@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.59 2001-02-06 07:52:51 geuzaine Exp $
+// $Id: Gmsh.y,v 1.60 2001-02-07 15:42:14 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -541,9 +541,9 @@ VectorLine :
     tVectorLine '(' FExpr ',' FExpr ',' FExpr ',' 
                     FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->SL, &$3); List_Add(ActualView->SL, &$9);
-      List_Add(ActualView->SL, &$5); List_Add(ActualView->SL, &$11);
-      List_Add(ActualView->SL, &$7); List_Add(ActualView->SL, &$13);
+      List_Add(ActualView->VL, &$3); List_Add(ActualView->VL, &$9);
+      List_Add(ActualView->VL, &$5); List_Add(ActualView->VL, &$11);
+      List_Add(ActualView->VL, &$7); List_Add(ActualView->VL, &$13);
     }
     '{' VectorLineValues '}' tEND
     {
@@ -562,9 +562,9 @@ TensorLine :
     tTensorLine '(' FExpr ',' FExpr ',' FExpr ',' 
                     FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->SL, &$3); List_Add(ActualView->SL, &$9);
-      List_Add(ActualView->SL, &$5); List_Add(ActualView->SL, &$11);
-      List_Add(ActualView->SL, &$7); List_Add(ActualView->SL, &$13);
+      List_Add(ActualView->TL, &$3); List_Add(ActualView->TL, &$9);
+      List_Add(ActualView->TL, &$5); List_Add(ActualView->TL, &$11);
+      List_Add(ActualView->TL, &$7); List_Add(ActualView->TL, &$13);
     }
     '{' TensorLineValues '}' tEND
     {

@@ -169,7 +169,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.67 2001-02-06 07:52:51 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.68 2001-02-07 15:42:14 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -3490,9 +3490,9 @@ case 99:
 case 100:
 #line 543 "Gmsh.y"
 { 
-      List_Add(ActualView->SL, &yyvsp[-11].d); List_Add(ActualView->SL, &yyvsp[-5].d);
-      List_Add(ActualView->SL, &yyvsp[-9].d); List_Add(ActualView->SL, &yyvsp[-3].d);
-      List_Add(ActualView->SL, &yyvsp[-7].d); List_Add(ActualView->SL, &yyvsp[-1].d);
+      List_Add(ActualView->VL, &yyvsp[-11].d); List_Add(ActualView->VL, &yyvsp[-5].d);
+      List_Add(ActualView->VL, &yyvsp[-9].d); List_Add(ActualView->VL, &yyvsp[-3].d);
+      List_Add(ActualView->VL, &yyvsp[-7].d); List_Add(ActualView->VL, &yyvsp[-1].d);
     ;
     break;}
 case 101:
@@ -3512,9 +3512,9 @@ case 103:
 case 104:
 #line 564 "Gmsh.y"
 { 
-      List_Add(ActualView->SL, &yyvsp[-11].d); List_Add(ActualView->SL, &yyvsp[-5].d);
-      List_Add(ActualView->SL, &yyvsp[-9].d); List_Add(ActualView->SL, &yyvsp[-3].d);
-      List_Add(ActualView->SL, &yyvsp[-7].d); List_Add(ActualView->SL, &yyvsp[-1].d);
+      List_Add(ActualView->TL, &yyvsp[-11].d); List_Add(ActualView->TL, &yyvsp[-5].d);
+      List_Add(ActualView->TL, &yyvsp[-9].d); List_Add(ActualView->TL, &yyvsp[-3].d);
+      List_Add(ActualView->TL, &yyvsp[-7].d); List_Add(ActualView->TL, &yyvsp[-1].d);
     ;
     break;}
 case 105:
