@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.35 2002-01-22 16:54:16 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.36 2002-02-05 20:13:51 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -1096,7 +1096,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "%%%%DocumentData: Clean7Bit\n"
 	  "%%%%Pages: 1\n"
 	  "%%%%PageOrder: Ascend\n"
-	  "%%%%Orientation: Portrait\n"
+	  "%%%%Orientation: %s\n"
 	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
 	  "%%%%BoundingBox: %d %d %d %d\n"
 	  "%%%%Copyright: GNU LGPL (C) 1999-2002 geuz@geuz.org\n"
@@ -1147,13 +1147,24 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "gl2psdict begin\n"
 	  "%%%%EndSetup\n"
 	  "%%%%Page: 1 1\n"
-	  "%%%%BeginPageSetup\n"
+	  "%%%%BeginPageSetup\n",
+	  gl2ps.title, GL2PS_VERSION, gl2ps.producer, ctime(&now),
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3],
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[1] : viewport[0],
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[0] : viewport[1],
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
+  if (gl2ps.options & GL2PS_LANDSCAPE)
+    fprintf(gl2ps.stream,
+	    "%d 0 translate 90 rotate\n",
+	    viewport[3]);
+  fprintf(gl2ps.stream, 
 	  "%%%%EndPageSetup\n"
 	  "mark\n"
 	  "gsave\n"
-	  "1.0 1.0 scale\n",
-	  gl2ps.title, GL2PS_VERSION, gl2ps.producer, ctime(&now), 
-	  viewport[2], viewport[3], viewport[0], viewport[1], viewport[2], viewport[3]);
+	  "1.0 1.0 scale\n");
 	  
   if(gl2ps.options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps.colormode == GL_RGBA || gl2ps.colorsize == 0)
@@ -1374,9 +1385,9 @@ GLint gl2psEndPage(GLvoid){
   GL2PSbsptree   *root;
   GL2PSxyz        eye={0., 0., 100000.};
   GLint           shademodel, res;
-  void          (*phead)(GLvoid);
-  void          (*pprim)(GLvoid *a, GLvoid *b);
-  void          (*pfoot)(GLvoid);
+  void          (*phead)(GLvoid) = 0;
+  void          (*pprim)(GLvoid *a, GLvoid *b) = 0;
+  void          (*pfoot)(GLvoid) = 0;
 
   glGetIntegerv(GL_SHADE_MODEL, &shademodel);
   gl2ps.shade = (shademodel == GL_SMOOTH);
