@@ -13,5 +13,3 @@ Line Loop(5) = {4,1,2,3};
 Plane Surface(6) = {5};         
        
 Extrude Surface{6, {0.0,1,0}, {0,0.0,0.0},  3.14159/4};         
-       
-Coherence;         

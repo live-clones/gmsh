@@ -1,6 +1,3 @@
-/*****************************    
-cube with a hole  
-*****************************/ 
 lv = .1; 
 lc = .04;    
 Point(1) = {0.0,0.0,0.0,lv};            
@@ -24,6 +21,3 @@ Line Loop(9) = {1,2,3,4};
 Line Loop(10) = {7,8,5,6};  
 Plane Surface(11) = {9,10};  
 Extrude Surface {11, {.0,0.0,.5} };  
-Coherence;  
-Surface Loop(54) = {24,11,28,32,36,53,40,44,48,52};  
-Complex Volume(55) = {54};  

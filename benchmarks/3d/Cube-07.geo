@@ -9,4 +9,3 @@ Line(4) = {4,1};
 Line Loop(5) = {1,2,3,4}; 
 Plane Surface(6) = {5}; 
 Extrude Surface {6, {1.0,0.0,0.0} }; 
-Coherence; 
