@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.233 2002-10-16 17:33:03 geuzaine Exp $
+# $Id: Makefile,v 1.234 2002-10-24 23:50:12 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -475,7 +475,11 @@ link-solaris-scorec:
 solaris-scorec: compile-solaris-scorec link-solaris-scorec
 
 #
-# MacOS X
+# MacOS X. To distribute: 
+# 1) compile
+# 2) copy (using the finder! copying in a shell will destroy the resources!) 
+#    a distribution folder
+# 3) use the DiskCopy ustility to create a disk image (.dmg)
 #
 compile-macosx: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
