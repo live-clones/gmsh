@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.59 2004-06-04 02:07:06 geuzaine Exp $
+// $Id: Draw.cpp,v 1.60 2004-07-22 19:32:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -294,3 +294,4 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
   InitPosition();
   Draw();
 }
+

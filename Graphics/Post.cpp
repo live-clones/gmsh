@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.74 2004-07-22 05:47:47 geuzaine Exp $
+// $Id: Post.cpp,v 1.75 2004-07-22 19:32:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -355,6 +355,13 @@ void Draw_Post(void)
 		      v->BBox[5] + offset / CTX.s[0]);
 	sprintf(label, "(%g,%g,%g)", v->BBox[1], v->BBox[3], v->BBox[5]);
 	Draw_String(label);
+
+	for(int i = 0; i < 6; i++)
+	  if(CTX.clip[i] & (1<<(2+iView)))
+	    Draw_PlaneInBoundingBox(v->BBox[0], v->BBox[2], v->BBox[4],
+				    v->BBox[1], v->BBox[3], v->BBox[5],
+				    CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
+				    CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
       }
     }
   }

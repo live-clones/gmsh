@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.104 2004-07-22 05:47:46 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.105 2004-07-22 19:32:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -173,8 +173,20 @@ void Draw_Mesh(Mesh * M)
 		  CTX.max[2] + offset / CTX.s[0]);
     sprintf(label, "(%g,%g,%g)", CTX.max[0], CTX.max[1], CTX.max[2]);
     Draw_String(label);
-  }
 
+    for(int i = 0; i < 6; i++)
+      if(CTX.clip[i] & 1 || CTX.clip[i] & 2)
+	Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],
+				CTX.max[0], CTX.max[1], CTX.max[2],
+				CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
+				CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
+    if(CTX.mesh.use_cut_plane)
+      Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],
+			      CTX.max[0], CTX.max[1], CTX.max[2],
+			      CTX.mesh.cut_planea, CTX.mesh.cut_planeb, 
+			      CTX.mesh.cut_planec, CTX.mesh.cut_planed);
+  }
+  
   // draw the mesh
 
   if(CTX.mesh.draw) {  

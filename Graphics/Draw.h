@@ -76,6 +76,7 @@ void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,
 		 double Raise[3][8], int light);
+
 void Draw_Mesh(Mesh *M);
 void Draw_Mesh_Volume(void *a, void *b);
 void Draw_Mesh_Surface(void *a, void *b);
@@ -90,6 +91,10 @@ void Draw_Mesh_Hexahedron(void *a, void *b);
 void Draw_Mesh_Prism(void *a, void *b);
 void Draw_Mesh_Pyramid(void *a, void *b);
 void Draw_Mesh_Array(VertexArray *va, int faces, int edges);
+
+void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
+			     double xmax, double ymax, double zmax,
+			     double a, double b, double c, double d);
 
 void Draw_ScalarPoint(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax, 
