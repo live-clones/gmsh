@@ -58,6 +58,7 @@
 #define DIRECT        30  // Direct message (no special formatting)
 
 #define SOLVER        31  // Solver message
+#define SOLVERR       32  // Solver errors and warnings
 
 #define WHITE_STR          "        : "
 #define FATAL_STR          "Fatal   : "
