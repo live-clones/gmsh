@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.18 2001-08-01 16:37:15 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.19 2001-08-01 16:42:10 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -30,6 +30,10 @@
 #define NB_NOD_MAX_ELM 20
 
 /* relecture maillage au format MSH */
+
+/* Note: the 'Dirty' flag only has an influence if one doesn't load
+   the geometry along with the mesh (since we make Tree_Insert for the
+   geometrical entities). And that's what we want. */
 
 void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
