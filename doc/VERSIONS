@@ -1,10 +1,11 @@
-$Id: VERSIONS,v 1.166 2003-11-29 01:38:55 geuzaine Exp $
+$Id: VERSIONS,v 1.167 2003-11-29 20:24:30 geuzaine Exp $
 
 New in 1.49: made Merge, Save and Print behave like Include (i.e.,
 open files in the same directory as the main project file if the path
 is relative); new Plugin(DecomposeInSimplex); new option
 View.AlphaChannel to set the transaprency factor globally for a
-post-processing view; new "Combine Views" command;
+post-processing view; new "Combine Views" command; various bug fixes
+and cleanups;
 
 New in 1.48: new DisplacementRaise plugin to plot arbitrary fields on
 deformed meshes; generalized CutMap, CutPlane, CutSphere and Skin
