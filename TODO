@@ -1,4 +1,4 @@
-$Id: TODO,v 1.64 2004-10-16 16:13:34 geuzaine Exp $
+$Id: TODO,v 1.65 2004-10-25 19:31:35 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -16,7 +16,13 @@ index-based format)
 
 ********************************************************************
 
-Raise & offsets should modify the bouding boxes... (maybe?)
+Raise & offsets should modify the bounding boxes... (maybe?)
+
+********************************************************************
+
+In the same way as we can specify 'Vector Type->Raised View', we
+should implement 'Vector Type->Colored View', so that we could draw a
+vector field colored by another view.
 
 ********************************************************************
 
