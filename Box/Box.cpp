@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.6 2000-11-24 08:10:10 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.7 2000-11-24 08:11:03 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -403,3 +403,6 @@ double Cpu(void){
 
 void Progress(int i){
 }
+
+void   AddALineInTheEditGeometryForm (char* line){
+};
