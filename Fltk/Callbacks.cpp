@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.118 2002-04-23 23:07:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.119 2002-04-25 18:06:15 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -595,6 +595,28 @@ void opt_statistics_histogram_cb(CALLBACK_ARGS) {
 
 void opt_message_cb(CALLBACK_ARGS) {
   WID->create_message_window();
+}
+void opt_message_copy_cb(CALLBACK_ARGS) {
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
+  // Fl::copy does not exist in older versions of fltk
+#else
+#define BUFFL 50000
+  static char buff[BUFFL];
+  strcpy(buff, "");
+  for(int i = 1 ; i<=WID->msg_browser->size() ; i++){
+    if(WID->msg_browser->selected(i)){
+      const char *c=WID->msg_browser->text(i);
+      if(strlen(buff)+strlen(c)>BUFFL-2){
+	Msg(GERROR, "Text selection too large to copy");
+	break;
+      }
+      if(c[0]=='@') strcat(buff,&c[3]);
+      else strcat(buff, c);
+      strcat(buff, "\n");
+    }
+  }
+  Fl::copy(buff, strlen(buff), 0);
+#endif
 }
 void opt_message_clear_cb(CALLBACK_ARGS) {
   WID->msg_browser->clear();

@@ -83,6 +83,7 @@ void opt_statistics_histogram_cb(CALLBACK_ARGS) ;
 // Option Message Menu
 
 void opt_message_cb(CALLBACK_ARGS) ;
+void opt_message_copy_cb(CALLBACK_ARGS) ;
 void opt_message_clear_cb(CALLBACK_ARGS) ;
 void opt_message_save_cb(CALLBACK_ARGS) ;
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.169 2002-04-25 04:30:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.170 2002-04-25 18:06:15 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -1920,6 +1920,8 @@ void GUI::create_message_window(){
   
   msg_browser = new Fl_Browser(WB, WB, width-2*WB, height-3*WB-BH);
   msg_browser->textfont(FL_COURIER);
+  msg_browser->type(FL_MULTI_BROWSER);
+  msg_browser->callback(opt_message_copy_cb);
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "Save");
