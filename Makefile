@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.176 2001-12-05 09:54:25 geuzaine Exp $
+# $Id: Makefile,v 1.177 2001-12-06 08:10:59 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
-GMSH_PATCH_VERSION = 0
+GMSH_PATCH_VERSION = 1
 
 MAKE = make
 CXX = c++

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.99 2001-12-04 16:42:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.100 2001-12-06 08:10:59 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -643,29 +643,8 @@ void opt_visibility_sort_cb(CALLBACK_ARGS){
   }
 }
 
-static int vnod, velm, vcur, vsur, vvol;
-static void vis_nod(void *a, void *b){ (*(Vertex**)a)->Visible = vnod; }
-static void vis_sim(void *a, void *b){ (*(Simplex**)a)->Visible = velm; }
-static void vis_hex(void *a, void *b){ (*(Hexahedron**)a)->Visible = velm; }
-static void vis_pri(void *a, void *b){ (*(Prism**)a)->Visible = velm; }
-static void vis_pyr(void *a, void *b){ (*(Pyramid**)a)->Visible = velm; }
-static void vis_cur(void *a, void *b){ (*(Curve**)a)->Visible = vcur; }
-static void vis_sur(void *a, void *b){ (*(Surface**)a)->Visible = vsur; }
-static void vis_vol(void *a, void *b){ (*(Volume**)a)->Visible = vvol; }
-
 void opt_visibility_number_cb(CALLBACK_ARGS){
-  static int allnod=1, allelm=1, allpnt=1, allcur=1, allsur=1, allvol=1;
-  int i, found, num, mode;
-  int type = WID->vis_input_mode->value();
-  List_T *tmp;
-  Vertex vv,*v,**pv;
-  Curve *c;
-  Surface *s;
-  Volume *V;
-  Simplex SS, *S, **pS;
-  Hexahedron HH, *H, **pH;
-  Prism PP, *P, **pP;
-  Pyramid QQ, *Q, **pQ;
+  int pos, mode, type = WID->vis_input_mode->value();
   char *str = (char*)((Fl_Input*)w)->value(); 
 
   switch(WID->vis_browser_mode->value()){
@@ -674,139 +653,11 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
   default: mode = VIS_MESH; break;
   }
 
-  if (!strcmp(str,"all") || !strcmp(str,"*")){
-    switch(type){
-    case 0: //node
-      allnod = !allnod;
-      vnod = allnod ? VIS_MESH : 0;
-      Tree_Action(THEM->Vertices, vis_nod);
-      break;
-    case 1: //element
-      allelm = !allelm;
-      velm = allelm ? VIS_MESH : 0;
-      tmp = Tree2List(THEM->Curves);
-      for(i=0; i<List_Nbr(tmp); i++){
-	List_Read(tmp, i, &c);
-	Tree_Action(c->Simplexes, vis_sim);
-      }
-      List_Delete(tmp);
-      tmp = Tree2List(THEM->Surfaces);
-      for(i=0; i<List_Nbr(tmp); i++){
-	List_Read(tmp, i, &s);
-	Tree_Action(s->Simplexes, vis_sim);
-      }
-      List_Delete(tmp);
-      Tree_Action(THEM->Simplexes, vis_sim);
-      tmp = Tree2List(THEM->Volumes);
-      for(i=0; i<List_Nbr(tmp); i++){
-	List_Read(tmp, i, &V);
-	Tree_Action(V->Hexahedra, vis_hex);
-	Tree_Action(V->Prisms, vis_pri);
-	Tree_Action(V->Pyramids, vis_pyr);
-      }
-      List_Delete(tmp);
-      break;
-    case 2: //point
-      allpnt = !allpnt;
-      vnod = allpnt ? VIS_MESH|VIS_GEOM : 0;
-      Tree_Action(THEM->Points, vis_nod);
-      break;
-    case 3: //curve
-      allcur = !allcur;
-      vcur = allcur ? VIS_MESH|VIS_GEOM : 0;
-      Tree_Action(THEM->Curves, vis_cur);
-      break;
-    case 4: //surface
-      allsur = !allsur;
-      vsur = allsur ? VIS_MESH|VIS_GEOM : 0;
-      Tree_Action(THEM->Surfaces, vis_sur);
-      break;
-    case 5: //volume
-      allvol= !allvol;
-      vvol = allvol ? VIS_MESH|VIS_GEOM : 0;
-      Tree_Action(THEM->Volumes, vis_vol);
-      break;
-    }
-  }
-  else{ 
-    num = atoi(str);
-
-    switch(type){
-    case 0: //node
-      vv.Num = num; v = &vv;
-      if((pv = (Vertex**)Tree_PQuery(THEM->Vertices, &v)))
-	(*pv)->Visible = (*pv)->Visible ? 0 : VIS_MESH;
-      else
-	Msg(WARNING, "Unknown node %d (use '*' to hide/show all nodes)", num);
-      break;
-    case 1: //element
-      SS.Num = num; S = &SS;
-      HH.Num = num; H = &HH;
-      PP.Num = num; P = &PP;
-      QQ.Num = num; Q = &QQ;
-      found = 0;
-      tmp = Tree2List(THEM->Curves);
-      for(i=0; i<List_Nbr(tmp); i++){
-	List_Read(tmp, i, &c);
-	if((pS = (Simplex**)Tree_PQuery(c->Simplexes, &S))){
-	  (*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH; found = 1; break;
-	}
-      }
-      List_Delete(tmp);
-      if(!found){
-	tmp = Tree2List(THEM->Surfaces);
-	for(i=0; i<List_Nbr(tmp); i++){
-	  List_Read(tmp, i, &s);
-	  if((pS = (Simplex**)Tree_PQuery(s->Simplexes, &S))){
-	    (*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH; found = 1; break;
-	  }
-	}
-	List_Delete(tmp);
-	if(!found){
-	  if((pS = (Simplex**)Tree_PQuery(THEM->Simplexes, &S))){
-	    (*pS)->Visible = (*pS)->Visible ? 0 : VIS_MESH;
-	  }
-	  else{
-	    tmp = Tree2List(THEM->Volumes);
-	    for(i=0; i<List_Nbr(tmp); i++){
-	      List_Read(tmp, i, &V);
-	      if((pH = (Hexahedron**)Tree_PQuery(V->Hexahedra, &H))){
-		(*pH)->Visible = (*pH)->Visible ? 0 : VIS_MESH; found = 1; break;
-	      }
-	      if((pP = (Prism**)Tree_PQuery(V->Prisms, &P))){
-		(*pP)->Visible = (*pP)->Visible ? 0 : VIS_MESH; found = 1; break;
-	      }
-	      if((pQ = (Pyramid**)Tree_PQuery(V->Pyramids, &Q))){
-		(*pQ)->Visible = (*pQ)->Visible ? 0 : VIS_MESH; found = 1; break;
-	      }
-	    }
-	    List_Delete(tmp);
-	    if(!found) 
-	      Msg(WARNING, "Unknown element %d (use '*' to hide/show all elements)", num);
-	  }
-	}
-      }
-      break;
-    case 2: //point
-      if((v=FindPoint(num,THEM))) v->Visible = v->Visible ? 0 : VIS_GEOM|VIS_MESH ;
-      else Msg(WARNING, "Unknown point %d (use '*' to hide/show all points)", num);
-      break;
-    case 3: //curve
-      if((c=FindCurve(num,THEM))) c->Visible = c->Visible ? 0 : VIS_GEOM|VIS_MESH ;
-      else Msg(WARNING, "Unknown curve %d (use '*' to hide/show all curves)", num);
-      break;
-    case 4: //surface
-      if((s=FindSurface(num,THEM))) s->Visible = s->Visible ? 0 : VIS_GEOM|VIS_MESH ;
-      else Msg(WARNING, "Unknown surface %d (use '*' to hide/show all surfaces)", num);
-      break;
-    case 5: //volume
-      if((V=FindVolume(num,THEM))) V->Visible = V->Visible ? 0 : VIS_GEOM|VIS_MESH ;
-      else Msg(WARNING, "Unknown volume %d (use '*' to hide/show all volumes)", num);
-      break;
-    }
-  }
-
+  SetVisibilityByNumber(str, type, mode);
+  pos = WID->vis_browser->position();
   opt_visibility_cb(NULL,NULL);
+  WID->vis_browser->position(pos);
+
   Draw();
 }
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.140 2001-12-04 12:06:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.141 2001-12-06 08:10:59 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -1956,7 +1956,7 @@ void GUI::create_visibility_window(){
     return;
   }
 
-  static int cols[5] = {15,100,100,200,0};  
+  static int cols[5] = {15,95,95,180,0};  
   static Fl_Menu_Item type_table[] = {
     {"Elementary",  0, (Fl_Callback *)opt_visibility_cb},
     {"Physical",    0, (Fl_Callback *)opt_visibility_cb},
@@ -2029,7 +2029,8 @@ void GUI::create_visibility_window(){
   vis_browser->type(FL_MULTI_BROWSER);
   vis_browser->column_widths(cols);
 
-  vis_window->resizable(new Fl_Box(width-3*WB-2*BB-10,height-5*WB-2*BH-10, 10,10));
+  vis_window->resizable(new Fl_Box(width-3*WB-2*BB-10,3*WB+2*BH+10, 10,10));
+  vis_window->size_range(width, 5*BH+5*WB);
 
   vis_input = new Fl_Input(1*WB, height-2*WB-2*BH, brw/3, BH);
   vis_input->labelsize(CTX.fontsize);

@@ -31,5 +31,6 @@ void    SetVisibilitySort(int sort);
 List_T* GetVisibilityList(int type);
 void    ClearVisibilityList(int type);
 void    InitVisibilityThroughPhysical();
+void    SetVisibilityByNumber(char *str, int type, int mode);
 
 #endif
