@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.16 2001-08-11 23:25:50 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.17 2001-08-12 10:21:19 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -106,7 +106,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	break;
       }
       
-      if(test<0){
+      if(test>0){
 	for(k=0;k<nx;k++){
 	  Xpi[k] = Xp[k];
 	  Ypi[k] = Yp[k];
