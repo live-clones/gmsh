@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.30 2001-05-30 18:09:17 geuzaine Exp $
+// $Id: Main.cpp,v 1.31 2001-05-31 07:16:50 geuzaine Exp $
 
 #include <signal.h>
 #include <time.h>
@@ -25,12 +25,15 @@ GUI *WID = NULL;
 
 int main(int argc, char *argv[]){
   int     i, nbf;
-  char    cmdline[1000]="";
+  char    cmdline[1000]="", currtime[100];
   time_t  now;
  
   // log some info
   
   time(&now);
+  strcpy(currtime, ctime(&now));
+  currtime[strlen(currtime)-1] = '\0';
+
   for(i=0;i<argc;i++){ 
     if(i) strcat(cmdline, " "); 
     strcat(cmdline, argv[i]);
@@ -55,8 +58,8 @@ int main(int argc, char *argv[]){
     CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
-    fprintf(stderr, "%s, version %.2f, started %s", 
-	    gmsh_progname, GMSH_VERSION, ctime(&now));
+    fprintf(stderr, "%s, version %.2f, started %s\n", 
+	    gmsh_progname, GMSH_VERSION, currtime);
 
   // Register Default Plugins (in test ...)
   if(CTX.default_plugins)
@@ -140,7 +143,7 @@ int main(int argc, char *argv[]){
   Msg(LOG_INFO, gmsh_host);
   Msg(LOG_INFO, gmsh_packager);
   Msg(LOG_INFO, "Home directory   : %s", CTX.home_dir);
-  Msg(LOG_INFO, "Launch date      : %s", ctime(&now));
+  Msg(LOG_INFO, "Launch date      : %s", currtime);
   Msg(LOG_INFO, "Command line     : %s", cmdline);
   Msg(LOG_INFO, "-------------------------------------------------------");
 
