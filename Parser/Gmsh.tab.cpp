@@ -192,7 +192,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.194 2004-05-30 21:21:41 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.195 2004-05-31 21:37:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -6192,7 +6192,7 @@ case 229:
 	GMSH_PluginManager::instance()->setPluginOption(yyvsp[-6].c, yyvsp[-3].c, yyvsp[-1].d); 
       }
       catch (...) {
-	yymsg(WARNING, "Unknown option '%s' or plugin '%s'", yyvsp[-3].c, yyvsp[-6].c);
+	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", yyvsp[-3].c, yyvsp[-6].c);
       }
     ;
     break;}
@@ -6203,7 +6203,7 @@ case 230:
 	GMSH_PluginManager::instance()->setPluginOption(yyvsp[-6].c, yyvsp[-3].c, yyvsp[-1].c); 
       }
       catch (...) {
-	yymsg(WARNING, "Unknown option '%s' or plugin '%s'", yyvsp[-3].c, yyvsp[-6].c);
+	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", yyvsp[-3].c, yyvsp[-6].c);
       }
     ;
     break;}
@@ -7135,7 +7135,7 @@ case 286:
 	GMSH_PluginManager::instance()->action(yyvsp[-4].c, yyvsp[-1].c, 0);
       }
       catch(...) {
-	yymsg(WARNING, "Unknown action '%s' or plugin '%s'", yyvsp[-1].c, yyvsp[-4].c);
+	yymsg(GERROR, "Unknown action '%s' or plugin '%s'", yyvsp[-1].c, yyvsp[-4].c);
       }
    ;
     break;}

@@ -280,9 +280,7 @@ the options `MaxIter' and `DT'. The time stepping
 scheme is a RK44. If `iView' < 0, the plugin is run
 on the current view.
 
-Plugin(StreamLines) creates one new view. It is
-nice to choose the displacement mode to see
-vectors and to animate the view ;-)
+Plugin(StreamLines) creates one new view.
 
 Numeric options:
 @table @code

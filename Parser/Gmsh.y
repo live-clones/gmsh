@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.170 2004-05-30 21:21:42 geuzaine Exp $
+// $Id: Gmsh.y,v 1.171 2004-05-31 21:37:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1625,7 +1625,7 @@ Affectation :
 	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
-	yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
+	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
@@ -1634,7 +1634,7 @@ Affectation :
 	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
-	yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
+	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
     }
 ;
@@ -2515,7 +2515,7 @@ Command :
 	GMSH_PluginManager::instance()->action($3, $6, 0);
       }
       catch(...) {
-	yymsg(WARNING, "Unknown action '%s' or plugin '%s'", $6, $3);
+	yymsg(GERROR, "Unknown action '%s' or plugin '%s'", $6, $3);
       }
    }
    | tCombine tSTRING tEND

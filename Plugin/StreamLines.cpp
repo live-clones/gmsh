@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.8 2004-05-31 20:09:37 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.9 2004-05-31 21:37:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -86,9 +86,7 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
 	 "scheme is a RK44. If `iView' < 0, the plugin is run\n"
 	 "on the current view.\n"
 	 "\n"
-	 "Plugin(StreamLines) creates one new view. It is\n"
-	 "nice to choose the displacement mode to see\n"
-	 "vectors and to animate the view ;-)\n");
+	 "Plugin(StreamLines) creates one new view.\n");
 }
 
 int GMSH_StreamLinesPlugin::getNbOptions() const
@@ -135,6 +133,7 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
 {
   Post_View * View = BeginView(1);
 
+  View->VectorType = DRAW_POST_DISPLACEMENT;
   View->NbTimeStep = (int) StreamLinesOptions_Number[11].def;
 
   double XINIT[3];
