@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.133 2002-07-12 17:20:24 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.134 2002-07-31 03:59:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -414,6 +414,9 @@ typedef struct{
   void (*func)(char *name) ;
 } patXfunc;
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 void file_save_as_cb(CALLBACK_ARGS) {
   int i, nbformats;
   static int patindex=0;
@@ -452,13 +455,30 @@ void file_save_as_cb(CALLBACK_ARGS) {
     }
   }
 
+ test:
+
   if(file_chooser(0,"Save file as", pat, patindex)){
+
+    char *name = file_chooser_get_name(1);
+
+    if(CTX.confirm_overwrite){
+      struct stat buf;
+      if(!stat(name, &buf))
+	if(fl_ask("%s already exists.\nDo you want to replace it?", name))
+	  goto save;
+	else
+	  goto test;
+    }
+
+  save:
     i = file_chooser_get_filter();
     if(i>=0 && i<nbformats)
-      formats[i].func(file_chooser_get_name(1));
+      formats[i].func(name);
     else // handle any additional automatic fltk filter
-      _save_auto(file_chooser_get_name(1));
+      _save_auto(name);
+    
   }
+
   patindex = file_chooser_get_filter();
 }
 
@@ -577,6 +597,7 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_orthographic(0, GMSH_SET, WID->gen_butt[10]->value());
   opt_general_moving_light(0, GMSH_SET, WID->gen_butt[12]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
+  opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
 
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());

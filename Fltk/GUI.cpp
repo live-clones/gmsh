@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.184 2002-07-03 23:54:10 geuzaine Exp $
+// $Id: GUI.cpp,v 1.185 2002-07-31 03:59:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1103,7 +1103,7 @@ void GUI::create_general_options_window(){
   }
     
   int width = 25*CTX.fontsize;
-  int height = 5*WB+11*BH ;
+  int height = 5*WB+12*BH ;
   int BW = width-4*WB;
   
   gen_window = new Fl_Window(width,height);
@@ -1125,6 +1125,7 @@ void GUI::create_general_options_window(){
 	gen_butt[i]->down_box(TOGGLE_BOX);
 	gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
+
       gen_butt[13] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW, BH, "Show tooltips");
       gen_butt[13]->type(FL_TOGGLE_BUTTON);
       gen_butt[13]->down_box(TOGGLE_BOX);
@@ -1142,16 +1143,23 @@ void GUI::create_general_options_window(){
 	gen_butt[i]->down_box(TOGGLE_BOX);
 	gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
-      gen_value[5] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Message verbosity");
+
+      gen_butt[14] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Ask confirmation before overwriting a file");
+      gen_butt[14]->type(FL_TOGGLE_BUTTON);
+      gen_butt[14]->down_box(TOGGLE_BOX);
+      gen_butt[14]->selection_color(TOGGLE_COLOR);
+
+
+      gen_value[5] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Message verbosity");
       gen_value[5]->minimum(0); 
       gen_value[5]->maximum(10); 
       gen_value[5]->step(1);
       gen_value[5]->align(FL_ALIGN_RIGHT);
-      gen_input[0] = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Default file name");
-      gen_input[1] = new Fl_Input(2*WB, 2*WB+6*BH, IW, BH, "Temporary file");
-      gen_input[2] = new Fl_Input(2*WB, 2*WB+7*BH, IW, BH, "Error file");
-      gen_input[3] = new Fl_Input(2*WB, 2*WB+8*BH, IW, BH, "Option file");
-      gen_input[4] = new Fl_Input(2*WB, 2*WB+9*BH, IW, BH, "Text editor command");
+      gen_input[0] = new Fl_Input(2*WB, 2*WB+6*BH, IW, BH, "Default file name");
+      gen_input[1] = new Fl_Input(2*WB, 2*WB+7*BH, IW, BH, "Temporary file");
+      gen_input[2] = new Fl_Input(2*WB, 2*WB+8*BH, IW, BH, "Error file");
+      gen_input[3] = new Fl_Input(2*WB, 2*WB+9*BH, IW, BH, "Option file");
+      gen_input[4] = new Fl_Input(2*WB, 2*WB+10*BH, IW, BH, "Text editor command");
       for(i=0 ; i<5 ; i++){
 	gen_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -2442,7 +2450,7 @@ void GUI::create_view_options_window(int num){
 
       static Fl_Menu_Item menu_pointtype[] = {
 	{"Color dot",   0, 0, 0},
-	{"3D Sphere",   0, 0, 0},
+	{"3D sphere",   0, 0, 0},
 	{0}
       };
       view_choice[5] = new Fl_Choice(2*WB, 2*WB+ 2*BH, IW, BH, "Point type");

@@ -405,6 +405,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Fourth clip plane 5 equation coefficient ('D' in equation 'AX+BY+CZ+D=0')" },
   { F|O, "ColorScheme", opt_general_color_scheme , 0. ,
     "Default color scheme (0, 1 or 2)" },
+  { F|S, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
+    "Ask confirmation before overwriting files?" }, 
 
   { F|O, "DefaultPlugins" , opt_general_default_plugins , 1. ,
     "Load default plugins on startup" },

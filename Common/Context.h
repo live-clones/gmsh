@@ -57,6 +57,7 @@ public :
   char *error_filename;       // the name of the error file
 
   int session_save, options_save; // save session/option file on exit
+  int confirm_overwrite;      // confirm overwrite when file->save as
   char *display;              // forced display host:0.0 under X11 
   int  terminal;              // show we print to the terminal console?
   char *editor;               // text editor command (with included '%s')

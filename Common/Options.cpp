@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.82 2002-06-15 21:25:27 geuzaine Exp $
+// $Id: Options.cpp,v 1.83 2002-07-31 03:59:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -985,6 +985,14 @@ double opt_general_options_save(OPT_ARGS_NUM){
     WID->gen_butt[9]->value(CTX.options_save);
 #endif
   return CTX.options_save;
+}
+double opt_general_confirm_overwrite(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.confirm_overwrite = (int)val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[14]->value(CTX.confirm_overwrite);
+#endif
+  return CTX.confirm_overwrite;
 }
 double opt_general_rotation0(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.r[0] = val;
