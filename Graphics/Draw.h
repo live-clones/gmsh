@@ -7,6 +7,8 @@
 #define GMSH_SELECT    2
 #define GMSH_FEEDBACK  3
 
+#define SELECTION_BUFFER_SIZE  1024
+
 #define TO_SCREEN  1
 #define TO_FILE    2
 

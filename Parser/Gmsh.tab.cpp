@@ -174,7 +174,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.105 2001-08-11 23:28:33 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.106 2001-08-12 14:24:50 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -5918,7 +5918,7 @@ void yyerror(char *s){
 
 void vyyerror(char *fmt, ...){
   va_list args;
-  char tmp[TEXT_BUFFER_SIZE];
+  char tmp[1024];
 
   va_start (args, fmt);
   vsprintf (tmp, fmt, args);

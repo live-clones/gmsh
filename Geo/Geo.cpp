@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.21 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Geo.cpp,v 1.22 2001-08-12 14:24:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -394,7 +394,7 @@ void add_multvol(List_T *list, char *fich){
 }
 
 void add_trsfvol(int N, int *l, char *fich){
-  char text[TEXT_BUFFER_SIZE], text2[TEXT_BUFFER_SIZE];
+  char text[BUFFSIZE], text2[BUFFSIZE];
   int i;
 
   sprintf(text,"Transfinite Volume{%s} = {", trsf_vol_text);

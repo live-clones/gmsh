@@ -1,4 +1,4 @@
-// $Id: CbColorbar.cpp,v 1.2 2001-08-11 23:28:33 geuzaine Exp $
+// $Id: CbColorbar.cpp,v 1.3 2001-08-12 14:24:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -359,7 +359,7 @@ void ColorBarRedraw(void){
 }
 
 void ColorBarChange(char *label, float min, float max, ColorTable *ct, int rgb){
-  strncpy(TheCB->label, label, LABEL_STR_L);
+  strncpy(TheCB->label, label, 31);
   TheCB->ct     = ct;
   TheCB->minval = min;
   TheCB->maxval = max;

@@ -7,7 +7,7 @@ typedef struct _colorbar {
   int wedge_y;                 /* top coord of color wedge */
   int marker_y;                /* top coord of marker arrow */
   int label_y;                 /* y coord of text labels */
-  char label[LABEL_STR_L];     /* text label at bottom */
+  char label[32];              /* text label at bottom */
   float minval, maxval;        /* min and max data values */
   int markerpos;               /* position of marker as index into table */
   int helpflag;                /* if nonzero, print help messages */  
