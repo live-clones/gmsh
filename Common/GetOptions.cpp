@@ -1,11 +1,13 @@
-// $Id: GetOptions.cpp,v 1.3 2001-01-11 12:53:57 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.4 2001-01-13 15:41:35 geuzaine Exp $
+
 #include "Gmsh.h"
+#include "GmshVersion.h"
 #include "Const.h"
 #include "Context.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Views.h"
-#include "./Version.h"
+#include "OpenFile.h"
 
 extern Context_T  CTX;
 
@@ -76,6 +78,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
   void Info (int level, char *arg0);
   if(argc < 2) Info(0,argv[0]);
 #endif
+
+  // Get default options in the configuration file
+  // we should do something more clever here (in $HOME?)
+  CTX.configfilename = ".gmshrc"; 
+  ParseFile(CTX.configfilename);
+
+  // Get command line options
 
   TheFileNameTab[0] = "unnamed.geo" ;
   *nbfiles = 0;

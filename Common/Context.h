@@ -53,11 +53,15 @@ typedef struct{
 }rgbacolors;
 
 class Context_T {
-  public :
+public :
 
   char filename[NAME_STR_L];  // the name of the currently opened file
   char basefilename[NAME_STR_L]; // the same without the extension
+  char *configfilename;       // the name of the configuration file
   char *display;              // forced display host:0.0 under X11 
+
+  int position[2];            // position of the menu window on the screen
+  int gl_position[2];         // position of the graphic window on the screen
 
   int interactive;            // 0=full gfx; -1=just parse; 1,2,3=batch mesh 
   int verbosity;              // 0=silent -> 3=debug 
@@ -97,7 +101,7 @@ class Context_T {
   //end(only used for Motif)
 
   int fontsize;               // font size for fltk UI
-  int glfontsize;             // font size for opengl graphics
+  int gl_fontsize;            // font size for opengl graphics
 
   // OpenGL stuff 
   int viewport[4];            // current viewport 
@@ -206,5 +210,6 @@ void Print_ColorOptions(StringXColor s[], char *prefix, FILE *file);
 void Init_Colors (int num);
 void Init_Context (void);
 void Print_Context(char *filename);
+void Print_Configuration(char *filename);
 
 #endif

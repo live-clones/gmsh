@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.8 2001-01-12 13:28:55 geuzaine Exp $
+// $Id: Message.cpp,v 1.9 2001-01-13 15:41:35 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -7,7 +7,7 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Version.h"
+#include "GmshVersion.h"
 #include "Context.h"
 #include "GUI.h"
 
@@ -45,10 +45,6 @@ void Signal (int sig_num){
 /*  M s g                                                                   */
 /* ------------------------------------------------------------------------ */
 
-#define PUT_IN_COMMAND_WIN			\
-    vfprintf(stderr, fmt, args); 		\
-    fprintf(stderr, "\n");
-
 void Msg(int level, char *fmt, ...){
   va_list  args;
   int      abort = 0, verb = 0, window = -1, log = 1;
@@ -56,11 +52,11 @@ void Msg(int level, char *fmt, ...){
 
   switch(level){
   case STATUS1N : log = 0; //fallthrough
-  case STATUS1  : window = 0; break ;
+  case STATUS1  : verb = 1; window = 0; break ;
   case STATUS2N : log = 0; //fallthrough
-  case STATUS2  : window = 1; break ;
+  case STATUS2  : verb = 1; window = 1; break ;
   case STATUS3N : log = 0; //fallthrough
-  case STATUS3  : window = 2; break ;
+  case STATUS3  : verb = 1; window = 2; break ;
 
   case FATAL    : str = FATAL_STR; abort = 1; break ;
   case FATAL1   : str = FATAL_STR; break ;
@@ -98,10 +94,8 @@ void Msg(int level, char *fmt, ...){
 
   static char buff1[1024], buff2[1024], buff[4][1024];
 
-  if(CTX.interactive){
-    if(verb) return;
+  if(CTX.interactive)
     window = -1;
-  }
   else 
     WID->check();
 
@@ -131,11 +125,23 @@ void Msg(int level, char *fmt, ...){
   }
 
   if(abort){
-    WID->save_message("error.log");
-    exit(1);
+    WID->save_message(".gmshlog");
+    Exit(1);
   }
 }
 
+
+/* ------------------------------------------------------------------------ */
+/*  Exit                                                                    */
+/* ------------------------------------------------------------------------ */
+
+void Exit(int level){
+  if(!CTX.interactive){
+    WID->get_position(CTX.position, CTX.gl_position);
+    Print_Configuration(CTX.configfilename);
+  }
+  exit(level);
+}
 
 /* ------------------------------------------------------------------------ */
 /*  C p u                                                                   */

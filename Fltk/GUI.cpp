@@ -6,12 +6,12 @@
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "GmshVersion.h"
 #include "Context.h"
 #include "Const.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Draw.h"
-#include "Version.h"
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Bitmaps.h"
@@ -389,7 +389,7 @@ void GUI::create_menu_window(){
       m_popup_butt[i]->hide();
     }
     
-    m_window->position(800,50);
+    m_window->position(CTX.position[0],CTX.position[1]);
     m_window->end();
   }
   else{
@@ -518,34 +518,40 @@ void GUI::create_graphic_window(){
   if(!init_graphic_window){
     init_graphic_window = 1 ;
 
-    g_window = new Fl_Window(700,520);
-    g_opengl_window = new Opengl_Window(0,0,700,500);
+    int sh = 2*CTX.fontsize-4; // status bar height
+    int width = CTX.viewport[2]-CTX.viewport[0];
+    int glheight = CTX.viewport[3]-CTX.viewport[1];
+    int height = glheight + sh;
+
+
+    g_window = new Fl_Window(width, height);
+    g_opengl_window = new Opengl_Window(0,0,width,glheight);
     
     {
-      Fl_Group *o = new Fl_Group(0,500,700,20);
+      Fl_Group *o = new Fl_Group(0,glheight,width,sh);
       o->box(FL_THIN_UP_BOX);
 
       x = 2;
       
-      g_status_butt[0] = new Fl_Button(x,502,15,16,"X"); x+=15;
+      g_status_butt[0] = new Fl_Button(x,glheight+2,15,sh-4,"X"); x+=15;
       g_status_butt[0]->callback(status_xyz1p_cb, (void*)0);
       //g_status_butt[0]->tooltip("Set X view");
-      g_status_butt[1] = new Fl_Button(x,502,15,16,"Y"); x+=15;
+      g_status_butt[1] = new Fl_Button(x,glheight+2,15,sh-4,"Y"); x+=15;
       g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
-      g_status_butt[2] = new Fl_Button(x,502,15,16,"Z"); x+=15;
+      g_status_butt[2] = new Fl_Button(x,glheight+2,15,sh-4,"Z"); x+=15;
       g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
-      g_status_butt[3] = new Fl_Button(x,502,20,16,"1:1"); x+=20;
+      g_status_butt[3] = new Fl_Button(x,glheight+2,20,sh-4,"1:1"); x+=20;
       g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
-      g_status_butt[4] = new Fl_Button(x,502,15,16,"?"); x+=15;
+      g_status_butt[4] = new Fl_Button(x,glheight+2,15,sh-4,"?"); x+=15;
       g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
 
-      g_status_butt[5] = new Fl_Button(x,502,15,16); x+=15;
+      g_status_butt[5] = new Fl_Button(x,glheight+2,15,sh-4); x+=15;
       g_status_butt[5]->callback(status_play_cb);
       start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
       start_bmp->label(g_status_butt[5]);
       stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
 
-      g_status_butt[6] = new Fl_Button(x,502,15,16); x+=15;
+      g_status_butt[6] = new Fl_Button(x,glheight+2,15,sh-4); x+=15;
       g_status_butt[6]->callback(status_cancel_cb);
       abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
       abort_bmp->label(g_status_butt[6]);
@@ -558,9 +564,9 @@ void GUI::create_graphic_window(){
 	g_status_butt[i]->align(FL_ALIGN_CENTER|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
       }
 
-      g_status_label[0] = new Fl_Box(x,502,(700-x)/3,16);
-      g_status_label[1] = new Fl_Box(x+(700-x)/3,502,(700-x)/3,16);
-      g_status_label[2] = new Fl_Box(x+2*(700-x)/3,502,(700-x)/3-2,16);
+      g_status_label[0] = new Fl_Box(x,glheight+2,(width-x)/3,sh-4);
+      g_status_label[1] = new Fl_Box(x+(width-x)/3,glheight+2,(height-x)/3,sh-4);
+      g_status_label[2] = new Fl_Box(x+2*(width-x)/3,glheight+2,(height-x)/3-2,sh-4);
       for(i = 0 ; i<3 ; i++){
 	g_status_label[i]->box(FL_FLAT_BOX);
 	g_status_label[i]->labelsize(CTX.fontsize);
@@ -571,7 +577,7 @@ void GUI::create_graphic_window(){
     }
 
     g_window->resizable(g_opengl_window);
-    g_window->position(20,30);
+    g_window->position(CTX.gl_position[0],CTX.gl_position[1]);
     g_window->end();   
   }
   else{
@@ -587,6 +593,15 @@ void GUI::create_graphic_window(){
 
 void GUI::set_size(int new_w, int new_h){
   g_window->size(new_w,new_h+g_window->h()-g_opengl_window->h());
+}
+
+// Get the position of the 2 main windows
+
+void GUI::get_position(int m[2], int g[2]){
+  m[0] = m_window->x();
+  m[1] = m_window->y();
+  g[0] = g_window->x();
+  g[1] = g_window->y();
 }
 
 // Set graphic window title

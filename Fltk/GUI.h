@@ -175,6 +175,7 @@ public:
   void draw_overlay();
   void set_size(int w, int h);
   void set_menu_size(int nb_butt);
+  void get_position(int m[2], int g[2]);
   void set_context(Context_Item menu[], int flag);
   int  get_context();
   void set_anim(int mode);

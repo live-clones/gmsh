@@ -1,11 +1,11 @@
-// $Id: Message.cpp,v 1.3 2001-01-12 13:29:02 geuzaine Exp $
+// $Id: Message.cpp,v 1.4 2001-01-13 15:41:35 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Version.h"
+#include "GmshVersion.h"
 #include "Context.h"
 #include "Widgets.h"
 

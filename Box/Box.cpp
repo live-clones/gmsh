@@ -1,8 +1,9 @@
-// $Id: Box.cpp,v 1.19 2001-01-09 14:24:04 geuzaine Exp $
+// $Id: Box.cpp,v 1.20 2001-01-13 15:41:35 geuzaine Exp $
 
 #include <signal.h>
 
 #include "Gmsh.h"
+#include "GmshVersion.h"
 #include "Const.h"
 #include "Geo.h"
 #include "Mesh.h"
@@ -12,8 +13,6 @@
 #include "OpenFile.h"
 #include "GetOptions.h"
 #include "MinMax.h"
-#include "Version.h"
-
 #include "Static.h"
 
 /* dummy defs for link purposes */

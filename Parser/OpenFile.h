@@ -3,7 +3,8 @@
 
 #include "Const.h"
 
-void OpenProblem(char *name);
-void MergeProblem(char *name);
+void ParseFile(char *filename);
+void OpenProblem(char *filename);
+void MergeProblem(char *filename);
 
 #endif

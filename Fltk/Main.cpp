@@ -1,9 +1,10 @@
-// $Id: Main.cpp,v 1.9 2001-01-12 14:58:09 geuzaine Exp $
+// $Id: Main.cpp,v 1.10 2001-01-13 15:41:35 geuzaine Exp $
 
 #include <signal.h>
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "GmshVersion.h"
 
 #include "Geo.h"
 #include "Verif.h"
@@ -13,7 +14,6 @@
 #include "ColorTable.h"
 #include "Parser.h"
 #include "Static.h"
-#include "Version.h"
 #include "GUI.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
   
   Init_Context();
 
-  // Command line options
+  // Configuration file and command line options
 
   Get_Options(argc, argv, &nbf);
 

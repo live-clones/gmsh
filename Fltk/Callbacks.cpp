@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.19 2001-01-12 13:28:55 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.20 2001-01-13 15:41:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -375,7 +375,7 @@ void file_remove_all_views_cb(CALLBACK_ARGS) {
 }
 
 void file_quit_cb(CALLBACK_ARGS) {
-  exit(0);
+  Exit(0);
 }
 
 // Option General Menu

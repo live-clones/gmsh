@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2001-01-11 16:34:38 colignon Exp $
+# $Id: Makefile,v 1.39 2001-01-13 15:41:35 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -186,15 +186,15 @@ nodepend:
         done 
 
 tag:
-	$(RM) $(RMFLAGS) Common/Version.h
-	echo "#define GMSH_VERSION  $(GMSH_RELEASE)" >  Common/Version.h
-	echo "#define GMSH_DATE     \"`date`\""      >> Common/Version.h
-	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/Version.h
-	echo "#define GMSH_PACKAGER \"`logname`\""   >> Common/Version.h
-	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/Version.h
+	$(RM) $(RMFLAGS) Common/GmshVersion.h
+	echo "#define GMSH_VERSION  $(GMSH_RELEASE)" >  Common/GmshVersion.h
+	echo "#define GMSH_DATE     \"`date`\""      >> Common/GmshVersion.h
+	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/GmshVersion.h
+	echo "#define GMSH_PACKAGER \"`logname`\""   >> Common/GmshVersion.h
+	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/GmshVersion.h
 
 initialtag:
-	@if [ ! -r Common/Version.h ]; then \
+	@if [ ! -r Common/GmshVersion.h ]; then \
         $(MAKE) tag ; \
         fi
 

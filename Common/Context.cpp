@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.32 2001-01-12 13:28:54 geuzaine Exp $
+// $Id: Context.cpp,v 1.33 2001-01-13 15:41:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -284,6 +284,30 @@ void Print_Context(char *filename){
     Msg(STATUS2, "Wrote File '%s'", filename);
     fclose(file);
   }
+}
+
+void Print_Configuration(char *filename){
+  FILE *file;
+  
+  file = fopen(filename,"w");
+  if(!file){
+    Msg(WARNING, "Unable to Open File '%s'", filename);
+    return;
+  }
+
+  fprintf(file, "// Default Gmsh Configuration\n");
+  fprintf(file, "// This is an automatically generated file: Do not edit!\n");
+  fprintf(file, "General.Viewport0 = %d;\n", CTX.viewport[0]);
+  fprintf(file, "General.Viewport1 = %d;\n", CTX.viewport[1]);
+  fprintf(file, "General.Viewport2 = %d;\n", CTX.viewport[2]);
+  fprintf(file, "General.Viewport3 = %d;\n", CTX.viewport[3]);
+  fprintf(file, "General.GraphicsFontSize = %d;\n", CTX.gl_fontsize);
+  fprintf(file, "General.GraphicsPosition0 = %d;\n", CTX.gl_position[0]);
+  fprintf(file, "General.GraphicsPosition1 = %d;\n", CTX.gl_position[1]);
+  fprintf(file, "General.MenuFontSize = %d;\n", CTX.fontsize);
+  fprintf(file, "General.MenuPosition0 = %d;\n", CTX.position[0]);
+  fprintf(file, "General.MenuPosition1 = %d;\n", CTX.position[1]);
+  fclose(file);
 }
 
 /*

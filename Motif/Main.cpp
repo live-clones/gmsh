@@ -1,9 +1,10 @@
-// $Id: Main.cpp,v 1.5 2001-01-12 13:29:02 geuzaine Exp $
+// $Id: Main.cpp,v 1.6 2001-01-13 15:41:35 geuzaine Exp $
 
 #include <signal.h>
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "GmshVersion.h"
 #include "Geo.h"
 #include "Verif.h"
 #include "Mesh.h"
@@ -27,8 +28,6 @@
 
 #include "Static.h"
 #include "XStatic.h"
-
-#include "Version.h"
 
 char* ShowVisualClass(int cls){
   if(cls==TrueColor)   return "TrueColor";

@@ -59,6 +59,7 @@ void   Signal (int signum);
 void   Msg (int level, char *fmt, ...);
 double Cpu (void);
 void   Progress(int);
+void   Exit(int);
 void   AddALineInTheEditGeometryForm (char* line);
 
 #endif
