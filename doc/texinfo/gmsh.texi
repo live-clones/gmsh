@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.148 2004-11-19 18:26:48 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.149 2004-12-13 15:57:35 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -3025,15 +3025,14 @@ one or more views in the same file):
 @example
 @group
 View "@var{string}" @{
+  < TIME @{ @var{expression-list} @}; >
   @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @};
   @dots{}
 @};
 @end group
 @end example
 
-The 26 objects that can be displayed are:
-
-@sp 1 
+where the 26 object @var{type}s that can be displayed are:
 
 @example
                     @var{type}  #@var{list-of-coords}  #@var{list-of-values}
@@ -3094,6 +3093,9 @@ The values are given by time step, by node and by component, i.e.:
 @var{comp1-node3-time2}, @var{comp2-node3-time2}, @var{comp3-node3-time2},
 @dots{}
 @end example
+
+The optional @code{TIME} list can contain a list of expressions giving the
+value of the time (or any other variable) for which an evolution was saved.
 
 @c .........................................................................
 @c ASCII post-processing file format

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.185 2004-11-25 02:10:39 geuzaine Exp $
+// $Id: Gmsh.y,v 1.186 2004-12-13 15:57:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -111,7 +111,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tScalarHexahedron tVectorHexahedron tTensorHexahedron
 %token tScalarPrism tVectorPrism tTensorPrism
 %token tScalarPyramid tVectorPyramid tTensorPyramid
-%token tText2D tText3D tInterpolationScheme tCombine
+%token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tTrimmed tShow tHide
@@ -485,6 +485,7 @@ Views :
   | Views Text2D
   | Views Text3D
   | Views InterpolationMatrix
+  | Views Time
 ;
 
 ScalarPointValues :
@@ -1234,6 +1235,19 @@ InterpolationMatrix :
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
       View->adaptive = new Adaptive_Post_View(View, $3, $6);
+    }
+;
+
+TimeValues :
+    FExpr
+    { List_Add(View->Time, &$1); }
+  | TimeValues ',' FExpr
+    { List_Add(View->Time, &$3); }
+;
+
+Time :
+    tTime '{' TimeValues '}' tEND
+    {
     }
 ;
 

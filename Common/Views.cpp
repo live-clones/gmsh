@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.148 2004-12-07 04:52:25 geuzaine Exp $
+// $Id: Views.cpp,v 1.149 2004-12-13 15:57:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -380,9 +380,10 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
   Stat_List(v, v->VY, 1, v->NbVY, 5);
   Stat_List(v, v->TY, 2, v->NbTY, 5);
 
-  // Dummy time values if using old parsed format
-  if(v->Time && !List_Nbr(v->Time)) {
-    for(i = 0; i < v->NbTimeStep; i++) {
+  // Dummy time values if none (or too few) provided (e.g. using old
+  // parsed format)
+  if(v->Time && List_Nbr(v->Time) < v->NbTimeStep) {
+    for(i = List_Nbr(v->Time); i < v->NbTimeStep; i++) {
       d = (double)i;
       List_Add(v->Time, &d);
     }
@@ -961,6 +962,18 @@ void ReadView(FILE *file, char *filename)
   Msg(STATUS2N, "Read '%s'", filename);
 }
 
+static void write_parsed_time(List_T *list, FILE *fp)
+{
+  if(List_Nbr(list) > 1) {
+    fprintf(fp, "TIME{");
+    for(int i = 0; i < List_Nbr(list); i ++) {
+      if(i) fprintf(fp, ",");
+      fprintf(fp, "%.16g", *(double *)List_Pointer(list, i));
+    }
+    fprintf(fp, "};\n");
+  }
+}
+
 static void write_parsed_elements(char *str, int nbnod, int nb, List_T *list, FILE *fp)
 {
   if(nb) {
@@ -974,12 +987,12 @@ static void write_parsed_elements(char *str, int nbnod, int nb, List_T *list, FI
 	if(j) fprintf(fp, ",");
 	fprintf(fp, "%.16g,%.16g,%.16g", x[j], y[j], z[j]);
       }
-      fprintf(fp, "){", str);
+      fprintf(fp, "){");
       for(int j = 3 * nbnod; j < n; j++) {
 	if(j - 3 * nbnod) fprintf(fp, ",");
 	fprintf(fp, "%.16g", *(double *)List_Pointer(list, i + j));
       }
-      fprintf(fp, "};\n", str);
+      fprintf(fp, "};\n");
     }
   }
 }
@@ -1101,6 +1114,7 @@ void WriteView(Post_View *v, char *filename, int format, int append)
   }
   else{
     fprintf(file, "View \"%s\" {\n", v->Name);
+    write_parsed_time(v->Time, file);
     write_parsed_elements("SP", 1, v->NbSP, v->SP, file);
     write_parsed_elements("VP", 1, v->NbVP, v->VP, file);
     write_parsed_elements("TP", 1, v->NbTP, v->TP, file);
