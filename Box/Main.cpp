@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.42 2004-05-17 16:28:09 geuzaine Exp $
+// $Id: Main.cpp,v 1.43 2004-05-22 01:24:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,9 +23,9 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#ifdef __APPLE__
-#define   RUSAGE_SELF      0
-#define   RUSAGE_CHILDREN -1
+#if defined(__APPLE__)
+#define RUSAGE_SELF      0
+#define RUSAGE_CHILDREN -1
 #endif
 
 #include "ParUtil.h"

@@ -1,4 +1,4 @@
-/* $Id: mysolver.c,v 1.4 2004-03-13 21:00:20 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.5 2004-05-22 01:24:19 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -35,10 +35,14 @@
 
    gcc -o mysolver.exe mysolver.c GmshClient.c
    
-   To test this solver, copy the mysolver.opt file into your default
-   Gmsh option file, or lauch Gmsh with the command:
+   To run it, merge the contents of the file mysolver.opt into your
+   default Gmsh option file, or lauch Gmsh with the command:
    
-   gmsh -option mysolver.opt */
+   gmsh -option mysolver.opt 
+
+   You will then see a new button labeled "My C solver" in Gmsh's
+   solver menu.
+*/
 
 /* We start by including some standard headers. Under Windows, you
    will need to install the cygwin tools (http://www.cygwin.com) to

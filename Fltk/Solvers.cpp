@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.24 2004-05-15 16:09:38 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.25 2004-05-22 01:24:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,7 +67,7 @@ int Solver(int num, char *args)
       Msg(GERROR, "Couldn't create socket '%s'", socket_name);
       break;
     case -2:
-      Msg(GERROR, "Couldn't bin socket to name '%s'", socket_name);
+      Msg(GERROR, "Couldn't bind socket to name '%s'", socket_name);
       break;
     case -3:
       Msg(GERROR, "Socket listen failed on '%s'", socket_name);

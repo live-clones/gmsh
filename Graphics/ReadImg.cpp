@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.7 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.8 2004-05-22 01:24:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,14 +24,6 @@
 #include "GmshUI.h"
 #include "Views.h"
   
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-
-void read_pnm(char *name) 
-{
-}
-
-#else
-
 #include <FL/Fl_PNM_Image.H>
   
 // from an image, we create a post pro object
@@ -121,5 +113,3 @@ void read_pnm(char *name)
   Msg(INFO, "Read PNM file '%s'", name);
   Msg(STATUS2N, "Read '%s'", name);
 }
-
-#endif

@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.16 2004-02-07 01:40:17 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.17 2004-05-22 01:24:17 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -126,8 +126,8 @@ int Gmsh_StartClient(char *command, char *sockname)
     return -3;  /* Error: Socket listen failed */
 
   /* Watch s to see when it has input. */
-  /* Wait up to 2 seconds */
-  tv.tv_sec = 2;
+  /* Wait up to 4 seconds */
+  tv.tv_sec = 4;
   tv.tv_usec = 0;
   FD_ZERO(&rfds);
   FD_SET(s, &rfds);

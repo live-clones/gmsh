@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.52 2004-05-18 18:52:01 geuzaine Exp $
+// $Id: Create.cpp,v 1.53 2004-05-22 01:24:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -612,8 +612,10 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
       List_Read(Liste, j, &iPnt);
       if((v = FindPoint(iPnt, THEM)))
         List_Add(pC->Control_Points, &v);
-      else
-        Msg(FATAL, "Unknown control point %d in Curve %d", iPnt, pC->Num);
+      else{
+        Msg(GERROR, "Unknown control point %d in Curve %d", iPnt, pC->Num);
+	pC->Dirty = 1;
+      }
     }
   }
   else {
@@ -627,21 +629,20 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   }
   else {
     if((v = FindPoint(p1, THEM))) {
-      pC->beg = v;
       Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
+      pC->beg = v;
     }
     else {
-      List_Read(pC->Control_Points, 0, &pC->beg);
       Msg(GERROR, "Unknown control point %d in Curve %d", p1, pC->Num);
+      pC->Dirty = 1;
     }
     if((v = FindPoint(p2, THEM))) {
-      pC->end = v;
       Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
+      pC->end = v;
     }
     else {
-      List_Read(pC->Control_Points, List_Nbr(pC->Control_Points) - 1,
-                &pC->end);
       Msg(GERROR, "Unknown control point %d in Curve %d", p2, pC->Num);
+      pC->Dirty = 1;
     }
   }
 

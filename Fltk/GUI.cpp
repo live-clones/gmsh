@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.303 2004-05-18 18:52:00 geuzaine Exp $
+// $Id: GUI.cpp,v 1.304 2004-05-22 01:24:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -54,24 +54,16 @@
 #include "CommandLine.h"
 #include "Solvers.h"
 
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-#define WINDOW_BOX FL_FLAT_BOX
-#define TOGGLE_BOX FL_DOWN_BOX
-#define TOGGLE_COLOR FL_YELLOW
-#define RADIO_BOX  FL_DIAMOND_DOWN_BOX
-#define RADIO_COLOR FL_YELLOW
-#else
 #define WINDOW_BOX FL_FLAT_BOX
 #define TOGGLE_BOX FL_DOWN_BOX
 #define TOGGLE_COLOR FL_BLACK
 #define RADIO_BOX  FL_ROUND_DOWN_BOX
 #define RADIO_COLOR FL_BLACK
-#endif
 
-#define IW  (10*fontsize)       // input field width
-#define BB  (6*fontsize+4)      // width of a button with internal label
-#define BH  (2*fontsize+1)      // button height
-#define WB  (5) // window border
+#define IW (10*fontsize)  // input field width
+#define BB (6*fontsize+4) // width of a button with internal label
+#define BH (2*fontsize+1) // button height
+#define WB (6)            // window border
 
 extern Context_T CTX;
 
@@ -82,61 +74,20 @@ extern Context_T CTX;
 
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
-    {"&New...",    FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
-    {"&Open...",   FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"M&erge...",  FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
-    {"Sa&ve mesh", FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-    {"Save &as",   0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
-      {"By &extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
-      {"&Geometry",  0, 0, 0, FL_SUBMENU},
-         {"Gmsh current options (*.opt)...",    0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
-         {"Gmsh unrolled geometry (*.geo)...",  0, (Fl_Callback *)file_save_as_geo_cb, 0},
-         {0},
-      {"&Mesh",  0, 0, 0, FL_SUBMENU},
-         {"Gmsh (*.msh)...",                    0, (Fl_Callback *)file_save_as_msh_cb, 0},
-         {"Gmsh all elements...",               0, (Fl_Callback *)file_save_as_msh_all_cb, 0},
-         {"GREF (*.gref)...",                   0, (Fl_Callback *)file_save_as_gref_cb, 0},
-         {"I-DEAS universal format (*.unv)...", 0, (Fl_Callback *)file_save_as_unv_cb, 0},
-         {"VRML lines/surfaces (*.wrl)...",     0, (Fl_Callback *)file_save_as_vrml_cb, 0},
-         {0},
-      {"&Image",  0, 0, 0, FL_SUBMENU},
-         {"GIF (*.gif)...",               0, (Fl_Callback *)file_save_as_gif_cb, 0},
-         {"GIF dithered...",              0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
-         {"GIF transparent...",           0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
-#if defined(HAVE_LIBJPEG)
-         {"JPEG (*.jpg)...",              0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
-#endif
-#if defined(HAVE_LIBPNG)
-         {"PNG (*.png)...",               0, (Fl_Callback *)file_save_as_png_cb, 0},
-#endif
-         {"Vector PS fast (*.ps)...",     0, (Fl_Callback *)file_save_as_ps_simple_cb, 0},
-         {"Vector PS accurate...",        0, (Fl_Callback *)file_save_as_ps_accurate_cb, 0},
-         {"PPM (*.ppm)...",               0, (Fl_Callback *)file_save_as_ppm_cb, 0},
-#if defined(HAVE_LIBJPEG)
-         {"LaTeX JPEG...",                0, (Fl_Callback *)file_save_as_jpegtex_cb, 0},
-#endif
-#if defined(HAVE_LIBPNG)
-         {"LaTeX PNG...",                 0, (Fl_Callback *)file_save_as_pngtex_cb, 0},
-#endif
-         {"LaTeX Vector EPS fast...",     0, (Fl_Callback *)file_save_as_epstex_simple_cb, 0},
-         {"LaTeX Vector EPS accurate...", 0, (Fl_Callback *)file_save_as_epstex_accurate_cb, 0},
-         {"LaTeX TeX (*.tex)...",         0, (Fl_Callback *)file_save_as_tex_cb, 0},
-         {"UCB YUV (*.yuv)...",           0, (Fl_Callback *)file_save_as_yuv_cb, 0},
-         {0},
-      {0},
-#else
+    {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
+    {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
+    {"M&erge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"Sa&ve mesh",  FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save &as...", FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
-#endif
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
-  {"&Tools",0,0,0,FL_SUBMENU},
+  {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",         FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
     {"&Visibility...",      FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"S&tatistics...",      FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
     {"M&essage console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
-  {"&Help",0,0,0,FL_SUBMENU},
+  {"&Help", 0, 0, 0, FL_SUBMENU},
     {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
     {"S&hortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
@@ -421,29 +372,17 @@ int GUI::global_shortcuts(int event)
     mod_geometry_cb(0, 0);
     return 1;
   }
-#if (FL_MAJOR_VERSION == 2)
-  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F(1))) {
-#else
   else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
-#endif
     mesh_1d_cb(0, 0);
     mod_mesh_cb(0, 0);
     return 1;
   }
-#if (FL_MAJOR_VERSION == 2)
-  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F(2))) {
-#else
   else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F + 2)) {
-#endif
     mesh_2d_cb(0, 0);
     mod_mesh_cb(0, 0);
     return 1;
   }
-#if (FL_MAJOR_VERSION == 2)
-  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F(3))) {
-#else
   else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F + 3)) {
-#endif
     mesh_3d_cb(0, 0);
     mod_mesh_cb(0, 0);
     return 1;
@@ -732,7 +671,6 @@ int GUI::arrow_shortcuts()
   return 0;
 }
 
-
 // The GUI constructor
 
 GUI::GUI(int argc, char **argv)
@@ -767,15 +705,17 @@ GUI::GUI(int argc, char **argv)
   fontsize = CTX.fontsize;
 
   // set default font size
-#if !((FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0))
   FL_NORMAL_SIZE = fontsize;
-#endif
 
   // handle themes and tooltip font size
-#if !((FL_MAJOR_VERSION == 1 || FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0))
   if(strlen(CTX.scheme))
     Fl::scheme(CTX.scheme);
   Fl_Tooltip::size(fontsize);
+
+  // add callback to respond to the Mac Finder (when you click on a
+  // document)
+#if defined(__APPLE__)
+  fl_open_callback(OpenProblemMacFinder);
 #endif
 
   // All static windows are contructed (even if some are not
@@ -789,7 +729,7 @@ GUI::GUI(int argc, char **argv)
   m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
                                    IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #elif defined(__APPLE__)
-  // Mac icons are defined in the resource fork or in the bundle
+  // Nothing to do here
 #else
   fl_open_display();
   Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
@@ -819,7 +759,6 @@ GUI::GUI(int argc, char **argv)
 
   // Draw the scene
   g_opengl_window->redraw();
-
 }
 
 // Run the GUI until no window is left
@@ -922,6 +861,7 @@ void GUI::create_menu_window(int argc, char **argv)
   m_navig_butt[0]->box(FL_FLAT_BOX);
   m_navig_butt[0]->selection_color(FL_WHITE);
   m_navig_butt[0]->callback(mod_back_cb);
+  m_navig_butt[0]->tooltip("Go back one in the menu history");
 
   m_navig_butt[1] = new Fl_Button(1, y + BH / 2, 18, BH / 2, "@#>");
   m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
@@ -929,11 +869,7 @@ void GUI::create_menu_window(int argc, char **argv)
   m_navig_butt[1]->box(FL_FLAT_BOX);
   m_navig_butt[1]->selection_color(FL_WHITE);
   m_navig_butt[1]->callback(mod_forward_cb);
-
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
-  m_navig_butt[0]->tooltip("Go back in menu history");
-  m_navig_butt[1]->tooltip("Go forward in menu history");
-#endif
+  m_navig_butt[1]->tooltip("Go forward one in the menu history");
 
   m_module_butt = new Fl_Choice(19, y, width - 24, BH);
   m_module_butt->menu(m_module_table);
@@ -955,9 +891,7 @@ void GUI::create_menu_window(int argc, char **argv)
     m_toggle2_butt[i]->labelsize(11);
     m_toggle2_butt[i]->align(FL_ALIGN_CENTER);
     m_toggle2_butt[i]->hide();
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
     m_toggle2_butt[i]->tooltip("Show view option menu");
-#endif
 
     m_popup_butt[i] = new Fl_Menu_Button(width - (fontsize + 4), y + i * BH, (fontsize + 4), BH);
     m_popup_butt[i]->type(Fl_Menu_Button::POPUP123);
@@ -1089,9 +1023,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       m_toggle_butt[i]->show();
       m_toggle_butt[i]->value(v->Visible);
       m_toggle_butt[i]->label(v->Name);
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
       m_toggle_butt[i]->tooltip(v->FileName);
-#endif
       m_toggle2_butt[i]->show();
       m_popup_butt[i]->show();
       m_popup2_butt[i]->show();
@@ -1182,27 +1114,34 @@ void GUI::create_graphic_window(int argc, char **argv)
   g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sh - 4, "X");
   x += sw;
   g_status_butt[0]->callback(status_xyz1p_cb, (void *)0);
+  g_status_butt[0]->tooltip("Set X view (Y=Z=0)");
   g_status_butt[1] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Y");
   x += sw;
   g_status_butt[1]->callback(status_xyz1p_cb, (void *)1);
+  g_status_butt[1]->tooltip("Set Y view (X=Z=0)");
   g_status_butt[2] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Z");
   x += sw;
   g_status_butt[2]->callback(status_xyz1p_cb, (void *)2);
+  g_status_butt[2]->tooltip("Set Z view (X=Y=0)");
   g_status_butt[3] = new Fl_Button(x, glheight + 2, 2 * fontsize, sh - 4, "1:1");
   x += 2 * fontsize;
   g_status_butt[3]->callback(status_xyz1p_cb, (void *)3);
+  g_status_butt[3]->tooltip("Set unit scale");
   g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
   x += sw;
   g_status_butt[4]->callback(status_xyz1p_cb, (void *)4);
+  g_status_butt[4]->tooltip("Show current options");
   g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   x += sw;
   g_status_butt[5]->callback(status_rewind_cb);
   rewind_bmp = new Fl_Bitmap(rewind_bits, rewind_width, rewind_height);
   rewind_bmp->label(g_status_butt[5]);
   g_status_butt[5]->deactivate();
+  g_status_butt[5]->tooltip("Rewind animation");
   g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   x += sw;
   g_status_butt[6]->callback(status_play_cb);
+  g_status_butt[6]->tooltip("Play/pause animation");
   start_bmp = new Fl_Bitmap(start_bits, start_width, start_height);
   start_bmp->label(g_status_butt[6]);
   stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
@@ -1220,17 +1159,6 @@ void GUI::create_graphic_window(int argc, char **argv)
     g_status_label[i]->box(FL_FLAT_BOX);
     g_status_label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
-
-
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
-  g_status_butt[0]->tooltip("Set X view (Y=Z=0)");
-  g_status_butt[1]->tooltip("Set Y view (X=Z=0)");
-  g_status_butt[2]->tooltip("Set Z view (X=Y=0)");
-  g_status_butt[3]->tooltip("Set unit scale");
-  g_status_butt[4]->tooltip("Show current options");
-  g_status_butt[5]->tooltip("Rewind animation");
-  g_status_butt[6]->tooltip("Play/pause animation");
-#endif
 
   // dummy resizable box
 
@@ -1450,8 +1378,8 @@ void GUI::create_option_window()
 {
   int i;
   int width = 40 * fontsize;
-  int height = 13 * BH;
-  int BROWSERW = 110;
+  int height = 12 * BH + 5 * WB;
+  int BROWSERW = 105 + WB;
 
   if(opt_window) {
     opt_window->show();
@@ -2807,7 +2735,7 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
 
   // create window
 
-  int width = 26 * fontsize;
+  int width = 27 * fontsize;
   int height = ((n+m > 8 ? n+m : 8) + 2) * BH + 5 * WB;
 
   PluginDialogBox *pdb = new PluginDialogBox;
@@ -3060,9 +2988,7 @@ void GUI::create_visibility_window()
     vis_input = new Fl_Input(3 * WB + 2 * (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH,
 			     (brw - 2 * WB) / 3, BH);
     vis_input->value("*");
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
     vis_input->tooltip("Enter an entity number, or *");
-#endif
   }
 
   {

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.7 2004-05-17 21:28:02 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.8 2004-05-22 01:24:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -200,8 +200,7 @@ int Mesh_Shewchuk(Surface * s)
     return 0;
   }
 
-#ifndef BGMESH
-
+  // generalize this if we have a bgmesh!
   mid.trianglearealist =
     (REAL *) Malloc(mid.numberoftriangles * sizeof(REAL));
   for(i = 0; i < mid.numberoftriangles; i++) {
@@ -214,12 +213,6 @@ int Mesh_Shewchuk(Surface * s)
     val = val * val / 1.5; // approx (we want isotropic meshes)
     mid.trianglearealist[i] = val;
   }
-
-#else
-
-  Msg(FATAL, "Triangle is not ready to be used with a background mesh");
-
-#endif
 
   out.pointlist = NULL;
   out.pointattributelist = NULL;

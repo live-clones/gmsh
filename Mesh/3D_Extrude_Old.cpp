@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.25 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.26 2004-05-22 01:24:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -97,8 +97,10 @@ static void InitExtrudeParams(void)
 
   printf("Number of layers: ");
   scanf("%d", &NbLayer);
-  if(NbLayer > MAXLAYERS)
-    Msg(FATAL, "Max number of layer (%d) exceeded", MAXLAYERS);
+  if(NbLayer > MAXLAYERS){
+    Msg(GERROR, "Max number of layer (%d) exceeded", MAXLAYERS);
+    NbLayer = MAXLAYERS;
+  }
 
   file = fopen("xtrude", "w");
 

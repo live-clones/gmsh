@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.54 2004-05-14 18:23:58 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.55 2004-05-22 01:24:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -284,6 +284,27 @@ void OpenProblem(char *name)
     WID->reset_visibility();
   ZeroHighlight(&M);
 #endif
+}
+
+void OpenProblemMacFinder(const char *filename)
+{
+  static int first = 1;
+  if(first){
+    // just copy the filename: it will be opened when Gmsh is ready in
+    // main() (calling OpenProblem right now would be a bad idea: Gmsh
+    // is probably not completely initialized)
+    strncpy(CTX.filename, filename, 255);
+    first = 0;
+  }
+  else{
+    // should we do MergeProblem instead? not sure what's the most
+    // intuitive
+    OpenProblem((char*)filename);
+#if defined(HAVE_FLTK)
+    Draw();
+    DrawUI();
+#endif
+  }
 }
 
 // replace "/cygwin/x/" with "x:/"

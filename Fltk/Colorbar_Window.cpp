@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.37 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.38 2004-05-22 01:24:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,10 +36,6 @@ extern Context_T CTX;
 
 #define UNDEFINED   0
 #define EPS         1.e-10
-
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-#define fl_contrast contrast
-#endif
 
 // This file defines the Colorbar_Window class (subclass of Fl_Window)
 

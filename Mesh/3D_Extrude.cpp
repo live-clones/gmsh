@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.75 2004-04-18 03:14:55 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.76 2004-05-22 01:24:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -140,7 +140,7 @@ List_T *getnxl(Vertex * v, int dim)
     }
   }
 
-  Msg(FATAL, "Could not find extruded list for vertex %d", v->Num);
+  Msg(GERROR, "Could not find extruded list for vertex %d", v->Num);
   return NULL;
 }
 
@@ -257,6 +257,8 @@ void Extrude_Simplex_Phase1(void *data, void *dum)
   L1 = getnxl(s->V[1], DIM);
   L2 = getnxl(s->V[2], DIM);
 
+  if(!L0 || !L1 || !L2) return;
+
   k = 0;
   for(i = 0; i < ep->mesh.NbLayer; i++) {
     for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
@@ -290,6 +292,8 @@ void Extrude_Simplex_Phase2(void *data, void *dum)
   L0 = getnxl(s->V[0], DIM);
   L1 = getnxl(s->V[1], DIM);
   L2 = getnxl(s->V[2], DIM);
+
+  if(!L0 || !L1 || !L2) return;
 
   k = 0;
   for(i = 0; i < ep->mesh.NbLayer; i++) {
@@ -474,8 +478,13 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
   L0 = getnxl(s->V[0], DIM);
   L1 = getnxl(s->V[1], DIM);
   L2 = getnxl(s->V[2], DIM);
-  if(s->V[3])
+
+  if(!L0 || !L1 || !L2) return;
+
+  if(s->V[3]){
     L3 = getnxl(s->V[3], DIM);
+    if(!L3) return;
+  }
 
   //printf("orig: %d %d %d %d\n",s->V[0]->Num,s->V[1]->Num,s->V[2]->Num,s->V[3]->Num);
 
@@ -657,6 +666,8 @@ void Extrude_Seg(Vertex * V1, Vertex * V2)
   L1 = getnxl(V1, DIM);
   L2 = getnxl(V2, DIM);
 
+  if(!L1 || !L2) return;
+
   k = 0;
   for(i = 0; i < ep->mesh.NbLayer; i++) {
     for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
@@ -829,6 +840,7 @@ int Extrude_Mesh(Curve * c)
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     Extrude_Vertex(&c->beg, NULL);
     L = getnxl(c->beg, DIM);
+    if(!L) return false;
     c->Vertices = List_Create(List_Nbr(L), 2, sizeof(Vertex *));
 
     v = c->beg;

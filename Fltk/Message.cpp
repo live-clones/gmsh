@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.53 2004-05-18 18:52:01 geuzaine Exp $
+// $Id: Message.cpp,v 1.54 2004-05-22 01:24:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,9 +24,9 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#ifdef __APPLE__
-#define   RUSAGE_SELF      0
-#define   RUSAGE_CHILDREN -1
+#if defined(__APPLE__)
+#define RUSAGE_SELF      0
+#define RUSAGE_CHILDREN -1
 #endif
 
 #include "Gmsh.h"

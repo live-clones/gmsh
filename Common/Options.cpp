@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.154 2004-05-17 17:40:02 geuzaine Exp $
+// $Id: Options.cpp,v 1.155 2004-05-22 01:24:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2205,12 +2205,10 @@ double opt_general_tooltips(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX.tooltips = (int)val;
 #if defined(HAVE_FLTK)
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
     if(CTX.tooltips)
       Fl_Tooltip::enable();
     else
       Fl_Tooltip::disable();
-#endif
 #endif
   }
 #if defined(HAVE_FLTK)
@@ -4948,10 +4946,6 @@ double opt_print_gif_transparent(OPT_ARGS_NUM)
 // Color option routines
 
 #if defined(HAVE_FLTK)
-
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-#define fl_contrast contrast
-#endif
 
 #define CCC(col,but)							\
   if(WID && (action & GMSH_GUI)){					\

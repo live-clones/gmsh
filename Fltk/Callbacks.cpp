@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.239 2004-05-19 04:50:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.240 2004-05-22 01:24:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -54,34 +54,6 @@ extern Mesh *THEM;
 extern Context_T CTX;
 
 // File chooser (re)definitions
-
-#if (FL_MAJOR_VERSION == 1 || FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0)
-
-#include <FL/fl_file_chooser.H>
-
-static char *fn = NULL;
-
-int file_chooser(int multi, int create, const char *message, 
-		 const char *pat, int patindex, char *fname=NULL)
-{
-  fn = fl_file_chooser(message, pat, fname);
-  if(fn)
-    return 1;
-  else
-    return 0;
-}
-
-char *file_chooser_get_name(int num)
-{
-  return fn;
-}
-
-int file_chooser_get_filter()
-{
-  return 0;
-}
-
-#else
 
 #include <FL/filename.H>
 #include <FL/Fl_File_Chooser.H>
@@ -145,8 +117,6 @@ int file_chooser_get_filter()
 {
   return fc->filter_value();
 }
-
-#endif
 
 // arrow editor
 
@@ -760,143 +730,10 @@ test:
   patindex = file_chooser_get_filter();
 }
 
-void file_save_as_auto_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save file by extension", "*", 0))
-    _save_auto(file_chooser_get_name(1));
-}
-
-void file_save_as_geo_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save GEO file", "*", 0))
-    _save_geo(file_chooser_get_name(1));
-}
-
-void file_save_as_geo_options_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save option file", "*", 0))
-    _save_geo_options(file_chooser_get_name(1));
-}
-
-void file_save_as_msh_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save MSH file", "*", 0))
-    _save_msh(file_chooser_get_name(1));
-}
-
-void file_save_as_msh_all_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save MSH file (no physicals)", "*", 0))
-    _save_msh_all(file_chooser_get_name(1));
-}
-
-void file_save_as_unv_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save UNV file", "*", 0))
-    _save_unv(file_chooser_get_name(1));
-}
-
-void file_save_as_gref_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save GREF file", "*", 0))
-    _save_gref(file_chooser_get_name(1));
-}
-
-void file_save_as_vrml_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save VRML file", "*", 0))
-    _save_vrml(file_chooser_get_name(1));
-}
-
-void file_save_as_ps_simple_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save PS file", "*", 0))
-    _save_ps_simple(file_chooser_get_name(1));
-}
-
-void file_save_as_ps_accurate_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save PS file", "*", 0))
-    _save_ps_accurate(file_chooser_get_name(1));
-}
-
-void file_save_as_epstex_simple_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save LaTeX file (EPS part)", "*", 0))
-    _save_epstex_simple(file_chooser_get_name(1));
-}
-
-void file_save_as_epstex_accurate_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save LaTeX file (EPS part)", "*", 0))
-    _save_epstex_accurate(file_chooser_get_name(1));
-}
-
-void file_save_as_jpegtex_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save LaTeX file (JPEG part)", "*", 0))
-    _save_jpegtex(file_chooser_get_name(1));
-}
-
-void file_save_as_pngtex_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save LaTeX file (PNG part)", "*", 0))
-    _save_pngtex(file_chooser_get_name(1));
-}
-
-void file_save_as_tex_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save LaTeX file (TeX part)", "*", 0))
-    _save_tex(file_chooser_get_name(1));
-}
-
-void file_save_as_jpeg_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save JPEG file", "*", 0))
-    _save_jpeg(file_chooser_get_name(1));
-}
-
-void file_save_as_png_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save PNG file", "*", 0))
-    _save_png(file_chooser_get_name(1));
-}
-
-void file_save_as_gif_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save GIF file", "*", 0))
-    _save_gif(file_chooser_get_name(1));
-}
-
-void file_save_as_gif_dithered_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save GIF file", "*", 0))
-    _save_gif_dithered(file_chooser_get_name(1));
-}
-
-void file_save_as_gif_transparent_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save GIF file", "*", 0))
-    _save_gif_transparent(file_chooser_get_name(1));
-}
-
-void file_save_as_ppm_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save PPM file", "*", 0))
-    _save_ppm(file_chooser_get_name(1));
-}
-
-void file_save_as_yuv_cb(CALLBACK_ARGS)
-{
-  if(file_chooser(0, 1, "Save YUV file", "*", 0))
-    _save_yuv(file_chooser_get_name(1));
-}
-
 void file_quit_cb(CALLBACK_ARGS)
 {
   Exit(0);
 }
-
 
 // Option Menu
 
@@ -1260,9 +1097,6 @@ void message_cb(CALLBACK_ARGS)
 
 void message_copy_cb(CALLBACK_ARGS)
 {
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-  // Fl::copy does not exist in older versions of fltk
-#else
 #define BUFFL 50000
   static char buff[BUFFL];
   strcpy(buff, "");
@@ -1283,7 +1117,6 @@ void message_copy_cb(CALLBACK_ARGS)
   // bof bof bof
   Fl::copy(buff, strlen(buff), 0);
   Fl::copy(buff, strlen(buff), 1);
-#endif
 }
 
 void message_clear_cb(CALLBACK_ARGS)
@@ -1311,28 +1144,6 @@ test:
 
 // Option Visibility Menu
 
-#if (FL_MAJOR_VERSION == 2)     // disabled for fltk 2 at the moment
-void select_vis_browser(int mode)
-{
-  ;
-}
-void visibility_cb(CALLBACK_ARGS)
-{
-  ;
-}
-void visibility_ok_cb(CALLBACK_ARGS)
-{
-  ;
-}
-void visibility_sort_cb(CALLBACK_ARGS)
-{
-  ;
-}
-void visibility_number_cb(CALLBACK_ARGS)
-{
-  ;
-}
-#else
 void select_vis_browser(int mode)
 {
   int i;
@@ -1506,7 +1317,6 @@ void visibility_number_cb(CALLBACK_ARGS)
 
   Draw();
 }
-#endif
 
 // Help Menu
 
@@ -1515,7 +1325,7 @@ void visibility_number_cb(CALLBACK_ARGS)
 // want to change all occurences of FL_CTRL with FL_COMMAND in the
 // future. FL_COMMAND would get mapped to Ctrl on Windows/Unix and to
 // Cmd on Macs.
-#ifdef __APPLE__NOT_USED_ANYMORE
+#if 0
 #define XX "Cmd "
 #else
 #define XX "Ctrl"

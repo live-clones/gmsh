@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.24 2004-02-28 00:48:50 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.25 2004-05-22 01:24:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -248,7 +248,9 @@ Vertex InterpolateCurve(Curve * Curve, double u, int derivee)
     return V;
 
   default:
-    Msg(FATAL, "Unknown curve type in interpolation");
+    Msg(GERROR, "Unknown curve type in interpolation");
+    V.Pos.X = V.Pos.Y = V.Pos.Z = 0.0;
+    V.w = V.lc = 1.0;
     return V;
   }
 
@@ -467,7 +469,9 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
     return (T);
 
   default:
-    Msg(FATAL, "Unknown surface type in interpolation");
+    Msg(GERROR, "Unknown surface type in interpolation");
+    T.Pos.X = T.Pos.Y = T.Pos.Z = 0.0;
+    T.w = T.lc = 1.0;
     return T;
   }
 

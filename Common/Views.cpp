@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.117 2004-05-12 04:31:21 geuzaine Exp $
+// $Id: Views.cpp,v 1.118 2004-05-22 01:24:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1660,8 +1660,6 @@ void Post_View::get_raw_data(int type, List_T **list, int **nbe, int *nbc, int *
   case 21: *list = SY; *nbe = &NbSY; *nbc = 1; *nbn = 5; break;
   case 22: *list = VY; *nbe = &NbVY; *nbc = 3; *nbn = 5; break;
   case 23: *list = TY; *nbe = &NbTY; *nbc = 9; *nbn = 5; break;
-  default: 
-    Msg(FATAL, "Wrong type in Post_View::get_raw_data");
-    *list = NULL; *nbc = 0; *nbn = 0; break;
+  default: Msg(GERROR, "Wrong type in Post_View::get_raw_data"); break;
   }
 }

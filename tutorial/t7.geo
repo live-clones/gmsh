@@ -39,7 +39,8 @@ Line(5) = {11,22};
 Spline(7) = {4,5,12,2};
 
 // Isotropic and anisotropic attractors can be defined on points and
-// lines:
+// lines (this is still experimental and known to be unstable: use at
+// your own risk!):
 
 Attractor Point{1} = {0.01, 0.01, 2};
 

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.108 2004-05-18 17:00:37 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.109 2004-05-22 01:24:18 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,7 +37,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.20
+@set EDITION        1.21
 @set GMSH-VERSION   1.52
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2004 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -1864,8 +1864,8 @@ You can use geometrical ``attractors'', an elaborate version of the method
 described in the preceding item: see the definition of the @code{Attractor}
 command below.
 
-Note that attractors currently only work with the 2D anisotropic algorithm
-(see the @code{Mesh.Algorithm} option in @ref{Mesh options}).
+Attractors only work with the 2D anisotropic algorithm (see the
+@code{Mesh.Algorithm} option in @ref{Mesh options}).
 @item
 You can give Gmsh an explicit background mesh in the form of a scalar
 post-processing view (see @ref{Post-processing commands}, and @ref{File
@@ -1897,6 +1897,9 @@ last @var{expression} a decay factor. This feature is still experimental,
 and only works with the 2D anisotropic algorithm (see @code{Mesh.Algorithm}
 in @ref{Mesh options}).  An example of the use of attractors is given in
 @ref{t7.geo}.
+
+Please note that attractors are an @emph{experimental} feature (to be
+considered @emph{at most} alpha-quality...). Use at your own risk.
 
 @item Characteristic Length @{ @var{expression-list} @} = @var{expression};
 Modifies the characteristic length of the points whose identification

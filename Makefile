@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.344 2004-05-12 18:36:21 geuzaine Exp $
+# $Id: Makefile,v 1.345 2004-05-22 01:24:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -212,8 +212,32 @@ package-mac:
         "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
         "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
         "    <key>CFBundleGetInfoString</key><string>Gmsh version ${GMSH_VERSION}, "\
-              "Copyright (C) 1997-2004 C. Geuzaine and J.-F. Remacle</string>\n"\
+                  "Copyright (C) 1997-2004 C. Geuzaine and J.-F. Remacle</string>\n"\
         "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
+        "    <key>CFBundleDocumentTypes</key>\n"\
+        "      <array>\n"\
+        "        <dict>\n"\
+        "          <key>CFBundleTypeExtensions</key><array><string>geo</string></array>\n"\
+        "          <key>CFBundleTypeIconFile</key><string>gmsh.icns</string>\n"\
+        "          <key>CFBundleTypeName</key><string>Gmsh Geometry File</string>\n"\
+        "          <key>CFBundleTypeOSTypes</key><array><string>GGEO</string></array>\n"\
+        "          <key>CFBundleTypeRole</key><string>Editor</string>\n"\
+        "        </dict>\n"\
+        "        <dict>\n"\
+        "          <key>CFBundleTypeExtensions</key><array><string>msh</string></array>\n"\
+        "          <key>CFBundleTypeIconFile</key><string>gmsh.icns</string>\n"\
+        "          <key>CFBundleTypeName</key><string>Gmsh Mesh File</string>\n"\
+        "          <key>CFBundleTypeOSTypes</key><array><string>GMSH</string></array>\n"\
+        "          <key>CFBundleTypeRole</key><string>Viewer</string>\n"\
+        "        </dict>\n"\
+        "        <dict>\n"\
+        "          <key>CFBundleTypeExtensions</key><array><string>pos</string></array>\n"\
+        "          <key>CFBundleTypeIconFile</key><string>gmsh.icns</string>\n"\
+        "          <key>CFBundleTypeName</key><string>Gmsh Post-Processing File</string>\n"\
+        "          <key>CFBundleTypeOSTypes</key><array><string>GPOS</string></array>\n"\
+        "          <key>CFBundleTypeRole</key><string>Viewer</string>\n"\
+        "        </dict>\n"\
+        "      </array>\n"\
         "  </dict>\n"\
         "</plist>" > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Info.plist
 	strip bin/gmsh

@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.4 2004-02-07 01:40:35 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.5 2004-05-22 01:24:19 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -96,6 +96,7 @@ int Gmsh_Connect(char *sockname)
   for(tries = 0; tries < 5; tries++) {
     if(connect(sock, (struct sockaddr *)&addr, len) >= 0)
       return sock;
+    Socket_Idle(0.1);
   }
 
   return -2;    /* Error: Couldn't connect */

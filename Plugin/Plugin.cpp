@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.51 2004-05-12 02:02:30 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.52 2004-05-22 01:24:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -179,11 +179,7 @@ void GMSH_PluginManager::registerDefaultPlugins()
   char *homeplugins = getenv("GMSHPLUGINSHOME");
   if(!homeplugins)
     return;
-#if (FL_MAJOR_VERSION == 1 || FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0)
-  int nbFiles = filename_list(homeplugins, &list);
-#else
   int nbFiles = fl_filename_list(homeplugins, &list);
-#endif
   if(nbFiles <= 0)
     return;
   for(int i = 0; i < nbFiles; i++) {
