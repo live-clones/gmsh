@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.92 2004-12-21 03:07:00 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.93 2004-12-29 16:34:38 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>
@@ -4366,17 +4366,14 @@ static GLint gl2psPrintPrimitives(void)
 
   used = glRenderMode(GL_RENDER);
 
-  if(used < 0){
-    gl2psMsg(GL2PS_INFO, "OpenGL feedback buffer overflow");
-    return GL2PS_OVERFLOW;
-  }
-
-  if(used > 0){
-    if(gl2ps->format == GL2PS_PS || 
-       gl2ps->format == GL2PS_EPS ||
-       gl2ps->format == GL2PS_PDF){
-      gl2psParseFeedbackBuffer(used);
+  if(gl2ps->format != GL2PS_TEX){
+    /* only report the overflow if we actually parse the buffer! */
+    if(used < 0){
+      gl2psMsg(GL2PS_INFO, "OpenGL feedback buffer overflow");
+      return GL2PS_OVERFLOW;
     }
+    if(used > 0)
+      gl2psParseFeedbackBuffer(used);
   }
 
   if(!gl2psListNbr(gl2ps->primitives)){
@@ -4481,9 +4478,10 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     }
   }
 
-  if(!viewport[2] || !viewport[3]){
+  if(!gl2ps->viewport[2] || !gl2ps->viewport[3]){
     gl2psMsg(GL2PS_ERROR, "Incorrect viewport (x=%d, y=%d, width=%d, height=%d)",
-             viewport[0], viewport[1], viewport[2], viewport[3]);
+             gl2ps->viewport[0], gl2ps->viewport[1], 
+             gl2ps->viewport[2], gl2ps->viewport[3]);
     gl2psFree(gl2ps);
     gl2ps = NULL;
     return GL2PS_ERROR;
