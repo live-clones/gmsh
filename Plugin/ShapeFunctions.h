@@ -59,6 +59,13 @@ public:
 	jac[0][0] += _x[i] * s[0]; jac[0][1] += _y[i] * s[0]; jac[0][2] += _z[i] * s[0];
 	jac[1][0] += _x[i] * s[1]; jac[1][1] += _y[i] * s[1]; jac[1][2] += _z[i] * s[1];
       }
+      {
+	double a[3], b[3], c[3];
+	a[0]= _x[1] - _x[0]; a[1]= _y[1] - _y[0]; a[2]= _z[1] - _z[0];
+	b[0]= _x[2] - _x[0]; b[1]= _y[2] - _y[0]; b[2]= _z[2] - _z[0];
+	prodve(a, b, c);
+	jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+      }
       return sqrt(DSQR(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
 		  DSQR(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
 		  DSQR(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
@@ -67,18 +74,24 @@ public:
 	getGradShapeFunction(i, u, v, w, s);
 	jac[0][0] += _x[i] * s[0]; jac[0][1] += _y[i] * s[0]; jac[0][2] += _z[i] * s[0];
       }
+      {
+	double a[3], b[3], c[3];
+	a[0]= _x[1] - _x[0]; a[1]= _y[1] - _y[0]; a[2]= _z[1] - _z[0];	
+	if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
+	   (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
+	  b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
+	}
+	else {
+	  b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
+	}
+	prodve(a, b, c);
+	jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
+	jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+      }
       return sqrt(DSQR(jac[0][0])+DSQR(jac[0][1])+DSQR(jac[0][2]));
     default:
       return 1.;
     }
-  }
-  double getInverseJacobian(double jac[3][3], double invjac[3][3])
-  {
-    // maybe we should use the classic approach to define always
-    // non-singular jacobians, so that we can simply invert them with
-    // inv3x3
-    Msg(GERROR, "getInverseJacibian not done yet");
-    return 0.;
   }
   double interpolate(double val[], double u, double v, double w, int stride=1)
   {
@@ -87,29 +100,55 @@ public:
     for(int i = 0; i < getNumNodes(); i++){
       double s;
       getShapeFunction(i, u, v, w, s);
-      sum += val[i] * s;
+      sum += val[j] * s;
       j += stride;
     }
     return sum;
   }
-  void interpolateGrad(double val[], double u, double v, double w, double f[3], int stride=1)
+  void interpolateGrad(double val[], double u, double v, double w, double f[3], int stride=1,
+		       double invjac[3][3]=NULL)
   {
-    double fu[3] = {0., 0., 0.};
+    double dfdu[3] = {0., 0., 0.};
     int j = 0;
     for(int i = 0; i < getNumNodes(); i++){
       double s[3];
       getGradShapeFunction(i, u, v, w, s);
-      fu[0] += val[j] * s[0];
-      fu[1] += val[j] * s[1];
-      fu[2] += val[j] * s[2];
+      dfdu[0] += val[j] * s[0];
+      dfdu[1] += val[j] * s[1];
+      dfdu[2] += val[j] * s[2];
       j += stride;
     }
-    double jac[3][3], invjac[3][3];
+    if(invjac){
+      matvec(invjac, dfdu, f);
+    }
+    else{
+      double jac[3][3], inv[3][3];
+      getJacobian(u, v, w, jac);
+      inv3x3(jac, inv);
+      matvec(inv, dfdu, f);
+    }
+  }
+  void interpolateCurl(double val[], double u, double v, double w, double f[3], int stride=3)
+  {
+    double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
     getJacobian(u, v, w, jac);
-    getInverseJacobian(jac, invjac);
-    f[0] = fu[0] * invjac[0][0] + fu[1] * invjac[0][1] + fu[2] * invjac[0][2];
-    f[1] = fu[0] * invjac[1][0] + fu[1] * invjac[1][1] + fu[2] * invjac[1][2];
-    f[2] = fu[0] * invjac[2][0] + fu[1] * invjac[2][1] + fu[2] * invjac[2][2];
+    inv3x3(jac, inv);
+    interpolateGrad(&val[0], u, v, w, fx, stride, inv);
+    interpolateGrad(&val[1], u, v, w, fy, stride, inv);
+    interpolateGrad(&val[2], u, v, w, fz, stride, inv);
+    f[0] = fz[1] - fy[2];
+    f[1] = -(fz[0] - fx[2]);
+    f[2] = fy[0] - fx[1];
+  }
+  double interpolateDiv(double val[], double u, double v, double w, int stride=3)
+  {
+    double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
+    getJacobian(u, v, w, jac);
+    inv3x3(jac, inv);
+    interpolateGrad(&val[0], u, v, w, fx, stride, inv);
+    interpolateGrad(&val[1], u, v, w, fy, stride, inv);
+    interpolateGrad(&val[2], u, v, w, fz, stride, inv);
+    return fx[0] + fy[1] + fz[2];
   }
   double integrate(double val[], int stride=1)
   {
@@ -219,12 +258,8 @@ public:
     double t[3] = {_x[1]-_x[0], _y[1]-_y[0], _z[1]-_z[0]};
     norme(t);
     double v[3];
-    for(int i = 0; i < 3; i++){
-      double tmp[2]; 
-      tmp[0] = val[i];
-      tmp[1] = val[3+i];
-      v[i] = integrate(tmp);
-    }
+    for(int i = 0; i < 3; i++)
+      v[i] = integrate(&val[i], 3);
     double d;
     prosca(t, v, &d);
     return d;
@@ -284,13 +319,8 @@ public:
     prodve(t1, t2, n);
     norme(n);
     double v[3];
-    for(int i = 0; i < 3; i++){
-      double tmp[3]; 
-      tmp[0] = val[i];
-      tmp[1] = val[3+i];
-      tmp[2] = val[6+i];
-      v[i] = integrate(tmp);
-    }
+    for(int i = 0; i < 3; i++)
+      v[i] = integrate(&val[i], 3);
     double d;
     prosca(n, v, &d);
     return d;
@@ -353,14 +383,8 @@ public:
     prodve(t1, t2, n);
     norme(n);
     double v[3];
-    for(int i = 0; i < 3; i++){
-      double tmp[4]; 
-      tmp[0] = val[i];
-      tmp[1] = val[3+i];
-      tmp[2] = val[6+i];
-      tmp[3] = val[9+i];
-      v[i] = integrate(tmp);
-    }
+    for(int i = 0; i < 3; i++)
+      v[i] = integrate(&val[i], 3);
     double d;
     prosca(n, v, &d);
     return d;
@@ -670,7 +694,9 @@ class elementFactory{
       else if(numNodes == 6) return new prism(x, y, z);
       else if(numNodes == 5) return new pyramid(x, y, z);
       else return new tetrahedron(x, y, z);
-    default: return NULL;
+    default: 
+      Msg(GERROR, "Unknown type of element in factory");
+      return NULL;
     }
   }
 };

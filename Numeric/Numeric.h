@@ -61,6 +61,7 @@ double myasin(double a);
 double myacos(double a);
 void prodve(double a[3], double b[3], double c[3]);
 void prosca(double a[3], double b[3], double *c);
+void matvec(double mat[3][3], double vec[3], double res[3]);
 double norme(double a[3]);
 void normal3points(double x0, double y0, double z0,
 		   double x1, double y1, double z1,
@@ -72,7 +73,7 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
 double det3x3(double mat[3][3]);
 double trace3x3(double mat[3][3]);
 double trace2 (double mat[3][3]);
-int inv3x3(double mat[3][3], double inv[3][3], double *det);
+double inv3x3(double mat[3][3], double inv[3][3]);
 double angle_02pi(double A3);
 void eigenvalue(double mat[3][3], double re[3]);
 void FindCubicRoots(const double coeff[4], double re[3], double im[3]);

@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.72 2005-01-09 02:19:00 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.73 2005-01-12 19:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -42,6 +42,9 @@
 #include "Extract.h"
 #include "HarmonicToTime.h"
 #include "Integrate.h"
+#include "Gradient.h"
+#include "Curl.h"
+#include "Divergence.h"
 #include "Annotate.h"
 #include "Remove.h"
 #include "DecomposeInSimplex.h"
@@ -200,6 +203,12 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Integrate", GMSH_RegisterIntegratePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Gradient", GMSH_RegisterGradientPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Curl", GMSH_RegisterCurlPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Divergence", GMSH_RegisterDivergencePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Annotate", GMSH_RegisterAnnotatePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >

@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.13 2005-01-08 20:15:19 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.14 2005-01-12 19:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -101,10 +101,7 @@ static double integrate(int nbList, List_T *list, int dim,
 					    nbNod * nbComp * step);
     elementFactory factory;
     element *element = factory.create(nbNod, dim, x, y, z);
-    if(!element){
-      Msg(GERROR, "Unknown type of element (dim=%d, nbNod=%d)", dim, nbNod);
-      return 0.;
-    }
+    if(!element) return 0.;
     if(nbComp == 1){
       if(!levelsetPositive) 
 	res += element->integrate(v);

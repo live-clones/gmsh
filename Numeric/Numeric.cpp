@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.21 2005-01-08 20:15:13 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.22 2005-01-12 19:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -99,6 +99,13 @@ void prodve(double a[3], double b[3], double c[3])
   c[2] = a[0] * b[1] - a[1] * b[0];
   c[1] = -a[0] * b[2] + a[2] * b[0];
   c[0] = a[1] * b[2] - a[2] * b[1];
+}
+
+void matvec(double mat[3][3], double vec[3], double res[3])
+{
+  res[0] = mat[0][0] * vec[0] + mat[0][1] * vec[1] + mat[0][2] * vec[2];
+  res[1] = mat[1][0] * vec[0] + mat[1][1] * vec[1] + mat[1][2] * vec[2];
+  res[2] = mat[2][0] * vec[0] + mat[2][1] * vec[1] + mat[2][2] * vec[2];
 }
 
 void prosca(double a[3], double b[3], double *c)
@@ -232,27 +239,28 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
   return out;
 }
 
-int inv3x3(double mat[3][3], double inv[3][3], double *det)
+double inv3x3(double mat[3][3], double inv[3][3])
 {
-  double ud;
-
-  *det = det3x3(mat);
-
-  if(*det == 0.0)
-    return (0);
-
-  ud = 1. / (*det);
-
-  inv[0][0] = ud * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]);
-  inv[0][1] = -ud * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]);
-  inv[0][2] = ud * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
-  inv[1][0] = -ud * (mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1]);
-  inv[1][1] = ud * (mat[0][0] * mat[2][2] - mat[0][2] * mat[2][0]);
-  inv[1][2] = -ud * (mat[0][0] * mat[2][1] - mat[0][1] * mat[2][0]);
-  inv[2][0] = ud * (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]);
-  inv[2][1] = -ud * (mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0]);
-  inv[2][2] = ud * (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]);
-  return (1);
+  double det = det3x3(mat);
+  if(det){
+    double ud = 1. / det;
+    inv[0][0] =  ( mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1] ) * ud ;
+    inv[1][0] = -( mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0] ) * ud ;
+    inv[2][0] =  ( mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0] ) * ud ;
+    inv[0][1] = -( mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1] ) * ud ;
+    inv[1][1] =  ( mat[0][0] * mat[2][2] - mat[0][2] * mat[2][0] ) * ud ;
+    inv[2][1] = -( mat[0][0] * mat[2][1] - mat[0][1] * mat[2][0] ) * ud ;
+    inv[0][2] =  ( mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1] ) * ud ;
+    inv[1][2] = -( mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0] ) * ud ;
+    inv[2][2] =  ( mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0] ) * ud ;
+  }
+  else{
+    Msg(GERROR, "Singular matrix");
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++)
+	inv[i][j] = 0.;
+  }
+  return det;
 }
 
 double angle_02pi(double A3)

@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.8 2005-01-08 20:15:19 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.9 2005-01-12 19:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -93,6 +93,29 @@ void GMSH_Lambda2Plugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Lambda2 failed...");
 }
 
+static int inv3x3tran(double mat[3][3], double inv[3][3], double *det)
+{
+  double ud;
+
+  *det = det3x3(mat);
+
+  if(*det == 0.0)
+    return (0);
+
+  ud = 1. / (*det);
+
+  inv[0][0] = ud * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]);
+  inv[0][1] = -ud * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]);
+  inv[0][2] = ud * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
+  inv[1][0] = -ud * (mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1]);
+  inv[1][1] = ud * (mat[0][0] * mat[2][2] - mat[0][2] * mat[2][0]);
+  inv[1][2] = -ud * (mat[0][0] * mat[2][1] - mat[0][1] * mat[2][0]);
+  inv[2][0] = ud * (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]);
+  inv[2][1] = -ud * (mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0]);
+  inv[2][2] = ud * (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]);
+  return 1;
+}
+
 static void eigen(List_T *inList, int inNb, 
 		  List_T *outList, int *outNb,
 		  int nbTime, int nbNod, int nbComp, int lam)
@@ -159,7 +182,7 @@ static void eigen(List_T *inList, int inNb,
 	  dx_dksi[0][0] = x[1] - x[0]; dx_dksi[0][1] = x[2]-x[0]; dx_dksi[0][2] = cross[0];
 	  dx_dksi[1][0] = y[1] - y[0]; dx_dksi[1][1] = y[2]-y[0]; dx_dksi[1][2] = cross[1];
 	  dx_dksi[2][0] = z[1] - z[0]; dx_dksi[2][1] = z[2]-z[0]; dx_dksi[2][2] = cross[2];
-	  inv3x3(dx_dksi, dksi_dx, &det);
+	  inv3x3tran(dx_dksi, dksi_dx, &det);
 	  GradPhi_ksi[0][0]= -1;  GradPhi_ksi[0][1]= -1;  GradPhi_ksi[0][2]= 0;  
 	  GradPhi_ksi[1][0]=  1;  GradPhi_ksi[1][1]=  0;  GradPhi_ksi[1][2]= 0;
 	  GradPhi_ksi[2][0]=  0;  GradPhi_ksi[2][1]=  1;  GradPhi_ksi[2][2]= 0;
@@ -168,7 +191,7 @@ static void eigen(List_T *inList, int inNb,
 	  dx_dksi[0][0] = x[1] - x[0]; dx_dksi[0][1] = x[2]-x[0]; dx_dksi[0][2] = x[3]-x[0];
 	  dx_dksi[1][0] = y[1] - y[0]; dx_dksi[1][1] = y[2]-y[0]; dx_dksi[1][2] = y[3]-y[0];
 	  dx_dksi[2][0] = z[1] - z[0]; dx_dksi[2][1] = z[2]-z[0]; dx_dksi[2][2] = z[3]-z[0];   
-	  inv3x3(dx_dksi, dksi_dx, &det);
+	  inv3x3tran(dx_dksi, dksi_dx, &det);
 	  GradPhi_ksi[0][0]= -1;  GradPhi_ksi[0][1]= -1; GradPhi_ksi[0][2]= -1; 
 	  GradPhi_ksi[1][0]=  1;  GradPhi_ksi[1][1]=  0; GradPhi_ksi[1][2]=  0; 
 	  GradPhi_ksi[2][0]=  0;  GradPhi_ksi[2][1]=  1; GradPhi_ksi[2][2]=  0; 

@@ -1,14 +1,19 @@
-$Id: TODO,v 1.75 2005-01-09 02:18:59 geuzaine Exp $
-
-create Gradient, Curl and Divergence plugins (based on
-Plugins/ShapeFunctions.h)
+$Id: TODO,v 1.76 2005-01-12 19:10:40 geuzaine Exp $
 
 ********************************************************************
 
-Add dynamic variables in labels? E.g., if a string contains
-%string.string, replace it dynamically in Draw_Text2D/3D by calling
+change the Tranform plugin so that it takes expression arguments?
+
+********************************************************************
+
+Labels:
+- add dynamic variables? E.g., if a string contains %string.string,
+replace it dynamically in Draw_Text2D/3D by calling
 Get_OptionsCategory/Get_OptionValue. (provide a global option to
 disable all replacements)
+- position with the mouse
+- select/move once positioned?
+- add ability to add arrows
 
 ********************************************************************
 

@@ -36,6 +36,19 @@ Default value: @code{14}
 Default value: @code{-1}
 @end table
 
+@item Plugin(Curl)
+Plugin(Curl) computes the curl of the field
+in the view `iView'. If `iView' < 0, the plugin
+is run on the current view.
+
+Plugin(Curl) creates one new view.
+
+Numeric options:
+@table @code
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(CutGrid)
 Plugin(CutGrid) cuts a triangle/tetrahedron view
 with a rectangular grid defined by the 3 points
@@ -249,6 +262,19 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(Divergence)
+Plugin(Divergence) computes the divergence of the
+field in the view `iView'. If `iView' < 0, the plugin
+is run on the current view.
+
+Plugin(Divergence) creates one new view.
+
+Numeric options:
+@table @code
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(Eigenvalues)
 Plugin(Eigenvalues) computes the three real
 eigenvalues of each tensor in the view `iView'.
@@ -375,6 +401,19 @@ Default value: @code{""}
 @item Expression2
 Default value: @code{""}
 @end table
+Numeric options:
+@table @code
+@item iView
+Default value: @code{-1}
+@end table
+
+@item Plugin(Gradient)
+Plugin(Gradient) computes the gradient of the
+field in the view `iView'. If `iView' < 0, the
+plugin is run on the current view.
+
+Plugin(Gradient) creates one new view.
+
 Numeric options:
 @table @code
 @item iView
