@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.12 2001-07-26 18:47:59 remacle Exp $
+// $Id: 3D_Extrude.cpp,v 1.13 2001-08-01 13:34:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -669,7 +669,7 @@ int Extrude_Mesh (Volume * v){
       do{
         TEST_IS_ALL_OK = 0;
         Extrude_Surface2 (s);
-	printf("swapping %d\n",TEST_IS_ALL_OK);
+	Msg(INFO, "Swapping %d",TEST_IS_ALL_OK);
         if (TEST_IS_ALL_OK == j)
           break;
         j = TEST_IS_ALL_OK;
@@ -684,6 +684,9 @@ int Extrude_Mesh (Volume * v){
     // surface mesh and create a new one. Edges were stored in Tree_Ares
     // so that now, the surface mesh is ok (edge swapping is easy in 2d).
     // cretainly not the most efficient way to do it but it seems to work
+
+    // but it doesn't :-(
+    /*
     for (i = 0; i < List_Nbr (v->Surfaces); i++)
       {
 	List_Read (v->Surfaces, i, &ss);
@@ -692,6 +695,7 @@ int Extrude_Mesh (Volume * v){
 	ss->Simplexes = Tree_Create (sizeof (Simplex *), compareQuality);
 	Extrude_Mesh(ss);
       }
+    */
 
     return true;
   }
