@@ -1,11 +1,11 @@
-// $Id: CutMap.cpp,v 1.8 2001-07-31 09:51:36 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.9 2001-07-31 10:24:56 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
 
 StringXNumber CutMapOptions_Number[] = {
   { GMSH_FULLRC, "Value" , NULL , 1. },
-  { GMSH_FULLRC, "View number" , NULL , 1. }
+  { GMSH_FULLRC, "ViewNumber" , NULL , 1. }
 };
 
 extern "C"
