@@ -27,6 +27,8 @@
 #include "parser.h"
 #include "symbol_table.h"
 
+#define YY_ALWAYS_INTERACTIVE 1
+
 /* Redefine macro to redirect scanner input from string instead of
    standard input.  */
 #define YY_INPUT( buffer, result, max_size ) \
