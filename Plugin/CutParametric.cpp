@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.11 2005-03-02 07:49:41 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.12 2005-03-02 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -76,13 +76,13 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuzaine@acm.caltech.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutParametric) cuts the scalar view `iView'\n"
-	 "with the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
+         "Plugin(CutParametric) cuts the view `iView' with\n"
+	 "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
 	 "using `nPointsU' values of the parameter u in\n"
 	 "[`MinU', `MaxU']. If `ConnectPoints' is set, the\n"
-	 "plugin creates scalar line elements; otherwise,\n"
-	 "the plugin generates scalar points. If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
+	 "plugin creates line elements; otherwise, the\n"
+	 "plugin generates points. If `iView' < 0, the plugin\n"
+	 "is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutParametric) creates one new view.\n");
 }

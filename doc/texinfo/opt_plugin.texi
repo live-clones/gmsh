@@ -58,9 +58,9 @@ and (`X2',`Y2',`Z2') (axis of V). The number of points
 along U and V is set with the options `nPointsU'
 and `nPointsV'. If `ConnectPoints' is zero, the
 plugin creates points; otherwise, the plugin
-generates quadrangles, lines or points depending on
-the values of `nPointsU' and `nPointsV'. If `iView' < 0,
-the plugin is run on the current view.
+generates quadrangles, lines or points depending
+on the values of `nPointsU' and `nPointsV'. If
+`iView' < 0, the plugin is run on the current view.
 
 Plugin(CutGrid) creates one new view.
 
@@ -130,13 +130,13 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutParametric)
-Plugin(CutParametric) cuts the scalar view `iView'
-with the parametric function (`X'(u), `Y'(u), `Z'(u)),
+Plugin(CutParametric) cuts the view `iView' with
+the parametric function (`X'(u), `Y'(u), `Z'(u)),
 using `nPointsU' values of the parameter u in
 [`MinU', `MaxU']. If `ConnectPoints' is set, the
-plugin creates scalar line elements; otherwise, the
-plugin generates scalar points. If `iView' < 0, the
-plugin is run on the current view.
+plugin creates line elements; otherwise, the
+plugin generates points. If `iView' < 0, the plugin
+is run on the current view.
 
 Plugin(CutParametric) creates one new view.
 
@@ -317,8 +317,8 @@ view `iView' to the expression `Expression'.
 - the usual mathematical functions (Log, Sqrt
 Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);
 
-- the symbols x, y and z, to retrieve the coordinates
-of the current node;
+- the symbols x, y and z, to retrieve the
+coordinates of the current node;
 
 - the symbols Time and TimeStep, to retrieve the
 current time and time step values;
@@ -333,11 +333,11 @@ component of the field in `iView' at the
 
 - the symbol w, to retrieve the `Component'-th
 component of the field in `ExternalView' at the
-`ExternalTimeStep'-th time step. `ExternalView' and
-`iView' must be of the same type (scalar, vector
-or tensor); if `ExternalView' and `iView' are not
-based on the same spatial grid, `ExternalView' is
-interpolated onto `iView';
+`ExternalTimeStep'-th time step. `ExternalView'
+and `iView' must be of the same type (scalar,
+vector or tensor); if `ExternalView' and `iView'
+are not based on the same spatial grid,
+`ExternalView' is interpolated onto `iView';
 
 - the symbols w0, w1, w2, ..., w8, to retrieve each
 component of the field in `ExternalView' at the
@@ -492,8 +492,8 @@ Default value: @code{-1}
 
 @item Plugin(Probe)
 Plugin(Probe) gets the value of the view `iView' at
-the point (`X',`Y',`Z'). If `iView' < 0, the plugin
-is run on the current view.
+the point (`X',`Y',`Z'). If `iView' < 0, the plugin is
+run on the current view.
 
 Plugin(Probe) creates one new view.
 
@@ -706,12 +706,11 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Triangulate)
-Plugin(Triangulate) triangulates the points
-in the view `iView', assuming that all the
-points belong to a surface that can be
-projected into a plane in a one-to-one
-fashion. If `iView' < 0, the plugin is run
-on the current view.
+Plugin(Triangulate) triangulates the points in the
+view `iView', assuming that all the points belong
+to a surface that can be projected one-to-one
+onto a plane. If `iView' < 0, the plugin is run on
+the current view.
 
 Plugin(Triangulate) creates one new view.
 
