@@ -1029,6 +1029,7 @@ void GUI::create_mesh_options_window(){
 
 void GUI::create_post_options_window(){
   static int init_post_options_window = 0;
+  int i;
 
   if(!init_post_options_window){
     init_post_options_window = 1 ;
@@ -1106,6 +1107,7 @@ void GUI::create_post_options_window(){
 
 void GUI::create_statistics_window(){
   static int init_statistics_window = 0;
+  int i;
 
   if(!init_statistics_window){
     init_statistics_window = 1 ;
@@ -1393,22 +1395,6 @@ void GUI::create_view_window(int num){
 	}	
 	view_offsetraise->end();
       }
-      // Raise
-      { 
-	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Raise");
-	o->labelsize(CTX.fontsize);
-        o->hide();
-	view_value[6] = new Fl_Value_Input(2*WB, 2*WB+ BH, IW, BH, "X raise");
-        view_value[7] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Y raise");
-	view_value[8] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Z raise");
-	for(i=6 ; i<9 ; i++){
-	  view_value[i]->labelsize(CTX.fontsize);
-	  view_value[i]->type(FL_HORIZONTAL);
-	  view_value[i]->align(FL_ALIGN_RIGHT);
-	}	
-	o->end();
-      }
->>>>>>> 1.14
       // Time step
       { 
 	view_timestep = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Time step");
@@ -1428,23 +1414,30 @@ void GUI::create_view_window(int num){
 	view_vector->labelsize(CTX.fontsize);
         view_vector->hide();
 
-	view_butt[10] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Line");
-        view_butt[11] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Arrow");
-	view_butt[12] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Cone");
-        view_butt[13] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Displacement");
-	for(i=10 ; i<14 ; i++){
-	  view_butt[i]->type(FL_TOGGLE_BUTTON);
-	  view_butt[i]->down_box(FL_DOWN_BOX);
-	  view_butt[i]->labelsize(CTX.fontsize);
-	  view_butt[i]->selection_color(FL_YELLOW);
+	{
+	  Fl_Group *o = new Fl_Group(2*WB, WB+BH, width-4*WB, 2*BH, 0);
+	  view_butt[10] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Line");
+	  view_butt[11] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Arrow");
+	  view_butt[12] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Cone");
+	  view_butt[13] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Displacement");
+	  for(i=10 ; i<14 ; i++){
+	    view_butt[i]->type(FL_RADIO_BUTTON);
+	    view_butt[i]->labelsize(CTX.fontsize);
+	    view_butt[i]->selection_color(FL_YELLOW);
+	  }
+	  o->end();
 	}
 
-	view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Cell centered");
-        view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Vertex centered");
-	for(i=14 ; i<16 ; i++){
-	  view_butt[i]->type(FL_RADIO_BUTTON);
-	  view_butt[i]->labelsize(CTX.fontsize);
-	  view_butt[i]->selection_color(FL_YELLOW);
+	{
+	  Fl_Group *o = new Fl_Group(2*WB, WB+3*BH, width-4*WB, 2*BH, 0);
+	  view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Cell centered");
+	  view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Vertex centered");
+	  for(i=14 ; i<16 ; i++){
+	    view_butt[i]->type(FL_RADIO_BUTTON);
+	    view_butt[i]->labelsize(CTX.fontsize);
+	    view_butt[i]->selection_color(FL_YELLOW);
+	  }
+	  o->end();
 	}
 
 	view_value[10] = new Fl_Value_Input(2*WB, 2*WB+ 5*BH, IW, BH, "Vector scale");

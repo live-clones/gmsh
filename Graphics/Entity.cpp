@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.4 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Entity.cpp,v 1.5 2001-01-10 08:50:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -247,7 +247,7 @@ void Draw_Vector (int Type, int Fill,
     break ;
     
   case DRAW_POST_ARROW_HEAD :
-    Msg(ERROR, "Arrow Head not done");
+    Msg(GERROR, "Arrow Head not done");
     break ;
 
   case DRAW_POST_PYRAMID :
@@ -378,7 +378,7 @@ void Draw_Vector (int Type, int Fill,
     break ;
 
   default :
-    Msg(ERROR, "Unknown Type of Vector to Draw");
+    Msg(GERROR, "Unknown Type of Vector to Draw");
     break;
   }
   

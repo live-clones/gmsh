@@ -1,4 +1,4 @@
-// $Id: gl2gif.cpp,v 1.8 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: gl2gif.cpp,v 1.9 2001-01-10 08:50:30 geuzaine Exp $
 
 /* 
  * gl2gif: an OpenGL to GIF printing library
@@ -162,7 +162,7 @@ colorhash_table ppm_colorhisttocolorhash( const colorhist_vector chv,
     hash = ppm_hashpixel( color );
     for ( chl = cht[hash]; chl != (colorhist_list) 0; chl = chl->next )
       if ( PPM_EQUAL( chl->ch.color, color ) )
-	Msg(ERROR, "GIF: same color found twice - %d %d %d", PPM_GETR(color),
+	Msg(GERROR, "GIF: same color found twice - %d %d %d", PPM_GETR(color),
 	    PPM_GETG(color), PPM_GETB(color) );
     chl = (colorhist_list) Malloc( sizeof(struct colorhist_list_item) );
     chl->ch.color = color;
@@ -226,7 +226,7 @@ static int colorstobpp( int colors ){
   else if ( colors <= 256 )
     bpp = 8;
   else{
-    Msg(ERROR, "GIF: can't happen: too many colors" );
+    Msg(GERROR, "GIF: can't happen: too many colors" );
     bpp = 8 ;
   }
 
@@ -324,7 +324,7 @@ static colorhist_vector mediancut( colorhist_vector chv, int colors,
   colormap =
     (colorhist_vector) malloc( sizeof(struct colorhist_item) * newcolors );
   if ( bv == (box_vector) 0 || colormap == (colorhist_vector) 0 )
-    Msg(ERROR,  "GIF: out of memory" );
+    Msg(GERROR,  "GIF: out of memory" );
   for ( i = 0; i < newcolors; ++i )
     PPM_ASSIGN( colormap[i].color, 0, 0, 0 );
   
@@ -774,7 +774,7 @@ static void output( code_int  code){
     fflush( g_outfile );
     
     if( ferror( g_outfile ) )
-      Msg(ERROR, "GIF: Error writing output file");
+      Msg(GERROR, "GIF: Error writing output file");
   }
 }
 

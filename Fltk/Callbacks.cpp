@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.7 2001-01-10 08:41:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.8 2001-01-10 08:50:29 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -785,7 +785,7 @@ void view_remove_cb(CALLBACK_ARGS){
   FreeView(v);
 
   if(!List_Suppress(Post_ViewList, v, fcmpPostViewNum))
-    Msg(ERROR, "Could Not Suppress View from List");
+    Msg(GERROR, "Could Not Suppress View from List");
 
   CTX.post.nb_views = List_Nbr(Post_ViewList);
 

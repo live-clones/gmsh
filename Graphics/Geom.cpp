@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.9 2001-01-09 14:24:09 geuzaine Exp $
+// $Id: Geom.cpp,v 1.10 2001-01-10 08:50:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -339,7 +339,7 @@ void Plan_SurfPlane (void *data,void *dum){
           res[2] = 1.;
         }
         else {
-          Msg(ERROR, "Draw Geometry (Plan_SurfPlane)");
+          Msg(GERROR, "Draw Geometry (Plan_SurfPlane)");
         }
       }
     }

@@ -1,4 +1,4 @@
-// $Id: XColors.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
+// $Id: XColors.cpp,v 1.2 2001-01-10 08:50:31 geuzaine Exp $
 
 /*
   Attention. Toutes les couleurs sont crees a partir de la colormap de
@@ -98,7 +98,7 @@ unsigned long AllocateColorInt( int r, int g, int b )
                           &xcol );
          return xcol.pixel;
       default:
-         Msg(ERROR, "Error in AllocateColorInt %d", pixelformat);
+         Msg(GERROR, "Error in AllocateColorInt %d", pixelformat);
          exit(0);
    }
    return 0;

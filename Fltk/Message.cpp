@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.3 2001-01-09 19:40:56 remacle Exp $
+// $Id: Message.cpp,v 1.4 2001-01-10 08:50:29 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -53,7 +53,7 @@ void Msg(int level, char *fmt, ...){
   va_list  args;
   int      abort=0;
 
-  if(level != FATAL && level != ERROR && level != PARSER_ERROR &&
+  if(level != FATAL && level != GERROR && level != PARSER_ERROR &&
      CTX.interactive && !CTX.verbosity) 
     return ;
 
