@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.60 2003-01-30 18:22:37 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.61 2003-03-01 22:34:18 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -734,7 +734,7 @@ void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
       }
       else{
         gl2psFree(cur->front);
-	cur = head = NULL;
+	cur->front = NULL;
       }
       break;
     case GL2PS_POINT_BACK :
@@ -765,7 +765,7 @@ void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
       }
       else{
         gl2psFree(cur->front);
-	cur = head = NULL;
+	cur->front = NULL;
       }
       break;
     default:
