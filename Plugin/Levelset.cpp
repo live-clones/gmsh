@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.19 2004-11-25 16:22:48 remacle Exp $
+// $Id: Levelset.cpp,v 1.20 2004-11-26 14:42:56 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,7 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
   _valueView = -1; // use same view for levelset and field data
   _valueTimeStep = -1; // use same time step in levelset and field data views
   _recurLevel = 4;
+  _targetError = 0;
   _orientation = GMSH_LevelsetPlugin::NONE;
 }
 
@@ -339,13 +340,17 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   Post_View *w;
   vector<Post_View *> out;
 
+  if(v->adaptive)
+      v->adaptive->setTolerance(_targetError);
   if (v->adaptive && v->NbST)
-    v->setAdaptiveResolutionLevel ( _recurLevel , this );
+      v->setAdaptiveResolutionLevel ( _recurLevel , this );
   if (v->adaptive && v->NbSS)
-    v->setAdaptiveResolutionLevel ( _recurLevel , this );
+      v->setAdaptiveResolutionLevel ( _recurLevel , this );
   if (v->adaptive && v->NbSQ)
-    v->setAdaptiveResolutionLevel ( _recurLevel , this );
-
+      v->setAdaptiveResolutionLevel ( _recurLevel , this );
+  if (v->adaptive && v->NbSH)
+      v->setAdaptiveResolutionLevel ( _recurLevel , this );
+  
 
   if(_valueView < 0) {
     w = v;
@@ -626,7 +631,7 @@ static bool recur_sign_change (_tet *t, double val, const GMSH_LevelsetPlugin *p
 static bool recur_sign_change (_quad *q, double val, const GMSH_LevelsetPlugin *plug)
 {
 
-  if (!q->q[0])
+  if (!q->q[0]|| q->visible)
     {
       double v1 = plug->levelset (q->p[0]->X,q->p[0]->Y,q->p[0]->Z,q->p[0]->val);
       double v2 = plug->levelset (q->p[1]->X,q->p[1]->Y,q->p[1]->Z,q->p[1]->val);

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.42 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.43 2004-11-26 14:42:56 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,8 @@ StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "recurLevel", NULL, 4}
+  {GMSH_FULLRC, "recurLevel", NULL, 4},
+  {GMSH_FULLRC, "targetError", NULL, 0}
 };
 
 extern "C"
@@ -121,6 +122,7 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
   _valueView = (int)CutMapOptions_Number[2].def;
   _valueTimeStep = (int)CutMapOptions_Number[1].def;
   _recurLevel = (int)CutMapOptions_Number[4].def;
+  _targetError = CutMapOptions_Number[5].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
   
   if(iView < 0)

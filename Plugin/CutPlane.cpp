@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.38 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.39 2004-11-26 14:42:56 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,8 @@ StringXNumber CutPlaneOptions_Number[] = {
   {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0.},
   {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01},
   {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "recurLevel", NULL, 4}
+  {GMSH_FULLRC, "recurLevel", NULL, 4},
+  {GMSH_FULLRC, "targetError", NULL, 0}
 };
 
 extern "C"
@@ -93,10 +94,10 @@ double GMSH_CutPlanePlugin::callbackA(int num, int action, double value)
 {
   if(action > 0) iview = num;
   switch(action){ // configure the input field
-  case 1: return 0.01;
-  case 2: return -1.;
-  case 3: return 1.;
-  default: break;
+      case 1: return 0.01;
+      case 2: return -1;
+      case 3: return 1;
+      default: break;
   }
   CutPlaneOptions_Number[0].def = value;
   callback();
@@ -197,16 +198,17 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::PLANE;
   _recurLevel = (int)CutPlaneOptions_Number[5].def;
-
+  _targetError = CutPlaneOptions_Number[6].def;
+  
   if(iView < 0)
-    iView = v ? v->Index : 0;
-
+      iView = v ? v->Index : 0;
+  
   if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
+      Msg(GERROR, "View[%d] does not exist", iView);
+      return v;
   }
-
+  
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-
+  
   return GMSH_LevelsetPlugin::execute(v1);
 }

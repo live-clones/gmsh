@@ -31,8 +31,8 @@ public:
   typedef enum {NONE, PLANE, SPHERE, MAP} ORIENTATION ;
   virtual double levelset(double x, double y, double z, double val) const = 0;
 protected:
-  double _ref[3];
-  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel;
+  double _ref[3], _targetError;
+  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel;  
   ORIENTATION _orientation;
 private:
   double _invert;
