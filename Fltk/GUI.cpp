@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.257 2003-12-01 21:51:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.258 2003-12-01 22:02:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2845,10 +2845,13 @@ void GUI::create_visibility_window()
     Fl_Button *o2 = new Fl_Button(2 * WB + ww, height - 2 * WB - 2 * BH, ww, BH, "Hide");
     o2->callback(visibility_number_cb, (void *)0);
 
-    vis_input_mode = new Fl_Choice(2 * WB + (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
+    vis_input_mode = new Fl_Choice(2 * WB + (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH,
+				   (brw - 2 * WB) / 3, BH);
     vis_input_mode->menu(input_mode_table);
     
-    vis_input = new Fl_Input(3 * WB + 2 * (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
+    vis_input = new Fl_Input(3 * WB + 2 * (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH,
+			     (brw - 2 * WB) / 3, BH);
+    vis_input->value("*");
 #if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
     vis_input->tooltip("Enter an entity number, or *");
 #endif
