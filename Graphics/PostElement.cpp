@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.14 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.15 2003-05-14 13:35:50 stainier Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1009,6 +1009,8 @@ void Draw_VectorPyramid(ARGS)
 
 // Tensor Elements
 
+extern double ComputeVonMises(double*);
+
 void Draw_TensorElement(int type, Post_View * View,
                         double ValMin, double ValMax, double Raise[3][8],
                         double *X, double *Y, double *Z, double *V)
@@ -1042,26 +1044,16 @@ void Draw_TensorElement(int type, Post_View * View,
     break;
   }
 
-  /// we want to compute "von mises" value i.e. max eigenvalue
+  /// by lack of any current better solution,
+  /// tensors are displayed as their Von Mises
+  /// invariant (J2 invariant)
   /// this will simply call the scalar function
   if(View->TensorType == DRAW_POST_VONMISES) {
-    static const double THIRD = 1.e0 / 3.e0;
+
     double V_VonMises[8];
-    for(int i = 0; i < nbnod; i++) {
-      double tr = (V[0 + 9 * i] + V[4 + 9 * i] + V[8 + 9 * i]) * THIRD;
-      double v11 = V[0 + 9 * i] - tr;
-      double v12 = V[1 + 9 * i];
-      double v13 = V[2 + 9 * i];
-      double v21 = V[3 + 9 * i];
-      double v22 = V[4 + 9 * i] - tr;
-      double v23 = V[5 + 9 * i];
-      double v31 = V[6 + 9 * i];
-      double v32 = V[7 + 9 * i];
-      double v33 = V[8 + 9 * i] - tr;
-      V_VonMises[i] = sqrt(1.5 * (v11 * v11 + v12 * v12 + v13 * v13 +
-                                  v21 * v21 + v22 * v22 + v23 * v23 +
-                                  v31 * v31 + v32 * v32 + v33 * v33));
-    }
+    for(int i = 0; i < nbnod; i++)
+      V_VonMises[i] = ComputeVonMises(V + 9*i);
+
     switch (type) {
     case POINT:
       Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.94 2003-04-14 22:55:56 geuzaine Exp $
+// $Id: Views.cpp,v 1.95 2003-05-14 13:35:50 stainier Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -157,6 +157,27 @@ Post_View *BeginView(int allocate)
   return v;
 }
 
+// utility function
+
+double ComputeVonMises(double*); // prototype
+
+double ComputeVonMises(double *V) {
+  static const double THIRD = 1.e0 / 3.e0;
+  double tr = (V[0] + V[4] + V[8]) * THIRD;
+  double v11 = V[0] - tr;
+  double v12 = V[1];
+  double v13 = V[2];
+  double v21 = V[3];
+  double v22 = V[4] - tr;
+  double v23 = V[5];
+  double v31 = V[6];
+  double v32 = V[7];
+  double v33 = V[8] - tr;
+  return sqrt(1.5 * (v11 * v11 + v12 * v12 + v13 * v13 +
+                     v21 * v21 + v22 * v22 + v23 * v23 +
+                     v31 * v31 + v32 * v32 + v33 * v33));
+}
+  
 void Stat_Element(Post_View * v, int type, int nbnod, int N,
                   double *X, double *Y, double *Z, double *V)
 {
@@ -202,9 +223,12 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
     v->ScalarOnly = 0;
     break;
 
-  case 2:      // tensor - TODO!
+  case 2:      // tensor
+    // by lack of any current better solution,
+    // tensors are displayed as their Von Mises
+    // invariant (J2 invariant)
     if(v->Min == VAL_INF || v->Max == -VAL_INF) {
-      l0 = sqrt(DSQR(V[0]) + DSQR(V[4]) + DSQR(V[8]));
+      l0 = ComputeVonMises(V);
       v->Min = l0;
       v->Max = l0;
       v->NbTimeStep = N / (9 * nbnod);
@@ -213,7 +237,7 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
       v->NbTimeStep = N / (9 * nbnod);
 
     for(i = 0; i < N; i += 9) {
-      l0 = sqrt(DSQR(V[i]) + DSQR(V[i + 4]) + DSQR(V[i + 8]));
+      l0 = ComputeVonMises(V+i);
       if(l0 < v->Min)
         v->Min = l0;
       if(l0 > v->Max)
