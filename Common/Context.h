@@ -39,6 +39,7 @@ public :
   char *display;              // forced display host:0.0 under X11 
   int  terminal;              // show we print to the terminal console?
   char *editor;               // text editor command (with included '%s')
+  char home_dir[NAME_STR_L];  // the home directory
 
   int position[2];            // position of the menu window on the screen
   int gl_position[2];         // position of the graphic window on the screen

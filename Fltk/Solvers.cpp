@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.6 2001-05-17 13:14:15 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.7 2001-05-21 13:01:13 geuzaine Exp $
 
 #include "Gmsh.h"
 
@@ -11,31 +11,14 @@
 #include "Socket.h"
 #include "OpenFile.h"
 #include "Solvers.h"
-
 #include "GmshUI.h"
 #include "GUI.h"
 #include "Mesh.h"
 #include "Draw.h"
+#include "Context.h"
 
-
+extern Context_T  CTX;
 extern GUI       *WID;
-
-
-#if defined(WIN32) && !defined(__CYGWIN__)
-#define SLASH "\\"
-#else
-#define SLASH "/"
-#endif
-
-#define GET_PATH(path_val)					\
-  char *tmp;							\
-  if     ((tmp = getenv("HOME"))) strcpy(path_val, tmp);	\
-  else if((tmp = getenv("TMP")))  strcpy(path_val, tmp);	\
-  else if((tmp = getenv("TEMP"))) strcpy(path_val, tmp);	\
-  else                            strcpy(path_val, "");		\
-  if(strlen(path_val)) strcat(path_val, SLASH);
-
-
 
 
 // interface to GetDP
@@ -46,7 +29,7 @@ int GetDP(char *args){
   int sock, type, i, n;
   char progname[1000], sockname[1000], str[1000];
 
-  GET_PATH(sockname);
+  strcpy(sockname, CTX.home_dir);
   strcat(sockname, ".gmshsock");
 
   sprintf(progname, "%s %s", GetDP_Info.command, args);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.19 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: Options.cpp,v 1.20 2001-05-21 13:01:13 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -19,6 +19,20 @@ extern GUI        *WID ;
 // ************** General routines ****************************************
 
 void Init_Options(int num){
+  char *tmp;
+
+  // Home directory
+  if((tmp = getenv("HOME")))      strcpy(CTX.home_dir, tmp);
+  else if((tmp = getenv("TMP")))  strcpy(CTX.home_dir, tmp);
+  else if((tmp = getenv("TEMP"))) strcpy(CTX.home_dir, tmp);
+  else                            strcpy(CTX.home_dir, "");
+  if(strlen(CTX.home_dir)){
+#if defined(WIN32) && !defined(__CYGWIN__)
+    strcat(CTX.home_dir, "\\");
+#else
+    strcat(CTX.home_dir, "/");
+#endif
+  }
 
   // Reference view storing default options
   Post_ViewReference = (Post_View*)Malloc(sizeof(Post_View)) ;
@@ -414,20 +428,6 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
     }									\
   }
 
-#if defined(WIN32) && !defined(__CYGWIN__)
-#define SLASH "\\"
-#else
-#define SLASH "/"
-#endif
-
-#define GET_PATH(path_val)					\
-  char *tmp;							\
-  if     ((tmp = getenv("HOME"))) strcpy(path_val, tmp);	\
-  else if((tmp = getenv("TMP")))  strcpy(path_val, tmp);	\
-  else if((tmp = getenv("TEMP"))) strcpy(path_val, tmp);	\
-  else                            strcpy(path_val, "");		\
-  if(strlen(path_val)) strcat(path_val, SLASH);
-
 char * opt_general_display(OPT_ARGS_STR){
   if(action & GMSH_SET) CTX.display = val;
   return CTX.display;
@@ -459,7 +459,7 @@ char * opt_general_error_filename(OPT_ARGS_STR){
 char * opt_general_session_filename(OPT_ARGS_STR){
   if(action & GMSH_SET){
     CTX.session_filename = val;
-    GET_PATH(CTX.sessionrc_filename);
+    strcpy(CTX.sessionrc_filename, CTX.home_dir);
     strcat(CTX.sessionrc_filename, CTX.session_filename);
   }
   return CTX.session_filename;
@@ -467,7 +467,7 @@ char * opt_general_session_filename(OPT_ARGS_STR){
 char * opt_general_options_filename(OPT_ARGS_STR){
   if(action & GMSH_SET){
     CTX.options_filename = val;
-    GET_PATH(CTX.optionsrc_filename);
+    strcpy(CTX.optionsrc_filename, CTX.home_dir);
     strcat(CTX.optionsrc_filename, CTX.options_filename);
   }
 #ifdef _FLTK

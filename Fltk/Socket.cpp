@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.10 2001-05-07 07:55:00 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.11 2001-05-21 13:01:13 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,7 +119,7 @@ int Socket_StartProgram(char *progname, char *sockname){
   strcpy(addr.sun_path, sockname);
   addr.sun_family = AF_UNIX;
   if(bind(s, (struct sockaddr *)&addr, strlen(addr.sun_path)+sizeof(addr.sun_family)) < 0) {
-    Msg(GERROR, "Couldn't bind socket to name");
+    Msg(GERROR, "Couldn't bind socket to name '%s'", sockname);
     return -1;
   }
   
@@ -158,7 +158,8 @@ int Socket_StartProgram(char *progname, char *sockname){
 }
 
 int Socket_StopProgram(char *progname, char *sockname, int sock){
-  if(Socket_UnlinkName(sockname)==-1) Msg(WARNING, "Impossible to unlink the socket");
+  if(Socket_UnlinkName(sockname)==-1)
+    Msg(WARNING, "Impossible to unlink the socket '%s'", sockname);
   close(sock);
   return 0;
 }
