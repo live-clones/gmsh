@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.182 2003-07-21 23:31:16 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.183 2003-09-16 23:50:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -469,6 +469,34 @@ void _save_epstex_accurate(char *name)
   CreateOutputFile(name, FORMAT_EPSTEX);
   CTX.print.eps_quality = old;
 }
+void _save_pdf_simple(char *name)
+{
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 1;
+  CreateOutputFile(name, FORMAT_PDF);
+  CTX.print.eps_quality = old;
+}
+void _save_pdf_accurate(char *name)
+{
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 2;
+  CreateOutputFile(name, FORMAT_PDF);
+  CTX.print.eps_quality = old;
+}
+void _save_pdftex_simple(char *name)
+{
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 1;
+  CreateOutputFile(name, FORMAT_PDFTEX);
+  CTX.print.eps_quality = old;
+}
+void _save_pdftex_accurate(char *name)
+{
+  int old = CTX.print.eps_quality;
+  CTX.print.eps_quality = 2;
+  CreateOutputFile(name, FORMAT_PDFTEX);
+  CTX.print.eps_quality = old;
+}
 void _save_jpegtex(char *name)
 {
   CreateOutputFile(name, FORMAT_JPEGTEX);
@@ -563,6 +591,8 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"PostScript accurate (*.ps)", _save_ps_accurate},
     {"Encapsulated PostScript fast (*.eps)", _save_eps_simple},
     {"Encapsulated PostScript accurate (*.eps)", _save_eps_accurate},
+    {"PDF fast (*.pdf)", _save_pdf_simple},
+    {"PDF accurate (*.pdf)", _save_pdf_accurate},
     {"PPM (*.ppm)", _save_ppm},
 #if defined(HAVE_LIBJPEG)
     {"LaTeX JPEG part (*.jpg)", _save_jpegtex},
@@ -572,6 +602,8 @@ void file_save_as_cb(CALLBACK_ARGS)
 #endif
     {"LaTeX EPS part fast (*.eps)", _save_epstex_simple},
     {"LaTeX EPS part accurate (*.eps)", _save_epstex_accurate},
+    {"LaTeX PDF part fast (*.pdf)", _save_pdftex_simple},
+    {"LaTeX PDF part accurate (*.pdf)", _save_pdftex_accurate},
     {"LaTeX TeX part (*.tex)", _save_tex},
     {"UCB YUV (*.yuv)", _save_yuv}
   };

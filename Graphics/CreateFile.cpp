@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.44 2003-09-01 23:53:00 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.45 2003-09-16 23:50:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -92,12 +92,16 @@ void CreateOutputFile(char *name, int format)
       CreateOutputFile(name, FORMAT_PS);
     else if(!strcmp(ext, ".eps"))
       CreateOutputFile(name, FORMAT_EPS);
+    else if(!strcmp(ext, ".pdf"))
+      CreateOutputFile(name, FORMAT_PDF);
     else if(!strcmp(ext, ".tex"))
       CreateOutputFile(name, FORMAT_TEX);
     else if(!strcmp(ext, ".pstex"))
       CreateOutputFile(name, FORMAT_PSTEX);
     else if(!strcmp(ext, ".epstex"))
       CreateOutputFile(name, FORMAT_EPSTEX);
+    else if(!strcmp(ext, ".pdftex"))
+      CreateOutputFile(name, FORMAT_PDFTEX);
     else if(!strcmp(ext, ".jpegtex"))
       CreateOutputFile(name, FORMAT_JPEGTEX);
     else if(!strcmp(ext, ".ppm"))
@@ -189,11 +193,18 @@ void CreateOutputFile(char *name, int format)
   case FORMAT_PSTEX:
   case FORMAT_EPS:
   case FORMAT_EPSTEX:
+  case FORMAT_PDF:
+  case FORMAT_PDFTEX:
     if(!(fp = fopen(name, "w"))) {
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
-    psformat = (format == FORMAT_PS || format == FORMAT_PSTEX) ? GL2PS_PS : GL2PS_EPS;
+    if(format == FORMAT_PDF || format == FORMAT_PDFTEX)
+      psformat = GL2PS_PDF;
+    else if(format == FORMAT_PS || format == FORMAT_PSTEX)
+      psformat = GL2PS_PS;
+    else
+      psformat = GL2PS_EPS;
     pssort = (CTX.print.eps_quality == 1) ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT;
     psoptions =
       GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT | 
@@ -201,7 +212,8 @@ void CreateOutputFile(char *name, int format)
       (CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
       (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
       (format == FORMAT_PSTEX ? GL2PS_NO_TEXT : 0) |
-      (format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0);
+      (format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0) |
+      (format == FORMAT_PDFTEX ? GL2PS_NO_TEXT : 0);
 
     size3d = 0;
     res = GL2PS_OVERFLOW;
@@ -215,7 +227,10 @@ void CreateOutputFile(char *name, int format)
       CTX.print.gl_fonts = 1;
       res = gl2psEndPage();
     }
-    Msg(INFO, "PS/EPS creation complete '%s'", name);
+    if(psformat == GL2PS_PDF)
+      Msg(INFO, "PDF creation complete '%s'", name);
+    else
+      Msg(INFO, "PS/EPS creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;

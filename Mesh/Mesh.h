@@ -50,6 +50,8 @@
 #define FORMAT_EPSTEX  21
 #define FORMAT_PNG     22
 #define FORMAT_PNGTEX  23
+#define FORMAT_PDF     24
+#define FORMAT_PDFTEX  25
 
 #define CONV_VALUE    0.8
 
