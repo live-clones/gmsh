@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.197 2002-04-13 04:01:09 geuzaine Exp $
+# $Id: Makefile,v 1.198 2002-04-13 04:02:06 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -321,11 +321,12 @@ compile-linux-gcc-2.95: initialtag
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I/usr/X11R6/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 link-linux-gcc-2.95:
-	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
+	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                 -L$(HOME)/SOURCES/fltk/lib -lfltk_gl $(OPENGL_LIB) -lfltk\
+                 -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
 linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95
 distrib-linux-gcc-2.95:
 	make tag
