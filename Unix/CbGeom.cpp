@@ -1,4 +1,4 @@
-/* $Id: CbGeom.cpp,v 1.5 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: CbGeom.cpp,v 1.6 2000-12-01 13:38:58 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -483,15 +483,15 @@ void geom_event_handler (int event) {
       switch(event){
         case GEOM_PHYS_ADD_POINT:
           Msg(STATUS,"Select Point ('e'=end, 'q'=quit)"); 
-          type = 0;
+          type = ENT_POINT;
           break;
         case GEOM_PHYS_ADD_LINE:
           Msg(STATUS,"Select Line ('e'=end, 'q'=quit)"); 
-          type = 1;
+          type = ENT_LINE;
           break;
         case GEOM_PHYS_ADD_SURF:
           Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)"); 
-          type = 2;
+          type = ENT_SURFACE;
           break;
       }
       ib = SelectEntity(type, &v,&c,&s);

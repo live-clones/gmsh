@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.6 2000-11-28 17:18:30 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.7 2000-12-01 13:38:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -59,6 +59,7 @@ void add_infile(char *text, char *fich){
   yyin = fopen("gmsh.tmp","w");
   file = fopen(fich,"a");
   fprintf(yyin,"%s\n",text);
+  Msg(SELECT,"%s",text);
   fclose(yyin);
   yyin = fopen("gmsh.tmp","r");
   while(!feof(yyin)){
@@ -431,14 +432,12 @@ void add_physical_entity(List_T *list, char *fich, int type, int *num){
   if(((*num) = recognize_zone(MSH_PHYSICAL_VOLUME,list))) return;
 
   *num = NEWREG();
-  if (type == 1)
-    sprintf(text, "Physical Line(%d) = {", *num);
-  else if (type == 2)
-    sprintf(text, "Physical Surface(%d) = {", *num);
-  else if (type == 0)
-    sprintf(text, "Physical Point(%d) = {", *num);
-  else
-    sprintf(text, "Physical Volume(%d) = {", *num);
+  switch(type){
+  case ENT_POINT : sprintf(text, "Physical Point(%d) = {", *num); break;
+  case ENT_LINE : sprintf(text, "Physical Line(%d) = {", *num); break;
+  case ENT_SURFACE : sprintf(text, "Physical Surface(%d) = {", *num); break;
+  case ENT_VOLUME : sprintf(text, "Physical Volume(%d) = {", *num); break;
+  }
 
   for(i=0; i<List_Nbr(list); i++){
     List_Read(list, i, &elementary_entity);
