@@ -1,0 +1,519 @@
+
+<!--- PLEASE DO NOT EDIT the BEGINSCRIPT and ENDSCRIPT comments --->
+
+<!---BEGINSCRIPT
+#!/bin/sh
+
+BASEDIR=/usr/local/cgi-bin
+
+echo Content-type: text/html
+echo
+cat << EOM 
+ENDSCRIPT--->
+
+<HTML>
+
+<HEAD>
+
+<TITLE>Gmsh homepage</TITLE>
+
+<meta name="description" content="Gmsh is a free automatic
+three-dimensional finite element mesh generator with pre- and
+post-processing facilities.">
+
+<meta name="keywords" content="gmsh, free, mesh, software, mesh
+generation, mesh refinement, free, delaunay, triangulation, delaunay
+triangulation, automatic, maillage, maillages automatiques, mailleur,
+finite element, modelisation, 3D, 3-D, opengl, maillages 3D, 3D
+meshes, 3-D meshes, maillages 3-D, voronoi, adaptation de maillages,
+mesh adaptation, modeling, gmsh">
+
+<META name="Autor-Handle" content="Christophe.Geuzaine@advalvas.be">
+
+</HEAD>
+
+<body text="#000000" bgcolor="#ffffff" background="/gmsh/images/background.gif">
+
+<!------------------------------------------------------------------>
+
+<table width="100%" border=0 cellspacing=10 cellpadding=5>
+
+<tr valign=bottom>
+
+  <td width="130" align="right" valign=top><font size=-2  face="Helvetica, Arial" color="#fffff">
+
+<!---BEGINSCRIPT
+EOM
+${BASEDIR}/n2l ${BASEDIR}/counter.gmsh
+cat << EOM
+
+    page requests since May 24, 1998<br><br>
+ENDSCRIPT--->
+
+    Last updated <b>December 10, 2000</b><br><br>
+    &copy; 1998-2000 C. Geuzaine, J.-F. Remacle<br>
+
+  </font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial">
+    <font size="+3"><b>Gmsh</b></font><br>
+    <b>a three-dimensional finite element mesh generator with pre- and
+       post-processing facilities</b>
+  </font></td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=bottom>
+
+  <td><spacer type="vertical" size=20>
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>General Description</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+Gmsh is an automatic three-dimensional finite element mesh generator,
+primarily Delaunay, with built-in pre- and post-processing
+facilities. Its primal goal is to provide a simple meshing tool for
+academic test cases with parametric input and up to date visualization
+capabilities. One of the strengths of Gmsh is its ability to respect a
+characteristic length field for the generation of adapted meshes on
+lines, surfaces and volumes. These adapted meshes can be mixed with
+simple structured (transfinite, elliptic, etc.)  meshes in order to
+augment the flexibility.
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>Geometrical Entity Definition</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+Parameterized geometries are created by successively defining points,
+oriented curves (segments, circles, ellipsis, splines, etc.), oriented
+surfaces (plane surfaces, ruled surfaces, etc.)  and volumes. Compound
+groups of geometrical entities can be defined, based on these
+elementary parameterized geometric entities. Data can be defined
+either interactively thanks to the menu system, or directly in the ASCII 
+input files.
+
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>Mesh Generation</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+A finite element mesh is a tessellation of a given subset of R^3 by
+elementary geometrical elements of various shapes (in this case lines,
+triangles, quadrangles, tetrahedra, prisms and hexahedra), arranged in
+such a way that two of them intersect, if they do, along a common
+face, edge or node, and never otherwise. All the finite element meshes
+produced by Gmsh as unstructured, even if they were generated in
+a structured way. This implies that the elementary geometrical
+elements are defined only by an ordered list of their vertices (which
+allows the orientation of all their lower order geometrical entities)
+but no predefined relation is assumed between any two elementary
+elements.
+<p>
+The procedure follows the same order as for the geometry creation:
+curves are discretized first; the mesh of the curves is then used to
+mesh the surfaces; then the mesh of the surfaces is used to mesh the
+volumes. This automatically assures the continuity of the mesh when,
+for example, two surfaces share a common curve. Every meshing step is
+constrained by the characteristic length field, which can be uniform,
+specified by characteristic length associated to elementary
+geometrical entities, or associated to another mesh (the background
+mesh).
+<p>
+For each meshing step (i.e. the discretization of lines, surfaces and
+volumes), all structured mesh directives are executed first, and serve
+as additional constraints for the unstructured parts. The implemented
+Delaunay algorithm is subdivided in the following five steps for
+surface/volume discretization:
+<p>
+<ol>
+<li>
+trivial meshing of a box including the convex polygon/polyhedron
+defined by the boundary nodes resulting from the discretization of the
+curves/surfaces; 
+<li>
+creation of the initial mesh by insertion of all the nodes on the
+curves/surfaces thanks to the Bowyer algorithm; 
+<li>
+boundary restoration to force all the edges/faces of the
+curves/surfaces to be present in the initial mesh;
+<li>
+suppression of all the unwanted triangles/tetrahedra (in
+particular those containing the nodes of the initial box); 
+<li>
+insertion of new nodes by the Bowyer algorithm until the
+characteristic size of each simplex is lower or equal to the
+characteristic length field evaluated at the center of its
+circumscribed circle/sphere.
+</ol>
+
+
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><p><b>Scalar, Vector and Tensor Field Visualization</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+Multiple post-processing scalar or vector maps can be loaded and
+manipulated (globally or individually) along with the geometry and the
+mesh. Scalar fields are represented by iso-value curves or color maps
+and vector fields by three-dimensional arrows or displacement
+maps. Post-processor functions include offsets, elevation, interactive
+color map modification, range clamping, interactive and scriptable
+animation, vector postscript output, etc. All post-processing options
+can be accessed either interactively or through the the input ascii
+files.
+
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>Documentation</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+    Online <A target = "_top" href="/gmsh/doc/tutorial.html">tutorial</A> and
+    file <A target="_top" href="/gmsh/doc/FORMATS">formats</A> description.
+
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right"> 
+    <font color="#ffffff" face="Helvetica, Arial"><b>Download</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td bgcolor="#f0f0f0"><font face="Helvetica, Arial" size=-1>
+
+    GMSH is available on most classical UNIX platforms. Due to its erratic
+    behavior, we don't distribute the Windows version for the moment (you
+    may consider switching to Linux instead...). No source distribution is
+    available for the moment.
+    <p>
+    All executables are dynamically linked with OpenGL and Motif. You
+    should have these libraries installed on your system, and in the path
+    of the library loader. Free replacements for OpenGL
+    and Motif can be found at 
+    <A target="_top" href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>
+    and <A target="_top" href="http://www.lesstif.org">http://www.lesstif.org</A>. 
+    (Linux RPMs are directly available here: 
+    <A href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">Mesa-3.2-2.i386.rpm</A>,
+    <A href="/gmsh/thirdparty/lesstif-0.91.4-1.i386.rpm">lesstif-0.91.4-1.i386.rpm</A>.)
+    <p>
+    Remember that you may have to reconfigure the loader (ldconfig
+    under Linux) or modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP)
+    in order for Gmsh to find these libraries.
+    <p>
+    Version 0.995 (10 December 2000):
+    <ul>
+    <li>Red Hat package with man page and examples
+      <ul>
+        <li><A href="/gmsh/latest/gmsh-0.995-1.i386.rpm">Linux (i386, glibc 2.1) RPM</A> 
+      </ul>
+    <li>Tarballs
+      <ul>
+        <li><A href="/gmsh/latest/gmsh-Linux.tgz" >Gmsh for Linux i386/glibc 2.1/Lesstif 0.91</A>
+        <li><A href="/gmsh/latest/gmsh-OSF1.tgz"  >Gmsh for Digital OSF 4.0/Compaq Tru64</A>
+        <li><A href="/gmsh/latest/gmsh-SunOS.tgz" >Gmsh for Sun OS 5.5.1</A>
+        <li><A href="/gmsh/latest/gmsh-AIX.tgz"   >Gmsh for IBM AIX</A>
+        <li><A href="/gmsh/latest/gmsh-HP-UX.tgz" >Gmsh for HP-UX 10.20</A>
+        <li><A href="/gmsh/latest/gmsh-IRIX.tgz"  >Gmsh for SGI IRIX 6.5</A>
+      </ul>
+    <li>Tutorial and demos
+      <ul>
+        <li><A href="/gmsh/latest/gmsh-tutorial.tgz">Gmsh tutorial</A>
+        <li><A href="/gmsh/latest/gmsh-demos.tgz">Gmsh demo files</A>
+      </ul>
+    </ul>
+  </td>
+
+</tr>
+
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>What's new</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1> 
+
+New in 0.995:
+<ul>
+<li>
+Totally rewritten geometrical database (performance has been
+drastically improved for all geometrical transformations, and most
+notably for extrusion). <font color=red> As a consequence, the
+internal numbering of geometrical entities has changed: this will
+cause incompatibilities with old .geo files, and will require a
+partial rewrite of your old .geo files if these files made use of
+geometrical transformations</font>. The syntax of the .geo file has
+also been clarified. Many additions for scripting purposes.
+<li>
+New extrusion mesh generator. Preliminary version of the coupling between
+extruded and Delaunay meshes.
+<li>
+New option and procedural database. All interactive operations can be
+scripted in the input files. See the last example in the tutorial for
+an example.
+<li>
+Many stability enhancements in the 2D and 3D mesh
+algorithms. Performance boost of the 3D algorithm. Gmsh is still slow,
+but the performance becomes acceptable. An average 1000
+tetrahedra/second is obtained on a 600Mhz computer for a mesh of
+one million tetrahedra.
+<li>
+New anisotropic 2D mesh algorithm.
+<li>
+New (ascii and binary) post-processing file format and clarified mesh
+file format.
+<li>
+New handling for interactive rotations (trackball mode).
+<li>
+New didactic interactive mesh construction (watch the Delaunay
+algorithm in real time on complex geometries: that's exciting ;-)
+<li>
+And many, many bug fixes and cleanings...
+</ul>
+
+    <p>
+    New in 0.992: corrected recombined extrusion; corrected ellipses; added
+    simple automatic animation of post-processing maps; fixed various bugs.
+    <p>
+    New in 0.991: fixed a serious allocation bug in 2D algorithm, which
+    caused random crashes. All users should upgrade to 0.991.
+    <p>
+    New in 0.990: bug fix in non-recombined 3D transfinite meshes.
+    <p>
+    New in 0.989: added ability to reload previously saved meshes; some
+    new command line options; reorganization of the scale menu; GIF
+    output.
+    <p>
+    New in 0.987: fixed bug with smoothing (leading to the possible
+    generation of erroneous 3d meshes); corrected bug for mixed 3D meshes;
+    moved the 'toggle view link' option to Opt->Postprocessing_Options.
+    <p>
+    New in 0.986: fixed overlay problems; SGI version should now also run
+    on 32 bits machines; fixed small 3d mesh bug.
+    <p>
+    New in 0.985: corrected colormap bug on HP, SUN, SGI and IBM versions;
+    corrected small initialization bug in postscript output.
+    <p>
+    New in 0.984: corrected bug in display lists; added some options in
+    Opt->General.
+    <p>
+    New in 0.983: corrected some seg faults in interactive mode; corrected
+    bug in rotations; changed default window sizes for better match with
+    1024x768 screens (default X resources can be changed: see ex03.geo).
+    <p>
+    New in 0.982: lighting for mesh and post-processing; corrected 2nd
+    order mesh on non plane surfaces; added example 13.
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>Problems / Performance</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+    <ul>
+      <li> If something goes wrong, it is likely because some libraries are
+      not properly installed on your system. Try 'ldd gmsh-name' to check
+      all shared libraries dependencies. Warning: HP version is reported not
+      to work with native OpenGL -> install Mesa instead.
+
+      <li> If, when moving the mouse over the graphic window, everything
+      that is drawn on it disappears, and each item is visible only when the
+      cursor is directly over it, you should start Gmsh with the '-noov'
+      command line option. (This will be fixed.)
+
+      <li> Turn double buffering off (with the -nodb command line option)
+      when working on a remote host with Mesa.
+
+      <li> Try display lists (-dl option) when working with big
+      post-processing data sets.
+
+      <li> Disable opaque move in your window manager to prevent multiple
+      expose events when an option window partially hides the graphical
+      window.
+    </ul>
+
+  </td>
+
+</tr>
+
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>Authors</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1> 
+
+    Gmsh is developed by 
+    <A HREF="mailto:Remacle@scorec.rpi.edu">Jean-François Remacle</A> and
+    <A HREF="mailto:Christophe.Geuzaine@ulg.ac.be">Christophe Geuzaine</A>.
+    Feel free to contact us to send bugs, remarks or nice pictures you achieved
+    with Gmsh (we'll put them on the web site).
+
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>Gallery</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+    Some pictures made with Gmsh:
+    <ul>
+      <li> Meshes of 
+           <A href="/gmsh/gallery/Mesh1D.gif">lines</A>, 
+           <A href="/gmsh/gallery/Mesh2DCiss.gif">surfaces</A> and 
+           <A href="/gmsh/gallery/Mesh3D.gif">volumes</A> 
+           respecting a given characteristic length field (d(r) = a (sin(X) * sin (Y)) + b).
+      <li> 3D mesh of an 
+           <A href="/gmsh/gallery/bigelec4.gif">electrical component</A>
+           (courtesy S.K. Choi).
+      <li> First example in the <A href="/gmsh/latest/gmsh-tutorial.tgz">tutorial</A>:
+           <A href="/gmsh/gallery/ex01-2.gif">pict1</A>, 
+           <A href="/gmsh/gallery/ex01-3.gif">pict2</A>, 
+           <A href="/gmsh/gallery/ex01-4.gif">pict3</A>.
+      <li> A mechanical part in the <A href="/gmsh/latest/gmsh-demos.tgz">demo files</A>: 
+           <A href="/gmsh/gallery/ex09-0.gif">pict1</A>, 
+           <A href="/gmsh/gallery/ex09-1.gif">pict2</A>, 
+           <A href="/gmsh/gallery/ex09-2.gif">pict3</A>.
+      <li> Mach number on a F16 
+           <A href="/gmsh/gallery/f16-1.gif">pict1</A>,
+           <A href="/gmsh/gallery/f16-2.gif">pict2</A>,
+           <A href="/gmsh/gallery/f16-3.gif">pict3</A>,
+           <A href="/gmsh/gallery/f16-5.gif">pict4</A> (courtesy P. Geuzaine).
+      <li> Example of on-screen information display: 
+           <A href="/gmsh/gallery/infodisplay1.gif">1</A>, 
+           <A href="/gmsh/gallery/infodisplay2.gif">2</A>.
+      <li> A 3D <A href="/gmsh/gallery/adap.gif">adapted mesh</A>.
+      <li> Smooth 2D <A href="/gmsh/gallery/blob.gif">colormap</A>.
+      <li> Some didactic animations about computational electromagnetics at 
+           <A target="_top" href="http://www.montefiore.ulg.ac.be/services/elap/elm/demos_en.html">ELAP</A>.
+    </ul>
+
+  </td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+<tr valign=top>
+
+  <td width="130" align="right">
+    <font color="#ffffff" face="Helvetica, Arial"><b>Links</b></font></td>
+
+  <td width="70">
+  </td>
+
+  <td><font face="Helvetica, Arial" size=-1>
+
+    Check out <A TARGET="_top" HREF="/getdp/">GetDP</A>, 
+    a scientific computation software for the numerical solution
+    of integro-differential equations, using finite element and integral
+    type methods. 
+
+  </font></td>
+
+</tr>
+
+<!------------------------------------------------------------------>
+
+</table>
+
+<p>
+
+</BODY>
+</HTML>
+
+<!---BEGINSCRIPT
+EOM
+ENDSCRIPT--->
