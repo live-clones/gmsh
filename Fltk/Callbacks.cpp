@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.26 2001-02-03 18:33:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.27 2001-02-07 13:25:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -479,6 +479,15 @@ void opt_mesh_algo_cb(CALLBACK_ARGS){
 }
 void opt_mesh_smoothing_cb(CALLBACK_ARGS){
   CTX.mesh.nb_smoothing = (int)((Fl_Value_Input*)w)->value();
+}
+void opt_mesh_scaling_factor_cb(CALLBACK_ARGS){
+  CTX.mesh.scaling_factor = ((Fl_Value_Input*)w)->value();
+}
+void opt_mesh_lc_factor_cb(CALLBACK_ARGS){
+  CTX.mesh.lc_factor = ((Fl_Value_Input*)w)->value();
+}
+void opt_mesh_rand_factor_cb(CALLBACK_ARGS){
+  CTX.mesh.rand_factor = ((Fl_Value_Input*)w)->value();
 }
 void opt_mesh_interactive_cb(CALLBACK_ARGS){
   CTX.mesh.interactive = !CTX.mesh.interactive;

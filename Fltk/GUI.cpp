@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.40 2001-02-05 14:20:14 geuzaine Exp $
+// $Id: GUI.cpp,v 1.41 2001-02-07 13:25:39 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1132,7 +1132,7 @@ void GUI::create_mesh_options_window(){
   if(!init_mesh_options_window){
     init_mesh_options_window = 1 ;
 
-    int width = 26*CTX.fontsize;
+    int width = 29*CTX.fontsize;
     int height = 5*WB+9*BH ;
     
     mesh_window = new Fl_Window(width,height);
@@ -1159,16 +1159,36 @@ void GUI::create_mesh_options_window(){
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
-        mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH,
-					   "Number of smoothing steps");
+        mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Number of smoothing steps");
 	mesh_value[0]->minimum(0);
 	mesh_value[0]->maximum(100); 
 	mesh_value[0]->step(1);
 	mesh_value[0]->callback(opt_mesh_smoothing_cb);
 	mesh_value[0]->value(CTX.mesh.nb_smoothing);
-	mesh_value[0]->labelsize(CTX.fontsize);
-	mesh_value[0]->type(FL_HORIZONTAL);
-	mesh_value[0]->align(FL_ALIGN_RIGHT);
+        mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Mesh scaling factor");
+	mesh_value[1]->minimum(0);
+	mesh_value[1]->maximum(100); 
+	mesh_value[1]->step(0.001);
+	mesh_value[1]->callback(opt_mesh_scaling_factor_cb);
+	mesh_value[1]->value(CTX.mesh.scaling_factor);
+        mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Characteristic length scaling factor");
+	mesh_value[2]->minimum(0);
+	mesh_value[2]->maximum(100); 
+	mesh_value[2]->step(0.001);
+	mesh_value[2]->callback(opt_mesh_lc_factor_cb);
+	mesh_value[2]->value(CTX.mesh.lc_factor);
+        mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Random perturbation factor");
+	mesh_value[3]->minimum(1.e-6);
+	mesh_value[3]->maximum(1.e-1); 
+	mesh_value[3]->step(1.e-6);
+	mesh_value[3]->callback(opt_mesh_rand_factor_cb);
+	mesh_value[3]->value(CTX.mesh.rand_factor);
+
+	for(i = 0 ; i<4 ; i++){
+	  mesh_value[i]->labelsize(CTX.fontsize);
+	  mesh_value[i]->type(FL_HORIZONTAL);
+	  mesh_value[i]->align(FL_ALIGN_RIGHT);
+	}
 
         o->end();
       }
