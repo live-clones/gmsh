@@ -32,7 +32,7 @@ merge file
 show general options
 
 @item Ctrl+n
-show new file
+new file
 
 @item Shift+o
 show option window

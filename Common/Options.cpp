@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.136 2004-02-28 00:48:47 geuzaine Exp $
+// $Id: Options.cpp,v 1.137 2004-02-29 16:51:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1607,6 +1607,7 @@ char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
   return opt_solver_fifth_button_command(4, action, val);
 }
 
+#if defined(HAVE_FLTK)
 int _gui_action_valid(int action, int num)
 {
   return ((WID) &&
@@ -1614,6 +1615,7 @@ int _gui_action_valid(int action, int num)
 	  (action & GMSH_GUI) && 
 	  (num == WID->view_number));
 }
+#endif
 
 char *opt_view_name(OPT_ARGS_STR)
 {
