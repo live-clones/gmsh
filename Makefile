@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.34 2001-01-09 16:09:50 geuzaine Exp $
+# $Id: Makefile,v 1.35 2001-01-11 14:19:48 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -110,7 +110,7 @@ gmsh2:
 
 gmsh3:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) $(THREAD_LIB) -lm
+                 $(FLTK_LIB) -lm
 
 gmsh4:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \

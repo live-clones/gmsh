@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.10 2001-01-10 08:50:30 geuzaine Exp $
+// $Id: Geom.cpp,v 1.11 2001-01-11 14:11:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -20,7 +20,7 @@ extern Mesh      *THEM;
 
 static int   Highlighted = 0; 
 
-void Draw_Point (void *a, void *b){
+void Draw_GeoPoint (void *a, void *b){
   Vertex **v;
   char Num[100];
 
@@ -743,7 +743,7 @@ void Draw_Geom (Mesh *m) {
   if(m->status == -1) return;
 
   if(CTX.geom.points || CTX.geom.points_num)
-    Tree_Action(m->Points, Draw_Point);
+    Tree_Action(m->Points, Draw_GeoPoint);
   if(CTX.geom.lines || CTX.geom.lines_num)
     Tree_Action(m->Curves,  Draw_Curve  );
   if(CTX.geom.surfaces || CTX.geom.surfaces_num)
@@ -813,7 +813,7 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
 
   if(v){
     if(permanent) v->Frozen = 1;
-    if(CTX.geom.highlight) Draw_Point(&v,NULL);
+    if(CTX.geom.highlight) Draw_GeoPoint(&v,NULL);
     Msg(SELECT,"Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
   }
   else if(c){

@@ -1,8 +1,9 @@
-// $Id: Callbacks.cpp,v 1.14 2001-01-11 12:25:23 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.15 2001-01-11 14:11:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
+#include "Verif.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Views.h"
@@ -20,7 +21,9 @@ extern GUI       *WID;
 extern Mesh       M;
 extern Context_T  CTX;
 
-// Compatibility routines
+///////////////////////////////////////////////////////////////////////////////
+
+// Compatibility/local routines
 
 int AddViewInUI(int i, char *Name, int Num){
   if(i > NB_BUTT_MAX -1) return 1;
@@ -105,6 +108,44 @@ void CancelMeshThread(void){
 int SetGlobalShortcut(int event){
   return WID->global_shortcuts(event);
 }
+
+int SelectContour (int type, int num, List_T *Liste1){
+  int      k,ip,i;
+  List_T  *Liste2;
+
+  Liste2 = List_Create(1,1,sizeof(int));
+
+  if(!List_Nbr(Liste1)){
+    switch(type){
+    case ENT_LINE    : k = alledgeslinked (num, Liste1, (List_T*)NULL); break;
+    case ENT_SURFACE : k = allfaceslinked (num, Liste1, (List_T*)NULL); break;
+    }
+  }
+  else{
+    List_Reset(Liste2);
+    for(i=0;i<List_Nbr(Liste1);i++)
+      List_Add(Liste2,List_Pointer(Liste1,i));
+    List_Reset(Liste1);
+    switch(type){
+    case ENT_LINE    : k = alledgeslinked (num, Liste1, Liste2); break;
+    case ENT_SURFACE : k = allfaceslinked (num, Liste1, Liste2); break;
+    }
+  }
+
+  for(i=0;i<List_Nbr(Liste1);i++){
+    List_Read(Liste1,i,&ip);
+    switch(type){
+    case ENT_LINE    : HighlightEntityNum(0,abs(ip),0,1); break ;
+    case ENT_SURFACE : HighlightEntityNum(0,0,abs(ip),1); break ;
+    }
+  }
+
+  List_Delete(Liste2);
+  return k;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 
 // Common callbacks 
 
@@ -532,42 +573,277 @@ void geometry_elementary_add_new_parameter_cb(CALLBACK_ARGS){
 void geometry_elementary_add_new_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(1);
 }
+
+static void _new_line_spline(int mode){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib;
+  static int n, p[100];
+
+  n = 0;
+  while(1){
+    Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+    ib = SelectEntity(ENT_POINT, &v,&c,&s);
+    if(ib == 1){ /* left mouse butt */
+      p[n++] = v->Num; 
+    }
+    if (ib == -1){ /* 'e' */
+      if(n >= 2) {
+	switch(mode){
+	case 0 : add_multline(n,p,CTX.filename); break;
+	case 1 : add_spline(n,p,CTX.filename); break;
+	}
+      }
+      n=0;
+      ZeroHighlight(&M);
+      DrawUpdate();
+    }
+    if(ib == 0){ /* 'q' */
+      n=0 ;
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+  }
+  Msg(STATUS,"Ready");
+}
+
 void geometry_elementary_add_new_line_cb(CALLBACK_ARGS){
-  printf("new line\n");
+  _new_line_spline(0);
 }
 void geometry_elementary_add_new_spline_cb(CALLBACK_ARGS){
-  printf("new spline\n");
+  _new_line_spline(1);
 }
 void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
-  printf("new circle\n");
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib;
+  static int n, p[100];
+
+  n=0;
+  while(1){
+    if(n == 0) Msg(STATUS,"Select Center ('q'=quit)");
+    if(n == 1) Msg(STATUS,"Select Starting Point ('q'=quit)");
+    if(n == 2) Msg(STATUS,"Select Ending Point ('q'=quit)");
+    ib = SelectEntity(ENT_POINT, &v,&c,&s);
+    if(ib == 1) { /* left mouse butt */
+      p[n++] = v->Num; 
+    }
+    if(ib == 0) { /* 'q' */
+      n=0 ;
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+    if(n == 3){
+      add_circ(p[1],p[0],p[2],CTX.filename); /* begin, center, end */
+      ZeroHighlight(&M);
+      DrawUpdate();
+      n=0;
+    }
+  }
+  Msg(STATUS,"Ready");
 }
 void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
-  printf("new ellipsis\n");
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib;
+  static int n, p[100];
+
+  n=0;
+  while(1){
+    if(n == 0) Msg(STATUS,"Select Center ('q'=quit)");
+    if(n == 1) Msg(STATUS,"Select an Axis Point ('q'=quit)");
+    if(n == 2) Msg(STATUS,"Select Starting Point ('q'=quit)");
+    if(n == 3) Msg(STATUS,"Select Ending Point ('q'=quit)");
+    ib = SelectEntity(ENT_POINT, &v,&c,&s);
+    if(ib == 1) { /* left mouse butt */
+      p[n++] = v->Num; 
+    }
+    if(ib == 0){ /* 'q' */
+      n=0 ;
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+    if(n == 4){
+      add_ell(p[3],p[2],p[0],p[1],CTX.filename);
+      ZeroHighlight(&M);
+      DrawUpdate();
+      n=0;
+    }
+  }
+  Msg(STATUS,"Ready");
 }
+
+static void _new_surface_volume(int mode){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib, type, zone;
+  List_T  *Liste1, *Liste2;
+
+  Liste1 = List_Create(10,10,sizeof(int));
+  Liste2 = List_Create(10,10,sizeof(int));
+  
+  if(mode == 2)
+    type = ENT_SURFACE;
+  else
+    type = ENT_LINE;      
+  
+  while(1){      
+    List_Reset(Liste1);
+    List_Reset(Liste2);
+    
+    while(1) {        
+      Msg(STATUS,"Select Boundary ('q'=quit)");
+      ib = SelectEntity(type, &v,&c,&s);
+      if(ib <= 0){
+	ZeroHighlight(&M);
+	DrawUpdate();
+	goto stopall;
+      }       
+      if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
+	if(type==ENT_LINE) 
+	  add_loop(Liste1,CTX.filename,&zone);
+	else
+	  add_vol(Liste1,CTX.filename,&zone);
+	List_Reset(Liste1);
+	List_Add(Liste2,&zone);
+	while(1){
+	  Msg(STATUS,"Select Holes ('q'=quit)");
+	  ib = SelectEntity(type, &v,&c,&s); 
+	  if(ib <= 0){
+	    ZeroHighlight(&M);
+	    DrawUpdate();
+	    break;
+	  }
+	  if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
+	    if(type==ENT_LINE) 
+	      add_loop(Liste1,CTX.filename,&zone);
+	    else
+	      add_vol(Liste1,CTX.filename,&zone);
+	    List_Reset(Liste1);
+	    List_Add(Liste2,&zone);
+	  }
+	}
+	if(List_Nbr(Liste2)){
+	  switch(mode){
+	  case 0 : add_surf(Liste2,CTX.filename,0,1); break;
+	  case 1 : add_surf(Liste2,CTX.filename,0,2); break;
+	  case 2 : add_multvol(Liste2,CTX.filename); break;
+	  }
+	  ZeroHighlight(&M);
+	  DrawUpdate();
+	  break;
+	}
+      }
+    }
+  }
+  stopall : ;
+  List_Delete(Liste1);
+  List_Delete(Liste2);
+  Msg(STATUS,"Ready");
+}
+
 void geometry_elementary_add_new_planesurface_cb(CALLBACK_ARGS){
-  printf("new plane surf\n");
+  _new_surface_volume(0);
 }
 void geometry_elementary_add_new_ruledsurface_cb(CALLBACK_ARGS){
-  printf("new rules surf\n");
+  _new_surface_volume(1);
 }
 void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS){
-  printf("new vol\n");
+  _new_surface_volume(2);
 }
+
+
+static void _translate_point(int mode){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  while(1){
+    Msg(STATUS,"Select Point ('q'=quit)");
+    if(!SelectEntity(ENT_POINT, &v,&c,&s)){
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+    translate_pt(mode,v->Num,CTX.filename);
+    ZeroHighlight(&M);
+    DrawUpdate();
+  }
+}
+
+static void _translate_curve(int mode){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  while(1){
+    Msg(STATUS,"Select Line ('q'=quit)");
+    if(!SelectEntity(ENT_LINE, &v,&c,&s)){
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+    translate_seg(mode,c->Num,CTX.filename);
+    ZeroHighlight(&M);
+    DrawUpdate();
+  }
+}
+static void _translate_surface(int mode){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  while(1){
+    Msg(STATUS,"Select Surface ('q'=quit)");
+    if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+    translate_surf(mode,s->Num,CTX.filename);
+    ZeroHighlight(&M);
+    DrawUpdate();
+  }
+}
+
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_add_translate, 0);
 }
 void geometry_elementary_add_translate_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  printf("translate point\n");
+  _translate_point(1);
 }
 void geometry_elementary_add_translate_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  printf("translate curve\n");
+  _translate_curve(1);
 }
 void geometry_elementary_add_translate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  printf("translate surface\n");
+  _translate_surface(1);
 }
+void geometry_elementary_translate_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_translate, 0);
+}
+void geometry_elementary_translate_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
+  _translate_point(0);
+}
+void geometry_elementary_translate_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
+  _translate_curve(0);
+}
+void geometry_elementary_translate_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
+  _translate_surface(0);
+}
+
+
+
+
 void geometry_elementary_add_rotate_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_add_rotate, 0);
 }
@@ -582,51 +858,6 @@ void geometry_elementary_add_rotate_curve_cb(CALLBACK_ARGS){
 void geometry_elementary_add_rotate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
   printf("rotate surf\n");
-}
-void geometry_elementary_add_scale_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_add_scale, 0);
-}
-void geometry_elementary_add_scale_point_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(4);
-  printf("scale point\n");
-}
-void geometry_elementary_add_scale_curve_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(4);
-  printf("scale curve\n");
-}
-void geometry_elementary_add_scale_surface_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(4);
-  printf("scale surface\n");
-}
-void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_add_symmetry, 0);
-}
-void geometry_elementary_add_symmetry_point_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(5);
-  printf("symm point\n");
-}
-void geometry_elementary_add_symmetry_curve_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(5);
-  printf("symm curve\n");
-}
-void geometry_elementary_add_symmetry_surface_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(5);
-  printf("symm surf\n");
-}
-void geometry_elementary_translate_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_translate, 0);
-}
-void geometry_elementary_translate_point_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(2);
-  printf("translate point\n");
-}
-void geometry_elementary_translate_curve_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(2);
-  printf("translate curve\n");
-}
-void geometry_elementary_translate_surface_cb(CALLBACK_ARGS){
-  WID->create_geometry_context_window(2);
-  printf("translate surf\n");
 }
 void geometry_elementary_rotate_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_rotate, 0);
@@ -643,6 +874,24 @@ void geometry_elementary_rotate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
   printf("rot surf\n");
 }
+
+
+
+void geometry_elementary_add_scale_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_add_scale, 0);
+}
+void geometry_elementary_add_scale_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale point\n");
+}
+void geometry_elementary_add_scale_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale curve\n");
+}
+void geometry_elementary_add_scale_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale surface\n");
+}
 void geometry_elementary_scale_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_scale, 0);
 }
@@ -657,6 +906,25 @@ void geometry_elementary_scale_curve_cb(CALLBACK_ARGS){
 void geometry_elementary_scale_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(4);
   printf("scale surf\n");
+}
+
+
+
+
+void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_add_symmetry, 0);
+}
+void geometry_elementary_add_symmetry_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
+  printf("symm point\n");
+}
+void geometry_elementary_add_symmetry_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
+  printf("symm curve\n");
+}
+void geometry_elementary_add_symmetry_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
+  printf("symm surf\n");
 }
 void geometry_elementary_symmetry_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_symmetry, 0);
@@ -673,6 +941,9 @@ void geometry_elementary_symmetry_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(5);
   printf("symm surf\n");
 }
+
+
+
 void geometry_elementary_extrude_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_extrude, 0);
 }
