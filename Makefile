@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2000-12-10 14:16:31 geuzaine Exp $
+# $Id: Makefile,v 1.19 2000-12-10 14:44:58 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -258,7 +258,7 @@ mesa_threads:
 
 dec: little_endian ogl
 
-linux: little_endian_threads mesa_threads
+linux: little_endian mesa
 
 ibm: big_endian mesa
 
