@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.10 2000-12-20 10:40:52 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.11 2000-12-29 10:27:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,7 +10,7 @@
 
 extern Context_T   CTX;
 
-#ifdef _UNIX
+#ifdef _XMOTIF
 #include "XContext.h"
 extern XContext_T  XCTX;
 #define FONTHEIGHT  XCTX.xfont.helve_h
@@ -43,7 +43,7 @@ void Draw_String(char *s){
 }
 
 
-#ifdef _UNIX
+#ifdef _XMOTIF
 static int          dir,ascent, descent;
 static XCharStruct  overall;
 #define CHECK_W                                                                         \

@@ -12,8 +12,6 @@ typedef long int       count_int;
 
 /* PPM handling */
 
-#define PPM_MAXMAXVAL  1023
-
 #define PPM_GETR(p)    (((p) & 0x3ff00000) >> 20)
 #define PPM_GETG(p)    (((p) & 0xffc00) >> 10)
 #define PPM_GETB(p)    ((p) & 0x3ff)

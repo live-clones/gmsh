@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.26 2000-12-26 20:45:42 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.27 2000-12-29 10:27:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -2573,6 +2573,7 @@ void CreateWidgets_PD(Widgets_T *w){
   XtManageChild(w->PD.vectorFrame[1][0]);
 
   i=0;
+  XtSetArg(arg[i], XmNnumColumns, 2); i++;
   w->PD.vectorTypeCheck = XmCreateRadioBox(w->PD.vectorFrame[0][0], "PDvectorTypeCheck", arg, i);
   XtManageChild(w->PD.vectorTypeCheck);
 
@@ -2615,7 +2616,7 @@ void CreateWidgets_PD(Widgets_T *w){
   
   i=0;
   XtSetArg(arg[i], XmNminimum, 0); i++;
-  XtSetArg(arg[i], XmNmaximum, 200); i++;
+  XtSetArg(arg[i], XmNmaximum, 500); i++;
   XtSetArg(arg[i], XmNdecimalPoints, 2); i++;
   XtSetArg(arg[i], XmNshowValue, False); i++;
   XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;

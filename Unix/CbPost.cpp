@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.9 2000-12-08 10:56:51 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.10 2000-12-29 10:27:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -324,7 +324,7 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
                   (v->ArrowType == DRAW_POST_DISPLACEMENT)?True:False, NULL);
     sprintf(label, "%g", v->ArrowScale);
     XtVaSetValues(WID.PD.vectorScaleText, XmNvalue, label, NULL);
-    XtVaSetValues(WID.PD.vectorScaleScale, XmNvalue, THRESHOLD((int)v->ArrowScale,0,200), NULL);
+    XtVaSetValues(WID.PD.vectorScaleScale, XmNvalue, THRESHOLD((int)v->ArrowScale,0,500), NULL);
     XtVaSetValues(WID.PD.vectorLocationButt[0], XmNset, 
                   (v->ArrowLocation == DRAW_POST_LOCATE_COG)?True:False, NULL);
     XtVaSetValues(WID.PD.vectorLocationButt[1], XmNset, 
@@ -695,7 +695,7 @@ void ChangeViewParam (Post_View *v, XtPointer client_data, XtPointer call_data){
     break;
   case POST_VECTOR_SCALE_TEXT:    
     v->ArrowScale = atof(XmTextGetString(WID.PD.vectorScaleText));
-    XtVaSetValues(WID.PD.vectorScaleScale, XmNvalue, THRESHOLD((int)v->ArrowScale,0,200), NULL);
+    XtVaSetValues(WID.PD.vectorScaleScale, XmNvalue, THRESHOLD((int)v->ArrowScale,0,500), NULL);
     XmUpdateDisplay(WID.PD.vectorScaleScale);
     v->Changed = 1;
     break;

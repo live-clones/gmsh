@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2000-12-08 10:56:51 geuzaine Exp $
+# $Id: Makefile,v 1.6 2000-12-29 10:27:00 geuzaine Exp $
 #
 # Makefile for "libUnix.a"
 #
@@ -9,7 +9,7 @@ CC            = c++
 C_FLAGS       = -g -Wall
 
 VERSION_FLAGS = -D_NOTHREADS
-OS_FLAGS      = -D_UNIX 
+OS_FLAGS      = -D_XMOTIF 
 
 GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
                 -I$(HOME)/SOURCES/Mesa-3.1/include/GL
@@ -31,7 +31,6 @@ SRC = Main.cpp \
       Geometry.cpp \
       Register.cpp \
       Pixmaps.cpp \
-      XDump.cpp \
       XColors.cpp \
       Message.cpp \
       CbContext.cpp \
@@ -71,106 +70,103 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
- ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
- ../Common/ColorTable.h ../Common/Context.h ../Parser/Parser.h \
- ../Geo/MinMax.h Widgets.h Pixmaps.h XColors.h XContext.h \
- XRessources.h CbContext.h CbGeom.h Register.h Geometry.h \
- ../Common/Static.h XStatic.h ../Common/Version.h
+Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshUI.h ../Geo/Geo.h ../Geo/Verif.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h \
+  ../Common/Context.h ../Parser/Parser.h ../Geo/MinMax.h Widgets.h \
+  Pixmaps.h XColors.h XContext.h XRessources.h CbContext.h CbGeom.h \
+  Register.h Geometry.h ../Common/Static.h XStatic.h ../Common/Version.h
 Widgets.o: Widgets.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Context.h \
- XContext.h Info.h Widgets.h Help.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Context.h XContext.h \
+  Info.h Widgets.h Help.h
 Geometry.o: Geometry.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
- ../Common/Context.h XContext.h Widgets.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Common/Context.h XContext.h Widgets.h
 Register.o: Register.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
- ../Common/Context.h XContext.h Widgets.h Register.h CbOptions.h \
- CbContext.h CbFile.h CbGeom.h CbMesh.h CbPost.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Common/Context.h XContext.h Widgets.h Register.h CbOptions.h \
+  CbContext.h CbFile.h CbGeom.h CbMesh.h CbPost.h
 Pixmaps.o: Pixmaps.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h Widgets.h \
- ../Common/Context.h Pixmaps.h Bitmaps.h XColors.h
-XDump.o: XDump.cpp
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h Widgets.h \
+  ../Common/Context.h Pixmaps.h Bitmaps.h XColors.h
 XColors.o: XColors.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h XContext.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h XContext.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
- ../Common/Version.h ../Common/Context.h Widgets.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Common/Version.h ../Common/Context.h Widgets.h
 CbContext.o: CbContext.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
- ../Common/Context.h XContext.h CbContext.h CbGeom.h CbMesh.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
+  ../Common/Context.h XContext.h CbContext.h CbGeom.h CbMesh.h
 CbPost.o: CbPost.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
- ../Common/Context.h XContext.h Main.h CbPost.h CbGeom.h CbMesh.h \
- CbColorbar.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
+  ../Common/Context.h XContext.h Main.h CbPost.h CbGeom.h CbMesh.h \
+  CbColorbar.h
 CbColorbar.o: CbColorbar.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
- ../Common/Const.h XColors.h Widgets.h Register.h ../Common/Context.h \
- XContext.h ../Common/ColorTable.h CbColorbar.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Common/Const.h XColors.h Widgets.h Register.h ../Common/Context.h \
+  XContext.h ../Common/ColorTable.h CbColorbar.h
 CbGeom.o: CbGeom.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
- ../Common/Context.h ../Geo/Verif.h Main.h CbGeom.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
+  ../Common/Context.h ../Geo/Verif.h Main.h CbGeom.h
 CbMesh.o: CbMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h CbMesh.h \
- ../Common/Context.h Widgets.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h CbMesh.h \
+  ../Common/Context.h Widgets.h
 CbOptions.o: CbOptions.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
- ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
- ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
- ../Common/ColorTable.h Widgets.h Pixmaps.h ../Common/Context.h \
- XContext.h Register.h CbGeneral.h CbOptions.h CbGeom.h CbMesh.h \
- CbPost.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
+  ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
+  ../Common/ColorTable.h Widgets.h Pixmaps.h ../Common/Context.h \
+  XContext.h Register.h CbGeneral.h CbOptions.h CbGeom.h CbMesh.h \
+  CbPost.h
 CbFile.o: CbFile.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h Main.h \
- ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
- ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Widgets.h \
- ../Common/Context.h XContext.h CbFile.h CbColorbar.h XDump.h \
- ../Graphics/gl2ps.h ../Graphics/gl2gif.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h Main.h \
+  ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Widgets.h \
+  ../Common/Context.h CbFile.h CbColorbar.h
 CbInput.o: CbInput.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
- ../Common/Context.h XContext.h Register.h CbContext.h CbGeneral.h \
- CbGeom.h CbPost.h CbMesh.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Widgets.h \
+  ../Common/Context.h XContext.h Register.h CbContext.h CbGeneral.h \
+  CbGeom.h CbPost.h CbMesh.h
 CbGeneral.o: CbGeneral.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h \
- ../Common/Context.h XContext.h Widgets.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h \
+  ../Common/Context.h XContext.h Widgets.h

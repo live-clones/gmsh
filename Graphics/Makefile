@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2000-12-26 17:40:18 geuzaine Exp $
+# $Id: Makefile,v 1.10 2000-12-29 10:27:00 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -9,7 +9,7 @@ CC            = c++
 C_FLAGS       = -g -Wall
 
 VERSION_FLAGS = 
-OS_FLAGS      = -D_UNIX
+OS_FLAGS      = -D_XMOTIF
 
 GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
                 -I$(HOME)/SOURCES/Mesa-3.1/include/GL
@@ -34,6 +34,8 @@ SRC = Draw.cpp \
       Entity.cpp \
       Scale.cpp \
       Axes.cpp \
+      CreateFile.cpp \
+      XDump.cpp\
       gl2ps.cpp\
       gl2gif.cpp\
       gl2jpeg.cpp\
@@ -124,13 +126,23 @@ Axes.o: Axes.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/Context.h
+CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Unix/Main.h \
+  ../Common/Const.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/Context.h ../Unix/Widgets.h ../Unix/XContext.h XDump.h \
+  gl2ps.h gl2gif.h gl2jpeg.h gl2ppm.h gl2yuv.h
+XDump.o: XDump.cpp
 gl2ps.o: gl2ps.cpp gl2ps.h
-gl2gif.o: gl2gif.cpp gl2gif.h
+gl2gif.o: gl2gif.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h gl2gif.h
 gl2jpeg.o: gl2jpeg.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
-  ../Common/Context.h ../jpeg/jpeglib.h ../jpeg/jconfig.h \
-  ../jpeg/jmorecfg.h ../jpeg/jerror.h
+  ../jpeg/jpeglib.h ../jpeg/jconfig.h ../jpeg/jmorecfg.h ../jpeg/jerror.h
 gl2ppm.o: gl2ppm.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h

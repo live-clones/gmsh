@@ -1,4 +1,4 @@
-/* $Id: gl2gif.cpp,v 1.5 2000-12-28 18:57:05 geuzaine Exp $ */
+/* $Id: gl2gif.cpp,v 1.6 2000-12-29 10:27:00 geuzaine Exp $ */
 /* 
  * gl2gif: an OpenGL to GIF printing library
  *
@@ -42,7 +42,7 @@
    ------------------------------------------------------------------ */
 
 #define HASH_SIZE 20023
-#define ppm_hashpixel(p) ( ( (int) (p) & 0xfffffffful ) % HASH_SIZE )
+#define ppm_hashpixel(p) ( ( (int) (p) & 0x7fffffff ) % HASH_SIZE )
 
 static int     static_red[MAX_GIFCOLORS];
 static int     static_green[MAX_GIFCOLORS];
@@ -266,6 +266,257 @@ static int GetPixel( int x, int y ){
   else
     color = static_perm[color];
   return color;
+}
+
+
+/* ------------------------------------------------------------------
+   PPM quantization
+   ------------------------------------------------------------------ */
+
+/* #define LARGE_NORM */
+#define LARGE_LUM
+
+/* #define REP_CENTER_BOX */
+/* #define REP_AVERAGE_COLORS */
+#define REP_AVERAGE_PIXELS
+
+typedef struct box* box_vector;
+struct box{
+  int ind;
+  int colors;
+  int sum;
+};
+
+static int redcompare( const void *ch1, const void *ch2 ){
+  return (int) PPM_GETR( ((colorhist_vector)ch1)->color ) - 
+    (int) PPM_GETR( ((colorhist_vector)ch2)->color );
+}
+
+static int greencompare( const void *ch1, const void *ch2 ) {
+  return (int) PPM_GETG(((colorhist_vector) ch1)->color ) - 
+    (int) PPM_GETG( ((colorhist_vector)ch2)->color );
+}
+
+static int bluecompare(const void *ch1, const void *ch2 ) {
+  return (int) PPM_GETB(((colorhist_vector)ch1)->color ) - 
+    (int) PPM_GETB(((colorhist_vector)ch2)->color );
+}
+
+static int sumcompare(const void *b1, const void *b2 ) {
+  return(((box_vector)b2)->sum - ((box_vector)b1)->sum);
+}
+
+/*
+ * Here is the fun part, the median-cut colormap generator.  This is based
+ * on Paul Heckbert's paper "Color Image Quantization for Frame Buffer
+ * Display", SIGGRAPH '82 Proceedings, page 297.
+ */
+
+static colorhist_vector mediancut( colorhist_vector chv, int colors, 
+				   int sum, pixval maxval, int newcolors ){
+  colorhist_vector colormap;
+  box_vector bv;
+  register int bi, i;
+  int boxes;
+  
+  bv = (box_vector) malloc( sizeof(struct box) * newcolors );
+  colormap =
+    (colorhist_vector) malloc( sizeof(struct colorhist_item) * newcolors );
+  if ( bv == (box_vector) 0 || colormap == (colorhist_vector) 0 )
+    Msg(ERROR,  "GIF: out of memory" );
+  for ( i = 0; i < newcolors; ++i )
+    PPM_ASSIGN( colormap[i].color, 0, 0, 0 );
+  
+  /*
+   * Set up the initial box.
+   */
+  bv[0].ind = 0;
+  bv[0].colors = colors;
+  bv[0].sum = sum;
+  boxes = 1;
+  
+  /*
+   * Main loop: split boxes until we have enough.
+   */
+  while ( boxes < newcolors ){
+    register int indx, clrs;
+    int sm;
+    register int minr, maxr, ming, maxg, minb, maxb, v;
+    int halfsum, lowersum;
+    
+    /*
+    * Find the first splittable box.
+    */
+    for ( bi = 0; bi < boxes; ++bi )
+      if ( bv[bi].colors >= 2 )
+	break;
+    if ( bi == boxes )
+      break;	/* ran out of colors! */
+    indx = bv[bi].ind;
+    clrs = bv[bi].colors;
+    sm = bv[bi].sum;
+    
+    /*
+     * Go through the box finding the minimum and maximum of each
+     * component - the boundaries of the box.
+     */
+    minr = maxr = PPM_GETR( chv[indx].color );
+    ming = maxg = PPM_GETG( chv[indx].color );
+    minb = maxb = PPM_GETB( chv[indx].color );
+    for ( i = 1; i < clrs; ++i ){
+      v = PPM_GETR( chv[indx + i].color );
+      if ( v < minr ) minr = v;
+      if ( v > maxr ) maxr = v;
+      v = PPM_GETG( chv[indx + i].color );
+      if ( v < ming ) ming = v;
+      if ( v > maxg ) maxg = v;
+      v = PPM_GETB( chv[indx + i].color );
+      if ( v < minb ) minb = v;
+      if ( v > maxb ) maxb = v;
+    }
+    
+    /*
+     * Find the largest dimension, and sort by that component.  I have
+     * included two methods for determining the "largest" dimension;
+     * first by simply comparing the range in RGB space, and second
+     * by transforming into luminosities before the comparison.  You
+     * can switch which method is used by switching the commenting on
+     * the LARGE_ defines at the beginning of this source file.
+     */
+#ifdef LARGE_NORM
+    if ( maxr - minr >= maxg - ming && maxr - minr >= maxb - minb )
+      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
+	     redcompare );
+    else if ( maxg - ming >= maxb - minb )
+      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
+	     greencompare );
+    else
+      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
+	     bluecompare );
+#endif 
+
+#ifdef LARGE_LUM
+    pixel p;
+    float rl, gl, bl;
+
+    PPM_ASSIGN(p, maxr - minr, 0, 0);
+    rl = PPM_LUMIN(p);
+    PPM_ASSIGN(p, 0, maxg - ming, 0);
+    gl = PPM_LUMIN(p);
+    PPM_ASSIGN(p, 0, 0, maxb - minb);
+    bl = PPM_LUMIN(p);
+    
+    if ( rl >= gl && rl >= bl )
+      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
+	     &redcompare );
+    else if ( gl >= bl )
+      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
+	     &greencompare );
+    else
+      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
+	     &bluecompare );
+#endif
+    
+    /*
+     * Now find the median based on the counts, so that about half the
+     * pixels (not colors, pixels) are in each subdivision.
+     */
+    lowersum = chv[indx].value;
+    halfsum = sm / 2;
+    for ( i = 1; i < clrs - 1; ++i ){
+      if ( lowersum >= halfsum )
+	break;
+      lowersum += chv[indx + i].value;
+    }
+    
+    /*
+    * Split the box, and sort to bring the biggest boxes to the top.
+    */
+    bv[bi].colors = i;
+    bv[bi].sum = lowersum;
+    bv[boxes].ind = indx + i;
+    bv[boxes].colors = clrs - i;
+    bv[boxes].sum = sm - lowersum;
+    ++boxes;
+    qsort( (char*) bv, boxes, sizeof(struct box), sumcompare );
+  }
+
+  /*
+   * Ok, we've got enough boxes.  Now choose a representative color for
+   * each box.  There are a number of possible ways to make this choice.
+   * One would be to choose the center of the box; this ignores any structure
+   * within the boxes.  Another method would be to average all the colors in
+   * the box - this is the method specified in Heckbert's paper.  A third
+   * method is to average all the pixels in the box.  You can switch which
+   * method is used by switching the commenting on the REP_ defines at
+   * the beginning of this source file.
+   */
+  for ( bi = 0; bi < boxes; ++bi ){
+
+#ifdef REP_CENTER_BOX
+    register int indx = bv[bi].ind;
+    register int clrs = bv[bi].colors;
+    register int minr, maxr, ming, maxg, minb, maxb, v;
+    
+    minr = maxr = PPM_GETR( chv[indx].color );
+    ming = maxg = PPM_GETG( chv[indx].color );
+    minb = maxb = PPM_GETB( chv[indx].color );
+    for ( i = 1; i < clrs; ++i ){
+      v = PPM_GETR( chv[indx + i].color );
+      minr = min( minr, v );
+      maxr = max( maxr, v );
+      v = PPM_GETG( chv[indx + i].color );
+      ming = min( ming, v );
+      maxg = max( maxg, v );
+      v = PPM_GETB( chv[indx + i].color );
+      minb = min( minb, v );
+      maxb = max( maxb, v );
+    }
+    PPM_ASSIGN( colormap[bi].color, ( minr + maxr ) / 2, ( ming + maxg ) / 2,
+		( minb + maxb ) / 2 );
+#endif
+
+#ifdef REP_AVERAGE_COLORS
+    register int indx = bv[bi].ind;
+    register int clrs = bv[bi].colors;
+    register long r = 0, g = 0, b = 0;
+    
+    for ( i = 0; i < clrs; ++i ){
+      r += PPM_GETR( chv[indx + i].color );
+      g += PPM_GETG( chv[indx + i].color );
+      b += PPM_GETB( chv[indx + i].color );
+    }
+    r = r / clrs;
+    g = g / clrs;
+    b = b / clrs;
+    PPM_ASSIGN( colormap[bi].color, r, g, b );
+#endif
+
+#ifdef REP_AVERAGE_PIXELS
+    register int indx = bv[bi].ind;
+    register int clrs = bv[bi].colors;
+    register long r = 0, g = 0, b = 0, sum = 0;
+    
+    for ( i = 0; i < clrs; ++i ){
+      r += PPM_GETR( chv[indx + i].color ) * chv[indx + i].value;
+      g += PPM_GETG( chv[indx + i].color ) * chv[indx + i].value;
+      b += PPM_GETB( chv[indx + i].color ) * chv[indx + i].value;
+      sum += chv[indx + i].value;
+    }
+    r = r / sum;
+    if ( r > (long)maxval ) r = maxval;	/* avoid math errors */
+    g = g / sum;
+    if ( g > (long)maxval ) g = maxval;
+    b = b / sum;
+    if ( b > (long)maxval ) b = maxval;
+    PPM_ASSIGN( colormap[bi].color, r, g, b );
+#endif
+  }
+  
+  /*
+   * All done.
+   */
+  return colormap;
 }
 
 
@@ -844,258 +1095,6 @@ static void GIFEncode( FILE* fp,
 
 
 /* ------------------------------------------------------------------
-   PPM quantization
-   ------------------------------------------------------------------ */
-
-/* #define LARGE_NORM */
-#define LARGE_LUM
-
-/* #define REP_CENTER_BOX */
-/* #define REP_AVERAGE_COLORS */
-#define REP_AVERAGE_PIXELS
-
-typedef struct box* box_vector;
-struct box{
-  int ind;
-  int colors;
-  int sum;
-};
-
-static int redcompare( const void *ch1, const void *ch2 ){
-  return (int) PPM_GETR( ((colorhist_vector)ch1)->color ) - 
-    (int) PPM_GETR( ((colorhist_vector)ch2)->color );
-}
-
-static int greencompare( const void *ch1, const void *ch2 ) {
-  return (int) PPM_GETG(((colorhist_vector) ch1)->color ) - 
-    (int) PPM_GETG( ((colorhist_vector)ch2)->color );
-}
-
-static int bluecompare(const void *ch1, const void *ch2 ) {
-  return (int) PPM_GETB(((colorhist_vector)ch1)->color ) - 
-    (int) PPM_GETB(((colorhist_vector)ch2)->color );
-}
-
-static int sumcompare(const void *b1, const void *b2 ) {
-  return(((box_vector)b2)->sum - ((box_vector)b1)->sum);
-}
-
-/*
- * Here is the fun part, the median-cut colormap generator.  This is based
- * on Paul Heckbert's paper "Color Image Quantization for Frame Buffer
- * Display", SIGGRAPH '82 Proceedings, page 297.
- */
-
-static colorhist_vector mediancut( colorhist_vector chv, int colors, 
-				   int sum, pixval maxval, int newcolors ){
-  colorhist_vector colormap;
-  box_vector bv;
-  register int bi, i;
-  int boxes;
-  
-  bv = (box_vector) malloc( sizeof(struct box) * newcolors );
-  colormap =
-    (colorhist_vector) malloc( sizeof(struct colorhist_item) * newcolors );
-  if ( bv == (box_vector) 0 || colormap == (colorhist_vector) 0 )
-    Msg(ERROR,  "GIF: out of memory" );
-  for ( i = 0; i < newcolors; ++i )
-    PPM_ASSIGN( colormap[i].color, 0, 0, 0 );
-  
-  /*
-   * Set up the initial box.
-   */
-  bv[0].ind = 0;
-  bv[0].colors = colors;
-  bv[0].sum = sum;
-  boxes = 1;
-  
-  /*
-   * Main loop: split boxes until we have enough.
-   */
-  while ( boxes < newcolors ){
-    register int indx, clrs;
-    int sm;
-    register int minr, maxr, ming, maxg, minb, maxb, v;
-    int halfsum, lowersum;
-    
-    /*
-    * Find the first splittable box.
-    */
-    for ( bi = 0; bi < boxes; ++bi )
-      if ( bv[bi].colors >= 2 )
-	break;
-    if ( bi == boxes )
-      break;	/* ran out of colors! */
-    indx = bv[bi].ind;
-    clrs = bv[bi].colors;
-    sm = bv[bi].sum;
-    
-    /*
-     * Go through the box finding the minimum and maximum of each
-     * component - the boundaries of the box.
-     */
-    minr = maxr = PPM_GETR( chv[indx].color );
-    ming = maxg = PPM_GETG( chv[indx].color );
-    minb = maxb = PPM_GETB( chv[indx].color );
-    for ( i = 1; i < clrs; ++i ){
-      v = PPM_GETR( chv[indx + i].color );
-      if ( v < minr ) minr = v;
-      if ( v > maxr ) maxr = v;
-      v = PPM_GETG( chv[indx + i].color );
-      if ( v < ming ) ming = v;
-      if ( v > maxg ) maxg = v;
-      v = PPM_GETB( chv[indx + i].color );
-      if ( v < minb ) minb = v;
-      if ( v > maxb ) maxb = v;
-    }
-    
-    /*
-     * Find the largest dimension, and sort by that component.  I have
-     * included two methods for determining the "largest" dimension;
-     * first by simply comparing the range in RGB space, and second
-     * by transforming into luminosities before the comparison.  You
-     * can switch which method is used by switching the commenting on
-     * the LARGE_ defines at the beginning of this source file.
-     */
-#ifdef LARGE_NORM
-    if ( maxr - minr >= maxg - ming && maxr - minr >= maxb - minb )
-      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
-	     redcompare );
-    else if ( maxg - ming >= maxb - minb )
-      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
-	     greencompare );
-    else
-      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
-	     bluecompare );
-#endif 
-
-#ifdef LARGE_LUM
-    pixel p;
-    float rl, gl, bl;
-
-    PPM_ASSIGN(p, maxr - minr, 0, 0);
-    rl = PPM_LUMIN(p);
-    PPM_ASSIGN(p, 0, maxg - ming, 0);
-    gl = PPM_LUMIN(p);
-    PPM_ASSIGN(p, 0, 0, maxb - minb);
-    bl = PPM_LUMIN(p);
-    
-    if ( rl >= gl && rl >= bl )
-      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
-	     &redcompare );
-    else if ( gl >= bl )
-      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
-	     &greencompare );
-    else
-      qsort( (char*) &(chv[indx]), clrs, sizeof(struct colorhist_item),
-	     &bluecompare );
-#endif
-    
-    /*
-     * Now find the median based on the counts, so that about half the
-     * pixels (not colors, pixels) are in each subdivision.
-     */
-    lowersum = chv[indx].value;
-    halfsum = sm / 2;
-    for ( i = 1; i < clrs - 1; ++i ){
-      if ( lowersum >= halfsum )
-	break;
-      lowersum += chv[indx + i].value;
-    }
-    
-    /*
-    * Split the box, and sort to bring the biggest boxes to the top.
-    */
-    bv[bi].colors = i;
-    bv[bi].sum = lowersum;
-    bv[boxes].ind = indx + i;
-    bv[boxes].colors = clrs - i;
-    bv[boxes].sum = sm - lowersum;
-    ++boxes;
-    qsort( (char*) bv, boxes, sizeof(struct box), sumcompare );
-  }
-
-  /*
-   * Ok, we've got enough boxes.  Now choose a representative color for
-   * each box.  There are a number of possible ways to make this choice.
-   * One would be to choose the center of the box; this ignores any structure
-   * within the boxes.  Another method would be to average all the colors in
-   * the box - this is the method specified in Heckbert's paper.  A third
-   * method is to average all the pixels in the box.  You can switch which
-   * method is used by switching the commenting on the REP_ defines at
-   * the beginning of this source file.
-   */
-  for ( bi = 0; bi < boxes; ++bi ){
-
-#ifdef REP_CENTER_BOX
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register int minr, maxr, ming, maxg, minb, maxb, v;
-    
-    minr = maxr = PPM_GETR( chv[indx].color );
-    ming = maxg = PPM_GETG( chv[indx].color );
-    minb = maxb = PPM_GETB( chv[indx].color );
-    for ( i = 1; i < clrs; ++i ){
-      v = PPM_GETR( chv[indx + i].color );
-      minr = min( minr, v );
-      maxr = max( maxr, v );
-      v = PPM_GETG( chv[indx + i].color );
-      ming = min( ming, v );
-      maxg = max( maxg, v );
-      v = PPM_GETB( chv[indx + i].color );
-      minb = min( minb, v );
-      maxb = max( maxb, v );
-    }
-    PPM_ASSIGN( colormap[bi].color, ( minr + maxr ) / 2, ( ming + maxg ) / 2,
-		( minb + maxb ) / 2 );
-#endif
-
-#ifdef REP_AVERAGE_COLORS
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register long r = 0, g = 0, b = 0;
-    
-    for ( i = 0; i < clrs; ++i ){
-      r += PPM_GETR( chv[indx + i].color );
-      g += PPM_GETG( chv[indx + i].color );
-      b += PPM_GETB( chv[indx + i].color );
-    }
-    r = r / clrs;
-    g = g / clrs;
-    b = b / clrs;
-    PPM_ASSIGN( colormap[bi].color, r, g, b );
-#endif
-
-#ifdef REP_AVERAGE_PIXELS
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register long r = 0, g = 0, b = 0, sum = 0;
-    
-    for ( i = 0; i < clrs; ++i ){
-      r += PPM_GETR( chv[indx + i].color ) * chv[indx + i].value;
-      g += PPM_GETG( chv[indx + i].color ) * chv[indx + i].value;
-      b += PPM_GETB( chv[indx + i].color ) * chv[indx + i].value;
-      sum += chv[indx + i].value;
-    }
-    r = r / sum;
-    if ( r > (long)maxval ) r = maxval;	/* avoid math errors */
-    g = g / sum;
-    if ( g > (long)maxval ) g = maxval;
-    b = b / sum;
-    if ( b > (long)maxval ) b = maxval;
-    PPM_ASSIGN( colormap[bi].color, r, g, b );
-#endif
-  }
-  
-  /*
-   * All done.
-   */
-  return colormap;
-}
-
-
-
-/* ------------------------------------------------------------------
    GL2GIF public routine
    ------------------------------------------------------------------ */
 
@@ -1115,15 +1114,14 @@ void create_gif(FILE *outfile, int width, int height,
   colorhash_table cht;
   register pixel* pP;
   register int col, row, limitcol, ind;
-  int newcolors=255;
+  int newcolors=256;
   long *thisrerr, *nextrerr, *thisgerr, *nextgerr;
   long *thisberr, *nextberr, *temperr;
   register long sr=0, sg=0, sb=0, err=0;
   int fs_direction;
 
   /* This is stupid, but I couldn't figure out how to pack the data
-   directly from OpenGL frame buffer into the approproate format into
-   unsigned long pixel[][]. */
+   directly from the OpenGL frame buffer into unsigned long pixel[][] */
 
   glPixelStorei(GL_PACK_ALIGNMENT,1);
   glPixelStorei(GL_UNPACK_ALIGNMENT,1);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.31 2000-12-22 11:09:39 geuzaine Exp $
+# $Id: Makefile,v 1.32 2000-12-29 10:27:00 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -53,7 +53,7 @@ default: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -63,7 +63,7 @@ threads: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -73,7 +73,7 @@ profile: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=-O3 -pg" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -164,7 +164,7 @@ bb: tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX" \
+           "OS_FLAGS=" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=" \
            "MOTIF_INCLUDE=" \
@@ -175,7 +175,7 @@ bbn: tag
 	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \
            "CC=g++ -mno-cygwin -I/mingw/include" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX" \
+           "OS_FLAGS=" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=" \
            "MOTIF_INCLUDE=" \
@@ -220,7 +220,7 @@ compile_little_endian:
 	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -230,7 +230,7 @@ compile_little_endian_2952:
 	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -240,7 +240,7 @@ compile_little_endian_threads:
 	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-D_REENTRANT -O3" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_USETHREADS" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -250,7 +250,7 @@ compile_big_endian:
 	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX" \
+           "OS_FLAGS=-D_XMOTIF" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -263,7 +263,7 @@ compile_sgi:
            "C_FLAGS=-O2 -o32 -Olimit 3000" \
            "RANLIB=true"\
            "AR=CC -o32 -ar -o"\
-           "OS_FLAGS=-D_UNIX" \
+           "OS_FLAGS=-D_XMOTIF" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
@@ -273,7 +273,7 @@ compile_sgi:
            "C_FLAGS=-O1 -o32" \
            "AR=CC -o32 -ar -o"\
            "RANLIB=true"\
-           "OS_FLAGS=-D_UNIX" \
+           "OS_FLAGS=-D_XMOTIF" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \

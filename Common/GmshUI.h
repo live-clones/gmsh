@@ -1,8 +1,6 @@
-/* $Id: GmshUI.h,v 1.3 2000-11-23 14:11:28 geuzaine Exp $ */
+/* $Id: GmshUI.h,v 1.4 2000-12-29 10:27:00 geuzaine Exp $ */
 
-#ifdef _UNIX
-
-/* UNIX includes */
+#if defined(_XMOTIF) /* UNIX with X and Motif */
 
 #include <X11/keysym.h>
 #include <Xm/XmAll.h>
@@ -11,9 +9,11 @@
 #include <GL/glx.h>
 #include <GLwMDrawA.h>
 
-#else
+#elif defined(_FLTK) /* FLTK widget set */
 
-/* Windows includes */
+#error "Not ready yet for FLTK..."
+
+#elif defined(_WINDOWS) /* Pure Windows */
 
 #include<windows.h>
 #include <GL/gl.h>
@@ -21,5 +21,7 @@
 extern "C"{
 #include <GL/glaux.h>
 }
+
+#else
 
 #endif

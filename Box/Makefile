@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2000-11-25 15:26:10 geuzaine Exp $
+# $Id: Makefile,v 1.3 2000-12-29 10:27:00 geuzaine Exp $
 #
 # Makefile for ".a"
 #
@@ -9,7 +9,7 @@ CC            = c++
 C_FLAGS       = -g
 
 VERSION_FLAGS = 
-OS_FLAGS      = -D_UNIX 
+OS_FLAGS      = 
 
 RM       = rm
 RMFLAGS  = -f

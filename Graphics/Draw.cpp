@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.13 2000-12-27 10:07:20 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.14 2000-12-29 10:27:00 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,7 +10,7 @@
 
 #include "CbGeneral.h"
 
-#ifdef _UNIX
+#ifdef _XMOTIF
 #include "Widgets.h"
 #include "XContext.h"
 extern XContext_T   XCTX ;
@@ -80,7 +80,7 @@ void Draw2d(void){
   glPopMatrix();
 }
 
-#ifdef _UNIX
+#ifdef _XMOTIF
 void Draw(void){
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
                UNPACK_GREEN(CTX.color.bg)/255.,
@@ -171,12 +171,12 @@ void Orthogonalize(int x, int y){
 /*  i n i t                                                                 */
 /* ------------------------------------------------------------------------ */
 
-#ifdef _UNIX
+#ifdef _XMOTIF
 #include <X11/IntrinsicP.h>
 #endif
 
 void Init(void){
-#ifdef _UNIX
+#ifdef _XMOTIF
   /* Resize Graphical Window if told to do it */
   XWindowAttributes  xattrib;
   XGetWindowAttributes(XtDisplay(WID.G.bottomForm),XtWindow(WID.G.bottomForm),&xattrib);
@@ -193,7 +193,7 @@ void Init(void){
 }
 
 void InitOv(void){
-#ifdef _UNIX
+#ifdef _XMOTIF
   glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
 #endif
   Orthogonalize(0,0);
@@ -329,7 +329,7 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
 }
 
 
-#ifdef _UNIX
+#ifdef _XMOTIF
 
 int check_type(int type, Vertex *v, Curve *c, Surface *s){
   return ( (type==ENT_POINT   && v) ||
@@ -416,7 +416,7 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 /*  InitCb, ResizeCb, ExposeCb                                              */
 /* ------------------------------------------------------------------------ */
 
-#ifdef _UNIX
+#ifdef _XMOTIF
 
 void InitCb(Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
   glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);

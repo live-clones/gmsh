@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2000-12-12 15:26:14 geuzaine Exp $
+# $Id: Makefile,v 1.10 2000-12-29 10:27:00 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -8,7 +8,7 @@
 CC        = c++
 C_FLAGS   = -g -Wall
 
-OS_FLAGS  = -D_UNIX
+OS_FLAGS  = -D_XMOTIF
 
 AR       = ar ruvs
 RANLIB   = ranlib
@@ -58,17 +58,17 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h ../Geo/CAD.h \
- ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h Gmsh.tab.cpp.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Gmsh.tab.cpp.h
 Gmsh.tab.o: Gmsh.tab.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
- ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
- ../Mesh/Create.h ../Common/Views.h ../Common/ColorTable.h \
- ../Geo/StepGeomDatabase.h ../Common/Options.h ../Graphics/Draw.h \
- ../Common/Colors.h Parser.h ../Unix/Main.h FunctionManager.h
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
+  ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
+  ../Mesh/Create.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Geo/StepGeomDatabase.h ../Common/Options.h ../Graphics/Draw.h \
+  ../Common/Colors.h Parser.h ../Unix/Main.h FunctionManager.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h
