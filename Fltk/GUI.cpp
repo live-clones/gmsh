@@ -249,9 +249,12 @@ int GUI::global_shortcuts(int event){
   if(event != FL_SHORTCUT) return 0 ;
 
   // test...
-  if(Fl::test_shortcut(FL_CTRL+'z')){
-    gen_butt[0]->do_callback();
-    printf("CACACACAC\n");
+  if(Fl::test_shortcut('e')){
+    end_selection = 1;
+    return 1;
+  }
+  else if(Fl::test_shortcut('q')){
+    quit_selection = 1;
     return 1;
   }
 

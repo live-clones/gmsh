@@ -97,3 +97,6 @@ Physical Surface(100) = {6} ;
 // description of the mesh and post-processing formats, see the FORMATS
 // file.
 
+Characteristic Length {2 ,2 ,2 ,2 ,2 ,1 ,1 ,1 ,1 } = 1.0;
+Characteristic Length {1 ,1 ,1 ,1 ,1 ,4 ,4 ,4 ,4 } = 1.0;
+Characteristic Length {2 ,2 ,2 ,2 ,2 ,2 } = 1.0;

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.9 2001-01-10 21:20:39 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.10 2001-01-11 07:32:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -109,21 +109,23 @@ int check_type(int type, Vertex *v, Curve *c, Surface *s){
 }
 
 int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
-  return 0;
-  /*
-  int             hits;
-  GLuint          ii[SELECTION_BUFFER_SIZE],jj[SELECTION_BUFFER_SIZE];
-  int event;
+  int     hits;
+  GLuint  ii[SELECTION_BUFFER_SIZE],jj[SELECTION_BUFFER_SIZE];
 
   *v = NULL; *c = NULL; *s = NULL;
-
-  printf("select entity...\n");
-
+  
+  WID->quit_selection = 0;
+  WID->end_selection = 0;
+  
   while(1){
     Fl::check();
-    if((event = Fl::event_key())){
-      if(event == 'q') return(0);
-      if(event == 'e') return(-1);
+    if(WID->quit_selection){
+      WID->quit_selection = 0;
+      return 0;
+    }
+    if(WID->end_selection){
+      WID->end_selection = 0;
+      return -1;
     }
     if(Fl::event_is_click()){
       Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
@@ -136,7 +138,7 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
       }
     }
   }
-  */
+
 }
 
 

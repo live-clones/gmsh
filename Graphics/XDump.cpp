@@ -1,4 +1,4 @@
-// $Id: XDump.cpp,v 1.3 2001-01-09 19:40:56 remacle Exp $
+// $Id: XDump.cpp,v 1.4 2001-01-11 07:34:25 geuzaine Exp $
 
 /* This is a modified version for Gmsh (mainly for c++ compliance) */
 
@@ -56,10 +56,7 @@
  * 12 so a correct file is written.  BEP July-21-95
  */
 
-#ifdef WIN32
-
-#else
-
+#ifndef WIN32
 
 typedef struct {
         unsigned int /*long*/ pixel;
@@ -456,3 +453,4 @@ void Window_Dump(Display *display, int scr, Window window, FILE *out){
     XDestroyImage(image);
 }
 #endif
+

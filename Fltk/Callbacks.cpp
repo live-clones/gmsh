@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.12 2001-01-10 21:28:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.13 2001-01-11 07:32:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -60,9 +60,47 @@ void MarkAllViewsChanged(int action){
   }
 }
 
+#ifdef _USETHREADS
+
+#include <pthread.h>
+
+int        MeshDim ;
+pthread_t  MeshThread ;
+
+void* StartMeshThread(void * data){
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+  mai3d(&M,MeshDim);
+  Msg(STATUS,"Ready");
+  CTX.mesh.draw = 1;
+  CTX.threads_lock = 0;
+  XtSetSensitive(WID.G.Butt[6], 0);
+  Init();
+  Draw();
+  pthread_exit(NULL);
+  return NULL ;
+}
+
+void CancelMeshThread(void){
+  if(CTX.threads){
+    pthread_cancel(MeshThread);
+    CTX.mesh.draw = 1;
+    CTX.threads_lock = 0;
+    XtSetSensitive(WID.G.Butt[6], 0);    
+    Msg(INFO,"Mesh Aborted");
+    mesh_event_handler(MESH_DELETE);
+    Msg(STATUS,"Ready");
+    Init();
+    Draw();
+  }
+}
+
+#else
+
 void CancelMeshThread(void){
   
 }
+
+#endif
 
 int SetGlobalShortcut(int event){
   return WID->global_shortcuts(event);
@@ -714,16 +752,70 @@ void mesh_define_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh_define, 0);
 }
 void mesh_1d_cb(CALLBACK_ARGS){
-  printf("mesh 1d\n");
+#ifdef _USETHREADS
+  if(CTX.threads){
+    XtSetSensitive(WID.G.Butt[6], 1);
+    CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 1 ; 
+    pthread_create(&MeshThread, NULL, StartMeshThread, NULL);
+  }
+  else
+#endif
+    mai3d(&M, 1); 
 }
 void mesh_2d_cb(CALLBACK_ARGS){
-  printf("mesh 2d\n");
+#ifdef _USETHREADS
+  if(CTX.threads){
+    XtSetSensitive(WID.G.Butt[6], 1);
+    CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 2 ; 
+    pthread_create(&MeshThread, NULL, StartMeshThread, NULL);
+  }
+  else
+#endif
+    mai3d(&M, 2);
 } 
 void mesh_3d_cb(CALLBACK_ARGS){
-  printf("mesh 3d\n");
+#ifdef _USETHREADS
+  if(CTX.threads){
+    XtSetSensitive(WID.G.Butt[6], 1);
+    CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 3 ; 
+    pthread_create(&MeshThread, NULL, StartMeshThread, NULL);
+  }
+  else
+#endif
+    mai3d(&M, 3); 
 } 
 void mesh_define_length_cb (CALLBACK_ARGS){
-  printf("mesh define length\n");
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int       ib;
+  static int n=0, p[100];
+
+  WID->create_mesh_context_window(0);
+
+  while(1){
+    Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+    ib = SelectEntity(ENT_POINT, &v,&c,&s);
+    if(ib == 1){ /* left mouse butt */
+      p[n++] = v->Num; 
+    }
+    if (ib == -1){ /* 'e' */
+      if(n >= 1) {
+	add_charlength(n,p,CTX.filename); 
+	break;
+      }
+      n=0;
+      ZeroHighlight(&M);
+      Replot();
+    }
+    if(ib == 0){ /* 'q' */
+      n=0 ;
+      ZeroHighlight(&M);
+      Replot();
+      break;
+    }
+  }
+  if(!CTX.threads) Msg(STATUS,"Ready");
 }
 void mesh_define_recombine_cb (CALLBACK_ARGS){
   printf("mesh define reco\n");
@@ -732,12 +824,14 @@ void mesh_define_transfinite_cb (CALLBACK_ARGS){
   WID->set_context(menu_mesh_define_transfinite, 0);
 } 
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS){
+  WID->create_mesh_context_window(1);
   printf("mesh define tr line\n");
 }
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS){
   printf("mesh define tr su\n");
 }
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
+  WID->create_mesh_context_window(3);
   printf("mesh define tr vol\n");
 } 
 

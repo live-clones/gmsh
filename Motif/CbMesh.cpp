@@ -1,4 +1,4 @@
-// $Id: CbMesh.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbMesh.cpp,v 1.2 2001-01-11 07:32:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,10 +12,6 @@
 extern Widgets_T  WID;
 extern Context_T  CTX;
 extern Mesh       M;
-
-extern char   trsf_pts_text[100], trsf_type_text[100];
-extern char   trsf_vol_text[100], char_length_text[100];
-extern char   attrx_text[100], attry_text[100], attrz_text[100], attrdec_text[100];
 
 /* ------------------------------------------------------------------------ */
 /*  m e s h _ e v e n t _ h a n d l e r                                     */
