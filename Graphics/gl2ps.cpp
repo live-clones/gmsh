@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.46 2002-06-05 03:38:22 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.47 2002-06-10 16:41:53 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -1361,8 +1361,8 @@ GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   prim->verts = (GL2PSvertex *)gl2psMalloc(sizeof(GL2PSvertex));
   prim->verts[0].xyz[0] = pos[0];
   prim->verts[0].xyz[1] = pos[1];
-  prim->verts[0].xyz[2] = pos[2];
-  prim->depth = GL2PS_DEPTH_FACT * pos[2];
+  prim->verts[0].xyz[2] = GL2PS_DEPTH_FACT * pos[2];
+  prim->depth = pos[2];
   prim->dash = 0;
   prim->width = 1;
   glGetFloatv(GL_CURRENT_RASTER_COLOR, prim->verts[0].rgba);
