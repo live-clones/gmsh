@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.2 2001-01-10 10:06:18 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.3 2001-01-10 20:23:38 geuzaine Exp $
 
 #include <X11/IntrinsicP.h>
 
@@ -62,6 +62,11 @@ void Draw(void){
   Draw2d();
   glFlush();
   if(CTX.db) glXSwapBuffers(XCTX.display,XtWindow(WID.G.glw));
+}
+
+void DrawUpdate(void){
+  Init();
+  Draw();
 }
 
 void DrawOverlay(void){

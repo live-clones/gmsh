@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.7 2001-01-10 20:14:34 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.8 2001-01-10 20:23:36 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -25,7 +25,6 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 /* ------------------------------------------------------------------------ */
 
 void Init(void){
-  //WID->make_current();
 }
 
 void InitOverlay(void){
@@ -42,6 +41,22 @@ void DrawOverlay(void){
 
 void DrawUI(void){
   WID->check();
+}
+
+// one should not call Opengl_Window::draw() from the handle(), but
+// rather the following:
+
+void DrawUpdate(){
+  WID->make_current();
+  Orthogonalize(0,0);
+  glClearColor(UNPACK_RED(CTX.color.bg)/255.,
+               UNPACK_GREEN(CTX.color.bg)/255.,
+               UNPACK_BLUE(CTX.color.bg)/255.,
+               0.);
+  glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+  Draw3d();
+  Draw2d();
+  WID->swap_buffers();
 }
 
 void Draw_String(char *s){

@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.3 2001-01-10 20:14:34 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.4 2001-01-10 20:23:36 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -51,22 +51,6 @@ void Opengl_Window::draw() {
   glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
   Draw3d();
   Draw2d();
-}
-
-// one should not call Opengl_Window::draw() from the handle(), but
-// rather the following:
-
-void DrawUpdate(){
-  WID->make_current();
-  Orthogonalize(0,0);
-  glClearColor(UNPACK_RED(CTX.color.bg)/255.,
-               UNPACK_GREEN(CTX.color.bg)/255.,
-               UNPACK_BLUE(CTX.color.bg)/255.,
-               0.);
-  glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-  Draw3d();
-  Draw2d();
-  WID->swap_buffers();
 }
 
 void Opengl_Window::clear_overlay() {

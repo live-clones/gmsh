@@ -40,6 +40,7 @@ void Draw2d(void);
 void DrawUI(void);
 void DrawOverlay(void);
 void Draw(void);
+void DrawUpdate(void);
 
 void Draw_String(char *s);
 void Draw_Geom (Mesh *m);

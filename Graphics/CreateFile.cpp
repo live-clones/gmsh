@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.6 2001-01-10 10:06:17 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.7 2001-01-10 20:23:37 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -106,7 +106,7 @@ void CreateFile (char *name, int format) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
       return;
     }
-    Replot();
+    DrawUpdate();
     create_jpeg(fp, CTX.viewport[2]-CTX.viewport[0],
 		CTX.viewport[3]-CTX.viewport[1],
 		CTX.print.jpeg_quality);
@@ -121,7 +121,7 @@ void CreateFile (char *name, int format) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
       return;
     }
-    Replot();
+    DrawUpdate();
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
                CTX.viewport[3]-CTX.viewport[1], 
 	       CTX.print.gif_dither,
@@ -141,7 +141,7 @@ void CreateFile (char *name, int format) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
       return;
     }
-    Replot();
+    DrawUpdate();
     create_ppm(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFOS, "PPM Creation Complete '%s'", name);
@@ -154,7 +154,7 @@ void CreateFile (char *name, int format) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
       return;
     }
-    Replot();
+    DrawUpdate();
     create_yuv(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFOS, "YUV Creation Complete '%s'", name);
@@ -203,8 +203,7 @@ void CreateFile (char *name, int format) {
 		       GL2PS_SIMPLE_LINE_OFFSET | GL2PS_DRAW_BACKGROUND,
 		       GL_RGBA, 0, NULL, size3d, fp);
 	CTX.stream = TO_FILE ;
-	Init();
-	Draw();
+	DrawUpdate();
 	CTX.stream = TO_SCREEN ;
 	res = gl2psEndPage();
       }
