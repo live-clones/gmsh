@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.72 2004-03-03 22:25:08 geuzaine Exp $
+// $Id: CAD.cpp,v 1.73 2004-04-01 18:06:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -130,30 +130,6 @@ int compare2Lists(List_T * List1, List_T * List2,
   List_Delete(List1Prime);
   List_Delete(List2Prime);
   return 0;
-}
-
-void dist_ddg(double x1, double y1, double z1,
-              double x2, double y2, double z2,
-              double x3, double y3, double z3,
-              double x4, double y4, double z4,
-              double *x, double *y, double *z)
-{
-  double v[3], u[3], d;
-
-  u[0] = x1 - x3;
-  u[1] = y1 - y3;
-  u[2] = z1 - z3;
-
-  v[0] = x4 - x3;
-  v[1] = y4 - y3;
-  v[2] = z4 - z3;
-
-  norme(v);
-  prosca(u, v, &d);
-
-  *x = d * x4 + x3 * (1. - d);
-  *y = d * y4 + y3 * (1. - d);
-  *z = d * z4 + z3 * (1. - d);
 }
 
 Vertex *FindPoint(int inum, Mesh * M)
@@ -1193,15 +1169,20 @@ int Extrude_ProtudePoint(int type, int ip,
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
     if(e)
       c->Extrude->mesh = e->mesh;
-
     List_Add(c->Control_Points, &pv);
-    dist_ddg(pv->Pos.X, pv->Pos.Y, pv->Pos.Z,
-             chapeau->Pos.X, chapeau->Pos.Y, chapeau->Pos.Z,
-             X0, X1, X2, X0 + A0, X1 + A1, X2 + A2, &xnew, &ynew, &znew);
+    // compute circle center
     newp = DuplicateVertex(pv);
-    newp->Pos.X = xnew;
-    newp->Pos.Y = ynew;
-    newp->Pos.Z = znew;
+    Ax[0] = A0;
+    Ax[1] = A1;
+    Ax[2] = A2;
+    norme(Ax);
+    T[0] = pv->Pos.X - X0;
+    T[1] = pv->Pos.Y - X1;
+    T[2] = pv->Pos.Z - X2;
+    prosca(T, Ax, &d);
+    newp->Pos.X = X0 + d * Ax[0];
+    newp->Pos.Y = X1 + d * Ax[1]; 
+    newp->Pos.Z = X2 + d * Ax[2]; 
     List_Add(c->Control_Points, &newp);
     List_Add(c->Control_Points, &chapeau);
     c->beg = pv;
