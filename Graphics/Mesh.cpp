@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.69 2004-04-19 19:04:15 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.70 2004-04-19 21:59:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -144,11 +144,13 @@ void Draw_Mesh(Mesh * M)
 
       //printf("normal mesh drawing\n");
 
-      if(M->status >= 3 && (CTX.mesh.volumes || CTX.mesh.volumes_num)) {
+      if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
+			    CTX.mesh.volumes_num)) {
 	Tree_Action(M->Volumes, Draw_Mesh_Volumes);
       }
 
-      if(M->status >= 2 && (CTX.mesh.surfaces || CTX.mesh.surfaces_num)) {
+      if(M->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
+			    CTX.mesh.surfaces_num)) {
         Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
         if(CTX.mesh.oldxtrude)  //old extrusion algo
           Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
@@ -318,7 +320,6 @@ void Draw_Simplex_Volume(void *a, void *b)
 {
   Simplex *s;
   char Num[100];
-  int fulldraw = 0;
   double tmp, X[4], Y[4], Z[4], X2[6], Y2[6], Z2[6];
 
   s = *(Simplex **) a;
@@ -345,13 +346,11 @@ void Draw_Simplex_Volume(void *a, void *b)
     tmp = s->GammaShapeMeasure();
     if(tmp < CTX.mesh.gamma_inf || tmp > CTX.mesh.gamma_sup)
       return;
-    fulldraw = 1;
   }
 
   if(CTX.mesh.radius_sup) {
     if(s->Radius < CTX.mesh.radius_inf || s->Radius > CTX.mesh.radius_sup)
       return;
-    fulldraw = 1;
   }
 
   double Xc = .25 * (s->V[0]->Pos.X + s->V[1]->Pos.X +
@@ -364,10 +363,9 @@ void Draw_Simplex_Volume(void *a, void *b)
   if(CTX.mesh.use_cut_plane) {
     if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
       return;
-    fulldraw = 1;
   }
 
-  if(!fulldraw){
+  if(!CTX.mesh.solid){
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -395,7 +393,7 @@ void Draw_Simplex_Volume(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.volumes) {
+  if(CTX.mesh.volumes_edges) {
     if(!s->VSUP){
       glBegin(GL_LINES);
       glVertex3d(X[0], Y[0], Z[0]); glVertex3d(X[1], Y[1], Z[1]);
@@ -458,21 +456,18 @@ void Draw_Simplex_Volume(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(!fulldraw)
-    return;
+  if(CTX.mesh.volumes_faces && CTX.mesh.solid){
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(s->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(s->iPart);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.tetrahedron);
 
-  if(theColor.type)
-    glColor4ubv((GLubyte *) & theColor.mesh);
-  else if(CTX.mesh.color_carousel == 1)
-    ColorSwitch(s->iEnt);
-  else if(CTX.mesh.color_carousel == 2)
-    ColorSwitch(thePhysical);
-  else if(CTX.mesh.color_carousel == 3)
-    ColorSwitch(s->iPart);
-  else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.tetrahedron);
-
-  if(CTX.mesh.solid) {
     double n[3];
     // FIXME: should subdivide if s->VSUP
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
@@ -509,23 +504,25 @@ void Draw_Simplex_Surface_Common(Simplex * s, double *pX, double *pY,
   if(CTX.mesh.normals || CTX.mesh.light)
     glNormal3verts(s->V[0], s->V[1], s->V[2], n);
 
-  if(CTX.mesh.surfaces && CTX.mesh.lines) {
-    if(!CTX.mesh.solid) {
-      if(theColor.type)
-	glColor4ubv((GLubyte *) & theColor.mesh);
-      else if(CTX.mesh.color_carousel == 1)
-	ColorSwitch(s->iEnt);
-      else if(CTX.mesh.color_carousel == 2)
-	ColorSwitch(thePhysical);
-      else if(CTX.mesh.color_carousel == 3)
-	ColorSwitch(s->iPart);
-      else
-	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    }
-    else {
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    }
+  if(!CTX.mesh.solid){
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(s->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(s->iPart);
+    else if(K == 3)
+      glColor4ubv((GLubyte *) & CTX.color.mesh.triangle);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
+  }
+  else {
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+  }
 
+  if(CTX.mesh.surfaces_edges){
     if(pX && pY && pZ) {        // using precomputed vertices
       glBegin(GL_LINE_LOOP);
       for(i = 0; i < K * (1 + L); i++) {
@@ -550,23 +547,22 @@ void Draw_Simplex_Surface_Common(Simplex * s, double *pX, double *pY,
         glEnd();
       }
     }
-
   }
 
-  if(theColor.type)
-    glColor4ubv((GLubyte *) & theColor.mesh);
-  else if(CTX.mesh.color_carousel == 1)
-    ColorSwitch(s->iEnt);
-  else if(CTX.mesh.color_carousel == 2)
-    ColorSwitch(thePhysical);
-  else if(CTX.mesh.color_carousel == 3)
-    ColorSwitch(s->iPart);
-  else if(K == 3)
-    glColor4ubv((GLubyte *) & CTX.color.mesh.triangle);
-  else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
+  if(CTX.mesh.surfaces_faces && CTX.mesh.solid) {
 
-  if(CTX.mesh.surfaces && CTX.mesh.solid) {
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(s->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(s->iPart);
+    else if(K == 3)
+      glColor4ubv((GLubyte *) & CTX.color.mesh.triangle);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
 
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
 
@@ -902,16 +898,20 @@ void Draw_Hexahedron_Volume(void *a, void *b)
       return;
   }
 
-  if(theColor.type)
-    glColor4ubv((GLubyte *) & theColor.mesh);
-  else if(CTX.mesh.color_carousel == 1)
-    ColorSwitch(h->iEnt);
-  else if(CTX.mesh.color_carousel == 2)
-    ColorSwitch(thePhysical);
-  else if(CTX.mesh.color_carousel == 3)
-    ColorSwitch(h->iPart);
+  if(!CTX.mesh.solid){
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(h->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(h->iPart);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.hexahedron);
+  }
   else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.hexahedron);
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
   for(i = 0; i < 8; i++) {
     X[i] = Xc + CTX.mesh.explode * (h->V[i]->Pos.X - Xc);
@@ -919,30 +919,31 @@ void Draw_Hexahedron_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (h->V[i]->Pos.Z - Zc);
   }
 
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(X[0], Y[0], Z[0]);
-  glVertex3d(X[1], Y[1], Z[1]);
-  glVertex3d(X[2], Y[2], Z[2]);
-  glVertex3d(X[3], Y[3], Z[3]);
-  glEnd();
-
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glVertex3d(X[5], Y[5], Z[5]);
-  glVertex3d(X[6], Y[6], Z[6]);
-  glVertex3d(X[7], Y[7], Z[7]);
-  glEnd();
-
-  glBegin(GL_LINES);
-  glVertex3d(X[0], Y[0], Z[0]);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glVertex3d(X[1], Y[1], Z[1]);
-  glVertex3d(X[5], Y[5], Z[5]);
-  glVertex3d(X[2], Y[2], Z[2]);
-  glVertex3d(X[6], Y[6], Z[6]);
-  glVertex3d(X[3], Y[3], Z[3]);
-  glVertex3d(X[7], Y[7], Z[7]);
-  glEnd();
+  // FIXME: remove "1" when we add the face drawing code
+  if(1 || CTX.mesh.volumes_edges){
+    glBegin(GL_LINE_LOOP);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glVertex3d(X[2], Y[2], Z[2]);
+    glVertex3d(X[3], Y[3], Z[3]);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glVertex3d(X[5], Y[5], Z[5]);
+    glVertex3d(X[6], Y[6], Z[6]);
+    glVertex3d(X[7], Y[7], Z[7]);
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glVertex3d(X[5], Y[5], Z[5]);
+    glVertex3d(X[2], Y[2], Z[2]);
+    glVertex3d(X[6], Y[6], Z[6]);
+    glVertex3d(X[3], Y[3], Z[3]);
+    glVertex3d(X[7], Y[7], Z[7]);
+    glEnd();
+  }
 
   if(CTX.mesh.volumes_num) {
     sprintf(Num, "%d", h->Num);
@@ -951,7 +952,6 @@ void Draw_Hexahedron_Volume(void *a, void *b)
   }
 
   if(CTX.mesh.dual) {
-
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glEnable(GL_LINE_STIPPLE);
     glLineStipple(1, 0x0F0F);
@@ -1052,16 +1052,20 @@ void Draw_Prism_Volume(void *a, void *b)
       return;
   }
 
-  if(theColor.type)
-    glColor4ubv((GLubyte *) & theColor.mesh);
-  else if(CTX.mesh.color_carousel == 1)
-    ColorSwitch(p->iEnt);
-  else if(CTX.mesh.color_carousel == 2)
-    ColorSwitch(thePhysical);
-  else if(CTX.mesh.color_carousel == 3)
-    ColorSwitch(p->iPart);
+  if(!CTX.mesh.solid){
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(p->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(p->iPart);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.prism);
+  }
   else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.prism);
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
   for(i = 0; i < 6; i++) {
     X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);
@@ -1069,26 +1073,27 @@ void Draw_Prism_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
 
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(X[0], Y[0], Z[0]);
-  glVertex3d(X[1], Y[1], Z[1]);
-  glVertex3d(X[2], Y[2], Z[2]);
-  glEnd();
-
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(X[3], Y[3], Z[3]);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glVertex3d(X[5], Y[5], Z[5]);
-  glEnd();
-
-  glBegin(GL_LINES);
-  glVertex3d(X[0], Y[0], Z[0]);
-  glVertex3d(X[3], Y[3], Z[3]);
-  glVertex3d(X[1], Y[1], Z[1]);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glVertex3d(X[2], Y[2], Z[2]);
-  glVertex3d(X[5], Y[5], Z[5]);
-  glEnd();
+  // FIXME: remove "1" when we add the face drawing code
+  if(1 || CTX.mesh.volumes_edges){
+    glBegin(GL_LINE_LOOP);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glVertex3d(X[2], Y[2], Z[2]);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex3d(X[3], Y[3], Z[3]);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glVertex3d(X[5], Y[5], Z[5]);
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[3], Y[3], Z[3]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glVertex3d(X[2], Y[2], Z[2]);
+    glVertex3d(X[5], Y[5], Z[5]);
+    glEnd();
+  }
 
   if(CTX.mesh.volumes_num) {
     sprintf(Num, "%d", p->Num);
@@ -1183,16 +1188,20 @@ void Draw_Pyramid_Volume(void *a, void *b)
       return;
   }
 
-  if(theColor.type)
-    glColor4ubv((GLubyte *) & theColor.mesh);
-  else if(CTX.mesh.color_carousel == 1)
-    ColorSwitch(p->iEnt);
-  else if(CTX.mesh.color_carousel == 2)
-    ColorSwitch(thePhysical);
-  else if(CTX.mesh.color_carousel == 3)
-    ColorSwitch(p->iPart);
+  if(!CTX.mesh.solid){
+    if(theColor.type)
+      glColor4ubv((GLubyte *) & theColor.mesh);
+    else if(CTX.mesh.color_carousel == 1)
+      ColorSwitch(p->iEnt);
+    else if(CTX.mesh.color_carousel == 2)
+      ColorSwitch(thePhysical);
+    else if(CTX.mesh.color_carousel == 3)
+      ColorSwitch(p->iPart);
+    else
+      glColor4ubv((GLubyte *) & CTX.color.mesh.pyramid);
+  }
   else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.pyramid);
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
   for(i = 0; i < 5; i++) {
     X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);
@@ -1200,23 +1209,25 @@ void Draw_Pyramid_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
 
-  glBegin(GL_LINE_LOOP);
-  glVertex3d(X[0], Y[0], Z[0]);
-  glVertex3d(X[1], Y[1], Z[1]);
-  glVertex3d(X[2], Y[2], Z[2]);
-  glVertex3d(X[3], Y[3], Z[3]);
-  glEnd();
-
-  glBegin(GL_LINES);
-  glVertex3d(X[0], Y[0], Z[0]);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glVertex3d(X[1], Y[1], Z[1]);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glVertex3d(X[2], Y[2], Z[2]);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glVertex3d(X[3], Y[3], Z[3]);
-  glVertex3d(X[4], Y[4], Z[4]);
-  glEnd();
+  // FIXME: remove "1" when we add the face drawing code
+  if(1 || CTX.mesh.volumes_edges){
+    glBegin(GL_LINE_LOOP);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glVertex3d(X[2], Y[2], Z[2]);
+    glVertex3d(X[3], Y[3], Z[3]);
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glVertex3d(X[2], Y[2], Z[2]);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glVertex3d(X[3], Y[3], Z[3]);
+    glVertex3d(X[4], Y[4], Z[4]);
+    glEnd();
+  }
 
   if(CTX.mesh.volumes_num) {
     sprintf(Num, "%d", p->Num);

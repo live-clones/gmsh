@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.144 2004-04-18 06:48:23 geuzaine Exp $
+// $Id: Options.cpp,v 1.145 2004-04-19 21:59:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3191,30 +3191,56 @@ double opt_mesh_lines(OPT_ARGS_NUM)
   return CTX.mesh.lines;
 }
 
-double opt_mesh_surfaces(OPT_ARGS_NUM)
+double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX.mesh.surfaces = (int)val;
+    CTX.mesh.surfaces_edges = (int)val;
     CTX.mesh.changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[8]->value(CTX.mesh.surfaces);
+    WID->mesh_butt[8]->value(CTX.mesh.surfaces_edges);
 #endif
-  return CTX.mesh.surfaces;
+  return CTX.mesh.surfaces_edges;
 }
 
-double opt_mesh_volumes(OPT_ARGS_NUM)
+double opt_mesh_surfaces_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX.mesh.volumes = (int)val;
+    CTX.mesh.surfaces_faces = (int)val;
     CTX.mesh.changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[9]->value(CTX.mesh.volumes);
+    WID->mesh_butt[9]->value(CTX.mesh.surfaces_faces);
 #endif
-  return CTX.mesh.volumes;
+  return CTX.mesh.surfaces_faces;
+}
+
+double opt_mesh_volumes_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.volumes_edges = (int)val;
+    CTX.mesh.changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[10]->value(CTX.mesh.volumes_edges);
+#endif
+  return CTX.mesh.volumes_edges;
+}
+
+double opt_mesh_volumes_faces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.volumes_faces = (int)val;
+    CTX.mesh.changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[11]->value(CTX.mesh.volumes_faces);
+#endif
+  return CTX.mesh.volumes_faces;
 }
 
 double opt_mesh_points_num(OPT_ARGS_NUM)
@@ -3225,7 +3251,7 @@ double opt_mesh_points_num(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[10]->value(CTX.mesh.points_num);
+    WID->mesh_butt[12]->value(CTX.mesh.points_num);
 #endif
   return CTX.mesh.points_num;
 }
@@ -3238,7 +3264,7 @@ double opt_mesh_lines_num(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[11]->value(CTX.mesh.lines_num);
+    WID->mesh_butt[13]->value(CTX.mesh.lines_num);
 #endif
   return CTX.mesh.lines_num;
 }
@@ -3251,7 +3277,7 @@ double opt_mesh_surfaces_num(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[12]->value(CTX.mesh.surfaces_num);
+    WID->mesh_butt[14]->value(CTX.mesh.surfaces_num);
 #endif
   return CTX.mesh.surfaces_num;
 }
@@ -3264,7 +3290,7 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[13]->value(CTX.mesh.volumes_num);
+    WID->mesh_butt[15]->value(CTX.mesh.volumes_num);
 #endif
   return CTX.mesh.volumes_num;
 }
@@ -3331,7 +3357,7 @@ double opt_mesh_solid(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[14]->value(CTX.mesh.solid);
+    WID->mesh_butt[16]->value(CTX.mesh.solid);
 #endif
   return CTX.mesh.solid;
 }
@@ -3342,7 +3368,7 @@ double opt_mesh_light(OPT_ARGS_NUM)
     CTX.mesh.light = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[15]->value(CTX.mesh.light);
+    WID->mesh_butt[17]->value(CTX.mesh.light);
 #endif
   return CTX.mesh.light;
 }
@@ -3531,10 +3557,10 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)){
-    WID->mesh_butt[17]->value(CTX.mesh.color_carousel==0);
-    WID->mesh_butt[18]->value(CTX.mesh.color_carousel==1);
-    WID->mesh_butt[19]->value(CTX.mesh.color_carousel==2);
-    WID->mesh_butt[20]->value(CTX.mesh.color_carousel==3);
+    WID->mesh_butt[18]->value(CTX.mesh.color_carousel==0);
+    WID->mesh_butt[19]->value(CTX.mesh.color_carousel==1);
+    WID->mesh_butt[20]->value(CTX.mesh.color_carousel==2);
+    WID->mesh_butt[21]->value(CTX.mesh.color_carousel==3);
   }
 #endif
   return CTX.mesh.color_carousel;

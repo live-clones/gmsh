@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.214 2004-04-18 21:47:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.215 2004-04-19 21:59:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1079,18 +1079,20 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[7]->value());
-  opt_mesh_surfaces(0, GMSH_SET, WID->mesh_butt[8]->value());
-  opt_mesh_volumes(0, GMSH_SET, WID->mesh_butt[9]->value());
-  opt_mesh_points_num(0, GMSH_SET, WID->mesh_butt[10]->value());
-  opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[11]->value());
-  opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[12]->value());
-  opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[13]->value());
-  opt_mesh_solid(0, GMSH_SET, WID->mesh_butt[14]->value());
-  opt_mesh_light(0, GMSH_SET, WID->mesh_butt[15]->value());
+  opt_mesh_surfaces_edges(0, GMSH_SET, WID->mesh_butt[8]->value());
+  opt_mesh_surfaces_faces(0, GMSH_SET, WID->mesh_butt[9]->value());
+  opt_mesh_volumes_edges(0, GMSH_SET, WID->mesh_butt[10]->value());
+  opt_mesh_volumes_faces(0, GMSH_SET, WID->mesh_butt[11]->value());
+  opt_mesh_points_num(0, GMSH_SET, WID->mesh_butt[12]->value());
+  opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[13]->value());
+  opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[14]->value());
+  opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[15]->value());
+  opt_mesh_solid(0, GMSH_SET, WID->mesh_butt[16]->value());
+  opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_color_carousel(0, GMSH_SET,
-			  WID->mesh_butt[17]->value()? 0 :
-			  WID->mesh_butt[18]->value()? 1 : 
-			  WID->mesh_butt[19]->value()? 2 : 
+			  WID->mesh_butt[18]->value()? 0 :
+			  WID->mesh_butt[19]->value()? 1 : 
+			  WID->mesh_butt[20]->value()? 2 : 
 			  3);
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());

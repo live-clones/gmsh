@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.283 2004-04-18 21:47:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.284 2004-04-19 21:59:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -623,24 +623,28 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    opt_mesh_surfaces(0, GMSH_SET | GMSH_GUI,
-                      !opt_mesh_surfaces(0, GMSH_GET, 0));
+    int old = opt_mesh_surfaces_edges(0, GMSH_GET, 0) || opt_mesh_surfaces_faces(0, GMSH_GET, 0);
+    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, !old);
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    opt_mesh_volumes(0, GMSH_SET | GMSH_GUI,
-                     !opt_mesh_volumes(0, GMSH_GET, 0));
+    int old = opt_mesh_volumes_edges(0, GMSH_GET, 0) || opt_mesh_volumes_faces(0, GMSH_GET, 0);
+    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, !old);
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    opt_mesh_points(0, GMSH_SET | GMSH_GUI, !opt_mesh_points(0, GMSH_GET, 0));
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
-    opt_mesh_surfaces(0, GMSH_SET | GMSH_GUI,
-                      !opt_mesh_surfaces(0, GMSH_GET, 0));
-    opt_mesh_volumes(0, GMSH_SET | GMSH_GUI,
-                     !opt_mesh_volumes(0, GMSH_GET, 0));
+    int old = opt_mesh_points(0, GMSH_GET, 0) || opt_mesh_lines(0, GMSH_GET, 0) ||
+      opt_mesh_surfaces_edges(0, GMSH_GET, 0) || opt_mesh_surfaces_faces(0, GMSH_GET, 0);
+    opt_mesh_points(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, !old);
+    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, !old);
     redraw_opengl();
     return 1;
   }
@@ -1798,32 +1802,34 @@ void GUI::create_option_window()
     }
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Visibility");
-      mesh_butt[6] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Points");
-      mesh_butt[7] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
-      mesh_butt[8] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surfaces");
-      mesh_butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volumes");
-      mesh_butt[10] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Point numbers");
-      mesh_butt[11] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line numbers");
-      mesh_butt[12] = new Fl_Check_Button(width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface numbers");
-      mesh_butt[13] = new Fl_Check_Button(width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume numbers");
-      for(i = 6; i < 14; i++) {
+      mesh_butt[6] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Nodes");
+      mesh_butt[7] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line elements");
+      mesh_butt[8] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface element edges");
+      mesh_butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Surface element faces");
+      mesh_butt[10] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Volume element edges");
+      mesh_butt[11] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume element faces");
+      mesh_butt[12] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Node numbers");
+      mesh_butt[13] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line element numbers");
+      mesh_butt[14] = new Fl_Check_Button(width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface element numbers");
+      mesh_butt[15] = new Fl_Check_Button(width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume element numbers");
+      for(i = 6; i < 16; i++) {
         mesh_butt[i]->type(FL_TOGGLE_BUTTON);
         mesh_butt[i]->down_box(TOGGLE_BOX);
         mesh_butt[i]->selection_color(TOGGLE_COLOR);
       }
-      mesh_value[4] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW / 2, BH);
+      mesh_value[4] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
       mesh_value[4]->minimum(0);
       mesh_value[4]->maximum(1);
       mesh_value[4]->step(0.001);
-      mesh_value[5] = new Fl_Value_Input(2 * WB + IW / 2, 2 * WB + 5 * BH, IW / 2, BH, "Quality range");
+      mesh_value[5] = new Fl_Value_Input(2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Quality range");
       mesh_value[5]->minimum(0);
       mesh_value[5]->maximum(1);
       mesh_value[5]->step(0.001);
 
-      mesh_value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW / 2, BH);
-      mesh_value[7] = new Fl_Value_Input(2 * WB + IW / 2, 2 * WB + 6 * BH, IW / 2, BH, "Size range");
+      mesh_value[6] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
+      mesh_value[7] = new Fl_Value_Input(2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH, "Size range");
 
-      mesh_value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Normals");
+      mesh_value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Normals");
       mesh_value[8]->minimum(0);
       mesh_value[8]->maximum(500);
       mesh_value[8]->step(1);
@@ -1831,7 +1837,7 @@ void GUI::create_option_window()
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      mesh_value[13] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Tangents");
+      mesh_value[13] = new Fl_Value_Input(2 * WB, 2 * WB + 10 * BH, IW, BH, "Tangents");
       mesh_value[13]->minimum(0);
       mesh_value[13]->maximum(200);
       mesh_value[13]->step(1.0);
@@ -1842,9 +1848,9 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
-      mesh_butt[14] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Draw as solid (hidden surfaces)");
-      mesh_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting");
-      for(i = 14; i < 16; i++) {
+      mesh_butt[16] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Draw as solid (hidden surfaces)");
+      mesh_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting");
+      for(i = 16; i < 18; i++) {
         mesh_butt[i]->type(FL_TOGGLE_BUTTON);
         mesh_butt[i]->down_box(TOGGLE_BOX);
 	mesh_butt[i]->selection_color(TOGGLE_COLOR);
@@ -1880,11 +1886,11 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Colors");
       o->hide();
-      mesh_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Color by element type");
-      mesh_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Color by elementary entity");
-      mesh_butt[19] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Color by physical entity");
-      mesh_butt[20] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Color by partition");
-      for(i = 17; i < 21; i++) {
+      mesh_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Color by element type");
+      mesh_butt[19] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Color by elementary entity");
+      mesh_butt[20] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Color by physical entity");
+      mesh_butt[21] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Color by partition");
+      for(i = 18; i < 22; i++) {
         mesh_butt[i]->type(FL_RADIO_BUTTON);
         mesh_butt[i]->down_box(RADIO_BOX);
         mesh_butt[i]->selection_color(RADIO_COLOR);
