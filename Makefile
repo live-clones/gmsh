@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.328 2004-03-06 00:20:00 geuzaine Exp $
+# $Id: Makefile,v 1.329 2004-03-09 21:38:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -80,7 +80,7 @@ source-nightly: source
 
 source-commercial: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-           Triangle/triangle.* TODO doc/gmsh.html doc/FAQ doc/README.cvs\
+           Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
            utils/commercial
 	cp -f utils/commercial/README gmsh-${GMSH_RELEASE}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_RELEASE}/doc/LICENSE
