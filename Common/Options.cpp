@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.140 2004-04-08 18:12:10 geuzaine Exp $
+// $Id: Options.cpp,v 1.141 2004-04-08 22:14:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -80,10 +80,8 @@ void Init_Options(int num)
   // Home directory
   if((tmp = getenv("GMSH_HOME")))
     strcpy(CTX.home_dir, tmp);
-#if !defined(WIN32)     // Some WinNT systems have bad HOME variables...
   else if((tmp = getenv("HOME")))
     strcpy(CTX.home_dir, tmp);
-#endif
   else if((tmp = getenv("TMP")))
     strcpy(CTX.home_dir, tmp);
   else if((tmp = getenv("TEMP")))

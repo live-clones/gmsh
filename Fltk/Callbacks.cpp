@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.212 2004-04-01 22:21:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.213 2004-04-08 22:14:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -97,7 +97,8 @@ int file_chooser(int multi, int create, const char *message,
   Fl_File_Chooser::all_files_label = "All files (*)";
 
   if(!fc) {
-    fc = new Fl_File_Chooser(".", pat, Fl_File_Chooser::SINGLE, message);
+    fc = new Fl_File_Chooser(getenv("PWD") ? "." : CTX.home_dir, pat, 
+			     Fl_File_Chooser::SINGLE, message);
     strncpy(oldfilter, pat, 1024);
   }
 
