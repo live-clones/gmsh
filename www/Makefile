@@ -1,10 +1,12 @@
 
 mirror:
 	cat gmsh.html |\
-        sed "s/\/gmsh\//http:\/\/www.geuz.org\/gmsh\//g" |\
-        sed "s/\/getdp\//http:\/\/www.geuz.org\/getdp\//g" |\
+        sed "s/\/gmsh\//http:\/\/geuz.org\/gmsh\//g" |\
+        sed "s/\/getdp\//http:\/\/geuz.org\/getdp\//g" |\
         sed "s/<!---BEGINDATE.Date: /Last updated<br>/g" |\
-        sed "s/ .ENDDATE--->/<p>/g" \
+        sed "s/ .ENDDATE--->/<p>/g" |\
+        sed "s/<!---BEGINMIRROR//g" |\
+        sed "s/ENDMIRROR--->//g" \
         > gmsh-mirror.html
 
 cgi:
