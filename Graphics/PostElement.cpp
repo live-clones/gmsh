@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.41 2004-09-01 20:23:50 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.42 2004-09-01 21:03:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1044,6 +1044,9 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     View->TimeStep = ts;
     return;
   }
+
+  if(preproNormals)
+    return;
 
   if(View->ShowElement)
     Draw_ElementBoundary(type, View, X, Y, Z, Raise);
