@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.257 2004-07-22 05:47:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.258 2004-07-23 01:28:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -978,6 +978,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[15]->value());
   opt_mesh_use_cut_plane(0, GMSH_SET, WID->mesh_butt[16]->value());
   opt_mesh_cut_plane_as_surface(0, GMSH_SET, WID->mesh_butt[22]->value());
+  opt_mesh_cut_plane_only_volume(0, GMSH_SET, WID->mesh_butt[23]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());

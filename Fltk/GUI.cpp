@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.326 2004-07-22 05:47:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.327 2004-07-23 01:28:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1884,18 +1884,24 @@ void GUI::create_option_window()
       mesh_butt[16]->type(FL_TOGGLE_BUTTON);
       mesh_butt[16]->down_box(TOGGLE_BOX);
       mesh_butt[16]->selection_color(TOGGLE_COLOR);
-      mesh_butt[22] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Draw intersecting volume layer as surface");
-      mesh_butt[22]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[22]->down_box(TOGGLE_BOX);
-      mesh_butt[22]->selection_color(TOGGLE_COLOR);
 
-      mesh_value[14] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "A");
-      mesh_value[15] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "B");
-      mesh_value[16] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "C");
-      mesh_value[17] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "D");
+      mesh_value[14] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "A");
+      mesh_value[15] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "B");
+      mesh_value[16] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "C");
+      mesh_value[17] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "D");
       for(i = 14; i <= 17; i++) {
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
+
+      mesh_butt[22] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw intersecting volume layer as surface");
+      mesh_butt[22]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[22]->down_box(TOGGLE_BOX);
+      mesh_butt[22]->selection_color(TOGGLE_COLOR);
+      mesh_butt[23] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW, BH, "Cut only volume elements");
+      mesh_butt[23]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[23]->down_box(TOGGLE_BOX);
+      mesh_butt[23]->selection_color(TOGGLE_COLOR);
+
       o->end();
     }
     {

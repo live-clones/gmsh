@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.105 2004-07-22 19:32:02 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.106 2004-07-23 01:28:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -354,7 +354,7 @@ void Draw_Mesh_Point(void *a, void *b)
   if(!(v->Visible & VIS_MESH))
     return;
 
-  if(intersectCutPlane(1, &v) < 0)
+  if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(1, &v) < 0)
     return;
 
   if(v->Degree == 2)
@@ -399,7 +399,7 @@ void Draw_Mesh_Line(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  if(intersectCutPlane(2, s->V) < 0)
+  if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(2, s->V) < 0)
     return;
 
   Xc = 0.5 * (s->V[0]->Pos.X + s->V[1]->Pos.X);
@@ -663,7 +663,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  if(intersectCutPlane(3, s->V) < 0)
+  if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(3, s->V) < 0)
     return;
 
   unsigned int col;
@@ -809,7 +809,7 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  if(intersectCutPlane(4, q->V) < 0)
+  if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(4, q->V) < 0)
     return;
 
   unsigned int col;

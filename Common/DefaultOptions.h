@@ -723,6 +723,8 @@ StringXNumber MeshOptions_Number[] = {
     "Enable mesh cut plane" },
   { F,   "CutPlaneAsSurface" , opt_mesh_cut_plane_as_surface , 0 ,
     "Draw the intersection volume layer as a surface" },
+  { F,   "CutPlaneOnlyVolume" , opt_mesh_cut_plane_only_volume , 0 ,
+    "Cut only the volume elements" },
   { F,   "CutPlaneA" , opt_mesh_cut_planea , 1. , 
     "First cut plane equation coefficient (`A' in `AX+BY+CZ+D=0')" },
   { F,   "CutPlaneB" , opt_mesh_cut_planeb , 0. , 
