@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.47 2002-02-22 16:44:09 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.48 2002-03-12 19:07:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -43,6 +43,7 @@ void draw_polygon_2d (double r, double g, double b, int n,
 }
 
 static int iColor;
+static DrawingColor theColor;
 
 void ColorSwitch(int i){
   glColor4ubv((GLubyte*)&CTX.color.mesh.carousel[i%10]);
@@ -73,8 +74,6 @@ void Draw_Mesh (Mesh *M) {
   glLineWidth(CTX.mesh.line_width); 
   gl2psLineWidth(CTX.mesh.line_width * CTX.print.eps_line_width_factor);
 
-  iColor = 0;
-
   if(CTX.mesh.hidden) glEnable(GL_POLYGON_OFFSET_FILL);
 
   // draw the bbox of the mesh in fast redraw mode if there is no geometry
@@ -103,6 +102,8 @@ void Draw_Mesh (Mesh *M) {
     glVertex3d(CTX.min[0], CTX.max[1], CTX.max[2]);
     glEnd();    
   }
+
+  iColor = 0;
 
   switch(M->status) {
   case 3 :
@@ -155,6 +156,7 @@ void Draw_Mesh_Volumes(void *a, void *b){
   Volume *v;
   v = *(Volume**)a;
   iColor++;
+  theColor = v->Color;
   // Ceci est la bonne methode, mais ne marchera que qd on aura une
   // structure coherente poue les volumes
   // if(!(v->Visible & VIS_MESH)) return;
@@ -168,6 +170,7 @@ void Draw_Mesh_Surfaces (void *a,void *b){
   Surface *s;
   s = *(Surface**)a;
   iColor++;
+  theColor = s->Color;
   if(!(s->Visible & VIS_MESH)) return;
   Tree_Action(s->Simplexes, Draw_Simplex_Surfaces);
 }
@@ -184,6 +187,7 @@ void Draw_Mesh_Curves (void *a, void *b){
   c = *(Curve**)a;
   if(c->Num < 0) return;
   iColor++;
+  theColor = c->Color;
   if(!(c->Visible & VIS_MESH)) return;
   Tree_Action(c->Simplexes,Draw_Simplex_Curves);
 }
@@ -500,8 +504,12 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     glNormal3dv(n);
   }
   
-  if(CTX.mesh.color_carousel)
-    ColorSwitch(iColor);
+  if(CTX.mesh.color_carousel){
+    if(theColor.type)
+      glColor4ubv((GLubyte*)&theColor.mesh);
+    else
+      ColorSwitch(iColor);
+  }
   else{
     if(K==3)
       glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
@@ -520,10 +528,15 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
     
     if(CTX.mesh.lines){
-      if(CTX.mesh.color_carousel && ! (CTX.mesh.hidden || CTX.mesh.shade))
-	ColorSwitch(iColor);
-      else
+      if(CTX.mesh.color_carousel && ! (CTX.mesh.hidden || CTX.mesh.shade)){
+	if(theColor.type)
+	  glColor4ubv((GLubyte*)&theColor.mesh);
+	else
+	  ColorSwitch(iColor);
+      }
+      else{
 	glColor4ubv((GLubyte*)&CTX.color.mesh.line);
+      }
       glBegin(GL_LINE_LOOP);
       for(i=0 ; i<K*(1+L) ; i++){
         glVertex3d(pX[i],pY[i],pZ[i]);
@@ -531,8 +544,12 @@ void Draw_Simplex_Surfaces (void *a, void *b){
       glEnd();    
     }
 
-    if(CTX.mesh.color_carousel)
-      ColorSwitch(iColor);
+    if(CTX.mesh.color_carousel){
+      if(theColor.type)
+	glColor4ubv((GLubyte*)&theColor.mesh);
+      else
+	ColorSwitch(iColor);
+    }
     else{
       if(K==3)
 	glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
@@ -598,8 +615,12 @@ void Draw_Simplex_Curves(void *a,void *b){
   }
   */
 
-  if(CTX.mesh.color_carousel)
-    ColorSwitch(iColor);
+  if(CTX.mesh.color_carousel){
+    if(theColor.type)
+      glColor4ubv((GLubyte*)&theColor.mesh);
+    else 
+      ColorSwitch(iColor);
+  }
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.line);
 

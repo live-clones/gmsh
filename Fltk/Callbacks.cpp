@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.111 2002-03-10 23:23:33 remacle Exp $
+// $Id: Callbacks.cpp,v 1.112 2002-03-12 19:07:32 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -2058,10 +2058,10 @@ void view_options_ok_cb(CALLBACK_ARGS){
 			    DRAW_POST_DISPLACEMENT);
 
 
-      if(force || WID->view_butt[70]->changed() ||
-	 WID->view_butt[71]->changed())
+      if(force || WID->view_butt[66]->changed() ||
+	 WID->view_butt[67]->changed())
 	opt_view_tensor_type(i, GMSH_SET, 
-			    WID->view_butt[70]->value()?DRAW_POST_VONMISES:
+			    WID->view_butt[66]->value()?DRAW_POST_VONMISES:
 			    DRAW_POST_EIGENVECTORS);      
 
       if(force || WID->view_butt[64]->changed() ||

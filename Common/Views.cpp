@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.65 2002-03-10 23:23:33 remacle Exp $
+// $Id: Views.cpp,v 1.66 2002-03-12 19:07:32 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -201,6 +201,7 @@ void Stat_TensorSimplex(Post_View *v, int nbnod, int N,
     if(Z[i] > v->BBox[5]) v->BBox[5] = Z[i] ;
   }
 
+  v->ScalarOnly = 0;
   v->TextOnly = 0;
 }
 
@@ -474,6 +475,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->RangeType = src->RangeType;
   dest->ArrowType = src->ArrowType;
   dest->ArrowLocation = src->ArrowLocation;
+  dest->TensorType = src->TensorType;
   dest->TimeStep = src->TimeStep;
   dest->PointSize = src->PointSize;
   dest->LineWidth = src->LineWidth;

@@ -212,6 +212,10 @@ typedef struct{
   double center[3];
 }CylParam;
 
+typedef struct{
+  int type;
+  unsigned int geom, mesh;
+}DrawingColor;
 
 struct _Surf{
   int Num;
@@ -242,6 +246,7 @@ struct _Surf{
   ExtrudeParams *Extrude;
   STL_Data *STL;
   int Dirty; //flag to prevent any meshing
+  DrawingColor Color;
 };
 typedef struct _Surf Surface;
 
@@ -286,6 +291,7 @@ typedef struct {
   Tree_T *Prisms;
   Tree_T *Pyramids;
   int Dirty; //flag to prevent any meshing
+  DrawingColor Color;
 }Volume;
 
 typedef struct {
@@ -349,6 +355,7 @@ typedef struct{
   CircParam Circle;
   char functu[256], functv[256], functw[256];
   int Dirty; //flag to prevent any meshing
+  DrawingColor Color;
 }Curve;
 
 typedef struct{

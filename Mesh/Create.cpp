@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.34 2002-01-24 17:48:28 geuzaine Exp $
+// $Id: Create.cpp,v 1.35 2002-03-12 19:07:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -411,6 +411,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
 
   pC = (Curve *) Malloc (sizeof (Curve));
   pC->Dirty = 0;
+  pC->Color.type = 0;
   pC->Visible = VIS_GEOM|VIS_MESH;
   pC->cp = NULL;
   pC->Vertices = NULL;
@@ -528,6 +529,7 @@ Surface * Create_Surface (int Num, int Typ){
 
   pS = (Surface *) Malloc (sizeof (Surface));
   pS->Dirty = 0;
+  pS->Color.type = 0;
   pS->Visible = VIS_GEOM|VIS_MESH;
   pS->Num = Num;
   THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum,Num);
@@ -577,6 +579,7 @@ Volume * Create_Volume (int Num, int Typ){
 
   pV = (Volume *) Malloc (sizeof (Volume));
   pV->Dirty = 0;
+  pV->Color.type = 0;
   pV->Visible = VIS_GEOM|VIS_MESH;
   pV->Num = Num;
   THEM->MaxVolumeNum = IMAX(THEM->MaxVolumeNum,Num);

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.116 2002-02-13 09:20:41 stainier Exp $
+// $Id: Gmsh.y,v 1.117 2002-03-12 19:07:33 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -393,6 +393,7 @@ GeomFormat :
   | Transform   { return 1; }
   | Duplicata   { return 1; }
   | Delete      { return 1; }
+  | Colorify    { return 1; }
   | Extrude     { return 1; }
   | Transfini   { return 1; }
   | Coherence   { return 1; }
@@ -1545,6 +1546,19 @@ Delete :
       Init_Mesh(THEM, 1);
     }
 ;
+
+/* -----------------
+    C O L O R I F Y
+   ----------------- */
+
+Colorify :
+    tColor ColorExpr '{' ListOfShapes '}'
+    {
+      for(i=0;i<List_Nbr($4);i++){
+	List_Read ($4,i,&TheShape);
+	ColorShape(TheShape.Type,TheShape.Num,$2);
+      }
+    }
 
 
 /* -----------------

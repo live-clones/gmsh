@@ -37,6 +37,7 @@ void SymmetryShapes(double A,double B,double C,
 		    double D, List_T *ListShapes, int x);
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
+void ColorShape(int Type, int Num, unsigned int Color);
 
 
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.46 2002-02-05 20:11:49 geuzaine Exp $
+// $Id: CAD.cpp,v 1.47 2002-03-12 19:07:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -422,6 +422,45 @@ void DeleteShape(int Type, int Num){
     break;
   default:
     Msg(GERROR, "Impossible to delete entity %d (of type %d)", Num, Type);
+    break;
+  }
+}
+
+void ColorCurve(int ip, unsigned int col){
+  Curve *c = FindCurve(ip,THEM);
+  if(!c) return;
+  c->Color.type = 1;
+  c->Color.mesh = c->Color.geom = col;
+}
+
+void ColorSurface(int is, unsigned int col){
+  Surface *s = FindSurface(is,THEM);
+  if(!s) return;
+  s->Color.type = 1;
+  s->Color.mesh = s->Color.geom = col;
+}
+
+void ColorShape(int Type, int Num, unsigned int Color){
+
+  switch(Type){
+  case MSH_POINT:
+    break;
+  case MSH_SEGM_LINE:
+  case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_BEZIER:
+  case MSH_SEGM_CIRC:
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_NURBS:
+    ColorCurve(Num,Color);
+    break;
+  case MSH_SURF_NURBS:
+  case MSH_SURF_TRIC:
+  case MSH_SURF_REGL:
+  case MSH_SURF_PLAN:
+    ColorSurface(Num,Color);
+    break;
+  default:
     break;
   }
 }
