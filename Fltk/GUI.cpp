@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.342 2004-09-16 19:15:27 geuzaine Exp $
+// $Id: GUI.cpp,v 1.343 2004-09-16 22:24:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -823,9 +823,10 @@ void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
     GMSH_Plugin *p = (*it).second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
       p->getName(name);
-      std::pair < int, GMSH_Plugin * >*pair = new std::pair < int, GMSH_Plugin * >(iView, p);
+      std::pair<int, GMSH_Plugin*> *pair = new std::pair < int, GMSH_Plugin * >(iView, p);
       sprintf(menuname, "Plugins/%s...", name);
       button->add(menuname, 0, (Fl_Callback *) view_options_plugin_cb, (void *)(pair), 0);
+      m_pop_plugin.push_back(pair);
       p->dialogBox = 0;
     }
   }
@@ -1002,6 +1003,9 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   for(unsigned int i = 0; i < m_pop_label.size(); i++)
     delete [] m_pop_label[i];
   m_pop_label.clear();
+  for(unsigned int i = 0; i < m_pop_plugin.size(); i++)
+    delete m_pop_plugin[i];
+  m_pop_plugin.clear();
 
   int width = m_window->w();
   int right_pop_width = 4 * fontsize + 3;
