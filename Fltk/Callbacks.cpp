@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.330 2005-01-18 00:12:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.331 2005-01-18 04:29:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -966,10 +966,18 @@ void select_vis_browser(int mode)
   Entity *e;
   for(i = 1; i <= WID->vis_browser->size(); i++) {
     e = (Entity *) WID->vis_browser->data(i);
-    if((mode == VIS_GEOM | VIS_MESH && e->Visible() == mode) ||
-       (mode == VIS_GEOM && e->Visible() & VIS_GEOM) ||
-       (mode == VIS_MESH && e->Visible() & VIS_MESH))
-      WID->vis_browser->select(i);
+    if((mode & VIS_GEOM) && (mode & VIS_MESH)){
+      if((e->Visible() & VIS_GEOM) && (e->Visible() & VIS_MESH))
+	WID->vis_browser->select(i);
+    }
+    else if(mode & VIS_GEOM){
+      if(e->Visible() & VIS_GEOM)
+	WID->vis_browser->select(i);
+    }
+    else if(mode & VIS_MESH){
+      if(e->Visible() & VIS_MESH)
+	WID->vis_browser->select(i);
+    }
   }
 }
 
