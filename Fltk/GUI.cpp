@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.36 2001-02-04 10:23:56 geuzaine Exp $
+// $Id: GUI.cpp,v 1.37 2001-02-04 12:46:08 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -36,7 +36,9 @@ Fl_Menu_Item m_menubar_table[] = {
       {"GREF...",              0, (Fl_Callback *)file_save_as_gref_cb, 0},
       {"EPS simple sort...",   0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
       {"EPS accurate sort...", 0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
+#ifndef WIN32
       {"JPEG...",              0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
+#endif
       {"GIF...",               0, (Fl_Callback *)file_save_as_gif_cb, 0},
       {"GIF dithered...",      0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
       {"GIF transparent...",   0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
@@ -553,6 +555,7 @@ void GUI::create_menu_window(int argc, char **argv){
     m_window = new Fl_Window(width,MH);
     m_window->box(FL_THIN_UP_BOX);
     m_window->label("Gmsh");
+    m_window->callback(file_quit_cb);
 
     m_menu_bar = new Fl_Menu_Bar(0,0,width,BH); 
     m_menu_bar->menu(m_menubar_table);
@@ -746,6 +749,8 @@ void GUI::create_graphic_window(int argc, char **argv){
 
 
     g_window = new Fl_Window(width, height);
+    g_window->callback(file_quit_cb);
+
     g_opengl_window = new Opengl_Window(0,0,width,glheight);
     g_opengl_window->end();
 

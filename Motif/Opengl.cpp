@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.4 2001-01-29 08:43:45 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.5 2001-02-04 12:46:09 geuzaine Exp $
 
 #include <X11/IntrinsicP.h>
 
@@ -48,13 +48,17 @@ void InitOverlay(void){
   Orthogonalize(0,0);
 }
 
-void Draw(void){
-  InitOpengl();
+void ClearOpengl(void){
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
                UNPACK_GREEN(CTX.color.bg)/255.,
                UNPACK_BLUE(CTX.color.bg)/255.,
                0.);
   glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+}
+
+void Draw(void){
+  InitOpengl();
+  ClearOpengl();
   if(CTX.db) glDrawBuffer(GL_BACK);    
   Draw3d();
   Draw2d();

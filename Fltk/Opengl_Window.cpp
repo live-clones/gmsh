@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.10 2001-02-04 10:23:56 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.11 2001-02-04 12:46:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -42,11 +42,7 @@ void Opengl_Window::draw() {
   }
   if(!ZOOM){
     Orthogonalize(0,0);
-    glClearColor(UNPACK_RED(CTX.color.bg)/255.,
-		 UNPACK_GREEN(CTX.color.bg)/255.,
-		 UNPACK_BLUE(CTX.color.bg)/255.,
-		 0.);
-    glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+    ClearOpengl();
     Draw3d();
     Draw2d();
   }

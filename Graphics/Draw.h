@@ -16,7 +16,9 @@ void InitShading(void);
 void InitRenderModel(void);
 void InitNoShading(void);
 void InitPosition(void);
+
 void Orthogonalize(int x, int y);
+void ClearOpengl(void);
 
 void set_r(int i, double val);
 void set_t(int i, double val);

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.16 2001-02-03 21:20:32 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.17 2001-02-04 12:46:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -32,6 +32,14 @@ void InitOpengl(void){
 void InitOverlay(void){
   WID->make_overlay_current();
   Orthogonalize(0,0);
+}
+
+void ClearOpengl(void){
+  glClearColor(UNPACK_RED(CTX.color.bg)/255.,
+               UNPACK_GREEN(CTX.color.bg)/255.,
+               UNPACK_BLUE(CTX.color.bg)/255.,
+               0.);
+  glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 }
 
 void Draw(void){
