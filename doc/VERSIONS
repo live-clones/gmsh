@@ -1,4 +1,4 @@
-$Date: 2001-10-05 19:26:25 $
+$Date: 2001-10-06 09:21:56 $
 
 New in 1.27: Added ability to extrude curves with Layers/Recombine
 attributes; New PointSize/LineWidth options; Fixed For/EndFor loops in
@@ -7,7 +7,7 @@ and functions; Made the automatic removal of duplicate geometrical
 entities optional ('Geometry.AutoCoherence=0;' allows to manually
 specify 'Coherence;' at strategic points of the geo files, achieving
 tremendous speedups when using multiple Rotate/Extrude/etc.
-transformations);
+transformations); various other small bug fixes and clean-ups;
 
 New in 1.26: Enhanced 2D anisotropic mesh generator (metric
 intersections); fixed small bug in 3D initial mesh; added alternative

@@ -63,6 +63,8 @@ Plane Surface(10) = {9};
 
 // 1st gap
 
+Geometry.AutoCoherence = 0;
+
 Extrude Surface {2, {0,0,1}, {0,0,0}, Pi/180}{  
  Layers { {1}, {9000+100}, {1} } ;
 };
@@ -205,6 +207,7 @@ Extrude Surface {345+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
  Layers { {1,1,1,nArc,1,1,1}, {9019,9019,9019,9019,9019,9019,9019}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
 };
 
+Coherence;
 
 PZTA = 1000;
 PZTB = 1500;
