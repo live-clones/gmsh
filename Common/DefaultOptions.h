@@ -582,6 +582,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "MessageWidth" , opt_general_message_size0 , 450. , 
     "Width (in pixels) of the message window" }, 
 
+  { F|O, "NoPopup" , opt_general_nopopup , 0. , 
+    "Disable interactive dialog windows in scripts (and use default values instead)" },
+
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the option window" }, 
   { F|S, "OptionsPositionY" , opt_general_option_position1 , 150. , 

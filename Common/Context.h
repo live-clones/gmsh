@@ -87,6 +87,7 @@ public :
   int batch;                  // 0=full gfx; -1=just parse; 1,2,3=batch 1D, 2D, 3D mesh 
   int initial_context;        // 0=automatic; 1=geom; 2=mesh; 3=solver; 4=post 
   int verbosity;              // 0=silent -> 3=debug 
+  int nopopup;                // never popup dialogs in scripts (use default values instead)
 
   double rot[16];             // current rotation matrix 
   double mod[16];             // current modelview matrix 

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.188 2004-12-26 19:50:18 geuzaine Exp $
+// $Id: Gmsh.y,v 1.189 2004-12-27 00:47:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -114,7 +114,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tReturn tCall tFunction tTrimmed tShow tHide
+%token tReturn tCall tFunction tTrimmed tShow tHide tGetValue
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -2582,6 +2582,7 @@ Loop :
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
+      if($3 > $5) skip_until("For", "EndFor");
     }
   | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')'
     {
@@ -2596,6 +2597,8 @@ Loop :
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
+      if(($7 > 0. && $3 > $5) || ($7 < 0. && $3 < $5))
+	skip_until("For", "EndFor");
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
     {
@@ -2621,6 +2624,7 @@ Loop :
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
+      if($5 > $7) skip_until("For", "EndFor");
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
     {
@@ -2646,11 +2650,16 @@ Loop :
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
+      if(($9 > 0. && $5 > $7) || ($9 < 0. && $5 < $7))
+	skip_until("For", "EndFor");
     }
   | tEndFor 
     {
-      if(LoopControlVariablesTab[ImbricatedLoop-1][1] >  
-	 LoopControlVariablesTab[ImbricatedLoop-1][0]){
+      double x0 = LoopControlVariablesTab[ImbricatedLoop-1][0];
+      double x1 = LoopControlVariablesTab[ImbricatedLoop-1][1];
+      double step = LoopControlVariablesTab[ImbricatedLoop-1][2];
+      int do_next = (step > 0.) ? (x0+step <= x1) : (x0+step >= x1);
+      if(do_next){
 	LoopControlVariablesTab[ImbricatedLoop-1][0] +=
 	  LoopControlVariablesTab[ImbricatedLoop-1][2];
 	if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
@@ -3617,6 +3626,10 @@ FExpr_Single :
 	else
 	  $$ = pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7);
       }
+    }
+  | tGetValue '(' tBIGSTR ',' FExpr ')'
+    { 
+      $$ = GetValue($3, $5);
     }
 ;
 

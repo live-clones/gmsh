@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.60 2004-12-13 15:57:29 geuzaine Exp $
+// $Id: Gmsh.l,v 1.61 2004-12-27 00:46:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -157,6 +157,8 @@ Floor                   return tFloor;
 Fmod                    return tFmod;
 For                     return tFor;
 Function                return tFunction;
+
+GetValue                return tGetValue;
 
 Hide                    return tHide;
 Hypot                   return tHypot;

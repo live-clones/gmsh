@@ -257,6 +257,7 @@ double opt_general_shine(OPT_ARGS_NUM);
 double opt_general_shine_exponent(OPT_ARGS_NUM);
 double opt_general_color_scheme(OPT_ARGS_NUM);
 double opt_general_verbosity(OPT_ARGS_NUM);
+double opt_general_nopopup(OPT_ARGS_NUM);
 double opt_general_terminal(OPT_ARGS_NUM);
 double opt_general_tooltips(OPT_ARGS_NUM);
 double opt_general_confirm_overwrite(OPT_ARGS_NUM);

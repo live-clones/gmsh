@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.51 2004-11-25 02:10:30 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.52 2004-12-27 00:46:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -104,6 +104,7 @@ void Print_Usage(char *name){
 #endif
   Msg(DIRECT, "  -pid                  print process id on stdout");
   Msg(DIRECT, "  -v int                set verbosity level");
+  Msg(DIRECT, "  -nopopup              don't popup dialog windows in scripts");
   Msg(DIRECT, "  -string \"string\"      parse string before project file");
   Msg(DIRECT, "  -option file          parse option file before GUI creation");
   Msg(DIRECT, "  -convert file file    perform batch conversion of views and meshes into latest file formats");
@@ -239,6 +240,10 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       }
       else if(!strcmp(argv[i] + 1, "optimize")) {
         CTX.mesh.optimize = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nopopup")) {
+        CTX.nopopup = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "option")) {

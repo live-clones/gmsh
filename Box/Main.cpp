@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.44 2004-11-25 02:10:30 geuzaine Exp $
+// $Id: Main.cpp,v 1.45 2004-12-27 00:46:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -271,4 +271,20 @@ double Cpu(void)
   long s, us, mem;
   GetResources(&s, &us, &mem);
   return (double)s + (double)us / 1.e6;
+}
+
+// interactive value dialog
+
+double GetValue(char *text, double defaultval)
+{
+  if(CTX.nopopup)
+    return defaultval;
+
+  printf("%s (default=%.16g): ", text, defaultval);
+  char str[256];
+  fgets(str, sizeof(str), stdin);
+  if(!strlen(str) || !strcmp(str, "\n"))
+    return defaultval;
+  else
+    return atof(str);
 }

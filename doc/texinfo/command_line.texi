@@ -89,6 +89,8 @@ start in automatic, geometry, mesh, solver or post-processing mode
 print pid on stdout
 @item -v int
 set verbosity level
+@item -nopopup
+don't popup dialog windows in scripts
 @item -string "string"
 parse string before project file
 @item -option file

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.58 2004-09-25 06:16:13 geuzaine Exp $
+// $Id: Message.cpp,v 1.59 2004-12-27 00:46:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -279,4 +279,29 @@ double Cpu(void)
   long s, us, mem;
   GetResources(&s, &us, &mem);
   return (double)s + (double)us / 1.e6;
+}
+
+double GetValue(char *text, double defaultval)
+{
+  if(CTX.nopopup)
+    return defaultval;
+
+  if(WID && !CTX.batch){ // pop up GUI dialog
+    char defaultstr[256];
+    sprintf(defaultstr, "%.16g", defaultval);
+    const char *ret = fl_input("%s", defaultstr, text);
+    if(!ret)
+      return defaultval;
+    else
+      return atof(ret);
+  }
+  else{
+    printf("%s (default=%.16g): ", text, defaultval);
+    char str[256];
+    fgets(str, sizeof(str), stdin);
+    if(!strlen(str) || !strcmp(str, "\n"))
+      return defaultval;
+    else
+      return atof(str);
+  }
 }

@@ -69,9 +69,10 @@
 #define DEBUG_STR          "Debug   : "
 #define STATUS_STR         "Info    : "
 
-void   Signal (int signum);
-void   Msg (int level, char *fmt, ...);
-double Cpu (void);
+void   Signal(int signum);
+void   Msg(int level, char *fmt, ...);
+double Cpu(void);
 void   Exit(int);
+double GetValue(char *text, double defaultval);
 
 #endif

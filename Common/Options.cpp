@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.217 2004-12-26 19:50:15 geuzaine Exp $
+// $Id: Options.cpp,v 1.218 2004-12-27 00:46:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2373,6 +2373,13 @@ double opt_general_verbosity(OPT_ARGS_NUM)
     WID->gen_value[5]->value(CTX.verbosity);
 #endif
   return CTX.verbosity;
+}
+
+double opt_general_nopopup(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.nopopup = (int)val;
+  return CTX.nopopup;
 }
 
 double opt_general_terminal(OPT_ARGS_NUM)
