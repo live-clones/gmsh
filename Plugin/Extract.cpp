@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.7 2004-05-12 06:03:12 geuzaine Exp $
+// $Id: Extract.cpp,v 1.8 2004-05-13 06:16:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,11 +26,18 @@
 #include "Context.h"
 #include "Malloc.h"
 
+#if defined(HAVE_MATH_EVAL)
+#include "matheval.h"
+#endif
+
 extern Context_T CTX;
 
 StringXNumber ExtractOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "iComponent", NULL, 0.}
+  {GMSH_FULLRC, "iView", NULL, -1.}
+};
+
+StringXString ExtractOptions_String[] = {
+  {GMSH_FULLRC, "Expression", NULL, "v0"}
 };
 
 extern "C"
@@ -56,8 +63,12 @@ void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Extract) extracts the `iComponent'-th\n"
-	 "component of the view `iView'. If `iView' < 0, the\n"
+         "Plugin(Extract) extracts a combination of\n"
+	 "components from the view `iView', as specified\n"
+	 "by `Expression'. In addition to the usual\n"
+	 "mathematical functions, `Expression' can contain\n"
+	 "the symbols v0, v1, v2, ..., vn, which represent\n"
+	 "the n components of the field. If `iView' < 0, the\n"
 	 "plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(Extract) creates one new view.\n");
@@ -73,42 +84,87 @@ StringXNumber *GMSH_ExtractPlugin::getOption(int iopt)
   return &ExtractOptions_Number[iopt];
 }
 
+int GMSH_ExtractPlugin::getNbOptionsStr() const
+{
+  return sizeof(ExtractOptions_String) / sizeof(StringXString);
+}
+
+StringXString *GMSH_ExtractPlugin::getOptionStr(int iopt)
+{
+  return &ExtractOptions_String[iopt];
+}
+
 void GMSH_ExtractPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "Extract failed...");
 }
 
-static void extract(int comp, List_T *inList, int inNb, 
+static void extract(char *expr, List_T *inList, int inNb, 
 		    List_T *outList, int *outNb, 
 		    int nbTime, int nbNod, int nbComp)
 {
   if(!inNb)
     return;
 
-  if(comp < 0 || comp > nbComp-1){
-    Msg(GERROR, "Cannot extract component #(%d+1)=%d from a %d-component field", 
-	comp, comp+1, nbComp);
+  // if we have MathEval, we can evaluate arbitrary expressions;
+  // otherwise, we only allow to extract single components
+
+#if defined(HAVE_MATH_EVAL)
+  void *f = evaluator_create(expr);
+  if(!f){
+    Msg(GERROR, "Invalid expression '%s'", expr);
     return;
   }
+#else
+  int comp;
+  if     (!strcmp(expr, "v0")) comp = 0;
+  else if(!strcmp(expr, "v1")) comp = 1;
+  else if(!strcmp(expr, "v2")) comp = 2;
+  else if(!strcmp(expr, "v3")) comp = 3;
+  else if(!strcmp(expr, "v4")) comp = 4;
+  else if(!strcmp(expr, "v5")) comp = 5;
+  else if(!strcmp(expr, "v6")) comp = 6;
+  else if(!strcmp(expr, "v7")) comp = 7;
+  else if(!strcmp(expr, "v8")) comp = 8;
+  else{
+    Msg(GERROR, "Invalid expression '%s'", expr);
+    return;
+  }
+#endif
 
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
     for(int j = 0; j < 3 * nbNod; j++)
       List_Add(outList, List_Pointer_Fast(inList, i + j));
-    for(int j = 0; j < nbTime; j++)
-      for(int k = 0; k < nbNod; k++)
-	List_Add(outList, List_Pointer_Fast(inList, i + 3 * nbNod + 
-					    nbNod * nbComp * j + 
-					    nbComp * k + 
-					    comp));
+    for(int j = 0; j < nbTime; j++){
+      for(int k = 0; k < nbNod; k++){
+	double res, d[9];
+	for(int l = 0; l < nbComp; l++)
+	  List_Read(inList, i + 3 * nbNod + nbNod * nbComp * j + nbComp * k + l, &d[l]);
+	for(int l = nbComp; l < 9; l++)
+	  d[l] = 0.;
+#if defined(HAVE_MATH_EVAL)
+	char *names[] = { "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
+	double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8] };
+	res = evaluator_evaluate(f, sizeof(names)/sizeof(names[0]), names, values);
+#else
+	res = d[comp];
+#endif
+	List_Add(outList, &res);
+      }
+    }
     (*outNb)++;
   }
+
+#if defined(HAVE_MATH_EVAL)
+  evaluator_destroy(f);
+#endif
 }
 
 Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
 {
   int iView = (int)ExtractOptions_Number[0].def;
-  int iComp = (int)ExtractOptions_Number[1].def;
+  char *expr = ExtractOptions_String[0].def;
   Post_View *vv;
 
   if(v && iView < 0)
@@ -126,44 +182,38 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
   // reallocation, vv is wrong
   Post_View *view = BeginView(1);
 
-  // FIXME: this is a very quick implementation of the Extract
-  // plugin. An interesting generalization would be to allow arbitrary
-  // manipulations of the components: we could do that by merging the
-  // stack-based expression evaluator from getdp and then allow things
-  // like "$1 + $2", or "Sqrt[$1^2+$5^2]"...
-
   // points
-  extract(iComp, vv->SP, vv->NbSP, view->SP, &view->NbSP, vv->NbTimeStep, 1, 1);
-  extract(iComp, vv->VP, vv->NbVP, view->SP, &view->NbSP, vv->NbTimeStep, 1, 3);
-  extract(iComp, vv->TP, vv->NbTP, view->SP, &view->NbSP, vv->NbTimeStep, 1, 9);
+  extract(expr, vv->SP, vv->NbSP, view->SP, &view->NbSP, vv->NbTimeStep, 1, 1);
+  extract(expr, vv->VP, vv->NbVP, view->SP, &view->NbSP, vv->NbTimeStep, 1, 3);
+  extract(expr, vv->TP, vv->NbTP, view->SP, &view->NbSP, vv->NbTimeStep, 1, 9);
   // lines
-  extract(iComp, vv->SL, vv->NbSL, view->SL, &view->NbSL, vv->NbTimeStep, 2, 1);
-  extract(iComp, vv->VL, vv->NbVL, view->SL, &view->NbSL, vv->NbTimeStep, 2, 3);
-  extract(iComp, vv->TL, vv->NbTL, view->SL, &view->NbSL, vv->NbTimeStep, 2, 9);
+  extract(expr, vv->SL, vv->NbSL, view->SL, &view->NbSL, vv->NbTimeStep, 2, 1);
+  extract(expr, vv->VL, vv->NbVL, view->SL, &view->NbSL, vv->NbTimeStep, 2, 3);
+  extract(expr, vv->TL, vv->NbTL, view->SL, &view->NbSL, vv->NbTimeStep, 2, 9);
   // triangles
-  extract(iComp, vv->ST, vv->NbST, view->ST, &view->NbST, vv->NbTimeStep, 3, 1);
-  extract(iComp, vv->VT, vv->NbVT, view->ST, &view->NbST, vv->NbTimeStep, 3, 3);
-  extract(iComp, vv->TT, vv->NbTT, view->ST, &view->NbST, vv->NbTimeStep, 3, 9);
+  extract(expr, vv->ST, vv->NbST, view->ST, &view->NbST, vv->NbTimeStep, 3, 1);
+  extract(expr, vv->VT, vv->NbVT, view->ST, &view->NbST, vv->NbTimeStep, 3, 3);
+  extract(expr, vv->TT, vv->NbTT, view->ST, &view->NbST, vv->NbTimeStep, 3, 9);
   // quadrangles
-  extract(iComp, vv->SQ, vv->NbSQ, view->SQ, &view->NbSQ, vv->NbTimeStep, 4, 1);
-  extract(iComp, vv->VQ, vv->NbVQ, view->SQ, &view->NbSQ, vv->NbTimeStep, 4, 3);
-  extract(iComp, vv->TQ, vv->NbTQ, view->SQ, &view->NbSQ, vv->NbTimeStep, 4, 9);
+  extract(expr, vv->SQ, vv->NbSQ, view->SQ, &view->NbSQ, vv->NbTimeStep, 4, 1);
+  extract(expr, vv->VQ, vv->NbVQ, view->SQ, &view->NbSQ, vv->NbTimeStep, 4, 3);
+  extract(expr, vv->TQ, vv->NbTQ, view->SQ, &view->NbSQ, vv->NbTimeStep, 4, 9);
   // tets
-  extract(iComp, vv->SS, vv->NbSS, view->SS, &view->NbSS, vv->NbTimeStep, 4, 1);
-  extract(iComp, vv->VS, vv->NbVS, view->SS, &view->NbSS, vv->NbTimeStep, 4, 3);
-  extract(iComp, vv->TS, vv->NbTS, view->SS, &view->NbSS, vv->NbTimeStep, 4, 9);
+  extract(expr, vv->SS, vv->NbSS, view->SS, &view->NbSS, vv->NbTimeStep, 4, 1);
+  extract(expr, vv->VS, vv->NbVS, view->SS, &view->NbSS, vv->NbTimeStep, 4, 3);
+  extract(expr, vv->TS, vv->NbTS, view->SS, &view->NbSS, vv->NbTimeStep, 4, 9);
   // hexas
-  extract(iComp, vv->SH, vv->NbSH, view->SH, &view->NbSH, vv->NbTimeStep, 8, 1);
-  extract(iComp, vv->VH, vv->NbVH, view->SH, &view->NbSH, vv->NbTimeStep, 8, 3);
-  extract(iComp, vv->TH, vv->NbTH, view->SH, &view->NbSH, vv->NbTimeStep, 8, 9);
+  extract(expr, vv->SH, vv->NbSH, view->SH, &view->NbSH, vv->NbTimeStep, 8, 1);
+  extract(expr, vv->VH, vv->NbVH, view->SH, &view->NbSH, vv->NbTimeStep, 8, 3);
+  extract(expr, vv->TH, vv->NbTH, view->SH, &view->NbSH, vv->NbTimeStep, 8, 9);
   // prisms
-  extract(iComp, vv->SI, vv->NbSI, view->SI, &view->NbSI, vv->NbTimeStep, 6, 1);
-  extract(iComp, vv->VI, vv->NbVI, view->SI, &view->NbSI, vv->NbTimeStep, 6, 3);
-  extract(iComp, vv->TI, vv->NbTI, view->SI, &view->NbSI, vv->NbTimeStep, 6, 9);
+  extract(expr, vv->SI, vv->NbSI, view->SI, &view->NbSI, vv->NbTimeStep, 6, 1);
+  extract(expr, vv->VI, vv->NbVI, view->SI, &view->NbSI, vv->NbTimeStep, 6, 3);
+  extract(expr, vv->TI, vv->NbTI, view->SI, &view->NbSI, vv->NbTimeStep, 6, 9);
   // pyramids
-  extract(iComp, vv->SY, vv->NbSY, view->SY, &view->NbSY, vv->NbTimeStep, 5, 1);
-  extract(iComp, vv->VY, vv->NbVY, view->SY, &view->NbSY, vv->NbTimeStep, 5, 3);
-  extract(iComp, vv->TY, vv->NbTY, view->SY, &view->NbSY, vv->NbTimeStep, 5, 9);
+  extract(expr, vv->SY, vv->NbSY, view->SY, &view->NbSY, vv->NbTimeStep, 5, 1);
+  extract(expr, vv->VY, vv->NbVY, view->SY, &view->NbSY, vv->NbTimeStep, 5, 3);
+  extract(expr, vv->TY, vv->NbTY, view->SY, &view->NbSY, vv->NbTimeStep, 5, 9);
 
   if(view->empty()) {
     RemoveViewByNumber(view->Num);
@@ -174,8 +224,8 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
       List_Add(view->Time, List_Pointer(vv->Time, i));
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "%s_Extract_%d", vv->Name, iComp);
-    sprintf(filename, "%s_Extract_%d.pos", vv->Name, iComp);
+    sprintf(name, "%s_Extract", vv->Name);
+    sprintf(filename, "%s_Extract.pos", vv->Name);
     EndView(view, 1, filename, name);
   }
 
