@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.31 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.32 2004-11-22 22:06:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,9 +32,8 @@ extern Context_T CTX;
 
 void ExportLcFieldOnVolume(Mesh * M, char *filename)
 {
-  List_T *l = Tree2List(M->Volumes);
   Volume *vol;
-  Simplex *simp;
+  SimplexBase *simp;
   FILE *f = fopen(filename, "w");
 
   if(!f) {
@@ -42,15 +41,19 @@ void ExportLcFieldOnVolume(Mesh * M, char *filename)
     return;
   }
 
+  List_T *l = Tree2List(M->Volumes);
   fprintf(f, "View \"LC_FIELD\" {\n");
   for(int i = 0; i < List_Nbr(l); i++) {
     List_Read(l, i, &vol);
-    List_T *ll = Tree2List(vol->Simplexes);
-    for(int j = 0; j < List_Nbr(ll); j++) {
-      List_Read(ll, j, &simp);
-      simp->ExportLcField(f);
+    List_T *ll;
+    for(int simtype = 0; simtype < 2; simtype++){
+      ll = (!simtype) ? Tree2List(vol->Simplexes) : Tree2List(vol->SimplexesBase);
+      for(int j = 0; j < List_Nbr(ll); j++) {
+	List_Read(ll, j, &simp);
+	simp->ExportLcField(f);
+      }
+      List_Delete(ll);
     }
-    List_Delete(ll);
   }
   List_Delete(l);
   fprintf(f, "};\n");
@@ -59,9 +62,8 @@ void ExportLcFieldOnVolume(Mesh * M, char *filename)
 
 void ExportLcFieldOnSurfaces(Mesh * M, char *filename)
 {
-  List_T *l = Tree2List(M->Surfaces);
   Surface *surf;
-  Simplex *simp;
+  SimplexBase *simp;
   FILE *f = fopen(filename, "w");
 
   if(!f) {
@@ -69,15 +71,19 @@ void ExportLcFieldOnSurfaces(Mesh * M, char *filename)
     return;
   }
 
+  List_T *l = Tree2List(M->Surfaces);
   fprintf(f, "View \"LC_FIELD\" {\n");
   for(int i = 0; i < List_Nbr(l); i++) {
     List_Read(l, i, &surf);
-    List_T *ll = Tree2List(surf->Simplexes);
-    for(int j = 0; j < List_Nbr(ll); j++) {
-      List_Read(ll, j, &simp);
-      simp->ExportLcField(f);
+    List_T *ll;
+    for(int simtype = 0; simtype < 2; simtype++){
+      ll = (!simtype) ? Tree2List(surf->Simplexes) : Tree2List(surf->SimplexesBase);
+      for(int j = 0; j < List_Nbr(ll); j++) {
+	List_Read(ll, j, &simp);
+	simp->ExportLcField(f);
+      }
+      List_Delete(ll);
     }
-    List_Delete(ll);
   }
   List_Delete(l);
   fprintf(f, "};\n");
