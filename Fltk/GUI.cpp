@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.227 2003-02-24 20:21:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.228 2003-02-25 14:40:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -81,6 +81,8 @@ extern Context_T  CTX;
 
 // We can not use the 'g', 'm' 's' and 'p' mnemonics since they are
 // already defined as global shortcuts (geometry, mesh, solver, post).
+
+// *INDENT-OFF*
 
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
@@ -339,6 +341,8 @@ static Fl_Menu_Item menu_line_display[] = {
   {"3D cylinder",   0, 0, 0},
   {0}
 };
+
+// *INDENT-ON*
 
 // Definition of global shortcuts
 
@@ -656,7 +660,7 @@ GUI::GUI(int argc, char **argv) {
   m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
   				   IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #elif defined(__APPLE__)
-  /* ??? */
+  // Mac icons are defined in the resource fork or in the bundle
 #else
   fl_open_display();
   Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
