@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.67 2001-05-04 13:42:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.68 2001-05-04 20:16:37 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2360,19 +2360,19 @@ void GUI::create_getdp_window(){
 	g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
 	g[0]->labelsize(CTX.fontsize);
 
-	getdp_value[0] = new Fl_Output(8*CTX.fontsize, 2*WB+1*BH, BW, BH, "Problem");
-	Fl_Button *b1 = new Fl_Button(8*CTX.fontsize+BW-2*BB-WB, 3*WB+2*BH, BB, BH, "Edit");
-	b1->callback(getdp_file_edit_cb);
+	getdp_value[0] = new Fl_Output(2*WB, 2*WB+1*BH, BW, BH, "Problem");
+	Fl_Button *b1 = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
+	b1->callback(getdp_file_open_cb);
 	b1->labelsize(CTX.fontsize);
-	Fl_Button *b2 = new Fl_Button(8*CTX.fontsize+BW-BB, 3*WB+2*BH, BB, BH, "Choose");
-	b2->callback(getdp_file_open_cb);
+	Fl_Button *b2 = new Fl_Button(3*WB+BB, 3*WB+2*BH, BB, BH, "Edit");
+	b2->callback(getdp_file_edit_cb);
 	b2->labelsize(CTX.fontsize);
 
-	getdp_choice[0] = new Fl_Choice(8*CTX.fontsize, 4*WB+3*BH, BW, BH,"Resolution");
-	getdp_choice[1] = new Fl_Choice(8*CTX.fontsize, 5*WB+4*BH, BW, BH,"PostOperation");
+	getdp_choice[0] = new Fl_Choice(2*WB, 4*WB+3*BH, BW, BH,"Resolution");
+	getdp_choice[1] = new Fl_Choice(2*WB, 5*WB+4*BH, BW, BH,"PostOperation");
 
-	getdp_value[1] = new Fl_Output(8*CTX.fontsize, 6*WB+5*BH, BW, BH, "Mesh");
-	Fl_Button *b3 = new Fl_Button(8*CTX.fontsize+BW-BB, 7*WB+6*BH, BB, BH, "Choose");
+	getdp_value[1] = new Fl_Output(2*WB, 6*WB+5*BH, BW, BH, "Mesh");
+	Fl_Button *b3 = new Fl_Button(2*WB, 7*WB+6*BH, BB, BH, "Choose");
 	b3->callback(getdp_choose_mesh_cb);
 	b3->labelsize(CTX.fontsize);
 
@@ -2380,12 +2380,13 @@ void GUI::create_getdp_window(){
 	  getdp_value[i]->labelsize(CTX.fontsize);
 	  getdp_value[i]->textsize(CTX.fontsize);
 	  getdp_value[i]->type(FL_HORIZONTAL);
-	  getdp_value[i]->align(FL_ALIGN_LEFT);
+	  getdp_value[i]->align(FL_ALIGN_RIGHT);
 	  getdp_value[i]->value(0);
 	}
 	for(i=0 ; i<2 ; i++){
 	  getdp_choice[i]->textsize(CTX.fontsize);
 	  getdp_choice[i]->labelsize(CTX.fontsize);
+	  getdp_choice[i]->align(FL_ALIGN_RIGHT);
 	}
 
         g[0]->end();
@@ -2398,9 +2399,14 @@ void GUI::create_getdp_window(){
 	getdp_input[0]->labelsize(CTX.fontsize);
 	getdp_input[0]->textsize(CTX.fontsize);
 	getdp_input[0]->align(FL_ALIGN_RIGHT);
+	Fl_Button *b = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
+	b->callback(getdp_choose_command_cb);
+	b->labelsize(CTX.fontsize);
 	
-	getdp_butt[0] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Popup message window");
-	getdp_butt[1] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Open post-processing views");
+	getdp_butt[0] = new Fl_Check_Button(2*WB, 4*WB+3*BH, BW, BH, 
+					    "Automatic message display");
+	getdp_butt[1] = new Fl_Check_Button(2*WB, 4*WB+4*BH, BW, BH, 
+					    "Automatic view merge");
 	for(i=0 ; i<2 ; i++){
 	  getdp_butt[i]->type(FL_TOGGLE_BUTTON);
 	  getdp_butt[i]->down_box(FL_DOWN_BOX);

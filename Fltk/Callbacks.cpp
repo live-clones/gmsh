@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.49 2001-05-04 13:39:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.50 2001-05-04 20:16:37 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -1371,6 +1371,11 @@ void getdp_post_cb(CALLBACK_ARGS){
 	    GetDP_Info.file,
 	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
   GetDP(arg);
+}
+void getdp_choose_command_cb(CALLBACK_ARGS){
+  char *newfile;
+  newfile = fl_file_chooser("Choose executable", "*", NULL);
+  if (newfile != NULL) WID->getdp_input[0]->value(newfile);
 }
 void getdp_ok_cb(CALLBACK_ARGS){
   opt_solver_getdp_popupmessages(0, GMSH_SET, WID->getdp_butt[0]->value());

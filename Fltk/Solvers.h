@@ -11,7 +11,7 @@
 #define GETDP_LOAD_VIEW            5
 
 typedef struct{
-  char *command;
+  char command[256];
   int popupmessages, mergeviews;
   int nbres, nbpostop;
   char res[100][100];
