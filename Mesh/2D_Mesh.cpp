@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.67 2004-06-30 00:57:50 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.68 2004-07-14 22:42:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -899,7 +899,7 @@ void Maillage_Surface(void *data, void *dum)
     else if(CTX.mesh.algo2d == DELAUNAY_ANISO)
       AlgorithmeMaillage2DAnisotropeModeJF(s);
     else
-      Mesh_Shewchuk(s);
+      Mesh_Triangle(s);
     
     if(CTX.mesh.nb_smoothing) {
       Msg(STATUS3, "Smoothing surface %d", s->Num);

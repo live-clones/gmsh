@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.126 2004-07-03 17:50:50 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.127 2004-07-14 22:42:27 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -1886,13 +1886,13 @@ way to compute the target sizes on this mesh (usually through an error
 estimation procedure, in an iterative process of mesh adaptation). Note that
 the target element sizes can be constrained by the characteristic lengths
 defined in the geometrical model if the
-@code{Mesh.ConstrainedBackgroundMesh} option is set.
-
-This method only works with the isotropic 1D, 2D and 3D algorithm, and is
-not currently available with the Triangle algorithm. To load a background
+@code{Mesh.ConstrainedBackgroundMesh} option is set. To load a background
 mesh, use the @code{-bgm} command-line option (@pxref{Command-line options})
 or select `Apply as background mesh' in the post-processing view option
 menu.
+
+Background meshes are not supported by the 2D anisotropic algorithm and the
+3D Netgen algorithm.
 @end enumerate
 
 Here are the mesh commands that are related to the specification of
@@ -2249,9 +2249,9 @@ Duplicates the @var{expression}-th post-processing view.
 Executes the plugin @var{string}. The list of default plugins is given in
 @ref{Post-processing plugins}.
 
-@item Plugin (@var{string}) . @var{string} = @var{expression};
-Sets a floating point option for a given plugin. See @ref{t9.geo}, for some
-examples.
+@item Plugin (@var{string}) . @var{string} = @var{expression} | @var{char-expression};
+Sets an option for a given plugin. See @ref{Post-processing plugins}, for a
+list of default plugins and @ref{t9.geo}, for some examples.
 
 @item Save View[@var{expression}] @var{char-expression};
 Saves the the @var{expression}-th post-processing view in a file named

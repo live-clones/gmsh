@@ -1,6 +1,7 @@
-$Id: VERSIONS,v 1.234 2004-07-05 15:31:59 geuzaine Exp $
+$Id: VERSIONS,v 1.235 2004-07-14 22:42:27 geuzaine Exp $
 
-New since 1.54: small bug fixes.
+New since 1.54: added background mesh support for Triangle; small bug
+fixes.
 
 New in 1.54: integrated Netgen (3D mesh quality optimization +
 alternative 3D algorithm); Extrude Surface now always automatically

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.10 2004-06-30 19:51:44 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.11 2004-07-14 22:42:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -256,6 +256,7 @@ void Netgen::OptimizeVolume()
     List_Read(_volverts, i, &v);
     Tree_Suppress(_vol->Vertices, &v);
     Tree_Suppress(THEM->Vertices, &v);
+    Free_Vertex(&v, NULL);
   }
   // remove the tets
   Tree_Action(_vol->Simplexes, suppressSimplex);
@@ -302,6 +303,8 @@ void Optimize_Netgen(Mesh *m)
 {
   Msg(STATUS2, "Optimize volume mesh...");
   double t1 = Cpu();
+
+  Degre1(); // cleanup 2nd order vertices, if any
 
   List_T *list = Tree2List(m->Volumes);
   for(int i = 0; i < List_Nbr(list); i++){

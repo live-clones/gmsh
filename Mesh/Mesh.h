@@ -467,7 +467,7 @@ int MeshEllipticSurface(Surface * sur);
 
 int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s);
 void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori);
-int Mesh_Shewchuk(Surface *s);
+int Mesh_Triangle(Surface *s);
 int Mesh_Netgen(Volume * v);
 void Optimize_Netgen(Volume * v);
 void Optimize_Netgen(Mesh * m);

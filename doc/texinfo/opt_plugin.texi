@@ -138,8 +138,8 @@ Default value: @code{-1}
 
 @item Plugin(DecomposeInSimplex)
 Plugin(DecomposeInSimplex) decomposes all
-non-simplectic elements (quadrangles, prisms
-pyramids, hexahedra) in the view `iView' into
+non-simplectic elements (quadrangles, prisms,
+hexahedra, pyramids) in the view `iView' into
 simplices (triangles, tetrahedra). If `iView' < 0,
 the plugin is run on the current view.
 

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.9 2004-05-22 01:29:46 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.10 2004-07-14 22:42:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 
 #if !defined(HAVE_TRIANGLE)
 
-int Mesh_Shewchuk(Surface * s)
+int Mesh_Triangle(Surface * s)
 {
   Msg(GERROR, "Triangle is not compiled in this version of Gmsh");
   return 1;
@@ -72,11 +72,10 @@ void AddInMesh(Surface * sur, int nbbound, Vertex ** vertexbound,
   Free(out->pointattributelist);
 
   for(i = 0; i < out->numberoftriangles; i++) {
-    s =
-      Create_Simplex(vtable[out->trianglelist[i * out->numberofcorners + 0]],
-                     vtable[out->trianglelist[i * out->numberofcorners + 1]],
-                     vtable[out->trianglelist[i * out->numberofcorners + 2]],
-                     NULL);
+    s = Create_Simplex(vtable[out->trianglelist[i * out->numberofcorners + 0]],
+		       vtable[out->trianglelist[i * out->numberofcorners + 1]],
+		       vtable[out->trianglelist[i * out->numberofcorners + 2]],
+		       NULL);
     s->iEnt = sur->Num;
     Tree_Add(sur->Simplexes, &s);
   }
@@ -108,7 +107,7 @@ void FindPointInHole(List_T * verts, REAL * x, REAL * y)
   *y = 0.5 * (v1->Pos.Y + v2->Pos.Y) + 1.e-12 * CTX.lc * c[1];
 }
 
-int Mesh_Shewchuk(Surface * s)
+int Mesh_Triangle(Surface * s)
 {
   char opts[128];
   int i, j, k, l, NbPts = 0, first;
@@ -138,6 +137,7 @@ int Mesh_Shewchuk(Surface * s)
 
   k = 0;
   l = 0;
+  double lc_max = -1.0;
   for(i = 0; i < List_Nbr(s->Contours); i++) {
     List_Read(s->Contours, i, &list);
     first = l;
@@ -146,6 +146,7 @@ int Mesh_Shewchuk(Surface * s)
       in.pointlist[k] = v->Pos.X;
       in.pointlist[k + 1] = v->Pos.Y;
       in.pointattributelist[l] = v->lc;
+      if(v->lc > lc_max) lc_max = v->lc;
       vtable[l] = v;
       in.segmentlist[k] = l;
       in.segmentlist[k + 1] = (j == List_Nbr(list) - 1) ? (first) : (l + 1);
@@ -180,8 +181,16 @@ int Mesh_Shewchuk(Surface * s)
   mid.edgelist = NULL;
   mid.edgemarkerlist = NULL;
 
-  // triangulate the points with minimum angle > 20 deg, with no boundary breaking
+  // triangulate the points with minimum angle > 20 deg, with no
+  // boundary breaking, 
 
+  // TODO:
+  // and with an area constraint related to the
+  // maximum char. length allowed (this last constraint is to avoid an
+  // extremely coarse initial grid, on which the interpolation of the
+  // final char. lengths would be awful).
+
+  //sprintf(opts, "pqzYa%e", lc_max*lc_max/2.);
   strcpy(opts, "pqzY");
   if(CTX.verbosity < 4)
     strcat(opts, "Q");
@@ -203,8 +212,7 @@ int Mesh_Shewchuk(Surface * s)
   mid.trianglearealist =
     (REAL *) Malloc(mid.numberoftriangles * sizeof(REAL));
   for(i = 0; i < mid.numberoftriangles; i++) {
-    //if(THEM->BGM.Typ == ONFILE) {
-    if(0) { 
+    if(THEM->BGM.Typ == ONFILE) {
       double xx = 0.0, yy = 0.0;
       for(j = 0; j < mid.numberofcorners; j++) {
 	k = mid.trianglelist[i * mid.numberofcorners + j];
@@ -213,10 +221,13 @@ int Mesh_Shewchuk(Surface * s)
       }
       xx /= mid.numberofcorners;
       yy /= mid.numberofcorners;
-      // project the point in real space; this is a mess, since we
-      // actually change the parameters of the surface in 2d_Mesh.cpp
-      // x =, y = , z = ; 
-      //val = Lc_XYZ(x, y, z, THEM);
+      Vertex *v, *dum;
+      v = Create_Vertex(-1, xx, yy, 0.0, 0.0, 0.0);
+      Calcule_Z_Plan(&v, &dum);
+      Projette_Inverse(&v, &dum);
+      val = Lc_XYZ(v->Pos.X, v->Pos.Y, v->Pos.Z, THEM);
+      val = val * val / 1.2;
+      Free_Vertex(&v, 0);
     }
     else {
       val = 0;
@@ -225,7 +236,7 @@ int Mesh_Shewchuk(Surface * s)
 	val += mid.pointattributelist[k];
       }
       val /= mid.numberofcorners;
-      val = val * val / 1.5; // approx (we want isotropic meshes)
+      val = val * val / 1.5;
     }
     mid.trianglearealist[i] = val;
   }
@@ -235,7 +246,8 @@ int Mesh_Shewchuk(Surface * s)
   out.trianglelist = NULL;
   out.triangleattributelist = NULL;
 
-  // refine the triangulation according to the triangle area constraints
+  // refine the triangulation according to the triangle area
+  // constraints
 
   //strcpy(opts, "praqzBPY");
   strcpy(opts, CTX.mesh.triangle_options);
