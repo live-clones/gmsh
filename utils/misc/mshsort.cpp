@@ -1,4 +1,4 @@
-// $Id: mshsort.cpp,v 1.1 2004-10-08 04:36:21 geuzaine Exp $
+// $Id: mshsort.cpp,v 1.2 2004-10-08 04:40:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -144,7 +144,7 @@ double readMesh(char *fileName, map<int, node*> &nodes, vector<element*> &elemen
       int numElements;
       fscanf(fp, "%d", &numElements);
       for(int i = 0; i < numElements; i++) {
-	int num, type, physical, elementary, partition = 0, numNodes, numTags;
+	int num, type, physical, elementary, partition = 1, numNodes, numTags;
 	if(version <= 1.0){
 	  fscanf(fp, "%d %d %d %d %d",
 		 &num, &type, &physical, &elementary, &numNodes);
