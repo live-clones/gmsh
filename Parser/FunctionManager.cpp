@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.11 2001-07-26 18:47:59 remacle Exp $
+// $Id: FunctionManager.cpp,v 1.12 2001-08-17 12:19:34 geuzaine Exp $
 
 #include <map>
 #include <stdio.h>
@@ -24,7 +24,7 @@ class File_Position
 };
 
 // Pour utiliser un namespace global sur SGI, il faut compiler avec
-// -LANG:std, et ajouter "use namespace std;". Dans tous les cas, il
+// -LANG:std, et ajouter "using namespace std;". Dans tous les cas, il
 // FAUT creer les librairies avec 'CC -ar', et pas avec 'ar'.
 
 class mystack
