@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.7 2003-11-24 01:02:51 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.8 2003-11-24 21:38:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -110,18 +110,18 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
   // 0). We should be doing this even for np < 4, but it would slow us
   // down even more... (And we don't really care if some nodes in a
   // postprocessing element are identical.)
-  if(np > 4){
+  if(np > 4) {
     int npi;
     affect(xpi, ypi, zpi, valpi, 0, xp, yp, zp, valp, 0, dNbComp);
     npi = 1;
-    for(int j = 1; j < np; j++){
-      for(int i = 0; i < npi; i++){
+    for(int j = 1; j < np; j++) {
+      for(int i = 0; i < npi; i++) {
 	if(fabs(xp[j] - xpi[i]) < 1.e-12 &&
 	   fabs(yp[j] - ypi[i]) < 1.e-12 &&
-	   fabs(zp[j] - zpi[i]) < 1.e-12){
+	   fabs(zp[j] - zpi[i]) < 1.e-12) {
 	  break;
 	}
-	if(i == npi-1){
+	if(i == npi-1) {
 	  affect(xpi, ypi, zpi, valpi, i+1, xp, yp, zp, valp, j, dNbComp);
 	  npi++;
 	}
@@ -254,7 +254,7 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
       for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
 	int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
 	// don't compute the zero levelset of the value view
-	if(dTimeStep < 0 || iView != dView || dTS != iTS){
+	if(dTimeStep < 0 || iView != dView || dTS != iTS) {
 	  double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod + 
 						     iNbComp * nbNod * iTS); 
 	  double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod + 
@@ -288,7 +288,7 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 	    for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
 	      int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
 	      // don't compute the zero levelset of the value view
-	      if(dTimeStep < 0 || iView != dView || dTS != iTS){
+	      if(dTimeStep < 0 || iView != dView || dTS != iTS) {
 		double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod + 
 							   iNbComp * nbNod * iTS); 
 		double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod + 
@@ -308,7 +308,7 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 	for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
 	  int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
 	  // don't compute the zero levelset of the value view
-	  if(dTimeStep < 0 || iView != dView || dTS != iTS){
+	  if(dTimeStep < 0 || iView != dView || dTS != iTS) {
 	    double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod +
 						       iNbComp * nbNod * iTS); 
 	    if(zeroLevelset(iTS, nbNod, nbEdg, exn, x, y, z, iVal, iNbComp, 
@@ -365,20 +365,20 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // lines
   int exnLin[12][2] = {{0,1}};
   executeList(v, v->SL, v->NbSL, 1, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->SL, v->NbSL, 1, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
     executeList(v, v->SL, v->NbSL, 1, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VL, v->NbVL, 3, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
   }
   executeList(v, v->VL, v->NbVL, 3, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VL, v->NbVL, 3, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->TL, v->NbTL, 9, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
     executeList(v, v->TL, v->NbTL, 9, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
   }
@@ -387,20 +387,20 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // triangles
   int exnTri[12][2] = {{0,1}, {0,2}, {1,2}};
   executeList(v, v->ST, v->NbST, 1, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->ST, v->NbST, 1, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
     executeList(v, v->ST, v->NbST, 1, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VT, v->NbVT, 3, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
   }
   executeList(v, v->VT, v->NbVT, 3, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VT, v->NbVT, 3, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->TT, v->NbTT, 9, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
     executeList(v, v->TT, v->NbTT, 9, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
   }
@@ -409,20 +409,20 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // tets
   int exnTet[12][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   executeList(v, v->SS, v->NbSS, 1, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->SS, v->NbSS, 1, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
     executeList(v, v->SS, v->NbSS, 1, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VS, v->NbVS, 3, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
   }
   executeList(v, v->VS, v->NbVS, 3, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VS, v->NbVS, 3, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->TS, v->NbTS, 9, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
     executeList(v, v->TS, v->NbTS, 9, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
   }
@@ -431,20 +431,20 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // quads
   int exnQua[12][2] = {{0,1}, {0,3}, {1,2}, {2,3}};
   executeList(v, v->SQ, v->NbSQ, 1, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->SQ, v->NbSQ, 1, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
     executeList(v, v->SQ, v->NbSQ, 1, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VQ, v->NbVQ, 3, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
   }
   executeList(v, v->VQ, v->NbVQ, 3, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VQ, v->NbVQ, 3, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->TQ, v->NbTQ, 9, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
     executeList(v, v->TQ, v->NbTQ, 9, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
   }
@@ -454,20 +454,20 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   int exnHex[12][2] = {{0,1}, {0,3}, {0,4}, {1,2}, {1,5}, {2,3},
 		       {2,6}, {3,7}, {4,5}, {4,7}, {5,6}, {6,7}};
   executeList(v, v->SH, v->NbSH, 1, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->SH, v->NbSH, 1, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
     executeList(v, v->SH, v->NbSH, 1, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VH, v->NbVH, 3, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
   }
   executeList(v, v->VH, v->NbVH, 3, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VH, v->NbVH, 3, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->TH, v->NbTH, 9, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
     executeList(v, v->TH, v->NbTH, 9, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
   }
@@ -477,20 +477,20 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   int exnPri[12][2] = {{0,1}, {0,2}, {0,3}, {1,2}, {1,4}, {2,5},
 		       {3,4}, {3,5}, {4,5}};
   executeList(v, v->SI, v->NbSI, 1, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->SI, v->NbSI, 1, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
     executeList(v, v->SI, v->NbSI, 1, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VI, v->NbVI, 3, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
   }
   executeList(v, v->VI, v->NbVI, 3, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VI, v->NbVI, 3, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
   }
  
-  if(v != w){
+  if(v != w) {
     executeList(v, v->TI, v->NbTI, 9, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
     executeList(v, v->TI, v->NbTI, 9, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
   }
@@ -499,20 +499,20 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // pyramids
   int exnPyr[12][2] = {{0,1}, {0,3}, {0,4}, {1,2}, {1,4}, {2,3}, {2,4}, {3,4}};
   executeList(v, v->SY, v->NbSY, 1, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->SY, v->NbSY, 1, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
     executeList(v, v->SY, v->NbSY, 1, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VY, v->NbVY, 3, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
   }
   executeList(v, v->VY, v->NbVY, 3, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
-  if(v != w){
+  if(v != w) {
     executeList(v, v->VY, v->NbVY, 3, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
   }
 
-  if(v != w){
+  if(v != w) {
     executeList(v, v->TY, v->NbTY, 9, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
     executeList(v, v->TY, v->NbTY, 9, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
   }

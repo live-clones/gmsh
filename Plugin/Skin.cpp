@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.20 2003-11-23 02:53:43 geuzaine Exp $
+// $Id: Skin.cpp,v 1.21 2003-11-24 21:38:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -147,22 +147,23 @@ void GMSH_SkinPlugin::skinList(List_T *inList, int inNbList,
     double *val = (double *)List_Pointer_Fast(inList, i + 3 * inNbNod);
     for(int j = 0; j < inNbFac; j++) {
       Elm e, *pe;
-      e.val = (double *)Malloc(_nbNod * _nbComp * _nbTimeStep * sizeof(double));
-      for(int k = 0; k < _nbNod; k++){
+      for(int k = 0; k < _nbNod; k++) {
 	e.coord[k] = coord[fxn[j][k]]; // x
 	e.coord[_nbNod + k] = coord[inNbNod + fxn[j][k]]; // y
 	e.coord[2 * _nbNod + k] = coord[2 * inNbNod + fxn[j][k]]; // z
-	for(int ts = 0; ts < _nbTimeStep; ts++)
-	  for(int n = 0; n < _nbComp; n++)
-	    e.val[_nbNod * _nbComp * ts + _nbComp * k + n] =
-	      val[inNbNod * _nbComp * ts + _nbComp * fxn[j][k] + n];
       }
-      if(!(pe = (Elm *)Tree_PQuery(_skin, &e)))
+      if(!(pe = (Elm *)Tree_PQuery(_skin, &e))) {
+	e.val = (double *)Malloc(_nbNod * _nbComp * _nbTimeStep * sizeof(double));
+	for(int k = 0; k < _nbNod; k++)
+	  for(int ts = 0; ts < _nbTimeStep; ts++)
+	    for(int n = 0; n < _nbComp; n++)
+	      e.val[_nbNod * _nbComp * ts + _nbComp * k + n] =
+		val[inNbNod * _nbComp * ts + _nbComp * fxn[j][k] + n];
         Tree_Add(_skin, &e);
+      }
       else {
         Free(pe->val);
-        Free(e.val);
-        Tree_Suppress(_skin, &e);
+        Tree_Suppress(_skin, pe);
       }
     }
   }
