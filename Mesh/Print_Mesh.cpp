@@ -1,4 +1,4 @@
-/* $Id: Print_Mesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Print_Mesh.cpp,v 1.4 2000-11-24 00:45:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -501,6 +501,8 @@ int process_3D_elements (FILE * funv, Mesh * m){
   List_T *ListVolumes = Tree2List (m->Volumes);
   List_T *Elements;
   Simplex *sx;
+  Hexahedron *hx;
+  Prism *px;
   Volume *v;
   int nb = 0, i, j, nsup, n, ntot, k, geo, fetyp;
 
@@ -553,8 +555,8 @@ int process_3D_elements (FILE * funv, Mesh * m){
     // PRISMS
     Elements = Tree2List (v->Prisms);
     for (j = 0; j < List_Nbr (Elements); j++){
-      List_Read (Elements, j, &sx);
-      if (sx->VSUP){
+      List_Read (Elements, j, &px);
+      if (px->VSUP){
 	fetyp = WEDGE;
 	n = 6;
 	nsup = 9;
@@ -570,13 +572,13 @@ int process_3D_elements (FILE * funv, Mesh * m){
 	       ELEMENT_ID++, fetyp, geo, geo, 7, n + nsup);
       ntot = 0;
       for (k = 0; k < n; k++){
-	fprintf (funv, "%10d", sx->V[k]->Num);
+	fprintf (funv, "%10d", px->V[k]->Num);
 	if (ntot % 8 == 7)
 	  fprintf (funv, "\n");
 	ntot++;
       }
       for (k = 0; k < nsup; k++){
-	fprintf (funv, "%10d", sx->VSUP[k]->Num);
+	fprintf (funv, "%10d", px->VSUP[k]->Num);
 	if (ntot % 8 == 7)
 	  fprintf (funv, "\n");
 	ntot++;
@@ -590,8 +592,8 @@ int process_3D_elements (FILE * funv, Mesh * m){
     // HEXAHEDRONS
     Elements = Tree2List (v->Hexahedra);
     for (j = 0; j < List_Nbr (Elements); j++){
-      List_Read (Elements, j, &sx);
-      if (sx->VSUP){
+      List_Read (Elements, j, &hx);
+      if (hx->VSUP){
 	fetyp = BRICK;
 	n = 8;
 	nsup = 12;
@@ -607,13 +609,13 @@ int process_3D_elements (FILE * funv, Mesh * m){
 	       ELEMENT_ID++, fetyp, geo, geo, 7, n + nsup);
       ntot = 0;
       for (k = 0; k < n; k++){
-	fprintf (funv, "%10d", sx->V[k]->Num);
+	fprintf (funv, "%10d", hx->V[k]->Num);
 	if (ntot % 8 == 7)
 	  fprintf (funv, "\n");
 	ntot++;
       }
       for (k = 0; k < nsup; k++){
-	fprintf (funv, "%10d", sx->VSUP[k]->Num);
+	fprintf (funv, "%10d", hx->VSUP[k]->Num);
 	if (ntot % 8 == 7)
 	  fprintf (funv, "\n");
 	ntot++;
