@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2004-05-29 10:11:12 geuzaine Exp $
+# $Id: Makefile,v 1.50 2004-06-15 16:17:58 remacle Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -28,8 +28,8 @@ CFLAGS  = -DMPICH_SKIP_MPICXX ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Plugin.cpp\
         Levelset.cpp\
-          CutPlane.cpp CutSphere.cpp CutMap.cpp\
-        Smooth.cpp\
+          CutPlane.cpp CutSphere.cpp CutMap.cpp \
+        Smooth.cpp CutCurve.cpp CutCircle.cpp\
 	Octree.cpp OctreeInternals.cpp OctreePost.cpp\
           StreamLines.cpp CutGrid.cpp\
         Transform.cpp\
@@ -68,10 +68,10 @@ depend:
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h PluginManager.h CutMap.h Levelset.h CutGrid.h \
-  StreamLines.h CutPlane.h CutSphere.h Skin.h ../DataStr/Tree.h \
-  ../DataStr/avl.h Extract.h Harmonic2Time.h DecomposeInSimplex.h \
-  Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
-  Evaluate.h
+  StreamLines.h CutPlane.h CutCircle.h CutCurve.h CutSphere.h Skin.h \
+  ../DataStr/Tree.h ../DataStr/avl.h Extract.h Harmonic2Time.h \
+  DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
+  SphericalRaise.h DisplacementRaise.h Evaluate.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h DecomposeInSimplex.h \
@@ -91,6 +91,14 @@ CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
 Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h Smooth.h ../Common/Context.h
+CutCurve.o: CutCurve.cpp OctreePost.h Octree.h OctreeInternals.h \
+  CutCurve.h Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
+  ../Common/VertexArray.h ../Common/Context.h
+CutCircle.o: CutCircle.cpp CutCircle.h CutCurve.h Plugin.h \
+  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
+  ../Common/Context.h
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals.o: OctreeInternals.cpp ../Common/Message.h \
   OctreeInternals.h
