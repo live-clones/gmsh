@@ -1,4 +1,4 @@
-/* $Id: List.h,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
+/* $Id: List.h,v 1.5 2000-11-27 10:58:45 geuzaine Exp $ */
 #ifndef _LIST_H_
 #define _LIST_H_
 
@@ -29,6 +29,7 @@ void    List_Put(List_T *liste, int index, void *data);
 void    List_Pop(List_T *liste);
 void   *List_Pointer(List_T *liste, int index);
 void   *List_Pointer_NoChange(List_T *liste, int index);
+void   *List_Pointer_Fast(List_T *liste, int index);
 void    List_Sort(List_T *liste, int (*fcmp)(const void *a, const void *b));
 int     List_Search(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));
 int     List_ISearch(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));

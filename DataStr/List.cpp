@@ -1,4 +1,4 @@
-/* $Id: List.cpp,v 1.6 2000-11-26 18:43:48 geuzaine Exp $ */
+/* $Id: List.cpp,v 1.7 2000-11-27 10:58:45 geuzaine Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -146,6 +146,11 @@ void *List_Pointer_NoChange(List_T *liste, int index)
   if ((index < 0) || (index >= liste->n))
     Msg(FATAL, "Wrong List Index in List_Pointer_NoChange");
 
+  return(&liste->array[index * liste->size]);
+}
+
+void *List_Pointer_Fast(List_T *liste, int index)
+{
   return(&liste->array[index * liste->size]);
 }
 
