@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: myperlsolver.pl,v 1.2 2002-01-25 18:32:35 geuzaine Exp $
+# $Id: myperlsolver.pl,v 1.3 2003-04-19 04:14:53 geuzaine Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 #
@@ -77,8 +77,8 @@ if ($opt_run) {
 	};
 	$mess = "Running $problem with option $opt_run"; 
 	GMSH_CLIENT::SendString(CLIENT, $GMSH_CLIENT::INFO, $mess);
-	for (my $i=0 ; $i < 20; $i++) {
-	        my $j = 5 * $i;
+	for (my $i=0 ; $i < 10; $i++) {
+	        my $j = 10 * $i;
 		$mess = "$j% Complete";
 		GMSH_CLIENT::SendString(CLIENT, $GMSH_CLIENT::PROGRESS, $mess);
 		work();

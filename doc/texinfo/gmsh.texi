@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.30 2003-04-18 22:57:57 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.31 2003-04-19 04:14:53 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -88,7 +88,7 @@ Copyright @value{COPYRIGHT}
 
 @title Gmsh Reference Manual
 
-@subtitle The documentation for Gmsh, Version @value{GMSH-VERSION}
+@subtitle The documentation for Gmsh @value{GMSH-VERSION}
 @subtitle A finite element mesh generator with built-in pre- and post-processing facilities
 @subtitle 
 @subtitle Edition @value{EDITION} (@today{})
@@ -989,8 +989,8 @@ argument.
 
 @cindex Evaluation order
 @cindex Order, evaluation
-@cindex Operation, priorities
-@cindex Priorities, operations
+@cindex Operator precedence
+@cindex Precedence, operators
 
 @findex ()
 
@@ -1000,12 +1000,12 @@ i.e.@: @code{*} has a highest evaluation priority than
 evaluation:
 
 @enumerate
-@item @code{()}
+@item @code{.}
 @item @code{^}
 @item @code{!}, @code{++}, @code{--}, @code{-} (unary)
 @item @code{*}, @code{/}, @code{%}
 @item @code{+}, @code{-}
-@item @code{<}, @code{<=}, @code{>}, @code{>=}
+@item @code{<}, @code{>}, @code{<=}, @code{>=}
 @item @code{==}, @code{!=}
 @item @code{&&}
 @item @code{||}
@@ -1131,7 +1131,7 @@ cannot be imbricated.
 Executes the body of a (previously defined) function named @var{string}.
 @end ftable
 
-@xref{t5.geo}, for an example of a user-defined function.
+See @ref{t5.geo}, for an example of a user-defined function.
 
 @c -------------------------------------------------------------------------
 @c Loops and conditionals
@@ -1185,7 +1185,7 @@ The body enclosed between `@code{If ( @var{expression} )}' and the matching
 Ends a matching @code{If} command.
 @end ftable
 
-@xref{t5.geo}, for an example of @code{For} and @code{If} commands. Gmsh
+See @ref{t5.geo}, for an example of @code{For} and @code{If} commands. Gmsh
 does not provide any @code{Else} (or similar) command at the time of this
 writing (Gmsh 1.44).
 
@@ -1212,7 +1212,7 @@ terminal. @code{Printf} is equivalent to the @code{printf} C function:
 characters (@code{%f}, @code{%e}, etc.). Note that all @w{@var{expression}s}
 are evaluated as floating point values in Gmsh (@pxref{Expressions}), so
 that only valid floating point formatting characters make sense in
-@var{char-expression}. @xref{t5.geo}, for an example of the use of
+@var{char-expression}. See @ref{t5.geo}, for an example of the use of
 @code{Printf}.
 
 @item Merge @var{char-expression};
@@ -1309,8 +1309,8 @@ into larger groups, possibly modifying their orientation, so that they can
 be referred to by the mesh module as single entities. Each physical entity
 is assigned a unique identification number when it is created. That is, no
 two physical entities (even of different type, like a physical line and a
-physical surface) can share identical identification numbers. @xref{Mesh
-module}, for more information about how physical entites affect the way
+physical surface) can share identical identification numbers. See @ref{Mesh
+module}, for more information about how physical entities affect the way
 meshes are saved.
 
 @menu
@@ -1363,8 +1363,8 @@ Creates an elementary point. The @var{expression} inside the parentheses is
 the point number; the three first @w{@var{expression}s} inside the braces on
 the right hand side give the three X, Y and Z coordinates of the point in
 the three-dimensional Euclidean space; the last @var{expression} sets the
-characteristic mesh length at that point. @xref{Characteristic lengths}, for
-more information about how this characteristic length indormation is used in
+characteristic mesh length at that point. See @ref{Characteristic lengths}, for
+more information about how this characteristic length information is used in
 the meshing process.
 
 @item Physical Point ( @var{expression} ) = @{ @var{expression-list} @};
@@ -1414,13 +1414,13 @@ arc.
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
 Creates an ellipse arc. The @var{expression} inside the parentheses is the
-ellispe arc number; the first @var{expression} inside the braces on the
+ellipse arc number; the first @var{expression} inside the braces on the
 right hand side gives the number of the start point of the arc; the second
 @var{expression} gives the point number of the center of the ellipse; the
 third @var{expression} gives the number of any point located on the major
 axis of the ellipse; the last @var{expression} gives the number of the end
 point of the arc.  (A deprecated synonym for @code{Ellipse} is
-@code{Ellispis}.)
+@code{Ellipsis}.)
 
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
 Creates a straight line segment. The @var{expression} inside the parentheses
@@ -1436,7 +1436,7 @@ line loop. A line loop must be a closed loop, and the elementary lines
 should be ordered and oriented (using a negative line number to specify
 reverse orientation). If the orientation is correct, but the ordering is
 wrong, Gmsh will actually reorder the list internally to create a consistent
-loop. Although Gmsh supports it, it is not recommened to specify multiple
+loop. Although Gmsh supports it, it is not recommended to specify multiple
 line loops (or subloops) in a single @code{Line Loop} command. (Line loops
 are used to create surfaces: see @ref{Surfaces}.)
 
@@ -1495,7 +1495,7 @@ a single line loop, composed of either three or four elementary lines.
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
 parentheses is the surface loop number; the @var{expression-list} on the
-right hand side should contain the nubers of all the elementary surfaces
+right hand side should contain the numbers of all the elementary surfaces
 that constitute the surface loop. A surface loop must always represent a
 closed shell, and the elementary surfaces should be oriented consistently
 (using a negative surface number to specify reverse orientation). (Surface
@@ -1608,7 +1608,7 @@ of any point on this axis.
 @item Symmetry @{ @var{expression-list} @} @{ @var{transform-list} @}
 Transforms all elementary entities (points, lines or surfaces) by symmetry
 in respect to a plane. The @var{expression-list} should contain four
-@w{@var{expression}s} giving the coeffients of the plane's equation.
+@w{@var{expression}s} giving the coefficients of the plane's equation.
 
 @item Translate @{ @var{expression-list} @} @{ @var{transform-list} @}
 Translates all elementary entities (points, lines or surfaces) in
@@ -1722,10 +1722,10 @@ To remedy these problems, the geometry module introduces the notion of
 entities is to assemble elementary entities into larger, possibly
 overlapping groups, and to control the orientation of the elements in these
 groups. If physical entities are defined, the output mesh only contains
-those elements that belong to physical entities. The introducion of such
+those elements that belong to physical entities. The introduction of such
 physical entities in large models usually greatly facilitates the
 manipulation of the model (e.g. using `Tools->Visibility' in the GUI) and
-the interfacing with external solvers. @xref{t1.geo}, for an example.
+the interfacing with external solvers. See @ref{t1.geo}, for an example.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
@@ -1771,14 +1771,14 @@ given geometry:
 You can specify characteristic lengths at the points of the geometrical
 model (with the @code{Point} command: see @ref{Points}). The actual size of
 the mesh elements will be computed by linearly interpolating these
-characteristric lengths on the initial mesh (see @ref{Mesh}). This might
+characteristic lengths on the initial mesh (see @ref{Mesh}). This might
 sometimes lead to over-refinement in some areas, so that you may have to add
 some ``dummy'' geometrical points in the model in order to get the desired
 element sizes.
 
 This method works with all the algorithms implemented in the mesh module,
 but is constrained by the structured algorithms for which the element size
-is explicitely specified (e.g. transfinite and extrusion grids: see
+is explicitly specified (e.g. transfinite and extrusion grids: see
 @ref{Structured grids}).
 @item
 You can use geometrical ``attractors'', an elaborated version of the
@@ -1794,8 +1794,8 @@ method is very general but it requires a first (usually rough) mesh and a
 way to compute the target sizes on this mesh (usually through an error
 estimation procedure, in an iterative process of mesh adaptation).
 
-This method only works with the isotropic 1D, 2D and 3D algoritm, and is not
-corrently available with the Triangle algorithm (see @code{Mesh.Algorithm}
+This method only works with the isotropic 1D, 2D and 3D algorithm, and is not
+currently available with the Triangle algorithm (see @code{Mesh.Algorithm}
 in @ref{Mesh options}). To load a background mesh, use the @code{-bgm}
 command-line option (@pxref{Command-line options}) or select `Apply as
 background mesh' in the post-processing view option menu.
@@ -1807,11 +1807,11 @@ characteristic lengths:
 @ftable @code
 @item Attractor Point | Line @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
 Specifies a characteristic length attractor. The @var{expression-list}
-should conatain the identification numbers of the elementary points or lines
+should contain the identification numbers of the elementary points or lines
 to serve as attractors; the two first @w{@var{expression}s} prescribe
 refinement factors in a coordinate system local to the entities, and the
 last @var{expression} a decay factor. this feature is still experimental,
-and only work with the 2D anisotropic amgorithm (see @code{Mesh.Algorithm}
+and only work with the 2D anisotropic algorithm (see @code{Mesh.Algorithm}
 in @ref{Mesh options}).  An example of the use of attractors is given in
 @ref{t7.geo}.
 
@@ -1852,7 +1852,7 @@ The first @var{expression-list} defines how many elements should be created
 in each extruded layer. The second @var{expression-list} assigns a region
 number to each layer. The last @var{expression-list} gives the normalized
 height of each layer (the list should contain a sequence of @var{n} numbers
-0 < @var{h1} < @var{h2} < @dots{} < @var{hn} <= 1). @xref{t3.geo} for an
+0 < @var{h1} < @var{h2} < @dots{} < @var{hn} <= 1). See @ref{t3.geo}, for an
 example.
 
 For line extrusions, the @code{Recombine} option will recombine (as many as
@@ -1944,10 +1944,9 @@ of the `Saved in:' field in the following list, see @ref{General options}.
 @cindex Solver, module
 @cindex Module, Solver
 
-Five external solvers can be interfaced simultaneously with Gmsh through
-Unix sockets.
+Five external solvers can be interfaced simultaneously with Gmsh.
 
-If you simply want to launch a solver from within Gmsh, with no further
+If you just want to start a solver from the solver module, with no further
 interactions between the solver and Gmsh, just edit the options relative to
 one of the five available solvers (e.g. @code{Solver.Name0},
 @code{Solver.Executable0}, @dots{}; see @ref{Solver options}), and set the
@@ -1960,9 +1959,10 @@ definitions, post-processing, etc.), you need to link your solver with the
 @file{GmshClient.c} file and add the appropriate function calls inside your
 program. You can then proceed as in the previous case, but this time you
 should set the client-server option to 1 (e.g. @code{Solver.ClientServer0 =
-1}). See @ref{Solver example} for an example of how to interface a C
-solver. Bindings for solvers written in other languages (e.g. Perl) are
-available on @value{GMSH-WEB}.
+1}), so that Gmsh and the solver can communicate through a Unix socket. See
+@ref{Solver example} for an example of how to interface a C solver. Bindings
+for solvers written in other languages (e.g. Perl) are available on
+@value{GMSH-WEB}.
 
 @menu
 * Solver options::              
@@ -2002,7 +2002,7 @@ source distribution.
 @sp 1
 
 To define the above solver as the second external solver in Gmsh, you should
-define the following solver options (either merge them ion your Gmsh option
+define the following solver options (either merge them in your Gmsh option
 file, or use the @code{-option} command-line option---see @ref{Command-line
 options}):
 
@@ -2019,6 +2019,26 @@ options}):
 
 @cindex Post-processing, module
 @cindex Module, Post-processing
+
+Gmsh's post-processing module can handle multiple scalar, vector or tensor
+data sets along with the geometry and the mesh. The data sets should be
+given in one of Gmsh's post-processing file formats described in @ref{File
+formats}. Once loaded into Gmsh, scalar fields can be displayed as iso-value
+lines and surfaces or color maps, whereas vector and tensor fields can be
+represented either by three-dimensional arrows or by displacement maps. in
+Gmsh's jargon, each data set is called a ``view'', and can arbitrarily mix
+all types of elements and fields. Each view is given a name, and can be
+manipulated either individually (each view has its own button in the GUI and
+can be referred to by its index in the scripting language) or globally (see
+the @code{PostProcessing.LinkView} option below).
+
+Though most of any visualization process is inherently interactive, Gmsh
+exposes all post-processing commands and options to the user to permit a
+complete scripting of the full post-processing process (see
+e.g. @ref{t8.geo}, and @ref{t9.geo}).
+
+The two following sections summarize all available post-processing commands
+and options.
 
 @menu
 * Post-processing commands::    
@@ -2037,53 +2057,31 @@ options}):
 
 @ftable @code
 @item Delete View[@var{expression}];
-Deletes (removes) the @var{expression}-th post-processing view. View
-numbers start at zero.
+Deletes (removes) the @var{expression}-th post-processing view. The first
+view is given the number zero, the second the number one, and so on.
 
 @item Duplicata View[@var{expression}];
 Duplicates the @var{expression}-th post-processing view.
 
-@item Plugin
+@item Plugin (@var{string}) . @var{string};
+Executes a plugin function. The plugin name is given between the parentheses.
+Several plugins are loaded by default: see e.g. @ref{t9.geo}.
+
+@item Plugin (@var{string}) . @var{string} = @var{expression} | @var{char-expression};
+Sets a floating point (@var{expression}) or a character
+(@var{char-expression}) option for a given plugin. See @ref{t9.geo}, for an
+example.
 
 @item View "@var{string}" @{ @var{string} ( @var{expression-list} ) @{ @var{expression-list} @}; @dots{} @}
-Creates a new post-processig view, named @code{"@var{string}"}.
-
-See @ref{Gmsh parsed post-processing file format}
-@item SP
-@item VP
-@item TP
-
-@item SL
-@item VL
-@item TL
-
-@item ST
-@item VT
-@item TT
-
-@item SQ
-@item VQ
-@item TQ
-
-@item SS
-@item VS
-@item TS
-
-@item SH
-@item VH
-@item TH
-
-@item SI
-@item VI
-@item TI
-
-@item SY
-@item VY
-@item TY
-
-@item T2
-
-@item T3
+Creates a new post-processing view, named @code{"@var{string}"}. This is the
+easiest way to create a post-processing view, but also the least efficient
+(the view is read through Gmsh's script parser, which can become quite slow
+if the view is large---e.g. with more than 100000 elements).  Though, this
+``parsed'' post-processing format (explained in detail in @ref{Gmsh parsed
+post-processing file format}) is very powerful for testing proposes, since
+all the values are @var{expressions}. Two other formats, better adapted for
+large data sets, are available described in @ref{Gmsh ASCII post-processing
+file format} and @ref{Gmsh binary post-processing file format}.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -2096,11 +2094,20 @@ See @ref{Gmsh parsed post-processing file format}
 @cindex Post-processing, options
 @cindex Options, post-processing
 
-@include opt_post.texi
+General post-processing option names have the form
+@code{PostProcessing.@var{string}}. Options peculiar to post-processing
+views take two forms:
+@enumerate
+@item options that should apply to all views can be set through
+@code{View.@var{string}}, @emph{before any view is loaded};
+@item options that should apply only to the @var{n}-th
+view take the form @code{View[@var{n}].@var{string}} (@var{n} = 0, 1, 2,
+@dots{}).
+@end enumerate
 
-Options that should apply to all views are given by @code{View.Option}. To
-set an option specifically for the n-th view, use @code{View[n].Option}
-(view numbers start at zero).
+See @ref{t9.geo} for some examples.
+
+@include opt_post.texi
 
 @include opt_view.texi
 
@@ -2987,22 +2994,48 @@ Pyramid:
 
 @cindex Programming, notes
 
-This is section is not yet written: see @file{utils/README.devel}.
+Gmsh was originally written in C, and later enhanced with various C++
+additions. The resulting code is a hybrid C/C++ beast, hopefully not too
+badly structured... The scripting language is parsed using lex and yacc
+(actually, flex and bison), while the GUI relies on OpenGL for the 3D
+graphics and FLTK for the widget set. See @uref{http://www.opengl.org},
+@uref{http://www.mesa3d.org} and @uref{http://www.fltk.org} for more
+information.
 
-@c The code itself is in C++, but most of it was initially written in C (hence
-@c the hybrid code style...). The analysis of the syntax is performed by Lex
-@c and Yacc.
+Gmsh's build system is based on autoconf, and should work on most modern
+platforms providing standard compliant C and C++ compilers. Practical notes
+on how to compile Gmsh's source code are included in the distribution. Note
+that compiling the Windows version requires the Cygwin tools (freely
+available from @uref{http://www.cygwin.com}). See the FAQ for more
+information.
 
-@c All graphics are rendered using OpenGL (@uref{http://www.opengl.org}). A
-@c free replacement for OpenGL can be found at @uref{http://www.mesa3d.org}.
+If you plan to contribute code to the Gmsh project, here are some easy rules
+to make the code easy to read/debug/maintain:
 
-@c The user interface is based on the FLTK widget set
-@c (@uref{http://www.fltk.org}).
+@enumerate
+@item
+please enable full warnings for your compiler (e.g. add @code{-Wall} to
+@code{FLAGS} in the @file{variable} file);
+@item
+always use the @code{Msg()} function to print information, errors, @dots{};
+@item 
+indent your files using @file{utils/indent.sh};
+@item
+if working on Windows, don't leave tabs in your files (e.g. untabify them
+with @file{utils/untabify}).
+@end enumerate
 
-@c Build system based on autoconf. Should we add a chapter/section on how to
-@c compile Gmsh? Compiling the Windows version requires the Cygwin tools
-@c (freely available from @uref{http://www.cygwin.com}).
+@sp 2
+(More to come...)
 
+@c todo:
+@c Tools to check memory leaks
+@c * LIBNJAMD
+@c   export LD_PRELOAD=libnjamd.so
+@c   kill -USR1
+@c * valgrind --leak-check=yes --show-reachable=yes gmsh file.geo -3
+@c * purify
+@c * memprof
 
 @c =========================================================================
 @c Bugs, versions and contributors

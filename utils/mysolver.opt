@@ -1,6 +1,6 @@
-// These are the options for the dummy solver client. The following
-// set of options define 'My Solver' as the second Gmsh solver.
-Solver.Name1 = "My Solver";
+// These options define 'mysolver.exe' as the second solver in Gmsh's
+// solver module, under the name 'My C Solver'.
+Solver.Name1 = "My C solver";
 Solver.Help1 = "A simple example of the client/server 
 solver implementation in Gmsh...";
 Solver.Executable1 = "./mysolver.exe";

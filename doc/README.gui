@@ -1,13 +1,4 @@
-$Id: README.devel,v 1.6 2003-03-30 22:27:07 geuzaine Exp $
-
-Some easy rules to make the code easy to read/debug/maintain:
-
-- please enable full warnings for your compiler (e.g. gcc -Wall)
-- always use Msg() to print information/errors/etc.
-- indent your files using ../utils/indent.sh
-- if working on Windows, don't leave tabs in your files (../utils/untabify)
-
-********************************************************************
+$Id: README.gui,v 1.1 2003-04-19 04:14:53 geuzaine Exp $
 
 How to add an option in the graphical user interface?
 
@@ -29,18 +20,3 @@ Optional:
 5) If no special callback is to be associated to the widget, add the
 handling routine opt_XXX to the OK callback for the corresponding
 option panel (in Fltk/Callbacks.cpp).
-
-********************************************************************
-
-Tools to check memory leaks
-
-* LIBNJAMD
-
-  export LD_PRELOAD=libnjamd.so
-  kill -USR1
-
-* valgrind --leak-check=yes --show-reachable=yes gmsh file.geo -3
-
-* purify
-
-* memprof

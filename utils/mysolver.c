@@ -1,4 +1,4 @@
-/* $Id: mysolver.c,v 1.8 2003-03-21 00:52:49 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.9 2003-04-19 04:14:53 geuzaine Exp $ */
 /*
   Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 
@@ -165,8 +165,8 @@ int main(int argc, char *argv[])
     case run:
       sprintf(tmp, "Running %s with option %s...", name, option);
       Gmsh_SendString(s, GMSH_CLIENT_INFO, tmp);
-      for(i = 0; i < 100; i++) {
-        sprintf(tmp, "%d %% complete", i);
+      for(i = 0; i < 10; i++) {
+        sprintf(tmp, "%d %% complete", 10*i);
         Gmsh_SendString(s, GMSH_CLIENT_PROGRESS, tmp);
         work();
       }
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
       }
       else {
         fprintf(file, "View \"%s\"{\n", option);
-        fprintf(file, "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n");
+	fprintf(file, "ST(0,0,0,1,0,0,0,1,0){0,1,2};\n");
         fprintf(file, "};\n");
         fclose(file);
         Gmsh_SendString(s, GMSH_CLIENT_VIEW, "mysolver.pos");
@@ -192,7 +192,6 @@ int main(int argc, char *argv[])
     Gmsh_Disconnect(s);
     break;
   }
-
 
   /* 4. That's it! */
 
