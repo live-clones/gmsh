@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.39 2003-03-02 05:31:45 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.40 2003-03-07 18:53:21 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -216,11 +216,11 @@ void CreateOutputFile(char *name, int format)
 
     size3d = 0;
     res = GL2PS_OVERFLOW;
-
     while(res == GL2PS_OVERFLOW) {
       size3d += 2048 * 2048;
-      gl2psBeginPage(CTX.base_filename, "Gmsh", psformat, pssort, psoptions,
-                     GL_RGBA, 0, NULL, size3d, fp, name);
+      gl2psBeginPage(CTX.base_filename, "Gmsh", CTX.viewport, 
+		     psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
+		     0, 0, 0, size3d, fp, name);
       CTX.print.gl_fonts = 0;
       FillBuffer();
       CTX.print.gl_fonts = 1;
@@ -236,9 +236,9 @@ void CreateOutputFile(char *name, int format)
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
-    gl2psBeginPage(CTX.base_filename, "Gmsh",
-                   GL2PS_TEX, GL2PS_NO_SORT, 0,
-                   GL_RGBA, 0, NULL, 1, fp, name);
+    gl2psBeginPage(CTX.base_filename, "Gmsh", CTX.viewport,
+                   GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
+		   0, 0, 0, 1, fp, name);
     CTX.print.gl_fonts = 0;
     FillBuffer();
     CTX.print.gl_fonts = 1;

@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.36 2003-03-01 22:34:18 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.37 2003-03-07 18:53:21 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -55,7 +55,7 @@
 #endif
 
 
-#define GL2PS_VERSION                    0.74
+#define GL2PS_VERSION                    0.8
 #define GL2PS_NONE                       0
 
 /* Output file format */
@@ -80,6 +80,7 @@
 #define GL2PS_NO_TEXT                    (1<<5)
 #define GL2PS_LANDSCAPE                  (1<<6)
 #define GL2PS_NO_PS3_SHADING             (1<<7)
+#define GL2PS_NO_PIXMAP                  (1<<8)
 
 /* Arguments for gl2psEnable/gl2psDisable */
 
@@ -96,17 +97,15 @@
 #define GL2PS_ZERO(arg)                  (fabs(arg)<1.e-20)
 /*#define GL2PS_ZERO(arg)                ((arg)==0.0)*/
 
-/* Message levels */
+/* Message levels and error codes */
 
+#define GL2PS_SUCCESS                    0
 #define GL2PS_INFO                       1
 #define GL2PS_WARNING                    2
 #define GL2PS_ERROR                      3
-
-/* Error codes */
-
-#define GL2PS_SUCCESS                    0
-#define GL2PS_NO_FEEDBACK               -1
-#define GL2PS_OVERFLOW                  -2
+#define GL2PS_NO_FEEDBACK                4
+#define GL2PS_OVERFLOW                   5
+#define GL2PS_UNINITIALIZED              6
 
 /* Primitive types */
 
@@ -115,6 +114,7 @@
 #define GL2PS_LINE                       3
 #define GL2PS_QUADRANGLE                 4
 #define GL2PS_TRIANGLE                   5
+#define GL2PS_PIXMAP                     6
 
 /* BSP tree primitive comparison */
 
@@ -175,11 +175,18 @@ typedef struct {
 } GL2PSstring;
 
 typedef struct {
+  GLsizei width, height;
+  GLenum format, type;
+  GLfloat *pixels;
+} GL2PSimage;
+
+typedef struct {
   GLshort type, numverts;
   char boundary, dash, culled;
   GLfloat width, depth;
   GL2PSvertex *verts;
   GL2PSstring *text;
+  GL2PSimage *image;
 } GL2PSprimitive;
 
 typedef struct {
@@ -187,13 +194,13 @@ typedef struct {
   const char *title, *producer, *filename;
   GLboolean shade, boundary;
   GLfloat *feedback, offset[2];
+  GLint viewport[4];
   GL2PSrgba *colormap, lastrgba, threshold;
   float lastlinewidth;
   GL2PSlist *primitives;
-  GL2PSbsptree2d *image;
+  GL2PSbsptree2d *imagetree;
   FILE *stream;
 } GL2PScontext;
-
 
 /* public functions */
 
@@ -201,18 +208,23 @@ typedef struct {
 extern "C" {
 #endif
 
-GL2PSDLL_API void  gl2psBeginPage(const char *title, const char *producer, 
-				  GLint format, GLint sort, GLint options, 
-				  GLint colormode, GLint colorsize, 
-				  GL2PSrgba *colormap, GLint buffersize, 
+GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer, 
+				  GLint viewport[4], GLint format, GLint sort,
+				  GLint options, GLint colormode,
+				  GLint colorsize, GL2PSrgba *colormap, 
+				  GLint nr, GLint ng, GLint nb, GLint buffersize,
 				  FILE *stream, const char *filename);
 GL2PSDLL_API GLint gl2psEndPage(void);
-GL2PSDLL_API void  gl2psText(const char *str, const char *fontname, GLshort fontsize);
-GL2PSDLL_API void  gl2psEnable(GLint mode);
-GL2PSDLL_API void  gl2psDisable(GLint mode);
-GL2PSDLL_API void  gl2psPointSize(GLfloat value);
-GL2PSDLL_API void  gl2psLineWidth(GLfloat value);
-GL2PSDLL_API void  gl2psNumShadeColors(GLint nr, GLint ng, GLint nb);
+GL2PSDLL_API GLint gl2psBeginViewport(GLint viewport[4]);
+GL2PSDLL_API GLint gl2psEndViewport(void);
+GL2PSDLL_API GLint gl2psText(const char *str, const char *fontname, GLshort fontsize);
+GL2PSDLL_API GLint gl2psDrawPixels(GLsizei width, GLsizei height,
+				   GLint xorig, GLint yorig,
+				   GLenum format, GLenum type, const void *pixels);
+GL2PSDLL_API GLint gl2psEnable(GLint mode);
+GL2PSDLL_API GLint gl2psDisable(GLint mode);
+GL2PSDLL_API GLint gl2psPointSize(GLfloat value);
+GL2PSDLL_API GLint gl2psLineWidth(GLfloat value);
 
 #ifdef __cplusplus
 };
