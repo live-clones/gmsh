@@ -1,84 +1,42 @@
-# $Id: Makefile,v 1.128 2001-08-14 10:49:47 geuzaine Exp $
-# ----------------------------------------------------------------------
-#  Makefile for Gmsh  
-# ----------------------------------------------------------------------
+# $Id: Makefile,v 1.129 2001-08-14 12:53:17 geuzaine Exp $
 
-           GMSH_RELEASE = 1.23
-
-                   MAKE = make
-                     CC = c++
-                  FLAGS = -g -Wall
-                     RM = rm
-                RMFLAGS = -f 
-
-# ----------------------------------------------------------------------
-#  Includes
-# ----------------------------------------------------------------------
-
-             OPENGL_INC = -I/usr/X11R6/include\
-                          -I/usr/include/X11/GLw\
-                          -I$(HOME)/SOURCES/Mesa-3.1/include\
-                          -I$(HOME)/SOURCES/Mesa-3.1/include/GL
-              MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
-               FLTK_INC = -I$(HOME)/SOURCES/fltk
-        FLTK_INC_SCOREC = -I/users/develop/develop/visual/fltk/1.0/include
-      FLTK_INC_LAPTOPJF = -I../../fltk-1.0.9
-   FLTK_INC_GERTHA_BURO = -I../../fltk
-
-# ----------------------------------------------------------------------
-#  3rd party libraries
-# ----------------------------------------------------------------------
-
-             OPENGL_LIB = -lGLU -lGL
-       OPENGL_MOTIF_LIB = -lGLw
-               MESA_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL
-         MESA_MOTIF_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLw
-        MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
-                          $(HOME)/SOURCES/Mesa-static/lib/libGL.a
-  MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
-#            XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
-             XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
-                          -L/usr/X11R6/lib -lXt -lX11 -lXext 
-               FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk -L/usr/X11R6/lib -lX11
-        FLTK_STATIC_LIB = -L$(HOME)/SOURCES/fltk-static/lib -lfltk -L/usr/X11R6/lib -lX11
-FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
-                          -L/usr/X11R6/lib -lX11
-  FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
-                          -L/usr/X11R6/lib -lX11
-
-             THREAD_LIB = -L/usr/lib -lpthread
+GMSH_RELEASE = 1.23
+MAKE = make
+CC = c++
+FLAGS = -g -Wall
+RM = rm
+RMFLAGS = -f 
+OPENGL_LIB = -lGLU -lGL
+FLTK_LIB = -lfltk
+X11_LIB = -lX11
 
 # ----------------------------------------------------------------------
 #  Gmsh definitions
 # ----------------------------------------------------------------------
 
-               GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser\
-                          Motif Fltk Plugin jpeg utils Parallel
-        GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg Parallel
-          GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin Parallel
-           GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin Parallel
-           GMSH_BIN_DIR = bin
-           GMSH_LIB_DIR = lib
-           GMSH_DOC_DIR = doc
-          GMSH_DEMO_DIR = demos
-         GMSH_TUTOR_DIR = tutorial
-       GMSH_ARCHIVE_DIR = archives
-
-
-        GMSH_XMOTIF_LIB = -L$(GMSH_LIB_DIR) -lMotif -lGraphics -lParser -lMesh -lGeo\
-                                            -lAdapt -lCommon -lDataStr -lJpeg -lParallel
-          GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
-                                            -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel
-           GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
-                                            -lAdapt -lPlugin -lCommon -lDataStr -lParallel
-           GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
-            GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
-           GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
-                                  -a ! -name "*.o"    -a ! -name "lib*.a"   \
-                                  -a ! -name "*.msh"  -a ! -name "*.bak" \
-                                  -a ! -name "gmsh"   -a ! -name "gmsh-*"\
-                                  -a ! -type d \)`
-             GMSH_UNAME = `uname`
+GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk\
+           Plugin jpeg utils Parallel
+GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk\
+                jpeg Plugin Parallel
+GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin Parallel
+GMSH_BIN_DIR = bin
+GMSH_LIB_DIR = lib
+GMSH_DOC_DIR = doc
+GMSH_DEMO_DIR = demos
+GMSH_TUTOR_DIR = tutorial
+GMSH_ARCHIVE_DIR = archives
+GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh\
+                -lGeo -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel
+GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo -lAdapt\
+               -lPlugin -lCommon -lDataStr -lParallel
+GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
+GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
+GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
+                       -a ! -name "*.o"    -a ! -name "lib*.a"   \
+                       -a ! -name "*.msh"  -a ! -name "*.bak" \
+                       -a ! -name "gmsh"   -a ! -name "gmsh-*"\
+                       -a ! -type d \)`
+GMSH_UNAME = `uname`
 
 # ----------------------------------------------------------------------
 # Rules for developers
@@ -90,8 +48,8 @@ default: initialtag
            "C_FLAGS=$(FLAGS)" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
 
 static:
@@ -100,11 +58,13 @@ static:
            "C_FLAGS=-O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-static/include -I$(HOME)/SOURCES/Mesa-static/include/GL" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-static/include" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB) $(MESA_STATIC_LIB) \
-                 $(FLTK_STATIC_LIB) -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB)\
+                 $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
+                 $(HOME)/SOURCES/Mesa-static/lib/libGL.a\
+                 $(HOME)/SOURCES/fltk-static/lib/libfltk.a -lX11 -lm
 
 win: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -112,47 +72,28 @@ win: initialtag
            "C_FLAGS=-g -Wall -DWIN32" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
             $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
-motif: initialtag
-	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(CC)" \
-           "C_FLAGS=$(FLAGS)" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN -D_NOPLUGIN" \
-           "VERSION_FLAGS=-D_XMOTIF" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC)" \
-        ); done
+purify:
+	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
+                 -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
 
 gmsh:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm
 
 efence:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lefence -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lefence -lm
 
 gmsh2:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lfltk_gl $(THREAD_LIB) -lm
-
-motifgl:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-              $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
-
-motifmesa:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-              $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
-
-motifmesastatic:
-	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_XMOTIF_LIB)\
-              $(MESA_MOTIF_STATIC_LIB) $(MESA_STATIC_LIB)\
-              $(XMOTIF_LIB) $(THREAD_LIB) -lm
-
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -lfltk_gl -L/usr/X11R6/lib $(X11_LIB) -lpthread -lm
 
 # ----------------------------------------------------------------------
 # Utilities
@@ -179,9 +120,9 @@ depend:
 	for i in $(GMSH_DIR); \
         do (cd $$i && $(MAKE) depend \
            "CC=$(CC)" \
-           "VERSION_FLAGS=-D_FLTK -D_XMOTIF" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC) $(FLTK_INC)" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
 
 nodepend:
@@ -251,10 +192,6 @@ distrib-win:
 strip_bin:
 	strip $(GMSH_BIN_DIR)/gmsh
 
-# ----------------------------------------------------------------------
-# Demos
-# ----------------------------------------------------------------------
-
 dem:
 	gtar zcvf gmsh-demos.tgz $(GMSH_DEMO_DIR)
 	gtar zcvf gmsh-tutorial.tgz $(GMSH_TUTOR_DIR)
@@ -286,7 +223,7 @@ bb-parallel: tag
         ); done
 	mpiCC -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
 
-bbn: tag
+bb-mingw: tag
 	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \
            "CC=g++ -mno-cygwin -I/mingw/include" \
            "C_FLAGS=-O3" \
@@ -298,143 +235,37 @@ bbn: tag
 	g++ -o $(GMSH_BIN_DIR)/gmsh.exe -mno-cygwin -L/mingw/lib $(GMSH_BOX_LIB) -lm
 
 # ----------------------------------------------------------------------
-# Ready to compile for some platforms with MOTIF
+# Ready to compile for some platforms
 # ----------------------------------------------------------------------
 
-motif_dec: tag motif_compile_little_endian motif_link_opengl strip_bin
-
-motif_linux: tag motif_compile_little_endian motif_link_mesa strip_bin
-
-motif_linux_2952: tag motif_compile_little_endian_2952 motif_link_mesa_2952 strip_bin
-
-motif_ibm: tag motif_compile_big_endian motif_link_mesa strip_bin
-
-motif_sun: tag motif_compile_big_endian motif_link_opengl strip_bin
-
-motif_hp: tag motif_compile_big_endian motif_link_hp strip_bin
-
-motif_sgi: tag motif_compile_sgi motif_link_sgi strip_bin
-
-motif_rpm: src
-	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
-	rpm -bb utils/gmsh_motif.spec
-	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
-	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/bin/gmsh .
-	gtar zcvf gmsh-$(GMSH_UNAME).tgz gmsh
-	rm -f gmsh
-
-motif_compile_little_endian:
-	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-motif_compile_little_endian_2952:
-	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(HOME)/gcc-2.95.2/bin/g++" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-motif_compile_little_endian_threads:
-	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-D_REENTRANT -O3" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN -D_USETHREADS" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-motif_compile_big_endian:
-	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-# special car -O2 merde dans 3d_smesh.c sur TransfiniteHex()
-motif_compile_sgi:
-	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
-           "CC=CC" \
-           "C_FLAGS=-O2 -o32 -Olimit 3000" \
-           "RANLIB=true"\
-           "AR=CC -o32 -ar -o"\
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC)" \
-        ); done
-	@for i in Mesh; do (cd $$i && $(MAKE) \
-           "CC=CC" \
-           "C_FLAGS=-O1 -o32" \
-           "AR=CC -o32 -ar -o"\
-           "RANLIB=true"\
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_XMOTIF -D_NOPLUGIN" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(MOTIF_INC)" \
-        ); done
-
-motif_link_sgi:
-	CC -O2 -o32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-           $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) -lm
-
-motif_link_opengl:
-	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-            $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) -lm
-
-motif_link_mesa:
-	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-            $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
-
-motif_link_mesa_2952:
-	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-               $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
-
-motif_link_mesa_threads:
-	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-               $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
-
-# special car +s necessaire pour shared libs avec SHLIB_PATH variable.
-motif_link_hp:
-	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
-                      $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
-
-
-# ----------------------------------------------------------------------
-# Ready to compile for some platforms with FLTK
-# ----------------------------------------------------------------------
-
-fltk_compile_little_endian:
+#
+# Linux standard
+#
+compile_linux:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=-O2" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
+link_linux:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
+linux: tag compile_linux link_linux strip_bin
 
-# optimized gcc fucks up with 3D_Extrude on old linux boxes...
-fltk_compile_little_endian_gcc-2.95:
+#
+# Linux, gcc-2.95.x
+# 
+compile_linux_gcc-2.95:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.3/bin/g++" \
            "C_FLAGS=-O2" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=-I/usr/X11R6/include" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
 	rm -f Mesh/3D_Extrude.o
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -442,52 +273,93 @@ fltk_compile_little_endian_gcc-2.95:
            "C_FLAGS=-O0" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=-I/usr/X11R6/include" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
+link_linux_gcc-2.95:
+	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
+linux_gcc-2.95: tag compile_linux_gcc-2.95 link_linux-2.95 strip_bin
+rpm: src
+	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
+	rpm -bb utils/gmsh_fltk.spec
+	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
+	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
 
-
-fltk_compile_big_endian:
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(CC)" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
-           "GL_INCLUDE=-I/usr/include/X11/GLw -I$(HOME)/SOURCES/Mesa-3.1/include -I$(HOME)/SOURCES/Mesa-3.1/include/GL" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
-        ); done
-
-fltk_compile_ibm:
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(CC)" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_BSD" \
-           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
-        ); done
-
-fltk_compile_solaris_scorec :
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(CC)" \
-           "C_FLAGS=-O3" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "OS_FLAGS=" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC_SCOREC)" \
-        ); done
-
-fltk_compile_linux_scorec :
+#
+# Linux SCOREC
+#
+compile_linux_scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=-O2" \
            "VERSION_FLAGS=-D_FLTK" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC_SCOREC)" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I/users/develop/develop/visual/fltk/1.0/include" \
         ); done
+link_linux_scorec:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
+                 -L/usr/X11R6/lib -lX11 -lm -ldl 
+linux_scorec : compile_linux_scorec link_linux_scorec strip_bin 
 
-fltk_compile_sgi:
+#
+# Digital (Compaq) Tru64
+#
+compile_dec:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O2" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+        ); done
+link_dec:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
+dec: tag compile_dec link_dec strip_bin
+
+#
+# HP-UX
+#
+compile_hp:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
+           "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+        ); done
+link_hp:
+	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                      -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB)\
+                      -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
+hp: tag compile_hp link_hp strip_bin
+
+#
+# IBM Aix
+#
+compile_ibm:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=-D_BSD" \
+           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+        ); done
+link_ibm:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
+ibm: tag compile_ibm link_ibm strip_bin
+
+#
+# SGI Irix
+#
+compile_sgi:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
            "C_FLAGS=-O2 -mips3 -n32 -OPT:Olimit=0 -LANG:std" \
@@ -495,128 +367,124 @@ fltk_compile_sgi:
            "AR=CC -mips3 -n32 -ar -o"\
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
+link_sgi:
+	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+               -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) $(OPENGL_LIB) -lm
+sgi: tag compile_sgi link_sgi strip_bin
 
-fltk_compile_mingw:
+#
+# Mingw
+#
+compile_mingw:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=g++ -mno-cygwin -I/mingw/include" \
            "C_FLAGS=-O2 -DWIN32" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
+link_mingw:
+	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
+                 Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
+                 -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+mingw: tag compile_mingw link_mingw
+	strip $(GMSH_BIN_DIR)/gmsh.exe
 
-fltk_compile_cygwin:
+#
+# Cygwin
+#
+compile_cygwin:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O2 -DWIN32" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
+link_cygwin:
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
+                 Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
+                 -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+cygwin: tag compile_cygwin link_cygwin
+	strip $(GMSH_BIN_DIR)/gmsh.exe
 
-fltk_link_solaris_scorec:
+#
+# Cygwin gertha_buro
+#
+cygwin_gertha_buro: tag
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-O2 -DWIN32" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I../../fltk" \
+        ); done
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
+                 Common/Icon.res ../fltk/lib/libfltk.a\
+                 -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+
+#
+# Cygwin laptop jf
+#
+cygwin_laptopjf: 
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-O2 -DWIN32" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I../../fltk-1.0.9" \
+        ); done
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB)\
+                 Common/Icon.res ../fltk-1.0.9/lib/libfltk.a\
+                 -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+cygwin_laptopjf_tag: tag cygwin_laptopjf
+
+#
+# Sun SunOS
+#
+compile_sun:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
+           "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+        ); done
+link_sun:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                 -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) \
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB)\
+                 $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
+sun: tag compile_sun link_sun strip_bin
+
+#
+# Solaris SCOREC
+#
+compile_solaris_scorec :
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "OS_FLAGS=" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I/users/develop/develop/visual/fltk/1.0/include" \
+        ); done
+link_solaris_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl -lsocket
+                 /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
+                 -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
+solaris_scorec : compile_solaris_scorec link_solaris_scorec strip_bin 
 
-fltk_purify:
-	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl -lsocket
 
-fltk_link_linux_scorec:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB_LINUX_SCOREC) -lm -ldl 
-fltk_link_mesa:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lm -ldl
 
-fltk_link_mesa_gcc-2.95:
-	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lm -ldl
 
-fltk_link_opengl:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB) -lm
-fltk_link_sgi:
-	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                  $(FLTK_LIB) $(OPENGL_LIB) -lm
-fltk_link_sun:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lXext -lsocket -lnsl -ldl -lm
-fltk_link_hp:
-	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                      $(MESA_LIB) $(FLTK_LIB) -lm
-
-fltk_link_ibm:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lm
-
-fltk_link_mingw:
-	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
-                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-
-fltk_link_cygwin:
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
-                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-
-fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin
-
-fltk_linux_gcc-2.95: tag fltk_compile_little_endian_gcc-2.95 fltk_link_mesa_gcc-2.95 strip_bin
-
-fltk_rpm: src
-	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
-	rpm -bb utils/gmsh_fltk.spec
-	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
-	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
-
-fltk_dec: tag fltk_compile_little_endian fltk_link_opengl strip_bin
-
-fltk_sun: tag fltk_compile_big_endian fltk_link_sun strip_bin
-
-fltk_hp: tag fltk_compile_big_endian fltk_link_hp strip_bin
-
-fltk_ibm: tag fltk_compile_ibm fltk_link_ibm strip_bin
-
-fltk_solaris_scorec : fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
-
-fltk_linux_scorec : fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin 
-
-fltk_sgi: tag fltk_compile_sgi fltk_link_sgi strip_bin
-
-fltk_mingw: tag fltk_compile_mingw fltk_link_mingw
-	strip $(GMSH_BIN_DIR)/gmsh.exe
-
-fltk_cygwin: tag fltk_compile_cygwin fltk_link_cygwin
-	strip $(GMSH_BIN_DIR)/gmsh.exe
-
-fltk_cygwin_gertha_buro: tag
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC_GERTHA_BURO)" \
-        ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
-                 ../fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-
-fltk_cygwin_laptopjf: 
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC_LAPTOPJF)" \
-        ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB) Common/Icon.res \
-                 ../fltk-1.0.9/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-
-fltk_cygwin_laptopjf_tag: tag fltk_cygwin_laptopjf
 
 
