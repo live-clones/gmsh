@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.40 2003-02-27 00:21:22 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.41 2003-02-27 05:06:46 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -129,7 +129,7 @@ int MergeProblem(char *name){
 
 void MergeProblemWithBoundingBox(char *name){
   int nb = List_Nbr(CTX.post.list);
-  int status = ParseFile(name,0);
+  int status = MergeProblem(name);
   if(List_Nbr(CTX.post.list) > nb){
     // if we merged a view, use it
     CalculateMinMax(NULL, ((Post_View*)List_Pointer
