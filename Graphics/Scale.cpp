@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.7 2000-12-05 15:23:56 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.8 2000-12-10 00:06:50 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -287,21 +287,16 @@ void Draw_Scales(void){
 /* ------------------------------------------------------------------------ */
 
 void Draw_SmallAxes(void){
-  double a,b,c;
   double l,o,xx,xy,yx,yy,zx,zy,cx,cy;
-
-  a = CTX.r[0] * Pi/180. ;
-  b = CTX.r[1] * Pi/180. ;
-  c = CTX.r[2] * Pi/180. ;
 
   l  = 30  ;
   o  = 2  ;
   cx = CTX.viewport[2] - 45;
   cy = CTX.viewport[1] + 35;
 
-  xx =  l*cos(b)*cos(c) ; xy =  l*(sin(a)*sin(b)*cos(c)+cos(a)*sin(c)) ;
-  yx = -l*cos(b)*sin(c) ; yy = -l*(sin(a)*sin(b)*sin(c)-cos(a)*cos(c)) ;
-  zx =  l*sin(b)        ; zy = -l*sin(a)*cos(b) ;
+  xx = l*CTX.rot[0][0] ; xy = l*CTX.rot[0][1] ;
+  yx = l*CTX.rot[1][0] ; yy = l*CTX.rot[1][1] ;
+  zx = l*CTX.rot[2][0] ; zy = l*CTX.rot[2][1] ;
 
   glColor4ubv((GLubyte*)&CTX.color.small_axes);
 

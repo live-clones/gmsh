@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.9 2000-12-05 23:01:06 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.10 2000-12-10 00:06:50 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -230,18 +230,8 @@ void InitPosition(void){
   glScaled    (CTX.s[0], CTX.s[1], CTX.s[2]);
   glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
 
-  if(CTX.useTrackball)
-    {
-      float m[4][4];
-      CTX.buildRotmatrix(m);
-      glMultMatrixf(&(m[0][0]));
-    }
-  else
-    {
-      glRotated   (CTX.r[0], 1., 0., 0.);
-      glRotated   (CTX.r[1], 0., 1., 0.);
-      glRotated   (CTX.r[2], 0., 0., 1.);
-    }
+  CTX.buildRotmatrix();
+  glMultMatrixf(&(CTX.rot[0][0]));
 }
 
 /* ------------------------------------------------------------------------ */

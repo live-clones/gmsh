@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.18 2000-12-09 17:33:39 geuzaine Exp $ */
+/* $Id: Context.h,v 1.19 2000-12-10 00:06:50 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -59,10 +59,11 @@ class Context_T {
   int verbosity;              /* 0=silent -> 3=debug */
   int expose;                 /* 1 if everything is ready to expose and draw */
 
-  double r[3], t[3], s[3];    /* current rotation, translation and scale */
+  float rot[4][4];            /* current rotation matrix */
+  double r[3];                /* position angles (if succ. rot. along x, y and z) */
+  double t[3], s[3];          /* current translation and scale */
   int rlock[3], tlock[3], slock[3];
                               /* locks for r, t and s */
-  
   float quaternion[4];        /* the actual quaternion used for "trackball" rotating */
   int useTrackball;           /* do or do not use the trackball for rotations */
 
@@ -145,7 +146,7 @@ class Context_T {
   } print;
 
   // trackball functions 
-  void buildRotmatrix(float m[4][4]);
+  void buildRotmatrix(void);
   void setQuaternion (float p1x, float p1y, float p2x, float p2y);
   void addQuaternion (float p1x, float p1y, float p2x, float p2y);
 };

@@ -1,4 +1,4 @@
-/* $Id: CbGeneral.cpp,v 1.5 2000-11-27 10:58:59 geuzaine Exp $ */
+/* $Id: CbGeneral.cpp,v 1.6 2000-12-10 00:06:50 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -133,12 +133,21 @@ void CurrentInfoCb (Widget w, XtPointer client_data, XtPointer call_data){
    ------------------------------------------------------------------------ */
 
 void set_r(int i, double val){
-  if(!CTX.rlock[i]){
-    CTX.r[i] = val;
+  if(CTX.useTrackball){
     if(XtIsManaged(WID.OD.viewportDialog)){
-      sprintf(label, "%.5g", CTX.r[i]);
+      sprintf(label, "---");
       XtVaSetValues(WID.OD.viewportText[0][i], XmNvalue, label, NULL);
       XmUpdateDisplay(WID.OD.viewportText[0][i]);  
+    }
+  }
+  else{
+    if(!CTX.rlock[i]){
+      CTX.r[i] = val;
+      if(XtIsManaged(WID.OD.viewportDialog)){
+	sprintf(label, "%.5g", CTX.r[i]);
+	XtVaSetValues(WID.OD.viewportText[0][i], XmNvalue, label, NULL);
+	XmUpdateDisplay(WID.OD.viewportText[0][i]);  
+      }
     }
   }
 }
