@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-11-13 19:33:10 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-11-16 21:53:24 $)
 
 1. GENERAL
 ==========
@@ -92,7 +92,7 @@ problem:
 
 Try the new isotropic algorithm:
 - on the command line: gmsh -algo tri
-- in the interface: Options->Mesh->2D->New isotropic algorithm
+- in the interface: Tools->Options->Mesh->2D->New isotropic algorithm
 - in input files: Mesh.Algorithm = 3
 The old 2D algorithm will disappear once all its features are
 integrated in the new one, so please don't send bug reports on the
@@ -139,7 +139,7 @@ The swapping algorithm is not very clever at the moment. Try to change
 the surface mesh a bit, or recombine your mesh to generate prisms or
 hexahedra.
 
-5.8) File->Visibility does not seem to work with extruded meshes.
+5.8) Tools->Visibility does not seem to work with extruded meshes.
 
 This a known problem (due to the fact that numbers are explicitly
 assigned to mesh entities in the extrude commands, which destroys

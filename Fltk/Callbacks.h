@@ -66,55 +66,75 @@ void file_save_as_ppm_cb(CALLBACK_ARGS) ;
 void file_save_as_yuv_cb(CALLBACK_ARGS) ;
 void file_quit_cb(CALLBACK_ARGS) ;
 
-// Option General Menu
+// Option Menu
 
-void opt_general_cb(CALLBACK_ARGS) ;
-void opt_general_color_scheme_cb(CALLBACK_ARGS) ;
-void opt_general_ok_cb(CALLBACK_ARGS) ;
+void options_cb(CALLBACK_ARGS) ;
+void options_browser_cb(CALLBACK_ARGS) ;
+void options_save_cb(CALLBACK_ARGS) ;
+void options_restore_defaults_cb(CALLBACK_ARGS) ;
+void options_ok_cb(CALLBACK_ARGS) ;
 
-// Option Geometry Menu
+void general_options_cb(CALLBACK_ARGS) ;
+void general_options_color_scheme_cb(CALLBACK_ARGS) ;
+void general_options_ok_cb(CALLBACK_ARGS) ;
 
-void opt_geometry_cb(CALLBACK_ARGS) ;
-void opt_geometry_color_scheme_cb(CALLBACK_ARGS) ;
-void opt_geometry_ok_cb(CALLBACK_ARGS) ;
+void geometry_options_cb(CALLBACK_ARGS) ;
+void geometry_options_color_scheme_cb(CALLBACK_ARGS) ;
+void geometry_options_ok_cb(CALLBACK_ARGS) ;
 
-// Option Mesh Menu
+void mesh_options_cb(CALLBACK_ARGS) ;
+void mesh_options_color_scheme_cb(CALLBACK_ARGS) ;
+void mesh_options_ok_cb(CALLBACK_ARGS) ;
 
-void opt_mesh_cb(CALLBACK_ARGS) ;
-void opt_mesh_color_scheme_cb(CALLBACK_ARGS) ;
-void opt_mesh_ok_cb(CALLBACK_ARGS) ;
+void solver_options_cb(CALLBACK_ARGS) ;
+void solver_options_ok_cb(CALLBACK_ARGS) ;
 
-// Option Solver Menu
+void post_options_cb(CALLBACK_ARGS) ;
+void post_options_ok_cb(CALLBACK_ARGS) ;
 
-void opt_solver_cb(CALLBACK_ARGS) ;
-void opt_solver_ok_cb(CALLBACK_ARGS) ;
+void view_toggle_cb(CALLBACK_ARGS) ;
+void view_reload_cb(CALLBACK_ARGS) ;
+void view_reload_all_cb(CALLBACK_ARGS) ;
+void view_reload_visible_cb(CALLBACK_ARGS) ;
+void view_remove_cb(CALLBACK_ARGS) ;
+void view_remove_all_cb(CALLBACK_ARGS) ;
+void view_remove_visible_cb(CALLBACK_ARGS) ;
+void view_remove_invisible_cb(CALLBACK_ARGS) ;
+void view_save_ascii_cb(CALLBACK_ARGS) ;
+void view_save_binary_cb(CALLBACK_ARGS) ;
+void view_duplicate_cb(CALLBACK_ARGS) ;
+void view_duplicate_with_options_cb(CALLBACK_ARGS) ;
+void view_merge_all_cb(CALLBACK_ARGS) ;
+void view_merge_visible_cb(CALLBACK_ARGS) ;
+void view_applybgmesh_cb(CALLBACK_ARGS) ;
+void view_options_cb(CALLBACK_ARGS) ;
+void view_plugin_cb(CALLBACK_ARGS) ;
+void view_options_plugin_cb(CALLBACK_ARGS) ;
+void view_options_custom_cb(CALLBACK_ARGS) ;
+void view_options_timestep_cb(CALLBACK_ARGS) ;
+void view_options_timestep_decr_cb(CALLBACK_ARGS);
+void view_options_timestep_incr_cb(CALLBACK_ARGS);
+void view_options_ok_cb(CALLBACK_ARGS) ;
 
-// Option Post Menu
+// Statistics Menu
 
-void opt_post_cb(CALLBACK_ARGS) ;
-void opt_post_ok_cb(CALLBACK_ARGS) ;
+void statistics_cb(CALLBACK_ARGS) ;
+void statistics_update_cb(CALLBACK_ARGS) ;
+void statistics_histogram_cb(CALLBACK_ARGS) ;
 
-// Option Statistics Menu
+// Message Menu
 
-void opt_statistics_cb(CALLBACK_ARGS) ;
-void opt_statistics_update_cb(CALLBACK_ARGS) ;
-void opt_statistics_histogram_cb(CALLBACK_ARGS) ;
+void message_cb(CALLBACK_ARGS) ;
+void message_copy_cb(CALLBACK_ARGS) ;
+void message_clear_cb(CALLBACK_ARGS) ;
+void message_save_cb(CALLBACK_ARGS) ;
 
-// Option Message Menu
+// Visibility Menu
 
-void opt_message_cb(CALLBACK_ARGS) ;
-void opt_message_copy_cb(CALLBACK_ARGS) ;
-void opt_message_clear_cb(CALLBACK_ARGS) ;
-void opt_message_save_cb(CALLBACK_ARGS) ;
-
-// Option Visibility Menu
-
-void opt_visibility_cb(CALLBACK_ARGS) ;
-void opt_visibility_sort_cb(CALLBACK_ARGS) ;
-void opt_visibility_number_cb(CALLBACK_ARGS);
-void opt_visibility_ok_cb(CALLBACK_ARGS) ;
-
-void opt_save_cb(CALLBACK_ARGS) ;
+void visibility_cb(CALLBACK_ARGS) ;
+void visibility_sort_cb(CALLBACK_ARGS) ;
+void visibility_number_cb(CALLBACK_ARGS);
+void visibility_ok_cb(CALLBACK_ARGS) ;
 
 // Help Menu
 
@@ -236,32 +256,6 @@ void solver_command_cb(CALLBACK_ARGS);
 void solver_kill_cb(CALLBACK_ARGS);
 void solver_choose_executable_cb(CALLBACK_ARGS);
 void solver_ok_cb(CALLBACK_ARGS);
-
-// Dynamic post menus
-
-void view_toggle_cb(CALLBACK_ARGS) ;
-void view_reload_cb(CALLBACK_ARGS) ;
-void view_reload_all_cb(CALLBACK_ARGS) ;
-void view_reload_visible_cb(CALLBACK_ARGS) ;
-void view_remove_cb(CALLBACK_ARGS) ;
-void view_remove_all_cb(CALLBACK_ARGS) ;
-void view_remove_visible_cb(CALLBACK_ARGS) ;
-void view_remove_invisible_cb(CALLBACK_ARGS) ;
-void view_save_ascii_cb(CALLBACK_ARGS) ;
-void view_save_binary_cb(CALLBACK_ARGS) ;
-void view_duplicate_cb(CALLBACK_ARGS) ;
-void view_duplicate_with_options_cb(CALLBACK_ARGS) ;
-void view_merge_all_cb(CALLBACK_ARGS) ;
-void view_merge_visible_cb(CALLBACK_ARGS) ;
-void view_applybgmesh_cb(CALLBACK_ARGS) ;
-void view_options_cb(CALLBACK_ARGS) ;
-void view_plugin_cb(CALLBACK_ARGS) ;
-void view_options_plugin_cb(CALLBACK_ARGS) ;
-void view_options_custom_cb(CALLBACK_ARGS) ;
-void view_options_timestep_cb(CALLBACK_ARGS) ;
-void view_options_timestep_decr_cb(CALLBACK_ARGS);
-void view_options_timestep_incr_cb(CALLBACK_ARGS);
-void view_options_ok_cb(CALLBACK_ARGS) ;
 
 #endif
 

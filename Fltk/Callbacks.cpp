@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.151 2002-11-16 08:29:15 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.152 2002-11-16 21:53:24 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -126,8 +126,11 @@ int file_chooser_get_filter(){
 
 int AddViewInUI(int i, char *Name, int Num){
   if(i > NB_BUTT_MAX -1) return 1;
-  if(WID && (WID->get_context() == 3))
-    WID->set_context(menu_post,0);
+  if(WID){
+    if(WID->get_context() == 3)
+      WID->set_context(menu_post,0);
+    WID->reset_option_browser();
+  }
   return 0;
 }
 
@@ -596,16 +599,57 @@ void file_quit_cb(CALLBACK_ARGS) {
   Exit(0);
 }
 
-// Option General Menu
 
-void opt_general_cb(CALLBACK_ARGS) {
+// Option Menu
+
+void options_cb(CALLBACK_ARGS) {
+  WID->create_option_window();
+}
+
+void options_browser_cb(CALLBACK_ARGS) {
+  switch(WID->opt_browser->value()){
+  case 0 : break;
+  case 1 : WID->create_general_options_window(); break;
+  case 2 : WID->create_geometry_options_window(); break;
+  case 3 : WID->create_mesh_options_window(); break;
+  case 4 : WID->create_solver_options_window(); break;
+  case 5 : WID->create_post_options_window(); break;
+  default : WID->create_view_options_window(WID->opt_browser->value()-6); break;
+  }
+}
+
+void options_save_cb(CALLBACK_ARGS) {
+  Print_Options(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
+}
+
+#include <unistd.h>
+void options_restore_defaults_cb(CALLBACK_ARGS) {
+  unlink(CTX.optionsrc_filename);
+  ReInit_Options(0);
+  Init_Options_GUI(0);
+  Draw();
+}
+
+void options_ok_cb(CALLBACK_ARGS) {
+  general_options_ok_cb(w,data);
+  geometry_options_ok_cb(w,data);
+  mesh_options_ok_cb(w,data);
+  solver_options_ok_cb(w,data);
+  post_options_ok_cb(w,data);
+  view_options_ok_cb(w, (void*)WID->view_number);
+  Draw();
+}
+
+// General options
+
+void general_options_cb(CALLBACK_ARGS) {
   WID->create_general_options_window();
 }
-void opt_general_color_scheme_cb(CALLBACK_ARGS){
+void general_options_color_scheme_cb(CALLBACK_ARGS){
   opt_general_color_scheme(0,GMSH_SET, WID->gen_value[0]->value());
   Draw();
 }
-void opt_general_ok_cb(CALLBACK_ARGS){
+void general_options_ok_cb(CALLBACK_ARGS){
   opt_general_axes(0, GMSH_SET, WID->gen_butt[0]->value());
   opt_general_small_axes(0, GMSH_SET, WID->gen_butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
@@ -638,20 +682,18 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_error_filename(0, GMSH_SET, (char*)WID->gen_input[2]->value());
   opt_general_options_filename(0, GMSH_SET, (char*)WID->gen_input[3]->value());
   opt_general_editor(0, GMSH_SET, (char*)WID->gen_input[4]->value());
-
-  Draw();
 }
 
-// Option Geometry Menu
+// Geometry options
 
-void opt_geometry_cb(CALLBACK_ARGS) {
+void geometry_options_cb(CALLBACK_ARGS) {
   WID->create_geometry_options_window();
 }
-void opt_geometry_color_scheme_cb(CALLBACK_ARGS){
+void geometry_options_color_scheme_cb(CALLBACK_ARGS){
   opt_geometry_color_scheme(0,GMSH_SET, WID->geo_value[2]->value());
   Draw();
 }
-void opt_geometry_ok_cb(CALLBACK_ARGS) {
+void geometry_options_ok_cb(CALLBACK_ARGS) {
   opt_geometry_points(0, GMSH_SET, WID->geo_butt[0]->value());
   opt_geometry_lines(0, GMSH_SET, WID->geo_butt[1]->value());
   opt_geometry_surfaces(0, GMSH_SET, WID->geo_butt[2]->value());
@@ -670,19 +712,18 @@ void opt_geometry_ok_cb(CALLBACK_ARGS) {
 
   opt_geometry_point_type(0, GMSH_SET, WID->geo_choice[0]->value());
   opt_geometry_line_type(0, GMSH_SET, WID->geo_choice[1]->value());
-  Draw();
 }
 
-// Option Mesh Menu
+// Mesh options
 
-void opt_mesh_cb(CALLBACK_ARGS) {
+void mesh_options_cb(CALLBACK_ARGS) {
   WID->create_mesh_options_window();
 }
-void opt_mesh_color_scheme_cb(CALLBACK_ARGS){
+void mesh_options_color_scheme_cb(CALLBACK_ARGS){
   opt_mesh_color_scheme(0,GMSH_SET, WID->mesh_value[12]->value());
   Draw();
 }
-void opt_mesh_ok_cb(CALLBACK_ARGS) {
+void mesh_options_ok_cb(CALLBACK_ARGS) {
   opt_mesh_algo(0, GMSH_SET, 
 		WID->mesh_butt[0]->value()?DELAUNAY_ISO:
 		WID->mesh_butt[1]->value()?DELAUNAY_SHEWCHUK:
@@ -720,24 +761,22 @@ void opt_mesh_ok_cb(CALLBACK_ARGS) {
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());
-
-  Draw();
 }
 
-// Option Solver Menu
+// Solver options
 
-void opt_solver_cb(CALLBACK_ARGS) {
+void solver_options_cb(CALLBACK_ARGS) {
   WID->create_solver_options_window();
 }
-void opt_solver_ok_cb(CALLBACK_ARGS) {
+void solver_options_ok_cb(CALLBACK_ARGS) {
 }
 
-// Option Post Menu
+// Post options
 
-void opt_post_cb(CALLBACK_ARGS) {
+void post_options_cb(CALLBACK_ARGS) {
   WID->create_post_options_window();
 }
-void opt_post_ok_cb(CALLBACK_ARGS) {
+void post_options_ok_cb(CALLBACK_ARGS) {
   opt_post_link(0, GMSH_SET, 
 		WID->post_butt[0]->value()?0:
 		WID->post_butt[1]->value()?1:
@@ -748,18 +787,17 @@ void opt_post_ok_cb(CALLBACK_ARGS) {
   opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[6]->value());
 
   opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
-  Draw();
 }
 
-// Option Statistics Menu
+// Statistics Menu
 
-void opt_statistics_cb(CALLBACK_ARGS) {
+void statistics_cb(CALLBACK_ARGS) {
   WID->create_statistics_window();
 }
-void opt_statistics_update_cb(CALLBACK_ARGS) {
+void statistics_update_cb(CALLBACK_ARGS) {
   WID->set_statistics();
 }
-void opt_statistics_histogram_cb(CALLBACK_ARGS) {
+void statistics_histogram_cb(CALLBACK_ARGS) {
   int i, type=(long int)data;
 
   Print_Histogram(THEM->Histogram[type]);
@@ -778,12 +816,12 @@ void opt_statistics_histogram_cb(CALLBACK_ARGS) {
   Draw(); 
 }
 
-// Option Messages Menu
+// Messages Menu
 
-void opt_message_cb(CALLBACK_ARGS) {
+void message_cb(CALLBACK_ARGS) {
   WID->create_message_window();
 }
-void opt_message_copy_cb(CALLBACK_ARGS) {
+void message_copy_cb(CALLBACK_ARGS) {
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
   // Fl::copy does not exist in older versions of fltk
 #else
@@ -805,10 +843,10 @@ void opt_message_copy_cb(CALLBACK_ARGS) {
   Fl::copy(buff, strlen(buff), 0);
 #endif
 }
-void opt_message_clear_cb(CALLBACK_ARGS) {
+void message_clear_cb(CALLBACK_ARGS) {
   WID->msg_browser->clear();
 }
-void opt_message_save_cb(CALLBACK_ARGS) {
+void message_save_cb(CALLBACK_ARGS) {
  test:
   if(file_chooser(0,"Save messages", "*", 0)){
     char *name = file_chooser_get_name(1);
@@ -824,18 +862,15 @@ void opt_message_save_cb(CALLBACK_ARGS) {
     WID->save_message(name); 
   }
 }
-void opt_save_cb(CALLBACK_ARGS) {
-  Print_Options(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
-}
 
 // Option Visibility Menu
 
 #if (FL_MAJOR_VERSION == 2) // disabled for fltk 2 at the moment
 void select_vis_browser(int mode){}
-void opt_visibility_cb(CALLBACK_ARGS) {}
-void opt_visibility_ok_cb(CALLBACK_ARGS) {}
-void opt_visibility_sort_cb(CALLBACK_ARGS){}
-void opt_visibility_number_cb(CALLBACK_ARGS){}
+void visibility_cb(CALLBACK_ARGS) {}
+void visibility_ok_cb(CALLBACK_ARGS) {}
+void visibility_sort_cb(CALLBACK_ARGS){}
+void visibility_number_cb(CALLBACK_ARGS){}
 #else
 void select_vis_browser(int mode){
   int i;
@@ -849,7 +884,7 @@ void select_vis_browser(int mode){
   }
 }
 
-void opt_visibility_cb(CALLBACK_ARGS) {
+void visibility_cb(CALLBACK_ARGS) {
   int i, type, mode;
   List_T *list;
   Entity *e;
@@ -876,7 +911,7 @@ void opt_visibility_cb(CALLBACK_ARGS) {
   select_vis_browser(mode);
 }
 
-void opt_visibility_ok_cb(CALLBACK_ARGS) {
+void visibility_ok_cb(CALLBACK_ARGS) {
   int i, mode;
   Entity *e;
 
@@ -925,7 +960,7 @@ void opt_visibility_ok_cb(CALLBACK_ARGS) {
   Draw();
 }
 
-void opt_visibility_sort_cb(CALLBACK_ARGS){
+void visibility_sort_cb(CALLBACK_ARGS){
   int i, val = (long int)data, selectall;
 
   if(!val){
@@ -943,11 +978,11 @@ void opt_visibility_sort_cb(CALLBACK_ARGS){
   }
   else{
     SetVisibilitySort(val);
-    opt_visibility_cb(NULL,NULL);
+    visibility_cb(NULL,NULL);
   }
 }
 
-void opt_visibility_number_cb(CALLBACK_ARGS){
+void visibility_number_cb(CALLBACK_ARGS){
   int pos, mode, type = WID->vis_input_mode->value();
   char *str = (char*)((Fl_Input*)w)->value(); 
 
@@ -959,7 +994,7 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
 
   SetVisibilityByNumber(str, type, mode);
   pos = WID->vis_browser->position();
-  opt_visibility_cb(NULL,NULL);
+  visibility_cb(NULL,NULL);
   WID->vis_browser->position(pos);
 
   Draw();
@@ -2521,8 +2556,6 @@ void view_options_ok_cb(CALLBACK_ARGS){
     if(WID->view_choice[i]) WID->view_choice[i]->clear_changed();
     WID->view_colorbar_window->clear_changed();
   }
-
-  Draw();
 }
 
 // Contextual windows for geometry

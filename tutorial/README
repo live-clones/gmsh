@@ -1,4 +1,4 @@
-$Id: README,v 1.16 2002-09-11 18:29:56 geuzaine Exp $
+$Id: README,v 1.17 2002-11-16 21:53:24 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -85,20 +85,19 @@ the following command:
 
 In the Post-Processing module (select 'Post_Processing' in the module
 menu), two view buttons will appear, respectively labeled "a scalar
-map" and "a vector map". A left mouse click toggles the visibility of
-the selected view. A right mouse click provides access to the view's
-options. If you want the modifications made to one view to affect also
-all the other views, select the 'Apply next changes to all views' or
-'Force same options for all views' option in the
-'Options->Post-processing' menu.
+map" and "a vector map". A mouse click on the name will toggle the
+visibility of the selected view, while a click on the arrow button on
+the right will provide access to the view's options. If you want the
+modifications made to one view to affect also all the other views,
+select the 'Apply next changes to all views' or 'Force same options
+for all views' option in the 'Tools->Options->Post-processing' menu.
 
 [NOTE: All the options specified interactively can also be directly
 specified in the ascii input files. All available options, with their
 current values, can be saved into a file by selecting 'File->Save
 as->Gmsh options', or simply viewed by pressing the '?' button in the
 status bar. To save the current options as your default preferences
-for all future Gmsh sessions, use the 'Options->Save options now'
-menu.]
+for all future Gmsh sessions, use the 'Tools->Options->Save' button.]
 
 
 OK, that's all, folks. Enjoy the tutorial.

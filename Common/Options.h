@@ -536,6 +536,7 @@ typedef struct {
 
 void Init_Options (int num);
 void Init_Options_GUI (int num);
+void ReInit_Options (int num);
 void Print_Options(int num, int level, char *filename);
 
 StringXString * Get_StringOptionCategory(char * cat);

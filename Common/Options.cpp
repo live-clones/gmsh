@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.93 2002-11-16 08:29:14 geuzaine Exp $
+// $Id: Options.cpp,v 1.94 2002-11-16 21:53:23 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -39,27 +39,7 @@ extern Post_View  *Post_ViewReference;
 
 // General routines
 
-void Init_Options(int num){
-  char *tmp;
-
-  // Home directory
-#if !defined(WIN32) // Some WinNT systems have bad HOME variables...
-  if((tmp = getenv("HOME")))      strcpy(CTX.home_dir, tmp);
-  else 
-#endif
-  if((tmp = getenv("TMP")))       strcpy(CTX.home_dir, tmp);
-  else if((tmp = getenv("TEMP"))) strcpy(CTX.home_dir, tmp);
-  else                            strcpy(CTX.home_dir, "");
-  if(strlen(CTX.home_dir)){
-#if defined(WIN32) && !defined(__CYGWIN__)
-    strcat(CTX.home_dir, "\\");
-#else
-    strcat(CTX.home_dir, "/");
-#endif
-  }
-
-  // Reference view storing default options
-  Post_ViewReference = (Post_View*)Malloc(sizeof(Post_View)) ;
+void Init_Options_Safe(int num){
   Post_ViewReference->CT.size = 255;
   Post_ViewReference->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
   ColorTable_InitParam(1, &Post_ViewReference->CT, 1, 1);
@@ -91,6 +71,31 @@ void Init_Options(int num){
   Set_DefaultColorOptions(num, PostProcessingOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, ViewOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, PrintOptions_Color, CTX.color_scheme);
+}
+
+void Init_Options(int num){
+  char *tmp;
+
+  // Home directory
+#if !defined(WIN32) // Some WinNT systems have bad HOME variables...
+  if((tmp = getenv("HOME")))      strcpy(CTX.home_dir, tmp);
+  else 
+#endif
+  if((tmp = getenv("TMP")))       strcpy(CTX.home_dir, tmp);
+  else if((tmp = getenv("TEMP"))) strcpy(CTX.home_dir, tmp);
+  else                            strcpy(CTX.home_dir, "");
+  if(strlen(CTX.home_dir)){
+#if defined(WIN32) && !defined(__CYGWIN__)
+    strcat(CTX.home_dir, "\\");
+#else
+    strcat(CTX.home_dir, "/");
+#endif
+  }
+
+  // Reference view storing default options
+  Post_ViewReference = (Post_View*)Malloc(sizeof(Post_View)) ;
+
+  Init_Options_Safe(num);
 
   // The following defaults cannot be set by the user 
   CTX.batch = 0 ;
@@ -117,6 +122,19 @@ void Init_Options(int num){
   CTX.mesh.histogram = 0 ;
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; //old extrusion mesh generator
   CTX.mesh.check_duplicates = 0; //check for duplicate nodes in Read_Mesh
+}
+
+void ReInit_Options(int num){
+  List_T *l = CTX.post.list;
+  CTX.post.list=NULL; // horrible trick so that the opt_view_XXX will
+		      // act on the reference view
+  Init_Options_Safe(num);
+  CTX.post.list = l;
+
+  for(int i=0; i<List_Nbr(CTX.post.list) ; i++){
+    Post_View *v = (Post_View*)List_Pointer(CTX.post.list,i);
+    CopyViewOptions(Post_ViewReference, v);
+  }
 }
 
 void Init_Options_GUI(int num){

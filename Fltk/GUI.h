@@ -41,6 +41,7 @@
 #include <FL/Fl_Multiline_Output.H>
 #include <FL/Fl_Bitmap.H>
 #include <FL/Fl_Browser.H>
+#include <FL/Fl_Hold_Browser.H>
 #include <FL/x.H>
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_ask.H>
@@ -150,14 +151,18 @@ public:
   Fl_Button        *g_status_butt[7] ;
   Fl_Box           *g_status_label[3] ;
 
-  // general options window
+  // Option window
+  Fl_Window        *opt_window ;
+  Fl_Hold_Browser  *opt_browser ;
+
+  // general options
   Fl_Window        *gen_window ;
   Fl_Check_Button  *gen_butt[20] ;
   Fl_Value_Input   *gen_value[10] ;
   Fl_Button        *gen_col[50] ;
   Fl_Input         *gen_input[10] ;
 
-  // geometry options window
+  // geometry options
   Fl_Window        *geo_window ;
   Fl_Check_Button  *geo_butt[10] ;
   Fl_Input         *geo_input ;
@@ -165,7 +170,7 @@ public:
   Fl_Button        *geo_col[50] ;
   Fl_Choice        *geo_choice[5] ;
   
-  // mesh options window
+  // mesh options
   Fl_Window        *mesh_window ;
   Fl_Check_Button  *mesh_butt[20] ;
   Fl_Input         *mesh_input ;
@@ -173,15 +178,29 @@ public:
   Fl_Button        *mesh_col[50] ;
   Fl_Choice        *mesh_choice[5] ;
 
-  // solver options window
+  // solver options
   Fl_Window        *solver_window ;
   Fl_Check_Button  *solver_butt[20] ;
   Fl_Value_Input   *solver_value[20] ;
 
-  // post-processing options window
+  // post-processing options
   Fl_Window        *post_window ;
   Fl_Check_Button  *post_butt[20] ;
   Fl_Value_Input   *post_value[20] ;
+
+  // view options
+  int view_number ;
+  Fl_Window        *view_window ;
+  Fl_Group         *view_3d, *view_2d, *view_range, *view_vector ;
+#define VIEW_OPT_BUTT 100
+  Fl_Check_Button  *view_butt[VIEW_OPT_BUTT] ;
+  Fl_Value_Input   *view_value[VIEW_OPT_BUTT] ;
+  Fl_Input         *view_input[VIEW_OPT_BUTT] ;
+  Fl_Repeat_Button *view_butt_rep[VIEW_OPT_BUTT] ;
+  Fl_Choice        *view_choice[VIEW_OPT_BUTT] ;
+
+  Colorbar_Window  *view_colorbar_window ;
+  Fl_Return_Button *view_ok ;
 
   // statistics window
   Fl_Window        *stat_window ;
@@ -201,20 +220,6 @@ public:
   // about window
   Fl_Window        *about_window ;
 
-  // view options window
-  int view_number ;
-  Fl_Window        *view_window ;
-  Fl_Group         *view_3d, *view_2d, *view_range, *view_vector ;
-#define VIEW_OPT_BUTT 100
-  Fl_Check_Button  *view_butt[VIEW_OPT_BUTT] ;
-  Fl_Value_Input   *view_value[VIEW_OPT_BUTT] ;
-  Fl_Input         *view_input[VIEW_OPT_BUTT] ;
-  Fl_Repeat_Button *view_butt_rep[VIEW_OPT_BUTT] ;
-  Fl_Choice        *view_choice[VIEW_OPT_BUTT] ;
-
-  Colorbar_Window  *view_colorbar_window ;
-  Fl_Return_Button *view_ok ;
-  
   // geometry context window
   Fl_Window        *context_geometry_window ;
   Fl_Input         *context_geometry_input[30] ;
@@ -233,6 +238,8 @@ public:
   // create the windows
   void create_menu_window(int argc, char **argv);
   void create_graphic_window(int argc, char **argv);
+  void create_option_window();
+  void hide_option_subwindows();
   void create_general_options_window();
   void create_geometry_options_window();
   void create_mesh_options_window();
@@ -273,6 +280,7 @@ public:
   int  global_shortcuts(int event);
   int  arrow_shortcuts();
   void reset_visibility();
+  void reset_option_browser();
   int  selection, try_selection, quit_selection, end_selection;
 
 };
