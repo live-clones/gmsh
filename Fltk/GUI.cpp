@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.55 2001-03-05 23:14:57 remacle Exp $
+// $Id: GUI.cpp,v 1.56 2001-03-06 04:38:56 remacle Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -505,7 +505,7 @@ void GUI::wait(){
 
 //********************************* Create the menu window *****************************
 
-void add_post_plugins ( Fl_Menu_Button *button )
+void add_post_plugins ( Fl_Menu_Button *button , int iView)
 {
   char name[256],menuname[256];
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::Instance()->begin();
@@ -516,8 +516,11 @@ void add_post_plugins ( Fl_Menu_Button *button )
       if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN)
 	{
 	  p->getName(name);
+	  std::pair<int,GMSH_Plugin*> *pair = 
+	    new  std::pair<int,GMSH_Plugin*>(iView,p);
 	  sprintf(menuname,"Plugins/%s",name);
-	  button->add(menuname, 0,(Fl_Callback *)view_plugin_cb, (void*)p, 0);
+	  button->add(menuname, 0,(Fl_Callback *)view_plugin_cb, 
+		      (void*)(pair), 0);
 	}
     }
 }
@@ -595,7 +598,7 @@ void GUI::create_menu_window(int argc, char **argv){
 			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
       m_popup_butt[i]->add("Options...", 0,
 			   (Fl_Callback *)view_options_cb, (void*)i, 0);
-      add_post_plugins ( m_popup_butt[i] );
+      add_post_plugins ( m_popup_butt[i] , i);
       m_popup_butt[i]->textsize(CTX.fontsize);
       m_popup_butt[i]->hide();
     }

@@ -1,5 +1,6 @@
-// $Id: Callbacks.cpp,v 1.38 2001-03-05 23:14:57 remacle Exp $
+// $Id: Callbacks.cpp,v 1.39 2001-03-06 04:38:56 remacle Exp $
 
+#include <map>
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
@@ -1447,9 +1448,25 @@ void view_options_cb(CALLBACK_ARGS){
 
 void view_plugin_cb(CALLBACK_ARGS){
   char name[256];
-  GMSH_Plugin *p = (GMSH_Plugin*)data;
+  std::pair<int,GMSH_Plugin*> *pair =  (std::pair<int,GMSH_Plugin*>*)data;
+  int iView = pair->first;
+  GMSH_Post_Plugin *p = (GMSH_Post_Plugin*)pair->second;
   p->getName(name);
-  Msg(INFO,"Plugin %s called",name);
+  // here we should perhaps launch 
+  // a dialogbox for setting up Plugin 
+  // properties
+  try
+    {
+      Post_View *v = (Post_View*)List_Pointer(Post_ViewList,iView);
+      p->execute(v);
+      Msg(INFO,"Plugin %s was called",name);
+    }
+  catch (GMSH_Plugin *err)
+    {
+      p->CatchErrorMessage(name);
+      Msg(WARNING,"%s",name);
+    }
+  //
 }
 
 void view_options_custom_cb(CALLBACK_ARGS){
