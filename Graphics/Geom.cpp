@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.50 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: Geom.cpp,v 1.51 2004-03-04 18:05:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -506,8 +506,10 @@ void Draw_NonPlane_Surface(Surface * s)
     if(CTX.geom.light) glEnable(GL_LIGHTING);
     GLUnurbsObj *nurb;
     nurb = gluNewNurbsRenderer();
+#if defined(GLU_VERSION_1_3)
     gluNurbsProperty(nurb, (GLenum) GLU_SAMPLING_TOLERANCE, 50.0);
     gluNurbsProperty(nurb, (GLenum) GLU_DISPLAY_MODE, GLU_FILL);
+#endif
     gluBeginSurface(nurb);
     gluNurbsSurface(nurb, s->Nu + s->OrderU + 1, s->ku,
 		    s->Nv + s->OrderV + 1, s->kv, 4, 4 * s->Nu, s->cp,
