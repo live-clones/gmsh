@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.187 2003-11-23 03:24:43 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.188 2003-11-23 03:38:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2713,11 +2713,14 @@ void view_reload_cb(CALLBACK_ARGS)
   Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
   strcpy(filename, v->FileName);
 
-  FILE *fp;
-  if(!(fp = fopen(filename, "r"))){
+  // Hum... We should use the appropriate function to test this, but I
+  // don't know it (stat?)
+  FILE *fp = fopen(filename, "r");
+  if(!fp){
     Msg(GERROR, "Unable to open file '%s'", filename);
     return;
   }
+  fclose(fp);
 
   CopyViewOptions(v, &tmp);
   FreeView(v);
