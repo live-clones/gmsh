@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.217 2004-04-21 00:28:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.218 2004-04-21 04:26:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1087,6 +1087,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[13]->value());
   opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[14]->value());
   opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[15]->value());
+  opt_mesh_use_cut_plane(0, GMSH_SET, WID->mesh_butt[16]->value());
+  opt_mesh_cut_plane_as_surface(0, GMSH_SET, WID->mesh_butt[22]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_color_carousel(0, GMSH_SET,
 			  WID->mesh_butt[18]->value()? 0 :
@@ -1107,6 +1109,10 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_tangents(0, GMSH_SET, WID->mesh_value[13]->value());
   opt_mesh_point_size(0, GMSH_SET, WID->mesh_value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, WID->mesh_value[11]->value());
+  opt_mesh_cut_planea(0, GMSH_SET, WID->mesh_value[14]->value());
+  opt_mesh_cut_planeb(0, GMSH_SET, WID->mesh_value[15]->value());
+  opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());
+  opt_mesh_cut_planed(0, GMSH_SET, WID->mesh_value[17]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());

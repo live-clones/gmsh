@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.75 2004-04-20 22:36:39 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.76 2004-04-21 04:26:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -151,7 +151,9 @@ void Draw_Mesh(Mesh * M)
       //printf("normal mesh drawing\n");
 
       if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
-			    CTX.mesh.volumes_num)) {
+			    CTX.mesh.volumes_num || 
+			    (CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface &&
+			     (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)))) {
 	Tree_Action(M->Volumes, Draw_Mesh_Volumes);
       }
 
@@ -637,6 +639,22 @@ void Draw_Simplex_Surface(void *a, void *b)
   }
 }
 
+int intersectCutPlane(int num, Vertex **v, int *edges, int *faces)
+{
+  if(CTX.mesh.cut_plane_as_surface && 
+     (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)){
+    double val = CTX.mesh.evalCutPlane(v[0]->Pos.X, v[0]->Pos.Y, v[0]->Pos.Z);
+    for(int i = 1; i < num; i++){
+      if(val * CTX.mesh.evalCutPlane(v[i]->Pos.X, v[i]->Pos.Y, v[i]->Pos.Z) < 0){
+	*edges = CTX.mesh.surfaces_edges;
+	*faces = CTX.mesh.surfaces_faces;
+	return 1;
+      }
+    }
+  }
+  return 0;
+}
+
 void Draw_Simplex_Volume(void *a, void *b)
 {
   Simplex *s;
@@ -681,12 +699,16 @@ void Draw_Simplex_Volume(void *a, void *b)
   double Zc = .25 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z +
                      s->V[2]->Pos.Z + s->V[3]->Pos.Z);
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
   if(CTX.mesh.use_cut_plane) {
-    if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-      return;
+    if(!intersectCutPlane(3, s->V, &edges, &faces))
+      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
+	return;
   }
 
-  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+  if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
   }
   else{
@@ -715,7 +737,7 @@ void Draw_Simplex_Volume(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.volumes_edges) {
+  if(edges) {
     if(!s->VSUP){
       glBegin(GL_LINES);
       glVertex3d(X[0], Y[0], Z[0]); glVertex3d(X[1], Y[1], Z[1]);
@@ -778,7 +800,7 @@ void Draw_Simplex_Volume(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.volumes_faces){
+  if(faces){
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -926,12 +948,16 @@ void Draw_Hexahedron_Volume(void *a, void *b)
   Zc *= .125;
   Yc *= .125;
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
   if(CTX.mesh.use_cut_plane) {
-    if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-      return;
+    if(!intersectCutPlane(8, h->V, &edges, &faces))
+      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
+	return;
   }
 
-  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+  if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
   }
   else{
@@ -953,7 +979,7 @@ void Draw_Hexahedron_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (h->V[i]->Pos.Z - Zc);
   }
 
-  if(CTX.mesh.volumes_edges){
+  if(edges){
     glBegin(GL_LINE_LOOP);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -1025,7 +1051,7 @@ void Draw_Hexahedron_Volume(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.volumes_faces){
+  if(faces){
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -1114,12 +1140,16 @@ void Draw_Prism_Volume(void *a, void *b)
   Zc /= 6.;
   Yc /= 6.;
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
   if(CTX.mesh.use_cut_plane) {
-    if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-      return;
+    if(!intersectCutPlane(6, p->V, &edges, &faces))
+      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
+	return;
   }
 
-  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+  if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
   }
   else{
@@ -1141,7 +1171,7 @@ void Draw_Prism_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
 
-  if(CTX.mesh.volumes_edges){
+  if(edges){
     glBegin(GL_LINE_LOOP);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -1204,7 +1234,7 @@ void Draw_Prism_Volume(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.volumes_faces){
+  if(faces){
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -1287,12 +1317,16 @@ void Draw_Pyramid_Volume(void *a, void *b)
   Zc /= 5.;
   Yc /= 5.;
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
   if(CTX.mesh.use_cut_plane) {
-    if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-      return;
+    if(!intersectCutPlane(5, p->V, &edges, &faces))
+      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
+	return;
   }
 
-  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+  if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
   }
   else{
@@ -1314,7 +1348,7 @@ void Draw_Pyramid_Volume(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
 
-  if(CTX.mesh.volumes_edges){
+  if(edges){
     glBegin(GL_LINE_LOOP);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -1339,7 +1373,7 @@ void Draw_Pyramid_Volume(void *a, void *b)
     Draw_String(Num);
   }
 
-  if(CTX.mesh.volumes_faces){
+  if(faces){
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)

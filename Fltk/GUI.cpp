@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.286 2004-04-21 00:28:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.287 2004-04-21 04:26:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1853,7 +1853,6 @@ void GUI::create_option_window()
       mesh_butt[17]->type(FL_TOGGLE_BUTTON);
       mesh_butt[17]->down_box(TOGGLE_BOX);
       mesh_butt[17]->selection_color(TOGGLE_COLOR);
-      mesh_butt[17]->selection_color(RADIO_COLOR);
 
       mesh_value[9] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Explode elements");
       mesh_value[9]->minimum(0);
@@ -1910,6 +1909,27 @@ void GUI::create_option_window()
         i++;
       }
       s->end();
+      o->end();
+    }
+    {
+      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cut plane");
+      o->hide();
+      mesh_butt[16] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable");
+      mesh_butt[16]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[16]->down_box(TOGGLE_BOX);
+      mesh_butt[16]->selection_color(TOGGLE_COLOR);
+      mesh_butt[22] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Draw intersecting layer as surface");
+      mesh_butt[22]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[22]->down_box(TOGGLE_BOX);
+      mesh_butt[22]->selection_color(TOGGLE_COLOR);
+
+      mesh_value[14] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "A");
+      mesh_value[15] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "B");
+      mesh_value[16] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "C");
+      mesh_value[17] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "D");
+      for(i = 14; i <= 17; i++) {
+        mesh_value[i]->align(FL_ALIGN_RIGHT);
+      }
       o->end();
     }
     o->end();

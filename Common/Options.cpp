@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.146 2004-04-20 21:47:36 geuzaine Exp $
+// $Id: Options.cpp,v 1.147 2004-04-21 04:26:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3475,13 +3475,32 @@ double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.use_cut_plane = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[16]->value(CTX.mesh.use_cut_plane);
+#endif
   return CTX.mesh.use_cut_plane;
+}
+
+double opt_mesh_cut_plane_as_surface(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.cut_plane_as_surface = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[22]->value(CTX.mesh.cut_plane_as_surface);
+#endif
+  return CTX.mesh.cut_plane_as_surface;
 }
 
 double opt_mesh_cut_planea(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.cut_planea = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[14]->value(CTX.mesh.cut_planea);
+#endif
   return CTX.mesh.cut_planea;
 }
 
@@ -3489,6 +3508,10 @@ double opt_mesh_cut_planeb(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.cut_planeb = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[15]->value(CTX.mesh.cut_planeb);
+#endif
   return CTX.mesh.cut_planeb;
 }
 
@@ -3496,6 +3519,10 @@ double opt_mesh_cut_planec(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.cut_planec = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[16]->value(CTX.mesh.cut_planec);
+#endif
   return CTX.mesh.cut_planec;
 }
 
@@ -3503,6 +3530,10 @@ double opt_mesh_cut_planed(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.cut_planed = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[17]->value(CTX.mesh.cut_planed);
+#endif
   return CTX.mesh.cut_planed;
 }
 

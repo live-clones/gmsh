@@ -174,7 +174,7 @@ public :
     int histogram, initial_only;
     double normals, tangents, explode;
     int color_scheme, color_carousel ;
-    int use_cut_plane;
+    int use_cut_plane, cut_plane_as_surface;
     double cut_planea,cut_planeb,cut_planec,cut_planed;
     double evalCutPlane (double x, double y, double z){
       double val = cut_planea * x + cut_planeb * y + cut_planec * z + cut_planed; 
