@@ -1,10 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.97 2001-08-27 11:19:18 geuzaine Exp $
-
-  //
-  // Generaliser sprintf avec des chaines de caracteres
-  // 
+// $Id: Gmsh.y,v 1.98 2001-09-04 08:05:47 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1067,27 +1063,27 @@ Affectation :
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
   {
 #ifndef _NOPLUGIN
-    try 
-      {
+    if(CTX.default_plugins){
+      try {
 	GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
       }
-    catch (...)
-      {
+      catch (...) {
 	Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
       }
+    }
 #endif
   }
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
   {
 #ifndef _NOPLUGIN
-    try 
-      {
+    if(CTX.default_plugins){
+      try {
 	GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
       }
-    catch (...)
-      {
+      catch (...) {
 	Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
       }
+    }
 #endif
   }
 ;
@@ -1572,7 +1568,8 @@ Command :
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
    {
 #ifndef _NOPLUGIN
-    GMSH_PluginManager::Instance()->Action($3,$6,0); 
+    if(CTX.default_plugins)
+      GMSH_PluginManager::Instance()->Action($3,$6,0); 
 #endif
    }
    | tExit tEND
