@@ -1,0 +1,130 @@
+$Id
+
+* Pb avec View->Reload si plusieurs vues dans le meme fichier
+
+> > Hmm, je viens de tester sous Linux et je n'arrive pas a reproduire le
+> > bug. A moins que... Aurais-tu toutes tes vues stockees dans le meme
+> > fichier ? Car 'reload' relit simplement le fichier duquel provient la
+> > vue (et il le relit entierement).
+> 
+> Tout à fait, toutes les vues sont dans un fichier unique.
+
+C'est de la que vient le probleme. Le 'reload' recharge en fait le
+fichier duquel provient la vue, en *forcant* sa position dans la liste
+des vues chargees. Si le fichier contient plusieurs vues, il va
+recharger la premiere, lui affecter la position de celle que tu veux
+recharger, puis la deuxieme, en lui affectant le meme position, et
+ainsi de suite. Ca fait donc un supeeer memory leak : tu recharges
+bien toutes les vues, mais tu ne sais acceder qu'a la derniere... Pour
+corriger ca, il faudrait que l'on garde comme info supplementaire dans
+chaque vue quelle etait sa position dans le fichier.
+
+=================================================================================
+
+* Tenseurs
+
+Laurent Stainier <l.stainier@ulg.ac.be>
+
+L'approche que je suggérerais est la suivante. Tout d'abord, on peut 
+commencer par le cas particulier (mais sans doute le plus courant) des 
+tenseurs symétriques (à valeurs réelles pour être précis). Dans ce cas, 
+les trois valeurs propres, et les vecteurs propres associés, sont bien 
+définies et réelles. On peut également définir les trois invariants du 
+tenseur A: I1=tr(A), I2=0.5*[tr(A)^2-tr(A^2)], I3=det(A), ou 
+alternativement tr(A), tr(A^2), tr(A^3). On peut alors envisager 
+différentes représentations graphiques:
+- la croix de contrainte (généralisée à 3D), composée à partir des 
+valeurs propres et des vecteurs propres;
+- les invariants (sous formes de plusieurs champs scalaires). Le choix 
+des invariants n'est pas évident: en mécanique, les plus intéressants 
+sont certainement I1, J2, I3. Quid en EM ?
+- composante par composante, ce qui serait d'ailleurs bien utile pour 
+les vecteurs également (mais peut-être cela peut-il être fait par 
+plugin, dont je n'ai pas encore étudié le mécanisme ??).
+
+Là où ça se complique franchement, c'est pour les tenseurs non 
+symétriques. Quoique ! Dans ce cas là, plus aucune garantie sur les 
+valeurs propres ... Mais il me semble donc que la solution peut être de 
+se ramener au cas précédent via une décomposition polaire A=R.U ou 
+A=V.R, où U et V sont des tenseurs symétriques et R un tenseur 
+anti-symétrique normé (R^t.R=1 => R^-1=R^t ; U^2=A^t.A, V^2=A.A^t), R 
+représentant une rotation rigide en mécanique. Ce dernier a trois 
+valeurs propres: 1 (avec un vecteur propre correspondant à l'axe de 
+rotation) et exp(+-i \theta) où \theta est l'angle de rotation (à 
+vérifier !!). Pour la représentation graphique, il y a l'option de 
+laisser tomber R. Sinon, il faudrait de fait voir comment représenter U 
+(ou V) avec R.
+
+Remarque finale: le calcul des valeurs et vecteurs propres est 
+évidemment un peu lourd au niveau CPU, mais bon, les tenseurs peuvent 
+être stockés sous cette forme (les invariants sont facilement calculés 
+à partir des v.p.), et cela nous rappelle cette belle expression "No 
+free meal" !
+
+=================================================================================
+
+* Stockage et acces aux normales en post-pro:
+
+- stocker les normales autrement (generer les noeuds?) pour acces
+plus rapide.
+
+Idem pour le maillage.
+
+=================================================================================
+
+* Orientation des surfaces
+
+mesh: il faut vraiment que je regarde la relation entre l'orientation
+des surfaces geometriques et les l'orientation des elements du
+maillage...
+
+Subject: Re: [Gmsh] surface normals: some point inwards, but most point in the negative direction
+        Date: Thu, 21 Nov 2002 05:59:56 -0500
+        From: "Matthias G. Imhof" <mgi@vt.edu>
+ Organization: Virginia Tech: Seismic Reservoir Characterization Laboratory
+          To: Christophe Geuzaine <geuzaine@acm.caltech.edu>
+  References: 1 , 2
+
+Christophe,
+
+Thanks for a nice tool! I finally extended my boundary-element method to 3D and 
+find your mesh generator perfect to make sure the boundary points are placed 
+uniformly on a sphere instead of clustering up at the poles.
+
+My only gripe is with the visualization of surface normals in gmsh. While 
+Physical Surface allows change of the normal directions in the mesh file, the 
+normals are not changed in the visualization which makes identification of wrong 
+polarity surfaces difficult.
+
+Matthias
+
+Christophe Geuzaine wrote:
+> Matthias G. Imhof wrote:
+> 
+>> I defined a simple rectangular block and noticed that normals in the 
+>> x-direction actually change signs depending on the surface to point 
+>> into the block, while the other normals point in the negative y- or 
+>> z-directions pointing into the block for some surfaces and pointing 
+>> outwards for others.
+>>
+>> How can I change this model to have all normals point out of the block?
+> 
+> 
+> The only way is to define Physical Surfaces with the appropriate sign, 
+> e.g. "Physical Surface(1) = {23,1,20,3,2,-16};". This will reverse the 
+> orientation of the surface 16 in the output mesh file.
+> 
+>>
+>> A second question for the same problem. If I generate a quantity by 
+>> duplicate, how can I lates access this quantity? I tried to assign it 
+>> to, e.g., a plane surface but that did not work.
+> 
+> 
+> There is unfortunately no way to access that information at the moment 
+> without using the GUI...
+> 
+> Christophe
+> 
+
+
+
