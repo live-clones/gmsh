@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.355 2004-09-28 22:45:14 geuzaine Exp $
+// $Id: GUI.cpp,v 1.356 2004-09-28 22:48:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1000,6 +1000,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 #if defined(HAVE_FLTK_1_1_5_OR_ABOVE)
   m_scroll->clear();
 #else
+  // Fl_Scroll.clear() is broken in old versions of FLTK...
   for(int i = 0; i < m_push_butt.size(); i++){
     m_scroll->remove(m_push_butt[i]);
     delete m_push_butt[i];
