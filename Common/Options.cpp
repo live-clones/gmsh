@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.31 2001-06-28 17:42:08 geuzaine Exp $
+// $Id: Options.cpp,v 1.32 2001-07-17 07:00:37 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -497,6 +497,8 @@ char * opt_solver_getdp_command(OPT_ARGS_STR){
   if(WID && (action & GMSH_GUI))
     WID->getdp_input[2]->value(GetDP_Info.command);
   return GetDP_Info.command;
+#else
+  return "getdp";
 #endif
 }
 
@@ -1484,6 +1486,8 @@ double opt_solver_getdp_popupmessages(OPT_ARGS_NUM){
   if(WID && (action & GMSH_GUI))
     WID->getdp_butt[0]->value(GetDP_Info.popupmessages);
   return GetDP_Info.popupmessages;
+#else
+  return 1.;
 #endif
 }
 double opt_solver_getdp_mergeviews(OPT_ARGS_NUM){
@@ -1493,6 +1497,8 @@ double opt_solver_getdp_mergeviews(OPT_ARGS_NUM){
   if(WID && (action & GMSH_GUI))
     WID->getdp_butt[1]->value(GetDP_Info.mergeviews);
   return GetDP_Info.mergeviews;
+#else
+  return 1.;
 #endif
 }
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.87 2001-06-29 07:27:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.88 2001-07-17 07:00:37 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1836,6 +1836,9 @@ void GUI::create_about_window(){
       o->add("@c@.Copyright (c) 1997-2001");
       o->add("@c@.Christophe Geuzaine and Jean-François Remacle");
       o->add("");
+      o->add("@c@.Please send all questions and bug reports to");
+      o->add("@c@b@.gmsh@geuz.org");
+      o->add("");
       sprintf(buffer, "@c@.Version: %.2f", GMSH_VERSION); o->add(buffer);
       sprintf(buffer, "@c@.Build date: %s", GMSH_DATE); o->add(buffer);
       sprintf(buffer, "@c@.Build OS: %s", GMSH_OS); o->add(buffer);
@@ -1844,7 +1847,7 @@ void GUI::create_about_window(){
       sprintf(buffer, "@c@.Build host: %s", GMSH_HOST); o->add(buffer);
       sprintf(buffer, "@c@.Packaged by: %s", GMSH_PACKAGER); o->add(buffer);
       o->add("");
-      o->add("@c@.Please visit http://www.geuz.org/gmsh/ for more info");
+      o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
       o->textsize(CTX.fontsize);
     }
 

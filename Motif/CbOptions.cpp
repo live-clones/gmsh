@@ -1,4 +1,4 @@
-// $Id: CbOptions.cpp,v 1.9 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.10 2001-07-17 07:00:37 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -364,9 +364,9 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     }
     else{
       if (!strcmp(c,"all") || !strcmp(c,"*"))
-        CTX.mesh.limit_gamma = 0.0 ;
+        CTX.mesh.gamma_sup = 0.0 ;
       else
-        CTX.mesh.limit_gamma = atof(c);
+        CTX.mesh.gamma_sup = atof(c);
     }
     break;
 
