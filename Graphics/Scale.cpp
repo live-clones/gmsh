@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.56 2005-01-18 05:31:04 geuzaine Exp $
+// $Id: Scale.cpp,v 1.57 2005-01-21 03:03:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -166,7 +166,7 @@ void draw_scale(Post_View * v,
   int nbv;
   double cv_box;
   if(horizontal){
-    sprintf(label, v->Format, -100*M_PI);
+    sprintf(label, v->Format, -M_PI/1.e4);
     double estim = gl_width(label);
     nbv = (width/estim > v->NbIso) ? v->NbIso : ((width/estim > 2.) ? -2 : -1);
     cv_box = width / nbv;
@@ -319,7 +319,7 @@ void Draw_Scales(void)
   double largest_number = 0.;
   for(int i = 0; i < List_Nbr(todraw); i++) {
     Post_View *v = *(Post_View **) List_Pointer(todraw, i);
-    sprintf(label, v->Format, -100*M_PI);
+    sprintf(label, v->Format, -M_PI/1.e4);
     if(largest_number < gl_width(label))
       largest_number = gl_width(label);
   }
@@ -379,7 +379,7 @@ void Draw_Scales(void)
 	}
 	// compute width
 	width_prev = width;
-	sprintf(label, v->Format, -100*M_PI);
+	sprintf(label, v->Format, -M_PI/1.e4);
 	width = bar_size + tic + gl_width(label);
 	if(List_Nbr(v->Time) > 1 && v->ShowTime){
 	  char tmp[256];
