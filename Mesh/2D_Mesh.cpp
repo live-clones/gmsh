@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.22 2001-05-21 08:56:35 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.23 2001-05-21 09:28:02 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -29,12 +29,9 @@ extern Mesh       *THEM;
 extern Context_T   CTX;
 extern int         CurrentNodeNumber;
 
-int LocalNewPoint;
-
 PointRecord   *gPointArray;
 DocRecord     *BGMESH, *FGMESH;
-double         qual, newqual, L;
-int            is_3D = 0;
+int            LocalNewPoint, is_3D = 0;
 double         LC2D ;
 
 static Surface  *THESURFACE, *THESUPPORT;
@@ -949,7 +946,7 @@ void Make_Mesh_With_Points (DocRecord * ptr, PointRecord * Liste, int Numpoints)
 void filldel (Delaunay * deladd, int aa, int bb, int cc,
               PointRecord * points, DocRecord * mesh){
 
-  double newqual, L;
+  double qual, newqual, L;
   MPoint pt2, pt4;
   Vertex *v, *dum;
 
