@@ -71,14 +71,14 @@ For num In {1:255}
 
 // It is also possible make tests
 
-  If (!(num % 20))
+  If (num < 10)
 
 // The Sprintf function permits to create complex strings using
 // variables (since all Gmsh variables are treated internally as
 // double precision numbers, the format should only contain valid
 // double precision number format specifiers):
-
-    Print Sprintf("t8-%g.gif", num); // print the scene in a gif file
+   
+    Print Sprintf("t8-0%g.jpg", num); // print the scene in a jpeg file
 
   EndIf
 
