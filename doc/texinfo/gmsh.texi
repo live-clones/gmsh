@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.179 2005-03-26 04:09:22 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.180 2005-03-26 05:39:48 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -3113,58 +3113,58 @@ View "@var{string}" @{
 @end group
 @end example
 
-where the 26 object @w{@var{type}s} that can be displayed are:
+where the 47 object @w{@var{type}s} that can be displayed are:
 
 @example
                                  @var{type}  #@var{list-of-coords}  #@var{list-of-values}
 --------------------------------------------------------------------
-scalar point                     SP    3            1  * @var{nb-time-steps}
-vector point                     VP    3            3  * @var{nb-time-steps}
-tensor point                     TP    3            9  * @var{nb-time-steps}
-scalar line                      SL    6            2  * @var{nb-time-steps}
-vector line                      VL    6            6  * @var{nb-time-steps}
-tensor line                      TL    6            18 * @var{nb-time-steps}
-scalar triangle                  ST    9            3  * @var{nb-time-steps}
-vector triangle                  VT    9            9  * @var{nb-time-steps}
-tensor triangle                  TT    9            27 * @var{nb-time-steps}
-scalar quadrangle                SQ    12           4  * @var{nb-time-steps}
-vector quadrangle                VQ    12           12 * @var{nb-time-steps}
-tensor quadrangle                TQ    12           36 * @var{nb-time-steps}
-scalar tetrahedron               SS    12           4  * @var{nb-time-steps}
-vector tetrahedron               VS    12           12 * @var{nb-time-steps}
-tensor tetrahedron               TS    12           36 * @var{nb-time-steps}
-scalar hexahedron                SH    24           8  * @var{nb-time-steps}
-vector hexahedron                VH    24           24 * @var{nb-time-steps}
-tensor hexahedron                TH    24           72 * @var{nb-time-steps}
-scalar prism                     SI    18           6  * @var{nb-time-steps}
-vector prism                     VI    18           18 * @var{nb-time-steps}
-tensor prism                     TI    18           54 * @var{nb-time-steps}
-scalar pyramid                   SY    15           5  * @var{nb-time-steps}
-vector pyramid                   VY    15           15 * @var{nb-time-steps}
-tensor pyramid                   TY    15           45 * @var{nb-time-steps}
-second order scalar line         SL2   9            3  * @var{nb-time-steps}
-second order vector line         VL2   9            9  * @var{nb-time-steps}
-second order tensor line         TL2   9            27 * @var{nb-time-steps}
-second order scalar triangle     ST2   18           6  * @var{nb-time-steps}
-second order vector triangle     VT2   18           18 * @var{nb-time-steps}
-second order tensor triangle     TT2   18           54 * @var{nb-time-steps}
-second order scalar quadrangle   SQ2   27           9  * @var{nb-time-steps}
-second order vector quadrangle   VQ2   27           27 * @var{nb-time-steps}
-second order tensor quadrangle   TQ2   27           81 * @var{nb-time-steps}
-second order scalar tetrahedron  SS2   30           10 * @var{nb-time-steps}
-second order vector tetrahedron  VS2   30           30 * @var{nb-time-steps}
-second order tensor tetrahedron  TS2   30           90 * @var{nb-time-steps}
-second order scalar hexahedron   SH2   81           27 * @var{nb-time-steps}
-second order vector hexahedron   VH2   81           81 * @var{nb-time-steps}
-second order tensor hexahedron   TH2   81           243* @var{nb-time-steps}
-second order scalar prism        SI2   54           18 * @var{nb-time-steps}
-second order vector prism        VI2   54           54 * @var{nb-time-steps}
-second order tensor prism        TI2   54           162* @var{nb-time-steps}
-second order scalar pyramid      SY2   42           14 * @var{nb-time-steps}
-second order vector pyramid      VY2   42           42 * @var{nb-time-steps}
-second order tensor pyramid      TY2   42           126* @var{nb-time-steps}
-text 2d                          T2    3            arbitrary
-text 3d                          T3    4            arbitrary
+Scalar point                     SP    3            1  * @var{nb-time-steps}
+Vector point                     VP    3            3  * @var{nb-time-steps}
+Tensor point                     TP    3            9  * @var{nb-time-steps}
+Scalar line                      SL    6            2  * @var{nb-time-steps}
+Vector line                      VL    6            6  * @var{nb-time-steps}
+Tensor line                      TL    6            18 * @var{nb-time-steps}
+Scalar triangle                  ST    9            3  * @var{nb-time-steps}
+Vector triangle                  VT    9            9  * @var{nb-time-steps}
+Tensor triangle                  TT    9            27 * @var{nb-time-steps}
+Scalar quadrangle                SQ    12           4  * @var{nb-time-steps}
+Vector quadrangle                VQ    12           12 * @var{nb-time-steps}
+Tensor quadrangle                TQ    12           36 * @var{nb-time-steps}
+Scalar tetrahedron               SS    12           4  * @var{nb-time-steps}
+Vector tetrahedron               VS    12           12 * @var{nb-time-steps}
+Tensor tetrahedron               TS    12           36 * @var{nb-time-steps}
+Scalar hexahedron                SH    24           8  * @var{nb-time-steps}
+Vector hexahedron                VH    24           24 * @var{nb-time-steps}
+Tensor hexahedron                TH    24           72 * @var{nb-time-steps}
+Scalar prism                     SI    18           6  * @var{nb-time-steps}
+Vector prism                     VI    18           18 * @var{nb-time-steps}
+Tensor prism                     TI    18           54 * @var{nb-time-steps}
+Scalar pyramid                   SY    15           5  * @var{nb-time-steps}
+Vector pyramid                   VY    15           15 * @var{nb-time-steps}
+Tensor pyramid                   TY    15           45 * @var{nb-time-steps}
+Second order scalar line         SL2   9            3  * @var{nb-time-steps}
+Second order vector line         VL2   9            9  * @var{nb-time-steps}
+Second order tensor line         TL2   9            27 * @var{nb-time-steps}
+Second order scalar triangle     ST2   18           6  * @var{nb-time-steps}
+Second order vector triangle     VT2   18           18 * @var{nb-time-steps}
+Second order tensor triangle     TT2   18           54 * @var{nb-time-steps}
+Second order scalar quadrangle   SQ2   27           9  * @var{nb-time-steps}
+Second order vector quadrangle   VQ2   27           27 * @var{nb-time-steps}
+Second order tensor quadrangle   TQ2   27           81 * @var{nb-time-steps}
+Second order scalar tetrahedron  SS2   30           10 * @var{nb-time-steps}
+Second order vector tetrahedron  VS2   30           30 * @var{nb-time-steps}
+Second order tensor tetrahedron  TS2   30           90 * @var{nb-time-steps}
+Second order scalar hexahedron   SH2   81           27 * @var{nb-time-steps}
+Second order vector hexahedron   VH2   81           81 * @var{nb-time-steps}
+Second order tensor hexahedron   TH2   81           243* @var{nb-time-steps}
+Second order scalar prism        SI2   54           18 * @var{nb-time-steps}
+Second order vector prism        VI2   54           54 * @var{nb-time-steps}
+Second order tensor prism        TI2   54           162* @var{nb-time-steps}
+Second order scalar pyramid      SY2   42           14 * @var{nb-time-steps}
+Second order vector pyramid      VY2   42           42 * @var{nb-time-steps}
+Second order tensor pyramid      TY2   42           126* @var{nb-time-steps}
+2D text                          T2    3            arbitrary
+3D text                          T3    4            arbitrary
 @end example
 
 The coordinates are given `by node'@footnote{Beware that this is different
