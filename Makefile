@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.358 2004-07-01 19:07:43 geuzaine Exp $
+# $Id: Makefile,v 1.359 2004-07-02 20:11:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -276,21 +276,21 @@ distrib-post:
 	mv -f Makefile.distrib Makefile
 	rm -f ${GMSH_VERSION_FILE}
 
-distrib-unix: clean
+distrib-unix:
 	make distrib-pre
 	make all
 	make package-unix
 	make distrib-post
 	ldd bin/gmsh
 
-distrib-win: clean
+distrib-win:
 	make distrib-pre
 	make all
 	make package-win
 	make distrib-post
 	objdump -p bin/gmsh.exe | grep DLL
 
-distrib-mac: clean
+distrib-mac:
 	make distrib-pre
 	make all
 	make package-mac
