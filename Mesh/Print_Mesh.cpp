@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.42 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.43 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -404,7 +404,7 @@ void print_msh_elements(Mesh * M)
       break;
 
     default:
-      Msg(GERROR, "Unknown type of Physical group");
+      Msg(GERROR, "Unknown type of physical group");
       break;
     }
 
@@ -1331,6 +1331,8 @@ void Print_Mesh(Mesh * M, char *c, int Type)
 
   strcpy(name, M->name);
 
+  Msg(INFO, "Writing mesh file '%s'", name);
+
   if(Type == FORMAT_MSH) {
     c ? strcpy(name, c) : strcat(name, ".msh");
     mshfile = fopen(name, "w");
@@ -1339,12 +1341,10 @@ void Print_Mesh(Mesh * M, char *c, int Type)
       CTX.threads_lock = 0;
       return;
     }
-    Msg(INFO, "Writing file '%s'", name);
     process_msh_nodes(M);
     process_msh_elements(M);
-    Msg(INFO, "Msh ouput complete '%s' (%d Nodes, %d Elements)",
-        name, MSH_NODE_NUM, MSH_ELEMENT_NUM - 1);
-    Msg(STATUS2, "Wrote '%s'", name);
+    Msg(INFO, "%d nodes", MSH_NODE_NUM);
+    Msg(INFO, "%d elements", MSH_ELEMENT_NUM - 1);
     fclose(mshfile);
   }
   else if(Type == FORMAT_VRML) {
@@ -1355,11 +1355,8 @@ void Print_Mesh(Mesh * M, char *c, int Type)
       CTX.threads_lock = 0;
       return;
     }
-    Msg(INFO, "Writing file '%s'", name);
     process_wrl_nodes(M);
     process_wrl_elements(M);
-    Msg(INFO, "VRML ouput complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
     fclose(wrlfile);
   }
   else if(Type == FORMAT_UNV) {
@@ -1370,7 +1367,6 @@ void Print_Mesh(Mesh * M, char *c, int Type)
       CTX.threads_lock = 0;
       return;
     }
-    Msg(INFO, "Writing file '%s'", name);
     process_unv_nodes(M);
     fprintf(unvfile, "%6d\n", -1);
     fprintf(unvfile, "%6d\n", ELEMENTS);
@@ -1381,8 +1377,6 @@ void Print_Mesh(Mesh * M, char *c, int Type)
     fprintf(unvfile, "%6d\n", -1);
     process_unv_groups(M);
     fclose(unvfile);
-    Msg(INFO, "Unv ouput complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
   }
   else if(Type == FORMAT_GREF) {
     c ? strcpy(name, c) : strcat(name, ".Gref");
@@ -1394,7 +1388,6 @@ void Print_Mesh(Mesh * M, char *c, int Type)
       CTX.threads_lock = 0;
       return;
     }
-    Msg(INFO, "Writing file '%s'", name);
     process_Gref_nodes(Greffile, M, TRN, TRE);
     process_Gref_elements(Greffile, M, Tree_Nbr(TRN));
     process_Gref_poundarybonditions(Greffile, M, TRN, TRE);
@@ -1402,9 +1395,10 @@ void Print_Mesh(Mesh * M, char *c, int Type)
     Tree_Delete(TRN);
     Tree_Delete(TRE);
     EndConsecutiveNodes(M);
-    Msg(INFO, "Gref ouput complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
   }
+
+  Msg(INFO, "Wrote mesh file '%s'", name);
+  Msg(STATUS2N, "Wrote '%s'", name);
 
   CTX.threads_lock = 0;
 }

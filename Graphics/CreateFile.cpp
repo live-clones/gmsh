@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.50 2003-11-08 04:08:20 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.51 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -148,14 +148,16 @@ void CreateOutputFile(char *name, int format)
     FillBuffer();
     CTX.print.gl_fonts = 1;
     if(format == FORMAT_JPEG || format == FORMAT_JPEGTEX){
+      Msg(INFO, "Writing JPEG file '%s'", name);
       create_jpeg(fp, viewport[2]-viewport[0], viewport[3]-viewport[1], CTX.print.jpeg_quality);
-      Msg(INFO, "JPEG creation complete '%s'", name);
+      Msg(INFO, "Wrote JPEG file '%s'", name);
     }
     else{
+      Msg(INFO, "Writing PNG file '%s'", name);
       create_png(fp, viewport[2]-viewport[0], viewport[3]-viewport[1], 100);
-      Msg(INFO, "PNG creation complete '%s'", name);
+      Msg(INFO, "Wrote PNG file '%s'", name);
     }
-    Msg(STATUS2, "Wrote '%s'", name);
+    Msg(STATUS2N, "Wrote '%s'", name);
     fclose(fp);
     break;
 
@@ -168,14 +170,17 @@ void CreateOutputFile(char *name, int format)
     }
     FillBuffer();
     if(format == FORMAT_PPM){
+      Msg(INFO, "Writing PPM file '%s'", name);
       create_ppm(fp, viewport[2]-viewport[0], viewport[3]-viewport[1]);
-      Msg(INFO, "PPM creation complete '%s'", name);
+      Msg(INFO, "Wrote PPM file '%s'", name);
     }
     else if (format == FORMAT_YUV){
+      Msg(INFO, "Writing YUV file '%s'", name);
       create_yuv(fp, viewport[2]-viewport[0], viewport[3]-viewport[1]);
-      Msg(INFO, "YUV creation complete '%s'", name);
+      Msg(INFO, "Wrote YUV file '%s'", name);
     }
     else{
+      Msg(INFO, "Writing GIF file '%s'", name);
       create_gif(fp, viewport[2]-viewport[0], viewport[3]-viewport[1],
 		 CTX.print.gif_dither,
 		 CTX.print.gif_sort,
@@ -183,9 +188,9 @@ void CreateOutputFile(char *name, int format)
 		 CTX.print.gif_transparent,
 		 UNPACK_RED(CTX.color.bg),
 		 UNPACK_GREEN(CTX.color.bg), UNPACK_BLUE(CTX.color.bg));
-      Msg(INFO, "GIF creation complete '%s'", name);
+      Msg(INFO, "Wrote GIF file '%s'", name);
     }
-    Msg(STATUS2, "Wrote '%s'", name);
+    Msg(STATUS2N, "Wrote '%s'", name);
     fclose(fp);
     break;
 
@@ -221,6 +226,8 @@ void CreateOutputFile(char *name, int format)
       (format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0) |
       (format == FORMAT_PDFTEX ? GL2PS_NO_TEXT : 0);
 
+    Msg(INFO, "Writing %s file '%s'", (psformat == GL2PS_PDF) ? "PDF" : "PS/EPS", name);
+
     size3d = 0;
     res = GL2PS_OVERFLOW;
     while(res == GL2PS_OVERFLOW) {
@@ -233,11 +240,8 @@ void CreateOutputFile(char *name, int format)
       CTX.print.gl_fonts = 1;
       res = gl2psEndPage();
     }
-    if(psformat == GL2PS_PDF)
-      Msg(INFO, "PDF creation complete '%s'", name);
-    else
-      Msg(INFO, "PS/EPS creation complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
+    Msg(INFO, "Wrote %s file '%s'", (psformat == GL2PS_PDF) ? "PDF" : "PS/EPS", name);
+    Msg(STATUS2N, "Wrote '%s'", name);
     fclose(fp);
     break;
 
@@ -246,6 +250,7 @@ void CreateOutputFile(char *name, int format)
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
+    Msg(INFO, "Writing TEX file '%s'", name);
     gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
                    GL2PS_TEX, GL2PS_NO_SORT, GL2PS_SILENT, GL_RGBA, 0, NULL, 
 		   0, 0, 0, 1000, fp, name);
@@ -253,8 +258,8 @@ void CreateOutputFile(char *name, int format)
     FillBuffer();
     CTX.print.gl_fonts = 1;
     res = gl2psEndPage();
-    Msg(INFO, "TEX creation complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
+    Msg(INFO, "Wrote TEX file '%s'", name);
+    Msg(STATUS2N, "Wrote '%s'", name);
     fclose(fp);
     break;
 

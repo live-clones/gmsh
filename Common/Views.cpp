@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.103 2003-11-23 03:23:52 geuzaine Exp $
+// $Id: Views.cpp,v 1.104 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -678,12 +678,14 @@ Post_View *Create2DGraph(char *xname, char *yname,
 
 // INput/output
 
-void ReadView(FILE * file, char *filename)
+void ReadView(FILE *file, char *filename)
 {
   char str[256], name[256];
   int i, nb, format, size, testone, swap, t2l, t3l;
   double version;
   Post_View *v;
+
+  Msg(INFO, "Reading post-processing file '%s'", filename);
 
   while(1) {
 
@@ -895,6 +897,8 @@ void ReadView(FILE * file, char *filename)
 
   }     /* while 1 ... */
 
+  Msg(INFO, "Read post-processing file '%s'", filename);
+  Msg(STATUS2N, "Read '%s'", filename);
 }
 
 // FIXME: add an integer per simplex (region num)
@@ -913,6 +917,7 @@ void WriteView(int Flag_BIN, Post_View * v, char *filename)
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
+    Msg(INFO, "Writing post-processing file '%s'", filename);
   }
   else
     file = stdout;
@@ -979,9 +984,9 @@ void WriteView(int Flag_BIN, Post_View * v, char *filename)
   fprintf(file, "$EndView\n");
 
   if(filename) {
-    Msg(INFO, "View output complete '%s'", filename);
-    Msg(STATUS2, "Wrote '%s'", filename);
     fclose(file);
+    Msg(INFO, "Wrote post-processing file '%s'", filename);
+    Msg(STATUS2N, "Wrote '%s'", filename);
   }
 
 }

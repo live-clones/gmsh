@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.30 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.31 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -100,7 +100,7 @@ void Print_Curve(void *a, void *b)
     fprintf(FOUT, "Bezier (%d) = ", c->Num);
     break;
   default:
-    Msg(GERROR, "Unknown Curve type %d", c->Typ);
+    Msg(GERROR, "Unknown curve type %d", c->Typ);
     return;
   }
 
@@ -277,6 +277,7 @@ void Print_Geo(Mesh * M, char *filename)
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
+    Msg(INFO, "Writing flattened geometry file '%s'", filename);
   }
   else
     FOUT = stdout;
@@ -288,8 +289,8 @@ void Print_Geo(Mesh * M, char *filename)
   List_Action(M->PhysicalGroups, Print_PhysicalGroups);
 
   if(filename) {
-    Msg(INFO, "Geo output complete '%s'", filename);
-    Msg(STATUS2, "Wrote '%s'", filename);
+    Msg(INFO, "Wrote flattened geometry file '%s'", filename);
+    Msg(STATUS2N, "Wrote '%s'", filename);
     fclose(FOUT);
   }
 

@@ -463,13 +463,13 @@ void Init_Mesh (Mesh * M, int all);
 void Create_BgMesh (int i, double d, Mesh * m);
 void Print_Geo (Mesh * M, char *c);
 void Print_Mesh (Mesh * M, char *c, int Type);
-void Read_Mesh (Mesh * M, FILE * File_GEO, int Type);
+void Read_Mesh (Mesh * M, FILE *fp, char *filename, int Type);
 void GetStatistics (double s[50]);
 
-void Maillage_Dimension_0 (Mesh * M);
-void Maillage_Dimension_1 (Mesh * M);
-void Maillage_Dimension_2 (Mesh * M);
-void Maillage_Dimension_3 (Mesh * M);
+void Maillage_Dimension_0 (Mesh *M);
+void Maillage_Dimension_1 (Mesh *M);
+void Maillage_Dimension_2 (Mesh *M);
+void Maillage_Dimension_3 (Mesh *M);
 
 void Maillage_Curve (void *data, void *dummy);
 void Maillage_Surface (void *data, void *dum);

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.58 2003-09-17 18:00:53 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.59 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,7 @@ void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
    the geometry along with the mesh (since we make Tree_Insert for the
    geometrical entities). And that's what we want. */
 
-void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
+void Read_Mesh_MSH(Mesh * M, FILE * fp)
 {
   char String[256];
   int Nbr_Nodes, Nbr_Elements, i_Node, i_Element;
@@ -104,23 +104,23 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 
   while(1) {
     do {
-      fgets(String, sizeof(String), File_GEO);
-      if(feof(File_GEO))
+      fgets(String, sizeof(String), fp);
+      if(feof(fp))
         break;
     } while(String[0] != '$');
 
-    if(feof(File_GEO))
+    if(feof(fp))
       break;
 
     /*  P T S  */
 
     if(!strncmp(&String[1], "PTS", 3)) {
 
-      fscanf(File_GEO, "%d", &Nbr_Nodes);
-      Msg(INFO, "%d Points", Nbr_Nodes);
+      fscanf(fp, "%d", &Nbr_Nodes);
+      Msg(INFO, "%d points", Nbr_Nodes);
 
       for(i_Node = 0; i_Node < Nbr_Nodes; i_Node++) {
-        fscanf(File_GEO, "%d %lf %lf %lf %lf %lf", &Num, &x, &y, &z, &lc1,
+        fscanf(fp, "%d %lf %lf %lf %lf %lf", &Num, &x, &y, &z, &lc1,
                &lc2);
         vert = Create_Vertex(Num, x, y, z, lc1, lc2);
         if(!Tree_Insert(M->Points, &vert)){
@@ -134,13 +134,13 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 
     if(!strncmp(&String[1], "NO", 2)) { /* $NOE or $NOD */
 
-      fscanf(File_GEO, "%d", &Nbr_Nodes);
-      Msg(INFO, "%d Nodes", Nbr_Nodes);
+      fscanf(fp, "%d", &Nbr_Nodes);
+      Msg(INFO, "%d nodes", Nbr_Nodes);
 
       if(CTX.mesh.check_duplicates)
         Duplicates = Tree_Create(sizeof(Vertex *), comparePosition);
       for(i_Node = 0; i_Node < Nbr_Nodes; i_Node++) {
-        fscanf(File_GEO, "%d %lf %lf %lf", &Num, &x, &y, &z);
+        fscanf(fp, "%d %lf %lf %lf", &Num, &x, &y, &z);
         vert = Create_Vertex(Num, x, y, z, 1.0, 0.0);
         if(!Tree_Insert(M->Vertices, &vert)){
 	  Msg(GERROR, "Node %d already exists\n", vert->Num);
@@ -162,20 +162,20 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 
     else if(!strncmp(&String[1], "ELM", 3)) {
 
-      fscanf(File_GEO, "%d", &Nbr_Elements);
-      Msg(INFO, "%d Elements", Nbr_Elements);
+      fscanf(fp, "%d", &Nbr_Elements);
+      Msg(INFO, "%d elements", Nbr_Elements);
 
       if(CTX.mesh.check_duplicates)
         Duplicates = Tree_Create(sizeof(Vertex *), comparePosition);
 
       for(i_Element = 0; i_Element < Nbr_Elements; i_Element++) {
 
-        fscanf(File_GEO, "%d %d %d %d %d",
+        fscanf(fp, "%d %d %d %d %d",
 	       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
 	//&Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
 
         for(j = 0; j < Nbr_Nodes; j++)
-          fscanf(File_GEO, "%d", &verts[j].Num);
+          fscanf(fp, "%d", &verts[j].Num);
 
         switch (Type) {
 	case PNT:
@@ -418,8 +418,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
     }
 
     do {
-      fgets(String, 256, File_GEO);
-      if(feof(File_GEO))
+      fgets(String, 256, fp);
+      if(feof(fp))
         Msg(GERROR, "Prematured end of mesh file");
     } while(String[0] != '$');
 
@@ -446,19 +446,27 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 
 // Public Read_Mesh routine
 
-void Read_Mesh_SMS(Mesh * m, FILE * File_GEO);
+void Read_Mesh_SMS(Mesh * m, FILE * fp);
 
-void Read_Mesh(Mesh * M, FILE * File_GEO, int type)
+void Read_Mesh(Mesh * M, FILE * fp, char *filename, int type)
 {
+  if(filename)
+    Msg(INFO, "Reading mesh file '%s'", filename);
+
   switch (type) {
   case FORMAT_MSH:
-    Read_Mesh_MSH(M, File_GEO);
+    Read_Mesh_MSH(M, fp);
     break;
   case FORMAT_SMS:
-    Read_Mesh_SMS(M, File_GEO);
+    Read_Mesh_SMS(M, fp);
     break;
   default:
-    Msg(WARNING, "Unkown mesh file format to read");
-    break;
+    Msg(GERROR, "Unkown mesh file format");
+    return;
+  }
+
+  if(filename){
+    Msg(INFO, "Read mesh file '%s'", filename);
+    Msg(STATUS2N, "Read '%s'", filename);
   }
 }

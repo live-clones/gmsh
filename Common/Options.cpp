@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.118 2003-11-18 20:06:02 geuzaine Exp $
+// $Id: Options.cpp,v 1.119 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -194,6 +194,7 @@ void Print_Options(int num, int level, char *filename)
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
+    Msg(INFO, "Writing option file '%s'", filename);
   }
   else
     file = NULL;
@@ -293,8 +294,8 @@ void Print_Options(int num, int level, char *filename)
 
   if(filename) {
     if((level & GMSH_OPTIONSRC) || (level & GMSH_FULLRC)) {
-      Msg(INFO, "Options output complete '%s'", filename);
-      Msg(STATUS2, "Wrote '%s'", filename);
+      Msg(INFO, "Wrote option file '%s'", filename);
+      Msg(STATUS2N, "Wrote '%s'", filename);
     }
     fclose(file);
   }

@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.5 2003-04-02 06:32:19 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.6 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -109,12 +109,17 @@ Post_View * Img2Pos(Fl_RGB_Image & img_init)
 
 void read_pnm(char *name) 
 {
+  Msg(INFO, "Reading PNM file '%s'", name);
+
   Fl_PNM_Image theVeryNicePicture(name);
   Post_View * v = Img2Pos(theVeryNicePicture);
   char name2[256];
   strcpy(name2, name);
   strcat(name2, ".pos");
   EndView(v, 1, name2, name);
+
+  Msg(INFO, "Read PNM file '%s'", name);
+  Msg(STATUS2N, "Read '%s'", name);
 }
 
 #endif

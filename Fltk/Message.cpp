@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.42 2003-11-23 07:14:08 geuzaine Exp $
+// $Id: Message.cpp,v 1.43 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -160,7 +160,7 @@ void Msg(int level, char *fmt, ...)
       if(log && strlen(buff[window]))
         WID->add_message(buff[window]);
     }
-    else {
+    else if(log) {
       strcpy(buff1, "@C1");
       if(str)
         strncat(buff1, str, BUFFSIZE-4);

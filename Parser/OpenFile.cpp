@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.44 2003-03-21 00:52:45 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.45 2003-11-27 02:33:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -42,76 +42,80 @@ extern GUI *WID;
 extern Mesh *THEM, M;
 extern Context_T CTX;
 
-int ParseFile(char *f, int silent)
+int ParseFile(char *f, int silent, int close)
 {
-  char String[256];
-  int status;
+  char yyname_old[256], tmp[256];
+  FILE *yyin_old, *fp;
+  int yylineno_old, yyerrorstate_old, status;
 
+  if(!(fp = fopen(f, "r"))){
+    return 0;
+  }
+
+  strncpy(yyname_old, yyname, 255);
+  yyin_old = yyin;
+  yyerrorstate_old = yyerrorstate;
+  yylineno_old = yylineno;
+  
   strncpy(yyname, f, 255);
+  yyin = fp;
   yyerrorstate = 0;
   yylineno = 1;
 
-  if(!(yyin = fopen(yyname, "r")))
-    return 0;
-
   if(!silent)
-    Msg(STATUS2, "Loading '%s'", yyname);
+    Msg(INFO, "Parsing file '%s'", yyname);
 
   fpos_t position;
   fgetpos(yyin, &position);
-  fgets(String, sizeof(String), yyin);
+  fgets(tmp, sizeof(tmp), yyin);
   fsetpos(yyin, &position);
 
-  if(!strncmp(String, "$PTS", 4) ||
-     !strncmp(String, "$NO", 3) || !strncmp(String, "$ELM", 4)) {
-    if(THEM->status < 0)
-      mai3d(THEM, 0);
-    Read_Mesh(THEM, yyin, FORMAT_MSH);
+  while(!feof(yyin))
+    yyparse();
+  if(THEM)
     status = THEM->status;
-  }
-  else if(!strncmp(String, "sms", 3)) {
-    if(THEM->status < 0)
-      mai3d(THEM, 0);
-    Read_Mesh(THEM, yyin, FORMAT_SMS);
-    status = THEM->status;
-  }
-  else if(!strncmp(String, "$PostFormat", 11) || !strncmp(String, "$View", 5)) {
-    ReadView(yyin, yyname);
+  else
     status = 0;
-  }
-  else {
-    while(!feof(yyin))
-      yyparse();
-    if(THEM)
-      status = THEM->status;
-    else
-      status = 0;
-  }
-  fclose(yyin);
 
-  if(!silent)
-    Msg(STATUS2, "Loaded '%s'", yyname);
+  if(close)
+    fclose(yyin);
+
+  if(!silent){
+    Msg(INFO, "Parsed file '%s'", yyname);
+    Msg(STATUS2N, "Read '%s'", yyname);
+  }
+
+  strncpy(yyname, yyname_old, 255);
+  yyin = yyin_old;
+  yyerrorstate = yyerrorstate_old;
+  yylineno = yylineno_old;
 
   return status;
 }
 
-
 void ParseString(char *str)
 {
-  FILE *f;
+  FILE *fp;
   if(!str)
     return;
-  if((f = fopen(CTX.tmp_filename, "w"))) {
-    fprintf(f, "%s\n", str);
-    fclose(f);
-    ParseFile(CTX.tmp_filename, 0);
+  if((fp = fopen(CTX.tmp_filename, "w"))) {
+    fprintf(fp, "%s\n", str);
+    fclose(fp);
+    ParseFile(CTX.tmp_filename, 0, 1);
   }
 }
 
-
 int MergeProblem(char *name)
 {
-  char ext[5];
+  char ext[5], tmp[256];
+  int status;
+  FILE *fp;
+
+  if(!(fp = fopen(name, "r"))){
+    // don't issue an error: this is fine (the same as File->New in
+    // other programs)
+    return 0;
+  }
 
   if(strlen(name) > 4) {
     strncpy(ext, &name[strlen(name) - 4], 5);
@@ -120,17 +124,48 @@ int MergeProblem(char *name)
     strcpy(ext, "");
   }
 
-  // a image file is used as an input, we transform it onto 
-  // a post pro file that could be used as a background mesh
   if(!strcmp(ext, ".ppm") || !strcmp(ext, ".pnm")) {
+    // An image file is used as an input, we transform it onto a post
+    // pro file that could be used as a background mesh. We should
+    // check the first bytes of the file instead of the extension to
+    // determine the file type.
 #if defined(HAVE_FLTK)
     read_pnm(name);
 #endif
-    return 1;
+    status = 0;
   }
   else {
-    return ParseFile(name, 0);
+    fpos_t position;
+    fgetpos(fp, &position);
+    fgets(tmp, sizeof(tmp), fp);
+    fsetpos(fp, &position);
+
+    if(!strncmp(tmp, "$PTS", 4) || 
+       !strncmp(tmp, "$NO", 3) || 
+       !strncmp(tmp, "$ELM", 4)) {
+      if(THEM->status < 0)
+	mai3d(THEM, 0);
+      Read_Mesh(THEM, fp, name, FORMAT_MSH);
+      status = THEM->status;
+    }
+    else if(!strncmp(tmp, "sms", 3)) {
+      if(THEM->status < 0)
+	mai3d(THEM, 0);
+      Read_Mesh(THEM, fp, name, FORMAT_SMS);
+      status = THEM->status;
+    }
+    else if(!strncmp(tmp, "$PostFormat", 11) ||
+	    !strncmp(tmp, "$View", 5)) {
+      ReadView(fp, name);
+      status = 0;
+    }
+    else {
+      status = ParseFile(name, 0, 1);
+    }
   }
+
+  fclose(fp);
+  return status;
 }
 
 void MergeProblemWithBoundingBox(char *name)
@@ -190,13 +225,6 @@ void OpenProblem(char *name)
      !strcmp(ext, ".pos") || !strcmp(ext, ".POS")) {
     CTX.base_filename[strlen(name) - 4] = '\0';
   }
-  /* Let's just remove this. It causes more confusion than anything
-     else, and entering the complete file name isn't such big a
-     deal.
-  else {
-    strcat(CTX.filename, ".geo");
-  }
-  */
 
   strncpy(THEM->name, CTX.base_filename, 255);
 

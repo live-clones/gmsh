@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.147 2003-11-26 16:35:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.148 2003-11-27 02:33:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -50,13 +50,10 @@ Tree_T *Symbol_T = NULL;
 extern Context_T CTX;
 extern Mesh *THEM;
 
-static FILE *yyinTab[MAX_OPEN_FILES];
-static int yylinenoTab[MAX_OPEN_FILES];
 static fpos_t yyposImbricatedLoopsTab[MAX_OPEN_FILES];
 static int yylinenoImbricatedLoopsTab[MAX_OPEN_FILES];
 static double LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char *LoopControlVariablesNameTab[MAX_OPEN_FILES];
-static char yynameTab[MAX_OPEN_FILES][256];
 static char tmpstring[1024];
 static Symbol TheSymbol, *pSymbol;
 static Surface *STL_Surf;
@@ -198,9 +195,9 @@ STLFormatItem :
     tEndLoop
     tEndFacet
     {
-      STL_Surf->STL->Add_Facet( $9, $10, $11,
-				$13, $14, $15,
-				$17, $18, $19);
+      STL_Surf->STL->Add_Facet($9, $10, $11,
+			       $13, $14, $15,
+			       $17, $18, $19);
       return 1;
     }
   | tEndSolid
@@ -311,7 +308,7 @@ StepDataItem  :
   | tDOUBLE tAFFECT tAXIS2_PLACEMENT_3D '(' tBIGSTR ',' tDOUBLE ',' 
                                             tDOUBLE ',' tDOUBLE ')'  tEND
     {
-      Add_Axis2_Placement3D  ( (int)$1, (int)$9, (int)$11, (int)$7);
+      Add_Axis2_Placement3D  ((int)$1, (int)$9, (int)$11, (int)$7);
     }
   | tDOUBLE tAFFECT tDIRECTION '(' tBIGSTR ',' VExpr ')' tEND
     {
@@ -1765,7 +1762,7 @@ Shape :
     ListOfListOfDouble tKnots  '{' ListOfDouble ',' ListOfDouble '}'
     tOrder '{' FExpr ',' FExpr '}' tEND
     {
-      CreateNurbsSurface ( (int) $6 , (int)$18 , (int)$20  , $9, $12, $14);
+      CreateNurbsSurface ((int) $6 , (int)$18 , (int)$20  , $9, $12, $14);
       $$.Type = MSH_SURF_NURBS;
       $$.Num = (int)$6;
     }
@@ -1954,28 +1951,7 @@ Command :
     {
       if(!strcmp($1, "Include")){
 	FixRelativePath($2, tmpstring);
-	yyinTab[RecursionLevel++] = yyin;
-	if((yyin = fopen(tmpstring,"r"))){
-	  Msg(INFO, "Including '%s'", tmpstring); 
-	  strcpy(yynameTab[RecursionLevel-1], yyname);
-	  yylinenoTab[RecursionLevel-1] = yylineno;
-	  yylineno = 1;
-	  strcpy(yyname, tmpstring);
-	  while(!feof(yyin)){
-	    yyparse();
-	  }
-	  // warning, warning... If we close the stream, we cannot
-	  // call a Function defined in another file... So we just
-	  // leave it open (arghhh)
-	  //fclose(yyin);
-	  yyin = yyinTab[--RecursionLevel];
-	  strcpy(yyname, yynameTab[RecursionLevel]);
-	  yylineno = yylinenoTab[RecursionLevel];
-	}
-	else{
-	  yymsg(GERROR, "Unknown file '%s'", tmpstring) ;  
-	  yyin = yyinTab[--RecursionLevel];
-	}
+	ParseFile(tmpstring, 0, 0);
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
@@ -1992,22 +1968,16 @@ Command :
 #endif
       }
       else if(!strcmp($1, "Merge")){
-	FILE *ff = yyin;
 	FixRelativePath($2, tmpstring);
 	MergeProblem(tmpstring);
-	yyin = ff;
       }
       else if(!strcmp($1, "MergeWithBoundingBox")){
-	FILE *ff = yyin;
 	FixRelativePath($2, tmpstring);
 	MergeProblemWithBoundingBox(tmpstring);
-	yyin = ff;
       }
       else if(!strcmp($1, "Open")){
-	FILE *ff = yyin;
 	FixRelativePath($2, tmpstring);
 	OpenProblem(tmpstring);
-	yyin = ff;
       }
       else if(!strcmp($1, "System")){
 	SystemCall($2);
@@ -2083,7 +2053,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
       LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
     }
@@ -2093,7 +2063,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7 ;
       LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
     }
@@ -2114,7 +2084,7 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       }
       
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
     }
@@ -2135,7 +2105,7 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       }
       
-      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
     }
@@ -2153,7 +2123,7 @@ Loop :
 	    LoopControlVariablesTab[ImbricatedLoop-1][2] ;
 	}
 	
-	fsetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
+	fsetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
 	yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
       }
       else{

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.51 2003-11-22 01:59:02 geuzaine Exp $
+// $Id: Main.cpp,v 1.52 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -40,8 +40,8 @@
 #include "CommandLine.h"
 #include "Numeric.h"
 
-char yyname[256];
-int yyerrorstate;
+char yyname[256]="";
+int yyerrorstate=0;
 Context_T CTX;
 Mesh M, *THEM = NULL, *LOCAL = NULL;
 GUI *WID = NULL;

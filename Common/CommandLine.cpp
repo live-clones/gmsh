@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.22 2003-10-29 19:51:42 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.23 2003-11-27 02:33:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -151,8 +151,8 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
 
   // Parse session and option files
 
-  ParseFile(CTX.sessionrc_filename, 1);
-  ParseFile(CTX.optionsrc_filename, 1);
+  ParseFile(CTX.sessionrc_filename, 1, 1);
+  ParseFile(CTX.optionsrc_filename, 1, 1);
 
   // Get command line options
 
@@ -231,7 +231,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       else if(!strcmp(argv[i] + 1, "option")) {
         i++;
         if(argv[i] != NULL)
-          ParseFile(argv[i++], 1);
+          ParseFile(argv[i++], 1, 1);
         else {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
@@ -263,7 +263,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         i++;
         CTX.terminal = 1;
         if(argv[i] && argv[i + 1]) {
-          ParseFile(argv[i], 0);
+          ParseFile(argv[i], 0, 1);
           if(List_Nbr(CTX.post.list))
             WriteView(1, (Post_View *) List_Pointer(CTX.post.list, 0),
                       argv[i + 1]);
