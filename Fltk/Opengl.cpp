@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.36 2004-05-17 17:40:03 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.37 2004-05-17 17:56:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -122,7 +122,8 @@ void set_s(int i, double val)
 int check_type(int type, Vertex * v, Curve * c, Surface * s)
 {
   return ((type == ENT_POINT && v) ||
-          (type == ENT_LINE && c) || (type == ENT_SURFACE && s));
+          (type == ENT_LINE && c) || 
+	  (type == ENT_SURFACE && s));
 }
 
 int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
@@ -130,16 +131,16 @@ int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
   int hits;
   GLuint ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
 
-  *v = NULL;
-  *c = NULL;
-  *s = NULL;
-
   WID->selection = type;
   WID->try_selection = 0;
   WID->quit_selection = 0;
   WID->end_selection = 0;
 
   while(1) {
+    *v = NULL;
+    *c = NULL;
+    *s = NULL;
+
     WID->wait();
     if(WID->quit_selection) {
       WID->quit_selection = 0;
@@ -158,7 +159,7 @@ int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
       if(check_type(type, *v, *c, *s)) {
         HighlightEntity(*v, *c, *s, 1);
         WID->selection = 0;
-        return (1);
+        return 1;
       }
     }
   }
