@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.132 2003-03-07 18:26:56 geuzaine Exp $
+$Id: VERSIONS,v 1.133 2003-03-07 18:35:56 geuzaine Exp $
 
 New in 1.42: suppressed the automatic addition of a ".geo" extension
 if the file given on the command line is not recognized;
@@ -30,8 +30,8 @@ smooth normals, save window positions, restore default options, etc.);
 New in 1.35: graphical user interface upgraded to FLTK 1.1 (tooltips,
 new file chooser with multiple selection, full keyboard navigation,
 cut/paste of messages, etc.); colors can be now be directly assigned
-to mesh entities; initial tensor visaulization; new keyboard animation
-(righ/left arrow for time steps; up/down arrow for view cycling); new
+to mesh entities; initial tensor visualization; new keyboard animation
+(right/left arrow for time steps; up/down arrow for view cycling); new
 VRML output format for surface meshes; new plugin for spherical
 elevation plots; new post-processing file format (version 1.2)
 supporting quadrangles, hexahedra, prisms and pyramids; transparency
@@ -101,7 +101,7 @@ New in 1.23: fixed duplicate elements generation + non-matching
 tetrahedra faces in 3D extruded meshes; better display of displacement
 maps; fixed interactive ellipsis construction; generalized boundary
 operator; added new explode option for post-processing views; enhanced
-link view behaviour (to update only the changed items); added new
+link view behavior (to update only the changed items); added new
 default plugins: Skin, Transform, Smooth; fixed various other small
 bugs (mostly in the post-processing module and for extruded meshes);
 
@@ -141,7 +141,7 @@ files (carriage return problems); easier geometrical selections
 (cursor change); plugin manager; enhanced variable arrays (sublist
 selection and affectation); line loop check; New arrow display;
 reduced number of 'fatal' errors + better handling in interactive
-mode; fixed bug when opening meshes; enhanced File->Open behaviour for
+mode; fixed bug when opening meshes; enhanced File->Open behavior for
 meshes and post-processing views;
 
 New in 1.16: added single/double buffer selection (only useful for
@@ -159,7 +159,7 @@ GUI); default options can now be saved and automatically reloaded at
 startup; made some changes to the scripting syntax
 (PostProcessing.View[n] becomes View[n]; Offset0 becomes OffsetX,
 etc.); corrected the handling of simple triangular surfaces with large
-characteristic lengths in the 2D isotropic algorithm; added an ascii
+characteristic lengths in the 2D isotropic algorithm; added an ASCII
 to binary post-processing view converter;
 
 New in 1.13: added jpeg output on Windows;
@@ -209,7 +209,7 @@ stability enhancements in the 2D and 3D mesh algorithms. Performance
 boost of the 3D algorithm. Gmsh is still slow, but the performance
 becomes acceptable. An average 1000 tetrahedra/second is obtained on a
 600Mhz computer for a mesh of one million tetrahedra. New anisotropic
-2D mesh algorithm. New (ascii and binary) post-processing file format
+2D mesh algorithm. New (ASCII and binary) post-processing file format
 and clarified mesh file format. New handling for interactive rotations
 (trackball mode). New didactic interactive mesh construction (watch
 the Delaunay algorithm in real time on complex geometries: that's
@@ -240,7 +240,7 @@ corrected small initialization bug in postscript output.
 New in 0.984: corrected bug in display lists; added some options in
 Opt->General.
 
-New in 0.983: corrected some seg faults in interactive mode; corrected
+New in 0.983: corrected some seg. faults in interactive mode; corrected
 bug in rotations; changed default window sizes for better match with
 1024x768 screens (default X resources can be changed: see ex03.geo).
 
