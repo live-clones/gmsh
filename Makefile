@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.268 2003-03-01 22:36:36 geuzaine Exp $
+# $Id: Makefile,v 1.269 2003-03-01 22:50:48 geuzaine Exp $
 
 include variables
 
@@ -42,7 +42,7 @@ source-common:
 	rm -rf gmsh-${GMSH_RELEASE}
 	tar zcvf gmsh.tgz `ls README* */README* configure *.in Makefile */Makefile\
                            */*.[chyl] */*.[ch]pp */*.rc */*.res */*.r */*.ico */*.icns\
-                           */*.pl */*.pm */*.opt */*.spec`\
+                           */*.pl */*.pm */*.sh */*.opt */*.spec`\
                            doc demos tutorial
 	mkdir gmsh-${GMSH_RELEASE}
 	cd gmsh-${GMSH_RELEASE} && tar zxvf ../gmsh.tgz
@@ -148,7 +148,7 @@ package-windows:
 	strip bin/gmsh.exe
 	cp /usr/bin/cygwin1.dll gmsh-${GMSH_RELEASE}
 	cp bin/gmsh.exe gmsh-${GMSH_RELEASE}
-	cp doc/README.txt gmsh-${GMSH_RELEASE}
+	cp doc/README.win32 gmsh-${GMSH_RELEASE}/README.txt
 	cp doc/FORMATS gmsh-${GMSH_RELEASE}/FORMATS.txt
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt

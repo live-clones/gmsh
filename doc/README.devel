@@ -3,9 +3,10 @@ Some easy rules to make the code easy to read/debug/maintain:
 
 - please enable full warnings for your compiler (e.g. gcc -Wall)
 - always use Msg() to print information/errors/etc.
-- indent your files using ../utils/gmshindent
+- indent your files using ../utils/indent.sh
 - if working on Windows, don't leave tabs in your files (../utils/untabify)
 
+===========================================================================
 
 How to add an option in the graphical user interface?
 
@@ -28,4 +29,17 @@ Optional:
 handling routine opt_XXX to the OK callback for the corresponding
 option panel (in Fltk/Callbacks.cpp).
 
+===========================================================================
 
+Tools to check memory leaks
+
+* LIBNJAMD
+
+  export LD_PRELOAD=libnjamd.so
+  kill -USR1
+
+* valgrind
+
+* purify
+
+* memprof
