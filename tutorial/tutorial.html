@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.13 2001-08-03 07:55:11 geuzaine Exp $
+$Id: tutorial.html,v 1.14 2001-08-03 10:50:22 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -368,17 +368,16 @@ Physical Volume(101) = {9000:9004};
 
 <I><FONT COLOR="#B22222">// All interactive options can also be set directly in the input file.
 </FONT></I><I><FONT COLOR="#B22222">// For example, the following lines define a global characteristic
-</FONT></I><I><FONT COLOR="#B22222">// length factor, redefine the background color of the graphic window,
-</FONT></I><I><FONT COLOR="#B22222">// redefine the color of the points of the geometry, disable the
-</FONT></I><I><FONT COLOR="#B22222">// display of the axes, and select an initial viewpoint in XYZ mode
-</FONT></I><I><FONT COLOR="#B22222">// (disabling the interactive trackball-like rotation mode):
+</FONT></I><I><FONT COLOR="#B22222">// length factor, redefine some background colors, disable the display
+</FONT></I><I><FONT COLOR="#B22222">// of the axes, and select an initial viewpoint in XYZ mode (disabling
+</FONT></I><I><FONT COLOR="#B22222">// the interactive trackball-like rotation mode):
 </FONT></I>
 Mesh.CharacteristicLengthFactor = 4;
-General.Color.Background = Red;
-General.Color.Background = Red;
+General.Color.Background = {120,120,120};
+General.Color.Foreground = {255,255,255};
+General.Color.Text = White;
 Geometry.Color.Points = Orange;
 General.Axes = 0;
-
 General.Trackball = 0;
 General.RotationX = 10;
 General.RotationY = 70;
