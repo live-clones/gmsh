@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.136 2004-10-15 02:30:50 geuzaine Exp $
+// $Id: Views.cpp,v 1.137 2004-10-16 16:13:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -954,11 +954,7 @@ void ReadView(FILE *file, char *filename)
   Msg(STATUS2N, "Read '%s'", filename);
 }
 
-// FIXME: add an integer per simplex (region num)?
-// FIXME: add a format similar to the msh format (node list + simplex list)?
-// FIXME: add a structured format?
-
-static void write_parsed_line(char *str, int nbnod, int nb, List_T *list, FILE *fp)
+static void write_parsed_elements(char *str, int nbnod, int nb, List_T *list, FILE *fp)
 {
   if(nb) {
     int n = List_Nbr(list) / nb;
@@ -981,11 +977,41 @@ static void write_parsed_line(char *str, int nbnod, int nb, List_T *list, FILE *
   }
 }
 
+static void write_parsed_strings(int nbc, int nb, List_T *TD, List_T *TC, FILE *fp)
+{
+  if(!nb || (nbc != 4 && nbc != 5)) return;
+  for(int j = 0; j < List_Nbr(TD); j += nbc){
+    double x, y, z, style, start, end;
+    List_Read(TD, j, &x);
+    List_Read(TD, j+1, &y);
+    if(nbc == 5)
+      List_Read(TD, j+2, &z);
+    List_Read(TD, j+nbc-2, &style);
+    if(nbc == 4)
+      fprintf(fp, "T2(%g,%g,%g){", x, y, style);
+    else
+      fprintf(fp, "T3(%g,%g,%g,%g){", x, y, z, style);
+    List_Read(TD, j+nbc-1, &start);
+    if(j+nbc*2-1 < List_Nbr(TD))
+      List_Read(TD, j+nbc*2-1, &end);
+    else
+      end = List_Nbr(TC);
+    int l = 0;
+    while(l < end-start){
+      char *str = (char*)List_Pointer(TC, (int)start + l);
+      if(l) fprintf(fp, ",");
+      fprintf(fp, "\"%s\"", str);
+      l += strlen(str)+1;
+    }
+    fprintf(fp, "};\n");
+  }
+}
+
 void WriteView(Post_View *v, char *filename, int format, int append)
 {
   FILE *file;
   char name[256];
-  int i, f, One = 1;
+  int f, One = 1;
   int binary = (format == 1) ? 1 : 0;
   int parsed = (format == 2);
 
@@ -1008,6 +1034,7 @@ void WriteView(Post_View *v, char *filename, int format, int append)
     fprintf(file, "$EndPostFormat\n");
   }
 
+  int i;
   for(i = 0; i < (int)strlen(v->Name); i++) {
     if(v->Name[i] == ' ')
       name[i] = '^';
@@ -1067,31 +1094,32 @@ void WriteView(Post_View *v, char *filename, int format, int append)
   }
   else{
     fprintf(file, "View \"%s\" {\n", v->Name);
-    write_parsed_line("SP", 1, v->NbSP, v->SP, file);
-    write_parsed_line("VP", 1, v->NbVP, v->VP, file);
-    write_parsed_line("TP", 1, v->NbTP, v->TP, file);
-    write_parsed_line("SL", 2, v->NbSL, v->SL, file);
-    write_parsed_line("VL", 2, v->NbVL, v->VL, file);
-    write_parsed_line("TL", 2, v->NbTL, v->TL, file);
-    write_parsed_line("ST", 3, v->NbST, v->ST, file);
-    write_parsed_line("VT", 3, v->NbVT, v->VT, file);
-    write_parsed_line("TT", 3, v->NbTT, v->TT, file);
-    write_parsed_line("SQ", 4, v->NbSQ, v->SQ, file);
-    write_parsed_line("VQ", 4, v->NbVQ, v->VQ, file);
-    write_parsed_line("TQ", 4, v->NbTQ, v->TQ, file);
-    write_parsed_line("SS", 4, v->NbSS, v->SS, file);
-    write_parsed_line("VS", 4, v->NbVS, v->VS, file);
-    write_parsed_line("TS", 4, v->NbTS, v->TS, file);
-    write_parsed_line("SH", 8, v->NbSH, v->SH, file);
-    write_parsed_line("VH", 8, v->NbVH, v->VH, file);
-    write_parsed_line("TH", 8, v->NbTH, v->TH, file);
-    write_parsed_line("SI", 6, v->NbSI, v->SI, file);
-    write_parsed_line("VI", 6, v->NbVI, v->VI, file);
-    write_parsed_line("TI", 6, v->NbTI, v->TI, file);
-    write_parsed_line("SY", 5, v->NbSY, v->SY, file);
-    write_parsed_line("VY", 5, v->NbVY, v->VY, file);
-    write_parsed_line("TY", 5, v->NbTY, v->TY, file);
-    // FIXME: do strings!
+    write_parsed_elements("SP", 1, v->NbSP, v->SP, file);
+    write_parsed_elements("VP", 1, v->NbVP, v->VP, file);
+    write_parsed_elements("TP", 1, v->NbTP, v->TP, file);
+    write_parsed_elements("SL", 2, v->NbSL, v->SL, file);
+    write_parsed_elements("VL", 2, v->NbVL, v->VL, file);
+    write_parsed_elements("TL", 2, v->NbTL, v->TL, file);
+    write_parsed_elements("ST", 3, v->NbST, v->ST, file);
+    write_parsed_elements("VT", 3, v->NbVT, v->VT, file);
+    write_parsed_elements("TT", 3, v->NbTT, v->TT, file);
+    write_parsed_elements("SQ", 4, v->NbSQ, v->SQ, file);
+    write_parsed_elements("VQ", 4, v->NbVQ, v->VQ, file);
+    write_parsed_elements("TQ", 4, v->NbTQ, v->TQ, file);
+    write_parsed_elements("SS", 4, v->NbSS, v->SS, file);
+    write_parsed_elements("VS", 4, v->NbVS, v->VS, file);
+    write_parsed_elements("TS", 4, v->NbTS, v->TS, file);
+    write_parsed_elements("SH", 8, v->NbSH, v->SH, file);
+    write_parsed_elements("VH", 8, v->NbVH, v->VH, file);
+    write_parsed_elements("TH", 8, v->NbTH, v->TH, file);
+    write_parsed_elements("SI", 6, v->NbSI, v->SI, file);
+    write_parsed_elements("VI", 6, v->NbVI, v->VI, file);
+    write_parsed_elements("TI", 6, v->NbTI, v->TI, file);
+    write_parsed_elements("SY", 5, v->NbSY, v->SY, file);
+    write_parsed_elements("VY", 5, v->NbVY, v->VY, file);
+    write_parsed_elements("TY", 5, v->NbTY, v->TY, file);
+    write_parsed_strings(4, v->NbT2, v->T2D, v->T2C, file);
+    write_parsed_strings(5, v->NbT3, v->T3D, v->T3C, file);
     fprintf(file, "};\n");
   }
 

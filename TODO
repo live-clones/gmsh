@@ -1,4 +1,4 @@
-$Id: TODO,v 1.63 2004-10-08 02:44:25 geuzaine Exp $
+$Id: TODO,v 1.64 2004-10-16 16:13:34 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -122,6 +122,15 @@ then gmsh will fail.
 We should definitely use a better projection algorithm
 (e.g. intrinstic parameterization). See the work by Desbrun et al. in
 CS for this.
+
+********************************************************************
+
+post-processing file format:
+- add an integer per simplex (region num)?
+- add a format similar to the msh format (node list + simplex list)?
+- add a structured format?
+
+...or implement one of the "industry-standard" formats?
 
 ********************************************************************
 
