@@ -1,0 +1,55 @@
+// This script encodes the image files 
+//
+//    /tmp/tmp[001-NUM_FRAMES].{gif,jpg} 
+//
+// into an mpeg or gif animation, using the encoder ENCODER
+// (set to WHIRLGIF, MENCODER or MPEG_ENCODE)
+
+If(ENCODER == WHIRLGIF)
+  // Call whirlgif
+  System "whirlgif -minimize -loop -o /tmp/animation.gif /tmp/tmp*.gif" ;
+EndIf
+
+If(ENCODER == MENCODER)
+  // Call mencoder
+  System "mencoder 'mf:///tmp/tmp*.jpg' -mf fps=5 -o /tmp/animation.mpg -ovc lavc -lavcopts vcodec=mpeg4:vhq";
+  // System "mencoder 'mf:///tmp/tmp*.jpg' -mf fps=5 -o /tmp/animation.mpg -ovc lavc -lavcopts vcodec=mpeg1video:vhq";
+EndIf
+
+If(ENCODER == MPEG_ENCODE)
+  // create the parameter file for mpeg_encode
+  System 'echo "PATTERN          I"                > /tmp/tmp.par' ;
+  System 'echo "BASE_FILE_FORMAT JPEG"            >> /tmp/tmp.par' ;
+  System 'echo "GOP_SIZE         30"              >> /tmp/tmp.par' ;
+  System 'echo "SLICES_PER_FRAME 1"               >> /tmp/tmp.par' ;
+  System 'echo "PIXEL            HALF"            >> /tmp/tmp.par' ;
+  System 'echo "RANGE            10"              >> /tmp/tmp.par' ;
+  System 'echo "PSEARCH_ALG      TWOLEVEL"        >> /tmp/tmp.par' ;
+  System 'echo "BSEARCH_ALG      CROSS2"          >> /tmp/tmp.par' ;
+  System 'echo "IQSCALE          1"               >> /tmp/tmp.par' ;
+  System 'echo "PQSCALE          10"              >> /tmp/tmp.par' ;
+  System 'echo "BQSCALE          25"              >> /tmp/tmp.par' ;
+  System 'echo "REFERENCE_FRAME  DECODED"         >> /tmp/tmp.par' ;
+  System 'echo "OUTPUT      /tmp/animation.mpg"   >> /tmp/tmp.par' ;
+  System 'echo "INPUT_CONVERT    *"               >> /tmp/tmp.par' ;
+  System 'echo "INPUT_DIR        /tmp"            >> /tmp/tmp.par' ;
+  System 'echo "INPUT"                            >> /tmp/tmp.par' ;
+  System Sprintf('echo "tmp*.jpg [001-%03g]" >> /tmp/tmp.par', NUM_FRAMES) ;
+  System 'echo "END_INPUT"                        >> /tmp/tmp.par' ;
+  // Call mpeg_encode
+  System "mpeg_encode /tmp/tmp.par" ;
+EndIf
+
+// Clean-up temp files?
+cleanup = GetValue("Remove temporary files?
+
+(The final animation has been saved in /tmp/animation.{gif,mpg})", 1);
+
+If(cleanup)
+  If(ENCODER == WHIRLGIF)
+    System "rm -f /tmp/tmp*.gif" ;
+  EndIf
+  If(ENCODER == MPEG_ENCODE || ENCODER == MENCODER)
+    System "rm -f /tmp/tmp*.jpg /tmp/tmp.par" ;
+  EndIf
+EndIf
