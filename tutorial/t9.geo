@@ -35,6 +35,22 @@ Plugin(CutPlane).C = 1 ;
 Plugin(CutPlane).D = 0 ; 
 Plugin(CutPlane).Run ; 
 
+// Add a title
+
+Plugin(Annotate).Text = "A nice title" ; 
+Plugin(Annotate).X = General.GraphicsWidth/2 ; 
+Plugin(Annotate).Y = 50 ; 
+Plugin(Annotate).Font = "Times-BoldItalic" ; 
+Plugin(Annotate).FontSize = 28 ; 
+Plugin(Annotate).Align = "Center" ; 
+Plugin(Annotate).Run ; 
+
+Plugin(Annotate).Text = "(small subtitle)" ; 
+Plugin(Annotate).Y = 70 ; 
+Plugin(Annotate).Font = "Times-Roman" ; 
+Plugin(Annotate).FontSize = 12 ; 
+Plugin(Annotate).Run ; 
+
 // We finish by setting some view options and redrawing the scene:
 
 View[0].Light = 1;
