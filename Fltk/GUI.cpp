@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.296 2004-05-12 03:46:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.297 2004-05-15 08:07:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1068,7 +1068,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     return;
   }
 
-  Msg(STATUS2, menu[0].label + 1);
+  Msg(STATUS2N, menu[0].label + 1);
 
   switch (m_module_butt->value()) {
   case 3:      // post-processing contexts
@@ -2766,7 +2766,7 @@ void GUI::add_multiline_in_browser(Fl_Browser * o, char *prefix, char *str)
   int start = 0, len;
   char *buff;
   if(!str || !strlen(str) || !strcmp(str, "\n")) {
-    o->add("");
+    o->add(" ");
     return;
   }
   for(unsigned int i = 0; i < strlen(str); i++) {
@@ -2837,14 +2837,14 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
 
       Fl_Browser *o = new Fl_Browser(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 5 * WB - 2 * BH);
 
-      o->add("");
+      o->add(" ");
       add_multiline_in_browser(o, "@c@b@.", namep);
-      o->add("");
+      o->add(" ");
       add_multiline_in_browser(o, "", help);
-      o->add("");
+      o->add(" ");
       add_multiline_in_browser(o, "Author: ", author);
       add_multiline_in_browser(o, "Copyright (C) ", copyright);
-      o->add("");
+      o->add(" ");
 
       g->end();
     }
@@ -3091,21 +3091,21 @@ void GUI::create_about_window()
 
   {
     Fl_Browser *o = new Fl_Browser(WB + 80, WB, width - 2 * WB - 80, height - 3 * WB - BH);
-    o->add("");
+    o->add(" ");
     o->add("@c@b@.Gmsh");
     o->add("@c@.A three-dimensional finite element mesh generator");
     o->add("@c@.with built-in pre- and post-processing facilities");
-    o->add("");
+    o->add(" ");
     o->add("@c@.Copyright (C) 1997-2004");
 #if defined(__APPLE__)
     o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
 #else
     o->add("@c@.Christophe Geuzaine and Jean-François Remacle");
 #endif
-    o->add("");
+    o->add(" ");
     o->add("@c@.Please send all questions and bug reports to");
     o->add("@c@b@.gmsh@geuz.org");
-    o->add("");
+    o->add(" ");
     sprintf(buffer, "@c@.Version: %s", GMSH_VERSION);
     o->add(buffer);
     sprintf(buffer, "@c@.License: %s", GMSH_SHORT_LICENSE);
@@ -3123,9 +3123,9 @@ void GUI::create_about_window()
     o->add(buffer);
     sprintf(buffer, "@c@.Packaged by: %s", GMSH_PACKAGER);
     o->add(buffer);
-    o->add("");
+    o->add(" ");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
-    o->add("");
+    o->add(" ");
   }
 
   {
@@ -3447,9 +3447,9 @@ void GUI::create_solver_window(int num)
 
       Fl_Browser *o = new Fl_Browser(2 * WB, 2 * WB + 1 * BH, width - 4 * WB,
                                      height - (5 + newrow) * WB - (2 + newrow) * BH);
-      o->add("");
+      o->add(" ");
       add_multiline_in_browser(o, "@c@b@.", SINFO[num].name);
-      o->add("");
+      o->add(" ");
       add_multiline_in_browser(o, "@c@. ", SINFO[num].help);
 
       g[2]->end();

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.40 2004-05-12 20:16:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.41 2004-05-15 08:07:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -200,8 +200,8 @@ void Msg(int level, char *fmt, ...)
   case FATAL3: abort = 1;
   case FATAL1:
   case FATAL2:
-    fprintf(stderr, "On processor %d : ", ParUtil::Instance()->rank());
     fprintf(stderr, FATAL_STR);
+    fprintf(stderr, "[on processor %d] ", ParUtil::Instance()->rank());
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
     break;
@@ -210,8 +210,8 @@ void Msg(int level, char *fmt, ...)
   case GERROR1:
   case GERROR2:
   case GERROR3:
-    fprintf(stderr, "On processor %d : ", ParUtil::Instance()->rank());
     fprintf(stderr, ERROR_STR);
+    fprintf(stderr, "[on processor %d] ", ParUtil::Instance()->rank());
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
     break;
@@ -221,8 +221,8 @@ void Msg(int level, char *fmt, ...)
   case WARNING2:
   case WARNING3:
     if(CTX.verbosity >= 1) {
-      fprintf(stderr, "On processor %d : ", ParUtil::Instance()->rank());
       fprintf(stderr, WARNING_STR);
+      fprintf(stderr, "[on processor %d] ", ParUtil::Instance()->rank());
       vfprintf(stderr, fmt, args);
       fprintf(stderr, "\n");
     }

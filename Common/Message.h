@@ -55,21 +55,17 @@
 #define STATUS2N      25  // Same as STATUS2, but not going into the log file
 #define STATUS3N      26  // Same as STATUS3, but not going into the log file
 
-#define LOG_INFO      29  // Info put only in the logfile
-
 #define DIRECT        30  // Direct message (no special formatting)
 
-#define FATAL_STR          "Fatal Error : "
-#define FATAL_NIL          "            : "
-#define ERROR_STR          "Error : "
-#define ERROR_NIL          "      : "
+#define SOLVER        31  // Solver message
+
+#define WHITE_STR          "        : "
+#define FATAL_STR          "Fatal   : "
+#define ERROR_STR          "Error   : "
 #define WARNING_STR        "Warning : "
-#define WARNING_NIL        "        : "
-#define INFO_STR           "Info : "
-#define INFO_NIL           "     : "
-#define DEBUG_STR          "Debug : "
-#define DEBUG_NIL          "      : "
-#define STATUS_STR         "Info : "
+#define INFO_STR           "Info    : "
+#define DEBUG_STR          "Debug   : "
+#define STATUS_STR         "Info    : "
 
 void   Signal (int signum);
 void   Msg (int level, char *fmt, ...);

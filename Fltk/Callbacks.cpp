@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.228 2004-05-12 16:47:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.229 2004-05-15 08:07:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1549,9 +1549,9 @@ void visibility_number_cb(CALLBACK_ARGS)
 void help_short_cb(CALLBACK_ARGS)
 {
   // *INDENT-OFF*
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "Mouse:");
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "  move                - highlight the elementary geometrical entity");
   Msg(DIRECT, "                        currently under the mouse pointer and display");
   Msg(DIRECT, "                        its properties in the status bar");
@@ -1566,12 +1566,12 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "                      - cancel a rubber zoom");
   Msg(DIRECT, "                      - pop up menu on post-processing view button");
   Msg(DIRECT, "  "XX"+Right button   reset to default viewpoint");   
-  Msg(DIRECT, "");   
+  Msg(DIRECT, " ");   
   Msg(DIRECT, "  For a 2 button mouse, Middle button = Shift+Left button");
   Msg(DIRECT, "  For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button");
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "Menu bar shortcuts:");
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "  <             go back to previous context");
   Msg(DIRECT, "  >             go forward to next context");
   Msg(DIRECT, "  Shift+a       raise (show) all open windows");
@@ -1591,9 +1591,9 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  "XX"+s        save mesh in default format");
   Msg(DIRECT, "  "XX"+Shift+s  save file as");
   Msg(DIRECT, "  Shift+w       show current post-processing view options");
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "Other shortcuts");
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "  0 or Esc      reload geometry input file");
   Msg(DIRECT, "  1 or F1       mesh lines");
   Msg(DIRECT, "  2 or F2       mesh surfaces");
@@ -1626,7 +1626,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Right arrow   go to next time step"); 
   Msg(DIRECT, "  Up arrow      make previous view visible"); 
   Msg(DIRECT, "  Down arrow    make next view visible"); 
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   // *INDENT-ON*
   WID->create_message_window();
 }
@@ -1635,7 +1635,7 @@ void help_short_cb(CALLBACK_ARGS)
 
 void help_command_line_cb(CALLBACK_ARGS)
 {
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   Print_Usage("gmsh");
   WID->create_message_window();
 }
@@ -1643,7 +1643,7 @@ void help_command_line_cb(CALLBACK_ARGS)
 void help_license_cb(CALLBACK_ARGS)
 {
   extern void print_license();
-  Msg(DIRECT, "");
+  Msg(DIRECT, " ");
   print_license();
   WID->create_message_window();
 }

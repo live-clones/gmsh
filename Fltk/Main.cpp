@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.65 2004-05-12 20:16:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.66 2004-05-15 08:07:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -113,13 +113,6 @@ int main(int argc, char *argv[])
   if(CTX.batch)
     CTX.terminal = 1;
 
-  if(CTX.verbosity && CTX.terminal)
-    fprintf(stderr, "Gmsh %s, started %s\n", GMSH_VERSION, currtime);
-
-  // Register Default Plugins
-
-
-
   // Signal handling
 
   signal(SIGINT, Signal);
@@ -130,7 +123,7 @@ int main(int argc, char *argv[])
 
   if(CTX.batch) {
     check_gsl();
-    Msg(DIRECT, "Command line : %s", cmdline);
+    Msg(INFO, "Running '%s'", cmdline);
     OpenProblem(CTX.filename);
     if(yyerrorstate)
       exit(1);
@@ -182,20 +175,21 @@ int main(int argc, char *argv[])
   // Say welcome!
 
   Msg(STATUS3N, "Ready");
-  Msg(STATUS1, "Gmsh %s", GMSH_VERSION);
+  Msg(STATUS1N, "Gmsh %s", GMSH_VERSION);
 
   // Log the following for bug reports
 
-  Msg(LOG_INFO, "-------------------------------------------------------");
-  Msg(LOG_INFO, gmsh_os);
-  Msg(LOG_INFO, "%s%s", gmsh_options, Get_BuildOptions());
-  Msg(LOG_INFO, gmsh_date);
-  Msg(LOG_INFO, gmsh_host);
-  Msg(LOG_INFO, gmsh_packager);
-  Msg(LOG_INFO, "Home directory : %s", CTX.home_dir);
-  Msg(LOG_INFO, "Launch date    : %s", currtime);
-  Msg(LOG_INFO, "Command line   : %s", cmdline);
-  Msg(LOG_INFO, "-------------------------------------------------------");
+  Msg(INFO, "-------------------------------------------------------");
+  Msg(INFO, "Gmsh version   : %s", GMSH_VERSION);
+  Msg(INFO, gmsh_os);
+  Msg(INFO, "%s%s", gmsh_options, Get_BuildOptions());
+  Msg(INFO, gmsh_date);
+  Msg(INFO, gmsh_host);
+  Msg(INFO, gmsh_packager);
+  Msg(INFO, "Home directory : %s", CTX.home_dir);
+  Msg(INFO, "Launch date    : %s", currtime);
+  Msg(INFO, "Command line   : %s", cmdline);
+  Msg(INFO, "-------------------------------------------------------");
 
   Free(cmdline);
 

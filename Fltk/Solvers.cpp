@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.21 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.22 2004-05-15 08:07:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -125,12 +125,12 @@ int Solver(int num, char *args)
     case GMSH_CLIENT_INFO:
     case GMSH_CLIENT_WARNING:
     case GMSH_CLIENT_ERROR:
-      Msg(DIRECT, "%s : %s", SINFO[num].name, str);
+      Msg(SOLVER, "%-7s : %s", SINFO[num].name, str);
       break;
     default:
       Msg(WARNING, "Unknown type of message received from %s",
           SINFO[num].name);
-      Msg(DIRECT, "%s : %s", SINFO[num].name, str);
+      Msg(SOLVER, "%-7s : %s", SINFO[num].name, str);
       break;
     }
     if(stop)

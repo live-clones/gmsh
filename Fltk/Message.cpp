@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.48 2004-05-12 03:22:13 geuzaine Exp $
+// $Id: Message.cpp,v 1.49 2004-05-15 08:07:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -75,50 +75,52 @@ void Debug()
 void Msg(int level, char *fmt, ...)
 {
   va_list args;
-  int abort = 0, verb = 0, window = -1, log = 1;
+  int abort = 0, verb = 0, window = -1, log = 1, color = 0;
   char *str = NULL;
 
   // *INDENT-OFF*
   switch(level){
-  case DIRECT   : verb = 2; break ;
+  case DIRECT   : color = 5; verb = 2; break ;
+  case SOLVER   : color = 4; verb = 2; break ;
 
   case STATUS1N : log = 0; //fallthrough
-  case STATUS1  : verb = 1; window = 0; break ;
+  case STATUS1  : str = INFO_STR; verb = 1; window = 0; break ;
   case STATUS2N : log = 0; //fallthrough
-  case STATUS2  : verb = 1; window = 1; break ;
+  case STATUS2  : str = INFO_STR; verb = 1; window = 1; break ;
   case STATUS3N : log = 0; //fallthrough
-  case STATUS3  : verb = 1; window = 2; break ;
+  case STATUS3  : str = INFO_STR; verb = 1; window = 2; break ;
 
   case FATAL    : str = FATAL_STR; abort = 1; break ;
   case FATAL1   : str = FATAL_STR; break ;
-  case FATAL2   : str = FATAL_NIL; break ;
-  case FATAL3   : str = FATAL_NIL; abort = 1; break ;
+  case FATAL2   : str = WHITE_STR; break ;
+  case FATAL3   : str = WHITE_STR; abort = 1; break ;
 				     		  
   case GERROR   : 		     		  
   case GERROR1  : str = ERROR_STR; break ;
   case GERROR2  : 		     
-  case GERROR3  : str = ERROR_NIL; break ;
+  case GERROR3  : str = WHITE_STR; break ;
 				     	  
   case WARNING  : 		     	  
   case WARNING1 : str = WARNING_STR; verb = 1; break ;
   case WARNING2 : 		     	  
-  case WARNING3 : str = WARNING_NIL; verb = 1; break ;
+  case WARNING3 : str = WHITE_STR; verb = 1; break ;
 				     	  
   case INFO     :		     	  
   case INFO1    : str = INFO_STR; verb = 2; break ;
   case INFO2    :		     	  
-  case INFO3    : str = INFO_NIL; verb = 2; break ;
+  case INFO3    : str = WHITE_STR; verb = 2; break ;
 				     	  
   case DEBUG    :		     	  
   case DEBUG1   : str = DEBUG_STR; verb = 3; break ;
   case DEBUG2   :		     	  
-  case DEBUG3   : str = DEBUG_NIL; verb = 3; break ;
-
-  case LOG_INFO : verb = 2 ; window = 3; break ;
+  case DEBUG3   : str = WHITE_STR; verb = 3; break ;
 
   default : return;
   }
   // *INDENT-ON*
+
+  if(verb < 2)
+    color = 1;
 
 #define BUFFSIZE 1024
 
@@ -155,15 +157,17 @@ void Msg(int level, char *fmt, ...)
 #else
       vsnprintf(buff[window], BUFFSIZE, fmt, args);
 #endif
-      if(window <= 2)
-        WID->set_status(buff[window], window);
-      if(log && strlen(buff[window]))
-        WID->add_message(buff[window]);
+      WID->set_status(buff[window], window);
+      if(log && strlen(buff[window])){
+	strcpy(buff1, str ? str : "");
+	strncat(buff1, buff[window], BUFFSIZE-strlen(buff1));
+        WID->add_message(buff1);
+      }
     }
     else if(log) {
-      strcpy(buff1, "@C1");
+      sprintf(buff1, "@C%d", color);
       if(str)
-        strncat(buff1, str, BUFFSIZE-4);
+        strncat(buff1, str, BUFFSIZE-strlen(buff1));
 
 #if defined(HAVE_NO_VSNPRINTF)
       vsprintf(buff2, fmt, args);
@@ -174,7 +178,7 @@ void Msg(int level, char *fmt, ...)
       if(CTX.terminal)
         fprintf(stderr, "%s\n", &buff1[3]);
       if(WID) {
-        if(verb < 2)
+        if(color)
           WID->add_message(buff1);
         else
           WID->add_message(&buff1[3]);
@@ -257,9 +261,9 @@ void GetResources(long *s, long *us, long *mem)
   *mem = (long)r.ru_maxrss;
 }
 
-void PrintResources(char *fmt, long s, long us, long mem)
+void PrintResources(long s, long us, long mem)
 {
-  Msg(DIRECT, "Resources = %scpu %ld.%ld s / mem %ld kb\n", fmt, s, us, mem);
+  Msg(INFO, "cpu %ld.%ld s / mem %ld kb\n", s, us, mem);
 }
 
 double Cpu(void)
