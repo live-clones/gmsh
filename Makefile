@@ -1,9 +1,9 @@
-# $Id: Makefile,v 1.49 2001-02-06 02:57:07 remacle Exp $
+# $Id: Makefile,v 1.50 2001-02-06 07:52:51 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
 
-         GMSH_RELEASE = 1.10
+         GMSH_RELEASE = 1.11
 
                  MAKE = make
                    CC = c++
@@ -414,7 +414,7 @@ fltk_mingw: tag
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
-	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTKWIN_LIB) \
+	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTKWIN_LIB) \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
 fltk_cygwin: tag
@@ -426,6 +426,6 @@ fltk_cygwin: tag
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTKWIN_LIB) \
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTKWIN_LIB) \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-
+	strip $(GMSH_BIN_DIR)/gmsh.exe

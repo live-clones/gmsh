@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.58 2001-02-05 20:32:33 geuzaine Exp $
+// $Id: Gmsh.y,v 1.59 2001-02-06 07:52:51 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -1615,6 +1615,7 @@ Command :
 	strcat(tmpstring,$2);
 
 	if((yyin = fopen(tmpstring,"r"))){
+	  Msg(INFO, "Including '%s'", tmpstring); 
 	  strcpy(yynameTab[RecursionLevel-1],yyname);
 	  yylinenoTab[RecursionLevel-1]=yylineno;
 	  yylineno=1;
