@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.24 2004-04-13 18:49:58 geuzaine Exp $
+// $Id: Utils.cpp,v 1.25 2004-04-18 03:23:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -244,7 +244,8 @@ end:
 
 
 #define  Precision 1.e-10
-#define  MaxIter 50
+#define  MaxIter 25
+#define  NumInitGuess 9
 
 void find_bestuv(Surface * s, double X, double Y,
                  double *U, double *V, double *Z, int N)
@@ -361,7 +362,8 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
   Vertex D_u, D_v, P;
   double mat[3][3], jac[3][3];
   double umin, umax, vmin, vmax;
-
+  double init[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1};
+  
   if(s->Typ == MSH_SURF_NURBS) {
     umin = s->ku[0];
     umax = s->ku[s->OrderU + s->Nu];
@@ -373,48 +375,58 @@ void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
     umax = vmax = 1.0;
   }
 
-  *U = *V = 0.487;
-  err = 1.0;
-  iter = 1;
+  for(int i = 0; i < NumInitGuess; i++){
+    for(int j = 0; j < NumInitGuess; j++){
+    
+      *U = init[i];
+      *V = init[j];
+      err = 1.0;
+      iter = 1;
+      
+      while(err > Precision && iter < MaxIter) {
+	P = InterpolateSurface(s, *U, *V, 0, 0);
+	D_u = InterpolateSurface(s, *U, *V, 1, 1);
+	D_v = InterpolateSurface(s, *U, *V, 1, 2);
+	
+	mat[0][0] = D_u.Pos.X;
+	mat[0][1] = D_u.Pos.Y;
+	mat[0][2] = D_u.Pos.Z;
+	mat[1][0] = D_v.Pos.X;
+	mat[1][1] = D_v.Pos.Y;
+	mat[1][2] = D_v.Pos.Z;
+	mat[2][0] = 0.;
+	mat[2][1] = 0.;
+	mat[2][2] = 0.;
+	invert_singular_matrix3x3(mat, jac);
+	
+	Unew = *U + relax *
+	  (jac[0][0] * (X - P.Pos.X) + jac[1][0] * (Y - P.Pos.Y) +
+	   jac[2][0] * (Z - P.Pos.Z));
+	Vnew = *V + relax * 
+	  (jac[0][1] * (X - P.Pos.X) + jac[1][1] * (Y - P.Pos.Y) +
+	   jac[2][1] * (Z - P.Pos.Z));
+	
+	err = DSQR(Unew - *U) + DSQR(Vnew - *V);
+	
+	iter++;
+	*U = Unew;
+	*V = Vnew;
+      }
 
-  while(err > Precision && iter < MaxIter) {
-    P = InterpolateSurface(s, *U, *V, 0, 0);
-    D_u = InterpolateSurface(s, *U, *V, 1, 1);
-    D_v = InterpolateSurface(s, *U, *V, 1, 2);
-
-    mat[0][0] = D_u.Pos.X;
-    mat[0][1] = D_u.Pos.Y;
-    mat[0][2] = D_u.Pos.Z;
-    mat[1][0] = D_v.Pos.X;
-    mat[1][1] = D_v.Pos.Y;
-    mat[1][2] = D_v.Pos.Z;
-    mat[2][0] = 0.;
-    mat[2][1] = 0.;
-    mat[2][2] = 0.;
-    invert_singular_matrix3x3(mat, jac);
-
-    Unew = *U + relax *
-      (jac[0][0] * (X - P.Pos.X) + jac[1][0] * (Y - P.Pos.Y) +
-       jac[2][0] * (Z - P.Pos.Z));
-    Vnew =
-      *V + relax * (jac[0][1] * (X - P.Pos.X) + jac[1][1] * (Y - P.Pos.Y) +
-                    jac[2][1] * (Z - P.Pos.Z));
-
-    err = DSQR(Unew - *U) + DSQR(Vnew - *V);
-
-    iter++;
-    *U = Unew;
-    *V = Vnew;
+      if(iter < MaxIter && err <= Precision &&
+	 Unew <= umax && Vnew <= vmax && 
+	 Unew >= umin && Vnew >= vmin){
+	//printf("converged for i=%d j=%d (err=%g iter=%d)\n", i, j, err, iter);
+	return;	
+      }
+    }
   }
 
-  if(iter == MaxIter ||
-     (Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin)) {
-    if(relax < 1.e-12)
-      Msg(GERROR, "Could not converge: surface mesh will be wrong");
-    else {
-      Msg(INFO, "Relaxation factor = %g", 0.75 * relax);
-      XYZtoUV(s, X, Y, Z, U, V, 0.75 * relax);
-    }
+  if(relax < 1.e-6)
+    Msg(GERROR, "Could not converge: surface mesh will be wrong");
+  else {
+    Msg(INFO, "Relaxation factor = %g", 0.75 * relax);
+    XYZtoUV(s, X, Y, Z, U, V, 0.75 * relax);
   }
 
 }
@@ -426,6 +438,7 @@ void XYtoUV(Surface * s, double *X, double *Y,
   int iter;
   Vertex D_u, D_v, P;
   double umin, umax, vmin, vmax;
+  double init[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1};
 
   if(s->Typ == MSH_SURF_NURBS) {
     umin = s->ku[0];
@@ -438,71 +451,77 @@ void XYtoUV(Surface * s, double *X, double *Y,
     umax = vmax = 1.0;
   }
 
-  *U = *V = 0.487;
-  err = 1.0;
-  iter = 1;
+  for(int i = 0; i < NumInitGuess; i++){
+    for(int j = 0; j < NumInitGuess; j++){
 
-  while(err > Precision && iter < MaxIter) {
-    P = InterpolateSurface(s, *U, *V, 0, 0);
-    D_u = InterpolateSurface(s, *U, *V, 1, 1);
-    D_v = InterpolateSurface(s, *U, *V, 1, 2);
-    mat[0][0] = D_u.Pos.X;
-    mat[0][1] = D_u.Pos.Y;
-    mat[1][0] = D_v.Pos.X;
-    mat[1][1] = D_v.Pos.Y;
-    det = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+      *U = init[i];
+      *V = init[j];
+      err = 1.0;
+      iter = 1;
 
-    if(det == 0.0) {
-      iter = MaxIter;
-      break;
+      while(err > Precision && iter < MaxIter) {
+	P = InterpolateSurface(s, *U, *V, 0, 0);
+	D_u = InterpolateSurface(s, *U, *V, 1, 1);
+	D_v = InterpolateSurface(s, *U, *V, 1, 2);
+	mat[0][0] = D_u.Pos.X;
+	mat[0][1] = D_u.Pos.Y;
+	mat[1][0] = D_v.Pos.X;
+	mat[1][1] = D_v.Pos.Y;
+	det = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+	
+	if(det == 0.0) {
+	  iter = MaxIter;
+	  break;
+	}
+	
+	jac[0][0] = mat[1][1] / det;
+	jac[0][1] = -mat[0][1] / det;
+	jac[1][0] = -mat[1][0] / det;
+	jac[1][1] = mat[0][0] / det;
+	
+	Unew = *U + relax * (jac[0][0] * (*X - P.Pos.X) + jac[1][0] * (*Y - P.Pos.Y));
+	Vnew = *V + relax * (jac[0][1] * (*X - P.Pos.X) + jac[1][1] * (*Y - P.Pos.Y));
+	
+	err = DSQR(Unew - *U) + DSQR(Vnew - *V);
+	
+	iter++;
+	*U = Unew;
+	*V = Vnew;
+      }
+
+      *Z = P.Pos.Z;
+
+      if(iter < MaxIter && err <= Precision &&
+	 Unew <= umax && Vnew <= vmax && 
+	 Unew >= umin && Vnew >= vmin){
+	//printf("converged for i=%d j=%d (err=%g iter=%d)\n", i, j, err, iter);
+	return;	
+      }
     }
-
-    jac[0][0] = mat[1][1] / det;
-    jac[0][1] = -mat[0][1] / det;
-    jac[1][0] = -mat[1][0] / det;
-    jac[1][1] = mat[0][0] / det;
-
-    Unew =
-      *U + relax * (jac[0][0] * (*X - P.Pos.X) + jac[1][0] * (*Y - P.Pos.Y));
-    Vnew =
-      *V + relax * (jac[0][1] * (*X - P.Pos.X) + jac[1][1] * (*Y - P.Pos.Y));
-
-    err = DSQR(Unew - *U) + DSQR(Vnew - *V);
-
-    iter++;
-    *U = Unew;
-    *V = Vnew;
   }
 
-  *Z = P.Pos.Z;
-
-  int thresh = Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin;
-
-  if(iter == MaxIter || thresh) {
-    if(relax < 1.e-6) {
-      Msg(GERROR, "Could not converge: surface mesh will probably be wrong");
-      if(Unew > umax)
-        *U = umax;
-      if(Vnew > vmax)
-        *V = vmax;
-      if(Unew < umin)
-        *U = umin;
-      if(Vnew < vmin)
-        *V = vmin;
-      find_bestuv(s, *X, *Y, U, V, Z, 30);
-      P = InterpolateSurface(s, *U, *V, 0, 0);
-      *X = P.Pos.X;
-      *Y = P.Pos.Y;
-      *Z = P.Pos.Z;
-    }
-    else {
-      Msg(INFO, "Relaxation factor = %g", 0.75 * relax);
-      XYtoUV(s, X, Y, U, V, Z, 0.75 * relax);
-    }
+  if(relax < 1.e-6) {
+    Msg(GERROR, "Could not converge: surface mesh will probably be wrong");
+    if(Unew > umax)
+      *U = umax;
+    if(Vnew > vmax)
+      *V = vmax;
+    if(Unew < umin)
+      *U = umin;
+    if(Vnew < vmin)
+      *V = vmin;
+    find_bestuv(s, *X, *Y, U, V, Z, 30);
+    P = InterpolateSurface(s, *U, *V, 0, 0);
+    *X = P.Pos.X;
+    *Y = P.Pos.Y;
+    *Z = P.Pos.Z;
+  }
+  else {
+    Msg(INFO, "Relaxation factor = %g", 0.75 * relax);
+    XYtoUV(s, X, Y, U, V, Z, 0.75 * relax);
   }
 
 }
-
 
 int Oriente(List_T * cu, double n[3])
 {
