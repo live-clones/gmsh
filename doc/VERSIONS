@@ -1,3 +1,5 @@
+$Id: VERSIONS,v 1.1 2001-03-04 16:27:07 geuzaine Exp $
+
 New in 1.17: Corrected physical points saving;
 
 New in 1.16: Added single/double buffer selection (only useful for

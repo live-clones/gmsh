@@ -1,0 +1,28 @@
+
+Q. Gmsh complains about missing libraries.
+A. Try 'ldd gmsh' to check if all required shared are installed on
+your system.
+
+Q. Gmsh does not work under HP-UX.
+A. the HP version is reported not to work with native OpenGL. You
+should install install Mesa instead.
+
+Q. When moving the mouse over the graphic window, everything that is
+drawn on it disappears, and each item is visible only when the cursor
+is directly over it.
+A. You should start Gmsh with the '-noov' command line option.
+
+Q. The graphics display very slowly.
+A. Are you are executing Gmsh from a remote host (via the network)
+without GLX? You should turn double buffering off (with the -nodb
+command line option).
+
+Q. Big post-processing scenes are slow to display.
+A. Try display lists (-dl command line option).
+
+Q. Gmsh keeps re-displaying its graphics when other windows partially
+hide the graphical window. 
+A. Disable opaque move in your window manager.
+
+Q. What does Gmsh mean?
+A. Nothing ;-)

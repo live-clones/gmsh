@@ -1,4 +1,4 @@
-$Id: README.bugs,v 1.2 2001-02-21 07:30:09 geuzaine Exp $
+$Id: BUGS,v 1.1 2001-03-04 16:28:12 geuzaine Exp $
 
 * Si la coherence des surfaces n'est pas recouvree en une etape, et
 qu'on fait une seconde passe qui marche, les volumes ne sont pas

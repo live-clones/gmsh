@@ -50,7 +50,7 @@ ENDSCRIPT--->
 This page is a mirror of <a href="/gmsh/">/gmsh/</a><p>
 ENDMIRROR--->
 
-<!---BEGINDATE$Date: 2001-03-04 13:24:29 $ENDDATE--->
+<!---BEGINDATE$Date: 2001-03-04 16:27:07 $ENDDATE--->
 
 Copyright &copy; 1998-2001<br>
 Jean-François Remacle and
@@ -230,9 +230,15 @@ files.
 
   <td><font face="Helvetica, Arial" size=-1>
 
-Online <A target = "_top" href="/gmsh/doc/tutorial.html">tutorial</A>
-and file <A target="_top" href="/gmsh/doc/FORMATS">formats</A>
-description.
+    <ul>
+      <li><A target="_top" href="/gmsh/doc/tutorial.html">Online tutorial</A>
+      <li><A target="_top" href="/gmsh/doc/FORMATS">File formats</A> description
+      <li><A target="_top" href="/gmsh/doc/VERSIONS">Version history</A>
+      <li><a target="_top" href="/gmsh/doc/BUGS">List of open bugs</a>
+      <li><a target="_top" href="/gmsh/doc/FAQ">Frequently asked questions</a>
+      <li><a target="_top" href="/gmsh/doc/CONTRIBUTORS">List of contributors</a>
+      <li><a target="_top" href="/gmsh/doc/README.txt">For Windows versions only</a>
+    </ul>
 
   </td>
 
@@ -296,64 +302,6 @@ Tutorial and demos for version 1.00
 <ul>
   <li><A href="/gmsh/1.00/gmsh-tutorial.tgz">Tutorial</A>
   <li><A href="/gmsh/1.00/gmsh-demos.tgz">Demo files</A>
-</ul>
-
-  </td>
-
-</tr>
-
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>What's new</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1> 
-
-    <A target = "_top" href="/gmsh/doc/Changelog">Changelog</A>
-
-  </td>
-
-</tr>
-
-<!------------------------------------------------------------------>
-
-<tr valign=top>
-
-  <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><b>Problems / Performance</b></font></td>
-
-  <td width="60">
-  </td>
-
-  <td><font face="Helvetica, Arial" size=-1>
-
-<ul>
-<li> If something goes wrong during the installation, it is likely
-because some libraries are not properly installed on your system. Try
-'ldd gmsh-name' to check all shared libraries dependencies. Warning:
-HP version is reported not to work with native OpenGL -> install Mesa
-instead.
-
-<li> (Motif versions only) If, when moving the mouse over the graphic
-window, everything that is drawn on it disappears, and each item is
-visible only when the cursor is directly over it, you should start
-Gmsh with the '-noov' command line option. (This will be fixed.)
-
-<li> (Motif versions only) Turn double buffering off (with the -nodb
-command line option) when working on a remote host with Mesa.
-
-<li> Try display lists (-dl option) when working with big
-post-processing data sets.
-
-<li> Disable opaque move in your window manager to prevent multiple
-expose events when an option window partially hides the graphical
-window.
 </ul>
 
   </td>

@@ -1,31 +1,35 @@
-$Id: CONTRIBUTORS,v 1.1 2001-03-04 16:27:07 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.2 2001-03-04 16:30:54 geuzaine Exp $
 
-The Gmsh project is brought to you by
+Gmsh is copyright (c) 1997-2001 by
 
     Jean-François Remacle <remacle@scorec.rpi.edu>
     Christophe Geuzaine <christophe.geuzaine@ulg.ac.be>
 
-Thanks to the following folks who made the Gmsh project possible.
-These folks have greatly contributed by sending patches, requests,
-warnings, and pleas for changes or improvements. Also, thanks to the
-many others who did not make it to the list, but whose contributions
-were, none the less, greatly appreciated. While attempts were made to
-be as complete as possible, it is inevitable that some contributors
-have been omitted. For that, please accept our humble appologies.
+Significant parts of the code have been contributed by
 
-Please remember, when reading through this list, that email addresses
-change.  Some shown below will be in excess of ten years old.  It is
-unlikely all the addresses shown below are deliverable.  Under no
-circustances should you attempt to contact these individuals.  Any
-email concerning the Gmsh project should be addressed to
-<gmsh@geuz.org>.
+    ...
 
-    Benoît Meys <>
+Special thanks to the following folks who have greatly contributed by
+sending patches, requests, warnings, and pleas for changes or
+improvements. While attempts were made to be as complete as possible,
+it is inevitable that some contributors have been omitted. For that,
+please accept our humble appologies.
+
     Nicolas Moës <>
     Éric Bechet <>
     David Colignon <>
-    Marc Umé <>
     Patrick Dular <>
     Johan Gyselinck <>
+    Philippe Geuzaine <geuzaine@gnat.colorado.edu>
+    François Henrotte <fhenrott@esat.kuleuven.ac.be>
+    Benoît Meys <bmeys@techspace-aero.be>
+    André Nicolet <andre.nicolet@fresnel.fr>
+    Uwe Pahner <uwe.pahner@esat.kuleuven.ac.be>
+    Ahmed Rassili <a.rassili@ulg.ac.be>
+
+Finally, thanks to all of you who sent e-mail showing interrest. This
+has motivated us a lot to release the code as free software and to
+continue to improve it.
+
 
 
