@@ -4672,12 +4672,3 @@ if test "x${HAVE_TRIANGLE}" = "xno"; then
   echo "*******************************************************************"
 fi
 
-if test "x${GSL}" = "xno"; then
-  echo "*******************************************************************"
-  echo "Configure could not find the GNU Scientific Library (GSL):"
-  echo "- if it is installed in a non-standard location, please run"
-  echo "  ./configure again with the --with-gsl-prefix option"
-  echo "- if it is not installed on your system, you can download it from"
-  echo "  http://sources.redhat.com/gsl/"
-  echo "*******************************************************************"
-fi

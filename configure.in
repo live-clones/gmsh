@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.11 2003-02-12 16:37:29 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.12 2003-02-12 17:14:52 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -241,12 +241,13 @@ if test "x${HAVE_TRIANGLE}" = "xno"; then
   echo "*******************************************************************"
 fi
 
-if test "x${GSL}" = "xno"; then
-  echo "*******************************************************************"
-  echo "Configure could not find the GNU Scientific Library (GSL):"
-  echo "- if it is installed in a non-standard location, please run"
-  echo "  ./configure again with the --with-gsl-prefix option"
-  echo "- if it is not installed on your system, you can download it from"
-  echo "  http://sources.redhat.com/gsl/"
-  echo "*******************************************************************"
-fi
+dnl Don't print the warning at the moment, since we don't use the GSL yet
+dnl if test "x${GSL}" = "xno"; then
+dnl   echo "*******************************************************************"
+dnl   echo "Configure could not find the GNU Scientific Library (GSL):"
+dnl   echo "- if it is installed in a non-standard location, please run"
+dnl   echo "  ./configure again with the --with-gsl-prefix option"
+dnl   echo "- if it is not installed on your system, you can download it from"
+dnl   echo "  http://sources.redhat.com/gsl/"
+dnl   echo "*******************************************************************"
+dnl fi
