@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.4 2001-05-03 01:04:07 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.5 2001-05-04 11:53:01 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -150,11 +150,27 @@ int Socket_StopProgram(char *progname, char *sockname, int sock){
   return 0;
 }
 
+long Socket_GetTime(){
+  struct timeval tp;
+  gettimeofday(&tp, (struct timezone *)0);
+  return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
+}
+
+void Socket_Idle(double delay){
+  long t1 = Socket_GetTime();
+  while(1){
+    if(Socket_GetTime() - t1 > 1.e6*delay) break;
+  }
+}
 
 int Socket_Connect(char *sockname){
   struct sockaddr_un addr;
   int len, sock;
   int tries;
+
+  /* slight delay to be sure that the socket gets created by the
+     server before we attempt to connect to it... */
+  Socket_Idle(0.1);
 
   /* create socket */
   sock = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -169,7 +185,7 @@ int Socket_Connect(char *sockname){
   len = strlen(addr.sun_path)+sizeof(addr.sun_family);
   for (tries=0;tries<5;tries++) {
     if (connect(sock, (struct sockaddr *)&addr, len) < 0) {
-      Msg(GERROR, "Socket connect failed");
+      Msg(WARNING, "Socket connect failed on '%s'", sockname);
     }
     else {
       return sock;

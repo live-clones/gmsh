@@ -1,6 +1,14 @@
 #ifndef _SOLVERS_H_
 #define _SOLVERS_H_
 
+// Message protocol for GetDP
+
+#define GETDP_END                 -1
+#define GETDP_INFO                 1
+#define GETDP_PROGRESS             2
+#define GETDP_RESOLUTION_NAME      3
+#define GETDP_POSTOPERATION_NAME   4
+#define GETDP_LOAD_VIEW            5
 
 typedef struct{
   int nbres, nbpostop;

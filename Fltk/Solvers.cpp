@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.1 2001-05-03 00:09:42 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.2 2001-05-04 11:53:01 geuzaine Exp $
 
 #include "Gmsh.h"
 
@@ -43,11 +43,11 @@ extern GUI       *WID;
 _GetDP_Info GetDP_Info ;
 
 int GetDP(char *args){
-  int sock, i, n ;
+  int sock, type, i, n ;
   char progname[1000], sockname[1000], str[1000];
 
   GET_PATH(sockname);
-  strcat(sockname, ".gmsh-socket-GetDP");
+  strcat(sockname, ".gmshsock");
 
   sprintf(progname, "getdp %s", args);
   sock = Socket_StartProgram(progname, sockname);
@@ -56,37 +56,40 @@ int GetDP(char *args){
     return 0;
   }
 
+  Msg(INFO, "GetDP start (%s)", progname);
+
   GetDP_Info.nbres = 0;
   GetDP_Info.nbpostop = 0;
 
   while(1){
-    Socket_ReceiveInt(sock, &i);
+    Socket_ReceiveInt(sock, &type);
 
-    if(i<0){
-      Msg(INFO, "Finished '%s'", progname);
-      break;
-    }
+    if(type == GETDP_END) break;
 
     Socket_ReceiveString(sock, str);
 
-    switch(i){
-    case 10 : // status
+    switch(type){
+    case GETDP_PROGRESS :
       Msg(STATUS3N, "GetDP %s", str);
       break ;
-    case 101 : // available resolution
+    case GETDP_RESOLUTION_NAME :
       strcpy(GetDP_Info.res[GetDP_Info.nbres++],str);
       break ;
-    case 102 : // available postoperations
+    case GETDP_POSTOPERATION_NAME :
       strcpy(GetDP_Info.postop[GetDP_Info.nbpostop++],str);
       break ;
-    case 200 : // load postprocessing file
+    case GETDP_LOAD_VIEW :
       n = List_Nbr(Post_ViewList);
       MergeProblem(str);
       Draw(); 
       if(n != List_Nbr(Post_ViewList))
 	WID->set_context(menu_post, 0);
       break ;
+    case GETDP_INFO :
+      Msg(DIRECT, "GetDP > %s", str);
+      break;
     default :
+      Msg(WARNING, "Unknown type of message received from GetDP");
       Msg(DIRECT, "GetDP > %s", str);
       break ;
     }
@@ -107,8 +110,11 @@ int GetDP(char *args){
     WID->getdp_choice[1]->value(0);
   }
 
+  Msg(STATUS3N, "");
 
   Socket_StopProgram(progname, sockname, sock);
+
+  Msg(INFO, "GetDP stop (%s)", progname);
 
   return 1;
 }
