@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.43 2001-09-25 08:20:50 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.44 2001-11-13 08:07:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -117,7 +117,7 @@ void Draw_Mesh (Mesh *M) {
        CTX.render_mode != GMSH_SELECT){
       Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
       if(CTX.mesh.oldxtrude)//old extrusion algo
-	Tree_Action(M->Surfaces, Draw_Mesh_Extruded_Surfaces);
+	Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
     }
     /* fall-through! */
   case 1 :  
