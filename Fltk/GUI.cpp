@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.149 2002-02-08 17:46:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.150 2002-02-09 19:50:50 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2285,7 +2285,7 @@ void GUI::create_view_options_window(int num){
       view_butt[5] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "Show annotations");
       view_butt[4] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW/2-WB, BH, "Show scale");
       view_butt[6] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW/2-WB, BH, "Transparent scale");
-      view_butt[7] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW/2-WB, BH, "Auto position");
+      view_butt[7] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW/2-WB, BH, "Scale/2D graph auto position");
       for(i=4 ; i<=8 ; i++){
 	view_butt[i]->type(FL_TOGGLE_BUTTON);
 	view_butt[i]->down_box(TOGGLE_BOX);
