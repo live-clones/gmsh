@@ -29,6 +29,8 @@ extern "C"
 
 class GMSH_StreamLinesPlugin : public GMSH_Post_Plugin
 {
+  static void callback();
+  static double callbackXYZ(int, int, double, double*);
 public:
   GMSH_StreamLinesPlugin();
   void getName(char *name) const;
@@ -39,10 +41,24 @@ public:
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   Post_View *execute(Post_View *);
-  virtual int getNbU() const ;
-  virtual int getNbV() const ;
-  virtual void getPoint(int iU, int iV, double *X ) const  ;
   virtual Post_View * GenerateView(int iView, int dView) const ;
+
+  static int getNbU();
+  static int getNbV();
+  static void getPoint(int iU, int iV, double *X );
+
+  static double callbackX0(int, int, double);
+  static double callbackY0(int, int, double);
+  static double callbackZ0(int, int, double);
+  static double callbackX1(int, int, double);
+  static double callbackY1(int, int, double);
+  static double callbackZ1(int, int, double);
+  static double callbackX2(int, int, double);
+  static double callbackY2(int, int, double);
+  static double callbackZ2(int, int, double);
+  static double callbackU(int, int, double);
+  static double callbackV(int, int, double);
+  static void draw();
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.13 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.14 2004-12-27 09:17:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,23 +24,26 @@
 #include "StreamLines.h"
 #include "List.h"
 #include "Context.h"
-#include "Views.h"
-#include "Message.h"
+
+#if defined(HAVE_FLTK)
+#include "GmshUI.h"
+#include "Draw.h"
+#endif
 
 extern Context_T CTX;
 
 StringXNumber StreamLinesOptions_Number[] = {
-  {GMSH_FULLRC, "X0", NULL, 2.39},
-  {GMSH_FULLRC, "Y0", NULL, .445},
-  {GMSH_FULLRC, "Z0", NULL, 0.},
-  {GMSH_FULLRC, "X1", NULL, 2.39},
-  {GMSH_FULLRC, "Y1", NULL, 0.94},
-  {GMSH_FULLRC, "Z1", NULL, 0.},
-  {GMSH_FULLRC, "X2", NULL, 2.39},
-  {GMSH_FULLRC, "Y2", NULL, .445},
-  {GMSH_FULLRC, "Z2", NULL, 1.},
-  {GMSH_FULLRC, "nPointsU", NULL, 20},
-  {GMSH_FULLRC, "nPointsV", NULL, 1},
+  {GMSH_FULLRC, "X0", GMSH_StreamLinesPlugin::callbackX0, 2.39},
+  {GMSH_FULLRC, "Y0", GMSH_StreamLinesPlugin::callbackY0, .445},
+  {GMSH_FULLRC, "Z0", GMSH_StreamLinesPlugin::callbackZ0, 0.},
+  {GMSH_FULLRC, "X1", GMSH_StreamLinesPlugin::callbackX1, 2.39},
+  {GMSH_FULLRC, "Y1", GMSH_StreamLinesPlugin::callbackY1, 0.94},
+  {GMSH_FULLRC, "Z1", GMSH_StreamLinesPlugin::callbackZ1, 0.},
+  {GMSH_FULLRC, "X2", GMSH_StreamLinesPlugin::callbackX2, 2.39},
+  {GMSH_FULLRC, "Y2", GMSH_StreamLinesPlugin::callbackY2, .445},
+  {GMSH_FULLRC, "Z2", GMSH_StreamLinesPlugin::callbackZ2, 1.},
+  {GMSH_FULLRC, "nPointsU", GMSH_StreamLinesPlugin::callbackU, 20},
+  {GMSH_FULLRC, "nPointsV", GMSH_StreamLinesPlugin::callbackV, 1},
   {GMSH_FULLRC, "MaxIter", NULL, 100},
   {GMSH_FULLRC, "DT", NULL, .1},
   {GMSH_FULLRC, "dView", NULL, -1.},
@@ -55,10 +58,131 @@ extern "C"
   }
 }
 
-
 GMSH_StreamLinesPlugin::GMSH_StreamLinesPlugin()
 {
   ;
+}
+
+void GMSH_StreamLinesPlugin::draw()
+{
+#if defined(HAVE_FLTK)
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+  double p[3];
+  glBegin(GL_LINES);
+  for(int i = 0; i < getNbU(); ++i){
+    getPoint(i, 0, p);
+    glVertex3d(p[0], p[1], p[2]);
+    getPoint(i, getNbV()-1, p);
+    glVertex3d(p[0], p[1], p[2]);
+  }
+  for(int i = 0; i < getNbV(); ++i){
+    getPoint(0, i, p);
+    glVertex3d(p[0], p[1], p[2]);
+    getPoint(getNbU()-1, i, p);
+    glVertex3d(p[0], p[1], p[2]);
+  }
+  glEnd();
+#endif
+}
+
+void GMSH_StreamLinesPlugin::callback()
+{
+#if defined(HAVE_FLTK)
+  CTX.post.plugin_draw_function = draw;
+  if(CTX.fast_redraw){
+    CTX.post.draw = 0;
+    CTX.mesh.draw = 0;
+  }
+  if(!CTX.batch) 
+    Draw();
+  CTX.post.plugin_draw_function = NULL;
+  CTX.post.draw = 1;
+  CTX.mesh.draw = 1;
+#endif
+}
+
+double GMSH_StreamLinesPlugin::callbackXYZ(int num, int action, double value, double *opt)
+{
+  switch(action){ // configure the input field
+  case 1: return CTX.lc/200.;
+  case 2: return -CTX.lc;
+  case 3: return CTX.lc;
+  default: break;
+  }
+  *opt = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_StreamLinesPlugin::callbackX0(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[0].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackY0(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[1].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackZ0(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[2].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackX1(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[3].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackY1(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[4].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackZ1(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[5].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackX2(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[6].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackY2(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[7].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackZ2(int num, int action, double value)
+{
+  return callbackXYZ(num, action, value, &StreamLinesOptions_Number[8].def);
+}
+
+double GMSH_StreamLinesPlugin::callbackU(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return 1;
+  case 2: return 1;
+  case 3: return 100;
+  default: break;
+  }
+  StreamLinesOptions_Number[9].def = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_StreamLinesPlugin::callbackV(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return 1;
+  case 2: return 1;
+  case 3: return 100;
+  default: break;
+  }
+  StreamLinesOptions_Number[10].def = value;
+  callback();
+  return 0.;
 }
 
 void GMSH_StreamLinesPlugin::getName(char *name) const
@@ -109,20 +233,20 @@ void GMSH_StreamLinesPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "StreamLines failed...");
 }
 
-int GMSH_StreamLinesPlugin::getNbU()const 
+int GMSH_StreamLinesPlugin::getNbU()
 {
   return (int)StreamLinesOptions_Number[9].def;
 }
 
-int GMSH_StreamLinesPlugin::getNbV()const 
+int GMSH_StreamLinesPlugin::getNbV()
 {
   return (int)StreamLinesOptions_Number[10].def;
 }
 
-void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X) const 
+void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X)
 {
-  double u = (double)iU / (double)(getNbU());
-  double v = (double)iV / (double)(getNbV());
+  double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
+  double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
   X[0] = StreamLinesOptions_Number[0].def + 
     u  * (StreamLinesOptions_Number[3].def-StreamLinesOptions_Number[0].def) +
     v  * (StreamLinesOptions_Number[6].def-StreamLinesOptions_Number[0].def) ;
