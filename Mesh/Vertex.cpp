@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.16 2001-12-04 12:06:50 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.17 2002-02-05 20:13:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -99,7 +99,11 @@ void Delete_Vertex ( Vertex *pV ){
 }
 
 void Free_Vertex (void *a, void *b){
-  Delete_Vertex ( *(Vertex**)a );
+  Vertex *v = *(Vertex**)a;
+  if(v){
+    Delete_Vertex(v);
+    v = NULL;
+  }
 }
 
 int compareVertex (const void *a, const void *b){
