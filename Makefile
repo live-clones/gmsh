@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.212 2002-05-18 07:28:53 geuzaine Exp $
+# $Id: Makefile,v 1.213 2002-05-18 09:33:59 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -214,7 +214,7 @@ bb: initialtag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
-           "OPT_FLAGS=-O3" \
+           "OPT_FLAGS=$(FLAGS)" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_BLACKBOX" \
            "GL_INCLUDE=" \
