@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.5 2005-02-25 01:45:41 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.6 2005-03-14 18:12:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -172,6 +172,17 @@ void POLY_rep_To_Mesh(POLY_rep *prep, Surface *s)
       Simplex *simp = Create_Simplex(v1, v2, v3, NULL);
       simp->iEnt = s->Num;
       Tree_Add(s->Simplexes, &simp);
+    }
+    else if (points[0] == 4){
+      Vertex *v1 = verts[(int)points[1]];
+      Vertex *v2 = verts[(int)points[2]];
+      Vertex *v3 = verts[(int)points[3]];
+      Vertex *v4 = verts[(int)points[4]];
+      SetLC(v1, v2, v3, CTX.mesh.lc_factor);
+      v4->lc = v1->lc;
+      Quadrangle *quad = Create_Quadrangle(v1, v2, v3, v4);
+      quad->iEnt = s->Num;
+      Tree_Add(s->Quadrangles, &quad);
     }
   }
   

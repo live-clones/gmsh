@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.177 2005-03-13 20:43:36 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.178 2005-03-14 18:12:29 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -1609,8 +1609,8 @@ Discrete Surface (1) = @{4, 2@}
 @end example
 
 The polygonal discretization is used for the graphical representation of the
-surface and can also be used as the actual two-dimensional mesh of the
-surface if all the polygons are triangles.
+surface and is also used as the actual two-dimensional mesh of the surface
+if all the polygons are triangles or quadrangles.
 
 @c todo:
 @c @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};

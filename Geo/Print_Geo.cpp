@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.36 2005-02-20 07:11:04 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.37 2005-03-14 18:12:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -335,6 +335,7 @@ void Print_Discrete_Surface(void *a, void *b)
     norms.add(q->V[0]->Pos.X, q->V[0]->Pos.Y, q->V[0]->Pos.Z, n[0], n[1], n[2]);
     norms.add(q->V[1]->Pos.X, q->V[1]->Pos.Y, q->V[1]->Pos.Z, n[0], n[1], n[2]);
     norms.add(q->V[2]->Pos.X, q->V[2]->Pos.Y, q->V[2]->Pos.Z, n[0], n[1], n[2]);
+    norms.add(q->V[3]->Pos.X, q->V[3]->Pos.Y, q->V[3]->Pos.Z, n[0], n[1], n[2]);
   }
 
   if(!List_Nbr(s->Generatrices))
