@@ -22,6 +22,7 @@
 
 #include "GmshUI.h"
 
+#include <FL/Fl_Window.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
 
@@ -55,7 +56,13 @@ class Dialog_Window : public Fl_Double_Window {
     Fl_Double_Window(w, h, l) {}
 };
 
-class Main_Window : public Fl_Double_Window {
+// Do the same for the main windows, but ask if we really want to quit
+// before closing. Also, derive the main windows from Fl_Window: they
+// show up faster that way, and they only contain either buttons that
+// are recreated each time, or the big (already double-buffered)
+// OpenGL area anyway.
+
+class Main_Window : public Fl_Window {
   int  handle(int event){
     switch (event) {
     case FL_SHORTCUT:
@@ -75,13 +82,13 @@ class Main_Window : public Fl_Double_Window {
 #endif
       break;
     }
-    return Fl_Double_Window::handle(event);
+    return Fl_Window::handle(event);
   }
  public:
   Main_Window(int x,int y,int w,int h,const char *l=0) :
-    Fl_Double_Window(x, y, w, h, l) {}
+    Fl_Window(x, y, w, h, l) {}
   Main_Window(int w,int h,const char *l=0) :
-    Fl_Double_Window(w, h, l) {}
+    Fl_Window(w, h, l) {}
 };
 
 #endif
