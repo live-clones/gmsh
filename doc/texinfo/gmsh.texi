@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.55 2003-05-09 16:29:57 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.56 2003-05-12 18:42:23 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -739,7 +739,7 @@ those corresponding to the indices provided by the
 @var{expression-list}). To see the practical use of such expressions, have a
 look at the first couple of examples in @ref{Tutorial}.
 
-Note that, in order to lighten the syntax, you can always ommit the braces
+Note that, in order to lighten the syntax, you can always omit the braces
 @code{@{@}} enclosing an @var{expression-list} if this @var{expression-list}
 only contains a single item.
 
@@ -2758,7 +2758,7 @@ the leftmost element of the 3D string in model (real world) coordinates,
 
 @item @var{text3d-chars}
 is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
-`@code{^}' characted.
+`@code{^}' character.
 @end table
 
 @c -------------------------------------------------------------------------
