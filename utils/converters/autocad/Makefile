@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2003-05-09 16:29:58 geuzaine Exp $
+# $Id: Makefile,v 1.1 2003-05-09 21:58:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -19,11 +19,11 @@
 # 
 # Please report all bugs and problems to "gmsh@geuz.org".
 
-include ../../variables
+include ../../../variables
 
 dxf2geo: dxf2geo.c message.c 
-	${CXX} ${OPTIM} -o ../../bin/dxf2geo -I../../DataStr\
-              dxf2geo.c message.c ../../lib/libGmshDataStr.a -lm
+	${CXX} ${OPTIM} -o ../../../bin/dxf2geo -I../../../DataStr\
+              dxf2geo.c message.c ../../../lib/libGmshDataStr.a -lm
 
 clean:
 	rm -f *.o

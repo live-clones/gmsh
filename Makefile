@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.284 2003-05-09 16:29:57 geuzaine Exp $
+# $Id: Makefile,v 1.285 2003-05-09 21:58:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -80,7 +80,7 @@ parser:
 	cd Parser && ${MAKE} parser
 
 converters:
-	cd utils/converters && ${MAKE}
+	cd utils/converters/autocad && ${MAKE}
 
 doc-info:
 	cd doc/texinfo && ${MAKE} info

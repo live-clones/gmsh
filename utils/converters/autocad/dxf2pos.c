@@ -1,4 +1,4 @@
-/* $Id: dxf2pos.c,v 1.1 2003-05-09 20:48:15 geuzaine Exp $ */
+/* $Id: dxf2pos.c,v 1.1 2003-05-09 21:58:55 geuzaine Exp $ */
 
 /* 
    AutoCAD DXF to GMSH .pos Data File Converter
