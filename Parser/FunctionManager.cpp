@@ -20,6 +20,10 @@ class File_Position
     FILE *file;
 };
 
+// Pour utiliser un namespace global sur SGI, il faut compiler avec
+// -LANG:std, et ajouter "use namespace std;". Dans tous les cas, il
+// FAUT creer les librairies avec 'CC -ar', et pas avec 'ar'.
+
 class mystack
 {
 public:
