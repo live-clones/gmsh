@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-10-24 17:04:45 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-11-11 18:45:10 $)
 
 1. GENERAL
 ==========
@@ -138,6 +138,13 @@ post-process the 3D Delaunay mesh, so that some (typically 0.1 to
 The swapping algorithm is not very clever at the moment. Try to change
 the surface mesh a bit, or recombine your mesh to generate prisms or
 hexahedra.
+
+5.8) File->Visibility does not seem to work with extruded meshes.
+
+This a known problem (due to the fact that numbers are explicitly
+assigned to mesh entities in the extrude commands, which destroys
+the geometry/mesh relationship). The only solution at the moment is
+to save the mesh, and to read it again. 
 
 
 6. SOLVER PROBLEMS
