@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.13 2004-04-13 19:27:09 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.14 2004-04-22 09:35:01 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -126,10 +126,11 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
     DSQR(mat[0][0]) + DSQR(mat[1][1]) + DSQR(mat[0][1]) + DSQR(mat[1][0]);
   det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
+
   // TOLERANCE ! WARNING WARNING
   if(norm == 0.0 || fabs(det) / norm < 1.e-12) {
     if(norm)
-      Msg(DEBUG, "Assuming 2x2 matrix is singular (det/norm == %g)",
+      Msg(WARNING, "Assuming 2x2 matrix is singular (det/norm == %g)",
           fabs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
@@ -141,6 +142,7 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
 
   for(i = 0; i < 2; i++)
     res[i] *= ud;
+
   return (1);
 }
 

@@ -215,6 +215,28 @@ Default value: 1
 Default value: -1
 @end table
 
+
+@item Plugin(Streamlines)
+Plugin(Streamlines) computes streamlines
+from a vector view 'iView' . It takes as input
+a grid of points defined by 3 points XYZ0 (origin)
+XYZ1 (axis of U) and XYZ2 (axis of V). The user
+can choose how many points are going to be 
+transported along U and V. Then, we solve 
+the equation DX(t)/dt = V (x,y,z) with X(0)
+chosen on the grid and V(x,y,z) interpolated on the
+vector view. The user has to choose the timestep as
+well as the maximum number of iterations. The time
+stepping scheme is a RK44.
+
+If `iView' < 0, the plugin is
+run on the current view. 
+
+Plugin(Streamlines) creates one new view. It is
+nice to choose the displacement mode to see vectors
+and to animate the view ;-)
+
+
 @item Plugin(Triangulate)
 Plugin(Triangulate) triangulates the points
 in the scalar view `iView', assuming that all

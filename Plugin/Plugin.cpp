@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.49 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.50 2004-04-22 09:35:01 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -33,6 +33,8 @@
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "CutMap.h"
+#include "CutGrid.h"
+#include "StreamLines.h"
 #include "CutPlane.h"
 #include "CutSphere.h"
 #include "Skin.h"
@@ -130,6 +132,10 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 
 void GMSH_PluginManager::registerDefaultPlugins()
 {
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("CutGrid", GMSH_RegisterCutGridPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("CutMap", GMSH_RegisterCutMapPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
