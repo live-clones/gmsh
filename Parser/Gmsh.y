@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.193 2004-12-30 01:48:54 geuzaine Exp $
+// $Id: Gmsh.y,v 1.194 2004-12-30 05:43:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -46,8 +46,6 @@
 #include "CreateFile.h"
 #include "STL.h"
 #include "Visibility.h"
-
-// FIXME: most tSTRING and tBIGSTRING are leaked: Free() them!
 
 Tree_T *Symbol_T = NULL;
 
@@ -218,6 +216,10 @@ StlFormatItem :
 
 // S T E P   I S O - 1 0 3 0 3 - 2 1   F I L E   F O R M A T
 
+// FIXME: The STEP interface is incomplete. All the strings and most
+// of the lists are leaked in this (unused and unusable...) part of
+// the parser.
+
 StepFormatItems :
     // nothing
   | StepFormatItems StepFormatItem
@@ -254,20 +256,20 @@ StepHeaderItem :
     }
   | tFILE_NAME '(' tBIGSTR ',' tBIGSTR ',' ListOfStrings ',' 
                     ListOfStrings ',' tBIGSTR ',' tBIGSTR ',' tBIGSTR ')' tEND
-   {
-   }
+    {
+    }
 ;
 
 StepDataItem  :
     tDOUBLE tAFFECT tCARTESIAN_POINT '(' tBIGSTR ',' VExpr ')' tEND
     {
-        Add_Cartesian_Point((int)$1, $5, $7[0], $7[1], $7[2]);
+      Add_Cartesian_Point((int)$1, $5, $7[0], $7[1], $7[2]);
     }
   | tDOUBLE tAFFECT tB_SPLINE_CURVE_WITH_KNOTS 
     '(' tBIGSTR ',' FExpr ',' ListOfDouble ',' BoolExpr ',' BoolExpr ',' 
         BoolExpr ',' ListOfDouble ',' ListOfDouble ',' BoolExpr ')' tEND
     {
-       Add_BSpline_Curve_With_Knots ((int)$1, $5, (int) $7, $9,	$17, $19, 0., 1.);
+      Add_BSpline_Curve_With_Knots ((int)$1, $5, (int) $7, $9,	$17, $19, 0., 1.);
     }
   | tDOUBLE tAFFECT tB_SPLINE_SURFACE_WITH_KNOTS 
     '(' tBIGSTR ',' FExpr ',' FExpr ',' ListOfListOfDouble ',' BoolExpr ',' 
@@ -416,6 +418,7 @@ Printf :
     tPrintf '(' tBIGSTR ')' tEND
     {
       Msg(DIRECT, $3);
+      Free($3);
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
@@ -427,6 +430,7 @@ Printf :
 	yymsg(GERROR, "%d extra argument%s in Printf", i, (i>1)?"s":"");
       else
 	Msg(DIRECT, tmpstring);
+      Free($3);
       List_Delete($5);
     }
 ;
@@ -439,12 +443,14 @@ View :
       if(!strcmp($1, "View") && !CheckViewErrorFlags(View)){
 	EndView(View, 0, yyname, $2);
       }
+      Free($1); Free($2);
     }
   | tSTRING tBIGSTR tSTRING VExpr '{' Views '}' tEND
     {
       if(!strcmp($1, "View") && !CheckViewErrorFlags(View)){
 	EndView(View, 0, yyname, $2);
       }
+      Free($1); Free($2); Free($3);
     }  
 ;
 
@@ -1274,13 +1280,15 @@ Affectation :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	TheSymbol.val = List_Create(1, 1, sizeof(double));
 	if(!$2){
+	  TheSymbol.val = List_Create(1, 1, sizeof(double));
 	  List_Put(TheSymbol.val, 0, &$3);
 	  Tree_Add(Symbol_T, &TheSymbol);
 	}
-	else
+	else{
 	  yymsg(GERROR, "Unknown variable '%s'", $1);
+	  Free($1);
+	}
       }
       else{
 	double *pd = (double*)List_Pointer_Fast(pSymbol->val, 0); 
@@ -1294,6 +1302,7 @@ Affectation :
 	  else yymsg(GERROR, "Division by zero in '%s /= %g'", $1, $3);
 	  break;
 	}
+	Free($1);
       }
     }
   | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
@@ -1302,13 +1311,15 @@ Affectation :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	TheSymbol.val = List_Create(5, 5, sizeof(double));
 	if(!$5){
+	  TheSymbol.val = List_Create(5, 5, sizeof(double));
 	  List_Put(TheSymbol.val, (int)$3, &$6);
 	  Tree_Add(Symbol_T, &TheSymbol);
 	}
-	else
+	else{
 	  yymsg(GERROR, "Unknown variable '%s'", $1);
+	  Free($1);
+	}
       }
       else{
 	double *pd;
@@ -1330,27 +1341,32 @@ Affectation :
 	  else
 	    yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, (int)$3);
 	}
+	Free($1);
       }
     }
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']' NumericAffectation ListOfDouble tEND
     {
-      if(List_Nbr($4) != List_Nbr($8))
+      if(List_Nbr($4) != List_Nbr($8)){
 	yymsg(GERROR, "Incompatible array dimensions in affectation");
+	Free($1);
+      }
       else{
 	Symbol TheSymbol;
 	TheSymbol.Name = $1;
 	Symbol *pSymbol;
 	if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	  TheSymbol.val = List_Create(5, 5, sizeof(double));
 	  if(!$7){
+	    TheSymbol.val = List_Create(5, 5, sizeof(double));
 	    for(int i = 0; i < List_Nbr($4); i++){
 	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer($4, i)),
 		       (double*)List_Pointer($8, i));
 	    }
 	    Tree_Add(Symbol_T, &TheSymbol);
 	  }
-	  else
+	  else{
 	    yymsg(GERROR, "Unknown variable '%s'", $1);
+	    Free($1);
+	  }
 	}
 	else{
 	  for(int i = 0; i < List_Nbr($4); i++){
@@ -1376,6 +1392,7 @@ Affectation :
 		yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, j);	  
 	    }
 	  }
+	  Free($1);
 	}
       }
       List_Delete($4);
@@ -1394,6 +1411,7 @@ Affectation :
       else{
 	List_Reset(pSymbol->val);
 	List_Copy($5, pSymbol->val);
+	Free($1);
       }
       List_Delete($5);
     }
@@ -1405,7 +1423,8 @@ Affectation :
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(GERROR, "Unknown variable '%s'", $1); 
       else
-	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2; 
+	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2;
+      Free($1);
     }
   | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
@@ -1421,6 +1440,7 @@ Affectation :
 	else
 	  yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, (int)$3);
       }
+      Free($1);
     }
 
   // Option Strings
@@ -1437,6 +1457,7 @@ Affectation :
 	else
 	  pStrOpt(0, GMSH_SET|GMSH_GUI, $5);
       }
+      Free($1); Free($3); //FIXME: somtimes leak $5
     }
   | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND 
     { 
@@ -1450,6 +1471,7 @@ Affectation :
 	else
 	  pStrOpt((int)$3, GMSH_SET|GMSH_GUI, $8);
       }
+      Free($1); Free($6); //FIXME: somtimes leak $8
     }
 
   // Option Numbers
@@ -1478,6 +1500,7 @@ Affectation :
 	  pNumOpt(0, GMSH_SET|GMSH_GUI, d);
 	}
       }
+      Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND 
     {
@@ -1504,6 +1527,7 @@ Affectation :
 	  pNumOpt((int)$3, GMSH_SET|GMSH_GUI, d);
 	}
       }
+      Free($1); Free($6);
     }
   | tSTRING '.' tSTRING NumericIncrement tEND 
     {
@@ -1517,6 +1541,7 @@ Affectation :
 	else
 	  pNumOpt(0, GMSH_SET|GMSH_GUI, pNumOpt(0, GMSH_GET, 0)+$4);
       }
+      Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement tEND 
     {
@@ -1530,6 +1555,7 @@ Affectation :
 	else
 	  pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7);
       }
+      Free($1); Free($6);
     }
 
   // Option Colors
@@ -1546,6 +1572,7 @@ Affectation :
 	else
 	  pColOpt(0, GMSH_SET|GMSH_GUI, $7);
       }
+      Free($1); Free($5);
     }
   | tSTRING '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND 
     {
@@ -1559,6 +1586,7 @@ Affectation :
 	else
 	  pColOpt((int)$3, GMSH_SET|GMSH_GUI, $10);
       }
+      Free($1); Free($8);
     }
 
   // ColorTable
@@ -1580,6 +1608,7 @@ Affectation :
 	  ct->table[1] = ct->table[0];
 	}
       }
+      Free($1);
       List_Delete($5);
     }
   | tSTRING '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND 
@@ -1599,6 +1628,7 @@ Affectation :
 	  ct->table[1] = ct->table[0];
 	}
       }
+      Free($1);
       List_Delete($8);
     }
 
@@ -1612,6 +1642,7 @@ Affectation :
       catch (...) {
 	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
+      Free($3); Free($6);
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
     {
@@ -1621,6 +1652,7 @@ Affectation :
       catch (...) {
 	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
+      Free($3); Free($6); // FIXME: sometimes leak $8
     }
 ;
 
@@ -1841,6 +1873,7 @@ Shape :
 	Tree_Add(THEM->Curves, &c);
 	CreateReversedCurve(THEM, c);
       }
+      Free($11); Free($13); Free($15);
       $$.Type = MSH_SEGM_PARAMETRIC;
       $$.Num = num;
     }
@@ -2343,6 +2376,7 @@ Duplicata :
   | tDuplicata tSTRING '[' FExpr ']' tEND
     {
       if(!strcmp($2, "View")) DuplicateView((int)$4, 0);
+      Free($2);
       $$ = NULL;
     }
 ;
@@ -2368,6 +2402,7 @@ Delete :
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
       }
+      Free($2);
     }
     | tDelete tSTRING tEND
     {
@@ -2377,6 +2412,7 @@ Delete :
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
       }
+      Free($2);
     }
     | tDelete tSTRING tSTRING tEND
     {
@@ -2390,6 +2426,7 @@ Delete :
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s %s'", $2, $3);
       }
+      Free($2); Free($3);
     }
 ;
 
@@ -2416,11 +2453,13 @@ Visibility :
 	((CTX.visibility_mode == 1) ? VIS_GEOM : VIS_GEOM|VIS_MESH);
       for(int i = 2; i < 6; i++)
 	SetVisibilityByNumber($2, i, m);
+      Free($2);
     }
   | tHide StringExpr tEND
     {
       for(int i = 2; i < 6; i++)
 	SetVisibilityByNumber($2, i, 0);
+      Free($2);
     }
   | tShow '{' ListOfShapes '}'
     {
@@ -2489,6 +2528,7 @@ Command :
       else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
       }
+      Free($1); Free($2);
     } 
   | tSTRING tSTRING '[' FExpr ']' StringExpr tEND
     {
@@ -2503,6 +2543,7 @@ Command :
       else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
       }
+      Free($1); Free($2); Free($6);
     }
   | tSTRING FExpr tEND
     {
@@ -2518,16 +2559,18 @@ Command :
       else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
       }
+      Free($1);
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
-   {
-      try {
-	GMSH_PluginManager::instance()->action($3, $6, 0);
-      }
-      catch(...) {
-	yymsg(GERROR, "Unknown action '%s' or plugin '%s'", $6, $3);
-      }
-   }
+     {
+       try {
+	 GMSH_PluginManager::instance()->action($3, $6, 0);
+       }
+       catch(...) {
+	 yymsg(GERROR, "Unknown action '%s' or plugin '%s'", $6, $3);
+       }
+       Free($3); Free($6);
+     }
    | tCombine tSTRING tEND
     {
       // for backward compatibility
@@ -2537,6 +2580,7 @@ Command :
 	CombineViews(1, 2, CTX.post.combine_remove_orig);
       else
 	yymsg(GERROR, "Unknown 'Combine' command");
+      Free($2);
     } 
    | tExit tEND
     {
@@ -2568,7 +2612,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][0] = $3;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0;
-      LoopControlVariablesNameTab[ImbricatedLoop] = "";
+      LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
       fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
@@ -2583,7 +2627,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][0] = $3;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7;
-      LoopControlVariablesNameTab[ImbricatedLoop] = "";
+      LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
       fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
@@ -2661,7 +2705,7 @@ Loop :
 	if(do_next){
 	  LoopControlVariablesTab[ImbricatedLoop-1][0] +=
 	    LoopControlVariablesTab[ImbricatedLoop-1][2];
-	  if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
+	  if(LoopControlVariablesNameTab[ImbricatedLoop-1]){
 	    Symbol TheSymbol;
 	    TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
 	    Symbol *pSymbol;
@@ -2684,6 +2728,7 @@ Loop :
       if(!FunctionManager::Instance()->createFunction($2, yyin, yyname, yylineno))
 	yymsg(GERROR, "Redefinition of function %s", $2);
       skip_until(NULL, "Return");
+      //FIXME: wee leak $2
     }
   | tReturn
     {
@@ -2694,6 +2739,7 @@ Loop :
     {
       if(!FunctionManager::Instance()->enterFunction($2, &yyin, yyname, yylineno))
 	yymsg(GERROR, "Unknown function %s", $2);
+      //FIXME: wee leak $2
     } 
   | tIf '(' FExpr ')'
     {
@@ -3488,6 +3534,7 @@ FExpr_Single :
       }
       else
 	$$ = *(double*)List_Pointer_Fast(pSymbol->val, 0);
+      Free($1);
     }
   | tSTRING '[' FExpr ']'
     {
@@ -3507,6 +3554,7 @@ FExpr_Single :
 	  $$ = 0.;
 	}
       }
+      Free($1);
     }
   | '#' tSTRING '[' ']'
     {
@@ -3520,6 +3568,7 @@ FExpr_Single :
       else{
 	$$ = List_Nbr(pSymbol->val);
       }
+      Free($2);
     }
   | tSTRING NumericIncrement
     {
@@ -3532,6 +3581,7 @@ FExpr_Single :
       }
       else
 	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2);
+      Free($1);
     }
   | tSTRING '[' FExpr ']' NumericIncrement
     {
@@ -3551,6 +3601,7 @@ FExpr_Single :
 	  $$ = 0.;
 	}
       }
+      Free($1);
     }
 
   // Option Strings
@@ -3571,6 +3622,7 @@ FExpr_Single :
 	else
 	  $$ = pNumOpt(0, GMSH_GET, 0);
       }
+      Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING 
     {
@@ -3588,6 +3640,7 @@ FExpr_Single :
 	else
 	  $$ = pNumOpt((int)$3, GMSH_GET, 0);
       }
+      Free($1); Free($6);
     }
   | tSTRING '.' tSTRING NumericIncrement
     {
@@ -3605,6 +3658,7 @@ FExpr_Single :
 	else
 	  $$ = pNumOpt(0, GMSH_SET|GMSH_GUI, pNumOpt(0, GMSH_GET, 0)+$4);
       }
+      Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement
     {
@@ -3622,10 +3676,12 @@ FExpr_Single :
 	else
 	  $$ = pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7);
       }
+      Free($1); Free($6);
     }
   | tGetValue '(' tBIGSTR ',' FExpr ')'
     { 
       $$ = GetValue($3, $5);
+      Free($3);
     }
 ;
 
@@ -3826,6 +3882,7 @@ FExpr_Multi :
 	for(int i = 0; i < List_Nbr(pSymbol->val); i++)
 	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i));
       }
+      Free($1);
     }
   | '-' tSTRING '[' ']'
     {
@@ -3844,6 +3901,7 @@ FExpr_Multi :
 	  List_Add($$, &d);
 	}
       }
+      Free($2);
     }
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
@@ -3866,6 +3924,7 @@ FExpr_Multi :
 	    yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, j);	  
 	}
       }
+      Free($1);
       List_Delete($4);
     }
   | '-' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
@@ -3891,6 +3950,7 @@ FExpr_Multi :
 	    yymsg(GERROR, "Uninitialized variable '%s[%d]'", $2, j);	  
 	}
       }
+      Free($2);
       List_Delete($5);
     }
 ;
@@ -3943,6 +4003,7 @@ ColorExpr :
       int flag;
       $$ = Get_ColorForString(ColorString, -1, $1, &flag);
       if(flag) yymsg(GERROR, "Unknown color '%s'", $1);
+      Free($1);
     }
   | tSTRING '.' tColor '.' tSTRING 
     {
@@ -3961,6 +4022,7 @@ ColorExpr :
 	  $$ = pColOpt(0, GMSH_GET, 0);
 	}
       }
+      Free($1); Free($5);
     }
 ;
 
@@ -3979,6 +4041,7 @@ ListOfColor :
 	for(int i = 0; i < ct->size; i++) 
 	  List_Add($$, &ct->table[i]);
       }
+      Free($1);
     }
 ;
 

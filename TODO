@@ -1,4 +1,4 @@
-$Id: TODO,v 1.72 2004-12-27 21:43:38 geuzaine Exp $
+$Id: TODO,v 1.73 2004-12-30 05:43:42 geuzaine Exp $
 
 create Gradient, Curl and Divergence plugins (based on
 Plugins/ShapeFunctions.h)
@@ -107,8 +107,7 @@ Attractors in the 2D aniso algo are extremely buggy
 
 Memory leaks, memory leaks
 
-- start with mesh_domain() and the parser (update: parser should be
-  mostly OK now)
+- in the old 2D code: mesh_domain()...
 
 - check all calls to Tree_Replace: we shouldn't use it with trees of
   pointers, since we loose the original pointer when we actually do a
