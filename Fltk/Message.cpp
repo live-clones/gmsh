@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.39 2003-05-22 19:25:58 geuzaine Exp $
+// $Id: Message.cpp,v 1.40 2003-05-22 22:18:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -126,14 +126,26 @@ void Msg(int level, char *fmt, ...)
 
   if(CTX.verbosity >= verb) {
 
-    if(!WID)
+    if(!WID){
       window = -1;
-    else
-      WID->check();
-    // this is pretty costly, but permits to keep the app
-    // responsive... the downside is that it can cause race
-    // conditions. Let's move it in here at least, so that we don;t
-    // check() on DEBUG calls when not in debug mode.
+    }
+    else{
+      // This is pretty costly, but permits to keep the app
+      // responsive. The downside is that it can cause race
+      // conditions: everytime we output a Msg, a pending callback can
+      // be executed! We fix this by encapsulating critical sections
+      // (mai3d(), CreateFile(), etc.) with 'CTX.threads_lock', but
+      // this is far from perfect...
+      if(level != DEBUG &&
+	 level != DEBUG1 &&
+	 level != DEBUG2 &&
+	 level != DEBUG3 &&
+	 level != STATUS1N &&
+	 level != STATUS2N &&
+	 level != STATUS3N){
+	WID->check();
+      }
+    }
 
     va_start(args, fmt);
 
