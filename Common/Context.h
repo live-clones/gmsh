@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.11 2000-12-05 15:23:54 geuzaine Exp $ */
+/* $Id: Context.h,v 1.12 2000-12-05 16:59:11 remacle Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -53,8 +53,8 @@ typedef struct{
   
 }rgbacolors;
 
-typedef struct {
-
+class Context_T {
+  public :
   int interactive;            /* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
   int verbosity;              /* 0=silent -> 3=debug */
   int expose;                 /* 1 if everything is ready to expose and draw */
@@ -63,12 +63,15 @@ typedef struct {
   int rlock[3], tlock[3], slock[3];
                               /* locks for r, t and s */
   
+  float quaternion[4];        /* the actual quaternion used for "trackball" rotating */
+  int useTrackball;           /* do or do not use the trackball for rotations */
+
   double min[3];              /* x, y and z min for the current geometry */
   double max[3];              /* x, y and z max for the current geometry */
   double range[3];            /* maximum range in the three directions */
   double lc, lc_middle;       /* characteristic lengths for the whole problem, */
   double lc_order;            /* and never used in mesh generation (->only for geo/post) */
-  
+
   int db;                     /* double buffer? */
   int overlay;                /* overlay graphic window? */
   int stream;                 /* output stream: TO_SCREEN or TO_FILE */
@@ -141,7 +144,10 @@ typedef struct {
     int  font_size;
   } print;
 
-} Context_T;
+  // trackball functions 
+  void buildRotmatrix(float m[4][4]);
+  void addQuaternion (float p1x, float p1y, float p2x, float p2y);
+};
 
 typedef struct {
   char *str ; 

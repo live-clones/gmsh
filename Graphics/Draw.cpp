@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.7 2000-12-05 15:23:56 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.8 2000-12-05 16:59:11 remacle Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -229,9 +229,19 @@ void InitNoShading(void){
 void InitPosition(void){
   glScaled    (CTX.s[0], CTX.s[1], CTX.s[2]);
   glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);
-  glRotated   (CTX.r[0], 1., 0., 0.);
-  glRotated   (CTX.r[1], 0., 1., 0.);
-  glRotated   (CTX.r[2], 0., 0., 1.);
+
+  if(CTX.useTrackball)
+    {
+      float m[4][4];
+      CTX.buildRotmatrix(m);
+      glMultMatrixf(&(m[0][0]));
+    }
+  else
+    {
+      glRotated   (CTX.r[0], 1., 0., 0.);
+      glRotated   (CTX.r[1], 0., 1., 0.);
+      glRotated   (CTX.r[2], 0., 0., 1.);
+    }
 }
 
 /* ------------------------------------------------------------------------ */

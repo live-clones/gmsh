@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.8 2000-12-05 15:23:58 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.9 2000-12-05 16:59:11 remacle Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -634,11 +634,23 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
 
         switch(ibut){
         case 1:
-          set_r(1, CTX.r[1] + ((abs(movx) > abs(movy))?180*(float)movx/(float)width:0));
-          set_r(0, CTX.r[0] + ((abs(movx) > abs(movy))?0:180*(float)movy/(float)height));
+	  
+	  if(CTX.useTrackball)
+	    {
+	      CTX.addQuaternion ((2.0*x - width) / width,
+				 (height - 2.0*y) / height,
+				 (2.0*event->xbutton.x - width) / width,
+				 (height - 2.0*event->xbutton.y) / height);
+	    }
+	  else
+	    {
+	      set_r(1, CTX.r[1] + ((abs(movx) > abs(movy))?180*(float)movx/(float)width:0));
+	      set_r(0, CTX.r[0] + ((abs(movx) > abs(movy))?0:180*(float)movy/(float)height));
+	    }
           break;
         case 2:
-          set_r(2, CTX.r[2] + ((abs(movy) > abs(movx))?0:-180*(float)movx/(float)width));         
+	  if(!CTX.useTrackball)
+	    set_r(2, CTX.r[2] + ((abs(movy) > abs(movx))?0:-180*(float)movx/(float)width));         
 
           set_s(0, CTX.s[0] * ( (abs(movy) > abs(movx)) ?
                                 ( (movy>0) ? (float)(1.04*(abs(movy)+height))/(float)height
@@ -706,3 +718,4 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
     break;
   }
 }
+

@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.10 2000-12-05 15:23:54 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.11 2000-12-05 16:59:11 remacle Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
+#include "trackball.c"
 
 extern Context_T CTX ;
 
@@ -345,6 +346,9 @@ void Init_Context(void){
   // Default color options
   Init_Colors(0);
 
+  CTX.useTrackball = 1;
+  trackball(CTX.quaternion, 0.0, 0.0, 0.0, 0.0);  
+
   //Print_Context(stdout);
 }
 
@@ -388,5 +392,30 @@ void Print_Context(FILE *file){
   fprintf(file, "  }\n");
 
   fprintf(file, "}\n");
+}
+
+void Context_T::buildRotmatrix(float m[4][4])
+{
+  build_rotmatrix(m, quaternion);
+
+  r[1] = atan2(-m[0][2],sqrt(m[1][2]*m[1][2] + m[2][2]*m[2][2]));
+
+  double c = cos(r[1]);  
+  if(c != 0.0)
+    {
+      r[0] = atan2(m[1][2]/c,m[2][2]/c);
+      r[2] = atan2(-m[1][0]/c,m[0][0]/c);
+      r[0] *= 180./(Pi);
+      r[2] *= 180./(Pi);
+    }
+  // lazyyyyyy
+  r[1] *= 180./(Pi);
+}
+
+void Context_T::addQuaternion (float p1x, float p1y, float p2x, float p2y)
+{
+  float quat[4];
+  trackball(quat,p1x,p1y,p2x,p2y);
+  add_quats(quat, quaternion, quaternion);  
 }
 
