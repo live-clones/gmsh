@@ -1,4 +1,4 @@
-/* $Id: Print_Geo.cpp,v 1.8 2000-12-08 11:16:36 geuzaine Exp $ */
+/* $Id: Print_Geo.cpp,v 1.9 2000-12-09 15:21:17 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -119,6 +119,7 @@ void Print_Surface(void *a, void *b){
 
   switch(s->Typ){
   case MSH_SURF_REGL:
+  case MSH_SURF_TRIC:
     fprintf(FOUT,"Ruled Surface (%d) = {%d};\n",s->Num,NUMLOOP);
     break;
   case MSH_SURF_PLAN:
@@ -160,6 +161,66 @@ void Print_Surface(void *a, void *b){
   }
 }
 
+void Print_Volume(void *a, void *b){
+  Surface *s;
+  Volume *vol;
+  int i;
+  vol = *(Volume**)a;
+
+  int NUMLOOP = vol->Num + 1000000;
+
+  if(s->Typ != MSH_SURF_NURBS){
+    fprintf(FOUT,"Surface Loop (%d) = ",NUMLOOP);
+    
+    for(i=0;i<List_Nbr(vol->Surfaces);i++){
+      List_Read(vol->Surfaces,i,&s);
+      if(i)
+        fprintf(FOUT,", %d",s->Num);
+      else
+        fprintf(FOUT,"{%d",s->Num);
+    }
+    fprintf(FOUT,"};\n");
+  }
+
+  switch(vol->Typ){
+  case MSH_VOLUME:
+    fprintf(FOUT,"Volume (%d) = {%d};\n",vol->Num,NUMLOOP);
+    break;
+  }
+}
+
+void Print_PhysicalGroups(void *a, void *b){
+  PhysicalGroup *pg ;
+  int i, j;
+
+  pg = *(PhysicalGroup**)a;
+  
+  switch(pg->Typ){
+  case MSH_PHYSICAL_POINT :
+    fprintf(FOUT,"Physical Point (%d) = ",pg->Num);
+    break;
+  case MSH_PHYSICAL_LINE :
+    fprintf(FOUT,"Physical Line (%d) = ",pg->Num);
+    break;
+  case MSH_PHYSICAL_SURFACE :
+    fprintf(FOUT,"Physical Surface (%d) = ",pg->Num);
+    break;
+  case MSH_PHYSICAL_VOLUME :
+    fprintf(FOUT,"Physical Volume (%d) = ",pg->Num);
+    break;
+  }
+
+  for(i=0;i<List_Nbr(pg->Entities);i++){
+    List_Read(pg->Entities,i,&j);
+    if(i)
+      fprintf(FOUT,", %d",j);
+    else
+      fprintf(FOUT,"{%d",j);
+  }
+  fprintf(FOUT,"};\n");
+
+}
+
 void Print_Geo(Mesh *M, char *filename){
   Coherence_PS();
 
@@ -176,6 +237,8 @@ void Print_Geo(Mesh *M, char *filename){
   Tree_Action(M->Points,Print_Point);
   Tree_Action(M->Curves,Print_Curve);
   Tree_Action(M->Surfaces,Print_Surface);
+  Tree_Action(M->Volumes,Print_Volume);
+  List_Action(M->PhysicalGroups,Print_PhysicalGroups);
 
   if(filename){
     Msg (INFOS, "Geo Output Complete '%s'", filename);

@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.7 2000-12-01 13:38:53 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.8 2000-12-09 15:21:17 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -455,7 +455,6 @@ void extrude(int s, char *fich, char *what){
 
   sprintf(text,"Extrude %s {%d, {%s,%s,%s}};",what,s,tx_text,ty_text,tz_text);
   add_infile(text,fich);
-  add_infile("Coherence;",fich);
 }
 void translate_seg(int add, int s, char *fich){
   char text[BUFFSIZE];
@@ -467,7 +466,6 @@ void translate_seg(int add, int s, char *fich){
     sprintf(text,"Translate {%s,%s,%s} {\n  Line{%d};\n}",
             tx_text,ty_text,tz_text,s);
   add_infile(text,fich);
-  add_infile("Coherence;",fich);
 }
 
 
@@ -481,7 +479,6 @@ void translate_surf(int add, int s, char *fich){
     sprintf(text,"Translate {%s,%s,%s} {\n  Surface{%d};\n}",
             tx_text,ty_text,tz_text,s);
   add_infile(text,fich);
-  add_infile("Coherence;",fich);
 }
 
 void translate_pt(int add, int s, char *fich){
@@ -494,7 +491,6 @@ void translate_pt(int add, int s, char *fich){
     sprintf(text,"Translate {%s,%s,%s} {\n  Point{%d};\n}",
             tx_text,ty_text,tz_text,s);
   add_infile(text,fich);
-  add_infile("Coherence;",fich);
 }
 
 void rotate(int add, int s, char *fich, char *quoi){
@@ -507,7 +503,6 @@ void rotate(int add, int s, char *fich, char *quoi){
     sprintf(text,"Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n   %s{%d};\n  }",
             ax_text,ay_text,az_text,px_text,py_text,pz_text,angle_text, quoi,s);
   add_infile(text,fich);
-  add_infile("Coherence;",fich);
 }
 
 void dilate(int add, int s, char *fich, char *quoi){
@@ -520,7 +515,6 @@ void dilate(int add, int s, char *fich, char *quoi){
     sprintf(text,"Dilate { {%s,%s,%s},%s } {\n   %s{%d};\n  }",
             dx_text,dy_text,dz_text,df_text, quoi,s);
   add_infile(text,fich);
-  add_infile("Coherence;",fich);
 }
 
 
@@ -530,7 +524,6 @@ void protude(int s, char *fich, char *what){
   sprintf(text,"Extrude %s {%d, {%s,%s,%s}, {%s,%s,%s}, %s};",what,s,ax_text,ay_text,
           az_text,px_text,py_text,pz_text,angle_text);
   add_infile(text,fich);
-  add_infile("Coherence;",fich);
 }
 
 

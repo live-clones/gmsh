@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.17 2000-12-09 03:13:48 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.18 2000-12-09 15:21:17 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -129,6 +129,7 @@ Fmod                    return tFmod ;
 Hypot                   return tHypot ;
 
 Include                 return tInclude;
+In                      return tIn;
 
 Knots			return tKnots;
 

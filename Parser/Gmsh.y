@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.32 2000-12-08 22:29:50 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.33 2000-12-09 15:21:17 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -33,7 +33,8 @@ extern char      ThePathForIncludes[NAME_STR_L];
 static FILE          *yyinTab[MAX_OPEN_FILES];
 static int            yylinenoTab[MAX_OPEN_FILES];
 static fpos_t         yyposImbricatedLoopsTab[MAX_OPEN_FILES];
-static int            LoopControlVariablesTab[MAX_OPEN_FILES][3];
+static double         LoopControlVariablesTab[MAX_OPEN_FILES][3];
+static char*          LoopControlVariablesNameTab[MAX_OPEN_FILES];
 static char           yynameTab[MAX_OPEN_FILES][NAME_STR_L];
 static char           tmpstring[NAME_STR_L];
 static Symbol         TheSymbol, *pSymbol;
@@ -88,7 +89,7 @@ void  vyyerror (char *fmt, ...);
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tFor tEndFor tScript tExit tMerge
+%token tColor tFor tIn tEndFor tScript tExit tMerge
 %token tReturn tCall tFunction
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
@@ -1720,7 +1721,7 @@ Command :
 
 Loop :   
 
-  tFor '(' FExpr tDOTS FExpr ')' 
+  tFor '{' FExpr tDOTS FExpr '}'
   {
     FILE* ff;
     if(RecursionLevel)
@@ -1728,12 +1729,13 @@ Loop :
     else
       ff = yyin;
     // here, we seek remember the position in yyin
-    LoopControlVariablesTab[ImbricatedLoop][0] = (int)$3 ;
-    LoopControlVariablesTab[ImbricatedLoop][1] = (int)$5 ;
-    LoopControlVariablesTab[ImbricatedLoop][2] = 1 ;
+    LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
+    LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
+    LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
+    LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
     fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
   }
-  | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')' 
+  | tFor '{' FExpr tDOTS FExpr tDOTS FExpr '}'
   {
     FILE* ff;
     if(RecursionLevel)
@@ -1741,23 +1743,75 @@ Loop :
     else
       ff = yyin;
     // here, we seek remember the position in yyin
-    LoopControlVariablesTab[ImbricatedLoop][0] = (int)$3 ;
-    LoopControlVariablesTab[ImbricatedLoop][1] = (int)$5 ;
-    LoopControlVariablesTab[ImbricatedLoop][2] = (int)$7 ;
+    LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
+    LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
+    LoopControlVariablesTab[ImbricatedLoop][2] = $7 ;
+    LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
+    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+  }
+  | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
+  {
+    FILE* ff;
+    if(RecursionLevel)
+      ff = yyinTab[RecursionLevel-1];
+    else
+      ff = yyin;
+    // here, we seek remember the position in yyin
+    LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
+    LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
+    LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
+    LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
+
+    TheSymbol.Name = $2;
+    TheSymbol.val  = $5;
+    if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+      List_Add(Symbol_L,&TheSymbol);
+    else
+      pSymbol->val = $5;
+
+    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+  }
+  | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
+  {
+    FILE* ff;
+    if(RecursionLevel)
+      ff = yyinTab[RecursionLevel-1];
+    else
+      ff = yyin;
+    // here, we seek remember the position in yyin
+    LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
+    LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
+    LoopControlVariablesTab[ImbricatedLoop][2] = $9 ;
+    LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
+
+    TheSymbol.Name = $2;
+    TheSymbol.val  = $5;
+    if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+      List_Add(Symbol_L,&TheSymbol);
+    else
+      pSymbol->val = $5;
+
     fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
   }
   | tEndFor 
   {
     if(LoopControlVariablesTab[ImbricatedLoop-1][1] >  
-       LoopControlVariablesTab[ImbricatedLoop-1][0])
-      {
+       LoopControlVariablesTab[ImbricatedLoop-1][0]){
 	FILE* ff;
 	if(RecursionLevel)
 	  ff = yyinTab[RecursionLevel-1];
 	else
 	  ff = yyin;
+
         LoopControlVariablesTab[ImbricatedLoop-1][0] +=
 	  LoopControlVariablesTab[ImbricatedLoop-1][2];
+
+	if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
+	  TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
+	  pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols);
+	  pSymbol->val += LoopControlVariablesTab[ImbricatedLoop-1][2];
+	}
+
         fsetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
       }
     else

@@ -1,4 +1,4 @@
-/* $Id: CbContext.cpp,v 1.6 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: CbContext.cpp,v 1.7 2000-12-09 15:21:17 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -33,7 +33,7 @@ static char *txt_move [] =
   { "Translate", "Rotate", "Dilate", "Symmetry", NULL };  
 
 static char *txt_elem [] = 
-  { "Add", "Move", "Extrude", "Delete", "Coherence", NULL };  
+  { "Add", "Move", "Extrude", "Delete", NULL };  
 
 static char *txt_phys [] = 
   { "Add", "Delete", NULL };  
@@ -356,7 +356,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     case 2: ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_MOVE,call_data); break;
     case 3: ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_EXTRUDE,call_data); break;
     case 4: ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_DELETE,call_data); break;
-    case 5: geom_event_handler(GEOM_ELEM_SKETCH); break;
+    //case 5: geom_event_handler(GEOM_ELEM_SKETCH); break;
     }
     break;
 

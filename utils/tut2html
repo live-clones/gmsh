@@ -1,0 +1,12 @@
+#!/usr/local/bin/bash
+
+if [ $# = 0 ] ; then
+  echo "Usage: tut2html file[s]"
+  exit 1
+fi
+
+for t in ${*/.geo/}; do
+  echo -n "[$t.html]"
+  enscript -Ecpp --color -Whtml -p$t.html $t.geo
+done
+

@@ -30,6 +30,7 @@ Install Gmsh if you need a simple 3D finite element mesh generator.
 make linux
 mv bin/gmsh-Linux bin/gmsh
 make utils
+rm -rf CVS */CVS */*/CVS
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -45,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc demos/*.* tutorial/*.* doc/FORMATS
+%doc doc/FORMATS demos tutorial
 /usr/bin/gmsh
 /usr/bin/dxf2geo
 /usr/man/man1/gmsh*
