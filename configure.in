@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.19 2003-02-17 01:46:39 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.20 2003-02-17 01:48:30 geuzaine Exp $"
 dnl
 dnl Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -106,12 +106,10 @@ if test "x$enable_gui" != "xno"; then
                    VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG"
                    GUI_LIBS="${GUI_LIBS} -ljpeg"))
   else
-    dnl Find the libs/includes even if jpeg is _not_ properly installed (ugly hack!)
-    LDFLAGS="-L${JPEG_PREFIX}/lib"
-    AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
-                 VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG"
-                 GUI_INCLUDE="${GUI_INCLUDE} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
-                 GUI_LIBS="${GUI_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg")
+    dnl Should work even if the jpeg libs/includes are _not_ properly installed (ugly hack!)
+    VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG"
+    GUI_INCLUDE="${GUI_INCLUDE} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+    GUI_LIBS="${GUI_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg")
   fi 
 
 else

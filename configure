@@ -3129,7 +3129,7 @@ fi
   else
         VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG"
     GUI_INCLUDE="${GUI_INCLUDE} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
-    GUI_LIBS="${GUI_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg")
+    GUI_LIBS="${GUI_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
   fi
 
 else
