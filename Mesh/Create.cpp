@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.50 2004-05-18 04:54:50 geuzaine Exp $
+// $Id: Create.cpp,v 1.51 2004-05-18 17:44:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -711,6 +711,7 @@ void Free_Surface(void *a, void *b)
     Tree_Delete(pS->Vertices);
     List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);
+    List_Delete(pS->Orientations);
     List_Delete(pS->Control_Points);
     List_Delete(pS->Generatrices);
     if(pS->Edges) {

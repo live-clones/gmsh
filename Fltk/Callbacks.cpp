@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.233 2004-05-18 17:00:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.234 2004-05-18 17:44:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2076,7 +2076,7 @@ static void _new_surface_volume(int mode)
 	  List_Reset(ListUnsorted);
 	  List_Add(List2, &num);
 	  while(1) {
-	    Msg(ONSCREEN1, "Select hole boundaries (if any)");
+	    Msg(ONSCREEN1, "Select hole boundaries (if none, press 'e')");
 	    Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
 	    ib = SelectEntity(type, &v, &c, &s);
 	    if(ib == 'q') {

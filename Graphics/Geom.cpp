@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.57 2004-05-18 04:54:50 geuzaine Exp $
+// $Id: Geom.cpp,v 1.58 2004-05-18 17:44:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -306,9 +306,6 @@ void Draw_Plane_Surface(Surface * s)
     return;
   }
 
-  static List_T *points;
-  static int deb = 1;
-
   if(!s->Orientations)
     s->Orientations = List_Create(20, 2, sizeof(Vertex));
 
@@ -316,12 +313,7 @@ void Draw_Plane_Surface(Surface * s)
 
     s->Orientations = List_Create(20, 2, sizeof(Vertex));
 
-    if(deb) {
-      points = List_Create(10, 10, sizeof(Vertex *));
-      deb = 0;
-    }
-    else
-      List_Reset(points);
+    List_T *points = List_Create(10, 10, sizeof(Vertex *));
 
     for(i = 0; i < List_Nbr(s->Generatrices); i++) {
       List_Read(s->Generatrices, i, &c);
@@ -331,6 +323,8 @@ void Draw_Plane_Surface(Surface * s)
     }
 
     MeanPlane(points, s);
+
+    List_Delete(points);
 
     k = 0;
 
@@ -423,20 +417,19 @@ void Draw_Plane_Surface(Surface * s)
     if(k)
       List_Add(s->Orientations, &vv);
 
-    Msg(STATUS2, "Plane Surface %d (%d points)", s->Num,
-        List_Nbr(s->Orientations));
+    Msg(STATUS2N, "Plane Surface %d (%d points)", s->Num, List_Nbr(s->Orientations));
   }
 
-  if(CTX.geom.surfaces) {
-    glBegin(GL_LINES);
-    for(i = 0; i < List_Nbr(s->Orientations); i++) {
-      List_Read(s->Orientations, i, &vv);
-      glVertex3d(vv.Pos.X, vv.Pos.Y, vv.Pos.Z);
+  if(List_Nbr(s->Orientations) > 1) {
+
+    if(CTX.geom.surfaces) {
+      glBegin(GL_LINES);
+      for(i = 0; i < List_Nbr(s->Orientations); i++) {
+	List_Read(s->Orientations, i, &vv);
+	glVertex3d(vv.Pos.X, vv.Pos.Y, vv.Pos.Z);
+      }
+      glEnd();
     }
-    glEnd();
-  }
-
-  if(List_Nbr(s->Orientations) > 1) {   //draw_surface can get called during the computation...
 
     if(CTX.geom.surfaces_num) {
       List_Read(s->Orientations, 0, &vv1);
