@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.28 2003-04-16 23:46:12 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.29 2003-04-18 07:53:51 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -23,6 +23,8 @@
 @c =========================================================================
 @c
 @c This is the Gmsh documentation texinfo source file
+@c
+@c Things to do -> "Ctrl+s todo:" 
 @c
 @c Indexing:
 @c
@@ -186,15 +188,23 @@ Geometry module
 Geometry commands
 
 * Points::                      
-* Curves::                      
+* Lines::                       
 * Surfaces::                    
 * Volumes::                     
-* Geometry manipulation::       
+* Extrusions::                  
+* Transformations::             
+* Miscellaneous geometry commands::  
 
 Mesh module
 
 * Mesh commands::               
 * Mesh options::                
+
+Mesh commands
+
+* Characteristic lengths::      
+* Structured grids::            
+* Miscellaneous mesh commands::  
 
 Solver module
 
@@ -341,7 +351,7 @@ modules is given hereafter.
 @section Geometry: geometrical entity definition
 
 Geometries are created in a bottom-up flow by successively defining points,
-oriented curves (line segments, circles, ellipses, splines,@w{ }@dots{}),
+oriented lines (line segments, circles, ellipses, splines,@w{ }@dots{}),
 oriented surfaces (plane surfaces, ruled surfaces,@w{ }@dots{}) and
 volumes. Compound groups of geometrical entities can be defined, based on
 these elementary geometric entities. Gmsh's scripting language allows all
@@ -366,10 +376,10 @@ are defined only by an ordered list of their vertices but that no predefined
 order relation is assumed between any two elements.
 
 The mesh generation is performed in the same bottom-up flow as the geometry
-creation: curves are discretized first; the mesh of the curves is then used
+creation: lines are discretized first; the mesh of the lines is then used
 to mesh the surfaces; then the mesh of the surfaces is used to mesh the
 volumes. This automatically assures the conformity of the mesh when, for
-example, two surfaces share a common curve. Every meshing step is
+example, two surfaces share a common line. Every meshing step is
 constrained by the characteristic length field, which can be uniform,
 specified by characteristic lengths associated with elementary geometrical
 entities, or associated with another mesh (the background mesh).
@@ -382,12 +392,12 @@ surface/volume discretization:
 @enumerate
 @item
 trivial meshing of a box including the convex polygon/polyhedron defined by
-the boundary nodes resulting from the discretization of the curves/surfaces;
+the boundary nodes resulting from the discretization of the lines/surfaces;
 @item
 creation of the initial mesh by insertion of all the nodes on the
-curves/surfaces thanks to the Bowyer algorithm;
+lines/surfaces thanks to the Bowyer algorithm;
 @item
-boundary restoration to force all the edges/faces of the curves/surfaces to
+boundary restoration to force all the edges/faces of the lines/surfaces to
 be present in the initial mesh;
 @item
 suppression of all the unwanted triangles/tetrahedra (in particular those
@@ -420,7 +430,7 @@ solver interfaced with Gmsh is GetDP
 
 Multiple post-processing scalar, vector or tensor maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
-mesh. Scalar fields are represented by iso-value curves/surfaces or color
+mesh. Scalar fields are represented by iso-value lines/surfaces or color
 maps, while vector and tensor fields are represented by three-dimensional
 arrows or displacement maps. Post-processing functions include arbitrary
 section computation, offset, elevation, boundary extraction, color map and
@@ -771,7 +781,7 @@ functions}) or general geometric primitives, when one does not know a priori
 which numbers are already attributed, and which ones are still available.
 
 @item newl
-Returns the next available curve number.
+Returns the next available line number.
 
 @item news
 Returns the next available surface number.
@@ -1021,7 +1031,6 @@ implemented:
 @var{build-in-function}:
 
 @ftable @code
-
 @item Acos ( @var{expression} )
 Arc cosine (inverse cosine) of an @var{expression} in [-1,1]. Returns a value
 in [0,Pi]. 
@@ -1106,7 +1115,6 @@ containing the function body was included at the location of the @code{Call}
 statement.
 
 @ftable @code
-
 @item Function @var{string}
 Begins the declaration of a user-defined function named @var{string}. The
 body of the function starts on the line after `@code{Function
@@ -1221,16 +1229,6 @@ current @code{Print.Format} (@pxref{General options}).
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
 
-@item Delete View[@var{expression}];
-Deletes (removes) the @var{expression}-th post-processing view. View
-numbers start at zero.
-
-@item Delete Meshes;
-Deletes all currently loaded meshes.
-
-@item Duplicata View[@var{expression}];
-Duplicates the @var{expression}-th post-processing view.
-
 @item System @var{expression-char};
 Executes a system call.
 
@@ -1279,9 +1277,9 @@ loaded by Gmsh during startup, by using the `Tools->Options->Save' menu.
 @cindex Geometry
 @cindex Module, Geometry
 
-Gmsh's geometry module provides a small CAD modeler, using a bottom-up
+Gmsh's geometry module provides a simple CAD engine, using a bottom-up
 approach: you need to first define points (using the @code{Point} command:
-see below), then curves (using @code{Line}, @code{Circle}, @code{Spline},@w{
+see below), then lines (using @code{Line}, @code{Circle}, @code{Spline},@w{
 }@dots{}, commands or by extruding points), then surfaces (using for example
 the @code{Plane Surface} or @code{RuledPlane Surface} commands, or by
 extruding lines), and finally volumes (using the @code{Volume} command or by
@@ -1291,7 +1289,7 @@ These geometrical entities are called ``elementary'' in Gmsh's jargon, and
 are assigned identification numbers when they are created:
 @enumerate
 @item each elementary point must possess a unique identification number;
-@item each elementary curve must possess a unique identification number;
+@item each elementary line must possess a unique identification number;
 @item each elementary surface must possess a unique identification number;
 @item each elementary volume must possess a unique identification number.
 @end enumerate
@@ -1305,14 +1303,10 @@ by geometry commands: their only purpose is to assemble elementary entities
 into larger groups, possibly modifying their orientation, so that they can
 be referred to by the mesh module as single entities. Each physical entity
 is assigned a unique identification number when it is created. That is, no
-two physical entities (even a physical point and a physical line) can share
-identical identification numbers. @xref{Mesh module}, for more information
-about how physical entites affect the way meshes are saved.
-
-The next section describes all the available geometrical
-commands. @ref{Geometry options}, describes all geometrical options, i.e.,
-options modifying the behavior of the geometry commands or governing how
-geometrical entities are handled in the GUI.
+two physical entities (even of different type, like a physical line and a
+physical surface) can share identical identification numbers. @xref{Mesh
+module}, for more information about how physical entites affect the way
+meshes are saved.
 
 @menu
 * Geometry commands::           
@@ -1326,26 +1320,28 @@ geometrical entities are handled in the GUI.
 @node Geometry commands, Geometry options, Geometry module, Geometry module
 @section Geometry commands
 
-Here is the list of all available geometry commands. These commands can be
-used anywhere in a Gmsh ASCII text input file. Note that the following
-general syntax rule is applied for the definition of geometrical entities:
-``If a number defines a new entity, it is enclosed between parentheses. If a
-number refers to a previously defined entity, it is enclosed between
-braces.''
+The next subsections describe all the available geometry commands. These
+commands can be used anywhere in a Gmsh ASCII text input file. Note that the
+following general syntax rule is applied for the definition of geometrical
+entities: ``If a number defines a new entity, it is enclosed between
+parentheses. If a number refers to a previously defined entity, it is
+enclosed between braces.''
 
 @menu
 * Points::                      
-* Curves::                      
+* Lines::                       
 * Surfaces::                    
 * Volumes::                     
-* Geometry manipulation::       
+* Extrusions::                  
+* Transformations::             
+* Miscellaneous geometry commands::  
 @end menu
 
 @c .........................................................................
 @c Points
 @c .........................................................................
 
-@node Points, Curves, Geometry commands, Geometry commands
+@node Points, Lines, Geometry commands, Geometry commands
 @subsection Points
 
 @ftable @code
@@ -1366,11 +1362,11 @@ group into the physical point.
 @end ftable
 
 @c .........................................................................
-@c Curves
+@c Lines
 @c .........................................................................
 
-@node Curves, Surfaces, Points, Geometry commands
-@subsection Curves
+@node Lines, Surfaces, Points, Geometry commands
+@subsection Lines
 
 @ftable @code
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
@@ -1392,9 +1388,8 @@ arc; the second @var{expression} gives the point number of the center of the
 circle; the last @var{expression} gives the number of the end point of the
 arc.
 
-@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @} Plane @{ @var{expression}, @var{expression}, @var{expression} @};
-Undocumented. @c todo
-
+@c todo:
+@c @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @} Plane @{ @var{expression}, @var{expression}, @var{expression} @};
 
 @item CatmullRom ( @var{expression} ) = @{ @var{expression-list} @};
 @code{CatmullRom} is a synonym for @code{Spline}.
@@ -1413,30 +1408,29 @@ point of the arc.  (A deprecated synonym for @code{Ellipse} is
 Creates a straight line segment. The @var{expression} inside the parentheses
 is the line segment number; the two @w{@var{expression}s} inside the braces
 on the right hand side give the start and end point numbers of the segment.
-@c multi-lines not authorized yet
+@c todo: multi-lines not authorized yet
 
 @item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented line loop. The @var{expression} inside the parentheses
 is the line loop number; the @var{expression-list} on the right hand side
-should contain the numbers of all the elementary curves that constitute the
-line loop. A line loop must be a closed loop, and the elementary curves
-should be ordered and oriented (using a negative curve number to specify
+should contain the numbers of all the elementary lines that constitute the
+line loop. A line loop must be a closed loop, and the elementary lines
+should be ordered and oriented (using a negative line number to specify
 reverse orientation). If the orientation is correct, but the ordering is
 wrong, Gmsh will actually reorder the list internally to create a consistent
 loop. Although Gmsh supports it, it is not recommened to specify multiple
 line loops (or subloops) in a single @code{Line Loop} command. (Line loops
 are used to create surfaces: see @ref{Surfaces}.)
 
-@item Nurbs ( @var{expression} ) = @{ @var{expression-list} @};
-Undocumented. @c todo
+@c todo:
+@c @item Nurbs ( @var{expression} ) = @{ @var{expression-list} @};
 
-@item Parametric ( @var{expression} ) = @{ @var{expression}, @var{expression}, "@var{string}", "@var{string}", "@var{string}" @};
-Undocumented. @c todo
+@c todo: @item Parametric ( @var{expression} ) = @{ @var{expression}, @var{expression}, "@var{string}", "@var{string}", "@var{string}" @};
 
 @item Physical Line ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a physical line. The @var{expression} inside the parentheses is the
 physical line number; the @var{expression-list} on the right hand side
-should contain the numbers of all the elementary curves that you want to
+should contain the numbers of all the elementary lines that you want to
 group into the physical line. Specifying negative numbers in the
 @var{expression-list} will reverse the orientation of the mesh elements in
 the saved mesh output file.
@@ -1451,18 +1445,13 @@ contain the numbers of all the spline's control points.
 @c Surfaces
 @c .........................................................................
 
-@node Surfaces, Volumes, Curves, Geometry commands
+@node Surfaces, Volumes, Lines, Geometry commands
 @subsection Surfaces
 
 @ftable @code
+@c todo: @item Nurbs Surface ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
 
-@item Nurbs Surface ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
-
-Undocumented. @c todo
-
-@item Nurbs Surface With Bounds ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
-
-Undocumented. @c todo
+@c todo: @item Nurbs Surface With Bounds ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
 
 @item Plane Surface ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a plane surface. The @var{expression} inside the parentheses is the
@@ -1486,18 +1475,16 @@ closed shell, and the elementary surfaces should be oriented consistently
 (using a negative surface number to specify reverse orientation). (Surface
 loops are used to create volumes: see @ref{Volumes}.)
 
-@item Triangulation Surface ( @var{expression} ) = ( @var{expression}, @var{expression} ) @{ @var{expression-list} @} @{ @var{expression-list} @};
-Undocumented. @c todo
+@c todo: @item Triangulation Surface ( @var{expression} ) = ( @var{expression}, @var{expression} ) @{ @var{expression-list} @} @{ @var{expression-list} @};
 
-@item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
-Undocumented. @c todo
+@c todo: @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
 @end ftable
 
 @c .........................................................................
 @c Volumes
 @c .........................................................................
 
-@node Volumes, Geometry manipulation, Surfaces, Geometry commands
+@node Volumes, Extrusions, Surfaces, Geometry commands
 @subsection Volumes
 
 @ftable @code
@@ -1511,39 +1498,114 @@ holes in the volume. (A deprecated synonym for @code{Volume} is
 @end ftable
 
 @c .........................................................................
-@c Geometry manipulation
+@c Extrusions
 @c .........................................................................
 
-@node Geometry manipulation,  , Volumes, Geometry commands
-@subsection Geometry manipulation
+@node Extrusions, Transformations, Volumes, Geometry commands
+@subsection Extrusions
+
+Lines, surfaces and volumes can also be created through extrusion of points,
+lines and surfaces, respectively. Here is the syntax of the geometrical
+extrusion commands (go to @ref{Structured grids} to see how these commands
+can be extended in order to also extrude the mesh):
+
+@ftable @code
+@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @};
+Extrudes the @var{expression}-th point, line or surface using a translation
+transformation. The @var{expression-list} should contain three
+@w{@var{expression}s} giving the X, Y and Z components of the translation
+vector.
+
+@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @};
+Extrudes the @var{expression}-th point, line or surface using a rotation
+transformation. The first @var{expression-list} should contain three
+@w{@var{expression}s} giving the X, Y and Z direction of the rotation axis;
+the second @var{expression-list} should contain three @w{@var{expression}s}
+giving the X, Y and Z components of any point on this axis; the last
+@var{expression} should contain the rotation angle (in radians).
+
+@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @};
+Extrudes the @var{expression}-th point, line or surface using a translation
+combined with a rotation. The first @var{expression-list} should contain
+three @w{@var{expression}s} giving the X, Y and Z components of the
+translation vector; the second @var{expression-list} should contain three
+@w{@var{expression}s} giving the X, Y and Z direction of the rotation axis;
+the third @var{expression-list} should contain three @w{@var{expression}s}
+giving the X, Y and Z components of any point on this axis; the last
+@var{expression} should contain the rotation angle (in radians).
+@end ftable
+
+@c .........................................................................
+@c Transformations
+@c .........................................................................
+
+@node Transformations, Miscellaneous geometry commands, Extrusions, Geometry commands
+@subsection Transformations
+
+Geometrical transformations can be applied to elementary entities, or to
+copies of geometrical entities (using the @code{Duplicata} command: see
+below). The syntax of the transformation commands is:
+
+@var{transform}:
+@ftable @code
+@item Dilate @{ @{ @var{expression-list} @}, @var{expression} @} @{ @var{transform-list} @}
+Scales all elementary entities (points, lines or surfaces) in
+@var{transform-list} by a factor @var{expression}. The @var{expression-list}
+should contain three @w{@var{expression}s} giving the X, Y and Z direction
+of the homothetic transformation.
+
+@item Rotate @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @}  @{ @var{transform-list} @}
+Rotates all elementary entities (points, lines or surfaces) in
+@var{transform-list} by an angle of @var{expression} radians. The first
+@var{expression-list} should contain three @w{@var{expression}s} giving the
+X, Y and Z direction of the rotation axis; the second @var{expression-list}
+should contain three @w{@var{expression}s} giving the X, Y and Z components
+of any point on this axis.
+
+@item Symmetry @{ @var{expression-list} @} @{ @var{transform-list} @}
+Transforms all elementary entities (points, lines or surfaces) by symmetry
+in respect to a plane. The @var{expression-list} should contain four
+@w{@var{expression}s} giving the coeffients of the plane's equation.
+
+@item Translate @{ @var{expression-list} @} @{ @var{transform-list} @}
+Translates all elementary entities (points, lines or surfaces) in
+@var{transform-list}. The @var{expression-list} should contain three
+@w{@var{expression}s} giving the X, Y and Z components of the translation
+vector.
+@end ftable
+
+@noindent with
+
+@example
+@var{transform-list}: 
+  < Point | Line | Surface @{ @var{expression-list} @}; > @dots{} |
+  Duplicata @{ < Point | Line | Surface @{ @var{expression-list} @}; > @dots{} @} |
+  @var{transform}
+@end example
+
+@c .........................................................................
+@c Miscellaneous
+@c .........................................................................
+
+@node Miscellaneous geometry commands,  , Transformations, Geometry commands
+@subsection Miscellaneous
+
+Here is a list of all other geometry commands currently available:
 
 @ftable @code
 @item Coherence;
+Removes all duplicate elementary geometrical entities (e.g. points having
+identical coordinates). Note that Gmsh executes the @code{Coherence} command
+automatically after each geometrical transformation, unless the
+@code{Geometry.AutoCoherence} is set to zero (@pxref{Geometry options}).
 
-@item Delete
+@item Delete @{ < Point | Line | Surface @{ @var{expression-list} @}; > @dots{} @};
+Deletes all elementary entities (points, lines or surfaces) whose numbers
+are given in @var{expression-list}.
 
-@item Dilate
-
-@item Duplicata
-
-@item Extrude
-
-@item Intersect
-
-@item Order
-
-@item Physical
-
-@item Plane
-
-@item Rotate
-
-@item Ruled
-
-@item Symmetry
-
-@item Translate
-
+@c todo:
+@c @item Intersect;
+@c Intersects all lines.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1553,7 +1615,7 @@ holes in the volume. (A deprecated synonym for @code{Volume} is
 @node Geometry options,  , Geometry commands, Geometry module
 @section Geometry options
 
-Geometry options control the behavior or geometry commands, as well as the
+Geometry options control the behavior of geometry commands, as well as the
 way geometrical entitities are handled in the graphical user interface. For
 the signification of the `Saved in:' field in the following list, see
 @ref{General options}.
@@ -1582,30 +1644,56 @@ the signification of the `Saved in:' field in the following list, see
 @node Mesh commands, Mesh options, Mesh module, Mesh module
 @section Mesh commands
 
+The mesh module commands mostly permit to modify the characteristic lengths
+and specify structured grid parameters. The actual mesh ``actions'' cannot
+be specified in the input ASCII text input files: they have to be given
+either in the GUI (using the Mesh->1D|2D|3D buttons; see @ref{Running Gmsh})
+or on the command line (with the @code{-1}, @code{-2} or @code{-3} options;
+see @ref{Running Gmsh} and @ref{Command-line options}).
+
+@menu
+* Characteristic lengths::      
+* Structured grids::            
+* Miscellaneous mesh commands::  
+@end menu
+
+@c .........................................................................
+@c Characteristic lengths
+@c .........................................................................
+
+@node Characteristic lengths, Structured grids, Mesh commands, Mesh commands
+@subsection Characteristic lengths
+
 @ftable @code
 @item Attractor Point @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
 
-@item Attractor Line @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
+(see @code{Mesh.Algorithm} in @ref{Mesh options}).
 
-@item Bump
+@item Attractor Line @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
 
 @item Characteristic Length @{ @var{expression-list} @} = @var{expression};
 
-@item Color
+@end ftable
+
+@c .........................................................................
+@c Structured grids
+@c .........................................................................
+
+@node Structured grids, Miscellaneous mesh commands, Characteristic lengths, Mesh commands
+@subsection Structured grids
+
+@ftable @code
+@item Bump
 
 @item Elliptic
 
 @item Extrude Layers          
-
-@item Meshes          
 
 @item Power           
 
 @item Progression     
 
 @item Parametric	
-
-@item Recombine
 
 @item Transfinite     
 
@@ -1614,6 +1702,25 @@ the signification of the `Saved in:' field in the following list, see
 @item Using           
 
 @item In              
+@end ftable
+
+@c .........................................................................
+@c Miscellaneous
+@c .........................................................................
+
+@node Miscellaneous mesh commands,  , Structured grids, Mesh commands
+@subsection Miscellaneous
+
+Here is a list of all other mesh commands currently available:
+
+@ftable @code
+@item Color
+
+@item Delete Meshes;
+Deletes all currently loaded meshes.
+
+@item Recombine
+
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1676,9 +1783,19 @@ from solver example?
 @ftable @code
 @item ColorTable
 
-@item Plugin
-@item View
+@item Delete View[@var{expression}];
+Deletes (removes) the @var{expression}-th post-processing view. View
+numbers start at zero.
 
+@item Duplicata View[@var{expression}];
+Duplicates the @var{expression}-th post-processing view.
+
+@item Plugin
+
+@item View "@var{string}" @{ @var{string} ( @var{expression-list} ) @{ @var{expression-list} @}; @dots{} @}
+Creates a new post-processig view, named @code{"@var{string}"}.
+
+See @ref{Gmsh parsed post-processing file format}
 @item SP
 @item VP
 @item TP
@@ -1887,8 +2004,8 @@ menu window (with a menu bar and some context dependent buttons). To open
 the first tutorial file, select the `File->Open' menu, and choose
 @file{t1.geo} in the input field. To perform the mesh generation, go to the
 mesh module (by selecting `Mesh' in the module menu) and choose the required
-dimension in the context-dependent buttons (`1D' will mesh all the curves;
-`2D' will mesh all the surfaces---as well as all the curves if `1D' was not
+dimension in the context-dependent buttons (`1D' will mesh all the lines;
+`2D' will mesh all the surfaces---as well as all the lines if `1D' was not
 called before; `3D' will mesh all the volumes---and all the surfaces if `2D'
 was not called before). To save the resulting mesh in the current mesh
 format, choose `Save' in the context-dependent buttons, or select the
@@ -1912,7 +2029,7 @@ example with:
 Note that, even if it is often handy to define the variables and the points
 directly in the input files (you may use any text editor for this purpose,
 e.g. Wordpad on Windows, or Emacs on Unix), it is almost always more simple
-to define the curves, the surfaces and the volumes interactively. To do so,
+to define the lines, the surfaces and the volumes interactively. To do so,
 just follow the context dependent buttons in the Geometry module. For
 example, to create a spline, select `Geometry' in the module menu, and then
 select `Elementary, Add, New, Spline'. You will then be asked (in the status
