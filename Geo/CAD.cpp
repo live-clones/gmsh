@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.75 2004-05-12 22:51:07 geuzaine Exp $
+// $Id: CAD.cpp,v 1.76 2004-07-01 19:40:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -362,7 +362,7 @@ void CopyShape(int Type, int Num, int *New)
   switch (Type) {
   case MSH_POINT:
     if(!(v = FindPoint(Num, THEM))) {
-      Msg(GERROR, "Unknown Vertex %d", Num);
+      Msg(GERROR, "Unknown vertex %d", Num);
       return;
     }
     newv = DuplicateVertex(v);
@@ -377,7 +377,7 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
     if(!(c = FindCurve(Num, THEM))) {
-      Msg(GERROR, "Unknown Curve %d", Num);
+      Msg(GERROR, "Unknown curve %d", Num);
       return;
     }
     newc = DuplicateCurve(c);
@@ -388,7 +388,7 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
     if(!(s = FindSurface(Num, THEM))) {
-      Msg(GERROR, "Unknown Surface %d", Num);
+      Msg(GERROR, "Unknown surface %d", Num);
       return;
     }
     news = DuplicateSurface(s);
@@ -950,7 +950,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
       if(v)
         ApplyTransformationToPoint(matrix, v);
       else
-        Msg(GERROR, "Unknown Point %d", O.Num);
+        Msg(GERROR, "Unknown point %d", O.Num);
       break;
     case MSH_SEGM_LINE:
     case MSH_SEGM_SPLN:
@@ -964,7 +964,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
       if(c)
         ApplyTransformationToCurve(matrix, c);
       else
-        Msg(GERROR, "Unknown Curve %d", O.Num);
+        Msg(GERROR, "Unknown curve %d", O.Num);
       break;
     case MSH_SURF_NURBS:
     case MSH_SURF_REGL:
@@ -974,7 +974,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
       if(s)
         ApplyTransformationToSurface(matrix, s);
       else
-        Msg(GERROR, "Unknown Surface %d", O.Num);
+        Msg(GERROR, "Unknown surface %d", O.Num);
       break;
     default:
       Msg(GERROR, "Impossible to transform entity %d (of type %d)", O.Num,
@@ -1439,7 +1439,7 @@ int Extrude_ProtudeSurface(int type, int is,
     List_Read(chapeau->Generatrices, i, &c);
     if(c->Num < 0)
       if(!(c = FindCurve(-c->Num, THEM))) {
-        Msg(GERROR, "Unknown Curve %d", -c->Num);
+        Msg(GERROR, "Unknown curve %d", -c->Num);
         return ps->Num;
       }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
@@ -1758,7 +1758,7 @@ void ReplaceDuplicateCurves(Mesh * m)
       if(!Tree_Search(allNonDuplicatedCurves, &c)) {
         Tree_Insert(allNonDuplicatedCurves, &c);
         if(!(c2 = FindCurve(-c->Num, m))) {
-          Msg(GERROR, "Unknown Curve %d", -c->Num);
+          Msg(GERROR, "Unknown curve %d", -c->Num);
           List_Delete(All);
           return;
         }
@@ -1767,7 +1767,7 @@ void ReplaceDuplicateCurves(Mesh * m)
       else {
         Tree_Suppress(m->Curves, &c);
         if(!(c2 = FindCurve(-c->Num, m))) {
-          Msg(GERROR, "Unknown Curve %d", -c->Num);
+          Msg(GERROR, "Unknown curve %d", -c->Num);
           List_Delete(All);
           return;
         }

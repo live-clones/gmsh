@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.4 2004-06-30 00:57:50 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.5 2004-07-01 19:40:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ void sortEdgesInLoop(int num, List_T *edges)
     if((c = FindCurve(j, THEM)))
       List_Add(temp, &c);
     else
-      Msg(GERROR, "Unknown Curve %d in Line Loop %d", j, num);
+      Msg(GERROR, "Unknown curve %d in line loop %d", j, num);
   }
   List_Reset(edges);
   
@@ -91,7 +91,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
     List_Read(loops, i, &iLoop);
     EdgeLoop *el;
     if(!(el = FindEdgeLoop(iLoop, THEM))) {
-      Msg(GERROR, "Unknown Line Loop %d", iLoop);
+      Msg(GERROR, "Unknown line loop %d", iLoop);
       List_Delete(s->Generatrices);
       return;
     }
@@ -102,7 +102,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
 	for(int j = 0; j < List_Nbr(el->Curves); j++) {
 	  List_Read(el->Curves, j, &ic);
 	  if(!(c = FindCurve(ic, THEM))) {
-	    Msg(GERROR, "Unknown Curve %d", ic);
+	    Msg(GERROR, "Unknown curve %d", ic);
 	    List_Delete(s->Generatrices);
 	    return;
 	  }
@@ -116,7 +116,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
 	  List_Read(el->Curves, j, &ic);
 	  ic *= -1;
 	  if(!(c = FindCurve(ic, THEM))) {
-	    Msg(GERROR, "Unknown Curve %d", ic);
+	    Msg(GERROR, "Unknown curve %d", ic);
 	    List_Delete(s->Generatrices);
 	    return;
 	  }
@@ -140,7 +140,7 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
     List_Read(loops, i, &il);
     SurfaceLoop *sl;
     if(!(sl = FindSurfaceLoop(il, THEM))) {
-      Msg(GERROR, "Unknown Surface Loop %d", il);
+      Msg(GERROR, "Unknown surface loop %d", il);
       return;
     }
     else {
@@ -153,7 +153,7 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
 	// surfaces. So we just store the signs in another list
 	// (beeerk...)
         if(!(s = FindSurface(abs(is), THEM))) {
-          Msg(GERROR, "Unknown Surface %d", is);
+          Msg(GERROR, "Unknown surface %d", is);
           return;
         }
         else{

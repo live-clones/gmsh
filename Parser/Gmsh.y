@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.172 2004-06-08 00:30:22 geuzaine Exp $
+// $Id: Gmsh.y,v 1.173 2004-07-01 19:41:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1685,7 +1685,7 @@ Shape :
       	List_Read($3, i, &p);
         Vertex *v = FindPoint((int)p, THEM);
         if(!v)
-	  yymsg(WARNING, "Unknown Point %d", (int)p);
+	  yymsg(WARNING, "Unknown point %d", (int)p);
 	else{
 	  Attractor *a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
 					  $6, $8, $10, v, NULL, NULL);
@@ -1704,7 +1704,7 @@ Shape :
 	List_Read($3, i, &d);
 	Vertex *v = FindPoint((int)d, THEM);
 	if(!v)
-	  yymsg(WARNING, "Unknown Point %d", (int)d);
+	  yymsg(WARNING, "Unknown point %d", (int)d);
 	else
 	  v->lc = $5;
       }
@@ -1957,7 +1957,7 @@ Shape :
       	List_Read($3, i, &p);
 	Curve *c = FindCurve((int)p, THEM);
         if(!c)
-	  yymsg(WARNING, "Unknown Curve %d", (int)p);
+	  yymsg(WARNING, "Unknown curve %d", (int)p);
 	else{
 	  Attractor *a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
 					  $6, $8, $10, NULL, c, NULL);
@@ -2017,7 +2017,7 @@ Shape :
 	List_Read($7, 0, &d);
 	EdgeLoop *el = FindEdgeLoop((int)d, THEM);
 	if(!el){
-	  yymsg(GERROR, "Unknown Line Loop %d", (int)d);
+	  yymsg(GERROR, "Unknown line loop %d", (int)d);
 	}
 	else{
 	  int j = List_Nbr(el->Curves);
@@ -2282,7 +2282,7 @@ ListOfShapes :
 	TheShape.Num = (int)d;
 	Vertex *v = FindPoint(TheShape.Num, THEM);
 	if(!v)
-	  yymsg(WARNING, "Unknown Point %d", TheShape.Num);
+	  yymsg(WARNING, "Unknown point %d", TheShape.Num);
 	else{
 	  TheShape.Type = MSH_POINT;
 	  List_Add($$, &TheShape);
@@ -2298,7 +2298,7 @@ ListOfShapes :
 	TheShape.Num = (int)d;
 	Curve *c = FindCurve(TheShape.Num, THEM);
 	if(!c)
-	  yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	  yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	else{
 	  TheShape.Type = c->Typ;
 	  List_Add($$, &TheShape);
@@ -2314,7 +2314,7 @@ ListOfShapes :
 	TheShape.Num = (int)d;
 	Surface *s = FindSurface(TheShape.Num, THEM);
 	if(!s)
-	  yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	  yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	else{
 	  TheShape.Type = s->Typ;
 	  List_Add($$, &TheShape);
@@ -2330,7 +2330,7 @@ ListOfShapes :
 	TheShape.Num = (int)d;
 	Volume *v = FindVolume(TheShape.Num, THEM);
 	if(!v)
-	  yymsg(WARNING, "Unknown Volume %d", TheShape.Num);
+	  yymsg(WARNING, "Unknown volume %d", TheShape.Num);
 	else{
 	  TheShape.Type = v->Typ;
 	  List_Add($$, &TheShape);
@@ -2525,7 +2525,7 @@ Command :
       else if(!strcmp($2, "TimeSteps"))
 	CombineViews_Time(2, 0);
       else
-	yymsg(GERROR, "Unknown Combine command");
+	yymsg(GERROR, "Unknown 'Combine' command");
     } 
    | tExit tEND
     {
@@ -2780,7 +2780,7 @@ Extrude :
 					  &ps, 1, NULL);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2798,7 +2798,7 @@ Extrude :
 					  &ps, 1, NULL);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2816,7 +2816,7 @@ Extrude :
 					  &ps, 1, NULL);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2839,7 +2839,7 @@ Extrude :
 					  &ps, 1, &extr);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2862,7 +2862,7 @@ Extrude :
 					  &ps, 1, &extr);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2885,7 +2885,7 @@ Extrude :
 					  &ps, 1, &extr);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2905,7 +2905,7 @@ Extrude :
 					    0, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2922,7 +2922,7 @@ Extrude :
 					    0, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2939,7 +2939,7 @@ Extrude :
 					    0, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2961,7 +2961,7 @@ Extrude :
 					    NEWREG(), &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2984,7 +2984,7 @@ Extrude :
 					    NEWREG(), &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -3007,7 +3007,7 @@ Extrude :
 					    NEWREG(), &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -3095,7 +3095,7 @@ Transfinite :
 	int j = (int)fabs(d);
         Curve *c = FindCurve(j, THEM);
 	if(!c)
-	  yymsg(WARNING, "Unknown Curve %d", j);
+	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = ($5>2)?(int)$5:2;
@@ -3113,7 +3113,7 @@ Transfinite :
 	int j = (int)fabs(d);
         Curve *c = FindCurve(j, THEM);
 	if(!c)
-	  yymsg(WARNING, "Unknown Curve %d", j);
+	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = ($5>2)?(int)$5:2;
@@ -3131,7 +3131,7 @@ Transfinite :
 	int j = (int)fabs(d);
         Curve *c = FindCurve(j, THEM);
 	if(!c)
-	  yymsg(WARNING, "Unknown Curve %d", j);
+	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = ($5>2)?(int)$5:2;
@@ -3145,7 +3145,7 @@ Transfinite :
     {
       Surface *s = FindSurface((int)$4, THEM);
       if(!s)
-	yymsg(WARNING, "Unknown Surface %d", (int)$4);
+	yymsg(WARNING, "Unknown surface %d", (int)$4);
       else{
 	s->Method = TRANSFINI;
 	int k = List_Nbr($7);
@@ -3160,7 +3160,7 @@ Transfinite :
 	    int j = (int)fabs(d);
 	    Vertex *v = FindPoint(j, THEM);
 	    if(!v)
-	      yymsg(WARNING, "Unknown Point %d", j);
+	      yymsg(WARNING, "Unknown point %d", j);
 	    else
 	      List_Add(s->TrsfPoints, &v);
 	  }
@@ -3172,7 +3172,7 @@ Transfinite :
     {
       Surface *s = FindSurface((int)$4, THEM);
       if(!s)
-	yymsg(WARNING, "Unknown Surface %d", (int)$4);
+	yymsg(WARNING, "Unknown surface %d", (int)$4);
       else{
         s->Method = ELLIPTIC;
         int k = List_Nbr($7);
@@ -3186,7 +3186,7 @@ Transfinite :
 	    int j = (int)fabs(d);
 	    Vertex *v = FindPoint(j, THEM);
 	    if(!v)
-	      yymsg(WARNING, "Unknown Point %d", j);
+	      yymsg(WARNING, "Unknown point %d", j);
 	    else
 	      List_Add(s->TrsfPoints, &v);
 	  }
@@ -3198,7 +3198,7 @@ Transfinite :
     {
       Volume *v = FindVolume((int)$4, THEM);
       if(!v)
-	yymsg(WARNING, "Unknown Volume %d", (int)$4);
+	yymsg(WARNING, "Unknown volume %d", (int)$4);
       else{
 	v->Method = TRANSFINI;
 	int k = List_Nbr($7);
@@ -3212,7 +3212,7 @@ Transfinite :
 	    int j = (int)fabs(d);
 	    Vertex *vert = FindPoint(j, THEM);
 	    if(!vert)
-	      yymsg(WARNING, "Unknown Point %d", j);
+	      yymsg(WARNING, "Unknown point %d", j);
 	    else
 	      List_Add(v->TrsfPoints, &vert);
 	  }
