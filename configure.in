@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.7 2003-02-12 00:27:06 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.8 2003-02-12 16:12:27 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -84,8 +84,8 @@ GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
 dnl Choose blackbox or GUI version
 if test "x$enable_gui" != "xno"; then
 
-  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk jpeg"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin -lGmshParallel"
+  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshParallel"
   VERSION_FLAGS="-D_FLTK"
   if test "x${FLTK_PREFIX}" != "x" ; then
     AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${FLTK_PREFIX})
@@ -95,8 +95,8 @@ if test "x$enable_gui" != "xno"; then
   if test "x$FLTKCONFIG" = "x"; then
     AC_MSG_ERROR(Could not find fltk-config. Try --with-fltk-prefix?)
   fi
-  GUI_LIBS="`$FLTKCONFIG --use-gl --ldstaticflags`"
-  GUI_INCLUDE="`$FLTKCONFIG --use-gl --cxxflags`"
+  GUI_LIBS="`$FLTKCONFIG --use-gl --use-images --ldstaticflags`"
+  GUI_INCLUDE="`$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
 else
 
@@ -115,6 +115,11 @@ if test "x${HAVE_TRIANGLE}" = "xyes" -a "x$enable_triangle" != "xno"; then
   GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
   VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_TRIANGLE"
 fi
+
+dnl Check if libjpeg is available (in case fltk didn't find it) to enable/disable gl2jpg
+AC_CHECK_HEADER(jpeglib.h,
+  AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
+    VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPG" GUI_LIBS="${GUI_LIBS} -ljpeg"))
 
 dnl Check if if should build the parallel version
 if test "x$enable_parallel" = "xyes"; then

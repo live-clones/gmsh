@@ -2670,8 +2670,8 @@ GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
 
 if test "x$enable_gui" != "xno"; then
 
-  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk jpeg"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin -lGmshParallel"
+  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshParallel"
   VERSION_FLAGS="-D_FLTK"
   if test "x${FLTK_PREFIX}" != "x" ; then
     # Extract the first word of "fltk-config", so it can be a program name with args.
@@ -2760,8 +2760,8 @@ fi
 echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
    { (exit 1); exit 1; }; }
   fi
-  GUI_LIBS="`$FLTKCONFIG --use-gl --ldstaticflags`"
-  GUI_INCLUDE="`$FLTKCONFIG --use-gl --cxxflags`"
+  GUI_LIBS="`$FLTKCONFIG --use-gl --use-images --ldstaticflags`"
+  GUI_INCLUDE="`$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
 else
 
@@ -2801,349 +2801,6 @@ if test "x${HAVE_TRIANGLE}" = "xyes" -a "x$enable_triangle" != "xno"; then
   GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
   VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_TRIANGLE"
 fi
-
-if test "x$enable_parallel" = "xyes"; then
-  VERSION_FLAGS="${VERSION_FLAGS} -DPARALLEL"
-fi
-
-
-
-
-OPT_FLAGS="${CXXFLAGS}"
-OS_FLAGS=""
-LINKER="${CXX}"
-POSTBUILD=""
-
-if test "x$enable_gui" != "xno"; then
-  GMSH_LIBS="${GMSH_LIBS} ${GUI_LIBS}"
-else
-  GMSH_LIBS="${GMSH_LIBS} -lm";
-fi
-
-case "$UNAME" in
-
-  CYGWIN* | MINGW*)
-    LINKER="${LINKER} -Wl,--subsystem,windows -mwindows"
-    if test "x$enable_gui" != "xno"; then
-      GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
-    fi
-    ;;
-
-  Darwin*)
-    OS_FLAGS="${OS_FLAGS} -D_NODLL"
-    POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
-    ;;
-
-  AIX*)
-    OS_FLAGS="${OS_FLAGS} -D_BSD -D_NODLL"
-    ;;
-
-  IRIX*)
-    CXX="CC"
-    CC="cc"
-    OS_FLAGS="${OS_FLAGS} -mips3 -n32"
-    OPT_FLAGS="-O2 -OPT:Olimit=0 -LANG:std"
-    AR="CC -mips3 -n32 -ar -o"
-    LINKER="CC -O2 -mips3 -n32"
-    ;;
-
-  SunOS*)
-    OS_FLAGS="${OS_FLAGS} -D_NODLL"
-    GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
-    ;;
-
-  HP-UX*)
-    OS_FLAGS="-D_NODLL"
-    ;;
-
-esac
-
-
-echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5
-echo $ECHO_N "checking whether byte ordering is bigendian... $ECHO_C" >&6
-if test "${ac_cv_c_bigendian+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  # See if sys/param.h defines the BYTE_ORDER macro.
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <sys/types.h>
-#include <sys/param.h>
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
- bogus endian macros
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  # It does; now see whether it defined to BIG_ENDIAN or not.
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <sys/types.h>
-#include <sys/param.h>
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-#if BYTE_ORDER != BIG_ENDIAN
- not big endian
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_bigendian=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-ac_cv_c_bigendian=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-# It does not; compile a test program.
-if test "$cross_compiling" = yes; then
-  # try to guess the endianess by grep'ing values into an object file
-  ac_cv_c_bigendian=unknown
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-short ascii_mm[] = { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
-short ascii_ii[] = { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
-void _ascii () { char *s = (char *) ascii_mm; s = (char *) ascii_ii; }
-short ebcdic_ii[] = { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
-short ebcdic_mm[] = { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
-void _ebcdic () { char *s = (char *) ebcdic_mm; s = (char *) ebcdic_ii; }
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
- _ascii (); _ebcdic ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  if fgrep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
-  ac_cv_c_bigendian=yes
-fi
-if fgrep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
-  if test "$ac_cv_c_bigendian" = unknown; then
-    ac_cv_c_bigendian=no
-  else
-    # finding both strings is unlikely to happen, but who knows?
-    ac_cv_c_bigendian=unknown
-  fi
-fi
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-int
-main ()
-{
-  /* Are we little or big endian?  From Harbison&Steele.  */
-  union
-  {
-    long l;
-    char c[sizeof (long)];
-  } u;
-  u.l = 1;
-  exit (u.c[sizeof (long) - 1] == 1);
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_bigendian=no
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
-ac_cv_c_bigendian=yes
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
-echo "${ECHO_T}$ac_cv_c_bigendian" >&6
-case $ac_cv_c_bigendian in
-  yes)
-
-cat >>confdefs.h <<\_ACEOF
-#define WORDS_BIGENDIAN 1
-_ACEOF
- ;;
-  no)
-    OS_FLAGS="-D_LITTLE_ENDIAN ${OS_FLAGS}" ;;
-  *)
-    { { echo "$as_me:$LINENO: error: unknown endianess
-presetting ac_cv_c_bigendian=no (or yes) will help" >&5
-echo "$as_me: error: unknown endianess
-presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
-   { (exit 1); exit 1; }; } ;;
-esac
-
-
-
-
-
-
-
-
-
-
-if test "x${GSL_PREFIX}" = "x"; then
-  LDFLAGS="-lgslcblas"
-else
-  LDFLAGS="-L${GSL_PREFIX}/lib -lgslcblas"
-fi
-echo "$as_me:$LINENO: checking for gsl_vector_alloc in -lgsl" >&5
-echo $ECHO_N "checking for gsl_vector_alloc in -lgsl... $ECHO_C" >&6
-if test "${ac_cv_lib_gsl_gsl_vector_alloc+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgsl  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char gsl_vector_alloc ();
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-gsl_vector_alloc ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_gsl_gsl_vector_alloc=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-ac_cv_lib_gsl_gsl_vector_alloc=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gsl_gsl_vector_alloc" >&5
-echo "${ECHO_T}$ac_cv_lib_gsl_gsl_vector_alloc" >&6
-if test $ac_cv_lib_gsl_gsl_vector_alloc = yes; then
-  GSL="yes"
-else
-  GSL="no"
-fi
-
-if test "x${GSL_PREFIX}" = "x"; then
-  GSL_LIBS="-lgsl -lgslcblas"
-else
-  GSL_LIBS="-L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-  GSL_INCLUDE="-I${GSL_PREFIX}/include"
-fi
-
-
 
 ac_ext=cc
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -3537,6 +3194,514 @@ _ACEOF
 fi
 
 done
+
+
+if test "${ac_cv_header_jpeglib_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for jpeglib.h" >&5
+echo $ECHO_N "checking for jpeglib.h... $ECHO_C" >&6
+if test "${ac_cv_header_jpeglib_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_jpeglib_h" >&5
+echo "${ECHO_T}$ac_cv_header_jpeglib_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking jpeglib.h usability" >&5
+echo $ECHO_N "checking jpeglib.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+$ac_includes_default
+#include <jpeglib.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_header_compiler=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking jpeglib.h presence" >&5
+echo $ECHO_N "checking jpeglib.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <jpeglib.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  egrep -v '^ *\+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_cxx_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc in
+  yes:no )
+    { echo "$as_me:$LINENO: WARNING: jpeglib.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: jpeglib.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: jpeglib.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: jpeglib.h: proceeding with the preprocessor's result" >&2;};;
+  no:yes )
+    { echo "$as_me:$LINENO: WARNING: jpeglib.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: jpeglib.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: jpeglib.h: check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: jpeglib.h: check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: jpeglib.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: jpeglib.h: proceeding with the preprocessor's result" >&2;};;
+esac
+echo "$as_me:$LINENO: checking for jpeglib.h" >&5
+echo $ECHO_N "checking for jpeglib.h... $ECHO_C" >&6
+if test "${ac_cv_header_jpeglib_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_jpeglib_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_jpeglib_h" >&5
+echo "${ECHO_T}$ac_cv_header_jpeglib_h" >&6
+
+fi
+if test $ac_cv_header_jpeglib_h = yes; then
+  echo "$as_me:$LINENO: checking for jpeg_destroy_decompress in -ljpeg" >&5
+echo $ECHO_N "checking for jpeg_destroy_decompress in -ljpeg... $ECHO_C" >&6
+if test "${ac_cv_lib_jpeg_jpeg_destroy_decompress+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljpeg  $LIBS"
+
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char jpeg_destroy_decompress ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+jpeg_destroy_decompress ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_jpeg_jpeg_destroy_decompress=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_jpeg_jpeg_destroy_decompress=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_jpeg_jpeg_destroy_decompress" >&5
+echo "${ECHO_T}$ac_cv_lib_jpeg_jpeg_destroy_decompress" >&6
+if test $ac_cv_lib_jpeg_jpeg_destroy_decompress = yes; then
+  VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPG" GUI_LIBS="${GUI_LIBS} -ljpeg"
+fi
+
+fi
+
+
+
+if test "x$enable_parallel" = "xyes"; then
+  VERSION_FLAGS="${VERSION_FLAGS} -DPARALLEL"
+fi
+
+
+
+
+OPT_FLAGS="${CXXFLAGS}"
+OS_FLAGS=""
+LINKER="${CXX}"
+POSTBUILD=""
+
+if test "x$enable_gui" != "xno"; then
+  GMSH_LIBS="${GMSH_LIBS} ${GUI_LIBS}"
+else
+  GMSH_LIBS="${GMSH_LIBS} -lm";
+fi
+
+case "$UNAME" in
+
+  CYGWIN* | MINGW*)
+    LINKER="${LINKER} -Wl,--subsystem,windows -mwindows"
+    if test "x$enable_gui" != "xno"; then
+      GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
+    fi
+    ;;
+
+  Darwin*)
+    OS_FLAGS="${OS_FLAGS} -D_NODLL"
+    POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
+    ;;
+
+  AIX*)
+    OS_FLAGS="${OS_FLAGS} -D_BSD -D_NODLL"
+    ;;
+
+  IRIX*)
+    CXX="CC"
+    CC="cc"
+    OS_FLAGS="${OS_FLAGS} -mips3 -n32"
+    OPT_FLAGS="-O2 -OPT:Olimit=0 -LANG:std"
+    AR="CC -mips3 -n32 -ar -o"
+    LINKER="CC -O2 -mips3 -n32"
+    ;;
+
+  SunOS*)
+    OS_FLAGS="${OS_FLAGS} -D_NODLL"
+    GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
+    ;;
+
+  HP-UX*)
+    OS_FLAGS="-D_NODLL"
+    ;;
+
+esac
+
+echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5
+echo $ECHO_N "checking whether byte ordering is bigendian... $ECHO_C" >&6
+if test "${ac_cv_c_bigendian+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  # See if sys/param.h defines the BYTE_ORDER macro.
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+#if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
+ bogus endian macros
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  # It does; now see whether it defined to BIG_ENDIAN or not.
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+#if BYTE_ORDER != BIG_ENDIAN
+ not big endian
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_bigendian=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_c_bigendian=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+# It does not; compile a test program.
+if test "$cross_compiling" = yes; then
+  # try to guess the endianess by grep'ing values into an object file
+  ac_cv_c_bigendian=unknown
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+short ascii_mm[] = { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
+short ascii_ii[] = { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
+void _ascii () { char *s = (char *) ascii_mm; s = (char *) ascii_ii; }
+short ebcdic_ii[] = { 0x89D3, 0xE3E3, 0x8593, 0x95C5, 0x89C4, 0x9581, 0 };
+short ebcdic_mm[] = { 0xC2C9, 0xC785, 0x95C4, 0x8981, 0x95E2, 0xA8E2, 0 };
+void _ebcdic () { char *s = (char *) ebcdic_mm; s = (char *) ebcdic_ii; }
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+ _ascii (); _ebcdic ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  if fgrep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
+  ac_cv_c_bigendian=yes
+fi
+if fgrep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
+  if test "$ac_cv_c_bigendian" = unknown; then
+    ac_cv_c_bigendian=no
+  else
+    # finding both strings is unlikely to happen, but who knows?
+    ac_cv_c_bigendian=unknown
+  fi
+fi
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+int
+main ()
+{
+  /* Are we little or big endian?  From Harbison&Steele.  */
+  union
+  {
+    long l;
+    char c[sizeof (long)];
+  } u;
+  u.l = 1;
+  exit (u.c[sizeof (long) - 1] == 1);
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_bigendian=no
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+ac_cv_c_bigendian=yes
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
+echo "${ECHO_T}$ac_cv_c_bigendian" >&6
+case $ac_cv_c_bigendian in
+  yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define WORDS_BIGENDIAN 1
+_ACEOF
+ ;;
+  no)
+    OS_FLAGS="-D_LITTLE_ENDIAN ${OS_FLAGS}" ;;
+  *)
+    { { echo "$as_me:$LINENO: error: unknown endianess
+presetting ac_cv_c_bigendian=no (or yes) will help" >&5
+echo "$as_me: error: unknown endianess
+presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+
+
+
+
+
+
+
+
+
+if test "x${GSL_PREFIX}" = "x"; then
+  LDFLAGS="-lgslcblas"
+else
+  LDFLAGS="-L${GSL_PREFIX}/lib -lgslcblas"
+fi
+echo "$as_me:$LINENO: checking for gsl_vector_alloc in -lgsl" >&5
+echo $ECHO_N "checking for gsl_vector_alloc in -lgsl... $ECHO_C" >&6
+if test "${ac_cv_lib_gsl_gsl_vector_alloc+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgsl  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gsl_vector_alloc ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+gsl_vector_alloc ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_gsl_gsl_vector_alloc=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_gsl_gsl_vector_alloc=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_gsl_gsl_vector_alloc" >&5
+echo "${ECHO_T}$ac_cv_lib_gsl_gsl_vector_alloc" >&6
+if test $ac_cv_lib_gsl_gsl_vector_alloc = yes; then
+  GSL="yes"
+else
+  GSL="no"
+fi
+
+if test "x${GSL_PREFIX}" = "x"; then
+  GSL_LIBS="-lgsl -lgslcblas"
+else
+  GSL_LIBS="-L${GSL_PREFIX}/lib -lgsl -lgslcblas"
+  GSL_INCLUDE="-I${GSL_PREFIX}/include"
+fi
+
 
 
 
@@ -4249,6 +4414,7 @@ s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@AR@,$AR,;t t
 s,@FLTKCONFIG@,$FLTKCONFIG,;t t
+s,@CXXCPP@,$CXXCPP,;t t
 s,@VERSION_FLAGS@,$VERSION_FLAGS,;t t
 s,@GUI_INCLUDE@,$GUI_INCLUDE,;t t
 s,@OPT_FLAGS@,$OPT_FLAGS,;t t
@@ -4259,7 +4425,6 @@ s,@GMSH_LIBS@,$GMSH_LIBS,;t t
 s,@POSTBUILD@,$POSTBUILD,;t t
 s,@GSL_LIBS@,$GSL_LIBS,;t t
 s,@GSL_INCLUDE@,$GSL_INCLUDE,;t t
-s,@CXXCPP@,$CXXCPP,;t t
 CEOF
 
 _ACEOF
