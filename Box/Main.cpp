@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.13 2001-12-05 10:17:51 geuzaine Exp $
+// $Id: Main.cpp,v 1.14 2001-12-05 10:53:11 geuzaine Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
@@ -79,9 +79,9 @@ int main(int argc, char *argv[]){
 
   ParUtil::Instance()->init(argc,argv);
 
-  if(argc < 2) Info(0,argv[0]);
-
   Init_Options(0);
+
+  if(argc < 2) Info(0,argv[0]);
 
   Get_Options(argc, argv, &nbf);
 
@@ -165,8 +165,9 @@ void Msg(int level, char *fmt, ...){
   switch(level){
 
   case DIRECT :
-    if(CTX.verbosity >=2 && ParUtil::Instance()->master()) 
+    if(CTX.verbosity >=2 && ParUtil::Instance()->master()) {
      vfprintf(stdout, fmt, args); fprintf(stdout, "\n");
+    }
     break;
 
   case FATAL :
