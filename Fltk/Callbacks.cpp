@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.204 2004-02-20 17:57:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.205 2004-02-20 23:22:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1472,10 +1472,11 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+o       show option window"); 
   Msg(DIRECT, "  "XX"+o        open file"); 
   Msg(DIRECT, "  p             go to post-processor module");
-  Msg(DIRECT, "  Shift+p       show post-processing general options");
+  Msg(DIRECT, "  Shift+p       show general post-processing options");
   Msg(DIRECT, "  "XX"+q        quit");
   Msg(DIRECT, "  "XX"+s        save mesh in default format");
   Msg(DIRECT, "  "XX"+Shift+s  save file as");
+  Msg(DIRECT, "  Shift+w       show current post-processing view options");
   Msg(DIRECT, "");
   Msg(DIRECT, "Other shortcuts");
   Msg(DIRECT, "");

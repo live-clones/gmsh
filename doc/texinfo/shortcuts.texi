@@ -41,7 +41,7 @@ open file
 go to post-processor module
 
 @item Shift+p
-show post-processing general options
+show general post-processing options
 
 @item Ctrl+q
 quit
@@ -51,6 +51,9 @@ save mesh in default format
 
 @item Ctrl+Shift+s
 save file as
+
+@item Shift+w
+show current post-processing view options
 
 @end table
 

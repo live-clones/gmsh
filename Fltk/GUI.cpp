@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.271 2004-02-20 17:57:59 geuzaine Exp $
+// $Id: GUI.cpp,v 1.272 2004-02-20 23:22:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -500,6 +500,14 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
     post_options_cb(0, 0);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
+    if(List_Nbr(CTX.post.list))
+      if(view_number >= 0)
+	create_view_options_window(view_number);
+      else
+	create_view_options_window(0);
     return 1;
   }
   else if(Fl::test_shortcut(FL_CTRL + FL_SHIFT + 'd')) {
@@ -1648,14 +1656,11 @@ void GUI::create_option_window()
       }
 
       geo_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Normals");
-      geo_value[0]->minimum(0);
-      geo_value[0]->maximum(100);
-      geo_value[0]->step(0.1);
       geo_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Tangents");
-      geo_value[1]->minimum(0);
-      geo_value[1]->maximum(100);
-      geo_value[1]->step(0.1);
       for(i = 0; i < 2; i++) {
+	geo_value[i]->minimum(0);
+	geo_value[i]->maximum(500);
+	geo_value[i]->step(1);
         geo_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1819,16 +1824,16 @@ void GUI::create_option_window()
 
       mesh_value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Normals");
       mesh_value[8]->minimum(0);
-      mesh_value[8]->maximum(100);
-      mesh_value[8]->step(0.1);
+      mesh_value[8]->maximum(500);
+      mesh_value[8]->step(1);
       for(i = 4; i < 9; i++) {
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
       mesh_value[13] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Tangents");
       mesh_value[13]->minimum(0);
-      mesh_value[13]->maximum(100);
-      mesh_value[13]->step(0.1);
+      mesh_value[13]->maximum(200);
+      mesh_value[13]->step(1.0);
       mesh_value[13]->align(FL_ALIGN_RIGHT);
 
       o->end();
@@ -2249,7 +2254,7 @@ void GUI::create_option_window()
 
         view_value[60] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Arrow size");
         view_value[60]->minimum(0);
-        view_value[60]->maximum(1000);
+        view_value[60]->maximum(500);
         view_value[60]->step(1);
         view_value[60]->align(FL_ALIGN_RIGHT);
         view_value[60]->callback(set_changed_cb, 0);
@@ -2305,6 +2310,9 @@ void GUI::update_view_window(int num)
 {
   int i;
   double val;
+
+  if(num < 0 || num >= List_Nbr(CTX.post.list))
+    return;
 
   view_number = num;
   Post_View *v = (Post_View *) List_Pointer(CTX.post.list, num);
@@ -2437,7 +2445,6 @@ void GUI::update_view_window(int num)
 
   // colors
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
-
 }
 
 // Create the window for the statistics

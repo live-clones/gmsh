@@ -614,7 +614,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "TranslationZ" , opt_general_translation2 , 0.0 , 
     "Z-axis translation (in model units)" },
 
-  { F|O, "VectorType" , opt_general_vector_type , DRAW_POST_ARROW ,
+  { F|O, "VectorType" , opt_general_vector_type , DRAW_POST_ARROW3D ,
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 2. ,
     "Level of information printed during processing (0=no information)" },
