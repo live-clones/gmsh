@@ -3355,7 +3355,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_jpeg_jpeg_destroy_decompress" >&5
 echo "${ECHO_T}$ac_cv_lib_jpeg_jpeg_destroy_decompress" >&6
 if test $ac_cv_lib_jpeg_jpeg_destroy_decompress = yes; then
-  VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPG" GUI_LIBS="${GUI_LIBS} -ljpeg"
+  VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG" GUI_LIBS="${GUI_LIBS} -ljpeg"
 fi
 
 fi

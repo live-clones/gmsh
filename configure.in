@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.8 2003-02-12 16:12:27 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.9 2003-02-12 16:20:31 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -119,7 +119,7 @@ fi
 dnl Check if libjpeg is available (in case fltk didn't find it) to enable/disable gl2jpg
 AC_CHECK_HEADER(jpeglib.h,
   AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
-    VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPG" GUI_LIBS="${GUI_LIBS} -ljpeg"))
+    VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_LIBJPEG" GUI_LIBS="${GUI_LIBS} -ljpeg"))
 
 dnl Check if if should build the parallel version
 if test "x$enable_parallel" = "xyes"; then
