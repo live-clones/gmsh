@@ -1,9 +1,9 @@
-# $Id: Makefile,v 1.27 2000-12-20 10:40:28 geuzaine Exp $
+# $Id: Makefile,v 1.28 2000-12-20 15:46:08 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
 
-    GMSH_RELEASE = 0.998
+    GMSH_RELEASE = 0.999
 
             MAKE = make
               CC = g++
@@ -190,6 +190,8 @@ dec: tag compile_little_endian link_opengl strip_bin compress_bin
 
 linux: tag compile_little_endian link_mesa strip_bin compress_bin
 
+linux-rpm: tag compile_little_endian_2952 link_mesa_2952 strip_bin compress_bin
+
 ibm: tag compile_big_endian link_mesa strip_bin compress_bin
 
 sun: tag compile_big_endian link_mesa strip_bin compress_bin
@@ -216,6 +218,16 @@ strip_bin:
 compile_little_endian:
 	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+        ); done
+
+compile_little_endian_2952:
+	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(HOME)/gcc-2.95.2/bin/g++" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=" \
@@ -276,6 +288,10 @@ link_opengl:
 
 link_mesa:
 	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
+               $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+
+link_mesa_2952:
+	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
                $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
 
 link_mesa_threads:
