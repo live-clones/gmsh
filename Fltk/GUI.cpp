@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.430 2005-03-14 01:38:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.431 2005-03-14 17:21:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3942,8 +3942,7 @@ void GUI::create_about_window()
   int width = 33 * fontsize;
   int height = 15 * BH;
 
-  // not a "Dialog_Window" since it is modal 
-  about_window = new Fl_Double_Window(width, height, "About Gmsh");
+  about_window = new Dialog_Window(width, height, "About Gmsh");
   about_window->box(GMSH_WINDOW_BOX);
 
   {
@@ -4002,8 +4001,6 @@ void GUI::create_about_window()
 
   about_window->position(Fl::x() + Fl::w()/2 - width / 2,
 			 Fl::y() + Fl::h()/2 - height / 2);
-
-  about_window->set_modal();
   about_window->end();
 }
 
