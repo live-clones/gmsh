@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.59 2003-11-27 02:33:31 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.60 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -172,7 +172,6 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
         fscanf(fp, "%d %d %d %d %d",
 	       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
-	//&Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
 
         for(j = 0; j < Nbr_Nodes; j++)
           fscanf(fp, "%d", &verts[j].Num);
@@ -266,6 +265,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Simplex(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
+          simp->iPart = Add_MeshPartition(Physical, M);
 	  if(Type == LGN2){
 	    simp->VSUP = (Vertex **) Malloc(1 * sizeof(Vertex *));
 	    simp->VSUP[0] = vertsp[2];
@@ -281,6 +281,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
+          simp->iPart = Add_MeshPartition(Physical, M);
 	  if(Type == TRI2){
 	    simp->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
 	    for(i = 0; i < 3; i++){
@@ -300,6 +301,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
+          simp->iPart = Add_MeshPartition(Physical, M);
 	  if(Type == QUA2){
 	    simp->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
 	    for(i = 0; i < 4; i++){
@@ -320,6 +322,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
+          simp->iPart = Add_MeshPartition(Physical, M);
 	  if(Type == TET2){
 	    simp->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
 	    for(i = 0; i < 6; i++){
@@ -340,6 +343,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                                   vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
           hex->Num = Num;
           hex->iEnt = Elementary;
+          hex->iPart = Add_MeshPartition(Physical, M);
 	  if(Type == HEX2){
 	    hex->VSUP = (Vertex **) Malloc(12 * sizeof(Vertex *));
 	    for(i = 0; i < 12; i++){
@@ -360,6 +364,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                              vertsp[3], vertsp[4], vertsp[5]);
           pri->Num = Num;
           pri->iEnt = Elementary;
+          pri->iPart = Add_MeshPartition(Physical, M);
 	  if(Type == PRI2){
 	    pri->VSUP = (Vertex **) Malloc(9 * sizeof(Vertex *));
 	    for(i = 0; i < 9; i++){
@@ -380,6 +385,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                                vertsp[3], vertsp[4]);
           pyr->Num = Num;
           pyr->iEnt = Elementary;
+          pyr->iPart = Add_MeshPartition(Physical, M);
 	  if(Type == PYR2){
 	    pyr->VSUP = (Vertex **) Malloc(8 * sizeof(Vertex *));
 	    for(i = 0; i < 8; i++){
@@ -427,20 +433,26 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
   if(Tree_Nbr(M->Volumes)) {
     M->status = 3;
-    M->Statistics[6] = Tree_Nbr(M->Vertices);   //incorrect, mais...
+    M->Statistics[6] = Tree_Nbr(M->Vertices);   // wrong, but...
   }
   else if(Tree_Nbr(M->Surfaces)) {
     M->status = 2;
-    M->Statistics[5] = Tree_Nbr(M->Vertices);   //incorrect, mais...
+    M->Statistics[5] = Tree_Nbr(M->Vertices);   // wrong, but...
   }
   else if(Tree_Nbr(M->Curves)) {
     M->status = 1;
-    M->Statistics[4] = Tree_Nbr(M->Vertices);   //incorrect, mais...
+    M->Statistics[4] = Tree_Nbr(M->Vertices);   // wrong, but...
   }
   else if(Tree_Nbr(M->Points))
     M->status = 0;
   else
     M->status = -1;
+
+  // For efficiency reasons, we store the partition index (and not the
+  // partition number) in the various mesh elements. We need to
+  // re-sort the list according to these indices to allow direct
+  // access through Llist_Pointer & co.
+  List_Sort(M->Partitions, compareMeshPartitionIndex);
 }
 
 

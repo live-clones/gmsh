@@ -30,16 +30,17 @@ typedef struct {
 class Simplex{
 
 public:
-  int     Num;           /* Numero                                       */
-  int     iEnt;          /* Entite geometrique                           */
-  char    Visible;       /* Visualization flag                           */
-  Face    F[4];          /* 4 faces                                      */
-  Vertex  **VSUP;        /* noeuds supplem pour les elts de degre eleves */
-  Vertex  *V[4];         /* 4 noeuds                                     */
-  double  Quality;       /* Qualite du simplexe                          */
-  Coord   Center;        /* centre du CC                                 */
-  double  Radius;        /* Rayon du CC                                  */
-  Simplex *S[4];         /* 4 Voisins                                    */
+  int     Num;           // Number
+  int     iEnt;          // Elementary geometrical entity
+  int     iPart;         // Mesh partition index
+  char    Visible;       // Visualization flag
+  Face    F[4];          // 4 faces
+  Vertex  **VSUP;        // suppl. nodes for higher order elts
+  Vertex  *V[4];         // 4 nodes
+  double  Quality;       // simplex quality
+  Coord   Center;        // CC center
+  double  Radius;        // CC radius
+  Simplex *S[4];         // 4 neighbours
   static  int TotalNumber;
   static  int TotalAllocated;
   Simplex();

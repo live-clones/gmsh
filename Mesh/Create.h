@@ -37,21 +37,28 @@ int compareAttractor (const void *a, const void *b);
 int compareSurface (const void *a, const void *b);
 int compareVolume (const void *a, const void *b);
 int compareSxF (const void *a, const void *b);
+int compareMeshPartitionNum(const void *a, const void *b);
+int compareMeshPartitionIndex(const void *a, const void *b);
 
 Attractor * Create_Attractor (int Num, double lc1, double lc2, double Radius,
                               Vertex * v, Curve * c, Surface * s);
-void Add_SurfaceLoop (int Num, List_T * intlist, Mesh * M);
-void Add_PhysicalGroup (int Num, int typ, List_T * intlist, Mesh * M);
-void Add_EdgeLoop (int Num, List_T * intlist, Mesh * M);
 
-void End_Curve (Curve * c);
-void End_Surface (Surface * s);
+void Add_EdgeLoop (int Num, List_T * intlist, Mesh * M);
+void Add_SurfaceLoop (int Num, List_T * intlist, Mesh * M);
+
+void Add_PhysicalGroup (int Num, int typ, List_T * intlist, Mesh * M);
+void Free_PhysicalGroup(void *a, void *b);
+
+int  Add_MeshPartition(int Num, Mesh * M);
+void Free_MeshPartition(void *a, void *b);
 
 Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
                      List_T * Knots, int p1, int p2, double u1, double u2);
+void End_Curve (Curve * c);
 void Free_Curve(void *a, void *b);
 
 Surface * Create_Surface (int Num, int Typ);
+void End_Surface (Surface * s);
 void Free_Surface(void *a, void *b);
 
 Volume * Create_Volume (int Num, int Typ);

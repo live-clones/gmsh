@@ -99,11 +99,11 @@ typedef struct _DELAUNAY Delaunay, *delpeek;
 typedef int PointNumero;
 
 struct _DOC{
-  PointRecord *points;  /* points a trianguler */
-  List_T *hotpoints;    /* hotpoints */
-  int numPoints;        /* nombre de points */
-  int numTriangles;     /* nombre de triangles */
-  Delaunay *delaunay;   /* resultats 2D */
+  PointRecord *points;  // points to triangulate
+  List_T *hotpoints;    // hotpoints
+  int numPoints;        // number of points
+  int numTriangles;     // number of triangles
+  Delaunay *delaunay;   // 2D results
 };
 
 typedef struct{
@@ -124,7 +124,7 @@ typedef struct{
 }IntPoint;
 
 struct _CDLIST{
-  PointNumero point_num; /* numero du point */
+  PointNumero point_num;
   DListPeek next, prev;
 };
 
@@ -197,27 +197,30 @@ class NXE{
 };
 
 typedef struct{
-  int Num;              /* Numero                                       */
-  int iEnt;             /* Entite geometrique                           */
-  char Visible;         /* Visualization flag                           */
-  Vertex *V[8];         /* 8 noeuds                                     */
-  Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
+  int Num; 
+  int iEnt; // parent geometrical entity
+  int iPart; // mesh partition index
+  char Visible;
+  Vertex *V[8];
+  Vertex **VSUP;
 }Hexahedron;
 
 typedef struct{
-  int Num;              /* Numero                                       */
-  int iEnt;             /* Entite geometrique                           */
-  char Visible;         /* Visualization flag                           */
-  Vertex *V[6];         /* 6 noeuds                                     */
-  Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
+  int Num;
+  int iEnt; // parent geometrical entity
+  int iPart; // mesh partition index
+  char Visible;
+  Vertex *V[6];
+  Vertex **VSUP;
 }Prism;
 
 typedef struct{
-  int Num;              /* Numero                                       */
-  int iEnt;             /* Entite geometrique                           */
-  char Visible;         /* Visualization flag                           */
-  Vertex *V[5];         /* 5 noeuds                                     */
-  Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
+  int Num;
+  int iEnt; // parent geometrical entity
+  int iPart; // mesh partition index
+  char Visible;
+  Vertex *V[5];
+  Vertex **VSUP;
 }Pyramid;
 
 typedef struct{
@@ -254,8 +257,8 @@ struct _Surf{
   double RecombineAngle;
   int ipar[5];
   int Nu, Nv;
-  List_T *Generatrices; /* Surface reglee    */
-  List_T *Control_Points; /* Patchs bicubiques */
+  List_T *Generatrices;
+  List_T *Control_Points;
   double plan[3][3];
   double invplan[3][3];
   double a, b, c, d;
@@ -270,14 +273,13 @@ struct _Surf{
   float *ku, *kv, *cp;
   struct _Surf *Support;
   CylParam Cyl;
-  Grid_T Grid;          /* Grille de recherches rapides */
+  Grid_T Grid;  // fast search grid
   ExtrudeParams *Extrude;
   STL_Data *STL; // stl representation of the surface
   POLY_rep *thePolyRep;
-  int Dirty; //flag to prevent any meshing
+  int Dirty; // flag to prevent any meshing
   DrawingColor Color;
-  /// a pointer to a solid model entity
-  void * aSolidModelEntity;
+  void * aSolidModelEntity; // pointer to a solid model entity
 };
 
 typedef struct _Surf Surface;
@@ -300,6 +302,12 @@ typedef struct{
 }PhysicalGroup;
 
 typedef struct{
+  int Index;
+  int Num;
+  char Visible;
+}MeshPartition;
+
+typedef struct{
   Face F;
   Face Sorted;
   Simplex *S[2];
@@ -318,7 +326,7 @@ typedef struct {
   Tree_T *Edges;
   Tree_T *Faces;
   Tree_T *Simplexes;
-  Tree_T *Simp_Surf;//for old extrusion mesh generator
+  Tree_T *Simp_Surf; // for old extrusion mesh generator
   Tree_T *Hexahedra;
   Tree_T *Prisms;
   Tree_T *Pyramids;
@@ -331,23 +339,23 @@ typedef struct {
   int iFac;
 }exf_T;
 
-/* Structure intersection arete - Simplexe */
+// Edge-Simplex intersections
 
 typedef struct{
-  int NbIntersect;      /* nombre total d'intersections                   */
-  Edge *e;              /* arete                                          */
-  Simplex *s;           /* simplexe                                       */
-  Face *f;              /* face                                           */
-  int NbVertex;         /* nombre de noeuds du simplexe que coupe l'arete */
-  Vertex *V[12];        /* noeuds du simplexe que coupe l'arete           */
-  int iV[12];           /* noeuds du simplexe que coupe l'arete           */
-  int NbEdge;           /* nombre d'intersections arete-arete             */
-  int E[12];            /* aretes                                         */
-  Vertex *VE[12];       /* noeuds d'intersection                          */
-  int NbFace;           /* nombre d'intersections face-arete              */
-  Face *F[12];          /* faces                                          */
-  int iF[12];           /* faces                                          */
-  Vertex *VF[12];       /* position des points d'intersections face-arete */
+  int NbIntersect;      // nombre total d'intersections
+  Edge *e;              // arete
+  Simplex *s;           // simplexe
+  Face *f;              // face
+  int NbVertex;         // nombre de noeuds du simplexe que coupe l'arete
+  Vertex *V[12];        // noeuds du simplexe que coupe l'arete
+  int iV[12];           // noeuds du simplexe que coupe l'arete
+  int NbEdge;           // nombre d'intersections arete-arete
+  int E[12];            // aretes
+  Vertex *VE[12];       // noeuds d'intersection
+  int NbFace;           // nombre d'intersections face-arete
+  Face *F[12];          // faces
+  int iF[12];           // faces
+  Vertex *VF[12];       // position des points d'intersections face-arete
 }Intersection;
 
 typedef struct _Mesh Mesh;
@@ -386,7 +394,7 @@ typedef struct{
   int degre;
   CircParam Circle;
   char functu[256], functv[256], functw[256];
-  int Dirty; //flag to prevent any meshing
+  int Dirty; // flag to prevent any meshing
   DrawingColor Color;
 }Curve;
 
@@ -421,22 +429,23 @@ class MeshParameters{
 };
 
 struct _Mesh{
-  char name[256];               /* Nom du probleme                       */
-  int status;                   /* Etat actuel du maillage               */
-  Tree_T *Points;               /* Points de controle                    */
-  Tree_T *Vertices;             /* Noeuds du maillage                    */
-  Tree_T *Simplexes;            /* Simplexes                             */
-  Tree_T *Curves;               /* Courbes                               */
-  Tree_T *Surfaces;             /* Surfaces                              */
-  Tree_T *Volumes;              /* Volumes                               */
-  Tree_T *SurfaceLoops;         /* Surface Loops                         */
-  Tree_T *EdgeLoops;            /* Edge Loops                            */
-  List_T *PhysicalGroups;       /* Physical Groups                       */
-  Grid_T Grid;                  /* Grille de recherches rapides          */
-  LcField BGM;                  /* Background mesh                       */
-  double Statistics[50];        /* Mesh statistics                       */
-  int Histogram[3][NB_HISTOGRAM]; /* Quality histograms                 */
-  GMSHMetric *Metric;           /* Metric                                */
+  char name[256];
+  int status; // current state of the mesh
+  Tree_T *Points;
+  Tree_T *Vertices;
+  Tree_T *Simplexes;
+  Tree_T *Curves;
+  Tree_T *Surfaces;
+  Tree_T *Volumes;
+  Tree_T *SurfaceLoops;
+  Tree_T *EdgeLoops;
+  List_T *PhysicalGroups;
+  List_T *Partitions;
+  Grid_T Grid; // fast search grid
+  LcField BGM; // background mesh
+  double Statistics[50]; // mesh statistics
+  int Histogram[3][NB_HISTOGRAM]; // quality histograms
+  GMSHMetric *Metric;
   MeshParameters MeshParams;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
@@ -455,7 +464,7 @@ struct Map{
 };
 
 
-/* public functions */
+// public functions
 
 void mai3d (Mesh * M, int Asked);
 

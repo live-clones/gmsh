@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.62 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.63 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -59,12 +59,11 @@ void draw_polygon_2d(double r, double g, double b, int n,
 
 }
 
-static int iColor;
 static DrawingColor theColor;
 
 void ColorSwitch(int i)
 {
-  glColor4ubv((GLubyte *) & CTX.color.mesh.carousel[i % 10]);
+  glColor4ubv((GLubyte *) & CTX.color.mesh.carousel[abs(i % 10)]);
 }
 
 void Draw_Mesh(Mesh * M)
@@ -122,8 +121,6 @@ void Draw_Mesh(Mesh * M)
     glVertex3d(CTX.min[0], CTX.max[1], CTX.max[2]);
     glEnd();
   }
-
-  iColor = 0;
 
   if(CTX.mesh.draw && CTX.render_mode != GMSH_SELECT) {
 
@@ -197,7 +194,6 @@ void Draw_Mesh_Volumes(void *a, void *b)
 {
   Volume *v;
   v = *(Volume **) a;
-  iColor++;
   theColor = v->Color;
   // FIXME: this is the correct method, but will only work when a
   // coherent datastruct exists for volumes
@@ -222,7 +218,6 @@ void Draw_Mesh_Surfaces(void *a, void *b)
 {
   Surface *s;
   s = *(Surface **) a;
-  iColor++;
   theColor = s->Color;
   if(!(s->Visible & VIS_MESH))
     return;
@@ -250,7 +245,6 @@ void Draw_Mesh_Curves(void *a, void *b)
   c = *(Curve **) a;
   if(c->Num < 0)
     return;
-  iColor++;
   theColor = c->Color;
   if(!(c->Visible & VIS_MESH))
     return;
@@ -317,6 +311,10 @@ void Draw_Simplex_Volume(void *a, void *b)
   if(!s->V[3] || !(s->Visible & VIS_MESH))
     return;
 
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
   // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V;
   if((V = FindVolume(s->iEnt, THEM)) && !(V->Visible & VIS_MESH))
@@ -349,8 +347,9 @@ void Draw_Simplex_Volume(void *a, void *b)
     fulldraw = 1;
   }
 
-  if(CTX.mesh.color_carousel && !fulldraw)
-    ColorSwitch(s->iEnt);
+  if(CTX.mesh.color_carousel && !fulldraw){
+    ColorSwitch((CTX.mesh.color_carousel == 2) ? s->iPart : s->iEnt);
+  }
   else if(fulldraw)
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
   else
@@ -430,7 +429,7 @@ void Draw_Simplex_Volume(void *a, void *b)
   double n[4], x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch(s->iEnt);
+    ColorSwitch((CTX.mesh.color_carousel == 2) ? s->iPart : s->iEnt);
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.tetrahedron);
 
@@ -546,7 +545,7 @@ void Draw_Simplex_Surface_Common(Simplex * s, double *pX, double *pY,
       if(theColor.type)
         glColor4ubv((GLubyte *) & theColor.mesh);
       else
-        ColorSwitch(iColor);
+        ColorSwitch((CTX.mesh.color_carousel == 2) ? s->iPart : s->iEnt);
     }
     else {
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
@@ -589,7 +588,7 @@ void Draw_Simplex_Surface_Common(Simplex * s, double *pX, double *pY,
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else
-      ColorSwitch(iColor);
+      ColorSwitch((CTX.mesh.color_carousel == 2) ? s->iPart : s->iEnt);
   }
   else {
     if(K == 3)
@@ -663,6 +662,10 @@ void Draw_Simplex_Surface_Simple(void *a, void *b)
   if(!s->V[2] || !(s->Visible & VIS_MESH))
     return;
 
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
   Draw_Simplex_Surface_Common(s, NULL, NULL, NULL, n);
 }
 
@@ -677,6 +680,10 @@ void Draw_Simplex_Surface(void *a, void *b)
   s = *(Simplex **) a;
 
   if(!s->V[2] || !(s->Visible & VIS_MESH))
+    return;
+
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
+  if(part && !(*part)->Visible)
     return;
 
   L = (s->VSUP) ? 1 : 0;
@@ -769,6 +776,10 @@ void Draw_Simplex_Curves(void *a, void *b)
   if(!(s->Visible & VIS_MESH))
     return;
 
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
   Xc = 0.5 * (s->V[0]->Pos.X + s->V[1]->Pos.X);
   Yc = 0.5 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y);
   Zc = 0.5 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z);
@@ -795,7 +806,7 @@ void Draw_Simplex_Curves(void *a, void *b)
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else
-      ColorSwitch(iColor);
+      ColorSwitch((CTX.mesh.color_carousel == 2) ? s->iPart : s->iEnt);
   }
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
@@ -849,6 +860,10 @@ void Draw_Hexahedron_Volume(void *a, void *b)
   if(!(h->Visible & VIS_MESH))
     return;
 
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, h->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
   // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V;
   if((V = FindVolume(h->iEnt, THEM)) && !(V->Visible & VIS_MESH))
@@ -869,7 +884,7 @@ void Draw_Hexahedron_Volume(void *a, void *b)
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch(h->iEnt);
+    ColorSwitch((CTX.mesh.color_carousel == 2) ? h->iPart : h->iEnt);
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.hexahedron);
 
@@ -990,6 +1005,10 @@ void Draw_Prism_Volume(void *a, void *b)
   if(!(p->Visible & VIS_MESH))
     return;
 
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
   // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V;
   if((V = FindVolume(p->iEnt, THEM)) && !(V->Visible & VIS_MESH))
@@ -1010,7 +1029,7 @@ void Draw_Prism_Volume(void *a, void *b)
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch(p->iEnt);
+    ColorSwitch((CTX.mesh.color_carousel == 2) ? p->iPart : p->iEnt);
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.prism);
 
@@ -1112,6 +1131,10 @@ void Draw_Pyramid_Volume(void *a, void *b)
   if(!(p->Visible & VIS_MESH))
     return;
 
+  MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
+  if(part && !(*part)->Visible)
+    return;
+
   // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V;
   if((V = FindVolume(p->iEnt, THEM)) && !(V->Visible & VIS_MESH))
@@ -1132,7 +1155,7 @@ void Draw_Pyramid_Volume(void *a, void *b)
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch(p->iEnt);
+    ColorSwitch((CTX.mesh.color_carousel == 2) ? p->iPart : p->iEnt);
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.pyramid);
 

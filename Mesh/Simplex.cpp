@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.27 2003-03-21 00:52:42 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.28 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -44,6 +44,7 @@ Simplex::Simplex()
   V[0] = V[1] = V[2] = V[3] = NULL;
   S[0] = S[1] = S[2] = S[3] = NULL;
   iEnt = -1;
+  iPart = -1;
   Quality = 0.;
   Num = TotalNumber;
   Visible = VIS_MESH;
@@ -60,6 +61,7 @@ Simplex::Simplex(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
   Num = TotalNumber;
   THEM->MaxSimplexNum = IMAX(THEM->MaxSimplexNum, Num);
   iEnt = -1;
+  iPart = -1;
   Visible = VIS_MESH;
 }
 

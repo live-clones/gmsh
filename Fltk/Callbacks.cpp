@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.195 2003-12-04 02:10:31 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.196 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1038,7 +1038,9 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_aspect(0, GMSH_SET,
                   WID->mesh_butt[14]->value()? 0 :
                   WID->mesh_butt[15]->value()? 1 : 2);
-  opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_butt[17]->value());
+  opt_mesh_color_carousel(0, GMSH_SET,
+			  WID->mesh_butt[17]->value()? 0 :
+			  WID->mesh_butt[18]->value()? 1 : 2);
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
@@ -1233,8 +1235,11 @@ void visibility_cb(CALLBACK_ARGS)
   case 0:
     type = ELEMENTARY;
     break;
-  default:
+  case 1:
     type = PHYSICAL;
+    break;
+  default :
+    type = PARTITION;
     break;
   }
   switch (WID->vis_browser_mode->value()) {
@@ -1269,8 +1274,11 @@ void visibility_ok_cb(CALLBACK_ARGS)
   case 0:
     ClearVisibilityList(PHYSICAL);
     break;
-  default:
+  case 1:
     ClearVisibilityList(ELEMENTARY);
+    break;
+  default:
+    // partitions: do nothing
     break;
   }
   switch (WID->vis_browser_mode->value()) {

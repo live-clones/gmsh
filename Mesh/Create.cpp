@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.45 2003-05-29 14:36:56 geuzaine Exp $
+// $Id: Create.cpp,v 1.46 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -200,6 +200,59 @@ void Add_PhysicalGroup(int Num, int typ, List_T * intlist, Mesh * M)
     List_Add(p->Entities, &j);
   }
   List_Add(M->PhysicalGroups, &p);
+}
+
+void Free_PhysicalGroup(void *a, void *b)
+{
+  PhysicalGroup *p = *(PhysicalGroup **) a;
+  if(p) {
+    List_Delete(p->Entities);
+    Free(p);
+    p = NULL;
+  }
+}
+
+int Add_MeshPartition(int Num, Mesh * M)
+{
+  MeshPartition P, *p, **pp;
+  p = &P;
+  p->Num = Num;
+  if((pp = (MeshPartition**)List_PQuery(M->Partitions, &p, compareMeshPartitionNum))){
+    return (*pp)->Index;
+  }
+  else{
+    p = (MeshPartition*)Malloc(sizeof(MeshPartition));
+    p->Num = Num;
+    p->Visible = VIS_GEOM | VIS_MESH;
+    p->Index = List_Nbr(M->Partitions);
+    List_Add(M->Partitions, &p);
+    return p->Index;
+  }
+}
+
+void Free_MeshPartition(void *a, void *b)
+{
+  MeshPartition *p = *(MeshPartition **) a;
+  if(p) {
+    Free(p);
+    p = NULL;
+  }
+}
+
+int compareMeshPartitionNum(const void *a, const void *b)
+{
+  MeshPartition *q, *w;
+  q = *(MeshPartition **) a;
+  w = *(MeshPartition **) b;
+  return (q->Num - w->Num);
+}
+
+int compareMeshPartitionIndex(const void *a, const void *b)
+{
+  MeshPartition *q, *w;
+  q = *(MeshPartition **) a;
+  w = *(MeshPartition **) b;
+  return (q->Index - w->Index);
 }
 
 void Add_EdgeLoop(int Num, List_T * intlist, Mesh * M)
@@ -692,6 +745,7 @@ Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
 
   h = (Hexahedron *) Malloc(sizeof(Hexahedron));
   h->iEnt = -1;
+  h->iPart = -1;
   h->Num = ++THEM->MaxSimplexNum;
   h->Visible = VIS_MESH;
   h->V[0] = v1;
@@ -723,6 +777,7 @@ Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
 
   p = (Prism *) Malloc(sizeof(Prism));
   p->iEnt = -1;
+  p->iPart = -1;
   p->Num = ++THEM->MaxSimplexNum;
   p->Visible = VIS_MESH;
   p->V[0] = v1;
@@ -752,6 +807,7 @@ Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
 
   p = (Pyramid *) Malloc(sizeof(Pyramid));
   p->iEnt = -1;
+  p->iPart = -1;
   p->Num = ++THEM->MaxSimplexNum;
   p->Visible = VIS_MESH;
   p->V[0] = v1;

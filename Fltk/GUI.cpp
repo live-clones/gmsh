@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.264 2003-12-04 02:10:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.265 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1824,22 +1824,26 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Colors");
       o->hide();
-      mesh_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Switch color by entity");
-      mesh_butt[17]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[17]->down_box(TOGGLE_BOX);
-      mesh_butt[17]->selection_color(TOGGLE_COLOR);
+      mesh_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Color by element type");
+      mesh_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Color by geometrical entity");
+      mesh_butt[19] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Color by partition");
+      for(i = 17; i < 20; i++) {
+        mesh_butt[i]->type(FL_RADIO_BUTTON);
+        mesh_butt[i]->down_box(RADIO_BOX);
+        mesh_butt[i]->selection_color(RADIO_COLOR);
+      }
 
-      mesh_value[12] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Predefined color scheme");
+      mesh_value[12] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Predefined color scheme");
       mesh_value[12]->minimum(0);
       mesh_value[12]->maximum(2);
       mesh_value[12]->step(1);
       mesh_value[12]->align(FL_ALIGN_RIGHT);
       mesh_value[12]->callback(mesh_options_color_scheme_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(2 * WB, 3 * WB + 3 * BH, IW + 20, height - 5 * WB - 3 * BH);
+      Fl_Scroll *s = new Fl_Scroll(2 * WB, 3 * WB + 5 * BH, IW + 20, height - 5 * WB - 5 * BH);
       i = 0;
       while(MeshOptions_Color[i].str) {
-        mesh_col[i] = new Fl_Button(2 * WB, 3 * WB + (3 + i) * BH, IW, BH, MeshOptions_Color[i].str);
+        mesh_col[i] = new Fl_Button(2 * WB, 3 * WB + (5 + i) * BH, IW, BH, MeshOptions_Color[i].str);
         mesh_col[i]->callback(color_cb, (void *)MeshOptions_Color[i].function);
         i++;
       }
@@ -2823,6 +2827,7 @@ void GUI::create_visibility_window()
   static Fl_Menu_Item type_table[] = {
     {"Elementary", 0, (Fl_Callback *) visibility_cb},
     {"Physical", 0, (Fl_Callback *) visibility_cb},
+    {"Partitions", 0, (Fl_Callback *) visibility_cb},
     {0}
   };
   static Fl_Menu_Item browser_mode_table[] = {

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.126 2003-12-04 02:10:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.127 2003-12-07 00:23:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3412,8 +3412,11 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     CTX.mesh.changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[17]->value(CTX.mesh.color_carousel);
+  if(WID && (action & GMSH_GUI)){
+    WID->mesh_butt[17]->value(CTX.mesh.color_carousel==0);
+    WID->mesh_butt[18]->value(CTX.mesh.color_carousel==1);
+    WID->mesh_butt[19]->value(CTX.mesh.color_carousel==2);
+  }
 #endif
   return CTX.mesh.color_carousel;
 }

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.53 2003-11-29 19:29:26 geuzaine Exp $
+// $Id: Main.cpp,v 1.54 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
   M.Surfaces = NULL;
   M.Volumes = NULL;
   M.PhysicalGroups = NULL;
+  M.Partitions = NULL;
   M.Metric = NULL;
 
   // Signal handling

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.45 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: Generator.cpp,v 1.46 2003-12-07 00:23:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -212,8 +212,11 @@ void Init_Mesh(Mesh * M, int all)
   Tree_Action(M->Volumes, Free_Volume);
   Tree_Delete(M->Volumes);
 
-  //Tree_Action (M->PhysicalGroups, Free_PhysicalGroup); // todo
+  List_Action(M->PhysicalGroups, Free_PhysicalGroup);
   List_Delete(M->PhysicalGroups);
+
+  List_Action(M->Partitions, Free_MeshPartition);
+  List_Delete(M->Partitions);
 
   if(M->Metric) {
     delete M->Metric;
@@ -228,6 +231,7 @@ void Init_Mesh(Mesh * M, int all)
   M->Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
   M->Volumes = Tree_Create(sizeof(Volume *), compareVolume);
   M->PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+  M->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
   M->Metric = new GMSHMetric;
   M->BGM.bgm = NULL;
 

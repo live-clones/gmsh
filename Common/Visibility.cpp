@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.2 2003-12-01 23:57:17 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.3 2003-12-07 00:23:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 
 extern Mesh *THEM;
 
-static List_T *ElementaryEntities = NULL, *PhysicalEntities = NULL;
+static List_T *ElementaryEntities = NULL, *PhysicalEntities = NULL, *Partitions = NULL;
 static Tree_T *VisibleThroughPhysical[4] = { NULL, NULL, NULL, NULL };
 static List_T *NumxSymb = NULL;
 static int Sort = 1;
@@ -50,6 +50,8 @@ int Entity::Num()
     return data.surface ? data.surface->Num : 0;
   case 8:
     return data.volume ? data.volume->Num : 0;
+  case 9:
+    return data.partition ? data.partition->Num : 0;
   default:
     return 0;
   }
@@ -70,6 +72,8 @@ char *Entity::Type()
   case 4:
   case 8:
     return "Volume";
+  case 9:
+    return "Partition";
   default:
     return "Unknown";
   }
@@ -108,6 +112,8 @@ int Entity::Visible()
     return data.surface ? data.surface->Visible : 0;
   case 8:
     return data.volume ? data.volume->Visible : 0;
+  case 9:
+    return data.partition ? data.partition->Visible : 0;
   default:
     return 0;
   }
@@ -213,6 +219,11 @@ void Entity::Visible(int mode)
     if(!data.volume)
       break;
     data.volume->Visible = mode;
+    break;
+  case 9:
+    if(!data.partition)
+      break;
+    data.partition->Visible = mode;
     break;
   }
 }
@@ -326,6 +337,8 @@ void Entity::RecurVisible()
         break;
       Recur(data.volume, mode);
       break;
+    case 9:
+      break;
     }
   }
 }
@@ -401,6 +414,16 @@ static void AddPhysical(void *a, void *b)
   List_Add(PhysicalEntities, &e);
 }
 
+static void AddPartition(void *a, void *b)
+{
+  MeshPartition *p = *(MeshPartition **) a;
+  Entity e;
+  e.type = 9;
+  e.data.partition = p;
+  e.str = NULL;
+  List_Add(Partitions, &e);
+}
+
 static void AddVertex(void *a, void *b)
 {
   Vertex *v = *(Vertex **) a;
@@ -467,6 +490,11 @@ List_T *GetVisibilityList(int type)
   else
     List_Reset(PhysicalEntities);
 
+  if(!Partitions)
+    Partitions = List_Create(100, 100, sizeof(Entity));
+  else
+    List_Reset(Partitions);
+
   if(!NumxSymb)
     NumxSymb = List_Create(100, 100, sizeof(NxS));
   else
@@ -475,6 +503,7 @@ List_T *GetVisibilityList(int type)
   Tree_Action(Symbol_T, addInNumxSymb);
 
   List_Action(THEM->PhysicalGroups, AddPhysical);
+  List_Action(THEM->Partitions, AddPartition);
 
   Tree_Action(THEM->Points, AddVertex);
   Tree_Action(THEM->Curves, AddCurve);
@@ -483,14 +512,16 @@ List_T *GetVisibilityList(int type)
 
   List_Sort(ElementaryEntities, CompareEntity);
   List_Sort(PhysicalEntities, CompareEntity);
+  List_Sort(Partitions, CompareEntity);
 
   switch (type) {
   case ELEMENTARY:
     return ElementaryEntities;
   case PHYSICAL:
     return PhysicalEntities;
+  case PARTITION:
   default:
-    return NULL;
+    return Partitions;
   }
 }
 
@@ -498,7 +529,13 @@ void ClearVisibilityList(int type)
 {
   int i;
   Entity *e;
-  List_T *list = (type == ELEMENTARY) ? ElementaryEntities : PhysicalEntities;
+  List_T *list;
+  switch(type){
+  case ELEMENTARY : list = ElementaryEntities; break;
+  case PHYSICAL : list = PhysicalEntities; break;
+  case PARTITION : list = Partitions; break;
+  default: return;
+  }
   for(i = 0; i < List_Nbr(list); i++) {
     e = (Entity *) List_Pointer(list, i);
     e->Visible(0);
@@ -647,6 +684,10 @@ static void vis_pri(void *a, void *b)
 static void vis_pyr(void *a, void *b)
 {
   (*(Pyramid **) a)->Visible = vmode;
+}
+static void vis_part(void *a, void *b)
+{
+  (*(MeshPartition **) a)->Visible = vmode;
 }
 static void vis_cur(void *a, void *b)
 {

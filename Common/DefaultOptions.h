@@ -696,7 +696,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths (and background meshes)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
-    "Use a `color by region number' coloring scheme" },
+    "Use a `color by region' coloring scheme (0=no, 1=by geometrical entity, 2=by partition)" },
   { F|O, "ColorScheme" , opt_mesh_color_scheme , 0. , 
     "Default mesh color scheme (0, 1 or 2)" },
   { F|O, "ConstrainedBackgroundMesh" , opt_mesh_constrained_bgmesh, 0. ,

@@ -37,6 +37,7 @@ public :
     Surface *surface;
     Volume *volume;
     PhysicalGroup *physical;
+    MeshPartition *partition;
   } data;
   char *str;
 
