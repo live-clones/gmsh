@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.83 2001-03-19 15:24:49 geuzaine Exp $
+# $Id: Makefile,v 1.84 2001-03-22 16:36:21 lefevre Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -483,7 +483,7 @@ fltk_cygwin: tag
            "CC=g++" \
            "C_FLAGS=-O2 -DWIN32" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
+           "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
