@@ -189,7 +189,7 @@
 
 #line 1 "Gmsh.y"
  
-// $Id: Gmsh.tab.cpp,v 1.166 2003-11-21 07:56:29 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.167 2003-11-21 08:00:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -6378,7 +6378,7 @@ case 269:
 case 270:
 #line 1928 "Gmsh.y"
 {
-      if(!strcmp(yyvsp[-4].c, "View")) FreeView((int)yyvsp[-2].d);
+      if(!strcmp(yyvsp[-4].c, "View")) RemoveViewByIndex((int)yyvsp[-2].d);
     ;
     break;}
 case 271:

@@ -1,7 +1,8 @@
-$Id: VERSIONS,v 1.159 2003-11-21 07:56:32 geuzaine Exp $
+$Id: VERSIONS,v 1.160 2003-11-21 08:00:04 geuzaine Exp $
 
 New since 1.47: new DisplacementRaise plugin to plot arbitrary fields
-on a deformed mesh; small bug fixes (configure script);
+on a deformed mesh; genearlized CutMap, CutPlane and CutSphere
+plugins; small bug fixes (configure script);
 
 New in 1.47: fixed extrusion of surfaces defined by only two curves;
 new syntax to retrieve point coordinates and indices of entities
