@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.65 2003-12-08 15:51:17 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.66 2003-12-08 16:08:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -82,6 +82,51 @@ void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
   }
 }
 
+Curve *addElementaryCurve(Mesh * M, int Num)
+{
+  Curve C, *c, **cc;
+  c = &C;
+  c->Num = Num;
+  if(!(cc = (Curve **) Tree_PQuery(M->Curves, &c))) {
+    c = Create_Curve(Num, MSH_SEGM_LINE, 0, NULL, NULL, -1, -1, 0., 1.);
+    c->Dirty = 1;
+    Tree_Add(M->Curves, &c);
+  }
+  else
+    c = *cc;
+  return c;
+}
+
+Surface *addElementarySurface(Mesh * M, int Num)
+{
+  Surface S, *s, **ss;
+  s = &S;
+  s->Num = Num;
+  if(!(ss = (Surface **) Tree_PQuery(M->Surfaces, &s))) {
+    s = Create_Surface(Num, MSH_SURF_PLAN);
+    s->Dirty = 1;
+    Tree_Add(M->Surfaces, &s);
+  }
+  else
+    s = *ss;
+  return s;
+}
+
+Volume *addElementaryVolume(Mesh * M, int Num)
+{
+  Volume V, *v, **vv;
+  v = &V;
+  v->Num = Num;
+  if(!(vv = (Volume **) Tree_PQuery(M->Volumes, &v))) {
+    v = Create_Volume(Num, MSH_VOLUME);
+    v->Dirty = 1;
+    Tree_Add(M->Volumes, &v);
+  }
+  else
+    v = *vv;
+  return v;
+}
+
 /* Note: the 'Dirty' flag only has an influence if one doesn't load
    the geometry along with the mesh (since we make Tree_Insert for the
    geometrical entities). And that's what we want. */
@@ -100,9 +145,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   Hexahedron *hex;
   Prism *pri;
   Pyramid *pyr;
-  Curve C, *c, **cc;
-  Surface S, *s, **ss;
-  Volume V, *v, **vv;
+  Curve *c;
+  Surface *s;
+  Volume *v;
   Tree_T *Duplicates = NULL;
 
   while(1) {
@@ -239,60 +284,6 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
         for(j = 0; j < Nbr_Nodes; j++)
           fscanf(fp, "%d", &verts[j].Num);
-
-        switch (Type) {
-	case PNT:
-	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
-	  break;
-        case LGN1:
-        case LGN2:
-          c = &C;
-          c->Num = abs(Elementary);
-          if(!(cc = (Curve **) Tree_PQuery(M->Curves, &c))) {
-            c = Create_Curve(abs(Elementary), MSH_SEGM_LINE, 0, NULL,
-                             NULL, -1, -1, 0., 1.);
-            c->Dirty = 1;
-            Tree_Add(M->Curves, &c);
-          }
-          else
-            c = *cc;
-	  addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
-          break;
-        case TRI1:
-        case QUA1:
-        case TRI2:
-        case QUA2:
-          s = &S;
-          s->Num = Elementary;
-          if(!(ss = (Surface **) Tree_PQuery(M->Surfaces, &s))) {
-            s = Create_Surface(Elementary, MSH_SURF_PLAN);
-            s->Dirty = 1;
-            Tree_Add(M->Surfaces, &s);
-          }
-          else
-            s = *ss;
-	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
-          break;
-        case TET1:
-        case HEX1:
-        case PRI1:
-        case PYR1:
-        case TET2:
-        case HEX2:
-        case PRI2:
-        case PYR2:
-          v = &V;
-          v->Num = Elementary;
-          if(!(vv = (Volume **) Tree_PQuery(M->Volumes, &v))) {
-            v = Create_Volume(Elementary, MSH_VOLUME);
-            v->Dirty = 1;
-            Tree_Add(M->Volumes, &v);
-          }
-          else
-            v = *vv;
-	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
-          break;
-	} 
 	
         for(i = 0; i < Nbr_Nodes; i++) {
           vertsp[i] = &verts[i];
@@ -322,6 +313,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         switch (Type) {
         case LGN1:
         case LGN2:
+	  c = addElementaryCurve(M, abs(Elementary));
+	  addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
           simp = Create_Simplex(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
@@ -338,6 +331,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         case TRI1:
         case TRI2:
+	  s = addElementarySurface(M, Elementary);
+	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
@@ -358,6 +353,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         case QUA1:
         case QUA2:
+	  s = addElementarySurface(M, Elementary);
+	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
           simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
@@ -379,6 +376,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         case TET1:
         case TET2:
+	  v = addElementaryVolume(M, Elementary);
+	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
@@ -399,6 +398,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         case HEX1:
         case HEX2:
+	  v = addElementaryVolume(M, Elementary);
+	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
                                   vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
           hex->Num = Num;
@@ -420,6 +421,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         case PRI1:
         case PRI2:
+	  v = addElementaryVolume(M, Elementary);
+	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2],
                              vertsp[3], vertsp[4], vertsp[5]);
           pri->Num = Num;
@@ -441,6 +444,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         case PYR1:
         case PYR2:
+	  v = addElementaryVolume(M, Elementary);
+	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
           pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2],
                                vertsp[3], vertsp[4]);
           pyr->Num = Num;
@@ -461,6 +466,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  }
           break;
         case PNT:
+	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
 	  // we need to make a new one: vertices in M->Vertices and
 	  // M->Points should never point to the same memory location
 	  vert = Create_Vertex(vertsp[0]->Num, vertsp[0]->Pos.X, vertsp[0]->Pos.Y, 
