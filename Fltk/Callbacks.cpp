@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.276 2004-09-19 06:42:38 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.277 2004-09-19 16:44:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3241,15 +3241,15 @@ void view_options_cb(CALLBACK_ARGS)
   WID->create_view_options_window((long int)data);
 }
 
-void view_plugin_cb(CALLBACK_ARGS)
+void view_plugin_run_cb(CALLBACK_ARGS)
 {
+  GMSH_Post_Plugin *p = (GMSH_Post_Plugin *) data;
   char name[256];
-  std::pair<int, GMSH_Plugin *> *pair = (std::pair<int, GMSH_Plugin *>*) data;
-  int iView = pair->first;
-  GMSH_Post_Plugin *p = (GMSH_Post_Plugin *) pair->second;
   p->getName(name);
+  int iView;
 
   if(p->dialogBox) { // get the values from the GUI
+    iView = p->dialogBox->current_view_index;
     int m = p->getNbOptionsStr();
     int n = p->getNbOptions();
     if(m > 20) m = 20;
@@ -3263,6 +3263,8 @@ void view_plugin_cb(CALLBACK_ARGS)
       sxn->def = p->dialogBox->value[i]->value();
     }
   }
+  else
+    iView = 0;
 
   try {
     Post_View *v = (Post_View *) List_Pointer_Test(CTX.post.list, iView);
@@ -3275,15 +3277,17 @@ void view_plugin_cb(CALLBACK_ARGS)
   }
 }
 
-void view_options_plugin_cb(CALLBACK_ARGS)
+void view_plugin_options_cb(CALLBACK_ARGS)
 {
   std::pair<int, GMSH_Plugin *> *pair = (std::pair<int, GMSH_Plugin *>*) data;
+  int iView = pair->first;
   GMSH_Plugin *p = pair->second;
 
   if(!p->dialogBox)
     p->dialogBox = WID->create_plugin_window(p);
 
-  p->dialogBox->run_button->callback(view_plugin_cb, (void *)pair);
+  p->dialogBox->current_view_index = iView;
+  p->dialogBox->run_button->callback(view_plugin_run_cb, (void *)p);
   p->dialogBox->main_window->show();
 }
 

@@ -96,6 +96,7 @@ class GMSH_Plugin;
 
 struct PluginDialogBox
 {
+  int current_view_index;
   Fl_Window *main_window;
   Fl_Return_Button *run_button;
   Fl_Value_Input *value[20];
@@ -143,6 +144,7 @@ public:
   std::vector<Fl_Menu_Button*>  m_popup_butt ;
   std::vector<Fl_Menu_Button*>  m_popup2_butt ;
   std::vector<char*>            m_pop_label ;
+  std::vector<std::pair<int, GMSH_Plugin*>*> m_pop_plugin;
 
   // graphic window
   Fl_Window        *g_window ;
