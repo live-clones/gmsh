@@ -1,4 +1,4 @@
-/* $Id: Print_Geo.cpp,v 1.9 2000-12-09 15:21:17 geuzaine Exp $ */
+/* $Id: Print_Geo.cpp,v 1.10 2000-12-10 00:15:33 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -169,18 +169,16 @@ void Print_Volume(void *a, void *b){
 
   int NUMLOOP = vol->Num + 1000000;
 
-  if(s->Typ != MSH_SURF_NURBS){
-    fprintf(FOUT,"Surface Loop (%d) = ",NUMLOOP);
+  fprintf(FOUT,"Surface Loop (%d) = ",NUMLOOP);
     
-    for(i=0;i<List_Nbr(vol->Surfaces);i++){
-      List_Read(vol->Surfaces,i,&s);
-      if(i)
-        fprintf(FOUT,", %d",s->Num);
-      else
-        fprintf(FOUT,"{%d",s->Num);
-    }
-    fprintf(FOUT,"};\n");
+  for(i=0;i<List_Nbr(vol->Surfaces);i++){
+    List_Read(vol->Surfaces,i,&s);
+    if(i)
+      fprintf(FOUT,", %d",s->Num);
+    else
+      fprintf(FOUT,"{%d",s->Num);
   }
+  fprintf(FOUT,"};\n");
 
   switch(vol->Typ){
   case MSH_VOLUME:
