@@ -464,16 +464,16 @@ Surface Loop(6031) = {184,6020,6030,6028,6018,-6024,-6022,-6026};
 AIR = 10000 ;
 R1 = 20000 ;
 R2 = 30000 ;
-T1 = 40000 ;
-T2 = 50000 ;
+TT1 = 40000 ;
+TT2 = 50000 ;
 CLD0 = 60000 ;
 SOU  = 70000 ;
 CLTEM  = 80000 ;
 
 Physical Volume  (AIR)     = 6002;
 
-Physical Volume  (T1)      = 606;
-Physical Volume  (T2)      = 608;
+Physical Volume  (TT1)      = 606;
+Physical Volume  (TT2)      = 608;
 Physical Volume  (R1)      = 602;
 Physical Volume  (R2)      = 604;
 //Physical Volume  (SOU)     = 6032;
