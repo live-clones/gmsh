@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.9 2001-11-05 08:37:43 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.10 2001-11-05 09:27:28 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -14,6 +14,26 @@ extern Context_T   CTX;
 /* ------------------------------------------------------------------------
     2D graphics (gnuplot style)
    ------------------------------------------------------------------------ */
+
+static void getval(Post_View *v, int i, int j, double *p1, double *p2, 
+		   double *Abs, double *Val){
+  int k;
+  if(v->Type==DRAW_POST_2D_SPACE){
+    for(k=0;k<3;k++){
+      List_Read(v->SP,j+k,&p2[k]);
+      if(j) p1[k] = p2[k]-p1[k];
+    }
+    *Abs += sqrt (p1[0] * p1[0] + p1[1] * p1[1] + p1[2] * p1[2]);
+    for(k=0;k<3;k++){
+      p1[k] = p2[k];
+    }
+    *Val = ((double*)List_Pointer_Fast(v->SP,j+3))[v->TimeStep];
+  }
+  else{
+    *Abs = *(double*)List_Pointer_Fast(v->Time,j);
+    *Val = ((double*)List_Pointer_Fast(v->SP,i+3))[j];
+  }
+}
 
 static void addval(Post_View *v, double Abs, double Val,
 		   double AbsMin, double AbsMax, double ValMin, double ValMax,
@@ -60,7 +80,8 @@ static void Draw_Graph2D(Post_View *v,
   double xtop = xx;
   double ytop = CTX.viewport[3]-yy;
   double ybot = ytop-height;
-  double ValMin, ValMax, AbsMin, AbsMax;
+  double Abs, Val, ValMin, ValMax, AbsMin, AbsMax;
+  double p1[3], p2[3];
 
   if(!v->TransparentScale){
     glColor4ubv((GLubyte*)&CTX.color.bg);
@@ -256,46 +277,31 @@ static void Draw_Graph2D(Post_View *v,
     j_max = v->TimeStep+1;
   }
 
-  double Abs = 0., Val = 0., p1[3]={0.,0.,0.}, p2[3];
-#define GETVAL								\
-  if(v->Type==DRAW_POST_2D_SPACE){					\
-    for(k=0;k<3;k++){							\
-      List_Read(v->SP,j+k,&p2[k]);					\
-      if(j) p1[k] = p2[k]-p1[k];					\
-    }									\
-    Abs += sqrt (p1[0] * p1[0] + p1[1] * p1[1] + p1[2] * p1[2]);	\
-    for(k=0;k<3;k++){							\
-      p1[k] = p2[k];							\
-    }	    								\
-    Val = ((double*)List_Pointer_Fast(v->SP,j+3))[v->TimeStep];		\
-  }									\
-  else{									\
-    Abs = *(double*)List_Pointer_Fast(v->Time,j);			\
-    Val = ((double*)List_Pointer_Fast(v->SP,i+3))[j];			\
-  }
-
   for(i=0; i<i_max; i+=i_inc){
     if(v->IntervalsType == DRAW_POST_ISO || 
        v->IntervalsType == DRAW_POST_DISCRETE ||
        v->IntervalsType == DRAW_POST_NUMERIC){
       glBegin(GL_POINTS); 
+      Abs = Val = p1[0] = p1[1] = p1[2] = 0.;
       for(j=0; j<j_max; j+=j_inc){
-	GETVAL;
+	getval(v,i,j,p1,p2,&Abs,&Val);
 	addval(v,Abs,Val,AbsMin,AbsMax,ValMin,ValMax,xtop,width,ybot,height,0);
       }
       glEnd();
     }
     if(v->IntervalsType == DRAW_POST_NUMERIC){
+      Abs = Val = p1[0] = p1[1] = p1[2] = 0.;
       for(j=0; j<j_max; j+=j_inc){
-	GETVAL;
+	getval(v,i,j,p1,p2,&Abs,&Val);
 	addval(v,Abs,Val,AbsMin,AbsMax,ValMin,ValMax,xtop,width,ybot,height,1);
       }
     }
     if(v->IntervalsType == DRAW_POST_DISCRETE || 
        v->IntervalsType == DRAW_POST_CONTINUOUS){
       glBegin(GL_LINE_STRIP); 
+      Abs = Val = p1[0] = p1[1] = p1[2] = 0.;
       for(j=0; j<j_max; j+=j_inc){
-	GETVAL;
+	getval(v,i,j,p1,p2,&Abs,&Val);
 	addval(v,Abs,Val,AbsMin,AbsMax,ValMin,ValMax,xtop,width,ybot,height,0);
       }
       glEnd();
