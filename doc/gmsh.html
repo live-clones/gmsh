@@ -1,3 +1,5 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+           "http://www.w3.org/TR/REC-html40/loose.dtd">
 <HTML>
 
 <HEAD>
@@ -5,8 +7,8 @@
 <TITLE>Gmsh: a three-dimensional finite element mesh generator with
 built-in pre- and post-processing facilities</TITLE>
 
-<meta name="keywords" content="free mesh generator, free finite element software,
-mesh generation, mesh refinement, free, delaunay triangulation,
+<meta name="keywords" content="free mesh generator, free finite element
+software, mesh generation, mesh refinement, free, delaunay triangulation,
 automatic, maillages automatiques, mailleur, modelisation, opengl,
 maillages 3D, 3D meshes, 3-D meshes, maillages 3-D, voronoi,
 adaptation de maillages, mesh adaptation, modeling">
@@ -39,23 +41,38 @@ lines, surfaces and volumes. These adapted meshes can be mixed with
 simple structured (transfinite, elliptic, etc.)  meshes in order to
 augment the flexibility.
 
-<h3>Geometrical Entity Definition</h3>
+Gmsh is structured around four modules: <a
+href="#geometry">geometry</a>, <a href="#mesh">mesh</a>, <a
+href="#solver">solver</a> and <a
+href="#post-processing">post-processing</a>. The specification of any
+input to these modules is done either interactively, or in text data
+files (interactive specifications generate language bits in the input
+file, and vice versa). The accessibility of most features in the ASCII
+text file makes it possible to automate all treatments (loops, tests
+and external access methods permit advanced scripting capabilities). A
+brief description of the four modules is given hereafter.
 
-Parameterized geometries are created by successively defining points,
-oriented curves (segments, circles, ellipsis, splines, etc.), oriented
-surfaces (plane surfaces, ruled surfaces, etc.)  and volumes. Compound
-groups of geometrical entities can be defined, based on these
-elementary parameterized geometric entities. Data can be defined
-either interactively thanks to the menu system, or directly in the ASCII 
-input files.
+<a name="geometry">
+<h3>Geometry: geometrical entity definition</h3>
 
-<h3>Mesh Generation</h3>
+Geometries are created in a bottom-up flow by successively defining
+points, oriented curves (segments, circles, ellipses, splines, etc.),
+oriented surfaces (plane surfaces, ruled surfaces, etc.) and
+volumes. Compound groups of geometrical entities can be defined, based
+on these elementary parametrized geometric entities. Data can be
+defined either interactively thanks to the menu system, or directly in
+the ASCII input files.  The scripting possibilities (with loops,
+tests, arrays of variables, etc.) allow fully parametrized definitions
+of all geometrical entities.
+
+<a name="mesh">
+<h3>Mesh: finite element mesh generation</h3>
 
 A finite element mesh is a tessellation of a given subset of
 R<sup>3</sup> by elementary geometrical elements of various shapes (in
 this case lines, triangles, quadrangles, tetrahedra, prisms and
-hexahedra), arranged in such a way that two of them intersect, if they
-do, along a common face, edge or node, and never otherwise. All the
+hexahedra), arranged in such a way that if two of them intersect, they
+do so along a face, an edge or a node, and never otherwise. All the
 finite element meshes produced by Gmsh as unstructured, even if they
 were generated in a structured way. This implies that the elementary
 geometrical elements are defined only by an ordered list of their
@@ -99,18 +116,30 @@ characteristic length field evaluated at the center of its
 circumscribed circle/sphere.
 </ol>
 
+<a name="solver">
+<h3>Solver: external solver interface</h3>
 
-<h3>Scalar and Vector Field Visualization</h3>
+External solvers can be interfaced with Gmsh through a socket
+mechanism, which permits to easily launch computations either locally
+or on remote computers, and to collect and exploit the simulation
+results within Gmsh.  The only solver currently interfaced is <A
+HREF="/getdp/">GetDP</A>.
+
+<a name="post-processing">
+<h3>Post-processing: scalar and vector field visualization</h3>
 
 Multiple post-processing scalar or vector maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
-mesh. Scalar fields are represented by iso-value curves or color maps
-and vector fields by three-dimensional arrows or displacement
-maps. Post-processor functions include offsets, elevation, interactive
-color map modification, range clamping, interactive and scriptable
-animation, vector postscript output, etc. All post-processing options
-can be accessed either interactively or through the the input ascii
-files.
+mesh. Scalar fields are represented by iso-value curves/surfaces or
+color maps and vector fields by three-dimensional arrows or
+displacement maps. Post-processing functions include arbitrary section
+computation, offset, elevation, boundary extraction, color map and
+range modification, animation, <a href="/gl2ps/">vector graphic
+output</a>, etc. All post-processing options can be accessed either
+interactively or through the input ASCII text files. Scripting permits
+to automate all the post-processing operations (e.g. for the creation
+of complex animations).
+
 
 <h2>Documentation</h2>
 
@@ -192,7 +221,7 @@ Polytechnic Institute</a>) and <A
 HREF="mailto:Christophe.Geuzaine@ulg.ac.be">Christophe Geuzaine</A>
 (currently with the <a href="http://www.ulg.ac.be">University of
 Liège</a>).  Please use <A
-HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</A> instead of our personnal
+HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</A> instead of our personal
 e-mails to send questions or bug reports!
 
 
@@ -232,17 +261,17 @@ Some pictures made with Gmsh:
 
 <h2>Links</h2>
 
-Check out <A HREF="/getdp/">GetDP</A>, a scientific
-computation software for the numerical solution of
-integro-differential equations, using finite element and integral type
-methods.
+Check out <A HREF="/getdp/">GetDP</A>, a scientific computation
+software for the numerical solution of integro-differential equations,
+using finite element and integral type methods.
 
 <p>
+
 Back to <a href="/">geuz.org</a>.
 
 <p>
 
-$Date: 2001-10-12 19:56:52 $
+$Date: 2001-10-13 07:20:35 $
 
 </BODY>
 </HTML>
