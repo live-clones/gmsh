@@ -63,7 +63,6 @@ adapt_point * adapt_point::New ( double x, double y, double z, Double_Matrix *co
 
 void adapt_triangle::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  printf("creating the sub-elements\n");
   int level = 0;
   cleanElement<adapt_triangle> ();
   adapt_point *p1 = adapt_point::New ( 0,0,0, coeffs, eexps);
@@ -75,7 +74,6 @@ void adapt_triangle::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix 
 
 void adapt_quad::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  printf("creating the sub-elements\n");
   int level = 0;
   cleanElement<adapt_quad> ();
   adapt_point *p1 = adapt_point::New ( -1,-1,0, coeffs, eexps);
@@ -88,7 +86,6 @@ void adapt_quad::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eex
 
 void adapt_tet::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  Msg(INFO, "creating sub-elements");
   int level = 0;
   cleanElement<adapt_tet> ();
   adapt_point *p1 = adapt_point::New ( 0,0,0, coeffs, eexps);
@@ -101,7 +98,6 @@ void adapt_tet::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexp
 
 void adapt_hex::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  Msg(INFO, "creating sub-elements");
   int level = 0;
   cleanElement<adapt_hex> ();
   adapt_point *p1 = adapt_point::New ( -1,-1,-1, coeffs, eexps);
@@ -149,7 +145,7 @@ void adapt_triangle::Recur_Create (adapt_triangle *t, int maxlevel, int level , 
   Recur_Create (t3, maxlevel,level,coeffs,eexps); 
   adapt_triangle *t4 = new adapt_triangle (p12,p13,p23);
   Recur_Create (t4, maxlevel,level,coeffs,eexps);
-  t->t[0]=t1;t->t[1]=t2;t->t[2]=t3;t->t[3]=t4;      
+  t->e[0]=t1;t->e[1]=t2;t->e[2]=t3;t->e[3]=t4;      
 
 }
 
@@ -189,7 +185,7 @@ void adapt_quad::Recur_Create (adapt_quad *q, int maxlevel, int level , Double_M
   Recur_Create (q3, maxlevel,level,coeffs,eexps);
   adapt_quad *q4 = new adapt_quad (p14,pc,p34,p4);
   Recur_Create (q4, maxlevel,level,coeffs,eexps);
-  q->q[0]=q1;q->q[1]=q2;q->q[2]=q3;q->q[3]=q4;      
+  q->e[0]=q1;q->e[1]=q2;q->e[2]=q3;q->e[3]=q4;      
 
 }
 
@@ -228,8 +224,8 @@ void adapt_tet::Recur_Create (adapt_tet *t, int maxlevel, int level , Double_Mat
   adapt_tet *t8 = new adapt_tet (pe0,pe2,pe3,pe1);
   Recur_Create (t8, maxlevel,level,coeffs,eexps);
 
-  t->t[0]=t1;t->t[1]=t2;t->t[2]=t3;t->t[3]=t4;      
-  t->t[4]=t5;t->t[5]=t6;t->t[6]=t7;t->t[7]=t8;      
+  t->e[0]=t1;t->e[1]=t2;t->e[2]=t3;t->e[3]=t4;      
+  t->e[4]=t5;t->e[5]=t6;t->e[6]=t7;t->e[7]=t8;      
 }
 
 
@@ -289,8 +285,8 @@ void adapt_hex::Recur_Create (adapt_hex *h, int maxlevel, int level , Double_Mat
   adapt_hex *h8 = new adapt_hex (p0312,pc,p1256,p12,p23,p2367,p26,p2);//p2
   Recur_Create (h8, maxlevel,level,coeffs,eexps);
 
-  h->h[0]=h1;h->h[1]=h2;h->h[2]=h3;h->h[3]=h4;      
-  h->h[4]=h5;h->h[5]=h6;h->h[6]=h7;h->h[7]=h8;      
+  h->e[0]=h1;h->e[1]=h2;h->e[2]=h3;h->e[3]=h4;      
+  h->e[4]=h5;h->e[5]=h6;h->e[6]=h7;h->e[7]=h8;      
 }
 
 
@@ -319,69 +315,69 @@ void adapt_hex::Error ( double AVG , double tol )
 
 void adapt_triangle::Recur_Error ( adapt_triangle *t, double AVG, double tol )
 {
-  if(!t->t[0])t->visible = true; 
+  if(!t->e[0])t->visible = true; 
   else
     {
       double vr;
-      if (!t->t[0]->t[0])
+      if (!t->e[0]->e[0])
 	{
-	  double v1 = t->t[0]->V();
-	  double v2 = t->t[1]->V();
-	  double v3 = t->t[2]->V();
-	  double v4 = t->t[3]->V();
+	  double v1 = t->e[0]->V();
+	  double v2 = t->e[1]->V();
+	  double v3 = t->e[2]->V();
+	  double v4 = t->e[3]->V();
 	  vr = (2*v1 + 2*v2 + 2*v3 + v4)/7.;
 	  double v =  t->V();
 	  if ( fabs(v - vr) > AVG * tol ) 
 	    //if ( fabs(v - vr) > ((fabs(v) + fabs(vr) + AVG * tol) * tol ) ) 
 	    {
 	      t->visible = false;
-	      Recur_Error (t->t[0],AVG,tol);
-	      Recur_Error (t->t[1],AVG,tol);
-	      Recur_Error (t->t[2],AVG,tol);
-	      Recur_Error (t->t[3],AVG,tol);
+	      Recur_Error (t->e[0],AVG,tol);
+	      Recur_Error (t->e[1],AVG,tol);
+	      Recur_Error (t->e[2],AVG,tol);
+	      Recur_Error (t->e[3],AVG,tol);
 	    } 
 	  else
 	    t->visible = true;
 	}
       else
 	{
-	  double v11 = t->t[0]->t[0]->V();
-	  double v12 = t->t[0]->t[1]->V();
-	  double v13 = t->t[0]->t[2]->V();
-	  double v14 = t->t[0]->t[3]->V();
-	  double v21 = t->t[1]->t[0]->V();
-	  double v22 = t->t[1]->t[1]->V();
-	  double v23 = t->t[1]->t[2]->V();
-	  double v24 = t->t[1]->t[3]->V();
-	  double v31 = t->t[2]->t[0]->V();
-	  double v32 = t->t[2]->t[1]->V();
-	  double v33 = t->t[2]->t[2]->V();
-	  double v34 = t->t[2]->t[3]->V();
-	  double v41 = t->t[3]->t[0]->V();
-	  double v42 = t->t[3]->t[1]->V();
-	  double v43 = t->t[3]->t[2]->V();
-	  double v44 = t->t[3]->t[3]->V();
+	  double v11 = t->e[0]->e[0]->V();
+	  double v12 = t->e[0]->e[1]->V();
+	  double v13 = t->e[0]->e[2]->V();
+	  double v14 = t->e[0]->e[3]->V();
+	  double v21 = t->e[1]->e[0]->V();
+	  double v22 = t->e[1]->e[1]->V();
+	  double v23 = t->e[1]->e[2]->V();
+	  double v24 = t->e[1]->e[3]->V();
+	  double v31 = t->e[2]->e[0]->V();
+	  double v32 = t->e[2]->e[1]->V();
+	  double v33 = t->e[2]->e[2]->V();
+	  double v34 = t->e[2]->e[3]->V();
+	  double v41 = t->e[3]->e[0]->V();
+	  double v42 = t->e[3]->e[1]->V();
+	  double v43 = t->e[3]->e[2]->V();
+	  double v44 = t->e[3]->e[3]->V();
 	  double vr1 = (2*v11 + 2*v12 + 2*v13 + v14)/7.;
 	  double vr2 = (2*v21 + 2*v22 + 2*v23 + v24)/7.;
 	  double vr3 = (2*v31 + 2*v32 + 2*v33 + v34)/7.;
 	  double vr4 = (2*v41 + 2*v42 + 2*v43 + v44)/7.;
 	  vr = (2*vr1+2*vr2+2*vr3+vr4)/7.;
-	  if ( fabs(t->t[0]->V() - vr1) > AVG * tol  || 
-	       fabs(t->t[1]->V() - vr2) > AVG * tol  || 
-	       fabs(t->t[2]->V() - vr3) > AVG * tol  || 
-	       fabs(t->t[3]->V() - vr4) > AVG * tol  || 
+	  if ( fabs(t->e[0]->V() - vr1) > AVG * tol  || 
+	       fabs(t->e[1]->V() - vr2) > AVG * tol  || 
+	       fabs(t->e[2]->V() - vr3) > AVG * tol  || 
+	       fabs(t->e[3]->V() - vr4) > AVG * tol  || 
 	       fabs(t->V() - vr) > AVG * tol ) 
-	    //if ( fabs(t->t[0]->V() - vr1) > (fabs(t->t[0]->V())+fabs(vr1)+AVG * tol)*tol  || 
-	    //		 fabs(t->t[1]->V() - vr2) > (fabs(t->t[1]->V())+fabs(vr2)+AVG * tol)*tol  || 
-	    //		 fabs(t->t[2]->V() - vr3) > (fabs(t->t[2]->V())+fabs(vr3)+AVG * tol)*tol  || 
-	    //		 fabs(t->t[3]->V() - vr4) > (fabs(t->t[3]->V())+fabs(vr4)+AVG * tol)*tol  || 
+	    //if ( fabs(t->e[0]->V() - vr1) > (fabs(t->e[0]->V())+fabs(vr1)+AVG * tol)*tol  || 
+	    //		 fabs(t->e[1]->V() - vr2) > (fabs(t->e[1]->V())+fabs(vr2)+AVG * tol)*tol  || 
+	    //		 fabs(t->e[2]->V() - vr3) > (fabs(t->e[2]->V())+fabs(vr3)+AVG * tol)*tol  || 
+	    //		 fabs(t->e[3]->V() - vr4) > (fabs(t->e[3]->V())+fabs(vr4)+AVG * tol)*tol  || 
 	    //		 fabs(t->V() - vr) > (fabs(t->V())+fabs(vr)+AVG * tol ) *tol)
 	    {
 	      t->visible = false;
-	      Recur_Error (t->t[0],AVG,tol);
-	      Recur_Error (t->t[1],AVG,tol);
-	      Recur_Error (t->t[2],AVG,tol);
-	      Recur_Error (t->t[3],AVG,tol);
+	      Recur_Error (t->e[0],AVG,tol);
+	      Recur_Error (t->e[1],AVG,tol);
+	      Recur_Error (t->e[2],AVG,tol);
+	      Recur_Error (t->e[3],AVG,tol);
 	    }
 	  else
 	    t->visible = true;	      
@@ -391,69 +387,69 @@ void adapt_triangle::Recur_Error ( adapt_triangle *t, double AVG, double tol )
 
 void adapt_quad::Recur_Error ( adapt_quad *q, double AVG, double tol )
 {
-  if(!q->q[0])q->visible = true; 
+  if(!q->e[0])q->visible = true; 
   else
     {
       double vr;
-      if (!q->q[0]->q[0])
+      if (!q->e[0]->e[0])
 	{
-	  double v1 = q->q[0]->V();
-	  double v2 = q->q[1]->V();
-	  double v3 = q->q[2]->V();
-	  double v4 = q->q[3]->V();
+	  double v1 = q->e[0]->V();
+	  double v2 = q->e[1]->V();
+	  double v3 = q->e[2]->V();
+	  double v4 = q->e[3]->V();
 	  vr = (v1 + v2 + v3 + v4)/4.;
 	  double v =  q->V();
 	  if ( fabs(v - vr) > AVG * tol ) 
 	    //if ( fabs(v - vr) > ((fabs(v) + fabs(vr) + AVG * tol) * tol ) ) 
 	    {
 	      q->visible = false;
-	      Recur_Error (q->q[0],AVG,tol);
-	      Recur_Error (q->q[1],AVG,tol);
-	      Recur_Error (q->q[2],AVG,tol);
-	      Recur_Error (q->q[3],AVG,tol);
+	      Recur_Error (q->e[0],AVG,tol);
+	      Recur_Error (q->e[1],AVG,tol);
+	      Recur_Error (q->e[2],AVG,tol);
+	      Recur_Error (q->e[3],AVG,tol);
 	    } 
 	  else
 	    q->visible = true;
 	}
       else
 	{
-	  double v11 = q->q[0]->q[0]->V();
-	  double v12 = q->q[0]->q[1]->V();
-	  double v13 = q->q[0]->q[2]->V();
-	  double v14 = q->q[0]->q[3]->V();
-	  double v21 = q->q[1]->q[0]->V();
-	  double v22 = q->q[1]->q[1]->V();
-	  double v23 = q->q[1]->q[2]->V();
-	  double v24 = q->q[1]->q[3]->V();
-	  double v31 = q->q[2]->q[0]->V();
-	  double v32 = q->q[2]->q[1]->V();
-	  double v33 = q->q[2]->q[2]->V();
-	  double v34 = q->q[2]->q[3]->V();
-	  double v41 = q->q[3]->q[0]->V();
-	  double v42 = q->q[3]->q[1]->V();
-	  double v43 = q->q[3]->q[2]->V();
-	  double v44 = q->q[3]->q[3]->V();
+	  double v11 = q->e[0]->e[0]->V();
+	  double v12 = q->e[0]->e[1]->V();
+	  double v13 = q->e[0]->e[2]->V();
+	  double v14 = q->e[0]->e[3]->V();
+	  double v21 = q->e[1]->e[0]->V();
+	  double v22 = q->e[1]->e[1]->V();
+	  double v23 = q->e[1]->e[2]->V();
+	  double v24 = q->e[1]->e[3]->V();
+	  double v31 = q->e[2]->e[0]->V();
+	  double v32 = q->e[2]->e[1]->V();
+	  double v33 = q->e[2]->e[2]->V();
+	  double v34 = q->e[2]->e[3]->V();
+	  double v41 = q->e[3]->e[0]->V();
+	  double v42 = q->e[3]->e[1]->V();
+	  double v43 = q->e[3]->e[2]->V();
+	  double v44 = q->e[3]->e[3]->V();
 	  double vr1 = (v11 + v12 + v13 + v14)/4.;
 	  double vr2 = (v21 + v22 + v23 + v24)/4.;
 	  double vr3 = (v31 + v32 + v33 + v34)/4.;
 	  double vr4 = (v41 + v42 + v43 + v44)/4.;
 	  vr = (vr1+vr2+vr3+vr4)/4.;
-	  if ( fabs(q->q[0]->V() - vr1) > AVG * tol  || 
-	       fabs(q->q[1]->V() - vr2) > AVG * tol  || 
-	       fabs(q->q[2]->V() - vr3) > AVG * tol  || 
-	       fabs(q->q[3]->V() - vr4) > AVG * tol  || 
+	  if ( fabs(q->e[0]->V() - vr1) > AVG * tol  || 
+	       fabs(q->e[1]->V() - vr2) > AVG * tol  || 
+	       fabs(q->e[2]->V() - vr3) > AVG * tol  || 
+	       fabs(q->e[3]->V() - vr4) > AVG * tol  || 
 	       fabs(q->V() - vr) > AVG * tol ) 
-	    //if ( fabs(t->t[0]->V() - vr1) > (fabs(t->t[0]->V())+fabs(vr1)+AVG * tol)*tol  || 
-	    //		 fabs(t->t[1]->V() - vr2) > (fabs(t->t[1]->V())+fabs(vr2)+AVG * tol)*tol  || 
-	    //		 fabs(t->t[2]->V() - vr3) > (fabs(t->t[2]->V())+fabs(vr3)+AVG * tol)*tol  || 
-	    //		 fabs(t->t[3]->V() - vr4) > (fabs(t->t[3]->V())+fabs(vr4)+AVG * tol)*tol  || 
+	    //if ( fabs(t->e[0]->V() - vr1) > (fabs(t->e[0]->V())+fabs(vr1)+AVG * tol)*tol  || 
+	    //		 fabs(t->e[1]->V() - vr2) > (fabs(t->e[1]->V())+fabs(vr2)+AVG * tol)*tol  || 
+	    //		 fabs(t->e[2]->V() - vr3) > (fabs(t->e[2]->V())+fabs(vr3)+AVG * tol)*tol  || 
+	    //		 fabs(t->e[3]->V() - vr4) > (fabs(t->e[3]->V())+fabs(vr4)+AVG * tol)*tol  || 
 	    //		 fabs(t->V() - vr) > (fabs(t->V())+fabs(vr)+AVG * tol ) *tol)
 	    {
 	      q->visible = false;
-	      Recur_Error (q->q[0],AVG,tol);
-	      Recur_Error (q->q[1],AVG,tol);
-	      Recur_Error (q->q[2],AVG,tol);
-	      Recur_Error (q->q[3],AVG,tol);
+	      Recur_Error (q->e[0],AVG,tol);
+	      Recur_Error (q->e[1],AVG,tol);
+	      Recur_Error (q->e[2],AVG,tol);
+	      Recur_Error (q->e[3],AVG,tol);
 	    }
 	  else
 	    q->visible = true;	      
@@ -464,31 +460,31 @@ void adapt_quad::Recur_Error ( adapt_quad *q, double AVG, double tol )
 
 void adapt_tet::Recur_Error ( adapt_tet *t, double AVG, double tol )
 {
-  if(!t->t[0])t->visible = true; 
+  if(!t->e[0])t->visible = true; 
   else
     {
       double vr;
-      double v1 = t->t[0]->V();
-      double v2 = t->t[1]->V();
-      double v3 = t->t[2]->V();
-      double v4 = t->t[3]->V();
-      double v5 = t->t[4]->V();
-      double v6 = t->t[5]->V();
-      double v7 = t->t[6]->V();
-      double v8 = t->t[7]->V();
+      double v1 = t->e[0]->V();
+      double v2 = t->e[1]->V();
+      double v3 = t->e[2]->V();
+      double v4 = t->e[3]->V();
+      double v5 = t->e[4]->V();
+      double v6 = t->e[5]->V();
+      double v7 = t->e[6]->V();
+      double v8 = t->e[7]->V();
       vr = (v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8)*.125;
       double v =  t->V();
       if ( fabs(v - vr) > AVG * tol ) 
 	{
 	  t->visible = false;
-	  Recur_Error (t->t[0],AVG,tol);
-	  Recur_Error (t->t[1],AVG,tol);
-	  Recur_Error (t->t[2],AVG,tol);
-	  Recur_Error (t->t[3],AVG,tol);
-	  Recur_Error (t->t[4],AVG,tol);
-	  Recur_Error (t->t[5],AVG,tol);
-	  Recur_Error (t->t[6],AVG,tol);
-	  Recur_Error (t->t[7],AVG,tol);
+	  Recur_Error (t->e[0],AVG,tol);
+	  Recur_Error (t->e[1],AVG,tol);
+	  Recur_Error (t->e[2],AVG,tol);
+	  Recur_Error (t->e[3],AVG,tol);
+	  Recur_Error (t->e[4],AVG,tol);
+	  Recur_Error (t->e[5],AVG,tol);
+	  Recur_Error (t->e[6],AVG,tol);
+	  Recur_Error (t->e[7],AVG,tol);
 	} 
       else
 	t->visible = true;
@@ -497,31 +493,31 @@ void adapt_tet::Recur_Error ( adapt_tet *t, double AVG, double tol )
 
 void adapt_hex::Recur_Error ( adapt_hex *h, double AVG, double tol )
 {
-  if(!h->h[0])h->visible = true; 
+  if(!h->e[0])h->visible = true; 
   else
     {
       double vr;
-      double v1 = h->h[0]->V();
-      double v2 = h->h[1]->V();
-      double v3 = h->h[2]->V();
-      double v4 = h->h[3]->V();
-      double v5 = h->h[4]->V();
-      double v6 = h->h[5]->V();
-      double v7 = h->h[6]->V();
-      double v8 = h->h[7]->V();
+      double v1 = h->e[0]->V();
+      double v2 = h->e[1]->V();
+      double v3 = h->e[2]->V();
+      double v4 = h->e[3]->V();
+      double v5 = h->e[4]->V();
+      double v6 = h->e[5]->V();
+      double v7 = h->e[6]->V();
+      double v8 = h->e[7]->V();
       vr = (v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8)*.125;
       double v =  h->V();
       if ( fabs(v - vr) > AVG * tol ) 
 	{
 	  h->visible = false;
-	  Recur_Error (h->h[0],AVG,tol);
-	  Recur_Error (h->h[1],AVG,tol);
-	  Recur_Error (h->h[2],AVG,tol);
-	  Recur_Error (h->h[3],AVG,tol);
-	  Recur_Error (h->h[4],AVG,tol);
-	  Recur_Error (h->h[5],AVG,tol);
-	  Recur_Error (h->h[6],AVG,tol);
-	  Recur_Error (h->h[7],AVG,tol);
+	  Recur_Error (h->e[0],AVG,tol);
+	  Recur_Error (h->e[1],AVG,tol);
+	  Recur_Error (h->e[2],AVG,tol);
+	  Recur_Error (h->e[3],AVG,tol);
+	  Recur_Error (h->e[4],AVG,tol);
+	  Recur_Error (h->e[5],AVG,tol);
+	  Recur_Error (h->e[6],AVG,tol);
+	  Recur_Error (h->e[7],AVG,tol);
 	} 
       else
 	h->visible = true;
@@ -531,12 +527,13 @@ void adapt_hex::Recur_Error ( adapt_hex *h, double AVG, double tol )
 static double t0,t1,t2,t3;
 
 template <class ELEM>
-void Adaptive_Post_View:: zoomElement (Post_View * view ,
-					int ielem ,
-					int level, 
-					GMSH_Post_Plugin *plug,
-					List_T *theList,
-					int *counter)
+int Adaptive_Post_View:: zoomElement (Post_View * view ,
+				       int ielem ,
+				       int level,
+				       int levelmax,
+				       GMSH_Post_Plugin *plug,
+				       List_T *theList,
+				       int *counter)
 {
 
   const int nbNod = ELEM::nbNod; 
@@ -545,6 +542,7 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   typename std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
 
   double c0 = Cpu();
+
 
   const int N = _coefs->size1();
   Double_Vector val ( N ), res(adapt_point::all_points.size());
@@ -564,7 +562,6 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
     }	        
   _Interpolate->mult(val,res);
   _Geometry->mult(xyz,XYZ);
-  
   double c1 = Cpu();
 
   int kk=0;
@@ -579,7 +576,6 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
       if (max < p->val) max = p->val;
       kk++;
     }
-
   double c2 = Cpu();
 
   typename std::list<ELEM*>::iterator itt  = ELEM::all_elems.begin();
@@ -602,6 +598,14 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   double c3 = Cpu();
   itt  = ELEM::all_elems.begin();
 
+
+  for ( ;itt != itte ; itt++)
+    {
+      if ((*itt)->visible && !(*itt)->e[0] && level != levelmax )return 0;
+    } 
+
+
+  itt  = ELEM::all_elems.begin();
   adapt_point **p;
 
   for ( ;itt != itte ; itt++)
@@ -622,6 +626,8 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   t1 += c2-c1;
   t2 += c3-c2;
   t3 += c4-c3;
+  
+  return 1;
 
 }
 
@@ -640,68 +646,117 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
 
 void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int level, GMSH_Post_Plugin *plug)
 {
-  setAdaptiveResolutionLevel_TEMPL <adapt_triangle> ( view,level,plug,&(view->ST),&(view->NbST)) ;
-  setAdaptiveResolutionLevel_TEMPL <adapt_quad>     ( view,level,plug,&(view->SQ),&(view->NbSQ)) ;
-  setAdaptiveResolutionLevel_TEMPL <adapt_hex>      ( view,level,plug,&(view->SH),&(view->NbSH)) ;
-  setAdaptiveResolutionLevel_TEMPL <adapt_tet>      ( view,level,plug,&(view->SS),&(view->NbSS)) ;
+
+  if (presentTol==tol && presentZoomLevel == level && !plug)return;
+
+  printf("calling setAdaptive with level = %d and plug = %p tol %g presentTol %g\n",level,plug,tol,presentTol);
+
+  int *done = new int [_STposX->size1()];
+  for (int i=0;i<_STposX->size1();++i)done[i] = 0;
+  int level_act = (level>2)?2:level;
+  int nbelm = _STposX->size1();
+
+  int TYP = 0;
+
+  if (view->NbST)
+    {
+      TYP  = 1;
+      List_Delete(view->ST); 
+      view->NbST = 0;
+      view->ST =List_Create ( nbelm * 4, nbelm , sizeof(double));	
+    }
+  if (view->NbSS)
+    {
+      TYP  = 3;
+      List_Delete(view->SS); 
+      view->NbSS = 0;
+      view->SS =List_Create ( nbelm * 4, nbelm , sizeof(double));	
+    }
+  if (view->NbSQ)
+    {
+      TYP  = 2;
+      List_Delete(view->SQ); 
+      view->NbSQ = 0;
+      view->SQ =List_Create ( nbelm * 20, nbelm *20, sizeof(double));	
+    }
+  if (view->NbSH)
+    {
+      TYP  = 4;
+      List_Delete(view->SH); 
+      view->NbSH = 0;
+      view->SH =List_Create ( nbelm * 4, nbelm , sizeof(double));	
+    }
+      
+  view->NbTimeStep=1;
+	
+  
+  t0 = t1 = t2 = t3 = 0;
+  
+  while (1)
+    {
+      if (TYP == 1)setAdaptiveResolutionLevel_TEMPL <adapt_triangle> ( view,level_act,level, plug,&(view->ST),&(view->NbST),done) ;
+      if (TYP == 2)setAdaptiveResolutionLevel_TEMPL <adapt_quad>     ( view,level_act,level, plug,&(view->SQ),&(view->NbSQ),done) ;
+      if (TYP == 4)setAdaptiveResolutionLevel_TEMPL <adapt_hex>      ( view,level_act,level, plug,&(view->SH),&(view->NbSH),done) ;
+      if (TYP == 3)setAdaptiveResolutionLevel_TEMPL <adapt_tet>      ( view,level_act,level, plug,&(view->SS),&(view->NbSS),done) ;
+      int nbDone = 0;
+      for (int i=0;i<_STposX->size1();++i)nbDone += done[i];
+      printf("adaptive %d %d %d %d\n",level, level_act, nbDone, _STposX->size1());
+      if (nbDone ==_STposX->size1())  break;
+      if (level_act >= level) break;
+      level_act ++;
+    }
+
+  view->Changed = 1;
+  presentZoomLevel = level;
+  presentTol = tol;    
+
+  printf("finished %g %g %g %g\n",t0,t1,t2,t3);
+  delete [] done;
 }
 
 template <class ELEM>
-void Adaptive_Post_View:: setAdaptiveResolutionLevel_TEMPL (Post_View * view , int level, GMSH_Post_Plugin *plug, List_T **myList, int *counter)
+void Adaptive_Post_View:: setAdaptiveResolutionLevel_TEMPL (Post_View * view , 
+							    int level, 
+							    int levelmax, 
+							    GMSH_Post_Plugin *plug, 
+							    List_T **myList, 
+							    int *counter,
+							    int *done)
 {
   const int N = _coefs->size1();
   
-  printf("coucou %d %d\n",*counter, ELEM::nbNod);
-
-  if (presentTol==tol && presentZoomLevel == level && !plug)return;
+  const int nbelm = _STposX->size1();
   
-  if (*counter)
+  double sf[100];
+  ELEM::Create ( level, _coefs, _eexps );
+  std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
+  std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
+  
+  if (_Interpolate)
+    delete _Interpolate;
+  if (_Geometry)
+    delete _Geometry;
+  _Interpolate = new Double_Matrix ( adapt_point::all_points.size(), N);
+  _Geometry    = new Double_Matrix ( adapt_point::all_points.size(), ELEM::nbNod);
+
+  int kk=0;
+  for ( ; it !=ite ; ++it)
     {
-      //double sf[ELEM::nbNod]; // does not compile on my mac (iso c++
-      //forbids variable-size arrays)
-      double sf[MAX_NB_NOD];
-      ELEM::Create ( level, _coefs, _eexps );
-      std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-      std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
-      
-      if (_Interpolate)
-	delete _Interpolate;
-      if (_Geometry)
-	delete _Geometry;
-      _Interpolate = new Double_Matrix ( adapt_point::all_points.size(), N);
-      _Geometry    = new Double_Matrix ( adapt_point::all_points.size(), ELEM::nbNod);
-      
-      int kk=0;
-      for ( ; it !=ite ; ++it)
+      adapt_point *p = (adapt_point*) &(*it);
+      for ( int k=0;k<N;++k)
 	{
-	  adapt_point *p = (adapt_point*) &(*it);
-	  for ( int k=0;k<N;++k)
-	    {
-	      (*_Interpolate)(kk,k) = p->shape_functions[k];
-	    }
-	  ELEM::GSF ( p->x, p->y,p->z,sf);
-	  for (int k=0;k<ELEM::nbNod;k++)(*_Geometry)(kk,k) = sf[k];
-	  kk++;	  
+	  (*_Interpolate)(kk,k) = p->shape_functions[k];
 	}
-	
-	List_Delete(*myList); *myList = 0;  
-	*counter = 0;
-	/// for now, that's all we do, 1 TS
-	view->NbTimeStep=1;
-	int nbelm = _STposX->size1();
-	*myList = List_Create ( nbelm * 4, nbelm , sizeof(double));	
-	
-	t0=t1 = t2 = t3 = 0;
-	
-	for ( int i=0;i<nbelm;++i)
-	{
-	  zoomElement<ELEM> ( view , i , level, plug,*myList,counter);
-	}  	
-	printf("finished %g %g %g %g\n",t0,t1,t2,t3);
-	view->Changed = 1;
-	presentZoomLevel = level;
-	presentTol = tol;    
+      ELEM::GSF ( p->x, p->y,p->z,sf);
+      for (int k=0;k<ELEM::nbNod;k++)(*_Geometry)(kk,k) = sf[k];
+      kk++;	  
     }
+
+  for ( int i=0;i<nbelm;++i)
+    {
+      if (!done[i])
+	done[i] = zoomElement<ELEM> ( view , i , level, levelmax, plug,*myList,counter);
+    }  	
 }
 
 void computeShapeFunctions ( Double_Matrix *coeffs, Double_Matrix *eexps , double u, double v, double w,double *sf)

@@ -66,7 +66,7 @@ public:
     p[0] = p1;
     p[1] = p2;
     p[2] = p3;
-    t[0]=t[1]=t[2]=t[3]=0;
+    e[0]=e[1]=e[2]=e[3]=0;
   }
 
   inline double V () const
@@ -89,7 +89,7 @@ public:
   static void Recur_Error ( adapt_triangle *t, double AVG, double tol );
   bool visible;
   adapt_point     *p[3];
-  adapt_triangle  *t[4];
+  adapt_triangle  *e[4];
   static std::list<adapt_triangle*> all_elems;
   static int nbNod;
 };
@@ -104,7 +104,7 @@ public:
     p[1] = p2;
     p[2] = p3;
     p[3] = p4;
-    q[0]=q[1]=q[2]=q[3]=0;
+    e[0]=e[1]=e[2]=e[3]=0;
   }
 
   inline double V () const
@@ -128,7 +128,7 @@ public:
   static void Recur_Error ( adapt_quad *q, double AVG, double tol );
   bool visible;
   adapt_point     *p[4];
-  adapt_quad  *q[4];
+  adapt_quad  *e[4];
   static std::list<adapt_quad*> all_elems;
   static int nbNod;
 };
@@ -143,8 +143,8 @@ public:
     p[1] = p2;
     p[2] = p3;
     p[3] = p4;
-    t[0]=t[1]=t[2]=t[3]=0;
-    t[4]=t[5]=t[6]=t[7]=0;
+    e[0]=e[1]=e[2]=e[3]=0;
+    e[4]=e[5]=e[6]=e[7]=0;
   }
 
   inline static void GSF (const double u, const double v, double w, double sf[]) 
@@ -168,7 +168,7 @@ public:
   static void Recur_Error ( adapt_tet *t, double AVG, double tol );
   bool visible;
   adapt_point     *p[4];
-  adapt_tet  *t[8];
+  adapt_tet  *e[8];
   static std::list<adapt_tet*> all_elems;
   static int nbNod;
 };
@@ -187,8 +187,8 @@ public:
     p[5] = p6;
     p[6] = p7;
     p[7] = p8;
-    h[0]=h[1]=h[2]=h[3]=0;
-    h[4]=h[5]=h[6]=h[7]=0;
+    e[0]=e[1]=e[2]=e[3]=0;
+    e[4]=e[5]=e[6]=e[7]=0;
   }
 
   inline static void GSF (const double u, const double v, double w, double sf[]) 
@@ -216,7 +216,7 @@ public:
   static void Recur_Error ( adapt_hex *h, double AVG, double tol );
   bool visible;
   adapt_point     *p[8];
-  adapt_hex *h[8];
+  adapt_hex *e[8];
   static std::list<adapt_hex*> all_elems;
   static int nbNod;
 };
@@ -244,14 +244,14 @@ public:
       setAdaptiveResolutionLevel ( view , level );
     }
   template <class ELEM>
-    void setAdaptiveResolutionLevel_TEMPL (Post_View * view , int level, GMSH_Post_Plugin *plug, List_T **myList, int *counter);
+    void setAdaptiveResolutionLevel_TEMPL (Post_View * view , int level, int lemvelmax, GMSH_Post_Plugin *plug, List_T **myList, int *counter, int *done);
   void setAdaptiveResolutionLevel ( Post_View * view , int levelmax, GMSH_Post_Plugin *plug = 0);
   void initWithLowResolution (Post_View *view);
   void setTolerance (const double eps) {tol=eps;}
   double getTolerance () const {return tol;}
   template <class ELEM>
-    void zoomElement (Post_View * view ,
-		       int ielem, int level, GMSH_Post_Plugin *plug, List_T *theList, int *counter);
+  int zoomElement (Post_View * view ,
+		   int ielem, int level, int levelmax, GMSH_Post_Plugin *plug, List_T *theList, int *counter);
 };
 
 template <class ELEM>
