@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.283 2004-10-16 22:15:16 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.284 2004-10-17 01:53:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1537,15 +1537,17 @@ void _replace_multi_format(char *in, char *val, char *out){
 
 void help_online_cb(CALLBACK_ARGS)
 {
-  char cmd[1000];
-  _replace_multi_format(CTX.web_browser, "http://www.geuz.org/gmsh/doc/texinfo/", cmd);
+  char prog[1024], cmd[1024];
+  FixWindowsPath(CTX.web_browser, prog);
+  _replace_multi_format(prog, "http://www.geuz.org/gmsh/doc/texinfo/", cmd);
   SystemCall(cmd);
 }
 
 void help_credits_cb(CALLBACK_ARGS)
 {
-  char cmd[1000];
-  _replace_multi_format(CTX.web_browser, "http://www.geuz.org/gmsh/doc/CREDITS", cmd);
+  char prog[1024], cmd[1024];
+  FixWindowsPath(CTX.web_browser, prog);
+  _replace_multi_format(prog, "http://www.geuz.org/gmsh/doc/CREDITS", cmd);
   SystemCall(cmd);
 }
 
@@ -1595,8 +1597,10 @@ void geometry_physical_cb(CALLBACK_ARGS)
 
 void geometry_edit_cb(CALLBACK_ARGS)
 {
-  char cmd[1000];
-  _replace_multi_format(CTX.editor, CTX.filename, cmd);
+  char prog[1024], file[1024], cmd[1024];
+  FixWindowsPath(CTX.editor, prog);
+  FixWindowsPath(CTX.filename, file);
+  _replace_multi_format(prog, file, cmd);
   SystemCall(cmd);
 }
 
@@ -2467,11 +2471,10 @@ static void _add_physical(char *what)
         add_physical(List1, CTX.filename, type, &num);
 
 	GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-	if (sp)
-	  {
-	    sp->receiveNewPhysicalGroup(type,num);
-	    sp->writeSolverFile(CTX.filename);
-	  }
+	if (sp){
+	  sp->receiveNewPhysicalGroup(type,num);
+	  sp->writeSolverFile(CTX.filename);
+	}
 
         List_Reset(List1);
         ZeroHighlight(THEM);
@@ -2877,8 +2880,9 @@ void solver_cb(CALLBACK_ARGS)
     WID->solver[num].input[0]->value(file);
   }
   if(SINFO[num].nboptions) {
-    sprintf(tmp, "%s \"%s\"", SINFO[num].option_command,
-            (char *)WID->solver[num].input[0]->value());
+    char file[1024];
+    FixWindowsPath((char *)WID->solver[num].input[0]->value(), file);
+    sprintf(tmp, "%s \"%s\"", SINFO[num].option_command, file);           
     Solver(num, tmp);
   }
   WID->create_solver_window(num);
@@ -2895,17 +2899,20 @@ void solver_file_open_cb(CALLBACK_ARGS)
   if(file_chooser(0, 1, "Open problem definition file", tmp, 0)) {
     WID->solver[num].input[0]->value(file_chooser_get_name(1));
     if(SINFO[num].nboptions) {
-      sprintf(tmp, "%s \"%s\"", SINFO[num].option_command,
-              file_chooser_get_name(1));
+      char file[1024];
+      FixWindowsPath(file_chooser_get_name(1), file);
+      sprintf(tmp, "%s \"%s\"", SINFO[num].option_command, file);
       Solver(num, tmp);
     }
   }
 }
 void solver_file_edit_cb(CALLBACK_ARGS)
 {
-  char cmd[1000];
+  char prog[1024], file[1024], cmd[1024];
   int num = (int)data;
-  sprintf(cmd, CTX.editor, WID->solver[num].input[0]->value());
+  FixWindowsPath(CTX.editor, prog);
+  FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
+  _replace_multi_format(prog, file, cmd);
   SystemCall(cmd);
 }
 
@@ -2938,7 +2945,8 @@ void solver_command_cb(CALLBACK_ARGS)
     WID->create_message_window();
 
   if(strlen(WID->solver[num].input[1]->value())) {
-    sprintf(tmp, "\"%s\"", WID->solver[num].input[1]->value());
+    FixWindowsPath((char*)WID->solver[num].input[1]->value(), mesh);
+    sprintf(tmp, "\"%s\"", mesh);
     sprintf(mesh, SINFO[num].mesh_command, tmp);
   }
   else {
@@ -2956,16 +2964,14 @@ void solver_command_cb(CALLBACK_ARGS)
       return;
     }
     sprintf(command, SINFO[num].button_command[idx],
-            SINFO[num].option[usedopts][WID->solver[num].choice[usedopts]->
-                                        value()]);
+            SINFO[num].option[usedopts][WID->solver[num].choice[usedopts]->value()]);
   }
   else {
     strcpy(command, SINFO[num].button_command[idx]);
   }
 
-  sprintf(arg, "\"%s\" %s %s", WID->solver[num].input[0]->value(), mesh,
-          command);
-
+  FixWindowsPath((char*)WID->solver[num].input[0]->value(), tmp);
+  sprintf(arg, "\"%s\" %s %s", tmp, mesh, command);
   Solver(num, arg);
 }
 

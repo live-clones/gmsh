@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.62 2004-09-13 18:02:52 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.63 2004-10-17 01:53:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+
+#if defined(__CYGWIN__)
+#include <sys/cygwin.h>
+#endif
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -56,6 +60,14 @@ void FixRelativePath(char *in, char *out){
     out[i+1] = '\0';
     strcat(out, in);
   }
+}
+
+void FixWindowsPath(char *in, char *out){
+#if defined(__CYGWIN__)
+  cygwin_conv_to_win32_path(in, out);
+#else
+  strcpy(out, in);
+#endif
 }
 
 void SetBoundingBox(double xmin, double xmax,
@@ -320,40 +332,16 @@ void OpenProblemMacFinder(const char *filename)
   }
 }
 
-// replace "/cygwin/x/" with "x:/"
-void decygwin(char *in, char *out)
-{
-  unsigned int i = 0, j = 0;
-
-  while(i < strlen(in)) {
-    if(!strncmp(in + i, "/cygdrive/", 10)) {
-      out[j++] = in[i + 10];    // drive letter
-      out[j++] = ':';
-      out[j++] = '/';
-      i += 12;
-    }
-    else {
-      out[j++] = in[i++];
-    }
-  }
-  out[j] = '\0';
-}
-
 void SystemCall(char *command)
 {
 #if defined(WIN32) && defined(HAVE_FLTK)
   STARTUPINFO suInfo;           // Process startup information
   PROCESS_INFORMATION prInfo;   // Process information
-
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
-
-  char copy[strlen(command) + 1];
-  decygwin(command, copy);
-  Msg(INFO, "Calling '%s'", copy);
-  CreateProcess(NULL, copy, NULL, NULL, FALSE,
+  Msg(INFO, "Calling '%s'", command);
+  CreateProcess(NULL, command, NULL, NULL, FALSE,
                 NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
-
 #else
   if(!system(NULL)) {
     Msg(GERROR, "Could not find /bin/sh: aborting system call");

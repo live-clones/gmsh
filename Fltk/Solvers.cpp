@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.26 2004-07-30 12:22:02 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.27 2004-10-17 01:53:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -45,17 +45,22 @@ SolverInfo SINFO[MAXSOLVERS];
 int Solver(int num, char *args)
 {
   int sock, type, stop = 0, i, j, n;
-  char command[1000], socket_name[1000], str[1000];
+  char command[1024], socket_name[1024], str[1024], prog[1024];
+
+  FixWindowsPath(SINFO[num].executable_name, prog);
 
   if(!SINFO[num].client_server) {
-    sprintf(command, "%s %s &", SINFO[num].executable_name, args);
+    sprintf(command, "%s %s", prog, args);
+#if !defined(WIN32)
+    strcat(command, " &");
+#endif
     Gmsh_StartClient(command, NULL);
     return 1;
   }
 
-  sprintf(socket_name, "%s.gmshsock-%d", CTX.home_dir, num);
-  sprintf(command, "%s %s -socket \"%s\"", SINFO[num].executable_name,
-          args, socket_name);
+  sprintf(str, "%s.gmshsock-%d", CTX.home_dir, num);
+  FixWindowsPath(str, socket_name);
+  sprintf(command, "%s %s -socket \"%s\"", prog, args, socket_name);
 #if !defined(WIN32)
   strcat(command, " &");
 #endif
@@ -73,9 +78,8 @@ int Solver(int num, char *args)
       Msg(GERROR, "Socket listen failed on '%s'", socket_name);
       break;
     case -4:
-      Msg(GERROR,
-          "Solver not responding (is '%s' correctly installed and in your path?)",
-          SINFO[num].executable_name);
+      Msg(GERROR, "Socket listen timeout on '%s'", socket_name);
+      Msg(GERROR, "Is '%s' correctly installed?", prog);
       break;
     case -5:
       Msg(GERROR, "Socket accept failed on '%s'", socket_name);
