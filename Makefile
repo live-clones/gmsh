@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2000-12-05 18:52:57 geuzaine Exp $
+# $Id: Makefile,v 1.11 2000-12-05 19:38:11 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -127,8 +127,6 @@ tag:
 	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/Version.h
 	echo "#define GMSH_PACKAGER \"`logname`\""   >> Common/Version.h
 	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/Version.h
-	echo "#define GMSH_URL      \"http://www.geuz.org/gmsh/\"" >> Common/Version.h
-	echo "#define GMSH_EMAIL    \"Christophe.Geuzaine@ulg.ac.be, Remacle@scorec.rpi.edu\"" >> Common/Version.h
 
 initialtag:
 	@if [ ! -r Common/Version.h ]; then \
