@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.36 2002-02-05 20:13:51 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.37 2002-02-15 00:32:35 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -1314,8 +1314,9 @@ GLvoid gl2psPrintTeXHeader(GLvoid){
 	  "\\begin{picture}(0,0)\n"
 	  "\\includegraphics{%s}\n"
 	  "\\end{picture}%%\n"
-	  "\\begin{picture}(%d,%d)(0,0)\n",
-	  name, viewport[2],viewport[3]);
+	  "%s\\begin{picture}(%d,%d)(0,0)\n",
+	  name, (gl2ps.options & GL2PS_LANDSCAPE) ? "\\rotatebox{90}{" : "",
+	  viewport[2],viewport[3]);
 }
 
 GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
@@ -1334,7 +1335,8 @@ GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
 }
 
 void gl2psPrintTeXFooter(GLvoid){
-  fprintf(gl2ps.stream, "\\end{picture}\n");
+  fprintf(gl2ps.stream, "\\end{picture}%s\n",
+	  (gl2ps.options & GL2PS_LANDSCAPE) ? "}" : "");
 }
 
 
