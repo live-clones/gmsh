@@ -1,4 +1,4 @@
-// $Id: Axes.cpp,v 1.22 2004-11-01 15:10:36 geuzaine Exp $
+// $Id: Axes.cpp,v 1.23 2004-12-21 03:13:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -97,7 +97,8 @@ void Draw_Axes(double s)
   glEnd();
 
   glEnable(GL_LINE_STIPPLE);
-  glLineStipple(2, 0x0F0F);
+  glLineStipple(1, 0x087F);
+  gl2psEnable(GL2PS_LINE_STIPPLE);
   glBegin(GL_LINES);
   if(CTX.range[2] != 0.) {
     glVertex3d(f, 0., 0.);
@@ -115,7 +116,7 @@ void Draw_Axes(double s)
   glVertex3d(f, 0., 0.);
   glEnd();
   glDisable(GL_LINE_STIPPLE);
-
+  gl2psDisable(GL2PS_LINE_STIPPLE);
 }
 
 void Draw_SmallAxes(void)
@@ -160,5 +161,4 @@ void Draw_SmallAxes(void)
   Draw_String("Y");
   glRasterPos2d(cx + zx + o, cy + zy + o);
   Draw_String("Z");
-
 }

@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.275 2004-12-13 15:58:39 geuzaine Exp $
+$Id: VERSIONS,v 1.276 2004-12-21 03:13:02 geuzaine Exp $
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored
@@ -14,7 +14,8 @@ triangular/tetrahadral meshes; the solver interface now supports
 TCP/IP connections; new generalized raise mode (allows to use complex
 expressions to offset post-processing maps); upgraded netgen kernel to
 version 4.4; new optional TIME list in parsed views to specify the
-values of the time steps; various small bug fixes and enhancements;
+values of the time steps; several bug fixes in the Elliptic mesh
+algorithm; various other small bug fixes and enhancements;
 
 New in 1.56: new post-processing option to draw a scalar view raised
 by a displacement view without using Plugin(DisplacementRaise) (makes

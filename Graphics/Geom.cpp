@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.74 2004-12-07 04:52:26 geuzaine Exp $
+// $Id: Geom.cpp,v 1.75 2004-12-21 03:13:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -478,7 +478,7 @@ void Draw_Plane_Surface(Surface * s)
 
     if(CTX.geom.surfaces) {
       glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0x0F0F);
+      glLineStipple(1, 0x1F1F);
       gl2psEnable(GL2PS_LINE_STIPPLE);
       glBegin(GL_LINES);
       for(i = 0; i < List_Nbr(s->Orientations); i++) {
@@ -543,7 +543,7 @@ void Draw_NonPlane_Surface(Surface * s)
     }
     else{
       glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0x0F0F);
+      glLineStipple(1, 0x1F1F);
       gl2psEnable(GL2PS_LINE_STIPPLE);
       int N = 50;
       glBegin(GL_LINE_STRIP);
@@ -613,14 +613,14 @@ void Draw_Surface(void *a, void *b)
   }
 
   if(s->ipar[4]) {
-    glLineWidth(CTX.geom.line_sel_width);
-    gl2psLineWidth(CTX.geom.line_sel_width *
+    glLineWidth(CTX.geom.line_sel_width / 2.);
+    gl2psLineWidth(CTX.geom.line_sel_width / 2. *
 		   CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
   }
   else {
-    glLineWidth(CTX.geom.line_width);
-    gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
+    glLineWidth(CTX.geom.line_width / 2.);
+    gl2psLineWidth(CTX.geom.line_width / 2. * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
 
