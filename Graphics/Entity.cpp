@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.38 2004-05-08 00:19:47 geuzaine Exp $
+// $Id: Entity.cpp,v 1.39 2004-05-13 18:01:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -202,7 +202,7 @@ void Draw_SimpleVector(int arrow, int fill,
 {
   double n[3], t[3], u[3];
 
-  if(light) glEnable(GL_LIGHTING);
+  if(light && fill) glEnable(GL_LIGHTING);
 
   n[0] = dx / d;
   n[1] = dy / d;
