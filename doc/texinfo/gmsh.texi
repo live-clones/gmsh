@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.130 2004-08-20 17:54:20 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.131 2004-08-21 19:34:52 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,8 +37,8 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.23
-@set GMSH-VERSION   1.54
+@set EDITION        1.24
+@set GMSH-VERSION   1.55
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2004 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
