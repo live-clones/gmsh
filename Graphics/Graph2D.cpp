@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.3 2001-10-29 14:27:40 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.4 2001-10-29 17:03:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,7 +11,7 @@
 
 extern Context_T   CTX;
 
-#define TIC 3
+#define TIC 5
 
 void addval(Post_View *v, double min, double max, 
 	    int i, int j, int j_inc, 
@@ -91,14 +91,18 @@ void Draw_Graph2D(Post_View *v){
     glEnd();
 
     // y tics + labels
-    dy = v->GraphSize[1]/(double)v->NbIso;
-    dv = (ValMax-ValMin)/(double)v->NbIso;
-    for(i=0; i<v->NbIso+1; i++){
+    if(v->NbIso * font_h > v->GraphSize[1])
+      nb = 1;
+    else
+      nb = v->NbIso;
+    dy = v->GraphSize[1]/(double)nb;
+    dv = (ValMax-ValMin)/(double)nb;
+    for(i=0; i<nb+1; i++){
       glBegin(GL_LINES);
       glVertex2d(xtop,ytop-i*dy);
       glVertex2d(xtop+TIC,ytop-i*dy);
       glEnd();
-      sprintf(label, v->Format, (i==v->NbIso)?ValMin:(ValMax-i*dv));
+      sprintf(label, v->Format, (i==nb)?ValMin:(ValMax-i*dv));
       glRasterPos2d(xtop-gl_width(label)-TIC,ytop-i*dy-font_a/3.);
       Draw_String(label);
     }
@@ -110,19 +114,18 @@ void Draw_Graph2D(Post_View *v){
     glRasterPos2d(xtop-gl_width(label)/2.,ytop+1.5*font_h);
     Draw_String(label);
 
-    // x tics + labels
-    if(v->GraphType==DRAW_POST_2D_SPACE){
-      dx = v->GraphSize[0]/(double)(v->NbSP-1);
-      nb = v->NbSP;
-    }
-    else if(v->NbTimeStep>1){
-      dx = v->GraphSize[0]/(double)(v->NbTimeStep-1);
-      nb = v->NbTimeStep;
-    }
-    else{
-      nb = 0;
-    }
 
+    // x tics + labels
+    if(v->GraphType==DRAW_POST_2D_SPACE)
+      nb = v->NbSP;
+    else if(v->NbTimeStep>1)
+      nb = v->NbTimeStep;
+    else
+      nb = 0;
+    sprintf(label, v->Format, 9.999);
+    if(nb*gl_width(label) > v->GraphSize[0])
+      nb = 2;
+    dx = v->GraphSize[0]/(double)(nb-1);
     double dist=0., p1[3]={0.,0.,0.}, p2[3];
     j=0;
 
