@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.32 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: Draw.cpp,v 1.33 2002-09-07 01:06:40 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -38,14 +38,10 @@ void Draw3d(void){
   if(CTX.alpha){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+#ifndef WIN32
+    // This seems to perturb the font rendering on Windows... And
+    // everything seems to work fine without, so...
     glEnable(GL_ALPHA);
-  }
-  else{
-#if 0
-    // Rigorously, this could be disabled. But it seems to perturb the
-    // font rendering on Windows (and Mac?)
-    glDisable(GL_BLEND);
-    glDisable(GL_ALPHA);
 #endif
   }
   glPolygonOffset(1.0, 1);
