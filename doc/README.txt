@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.2 2001-05-07 08:38:02 geuzaine Exp $
+$Id: README.txt,v 1.3 2001-05-08 09:19:28 geuzaine Exp $
 
 For Windows versions of Gmsh only:
 ==================================
@@ -33,8 +33,8 @@ files from the current working directory.
 4) About solvers:
 
 Gmsh can be used as a front end to solvers, e.g. to GetDP. The default
-behaviour of Gmsh is to look for these executables in the same
-directory as the Gmsh executable (i.e. to look for getdp.exe in the
-same directory as gmsh.exe). If you don't want to copy the solver
-executable to this directory, you have to modify the path in the
-solver command defined in the solver options.
+behaviour of Gmsh is to look for these solvers in the same directory
+as the Gmsh executable (i.e. to look for getdp.exe in the same
+directory as gmsh.exe). If you don't want to copy the solver
+executable into this directory, you have to modify the path in the
+solver command (in the solver option panel).
