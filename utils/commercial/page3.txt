@@ -1,0 +1,42 @@
+Page (3/3)
+
+of the original version of the SOFTWARE. BUYER acknowledges that this
+AGREEMENT grants to it no interest in the title to the original
+version of the software. Any copies of the original version SOFTWARE,
+in whole or part which are made by BUYER shall be and remain the sole
+property of GMSH AUTHOR.
+
+4.2 BUYER acknowledges that pursuant to this AGREEMENT, it obtains
+only the right to use, modify and resell the SOFTWARE but that no
+right, title or interest in or to any copyrights is transferred from
+GMSH AUTHOR to BUYER.
+
+4.3 BUYER shall not remove, alter, cover or obliterate any copyright
+notice placed by GMSH AUTHOR on the SOFTWARE.
+
+4.4 BUYER will make best effort to acknowledge GMSH AUTHOR as the
+developer of the original version of the SOFTWARE in the user
+documentation relating to the use of the SOFTWARE.
+
+
+For GMSH AUTHOR:
+
+
+_____________________________
+Name
+
+
+_____________________________          _____________________________
+Signature                              Date
+
+
+
+Accepted for BUYER:
+
+
+_____________________________          _____________________________
+Name                                   Title
+
+
+_____________________________          _____________________________
+Signature                              Date

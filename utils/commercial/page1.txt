@@ -1,0 +1,43 @@
+Page (1/3)
+
+			  SOFTWARE AGREEMENT
+
+			       between
+
+				BUYER
+
+				 and
+
+	     Christophe GEUZAINE & Jean-Francois REMACLE
+		Copyright holders of the Gmsh Software
+
+
+This Software Agreement (hereinafter referred to as "AGREEMENT") made
+as of ____________________________________, is entered into between
+Christophe GEUZAINE and Jean-Francois REMACLE (hereinafter referred to
+as "GMSH AUTHOR") and BUYER (hereinafter referred to as "BUYER").
+
+This AGREEMENT governs the use by BUYER of the Gmsh Mesh Generation
+Tool Kit and all its elements (hereinafter referred to as "SOFTWARE"),
+which includes source code and documentation.
+
+This AGREEMENT constitutes the complete and exclusive statement of the
+AGREEMENT between the parties and supersedes all proposals, oral or
+written, and all other communications relating to the subject matter
+of this AGREEMENT.  No modification thereof shall be binding upon GMSH
+AUTHOR unless acknowledged in writing by GMSH AUTHOR authorized
+representative.
+
+1. GRANT AND SCOPE OF LICENSE
+-----------------------------
+
+For the purpose of this Article, the term "BUYERS" shall include all
+buyer's subsidiaries and affiliates which are 50% or more owned or
+controlled by BUYER.
+
+GMSH AUTHOR hereby grants to BUYER a paid-up, non-exclusive, right to
+use, modify or sell the SOFTWARE subject to the following terms,
+conditions, and restrictions:
+
+1.1 Access to the source code of the SOFTWARE in any manner by any
+                                                                 ../..

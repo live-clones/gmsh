@@ -1,0 +1,43 @@
+Page (2/3)
+
+person not employed by the BUYER is prohibited.
+
+1.2 The BUYER has the right of possession of the source code in
+accordance with this AGREEMENT. The BUYER has the right to modify the
+software to perform any functions which the BUYER deems desirable.
+The source code as so modified, shall nonetheless, remain subject to
+the same restrictions on use, reproduction, transmission, disclosure,
+translation and access as are contained in the AGREEMENT with respect
+to SOFTWARE for a period of 3 years.
+
+2. ERRORS AND WARRANTY
+----------------------
+
+2.1 GMSH AUTHOR shall not be responsible or liable for any damages
+suffered by BUYER or others resulting from use of the SOFTWARE
+including, but not limited to, special, indirect or consequential
+damages arising out of or in connection with any errors in the
+SOFTWARE. BUYER hereby agrees to indemnify and hold harmless GMSH
+AUTHOR with respect to any and all injury, claim, loss, damage, either
+special, indirect, consequential or otherwise, which shall arise from
+the use of the SOFTWARE.
+
+2.2 GMSH AUTHOR MAKES NO WARRANTIES, REPRESENTATIONS OR GUARANTEES,
+INCLUDING BUT NOT LIMITED TO, WARRANTIES OR MERCHANTABILITY OR FITNESS
+FOR INTENDED USE, REGARDING THE SOFTWARE.
+
+3. CONSIDERATION
+----------------
+
+In consideration of the sale of the SOFTWARE granted to BUYER under
+section 1 of this AGREEMENT, BUYER agrees to pay to GMSH AUTHOR, the
+lump sum of ______________________. BUYER agrees to pay directly to
+GMSH AUTHOR any local, state, or federal taxes which may accrue or be
+levied due to the granting of this license, exclusive, however, of
+taxes based on net income.
+
+4. TITLE/PROPRIETARY RIGHTS
+---------------------------
+
+4.1 GMSH AUTHOR represents that it is the owner and copyright holder
+                                                                 ../..
