@@ -23,6 +23,9 @@
 #if defined(HAVE_FLTK)
 #  include <FL/Fl.H>
 #  if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+#    if (FL_PATCH_VERSION >= 6)
+#      define HAVE_FLTK_1_1_6_OR_ABOVE
+#    endif
 #    if (FL_PATCH_VERSION >= 5)
 #      define HAVE_FLTK_1_1_5_OR_ABOVE
 #    endif

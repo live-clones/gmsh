@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.383 2004-11-19 18:26:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.384 2004-11-24 16:33:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -996,32 +996,53 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 
   Msg(STATUS2N, menu[0].label + 1);
 
-  // free all the children (m_push*, m_toggle*, m_pop*)
-#if defined(HAVE_FLTK_1_1_5_OR_ABOVE)
-  m_scroll->clear();
-#else
-  // Fl_Scroll.clear() is broken in old versions of FLTK...
+  // Remove all the children (m_push*, m_toggle*, m_pop*). FLTK <=
+  // 1.1.4 should be OK wih this. FLTK 1.1.5 may crash as it may
+  // access a widget's data after its callback is executed (we call
+  // set_context in the button callbacks!). FLTK 1.1.6 introduced a
+  // fix (Fl::delete_widget) to delay the deletion until the next
+  // Fl::wait call. In any case, we cannot use m_scroll->clear()
+  // (broken in < 1.1.5, potential crasher in >= 1.1.5).
   for(unsigned int i = 0; i < m_push_butt.size(); i++){
     m_scroll->remove(m_push_butt[i]);
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_push_butt[i]);
+#else
     delete m_push_butt[i];
+#endif
   }
   for(unsigned int i = 0; i < m_toggle_butt.size(); i++){
     m_scroll->remove(m_toggle_butt[i]);
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_toggle_butt[i]);
+#else
     delete m_toggle_butt[i];
+#endif
   }
   for(unsigned int i = 0; i < m_toggle2_butt.size(); i++){
     m_scroll->remove(m_toggle2_butt[i]);
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_toggle2_butt[i]);
+#else
     delete m_toggle2_butt[i];
+#endif
   }
   for(unsigned int i = 0; i < m_popup_butt.size(); i++){
     m_scroll->remove(m_popup_butt[i]);
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_popup_butt[i]);
+#else
     delete m_popup_butt[i];
+#endif
   }
   for(unsigned int i = 0; i < m_popup2_butt.size(); i++){
     m_scroll->remove(m_popup2_butt[i]);
+#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
+    Fl::delete_widget(m_popup2_butt[i]);
+#else
     delete m_popup2_butt[i];
-  }
 #endif
+  }
 
   // reset the vectors
   m_push_butt.clear();
