@@ -1,3 +1,4 @@
+$Id: README.devel,v 1.5 2003-03-06 23:01:17 geuzaine Exp $
 
 Some easy rules to make the code easy to read/debug/maintain:
 
@@ -6,7 +7,7 @@ Some easy rules to make the code easy to read/debug/maintain:
 - indent your files using ../utils/indent.sh
 - if working on Windows, don't leave tabs in your files (../utils/untabify)
 
-===========================================================================
+********************************************************************
 
 How to add an option in the graphical user interface?
 
@@ -29,7 +30,7 @@ Optional:
 handling routine opt_XXX to the OK callback for the corresponding
 option panel (in Fltk/Callbacks.cpp).
 
-===========================================================================
+********************************************************************
 
 Tools to check memory leaks
 

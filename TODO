@@ -1,8 +1,8 @@
-$Id: TODO,v 1.10 2003-03-03 16:07:15 geuzaine Exp $
+$Id: TODO,v 1.11 2003-03-06 23:01:17 geuzaine Exp $
 
-=================================================================================
+********************************************************************
 
-* Combine view + save view with != nb of time steps
+Combine view + save view with != nb of time steps
 
 gmsh tutorial/view*.pos
 View->Combine->All
@@ -17,31 +17,31 @@ values up to MIN(NbTimeStep for all merged views).
 -> need to make merge() more intelligent. First pass on NbTimeStep,
 then List_Add() only up to common TimeStep value.
 
-=================================================================================
+********************************************************************
 
-* Include Tetgen (the same way we did it with Triangle--the license is
+Include Tetgen (the same way we did it with Triangle--the license is
 the same).
 
-=================================================================================
+********************************************************************
 
-* Rewrite the View interface in C++
+Rewrite the View interface in C++
 
-=================================================================================
+********************************************************************
 
-* Memory leaks, memory leaks (start with mesh_domain() and the parser)
+Memory leaks, memory leaks (start with mesh_domain() and the parser)
 
-=================================================================================
+********************************************************************
 
-* Two-field plots <nicolas.moes@ec-nantes.fr>
+Two-field plots <nicolas.moes@ec-nantes.fr>
 
 Imagine I would like to plot a temperature field on a deformed
 mesh. This requires two field : the temperature field and the
 displacement field to deform the mesh. Is there something done in gmsh
 done for this?
 
-=================================================================================
+********************************************************************
 
-* Pb avec View->Reload si plusieurs vues dans le meme fichier
+Pb avec View->Reload si plusieurs vues dans le meme fichier
 
 > > Hmm, je viens de tester sous Linux et je n'arrive pas a reproduire le
 > > bug. A moins que... Aurais-tu toutes tes vues stockees dans le meme
@@ -60,11 +60,9 @@ bien toutes les vues, mais tu ne sais acceder qu'a la derniere... Pour
 corriger ca, il faudrait que l'on garde comme info supplementaire dans
 chaque vue quelle etait sa position dans le fichier.
 
-=================================================================================
+********************************************************************
 
-* Tenseurs
-
-Laurent Stainier <l.stainier@ulg.ac.be>
+Tenseurs, Laurent Stainier <l.stainier@ulg.ac.be>
 
 L'approche que je suggérerais est la suivante. Tout d'abord, on peut 
 commencer par le cas particulier (mais sans doute le plus courant) des 
@@ -102,18 +100,16 @@ Remarque finale: le calcul des valeurs et vecteurs propres est
 à partir des v.p.), et cela nous rappelle cette belle expression "No 
 free meal" !
 
-=================================================================================
+********************************************************************
 
-* Stockage et acces aux normales en post-pro:
-
-- stocker les normales autrement (generer les noeuds?) pour acces
-plus rapide.
+Stockage et acces aux normales en post-pro: generer les noeuds pour
+acces plus rapide?
 
 Idem pour le maillage.
 
-=================================================================================
+********************************************************************
 
-* Orientation des surfaces
+Orientation des surfaces
 
 mesh: il faut vraiment que je regarde la relation entre l'orientation
 des surfaces geometriques et les l'orientation des elements du

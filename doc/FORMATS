@@ -1,16 +1,16 @@
-$Id: FORMATS,v 1.15 2003-03-01 23:11:35 geuzaine Exp $
+$Id: FORMATS,v 1.16 2003-03-06 23:01:17 geuzaine Exp $
 
 This document describes the version 1.2 of Gmsh's mesh and
-post-processing file formats
+post-processing file formats.
 
 (This document deals only with the import/export interfaces for
 Gmsh. The language driving the behaviour of Gmsh for defining
 geometries, options, scripts, etc. is explained step by step in the
 tutorials.)
 
+********************************************************************
 
-Gmsh Mesh File Format
-=====================
+Section 1: Gmsh Mesh File Format
 
 The 'msh' file format is the native output file format for Gmsh. The
 file is divided in two sections (enclosed in $KEY and $ENDKEY pairs):
@@ -30,8 +30,12 @@ $NOD/$ENDNOD defines the nodes and $ELM/$ENDELM defines the elements.
 
 All the syntactic variables stand for integers except coord1, coord2
 and coord3 which stand for floating point values, and node-numbers
-which stand for a list of nb-nodes integers.  The elm-type value
-defines the geometrical type for the element:
+which stand for a list of nb-nodes integers.  
+
+Please note that the the node-number and elm-number numbers are not
+necessarily given in a consecutive or even an ordered way.
+
+The elm-type value defines the geometrical type for the element:
    
    1  Line (2 nodes, 1 edge). 
    2  Triangle (3 nodes, 3 edges). 
@@ -43,16 +47,16 @@ defines the geometrical type for the element:
    15 Point (1 node). 
 
 The elm-region value is the number of the physical entity to which the
-element belongs.
+element belongs. 
 
+********************************************************************
 
-Gmsh ASCII Post-Processing File Format
-======================================
+Section 2: Gmsh ASCII Post-Processing File Format
    
-A post-processing file is divided in several sections: one format
-section (enclosed between $PostFormat/$EndPostFormat) and (possibly
-multiple) post-processing views (enclosed between $View/$EndView
-pairs).
+An ASCII post-processing file is divided in several sections: one
+format section, enclosed between $PostFormat/$EndPostFormat, and
+(possibly multiple) post-processing views, enclosed between
+$View/$EndView pairs:
 
     $PostFormat
     1.2 file-type data-size
@@ -95,7 +99,7 @@ pairs).
     tensor-pyramid-value ...
     text2d ... text2d-chars ...
     text3d ... text3d-chars ...
-    $endView
+    $EndView
 
 file-type is an integer equal to 0 in the ASCII file format.
 
@@ -151,8 +155,9 @@ string in text3d-chars.
 text3d-chars is a list of nb-text3d-chars chars. Substrings are
 separated with the '^' characted.
 
-Gmsh Binary Post-Processing File Format
-=======================================
+********************************************************************
+
+Section 3: Gmsh Binary Post-Processing File Format
 
 The binary post-processing file format is the same as the ASCII file
 format, except that:
@@ -200,15 +205,17 @@ precision numbers containing all the scalar-point-value lists, put one
 after each other in order to form a long array of doubles. The
 principle is the same for all other kinds of values.
 
+********************************************************************
 
-Gmsh Parsed Post-Processing Format
-==================================
+Section 4: Gmsh Parsed Post-Processing Format
 
-For testing purposes (or with very small data sets, e.g. in the
-tutorials), there is an additional post-processing format which is
-parsed by the same grammar analyzer as the geometry. You can thus, for
-example, embed small post-processing views into your geometrical
-descriptions. The format of the parsed post-processing files is the
+For relatively small data sets Gmsh provides an additional
+post-processing format, which is parsed by the same grammar analyzer
+as the geometry. You can thus, for example, embed small
+post-processing views directly into your geometrical descriptions (see
+the tutorial). This format is also very useful for testing purposes:
+it's syntax is very permissive, and you can easily generate it by hand
+or on the fly. The format of the parsed post-processing file is the
 following:
 
    View "name" {
@@ -247,16 +254,24 @@ following:
    text 2d             T2                4                      arbitrary
    text 3d             T3                5                      arbitrary
 
-Contrary to the ASCII post-processing file format, the coordinates are
-given by node, i.e. (coord1, coord2, coord3) for a point,
-(coord1-node1, coord2-node1, coord3-node1, coord1-node2, coord2-node2,
-coord3-node2) for a line, (coord1-node1, coord2-node1, coord3-node1,
-coord1-node2, coord2-node2, coord3-node2, coord1-node3, coord2-node3,
-coord3-node3) for a triangle, etc. The values are given in the same
-order as for the ASCII post-processing file format.
+Contrary to the ASCII and Binary post-processing file formats (see
+below), the coordinates are given by node, i.e.
 
-Ordering of nodes
-=================
+(coord1, coord2,coord3) for a point,
+
+(coord1-node1, coord2-node1, coord3-node1, 
+ coord1-node2, coord2-node2, coord3-node2) for a line,
+
+(coord1-node1, coord2-node1, coord3-node1, 
+ coord1-node2, coord2-node2, coord3-node2,
+ coord1-node3, coord2-node3, coord3-node3) for a triangle,
+
+etc. The values are given in the same order as for the ASCII and
+Binary post-processing file formats.
+
+********************************************************************
+
+Section 5: Gmsh node ordering
 
 * POINT
         v                            

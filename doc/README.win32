@@ -1,7 +1,4 @@
-$Id: README.win32,v 1.1 2003-03-01 22:50:48 geuzaine Exp $
-
-For Windows versions of Gmsh only:
-==================================
+$Id: README.win32,v 1.2 2003-03-06 23:01:17 geuzaine Exp $
 
 1) About opengl32.dll and glu32.dll:
 

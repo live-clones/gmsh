@@ -1,15 +1,14 @@
-.\" $Id: gmsh.1,v 1.45 2003-03-02 16:24:19 geuzaine Exp $
-.\" ======================================================================
+.\" $Id: gmsh.1,v 1.46 2003-03-06 23:01:17 geuzaine Exp $
 .TH Gmsh 1 "12 November 2001" "Gmsh > 1.30" "Gmsh Manual Pages"
 .UC 4
-.\" ======================================================================
+.\" ********************************************************************
 .SH NAME
 Gmsh \- an automatic three-dimensional finite element mesh generator
 with built-in pre- and post-processing facilities
-.\" ======================================================================
+.\" ********************************************************************
 .SH SYNOPSIS
 .B gmsh [file(s)] [option(s)]
-.\" ======================================================================
+.\" ********************************************************************
 .SH DESCRIPTION
 \fIGmsh\fR is an automatic three-dimensional finite element mesh
 generator, primarily Delaunay, with built-in pre- and post-processing
@@ -91,12 +90,12 @@ maps. Post-processor functions include offsets, elevation, interactive
 color map modification, range clamping, interactive animation, vector
 postscript output, etc. All post-processing options can be accessed
 either interactively or through the input ascii files.
-.\" ======================================================================
+.\" ********************************************************************
 .SH GEOMETRY OPTIONS
 .TP 4
 .B \-0
 parse all input files, output unrolled geometry, and exit. 
-.\" ======================================================================
+.\" ********************************************************************
 .SH MESH OPTIONS
 .TP 4
 .B \-1
@@ -161,7 +160,7 @@ use the old extrusion mesh generator.
 .TP 4
 .B \-recombine
 recombine meshes from the old extrusion mesh generator.
-.\" ======================================================================
+.\" ********************************************************************
 .SH POST-PROCESSING OPTIONS
 .TP 4
 .B \-dl
@@ -178,7 +177,7 @@ smooth views at startup.
 .TP 4
 .B \-convert file file
 convert an ascii view into a binary one.
-.\" ======================================================================
+.\" ********************************************************************
 .SH DISPLAY OPTIONS
 .TP 4
 .B \-nodb
@@ -196,7 +195,7 @@ specify display.
 .TP 4
 .B \-perspective
 use perspective instead of orthographic projection.
-.\" ======================================================================
+.\" ********************************************************************
 .SH OTHER OPTIONS
 .TP 4
 .B \-a, \-g, \-m, \-s, \-p
@@ -220,11 +219,11 @@ show detailed version information.
 .TP 4
 .B \-help
 show help message.
-.\" ======================================================================
+.\" ********************************************************************
 .SH AUTHORS
 Christophe Geuzaine (geuzaine@acm.caltech.edu) and Jean-Francois
 Remacle (Remacle@scorec.rpi.edu). 
-.\" ======================================================================
+.\" ********************************************************************
 .SH SEE ALSO
 .BR getdp (1),
 .br

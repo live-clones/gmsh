@@ -1,8 +1,8 @@
+$Id: README.mac,v 1.4 2003-03-06 23:01:17 geuzaine Exp $
 
-How to distribute the Mac version...
-====================================
+How to make a version recognized by the Mac Finder?
 
-The old way (using resource forks)
+The old way (using resource forks):
 
 - compile
 
@@ -19,16 +19,15 @@ The old way (using resource forks)
   b) you can also create the disk image on the command line, using
      utils/make-dmg.sh (WARNING: modify the script to suit your needs)
 
-
 The new way:
 
 - use the new XML-based scheme: see 'make distrib-mac'
 
-- and just 'tar zcvf' the directory! No more resources!
+- ...and just 'tar zcvf' the directory. No more crappy resources!
 
+********************************************************************
 
 Apple Creator Registration
-==========================
 
 Please include the line below in follow-up emails for this request. 
 
