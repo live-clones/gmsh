@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.197 2002-10-02 17:10:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.198 2002-10-04 22:18:30 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1827,7 +1827,8 @@ void GUI::set_statistics(){
   // post
   p[0] = List_Nbr(CTX.post.list) ;
   sprintf(label[num], "%g", p[0]); stat_value[num]->value(label[num]); num++;
-  p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = p[8] = p[9] = p[10] = 0 ;
+  p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = p[8] = p[9] = 0 ;
+  p[10] = p[11] = p[12] = p[13] = p[14] = p[15] = p[16] = p[17] = p[18] = 0 ;
   for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
     Post_View *v = (Post_View*)List_Pointer(CTX.post.list, i);
     p[1] += v->NbSP + v->NbVP + v->NbTP;
