@@ -1,4 +1,4 @@
-/* $Id: Create.cpp,v 1.3 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Create.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -342,7 +342,8 @@ void End_Curve (Curve * c){
     
     for (i = 0; i < 4; i++)
       Curve->Circle.v[i] = v[i];
-    
+
+    /*
     if (!c->Circle.done){
       float proj[4][4];
       for (i = 0; i < 4; i++){
@@ -359,6 +360,7 @@ void End_Curve (Curve * c){
       proj[3][3] = 1.0;
       c->Circle.done = 1;
     }
+    */
     // Un cercle a au moins 16 pts par pi radiants
     
     // c->beg->lc = DMIN (R*Pi/(fabs(c->Circle.t1-c->Circle.t2)*CIRC_GRAN),c->beg->lc);

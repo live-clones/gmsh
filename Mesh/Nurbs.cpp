@@ -1,4 +1,4 @@
-/* $Id: Nurbs.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Nurbs.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -81,13 +81,12 @@ Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
 
 Vertex InterpolateUBS (Curve * Curve, double u, int derivee){
 
-  int NbControlPoints, NbKnots, NbCurves, iCurve;
+  int NbControlPoints, NbCurves, iCurve;
   double t, t1, t2;
   Vertex *v[4];
 
   NbControlPoints = List_Nbr (Curve->Control_Points);
   NbCurves = NbControlPoints - 3;
-  NbKnots = NbControlPoints - 2;
 
   iCurve = (int) (u * (double) NbCurves) + 1;
 

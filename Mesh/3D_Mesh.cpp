@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.3 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -65,9 +65,6 @@ void VSIM (void *a, void *b){
 }
 
 void add_points (void *a, void *b){
-  Vertex **w;
-
-  w = (Vertex **) a;
   Tree_Insert (POINTS_TREE, a);
 }
 

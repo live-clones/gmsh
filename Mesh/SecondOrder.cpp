@@ -1,4 +1,4 @@
-/* $Id: SecondOrder.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: SecondOrder.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -63,7 +63,7 @@ void PutMiddlePoint (void *a, void *b){
   Edge *ed;
   Simplex *s;
   Vertex *v;
-  int i, j, k, N, c;
+  int i, j, k, N;
   int edges[6][2];
 
   ed = (Edge *) a;
@@ -115,7 +115,7 @@ void PutMiddlePoint (void *a, void *b){
 	for (j = 0; j < 2; j++)
 	  edges[k][j] = edges_tetra[k][j];
     }
-    c = 0;
+
     for (j = 0; j < N; j++){
       if ((!compareVertex (&s->V[edges[j][0]], &ed->V[0]) &&
 	   !compareVertex (&s->V[edges[j][1]], &ed->V[1])) ||

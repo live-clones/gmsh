@@ -1,4 +1,4 @@
-/* $Id: Numeric.cpp,v 1.3 2000-11-23 16:07:12 geuzaine Exp $ */
+/* $Id: Numeric.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -239,6 +239,8 @@ void XYtoUV (Surface * s, double *X, double *Y,
   double det, Unew, Vnew, err, mat[2][2], jac[2][2];
   int iter;
   Vertex D_u, D_v, P;
+
+  /*
   double umin, umax, vmin, vmax;
 
   if (s->Typ == MSH_SURF_NURBS){
@@ -251,6 +253,7 @@ void XYtoUV (Surface * s, double *X, double *Y,
     umin = vmin = 0.0;
     umax = vmax = 1.0;
   }
+  */
 
   *U = *V = 0.487;
   err = 1.0;

@@ -1,4 +1,4 @@
-/* $Id: Simplex.cpp,v 1.3 2000-11-23 16:07:12 geuzaine Exp $ */
+/* $Id: Simplex.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -370,9 +370,9 @@ int compareSimplex (const void *a, const void *b){
 
 int Simplex::Pt_In_Simplexe (Vertex * v, double uvw[3], double tol){
   double mat[3][3];
-  double b[3], det, dum;
+  double b[3], dum;
 
-  det = matsimpl (mat);
+  matsimpl (mat);
   b[0] = v->Pos.X - V[0]->Pos.X;
   b[1] = v->Pos.Y - V[0]->Pos.Y;
   b[2] = v->Pos.Z - V[0]->Pos.Z;

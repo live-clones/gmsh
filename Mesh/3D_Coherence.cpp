@@ -1,4 +1,4 @@
-/* $Id: 3D_Coherence.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: 3D_Coherence.cpp,v 1.4 2000-11-23 17:18:50 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -1149,8 +1149,7 @@ Simplex * Create_Simplex_MemeSens (Simplex * sold, Vertex * v1, Vertex * v2, Ver
 int Coherence (Volume * v, Mesh * m){
   int i, j, k, Np, Nh;
   Surface *s;
-  Vertex V1, V2 ;
-  //Vertex *ver1, *ver2 ;
+  //Vertex V1, V2, *ver1, *ver2 ;
   Face Face;
   static Edge E, *pE1, *pE2, *pE3;
   Simplex *simp, *simp1;

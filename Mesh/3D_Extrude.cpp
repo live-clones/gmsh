@@ -1,4 +1,4 @@
-/* $Id: 3D_Extrude.cpp,v 1.3 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: 3D_Extrude.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -311,7 +311,7 @@ static Tree_T *Vertex_Bound, *ToAdd = NULL;
 
 void Extrude_Vertex (void *data, void *dum){
 
-  Vertex **pV, *v, *newv, *exv;
+  Vertex **pV, *v, *newv;
   int i, j;
 
   pV = (Vertex **) data;
@@ -320,15 +320,13 @@ void Extrude_Vertex (void *data, void *dum){
     List_Delete (v->Extruded_Points);
   v->Extruded_Points = List_Create (ep->mesh.NbLayer, 1, sizeof (Vertex *));
   List_Add (v->Extruded_Points, &v);
-  exv = v;
 
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
       newv = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
 			    v->Pos.Y, v->Pos.Z, v->lc, v->u);
       ep->Extrude (i, j + 1, newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
-      //newv->lc = DMIN(newv->lc,sqrt( ((*newv) - (*exv)) * ((*newv) - (*exv)) ));
-      exv = newv;
+
       if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &newv))){
 	List_Add (v->Extruded_Points, pV);
 	if (ToAdd)
@@ -587,7 +585,7 @@ int Extrude_Mesh (Surface * s){
     copy_mesh (ss, s);
     return true;
   }
-  ToAdd = NULL;
+
 }
 
 int Extrude_Mesh (Volume * v){
