@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.39 2002-03-31 00:50:39 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.40 2002-04-26 23:17:10 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -1099,7 +1099,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "%%%%Orientation: %s\n"
 	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
 	  "%%%%BoundingBox: %d %d %d %d\n"
-	  "%%%%Copyright: GNU LGPL (C) 1999-2002 geuz@geuz.org\n"
+	  "%%%%Copyright: GNU LGPL (C) 1999-2002 Christophe Geuzaine <geuz@geuz.org>\n"
 	  "%%%%EndComments\n"
 	  "%%%%BeginProlog\n"
 	  "/gl2psdict 64 dict def gl2psdict begin\n"
@@ -1497,10 +1497,7 @@ GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   prim->text->fontname = fontname;
   prim->text->fontsize = fontsize;
 
-  if(!gl2ps->primitives)
-    gl2psMsg(GL2PS_ERROR, "gl2psText should be called inside gl2psBeginPage/gl2psEndPage");
-  else
-    gl2psListAdd(gl2ps->primitives, &prim);
+  gl2psListAdd(gl2ps->primitives, &prim);
 }
 
 GL2PSDLL_API GLvoid gl2psEnable(GLint mode){
