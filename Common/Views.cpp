@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.122 2004-05-30 06:24:01 geuzaine Exp $
+// $Id: Views.cpp,v 1.123 2004-06-01 06:29:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -189,14 +189,12 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
 
   case 0:      // scalar
     if(v->Min == VAL_INF || v->Max == -VAL_INF) {
-      v->Min = V[0];
-      v->Max = V[0];
       v->NbTimeStep = N / nbnod;
       v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
       v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
       for(i = 0; i < v->NbTimeStep; i++){
-	v->TimeStepMin[i] = V[0];
-	v->TimeStepMax[i] = V[0];
+	v->TimeStepMin[i] = VAL_INF;
+	v->TimeStepMax[i] = -VAL_INF;
       }
     }
     else if(N / nbnod < v->NbTimeStep){
@@ -222,15 +220,12 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
 
   case 1:      // vector
     if(v->Min == VAL_INF || v->Max == -VAL_INF) {
-      l0 = sqrt(DSQR(V[0]) + DSQR(V[1]) + DSQR(V[2]));
-      v->Min = l0;
-      v->Max = l0;
       v->NbTimeStep = N / (3 * nbnod);
       v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
       v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
       for(i = 0; i < v->NbTimeStep; i++){
-	v->TimeStepMin[i] = l0;
-	v->TimeStepMax[i] = l0;
+	v->TimeStepMin[i] = VAL_INF;
+	v->TimeStepMax[i] = -VAL_INF;
       }
     }
     else if(N / (3 * nbnod) < v->NbTimeStep){
@@ -255,19 +250,13 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
     break;
 
   case 2:      // tensor
-    // by lack of any current better solution,
-    // tensors are displayed as their Von Mises
-    // invariant (J2 invariant)
     if(v->Min == VAL_INF || v->Max == -VAL_INF) {
-      l0 = ComputeVonMises(V);
-      v->Min = l0;
-      v->Max = l0;
       v->NbTimeStep = N / (9 * nbnod);
       v->TimeStepMin = (double*)Malloc(v->NbTimeStep * sizeof(double));
       v->TimeStepMax = (double*)Malloc(v->NbTimeStep * sizeof(double));
       for(i = 0; i < v->NbTimeStep; i++){
-	v->TimeStepMin[i] = l0;
-	v->TimeStepMax[i] = l0;
+	v->TimeStepMin[i] = VAL_INF;
+	v->TimeStepMax[i] = -VAL_INF;
       }
     }
     else if(N / (9 * nbnod) < v->NbTimeStep){
@@ -275,6 +264,8 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
     }
 
     for(i = 0; i < N; i += 9) {
+      // by lack of any current better solution, tensors are displayed
+      // as their Von Mises invariant (J2 invariant)
       l0 = ComputeVonMises(V+i);
       if(l0 < v->Min)
         v->Min = l0;
