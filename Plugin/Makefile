@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.41 2004-02-07 01:40:30 geuzaine Exp $
+# $Id: Makefile,v 1.42 2004-03-07 22:24:48 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -35,6 +35,7 @@ SRC = Plugin.cpp\
         SphericalRaise.cpp\
         DisplacementRaise.cpp\
         Skin.cpp\
+        Extract.cpp\
         DecomposeInSimplex.cpp\
         Harmonic2Time.cpp
 

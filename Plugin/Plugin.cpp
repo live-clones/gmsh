@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.47 2004-03-05 01:21:06 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.48 2004-03-07 22:24:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,7 @@
 #include "CutPlane.h"
 #include "CutSphere.h"
 #include "Skin.h"
+#include "Extract.h"
 #include "Harmonic2Time.h"
 #include "DecomposeInSimplex.h"
 #include "Smooth.h"
@@ -137,6 +138,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		    ("CutSphere", GMSH_RegisterCutSpherePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Skin", GMSH_RegisterSkinPlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Extract", GMSH_RegisterExtractPlugin()));
   // not ready yet
   // allPlugins.insert(std::pair < char *, GMSH_Plugin * >
   //                  ("Harmonic2Time", GMSH_RegisterHarmonic2TimePlugin()));

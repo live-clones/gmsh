@@ -1,8 +1,4 @@
-$Id: TODO,v 1.34 2004-03-07 02:35:44 geuzaine Exp $
-
-********************************************************************
-
-ability to plot a single component of vector and tensor fields
+$Id: TODO,v 1.35 2004-03-07 22:24:48 geuzaine Exp $
 
 ********************************************************************
 
@@ -13,6 +9,9 @@ at least make this behaviour optional)
 
 degre2: remove from after each 1d/2d/3d step, and add a global
 "add_degre2_nodes" and "remove_degre2_nodes" menu
+
++ Document the 2nd order elements in "msh file format" and "node
+ordering".
 
 ********************************************************************
 
@@ -38,11 +37,6 @@ Yves Krahenbuhl wrote:
 cleanup the Draw; command in the parser: it calls CalculateMinMax if
 the nb points changed. Try make something more intelligent during
 OpenFile?
-
-********************************************************************
-
-Document the 2nd order elements in "msh file format" and "node
-ordering".
 
 ********************************************************************
 
