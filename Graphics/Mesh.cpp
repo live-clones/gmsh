@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.31 2001-06-25 13:05:16 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.32 2001-06-28 15:16:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -115,6 +115,9 @@ void Draw_Mesh (Mesh *M) {
   }
 
   if(CTX.mesh.hidden) glDisable(GL_POLYGON_OFFSET_FILL);
+
+  glPointSize(2); gl2psPointSize(2);
+  glLineWidth(1); gl2psLineWidth(1);
 
   if(CTX.render_mode != GMSH_SELECT){
     if(CTX.axes) Draw_Axes(CTX.lc_middle/4.);

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.21 2001-06-12 08:29:52 geuzaine Exp $
+// $Id: Geom.cpp,v 1.22 2001-06-28 15:16:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -88,15 +88,15 @@ void Draw_Curve (void *a, void *b){
   }
 
   if((c)->ipar[3]){
-    glLineWidth(2.); gl2psLineWidth(2.);
+    glLineWidth(2.); gl2psLineWidth(2.*CTX.print.geom_line_width);
     glColor4ubv((GLubyte*)&CTX.color.geom.line_sel);
   }
   else if(Highlighted){
-    glLineWidth(2.); gl2psLineWidth(2.);
+    glLineWidth(2.); gl2psLineWidth(2.*CTX.print.geom_line_width);
     glColor4ubv((GLubyte*)&CTX.color.geom.line_hlt);
   }
   else{
-    glLineWidth(1.); gl2psLineWidth(1.);
+    glLineWidth(1.); gl2psLineWidth(1.*CTX.print.geom_line_width);
     glColor4ubv((GLubyte*)&CTX.color.geom.line);
   }
 

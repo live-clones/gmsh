@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.29 2001-06-26 16:47:23 geuzaine Exp $
+// $Id: Options.cpp,v 1.30 2001-06-28 15:16:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1991,6 +1991,11 @@ double opt_print_font_size(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.print.font_size = (int)val;
   return CTX.print.font_size;
+}
+double opt_print_geom_line_width(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.geom_line_width = (int)val;
+  return CTX.print.geom_line_width;
 }
 
 // ************** Color option routines ****************************
