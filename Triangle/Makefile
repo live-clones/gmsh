@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2002-05-18 09:14:34 geuzaine Exp $
+# $Id: Makefile,v 1.8 2002-05-18 16:31:17 geuzaine Exp $
 #
 # Makefile for "libGmshTriangle.a"
 #
@@ -21,8 +21,6 @@
 #   CDT_ONLY symbols may be particularly attractive when Triangle is called
 #   by another program that does not need all of Triangle's features; in
 #   this case, these switches should appear as part of "TRILIBDEFS" below.
-
-.IGNORE:
 
 CC     = gcc
 AR     = ar ruvs

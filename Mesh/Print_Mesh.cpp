@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.35 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.36 2002-05-18 16:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -26,9 +26,7 @@
 
 extern Context_T CTX ;
 
-/* ------------------------------------------------------------------------ */
-/*  M S H    F O R M A T                                                    */
-/* ------------------------------------------------------------------------ */
+// M S H   F O R M A T
 
 #define LINE            1
 #define TRIANGLE        2
@@ -473,11 +471,9 @@ void process_msh_elements (Mesh * M){
 }
 
 
-/* ------------------------------------------------------------------------ */
-/*  U N V   F O R M A T                                                     */
-/* ------------------------------------------------------------------------ */
+//  U N V   F O R M A T
 
-/* Numeros des enregistrements IDEAS */
+// Numeros des enregistrements IDEAS
 #define HEADER       151
 #define UNITS        164
 #define NODES        2411
@@ -487,13 +483,13 @@ void process_msh_elements (Mesh * M){
 #define RESVECT      57
 #define GROUPOFNODES 790
 
-/* Numeros des elements IDEAS */
+// Numeros des elements IDEAS
 #define BEAM         21
 #define BEAM2        24
 #define THINSHLL     91
 #define THINSHLL2    92
 #define QUAD         94
-#define QUAD2        95         /* Ca c'est une impro !!! */
+#define QUAD2        95         // Ca c'est une impro !!!
 #define SOLIDFEM     111
 #define WEDGE        112
 #define BRICK        115
@@ -927,9 +923,7 @@ void process_unv_groups (Mesh * m){
   }
 }
 
-/* ------------------------------------------------------------------------ */
-/*  G R E F   F O R M A T                                                   */
-/* ------------------------------------------------------------------------ */
+//  G R E F   F O R M A T
 
 void ConsecutiveNodes (Mesh * M, Tree_T * ConstecutiveNTree, Tree_T * ConsecutiveETree);
 
@@ -1221,9 +1215,7 @@ void EndConsecutiveNodes (Mesh * M){
   List_Delete (ListSurfaces);
 }
 
-/* ------------------------------------------------------------------------ */
-/*  V R M L 1    F O R M A T                                                */
-/* ------------------------------------------------------------------------ */
+//  V R M L 1   F O R M A T
 
 static FILE *wrlfile;
 static List_T *wrlnodes=NULL;
@@ -1293,9 +1285,8 @@ void process_wrl_elements (Mesh * M){
   }
 }
 
-/* ------------------------------------------------------------------------ */
-/*  P r i n t _ M e s h                                                     */
-/* ------------------------------------------------------------------------ */
+
+// Public Print_Mesh routine
 
 void Print_Mesh (Mesh * M, char *c, int Type){
   char name[256];

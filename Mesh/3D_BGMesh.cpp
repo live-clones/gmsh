@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.19 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.20 2002-05-18 16:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -140,10 +140,6 @@ double Lc_XYZ (double X, double Y, double Z, Mesh * m){
   }
   return CTX.mesh.lc_factor*l;
 }
-
-/* ------------------------------------------------------------------------ */
-/*  B G M W i t h V i e w                                                   */
-/* ------------------------------------------------------------------------ */
 
 static Tree_T *Pts;
 

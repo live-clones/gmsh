@@ -17,15 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 
-/*
-  The one who intend to create a plugin for gmsh have to 
-    -) Create a dynamin lib (.so) containing 1 symbols
-       GMSH_Plugin * GMSH_RegisterPlugin ();
-    -) When there is an unacceptable error in the plugin,
-    just throw this, the plugin manager will be able to 
-    catch the exception.
-*/
-
 #include <map>
 #include <iosfwd>
 
@@ -46,31 +37,36 @@ class GMSH_PluginManager
 public :
   virtual ~GMSH_PluginManager();
   typedef std::map<const char*,GMSH_Plugin*,ltstrpg>::iterator iter;
-/**
-  Registering all default plugins that are in $(GMSHPLUGINSHOME)
-  In fact, we will load all .so files in dir $(GMSHPLUGINSHOME)
 
-  In fact, loading a .so (or a .o) is not what is usually called a
-  'plugin'. This is a 'module'. A plugin is an _executable_, but
-  can only be executed from inside another program... CG
-  */
+  
+  // Registering all default plugins that are in
+  // $(GMSHPLUGINSHOME). In fact, we will load all .so files in dir
+  // $(GMSHPLUGINSHOME). Note that loading a .so (or a .o) is not what
+  // is usually called a 'plugin'. We should call the plugins
+  // 'modules'. A plugin is an _executable_, but that can only be
+  // executed from inside another program...
   void RegisterDefaultPlugins();
   static GMSH_PluginManager *Instance();
-  /** Dynamically add a plugin pluginName.so in dirName*/
+
+  // Dynamically add a plugin pluginName.so in dirName
   void AddPlugin(char *dirName, char *pluginName);
-  // uninstall a given plugin
+
+  // Uninstall a given plugin
   void UninstallPlugin (char *pluginName);
-  // set an option to a value in plugin named pluginName
+
+  // Set an option to a value in plugin named pluginName
   void SetPluginOption (char *pluginName, char *option, double value);
   void SetPluginOption (char *pluginName, char *option, char * value);
-  // iterator on plugins
+
+  // Iterator on plugins
   inline iter begin() {return allPlugins.begin();}
   inline iter end() {return allPlugins.end();}
-  // find a plugin named pluginName
+
+  // Find a plugin named pluginName
   GMSH_Plugin *find(char *pluginName);
-  // perform an action on the plugin
-  // default action are Run and Save
-  // other plugins may perform other actions
+
+  // Perform an action on the plugin. Default action are Run and
+  // Save. Other plugins may perform other actions.
   void Action (char *pluginMane , char *action , void *data); 
 };
 #endif

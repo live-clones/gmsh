@@ -1,9 +1,7 @@
-# $Id: Makefile,v 1.15 2002-05-18 09:14:33 geuzaine Exp $
+# $Id: Makefile,v 1.16 2002-05-18 16:31:16 geuzaine Exp $
 #
 # Makefile for "libGmshDataStr.a"
 #
-
-.IGNORE:
 
 CXX    = c++
 AR     = ar ruvs
@@ -47,7 +45,6 @@ depend:
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	$(RM) Makefile.new
-
 
 # DO NOT DELETE THIS LINE
 List.o: List.cpp Malloc.h List.h ../Common/Message.h

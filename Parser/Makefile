@@ -1,9 +1,7 @@
-# $Id: Makefile,v 1.39 2002-05-18 09:14:33 geuzaine Exp $
+# $Id: Makefile,v 1.40 2002-05-18 16:31:17 geuzaine Exp $
 #
 # Makefile for "libGmshParser.a"
 #
-
-.IGNORE:
 
 CXX    = c++
 AR     = ar ruvs

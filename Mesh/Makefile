@@ -1,9 +1,7 @@
-# $Id: Makefile,v 1.42 2002-05-18 09:14:33 geuzaine Exp $
+# $Id: Makefile,v 1.43 2002-05-18 16:31:16 geuzaine Exp $
 #
 # Makefile for "libGmshMesh.a"
 #
-
-.IGNORE:
 
 CXX    = c++
 AR     = ar ruvs

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.49 2002-05-18 07:56:48 geuzaine Exp $
+// $Id: CAD.cpp,v 1.50 2002-05-18 16:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1571,7 +1571,7 @@ void ReplaceAllDuplicates(Mesh *m){
 
 
 // Inetersection routines
-// FIXME: this codeis full of crap :-)
+// FIXME: this code is full of crap :-)
 
 /*
   S = (sx(u,v),sy(u,v),sz(u,v))

@@ -1,9 +1,7 @@
-# $Id: Makefile,v 1.38 2002-05-18 09:14:33 geuzaine Exp $
+# $Id: Makefile,v 1.39 2002-05-18 16:31:16 geuzaine Exp $
 #
 # Makefile for "libGmshGraphics.a"
 #
-
-.IGNORE:
 
 CXX    = c++
 AR     = ar ruvs

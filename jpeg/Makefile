@@ -1,9 +1,7 @@
-# $Id: Makefile,v 1.23 2002-05-18 09:14:34 geuzaine Exp $
+# $Id: Makefile,v 1.24 2002-05-18 16:31:17 geuzaine Exp $
 #
 # Makefile for "libGmshJpeg.a"
 #
-
-.IGNORE:
 
 CXX    = c++
 AR     = ar ruvs

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.42 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.43 2002-05-18 16:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -26,9 +26,7 @@
 
 extern Context_T CTX;
 
-/* ------------------------------------------------------------------------ */
-/*  M S H    F O R M A T                                                    */
-/* ------------------------------------------------------------------------ */
+// Read mesh in the native MSH format
 
 #define LGN1 1
 #define TRI1 2
@@ -47,8 +45,6 @@ extern Context_T CTX;
 #define PNT  15 
 
 #define NB_NOD_MAX_ELM 20
-
-/* relecture maillage au format MSH */
 
 /* Note: the 'Dirty' flag only has an influence if one doesn't load
    the geometry along with the mesh (since we make Tree_Insert for the
@@ -299,9 +295,8 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     M->status = -1 ;
 }
 
-/* ------------------------------------------------------------------------ */
-/*  R e a d _ M e s h                                                       */
-/* ------------------------------------------------------------------------ */
+
+// Public Read_Mesh routine
 
 void Read_Mesh_SMS (Mesh *m, FILE *File_GEO);
 

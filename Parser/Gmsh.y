@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.121 2002-05-18 09:14:33 geuzaine Exp $
+// $Id: Gmsh.y,v 1.122 2002-05-18 16:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -143,13 +143,12 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %type <l> ListOfStrings
 %type <s> Shape
 
-/* ------------------------------------------------------------------ */
-/* Operators (with ascending priority): cf. C language                */
-/*                                                                    */
-/* Notes: - associativity (%left, %right)                             */
-/*        - UNARYPREC is a dummy terminal to resolve ambiguous cases  */ 
-/*          for + and - (which exist in both unary and binary form)   */
-/* ------------------------------------------------------------------ */
+// Operators (with ascending priority): cf. C language
+//
+// Notes: - associativity (%left, %right)
+//        - UNARYPREC is a dummy terminal to resolve ambiguous cases
+//          for + and - (which exist in both unary and binary form)
+
 %right   tAFFECT tAFFECTPLUS tAFFECTMINUS tAFFECTTIMES tAFFECTDIVIDE
 %right   '?' tDOTS
 %left    tOR
@@ -161,7 +160,6 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %right   '!' tPLUSPLUS tMINUSMINUS UNARYPREC
 %right   '^'
 %left    '(' ')' '[' ']' '.'
-/* ------------------------------------------------------------------ */
 
 %start All
 
@@ -174,9 +172,7 @@ All :
   | error tEND { yyerrok ; return 1; }
 ;
 
-/*  ----------------------------------------------------------------------
-    S T E R E O L I T H O G R A P H Y  ( S T L )
-    ---------------------------------------------------------------------- */
+//  S T E R E O L I T H O G R A P H Y  ( S T L )
 
 SignedDouble :
     tDOUBLE     { $$ = $1; }
@@ -213,9 +209,7 @@ STLFormatItem :
     }
 ;
 
-/*  ----------------------------------------------------------------------
-    S T E P   I S O - 1 0 3 0 3 - 2 1   F I L E   F O R M A T
-    ---------------------------------------------------------------------- */
+//  S T E P   I S O - 1 0 3 0 3 - 2 1   F I L E   F O R M A T
 
 StepFormatItems :
     /* nothing */
@@ -287,7 +281,7 @@ StepDataItem  :
     }
   | tDOUBLE tAFFECT tFACE_BOUND '(' tBIGSTR ',' tDOUBLE ','  BoolExpr  ')' tEND
     {
-      /* La je dois voir la norme ! Face_Bound : trou externe a la surface ! */
+      // check the norm! Face_Bound : hole outside surface!
       Msg(PARSER_INFO,"Found a face bound");
       Add_Face_Outer_Bound((int)$1,$5,(int)$7,$9,0);
     }
@@ -387,9 +381,7 @@ StepDataItem  :
     }
 ;
 
-/*  ----------------------------------------------------------------------
-    G E O   F I L E   F O R M A T
-    ---------------------------------------------------------------------- */
+//  G E O   F I L E   F O R M A T
 
 GeomFormatList : 
     /* none*/
@@ -435,9 +427,7 @@ Printf :
     }
 ;
 
-/* ------------
-   V I E W 
-   ------------ */
+// V I E W 
 
 View :
     tSTRING tBIGSTR '{' Views '}' tEND
@@ -799,9 +789,7 @@ Text3D :
 ;
 
 
-/* -----------------------
-    A F F E C T A T I O N
-   ----------------------- */
+//  A F F E C T A T I O N
 
 NumericAffectation :
     tAFFECT        { $$ = 0 ; }
@@ -818,7 +806,7 @@ NumericIncrement :
 
 Affectation :
 
-  /* -------- Variables -------- */ 
+  // Variables
 
     tSTRING NumericAffectation FExpr tEND
     {
@@ -965,7 +953,7 @@ Affectation :
       }
     }
 
-  /* -------- Option Strings -------- */ 
+  // Option Strings
 
   | tSTRING '.' tSTRING tAFFECT StringExpr tEND 
     { 
@@ -991,7 +979,7 @@ Affectation :
       }
     }
 
-  /* -------- Option Numbers -------- */ 
+  // Option Numbers
 
   | tSTRING '.' tSTRING NumericAffectation FExpr tEND 
     {
@@ -1064,7 +1052,7 @@ Affectation :
       }
     }
 
-  /* -------- Option Colors -------- */ 
+  // Option Colors
 
   | tSTRING '.' tColor '.' tSTRING tAFFECT ColorExpr tEND 
     {
@@ -1090,7 +1078,7 @@ Affectation :
       }
     }
 
-  /* -------- ColorTable -------- */ 
+  // ColorTable
 
   | tSTRING '.' tColorTable tAFFECT ListOfColor tEND 
     {
@@ -1132,7 +1120,7 @@ Affectation :
       List_Delete($8);
     }
 
-  /* -------- Plugins -------- */ 
+  // Plugins
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
     {
@@ -1160,13 +1148,11 @@ Affectation :
 ;
 
 
-/* -----------
-    S H A P E
-   ----------- */
+//  S H A P E
 
 Shape :
 
-  /* -------- Points -------- */ 
+  // Points
 
     tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
@@ -1212,7 +1198,7 @@ Shape :
       }
     }  
 
-  /* -------- Lines -------- */ 
+  // Lines
 
   | tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
@@ -1337,7 +1323,7 @@ Shape :
       }
     }
 
-  /* -------- Surfaces -------- */ 
+  // Surfaces
 
   | tPlane tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
@@ -1412,7 +1398,7 @@ Shape :
       $$.Num  = (int)$4;
     }
 
-  /* -------- Volumes -------- */ 
+  // Volumes
 
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
@@ -1434,9 +1420,7 @@ Shape :
     }
 ;
 
-/* -------------------
-    T R A N S F O R M
-   ------------------- */
+//  T R A N S F O R M
 
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
@@ -1524,9 +1508,7 @@ ListOfShapes :
     }
 ;
 
-/* -------------------
-    D U P L I C A T A
-   ------------------- */
+//  D U P L I C A T A
 
 Duplicata :
     tDuplicata '{' ListOfShapes '}'
@@ -1542,9 +1524,7 @@ Duplicata :
 ;
 
 
-/* -------------
-    D E L E T E 
-   ------------- */
+//  D E L E T E
 
 Delete :
     tDelete '{' ListOfShapes '}'
@@ -1565,9 +1545,7 @@ Delete :
     }
 ;
 
-/* -----------------
-    C O L O R I F Y
-   ----------------- */
+//  C O L O R I F Y
 
 Colorify :
     tColor ColorExpr '{' ListOfShapes '}'
@@ -1579,9 +1557,7 @@ Colorify :
     }
 ;
 
-/* -----------------
-    C O M M A N D  
-   ----------------- */
+//  C O M M A N D  
 
 Command :
     tSTRING StringExpr tEND
@@ -1605,12 +1581,8 @@ Command :
 	  while(!feof(yyin)){
 	    yyparse();
 	  }
-	  //
-	  //Est-ce grave de laisser le stream ouvert? Si on fait le
-	  //fclose, on ne peut pas faire appel a une fonction
-	  //(Function) definie en dehors de son fichier de
-	  //definition...
-	  //
+	  // FIXME: If we do fclose, we cannot call a Function defined
+	  // in another file...
 	  //fclose(yyin);
 	  yyin = yyinTab[--RecursionLevel];
 	  strcpy(yyname,yynameTab[RecursionLevel]);
@@ -1705,9 +1677,7 @@ Command :
     }
 ;
 
-/* ---------------
-    L O O P  
-   --------------- */
+// L O O P  
 
 Loop :   
 
@@ -1820,12 +1790,12 @@ Loop :
 ;
 
 
-/* ---------------
-    E X T R U D E 
-   --------------- */
+//  E X T R U D E 
 
 Extrude :
-  /* -------- Points -------- */ 
+
+  // Points
+
     tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
     {
       Curve *pc, *prc;
@@ -1847,7 +1817,8 @@ Extrude :
 			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
 			   &pc,&prc,NULL);
     }
-  /* -------- Lines -------- */ 
+
+  // Lines
 
   | tExtrude tLine '{' FExpr ',' VExpr '}' tEND
     {
@@ -1895,7 +1866,7 @@ Extrude :
 			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,1,&extr);
     }
 
-  /* -------- Surfaces -------- */ 
+  // Surfaces
 
   | tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
     {
@@ -2015,9 +1986,7 @@ ExtrudeParameter :
     }
 ;
 
-/* -------------------
-    T R A N S F I N I
-   ------------------- */
+//  T R A N S F I N I
 
 Transfini : 
     tTransfinite tLine ListOfDouble tAFFECT FExpr tEND
@@ -2169,9 +2138,7 @@ Transfini :
 ;
 
 
-/* -------------------
-    C O H E R E N C E
-   ------------------- */
+//  C O H E R E N C E
 
 Coherence : 
     tCoherence tEND
@@ -2185,9 +2152,7 @@ Coherence :
 ;
 
 
-/* ---------------
-    G E N E R A L
-    --------------- */
+//  G E N E R A L
 
 BoolExpr :
     tTRUE {$$ = 1;}
@@ -2245,7 +2210,7 @@ FExpr :
   | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3,$5);  }
   | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3*$3+$5*$5); }
   | tRand   '(' FExpr ')'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
-  /* for GetDP compatibility */
+  // The following is for GetDP compatibility
   | tExp    '[' FExpr ']'            { $$ = exp($3);      }
   | tLog    '[' FExpr ']'            { $$ = log($3);      }
   | tLog10  '[' FExpr ']'            { $$ = log10($3);    }
@@ -2269,18 +2234,18 @@ FExpr :
   | tRand   '[' FExpr ']'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
 ;
 
-/* Pour etre vraiment complet, il faudrait encore ajouter +=, -=, *= et /= */
+// FIXME: add +=, -=, *= et /=
 
 FExpr_Single :
 
-  /* -------- Constants -------- */ 
+  // Constants
 
     tDOUBLE   { $$ = $1; }
   | tPi       { $$ = 3.141592653589793; }
   | tMPI_Rank { $$ = ParUtil::Instance()->rank(); }
   | tMPI_Size { $$ = ParUtil::Instance()->size(); }
 
-  /* -------- Variables -------- */ 
+  // Variables
 
   | tSTRING
     {
@@ -2338,7 +2303,7 @@ FExpr_Single :
       }
     }
 
-  /* -------- Option Strings -------- */ 
+  // Option Strings
 
   | tSTRING '.' tSTRING 
     {

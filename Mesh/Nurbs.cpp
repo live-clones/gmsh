@@ -1,4 +1,4 @@
-// $Id: Nurbs.cpp,v 1.8 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: Nurbs.cpp,v 1.9 2002-05-18 16:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,8 @@
 
 #include "Gmsh.h"
 #include "Mesh.h"
+
+// Cubic spline
 
 Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
                                int derivee, double t1, double t2){
@@ -90,11 +92,8 @@ Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
   return V;
 }
 
-/* ------------------------------------------------------------------------ */
-/*  I n t e r p o l a t e N u r b s                                         */
-/* ------------------------------------------------------------------------ */
 
-/* B S p l i n e s   U n i f o r m e s */
+// Uniform BSplines
 
 Vertex InterpolateUBS (Curve * Curve, double u, int derivee){
 
@@ -123,7 +122,7 @@ Vertex InterpolateUBS (Curve * Curve, double u, int derivee){
   return InterpolateCubicSpline (v, t, Curve->mat, derivee, t1, t2);
 }
 
-/* B S p l i n e s   N o n   U n i f o r m e s */
+// Non Uniform BSplines
 
 int findSpan (double u, int deg, int n, float *U){
   if (u >= U[n])

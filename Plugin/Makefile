@@ -1,9 +1,7 @@
-# $Id: Makefile,v 1.25 2002-05-18 09:14:34 geuzaine Exp $
+# $Id: Makefile,v 1.26 2002-05-18 16:31:17 geuzaine Exp $
 #
 # Makefile for "libGmshPlugin.a"
 #
-
-.IGNORE:
 
 CXX    = c++
 AR     = ar ruvs
