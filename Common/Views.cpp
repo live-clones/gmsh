@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.131 2004-09-18 01:51:56 geuzaine Exp $
+// $Id: Views.cpp,v 1.132 2004-09-18 05:10:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1293,9 +1293,15 @@ static void combine_space(struct nameidx *id, List_T *to_remove)
   }
 
   // finalize
-  char name[256], filename[256];
-  sprintf(name, "%s_Combine", id->name);
-  sprintf(filename, "%s_Combine.pos", id->name);
+  char name[256], filename[256], tmp[256];
+  if(!strcmp(id->name, "__all__"))
+    strcpy(tmp, "all");
+  else if(!strcmp(id->name, "__vis__"))
+    strcpy(tmp, "visible");
+  else
+    strcpy(tmp, id->name);
+  sprintf(name, "%s_Combine", tmp);
+  sprintf(filename, "%s_Combine.pos", tmp);
   EndView(vm, 0, filename, name);
 }
 
@@ -1373,9 +1379,15 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
   }
 
   // finalize
-  char name[256], filename[256];
-  sprintf(name, "%s_Combine", id->name);
-  sprintf(filename, "%s_Combine.pos", id->name);
+  char name[256], filename[256], tmp[256];
+  if(!strcmp(id->name, "__all__"))
+    strcpy(tmp, "all");
+  else if(!strcmp(id->name, "__vis__"))
+    strcpy(tmp, "visible");
+  else
+    strcpy(tmp, id->name);
+  sprintf(name, "%s_Combine", tmp);
+  sprintf(filename, "%s_Combine.pos", tmp);
   EndView(vm, 0, filename, name);
 }
 
@@ -1396,10 +1408,14 @@ void CombineViews(int time, int how, int remove)
     Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
     if(how || v->Visible) {
       nameidx id;
+      // this might potentially lead to unwanted results if there are
+      // views named "__all__" or "__vis__", but what the heck...
       if(how == 2)
 	strcpy(id.name, v->Name);
+      else if(how == 1)
+	strcpy(id.name, "__all__");
       else
-	strcpy(id.name, "all");
+	strcpy(id.name, "__vis__");
       if((pid = (struct nameidx*)List_PQuery(ids, &id, fcmp_name))){
 	List_Add(pid->indices, &i);
       }
