@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.23 2001-12-03 08:41:45 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.24 2001-12-03 09:07:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -63,7 +63,10 @@ int ParseFile(char *f){
   }
   else{
     while(!feof(yyin)) yyparse();
-    status = 0;
+    if(THEM)
+      status = THEM->status;
+    else
+      status = 0;
   }
   fclose(yyin);
 
