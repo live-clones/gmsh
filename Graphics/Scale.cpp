@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.48 2004-10-11 20:48:16 geuzaine Exp $
+// $Id: Scale.cpp,v 1.49 2004-10-11 21:06:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -324,7 +324,7 @@ void Draw_Scales(void)
 	}
 	else{
 	  double xsep = largest_number/2. + 20;
-	  double ww = (CTX.viewport[2] - CTX.viewport[0]) / 2. - 2 * xsep;
+	  double ww = (CTX.viewport[2] - CTX.viewport[0]) / 2.25 - 2 * xsep;
 	  if(ww < 20) ww = 20;
 	  draw_scale(v, 
 		     (CTX.viewport[2] - CTX.viewport[0]) / 2. - (i%2 ? -(xsep-10) : ww+xsep-10),
