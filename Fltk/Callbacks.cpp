@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.144 2002-10-12 19:41:13 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.145 2002-11-01 19:00:29 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2551,7 +2551,8 @@ void con_mesh_define_length_cb(CALLBACK_ARGS){
 
 void con_mesh_define_transfinite_line_cb(CALLBACK_ARGS){
   strcpy(trsf_pts_text, WID->context_mesh_input[1]->value());
-  strcpy(trsf_type_text, WID->context_mesh_input[2]->value());
+  strcpy(trsf_type_text, (!WID->context_mesh_choice[0]->value()) ? "Progression" : "Bump");
+  strcpy(trsf_typearg_text, WID->context_mesh_input[2]->value());
 }
 
 void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS){

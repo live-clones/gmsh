@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.28 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: Geo.cpp,v 1.29 2002-11-01 19:00:29 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,7 @@ char angle_text[100] = "3.14159/2" ;
 char ax_text[100] = "0.0", ay_text[100] = "0.0", az_text[100] = "1.0";
 char dx_text[100] = "0.0", dy_text[100] = "0.0", dz_text[100] = "0.0", df_text[100] = "1.0";
 char sa_text[100] = "0.0", sb_text[100] = "0.0", sc_text[100] = "0.0", sd_text[100] = "0.0";
-char trsf_pts_text[100] = "2", trsf_type_text[100] = "Progression 1.";
+char trsf_pts_text[100] = "2", trsf_type_text[100] = "Progression", trsf_typearg_text[100] = "1.";
 char trsf_vol_text[100] = "1";
 char char_length_text[100] = "1.";
 
@@ -179,8 +179,8 @@ void add_trsfline (int N, int *l, char *fich){
     else sprintf(text2,",%d",l[i]);
     strcat(text,text2);
   }
-  if(strlen(trsf_type_text))
-    sprintf(text2,"} = %s Using %s;", trsf_pts_text, trsf_type_text);
+  if(strlen(trsf_typearg_text))
+    sprintf(text2,"} = %s Using %s %s;", trsf_pts_text, trsf_type_text, trsf_typearg_text);
   else
     sprintf(text2,"} = %s;", trsf_pts_text);
   strcat(text,text2);

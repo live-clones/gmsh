@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.201 2002-10-12 19:41:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.202 2002-11-01 19:00:29 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2885,10 +2885,17 @@ void GUI::create_mesh_context_window(int num){
     { 
       g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Transfinite line");
       context_mesh_input[1] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Number of points");
-      context_mesh_input[2] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Distribution");
+      context_mesh_input[2] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH);
       for(i=1 ; i<3 ; i++){
 	context_mesh_input[i]->align(FL_ALIGN_RIGHT);
       }
+      static Fl_Menu_Item menu_trsf_mesh[] = {
+	{"Progression", 0, 0, 0},
+	{"Bump",        0, 0, 0},
+	{0}
+      };
+      context_mesh_choice[0] = new Fl_Choice (2*WB+IW, 2*WB+2*BH, IW, BH);
+      context_mesh_choice[0]->menu(menu_trsf_mesh);
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
 	o->callback(con_mesh_define_transfinite_line_cb);

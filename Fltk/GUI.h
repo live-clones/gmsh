@@ -218,6 +218,7 @@ public:
   // mesh context window
   Fl_Window        *context_mesh_window ;
   Fl_Input         *context_mesh_input[20] ;
+  Fl_Choice        *context_mesh_choice[5] ;
 
   // solver windows
   SolverDialogBox  solver[5] ;

@@ -101,7 +101,7 @@ extern char ax_text[100], ay_text[100], az_text[100];
 extern char dx_text[100], dy_text[100], dz_text[100], df_text[100];
 extern char sa_text[100], sb_text[100], sc_text[100], sd_text[100];
 extern char nb_pts[100], mode_value[100];
-extern char trsf_pts_text[100], trsf_type_text[100];
+extern char trsf_pts_text[100], trsf_type_text[100], trsf_typearg_text[100];
 extern char trsf_vol_text[100];
 extern char char_length_text[100];
 
