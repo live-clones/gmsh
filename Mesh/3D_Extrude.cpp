@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.50 2001-11-14 19:00:05 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.51 2001-12-03 15:30:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -19,7 +19,7 @@ static Curve *THEC=NULL;
 static Surface *THES=NULL;
 static Volume *THEV=NULL;
 static ExtrudeParams *ep;
-static Tree_T *Vertex_Bound = NULL, *ToAdd = NULL;
+static Tree_T *Vertex_Bound = NULL;
 
 // Vertex_Bound contains the vertices on the boundary (on the curves
 // for extrude_mesh(surface) and on the surfaces for
@@ -165,7 +165,7 @@ void ExitExtrude (){
   if (Tree_Swaps)Tree_Delete(Tree_Swaps);
   if(Vertex_Bound)Tree_Delete (Vertex_Bound);
   Tree_Ares = Tree_Swaps = NULL;
-  ToAdd = Vertex_Bound = NULL;
+  Vertex_Bound = NULL;
 }
 
 int are_exist (Vertex * v1, Vertex * v2, Tree_T * t){
@@ -565,15 +565,11 @@ void Extrude_Vertex (void *data, void *dum){
       if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &newv))){
 	Free_Vertex (&newv,0);
         List_Add (NXL.List, pV);
-        if (ToAdd)
-          Tree_Insert (ToAdd, pV);
       }
       else{
         List_Add (NXL.List, &newv);
         Tree_Insert (THEM->Vertices, &newv);
         Tree_Insert (Vertex_Bound, &newv);
-        if (ToAdd)
-          Tree_Insert (ToAdd, &newv);
       }
     }
   }
@@ -599,6 +595,17 @@ void Extrude_Surface3 (Surface * s){
 }
 
 
+void Create_Tri(Vertex *v1, Vertex *v2, Vertex *v3){
+  Simplex *s;
+  if(CTX.mesh.allow_degenerated_extrude ||
+     (v1->Num != v2->Num && v1->Num != v3->Num && v2->Num != v3->Num)){
+    s = Create_Simplex (v1, v2, v3, NULL);
+    s->iEnt = THES->Num;
+    s->Num = -s->Num; //Tag triangles to re-extrude
+    Tree_Add (THES->Simplexes, &s);
+  }
+}
+
 void Extrude_Seg (Vertex * V1, Vertex * V2){
   int i, j, k;
   Vertex *v1, *v2, *v3, *v4;
@@ -616,7 +623,17 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
       List_Read (L1, k + 1, &v3);
       List_Read (L2, k + 1, &v4);
       if(ep->mesh.Recombine){
-        s = Create_Quadrangle(v1,v2,v4,v3);
+	if(CTX.mesh.allow_degenerated_extrude) 
+	  s = Create_Quadrangle(v1,v2,v4,v3);
+	else if(v1->Num == v2->Num || v2->Num == v4->Num) 
+	  s = Create_Simplex (v1, v4, v3, NULL);
+	else if(v1->Num == v3->Num || v3->Num == v4->Num) 
+	  s = Create_Simplex (v1, v2, v4, NULL);
+	else if(v1->Num == v4->Num || v2->Num == v3->Num)
+	  Msg(GERROR, "Uncoherent quadrangle  (nodes %d %d %d %d)",
+	      v1->Num,v2->Num,v3->Num,v4->Num);
+	else 
+	  s = Create_Quadrangle(v1,v2,v4,v3);
         s->iEnt = THES->Num; 
 	s->Num = -s->Num; //Tag quadrangles to re-extrude
         Tree_Add(THES->Simplexes,&s);
@@ -626,24 +643,12 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
       }
       else{
         if (are_exist (v3, v2, Tree_Ares)){
-          s = Create_Simplex (v3, v2, v1, NULL);
-          s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Tag triangles to re-extrude
-          Tree_Add (THES->Simplexes, &s);
-          s = Create_Simplex (v3, v4, v2, NULL);
-          s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Tag triangles to re-extrude
-          Tree_Add (THES->Simplexes, &s);
+	  Create_Tri(v3, v2, v1);
+          Create_Tri(v3, v4, v2);
         }
         else{
-          s = Create_Simplex (v3, v4, v1, NULL);
-          s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Tag triangles to re-extrude
-          Tree_Add (THES->Simplexes, &s);
-          s = Create_Simplex (v1, v4, v2, NULL);
-          s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Tag triangles to re-extrude
-          Tree_Add (THES->Simplexes, &s);
+          Create_Tri(v3, v4, v1);
+          Create_Tri(v1, v4, v2);
         }
       }
       k++;
@@ -685,7 +690,7 @@ void copy_mesh (Curve * from, Curve * to, int direction){
   vv = &to->beg;
   if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->ubeg;
-    Tree_Insert (THEM->Vertices, vexist);
+    //Tree_Insert (THEM->Vertices, vexist);
     if ((*vexist)->ListCurves)
       List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
@@ -708,6 +713,10 @@ void copy_mesh (Curve * from, Curve * to, int direction){
 			v->Pos.Y, v->Pos.Z, v->lc, (direction>0)?v->u:(1.-v->u));
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		 vi->Pos.X, vi->Pos.Y, vi->Pos.Z);
+    if(!comparePosition(&vi,&v)){
+      Free_Vertex(&vi,0);
+      vi = v;
+    }
     Tree_Insert (THEM->Vertices, &vi);
     if(!vi->ListCurves)
       vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
@@ -718,7 +727,7 @@ void copy_mesh (Curve * from, Curve * to, int direction){
   vv = &to->end;
   if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->uend;
-    Tree_Insert (THEM->Vertices, vexist);
+    //Tree_Insert (THEM->Vertices, vexist);
     if ((*vexist)->ListCurves)
       List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
@@ -731,7 +740,6 @@ void copy_mesh (Curve * from, Curve * to, int direction){
     List_Add (vi->ListCurves, &to);
     List_Add (to->Vertices, &vi);
   }
-
 
 }
 
@@ -833,8 +841,6 @@ void copy_mesh (Surface * from, Surface * to){
 	  Tree_Insert(THEM->Vertices, &vi[j]);
 	  Tree_Insert(Vertex_Bound, &vi[j]);
 	}
-	if(ToAdd)
-	  Tree_Insert(ToAdd, &vi[j]);
       }
       else{
 	vi[j] = NULL;
@@ -853,6 +859,12 @@ void copy_mesh (Surface * from, Surface * to){
   List_Delete (list);
 }
 
+void AddVertsInSurf(void *a, void *b){
+  Simplex *s=*(Simplex**)a;
+  for(int i=0;i<4;i++)
+    if(s->V[i]) Tree_Replace(THES->Vertices, &s->V[i]);
+}
+
 int Extrude_Mesh (Surface * s){
   int i, j;
   Vertex *v1;
@@ -868,8 +880,6 @@ int Extrude_Mesh (Surface * s){
   ep = s->Extrude;
 
   FACE_DIMENSION = 2;
-
-  ToAdd = s->Vertices;
 
   for (i = 0; i < List_Nbr (s->Generatrices); i++){
     List_Read (s->Generatrices, i, &c);
@@ -892,6 +902,8 @@ int Extrude_Mesh (Surface * s){
     if (!ss) return false;
     copy_mesh (ss, s);
   }
+  
+  Tree_Action(s->Simplexes, AddVertsInSurf);
 
   return true;
 }
