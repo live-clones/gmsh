@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.96 2001-08-20 10:30:20 geuzaine Exp $
+// $Id: Gmsh.y,v 1.97 2001-08-27 11:19:18 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1257,19 +1257,22 @@ Shape :
       List_T *Temp;
       int i;
       double d;
-      if((int)$10 + 1 + List_Nbr($6) != List_Nbr($8)){
+      if(List_Nbr($6) + (int)$10 + 1 != List_Nbr($8)){
 	vyyerror("Wrong definition of Nurbs Curve %d: "
-		"[Degree]%d + 1 + [NbPts]%d != [NbKnots]%d",
-		(int)$3, (int)$10, List_Nbr($6), List_Nbr($8));
+		 "got %d Knots, need N + D + 1 = %d + %d + 1 = %d",
+		 (int)$3, 
+		 List_Nbr($8), List_Nbr($6), (int)$10, List_Nbr($6) + (int)$10 + 1);
       }
-      Temp = List_Create(List_Nbr($6),1,sizeof(int));
-      for(i=0;i<List_Nbr($6);i++) {
-      	List_Read($6,i,&d);
-        j = (int)d;
-        List_Add(Temp,&j);
+      else{
+	Temp = List_Create(List_Nbr($6),1,sizeof(int));
+	for(i=0;i<List_Nbr($6);i++) {
+	  List_Read($6,i,&d);
+	  j = (int)d;
+	  List_Add(Temp,&j);
+	}
+	AddCurveInDataBase ((int)$3,MSH_SEGM_NURBS,(int)$10,Temp,$8,-1,-1,0.,1.);
+	List_Delete(Temp);
       }
-      AddCurveInDataBase ((int)$3,MSH_SEGM_NURBS,(int)$10,Temp,$8,-1,-1,0.,1.);
-      List_Delete(Temp);
     }
   | tLine '{' FExpr '}' tEND
     {

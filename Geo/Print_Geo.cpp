@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.20 2001-08-17 08:31:31 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.21 2001-08-27 11:19:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -30,14 +30,14 @@ void Print_Nurbs (Curve *c, FILE *f){
     if(i%8 == 7 && i!=List_Nbr(c->Control_Points)-1)fprintf(FOUT,"\n");
   }
   fprintf(f,"}\n");
-  fprintf(f,"Knots {");
+  fprintf(f,"  Knots {");
   for(j=0;j<List_Nbr(c->Control_Points)+c->degre+1;j++){
     if(!j)fprintf(f,"%g",c->k[j]);
     else fprintf(f,", %g",c->k[j]);
-    if(j%5 == 4 && j!=List_Nbr(c->Control_Points)+c->degre)fprintf(FOUT,"\n");
+    if(j%5 == 4 && j!=List_Nbr(c->Control_Points)+c->degre)fprintf(FOUT,"\n        ");
   }
-  fprintf(f,"}");
-  fprintf(f,"Order %d;\n\n",c->degre);
+  fprintf(f,"}\n");
+  fprintf(f,"  Order %d;\n",c->degre);
 }
 
 void Print_Curve(void *a, void *b){
@@ -139,7 +139,7 @@ void Print_Surface(void *a, void *b){
   case MSH_SURF_NURBS:
     fprintf(FOUT,"Nurbs Surface (%d) = {\n",s->Num);
     for(i=0;i<s->Nv;i++){
-      fprintf(FOUT,"\t\t{");
+      fprintf(FOUT,"  {");
       for(j=0;j<s->Nu;j++){
         List_Read(s->Control_Points,j+s->Nu *i,&v);
         if(!j)
@@ -152,19 +152,19 @@ void Print_Surface(void *a, void *b){
       else
         fprintf(FOUT,"}}\n");
     }
-    fprintf(FOUT,"\t\tKnots\n\t\t{");
+    fprintf(FOUT,"  Knots\n  {");
     for(j=0;j<s->Nu+s->OrderU+1;j++){
       if(!j)fprintf(FOUT,"%g",s->ku[j]);
       else fprintf(FOUT,", %g",s->ku[j]);
-      if(j%5 == 4 && j!=s->Nu + s->OrderU)fprintf(FOUT,"\n\t\t");
+      if(j%5 == 4 && j!=s->Nu + s->OrderU)fprintf(FOUT,"\n  ");
     }
-    fprintf(FOUT,"}\n\t\t{");
+    fprintf(FOUT,"}\n  {");
     for(j=0;j<s->Nv+s->OrderV+1;j++){
       if(!j)fprintf(FOUT,"%g",s->kv[j]);
       else fprintf(FOUT,", %g",s->kv[j]);
-      if(j%5 == 4 && j!=s->Nv + s->OrderV)fprintf(FOUT,"\n\t\t");
+      if(j%5 == 4 && j!=s->Nv + s->OrderV)fprintf(FOUT,"\n  ");
     }
-    fprintf(FOUT,"}\n\t\tOrder %d %d;\n\n",s->OrderU,s->OrderV);
+    fprintf(FOUT,"}\n  Order %d %d;\n",s->OrderU,s->OrderV);
     break;
   }
 }

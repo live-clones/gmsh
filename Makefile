@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.140 2001-08-20 08:30:05 geuzaine Exp $
+# $Id: Makefile,v 1.141 2001-08-27 11:19:18 geuzaine Exp $
 
 GMSH_RELEASE = 1.24
 
@@ -248,6 +248,27 @@ link_linux:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
 linux: tag compile_linux link_linux strip_bin
+
+#
+# Test for fltk 1.1
+#
+compile_fltk1:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CXX=$(CXX)" \
+           "CC=$(CC)" \
+           "OPT_FLAGS=-g -Wall" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1.0b1" \
+        ); done
+link_fltk1:
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                 $(HOME)/SOURCES/fltk-1.1.0b1/lib/libfltkgl.a\
+                 $(OPENGL_LIB) \
+                 $(HOME)/SOURCES/fltk-1.1.0b1/lib/libfltk.a \
+                 -L/usr/X11R6/lib $(X11_LIB) -lm
+fltk1: compile_fltk1 link_fltk1
 
 #
 # Test for fltk 2.0
