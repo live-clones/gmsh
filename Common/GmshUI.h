@@ -21,23 +21,26 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #if defined(HAVE_FLTK)
+
 #  include <FL/Fl.H>
+
+// Gmsh requires FLTK 1.1.5 or above (the new dynamic menus don't
+// work with older FLTK versions due to a bug in Fl_Scroll.clear())
+#  if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+#    if (FL_PATCH_VERSION < 5)
+#      error "Gmsh requires at least FLTK 1.1.5"
+#    endif
+#  else
+#    error "Gmsh requires FLTK branch 1.1"
+#  endif
+
 #  include <FL/gl.h>
 #  if defined(__APPLE__)
 #    include <OpenGL/glu.h>
 #  else
 #    include <GL/glu.h>
 #  endif
-#endif
 
-// Gmsh requires FLTK 1.1.5 or above (the new dynamic menus don't
-// work with older FLTK versions due to a bug in Fl_Scroll.clear())
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-#  if (FL_PATCH_VERSION < 5)
-#    error "Gmsh requires at least FLTK 1.1.5"
-#  endif
-#else
-#  error "Gmsh requires FLTK branch 1.1"
 #endif
 
 #endif
