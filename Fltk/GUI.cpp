@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.64 2001-05-03 00:09:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.65 2001-05-03 08:47:52 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2347,7 +2347,7 @@ void GUI::create_getdp_window(){
   if(!init_getdp_window){
     init_getdp_window = 1 ;
 
-    int width = 25*CTX.fontsize;
+    int width = 24*CTX.fontsize;
     int height = 5*WB+9*BH  + WB;
     
     getdp_window = new Fl_Window(width,height);
