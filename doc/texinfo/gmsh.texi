@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.67 2003-06-23 18:18:25 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.68 2003-06-23 21:25:56 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2107,6 +2107,11 @@ options}):
 
 @cindex Post-processing, module
 @cindex Module, Post-processing
+@cindex 2D plots
+@cindex 3D plots
+@cindex Plots
+@cindex Graphs
+@cindex Views
 
 Gmsh's post-processing module can handle multiple scalar, vector or tensor
 data sets along with the geometry and the mesh. The data sets should be
@@ -2121,56 +2126,45 @@ can be referred to by its index in the scripting language) or globally (see
 the @code{PostProcessing.LinkView} option in @ref{Post-processing
 options}).
 
+By default, Gmsh treats all post-processing views as three-dimensional
+plots, i.e., draws the scalar, vector and tensor primitives (points, lines,
+triangles, tetrahedra, etc.) in 3D space. But Gmsh can also represent each
+post-processing view containing @emph{scalar points} as two-dimensional
+(``X-Y'') plots, either space- or time-oriented:
+
+@itemize @bullet
+@item
+in a `2D space table', the scalar points are taken in the same order as they
+are defined in the post-processing view: the abscissa of the 2D graph is
+the curvilinear abscissa of the curve defined by the point series, and only
+one curve is drawn using the values associated with the points. If several
+time steps are available, each time step generates a new curve;
+@item
+in a `2D time table', one curve is drawn for each scalar point in the view
+and the abscissa is the time step.
+@end itemize
+
 Although visualization is usually mostly an interactive task, Gmsh exposes
 all the post-processing commands and options to the user in its scripting
 language to permit a complete automation of the post-processing process (see
 e.g.@: @ref{t8.geo}, and @ref{t9.geo}).
 
 The two following sections summarize all available post-processing commands
-and options.
+and options. Most options apply to both 2D and 3D plots (colormaps,
+point/line sizes, interval types, time step selection, etc.), but some are
+peculiar to 3D (lightning, element selection, etc.) or 2D plots (graph
+style, labels, etc.). Note that 2D plots can be positioned explicitly
+inside the graphical window, or be automatically positioned in order to
+avoid overlaps.
+
+Sample post-processing files (in human-readable ``parsed'' format--see
+@ref{Gmsh parsed post-processing file format}) are available in the tutorial
+directory of Gmsh's distribution.
 
 @menu
 * Post-processing commands::    
 * Post-processing options::     
 @end menu
-
-@c -------------------------------------------------------------------------
-@c Two- and three-dimensional plots
-@c -------------------------------------------------------------------------
-
-@c todo: explain 2D vs. 3D plots
-
-@c @node Two- and three-dimensional plots, , 
-@c @section Two- and three-dimensional plots
-
-@c @cindex Plot, type
-@c @cindex Graph, type
-
-@c The default plot style is 3D... Explain this.
-
-@c In addition, Gmsh can also represent each post-processing view containing
-@c scalar points (see ...) as a 2D (``X-Y'') graph:
-
-@c - 2D space table: the scalar points are taken in the same order as they
-@c are defined in the view (the abscissa of the graph is the curvilinear
-@c abscissa of the curve defined by the point series) and only one curve is
-@c drawn using the values associated with the points. If several time steps
-@c are available, you can of course animate the 2D graph.
-
-@c - 2D time table: one curve is drawn for each scalar point in the view:
-@c the abscissa is now the time step. You should have several time steps in
-@c order for this graph to display something useful :-)
-
-@c All usual options for 3D drawings are also available for 2D graphs
-@c (colors, point/line sizes, iso type, etc.).
-
-@c Try for example tutorial/view4.pos: in View->Options->general, just
-@c select "2d Space table", et voila!
-
-@c You can modify the size of the graph and, either define its position
-@c explicitly, or let Gmsh organize the screen presentation to avoid
-@c overlap between 2D graphs. There are also some options peculiar to 2D
-@c graphs (see Options->2D).
 
 @c -------------------------------------------------------------------------
 @c Post-processing commands
