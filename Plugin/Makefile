@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.42 2004-03-07 22:24:48 geuzaine Exp $
+# $Id: Makefile,v 1.43 2004-03-08 06:02:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -65,8 +65,9 @@ depend:
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   PluginManager.h CutMap.h Levelset.h CutPlane.h CutSphere.h Skin.h \
-  ../DataStr/Tree.h ../DataStr/avl.h Harmonic2Time.h DecomposeInSimplex.h \
-  Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h
+  ../DataStr/Tree.h ../DataStr/avl.h Extract.h Harmonic2Time.h \
+  DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
+  SphericalRaise.h DisplacementRaise.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h DecomposeInSimplex.h ../DataStr/Tools.h \
@@ -106,6 +107,9 @@ Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h Skin.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
   ../DataStr/Malloc.h
+Extract.o: Extract.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h Extract.h \
+  ../Common/Context.h ../DataStr/Malloc.h
 DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h DecomposeInSimplex.h ../DataStr/Tree.h \
