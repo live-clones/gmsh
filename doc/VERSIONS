@@ -1,17 +1,18 @@
-$Id: VERSIONS,v 1.198 2004-04-24 03:52:00 geuzaine Exp $
+$Id: VERSIONS,v 1.199 2004-04-26 20:12:30 geuzaine Exp $
 
 New in 1.52: new raster ("bitmap") PostScript/EPS/PDF output formats;
 new Plugin(Extract) to extract a given component from a
-post-processing view; improved mesh projection on non-planar surfaces;
-added support for second order tetrahedral elements; added interactive
-control of element order; refined mesh entity drawing selection (and
-renamed most of the corresponding options); enhanced log scale in
-post-processing; better font selection; new Plugin(CutGrid) and
-Plugin(StreamLines); various bug fixes (default postscript printing
-mode, drawing of 3D arrows/cylinders on Linux, default home directory
-on Windows, default initial file browser directory, extrusion of
-points with non-normalized axes of rotation, computation of the scene
-bounding box in scripts, + the usual documentation updates);
+post-processing view; new Plugin(CutGrid) and Plugin(StreamLines);
+improved mesh projection on non-planar surfaces; added support for
+second order tetrahedral elements; added interactive control of
+element order; refined mesh entity drawing selection (and renamed most
+of the corresponding options); enhanced log scale in post-processing;
+better font selection; simplified View.Raise{X,Y,Z} by removing the
+scaling; various bug fixes (default postscript printing mode, drawing
+of 3D arrows/cylinders on Linux, default home directory on Windows,
+default initial file browser directory, extrusion of points with
+non-normalized axes of rotation, computation of the scene bounding box
+in scripts, + the usual documentation updates);
 
 New in 1.51: initial support for visualizing mesh partitions;
 integrated version 2.0 of the MSH mesh file format; new option to
