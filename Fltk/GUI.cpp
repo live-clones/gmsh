@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.281 2004-04-18 03:36:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.282 2004-04-18 14:53:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1880,27 +1880,27 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Colors");
       o->hide();
-      mesh_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Color by element type");
-      mesh_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Color by elementary entity");
-      mesh_butt[19] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Color by physical entity");
-      mesh_butt[20] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Color by partition");
+      mesh_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Color by element type");
+      mesh_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Color by elementary entity");
+      mesh_butt[19] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Color by physical entity");
+      mesh_butt[20] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Color by partition");
       for(i = 17; i < 21; i++) {
         mesh_butt[i]->type(FL_RADIO_BUTTON);
         mesh_butt[i]->down_box(RADIO_BOX);
         mesh_butt[i]->selection_color(RADIO_COLOR);
       }
 
-      mesh_value[12] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Predefined color scheme");
+      mesh_value[12] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Predefined color scheme");
       mesh_value[12]->minimum(0);
       mesh_value[12]->maximum(2);
       mesh_value[12]->step(1);
       mesh_value[12]->align(FL_ALIGN_RIGHT);
       mesh_value[12]->callback(mesh_options_color_scheme_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(2 * WB, 3 * WB + 6 * BH, IW + 20, height - 6 * WB - 6 * BH);
+      Fl_Scroll *s = new Fl_Scroll(2 * WB, 3 * WB + 4 * BH, IW + 20, height - 5 * WB - 4 * BH);
       i = 0;
       while(MeshOptions_Color[i].str) {
-        mesh_col[i] = new Fl_Button(2 * WB, 3 * WB + (6 + i) * BH, IW, BH, MeshOptions_Color[i].str);
+        mesh_col[i] = new Fl_Button(2 * WB, 3 * WB + (4 + i) * BH, IW, BH, MeshOptions_Color[i].str);
         mesh_col[i]->callback(color_cb, (void *)MeshOptions_Color[i].function);
         i++;
       }
