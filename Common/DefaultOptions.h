@@ -861,7 +861,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Height" , opt_view_size1 , 200. , 
     "Height (in pixels) of the scale or 2D graph" }, 
 
-  { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_ISO ,
+  { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_CONTINUOUS ,
     "Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)" },
 
   { F|O, "Light" , opt_view_light , 0. ,
