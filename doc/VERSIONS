@@ -1,13 +1,13 @@
-$Id: VERSIONS,v 1.39 2001-07-31 13:19:25 geuzaine Exp $
+$Id: VERSIONS,v 1.40 2001-07-31 13:27:28 geuzaine Exp $
 
 New in 1.22: Fixed (yet another) bug for 2D mesh in the mean plane;
 fixed surface coherence bug in extruded meshes; new double logarithmic
-post-processing scale, saturate value and smoothed normals option for
-post-processing views; plugins are now enabled by default on Windows,
-Linux, SGI and DEC; 3 experimental plugins are loaded by default:
-CutMap (extract a given iso surface from a 3D scalar map), CutPlane
-(cut a 3D scalar map with a plane section), CutSphere (cut a 3D scalar
-map with a sphere);
+scale, saturate value and smoothed normals option for post-processing
+views; plugins are now enabled by default on Windows, Linux, SGI and
+DEC; three experimental plugins are loaded by default: CutMap (extract
+a given iso surface from a 3D scalar map), CutPlane (cut a 3D scalar
+map with a plane section), CutSphere (cut a 3D scalar map with a
+sphere);
 
 New in 1.21: Fixed more memory leaks; added -opt command line option
 to parse definitions directly from the command line; fixed missing
