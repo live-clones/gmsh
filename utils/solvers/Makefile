@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2003-05-09 16:30:01 geuzaine Exp $
+# $Id: Makefile,v 1.2 2003-05-09 23:11:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -21,13 +21,11 @@
 
 include ../../variables
 
-mysolver: mysolver.c
+mysolver: mysolver.c GmshClient.c
 	${CXX} ${OPTIM} -o mysolver.exe mysolver.c GmshClient.c
 
-mysolvertgz:
+tgz:
 	gtar zcvf mysolver.tgz mysolver.c mysolver.opt GmshClient.c GmshClient.h
-
-myperlsolvertgz:
 	gtar zcvf myperlsolver.tgz myperlsolver.pl myperlsolver.opt GMSH_CLIENT.pm
 
 clean:
