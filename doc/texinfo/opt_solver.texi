@@ -608,6 +608,11 @@ Maximum delay allowed for solver response (in seconds)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.Plugins
+Enable default solver plugins?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.ClientServer0
 Connect solver 0 to the Gmsh server@*
 Default value: @code{1}@*

@@ -218,8 +218,10 @@ mathematical functions (Exp, Log, Sqrt, Sin,
 Cos, Fabs, etc.) and operators (+, -, *, /, ^),
 the expressions can contain the symbols v0,
 v1, v2, ..., vn, which represent the n
-components of the field. If `iView' < 0, the
-plugin is run on the current view.
+components of the field, and the symbols x, y
+and z, which represent the three spatial
+coordinates. If `iView' < 0, the plugin is
+run on the current view.
 
 Plugin(Extract) creates one new view.
 
@@ -349,7 +351,6 @@ Default value: @code{-1}
 @item iView
 Default value: @code{-1}
 @end table
-
 
 @item Plugin(Transform)
 Plugin(Transform) transforms the coordinates of

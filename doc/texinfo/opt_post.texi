@@ -34,6 +34,11 @@ Current number of views merged@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item PostProcessing.Plugins
+Enable default post-processing plugins?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.Scales
 Show value scales@*
 Default value: @code{1}@*
