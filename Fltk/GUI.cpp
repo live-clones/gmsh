@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.204 2002-11-03 01:58:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.205 2002-11-03 04:26:07 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -774,36 +774,41 @@ void GUI::create_menu_window(int argc, char **argv){
 
     m_popup_butt[i] = new Fl_Menu_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH);
     m_popup_butt[i]->type(Fl_Menu_Button::POPUP123);
-    m_popup_butt[i]->add("Reload/View", 0, 
-			 (Fl_Callback *)view_reload_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Reload/All views", 0, 
-			 (Fl_Callback *)view_reload_all_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Reload/All visible views", 0, 
-			 (Fl_Callback *)view_reload_visible_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Remove/View", FL_Delete, 
-			 (Fl_Callback *)view_remove_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Remove/All views", 0, 
-			 (Fl_Callback *)view_remove_all_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Remove/All visible views", 0, 
-			 (Fl_Callback *)view_remove_visible_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Remove/All invisible views", 0, 
-			 (Fl_Callback *)view_remove_invisible_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Duplicate/View without options", 0,
-			 (Fl_Callback *)view_duplicate_cb, (void*)i, 0) ;
-    m_popup_butt[i]->add("Duplicate/View with options", 0,
-			 (Fl_Callback *)view_duplicate_with_options_cb, (void*)i, 0) ;
-    m_popup_butt[i]->add("Save as/ASCII view...", 0,
-			 (Fl_Callback *)view_save_ascii_cb, (void*)i, 0) ;
-    m_popup_butt[i]->add("Save as/Binary view...", 0,
-			 (Fl_Callback *)view_save_binary_cb, (void*)i, 0) ;
-    add_post_plugins(m_popup_butt[i], i);
-    m_popup_butt[i]->add("Apply as background mesh", 0,
-			 (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
-    m_popup_butt[i]->add("Options...", 0,
-			 (Fl_Callback *)view_options_cb, (void*)i, 0);
-    m_popup_butt[i]->hide();
+    m_popup2_butt[i] = new Fl_Menu_Button(0,y+i*BH,width-(CTX.fontsize+4),BH);
+    m_popup2_butt[i]->type(Fl_Menu_Button::POPUP3);
+
+    for(int j=0; j<2; j++){
+      Fl_Menu_Button *pop = j ? m_popup2_butt[i] : m_popup_butt[i];
+      pop->add("Reload/View", 0, 
+	       (Fl_Callback *)view_reload_cb, (void*)i, 0);
+      pop->add("Reload/All views", 0, 
+	       (Fl_Callback *)view_reload_all_cb, (void*)i, 0);
+      pop->add("Reload/All visible views", 0, 
+	       (Fl_Callback *)view_reload_visible_cb, (void*)i, 0);
+      pop->add("Remove/View", FL_Delete, 
+	       (Fl_Callback *)view_remove_cb, (void*)i, 0);
+      pop->add("Remove/All views", 0, 
+	       (Fl_Callback *)view_remove_all_cb, (void*)i, 0);
+      pop->add("Remove/All visible views", 0, 
+	       (Fl_Callback *)view_remove_visible_cb, (void*)i, 0);
+      pop->add("Remove/All invisible views", 0, 
+	       (Fl_Callback *)view_remove_invisible_cb, (void*)i, 0);
+      pop->add("Duplicate/View without options", 0,
+	       (Fl_Callback *)view_duplicate_cb, (void*)i, 0) ;
+      pop->add("Duplicate/View with options", 0,
+	       (Fl_Callback *)view_duplicate_with_options_cb, (void*)i, 0) ;
+      pop->add("Save as/ASCII view...", 0,
+	       (Fl_Callback *)view_save_ascii_cb, (void*)i, 0) ;
+      pop->add("Save as/Binary view...", 0,
+	       (Fl_Callback *)view_save_binary_cb, (void*)i, 0) ;
+      add_post_plugins(pop, i);
+      pop->add("Apply as background mesh", 0,
+	       (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
+      pop->add("Options...", 'o',
+	       (Fl_Callback *)view_options_cb, (void*)i, 0);
+      pop->hide();
+    }
   }
-  
   m_window->position(CTX.position[0],CTX.position[1]);
   m_window->end();
   
@@ -882,12 +887,14 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_toggle_butt[i]->label(v->Name);
       m_toggle2_butt[i]->show();
       m_popup_butt[i]->show();
+      m_popup2_butt[i]->show();
     }
     for(i = List_Nbr(CTX.post.list) ; i < NB_BUTT_MAX ; i++) {
       m_push_butt[i]->hide();
       m_toggle_butt[i]->hide();
       m_toggle2_butt[i]->hide();
       m_popup_butt[i]->hide();
+      m_popup2_butt[i]->hide();
     }
     break;
   default : // geometry, mesh, solver contexts
@@ -906,6 +913,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_toggle_butt[i]->hide();
       m_toggle2_butt[i]->hide();
       m_popup_butt[i]->hide();
+      m_popup2_butt[i]->hide();
       if(menu[i+1].label){
 	m_push_butt[i]->label(menu[i+1].label);
 	m_push_butt[i]->callback(menu[i+1].callback,menu[i+1].arg);
@@ -920,6 +928,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_toggle_butt[i]->hide();
       m_toggle2_butt[i]->hide();
       m_popup_butt[i]->hide();
+      m_popup2_butt[i]->hide();
       m_push_butt[i]->hide();
     }
     break ;
