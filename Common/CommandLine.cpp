@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.26 2004-02-05 16:53:58 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.27 2004-02-05 16:57:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -93,7 +93,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
   Msg(DIRECT, "  -smoothview           smooth views");
   Msg(DIRECT, "  -combine              combine input views into multi time step ones");
-  Msg(DIRECT, "  -convert file file    convert an ascii view into a binary one");
+  Msg(DIRECT, "  -convert file file    convert all views in a file into binary views");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
   Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
@@ -270,8 +270,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
                       argv[i + 1], 1, j ? 1 : 0);
         }
         else
-          fprintf(stderr, "Usage: %s -convert ViewFile BinaryViewFile\n",
-                  argv[0]);
+          fprintf(stderr, "Usage: %s -convert file file\n", argv[0]);
         exit(1);
       }
       else if(!strcmp(argv[i] + 1, "old")) {
