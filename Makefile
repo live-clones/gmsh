@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.145 2001-09-01 15:19:05 geuzaine Exp $
+# $Id: Makefile,v 1.146 2001-09-01 16:11:43 geuzaine Exp $
 
 GMSH_RELEASE = 1.25
 
@@ -357,8 +357,8 @@ dec: tag compile_dec link_dec strip_bin
 #
 compile_hp:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CXX=$(CXX)" \
-           "CC=$(CC)" \
+           "CXX=g++" \
+           "CC=gcc" \
            "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
