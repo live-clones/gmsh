@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.193 2003-12-03 22:17:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.194 2003-12-03 22:22:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1496,7 +1496,7 @@ void help_about_cb(CALLBACK_ARGS)
 }
 
 void _replace_multi_format(char *in, char *val, char *out){
-  int i = 0, j = 0;
+  unsigned int i = 0, j = 0;
 
   out[0] = '\0';
   while(i < strlen(in)){
