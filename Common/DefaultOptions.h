@@ -653,10 +653,10 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "AllowDegeneratedExtrude" , opt_mesh_allow_degenerated_extrude , 0. , 
     "Allow the generation of degenerated hexahedra or prisms during extrusion" },
   { F|O, "Aspect" , opt_mesh_aspect , 0. , 
-    "Mesh apsect (0=wireframe, 1=hidden lines, 2=solid)" },
+    "Mesh aspect (0=wireframe, 1=hidden lines, 2=solid)" },
 
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
-    "Factor applied to all charcteristic lenghts (and background meshes)" },
+    "Factor applied to all characteristic lengths (and background meshes)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Use a 'color by region number' scheme" },
   { F|O, "ColorScheme" , opt_mesh_color_scheme , 0. , 
@@ -988,7 +988,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "GifTransparent" , opt_print_gif_transparent , 0 ,
     "Output transparent GIF image" },
 
-  { F|O, "JpegQuality" , opt_print_jpeg_quality , 85 ,
+  { F|O, "JpegQuality" , opt_print_jpeg_quality , 100 ,
     "JPEG quality (between 1 and 100)" },
 
   { 0, NULL , NULL , 0. }
@@ -1163,7 +1163,7 @@ StringXColor MeshOptions_Color[] = {
   { F|O, "Six" , opt_mesh_color_6   , COL6, COL6, COLW, "Sixth color in color carousel" },
   { F|O, "Seven" , opt_mesh_color_7 , COL7, COL7, COLW, "Seventh color in color carousel" },
   { F|O, "Eight" , opt_mesh_color_8 , COL8, COL8, COLW, "Eighth color in color carousel" },
-  { F|O, "Nine" , opt_mesh_color_9  , COL9, COL9, COLW, "Nitnth color in color carousel" },
+  { F|O, "Nine" , opt_mesh_color_9  , COL9, COL9, COLW, "Ninth color in color carousel" },
   { F|O, "Ten" , opt_mesh_color_10  , COL10, COL10, COLW,  "tenth color in color carousel" },
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
