@@ -2338,6 +2338,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 FLAGS=""
+INCLS=""
 OPTIM="${CXXFLAGS}"
 
 ac_ext=c
@@ -2828,7 +2829,7 @@ echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
    { (exit 1); exit 1; }; }
   fi
   GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
-  FLAGS="${FLAGS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
+  INCLS="${INCLS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
     if test "x${JPEG_PREFIX}" != "x"; then
     LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
@@ -2894,7 +2895,7 @@ fi
       GMSH_LIBS="${GMSH_LIBS} -ljpeg"
     else
             GMSH_LIBS="${GMSH_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
-      FLAGS="${FLAGS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+      INCLS="${INCLS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
     fi
   fi
 
@@ -2928,23 +2929,35 @@ else
   TRIANGLE="no"
 fi
 
-if test "x${TRIANGLE}" = "xyes" -a "x$enable_triangle" != "xno"; then
-  GMSH_DIRS="${GMSH_DIRS} Triangle"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-  FLAGS="${FLAGS} -DHAVE_TRIANGLE"
+if test "x${TRIANGLE}" = "xyes"; then
+  if test "x$enable_triangle" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} Triangle"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
+     FLAGS="${FLAGS} -DHAVE_TRIANGLE"
+     echo "********************************************************************"
+     echo "You are building a version of Gmsh that contains Jonathan"
+     echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
+     echo "Please note that by doing so, you agree to Triangle's licencing"
+     echo "requirements stated in ./Triangle/README. (Most notably, you can"
+     echo "only redistribute Gmsh if no compensation is received.)"
+     echo "To disable Triangle, run configure again with the --disable-triangle"
+     echo "option."
+     echo "********************************************************************"
+  fi
 else
-  echo "*******************************************************************"
-  echo "If you want to use Jonathan Shewchuk's Triangle as an alternative"
-  echo "isotropic 2D mesh generator, please download Triangle from the"
-  echo "author's web site at http://www.cs.cmu.edu/~quake/triangle.html,"
-  echo "unpack the archive and copy the two files 'triangle.c' and"
-  echo "'triangle.h' in the ./Triangle subdirectory. Then run ./configure"
-  echo "again."
-  echo ""
-  echo "Please note that by doing so, you agree to Triangle's licencing"
-  echo "requirements stated in ./Triangle/README. (Most notably, you may"
-  echo "then only redistribute Gmsh if no compensation is received.)"
-  echo "*******************************************************************"
+  if test "x$enable_triangle" != "xno"; then
+     echo "********************************************************************"
+     echo "If you want to use Jonathan Shewchuk's Triangle as an alternative"
+     echo "isotropic 2D mesh generator, please download Triangle from the"
+     echo "author's web site at http://www.cs.cmu.edu/~quake/triangle.html,"
+     echo "unpack the archive and copy the two files 'triangle.c' and"
+     echo "'triangle.h' in the ./Triangle subdirectory. Then run ./configure"
+     echo "again."
+     echo "Please note that by doing so, you agree to Triangle's licencing"
+     echo "requirements stated in ./Triangle/README. (Most notably, you may"
+     echo "then only redistribute Gmsh if no compensation is received.)"
+     echo "********************************************************************"
+  fi
 fi
 
 if test "x$enable_gsl" = "xyes"; then
@@ -3071,7 +3084,7 @@ fi
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      FLAGS="${FLAGS} -I${GSL_PREFIX}/include"
+      INCLS="${INCLS} -I${GSL_PREFIX}/include"
     fi
   fi
 fi
@@ -3100,25 +3113,27 @@ else
 fi
 
   if test "x${NR}" = "xyes"; then
-    echo "*******************************************************************"
-    echo "You are building a non-free version of Gmsh, using some code"
-    echo "copyrighted by Numerical Recipes."
-    echo "*******************************************************************"
+    echo "********************************************************************"
+    echo "You are building a non-free version of Gmsh, using code copyright"
+    echo "(C) 1986-92 Numerical Recipes Software J!0."
+    echo "To use the GSL instead, run configure again with the --enable-gsl"
+    echo "option."
+    echo "********************************************************************"
     GMSH_DIRS="${GMSH_DIRS} NR"
     GMSH_LIBS="${GMSH_LIBS} -lGmshNR"
   else
-    echo "*******************************************************************"
+    echo "********************************************************************"
     echo "This is the free version of Gmsh and configure could not find"
     echo "the GNU Scientific Library (GSL) on your system:"
     echo "- if it is installed in a non-standard location, please run"
-    echo "  ./configure again with the --with-gsl-prefix option"
+    echo "  configure again with the --with-gsl-prefix option"
     echo "- if it is not installed on your system, you can download it from"
     echo "  http://sources.redhat.com/gsl/"
     echo ""
-    echo "IMPORTANT NOTE: You need to install GSL 1.2 or above. All versions"
-    echo "<= 1.1.1 have a bug in the singular value decomposition algorithm"
-    echo "that will cause Gmsh to hang during mesh generation."
-    echo "*******************************************************************"
+    echo "IMPORTANT NOTE: You need to install GSL version 1.2 or above. All"
+    echo "versions <= 1.1.1 have a bug in the singular value decomposition"
+    echo "algorithm that will cause Gmsh to hang during mesh generation."
+    echo "********************************************************************"
     { { echo "$as_me:$LINENO: error: " >&5
 echo "$as_me: error: " >&2;}
    { (exit 1); exit 1; }; }
@@ -3683,6 +3698,7 @@ _ACEOF
 fi
 
 done
+
 
 
 
@@ -4288,6 +4304,7 @@ s,@AR@,$AR,;t t
 s,@FLTKCONFIG@,$FLTKCONFIG,;t t
 s,@UNAME@,$UNAME,;t t
 s,@FLAGS@,$FLAGS,;t t
+s,@INCLS@,$INCLS,;t t
 s,@OPTIM@,$OPTIM,;t t
 s,@LINKER@,$LINKER,;t t
 s,@GMSH_DIRS@,$GMSH_DIRS,;t t
@@ -4516,10 +4533,10 @@ if test "$no_create" != yes; then
 fi
 
 
-echo "*******************************************************************"
+echo "********************************************************************"
 echo "Gmsh is configured for"
 echo "- OS    : $UNAME"
 echo "- OPTIM : $OPTIM"
 echo "- FLAGS : $FLAGS"
-echo "*******************************************************************"
+echo "********************************************************************"
 

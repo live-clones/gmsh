@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.261 2003-02-18 06:34:14 geuzaine Exp $
+# $Id: Makefile,v 1.262 2003-02-18 08:52:40 geuzaine Exp $
 
 include variables
 
@@ -32,10 +32,10 @@ install: variables
 	-cp doc/gmsh.1 ${mandir}/man1
 
 variables: configure
-	@echo "*******************************************************************"
+	@echo "********************************************************************"
 	@echo "Please configure Gmsh by running ./configure"
 	@echo "For help, type ./configure --help"
-	@echo "*******************************************************************"
+	@echo "********************************************************************"
 	@exit 1
 
 source:

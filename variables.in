@@ -7,7 +7,7 @@ CXX=@CXX@
 LINKER=@LINKER@
 
 # Compiler flags
-FLAGS=@FLAGS@
+FLAGS=@FLAGS@ @INCLS@
 OPTIM=@OPTIM@
 
 # Gmsh subdirectories and libraries
