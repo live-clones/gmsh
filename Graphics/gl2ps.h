@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.31 2002-12-11 22:41:22 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.32 2002-12-11 23:55:29 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -175,7 +175,8 @@ typedef struct {
 } GL2PSstring;
 
 typedef struct {
-  GLshort type, numverts, boundary, dash;
+  GLshort type, numverts;
+  char boundary, dash, culled;
   GLfloat width, depth;
   GL2PSvertex *verts;
   GL2PSstring *text;

@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.54 2002-12-11 22:41:22 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.55 2002-12-11 23:55:29 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -265,9 +265,9 @@ void gl2psCutEdge(GL2PSvertex *a, GL2PSvertex *b, GL2PSplane plane,
   c->rgba[3] = (1.-sect) * a->rgba[3] + sect * b->rgba[3];
 }
 
-void gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
-				  GL2PSprimitive *child, GLshort numverts,
-				  GLshort *index0, GLshort *index1){
+void gl2psCreateSplitPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
+			       GL2PSprimitive *child, GLshort numverts,
+			       GLshort *index0, GLshort *index1){
   GLshort i;
 
   if(numverts > 4){
@@ -282,6 +282,8 @@ void gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
   case 4 : child->type = GL2PS_QUADRANGLE; break;    
   }
   child->boundary = 0; /* not done! */
+  child->depth = parent->depth; /* should not be used in this case */
+  child->culled = parent->culled;
   child->dash = parent->dash;
   child->width = parent->width;
   child->numverts = numverts;
@@ -394,8 +396,8 @@ GLint gl2psSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane,
   if(type == GL2PS_SPANNING){
     *back = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
     *front = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
-    gl2psCreateSplittedPrimitive(prim, plane, *back, out, out0, out1);
-    gl2psCreateSplittedPrimitive(prim, plane, *front, in, in0, in1);
+    gl2psCreateSplitPrimitive(prim, plane, *back, out, out0, out1);
+    gl2psCreateSplitPrimitive(prim, plane, *front, in, in0, in1);
   }
 
   return type;
@@ -408,6 +410,7 @@ void gl2psDivideQuad(GL2PSprimitive *quad,
   (*t1)->type = (*t2)->type = GL2PS_TRIANGLE;
   (*t1)->numverts = (*t2)->numverts = 3;
   (*t1)->depth = (*t2)->depth = quad->depth;
+  (*t1)->culled = (*t2)->culled = quad->culled;
   (*t1)->dash = (*t2)->dash = quad->dash;
   (*t1)->width = (*t2)->width = quad->width;
   (*t1)->verts = (GL2PSvertex *)gl2psMalloc(3 * sizeof(GL2PSvertex));
@@ -776,6 +779,8 @@ GL2PSprimitive* gl2psCreateSplitPrimitive2D(GL2PSprimitive *parent,
   case 4 : child->type = GL2PS_QUADRANGLE; break;
   }
   child->boundary = 0; /* not done! */
+  child->depth = parent->depth;
+  child->culled = parent->culled;
   child->dash = parent->dash;
   child->width = parent->width;
   child->numverts = numverts;
@@ -903,8 +908,8 @@ GLint gl2psAddInImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree){
 void gl2psAddInImage(void *a, void *b){
   GL2PSprimitive *prim;
   prim = *(GL2PSprimitive **)a;
-  if(gl2psAddInImageTree(prim, &gl2ps->image)){
-    prim->depth = -1.;
+  if(!gl2psAddInImageTree(prim, &gl2ps->image)){
+    prim->culled = 1;
   }
 }
 
@@ -928,6 +933,8 @@ void gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
       b = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
       b->type = GL2PS_LINE;
       b->dash = prim->dash;
+      b->depth = prim->depth; /* this is wrong */
+      b->culled = prim->culled;
       b->width = prim->width;
       b->boundary = 0;
       b->numverts = 2;
@@ -1005,6 +1012,9 @@ void gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   prim->verts = (GL2PSvertex *)gl2psMalloc(numverts * sizeof(GL2PSvertex));
   memcpy(prim->verts, verts, numverts * sizeof(GL2PSvertex));
   prim->boundary = boundary;
+  prim->dash = dash;
+  prim->width = width;
+  prim->culled = 0;
 
   if(gl2ps->options & GL2PS_SIMPLE_LINE_OFFSET){
 
@@ -1059,9 +1069,6 @@ void gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   }
 
   prim->depth = 0.;
-  prim->dash = dash;
-  prim->width = width;  /* we should maybe use floats */
-
   if(gl2ps->sort == GL2PS_SIMPLE_SORT){
     for(i = 0; i < numverts; i++) 
       prim->depth += prim->verts[i].xyz[2]; 
@@ -1464,7 +1471,7 @@ void gl2psPrintPostScriptPrimitive(void *a, void *b){
 
   prim = *(GL2PSprimitive**)a;
 
-  if(gl2ps->options & GL2PS_OCCLUSION_CULL && prim->depth >= 0.) return;
+  if(gl2ps->options & GL2PS_OCCLUSION_CULL && prim->culled) return;
 
   switch(prim->type){
   case GL2PS_TEXT :
@@ -1762,6 +1769,7 @@ GL2PSDLL_API void gl2psText(const char *str, const char *fontname, GLint fontsiz
   prim->verts[0].xyz[1] = pos[1];
   prim->verts[0].xyz[2] = GL2PS_DEPTH_FACT * pos[2];
   prim->depth = pos[2];
+  prim->culled = 0;
   prim->dash = 0;
   prim->width = 1;
   glGetFloatv(GL_CURRENT_RASTER_COLOR, prim->verts[0].rgba);
