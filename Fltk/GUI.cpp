@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.195 2002-09-02 15:44:40 geuzaine Exp $
+// $Id: GUI.cpp,v 1.196 2002-09-24 02:04:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -40,7 +40,7 @@
 #include "Bitmaps.h"
 #include "Icon.h"
 #include "OpenFile.h"
-#include "GetOptions.h"
+#include "CommandLine.h"
 
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
 #define WINDOW_BOX FL_FLAT_BOX

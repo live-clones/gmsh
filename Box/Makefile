@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2002-05-18 16:31:16 geuzaine Exp $
+# $Id: Makefile,v 1.19 2002-09-24 02:04:33 geuzaine Exp $
 #
 # Makefile for "libGmshBox.a"
 #
@@ -52,4 +52,4 @@ Main.o: Main.cpp ../Parallel/ParUtil.h ../Plugin/PluginManager.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Common/Views.h ../Common/ColorTable.h ../Parser/Parser.h \
   ../Common/Context.h ../Common/Options.h ../Parser/OpenFile.h \
-  ../Common/GetOptions.h ../Geo/MinMax.h
+  ../Common/CommandLine.h ../Geo/MinMax.h

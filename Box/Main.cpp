@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.21 2002-05-20 18:28:24 geuzaine Exp $
+// $Id: Main.cpp,v 1.22 2002-09-24 02:04:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "OpenFile.h"
-#include "GetOptions.h"
+#include "CommandLine.h"
 #include "MinMax.h"
 
 char        yyname[256];

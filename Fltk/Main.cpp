@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.39 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: Main.cpp,v 1.40 2002-09-24 02:04:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@
 #include "Parser.h"
 #include "GUI.h"
 #include "OpenFile.h"
-#include "GetOptions.h"
+#include "CommandLine.h"
 
 char        yyname[256];
 int         yyerrorstate;

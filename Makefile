@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.227 2002-09-09 17:24:02 geuzaine Exp $
+# $Id: Makefile,v 1.228 2002-09-24 02:04:33 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -69,7 +69,7 @@ default:
 # Source distribution
 #
 source:
-	tar zcvf gmsh.tgz `ls README* Makefile */Makefile */*.[chyl] */*.cpp\
+	tar zcvf gmsh.tgz `ls README* Makefile */Makefile */*.[chyl] */*.[ch]pp\
                            */*.rc */*.res */*.ico */*.pl */*.pm */*.opt */*.spec`\
                            doc demos tutorial
 	mkdir gmsh-$(GMSH_RELEASE)
@@ -596,7 +596,8 @@ tgz:
 	chmod 640 $(GMSH_ARCHIVE).tar.gz
 
 minizip:
-	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 `ls Makefile */Makefile */*.[chyl] */*.cpp`
+	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 \
+        `ls Makefile */Makefile */*.[chyl] */*.[ch]pp */*.rc */*.res */*.ico`
 
 # Add doc/COPYING as soon as we are GPL'ed
 

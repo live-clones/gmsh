@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.30 2002-05-20 18:28:29 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.31 2002-09-24 02:04:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,7 @@
 #include "Context.h"
 #include "Parser.h"
 #include "OpenFile.h"
-#include "GetOptions.h"
+#include "CommandLine.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Views.h"

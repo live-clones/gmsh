@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.140 2002-09-20 04:06:43 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.141 2002-09-24 02:04:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@
 #include "Timer.h"
 #include "CreateFile.h"
 #include "OpenFile.h"
-#include "GetOptions.h"
+#include "CommandLine.h"
 #include "Context.h"
 #include "Options.h"
 #include "GUI.h"

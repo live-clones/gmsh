@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.36 2002-05-18 21:08:22 geuzaine Exp $
+# $Id: Makefile,v 1.37 2002-09-24 02:04:34 geuzaine Exp $
 #
 # Makefile for "libGmshFltk.a"
 #
@@ -66,7 +66,7 @@ Main.o: Main.cpp ../Plugin/PluginManager.h ../Common/Gmsh.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/Context.h ../Common/Options.h ../Parser/Parser.h GUI.h \
   Opengl_Window.h Colorbar_Window.h ../Parser/OpenFile.h \
-  ../Common/GetOptions.h
+  ../Common/CommandLine.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
@@ -81,7 +81,7 @@ GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h GUI.h \
   Opengl_Window.h Colorbar_Window.h Callbacks.h Bitmaps.h \
-  ../Parser/OpenFile.h ../Common/GetOptions.h Solvers.h
+  ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
@@ -89,7 +89,7 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Geo/Verif.h ../Graphics/Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/Timer.h ../Graphics/CreateFile.h \
-  ../Parser/OpenFile.h ../Common/GetOptions.h ../Common/Context.h \
+  ../Parser/OpenFile.h ../Common/CommandLine.h ../Common/Context.h \
   ../Common/Options.h GUI.h Opengl_Window.h Colorbar_Window.h Callbacks.h \
   ../Plugin/Plugin.h ../Graphics/Visibility.h Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \

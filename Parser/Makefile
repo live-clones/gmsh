@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.41 2002-09-01 21:54:13 geuzaine Exp $
+# $Id: Makefile,v 1.42 2002-09-24 02:04:34 geuzaine Exp $
 #
 # Makefile for "libGmshParser.a"
 #
@@ -74,7 +74,7 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Parallel/ParUtil.h \
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \
-  ../Common/Context.h Parser.h OpenFile.h ../Common/GetOptions.h \
+  ../Common/Context.h Parser.h OpenFile.h ../Common/CommandLine.h \
   ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Common/Views.h ../Common/ColorTable.h ../Geo/MinMax.h \
