@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.47 2001-09-25 08:19:48 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.48 2001-09-27 15:00:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -621,6 +621,9 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
         s->iEnt = THES->Num; 
 	s->Num = -s->Num; //Tag quadrangles to re-extrude
         Tree_Add(THES->Simplexes,&s);
+
+	// This is horrible
+	THEM->Statistics[8] += 1;
       }
       else{
         if (are_exist (v3, v2, Tree_Ares)){
@@ -838,8 +841,11 @@ void copy_mesh (Surface * from, Surface * to){
 	vi[j] = NULL;
       }
     }    
-    if(vi[3])
+    if(vi[3]){
       news = Create_Quadrangle (vi[0], vi[1], vi[2], vi[3]);
+      // This is horrible
+      THEM->Statistics[8] += 1;
+    }
     else
       news = Create_Simplex (vi[0], vi[1], vi[2], NULL);
     news->iEnt = to->Num;
