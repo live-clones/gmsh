@@ -1,8 +1,7 @@
-// $Id: GUI.cpp,v 1.160 2002-03-21 21:59:05 geuzaine Exp $
+// $Id: GUI.cpp,v 1.161 2002-03-31 00:50:39 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
-// - use CTX.fontsize for font sizes
 // - examine what's already done before adding something new...
 
 #include "PluginManager.h"
@@ -24,18 +23,18 @@
 #include "OpenFile.h"
 #include "GetOptions.h"
 
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-#define WINDOW_BOX FL_FLAT_BOX
-#define TOGGLE_BOX FL_DOWN_BOX
-#define TOGGLE_COLOR FL_BLACK
-#define RADIO_BOX  FL_ROUND_DOWN_BOX
-#define RADIO_COLOR FL_BLACK
-#else
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
 #define WINDOW_BOX FL_FLAT_BOX
 #define TOGGLE_BOX FL_DOWN_BOX
 #define TOGGLE_COLOR FL_YELLOW
 #define RADIO_BOX  FL_DIAMOND_DOWN_BOX
 #define RADIO_COLOR FL_YELLOW
+#else
+#define WINDOW_BOX FL_FLAT_BOX
+#define TOGGLE_BOX FL_DOWN_BOX
+#define TOGGLE_COLOR FL_BLACK
+#define RADIO_BOX  FL_ROUND_DOWN_BOX
+#define RADIO_COLOR FL_BLACK
 #endif
 
 #define IW  (10*CTX.fontsize) // input field width
@@ -543,6 +542,7 @@ int GUI::arrow_shortcuts(){
 GUI::GUI(int argc, char **argv) {
   int i;
 
+  // initialize static windows
   m_window = NULL;
   g_window = NULL;
   gen_window = NULL;
@@ -558,17 +558,25 @@ GUI::GUI(int argc, char **argv) {
   context_geometry_window = NULL;
   context_mesh_window = NULL;
 
+  // set X display
   if(strlen(CTX.display)) Fl::display(CTX.display);
+
+  // add global shortcuts
   Fl::add_handler(SetGlobalShortcut);
 
-#ifdef __APPLE__
-  Fl::scheme("plastic");
+  // set default font size
+  FL_NORMAL_SIZE = CTX.fontsize;
+
+  // handle themes and tooltip font size
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+  if(strlen(CTX.theme)) Fl::scheme(CTX.theme);
+  Fl_Tooltip::size(CTX.fontsize);
 #endif
 
-  // Fl::visible_focus(0); 
-  // we could use that to prohibit all default fltk navigation. It is
-  // not necessary anymore, since I added the correct handlers for the
-  // graphic and the colorbar window...
+  // disable default fltk keyboard navigation. It is not necessary
+  // anymore, since correct handlers for the graphic and the colorbar
+  // window have been added.
+  // Fl::visible_focus(0);
 
   // All static windows are contructed (even if some are not
   // displayed) since the shortcuts should be valid even for hidden
@@ -670,7 +678,6 @@ void GUI::create_menu_window(int argc, char **argv){
   
   m_menu_bar = new Fl_Menu_Bar(0,0,width,BH); 
   m_menu_bar->menu(m_menubar_table);
-  m_menu_bar->textsize(CTX.fontsize);
   m_menu_bar->box(FL_UP_BOX);
   m_menu_bar->global();
   
@@ -692,20 +699,22 @@ void GUI::create_menu_window(int argc, char **argv){
   m_navig_butt[1]->box(FL_FLAT_BOX);
   m_navig_butt[1]->selection_color(FL_WHITE);
   m_navig_butt[1]->callback(mod_forward_cb);
+
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+  m_navig_butt[0]->tooltip("Go back in menu history");
+  m_navig_butt[1]->tooltip("Go forward in menu history");
+#endif
   
   m_module_butt = new Fl_Choice(19,y,width-24,BH);
   m_module_butt->menu(m_module_table);
-  m_module_butt->textsize(CTX.fontsize);
   m_module_butt->box(FL_THIN_DOWN_BOX);
   
   y = MH ;
   
   for(i=0; i<NB_BUTT_MAX; i++){
     m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
-    m_push_butt[i]->labelsize(CTX.fontsize);
     m_push_butt[i]->hide();
     m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width,BH); 
-    m_toggle_butt[i]->labelsize(CTX.fontsize); 
     m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
     m_toggle_butt[i]->hide();
     m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH);
@@ -737,7 +746,6 @@ void GUI::create_menu_window(int argc, char **argv){
 			 (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
     m_popup_butt[i]->add("Options...", 0,
 			 (Fl_Callback *)view_options_cb, (void*)i, 0);
-    m_popup_butt[i]->textsize(CTX.fontsize);
     m_popup_butt[i]->hide();
   }
   
@@ -899,32 +907,25 @@ void GUI::create_graphic_window(int argc, char **argv){
   
   g_status_butt[0] = new Fl_Button(x,glheight+2,sw,sh-4,"X"); x+=sw;
   g_status_butt[0]->callback(status_xyz1p_cb, (void*)0);
-  //g_status_butt[0]->tooltip("Set X view");
   g_status_butt[1] = new Fl_Button(x,glheight+2,sw,sh-4,"Y"); x+=sw;
   g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
-  //g_status_butt[1]->tooltip("Set Y view");
   g_status_butt[2] = new Fl_Button(x,glheight+2,sw,sh-4,"Z"); x+=sw;
   g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
-  //g_status_butt[2]->tooltip("Set Z view");
   g_status_butt[3] = new Fl_Button(x,glheight+2,2*CTX.fontsize,sh-4,"1:1"); x+=2*CTX.fontsize;
   g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
-  //g_status_butt[3]->tooltip("Set unit scale");
   g_status_butt[4] = new Fl_Button(x,glheight+2,sw,sh-4,"?"); x+=sw;
   g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
-  //g_status_butt[4]->tooltip("Show current options");
   g_status_butt[5] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
   g_status_butt[5]->callback(status_rewind_cb);
   rewind_bmp = new Fl_Bitmap(rewind_bits,rewind_width,rewind_height);
   rewind_bmp->label(g_status_butt[5]);
   g_status_butt[5]->deactivate();
-  //g_status_butt[5]->tooltip("Play/pause animation");
   g_status_butt[6] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
   g_status_butt[6]->callback(status_play_cb);
   start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
   start_bmp->label(g_status_butt[6]);
   stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
   g_status_butt[6]->deactivate();
-  //g_status_butt[6]->tooltip("Play/pause animation");
 
   /*
   g_status_butt[7] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
@@ -936,7 +937,6 @@ void GUI::create_graphic_window(int argc, char **argv){
   for(i = 0 ; i<7 ; i++){
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
-    g_status_butt[i]->labelsize(CTX.fontsize);
     g_status_butt[i]->align(FL_ALIGN_CENTER|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
   }
   
@@ -945,9 +945,19 @@ void GUI::create_graphic_window(int argc, char **argv){
   g_status_label[2] = new Fl_Box(x+2*(width-x)/3,glheight+2,(width-x)/3-2,sh-4);
   for(i = 0 ; i<3 ; i++){
     g_status_label[i]->box(FL_FLAT_BOX);
-    g_status_label[i]->labelsize(CTX.fontsize);
     g_status_label[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
   }
+
+
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+  g_status_butt[0]->tooltip("Set X view (Y=Z=0)");
+  g_status_butt[1]->tooltip("Set Y view (X=Z=0)");
+  g_status_butt[2]->tooltip("Set Z view (X=Y=0)");
+  g_status_butt[3]->tooltip("Set unit scale");
+  g_status_butt[4]->tooltip("Show current options");
+  g_status_butt[5]->tooltip("Rewind animation");
+  g_status_butt[6]->tooltip("Play/pause animation");
+#endif
   
   g_window->resizable(new Fl_Box(x,0,width-x,glheight));
   
@@ -1053,7 +1063,6 @@ void GUI::create_general_options_window(){
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Display");
-      o->labelsize(CTX.fontsize);
       gen_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Show moving axes");
       gen_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Show small axes");
       gen_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Enable fast redraw");
@@ -1064,29 +1073,29 @@ void GUI::create_general_options_window(){
       for(i=0 ; i<7 ; i++){
 	gen_butt[i]->type(FL_TOGGLE_BUTTON);
 	gen_butt[i]->down_box(TOGGLE_BOX);
-	gen_butt[i]->labelsize(CTX.fontsize);
 	gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
+      gen_butt[13] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW, BH, "Show tooltips");
+      gen_butt[13]->type(FL_TOGGLE_BUTTON);
+      gen_butt[13]->down_box(TOGGLE_BOX);
+      gen_butt[13]->selection_color(TOGGLE_COLOR);
+
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Output");
-      o->labelsize(CTX.fontsize);
       gen_butt[7] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Print messages on terminal");
       gen_butt[8] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Save session information on exit");
       gen_butt[9] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Save options on exit");
       for(i=7 ; i<10 ; i++){
 	gen_butt[i]->type(FL_TOGGLE_BUTTON);
 	gen_butt[i]->down_box(TOGGLE_BOX);
-	gen_butt[i]->labelsize(CTX.fontsize);
 	gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
       gen_value[5] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Message verbosity");
       gen_value[5]->minimum(0); 
       gen_value[5]->maximum(10); 
       gen_value[5]->step(1);
-      gen_value[5]->labelsize(CTX.fontsize);
-      gen_value[5]->textsize(CTX.fontsize);
       gen_value[5]->align(FL_ALIGN_RIGHT);
       gen_input[0] = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Default file name");
       gen_input[1] = new Fl_Input(2*WB, 2*WB+6*BH, IW, BH, "Temporary file");
@@ -1094,22 +1103,18 @@ void GUI::create_general_options_window(){
       gen_input[3] = new Fl_Input(2*WB, 2*WB+8*BH, IW, BH, "Option file");
       gen_input[4] = new Fl_Input(2*WB, 2*WB+9*BH, IW, BH, "Text editor command");
       for(i=0 ; i<5 ; i++){
-	gen_input[i]->labelsize(CTX.fontsize);
-	gen_input[i]->textsize(CTX.fontsize);
 	gen_input[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
-      o->labelsize(CTX.fontsize);
       o->hide();
       gen_butt[10] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Orthographic projection");
       gen_butt[11] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Perspective projection");
       for(i=10 ; i<12 ; i++){
 	gen_butt[i]->type(FL_RADIO_BUTTON);
 	gen_butt[i]->down_box(RADIO_BOX);
-	gen_butt[i]->labelsize(CTX.fontsize);
 	gen_butt[i]->selection_color(RADIO_COLOR);
       }
       gen_value[6] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Point size");
@@ -1121,22 +1126,17 @@ void GUI::create_general_options_window(){
       gen_value[7]->maximum(50);
       gen_value[7]->step(0.1);
       for(i=6 ; i<= 7 ; i++){
-	gen_value[i]->labelsize(CTX.fontsize);
-	gen_value[i]->textsize(CTX.fontsize);
 	gen_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
-      o->labelsize(CTX.fontsize);
       o->hide();
       gen_value[0] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Predefined color scheme");
       gen_value[0]->minimum(0); 
       gen_value[0]->maximum(2); 
       gen_value[0]->step(1);
-      gen_value[0]->labelsize(CTX.fontsize);
-      gen_value[0]->textsize(CTX.fontsize);
       gen_value[0]->align(FL_ALIGN_RIGHT);
       gen_value[0]->callback(opt_general_color_scheme_cb);
       
@@ -1145,7 +1145,6 @@ void GUI::create_general_options_window(){
       while(GeneralOptions_Color[i].str){
 	gen_col[i] = new Fl_Button(2*WB, 3*WB+(2+i)*BH, IW, BH, GeneralOptions_Color[i].str);
 	gen_col[i]->callback(color_cb, (void*)GeneralOptions_Color[i].function) ;
-	gen_col[i]->labelsize(CTX.fontsize);
 	i++;
       }
       s->end();
@@ -1153,7 +1152,6 @@ void GUI::create_general_options_window(){
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Light");
-      o->labelsize(CTX.fontsize);
       o->hide();
       gen_value[1] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Material shininess");
       gen_value[1]->minimum(0); 
@@ -1162,7 +1160,6 @@ void GUI::create_general_options_window(){
       gen_butt[12] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Moving light");
       gen_butt[12]->type(FL_TOGGLE_BUTTON);
       gen_butt[12]->down_box(TOGGLE_BOX);
-      gen_butt[12]->labelsize(CTX.fontsize);
       gen_butt[12]->selection_color(TOGGLE_COLOR);
       gen_value[2] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Light position X");
       gen_value[2]->minimum(-1); 
@@ -1177,8 +1174,6 @@ void GUI::create_general_options_window(){
       gen_value[4]->maximum(1); 
       gen_value[4]->step(0.01);
       for(i=1 ; i<5 ; i++){
-	gen_value[i]->labelsize(CTX.fontsize);
-	gen_value[i]->textsize(CTX.fontsize);
 	gen_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1188,12 +1183,10 @@ void GUI::create_general_options_window(){
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_general_ok_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)gen_window);
   }
   
@@ -1225,18 +1218,15 @@ void GUI::create_geometry_options_window(){
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
-      o->labelsize(CTX.fontsize);
       o->hide();
       geo_butt[8] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Auto coherence (suppress duplicates)");
       geo_butt[8]->type(FL_TOGGLE_BUTTON);
       geo_butt[8]->down_box(TOGGLE_BOX);
-      geo_butt[8]->labelsize(CTX.fontsize);
       geo_butt[8]->selection_color(TOGGLE_COLOR);
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
-      o->labelsize(CTX.fontsize);
       geo_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "Points");
       geo_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Curves");
       geo_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Surfaces");
@@ -1248,7 +1238,6 @@ void GUI::create_geometry_options_window(){
       for(i=0 ; i<8 ; i++){
 	geo_butt[i]->type(FL_TOGGLE_BUTTON);
 	geo_butt[i]->down_box(TOGGLE_BOX);
-	geo_butt[i]->labelsize(CTX.fontsize);
 	geo_butt[i]->selection_color(TOGGLE_COLOR);
       }
       
@@ -1261,15 +1250,12 @@ void GUI::create_geometry_options_window(){
       geo_value[1]->maximum(100);
       geo_value[1]->step(0.1);
       for(i=0 ; i<2 ; i++){
-	geo_value[i]->labelsize(CTX.fontsize);
-	geo_value[i]->textsize(CTX.fontsize);
 	geo_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
-      o->labelsize(CTX.fontsize);
       o->hide();
       geo_value[3] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Point size");
       geo_value[3]->minimum(0.1);
@@ -1280,22 +1266,17 @@ void GUI::create_geometry_options_window(){
       geo_value[4]->maximum(50);
       geo_value[4]->step(0.1);
       for(i=3 ; i<= 4 ; i++){
-	geo_value[i]->labelsize(CTX.fontsize);
-	geo_value[i]->textsize(CTX.fontsize);
 	geo_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
-      o->labelsize(CTX.fontsize);
       o->hide();
       geo_value[2] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Predefined color scheme");
       geo_value[2]->minimum(0); 
       geo_value[2]->maximum(2); 
       geo_value[2]->step(1);
-      geo_value[2]->labelsize(CTX.fontsize);
-      geo_value[2]->textsize(CTX.fontsize);
       geo_value[2]->align(FL_ALIGN_RIGHT);
       geo_value[2]->callback(opt_geometry_color_scheme_cb);
       
@@ -1304,7 +1285,6 @@ void GUI::create_geometry_options_window(){
       while(GeometryOptions_Color[i].str){
 	geo_col[i] = new Fl_Button(2*WB, 3*WB+(2+i)*BH, IW, BH, GeometryOptions_Color[i].str);
 	geo_col[i]->callback(color_cb, (void*)GeometryOptions_Color[i].function) ;
-	geo_col[i]->labelsize(CTX.fontsize);
 	i++;
       }
       s->end();
@@ -1315,12 +1295,10 @@ void GUI::create_geometry_options_window(){
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_geometry_ok_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)geo_window);
   }
   
@@ -1352,7 +1330,6 @@ void GUI::create_mesh_options_window(){
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
-      o->labelsize(CTX.fontsize);
       o->hide();
       
       mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Number of smoothing steps");
@@ -1372,8 +1349,6 @@ void GUI::create_mesh_options_window(){
       mesh_value[3]->maximum(1.e-1); 
       mesh_value[3]->step(1.e-6);
       for(i = 0 ; i<4 ; i++){
-	mesh_value[i]->labelsize(CTX.fontsize);
-	mesh_value[i]->textsize(CTX.fontsize);
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
       
@@ -1381,20 +1356,17 @@ void GUI::create_mesh_options_window(){
       mesh_butt[3]->deactivate();//2nd order elements do not work. Disable the graphical option.
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->down_box(TOGGLE_BOX);
-      mesh_butt[3]->labelsize(CTX.fontsize);
       mesh_butt[3]->selection_color(TOGGLE_COLOR);
 
       mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Constrain background mesh");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->down_box(TOGGLE_BOX);
-      mesh_butt[5]->labelsize(CTX.fontsize);
       mesh_butt[5]->selection_color(TOGGLE_COLOR);
 
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
-      o->labelsize(CTX.fontsize);
       o->hide();
       
       mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Old isotropic algorithm");
@@ -1403,20 +1375,17 @@ void GUI::create_mesh_options_window(){
       for(i=0 ; i<3 ; i++){
 	mesh_butt[i]->type(FL_RADIO_BUTTON);
 	mesh_butt[i]->down_box(RADIO_BOX);
-	mesh_butt[i]->labelsize(CTX.fontsize);
 	mesh_butt[i]->selection_color(RADIO_COLOR);
       }
       mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Interactive");
       mesh_butt[4]->type(FL_TOGGLE_BUTTON);
       mesh_butt[4]->down_box(TOGGLE_BOX);
-      mesh_butt[4]->labelsize(CTX.fontsize);
       mesh_butt[4]->selection_color(TOGGLE_COLOR);
 
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
-      o->labelsize(CTX.fontsize);
       mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "Points");
       mesh_butt[7] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Lines");
       mesh_butt[8] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Surfaces");
@@ -1428,7 +1397,6 @@ void GUI::create_mesh_options_window(){
       for(i=6 ; i<14 ; i++){
 	mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	mesh_butt[i]->down_box(TOGGLE_BOX);
-	mesh_butt[i]->labelsize(CTX.fontsize);
 	mesh_butt[i]->selection_color(TOGGLE_COLOR);
       }
       mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW/2, BH);
@@ -1448,8 +1416,6 @@ void GUI::create_mesh_options_window(){
       mesh_value[8]->maximum(100);
       mesh_value[8]->step(0.1);
       for(i=4 ; i<9 ; i++){
-	mesh_value[i]->labelsize(CTX.fontsize);
-	mesh_value[i]->textsize(CTX.fontsize);
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
@@ -1457,15 +1423,12 @@ void GUI::create_mesh_options_window(){
       mesh_value[13]->minimum(0); 
       mesh_value[13]->maximum(100);
       mesh_value[13]->step(0.1);
-      mesh_value[13]->labelsize(CTX.fontsize);
-      mesh_value[13]->textsize(CTX.fontsize);
       mesh_value[13]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
-      o->labelsize(CTX.fontsize);
       o->hide();
       mesh_butt[14] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Wireframe");
       mesh_butt[15] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Hidden lines");
@@ -1473,7 +1436,6 @@ void GUI::create_mesh_options_window(){
       for(i=14 ; i<17 ; i++){
 	mesh_butt[i]->type(FL_RADIO_BUTTON);
 	mesh_butt[i]->down_box(RADIO_BOX);
-	mesh_butt[i]->labelsize(CTX.fontsize);
 	mesh_butt[i]->selection_color(RADIO_COLOR);
       }
       mesh_value[9] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Explode elements");
@@ -1489,28 +1451,22 @@ void GUI::create_mesh_options_window(){
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);
       for(i=9 ; i<= 11 ; i++){
-	mesh_value[i]->labelsize(CTX.fontsize);
-	mesh_value[i]->textsize(CTX.fontsize);
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
-      o->labelsize(CTX.fontsize);
       o->hide();
       mesh_butt[17] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Switch color by entity");
       mesh_butt[17]->type(FL_TOGGLE_BUTTON);
       mesh_butt[17]->down_box(TOGGLE_BOX);
-      mesh_butt[17]->labelsize(CTX.fontsize);
       mesh_butt[17]->selection_color(TOGGLE_COLOR);
       
       mesh_value[12] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Predefined color scheme");
       mesh_value[12]->minimum(0); 
       mesh_value[12]->maximum(2); 
       mesh_value[12]->step(1);
-      mesh_value[12]->labelsize(CTX.fontsize);
-      mesh_value[12]->textsize(CTX.fontsize);
       mesh_value[12]->align(FL_ALIGN_RIGHT);
       mesh_value[12]->callback(opt_mesh_color_scheme_cb);
       
@@ -1519,7 +1475,6 @@ void GUI::create_mesh_options_window(){
       while(MeshOptions_Color[i].str){
 	mesh_col[i] = new Fl_Button(2*WB, 3*WB+(3+i)*BH, IW, BH, MeshOptions_Color[i].str);
 	mesh_col[i]->callback(color_cb, (void*)MeshOptions_Color[i].function) ;
-	mesh_col[i]->labelsize(CTX.fontsize);
 	i++;
       }
       s->end();
@@ -1530,12 +1485,10 @@ void GUI::create_mesh_options_window(){
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_mesh_ok_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)mesh_window);
   }
   
@@ -1565,19 +1518,16 @@ void GUI::create_solver_options_window(){
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Solvers");
-      o->labelsize(CTX.fontsize);
 
       Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+1*BH, width-4*WB, 2*BH,
 				 "There are no global solver options available yet.\n\n"
 				 "To define your own solver interface, edit the option file.");
       text->align(FL_ALIGN_LEFT|FL_ALIGN_TOP|FL_ALIGN_INSIDE|FL_ALIGN_WRAP);
-      text->labelsize(CTX.fontsize);
       /*
 	int BW = width-4*WB;
 	solver_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Use Unix sockets");
 	solver_butt[0]->type(FL_TOGGLE_BUTTON);
 	solver_butt[0]->down_box(TOGGLE_BOX);
-	solver_butt[0]->labelsize(CTX.fontsize);
 	solver_butt[0]->selection_color(TOGGLE_COLOR);
       */
       o->end();
@@ -1587,12 +1537,10 @@ void GUI::create_solver_options_window(){
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_solver_ok_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)solver_window);
   }
   
@@ -1625,7 +1573,6 @@ void GUI::create_post_options_window(){
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Views");
-      o->labelsize(CTX.fontsize);
       post_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Independent views");
       post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Apply next changes to all visible views");
       post_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Apply next changes to all views");
@@ -1634,7 +1581,6 @@ void GUI::create_post_options_window(){
       for(i=0 ; i<5 ; i++){
 	post_butt[i]->type(FL_RADIO_BUTTON);
 	post_butt[i]->down_box(RADIO_BOX);
-	post_butt[i]->labelsize(CTX.fontsize);
 	post_butt[i]->selection_color(RADIO_COLOR);
       }
       Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+6*BH, width-4*WB, 2*BH,
@@ -1642,35 +1588,28 @@ void GUI::create_post_options_window(){
 				 "by right-clicking on each view button "
 				 "in the post-processing menu");
       text->align(FL_ALIGN_LEFT|FL_ALIGN_TOP|FL_ALIGN_INSIDE|FL_ALIGN_WRAP);
-      text->labelsize(CTX.fontsize);
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Smoothing");
-      o->labelsize(CTX.fontsize);
       post_butt[5] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Smooth views during merge");
       post_butt[5]->type(FL_TOGGLE_BUTTON);
       post_butt[5]->down_box(TOGGLE_BOX);
-      post_butt[5]->labelsize(CTX.fontsize);
       post_butt[5]->selection_color(TOGGLE_COLOR);
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Animation");
-      o->labelsize(CTX.fontsize);
       o->hide();
       post_value[0] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Delay");
       post_value[0]->minimum(0);
       post_value[0]->maximum(10); 
       post_value[0]->step(0.01);
-      post_value[0]->labelsize(CTX.fontsize);
-      post_value[0]->textsize(CTX.fontsize);
       post_value[0]->align(FL_ALIGN_RIGHT);
 
       post_butt[6] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Cycle through views instead of time steps");
       post_butt[6]->type(FL_TOGGLE_BUTTON);
       post_butt[6]->down_box(TOGGLE_BOX);
-      post_butt[6]->labelsize(CTX.fontsize);
       post_butt[6]->selection_color(TOGGLE_COLOR);
       o->end();
     }
@@ -1679,12 +1618,10 @@ void GUI::create_post_options_window(){
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_post_ok_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)post_window);
   }
   
@@ -1716,7 +1653,6 @@ void GUI::create_statistics_window(){
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Geometry");
-      o->labelsize(CTX.fontsize);
       o->hide();
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Points");
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Curves");
@@ -1726,7 +1662,6 @@ void GUI::create_statistics_window(){
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Mesh");
-      o->labelsize(CTX.fontsize);
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Nodes on curves");
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Nodes on surfaces");
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Nodes in volumes");
@@ -1746,20 +1681,16 @@ void GUI::create_statistics_window(){
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+15*BH, IW, BH, "Rho factor");
       
       Fl_Button* b0 = new Fl_Button(width-BB-2*WB, 2*WB+13*BH, BB, BH, "Graph");
-      b0->labelsize(CTX.fontsize);
       b0->callback(opt_statistics_histogram_cb, (void*)0);
       Fl_Button* b1 = new Fl_Button(width-BB-2*WB, 2*WB+14*BH, BB, BH, "Graph");
-      b1->labelsize(CTX.fontsize);
       b1->callback(opt_statistics_histogram_cb, (void*)1);
       Fl_Button* b2 = new Fl_Button(width-BB-2*WB, 2*WB+15*BH, BB, BH, "Graph");
-      b2->labelsize(CTX.fontsize);
       b2->callback(opt_statistics_histogram_cb, (void*)2);
       
       o->end();
     }
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Post-processing");
-      o->labelsize(CTX.fontsize);
       o->hide();
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Views");
       stat_value[num++] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Visible points");
@@ -1773,20 +1704,16 @@ void GUI::create_statistics_window(){
   }
   
   for(i=0 ; i<num ; i++){
-    stat_value[i]->labelsize(CTX.fontsize);
-    stat_value[i]->textsize(CTX.fontsize);
     stat_value[i]->align(FL_ALIGN_RIGHT);
     stat_value[i]->value(0);
   }
   
   { 
     Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Update");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_statistics_update_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)stat_window);
   }
   
@@ -1919,7 +1846,6 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-1*BH);
     { 
       Fl_Group *g = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Options");
-      g->labelsize(CTX.fontsize);
 
       if(n > 20)Msg(GERROR, "Plugin has too many parameters");
       
@@ -1927,8 +1853,6 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
 	StringXNumber *sxn;
 	sxn = p->GetOption(i);
 	pdb->view_value[i] = new Fl_Value_Input(2*WB, 2*WB+(i+1)*BH, IW, BH, sxn->str);
-	pdb->view_value[i]->labelsize(CTX.fontsize);
-	pdb->view_value[i]->textsize(CTX.fontsize);
 	pdb->view_value[i]->align(FL_ALIGN_RIGHT);
 	pdb->view_value[i]->value(sxn->def);
       }
@@ -1937,7 +1861,6 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
     }
     { 
       Fl_Group *g = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "About");
-      g->labelsize(CTX.fontsize);
 
       Fl_Browser *o = new Fl_Browser(2*WB, 2*WB+1*BH, width-4*WB, height-5*WB-2*BH);
 
@@ -1948,7 +1871,6 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
       o->add("");
       add_multiline_in_browser(o, "Author(s): ", author);
       add_multiline_in_browser(o, "Copyright: ", copyright);
-      o->textsize(CTX.fontsize);
       
       g->end();
     }
@@ -1956,11 +1878,9 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
   }
 
   Fl_Button* cancel = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Close");
-  cancel->labelsize(CTX.fontsize);
   cancel->callback(cancel_cb, (void*)pdb->main_window);
 
   pdb->run_button = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Run");
-  pdb->run_button->labelsize(CTX.fontsize);
 
   pdb->main_window->resizable(new Fl_Box(2*WB,2*WB+BH,10,10));
 
@@ -1994,21 +1914,17 @@ void GUI::create_message_window(){
   
   msg_browser = new Fl_Browser(WB, WB, width-2*WB, height-3*WB-BH);
   msg_browser->textfont(FL_COURIER);
-  msg_browser->textsize(CTX.fontsize);
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "Save");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_message_save_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Clear");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_message_clear_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)msg_window);
   }
   
@@ -2099,43 +2015,35 @@ void GUI::create_visibility_window(){
 
   vis_type = new Fl_Choice(1*WB,1*WB+0*BH,brw/3,BH);
   vis_type->menu(type_table);
-  vis_type->textsize(CTX.fontsize);
   
   vis_browser_mode = new Fl_Choice(2*WB+(brw-2*WB)/3,1*WB+0*BH,(brw-2*WB)/3,BH);
   vis_browser_mode->menu(browser_mode_table);
-  vis_browser_mode->textsize(CTX.fontsize);
   
   vis_butt[0] = new Fl_Check_Button(3*WB+2*(brw-2*WB)/3, 1*WB+0*BH, (brw-2*WB)/3, BH, "Recursive");
   vis_butt[0]->type(FL_TOGGLE_BUTTON);
   vis_butt[0]->down_box(TOGGLE_BOX);
-  vis_butt[0]->labelsize(CTX.fontsize);
   vis_butt[0]->selection_color(TOGGLE_COLOR);
   vis_butt[0]->value(1);
 
   Fl_Button* o0 = new Fl_Button(1*WB, 2*WB+1*BH, cols[0], BH, "*");
-  o0->labelsize(CTX.fontsize);
   o0->callback(opt_visibility_sort_cb, (void*)0);
 
   Fl_Button* o1 = new Fl_Button(1*WB+cols[0], 2*WB+1*BH, cols[1], BH, "Type");
   //Fl_Box *a = new Fl_Box(FL_NO_BOX, 1*WB+15+cols[0]-15-20, 2*WB+1*BH, 15, BH, "@#UpArrow");
   //a->labeltype(FL_SYMBOL_LABEL);
-  o1->labelsize(CTX.fontsize);
   o1->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
   o1->callback(opt_visibility_sort_cb, (void*)1);
 
   Fl_Button* o2 = new Fl_Button(1*WB+cols[0]+cols[1], 2*WB+1*BH, cols[2], BH, "Number");
-  o2->labelsize(CTX.fontsize);
   o2->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
   o2->callback(opt_visibility_sort_cb, (void*)2);
 
   Fl_Button* o3 = new Fl_Button(1*WB+cols[0]+cols[1]+cols[2], 2*WB+1*BH, cols[3], BH, "Name");
-  o3->labelsize(CTX.fontsize);
   o3->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
   o3->callback(opt_visibility_sort_cb, (void*)3);
 
   vis_browser = new Fl_Browser(1*WB, 2*WB+2*BH, brw, height-5*WB-4*BH);
   vis_browser->textfont(FL_COURIER);
-  vis_browser->textsize(CTX.fontsize);
   vis_browser->type(FL_MULTI_BROWSER);
   vis_browser->column_widths(cols);
 
@@ -2143,23 +2051,18 @@ void GUI::create_visibility_window(){
   vis_window->size_range(width, 5*BH+5*WB);
 
   vis_input = new Fl_Input(1*WB, height-2*WB-2*BH, (brw-2*WB)/3, BH);
-  vis_input->labelsize(CTX.fontsize);
-  vis_input->textsize(CTX.fontsize);
   vis_input->callback(opt_visibility_number_cb);
   vis_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 
   vis_input_mode = new Fl_Choice(2*WB+(brw-2*WB)/3, height-2*WB-2*BH, (brw-2*WB)/3, BH);
   vis_input_mode->menu(input_mode_table);
-  vis_input_mode->textsize(CTX.fontsize);
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
-    o->labelsize(CTX.fontsize);
     o->callback(opt_visibility_ok_cb);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)vis_window);
   }
 
@@ -2215,12 +2118,10 @@ void GUI::create_about_window(){
     sprintf(buffer, "@c@.Packaged by: %s", GMSH_PACKAGER); o->add(buffer);
     o->add("");
     o->add("@c@.Visit http://www.geuz.org/gmsh/ for more information");
-    o->textsize(CTX.fontsize);
   }
   
   { 
     Fl_Return_Button* o = new Fl_Return_Button(width-BB-WB, height-BH-WB, BB, BH, "OK");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)about_window);
   }
   
@@ -2263,7 +2164,6 @@ void GUI::create_view_options_window(int num){
     // General
     { 
       Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
-      o->labelsize(CTX.fontsize);
       
       view_butt[1] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "3D view");
       view_butt[2] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "2D space table");
@@ -2271,7 +2171,6 @@ void GUI::create_view_options_window(int num){
       for(i=1 ; i<=3 ; i++){
 	view_butt[i]->type(FL_RADIO_BUTTON);
 	view_butt[i]->down_box(RADIO_BOX);
-	view_butt[i]->labelsize(CTX.fontsize);
 	view_butt[i]->selection_color(RADIO_COLOR);
 	view_butt[i]->callback(set_changed_cb, 0);
       }
@@ -2279,22 +2178,16 @@ void GUI::create_view_options_window(int num){
       view_input[0] = new Fl_Input(2*WB, 2*WB+4*BH, IW, BH, "Name");
       view_input[1] = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Format");
       for(i=0 ; i<=1 ; i++){
-	view_input[i]->labelsize(CTX.fontsize);
-	view_input[i]->textsize(CTX.fontsize);
 	view_input[i]->align(FL_ALIGN_RIGHT);
 	view_input[i]->callback(set_changed_cb, 0);
       }
 
       int sw=(int)(1.5*CTX.fontsize);
       view_butt_rep[0] = new Fl_Repeat_Button(2*WB, 2*WB+6*BH, sw, BH, "-");
-      view_butt_rep[0]->labelsize(CTX.fontsize);
       //no set_changed since has its own callback
       view_butt_rep[1] = new Fl_Repeat_Button(2*WB+IW-sw, 2*WB+6*BH, sw, BH, "+");
-      view_butt_rep[1]->labelsize(CTX.fontsize);
       //no set_changed since has its own callback
       view_value[50] = new Fl_Value_Input(2*WB+sw, 2*WB+6*BH, IW-2*sw, BH);
-      view_value[50]->labelsize(CTX.fontsize);
-      view_value[50]->textsize(CTX.fontsize);
       view_value[50]->align(FL_ALIGN_RIGHT);
       view_value[50]->minimum(0); 
       view_value[50]->maximum(0); 
@@ -2302,7 +2195,6 @@ void GUI::create_view_options_window(int num){
       //no set_changed since has its own callback
       Fl_Box *a = new Fl_Box(2*WB+IW, 2*WB+6*BH, IW/2, BH, "Time step");
       a->box(FL_NO_BOX);
-      a->labelsize(CTX.fontsize);
       a->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
 
 
@@ -2311,8 +2203,6 @@ void GUI::create_view_options_window(int num){
       view_value[22] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW/2, BH);
       view_value[23] = new Fl_Value_Input(2*WB+IW/2, 2*WB+8*BH, IW/2, BH, "Size");
       for(i=20 ; i<=23 ; i++){
-	view_value[i]->labelsize(CTX.fontsize);
-	view_value[i]->textsize(CTX.fontsize);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2326,7 +2216,6 @@ void GUI::create_view_options_window(int num){
       for(i=4 ; i<=8 ; i++){
 	view_butt[i]->type(FL_TOGGLE_BUTTON);
 	view_butt[i]->down_box(TOGGLE_BOX);
-	view_butt[i]->labelsize(CTX.fontsize);
 	view_butt[i]->selection_color(TOGGLE_COLOR);
 	view_butt[i]->callback(set_changed_cb, 0);
       }
@@ -2337,7 +2226,6 @@ void GUI::create_view_options_window(int num){
     // 3D
     { 
       view_3d = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "3D");
-      view_3d->labelsize(CTX.fontsize);
       view_3d->hide();
       
       view_butt[10] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW/2-WB, BH, "Show elements");
@@ -2346,7 +2234,6 @@ void GUI::create_view_options_window(int num){
       for(i=10 ; i<=12 ; i++){
 	view_butt[i]->type(FL_TOGGLE_BUTTON);
 	view_butt[i]->down_box(TOGGLE_BOX);
-	view_butt[i]->labelsize(CTX.fontsize);
 	view_butt[i]->selection_color(TOGGLE_COLOR);
 	view_butt[i]->callback(set_changed_cb, 0);
       }
@@ -2363,8 +2250,6 @@ void GUI::create_view_options_window(int num){
       view_value[12]->step(0.01); 
       view_value[12]->maximum(1.); 
       for(i=10 ; i<=12 ; i++){
-	view_value[i]->labelsize(CTX.fontsize);
-	view_value[i]->textsize(CTX.fontsize);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2379,7 +2264,6 @@ void GUI::create_view_options_window(int num){
       for(i=13 ; i<=19 ; i++){
 	view_butt[i]->type(FL_TOGGLE_BUTTON);
 	view_butt[i]->down_box(TOGGLE_BOX);
-	view_butt[i]->labelsize(CTX.fontsize);
 	view_butt[i]->selection_color(TOGGLE_COLOR);
 	view_butt[i]->callback(set_changed_cb, 0);
       }
@@ -2389,12 +2273,9 @@ void GUI::create_view_options_window(int num){
     // 2D
     { 
       view_2d = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
-      view_2d->labelsize(CTX.fontsize);
       view_2d->hide();
       
       view_input[2] = new Fl_Input(2*WB, 2*WB+1*BH, IW, BH, "Abscissa name");
-      view_input[2]->labelsize(CTX.fontsize);
-      view_input[2]->textsize(CTX.fontsize);
       view_input[2]->align(FL_ALIGN_RIGHT);
       view_input[2]->callback(set_changed_cb, 0);
       
@@ -2407,8 +2288,6 @@ void GUI::create_view_options_window(int num){
       view_value[26]->step(1); 
       view_value[26]->maximum(3); 
       for(i=25 ; i<=26 ; i++){
-	view_value[i]->labelsize(CTX.fontsize);
-	view_value[i]->textsize(CTX.fontsize);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2418,12 +2297,9 @@ void GUI::create_view_options_window(int num){
     // Range
     { 
       view_range = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
-      view_range->labelsize(CTX.fontsize);
       view_range->hide();
       
       view_value[30] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Intervals");
-      view_value[30]->labelsize(CTX.fontsize);
-      view_value[30]->textsize(CTX.fontsize);
       view_value[30]->align(FL_ALIGN_RIGHT);
       view_value[30]->minimum(1); 
       view_value[30]->maximum(256); 
@@ -2439,7 +2315,6 @@ void GUI::create_view_options_window(int num){
 	for(i=30 ; i<=33 ; i++){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->down_box(RADIO_BOX);
-	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(RADIO_COLOR);
 	  view_butt[i]->callback(set_changed_cb, 0);
 	}
@@ -2449,15 +2324,12 @@ void GUI::create_view_options_window(int num){
       view_butt[34] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW/2-WB, BH, "Custom range");
       view_butt[34]->type(FL_TOGGLE_BUTTON);
       view_butt[34]->down_box(TOGGLE_BOX);
-      view_butt[34]->labelsize(CTX.fontsize);
       view_butt[34]->selection_color(TOGGLE_COLOR);
       //no set_changed since customrange has its own callback
       
       view_value[31] = new Fl_Value_Input(width/2, 2*WB+3*BH, IW, BH, "Minimum");
       view_value[32] = new Fl_Value_Input(width/2, 2*WB+4*BH, IW, BH, "Maximum");
       for(i=31 ; i<=32 ; i++){
-	view_value[i]->labelsize(CTX.fontsize);
-	view_value[i]->textsize(CTX.fontsize);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2470,7 +2342,6 @@ void GUI::create_view_options_window(int num){
 	for(i=35 ; i<=37 ; i++){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->down_box(RADIO_BOX);
-	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(RADIO_COLOR);
 	  view_butt[i]->callback(set_changed_cb, 0);
 	}
@@ -2480,7 +2351,6 @@ void GUI::create_view_options_window(int num){
       view_butt[38] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "Saturate values");
       view_butt[38]->type(FL_TOGGLE_BUTTON);
       view_butt[38]->down_box(TOGGLE_BOX);
-      view_butt[38]->labelsize(CTX.fontsize);
       view_butt[38]->selection_color(TOGGLE_COLOR);
       view_butt[38]->callback(set_changed_cb, 0);
       
@@ -2489,7 +2359,6 @@ void GUI::create_view_options_window(int num){
     // Offset and Raise
     { 
       Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset");
-      o->labelsize(CTX.fontsize);
       o->hide();
       view_value[40] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "X offset");
       view_value[41] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Y offset");
@@ -2498,8 +2367,6 @@ void GUI::create_view_options_window(int num){
       view_value[44] = new Fl_Value_Input(width/2, 2*WB+2*BH, IW, BH, "Y raise");
       view_value[45] = new Fl_Value_Input(width/2, 2*WB+3*BH, IW, BH, "Z raise");
       for(i=40 ; i<=45 ; i++){
-	view_value[i]->labelsize(CTX.fontsize);
-	view_value[i]->textsize(CTX.fontsize);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }	
@@ -2508,7 +2375,6 @@ void GUI::create_view_options_window(int num){
     // Aspect
     { 
       Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
-      o->labelsize(CTX.fontsize);
       o->hide();
       
       {
@@ -2536,7 +2402,6 @@ void GUI::create_view_options_window(int num){
 	for(i=60 ; i<=67 ; i++){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->down_box(RADIO_BOX);
-	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(RADIO_COLOR);
 	  view_butt[i]->callback(set_changed_cb, 0);
 	}
@@ -2555,8 +2420,6 @@ void GUI::create_view_options_window(int num){
       view_value[62]->maximum(50);
       view_value[62]->step(0.1);
       for(i=60 ; i<=62 ; i++){
-	view_value[i]->labelsize(CTX.fontsize);
-	view_value[i]->textsize(CTX.fontsize);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2566,7 +2429,6 @@ void GUI::create_view_options_window(int num){
     // Colors
     { 
       Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
-      o->labelsize(CTX.fontsize);
       o->hide();
       view_colorbar_window = new Colorbar_Window(2*WB, 2*WB+1*BH,
 						 width-4*WB, height-5*WB-2*BH);
@@ -2579,11 +2441,9 @@ void GUI::create_view_options_window(int num){
   
   { 
     view_ok = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
-    view_ok->labelsize(CTX.fontsize);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)view_window);
   }
   
@@ -2752,17 +2612,13 @@ void GUI::create_geometry_context_window(int num){
     // 0: Parameter
     { 
       g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Parameter");
-      g[0]->labelsize(CTX.fontsize);
       context_geometry_input[0] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Name");
       context_geometry_input[1] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Value");
       for(i=0 ; i<2 ; i++){
-	context_geometry_input[i]->labelsize(CTX.fontsize);
-	context_geometry_input[i]->textsize(CTX.fontsize);
 	context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Add");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_geometry_define_parameter_cb);
       }
       g[0]->end();
@@ -2770,19 +2626,15 @@ void GUI::create_geometry_context_window(int num){
     // 1: Point
     { 
       g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Point");
-      g[1]->labelsize(CTX.fontsize);
       context_geometry_input[2] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X coordinate");
       context_geometry_input[3] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y coordinate");
       context_geometry_input[4] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z coordinate");
       context_geometry_input[5] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Characteristic length");
       for(i=2 ; i<6 ; i++){
-	context_geometry_input[i]->labelsize(CTX.fontsize);
-	context_geometry_input[i]->textsize(CTX.fontsize);
 	context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Add");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_geometry_define_point_cb);
       }
       g[1]->end();
@@ -2790,18 +2642,14 @@ void GUI::create_geometry_context_window(int num){
     // 2: Translation
     { 
       g[2] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Translation");
-      g[2]->labelsize(CTX.fontsize);
       context_geometry_input[6] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X component");
       context_geometry_input[7] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y component");
       context_geometry_input[8] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z component");
       for(i=6 ; i<9 ; i++){
-	context_geometry_input[i]->labelsize(CTX.fontsize);
-	context_geometry_input[i]->textsize(CTX.fontsize);
 	context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_geometry_define_translation_cb);
       }
       g[2]->end();
@@ -2809,7 +2657,6 @@ void GUI::create_geometry_context_window(int num){
     // 3: Rotation
     { 
       g[3] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Rotation");
-      g[3]->labelsize(CTX.fontsize);
       context_geometry_input[9]  = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X coordinate of an axis point");
       context_geometry_input[10] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y coordinate of an axis point");
       context_geometry_input[11] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z coordinate of an axis point");
@@ -2818,13 +2665,10 @@ void GUI::create_geometry_context_window(int num){
       context_geometry_input[14] = new Fl_Input (2*WB, 2*WB+6*BH, IW, BH, "Z component of direction");
       context_geometry_input[15] = new Fl_Input (2*WB, 2*WB+7*BH, IW, BH, "Angle in radians");
       for(i=9 ; i<16 ; i++){
-	context_geometry_input[i]->labelsize(CTX.fontsize);
-	context_geometry_input[i]->textsize(CTX.fontsize);
 	context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_geometry_define_rotation_cb);
       }
       g[3]->end();
@@ -2832,19 +2676,15 @@ void GUI::create_geometry_context_window(int num){
     // 4: Scale
     { 
       g[4] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Scale");
-      g[4]->labelsize(CTX.fontsize);
       context_geometry_input[16] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X component of direction");
       context_geometry_input[17] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y component of direction");
       context_geometry_input[18] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z component of direction");
       context_geometry_input[19] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Factor");
       for(i=16 ; i<20 ; i++){
-	context_geometry_input[i]->labelsize(CTX.fontsize);
-	context_geometry_input[i]->textsize(CTX.fontsize);
 	context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_geometry_define_scale_cb);
       }
       g[4]->end();
@@ -2852,19 +2692,15 @@ void GUI::create_geometry_context_window(int num){
     // 5: Symmetry
     { 
       g[5] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Symmetry");
-      g[5]->labelsize(CTX.fontsize);
       context_geometry_input[20] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "1st plane equation coefficient");
       context_geometry_input[21] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "2nd plane equation coefficient");
       context_geometry_input[22] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "3rd plane equation coefficient");
       context_geometry_input[23] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "4th plane equation coefficient");
       for(i=20 ; i<24 ; i++){
-	context_geometry_input[i]->labelsize(CTX.fontsize);
-	context_geometry_input[i]->textsize(CTX.fontsize);
 	context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+7*BH, BB, BH, "Set");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_geometry_define_symmetry_cb);
       }
       g[5]->end();
@@ -2874,7 +2710,6 @@ void GUI::create_geometry_context_window(int num){
   
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)context_geometry_window);
   }
   
@@ -2913,14 +2748,10 @@ void GUI::create_mesh_context_window(int num){
     // 0: Characteristic length
     { 
       g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Characteristic length");
-      g[0]->labelsize(CTX.fontsize);
       context_mesh_input[0] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Value");
-      context_mesh_input[0]->labelsize(CTX.fontsize);
-      context_mesh_input[0]->textsize(CTX.fontsize);
       context_mesh_input[0]->align(FL_ALIGN_RIGHT);
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_mesh_define_length_cb);
       }
       g[0]->end();
@@ -2928,17 +2759,13 @@ void GUI::create_mesh_context_window(int num){
     // 1: Transfinite line
     { 
       g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Transfinite line");
-      g[1]->labelsize(CTX.fontsize);
       context_mesh_input[1] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Number of points");
       context_mesh_input[2] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Distribution");
       for(i=1 ; i<3 ; i++){
-	context_mesh_input[i]->labelsize(CTX.fontsize);
-	context_mesh_input[i]->textsize(CTX.fontsize);
 	context_mesh_input[i]->align(FL_ALIGN_RIGHT);
       }
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_mesh_define_transfinite_line_cb);
       }
       g[1]->end();
@@ -2946,14 +2773,10 @@ void GUI::create_mesh_context_window(int num){
     // 2: Transfinite volume
     { 
       g[2] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Transfinite volume");
-      g[2]->labelsize(CTX.fontsize);
       context_mesh_input[3] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Volume number");
-      context_mesh_input[3]->labelsize(CTX.fontsize);
-      context_mesh_input[3]->textsize(CTX.fontsize);
       context_mesh_input[3]->align(FL_ALIGN_RIGHT);
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
-	o->labelsize(CTX.fontsize);
 	o->callback(con_mesh_define_transfinite_line_cb);
       }
       g[2]->end();
@@ -2963,7 +2786,6 @@ void GUI::create_mesh_context_window(int num){
   
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)context_mesh_window);
   }
   
@@ -3010,32 +2832,24 @@ void GUI::create_solver_window(int num){
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-(3+newrow)*WB-(1+newrow)*BH);
     { 
       g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-(3+newrow)*WB-(2+newrow)*BH, "General");
-      g[0]->labelsize(CTX.fontsize);
       
       solver[num].input[0] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Problem");
       Fl_Button *b1 = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
       b1->callback(solver_file_open_cb, (void*)num);
-      b1->labelsize(CTX.fontsize);
       Fl_Button *b2 = new Fl_Button(3*WB+BB, 3*WB+2*BH, BB, BH, "Edit");
       b2->callback(solver_file_edit_cb, (void*)num);
-      b2->labelsize(CTX.fontsize);
 
       solver[num].input[1] = new Fl_Input(2*WB, 4*WB+3*BH, LL, BH, "Mesh");
       Fl_Button *b3 = new Fl_Button(2*WB, 5*WB+4*BH, BB, BH, "Choose");
       b3->callback(solver_choose_mesh_cb, (void*)num);
-      b3->labelsize(CTX.fontsize);
 
       for(i=0 ; i<2 ; i++){
-	solver[num].input[i]->labelsize(CTX.fontsize);
-	solver[num].input[i]->textsize(CTX.fontsize);
 	solver[num].input[i]->align(FL_ALIGN_RIGHT);
       }
 
       for(i=0; i<SINFO[num].nboptions; i++){
 	solver[num].choice[i] = new Fl_Choice(2*WB, (6+i)*WB+(5+i)*BH, LL, BH,
 					      SINFO[num].option_name[i]);
-	solver[num].choice[i]->textsize(CTX.fontsize);
-	solver[num].choice[i]->labelsize(CTX.fontsize);
 	solver[num].choice[i]->align(FL_ALIGN_RIGHT);
       }
 
@@ -3043,15 +2857,11 @@ void GUI::create_solver_window(int num){
     }
     { 
       g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-(3+newrow)*WB-(2+newrow)*BH, "Options");
-      g[1]->labelsize(CTX.fontsize);
       
       solver[num].input[2] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Executable");
-      solver[num].input[2]->labelsize(CTX.fontsize);
-      solver[num].input[2]->textsize(CTX.fontsize);
       solver[num].input[2]->align(FL_ALIGN_RIGHT);
       Fl_Button *b = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
       b->callback(solver_choose_executable_cb, (void*)num);
-      b->labelsize(CTX.fontsize);
       
       solver[num].butt[2] = new Fl_Check_Button(2*WB, 4*WB+3*BH, LL, BH, 
 						"Client/server connection");
@@ -3062,24 +2872,20 @@ void GUI::create_solver_window(int num){
       for(i=0 ; i<3 ; i++){
 	solver[num].butt[i]->type(FL_TOGGLE_BUTTON);
 	solver[num].butt[i]->down_box(TOGGLE_BOX);
-	solver[num].butt[i]->labelsize(CTX.fontsize);
 	solver[num].butt[i]->selection_color(TOGGLE_COLOR);
       }
       
       Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 
 						 height-(3+newrow)*WB-(2+newrow)*BH, BB, BH, "OK");
-      o->labelsize(CTX.fontsize);
       o->callback(solver_ok_cb, (void*)num);
       
       g[1]->end();
     }
     { 
       g[2] = new Fl_Group(WB, WB+BH, width-2*WB, height-(3+newrow)*WB-(2+newrow)*BH, "About");
-      g[2]->labelsize(CTX.fontsize);
       
       Fl_Browser *o = new Fl_Browser(2*WB, 2*WB+1*BH, width-4*WB,
 				     height-(5+newrow)*WB-(2+newrow)*BH);
-      o->textsize(CTX.fontsize);
       o->add("");
       add_multiline_in_browser(o, "@c@b@.", SINFO[num].name);
       o->add("");
@@ -3101,19 +2907,16 @@ void GUI::create_solver_window(int num){
 					      BB, BH,
 					      SINFO[num].button_name[i]);
       solver[num].command[nb]->callback(solver_command_cb,(void*)arg[num][i]);
-      solver[num].command[nb]->labelsize(CTX.fontsize);
       nb++;
     }
   }
   
   { 
     Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Kill");
-    o->labelsize(CTX.fontsize);
     o->callback(solver_kill_cb, (void*)num);
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
-    o->labelsize(CTX.fontsize);
     o->callback(cancel_cb, (void*)solver[num].window);
   }
   

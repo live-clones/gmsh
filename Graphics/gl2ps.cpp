@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.38 2002-03-08 22:12:41 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.39 2002-03-31 00:50:39 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -851,8 +851,8 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
 	prim->verts[1].xyz[2] -= 1.;
       }
       else{
-	prim->verts[0].xyz[2] -= 0.1;
-	prim->verts[1].xyz[2] -= 0.1;
+	prim->verts[0].xyz[2] -= 0.05;
+	prim->verts[1].xyz[2] -= 0.05;
       }
     }
   }

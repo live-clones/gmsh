@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.76 2002-03-12 19:07:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.77 2002-03-31 00:50:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -510,6 +510,10 @@ char * opt_general_editor(OPT_ARGS_STR){
 #endif
   return CTX.editor;
 }
+char * opt_general_theme(OPT_ARGS_STR){
+  if(action & GMSH_SET) CTX.theme = val;
+  return CTX.theme;
+}
 
 char * opt_solver_name(OPT_ARGS_STR){
 #ifdef _FLTK
@@ -857,8 +861,16 @@ char * opt_view_format(OPT_ARGS_STR){
 }
 char * opt_view_filename(OPT_ARGS_STR){
   GET_VIEW(NULL) ;
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     strcpy(v->FileName, val);
+#ifdef _FLTK
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+    if(WID && num<NB_BUTT_MAX){
+      WID->m_toggle_butt[num]->tooltip(v->FileName);
+    }
+#endif
+#endif
+  }
   return v->FileName;
 }
 char * opt_view_abscissa_name(OPT_ARGS_STR){
@@ -1051,6 +1063,22 @@ double opt_general_terminal(OPT_ARGS_NUM){
     WID->gen_butt[7]->value(CTX.terminal);
 #endif
   return CTX.terminal;
+}
+double opt_general_tooltips(OPT_ARGS_NUM){
+  if(action & GMSH_SET){
+    CTX.tooltips = (int)val;
+#ifdef _FLTK
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+    if(CTX.tooltips) Fl_Tooltip::enable();
+    else  Fl_Tooltip::disable();
+#endif
+#endif
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[13]->value(CTX.tooltips);
+#endif
+  return CTX.tooltips;
 }
 double opt_general_orthographic(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
@@ -2761,8 +2789,8 @@ double opt_print_gif_transparent(OPT_ARGS_NUM){
 
 #ifdef _FLTK
 
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-#define contrast fl_contrast
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
+#define fl_contrast contrast
 #endif
 
 #define CCC(col,but)							\
@@ -2771,7 +2799,7 @@ double opt_print_gif_transparent(OPT_ARGS_NUM){
 			       UNPACK_GREEN(col)*FL_NUM_GREEN/256,	\
 			       UNPACK_BLUE(col)*FL_NUM_BLUE/256);	\
     (but)->color(c);							\
-    (but)->labelcolor(contrast(FL_BLACK,c));				\
+    (but)->labelcolor(fl_contrast(FL_BLACK,c));				\
     (but)->redraw();							\
   }
 

@@ -35,6 +35,8 @@ StringXString GeneralOptions_String[] = {
   { F|O, "TextEditor" , opt_general_editor , "emacs %s &" ,
 #endif
     "System command to launch a text editor" },
+  { F|O,   "Theme" , opt_general_theme , "" ,
+    "Graphical user interface theme (try e.g. plastic)" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
     "Temporary file (created in your home directory)" },
 
@@ -393,7 +395,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "FastRedraw" , opt_general_fast_redraw , 1. ,
     "Fast redraw (no mesh or view display) when moving the model" },
   { F|S, "FontSize" , opt_general_fontsize , 12. , 
-    "Size of the font in the graphical user interface" }, 
+    "Size of the font in the graphical user interface" },
 
   { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 11. , 
     "Size of the font in the graphic window" }, 
@@ -513,6 +515,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Terminal" , opt_general_terminal , 1. ,
 #endif
     "Should information be printed on the terminal (if available)?" },
+  { F|O, "Tooltips" , opt_general_tooltips , 1. ,
+    "Show tooltips in the graphical user interface" },
   { F|O, "Trackball" , opt_general_trackball , 1. ,
     "Use trackball rotation mode" },
   { F,   "TrackballQuaternion0" , opt_general_quaternion0 , 0.0 , 

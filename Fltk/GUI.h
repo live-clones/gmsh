@@ -26,6 +26,10 @@
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_ask.H>
 
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+#include <FL/Fl_Tooltip.H>
+#endif
+
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
 

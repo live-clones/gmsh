@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.45 2002-01-21 18:49:17 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.46 2002-03-31 00:50:39 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -68,6 +68,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
   Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
+  Msg(DIRECT, "  -theme string         specify GUI theme");
   Msg(DIRECT, "  -alpha                enable alpha blending");
   Msg(DIRECT, "  -notrack              don't use trackball mode for rotations");
   Msg(DIRECT, "  -display string       specify display");
@@ -468,6 +469,17 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	}
         else {    
           fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i]+1, "theme")){
+        i++;
+        if(argv[i]!=NULL){
+	  CTX.theme = argv[i];
+          i++;
+	}
+        else {    
+          fprintf(stderr, ERROR_STR "Missing argument\n");
           exit(1);
         }
       }

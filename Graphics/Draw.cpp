@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.28 2001-10-30 14:27:47 geuzaine Exp $
+// $Id: Draw.cpp,v 1.29 2002-03-31 00:50:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -24,10 +24,10 @@ void Draw3d(void){
     glEnable(GL_ALPHA);
   }
   else{
+#if 0
+    // Rigorously, this could be disabled. But it seems to perturb the
+    // font rendering on Windows (and Mac?)
     glDisable(GL_BLEND);
-#ifndef WIN32
-    // Merde de bug dans les nouvelles dll opengl Windows (ATI Rage
-    // Mobility, NVIDIA, etc.)
     glDisable(GL_ALPHA);
 #endif
   }
