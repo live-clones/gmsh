@@ -1,13 +1,13 @@
-# $Id: Makefile,v 1.8 2002-04-13 04:01:09 geuzaine Exp $
+# $Id: Makefile,v 1.9 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libParallel.a"
+# Makefile for "libGmshParallel.a"
 #
 
 .IGNORE:
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
-LIB      = ../lib/libParallel.a
+LIB      = ../lib/libGmshParallel.a
 CC       = gcc
 
 OPT_FLAGS     = -g

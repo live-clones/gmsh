@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.31 2002-02-22 16:43:41 geuzaine Exp $
+# $Id: Makefile,v 1.32 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libCommon.a"
+# Makefile for "libGmshCommon.a"
 #
 
 .IGNORE:
@@ -10,7 +10,7 @@ AR      = ar ruvs
 RANLIB  = ranlib
 RM      = rm
 
-LIB     = ../lib/libCommon.a
+LIB     = ../lib/libGmshCommon.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Parser -I../Fltk
 

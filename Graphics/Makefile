@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.35 2001-12-04 10:47:39 geuzaine Exp $
+# $Id: Makefile,v 1.36 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libGraphics.a"
+# Makefile for "libGmshGraphics.a"
 #
 
 .IGNORE:
@@ -9,7 +9,7 @@ CXX      = c++
 AR       = ar ruvs
 RANLIB   = ranlib
 RM       = rm
-LIB      = ../lib/libGraphics.a
+LIB      = ../lib/libGmshGraphics.a
 INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics\
            -I../Fltk -I../Mesh -I../Parser -I../jpeg
 

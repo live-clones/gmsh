@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.39 2001-12-16 05:16:37 remacle Exp $
+# $Id: Makefile,v 1.40 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libMesh.a"
+# Makefile for "libGmshMesh.a"
 #
 
 .IGNORE:
@@ -10,7 +10,7 @@ AR      = ar ruvs
 RM      = rm
 RANLIB  = ranlib
 
-LIB     = ../lib/libMesh.a
+LIB     = ../lib/libGmshMesh.a
 INCLUDE = -I../Adapt -I../Common -I../DataStr -I../Geo -I../Mesh\
           -I../Graphics -I../Parser -I../Fltk -I../Triangle
 

@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.22 2001-11-05 11:25:11 geuzaine Exp $
+# $Id: Makefile,v 1.23 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libAdapt.a"
+# Makefile for "libGmshPlugin.a"
 #
 
 .IGNORE:
@@ -10,7 +10,7 @@ AR        = ar ruvs
 RM        = rm
 RANLIB    = ranlib
 
-LIB       = ../lib/libPlugin.a
+LIB       = ../lib/libGmshPlugin.a
 INCLUDE   = -I../Common -I../Graphics -I../DataStr -I../Geo -I../Mesh -I../Triangle
 
 OPT_FLAGS     = -g -Wall

@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.14 2001-10-30 09:52:30 geuzaine Exp $
+# $Id: Makefile,v 1.15 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libBox.a"
+# Makefile for "libGmshBox.a"
 #
 
 .IGNORE:
@@ -9,7 +9,7 @@ CXX      = c++
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
-LIB      = ../lib/libBox.a
+LIB      = ../lib/libGmshBox.a
 INCLUDE  = -I../Common -I../DataStr -I../Geo\
            -I../Graphics -I../Mesh -I../Parser -I../Fltk -I../Plugin -I../Parallel
 

@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.28 2001-12-03 08:41:43 geuzaine Exp $
+# $Id: Makefile,v 1.29 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libGeo.a"
+# Makefile for "libGmshGeo.a"
 #
 
 .IGNORE:
@@ -10,7 +10,7 @@ AR      = ar ruvs
 RANLIB  = ranlib
 RM      = rm
 
-LIB       = ../lib/libGeo.a
+LIB       = ../lib/libGmshGeo.a
 INCLUDE   = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Parser\
             -I../Fltk
 

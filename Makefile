@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.209 2002-04-30 21:36:31 geuzaine Exp $
+# $Id: Makefile,v 1.210 2002-05-18 00:55:14 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -26,10 +26,11 @@ GMSH_DEMO_DIR = demos
 GMSH_TUTORIAL_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
 
-GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo -lAdapt\
-               -lPlugin -lCommon -lDataStr -lParallel -lTriangle
-GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh\
-                -lGeo -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel -lTriangle
+GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshAdapt\
+               -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel -lGmshTriangle
+GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh\
+                -lGmshGeo -lGmshAdapt -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin\
+                -lGmshParallel -lGmshTriangle
 
 GMSH_RELEASE = $(GMSH_MAJOR_VERSION).$(GMSH_MINOR_VERSION).$(GMSH_PATCH_VERSION)
 GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
@@ -634,10 +635,10 @@ compile-macosx: initialtag
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/Projects/fltk" \
+           "GUI_INCLUDE=-I../../fltk" \
         ); done
 link-macosx:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L../fltk/lib -lfltk_gl -lfltk_base \
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L../fltk/lib -lfltk_gl -lfltk \
                -framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices
 	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh ../fltk/FL/mac.r
 macosx: compile-macosx link-macosx

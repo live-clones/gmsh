@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.36 2002-02-22 16:43:41 geuzaine Exp $
+# $Id: Makefile,v 1.37 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libParser.a"
+# Makefile for "libGmshParser.a"
 #
 
 .IGNORE:
@@ -12,7 +12,7 @@ RM       = rm
 YACC     = bison
 LEX      = flex
 
-LIB      = ../lib/libParser.a
+LIB      = ../lib/libGmshParser.a
 INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics\
            -I../Mesh -I../Fltk -I../Plugin -I../Parallel
 

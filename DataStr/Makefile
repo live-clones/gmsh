@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.13 2001-08-20 08:25:23 geuzaine Exp $
+# $Id: Makefile,v 1.14 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libDataStr.a"
+# Makefile for "libGmshDataStr.a"
 #
 
 .IGNORE:
@@ -9,7 +9,7 @@ CXX      = c++
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
-LIB      = ../lib/libDataStr.a
+LIB      = ../lib/libGmshDataStr.a
 INCLUDE  = -I../Common
 
 OPT_FLAGS     = -g -Wall

@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.31 2002-01-03 10:25:06 geuzaine Exp $
+# $Id: Makefile,v 1.32 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libFltk.a"
+# Makefile for "libGmshFltk.a"
 #
 
 .IGNORE:
@@ -10,7 +10,7 @@ AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 
-LIB      = ../lib/libFltk.a
+LIB      = ../lib/libGmshFltk.a
 INCLUDE  = -I../Common -I../DataStr -I../Graphics -I../Geo\
            -I../Mesh -I../Parser -I../Fltk -I../Plugin -I../utils
 

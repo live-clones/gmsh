@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.21 2001-08-20 08:25:24 geuzaine Exp $
+# $Id: Makefile,v 1.22 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libJpeg.a"
+# Makefile for "libGmshJpeg.a"
 #
 
 .IGNORE:
@@ -10,7 +10,7 @@ AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 
-LIB      = ../lib/libJpeg.a
+LIB      = ../lib/libGmshJpeg.a
 INCLUDE  = -I.
 
 OPT_FLAGS     = -g -Wall

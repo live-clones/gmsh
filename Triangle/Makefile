@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.4 2001-10-31 16:33:46 remacle Exp $
+# $Id: Makefile,v 1.5 2002-05-18 00:55:14 geuzaine Exp $
 #
-# Makefile for "libTriangle.a"
+# Makefile for "libGmshTriangle.a"
 #
 # If yours is not a Unix system, use the -DNO_TIMER switch to eliminate the
 #   Unix-specific timer code.
@@ -29,7 +29,7 @@ AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 
-LIB     = ../lib/libTriangle.a
+LIB     = ../lib/libGmshTriangle.a
 
 RMFLAGS  = -f
 
