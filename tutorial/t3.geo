@@ -37,10 +37,11 @@ Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
 // {0,0.15,0.25}, Pi/2) can also be combined:
 
 aa[] = Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
-  Layers {10,0,1}; Recombine; 
+  Layers { 10, 1 }; Recombine; 
 }; ;
 
-// In this last extrusion command, we set the volume number to 0,
+// In this last extrusion command we didn't specify an explicit
+// volume number (which is equivalent to setting it to "0"),
 // which means that the elements will simply belong the automatically
 // created volume (whose number we get from the aa[] list).
 
