@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.306 2003-11-16 16:49:37 geuzaine Exp $
+# $Id: Makefile,v 1.307 2003-11-23 03:24:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include variables
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 47
-GMSH_PATCH_VERSION = 1
+GMSH_PATCH_VERSION = 2
 
 GMSH_SHORT_LICENSE = "GNU General Public License"
 
@@ -106,7 +106,7 @@ doc-info:
 
 purge:
 	rm -f `find . -name "*~" -o -name "*~~" -o -name ".gmsh-errors"\
-                   -o -name "\#*" -o -name "gmon.out"`
+               -o -name "\#*" -o -name "gmon.out" -o -name ".gdb_history"`
 
 clean:
 	for i in doc lib ${GMSH_DIRS}; do (cd $$i && ${MAKE} clean); done

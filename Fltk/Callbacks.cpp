@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.186 2003-11-21 07:56:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.187 2003-11-23 03:24:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2712,10 +2712,17 @@ void view_reload_cb(CALLBACK_ARGS)
 
   Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
   strcpy(filename, v->FileName);
+
+  FILE *fp;
+  if(!(fp = fopen(filename, "r"))){
+    Msg(GERROR, "Unable to open file '%s'", filename);
+    return;
+  }
+
   CopyViewOptions(v, &tmp);
+  FreeView(v);
 
   CTX.post.force_num = v->Num;
-  FreeView(v);
   MergeProblem(filename);
   CTX.post.force_num = 0;
 
