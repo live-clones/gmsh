@@ -1010,7 +1010,7 @@ StringXNumber ViewOptions_Number[] = {
     "Position the scale or the 2D graph automatically to avoid overlaps" }, 
 
   { F|O, "Boundary" , opt_view_boundary , 0. ,
-    "Draw the `N minus b'-dimensional boundary of the simplex (N=simplex dimension, b=option value)" },
+    "Draw the `N minus b'-dimensional boundary of the element (N=element dimension, b=option value)" },
 
   { F|O, "ColormapAlpha" , opt_view_colormap_alpha , 1.0 ,
     "Colormap alpha channel value (used only if != 1)" },
