@@ -101,4 +101,11 @@ Physical Surface(MySurface) = {6} ;
 //
 // If no physical groups are defined, all the elements in the mesh are
 // directly saved with their default orientation and with a region
-// number equal to their elementary region number.
+// number equal to their elementary region number. For a description
+// of the mesh and post-processing formats, see the reference manual.
+
+Transfinite Line{2,4} = 100 Using Power 2;
+Transfinite Line{1,3} = 30 ;
+
+Elliptic Surface{6} = {1,2,3,4};
+

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.29 2003-04-18 07:53:51 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.30 2003-04-18 22:57:57 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -144,7 +144,7 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 * Running Gmsh::                How to run Gmsh on your operating system.
 * File formats::                Input and output file formats.
 * Programming notes::           Random notes for developers.
-* Bugs and versions::           Contact information, version history and list of contributors.
+* Bugs and versions::           Contact information, version history and contributors.
 * Tips and tricks::             Some tips to make your life easier with Gmsh.
 * GNU General Public License::  Copy of the GNU GPL.
 * Concept index::               Index of concepts.
@@ -197,6 +197,7 @@ Geometry commands
 
 Mesh module
 
+* Elementary vs physical entities::  
 * Mesh commands::               
 * Mesh options::                
 
@@ -209,6 +210,7 @@ Mesh commands
 Solver module
 
 * Solver options::              
+* Solver example::              
 
 Post-processing module
 
@@ -229,7 +231,7 @@ Tutorial
 
 Running Gmsh
 
-* Interactive vs. non-interactive mode::  
+* Interactive vs non-interactive mode::  
 * Command-line options::        
 * Mouse actions::               
 * Keyboard shortcuts::          
@@ -261,8 +263,10 @@ Bugs, versions and contributors
 @unnumbered Copying conditions
 
 @cindex Copyright
+@cindex License
 @cindex Web site
 @cindex Internet address
+@cindex Mailing list
 @cindex Download
 
 Gmsh is ``free software''; this means that everyone is free to use it and
@@ -586,7 +590,7 @@ Three dots (@dots{}) indicate a possible repetition of the preceding rule.
 @section Comments
 
 @cindex Comments
-@cindex File, comment
+@cindex File, comments
 
 @findex /*, */
 @findex //
@@ -647,8 +651,8 @@ commands and esoteric options.
 @node Expressions, Operators, General tools, General tools
 @section Expressions 
 
-@cindex Expression, definition
-@cindex Constant, definition
+@cindex Expressions, definition
+@cindex Constants
 
 The two constant types used in Gmsh are @var{real} and @var{string} (there
 is no integer type).  These types have the same meaning and syntax as in the
@@ -667,7 +671,7 @@ C or C++ programming languages.
 @node Floating point expressions, Character expressions, Expressions, Expressions
 @subsection Floating point expressions
 
-@cindex Expression, floating point
+@cindex Expressions, floating point
 @cindex Real numbers
 @cindex Numbers, real
 @cindex Floating point numbers
@@ -695,8 +699,7 @@ operators @var{operator-unary}, @var{operator-binary} and
 @ref{Operators}. For the definition of @w{@var{built-in-function}s}, see
 @ref{Built-in functions}.
 
-@cindex Expression, lists
-@cindex Number, lists
+@cindex Expressions, lists
 
 List of expressions are also widely used, and are defined as:
 
@@ -731,8 +734,8 @@ In order to lighten the syntax, you can always ommit the braces @code{@{@}}
 enclosing an @var{expression-list} if this @var{expression-list} contains a
 single item.
 
-@cindex Expression, affectation
-@cindex Expression, identifier
+@cindex Expressions, affectation
+@cindex Expressions, identifiers
 
 @findex =
 @findex +=
@@ -830,17 +833,17 @@ item per list item''.
 @node Character expressions, Color expressions, Floating point expressions, Expressions
 @subsection Character expressions
 
-@cindex Expression, character
+@cindex Expressions, character
 @cindex Strings
 
 Character expressions are defined as:
 
 @example
-@var{expression-char}:
+@var{char-expression}:
   "@var{string}" |
-  StrPrefix ( @var{expression-char} ) |
-  StrCat ( @var{expression-char} , @var{expression-char} ) |
-  Sprintf ( @var{expression-char} , @var{expression-list} ) |
+  StrPrefix ( @var{char-expression} ) |
+  StrCat ( @var{char-expression} , @var{char-expression} ) |
+  Sprintf ( @var{char-expression} , @var{expression-list} ) |
   @var{string-option}
 @end example
 
@@ -848,17 +851,17 @@ Character expressions are defined as:
 prefix of a string (e.g. for removing the extension from a file name). The
 third case permits to concatenate two character expressions, and the fourth
 is an equivalent of the @code{sprintf} C function (where
-@var{expression-char} is a format string that can contain floating point
+@var{char-expression} is a format string that can contain floating point
 formatting characters: @code{%e}, @code{%g}, etc.).
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
-@w{@var{expression-char}s} in an animation script. Although there exists no
-character expression identifier, @w{@var{expression-char}s} can be affected
+@w{@var{char-expression}s} in an animation script. Although there exists no
+character expression identifier, @w{@var{char-expression}s} can be affected
 to @w{@var{string-option}s}:
 
 @example
-@var{string-option} = @var{expression-char};
+@var{string-option} = @var{char-expression};
 @end example
 
 The various @w{@var{string-option}s} are listed in @ref{General options},
@@ -872,14 +875,14 @@ The various @w{@var{string-option}s} are listed in @ref{General options},
 @node Color expressions,  , Character expressions, Expressions
 @subsection Color expressions
 
-@cindex Expression, color
+@cindex Expressions, color
 @cindex Colors
 
 Colors expressions are hybrids between fixed-length braced
 @w{@var{expression-list}s} and @w{@var{string}s}:
 
 @example
-@var{expression-color}:
+@var{color-expression}:
   @var{string} |
   @{ @var{expression}, @var{expression}, @var{expression} @} |
   @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @} |
@@ -896,10 +899,10 @@ as well as the alpha channel. See @ref{t3.geo}, for an example of the use of
 color expressions.
 
 Although there exists no color expression identifier,
-@w{@var{expression-color}s} can be affected to @w{@var{color-option}s}:
+@w{@var{color-expression}s} can be affected to @w{@var{color-option}s}:
 
 @example
-@var{color-option} = @var{expression-color};
+@var{color-option} = @var{color-expression};
 @end example
 
 The various @w{@var{color-option}s} are listed in @ref{General options},
@@ -984,8 +987,8 @@ the first argument is non-zero; otherwise it returns the value of its third
 argument.
 @end ftable
 
-@cindex Evaluation, order
-@cindex Order of evaluation
+@cindex Evaluation order
+@cindex Order, evaluation
 @cindex Operation, priorities
 @cindex Priorities, operations
 
@@ -1108,7 +1111,7 @@ Hyperbolic tangent of @var{expression}.
 @node User-defined functions, Loops and conditionals, Built-in functions, General tools
 @section User-defined functions
 
-@cindex Function, user-defined
+@cindex Functions, user-defined
 
 User-defined functions take no arguments, and are evaluated as if a file
 containing the function body was included at the location of the @code{Call}
@@ -1136,6 +1139,9 @@ Executes the body of a (previously defined) function named @var{string}.
 
 @node Loops and conditionals, General commands, User-defined functions, General tools
 @section Loops and conditionals
+
+@cindex Loops
+@cindex Conditionals
 
 Loops and conditionals are defined as follows, and can be imbricated:
 
@@ -1190,51 +1196,50 @@ writing (Gmsh 1.44).
 @node General commands, General options, Loops and conditionals, General tools
 @section General commands
 
+@cindex General commands
+@cindex Commands, general
+
 The following commands can be used anywhere in a Gmsh ASCII text input file:
 
 @ftable @code
 @item Exit;
 Aborts the current script.
 
-@item Printf ( @var{expression-char} , @var{expression-list} );
+@item Printf ( @var{char-expression} , @var{expression-list} );
 Prints a character expression in the information window and/or on the
 terminal. @code{Printf} is equivalent to the @code{printf} C function:
-@var{expression-char} is a format string that can contain formatting
+@var{char-expression} is a format string that can contain formatting
 characters (@code{%f}, @code{%e}, etc.). Note that all @w{@var{expression}s}
 are evaluated as floating point values in Gmsh (@pxref{Expressions}), so
 that only valid floating point formatting characters make sense in
-@var{expression-char}. @xref{t5.geo}, for an example of the use of
+@var{char-expression}. @xref{t5.geo}, for an example of the use of
 @code{Printf}.
 
-@item Merge @var{expression-char};
-Merges a file named @var{expression-char}. This command is equivalent to the
+@item Merge @var{char-expression};
+Merges a file named @var{char-expression}. This command is equivalent to the
 `File->Merge' menu in the graphical user interface. If the path in
-@var{expression-char} is not absolute, @var{expression-char} is appended to
+@var{char-expression} is not absolute, @var{char-expression} is appended to
 the directory where the current opened project resides.
 
-@item MergeWithBoundingBox @var{expression-char};
+@item MergeWithBoundingBox @var{char-expression};
 Merges a file and forces the recalculation of the scene's bounding box.
 
 @item Draw;
 Redraws the scene.
 
-@item Save @var{expression-char};
-Saves the mesh in a file named @var{expression-char}, using the current
-@code{Mesh.Format} (@pxref{Mesh options}).
-
-@item Print @var{expression-char};
-Prints the graphic window in a file named @var{expression-char}, using the
+@item Print @var{char-expression};
+Prints the graphic window in a file named @var{char-expression}, using the
 current @code{Print.Format} (@pxref{General options}).
 
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
 
-@item System @var{expression-char};
+@item System @var{char-expression};
 Executes a system call.
 
-@item Include @var{expression-char};
-@item #include @var{expression-char};
-Includes the file named @var{expression-char} at the current position in the
+@item Include @var{char-expression};
+@item #include @var{char-expression};
+Includes the file named @var{char-expression} at the current position in the
 input file. Both include commands should be given on a line of their own.
 @end ftable
 
@@ -1274,14 +1279,14 @@ loaded by Gmsh during startup, by using the `Tools->Options->Save' menu.
 @node Geometry module, Mesh module, General tools, Top
 @chapter Geometry module
 
-@cindex Geometry
-@cindex Module, Geometry
+@cindex Geometry, module
+@cindex Module, geometry
 
 Gmsh's geometry module provides a simple CAD engine, using a bottom-up
 approach: you need to first define points (using the @code{Point} command:
 see below), then lines (using @code{Line}, @code{Circle}, @code{Spline},@w{
 }@dots{}, commands or by extruding points), then surfaces (using for example
-the @code{Plane Surface} or @code{RuledPlane Surface} commands, or by
+the @code{Plane Surface} or @code{Ruled Surface} commands, or by
 extruding lines), and finally volumes (using the @code{Volume} command or by
 extruding surfaces).
 
@@ -1320,6 +1325,9 @@ meshes are saved.
 @node Geometry commands, Geometry options, Geometry module, Geometry module
 @section Geometry commands
 
+@cindex Geometry commands
+@cindex Commands, geometry
+
 The next subsections describe all the available geometry commands. These
 commands can be used anywhere in a Gmsh ASCII text input file. Note that the
 following general syntax rule is applied for the definition of geometrical
@@ -1344,15 +1352,20 @@ enclosed between braces.''
 @node Points, Lines, Geometry commands, Geometry commands
 @subsection Points
 
+@cindex Elementary points
+@cindex Points, elementary
+@cindex Physical points
+@cindex Points, physical
+
 @ftable @code
 @item Point ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
 Creates an elementary point. The @var{expression} inside the parentheses is
 the point number; the three first @w{@var{expression}s} inside the braces on
 the right hand side give the three X, Y and Z coordinates of the point in
 the three-dimensional Euclidean space; the last @var{expression} sets the
-characteristic mesh length at that point. @xref{Mesh module}, for more
-information about how this characteristic length indormation is used in the
-meshing process.
+characteristic mesh length at that point. @xref{Characteristic lengths}, for
+more information about how this characteristic length indormation is used in
+the meshing process.
 
 @item Physical Point ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a physical point. The @var{expression} inside the parentheses is the
@@ -1367,6 +1380,11 @@ group into the physical point.
 
 @node Lines, Surfaces, Points, Geometry commands
 @subsection Lines
+
+@cindex Elementary lines
+@cindex Lines, elementary
+@cindex Physical lines
+@cindex Lines, physical
 
 @ftable @code
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
@@ -1425,7 +1443,8 @@ are used to create surfaces: see @ref{Surfaces}.)
 @c todo:
 @c @item Nurbs ( @var{expression} ) = @{ @var{expression-list} @};
 
-@c todo: @item Parametric ( @var{expression} ) = @{ @var{expression}, @var{expression}, "@var{string}", "@var{string}", "@var{string}" @};
+@c todo:
+@c @item Parametric ( @var{expression} ) = @{ @var{expression}, @var{expression}, "@var{string}", "@var{string}", "@var{string}" @};
 
 @item Physical Line ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a physical line. The @var{expression} inside the parentheses is the
@@ -1448,10 +1467,17 @@ contain the numbers of all the spline's control points.
 @node Surfaces, Volumes, Lines, Geometry commands
 @subsection Surfaces
 
-@ftable @code
-@c todo: @item Nurbs Surface ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
+@cindex Elementary surfaces
+@cindex Surfaces, elementary
+@cindex Physical surfaces
+@cindex Surfaces, physical
 
-@c todo: @item Nurbs Surface With Bounds ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
+@ftable @code
+@c todo:
+@c @item Nurbs Surface ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
+
+@c todo:
+@c @item Nurbs Surface With Bounds ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
 
 @item Plane Surface ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a plane surface. The @var{expression} inside the parentheses is the
@@ -1475,9 +1501,11 @@ closed shell, and the elementary surfaces should be oriented consistently
 (using a negative surface number to specify reverse orientation). (Surface
 loops are used to create volumes: see @ref{Volumes}.)
 
-@c todo: @item Triangulation Surface ( @var{expression} ) = ( @var{expression}, @var{expression} ) @{ @var{expression-list} @} @{ @var{expression-list} @};
+@c todo:
+@c @item Triangulation Surface ( @var{expression} ) = ( @var{expression}, @var{expression} ) @{ @var{expression-list} @} @{ @var{expression-list} @};
 
-@c todo: @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
+@c todo:
+@c @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
 @end ftable
 
 @c .........................................................................
@@ -1486,6 +1514,11 @@ loops are used to create volumes: see @ref{Volumes}.)
 
 @node Volumes, Extrusions, Surfaces, Geometry commands
 @subsection Volumes
+
+@cindex Elementary volumes
+@cindex Volumes, elementary
+@cindex Physical volumes
+@cindex Volumes, physical
 
 @ftable @code
 @item Volume ( @var{expression} ) = @{ @var{expression-list} @};
@@ -1504,13 +1537,16 @@ holes in the volume. (A deprecated synonym for @code{Volume} is
 @node Extrusions, Transformations, Volumes, Geometry commands
 @subsection Extrusions
 
+@cindex Extrusion, geometry
+@cindex Geometry, extrusion
+
 Lines, surfaces and volumes can also be created through extrusion of points,
 lines and surfaces, respectively. Here is the syntax of the geometrical
 extrusion commands (go to @ref{Structured grids} to see how these commands
 can be extended in order to also extrude the mesh):
 
 @ftable @code
-@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @};
+@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @} ;
 Extrudes the @var{expression}-th point, line or surface using a translation
 transformation. The @var{expression-list} should contain three
 @w{@var{expression}s} giving the X, Y and Z components of the translation
@@ -1541,6 +1577,13 @@ giving the X, Y and Z components of any point on this axis; the last
 
 @node Transformations, Miscellaneous geometry commands, Extrusions, Geometry commands
 @subsection Transformations
+
+@cindex Transformations, geometry
+@cindex Geometry, transformations
+@cindex Rotation
+@cindex Scale
+@cindex Symmetry
+@cindex Translation
 
 Geometrical transformations can be applied to elementary entities, or to
 copies of geometrical entities (using the @code{Duplicata} command: see
@@ -1578,8 +1621,8 @@ vector.
 
 @example
 @var{transform-list}: 
-  < Point | Line | Surface @{ @var{expression-list} @}; > @dots{} |
-  Duplicata @{ < Point | Line | Surface @{ @var{expression-list} @}; > @dots{} @} |
+  Point | Line | Surface @{ @var{expression-list} @}; @dots{} |
+  Duplicata @{ Point | Line | Surface @{ @var{expression-list} @}; @dots{} @} |
   @var{transform}
 @end example
 
@@ -1599,7 +1642,7 @@ identical coordinates). Note that Gmsh executes the @code{Coherence} command
 automatically after each geometrical transformation, unless the
 @code{Geometry.AutoCoherence} is set to zero (@pxref{Geometry options}).
 
-@item Delete @{ < Point | Line | Surface @{ @var{expression-list} @}; > @dots{} @};
+@item Delete @{ Point | Line | Surface @{ @var{expression-list} @}; @dots{} @};
 Deletes all elementary entities (points, lines or surfaces) whose numbers
 are given in @var{expression-list}.
 
@@ -1615,8 +1658,11 @@ are given in @var{expression-list}.
 @node Geometry options,  , Geometry commands, Geometry module
 @section Geometry options
 
+@cindex Options, geometry
+@cindex Geometry, options
+
 Geometry options control the behavior of geometry commands, as well as the
-way geometrical entitities are handled in the graphical user interface. For
+way geometrical entities are handled in the graphical user interface. For
 the signification of the `Saved in:' field in the following list, see
 @ref{General options}.
 
@@ -1629,27 +1675,75 @@ the signification of the `Saved in:' field in the following list, see
 @node Mesh module, Solver module, Geometry module, Top
 @chapter Mesh module
 
-@cindex Mesh
+@cindex Mesh, module
 @cindex Module, Mesh
 
+Gmsh's mesh module regroups several 1D, 2D and 3D mesh generators, all
+producing grids conforming in the sense of finite elements (@pxref{Mesh}).
+
 @menu
+* Elementary vs physical entities::  
 * Mesh commands::               
 * Mesh options::                
 @end menu
 
 @c -------------------------------------------------------------------------
+@c Elementary vs. physical entities
+@c -------------------------------------------------------------------------
+
+@node Elementary vs physical entities, Mesh commands, Mesh module, Mesh module
+@section Elementary vs. physical entities
+
+The input to all Gmsh's mesh algorithms is a geometry described in the
+geometry module (@pxref{Geometry module}). 
+
+If only elementary geometrical entities are defined (or if the option
+@code{Mesh.SaveAll} is set; see @ref{Mesh options}), the grid produced by
+the mesh will be saved ``as is''. That is, all the elements in the grid are
+saved to disk using the number of the elementary region they discretize as
+their region number (@pxref{Gmsh mesh file format}). However, this can
+sometimes be impractical or even insufficient:
+
+@itemize @bullet
+@item
+mesh elements can only appear once in the mesh file;
+@item 
+the orientation of the mesh elements (the ordering of their nodes) is
+determined entirely by the orientation of their ``parent'' elementary
+entity, and cannot be modified;
+@item
+it is impossible to group multiple elementary entities into larger groups
+carrying some common characteristic (e.g. `Left wing', `Metal', `Dirichlet
+boundary condition', @dots{}).
+@end itemize
+
+To remedy these problems, the geometry module introduces the notion of
+``physical'' entities (@pxref{Geometry module}). The purpose of physical
+entities is to assemble elementary entities into larger, possibly
+overlapping groups, and to control the orientation of the elements in these
+groups. If physical entities are defined, the output mesh only contains
+those elements that belong to physical entities. The introducion of such
+physical entities in large models usually greatly facilitates the
+manipulation of the model (e.g. using `Tools->Visibility' in the GUI) and
+the interfacing with external solvers. @xref{t1.geo}, for an example.
+
+@c -------------------------------------------------------------------------
 @c Mesh commands
 @c -------------------------------------------------------------------------
 
-@node Mesh commands, Mesh options, Mesh module, Mesh module
+@node Mesh commands, Mesh options, Elementary vs physical entities, Mesh module
 @section Mesh commands
 
+@cindex Mesh commands
+@cindex Commands, mesh
+
 The mesh module commands mostly permit to modify the characteristic lengths
-and specify structured grid parameters. The actual mesh ``actions'' cannot
-be specified in the input ASCII text input files: they have to be given
-either in the GUI (using the Mesh->1D|2D|3D buttons; see @ref{Running Gmsh})
-or on the command line (with the @code{-1}, @code{-2} or @code{-3} options;
-see @ref{Running Gmsh} and @ref{Command-line options}).
+and specify structured grid parameters. The actual mesh ``actions'' (i.e.,
+``mesh the lines'', ``mesh the surfaces'' and ``mesh the volumes'') cannot
+be specified in the input ASCII text input files. They have to be given
+either in the GUI (using the `Mesh->1D|2D|3D' buttons; see @ref{Running
+Gmsh}) or on the command line (with the @code{-1}, @code{-2} or @code{-3}
+options; see @ref{Running Gmsh} and @ref{Command-line options}).
 
 @menu
 * Characteristic lengths::      
@@ -1664,15 +1758,67 @@ see @ref{Running Gmsh} and @ref{Command-line options}).
 @node Characteristic lengths, Structured grids, Mesh commands, Mesh commands
 @subsection Characteristic lengths
 
+@cindex Characteristic lengths
+@cindex Mesh, element size
+@cindex Size, elements
+@cindex Mesh, background
+@cindex Background mesh
+
+There are three main ways to specify the size of the mesh elements for a
+given geometry:
+@enumerate
+@item
+You can specify characteristic lengths at the points of the geometrical
+model (with the @code{Point} command: see @ref{Points}). The actual size of
+the mesh elements will be computed by linearly interpolating these
+characteristric lengths on the initial mesh (see @ref{Mesh}). This might
+sometimes lead to over-refinement in some areas, so that you may have to add
+some ``dummy'' geometrical points in the model in order to get the desired
+element sizes.
+
+This method works with all the algorithms implemented in the mesh module,
+but is constrained by the structured algorithms for which the element size
+is explicitely specified (e.g. transfinite and extrusion grids: see
+@ref{Structured grids}).
+@item
+You can use geometrical ``attractors'', an elaborated version of the
+previous solution: see the @code{Attractor} commands below.
+
+Attractors currently only work with the 2D anisotropic algorithm (see
+@code{Mesh.Algorithm} in @ref{Mesh options}).
+@item
+You can give Gmsh an explicit background mesh (in the form of a scalar
+post-processing view; see @ref{Post-processing commands} and @ref{File
+formats}) in which the nodal values are the target element sizes.  This
+method is very general but it requires a first (usually rough) mesh and a
+way to compute the target sizes on this mesh (usually through an error
+estimation procedure, in an iterative process of mesh adaptation).
+
+This method only works with the isotropic 1D, 2D and 3D algoritm, and is not
+corrently available with the Triangle algorithm (see @code{Mesh.Algorithm}
+in @ref{Mesh options}). To load a background mesh, use the @code{-bgm}
+command-line option (@pxref{Command-line options}) or select `Apply as
+background mesh' in the post-processing view option menu.
+@end enumerate
+
+Here are the mesh commands that are related to the specification of
+characteristic lengths:
+
 @ftable @code
-@item Attractor Point @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
-
-(see @code{Mesh.Algorithm} in @ref{Mesh options}).
-
-@item Attractor Line @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
+@item Attractor Point | Line @{ @var{expression-list} @} = @{ @var{expression}, @var{expression}, @var{expression} @};
+Specifies a characteristic length attractor. The @var{expression-list}
+should conatain the identification numbers of the elementary points or lines
+to serve as attractors; the two first @w{@var{expression}s} prescribe
+refinement factors in a coordinate system local to the entities, and the
+last @var{expression} a decay factor. this feature is still experimental,
+and only work with the 2D anisotropic amgorithm (see @code{Mesh.Algorithm}
+in @ref{Mesh options}).  An example of the use of attractors is given in
+@ref{t7.geo}.
 
 @item Characteristic Length @{ @var{expression-list} @} = @var{expression};
-
+Modifies the characteristic length of the points whose identification
+numbers are listed in @var{expression-list}. The new value is given by
+@var{expression}.
 @end ftable
 
 @c .........................................................................
@@ -1682,26 +1828,67 @@ see @ref{Running Gmsh} and @ref{Command-line options}).
 @node Structured grids, Miscellaneous mesh commands, Characteristic lengths, Mesh commands
 @subsection Structured grids
 
+@cindex Extrusion, mesh
+@cindex Mesh, extrusion
+@cindex Transfinite, mesh
+@cindex Mesh, transfinite
+
 @ftable @code
-@item Bump
+@c todo:
+@c @item Elliptic Surface @{ @var{expression} @} = @{ @var{expression-list} @};
 
-@item Elliptic
+@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @} @{ @var{layers}; @dots{} @} ;
+Extrudes both the geometry and the mesh using a translation
+(@pxref{Extrusions}). The @var{layers} option determines how the mesh is
+extruded and has the following syntax:
 
-@item Extrude Layers          
+@example
+@var{layers}:
+  Layer @{ @{ @var{expression-list} @}, @{ @var{expression-list} @},
+          @{ @var{expression-list} @} @}; | Recombine;
+@end example
 
-@item Power           
+The first @var{expression-list} defines how many elements should be created
+in each extruded layer. The second @var{expression-list} assigns a region
+number to each layer. The last @var{expression-list} gives the normalized
+height of each layer (the list should contain a sequence of @var{n} numbers
+0 < @var{h1} < @var{h2} < @dots{} < @var{hn} <= 1). @xref{t3.geo} for an
+example.
 
-@item Progression     
+For line extrusions, the @code{Recombine} option will recombine (as many as
+possible) triangles into quadrangles.  For surface extrusions, the
+@code{Recombine} option will recombine (as many as possible) tetrahedra
+into prisms, hexahedra or pyramids.
 
-@item Parametric	
+@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{layers}; @dots{} @};
+Extrudes both the geometry and the mesh using a rotation
+(@pxref{Extrusions}). The @var{layers} parameters are defined as above.
 
-@item Transfinite     
+@item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{layers}; @dots{} @};
+Extrudes both the geometry and the mesh using a combined translation and
+rotation (@pxref{Extrusions}). The @var{layers} parameters are defined as
+above.
 
-@item With		
+@item Transfinite Line @{ @var{expression-list} @} = @var{expression} < Using Progression | Bump @var{expression} >
+Selects the lines in @var{expression-list} to be meshed with the 1D
+transfinite algorithm. The @var{expression} on the right hand side gives the
+number of points to be used (this overrides any characteristic length
+prescription---see @ref{Characteristic lengths}). The optional argument
+`@code{Using Progression @var{expression}}' instructs the transfinite
+algorithm to distribute the points following a geometric progression
+(@code{Progression 2} means that each line element in the series will be
+twice as long as the preceding one). The optional argument `@code{Using Bump
+@var{expression}}' instructs the transfinite algorithm to distribute the
+with a refinement at both ends of the line.  (A deprecated synonym for
+@code{Progression} is @code{Power}.)
 
-@item Using           
+@item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @};
+Selects the surface @var{expression} to be meshed with the 2D transfinite
+algorithm. The @var{expression-list} ...
 
-@item In              
+@item Transfinite Volume @{ @var{expression} @} = @{ @var{expression-list} @};
+Selects the volume @var{expression} to be meshed with the 3D transfinite
+algorithm.
 @end ftable
 
 @c .........................................................................
@@ -1714,13 +1901,21 @@ see @ref{Running Gmsh} and @ref{Command-line options}).
 Here is a list of all other mesh commands currently available:
 
 @ftable @code
-@item Color
+@item Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+Sets the mesh color of the entities listed in @var{expression-list} to @var{color-expression}.
 
 @item Delete Meshes;
 Deletes all currently loaded meshes.
 
-@item Recombine
+@item Recombine Surface @{ @var{expression-list} @} < = @var{expression} >;
+Recombines the triangular meshes of the surfaces @var{expression-list} into
+a mixed triangular/quadrangular mesh. The optional @var{expression} on the
+right hand side specifies the maximum recombination angle allowed (a large
+@var{expression} leading to more triangle recombinations).
 
+@item Save @var{char-expression};
+Saves the mesh in a file named @var{char-expression}, using the current
+@code{Mesh.Format} (@pxref{Mesh options}).
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1729,6 +1924,13 @@ Deletes all currently loaded meshes.
 
 @node Mesh options,  , Mesh commands, Mesh module
 @section Mesh options
+
+@cindex Options, mesh
+@cindex Mesh, options
+
+Mesh options control the behavior of mesh commands, as well as the way
+meshes are displayed in the graphical user interface. For the signification
+of the `Saved in:' field in the following list, see @ref{General options}.
 
 @include opt_mesh.texi
 
@@ -1739,24 +1941,74 @@ Deletes all currently loaded meshes.
 @node Solver module, Post-processing module, Mesh module, Top
 @chapter Solver module
 
-@cindex Solver
+@cindex Solver, module
 @cindex Module, Solver
 
-No solver commands. The solver interface works like this XXX. Include C code
-from solver example?
+Five external solvers can be interfaced simultaneously with Gmsh through
+Unix sockets.
+
+If you simply want to launch a solver from within Gmsh, with no further
+interactions between the solver and Gmsh, just edit the options relative to
+one of the five available solvers (e.g. @code{Solver.Name0},
+@code{Solver.Executable0}, @dots{}; see @ref{Solver options}), and set the
+corresponding ``client-server'' option to zero
+(e.g. @code{Solver.ClientServer0 = 0}). This doesn't require any
+modification to be made to the solver.
+
+If you want the solver to interact with Gmsh (for error messages, option
+definitions, post-processing, etc.), you need to link your solver with the
+@file{GmshClient.c} file and add the appropriate function calls inside your
+program. You can then proceed as in the previous case, but this time you
+should set the client-server option to 1 (e.g. @code{Solver.ClientServer0 =
+1}). See @ref{Solver example} for an example of how to interface a C
+solver. Bindings for solvers written in other languages (e.g. Perl) are
+available on @value{GMSH-WEB}.
+
+@menu
+* Solver options::              
+* Solver example::              
+@end menu
 
 @c -------------------------------------------------------------------------
 @c Solver options
 @c -------------------------------------------------------------------------
 
-@menu
-* Solver options::              
-@end menu
-
-@node Solver options,  , Solver module, Solver module
+@node Solver options, Solver example, Solver module, Solver module
 @section Solver options
 
+@cindex Solver commands
+@cindex Options, geometry
+
 @include opt_solver.texi
+
+@c -------------------------------------------------------------------------
+@c Solver example
+@c -------------------------------------------------------------------------
+
+@node Solver example,  , Solver options, Solver module
+@section Solver example
+
+@cindex Solver example
+@cindex Example, solver
+
+Here is a small example of how to interface a C solver with Gmsh. The
+following listing reproduces the @file{utils/mysolver.c} file from the Gmsh
+source distribution.
+
+@sp 1
+
+@verbatiminclude ../../utils/mysolver.c
+
+@sp 1
+
+To define the above solver as the second external solver in Gmsh, you should
+define the following solver options (either merge them ion your Gmsh option
+file, or use the @code{-option} command-line option---see @ref{Command-line
+options}):
+
+@sp 1
+
+@verbatiminclude ../../utils/mysolver.opt
 
 @c =========================================================================
 @c Post-processing module
@@ -1765,7 +2017,7 @@ from solver example?
 @node Post-processing module, Tutorial, Solver module, Top
 @chapter Post-processing module
 
-@cindex Post-processing
+@cindex Post-processing, module
 @cindex Module, Post-processing
 
 @menu
@@ -1780,9 +2032,10 @@ from solver example?
 @node Post-processing commands, Post-processing options, Post-processing module, Post-processing module
 @section Post-processing commands
 
-@ftable @code
-@item ColorTable
+@cindex Post-processing commands
+@cindex Commands, post-processing
 
+@ftable @code
 @item Delete View[@var{expression}];
 Deletes (removes) the @var{expression}-th post-processing view. View
 numbers start at zero.
@@ -1840,6 +2093,9 @@ See @ref{Gmsh parsed post-processing file format}
 @node Post-processing options,  , Post-processing commands, Post-processing module
 @section Post-processing options
 
+@cindex Post-processing, options
+@cindex Options, post-processing
+
 @include opt_post.texi
 
 Options that should apply to all views are given by @code{View.Option}. To
@@ -1848,6 +2104,11 @@ set an option specifically for the n-th view, use @code{View[n].Option}
 
 @include opt_view.texi
 
+@sp 1
+
+@c todo:
+@c The @code{ColorTable} is defined as a list...
+
 @c =========================================================================
 @c Tutorial
 @c =========================================================================
@@ -1855,7 +2116,6 @@ set an option specifically for the n-th view, use @code{View[n].Option}
 @node Tutorial, Running Gmsh, Post-processing module, Top
 @chapter Tutorial
 
-@cindex Short examples
 @cindex Examples
 @cindex Tutorial
 
@@ -1968,13 +2228,10 @@ formats. See @ref{File formats} for this.
 @chapter Running Gmsh
 
 @cindex Operating system
-@cindex Platforms
-@cindex Command line options
-@cindex Options, command line
 @cindex Running Gmsh
 
 @menu
-* Interactive vs. non-interactive mode::  
+* Interactive vs non-interactive mode::  
 * Command-line options::        
 * Mouse actions::               
 * Keyboard shortcuts::          
@@ -1984,8 +2241,11 @@ formats. See @ref{File formats} for this.
 @c Interactive vs. non-interactive mode
 @c -------------------------------------------------------------------------
 
-@node Interactive vs. non-interactive mode, Command-line options, Running Gmsh, Running Gmsh
+@node Interactive vs non-interactive mode, Command-line options, Running Gmsh, Running Gmsh
 @section Interactive vs. non-interactive mode
+
+@cindex Interactive mode
+@cindex Non-interactive mode
 
 There are several different ways to actually run Gmsh on your
 computer@footnote{Note that these operation modes can slightly vary
@@ -2060,7 +2320,7 @@ You should read the notes in the file @file{bgmesh.pos} if you intend to use
 background meshes.
 
 Several files can be loaded simultaneously in Gmsh. The first one defines
-the project, while the others are appended ("merged") to this project. You
+the project, while the others are appended (merged) to this project. You
 can merge such files with the `File->Merge' menu, or by directly specifying
 the names of the files on the command line. This is most useful for
 post-processing purposes. For example, to merge the post-processing views
@@ -2091,8 +2351,11 @@ sessions, use the `Tools->Options->Save' button.
 @c Command-line options
 @c -------------------------------------------------------------------------
 
-@node Command-line options, Mouse actions, Interactive vs. non-interactive mode, Running Gmsh
+@node Command-line options, Mouse actions, Interactive vs non-interactive mode, Running Gmsh
 @section Command-line options
+
+@cindex Command-line options
+@cindex Options, command-line
 
 @include command_line.texi
 
@@ -2103,10 +2366,12 @@ sessions, use the `Tools->Options->Save' button.
 @node Mouse actions, Keyboard shortcuts, Command-line options, Running Gmsh
 @section Mouse actions
 
+@cindex Mouse, actions
+@cindex Bindings, mouse
+
 In the following, for a 2 button mouse, @kbd{Middle button} =
 @kbd{Shift+Left button}. For a 1 button mouse, @kbd{Middle button} =
 @kbd{Shift+Left button} and @kbd{Right button} = @kbd{Alt+Left button}.
-
 
 @kbd{Move the mouse}:
 @itemize @bullet
@@ -2156,6 +2421,10 @@ pop up menu on post-processing view button
 @node Keyboard shortcuts,  , Mouse actions, Running Gmsh
 @section Keyboard shortcuts
 
+@cindex Keyboard, shortcuts
+@cindex Shortcuts, keyboard
+@cindex Bindings, keyboard
+
 @include shortcuts.texi
 
 @c =========================================================================
@@ -2190,6 +2459,7 @@ All non-parsed file formats have sections enclosed between @code{$KEY} and
 @section Gmsh mesh file format
 
 @cindex Mesh, file format
+@cindex File format, mesh
 @cindex @file{.msh} file
 
 The @file{.msh} file format is Gmsh's native mesh file format. The file is
@@ -2280,6 +2550,7 @@ without commas).
 @section Gmsh ASCII post-processing file format
 
 @cindex Post-processing, ASCII file format
+@cindex File format, post-processing, ASCII
 @cindex @file{.pos} file
 
 The ASCII post-processing file is divided in several sections: one format
@@ -2427,6 +2698,7 @@ is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
 @section Gmsh binary post-processing file format
 
 @cindex Post-processing, binary file format
+@cindex File format, post-processing, binary
 @cindex @file{.pos} file
 
 The binary post-processing file format is the same as the ASCII file format
@@ -2494,6 +2766,7 @@ the same for all other kinds of values.
 @section Gmsh parsed post-processing file format
 
 @cindex Post-processing, parsed file format
+@cindex File format, post-processing, parsed
 @cindex @file{.pos} file
 
 For relatively small data sets Gmsh provides an additional post-processing
@@ -2570,6 +2843,10 @@ post-processing file formats.
 
 @node Gmsh node ordering,  , Gmsh parsed post-processing file format, File formats
 @section Gmsh node ordering
+
+@cindex Nodes, ordering
+@cindex Edges, ordering
+@cindex Faces, ordering
 
 For all mesh and post-processing file formats, the reference elements are
 defined as follows.
@@ -2708,14 +2985,7 @@ Pyramid:
 @node Programming notes, Bugs and versions, File formats, Top
 @chapter Programming notes
 
-@cindex Programming comments
-@cindex Language
-@cindex C
-@cindex C++
-@cindex @code{lex}
-@cindex @code{flex}
-@cindex @code{yacc}
-@cindex @code{bison}
+@cindex Programming, notes
 
 This is section is not yet written: see @file{utils/README.devel}.
 
@@ -2756,10 +3026,10 @@ This is section is not yet written: see @file{utils/README.devel}.
 @node Bugs, Version history, Bugs and versions, Bugs and versions
 @section Bugs
 
-@cindex Known bugs
-@cindex Bugs, known
 @cindex Bugs, reporting
 @cindex Reporting bugs
+@cindex Contact information
+@cindex Mailing list
 @cindex Authors, e-mail
 @cindex E-mail, authors
 
@@ -2847,6 +3117,8 @@ Read the @file{FAQ}...
 
 @node  GNU General Public License, Concept index, Tips and tricks, Top
 @appendix GNU General Public License
+
+@cindex License
 
 @include gpl.texi
 
