@@ -45,7 +45,9 @@ extern "C"
 struct Structural_Texture
 {
   std::string filename;
+#ifdef HAVE_FLTK
   GLuint  tag ;
+#endif
   void setup();
 };
 

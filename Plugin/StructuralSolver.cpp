@@ -86,7 +86,8 @@ void Structural_BeamSection :: computeGeometricalProperties ()
 
 void Structural_Texture::setup ()
 {
-  
+
+#ifdef HAVE_FLTK  
   Fl_PNG_Image image(filename.c_str());
 
   // allocate a texture name
@@ -118,18 +119,17 @@ void Structural_Texture::setup ()
 		     GL_RGB, 
 		     GL_UNSIGNED_BYTE, 
 		     data );
+#endif
 }
 
 void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3], const double dirz[3], Structural_Texture &texture)
 {
+#ifdef HAVE_FLTK
 
   if (texture.tag==0)
     {
       texture.setup();
     }
-
-#ifdef HAVE_FLTK
-
 
   double X[3] = {dir[0],dir[1],dir[2]};
   double Z[3] = {dirz[0],dirz[1],dirz[2]};
@@ -634,6 +634,8 @@ void Draw_Kinematic_Constraint ( const int type [3],
 				 const double pos[3], 
 				 double dir[3])
 {
+#ifdef HAVE_FLTK
+
   // presently, it's only 2D , 1st and second component are for dir and dir2 
   // and third one is for rotation around z
 
@@ -777,8 +779,7 @@ void Draw_Kinematic_Constraint ( const int type [3],
   glDisable(GL_LIGHTING);
   glColor4ubv((GLubyte *) & CTX.color.geom.point);
 
-  
-
+#endif  
 }
 
 
