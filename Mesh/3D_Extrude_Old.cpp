@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.14 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.15 2001-12-04 09:27:57 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -316,7 +316,9 @@ static void Extrude_Simplex_Phase2 (void *data , void *dum){
       List_Read(s->V[1]->Extruded_Points,k+1,&v5);
       List_Read(s->V[2]->Extruded_Points,k+1,&v6);
       k++;
-      if(are_exist(v4,v2,Tree_Ares) && are_exist(v5,v3,Tree_Ares) && are_exist(v1,v6,Tree_Ares)){
+      if(are_exist(v4,v2,Tree_Ares) && 
+	 are_exist(v5,v3,Tree_Ares) && 
+	 are_exist(v1,v6,Tree_Ares)){
 	TEST_IS_ALL_OK++;
 	if(!are_exist(v4,v2,Tree_Swaps)){
 	  are_del(v4,v2,Tree_Ares);
@@ -337,7 +339,9 @@ static void Extrude_Simplex_Phase2 (void *data , void *dum){
 	  are_cree(v4,v3,Tree_Swaps);
 	}
       }
-      else if(are_exist(v1,v5,Tree_Ares) && are_exist(v2,v6,Tree_Ares) && are_exist(v4,v3,Tree_Ares)){
+      else if(are_exist(v1,v5,Tree_Ares) && 
+	      are_exist(v2,v6,Tree_Ares) && 
+	      are_exist(v4,v3,Tree_Ares)){
 	TEST_IS_ALL_OK++;
 	if(!are_exist(v1,v5,Tree_Swaps)){
 	  are_del(v1,v5,Tree_Ares);
@@ -374,6 +378,8 @@ static void Extrude_Vertex (void *data , void *dum){
   v->Extruded_Points = List_Create(NbLayer,1,sizeof(Vertex*));
   List_Add(v->Extruded_Points,&v);
   h = 0.0;
+
+  //printf("-extruding vertex %d %p\n", v->Num, v);
  
   for(i=0;i<NbLayer;i++){
 
@@ -445,6 +451,8 @@ static void Extrude_Seg(Vertex *V1, Vertex *V2){
   int i,j,k;
   Vertex *v1,*v2,*v3,*v4;
   Simplex *s;
+
+  //printf("-curve vertex %d %p   %d %p\n", V1->Num, V1, V2->Num, V2);
 
   k = 0;
   for(i=0;i<NbLayer;i++){
@@ -550,6 +558,12 @@ static void Extrude_Point (void *data , void *dum){
 
 }
 
+void FreeEP(void *a, void *b){
+  Vertex *v = *((Vertex**)a);
+  Free_ExtrudedPoints(v->Extruded_Points);
+  v->Extruded_Points = NULL;
+}
+
 void Extrude_Mesh_Old(Mesh *M){
   int j;
   Mesh MM;
@@ -559,6 +573,10 @@ void Extrude_Mesh_Old(Mesh *M){
   InitExtrudeParams();
   LOCAL = &MM;
   THEM  = M;
+
+  //clean up Extruded_Points stuff (in case another extrusion was
+  //performed before)
+  Tree_Action(THEM->Vertices,FreeEP);
 
   Create_BgMesh (WITHPOINTS, .2, LOCAL);
 
