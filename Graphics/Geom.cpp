@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.58 2004-05-18 17:44:55 geuzaine Exp $
+// $Id: Geom.cpp,v 1.59 2004-05-18 18:52:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -292,7 +292,6 @@ void Draw_Triangulated_Surface(Surface * s)
   }  
 }
 
-
 void Draw_Plane_Surface(Surface * s)
 {
   int i, j, k;
@@ -306,24 +305,16 @@ void Draw_Plane_Surface(Surface * s)
     return;
   }
 
-  if(!s->Orientations)
-    s->Orientations = List_Create(20, 2, sizeof(Vertex));
-
-  if(!List_Nbr(s->Orientations)) {
-
-    s->Orientations = List_Create(20, 2, sizeof(Vertex));
+  if(List_Nbr(s->Orientations) < 1) {
 
     List_T *points = List_Create(10, 10, sizeof(Vertex *));
-
     for(i = 0; i < List_Nbr(s->Generatrices); i++) {
       List_Read(s->Generatrices, i, &c);
       for(j = 0; j < List_Nbr(c->Control_Points); j++) {
         List_Add(points, List_Pointer(c->Control_Points, j));
       }
     }
-
     MeanPlane(points, s);
-
     List_Delete(points);
 
     k = 0;
@@ -418,17 +409,25 @@ void Draw_Plane_Surface(Surface * s)
       List_Add(s->Orientations, &vv);
 
     Msg(STATUS2N, "Plane Surface %d (%d points)", s->Num, List_Nbr(s->Orientations));
+
+    if(!List_Nbr(s->Orientations)) // add dummy
+      List_Add(s->Orientations, &vv);
   }
 
   if(List_Nbr(s->Orientations) > 1) {
 
     if(CTX.geom.surfaces) {
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0x0F0F);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
       glBegin(GL_LINES);
       for(i = 0; i < List_Nbr(s->Orientations); i++) {
 	List_Read(s->Orientations, i, &vv);
 	glVertex3d(vv.Pos.X, vv.Pos.Y, vv.Pos.Z);
       }
       glEnd();
+      glDisable(GL_LINE_STIPPLE);
+      gl2psDisable(GL2PS_LINE_STIPPLE);
     }
 
     if(CTX.geom.surfaces_num) {
@@ -443,7 +442,6 @@ void Draw_Plane_Surface(Surface * s)
     }
 
     if(CTX.geom.normals) {
-      glDisable(GL_LINE_STIPPLE);
       List_Read(s->Orientations, 0, &vv1);
       List_Read(s->Orientations, 1, &vv2);
       n[0] = s->plan[2][0];
@@ -486,6 +484,9 @@ void Draw_NonPlane_Surface(Surface * s)
       glDisable(GL_LIGHTING);
     }
     else{
+      glEnable(GL_LINE_STIPPLE);
+      glLineStipple(1, 0x0F0F);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
       int N = 50;
       glBegin(GL_LINE_STRIP);
       for(int i = 0; i < N + 1; i++) {
@@ -501,6 +502,8 @@ void Draw_NonPlane_Surface(Surface * s)
 	glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
       }
       glEnd();
+      glDisable(GL_LINE_STIPPLE);
+      gl2psDisable(GL2PS_LINE_STIPPLE);
     }
   }
 
@@ -516,7 +519,6 @@ void Draw_NonPlane_Surface(Surface * s)
   }
 
   if(CTX.geom.normals) {
-    glDisable(GL_LINE_STIPPLE);
     Vertex n1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
     Vertex n2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
     Vertex n3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
@@ -565,15 +567,11 @@ void Draw_Surface(void *a, void *b)
     gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.surface);
   }
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1, 0x0F0F);
 
   if(s->Typ == MSH_SURF_STL) {
-    glDisable(GL_LINE_STIPPLE);
     Tree_Action(s->STL->Simplexes, Draw_Simplex_Surface);
   }
   else if(s->Typ == MSH_SURF_DISCRETE) {
-    glDisable(GL_LINE_STIPPLE);
     Tree_Action(s->Simplexes, Draw_Simplex_Surface);
   }
   else if(s->Typ == MSH_SURF_PLAN)
@@ -584,8 +582,6 @@ void Draw_Surface(void *a, void *b)
   if(CTX.render_mode == GMSH_SELECT) {
     glPopName();
   }
-
-  glDisable(GL_LINE_STIPPLE);
 }
 
 // Volumes

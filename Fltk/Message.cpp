@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.52 2004-05-18 17:00:37 geuzaine Exp $
+// $Id: Message.cpp,v 1.53 2004-05-18 18:52:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -90,8 +90,7 @@ void Msg(int level, char *fmt, ...)
   case STATUS2  : str = INFO_STR; verb = 1; window = 1; break ;
   case STATUS3N : log = 0; //fallthrough
   case STATUS3  : str = INFO_STR; verb = 1; window = 2; break ;
-  case ONSCREEN1: log = 0; verb = 1; window = 3; break ;
-  case ONSCREEN2: log = 0; verb = 1; window = 4; break ;
+  case ONSCREEN : log = 0; verb = 1; window = 3; break ;
 
   case FATAL    : str = FATAL_STR; abort = 1; break ;
   case FATAL1   : str = FATAL_STR; break ;

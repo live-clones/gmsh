@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.51 2004-05-18 17:44:55 geuzaine Exp $
+// $Id: Create.cpp,v 1.52 2004-05-18 18:52:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -690,7 +690,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   pS->TrsfVertices = List_Create(1, 10, sizeof(Vertex *));
   pS->Contours = List_Create(1, 1, sizeof(List_T *));
-  pS->Orientations = NULL;
+  pS->Orientations = List_Create(20, 2, sizeof(Vertex));
   pS->Support = pS;
   pS->Control_Points = List_Create(1, 10, sizeof(Vertex *));
   pS->Generatrices = NULL;

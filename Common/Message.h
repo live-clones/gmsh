@@ -55,8 +55,7 @@
 #define STATUS2N      25  // Same as STATUS2, but not going into the log file
 #define STATUS3N      26  // Same as STATUS3, but not going into the log file
 
-#define ONSCREEN1     27  // Persistent on-screen message (line 1)
-#define ONSCREEN2     28  // Persistent on-screen message (line 2)
+#define ONSCREEN      27  // Persistent on-screen message
 
 #define DIRECT        30  // Direct message (no special formatting)
 #define SOLVER        31  // Solver message

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.302 2004-05-18 17:44:55 geuzaine Exp $
+// $Id: GUI.cpp,v 1.303 2004-05-18 18:52:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1310,11 +1310,18 @@ void GUI::set_status(char *msg, int num)
     g_status_label[num]->label(msg);
     g_status_label[num]->redraw();
   }
-  else{
-    if(num == 3)
-      strncpy(onscreen_buffer[0], msg, 255);
-    if(num == 4)
-      strncpy(onscreen_buffer[1], msg, 255);
+  else if (num == 3){
+    int n = strlen(msg);
+    int i = 0;
+    while(i < n)
+      if(msg[i++] == '\n') break;
+
+    strncpy(onscreen_buffer[0], msg, 255);
+    if(i < n) 
+      strncpy(onscreen_buffer[1], &msg[i], 255);
+    else
+      onscreen_buffer[1][0] = '\0';
+    onscreen_buffer[0][i-1] = '\0';
     redraw_opengl();
   }
 }
