@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.332 2004-04-15 03:04:48 geuzaine Exp $
+# $Id: Makefile,v 1.333 2004-04-15 03:50:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -76,13 +76,6 @@ source: source-common
 	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
           NR Triangle/triangle.* utils/commercial
 	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
-
-source-nightly:
-	mv -f Makefile Makefile.nightly
-	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
-          Makefile.nightly > Makefile
-	make source
-	mv -f Makefile.nightly Makefile
 
 source-commercial: source-common
 	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
@@ -166,10 +159,6 @@ tgz:
 	gzip ${GMSH_ARCHIVE}.tar
 	chmod 640 ${GMSH_ARCHIVE}.tar.gz
 
-minizip:
-	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 \
-          `ls Makefile */Makefile */*.[chyl] */*.[ch]pp */*.rc */*.res */*.ico`
-
 distrib-pre:
 	mv -f Makefile Makefile.distrib
 	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION =/g"\
@@ -177,21 +166,46 @@ distrib-pre:
 
 distrib-post:
 	mv -f Makefile.distrib Makefile
-	@echo "********************************************************************"
-	@echo "Remember to change -ljpeg, etc. to /usr/lib/libjpeg.a, etc. in"
-	@echo "./variables and relink if the list below contains non-standard"
-	@echo "dynamic libs and you want to distribute a portable binary:"
-	@echo "********************************************************************"
+	rm -f ${GMSH_VERSION_FILE}
 
-distrib-unix: clean distrib-pre all package-unix distrib-post
+distrib-unix: clean
+	make distrib-pre
+	make all
+	make package-unix
+	make distrib-post
 	ldd bin/gmsh
 
-distrib-win: clean distrib-pre all package-win distrib-post
+distrib-win: clean
+	make distrib-pre
+	make all
+	make package-win
+	make distrib-post
 	objdump -p bin/gmsh.exe | grep DLL
 
-distrib-mac: clean distrib-pre all package-mac distrib-post
+distrib-mac: clean
+	make distrib-pre
+	make all
+	make package-mac
+	make distrib-post
 	${POSTBUILD}
 	otool -L bin/gmsh
+
+distrib-source:
+	make distrib-pre
+	make source
+	make distrib-post
+
+distrib-source-commercial:
+	make distrib-pre
+	make source-commercial
+	make distrib-post
+
+distrib-source-nightly:
+	mv -f Makefile Makefile.distrib
+	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
+          Makefile.distrib > Makefile
+	make source
+	make distrib-post
 
 package-unix:
 	rm -rf gmsh-${GMSH_VERSION}
