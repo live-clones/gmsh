@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.99 2001-09-04 16:25:05 geuzaine Exp $
+// $Id: Gmsh.y,v 1.100 2001-09-24 06:56:02 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1733,6 +1733,7 @@ Loop :
    --------------- */
 
 Extrude :
+  /* -------- Points -------- */ 
     tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
     {
       Curve *pc, *prc;
@@ -1744,6 +1745,9 @@ Extrude :
       Extrude_ProtudePoint(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
 			   &pc,&prc,NULL);
     }
+
+  /* -------- Lines -------- */ 
+
   | tExtrude tLine'{' FExpr ',' VExpr '}' tEND
     {
       Extrude_ProtudeCurve(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,NULL);
@@ -1752,7 +1756,28 @@ Extrude :
     {
       Extrude_ProtudeCurve(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,NULL);
     }
-  |  tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
+  | tExtrude tLine'{' FExpr ',' VExpr '}'
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+                      '{' ExtrudeParameters '}' tEND
+    {
+      Extrude_ProtudeCurve(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,&extr);
+    }
+  | tExtrude tLine'{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+                      '{' ExtrudeParameters '}' tEND
+    {
+      Extrude_ProtudeCurve(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,&extr);
+    }
+
+  /* -------- Surfaces -------- */ 
+
+  | tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
     {
       Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,0,NULL);
     }
