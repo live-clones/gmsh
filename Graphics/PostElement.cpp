@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.40 2004-08-07 06:59:16 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.41 2004-09-01 20:23:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -229,7 +229,7 @@ void Draw_ScalarPoint(Post_View * View, int preproNormals,
   double d;
   char Num[100];
 
-  if(View->Boundary > 0)
+  if(View->Boundary > 0 || preproNormals)
     return;
 
   d = V[View->TimeStep];
@@ -268,6 +268,9 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
   double d;
   double Xp[5], Yp[5], Zp[5], Vp[5], Val[5];
   char Num[100];
+
+  if(preproNormals)
+    return;
 
   double *vv = &V[2 * View->TimeStep];
 
@@ -858,9 +861,69 @@ void Draw_ScalarPyramid(Post_View * View, int preproNormals,
   View->ShowElement = show;
 }
 
+
+int GetScalarDataFromOtherView(int type, int nbnod, Post_View *v, double *d)
+{
+  static int error1 = -1;
+  static int error2 = -1;
+  Post_View *v2 = v->ViewForDisplacement;
+  int num = v->ElementForDisplacement;
+
+  if(!v2){
+    if(error1 != v->Num){
+      Msg(GERROR, "Non-existent view for displacement plot");
+      error1 = v->Num;
+    }
+    return 0;
+  }
+
+  int nbelm = 0;
+  List_T *l;
+  switch (type) {
+  case POINT: if(v->NbVP == v2->NbSP){ nbelm = v2->NbSP; l = v2->SP; } break;
+  case LINE: if(v->NbVL == v2->NbSL){ nbelm = v2->NbSL; l = v2->SL; } break;
+  case TRIANGLE: if(v->NbVT == v2->NbST){ nbelm = v2->NbST; l = v2->ST; } break;
+  case QUADRANGLE: if(v->NbVQ == v2->NbSQ){ nbelm = v2->NbSQ; l = v2->SQ; } break;
+  case TETRAHEDRON: if(v->NbVS == v2->NbSS){ nbelm = v2->NbSS; l = v2->SS; } break;
+  case HEXAHEDRON: if(v->NbVH == v2->NbSH){ nbelm = v2->NbSH; l = v2->SH; } break;
+  case PRISM: if(v->NbVI == v2->NbSI){ nbelm = v2->NbSI; l = v2->SI; } break;
+  case PYRAMID: if(v->NbVY == v2->NbSY){ nbelm = v2->NbSY; l = v2->SY; } break;
+  }
+
+  if(!nbelm || num < 0 || v2->NbTimeStep != v->NbTimeStep){
+    if(error2 != v->Num){
+      Msg(GERROR, "Incompatible view for displacement plot");
+      error2 = v->Num;
+    }
+    return 0;
+  }
+
+  int nb = List_Nbr(l) / nbelm;
+  double *val = (double *)List_Pointer_Fast(l, num * nb + 3 * nbnod);
+  for(int k = 0; k < nbnod; k++)
+    d[k] = val[nbnod * v->TimeStep + k];
+
+  switch (v->RangeType) {
+  case DRAW_POST_RANGE_DEFAULT:
+    v->MinForDisplacement = v2->Min;
+    v->MaxForDisplacement = v2->Max;
+    break;
+  case DRAW_POST_RANGE_CUSTOM: // yes, take the values from v!
+    v->MinForDisplacement = v->CustomMin;
+    v->MaxForDisplacement = v->CustomMax;
+    break;
+  case DRAW_POST_RANGE_PER_STEP:
+    v->MinForDisplacement = v2->TimeStepMin[v->TimeStep];
+    v->MaxForDisplacement = v2->TimeStepMax[v->TimeStep];
+    break;
+  }
+
+  return 1;
+}
+
 // Vector Elements
 
-void Draw_VectorElement(int type, Post_View * View,
+void Draw_VectorElement(int type, Post_View * View, int preproNormals,
                         double ValMin, double ValMax, 
                         double *X, double *Y, double *Z, double *V)
 {
@@ -888,12 +951,19 @@ void Draw_VectorElement(int type, Post_View * View,
     d[k] = sqrt(Val[k][0] * Val[k][0] + Val[k][1] * Val[k][1] +	Val[k][2] * Val[k][2]);
   }
 
+  if(View->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
+    GetScalarDataFromOtherView(type, nbnod, View, d);
+    ValMin = View->MinForDisplacement;
+    ValMax = View->MaxForDisplacement;
+  }
+
   double Raise[3][8];
   for(int i = 0; i < 3; i++)
     for(int k = 0; k < nbnod; k++)
       Raise[i][k] = View->Raise[i] * d[k];
 
-  if(View->VectorType == DRAW_POST_DISPLACEMENT) {
+  if(View->VectorType == DRAW_POST_DISPLACEMENT ||
+     View->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
 
     fact = View->DisplacementFactor;
     for(int k = 0; k < nbnod; k++) {
@@ -906,7 +976,7 @@ void Draw_VectorElement(int type, Post_View * View,
     View->TimeStep = 0;
     switch (type) {
     case POINT:
-      Draw_ScalarPoint(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarPoint(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       if(ts) {  //draw trajectory
         if(View->LineType) {
           double dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
@@ -950,25 +1020,25 @@ void Draw_VectorElement(int type, Post_View * View,
       }
       break;
     case LINE:
-      Draw_ScalarLine(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarLine(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       break;
     case TRIANGLE:
-      Draw_ScalarTriangle(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       break;
     case TETRAHEDRON:
-      Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       break;
     case QUADRANGLE:
-      Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarQuadrangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       break;
     case HEXAHEDRON:
-      Draw_ScalarHexahedron(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarHexahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       break;
     case PRISM:
-      Draw_ScalarPrism(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       break;
     case PYRAMID:
-      Draw_ScalarPyramid(View, 0, ValMin, ValMax, xx, yy, zz, d);
+      Draw_ScalarPyramid(View, preproNormals, ValMin, ValMax, xx, yy, zz, d);
       break;
     }
     View->TimeStep = ts;
@@ -1058,55 +1128,55 @@ void Draw_VectorElement(int type, Post_View * View,
   }
 }
 
-#define ARGS Post_View *View, 			\
-             double ValMin, double ValMax, 	\
+#define ARGS Post_View *View, int preproNormals, \
+             double ValMin, double ValMax, 	 \
              double *X, double *Y, double *Z, double *V
 
 void Draw_VectorPoint(ARGS)
 {
-  Draw_VectorElement(POINT, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(POINT, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorLine(ARGS)
 {
-  Draw_VectorElement(LINE, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(LINE, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorTriangle(ARGS)
 {
-  Draw_VectorElement(TRIANGLE, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(TRIANGLE, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorTetrahedron(ARGS)
 {
-  Draw_VectorElement(TETRAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(TETRAHEDRON, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorQuadrangle(ARGS)
 {
-  Draw_VectorElement(QUADRANGLE, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(QUADRANGLE, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorHexahedron(ARGS)
 {
-  Draw_VectorElement(HEXAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(HEXAHEDRON, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorPrism(ARGS)
 {
-  Draw_VectorElement(PRISM, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(PRISM, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorPyramid(ARGS)
 {
-  Draw_VectorElement(PYRAMID, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_VectorElement(PYRAMID, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 #undef ARGS
 
 // Tensor Elements
 
-void Draw_TensorElement(int type, Post_View * View,
+void Draw_TensorElement(int type, Post_View * View, int preproNormals,
                         double ValMin, double ValMax,
                         double *X, double *Y, double *Z, double *V)
 {
@@ -1138,76 +1208,76 @@ void Draw_TensorElement(int type, Post_View * View,
 
   switch (type) {
   case POINT:
-    Draw_ScalarPoint(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarPoint(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case LINE:
-    Draw_ScalarLine(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarLine(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case TRIANGLE:
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case QUADRANGLE:
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarQuadrangle(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case TETRAHEDRON:
-    Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case HEXAHEDRON:
-    Draw_ScalarHexahedron(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarHexahedron(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case PRISM:
-    Draw_ScalarPrism(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case PYRAMID:
-    Draw_ScalarPyramid(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
+    Draw_ScalarPyramid(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   }
 
   View->TimeStep = ts;
 }
 
-#define ARGS Post_View *View, 			\
-             double ValMin, double ValMax, 	\
+#define ARGS Post_View *View, int preproNormals, \
+             double ValMin, double ValMax, 	 \
              double *X, double *Y, double *Z, double *V
 
 void Draw_TensorPoint(ARGS)
 {
-  Draw_TensorElement(POINT, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(POINT, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorLine(ARGS)
 {
-  Draw_TensorElement(LINE, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(LINE, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorTriangle(ARGS)
 {
-  Draw_TensorElement(TRIANGLE, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(TRIANGLE, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorTetrahedron(ARGS)
 {
-  Draw_TensorElement(TETRAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(TETRAHEDRON, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorQuadrangle(ARGS)
 {
-  Draw_TensorElement(QUADRANGLE, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(QUADRANGLE, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorHexahedron(ARGS)
 {
-  Draw_TensorElement(HEXAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(HEXAHEDRON, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorPrism(ARGS)
 {
-  Draw_TensorElement(PRISM, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(PRISM, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorPyramid(ARGS)
 {
-  Draw_TensorElement(PYRAMID, View, ValMin, ValMax, X, Y, Z, V);
+  Draw_TensorElement(PYRAMID, View, preproNormals, ValMin, ValMax, X, Y, Z, V);
 }
 
 #undef ARGS

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.179 2004-08-16 17:52:58 remacle Exp $
+// $Id: Options.cpp,v 1.180 2004-09-01 20:23:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4929,19 +4929,19 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
     v->TensorType = (int)val;
     v->Changed = 1;
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num)) {
-    switch (v->TensorType) {
-    case DRAW_POST_EIGENVECTORS:
-      WID->view_choice[4]->value(1);
-      break;
-    case DRAW_POST_VONMISES:
-    default:
-      WID->view_choice[4]->value(0);
-      break;
-    }
-  }
-#endif
+// #if defined(HAVE_FLTK)
+//   if(_gui_action_valid(action, num)) {
+//     switch (v->TensorType) {
+//     case DRAW_POST_EIGENVECTORS:
+//       WID->view_choice[4]->value(1);
+//       break;
+//     case DRAW_POST_VONMISES:
+//     default:
+//       WID->view_choice[4]->value(0);
+//       break;
+//     }
+//   }
+// #endif
   return v->TensorType;
 }
 
@@ -5064,6 +5064,20 @@ double opt_view_alpha_channel(OPT_ARGS_NUM)
     v->AlphaChannel = val;
   }
   return v->AlphaChannel;
+}
+
+double opt_view_raised_scalar_view(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->RaisedScalarView = (int)val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[64]->value(v->RaisedScalarView);
+#endif
+  return v->RaisedScalarView;
 }
 
 double opt_print_format(OPT_ARGS_NUM)

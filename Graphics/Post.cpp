@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.76 2004-08-28 00:48:37 geuzaine Exp $
+// $Id: Post.cpp,v 1.77 2004-09-01 20:23:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -231,19 +231,23 @@ int compareEye8Nodes(const void *a, const void *b)
 
 // Draw_Post
 
-void Draw_ScalarList(Post_View * v, double ValMin, double ValMax,
-                     List_T * list, int nbelm, int nbnod, int smoothnormals,
-		     void (*draw) (Post_View *, int, double, double, double *, 
-				   double *, double *, double *))
+void Draw_List(Post_View * v, double ValMin, double ValMax,
+	       List_T * list, int nbelm, int nbnod,
+	       void (*draw) (Post_View *, int, double, double, double *, 
+			     double *, double *, double *))
 {
   int i, nb;
   double X[8], Y[8], Z[8];
 
-  if(nbelm && v->DrawScalars) {
+  if(nbelm) {
     nb = List_Nbr(list) / nbelm;
-    if(smoothnormals && v->Light && v->SmoothNormals && v->Changed) {
-      v->reset_normals(); 
+
+    v->ViewForDisplacement = 
+      (Post_View*)List_Pointer_Test(CTX.post.list, v->RaisedScalarView);
+
+    if(v->Light && v->SmoothNormals && v->Changed) {
       Msg(DEBUG, "Preprocessing of normals in View[%d]", v->Index);
+      v->ElementForDisplacement = 0;
       for(i = 0; i < List_Nbr(list); i += nb) {
         Get_Coords(v->Explode, v->Offset, nbnod,
                    (double *)List_Pointer_Fast(list, i),
@@ -251,8 +255,11 @@ void Draw_ScalarList(Post_View * v, double ValMin, double ValMax,
                    (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
         draw(v, 1, ValMin, ValMax, X, Y, Z,
              (double *)List_Pointer_Fast(list, i + 3 * nbnod));
+	v->ElementForDisplacement++;
       }
     }
+
+    v->ElementForDisplacement = 0;
     for(i = 0; i < List_Nbr(list); i += nb) {
       Get_Coords(v->Explode, v->Offset, nbnod,
                  (double *)List_Pointer_Fast(list, i),
@@ -260,48 +267,7 @@ void Draw_ScalarList(Post_View * v, double ValMin, double ValMax,
                  (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
       draw(v, 0, ValMin, ValMax, X, Y, Z,
            (double *)List_Pointer_Fast(list, i + 3 * nbnod));
-    }
-  }
-}
-
-void Draw_VectorList(Post_View * v, double ValMin, double ValMax,
-                     List_T * list, int nbelm, int nbnod, 
-                     void (*draw) (Post_View *, double, double,
-                                   double *, double *, double *, double *))
-{
-  int i, nb;
-  double X[8], Y[8], Z[8];
-
-  if(nbelm && v->DrawVectors) {
-    nb = List_Nbr(list) / nbelm;
-    for(i = 0; i < List_Nbr(list); i += nb) {
-      Get_Coords(v->Explode, v->Offset, nbnod,
-                 (double *)List_Pointer_Fast(list, i),
-                 (double *)List_Pointer_Fast(list, i + nbnod),
-                 (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
-      draw(v, ValMin, ValMax, X, Y, Z,
-           (double *)List_Pointer_Fast(list, i + 3 * nbnod));
-    }
-  }
-}
-
-void Draw_TensorList(Post_View * v, double ValMin, double ValMax,
-                     List_T * list, int nbelm, int nbnod, 
-                     void (*draw) (Post_View *, double, double,
-                                   double *, double *, double *, double *))
-{
-  int i, nb;
-  double X[8], Y[8], Z[8];
-
-  if(nbelm && v->DrawTensors) {
-    nb = List_Nbr(list) / nbelm;
-    for(i = 0; i < List_Nbr(list); i += nb) {
-      Get_Coords(v->Explode, v->Offset, nbnod,
-                 (double *)List_Pointer_Fast(list, i),
-                 (double *)List_Pointer_Fast(list, i + nbnod),
-                 (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
-      draw(v, ValMin, ValMax, X, Y, Z,
-           (double *)List_Pointer_Fast(list, i + 3 * nbnod));
+      v->ElementForDisplacement++;
     }
   }
 }
@@ -406,6 +372,8 @@ void Draw_Post(void)
 	ValMax = v->TimeStepMax[v->TimeStep];
 	break;
       }
+      v->MinForDisplacement = ValMin;
+      v->MaxForDisplacement = ValMax;
       
       switch (v->ScaleType) {
       case DRAW_POST_LINEAR:
@@ -421,6 +389,9 @@ void Draw_Post(void)
 	v->GVFI = GiveValueFromIndex_DoubleLog;
 	break;
       }
+
+      if(v->Light && v->SmoothNormals && v->Changed)
+	v->reset_normals();
 
       // initialize alpha blending for transparency
       if(CTX.alpha && ColorTable_IsAlpha(&v->CT)){
@@ -472,17 +443,22 @@ void Draw_Post(void)
 	  }
 	}
       }
-      
+
       if(v->DrawPoints) {
-	if(v->Type == DRAW_POST_3D)
-	  Draw_ScalarList(v, ValMin, ValMax, v->SP, v->NbSP, 1, 0, Draw_ScalarPoint);
-	Draw_VectorList(v, ValMin, ValMax, v->VP, v->NbVP, 1, Draw_VectorPoint);
-	Draw_TensorList(v, ValMin, ValMax, v->TP, v->NbTP, 1, Draw_TensorPoint);
+	if(v->Type == DRAW_POST_3D && v->DrawScalars)
+	  Draw_List(v, ValMin, ValMax, v->SP, v->NbSP, 1, Draw_ScalarPoint);
+	if(v->DrawVectors)
+	  Draw_List(v, ValMin, ValMax, v->VP, v->NbVP, 1, Draw_VectorPoint);
+	if(v->DrawTensors)
+	  Draw_List(v, ValMin, ValMax, v->TP, v->NbTP, 1, Draw_TensorPoint);
       }
       if(v->DrawLines) {
-	Draw_ScalarList(v, ValMin, ValMax, v->SL, v->NbSL, 2, 0, Draw_ScalarLine);
-	Draw_VectorList(v, ValMin, ValMax, v->VL, v->NbVL, 2, Draw_VectorLine);
-	Draw_TensorList(v, ValMin, ValMax, v->TL, v->NbTL, 2, Draw_TensorLine);
+	if(v->DrawScalars)
+	  Draw_List(v, ValMin, ValMax, v->SL, v->NbSL, 2, Draw_ScalarLine);
+	if(v->DrawVectors)
+	  Draw_List(v, ValMin, ValMax, v->VL, v->NbVL, 2, Draw_VectorLine);
+	if(v->DrawTensors)
+	  Draw_List(v, ValMin, ValMax, v->TL, v->NbTL, 2, Draw_TensorLine);
       }
 
       for(int pass = 0; pass < 2; pass++){
@@ -517,40 +493,52 @@ void Draw_Post(void)
 
       pass_0:
 	if(v->DrawTriangles) {
-	  if(!skip_2d)
-	    Draw_ScalarList(v, ValMin, ValMax, v->ST, v->NbST, 3, 1, Draw_ScalarTriangle);
-	  Draw_VectorList(v, ValMin, ValMax, v->VT, v->NbVT, 3, Draw_VectorTriangle);
-	  Draw_TensorList(v, ValMin, ValMax, v->TT, v->NbTT, 3, Draw_TensorTriangle);
+	  if(!skip_2d && v->DrawScalars)
+	    Draw_List(v, ValMin, ValMax, v->ST, v->NbST, 3, Draw_ScalarTriangle);
+	  if(v->DrawVectors)
+	    Draw_List(v, ValMin, ValMax, v->VT, v->NbVT, 3, Draw_VectorTriangle);
+	  if(v->DrawTensors)
+	    Draw_List(v, ValMin, ValMax, v->TT, v->NbTT, 3, Draw_TensorTriangle);
 	}
 	if(v->DrawQuadrangles) {
-	  if(!skip_2d)
-	    Draw_ScalarList(v, ValMin, ValMax, v->SQ, v->NbSQ, 4, 1, Draw_ScalarQuadrangle);
-	  Draw_VectorList(v, ValMin, ValMax, v->VQ, v->NbVQ, 4, Draw_VectorQuadrangle);
-	  Draw_TensorList(v, ValMin, ValMax, v->TQ, v->NbTQ, 4, Draw_TensorQuadrangle);
+	  if(!skip_2d && v->DrawScalars)
+	    Draw_List(v, ValMin, ValMax, v->SQ, v->NbSQ, 4, Draw_ScalarQuadrangle);
+	  if(v->DrawVectors)
+	    Draw_List(v, ValMin, ValMax, v->VQ, v->NbVQ, 4, Draw_VectorQuadrangle);
+	  if(v->DrawTensors)
+	    Draw_List(v, ValMin, ValMax, v->TQ, v->NbTQ, 4, Draw_TensorQuadrangle);
 	}
 	if(v->DrawTetrahedra) {
-	  if(!skip_3d)
-	    Draw_ScalarList(v, ValMin, ValMax, v->SS, v->NbSS, 4, 1, Draw_ScalarTetrahedron);
-	  Draw_VectorList(v, ValMin, ValMax, v->VS, v->NbVS, 4, Draw_VectorTetrahedron);
-	  Draw_TensorList(v, ValMin, ValMax, v->TS, v->NbTS, 4, Draw_TensorTetrahedron);
+	  if(!skip_3d && v->DrawScalars)
+	    Draw_List(v, ValMin, ValMax, v->SS, v->NbSS, 4, Draw_ScalarTetrahedron);
+	  if(v->DrawVectors)
+	    Draw_List(v, ValMin, ValMax, v->VS, v->NbVS, 4, Draw_VectorTetrahedron);
+	  if(v->DrawTensors)
+	    Draw_List(v, ValMin, ValMax, v->TS, v->NbTS, 4, Draw_TensorTetrahedron);
 	}
 	if(v->DrawHexahedra) {
-	  if(!skip_3d)
-	    Draw_ScalarList(v, ValMin, ValMax, v->SH, v->NbSH, 8, 1, Draw_ScalarHexahedron);
-	  Draw_VectorList(v, ValMin, ValMax, v->VH, v->NbVH, 8, Draw_VectorHexahedron);
-	  Draw_TensorList(v, ValMin, ValMax, v->TH, v->NbTH, 8, Draw_TensorHexahedron);
+	  if(!skip_3d && v->DrawScalars)
+	    Draw_List(v, ValMin, ValMax, v->SH, v->NbSH, 8, Draw_ScalarHexahedron);
+	  if(v->DrawVectors)
+	    Draw_List(v, ValMin, ValMax, v->VH, v->NbVH, 8, Draw_VectorHexahedron);
+	  if(v->DrawTensors)
+	    Draw_List(v, ValMin, ValMax, v->TH, v->NbTH, 8, Draw_TensorHexahedron);
 	}
 	if(v->DrawPrisms) {
-	  if(!skip_3d)
-	    Draw_ScalarList(v, ValMin, ValMax, v->SI, v->NbSI, 6, 1, Draw_ScalarPrism);
-	  Draw_VectorList(v, ValMin, ValMax, v->VI, v->NbVI, 6, Draw_VectorPrism);
-	  Draw_TensorList(v, ValMin, ValMax, v->TI, v->NbTI, 6, Draw_TensorPrism);
+	  if(!skip_3d && v->DrawScalars)
+	    Draw_List(v, ValMin, ValMax, v->SI, v->NbSI, 6, Draw_ScalarPrism);
+	  if(v->DrawVectors)
+	    Draw_List(v, ValMin, ValMax, v->VI, v->NbVI, 6, Draw_VectorPrism);
+	  if(v->DrawTensors)
+	    Draw_List(v, ValMin, ValMax, v->TI, v->NbTI, 6, Draw_TensorPrism);
 	}
 	if(v->DrawPyramids) {
-	  if(!skip_3d)
-	    Draw_ScalarList(v, ValMin, ValMax, v->SY, v->NbSY, 5, 1, Draw_ScalarPyramid);
-	  Draw_VectorList(v, ValMin, ValMax, v->VY, v->NbVY, 5, Draw_VectorPyramid);
-	  Draw_TensorList(v, ValMin, ValMax, v->TY, v->NbTY, 5, Draw_TensorPyramid);
+	  if(!skip_3d && v->DrawScalars)
+	    Draw_List(v, ValMin, ValMax, v->SY, v->NbSY, 5, Draw_ScalarPyramid);
+	  if(v->DrawVectors)
+	    Draw_List(v, ValMin, ValMax, v->VY, v->NbVY, 5, Draw_VectorPyramid);
+	  if(v->DrawTensors)
+	    Draw_List(v, ValMin, ValMax, v->TY, v->NbTY, 5, Draw_TensorPyramid);
 	}
 
       pass_1:

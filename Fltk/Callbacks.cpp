@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.265 2004-08-15 02:27:48 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.266 2004-09-01 20:23:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3367,7 +3367,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double line_type = opt_view_line_type(current, GMSH_GET, 0);
   double vector_type = opt_view_vector_type(current, GMSH_GET, 0);
   double arrow_location = opt_view_arrow_location(current, GMSH_GET, 0);
-  double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
+  //double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
   double range_type = opt_view_range_type(current, GMSH_GET, 0);
   double grid = opt_view_grid(current, GMSH_GET, 0);
   double boundary = opt_view_boundary(current, GMSH_GET, 0);
@@ -3406,6 +3406,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double timestep = opt_view_timestep(current, GMSH_GET, 0);
   double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
   double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
+  double raised_scalar_view = opt_view_raised_scalar_view(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
@@ -3490,6 +3491,9 @@ void view_options_ok_cb(CALLBACK_ARGS)
       case 4:
 	val = DRAW_POST_DISPLACEMENT;
 	break;
+      case 5:
+	val = DRAW_POST_DISPLACEMENT_EXTERNAL;
+	break;
       default: // 3
 	val = DRAW_POST_ARROW3D;
 	break;
@@ -3508,16 +3512,16 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != arrow_location))
         opt_view_arrow_location(i, GMSH_SET, val);
 
-      switch (WID->view_choice[4]->value()) {
-      case 0:
-	val = DRAW_POST_VONMISES;
-	break;
-      default:
-	val = DRAW_POST_EIGENVECTORS;
-	break;
-      }
-      if(force || (val != tensor_type))
-        opt_view_tensor_type(i, GMSH_SET, val);
+//     switch (WID->view_choice[4]->value()) {
+//     case 0:
+// 	val = DRAW_POST_VONMISES;
+//      break;
+//     default:
+// 	val = DRAW_POST_EIGENVECTORS;
+// 	break;
+//     }
+//     if(force || (val != tensor_type))
+//       opt_view_tensor_type(i, GMSH_SET, val);
 
       switch (WID->view_choice[7]->value()) {
       case 0:
@@ -3677,6 +3681,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_value[63]->value();
       if(force || (val != displacement_factor))
         opt_view_displacement_factor(i, GMSH_SET, val);
+
+      val = WID->view_value[64]->value();
+      if(force || (val != raised_scalar_view))
+        opt_view_raised_scalar_view(i, GMSH_SET, val);
 
       val = WID->view_value[61]->value();
       if(force || (val != point_size))

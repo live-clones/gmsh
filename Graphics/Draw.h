@@ -100,73 +100,73 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 void Draw_ScalarPoint(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax, 
 		      double *X, double *Y, double *Z, double *V);
-void Draw_VectorPoint(Post_View *View, 
+void Draw_VectorPoint(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax, 
 		      double *X, double *Y, double *Z, double *V);
-void Draw_TensorPoint(Post_View *View, 
+void Draw_TensorPoint(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax, 
 		      double *X, double *Y, double *Z, double *V);
 void Draw_ScalarLine(Post_View *View, int preproNormals,
 		     double ValMin, double ValMax, 
 		     double *X, double *Y, double *Z, double *V);
-void Draw_VectorLine(Post_View *View, 
+void Draw_VectorLine(Post_View *View, int preproNormals,
 		     double ValMin, double ValMax, 
 		     double *X, double *Y, double *Z, double *V);
-void Draw_TensorLine(Post_View *View, 
+void Draw_TensorLine(Post_View *View, int preproNormals,
 		     double ValMin, double ValMax,
 		     double *X, double *Y, double *Z, double *V);
 void Draw_ScalarTriangle(Post_View *View, int preproNormals,
 			 double ValMin, double ValMax,
 			 double *X, double *Y, double *Z, double *V);
-void Draw_VectorTriangle(Post_View *View, 
+void Draw_VectorTriangle(Post_View *View, int preproNormals,
 			 double ValMin, double ValMax,
 			 double *X, double *Y, double *Z, double *V);
-void Draw_TensorTriangle(Post_View *View, 
+void Draw_TensorTriangle(Post_View *View, int preproNormals,
 			 double ValMin, double ValMax,
 			 double *X, double *Y, double *Z, double *V);
 void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
 			    double ValMin, double ValMax,
 			    double *X, double *Y, double *Z, double *V);
-void Draw_VectorTetrahedron(Post_View *View, 
+void Draw_VectorTetrahedron(Post_View *View, int preproNormals,
 			    double ValMin, double ValMax,
 			    double *X, double *Y, double *Z, double *V);
-void Draw_TensorTetrahedron(Post_View *View, 
+void Draw_TensorTetrahedron(Post_View *View, int preproNormals,
 			    double ValMin, double ValMax,
 			    double *X, double *Y, double *Z, double *V);
 void Draw_ScalarQuadrangle(Post_View *View, int preproNormals,
 			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
-void Draw_VectorQuadrangle(Post_View *View, 
+void Draw_VectorQuadrangle(Post_View *View, int preproNormals,
 			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
-void Draw_TensorQuadrangle(Post_View *View, 
+void Draw_TensorQuadrangle(Post_View *View, int preproNormals,
 			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_ScalarHexahedron(Post_View *View, int preproNormals,
 			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
-void Draw_VectorHexahedron(Post_View *View, 
+void Draw_VectorHexahedron(Post_View *View, int preproNormals,
 			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
-void Draw_TensorHexahedron(Post_View *View, 
+void Draw_TensorHexahedron(Post_View *View, int preproNormals,
 			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_ScalarPrism(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax,
 		      double *X, double *Y, double *Z, double *V);
-void Draw_VectorPrism(Post_View *View, 
+void Draw_VectorPrism(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax,
 		      double *X, double *Y, double *Z, double *V);
-void Draw_TensorPrism(Post_View *View, 
+void Draw_TensorPrism(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax,
 		      double *X, double *Y, double *Z, double *V);
 void Draw_ScalarPyramid(Post_View *View, int preproNormals,
 			double ValMin, double ValMax,
 			double *X, double *Y, double *Z, double *V);
-void Draw_VectorPyramid(Post_View *View, 
+void Draw_VectorPyramid(Post_View *View, int preproNormals,
 			double ValMin, double ValMax,
 			double *X, double *Y, double *Z, double *V);
-void Draw_TensorPyramid(Post_View *View, 
+void Draw_TensorPyramid(Post_View *View, int preproNormals,
 			double ValMin, double ValMax,
 			double *X, double *Y, double *Z, double *V);
 

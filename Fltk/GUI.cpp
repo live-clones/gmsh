@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.336 2004-08-16 17:52:59 remacle Exp $
+// $Id: GUI.cpp,v 1.337 2004-09-01 20:23:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -456,6 +456,7 @@ int GUI::global_shortcuts(int event)
     if(g_window && g_window->shown()) g_window->show();
     if(opt_window && opt_window->shown()) opt_window->show();
     if(vis_window && vis_window->shown()) vis_window->show();
+    if(clip_window && clip_window->shown()) clip_window->show();
     if(stat_window && stat_window->shown()) stat_window->show();
     if(msg_window && msg_window->shown()) msg_window->show();
     if(m_window && m_window->shown()) m_window->show();
@@ -2558,6 +2559,7 @@ void GUI::create_option_window()
           {"Pyramid", 0, 0, 0},
           {"3D arrow", 0, 0, 0},
           {"Displacement", 0, 0, 0},
+          {"Raised scalar view", 0, 0, 0},
           {0}
         };
         view_choice[2] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
@@ -2575,23 +2577,29 @@ void GUI::create_option_window()
         view_value[63] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view_value[63]->align(FL_ALIGN_RIGHT);
 
+        view_value[64] = new Fl_Value_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Raised scalar view number");
+        view_value[64]->minimum(0);
+        view_value[64]->maximum(10);
+        view_value[64]->step(1);
+        view_value[64]->align(FL_ALIGN_RIGHT);
+
         static Fl_Menu_Item menu_vecloc[] = {
           {"Cell centered", 0, 0, 0},
           {"Vertex centered", 0, 0, 0},
           {0}
         };
-        view_choice[3] = new Fl_Choice(2 * WB, 2 * WB + 9 * BH, IW, BH, "Arrow location");
+        view_choice[3] = new Fl_Choice(2 * WB, 2 * WB + 10 * BH, IW, BH, "Arrow location");
         view_choice[3]->menu(menu_vecloc);
         view_choice[3]->align(FL_ALIGN_RIGHT);
 
-        static Fl_Menu_Item menu_tensor[] = {
-          {"Von-Mises", 0, 0, 0},
+        //static Fl_Menu_Item menu_tensor[] = {
+	  //{"Von-Mises", 0, 0, 0},
           //{"Eigenvectors", 0, 0, 0}, //not implemented yet
-          {0}
-        };
-        view_choice[4] = new Fl_Choice(2 * WB, 2 * WB + 10 * BH, IW, BH, "Tensor display");
-        view_choice[4]->menu(menu_tensor);
-        view_choice[4]->align(FL_ALIGN_RIGHT);
+          //{0}
+        //};
+        //view_choice[4] = new Fl_Choice(2 * WB, 2 * WB + 10 * BH, IW, BH, "Tensor display");
+        //view_choice[4]->menu(menu_tensor);
+        //view_choice[4]->align(FL_ALIGN_RIGHT);
 
         view_vector->end();
       }
@@ -2780,8 +2788,9 @@ void GUI::update_view_window(int num)
   opt_view_vector_type(num, GMSH_GUI, 0);
   opt_view_arrow_size(num, GMSH_GUI, 0);
   opt_view_displacement_factor(num, GMSH_GUI, 0);
+  opt_view_raised_scalar_view(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
-  opt_view_tensor_type(num, GMSH_GUI, 0);
+  //opt_view_tensor_type(num, GMSH_GUI, 0);
   view_push_butt[0]->callback(view_arrow_param_cb, (void*)num);
 
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);

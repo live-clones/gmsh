@@ -1,4 +1,4 @@
-$Id: TODO,v 1.60 2004-08-20 17:54:20 geuzaine Exp $
+$Id: TODO,v 1.61 2004-09-01 20:23:49 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -6,6 +6,10 @@ surface loops and lines in line loops
 (To make things simple, all line loops should be oriented "aire a
 gauche", and all surface loops whould be oriented with exterior
 normals...)
+
+********************************************************************
+
+Raise & offsets should modify the bouding boxes... (maybe?)
 
 ********************************************************************
 

@@ -83,10 +83,15 @@ class Post_View{
   int Boundary, Grid, PointType, LineType;
   double PointSize, LineWidth;
   GmshColorTable CT;
+  int RaisedScalarView;
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
+  int ElementForDisplacement;
+  Post_View *ViewForDisplacement;
+  double MinForDisplacement, MaxForDisplacement;
+
   // smooth the view
   void smooth();
   // smooth normals
@@ -114,11 +119,12 @@ class Post_View{
 #define DRAW_POST_NUMERIC      4
 
 // VectorType
-#define DRAW_POST_SEGMENT      1
-#define DRAW_POST_ARROW        2
-#define DRAW_POST_PYRAMID      3
-#define DRAW_POST_ARROW3D      4
-#define DRAW_POST_DISPLACEMENT 5
+#define DRAW_POST_SEGMENT               1
+#define DRAW_POST_ARROW                 2
+#define DRAW_POST_PYRAMID               3
+#define DRAW_POST_ARROW3D               4
+#define DRAW_POST_DISPLACEMENT          5
+#define DRAW_POST_DISPLACEMENT_EXTERNAL 6
 
 // ArrowLocation
 #define DRAW_POST_LOCATE_COG     1

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.43 2004-05-29 10:11:12 geuzaine Exp $
+// $Id: Scale.cpp,v 1.44 2004-09-01 20:23:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -68,20 +68,26 @@ void draw_scale(Post_View * v,
     glEnd();
   }
 
-  switch(v->RangeType){
-  case DRAW_POST_RANGE_CUSTOM:
-    ValMin = v->CustomMin;
-    ValMax = v->CustomMax;
-    break;
-  case DRAW_POST_RANGE_PER_STEP:
-    ValMin = v->TimeStepMin[v->TimeStep];
-    ValMax = v->TimeStepMax[v->TimeStep];
-    break;
-  case DRAW_POST_RANGE_DEFAULT:
-  default:
-    ValMin = v->Min;
-    ValMax = v->Max;
-    break;
+  if(v->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
+    ValMin = v->MinForDisplacement;
+    ValMax = v->MaxForDisplacement;
+  }
+  else{
+    switch(v->RangeType){
+    case DRAW_POST_RANGE_CUSTOM:
+      ValMin = v->CustomMin;
+      ValMax = v->CustomMax;
+      break;
+    case DRAW_POST_RANGE_PER_STEP:
+      ValMin = v->TimeStepMin[v->TimeStep];
+      ValMax = v->TimeStepMax[v->TimeStep];
+      break;
+    case DRAW_POST_RANGE_DEFAULT:
+    default:
+      ValMin = v->Min;
+      ValMax = v->Max;
+      break;
+    }
   }
 
   switch (v->ScaleType) {
