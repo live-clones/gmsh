@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.20 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: Entity.cpp,v 1.21 2002-11-07 08:06:31 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -117,17 +117,6 @@ void Draw_Quadrangle (double *x, double *y, double *z, double *n,
   else
     Draw_Triangle(x2,y2,z2,n,Raise,shade);
 
-}
-
-void Draw_Polygon (int n, double *x, double *y, double *z,
-                   double Raise[3][8]){
-  int i;
-  
-  glBegin(GL_POLYGON);
-  for(i=0;i<n;i++) glVertex3d(x[i]+Raise[0][i],
-                              y[i]+Raise[1][i],
-                              z[i]+Raise[2][i]);
-  glEnd();
 }
 
 void Draw_Vector (int Type, int Fill, 

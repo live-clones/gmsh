@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.14 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: Iso.cpp,v 1.15 2002-11-07 08:06:31 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -95,10 +95,12 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   if(Val[io[2]] < V1) return;
 
   if(V1 <= Val[io[0]] && Val[io[2]] <= V2){
-    memcpy(Vp2,Val,3*sizeof(double));
-    memcpy(Xp2,X,3*sizeof(double)); 
-    memcpy(Yp2,Y,3*sizeof(double)); 
-    memcpy(Zp2,Z,3*sizeof(double)); 
+    for(i=0;i<3;i++){
+      Vp2[i]=Val[i];
+      Xp2[i]=X[i];
+      Yp2[i]=Y[i];
+      Zp2[i]=Z[i];
+    }
     *Np2 = 3;
     return;
   }
@@ -207,7 +209,7 @@ void CutLine1D(double *X, double *Y, double *Z, double *Val,
                double V1, double V2, double Vmin, double Vmax,
                double *Xp2, double *Yp2, double *Zp2, int *Np2, double *Vp2){
 
-  int io[2];
+  int i, io[2];
 
   if(Val[0]<Val[1]){
     io[0] = 0;
@@ -228,10 +230,12 @@ void CutLine1D(double *X, double *Y, double *Z, double *Val,
   *Np2 = 2;
 
   if(V1 <= Val[io[0]] && Val[io[1]] <= V2){
-    memcpy(Vp2,Val,2*sizeof(double));
-    memcpy(Xp2,X,2*sizeof(double)); 
-    memcpy(Yp2,Y,2*sizeof(double)); 
-    memcpy(Zp2,Z,2*sizeof(double)); 
+    for(i=0;i<2;i++){
+      Vp2[i]=Val[i];
+      Xp2[i]=X[i];
+      Yp2[i]=Y[i];
+      Zp2[i]=Z[i];
+    }
     return;
   }
 

@@ -77,7 +77,6 @@ void Draw_Triangle (double *x, double *y, double *z,double *n,
                     double Raise[3][8], int shade);
 void Draw_Quadrangle (double *x, double *y, double *z, double *n,
                       double Raise[3][8], int shade);
-void Draw_Polygon (int n, double *x, double *y, double *z, double Raise[3][8]);
 void Draw_Vector (int Type, int Fill,
                   double x, double y, double z,
                   double d, double dx, double dy, double dz,

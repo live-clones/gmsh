@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.1 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.2 2002-11-07 08:06:31 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,12 @@
 // USA.
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
+
+
+// OK, I understood why the Cut2D stuff does not work correctly with
+// TWO_FACE and light. The normal has tpo be coherent with the vertex
+// ordering. doing i=nb-1; i>=0; i-- works when the classic order does
+// not. So we really have to check the ordering of the output of cut2d
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -444,7 +450,11 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
                         Xp,Yp,Zp,&nb,value);      
           if(nb >= 3){
             for(i=0 ; i<nb ; i++) RaiseFill(i,value[i],ValMin,Raise);    
-            Draw_Polygon(nb,Xp,Yp,Zp,Raise);  
+             glBegin(GL_POLYGON);
+	     for(i=0;i<nb;i++) glVertex3d(Xp[i]+Raise[0][i],
+					  Yp[i]+Raise[1][i],
+					  Zp[i]+Raise[2][i]);
+	     glEnd();
           }
         }
         else{
