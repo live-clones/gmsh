@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.14 2004-06-23 19:53:52 geuzaine Exp $
+$Id: CREDITS,v 1.15 2004-06-26 18:03:24 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2004 
 
@@ -64,6 +64,10 @@ and Andre Battaiola.
 This version of Gmsh may contain code (in the Triangle subdirectory)
 copyright (C) 1993, 1995, 1997, 1998, 2002, Jonathan Richard Shewchuk:
 check the configuration options.
+
+This version of Gmsh may contain code (in the Netgen subdirectory)
+copyright (C) 1994-2004, Joachim Sch"oberl: check the configuration
+options.
 
 Special thanks to Bill Spitzak <spitzak at users.sourceforge.net>,
 Michael Sweet <easysw at users.sourceforge.net>, Matthias Melcher <mm
