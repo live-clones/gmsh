@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.14 2001-03-17 21:33:13 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.15 2001-06-13 13:55:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -265,7 +265,7 @@ int Opengl_Window::handle(int event) {
       Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
       if(ov != v || oc != c || os != s) { 
 	if(check_type(WID->selection, v, c, s))
-	  WID->g_window->cursor(FL_CURSOR_CROSS,FL_BLACK,FL_WHITE);
+	  WID->g_window->cursor(Fl_Cursor(18)/*FL_CURSOR_CROSS*/,FL_BLACK,FL_WHITE);
 	else
 	  WID->g_window->cursor(FL_CURSOR_DEFAULT,FL_BLACK,FL_WHITE);
 	BeginHighlight();
