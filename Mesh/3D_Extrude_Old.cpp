@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.4 2001-06-26 09:35:22 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.5 2001-06-27 09:05:35 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -48,6 +48,8 @@ int            ZonLayer   [NB_LAYER_MAX];
 int            LineLayer  [NB_LAYER_MAX];
 int            SurfLayer  [NB_LAYER_MAX+1];
 double         hLayer     [NB_LAYER_MAX];
+double         parLayer   [NB_LAYER_MAX];
+
 
 typedef struct {
   int a,b;
@@ -75,9 +77,14 @@ static void InitExtrudeParams (void){
     printf("Number of elements in layer %d: ",i+1);
     scanf("%d",&NbElmLayer[i]);
     fprintf(file, "%d\n", NbElmLayer[i]);fflush(file);
+
     printf("Depth of layer %d: ",i+1);
     scanf("%lf",&hLayer[i]);
     fprintf(file, "%g\n", hLayer[i]);fflush(file);
+
+    printf("Progresion ratio for layer %d: ",i+1);
+    scanf("%lf",&parLayer[i]);
+    fprintf(file, "%g\n", parLayer[i]);fflush(file);
   }
   Tree_Ares = Tree_Create(sizeof(nxn),compnxn);
   Tree_Swaps = Tree_Create(sizeof(nxn),compnxn);
@@ -356,7 +363,7 @@ static void Extrude_Vertex (void *data , void *dum){
 
   Vertex **pV , *v, *newv;
   int i,j;
-  double h;
+  double h,a;
 
   pV = (Vertex**)data;
   v = *pV;
@@ -364,9 +371,17 @@ static void Extrude_Vertex (void *data , void *dum){
   v->Extruded_Points = List_Create(NbLayer,1,sizeof(Vertex*));
   List_Add(v->Extruded_Points,&v);
   h = 0.0;
+ 
   for(i=0;i<NbLayer;i++){
+    
+    a = hLayer[i] * (parLayer[i]-1.)/(pow(parLayer[i],NbElmLayer[i])-1.) ;
+
     for(j=0;j<NbElmLayer[i];j++){
-      h += hLayer[i]/(double)NbElmLayer[i];
+
+      //h += hLayer[i]/(double)NbElmLayer[i];
+      
+      h += a*pow(parLayer[i],j);
+
       newv = Create_Vertex(++CurrentNodeNumber,v->Pos.X,v->Pos.Y,v->Pos.Z + h, v->lc , v->u );
       Tree_Add(THEM->Vertices,&newv);
       List_Add(v->Extruded_Points,&newv);
