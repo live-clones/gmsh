@@ -1,4 +1,13 @@
-$Id: TODO,v 1.24 2003-07-09 17:14:39 geuzaine Exp $
+$Id: TODO,v 1.25 2003-09-17 22:02:42 geuzaine Exp $
+
+Yves Krahenbuhl wrote:
+
+> Lors de la creation des elements du 2eme ordre, et selon la courbure
+> du contour exterieur, le jacobien de l'element peut devenir negatif.
+> Cependant le programme genere le maillage sans protester. Il
+> faudrait peut-etre faire apparaitre un message d'erreurs / ou se
+> restreindre (automatiquement ou non) a une interpolation lineaire
+> entre les points en question.
 
 ********************************************************************
 
