@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.89 2004-05-29 10:11:12 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.90 2004-05-29 10:39:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -229,8 +229,7 @@ void Draw_Mesh_Surface(void *a, void *b)
   if(!(s->Visible & VIS_MESH))
     return;
 
-  if(CTX.mesh.vertex_arrays && Tree_Nbr(s->Simplexes) && !CTX.threads_lock){
-    CTX.threads_lock = 1;
+  if(CTX.mesh.vertex_arrays && Tree_Nbr(s->Simplexes)){
     if(CTX.mesh.changed){
       Msg(DEBUG, "regenerate mesh vertex array");
       if(s->vertexArray) delete s->vertexArray;
@@ -243,7 +242,6 @@ void Draw_Mesh_Surface(void *a, void *b)
     }
     if(s->vertexArray && useTheVertexArray)
       Draw_Mesh_Triangle_Array(s->vertexArray);
-    CTX.threads_lock = 0;
   }
     
   fillTheVertexArray = 0; // just to make sure...

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.61 2004-05-29 10:11:12 geuzaine Exp $
+// $Id: Post.cpp,v 1.62 2004-05-29 10:39:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -247,7 +247,7 @@ void Draw_ScalarList(Post_View * v, double ValMin, double ValMax,
       // we might save some normal stuff by checking if the change
       // actually changed the "geometry"... Should put e.g. Change=2
       // if timestep changed, etc.
-      Msg(DEBUG, "Preprocessing of normals in view %d", v->Num);
+      Msg(DEBUG, "Preprocessing of normals in View[%d]", v->Index);
       for(i = 0; i < List_Nbr(list); i += nb) {
         Get_Coords(v->Explode, v->Offset, nbnod,
                    (double *)List_Pointer_Fast(list, i),
@@ -456,10 +456,9 @@ void Draw_Post(void)
       for(int p = 0; p < 2; p++){ // two-passes for vertex arrays
 	int skip_2d = 0, skip_3d = 0;
 	if(p == 0){
-	  if(CTX.post.vertex_arrays && !CTX.threads_lock){
-	    CTX.threads_lock = 1;
+	  if(CTX.post.vertex_arrays){
 	    if(v->Changed){
-	      Msg(DEBUG, "regenerate View[%d] vertex array", v->Num);
+	      Msg(DEBUG, "regenerate View[%d] vertex array", v->Index);
 	      if(v->VertexArray) delete v->VertexArray;
 	      v->VertexArray = new triangleVertexArray(10000);
 	      v->FillVertexArray = 1;
@@ -522,7 +521,6 @@ void Draw_Post(void)
       pass2:
 	v->FillVertexArray = 0;
 	v->UseVertexArray = 0;
-	CTX.threads_lock = 0;
       }
 
       if(CTX.post.vertex_arrays && v->VertexArray){
