@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.22 2004-04-27 00:11:55 geuzaine Exp $
+// $Id: Iso.cpp,v 1.23 2004-05-08 00:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -440,7 +440,7 @@ void IsoSimplex(Post_View * View,
       Raise[i][k] = View->Raise[i] * V;
 
   if(nb == 3)
-    Draw_Triangle(Xp, Yp, Zp, norms, Raise, View->Light);
+    Draw_Triangle(Xp, Yp, Zp, norms, Raise, View->Light, false);
   else if(nb == 4)
-    Draw_Quadrangle(Xp, Yp, Zp, norms, Raise, View->Light);
+    Draw_Quadrangle(Xp, Yp, Zp, norms, Raise, View->Light, false);
 }

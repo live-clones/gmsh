@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.222 2004-04-24 06:13:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.223 2004-05-08 00:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -515,6 +515,14 @@ void _save_msh_all_v2(char *name)
   CTX.mesh.save_all = all;
   CTX.mesh.msh_file_version = ver;
 }
+void _save_lc_sur(char *name)
+{
+  CreateOutputFile(name, FORMAT_LC_SUR);
+}
+void _save_lc_vol(char *name)
+{
+  CreateOutputFile(name, FORMAT_LC_VOL);
+}
 void _save_gref(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_GREF);
@@ -694,6 +702,8 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh mesh v1.0 without physicals (*.msh)", _save_msh_all},
     {"Gmsh mesh v2.0 (*.msh)", _save_msh_v2},
     {"Gmsh mesh v2.0 without physicals (*.msh)", _save_msh_all_v2},
+    {"Gmsh Surface LC field (*.pos)", _save_lc_sur},
+    {"Gmsh Volume LC field (*.pos)", _save_lc_vol},
     {"GREF mesh (*.gref)", _save_gref},
     {"I-DEAS universal mesh format (*.unv)", _save_unv},
     {"VRML surface mesh (*.wrl)", _save_vrml},

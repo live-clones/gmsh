@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.37 2004-04-23 18:31:01 geuzaine Exp $
+// $Id: Entity.cpp,v 1.38 2004-05-08 00:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -126,12 +126,12 @@ void Draw_Line(int type, double width, double *x, double *y, double *z,
 }
 
 void Draw_Triangle(double *x, double *y, double *z, double *n,
-                   double Raise[3][8], int light)
+                   double Raise[3][8], int light, bool polygon_offset)
 {
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
 
   if(light) glEnable(GL_LIGHTING);
-  glEnable(GL_POLYGON_OFFSET_FILL);
+  if(polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
 
   glBegin(GL_TRIANGLES);
   if(light) {
@@ -170,13 +170,13 @@ void Draw_Triangle(double *x, double *y, double *z, double *n,
 }
 
 void Draw_Quadrangle(double *x, double *y, double *z, double *n,
-                     double Raise[3][8], int light)
+                     double Raise[3][8], int light, bool polygon_offset)
 {
   double x2[3] = { x[2], x[3], x[0] };
   double y2[3] = { y[2], y[3], y[0] };
   double z2[3] = { z[2], z[3], z[0] };
 
-  Draw_Triangle(x, y, z, n, Raise, light);
+  Draw_Triangle(x, y, z, n, Raise, light, polygon_offset);
   if(n) {
     double n2[9];
     n2[0] = n[6];
@@ -188,10 +188,10 @@ void Draw_Quadrangle(double *x, double *y, double *z, double *n,
     n2[6] = n[0];
     n2[7] = n[1];
     n2[8] = n[2];
-    Draw_Triangle(x2, y2, z2, n2, Raise, light);
+    Draw_Triangle(x2, y2, z2, n2, Raise, light, polygon_offset);
   }
   else
-    Draw_Triangle(x2, y2, z2, n, Raise, light);
+    Draw_Triangle(x2, y2, z2, n, Raise, light, polygon_offset);
 }
 
 void Draw_SimpleVector(int arrow, int fill,

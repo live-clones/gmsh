@@ -76,9 +76,9 @@ void Draw_Point(int type, double size, double *x, double *y, double *z,
 void Draw_Line(int type, double width, double *x, double *y, double *z,
 	       double Raise[3][8], int light);
 void Draw_Triangle(double *x, double *y, double *z,double *n,
-		   double Raise[3][8], int light);
+		   double Raise[3][8], int light, bool polygon_offset);
 void Draw_Quadrangle(double *x, double *y, double *z, double *n,
-		     double Raise[3][8], int light);
+		     double Raise[3][8], int light, bool polygon_offset);
 void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.57 2004-04-08 19:26:49 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.58 2004-05-08 00:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -82,6 +82,8 @@ void CreateOutputFile(char *name, int format)
       CreateOutputFile(name, FORMAT_MSH);
     else if(!strcmp(ext, ".unv"))
       CreateOutputFile(name, FORMAT_UNV);
+    else if(!strcmp(ext, ".pos"))
+      CreateOutputFile(name, FORMAT_LC_SUR);
     else if(!strcmp(ext, ".gif"))
       CreateOutputFile(name, FORMAT_GIF);
     else if(!strcmp(ext, ".jpg"))
@@ -132,6 +134,16 @@ void CreateOutputFile(char *name, int format)
   case FORMAT_GREF:
   case FORMAT_VRML:
     Print_Mesh(&M, name, format);
+    break;
+
+  case FORMAT_LC_SUR:
+    ExportLcFieldOnSurfaces(&M, name);
+    Msg(STATUS2N, "Wrote '%s'", name);
+    break;
+
+  case FORMAT_LC_VOL:
+    ExportLcFieldOnVolume(&M, name);
+    Msg(STATUS2N, "Wrote '%s'", name);
     break;
 
   case FORMAT_JPEG:
@@ -308,5 +320,4 @@ void CreateOutputFile(char *name, int format)
   }
 
   CTX.print.format = oldformat;
-
 }

@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.28 2004-05-07 22:51:11 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.29 2004-05-08 00:19:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,19 +30,19 @@
 extern Mesh *THEM;
 extern Context_T CTX;
 
-void ExportLcFieldOnVolume(Mesh * M)
+void ExportLcFieldOnVolume(Mesh * M, char *filename)
 {
   List_T *l = Tree2List(M->Volumes);
   Volume *vol;
   Simplex *simp;
-  FILE *f = fopen("OutFile.pos", "w");
+  FILE *f = fopen(filename, "w");
 
   if(!f) {
-    Msg(GERROR, "Unable to open file");
+    Msg(GERROR, "Unable to open file '%s'", filename);
     return;
   }
 
-  fprintf(f, "View \"LC_FIELD\" Offset{0,0,0} {\n");
+  fprintf(f, "View \"LC_FIELD\" {\n");
   for(int i = 0; i < List_Nbr(l); i++) {
     List_Read(l, i, &vol);
     List_T *ll = Tree2List(vol->Simplexes);
@@ -57,19 +57,19 @@ void ExportLcFieldOnVolume(Mesh * M)
   fclose(f);
 }
 
-void ExportLcFieldOnSurfaces(Mesh * M)
+void ExportLcFieldOnSurfaces(Mesh * M, char *filename)
 {
   List_T *l = Tree2List(M->Surfaces);
   Surface *surf;
   Simplex *simp;
-  FILE *f = fopen("OutFileS.pos", "w");
+  FILE *f = fopen(filename, "w");
 
   if(!f) {
-    Msg(GERROR, "Unable to open file");
+    Msg(GERROR, "Unable to open file '%s'", filename);
     return;
   }
 
-  fprintf(f, "View \"LC_FIELD\" Offset{0,0,0} {\n");
+  fprintf(f, "View \"LC_FIELD\" {\n");
   for(int i = 0; i < List_Nbr(l); i++) {
     List_Read(l, i, &surf);
     List_T *ll = Tree2List(surf->Simplexes);
@@ -134,7 +134,7 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
   }
 
   if(l <= 0.){
-    Msg(GERROR, "Characteristic length <= 0: setting to 1.0");
+    Msg(WARNING, "Characteristic length <= 0: setting to 1.0");
     l = 1.0;
   }
 

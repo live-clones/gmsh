@@ -57,6 +57,8 @@
 #define FORMAT_PDF_RASTER    28
 #define FORMAT_EPSTEX_RASTER 29
 #define FORMAT_PDFTEX_RASTER 30
+#define FORMAT_LC_SUR        31
+#define FORMAT_LC_VOL        32
 
 #define CONV_VALUE    0.8
 
@@ -504,6 +506,8 @@ void ActionLiss (void *data, void *dummy);
 void ActionLissSurf (void *data, void *dummy);
 int  Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
 void ApplyLcFactor(Mesh *M);
+void ExportLcFieldOnVolume(Mesh * M, char *filename);
+void ExportLcFieldOnSurfaces(Mesh * M, char *filename);
 
 void Gamma_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
 void Eta_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
