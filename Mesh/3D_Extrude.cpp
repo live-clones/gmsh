@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.28 2001-08-13 10:43:16 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.29 2001-08-13 15:16:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -746,9 +746,10 @@ int Extrude_Mesh (Volume * v){
     // cretainly not the most efficient way to do it but it seems to work
     //
     // In order to suppress only the tri/qua that have to, i.e. all
-    // those created by the extrusion, they are tagged with a negative
-    // number, that they will keep their lives in order for adjacent
-    // volumes to respect the coherence of their common boundaries
+    // those created by extrude_seg(), we tag tag them with a negative
+    // number. These elts will keep this negative number during their
+    // whole lives in order for adjacent volumes to respect the
+    // coherence of their common boundaries.
     
     for (i = 0; i < List_Nbr (v->Surfaces); i++){
       List_Read (v->Surfaces, i, &ss);
