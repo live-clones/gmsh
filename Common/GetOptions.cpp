@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.29 2001-07-08 15:45:47 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.30 2001-07-31 08:10:33 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -371,8 +371,11 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       else if(!strcmp(argv[i]+1, "noview")){ 
         opt_view_visible(0, GMSH_SET, 0); i++;
       }
-      else if(!strcmp(argv[i]+1, "plug")){ 
+      else if(!strcmp(argv[i]+1, "plugin")){ 
 	opt_general_default_plugins(0, GMSH_SET, 1); i++;
+      }
+      else if(!strcmp(argv[i]+1, "noplugin")){ 
+	opt_general_default_plugins(0, GMSH_SET, 0); i++;
       }
       else if(!strcmp(argv[i]+1, "link")){ 
         CTX.post.link = 2 ; i++;
