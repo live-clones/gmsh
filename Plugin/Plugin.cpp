@@ -77,7 +77,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
 
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
 {
-#if ( defined(WIN32) && !defined(__CYGWIN__) ) || defined(_NODLL) )
+#if ( defined(WIN32) && !defined(__CYGWIN__) ) || defined(_NODLL)
   Msg(WARNING,"Plugins not yet implemented for WIN32 native compiler");
   return;
 #else
