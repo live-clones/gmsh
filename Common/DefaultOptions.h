@@ -446,7 +446,7 @@ StringXNumber ViewOptions_Number[] = {
   { F, "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
   { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_ISO ,
-    "Type of interval display (1=iso, 2=discrete, 3=continuous, 4=numeric)" },
+    "Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)" },
   { F|O, "SaturateValues" , opt_view_saturate_values , 0 ,
     "Saturate the view values to custom min and max (1=true, 0=false)" },
   { F|O, "NbIso" , opt_view_nb_iso , 15. ,
