@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.336 2005-02-20 06:36:52 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.337 2005-02-28 23:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -404,6 +404,12 @@ int _save_unv(char *name)
   return 1;
 }
 
+int _save_p3d(char *name)
+{
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_P3D);
+  return 1;
+}
+
 int _save_vrml(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_VRML);
@@ -503,6 +509,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh characteristic length field (*.pos)", _save_lc},
     {"GREF mesh (*.gref)", _save_gref},
     {"I-DEAS universal mesh (*.unv)", _save_unv},
+    {"PLOT3D formatted ASCII mgrid (*.p3d)", _save_p3d},
     {"VRML surface mesh (*.wrl)", _save_vrml},
     {"STL triangulation (*.stl)", _save_stl},
     {"GIF (*.gif)", _save_gif},

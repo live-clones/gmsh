@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.54 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.55 2005-02-28 23:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -1, -2, -3            Perform batch 1D, 2D and 3D mesh generation");
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               Specify mesh output file name");
-  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, gref)");
+  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, gref, p3d)");
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, aniso, netgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
@@ -395,6 +395,10 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
           else if(!strcmp(argv[i], "gref") ||
                   !strcmp(argv[i], "GREF") || !strcmp(argv[i], "Gref")) {
             CTX.mesh.format = FORMAT_GREF;
+          }
+          else if(!strcmp(argv[i], "p3d") ||
+                  !strcmp(argv[i], "P3D") || !strcmp(argv[i], "Plot3D")) {
+            CTX.mesh.format = FORMAT_P3D;
           }
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh format\n");

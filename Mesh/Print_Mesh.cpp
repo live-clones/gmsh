@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.59 2005-02-04 16:06:10 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.60 2005-02-28 23:57:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1604,6 +1604,216 @@ void Print_Mesh_DMG(Mesh *m, FILE *fp)
   // write the volumes (2 b continued...)
 }
 
+// Write mesh in Plot3D format, ASCII structured, multi-zone
+// FIXME: still need to implement this for extruded grids
+
+static FILE *P3DFILE;
+
+int _p3d_cmp_entities(const void *a, const void *b)
+{
+  Element **e1 = (Element **) a;
+  Element **e2 = (Element **) b;
+
+  return (*e1)->iEnt - (*e2)->iEnt;
+}
+
+
+int _p3d_cmp_surf_num(const void *a, const void *b)
+{
+  Surface **e1 = (Surface **) a;
+  Surface **e2 = (Surface **) b;
+
+  return (*e1)->Num - (*e2)->Num;
+}
+
+int _p3d_cmp_vol_num(const void *a, const void *b)
+{
+  Volume **e1 = (Volume **) a;
+  Volume **e2 = (Volume **) b;
+
+  return (*e1)->Num - (*e2)->Num;
+}
+
+void _p3d_print_quads(List_T *ListQuads, int Nu, int Nv)
+{
+  int i = 0, j = 0, c = 1, curQuad = 0;
+  double coord;
+  Quadrangle *pQ;
+
+  for (c = 0; c < 3; c++) {
+    for (j = 0; j < (Nu - 1); j++) {
+      for (i = 0; i < (Nv - 1); i++) {
+        curQuad = i + (j * (Nv - 1));
+        List_Read(ListQuads, curQuad, &pQ);
+        coord = (c==0) ? pQ->V[0]->Pos.X : ((c==1) ? pQ->V[0]->Pos.Y : pQ->V[0]->Pos.Z);
+        fprintf(P3DFILE, "%g ", coord * CTX.mesh.scaling_factor);
+      }
+      coord = (c==0) ? pQ->V[3]->Pos.X : ((c==1) ? pQ->V[3]->Pos.Y : pQ->V[3]->Pos.Z);
+      fprintf(P3DFILE, "%g\n", coord * CTX.mesh.scaling_factor);
+    } j--;
+    for (i = 0; i < (Nv - 1); i++) {
+      curQuad = i + (j * (Nv - 1));
+      List_Read(ListQuads, curQuad, &pQ);
+      coord = (c==0) ? pQ->V[1]->Pos.X : ((c==1) ? pQ->V[1]->Pos.Y : pQ->V[1]->Pos.Z);
+      fprintf(P3DFILE, "%g ", coord * CTX.mesh.scaling_factor);
+    }
+    coord = (c==0) ? pQ->V[2]->Pos.X : ((c==1) ? pQ->V[2]->Pos.Y : pQ->V[2]->Pos.Z);
+    fprintf(P3DFILE, "%g\n", coord * CTX.mesh.scaling_factor);
+  }
+}
+
+void _p3d_print_hex(List_T *ListHex, int Nu, int Nv, int Nw)
+{
+  int i = 0, j = 0, k = 0, c = 0, curHex = 0;
+  double coord;
+  Hexahedron *pH;
+
+  
+  for (c = 0; c < 3; c++) {
+    for (k = 0; k < (Nu - 1); k++) {
+      for (j = 0; j < (Nv - 1); j++) {
+        for (i = 0; i < (Nw - 1); i++) {
+          curHex = i + (j * (Nw - 1)) + (k * (Nw - 1) * (Nv - 1));
+          List_Read(ListHex, curHex, &pH);
+          coord = (c==0) ? pH->V[0]->Pos.X : ((c==1) ? pH->V[0]->Pos.Y : pH->V[0]->Pos.Z);
+          fprintf(P3DFILE, "%g ", coord * CTX.mesh.scaling_factor);
+        }
+       coord = (c==0) ? pH->V[4]->Pos.X : ((c==1) ? pH->V[4]->Pos.Y : pH->V[4]->Pos.Z);
+       fprintf(P3DFILE, "%g\n", coord * CTX.mesh.scaling_factor);
+      } j--;
+      for (i = 0; i < (Nw - 1); i++) {
+        curHex = i + (j * (Nw - 1)) + (k * (Nw - 1) * (Nv - 1));
+        List_Read(ListHex, curHex, &pH);
+        coord = (c==0) ? pH->V[3]->Pos.X : ((c==1) ? pH->V[3]->Pos.Y : pH->V[3]->Pos.Z);
+        fprintf(P3DFILE, "%g ", coord * CTX.mesh.scaling_factor);
+      }
+      coord = (c==0) ? pH->V[7]->Pos.X : ((c==1) ? pH->V[7]->Pos.Y : pH->V[7]->Pos.Z);
+      fprintf(P3DFILE, "%g\n", coord * CTX.mesh.scaling_factor);
+    } k--;
+    for (j = 0; j < (Nv - 1); j++) {
+      for (i = 0; i < (Nw - 1); i++) {
+        curHex = i + (j * (Nw - 1)) + (k * (Nw - 1) * (Nv - 1));
+        List_Read(ListHex, curHex, &pH);
+        coord = (c==0) ? pH->V[1]->Pos.X : ((c==1) ? pH->V[1]->Pos.Y : pH->V[1]->Pos.Z);
+        fprintf(P3DFILE, "%g ", coord * CTX.mesh.scaling_factor);
+      }
+      coord = (c==0) ? pH->V[5]->Pos.X : ((c==1) ? pH->V[5]->Pos.Y : pH->V[5]->Pos.Z);
+      fprintf(P3DFILE, "%g\n", coord * CTX.mesh.scaling_factor);
+    } j--;
+    for (i = 0; i < (Nw - 1); i++) {
+      curHex = i + (j * (Nw - 1)) + (k * (Nw - 1) * (Nv - 1));
+      List_Read(ListHex, curHex, &pH);
+      coord = (c==0) ? pH->V[2]->Pos.X : ((c==1) ? pH->V[2]->Pos.Y : pH->V[2]->Pos.Z);
+      fprintf(P3DFILE, "%g ", coord * CTX.mesh.scaling_factor);
+    }
+    coord = (c==0) ? pH->V[6]->Pos.X : ((c==1) ? pH->V[6]->Pos.Y : pH->V[6]->Pos.Z);
+    fprintf(P3DFILE, "%g\n", coord * CTX.mesh.scaling_factor);
+  }
+}
+
+void _p3d_print_all_elements(Mesh *M)
+{
+  int i, Nv, Nu, ElemCnt = 0;
+  Volume *pV;
+  Surface *pS;
+  List_T *ListQuads;
+  List_T *ListHex;
+
+  List_T *ListSurfaces = Tree2List(M->Surfaces);
+  List_T *ListVolumes = Tree2List(M->Volumes);
+
+  List_T *ListStructSurf = List_Create(1,1,sizeof(Surface *));
+  List_T *ListStructVol = List_Create(1,1,sizeof(Volume *));
+
+  List_Sort(ListSurfaces, _p3d_cmp_surf_num);
+  List_Sort(ListVolumes, _p3d_cmp_vol_num);
+
+  for(i = 0; i < List_Nbr(ListSurfaces); i++) {
+    List_Read(ListSurfaces, i, &pS);
+    if (pS->Nu &&
+        pS->Nv &&
+        (Tree_Nbr(pS->Quadrangles) == (pS->Nu - 1) * (pS->Nv - 1))){
+        ElemCnt++;
+        List_Add(ListStructSurf, &pS);
+    }
+  }
+
+  for(i = 0; i < List_Nbr(ListVolumes); i++) {
+    List_Read(ListVolumes, i, &pV);
+    List_Read(pV->Surfaces, 0, &pS);
+    Nu = pS->Nu;
+    Nv = pS->Nv;
+    List_Read(pV->Surfaces, 1, &pS);
+    if (Nu &&
+        Nv &&
+        pS->Nv &&
+        (Tree_Nbr(pV->Hexahedra) == (Nu - 1) * (Nv - 1) * (pS->Nv - 1))){
+        ElemCnt++;
+        List_Add(ListStructVol, &pV);
+    }
+  }
+
+  fprintf(P3DFILE, "%d\n", ElemCnt);
+
+  for(i = 0; i < List_Nbr(ListStructSurf); i++) {
+    List_Read(ListStructSurf, i, &pS);
+    fprintf(P3DFILE, "%d %d 1\n", pS->Nv, pS->Nu);
+  }
+
+  for(i = 0; i < List_Nbr(ListStructVol); i++) {
+    List_Read(ListStructVol, i, &pV);
+    List_Read(pV->Surfaces, 0, &pS);
+    Nu = pS->Nu;
+    Nv = pS->Nv;
+    List_Read(pV->Surfaces, 1, &pS);
+    fprintf(P3DFILE, "%d %d %d\n", pS->Nv, Nv, Nu);
+  }
+
+  for(i = 0; i < List_Nbr(ListStructSurf); i++) {
+    List_Read(ListStructSurf, i, &pS);
+    ListQuads = Tree2List(pS->Quadrangles);
+    List_Sort(ListQuads, _p3d_cmp_entities);
+    _p3d_print_quads(ListQuads, pS->Nu, pS->Nv);
+    List_Delete(ListQuads);
+  }
+
+  for(i = 0; i < List_Nbr(ListStructVol); i++) {
+    List_Read(ListStructVol, i, &pV);
+    List_Read(pV->Surfaces, 0, &pS);
+    Nu = pS->Nu;
+    Nv = pS->Nv;
+    List_Read(pV->Surfaces, 1, &pS);
+    ListHex = Tree2List(pV->Hexahedra);
+    List_Sort(ListHex, _p3d_cmp_entities);
+    _p3d_print_hex(ListHex, Nu, Nv, pS->Nv);
+    List_Delete(ListHex);
+  }
+
+  List_Delete(ListSurfaces);
+  List_Delete(ListVolumes);
+  List_Delete(ListStructSurf);
+  List_Delete(ListStructVol);
+}
+
+void _p3d_print_elements(Mesh *M)
+{
+  // FIXME: to do
+}
+
+void Print_Mesh_P3D(Mesh *M, FILE *fp)
+{
+  P3DFILE = fp;
+
+  if(!List_Nbr(M->PhysicalGroups) || CTX.mesh.save_all) {
+    Msg(INFO, "Saving all elements (discarding physical groups)");
+    _p3d_print_all_elements(M);
+  }
+  else{
+    Msg(WARNING, "No Plot3d format of physicals yet, saving all elements!");
+    //_p3d_print_elements(M);
+    _p3d_print_all_elements(M);
+  }
+}
 
 // Public Print_Mesh routine
 
@@ -1627,6 +1837,7 @@ void Print_Mesh(Mesh *M, char *c, int Type)
   case FORMAT_GREF: strcpy(ext, ".Gref"); break;
   case FORMAT_DMG:  strcpy(ext, ".dmg"); break;
   case FORMAT_STL:  strcpy(ext, ".stl"); break;
+  case FORMAT_P3D:  strcpy(ext, ".p3d"); break;
   default:
     Msg(GERROR, "Unknown mesh file format %d", Type);
     return;
@@ -1650,6 +1861,7 @@ void Print_Mesh(Mesh *M, char *c, int Type)
   case FORMAT_GREF: Print_Mesh_GREF(M, fp); break;
   case FORMAT_DMG:  Print_Mesh_DMG(M, fp); break;
   case FORMAT_STL:  Print_Mesh_STL(M, fp); break;
+  case FORMAT_P3D:  Print_Mesh_P3D(M, fp); break;
   default:
     break;
   }

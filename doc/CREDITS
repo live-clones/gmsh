@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.26 2005-02-04 16:06:10 geuzaine Exp $
+$Id: CREDITS,v 1.27 2005-02-28 23:57:59 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2005
 
@@ -19,8 +19,9 @@ univ.u-3mrs.fr> for new colormaps; Patrick Dular <patrick.dular at
 ulg.ac.be> for transfinite mesh bug fixes; Laurent Stainier
 <l.stainier at ulg.ac.be> for the eigenvalue solvers and for help with
 the MacOS port and the tensor display code; Pierre Badel <badel at
-freesurf.fr> for help with the GSL integration; and Marc Ume <Marc.Ume
-at digitalgraphics.be> for the original list code.
+freesurf.fr> for help with the GSL integration; Marc Ume <Marc.Ume at
+digitalgraphics.be> for the original list code; Matt Gundry
+<mjgundry at faa-engineers.com> for the Plot3d mesh format.
 
 The AVL tree code (DataStr/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -94,7 +95,7 @@ at debian.org>, Sebastien.Clerc <Sebastien.Clerc at space.alcatel.fr>,
 Jose Miguel Pasini <jmp84 at cornell.edu>, Philippe Lussou <plussou at
 necs.fr>, Jacques Kools <JKools at veeco.com>, Bayram Yenikaya
 <yenikaya at math.umn.edu>, Peter Hornby <p.hornby at arrc.csiro.au>,
-Krishna Mohan Gundu <gkmohan at gmail.com>, Christopher Stott
-<C.Stott@surrey.ac.uk>, Timmy Schumacher
-<Tim.Schumacher@colorado.edu>, Carl Osterwisch <osterwischc@asme.org>,
-Bruno Frackowiak <bruno.frackowiak@onecert.fr>.
+Krishna Mohan Gundu <gkmohan at gmail.com>, Christopher Stott <C.Stott
+at surrey.ac.uk>, Timmy Schumacher <Tim.Schumacher at colorado.edu>,
+Carl Osterwisch <osterwischc at asme.org>, Bruno Frackowiak
+<bruno.frackowiak at onecert.fr>.

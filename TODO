@@ -1,4 +1,13 @@
-$Id: TODO,v 1.85 2005-02-26 04:53:12 geuzaine Exp $
+$Id: TODO,v 1.86 2005-02-28 23:57:59 geuzaine Exp $
+
+********************************************************************
+
+add a mode to pick a mesh element with the mouse (a la medit)
+
+********************************************************************
+
+add option to cutmesh to cap the mesh instead of displaying "whole"
+elements
 
 ********************************************************************
 
