@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.15 2001-02-18 18:11:17 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.16 2001-02-26 10:26:37 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -242,8 +242,12 @@ void add_msh_elements (Mesh * M){
         List_Read (p->Entities, j, &Num);
         pv->Num = abs (Num);
         MSH_PHYSICAL_ORI = sign (Num);
-        if (Tree_Query (M->Vertices, &pv))
+        if (Tree_Query (M->Points, &pv))
           add_msh_point (pv);
+	else{
+	  if (Tree_Query (M->Vertices, &pv))
+	    add_msh_point (pv);
+	}
       }
       break;
 
