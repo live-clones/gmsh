@@ -8,6 +8,7 @@ Copyright: GPL
 Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
 Packager: geuz@geuz.org
+Prereq: /sbin/install-info
 Buildroot: /var/tmp/%{name}-buildroot
 Requires: Mesa >= 3.2
 Prefix: /usr
