@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.1 2004-03-07 22:24:48 geuzaine Exp $
+// $Id: Extract.cpp,v 1.2 2004-03-07 23:49:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,7 @@ static void extract(int comp, List_T *inList, int inNb,
     return;
 
   if(comp < 0 || comp > nbComp-1){
-    Msg(GERROR, "Cannot extract component #(%d+1)=%d of a %d-component field", 
+    Msg(GERROR, "Cannot extract component #(%d+1)=%d from a %d-component field", 
 	comp, comp+1, nbComp);
   }
 
