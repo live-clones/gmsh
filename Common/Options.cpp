@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.141 2004-04-08 22:14:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.142 2004-04-13 18:46:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2906,7 +2906,7 @@ double opt_geometry_point_type(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->geo_choice[0]->value(CTX.geom.point_type);
+    WID->geo_choice[0]->value(CTX.geom.point_type ? 1 : 0);
   }
 #endif
   return CTX.geom.point_type;
@@ -2937,7 +2937,7 @@ double opt_geometry_line_type(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->geo_choice[1]->value(CTX.geom.line_type);
+    WID->geo_choice[1]->value(CTX.geom.line_type ? 1 : 0);
   }
 #endif
   return CTX.geom.line_type;
@@ -3290,7 +3290,7 @@ double opt_mesh_point_type(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->mesh_choice[0]->value(CTX.mesh.point_type);
+    WID->mesh_choice[0]->value(CTX.mesh.point_type ? 1 : 0);
   }
 #endif
   return CTX.mesh.point_type;
@@ -3317,7 +3317,7 @@ double opt_mesh_line_type(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->mesh_choice[1]->value(CTX.mesh.line_type);
+    WID->mesh_choice[1]->value(CTX.mesh.line_type ? 1 : 0);
   }
 #endif
   return CTX.mesh.line_type;
@@ -4088,11 +4088,12 @@ double opt_view_intervals_type(OPT_ARGS_NUM)
     case DRAW_POST_DISCRETE:
       WID->view_choice[0]->value(1);
       break;
-    case DRAW_POST_CONTINUOUS:
-      WID->view_choice[0]->value(2);
-      break;
     case DRAW_POST_NUMERIC:
       WID->view_choice[0]->value(3);
+      break;
+    case DRAW_POST_CONTINUOUS:
+    default:
+      WID->view_choice[0]->value(2);
       break;
     }
   }
@@ -4551,14 +4552,15 @@ double opt_view_scale_type(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     switch (v->ScaleType) {
-    case DRAW_POST_LINEAR:
-      WID->view_choice[1]->value(0);
-      break;
     case DRAW_POST_LOGARITHMIC:
       WID->view_choice[1]->value(1);
       break;
     case DRAW_POST_DOUBLELOGARITHMIC:
       WID->view_choice[1]->value(2);
+      break;
+    case DRAW_POST_LINEAR:
+    default:
+      WID->view_choice[1]->value(0);
       break;
     }
   }
@@ -4576,14 +4578,15 @@ double opt_view_range_type(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     switch(v->RangeType){
-    case DRAW_POST_RANGE_DEFAULT:
-      WID->view_choice[7]->value(0);
-      break;
     case DRAW_POST_RANGE_PER_STEP:
       WID->view_choice[7]->value(1);
       break;
     case DRAW_POST_RANGE_CUSTOM:
       WID->view_choice[7]->value(2);
+      break;
+    case DRAW_POST_RANGE_DEFAULT:
+    default:
+      WID->view_choice[7]->value(0);
       break;
     }
   }
@@ -4601,11 +4604,12 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     switch (v->TensorType) {
-    case DRAW_POST_VONMISES:
-      WID->view_choice[4]->value(0);
-      break;
     case DRAW_POST_EIGENVECTORS:
       WID->view_choice[4]->value(1);
+      break;
+    case DRAW_POST_VONMISES:
+    default:
+      WID->view_choice[4]->value(0);
       break;
     }
   }
@@ -4655,11 +4659,12 @@ double opt_view_arrow_location(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     switch (v->ArrowLocation) {
-    case DRAW_POST_LOCATE_COG:
-      WID->view_choice[3]->value(0);
-      break;
     case DRAW_POST_LOCATE_VERTEX:
       WID->view_choice[3]->value(1);
+      break;
+    case DRAW_POST_LOCATE_COG:
+    default:
+      WID->view_choice[3]->value(0);
       break;
     }
   }
