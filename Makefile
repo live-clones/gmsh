@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.188 2002-02-12 23:26:04 geuzaine Exp $
+# $Id: Makefile,v 1.189 2002-02-13 09:16:06 stainier Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 34
@@ -657,4 +657,24 @@ link-solaris-scorec:
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
 solaris-scorec: compile-solaris-scorec link-solaris-scorec
+
+#
+# MacOS X
+#
+compile-macosx: initialtag
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CXX=$(CXX)" \
+           "CC=$(CC)" \
+           "AR=ar ruv" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/Projects/fltk" \
+        ); done
+link-macosx:
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L../fltk/lib -lfltk_gl -lfltk_base \
+               -framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices
+	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh ../fltk/FL/mac.r
+macosx: compile-macosx link-macosx
 

@@ -1,9 +1,16 @@
-// $Id: Message.cpp,v 1.24 2001-11-20 09:04:54 geuzaine Exp $
+// $Id: Message.cpp,v 1.25 2002-02-13 09:20:41 stainier Exp $
 
 #include <unistd.h>
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
+#ifdef __APPLE__
+#include <sys/time.h>
+#endif /* __APPLE__ */
 #include <sys/resource.h>
+#ifdef __APPLE__
+#define   RUSAGE_SELF      0
+#define   RUSAGE_CHILDREN -1
+#endif /* __APPLE__ */
 #endif
 
 #include "Gmsh.h"

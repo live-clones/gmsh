@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.31 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.32 2002-02-13 09:20:41 stainier Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -161,7 +161,7 @@ void Draw_ScalarLine(Post_View *View,
     }
     else{
       for(k=0 ; k<View->NbIso ; k++){
-	Palette(View,View->NbIso,k);
+	Palette1(View,View->NbIso,k);
 	if(View->IntervalsType==DRAW_POST_DISCRETE){
 	  CutLine1D(X,Y,Z,&Val[0],
 		    View->GVFI(ValMin,ValMax,View->NbIso+1,k),
@@ -329,7 +329,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
     else{
       for(k=0 ; k<View->NbIso ; k++){
         if(View->IntervalsType == DRAW_POST_DISCRETE){
-          Palette(View,View->NbIso,k);
+          Palette1(View,View->NbIso,k);
           CutTriangle2D(X,Y,Z,Val,
                         View->GVFI(ValMin,ValMax,View->NbIso+1,k),
                         View->GVFI(ValMin,ValMax,View->NbIso+1,k+1),
@@ -341,7 +341,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
           }
         }
         else{
-          Palette(View,View->NbIso,k);
+          Palette1(View,View->NbIso,k);
           thev = View->GVFI(ValMin,ValMax,View->NbIso,k);
           CutTriangle1D(X,Y,Z,Val,
                         thev, ValMin,ValMax,Xp,Yp,Zp,&nb);        
@@ -421,7 +421,7 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
   }
   else{
     for(k=0 ; k<View->NbIso ; k++){
-      if(!preproNormals) Palette(View,View->NbIso,k);
+      if(!preproNormals) Palette1(View,View->NbIso,k);
       IsoSimplex(View, preproNormals, X, Y, Z, Val,
 		 View->GVFI(ValMin,ValMax,View->NbIso,k), 
 		 ValMin, ValMax, Raise);
@@ -500,7 +500,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
     dz /= (double)nbnod; zc /= (double)nbnod;
     dd = sqrt(dx*dx+dy*dy+dz*dz);
     if(dd!=0.0 && dd>=ValMin && dd<=ValMax){             
-      Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,dd));            
+      Palette1(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,dd));            
       if(View->IntervalsType == DRAW_POST_NUMERIC){
 	glRasterPos3d(xc, yc, zc);
 	sprintf(Num, View->Format, dd);
@@ -522,7 +522,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
   else{
     for(k=0 ; k<nbnod ; k++){
       if(d[k]!=0.0 && d[k]>=ValMin && d[k]<=ValMax){           
-	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d[k]));
+	Palette1(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d[k]));
 	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
 	if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	  Val[k][0] /= d[k] ; Val[k][1] /= d[k] ; Val[k][2] /= d[k] ;

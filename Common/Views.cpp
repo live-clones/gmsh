@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.63 2002-01-18 23:46:38 geuzaine Exp $
+// $Id: Views.cpp,v 1.64 2002-02-13 09:20:41 stainier Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -455,7 +455,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   ColorTable_Paste(&dest->CT);
 }
 
-ColorTable *Get_ColorTable(int num){
+GmshColorTable *Get_ColorTable(int num){
   Post_View *v;
 
   if(!CTX.post.list)

@@ -1,7 +1,9 @@
-// $Id: Malloc.cpp,v 1.8 2001-06-07 15:13:08 geuzaine Exp $
+// $Id: Malloc.cpp,v 1.9 2002-02-13 09:20:41 stainier Exp $
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 
 #include "Malloc.h"
 #include "Message.h"

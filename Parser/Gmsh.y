@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.115 2001-12-03 08:41:44 geuzaine Exp $
+// $Id: Gmsh.y,v 1.116 2002-02-13 09:20:41 stainier Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1075,7 +1075,7 @@ Affectation :
 
   | tSTRING '.' tColorTable tAFFECT ListOfColor tEND 
     {
-      ColorTable *ct = Get_ColorTable(0);
+      GmshColorTable *ct = Get_ColorTable(0);
       if(!ct)
 	vyyerror("View[%d] does not exist", 0);
       else{
@@ -1095,7 +1095,7 @@ Affectation :
 
   | tSTRING '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND 
     {
-      ColorTable *ct = Get_ColorTable((int)$3);
+      GmshColorTable *ct = Get_ColorTable((int)$3);
       if(!ct)
 	vyyerror("View[%d] does not exist", (int)$3);
       else{
@@ -2640,7 +2640,7 @@ ListOfColor :
   | tSTRING '[' FExpr ']' '.' tColorTable
     {
       $$ = List_Create(256,10,sizeof(unsigned int)) ;
-      ColorTable *ct = Get_ColorTable((int)$3);
+      GmshColorTable *ct = Get_ColorTable((int)$3);
       if(!ct)
 	vyyerror("View[%d] does not exist", (int)$3);
       else{

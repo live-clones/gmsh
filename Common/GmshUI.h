@@ -10,7 +10,11 @@
 #ifdef _FLTK
 #include <FL/Fl.H>
 #include <FL/gl.h>
+#ifdef __APPLE__
+#include <OpenGL/glu.h>
+#else
 #include <GL/glu.h>
+#endif /* __APPLE__ */
 #endif
 
 

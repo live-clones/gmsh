@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.27 2001-12-03 08:41:44 geuzaine Exp $
+// $Id: Scale.cpp,v 1.28 2002-02-13 09:20:41 stainier Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -85,7 +85,7 @@ void draw_scale(Post_View *v,
 
   for(i=0;i<v->NbIso;i++){
     if(v->IntervalsType==DRAW_POST_DISCRETE){
-      Palette(v,v->NbIso,i);   
+      Palette1(v,v->NbIso,i);   
       glBegin(GL_QUADS);
       glVertex2d(xmin,       ymin+i*cs_bh);
       glVertex2d(xmin+width, ymin+i*cs_bh);
@@ -104,7 +104,7 @@ void draw_scale(Post_View *v,
       glEnd();  
     }
     else{
-      Palette(v,v->NbIso,i);
+      Palette1(v,v->NbIso,i);
       glBegin(GL_LINES);
       glVertex2d(xmin,       ymin+i*cs_bh+0.5*cs_bh);
       glVertex2d(xmin+width, ymin+i*cs_bh+0.5*cs_bh);

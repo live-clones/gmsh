@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.4 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.5 2002-02-13 09:20:14 stainier Exp $
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -6,7 +6,7 @@
 
 extern Context_T CTX ;
 
-void ColorTable_InitParam(int number, ColorTable *ct, 
+void ColorTable_InitParam(int number, GmshColorTable *ct, 
                           int rgb_flag, int alpha_flag){
 
   ct->ipar[COLORTABLE_NUMBER] = number;
@@ -27,7 +27,7 @@ void ColorTable_InitParam(int number, ColorTable *ct,
 
 }
 
-void ColorTable_Recompute(ColorTable *ct, int rgb_flag, int alpha_flag){
+void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
   float curve, bias;
   double gamma;
   int i,r,g,b,a,rotate;
@@ -172,16 +172,16 @@ void ColorTable_Recompute(ColorTable *ct, int rgb_flag, int alpha_flag){
   
 }
 
-static ColorTable clip;
+static GmshColorTable clip;
 
-void ColorTable_Copy(ColorTable *ct){
+void ColorTable_Copy(GmshColorTable *ct){
   clip.size = ct->size;
   memcpy(clip.table, ct->table, ct->size * sizeof(unsigned int));
   memcpy(clip.ipar,  ct->ipar,  COLORTABLE_NBMAX_PARAM * sizeof(int));
   memcpy(clip.fpar,  ct->fpar,  COLORTABLE_NBMAX_PARAM * sizeof(float));
 }
 
-void ColorTable_Paste(ColorTable *ct){
+void ColorTable_Paste(GmshColorTable *ct){
   ct->size = clip.size;
   memcpy(ct->table, clip.table, clip.size * sizeof(unsigned int));
   memcpy(ct->ipar,  clip.ipar,  COLORTABLE_NBMAX_PARAM * sizeof(int));
@@ -189,7 +189,7 @@ void ColorTable_Paste(ColorTable *ct){
 }
 
 
-void ColorTable_Print(ColorTable *ct, FILE *fp){
+void ColorTable_Print(GmshColorTable *ct, FILE *fp){
   int i, r, g, b, a;  
   char tmp1[1024],tmp2[1024];
 

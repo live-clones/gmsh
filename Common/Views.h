@@ -44,7 +44,7 @@ class Post_View{
   int DrawScalars, DrawVectors, DrawTensors;
   int Boundary, Grid;
   double PointSize, LineWidth;
-  ColorTable CT;
+  GmshColorTable CT;
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
@@ -113,7 +113,7 @@ int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
 double ErrorInView(Post_View * ErrView, int *n);
 Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double *y);
 
-ColorTable *Get_ColorTable(int num);
+GmshColorTable *Get_ColorTable(int num);
 void Print_ColorTable(int num, char *prefix, FILE *file);
 
 #endif

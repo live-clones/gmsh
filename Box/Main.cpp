@@ -1,11 +1,18 @@
-// $Id: Main.cpp,v 1.14 2001-12-05 10:53:11 geuzaine Exp $
+// $Id: Main.cpp,v 1.15 2002-02-13 09:17:48 stainier Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
+#ifdef __APPLE__
+#include <sys/time.h>
+#endif /* __APPLE__ */
 #include <sys/resource.h>
+#ifdef __APPLE__
+#define   RUSAGE_SELF      0
+#define   RUSAGE_CHILDREN -1
+#endif /* __APPLE__ */
 #endif
 
 #include "PluginManager.h"

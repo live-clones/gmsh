@@ -25,14 +25,14 @@ class Colorbar_Window : public Fl_Window {
   int help_flag;   // if nonzero, print help message
   int marker_pos;  // position of marker as index into table
   
-  ColorTable *ct;  // pointer to the color table (allocated in Post_View)
+  GmshColorTable *ct;  // pointer to the color table (allocated in Post_View)
   int *viewchanged;// pointer to changed bit in view
   Fl_Color color_bg;
 
 public:
 
   Colorbar_Window(int x,int y,int w,int h,const char *l=0);
-  void update(char *name, float min, float max, ColorTable *ct, int *changed);
+  void update(char *name, float min, float max, GmshColorTable *ct, int *changed);
 
 };
 

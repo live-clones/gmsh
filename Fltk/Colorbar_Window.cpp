@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.17 2001-11-23 13:32:21 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.18 2002-02-13 09:20:41 stainier Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -328,7 +328,7 @@ void Colorbar_Window::draw(){
 // Update
 
 void Colorbar_Window::update(char *name, float min, float max, 
-			     ColorTable *table, int *changed){
+			     GmshColorTable *table, int *changed){
   label = name;
   ct = table;
   viewchanged = changed;

@@ -9,7 +9,7 @@ typedef struct{
   int size; // must be >= 2
   int ipar[COLORTABLE_NBMAX_PARAM];
   float fpar[COLORTABLE_NBMAX_PARAM];
-}ColorTable;
+}GmshColorTable;
 
 
 /* COLORTABLE_MODE */
@@ -35,10 +35,10 @@ typedef struct{
 #define COLORTABLE_ALPHAVAL  3  /* alpha channel value */
 #define COLORTABLE_BETA      4  /* beta coeff for brighten */
 
-void ColorTable_InitParam (int number, ColorTable * ct, int rgb_flag, int alpha_flag);
-void ColorTable_Recompute (ColorTable * ct, int rgb_flag, int alpha_flag);
-void ColorTable_Copy(ColorTable *ct);
-void ColorTable_Paste(ColorTable *ct);
-void ColorTable_Print(ColorTable *ct, FILE *fp) ;
+void ColorTable_InitParam (int number, GmshColorTable * ct, int rgb_flag, int alpha_flag);
+void ColorTable_Recompute (GmshColorTable * ct, int rgb_flag, int alpha_flag);
+void ColorTable_Copy(GmshColorTable *ct);
+void ColorTable_Paste(GmshColorTable *ct);
+void ColorTable_Print(GmshColorTable *ct, FILE *fp) ;
 
 #endif

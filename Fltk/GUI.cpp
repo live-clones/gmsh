@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.150 2002-02-09 19:50:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.151 2002-02-13 09:20:41 stainier Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -534,6 +534,8 @@ GUI::GUI(int argc, char **argv) {
 #ifdef WIN32
   m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
   				   IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
+#elif defined(__APPLE__)
+  /* ??? */
 #else
   fl_open_display();
   Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),

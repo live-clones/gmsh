@@ -177,7 +177,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.134 2001-12-16 05:16:37 remacle Exp $
+// $Id: Gmsh.tab.cpp,v 1.135 2002-02-13 09:20:41 stainier Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -4222,7 +4222,7 @@ case 162:
 case 163:
 #line 1077 "Gmsh.y"
 {
-      ColorTable *ct = Get_ColorTable(0);
+      GmshColorTable *ct = Get_ColorTable(0);
       if(!ct)
 	vyyerror("View[%d] does not exist", 0);
       else{
@@ -4243,7 +4243,7 @@ case 163:
 case 164:
 #line 1097 "Gmsh.y"
 {
-      ColorTable *ct = Get_ColorTable((int)yyvsp[-6].d);
+      GmshColorTable *ct = Get_ColorTable((int)yyvsp[-6].d);
       if(!ct)
 	vyyerror("View[%d] does not exist", (int)yyvsp[-6].d);
       else{
@@ -6101,7 +6101,7 @@ case 376:
 #line 2641 "Gmsh.y"
 {
       yyval.l = List_Create(256,10,sizeof(unsigned int)) ;
-      ColorTable *ct = Get_ColorTable((int)yyvsp[-3].d);
+      GmshColorTable *ct = Get_ColorTable((int)yyvsp[-3].d);
       if(!ct)
 	vyyerror("View[%d] does not exist", (int)yyvsp[-3].d);
       else{

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.31 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: Post.cpp,v 1.32 2002-02-13 09:20:41 stainier Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,7 +67,7 @@ int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso, double
     Color Palette
    ------------------------------------------------------------------------ */
 
-void Palette(Post_View *v, int nbi, int i){ /* i in [0,nbi-1] */
+void Palette1(Post_View *v, int nbi, int i){ /* i in [0,nbi-1] */
   int index ;
 
   index = (nbi==1) ? 
