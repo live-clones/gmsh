@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.47 2001-09-25 08:20:50 geuzaine Exp $
+// $Id: Options.cpp,v 1.48 2001-09-26 08:28:12 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1595,16 +1595,6 @@ double opt_post_nb_views(OPT_ARGS_NUM){
     CTX.post.nb_views = (int)val;
   return CTX.post.nb_views;
 }
-double opt_post_point_size(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.post.point_size = (int)val;
-  return CTX.post.point_size;
-}
-double opt_post_line_width(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.post.line_width = (int)val;
-  return CTX.post.line_width;
-}
 
 
 
@@ -2065,6 +2055,22 @@ double opt_view_arrow_location(OPT_ARGS_NUM){
   }
 #endif
   return v->ArrowLocation;
+}
+double opt_view_point_size(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->PointSize = (int)val;
+    v->Changed = 1;
+  }
+  return v->PointSize;
+}
+double opt_view_line_width(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->LineWidth = (int)val;
+    v->Changed = 1;
+  }
+  return v->LineWidth;
 }
 
 

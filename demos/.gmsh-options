@@ -165,8 +165,6 @@ PostProcessing.Scales = 1; // Show value scales
 PostProcessing.Link = 0; // Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)
 PostProcessing.Smoothing = 0; // Apply (non-reversible) smoothing to post-processing view when merged
 PostProcessing.AnimationDelay = 0.25; // Delay (in seconds) between to animation frames
-PostProcessing.PointSize = 2; // Display size of points (in pixels)
-PostProcessing.LineWidth = 1; // Display width of lines (in pixels)
 //
 // View options
 //
@@ -195,6 +193,8 @@ View.ScaleType = 1; // Value scale type (1=linear, 2=logarithmic, 3=double logar
 View.RangeType = 1; // Value scale range type (1=default, 2=custom)
 View.ArrowType = 2; // Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)
 View.ArrowLocation = 1; // Arrow location (1=cog, 2=vertex)
+View.PointSize = 2; // Display size of points (in pixels)
+View.LineWidth = 1; // Display width of lines (in pixels)
 View.ColorTable = {
 {17, 246, 238, 255}, {17, 246, 238, 255}, {17, 245, 238, 255}, {17, 245, 238, 255}, 
 {17, 244, 238, 255}, {17, 244, 238, 255}, {18, 243, 237, 255}, {18, 243, 237, 255}, 
@@ -265,7 +265,7 @@ View.ColorTable = {
 // Print options
 //
 Print.EpsFont = "Courier"; // Font used for postscript printing
-Print.Format = 10; // Print format
+Print.Format = 10; // Print format (10=automatic)
 Print.EpsQuality = 2; // Postscript quality (1=simple sort, 2=recursive sort)
 Print.EpsBackground = 0; // Save image background in postscript output
 Print.EpsFontSize = 12; // Font size used for postscript printing

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.53 2001-08-23 18:03:45 geuzaine Exp $
+// $Id: Views.cpp,v 1.54 2001-09-26 08:28:12 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -420,6 +420,8 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->ArrowType = src->ArrowType;
   dest->ArrowLocation = src->ArrowLocation;
   dest->TimeStep = src->TimeStep;
+  dest->PointSize = src->PointSize;
+  dest->LineWidth = src->LineWidth;
   ColorTable_Copy(&src->CT);
   ColorTable_Paste(&dest->CT);
 }

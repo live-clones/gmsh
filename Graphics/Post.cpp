@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.24 2001-09-25 08:20:50 geuzaine Exp $
+// $Id: Post.cpp,v 1.25 2001-09-26 08:28:12 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -141,12 +141,6 @@ void Draw_Post (void) {
 
   if(!Post_ViewList) return;
 
-  glPointSize(CTX.post.point_size); 
-  gl2psPointSize(CTX.post.point_size * CTX.print.eps_point_size_factor);
-
-  glLineWidth(CTX.post.line_width); 
-  gl2psLineWidth(CTX.post.line_width * CTX.print.eps_line_width_factor);
-
   if(!CTX.post.draw){ // draw only the bbox of the visible views
     for(iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
       v = (Post_View*)List_Pointer(Post_ViewList,iView);
@@ -197,6 +191,12 @@ void Draw_Post (void) {
           Msg(DEBUG, "New Display List");
           glNewList(v->Num, GL_COMPILE_AND_EXECUTE);
         }
+
+	glPointSize(v->PointSize); 
+	gl2psPointSize(v->PointSize * CTX.print.eps_point_size_factor);
+
+	glLineWidth(v->LineWidth); 
+	gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
 
         if(v->Light)
           InitShading();

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.21 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Scale.cpp,v 1.22 2001-09-26 08:28:12 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Views.h"
+#include "gl2ps.h"
 
 extern Context_T   CTX;
 
@@ -66,7 +67,12 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   cv_h    = cs_h ;                    /* valuescale height */
   cv_bh   = 0.0 ;                     /* valuescale box height: to be computed */
 
+  glPointSize(v->PointSize); 
+  gl2psPointSize(v->PointSize * CTX.print.eps_point_size_factor);
 
+  glLineWidth(v->LineWidth); 
+  gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
+	
   if(v->IntervalsType == DRAW_POST_CONTINUOUS)
     glShadeModel(GL_SMOOTH);
   else

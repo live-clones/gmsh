@@ -154,7 +154,6 @@ public :
   // post processing options 
   struct{
     int draw, scales, link ;
-    int point_size, line_width;
     int smooth ;
     int nb_views ;
     double anim_delay ;

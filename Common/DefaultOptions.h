@@ -429,10 +429,6 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Delay (in seconds) between to animation frames" },
   { F, "NbViews" , opt_post_nb_views , 0. ,
     "Current number of views merged (do _not_ change this!)" },
-  { F|O, "PointSize" , opt_post_point_size , 2. , 
-    "Display size of points (in pixels)" },
-  { F|O, "LineWidth" , opt_post_line_width , 1. , 
-    "Display width of lines (in pixels)" },
   { 0, NULL , NULL , 0. }
 } ;
 
@@ -511,6 +507,10 @@ StringXNumber ViewOptions_Number[] = {
     "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)" },
   { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 
     "Arrow location (1=cog, 2=vertex)" },
+  { F|O, "PointSize" , opt_view_point_size , 2. , 
+    "Display size of points (in pixels)" },
+  { F|O, "LineWidth" , opt_view_line_width , 1. , 
+    "Display width of lines (in pixels)" },
   { 0, NULL , NULL , 0. , NULL }
 } ;
 
