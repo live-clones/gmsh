@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.28 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.29 2001-09-01 15:18:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -9,9 +9,6 @@
 #include "Context.h"
 
 extern Context_T CTX;
-
-//test for hanging nodes
-//#define MOES
 
 /* ------------------------------------------------------------------------ */
 /*  M S H    F O R M A T                                                    */
@@ -114,10 +111,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
       if(CTX.mesh.check_duplicates)
 	Duplicates = Tree_Create (sizeof (Vertex *), comparePosition);
 
-#ifdef MOES
-      Tree_T *Duplicates2 = Tree_Create (sizeof (Vertex *), compareVertex);
-#endif
-
       for (i_Element = 0 ; i_Element < Nbr_Elements ; i_Element++) {
         
 	// HACK FROM JF
@@ -208,16 +201,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    Tree_Insert(s->Simplexes, &simp) ;
 	    Tree_Insert(M->Simplexes, &simp) ;
 	    M->Statistics[7]++;
-
-#ifdef MOES
-	    if(!(vertspp = (Vertex**)Tree_PQuery(Duplicates2, &vertsp[0])))
-	      printf("vertex %d belongs to no simplex...", vertsp[0]->Num);
-	    if(!(vertspp = (Vertex**)Tree_PQuery(Duplicates2, &vertsp[1])))
-	      printf("vertex %d belongs to no simplex...", vertsp[1]->Num);
-	    if(!(vertspp = (Vertex**)Tree_PQuery(Duplicates2, &vertsp[2])))
-	      printf("vertex %d belongs to no simplex...", vertsp[2]->Num);
-#endif
-
 	    break;
 	  case QUA1:
 	    simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
@@ -225,6 +208,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    simp->iEnt = Elementary ;
 	    Tree_Insert(s->Simplexes, &simp) ;
 	    Tree_Insert(M->Simplexes, &simp) ;
+	    M->Statistics[7]++;//since s->Simplexes holds quads, too :-(
 	    M->Statistics[8]++;
 	    break;
 	  case TET1:
@@ -234,14 +218,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    Tree_Insert(v->Simplexes, &simp) ;
 	    Tree_Insert(M->Simplexes, &simp) ;
 	    M->Statistics[9]++;
-
-#ifdef MOES
-	    Tree_Insert(Duplicates2, &vertsp[0]);
-	    Tree_Insert(Duplicates2, &vertsp[1]);
-	    Tree_Insert(Duplicates2, &vertsp[2]);
-	    Tree_Insert(Duplicates2, &vertsp[3]);
-#endif
-
 	    break;
 	  case HEX1:
 	    hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
