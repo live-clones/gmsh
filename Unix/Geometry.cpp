@@ -1,4 +1,4 @@
-/* $Id: Geometry.cpp,v 1.4 2000-12-08 10:56:51 geuzaine Exp $ */
+/* $Id: Geometry.cpp,v 1.5 2000-12-08 11:16:55 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -261,23 +261,28 @@ void ForceGeometry_FD (Widgets_T *w){
                 XmNmarginWidth, DIALOG_W,
                 NULL);
 
-  XtVaSetValues(w->FD.saveAsDialog,
+  XtVaSetValues(w->FD.saveMeshAsDialog,
                 XmNmarginHeight, DIALOG_H,
                 XmNmarginWidth, DIALOG_W,
                 NULL);
 
-  XtVaSetValues(w->FD.saveAsFrame[0],
+  XtVaSetValues(w->FD.saveMeshAsFrame[0],
                 XmNshadowType, IN_FRAME_TYPE,
                 XmNshadowThickness, IN_FRAME_SHADOW,
                 NULL);
 
-  XtVaSetValues(w->FD.saveAsFrame[1],
+  XtVaSetValues(w->FD.saveMeshAsFrame[1],
                 XmNchildHorizontalSpacing, TITLE_SPACE,
                 XmNchildVerticalAlignment, TITLE_ALIGN,
                 NULL);
 
-  XtVaSetValues(w->FD.saveAsRowCol,
+  XtVaSetValues(w->FD.saveMeshAsRowCol,
                 XmNmarginWidth, 0,
+                NULL);
+
+  XtVaSetValues(w->FD.saveOptionsAsDialog,
+                XmNmarginHeight, DIALOG_H,
+                XmNmarginWidth, DIALOG_W,
                 NULL);
 
   XtVaSetValues(w->FD.printDialog,

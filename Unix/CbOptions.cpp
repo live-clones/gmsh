@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.11 2000-12-05 19:03:21 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.12 2000-12-08 11:16:55 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -126,7 +126,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
             CTX.r[0],CTX.r[1],CTX.r[2],
             CTX.t[0],CTX.t[1],CTX.t[2],
             CTX.s[0],CTX.s[1],CTX.s[2]);
-    Print_Context(stderr);
+    Print_Context(NULL);
     break ;
 
     /* print */

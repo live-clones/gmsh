@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.9 2000-12-08 10:56:51 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.10 2000-12-08 11:16:55 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -147,6 +147,7 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   case FILE_LOAD_GEOM          : OpenProblem(c); Init(); Draw(); break;
   case FILE_LOAD_POST          : MergeProblem(c); ColorBarRedraw(); Init(); Draw(); break;
   case FILE_SAVE_MESH_AS       : Print_Mesh(&M, c, CTX.mesh.format); break;
+  case FILE_SAVE_OPTIONS_AS    : Print_Context(c); break;
   case FILE_CANCEL             : WARNING_OVERRIDE = 0; break;
   case FILE_PRINT              : 
     if(CTX.print.format == FORMAT_GEO)

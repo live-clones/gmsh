@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.11 2000-12-08 10:56:51 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.12 2000-12-08 11:16:55 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -23,11 +23,12 @@ void RegisterCallbacks_M(Widgets_T *w){
   register_activate_cb (w->M.fileButt[0],   ManageCb,           w->FD.openDialog);
   register_activate_cb (w->M.fileButt[1],   ManageCb,           w->FD.mergeDialog);
   register_activate_cb (w->M.fileButt[2],   FileCb,             FILE_SAVE_MESH);
-  register_activate_cb (w->M.fileButt[3],   ManageCb,           w->FD.saveAsDialog);
-  register_activate_cb (w->M.fileButt[4],   ManageCb,           w->FD.printDialog);
-  register_activate_cb (w->M.fileButt[5],   ReloadAllViewsCb,   NULL);
-  register_activate_cb (w->M.fileButt[6],   RemoveAllViewsCb,   NULL);
-  register_activate_cb (w->M.fileButt[7],   ExitCb,             NULL);
+  register_activate_cb (w->M.fileButt[3],   ManageCb,           w->FD.saveMeshAsDialog);
+  register_activate_cb (w->M.fileButt[4],   ManageCb,           w->FD.saveOptionsAsDialog);
+  register_activate_cb (w->M.fileButt[5],   ManageCb,           w->FD.printDialog);
+  register_activate_cb (w->M.fileButt[6],   ReloadAllViewsCb,   NULL);
+  register_activate_cb (w->M.fileButt[7],   RemoveAllViewsCb,   NULL);
+  register_activate_cb (w->M.fileButt[8],   ExitCb,             NULL);
 
   register_activate_cb (w->M.moduleButt[0], ActualizeContextCb, CONTEXT_GEOM);
   register_activate_cb (w->M.moduleButt[1], ActualizeContextCb, CONTEXT_MESH);
@@ -135,11 +136,14 @@ void RegisterCallbacks_FD(Widgets_T *w){
   register_ok_cb       (w->FD.mergeDialog,     FileCb,    FILE_LOAD_POST);
   register_cancel_cb   (w->FD.mergeDialog,     ManageCb,  w->FD.mergeDialog);
 
-  register_ok_cb       (w->FD.saveAsDialog,      FileCb,    FILE_SAVE_MESH_AS);
-  register_cancel_cb   (w->FD.saveAsDialog,      ManageCb,  w->FD.saveAsDialog);
-  register_activate_cb (w->FD.saveAsButt[0],     OptionsCb, OPTIONS_MESH_FORMAT_MSH);
-  register_activate_cb (w->FD.saveAsButt[1],     OptionsCb, OPTIONS_MESH_FORMAT_UNV);
-  register_activate_cb (w->FD.saveAsButt[2],     OptionsCb, OPTIONS_MESH_FORMAT_GREF);
+  register_ok_cb       (w->FD.saveMeshAsDialog,      FileCb,    FILE_SAVE_MESH_AS);
+  register_cancel_cb   (w->FD.saveMeshAsDialog,      ManageCb,  w->FD.saveMeshAsDialog);
+  register_activate_cb (w->FD.saveMeshAsButt[0],     OptionsCb, OPTIONS_MESH_FORMAT_MSH);
+  register_activate_cb (w->FD.saveMeshAsButt[1],     OptionsCb, OPTIONS_MESH_FORMAT_UNV);
+  register_activate_cb (w->FD.saveMeshAsButt[2],     OptionsCb, OPTIONS_MESH_FORMAT_GREF);
+
+  register_ok_cb       (w->FD.saveOptionsAsDialog,   FileCb,    FILE_SAVE_OPTIONS_AS);
+  register_cancel_cb   (w->FD.saveOptionsAsDialog,   ManageCb,  w->FD.saveOptionsAsDialog);
 
   register_ok_cb       (w->FD.printDialog,     FileCb,    FILE_PRINT);
   register_cancel_cb   (w->FD.printDialog,     ManageCb,  w->FD.printDialog);

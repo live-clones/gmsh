@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.22 2000-12-08 10:56:51 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.23 2000-12-08 11:16:55 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -43,7 +43,7 @@ char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Geometry options:\n"
-  "  -0                    output current options, flattened geometry and exit\n"
+  "  -0                    output flattened geometry and exit\n"
   "Mesh options:\n"
   "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
   "  -script               gmsh in script mode\n"

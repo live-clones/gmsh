@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.10 2000-12-05 18:38:11 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.11 2000-12-08 11:16:55 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -155,7 +155,7 @@ void KeyboardAccel(XEvent *event){
       break; 
     case XK_S : 
       Modifier = 0 ;
-      ManageCb(NULL,(XtPointer)WID.FD.saveAsDialog,NULL); 
+      ManageCb(NULL,(XtPointer)WID.FD.saveMeshAsDialog,NULL); 
       break ;
     case XK_o : case XK_O : 
       Modifier = 0 ;

@@ -1,4 +1,4 @@
-/* $Id: Widgets.h,v 1.7 2000-12-08 10:56:51 geuzaine Exp $ */
+/* $Id: Widgets.h,v 1.8 2000-12-08 11:16:55 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 
@@ -19,7 +19,7 @@ typedef struct {
   struct {
     Widget   shell, containerWin ; 
     Widget   menuBar ;
-    Widget     fileCascade, filePane, fileButt[8], fileSep[3] ;
+    Widget     fileCascade, filePane, fileButt[10], fileSep[3] ;
     Widget     moduleCascade, modulePane, moduleButt[3] ;
     Widget     optionCascade, optionPane, optionButt[6], optionSep[2] ;
     Widget     helpCascade, helpPane, helpButt[2], helpSep[1] ;
@@ -75,9 +75,10 @@ typedef struct {
   struct {
     Widget   openDialog ;
     Widget   mergeDialog ;
-    Widget   saveAsDialog ;
-    Widget     saveAsFrame[2], saveAsRowCol ;
-    Widget     saveAsPane, saveAsButt[3], saveAsMenu ;
+    Widget   saveMeshAsDialog ;
+    Widget     saveMeshAsFrame[2], saveMeshAsRowCol ;
+    Widget     saveMeshAsPane, saveMeshAsButt[3], saveMeshAsMenu ;
+    Widget   saveOptionsAsDialog ;
     Widget   printDialog ;
     Widget     printFrame[2], printRowCol ;
     Widget     printPane[3], printButt[13], printMenu[3] ;
