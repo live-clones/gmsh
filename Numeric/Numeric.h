@@ -73,7 +73,8 @@ double angle_02pi(double A3);
 void eigenvalue(double mat[3][3], double re[3]);
 void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);
-int EigenSolve3x3(double A[3][3], double wr[3], double wi[3], double B[3][3]);
+int EigSolve(int N, double **A, double *wr, double *wi, double **B, 
+	     int *itmp, double *dtmp);
 
 double InterpolateIso(double *X, double *Y, double *Z, 
 		      double *Val, double V, int I1, int I2, 

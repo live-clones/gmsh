@@ -1,4 +1,4 @@
-// $Id: PrincipalStresses.cpp,v 1.1 2004-12-08 03:10:06 geuzaine Exp $
+// $Id: PrincipalStresses.cpp,v 1.2 2004-12-08 05:38:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -92,7 +92,15 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
 			       List_T *midList, int *midNb, 
 			       List_T *maxList, int *maxNb)
 {
-  int nbcomplex = 0;
+  int itmp[3], nbcomplex = 0;
+  double wr[3], wi[3], dtmp[3];
+  double **A = new double*[3];
+  double **B = new double*[3];
+  for(int i = 0; i < 3; i++){
+    A[i] = new double[3];
+    B[i] = new double[3];
+  }
+
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
     for(int j = 0; j < 3 * nbNod; j++){
@@ -104,11 +112,10 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
       for(int k = 0; k < nbNod; k++){
 	double *val = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
 						  nbNod * 9 * j + 9 * k);
-	double A[3][3] = { {val[0], val[1], val[2]},
-			   {val[3], val[4], val[5]},
-			   {val[6], val[7], val[8]} };
-	double wr[3], wi[3], B[3][3];
-	EigenSolve3x3(A, wr, wi, B);
+	A[0][0] = val[0]; A[0][1] = val[1]; A[0][2] = val[2];
+	A[1][0] = val[3]; A[1][1] = val[4]; A[1][2] = val[5];
+	A[2][0] = val[6]; A[2][1] = val[7]; A[2][2] = val[8];
+	EigSolve(3, A, wr, wi, B, itmp, dtmp);
 	nbcomplex += nonzero(wi); 
 	//printf("djf=%g %g %g\n", wr[0], wr[1], wr[2]);
 	//printf("vec1=%g %g %g\n", B[0][0], B[1][0], B[2][0]);
@@ -117,7 +124,7 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
 	for(int l = 0; l < 3; l++){
 	  double res;
 	  // wrong if there are complex eigenvals (B contains both
-	  // real and imag parts: cf. explanation in EigenSolve3x3)
+	  // real and imag parts: cf. explanation in EigSolve.cpp)
 	  res = wr[0] * B[l][0]; List_Add(minList, &res);
 	  res = wr[1] * B[l][1]; List_Add(midList, &res);
 	  res = wr[2] * B[l][2]; List_Add(maxList, &res);
@@ -128,6 +135,13 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
     (*midNb)++;
     (*maxNb)++;
   }
+
+  for(int i = 0; i < 3; i++){
+    delete [] A[i];
+    delete [] B[i];
+  }
+  delete [] A;
+  delete [] B;
 
   if(nbcomplex)
     Msg(GERROR, "%d elements have complex eigenvalues/eigenvectors");

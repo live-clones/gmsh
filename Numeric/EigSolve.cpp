@@ -1,4 +1,4 @@
-// $Id: EigenSolve3x3.cpp,v 1.1 2004-12-08 03:09:03 geuzaine Exp $
+// $Id: EigSolve.cpp,v 1.1 2004-12-08 05:38:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,8 @@
 
 // This file contains a routine that numerically finds the eigenvalues
 // and eigenvectors of a N X N Real Matrix. It is a C++ translation of
-// a Javascript translation of a routine from EISPACK. The Javascript
-// implementation comes from http://www.akiti.ca/Eig3Solv.html.
+// a Javascript translation of Fortran routines from EISPACK. The
+// Javascript implementation comes from http://www.akiti.ca/Eig3Solv.html
 //
 // References:
 //
@@ -36,13 +36,6 @@
 //           "Matrix Eigensystem Routines--(EISPACK) Guide Extension"
 //           Springer-Verlag, Berlin.
 //           1977
-//
-// The original sub-routines were written in FORTRAN and have been
-// translated to Javascript here. Although all care has been taken to
-// ensure that the sub-routines were translated accurately, some
-// errors may have crept into the translation. These errors are mine;
-// the original FORTRAN routines have been thoroughly tested and work
-// properly. Please report any errors to the webmaster.
 //
 // IMPORTANT! How to use the output:
 //
@@ -60,10 +53,8 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 
-#define N  3 //Global variable, dimension of matrix.
-
-static void cdivA(double ar, double ai, double br, double bi, 
-		  double A[N][N], int in1, int in2, int in3)
+static void cdivA(int N, double ar, double ai, double br, double bi, 
+		  double **A, int in1, int in2, int in3)
 {
   // Division routine for dividing one complex number into another:
   // This routine does (ar + ai)/(br + bi) and returns the results in
@@ -82,8 +73,8 @@ static void cdivA(double ar, double ai, double br, double bi,
   return;
 } // End cdivA
 
-static void hqr2(double A[N][N], double B[N][N], int low, int igh, 
-		 double wi[N], double wr[N], int ierr)
+static void hqr2(int N, double **A, double **B, int low, int igh, 
+		 double *wi, double *wr, int ierr)
 {
   // Computes the eigenvalues and eigenvectors of a real
   // upper-Hessenberg Matrix using the QR method.
@@ -391,7 +382,7 @@ static void hqr2(double A[N][N], double B[N][N], int low, int igh,
       m = na;
       
       if (fabs(A[en][na]) <= fabs(A[na][en]))
-	cdivA(0.0, -A[na][en], -p + A[na][na], q, A, na, na, en);
+	cdivA(N, 0.0, -A[na][en], -p + A[na][na], q, A, na, na, en);
       else {
 	A[na][na] = q/A[en][na];
 	A[na][en] = -(-p + A[en][en])/A[en][na];
@@ -419,7 +410,7 @@ static void hqr2(double A[N][N], double B[N][N], int low, int igh,
 	//else wi[j] >= 0.0
 	m = j;
 	if (wi[j] == 0.0)
-	  cdivA(-ra, -sa, w, q, A, j, na, en);
+	  cdivA(N, -ra, -sa, w, q, A, j, na, en);
 	else {//wi[j] > 0.0; solve complex equations
 	  x = A[j][j + 1];
 	  y = A[j + 1][j];
@@ -433,14 +424,14 @@ static void hqr2(double A[N][N], double B[N][N], int low, int igh,
 	      tst2 = tst1 + vr;
 	    } while (tst2 > tst1);
 	  } //End if vr and vi == 0.0
-	  cdivA(-(zz*ra) + x*r + q*sa, -(zz*sa + q*ra) + x*s, vr, vi, A, j, na, en);
+	  cdivA(N, -(zz*ra) + x*r + q*sa, -(zz*sa + q*ra) + x*s, vr, vi, A, j, na, en);
 	  
 	  if (fabs(x) > (fabs(zz) + fabs(q))){
 	    A[j + 1][na] = (-(ra + w*A[j][na]) + q*A[j][en])/x;
 	    A[j + 1][en] = -(sa + w*A[j][en] + q*A[j][na])/x;
 	  }//End if
 	  else
-	    cdivA(-(r + y*A[j][na]), -(s + y*A[j][en]), zz, q, A, j + 1, na, en);
+	    cdivA(N, -(r + y*A[j][na]), -(s + y*A[j][en]), zz, q, A, j + 1, na, en);
 	  
 	}//End else wi[j] > 0.0
 	
@@ -492,7 +483,7 @@ static void hqr2(double A[N][N], double B[N][N], int low, int igh,
   return;
 } //End of function hqr2
 
-static void norVecC(double Z[N][N], double wi[N])
+static void norVecC(int N, double **Z, double *wi)
 {
   // Normalizes the eigenvectors
 
@@ -559,14 +550,14 @@ static void norVecC(double Z[N][N], double wi[N])
   return;
 } // End norVecC
 
-static void swap_elements(double v[N], int i, int k)
+static void swap_elements(int N, double *v, int i, int k)
 {
   double tmp = v[k];
   v[k] = v[i];
   v[i] = tmp;
 }
 
-static void swap_columns(double v[N][N], int i, int k)
+static void swap_columns(int N, double **v, int i, int k)
 {
   for(int n = 0; n < N; n++){
     double tmp = v[n][k];
@@ -575,7 +566,7 @@ static void swap_columns(double v[N][N], int i, int k)
   }
 }
 
-void EigenSort3x3(double wr[N], double wi[N], double B[N][N])
+void EigSort(int N, double *wr, double *wi, double **B)
 {
   for (int i = 0; i < N - 1; i++){
     int k = i;
@@ -589,20 +580,29 @@ void EigenSort3x3(double wr[N], double wi[N], double B[N][N])
       }
     }
     if (k != i){
-      swap_elements (wr, i, k);
-      swap_elements (wi, i, k);
-      swap_columns (B, i, k);
+      swap_elements(N, wr, i, k);
+      swap_elements(N, wi, i, k);
+      swap_columns(N, B, i, k);
     }
   }
 }
 
-int EigenSolve3x3(double A[N][N], double wr[N], double wi[N], double B[N][N])
+int EigSolve(int N, double **A, double *wr, double *wi, double **B,
+	     int *itmp, double *dtmp)
 {
-  // Balance the matrix to improve accuracy of eigenvalues. Introduces
-  // no rounding errors, since it scales A by powers of the radix.
+  // Computes the N eigenvalues of the square, real matrix A. All
+  // vectors have dimension N and all matrices have dimension
+  // NxN. Warning: the matrix A gets modified during the
+  // computation. The eigenvalues/vectors are sorted in ascending
+  // order according to the real part of the eigenvalues.
 
-  double scale[N]; //Contains information about transformations.
-  int trace[N]; //Records row and column interchanges
+  // Balance the matrix to improve accuracy of
+  // eigenvalues. (Introduces no rounding errors, since it scales A by
+  // powers of the radix.)
+
+  double *scale = dtmp; //Contains information about transformations.
+  int *trace = itmp; //Records row and column interchanges
+
   double radix = 2; //Base of machine floating point representation.
   double c, f, g, r, s, b2 = radix*radix;
   int ierr = -1, igh, low, k = 0, l = N - 1, noconv;
@@ -814,7 +814,7 @@ int EigenSolve3x3(double A[N][N], double wr[N], double wi[N], double B[N][N])
     
   } // End for i
   
-  hqr2(A, B, low, igh, wi, wr, ierr);
+  hqr2(N, A, B, low, igh, wi, wr, ierr);
   
   if (ierr == -1){
     
@@ -848,22 +848,35 @@ int EigenSolve3x3(double A[N][N], double wr[N], double wi[N], double B[N][N])
       }//End if k != i
     }//End for i
     
-    norVecC(B, wi);  //Normalize the eigenvectors
+    norVecC(N, B, wi);  //Normalize the eigenvectors
     
   }//End if ierr = -1
-  
-  EigenSort3x3(wr, wi, B);
 
+  EigSort(N, wr, wi, B);
+  
   return ierr;
 }  //End of Eig3Solve
 
 # if 0
 int main()
 {
-  double wr[3], wi[3], B[3][3];
+  const int N = 3;
+  double *wr = new double[N];
+  double *wi = new double[N];
+  double **A = new double*[N];
+  double **B = new double*[N];
+  for(int i = 0; i < N; i++){
+    A[i] = new double[N];
+    B[i] = new double[N];
+  }
+  double *dtmp = new double[N];
+  int *itmp = new int[N];
+
   for(int i = 0; i < 1000000; i++){ // perf test
-    double A[3][3] = { {1.,2.,3.}, {2.,4.,5.}, {3.,5.,6.} };
-    EigenSolve3x3(A, wr, wi, B);
+    A[0][0] = 1.; A[0][1] = 2.; A[0][2] = 3.;
+    A[1][0] = 2.; A[1][1] = 4.; A[1][2] = 5.;
+    A[2][0] = 3.; A[2][1] = 5.; A[2][2] = 6.;
+    EigSolve(3, A, wr, wi, B, itmp, dtmp);
   }
   /*
   printf("%g %g %g\n", A[0][0], A[0][1], A[0][2]);
