@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.164 2005-01-09 03:01:56 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.165 2005-01-09 21:36:31 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -319,11 +319,11 @@ modules is given hereafter.
 @section Geometry: geometrical entity definition
 
 Geometries are created in a bottom-up flow by successively defining points,
-oriented lines (line segments, circles, ellipses, splines,@w{ }@dots{}),
-oriented surfaces (plane surfaces, ruled surfaces,@w{ }@dots{}) and
-volumes. Compound groups of geometrical entities can be defined, based on
-these elementary geometric entities. Gmsh's scripting language allows all
-geometrical entities to be fully parameterized.
+oriented lines (line segments, circles, ellipses, splines, @dots{}),
+oriented surfaces (plane surfaces, ruled surfaces, triangulated surfaces,
+@dots{}) and volumes. Compound groups of geometrical entities can be
+defined, based on these elementary geometric entities. Gmsh's scripting
+language allows all geometrical entities to be fully parameterized.
 
 @c -------------------------------------------------------------------------
 @c Mesh: finite element mesh generation
@@ -473,7 +473,7 @@ scalar, vector and tensor data sets, and can perform various operations on
 the resulting post-processing views (@pxref{Post-processing module});
 @item
 export plots in many different formats: vector PostScript or encapsulated
-PostScript, LaTeX, PNG, JPEG,@w{ }@dots{} (@pxref{General options});
+PostScript, LaTeX, PNG, JPEG, @dots{} (@pxref{General options});
 @item
 generate complex animations (see @ref{General tools}, and @ref{t8.geo});
 @item
@@ -746,7 +746,7 @@ syntax, you can always omit the braces @code{@{@}} enclosing an
 @var{expression-list} if this @var{expression-list} only contains a single
 item. Also note that a braced @var{expression-list} can be preceded by a
 minus sign in order to change the sign of all the
-@var{expression-list-item}s.
+@w{@var{expression-list-item}s}.
 
 @c .........................................................................
 @c Character expressions
@@ -808,7 +808,7 @@ Colors expressions are hybrids between fixed-length braced
 @end example
 
 @noindent The first case permits to use the X Windows names to refer to colors,
-e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3},@w{ }@dots{}
+e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
 (see @file{Common/Colors.h} in Gmsh's source tree for a complete list). The
 second case permits to define colors by using three expressions to specify
 their red, green and blue components (with values comprised between 0 and
@@ -1274,8 +1274,8 @@ the views.
 @end enumerate
 
 @item BoundingBox @{ @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
-Forces the bounding box of the scene to the given @var{expression}s (X min, X
-max, Y min, Y max, Z min, Z max).
+Forces the bounding box of the scene to the given @w{@var{expression}s} (X
+min, X max, Y min, Y max, Z min, Z max).
 
 @item Delete All;
 Deletes all geometrical entities and all currently loaded meshes.
@@ -1342,7 +1342,7 @@ automatically loaded by Gmsh every time it starts up, by using the
 Gmsh's geometry module provides a simple CAD engine, using a bottom-up
 (boundary representation) approach: you need to first define points (using
 the @code{Point} command: see below), then lines (using @code{Line},
-@code{Circle}, @code{Spline},@w{ }@dots{}, commands or by extruding points),
+@code{Circle}, @code{Spline}, @dots{}, commands or by extruding points),
 then surfaces (using for example the @code{Plane Surface} or @code{Ruled
 Surface} commands, or by extruding lines), and finally volumes (using the
 @code{Volume} command or by extruding surfaces).
@@ -1566,17 +1566,17 @@ composed of either three or four elementary lines.
 
 @item Discrete Surface ( @var{expression} ) = @{ @var{expression}, @var{expression} @} @{ @var{expression-list} @} @{ @var{expression-list} @};
 Creates a discrete surface, i.e., a surface defined by a polygonal
-discretization (usually a triangulation).  The two @var{expression}s on the
-right hand side define the number of points and the number of polygons in
-the discretization, respectively. The first @var{expression-list} gives the
-list of discretization points and their associated normals, by groups of six
-@var{expression}s (three node coordinates and three normal components for
-each point). The second @var{expression-list} gives the list of polygons, by
-groups of (@var{N}+1) @var{expression}s (the first expression being equal to
-@var{N}, the number of points in the polygon, and the @var{N} following
-expressions referring to the indices of the points in the first list). For
-example, a triangulation of a unit square surface in the X-Y plane with two
-triangles could be defined as:
+discretization (usually a triangulation).  The two @w{@var{expression}s} on
+the right hand side define the number of points and the number of polygons
+in the discretization, respectively. The first @var{expression-list} gives
+the list of discretization points and their associated normals, by groups of
+six @w{@var{expression}s} (three node coordinates and three normal
+components for each point). The second @var{expression-list} gives the list
+of polygons, by groups of (@var{N}+1) @w{@var{expression}s} (the first
+expression being equal to @var{N}, the number of points in the polygon, and
+the @var{N} following expressions referring to the indices of the points in
+the first list). For example, a triangulation of a unit square surface in
+the X-Y plane with two triangles could be defined as:
 
 @example
 Discrete Surface (1) = @{4, 2@} 
@@ -2087,8 +2087,8 @@ representation of the surface and can also be used as the actual
 two-dimensional mesh of the surface if all the polygons are triangles.
 
 See the definition of @code{Discrete Surface} in @ref{Surfaces}, for an
-explanation of the meaning of the @var{expression}s and
-@var{expression-list}s on the right hand side.
+explanation of the meaning of the @w{@var{expression}s} and
+@w{@var{expression-list}s} on the right hand side.
 
 @end ftable
 
@@ -3079,7 +3079,7 @@ View "@var{string}" @{
 @end group
 @end example
 
-where the 26 object @var{type}s that can be displayed are:
+where the 26 object @w{@var{type}s} that can be displayed are:
 
 @example
                     @var{type}  #@var{list-of-coords}  #@var{list-of-values}
@@ -3141,7 +3141,7 @@ The values are given by time step, by node and by component, i.e.:
 @dots{}
 @end example
 
-For the 2D text objects, the two first @var{expression}s in
+For the 2D text objects, the two first @w{@var{expression}s} in
 @var{list-of-coords} give the X-Y position of the string in screen
 coordinates, measured from the top-left corner of the window. If the first
 (respectively second) @var{expression} is negative, the position is measured
@@ -3155,7 +3155,7 @@ eight next bits select the font (the index corresponds to the position in
 the font menu in the GUI), and whose eight next bits define the text
 alignment (0=left, 1=center, 2=right).
 
-For the 3D text objects, the three first @var{expression}s in
+For the 3D text objects, the three first @w{@var{expression}s} in
 @var{list-of-coords} give the position of the leftmost element of the string
 in model (real world) coordinates.  If the fourth @var{expression} is equal
 to zero, the text is displayed using the default font and size. Otherwise,
@@ -3164,7 +3164,7 @@ bits give the font size and whose eight next bits select the font (the index
 corresponds to the position in the font menu in the GUI).
 
 For both 2D and 3D text objects, the @var{list-of-values} can contain an
-arbitrary number of @var{char-expression}s.
+arbitrary number of @w{@var{char-expression}s}.
 
 The optional @code{TIME} list can contain a list of expressions giving the
 value of the time (or any other variable) for which an evolution was saved.
@@ -3248,8 +3248,8 @@ is an integer giving the number of time steps in the view.
 @item @var{nb-scalar-points}
 @item @var{nb-vector-points}
 @item @dots{}
-are integers giving the number of scalar points, vector points,@w{ }@dots{}
-in the view.
+are integers giving the number of scalar points, vector points, @dots{}, in
+the view.
 
 @item @var{nb-text2d}
 @item @var{nb-text3d}
@@ -3269,7 +3269,7 @@ of the time (or any other variable) for which an evolution was saved.
 @item @dots{}
 are lists of double precision numbers giving the node coordinates and the
 values associated with the nodes of the @var{nb-scalar-points} scalar
-points, @var{nb-vector-points} vector points,@w{ }@dots{}, for each of the
+points, @var{nb-vector-points} vector points, @dots{}, for each of the
 @var{time-step-values}.
 
 For example, @var{vector-triangle-value} is defined as:
