@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.42 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.43 2001-12-06 10:10:42 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -94,8 +94,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
   InitSymbols(); //this symbol context is local to option parsing (the
                  //symbols will not interfere with subsequent OpenFiles)
 
-  ParseFile(CTX.sessionrc_filename);
-  ParseFile(CTX.optionsrc_filename);
+  ParseFile(CTX.sessionrc_filename,1);
+  ParseFile(CTX.optionsrc_filename,1);
 
   // Get command line options
 
@@ -179,7 +179,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	i++;
 	CTX.terminal = 1;
 	if(argv[i] && argv[i+1]){
-	  ParseFile(argv[i]);
+	  ParseFile(argv[i],0);
 	  if(List_Nbr(CTX.post.list))
 	    Write_View(1,(Post_View*)List_Pointer(CTX.post.list, 0),argv[i+1]);
 	  else

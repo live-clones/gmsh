@@ -3,7 +3,7 @@
 
 #define MAX_OPEN_FILES  256
 
-int  ParseFile(char *filename);
+int  ParseFile(char *filename, int silent);
 void ParseString(char *str);
 void OpenProblem(char *filename);
 void MergeProblem(char *filename);

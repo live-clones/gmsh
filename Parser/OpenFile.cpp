@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.25 2001-12-04 09:31:18 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.26 2001-12-06 10:10:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -25,7 +25,7 @@ extern GUI *WID;
 extern Mesh      *THEM, M;
 extern Context_T  CTX;
 
-int ParseFile(char *f){
+int ParseFile(char *f, int silent){
   char String[256];
   int status;
 
@@ -36,7 +36,7 @@ int ParseFile(char *f){
   if(!(yyin = fopen(yyname,"r")))
     return 0;
   
-  Msg(STATUS2, "Loading '%s'", yyname); 
+  if(!silent) Msg(STATUS2, "Loading '%s'", yyname); 
 
   fpos_t position;
   fgetpos(yyin, &position);
@@ -70,7 +70,8 @@ int ParseFile(char *f){
   }
   fclose(yyin);
 
-  Msg(STATUS2, "Loaded '%s'", yyname); 
+  if(!silent) Msg(STATUS2, "Loaded '%s'", yyname); 
+
   return status;
 }
 
@@ -81,12 +82,12 @@ void ParseString(char *str){
   if((f = fopen(CTX.tmp_filename,"w"))){
     fprintf(f,"%s\n", str);
     fclose(f);
-    ParseFile(CTX.tmp_filename);
+    ParseFile(CTX.tmp_filename,0);
   }
 }
 
 void MergeProblem(char *name){
-  ParseFile(name);  
+  ParseFile(name,0);  
   if (yyerrorstate) return;
 }
 
@@ -131,7 +132,7 @@ void OpenProblem(char *name){
 
   int nb = List_Nbr(CTX.post.list);
 
-  status = ParseFile(CTX.filename);  
+  status = ParseFile(CTX.filename,0);
 
   ApplyLcFactor(THEM);
 
