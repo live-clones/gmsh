@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.170 2001-12-04 13:19:19 geuzaine Exp $
+# $Id: Makefile,v 1.171 2001-12-05 09:22:01 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
@@ -194,7 +194,7 @@ distrib-win:
 	rm -rf ../gmsh-distrib/tutorial
 	rm -rf ../gmsh-distrib/demos
 
-strip_bin:
+strip-bin:
 	strip $(GMSH_BIN_DIR)/gmsh
 
 dem:
@@ -249,7 +249,7 @@ bb-mingw: tag
 #
 # Linux standard
 #
-compile_linux:
+compile-linux:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -259,15 +259,15 @@ compile_linux:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_linux:
+link-linux:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux: tag compile_linux link_linux strip_bin
+linux: tag compile-linux link-linux strip-bin
 
 #
 # Test for fltk 1.1
 #
-compile_fltk1:
+compile-fltk1:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -277,18 +277,18 @@ compile_fltk1:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link_fltk1:
+link-fltk1:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
                  $(OPENGL_LIB) \
                  $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a \
                  -L/usr/X11R6/lib $(X11_LIB) -lm
-fltk1: compile_fltk1 link_fltk1
+fltk1: compile-fltk1 link-fltk1
 
 #
 # Test for fltk 2.0
 #
-compile_fltk2:
+compile-fltk2:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -298,19 +298,19 @@ compile_fltk2:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-2.0" \
         ); done
-link_fltk2:
+link-fltk2:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk_gl.so.2\
                  $(OPENGL_LIB) \
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk_forms.so.2 \
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk.so.2 \
                  -L/usr/X11R6/lib $(X11_LIB) -lm
-fltk2: compile_fltk2 link_fltk2
+fltk2: compile-fltk2 link-fltk2
 
 #
 # Linux, gcc-2.95.x (optimized build is very buggy)
 # 
-compile_linux_gcc-2.95:
+compile-linux_gcc-2.95:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
            "CC=$(HOME)/gcc-2.95.3/bin/gcc" \
@@ -320,10 +320,25 @@ compile_linux_gcc-2.95:
            "GL_INCLUDE=-I/usr/X11R6/include" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_linux_gcc-2.95:
+link-linux_gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux_gcc-2.95: tag compile_linux_gcc-2.95 link_linux_gcc-2.95 strip_bin
+linux_gcc-2.95: tag compile-linux_gcc-2.95 link-linux_gcc-2.95 strip-bin
+linux_gcc-2.95-distrib:
+	make linux_gcc-2.95
+	make clean
+	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
+           "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
+           "CC=$(HOME)/gcc-2.95.3/bin/gcc" \
+           "OPT_FLAGS=-g" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_BLACKBOX" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=" \
+        ); done
+	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm -ldl
+	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make distrib
 rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
 	rpm -bb --define 'gmshversion $(GMSH_RELEASE)' utils/gmsh.spec
@@ -333,7 +348,7 @@ rpm: src
 #
 # Linux SCOREC
 #
-compile_linux_scorec :
+compile-linux-scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -343,16 +358,16 @@ compile_linux_scorec :
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I/users/develop/develop/visual/fltk/1.0/include" \
         ); done
-link_linux_scorec:
+link-linux-scorec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl 
-linux_scorec : compile_linux_scorec link_linux_scorec strip_bin 
+linux-scorec : compile-linux-scorec link-linux-scorec strip-bin 
 
 #
 # Digital (Compaq) Tru64
 #
-compile_dec:
+compile-dec:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -362,15 +377,29 @@ compile_dec:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_dec:
+link-dec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-dec: tag compile_dec link_dec strip_bin
-
+dec: tag compile-dec link-dec strip-bin
+dec-distrib:
+	make dec
+	make clean
+	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
+           "CXX=$(CXX)" \
+           "CC=$(CC)" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_BLACKBOX" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=" \
+        ); done
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
+	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make distrib
 #
 # HP-UX
 #
-compile_hp:
+compile-hp:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -380,16 +409,30 @@ compile_hp:
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_hp:
+link-hp:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                       -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB)\
                       -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-hp: tag compile_hp link_hp strip_bin
-
+hp: tag compile-hp link-hp strip-bin
+hp-distrib:
+	make hp
+	make clean
+	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
+           "CXX=g++" \
+           "CC=gcc" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_BLACKBOX -D_NODLL" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=" \
+        ); done
+	g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
+	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make distrib
 #
 # IBM Aix
 #
-compile_ibm:
+compile-ibm:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -399,15 +442,29 @@ compile_ibm:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_ibm:
+link-ibm:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-ibm: tag compile_ibm link_ibm strip_bin
-
+ibm: tag compile-ibm link-ibm strip-bin
+ibm-distrib:
+	make ibm
+	make clean
+	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
+           "CXX=$(CXX)" \
+           "CC=$(CC)" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=-D_BSD" \
+           "VERSION_FLAGS=-D_BLACKBOX -D_NODLL" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=" \
+        ); done
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
+	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make distrib
 #
 # SGI Irix
 #
-compile_sgi:
+compile-sgi:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=CC" \
            "CC=cc" \
@@ -419,15 +476,31 @@ compile_sgi:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_sgi:
+link-sgi:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) $(OPENGL_LIB) -lm
-sgi: tag compile_sgi link_sgi strip_bin
-
+sgi: tag compile-sgi link-sgi strip-bin
+sgi-distrib:
+	make sgi
+	make clean
+	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
+           "CXX=CC" \
+           "CC=cc" \
+           "OPT_FLAGS=-O2 -OPT:Olimit=0 -LANG:std" \
+           "RANLIB=true"\
+           "AR=CC -mips3 -n32 -ar -o"\
+           "OS_FLAGS=-mips3 -n32" \
+           "VERSION_FLAGS=-D_BLACKBOX" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=" \
+        ); done
+	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh-batch -lm
+	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make distrib
 #
 # Mingw
 #
-compile_mingw:
+compile-mingw:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -437,17 +510,17 @@ compile_mingw:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_mingw:
+link-mingw:
 	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
                  Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-mingw: tag compile_mingw link_mingw
+mingw: tag compile-mingw link-mingw
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
 # Cygwin
 #
-compile_cygwin:
+compile-cygwin:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -457,17 +530,17 @@ compile_cygwin:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_cygwin:
+link-cygwin:
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
                  Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-cygwin: tag compile_cygwin link_cygwin
+cygwin: tag compile-cygwin link-cygwin
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
 # Cygwin with fltk 1.1
 #
-compile_cygwin1:
+compile-cygwin1:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -477,13 +550,13 @@ compile_cygwin1:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link_cygwin1:
+link-cygwin1:
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
                  Common/Icon.res $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
                  -lglu32 -lopengl32\
                  $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a\
                  -lgdi32 -lwsock32 -lm
-cygwin1: tag compile_cygwin1 link_cygwin1
+cygwin1: tag compile-cygwin1 link-cygwin1
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
@@ -524,7 +597,7 @@ cygwin_laptopjf_tag: tag cygwin_laptopjf
 #
 # Sun SunOS
 #
-compile_sun:
+compile-sun:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -534,17 +607,31 @@ compile_sun:
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link_sun:
+link-sun:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB)\
                  $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
-sun: tag compile_sun link_sun strip_bin
-
+sun: tag compile-sun link-sun strip-bin
+sun-distrib:
+	make sun
+	make clean
+	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
+           "CXX=$(CXX)" \
+           "CC=$(CC)" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_BLACKBOX -D_NODLL" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=" \
+        ); done
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch -lm
+	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make distrib
 #
 # Solaris SCOREC
 #
-compile_solaris_scorec :
+compile-solaris-scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -554,9 +641,9 @@ compile_solaris_scorec :
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I/users/develop/develop/visual/fltk/1.0/include" \
         ); done
-link_solaris_scorec:
+link-solaris-scorec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
-solaris_scorec : compile_solaris_scorec link_solaris_scorec strip_bin 
+solaris-scorec : compile-solaris-scorec link-solaris-scorec strip-bin 
 
