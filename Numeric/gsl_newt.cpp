@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.3 2003-02-20 10:05:09 remacle Exp $
+// $Id: gsl_newt.cpp,v 1.4 2003-02-20 16:34:30 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -64,6 +64,9 @@ int gslfunc(const gsl_vector *xx, void *params, gsl_vector *f){
   convert_vector_to_gsl(gsl_v,gsl_dim,f);
   return GSL_SUCCESS;
 }
+
+// Warning: for compatibility with the old newt from NR, x[] is
+// indexed from 1 to N!
 
 void newt(double x[], int n, int *check, void (*func)(int, double [],double [])){
   const gsl_multiroot_fsolver_type *T;
