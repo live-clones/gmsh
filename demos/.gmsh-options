@@ -67,10 +67,14 @@ Geometry.Points = 1; // Display geometry points?
 Geometry.Lines = 1; // Display geometry curves?
 Geometry.Surfaces = 0; // Display geometry surfaces?
 Geometry.Volumes = 0; // Display geometry volumes? (not implemented yet)
-Geometry.PointsNumbers = 1; // Display points numbers?
-Geometry.LinesNumbers = 1; // Display curve numbers?
+Geometry.PointsNumbers = 0; // Display points numbers?
+Geometry.LinesNumbers = 0; // Display curve numbers?
 Geometry.SurfacesNumbers = 0; // Display surface numbers?
 Geometry.VolumesNumbers = 0; // Display volume numbers? (not implemented yet)
+Geometry.PointSize = 3; // Display size of points (in pixels)
+Geometry.PointSelectSize = 5; // Display size of selected points (in pixels)
+Geometry.LineWidth = 1; // Display width of lines (in pixels)
+Geometry.LineSelectWidth = 2; // Display width of selected lines (in pixels)
 Geometry.Aspect = 0; // Not used
 Geometry.Highlight = 0; // Not used
 Geometry.OldCircle = 0; // Use old circle description (compatibility option for old Gmsh geometries)
@@ -112,10 +116,12 @@ Mesh.PointsNumbers = 0; // Display mesh vertices numbers?
 Mesh.LinesNumbers = 0; // Display mesh line numbers?
 Mesh.SurfacesNumbers = 0; // Display mesh surface numbers?
 Mesh.VolumesNumbers = 0; // Display mesh elements numbers?
+Mesh.PointSize = 2; // Display size of points (in pixels)
+Mesh.LineWidth = 1; // Display width of lines (in pixels)
 Mesh.Aspect = 0; // Mesh apsect (0=wireframe, 1=hidden lines, 2=solid)
 Mesh.Format = 1; // Mesh output format (1=MSH, 2=UNV)
 Mesh.Smoothing = 0; // Number of smoothing steps applied to the final mesh
-Mesh.Algorithm = 1; // 2D mesh algorithm (1=isotropic, 2=anisotropic)
+Mesh.Algorithm = 3; // 2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)
 Mesh.PointInsertion = 1; // Point insertion method for isotropic 2D algorithm (1=center of circ. circle, 2=voronoi, 3=cog)
 Mesh.SpeedMax = 0; // Disable dubious point insertion tests
 Mesh.MinimumCirclePoints = 7; // Minimum number of points used to mesh a circle
@@ -159,6 +165,8 @@ PostProcessing.Scales = 1; // Show value scales
 PostProcessing.Link = 0; // Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)
 PostProcessing.Smoothing = 0; // Apply (non-reversible) smoothing to post-processing view when merged
 PostProcessing.AnimationDelay = 0.25; // Delay (in seconds) between to animation frames
+PostProcessing.PointSize = 2; // Display size of points (in pixels)
+PostProcessing.LineWidth = 1; // Display width of lines (in pixels)
 //
 // View options
 //
@@ -171,6 +179,7 @@ View.NbIso = 15; // Number of intervals
 View.Boundary = 0; // Draw the N-b dimensional boundary of the simplex (N=dimension, b=option value)
 View.Light = 0; // Enable light sources?
 View.SmoothNormals = 0; // Smooth the normals?
+View.AngleSmoothNormals = 15; // Threshold angle below which we do not smooth the normals
 View.ShowElement = 0; // Show element boundaries?
 View.ShowTime = 1; // Show time value (or time step) if NbTimeStep > 1?
 View.ShowScale = 1; // Show value scale?
@@ -255,16 +264,15 @@ View.ColorTable = {
 //
 // Print options
 //
-Print.Font = "Courier"; // Font used for postscript printing
+Print.EpsFont = "Courier"; // Font used for postscript printing
 Print.Format = 10; // Print format
 Print.EpsQuality = 2; // Postscript quality (1=simple sort, 2=recursive sort)
 Print.EpsBackground = 0; // Save image background in postscript output
+Print.EpsFontSize = 12; // Font size used for postscript printing
+Print.EpsPointSizeFactor = 1; // Size factor for points in postscript output
+Print.EpsLineWidthFactor = 1; // Width factor for lines in postscript output
 Print.JpegQuality = 85; // JPEG quality (between 1 and 100)
 Print.GifDither = 0; // Apply dithering to GIF output
 Print.GifSort = 1; // Sort the colormap in GIF output
 Print.GifInterlace = 0; // Interlace GIF output
 Print.GifTransparent = 0; // Output transparent GIF image
-Print.FontSize = 12; // Font size used for postscript printing
-Print.GeometryLineWidth = 8; // Width factor for geometry lines in postscript output (10 looks nice for geometry+mesh display)
-Print.MeshLineWidth = 1; // Width factor for mesh lines in postscript output (1 looks nice for geometry+mesh display)
-Print.PostProcessingLineWidth = 2; // Width factor for post-processing lines in postscript output
