@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2004-05-12 02:02:21 geuzaine Exp $
+# $Id: Makefile,v 1.2 2004-05-12 18:38:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -48,6 +48,7 @@ parser:
 	bison --output parser.cpp -pme -d parser.y 
 	flex -oscanner.cpp -Pme scanner.l
 	if [ -r parser.cpp.h ]; then mv parser.cpp.h parser.h ; fi
+	if [ -r parser.hpp ]; then mv parser.hpp parser.h ; fi
 
 clean:
 	rm -f *.o
