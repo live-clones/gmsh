@@ -1,4 +1,6 @@
-$Date: 2003-01-24 23:13:36 $
+$Date: 2003-02-11 18:38:20 $
+
+New in 1.38: fixed custom range selection for 3D iso graphs;
 
 New in 1.37: Generalized smoothing and cuts of post-processing views;
 better Windows integration (solvers, external editors, etc.); small
