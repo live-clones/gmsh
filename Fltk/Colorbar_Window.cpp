@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.13 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.14 2001-11-13 13:22:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -217,7 +217,10 @@ void Colorbar_Window::redraw_range(int a, int b){
      x = index_to_x(i);
      y = intensity_to_y(UNPACK_ALPHA(ct->table[i]));
      if (i!=a){
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+#else
        fl_color(contrast(FL_BLACK,color_bg));
+#endif
        fl_line(px,py,x,y);
      }
      px = x;  py = y;
@@ -238,7 +241,10 @@ void Colorbar_Window::redraw_range(int a, int b){
 
    // print colortable mode and help
    fl_font(FL_HELVETICA, font_height);
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+#else
    fl_color(contrast(FL_BLACK,color_bg));
+#endif
    int xx0=10, xx1=13*font_height, yy0=10;
    if (help_flag){
      i = 0;
@@ -294,7 +300,10 @@ void Colorbar_Window::redraw_marker(){
   
   // draw marker below color wedge
   x = index_to_x(marker_pos);
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+#else
   fl_color(contrast(FL_BLACK,color_bg));   
+#endif
   fl_line(x, marker_y, x, marker_y+marker_height);
   fl_line(x, marker_y, x-3, marker_y+6);
   fl_line(x, marker_y, x+3, marker_y+6);
