@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.216 2004-04-20 21:47:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.217 2004-04-21 00:28:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1514,7 +1514,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+f         change redraw mode (fast/full)"); 
   Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
   Msg(DIRECT, "  Alt+l         hide/show geometry lines");
-  Msg(DIRECT, "  Alt+Shift+l   hide/show mesh lines");
+  Msg(DIRECT, "  Alt+Shift+l   hide/show surface mesh edges");
   Msg(DIRECT, "  Alt+m         change visibility of all mesh entities");
   Msg(DIRECT, "  Alt+o         change projection mode (ortho/perspective)");
   Msg(DIRECT, "  Alt+p         hide/show geometry points");

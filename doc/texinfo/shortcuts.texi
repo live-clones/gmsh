@@ -112,7 +112,7 @@ hide/show all post-processing views
 hide/show geometry lines
 
 @item Alt+Shift+l
-hide/show mesh lines
+hide/show surface mesh edges
 
 @item Alt+m
 change visibility of all mesh entities

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.285 2004-04-20 21:47:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.286 2004-04-21 00:28:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -618,7 +618,8 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
-    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
+    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 
+			    !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
