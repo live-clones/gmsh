@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.137 2003-04-14 17:13:15 geuzaine Exp $
+// $Id: Gmsh.y,v 1.138 2003-04-19 22:10:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1959,11 +1959,18 @@ Command :
 
 	yyinTab[RecursionLevel++] = yyin;
 
-	strcpy(tmpstring, yyname);
-	i = strlen(yyname)-1 ;
-	while(i >= 0 && yyname[i] != '/' && yyname[i] != '\\') i-- ;
-	tmpstring[i+1] = '\0';
-	strcat(tmpstring,$2);
+	if($2[0] == '/' || $2[0] == '\\' || (strlen($2)>2 && $2[1] == ':')){
+	  // do nothing: $2 is an absolute path
+	  strcpy(tmpstring, $2);
+	}
+	else{
+	  // append $2 to the path of the parent file
+	  strcpy(tmpstring, yyname);
+	  i = strlen(yyname)-1 ;
+	  while(i >= 0 && yyname[i] != '/' && yyname[i] != '\\') i-- ;
+	  tmpstring[i+1] = '\0';
+	  strcat(tmpstring, $2);
+	}
 
 	if((yyin = fopen(tmpstring,"r"))){
 	  Msg(INFO, "Including '%s'", tmpstring); 
