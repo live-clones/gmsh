@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.22 2001-08-03 17:46:48 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.23 2001-08-03 19:18:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,6 +11,46 @@
 
 extern Context_T   CTX;
 
+void Draw_Simplex(int dim, double *X, double *Y, double *Z,
+		  double *Offset, double Raise[3][5]){
+  int k;
+  double xx[4], yy[4], zz[4];
+
+  glColor4ubv((GLubyte*)&CTX.color.fg);
+  switch(dim){
+  case 0 :
+    Draw_Point(X,Y,Z,Offset,Raise);
+    break;
+  case 1 :
+    Draw_Line(X,Y,Z,Offset,Raise);
+    break;
+  case 2 :
+    glBegin(GL_LINE_LOOP);
+    for(k=0 ; k<3 ; k++) 
+      glVertex3d(X[k]+Offset[0]+Raise[0][k],
+		 Y[k]+Offset[1]+Raise[1][k],
+		 Z[k]+Offset[2]+Raise[2][k]);
+    glEnd();
+    break;
+  case 3 :
+    for(k=0 ; k<4 ; k++){
+      xx[k] = X[k]+Offset[0]+Raise[0][k] ;
+      yy[k] = Y[k]+Offset[1]+Raise[1][k] ;
+      zz[k] = Z[k]+Offset[2]+Raise[2][k] ;
+    }
+    glBegin(GL_LINES);
+    glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
+    glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
+    glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[3], yy[3], zz[3]);
+    glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[2], yy[2], zz[2]);
+    glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[3], yy[3], zz[3]);
+    glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[3], yy[3], zz[3]);
+    glEnd();
+    break;
+  }
+}
+
+
 /* ------------------------------------------------------------------------ */
 /*  Scalar Simplices                                                        */
 /* ------------------------------------------------------------------------ */
@@ -21,15 +61,18 @@ void Draw_ScalarPoint(Post_View *View,
   double   d;
   char Num[100];
 
-  d = V[View->TimeStep];  
-  RaiseFill(0, d, ValMin, Raise);
-
   if(View->Boundary > 0) return;
 
-  if(View->ShowElement){
-    glColor4ubv((GLubyte*)&CTX.color.fg);
-    Draw_Point(X,Y,Z,View->Offset,Raise);
+  d = V[View->TimeStep];
+
+  if(View->SaturateValues){
+    if(d > ValMax) d = ValMax;
+    else if(d < ValMin) d = ValMin;
   }
+
+  RaiseFill(0, d, ValMin, Raise);
+
+  if(View->ShowElement) Draw_Simplex(0,X,Y,Z,View->Offset,Raise);
 
   if(d>=ValMin && d<=ValMax){      
     Palette2(View,ValMin,ValMax,d);
@@ -79,10 +122,7 @@ void Draw_ScalarLine(Post_View *View,
   for(k=0 ; k<2 ; k++)
     RaiseFill(k, Val[k], ValMin, Raise);
 
-  if(View->ShowElement){
-    glColor4ubv((GLubyte*)&CTX.color.fg);
-    Draw_Line(X,Y,Z,View->Offset,Raise);
-  }
+  if(View->ShowElement) Draw_Simplex(1,X,Y,Z,View->Offset,Raise);
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -231,15 +271,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
 
   if(preproNormals) return;
 
-  if(View->ShowElement){
-    glColor4ubv((GLubyte*)&CTX.color.fg);
-    glBegin(GL_LINE_LOOP);
-    for(i=0 ; i<3 ; i++) 
-      glVertex3d(X[i]+View->Offset[0]+Raise[0][i],
-		 Y[i]+View->Offset[1]+Raise[1][i],
-		 Z[i]+View->Offset[2]+Raise[2][i]);
-    glEnd();
-  }
+  if(View->ShowElement) Draw_Simplex(2,X,Y,Z,View->Offset,Raise);
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -352,8 +384,6 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
     return;
   }
 
-  // Saturation of values 
-
   double *vv = &V[4*View->TimeStep];
   if(View->SaturateValues){
     for(i=0;i<4;i++){
@@ -371,22 +401,7 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
   for(k=0 ; k<4 ; k++)
     RaiseFill(k, Val[k], ValMin, Raise);
 
-  if(!preproNormals && View->ShowElement){
-    glColor4ubv((GLubyte*)&CTX.color.fg);
-    for(k=0 ; k<4 ; k++){
-      xx[k] = X[k]+View->Offset[0]+Raise[0][k] ;
-      yy[k] = Y[k]+View->Offset[1]+Raise[1][k] ;
-      zz[k] = Z[k]+View->Offset[2]+Raise[2][k] ;
-    }
-    glBegin(GL_LINES);
-    glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
-    glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
-    glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[3], yy[3], zz[3]);
-    glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[2], yy[2], zz[2]);
-    glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[3], yy[3], zz[3]);
-    glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[3], yy[3], zz[3]);
-    glEnd();
-  }
+  if(!preproNormals && View->ShowElement) Draw_Simplex(3,X,Y,Z,View->Offset,Raise);
 
   if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -424,183 +439,105 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 			double ValMin, double ValMax, double Raise[3][5],
 			double *X, double *Y, double *Z, double *V){
   int    j, k ;
-  double d, dx, dy, dz, fact, xx[4], yy[4], zz[4], vv[4], xc=0., yc=0., zc=0. ;
+  double fact, xx[4], yy[4], zz[4],  xc=0., yc=0., zc=0., Val[4][3], d[4];
+  double dx=0., dy=0., dz=0., dd;
   char   Num[100];
 
   for(k=0 ; k<nbnod ; k++){
-    dx = V[3*nbnod*View->TimeStep  +3*k] ;
-    dy = V[3*nbnod*View->TimeStep+1+3*k] ;
-    dz = V[3*nbnod*View->TimeStep+2+3*k] ;              
-    d = sqrt(dx*dx+dy*dy+dz*dz);            
-    RaiseFill(k, d, ValMin, Raise);
+    Val[k][0] = V[3*nbnod*View->TimeStep+3*k] ;
+    Val[k][1] = V[3*nbnod*View->TimeStep+3*k+1] ;
+    Val[k][2] = V[3*nbnod*View->TimeStep+3*k+2] ;              
+    d[k] = sqrt(Val[k][0]*Val[k][0]+Val[k][1]*Val[k][1]+Val[k][2]*Val[k][2]);            
+    RaiseFill(k, d[k], ValMin, Raise);
   }
 
   if(View->ArrowType == DRAW_POST_DISPLACEMENT){
 
     fact = View->ArrowScale/50. ;
     for(k=0 ; k<nbnod ; k++){
-      xx[k] = X[k] + fact * V[3*nbnod*View->TimeStep  +3*k] + 
-	Raise[0][k] + View->Offset[0];
-      yy[k] = Y[k] + fact * V[3*nbnod*View->TimeStep+1+3*k] + 
-	Raise[1][k] + View->Offset[1];
-      zz[k] = Z[k] + fact * V[3*nbnod*View->TimeStep+2+3*k] + 
-	Raise[2][k] + View->Offset[2];
+      xx[k] = X[k] + fact * Val[k][0] + Raise[0][k] + View->Offset[0];
+      yy[k] = Y[k] + fact * Val[k][1] + Raise[1][k] + View->Offset[1];
+      zz[k] = Z[k] + fact * Val[k][2] + Raise[2][k] + View->Offset[2];
     }
 
-    if(nbnod==1){ //draw trajectories
-      glColor4ubv((GLubyte*)&CTX.color.fg);
+    switch(nbnod){
+    case 1:
+      Palette2(View,ValMin,ValMax,d[0]);
       glBegin(GL_POINTS);
       glVertex3d(xx[0],yy[0],zz[0]);
       glEnd();
-      if(View->TimeStep){
+      if(View->TimeStep){//draw trajectory
 	glBegin(GL_LINE_STRIP);
-	for(j=0 ; j<View->TimeStep+1 ; j++)
-	  glVertex3d(X[0] + fact*V[3*(View->TimeStep-j)]  + Raise[0][0] + View->Offset[0],
-		     Y[0] + fact*V[3*(View->TimeStep-j)+1]+ Raise[1][0] + View->Offset[1],
-		     Z[0] + fact*V[3*(View->TimeStep-j)+2]+ Raise[2][0] + View->Offset[2]);
+	for(j=0 ; j<View->TimeStep+1 ; j++){
+	  dx = V[3*(View->TimeStep-j)]  ;
+	  dy = V[3*(View->TimeStep-j)+1];
+	  dz = V[3*(View->TimeStep-j)+2];
+	  dd = sqrt(dx*dx+dy*dy+dz*dz);
+	  Palette2(View,ValMin,ValMax,dd);
+	  glVertex3d(X[0] + fact*dx + Raise[0][0] + View->Offset[0],
+		     Y[0] + fact*dy + Raise[1][0] + View->Offset[1],
+		     Z[0] + fact*dz + Raise[2][0] + View->Offset[2]);
+	}
 	glEnd();
       }
+      break;
+    case 2: Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, d); break;
+    case 3: Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d); break;
+    case 4: Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d); break;
     }
-    else{
-      for(k=0 ; k<nbnod ; k++){
-	dx = V[3*nbnod*View->TimeStep  +3*k] ;
-	dy = V[3*nbnod*View->TimeStep+1+3*k] ;
-	dz = V[3*nbnod*View->TimeStep+2+3*k] ;
-	vv[k] = sqrt(dx*dx+dy*dy+dz*dz);
-      }
-      switch(nbnod){
-      case 2: Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv); break;
-      case 3: Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, vv); break;
-      case 4: Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, xx, yy, zz, vv); break;
-      }
-    }
-  
     return;
   }
 
-  if(View->ShowElement){
-    switch(nbnod){
-    case 1 :
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      Draw_Point(X,Y,Z,View->Offset,Raise);
-      break;
-    case 2 :
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      Draw_Line(X,Y,Z,View->Offset,Raise);
-      break;
-    case 3 :
-      glColor4ubv((GLubyte*)&CTX.color.bg);
-      if(View->IntervalsType!=DRAW_POST_ISO)
-	Draw_Polygon (3, X, Y, Z, View->Offset, Raise);
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      glBegin(GL_LINE_LOOP);
-      for(k=0 ; k<3 ; k++) 
-	glVertex3d(X[k]+View->Offset[0]+Raise[0][k],
-		   Y[k]+View->Offset[1]+Raise[1][k],
-		   Z[k]+View->Offset[2]+Raise[2][k]);
-      glEnd();
-      break;
-    case 4 :
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      for(k=0 ; k<4 ; k++){
-	xx[k] = X[k]+View->Offset[0]+Raise[0][k] ;
-	yy[k] = Y[k]+View->Offset[1]+Raise[1][k] ;
-	zz[k] = Z[k]+View->Offset[2]+Raise[2][k] ;
-      }
-      glBegin(GL_LINES);
-      glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
-      glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
-      glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[3], yy[3], zz[3]);
-      glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[2], yy[2], zz[2]);
-      glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[3], yy[3], zz[3]);
-      glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[3], yy[3], zz[3]);
-      glEnd();
-    }
-  }
+  if(View->ShowElement) Draw_Simplex(nbnod-1,X,Y,Z,View->Offset,Raise);
 
   if(View->ArrowLocation == DRAW_POST_LOCATE_COG ||
      View->IntervalsType == DRAW_POST_NUMERIC){
-    switch(nbnod){
-    case 1:
-      dx = V[3*View->TimeStep];
-      dy = V[3*View->TimeStep+1];
-      dz = V[3*View->TimeStep+2];
-      break;
-    case 2:
-      dx = 0.5 * (V[6*View->TimeStep]  +V[6*View->TimeStep+3]);
-      dy = 0.5 * (V[6*View->TimeStep+1]+V[6*View->TimeStep+4]);
-      dz = 0.5 * (V[6*View->TimeStep+2]+V[6*View->TimeStep+5]);
-      break;
-    case 3 :
-      dx = (V[9*View->TimeStep]  +V[9*View->TimeStep+3]+V[9*View->TimeStep+6])/3.;
-      dy = (V[9*View->TimeStep+1]+V[9*View->TimeStep+4]+V[9*View->TimeStep+7])/3.;
-      dz = (V[9*View->TimeStep+2]+V[9*View->TimeStep+5]+V[9*View->TimeStep+8])/3.;
-      break;
-    case 4 :
-      dx = 0.25 * (V[12*View->TimeStep]  +V[12*View->TimeStep+3]+
-		   V[12*View->TimeStep+6]+V[12*View->TimeStep+9] );
-      dy = 0.25 * (V[12*View->TimeStep+1]+V[12*View->TimeStep+4]+
-		   V[12*View->TimeStep+7]+V[12*View->TimeStep+10] );
-      dz = 0.25 * (V[12*View->TimeStep+2]+V[12*View->TimeStep+5]+
-		   V[12*View->TimeStep+8]+V[12*View->TimeStep+11] );
-      break;
+    for(k = 0 ; k<nbnod ; k++){
+      dx += Val[k][0]; xc += X[k] + Raise[0][k];
+      dy += Val[k][1]; yc += Y[k] + Raise[1][k];
+      dz += Val[k][2]; zc += Z[k] + Raise[2][k];
     }
-    d = sqrt(dx*dx+dy*dy+dz*dz);
-    if(d!=0.0 && d>=ValMin && d<=ValMax){             
-      Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));            
+    dx /= (double)nbnod; xc /= (double)nbnod;
+    dy /= (double)nbnod; yc /= (double)nbnod;
+    dz /= (double)nbnod; zc /= (double)nbnod;
+    dd = sqrt(dx*dx+dy*dy+dz*dz);
+    if(dd!=0.0 && dd>=ValMin && dd<=ValMax){             
+      Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,dd));            
       if(View->IntervalsType == DRAW_POST_NUMERIC){
-	for(k = 0 ; k<nbnod ; k++){
-	  xc += X[k] + Raise[0][k] ; 
-	  yc += Y[k] + Raise[1][k]; 
-	  zc += Z[k] + Raise[2][k]; 
-	}
-	glRasterPos3d(xc/(double)nbnod + View->Offset[0],
-		      yc/(double)nbnod + View->Offset[1],
-		      zc/(double)nbnod + View->Offset[2]);
-	sprintf(Num, View->Format, d);
+	glRasterPos3d(xc + View->Offset[0],
+		      yc + View->Offset[1],
+		      zc + View->Offset[2]);
+	sprintf(Num, View->Format, dd);
 	Draw_String(Num);
       }
       else{
-	for(k = 0 ; k<nbnod ; k++){
-	  xc += X[k] ; 
-	  yc += Y[k] ; 
-	  zc += Z[k] ; 
-	}
-	xc /= (double)nbnod;
-	yc /= (double)nbnod;
-	zc /= (double)nbnod;
 	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
 	if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
-	  dx /= d ; dy /= d ; dz /= d ;
-	  d = log10(d/ValMin) ; 
-	  dx *= d ; dy *= d ; dz *= d ;
+	  dx /= dd ; dy /= dd ; dz /= dd ;
+	  dd = log10(dd/ValMin) ; 
+	  dx *= dd ; dy *= dd ; dz *= dd ;
 	}
-	RaiseFill(0, d, ValMin, Raise);         
+	RaiseFill(0, dd, ValMin, Raise);         
 	Draw_Vector(View->ArrowType, View->IntervalsType!=DRAW_POST_ISO,
-		    xc, yc, zc,
-		    fact*d, fact*dx, fact*dy, fact*dz,
+		    xc, yc, zc, fact*dd, fact*dx, fact*dy, fact*dz,
 		    View->Offset, Raise);
       }
     }
   }
   else{
     for(k=0 ; k<nbnod ; k++){
-      dx = V[3*nbnod*View->TimeStep  +3*k] ;
-      dy = V[3*nbnod*View->TimeStep+1+3*k] ;
-      dz = V[3*nbnod*View->TimeStep+2+3*k] ;              
-      d = sqrt(dx*dx+dy*dy+dz*dz);
-      if(d!=0.0 && d>=ValMin && d<=ValMax){           
-	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
+      if(d[k]!=0.0 && d[k]>=ValMin && d[k]<=ValMax){           
+	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d[k]));
 	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
 	if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
-	  dx /= d ; dy /= d ; dz /= d ;
-	  d = log10(d/ValMin) ; 
-	  dx *= d ; dy *= d ; dz *= d ;
+	  Val[k][0] /= d[k] ; Val[k][1] /= d[k] ; Val[k][2] /= d[k] ;
+	  d[k] = log10(d[k]/ValMin) ;
+	  Val[k][0] *= d[k] ; Val[k][1] *= d[k] ; Val[k][2] *= d[k] ;
 	}
-	RaiseFill(0, d, ValMin, Raise);         
+	RaiseFill(0, d[k], ValMin, Raise);         
 	Draw_Vector(View->ArrowType, View->IntervalsType!=DRAW_POST_ISO,
 		    X[k], Y[k], Z[k],
-		    fact*d, fact*dx, fact*dy, fact*dz,
+		    fact*d[k], fact*Val[k][0], fact*Val[k][1], fact*Val[k][1],
 		    View->Offset, Raise);
       }               
     }       
