@@ -1,5 +1,5 @@
-The precise conditions of the license for this version of Gmsh can be found
-in the @file{doc/COPYING} file that accompanies the source code
+The precise licensing conditions for this version of Gmsh can be found in
+the @file{doc/COPYING} file that accompanies the source code
 (@pxref{License}). Detailed copyright information can be found in
 @ref{Credits}.
 
