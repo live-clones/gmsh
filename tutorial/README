@@ -1,4 +1,4 @@
-$Id: README,v 1.19 2003-03-07 07:32:56 geuzaine Exp $
+$Id: README,v 1.20 2003-03-07 18:28:28 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -41,8 +41,6 @@ often more convenient to put the file name on the command line, for
 example with:
 
 > gmsh t1.geo
-
-[NOTE: The '.geo' extension can also be omitted.]
 
 [NOTE: Even if it is often handy to define the variables and the
 points directly in the input files (you may use any text editor for

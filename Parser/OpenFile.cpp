@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.42 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.43 2003-03-07 18:28:28 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -180,17 +180,23 @@ void OpenProblem(char *name)
   else {
     strcpy(ext, "");
   }
+
   if(!strcmp(ext, ".geo") || !strcmp(ext, ".GEO") ||
      !strcmp(ext, ".msh") || !strcmp(ext, ".MSH") ||
      !strcmp(ext, ".stl") || !strcmp(ext, ".STL") ||
      !strcmp(ext, ".sms") || !strcmp(ext, ".SMS") ||
-     !strcmp(ext, ".ppm") || !strcmp(ext, ".pnm") ||
+     !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM") ||
+     !strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
      !strcmp(ext, ".pos") || !strcmp(ext, ".POS")) {
     CTX.base_filename[strlen(name) - 4] = '\0';
   }
+  /* Let's just remove this. It causes more confusion than anything
+     else, and entering the complete file name isn't such big a
+     deal.
   else {
     strcat(CTX.filename, ".geo");
   }
+  */
 
   strncpy(THEM->name, CTX.base_filename, 255);
 
