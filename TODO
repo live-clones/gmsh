@@ -1,4 +1,10 @@
-$Id: TODO,v 1.23 2003-06-23 21:34:39 geuzaine Exp $
+$Id: TODO,v 1.24 2003-07-09 17:14:39 geuzaine Exp $
+
+********************************************************************
+
+cleanup the Draw; command in the parser: it calls CalculateMinMax if
+the nb points changed. Try make something more intelligent during
+OpenFile?
 
 ********************************************************************
 
