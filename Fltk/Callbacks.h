@@ -106,6 +106,7 @@ void view_reload_cb(CALLBACK_ARGS) ;
 void view_reload_all_cb(CALLBACK_ARGS) ;
 void view_reload_visible_cb(CALLBACK_ARGS) ;
 void view_remove_cb(CALLBACK_ARGS) ;
+void view_remove_other_cb(CALLBACK_ARGS) ;
 void view_remove_all_cb(CALLBACK_ARGS) ;
 void view_remove_visible_cb(CALLBACK_ARGS) ;
 void view_remove_invisible_cb(CALLBACK_ARGS) ;

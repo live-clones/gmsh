@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.408 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.409 2005-01-03 07:03:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1147,34 +1147,36 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       for(int j = 0; j < 2; j++) {
 	p[j]->add("Reload/View", 0, 
 		  (Fl_Callback *) view_reload_cb, (void *)nb, 0);
+	p[j]->add("Reload/Visible Views", 0, 
+		  (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
 	p[j]->add("Reload/All Views", 0, 
 		  (Fl_Callback *) view_reload_all_cb, (void *)nb, 0);
-	p[j]->add("Reload/All Visible Views", 0, 
-		  (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
 	p[j]->add("Remove/View", FL_Delete, 
 		  (Fl_Callback *) view_remove_cb, (void *)nb, 0);
+	p[j]->add("Remove/Other Views", 0, 
+		  (Fl_Callback *) view_remove_other_cb, (void *)nb, 0);
+	p[j]->add("Remove/Visible Views", 0, 
+		  (Fl_Callback *) view_remove_visible_cb, (void *)nb, 0);
+	p[j]->add("Remove/Invisible Views", 0, 
+		  (Fl_Callback *) view_remove_invisible_cb, (void *)nb, 0);
+	p[j]->add("Remove/Empty Views", 0, 
+		  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
 	p[j]->add("Remove/All Views", 0, 
 		  (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
-	p[j]->add("Remove/All Visible Views", 0, 
-		  (Fl_Callback *) view_remove_visible_cb, (void *)nb, 0);
-	p[j]->add("Remove/All Invisible Views", 0, 
-		  (Fl_Callback *) view_remove_invisible_cb, (void *)nb, 0);
-	p[j]->add("Remove/All Empty Views", 0, 
-		  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
 	p[j]->add("Duplicate/View without Options", 0, 
 		  (Fl_Callback *) view_duplicate_cb, (void *)nb, 0);
 	p[j]->add("Duplicate/View with Options", 0, 
 		  (Fl_Callback *) view_duplicate_with_options_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/From All Views", 0, 
-		  (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/From Visible Views", 0, 
 		  (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
+	p[j]->add("Combine/Elements/From All Views", 0, 
+		  (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/By View Name", 0, 
 		  (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time Steps/From All Views", 0, 
-		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time Steps/From Visible Views", 0, 
 		  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
+	p[j]->add("Combine/Time Steps/From All Views", 0, 
+		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time Steps/By View Name", 0, 
 		 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
 	p[j]->add("Set Visibility/All On", 0, 

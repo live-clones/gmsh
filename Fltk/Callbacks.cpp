@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.325 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.326 2005-01-03 07:03:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2796,37 +2796,12 @@ void view_toggle_cb(CALLBACK_ARGS)
   Draw();
 }
 
-static int RELOAD_ALL_VIEWS = 0;
-
-void view_reload_all_cb(CALLBACK_ARGS)
-{
-  if(!CTX.post.list)
-    return;
-  RELOAD_ALL_VIEWS = 1;
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++)
-    view_reload_cb(NULL, (void *)i);
-  RELOAD_ALL_VIEWS = 0;
-  Draw();
-}
-
-void view_reload_visible_cb(CALLBACK_ARGS)
-{
-  if(!CTX.post.list)
-    return;
-  RELOAD_ALL_VIEWS = 1;
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++)
-    if(opt_view_visible(i, GMSH_GET, 0))
-      view_reload_cb(NULL, (void *)i);
-  RELOAD_ALL_VIEWS = 0;
-  Draw();
-}
-
-void view_reload_cb(CALLBACK_ARGS)
+static void _view_reload(int num)
 {
   if(!CTX.post.list)
     return;
 
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, num);
 
   struct stat buf;
   if(stat(v->FileName, &buf)){
@@ -2838,7 +2813,7 @@ void view_reload_cb(CALLBACK_ARGS)
   MergeProblem(v->FileName);
   CTX.post.force_num = 0;
 
-  Post_View *v2 = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
+  Post_View *v2 = *(Post_View **) List_Pointer(CTX.post.list, num);
   CopyViewOptions(v, v2);
 
   // In case the reloaded view has a different number of time steps
@@ -2846,9 +2821,37 @@ void view_reload_cb(CALLBACK_ARGS)
     v2->TimeStep = 0;
 
   FreeView(v);
+}
 
-  if(!RELOAD_ALL_VIEWS)
-    Draw();
+void view_reload_cb(CALLBACK_ARGS)
+{
+  _view_reload((long)data);
+  Draw();
+}
+
+void view_reload_all_cb(CALLBACK_ARGS)
+{
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+    _view_reload(i);
+  Draw();
+}
+
+void view_reload_visible_cb(CALLBACK_ARGS)
+{
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+    if(opt_view_visible(i, GMSH_GET, 0))
+      _view_reload(i);
+  Draw();
+}
+
+void view_remove_other_cb(CALLBACK_ARGS)
+{
+  if(!CTX.post.list) return;
+  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
+    if(i != (long)data)
+      RemoveViewByIndex(i);
+  UpdateViewsInGUI();
+  Draw();
 }
 
 void view_remove_all_cb(CALLBACK_ARGS)
