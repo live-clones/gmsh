@@ -1,4 +1,4 @@
-/* $Id: Post.cpp,v 1.6 2000-11-27 10:58:54 geuzaine Exp $ */
+/* $Id: Post.cpp,v 1.7 2000-12-08 12:16:51 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -55,7 +55,7 @@ void Palette(Post_View *v, int nbi, int i){ /* i in [0,nbi-1] */
 
   index = (nbi==1) ? 
     v->CT.size/2 :
-    (int) (i/(double)(nbi-1)*(v->CT.size-1)) ;
+    (int) (i/(double)(nbi-1)*(v->CT.size-1) + 0.5) ;
 
   glColor4ubv( (GLubyte *) &v->CT.table[index] );
 }
@@ -63,7 +63,7 @@ void Palette(Post_View *v, int nbi, int i){ /* i in [0,nbi-1] */
 void Palette2(Post_View *v,double min, double max, double val){ /* val in [min,max] */
   int index;  
 
-  index = (int)( (val-min)/(max-min)*(v->CT.size-1) );
+  index = (int)( (val-min)/(max-min)*(v->CT.size-1) + 0.5);
 
   glColor4ubv((GLubyte *) &v->CT.table[index]);
 }
