@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.109 2002-02-20 16:45:33 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.110 2002-02-22 16:44:09 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -486,7 +486,8 @@ void opt_mesh_ok_cb(CALLBACK_ARGS) {
   opt_mesh_radius_inf(0, GMSH_SET, WID->mesh_value[6]->value());
   opt_mesh_radius_sup(0, GMSH_SET, WID->mesh_value[7]->value());
   opt_mesh_normals(0, GMSH_SET, WID->mesh_value[8]->value());
-  opt_mesh_explode(0, GMSH_SET, WID->mesh_value[9]->value());
+  opt_mesh_explode(0, GMSH_SET, WID->mesh_value[9]->value()); 
+  opt_mesh_tangents(0, GMSH_SET, WID->mesh_value[13]->value());
   opt_mesh_point_size(0, GMSH_SET, WID->mesh_value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, WID->mesh_value[11]->value());
 

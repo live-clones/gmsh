@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.71 2002-02-08 17:33:52 geuzaine Exp $
+// $Id: Options.cpp,v 1.72 2002-02-22 16:44:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1615,6 +1615,10 @@ double opt_mesh_normals(OPT_ARGS_NUM){
 double opt_mesh_tangents(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.mesh.tangents = val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[13]->value(CTX.mesh.tangents);
+#endif
   return CTX.mesh.tangents;
 }
 double opt_mesh_explode(OPT_ARGS_NUM){

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.46 2002-02-01 14:34:05 remacle Exp $
+// $Id: Mesh.cpp,v 1.47 2002-02-22 16:44:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -564,7 +564,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
 void Draw_Simplex_Curves(void *a,void *b){
   Simplex *s;
-  double Xc = 0.0 , Yc = 0.0, Zc = 0.0 ;
+  double Xc = 0.0 , Yc = 0.0, Zc = 0.0, m[3], mm ;
   char Num[100];
 
   s = *(Simplex**)a;
@@ -617,6 +617,20 @@ void Draw_Simplex_Curves(void *a,void *b){
                   Zc + 3*CTX.pixel_equiv_x/CTX.s[2]);
     Draw_String(Num);
   }
+
+  if(CTX.mesh.tangents) {
+    glColor4ubv((GLubyte*)&CTX.color.mesh.tangents);
+    m[0] = X[1]-X[0];
+    m[1] = Y[1]-Y[0];
+    m[2] = Z[1]-Z[0];
+    norme(m);
+    m[0] *= CTX.mesh.tangents * CTX.pixel_equiv_x/CTX.s[0];
+    m[1] *= CTX.mesh.tangents * CTX.pixel_equiv_x/CTX.s[1];
+    m[2] *= CTX.mesh.tangents * CTX.pixel_equiv_x/CTX.s[2];
+    mm = sqrt(m[0]*m[0]+m[1]*m[1]+m[2]*m[2]);
+    Draw_Vector(DRAW_POST_ARROW, 0, Xc,Yc,Zc,mm,m[0],m[1],m[2],NULL);
+  }
+  
 
 
 }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.154 2002-02-20 16:41:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.155 2002-02-22 16:44:09 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -1428,12 +1428,21 @@ void GUI::create_mesh_options_window(){
       mesh_value[8] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Normals");
       mesh_value[8]->minimum(0); 
       mesh_value[8]->maximum(100);
-      mesh_value[8]->step(1);
+      mesh_value[8]->step(0.1);
       for(i=4 ; i<9 ; i++){
 	mesh_value[i]->labelsize(CTX.fontsize);
 	mesh_value[i]->textsize(CTX.fontsize);
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
+
+      mesh_value[13] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW, BH, "Tangents");
+      mesh_value[13]->minimum(0); 
+      mesh_value[13]->maximum(100);
+      mesh_value[13]->step(0.1);
+      mesh_value[13]->labelsize(CTX.fontsize);
+      mesh_value[13]->textsize(CTX.fontsize);
+      mesh_value[13]->align(FL_ALIGN_RIGHT);
+
       o->end();
     }
     { 
