@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.40 2003-03-24 19:47:27 geuzaine Exp $
+// $Id: Draw.cpp,v 1.41 2003-03-24 20:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -74,7 +74,7 @@ void Draw2d(void)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  /* to draw directly in screen coords */
+  // to draw directly in screen coords
   glOrtho((double)CTX.viewport[0],
           (double)CTX.viewport[2],
           (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
@@ -142,7 +142,7 @@ void Orthogonalize(int x, int y)
   if(CTX.ortho) {
     // Warning: for large s (i.e. big zooms) the PolygonOffset will
     // degrade...
-    double clip = CTX.s[0] * 10;
+    double clip = CTX.s[2] * 10;
     glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, 0, clip * CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -176,7 +176,7 @@ void InitRenderModel(void)
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  /* let's add some shininess to all these automatically created materials */
+  // let's add some shininess to all these automatically created materials
   specular[0] = CTX.shine;
   specular[1] = CTX.shine;
   specular[2] = CTX.shine;
@@ -302,7 +302,6 @@ void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
   }
 }
 
-// Zoom
 // FIXME: this is notoriously wrong :-)
 
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
@@ -314,7 +313,6 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
   yscale1 = CTX.s[1];
   set_s(0, CTX.s[0] * (CTX.vxmax - CTX.vxmin) / (X2 - X1));
   set_s(1, CTX.s[1] * (CTX.vymax - CTX.vymin) / (Y1 - Y2));
-  /* bif bif bif */
   set_s(2, 0.5 * (CTX.s[0] + CTX.s[1]));
   set_t(0,
         CTX.t[0] * (xscale1 / CTX.s[0]) - ((Xc1 + Xc2) / 2.) * (1. -
