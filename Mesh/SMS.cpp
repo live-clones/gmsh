@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream.h>
 #include <assert.h>
 #include "Gmsh.h"
 #include "Geo.h"
@@ -38,9 +38,8 @@ void Read_VTK_File (char *file, Mesh *m)
   FILE *in = fopen (file,"r");
   if(!in)return;
   char line[256],dumline1[256],dumline2[256];
-  int i,j;
-  int NbRegions,NbFaces,NbEdges,NbVertices,NbPoints,
-    Vertex1,Vertex2,Vertex3,Vertex4,NbVerticesOnFace;
+  int i;
+  int NbFaces,NbVertices,Vertex1,Vertex2,Vertex3,NbVerticesOnFace;
   double x,y,z;
   Vertex *v1,*v2,*v3,*v4;
 

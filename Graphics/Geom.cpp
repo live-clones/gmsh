@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.16 2001-02-23 00:07:51 remacle Exp $
+// $Id: Geom.cpp,v 1.17 2001-02-23 08:46:12 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -833,7 +833,6 @@ void EndHighlight(int permanent){
 void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
 
   Curve *cc;
-  Vertex *v1,*v2;
   char Message[256],temp[256];
   int i,nbg;
 
@@ -845,9 +844,6 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
   else if(c){
     if(permanent) c->ipar[3] = 1;
     if(CTX.geom.highlight) Draw_Curve(&c,NULL);
-
-    //    List_Read(c->Control_Points,0,&v1);
-    //    List_Read(c->Control_Points,List_Nbr(c->Control_Points)-1,&v2);
     Msg(STATUS1N,"Curve %d  {%d->%d}",c->Num,c->beg->Num,c->end->Num);
   }
   else if(s){

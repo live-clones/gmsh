@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.68 2001-02-23 00:07:51 remacle Exp $
+# $Id: Makefile,v 1.69 2001-02-23 08:46:12 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -395,7 +395,7 @@ fltk_compile_linux_scorec :
 fltk_compile_sgi:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
-           "C_FLAGS=-O2 -n32 -OPT:Olimit=0" \
+           "C_FLAGS=-O2 -n32 -OPT:Olimit=0 -LANG:std" \
            "RANLIB=true"\
            "AR=CC -n32 -ar -o"\
            "OS_FLAGS=" \
