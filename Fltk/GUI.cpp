@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.414 2005-01-18 00:23:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.415 2005-01-18 06:48:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1621,7 +1621,7 @@ void GUI::create_option_window()
 
   // General options
 
-  gen_group = new Fl_Group(L, 0, width, height, "General options");
+  gen_group = new Fl_Group(L, 0, width, height, "General Options");
   {
     Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
@@ -1884,7 +1884,7 @@ void GUI::create_option_window()
 
   // Geometry options
 
-  geo_group = new Fl_Group(L, 0, width, height, "Geometry options");
+  geo_group = new Fl_Group(L, 0, width, height, "Geometry Options");
   geo_group->hide();
   {
     Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
@@ -2037,7 +2037,7 @@ void GUI::create_option_window()
 
   // Mesh options
 
-  mesh_group = new Fl_Group(L, 0, width, height, "Mesh options");
+  mesh_group = new Fl_Group(L, 0, width, height, "Mesh Options");
   mesh_group->hide();
   {
     Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
@@ -2206,7 +2206,7 @@ void GUI::create_option_window()
       o->end();
     }
     {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cut plane");
+      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cut Plane");
       o->hide();
 
       mesh_butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable");
@@ -2352,7 +2352,7 @@ void GUI::create_option_window()
 
   // Solver options
 
-  solver_group = new Fl_Group(L, 0, width, height, "Solver options");
+  solver_group = new Fl_Group(L, 0, width, height, "Solver Options");
   solver_group->hide();
   {
     Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
@@ -2378,7 +2378,7 @@ void GUI::create_option_window()
 
   // Post-processing options
 
-  post_group = new Fl_Group(L, 0, width, height, "Post-processing options");
+  post_group = new Fl_Group(L, 0, width, height, "Post-processing Options");
   post_group->hide();
   {
     Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
@@ -2428,7 +2428,7 @@ void GUI::create_option_window()
   // View options
 
   view_number = -1;
-  view_group = new Fl_Group(L, 0, width, height, "View options");
+  view_group = new Fl_Group(L, 0, width, height, "View Options");
   view_group->hide();
   {
     Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
@@ -3508,7 +3508,7 @@ void GUI::create_visibility_window()
   };
 
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 4 * WB;
-  int height = 15 * BH;
+  int height = 16 * BH;
 
   vis_window = new Dialog_Window(width, height, "Visibility");
   vis_window->box(GMSH_WINDOW_BOX);
@@ -3566,7 +3566,7 @@ void GUI::create_visibility_window()
     Fl_Group::current()->resizable(o);
   }
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - BH, "Numeric input");
+    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - BH, "Direct Numeric Input");
     o->resizable(NULL);
 
     for(int i = 0; i < 6; i++){
@@ -3959,7 +3959,7 @@ void GUI::create_mesh_context_window(int num)
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Characteristic length
     {
-      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Characteristic length");
+      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Characteristic Length");
       context_mesh_input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
       context_mesh_input[0]->value("1.0");
       context_mesh_input[0]->align(FL_ALIGN_RIGHT);
@@ -3967,7 +3967,7 @@ void GUI::create_mesh_context_window(int num)
     }
     // 1: Transfinite line
     {
-      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite line");
+      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Line");
       context_mesh_input[1] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of points");
       context_mesh_input[1]->value("10");
       context_mesh_input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");
@@ -3987,7 +3987,7 @@ void GUI::create_mesh_context_window(int num)
     }
     // 2: Transfinite volume
     {
-      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite volume");
+      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite Volume");
       context_mesh_input[3] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Volume number");
       context_mesh_input[3]->value("1");
       context_mesh_input[3]->align(FL_ALIGN_RIGHT);
