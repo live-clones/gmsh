@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.258 2003-02-12 21:58:31 geuzaine Exp $
+# $Id: Makefile,v 1.259 2003-02-12 22:09:50 geuzaine Exp $
 
 include variables
 
@@ -40,7 +40,7 @@ variables: configure
 
 source:
 	rm -rf gmsh-${GMSH_RELEASE}
-	tar zcvf gmsh.tgz `ls README* configure *.in Makefile */Makefile\
+	tar zcvf gmsh.tgz `ls README* */README* configure *.in Makefile */Makefile\
                            */*.[chyl] */*.[ch]pp */*.rc */*.res */*.r */*.ico */*.icns\
                            */*.pl */*.pm */*.opt */*.spec`\
                            doc demos tutorial
