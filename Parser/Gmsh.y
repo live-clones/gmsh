@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.60 2001-02-07 15:42:14 geuzaine Exp $
+// $Id: Gmsh.y,v 1.61 2001-02-08 10:32:43 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -757,6 +757,19 @@ Affectation :
       }
       else{
 	List_Put(pSymbol->val, (int)$3, &$6);
+      }
+    }
+  | tSTRING '[' ']' tAFFECT ListOfDouble tEND
+    {
+      TheSymbol.Name = $1;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	TheSymbol.val = List_Create(5,5,sizeof(double));
+	List_Copy($5,TheSymbol.val);
+	List_Add(Symbol_L, &TheSymbol);
+      }
+      else{
+	List_Reset(pSymbol->val);
+	List_Copy($5, pSymbol->val);
       }
     }
   | tSTRING tPLUSPLUS tEND
