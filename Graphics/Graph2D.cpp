@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.33 2004-04-24 02:13:07 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.34 2004-04-24 04:19:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -378,8 +378,8 @@ void Draw_Graph2D(void)
 {
   int i, nbauto = 0;
   Post_View *v;
-  double dx, dy, bb[4], bbtot[4] = { 0., 0., 0., 0. }, pos[2], tic, space =
-    10.;
+  double dx, dy, bb[4], bbtot[4] = { 0., 0., 0., 0. }, pos[2] = {0., 0.}, tic;
+  double space = 10.;
   char label[1024];
 
   if(!CTX.post.list)
