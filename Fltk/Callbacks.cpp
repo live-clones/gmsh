@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.83 2001-09-06 06:38:48 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.84 2001-10-05 15:25:35 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -383,6 +383,7 @@ void opt_geometry_ok_cb(CALLBACK_ARGS) {
   opt_geometry_lines_num(0, GMSH_SET, WID->geo_butt[5]->value());
   opt_geometry_surfaces_num(0, GMSH_SET, WID->geo_butt[6]->value());
   opt_geometry_volumes_num(0, GMSH_SET, WID->geo_butt[7]->value());
+  opt_geometry_auto_coherence(0, GMSH_SET, WID->geo_butt[8]->value());
 
   opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, WID->geo_value[1]->value());

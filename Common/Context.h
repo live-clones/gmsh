@@ -119,6 +119,7 @@ public :
     double normals, tangents;
     double scaling_factor;
     int color_scheme ;
+    int auto_coherence;
   } geom;
 
   // mesh options 

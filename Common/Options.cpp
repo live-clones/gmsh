@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.48 2001-09-26 08:28:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.49 2001-10-05 15:25:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1053,6 +1053,15 @@ double opt_general_light52(OPT_ARGS_NUM){
 
 
 
+double opt_geometry_auto_coherence(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.auto_coherence = (int)val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->geo_butt[8]->value(CTX.geom.auto_coherence);
+#endif
+  return CTX.geom.auto_coherence;
+}
 double opt_geometry_normals(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.geom.normals = val;

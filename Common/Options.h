@@ -130,6 +130,7 @@ double opt_general_light5(OPT_ARGS_NUM);
 double opt_general_light50(OPT_ARGS_NUM);
 double opt_general_light51(OPT_ARGS_NUM);
 double opt_general_light52(OPT_ARGS_NUM);
+double opt_geometry_auto_coherence(OPT_ARGS_NUM);
 double opt_geometry_normals(OPT_ARGS_NUM);
 double opt_geometry_tangents(OPT_ARGS_NUM);
 double opt_geometry_points(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.115 2001-09-06 07:18:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.116 2001-10-05 15:25:35 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1090,6 +1090,17 @@ void GUI::create_geometry_options_window(){
     geo_window->label("Geometry options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Algorithm");
+	o->labelsize(CTX.fontsize);
+	o->hide();
+	geo_butt[8] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Auto coherence (suppress duplicates)");
+	geo_butt[8]->type(FL_TOGGLE_BUTTON);
+	geo_butt[8]->down_box(FL_DOWN_BOX);
+	geo_butt[8]->labelsize(CTX.fontsize);
+	geo_butt[8]->selection_color(FL_YELLOW);
+	o->end();
+      }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.31 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: CAD.cpp,v 1.32 2001-10-05 15:25:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -940,6 +940,7 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
   CreateReversedCurve (THEM,c);
   *pc = c;
   *prc = FindCurve(-c->Num,THEM);
+
 }
 
 Surface *Extrude_ProtudeCurve(int ep, int ic,
@@ -1032,6 +1033,7 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
 
   End_Surface(s);
   Tree_Add(THEM->Surfaces,&s);
+
   return s;
 }
 
@@ -1121,7 +1123,7 @@ void Extrude_ProtudeSurface(int ep, int is,
   
   if(pv)Tree_Add(THEM->Volumes,&pv);
   
-  ReplaceAllDuplicates ( THEM );
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
   List_Reset(ListOfTransformedPoints);
   
 }
@@ -1482,7 +1484,7 @@ void TranslateShapes(double X,double Y,double Z,
   T[0] = X;T[1] = Y;T[2] = Z;
   SetTranslationMatrix(matrix,T);
   ApplicationOnShapes(matrix,ListShapes);
-  if(isFinal)ReplaceAllDuplicates ( THEM );
+  if(CTX.geom.auto_coherence && isFinal) ReplaceAllDuplicates ( THEM );
 }
 
 void DilatShapes(double X,double Y,double Z, double A,
@@ -1491,7 +1493,7 @@ void DilatShapes(double X,double Y,double Z, double A,
   T[0] = X;T[1] = Y;T[2] = Z;
   SetDilatationMatrix(matrix,T,A);
   ApplicationOnShapes(matrix,ListShapes);
-  ReplaceAllDuplicates ( THEM );
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
 }
 
 
@@ -1506,7 +1508,7 @@ void RotateShapes (double Ax,double Ay,double Az,
   ApplicationOnShapes(matrix,ListShapes);
   TranslateShapes(Px,Py,Pz,ListShapes,0);
   List_Reset(ListOfTransformedPoints);
-  ReplaceAllDuplicates ( THEM );
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
 }
 
 void SymmetryShapes (double A,double B,double C,
@@ -1514,7 +1516,7 @@ void SymmetryShapes (double A,double B,double C,
   double matrix[4][4];
   SetSymmetryMatrix(matrix,A,B,C,D);
   ApplicationOnShapes(matrix,ListShapes);
-  ReplaceAllDuplicates ( THEM );
+  if(CTX.geom.auto_coherence) ReplaceAllDuplicates ( THEM );
 }
 
 
