@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.16 2003-04-15 05:12:01 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.17 2003-04-15 06:38:55 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -75,15 +75,6 @@ Manual}, for Gmsh @value{GMSH-VERSION}.
 @noindent
 Copyright @value{COPYRIGHT}
 @end ifinfo
-
-@c =========================================================================
-@c TeX directives
-@c =========================================================================
-
-@iftex
-@global@let@sl=@it
-@global@setfont@indit@itshape{9}{1000}
-@end iftex
 
 @c =========================================================================
 @c Title page
@@ -1363,7 +1354,7 @@ formats. See @ref{File formats} for this.
 @node t1.geo, t2.geo, Tutorial, Tutorial
 @section @file{t1.geo}
 
-@include t1.geo
+@verbatiminclude ../../tutorial/t1.geo
 
 @c -------------------------------------------------------------------------
 @c t2.geo
@@ -1372,7 +1363,7 @@ formats. See @ref{File formats} for this.
 @node t2.geo, t3.geo, t1.geo, Tutorial
 @section @file{t2.geo}
 
-@include t2.geo
+@verbatiminclude ../../tutorial/t2.geo
 
 @c -------------------------------------------------------------------------
 @c t3.geo
@@ -1381,7 +1372,7 @@ formats. See @ref{File formats} for this.
 @node t3.geo, t4.geo, t2.geo, Tutorial
 @section @file{t3.geo}
 
-@include t3.geo
+@verbatiminclude ../../tutorial/t3.geo
 
 @c -------------------------------------------------------------------------
 @c t4.geo
@@ -1390,7 +1381,7 @@ formats. See @ref{File formats} for this.
 @node t4.geo, t5.geo, t3.geo, Tutorial
 @section @file{t4.geo}
 
-@include t4.geo
+@verbatiminclude ../../tutorial/t4.geo
 
 @c -------------------------------------------------------------------------
 @c t5.geo
@@ -1399,7 +1390,7 @@ formats. See @ref{File formats} for this.
 @node t5.geo, t6.geo, t4.geo, Tutorial
 @section @file{t5.geo}
 
-@include t5.geo
+@verbatiminclude ../../tutorial/t5.geo
 
 @c -------------------------------------------------------------------------
 @c t6.geo
@@ -1408,7 +1399,7 @@ formats. See @ref{File formats} for this.
 @node t6.geo, t7.geo, t5.geo, Tutorial
 @section @file{t6.geo}
 
-@include t6.geo
+@verbatiminclude ../../tutorial/t6.geo
 
 @c -------------------------------------------------------------------------
 @c t7.geo
@@ -1417,7 +1408,7 @@ formats. See @ref{File formats} for this.
 @node t7.geo, t8.geo, t6.geo, Tutorial
 @section @file{t7.geo}
 
-@include t7.geo
+@verbatiminclude ../../tutorial/t7.geo
 
 @c -------------------------------------------------------------------------
 @c t8.geo
@@ -1426,7 +1417,7 @@ formats. See @ref{File formats} for this.
 @node t8.geo, t9.geo, t7.geo, Tutorial
 @section @file{t8.geo}
 
-@include t8.geo
+@verbatiminclude ../../tutorial/t8.geo
 
 @c -------------------------------------------------------------------------
 @c t9.geo
@@ -1435,7 +1426,7 @@ formats. See @ref{File formats} for this.
 @node t9.geo,  , t8.geo, Tutorial
 @section @file{t9.geo}
 
-@include t9.geo
+@verbatiminclude ../../tutorial/t9.geo
 
 @c =========================================================================
 @c Running Gmsh
@@ -1849,11 +1840,11 @@ time (or any other variable) for which an evolution was saved.
 @item @var{vector-point-value}
 @item @dots{}
 are lists of double precision numbers giving the node coordinates and the
-values associated with the nodes of the @item @var{nb-scalar-points} scalar
-points, @item @var{nb-vector-points} vector points, @dots{}, for each
-of the @var{time-step-values}.
+values associated with the nodes of the @var{nb-scalar-points} scalar
+points, @var{nb-vector-points} vector points, @dots{}, for each of the
+@var{time-step-values}.
 
-For example, vector-triangle-value is defined as:
+For example, @var{vector-triangle-value} is defined as:
 @example
 @var{coord1-node1} @var{coord1-node2} @var{coord1-node3}
 @var{coord2-node1} @var{coord2-node2} @var{coord2-node3}
@@ -2265,9 +2256,7 @@ already know about.
 @cindex History, versions
 @cindex Changelog
 
-@example
-@include ../VERSIONS
-@end example
+@verbatiminclude ../VERSIONS
 
 @c -------------------------------------------------------------------------
 @c Contributors
@@ -2280,9 +2269,7 @@ already know about.
 @cindex Contributors, list
 @cindex Credits 
 
-@example
-@include ../CONTRIBUTORS
-@end example
+@verbatiminclude ../CONTRIBUTORS
 
 @end ifclear
 

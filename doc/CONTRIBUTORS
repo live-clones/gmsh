@@ -1,9 +1,9 @@
-$Id: CONTRIBUTORS,v 1.26 2003-03-16 21:23:18 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.27 2003-04-15 06:38:55 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2003 by
 
-  Jean-Francois Remacle <remacle@@gce.ucl.ac.be> and
-  Christophe Geuzaine <geuzaine@@acm.caltech.edu>
+  Jean-Francois Remacle <remacle@gce.ucl.ac.be> and
+  Christophe Geuzaine <geuzaine@acm.caltech.edu>
 
 Portions of Gmsh are copyright (c)
 
@@ -16,17 +16,17 @@ This version of Gmsh may also contain code copyright (c) 1993, 1995,
 1997, 1998, 2002 Jonathan Richard Shewchuk: check the configuration
 options.
 
-Special thanks to David Colignon <David.Colignon@@univ.u-3mrs.fr> for
-new colormaps; Patrick Dular <patrick.dular@@ulg.ac.be> for transfinite
-mesh bug fixes; Laurent Stainier <l.stainier@@ulg.ac.be> for the Mac OS
+Special thanks to David Colignon <David.Colignon@univ.u-3mrs.fr> for
+new colormaps; Patrick Dular <patrick.dular@ulg.ac.be> for transfinite
+mesh bug fixes; Laurent Stainier <l.stainier@ulg.ac.be> for the Mac OS
 port and the tensor display code; Nicolas Tardieu
-<nicolas.tardieu@@edf.fr> and Pierre Badel <badel@@freesurf.fr> for help
-with the GSL integration and Marc Ume <Marc.Ume@@digitalgraphics.be>
+<nicolas.tardieu@edf.fr> and Pierre Badel <badel@freesurf.fr> for help
+with the GSL integration and Marc Ume <Marc.Ume@digitalgraphics.be>
 for the original list code.
 
-Special thanks also to Bill Spitzak <spitzak@@users.sourceforge.net>,
-Michael Sweet <easysw@@users.sourceforge.net>, Matthias Melcher
-<mm@@matthiasm.com> and others for the Fast Light Tool Kit on which
+Special thanks also to Bill Spitzak <spitzak@users.sourceforge.net>,
+Michael Sweet <easysw@users.sourceforge.net>, Matthias Melcher
+<mm@matthiasm.com> and others for the Fast Light Tool Kit on which
 Gmsh's GUI is based. See http://www.fltk.org for more info on this
 excellent object-oriented, cross-platform toolkit.
 
@@ -35,16 +35,16 @@ providing fresh ideas on theoretical or programming topics, who have
 sent patches, requests for changes or improvements, or who gave us
 access to exotic machines for testing Gmsh:
 
-  Juan Abanto <juanabanto@@yahoo.com>
-  Olivier Adam <o.adam@@ulg.ac.be>
-  Guillaume Alleon <guillaume.alleon@@airbus.aeromatra.com>
-  Eric Bechet <eric.bechet@@epost.de>
-  Laurent Champaney <laurent.champaney@@meca.uvsq.fr>
-  Pascal Dupuis <Pascal.Dupuis@@esat.kuleuven.ac.be>
-  Philippe Geuzaine <geuzaine@@gnat.colorado.edu>
-  Johan Gyselinck <johan.gyselinck@@ulg.ac.be>
-  Francois Henrotte <fhenrott@@esat.kuleuven.ac.be>
-  Benoit Meys <bmeys@@techspace-aero.be>
-  Nicolas Moes <moes@@tam9.mech.nwu.edu>
-  Osamu Nakamura <naka@@hasaki.sumitomometals.co.jp>
-  Chad Schmutzer <schmutze@@acm.caltech.edu>
+  Juan Abanto <juanabanto@yahoo.com>
+  Olivier Adam <o.adam@ulg.ac.be>
+  Guillaume Alleon <guillaume.alleon@airbus.aeromatra.com>
+  Eric Bechet <eric.bechet@epost.de>
+  Laurent Champaney <laurent.champaney@meca.uvsq.fr>
+  Pascal Dupuis <Pascal.Dupuis@esat.kuleuven.ac.be>
+  Philippe Geuzaine <geuzaine@gnat.colorado.edu>
+  Johan Gyselinck <johan.gyselinck@ulg.ac.be>
+  Francois Henrotte <fhenrott@esat.kuleuven.ac.be>
+  Benoit Meys <bmeys@techspace-aero.be>
+  Nicolas Moes <moes@tam9.mech.nwu.edu>
+  Osamu Nakamura <naka@hasaki.sumitomometals.co.jp>
+  Chad Schmutzer <schmutze@acm.caltech.edu>
