@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.169 2001-12-03 08:41:43 geuzaine Exp $
+# $Id: Makefile,v 1.170 2001-12-04 13:19:19 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
@@ -374,7 +374,7 @@ compile_hp:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
-           "OPT_FLAGS=-O3" \
+           "OPT_FLAGS=-O2" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
@@ -393,7 +393,7 @@ compile_ibm:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
-           "OPT_FLAGS=-O3" \
+           "OPT_FLAGS=-O2" \
            "OS_FLAGS=-D_BSD" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=" \
@@ -528,7 +528,7 @@ compile_sun:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
-           "OPT_FLAGS=-O3" \
+           "OPT_FLAGS=-O2" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
