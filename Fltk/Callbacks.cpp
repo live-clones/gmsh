@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.293 2004-10-28 06:11:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.294 2004-10-28 06:57:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1671,13 +1671,16 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
   while(1) {
     Msg(STATUS3N, "Creating point");
     Msg(ONSCREEN, "Click and/or enter coordinates\n"
-	"[Click 'Add' to add point or press 'q' to abort]");
+	"[Press 'e' or 'Add' to add point or 'q' to abort]");
     Vertex *v;
     Curve *c;
     Surface *s;
     char ib = SelectEntity(ENT_NONE, &v, &c, &s);
     if(ib == 'q'){
       break;
+    }
+    else if(ib == 'e') {
+      con_geometry_define_point_cb(NULL, NULL);
     }
     else if(ib == 'c') { // mouse click
       // find line in real space corresponding to current cursor position
