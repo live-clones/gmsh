@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.91 2003-12-04 18:24:50 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.92 2003-12-07 05:37:00 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -234,6 +234,11 @@ File formats
 * Gmsh binary post-processing file format::  
 * Gmsh parsed post-processing file format::  
 * Gmsh node ordering::          
+
+Gmsh mesh file format
+
+* Version 1.0::                 
+* Version 2.0::                 
 
 Bugs, versions and credits
 
@@ -2605,9 +2610,24 @@ All non-parsed file formats have sections enclosed between @code{$KEY} and
 @cindex File format, mesh
 @cindex @file{.msh} file
 
-The @file{.msh} file format is Gmsh's native mesh file format. The file is
-divided in two sections, defining the nodes (@code{$NOD}-@code{$ENDNOD}) and
-the elements (@code{$ELM}-@code{$ENDELM}) in the mesh:
+@menu
+* Version 1.0::                 
+* Version 2.0::                 
+@end menu
+
+@c .........................................................................
+@c Version 1.0
+@c .........................................................................
+
+@node Version 1.0, Version 2.0, Gmsh mesh file format, Gmsh mesh file format
+@subsection Version 1.0
+
+The @file{.msh} file format, version 1.0, is Gmsh's old native mesh file
+format, now superseeded by the format described in @ref{Version 2.0}.
+
+In the @file{.msh} file format, version 1.0, the file is divided in two
+sections, defining the nodes (@code{$NOD}-@code{$ENDNOD}) and the elements
+(@code{$ELM}-@code{$ENDELM}) in the mesh:
 
 @example
 $NOD
@@ -2626,7 +2646,7 @@ $ENDELM
 where
 @table @code
 @item @var{number-of-nodes}
-is the number of nodes in the mesh
+is the number of nodes in the mesh.
 
 @item @var{node-number}
 is the number (index) of the @var{n}-th node in the mesh. Note that the
@@ -2638,7 +2658,7 @@ are the floating point values giving the X, Y and Z coordinates of the
 @var{n}-th node.
 
 @item @var{number-of-elements}
-is the number of elements in the mesh
+is the number of elements in the mesh.
 
 @item @var{elm-number}
 is the number (index) of the @var{n}-th element in the mesh. Note that the
@@ -2674,13 +2694,114 @@ is the number of the elementary entity to which the element belongs.
 
 @item @var{number-of-nodes}
 is the number of nodes for the @var{n}-th element. This is redundant, but
-kept for backward compatibility. The redundancy may disappear in the future
-if higher order elements are implemented using the same @w{@var{elm-type}s}
-as the current ones.
+kept for backward compatibility.
 
 @item @var{node-number-list}
 is the list of the @var{number-of-nodes} node numbers of the @var{n}-th
 element (separated by white space, without commas).
+@end table
+
+@c .........................................................................
+@c Version 2.0
+@c .........................................................................
+
+@node Version 2.0,  , Version 1.0, Gmsh mesh file format
+@subsection Version 2.0
+
+The version 2.0 of the @file{.msh} file format is the Gmsh's new native mesh
+file format. It will eventually become the new default mesh format generated
+by Gmsh. This new format is very similar to the old one, but is more
+general: it contains information about itself and allows to attach an
+arbitrary number of tags to each element.
+
+The @file{.msh} file format, version 2.0, is divided in three sections,
+defining the file format (@code{$MeshFormat}-@code{$EndMeshFormat}), the
+nodes (@code{$Nodes}-@code{$EndNodes}) and the elements
+(@code{$Elements}-@code{$EndElements}) in the mesh:
+
+@example
+$MeshFormat
+2.0 @var{file-type} @var{data-size}
+$EndMeshFormat
+$Nodes
+@var{number-of-nodes}
+@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
+@dots{}
+$EndNodes
+$Elements
+@var{number-of-elements}
+@var{elm-number} @var{elm-type} @var{number-of-tags} < @var{tag} > @dots{} @var{node-number-list}
+@dots{}
+$EndElements
+@end example
+
+@noindent
+where
+@table @code
+@item @var{file-type}
+is an integer equal to 0 in the ASCII file format.
+
+@item @var{data-size}
+is an integer equal to the size of the floating point numbers used in the
+file (usually, @var{data-size} = sizeof(double)).
+
+@item @var{number-of-nodes}
+is the number of nodes in the mesh.
+
+@item @var{node-number}
+is the number (index) of the @var{n}-th node in the mesh. Note that the
+@w{@var{node-number}s} do not have to be given in a consecutive (or even an
+ordered) way.
+
+@item @var{x-coord} @var{y-coord} @var{z-coord}
+are the floating point values giving the X, Y and Z coordinates of the
+@var{n}-th node.
+
+@item @var{number-of-elements}
+is the number of elements in the mesh.
+
+@item @var{elm-number}
+is the number (index) of the @var{n}-th element in the mesh. Note that the
+@w{@var{elm-number}s} do not have to be given in a consecutive (or even an
+ordered) way.
+
+@item @var{elm-type}
+defines the geometrical type of the @var{n}-th element:
+@table @code
+@item 1
+Line (2 nodes, 1 edge).
+@item 2
+Triangle (3 nodes, 3 edges).
+@item 3
+Quadrangle (4 nodes, 4 edges).
+@item 4
+Tetrahedron (4 nodes, 6 edges, 4 faces).
+@item 5
+Hexahedron (8 nodes, 12 edges, 6 faces).
+@item 6
+Prism (6 nodes, 9 edges, 5 faces).
+@item 7
+Pyramid (5 nodes, 8 edges, 5 faces).
+@item 15
+Point (1 node).
+@end table
+
+@item @var{number-of-tags}
+gives the number of (integer) tags for the @var{n}-th element. By default,
+Gmsh generates meshes with two tags, but can read files with an arbitrary
+number of tags (and currently only interprets the three first ones: see
+below).
+
+@item @var{tag}
+is an integer tag associated with the @var{n}-th element. By default, the
+first tag is the number of the physical entity to which the element belongs;
+the second tag is the number of the elementary geometrical entity to which
+the element belongs; the third tag is the number of a mesh partition to
+which the element belongs.
+
+@item @var{node-number-list}
+is the list of the node numbers of the @var{n}-th element (separated by
+white space, without commas).
 @end table
 
 @c -------------------------------------------------------------------------
@@ -2752,7 +2873,7 @@ is an integer equal to 0 in the ASCII file format.
 
 @item @var{data-size}
 is an integer equal to the size of the floating point numbers used in the
-file (usually, data-size = sizeof(double)).
+file (usually, @var{data-size} = sizeof(double)).
 
 @item @var{view-name}
 is a string containing the name of the view (max. 256 characters).

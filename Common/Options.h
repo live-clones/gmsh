@@ -354,6 +354,7 @@ double opt_mesh_line_width(OPT_ARGS_NUM);
 double opt_mesh_line_type(OPT_ARGS_NUM);
 double opt_mesh_aspect(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);
+double opt_mesh_msh_file_version(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_algo(OPT_ARGS_NUM);
 double opt_mesh_point_insertion(OPT_ARGS_NUM);

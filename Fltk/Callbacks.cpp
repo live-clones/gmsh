@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.196 2003-12-07 00:23:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.197 2003-12-07 05:37:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -439,6 +439,20 @@ void _save_msh_all(char *name)
   CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
   CTX.mesh.save_all = all;
 }
+void _save_msh_v2(char *name)
+{
+  double ver = CTX.mesh.msh_file_version;
+  CTX.mesh.msh_file_version = 2.0;
+  _save_msh(name);
+  CTX.mesh.msh_file_version = ver;
+}
+void _save_msh_all_v2(char *name)
+{
+  double ver = CTX.mesh.msh_file_version;
+  CTX.mesh.msh_file_version = 2.0;
+  _save_msh_all(name);
+  CTX.mesh.msh_file_version = ver;
+}
 void _save_gref(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_GREF);
@@ -608,8 +622,10 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"By extension (*)", _save_auto},
     {"Gmsh options (*.opt)", _save_geo_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
-    {"Gmsh mesh (*.msh)", _save_msh},
-    {"Gmsh mesh without physicals (*.msh)", _save_msh_all},
+    {"Gmsh mesh v1.0 (*.msh)", _save_msh},
+    {"Gmsh mesh v1.0 without physicals (*.msh)", _save_msh_all},
+    {"Gmsh mesh v2.0 (*.msh)", _save_msh_v2},
+    {"Gmsh mesh v2.0 without physicals (*.msh)", _save_msh_all_v2},
     {"GREF mesh (*.gref)", _save_gref},
     {"I-DEAS universal mesh format (*.unv)", _save_unv},
     {"VRML surface mesh (*.wrl)", _save_vrml},

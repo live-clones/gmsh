@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.127 2003-12-07 00:23:06 geuzaine Exp $
+// $Id: Options.cpp,v 1.128 2003-12-07 05:37:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3241,6 +3241,13 @@ double opt_mesh_format(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.format = (int)val;
   return CTX.mesh.format;
+}
+
+double opt_mesh_msh_file_version(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.msh_file_version = val;
+  return CTX.mesh.msh_file_version;
 }
 
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM)

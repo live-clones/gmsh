@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.61 2003-12-07 02:56:34 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.62 2003-12-07 05:37:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -93,6 +93,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   int format = LIST_FORMAT_ASCII, size = sizeof(double);
   int Nbr_Nodes, Nbr_Elements, i_Node, i_Element;
   int Num, Type, Physical, Elementary, Partition, i, j;
+  int NbTags, Tag;
   double x, y, z, lc1, lc2;
   Vertex *vert, verts[NB_NOD_MAX_ELM], *vertsp[NB_NOD_MAX_ELM], **vertspp;
   Simplex *simp;
@@ -118,7 +119,15 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
     if(!strncmp(&String[1], "MeshFormat", 10)) {
       fscanf(fp, "%lf %d %d\n", &version, &format, &size);
-      Msg(INFO, "Detected mesh file format %g", version);
+
+      if(version == 2.0){
+	Msg(INFO, "Detected mesh file format %g", version);
+      }
+      else{
+	Msg(GERROR, "Unknown MSH file version to read (%g)", version);
+	return;
+      }
+
       if(format == 0)
         format = LIST_FORMAT_ASCII;
       else if(format == 1)
@@ -129,7 +138,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
       }
     }
 
-    /*  P T S  */
+    /*  POINTS -- this field is deprecated, and will eventually disappear */
 
     if(!strncmp(&String[1], "PTS", 3) ||
        !strncmp(&String[1], "Points", 6)) {
@@ -148,7 +157,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
       }
     }
 
-    /*  N O E  */
+    /*  NODES  */
 
     if(!strncmp(&String[1], "NOD", 3) ||
        !strncmp(&String[1], "NOE", 3) ||
@@ -197,8 +206,35 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  Partition = Physical;
 	}
 	else{
-	  fscanf(fp, "%d %d %d %d %d %d",
-		 &Num, &Type, &Physical, &Elementary, &Partition, &Nbr_Nodes);
+	  fscanf(fp, "%d %d %d", &Num, &Type, &NbTags);
+	  Elementary = Physical = Partition = 1;
+	  for(j = 0; j < NbTags; j++){
+	    fscanf(fp, "%d", &Tag);	    
+	    if(j == 0)
+	      Physical = Tag;
+	    else if(j == 1)
+	      Elementary = Tag;
+	    else if(j == 2)
+	      Partition = Tag;
+	    // ignore any other tags for now
+	  }
+	  switch (Type) {
+	  case PNT : Nbr_Nodes = 1; break;
+	  case LGN1: Nbr_Nodes = 2; break;
+	  case LGN2: Nbr_Nodes = 3; break;
+	  case TRI1: Nbr_Nodes = 3; break;
+	  case TRI2: Nbr_Nodes = 6; break;
+	  case QUA1: Nbr_Nodes = 4; break;
+	  case QUA2: Nbr_Nodes = 8; break;
+	  case TET1: Nbr_Nodes = 4; break;
+	  case TET2: Nbr_Nodes = 10; break;
+	  case HEX1: Nbr_Nodes = 8; break;
+	  case HEX2: Nbr_Nodes = 20; break;
+	  case PRI1: Nbr_Nodes = 6; break;
+	  case PRI2: Nbr_Nodes = 15; break;
+	  case PYR1: Nbr_Nodes = 5; break;
+	  case PYR2: Nbr_Nodes = 13; break;
+	  }
 	}
 
         for(j = 0; j < Nbr_Nodes; j++)

@@ -746,6 +746,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
+  { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 1.0 , 
+    "MSH mesh file version to generate" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh" },

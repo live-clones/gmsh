@@ -150,6 +150,7 @@ public :
 
   // mesh options 
   struct {
+    double msh_file_version;
     int vis_type, changed, display_lists;
     int draw;
     int points, lines, surfaces, volumes;

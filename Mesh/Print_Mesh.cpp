@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.45 2003-12-07 02:56:34 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.46 2003-12-07 05:37:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,6 @@ static FILE *meshfile;
 #define PYRAMID_2      14
 #define POINT          15
 
-static double MSH_VERSION = 1.0;
 static int MSH_VOL_NUM, MSH_SUR_NUM, MSH_LIN_NUM;
 static int MSH_NODE_NUM, MSH_ELEMENT_NUM, MSH_3D, MSH_ADD;
 static int MSH_PHYSICAL_NUM, MSH_PHYSICAL_ORI;
@@ -90,16 +89,16 @@ void process_msh_nodes(Mesh * M)
 
   MSH_NODE_NUM = Tree_Nbr(M->Vertices);
 
-  if(MSH_VERSION > 1.0)
+  if(CTX.mesh.msh_file_version == 2.0)
     fprintf(meshfile, "$Nodes\n");
   else
     fprintf(meshfile, "$NOD\n");
   fprintf(meshfile, "%d\n", MSH_NODE_NUM);
   Tree_Action(M->Vertices, print_msh_node);
-  if(MSH_VERSION > 1.0)
-    fprintf(meshfile, "$ENDNOD\n");
-  else
+  if(CTX.mesh.msh_file_version == 2.0)
     fprintf(meshfile, "$EndNodes\n");
+  else
+    fprintf(meshfile, "$ENDNOD\n");
 }
 
 void print_msh_simplex(void *a, void *b)
@@ -168,11 +167,10 @@ void print_msh_simplex(void *a, void *b)
     }
   }
 
-  if(MSH_VERSION > 1.0)
-    fprintf(meshfile, "%d %d %d %d 0 %d",
-	    MSH_ELEMENT_NUM++, type,
-	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*S)->iEnt, (*S)->iEnt,
-	    nbn + nbs);
+  if(CTX.mesh.msh_file_version == 2.0)
+    fprintf(meshfile, "%d %d 2 %d %d",
+	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*S)->iEnt, 
+	    (*S)->iEnt);
   else
     fprintf(meshfile, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -218,11 +216,10 @@ void print_msh_hexahedron(void *a, void *b)
   else
     type = HEXAHEDRON;
 
-  if(MSH_VERSION > 1.0)
-    fprintf(meshfile, "%d %d %d %d 0 %d",
-	    MSH_ELEMENT_NUM++, type,
-	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*H)->iEnt, (*H)->iEnt,
-	    nbn + nbs);
+  if(CTX.mesh.msh_file_version == 2.0)
+    fprintf(meshfile, "%d %d 2 %d %d",
+	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*H)->iEnt,
+	    (*H)->iEnt);
   else
     fprintf(meshfile, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -261,11 +258,10 @@ void print_msh_prism(void *a, void *b)
     type = PRISM;
   }
 
-  if(MSH_VERSION > 1.0)
-    fprintf(meshfile, "%d %d %d %d 0 %d",
-	    MSH_ELEMENT_NUM++, type,
-	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
-	    nbn + nbs);
+  if(CTX.mesh.msh_file_version == 2.0)
+    fprintf(meshfile, "%d %d 2 %d %d",
+	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt,
+	    (*P)->iEnt);
   else
     fprintf(meshfile, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -304,11 +300,10 @@ void print_msh_pyramid(void *a, void *b)
     type = PYRAMID;
   }
 
-  if(MSH_VERSION > 1.0)
-    fprintf(meshfile, "%d %d %d %d 0 %d",
-	    MSH_ELEMENT_NUM++, type,
-	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
-	    nbn + nbs);
+  if(CTX.mesh.msh_file_version == 2.0)
+    fprintf(meshfile, "%d %d 2 %d %d",
+	    MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt,
+	    (*P)->iEnt);
   else
     fprintf(meshfile, "%d %d %d %d %d",
 	    MSH_ELEMENT_NUM++, type,
@@ -330,10 +325,10 @@ void print_msh_point(Vertex * V)
     return;
   }
 
-  if(MSH_VERSION > 1.0)
-    fprintf(meshfile, "%d %d %d %d 0 1 %d\n",
-	    MSH_ELEMENT_NUM++, POINT,
-	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num, V->Num);
+  if(CTX.mesh.msh_file_version == 2.0)
+    fprintf(meshfile, "%d %d 2 %d %d %d\n",
+	    MSH_ELEMENT_NUM++, POINT, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num,
+	    V->Num);
   else
     fprintf(meshfile, "%d %d %d %d 1 %d\n",
 	    MSH_ELEMENT_NUM++, POINT,
@@ -502,7 +497,7 @@ void process_msh_elements(Mesh * M)
   else
     print_msh_elements(M);
 
-  if(MSH_VERSION > 1.0)
+  if(CTX.mesh.msh_file_version == 2.0)
     fprintf(meshfile, "$Elements\n");
   else
     fprintf(meshfile, "$ELM\n");
@@ -519,7 +514,7 @@ void process_msh_elements(Mesh * M)
   else
     print_msh_elements(M);
 
-  if(MSH_VERSION > 1.0)
+  if(CTX.mesh.msh_file_version == 2.0)
     fprintf(meshfile, "$EndElements\n");
   else
     fprintf(meshfile, "$ENDELM\n");
@@ -1399,11 +1394,19 @@ void Print_Mesh(Mesh * M, char *c, int Type)
 
   switch(Type){
   case FORMAT_MSH:
-    MSH_VERSION = 0.0;
-    if(MSH_VERSION > 1.0){
+    if(CTX.mesh.msh_file_version == 1.0){
+      // OK, no header
+    }
+    else if(CTX.mesh.msh_file_version == 2.0){
       fprintf(meshfile, "$MeshFormat\n");
-      fprintf(meshfile, "%g %d %d\n", MSH_VERSION, LIST_FORMAT_ASCII, sizeof(double));
+      fprintf(meshfile, "%g %d %d\n", CTX.mesh.msh_file_version,
+	      LIST_FORMAT_ASCII, sizeof(double));
       fprintf(meshfile, "$EndMeshFormat\n");
+    }
+    else{
+      Msg(GERROR, "Unknown MSH file version to generate (%g)", 
+	  CTX.mesh.msh_file_version);
+      return;
     }
     process_msh_nodes(M);
     process_msh_elements(M);
