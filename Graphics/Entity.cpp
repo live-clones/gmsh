@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.31 2004-02-20 19:28:25 geuzaine Exp $
+// $Id: Entity.cpp,v 1.32 2004-03-01 23:43:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,54 +67,34 @@ void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
 {
   if(light) glEnable(GL_LIGHTING);
 
-  double mat[4][4], r[3];
-  static GLUquadricObj *qua;
   static int first = 1;
-  //static listnum;
+  static GLUquadricObj *qua;
 
-  float s = width * CTX.pixel_equiv_x / CTX.s[0];       // width is in pixels
-  if(first) {
+  if(first){
     first = 0;
     qua = gluNewQuadric();
-    //listnum = glGenLists(1);
-    //glNewList(listnum, GL_COMPILE);
-    //gluCylinder(qua, 1, 1, 1, CTX.quadric_subdivisions, 1);
-    //glEndList();
   }
 
-  r[0] = x[1] - x[0];
-  r[1] = y[1] - y[0];
-  r[2] = z[1] - z[0];
-  double rn = sqrt(SQR(r[0]) + SQR(r[1]) + SQR(r[2]));
-  double theta = atan2(sqrt(SQR(r[0]) + SQR(r[1])), r[2]);
-  double phi = atan2(r[1], r[0]);
-
-  mat[0][0] = sin(theta) * cos(phi);
-  mat[0][1] = sin(theta) * sin(phi);
-  mat[0][2] = cos(theta);
-  mat[0][3] = 0.;
-  mat[1][0] = cos(theta) * cos(phi);
-  mat[1][1] = cos(theta) * sin(phi);
-  mat[1][2] = -sin(theta);
-  mat[1][3] = 0.;
-  mat[2][0] = -sin(phi);
-  mat[2][1] = cos(phi);
-  mat[2][2] = 0.;
-  mat[2][3] = 0.;
-  mat[3][0] = 0.;
-  mat[3][1] = 0.;
-  mat[3][2] = 0.;
-  mat[3][3] = 1.0;
-
   glPushMatrix();
-  glTranslated(x[0], y[0], z[0]);
-  glMultMatrixd(&(mat[0][0]));
-  glRotated(90., 0, 1, 0);
-  glScaled(s, s, rn);
-  //glCallList(listnum);
-  gluCylinder(qua, 1, 1, 1, CTX.quadric_subdivisions, 1);
+
+  double dx = x[1] - x[0];
+  double dy = y[1] - y[0];
+  double dz = z[1] - z[0];
+  double length = sqrt(dx*dx + dy*dy + dz*dz);
+  double radius = width * CTX.pixel_equiv_x / CTX.s[0];
+  double zdir[3] = {0., 0., 1.};
+  double vdir[3] = {dx/length, dy/length, dz/length};
+  double axis[3], cosphi, phi;
+  prodve(zdir, vdir, axis);
+  norme(axis);
+  prosca(zdir, vdir, &cosphi);
+  phi = 180. * acos(cosphi) / M_PI;
+
+  glTranslatef(x[0], y[0], z[0]);
+  glRotatef(phi, axis[0], axis[1], axis[2]);
+  gluCylinder(qua, radius, radius, length, CTX.quadric_subdivisions, 1);
   glPopMatrix();
-  
+
   glDisable(GL_LIGHTING);
 }
 
