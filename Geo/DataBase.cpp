@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.8 2001-03-23 08:55:14 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.9 2001-03-23 14:41:52 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -223,10 +223,10 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
                 int support, List_T *ListCP, List_T *liste,
                 List_T *intlist){
 
-  int      i,j,k,nb, *pj, *pl;
+  int      i,j;
   double   f;
-  List_T *templist, *templist2;
-  Curve *c1, *c2;
+  List_T  *templist;
+  Curve   *c, **pc1, **pc2;
 
   if(liste){
     templist = List_Create(List_Nbr(liste),1,sizeof(int));
@@ -251,32 +251,39 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
   }
   else  if(typzon == MSH_SEGM_LOOP){
 
-    nb = List_Nbr(templist);
-    templist2 = List_Create(List_Nbr(templist),1,sizeof(int));
+    // We sort the lines in the line loops. Without this sort, it very
+    // difficult to write general scriptable surface generation in
+    // complex cases.
 
-    pj = (int*)List_Pointer_Fast(templist,0);
-    List_Add(templist2, pj);
-
-    while(List_Nbr(templist2) != nb){
-      pj = (int*)List_Pointer_Fast(templist2,List_Nbr(templist2)-1);
-      c1 = FindCurve(*pj, THEM);
-
-      //printf("last = %d \n", *pj);
-
-      for(k=0; k<List_Nbr(templist) ; k++){
-	pl = (int*)List_Pointer_Fast(templist,k);
-	//printf("testing %d \n", *pl);
-
-	c2 = FindCurve(*pl, THEM);
-	if(c2->beg == c1->end){
-	  List_Add(templist2, pl);
-	  //printf("adding %d \n", *pl);
+    int NbCurves = List_Nbr(templist) ;
+    List_T *curves = List_Create(NbCurves,1,sizeof(Curve*));
+    for(i=0 ; i<NbCurves ; i++){
+      if((c = FindCurve(*(int*)List_Pointer(templist,i), THEM)))
+	List_Add(curves, &c);
+      else
+	Msg(GERROR, "Unknown Curve %d in Line Loop %d", 
+	    *(int*)List_Pointer(templist,i), izon);
+    }
+    List_Reset(templist);
+    pc1 = (Curve**)List_Pointer(curves, 0);
+    List_Add(templist, &(*pc1)->Num);
+    int j=0;
+    while(List_Nbr(templist) < NbCurves){
+      for(i=0 ; i<NbCurves ; i++){
+	pc2 = (Curve**)List_Pointer(curves, i);
+	if((*pc1)->end == (*pc2)->beg){
+	  List_Add(templist, &(*pc2)->Num);
+	  pc1 = pc2 ;
 	  break;
 	}
       }
+      if(j++ > NbCurves){
+	Msg(GERROR, "Wrong Line Loop %d", izon);
+	break;
+      }
     }  
 
-    Add_EdgeLoop(izon,templist2,THEM);
+    Add_EdgeLoop(izon,templist,THEM);
   }
   else  if(typzon == MSH_VOLUME){
     CreateVolumeFromOldCrappyDatabase (izon,templist,THEM);

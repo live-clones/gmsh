@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.84 2001-03-22 16:36:21 lefevre Exp $
+# $Id: Makefile,v 1.85 2001-03-23 14:41:52 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -427,7 +427,7 @@ fltk_link_mesa:
                  $(FLTK_LIB) -lm -ldl
 fltk_link_opengl:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB) -lm -ldl
+                 $(FLTK_LIB) -lm
 fltk_link_sgi:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                   $(FLTK_LIB) $(OPENGL_LIB) -lm -ldl
