@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.231 2002-10-12 18:18:35 geuzaine Exp $
+# $Id: Makefile,v 1.232 2002-10-16 16:10:03 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -374,10 +374,10 @@ compile-cygwin: initialtag
            "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-cygwin:
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
-                 Fltk/Icon.res $(FLTK_DIR)/lib/libfltk_gl.a\
-                 -lglu32 -lopengl32\
-                 $(FLTK_DIR)/lib/libfltk.a -lgdi32 -lwsock32 -lm
+	g++ -Wl,--subsystem,windows -mwindows -o $(GMSH_BIN_DIR)/gmsh.exe\
+                 $(GMSH_FLTK_LIB) Fltk/Icon.res $(FLTK_DIR)/lib/libfltk_gl.a\
+                 -lglu32 -lopengl32 $(FLTK_DIR)/lib/libfltk.a \
+                 -lole32 -luuid -lcomctl32 -lwsock32 -lm
 cygwin: compile-cygwin link-cygwin
 distrib-cygwin:
 	make tag
