@@ -5,7 +5,7 @@
 .\" Copyright (c) 2000-2001 J.-F. Remacle, C. Geuzaine
 .\" 
 .\" ======================================================================
-.TH Gmsh 1 "15 February 2001" "Version 1.20" "Gmsh Manual Pages"
+.TH Gmsh 1 "15 February 2001" "Version 1.21" "Gmsh Manual Pages"
 .UC 4
 .\" ======================================================================
 .SH NAME
@@ -152,6 +152,12 @@ print mesh quality histogram.
 .B \-interactive
 display the 2D mesh construction interactively if the anisotropic mesh
 algorithm is selected.
+.TP 4
+.B \-extrude
+use old extrusion mesh generator.
+.TP 4
+.B \-recombine
+recombine meshes from old extrusion mesh generator.
 .\" ======================================================================
 .SH POST-PROCESSING OPTIONS
 .TP 4
@@ -174,9 +180,6 @@ convert an ascii view into a binary one.
 suppress the double buffer. Use this options if you use \fIGmsh\fR on
 a remote host without GLX.
 .TP 4
-.B \-noov
-(Motif versions only) suppress overlay visual.
-.TP 4
 .B \-alpha
 enable alpha blending.
 .TP 4
@@ -194,6 +197,9 @@ use perspective instead of orthographic projection.
 .B \-a, \-g, \-m, \-s, \-p
 start in automatic, geometry, mesh, solver or post-processing mode
 (default: automatic).
+.TP 4
+.B \-opt string
+parse string before project file.
 .TP 4
 .B \-v int
 set verbosity level (default:2).
@@ -214,6 +220,6 @@ Remacle (Remacle@scorec.rpi.edu).
 .SH SEE ALSO
 .BR getdp (1),
 .br
-Gmsh examples (\fI/usr/doc/gmsh-1.20/\fR),
+Gmsh examples (\fI/usr/doc/gmsh-1.21/\fR),
 .br
 Gmsh homepage (\fIhttp://www.geuz.org/gmsh/\fR).

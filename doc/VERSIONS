@@ -1,9 +1,9 @@
-$Id: VERSIONS,v 1.30 2001-07-25 13:11:08 geuzaine Exp $
+$Id: VERSIONS,v 1.31 2001-07-25 17:53:55 geuzaine Exp $
 
 New in 1.21: Fixed more memory leaks; added -opt command line option
 to parse definitions directly from the command line; fixed missing
-screen refreshes during contour/surface selection; Enhanced string
-manipulation functions (Sprintf, StrCat, StrPrefix);
+screen refreshes during contour/surface/volume selection; Enhanced
+string manipulation functions (Sprintf, StrCat, StrPrefix);
 
 New in 1.20: Fixed various bugs (memory leaks, functions in included
 files, solver command selection, ColorTable option, duplicate nodes in
