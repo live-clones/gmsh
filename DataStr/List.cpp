@@ -1,4 +1,4 @@
-/* $Id: List.cpp,v 1.7 2000-11-27 10:58:45 geuzaine Exp $ */
+/* $Id: List.cpp,v 1.8 2000-11-27 17:13:42 geuzaine Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -341,7 +341,21 @@ void List_Copy(List_T *a , List_T *b){
   }
 }
 
-List_T *List_CreateFromFile(int n, int size, FILE *file, int format){
+void swap_doubles(double *array, unsigned int n){
+  unsigned int i, c;
+  double x;
+  char *px, *pp;
+  
+  for (i = 0; i < n; i++) {
+    x = array[i];
+    px = (char *) &x;
+    pp = (char *) (array+i);
+    for (c = 0; c < sizeof(double); ++c)
+      pp[sizeof(double)-1-c] = px[c];
+  }
+}
+
+List_T *List_CreateFromFile(int n, int size, FILE *file, int format, int swap){
   int i;
   List_T *liste;
 
@@ -351,10 +365,17 @@ List_T *List_CreateFromFile(int n, int size, FILE *file, int format){
   liste->n = n;
   switch(format){
   case LIST_FORMAT_ASCII :
-    for(i=0;i<n;i++) fscanf(file, "%lf ", (double*)&liste->array[i*size]) ;
+    for(i=0;i<n;i++) fscanf(file, "%lf", (double*)&liste->array[i*size]) ;
     return liste;
   case LIST_FORMAT_BINARY :
     fread(liste->array, size, n, file);
+    if(swap){
+      if(size != sizeof(double)){
+	Msg(ERROR, "Swapping Bytes only done for doubles");
+	return NULL;
+      }
+      swap_doubles((double*)liste->array, n);
+    }
     return liste;
   default :
     Msg(ERROR, "Unknown List Format");

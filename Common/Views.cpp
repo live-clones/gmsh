@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.9 2000-11-27 14:27:34 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.10 2000-11-27 17:13:39 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -362,7 +362,7 @@ extern int Force_ViewNumber;
 
 void Read_View(FILE *file, char *filename){
   char   str[NAME_STR_L], name[NAME_STR_L];
-  int    nb, format;
+  int    nb, format, testone, swap=0;
   double version;
 
   while (1) {
@@ -407,48 +407,70 @@ void Read_View(FILE *file, char *filename){
           ActualView->NbST, ActualView->NbVT, ActualView->NbTT, 
           ActualView->NbSS, ActualView->NbVS, ActualView->NbTS);
 
-      ActualView->Time = List_CreateFromFile(ActualView->NbTimeStep, 
-					     sizeof(double), file, format);
+      if(format == LIST_FORMAT_BINARY){
+	fread(&testone, sizeof(int), 1, file);
+	if(testone != 1){
+	  Msg(INFOS, "Swapping Bytes from Binary File");
+	  swap = 1;
+	}
+      }
 
+      // Time values
+      ActualView->Time = List_CreateFromFile(ActualView->NbTimeStep, 
+					     sizeof(double), file, format, swap);
+
+      // Points
       nb = ActualView->NbSP ? 
         ActualView->NbSP * ActualView->NbTimeStep     + ActualView->NbSP * 3 : 0 ;
-      ActualView->SP = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->SP = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbVP ?
         ActualView->NbVP * ActualView->NbTimeStep * 3 + ActualView->NbVP * 3 : 0 ;
-      ActualView->VP = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->VP = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbTP ? 
         ActualView->NbTP * ActualView->NbTimeStep * 9 + ActualView->NbTP * 3 : 0 ;
-      ActualView->TP = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->TP = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
+      // Lines
       nb = ActualView->NbSL ? 
         ActualView->NbSL * ActualView->NbTimeStep * 2     + ActualView->NbSL * 6 : 0 ;
-      ActualView->SL = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->SL = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbVL ?
         ActualView->NbVL * ActualView->NbTimeStep * 2 * 3 + ActualView->NbVL * 6 : 0 ;
-      ActualView->VL = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->VL = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbTL ?
         ActualView->NbTL * ActualView->NbTimeStep * 2 * 9 + ActualView->NbTL * 6 : 0 ;
-      ActualView->TL = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->TL = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
+      // Triangles
       nb = ActualView->NbST ? 
         ActualView->NbST * ActualView->NbTimeStep * 3     + ActualView->NbST * 9 : 0 ;
-      ActualView->ST = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->ST = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbVT ? 
         ActualView->NbVT * ActualView->NbTimeStep * 3 * 3 + ActualView->NbVT * 9 : 0 ;
-      ActualView->VT = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->VT = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbTT ? 
         ActualView->NbTT * ActualView->NbTimeStep * 3 * 9 + ActualView->NbTT * 9 : 0 ;
-      ActualView->TT = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->TT = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
+      // Tetrahedra
       nb = ActualView->NbSS ?
         ActualView->NbSS * ActualView->NbTimeStep * 4     + ActualView->NbSS * 12 : 0 ;
-      ActualView->SS = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->SS = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbVS ? 
         ActualView->NbVS * ActualView->NbTimeStep * 4 * 3 + ActualView->NbVS * 12 : 0 ;
-      ActualView->VS = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->VS = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
       nb = ActualView->NbTS ?
         ActualView->NbTS * ActualView->NbTimeStep * 4 * 9 + ActualView->NbTS * 12 : 0 ;
-      ActualView->TS = List_CreateFromFile(nb, sizeof(double), file, format);
+      ActualView->TS = List_CreateFromFile(nb, sizeof(double), file, format, swap);
+
 
       Msg(DEBUG, "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d",
           name, ActualView->NbTimeStep,

@@ -1,4 +1,4 @@
-/* $Id: List.h,v 1.5 2000-11-27 10:58:45 geuzaine Exp $ */
+/* $Id: List.h,v 1.6 2000-11-27 17:13:42 geuzaine Exp $ */
 #ifndef _LIST_H_
 #define _LIST_H_
 
@@ -46,7 +46,7 @@ void    List_Reset(List_T *liste);
 void    List_Action(List_T *liste, void (*action)(void *data, void *dummy));
 void    List_Action_Inverse(List_T *liste, void (*action)(void *data, void *dummy));
 void    List_Copy(List_T *a , List_T *b);
-List_T *List_CreateFromFile(int n, int size, FILE *file, int format);
+List_T *List_CreateFromFile(int n, int size, FILE *file, int format, int swap);
 void    List_WriteToFile(List_T *liste, FILE *file, int format);
 
 #endif
