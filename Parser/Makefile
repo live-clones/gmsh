@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2000-12-07 08:46:27 geuzaine Exp $
+# $Id: Makefile,v 1.7 2000-12-07 16:03:44 remacle Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -23,7 +23,8 @@ INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
 CFLAGS = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE) 
 
 SRC =  	Gmsh.yy.cpp \
-	Gmsh.tab.cpp
+	Gmsh.tab.cpp\
+	FunctionManager.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.25 2000-12-07 09:21:34 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.26 2000-12-07 16:03:44 remacle Exp $ */
 
 #include <stdarg.h>
 
@@ -16,6 +16,7 @@
 #include "Colors.h"
 #include "Parser.h"
 #include "Main.h"
+#include "FunctionManager.h"
 
 #ifdef __DECCXX // bug in bison
 #include <alloca.h>
@@ -86,6 +87,7 @@ void  vyyerror (char *fmt, ...);
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
 %token tColor tFor tEndFor tScript tExit tMerge
+%token tReturn tCall tFunction
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -1737,7 +1739,31 @@ Loop :
 	ImbricatedLoop--;
       }
   }
-
+  | tReturn
+  {
+    if(!FunctionManager::Instance()->leaveFunction(&yyin))
+      {
+	vyyerror("Error while exiting function");
+      }
+  } 
+  | tCall tSTRING tEND
+  {
+    if(!FunctionManager::Instance()->enterFunction($2,&yyin))
+      {
+	vyyerror("Unknown Function %s",$2);
+      }
+  } 
+  | tFunction tSTRING
+  {
+    // skip everything until return is found
+    if(!FunctionManager::Instance()->createFunction($2,yyin))
+      {
+	vyyerror("Redefinition of function %s",$2);
+      }
+    void skip_until(char *until);
+    skip_until("Return");
+  }
+;
 /* ---------------
     S C R I P T 
    --------------- 

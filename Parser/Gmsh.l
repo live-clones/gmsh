@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.13 2000-12-07 09:21:33 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.14 2000-12-07 16:03:43 remacle Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -182,9 +182,11 @@ With			return tWith;
 
 For                     return tFor;
 EndFor                  return tEndFor;
-Script                  return tScript;
 Exit                    return tExit;
 Merge                   return tMerge;
+Function                return tFunction;
+Return                  return tReturn;
+Call                    return tCall;
 
 SS                      return tScalarTetrahedron;
 VS                      return tVectorTetrahedron;
@@ -307,5 +309,44 @@ char *strsave(char *ptr){
 void skipline(void)
 {
    while (yyinput() != '\n') ;
+}
+
+void skip_until(char *until)
+{
+  int l = strlen(until);
+  char chars[256];
+  while(1)
+    {
+      while (1)
+	{
+	  chars[0] = yyinput();
+	  if(chars[0] == EOF) 
+	    {
+	      fprintf(stderr, "Error, Unexpected End Of File\n") ;
+	      exit(1);
+	    }
+	  if(chars[0] == until[0])break;
+	}
+      
+      printf("%c",chars[0]); 
+      for(int i=1;i<l;i++)
+	{
+	  chars[i] = yyinput();
+	  if(chars[i] == EOF) 
+	    {
+	      fprintf(stderr, "Error, Unexpected End Of File\n") ;
+	      exit(1);
+	    }
+	}
+      chars[l] = '\0';
+      if(!strcmp(chars,until))
+	{
+	  return;
+	}
+      for(int i=1;i<l-1;i++)
+	{
+	  unput(chars[l-i]);
+	}      
+    }
 }
 
