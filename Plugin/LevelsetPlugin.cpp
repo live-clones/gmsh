@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.13 2001-08-09 18:28:24 remacle Exp $
+// $Id: LevelsetPlugin.cpp,v 1.14 2001-08-09 21:15:30 remacle Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -69,6 +69,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 		  nx++;
 		}
 	    }
+	  /*
 	  if(nx == 4)
 	    {
 	      double xx =  Xp[3];
@@ -84,7 +85,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	      Zp[2] = zz;
 	      myVals[2] = vv;
 	    }
-
+	  */
 	  double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
 	  double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
 	  double gr[3];
@@ -106,6 +107,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	      Zp[k] = Zpi[nx-k-1];	      
 	    }
 	  }
+	  
 	  if(nx == 3 || nx == 4)
 	    {
 	      for(k=0;k<3;k++)List_Add(View->ST, &Xp[k]);

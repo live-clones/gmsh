@@ -45,3 +45,4 @@ View[0].SmoothNormals = 1;
 View[1].IntervalsType = 2;
 
 View[2].IntervalsType = 2;
+Draw;
