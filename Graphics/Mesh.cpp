@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.68 2004-04-18 03:12:00 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.69 2004-04-19 19:04:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -287,9 +287,10 @@ void Draw_Mesh_Points(void *a, void *b)
 
   if(CTX.mesh.points_num) {
     sprintf(Num, "%d", v->Num);
-    glRasterPos3d(v->Pos.X + 3 * CTX.pixel_equiv_x / CTX.s[0],
-                  v->Pos.Y + 3 * CTX.pixel_equiv_x / CTX.s[1],
-                  v->Pos.Z + 3 * CTX.pixel_equiv_x / CTX.s[2]);
+    double offset = 0.5 * (CTX.mesh.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    glRasterPos3d(v->Pos.X + offset / CTX.s[0],
+                  v->Pos.Y + offset / CTX.s[1],
+                  v->Pos.Z + offset / CTX.s[2]);
     Draw_String(Num);
   }
 
@@ -838,9 +839,10 @@ void Draw_Simplex_Curves(void *a, void *b)
 
   if(CTX.mesh.lines_num) {
     sprintf(Num, "%d", s->Num);
-    glRasterPos3d(Xc + 3 * CTX.pixel_equiv_x / CTX.s[0],
-                  Yc + 3 * CTX.pixel_equiv_x / CTX.s[1],
-                  Zc + 3 * CTX.pixel_equiv_x / CTX.s[2]);
+    double offset = 0.5 * (CTX.mesh.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    glRasterPos3d(Xc + offset / CTX.s[0],
+                  Yc + offset / CTX.s[1],
+                  Zc + offset / CTX.s[2]);
     Draw_String(Num);
   }
 

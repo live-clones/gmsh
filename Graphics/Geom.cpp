@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.51 2004-03-04 18:05:43 geuzaine Exp $
+// $Id: Geom.cpp,v 1.52 2004-04-19 19:04:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -87,9 +87,10 @@ void Draw_GeoPoint(void *a, void *b)
 
   if(CTX.geom.points_num) {
     sprintf(Num, "%d", v->Num);
-    glRasterPos3d(v->Pos.X + 3 * CTX.pixel_equiv_x / CTX.s[0],
-                  v->Pos.Y + 3 * CTX.pixel_equiv_x / CTX.s[1],
-                  v->Pos.Z + 3 * CTX.pixel_equiv_x / CTX.s[2]);
+    double offset = 0.5 * (CTX.geom.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    glRasterPos3d(v->Pos.X + offset / CTX.s[0],
+                  v->Pos.Y + offset / CTX.s[1],
+                  v->Pos.Z + offset / CTX.s[2]);
     Draw_String(Num);
   }
 
@@ -190,9 +191,10 @@ void Draw_Curve(void *a, void *b)
   if(CTX.geom.lines_num) {
     v = InterpolateCurve(c, 0.5, 0);
     sprintf(Num, "%d", c->Num);
-    glRasterPos3d(v.Pos.X + 3 * CTX.pixel_equiv_x / CTX.s[0],
-                  v.Pos.Y + 3 * CTX.pixel_equiv_x / CTX.s[1],
-                  v.Pos.Z + 3 * CTX.pixel_equiv_x / CTX.s[2]);
+    double offset = 0.5 * (CTX.geom.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
+    glRasterPos3d(v.Pos.X + offset / CTX.s[0],
+                  v.Pos.Y + offset / CTX.s[1],
+                  v.Pos.Z + offset / CTX.s[2]);
     Draw_String(Num);
   }
 
@@ -451,12 +453,10 @@ void Draw_Plane_Surface(Surface * s)
       List_Read(s->Orientations, 0, &vv1);
       List_Read(s->Orientations, 1, &vv2);
       sprintf(Num, "%d", s->Num);
-      glRasterPos3d((vv2.Pos.X + vv1.Pos.X) / 2. +
-                    3 * CTX.pixel_equiv_x / CTX.s[0],
-                    (vv2.Pos.Y + vv1.Pos.Y) / 2. +
-                    3 * CTX.pixel_equiv_x / CTX.s[1],
-                    (vv2.Pos.Z + vv1.Pos.Z) / 2. +
-                    3 * CTX.pixel_equiv_x / CTX.s[2]);
+      double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+      glRasterPos3d((vv2.Pos.X + vv1.Pos.X) / 2. + offset / CTX.s[0],
+                    (vv2.Pos.Y + vv1.Pos.Y) / 2. + offset / CTX.s[1],
+                    (vv2.Pos.Z + vv1.Pos.Z) / 2. + offset / CTX.s[2]);
       Draw_String(Num);
     }
 
@@ -558,9 +558,10 @@ void Draw_NonPlane_Surface(Surface * s)
   if(CTX.geom.surfaces_num) {
     v = InterpolateSurface(s, 0.5, 0.5, 0, 0);
     sprintf(Num, "%d", s->Num);
-    glRasterPos3d(v.Pos.X + 3 * CTX.pixel_equiv_x / CTX.s[0],
-                  v.Pos.Y + 3 * CTX.pixel_equiv_x / CTX.s[1],
-                  v.Pos.Z + 3 * CTX.pixel_equiv_x / CTX.s[2]);
+    double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+    glRasterPos3d(v.Pos.X + offset / CTX.s[0],
+                  v.Pos.Y + offset / CTX.s[1],
+                  v.Pos.Z + offset / CTX.s[2]);
     Draw_String(Num);
   }
 
