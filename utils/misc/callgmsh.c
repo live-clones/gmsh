@@ -16,6 +16,8 @@ int main(void)
 
     fp = fopen("/tmp/gmsh.pid", "r");
     fscanf(fp, "%d", &pid);
+    fclose(fp);
+
     sprintf(str, "kill %d", pid);
     system(str);
   }    
