@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.32 2004-03-01 23:43:53 geuzaine Exp $
+// $Id: Entity.cpp,v 1.33 2004-04-13 18:47:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -88,8 +88,7 @@ void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
   prodve(zdir, vdir, axis);
   norme(axis);
   prosca(zdir, vdir, &cosphi);
-  phi = 180. * acos(cosphi) / M_PI;
-
+  phi = 180. * myacos(cosphi) / M_PI;
   glTranslatef(x[0], y[0], z[0]);
   glRotatef(phi, axis[0], axis[1], axis[2]);
   gluCylinder(qua, radius, radius, length, CTX.quadric_subdivisions, 1);
@@ -352,7 +351,7 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
   prodve(zdir, vdir, axis);
   norme(axis);
   prosca(zdir, vdir, &cosphi);
-  phi = 180. * acos(cosphi) / M_PI;
+  phi = 180. * myacos(cosphi) / M_PI; 
 
   glTranslatef(x, y, z);
   glRotatef(phi, axis[0], axis[1], axis[2]);

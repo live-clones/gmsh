@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.23 2004-03-28 01:16:50 geuzaine Exp $
+// $Id: Utils.cpp,v 1.24 2004-04-13 18:49:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -615,7 +615,7 @@ double angle_3pts(Vertex * a, Vertex * b, Vertex * c)
   prosca = ((a->Pos.X - b->Pos.X) * (c->Pos.X - b->Pos.X) +
             (a->Pos.Y - b->Pos.Y) * (c->Pos.Y - b->Pos.Y)) / L;
 
-  angle = acos(prosca) * 180. / Pi;
+  angle = myacos(prosca) * 180. / Pi;
   return (angle);
 }
 

@@ -56,23 +56,23 @@
 
 int check_gsl();
 
-double myatan2 (double a, double b);
-double myasin (double a);
-void prodve (double a[3], double b[3], double c[3]);
-void prosca (double a[3], double b[3], double *c);
-void norme (double a[3]);
-int sys2x2 (double mat[2][2], double b[2], double res[2]);
-int sys3x3 (double mat[3][3], double b[3], double res[3], double *det);
-int sys3x3_with_tol (double mat[3][3], double b[3], double res[3], double *det);
-int det3x3 (double mat[3][3], double *det);
-int inv3x3 (double mat[3][3], double inv[3][3], double *det);
-double angle_02pi (double A3);
+double myatan2(double a, double b);
+double myasin(double a);
+double myacos(double a);
+void prodve(double a[3], double b[3], double c[3]);
+void prosca(double a[3], double b[3], double *c);
+void norme(double a[3]);
+int sys2x2(double mat[2][2], double b[2], double res[2]);
+int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
+int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
+int det3x3(double mat[3][3], double *det);
+int inv3x3(double mat[3][3], double inv[3][3], double *det);
+double angle_02pi(double A3);
 
 double InterpolateIso(double *X, double *Y, double *Z, 
 		      double *Val, double V, int I1, int I2, 
 		      double *XI, double *YI ,double *ZI);
-void gradSimplex (double *x, double *y, double *z, double *v, double *grad);
-
+void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 
 /* Numerical routines implemented using either Numerical Recipes or
    the GSL */

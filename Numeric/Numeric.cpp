@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.11 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.12 2004-04-13 18:47:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -82,6 +82,16 @@ double myasin(double a)
     return Pi / 2.;
   else
     return asin(a);
+}
+
+double myacos(double a)
+{
+  if(a <= -1.)
+    return Pi;
+  else if(a >= 1.)
+    return 0.;
+  else
+    return acos(a);
 }
 
 void prodve(double a[3], double b[3], double c[3])
