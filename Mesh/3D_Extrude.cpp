@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.37 2001-08-15 14:16:59 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.38 2001-08-15 15:25:27 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -820,8 +820,6 @@ int Extrude_Mesh (Tree_T * Volumes){
   InitExtrude ();
   DIM = 3;
 
-  Msg(STATUS2, "Mesh 3D... (initial)");
-
   List_T *vol = Tree2List(Volumes);
 
   for (int ivol = 0; ivol < List_Nbr(vol); ivol++){
@@ -842,6 +840,8 @@ int Extrude_Mesh (Tree_T * Volumes){
     }
   }
   if(!extrude) return false;
+
+  Msg(STATUS2, "Mesh 3D... (initial)");
 
   for (int ivol = 0; ivol < List_Nbr (vol); ivol++){
     List_Read(vol, ivol, &THEV);
