@@ -1,0 +1,327 @@
+\input texinfo.tex    @c -*-texinfo-*-
+@c $Id: gmsh.texi,v 1.3 2000-12-11 22:09:43 geuzaine Exp $
+@c =========================================================================
+@c
+@c This is the Gmsh documentation texinfo source file
+@c
+@c Indexing : @cindex  == concepts
+@c            @tindex  == syntax
+@c
+@c Before release, run C-u C-c C-u C-a in GNU Emacs
+@c This updates all node pointers and menus
+@c 
+@c info  : makeinfo getdp.texi
+@c dvi   : texi2dvi getdp.texi
+@c ps    : dvips getdp.dvi -o
+@c pdf   : texi2pdf getdp.texi
+@c html  : texi2html -init_file getdp.t2h getdp.texi
+@c nroff : texi2roff getdp.texi
+@c
+@c =========================================================================
+@c %**start of header
+@setfilename   gmsh.info
+@set EDITION   1.
+@set VERSION   0.996
+@set DAY       12
+@set MONTH     December 2000
+@set COPYRIGHT @copyright{} 1997-2000 Christophe Geuzaine, Jean-Francois Remacle
+@set WEB-GMSH  @uref{http://www.geuz.org/gmsh/}
+@settitle Gmsh @value{VERSION}
+@footnotestyle separate
+@setchapternewpage odd
+@paragraphindent 0
+@finalout
+@c %**end of header
+
+@c =========================================================================
+@c Info directives
+@c =========================================================================
+
+@ifinfo
+@dircategory Math
+@direntry
+* Gmsh: (gmsh).       a 3D mesh generator with pre- and post-processing facilities
+@end direntry
+@noindent
+This is Edition @value{EDITION}, last updated @value{DAY} @value{MONTH}, of the
+@cite{Gmsh Manual}, for Gmsh, Version @value{VERSION}.
+@noindent
+Copyright @value{COPYRIGHT}
+@end ifinfo
+
+@c =========================================================================
+@c TeX directives
+@c =========================================================================
+
+@iftex
+@global@let@bullet=-
+@global@let@sl=@it
+@global@setfont@indit@itshape{9}{1000}
+@c @global@let@linkcolor=@Orange
+@c @parskip=5pt
+@end iftex
+
+@c =========================================================================
+@c Title page
+@c =========================================================================
+
+@shorttitlepage Gmsh
+
+@titlepage
+
+@title Gmsh Manual
+
+@subtitle The documentation for Gmsh, Version  @value{VERSION}
+@subtitle 
+@subtitle Edition @value{EDITION}, @value{MONTH}
+
+@author Christophe Geuzaine
+@author Jean-Francois Remacle
+
+
+@page
+@vskip 0pt plus 1filll
+Copyright @value{COPYRIGHT}
+@sp 1
+This manual was prepared with Texinfo (@uref{http://texinfo.org}). The source
+of the document as well as several formatted versions (info, postscript, pdf,
+html) are available at @value{WEB-GMSH}.
+
+@end titlepage
+
+@c =========================================================================
+@c Table of contents
+@c =========================================================================
+
+@summarycontents
+@contents
+
+@c =========================================================================
+@c Top node (for all output, except TeX)
+@c =========================================================================
+
+@ifnottex
+@node Top, Copying Conditions, (dir), (dir)
+@top Gmsh
+
+@chapheading The documentation for Gmsh, version  @value{VERSION}
+
+Christophe Geuzaine and Jean-Francois Remacle
+
+Gmsh is an automatic three-dimensional mesh generator, primarily Delaunay,
+with pre- and post-processing facilities. This is Edition @value{EDITION} of
+the @cite{Gmsh Manual}, last updated @value{DAY} @value{MONTH} for Gmsh
+Version @value{VERSION}.
+@end ifnottex
+
+@c =========================================================================
+@c Master menu
+@c =========================================================================
+
+@menu
+* Copying Conditions::          How is Gmsh distributable?
+* Introduction::                Basic presentation
+* Geometry::                    How to define a geometry in Gmsh
+* Mesh::                        An explanation of the mesh generator
+* Post-Processing::             An overview of the post-processing functions
+* Tutorial::                    Seven complete examples
+* Running Gmsh::                How to run Gmsh on your operating system
+* File formats::                Input and output file formats
+* Versions and credits::        Versions history and contributors
+* Tips and tricks::             Some tips to make your life easier with Gmsh
+* Concept index::               Main concepts
+* Syntax index::                Reserved keywords
+@end menu
+
+@c =========================================================================
+@c Copying Conditions
+@c =========================================================================
+
+@node Copying Conditions, Introduction, Top, Top
+@unnumbered Copying Conditions
+
+@cindex Copyright
+@cindex Web site
+@cindex Internet address
+@cindex Download
+@cindex Platforms
+
+Executable versions of Gmsh can be downloaded for most of the classical UNIX
+platforms (SUN, DEC, IBM, HP, SGI and Linux) from the web site
+@value{WEB-GMSH} (no source distribution is available for the moment). The
+executable versions of Gmsh are free; the only thing asked if you use Gmsh
+is to mention it in your work. Published references, as well as the latest
+news about Gmsh developments and download information, are always available
+on the web site.
+
+
+@c =========================================================================
+@c Introduction
+@c =========================================================================
+
+@node Introduction, General overview, Copying Conditions, Top
+@unnumbered Introduction
+
+@cindex Introduction
+
+Gmsh is an automatic three-dimensional mesh generator, primarily Delaunay,
+with pre- and post-processing facilities. Its primal goal is to provide a
+simple meshing tool for academic test cases with parametric input and up to
+date visualization capabilities.  One of the strengths of Gmsh is its
+ability to respect a characteristic length field for the generation of
+adapted meshes on lines, surfaces and volumes. Gmsh requires OpenGL
+libraries to be installed in on your system.
+
+
+@c -------------------------------------------------------------------------
+@c How to Read this Manual?
+@c -------------------------------------------------------------------------
+
+@node How to Read this Manual?,  , Industry, Introduction
+@heading How to Read this Manual?
+
+@cindex Reading, guidelines
+
+After reading @ref{General overview}, and @ref{Expressions}, which depict
+the general concepts and the way to construct simple expressions in GetDP,
+you can safely (in a first reading) skip @ref{Objects} and @ref{Types for
+objects} and directly go to @ref{Short examples}. This chapter gives simple
+examples of the problem definition syntax used to define the discrete
+problems. For each example, you should then go back to @ref{Objects}, and
+@ref{Types for objects}, and have a detailed view of the syntax of the
+objects appearing in it. Note that indexes for many concepts and for all the
+syntax elements are available at the end of this manual.
+
+Once the examples presented in @ref{Short examples}, are understood, you
+may start to use GetDP on your computer (@pxref{Running GetDP}), for
+example by solving the complete examples presented in @ref{Complete
+examples}. Ready-to-use input files for these examples can be downloaded
+from the web site.
+
+
+@c =========================================================================
+@c Versions and Credits
+@c =========================================================================
+
+@node Versions and credits, Tips and tricks, File formats, Top
+@chapter Versions and Credits
+
+@menu
+* Version history::             
+* Bugs::                        
+* Contributors::                
+@end menu
+
+@c -------------------------------------------------------------------------
+@c Versions
+@c -------------------------------------------------------------------------
+
+@node Version history, Bugs, Versions and credits, Versions and credits
+@section Version History
+
+@cindex Versions
+@cindex History, versions
+@cindex Changelog
+
+@c -------------------------------------------------------------------------
+@c Bugs
+@c -------------------------------------------------------------------------
+
+@node Bugs, Contributors, Version history, Versions and credits
+@section Bugs
+
+@cindex Known bugs
+@cindex Bugs, known
+@cindex Bugs, reporting
+@cindex Reporting bugs
+@cindex Authors, e-mail
+@cindex E-mail, authors
+
+If you think you have found a bug in Gmsh, you can report it by electronic
+mail to @email{Christophe.Geuzaine@@ulg.ac.be} or
+@email{Remacle@@scorec.rpi.edu}.  Please send as precise a description of
+the problem as you can, including sample input files that produce the
+bug. Don't forget to mention both the versions of Gmsh and of your operation
+system (@pxref{Running Gmsh} to see how to get this information).
+
+Here is a list of known bugs:
+
+
+@c -------------------------------------------------------------------------
+@c Contributors
+@c -------------------------------------------------------------------------
+
+@node Contributors,  , Bugs, Versions and credits
+@section Contributors
+
+@cindex Acknowledgments
+@cindex Contributors, list
+@cindex Credits 
+
+@itemize @bullet
+@item
+M. Ume: code for lists and trees (listman.c, treeman.c). 
+@item
+Unknown: avl tree code
+@item
+@dots{}
+@end itemize
+
+And many thanks to all the users whose feedback permitted many
+improvements and bug correction...
+
+
+@c =========================================================================
+@c Tips ans Tricks
+@c =========================================================================
+
+@node Tips and tricks, Gmsh examples, Versions and credits, Top
+@appendix Tips and Tricks
+
+@cindex Tips
+@cindex Tricks
+@cindex Efficiency, tips
+
+@itemize @bullet
+@item
+Install the 'info' version of this user's guide! On your (Unix) system, this
+can be done by 1) copying all getdp.info* files to the place where your info
+files live (usually /usr/info), and 2) issuing the command 'install-info
+/usr/info/getdp.info /usr/info/dir'. You will then be able to access the
+documentation with the command 'info getdp'. Note that particular sections
+("nodes") can be accessed directly. For example, 'info getdp functionspace'
+will take you directly to the definition of the FunctionSpace object.
+@item
+Use emacs to edit your files, and load the C++ mode! This permits automatic
+syntax highlighting and easy indentation. Automatic loading of the C++ mode
+for @file{.pro} files can be done by adding the following command in your
+@code{.emacs} file: @code{(setq auto-mode-alist (append '(("\\.pro$"
+. c++-mode)) auto-mode-alist))}.
+@end itemize
+
+@c =========================================================================
+@c Concept Index
+@c =========================================================================
+
+@node Concept index, Syntax index, Gmsh examples, Top
+@unnumbered Concept Index
+
+@cindex Index, concepts
+@cindex Concepts, index
+
+@printindex cp
+
+@c =========================================================================
+@c Syntax Index
+@c =========================================================================
+
+@node Syntax index, Variable index, Concept index, Top
+@unnumbered Syntax Index
+
+@cindex Index, syntax
+@cindex Syntax, index
+@cindex Keywords, index
+
+@printindex tp
+
+@bye
