@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.272 2004-02-20 23:22:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.273 2004-02-22 20:13:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -504,7 +504,7 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
     if(List_Nbr(CTX.post.list))
-      if(view_number >= 0)
+      if(view_number >= 0 && view_number < List_Nbr(CTX.post.list))
 	create_view_options_window(view_number);
       else
 	create_view_options_window(0);
