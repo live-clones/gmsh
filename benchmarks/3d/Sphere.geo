@@ -38,5 +38,5 @@ Ruled Surface(28) = {27};
 Surface Loop(29) = {28,26,16,14,20,24,22,18};
 Complex Volume(30) = {29};
 
-Physical Volume(1) = 30;
+Physical Volume(1) = {0,30};
 Physical Surface(2) = {14:28:2};

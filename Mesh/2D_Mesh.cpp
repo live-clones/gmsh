@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.33 2001-08-20 07:38:30 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.34 2001-08-24 06:58:19 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -705,7 +705,7 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
   }
 
   if (pS->Method)
-    mesh_domain (liste, List_Nbr (pS->Contours), &M, &N, 0);
+    mesh_domain (liste, List_Nbr (pS->Contours), &M, &N, (CTX.mesh.initial_only==2));
 
   for (i = 0; i < M.numpoints; i++){
     if (gPointArray[i].initial < 0){

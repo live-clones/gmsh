@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.42 2001-08-23 18:03:45 geuzaine Exp $
+// $Id: Options.cpp,v 1.43 2001-08-24 06:58:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -73,6 +73,7 @@ void Init_Options(int num){
 
   // The following defaults cannot be set by the user 
   CTX.batch = 0 ;
+  CTX.mesh.initial_only = 0 ;
   CTX.output_filename = NULL ;
   CTX.expose = 0 ;
   CTX.stream = TO_SCREEN ;

@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.36 2001-08-20 07:38:29 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.37 2001-08-24 06:58:19 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -189,6 +189,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "old")){ 
         CTX.geom.old_circle = 1; i++;
+      }
+      else if(!strcmp(argv[i]+1, "initial")){
+        i++;
+        if(argv[i]!=NULL) CTX.mesh.initial_only = atoi(argv[i++]);
+        else {    
+          fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "quality")){
         i++;

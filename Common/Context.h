@@ -132,7 +132,7 @@ public :
     int hidden, shade;
     int format, nb_smoothing, algo, degree;
     int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
-    int histogram;
+    int histogram, initial_only;
     double normals, tangents, explode;
     int color_scheme, color_carousel ;
     int use_cut_plane;

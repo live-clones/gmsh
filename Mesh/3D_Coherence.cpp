@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.16 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.17 2001-08-24 06:58:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -487,7 +487,6 @@ int Edge_Node (Edge * e, Vertex * v){
     return 1;
   if (!compareVertex (&e->V[1], &v))
     return 1;
-
   lc = myhypot (myhypot (e->V[0]->Pos.X - e->V[1]->Pos.X, e->V[0]->Pos.Y - e->V[1]->Pos.Y),
                 e->V[0]->Pos.Z - e->V[1]->Pos.Z);
   
@@ -1304,6 +1303,14 @@ int Coherence (Volume * v, Mesh * m){
       for (j = 0; j < List_Nbr (v->Surfaces); j++){
         List_Read (v->Surfaces, j, &s);
         if (Tree_Search (s->Simplexes, &simp)){
+	  /*
+	  if(List_Nbr(ListFaces)>2){
+	    printf("suppressed tri %d\n", simp->Num);
+	    printf(" (%g %g %g)\n", simp->V[0]->Pos.X, simp->V[0]->Pos.Y,simp->V[0]->Pos.Z);
+	    printf(" (%g %g %g)\n", simp->V[1]->Pos.X, simp->V[1]->Pos.Y,simp->V[1]->Pos.Z);
+	    printf(" (%g %g %g)\n", simp->V[2]->Pos.X, simp->V[2]->Pos.Y,simp->V[2]->Pos.Z);
+	  }
+	  */
           for (k = 0; k < List_Nbr (ListFaces); k++){
             List_Read (ListFaces, k, &Face);
             simp1 = Create_Simplex_MemeSens (simp, Face.V[0], Face.V[1], Face.V[2]);
@@ -1314,9 +1321,18 @@ int Coherence (Volume * v, Mesh * m){
             Tree_Replace (v->Vertices, &Face.V[0]);
             Tree_Replace (v->Vertices, &Face.V[1]);
             Tree_Replace (v->Vertices, &Face.V[2]);
+	    /*
+	    if(List_Nbr(ListFaces)>2){
+	      printf("replaced by tri %d\n", simp1->Num);
+	      printf(" (%g %g %g)\n", simp1->V[0]->Pos.X, simp1->V[0]->Pos.Y,simp1->V[0]->Pos.Z);
+	      printf(" (%g %g %g)\n", simp1->V[1]->Pos.X, simp1->V[1]->Pos.Y,simp1->V[1]->Pos.Z);
+	      printf(" (%g %g %g)\n", simp1->V[2]->Pos.X, simp1->V[2]->Pos.Y,simp1->V[2]->Pos.Z);
+	    }
+	    */
           }
           Tree_Suppress (s->Simplexes, &simp);
         }
+
       }
     }
     else{

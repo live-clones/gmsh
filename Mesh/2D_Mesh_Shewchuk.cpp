@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Shewchuk.cpp,v 1.4 2001-08-21 10:43:25 geuzaine Exp $
+// $Id: 2D_Mesh_Shewchuk.cpp,v 1.5 2001-08-24 06:58:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -155,6 +155,11 @@ int Mesh_Shewchuk(Surface *s){
   Free(in.segmentlist);
   Free(in.segmentmarkerlist);
   Free(in.holelist);
+
+  if(CTX.mesh.initial_only==2){
+    AddInMesh(s, NbPts, vtable, &mid);
+    return 0;
+  }
 
 #ifndef BGMESH
 

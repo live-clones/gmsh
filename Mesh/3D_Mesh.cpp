@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.27 2001-08-13 18:38:55 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.28 2001-08-24 06:58:19 geuzaine Exp $
 
 /*
  
@@ -761,6 +761,14 @@ void Maillage_Volume (void *data, void *dum){
 
     Link_Simplexes (NULL, LOCAL->Simplexes);
     
+    if(CTX.mesh.initial_only==3){
+      POINTS_TREE = THEM->Vertices;
+      Tree_Action (v->Vertices, add_points);
+      POINTS_TREE = THEM->Simplexes;
+      Tree_Action (v->Simplexes, add_points);
+      return;  
+    }
+  
     /* Suppression des noeuds de num < 0 */
     
     Suppress = List_Create (10, 10, sizeof (Vertex *));
