@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.33 2000-12-09 15:21:17 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.34 2000-12-09 17:33:39 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -76,20 +76,20 @@ void  vyyerror (char *fmt, ...);
 %token tEND tAFFECT tDOTS tPi
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token tFmod tModulo tHypot tPrintf tDraw tSleep
+%token tFmod tModulo tHypot tPrintf tSprintf tDraw
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tInclude tRecombine tDelete tCoherence
+%token tLoop tRecombine tDelete tCoherence
 %token tView tAttractor tLayers
 %token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
 %token tScalarTriangle tVectorTriangle tTensorTriangle
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tFor tIn tEndFor tScript tExit tMerge
+%token tColor tFor tIn tEndFor tExit tMerge
 %token tReturn tCall tFunction
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
@@ -108,11 +108,12 @@ void  vyyerror (char *fmt, ...);
 
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single
+%type <i> BoolExpr
+%type <u> ColorExpr
+%type <c> StringExpr
 %type <l> ListOfShapes Duplicata Transform MultipleShape
 %type <l> ListOfStrings ListOfDouble ListOfListOfDouble ListOfColor
 %type <s> Shape
-%type <i> BoolExpr
-%type <u> Color
 
 /* A VERFIFIER ! Je n'ai pas le bouquin sous les yeux */
 
@@ -380,7 +381,6 @@ GeomFormat :
   | Extrude     { return 1; }
   | Transfini   { return 1; }
   | Coherence   { return 1; }
-  | Macro       { return 1; }
   | Loop        {return 1;}
 /*  | Script      { return 1; }*/
   | Command     { return 1; }
@@ -1231,7 +1231,7 @@ Affectation :
 
   /* -------- Option Colors -------- */ 
 
-  | tSTRING '.' tColor '.' tSTRING tAFFECT Color tEND 
+  | tSTRING '.' tColor '.' tSTRING tAFFECT ColorExpr tEND 
     {
       if(!(pColCat = Get_ColorOptionCategory($1)))
 	vyyerror("Unknown Color Option Class '%s'", $1);
@@ -1621,98 +1621,116 @@ Delete :
 ;
 
 
-/* -----------
-    M A C R O
-   ----------- */
-
-Macro : 
-    tInclude tBIGSTR tEND
-    {
-      yyinTab[RecursionLevel++] = yyin;
-      strcpy(tmpstring, ThePathForIncludes);
-      if((yyin = fopen(strcat(tmpstring,$2),"r"))){
-	strcpy(yynameTab[RecursionLevel-1],yyname);
-	yylinenoTab[RecursionLevel-1]=yylineno;
-	yylineno=1;
-	strcpy(yyname,$2);
-	while(!feof(yyin)){
-	  yyparse();
-	}
-	fclose(yyin);
-	yyin = yyinTab[--RecursionLevel];
-	strcpy(yyname,yynameTab[RecursionLevel]);
-	yylineno = yylinenoTab[RecursionLevel];
-      }
-      else{
-	vyyerror("Unknown File '%s'", $2) ;  
-	yyin = yyinTab[--RecursionLevel];
-      }
-    }
-;
 /* -----------------
     C O M M A N D  
    ----------------- */
 
 Command :
-   tPrintf tBIGSTR tEND
-   {
-     if(!CTX.interactive){ // we're in interactive mode
-       char ext[6];
-       strcpy(ext,$2+(strlen($2)-4));
-       Replot();
-       extern void CreateImage (FILE *fp);
-       FILE *fp = 0;
-       if(!strcmp(ext,".gif")){
-	 fp = fopen($2,"wb");
-	 CTX.print.type = PRINT_GL2GIF;
-       }
-       else if(!strcmp(ext,".eps")){
-	 fp = fopen($2,"w");
-	 CTX.print.type =  PRINT_GL2PS_RECURSIVE;
-       } 
-       else if(!strcmp(ext,".xpm")){
-	 fp = fopen($2,"wb");
-	 CTX.print.type =  PRINT_XDUMP;
-	 CTX.print.format = FORMAT_XPM;
-       } 
+    tSTRING StringExpr tEND
+    {
+      if(!strcmp($1, "Include")){
 
-       if(fp){
-	 CreateImage(fp);
-	 fclose(fp);
-       }
-     }
-   } 
-   | tExit tEND
-   {
-     exit(0);
-   } 
-   | tMerge tBIGSTR tEND
-   {
-     FILE *ff = yyin;
-     MergeProblem($2);
-     yyin = ff;
-   }
-   | tDraw tEND
-   {
-     if(!CTX.interactive){ // we're in interactive mode
-       if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
-	 Last_NumberOfPoints = Tree_Nbr(THEM->Points);
-	 Replot();
-       }
-       else{
-	 Init();
-	 Draw();
-       }
-     }
-   }
-   | tSleep FExpr tEND
-   {
-     extern long Get_AnimTime();
-     long sleep_time = Get_AnimTime();
-     while(1){
-       if(Get_AnimTime() - sleep_time > (long)($2*1.e6)) break;
-     }
-   }
+	yyinTab[RecursionLevel++] = yyin;
+	strcpy(tmpstring, ThePathForIncludes);
+	if((yyin = fopen(strcat(tmpstring,$2),"r"))){
+	  strcpy(yynameTab[RecursionLevel-1],yyname);
+	  yylinenoTab[RecursionLevel-1]=yylineno;
+	  yylineno=1;
+	  strcpy(yyname,$2);
+	  while(!feof(yyin)){
+	    yyparse();
+	  }
+	  fclose(yyin);
+	  yyin = yyinTab[--RecursionLevel];
+	  strcpy(yyname,yynameTab[RecursionLevel]);
+	  yylineno = yylinenoTab[RecursionLevel];
+	}
+	else{
+	  vyyerror("Unknown File '%s'", $2) ;  
+	  yyin = yyinTab[--RecursionLevel];
+	}
+
+      }
+      else if(!strcmp($1, "Print")){
+
+	if(!CTX.interactive){ // we're in interactive mode
+	  char ext[6];
+	  strcpy(ext,$2+(strlen($2)-4));
+	  Replot();
+	  extern void CreateImage (char *name, FILE *fp);
+	  FILE *fp = 0;
+	  if(!strcmp(ext,".gif")){
+	    fp = fopen($2,"wb");
+	    CTX.print.type = PRINT_GL2GIF;
+	  }
+	  else if(!strcmp(ext,".eps")){
+	    fp = fopen($2,"w");
+	    CTX.print.type =  PRINT_GL2PS_RECURSIVE;
+	  } 
+	  else if(!strcmp(ext,".xpm")){
+	    fp = fopen($2,"wb");
+	    CTX.print.type =  PRINT_XDUMP;
+	    CTX.print.format = FORMAT_XPM;
+	  } 
+	  if(fp){
+	    CreateImage($2,fp);
+	    fclose(fp);
+	  }
+	}
+	
+      }
+      else if(!strcmp($1, "Merge")){
+
+	FILE *ff = yyin;
+	MergeProblem($2);
+	yyin = ff;
+
+      }
+      else if(!strcmp($1, "Save")){
+
+	Print_Mesh(THEM, $2, CTX.mesh.format);
+
+      }
+      else
+	vyyerror("Unknown Command '%s'", $1);
+    } 
+  | tSTRING FExpr tEND
+    {
+      if(!strcmp($1, "Sleep")){
+
+	extern long Get_AnimTime();
+	long sleep_time = Get_AnimTime();
+	while(1){
+	  if(Get_AnimTime() - sleep_time > (long)($2*1.e6)) break;
+	}
+      
+      }
+      else if(!strcmp($1, "Mesh")){
+
+	Maillage_Dimension_0(THEM);
+	mai3d(THEM,(int)$2);
+  
+      }
+      else
+	vyyerror("Unknown Command '%s'", $1);
+    }
+  | tExit tEND
+    {
+      exit(0);
+    } 
+  | tDraw tEND
+    {
+      if(!CTX.interactive){ // we're in interactive mode
+	if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
+	  Last_NumberOfPoints = Tree_Nbr(THEM->Points);
+	  Replot();
+	}
+	else{
+	  Init();
+	  Draw();
+	}
+      }
+    }
 ;
 
 /* ---------------
@@ -1844,18 +1862,6 @@ Loop :
     skip_until("Return");
   }
 ;
-/* ---------------
-    S C R I P T 
-   --------------- 
-
-Script :
-  tScript '(' FExpr ')' '{' GeomFormatList '}' tEND
-   {
-     // here put something to close the script which 
-     // number is (int) $3
-   }
-;
-*/
 
 
 /* ---------------
@@ -2492,7 +2498,7 @@ RecursiveListOfDouble :
     }
 ;
 
-Color :
+ColorExpr :
     '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
       $$ = PACK_COLOR((int)$2, (int)$4, (int)$6, (int)$8);
@@ -2553,7 +2559,7 @@ ListOfColor :
 ;
 
 RecursiveListOfColor :
-    Color
+    ColorExpr
     {
       if(!ListOfColor_L)
 	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
@@ -2561,12 +2567,24 @@ RecursiveListOfColor :
 	List_Reset(ListOfColor_L) ;
       List_Add(ListOfColor_L, &($1)) ;
     }
-  | RecursiveListOfColor ',' Color
+  | RecursiveListOfColor ',' ColorExpr
     {
       List_Add(ListOfColor_L, &($3)) ;
     }
 ;
 
+StringExpr :
+    tBIGSTR
+    {
+      $$ = $1;
+    }
+  | tSprintf '(' tBIGSTR ',' FExpr ')'
+    {
+      sprintf(tmpstring, $3, $5);
+      $$ = (char*)Malloc(strlen(tmpstring));
+      strcpy($$, tmpstring);
+    }
+;
 
 %%
 

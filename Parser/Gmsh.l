@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.18 2000-12-09 15:21:17 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.19 2000-12-09 17:33:39 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,7 +114,6 @@ Delete                  return tDelete;
 Dilate                  return tDilate;
 Duplicata               return tDuplicata;
 Draw                    return tDraw;
-Sleep                   return tSleep;
 
 Exp                     return tExp ;
 Ellipsis                return tEllipsis;
@@ -128,7 +127,6 @@ Fmod                    return tFmod ;
 
 Hypot                   return tHypot ;
 
-Include                 return tInclude;
 In                      return tIn;
 
 Knots			return tKnots;
@@ -163,11 +161,10 @@ Rand                    return tRand;
 Sqrt                    return tSqrt ;
 Sin                     return tSin ;
 Sinh                    return tSinh ;
-Save                    return tPhysical;
 Spline                  return tSpline;
 Surface                 return tSurface;
 Symmetry                return tSymmetry;
-Script                  return tScript;
+Sprintf                 return tSprintf ;
 
 Transfinite             return tTransfinite;
 Translate               return tTranslate;

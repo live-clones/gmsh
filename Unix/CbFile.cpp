@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.10 2000-12-08 11:16:55 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.11 2000-12-09 17:33:40 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -24,15 +24,15 @@ extern Widgets_T   WID;
 extern Mesh        M;
 
 static int WARNING_OVERRIDE = 0;
-static char KeepFileName[256];
 
 /* ------------------------------------------------------------------------ */
 /*  C r e a t e I m a g e                                                   */
 /* ------------------------------------------------------------------------ */
 
 void SaveToDisk (char *FileName, Widget warning, 
-                 void (*function)(FILE *file)){
+                 void (*function)(char *filename, FILE *file)){
   FILE    *fp ;
+  static char KeepFileName[256];
 
   if(!WARNING_OVERRIDE){
     fp = fopen(FileName,"r");
@@ -54,14 +54,14 @@ void SaveToDisk (char *FileName, Widget warning,
     return;
   }
 
-  function(fp);
+  function(KeepFileName, fp);
 
   fclose(fp);
 
   WARNING_OVERRIDE = 0;
 }
 
-void CreateImage (FILE *fp) {
+void CreateImage (char *name, FILE *fp) {
   FILE    *tmp;
   GLint    size3d;
   char     cmd[1000];
@@ -79,14 +79,14 @@ void CreateImage (FILE *fp) {
       tmp = fopen(tmpFileName,"w");
       Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), tmp);
       fclose(tmp);
-      sprintf(cmd, "xpr -device ps -gray 4 %s >%s", tmpFileName, KeepFileName);
+      sprintf(cmd, "xpr -device ps -gray 4 %s >%s", tmpFileName, name);
       Msg(INFOS, "Executing '%s'", cmd);
       system(cmd);
       unlink(tmpFileName);
       break;
     }
-    Msg(INFOS, "X Image Dump Complete '%s'", KeepFileName);
-    Msg (INFO, "Wrote File '%s'", KeepFileName);
+    Msg(INFOS, "XPM Creation Complete '%s'", name);
+    Msg (INFO, "Wrote File '%s'", name);
     break ;
 
   case PRINT_GL2GIF :
@@ -94,8 +94,8 @@ void CreateImage (FILE *fp) {
     Replot();
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
                CTX.viewport[3]-CTX.viewport[1]);
-    Msg(INFOS, "GIF Dump Complete '%s'", KeepFileName);
-    Msg (INFO, "Wrote File '%s'", KeepFileName);
+    Msg(INFOS, "GIF Creation Complete '%s'", name);
+    Msg (INFO, "Wrote File '%s'", name);
     break;
 
   case PRINT_GL2PS_SIMPLE :
@@ -115,8 +115,8 @@ void CreateImage (FILE *fp) {
       CTX.stream = TO_SCREEN ;
       res = gl2psEndPage();
     }
-    Msg(INFOS, "GL2PS Output Complete '%s'", KeepFileName);
-    Msg (INFO, "Wrote File '%s'", KeepFileName);
+    Msg(INFOS, "EPS Creation Complete '%s'", name);
+    Msg (INFO, "Wrote File '%s'", name);
     break;
 
   default :

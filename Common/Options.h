@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.3 2000-12-05 20:02:12 geuzaine Exp $ */
+/* $Id: Options.h,v 1.4 2000-12-09 17:33:39 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -30,8 +30,8 @@ StringXString PostProcessingOptions_String[] = {
 } ;
 
 StringXString PrintOptions_String[] = {
-  { "Font" ,  &CTX.print.font , "Courier" },
-  { NULL   , NULL             ,   NULL }
+  { "PrintFont" ,  &CTX.print.font , "Courier" },
+  { NULL , NULL , NULL }
 } ;
 
 // NUMBERS
@@ -134,10 +134,10 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber PrintOptions_Number[] = {
-  { "Type"           , GMSH_INT,    (void*)&CTX.print.type      , PRINT_GL2PS_SIMPLE }, 
-  { "Format"         , GMSH_INT,    (void*)&CTX.print.format    , FORMAT_EPS }, 
-  { "FontSize"       , GMSH_INT,    (void*)&CTX.print.font_size , 12. }, 
-  { NULL             , GMSH_DOUBLE, NULL , 0. }
+  { "Type"     , GMSH_INT,    (void*)&CTX.print.type      , PRINT_GL2PS_SIMPLE }, 
+  { "Format"   , GMSH_INT,    (void*)&CTX.print.format    , FORMAT_EPS }, 
+  { "FontSize" , GMSH_INT,    (void*)&CTX.print.font_size , 12. }, 
+  { NULL       , GMSH_DOUBLE, NULL , 0. }
 } ;
 
 // ARRAYS

@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.17 2000-12-08 11:16:34 geuzaine Exp $ */
+/* $Id: Context.h,v 1.18 2000-12-09 17:33:39 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -55,7 +55,6 @@ typedef struct{
 
 class Context_T {
   public :
-  int script;                 /* gmsh in script mode */
   int interactive;            /* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
   int verbosity;              /* 0=silent -> 3=debug */
   int expose;                 /* 1 if everything is ready to expose and draw */

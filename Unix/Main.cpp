@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.26 2000-12-08 22:17:48 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.27 2000-12-09 17:33:40 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -46,7 +46,6 @@ char gmsh_help[]      =
   "  -0                    parse input files, output flattened geometry, and exit\n"
   "Mesh options:\n"
   "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
-//  "  -script               gmsh in script mode\n"
   "  -format msh|unv|gref  set output mesh format (default: msh)\n"
   "  -algo iso|aniso       select 2D mesh algorithm (default: iso)\n"
   "  -smooth int           set mesh smoothing (default: 0)\n"
@@ -208,9 +207,6 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "3")){ 
         CTX.interactive = 3; i++;
-      }
-      else if(!strcmp(argv[i]+1, "script")){ 
-        CTX.script = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "path")){ 
         i++;
