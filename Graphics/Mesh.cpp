@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.39 2001-08-13 11:52:56 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.40 2001-08-13 12:10:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -545,8 +545,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
 void Draw_Simplex_Curves(void *a,void *b){
   Simplex *s;
-  int i;
-  double Xc = 0.0 , Yc = 0.0, Zc = 0.0, X[2],Y[2],Z[2] ;
+  double Xc = 0.0 , Yc = 0.0, Zc = 0.0 ;
   char Num[100];
 
   s = *(Simplex**)a;
@@ -555,7 +554,9 @@ void Draw_Simplex_Curves(void *a,void *b){
   Yc = 0.5 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y);
   Zc = 0.5 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z);
 
-  for (i=0 ; i<2 ; i++) {
+  /*
+  double X[2],Y[2],Z[2]
+  for (int i=0 ; i<2 ; i++) {
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
@@ -568,6 +569,7 @@ void Draw_Simplex_Curves(void *a,void *b){
     glVertex3d(X[1], Y[1], Z[1]);
     glEnd();    
   }
+  */
 
   if(CTX.mesh.points){
     glColor4ubv((GLubyte*)&CTX.color.mesh.vertex);
