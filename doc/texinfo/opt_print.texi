@@ -1,41 +1,46 @@
 @ftable @code
 @item Print.EpsFont
-Font used for postscript printing@*
+Font used in PostScript/PDF output@*
 Default value: @code{"Courier"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.EpsBackground
-Save image background in postscript output@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Print.EpsFontSize
-Font size used for postscript printing@*
-Default value: @code{12}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Print.EpsLineWidthFactor
-Width factor for lines in postscript output@*
-Default value: @code{0.2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Print.EpsPointSizeFactor
-Size factor for points in postscript output@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Print.EpsQuality
-Postscript quality (1=simple sort, 2=recursive sort)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Print.EpsOcclusionCulling
-Cull occluded primitives (to reduce PostScript file size)@*
+Save image background in PostScript/PDF output@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.EpsBestRoot
-Try to minimize primitive splitting in recursive sort@*
+Try to minimize primitive splitting in BSP tree sorted PostScript/PDF output@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.EpsCompress
+Compress PostScript/PDF output using zlib@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.EpsFontSize
+Font size used in PostScript/PDF output@*
+Default value: @code{12}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.EpsLineWidthFactor
+Width factor for lines in PostScript/PDF output@*
+Default value: @code{0.2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.EpsOcclusionCulling
+Cull occluded primitives (to reduce PostScript/PDF file size)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.EpsPointSizeFactor
+Size factor for points in PostScript/PDF output@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.EpsQuality
+PostScript/PDF quality (1=simple sort, 2=BSP tree sort)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
