@@ -2673,6 +2673,7 @@ if test "x$enable_gui" != "xno"; then
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshParallel"
   VERSION_FLAGS="-D_FLTK"
+
   if test "x${FLTK_PREFIX}" != "x" ; then
     # Extract the first word of "fltk-config", so it can be a program name with args.
 set dummy fltk-config; ac_word=$2
@@ -2763,46 +2764,7 @@ echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
   GUI_LIBS="`$FLTKCONFIG --use-gl --use-images --ldstaticflags`"
   GUI_INCLUDE="`$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
-else
-
-  GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel"
-  VERSION_FLAGS="-D_BLACKBOX"
-  GUI_LIBS=""
-  GUI_INCLUDE=""
-
-fi
-
-echo "$as_me:$LINENO: checking for ./Triangle/triangle.c" >&5
-echo $ECHO_N "checking for ./Triangle/triangle.c... $ECHO_C" >&6
-if test "${ac_cv_file___Triangle_triangle_c+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "./Triangle/triangle.c"; then
-  ac_cv_file___Triangle_triangle_c=yes
-else
-  ac_cv_file___Triangle_triangle_c=no
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_file___Triangle_triangle_c" >&5
-echo "${ECHO_T}$ac_cv_file___Triangle_triangle_c" >&6
-if test $ac_cv_file___Triangle_triangle_c = yes; then
-  HAVE_TRIANGLE="yes"
-else
-  HAVE_TRIANGLE="no"
-fi
-
-if test "x${HAVE_TRIANGLE}" = "xyes" -a "x$enable_triangle" != "xno"; then
-  GMSH_DIRS="${GMSH_DIRS} Triangle"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-  VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_TRIANGLE"
-fi
-
-ac_ext=cc
+    ac_ext=cc
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -3361,6 +3323,45 @@ fi
 fi
 
 
+
+else
+
+  GMSH_DIRS="${GMSH_DIRS} Box"
+  GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel"
+  VERSION_FLAGS="-D_BLACKBOX"
+  GUI_LIBS=""
+  GUI_INCLUDE=""
+
+fi
+
+echo "$as_me:$LINENO: checking for ./Triangle/triangle.c" >&5
+echo $ECHO_N "checking for ./Triangle/triangle.c... $ECHO_C" >&6
+if test "${ac_cv_file___Triangle_triangle_c+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./Triangle/triangle.c"; then
+  ac_cv_file___Triangle_triangle_c=yes
+else
+  ac_cv_file___Triangle_triangle_c=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___Triangle_triangle_c" >&5
+echo "${ECHO_T}$ac_cv_file___Triangle_triangle_c" >&6
+if test $ac_cv_file___Triangle_triangle_c = yes; then
+  HAVE_TRIANGLE="yes"
+else
+  HAVE_TRIANGLE="no"
+fi
+
+if test "x${HAVE_TRIANGLE}" = "xyes" -a "x$enable_triangle" != "xno"; then
+  GMSH_DIRS="${GMSH_DIRS} Triangle"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
+  VERSION_FLAGS="${VERSION_FLAGS} -DHAVE_TRIANGLE"
+fi
 
 if test "x$enable_parallel" = "xyes"; then
   VERSION_FLAGS="${VERSION_FLAGS} -DPARALLEL"
