@@ -26,7 +26,7 @@
 // integer. Don't use 'LITTLE_ENDIAN': Apple defines it in its system
 // headers.
 
-#if defined(_BIG_ENDIAN)
+#if defined(HAVE_BIG_ENDIAN)
 #  define PACK_COLOR(R,G,B,A)   ( (R)<<24 | (G)<<16 | (B)<<8 | (A) )
 #  define UNPACK_RED(X)         ( ( (X) >> 24 ) & 0xff )
 #  define UNPACK_GREEN(X)       ( ( (X) >> 16 ) & 0xff )

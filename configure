@@ -3709,7 +3709,7 @@ echo "$as_me: error: Could not find GSL, aborting." >&2;}
 fi
 
 if test "x$enable_parallel" = "xyes"; then
-  FLAGS="-DPARALLEL ${FLAGS}"
+  FLAGS="-DHAVE_PARALLEL ${FLAGS}"
 fi
 
 if test "x$enable_system_menubar" = "xyes"; then
@@ -3736,7 +3736,7 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    FLAGS="-D_NO_DLL ${FLAGS}"
+    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
     fi
@@ -3744,7 +3744,7 @@ case "$UNAME" in
     ;;
 
   AIX*)
-    FLAGS="-D_BSD -D_NO_DLL ${FLAGS}"
+    FLAGS="-D_BSD -DHAVE_NO_DLL ${FLAGS}"
     ;;
 
   IRIX*)
@@ -3763,12 +3763,12 @@ case "$UNAME" in
     ;;
 
   SunOS*)
-    FLAGS="-D_NO_DLL ${FLAGS}"
+    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    FLAGS="-D_NO_DLL ${FLAGS}"
+    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     ;;
 
 esac
@@ -3962,7 +3962,7 @@ echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
 echo "${ECHO_T}$ac_cv_c_bigendian" >&6
 case $ac_cv_c_bigendian in
   yes)
-    FLAGS="-D_BIG_ENDIAN ${FLAGS}" ;;
+    FLAGS="-DHAVE_BIG_ENDIAN ${FLAGS}" ;;
   no)
      ;;
   *)

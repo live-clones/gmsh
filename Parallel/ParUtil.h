@@ -45,7 +45,7 @@ public:
   void processorName(char *name) const;
   /// abort a calculation
   void Abort();
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   inline int rank() { return myrank; }
   inline int size() { return mysize; }
   inline int master() { return myrank==0; }
@@ -60,7 +60,7 @@ public:
 private:
   static ParUtil *instance;
   char *procName;
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   int myrank;
   int mysize;
 #endif

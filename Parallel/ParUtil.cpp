@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.9 2004-02-07 01:40:23 geuzaine Exp $
+// $Id: ParUtil.cpp,v 1.10 2004-03-05 01:21:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ParUtil.h"
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
 #include "mpi.h"
 #else
 #include <sys/time.h>
@@ -49,7 +49,7 @@ ParUtil::ParUtil()
 
 void ParUtil::init(int &argc, char **&argv)
 {
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   int namelen;
   char name[1024];
   MPI_Init(&argc, &argv);
@@ -66,7 +66,7 @@ void ParUtil::init(int &argc, char **&argv)
 
 double ParUtil::wTime() const
 {
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   return MPI_Wtime();
 #else
   struct timeval tp;
@@ -84,7 +84,7 @@ double ParUtil::wTime() const
 
 void ParUtil::processorName(char *name) const
 {
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   strcpy(name, procName);
 #else
   strcpy(name, "localhost");
@@ -93,7 +93,7 @@ void ParUtil::processorName(char *name) const
 
 void ParUtil::Abort()
 {
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   MPI_Abort(MPI_COMM_WORLD, 1);
 #else
   abort();
@@ -102,7 +102,7 @@ void ParUtil::Abort()
 
 void ParUtil::Exit()
 {
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   MPI_Finalize();
 #else
   exit(0);
@@ -111,7 +111,7 @@ void ParUtil::Exit()
 
 void ParUtil::Barrier(int line, const char *fn)
 {
-#ifdef PARALLEL
+#ifdef HAVE_PARALLEL
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }

@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.49 2004-02-07 01:40:16 geuzaine Exp $
+dnl $Id: configure.in,v 1.50 2004-03-05 01:21:06 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 dnl
@@ -288,7 +288,7 @@ fi
 
 dnl Check if we should build the parallel version
 if test "x$enable_parallel" = "xyes"; then
-  FLAGS="-DPARALLEL ${FLAGS}"
+  FLAGS="-DHAVE_PARALLEL ${FLAGS}"
 fi
 
 dnl Check if we should enable the system menu bar on MacOS X
@@ -319,7 +319,7 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    FLAGS="-D_NO_DLL ${FLAGS}"
+    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
     fi
@@ -327,7 +327,7 @@ case "$UNAME" in
     ;;
 
   AIX*)
-    FLAGS="-D_BSD -D_NO_DLL ${FLAGS}"
+    FLAGS="-D_BSD -DHAVE_NO_DLL ${FLAGS}"
     ;;
 
   IRIX*)
@@ -346,18 +346,18 @@ case "$UNAME" in
     ;;
 
   SunOS*)
-    FLAGS="-D_NO_DLL ${FLAGS}"
+    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    FLAGS="-D_NO_DLL ${FLAGS}"
+    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     ;;
 
 esac
 
 dnl Is the machine big or little endian?
-AC_C_BIGENDIAN(FLAGS="-D_BIG_ENDIAN ${FLAGS}")
+AC_C_BIGENDIAN(FLAGS="-DHAVE_BIG_ENDIAN ${FLAGS}")
 
 dnl Check for header files
 AC_HEADER_STDC
