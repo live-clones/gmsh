@@ -10,5 +10,4 @@ Line(4) = {1,4};
 Line Loop(5) = {2,3,4,1};         
 Plane Surface(6) = {5};         
 Extrude Surface { 6, {0,0.0,1} };         
-Surface Loop(29) = - {28,15,-6,19,23,27};
-Volume(30) = {29};
+Mesh.Algorithm3D = 4;
