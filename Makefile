@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.221 2002-05-19 20:29:47 geuzaine Exp $
+# $Id: Makefile,v 1.222 2002-05-19 20:45:15 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -10,6 +10,8 @@ CC = cc
 FLAGS = -g -Wall
 RM = rm
 RMFLAGS = -f 
+
+FLTK_DIR = $(HOME)/SOURCES/fltk-1.1
 
 # ----------------------------------------------------------------------
 #  Gmsh definitions
@@ -42,10 +44,7 @@ GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
                        -a ! -type d \)`
 
 default:
-	@echo "You need fltk (http://www.fltk.org) version 1.1.x installed"
-	@echo "in $(HOME)/SOURCES/fltk-1.1"
-	@echo ""
-	@echo "Then type one of the following:"
+	@echo "Type one of the following:"
 	@echo "  make aix                  for IBM RS/6000 with AIX"
 	@echo "  make cygwin               for Win95/NT using Cygnus-Win32"
 	@echo "  make gcc                  for a generic system with GCC"
@@ -55,7 +54,10 @@ default:
 	@echo "  make macosx               for Macintosh with Mac OS X and GCC"
 	@echo "  make osf1                 for DEC Alpha systems with OSF/1"
 	@echo "  make sunos                for Suns with SunOS"
-	@echo "  make clean                remove .o files and libraries"
+	@echo ""
+	@echo "You need fltk (http://www.fltk.org) version 1.1.x installed"
+	@echo "in $(FLTK_DIR) (or add \"FLTK_DIR=dir\""
+	@echo "to the above commands, e.g., make linux \"FLTK_DIR=/opt/fltk\")"
 	@echo ""
 	@echo "If your system is not listed above, edit the Makefile"
 
@@ -89,12 +91,12 @@ compile: initialtag
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 
 link:
 	$(CXX) $(FLAGS) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-               -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+               -L$(FLTK_DIR)/lib -lfltk_gl -lGLU -lGL -lfltk\
                -L/usr/X11R6/lib -lX11 -lm
 
 gcc: compile link
@@ -110,11 +112,11 @@ compile-linux: initialtag
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-linux:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L$(FLTK_DIR)/lib -lfltk_gl -lGLU -lGL -lfltk\
                  -L/usr/X11R6/lib -lX11 -lm -ldl
 linux: compile-linux link-linux
 
@@ -169,11 +171,11 @@ compile-linux-gcc-2.95: initialtag
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I/usr/X11R6/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-linux-gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L$(FLTK_DIR)/lib -lfltk_gl -lGLU -lGL -lfltk\
                  -L/usr/X11R6/lib -lX11 -lm -ldl
 linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95
 distrib-linux-gcc-2.95:
@@ -229,11 +231,11 @@ compile-osf1: initialtag
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-osf1:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L$(FLTK_DIR)/lib -lfltk_gl -lGLU -lGL -lfltk\
                  -lX11 -lm
 osf1: compile-osf1 link-osf1
 distrib-osf1:
@@ -263,11 +265,11 @@ compile-hpux: initialtag
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-hpux:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                      -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
+                      -L$(FLTK_DIR)/lib -lfltk_gl\
                       -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL -lfltk\
                       -lX11 -lm
 hpux: compile-hpux link-hpux
@@ -298,11 +300,11 @@ compile-aix: initialtag
            "OS_FLAGS=-D_BSD" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-aix:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L$(FLTK_DIR)/lib -lfltk_gl -lGLU -lGL -lfltk\
                   -lX11 -lm
 aix: compile-aix link-aix
 distrib-aix:
@@ -334,11 +336,11 @@ compile-irix: initialtag
            "OS_FLAGS=-mips3 -n32" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-irix:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-               -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lfltk -lX11 -lGLU -lGL -lm
+               -L$(FLTK_DIR)/lib -lfltk_gl -lfltk -lX11 -lGLU -lGL -lm
 irix: compile-irix link-irix
 distrib-irix:
 	make tag
@@ -370,13 +372,13 @@ compile-cygwin: initialtag
            "OS_FLAGS=-mwindows -DWIN32 -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-cygwin:
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
-                 Fltk/Icon.res $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
+                 Fltk/Icon.res $(FLTK_DIR)/lib/libfltk_gl.a\
                  -lglu32 -lopengl32\
-                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a -lgdi32 -lwsock32 -lm
+                 $(FLTK_DIR)/lib/libfltk.a -lgdi32 -lwsock32 -lm
 cygwin: compile-cygwin link-cygwin
 distrib-cygwin:
 	make tag
@@ -430,11 +432,11 @@ compile-sunos: initialtag
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-sunos:
 	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
+                 -L$(FLTK_DIR)/lib -lfltk_gl\
                  -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL -lfltk\
                  -lX11 -lXext -lsocket -lnsl -ldl -lm
 sunos: compile-sunos link-sunos
@@ -485,12 +487,12 @@ compile-macosx: initialtag
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I../../fltk" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 link-macosx:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L../fltk/lib -lfltk_gl -lfltk \
                -framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices
-	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh ../fltk/FL/mac.r
+	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh $(FLTK_DIR)/FL/mac.r
 macosx: compile-macosx link-macosx
 
 # ----------------------------------------------------------------------
@@ -507,13 +509,13 @@ static:
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-static/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB)\
-                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
+                 $(FLTK_DIR)/lib/libfltk_gl.a\
                  $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
                  $(HOME)/SOURCES/Mesa-static/lib/libGL.a\
-                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a -lX11 -lm
+                 $(FLTK_DIR)/lib/libfltk.a -lX11 -lm
 
 purify:
 	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) -lGLU -lGL \
@@ -522,7 +524,7 @@ purify:
 
 efence:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L$(FLTK_DIR)/lib -lfltk_gl -lGLU -lGL -lfltk\
                  -L/usr/X11R6/lib -lX11 -lefence -lm
 
 # ----------------------------------------------------------------------
@@ -553,7 +555,7 @@ depend:
            "CC=$(CC)" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+           "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
 
 nodepend:
