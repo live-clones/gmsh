@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.8 2000-11-28 11:28:35 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.9 2000-11-28 14:42:44 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -697,21 +697,21 @@ Shape :
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num  = (int)$4;
     }
-  | tAttractor tPoint '(' FExpr ',' FExpr ',' FExpr ')' tAFFECT ListOfDouble tEND
+  | tAttractor tPoint ListOfDouble tAFFECT '(' FExpr ',' FExpr ',' FExpr ')'  tEND
     {
       Vertex *v;
       Attractor *a;
       double p;
       int ip;
-      for(int i=0;i<List_Nbr($11);i++){
-      	List_Read($11,i,&p);
+      for(int i=0;i<List_Nbr($3);i++){
+      	List_Read($3,i,&p);
         ip = (int)p;
         v = FindVertex(ip,THEM);
         if(!v)
 	  vyyerror("Unkown Point %d", ip);
 	else{
 	  a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
-			       $4,$6,$8,v,NULL,NULL);
+			       $6,$8,$10,v,NULL,NULL);
 	  List_Add(THEM->Metric->Attractors,&a);
         }
       }
@@ -727,7 +727,7 @@ Shape :
 	  v->lc = $5;
       }
     }  
-  | tPoint '(' FExpr ')' tEND
+  | tPoint '{' FExpr '}' tEND
     {
       $$.Type = MSH_POINT;
       $$.Num  = (int)$3;
@@ -747,21 +747,21 @@ Shape :
       $$.Type = MSH_SEGM_SPLN;
       $$.Num  = (int)$3;
     }
-  | tAttractor tLine '(' FExpr ',' FExpr ',' FExpr ')' tAFFECT ListOfDouble tEND
+  | tAttractor tLine ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
     {
       Curve *c;
       Attractor *a;
       double p;
       int ip;
-      for(int i=0;i<List_Nbr($11);i++){
-      	List_Read($11,i,&p);
+      for(int i=0;i<List_Nbr($3);i++){
+      	List_Read($3,i,&p);
         ip = (int)p;
         c = FindCurve(ip,THEM);
         if(!c)
 	  vyyerror("Unkown Curve %d", ip);
 	else{
 	  a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
-			       $4,$6,$8,NULL,c,NULL);
+			       $6,$8,$10,NULL,c,NULL);
 	  List_Add(THEM->Metric->Attractors,&a);
         }
       }
@@ -789,7 +789,7 @@ Shape :
       $$.Num  = (int)$3;
     }
   | tParametric '(' FExpr ')' tAFFECT 
-      '(' FExpr ',' FExpr ',' tBIGSTR ',' tBIGSTR ',' tBIGSTR ')' tEND
+      '{' FExpr ',' FExpr ',' tBIGSTR ',' tBIGSTR ',' tBIGSTR '}' tEND
     {
       Cdbseg101((int)$3,MSH_SEGM_PARAMETRIC,2,NULL,NULL,-1,-1,$7,$9,$11,$13,$15);
       $$.Type = MSH_SEGM_PARAMETRIC ;
@@ -812,15 +812,6 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       Cdbz101((int)$4,$$.Type,0,0,0,0,0,NULL,$7,NULL);
       $$.Num = (int)$4;
-    }
-  | tLine '(' FExpr ')' tEND
-    {
-      $$.Num = (int)$3;
-      Curve *c = FindCurve($$.Num,THEM);
-      if(!c)
-	vyyerror("Unkown Curve %d", $$.Num);
-      else
-	$$.Type = c->Typ;
     }
   | tBSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
@@ -846,6 +837,15 @@ Shape :
       }
       AddCurveInDataBase ((int)$3,MSH_SEGM_NURBS,(int)$10,Temp,$8,-1,-1,0.,1.);
       List_Delete(Temp);
+    }
+  | tLine '{' FExpr '}' tEND
+    {
+      $$.Num = (int)$3;
+      Curve *c = FindCurve($$.Num,THEM);
+      if(!c)
+	vyyerror("Unkown Curve %d", $$.Num);
+      else
+	$$.Type = c->Typ;
     }
 
   /* -------- Surfaces -------- */ 
@@ -922,7 +922,7 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num  = (int)$4;
     }
-  | tSurface '(' FExpr ')' tEND
+  | tSurface '{' FExpr '}' tEND
     {
       $$.Num = (int)$3;
       Surface *s = FindSurface($$.Num,THEM);
@@ -959,22 +959,22 @@ Shape :
    ------------------- */
 
 Transform :
-    tTranslate '(' VExpr ')' '{' MultipleShape '}'
+    tTranslate VExpr '{' MultipleShape '}'
     {
-      TranslateShapes ($3[0],$3[1],$3[2],$6,1);
-      $$ = $6;
+      TranslateShapes ($2[0],$2[1],$2[2],$4,1);
+      $$ = $4;
     }
-  | tRotate '(' VExpr ',' VExpr ',' FExpr ')' '{' MultipleShape '}'
+  | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
       RotateShapes($3[0],$3[1],$3[2],$5[0],$5[1],$5[2],$7,$10);
       $$ = $10;
     }
-  | tSymmetry '(' VExpr ')'  '{' MultipleShape '}'
+  | tSymmetry  VExpr   '{' MultipleShape '}'
     {
-      SymmetryShapes($3[0],$3[1],$3[2],$3[3],$6,1);
-      $$ = $6;
+      SymmetryShapes($2[0],$2[1],$2[2],$2[3],$4,1);
+      $$ = $4;
     }
-  | tDilate '(' VExpr ',' FExpr ')'  '{' MultipleShape '}'
+  | tDilate '{' VExpr ',' FExpr '}'  '{' MultipleShape '}'
     {
       DilatShapes($3[0],$3[1],$3[2],$5,$8,1);
       $$ = $8;
@@ -1068,48 +1068,39 @@ Macro :
    --------------- */
 
 Extrude :
-    tExtrude '(' FExpr ',' VExpr ')' tEND
+    tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
     {
-      Extrude_ProtudeSurface(1,(int)$3,$5[0],$5[1],$5[2],0.,0.,0.,0.,0,NULL);
+      Curve *pc, *prc;
+      Extrude_ProtudePoint(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,&pc,&prc,NULL);
     }
-  | tExtrude tSurface '(' FExpr ',' VExpr ')' tEND
-    {
-      Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,0,NULL);
-    }
-  | tExtrude '(' FExpr ',' VExpr ',' VExpr ',' FExpr ')' tEND
-    {
-      Extrude_ProtudeSurface(0,(int)$3,$5[0],$5[1],$5[2],$7[0],$7[1],$7[2],$9,0,NULL);
-    }
-  | tExtrude tSurface '(' FExpr ',' VExpr ',' VExpr ',' FExpr ')' tEND
-    {
-      Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,0,NULL);
-    }
-  | tExtrude tPoint '(' FExpr ',' VExpr ',' VExpr ',' FExpr ')' tEND
+  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       Curve *pc, *prc;
       Extrude_ProtudePoint(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
 			   &pc,&prc,NULL);
     }
-  | tExtrude tPoint '(' FExpr ',' VExpr ')' tEND
-    {
-      Curve *pc, *prc;
-      Extrude_ProtudePoint(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,&pc,&prc,NULL);
-    }
-  | tExtrude tLine'(' FExpr ',' VExpr ',' VExpr ',' FExpr ')' tEND
-    {
-      Extrude_ProtudeCurve(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,NULL);
-    }
-  | tExtrude tLine'(' FExpr ',' VExpr ')' tEND
+  | tExtrude tLine'{' FExpr ',' VExpr '}' tEND
     {
       Extrude_ProtudeCurve(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,NULL);
     }
-  | tExtrude tSurface '(' FExpr ',' VExpr ')' '{' ExtrudeParameters '}' tEND
+  | tExtrude tLine'{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
+    {
+      Extrude_ProtudeCurve(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,NULL);
+    }
+  |  tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
+    {
+      Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,0,NULL);
+    }
+  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
+    {
+      Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,0,NULL);
+    }
+  | tExtrude tSurface '{' FExpr ',' VExpr '}' '{' ExtrudeParameters '}' tEND
   {
     int vol = NEWREG();
     Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,vol,&extr);
   }
-  | tExtrude tSurface '(' FExpr ',' VExpr ',' VExpr ',' FExpr ')' 
-     '{' ExtrudeParameters '}'tEND
+  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' '{' ExtrudeParameters '}'tEND
   {
     int vol = NEWREG();
     Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,vol,&extr);
