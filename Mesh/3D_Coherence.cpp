@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.17 2001-08-24 06:58:19 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.18 2001-08-28 15:09:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -17,7 +17,7 @@ static Face *TheFace;
 static List_T  *Teti;
 
 List_T *Missing, *MissingF, *MissingS;
-Tree_T *EdgesTree, *FacesTree, *swaps;
+Tree_T *EdgesTree, *FacesTree, *swaps, *touchedvertex;
 
 int edges_quad[4][2] = { {0, 1},
                          {1, 2},
@@ -108,66 +108,21 @@ void find_quads (void *a, void *b){
 
 void swap_quads (void *a, void *b){
   Edge *q;
-  int i, K;
-  Simplex *s1, *s2;
-  Vertex *temp[3], *kk[3];
-  q = (Edge *) a;
-  List_Read (q->Simplexes, 0, &s1);
-  List_Read (q->Simplexes, 1, &s2);
-
-  K = -1;
-
-  for (i = 0; i < 3; i++){
-    if (!compareVertex (&q->O[0], &s1->V[i]))
-      K = i;
-    temp[i] = s1->V[i];
-  }
-  /*
-    printf("s1 : %d %d %d ->",s1->V[0]->Num,s1->V[1]->Num,s1->V[2]->Num);
-  */
-  kk[0] = q->O[0];
-  kk[1] = (K == 2) ? s1->V[0] : s1->V[K + 1];
-  kk[2] = q->O[1];
-
-  s1->V[0] = kk[0];
-  s1->V[1] = kk[1];
-  s1->V[2] = kk[2];
-  /*
-    printf("%d %d %d \n",s1->V[0]->Num,s1->V[1]->Num,s1->V[2]->Num);
-  */
-  s1->F[0].V[0] = s1->V[0];
-  s1->F[0].V[1] = s1->V[1];
-  s1->F[0].V[2] = s1->V[2];
-
-  /*
-    printf("s2 : %d %d %d ->",s2->V[0]->Num,s2->V[1]->Num,s2->V[2]->Num);
-  */
-  s2->V[0] = q->O[1];
-  s2->V[1] = (K == 0) ? temp[2] : temp[K - 1];
-  s2->V[2] = q->O[0];
-  /*
-    printf("%d %d %d \n",s2->V[0]->Num,s2->V[1]->Num,s2->V[2]->Num);
-  */
-  s2->F[0].V[0] = s2->V[0];
-  s2->F[0].V[1] = s2->V[1];
-  s2->F[0].V[2] = s2->V[2];
-
-  qsort (s1->F[0].V, 3, sizeof (Vertex *), compareVertex);
-  qsort (s2->F[0].V, 3, sizeof (Vertex *), compareVertex);
-
-  List_Suppress (Missing, q, compareedge);
-  q->V[0] = q->O[0];
-  q->V[1] = q->O[1];
-}
-
-
-void swap_quads2 (void *a, void *b){
-  Edge *q;
   Simplex *s1, *s2;
 
   q = (Edge *) a;
   List_Read (q->Simplexes, 0, &s1);
   List_Read (q->Simplexes, 1, &s2);
+
+  if(Tree_Query(touchedvertex, &q->V[0])) return;
+  if(Tree_Query(touchedvertex, &q->V[1])) return;
+  if(Tree_Query(touchedvertex, &q->O[0])) return;
+  if(Tree_Query(touchedvertex, &q->O[1])) return;
+
+  Tree_Add(touchedvertex, &q->V[0]);
+  Tree_Add(touchedvertex, &q->V[1]);
+  Tree_Add(touchedvertex, &q->O[0]);
+  Tree_Add(touchedvertex, &q->O[1]);
 
   if (memesens (s1->V[0], s1->V[1], s1->V[2], q->O[0], q->O[1], q->V[0])){
     s1->V[0] = q->O[0];
@@ -208,15 +163,20 @@ void swap_quads2 (void *a, void *b){
 
 }
 
-void create_Quads (Volume * V){
-  int i;
+int create_Quads (Volume * V){
+  int i, n;
   Surface *S;
   swaps = Tree_Create (sizeof (Edge), compareedge);
+  touchedvertex = Tree_Create (sizeof (Vertex*), compareVertex);
   for (i = 0; i < List_Nbr (V->Surfaces); i++){
     List_Read (V->Surfaces, i, &S);
     Tree_Action (S->Edges, find_quads);
   }
-  Tree_Action (swaps, swap_quads2);
+  Tree_Action (swaps, swap_quads);
+  n = Tree_Nbr(swaps);
+  Tree_Delete(swaps);
+  Tree_Delete(touchedvertex);
+  return n;
 }
 
 void create_Fac (void *a, void *b){
@@ -1144,7 +1104,7 @@ Simplex * Create_Simplex_MemeSens (Simplex * sold, Vertex * v1, Vertex * v2, Ver
 }
 
 int Coherence (Volume * v, Mesh * m){
-  int i, j, k, Np, Nh;
+  int i, j, k, Np, Nh, nb_swaps=0;
   Surface *s;
   //Vertex V1, V2, *ver1, *ver2 ;
   Face Face;
@@ -1161,11 +1121,13 @@ int Coherence (Volume * v, Mesh * m){
 
   Remise_A_Zero ();
 
-  create_Edges (v);
-  MissingEdges = Missing_Edges (v);
-
   /* Edge Swapping */
-  create_Quads (v);
+  do{
+    create_Edges (v);
+    MissingEdges = Missing_Edges (v);
+    nb_swaps = create_Quads (v);
+    Msg(INFO, "Swapped %d edges", nb_swaps);
+  } while(nb_swaps);
 
   /* Missing Edges */
   create_Edges (v);
