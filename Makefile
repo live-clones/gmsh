@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.217 2002-05-18 19:31:10 geuzaine Exp $
+# $Id: Makefile,v 1.218 2002-05-18 23:34:49 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -281,7 +281,7 @@ source:
 	cd gmsh-$(GMSH_RELEASE) && zip -r gmsh-$(GMSH_RELEASE)-source.zip *
 	mv gmsh-$(GMSH_RELEASE)/gmsh-$(GMSH_RELEASE)-source.zip .
 	rm -f gmsh.tgz
-	tar zcvf gmsh-$(GMSH_RELEASE)-source.tar.gz gmsh-$(GMSH_RELEASE)
+	tar zcvf gmsh-$(GMSH_RELEASE)-source.tgz gmsh-$(GMSH_RELEASE)
 	rm -rf gmsh-$(GMSH_RELEASE)
 
 #
