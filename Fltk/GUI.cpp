@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.230 2003-03-02 00:16:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.231 2003-03-02 00:48:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3249,7 +3249,7 @@ void GUI::create_about_window()
     sprintf(buffer, "@c@.Version: %d.%d.%d", GMSH_MAJOR_VERSION,
             GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
     o->add(buffer);
-    sprintf(buffer, "@c@.License: GNU GPL");
+    sprintf(buffer, "@c@.License: GNU General Public License");
     o->add(buffer);
     sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d",
             FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
