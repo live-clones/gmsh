@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.107 2001-07-26 21:26:34 geuzaine Exp $
+# $Id: Makefile,v 1.108 2001-07-29 09:41:37 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -81,7 +81,7 @@ FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libf
              GMSH_UNAME = `uname`
 
 # ----------------------------------------------------------------------
-# Rules for developpers
+# Rules for developers
 # ----------------------------------------------------------------------
 
 default: initialtag
@@ -119,6 +119,10 @@ motif: initialtag
 gmsh:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm
+
+efence:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+                 $(FLTK_LIB) -lefence -lm
 
 gmshm:
 	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB) $(MESA_STATIC_LIB) \
