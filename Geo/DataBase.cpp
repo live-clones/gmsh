@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.14 2001-06-06 21:29:58 remacle Exp $
+// $Id: DataBase.cpp,v 1.15 2001-08-09 15:24:27 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -319,6 +319,14 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
       }
     }  
     List_Delete(curves);
+
+    /*
+    printf("Line Loop %d = {", izon);
+    for(i=0 ; i<List_Nbr(templist); i++){
+      printf(" %d", *(int*)List_Pointer(templist, i));
+    }
+    printf("}\n");
+    */
 
     Add_EdgeLoop(izon,templist,THEM);
   }
