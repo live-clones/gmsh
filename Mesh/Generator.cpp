@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.43 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: Generator.cpp,v 1.44 2003-06-13 21:14:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -184,6 +184,7 @@ void Init_Mesh(Mesh * M, int all)
   M->MaxSimplexNum = 0;
 
   ExitExtrude();
+  Reset_Degre2();
 
   Tree_Action(M->Vertices, Free_Vertex);  
   Tree_Delete(M->Vertices);

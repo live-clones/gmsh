@@ -504,6 +504,7 @@ void crEdges (Tree_T * TreeElem, Tree_T * treeedges);
 double Lc_XYZ (double X, double Y, double Z, Mesh * m);
 void Degre2 (Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
              Curve * c, Surface * s);
+void Reset_Degre2 ();
 void ActionLiss (void *data, void *dummy);
 void ActionLissSurf (void *data, void *dummy);
 int  Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);

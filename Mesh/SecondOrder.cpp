@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.13 2003-03-21 00:52:42 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.14 2003-06-13 21:14:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -152,22 +152,28 @@ void PutMiddlePoint(void *a, void *b)
   }
 }
 
+static Tree_T *TreeEdges = NULL;
+
+void Reset_Degre2(){
+  if(TreeEdges){
+    Tree_Delete(TreeEdges);
+  }
+  TreeEdges = Tree_Create(sizeof(Edge), compareedge);
+}
+
 void Degre2(Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
             Curve * c, Surface * s)
 {
-  static Tree_T *TreeEdges = NULL;
-
   THES = s;
   THEC = c;
   THET = TreeNodes;
 
-  if(!TreeEdges)
-    TreeEdges = Tree_Create(sizeof(Edge), compareedge);
-
-  if(THES || THEC)
+  if(THES || THEC){
     EdgesInVolume = 0;
+  }
 
   crEdges(TreeElm, TreeEdges);
   Tree_Action(TreeEdges, PutMiddlePoint);
+
   EdgesInVolume = 1;
 }

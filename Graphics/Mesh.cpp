@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.59 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.60 2003-06-13 21:14:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -781,28 +781,23 @@ void Draw_Simplex_Curves(void *a, void *b)
   Yc = 0.5 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y);
   Zc = 0.5 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z);
 
-  double X[2], Y[2], Z[2];
+  double X[3], Y[3], Z[3];
+  int N = s->VSUP ? 3 : 2;
+
   for(int i = 0; i < 2; i++) {
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
-
-  /*
-     if(CTX.mesh.points){
-     glColor4ubv((GLubyte*)&CTX.color.mesh.vertex);
-     glBegin(GL_POINTS);
-     glVertex3d(s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z);
-     glEnd();    
-
-     if(s->VSUP){
-     glColor4ubv((GLubyte*)&CTX.color.mesh.vertex_supp);
-     glBegin(GL_POINTS);
-     glVertex3d(s->VSUP[0]->Pos.X, s->VSUP[0]->Pos.Y, s->VSUP[0]->Pos.Z);
-     glEnd();    
-     }
-     }
-   */
+  
+  if(N == 3){
+    X[2] = X[1];
+    Y[2] = Y[1];
+    Z[2] = Z[1];
+    X[1] = Xc + CTX.mesh.explode * (s->VSUP[0]->Pos.X - Xc);
+    Y[1] = Yc + CTX.mesh.explode * (s->VSUP[0]->Pos.Y - Yc);
+    Z[1] = Zc + CTX.mesh.explode * (s->VSUP[0]->Pos.Z - Zc);
+  }
 
   if(CTX.mesh.color_carousel) {
     if(theColor.type)
@@ -818,8 +813,9 @@ void Draw_Simplex_Curves(void *a, void *b)
 
   if(CTX.mesh.lines) {
     glBegin(GL_LINES);
-    glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[1], Y[1], Z[1]);
+    for(int i = 0; i < N; i++){
+      glVertex3d(X[i], Y[i], Z[i]);
+    }
     glEnd();
   }
 

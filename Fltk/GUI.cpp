@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.236 2003-04-02 06:25:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.237 2003-06-13 21:14:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1635,7 +1635,6 @@ void GUI::create_option_window()
       }
 
       mesh_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Second order elements");
-      mesh_butt[3]->deactivate();       //2nd order elements do not work. Disable the graphical option.
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->down_box(TOGGLE_BOX);
       mesh_butt[3]->selection_color(TOGGLE_COLOR);

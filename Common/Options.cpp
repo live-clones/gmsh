@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.107 2003-05-29 14:36:56 geuzaine Exp $
+// $Id: Options.cpp,v 1.108 2003-06-13 21:14:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3267,7 +3267,7 @@ double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM)
 double opt_mesh_degree(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.degree = 1;        //(int)val; // INTERDIT POUR LE MOMENT !!!
+    CTX.mesh.degree = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[3]->value(CTX.mesh.degree == 2);
