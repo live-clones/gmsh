@@ -1,80 +1,104 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2003-03-02 01:08:56 $)
+This is the Gmsh FAQ - $Date: 2003-03-02 06:57:07 $
 
-1. GENERAL
-==========
+********************************************************************
 
-1.1) What is Gmsh?
+Section 1: The basics
+
+* 1.1 What is Gmsh?
 
 Gmsh is an automatic three-dimensional finite element mesh generator,
-primarily Delaunay, with built-in pre- and post-processing facilities. Its
-primal goal is to provide a simple meshing tool for academic test cases with
-parametric input and up to date visualization capabilities.  One of the
-strengths of Gmsh is its ability to respect a characteristic length field
-for the generation of adapted meshes on lines, surfaces and volumes.
+primarily Delaunay, with built-in pre- and post-processing
+facilities. Its primal goal is to provide a simple meshing tool for
+academic test cases with parametric input and up to date visualization
+capabilities.  One of the strengths of Gmsh is its ability to respect
+a characteristic length field for the generation of adapted meshes on
+lines, surfaces and volumes.
 
-1.2) What does 'Gmsh' mean?
+* 1.2 What are the terms and conditions of use?
+
+Gmsh is distributed under the terms of the GNU General Public
+License. See the file doc/COPYING for more information, or go to the
+GNU foundation's web site at http://www.gnu.org.
+
+* 1.3 What does 'Gmsh' mean?
 
 Nothing ;-)
 
-(People tend to pronounce 'Gmsh' as 'Gee-mesh'.)
+(People tend to pronounce 'Gmsh' as 'Gee-mesh'. Since Gmsh is
+distributed under the GNU General Public License, a nice way of
+pronouncing it could be 'Gnu-mesh'...)
 
-1.3) Where can I find more information?
+* 1.4 Where can I find more information?
 
 <http://www.geuz.org/gmsh/> is the primary site to obtain information
 about Gmsh. You will for example find a searchable archive of the Gmsh
 mailing list (<gmsh@geuz.org>) on this site.
 
+********************************************************************
 
-2. INSTALLATION
-===============
+Section 2: Installation
 
-2.1) Which OSes does Gmsh run on?
+* 2.1 Which OSes does Gmsh run on?
 
-Gmsh is known to run on Windows 95/98/NT/2000/XP, Linux (with glibc >
-2.1), Mac OS X, Compaq Tru64 Unix (aka OSF1), Sun OS, IBM AIX, SGI
-IRIX and HP-UX.
+Gmsh is known to run on Windows 95/98/NT/2000/XP, Linux, Mac OS X,
+Compaq Tru64 Unix (aka OSF1, aka Digital Unix), Sun OS, IBM AIX, SGI
+IRIX and HP-UX. It should compile on any Unix-like operating system,
+provided that you have access to a recent C and C++ compiler.
 
-2.2) Are there additional requirements to run Gmsh?
+* 2.2 Are there additional requirements to run Gmsh?
 
 You should have the OpenGL libraries installed on your system, and in
 the path of the library loader. A free replacement for OpenGL can be
-found at <http://www.mesa3d.org>. For Windows versions: please read
-the README.txt file included in the distribution.
+found at <http://www.mesa3d.org>.
 
-To compile the source code, you'll need the GSL (version 1.2 or
-higher; freely available from http://sources.redhat.com/gsl/) and FLTK
-(version 1.1.x, configured with OpenGL support; freely available from
-http://www.fltk.org) installed on your system. You'll also need the
-jpeg library of you want to save jpeg images.
+* 2.3 What do I need to compile Gmsh from the sources?
 
+You need a C and a C++ compiler (e.g. the GNU compilers gcc and g++)
+as well as the GSL (version 1.2 or higher; freely available from
+http://sources.redhat.com/gsl/) and FLTK (version 1.1.x, configured
+with OpenGL support; freely available from http://www.fltk.org)
+installed on your system. You'll also need the jpeg library if you
+want to save jpeg images.
 
-3. GENERAL PROBLEMS
-===================
+Under Windows, you will need the Cygwin tools and compilers (freely
+available from http://www.cygwin.com).
 
-3.1) Gmsh complains about missing libraries.
+* 2.4 How to I compile Gmsh?
 
-Try 'ldd gmsh' to check if all required shared libraries are installed on
-your system. If not, install them.
+Just type 
 
-3.2) Gmsh does not work under HP-UX.
+./configure; make; make install
 
-The HP version is reported not to work with HP's native OpenGL. You
-should install Mesa <http://www.mesa3d.org> instead.
+If you change some configuration options (type ./configure --help to
+get the list of all available choices), don't forget to do 'make
+clean' before rebuilding Gmsh.
 
-3.3) Gmsh keeps re-displaying its graphics when other windows partially hide
-the graphical window.
+********************************************************************
+
+Section 3: General problems
+
+* 3.1 Gmsh [from a binary distribution] complains about missing
+libraries.
+
+Try 'ldd gmsh' (or 'otool -L gmsh' under Mac OS X) to check if all the
+required shared libraries are installed on your system. If not,
+install them. If it still doesn't work, recompile Gmsh from the
+sources.
+
+* 3.2 Gmsh keeps re-displaying its graphics when other windows
+partially hide the graphical window.
 
 Disable opaque move in your window manager.
 
+********************************************************************
 
-4. GEOMETRY PROBLEMS
-====================
+Section 4: Geometry module
 
-4.1) Does Gmsh support NURBS curves/surfaces?
+* 4.1 Does Gmsh support NURBS curves/surfaces?
 
 Not yet.
 
-4.2) Gmsh is very slow when I use many transformations (Translate,
+* 4.2 Gmsh is very slow when I use many transformations (Translate,
 Rotate, Symmetry, Extrude, etc. ). What's wrong?
 
 The default behavior of Gmsh is to check and suppress all duplicate
@@ -91,11 +115,11 @@ problem:
   strategic locations in your geo files (e.g. before the creation of
   line loops, etc.).
 
+********************************************************************
 
-5. MESH PROBLEMS
-================
+Section 5: Mesh module
 
-5.1) What should I do when the 2D unstructured algorithm fails?
+* 5.1 What should I do when the 2D unstructured algorithm fails?
 
 Try one of the other 2D algorithms, e.g.:
 - on the command line: gmsh -algo tri
@@ -105,7 +129,7 @@ The old 2D algorithm will disappear once all its features are
 integrated in the new ones, so please don't send bug reports on the
 old algorithm anymore.
 
-5.2) The new 2D unstructured algorithms also fail! Then what?
+* 5.2 The new 2D unstructured algorithms also fail! Then what?
 
 Send us your geometry, and we will investigate. Please keep the
 following in mind though: 2D (surface) meshes are generated by
@@ -116,53 +140,53 @@ to define a cylinder will fail with the unstructured algorithm (you
 should define arcs with angles smaller than Pi, and thus define the
 cylinder with at least three patch surfaces).
 
-5.3) What should I do when the 3D unstructured algorithm fails?
+* 5.3 What should I do when the 3D unstructured algorithm fails?
 
 The 3D algorithm is still very experimental. Try to change some
 characteristic lengths in your input file to generate meshes that
 better suit the geometrical details of your structure.
 
-5.4) I changed the characteristic lengths, but the 3D algorithm still does
+* 5.4 I changed the characteristic lengths, but the 3D algorithm still does
 not work. What should I do?
 
 Buy a professional mesh generator ;-)
 
-5.5) The 3D algorithm is reaaaaally slow. Can you improve it?
+* 5.5 The 3D algorithm is reaaaaally slow. Can you improve it?
 
 We are working on it. But since we have a (very) limited amount of
 time to spend on the development of Gmsh, this may take a while. For
 very big meshes, see the answer to the previous question...
 
-5.6) The quality of the elements generated by the 3D algorithm is very bad.
+* 5.6 The quality of the elements generated by the 3D algorithm is very bad.
 
 Yes, this is normal(!). At the time of this writing, we do not
 post-process the 3D Delaunay mesh, so that some (typically 0.1 to
 0.5%) badly shaped tetrahedra will likely subsist in any unstructured
 3D mesh. This may/should be fixed in the future.
 
-5.7) Non-recombined 3D extruded meshes sometimes fail.
+* 5.7 Non-recombined 3D extruded meshes sometimes fail.
 
 The swapping algorithm is not very clever at the moment. Try to change
 the surface mesh a bit, or recombine your mesh to generate prisms or
 hexahedra.
 
-5.8) Tools->Visibility does not seem to work with extruded meshes.
+* 5.8 Tools->Visibility does not seem to work with extruded meshes.
 
 This a known problem (due to the fact that numbers are explicitly
 assigned to mesh entities in the extrude commands, which destroys
 the geometry/mesh relationship). The only solution at the moment is
 to save the mesh, and to read it again. 
 
+********************************************************************
 
-6. SOLVER PROBLEMS
-==================
+Section 6: Solver module
 
-6.1) How do I integrate my own solver with Gmsh?
+* 6.1 How do I integrate my own solver with Gmsh?
 
-If you want to simply launch a program from within Gmsh, just edit
-the options to define your solver commands (e.g. Solver.Name0,
+If you want to simply launch a program from within Gmsh, just edit the
+options to define your solver commands (e.g. Solver.Name0,
 Solver.Executable0, etc.), and set the ClientServer option to zero
-(e.g. Solver.ClientServer0 = 0). 
+(e.g. Solver.ClientServer0 = 0).
 
 If you want your solver to interact with Gmsh (for error messages,
 option definitions, post-processing, etc.), you will need to link your
@@ -173,24 +197,24 @@ ClientServer variable to 1 (e.g. Solver.ClientServer = 1). A complete
 example on how to build a solver that interacts with Gmsh is available
 at http://www.geuz.org/gmsh/doc/mysolver.tgz.
 
-6.2) On Windows, Gmsh does not seem to find the solver
+* 6.2 On Windows, Gmsh does not seem to find the solver
 executable. What's wrong?
 
 The solver executable (e.g. 'getdp.exe') has to be in your path. If
-not, simply go to the solver options (e.g. Solver->GetDP->Options->Executable)
-to specify its location.
+not, simply go to the solver options
+(e.g. Solver->GetDP->Options->Executable) to specify its location.
 
+********************************************************************
 
-7. POST-PROCESSING PROBLEMS
-===========================
+Section 7: Post-provessing module
 
-7.1) The graphics display very slowly.
+* 7.1 The graphics display very slowly.
 
 Are you are executing Gmsh from a remote host (via the network) without GLX?
 You should turn double buffering off (with the -nodb command line option).
 
-7.2) Big post-processing scenes are slow to display.
+* 7.2 Big post-processing scenes are slow to display.
 
-Try display lists (-dl command line option).
+Try display lists (Tools->Options->Display->Use display lists).
 
 
