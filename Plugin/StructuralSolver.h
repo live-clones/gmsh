@@ -32,6 +32,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Button.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/filename.H>
 #include <FL/Fl_PNG_Image.H>

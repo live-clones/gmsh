@@ -419,6 +419,9 @@ Structural_Material StructuralSolver :: GetMaterial (const std::string & name) c
       if ((*it).name == name)
 	return *it;
     }
+  
+  // just to fix the warning...
+  return *it;
 }
 
 
@@ -432,6 +435,10 @@ Structural_Material StructuralSolver :: GetMaterial (const std::string & name) c
 #define ACROSS_ 1
 #define AROUND_ 2
 
+void close_cb(Fl_Widget* w, void* data)
+{
+  if(data) ((Fl_Window *) data)->hide();
+}
 
 void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
 { 
@@ -444,6 +451,7 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
 #define BH (2*fontsize+1) // button height
 #define WB (6)            // window border
 #define IW (17*fontsize)  // input field width
+#define BB (7*fontsize)   // width of a button with internal label
   
   if(_window) {
     for(i = 0; i < 2; i++)
@@ -556,7 +564,15 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
       g[1]->end();
     }
     o->end();
+
+    {
+      Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+      o->callback(close_cb, (void *)_window);
+    }
+    
   }
+  _window->end();
+
 #endif
 }
 

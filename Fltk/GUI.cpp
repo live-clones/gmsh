@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.372 2004-10-28 03:44:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.373 2004-10-28 03:59:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -341,7 +341,7 @@ static Fl_Menu_Item menu_point_display[] = {
 static Fl_Menu_Item menu_point_display_with_plugin[] = {
   {"Color dot",   0, 0, 0},
   {"3D sphere",   0, 0, 0},
-  {"Use Solver Plugin",   0, 0, 0},
+  {"Use solver plugin",   0, 0, 0},
   {0}
 };
 
@@ -354,7 +354,7 @@ static Fl_Menu_Item menu_line_display[] = {
 static Fl_Menu_Item menu_line_display_with_plugin[] = {
   {"Color segment", 0, 0, 0},
   {"3D cylinder",   0, 0, 0},
-  {"Use Solver Plugin",   0, 0, 0},
+  {"Use solver plugin",   0, 0, 0},
   {0}
 };
 
