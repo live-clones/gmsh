@@ -85,6 +85,8 @@ specify display
 @ftable @code
 @item -a, -g, -m, -s, -p
 start in automatic, geometry, mesh, solver or post-processing mode
+@item -pid
+print pid on stdout
 @item -v int
 set verbosity level
 @item -string "string"

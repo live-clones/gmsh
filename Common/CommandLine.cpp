@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.46 2004-07-01 22:23:10 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.47 2004-09-17 17:35:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <sys/types.h>
 #include <unistd.h>
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -101,6 +102,7 @@ void Print_Usage(char *name){
 #if defined(HAVE_FLTK)
   Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
+  Msg(DIRECT, "  -pid                  print pid on stdout");
   Msg(DIRECT, "  -v int                set verbosity level");
   Msg(DIRECT, "  -string \"string\"      parse string before project file");
   Msg(DIRECT, "  -option file          parse option file before GUI creation");
@@ -165,7 +167,12 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
 
     if(argv[i][0] == '-') {
 
-      if(!strcmp(argv[i] + 1, "string")) {
+      if(!strcmp(argv[i] + 1, "pid")) {
+	fprintf(stdout, "%d\n", getpid());
+	fflush(stdout);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "string")) {
         i++;
         if(argv[i] != NULL)
           TheOptString = argv[i++];
