@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.24 2000-12-08 13:06:56 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.25 2000-12-08 13:12:18 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -853,17 +853,13 @@ int main(int argc, char *argv[]){
 
   /* The GUI is ready */
   CTX.interactive = 0 ; 
+  CTX.expose = 1 ;
 
   /* Say welcome! */
 
   TextBuffer = (char*)Malloc(1024*sizeof(char));
   Msg(STATUS, "Ready");
   Msg(SELECT, "Gmsh %g", GMSH_VERSION);
-
-  /* Compute viewport and Draw empty scene */
-  CTX.expose = 1 ;
-  Init();
-  Draw();
 
   /* Open input file */
 
