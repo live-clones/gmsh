@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.4 2003-02-11 17:55:23 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.5 2003-02-11 22:01:43 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -35,10 +35,6 @@ AC_ARG_WITH(fltk-prefix,
             AC_HELP_STRING([--with-fltk-prefix=PFX],
                            [prefix where FLTK is installed]),
             [FLTK_PREFIX=$withval],[FLTK_PREFIX="$FLTK_DIR"])
-AC_ARG_WITH(gl-prefix,
-            AC_HELP_STRING([--with-gl-prefix=PFX],
-                           [prefix where OpenGL is installed]),
-            [GL_PREFIX=$withval],[GL_PREFIX="$GL_DIR"])
 
 dnl Parse --enable command line options
 AC_ARG_ENABLE(gui,
@@ -78,7 +74,7 @@ AC_EXEEXT
 
 dnl How to build static libraries
 if test "x${AR}" = "x:"; then
-  AC_MSG_ERROR(Configure could not find the library archiver, aborting.)
+  AC_MSG_ERROR(Could not find the library archiver, aborting.)
 fi
 AR="${AR} ruvs"
 
@@ -89,30 +85,24 @@ dnl Choose blackbox or GUI version
 if test "x$enable_gui" != "xno"; then
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk jpeg"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin -lGmshParallel"
-
-#  dnl We should check for FLTK like this:
-#  AC_PATH_PROG(FLTKCONFIG,fltk-config)
-#
-#  if test "x$FLTKCONFIG" = x; then
-#    AC_MSG_ERROR([Sorry, flphoto requires FLTK 1.1.x.])
-#  else
-#    CFLAGS="`$FLTKCONFIG --cflags` $CFLAGS"
-#    CXXFLAGS="`$FLTKCONFIG --cflags` $CXXFLAGS"
-#    LIBS="`$FLTKCONFIG --use-images --ldflags` $LIBS"
-#  fi
-
   VERSION_FLAGS="-D_FLTK"
-  if test "x${FLTK_PREFIX}" != "x"; then
-    FLTK_LIB_PREFIX="-L${FLTK_PREFIX}/lib"
-    GUI_INCLUDE="-I${FLTK_PREFIX}"
+  AC_PATH_PROG(FLTKCONFIG,fltk-config)
+  if test "x${FLTKCONFIG}" = "x" -a "x${FLTK_PREFIX}" != "x" ; then
+    AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${FLTK_PREFIX})
   fi
-  if test "x${GL_PREFIX}" != "x"; then
-    GUI_INCLUDE="${GUI_INCLUDE} -I${GL_PREFIX}/include"
+  if test "x${FLTKCONFIG}" = "x" ; then
+    AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${HOME}/SOURCES/fltk-1.1)
   fi
+  if test "x$FLTKCONFIG" = "x"; then
+    AC_MSG_ERROR(Could not find fltk-config. Try --with-prefix-fltk?)
+  fi
+  GUI_LIBS="`$FLTKCONFIG --use-gl --ldstaticflags`"
+  GUI_INCLUDE="`$FLTKCONFIG --use-gl --cxxflags`"
 else
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshNumeric -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel"
   VERSION_FLAGS="-D_BLACKBOX"
+  GUI_LIBS=""
   GUI_INCLUDE=""
 fi
 
@@ -136,101 +126,60 @@ dnl default flags and linker
 OPT_FLAGS="${CXXFLAGS}"
 LINKER="${CXX}"
 POSTBUILD=""
+if test "x$enable_gui" != "xno"; then
+  GMSH_LIBS="${GMSH_LIBS} ${GUI_LIBS}"
+else
+  GMSH_LIBS="${GMSH_LIBS} -lm";
+fi
 
 dnl Modify defaults according to OS
 case "$UNAME" in
 
   CYGWIN* | MINGW*)
-    OPT_FLAGS="-O2"
     OS_FLAGS="-mwindows -DWIN32 -D_LITTLE_ENDIAN"
     LINKER="g++ -Wl,--subsystem,windows -mwindows"
     if test "x$enable_gui" != "xno"; then
-      GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res ${FLTK_LIB_PREFIX} -lfltk_gl -lglu32 -lopengl32 -lfltk -lole32 -luuid -lcomctl32 -lwsock32 -lm"
-    else
-      GMSH_LIBS="${GMSH_LIBS} -lm"
+      GMSH_LIBS="${GMSH_LIBS} Fltk/Win32Icon.res"
     fi
     ;;
 
   Darwin*)
-    OPT_FLAGS="-O2"
     OS_FLAGS="-D_NODLL"
-    if test "x$enable_gui" != "xno"; then
-      GMSH_LIBS="${GMSH_LIBS} ${FLTK_LIB_PREFIX} -lfltk_gl -lfltk -framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices"
-    else
-      GMSH_LIBS="${GMSH_LIBS}"
-    fi
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
-  *)
-    if test "x$enable_gui" != "xno"; then
-      AC_PATH_XTRA
-      if test "x$no_x" = "xyes"; then
-        AC_MSG_ERROR(Configure could not find required X11 libraries, aborting. Try --disable-gui?)
-      fi
-      GL_LIB=""
-      AC_CHECK_HEADER(GL/gl.h,
-                      AC_CHECK_LIB(GL, glXMakeCurrent, GL_LIB="-lGL",
-                                   AC_CHECK_LIB(MesaGL, glXMakeCurrent, GL_LIB="-lMesaGL", , -lm),
-                                   -lm)
-                      )
-      GLU_LIB=""
-      AC_CHECK_HEADER(GL/glu.h,
-                      if test "x$ac_cv_lib_GL_glXMakeCurrent" = "xyes"; then
-                        GLU_LIB="-lGLU"
-                      fi
-                      if test "x$ac_cv_lib_MesaGL_glXMakeCurrent" = "xyes"; then
-                        GLU_LIB="-lMesaGLU"
-                      fi
-                      )
-      if test "x${GL_LIB}" = "x" -o "x${GLU_LIB}" = "x"; then
-        AC_MSG_ERROR(Configure could not find required OpenGL libraries, aborting. Try --disable-gui?)
-      fi
-      if test "x${GL_PREFIX}" != "x"; then
-         GL_LIB="-L${GL_PREFIX}/lib ${GL_LIB}"
-      fi
-      GMSH_LIBS="${GMSH_LIBS} ${FLTK_LIB_PREFIX} -lfltk_gl ${GL_LIB} ${GLU_LIB} -lfltk ${X_LIBS} -lXext -lX11 ${X_EXTRA_LIBS} -lm"
-      if test "x$x_includes" != x; then
-        ac_cpp="$ac_cpp -I$x_includes"
-      fi
-    else
-      GMSH_LIBS="${GMSH_LIBS} -lm";
-    fi
+  Linux*)
+    OS_FLAGS="-D_LITTLE_ENDIAN"
+    GMSH_LIBS="${GMSH_LIBS} -ldl"
+    ;;
 
-    case "${UNAME}" in
-      Linux*)
-        OPT_FLAGS="-O3 -Wall -Wno-uninitialized"
-        OS_FLAGS="-D_LITTLE_ENDIAN"
-        GMSH_LIBS="${GMSH_LIBS} -ldl"
-      ;;
-      OSF1*)
-        OPT_FLAGS="-O2"
-        OS_FLAGS="-D_LITTLE_ENDIAN"
-      ;;
-      AIX*)
-        OPT_FLAGS="-O2"
-        OS_FLAGS="-D_BSD -D_NODLL"
-      ;;
-      IRIX*)
-        CXX="CC"
-        CC="cc"
-        OPT_FLAGS="-O2 -OPT:Olimit=0 -LANG:std"
-        AR="CC -mips3 -n32 -ar -o"
-        OS_FLAGS="-mips3 -n32"
-        LINKER="CC -O2 -mips3 -n32"
-      ;;
-      SunOS*)
-        CXX="g++"
-        CC="gcc"
-        OPT_FLAGS="-O2"
-        OS_FLAGS="-D_NODLL"
-        GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
-      ;;
-      *)
-        OS_FLAGS="-D_NODLL"
-      ;;
-    esac
-  ;;
+  OSF1*)
+    OS_FLAGS="-D_LITTLE_ENDIAN"
+    ;;
+
+  AIX*)
+    OS_FLAGS="-D_BSD -D_NODLL"
+    ;;
+
+  IRIX*)
+    OS_FLAGS="-mips3 -n32" 
+    CXX="CC"
+    CC="cc"
+    OPT_FLAGS="-O2 -OPT:Olimit=0 -LANG:std"
+    AR="CC -mips3 -n32 -ar -o"
+    LINKER="CC -O2 -mips3 -n32"
+    ;;
+
+  SunOS*)
+    OS_FLAGS="-D_NODLL"
+    CXX="g++"
+    CC="gcc"
+    GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
+    ;;
+
+  *)
+    OS_FLAGS="-D_NODLL"
+    ;;
 
 esac
 
@@ -257,9 +206,6 @@ else
 fi
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_INCLUDE)
-
-dnl Check for math library
-AC_CHECK_LIB(m, sin)
 
 dnl Check for header files
 AC_CHECK_HEADERS(sys/time.h sys/resource.h)
@@ -298,5 +244,3 @@ if test "x${GSL}" = "xno"; then
   echo "  http://sources.redhat.com/gsl/"
   echo "*******************************************************************"
 fi
-
-

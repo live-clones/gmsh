@@ -5,17 +5,15 @@ facilities.
 
 To install Gmsh, type
 
-./configure --with-fltk-prefix=/path/to/fltk-1.1.x
+./configure
 make
 make install
 
-This requires the Fast Light Tool Kit (FLTK, http://www.fltk.org)
-version 1.1 or above, the GNU Scientific Library (GSL,
-http://sources.redhat.com/gsl/) and OpenGL (for a free implementation,
-see http://www.mesa3d.org) to be installed on your system. If not in
-default locations, you can either use the --with-fltk-prefix,
---with-gsl-prefix and --with-gl-prefix configure options, or you can
-set the environment variables FLTK_DIR, GSL_DIR and GL_DIR.
+This requires the GSL (http://sources.redhat.com/gsl/) and FLTK 1.1.x
+(http://www.fltk.org), configured with OpenGL support, to be installed
+on your system. If not in default locations, you can either use the
+--with-fltk-prefix and --with-gsl-prefix configure options, or you can
+set the environment variables FLTK_DIR and GSL_DIR.
 
 To install a non-graphical version of Gmsh (that does not require
 FLTK nor OpenGL), type
