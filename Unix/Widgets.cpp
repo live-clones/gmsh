@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.6 2000-11-24 09:44:05 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -752,7 +752,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.geomVisibleFrame[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Visibility")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Global Visibility")); i++;
   XtSetArg(arg[i], XmNchildType, XmFRAME_TITLE_CHILD); i++;
   w->OD.geomVisibleFrame[1] = XmCreateLabel(w->OD.geomVisibleFrame[0], "ODgeomVisibleFrame1", arg, i);
   XtManageChild(w->OD.geomVisibleFrame[1]);
@@ -767,13 +767,13 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.geomVisibleTypeCheck);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entity")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entities")); i++;
   XtSetArg(arg[i], XmNset, True); i++;
   w->OD.geomVisibleTypeButt[0] = XmCreateToggleButton(w->OD.geomVisibleTypeCheck, "ODgeomVisibleTypeButt0", arg, i);
   XtManageChild(w->OD.geomVisibleTypeButt[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Label")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Labels")); i++;
   XtSetArg(arg[i], XmNset, False); i++;
   w->OD.geomVisibleTypeButt[1] = XmCreateToggleButton(w->OD.geomVisibleTypeCheck, "ODgeomVisibleTypeButt1", arg, i);
   XtManageChild(w->OD.geomVisibleTypeButt[1]);
@@ -814,7 +814,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.geomVisibleByNumFrame[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Visibility by Number")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Visibility by Entity Number")); i++;
   XtSetArg(arg[i], XmNchildType, XmFRAME_TITLE_CHILD); i++;
   w->OD.geomVisibleByNumFrame[1] = XmCreateLabel(w->OD.geomVisibleByNumFrame[0], "ODgeomVisibleByNumFrame1", arg, i);
   XtManageChild(w->OD.geomVisibleByNumFrame[1]);
@@ -985,7 +985,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.meshVisibleFrame[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Visibility")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Global Visibility")); i++;
   XtSetArg(arg[i], XmNchildType, XmFRAME_TITLE_CHILD); i++;
   w->OD.meshVisibleFrame[1] = XmCreateLabel(w->OD.meshVisibleFrame[0], "ODmeshVisibleFrame1", arg, i);
   XtManageChild(w->OD.meshVisibleFrame[1]);
@@ -1000,13 +1000,13 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.meshVisibleTypeCheck);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entity")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entities")); i++;
   XtSetArg(arg[i], XmNset, True); i++;
   w->OD.meshVisibleTypeButt[0] = XmCreateToggleButton(w->OD.meshVisibleTypeCheck, "ODmeshVisibleTypeButt0", arg, i);
   XtManageChild(w->OD.meshVisibleTypeButt[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Label")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Labels")); i++;
   XtSetArg(arg[i], XmNset, False); i++;
   w->OD.meshVisibleTypeButt[1] = XmCreateToggleButton(w->OD.meshVisibleTypeCheck, "ODmeshVisibleTypeButt1", arg, i);
   XtManageChild(w->OD.meshVisibleTypeButt[1]);
