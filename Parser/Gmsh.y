@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.45 2000-12-17 21:17:30 remacle Exp $ */
+%{ /* $Id: Gmsh.y,v 1.46 2000-12-18 08:32:08 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1818,6 +1818,12 @@ Loop :
 	ImbricatedLoop--;
       }
     }
+  | tFunction tSTRING
+    {
+      if(!FunctionManager::Instance()->createFunction($2,yyin,yylineno))
+	vyyerror("Redefinition of function %s",$2);
+      skip_until("Return");
+    }
   | tReturn
     {
       if(!FunctionManager::Instance()->leaveFunction(&yyin,yylineno))
@@ -1828,13 +1834,6 @@ Loop :
       if(!FunctionManager::Instance()->enterFunction($2,&yyin,yylineno))
 	vyyerror("Unknown Function %s",$2);
     } 
-  | tFunction tSTRING
-    {
-      // skip everything until return is found
-      if(!FunctionManager::Instance()->createFunction($2,yyin,yylineno))
-	vyyerror("Redefinition of function %s",$2);
-      skip_until("Return");
-    }
   | tIf '(' FExpr ')'
     {
       if(!$3) skip_until("EndIf");
