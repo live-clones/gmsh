@@ -1,4 +1,4 @@
-// $Id: Axes.cpp,v 1.5 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Axes.cpp,v 1.6 2001-09-25 08:20:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -23,7 +23,7 @@ void Draw_Axes (double s) {
   b = .1 * s;
   c = 0.666 * b;
 
-  glLineWidth(1.); gl2psLineWidth(1.);
+  glLineWidth(1.); gl2psLineWidth(1.*CTX.print.eps_line_width_factor);
   glColor4ubv((GLubyte*)&CTX.color.axes);
 
   glBegin(GL_LINES);

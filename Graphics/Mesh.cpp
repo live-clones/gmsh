@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.42 2001-09-05 09:35:29 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.43 2001-09-25 08:20:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,8 +67,12 @@ void Draw_Mesh (Mesh *M) {
     if(CTX.clip[i])
       glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 
-  glPointSize(2); gl2psPointSize(2);
-  glLineWidth(1); gl2psLineWidth(1*CTX.print.mesh_line_width);
+  glPointSize(CTX.mesh.point_size); 
+  gl2psPointSize(CTX.mesh.point_size * CTX.print.eps_point_size_factor);
+
+  glLineWidth(CTX.mesh.line_width); 
+  gl2psLineWidth(CTX.mesh.line_width * CTX.print.eps_line_width_factor);
+
   iColor = 0;
 
   if(CTX.mesh.hidden) glEnable(GL_POLYGON_OFFSET_FILL);
@@ -132,7 +136,6 @@ void Draw_Mesh (Mesh *M) {
       DrawVertexSupp = 0 ; 
       Tree_Action(M->Vertices, Draw_Mesh_Points);
     }
-    glPointSize(4); gl2psPointSize(4);
     if(!CTX.geom.shade) InitNoShading();
     Draw_Geom(M);
     break;
@@ -194,7 +197,6 @@ void Draw_Mesh_Points (void *a, void *b){
     glPushName((*v)->Num);
   }
 
-  glPointSize(3); gl2psPointSize(3);
   if(DrawVertexSupp) 
     glColor4ubv((GLubyte*)&CTX.color.mesh.vertex_supp);
   else

@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.5 2001-08-14 16:25:11 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.6 2001-09-25 08:21:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -17,8 +17,9 @@ void Projette (double p[3],double mat[3][3]) {
 }
 
 ExtrudeParams :: ExtrudeParams (int ModeEx){
-  mesh.ExtrudeMesh = false;
   geo.Mode = ModeEx;
+  geo.Source = -1;
+  mesh.ExtrudeMesh = false;
   mesh.Recombine = false;
 }
 

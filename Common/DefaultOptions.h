@@ -67,7 +67,7 @@ StringXString ViewOptions_String[] = {
 } ;
 
 StringXString PrintOptions_String[] = {
-  { F|O, "Font" , opt_print_font , "Courier" , 
+  { F|O, "EpsFont" , opt_print_eps_font , "Courier" , 
     "Font used for postscript printing" },
   { 0, NULL , NULL , NULL , NULL }
 } ;
@@ -303,6 +303,14 @@ StringXNumber GeometryOptions_Number[] = {
     "Display surface numbers?" },
   { F|O, "VolumesNumbers" , opt_geometry_volumes_num , 0. , 
     "Display volume numbers? (not implemented yet)" },
+  { F|O, "PointSize" , opt_geometry_point_size , 3. , 
+    "Display size of points (in pixels)" },
+  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 5. , 
+    "Display size of selected points (in pixels)" },
+  { F|O, "LineWidth" , opt_geometry_line_width , 1. , 
+    "Display width of lines (in pixels)" },
+  { F|O, "LineSelectWidth" , opt_geometry_line_sel_width , 2. , 
+    "Display width of selected lines (in pixels)" },
   { F|O, "Aspect" , opt_geometry_aspect , 0. , 
     "Not used" },
   { F|O, "Highlight" , opt_geometry_highlight , 1. , 
@@ -355,6 +363,10 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh surface numbers?" },
   { F|O, "VolumesNumbers" , opt_mesh_volumes_num , 0. , 
     "Display mesh elements numbers?" },
+  { F|O, "PointSize" , opt_mesh_point_size , 2. , 
+    "Display size of points (in pixels)" },
+  { F|O, "LineWidth" , opt_mesh_line_width , 1. , 
+    "Display width of lines (in pixels)" },
   { F|O, "Aspect" , opt_mesh_aspect , 0. , 
     "Mesh apsect (0=wireframe, 1=hidden lines, 2=solid)" },
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
@@ -417,6 +429,10 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Delay (in seconds) between to animation frames" },
   { F, "NbViews" , opt_post_nb_views , 0. ,
     "Current number of views merged (do _not_ change this!)" },
+  { F|O, "PointSize" , opt_post_point_size , 2. , 
+    "Display size of points (in pixels)" },
+  { F|O, "LineWidth" , opt_post_line_width , 1. , 
+    "Display width of lines (in pixels)" },
   { 0, NULL , NULL , 0. }
 } ;
 
@@ -505,6 +521,12 @@ StringXNumber PrintOptions_Number[] = {
     "Postscript quality (1=simple sort, 2=recursive sort)" },
   { F|O, "EpsBackground" , opt_print_eps_background , 1 ,
     "Save image background in postscript output" },
+  { F|O, "EpsFontSize" , opt_print_eps_font_size , 12. ,
+    "Font size used for postscript printing" },
+  { F|O, "EpsPointSizeFactor" , opt_print_eps_point_size_factor , 1. ,
+    "Size factor for points in postscript output" },
+  { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 1. ,
+    "Width factor for lines in postscript output" },
   { F|O, "JpegQuality" , opt_print_jpeg_quality , 85 ,
     "JPEG quality (between 1 and 100)" },
   { F|O, "GifDither" , opt_print_gif_dither , 0 ,
@@ -515,14 +537,6 @@ StringXNumber PrintOptions_Number[] = {
     "Interlace GIF output" },
   { F|O, "GifTransparent" , opt_print_gif_transparent , 0 ,
     "Output transparent GIF image" },
-  { F|O, "FontSize" , opt_print_font_size , 12. ,
-    "Font size used for postscript printing" },
-  { F|O, "GeometryLineWidth" , opt_print_geom_line_width , 2. ,
-    "Width factor for geometry lines in postscript output (10 looks nice for geometry+mesh display)" },
-  { F|O, "MeshLineWidth" , opt_print_mesh_line_width , 1. ,
-    "Width factor for mesh lines in postscript output (1 looks nice for geometry+mesh display)" },
-  { F|O, "PostProcessingLineWidth" , opt_print_post_line_width , 2. ,
-    "Width factor for post-processing lines in postscript output" },
   { 0, NULL , NULL , 0. }
 } ;
 

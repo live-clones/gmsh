@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.46 2001-09-05 19:14:05 geuzaine Exp $
+// $Id: Options.cpp,v 1.47 2001-09-25 08:20:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -541,9 +541,9 @@ char * opt_view_filename(OPT_ARGS_STR){
 }
 
 
-char * opt_print_font(OPT_ARGS_STR){
-  if(action & GMSH_SET) CTX.print.font = val;
-  return CTX.print.font;
+char * opt_print_eps_font(OPT_ARGS_STR){
+  if(action & GMSH_SET) CTX.print.eps_font = val;
+  return CTX.print.eps_font;
 }
 
 
@@ -1143,6 +1143,26 @@ double opt_geometry_volumes_num(OPT_ARGS_NUM){
 #endif
   return CTX.geom.volumes_num;
 }
+double opt_geometry_point_size(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.point_size = (int)val;
+  return CTX.geom.point_size;
+}
+double opt_geometry_point_sel_size(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.point_sel_size = (int)val;
+  return CTX.geom.point_sel_size;
+}
+double opt_geometry_line_width(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.line_width = (int)val;
+  return CTX.geom.line_width;
+}
+double opt_geometry_line_sel_width(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.line_sel_width = (int)val;
+  return CTX.geom.line_sel_width;
+}
 double opt_geometry_aspect(OPT_ARGS_NUM){
   if(action & GMSH_SET){ 
     switch((int)val){
@@ -1347,6 +1367,16 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM){
     WID->mesh_butt[13]->value(CTX.mesh.volumes_num);
 #endif
   return CTX.mesh.volumes_num;
+}
+double opt_mesh_point_size(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.mesh.point_size = (int)val;
+  return CTX.mesh.point_size;
+}
+double opt_mesh_line_width(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.mesh.line_width = (int)val;
+  return CTX.mesh.line_width;
 }
 double opt_mesh_aspect(OPT_ARGS_NUM){
   if(action & GMSH_SET){ 
@@ -1564,6 +1594,16 @@ double opt_post_nb_views(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.post.nb_views = (int)val;
   return CTX.post.nb_views;
+}
+double opt_post_point_size(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.post.point_size = (int)val;
+  return CTX.post.point_size;
+}
+double opt_post_line_width(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.post.line_width = (int)val;
+  return CTX.post.line_width;
 }
 
 
@@ -2043,6 +2083,21 @@ double opt_print_eps_background(OPT_ARGS_NUM){
     CTX.print.eps_background = (int)val;
   return CTX.print.eps_background;
 }
+double opt_print_eps_font_size(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.eps_font_size = (int)val;
+  return CTX.print.eps_font_size;
+}
+double opt_print_eps_line_width_factor(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.eps_line_width_factor = (int)val;
+  return CTX.print.eps_line_width_factor;
+}
+double opt_print_eps_point_size_factor(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.eps_point_size_factor = (int)val;
+  return CTX.print.eps_point_size_factor;
+}
 double opt_print_jpeg_quality(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.print.jpeg_quality = (int)val;
@@ -2067,26 +2122,6 @@ double opt_print_gif_transparent(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.print.gif_transparent = (int)val;
   return CTX.print.gif_transparent;
-}
-double opt_print_font_size(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.print.font_size = (int)val;
-  return CTX.print.font_size;
-}
-double opt_print_geom_line_width(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.print.geom_line_width = (int)val;
-  return CTX.print.geom_line_width;
-}
-double opt_print_mesh_line_width(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.print.mesh_line_width = (int)val;
-  return CTX.print.mesh_line_width;
-}
-double opt_print_post_line_width(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.print.post_line_width = (int)val;
-  return CTX.print.post_line_width;
 }
 
 // ************** Color option routines ****************************

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.5 2001-02-04 12:46:09 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.6 2001-09-25 08:21:14 geuzaine Exp $
 
 #include <X11/IntrinsicP.h>
 
@@ -73,7 +73,7 @@ void Draw_String(char *s){
 
   if(CTX.stream == TO_FILE){
     if(!CTX.print.gl_fonts && CTX.print.eps_quality > 0){
-      gl2psText(s,CTX.print.font,CTX.print.font_size);
+      gl2psText(s,CTX.print.eps_font,CTX.print.eps_font_size);
       return ;
     }
   }

@@ -111,6 +111,8 @@ public :
     int vis_type;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
+    int point_size, line_width;
+    int point_sel_size, line_sel_width;
     int hidden, shade;
     int highlight;
     int level, old_circle;
@@ -125,6 +127,7 @@ public :
     int draw;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
+    int point_size, line_width;
     double quality;
     double gamma_inf, gamma_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
@@ -151,6 +154,7 @@ public :
   // post processing options 
   struct{
     int draw, scales, link ;
+    int point_size, line_width;
     int smooth ;
     int nb_views ;
     double anim_delay ;
@@ -159,12 +163,12 @@ public :
   // print options 
   struct{
     int format;
-    int eps_quality, eps_background;
+    int eps_quality, eps_background, eps_font_size;
+    char *eps_font;
+    int eps_line_width_factor, eps_point_size_factor;
     int jpeg_quality;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
-    char *font;
-    int font_size, gl_fonts;
-    int geom_line_width, mesh_line_width, post_line_width;
+    int gl_fonts;
   } print;
 
   // color options

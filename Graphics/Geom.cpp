@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.28 2001-08-17 15:56:18 geuzaine Exp $
+// $Id: Geom.cpp,v 1.29 2001-09-25 08:20:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -35,15 +35,18 @@ void Draw_GeoPoint (void *a, void *b){
   }
 
   if((*v)->Frozen){
-    glPointSize(5); gl2psPointSize(5);
+    glPointSize(CTX.geom.point_sel_size); 
+    gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte*)&CTX.color.geom.point_sel);
   }
   else if(Highlighted){
-    glPointSize(5); gl2psPointSize(5);
+    glPointSize(CTX.geom.point_sel_size);
+    gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte*)&CTX.color.geom.point_hlt);
   }
   else{
-    glPointSize(3); gl2psPointSize(3);
+    glPointSize(CTX.geom.point_size);
+    gl2psPointSize(CTX.geom.point_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte*)&CTX.color.geom.point);
   }
 
@@ -89,15 +92,18 @@ void Draw_Curve (void *a, void *b){
   }
 
   if((c)->ipar[3]){
-    glLineWidth(2.); gl2psLineWidth(2.*CTX.print.geom_line_width);
+    glLineWidth(CTX.geom.line_sel_width);
+    gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte*)&CTX.color.geom.line_sel);
   }
   else if(Highlighted){
-    glLineWidth(2.); gl2psLineWidth(2.*CTX.print.geom_line_width);
+    glLineWidth(CTX.geom.line_sel_width); 
+    gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte*)&CTX.color.geom.line_hlt);
   }
   else{
-    glLineWidth(1.); gl2psLineWidth(1.*CTX.print.geom_line_width);
+    glLineWidth(CTX.geom.line_width);
+    gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte*)&CTX.color.geom.line);
   }
 
@@ -487,15 +493,18 @@ void Draw_Surface (void *a, void *b){
 
   if(!CTX.geom.shade){
     if(s->Mat){
-      glLineWidth(2.); gl2psLineWidth(2.);
+      glLineWidth(CTX.geom.line_sel_width); 
+      gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface_sel);
     }
     else if (Highlighted){
-      glLineWidth(2.); gl2psLineWidth(2.);
+      glLineWidth(CTX.geom.line_sel_width); 
+      gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface_hlt);
     }
     else{
-      glLineWidth(1.); gl2psLineWidth(1.);
+      glLineWidth(CTX.geom.line_width); 
+      gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
       glColor4ubv((GLubyte*)&CTX.color.geom.surface);
     }
     glEnable(GL_LINE_STIPPLE);
@@ -538,7 +547,8 @@ void Draw_Curve_For_Volume (void *a, void *b){
   Curve  *c;
   Vertex  v;
 
-  glLineWidth(2.); gl2psLineWidth(2.);
+  glLineWidth(CTX.geom.line_width);
+  gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
 
   c = *(Curve**)a;
 
@@ -569,10 +579,6 @@ void Draw_Curve_For_Volume (void *a, void *b){
 
   if(CTX.render_mode == GMSH_SELECT){
     glPopName ();
-  }
-
-  if((c)->ipar[3]){
-    glLineWidth(1.); gl2psLineWidth(1.);
   }
 
 }

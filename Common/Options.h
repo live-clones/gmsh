@@ -28,7 +28,7 @@ char * opt_solver_getdp_command(OPT_ARGS_STR);
 char * opt_view_name(OPT_ARGS_STR);
 char * opt_view_format(OPT_ARGS_STR);
 char * opt_view_filename(OPT_ARGS_STR);
-char * opt_print_font(OPT_ARGS_STR);
+char * opt_print_eps_font(OPT_ARGS_STR);
 
 // NUMBERS
 
@@ -140,6 +140,10 @@ double opt_geometry_points_num(OPT_ARGS_NUM);
 double opt_geometry_lines_num(OPT_ARGS_NUM);
 double opt_geometry_surfaces_num(OPT_ARGS_NUM);
 double opt_geometry_volumes_num(OPT_ARGS_NUM);
+double opt_geometry_point_size(OPT_ARGS_NUM);
+double opt_geometry_point_sel_size(OPT_ARGS_NUM);
+double opt_geometry_line_width(OPT_ARGS_NUM);
+double opt_geometry_line_sel_width(OPT_ARGS_NUM);
 double opt_geometry_aspect(OPT_ARGS_NUM);
 double opt_geometry_highlight(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
@@ -164,6 +168,8 @@ double opt_mesh_points_num(OPT_ARGS_NUM);
 double opt_mesh_lines_num(OPT_ARGS_NUM);
 double opt_mesh_surfaces_num(OPT_ARGS_NUM);
 double opt_mesh_volumes_num(OPT_ARGS_NUM);
+double opt_mesh_point_size(OPT_ARGS_NUM);
+double opt_mesh_line_width(OPT_ARGS_NUM);
 double opt_mesh_aspect(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
@@ -192,6 +198,8 @@ double opt_post_smooth(OPT_ARGS_NUM);
 double opt_post_anim_delay(OPT_ARGS_NUM);
 double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_post_color_scheme(OPT_ARGS_NUM);
+double opt_post_point_size(OPT_ARGS_NUM);
+double opt_post_line_width(OPT_ARGS_NUM);
 double opt_view_nb_timestep(OPT_ARGS_NUM);
 double opt_view_timestep(OPT_ARGS_NUM);
 double opt_view_min(OPT_ARGS_NUM);
@@ -232,15 +240,14 @@ double opt_view_arrow_location(OPT_ARGS_NUM);
 double opt_print_format(OPT_ARGS_NUM);
 double opt_print_eps_quality(OPT_ARGS_NUM);
 double opt_print_eps_background(OPT_ARGS_NUM);
+double opt_print_eps_font_size(OPT_ARGS_NUM);
+double opt_print_eps_line_width_factor(OPT_ARGS_NUM);
+double opt_print_eps_point_size_factor(OPT_ARGS_NUM);
 double opt_print_jpeg_quality(OPT_ARGS_NUM);
 double opt_print_gif_dither(OPT_ARGS_NUM);
 double opt_print_gif_sort(OPT_ARGS_NUM);
 double opt_print_gif_interlace(OPT_ARGS_NUM);
 double opt_print_gif_transparent(OPT_ARGS_NUM);
-double opt_print_font_size(OPT_ARGS_NUM);
-double opt_print_geom_line_width(OPT_ARGS_NUM);
-double opt_print_mesh_line_width(OPT_ARGS_NUM);
-double opt_print_post_line_width(OPT_ARGS_NUM);
 
 // COLORS
 

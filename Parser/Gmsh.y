@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.100 2001-09-24 06:56:02 geuzaine Exp $
+// $Id: Gmsh.y,v 1.101 2001-09-25 08:21:14 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1846,6 +1846,32 @@ ExtrudeParameter :
       List_Delete($3);
       List_Delete($5);
       List_Delete($7);
+    }
+  | tLayers '{' ListOfDouble ',' ListOfDouble '}' tEND
+    {
+      double d;
+      int j;
+      extr.mesh.ExtrudeMesh = true;
+      extr.mesh.NbLayer = List_Nbr($3);
+      if(extr.mesh.NbLayer > NB_LAYER_MAX){
+	vyyerror("Too many layers in extrusion");
+      }
+      else if(List_Nbr($3) == List_Nbr($5)){
+	for(int i=0;i<List_Nbr($3);i++){
+	  List_Read($3,i,&d);
+	  j = (int)d;
+	  extr.mesh.NbElmLayer[i] = j;
+	  extr.mesh.ZonLayer[i] = 0;
+	  List_Read($5,i,&d);
+	  extr.mesh.hLayer[i] = d;
+	}
+      }
+      else{
+	vyyerror("Wrong layer definition {%d, %d}", 
+	       List_Nbr($3), List_Nbr($5));
+      }
+      List_Delete($3);
+      List_Delete($5);
     }
   | tRecombine tEND
     {
