@@ -13,4 +13,4 @@ Line(4) = {4,3};
 Point(55) = {0.2,.5,0,lc};                 
 Line Loop(5) = {1,2,3,4};                
 Plane Surface(6) = {5};                
-Attractor Point (.01,.1,3.0) = {55};       
+Attractor Point {55} = {.01,.1,3.0};       
