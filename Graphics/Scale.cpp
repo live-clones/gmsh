@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.6 2000-12-04 11:28:26 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -34,7 +34,7 @@ void Draw_String(char *s){
   if(CTX.stream == TO_FILE){
     if(CTX.print.type == PRINT_GL2PS_SIMPLE ||
        CTX.print.type == PRINT_GL2PS_RECURSIVE) {
-      gl2psText(s,CTX.post.font,CTX.post.fontsize);
+      gl2psText(s,CTX.print.font,CTX.print.fontsize);
       return ;
     }
   }
