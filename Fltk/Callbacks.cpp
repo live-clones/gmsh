@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.76 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.77 2001-08-12 14:23:36 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -519,7 +519,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Shift+d       decrease animation delay");
   Msg(DIRECT, "  Ctrl+Shift+d  increase animation delay");
   Msg(DIRECT, "  Alt+f         toggle redraw mode (fast/full)"); 
-  Msg(DIRECT, "  Alt+h         toggle visibility for all post-processing views"); 
+  Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
   Msg(DIRECT, "  Alt+l         hide/show geometry lines");
   Msg(DIRECT, "  Alt+Shift+l   hide/show mesh lines");
   Msg(DIRECT, "  Alt+m         toggle visibility of all mesh entities");

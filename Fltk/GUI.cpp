@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.106 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.107 2001-08-12 14:23:36 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -21,6 +21,7 @@
 #include "Callbacks.h"
 #include "Bitmaps.h"
 #include "Icon.h"
+#include "OpenFile.h"
 #include "GetOptions.h"
 
 #define WINDOW_BOX FL_FLAT_BOX
@@ -450,9 +451,11 @@ int GUI::global_shortcuts(int event){
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT+'h')){
+    static int show = 0;
     for(i=0 ; i<List_Nbr(Post_ViewList) ; i++)
-      opt_view_visible(i, GMSH_SET|GMSH_GUI, !opt_view_visible(i, GMSH_GET, 0));
+      opt_view_visible(i, GMSH_SET|GMSH_GUI, show);
     redraw_opengl();
+    show = !show;
     return 1;
   }
   
