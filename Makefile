@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.241 2002-11-11 17:50:57 geuzaine Exp $
+# $Id: Makefile,v 1.242 2002-11-13 19:26:41 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
-GMSH_MINOR_VERSION = 35
-GMSH_PATCH_VERSION = 3
+GMSH_MINOR_VERSION = 36
+GMSH_PATCH_VERSION = 0
 
 MAKE = make
 CXX = c++
@@ -675,8 +675,11 @@ distrib-mac:
 	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/MacOS/Gmsh
 	cp Fltk/MacIcons.icns gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/Resources/gmsh.icns
 	cp tutorial/tutorial.html gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/Resources
-	cp -R doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS doc/gmsh.1\
-              tutorial demos gmsh-$(GMSH_RELEASE)
+	cp -R doc/gmsh.1 tutorial demos gmsh-$(GMSH_RELEASE)
+	cp doc/FORMATS gmsh-$(GMSH_RELEASE)/FORMATS.txt
+	cp doc/VERSIONS gmsh-$(GMSH_RELEASE)/VERSIONS.txt
+	cp doc/FAQ gmsh-$(GMSH_RELEASE)/FAQ.txt
+	cp doc/CONTRIBUTORS gmsh-$(GMSH_RELEASE)/CONTRIBUTORS.txt
 	rm -rf gmsh-$(GMSH_RELEASE)/*/CVS\
                gmsh-$(GMSH_RELEASE)/*/*~\
                gmsh-$(GMSH_RELEASE)/*/*.msh
