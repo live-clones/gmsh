@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.154 2002-11-16 23:46:05 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.155 2002-11-17 00:32:22 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2293,13 +2293,25 @@ void view_options_timestep_cb(CALLBACK_ARGS){
 }
 
 void view_options_timestep_decr_cb(CALLBACK_ARGS){
-  int i=(long int)data;
-  opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i,GMSH_GET,0)-1);
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i=0 ; i<List_Nbr(CTX.post.list) ; i++){
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == (long int)data)){
+      opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i,GMSH_GET,0)-1);
+    }
+  }
   Draw();
 }
 void view_options_timestep_incr_cb(CALLBACK_ARGS){
-  int i=(long int)data;
-  opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i,GMSH_GET,0)+1);
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i=0 ; i<List_Nbr(CTX.post.list) ; i++){
+    if((links == 2 || links == 4) ||
+       ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == (long int)data)){
+      opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i,GMSH_GET,0)+1);
+    }
+  }
   Draw();
 }
 
