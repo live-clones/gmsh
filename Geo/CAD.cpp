@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.39 2001-11-12 13:44:41 geuzaine Exp $
+// $Id: CAD.cpp,v 1.40 2001-11-12 14:18:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1304,8 +1304,8 @@ void ReplaceDuplicatePoints(Mesh *m){
 
   /* Create unique points */
 
+  start = Tree_Nbr(m->Points);
   All = Tree2List(m->Points);
-  start = List_Nbr(All);
 
   allNonDulpicatedPoints = Tree_Create(sizeof(Vertex*),comparePosition);
   for(i=0;i<List_Nbr(All);i++){
@@ -1333,7 +1333,6 @@ void ReplaceDuplicatePoints(Mesh *m){
   /* Replace old points in curves */
 
   All = Tree2List(m->Curves);
-  start = List_Nbr(All);
 
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
@@ -1370,14 +1369,16 @@ void ReplaceDuplicatePoints(Mesh *m){
 
 void ReplaceDuplicateCurves(Mesh *m){
   List_T *All;
+  Tree_T *allNonDulpicatedCurves;
   Curve *c,*c2;
   Surface *s;
   int i,j,start,end;
 
   /* Create unique curves */
 
+  start = Tree_Nbr(m->Curves);
   All = Tree2List(m->Curves);
-  Tree_T *allNonDulpicatedCurves;
+
   allNonDulpicatedCurves = Tree_Create(sizeof(Curve*),compareTwoCurves);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
@@ -1431,15 +1432,16 @@ void ReplaceDuplicateCurves(Mesh *m){
 
 void ReplaceDuplicateSurfaces(Mesh *m){
   List_T *All;
+  Tree_T *allNonDulpicatedSurfaces;
   Surface *s;
   Volume *vol;
   int i,j,start,end;
 
   /* Create unique surfaces */
 
-  start = List_Nbr(All);
+  start = Tree_Nbr(m->Surfaces);
+  All = Tree2List(m->Surfaces);
   
-  Tree_T *allNonDulpicatedSurfaces;
   allNonDulpicatedSurfaces = Tree_Create(sizeof(Curve*),compareTwoSurfaces);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
