@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.71 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: CAD.cpp,v 1.72 2004-03-03 22:25:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -423,6 +423,8 @@ void CopyShape(int Type, int Num, int *New)
     break;
   }
 }
+
+// FIXME: we still need to actually free the entity!
 
 void DeletePoint(int ip)
 {
