@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.38 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.39 2001-08-13 11:52:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -59,7 +59,6 @@ void Draw_Mesh (Mesh *M) {
     InitShading();
   else
     InitNoShading();
-
   InitPosition();
 
   if(CTX.moving_light) InitRenderModel();
@@ -123,7 +122,7 @@ void Draw_Mesh (Mesh *M) {
        CTX.render_mode != GMSH_SELECT){
       Tree_Action(M->Curves, Draw_Mesh_Curves);
       DrawVertexSupp = 1 ; 
-      Tree_Action(M->VertexEdges,Draw_Mesh_Points);
+      Tree_Action(M->VertexEdges, Draw_Mesh_Points);
     }
     /* fall-through! */
   case 0 :  
@@ -131,7 +130,7 @@ void Draw_Mesh (Mesh *M) {
        (CTX.mesh.points || CTX.mesh.points_num) &&
        CTX.render_mode != GMSH_SELECT){
       DrawVertexSupp = 0 ; 
-      Tree_Action(M->Vertices,Draw_Mesh_Points);
+      Tree_Action(M->Vertices, Draw_Mesh_Points);
     }
     glPointSize(4); gl2psPointSize(4);
     if(!CTX.geom.shade) InitNoShading();
@@ -171,15 +170,13 @@ void Draw_Mesh_Extruded_Surfaces(void *a, void *b){
   Tree_Action((*v)->Simp_Surf, Draw_Simplex_Surfaces);
 }
 
-
 void Draw_Mesh_Curves (void *a, void *b){
   Curve **c;
   c = (Curve**)a;
   if((*c)->Num < 0)return;
   iColor++;
-  Tree_Action((*c)->Simplexes,Draw_Simplex_Points);
+  Tree_Action((*c)->Simplexes,Draw_Simplex_Curves);
 }
-
 
 void Draw_Mesh_Points (void *a, void *b){
   Vertex **v;
@@ -546,31 +543,52 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 }
 
 
-void Draw_Simplex_Points(void *a,void *b){
+void Draw_Simplex_Curves(void *a,void *b){
   Simplex *s;
+  int i;
+  double Xc = 0.0 , Yc = 0.0, Zc = 0.0, X[2],Y[2],Z[2] ;
   char Num[100];
 
   s = *(Simplex**)a;
 
-  glColor4ubv((GLubyte*)&CTX.color.mesh.vertex);
+  Xc = 0.5 * (s->V[0]->Pos.X + s->V[1]->Pos.X);
+  Yc = 0.5 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y);
+  Zc = 0.5 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z);
+
+  for (i=0 ; i<2 ; i++) {
+    X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
+  }
   
-  glBegin(GL_POINTS);
-  glVertex3d(s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z);
-  glEnd();    
-  
-  if(s->VSUP){
-    glColor4ubv((GLubyte*)&CTX.color.mesh.vertex_supp);
-    glBegin(GL_POINTS);
-    glVertex3d(s->VSUP[0]->Pos.X, s->VSUP[0]->Pos.Y, s->VSUP[0]->Pos.Z);
+  if(CTX.mesh.lines){
+    glColor4ubv((GLubyte*)&CTX.color.mesh.line);
+    glBegin(GL_LINES);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[1], Y[1], Z[1]);
     glEnd();    
+  }
+
+  if(CTX.mesh.points){
+    glColor4ubv((GLubyte*)&CTX.color.mesh.vertex);
+    glBegin(GL_POINTS);
+    glVertex3d(s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z);
+    glEnd();    
+  
+    if(s->VSUP){
+      glColor4ubv((GLubyte*)&CTX.color.mesh.vertex_supp);
+      glBegin(GL_POINTS);
+      glVertex3d(s->VSUP[0]->Pos.X, s->VSUP[0]->Pos.Y, s->VSUP[0]->Pos.Z);
+      glEnd();    
+    }
   }
 
   if(CTX.mesh.lines_num){
     glColor4ubv((GLubyte*)&CTX.color.mesh.line);
     sprintf(Num,"%d",s->Num);
-    glRasterPos3d(0.5*(s->V[0]->Pos.X+s->V[1]->Pos.X) + 3*CTX.pixel_equiv_x/CTX.s[0],
-                  0.5*(s->V[0]->Pos.Y+s->V[1]->Pos.Y) + 3*CTX.pixel_equiv_x/CTX.s[1], 
-                  0.5*(s->V[0]->Pos.Z+s->V[1]->Pos.Z) + 3*CTX.pixel_equiv_x/CTX.s[2]);
+    glRasterPos3d(Xc + 3*CTX.pixel_equiv_x/CTX.s[0],
+                  Yc + 3*CTX.pixel_equiv_x/CTX.s[1], 
+                  Zc + 3*CTX.pixel_equiv_x/CTX.s[2]);
     Draw_String(Num);
   }
 

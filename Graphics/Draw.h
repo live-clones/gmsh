@@ -63,15 +63,17 @@ void Draw_Vector (int Type, int Fill,
                   double x, double y, double z,
                   double d, double dx, double dy, double dz,
                   double Raise[3][5]);
+
 void Draw_Mesh_Volumes(void *a, void *b);
 void Draw_Mesh_Surfaces(void *a, void *b);
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b);
 void Draw_Mesh_Curves(void *a, void *b);
 void Draw_Mesh_Points(void *a, void *b);
-void Draw_Simplex_Surfaces (void *a, void *b);
-void Draw_Simplex_Points(void *a,void *b);
-void Draw_Extruded_Surfaces(void *a, void *b);
+
 void Draw_Simplex_Volume (void *a, void *b);
+void Draw_Simplex_Surfaces (void *a, void *b);
+void Draw_Simplex_Curves(void *a,void *b);
+
 void Draw_Hexahedron_Volume (void *a, void *b);
 void Draw_Prism_Volume (void *a, void *b);
 
