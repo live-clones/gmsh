@@ -1,6 +1,6 @@
-$Id: VERSIONS,v 1.164 2003-11-26 16:35:48 geuzaine Exp $
+$Id: VERSIONS,v 1.165 2003-11-27 05:01:46 geuzaine Exp $
 
-New in 1.49: made Merge, Save and Print behave like Include (i.e.,
+New since 1.48: made Merge, Save and Print behave like Include (i.e.,
 open files in the same directory as the main project file if the path
 is relative);
 
