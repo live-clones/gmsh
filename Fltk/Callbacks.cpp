@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.54 2001-05-17 13:14:15 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.55 2001-05-18 11:47:07 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1437,6 +1437,9 @@ void view_reload_cb(CALLBACK_ARGS){
   
   v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
   CopyViewOptions(&tmp, v);
+
+  // In case the reloaded view has a different number of time steps
+  if(v->TimeStep > v->NbTimeStep-1) v->TimeStep = 0;
 
   if(!RELOAD_ALL_VIEWS)
     Draw();
