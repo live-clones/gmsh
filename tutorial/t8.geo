@@ -84,7 +84,7 @@ For num In {1:255}
 
   t = (View[v0].TimeStep < View[v0].NbTimeStep-1) ? t+1 : 0 ;
   
-  View[v0].RaiseZ += 0.01*t ;
+  View[v0].RaiseZ += 0.01/View[v0].Max * t ;
 
   If (num == 3)
     // We want to create 320x240 frames when num == 3:

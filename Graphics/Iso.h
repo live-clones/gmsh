@@ -39,6 +39,6 @@ void CutLine1D (double *X, double *Y, double *Z, double *Val,
 void IsoSimplex (Post_View *View, 
 		 int preproNormals,
 		 double *X, double *Y, double *Z, double *Val,
-                 double V, double Raise[3][8]);
+                 double V);
   
 #endif

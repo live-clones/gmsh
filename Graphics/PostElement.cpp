@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.26 2004-04-20 19:15:14 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.27 2004-04-26 19:54:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -52,7 +52,6 @@ extern Context_T CTX;
 void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
                           double *Z, double Raise[3][8])
 {
-  int k;
   double xx[8], yy[8], zz[8];
 
   glColor4ubv((GLubyte *) & CTX.color.fg);
@@ -65,12 +64,12 @@ void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
     break;
   case TRIANGLE:
     glBegin(GL_LINE_LOOP);
-    for(k = 0; k < 3; k++)
+    for(int k = 0; k < 3; k++)
       glVertex3d(X[k] + Raise[0][k], Y[k] + Raise[1][k], Z[k] + Raise[2][k]);
     glEnd();
     break;
   case TETRAHEDRON:
-    for(k = 0; k < 4; k++) {
+    for(int k = 0; k < 4; k++) {
       xx[k] = X[k] + Raise[0][k];
       yy[k] = Y[k] + Raise[1][k];
       zz[k] = Z[k] + Raise[2][k];
@@ -92,12 +91,12 @@ void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
     break;
   case QUADRANGLE:
     glBegin(GL_LINE_LOOP);
-    for(k = 0; k < 4; k++)
+    for(int k = 0; k < 4; k++)
       glVertex3d(X[k] + Raise[0][k], Y[k] + Raise[1][k], Z[k] + Raise[2][k]);
     glEnd();
     break;
   case HEXAHEDRON:
-    for(k = 0; k < 8; k++) {
+    for(int k = 0; k < 8; k++) {
       xx[k] = X[k] + Raise[0][k];
       yy[k] = Y[k] + Raise[1][k];
       zz[k] = Z[k] + Raise[2][k];
@@ -130,7 +129,7 @@ void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
     glEnd();
     break;
   case PRISM:
-    for(k = 0; k < 6; k++) {
+    for(int k = 0; k < 6; k++) {
       xx[k] = X[k] + Raise[0][k];
       yy[k] = Y[k] + Raise[1][k];
       zz[k] = Z[k] + Raise[2][k];
@@ -157,7 +156,7 @@ void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
     glEnd();
     break;
   case PYRAMID:
-    for(k = 0; k < 5; k++) {
+    for(int k = 0; k < 5; k++) {
       xx[k] = X[k] + Raise[0][k];
       yy[k] = Y[k] + Raise[1][k];
       zz[k] = Z[k] + Raise[2][k];
@@ -187,9 +186,8 @@ void Draw_ElementBoundary(int type, Post_View * View, double *X, double *Y,
 void SaturateValues(int saturate, double min, double max,
                     double *v1, double *v2, int nbnod)
 {
-  int i;
   if(saturate) {
-    for(i = 0; i < nbnod; i++) {
+    for(int i = 0; i < nbnod; i++) {
       if(v1[i] > max)
         v2[i] = max;
       else if(v1[i] < min)
@@ -199,7 +197,7 @@ void SaturateValues(int saturate, double min, double max,
     }
   }
   else {
-    for(i = 0; i < nbnod; i++) {
+    for(int i = 0; i < nbnod; i++) {
       v2[i] = v1[i];
     }
   }
@@ -231,7 +229,7 @@ void SaturateValues(int saturate, double min, double max,
 // Scalar Elements
 
 void Draw_ScalarPoint(Post_View * View, int preproNormals,
-                      double ValMin, double ValMax, double Raise[3][8],
+                      double ValMin, double ValMax,
                       double *X, double *Y, double *Z, double *V)
 {
   double d;
@@ -249,7 +247,9 @@ void Draw_ScalarPoint(Post_View * View, int preproNormals,
       d = ValMin;
   }
 
-  RaiseFill(0, d, ValMin, Raise);
+  double Raise[3][8];
+  for(int i = 0; i < 3; i++)
+    Raise[i][0] = View->Raise[i] * d;
 
   if(View->ShowElement)
     Draw_ElementBoundary(POINT, View, X, Y, Z, Raise);
@@ -257,8 +257,7 @@ void Draw_ScalarPoint(Post_View * View, int preproNormals,
   if(d >= ValMin && d <= ValMax) {
     PaletteContinuous(View, ValMin, ValMax, d);
     if(View->IntervalsType == DRAW_POST_NUMERIC) {
-      glRasterPos3d(X[0] + Raise[0][0], Y[0] + Raise[1][0],
-                    Z[0] + Raise[2][0]);
+      glRasterPos3d(X[0] + Raise[0][0], Y[0] + Raise[1][0], Z[0] + Raise[2][0]);
       sprintf(Num, View->Format, d);
       Draw_String(Num);
     }
@@ -268,10 +267,10 @@ void Draw_ScalarPoint(Post_View * View, int preproNormals,
 }
 
 void Draw_ScalarLine(Post_View * View, int preproNormals,
-                     double ValMin, double ValMax, double Raise[3][8],
+                     double ValMin, double ValMax,
                      double *X, double *Y, double *Z, double *V)
 {
-  int i, k, nb = 0;
+  int nb = 0;
   double d;
   double Xp[5], Yp[5], Zp[5], Val[5], value[5], thev;
   char Num[100];
@@ -282,8 +281,8 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
     View->Boundary--;
     int ts = View->TimeStep;
     View->TimeStep = 0;
-    Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &vv[0]);      //0
-    Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &vv[1]);      //1
+    Draw_ScalarPoint(View, 0, ValMin, ValMax, &X[0], &Y[0], &Z[0], &vv[0]);      //0
+    Draw_ScalarPoint(View, 0, ValMin, ValMax, &X[1], &Y[1], &Z[1], &vv[1]);      //1
     View->TimeStep = ts;
     View->Boundary++;
     return;
@@ -291,8 +290,10 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
 
   SaturateValues(View->SaturateValues, ValMin, ValMax, vv, Val, 2);
 
-  for(k = 0; k < 2; k++)
-    RaiseFill(k, Val[k], ValMin, Raise);
+  double Raise[3][8];
+  for(int i = 0; i < 3; i++)
+    for(int k = 0; k < 2; k++)
+      Raise[i][k] = View->Raise[i] * Val[k];
 
   if(View->ShowElement)
     Draw_ElementBoundary(LINE, View, X, Y, Z, Raise);
@@ -325,11 +326,9 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
         else {
           glBegin(GL_LINES);
           PaletteContinuous(View, ValMin, ValMax, Val[0]);
-          glVertex3d(X[0] + Raise[0][0], Y[0] + Raise[1][0],
-                     Z[0] + Raise[2][0]);
+          glVertex3d(X[0] + Raise[0][0], Y[0] + Raise[1][0], Z[0] + Raise[2][0]);
           PaletteContinuous(View, ValMin, ValMax, Val[1]);
-          glVertex3d(X[1] + Raise[0][1], Y[1] + Raise[1][1],
-                     Z[1] + Raise[2][1]);
+          glVertex3d(X[1] + Raise[0][1], Y[1] + Raise[1][1], Z[1] + Raise[2][1]);
           glEnd();
         }
       }
@@ -339,7 +338,7 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
 
     }
     else {
-      for(k = 0; k < View->NbIso; k++) {
+      for(int k = 0; k < View->NbIso; k++) {
         PaletteDiscrete(View, View->NbIso, k);
         if(View->IntervalsType == DRAW_POST_DISCRETE) {
           CutLine1D(X, Y, Z, &Val[0],
@@ -347,8 +346,9 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
                     View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
                     Xp, Yp, Zp, &nb, value);
           if(nb == 2) {
-            for(i = 0; i < 2; i++)
-              RaiseFill(i, value[i], ValMin, Raise);
+	    for(int i = 0; i < 3; i++)
+	      for(int l = 0; l < 2; l++)
+		Raise[i][l] = View->Raise[i] * value[l];
             Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, Raise, View->Light);
           }
         }
@@ -356,7 +356,8 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
           thev = View->GVFI(ValMin, ValMax, View->NbIso, k);
           CutLine0D(X, Y, Z, &Val[0], thev, Xp, Yp, Zp, &nb);
           if(nb) {
-            RaiseFill(0, thev, ValMin, Raise);
+	    for(int i = 0; i < 3; i++)
+	      Raise[i][0] = View->Raise[i] * thev;
             Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, Raise, View->Light);
           }
         }
@@ -367,10 +368,10 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
 }
 
 void Draw_ScalarTriangle(Post_View * View, int preproNormals,
-                         double ValMin, double ValMax, double Raise[3][8],
+                         double ValMin, double ValMax,
                          double *X, double *Y, double *Z, double *V)
 {
-  int i, k, nb = 0;
+  int nb = 0;
   double d;
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3], norms[9];
   double Xp[5], Yp[5], Zp[5], Val[3], value[5], thev;
@@ -382,10 +383,10 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     View->Boundary--;
     int ts = View->TimeStep;
     View->TimeStep = 0;
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &vv[0]);       //01
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &vv[1]);       //12
+    Draw_ScalarLine(View, 0, ValMin, ValMax, &X[0], &Y[0], &Z[0], &vv[0]);       //01
+    Draw_ScalarLine(View, 0, ValMin, ValMax, &X[1], &Y[1], &Z[1], &vv[1]);       //12
     REORDER2(0, 2);
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);   //02
+    Draw_ScalarLine(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);   //02
     View->TimeStep = ts;
     View->Boundary++;
     return;
@@ -393,8 +394,10 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 
   SaturateValues(View->SaturateValues, ValMin, ValMax, vv, Val, 3);
 
-  for(k = 0; k < 3; k++)
-    RaiseFill(k, Val[k], ValMin, Raise);
+  double Raise[3][8];
+  for(int i = 0; i < 3; i++)
+    for(int k = 0; k < 3; k++)
+      Raise[i][k] = View->Raise[i] * Val[k];
 
   if(View->Light) {
 
@@ -410,14 +413,14 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 
     if(View->SmoothNormals) {
       if(preproNormals) {
-        for(i = 0; i < 3; i++) {
+        for(int i = 0; i < 3; i++) {
           View->add_normal(X[i] + Raise[0][i], Y[i] + Raise[1][i],
                            Z[i] + Raise[2][i], nn[0], nn[1], nn[2]);
         }
         return;
       }
       else {
-        for(i = 0; i < 3; i++) {
+        for(int i = 0; i < 3; i++) {
           norms[3 * i] = nn[0];
           norms[3 * i + 1] = nn[1];
           norms[3 * i + 2] = nn[2];
@@ -432,7 +435,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
     }
     else {
-      for(i = 0; i < 3; i++) {
+      for(int i = 0; i < 3; i++) {
         norms[3 * i] = nn[0];
         norms[3 * i + 1] = nn[1];
         norms[3 * i + 2] = nn[2];
@@ -456,12 +459,9 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     if(d >= ValMin && d <= ValMax) {
       PaletteContinuous(View, ValMin, ValMax, d);
       sprintf(Num, View->Format, d);
-      glRasterPos3d((X[0] + Raise[0][0] + X[1] + Raise[0][1] + X[2] +
-                     Raise[0][2]) / 3.,
-                    (Y[0] + Raise[1][0] + Y[1] + Raise[1][1] + Y[2] +
-                     Raise[1][2]) / 3.,
-                    (Z[0] + Raise[2][0] + Z[1] + Raise[2][1] + Z[2] +
-                     Raise[2][2]) / 3.);
+      glRasterPos3d((X[0] + Raise[0][0] + X[1] + Raise[0][1] + X[2] + Raise[0][2]) / 3.,
+                    (Y[0] + Raise[1][0] + Y[1] + Raise[1][1] + Y[2] + Raise[1][2]) / 3.,
+                    (Z[0] + Raise[2][0] + Z[1] + Raise[2][1] + Z[2] + Raise[2][2]) / 3.);
       Draw_String(Num);
     }
 
@@ -478,34 +478,31 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
         glBegin(GL_TRIANGLES);
         PaletteContinuous(View, ValMin, ValMax, Val[0]);
         glNormal3dv(&norms[0]);
-        glVertex3d(X[0] + Raise[0][0], Y[0] + Raise[1][0],
-                   Z[0] + Raise[2][0]);
+        glVertex3d(X[0] + Raise[0][0], Y[0] + Raise[1][0], Z[0] + Raise[2][0]);
         PaletteContinuous(View, ValMin, ValMax, Val[1]);
         glNormal3dv(&norms[3]);
-        glVertex3d(X[1] + Raise[0][1], Y[1] + Raise[1][1],
-                   Z[1] + Raise[2][1]);
+        glVertex3d(X[1] + Raise[0][1], Y[1] + Raise[1][1], Z[1] + Raise[2][1]);
         PaletteContinuous(View, ValMin, ValMax, Val[2]);
         glNormal3dv(&norms[6]);
-        glVertex3d(X[2] + Raise[0][2], Y[2] + Raise[1][2],
-                   Z[2] + Raise[2][2]);
+        glVertex3d(X[2] + Raise[0][2], Y[2] + Raise[1][2], Z[2] + Raise[2][2]);
         glEnd();
       }
       else {
         CutTriangle2D(X, Y, Z, Val, ValMin, ValMax, Xp, Yp, Zp, &nb, value);
         if(nb >= 3) {
           glBegin(GL_POLYGON);
-          for(i = 0; i < nb; i++) {
+          for(int i = 0; i < nb; i++) {
             PaletteContinuous(View, ValMin, ValMax, value[i]);
-	    RaiseFill(i, value[i], ValMin, Raise);
-            glVertex3d(Xp[i] + Raise[0][i], Yp[i] + Raise[1][i],
-                       Zp[i] + Raise[2][i]);
+            glVertex3d(Xp[i] + View->Raise[0] * value[i], 
+		       Yp[i] + View->Raise[1] * value[i], 
+		       Zp[i] + View->Raise[2] * value[i]);
           }
           glEnd();
         }
       }
     }
     else {
-      for(k = 0; k < View->NbIso; k++) {
+      for(int k = 0; k < View->NbIso; k++) {
 	PaletteDiscrete(View, View->NbIso, k);
         if(View->IntervalsType == DRAW_POST_DISCRETE) {
           CutTriangle2D(X, Y, Z, Val,
@@ -513,12 +510,11 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
                         View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
                         Xp, Yp, Zp, &nb, value);
           if(nb >= 3) {
-            for(i = 0; i < nb; i++)
-              RaiseFill(i, value[i], ValMin, Raise);
             glBegin(GL_POLYGON);
-            for(i = 0; i < nb; i++)
-              glVertex3d(Xp[i] + Raise[0][i],
-                         Yp[i] + Raise[1][i], Zp[i] + Raise[2][i]);
+            for(int i = 0; i < nb; i++)
+              glVertex3d(Xp[i] + View->Raise[0] * value[i],
+			 Yp[i] + View->Raise[1] * value[i], 
+			 Zp[i] + View->Raise[2] * value[i]);
             glEnd();
           }
         }
@@ -526,8 +522,9 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
           thev = View->GVFI(ValMin, ValMax, View->NbIso, k);
           CutTriangle1D(X, Y, Z, Val, thev, Xp, Yp, Zp, &nb);
           if(nb == 2) {
-            for(i = 0; i < 2; i++)
-              RaiseFill(i, thev, ValMin, Raise);
+            for(int i = 0; i < 3; i++)
+	      for(int l = 0; l < 2; l++)
+		Raise[i][l] = View->Raise[i] * thev;
             Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, Raise, View->Light);
           }
         }
@@ -540,10 +537,9 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 }
 
 void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
-                            double ValMin, double ValMax, double Raise[3][8],
+                            double ValMin, double ValMax,
                             double *X, double *Y, double *Z, double *V)
 {
-  int k;
   double d, Xp[4], Yp[4], Zp[4];
   char Num[100];
   double Val[4];
@@ -554,15 +550,15 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
     View->Boundary--;
     int ts = View->TimeStep;
     View->TimeStep = 0;
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &vv[0]);   //012
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &vv[1]);   //123
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, &X[0], &Y[0], &Z[0], &vv[0]);   //012
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, &X[1], &Y[1], &Z[1], &vv[1]);   //123
     REORDER3(0, 1, 3);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);       //013
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);       //013
     Xp[1] = X[2];
     Yp[1] = Y[2];
     Zp[1] = Z[2];
     Val[1] = vv[2];
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);       //023
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);       //023
     View->TimeStep = ts;
     View->Boundary++;
     return;
@@ -570,8 +566,10 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
 
   SaturateValues(View->SaturateValues, ValMin, ValMax, vv, Val, 4);
 
-  for(k = 0; k < 4; k++)
-    RaiseFill(k, Val[k], ValMin, Raise);
+  double Raise[3][8];
+  for(int i = 0; i < 3; i++)
+    for(int k = 0; k < 4; k++)
+      Raise[i][k] = View->Raise[i] * Val[k];
 
   if(!preproNormals && View->ShowElement)
     Draw_ElementBoundary(TETRAHEDRON, View, X, Y, Z, Raise);
@@ -593,21 +591,21 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
 
   }
   else {
-    for(k = 0; k < View->NbIso; k++) {
+    for(int k = 0; k < View->NbIso; k++) {
       if(!preproNormals)
         PaletteDiscrete(View, View->NbIso, k);
       IsoSimplex(View, preproNormals, X, Y, Z, Val,
-                 View->GVFI(ValMin, ValMax, View->NbIso, k), Raise);
+                 View->GVFI(ValMin, ValMax, View->NbIso, k));
     }
 
   }
 }
 
 void Draw_ScalarQuadrangle(Post_View * View, int preproNormals,
-                           double ValMin, double ValMax, double Raise[3][8],
+                           double ValMin, double ValMax,
                            double *X, double *Y, double *Z, double *V)
 {
-  int k, ts, show = 0;
+  int ts, show = 0;
   double Val[4], Xp[4], Yp[4], Zp[4];
   double *vv = &V[4 * View->TimeStep];
 
@@ -616,11 +614,11 @@ void Draw_ScalarQuadrangle(Post_View * View, int preproNormals,
 
   if(!preproNormals && View->Boundary > 0) {
     View->Boundary--;
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &vv[0]);       //01
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &vv[1]);       //12
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, &X[2], &Y[2], &Z[2], &vv[2]);       //23
+    Draw_ScalarLine(View, 0, ValMin, ValMax, &X[0], &Y[0], &Z[0], &vv[0]);       //01
+    Draw_ScalarLine(View, 0, ValMin, ValMax, &X[1], &Y[1], &Z[1], &vv[1]);       //12
+    Draw_ScalarLine(View, 0, ValMin, ValMax, &X[2], &Y[2], &Z[2], &vv[2]);       //23
     REORDER2(0, 3);
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);   //03
+    Draw_ScalarLine(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);   //03
     View->TimeStep = ts;
     View->Boundary++;
     return;
@@ -631,24 +629,26 @@ void Draw_ScalarQuadrangle(Post_View * View, int preproNormals,
 
   if(!preproNormals && show) {
     SaturateValues(View->SaturateValues, ValMin, ValMax, vv, Val, 4);
-    for(k = 0; k < 4; k++)
-      RaiseFill(k, Val[k], ValMin, Raise);
+    double Raise[3][8];
+    for(int i = 0; i < 3; i++)
+      for(int k = 0; k < 4; k++)
+	Raise[i][k] = View->Raise[i] * Val[k];
     Draw_ElementBoundary(QUADRANGLE, View, X, Y, Z, Raise);
   }
 
-  Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, Raise, X, Y, Z, vv); //012
+  Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, X, Y, Z, vv); //012
   REORDER3(0, 2, 3);
-  Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);     //023
+  Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);     //023
 
   View->TimeStep = ts;
   View->ShowElement = show;
 }
 
 void Draw_ScalarHexahedron(Post_View * View, int preproNormals,
-                           double ValMin, double ValMax, double Raise[3][8],
+                           double ValMin, double ValMax,
                            double *X, double *Y, double *Z, double *V)
 {
-  int k, ts, show = 0;
+  int ts, show = 0;
   double Val[8], Xp[8], Yp[8], Zp[8];
   double *vv = &V[8 * View->TimeStep];
 
@@ -658,16 +658,16 @@ void Draw_ScalarHexahedron(Post_View * View, int preproNormals,
   if(!preproNormals && View->Boundary > 0) {
     View->Boundary--;
     REORDER4(0, 1, 5, 4);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);     //0154
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);     //0154
     REORDER4(0, 3, 2, 1);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);     //0321
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);     //0321
     REORDER4(0, 4, 7, 3);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);     //0473
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);     //0473
     REORDER4(1, 2, 6, 5);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);     //1265
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);     //1265
     REORDER4(2, 3, 7, 6);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);     //2376
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, &X[4], &Y[4], &Z[4], &vv[4]); //4567
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);     //2376
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, &X[4], &Y[4], &Z[4], &vv[4]); //4567
     View->TimeStep = ts;
     View->Boundary++;
     return;
@@ -678,27 +678,27 @@ void Draw_ScalarHexahedron(Post_View * View, int preproNormals,
 
   if(!preproNormals && show) {
     SaturateValues(View->SaturateValues, ValMin, ValMax, vv, Val, 8);
-    for(k = 0; k < 8; k++)
-      RaiseFill(k, Val[k], ValMin, Raise);
+    double Raise[3][8];
+    for(int i = 0; i < 3; i++)
+      for(int k = 0; k < 8; k++)
+	Raise[i][k] = View->Raise[i] * Val[k];
     Draw_ElementBoundary(HEXAHEDRON, View, X, Y, Z, Raise);
   }
 
   REORDER6(0, 1, 3, 4, 5, 7);
-  Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, Raise, Xp, Yp, Zp,
-                   Val);
+  Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
   REORDER6(1, 2, 3, 5, 6, 7);
-  Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, Raise, Xp, Yp, Zp,
-                   Val);
+  Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
 
   View->TimeStep = ts;
   View->ShowElement = show;
 }
 
 void Draw_ScalarPrism(Post_View * View, int preproNormals,
-                      double ValMin, double ValMax, double Raise[3][8],
+                      double ValMin, double ValMax,
                       double *X, double *Y, double *Z, double *V)
 {
-  int k, ts, show = 0;
+  int ts, show = 0;
   double Val[6], Xp[6], Yp[6], Zp[6];
   double *vv = &V[6 * View->TimeStep];
 
@@ -708,15 +708,14 @@ void Draw_ScalarPrism(Post_View * View, int preproNormals,
   if(!preproNormals && View->Boundary > 0) {
     View->Boundary--;
     REORDER4(0, 1, 4, 3);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);
     REORDER3(0, 2, 1);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);
     REORDER4(0, 3, 5, 2);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);
     REORDER4(1, 2, 5, 4);
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[3], &Y[3], &Z[3],
-                        &V[3]);
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val);
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, &X[3], &Y[3], &Z[3], &V[3]);
     View->TimeStep = ts;
     View->Boundary++;
     return;
@@ -727,23 +726,25 @@ void Draw_ScalarPrism(Post_View * View, int preproNormals,
 
   if(!preproNormals && show) {
     SaturateValues(View->SaturateValues, ValMin, ValMax, vv, Val, 6);
-    for(k = 0; k < 6; k++)
-      RaiseFill(k, Val[k], ValMin, Raise);
+    double Raise[3][8];
+    for(int i = 0; i < 3; i++)
+      for(int k = 0; k < 6; k++)
+	Raise[i][k] = View->Raise[i] * Val[k];
     Draw_ElementBoundary(PRISM, View, X, Y, Z, Raise);
   }
 
-  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Raise, X, Y, Z, vv); //0123
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, X, Y, Z, vv); //0123
   REORDER4(3, 4, 5, 2);
-  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);  //3452
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);  //3452
   REORDER4(1, 2, 4, 3);
-  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);  //1243
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);  //1243
 
   View->TimeStep = ts;
   View->ShowElement = show;
 }
 
 void Draw_ScalarPyramid(Post_View * View, int preproNormals,
-                        double ValMin, double ValMax, double Raise[3][8],
+                        double ValMin, double ValMax,
                         double *X, double *Y, double *Z, double *V)
 {
   static int error = 0;
@@ -756,10 +757,10 @@ void Draw_ScalarPyramid(Post_View * View, int preproNormals,
 // Vector Elements
 
 void Draw_VectorElement(int type, Post_View * View,
-                        double ValMin, double ValMax, double Raise[3][8],
+                        double ValMin, double ValMax, 
                         double *X, double *Y, double *Z, double *V)
 {
-  int j, k, nbnod = 0;
+  int nbnod = 0;
   double fact, xx[8], yy[8], zz[8], xc = 0., yc = 0., zc = 0.;
   double Val[8][3], d[8];
   double dx = 0., dy = 0., dz = 0., dd;
@@ -792,20 +793,22 @@ void Draw_VectorElement(int type, Post_View * View,
     break;
   }
 
-  for(k = 0; k < nbnod; k++) {
+  for(int k = 0; k < nbnod; k++) {
     Val[k][0] = V[3 * nbnod * View->TimeStep + 3 * k];
     Val[k][1] = V[3 * nbnod * View->TimeStep + 3 * k + 1];
     Val[k][2] = V[3 * nbnod * View->TimeStep + 3 * k + 2];
-    d[k] =
-      sqrt(Val[k][0] * Val[k][0] + Val[k][1] * Val[k][1] +
-           Val[k][2] * Val[k][2]);
-    RaiseFill(k, d[k], ValMin, Raise);
+    d[k] = sqrt(Val[k][0] * Val[k][0] + Val[k][1] * Val[k][1] +	Val[k][2] * Val[k][2]);
   }
+
+  double Raise[3][8];
+  for(int i = 0; i < 3; i++)
+    for(int k = 0; k < nbnod; k++)
+      Raise[i][k] = View->Raise[i] * d[k];
 
   if(View->VectorType == DRAW_POST_DISPLACEMENT) {
 
     fact = View->DisplacementFactor;
-    for(k = 0; k < nbnod; k++) {
+    for(int k = 0; k < nbnod; k++) {
       xx[k] = X[k] + fact * Val[k][0] + Raise[0][k];
       yy[k] = Y[k] + fact * Val[k][1] + Raise[1][k];
       zz[k] = Z[k] + fact * Val[k][2] + Raise[2][k];
@@ -815,7 +818,7 @@ void Draw_VectorElement(int type, Post_View * View,
     View->TimeStep = 0;
     switch (type) {
     case POINT:
-      Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarPoint(View, 0, ValMin, ValMax, xx, yy, zz, d);
       if(ts) {  //draw trajectory
         if(View->LineType) {
           double dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
@@ -823,7 +826,7 @@ void Draw_VectorElement(int type, Post_View * View,
 	  Raise[0][1] = Raise[0][0];
 	  Raise[1][1] = Raise[1][0];
 	  Raise[2][1] = Raise[2][0];
-          for(j = 0; j < ts; j++) {
+          for(int j = 0; j < ts; j++) {
             dx = V[3 * (ts - j)];
             dy = V[3 * (ts - j) + 1];
             dz = V[3 * (ts - j) + 2];
@@ -844,7 +847,7 @@ void Draw_VectorElement(int type, Post_View * View,
         }
         else {
           glBegin(GL_LINE_STRIP);
-          for(j = 0; j < ts + 1; j++) {
+          for(int j = 0; j < ts + 1; j++) {
             dx = V[3 * (ts - j)];
             dy = V[3 * (ts - j) + 1];
             dz = V[3 * (ts - j) + 2];
@@ -859,25 +862,25 @@ void Draw_VectorElement(int type, Post_View * View,
       }
       break;
     case LINE:
-      Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarLine(View, 0, ValMin, ValMax, xx, yy, zz, d);
       break;
     case TRIANGLE:
-      Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarTriangle(View, 0, ValMin, ValMax, xx, yy, zz, d);
       break;
     case TETRAHEDRON:
-      Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, xx, yy, zz, d);
       break;
     case QUADRANGLE:
-      Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, xx, yy, zz, d);
       break;
     case HEXAHEDRON:
-      Draw_ScalarHexahedron(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarHexahedron(View, 0, ValMin, ValMax, xx, yy, zz, d);
       break;
     case PRISM:
-      Draw_ScalarPrism(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarPrism(View, 0, ValMin, ValMax, xx, yy, zz, d);
       break;
     case PYRAMID:
-      Draw_ScalarPyramid(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
+      Draw_ScalarPyramid(View, 0, ValMin, ValMax, xx, yy, zz, d);
       break;
     }
     View->TimeStep = ts;
@@ -889,7 +892,7 @@ void Draw_VectorElement(int type, Post_View * View,
 
   if(View->ArrowLocation == DRAW_POST_LOCATE_COG ||
      View->IntervalsType == DRAW_POST_NUMERIC) {
-    for(k = 0; k < nbnod; k++) {
+    for(int k = 0; k < nbnod; k++) {
       dx += Val[k][0];
       xc += X[k] + Raise[0][k];
       dy += Val[k][1];
@@ -928,7 +931,8 @@ void Draw_VectorElement(int type, Post_View * View,
           dy *= dd;
           dz *= dd;
         }
-        RaiseFill(0, dd, ValMin, Raise);
+	for(int i = 0; i < 3; i++)
+	  Raise[i][0] = View->Raise[i] * dd;
         Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
 		    View->ArrowRelHeadRadius, View->ArrowRelStemLength,
 		    View->ArrowRelStemRadius, xc, yc, zc, 
@@ -937,7 +941,7 @@ void Draw_VectorElement(int type, Post_View * View,
     }
   }
   else {
-    for(k = 0; k < nbnod; k++) {
+    for(int k = 0; k < nbnod; k++) {
       if(d[k] != 0.0 && d[k] >= ValMin && d[k] <= ValMax) {
 	if(View->IntervalsType == DRAW_POST_CONTINUOUS)
 	  PaletteContinuous(View, ValMin, ValMax, d[k]);
@@ -954,7 +958,8 @@ void Draw_VectorElement(int type, Post_View * View,
           Val[k][1] *= d[k];
           Val[k][2] *= d[k];
         }
-        RaiseFill(0, d[k], ValMin, Raise);
+	for(int i = 0; i < 3; i++)
+	  Raise[i][0] = View->Raise[i] * d[k];
         Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
 		    View->ArrowRelHeadRadius, View->ArrowRelStemLength,
 		    View->ArrowRelStemRadius, X[k], Y[k], Z[k], 
@@ -965,48 +970,48 @@ void Draw_VectorElement(int type, Post_View * View,
   }
 }
 
-#define ARGS Post_View *View, 					\
-             double ValMin, double ValMax, double Raise[3][8],	\
+#define ARGS Post_View *View, 			\
+             double ValMin, double ValMax, 	\
              double *X, double *Y, double *Z, double *V
 
 void Draw_VectorPoint(ARGS)
 {
-  Draw_VectorElement(POINT, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(POINT, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorLine(ARGS)
 {
-  Draw_VectorElement(LINE, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(LINE, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorTriangle(ARGS)
 {
-  Draw_VectorElement(TRIANGLE, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(TRIANGLE, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorTetrahedron(ARGS)
 {
-  Draw_VectorElement(TETRAHEDRON, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(TETRAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorQuadrangle(ARGS)
 {
-  Draw_VectorElement(QUADRANGLE, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(QUADRANGLE, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorHexahedron(ARGS)
 {
-  Draw_VectorElement(HEXAHEDRON, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(HEXAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorPrism(ARGS)
 {
-  Draw_VectorElement(PRISM, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(PRISM, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_VectorPyramid(ARGS)
 {
-  Draw_VectorElement(PYRAMID, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_VectorElement(PYRAMID, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 #undef ARGS
@@ -1014,7 +1019,7 @@ void Draw_VectorPyramid(ARGS)
 // Tensor Elements
 
 void Draw_TensorElement(int type, Post_View * View,
-                        double ValMin, double ValMax, double Raise[3][8],
+                        double ValMin, double ValMax,
                         double *X, double *Y, double *Z, double *V)
 {
   int nbnod = 0;
@@ -1061,76 +1066,76 @@ void Draw_TensorElement(int type, Post_View * View,
 
   switch (type) {
   case POINT:
-    Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarPoint(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case LINE:
-    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarLine(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case TRIANGLE:
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case QUADRANGLE:
-    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case TETRAHEDRON:
-    Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case HEXAHEDRON:
-    Draw_ScalarHexahedron(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarHexahedron(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case PRISM:
-    Draw_ScalarPrism(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarPrism(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   case PYRAMID:
-    Draw_ScalarPyramid(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    Draw_ScalarPyramid(View, 0, ValMin, ValMax, X, Y, Z, V_VonMises);
     break;
   }
 
   View->TimeStep = ts;
 }
 
-#define ARGS Post_View *View, 					\
-             double ValMin, double ValMax, double Raise[3][8],	\
+#define ARGS Post_View *View, 			\
+             double ValMin, double ValMax, 	\
              double *X, double *Y, double *Z, double *V
 
 void Draw_TensorPoint(ARGS)
 {
-  Draw_TensorElement(POINT, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(POINT, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorLine(ARGS)
 {
-  Draw_TensorElement(LINE, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(LINE, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorTriangle(ARGS)
 {
-  Draw_TensorElement(TRIANGLE, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(TRIANGLE, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorTetrahedron(ARGS)
 {
-  Draw_TensorElement(TETRAHEDRON, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(TETRAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorQuadrangle(ARGS)
 {
-  Draw_TensorElement(QUADRANGLE, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(QUADRANGLE, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorHexahedron(ARGS)
 {
-  Draw_TensorElement(HEXAHEDRON, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(HEXAHEDRON, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorPrism(ARGS)
 {
-  Draw_TensorElement(PRISM, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(PRISM, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 void Draw_TensorPyramid(ARGS)
 {
-  Draw_TensorElement(PYRAMID, View, ValMin, ValMax, Raise, X, Y, Z, V);
+  Draw_TensorElement(PYRAMID, View, ValMin, ValMax, X, Y, Z, V);
 }
 
 #undef ARGS

@@ -42,7 +42,6 @@ void set_r(int i, double val);
 void set_t(int i, double val);
 void set_s(int i, double val);
 
-void RaiseFill(int i, double Val, double ValMin, double Raise[3][8]);
 void PaletteContinuous(Post_View * View, double min, double max, double val);
 void PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 void PaletteDiscrete(Post_View * View, int nbi, int i);
@@ -72,8 +71,10 @@ void Draw_Axes(double s);
 void Draw_SmallAxes(void);
 void Draw_Sphere(double size, double x, double y, double z, int light);
 void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
-void Draw_Point(int type, double size, double *x, double *y, double *z, double Raise[3][8], int light);
-void Draw_Line(int type, double width, double *x, double *y, double *z, double Raise[3][8], int light);
+void Draw_Point(int type, double size, double *x, double *y, double *z, 
+		double Raise[3][8], int light);
+void Draw_Line(int type, double width, double *x, double *y, double *z,
+	       double Raise[3][8], int light);
 void Draw_Triangle(double *x, double *y, double *z,double *n,
 		   double Raise[3][8], int light);
 void Draw_Quadrangle(double *x, double *y, double *z, double *n,
@@ -99,76 +100,76 @@ void Draw_Prism_Volume(void *a, void *b);
 void Draw_Pyramid_Volume(void *a, void *b);
 
 void Draw_ScalarPoint(Post_View *View, int preproNormals,
-		      double ValMin, double ValMax, double Raise[3][8],
+		      double ValMin, double ValMax, 
 		      double *X, double *Y, double *Z, double *V);
 void Draw_VectorPoint(Post_View *View, 
-		      double ValMin, double ValMax, double Raise[3][8],
+		      double ValMin, double ValMax, 
 		      double *X, double *Y, double *Z, double *V);
 void Draw_TensorPoint(Post_View *View, 
-		      double ValMin, double ValMax, double Raise[3][8],
+		      double ValMin, double ValMax, 
 		      double *X, double *Y, double *Z, double *V);
 void Draw_ScalarLine(Post_View *View, int preproNormals,
-		     double ValMin, double ValMax, double Raise[3][8],
+		     double ValMin, double ValMax, 
 		     double *X, double *Y, double *Z, double *V);
 void Draw_VectorLine(Post_View *View, 
-		     double ValMin, double ValMax, double Raise[3][8],
+		     double ValMin, double ValMax, 
 		     double *X, double *Y, double *Z, double *V);
 void Draw_TensorLine(Post_View *View, 
-		     double ValMin, double ValMax, double Raise[3][8],
+		     double ValMin, double ValMax,
 		     double *X, double *Y, double *Z, double *V);
 void Draw_ScalarTriangle(Post_View *View, int preproNormals,
-			 double ValMin, double ValMax, double Raise[3][8],
+			 double ValMin, double ValMax,
 			 double *X, double *Y, double *Z, double *V);
 void Draw_VectorTriangle(Post_View *View, 
-			 double ValMin, double ValMax, double Raise[3][8],
+			 double ValMin, double ValMax,
 			 double *X, double *Y, double *Z, double *V);
 void Draw_TensorTriangle(Post_View *View, 
-			 double ValMin, double ValMax, double Raise[3][8],
+			 double ValMin, double ValMax,
 			 double *X, double *Y, double *Z, double *V);
 void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
-			    double ValMin, double ValMax, double Raise[3][8],
+			    double ValMin, double ValMax,
 			    double *X, double *Y, double *Z, double *V);
 void Draw_VectorTetrahedron(Post_View *View, 
-			    double ValMin, double ValMax, double Raise[3][8],
+			    double ValMin, double ValMax,
 			    double *X, double *Y, double *Z, double *V);
 void Draw_TensorTetrahedron(Post_View *View, 
-			    double ValMin, double ValMax, double Raise[3][8],
+			    double ValMin, double ValMax,
 			    double *X, double *Y, double *Z, double *V);
 void Draw_ScalarQuadrangle(Post_View *View, int preproNormals,
-			   double ValMin, double ValMax, double Raise[3][8],
+			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_VectorQuadrangle(Post_View *View, 
-			   double ValMin, double ValMax, double Raise[3][8],
+			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_TensorQuadrangle(Post_View *View, 
-			   double ValMin, double ValMax, double Raise[3][8],
+			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_ScalarHexahedron(Post_View *View, int preproNormals,
-			   double ValMin, double ValMax, double Raise[3][8],
+			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_VectorHexahedron(Post_View *View, 
-			   double ValMin, double ValMax, double Raise[3][8],
+			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_TensorHexahedron(Post_View *View, 
-			   double ValMin, double ValMax, double Raise[3][8],
+			   double ValMin, double ValMax,
 			   double *X, double *Y, double *Z, double *V);
 void Draw_ScalarPrism(Post_View *View, int preproNormals,
-		      double ValMin, double ValMax, double Raise[3][8],
+		      double ValMin, double ValMax,
 		      double *X, double *Y, double *Z, double *V);
 void Draw_VectorPrism(Post_View *View, 
-		      double ValMin, double ValMax, double Raise[3][8],
+		      double ValMin, double ValMax,
 		      double *X, double *Y, double *Z, double *V);
 void Draw_TensorPrism(Post_View *View, 
-		      double ValMin, double ValMax, double Raise[3][8],
+		      double ValMin, double ValMax,
 		      double *X, double *Y, double *Z, double *V);
 void Draw_ScalarPyramid(Post_View *View, int preproNormals,
-			double ValMin, double ValMax, double Raise[3][8],
+			double ValMin, double ValMax,
 			double *X, double *Y, double *Z, double *V);
 void Draw_VectorPyramid(Post_View *View, 
-			double ValMin, double ValMax, double Raise[3][8],
+			double ValMin, double ValMax,
 			double *X, double *Y, double *Z, double *V);
 void Draw_TensorPyramid(Post_View *View, 
-			double ValMin, double ValMax, double Raise[3][8],
+			double ValMin, double ValMax,
 			double *X, double *Y, double *Z, double *V);
 
 double GiveValueFromIndex_Lin(double ValMin, double ValMax, int NbIso, int Iso);

@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.20 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Iso.cpp,v 1.21 2004-04-26 19:54:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,8 +29,6 @@
 #include "Numeric.h"
 
 extern Context_T CTX;
-
-void RaiseFill(int i, double Val, double ValMin, double Raise[3][8]);
 
 // Iso line computation for triangles.
 
@@ -371,7 +369,7 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
 void IsoSimplex(Post_View * View,
                 int preproNormals,
                 double *X, double *Y, double *Z, double *Val,
-                double V, double Raise[3][8])
+                double V)
 {
   int nb;
   double Xp[6], Yp[6], Zp[6], PVals[6];
@@ -411,6 +409,11 @@ void IsoSimplex(Post_View * View,
 
   if(preproNormals)
     return;
+
+  double Raise[3][8];
+  for(int i = 0; i < 3; i++)
+    for(int k = 0; k < nb; k++)
+      Raise[i][k] = View->Raise[i] * V;
 
   if(nb == 3)
     Draw_Triangle(Xp, Yp, Zp, norms, Raise, View->Light);

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.293 2004-04-24 06:13:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.294 2004-04-26 19:54:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2374,9 +2374,6 @@ void GUI::create_option_window()
 
 void GUI::update_view_window(int num)
 {
-  int i;
-  double val;
-
   if(num < 0 || num >= List_Nbr(CTX.post.list))
     return;
 
@@ -2449,7 +2446,7 @@ void GUI::update_view_window(int num)
   int range_type = (int)opt_view_range_type(num, GMSH_GUI, 0);
   opt_view_custom_min(num, GMSH_GUI, 0);
   opt_view_custom_max(num, GMSH_GUI, 0);
-  for(i = 31; i <= 32; i++) {
+  for(int i = 31; i <= 32; i++) {
     view_value[i]->minimum(v->CustomMin);
     view_value[i]->maximum(v->CustomMax);
     if(range_type == DRAW_POST_RANGE_CUSTOM)
@@ -2464,14 +2461,22 @@ void GUI::update_view_window(int num)
   opt_view_offset0(num, GMSH_GUI, 0);
   opt_view_offset1(num, GMSH_GUI, 0);
   opt_view_offset2(num, GMSH_GUI, 0);
+  double val1 = 10. * CTX.lc;
+  for(int i = 40; i <= 42; i++) {
+    view_value[i]->step(val1/100.);
+    view_value[i]->minimum(-val1);
+    view_value[i]->maximum(val1);
+  }
   opt_view_raise0(num, GMSH_GUI, 0);
   opt_view_raise1(num, GMSH_GUI, 0);
   opt_view_raise2(num, GMSH_GUI, 0);
-  val = 10. * CTX.lc;
-  for(i = 40; i <= 45; i++) {
-    view_value[i]->step(val, 1000);
-    view_value[i]->minimum(-val);
-    view_value[i]->maximum(val);
+  double maxval = MAX(fabs(v->Min), fabs(v->Max));
+  if(!maxval) maxval = 1.;
+  double val2 = 2. * CTX.lc / maxval;
+  for(int i = 43; i <= 45; i++) {
+    view_value[i]->step(val2/100.);
+    view_value[i]->minimum(-val2);
+    view_value[i]->maximum(val2);
   }
 
   // timestep
