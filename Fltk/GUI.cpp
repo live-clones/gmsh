@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.436 2005-03-26 04:09:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.437 2005-04-06 16:30:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2919,7 +2919,7 @@ void GUI::create_option_window()
       view_value[62]->align(FL_ALIGN_RIGHT);
 
       {
-        view_vector = new Fl_Group(L + 2 * WB, 2 * WB + 6 * BH, width - 2 * WB, 5 * BH, 0);
+        view_vector = new Fl_Group(L + 2 * WB, 2 * WB + 6 * BH, width - 2 * WB, 4 * BH, 0);
 
         static Fl_Menu_Item menu_vectype[] = {
           {"Line", 0, 0, 0},
@@ -2957,15 +2957,6 @@ void GUI::create_option_window()
         view_choice[10]->align(FL_ALIGN_RIGHT);
 	view_choice[10]->add("Self");
 
-        static Fl_Menu_Item menu_vecloc[] = {
-          {"Cell centered", 0, 0, 0},
-          {"Vertex centered", 0, 0, 0},
-          {0}
-        };
-        view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Arrow location");
-        view_choice[3]->menu(menu_vecloc);
-        view_choice[3]->align(FL_ALIGN_RIGHT);
-
         //static Fl_Menu_Item menu_tensor[] = {
 	  //{"Von-Mises", 0, 0, 0},
           //{"Eigenvectors", 0, 0, 0}, //not implemented yet
@@ -2976,6 +2967,15 @@ void GUI::create_option_window()
         //view_choice[4]->align(FL_ALIGN_RIGHT);
 
         view_vector->end();
+
+        static Fl_Menu_Item menu_vecloc[] = {
+          {"Barycenter", 0, 0, 0},
+          {"Vertex", 0, 0, 0},
+          {0}
+        };
+        view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
+        view_choice[3]->menu(menu_vecloc);
+        view_choice[3]->align(FL_ALIGN_RIGHT);
       }
 
       o->end();
@@ -3229,7 +3229,7 @@ void GUI::update_view_window(int num)
   view_value[63]->maximum(val3);
 
   opt_view_external_view(num, GMSH_GUI, 0);
-  opt_view_arrow_location(num, GMSH_GUI, 0);
+  opt_view_glyph_location(num, GMSH_GUI, 0);
   //opt_view_tensor_type(num, GMSH_GUI, 0);
 
   opt_view_fake_transparency(num, GMSH_GUI, 0);

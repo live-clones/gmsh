@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.350 2005-04-01 15:48:14 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.351 2005-04-06 16:30:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3514,7 +3514,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double point_type = opt_view_point_type(current, GMSH_GET, 0);
   double line_type = opt_view_line_type(current, GMSH_GET, 0);
   double vector_type = opt_view_vector_type(current, GMSH_GET, 0);
-  double arrow_location = opt_view_arrow_location(current, GMSH_GET, 0);
+  double glyph_location = opt_view_glyph_location(current, GMSH_GET, 0);
   //double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
   double range_type = opt_view_range_type(current, GMSH_GET, 0);
   double axes = opt_view_axes(current, GMSH_GET, 0);
@@ -3696,8 +3696,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
 	val = DRAW_POST_LOCATE_VERTEX;
 	break;
       }
-      if(force || (val != arrow_location))
-        opt_view_arrow_location(i, GMSH_SET, val);
+      if(force || (val != glyph_location))
+        opt_view_glyph_location(i, GMSH_SET, val);
 
 //     switch (WID->view_choice[4]->value()) {
 //     case 0:

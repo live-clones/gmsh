@@ -89,7 +89,7 @@ class Post_View{
   int SaturateValues, FakeTransparency;
   int ShowElement, ShowTime, ShowScale;
   int ScaleType, RangeType;
-  int VectorType, TensorType, ArrowLocation;
+  int VectorType, TensorType, GlyphLocation;
   int TimeStep;
   int DrawStrings;
   int DrawPoints, DrawLines, DrawTriangles, DrawQuadrangles;
@@ -171,7 +171,7 @@ class Post_View{
 #define DRAW_POST_ARROW3D      4
 #define DRAW_POST_DISPLACEMENT 5
 
-// ArrowLocation
+// GlyphLocation
 #define DRAW_POST_LOCATE_COG    1
 #define DRAW_POST_LOCATE_VERTEX 2
 

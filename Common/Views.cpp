@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.172 2005-04-05 05:56:48 geuzaine Exp $
+// $Id: Views.cpp,v 1.173 2005-04-06 16:30:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -651,7 +651,7 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->ScaleType = src->ScaleType;
   dest->RangeType = src->RangeType;
   dest->VectorType = src->VectorType;
-  dest->ArrowLocation = src->ArrowLocation;
+  dest->GlyphLocation = src->GlyphLocation;
   dest->TensorType = src->TensorType;
   dest->TimeStep = src->TimeStep;
   dest->PointSize = src->PointSize;

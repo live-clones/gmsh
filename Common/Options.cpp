@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.239 2005-04-04 19:17:31 geuzaine Exp $
+// $Id: Options.cpp,v 1.240 2005-04-06 16:30:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -6102,15 +6102,15 @@ double opt_view_vector_type(OPT_ARGS_NUM)
   return v->VectorType;
 }
 
-double opt_view_arrow_location(OPT_ARGS_NUM)
+double opt_view_glyph_location(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ArrowLocation = (int)val;
+    v->GlyphLocation = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    switch (v->ArrowLocation) {
+    switch (v->GlyphLocation) {
     case DRAW_POST_LOCATE_VERTEX:
       WID->view_choice[3]->value(1);
       break;
@@ -6121,7 +6121,7 @@ double opt_view_arrow_location(OPT_ARGS_NUM)
     }
   }
 #endif
-  return v->ArrowLocation;
+  return v->GlyphLocation;
 }
 
 double opt_view_point_size(OPT_ARGS_NUM)

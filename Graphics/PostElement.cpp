@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.63 2005-03-14 21:19:32 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.64 2005-04-06 16:30:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -276,12 +276,24 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
   }
   
   if(View->IntervalsType == DRAW_POST_NUMERIC) {
-    d = (Val[0] + Val[1]) / 2.;
-    if(d >= ValMin && d <= ValMax) {
-      PaletteContinuous(View, ValMin, ValMax, d);
-      sprintf(Num, View->Format, d);
-      glRasterPos3d((X[0] + X[1]) / 2., (Y[0] + Y[1]) / 2., (Z[0] + Z[1]) / 2.);
-      Draw_String(Num);
+    if(View->GlyphLocation == DRAW_POST_LOCATE_COG){
+      d = (Val[0] + Val[1]) / 2.;
+      if(d >= ValMin && d <= ValMax) {
+	PaletteContinuous(View, ValMin, ValMax, d);
+	sprintf(Num, View->Format, d);
+	glRasterPos3d((X[0] + X[1]) / 2., (Y[0] + Y[1]) / 2., (Z[0] + Z[1]) / 2.);
+	Draw_String(Num);
+      }
+    }
+    else{
+      for(int i = 0; i < 2; i++){
+	if(Val[i] >= ValMin && Val[i] <= ValMax) {
+	  PaletteContinuous(View, ValMin, ValMax, Val[i]);
+	  sprintf(Num, View->Format, Val[i]);
+	  glRasterPos3d(X[i], Y[i], Z[i]);
+	  Draw_String(Num);
+	}
+      }
     }
   }
 
@@ -388,14 +400,26 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   }
   
   if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC) {
-    d = (Val[0] + Val[1] + Val[2]) / 3.;
-    if(d >= ValMin && d <= ValMax) {
-      PaletteContinuous(View, ValMin, ValMax, d);
-      sprintf(Num, View->Format, d);
-      glRasterPos3d((X[0] + X[1] + X[2]) / 3.,
-                    (Y[0] + Y[1] + Y[2]) / 3.,
-                    (Z[0] + Z[1] + Z[2]) / 3.);
-      Draw_String(Num);
+    if(View->GlyphLocation == DRAW_POST_LOCATE_COG){
+      d = (Val[0] + Val[1] + Val[2]) / 3.;
+      if(d >= ValMin && d <= ValMax) {
+	PaletteContinuous(View, ValMin, ValMax, d);
+	sprintf(Num, View->Format, d);
+	glRasterPos3d((X[0] + X[1] + X[2]) / 3.,
+		      (Y[0] + Y[1] + Y[2]) / 3.,
+		      (Z[0] + Z[1] + Z[2]) / 3.);
+	Draw_String(Num);
+      }
+    }
+    else{
+      for(int i = 0; i < 3; i++){
+	if(Val[i] >= ValMin && Val[i] <= ValMax) {
+	  PaletteContinuous(View, ValMin, ValMax, Val[i]);
+	  sprintf(Num, View->Format, Val[i]);
+	  glRasterPos3d(X[i], Y[i], Z[i]);
+	  Draw_String(Num);
+	}
+      }
     }
   }
 
@@ -598,14 +622,26 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
     Draw_ElementBoundary(POST_TETRAHEDRON, View, X, Y, Z);
 
   if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC) {
-    d = 0.25 * (Val[0] + Val[1] + Val[2] + Val[3]);
-    if(d >= ValMin && d <= ValMax) {
-      PaletteContinuous(View, ValMin, ValMax, d);
-      sprintf(Num, View->Format, d);
-      glRasterPos3d(0.25 * (X[0] + X[1] + X[2] + X[3]),
-                    0.25 * (Y[0] + Y[1] + Y[2] + Y[3]),
-                    0.25 * (Z[0] + Z[1] + Z[2] + Z[3]));
-      Draw_String(Num);
+    if(View->GlyphLocation == DRAW_POST_LOCATE_COG){
+      d = 0.25 * (Val[0] + Val[1] + Val[2] + Val[3]);
+      if(d >= ValMin && d <= ValMax) {
+	PaletteContinuous(View, ValMin, ValMax, d);
+	sprintf(Num, View->Format, d);
+	glRasterPos3d(0.25 * (X[0] + X[1] + X[2] + X[3]),
+		      0.25 * (Y[0] + Y[1] + Y[2] + Y[3]),
+		      0.25 * (Z[0] + Z[1] + Z[2] + Z[3]));
+	Draw_String(Num);
+      }
+    }
+    else{
+      for(int i = 0; i < 4; i++){
+	if(Val[i] >= ValMin && Val[i] <= ValMax) {
+	  PaletteContinuous(View, ValMin, ValMax, Val[i]);
+	  sprintf(Num, View->Format, Val[i]);
+	  glRasterPos3d(X[i], Y[i], Z[i]);
+	  Draw_String(Num);
+	}
+      }
     }
   }
   else if(!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill)){
@@ -994,9 +1030,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     Draw_ElementBoundary(type, View, X, Y, Z);
 
   double xc = 0., yc = 0., zc = 0.;
-  if(View->Normals || View->Tangents || 
-     View->IntervalsType == DRAW_POST_NUMERIC ||
-     View->ArrowLocation == DRAW_POST_LOCATE_COG){
+  if(View->Normals || View->Tangents || View->GlyphLocation == DRAW_POST_LOCATE_COG){
     for(int k = 0; k < nbnod; k++) {
       xc += X[k];
       yc += Y[k];
@@ -1031,8 +1065,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 		xc, yc, zc, t[0], t[1], t[2], View->Light);
   }
 
-  if(View->ArrowLocation == DRAW_POST_LOCATE_COG ||
-     View->IntervalsType == DRAW_POST_NUMERIC) {
+  if(View->GlyphLocation == DRAW_POST_LOCATE_COG) {
     double dd = 0., ext_dd = 0., dx = 0., dy = 0., dz = 0.;
     for(int k = 0; k < nbnod; k++) {
       dx += Val[k][0];
@@ -1058,9 +1091,12 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 	PaletteDiscrete(View, View->NbIso,
 			View->GIFV(ext_min, ext_max, View->NbIso, ext_dd));
       if(View->IntervalsType == DRAW_POST_NUMERIC) {
-	char Num[100];
+	char Num[100], Numx[100], Numy[100], Numz[100];
         glRasterPos3d(xc, yc, zc);
-        sprintf(Num, View->Format, ext_dd);
+        sprintf(Numx, View->Format, dx);
+        sprintf(Numy, View->Format, dy);
+        sprintf(Numz, View->Format, dz);
+        sprintf(Num, "(%s,%s,%s)", Numx, Numy, Numz);
         Draw_String(Num);
       }
       else {
@@ -1090,22 +1126,33 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 	else
 	  PaletteDiscrete(View, View->NbIso,
 			  View->GIFV(ext_min, ext_max, View->NbIso, ext_norm[k]));
-        double fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize /
-	  (View->ArrowSizeProportional ? ValMax : norm[k]);
-        if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
-          Val[k][0] /= norm[k];
-          Val[k][1] /= norm[k];
-          Val[k][2] /= norm[k];
-          norm[k] = log10(norm[k] / ValMin);
-          Val[k][0] *= norm[k];
-          Val[k][1] *= norm[k];
-          Val[k][2] *= norm[k];
-        }
-        Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
-		    View->ArrowRelHeadRadius, View->ArrowRelStemLength,
-		    View->ArrowRelStemRadius, X[k], Y[k], Z[k], 
-		    fact * Val[k][0], fact * Val[k][1], fact * Val[k][2], 
-		    View->Light);
+	if(View->IntervalsType == DRAW_POST_NUMERIC) {
+	  char Num[100], Numx[100], Numy[100], Numz[100];
+	  glRasterPos3d(X[k], Y[k], Z[k]);
+	  sprintf(Numx, View->Format, Val[k][0]);
+	  sprintf(Numy, View->Format, Val[k][1]);
+	  sprintf(Numz, View->Format, Val[k][2]);
+	  sprintf(Num, "(%s,%s,%s)", Numx, Numy, Numz);
+	  Draw_String(Num);
+	}
+	else{
+	  double fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize /
+	    (View->ArrowSizeProportional ? ValMax : norm[k]);
+	  if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
+	    Val[k][0] /= norm[k];
+	    Val[k][1] /= norm[k];
+	    Val[k][2] /= norm[k];
+	    norm[k] = log10(norm[k] / ValMin);
+	    Val[k][0] *= norm[k];
+	    Val[k][1] *= norm[k];
+	    Val[k][2] *= norm[k];
+	  }
+	  Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
+		      View->ArrowRelHeadRadius, View->ArrowRelStemLength,
+		      View->ArrowRelStemRadius, X[k], Y[k], Z[k], 
+		      fact * Val[k][0], fact * Val[k][1], fact * Val[k][2], 
+		      View->Light);
+	}
       }
     }
   }

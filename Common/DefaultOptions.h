@@ -1063,8 +1063,6 @@ StringXNumber ViewOptions_Number[] = {
     "Threshold angle below which normals are not smoothed" },
   { F|O, "ArrowHeadRadius" , opt_view_arrow_head_radius , 0.12 ,
     "Relative radius of arrow head" },
-  { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 
-    "Arrow location (1=center of gravity, 2=node)" },
   { F|O, "ArrowSize" , opt_view_arrow_size , 60. ,
     "Display size of arrows (in pixels)" },
   { F|O, "ArrowSizeProportional" , opt_view_arrow_size_proportional , 1. ,
@@ -1164,6 +1162,8 @@ StringXNumber ViewOptions_Number[] = {
     "Generalized raise amplification factor" },
   { F|O, "GeneralizedRaiseView" , opt_view_gen_raise_view , -1. ,
     "Index of the view used for generalized raise (-1=self)" },
+  { F|O, "GlyphLocation" , opt_view_glyph_location , DRAW_POST_LOCATE_COG , 
+    "Glyph (arrow, number, etc.) location (1=center of gravity, 2=node)" },
   // for backward compatibility:
   { F,   "Grid" , opt_view_axes , 0 ,
     "Grid mode (this option is deprecated: use View.Axes instead)" },
