@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.16 2001-05-29 13:26:54 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.17 2001-08-01 16:37:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -114,6 +114,11 @@ void Maillage_Curve (void *data, void *dummy){
 
   if (c->Num < 0)
     return;
+
+  if(c->Dirty){
+    Msg(INFO, "Not meshing dirty Curve %d", c->Num);
+    return;
+  }
 
   Msg(STATUS3, "Meshing Curve %d", c->Num);
 

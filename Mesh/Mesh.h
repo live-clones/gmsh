@@ -224,6 +224,7 @@ struct _Surf{
   Grid_T Grid;          /* Grille de recherches rapides */
   ExtrudeParams *Extrude;
   STL_Data *STL;
+  int Dirty; //flag to prevent any meshing
 };
 typedef struct _Surf Surface;
 
@@ -265,6 +266,7 @@ typedef struct {
   Tree_T *Simp_Surf;//for old extrusion mesh generator
   Tree_T *Hexahedra;
   Tree_T *Prisms;
+  int Dirty; //flag to prevent any meshing
 }Volume;
 
 typedef struct {
@@ -327,6 +329,7 @@ typedef struct{
   int degre;
   CircParam Circle;
   char functu[256], functv[256], functw[256];
+  int Dirty; //flag to prevent any meshing
 }Curve;
 
 typedef struct{

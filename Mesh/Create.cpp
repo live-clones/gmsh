@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.21 2001-06-25 13:05:16 geuzaine Exp $
+// $Id: Create.cpp,v 1.22 2001-08-01 16:37:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -423,6 +423,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
                           {1, 0, 0, 0.0} };
 
   pC = (Curve *) Malloc (sizeof (Curve));
+  pC->Dirty = 0;
   pC->cp = NULL;
   pC->Vertices = NULL;
   pC->Extrude = NULL;
@@ -534,6 +535,7 @@ Surface * Create_Surface (int Num, int Typ, int Mat){
   Surface *pS;
 
   pS = (Surface *) Malloc (sizeof (Surface));
+  pS->Dirty = 0;
   pS->Num = Num;
   pS->Typ = Typ;
   pS->Mat = Mat;
@@ -581,6 +583,7 @@ Volume * Create_Volume (int Num, int Typ, int Mat){
   Volume *pV;
 
   pV = (Volume *) Malloc (sizeof (Volume));
+  pV->Dirty = 0;
   pV->Num = Num;
   pV->Typ = Typ;
   pV->Mat = Mat;

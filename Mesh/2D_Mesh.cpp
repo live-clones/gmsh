@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.30 2001-07-26 21:26:34 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.31 2001-08-01 16:37:15 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -861,6 +861,11 @@ void Maillage_Surface (void *data, void *dum){
 
   if (!s->Support)
     return;
+
+  if(s->Dirty){
+    Msg(INFO, "Not meshing dirty Surface %d", s->Num);
+    return;
+  }
 
   THESUPPORT = s->Support;
   THESURFACE = s;

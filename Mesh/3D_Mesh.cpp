@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.22 2001-06-25 15:24:12 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.23 2001-08-01 16:37:15 geuzaine Exp $
 
 /*
  
@@ -724,6 +724,11 @@ void Maillage_Volume (void *data, void *dum){
 
   pv = (Volume **) data;
   v = *pv;
+
+  if(v->Dirty){
+    Msg(INFO, "Not meshing dirty Volume %d", v->Num);
+    return;
+  }
 
   if (Extrude_Mesh (v)){
   }
