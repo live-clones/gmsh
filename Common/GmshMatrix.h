@@ -160,6 +160,7 @@ public:
   {
     gsl_blas_dgemm (CblasNoTrans,CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
   }
+
   inline void mult (const GSL_Vector & x, GSL_Vector & b )
   {
     gsl_blas_dgemv (CblasNoTrans, 1.0, data, x.data, 1.0, b.data);

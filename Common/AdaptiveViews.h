@@ -73,11 +73,16 @@ public:
   {
     return (p[0]->val + p[1]->val + p[2]->val)/3.;    
   }
+  inline static void GSF (const double u, const double v, double w, double sf[]) 
+  {
+    sf[0] = 1-u-v;
+    sf[1] = u;
+    sf[2] = v;
+  }
   void print ()
   {
     printf ("p1 %g %g p2 %g %g p3 %g %g \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y,p[2]->x,p[2]->y);
   }
-  static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
   static void Recur_Create (adapt_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
@@ -85,7 +90,8 @@ public:
   bool visible;
   adapt_point     *p[3];
   adapt_triangle  *t[4];
-  static std::list<adapt_triangle*> all_triangles;
+  static std::list<adapt_triangle*> all_elems;
+  static int nbNod;
 };
 
 class adapt_quad
@@ -105,11 +111,17 @@ public:
   {
     return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val)/4.;    
   }
+  inline static void GSF (const double u, const double v, double w, double sf[]) 
+  {
+    sf[0] = 0.25*(1-u)*(1-v);
+    sf[1] = 0.25*(1+u)*(1-v);
+    sf[2] = 0.25*(1+u)*(1+v);
+    sf[3] = 0.25*(1-u)*(1+v);
+  }
   void print ()
   {
     printf ("p1 %g %g p2 %g %g p3 %g %g \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y,p[2]->x,p[2]->y);
   }
-  static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
   static void Recur_Create (adapt_quad *q, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
@@ -117,7 +129,8 @@ public:
   bool visible;
   adapt_point     *p[4];
   adapt_quad  *q[4];
-  static std::list<adapt_quad*> all_quads;
+  static std::list<adapt_quad*> all_elems;
+  static int nbNod;
 };
 
 class adapt_tet
@@ -134,6 +147,13 @@ public:
     t[4]=t[5]=t[6]=t[7]=0;
   }
 
+  inline static void GSF (const double u, const double v, double w, double sf[]) 
+  {
+    sf[0] = 1-u-v-w;
+    sf[1] = u;
+    sf[2] = v;
+    sf[3] = w;
+  }
   inline double V () const
   {
     return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val)/4.;    
@@ -142,7 +162,6 @@ public:
   {
     printf ("p1 %g %g p2 %g %g p3 %g %g \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y,p[2]->x,p[2]->y);
   }
-  static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
   static void Recur_Create (adapt_tet *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
@@ -150,7 +169,8 @@ public:
   bool visible;
   adapt_point     *p[4];
   adapt_tet  *t[8];
-  static std::list<adapt_tet*> all_tets;
+  static std::list<adapt_tet*> all_elems;
+  static int nbNod;
 };
 
 class adapt_hex
@@ -171,6 +191,17 @@ public:
     h[4]=h[5]=h[6]=h[7]=0;
   }
 
+  inline static void GSF (const double u, const double v, double w, double sf[]) 
+  {
+    sf[0] = 0.125*(1-u)*(1-v)*(1-w);
+    sf[1] = 0.125*(1+u)*(1-v)*(1-w);
+    sf[2] = 0.125*(1+u)*(1+v)*(1-w);
+    sf[3] = 0.125*(1-u)*(1+v)*(1-w);
+    sf[4] = 0.125*(1-u)*(1-v)*(1+w);
+    sf[5] = 0.125*(1+u)*(1-v)*(1+w);
+    sf[6] = 0.125*(1+u)*(1+v)*(1+w);
+    sf[7] = 0.125*(1-u)*(1+v)*(1+w);
+  }
   inline double V () const
   {
     return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val+p[4]->val + p[5]->val + p[6]->val+ p[7]->val)/8.;    
@@ -179,7 +210,6 @@ public:
   {
     printf ("p1 %g %g p2 %g %g p3 %g %g \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y,p[2]->x,p[2]->y);
   }
-  static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
   static void Recur_Create (adapt_hex *h, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
@@ -187,7 +217,8 @@ public:
   bool visible;
   adapt_point     *p[8];
   adapt_hex *h[8];
-  static std::list<adapt_hex*> all_hexes;
+  static std::list<adapt_hex*> all_elems;
+  static int nbNod;
 };
 
 class Adaptive_Post_View 
@@ -212,24 +243,30 @@ public:
     {
       setAdaptiveResolutionLevel ( view , level );
     }
+  template <class ELEM>
+    void setAdaptiveResolutionLevel_TEMPL (Post_View * view , int level, GMSH_Post_Plugin *plug, List_T **myList, int *counter);
   void setAdaptiveResolutionLevel ( Post_View * view , int levelmax, GMSH_Post_Plugin *plug = 0);
   void initWithLowResolution (Post_View *view);
   void setTolerance (const double eps) {tol=eps;}
   double getTolerance () const {return tol;}
-  void zoomQuad (Post_View * view ,
-		 int ielem, int level, GMSH_Post_Plugin *plug);
-  void zoomTriangle (Post_View * view ,
-		    int ielem, int level, GMSH_Post_Plugin *plug);
-  void zoomTet (Post_View * view ,
-		int ielem, int level, GMSH_Post_Plugin *plug,
-		Double_Vector & val,
-		Double_Vector & res,
-		Double_Matrix & XYZ);
-  void zoomHex (Post_View * view ,
-		int ielem, int level, GMSH_Post_Plugin *plug,
-		Double_Vector & val,
-		Double_Vector & res,
-		Double_Matrix & XYZ);
+  template <class ELEM>
+    void zoomElement (Post_View * view ,
+		       int ielem, int level, GMSH_Post_Plugin *plug, List_T *theList, int *counter);
 };
+
+template <class ELEM>
+void cleanElement ()
+{  
+  typename std::list<ELEM*>::iterator it =  ELEM::all_elems.begin();
+  typename std::list<ELEM*>::iterator ite =  ELEM::all_elems.end();
+  for (;it!=ite;++it)
+    {
+      delete *it;
+    }
+  ELEM::all_elems.clear();
+  adapt_point::all_points.clear();
+
+}
+
 
 #endif

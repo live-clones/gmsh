@@ -33,10 +33,14 @@
 void computeShapeFunctions ( Double_Matrix *coeffs, Double_Matrix *eexps , double u, double v, double w,double *sf);
 
 std::set<adapt_point> adapt_point::all_points;
-std::list<adapt_triangle*> adapt_triangle::all_triangles;
-std::list<adapt_tet*> adapt_tet::all_tets;
-std::list<adapt_quad*> adapt_quad::all_quads;
-std::list<adapt_hex*> adapt_hex::all_hexes;
+std::list<adapt_triangle*> adapt_triangle::all_elems;
+std::list<adapt_tet*> adapt_tet::all_elems;
+std::list<adapt_quad*> adapt_quad::all_elems;
+std::list<adapt_hex*> adapt_hex::all_elems;
+int adapt_triangle::nbNod = 3;
+int adapt_tet::nbNod = 4;
+int adapt_quad::nbNod = 4;
+int adapt_hex::nbNod = 8;
 
 adapt_point * adapt_point::New ( double x, double y, double z, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
@@ -54,60 +58,13 @@ adapt_point * adapt_point::New ( double x, double y, double z, Double_Matrix *co
   else
     return (adapt_point*) & (*it);
 }
-void adapt_triangle::clean ()
-{    
-  std::list<adapt_triangle*>::iterator it =  all_triangles.begin();
-  std::list<adapt_triangle*>::iterator ite =  all_triangles.end();
-  for (;it!=ite;++it)
-    {
-      delete *it;
-    }
-  all_triangles.clear();
-  adapt_point::all_points.clear();
-}
-
-void adapt_quad::clean ()
-{    
-  std::list<adapt_quad*>::iterator it =  all_quads.begin();
-  std::list<adapt_quad*>::iterator ite =  all_quads.end();
-  for (;it!=ite;++it)
-    {
-      delete *it;
-    }
-  all_quads.clear();
-  adapt_point::all_points.clear();
-}
-
-void adapt_tet::clean ()
-{    
-  std::list<adapt_tet*>::iterator it =  all_tets.begin();
-  std::list<adapt_tet*>::iterator ite =  all_tets.end();
-  for (;it!=ite;++it)
-    {
-      delete *it;
-    }
-  all_tets.clear();
-  adapt_point::all_points.clear();
-}
-
-void adapt_hex::clean ()
-{    
-  std::list<adapt_hex*>::iterator it =  all_hexes.begin();
-  std::list<adapt_hex*>::iterator ite =  all_hexes.end();
-  for (;it!=ite;++it)
-    {
-      delete *it;
-    }
-  all_hexes.clear();
-  adapt_point::all_points.clear();
-}
 
 
 void adapt_triangle::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
   printf("creating the sub-elements\n");
   int level = 0;
-  clean();
+  cleanElement<adapt_triangle> ();
   adapt_point *p1 = adapt_point::New ( 0,0,0, coeffs, eexps);
   adapt_point *p2 = adapt_point::New ( 0,1,0, coeffs, eexps);
   adapt_point *p3 = adapt_point::New ( 1,0,0, coeffs, eexps);
@@ -119,7 +76,7 @@ void adapt_quad::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eex
 {
   printf("creating the sub-elements\n");
   int level = 0;
-  clean();
+  cleanElement<adapt_quad> ();
   adapt_point *p1 = adapt_point::New ( -1,-1,0, coeffs, eexps);
   adapt_point *p2 = adapt_point::New ( -1,1,0, coeffs, eexps);
   adapt_point *p3 = adapt_point::New ( 1,1,0, coeffs, eexps);
@@ -132,7 +89,7 @@ void adapt_tet::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexp
 {
   Msg(INFO, "creating sub-elements");
   int level = 0;
-  clean();
+  cleanElement<adapt_tet> ();
   adapt_point *p1 = adapt_point::New ( 0,0,0, coeffs, eexps);
   adapt_point *p2 = adapt_point::New ( 0,1,0, coeffs, eexps);
   adapt_point *p3 = adapt_point::New ( 1,0,0, coeffs, eexps);
@@ -145,7 +102,7 @@ void adapt_hex::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexp
 {
   Msg(INFO, "creating sub-elements");
   int level = 0;
-  clean();
+  cleanElement<adapt_hex> ();
   adapt_point *p1 = adapt_point::New ( -1,-1,-1, coeffs, eexps);
   adapt_point *p2 = adapt_point::New ( -1,1,-1, coeffs, eexps);
   adapt_point *p3 = adapt_point::New ( 1,1,-1, coeffs, eexps);
@@ -160,7 +117,7 @@ void adapt_hex::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexp
 
 void adapt_triangle::Recur_Create (adapt_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  all_triangles.push_back(t);
+  all_elems.push_back(t);
   if (level++ >= maxlevel)
     return;
 
@@ -197,7 +154,7 @@ void adapt_triangle::Recur_Create (adapt_triangle *t, int maxlevel, int level , 
 
 void adapt_quad::Recur_Create (adapt_quad *q, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  all_quads.push_back(q);
+  all_elems.push_back(q);
   if (level++ >= maxlevel)
     return;
 
@@ -237,7 +194,7 @@ void adapt_quad::Recur_Create (adapt_quad *q, int maxlevel, int level , Double_M
 
 void adapt_tet::Recur_Create (adapt_tet *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  all_tets.push_back(t);
+  all_elems.push_back(t);
   if (level++ >= maxlevel)
     return;
 
@@ -277,7 +234,7 @@ void adapt_tet::Recur_Create (adapt_tet *t, int maxlevel, int level , Double_Mat
 
 void adapt_hex::Recur_Create (adapt_hex *h, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  all_hexes.push_back(h);
+  all_elems.push_back(h);
   if (level++ >= maxlevel)
     return;
 
@@ -338,24 +295,24 @@ void adapt_hex::Recur_Create (adapt_hex *h, int maxlevel, int level , Double_Mat
 
 void adapt_triangle::Error ( double AVG , double tol )
 {
-  adapt_triangle *t = *all_triangles.begin();
+  adapt_triangle *t = *all_elems.begin();
   Recur_Error (t,AVG,tol);
 }
 
 void adapt_quad::Error ( double AVG , double tol )
 {
-  adapt_quad *q = *all_quads.begin();
+  adapt_quad *q = *all_elems.begin();
   Recur_Error (q,AVG,tol);
 }
 
 void adapt_tet::Error ( double AVG , double tol )
 {
-  adapt_tet *t = *all_tets.begin();
+  adapt_tet *t = *all_elems.begin();
   Recur_Error (t,AVG,tol);
 }
 void adapt_hex::Error ( double AVG , double tol )
 {
-  adapt_hex *h = *all_hexes.begin();
+  adapt_hex *h = *all_elems.begin();
   Recur_Error (h,AVG,tol);
 }
 
@@ -572,22 +529,28 @@ void adapt_hex::Recur_Error ( adapt_hex *h, double AVG, double tol )
 
 static double t0,t1,t2,t3;
 
-void Adaptive_Post_View:: zoomTriangle (Post_View * view ,
+template <class ELEM>
+void Adaptive_Post_View:: zoomElement (Post_View * view ,
 					int ielem ,
 					int level, 
-					GMSH_Post_Plugin *plug)
+					GMSH_Post_Plugin *plug,
+					List_T *theList,
+					int *counter)
 {
-  std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-  std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
+
+  const int nbNod = ELEM::nbNod; 
+
+  typename std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
+  typename std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
 
   double c0 = Cpu();
 
   const int N = _coefs->size1();
   Double_Vector val ( N ), res(adapt_point::all_points.size());
-  Double_Matrix xyz (3,3);
+  Double_Matrix xyz (nbNod,3);
   Double_Matrix XYZ (adapt_point::all_points.size(),3);
 
-  for ( int k=0;k<3;++k)
+  for ( int k=0;k<nbNod;++k)
     {
       xyz(k,0) = (*_STposX) ( ielem , k );
       xyz(k,1) = (*_STposY) ( ielem , k );
@@ -618,8 +581,8 @@ void Adaptive_Post_View:: zoomTriangle (Post_View * view ,
 
   double c2 = Cpu();
 
-  std::list<adapt_triangle*>::iterator itt  = adapt_triangle::all_triangles.begin();
-  std::list<adapt_triangle*>::iterator itte = adapt_triangle::all_triangles.end();
+  typename std::list<ELEM*>::iterator itt  = ELEM::all_elems.begin();
+  typename std::list<ELEM*>::iterator itte = ELEM::all_elems.end();
 
   for ( ;itt != itte ; itt++)
     {
@@ -629,241 +592,27 @@ void Adaptive_Post_View:: zoomTriangle (Post_View * view ,
 
   if (!plug || tol != 0.0)
   {
-      adapt_triangle::Error ( max-min, tol );
+      ELEM::Error ( max-min, tol );
   }
   if (plug)
       plug->assign_specific_visibility ();
 
 
   double c3 = Cpu();
-  itt  = adapt_triangle::all_triangles.begin();
+  itt  = ELEM::all_elems.begin();
+
+  adapt_point **p;
+
   for ( ;itt != itte ; itt++)
     {
       if ((*itt)->visible)
 	{
-	  adapt_point *p1 = (*itt)->p[0];
-	  adapt_point *p2 = (*itt)->p[1];
-	  adapt_point *p3 = (*itt)->p[2];
-	  List_Add ( view->ST , &p1->X );
-	  List_Add ( view->ST , &p2->X );
-	  List_Add ( view->ST , &p3->X );
-	  List_Add ( view->ST , &p1->Y );
-	  List_Add ( view->ST , &p2->Y );
-	  List_Add ( view->ST , &p3->Y );
-	  List_Add ( view->ST , &p1->Z );
-	  List_Add ( view->ST , &p2->Z );
-	  List_Add ( view->ST , &p3->Z );
-	  List_Add ( view->ST , &p1->val );
-	  List_Add ( view->ST , &p2->val );
-	  List_Add ( view->ST , &p3->val );
-	  view->NbST++;
-	}
-    }
-  double c4 = Cpu();
-
-  t0 += c1-c0;
-  t1 += c2-c1;
-  t2 += c3-c2;
-  t3 += c4-c3;
-
-}
-
-void Adaptive_Post_View:: zoomQuad (Post_View * view ,
-				    int ielem ,
-				    int level, 
-				    GMSH_Post_Plugin *plug)
-{
-    std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-    std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
-  
-    double c0 = Cpu();
-    
-    const int N = _coefs->size1();
-    Double_Vector val ( N ), res(adapt_point::all_points.size());
-    Double_Matrix xyz (4,3);
-    Double_Matrix XYZ (adapt_point::all_points.size(),3);
-    
-    for ( int k=0;k<4;++k)
-    {
-	xyz(k,0) = (*_STposX) ( ielem , k );
-	xyz(k,1) = (*_STposY) ( ielem , k );
-	xyz(k,2) = (*_STposZ) ( ielem , k );
-    }
-    
-    for ( int k=0;k<N;++k)
-    {
-	val(k) = (*_STval )( ielem , k );
-    }	        
-    _Interpolate->mult(val,res);
-    _Geometry->mult(xyz,XYZ);
-  
-    double c1 = Cpu();
-    
-    int kk=0;
-    for ( ; it !=ite ; ++it)
-    {
-	adapt_point *p = (adapt_point*) &(*it);
-	p->val = res(kk);
-	p->X = XYZ(kk,0);
-	p->Y = XYZ(kk,1);
-	p->Z = XYZ(kk,2);
-	if (min > p->val) min = p->val;
-	if (max < p->val) max = p->val;
-	kk++;
-    }
-
-    double c2 = Cpu();
-    
-    std::list<adapt_quad*>::iterator itt  = adapt_quad::all_quads.begin();
-    std::list<adapt_quad*>::iterator itte = adapt_quad::all_quads.end();
-
-    for ( ;itt != itte ; itt++)
-    {
-	(*itt)->visible = false;
-    }    
-    
-    if (!plug || tol != 0.0)
-    {
-	adapt_quad::Error ( max-min, tol );
-    }
-    if (plug)
-	plug->assign_specific_visibility ();
-
-    double c3 = Cpu();
-    itt  = adapt_quad::all_quads.begin();
-    for ( ;itt != itte ; itt++)
-    {
-	if ((*itt)->visible)
-	{
-	    adapt_point *p1 = (*itt)->p[0];
-	    adapt_point *p2 = (*itt)->p[1];
-	    adapt_point *p3 = (*itt)->p[2];
-	    adapt_point *p4 = (*itt)->p[3];
-	    List_Add ( view->SQ , &p1->X );
-	    List_Add ( view->SQ , &p2->X );
-	    List_Add ( view->SQ , &p3->X );
-	    List_Add ( view->SQ , &p4->X );
-	    List_Add ( view->SQ , &p1->Y );
-	    List_Add ( view->SQ , &p2->Y );
-	    List_Add ( view->SQ , &p3->Y );
-	    List_Add ( view->SQ , &p4->Y );
-	    List_Add ( view->SQ , &p1->Z );
-	    List_Add ( view->SQ , &p2->Z );
-	    List_Add ( view->SQ , &p3->Z );
-	    List_Add ( view->SQ , &p4->Z );
-	    List_Add ( view->SQ , &p1->val );
-	    List_Add ( view->SQ , &p2->val );
-	    List_Add ( view->SQ , &p3->val );
-	    List_Add ( view->SQ , &p4->val );
-	    view->NbSQ++;
-	}
-    }
-    double c4 = Cpu();
-    
-    t0 += c1-c0;
-    t1 += c2-c1;
-    t2 += c3-c2;
-    t3 += c4-c3;    
-}
-
-
-void Adaptive_Post_View:: zoomTet (Post_View * view ,
-				   int ielem ,
-				   int level, 
-				   GMSH_Post_Plugin *plug,
-				   Double_Vector & va2l,
-				   Double_Vector & re2s,
-				   Double_Matrix & XY2Z)
-{
-  std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-  std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
-
-
-  
-
-  double c0 = Cpu();
-
-  Double_Matrix xyz (4,3);
-
-  for ( int k=0;k<4;++k)
-    {
-      xyz(k,0) = (*_STposX) ( ielem , k );
-      xyz(k,1) = (*_STposY) ( ielem , k );
-      xyz(k,2) = (*_STposZ) ( ielem , k );
-    }
-  
-  const int N = _coefs->size1();
-  Double_Vector val ( N ), res(adapt_point::all_points.size());
-  Double_Matrix XYZ (adapt_point::all_points.size(),3);
-
-  for ( int k=0;k<N;++k)
-    {
-      val(k) = (*_STval )( ielem , k );
-    }	        
-
-  _Interpolate->mult(val,res);
-  _Geometry->mult(xyz,XYZ);
-
-  double c1 = Cpu();
-
-  int kk=0;
-  for ( ; it !=ite ; ++it)
-    {
-      adapt_point *p = (adapt_point*) &(*it);
-      p->val = res(kk);
-      p->X = XYZ(kk,0);
-      p->Y = XYZ(kk,1);
-      p->Z = XYZ(kk,2);
-      if (min > p->val) min = p->val;
-      if (max < p->val) max = p->val;
-      kk++;
-    }
-
-  double c2 = Cpu();
-
-  std::list<adapt_tet*>::iterator itt  = adapt_tet::all_tets.begin();
-  std::list<adapt_tet*>::iterator itte = adapt_tet::all_tets.end();
-
-  for ( ;itt != itte ; itt++)
-    {
-      (*itt)->visible = false;
-    }
-
-
-  if (!plug || tol != 0.0)
-  {
-      adapt_tet::Error ( max-min, tol );
-  }
-  if (plug)
-      plug->assign_specific_visibility ();
-
-  double c3 = Cpu();
-  itt  = adapt_tet::all_tets.begin();
-  for ( ;itt != itte ; itt++)
-    {
-      if ((*itt)->visible)
-	{
-	  adapt_point *p1 = (*itt)->p[0];
-	  adapt_point *p2 = (*itt)->p[1];
-	  adapt_point *p3 = (*itt)->p[2];
-	  adapt_point *p4 = (*itt)->p[3];
-	  List_Add ( view->SS , &p1->X );
-	  List_Add ( view->SS , &p2->X );
-	  List_Add ( view->SS , &p3->X );
-	  List_Add ( view->SS , &p4->X );
-	  List_Add ( view->SS , &p1->Y );
-	  List_Add ( view->SS , &p2->Y );
-	  List_Add ( view->SS , &p3->Y );
-	  List_Add ( view->SS , &p4->Y );
-	  List_Add ( view->SS , &p1->Z );
-	  List_Add ( view->SS , &p2->Z );
-	  List_Add ( view->SS , &p3->Z );
-	  List_Add ( view->SS , &p4->Z );
-	  List_Add ( view->SS , &p1->val );
-	  List_Add ( view->SS , &p2->val );
-	  List_Add ( view->SS , &p3->val );
-	  List_Add ( view->SS , &p4->val );
-	  view->NbSS++;
+	  p = (*itt)->p;
+	  for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->X );
+	  for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->Y );
+	  for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->Z );
+	  for (int k=0;k<nbNod;++k)List_Add ( theList , &p[k]->val );
+	  (*counter)++;
 	}
     }
   double c4 = Cpu();
@@ -876,334 +625,80 @@ void Adaptive_Post_View:: zoomTet (Post_View * view ,
 }
 
 
-void Adaptive_Post_View:: zoomHex (Post_View * view ,
-				   int ielem ,
-				   int level, 
-				   GMSH_Post_Plugin *plug,
-				   Double_Vector & va2l,
-				   Double_Vector & re2s,
-				   Double_Matrix & XY2Z)
-{
-  std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-  std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
+/*
+  We first do the adaptive stuff at level 2 and will only process
+  elements that have reached the maximal recursion level
 
-  double c0 = Cpu();
+  We compute first the matrix at max recursion level (those should be stored
+  on disk once in the GMSHPLUGINSHOME directory, i'll do that at some point).
 
-  Double_Matrix xyz (8,3);
-
-  for ( int k=0;k<8;++k)
-    {
-      xyz(k,0) = (*_STposX) ( ielem , k );
-      xyz(k,1) = (*_STposY) ( ielem , k );
-      xyz(k,2) = (*_STposZ) ( ielem , k );
-    }
   
-  const int N = _coefs->size1();
-  Double_Vector val ( N ), res(adapt_point::all_points.size());
-  Double_Matrix XYZ (adapt_point::all_points.size(),3);
 
-  for ( int k=0;k<N;++k)
-    {
-      val(k) = (*_STval )( ielem , k );
-    }	        
-
-  _Interpolate->mult(val,res);
-  _Geometry->mult(xyz,XYZ);
-
-  double c1 = Cpu();
-
-  int kk=0;
-  for ( ; it !=ite ; ++it)
-    {
-      adapt_point *p = (adapt_point*) &(*it);
-      p->val = res(kk);
-      p->X = XYZ(kk,0);
-      p->Y = XYZ(kk,1);
-      p->Z = XYZ(kk,2);
-      if (min > p->val) min = p->val;
-      if (max < p->val) max = p->val;
-      kk++;
-    }
-
-  double c2 = Cpu();
-
-  std::list<adapt_hex*>::iterator itt  = adapt_hex::all_hexes.begin();
-  std::list<adapt_hex*>::iterator itte = adapt_hex::all_hexes.end();
-
-  for ( ;itt != itte ; itt++)
-    {
-      (*itt)->visible = false;
-    }
-
-
-  if (!plug || tol != 0.0)
-  {
-      adapt_hex::Error ( max-min, tol );
-  }
-  if (plug)
-      plug->assign_specific_visibility ();
-
-  double c3 = Cpu();
-  itt  = adapt_hex::all_hexes.begin();
-  for ( ;itt != itte ; itt++)
-    {
-      if ((*itt)->visible)
-	{
-	  adapt_point *p1 = (*itt)->p[0];
-	  adapt_point *p2 = (*itt)->p[1];
-	  adapt_point *p3 = (*itt)->p[2];
-	  adapt_point *p4 = (*itt)->p[3];
-	  adapt_point *p5 = (*itt)->p[4];
-	  adapt_point *p6 = (*itt)->p[5];
-	  adapt_point *p7 = (*itt)->p[6];
-	  adapt_point *p8 = (*itt)->p[7];
-	  List_Add ( view->SH , &p1->X );
-	  List_Add ( view->SH , &p2->X );
-	  List_Add ( view->SH , &p3->X );
-	  List_Add ( view->SH , &p4->X );
-	  List_Add ( view->SH , &p5->X );
-	  List_Add ( view->SH , &p6->X );
-	  List_Add ( view->SH , &p7->X );
-	  List_Add ( view->SH , &p8->X );
-	  List_Add ( view->SH , &p1->Y );
-	  List_Add ( view->SH , &p2->Y );
-	  List_Add ( view->SH , &p3->Y );
-	  List_Add ( view->SH , &p4->Y );
-	  List_Add ( view->SH , &p5->Y );
-	  List_Add ( view->SH , &p6->Y );
-	  List_Add ( view->SH , &p7->Y );
-	  List_Add ( view->SH , &p8->Y );
-	  List_Add ( view->SH , &p1->Z );
-	  List_Add ( view->SH , &p2->Z );
-	  List_Add ( view->SH , &p3->Z );
-	  List_Add ( view->SH , &p4->Z );
-	  List_Add ( view->SH , &p5->Z );
-	  List_Add ( view->SH , &p6->Z );
-	  List_Add ( view->SH , &p7->Z );
-	  List_Add ( view->SH , &p8->Z );
-	  List_Add ( view->SH , &p1->val );
-	  List_Add ( view->SH , &p2->val );
-	  List_Add ( view->SH , &p3->val );
-	  List_Add ( view->SH , &p4->val );
-	  List_Add ( view->SH , &p5->val );
-	  List_Add ( view->SH , &p6->val );
-	  List_Add ( view->SH , &p7->val );
-	  List_Add ( view->SH , &p8->val );
-	  view->NbSH++;
-	}
-    }
-  double c4 = Cpu();
-
-  t0 += c1-c0;
-  t1 += c2-c1;
-  t2 += c3-c2;
-  t3 += c4-c3;
-
-}
+*/
 
 
 void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int level, GMSH_Post_Plugin *plug)
 {
-    const int N = _coefs->size1();
+  setAdaptiveResolutionLevel_TEMPL <adapt_triangle> ( view,level,plug,&(view->ST),&(view->NbST)) ;
+  setAdaptiveResolutionLevel_TEMPL <adapt_quad>     ( view,level,plug,&(view->SQ),&(view->NbSQ)) ;
+  setAdaptiveResolutionLevel_TEMPL <adapt_hex>      ( view,level,plug,&(view->SH),&(view->NbSH)) ;
+  setAdaptiveResolutionLevel_TEMPL <adapt_tet>      ( view,level,plug,&(view->SS),&(view->NbSS)) ;
+}
 
-    if (presentTol==tol && presentZoomLevel == level && !plug)return;
+template <class ELEM>
+void Adaptive_Post_View:: setAdaptiveResolutionLevel_TEMPL (Post_View * view , int level, GMSH_Post_Plugin *plug, List_T **myList, int *counter)
+{
+  const int N = _coefs->size1();
+  
+  printf("coucou %d %d\n",*counter, ELEM::nbNod);
 
-    if (view->NbST)
+  if (presentTol==tol && presentZoomLevel == level && !plug)return;
+  
+  if (*counter)
     {
-	adapt_triangle::Create ( level, _coefs, _eexps );
-	std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-	std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
-	
-	if (_Interpolate)
-	    delete _Interpolate;
-	if (_Geometry)
-	    delete _Geometry;
-	_Interpolate = new Double_Matrix ( adapt_point::all_points.size(), N);
-	_Geometry    = new Double_Matrix ( adapt_point::all_points.size(), 3);
-	
-	int kk=0;
-	for ( ; it !=ite ; ++it)
+      double sf[ELEM::nbNod];
+      ELEM::Create ( level, _coefs, _eexps );
+      std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
+      std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
+      
+      if (_Interpolate)
+	delete _Interpolate;
+      if (_Geometry)
+	delete _Geometry;
+      _Interpolate = new Double_Matrix ( adapt_point::all_points.size(), N);
+      _Geometry    = new Double_Matrix ( adapt_point::all_points.size(), ELEM::nbNod);
+      
+      int kk=0;
+      for ( ; it !=ite ; ++it)
 	{
-	    adapt_point *p = (adapt_point*) &(*it);
-	    for ( int k=0;k<N;++k)
+	  adapt_point *p = (adapt_point*) &(*it);
+	  for ( int k=0;k<N;++k)
 	    {
-		(*_Interpolate)(kk,k) = p->shape_functions[k];
+	      (*_Interpolate)(kk,k) = p->shape_functions[k];
 	    }
-	    (*_Geometry)(kk,0) = ( 1.-p->x-p->y);
-	    (*_Geometry)(kk,1) = p->x;
-	    (*_Geometry)(kk,2) = p->y;
-	    kk++;	  
+	  ELEM::GSF ( p->x, p->y,p->z,sf);
+	  for (int k=0;k<ELEM::nbNod;k++)(*_Geometry)(kk,k) = sf[k];
+	  kk++;	  
 	}
 	
-	List_Delete(view->ST); view->ST = 0;  
-	view->NbST = 0;
+	List_Delete(*myList); *myList = 0;  
+	*counter = 0;
 	/// for now, that's all we do, 1 TS
 	view->NbTimeStep=1;
 	int nbelm = _STposX->size1();
-	view->ST = List_Create ( nbelm * 4, nbelm , sizeof(double));
-	
+	*myList = List_Create ( nbelm * 4, nbelm , sizeof(double));	
 	
 	t0=t1 = t2 = t3 = 0;
 	
 	for ( int i=0;i<nbelm;++i)
 	{
-	    zoomTriangle ( view , i , level, plug);
-	}  
-	
+	  zoomElement<ELEM> ( view , i , level, plug,*myList,counter);
+	}  	
 	printf("finished %g %g %g %g\n",t0,t1,t2,t3);
+	view->Changed = 1;
+	presentZoomLevel = level;
+	presentTol = tol;    
     }
-    else if (view->NbSS)
-    {
-	adapt_tet::Create ( level, _coefs, _eexps );
-	std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-	std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
-	
-	if (_Interpolate)
-	    delete _Interpolate;
-	if (_Geometry)
-	    delete _Geometry;
-	_Interpolate = new Double_Matrix ( adapt_point::all_points.size(), N);
-	_Geometry    = new Double_Matrix ( adapt_point::all_points.size(), 4);
-	
-	int kk=0;
-	for ( ; it !=ite ; ++it)
-	{
-	    adapt_point *p = (adapt_point*) &(*it);
-	    for ( int k=0;k<N;++k)
-	    {
-		(*_Interpolate)(kk,k) = p->shape_functions[k];
-	    }
-	    (*_Geometry)(kk,0) = ( 1.-p->x-p->y-p->z);
-	    (*_Geometry)(kk,1) = p->x;
-	    (*_Geometry)(kk,2) = p->y;
-	    (*_Geometry)(kk,3) = p->z;
-	    kk++;	  
-	}
-	
-	List_Delete(view->SS); view->SS = 0;  
-	view->NbSS = 0;
-	/// for now, that's all we do, 1 TS
-	view->NbTimeStep=1;
-	int nbelm = _STposX->size1();
-	view->SS = List_Create ( nbelm * 4, nbelm , sizeof(double));
-	
-	
-	t0=t1 = t2 = t3 = 0;
-	
-	Double_Vector val ( N ), res(adapt_point::all_points.size());
-	Double_Matrix XYZ (adapt_point::all_points.size(),3);
-
-	for ( int i=0;i<nbelm;++i)
-	{
-	    zoomTet ( view , i , level, plug,val,res,XYZ);
-	}  
-	
-	printf("finished B %g %g %g %g\n",t0,t1,t2,t3);
-    }
-
-    else if (view->NbSH)
-    {
-	adapt_hex::Create ( level, _coefs, _eexps );
-	std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-	std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
-	
-	if (_Interpolate)
-	    delete _Interpolate;
-	if (_Geometry)
-	    delete _Geometry;
-	_Interpolate = new Double_Matrix ( adapt_point::all_points.size(), N);
-	_Geometry    = new Double_Matrix ( adapt_point::all_points.size(), 8);
-	
-	int kk=0;
-	for ( ; it !=ite ; ++it)
-	{
-	    adapt_point *p = (adapt_point*) &(*it);
-	    for ( int k=0;k<N;++k)
-	    {
-		(*_Interpolate)(kk,k) = p->shape_functions[k];
-	    }
-	    (*_Geometry)(kk,0) = ( 1.-p->x) * ( 1.-p->y) * ( 1.-p->z) * .125;
-	    (*_Geometry)(kk,1) = ( 1.+p->x) * ( 1.-p->y) * ( 1.-p->z) * .125;
-	    (*_Geometry)(kk,2) = ( 1.+p->x) * ( 1.+p->y) * ( 1.-p->z) * .125;
-	    (*_Geometry)(kk,3) = ( 1.-p->x) * ( 1.+p->y) * ( 1.-p->z) * .125;
-	    (*_Geometry)(kk,4) = ( 1.-p->x) * ( 1.-p->y) * ( 1.+p->z) * .125;
-	    (*_Geometry)(kk,5) = ( 1.+p->x) * ( 1.-p->y) * ( 1.+p->z) * .125;
-	    (*_Geometry)(kk,6) = ( 1.+p->x) * ( 1.+p->y) * ( 1.+p->z) * .125;
-	    (*_Geometry)(kk,7) = ( 1.-p->x) * ( 1.+p->y) * ( 1.+p->z) * .125;
-	    kk++;	  
-	}
-	
-	List_Delete(view->SH); view->SH = 0;  
-	view->NbSH = 0;
-	/// for now, that's all we do, 1 TS
-	view->NbTimeStep=1;
-	int nbelm = _STposX->size1();
-	view->SH = List_Create ( nbelm * 4, nbelm , sizeof(double));
-		
-	t0=t1 = t2 = t3 = 0;
-	
-	Double_Vector val ( N ), res(adapt_point::all_points.size());
-	Double_Matrix XYZ (adapt_point::all_points.size(),3);
-
-	for ( int i=0;i<nbelm;++i)
-	{
-	    zoomHex ( view , i , level, plug,val,res,XYZ);
-	}  
-	
-	printf("finished B %g %g %g %g\n",t0,t1,t2,t3);
-    }
-
-    else if (view->NbSQ)
-    {
-	adapt_quad::Create ( level, _coefs, _eexps );
-	std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
-	std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
-	
-	if (_Interpolate)
-	    delete _Interpolate;
-	if (_Geometry)
-	    delete _Geometry;
-	_Interpolate = new Double_Matrix ( adapt_point::all_points.size(), N);
-	_Geometry    = new Double_Matrix ( adapt_point::all_points.size(), 4);
-	
-	int kk=0;
-	for ( ; it !=ite ; ++it)
-	{
-	    adapt_point *p = (adapt_point*) &(*it);
-	    for ( int k=0;k<N;++k)
-	    {
-		(*_Interpolate)(kk,k) = p->shape_functions[k];
-	    }
-	    (*_Geometry)(kk,0) = ( 1.-p->x) * ( 1.-p->y) * .25;
-	    (*_Geometry)(kk,1) = ( 1.+p->x) * ( 1.-p->y) * .25;
-	    (*_Geometry)(kk,2) = ( 1.+p->x) * ( 1.+p->y) * .25;
-	    (*_Geometry)(kk,3) = ( 1.-p->x) * ( 1.+p->y) * .25;
-	    kk++;	  
-	}
-	
-	List_Delete(view->SQ); view->SQ = 0;  
-	view->NbSQ = 0;
-	/// for now, that's all we do, 1 TS
-	view->NbTimeStep=1;
-	int nbelm = _STposX->size1();
-	view->SQ = List_Create ( nbelm * 4, nbelm , sizeof(double));
-	
-	
-	t0=t1 = t2 = t3 = 0;
-	
-	for ( int i=0;i<nbelm;++i)
-	{
-	    zoomQuad ( view , i , level, plug);
-	}  
-	
-	printf("finished Q %g %g %g %g\n",t0,t1,t2,t3);
-    }
-    else 
-	return;
-    
-    view->Changed = 1;
-    presentZoomLevel = level;
-    presentTol = tol;    
 }
 
 void computeShapeFunctions ( Double_Matrix *coeffs, Double_Matrix *eexps , double u, double v, double w,double *sf)
@@ -1335,5 +830,8 @@ Adaptive_Post_View::~Adaptive_Post_View()
   delete _STval;
   if(_Interpolate)delete _Interpolate;
   if(_Geometry)delete _Geometry;
-  adapt_triangle::clean();
+  cleanElement<adapt_triangle> ();
+  cleanElement<adapt_tet> ();
+  cleanElement<adapt_hex> ();
+  cleanElement<adapt_quad> ();
 }

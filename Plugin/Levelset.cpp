@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.24 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.25 2005-03-16 16:44:38 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -916,24 +916,24 @@ static bool recur_sign_change (adapt_quad *q, double val, const GMSH_LevelsetPlu
 
 void GMSH_LevelsetPlugin::assign_specific_visibility () const
 {
-  if (adapt_triangle::all_triangles.size())
+  if (adapt_triangle::all_elems.size())
     {
-      adapt_triangle *t  = *adapt_triangle::all_triangles.begin();
+      adapt_triangle *t  = *adapt_triangle::all_elems.begin();
       t->visible = !recur_sign_change (t, _valueView, this);
     }
-  if (adapt_tet::all_tets.size())
+  if (adapt_tet::all_elems.size())
     {
-      adapt_tet *te  = *adapt_tet::all_tets.begin();
+      adapt_tet *te  = *adapt_tet::all_elems.begin();
       te->visible = !recur_sign_change (te, _valueView, this);
     }
-  if (adapt_quad::all_quads.size())
+  if (adapt_quad::all_elems.size())
     {
-      adapt_quad *qe  = *adapt_quad::all_quads.begin();
+      adapt_quad *qe  = *adapt_quad::all_elems.begin();
       qe->visible = !recur_sign_change (qe, _valueView, this);
     }
-  if (adapt_hex::all_hexes.size())
+  if (adapt_hex::all_elems.size())
     {
-      adapt_hex *he  = *adapt_hex::all_hexes.begin();
+      adapt_hex *he  = *adapt_hex::all_elems.begin();
       he->visible = !recur_sign_change (he, _valueView, this);
     }
 }
