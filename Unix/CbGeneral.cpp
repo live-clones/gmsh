@@ -1,4 +1,4 @@
-/* $Id: CbGeneral.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: CbGeneral.cpp,v 1.5 2000-11-27 10:58:59 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -107,10 +107,10 @@ void CurrentInfoCb (Widget w, XtPointer client_data, XtPointer call_data){
     for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
       v = (Post_View*)List_Pointer(Post_ViewList, i);
       if(v->Visible){
-	s[16] += List_Nbr(v->Points);
-	s[17] += List_Nbr(v->Lines);
-	s[18] += List_Nbr(v->Triangles);
-	s[19] += List_Nbr(v->Tetrahedra);
+	s[16] += v->NbSP + v->NbVP + v->NbTP;
+	s[17] += v->NbSL + v->NbVL + v->NbTL;
+	s[18] += v->NbST + v->NbVT + v->NbTT;
+	s[19] += v->NbSS + v->NbVS + v->NbTS;
       }
     }
     sprintf(label, "%g", s[16]); XtVaSetValues(VLAB(19));

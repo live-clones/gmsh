@@ -1,14 +1,8 @@
-/* $Id: Views.h,v 1.6 2000-11-26 15:43:45 geuzaine Exp $ */
+/* $Id: Views.h,v 1.7 2000-11-27 10:58:18 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
 #include "Const.h"
-
-typedef struct{
-  int    Dimension, Type;
-  double *X, *Y, *Z, *V;
-}Post_Simplex;
-
 #include "ColorTable.h"
 
 typedef struct{
@@ -18,14 +12,14 @@ typedef struct{
 
   /* the data */
   List_T *Time;
-  int NbSP, NbVP, NbTP;
-  List_T *SP, *VP, *TP, *Points; // points
-  int NbSL, NbVL, NbTL;
-  List_T *SL, *VL, *TL, *Lines; // lines
-  int NbST, NbVT, NbTT;
-  List_T *ST, *VT, *TT, *Triangles; // triangles
-  int NbSS, NbVS, NbTS;
-  List_T *SS, *VS, *TS, *Tetrahedra; // tetrahedra
+  int NbPoints, NbSP, NbVP, NbTP;
+  List_T *SP, *VP, *TP; // points
+  int NbLines, NbSL, NbVL, NbTL;
+  List_T *SL, *VL, *TL; // lines
+  int NbTriangles, NbST, NbVT, NbTT;
+  List_T *ST, *VT, *TT; // triangles
+  int NbTetrahedra, NbSS, NbVS, NbTS;
+  List_T *SS, *VS, *TS; // tetrahedra
   int NbTimeStep, ScalarOnly;
   double Min, Max;
 
@@ -44,11 +38,6 @@ typedef struct{
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
 }Post_View;
-
-/* Type (The keys are important!) */
-#define DRAW_POST_SCALAR  1
-#define DRAW_POST_VECTOR  3
-#define DRAW_POST_TENSOR  9
 
 /* IntervalsType */
 #define DRAW_POST_ISO          1
@@ -89,9 +78,9 @@ void FreeView(Post_View *v);
 void Read_View(FILE *file, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);
 
-void AddView_ScalarSimplex(int dim, double *coord, int N, double *v);
-void AddView_VectorSimplex(int dim, double *coord, int N, double *v);
-void AddView_TensorSimplex(int dim, double *coord, int N, double *v);
+void Stat_ScalarSimplex(int dim, double *coord, int N, double *v);
+void Stat_VectorSimplex(int dim, double *coord, int N, double *v);
+void Stat_TensorSimplex(int dim, double *coord, int N, double *v);
 
 int BGMWithView (Post_View *ErrView);
 int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,

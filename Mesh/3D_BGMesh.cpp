@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.9 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.10 2000-11-27 10:58:56 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -123,10 +123,9 @@ static void AIG (void *a, void *b){
 }
 
 int BGMWithView (Post_View * ErrView){
-
   static Vertex *VertexUp, *v, V, *ver[4];
-  int i, j, k;
-  Post_Simplex s, t;
+  int i, j, k, nb;
+  double *X, *Y, *Z, *Val;
   Simplex *si;
 
   VertexUp = Create_Vertex (-1, 0., 0., 1., 1., -1.0);
@@ -138,50 +137,64 @@ int BGMWithView (Post_View * ErrView){
   m.Simplexes = Tree_Create (sizeof (Simplex *), compareSimplex);
   Create_BgMesh (ONFILE, .2, THEM);
 
+
   k = 1;
-  for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
-    List_Read (ErrView->Triangles, i, &t);
-    for (j = 0; j < 3; j++){
-      v = &V;
-      v->Pos.X = t.X[j];
-      v->Pos.Y = t.Y[j];
-      v->Pos.Z = t.Z[j];
-      if (0 /*Tree_Query(Pts,&v) */ ){
-        /* Corriger la Lc pour lissage */
-        //ver[j] = v;
+  if(ErrView->NbST){
+    nb = List_Nbr(ErrView->ST) / ErrView->NbST ;
+    for(i = 0 ; i < List_Nbr(ErrView->ST) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->ST,i);
+      Y = (double*)List_Pointer_Fast(ErrView->ST,i+3);
+      Z = (double*)List_Pointer_Fast(ErrView->ST,i+6);
+      Val = (double*)List_Pointer_Fast(ErrView->ST,i+9);
+
+      for (j = 0; j < 3; j++){
+	v = &V;
+	v->Pos.X = X[j];
+	v->Pos.Y = Y[j];
+	v->Pos.Z = Z[j];
+	if (Tree_Query (Pts, &v)){
+	  ver[j] = v;
+	}
+	else{
+	  v = Create_Vertex (k++, X[j], Y[j], Z[j], Val[j], -1.0);
+	  ver[j] = v;
+	  Tree_Add (m.Vertices, &v);
+	  Tree_Add (Pts, &v);
+	}
       }
-      else{
-        v = Create_Vertex (k++, t.X[j], t.Y[j], t.Z[j], t.V[j], -1.0);
-        ver[j] = v;
-        Tree_Add (m.Vertices, &v);
-        Tree_Add (Pts, &v);
-      }
+      si = Create_Simplex (ver[0], ver[1], ver[2], VertexUp);
+      Tree_Add (m.Simplexes, &si);
     }
-    si = Create_Simplex (ver[0], ver[1], ver[2], VertexUp);
-    Tree_Add (m.Simplexes, &si);
   }
-  
-  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
-    List_Read (ErrView->Tetrahedra, i, &s);
-    for (j = 0; j < 4; j++){
-      v = &V;
-      v->Pos.X = s.X[j];
-      v->Pos.Y = s.Y[j];
-      v->Pos.Z = s.Z[j];
-      if (Tree_Query (Pts, &v)){
-        ver[j] = v;
+
+  if(ErrView->NbSS){
+    nb = List_Nbr(ErrView->SS) / ErrView->NbSS ;
+    for(i = 0 ; i < List_Nbr(ErrView->SS) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->SS,i);
+      Y = (double*)List_Pointer_Fast(ErrView->SS,i+4);
+      Z = (double*)List_Pointer_Fast(ErrView->SS,i+8);
+      Val = (double*)List_Pointer_Fast(ErrView->SS,i+12);
+
+      for (j = 0; j < 4; j++){
+	v = &V;
+	v->Pos.X = X[j];
+	v->Pos.Y = Y[j];
+	v->Pos.Z = Z[j];
+	if (Tree_Query (Pts, &v)){
+	  ver[j] = v;
+	}
+	else{
+	  v = Create_Vertex (k++, X[j], Y[j], Z[j], Val[j], -1.0);
+	  ver[j] = v;
+	  Tree_Add (m.Vertices, &v);
+	  Tree_Add (Pts, &v);
+	}
       }
-      else{
-        v = Create_Vertex (k++, s.X[k], s.Y[j], s.Z[j], s.V[0], -1.0);
-        ver[j] = v;
-        Tree_Add (m.Vertices, &v);
-        Tree_Add (Pts, &v);
-      }
+      si = Create_Simplex (ver[0], ver[1], ver[2], ver[3]);
+      Tree_Add (m.Simplexes, &si);
     }
-    si = Create_Simplex (ver[0], ver[1], ver[2], ver[3]);
-    Tree_Add (m.Simplexes, &si);
   }
-  
+
   m.Grid.init = 0;
   m.Grid.Nx = 10;
   m.Grid.Ny = 10;
@@ -208,31 +221,42 @@ int BGMWithView (Post_View * ErrView){
 
 
 double ErrorInView (Post_View * ErrView, int *n){
-
-  Post_Simplex s, t;
-  double e, tot=0.0;
-  int i, j=0;
+  double e, tot=0.0, *X, *Y, *Z, *Val;
+  int i, j=0, nb;
 
   if(ErrView == NULL){
     Msg(WARNING, "Empty Error View");
     return 0.;
   }
 
-  for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
-    List_Read (ErrView->Triangles, i, &t);
-    e = (t.V[0] + t.V[1] + t.V[2]) / 3. ;
-    tot += e * e;
-    j++;
+  if(ErrView->NbST){
+    nb = List_Nbr(ErrView->ST) / ErrView->NbST ;
+    for(i = 0 ; i < List_Nbr(ErrView->ST) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->ST,i);
+      Y = (double*)List_Pointer_Fast(ErrView->ST,i+3);
+      Z = (double*)List_Pointer_Fast(ErrView->ST,i+6);
+      Val = (double*)List_Pointer_Fast(ErrView->ST,i+9);
+      e = (Val[0] + Val[1] + Val[2]) / 3. ;
+      tot += e * e;
+      j++;
+    }
   }
 
-  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
-    List_Read (ErrView->Tetrahedra, i, &s);
-    e = (t.V[0] + t.V[1] + t.V[2] + t.V[3]) * 0.25;
-    tot += e * e;
-    j++;
+  if(ErrView->NbSS){
+    nb = List_Nbr(ErrView->SS) / ErrView->NbSS ;
+    for(i = 0 ; i < List_Nbr(ErrView->SS) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->SS,i);
+      Y = (double*)List_Pointer_Fast(ErrView->SS,i+3);
+      Z = (double*)List_Pointer_Fast(ErrView->SS,i+8);
+      Val = (double*)List_Pointer_Fast(ErrView->SS,i+12);
+      e = (Val[0] + Val[1] + Val[2] + Val[3]) * 0.25 ;
+      tot += e * e;
+      j++;
+    }
   }
 
   *n = j;
+
   return 100 * sqrt (tot);
 }
 
@@ -243,20 +267,17 @@ double ErrorInView (Post_View * ErrView, int *n){
 
 int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
                double OptiValue, double *ObjFunct, char *OutFile){
-
-  Post_Simplex s, t;
-  double *h, *p, *e, xc, yc, zc, c[3];
-  int N, i, j, dim;
+  double *h, *p, *e, xc, yc, zc, c[3], *X, *Y, *Z, *Val;
+  int N, i, j, dim, nb;
   Simplex smp;
   FILE *f;
 
-  if (List_Nbr (ErrView->Tetrahedra))
+  if (ErrView->NbSS)
     dim = 3;
   else
     dim = 2;
 
-  N = List_Nbr (ErrView->Tetrahedra) +
-    List_Nbr (ErrView->Triangles) + 2;
+  N = ErrView->NbSS + ErrView->NbST + 2;
 
   h = (double *) malloc (N * sizeof (double));
   e = (double *) malloc (N * sizeof (double));
@@ -264,40 +285,50 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
 
   j = 0;
 
-  for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
-    List_Read (ErrView->Triangles, i, &t);
-
-    /*
-      Attention, cette ligne est seulement valable en
-      2d x-y. Si plus, calculer le centre du cercle en
-      3d ou utiliser une autre mesure de taille.
-    */
-    CircumCircle (t.X[0], t.Y[0],
-                  t.X[1], t.Y[1],
-                  t.X[2], t.Y[2],
-                  &xc, &yc);
-    h[j + 1] = sqrt ((xc - t.X[0]) * (xc - t.X[0]) +
-                     (yc - t.Y[0]) * (yc - t.Y[0]));
-    p[j + 1] = Degree;
-    e[j + 1] = (t.V[0] + t.V[1] + t.V[2]) / 3. ;
-    j++;
+  if(ErrView->NbST){
+    nb = List_Nbr(ErrView->ST) / ErrView->NbST ;
+    for(i = 0 ; i < List_Nbr(ErrView->ST) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->ST,i);
+      Y = (double*)List_Pointer_Fast(ErrView->ST,i+3);
+      Z = (double*)List_Pointer_Fast(ErrView->ST,i+6);
+      Val = (double*)List_Pointer_Fast(ErrView->ST,i+9);
+      /*
+	Attention, cette ligne est seulement valable en
+	2d x-y. Si plus, calculer le centre du cercle en
+	3d ou utiliser une autre mesure de taille.
+      */
+      CircumCircle (X[0], Y[0],
+		    X[1], Y[1],
+		    X[2], Y[2],
+		    &xc, &yc);
+      h[j + 1] = sqrt ((xc - X[0]) * (xc - X[0]) +
+		       (yc - Y[0]) * (yc - Y[0]));
+      p[j + 1] = Degree;
+      e[j + 1] = (Val[0] + Val[1] + Val[2]) / 3. ;
+      j++;
+    }
   }
 
-  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
-    List_Read (ErrView->Tetrahedra, i, &s);
+  if(ErrView->NbSS){
+    nb = List_Nbr(ErrView->SS) / ErrView->NbSS ;
+    for(i = 0 ; i < List_Nbr(ErrView->SS) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->SS,i);
+      Y = (double*)List_Pointer_Fast(ErrView->SS,i+3);
+      Z = (double*)List_Pointer_Fast(ErrView->SS,i+8);
+      Val = (double*)List_Pointer_Fast(ErrView->SS,i+12);
     
-    smp.center_tet (t.X, t.Y, t.Z, c);
+      smp.center_tet (X, Y, Z, c);
+      xc = c[0];
+      yc = c[1];
+      zc = c[2];
     
-    xc = c[0];
-    yc = c[1];
-    zc = c[2];
-    
-    h[j + 1] = sqrt ((xc - t.X[0]) * (xc - t.X[0]) +
-                     (yc - t.X[0]) * (yc - t.X[0]) +
-                     (zc - t.Y[0]) * (zc - t.Y[0]));
-    p[j + 1] = Degree;
-    e[j + 1] = (t.V[0] + t.V[1] + t.V[2] + t.V[3]) * 0.25;
-    j++;
+      h[j + 1] = sqrt ((xc - X[0]) * (xc - X[0]) +
+		       (yc - X[0]) * (yc - X[0]) +
+		       (zc - Y[0]) * (zc - Y[0]));
+      p[j + 1] = Degree;
+      e[j + 1] = (Val[0] + Val[1] + Val[2] + Val[3]) * 0.25;
+      j++;
+    }
   }
 
   *ObjFunct = AdaptMesh (j, OptiMethod, dim, e, h, p, OptiValue);
@@ -305,25 +336,40 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   f = fopen (OutFile, "w");
 
   fprintf (f, "View \"Auto_BGMesh\" Offset{0,0,0} {\n");
+
   j = 0;
-  for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
-    List_Read (ErrView->Triangles, i, &t);
-    fprintf (f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-             t.X[0], t.Y[0], t.Z[0],
-             t.X[1], t.Y[1], t.Z[1],
-             t.X[2], t.Y[2], t.Z[2],
-             h[j], h[j], h[j]);
-    j++;
+
+  if(ErrView->NbST){
+    nb = List_Nbr(ErrView->ST) / ErrView->NbST ;
+    for(i = 0 ; i < List_Nbr(ErrView->ST) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->ST,i);
+      Y = (double*)List_Pointer_Fast(ErrView->ST,i+3);
+      Z = (double*)List_Pointer_Fast(ErrView->ST,i+6);
+      Val = (double*)List_Pointer_Fast(ErrView->ST,i+9);
+      fprintf (f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	       X[0], Y[0], Z[0],
+	       X[1], Y[1], Z[1],
+	       X[2], Y[2], Z[2],
+	       h[j], h[j], h[j]);
+      j++;
+    }
   }
-  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
-    List_Read (ErrView->Tetrahedra, i, &s);
-    fprintf (f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-             s.X[0], s.Y[0], s.Z[0],
-             s.X[1], s.Y[1], s.Z[1],
-             s.X[2], s.Y[2], s.Z[2],
-             s.X[3], s.Y[3], s.Z[3],
-             h[j], h[j], h[j], h[j]);
-    j++;
+
+  if(ErrView->NbSS){
+    nb = List_Nbr(ErrView->SS) / ErrView->NbSS ;
+    for(i = 0 ; i < List_Nbr(ErrView->SS) ; i+=nb){
+      X = (double*)List_Pointer_Fast(ErrView->SS,i);
+      Y = (double*)List_Pointer_Fast(ErrView->SS,i+3);
+      Z = (double*)List_Pointer_Fast(ErrView->SS,i+8);
+      Val = (double*)List_Pointer_Fast(ErrView->SS,i+12);
+      fprintf (f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+	       X[0], Y[0], Z[0],
+	       X[1], Y[1], Z[1],
+	       X[2], Y[2], Z[2],
+	       X[3], Y[3], Z[3],
+	       h[j], h[j], h[j], h[j]);
+      j++;
+    }
   }
   fprintf (f, "};\n");
   fclose (f);
@@ -331,5 +377,6 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   Msg(INFOS, "Background Mesh Wriiten in '%s'", OutFile); 
 
   return 1;
+
 }
 

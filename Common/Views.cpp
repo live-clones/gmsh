@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.6 2000-11-26 21:34:22 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.7 2000-11-27 10:58:18 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -10,7 +10,8 @@ Post_View  *ActualView;
 
 extern Context_T   CTX ;
 
-static int         ActualViewNum=0;
+static int  ActualViewNum=0;
+static int  NbPoints, NbLines, NbTriangles, NbTetrahedra;
 
 /* ------------------------------------------------------------------------ */
 /*  V i e w s                                                               */
@@ -27,6 +28,8 @@ int fcmpPostViewDuplicateOf(const void *v1, const void *v2){
 void BeginView(int allocate){
   ActualView = (Post_View*)Malloc(sizeof(Post_View));
 
+  NbPoints = NbLines = NbTriangles = NbTetrahedra = 0;
+
   ActualView->NbSP = ActualView->NbVP = ActualView->NbTP = 0;
   ActualView->NbSL = ActualView->NbVL = ActualView->NbTL = 0;
   ActualView->NbST = ActualView->NbVT = ActualView->NbTT = 0;
@@ -38,33 +41,25 @@ void BeginView(int allocate){
     ActualView->SP = List_Create(100,1000,sizeof(double));
     ActualView->VP = List_Create(100,1000,sizeof(double));
     ActualView->TP = List_Create(100,1000,sizeof(double));
-    ActualView->Points = List_Create(100,1000,sizeof(Post_Simplex));
     
     ActualView->SL = List_Create(100,1000,sizeof(double));
     ActualView->VL = List_Create(100,1000,sizeof(double));
     ActualView->TL = List_Create(100,1000,sizeof(double));
-    ActualView->Lines = List_Create(100,1000,sizeof(Post_Simplex));
     
     ActualView->ST = List_Create(100,1000,sizeof(double));
     ActualView->VT = List_Create(100,1000,sizeof(double));
     ActualView->TT = List_Create(100,1000,sizeof(double));
-    ActualView->Triangles = List_Create(100,1000,sizeof(Post_Simplex));
     
     ActualView->SS = List_Create(100,1000,sizeof(double));
     ActualView->VS = List_Create(100,1000,sizeof(double));
     ActualView->TS = List_Create(100,1000,sizeof(double));
-    ActualView->Tetrahedra = List_Create(100,1000,sizeof(Post_Simplex));
   }
   else{
     ActualView->Time = NULL;
     ActualView->SP = NULL; ActualView->VP = NULL; ActualView->TP = NULL;
-    ActualView->Points = NULL;
     ActualView->SL = NULL; ActualView->VL = NULL; ActualView->TL = NULL;
-    ActualView->Lines = NULL;
     ActualView->ST = NULL; ActualView->VT = NULL; ActualView->TT = NULL;
-    ActualView->Triangles = NULL;
     ActualView->SS = NULL; ActualView->VS = NULL; ActualView->TS = NULL;
-    ActualView->Tetrahedra = NULL;
   }
 
   ActualView->Changed = 1;
@@ -108,20 +103,20 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbSP){
     nb = List_Nbr(ActualView->SP) / ActualView->NbSP ;
     for(i = 0 ; i < List_Nbr(ActualView->SP) ; i+=nb)
-      AddView_ScalarSimplex(0, (double*)List_Pointer(ActualView->SP,i),
-                            nb-3, (double*)List_Pointer(ActualView->SP,i+3));
+      Stat_ScalarSimplex(0, (double*)List_Pointer(ActualView->SP,i),
+			 nb-3, (double*)List_Pointer(ActualView->SP,i+3));
   }
   if(ActualView->NbVP){
     nb = List_Nbr(ActualView->VP) / ActualView->NbVP ;
     for(i = 0 ; i < List_Nbr(ActualView->VP) ; i+=nb)
-      AddView_VectorSimplex(0, (double*)List_Pointer(ActualView->VP,i),
-                            nb-3, (double*)List_Pointer(ActualView->VP,i+3));
+      Stat_VectorSimplex(0, (double*)List_Pointer(ActualView->VP,i),
+			 nb-3, (double*)List_Pointer(ActualView->VP,i+3));
   }
   if(ActualView->NbTP){
     nb = List_Nbr(ActualView->TP) / ActualView->NbTP ;
     for(i = 0 ; i < List_Nbr(ActualView->TP) ; i+=nb)
-      AddView_TensorSimplex(0, (double*)List_Pointer(ActualView->TP,i),
-                            nb-3, (double*)List_Pointer(ActualView->TP,i+3));
+      Stat_TensorSimplex(0, (double*)List_Pointer(ActualView->TP,i),
+			 nb-3, (double*)List_Pointer(ActualView->TP,i+3));
   }
 
   // Lines
@@ -129,20 +124,20 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbSL){
     nb = List_Nbr(ActualView->SL) / ActualView->NbSL ;
     for(i = 0 ; i < List_Nbr(ActualView->SL) ; i+=nb)
-      AddView_ScalarSimplex(1, (double*)List_Pointer(ActualView->SL,i),
-                            nb-6, (double*)List_Pointer(ActualView->SL,i+6));
+      Stat_ScalarSimplex(1, (double*)List_Pointer(ActualView->SL,i),
+			 nb-6, (double*)List_Pointer(ActualView->SL,i+6));
   }
   if(ActualView->NbVL){
     nb = List_Nbr(ActualView->VL) / ActualView->NbVL ;
     for(i = 0 ; i < List_Nbr(ActualView->VL) ; i+=nb)
-      AddView_VectorSimplex(1, (double*)List_Pointer(ActualView->VL,i),
-                            nb-6, (double*)List_Pointer(ActualView->VL,i+6));
+      Stat_VectorSimplex(1, (double*)List_Pointer(ActualView->VL,i),
+			 nb-6, (double*)List_Pointer(ActualView->VL,i+6));
   }
   if(ActualView->NbTL){
     nb = List_Nbr(ActualView->TL) / ActualView->NbTL ;
     for(i = 0 ; i < List_Nbr(ActualView->TL) ; i+=nb)
-      AddView_TensorSimplex(1, (double*)List_Pointer(ActualView->TL,i),
-                            nb-6, (double*)List_Pointer(ActualView->TL,i+6));
+      Stat_TensorSimplex(1, (double*)List_Pointer(ActualView->TL,i),
+			 nb-6, (double*)List_Pointer(ActualView->TL,i+6));
   }
 
   // Triangles
@@ -150,20 +145,20 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbST){
     nb = List_Nbr(ActualView->ST) / ActualView->NbST ;
     for(i = 0 ; i < List_Nbr(ActualView->ST) ; i+=nb)
-      AddView_ScalarSimplex(2, (double*)List_Pointer(ActualView->ST,i),
-                            nb-9, (double*)List_Pointer(ActualView->ST,i+9));
+      Stat_ScalarSimplex(2, (double*)List_Pointer(ActualView->ST,i),
+			 nb-9, (double*)List_Pointer(ActualView->ST,i+9));
   }
   if(ActualView->NbVT){
     nb = List_Nbr(ActualView->VT) / ActualView->NbVT ;
     for(i = 0 ; i < List_Nbr(ActualView->VT) ; i+=nb)
-      AddView_VectorSimplex(2, (double*)List_Pointer(ActualView->VT,i),
-                            nb-9, (double*)List_Pointer(ActualView->VT,i+9));
+      Stat_VectorSimplex(2, (double*)List_Pointer(ActualView->VT,i),
+			 nb-9, (double*)List_Pointer(ActualView->VT,i+9));
   }
   if(ActualView->NbTT){
     nb = List_Nbr(ActualView->TT) / ActualView->NbTT ;
     for(i = 0 ; i < List_Nbr(ActualView->TT) ; i+=nb)
-      AddView_TensorSimplex(2, (double*)List_Pointer(ActualView->TT,i),
-                            nb-9, (double*)List_Pointer(ActualView->TT,i+9));
+      Stat_TensorSimplex(2, (double*)List_Pointer(ActualView->TT,i),
+			 nb-9, (double*)List_Pointer(ActualView->TT,i+9));
   }
 
   // Tetrahedra
@@ -171,20 +166,20 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(ActualView->NbSS){
     nb = List_Nbr(ActualView->SS) / ActualView->NbSS ;
     for(i = 0 ; i < List_Nbr(ActualView->SS) ; i+=nb)
-      AddView_ScalarSimplex(3, (double*)List_Pointer(ActualView->SS,i),
-                            nb-12, (double*)List_Pointer(ActualView->SS,i+12));
+      Stat_ScalarSimplex(3, (double*)List_Pointer(ActualView->SS,i),
+			 nb-12, (double*)List_Pointer(ActualView->SS,i+12));
   }
   if(ActualView->NbVS){
     nb = List_Nbr(ActualView->VS) / ActualView->NbVS ;
     for(i = 0 ; i < List_Nbr(ActualView->VS) ; i+=nb)
-      AddView_VectorSimplex(3, (double*)List_Pointer(ActualView->VS,i),
-                            nb-12, (double*)List_Pointer(ActualView->VS,i+12));
+      Stat_VectorSimplex(3, (double*)List_Pointer(ActualView->VS,i),
+			 nb-12, (double*)List_Pointer(ActualView->VS,i+12));
   }
   if(ActualView->NbTS){
     nb = List_Nbr(ActualView->TS) / ActualView->NbTS ;
     for(i = 0 ; i < List_Nbr(ActualView->TS) ; i+=nb)
-      AddView_TensorSimplex(3, (double*)List_Pointer(ActualView->TS,i),
-                            nb-12, (double*)List_Pointer(ActualView->TS,i+12));
+      Stat_TensorSimplex(3, (double*)List_Pointer(ActualView->TS,i),
+			 nb-12, (double*)List_Pointer(ActualView->TS,i+12));
   }
 
   // Dummy time values if using old parsed format...
@@ -254,20 +249,11 @@ void FreeView(Post_View *v){
 
   if(free && !v->Links){
     Msg(DEBUG, " ->Freeing View");
-
     List_Delete(v->Time);
-
     List_Delete(v->SP); List_Delete(v->VP); List_Delete(v->TP);
-    List_Delete(v->Points);
-
     List_Delete(v->SL); List_Delete(v->VL); List_Delete(v->TL);
-    List_Delete(v->Lines);
-
     List_Delete(v->ST); List_Delete(v->VT); List_Delete(v->TT);
-    List_Delete(v->Triangles);
-
     List_Delete(v->SS); List_Delete(v->VS); List_Delete(v->TS);
-    List_Delete(v->Tetrahedra);   
   }
 
 }
@@ -301,68 +287,52 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
 }
 
 /* ------------------------------------------------------------------------ */
-/*  S c a l a r S i m p l e x                                               */
+/*  S t a t _ X X X  S i m p l e x                                          */
 /* ------------------------------------------------------------------------ */
 
-void AddView_ScalarSimplex(int dim, double *coord, int N, double *v){
-  Post_Simplex S;
+void Stat_ScalarSimplex(int dim, double *coord, int N, double *V){
   int i,nbnod;
-  
-  S.Type = DRAW_POST_SCALAR;
-  S.Dimension = dim;
+  double *X, *Y, *Z;
   
   switch(dim){
-  case 0 : nbnod = 1 ; break; // point
-  case 1 : nbnod = 2 ; break; // line
-  case 2 : nbnod = 3 ; break; // triangle
-  case 3 : nbnod = 4 ; break; // tetrahedron
+  case 0 : nbnod = 1 ; NbPoints++; break;
+  case 1 : nbnod = 2 ; NbLines++; break;
+  case 2 : nbnod = 3 ; NbTriangles++; break;
+  case 3 : nbnod = 4 ; NbTetrahedra++; break;
   }
 
-  S.X = &coord[0] ; S.Y = &coord[nbnod] ; S.Z = &coord[2*nbnod] ; S.V = v ;
+  X = &coord[0] ; Y = &coord[nbnod] ; Z = &coord[2*nbnod] ;
 
-  if(!List_Nbr(ActualView->Points) &&    !List_Nbr(ActualView->Lines) && 
-     !List_Nbr(ActualView->Triangles) && !List_Nbr(ActualView->Tetrahedra)){
-    ActualView->Min = S.V[0];
-    ActualView->Max = S.V[0];
+  if(NbPoints == 1 && NbLines == 1 && NbTriangles == 1 && NbTetrahedra == 1){
+    ActualView->Min = V[0];
+    ActualView->Max = V[0];
     ActualView->NbTimeStep = N/nbnod;
   }
   else if(N/nbnod < ActualView->NbTimeStep)
     ActualView->NbTimeStep = N/nbnod ;
 
   for(i=0 ; i<N ; i++){
-    if(S.V[i] < ActualView->Min) ActualView->Min = S.V[i] ;
-    if(S.V[i] > ActualView->Max) ActualView->Max = S.V[i] ;
+    if(V[i] < ActualView->Min) ActualView->Min = V[i] ;
+    if(V[i] > ActualView->Max) ActualView->Max = V[i] ;
   }
-  
-  switch(dim){
-  case 0 : List_Add(ActualView->Points,&S); break;
-  case 1 : List_Add(ActualView->Lines,&S); break;
-  case 2 : List_Add(ActualView->Triangles,&S); break;
-  case 3 : List_Add(ActualView->Tetrahedra,&S); break;
-  }
-  
 }
 
-void AddView_VectorSimplex(int dim, double *coord, int N, double *v){
-  Post_Simplex S;
+void Stat_VectorSimplex(int dim, double *coord, int N, double *V){
   double l0;
   int nbnod, i;
-    
-  S.Type = DRAW_POST_VECTOR;
-  S.Dimension = dim;
+  double *X, *Y, *Z;
 
   switch(dim){
-  case 0 : nbnod = 1 ; break; // point
-  case 1 : nbnod = 2 ; break; // line
-  case 2 : nbnod = 3 ; break; // triangle
-  case 3 : nbnod = 4 ; break; // tetrahedron
+  case 0 : nbnod = 1 ; NbPoints++; break;
+  case 1 : nbnod = 2 ; NbLines++; break; 
+  case 2 : nbnod = 3 ; NbTriangles++; break;
+  case 3 : nbnod = 4 ; NbTetrahedra++; break;
   }
 
-  S.X = &coord[0] ; S.Y = &coord[nbnod] ; S.Z = &coord[2*nbnod] ; S.V = v ;
+  X = &coord[0] ; Y = &coord[nbnod] ; Z = &coord[2*nbnod] ;
 
-  if(!List_Nbr(ActualView->Points) &&    !List_Nbr(ActualView->Lines) && 
-     !List_Nbr(ActualView->Triangles) && !List_Nbr(ActualView->Tetrahedra)){
-    l0 = sqrt(DSQR(S.V[0])+DSQR(S.V[1])+DSQR(S.V[2]));
+  if(NbPoints == 1 && NbLines == 1 && NbTriangles == 1 && NbTetrahedra == 1){
+    l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
     ActualView->Min = l0;
     ActualView->Max = l0;
     ActualView->NbTimeStep = N/(3*nbnod) ;
@@ -371,22 +341,15 @@ void AddView_VectorSimplex(int dim, double *coord, int N, double *v){
     ActualView->NbTimeStep = N/(3*nbnod) ;
 
   for(i=0 ; i<N ; i+=3){
-    l0 = sqrt(DSQR(S.V[i])+DSQR(S.V[i+1])+DSQR(S.V[i+2]));
+    l0 = sqrt(DSQR(V[i])+DSQR(V[i+1])+DSQR(V[i+2]));
     if(l0 < ActualView->Min) ActualView->Min = l0 ;
     if(l0 > ActualView->Max) ActualView->Max = l0 ;
   }
 
   ActualView->ScalarOnly = 0;
-
-  switch(dim){
-  case 0 : List_Add(ActualView->Points,&S); break;
-  case 1 : List_Add(ActualView->Lines,&S); break;
-  case 2 : List_Add(ActualView->Triangles,&S); break;
-  case 3 : List_Add(ActualView->Tetrahedra,&S); break;
-  }
 }
 
-void AddView_TensorSimplex(int dim, double *coord, int N, double *v){
+void Stat_TensorSimplex(int dim, double *coord, int N, double *v){
   Msg(ERROR, "Tensor Field Views not Implemented Yet");
 }
 
@@ -446,10 +409,6 @@ void Read_View(FILE *file, char *filename){
 
       ActualView->Time = List_CreateFromFile(nbtimestep, sizeof(double), file, format);
 
-      if((nb = ActualView->NbSP + ActualView->NbVP + ActualView->NbTP))
-        ActualView->Points = List_Create(nb,1,sizeof(Post_Simplex));
-      else
-        ActualView->Points = NULL ;
       nb = ActualView->NbSP ? 
         ActualView->NbSP * nbtimestep     + ActualView->NbSP * 3 : 0 ;
       ActualView->SP = List_CreateFromFile(nb, sizeof(double), file, format);
@@ -460,10 +419,6 @@ void Read_View(FILE *file, char *filename){
         ActualView->NbTP * nbtimestep * 9 + ActualView->NbTP * 3 : 0 ;
       ActualView->TP = List_CreateFromFile(nb, sizeof(double), file, format);
 
-      if((nb = ActualView->NbSL + ActualView->NbVL + ActualView->NbTL))
-        ActualView->Lines = List_Create(nb,1,sizeof(Post_Simplex));
-      else
-        ActualView->Lines = NULL ;
       nb = ActualView->NbSL ? 
         ActualView->NbSL * nbtimestep * 2     + ActualView->NbSL * 6 : 0 ;
       ActualView->SL = List_CreateFromFile(nb, sizeof(double), file, format);
@@ -474,10 +429,6 @@ void Read_View(FILE *file, char *filename){
         ActualView->NbTL * nbtimestep * 2 * 9 + ActualView->NbTL * 6 : 0 ;
       ActualView->TL = List_CreateFromFile(nb, sizeof(double), file, format);
 
-      if((nb = ActualView->NbST + ActualView->NbVT + ActualView->NbTT))
-        ActualView->Triangles = List_Create(nb,1,sizeof(Post_Simplex));
-      else
-        ActualView->Triangles = NULL ;
       nb = ActualView->NbST ? 
         ActualView->NbST * nbtimestep * 3     + ActualView->NbST * 9 : 0 ;
       ActualView->ST = List_CreateFromFile(nb, sizeof(double), file, format);
@@ -488,10 +439,6 @@ void Read_View(FILE *file, char *filename){
         ActualView->NbTT * nbtimestep * 3 * 9 + ActualView->NbTT * 9 : 0 ;
       ActualView->TT = List_CreateFromFile(nb, sizeof(double), file, format);
 
-      if((nb = ActualView->NbSS + ActualView->NbVS + ActualView->NbTS))
-        ActualView->Tetrahedra = List_Create(nb,1,sizeof(Post_Simplex));
-      else
-        ActualView->Tetrahedra = NULL ;
       nb = ActualView->NbSS ?
         ActualView->NbSS * nbtimestep * 4     + ActualView->NbSS * 12 : 0 ;
       ActualView->SS = List_CreateFromFile(nb, sizeof(double), file, format);

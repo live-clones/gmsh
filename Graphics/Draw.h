@@ -1,4 +1,4 @@
-/* $Id: Draw.h,v 1.6 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: Draw.h,v 1.7 2000-11-27 10:58:54 geuzaine Exp $ */
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
@@ -73,13 +73,41 @@ void Draw_Simplex_Volume (void *a, void *b);
 void Draw_Hexahedron_Volume (void *a, void *b);
 void Draw_Prism_Volume (void *a, void *b);
 
-void Draw_Post_Tetrahedron (Post_View * View, Post_Simplex * s,
-                            double ValMin, double ValMax, double Raise[3][5]);
-void Draw_Post_Triangle (Post_View * View, Post_Simplex * t,
-                         double ValMin, double ValMax, double Raise[3][5]);
-void Draw_Post_Line (Post_View * View, Post_Simplex * l,
-                     double ValMin, double ValMax, double Raise[3][5]);
-void Draw_Post_Point (Post_View * View, Post_Simplex * p,
-                      double ValMin, double ValMax, double Raise[3][5]);
+void Draw_ScalarPoint(Post_View *View, 
+		      double ValMin, double ValMax, double Raise[3][5],
+		      double *X, double *Y, double *Z, double *V);
+void Draw_VectorPoint(Post_View *View, 
+		      double ValMin, double ValMax, double Raise[3][5],
+		      double *X, double *Y, double *Z, double *V);
+void Draw_TensorPoint(Post_View *View, 
+		      double ValMin, double ValMax, double Raise[3][5],
+		      double *X, double *Y, double *Z, double *V);
+void Draw_ScalarLine(Post_View *View, 
+		     double ValMin, double ValMax, double Raise[3][5],
+		     double *X, double *Y, double *Z, double *V);
+void Draw_VectorLine(Post_View *View, 
+		     double ValMin, double ValMax, double Raise[3][5],
+		     double *X, double *Y, double *Z, double *V);
+void Draw_TensorLine(Post_View *View, 
+		     double ValMin, double ValMax, double Raise[3][5],
+		     double *X, double *Y, double *Z, double *V);
+void Draw_ScalarTriangle(Post_View *View, 
+			 double ValMin, double ValMax, double Raise[3][5],
+			 double *X, double *Y, double *Z, double *V);
+void Draw_VectorTriangle(Post_View *View, 
+			 double ValMin, double ValMax, double Raise[3][5],
+			 double *X, double *Y, double *Z, double *V);
+void Draw_TensorTriangle(Post_View *View, 
+			 double ValMin, double ValMax, double Raise[3][5],
+			 double *X, double *Y, double *Z, double *V);
+void Draw_ScalarTetrahedron(Post_View *View, 
+			    double ValMin, double ValMax, double Raise[3][5],
+			    double *X, double *Y, double *Z, double *V);
+void Draw_VectorTetrahedron(Post_View *View, 
+			    double ValMin, double ValMax, double Raise[3][5],
+			    double *X, double *Y, double *Z, double *V);
+void Draw_TensorTetrahedron(Post_View *View, 
+			    double ValMin, double ValMax, double Raise[3][5],
+			    double *X, double *Y, double *Z, double *V);
 
 #endif

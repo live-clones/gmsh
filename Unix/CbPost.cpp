@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.6 2000-11-26 15:43:48 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.7 2000-11-27 10:58:59 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -129,10 +129,6 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   }
 
   v2->Time        = v1->Time;
-  v2->Points      = v1->Points;
-  v2->Lines       = v1->Lines;
-  v2->Triangles   = v1->Triangles;
-  v2->Tetrahedra  = v1->Tetrahedra;
   v2->ScalarOnly  = v1->ScalarOnly;
   v2->Min         = v1->Min;       
   v2->Max         = v1->Max;      
