@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.194 2003-12-03 22:22:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.195 2003-12-04 02:10:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -967,6 +967,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_error_filename(0, GMSH_SET, (char *)WID->gen_input[2]->value());
   opt_general_options_filename(0, GMSH_SET, (char *)WID->gen_input[3]->value());
   opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[4]->value());
+  opt_general_web_browser(0, GMSH_SET, (char *)WID->gen_input[5]->value());
 }
 
 // Geometry options

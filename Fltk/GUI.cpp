@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.263 2003-12-03 22:32:52 geuzaine Exp $
+// $Id: GUI.cpp,v 1.264 2003-12-04 02:10:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1482,14 +1482,22 @@ void GUI::create_option_window()
       gen_input[1] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Temporary file");
       gen_input[2] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Error file");
       gen_input[3] = new Fl_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Option file");
-      gen_input[4] = new Fl_Input(2 * WB, 2 * WB + 10 * BH, IW, BH, "Text editor command");
-      for(i = 0; i < 5; i++) {
+      for(i = 0; i < 4; i++) {
         gen_input[i]->align(FL_ALIGN_RIGHT);
       }
 
       Fl_Button *b0 = new Fl_Button(width - 2 * BB - 2 * WB, 2 * WB + 9 * BH, 2 * BB, BH, "Restore default options");
       b0->callback(options_restore_defaults_cb);
 
+      o->end();
+    }
+    {
+      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Helpers");
+      gen_input[4] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Text editor command");
+      gen_input[5] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Web browser command");
+      for(i = 4; i < 6; i++) {
+        gen_input[i]->align(FL_ALIGN_RIGHT);
+      }
       o->end();
     }
     {

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.125 2003-12-03 04:14:17 geuzaine Exp $
+// $Id: Options.cpp,v 1.126 2003-12-04 02:10:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -780,6 +780,10 @@ char *opt_general_web_browser(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.web_browser = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_input[5]->value(CTX.web_browser);
+#endif
   return CTX.web_browser;
 }
 
