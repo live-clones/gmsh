@@ -73,4 +73,10 @@ Line Loop(54) = {-45,44};
 Plane Surface(55) = {54};
 
 // extruding this makes Gmsh go nuts
+
+// we just need to generalize 
+// int compareTwoCurves(const void *a, const void *b)
+// in Geo/CAD.cpp
+// Currently, we only compare start/end points ...
+
 Extrude Surface {51, {0,0,3}};
