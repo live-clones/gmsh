@@ -11,7 +11,7 @@
 #endif
 
 
-//#include <visual.hpp>
+#include <visual.hpp>
 
 #include "nginterface.h"
 // #include <FlexLexer.h>

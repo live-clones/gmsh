@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2004-12-08 20:01:21 geuzaine Exp $
+# $Id: Makefile,v 1.8 2004-12-08 20:04:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -1332,6 +1332,41 @@ curvedelems2.o: libsrc/meshing/curvedelems2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp
+hprefinement.o: libsrc/meshing/hprefinement.cpp libsrc/include/mystdlib.h \
+  libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
+  libsrc/general/myadt.hpp libsrc/include/mydefs.hpp \
+  libsrc/general/ngexception.hpp libsrc/general/parthreads.hpp \
+  libsrc/general/moveablemem.hpp libsrc/general/dynamicmem.hpp \
+  libsrc/general/template.hpp libsrc/general/array.hpp \
+  libsrc/general/table.hpp libsrc/general/hashtabl.hpp \
+  libsrc/general/symbolta.hpp libsrc/general/bitarray.hpp \
+  libsrc/general/flags.hpp libsrc/general/spbita2d.hpp \
+  libsrc/general/seti.hpp libsrc/general/optmem.hpp \
+  libsrc/general/autoptr.hpp libsrc/general/sort.hpp \
+  libsrc/general/stack.hpp libsrc/general/mystring.hpp \
+  libsrc/include/gprim.hpp libsrc/gprim/gprim.hpp \
+  libsrc/gprim/geomobjects.hpp libsrc/gprim/geomops.hpp \
+  libsrc/gprim/geomfuncs.hpp libsrc/gprim/geom2d.hpp \
+  libsrc/gprim/geom3d.hpp libsrc/gprim/geomtest3d.hpp \
+  libsrc/gprim/transform3d.hpp libsrc/gprim/adtree.hpp \
+  libsrc/include/linalg.hpp libsrc/linalg/linalg.hpp \
+  libsrc/linalg/vector.hpp libsrc/linalg/densemat.hpp \
+  libsrc/linalg/polynomial.hpp libsrc/include/opti.hpp \
+  libsrc/opti/opti.hpp libsrc/meshing/msghandler.hpp \
+  libsrc/meshing/meshtype.hpp libsrc/meshing/localh.hpp \
+  libsrc/meshing/meshclass.hpp libsrc/meshing/global.hpp \
+  libsrc/meshing/meshtool.hpp libsrc/meshing/ruler2.hpp \
+  libsrc/meshing/adfront2.hpp libsrc/meshing/meshing2.hpp \
+  libsrc/meshing/improve2.hpp libsrc/meshing/geomsearch.hpp \
+  libsrc/meshing/adfront3.hpp libsrc/meshing/ruler3.hpp \
+  libsrc/meshing/meshing3.hpp libsrc/meshing/improve3.hpp \
+  libsrc/meshing/findip.hpp libsrc/meshing/topology.hpp \
+  libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
+  libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
+  libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
+  libsrc/meshing/specials.hpp libsrc/meshing/hpref_trig.hpp \
+  libsrc/meshing/hpref_quad.hpp libsrc/meshing/hpref_tet.hpp \
+  libsrc/meshing/hpref_prism.hpp
 nglib.o: libsrc/interface/nglib.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/general/ngexception.hpp \
