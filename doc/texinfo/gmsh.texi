@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.57 2003-05-14 14:53:02 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.58 2003-05-17 17:01:45 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -380,13 +380,34 @@ are defined only by an ordered list of their nodes but that no predefined
 order relation is assumed between any two elements.
 
 The mesh generation is performed in the same bottom-up flow as the geometry
-creation: lines are discretized first; the mesh of the lines is then used
-to mesh the surfaces; then the mesh of the surfaces is used to mesh the
-volumes. This automatically assures the conformity of the mesh when, for
-example, two surfaces share a common line. Every meshing step is
-constrained by the characteristic length field, which can be uniform,
-specified by characteristic lengths associated with elementary geometrical
-entities, or associated with another mesh (the background mesh).
+creation: lines are discretized first; the mesh of the lines is then used to
+mesh the surfaces; then the mesh of the surfaces is used to mesh the
+volumes. In this process, the mesh of an entity is only constrained by the
+mesh of its boundary@footnote{For example, in three dimensions:
+
+@itemize @bullet
+@item
+the triangles discretizing a surface will be forced to be faces of
+tetrahedra in the final 3D mesh only if the surface is part of the boundary
+of a volume;
+@item
+the line elements discretizing a curve will be forced to be edges of
+tetrahedra in the final 3D mesh only if the curve is part of the boundary of
+a surface, itself part of the boundary of a volume;
+@item
+a single node discretizing a point in the middle of a volume will be forced
+to be a vertex of one of the tetrahedra in the final 3D mesh only if this
+point is connected to a curve, itself part of the boundary of a surface,
+itself part of the boundary of a volume...
+@end itemize
+}. This automatically assures the conformity of the mesh when, for example,
+two surfaces share a common line. But this also implies that the
+discretization of an ``isolated'' (@var{n}-1)-th entity inside an @var{n}-th
+dimensional entity does @emph{not} constrain the @var{n}-th dimensional
+mesh.  Every meshing step is constrained by the characteristic length field,
+which can be uniform, specified by characteristic lengths associated with
+elementary geometrical entities, or associated with another mesh (the
+background mesh).
 
 For each meshing step, all structured mesh directives are executed first,
 and serve as additional constraints for the unstructured parts. The
