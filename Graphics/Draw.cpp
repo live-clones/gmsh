@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.10 2000-12-10 00:06:50 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.11 2000-12-10 23:31:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -26,6 +26,8 @@ extern List_T      *Post_ViewList;
 /* ------------------------------------------------------------------------ */
 
 void Draw3d(void){
+  int i;
+
   if(CTX.alpha){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -37,12 +39,8 @@ void Draw3d(void){
   }
   glPolygonOffset(1.0, 1);
 
-  if(CTX.clip[0]) glEnable(GL_CLIP_PLANE0);
-  if(CTX.clip[1]) glEnable(GL_CLIP_PLANE1);
-  if(CTX.clip[2]) glEnable(GL_CLIP_PLANE2);
-  if(CTX.clip[3]) glEnable(GL_CLIP_PLANE3);
-  if(CTX.clip[4]) glEnable(GL_CLIP_PLANE4);
-  if(CTX.clip[5]) glEnable(GL_CLIP_PLANE5);
+  for(i = 0 ; i < 6 ; i++)
+    if(CTX.clip[i]) glEnable((GLenum)(GL_CLIP_PLANE0 + i));
 
   /* This is sufficient, since we NEVER give different normals to nodes of one polygon */
   glShadeModel(GL_FLAT);   //glShadeModel(GL_SMOOTH);
@@ -57,16 +55,14 @@ void Draw3d(void){
 }
 
 void Draw2d(void){
-  glEnable(GL_CLIP_PLANE0);
-  glEnable(GL_CLIP_PLANE1);
-  glEnable(GL_CLIP_PLANE2);
-  glEnable(GL_CLIP_PLANE3);
-  glEnable(GL_CLIP_PLANE4);
-  glEnable(GL_CLIP_PLANE5);
+  int i;
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_LIGHTING);
   glShadeModel(GL_FLAT);
+
+  for(i = 0 ; i < 6 ; i++)
+    glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
