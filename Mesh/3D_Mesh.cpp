@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.24 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.25 2001-08-13 09:38:14 geuzaine Exp $
 
 /*
  
@@ -577,8 +577,6 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   N = List_Nbr (Points);
   n = IMAX (N / 20, 1);
 
-  Msg(STATUS2, "Mesh 3D... (initial)");
-
   Box_6_Tetraedron (Points, m);
   // List_Sort (Points, comparePosition);
 
@@ -731,12 +729,11 @@ void Maillage_Volume (void *data, void *dum){
 
   if (Extrude_Mesh (v)){
   }
-
-  if (v->Method == TRANSFINI){
-    MeshTransfiniteVolume (v);
+  else if (MeshTransfiniteVolume (v)){
   }
   else if (v->Typ == 99999){
-    Msg(STATUS3, "Nod=0 Elm=0"); 
+
+    Msg(STATUS2, "Mesh 3D... (initial)");
 
     LOCAL = &M;
     Create_BgMesh (THEM->BGM.Typ, .2, LOCAL);

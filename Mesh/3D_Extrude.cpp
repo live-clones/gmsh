@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.26 2001-08-12 12:30:48 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.27 2001-08-13 09:38:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -694,6 +694,8 @@ int Extrude_Mesh (Volume * v){
   Vertex *v1;
 
   if (!v->Extrude || !v->Extrude->mesh.ExtrudeMesh) return false;
+
+  Msg(STATUS3, "Meshing Volume %d", v->Num);
 
   ep = v->Extrude;
   THEV = v;

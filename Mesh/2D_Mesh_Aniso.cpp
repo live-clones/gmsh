@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.18 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.19 2001-08-13 09:38:14 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -654,8 +654,6 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
 
   N = List_Nbr (Points);
 
-  Msg(STATUS2, "Mesh 2D... (initial)");
-
   Box_2_Triangles (Points, s);
   for (i = 0; i < N; i++){
     THES = NULL;
@@ -995,6 +993,8 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
   N = List_Nbr (Points);
   n = N + 100;
 
+  Msg(STATUS2, "Mesh 2D... (initial)");
+
   Convex_Hull_Mesh_2D (Points, s);
   List_Reset (Points);
   Link_Simplexes (NULL, s->Simplexes);
@@ -1041,6 +1041,8 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
     Tree_Suppress (s->Simplexes, List_Pointer (Suppress, i));
   }
 
+  Msg(STATUS2, "Mesh 2D... (final)");
+
   if(!Tree_Right (s->Simplexes, &simp))
     Msg(WARNING, "No simplex left");
   else{
@@ -1052,8 +1054,8 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
              (simp->S[1] == &MyNewBoundary || !simp->S[1]->Pt_In_Simplex_2D (newv)) &&
              (simp->S[2] == &MyNewBoundary || !simp->S[2]->Pt_In_Simplex_2D (newv))){
         /*
-          Msg(STATUS2,"pt : %12.5E %12.5E",newv->Pos.X,newv->Pos.Y);
-          Msg(STATUS2,"not in : (%12.5E %12.5E) (%12.5E %12.5E) (%12.5E %12.5E)",
+          Msg(INFO,"pt : %12.5E %12.5E",newv->Pos.X,newv->Pos.Y);
+          Msg(INFO,"not in : (%12.5E %12.5E) (%12.5E %12.5E) (%12.5E %12.5E)",
           simp->V[0]->Pos.X,simp->V[0]->Pos.Y,simp->V[1]->Pos.X,
           simp->V[1]->Pos.Y,simp->V[2]->Pos.X,simp->V[2]->Pos.Y);
         */

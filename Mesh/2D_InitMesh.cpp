@@ -1,4 +1,4 @@
-// $Id: 2D_InitMesh.cpp,v 1.8 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 2D_InitMesh.cpp,v 1.9 2001-08-13 09:38:14 geuzaine Exp $
 
 /*
  
@@ -173,7 +173,7 @@ void Print ( void *data , void *dummy){
   ED *e;
 
   e = (ED*)data;
-  Msg(STATUS2,"%d %d",e->from,e->to); 
+  Msg(INFO,"%d %d",e->from,e->to); 
 }
 
 void SwapED ( void *data , void *dummy){
