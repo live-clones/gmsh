@@ -1,7 +1,3 @@
-#ifndef BISON_GMSH_TAB_HPP
-# define BISON_GMSH_TAB_HPP
-
-#ifndef YYSTYPE
 typedef union {
   char *c;
   int i;
@@ -10,196 +6,191 @@ typedef union {
   double v[5];
   Shape s;
   List_T *l;
-} yystype;
-# define YYSTYPE yystype
-# define YYSTYPE_IS_TRIVIAL 1
-#endif
-# define	tDOUBLE	257
-# define	tSTRING	258
-# define	tBIGSTR	259
-# define	tEND	260
-# define	tAFFECT	261
-# define	tDOTS	262
-# define	tPi	263
-# define	tMPI_Rank	264
-# define	tMPI_Size	265
-# define	tExp	266
-# define	tLog	267
-# define	tLog10	268
-# define	tSqrt	269
-# define	tSin	270
-# define	tAsin	271
-# define	tCos	272
-# define	tAcos	273
-# define	tTan	274
-# define	tRand	275
-# define	tAtan	276
-# define	tAtan2	277
-# define	tSinh	278
-# define	tCosh	279
-# define	tTanh	280
-# define	tFabs	281
-# define	tFloor	282
-# define	tCeil	283
-# define	tFmod	284
-# define	tModulo	285
-# define	tHypot	286
-# define	tPrintf	287
-# define	tSprintf	288
-# define	tStrCat	289
-# define	tStrPrefix	290
-# define	tDraw	291
-# define	tPoint	292
-# define	tCircle	293
-# define	tEllipse	294
-# define	tLine	295
-# define	tSurface	296
-# define	tSpline	297
-# define	tVolume	298
-# define	tCharacteristic	299
-# define	tLength	300
-# define	tParametric	301
-# define	tElliptic	302
-# define	tPlane	303
-# define	tRuled	304
-# define	tTriangulation	305
-# define	tTransfinite	306
-# define	tComplex	307
-# define	tPhysical	308
-# define	tUsing	309
-# define	tBump	310
-# define	tProgression	311
-# define	tPlugin	312
-# define	tRotate	313
-# define	tTranslate	314
-# define	tSymmetry	315
-# define	tDilate	316
-# define	tExtrude	317
-# define	tDuplicata	318
-# define	tLoop	319
-# define	tRecombine	320
-# define	tDelete	321
-# define	tCoherence	322
-# define	tIntersect	323
-# define	tAttractor	324
-# define	tLayers	325
-# define	tScalarPoint	326
-# define	tVectorPoint	327
-# define	tTensorPoint	328
-# define	tScalarLine	329
-# define	tVectorLine	330
-# define	tTensorLine	331
-# define	tScalarTriangle	332
-# define	tVectorTriangle	333
-# define	tTensorTriangle	334
-# define	tScalarQuadrangle	335
-# define	tVectorQuadrangle	336
-# define	tTensorQuadrangle	337
-# define	tScalarTetrahedron	338
-# define	tVectorTetrahedron	339
-# define	tTensorTetrahedron	340
-# define	tScalarHexahedron	341
-# define	tVectorHexahedron	342
-# define	tTensorHexahedron	343
-# define	tScalarPrism	344
-# define	tVectorPrism	345
-# define	tTensorPrism	346
-# define	tScalarPyramid	347
-# define	tVectorPyramid	348
-# define	tTensorPyramid	349
-# define	tText2D	350
-# define	tText3D	351
-# define	tCombine	352
-# define	tBSpline	353
-# define	tBezier	354
-# define	tNurbs	355
-# define	tOrder	356
-# define	tWith	357
-# define	tBounds	358
-# define	tKnots	359
-# define	tColor	360
-# define	tColorTable	361
-# define	tFor	362
-# define	tIn	363
-# define	tEndFor	364
-# define	tIf	365
-# define	tEndIf	366
-# define	tExit	367
-# define	tReturn	368
-# define	tCall	369
-# define	tFunction	370
-# define	tTrimmed	371
-# define	tShow	372
-# define	tHide	373
-# define	tB_SPLINE_SURFACE_WITH_KNOTS	374
-# define	tB_SPLINE_CURVE_WITH_KNOTS	375
-# define	tCARTESIAN_POINT	376
-# define	tTRUE	377
-# define	tFALSE	378
-# define	tUNSPECIFIED	379
-# define	tU	380
-# define	tV	381
-# define	tEDGE_CURVE	382
-# define	tVERTEX_POINT	383
-# define	tORIENTED_EDGE	384
-# define	tPLANE	385
-# define	tFACE_OUTER_BOUND	386
-# define	tEDGE_LOOP	387
-# define	tADVANCED_FACE	388
-# define	tVECTOR	389
-# define	tDIRECTION	390
-# define	tAXIS2_PLACEMENT_3D	391
-# define	tISO	392
-# define	tENDISO	393
-# define	tENDSEC	394
-# define	tDATA	395
-# define	tHEADER	396
-# define	tFILE_DESCRIPTION	397
-# define	tFILE_SCHEMA	398
-# define	tFILE_NAME	399
-# define	tMANIFOLD_SOLID_BREP	400
-# define	tCLOSED_SHELL	401
-# define	tADVANCED_BREP_SHAPE_REPRESENTATION	402
-# define	tFACE_BOUND	403
-# define	tCYLINDRICAL_SURFACE	404
-# define	tCONICAL_SURFACE	405
-# define	tCIRCLE	406
-# define	tTRIMMED_CURVE	407
-# define	tGEOMETRIC_SET	408
-# define	tCOMPOSITE_CURVE_SEGMENT	409
-# define	tCONTINUOUS	410
-# define	tCOMPOSITE_CURVE	411
-# define	tTOROIDAL_SURFACE	412
-# define	tPRODUCT_DEFINITION	413
-# define	tPRODUCT_DEFINITION_SHAPE	414
-# define	tSHAPE_DEFINITION_REPRESENTATION	415
-# define	tELLIPSE	416
-# define	tSolid	417
-# define	tEndSolid	418
-# define	tVertex	419
-# define	tFacet	420
-# define	tNormal	421
-# define	tOuter	422
-# define	tLoopSTL	423
-# define	tEndLoop	424
-# define	tEndFacet	425
-# define	tAFFECTPLUS	426
-# define	tAFFECTMINUS	427
-# define	tAFFECTTIMES	428
-# define	tAFFECTDIVIDE	429
-# define	tOR	430
-# define	tAND	431
-# define	tEQUAL	432
-# define	tNOTEQUAL	433
-# define	tAPPROXEQUAL	434
-# define	tLESSOREQUAL	435
-# define	tGREATEROREQUAL	436
-# define	tCROSSPRODUCT	437
-# define	tPLUSPLUS	438
-# define	tMINUSMINUS	439
-# define	UNARYPREC	440
+} YYSTYPE;
+#define	tDOUBLE	257
+#define	tSTRING	258
+#define	tBIGSTR	259
+#define	tEND	260
+#define	tAFFECT	261
+#define	tDOTS	262
+#define	tPi	263
+#define	tMPI_Rank	264
+#define	tMPI_Size	265
+#define	tExp	266
+#define	tLog	267
+#define	tLog10	268
+#define	tSqrt	269
+#define	tSin	270
+#define	tAsin	271
+#define	tCos	272
+#define	tAcos	273
+#define	tTan	274
+#define	tRand	275
+#define	tAtan	276
+#define	tAtan2	277
+#define	tSinh	278
+#define	tCosh	279
+#define	tTanh	280
+#define	tFabs	281
+#define	tFloor	282
+#define	tCeil	283
+#define	tFmod	284
+#define	tModulo	285
+#define	tHypot	286
+#define	tPrintf	287
+#define	tSprintf	288
+#define	tStrCat	289
+#define	tStrPrefix	290
+#define	tDraw	291
+#define	tPoint	292
+#define	tCircle	293
+#define	tEllipse	294
+#define	tLine	295
+#define	tSurface	296
+#define	tSpline	297
+#define	tVolume	298
+#define	tCharacteristic	299
+#define	tLength	300
+#define	tParametric	301
+#define	tElliptic	302
+#define	tPlane	303
+#define	tRuled	304
+#define	tTriangulation	305
+#define	tTransfinite	306
+#define	tComplex	307
+#define	tPhysical	308
+#define	tUsing	309
+#define	tBump	310
+#define	tProgression	311
+#define	tPlugin	312
+#define	tRotate	313
+#define	tTranslate	314
+#define	tSymmetry	315
+#define	tDilate	316
+#define	tExtrude	317
+#define	tDuplicata	318
+#define	tLoop	319
+#define	tRecombine	320
+#define	tDelete	321
+#define	tCoherence	322
+#define	tIntersect	323
+#define	tAttractor	324
+#define	tLayers	325
+#define	tScalarPoint	326
+#define	tVectorPoint	327
+#define	tTensorPoint	328
+#define	tScalarLine	329
+#define	tVectorLine	330
+#define	tTensorLine	331
+#define	tScalarTriangle	332
+#define	tVectorTriangle	333
+#define	tTensorTriangle	334
+#define	tScalarQuadrangle	335
+#define	tVectorQuadrangle	336
+#define	tTensorQuadrangle	337
+#define	tScalarTetrahedron	338
+#define	tVectorTetrahedron	339
+#define	tTensorTetrahedron	340
+#define	tScalarHexahedron	341
+#define	tVectorHexahedron	342
+#define	tTensorHexahedron	343
+#define	tScalarPrism	344
+#define	tVectorPrism	345
+#define	tTensorPrism	346
+#define	tScalarPyramid	347
+#define	tVectorPyramid	348
+#define	tTensorPyramid	349
+#define	tText2D	350
+#define	tText3D	351
+#define	tCombine	352
+#define	tBSpline	353
+#define	tBezier	354
+#define	tNurbs	355
+#define	tOrder	356
+#define	tWith	357
+#define	tBounds	358
+#define	tKnots	359
+#define	tColor	360
+#define	tColorTable	361
+#define	tFor	362
+#define	tIn	363
+#define	tEndFor	364
+#define	tIf	365
+#define	tEndIf	366
+#define	tExit	367
+#define	tReturn	368
+#define	tCall	369
+#define	tFunction	370
+#define	tTrimmed	371
+#define	tShow	372
+#define	tHide	373
+#define	tB_SPLINE_SURFACE_WITH_KNOTS	374
+#define	tB_SPLINE_CURVE_WITH_KNOTS	375
+#define	tCARTESIAN_POINT	376
+#define	tTRUE	377
+#define	tFALSE	378
+#define	tUNSPECIFIED	379
+#define	tU	380
+#define	tV	381
+#define	tEDGE_CURVE	382
+#define	tVERTEX_POINT	383
+#define	tORIENTED_EDGE	384
+#define	tPLANE	385
+#define	tFACE_OUTER_BOUND	386
+#define	tEDGE_LOOP	387
+#define	tADVANCED_FACE	388
+#define	tVECTOR	389
+#define	tDIRECTION	390
+#define	tAXIS2_PLACEMENT_3D	391
+#define	tISO	392
+#define	tENDISO	393
+#define	tENDSEC	394
+#define	tDATA	395
+#define	tHEADER	396
+#define	tFILE_DESCRIPTION	397
+#define	tFILE_SCHEMA	398
+#define	tFILE_NAME	399
+#define	tMANIFOLD_SOLID_BREP	400
+#define	tCLOSED_SHELL	401
+#define	tADVANCED_BREP_SHAPE_REPRESENTATION	402
+#define	tFACE_BOUND	403
+#define	tCYLINDRICAL_SURFACE	404
+#define	tCONICAL_SURFACE	405
+#define	tCIRCLE	406
+#define	tTRIMMED_CURVE	407
+#define	tGEOMETRIC_SET	408
+#define	tCOMPOSITE_CURVE_SEGMENT	409
+#define	tCONTINUOUS	410
+#define	tCOMPOSITE_CURVE	411
+#define	tTOROIDAL_SURFACE	412
+#define	tPRODUCT_DEFINITION	413
+#define	tPRODUCT_DEFINITION_SHAPE	414
+#define	tSHAPE_DEFINITION_REPRESENTATION	415
+#define	tELLIPSE	416
+#define	tSolid	417
+#define	tEndSolid	418
+#define	tVertex	419
+#define	tFacet	420
+#define	tNormal	421
+#define	tOuter	422
+#define	tLoopSTL	423
+#define	tEndLoop	424
+#define	tEndFacet	425
+#define	tAFFECTPLUS	426
+#define	tAFFECTMINUS	427
+#define	tAFFECTTIMES	428
+#define	tAFFECTDIVIDE	429
+#define	tOR	430
+#define	tAND	431
+#define	tEQUAL	432
+#define	tNOTEQUAL	433
+#define	tAPPROXEQUAL	434
+#define	tLESSOREQUAL	435
+#define	tGREATEROREQUAL	436
+#define	tCROSSPRODUCT	437
+#define	tPLUSPLUS	438
+#define	tMINUSMINUS	439
+#define	UNARYPREC	440
 
 
 extern YYSTYPE yylval;
-
-#endif /* not BISON_GMSH_TAB_HPP */
