@@ -1,14 +1,13 @@
-$Id: README.txt,v 1.3 2001-05-08 09:19:28 geuzaine Exp $
+$Id: README.txt,v 1.4 2002-10-24 03:03:59 geuzaine Exp $
 
 For Windows versions of Gmsh only:
 ==================================
 
-1) About opengl32.dll:
+1) About opengl32.dll and glu32.dll:
 
-If a version of the OpenGL library opengl32.dll is already installed
-on your system, you should remove the version shipped with
-Gmsh. Failing to do so may result in an incorrect behaviour of Gmsh
-(the most common being the graphic window staying "transparent").
+If your system complains about missing opengl32.dll or glu32.dll
+dynamic libraries, OpenGL is not properly installed on your
+system. Go download OpenGL on Microsoft's web site!
 
 2) About cygwin1.dll:
 
