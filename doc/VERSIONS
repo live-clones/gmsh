@@ -1,6 +1,8 @@
-$Id: VERSIONS,v 1.33 2001-07-26 21:26:35 geuzaine Exp $
+$Id: VERSIONS,v 1.34 2001-07-26 21:32:16 geuzaine Exp $
 
 New in 1.22: Fixed (yet another) bug for 2D mesh in the mean plane;
+Fixed surface coherence bug in extruded meshes; new double logarithmic
+post-processing scale;
 
 New in 1.21: Fixed more memory leaks; added -opt command line option
 to parse definitions directly from the command line; fixed missing
