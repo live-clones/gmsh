@@ -50,13 +50,13 @@ class mystreambuf: public streambuf
 // replaces the standard Ng_Init
 void NgAddOn_Init ()
 {
-  mycout = &cout;
-  myerr = &cerr;
-  testout = new ofstream ("test.out");
+  //mycout = &cout;
+  //myerr = &cerr;
+  //testout = new ofstream ("test.out");
 
-  //mycout = new ostream(new mystreambuf());
-  //myerr = new ostream(new mystreambuf());
-  //testout = new ofstream ("/dev/null");
+  mycout = new ostream(new mystreambuf());
+  myerr = new ostream(new mystreambuf());
+  testout = new ofstream ("/dev/null");
 }
 
 // generates volume mesh from surface mesh, without optimization
