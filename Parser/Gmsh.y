@@ -1,6 +1,10 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.76 2001-04-26 17:58:00 remacle Exp $
+// $Id: Gmsh.y,v 1.77 2001-05-16 15:11:45 geuzaine Exp $
+
+  //
+  // Generaliser sprintf avec des chaines de caracteres
+  // 
 
 #include <stdarg.h>
 
@@ -1453,7 +1457,13 @@ Command :
 	  while(!feof(yyin)){
 	    yyparse();
 	  }
-	  fclose(yyin);
+	  //
+	  //Est-ce grave de laisser le stream ouvert? Si on fait le
+	  //fclose, on ne peut pas faire appel a une fonction
+	  //(Function) definie en dehors de son fichier de
+	  //definition...
+	  //
+	  //fclose(yyin);
 	  yyin = yyinTab[--RecursionLevel];
 	  strcpy(yyname,yynameTab[RecursionLevel]);
 	  yylineno = yylinenoTab[RecursionLevel];
@@ -2409,6 +2419,7 @@ RecursiveListOfDouble :
       List_Delete($7);
     }
 ;
+
 
 ColorExpr :
     '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'

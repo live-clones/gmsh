@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.29 2001-04-20 08:52:23 geuzaine Exp $
+// $Id: Gmsh.l,v 1.30 2001-05-16 15:11:45 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -330,7 +330,10 @@ void skip_until(char *skip, char *until){
   while(1){
     while (1){
       chars[0] = yyinput();
-      if(chars[0] == (char)EOF) Msg(FATAL, "Unexpected end of file") ;
+      if(chars[0] == (char)EOF){
+        Msg(GERROR, "Unexpected end of file") ;
+	return;
+      }
       if(chars[0] == until[0]) break;
       if(skip && chars[0] == skip[0]) break;
     }
