@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.36 2003-01-25 22:33:38 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.37 2003-02-11 09:18:48 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -209,7 +209,7 @@ void decygwin(char *in, char *out){
 }
 
 void SystemCall(char *command){
-#if defined(WIN32)
+#if defined(WIN32) && !defined(_BLACKBOX)
   STARTUPINFO		suInfo;	// Process startup information
   PROCESS_INFORMATION	prInfo;	// Process information
   

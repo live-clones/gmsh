@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.254 2003-02-11 08:54:55 geuzaine Exp $
+# $Id: Makefile,v 1.255 2003-02-11 09:18:48 geuzaine Exp $
 
 include variables
 
@@ -22,6 +22,7 @@ compile: variables initialtag
 
 link: variables
 	${LINKER} -o bin/gmsh ${GMSH_LIBS}
+	${POSTBUILD}
 
 install: variables
 	-mkdir -p ${bindir}
