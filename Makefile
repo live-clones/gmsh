@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.335 2004-04-15 05:44:38 geuzaine Exp $
+# $Id: Makefile,v 1.336 2004-04-15 05:56:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -32,7 +32,6 @@ GMSH_SHORT_LICENSE = "GNU General Public License"
 
 GMSH_VERSION_FILE = Common/GmshVersion.h
 GMSH_DATE = `date "+%Y%m%d"`
-GMSH_ARCHIVE = archives/gmsh-${GMSH_DATE}
 GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
                        -a ! -name "*.o"    -a ! -name "lib*.a"   \
                        -a ! -name "*.msh"  -a ! -name "*.bak" \
@@ -61,33 +60,6 @@ variables: configure
 	@echo "For help, type ./configure --help"
 	@echo "********************************************************************"
 	@exit 1
-
-source-common:
-	rm -rf gmsh-${GMSH_VERSION}
-	tar zcvf gmsh.tgz `ls TODO README* */README* configure *.in *.spec Makefile\
-                           */Makefile */*.[chylr] */*.[ch]pp */*.rc */*.res */*.ico\
-                           */*.icns`\
-                           doc demos tutorial utils
-	mkdir gmsh-${GMSH_VERSION}
-	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
-	rm -f gmsh.tgz
-
-source: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-          NR Triangle/triangle.* utils/commercial
-	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
-
-source-commercial: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-          Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
-          utils/commercial
-	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
-	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
-	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp
-	cp -f utils/commercial/license.texi gmsh-${GMSH_VERSION}/doc/texinfo/license.texi
-	cp -f utils/commercial/copying.texi gmsh-${GMSH_VERSION}/doc/texinfo/copying.texi
-	utils/commercial/sanitize.sh gmsh-${GMSH_VERSION}
-	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
 
 .PHONY: parser
 parser:
@@ -151,13 +123,36 @@ etags:
 	etags `find . \( -name "*.cpp" -o -name "*.c" -o -name "*.h"\
                       -o -name "*.y" -o -name "*.l" \)`
 
-tgz:
-	if (test -f ${GMSH_ARCHIVE}.tar.gz); then \
-	  mv -f ${GMSH_ARCHIVE}.tar.gz ${GMSH_ARCHIVE}.tar.gz~; \
-	fi
-	tar cvf ${GMSH_ARCHIVE}.tar ${GMSH_SOURCES}
-	gzip ${GMSH_ARCHIVE}.tar
-	chmod 640 ${GMSH_ARCHIVE}.tar.gz
+# Rules to package the sources
+
+source-common:
+	rm -rf gmsh-${GMSH_VERSION}
+	tar zcvf gmsh.tgz `ls TODO README* */README* configure *.in *.spec Makefile\
+                           */Makefile */*.[chylr] */*.[ch]pp */*.rc */*.res */*.ico\
+                           */*.icns`\
+                           doc demos tutorial utils
+	mkdir gmsh-${GMSH_VERSION}
+	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
+	rm -f gmsh.tgz
+
+source: source-common
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
+          NR Triangle/triangle.* utils/commercial
+	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
+
+source-commercial: source-common
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
+          Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
+          utils/commercial
+	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
+	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
+	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp
+	cp -f utils/commercial/license.texi gmsh-${GMSH_VERSION}/doc/texinfo/license.texi
+	cp -f utils/commercial/copying.texi gmsh-${GMSH_VERSION}/doc/texinfo/copying.texi
+	utils/commercial/sanitize.sh gmsh-${GMSH_VERSION}
+	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
+
+# Rules to package the binaries
 
 package-unix:
 	rm -rf gmsh-${GMSH_VERSION}
