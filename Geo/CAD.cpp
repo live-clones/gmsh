@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.63 2003-03-21 00:52:37 geuzaine Exp $
+// $Id: CAD.cpp,v 1.64 2003-08-27 01:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1509,15 +1509,30 @@ int compareTwoCurves(const void *a, const void *b)
 
   if(c1->Typ != c2->Typ)
     return c1->Typ - c2->Typ;
-  comp = compareVertex(&c1->beg, &c2->beg);
-  if(comp)
-    return comp;
-  comp = compareVertex(&c1->end, &c2->end);
-  if(comp)
-    return comp;
-  // a finir pour des splines !!
+  
+  if(List_Nbr(c1->Control_Points) != List_Nbr(c2->Control_Points))
+    return List_Nbr(c1->Control_Points) - List_Nbr(c2->Control_Points);
+  
+  if(!List_Nbr(c1->Control_Points)){
+    comp = compareVertex(&c1->beg, &c2->beg);
+    if(comp)
+      return comp;
+    comp = compareVertex(&c1->end, &c2->end);
+    if(comp)
+      return comp;
+  }
+  else {
+    for(int i = 0; i < List_Nbr(c1->Control_Points); i++){
+      Vertex *v1, *v2;
+      List_Read(c1->Control_Points, i, &v1);
+      List_Read(c2->Control_Points, i, &v2);
+      comp = compareVertex(&v1, &v2);
+      if(comp)
+	return comp;
+    }
+  }
+
   return 0;
-  //return c1->Num - c2->Num;
 }
 
 int compareAbsCurve(const void *a, const void *b)

@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.154 2003-08-22 21:20:05 geuzaine Exp $
+$Id: VERSIONS,v 1.155 2003-08-27 01:45:09 geuzaine Exp $
+
+New since 1.46: fix extrusion of surfaces defined by only two curves;
 
 New in 1.46: fix crash for very long command lines; new options for
 setting the displacement factor and Triangle's parameters + renamed a
