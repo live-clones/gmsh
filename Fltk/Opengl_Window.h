@@ -26,9 +26,9 @@
 
 class Opengl_Window : public Fl_Gl_Window {
  public:
-  int xpos, ypos;
+  bool AddPointMode;
  private:
-  int xmov, ymov, ibut, hits;
+  int xpos, ypos, xmov, ymov, ibut, hits;
   int ZoomClick, FirstClick;
   GLdouble xc, yc, xc1, yc1, xc2, yc2, xt1, yt1, xscale1, yscale1;
   Vertex *v, *ov;
@@ -43,6 +43,7 @@ class Opengl_Window : public Fl_Gl_Window {
  public:
   Opengl_Window(int x,int y,int w,int h,const char *l=0)
     : Fl_Gl_Window(x, y, w, h, l) {
+    AddPointMode = false;
     xpos = ypos = xmov = ymov = ibut = hits = 0;
     ZoomClick = FirstClick = 0;
     v = ov = NULL;

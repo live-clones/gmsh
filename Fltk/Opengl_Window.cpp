@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.40 2004-10-28 03:44:37 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.41 2004-11-14 04:38:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -160,7 +160,7 @@ int Opengl_Window::handle(int event)
     ibut = Fl::event_button();
     xpos = Fl::event_x();
     ypos = Fl::event_y();
-
+    
     if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
       if(!ZoomClick && Fl::event_state(FL_CTRL)) {
         ZOOM_X0 = ZOOM_X1 =
@@ -302,6 +302,25 @@ int Opengl_Window::handle(int event)
   case FL_MOVE:
     xmov = Fl::event_x() - xpos;
     ymov = Fl::event_y() - ypos;
+    
+    if(AddPointMode && !Fl::event_state(FL_SHIFT)){
+      WID->g_opengl_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+      // find line in real space corresponding to current cursor position
+      double p[3],d[3];
+      unproject(Fl::event_x(), Fl::event_y(), p, d);
+      // fin closest point to the center of gravity
+      double r[3] = {CTX.cg[0]-p[0], CTX.cg[1]-p[1], CTX.cg[2]-p[2]};
+      double t;
+      prosca(r,d,&t);
+      double sol[3] = {p[0]+t*d[0], p[1]+t*d[1], p[2]+t*d[2]};
+      char str[32];
+      sprintf(str, "%g", sol[0]);        
+      WID->context_geometry_input[2]->value(str);
+      sprintf(str, "%g", sol[1]);
+      WID->context_geometry_input[3]->value(str);
+      sprintf(str, "%g", sol[2]);
+      WID->context_geometry_input[4]->value(str);
+    }
 
     if(ZoomClick) {
       ZOOM = 1;

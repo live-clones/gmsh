@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.297 2004-11-13 22:52:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.298 2004-11-14 04:38:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1670,34 +1670,25 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
 
   while(1) {
     Msg(STATUS3N, "Creating point");
-    Msg(ONSCREEN, "Click and/or enter coordinates\n"
-	"[Press 'e' or 'Add' to add point or 'q' to abort]");
+    WID->g_opengl_window->AddPointMode = true;
+    Msg(ONSCREEN, "Move mouse and/or enter coordinates\n"
+	"[Press 'Shift' to hold position, 'e' to add point or 'q' to abort]");
     Vertex *v;
     Curve *c;
     Surface *s;
     char ib = SelectEntity(ENT_NONE, &v, &c, &s);
+    if(ib == 'e'){
+      add_point(CTX.filename,
+		(char*)WID->context_geometry_input[2]->value(),
+		(char*)WID->context_geometry_input[3]->value(),
+		(char*)WID->context_geometry_input[4]->value(),
+		(char*)WID->context_geometry_input[5]->value());
+      Draw();
+    }
     if(ib == 'q'){
+      WID->g_opengl_window->AddPointMode = false;
+      WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
       break;
-    }
-    else if(ib == 'e') {
-      con_geometry_define_point_cb(NULL, NULL);
-    }
-    else if(ib == 'c') { // mouse click
-      // find line in real space corresponding to current cursor position
-      double p[3], d[3];
-      unproject(WID->g_opengl_window->xpos, WID->g_opengl_window->ypos, p, d);
-      // fin closest point to the center of gravity
-      double r[3] = {CTX.cg[0]-p[0], CTX.cg[1]-p[1], CTX.cg[2]-p[2]};
-      double t;
-      prosca(r, d, &t);
-      double sol[3] = {p[0]+t*d[0], p[1]+t*d[1], p[2]+t*d[2]};
-      char str[32];
-      sprintf(str, "%g", sol[0]); 
-      WID->context_geometry_input[2]->value(str);
-      sprintf(str, "%g", sol[1]);
-      WID->context_geometry_input[3]->value(str);
-      sprintf(str, "%g", sol[2]);
-      WID->context_geometry_input[4]->value(str);
     }
   }
   Msg(STATUS3N, "Ready");
