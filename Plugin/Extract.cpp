@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.8 2004-05-13 06:16:28 geuzaine Exp $
+// $Id: Extract.cpp,v 1.9 2004-05-13 15:09:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -66,10 +66,12 @@ void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text
          "Plugin(Extract) extracts a combination of\n"
 	 "components from the view `iView', as specified\n"
 	 "by `Expression'. In addition to the usual\n"
-	 "mathematical functions, `Expression' can contain\n"
-	 "the symbols v0, v1, v2, ..., vn, which represent\n"
-	 "the n components of the field. If `iView' < 0, the\n"
-	 "plugin is run on the current view.\n"
+	 "mathematical functions (Exp, Log, Sqrt, Sin,\n"
+	 "Cos, Fabs, etc.) and operators (+, -, *, /, ^),\n"
+	 "`Expression' can contain the symbols v0, v1,\n"
+	 "v2, ..., vn, which represent the n components\n"
+	 "of the field. If `iView' < 0, the plugin is\n"
+	 "run on the current view.\n"
 	 "\n"
 	 "Plugin(Extract) creates one new view.\n");
 }
