@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.343 2004-09-16 22:24:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.344 2004-09-17 21:36:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -613,22 +613,26 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    int old = opt_mesh_surfaces_edges(0, GMSH_GET, 0) || opt_mesh_surfaces_faces(0, GMSH_GET, 0);
+    int old = opt_mesh_surfaces_edges(0, GMSH_GET, 0) ||
+      opt_mesh_surfaces_faces(0, GMSH_GET, 0);
     opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, !old);
     opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, !old);
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    int old = opt_mesh_volumes_edges(0, GMSH_GET, 0) || opt_mesh_volumes_faces(0, GMSH_GET, 0);
+    int old = opt_mesh_volumes_edges(0, GMSH_GET, 0) || 
+      opt_mesh_volumes_faces(0, GMSH_GET, 0);
     opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, !old);
     opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, !old);
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    int old = opt_mesh_points(0, GMSH_GET, 0) || opt_mesh_lines(0, GMSH_GET, 0) ||
-      opt_mesh_surfaces_edges(0, GMSH_GET, 0) || opt_mesh_surfaces_faces(0, GMSH_GET, 0);
+    int old = opt_mesh_points(0, GMSH_GET, 0) || 
+      opt_mesh_lines(0, GMSH_GET, 0) ||
+      opt_mesh_surfaces_edges(0, GMSH_GET, 0) ||
+      opt_mesh_surfaces_faces(0, GMSH_GET, 0);
     opt_mesh_points(0, GMSH_SET | GMSH_GUI, !old);
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !old);
     opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, !old);
@@ -1008,7 +1012,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   m_pop_plugin.clear();
 
   int width = m_window->w();
-  int right_pop_width = 4 * fontsize + 3;
+  int popw = 4 * fontsize + 3;
 
   // construct the dynamic menu
   int nb = 0;
@@ -1016,7 +1020,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     for(nb = 0; nb < List_Nbr(CTX.post.list); nb++) {
       Post_View *v = (Post_View *) List_Pointer(CTX.post.list, nb);
       
-      Fl_Light_Button *b1 = new Fl_Light_Button(0, MH + nb * BH, width - right_pop_width, BH);
+      Fl_Light_Button *b1 = new Fl_Light_Button(0, MH + nb * BH, width - popw, BH);
       b1->callback(view_toggle_cb, (void *)nb);
       b1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       b1->value(v->Visible);
@@ -1025,16 +1029,16 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       
       char *tmp = new char[32];
       sprintf(tmp, "[%d]@#-1>", nb);
-      Fl_Button *b2 = new Fl_Button(width - right_pop_width, MH + nb * BH, right_pop_width, BH, tmp);
+      Fl_Button *b2 = new Fl_Button(width - popw, MH + nb * BH, popw, BH, tmp);
       m_pop_label.push_back(tmp);
       b2->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       b2->tooltip("Show view option menu (Shift+w)");
   
       Fl_Menu_Button *p[2];
-      p[0] = new Fl_Menu_Button(width - right_pop_width, MH + nb * BH, right_pop_width, BH);
+      p[0] = new Fl_Menu_Button(width - popw, MH + nb * BH, popw, BH);
       p[0]->type(Fl_Menu_Button::POPUP123);
   
-      p[1] = new Fl_Menu_Button(0, MH + nb * BH, width - right_pop_width, BH);
+      p[1] = new Fl_Menu_Button(0, MH + nb * BH, width - popw, BH);
       p[1]->type(Fl_Menu_Button::POPUP3);
   
       for(int j = 0; j < 2; j++) {
@@ -1210,9 +1214,12 @@ void GUI::create_graphic_window(int argc, char **argv)
     }
   }
 
-  g_status_label[0] = new Fl_Box(x, glheight + 2, (width - x) / 3, sh - 4);
-  g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, (width - x) / 3, sh - 4);
-  g_status_label[2] = new Fl_Box(x + 2 * (width - x) / 3, glheight + 2, (width - x) / 3 - 2, sh - 4);
+  g_status_label[0] = new Fl_Box(x, glheight + 2, 
+				 (width - x) / 3, sh - 4);
+  g_status_label[1] = new Fl_Box(x + (width - x) / 3, glheight + 2, 
+				 (width - x) / 3, sh - 4);
+  g_status_label[2] = new Fl_Box(x + 2 * (width - x) / 3, glheight + 2, 
+				 (width - x) / 3 - 2, sh - 4);
   for(i = 0; i < 3; i++) {
     g_status_label[i]->box(FL_FLAT_BOX);
     g_status_label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
