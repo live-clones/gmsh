@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.340 2004-05-07 18:42:48 geuzaine Exp $
+# $Id: Makefile,v 1.341 2004-05-10 06:35:05 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -136,14 +136,14 @@ source-common:
 	rm -f gmsh.tgz
 
 source: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-          NR Triangle/triangle.* utils/commercial
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */.globalrc\
+          NR Triangle/triangle.* utils/commercial ${GMSH_VERSION_FILE} 
 	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 source-commercial: source-common
-	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */.globalrc\
           Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
-          utils/commercial
+          utils/commercial ${GMSH_VERSION_FILE}
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
 	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp
@@ -225,8 +225,8 @@ package-mac:
 	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt
 	cp doc/LICENSE gmsh-${GMSH_VERSION}/LICENSE.txt
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS\
-               gmsh-${GMSH_VERSION}/*/*~\
-               gmsh-${GMSH_VERSION}/*/*.msh
+               gmsh-${GMSH_VERSION}/*/*.msh\
+               gmsh-${GMSH_VERSION}/*/*~
 	tar zcvf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
 
 package-rpm:
