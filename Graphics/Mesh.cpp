@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.76 2004-04-21 04:26:45 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.77 2004-04-21 06:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -255,6 +255,31 @@ void Draw_Mesh_Curves(void *a, void *b)
   Tree_Action(c->Simplexes, Draw_Simplex_Curves);
 }
 
+double intersectCutPlane(int num, Vertex **v, int *edges, int *faces)
+{
+  if(!CTX.mesh.use_cut_plane)
+    return 0;
+
+  double val = CTX.mesh.evalCutPlane(v[0]->Pos.X, v[0]->Pos.Y, v[0]->Pos.Z);
+  for(int i = 1; i < num; i++){
+    if(val * CTX.mesh.evalCutPlane(v[i]->Pos.X, v[i]->Pos.Y, v[i]->Pos.Z) <= 0){
+      // the element intersects the cut plane
+      if(CTX.mesh.cut_plane_as_surface){
+	*edges = CTX.mesh.surfaces_edges;
+	*faces = CTX.mesh.surfaces_faces;
+      }
+      return 1.;
+    }
+  }
+  return val;
+}
+
+double intersectCutPlane(int num, Vertex **v)
+{
+  int dummy;
+  return intersectCutPlane(num, v, &dummy, &dummy);
+}
+
 void Draw_Mesh_Points(void *a, void *b)
 {
   Vertex *v;
@@ -265,10 +290,8 @@ void Draw_Mesh_Points(void *a, void *b)
   if(!(v->Visible & VIS_MESH))
     return;
 
-  if(CTX.mesh.use_cut_plane) {
-    if(CTX.mesh.evalCutPlane(v->Pos.X, v->Pos.Y, v->Pos.Z) < 0)
-      return;
-  }
+  if(intersectCutPlane(1, &v) < 0)
+    return;
 
   if(CTX.render_mode == GMSH_SELECT) {
     glLoadName(0);
@@ -319,6 +342,9 @@ void Draw_Simplex_Curves(void *a, void *b)
 
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
   if(part && !(*part)->Visible)
+    return;
+
+  if(intersectCutPlane(2, s->V) < 0)
     return;
 
   Xc = 0.5 * (s->V[0]->Pos.X + s->V[1]->Pos.X);
@@ -560,6 +586,9 @@ void Draw_Simplex_Surface(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
+  if(intersectCutPlane(3, s->V) < 0)
+    return;
+
   L = (s->VSUP) ? 1 : 0;
   K = (s->V[3]) ? 4 : 3;
 
@@ -575,11 +604,6 @@ void Draw_Simplex_Surface(void *a, void *b)
     Xc = (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X) / 3.;
     Yc = (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y) / 3.;
     Zc = (s->V[0]->Pos.Z + s->V[1]->Pos.Z + s->V[2]->Pos.Z) / 3.;
-  }
-
-  if(CTX.mesh.use_cut_plane) {
-    if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-      return;
   }
 
   k = 0;
@@ -639,22 +663,6 @@ void Draw_Simplex_Surface(void *a, void *b)
   }
 }
 
-int intersectCutPlane(int num, Vertex **v, int *edges, int *faces)
-{
-  if(CTX.mesh.cut_plane_as_surface && 
-     (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)){
-    double val = CTX.mesh.evalCutPlane(v[0]->Pos.X, v[0]->Pos.Y, v[0]->Pos.Z);
-    for(int i = 1; i < num; i++){
-      if(val * CTX.mesh.evalCutPlane(v[i]->Pos.X, v[i]->Pos.Y, v[i]->Pos.Z) < 0){
-	*edges = CTX.mesh.surfaces_edges;
-	*faces = CTX.mesh.surfaces_faces;
-	return 1;
-      }
-    }
-  }
-  return 0;
-}
-
 void Draw_Simplex_Volume(void *a, void *b)
 {
   Simplex *s;
@@ -692,21 +700,18 @@ void Draw_Simplex_Volume(void *a, void *b)
       return;
   }
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
+  if(intersectCutPlane(3, s->V, &edges, &faces) < 0)
+    return;
+
   double Xc = .25 * (s->V[0]->Pos.X + s->V[1]->Pos.X +
                      s->V[2]->Pos.X + s->V[3]->Pos.X);
   double Yc = .25 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y +
                      s->V[2]->Pos.Y + s->V[3]->Pos.Y);
   double Zc = .25 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z +
                      s->V[2]->Pos.Z + s->V[3]->Pos.Z);
-
-  int edges = CTX.mesh.volumes_edges;
-  int faces = CTX.mesh.volumes_faces;
-
-  if(CTX.mesh.use_cut_plane) {
-    if(!intersectCutPlane(3, s->V, &edges, &faces))
-      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-	return;
-  }
 
   if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
@@ -939,6 +944,12 @@ void Draw_Hexahedron_Volume(void *a, void *b)
   if(CTX.mesh.color_carousel == 2)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, h->iEnt);
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
+  if(intersectCutPlane(8, h->V, &edges, &faces) < 0)
+    return;
+
   for(i = 0; i < 8; i++) {
     Xc += h->V[i]->Pos.X;
     Yc += h->V[i]->Pos.Y;
@@ -947,15 +958,6 @@ void Draw_Hexahedron_Volume(void *a, void *b)
   Xc *= .125;
   Zc *= .125;
   Yc *= .125;
-
-  int edges = CTX.mesh.volumes_edges;
-  int faces = CTX.mesh.volumes_faces;
-
-  if(CTX.mesh.use_cut_plane) {
-    if(!intersectCutPlane(8, h->V, &edges, &faces))
-      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-	return;
-  }
 
   if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
@@ -1131,6 +1133,12 @@ void Draw_Prism_Volume(void *a, void *b)
   if(CTX.mesh.color_carousel == 2)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, p->iEnt);
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
+  if(intersectCutPlane(6, p->V, &edges, &faces) < 0)
+    return;
+
   for(i = 0; i < 6; i++) {
     Xc += p->V[i]->Pos.X;
     Yc += p->V[i]->Pos.Y;
@@ -1139,15 +1147,6 @@ void Draw_Prism_Volume(void *a, void *b)
   Xc /= 6.;
   Zc /= 6.;
   Yc /= 6.;
-
-  int edges = CTX.mesh.volumes_edges;
-  int faces = CTX.mesh.volumes_faces;
-
-  if(CTX.mesh.use_cut_plane) {
-    if(!intersectCutPlane(6, p->V, &edges, &faces))
-      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-	return;
-  }
 
   if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
@@ -1308,6 +1307,12 @@ void Draw_Pyramid_Volume(void *a, void *b)
   if(CTX.mesh.color_carousel == 2)
     thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, p->iEnt);
 
+  int edges = CTX.mesh.volumes_edges;
+  int faces = CTX.mesh.volumes_faces;
+
+  if(intersectCutPlane(5, p->V, &edges, &faces) < 0)
+    return;
+
   for(i = 0; i < 5; i++) {
     Xc += p->V[i]->Pos.X;
     Yc += p->V[i]->Pos.Y;
@@ -1316,15 +1321,6 @@ void Draw_Pyramid_Volume(void *a, void *b)
   Xc /= 5.;
   Zc /= 5.;
   Yc /= 5.;
-
-  int edges = CTX.mesh.volumes_edges;
-  int faces = CTX.mesh.volumes_faces;
-
-  if(CTX.mesh.use_cut_plane) {
-    if(!intersectCutPlane(5, p->V, &edges, &faces))
-      if(CTX.mesh.evalCutPlane(Xc, Yc, Zc) < 0)
-	return;
-  }
 
   if(CTX.mesh.surfaces_faces || faces){
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
