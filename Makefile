@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.360 2004-07-02 20:52:57 geuzaine Exp $
+# $Id: Makefile,v 1.361 2004-07-02 21:13:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -266,6 +266,7 @@ distrib-pre:
 	mv -f Makefile Makefile.distrib
 	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION =/g"\
           Makefile.distrib > Makefile
+	make tag
 
 distrib-post:
 	mv -f Makefile.distrib Makefile
