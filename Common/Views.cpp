@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.47 2001-08-04 03:35:32 geuzaine Exp $
+// $Id: Views.cpp,v 1.48 2001-08-06 08:09:51 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -10,11 +10,11 @@
 // this static stuff should be removed
 int         Post_ViewForceNumber = 0;
 List_T     *Post_ViewList = NULL;
-Post_View  *Post_ViewReference = NULL, *ActualView;
-
+Post_View  *Post_ViewReference = NULL;
 
 extern Context_T   CTX ;
 
+static Post_View *ActualView;
 static int  ActualViewNum=0, ActualViewIndex=0;
 static int  NbPoints, NbLines, NbTriangles, NbTetrahedra;
 
@@ -30,7 +30,7 @@ int fcmpPostViewDuplicateOf(const void *v1, const void *v2){
   return (((Post_View *)v1)->DuplicateOf - ((Post_View *)v2)->DuplicateOf);
 }
 
-void BeginView(int allocate){
+Post_View * BeginView(int allocate){
   Post_View v;
   int i;
 
@@ -103,6 +103,7 @@ void BeginView(int allocate){
     ActualView->BBox[2*i+1] = -1.e200;
   }
 
+  return ActualView;
 }
 
 void Stat_ScalarSimplex(int nbnod, int N, double *X, double *Y, double *Z, double *V){
@@ -870,3 +871,73 @@ bool Post_View :: get_normal(double x, double y, double z,
   return true;
 }
 
+/* ------------------------------------------------------------------------ */
+/*  T r a n s f o r m a t i o n                                             */
+/* ------------------------------------------------------------------------ */
+
+void transform(double mat[3][3], double v[3],
+	       double *x, double *y, double *z){
+  *x = mat[0][0]*v[0] + mat[0][1]*v[1] + mat[0][2]*v[2];
+  *y = mat[1][0]*v[0] + mat[1][1]*v[1] + mat[1][2]*v[2];
+  *z = mat[2][0]*v[0] + mat[2][1]*v[1] + mat[2][2]*v[2];
+}
+
+void transform_list(List_T *V ,
+		    int NbTimeStep,
+		    int nbvert,
+		    int nb,
+		    double mat[3][3]){
+  double *x,*y,*z, v[3];
+  int i, j;
+
+  for(i = 0 ; i < List_Nbr(V) ; i+=nb){
+    x = (double*)List_Pointer_Fast(V,i);
+    y = (double*)List_Pointer_Fast(V,i+nbvert);
+    z = (double*)List_Pointer_Fast(V,i+2*nbvert);
+    for(j=0; j<nbvert; j++){
+      v[0] = x[j];
+      v[1] = y[j];
+      v[2] = z[j];
+      transform(mat,v,&x[j],&y[j],&z[j]);
+    }
+  }
+}
+
+void Post_View :: transform (double mat[3][3]){
+  int nb;
+
+  if(NbSP){
+    nb = List_Nbr(SP) / NbSP ;
+    transform_list(SP, NbTimeStep, 1, nb, mat);
+  }
+  if(NbSL){
+    nb = List_Nbr(SL) / NbSL ;
+    transform_list(SL, NbTimeStep, 2, nb, mat);
+  }
+  if(NbST){
+    nb = List_Nbr(ST) / NbST ;
+    transform_list(ST, NbTimeStep, 3, nb, mat);
+  }
+  if(NbSS){
+    nb = List_Nbr(SS) / NbSS ;
+    transform_list(SS, NbTimeStep, 4, nb, mat);
+  }
+
+
+  if(NbVP){
+    nb = List_Nbr(VP) / NbVP ;
+    transform_list(VP, NbTimeStep, 1, nb, mat);
+  }
+  if(NbVL){
+    nb = List_Nbr(VL) / NbVL ;
+    transform_list(VL, NbTimeStep, 2, nb, mat);
+  }
+  if(NbVT){
+    nb = List_Nbr(VT) / NbVT ;
+    transform_list(VT, NbTimeStep, 3, nb, mat);
+  }
+  if(NbVS){
+    nb = List_Nbr(VS) / NbVS ;
+    transform_list(VS, NbTimeStep, 4, nb, mat);
+  }
+}

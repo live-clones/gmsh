@@ -172,7 +172,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.100 2001-08-01 14:30:40 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.101 2001-08-06 08:09:51 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -211,7 +211,6 @@ List_T *Symbol_L=NULL;
 
 extern Context_T  CTX;
 extern Mesh      *THEM;
-extern Post_View *ActualView;
 
 static FILE          *yyinTab[MAX_OPEN_FILES];
 static int            yylinenoTab[MAX_OPEN_FILES];
@@ -235,6 +234,7 @@ static StringXColor   *pColCat;
 static double         (*pNumOpt)(int num, int action, double value);
 static char*          (*pStrOpt)(int num, int action, char *value);
 static unsigned int   (*pColOpt)(int num, int action, unsigned int value);
+static Post_View      *View;
 
 char *strsave(char *ptr);
 void  yyerror (char *s);
@@ -3298,286 +3298,286 @@ case 70:
 case 71:
 #line 453 "Gmsh.y"
 {
-      BeginView(1); 
+      View = BeginView(1); 
     ;
     break;}
 case 84:
 #line 472 "Gmsh.y"
-{ List_Add(ActualView->SP, &yyvsp[0].d) ; ;
+{ List_Add(View->SP, &yyvsp[0].d) ; ;
     break;}
 case 85:
 #line 474 "Gmsh.y"
-{ List_Add(ActualView->SP, &yyvsp[0].d) ; ;
+{ List_Add(View->SP, &yyvsp[0].d) ; ;
     break;}
 case 86:
 #line 479 "Gmsh.y"
 { 
-      List_Add(ActualView->SP, &yyvsp[-5].d); List_Add(ActualView->SP, &yyvsp[-3].d);
-      List_Add(ActualView->SP, &yyvsp[-1].d);
+      List_Add(View->SP, &yyvsp[-5].d); List_Add(View->SP, &yyvsp[-3].d);
+      List_Add(View->SP, &yyvsp[-1].d);
     ;
     break;}
 case 87:
 #line 484 "Gmsh.y"
 {
-      ActualView->NbSP++ ;
+      View->NbSP++ ;
     ;
     break;}
 case 88:
 #line 491 "Gmsh.y"
-{ List_Add(ActualView->VP, &yyvsp[0].d) ; ;
+{ List_Add(View->VP, &yyvsp[0].d) ; ;
     break;}
 case 89:
 #line 493 "Gmsh.y"
-{ List_Add(ActualView->VP, &yyvsp[0].d) ; ;
+{ List_Add(View->VP, &yyvsp[0].d) ; ;
     break;}
 case 90:
 #line 498 "Gmsh.y"
 { 
-      List_Add(ActualView->VP, &yyvsp[-5].d); List_Add(ActualView->VP, &yyvsp[-3].d);
-      List_Add(ActualView->VP, &yyvsp[-1].d); 
+      List_Add(View->VP, &yyvsp[-5].d); List_Add(View->VP, &yyvsp[-3].d);
+      List_Add(View->VP, &yyvsp[-1].d); 
     ;
     break;}
 case 91:
 #line 503 "Gmsh.y"
 {
-      ActualView->NbVP++ ;
+      View->NbVP++ ;
     ;
     break;}
 case 92:
 #line 510 "Gmsh.y"
-{ List_Add(ActualView->TP, &yyvsp[0].d) ; ;
+{ List_Add(View->TP, &yyvsp[0].d) ; ;
     break;}
 case 93:
 #line 512 "Gmsh.y"
-{ List_Add(ActualView->TP, &yyvsp[0].d) ; ;
+{ List_Add(View->TP, &yyvsp[0].d) ; ;
     break;}
 case 94:
 #line 517 "Gmsh.y"
 { 
-      List_Add(ActualView->TP, &yyvsp[-5].d); List_Add(ActualView->TP, &yyvsp[-3].d);
-      List_Add(ActualView->TP, &yyvsp[-1].d);
+      List_Add(View->TP, &yyvsp[-5].d); List_Add(View->TP, &yyvsp[-3].d);
+      List_Add(View->TP, &yyvsp[-1].d);
     ;
     break;}
 case 95:
 #line 522 "Gmsh.y"
 {
-      ActualView->NbTP++ ;
+      View->NbTP++ ;
     ;
     break;}
 case 96:
 #line 529 "Gmsh.y"
-{ List_Add(ActualView->SL, &yyvsp[0].d) ; ;
+{ List_Add(View->SL, &yyvsp[0].d) ; ;
     break;}
 case 97:
 #line 531 "Gmsh.y"
-{ List_Add(ActualView->SL, &yyvsp[0].d) ; ;
+{ List_Add(View->SL, &yyvsp[0].d) ; ;
     break;}
 case 98:
 #line 537 "Gmsh.y"
 { 
-      List_Add(ActualView->SL, &yyvsp[-11].d); List_Add(ActualView->SL, &yyvsp[-5].d);
-      List_Add(ActualView->SL, &yyvsp[-9].d); List_Add(ActualView->SL, &yyvsp[-3].d);
-      List_Add(ActualView->SL, &yyvsp[-7].d); List_Add(ActualView->SL, &yyvsp[-1].d);
+      List_Add(View->SL, &yyvsp[-11].d); List_Add(View->SL, &yyvsp[-5].d);
+      List_Add(View->SL, &yyvsp[-9].d); List_Add(View->SL, &yyvsp[-3].d);
+      List_Add(View->SL, &yyvsp[-7].d); List_Add(View->SL, &yyvsp[-1].d);
     ;
     break;}
 case 99:
 #line 543 "Gmsh.y"
 {
-      ActualView->NbSL++ ;
+      View->NbSL++ ;
     ;
     break;}
 case 100:
 #line 550 "Gmsh.y"
-{ List_Add(ActualView->VL, &yyvsp[0].d) ; ;
+{ List_Add(View->VL, &yyvsp[0].d) ; ;
     break;}
 case 101:
 #line 552 "Gmsh.y"
-{ List_Add(ActualView->VL, &yyvsp[0].d) ; ;
+{ List_Add(View->VL, &yyvsp[0].d) ; ;
     break;}
 case 102:
 #line 558 "Gmsh.y"
 { 
-      List_Add(ActualView->VL, &yyvsp[-11].d); List_Add(ActualView->VL, &yyvsp[-5].d);
-      List_Add(ActualView->VL, &yyvsp[-9].d); List_Add(ActualView->VL, &yyvsp[-3].d);
-      List_Add(ActualView->VL, &yyvsp[-7].d); List_Add(ActualView->VL, &yyvsp[-1].d);
+      List_Add(View->VL, &yyvsp[-11].d); List_Add(View->VL, &yyvsp[-5].d);
+      List_Add(View->VL, &yyvsp[-9].d); List_Add(View->VL, &yyvsp[-3].d);
+      List_Add(View->VL, &yyvsp[-7].d); List_Add(View->VL, &yyvsp[-1].d);
     ;
     break;}
 case 103:
 #line 564 "Gmsh.y"
 {
-      ActualView->NbVL++ ;
+      View->NbVL++ ;
     ;
     break;}
 case 104:
 #line 571 "Gmsh.y"
-{ List_Add(ActualView->TL, &yyvsp[0].d) ; ;
+{ List_Add(View->TL, &yyvsp[0].d) ; ;
     break;}
 case 105:
 #line 573 "Gmsh.y"
-{ List_Add(ActualView->TL, &yyvsp[0].d) ; ;
+{ List_Add(View->TL, &yyvsp[0].d) ; ;
     break;}
 case 106:
 #line 579 "Gmsh.y"
 { 
-      List_Add(ActualView->TL, &yyvsp[-11].d); List_Add(ActualView->TL, &yyvsp[-5].d);
-      List_Add(ActualView->TL, &yyvsp[-9].d); List_Add(ActualView->TL, &yyvsp[-3].d);
-      List_Add(ActualView->TL, &yyvsp[-7].d); List_Add(ActualView->TL, &yyvsp[-1].d);
+      List_Add(View->TL, &yyvsp[-11].d); List_Add(View->TL, &yyvsp[-5].d);
+      List_Add(View->TL, &yyvsp[-9].d); List_Add(View->TL, &yyvsp[-3].d);
+      List_Add(View->TL, &yyvsp[-7].d); List_Add(View->TL, &yyvsp[-1].d);
     ;
     break;}
 case 107:
 #line 585 "Gmsh.y"
 {
-      ActualView->NbTL++ ;
+      View->NbTL++ ;
     ;
     break;}
 case 108:
 #line 592 "Gmsh.y"
-{ List_Add(ActualView->ST, &yyvsp[0].d) ; ;
+{ List_Add(View->ST, &yyvsp[0].d) ; ;
     break;}
 case 109:
 #line 594 "Gmsh.y"
-{ List_Add(ActualView->ST, &yyvsp[0].d) ; ;
+{ List_Add(View->ST, &yyvsp[0].d) ; ;
     break;}
 case 110:
 #line 601 "Gmsh.y"
 { 
-      List_Add(ActualView->ST, &yyvsp[-17].d); List_Add(ActualView->ST, &yyvsp[-11].d);
-      List_Add(ActualView->ST, &yyvsp[-5].d);
-      List_Add(ActualView->ST, &yyvsp[-15].d); List_Add(ActualView->ST, &yyvsp[-9].d);
-      List_Add(ActualView->ST, &yyvsp[-3].d);
-      List_Add(ActualView->ST, &yyvsp[-13].d); List_Add(ActualView->ST, &yyvsp[-7].d);
-      List_Add(ActualView->ST, &yyvsp[-1].d);
+      List_Add(View->ST, &yyvsp[-17].d); List_Add(View->ST, &yyvsp[-11].d);
+      List_Add(View->ST, &yyvsp[-5].d);
+      List_Add(View->ST, &yyvsp[-15].d); List_Add(View->ST, &yyvsp[-9].d);
+      List_Add(View->ST, &yyvsp[-3].d);
+      List_Add(View->ST, &yyvsp[-13].d); List_Add(View->ST, &yyvsp[-7].d);
+      List_Add(View->ST, &yyvsp[-1].d);
     ;
     break;}
 case 111:
 #line 610 "Gmsh.y"
 {
-      ActualView->NbST++ ;
+      View->NbST++ ;
     ;
     break;}
 case 112:
 #line 617 "Gmsh.y"
-{ List_Add(ActualView->VT, &yyvsp[0].d) ; ;
+{ List_Add(View->VT, &yyvsp[0].d) ; ;
     break;}
 case 113:
 #line 619 "Gmsh.y"
-{ List_Add(ActualView->VT, &yyvsp[0].d) ; ;
+{ List_Add(View->VT, &yyvsp[0].d) ; ;
     break;}
 case 114:
 #line 626 "Gmsh.y"
 { 
-      List_Add(ActualView->VT, &yyvsp[-17].d); List_Add(ActualView->VT, &yyvsp[-11].d);
-      List_Add(ActualView->VT, &yyvsp[-5].d);
-      List_Add(ActualView->VT, &yyvsp[-15].d); List_Add(ActualView->VT, &yyvsp[-9].d);
-      List_Add(ActualView->VT, &yyvsp[-3].d);
-      List_Add(ActualView->VT, &yyvsp[-13].d); List_Add(ActualView->VT, &yyvsp[-7].d);
-      List_Add(ActualView->VT, &yyvsp[-1].d);
+      List_Add(View->VT, &yyvsp[-17].d); List_Add(View->VT, &yyvsp[-11].d);
+      List_Add(View->VT, &yyvsp[-5].d);
+      List_Add(View->VT, &yyvsp[-15].d); List_Add(View->VT, &yyvsp[-9].d);
+      List_Add(View->VT, &yyvsp[-3].d);
+      List_Add(View->VT, &yyvsp[-13].d); List_Add(View->VT, &yyvsp[-7].d);
+      List_Add(View->VT, &yyvsp[-1].d);
     ;
     break;}
 case 115:
 #line 635 "Gmsh.y"
 {
-      ActualView->NbVT++ ;
+      View->NbVT++ ;
     ;
     break;}
 case 116:
 #line 642 "Gmsh.y"
-{ List_Add(ActualView->TT, &yyvsp[0].d) ; ;
+{ List_Add(View->TT, &yyvsp[0].d) ; ;
     break;}
 case 117:
 #line 644 "Gmsh.y"
-{ List_Add(ActualView->TT, &yyvsp[0].d) ; ;
+{ List_Add(View->TT, &yyvsp[0].d) ; ;
     break;}
 case 118:
 #line 651 "Gmsh.y"
 { 
-      List_Add(ActualView->TT, &yyvsp[-17].d); List_Add(ActualView->TT, &yyvsp[-11].d);
-      List_Add(ActualView->TT, &yyvsp[-5].d);
-      List_Add(ActualView->TT, &yyvsp[-15].d); List_Add(ActualView->TT, &yyvsp[-9].d);
-      List_Add(ActualView->TT, &yyvsp[-3].d);
-      List_Add(ActualView->TT, &yyvsp[-13].d); List_Add(ActualView->TT, &yyvsp[-7].d);
-      List_Add(ActualView->TT, &yyvsp[-1].d);
+      List_Add(View->TT, &yyvsp[-17].d); List_Add(View->TT, &yyvsp[-11].d);
+      List_Add(View->TT, &yyvsp[-5].d);
+      List_Add(View->TT, &yyvsp[-15].d); List_Add(View->TT, &yyvsp[-9].d);
+      List_Add(View->TT, &yyvsp[-3].d);
+      List_Add(View->TT, &yyvsp[-13].d); List_Add(View->TT, &yyvsp[-7].d);
+      List_Add(View->TT, &yyvsp[-1].d);
     ;
     break;}
 case 119:
 #line 660 "Gmsh.y"
 {
-      ActualView->NbTT++ ;
+      View->NbTT++ ;
     ;
     break;}
 case 120:
 #line 667 "Gmsh.y"
-{ List_Add(ActualView->SS, &yyvsp[0].d) ; ;
+{ List_Add(View->SS, &yyvsp[0].d) ; ;
     break;}
 case 121:
 #line 669 "Gmsh.y"
-{ List_Add(ActualView->SS, &yyvsp[0].d) ; ;
+{ List_Add(View->SS, &yyvsp[0].d) ; ;
     break;}
 case 122:
 #line 677 "Gmsh.y"
 { 
-      List_Add(ActualView->SS, &yyvsp[-23].d);  List_Add(ActualView->SS, &yyvsp[-17].d);
-      List_Add(ActualView->SS, &yyvsp[-11].d); List_Add(ActualView->SS, &yyvsp[-5].d);
-      List_Add(ActualView->SS, &yyvsp[-21].d);  List_Add(ActualView->SS, &yyvsp[-15].d);
-      List_Add(ActualView->SS, &yyvsp[-9].d); List_Add(ActualView->SS, &yyvsp[-3].d);
-      List_Add(ActualView->SS, &yyvsp[-19].d);  List_Add(ActualView->SS, &yyvsp[-13].d);
-      List_Add(ActualView->SS, &yyvsp[-7].d); List_Add(ActualView->SS, &yyvsp[-1].d);
+      List_Add(View->SS, &yyvsp[-23].d);  List_Add(View->SS, &yyvsp[-17].d);
+      List_Add(View->SS, &yyvsp[-11].d); List_Add(View->SS, &yyvsp[-5].d);
+      List_Add(View->SS, &yyvsp[-21].d);  List_Add(View->SS, &yyvsp[-15].d);
+      List_Add(View->SS, &yyvsp[-9].d); List_Add(View->SS, &yyvsp[-3].d);
+      List_Add(View->SS, &yyvsp[-19].d);  List_Add(View->SS, &yyvsp[-13].d);
+      List_Add(View->SS, &yyvsp[-7].d); List_Add(View->SS, &yyvsp[-1].d);
     ;
     break;}
 case 123:
 #line 686 "Gmsh.y"
 {
-      ActualView->NbSS++ ;
+      View->NbSS++ ;
     ;
     break;}
 case 124:
 #line 693 "Gmsh.y"
-{ List_Add(ActualView->VS, &yyvsp[0].d) ; ;
+{ List_Add(View->VS, &yyvsp[0].d) ; ;
     break;}
 case 125:
 #line 695 "Gmsh.y"
-{ List_Add(ActualView->VS, &yyvsp[0].d) ; ;
+{ List_Add(View->VS, &yyvsp[0].d) ; ;
     break;}
 case 126:
 #line 703 "Gmsh.y"
 { 
-      List_Add(ActualView->VS, &yyvsp[-23].d);  List_Add(ActualView->VS, &yyvsp[-17].d);
-      List_Add(ActualView->VS, &yyvsp[-11].d); List_Add(ActualView->VS, &yyvsp[-5].d);
-      List_Add(ActualView->VS, &yyvsp[-21].d);  List_Add(ActualView->VS, &yyvsp[-15].d);
-      List_Add(ActualView->VS, &yyvsp[-9].d); List_Add(ActualView->VS, &yyvsp[-3].d);
-      List_Add(ActualView->VS, &yyvsp[-19].d);  List_Add(ActualView->VS, &yyvsp[-13].d);
-      List_Add(ActualView->VS, &yyvsp[-7].d); List_Add(ActualView->VS, &yyvsp[-1].d);
+      List_Add(View->VS, &yyvsp[-23].d);  List_Add(View->VS, &yyvsp[-17].d);
+      List_Add(View->VS, &yyvsp[-11].d); List_Add(View->VS, &yyvsp[-5].d);
+      List_Add(View->VS, &yyvsp[-21].d);  List_Add(View->VS, &yyvsp[-15].d);
+      List_Add(View->VS, &yyvsp[-9].d); List_Add(View->VS, &yyvsp[-3].d);
+      List_Add(View->VS, &yyvsp[-19].d);  List_Add(View->VS, &yyvsp[-13].d);
+      List_Add(View->VS, &yyvsp[-7].d); List_Add(View->VS, &yyvsp[-1].d);
     ;
     break;}
 case 127:
 #line 712 "Gmsh.y"
 {
-      ActualView->NbVS++ ;
+      View->NbVS++ ;
     ;
     break;}
 case 128:
 #line 719 "Gmsh.y"
-{ List_Add(ActualView->TS, &yyvsp[0].d) ; ;
+{ List_Add(View->TS, &yyvsp[0].d) ; ;
     break;}
 case 129:
 #line 721 "Gmsh.y"
-{ List_Add(ActualView->TS, &yyvsp[0].d) ; ;
+{ List_Add(View->TS, &yyvsp[0].d) ; ;
     break;}
 case 130:
 #line 729 "Gmsh.y"
 { 
-      List_Add(ActualView->TS, &yyvsp[-23].d);  List_Add(ActualView->TS, &yyvsp[-17].d);
-      List_Add(ActualView->TS, &yyvsp[-11].d); List_Add(ActualView->TS, &yyvsp[-5].d);
-      List_Add(ActualView->TS, &yyvsp[-21].d);  List_Add(ActualView->TS, &yyvsp[-15].d);
-      List_Add(ActualView->TS, &yyvsp[-9].d); List_Add(ActualView->TS, &yyvsp[-3].d);
-      List_Add(ActualView->TS, &yyvsp[-19].d);  List_Add(ActualView->TS, &yyvsp[-13].d);
-      List_Add(ActualView->TS, &yyvsp[-7].d); List_Add(ActualView->TS, &yyvsp[-1].d);
+      List_Add(View->TS, &yyvsp[-23].d);  List_Add(View->TS, &yyvsp[-17].d);
+      List_Add(View->TS, &yyvsp[-11].d); List_Add(View->TS, &yyvsp[-5].d);
+      List_Add(View->TS, &yyvsp[-21].d);  List_Add(View->TS, &yyvsp[-15].d);
+      List_Add(View->TS, &yyvsp[-9].d); List_Add(View->TS, &yyvsp[-3].d);
+      List_Add(View->TS, &yyvsp[-19].d);  List_Add(View->TS, &yyvsp[-13].d);
+      List_Add(View->TS, &yyvsp[-7].d); List_Add(View->TS, &yyvsp[-1].d);
     ;
     break;}
 case 131:
 #line 738 "Gmsh.y"
 {
-      ActualView->NbTS++ ;
+      View->NbTS++ ;
     ;
     break;}
 case 132:

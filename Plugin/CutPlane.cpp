@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.11 2001-07-31 19:25:04 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.12 2001-08-06 08:09:51 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -55,7 +55,7 @@ StringXNumber* GMSH_CutPlanePlugin:: GetOption (int iopt)
 
 void GMSH_CutPlanePlugin::CatchErrorMessage (char *errorMessage) const
 {
-  strcpy(errorMessage,"CutPlane Failed...");
+  strcpy(errorMessage,"CutPlane failed...");
 }
 
 double GMSH_CutPlanePlugin :: levelset (double x, double y, double z, double val) const

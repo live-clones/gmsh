@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.17 2001-08-01 09:31:57 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.18 2001-08-06 08:09:51 geuzaine Exp $
 
 #ifndef _NODLL
 #include <dlfcn.h>
@@ -10,9 +10,12 @@
 #include "Plugin.h"
 #include "PluginManager.h"
 
+#include "CutMap.h"
 #include "CutPlane.h"
 #include "CutSphere.h"
-#include "CutMap.h"
+#include "Skin.h"
+#include "Smooth.h"
+#include "Transform.h"
 
 using namespace std;
 
@@ -100,12 +103,18 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
   struct dirent **list;
   char ext[6];
 
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutMap",
+						  GMSH_RegisterCutMapPlugin()));
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutPlane",
 						  GMSH_RegisterCutPlanePlugin()));
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutSphere",
 						  GMSH_RegisterCutSpherePlugin()));
-  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutMap",
-						  GMSH_RegisterCutMapPlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Skin",
+						  GMSH_RegisterSkinPlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Smooth",
+						  GMSH_RegisterSmoothPlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Transform",
+						  GMSH_RegisterTransformPlugin()));
 
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins)return;

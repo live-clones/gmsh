@@ -1,12 +1,9 @@
-// $Id: LevelsetPlugin.cpp,v 1.8 2001-07-31 19:25:04 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.9 2001-08-06 08:09:51 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
 #include "Views.h"
 #include "Iso.h"
-
-// that's the bad part of the story ...
-extern Post_View *ActualView;
 
 GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 {
@@ -37,12 +34,13 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
     a cut of the actual view with a levelset.
    */
   int k,i,nb,edtet[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
+  Post_View *View;
 
   //   for all scalar simplices 
 
   if(v->NbSS)
     {
-      BeginView(1);
+      View = BeginView(1);
       nb = List_Nbr(v->SS) / v->NbSS ;
       for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
 	{
@@ -67,11 +65,11 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	    }
 	  if(nx == 3 || nx == 4)
 	    {
-	      for(k=0;k<3;k++)List_Add(ActualView->ST, &Xp[k]);
-	      for(k=0;k<3;k++)List_Add(ActualView->ST, &Yp[k]);
-	      for(k=0;k<3;k++)List_Add(ActualView->ST, &Zp[k]);
-	      for(k=0;k<3;k++)List_Add(ActualView->ST, &myVals[k]);
-	      ActualView->NbST++;
+	      for(k=0;k<3;k++)List_Add(View->ST, &Xp[k]);
+	      for(k=0;k<3;k++)List_Add(View->ST, &Yp[k]);
+	      for(k=0;k<3;k++)List_Add(View->ST, &Zp[k]);
+	      for(k=0;k<3;k++)List_Add(View->ST, &myVals[k]);
+	      View->NbST++;
 	    }
 	  if(nx == 4)
 	    {
@@ -87,11 +85,11 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	      Yp[2] = yy;
 	      Zp[2] = zz;
 	      myVals[2] = vv;
-	      for(k=1;k<4;k++)List_Add(ActualView->ST, &Xp[k %4]);
-	      for(k=1;k<4;k++)List_Add(ActualView->ST, &Yp[k % 4]);
-	      for(k=1;k<4;k++)List_Add(ActualView->ST, &Zp[k % 4]);
-	      for(k=1;k<4;k++)List_Add(ActualView->ST, &myVals[k %4]);
-	      ActualView->NbST++;
+	      for(k=1;k<4;k++)List_Add(View->ST, &Xp[k %4]);
+	      for(k=1;k<4;k++)List_Add(View->ST, &Yp[k % 4]);
+	      for(k=1;k<4;k++)List_Add(View->ST, &Zp[k % 4]);
+	      for(k=1;k<4;k++)List_Add(View->ST, &myVals[k %4]);
+	      View->NbST++;
 	    }
 	}
       char name[1024],filename[1024];
@@ -101,9 +99,9 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
       EndView(1, filename, name);
       
       Msg(INFO, "Levelset plugin OK: created view '%s' (%d triangles)",
-	  name, ActualView->NbST);
-      processed = ActualView;
-      return ActualView;
+	  name, View->NbST);
+      processed = View;
+      return View;
     }
 
   Msg(INFO, "Levelset plugin: nothing to do");

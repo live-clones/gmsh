@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.10 2001-07-31 19:25:04 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.11 2001-08-06 08:09:51 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -56,7 +56,7 @@ StringXNumber* GMSH_CutSpherePlugin:: GetOption (int iopt)
 
 void GMSH_CutSpherePlugin::CatchErrorMessage (char *errorMessage) const
 {
-  strcpy(errorMessage,"CutSphere Failed...");
+  strcpy(errorMessage,"CutSphere failed...");
 }
 
 double GMSH_CutSpherePlugin :: levelset (double x, double y, double z, double val) const

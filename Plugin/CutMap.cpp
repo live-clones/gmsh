@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.13 2001-07-31 19:25:04 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.14 2001-08-06 08:09:51 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -49,7 +49,7 @@ StringXNumber *GMSH_CutMapPlugin:: GetOption (int iopt)
 
 void GMSH_CutMapPlugin::CatchErrorMessage (char *errorMessage) const
 {
-  strcpy(errorMessage,"CutMap Failed...");
+  strcpy(errorMessage,"CutMap failed...");
 }
 
 double GMSH_CutMapPlugin :: levelset (double x, double y, double z, double val) const

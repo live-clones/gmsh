@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2001-07-30 15:40:04 geuzaine Exp $
+# $Id: Makefile,v 1.11 2001-08-06 08:09:51 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -20,7 +20,12 @@ VERSION_FLAGS =
 RMFLAGS   = -f
 CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
 
-SRC = Plugin.cpp CutPlane.cpp CutSphere.cpp LevelsetPlugin.cpp CutMap.cpp
+SRC = Plugin.cpp\
+        LevelsetPlugin.cpp\
+          CutPlane.cpp CutSphere.cpp CutMap.cpp\
+        Smooth.cpp\
+        Transform.cpp\
+        Skin.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

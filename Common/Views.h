@@ -53,6 +53,8 @@ class Post_View{
 		  double nx, double ny, double nz);
   bool get_normal(double x, double y, double z, 
 		  double &nx, double &ny, double &nz);
+  // transform the view
+  void transform(double mat[3][3]);
 };
 
 // The static list with pointers to all views
@@ -98,7 +100,7 @@ extern int        Post_ViewForceNumber, Post_ViewComputeBBox;
 int fcmpPostViewNum(const void *v1, const void *v2);
 int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
 
-void BeginView (int alloc);
+Post_View * BeginView (int alloc);
 void EndView (int AddInUI, char *FileName, char *Name);
 void FreeView(Post_View *v);
 bool FreeView(int);

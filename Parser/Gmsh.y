@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.87 2001-08-01 14:30:40 geuzaine Exp $
+// $Id: Gmsh.y,v 1.88 2001-08-06 08:09:51 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -39,7 +39,6 @@ List_T *Symbol_L=NULL;
 
 extern Context_T  CTX;
 extern Mesh      *THEM;
-extern Post_View *ActualView;
 
 static FILE          *yyinTab[MAX_OPEN_FILES];
 static int            yylinenoTab[MAX_OPEN_FILES];
@@ -63,6 +62,7 @@ static StringXColor   *pColCat;
 static double         (*pNumOpt)(int num, int action, double value);
 static char*          (*pStrOpt)(int num, int action, char *value);
 static unsigned int   (*pColOpt)(int num, int action, unsigned int value);
+static Post_View      *View;
 
 char *strsave(char *ptr);
 void  yyerror (char *s);
@@ -451,7 +451,7 @@ View :
 Views :
     /* none */
     {
-      BeginView(1); 
+      View = BeginView(1); 
     }
   | Views ScalarPoint
   | Views VectorPoint
@@ -469,129 +469,129 @@ Views :
 
 ScalarPointValues :
     FExpr
-    { List_Add(ActualView->SP, &$1) ; }
+    { List_Add(View->SP, &$1) ; }
   | ScalarPointValues ',' FExpr
-    { List_Add(ActualView->SP, &$3) ; }
+    { List_Add(View->SP, &$3) ; }
   ;
 
 ScalarPoint : 
     tScalarPoint '(' FExpr ',' FExpr ',' FExpr ')'
     { 
-      List_Add(ActualView->SP, &$3); List_Add(ActualView->SP, &$5);
-      List_Add(ActualView->SP, &$7);
+      List_Add(View->SP, &$3); List_Add(View->SP, &$5);
+      List_Add(View->SP, &$7);
     }
     '{' ScalarPointValues '}' tEND
     {
-      ActualView->NbSP++ ;
+      View->NbSP++ ;
     }
 ;
 
 VectorPointValues :
     FExpr
-    { List_Add(ActualView->VP, &$1) ; }
+    { List_Add(View->VP, &$1) ; }
   | VectorPointValues ',' FExpr
-    { List_Add(ActualView->VP, &$3) ; }
+    { List_Add(View->VP, &$3) ; }
   ;
 
 VectorPoint : 
     tVectorPoint '(' FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->VP, &$3); List_Add(ActualView->VP, &$5);
-      List_Add(ActualView->VP, &$7); 
+      List_Add(View->VP, &$3); List_Add(View->VP, &$5);
+      List_Add(View->VP, &$7); 
     }
     '{' VectorPointValues '}' tEND
     {
-      ActualView->NbVP++ ;
+      View->NbVP++ ;
     }
 ;
 
 TensorPointValues :
     FExpr
-    { List_Add(ActualView->TP, &$1) ; }
+    { List_Add(View->TP, &$1) ; }
   | TensorPointValues ',' FExpr
-    { List_Add(ActualView->TP, &$3) ; }
+    { List_Add(View->TP, &$3) ; }
   ;
 
 TensorPoint :
     tTensorPoint '(' FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->TP, &$3); List_Add(ActualView->TP, &$5);
-      List_Add(ActualView->TP, &$7);
+      List_Add(View->TP, &$3); List_Add(View->TP, &$5);
+      List_Add(View->TP, &$7);
     }
     '{' TensorPointValues '}' tEND
     {
-      ActualView->NbTP++ ;
+      View->NbTP++ ;
     }
 ;
 
 ScalarLineValues :
     FExpr
-    { List_Add(ActualView->SL, &$1) ; }
+    { List_Add(View->SL, &$1) ; }
   | ScalarLineValues ',' FExpr
-    { List_Add(ActualView->SL, &$3) ; }
+    { List_Add(View->SL, &$3) ; }
   ;
 
 ScalarLine : 
     tScalarLine '(' FExpr ',' FExpr ',' FExpr ',' 
                     FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->SL, &$3); List_Add(ActualView->SL, &$9);
-      List_Add(ActualView->SL, &$5); List_Add(ActualView->SL, &$11);
-      List_Add(ActualView->SL, &$7); List_Add(ActualView->SL, &$13);
+      List_Add(View->SL, &$3); List_Add(View->SL, &$9);
+      List_Add(View->SL, &$5); List_Add(View->SL, &$11);
+      List_Add(View->SL, &$7); List_Add(View->SL, &$13);
     }
     '{' ScalarLineValues '}' tEND
     {
-      ActualView->NbSL++ ;
+      View->NbSL++ ;
     }
 ;
 
 VectorLineValues :
     FExpr
-    { List_Add(ActualView->VL, &$1) ; }
+    { List_Add(View->VL, &$1) ; }
   | VectorLineValues ',' FExpr
-    { List_Add(ActualView->VL, &$3) ; }
+    { List_Add(View->VL, &$3) ; }
   ;
 
 VectorLine : 
     tVectorLine '(' FExpr ',' FExpr ',' FExpr ',' 
                     FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->VL, &$3); List_Add(ActualView->VL, &$9);
-      List_Add(ActualView->VL, &$5); List_Add(ActualView->VL, &$11);
-      List_Add(ActualView->VL, &$7); List_Add(ActualView->VL, &$13);
+      List_Add(View->VL, &$3); List_Add(View->VL, &$9);
+      List_Add(View->VL, &$5); List_Add(View->VL, &$11);
+      List_Add(View->VL, &$7); List_Add(View->VL, &$13);
     }
     '{' VectorLineValues '}' tEND
     {
-      ActualView->NbVL++ ;
+      View->NbVL++ ;
     }
 ;
 
 TensorLineValues :
     FExpr
-    { List_Add(ActualView->TL, &$1) ; }
+    { List_Add(View->TL, &$1) ; }
   | TensorLineValues ',' FExpr
-    { List_Add(ActualView->TL, &$3) ; }
+    { List_Add(View->TL, &$3) ; }
   ;
 
 TensorLine :
     tTensorLine '(' FExpr ',' FExpr ',' FExpr ',' 
                     FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->TL, &$3); List_Add(ActualView->TL, &$9);
-      List_Add(ActualView->TL, &$5); List_Add(ActualView->TL, &$11);
-      List_Add(ActualView->TL, &$7); List_Add(ActualView->TL, &$13);
+      List_Add(View->TL, &$3); List_Add(View->TL, &$9);
+      List_Add(View->TL, &$5); List_Add(View->TL, &$11);
+      List_Add(View->TL, &$7); List_Add(View->TL, &$13);
     }
     '{' TensorLineValues '}' tEND
     {
-      ActualView->NbTL++ ;
+      View->NbTL++ ;
     }
 ;
 
 ScalarTriangleValues :
     FExpr
-    { List_Add(ActualView->ST, &$1) ; }
+    { List_Add(View->ST, &$1) ; }
   | ScalarTriangleValues ',' FExpr
-    { List_Add(ActualView->ST, &$3) ; }
+    { List_Add(View->ST, &$3) ; }
   ;
 
 ScalarTriangle : 
@@ -599,24 +599,24 @@ ScalarTriangle :
                         FExpr ',' FExpr ',' FExpr ','
                         FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->ST, &$3); List_Add(ActualView->ST, &$9);
-      List_Add(ActualView->ST, &$15);
-      List_Add(ActualView->ST, &$5); List_Add(ActualView->ST, &$11);
-      List_Add(ActualView->ST, &$17);
-      List_Add(ActualView->ST, &$7); List_Add(ActualView->ST, &$13);
-      List_Add(ActualView->ST, &$19);
+      List_Add(View->ST, &$3); List_Add(View->ST, &$9);
+      List_Add(View->ST, &$15);
+      List_Add(View->ST, &$5); List_Add(View->ST, &$11);
+      List_Add(View->ST, &$17);
+      List_Add(View->ST, &$7); List_Add(View->ST, &$13);
+      List_Add(View->ST, &$19);
     }
     '{' ScalarTriangleValues '}' tEND
     {
-      ActualView->NbST++ ;
+      View->NbST++ ;
     }
 ;
 
 VectorTriangleValues :
     FExpr
-    { List_Add(ActualView->VT, &$1) ; }
+    { List_Add(View->VT, &$1) ; }
   | VectorTriangleValues ',' FExpr
-    { List_Add(ActualView->VT, &$3) ; }
+    { List_Add(View->VT, &$3) ; }
   ;
 
 VectorTriangle : 
@@ -624,24 +624,24 @@ VectorTriangle :
                         FExpr ',' FExpr ',' FExpr ','
                         FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->VT, &$3); List_Add(ActualView->VT, &$9);
-      List_Add(ActualView->VT, &$15);
-      List_Add(ActualView->VT, &$5); List_Add(ActualView->VT, &$11);
-      List_Add(ActualView->VT, &$17);
-      List_Add(ActualView->VT, &$7); List_Add(ActualView->VT, &$13);
-      List_Add(ActualView->VT, &$19);
+      List_Add(View->VT, &$3); List_Add(View->VT, &$9);
+      List_Add(View->VT, &$15);
+      List_Add(View->VT, &$5); List_Add(View->VT, &$11);
+      List_Add(View->VT, &$17);
+      List_Add(View->VT, &$7); List_Add(View->VT, &$13);
+      List_Add(View->VT, &$19);
     }
     '{' VectorTriangleValues '}' tEND
     {
-      ActualView->NbVT++ ;
+      View->NbVT++ ;
     }
 ;
 
 TensorTriangleValues :
     FExpr
-    { List_Add(ActualView->TT, &$1) ; }
+    { List_Add(View->TT, &$1) ; }
   | TensorTriangleValues ',' FExpr
-    { List_Add(ActualView->TT, &$3) ; }
+    { List_Add(View->TT, &$3) ; }
   ;
 
 TensorTriangle :
@@ -649,24 +649,24 @@ TensorTriangle :
                         FExpr ',' FExpr ',' FExpr ','
                         FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->TT, &$3); List_Add(ActualView->TT, &$9);
-      List_Add(ActualView->TT, &$15);
-      List_Add(ActualView->TT, &$5); List_Add(ActualView->TT, &$11);
-      List_Add(ActualView->TT, &$17);
-      List_Add(ActualView->TT, &$7); List_Add(ActualView->TT, &$13);
-      List_Add(ActualView->TT, &$19);
+      List_Add(View->TT, &$3); List_Add(View->TT, &$9);
+      List_Add(View->TT, &$15);
+      List_Add(View->TT, &$5); List_Add(View->TT, &$11);
+      List_Add(View->TT, &$17);
+      List_Add(View->TT, &$7); List_Add(View->TT, &$13);
+      List_Add(View->TT, &$19);
     }
     '{' TensorTriangleValues '}' tEND
     {
-      ActualView->NbTT++ ;
+      View->NbTT++ ;
     }
 ;
 
 ScalarTetrahedronValues :
     FExpr
-    { List_Add(ActualView->SS, &$1) ; }
+    { List_Add(View->SS, &$1) ; }
   | ScalarTetrahedronValues ',' FExpr
-    { List_Add(ActualView->SS, &$3) ; }
+    { List_Add(View->SS, &$3) ; }
   ;
 
 ScalarTetrahedron : 
@@ -675,24 +675,24 @@ ScalarTetrahedron :
                            FExpr ',' FExpr ',' FExpr ',' 
                            FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->SS, &$3);  List_Add(ActualView->SS, &$9);
-      List_Add(ActualView->SS, &$15); List_Add(ActualView->SS, &$21);
-      List_Add(ActualView->SS, &$5);  List_Add(ActualView->SS, &$11);
-      List_Add(ActualView->SS, &$17); List_Add(ActualView->SS, &$23);
-      List_Add(ActualView->SS, &$7);  List_Add(ActualView->SS, &$13);
-      List_Add(ActualView->SS, &$19); List_Add(ActualView->SS, &$25);
+      List_Add(View->SS, &$3);  List_Add(View->SS, &$9);
+      List_Add(View->SS, &$15); List_Add(View->SS, &$21);
+      List_Add(View->SS, &$5);  List_Add(View->SS, &$11);
+      List_Add(View->SS, &$17); List_Add(View->SS, &$23);
+      List_Add(View->SS, &$7);  List_Add(View->SS, &$13);
+      List_Add(View->SS, &$19); List_Add(View->SS, &$25);
     }
     '{' ScalarTetrahedronValues '}' tEND
     {
-      ActualView->NbSS++ ;
+      View->NbSS++ ;
     }
 ;
 
 VectorTetrahedronValues :
     FExpr
-    { List_Add(ActualView->VS, &$1) ; }
+    { List_Add(View->VS, &$1) ; }
   | VectorTetrahedronValues ',' FExpr
-    { List_Add(ActualView->VS, &$3) ; }
+    { List_Add(View->VS, &$3) ; }
   ;
 
 VectorTetrahedron : 
@@ -701,24 +701,24 @@ VectorTetrahedron :
                            FExpr ',' FExpr ',' FExpr ',' 
                            FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->VS, &$3);  List_Add(ActualView->VS, &$9);
-      List_Add(ActualView->VS, &$15); List_Add(ActualView->VS, &$21);
-      List_Add(ActualView->VS, &$5);  List_Add(ActualView->VS, &$11);
-      List_Add(ActualView->VS, &$17); List_Add(ActualView->VS, &$23);
-      List_Add(ActualView->VS, &$7);  List_Add(ActualView->VS, &$13);
-      List_Add(ActualView->VS, &$19); List_Add(ActualView->VS, &$25);
+      List_Add(View->VS, &$3);  List_Add(View->VS, &$9);
+      List_Add(View->VS, &$15); List_Add(View->VS, &$21);
+      List_Add(View->VS, &$5);  List_Add(View->VS, &$11);
+      List_Add(View->VS, &$17); List_Add(View->VS, &$23);
+      List_Add(View->VS, &$7);  List_Add(View->VS, &$13);
+      List_Add(View->VS, &$19); List_Add(View->VS, &$25);
     }
     '{' VectorTetrahedronValues '}' tEND
     {
-      ActualView->NbVS++ ;
+      View->NbVS++ ;
     }
 ;
 
 TensorTetrahedronValues :
     FExpr
-    { List_Add(ActualView->TS, &$1) ; }
+    { List_Add(View->TS, &$1) ; }
   | TensorTetrahedronValues ',' FExpr
-    { List_Add(ActualView->TS, &$3) ; }
+    { List_Add(View->TS, &$3) ; }
   ;
 
 TensorTetrahedron :
@@ -727,16 +727,16 @@ TensorTetrahedron :
                            FExpr ',' FExpr ',' FExpr ',' 
                            FExpr ',' FExpr ',' FExpr ')' 
     { 
-      List_Add(ActualView->TS, &$3);  List_Add(ActualView->TS, &$9);
-      List_Add(ActualView->TS, &$15); List_Add(ActualView->TS, &$21);
-      List_Add(ActualView->TS, &$5);  List_Add(ActualView->TS, &$11);
-      List_Add(ActualView->TS, &$17); List_Add(ActualView->TS, &$23);
-      List_Add(ActualView->TS, &$7);  List_Add(ActualView->TS, &$13);
-      List_Add(ActualView->TS, &$19); List_Add(ActualView->TS, &$25);
+      List_Add(View->TS, &$3);  List_Add(View->TS, &$9);
+      List_Add(View->TS, &$15); List_Add(View->TS, &$21);
+      List_Add(View->TS, &$5);  List_Add(View->TS, &$11);
+      List_Add(View->TS, &$17); List_Add(View->TS, &$23);
+      List_Add(View->TS, &$7);  List_Add(View->TS, &$13);
+      List_Add(View->TS, &$19); List_Add(View->TS, &$25);
     }
     '{' TensorTetrahedronValues '}' tEND
     {
-      ActualView->NbTS++ ;
+      View->NbTS++ ;
     }
 ;
 
