@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004-11-09 16:27:50 remacle Exp $
+# $Id: Makefile,v 1.14 2004-11-09 19:53:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -26,7 +26,6 @@ INCLUDE = -I../Common -I../DataStr
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = Numeric.cpp\
-      GaussQuadrature.cpp\
       gsl_newt.cpp\
       gsl_brent.cpp
 
@@ -56,7 +55,6 @@ depend:
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
-GaussQuadrature.o: GaussQuadrature.cpp GaussQuadrature.h Numeric.h
 gsl_newt.o: gsl_newt.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Numeric.h

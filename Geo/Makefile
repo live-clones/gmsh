@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.55 2004-11-09 16:27:50 remacle Exp $
+# $Id: Makefile,v 1.56 2004-11-09 19:53:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -64,8 +64,8 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Mesh/Interpolation.h ../Mesh/Create.h CAD.h ExtrudeParams.h \
-  ../Common/Visibility.h ../Common/Context.h
+  ../Mesh/Interpolation.h ../Mesh/Create.h CAD.h ../Common/Visibility.h \
+  ../Common/Context.h
 MinMax.o: MinMax.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \
@@ -76,21 +76,21 @@ ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h ExtrudeParams.h
+  ../Mesh/Matrix.h
 Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h Geo.h CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ExtrudeParams.h ../Parser/Parser.h ../Common/Context.h
+  ../Parser/Parser.h ../Common/Context.h
 GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h ExtrudeParams.h ../Numeric/Numeric.h
+  ../Mesh/Matrix.h ../Numeric/Numeric.h
 StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
@@ -98,19 +98,19 @@ StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Mesh/Nurbs.h CAD.h ExtrudeParams.h StepGeomDatabase.h \
-  ../Mesh/Create.h ../Common/Context.h
+  ../Mesh/Nurbs.h CAD.h StepGeomDatabase.h ../Mesh/Create.h \
+  ../Common/Context.h
 ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h GeoUtils.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h CAD.h ExtrudeParams.h ../Numeric/Numeric.h
+  ../Mesh/Matrix.h CAD.h ../Numeric/Numeric.h
 Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h CAD.h ExtrudeParams.h ../Common/Context.h
+  ../Mesh/Matrix.h CAD.h ../Common/Context.h

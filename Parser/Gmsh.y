@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.182 2004-11-09 16:27:53 remacle Exp $
+// $Id: Gmsh.y,v 1.183 2004-11-09 19:54:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -642,9 +642,11 @@ ScalarTriangle :
     }
     '{' ScalarTriangleValues '}' tEND
     {
-//     if((List_Nbr(View->ST) - ntmp) % 3)
-//	yymsg(GERROR, "Wrong number of values for scalar triangle "
-//	      "(%d is not a multiple of 3)", List_Nbr(View->ST) - ntmp);
+      // FIXME: removed this sanity chack for high-order views (need
+      // to make the check elsewhere!)
+      // if((List_Nbr(View->ST) - ntmp) % 3)
+      //   yymsg(GERROR, "Wrong number of values for scalar triangle "
+      //         "(%d is not a multiple of 3)", List_Nbr(View->ST) - ntmp);
       View->NbST++;
     }
 ;
@@ -1269,9 +1271,10 @@ Text3D :
 ;
 
 InterpolationMatrix :
-    tInterpolationScheme ListOfListOfDouble  ListOfListOfDouble  tEND
+    tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
+                         '{' RecursiveListOfListOfDouble '}'  tEND
     {
-      View -> adaptive = new Adaptive_Post_View ( View , $2 , $3);
+      View -> adaptive = new Adaptive_Post_View(View, $3, $6);
     }
 ;
 
