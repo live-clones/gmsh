@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.103 2001-06-06 15:30:18 remacle Exp $
+# $Id: Makefile,v 1.104 2001-06-14 07:39:43 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -15,7 +15,8 @@
 #  Includes
 # ----------------------------------------------------------------------
 
-             OPENGL_INC = -I/usr/include/X11/GLw\
+             OPENGL_INC = -I/usr/X11R6/include\
+                          -I/usr/include/X11/GLw\
                           -I$(HOME)/SOURCES/Mesa-3.1/include\
                           -I$(HOME)/SOURCES/Mesa-3.1/include/GL
               MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
