@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.178 2003-06-19 16:48:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.179 2003-06-19 16:52:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -844,7 +844,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
     Draw();
   }
 
-  Msg(STATUS3N, "Select Point ('q'=quit)");
+  Msg(STATUS3N, "Select point ('q'=quit)");
   ib = SelectEntity(ENT_POINT, &v, &c, &s);
   if(ib == 1) {
     // This would bypass the "Apply" button... Not necessarily bad,
@@ -1515,7 +1515,7 @@ static void _new_multiline(int type)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Select Point ('e'=end, 'q'=quit)");
+    Msg(STATUS3N, "Select point ('e'=end, 'q'=quit)");
     ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 1) {       /* left mouse butt */
       p[n++] = v->Num;
@@ -1572,9 +1572,9 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   n = 0;
   while(1) {
     if(n == 0)
-      Msg(STATUS3N, "Select start Point ('q'=quit)");
+      Msg(STATUS3N, "Select start point ('q'=quit)");
     if(n == 1)
-      Msg(STATUS3N, "Select end Point ('q'=quit)");
+      Msg(STATUS3N, "Select end point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 1) {       /* left mouse butt */
       p[n++] = v->Num;
@@ -1621,11 +1621,11 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   n = 0;
   while(1) {
     if(n == 0)
-      Msg(STATUS3N, "Select start Point ('q'=quit)");
+      Msg(STATUS3N, "Select start point ('q'=quit)");
     if(n == 1)
-      Msg(STATUS3N, "Select center Point ('q'=quit)");
+      Msg(STATUS3N, "Select center point ('q'=quit)");
     if(n == 2)
-      Msg(STATUS3N, "Select end Point ('q'=quit)");
+      Msg(STATUS3N, "Select end point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 1) {       /* left mouse butt */
       p[n++] = v->Num;
@@ -1662,13 +1662,13 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   n = 0;
   while(1) {
     if(n == 0)
-      Msg(STATUS3N, "Select start Point ('q'=quit)");
+      Msg(STATUS3N, "Select start point ('q'=quit)");
     if(n == 1)
-      Msg(STATUS3N, "Select center Point ('q'=quit)");
+      Msg(STATUS3N, "Select center point ('q'=quit)");
     if(n == 2)
-      Msg(STATUS3N, "Select major axis Point ('q'=quit)");
+      Msg(STATUS3N, "Select major axis point ('q'=quit)");
     if(n == 3)
-      Msg(STATUS3N, "Select end Point ('q'=quit)");
+      Msg(STATUS3N, "Select end point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 1) {       /* left mouse butt */
       p[n++] = v->Num;
@@ -2278,7 +2278,7 @@ void mesh_define_length_cb(CALLBACK_ARGS)
   WID->create_mesh_context_window(0);
 
   while(1) {
-    Msg(STATUS3N, "Select Point ('e'=end, 'q'=quit)");
+    Msg(STATUS3N, "Select point ('e'=end, 'q'=quit)");
     ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 1) {       /* left mouse butt */
       p[n++] = v->Num;
@@ -2317,7 +2317,7 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Select Surface ('e'=end, 'q'=quit)");
+    Msg(STATUS3N, "Select surface ('e'=end, 'q'=quit)");
     ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
     if(ib == 1) {       /* left mouse butt */
       p[n++] = s->Num;
@@ -2384,11 +2384,11 @@ static void _add_transfinite(int dim)
   while(1) {
     switch (dim) {
     case 1:
-      Msg(STATUS3N, "Select Line ('e'=end, 'q'=quit)");
+      Msg(STATUS3N, "Select line ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_LINE, &v, &c, &s);
       break;
     case 2:
-      Msg(STATUS3N, "Select Surface ('e'=end, 'q'=quit)");
+      Msg(STATUS3N, "Select surface ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
       break;
     case 3:
@@ -2404,7 +2404,7 @@ static void _add_transfinite(int dim)
         p[n++] = s->Num;        // fall-through
       case 3:
         while(1) {
-          Msg(STATUS3N, "Select Point ('e'=end, 'q'=quit)");
+          Msg(STATUS3N, "Select point ('e'=end, 'q'=quit)");
           ib = SelectEntity(ENT_POINT, &v, &c, &s);
           if(ib == 1) { /* left mouse butt */
             p[n++] = v->Num;
@@ -2416,13 +2416,13 @@ static void _add_transfinite(int dim)
                 add_trsfsurf(n, p, CTX.filename);
               else
                 Msg(STATUS2,
-                    "Wrong number of points for Transfinite Surface");
+                    "Wrong number of points for transfinite surface");
               break;
             case 3:
               if(n == 6 || n == 8)
                 add_trsfvol(n, p, CTX.filename);
               else
-                Msg(STATUS2, "Wrong number of points for Transfinite Volume");
+                Msg(STATUS2, "Wrong number of points for transfinite volume");
               break;
             }
             n = 0;
