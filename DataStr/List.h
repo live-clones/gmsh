@@ -69,7 +69,7 @@ void    List_Reset(List_T *liste);
 void    List_Action(List_T *liste, void (*action)(void *data, void *dummy));
 void    List_Action_Inverse(List_T *liste, void (*action)(void *data, void *dummy));
 void    List_Copy(List_T *a , List_T *b);
-List_T *List_CreateFromFile(int n, int size, FILE *file, int format, int swap);
+List_T *List_CreateFromFile(int n, int incr, int size, FILE *file, int format, int swap);
 void    List_WriteToFile(List_T *liste, FILE *file, int format);
 
 #endif

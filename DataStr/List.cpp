@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.30 2004-05-18 20:51:31 geuzaine Exp $
+// $Id: List.cpp,v 1.31 2004-06-16 17:57:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -420,16 +420,18 @@ void swap_bytes(char *array, int size, int n)
   Free(x);
 }
 
-List_T *List_CreateFromFile(int n, int size, FILE * file, int format,
+List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
                             int swap)
 {
   int i;
   List_T *liste;
 
-  if(!n)
-    return NULL;
+  if(!n){
+    liste = List_Create(incr, incr, size);
+    return liste;
+  }
 
-  liste = List_Create(n, 1, size);
+  liste = List_Create(n, incr, size);
   liste->n = n;
   switch (format) {
   case LIST_FORMAT_ASCII:

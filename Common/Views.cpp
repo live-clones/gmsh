@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.123 2004-06-01 06:29:13 geuzaine Exp $
+// $Id: Views.cpp,v 1.124 2004-06-16 17:57:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -831,9 +831,11 @@ void ReadView(FILE *file, char *filename)
       v->DataSize = size;
 
       // Time values
-      v->Time = List_CreateFromFile(v->NbTimeStep, size, file, format, swap);
+      v->Time = List_CreateFromFile(v->NbTimeStep, 10, size, file, format, swap);
 
-#define LL List_CreateFromFile(nb, size, file, format, swap)
+      // if nb==0, this still allocates a list (empty, but ready to be
+      // filled later, e.g. in a plugin)
+#define LL List_CreateFromFile(nb, 100, size, file, format, swap)
 
       // Points
       nb = v->NbSP ? v->NbSP * (v->NbTimeStep + 3) : 0;
@@ -903,12 +905,12 @@ void ReadView(FILE *file, char *filename)
 
       // Strings
       nb = v->NbT2 ? v->NbT2 * 4 : 0;
-      v->T2D = List_CreateFromFile(nb, size, file, format, swap);
-      v->T2C = List_CreateFromFile(t2l, sizeof(char), file, format, swap);
+      v->T2D = List_CreateFromFile(nb, 10, size, file, format, swap);
+      v->T2C = List_CreateFromFile(t2l, 10, sizeof(char), file, format, swap);
 
       nb = v->NbT3 ? v->NbT3 * 5 : 0;
-      v->T3D = List_CreateFromFile(nb, size, file, format, swap);
-      v->T3C = List_CreateFromFile(t3l, sizeof(char), file, format, swap);
+      v->T3D = List_CreateFromFile(nb, 10, size, file, format, swap);
+      v->T3C = List_CreateFromFile(t3l, 10, sizeof(char), file, format, swap);
 
 
       Msg(DEBUG,
