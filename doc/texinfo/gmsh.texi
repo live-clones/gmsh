@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.133 2004-10-04 01:07:43 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.134 2004-10-04 04:40:59 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,7 +37,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.24
+@set EDITION        1.25
 @set GMSH-VERSION   1.55
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2004 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -1134,13 +1134,13 @@ if you compiled Gmsh's parallel extensions).
 Returns the rank of the current processor.
 
 @item newp
-Returns the next available point number. As we will see in @ref{Geometry
-module}, a unique number is associated with every geometrical point:
-@code{newp} permits to know the highest number already attributed. This is
-mostly useful when writing user-defined functions (@pxref{User-defined
-functions}) or general geometric primitives, when one does not know @emph{a
-priori} which numbers are already attributed, and which ones are still
-available.
+Returns the next available point number. As explained in @ref{Geometry
+module}, a unique number must be associated with every geometrical point:
+@code{newp} permits to know the highest number already attributed (plus
+one). This is mostly useful when writing user-defined functions
+(@pxref{User-defined functions}) or general geometric primitives, when one
+does not know @emph{a priori} which numbers are already attributed, and
+which ones are still available.
 
 @item newl
 Returns the next available line number.
@@ -1227,7 +1227,9 @@ that only valid floating point formatting characters make sense in
 
 @item Merge @var{char-expression};
 Merges a file named @var{char-expression}. This command is equivalent to the
-`File->Merge' menu in the graphical user interface.
+`File->Merge' menu in the graphical user interface. If the path in
+@var{char-expression} is not absolute, @var{char-expression} is appended to
+the path of the current file.
 
 @item Draw;
 Redraws the scene.
@@ -1238,14 +1240,14 @@ after new geometrical entities are added or after files are included or
 merged). The bounding box is computed as follows:
 @enumerate
 @item
-If there is a geometry (i.e., at least one geometrical point), the bounding
-box is taken as the box enclosing all the geometrical points;
+If there is a mesh (i.e., at least one mesh vertex), the bounding
+box is taken as the box enclosing all the mesh vertices;
 @item
-If there is no geometry but there is a mesh (i.e., at least one mesh
-vertex), the bounding box is taken as the box enclosing all the mesh
-vertices;
+If there is no mesh but there is a geometry (i.e., at least one geometrical
+point), the bounding box is taken as the box enclosing all the geometrical
+points;
 @item
-If there is no geometry and no mesh, but there are some post-processing
+If there is no mesh and no geometry, but there are some post-processing
 views, the bounding box is taken as the box enclosing all the primitives of
 the last post-processing view.
 @end enumerate
@@ -1259,7 +1261,9 @@ Deletes all geometrical entities and all currently loaded meshes.
 
 @item Print @var{char-expression};
 Prints the graphic window in a file named @var{char-expression}, using the
-current @code{Print.Format} (@pxref{General options}).
+current @code{Print.Format} (@pxref{General options}). If the path in
+@var{char-expression} is not absolute, @var{char-expression} is appended to
+the path of the current file.
 
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
@@ -1271,7 +1275,7 @@ Executes a system call.
 Includes the file named @var{char-expression} at the current position in the
 input file. The include command should be given on a line of its own.  If
 the path in @var{char-expression} is not absolute, @var{char-expression} is
-appended to the path of the including file.
+appended to the path of the current file.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -2064,7 +2068,9 @@ triangle recombinations).
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
-@code{Mesh.Format} (@pxref{Mesh options}).
+@code{Mesh.Format} (@pxref{Mesh options}). If the path in
+@var{char-expression} is not absolute, @var{char-expression} is appended to
+the path of the current file.
 
 @item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
@@ -2272,7 +2278,8 @@ list of default plugins and @ref{t9.geo}, for some examples.
 
 @item Save View[@var{expression}] @var{char-expression};
 Saves the the @var{expression}-th post-processing view in a file named
-@var{char-expression}.
+@var{char-expression}. If the path in @var{char-expression} is not absolute,
+@var{char-expression} is appended to the path of the current file.
 
 @item View "@var{string}" @{ @var{string} ( @var{expression-list} ) @{ @var{expression-list} @}; @dots{} @}
 Creates a new post-processing view, named @code{"@var{string}"}. This is the
