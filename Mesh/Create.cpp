@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.58 2004-05-29 23:22:19 geuzaine Exp $
+// $Id: Create.cpp,v 1.59 2004-06-23 22:23:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -655,7 +655,7 @@ Surface *Create_Surface(int Num, int Typ)
   for(i = 0; i < 5; i++)
     pS->ipar[i] = 0;
   pS->Recombine = 0;
-  pS->RecombineAngle = 90;
+  pS->RecombineAngle = 75;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
   pS->Quadrangles = Tree_Create(sizeof(Quadrangle *), compareQuadrangle);
