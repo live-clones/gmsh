@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.69 2003-12-04 19:53:41 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.70 2003-12-16 17:36:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,7 @@ extern Mesh *THEM;
 
 static int DIM, NUM;            // current dimension of parent entity
 static int TEST_IS_ALL_OK;
+static double RANDOM_SWAP_FACT = 0.0;
 static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static Curve *THEC = NULL;
 static Surface *THES = NULL;
@@ -516,7 +517,10 @@ void Extrude_Simplex_Phase2(void *data, void *dum)
       List_Read(L1, k + 1, &v5);
       List_Read(L2, k + 1, &v6);
       k++;
-      //if((double)rand()/(double)RAND_MAX < 0.1) break;
+      if(RANDOM_SWAP_FACT){
+	if((double)rand()/(double)RAND_MAX < RANDOM_SWAP_FACT)
+	  break;
+      }
       if(are_exist(v4, v2, Tree_Ares) &&
          are_exist(v5, v3, Tree_Ares) && 
 	 are_exist(v1, v6, Tree_Ares)) {
@@ -1069,6 +1073,7 @@ int Extrude_Mesh(Tree_T * Volumes)
   }
 
   j = 0;
+  RANDOM_SWAP_FACT = 0.0;
   do {
     TEST_IS_ALL_OK = 0;
     for(int ivol = 0; ivol < List_Nbr(vol); ivol++) {
@@ -1083,10 +1088,15 @@ int Extrude_Mesh(Tree_T * Volumes)
       }
     }
     Msg(STATUS3, "Swapping %d", TEST_IS_ALL_OK);
-    if(TEST_IS_ALL_OK == j) {
-      if(j)
-        Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
-      break;
+    if(TEST_IS_ALL_OK == j && j != 0) {
+      if(RANDOM_SWAP_FACT > 0.8){
+	Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
+	break;
+      }
+      else{
+	RANDOM_SWAP_FACT += 0.1;
+	Msg(INFO, "Setting random swapping factor to %g", RANDOM_SWAP_FACT);
+      }
     }
     j = TEST_IS_ALL_OK;
   } while(TEST_IS_ALL_OK);
