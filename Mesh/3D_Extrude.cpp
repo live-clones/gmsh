@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.52 2001-12-04 09:30:12 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.53 2002-02-05 20:12:36 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -156,7 +156,10 @@ void InitExtrude (){
   if(Vertex_Bound) Tree_Delete(Vertex_Bound);
   Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
 
-  Tree_Action(THEM->Points, ReplaceInVertexBound);
+  //ceci doit etre enleve: ca fout le boxon si des points du maillage
+  //correspondent a des points de controle de la geometrie, lors du Free.
+  //Tree_Action(THEM->Points, ReplaceInVertexBound);
+
   Tree_Action(THEM->Vertices, ReplaceInVertexBound);
 }
 
