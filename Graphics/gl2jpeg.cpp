@@ -1,3 +1,4 @@
+/* $Id: gl2jpeg.cpp,v 1.2 2000-12-21 10:29:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
