@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.15 2001-06-02 13:09:14 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.16 2001-07-26 21:26:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -8,6 +8,9 @@
 #include "Numeric.h"
 #include "Interpolation.h"
 #include "nrutil.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 double myatan2 (double a, double b){
   if (a == 0.0 && b == 0)
@@ -67,7 +70,9 @@ int sys2x2 (double mat[2][2], double b[2], double res[2]){
   norm = DSQR (mat[0][0]) + DSQR (mat[1][1]) + DSQR (mat[0][1]) + DSQR (mat[1][0]);
   det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
+  // TOLERANCE ! WARNING WARNING
   if (norm == 0.0 || fabs (det) / norm < 1.e-07){
+    Msg(DEBUG, "Assuming 2x2 matrix is singular (det/norm == %g)", fabs(det)/norm);
     res[0] = res[1] = 0.0 ;
     return 0;
   }
@@ -116,13 +121,19 @@ int sys3x3 (double mat[3][3], double b[3], double res[3], double *det){
 
 int sys3x3_with_tol (double mat[3][3], double b[3], double res[3], double *det){
   int out;
+  double norm;
 
   out = sys3x3(mat,b,res,det);
+  norm = 
+    DSQR (mat[0][0]) + DSQR (mat[0][1]) + DSQR (mat[0][2]) + 
+    DSQR (mat[1][0]) + DSQR (mat[1][1]) + DSQR (mat[1][2]) + 
+    DSQR (mat[2][0]) + DSQR (mat[2][1]) + DSQR (mat[2][2]) ;
 
-  if (fabs(*det) < 1.e-14){
-    Msg(DEBUG, "Assuming 3x3 matrix is singular (det == %g)", fabs(*det));
+  // TOLERANCE ! WARNING WARNING
+  if (norm == 0.0 || fabs (*det) / norm < 1.e-07){
+    Msg(DEBUG, "Assuming 3x3 matrix is singular (det/norm == %g)", fabs(*det)/norm);
     res[0] = res[1] = res[2] = 0.0 ;
-    return (0);
+    return 0;
   }
 
   return out ;
@@ -159,6 +170,242 @@ int inv3x3 (double mat[3][3], double inv[3][3], double *det){
   return (1);
 
 }
+
+
+void MeanPlane(List_T *points, Surface *s){
+  int       i, j, ix, iy, iz, N;
+  double    det,sys[3][3],b[3],res[3],mod,t1[3],t2[3],ex[3],s2s[2][2],r2[2],X,Y,Z;
+  Vertex   *v;
+
+  N = List_Nbr (points);
+
+  for (i = 0; i < 3; i++){
+    b[i] = 0.0;
+    for (j = 0; j < 3; j++){
+      sys[i][j] = 0.0;
+    }
+  }
+
+  /* ax + by + cz = 1 */
+
+  ix = iy = iz = 0;
+
+  // TOLERANCE ! WARNING WARNING
+  double eps = 1.e-6 * CTX.lc;
+
+  for (i = 0; i < N; i++){
+    List_Read (points, i, &v);
+
+    if (!i){
+      X = v->Pos.X;
+      Y = v->Pos.Y;
+      Z = v->Pos.Z;
+    }
+    else{
+      if(fabs(X-v->Pos.X) > eps) ix = 1;
+      if(fabs(Y-v->Pos.Y) > eps) iy = 1;
+      if(fabs(Z-v->Pos.Z) > eps) iz = 1;
+    }
+    
+    sys[0][0] += v->Pos.X * v->Pos.X;
+    sys[1][1] += v->Pos.Y * v->Pos.Y;
+    sys[2][2] += v->Pos.Z * v->Pos.Z;
+    sys[0][1] += v->Pos.X * v->Pos.Y;
+    sys[0][2] += v->Pos.X * v->Pos.Z;
+    sys[1][2] += v->Pos.Y * v->Pos.Z;
+    sys[2][1] = sys[1][2];
+    sys[1][0] = sys[0][1];
+    sys[2][0] = sys[0][2];
+    b[0] += v->Pos.X;
+    b[1] += v->Pos.Y;
+    b[2] += v->Pos.Z;
+  }
+
+  s->d = 1.0;
+
+  /* x = X */
+
+  if (!ix){
+    s->d = X;
+    res[0] = 1.;
+    res[1] = res[2] = 0.0;
+    Msg(DEBUG, "Mean plane of type 'x = c'");
+  }
+
+  /* y = Y */
+
+  else if (!iy){
+    s->d = Y;
+    res[1] = 1.;
+    res[0] = res[2] = 0.0;
+    Msg(DEBUG, "Mean plane of type 'y = c'");
+  }
+
+  /* z = Z */
+
+  else if (!iz){
+    s->d = Z;
+    res[2] = 1.;
+    res[1] = res[0] = 0.0;
+    Msg(DEBUG, "Mean plane of type 'z = c'");
+  }
+
+  /* by + cz = -x */
+
+  else if (!sys3x3_with_tol (sys, b, res, &det)){
+    s->d = 0.0;
+    s2s[0][0] = sys[1][1];
+    s2s[0][1] = sys[1][2];
+    s2s[1][0] = sys[1][2];
+    s2s[1][1] = sys[2][2];
+    b[0] = -sys[0][1];
+    b[1] = -sys[0][2];
+    if (sys2x2 (s2s, b, r2)){
+      res[0] = 1.;
+      res[1] = r2[0];
+      res[2] = r2[1];
+      Msg(DEBUG, "Mean plane of type 'by + cz = -x'");
+    }
+
+    /* ax + cz = -y */
+    
+    else{
+      s->d = 0.0;
+      s2s[0][0] = sys[0][0];
+      s2s[0][1] = sys[0][2];
+      s2s[1][0] = sys[0][2];
+      s2s[1][1] = sys[2][2];
+      b[0] = -sys[0][1];
+      b[1] = -sys[1][2];
+      if (sys2x2 (s2s, b, r2)){
+        res[0] = r2[0];
+        res[1] = 1.;
+        res[2] = r2[1];
+        Msg(DEBUG, "Mean plane of type 'ax + cz = -y'");
+      }
+      
+      /* ax + by = -z */
+      
+      else{
+        s->d = 1.0;
+        s2s[0][0] = sys[0][0];
+        s2s[0][1] = sys[0][1];
+        s2s[1][0] = sys[0][1];
+        s2s[1][1] = sys[1][1];
+        b[0] = -sys[0][2];
+        b[1] = -sys[1][2];
+        if (sys2x2 (s2s, b, r2)){
+          res[0] = r2[0];
+          res[1] = r2[1];
+          res[2] = 1.;
+          Msg(DEBUG, "Mean plane of type 'ax + by = -z'");
+        }
+        else{
+          Msg(GERROR, "Problem in mean plane computation");
+        }
+      }
+    }
+  }
+
+  s->a = res[0];
+  s->b = res[1];
+  s->c = res[2];
+  mod = sqrt (res[0] * res[0] + res[1] * res[1] + res[2] * res[2]);
+  for (i = 0; i < 3; i++)
+    res[i] /= mod;
+
+  /* L'axe n'est pas l'axe des x */
+
+  ex[0] = ex[1] = ex[2] = 0.0;
+  if(res[0] == 0.0)
+    ex[0] = 1.0;
+  else if(res[1] == 0.0)
+    ex[1] = 1.0;
+  else
+    ex[2] = 1.0;
+
+  prodve (res, ex, t1);
+
+  mod = sqrt (t1[0] * t1[0] + t1[1] * t1[1] + t1[2] * t1[2]);
+  for (i = 0; i < 3; i++)
+    t1[i] /= mod;
+
+  prodve (t1, res, t2);
+
+  mod = sqrt (t2[0] * t2[0] + t2[1] * t2[1] + t2[2] * t2[2]);
+  for (i = 0; i < 3; i++)
+    t2[i] /= mod;
+
+  for (i = 0; i < 3; i++)
+    s->plan[0][i] = t1[i];
+  for (i = 0; i < 3; i++)
+    s->plan[1][i] = t2[i];
+  for (i = 0; i < 3; i++)
+    s->plan[2][i] = res[i];
+
+  Msg(DEBUG1, "Plane  : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
+  Msg(DEBUG2, "Normal : (%g , %g , %g )", res[0], res[1], res[2]);
+  Msg(DEBUG2, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
+  Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
+
+  /* Matrice orthogonale */
+
+  if (!iz){
+    for (i = 0; i < 3; i++){
+      for (j = 0; j < 3; j++){
+        s->invplan[i][j] = (i == j) ? 1. : 0.;
+        s->plan[i][j] = (i == j) ? 1. : 0.;
+      }
+    }
+  }
+  else{
+    for (i = 0; i < 3; i++){
+      for (j = 0; j < 3; j++){
+        s->invplan[i][j] = s->plan[j][i];
+      }
+    }
+  }
+
+
+// this is the end of the algo as it was used for surface drawing:
+
+#if 0
+  /* L'axe n'est pas l'axe des x */
+  if(res[0] > res[1]){
+    ex[0] = 0.;
+    ex[1] = 1.;
+    ex[2] = 0.;
+  }
+  else{
+    ex[0] = 1.;
+    ex[1] = 0.;
+    ex[2] = 0.;
+  }
+  
+  prodve(res,ex,t1);
+  
+  mod = sqrt (t1[0] * t1[0] + t1[1] * t1[1] + t1[2] * t1[2] ) ;
+  for(i=0;i<3;i++) t1[i]/=mod;
+
+  prodve(t1,res,t2);
+
+  mod = sqrt (t2[0] * t2[0] + t2[1] * t2[1] + t2[2] * t2[2] ) ;
+  for(i=0;i<3;i++) t2[i]/=mod;
+
+  for(i=0;i<3;i++)s->plan[0][i] = t1[i];
+  for(i=0;i<3;i++)s->plan[1][i] = t2[i];
+  for(i=0;i<3;i++)s->plan[2][i] = res[i];
+
+  /* Matrice orthogonale */
+
+  for(i=0;i<3;i++){
+    for(j=0;j<3;j++){
+      s->invplan[i][j] = s->plan[j][i];
+    }
+  }
+#endif
+}
+
 
 
 #define  Precision 1.e-10
