@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.24 2003-02-18 05:50:04 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.25 2003-02-18 07:09:10 geuzaine Exp $"
 dnl
 dnl Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -274,7 +274,8 @@ AC_OUTPUT(variables)
 dnl Print some information
 echo "*******************************************************************"
 echo "Gmsh is configured for"
-echo "- Operating system: $UNAME"
-echo "- Compiler flags: $FLAGS"
+echo "- OS    : $UNAME"
+echo "- OPTIM : $OPTIM"
+echo "- FLAGS : $FLAGS"
 echo "*******************************************************************"
 

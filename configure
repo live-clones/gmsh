@@ -4518,7 +4518,8 @@ fi
 
 echo "*******************************************************************"
 echo "Gmsh is configured for"
-echo "- Operating system: $UNAME"
-echo "- Compiler flags: $FLAGS"
+echo "- OS    : $UNAME"
+echo "- OPTIM : $OPTIM"
+echo "- FLAGS : $FLAGS"
 echo "*******************************************************************"
 
