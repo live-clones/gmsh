@@ -38,7 +38,7 @@ Gmsh Mesh File Format
 Gmsh Ascii Post-Processing File Format
 ======================================
    
-    Any post-processing file is divided in several sections: one
+    A post-processing file is divided in several sections: one
     format section (enclosed between $PostFormat/$EndPostFormat) and
     (possibly multiple) post-processing views (enclosed between
     $View/$EndView pairs). 
@@ -83,11 +83,28 @@ Gmsh Ascii Post-Processing File Format
       scalar points, vector points, tensor points, scalar lines, vector lines,
       tensor lines, scalar triangles, vector triangles, tensor triangles,
       scalar tetrahedra, vector tetrahedra and tensor tetrahedra.
+    - 'SP-values' is a list of double precision numbers:
+      the three first represent the corrdinates of the point
+      the 'nb-time-step' following
 
 Gmsh Binary Post-Processing File Format
 =======================================
 
-    int one=1;	
+    The binary post-processing file format is the same as the ascii file format,
+    except that:
+    - the format field is the following
+      $PostFormat
+      version-number 1
+      $EndPostFormat
+    - all double precision vectors ('time-step-values', 'SP-values', 'VP-values', etc.)
+      are written in binary format
+    - AND there is an additional integer written before the 'time-step-values', and
+      which contains the value '1'. This integer serves as a test for little/big endian
+      detection.
+
+    Here is an example, of C code to write the binary format:
+
+    int one=1;
 
     fprintf(file, "$View /* %s */\n", name);
     fprintf(file, "%s %g\n", name, version);
@@ -96,17 +113,23 @@ Gmsh Binary Post-Processing File Format
     fwrite(&One, sizeof(int), 1, PostStream);
 
 
-Parsed View Format
-==================
+
+Gmsh Parsed Post-Processing Format
+==================================
+
+   For testing purposes (or with very small data sets), there is an additional,
+   post-processing format which is parsed by the same grammar analyser as the
+   geometry. You can thus for example embed small post-processing views into your
+   geometrical descriptions.
 
    View "name" {
-     type of element (list of coordinates) {list of values} ;
+     type_of_element (list_of_coordinates) {list_of_values} ;
      ...
    }	
 
    12 base objects can be displayed:
 
-                       type of element   list of coordinates    list of values
+                       type_of_element   list_of_coordinates    list_of_values
    --------------------------------------------------------------------------------
    scalar point        SP                3                      1  * nb time steps
    vector point        VP                3                      3  * nb time steps

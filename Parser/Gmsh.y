@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.11 2000-12-04 09:51:51 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.12 2000-12-04 11:28:33 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1305,9 +1305,9 @@ Coherence :
     }
 ;
 
-/* -------------
-    C O L O R S 
-   ------------- */
+/* ---------------
+    O P T I O N S 
+   --------------- */
 
 Options :
     tColor '{' ColorSections '}'
