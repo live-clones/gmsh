@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.329 2004-07-30 12:22:02 geuzaine Exp $
+// $Id: GUI.cpp,v 1.330 2004-08-03 15:22:18 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -44,6 +44,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "Geo.h"
+#include "CAD.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "GUI.h"
@@ -762,6 +763,7 @@ GUI::GUI(int argc, char **argv)
   create_clip_window();
   create_about_window();
   create_geometry_context_window(0);
+  call_for_solver_plugin (-1);
   create_mesh_context_window(0);
   for(i = 0; i < MAXSOLVERS; i++) {
     solver[i].window = NULL;
@@ -3578,6 +3580,19 @@ void GUI::create_geometry_context_window(int num)
   context_geometry_window->position(CTX.ctx_position[0], CTX.ctx_position[1]);
   context_geometry_window->end();
 }
+
+// Create the window for physical context dependant definitions
+
+void GUI::call_for_solver_plugin (int dim)
+{ 
+   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
+   if (sp)
+     {
+       sp->popupPropertiesForPhysicalEntity(dim);
+     }
+}
+
+
 
 // Create the window for mesh context dependant definitions
 

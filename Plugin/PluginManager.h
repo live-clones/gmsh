@@ -67,7 +67,9 @@ public :
   inline iter end() {return allPlugins.end();}
 
   // Find a plugin named pluginName
-  GMSH_Plugin *find(char *pluginName);
+  GMSH_Plugin *find            (char *pluginName);
+  // Get The ONLY Solver Plugin
+  GMSH_Solve_Plugin *findSolverPlugin();
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.

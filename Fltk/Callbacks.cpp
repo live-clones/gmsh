@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.260 2004-07-30 12:22:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.261 2004-08-03 15:22:18 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2489,6 +2489,7 @@ void geometry_physical_add_point_cb(CALLBACK_ARGS)
 
 void geometry_physical_add_line_cb(CALLBACK_ARGS)
 {
+  WID->call_for_solver_plugin(1);
   _add_physical("Line");
 }
 

@@ -94,4 +94,26 @@ public:
   virtual Post_View *execute(Post_View *) = 0;
 };
 
+/*
+  A solver plugin. The idea here is to be able to associate
+  some properties to physical entities. The goal is to be able
+  to interface gmsh with a solver (ABAQUS...) i.e. create the 
+  input file for the solver.
+*/
+
+class GMSH_Solve_Plugin : public GMSH_Plugin
+{
+public:
+  virtual int getNbOptionsStr() const { return 0; };
+  virtual StringXString *getOptionStr(int iopt) { return NULL; };
+  virtual int getNbOptions() const { return 0; };
+  virtual StringXNumber *getOption(int iopt) { return NULL; };
+  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_SOLVE_PLUGIN; }
+  virtual void run() {};// do nothing
+  virtual void popupPropertiesForPhysicalEntity (int dim) = 0;// popup dialog box
+  virtual void receiveNewPhysicalGroup (int dim, int id) = 0;// add the given group to the solver data's
+  virtual void loadSolverFile  ( FILE *f ) = 0;  // load the solver input file related to the gmsh geo file
+  virtual void writeSolverFile ( FILE *f ) const = 0;  // save the solver file 
+};
+
 #endif

@@ -263,6 +263,7 @@ public:
   void create_message_window();
   void create_about_window();
   void create_geometry_context_window(int num);
+  void call_for_solver_plugin (int dim);
   void create_mesh_context_window(int num);
   void create_solver_window(int num);
 

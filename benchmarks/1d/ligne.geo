@@ -1,3 +1,15 @@
 Point(1) = {0.0,0.0,0.0,.1}; 
 Point(2) = {1,0.0,0.0,.1}; 
 Line(1) = {1,2}; 
+Physical Point(2) = {2};
+Physical Point(3) = {2,1};
+Physical Point(4) = {2,1};
+Physical Point(5) = {2,1};
+Physical Point(6) = {2,1};
+Physical Point(7) = {2};
+Physical Point(8) = {1};
+Physical Point(9) = {2};
+Physical Point(10) = {1};
+Physical Line(11) = {1};
+Physical Line(12) = {1};
+Physical Line(13) = {1};

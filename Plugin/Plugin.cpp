@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.55 2004-06-20 23:25:33 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.56 2004-08-03 15:22:18 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -47,6 +47,7 @@
 #include "Triangulate.h"
 #include "SphericalRaise.h"
 #include "DisplacementRaise.h"
+#include "StructuralSolver.h"
 #include "Evaluate.h"
 
 using namespace std;
@@ -71,6 +72,21 @@ GMSH_Plugin *GMSH_PluginManager::find(char *pluginName)
   if(it == allPlugins.end())
     return 0;
   return (*it).second;
+}
+
+GMSH_Solve_Plugin *GMSH_PluginManager::findSolverPlugin()
+{
+  iter it  = allPlugins.begin();
+  iter ite = allPlugins.end();
+  for (;it!=ite;++it)
+    {
+      GMSH_Plugin *p = (*it).second;
+      if (p->getType() == GMSH_Plugin::GMSH_SOLVE_PLUGIN)
+	{
+	  return (GMSH_Solve_Plugin*)(p);
+	}      
+    }
+  return 0;
 }
 
 void GMSH_PluginManager::action(char *pluginName, char *action, void *data)
@@ -138,6 +154,10 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 
 void GMSH_PluginManager::registerDefaultPlugins()
 {
+  // SOLVE PLUGINS
+  //  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+  //		    ("StructuralSolver", GMSH_RegisterStructuralSolverPlugin()));
+  // POST PLUGINS
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
