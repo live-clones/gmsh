@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.43 2004-12-24 03:25:37 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.44 2004-12-31 06:01:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -132,16 +132,7 @@ int Opengl_Window::handle(int event)
 
   switch (event) {
 
-  case FL_ENTER:
-    take_focus();       //force keyboard focus on the Opengl_Window
-    return 1;
-
-  case FL_LEAVE:
-    return 1;
-
-  case FL_FOCUS:
-    return 1;
-
+  case FL_FOCUS: // accept the focus when I'm asked if I want it
   case FL_UNFOCUS:
     return 1;
 
@@ -154,6 +145,7 @@ int Opengl_Window::handle(int event)
     return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:
+    take_focus(); // force keyboard focus when we click in the window
     FirstClick = 1;
     ibut = Fl::event_button();
     xpos = Fl::event_x();
@@ -294,7 +286,6 @@ int Opengl_Window::handle(int event)
     xpos += xmov;
     ypos += ymov;
     return 1;
-
 
   case FL_MOVE:
     xmov = Fl::event_x() - xpos;

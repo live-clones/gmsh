@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.46 2004-12-31 04:04:50 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.47 2004-12-31 06:01:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -352,13 +352,15 @@ int Colorbar_Window::handle(int event)
 
   switch (event) {
 
+  case FL_FOCUS: // accept focus events when asked
+  case FL_UNFOCUS:
+    return 1;
+
   case FL_ENTER:
-    take_focus();       //force keyboard focus on the ColorbarWindow    
+    take_focus(); // force keyboard focus as soon as the mouse enters
     return 1;
 
   case FL_LEAVE:
-  case FL_FOCUS:
-  case FL_UNFOCUS:
     return 1;
 
   case FL_SHORTCUT:
