@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.108 2004-01-25 09:32:30 geuzaine Exp $
+// $Id: Views.cpp,v 1.109 2004-01-25 10:13:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1509,7 +1509,7 @@ void combine_time(struct nameidx *id, List_T *to_remove)
 	List_Read(id->indices, k, &index);
 	v = (Post_View*)List_Pointer(CTX.post.list, index);
 	v->get_raw_data(i, &list2, &nbe2, &nbc2, &nbn2);
-	if(nbe && *nbe == *nbe2){
+	if(*nbe && *nbe == *nbe2){
 	  List_Insert(to_remove, &v->Num, fcmp_int);
 	  int nb2 = List_Nbr(list2) / *nbe2;
 	  if(!k){
