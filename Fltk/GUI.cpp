@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.69 2001-05-04 22:42:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.70 2001-05-05 08:56:58 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -902,7 +902,7 @@ void GUI::create_general_options_window(){
     
     gen_window = new Fl_Window(width,height);
     gen_window->box(WINDOW_BOX);
-    gen_window->label("General Options");
+    gen_window->label("General options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -1068,7 +1068,7 @@ void GUI::create_geometry_options_window(){
     
     geo_window = new Fl_Window(width,height);
     geo_window->box(WINDOW_BOX);
-    geo_window->label("Geometry Options");
+    geo_window->label("Geometry options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -1179,7 +1179,7 @@ void GUI::create_mesh_options_window(){
     
     mesh_window = new Fl_Window(width,height);
     mesh_window->box(WINDOW_BOX);
-    mesh_window->label("Mesh Options");
+    mesh_window->label("Mesh options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -1356,7 +1356,7 @@ void GUI::create_post_options_window(){
 
     post_window = new Fl_Window(width,height);
     post_window->box(WINDOW_BOX);
-    post_window->label("Post Processing Options");
+    post_window->label("Post-processing options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -1445,40 +1445,40 @@ void GUI::create_statistics_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Geometry");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	stat_value[0] = new Fl_Output(width/2, 2*WB+1*BH, IW, BH, "Number of points");
-	stat_value[1] = new Fl_Output(width/2, 2*WB+2*BH, IW, BH, "Number of curves");
-	stat_value[2] = new Fl_Output(width/2, 2*WB+3*BH, IW, BH, "Number of surfaces");
-	stat_value[3] = new Fl_Output(width/2, 2*WB+4*BH, IW, BH, "Number of volumes");
+	stat_value[0] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Points");
+	stat_value[1] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Curves");
+	stat_value[2] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
+	stat_value[3] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
 	o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Mesh");
 	o->labelsize(CTX.fontsize);
-	stat_value[4] = new Fl_Output(width/2, 2*WB+1*BH, IW, BH, "Nodes on curves");
-	stat_value[5] = new Fl_Output(width/2, 2*WB+2*BH, IW, BH, "Nodes on surfaces");
-	stat_value[6] = new Fl_Output(width/2, 2*WB+3*BH, IW, BH, "Nodes in volumes");
-	stat_value[7] = new Fl_Output(width/2, 2*WB+4*BH, IW, BH, "Triangles");
-	stat_value[8] = new Fl_Output(width/2, 2*WB+5*BH, IW, BH, "Quadrangles");
-	stat_value[9] = new Fl_Output(width/2, 2*WB+6*BH, IW, BH, "Tetrahedra");
-	stat_value[10] = new Fl_Output(width/2, 2*WB+7*BH, IW, BH, "Hexahedra");
-	stat_value[11] = new Fl_Output(width/2, 2*WB+8*BH, IW, BH, "Prisms");
-	stat_value[12] = new Fl_Output(width/2, 2*WB+9*BH, IW, BH, "Time for 1D mesh");
-	stat_value[13] = new Fl_Output(width/2, 2*WB+10*BH, IW, BH, "Time for 2D mesh");
-	stat_value[14] = new Fl_Output(width/2, 2*WB+11*BH, IW, BH, "Time for 3D mesh");
-	stat_value[15] = new Fl_Output(width/2, 2*WB+12*BH, IW, BH, "Gamma factor");
-	stat_value[16] = new Fl_Output(width/2, 2*WB+13*BH, IW, BH, "Eta factor");
-	stat_value[17] = new Fl_Output(width/2, 2*WB+14*BH, IW, BH, "Rho factor");
+	stat_value[4] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Nodes on curves");
+	stat_value[5] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Nodes on surfaces");
+	stat_value[6] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Nodes in volumes");
+	stat_value[7] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Triangles");
+	stat_value[8] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Quadrangles");
+	stat_value[9] = new Fl_Output(2*WB, 2*WB+6*BH, IW, BH, "Tetrahedra");
+	stat_value[10] = new Fl_Output(2*WB, 2*WB+7*BH, IW, BH, "Hexahedra");
+	stat_value[11] = new Fl_Output(2*WB, 2*WB+8*BH, IW, BH, "Prisms");
+	stat_value[12] = new Fl_Output(2*WB, 2*WB+9*BH, IW, BH, "Time for 1D mesh");
+	stat_value[13] = new Fl_Output(2*WB, 2*WB+10*BH, IW, BH, "Time for 2D mesh");
+	stat_value[14] = new Fl_Output(2*WB, 2*WB+11*BH, IW, BH, "Time for 3D mesh");
+	stat_value[15] = new Fl_Output(2*WB, 2*WB+12*BH, IW, BH, "Gamma factor");
+	stat_value[16] = new Fl_Output(2*WB, 2*WB+13*BH, IW, BH, "Eta factor");
+	stat_value[17] = new Fl_Output(2*WB, 2*WB+14*BH, IW, BH, "Rho factor");
 	o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Post-processing");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	stat_value[18] = new Fl_Output(width/2, 2*WB+1*BH, IW, BH, "Views loaded");
-	stat_value[19] = new Fl_Output(width/2, 2*WB+2*BH, IW, BH, "Visible Points");
-	stat_value[20] = new Fl_Output(width/2, 2*WB+3*BH, IW, BH, "Visible lines");
-	stat_value[21] = new Fl_Output(width/2, 2*WB+4*BH, IW, BH, "Visible triangles");
-	stat_value[22] = new Fl_Output(width/2, 2*WB+5*BH, IW, BH, "Visible tetrahedra");
+	stat_value[18] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Views");
+	stat_value[19] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Visible Points");
+	stat_value[20] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Visible lines");
+	stat_value[21] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Visible triangles");
+	stat_value[22] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Visible tetrahedra");
 	o->end();
       }
       o->end();
@@ -1488,7 +1488,7 @@ void GUI::create_statistics_window(){
       stat_value[i]->labelsize(CTX.fontsize);
       stat_value[i]->textsize(CTX.fontsize);
       stat_value[i]->type(FL_HORIZONTAL);
-      stat_value[i]->align(FL_ALIGN_LEFT);
+      stat_value[i]->align(FL_ALIGN_RIGHT);
       stat_value[i]->value(0);
     }
 
@@ -2085,7 +2085,7 @@ void GUI::create_geometry_context_window(int num){
     
     context_geometry_window = new Fl_Window(width,height);
     context_geometry_window->box(WINDOW_BOX);
-    context_geometry_window->label("Contextual Geometry Definitions");
+    context_geometry_window->label("Contextual geometry definitions");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       // 0: Parameter
@@ -2255,7 +2255,7 @@ void GUI::create_mesh_context_window(int num){
     
     context_mesh_window = new Fl_Window(width,height);
     context_mesh_window->box(WINDOW_BOX);
-    context_mesh_window->label("Contextual Mesh Definitions");
+    context_mesh_window->label("Contextual mesh definitions");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       // 0: Characteristic length
@@ -2353,7 +2353,7 @@ void GUI::create_getdp_window(){
     
     getdp_window = new Fl_Window(width,height);
     getdp_window->box(WINDOW_BOX);
-    getdp_window->label("GetDP Solver");
+    getdp_window->label("GetDP solver");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-1*BH);
       { 

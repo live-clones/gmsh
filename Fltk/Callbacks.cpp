@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.51 2001-05-04 22:42:21 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.52 2001-05-05 08:56:58 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -165,7 +165,7 @@ void status_cancel_cb(CALLBACK_ARGS){
 void file_open_cb(CALLBACK_ARGS) {
   char *newfile;
   int n = List_Nbr(Post_ViewList);
-  newfile = fl_file_chooser("Open File", "*", NULL);
+  newfile = fl_file_chooser("Open file", "*", NULL);
   if (newfile != NULL) {
     OpenProblem(newfile); 
     Draw(); 
@@ -177,7 +177,7 @@ void file_open_cb(CALLBACK_ARGS) {
 void file_merge_cb(CALLBACK_ARGS) {
   char *newfile;
   int n = List_Nbr(Post_ViewList);
-  newfile = fl_file_chooser("Merge File", "*", NULL);
+  newfile = fl_file_chooser("Merge file", "*", NULL);
   if (newfile != NULL) {
     MergeProblem(newfile); 
     Draw(); 
@@ -196,60 +196,60 @@ void file_save_options_cb(CALLBACK_ARGS) {
 
 void file_save_as_auto_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save File by Extension", "*", NULL)))
+  if((newfile = fl_file_chooser("Save file by extension", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = FORMAT_AUTO); 
 }
 
 void file_save_as_geo_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save GEO File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save GEO file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = FORMAT_GEO); 
 }
 
 void file_save_as_geo_options_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save Options File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save options file", "*", NULL)))
     Print_Options(0,GMSH_FULLRC, newfile); 
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save MSH File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save MSH file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
 }
 void file_save_as_unv_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save UNV File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save UNV file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_UNV); 
 }
 void file_save_as_gref_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save GREF File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save GREF file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_GREF); 
 }
 void file_save_as_eps_simple_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save EPS File", "*", NULL))){
+  if((newfile = fl_file_chooser("Save EPS file", "*", NULL))){
     CTX.print.eps_quality = 1; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
   }
 }
 void file_save_as_eps_accurate_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save EPS File", "*", NULL))){
+  if((newfile = fl_file_chooser("Save EPS file", "*", NULL))){
     CTX.print.eps_quality = 2; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
   }
 }
 void file_save_as_jpeg_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save JPEG File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save JPEG file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = FORMAT_JPEG); 
 }
 
 void file_save_as_gif_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
+  if((newfile = fl_file_chooser("Save GIF file", "*", NULL))){
     CTX.print.gif_dither = 0;
     CTX.print.gif_transparent = 0;
     CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF); 
@@ -257,7 +257,7 @@ void file_save_as_gif_cb(CALLBACK_ARGS) {
 }
 void file_save_as_gif_dithered_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
+  if((newfile = fl_file_chooser("Save GIF file", "*", NULL))){
     CTX.print.gif_dither = 1; 
     CTX.print.gif_transparent = 0; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF); 
@@ -265,7 +265,7 @@ void file_save_as_gif_dithered_cb(CALLBACK_ARGS) {
 }
 void file_save_as_gif_transparent_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
+  if((newfile = fl_file_chooser("Save GIF file", "*", NULL))){
     CTX.print.gif_dither = 0;
     CTX.print.gif_transparent = 1; 
     CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF);
@@ -273,12 +273,12 @@ void file_save_as_gif_transparent_cb(CALLBACK_ARGS) {
 }
 void file_save_as_ppm_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save PPM File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save PPM file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = FORMAT_PPM); 
 }
 void file_save_as_yuv_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save YUV File", "*", NULL)))
+  if((newfile = fl_file_chooser("Save YUV file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = FORMAT_YUV); 
 }
 
@@ -437,7 +437,7 @@ void opt_message_clear_cb(CALLBACK_ARGS) {
 }
 void opt_message_save_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save Messages", "*", NULL)))
+  if((newfile = fl_file_chooser("Save messages", "*", NULL)))
     WID->save_message(newfile); 
 }
 
@@ -1321,7 +1321,7 @@ void getdp_cb(CALLBACK_ARGS){
 }
 void getdp_file_open_cb(CALLBACK_ARGS){
   char *newfile;
-  newfile = fl_file_chooser("Open Problem Definition File", "*", NULL);
+  newfile = fl_file_chooser("Open problem definition file", "*.[Pp][Rr][Oo]", NULL);
   if (newfile != NULL){
     WID->getdp_input[0]->value(newfile);
     GetDP(newfile);
@@ -1335,7 +1335,7 @@ void getdp_file_edit_cb(CALLBACK_ARGS){
 }
 void getdp_choose_mesh_cb(CALLBACK_ARGS){
   char *newfile;
-  newfile = fl_file_chooser("Open Mesh File", "*", NULL);
+  newfile = fl_file_chooser("Open mesh file", "*.[Mm][Ss][Hh]", NULL);
   if (newfile != NULL) WID->getdp_input[1]->value(newfile);
 }
 void getdp_pre_cb(CALLBACK_ARGS){
@@ -1467,13 +1467,13 @@ void view_remove_cb(CALLBACK_ARGS){
 
 void view_save_ascii_cb(CALLBACK_ARGS){
   char *newfile;
-  if((newfile = fl_file_chooser("Save View in ASCII Format", "*", NULL)))
+  if((newfile = fl_file_chooser("Save view in ASCII format", "*", NULL)))
     Write_View(0, (Post_View*)List_Pointer(Post_ViewList,(int)data), newfile); 
 }
 
 void view_save_binary_cb(CALLBACK_ARGS){
   char *newfile;
-  if((newfile = fl_file_chooser("Save View in Binary Format", "*", NULL)))
+  if((newfile = fl_file_chooser("Save view in binary format", "*", NULL)))
     Write_View(1, (Post_View*)List_Pointer(Post_ViewList,(int)data), newfile); 
 }
 
