@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.132 2003-03-02 18:44:19 geuzaine Exp $
+// $Id: Gmsh.y,v 1.133 2003-03-11 03:47:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2206,6 +2206,42 @@ Extrude :
       Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
 			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
 			   &pc,&prc,NULL);
+    }
+  | tExtrude tPoint '{' FExpr ',' VExpr '}'
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+                   '{' ExtrudeParameters '}' tEND
+    {
+      Curve *pc, *prc;
+      Extrude_ProtudePoint(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
+			   0.,0.,0.,0.,0.,0.,0.,
+			   &pc,&prc,&extr);
+    }
+  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+                   '{' ExtrudeParameters '}' tEND
+    {
+      Curve *pc, *prc;
+      Extrude_ProtudePoint(ROTATE,(int)$4,0.,0.,0.,
+			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
+			   &pc,&prc,&extr);
+    }
+  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+                   '{' ExtrudeParameters '}' tEND
+    {
+      Curve *pc, *prc;
+      Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
+			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
+			   &pc,&prc,&extr);
     }
 
   // Lines

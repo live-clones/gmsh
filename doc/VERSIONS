@@ -1,8 +1,8 @@
-$Id: VERSIONS,v 1.134 2003-03-10 04:26:32 geuzaine Exp $
+$Id: VERSIONS,v 1.135 2003-03-11 03:47:07 geuzaine Exp $
 
 New in 1.42: suppressed the automatic addition of a ".geo" extension
-if the file given on the command line is not recognized; fixed various
-small bugs;
+if the file given on the command line is not recognized; added missing
+Layer option for Extrude Point; fixed various small bugs;
 
 New in 1.41: Gmsh is now licensed under the GNU General Public
 License; general code cleanup (indent);
