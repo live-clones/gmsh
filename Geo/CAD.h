@@ -42,7 +42,6 @@ void Extrude_ProtudeSurface(int type, int is,
                             int NewVolume, ExtrudeParams *e);
 void ProtudeXYZ ( double &x, double &y, double &z, ExtrudeParams *e);
 void ReplaceAllDuplicates ( Mesh *m );
-void Coherence_PS(void);
 bool IntersectAllSegmentsTogether(void);
 
 void ModifyLcPoint(int ip, double lc);

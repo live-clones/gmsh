@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.35 2001-11-12 08:21:17 geuzaine Exp $
+// $Id: CAD.cpp,v 1.36 2001-11-12 10:26:33 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1318,17 +1318,12 @@ void MaxNumSurface(void *a, void *b){
   THEM->MaxSurfaceNum = MAX(THEM->MaxSurfaceNum,s->Num);
 }
 
-void Coherence_PS(void){
-  ReplaceAllDuplicates (THEM);
-}
-
-void ReplaceAllDuplicates ( Mesh *m ){
+void ReplaceDuplicatePoints (Mesh *m){
   List_T *All;
   Tree_T *allNonDulpicatedPoints;
   Vertex *v;
-  Curve *c,*c2;
+  Curve *c;
   Surface *s;
-  Volume *vol;
   int i,j,start,end;
 
   List_T *points2delete = List_Create(100,100,sizeof(Vertex*));
@@ -1347,7 +1342,7 @@ void ReplaceAllDuplicates ( Mesh *m ){
     else{
       Tree_Suppress(m->Points,&v);
       Tree_Suppress(m->Vertices,&v);      
-      //      List_Add(points2delete,&v);      
+      // List_Add(points2delete,&v);      
     }
   }
 
@@ -1391,6 +1386,19 @@ void ReplaceAllDuplicates ( Mesh *m ){
   }
   
   List_Delete(All);
+
+  for(int k = 0; k < List_Nbr(points2delete);k++){
+    List_Read(points2delete,i,&v);      
+    Free_Vertex(&v,0);
+  }
+
+}
+
+void ReplaceDuplicateCurves (Mesh *m){
+  List_T *All;
+  Curve *c,*c2;
+  Surface *s;
+  int i,j,start,end;
 
   /* Create unique curves */
 
@@ -1445,6 +1453,14 @@ void ReplaceAllDuplicates ( Mesh *m ){
     }
   }
   
+}
+
+void ReplaceDuplicateSurfaces (Mesh *m){
+  List_T *All;
+  Surface *s;
+  Volume *vol;
+  int i,j,start,end;
+
   /* Create unique surfaces */
 
   start = List_Nbr(All);
@@ -1485,13 +1501,12 @@ void ReplaceAllDuplicates ( Mesh *m ){
     }
   }
 
-  for(int k = 0; k < List_Nbr(points2delete);k++)
-    {
-      List_Read(points2delete,i,&v);      
-      Free_Vertex(&v,0);
-    }
+}
 
-
+void ReplaceAllDuplicates (Mesh *m){
+  ReplaceDuplicatePoints(m);
+  ReplaceDuplicateCurves(m);
+  ReplaceDuplicateSurfaces(m);
 }
 
 /* NEW CAD FUNCTIONS */

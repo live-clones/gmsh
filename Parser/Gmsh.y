@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.108 2001-11-12 08:21:18 geuzaine Exp $
+// $Id: Gmsh.y,v 1.109 2001-11-12 10:26:33 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -2112,7 +2112,7 @@ Transfini :
 Coherence : 
     tCoherence tEND
     { 
-      Coherence_PS();
+      ReplaceAllDuplicates(THEM);
     }
   | tIntersect tEND
     { 

@@ -177,7 +177,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.123 2001-11-12 08:21:17 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.124 2001-11-12 10:26:33 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -5349,7 +5349,7 @@ case 257:
 case 258:
 #line 2114 "Gmsh.y"
 { 
-      Coherence_PS();
+      ReplaceAllDuplicates(THEM);
     ;
     break;}
 case 259:
