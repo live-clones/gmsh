@@ -11,7 +11,6 @@
 
 General.GraphicsWidth = 320 ; 
 General.GraphicsHeight = 240 ;
-PostProcessing.Link = 0;
 
 // Hide all views
 
