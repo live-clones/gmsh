@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.2 2003-11-22 01:45:48 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.3 2003-11-22 02:19:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -357,104 +357,164 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // We should definitely recode the View interface in C++ (and define
   // iterators on the different kinds of elements...)
 
+  // To avoid surprising results, we don't try to plot values of
+  // different types on the levelset if the value view (w) is the same
+  // as the levelset view (v).
+
   // lines
   int exnLin[12][2] = {{0,1}};
   executeList(v, v->SL, v->NbSL, 1, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
-  executeList(v, v->SL, v->NbSL, 1, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
-  executeList(v, v->SL, v->NbSL, 1, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
+  if(v != w){
+    executeList(v, v->SL, v->NbSL, 1, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
+    executeList(v, v->SL, v->NbSL, 1, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
+  }
 
-  executeList(v, v->VL, v->NbVL, 3, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
+  if(v != w){
+    executeList(v, v->VL, v->NbVL, 3, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
+  }
   executeList(v, v->VL, v->NbVL, 3, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
-  executeList(v, v->VL, v->NbVL, 3, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
+  if(v != w){
+    executeList(v, v->VL, v->NbVL, 3, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
+  }
 
-  executeList(v, v->TL, v->NbTL, 9, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
-  executeList(v, v->TL, v->NbTL, 9, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
+  if(v != w){
+    executeList(v, v->TL, v->NbTL, 9, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
+    executeList(v, v->TL, v->NbTL, 9, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
+  }
   executeList(v, v->TL, v->NbTL, 9, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
 
   // triangles
   int exnTri[12][2] = {{0,1}, {0,2}, {1,2}};
   executeList(v, v->ST, v->NbST, 1, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
-  executeList(v, v->ST, v->NbST, 1, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
-  executeList(v, v->ST, v->NbST, 1, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
+  if(v != w){
+    executeList(v, v->ST, v->NbST, 1, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
+    executeList(v, v->ST, v->NbST, 1, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
+  }
 
-  executeList(v, v->VT, v->NbVT, 3, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
+  if(v != w){
+    executeList(v, v->VT, v->NbVT, 3, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
+  }
   executeList(v, v->VT, v->NbVT, 3, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
-  executeList(v, v->VT, v->NbVT, 3, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
+  if(v != w){
+    executeList(v, v->VT, v->NbVT, 3, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
+  }
 
-  executeList(v, v->TT, v->NbTT, 9, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
-  executeList(v, v->TT, v->NbTT, 9, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
+  if(v != w){
+    executeList(v, v->TT, v->NbTT, 9, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
+    executeList(v, v->TT, v->NbTT, 9, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
+  }
   executeList(v, v->TT, v->NbTT, 9, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
 
   // tets
   int exnTet[12][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   executeList(v, v->SS, v->NbSS, 1, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
-  executeList(v, v->SS, v->NbSS, 1, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
-  executeList(v, v->SS, v->NbSS, 1, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
+  if(v != w){
+    executeList(v, v->SS, v->NbSS, 1, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
+    executeList(v, v->SS, v->NbSS, 1, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
+  }
 
-  executeList(v, v->VS, v->NbVS, 3, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
+  if(v != w){
+    executeList(v, v->VS, v->NbVS, 3, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
+  }
   executeList(v, v->VS, v->NbVS, 3, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
-  executeList(v, v->VS, v->NbVS, 3, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
+  if(v != w){
+    executeList(v, v->VS, v->NbVS, 3, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
+  }
 
-  executeList(v, v->TS, v->NbTS, 9, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
-  executeList(v, v->TS, v->NbTS, 9, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
+  if(v != w){
+    executeList(v, v->TS, v->NbTS, 9, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
+    executeList(v, v->TS, v->NbTS, 9, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
+  }
   executeList(v, v->TS, v->NbTS, 9, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
 
   // quads
   int exnQua[12][2] = {{0,1}, {0,3}, {1,2}, {2,3}};
   executeList(v, v->SQ, v->NbSQ, 1, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
-  executeList(v, v->SQ, v->NbSQ, 1, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
-  executeList(v, v->SQ, v->NbSQ, 1, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
+  if(v != w){
+    executeList(v, v->SQ, v->NbSQ, 1, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
+    executeList(v, v->SQ, v->NbSQ, 1, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
+  }
 
-  executeList(v, v->VQ, v->NbVQ, 3, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
+  if(v != w){
+    executeList(v, v->VQ, v->NbVQ, 3, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
+  }
   executeList(v, v->VQ, v->NbVQ, 3, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
-  executeList(v, v->VQ, v->NbVQ, 3, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
+  if(v != w){
+    executeList(v, v->VQ, v->NbVQ, 3, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
+  }
 
-  executeList(v, v->TQ, v->NbTQ, 9, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
-  executeList(v, v->TQ, v->NbTQ, 9, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
+  if(v != w){
+    executeList(v, v->TQ, v->NbTQ, 9, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
+    executeList(v, v->TQ, v->NbTQ, 9, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
+  }
   executeList(v, v->TQ, v->NbTQ, 9, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
 
   // hexes
   int exnHex[12][2] = {{0,1}, {0,3}, {0,4}, {1,2}, {1,5}, {2,3},
 		       {2,6}, {3,7}, {4,5}, {4,7}, {5,6}, {6,7}};
   executeList(v, v->SH, v->NbSH, 1, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
-  executeList(v, v->SH, v->NbSH, 1, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
-  executeList(v, v->SH, v->NbSH, 1, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
+  if(v != w){
+    executeList(v, v->SH, v->NbSH, 1, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
+    executeList(v, v->SH, v->NbSH, 1, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
+  }
 
-  executeList(v, v->VH, v->NbVH, 3, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
+  if(v != w){
+    executeList(v, v->VH, v->NbVH, 3, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
+  }
   executeList(v, v->VH, v->NbVH, 3, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
-  executeList(v, v->VH, v->NbVH, 3, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
+  if(v != w){
+    executeList(v, v->VH, v->NbVH, 3, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
+  }
 
-  executeList(v, v->TH, v->NbTH, 9, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
-  executeList(v, v->TH, v->NbTH, 9, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
+  if(v != w){
+    executeList(v, v->TH, v->NbTH, 9, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
+    executeList(v, v->TH, v->NbTH, 9, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
+  }
   executeList(v, v->TH, v->NbTH, 9, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
 
   // prisms
   int exnPri[12][2] = {{0,1}, {0,2}, {0,3}, {1,2}, {1,4}, {2,5},
 		       {3,4}, {3,5}, {4,5}};
   executeList(v, v->SI, v->NbSI, 1, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
-  executeList(v, v->SI, v->NbSI, 1, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
-  executeList(v, v->SI, v->NbSI, 1, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
+  if(v != w){
+    executeList(v, v->SI, v->NbSI, 1, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
+    executeList(v, v->SI, v->NbSI, 1, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
+  }
 
-  executeList(v, v->VI, v->NbVI, 3, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
+  if(v != w){
+    executeList(v, v->VI, v->NbVI, 3, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
+  }
   executeList(v, v->VI, v->NbVI, 3, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
-  executeList(v, v->VI, v->NbVI, 3, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
-
-  executeList(v, v->TI, v->NbTI, 9, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
-  executeList(v, v->TI, v->NbTI, 9, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
+  if(v != w){
+    executeList(v, v->VI, v->NbVI, 3, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
+  }
+ 
+  if(v != w){
+    executeList(v, v->TI, v->NbTI, 9, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
+    executeList(v, v->TI, v->NbTI, 9, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
+  }
   executeList(v, v->TI, v->NbTI, 9, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
 
   // pyramids
   int exnPyr[12][2] = {{0,1}, {0,3}, {0,4}, {1,2}, {1,4}, {2,3}, {2,4}, {3,4}};
   executeList(v, v->SY, v->NbSY, 1, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
-  executeList(v, v->SY, v->NbSY, 1, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
-  executeList(v, v->SY, v->NbSY, 1, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
+  if(v != w){
+    executeList(v, v->SY, v->NbSY, 1, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
+    executeList(v, v->SY, v->NbSY, 1, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
+  }
 
-  executeList(v, v->VY, v->NbVY, 3, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
+  if(v != w){
+    executeList(v, v->VY, v->NbVY, 3, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
+  }
   executeList(v, v->VY, v->NbVY, 3, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
-  executeList(v, v->VY, v->NbVY, 3, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
+  if(v != w){
+    executeList(v, v->VY, v->NbVY, 3, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
+  }
 
-  executeList(v, v->TY, v->NbTY, 9, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
-  executeList(v, v->TY, v->NbTY, 9, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
+  if(v != w){
+    executeList(v, v->TY, v->NbTY, 9, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
+    executeList(v, v->TY, v->NbTY, 9, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
+  }
   executeList(v, v->TY, v->NbTY, 9, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
 
   for(unsigned int i = 0; i < out.size(); i++) {
