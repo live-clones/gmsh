@@ -40,15 +40,15 @@
 // STRINGS
 
 StringXString GeneralOptions_String[] = {
-  { F|S, "DefaultFileName" , opt_general_default_filename , "untitled.geo" ,
+  { F|O, "DefaultFileName" , opt_general_default_filename , "untitled.geo" ,
     "Default project file name" },
   { F,   "Display" , opt_general_display , "" ,
     "X server to use (only for Unix versions)" },
 
-  { F|S, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" ,
+  { F|O, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" ,
     "File into which the log is saved if a fatal error occurs" },
 
-  { F|S, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
+  { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" }, 
 
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
@@ -56,7 +56,7 @@ StringXString GeneralOptions_String[] = {
 
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "Option file into which session specific information is saved; automatically read on startup" },
-  { F|S, "Scheme" , opt_general_scheme , "" ,
+  { F|O, "Scheme" , opt_general_scheme , "" ,
     "FLTK user interface scheme (try e.g. plastic)" },
 
   { F|O, "TextEditor" , opt_general_editor , 
@@ -458,7 +458,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Vertical position (in pixels) of the upper left corner of the clipping planes window" }, 
   { F|O, "ColorScheme", opt_general_color_scheme , 0. ,
     "Default color scheme (0, 1 or 2)" },
-  { F|S, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
+  { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
     "Ask confirmation before overwriting files?" }, 
   { F|S, "ContextPositionX" , opt_general_context_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the contextual windows" }, 
@@ -478,10 +478,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the file chooser windows" }, 
   { F|S, "FileChooserPositionY" , opt_general_file_chooser_position1 , 200. ,
     "Vertical position (in pixels) of the upper left corner of the file chooser windows" }, 
-  { F|S, "FontSize" , opt_general_fontsize , 12. , 
+  { F|O, "FontSize" , opt_general_fontsize , 12. , 
     "Size of the font in the user interface" },
 
-  { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 14. ,
+  { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 14. ,
     "Size of the font in the graphic window" }, 
   { F|S, "GraphicsHeight" , opt_general_viewport3 , 600. , 
     "Height (in pixels) of the graphic window" }, 
@@ -660,7 +660,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 3. ,
     "Level of information printed during processing (0=no information)" },
-  { F|S, "VisibilityMode" , opt_general_visibility_mode , 0. , 
+  { F|O, "VisibilityMode" , opt_general_visibility_mode , 0. , 
     "Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)" }, 
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the visibility window" }, 
