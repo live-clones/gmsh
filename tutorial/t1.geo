@@ -23,10 +23,18 @@ lc = 0.007 ;
 
 Point(1) = {0,  0,  0, 9.e-1 * lc} ;
 
-// As can be seen in this definition, more complex expressions can be
-// constructed from variables. Here, the product of the variable 'lc'
-// by the constant 9.e-1 is given as the fourth argument of the list
-// defining the point.
+// The mesh size is defined as the length of the segments for lines,
+// the radii of the circumscribed circles for triangles and the radii
+// of the circumscribed spheres for tetrahedra, respectively. The
+// actual distribution of the mesh sizes is obtained by interpolation
+// of the characteristic lengths prescribed at the points. There are
+// also other possibilities to specify characteristic lengths:
+// attractors (see t7.geo) and background meshes (see bgmesh.pos).
+
+// As can be seen in the previous definition, more complex expressions
+// can be constructed from variables. Here, the product of the
+// variable 'lc' by the constant 9.e-1 is given as the fourth argument
+// of the list defining the point.
 //
 // The following general syntax rule is applied for the definition of
 // all geometrical entities:

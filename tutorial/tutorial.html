@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.14 2001-08-03 10:50:22 geuzaine Exp $
+$Id: tutorial.html,v 1.15 2001-08-03 11:06:30 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -158,10 +158,18 @@ lc = 0.007 ;
 </FONT></I>
 Point(1) = {0,  0,  0, 9.e-1 * lc} ;
 
-<I><FONT COLOR="#B22222">// As can be seen in this definition, more complex expressions can be
-</FONT></I><I><FONT COLOR="#B22222">// constructed from variables. Here, the product of the variable 'lc'
-</FONT></I><I><FONT COLOR="#B22222">// by the constant 9.e-1 is given as the fourth argument of the list
-</FONT></I><I><FONT COLOR="#B22222">// defining the point.
+<I><FONT COLOR="#B22222">// The mesh size is defined as the length of the segments for lines,
+</FONT></I><I><FONT COLOR="#B22222">// the radii of the circumscribed circles for triangles and the radii
+</FONT></I><I><FONT COLOR="#B22222">// of the circumscribed spheres for tetrahedra, respectively. The
+</FONT></I><I><FONT COLOR="#B22222">// actual distribution of the mesh sizes is obtained by interpolation
+</FONT></I><I><FONT COLOR="#B22222">// of the characteristic lengths prescribed at the points. There are
+</FONT></I><I><FONT COLOR="#B22222">// also other possibilities to specify characteristic lengths:
+</FONT></I><I><FONT COLOR="#B22222">// attractors (see t7.geo) and background meshes (see bgmesh.pos).
+</FONT></I>
+<I><FONT COLOR="#B22222">// As can be seen in the previous definition, more complex expressions
+</FONT></I><I><FONT COLOR="#B22222">// can be constructed from variables. Here, the product of the
+</FONT></I><I><FONT COLOR="#B22222">// variable 'lc' by the constant 9.e-1 is given as the fourth argument
+</FONT></I><I><FONT COLOR="#B22222">// of the list defining the point.
 </FONT></I><I><FONT COLOR="#B22222">//
 </FONT></I><I><FONT COLOR="#B22222">// The following general syntax rule is applied for the definition of
 </FONT></I><I><FONT COLOR="#B22222">// all geometrical entities:
