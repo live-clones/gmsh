@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2000-12-08 22:34:53 geuzaine Exp $
+# $Id: Makefile,v 1.18 2000-12-10 14:16:31 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -33,6 +33,7 @@ GMSH_DISTRIB_DIR = $(GMSH_DIR) utils
     GMSH_LIB_DIR = lib
     GMSH_DOC_DIR = doc
    GMSH_DEMO_DIR = demos
+  GMSH_TUTOR_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
         GMSH_LIB = -L$(GMSH_LIB_DIR) -lUnix -lGraphics -lParser -lMesh -lGeo\
                                      -lAdapt -lCommon -lDataStr
@@ -96,7 +97,7 @@ parser:
 
 purge:
 	for i in "." $(GMSH_DISTRIB_DIR) $(GMSH_LIB_DIR) $(GMSH_ARCHIVE_DIR)\
-                     $(GMSH_DEMO_DIR) $(GMSH_DOC_DIR) $(GMSH_BOX_DIR); \
+                     $(GMSH_DEMO_DIR) $(GMSH_TUTOR_DIR) $(GMSH_DOC_DIR) $(GMSH_BOX_DIR); \
         do (cd $$i && $(RM) $(RMFLAGS) *~ *~~); \
         done
 
@@ -152,6 +153,7 @@ src:
 
 dem:
 	gtar zcvf gmsh-demos.tgz $(GMSH_DEMO_DIR)
+	gtar zcvf gmsh-tutorial.tgz $(GMSH_TUTOR_DIR)
 
 # ----------------------------------------------------------------------
 # Black Box
