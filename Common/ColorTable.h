@@ -48,8 +48,8 @@ typedef struct{
 
 // float parameters indices
 
-#define COLORTABLE_CURVE     0  // curvature */
-#define COLORTABLE_BIAS      1  // offset */
+#define COLORTABLE_CURVE     0  // curvature
+#define COLORTABLE_BIAS      1  // offset
 #define COLORTABLE_ALPHAPOW  2  // alpha channel power
 #define COLORTABLE_ALPHAVAL  3  // alpha channel value
 #define COLORTABLE_BETA      4  // beta coeff for brighten
@@ -59,5 +59,6 @@ void ColorTable_Recompute (GmshColorTable * ct, int rgb_flag, int alpha_flag);
 void ColorTable_Copy(GmshColorTable *ct);
 void ColorTable_Paste(GmshColorTable *ct);
 void ColorTable_Print(GmshColorTable *ct, FILE *fp) ;
+int  ColorTable_IsAlpha(GmshColorTable *ct) ;
 
 #endif
