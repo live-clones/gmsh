@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.23 2003-01-23 20:19:17 geuzaine Exp $
+// $Id: List.cpp,v 1.24 2003-02-10 18:57:02 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "Malloc.h"
 #include "List.h"
 #include "Message.h"
+#include "SafeIO.h"
 
 static char *startptr;
 
@@ -450,7 +451,7 @@ void List_WriteToFile(List_T *liste, FILE *file, int format){
       Msg(GERROR, "Bad type of data to write list to file (size = %d)", liste->size);
     break;
   case LIST_FORMAT_BINARY :
-    fwrite(liste->array, liste->size, n, file);
+    safe_fwrite(liste->array, liste->size, n, file);
     break;
   default :
     Msg(GERROR, "Unknown list format");
