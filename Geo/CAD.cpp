@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.10 2000-12-13 15:26:21 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.11 2000-12-13 20:21:03 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -568,6 +568,7 @@ Surface *DuplicateSurface (Surface *s, int addthesurf){
     newv = DuplicateVertex(v);
     List_Write(ps->Control_Points,i,&newv);
   }
+
   return ps;
 }
 
@@ -781,6 +782,28 @@ void ApplyTransformationToCurve (double matrix[4][4],Curve *c){
   End_Curve(c);
 }
 
+void printCurve(Curve *c){
+  Vertex *v;
+  int N = List_Nbr(c->Control_Points);
+  Msg(DEBUG,"Curve %d %d cp (%d->%d)",c->Num,N,c->beg->Num,c->end->Num);
+  for(int i=0;i<N;i++){
+    List_Read(c->Control_Points,i,&v);
+    Msg(DEBUG,"Vertex %d (%g,%g,%g,%g)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
+  }
+}
+
+void printSurface(Surface*s){
+  Curve *c;
+  int N = List_Nbr(s->s.Generatrices);
+
+  Msg(DEBUG,"Surface %d, %d generatrices",s->Num,N);
+  for(int i=0;i<N;i++){
+    List_Read(s->s.Generatrices,i,&c);
+    printCurve(c);
+  }
+}
+
+
 void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
   Curve *c;
   Vertex *v;
@@ -797,15 +820,6 @@ void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
   End_Surface(s);
 }
 
-void printCurve(Curve *c){
-  Vertex *v;
-  int N = List_Nbr(c->Control_Points);
-  Msg(DEBUG,"Curve %d %d cp (%d->%d)",c->Num,N,c->beg->Num,c->end->Num);
-  for(int i=0;i<N;i++){
-    List_Read(c->Control_Points,i,&v);
-    Msg(DEBUG,"Vertex %d (%g,%g,%g,%g)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
-  }
-}
 
 void ProtudeXYZ ( double &x, double &y, double &z, ExtrudeParams *e){
   double matrix[4][4];
@@ -845,6 +859,8 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
   *pc = *prc = NULL;
   if(!Tree_Query(THEM->Points, &pv) )return;
 
+  Msg(DEBUG, "Extrude Point %d\n", ip);
+
   chapeau = DuplicateVertex(pv);
   if(ep){
     T[0] = A; T[1] = B; T[2] = C;
@@ -853,21 +869,24 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
     List_Reset(ListOfTransformedPoints);
   }
   else{
-    T[0] = X; T[1] = Y; T[2] = Z;
-    Ax[0] = A; Ax[1] = B; Ax[2] = C;
-    T[0] = -T[0]; T[1] = -T[1]; T[2] = -T[2];
+    T[0] = -X; T[1] = -Y; T[2] = -Z;
     SetTranslationMatrix(matrix,T);
     ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
+
+    Ax[0] = A; Ax[1] = B; Ax[2] = C;
     SetRotationMatrix(matrix,Ax,alpha);
     ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
-    T[0] = -T[0]; T[1] = -T[1]; T[2] = -T[2];
+
+    T[0] = X; T[1] = Y; T[2] = Z;
     SetTranslationMatrix(matrix,T);
     ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
     Msg(DEBUG,"Angle %g Point (%g,%g,%g) Axis (%g,%g,%g)",alpha,X,Y,Z,A,B,C);
   }
+
+  if(!comparePosition(&pv,&chapeau)) return ;
 
   c = Create_Curve(MAXREG++,(ep)?MSH_SEGM_LINE:MSH_SEGM_CIRC,1,NULL,NULL,-1,-1,0.,1.);
   c->Control_Points = List_Create((ep)?2:3,1,sizeof(Vertex*));
@@ -907,17 +926,6 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
   
 }
 
-void printSurface(Surface*s){
-  Curve *c;
-  int N = List_Nbr(s->s.Generatrices);
-
-  Msg(DEBUG,"Surface %d, %d generatrices",s->Num,N);
-  for(int i=0;i<N;i++){
-    List_Read(s->s.Generatrices,i,&c);
-    printCurve(c);
-  }
-}
-
 Surface *Extrude_ProtudeCurve(int ep, int ic,
                               double A, double B, double C,
                               double X, double Y, double Z,
@@ -935,6 +943,8 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   revpc = FindCurve(-ic,THEM);
   
   if(!pc || !revpc) return NULL;
+
+  Msg(DEBUG, "Extrude Curve %d\n", ic);
 
   chapeau = DuplicateCurve(pc);
   
@@ -968,7 +978,10 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
                        &CurveBeg,&ReverseBeg,e);
   Extrude_ProtudePoint(ep,pc->end->Num,A,B,C,X,Y,Z,alpha,
                        &CurveEnd,&ReverseEnd,e);
+  List_Reset(ListOfTransformedPoints);
   
+  if(!CurveBeg && !CurveEnd) return NULL;
+
   s = Create_Surface(MAXREG++,MSH_SURF_REGL,0);
   s->s.Generatrices = List_Create(4,1,sizeof(Curve*));
   
@@ -980,17 +993,25 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   
   ReverseChapeau = FindCurve(-chapeau->Num,THEM);
 
-  if(!CurveEnd || !ReverseBeg || !CurveEnd || !ReverseEnd || !ReverseChapeau){
-    return NULL;
+  if(!CurveBeg){
+    List_Add(s->s.Generatrices,&pc);
+    List_Add(s->s.Generatrices,&CurveEnd);
+    List_Add(s->s.Generatrices,&ReverseChapeau);
+  }
+  else if(!CurveEnd){
+    List_Add(s->s.Generatrices,&ReverseChapeau);
+    List_Add(s->s.Generatrices,&ReverseBeg);
+    List_Add(s->s.Generatrices,&pc);
+  }
+  else{
+    List_Add(s->s.Generatrices,&pc);
+    List_Add(s->s.Generatrices,&CurveEnd);
+    List_Add(s->s.Generatrices,&ReverseChapeau);
+    List_Add(s->s.Generatrices,&ReverseBeg);
   }
 
-  List_Add(s->s.Generatrices,&pc);
-  List_Add(s->s.Generatrices,&CurveEnd);
-  List_Add(s->s.Generatrices,&ReverseChapeau);
-  List_Add(s->s.Generatrices,&ReverseBeg);
   End_Surface(s);
   Tree_Add(THEM->Surfaces,&s);
-  List_Reset(ListOfTransformedPoints);
   return s;
 }
 
@@ -1006,6 +1027,8 @@ void Extrude_ProtudeSurface(int ep, int is,
   Volume *pv = NULL;
   
   if(!(ps = FindSurface(is,THEM)) )return;
+
+  Msg(DEBUG, "Extrude Surface %d\n", is);
   
   if(NewVolume){
     pv = Create_Volume(NewVolume,0,0);
@@ -1044,7 +1067,7 @@ void Extrude_ProtudeSurface(int ep, int is,
   for(i=0;i<List_Nbr(ps->s.Generatrices);i++){
     List_Read(ps->s.Generatrices,i,&c);
     s = Extrude_ProtudeCurve(ep,c->Num,A,B,C,X,Y,Z,alpha,e);
-    if(pv)List_Add(pv->Surfaces,&s);
+    if(pv && s)List_Add(pv->Surfaces,&s);
     //printSurface(s);
   }
 
@@ -1059,7 +1082,7 @@ void Extrude_ProtudeSurface(int ep, int is,
     ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
     
-    Ax[0] = A;Ax[1]=B;Ax[2]=C;
+    Ax[0] = A; Ax[1] = B; Ax[2] = C;
     SetRotationMatrix(matrix,Ax,alpha);
     ApplyTransformationToSurface(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);

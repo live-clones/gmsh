@@ -1,4 +1,4 @@
-/* $Id: DataBase.cpp,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
+/* $Id: DataBase.cpp,v 1.5 2000-12-13 20:21:03 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -220,7 +220,7 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
   List_T *templist;
 
   if(liste){
-    templist = List_Create(4,1,sizeof(int));
+    templist = List_Create(List_Nbr(liste),1,sizeof(int));
     for(i=0;i<List_Nbr(liste);i++){
       List_Read (liste, i, &f);
       j = (int)f;
