@@ -1,4 +1,4 @@
-// $Id: MinMax.cpp,v 1.17 2005-03-11 08:56:38 geuzaine Exp $
+// $Id: MinMax.cpp,v 1.18 2005-03-17 22:37:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -28,8 +28,7 @@ extern Context_T CTX;
 
 static void minmax(void *a, void *b)
 {
-  Vertex *v;
-  v = *(Vertex **) a;
+  Vertex *v = *(Vertex **) a;
   CTX.min[0] = (CTX.min[0] < v->Pos.X) ? CTX.min[0] : v->Pos.X;
   CTX.max[0] = (CTX.max[0] > v->Pos.X) ? CTX.max[0] : v->Pos.X;
   CTX.min[1] = (CTX.min[1] < v->Pos.Y) ? CTX.min[1] : v->Pos.Y;
@@ -44,10 +43,6 @@ static void minmax(void *a, void *b)
 
 void CalculateMinMax(Tree_T * t, double *bbox)
 {
-  Vertex *v;
-  double frac;
-  int exp;
-
   CTX.cg[0] = 0.0;
   CTX.cg[1] = 0.0;
   CTX.cg[2] = 0.0;
@@ -74,6 +69,7 @@ void CalculateMinMax(Tree_T * t, double *bbox)
     }
   }
   else {
+    Vertex *v;
     Tree_Right(t, &v);
     CTX.min[0] = CTX.max[0] = v->Pos.X;
     CTX.min[1] = CTX.max[1] = v->Pos.Y;
