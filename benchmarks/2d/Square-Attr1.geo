@@ -16,3 +16,4 @@ Point(11) = {0.5,0.5,-1,lc};
 Point(22) = {0.5,0.5,1,lc};                    
 Line(5) = {11,22};                    
 Attractor Line{5} = {1,0.1,7};                             
+Mesh.Algorithm = 2;

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.15 2001-02-09 07:59:50 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.16 2001-02-17 22:08:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -103,7 +103,7 @@ void CreateOutputFile (char *name, int format) {
     }
     Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), fp);    
     Msg(INFO, "XPM Creation Complete '%s'", name);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 #endif
@@ -118,7 +118,7 @@ void CreateOutputFile (char *name, int format) {
 		CTX.viewport[3]-CTX.viewport[1],
 		CTX.print.jpeg_quality);
     Msg(INFO, "JPEG Creation Complete '%s'", name);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
@@ -138,7 +138,7 @@ void CreateOutputFile (char *name, int format) {
 	       UNPACK_GREEN(CTX.color.bg),
 	       UNPACK_BLUE(CTX.color.bg));
     Msg(INFO, "GIF Creation Complete '%s'", name);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
@@ -151,7 +151,7 @@ void CreateOutputFile (char *name, int format) {
     create_ppm(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFO, "PPM Creation Complete '%s'", name);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
@@ -164,7 +164,7 @@ void CreateOutputFile (char *name, int format) {
     create_yuv(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFO, "YUV Creation Complete '%s'", name);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
@@ -189,7 +189,7 @@ void CreateOutputFile (char *name, int format) {
       system(cmd);
       unlink(tmpFileName);
       Msg(INFO, "Bitmap EPS Creation Complete '%s'", name);
-      Msg(STATUS2, "Wrote File '%s'", name);
+      Msg(STATUS2, "Wrote '%s'", name);
       fclose(fp);
       break;
 #endif
@@ -214,7 +214,7 @@ void CreateOutputFile (char *name, int format) {
 	res = gl2psEndPage();
       }
       Msg(INFO, "EPS Creation Complete '%s'", name);
-      Msg(STATUS2, "Wrote File '%s'", name);
+      Msg(STATUS2, "Wrote '%s'", name);
       fclose(fp);
       CTX.print.gl_fonts = 1;
       break;

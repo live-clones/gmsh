@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.7 2001-02-05 14:20:14 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.8 2001-02-17 22:02:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -145,7 +145,7 @@ void Colorbar_Window::redraw_range(int a, int b){
    y2 = intensity_to_y(0); 
 
    // erase region
-   fl_color(FL_BLACK);
+   fl_color(color_bg);
    fl_rectf(x1, y1, x2-x1+1, y2-y1+1);
 
    // redraw region of entries in interval [a,b]
@@ -217,7 +217,7 @@ void Colorbar_Window::redraw_range(int a, int b){
      x = index_to_x(i);
      y = intensity_to_y(UNPACK_ALPHA(ct->table[i]));
      if (i!=a){
-       fl_color(FL_WHITE);
+       fl_color(contrast(FL_BLACK,color_bg));
        fl_line(px,py,x,y);
      }
      px = x;  py = y;
@@ -238,7 +238,7 @@ void Colorbar_Window::redraw_range(int a, int b){
 
    // print colortable mode and help
    fl_font(FL_HELVETICA, font_height);
-   fl_color(FL_WHITE);
+   fl_color(contrast(FL_BLACK,color_bg));
    if (help_flag){
      int i=0, xx=13*font_height;
      fl_draw("1, 2, ..., 6", 10,10+(i+1)*font_height); 
@@ -259,8 +259,8 @@ void Colorbar_Window::redraw_range(int a, int b){
      fl_draw(    "move or rotate colormap", xx,10+(i+1)*font_height); i++;
      fl_draw("up, down", 10,10+(i+1)*font_height); 
      fl_draw(    "modify color curvature", xx,10+(i+1)*font_height); i++;
-     fl_draw("Ctrl+up, Ctrl+down", 10,10+(i+1)*font_height); 
-     fl_draw(    "modify alpha curvature", xx,10+(i+1)*font_height); i++;
+     //fl_draw("Ctrl+up, Ctrl+down", 10,10+(i+1)*font_height); 
+     //fl_draw(    "modify alpha curvature", xx,10+(i+1)*font_height); i++;
      fl_draw("i, Ctrl+i", 10,10+(i+1)*font_height); 
      fl_draw(    "invert x or y range", xx,10+(i+1)*font_height); i++;
      fl_draw("b, Ctrl+b", 10,10+(i+1)*font_height); 
@@ -288,12 +288,12 @@ void Colorbar_Window::redraw_marker(){
   y0 = marker_y;
   y1 = h() - 1;
   
-  fl_color(FL_BLACK);
+  fl_color(color_bg);
   fl_rectf(0, y0, w(), y1-y0+1);
   
   // draw marker below color wedge
   x = index_to_x(marker_pos);
-  fl_color(FL_WHITE);   
+  fl_color(contrast(FL_BLACK,color_bg));   
   fl_line(x, marker_y, x, marker_y+marker_height);
   fl_line(x, marker_y, x-3, marker_y+6);
   fl_line(x, marker_y, x+3, marker_y+6);
@@ -308,11 +308,13 @@ void Colorbar_Window::redraw_marker(){
 // Draw everything
 
 void Colorbar_Window::draw(){
-  Fl_Window::draw();
   if(ct){
     label_y = h() - 5; 
     marker_y = label_y - marker_height - font_height;
     wedge_y = marker_y - wedge_height;
+    color_bg = fl_color_cube(UNPACK_RED(CTX.color.bg)*FL_NUM_RED/256,
+			     UNPACK_GREEN(CTX.color.bg)*FL_NUM_GREEN/256,
+			     UNPACK_BLUE(CTX.color.bg)*FL_NUM_BLUE/256);
     redraw_range(0, ct->size-1);
     redraw_marker();
   }

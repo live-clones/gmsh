@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.17 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Geo.cpp,v 1.18 2001-02-17 22:08:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -6,6 +6,9 @@
 #include "CAD.h"
 #include "DataBase.h"
 #include "Parser.h"
+#include "Context.h"
+
+extern Context_T CTX ;
 
 #define BUFFSIZE 32000
 
@@ -33,7 +36,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
   FILE *tempf;
   tempf = yyin;
   
-  if(!(yyin = fopen(".gmshtmp","w"))){
+  if(!(yyin = fopen(CTX.tmp_filename,"w"))){
     Msg(GERROR, "Unable to Open Temporary File");
     return 0.;
   }
@@ -43,7 +46,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
   fprintf(yyin,"%s = %g ;\n",var,val);
   fprintf(yyin,"ValeurTemporaire__ = %s ;\n",funct);
   fclose(yyin);
-  yyin = fopen(".gmshtmp","r");
+  yyin = fopen(CTX.tmp_filename,"r");
   while(!feof(yyin)){
     yyparse();
   }
@@ -63,7 +66,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
 void add_infile(char *text, char *fich){
   FILE *file;
 
-  if(!(yyin = fopen(".gmshtmp","w"))){
+  if(!(yyin = fopen(CTX.tmp_filename,"w"))){
     Msg(GERROR, "Unable to Open Temporary File");
     return;
   }
@@ -74,7 +77,7 @@ void add_infile(char *text, char *fich){
   fprintf(yyin,"%s\n",text);
   Msg(STATUS1,"%s",text);
   fclose(yyin);
-  yyin = fopen(".gmshtmp","r");
+  yyin = fopen(CTX.tmp_filename,"r");
   while(!feof(yyin)){
     yyparse();
   }

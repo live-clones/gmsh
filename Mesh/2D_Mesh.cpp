@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.18 2001-01-24 16:15:31 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.19 2001-02-17 22:08:58 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -526,8 +526,13 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
 
   (*root) = (*root_w) = (*root_acc) = NULL;
 
-  if (doc->numTriangles == 1)
+  int onlyinit = OnlyTheInitialMesh;
+
+  if (doc->numTriangles == 1){
     doc->delaunay[0].t.position = INTERN;
+    Msg(INFO, "Only 1 triangle in initial mesh: skipping refinement");
+    onlyinit = 1;
+  }
 
   for (i = 0; i < doc->numTriangles; i++){
     if (doc->delaunay[i].t.position != EXTERN){
@@ -569,7 +574,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
   List_Reset(del_L);
   kill_L = List_Create(1000, 1000, sizeof(Delaunay*));
 
-  if (OnlyTheInitialMesh)
+  if (onlyinit)
     conv = 1;
 
   while (conv != 1){
@@ -757,6 +762,8 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
     
   }
 
+  List_Delete(kill_L);
+
   numtri = 0;
   numtrwait = 0;
 
@@ -798,8 +805,11 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
 
   /* Tous Les Triangles doivent etre orientes */
 
-  if (!mai->numtriangles)
-    mai->numtriangles = 1;
+  if (!mai->numtriangles){
+    Msg(GERROR, "No triangles in surface mesh");
+    return 0;
+    //mai->numtriangles = 1;
+  }
 
   for (i = 0; i < mai->numtriangles; i++){
     a = mai->listdel[i]->t.a;
@@ -868,9 +878,9 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       cp->oriented_points[j].where.h = v->Pos.X;
       cp->oriented_points[j].where.v = v->Pos.Y;
 
-      cp->perturbations[j].h = CTX.mesh.rand_factor * LC2D * 
+      cp->perturbations[j].h = CTX.mesh.rand_factor /* /(100*v->lc) */  * LC2D * 
 	(double)rand()/(double)RAND_MAX;
-      cp->perturbations[j].v = CTX.mesh.rand_factor * LC2D *
+      cp->perturbations[j].v = CTX.mesh.rand_factor /* /(100.*v->lc) */ * LC2D *
 	(double)rand()/(double)RAND_MAX;
 
       cp->oriented_points[j].numcontour = i;
@@ -1013,9 +1023,6 @@ void ActionEndTheCurve (void *a, void *b){
   Curve *c = *(Curve **) a;
   End_Curve (c);
 }
-
-int MeshParametricSurface (Surface * s);
-int Extrude_Mesh (Surface * s);
 
 void Maillage_Surface (void *data, void *dum){
   Surface  **pS, *s;

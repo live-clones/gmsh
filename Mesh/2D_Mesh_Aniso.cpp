@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.11 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.12 2001-02-17 22:08:58 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -1108,6 +1108,9 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
     }
   }
   List_Delete (List);
+
+  if(!Tree_Nbr(s->Simplexes))
+    Msg(GERROR, "No Triangles in surface %d", s->Num);
 
   /*
      RandomSwapEdges2d(s);

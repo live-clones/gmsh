@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.13 2001-01-12 13:28:57 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.14 2001-02-17 22:08:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -240,7 +240,7 @@ void Print_Geo(Mesh *M, char *filename){
 
   if(filename){
     Msg(INFO, "Geo Output Complete '%s'", filename);
-    Msg(STATUS2, "Wrote File '%s'", filename);
+    Msg(STATUS2, "Wrote '%s'", filename);
     fclose(FOUT);
   }
 

@@ -1,0 +1,16 @@
+$Id: README.bugs,v 1.1 2001-02-17 22:08:40 geuzaine Exp $
+
+* gmsh demos/piece.geo
+mailler en 2D
+mailler en 1D
+crash
+
+--> probleme d'initialisation: Curve *c->Extrude n'est pas NULL dans
+Extrude_Mesh alors qu'il devrait
+
+* Si la coherence des surfaces n'est pas recouvree en une etape, et
+qu'on fait une seconde passe qui marche, les volumes ne sont pas
+retrouves-< pas de maillage final.
+
+* il faudrait initialiser les statistiques qd on loade un maillage
+avec Read_Mesh.

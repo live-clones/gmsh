@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.63 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: Gmsh.y,v 1.64 2001-02-17 22:09:00 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -967,6 +967,23 @@ Affectation :
 	  vyyerror("Unknown Color Option '%s[%d].Color.%s'", $1, (int)$3, $8);
 	else
 	  pColOpt((int)$3,GMSH_SET|GMSH_GUI,$10) ;
+      }
+    }
+
+  /* -------- ColorTable -------- */ 
+
+  | tSTRING '.' tColorTable tAFFECT ListOfColor tEND 
+    {
+      ColorTable *ct = Get_ColorTable(0);
+      if(!ct)
+	vyyerror("View[%d] does not exist", 0);
+      else{
+	ct->size = List_Nbr($5);
+	if(ct->size > COLORTABLE_NBMAX_COLOR)
+	  vyyerror("Too Many (%d>%d) Colors in View[%d].ColorTable", 
+		   ct->size, COLORTABLE_NBMAX_COLOR, 0);
+	else
+	  for(i=0 ; i<ct->size ; i++) List_Read($5, i, &ct->table[i]);
       }
     }
 

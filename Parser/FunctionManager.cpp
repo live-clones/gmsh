@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.9 2001-02-16 20:16:40 remacle Exp $
+// $Id: FunctionManager.cpp,v 1.10 2001-02-17 22:09:00 geuzaine Exp $
 
 #include <stdio.h>
 #include <stack>
@@ -30,12 +30,12 @@ class File_Position
 class mystack
 {
 public:
-  std::stack<File_Position> s;
+  stack<File_Position> s;
 };
 class mymap
 {
 public :
-    std::map<char*,File_Position,ltstr> m;
+  map<char*,File_Position,ltstr> m;
 };
 
 FunctionManager *FunctionManager::instance = 0;

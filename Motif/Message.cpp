@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.6 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: Message.cpp,v 1.7 2001-02-17 22:04:05 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -120,7 +120,7 @@ void Msg(int level, char *fmt, ...){
         fprintf(stderr, "\n");
       }
     }
-    else{
+    else if(CTX.expose){
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.infoLabel, XmNlabelString,
                     XmStringCreateSimple(TextBuffer), NULL);
@@ -136,7 +136,7 @@ void Msg(int level, char *fmt, ...){
         fprintf(stderr, "\n");
       }
     }
-    else{
+    else if(CTX.expose){
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.selectLabel, XmNlabelString, 
                     XmStringCreateSimple(TextBuffer), NULL);
@@ -152,7 +152,7 @@ void Msg(int level, char *fmt, ...){
         fprintf(stderr, "\n");
       }
     }
-    else{
+    else if(CTX.expose){
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.statusLabel, XmNlabelString,
                     XmStringCreateSimple(TextBuffer), NULL);

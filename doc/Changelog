@@ -1,3 +1,13 @@
+New in 1.14: Corrected a few bugs in the GUI (most of them were
+introduced in 1.13); Added interactive color selection; Made the
+option database bidirectional (i.e. scripts now correctly update the
+GUI); Default options can now be saved and automatically reloaded at
+startup; Made some changes to the scripting syntax
+(PostProcessing.View[n] becomes View[n]; Offset0 becomes OffsetX,
+etc.); Corrected the handling of simple triangular surfaces with large
+characteristic lengths in the 2D isotropic algorithm; Added an ascii
+to binary view converter (gmsh -convert file file);
+
 New in 1.13: Added jpeg output on Windows;
 
 New in 1.12: Corrected vector lines in the post-processing parsed
@@ -30,32 +40,26 @@ in 2D mesh when meshing in the mean plane;
 New in 0.996: Arrays of variables; Enhanced Printf and Sprintf;
 Simplified options (suppression of option arrays).
 
-New in 0.995:
-* Totally rewritten geometrical database (performance has been
-drastically improved for all geometrical transformations, and most
-notably for extrusion). <font color=red> As a consequence, the
-internal numbering of geometrical entities has changed: this will
-cause incompatibilities with old .geo files, and will require a
-partial rewrite of your old .geo files if these files made use of
-geometrical transformations</font>. The syntax of the .geo file has
-also been clarified. Many additions for scripting purposes.
-* New extrusion mesh generator. Preliminary version of the coupling between
-extruded and Delaunay meshes.
-* New option and procedural database. All interactive operations can be
-scripted in the input files. See the last example in the tutorial for
-an example.
-* Many stability enhancements in the 2D and 3D mesh
-algorithms. Performance boost of the 3D algorithm. Gmsh is still slow,
-but the performance becomes acceptable. An average 1000
-tetrahedra/second is obtained on a 600Mhz computer for a mesh of
-one million tetrahedra.
-* New anisotropic 2D mesh algorithm.
-* New (ascii and binary) post-processing file format and clarified mesh
-file format.
-* New handling for interactive rotations (trackball mode).
-* New didactic interactive mesh construction (watch the Delaunay
-algorithm in real time on complex geometries: that's exciting ;-)
-* And many, many bug fixes and cleanings...
+New in 0.995: Totally rewritten geometrical database (performance has
+been drastically improved for all geometrical transformations, and
+most notably for extrusion). As a consequence, the internal numbering
+of geometrical entities has changed: this will cause incompatibilities
+with old .geo files, and will require a partial rewrite of your old
+.geo files if these files made use of geometrical transformations. The
+syntax of the .geo file has also been clarified. Many additions for
+scripting purposes. New extrusion mesh generator. Preliminary version
+of the coupling between extruded and Delaunay meshes. New option and
+procedural database. All interactive operations can be scripted in the
+input files. See the last example in the tutorial for an example. Many
+stability enhancements in the 2D and 3D mesh algorithms. Performance
+boost of the 3D algorithm. Gmsh is still slow, but the performance
+becomes acceptable. An average 1000 tetrahedra/second is obtained on a
+600Mhz computer for a mesh of one million tetrahedra. New anisotropic
+2D mesh algorithm. New (ascii and binary) post-processing file format
+and clarified mesh file format. New handling for interactive rotations
+(trackball mode). New didactic interactive mesh construction (watch
+the Delaunay algorithm in real time on complex geometries: that's
+exciting ;-). And many, many bug fixes and cleanings...
 
 New in 0.992: corrected recombined extrusion; corrected ellipses; added
 simple automatic animation of post-processing maps; fixed various bugs.

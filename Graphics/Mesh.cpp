@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.20 2001-02-09 14:51:31 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.21 2001-02-17 22:08:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -53,7 +53,7 @@ static int DrawVertexSupp ;
 void Draw_Mesh (Mesh *M) {
   int i;
 
-  InitRenderModel();
+  if(!CTX.moving_light) InitRenderModel();
 
   if(CTX.mesh.shade)
     InitShading();
@@ -61,6 +61,8 @@ void Draw_Mesh (Mesh *M) {
     InitNoShading();
 
   InitPosition();
+
+  if(CTX.moving_light) InitRenderModel();
 
   for(i = 0 ; i < 6 ; i++)
     if(CTX.clip[i])
@@ -225,7 +227,10 @@ void Draw_Simplex_Volume (void *a, void *b){
     if((*s)->RhoShapeMeasure() > CTX.mesh.limit_rho) return;
   }
 
-  ColorSwitch((*s)->iEnt+1);
+  if(CTX.mesh.color_carousel)
+    ColorSwitch((*s)->iEnt+1);
+  else
+    glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);    
 
   for (int i=0 ; i<4 ; i++) {
      X[i] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
@@ -454,9 +459,14 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     glNormal3dv(n);
   }
   
-  //  ColorSwitch(abs(iVolume));
-  //  printf("%d\n",(*s)->iEnt);
-  ColorSwitch((*s)->iEnt);
+  if(CTX.mesh.color_carousel)
+    ColorSwitch((*s)->iEnt);
+  else{
+    if(K==3)
+      glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
+    else
+      glColor4ubv((GLubyte*)&CTX.color.mesh.quadrangle);
+  }
 
   if(CTX.mesh.surfaces_num){
     sprintf(Num,"%d",(*s)->Num);
@@ -556,9 +566,11 @@ void Draw_Hexahedron_Volume (void *a, void *b){
     {
       if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
     }
-  
-  //glColor4ubv((GLubyte*)&CTX.color.mesh.hexahedron);
-  ColorSwitch((*h)->iEnt+1);
+
+  if(CTX.mesh.color_carousel)
+    ColorSwitch((*h)->iEnt+1);  
+  else
+    glColor4ubv((GLubyte*)&CTX.color.mesh.hexahedron);
 
   for (i=0 ; i<8 ; i++) {
     X[i] = Xc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.X - Xc);
@@ -648,8 +660,10 @@ void Draw_Prism_Volume (void *a, void *b){
 
   if(!EntiteEstElleVisible((*p)->iEnt)) return;
   
-  //glColor4ubv((GLubyte*)&CTX.color.mesh.prism);
-  ColorSwitch((*p)->iEnt+1);
+  if(CTX.mesh.color_carousel)
+    ColorSwitch((*p)->iEnt+1);
+  else
+    glColor4ubv((GLubyte*)&CTX.color.mesh.prism);
 
   glBegin(GL_LINE_LOOP);
   glVertex3d((*p)->V[0]->Pos.X, (*p)->V[0]->Pos.Y, (*p)->V[0]->Pos.Z);

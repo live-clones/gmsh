@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.6 2001-02-12 17:38:02 geuzaine Exp $
+# $Id: Makefile,v 1.7 2001-02-17 22:08:53 geuzaine Exp $
 #
-# Makefile for ".a"
+# Makefile for "libBox.a"
 #
 
 .IGNORE:
@@ -20,7 +20,7 @@ VERSION_FLAGS =
 RMFLAGS  = -f
 CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
-SRC = Box.cpp
+SRC = Main.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -48,11 +48,11 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-Box.o: Box.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Common/GmshVersion.h ../Common/Const.h ../Geo/Geo.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Parser/Parser.h ../Common/Context.h \
-  ../Parser/OpenFile.h ../Common/GetOptions.h ../Geo/MinMax.h \
-  ../Common/Static.h
+Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshVersion.h \
+ ../Common/Const.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+ ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+ ../Mesh/Metric.h ../Common/Views.h ../Common/ColorTable.h \
+ ../Parser/Parser.h ../Common/Context.h ../Parser/OpenFile.h \
+ ../Common/GetOptions.h ../Geo/MinMax.h ../Common/Static.h

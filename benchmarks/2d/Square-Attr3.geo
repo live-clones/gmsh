@@ -14,3 +14,5 @@ Line Loop(5) = {1,2,3,4};
 Plane Surface(6) = {5};      
 Line(5) = {3,1};                    
 Attractor Line{5} = {1,0.01,3};                             
+Mesh.Algorithm = 2;
+

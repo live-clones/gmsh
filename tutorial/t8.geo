@@ -19,9 +19,9 @@ Include "view1.pos" ;
 // 'File->Save_Options_as')...
 
 General.Trackball = 0 ;
-General.Rotation0 = 0 ;
-General.Rotation1 = 0 ;
-General.Rotation2 = 0 ;
+General.RotationX = 0 ;
+General.RotationY = 0 ;
+General.RotationZ = 0 ;
 General.Color.Background = White ;
 General.Color.Text = Black ;
 General.Orthographic = 0 ;
@@ -31,8 +31,8 @@ General.Axes = 0 ;
 
 View[0].Name = "This is a very stupid demonstration..." ;
 View[0].IntervalsType = 2 ;
-View[0].Offset2 = 0.05 ;
-View[0].Raise2 = 0 ;
+View[0].OffsetZ = 0.05 ;
+View[0].RaiseZ = 0 ;
 View[0].Light = 1 ;
 
 View[1].Name = "...of Gmsh's scripting capabilities" ;
@@ -54,22 +54,22 @@ For num In {1:255}
 
   t = (View[0].TimeStep < View[0].NbTimeStep-1) ? t+1 : 0 ;
   
-  View[0].Raise2 += 0.001*t ;
+  View[0].RaiseZ += 0.001*t ;
 
   If (num == 3)
     // We want to use mpeg_encode to create a nice 320x240 animation
     // for all frames when num==3:
-    General.Viewport2 = 320 ; 
-    General.Viewport3 = 240 ;
+    General.GraphicsWidth = 320 ; 
+    General.GraphicsHeight = 240 ;
   EndIf
 
   // It is possible to nest loops:
 
   For num2 In {1:50}
 
-    General.Rotation0 += 10 ;
-    General.Rotation1 = General.Rotation0 / 3 ;
-    General.Rotation2 += 0.1 ;
+    General.RotationX += 10 ;
+    General.RotationY = General.RotationX / 3 ;
+    General.RotationZ += 0.1 ;
  
     Sleep 0.01; // sleep for 0.01 second
     Draw; // draw the scene

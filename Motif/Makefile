@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2001-02-12 17:42:26 geuzaine Exp $
+# $Id: Makefile,v 1.8 2001-02-17 22:04:05 geuzaine Exp $
 #
 # Makefile for "libMotif.a"
 #
@@ -159,8 +159,8 @@ CbOptions.o: CbOptions.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
  ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
  ../Common/ColorTable.h Widgets.h Pixmaps.h ../Common/Context.h \
- XContext.h Register.h ../Common/Timer.h ../Geo/Visibility.h \
- CbOptions.h CbGeom.h CbMesh.h CbPost.h
+ ../Common/Options.h XContext.h Register.h ../Common/Timer.h \
+ ../Geo/Visibility.h CbOptions.h CbGeom.h CbMesh.h CbPost.h
 CbFile.o: CbFile.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
@@ -168,7 +168,8 @@ CbFile.o: CbFile.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
  ../Common/Views.h ../Common/ColorTable.h Widgets.h \
- ../Common/Context.h ../Graphics/CreateFile.h CbFile.h CbColorbar.h
+ ../Common/Context.h ../Common/Options.h ../Graphics/CreateFile.h \
+ CbFile.h CbColorbar.h
 CbInput.o: CbInput.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \

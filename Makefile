@@ -1,9 +1,9 @@
-# $Id: Makefile,v 1.59 2001-02-12 17:38:02 geuzaine Exp $
+# $Id: Makefile,v 1.60 2001-02-17 22:08:40 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
 
-         GMSH_RELEASE = 1.13
+         GMSH_RELEASE = 1.14
 
                  MAKE = make
                    CC = c++
@@ -77,6 +77,18 @@ default: initialtag
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+win: initialtag
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-g -Wall -DWIN32" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
+            $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+
 motif: initialtag
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
@@ -122,7 +134,7 @@ utilities:
 purge:
 	for i in "." $(GMSH_DIR) $(GMSH_LIB_DIR) $(GMSH_ARCHIVE_DIR)\
                      $(GMSH_DEMO_DIR) $(GMSH_TUTOR_DIR) $(GMSH_DOC_DIR) $(GMSH_BOX_DIR); \
-        do (cd $$i && $(RM) $(RMFLAGS) *~ *~~ .gmshrc .gmshtmp .gmshlog gmon.out); \
+        do (cd $$i && $(RM) $(RMFLAGS) *~ *~~ .gmsh-tmp .gmsh-errors gmon.out); \
         done
 
 clean:
@@ -202,7 +214,7 @@ bb: tag
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh-box $(GMSH_BOX_LIB) -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_BOX_LIB) -lm
 
 bbn: tag
 	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \

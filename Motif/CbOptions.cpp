@@ -1,4 +1,4 @@
-// $Id: CbOptions.cpp,v 1.6 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.7 2001-02-17 22:04:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -9,6 +9,7 @@
 #include "Widgets.h"
 #include "Pixmaps.h"
 #include "Context.h"
+#include "Options.h"
 #include "XContext.h"
 #include "Register.h"
 #include "Timer.h"
@@ -52,8 +53,9 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_TRACKBALL     : CTX.useTrackball = !CTX.useTrackball; break;
   case OPTIONS_COLOR_SCHEME_SCALE: 
     XmScaleGetValue(WID.OD.miscColorSchemeScale, &e); 
-    CTX.color_scheme=e;
-    Init_Colors(0);
+    opt_general_color_scheme(0,GMSH_SET,e);
+    opt_geometry_color_scheme(0,GMSH_SET,e);
+    opt_mesh_color_scheme(0,GMSH_SET,e);
     Draw();
     break ;
   case OPTIONS_ORTHOGRAPHIC  : CTX.ortho = 1; break;
@@ -118,7 +120,11 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
             CTX.r[0],CTX.r[1],CTX.r[2],
             CTX.t[0],CTX.t[1],CTX.t[2],
             CTX.s[0],CTX.s[1],CTX.s[2]);
+<<<<<<< CbOptions.cpp
+    Print_Context(0, GMSH_FULLRC, NULL);
+=======
     Print_Context(0, NULL);
+>>>>>>> 1.6
     break ;
 
     /* save */

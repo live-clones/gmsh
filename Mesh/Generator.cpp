@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.9 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: Generator.cpp,v 1.10 2001-02-17 22:08:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -40,7 +40,7 @@ void ApplyLcFactor(Mesh *M){
 }
 
 void Maillage_Dimension_0 (Mesh * M){
-  for (int i = 0; i < 20; i++) M->Statistics[i] = 0.0;
+  for (int i = 0; i < 50; i++) M->Statistics[i] = 0.0;
   // This is the default type of BGM (lc associated with 
   // points of the geometry). It can be changed to
   // - ONFILE by loading a view containing a bgmesh

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.16 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: Main.cpp,v 1.17 2001-02-17 22:02:17 geuzaine Exp $
 
 #include <signal.h>
 
@@ -27,13 +27,19 @@ int main(int argc, char *argv[]){
   
   Init_Context(0);
 
+  // Configuration files and command line options
+
+  Get_Options(argc, argv, &nbf);
+
   // This does not work with FLTK right now...
+
   CTX.overlay = 0 ;
   CTX.geom.highlight = 0 ;
 
-  // Configuration file and command line options
+  // Always print info on terminal for non-interactive execution
 
-  Get_Options(argc, argv, &nbf);
+  if(CTX.interactive)
+    CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
     fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
@@ -65,9 +71,7 @@ int main(int argc, char *argv[]){
     if(yyerrorstate)
       exit(1);
     else {
-      if(nbf > 1){
-        for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
-      }
+      for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
       if(TheBgmFileName){
         MergeProblem(TheBgmFileName);
         if(List_Nbr(Post_ViewList))
@@ -94,9 +98,9 @@ int main(int argc, char *argv[]){
   
   WID = new GUI(argc, argv);
 
-  // Set all options in the GUI
+  // Set all previously defined options in the GUI
 
-  UpdateGUI_Context(0);
+  Init_Context_GUI(0);
 
   // The GUI is ready
   CTX.interactive = 0 ; 
@@ -106,10 +110,12 @@ int main(int argc, char *argv[]){
   Msg(STATUS3N, "Ready");
   Msg(STATUS1, "Gmsh %.2f", GMSH_VERSION);
 
+  Msg(LOG_INFO, "-------------------------------------------------------");
   Msg(LOG_INFO, gmsh_os);
   Msg(LOG_INFO, gmsh_date);
   Msg(LOG_INFO, gmsh_host);
   Msg(LOG_INFO, gmsh_packager);
+  Msg(LOG_INFO, "-------------------------------------------------------");
 
   // Display the GUI to have a quick "a la Windows" launch time
 
@@ -119,15 +125,16 @@ int main(int argc, char *argv[]){
 
   OpenProblem(CTX.filename);
 
-  // Merge all Input Files, then init first context (geometry or post)
+  // Merge all Input Files
 
-  if(nbf > 1){
-    for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
+  for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
+  
+  // Init first context (geometry or post)
+
+  if(List_Nbr(Post_ViewList))
     WID->set_context(menu_post, 0);
-  }
-  else {
+  else
     WID->set_context(menu_geometry, 0); 
-  }
 
   // Read background mesh on disk
 

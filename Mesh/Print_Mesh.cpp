@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.13 2001-02-16 20:16:40 remacle Exp $
+// $Id: Print_Mesh.cpp,v 1.14 2001-02-17 22:08:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -1047,7 +1047,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     process_msh_elements (M);
     Msg(INFO, "Msh Ouput Complete '%s' (%d Nodes, %d Elements)",
          name, MSH_NODE_NUM, MSH_ELEMENT_NUM - 1);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
     fclose (mshfile);
   }
   else if (Type == FORMAT_UNV){
@@ -1069,7 +1069,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     PrintGroups (M);
     fclose (unvfile);
     Msg(INFO, "Unv Ouput Complete '%s'", name);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
   }
   else if (Type == FORMAT_GREF){
     c ? strcpy (name, c) : strcat (name, ".Gref");
@@ -1089,6 +1089,6 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     Tree_Delete (TRE);
     EndConsecutiveNodes (M);
     Msg(INFO, "Gref Ouput Complete '%s'", name);
-    Msg(STATUS2, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
   }
 }

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.12 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: Message.cpp,v 1.13 2001-02-17 22:02:18 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -9,6 +9,7 @@
 #include "GmshUI.h"
 #include "GmshVersion.h"
 #include "Context.h"
+#include "Options.h"
 #include "GUI.h"
 
 extern GUI       *WID;
@@ -32,7 +33,8 @@ void Signal (int sig_num){
     Msg(FATAL, "Floating Point Exception (Division by Zero?)"); 
     break;
   case SIGINT :
-    Msg(FATAL, "Interrupt (Generated from Terminal Special Character)"); 
+    Msg(INFO, "Interrupt (Generated from Terminal Special Character)"); 
+    Exit(1);
     break;
   default :
     Msg(FATAL, "Unknown Signal");
@@ -96,7 +98,7 @@ void Msg(int level, char *fmt, ...){
 
   static char buff1[1024], buff2[1024], buff[4][1024];
 
-  if(CTX.interactive || !WID)
+  if(!WID)
     window = -1;
   else 
     WID->check();
@@ -115,7 +117,7 @@ void Msg(int level, char *fmt, ...){
       vsprintf(buff2, fmt, args); 
       strcat(buff1,buff2);
       if(CTX.terminal) fprintf(stderr, "%s\n", &buff1[3]);
-      if(WID && !CTX.interactive){
+      if(WID){
 	if(verb<2)
 	  WID->add_message(buff1);
 	else
@@ -126,8 +128,8 @@ void Msg(int level, char *fmt, ...){
     va_end (args);
   }
 
-  if(WID && abort){
-    WID->save_message(".gmshlog");
+  if(abort){
+    if(WID) WID->save_message(CTX.error_filename);
     Exit(1);
   }
 }
@@ -138,9 +140,20 @@ void Msg(int level, char *fmt, ...){
 /* ------------------------------------------------------------------------ */
 
 void Exit(int level){
-  if(!CTX.interactive){
-    WID->get_position(CTX.position, CTX.gl_position);
-    Print_Configuration(0, CTX.configfilename);
+  if(WID && !CTX.interactive){
+    if(CTX.session_save){
+      CTX.position[0] = WID->m_window->x();
+      CTX.position[1] = WID->m_window->y();
+      CTX.gl_position[0] = WID->g_window->x();
+      CTX.gl_position[1] = WID->g_window->y();
+      CTX.msg_position[0] = WID->msg_window->x();
+      CTX.msg_position[1] = WID->msg_window->y();
+      CTX.msg_size[0] = WID->msg_window->w();
+      CTX.msg_size[1] = WID->msg_window->h();
+      Print_Context(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
+    }
+    if(CTX.options_save)
+      Print_Context(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
   }
   exit(level);
 }

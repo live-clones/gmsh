@@ -43,9 +43,9 @@ Geometry.Color.Points = Orange;
 General.Axes = 0;
 
 General.Trackball = 0;
-General.Rotation0 = 10;
-General.Rotation1 = 70;
-General.Translation0 = -0.1;
+General.RotationX = 10;
+General.RotationY = 70;
+General.TranslationX = -0.1;
 
 // Note: all colors can be defined literally or numerically, i.e.
 // 'General.Color.Background = Red' is equivalent to

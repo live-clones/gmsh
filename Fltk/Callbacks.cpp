@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.30 2001-02-16 20:16:40 remacle Exp $
+// $Id: Callbacks.cpp,v 1.31 2001-02-17 22:02:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,6 +11,7 @@
 #include "Visibility.h"
 #include "CreateFile.h"
 #include "OpenFile.h"
+#include "GetOptions.h"
 #include "Context.h"
 #include "Options.h"
 #include "GUI.h"
@@ -27,81 +28,10 @@ extern Context_T  CTX;
 
 int AddViewInUI(int i, char *Name, int Num){
   if(i > NB_BUTT_MAX -1) return 1;
-  if(WID->get_context() == 2)
+  if(WID && (WID->get_context() == 2))
     WID->set_context(menu_post,0);
   return 0;
 }
-
-void MarkAllViewsChanged(int action){
-  int i;
-  Post_View *v;
-
-  for(i = 0 ; i< List_Nbr(Post_ViewList) ; i++){
-    v = (Post_View*)List_Pointer(Post_ViewList, i);
-    switch(action){
-    case 1: // toggle drawing mode
-      if(v->IntervalsType == DRAW_POST_ISO) 
-        v->IntervalsType = DRAW_POST_DISCRETE ;
-      else if(v->IntervalsType == DRAW_POST_DISCRETE) 
-        v->IntervalsType = DRAW_POST_CONTINUOUS ;
-      else 
-        v->IntervalsType = DRAW_POST_ISO ;
-      break;
-    case 2: // time step++
-      if(v->TimeStep < v->NbTimeStep-1)
-        v->TimeStep++ ;
-      else
-        v->TimeStep = 0 ;
-      break;
-    case 3: // time step--
-      if(v->TimeStep > 0)
-        v->TimeStep-- ;
-      else
-        v->TimeStep = v->NbTimeStep-1 ;
-    }
-    v->Changed = 1 ;
-  }
-}
-
-#ifdef _USETHREADS
-
-#include <pthread.h>
-
-int        MeshDim ;
-pthread_t  MeshThread ;
-
-void* StartMeshThread(void * data){
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-  mai3d(&M,MeshDim);
-  Msg(STATUS3N,"Ready");
-  CTX.mesh.draw = 1;
-  CTX.threads_lock = 0;
-  XtSetSensitive(WID.G.Butt[6], 0);
-  Draw();
-  pthread_exit(NULL);
-  return NULL ;
-}
-
-void CancelMeshThread(void){
-  if(CTX.threads){
-    pthread_cancel(MeshThread);
-    CTX.mesh.draw = 1;
-    CTX.threads_lock = 0;
-    XtSetSensitive(WID.G.Butt[6], 0);    
-    Msg(STATUS2,"Mesh Aborted");
-    mesh_event_handler(MESH_DELETE);
-    Msg(STATUS3N,"Ready");
-    Draw();
-  }
-}
-
-#else
-
-void CancelMeshThread(void){
-  
-}
-
-#endif
 
 int SetGlobalShortcut(int event){
   return WID->global_shortcuts(event);
@@ -142,13 +72,22 @@ int SelectContour (int type, int num, List_T *Liste1){
   return k;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
 
 // Common callbacks 
 
 void cancel_cb(CALLBACK_ARGS){
   if(data) ((Fl_Window*)data)->hide();
+}
+
+void color_cb(CALLBACK_ARGS){
+  unsigned int (*fct) (int, int, unsigned int);
+  fct = (unsigned int (*) (int, int, unsigned int))data ;
+  uchar r = UNPACK_RED(fct(0,GMSH_GET,0)) ; 
+  uchar g = UNPACK_GREEN(fct(0,GMSH_GET,0)) ; 
+  uchar b = UNPACK_BLUE(fct(0,GMSH_GET,0)) ; 
+  if (fl_color_chooser("Color Chooser",r,g,b))
+    fct(0,GMSH_SET|GMSH_GUI,PACK_COLOR(r,g,b,255));
+  Draw();
 }
 
 // Graphical window 
@@ -184,7 +123,8 @@ void status_xyz1p_cb(CALLBACK_ARGS){
     Draw(); 
     break;
   case 4 :
-    Print_Context(0,NULL);
+    Print_Context(0,GMSH_FULLRC,NULL);
+    WID->create_message_window();
     break ;
   }
 }
@@ -192,6 +132,7 @@ void status_xyz1p_cb(CALLBACK_ARGS){
 static int stop_anim ;
 void status_play_cb(CALLBACK_ARGS){
   static long anim_time ;
+  int i;
   WID->set_anim(0);
   stop_anim = 0 ;
   anim_time = GetTime();
@@ -199,7 +140,8 @@ void status_play_cb(CALLBACK_ARGS){
     if(stop_anim) break ;
     if(GetTime() - anim_time > 1.e6*CTX.post.anim_delay){
       anim_time = GetTime();
-      MarkAllViewsChanged(2);
+      for(i=0 ; i<List_Nbr(Post_ViewList) ; i++)
+	opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i, GMSH_GET, 0)+1);
       Draw();
     }
     WID->check();
@@ -212,33 +154,41 @@ void status_pause_cb(CALLBACK_ARGS){
 }
 
 void status_cancel_cb(CALLBACK_ARGS){
-  CancelMeshThread();
 }
 
 // File Menu
 
 void file_open_cb(CALLBACK_ARGS) {
   char *newfile;
+  int n = List_Nbr(Post_ViewList);
   newfile = fl_file_chooser("Open File", "*.geo", NULL);
   if (newfile != NULL) {
     OpenProblem(newfile); 
     Draw(); 
   }
+  if(n != List_Nbr(Post_ViewList))
+    WID->set_context(menu_post, 0);
 }
 
 void file_merge_cb(CALLBACK_ARGS) {
   char *newfile;
+  int n = List_Nbr(Post_ViewList);
   newfile = fl_file_chooser("Merge File", "*", NULL);
   if (newfile != NULL) {
     MergeProblem(newfile); 
     Draw(); 
   }
+  if(n != List_Nbr(Post_ViewList))
+    WID->set_context(menu_post, 0);
 }
 
-void file_save_cb(CALLBACK_ARGS) {
+void file_save_mesh_cb(CALLBACK_ARGS) {
   Print_Mesh(&M, NULL, CTX.mesh.format);
 }
 
+void file_save_options_cb(CALLBACK_ARGS) {
+  Print_Context(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
+}
 
 void file_save_as_auto_cb(CALLBACK_ARGS) {
   char *newfile;
@@ -255,7 +205,7 @@ void file_save_as_geo_cb(CALLBACK_ARGS) {
 void file_save_as_geo_options_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save Options File", "*", NULL)))
-    Print_Context(0,newfile); 
+    Print_Context(0,GMSH_FULLRC, newfile); 
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS) {
@@ -328,28 +278,6 @@ void file_save_as_yuv_cb(CALLBACK_ARGS) {
     CreateOutputFile(newfile, CTX.print.format = FORMAT_YUV); 
 }
 
-static int RELOAD_ALL_VIEWS = 0 ;
-
-void file_reload_all_views_cb(CALLBACK_ARGS) {
-  if(!Post_ViewList) return;
-  RELOAD_ALL_VIEWS = 1;
-  for(int i = 0 ; i<List_Nbr(Post_ViewList) ; i++)
-    view_reload_cb(NULL, (void *)i);
-  RELOAD_ALL_VIEWS = 0;
-  Draw();
-}
-
-static int REMOVE_ALL_VIEWS = 0 ;
-
-void file_remove_all_views_cb(CALLBACK_ARGS) {
-  if(!Post_ViewList) return;
-  REMOVE_ALL_VIEWS = 1;
-  while(List_Nbr(Post_ViewList))
-    view_remove_cb(NULL, (void*)0);
-  REMOVE_ALL_VIEWS = 0;
-  Draw();
-}
-
 void file_quit_cb(CALLBACK_ARGS) {
   Exit(0);
 }
@@ -359,6 +287,10 @@ void file_quit_cb(CALLBACK_ARGS) {
 void opt_general_cb(CALLBACK_ARGS) {
   WID->create_general_options_window();
 }
+void opt_general_color_scheme_cb(CALLBACK_ARGS){
+  opt_general_color_scheme(0,GMSH_SET, WID->gen_value[0]->value());
+  Draw();
+}
 void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_axes(0, GMSH_SET, WID->gen_butt[0]->value());
   opt_general_small_axes(0, GMSH_SET, WID->gen_butt[1]->value());
@@ -366,13 +298,22 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_display_lists(0, GMSH_SET, WID->gen_butt[3]->value());
   opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[4]->value());
   opt_general_trackball(0, GMSH_SET, WID->gen_butt[5]->value());
-  opt_general_orthographic(0, GMSH_SET, WID->gen_butt[6]->value());
+  opt_general_terminal(0, GMSH_SET, WID->gen_butt[6]->value());
+  opt_general_session_save(0, GMSH_SET, WID->gen_butt[7]->value());
+  opt_general_options_save(0, GMSH_SET, WID->gen_butt[8]->value());
+  opt_general_orthographic(0, GMSH_SET, WID->gen_butt[9]->value());
+  opt_general_moving_light(0, GMSH_SET, WID->gen_butt[11]->value());
 
-  opt_general_color_scheme(0,GMSH_SET, WID->gen_value[0]->value());
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
   opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
   opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
+  opt_general_verbosity(0, GMSH_SET, WID->gen_value[5]->value());
+
+  opt_general_default_filename(0, GMSH_SET, (char*)WID->gen_input[0]->value());
+  opt_general_tmp_filename(0, GMSH_SET, (char*)WID->gen_input[1]->value());
+  opt_general_error_filename(0, GMSH_SET, (char*)WID->gen_input[2]->value());
+  opt_general_options_filename(0, GMSH_SET, (char*)WID->gen_input[3]->value());
   Draw();
 }
 
@@ -392,6 +333,10 @@ void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) {
     if(EntiteEstElleVisible(i)) ToutesLesEntitesRelatives(i,EntitesVisibles,0);
     else ToutesLesEntitesRelatives(i,EntitesVisibles,1);
   }
+  Draw();
+}
+void opt_geometry_color_scheme_cb(CALLBACK_ARGS){
+  opt_geometry_color_scheme(0,GMSH_SET, WID->geo_value[2]->value());
   Draw();
 }
 void opt_geometry_ok_cb(CALLBACK_ARGS) {
@@ -417,6 +362,10 @@ void opt_mesh_cb(CALLBACK_ARGS) {
 void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) {
   opt_geometry_show_by_entity_num_cb(w,data);
 }
+void opt_mesh_color_scheme_cb(CALLBACK_ARGS){
+  opt_mesh_color_scheme(0,GMSH_SET, WID->mesh_value[7]->value());
+  Draw();
+}
 void opt_mesh_ok_cb(CALLBACK_ARGS) {
   opt_mesh_degree(0, GMSH_SET, WID->mesh_butt[0]->value()?2:1);
   opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[1]->value());
@@ -429,8 +378,11 @@ void opt_mesh_ok_cb(CALLBACK_ARGS) {
   opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[8]->value());
   opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[9]->value());
   opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[10]->value());
-  opt_mesh_hidden(0, GMSH_SET, !WID->mesh_butt[11]->value());
-  opt_mesh_shade(0, GMSH_SET, WID->mesh_butt[13]->value());
+  opt_mesh_aspect(0, GMSH_SET, 
+		  WID->mesh_butt[11]->value()?0:
+		  WID->mesh_butt[12]->value()?1:
+		  2);
+  opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_butt[14]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
@@ -470,16 +422,89 @@ void opt_statistics_update_cb(CALLBACK_ARGS) {
 void opt_message_cb(CALLBACK_ARGS) {
   WID->create_message_window();
 }
+void opt_message_clear_cb(CALLBACK_ARGS) {
+  WID->clear_message();
+}
 void opt_message_save_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save Log", "*", NULL)))
+  if((newfile = fl_file_chooser("Save Messages", "*", NULL)))
     WID->save_message(newfile); 
 }
 
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS){
-  WID->create_help_window();
+  Msg(DIRECT, "");
+  Msg(DIRECT, "Mouse:");
+  Msg(DIRECT, "");
+  Msg(DIRECT, "  move          - highlight the elementary geometrical entity");
+  Msg(DIRECT, "                  currently under the mouse pointer and display");
+  Msg(DIRECT, "                  its properties in the status bar");
+  Msg(DIRECT, "                - size a rubber zoom started with (Ctrl+mouse1)");
+  Msg(DIRECT, "  mouse1        - rotate");
+  Msg(DIRECT, "                - accept a rubber zoom started by Ctrl+mouse1"); 
+  Msg(DIRECT, "  Ctrl+mouse1   start (anisotropic) rubber zoom"); 
+  Msg(DIRECT, "  Shift+mouse1  - zoom (isotropic)");
+  Msg(DIRECT, "                - cancel a rubber zoom");
+  Msg(DIRECT, "  mouse2        same as Shift+mouse1");
+  Msg(DIRECT, "  Ctrl+mouse2   orthogonalize display"); 
+  Msg(DIRECT, "  mouse3        - pan");
+  Msg(DIRECT, "                - cancel a rubber zoom");
+  Msg(DIRECT, "                - pop up menu on module name");
+  Msg(DIRECT, "                - pop up menu on post-processing view button");
+  Msg(DIRECT, "  Ctrl+mouse3   reset viewpoint to default");   
+  Msg(DIRECT, "");
+  Msg(DIRECT, "Menu bar shortcuts:");
+  Msg(DIRECT, "");
+  Msg(DIRECT, "  g             go to geometry module");
+  Msg(DIRECT, "  Shift+g       show geometry options");
+  Msg(DIRECT, "  Shift+i       show statistics window"); 
+  Msg(DIRECT, "  m             go to mesh module");
+  Msg(DIRECT, "  Shift+m       show mesh options");
+  Msg(DIRECT, "  Ctrl+m        merge file"); 
+  Msg(DIRECT, "  Shift+o       show general options"); 
+  Msg(DIRECT, "  Ctrl+o        open file"); 
+  Msg(DIRECT, "  p             go to post processor module");
+  Msg(DIRECT, "  Shift+p       show post-processing general options");
+  Msg(DIRECT, "  Ctrl+p        save file by extension");
+  Msg(DIRECT, "  Ctrl+q        quit");
+  Msg(DIRECT, "  Ctrl+s        save mesh");
+  Msg(DIRECT, "");
+  Msg(DIRECT, "Other shortcuts");
+  Msg(DIRECT, "");
+  Msg(DIRECT, "  0 or Esc      reload geometry input file");
+  Msg(DIRECT, "  1 or F1       mesh curves");
+  Msg(DIRECT, "  2 or F2       mesh surfaces");
+  Msg(DIRECT, "  3 or F3       mesh volumes");
+  Msg(DIRECT, "  Alt+a         hide/show small axes"); 
+  Msg(DIRECT, "  Alt+Shift+a   hide/show big moving axes"); 
+  Msg(DIRECT, "  Alt+b         hide/show all post processing scales");
+  Msg(DIRECT, "  Alt+c         alternate between predefined color schemes");
+  Msg(DIRECT, "  Alt+d         alternate between mesh wire frame, hidden lines and shading modes");
+  Msg(DIRECT, "  Alt+f         toggle redraw mode (fast/full)"); 
+  Msg(DIRECT, "  Alt+l         hide/show geometry lines");
+  Msg(DIRECT, "  Alt+Shift+l   hide/show mesh lines");
+  Msg(DIRECT, "  Alt+m         toggle visibility of all mesh entities");
+  Msg(DIRECT, "  Alt+o         change projection mode");
+  Msg(DIRECT, "  Alt+p         hide/show geometry points");
+  Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
+  Msg(DIRECT, "  s             increase animation delay");
+  Msg(DIRECT, "  Shift+s       decrease animation delay");
+  Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
+  Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
+  Msg(DIRECT, "  Alt+t         alternate intervals mode for all post-processing views"); 
+  Msg(DIRECT, "  Alt+v         hide/show geometry volumes");
+  Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
+  Msg(DIRECT, "  Alt+x         set X view"); 
+  Msg(DIRECT, "  Alt+y         set Y view"); 
+  Msg(DIRECT, "  Alt+z         set Z view"); 
+  Msg(DIRECT, "");
+  WID->create_message_window();
+}
+void help_command_line_cb(CALLBACK_ARGS){
+  Msg(DIRECT, "");
+  Print_Options("gmsh");
+  WID->create_message_window();
 }
 void help_about_cb(CALLBACK_ARGS){
   WID->create_about_window();
@@ -993,41 +1018,17 @@ void mesh_define_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh_define, 0);
 }
 void mesh_1d_cb(CALLBACK_ARGS){
-#ifdef _USETHREADS
-  if(CTX.threads){
-    XtSetSensitive(WID.G.Butt[6], 1);
-    CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 1 ; 
-    pthread_create(&MeshThread, NULL, StartMeshThread, NULL);
-  }
-  else
-#endif
-    mai3d(&M, 1); 
+  mai3d(&M, 1); 
   Draw();
   Msg(STATUS3N,"Ready");
 }
 void mesh_2d_cb(CALLBACK_ARGS){
-#ifdef _USETHREADS
-  if(CTX.threads){
-    XtSetSensitive(WID.G.Butt[6], 1);
-    CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 2 ; 
-    pthread_create(&MeshThread, NULL, StartMeshThread, NULL);
-  }
-  else
-#endif
-    mai3d(&M, 2);
+  mai3d(&M, 2);
   Draw();
   Msg(STATUS3N,"Ready");
 } 
 void mesh_3d_cb(CALLBACK_ARGS){
-#ifdef _USETHREADS
-  if(CTX.threads){
-    XtSetSensitive(WID.G.Butt[6], 1);
-    CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 3 ; 
-    pthread_create(&MeshThread, NULL, StartMeshThread, NULL);
-  }
-  else
-#endif
-    mai3d(&M, 3); 
+  mai3d(&M, 3); 
   Draw();
   Msg(STATUS3N,"Ready");
 } 
@@ -1195,18 +1196,18 @@ void mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
 // Dynamic Post Menus
 
 void view_toggle_cb(CALLBACK_ARGS){
+  opt_view_visible((int)data, GMSH_SET, WID->m_toggle_butt[(int)data]->value());
+  Draw();
+}
+
+static int RELOAD_ALL_VIEWS = 0 ;
+
+void view_reload_all_cb(CALLBACK_ARGS) {
   if(!Post_ViewList) return;
-
-  Post_View  *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
-
-  Msg(DEBUG1, "View %d", v->Num);
-  Msg(DEBUG2, "  -> Name '%s'", v->Name);
-  Msg(DEBUG2, "  -> FileName '%s'", v->FileName);
-  Msg(DEBUG2, "  -> DuplicateOf %d", v->DuplicateOf);
-  Msg(DEBUG3, "  -> Links %d", v->Links);
-
-  v->Visible = !v->Visible;
-  
+  RELOAD_ALL_VIEWS = 1;
+  for(int i = 0 ; i<List_Nbr(Post_ViewList) ; i++)
+    view_reload_cb(NULL, (void *)i);
+  RELOAD_ALL_VIEWS = 0;
   Draw();
 }
 
@@ -1233,14 +1234,28 @@ void view_reload_cb(CALLBACK_ARGS){
     Draw();
 }
 
+static int REMOVE_ALL_VIEWS = 0 ;
+
+void view_remove_all_cb(CALLBACK_ARGS) {
+  if(!Post_ViewList) return;
+  REMOVE_ALL_VIEWS = 1;
+  while(List_Nbr(Post_ViewList))
+    view_remove_cb(NULL, (void*)0);
+  REMOVE_ALL_VIEWS = 0;
+  Draw();
+}
+
 void view_remove_cb(CALLBACK_ARGS){
-  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
-  FreeView(v);
+  int i, play=0;
 
-  if(!List_Suppress(Post_ViewList, v, fcmpPostViewNum))
-    Msg(GERROR, "Could Not Suppress View from List");
+  FreeView((int)data);
 
-  CTX.post.nb_views = List_Nbr(Post_ViewList);
+  for(i=0 ; i<List_Nbr(Post_ViewList) ; i++)
+    if(((Post_View*)List_Pointer(Post_ViewList,i))->NbTimeStep > 1){
+      play = 1 ; 
+      break ;
+    }
+  if(!play) WID->g_status_butt[5]->deactivate();
 
   if(WID->get_context() == 2)
     WID->set_context(menu_post, 0);  
@@ -1249,12 +1264,24 @@ void view_remove_cb(CALLBACK_ARGS){
     Draw();
 }
 
-void view_duplicate_cb(CALLBACK_ARGS){
+void view_save_ascii_cb(CALLBACK_ARGS){
+  char *newfile;
+  if((newfile = fl_file_chooser("Save View in ASCII Format", "*", NULL)))
+    Write_View(0, (Post_View*)List_Pointer(Post_ViewList,(int)data), newfile); 
+}
+
+void view_save_binary_cb(CALLBACK_ARGS){
+  char *newfile;
+  if((newfile = fl_file_chooser("Save View in Binary Format", "*", NULL)))
+    Write_View(1, (Post_View*)List_Pointer(Post_ViewList,(int)data), newfile); 
+}
+
+static void _duplicate_view(int num, int options){
   Post_View  v, *v1, *v2, *v3 ;
 
   if(!Post_ViewList) return;
 
-  v1 = (Post_View*)List_Pointer(Post_ViewList,(int)data);
+  v1 = (Post_View*)List_Pointer(Post_ViewList,num);
 
   BeginView(0, 0);
   EndView(0, 0, v1->FileName, v1->Name);
@@ -1295,39 +1322,23 @@ void view_duplicate_cb(CALLBACK_ARGS){
   v2->Max         = v1->Max;      
   v2->NbTimeStep  = v1->NbTimeStep;
 
-  CopyViewOptions(v1, v2);
+  if(options) CopyViewOptions(v1, v2);
   AddViewInUI(List_Nbr(Post_ViewList), v2->Name, v2->Num);
   Draw();
 }
-
-#define STARTVIEWMOD					\
-  Post_View *v;						\
-  int i;						\
-  for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){		\
-    v = (Post_View*)List_Pointer(Post_ViewList, i);	\
-    if(CTX.post.link == 2 ||				\
-       (CTX.post.link == 1 && v->Visible) ||		\
-       (CTX.post.link == 0 && i == WID->view_number)){
-
-#define ENDVIEWMOD				\
-    }						\
-  }
-
-void view_lighting_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    v->Light = !v->Light;
-    v->Changed = 1;
-  ENDVIEWMOD
-  Draw() ;
+void view_duplicate_cb(CALLBACK_ARGS){
+  _duplicate_view((int)data,0);
 }
-void view_elements_cb(CALLBACK_ARGS){
-  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
-  v->ShowElement = !v->ShowElement;
-  v->Changed = 1;
-  Draw() ;
+void view_duplicate_with_options_cb(CALLBACK_ARGS){
+  _duplicate_view((int)data,1);
 }
+
 void view_applybgmesh_cb(CALLBACK_ARGS){
   Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
+  if(!v->ScalarOnly){
+    Msg(GERROR, "Background mesh generation impossible with non-scalar view");
+    return;
+  }
   BGMWithView(v); 
 }
 void view_options_cb(CALLBACK_ARGS){
@@ -1335,7 +1346,7 @@ void view_options_cb(CALLBACK_ARGS){
 }
 
 void view_options_custom_cb(CALLBACK_ARGS){
-  if(WID->view_butt[3]->value()){
+  if(WID->view_butt[0]->value()){
     WID->view_value[0]->activate();
     WID->view_value[1]->activate();
   }
@@ -1346,120 +1357,128 @@ void view_options_custom_cb(CALLBACK_ARGS){
 }
 
 void view_options_timestep_cb(CALLBACK_ARGS){
-  int ii = (int)((Fl_Value_Input*)w)->value();
-  STARTVIEWMOD
-    if(ii>=0 && ii<v->NbTimeStep){
-      v->TimeStep = ii ;
-      v->Changed = 1;
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+    if((links == 2) ||
+       (links == 1 && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == (int)data)){
+      opt_view_timestep(i, GMSH_SET, (int)((Fl_Value_Input*)w)->value());
     }
-  ENDVIEWMOD
+  }
   Draw();
 }
 
 void view_options_ok_cb(CALLBACK_ARGS){
-  STARTVIEWMOD
-    opt_view_show_scale(i, GMSH_SET, WID->view_butt[0]->value());
-    opt_view_show_time(i, GMSH_SET, WID->view_butt[1]->value());
-    opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[2]->value());
-    opt_view_range_type(i, GMSH_SET, WID->view_butt[3]->value()?DRAW_POST_CUSTOM:DRAW_POST_DEFAULT);
-    opt_view_scale_type(i, GMSH_SET, WID->view_butt[4]->value()?DRAW_POST_LINEAR:DRAW_POST_LOGARITHMIC);
-    opt_view_intervals_type(i, GMSH_SET, 
-			    WID->view_butt[6]->value()?DRAW_POST_ISO:
-			    WID->view_butt[7]->value()?DRAW_POST_DISCRETE:
-			    WID->view_butt[8]->value()?DRAW_POST_CONTINUOUS:
-			    DRAW_POST_NUMERIC);
-    opt_view_arrow_type(i, GMSH_SET, 
-			WID->view_butt[10]->value()?DRAW_POST_SEGMENT:
-			WID->view_butt[11]->value()?DRAW_POST_ARROW:
-			WID->view_butt[12]->value()?DRAW_POST_CONE:
-			DRAW_POST_DISPLACEMENT);
-    opt_view_arrow_location(i, GMSH_SET, 
-			    WID->view_butt[14]->value()?DRAW_POST_LOCATE_COG:
-			    DRAW_POST_LOCATE_VERTEX);
-
-    opt_view_custom_min(i, GMSH_SET, WID->view_value[0]->value());
-    opt_view_custom_max(i, GMSH_SET, WID->view_value[1]->value());
-    opt_view_nb_iso(i, GMSH_SET, WID->view_value[2]->value());
-    opt_view_offset0(i, GMSH_SET, WID->view_value[3]->value());
-    opt_view_offset1(i, GMSH_SET, WID->view_value[4]->value());
-    opt_view_offset2(i, GMSH_SET, WID->view_value[5]->value());
-    opt_view_raise0(i, GMSH_SET, WID->view_value[6]->value());
-    opt_view_raise1(i, GMSH_SET, WID->view_value[7]->value());
-    opt_view_raise2(i, GMSH_SET, WID->view_value[8]->value());
-    opt_view_timestep(i, GMSH_SET, WID->view_value[9]->value());
-    opt_view_arrow_scale(i, GMSH_SET, WID->view_value[10]->value());
-
-    opt_view_name(i, GMSH_SET, (char*)WID->view_input[0]->value());
-    opt_view_format(i, GMSH_SET, (char*)WID->view_input[1]->value());
-    v->Changed = 1;
-  ENDVIEWMOD
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  for(int i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+    if((links == 2) ||
+       (links == 1 && opt_view_visible(i, GMSH_GET, 0)) ||
+       (links == 0 && i == (int)data)){
+      opt_view_range_type(i, GMSH_SET, 
+			  WID->view_butt[0]->value()?DRAW_POST_CUSTOM:
+			  DRAW_POST_DEFAULT);
+      opt_view_scale_type(i, GMSH_SET, 
+			  WID->view_butt[1]->value()?DRAW_POST_LINEAR:
+			  DRAW_POST_LOGARITHMIC);
+      opt_view_intervals_type(i, GMSH_SET, 
+			      WID->view_butt[3]->value()?DRAW_POST_ISO:
+			      WID->view_butt[4]->value()?DRAW_POST_DISCRETE:
+			      WID->view_butt[5]->value()?DRAW_POST_CONTINUOUS:
+			      DRAW_POST_NUMERIC);
+      opt_view_arrow_type(i, GMSH_SET, 
+			  WID->view_butt[7]->value()?DRAW_POST_SEGMENT:
+			  WID->view_butt[8]->value()?DRAW_POST_ARROW:
+			  WID->view_butt[9]->value()?DRAW_POST_CONE:
+			  DRAW_POST_DISPLACEMENT);
+      opt_view_arrow_location(i, GMSH_SET, 
+			      WID->view_butt[11]->value()?DRAW_POST_LOCATE_COG:
+			      DRAW_POST_LOCATE_VERTEX);
+      opt_view_show_element(i, GMSH_SET, WID->view_butt[13]->value());
+      opt_view_show_scale(i, GMSH_SET, WID->view_butt[14]->value());
+      opt_view_show_time(i, GMSH_SET, WID->view_butt[15]->value());
+      opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[16]->value());
+      opt_view_light(i,GMSH_SET,WID->view_butt[17]->value());
+      
+      opt_view_custom_min(i, GMSH_SET, WID->view_value[0]->value());
+      opt_view_custom_max(i, GMSH_SET, WID->view_value[1]->value());
+      opt_view_nb_iso(i, GMSH_SET, WID->view_value[2]->value());
+      opt_view_offset0(i, GMSH_SET, WID->view_value[3]->value());
+      opt_view_offset1(i, GMSH_SET, WID->view_value[4]->value());
+      opt_view_offset2(i, GMSH_SET, WID->view_value[5]->value());
+      opt_view_raise0(i, GMSH_SET, WID->view_value[6]->value());
+      opt_view_raise1(i, GMSH_SET, WID->view_value[7]->value());
+      opt_view_raise2(i, GMSH_SET, WID->view_value[8]->value());
+      opt_view_timestep(i, GMSH_SET, WID->view_value[9]->value());
+      opt_view_arrow_scale(i, GMSH_SET, WID->view_value[10]->value());
+      
+      opt_view_name(i, GMSH_SET, (char*)WID->view_input[0]->value());
+      opt_view_format(i, GMSH_SET, (char*)WID->view_input[1]->value());
+    }
+  }
   Draw();
 }
-
-#undef STARTVIEWMOD
-#undef ENDVIEWMOD
 
 // Contextual windows for geometry
 
 void con_geometry_define_parameter_cb(CALLBACK_ARGS){
-  add_param(WID->get_geometry_parameter(0),
-	    WID->get_geometry_parameter(1),
+  add_param((char*)WID->context_geometry_input[0]->value(),
+	    (char*)WID->context_geometry_input[1]->value(),
 	    CTX.filename);
 }
 
 void con_geometry_define_point_cb(CALLBACK_ARGS){
- strcpy(x_text, WID->get_geometry_point(0));
- strcpy(y_text, WID->get_geometry_point(1));
- strcpy(z_text, WID->get_geometry_point(2));
- strcpy(l_text, WID->get_geometry_point(3));
- add_point(CTX.filename);
- ZeroHighlight(&M);
- Replot();
+  strcpy(x_text, (char*)WID->context_geometry_input[2]->value());
+  strcpy(y_text, WID->context_geometry_input[3]->value());
+  strcpy(z_text, WID->context_geometry_input[4]->value());
+  strcpy(l_text, WID->context_geometry_input[5]->value());
+  add_point(CTX.filename);
+  ZeroHighlight(&M);
+  Replot();
 }
 
 void con_geometry_define_translation_cb(CALLBACK_ARGS){
-  strcpy(tx_text, WID->get_geometry_translation(0));
-  strcpy(ty_text, WID->get_geometry_translation(1));
-  strcpy(tz_text, WID->get_geometry_translation(2));
+  strcpy(tx_text, WID->context_geometry_input[6]->value());
+  strcpy(ty_text, WID->context_geometry_input[7]->value());
+  strcpy(tz_text, WID->context_geometry_input[8]->value());
 }
 
 void con_geometry_define_rotation_cb(CALLBACK_ARGS){
-  strcpy(px_text, WID->get_geometry_rotation(0));
-  strcpy(py_text, WID->get_geometry_rotation(1));
-  strcpy(pz_text, WID->get_geometry_rotation(2));
-  strcpy(ax_text, WID->get_geometry_rotation(3));
-  strcpy(ay_text, WID->get_geometry_rotation(4));
-  strcpy(az_text, WID->get_geometry_rotation(5));
-  strcpy(angle_text, WID->get_geometry_rotation(6));
+  strcpy(px_text, WID->context_geometry_input[9]->value());
+  strcpy(py_text, WID->context_geometry_input[10]->value());
+  strcpy(pz_text, WID->context_geometry_input[11]->value());
+  strcpy(ax_text, WID->context_geometry_input[12]->value());
+  strcpy(ay_text, WID->context_geometry_input[13]->value());
+  strcpy(az_text, WID->context_geometry_input[14]->value());
+  strcpy(angle_text, WID->context_geometry_input[15]->value());
 }
 
 void con_geometry_define_scale_cb(CALLBACK_ARGS){
-  strcpy(dx_text, WID->get_geometry_scale(0));
-  strcpy(dy_text, WID->get_geometry_scale(1));
-  strcpy(dz_text, WID->get_geometry_scale(2));
-  strcpy(df_text, WID->get_geometry_scale(3));
+  strcpy(dx_text, WID->context_geometry_input[16]->value());
+  strcpy(dy_text, WID->context_geometry_input[17]->value());
+  strcpy(dz_text, WID->context_geometry_input[18]->value());
+  strcpy(df_text, WID->context_geometry_input[19]->value());
 }
 
 void con_geometry_define_symmetry_cb(CALLBACK_ARGS){
-  strcpy(sa_text, WID->get_geometry_symmetry(0));
-  strcpy(sb_text, WID->get_geometry_symmetry(1));
-  strcpy(sc_text, WID->get_geometry_symmetry(2));
-  strcpy(sd_text, WID->get_geometry_symmetry(3));
+  strcpy(sa_text, WID->context_geometry_input[20]->value());
+  strcpy(sb_text, WID->context_geometry_input[21]->value());
+  strcpy(sc_text, WID->context_geometry_input[22]->value());
+  strcpy(sd_text, WID->context_geometry_input[23]->value());
 }
 
 
 // Contextual windows for mesh
 
 void con_mesh_define_length_cb(CALLBACK_ARGS){
-  strcpy(char_length_text, WID->get_mesh_length());
+  strcpy(char_length_text, WID->context_mesh_input[0]->value());
 }
 
 void con_mesh_define_transfinite_line_cb(CALLBACK_ARGS){
-  strcpy(trsf_pts_text, WID->get_mesh_transfinite_line(0));
-  strcpy(trsf_type_text, WID->get_mesh_transfinite_line(1));
+  strcpy(trsf_pts_text, WID->context_mesh_input[1]->value());
+  strcpy(trsf_type_text, WID->context_mesh_input[2]->value());
 }
 
 void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
-  strcpy(trsf_vol_text, WID->get_mesh_transfinite_volume());
+  strcpy(trsf_vol_text, WID->context_mesh_input[3]->value());
 }
 

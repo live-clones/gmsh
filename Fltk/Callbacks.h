@@ -4,12 +4,11 @@
 #define CALLBACK_ARGS   Fl_Widget* w, void* data
 
 int SetGlobalShortcut(int event);
-void MarkAllViewsChanged(int action);
 
 // Common callbacks
 
 void cancel_cb(CALLBACK_ARGS) ;
-void ok_cb(CALLBACK_ARGS) ;
+void color_cb(CALLBACK_ARGS) ;
 
 // Graphical window
 
@@ -22,7 +21,8 @@ void status_cancel_cb(CALLBACK_ARGS) ;
 
 void file_open_cb(CALLBACK_ARGS) ;
 void file_merge_cb(CALLBACK_ARGS) ;
-void file_save_cb(CALLBACK_ARGS) ;
+void file_save_mesh_cb(CALLBACK_ARGS) ;
+void file_save_options_cb(CALLBACK_ARGS) ;
 void file_save_as_auto_cb(CALLBACK_ARGS) ;
 void file_save_as_geo_cb(CALLBACK_ARGS) ;
 void file_save_as_geo_options_cb(CALLBACK_ARGS) ;
@@ -37,25 +37,26 @@ void file_save_as_gif_dithered_cb(CALLBACK_ARGS) ;
 void file_save_as_gif_transparent_cb(CALLBACK_ARGS) ;
 void file_save_as_ppm_cb(CALLBACK_ARGS) ;
 void file_save_as_yuv_cb(CALLBACK_ARGS) ;
-void file_reload_all_views_cb(CALLBACK_ARGS) ;
-void file_remove_all_views_cb(CALLBACK_ARGS) ;
 void file_quit_cb(CALLBACK_ARGS) ;
 
 // Option General Menu
 
 void opt_general_cb(CALLBACK_ARGS) ;
+void opt_general_color_scheme_cb(CALLBACK_ARGS) ;
 void opt_general_ok_cb(CALLBACK_ARGS) ;
 
 // Option Geometry Menu
 
 void opt_geometry_cb(CALLBACK_ARGS) ;
 void opt_geometry_show_by_entity_num_cb(CALLBACK_ARGS) ;
+void opt_geometry_color_scheme_cb(CALLBACK_ARGS) ;
 void opt_geometry_ok_cb(CALLBACK_ARGS) ;
 
 // Option Mesh Menu
 
 void opt_mesh_cb(CALLBACK_ARGS) ;
 void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) ;
+void opt_mesh_color_scheme_cb(CALLBACK_ARGS) ;
 void opt_mesh_ok_cb(CALLBACK_ARGS) ;
 
 // Option Post Menu
@@ -71,11 +72,13 @@ void opt_statistics_update_cb(CALLBACK_ARGS) ;
 // Option Message Menu
 
 void opt_message_cb(CALLBACK_ARGS) ;
+void opt_message_clear_cb(CALLBACK_ARGS) ;
 void opt_message_save_cb(CALLBACK_ARGS) ;
 
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS) ;
+void help_command_line_cb(CALLBACK_ARGS) ;
 void help_about_cb(CALLBACK_ARGS) ;
 
 // Module Menu
@@ -179,10 +182,15 @@ void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS) ;
 
 // Dynamic post menus
 
-void view_reload_cb(CALLBACK_ARGS) ;
 void view_toggle_cb(CALLBACK_ARGS) ;
+void view_reload_cb(CALLBACK_ARGS) ;
+void view_reload_all_cb(CALLBACK_ARGS) ;
 void view_remove_cb(CALLBACK_ARGS) ;
+void view_remove_all_cb(CALLBACK_ARGS) ;
+void view_save_ascii_cb(CALLBACK_ARGS) ;
+void view_save_binary_cb(CALLBACK_ARGS) ;
 void view_duplicate_cb(CALLBACK_ARGS) ;
+void view_duplicate_with_options_cb(CALLBACK_ARGS) ;
 void view_lighting_cb(CALLBACK_ARGS) ;
 void view_elements_cb(CALLBACK_ARGS) ;
 void view_applybgmesh_cb(CALLBACK_ARGS) ;

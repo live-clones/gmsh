@@ -1,4 +1,4 @@
-// $Id: CbInput.cpp,v 1.6 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: CbInput.cpp,v 1.7 2001-02-17 22:04:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -206,6 +206,8 @@ void KeyboardAccel(XEvent *event){
       break;
     case XK_c : case XK_C :
       opt_general_color_scheme(0,GMSH_SET,opt_general_color_scheme(0,GMSH_GET,0)+1);
+      opt_geometry_color_scheme(0,GMSH_SET,opt_general_color_scheme(0,GMSH_GET,0));
+      opt_mesh_color_scheme(0,GMSH_SET,opt_general_color_scheme(0,GMSH_GET,0));
       XtVaSetValues(WID.OD.miscColorSchemeScale,XmNvalue, CTX.color_scheme, NULL);
       XmUpdateDisplay(WID.OD.miscColorSchemeScale);  
       Draw();

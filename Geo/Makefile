@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2001-02-12 17:42:22 geuzaine Exp $
+# $Id: Makefile,v 1.13 2001-02-17 22:08:55 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
@@ -83,7 +83,8 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h Geo.h CAD.h \
  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h ../Parser/Parser.h
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h ../Parser/Parser.h \
+ ../Common/Context.h
 StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \

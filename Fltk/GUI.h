@@ -22,6 +22,7 @@
 #include <FL/Fl_Bitmap.H>
 #include <FL/Fl_Browser.H>
 #include <FL/x.H>
+#include <FL/Fl_Color_Chooser.H>
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
@@ -100,8 +101,10 @@ public:
   // general options window
   int init_general_options_window;
   Fl_Window        *gen_window ;
-  Fl_Check_Button  *gen_butt[10] ;
+  Fl_Check_Button  *gen_butt[20] ;
   Fl_Value_Input   *gen_value[10] ;
+  Fl_Button        *gen_col[50] ;
+  Fl_Input         *gen_input[10] ;
 
   // geometry options window
   int init_geometry_options_window;
@@ -109,6 +112,7 @@ public:
   Fl_Check_Button  *geo_butt[10] ;
   Fl_Input         *geo_input ;
   Fl_Value_Input   *geo_value[10] ;
+  Fl_Button        *geo_col[50] ;
   
   // mesh options window
   int init_mesh_options_window;
@@ -116,6 +120,7 @@ public:
   Fl_Check_Button  *mesh_butt[20] ;
   Fl_Input         *mesh_input ;
   Fl_Value_Input   *mesh_value[20] ;
+  Fl_Button        *mesh_col[50] ;
 
   // post-processing options window
   int init_post_options_window;
@@ -133,10 +138,6 @@ public:
   Fl_Window        *msg_window ;
   Fl_Browser       *msg_browser ;
 
-  // help window
-  int init_help_window;
-  Fl_Window        *help_window ;
-    
   // about window
   int init_about_window;
   Fl_Window        *about_window ;
@@ -144,12 +145,12 @@ public:
   // view options window
   int init_view_window, view_number ;
   Fl_Window        *view_window ;
-  Fl_Group         *view_colors, *view_colorbar, *view_range, *view_intervals ;
-  Fl_Group         *view_offsetraise, *view_timestep, *view_vector ;
+  Fl_Group         *view_timestep, *view_vector ;
   Fl_Check_Button  *view_butt[20] ;
   Fl_Value_Input   *view_value[20] ;
   Fl_Input         *view_input[20] ;
   Colorbar_Window  *view_colorbar_window ;
+  Fl_Return_Button *view_ok ;
   
   // geometry context window
   int init_geometry_context_window;
@@ -175,7 +176,6 @@ public:
   void create_view_options_window(int numview);
   void create_statistics_window();
   void create_message_window();
-  void create_help_window();
   void create_about_window();
   void create_geometry_context_window(int num);
   void create_mesh_context_window(int num);
@@ -190,12 +190,12 @@ public:
   void redraw_overlay();
   void set_size(int w, int h);
   void set_menu_size(int nb_butt);
-  void get_position(int m[2], int g[2]);
   void set_context(Context_Item menu[], int flag);
   int  get_context();
   void set_anim(int mode);
   void set_status(char *msg, int num);
   void add_message(char *msg);
+  void clear_message();
   void save_message(char *filename);
   void set_statistics();
   void update_view_window(int numview);
@@ -203,20 +203,6 @@ public:
   void add_handler();
   int  global_shortcuts(int event);
   int  try_selection, quit_selection, end_selection;
-
-  // geometry contexts queries
-  char *get_geometry_parameter(int num);
-  char *get_geometry_point(int num);
-  char *get_geometry_translation(int num);
-  char *get_geometry_rotation(int num);
-  char *get_geometry_scale(int num);
-  char *get_geometry_symmetry(int num);
-
-  // mesh contexts queries
-  char *get_mesh_length();
-  char *get_mesh_transfinite_line(int num);
-  char *get_mesh_transfinite_volume();
-
 
 };
 

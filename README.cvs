@@ -1,0 +1,17 @@
+
+To download the latset full source by CVS, type
+
+cvs -d :pserver:YOUR_NAME@elap57.montefiore.ulg.ac.be:/usr/users57/cvs-master COMMAND
+
+where YOUR_NAME is your username on elap57.montefiore.ulg.ac.be, and where COMMAND is
+first 'login' (you will be prompted for a password), and then 'checkout gmsh'. When
+this is done, you can use 'logout' to exit.
+
+To update your local version, type
+
+cvs update -d
+
+To submit your changes, type
+
+cvs commit
+

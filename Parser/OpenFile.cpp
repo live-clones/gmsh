@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.5 2001-01-12 13:29:04 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.6 2001-02-17 22:09:00 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -33,11 +33,11 @@ void ParseFile(char *f){
   yyerrorstate=0;
   yylineno=1;
 
-  if(!(yyin = fopen(yyname,"r"))){
-    //Msg(STATUS2, "File '%s' Does not Exist", f);
+  if(!(yyin = fopen(yyname,"r")))
     return;
-  }
   
+  Msg(STATUS2, "Loading '%s'", yyname); 
+
   fpos_t position;
   fgetpos(yyin, &position);
   fgets(String, sizeof(String), yyin) ; 
@@ -57,10 +57,11 @@ void ParseFile(char *f){
     while(!feof(yyin)) yyparse();
   }
   fclose(yyin);
+
+  Msg(STATUS2, "Loaded '%s'", yyname); 
 }
 
 void MergeProblem(char *name){
-  Msg(INFO, "Merging '%s'",name); 
 
   ParseFile(name);  
   if (yyerrorstate) return;
@@ -105,8 +106,6 @@ void OpenProblem(char *name){
     WID->set_title(CTX.filename);
 #endif
   }
-
-  Msg(INFO, "Opening '%s'", CTX.filename); 
 
   ParseFile(CTX.filename);  
 
