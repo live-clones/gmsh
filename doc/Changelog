@@ -1,0 +1,85 @@
+New in 1.11: Corrected included file loading problem.
+
+New in 1.10: Switched from Motif to FLTK for the GUI. Many small
+tweaks.
+
+New in 1.00: Added PPM and YUV output; Corrected nested If/Endif;
+Corrected several bugs for pixel output and enhanced GIF output
+(dithering, transparency); Slightly changed the post-processing file
+format to allow both single and double precision numbers.
+
+New in 0.999: Added JPEG output and easy MPEG generation (see t8.geo in the
+tutorial); Clean up of export functions; small fixes; Linux versions
+are now compiled with gcc 2.95.2, which should fix the problems
+encountered with Mandrake 7.2;
+
+New in 0.998: Corrected bug introduced in 0.997 in the generation of
+the initial 3D mesh;
+
+New in 0.997: Corrected bug in interactive surface/volume selection;
+Added interactive symmetry; Corrected geometrical extrusion with
+rotation in degenerated or partially degenerated cases; Corrected bug
+in 2D mesh when meshing in the mean plane; 
+
+New in 0.996: Arrays of variables; Enhanced Printf and Sprintf;
+Simplified options (suppression of option arrays).
+
+New in 0.995:
+* Totally rewritten geometrical database (performance has been
+drastically improved for all geometrical transformations, and most
+notably for extrusion). <font color=red> As a consequence, the
+internal numbering of geometrical entities has changed: this will
+cause incompatibilities with old .geo files, and will require a
+partial rewrite of your old .geo files if these files made use of
+geometrical transformations</font>. The syntax of the .geo file has
+also been clarified. Many additions for scripting purposes.
+* New extrusion mesh generator. Preliminary version of the coupling between
+extruded and Delaunay meshes.
+* New option and procedural database. All interactive operations can be
+scripted in the input files. See the last example in the tutorial for
+an example.
+* Many stability enhancements in the 2D and 3D mesh
+algorithms. Performance boost of the 3D algorithm. Gmsh is still slow,
+but the performance becomes acceptable. An average 1000
+tetrahedra/second is obtained on a 600Mhz computer for a mesh of
+one million tetrahedra.
+* New anisotropic 2D mesh algorithm.
+* New (ascii and binary) post-processing file format and clarified mesh
+file format.
+* New handling for interactive rotations (trackball mode).
+* New didactic interactive mesh construction (watch the Delaunay
+algorithm in real time on complex geometries: that's exciting ;-)
+* And many, many bug fixes and cleanings...
+
+New in 0.992: corrected recombined extrusion; corrected ellipses; added
+simple automatic animation of post-processing maps; fixed various bugs.
+
+New in 0.991: fixed a serious allocation bug in 2D algorithm, which
+caused random crashes. All users should upgrade to 0.991.
+
+New in 0.990: bug fix in non-recombined 3D transfinite meshes.
+
+New in 0.989: added ability to reload previously saved meshes; some
+new command line options; reorganization of the scale menu; GIF
+output.
+
+New in 0.987: fixed bug with smoothing (leading to the possible
+generation of erroneous 3d meshes); corrected bug for mixed 3D meshes;
+moved the 'toggle view link' option to Opt->Postprocessing_Options.
+
+New in 0.986: fixed overlay problems; SGI version should now also run
+on 32 bits machines; fixed small 3d mesh bug.
+
+New in 0.985: corrected colormap bug on HP, SUN, SGI and IBM versions;
+corrected small initialization bug in postscript output.
+
+New in 0.984: corrected bug in display lists; added some options in
+Opt->General.
+
+New in 0.983: corrected some seg faults in interactive mode; corrected
+bug in rotations; changed default window sizes for better match with
+1024x768 screens (default X resources can be changed: see ex03.geo).
+
+New in 0.982: lighting for mesh and post-processing; corrected 2nd
+order mesh on non plane surfaces; added example 13.
+

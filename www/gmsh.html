@@ -51,7 +51,7 @@ ENDSCRIPT--->
 This page is a mirror of <a href="/gmsh/">/gmsh/</a><p>
 ENDMIRROR--->
 
-<!---BEGINDATE$Date: 2001-02-07 11:57:03 $ENDDATE--->
+<!---BEGINDATE$Date: 2001-02-07 14:18:43 $ENDDATE--->
 
 Copyright &copy; 1998-2001<br>
 J.-F. Remacle<br>
@@ -249,13 +249,18 @@ description.
   <td width="70">
   </td>
 
-  <td bgcolor="#ededed">
+  <td bgcolor="#ededed"><font face="Helvetica, Arial" size=-1>
 
-    <table border=0 cellspacing=0 cellpadding=0>
+<b>Development Release: 1.11 (February 5, 2001)</b>
+<p>
+The development release of Gmsh is available for Linux and
+Windows. All executables are dynamically linked with OpenGL.
+<ul>
+<li><A href="/gmsh/latest/gmsh-win.zip">Gmsh for Windows (95/98/NT)</A>
+<li><A href="/gmsh/latest/gmsh-1.11-1.i386.rpm">Gmsh for Red Hat Linux 6.2 and compatible (i386, glibc 2.1)</A> 
+</ul>
 
-    <tr valign=top>
-
-    <td width="45%"> <font face="Helvetica, Arial" size=-1>
+<p><br>
 
 <b>Stable Release: Version 1.00 (January 1, 2001)</b>
 <p>
@@ -272,61 +277,23 @@ RPMs are directly available here: <A
 href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">Mesa-3.2-2.i386.rpm</A>,
 <A
 href="/gmsh/thirdparty/lesstif-0.91.4-1.i386.rpm">lesstif-0.91.4-1.i386.rpm</A>.)
-<p>
 Remember that you may have to reconfigure the loader (ldconfig
 under Linux) or modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP)
 in order for Gmsh to find these libraries.
 <ul>
-<li>Red Hat package with man page and examples
-  <ul>
-    <li><A href="/gmsh/1.00/gmsh-1.00-1.i386.rpm">Linux RPM for Red Hat
-           6.2 and compatible (i386, glibc 2.1)</A> 
-  </ul>
-<li>Tarballs
-  <ul>
-    <li><A href="/gmsh/1.00/gmsh-Linux.tgz" >Gmsh for Linux (i386, glibc 2.1)</A>
-    <li><A href="/gmsh/1.00/gmsh-OSF1.tgz"  >Gmsh for Digital OSF 4.0/Compaq Tru64</A>
-    <li><A href="/gmsh/1.00/gmsh-SunOS.tgz" >Gmsh for Sun OS 5.5.1</A>
-    <li><A href="/gmsh/1.00/gmsh-AIX.tgz"   >Gmsh for IBM AIX</A>
-    <li><A href="/gmsh/1.00/gmsh-HP-UX.tgz" >Gmsh for HP-UX 10.20</A>
-    <li><A href="/gmsh/1.00/gmsh-IRIX.tgz"  >Gmsh for SGI IRIX 6.5</A>
-  </ul>
-<li>Tutorial and demos
-  <ul>
-    <li><A href="/gmsh/1.00/gmsh-tutorial.tgz">Gmsh tutorial</A>
-    <li><A href="/gmsh/1.00/gmsh-demos.tgz">Gmsh demo files</A>
-  </ul>
+  <li><A href="/gmsh/1.00/gmsh-1.00-1.i386.rpm">Linux RPM for Red Hat 6.2 and compatible (i386, glibc 2.1)</A> 
+  <li><A href="/gmsh/1.00/gmsh-Linux.tgz">Linux binary (i386, glibc 2.1)</A>
+  <li><A href="/gmsh/1.00/gmsh-OSF1.tgz">Digital OSF 4.0/Compaq Tru64 binary</A>
+  <li><A href="/gmsh/1.00/gmsh-SunOS.tgz">Sun OS 5.5.1 binary</A>
+  <li><A href="/gmsh/1.00/gmsh-AIX.tgz">IBM AIX binary</A>
+  <li><A href="/gmsh/1.00/gmsh-HP-UX.tgz">HP-UX 10.20 binary</A>
+  <li><A href="/gmsh/1.00/gmsh-IRIX.tgz">SGI IRIX 6.5 binary</A>
 </ul>
-
-
-
-    </td>
-
-    <td width="10%">
-    </td>
-
-    <td width="45%"> <font face="Helvetica, Arial" size=-1>
-
-
-
-<b>Development Release: 1.11 (February 5, 2001)</b>
-<p>
-The development release of Gmsh is available for Linux and
-Windows. All executables are dynamically linked with OpenGL.
+Tutorial and demos
 <ul>
-<li><A href="/gmsh/latest/gmsh-win.zip">Gmsh for Windows (95/98/NT)</A>
-<li><A href="/gmsh/latest/gmsh-1.11-1.i386.rpm">Gmsh for Red Hat Linux 6.2 and compatible (i386, glibc 2.1)</A> 
+  <li><A href="/gmsh/1.00/gmsh-tutorial.tgz">Tutorial</A>
+  <li><A href="/gmsh/1.00/gmsh-demos.tgz">Demo files</A>
 </ul>
-
-
-
-
-
-    </td>
-
-    </tr>
-
-    </table>
 
   </td>
 
@@ -345,101 +312,8 @@ Windows. All executables are dynamically linked with OpenGL.
 
   <td><font face="Helvetica, Arial" size=-1> 
 
-New in 1.11: Corrected included file loading problem.
-<p>
-New in 1.10: Switched from Motif to FLTK for the GUI. Many small
-tweaks.
-<p>
-New in 1.00: Added PPM and YUV output; Corrected nested If/Endif;
-Corrected several bugs for pixel output and enhanced GIF output
-(dithering, transparency); Slightly changed the post-processing file
-format to allow both single and double precision numbers.
-<p>
-New in 0.999: Added JPEG output and easy MPEG generation (see t8.geo in the
-tutorial); Clean up of export functions; small fixes; Linux versions
-are now compiled with gcc 2.95.2, which should fix the problems
-encountered with Mandrake 7.2;
-<p>
-New in 0.998: Corrected bug introduced in 0.997 in the generation of
-the initial 3D mesh;
-<p>
-New in 0.997: Corrected bug in interactive surface/volume selection;
-Added interactive symmetry; Corrected geometrical extrusion with
-rotation in degenerated or partially degenerated cases; Corrected bug
-in 2D mesh when meshing in the mean plane; 
-<p>
-New in 0.996: Arrays of variables; Enhanced Printf and Sprintf;
-Simplified options (suppression of option arrays).
-<p>
-New in 0.995:
-<ul>
-<li>
-Totally rewritten geometrical database (performance has been
-drastically improved for all geometrical transformations, and most
-notably for extrusion). <font color=red> As a consequence, the
-internal numbering of geometrical entities has changed: this will
-cause incompatibilities with old .geo files, and will require a
-partial rewrite of your old .geo files if these files made use of
-geometrical transformations</font>. The syntax of the .geo file has
-also been clarified. Many additions for scripting purposes.
-<li>
-New extrusion mesh generator. Preliminary version of the coupling between
-extruded and Delaunay meshes.
-<li>
-New option and procedural database. All interactive operations can be
-scripted in the input files. See the last example in the tutorial for
-an example.
-<li>
-Many stability enhancements in the 2D and 3D mesh
-algorithms. Performance boost of the 3D algorithm. Gmsh is still slow,
-but the performance becomes acceptable. An average 1000
-tetrahedra/second is obtained on a 600Mhz computer for a mesh of
-one million tetrahedra.
-<li>
-New anisotropic 2D mesh algorithm.
-<li>
-New (ascii and binary) post-processing file format and clarified mesh
-file format.
-<li>
-New handling for interactive rotations (trackball mode).
-<li>
-New didactic interactive mesh construction (watch the Delaunay
-algorithm in real time on complex geometries: that's exciting ;-)
-<li>
-And many, many bug fixes and cleanings...
-</ul>
-<p>
-New in 0.992: corrected recombined extrusion; corrected ellipses; added
-simple automatic animation of post-processing maps; fixed various bugs.
-<p>
-New in 0.991: fixed a serious allocation bug in 2D algorithm, which
-caused random crashes. All users should upgrade to 0.991.
-<p>
-New in 0.990: bug fix in non-recombined 3D transfinite meshes.
-<p>
-New in 0.989: added ability to reload previously saved meshes; some
-new command line options; reorganization of the scale menu; GIF
-output.
-<p>
-New in 0.987: fixed bug with smoothing (leading to the possible
-generation of erroneous 3d meshes); corrected bug for mixed 3D meshes;
-moved the 'toggle view link' option to Opt->Postprocessing_Options.
-<p>
-New in 0.986: fixed overlay problems; SGI version should now also run
-on 32 bits machines; fixed small 3d mesh bug.
-<p>
-New in 0.985: corrected colormap bug on HP, SUN, SGI and IBM versions;
-corrected small initialization bug in postscript output.
-<p>
-New in 0.984: corrected bug in display lists; added some options in
-Opt->General.
-<p>
-New in 0.983: corrected some seg faults in interactive mode; corrected
-bug in rotations; changed default window sizes for better match with
-1024x768 screens (default X resources can be changed: see ex03.geo).
-<p>
-New in 0.982: lighting for mesh and post-processing; corrected 2nd
-order mesh on non plane surfaces; added example 13.
+    <A href="/gmsh/doc/Changelog">Changelog</A>
+
   </td>
 
 </tr>
