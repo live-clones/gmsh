@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.54 2004-06-07 23:52:29 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.55 2004-06-08 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -381,10 +381,12 @@ static void _msh_print_elements(Mesh *M)
 
   PhysicalGroup *p;
   Volume *pV;
-  Surface *ps, s;
-  Curve *pc, c;
+  Surface *ps;
+  Curve *pc;
   Vertex *pv, v;
 
+  List_T *ListCurves = Tree2List(M->Curves);
+  List_T *ListSurfaces = Tree2List(M->Surfaces);
   List_T *ListVolumes = Tree2List(M->Volumes);
 
   for(i = 0; i < List_Nbr(M->PhysicalGroups); i++) {
@@ -417,16 +419,17 @@ static void _msh_print_elements(Mesh *M)
             Tree_Action(pV->Quad_Surf, _msh_print_quadrangle);
           }
         }
-        break;  //done
       }
-
-      for(j = 0; j < List_Nbr(p->Entities); j++) {
-        pc = &c;
-        List_Read(p->Entities, j, &Num);
-        pc->Num = abs(Num);
-        MSH_PHYSICAL_ORI = sign(Num);
-        if(Tree_Query(M->Curves, &pc))
-          Tree_Action(pc->Simplexes, _msh_print_simplex);
+      else{
+	for(k = 0; k < List_Nbr(ListCurves); k++) {
+	  List_Read(ListCurves, k, &pc);
+	  for(j = 0; j < List_Nbr(p->Entities); j++) {
+	    List_Read(p->Entities, j, &Num);
+	    MSH_LIN_NUM = abs(Num);
+	    MSH_PHYSICAL_ORI = sign(Num);
+	    Tree_Action(pc->Simplexes, _msh_print_simplex);
+	  }
+	}
       }
       break;
 
@@ -442,17 +445,17 @@ static void _msh_print_elements(Mesh *M)
             Tree_Action(pV->Quad_Surf, _msh_print_quadrangle);
           }
         }
-        break;  //done
       }
-
-      for(j = 0; j < List_Nbr(p->Entities); j++) {
-        ps = &s;
-        List_Read(p->Entities, j, &Num);
-        ps->Num = abs(Num);
-        MSH_PHYSICAL_ORI = sign(Num);
-        if(Tree_Query(M->Surfaces, &ps)){
-          Tree_Action(ps->Simplexes, _msh_print_simplex);
-          Tree_Action(ps->Quadrangles, _msh_print_quadrangle);
+      else{
+	for(k = 0; k < List_Nbr(ListSurfaces); k++) {
+	  List_Read(ListSurfaces, k, &ps);
+	  for(j = 0; j < List_Nbr(p->Entities); j++) {
+	    List_Read(p->Entities, j, &Num);
+	    MSH_SUR_NUM = abs(Num);
+	    MSH_PHYSICAL_ORI = sign(Num);
+	    Tree_Action(ps->Simplexes, _msh_print_simplex);
+	    Tree_Action(ps->Quadrangles, _msh_print_quadrangle);
+	  }
 	}
       }
       break;
@@ -479,6 +482,9 @@ static void _msh_print_elements(Mesh *M)
 
   }
 
+  List_Delete(ListCurves);
+  List_Delete(ListSurfaces);
+  List_Delete(ListVolumes);
 }
 
 static void _msh_print_all_curves(void *a, void *b)

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.164 2004-06-04 02:07:06 geuzaine Exp $
+// $Id: Options.cpp,v 1.165 2004-06-08 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3265,6 +3265,7 @@ double opt_mesh_lines(OPT_ARGS_NUM)
 double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+    if(CTX.mesh.surfaces_edges != val) CTX.mesh.changed = 1;
     CTX.mesh.surfaces_edges = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -3277,6 +3278,7 @@ double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
 double opt_mesh_surfaces_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+    if(CTX.mesh.surfaces_faces != val) CTX.mesh.changed = 1;
     CTX.mesh.surfaces_faces = (int)val;
   }
 #if defined(HAVE_FLTK)

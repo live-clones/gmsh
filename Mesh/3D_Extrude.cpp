@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.79 2004-05-26 00:33:37 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.80 2004-06-08 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -642,7 +642,7 @@ void Create_Tri(int iEnt, Vertex * v1, Vertex * v2, Vertex * v3)
   if(CTX.mesh.allow_degenerated_extrude ||
      (v1->Num != v2->Num && v1->Num != v3->Num && v2->Num != v3->Num)) {
     Simplex *s = Create_Simplex(v1, v2, v3, NULL);
-    s->iEnt = ep->useZonLayer() ? iEnt : THES->Num;
+    s->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THES->Num;
     s->Num = -s->Num;   //Tag triangles to re-extrude
     Tree_Add(THES->Simplexes, &s);
   }
@@ -667,19 +667,22 @@ void Extrude_Seg(Vertex * V1, Vertex * V2)
       if(ep->mesh.Recombine) {
         if(CTX.mesh.allow_degenerated_extrude){
           Quadrangle *q = Create_Quadrangle(v1, v2, v4, v3);
-	  q->iEnt = ep->useZonLayer() ? ep->mesh.ZonLayer[i] : THES->Num;
+	  q->iEnt = (ep->mesh.ZonLayer[i] && ep->useZonLayer()) ? 
+	    ep->mesh.ZonLayer[i] : THES->Num;
 	  q->Num = -q->Num; // Tag elt to re-extrude
 	  Tree_Add(THES->Quadrangles, &q);
 	}
         else if(v1->Num == v2->Num || v2->Num == v4->Num){
           Simplex *s = Create_Simplex(v1, v4, v3, NULL);
-	  s->iEnt = ep->useZonLayer() ? ep->mesh.ZonLayer[i] : THES->Num;
+	  s->iEnt = (ep->mesh.ZonLayer[i] && ep->useZonLayer()) ? 
+	    ep->mesh.ZonLayer[i] : THES->Num;
 	  s->Num = -s->Num; // Tag elt to re-extrude
 	  Tree_Add(THES->Simplexes, &s);
 	}
         else if(v1->Num == v3->Num || v3->Num == v4->Num){
           Simplex *s = Create_Simplex(v1, v2, v4, NULL);
-	  s->iEnt = ep->useZonLayer() ? ep->mesh.ZonLayer[i] : THES->Num;
+	  s->iEnt = (ep->mesh.ZonLayer[i] && ep->useZonLayer()) ? 
+	    ep->mesh.ZonLayer[i] : THES->Num;
 	  s->Num = -s->Num; // Tag elt to re-extrude
 	  Tree_Add(THES->Simplexes, &s);
 	}
@@ -690,7 +693,8 @@ void Extrude_Seg(Vertex * V1, Vertex * V2)
         }
         else{
           Quadrangle *q = Create_Quadrangle(v1, v2, v4, v3);
-	  q->iEnt = ep->useZonLayer() ? ep->mesh.ZonLayer[i] : THES->Num;
+	  q->iEnt = (ep->mesh.ZonLayer[i] && ep->useZonLayer()) ?
+	    ep->mesh.ZonLayer[i] : THES->Num;
 	  q->Num = -q->Num; // Tag elt to re-extrude
 	  Tree_Add(THES->Quadrangles, &q);
 	}
@@ -888,12 +892,9 @@ int Extrude_Mesh(Curve * c)
 	List_Read(c->Vertices, k, &v1);
 	List_Read(c->Vertices, k + 1, &v2);
 	Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
-	if(!ep->useZonLayer())
-	  s->iEnt = c->Num;
-	else
-	  s->iEnt = ep->mesh.ZonLayer[i];
+	s->iEnt = (ep->mesh.ZonLayer[i] && ep->useZonLayer()) ?
+	  ep->mesh.ZonLayer[i] : c->Num;
 	Tree_Add(c->Simplexes, &s);
-
 	// fill-in the data we didn't have above:
 	v1->u = ep->u(i, j);
 	k++;

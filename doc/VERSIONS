@@ -1,4 +1,7 @@
-$Id: VERSIONS,v 1.220 2004-06-04 18:58:46 geuzaine Exp $
+$Id: VERSIONS,v 1.221 2004-06-08 02:10:32 geuzaine Exp $
+
+New since 1.53: fixed UNV output; make Layers' region numbering
+consistent between lines/surfaces/volumes;
 
 New in 1.53: completed support for second order elements in the mesh
 module (lines, triangles, quadrangles, tetrahedra, hexahedra, prisms
