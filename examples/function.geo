@@ -55,3 +55,5 @@ Line(10000) = {6,11};
 Attractor Line {10000} = {1,.03,1};
 
 Mesh.Algorithm = 2 ; // This is the new 2D anisotropic algorithm
+
+

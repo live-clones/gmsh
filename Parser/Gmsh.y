@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.26 2000-12-07 16:03:44 remacle Exp $ */
+%{ /* $Id: Gmsh.y,v 1.27 2000-12-07 16:24:58 remacle Exp $ */
 
 #include <stdarg.h>
 
@@ -1741,14 +1741,14 @@ Loop :
   }
   | tReturn
   {
-    if(!FunctionManager::Instance()->leaveFunction(&yyin))
+    if(!FunctionManager::Instance()->leaveFunction(&yyin,yylineno))
       {
 	vyyerror("Error while exiting function");
       }
   } 
   | tCall tSTRING tEND
   {
-    if(!FunctionManager::Instance()->enterFunction($2,&yyin))
+    if(!FunctionManager::Instance()->enterFunction($2,&yyin,yylineno))
       {
 	vyyerror("Unknown Function %s",$2);
       }
@@ -1756,7 +1756,7 @@ Loop :
   | tFunction tSTRING
   {
     // skip everything until return is found
-    if(!FunctionManager::Instance()->createFunction($2,yyin))
+    if(!FunctionManager::Instance()->createFunction($2,yyin,yylineno))
       {
 	vyyerror("Redefinition of function %s",$2);
       }

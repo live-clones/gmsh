@@ -164,7 +164,7 @@
 #define	tMINUSMINUS	414
 
 #line 1 "Gmsh.y"
- /* $Id: Gmsh.tab.cpp,v 1.26 2000-12-07 16:03:43 remacle Exp $ */
+ /* $Id: Gmsh.tab.cpp,v 1.27 2000-12-07 16:24:58 remacle Exp $ */
 
 #include <stdarg.h>
 
@@ -4831,7 +4831,7 @@ case 208:
 case 209:
 #line 1743 "Gmsh.y"
 {
-    if(!FunctionManager::Instance()->leaveFunction(&yyin))
+    if(!FunctionManager::Instance()->leaveFunction(&yyin,yylineno))
       {
 	vyyerror("Error while exiting function");
       }
@@ -4840,7 +4840,7 @@ case 209:
 case 210:
 #line 1750 "Gmsh.y"
 {
-    if(!FunctionManager::Instance()->enterFunction(yyvsp[-1].c,&yyin))
+    if(!FunctionManager::Instance()->enterFunction(yyvsp[-1].c,&yyin,yylineno))
       {
 	vyyerror("Unknown Function %s",yyvsp[-1].c);
       }
@@ -4850,7 +4850,7 @@ case 211:
 #line 1757 "Gmsh.y"
 {
     // skip everything until return is found
-    if(!FunctionManager::Instance()->createFunction(yyvsp[0].c,yyin))
+    if(!FunctionManager::Instance()->createFunction(yyvsp[0].c,yyin,yylineno))
       {
 	vyyerror("Redefinition of function %s",yyvsp[0].c);
       }

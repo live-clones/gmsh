@@ -14,6 +14,7 @@ struct ltstr
 class File_Position 
 {
   public :
+    int lineno;
     fpos_t position;
     FILE *file;
 };
@@ -46,20 +47,22 @@ FunctionManager* FunctionManager::Instance()
   return instance;
 }
 
-bool FunctionManager::enterFunction(char *name, FILE **f) const
+bool FunctionManager::enterFunction(char *name, FILE **f, int &lno) const
 {
   if(functions->m.find(name) == functions->m.end())return false;
   File_Position fpold;
+  fpold.lineno = lno;
   fpold.file = *f;
   fgetpos(fpold.file,&fpold.position);
   calls->s.push(fpold);
   File_Position fp = (functions->m)[name];
   fsetpos(fp.file,&fp.position);
   *f = fp.file;
+  lno = fp.lineno;
   return true;
 }
 
-bool FunctionManager::leaveFunction(FILE **f)
+bool FunctionManager::leaveFunction(FILE **f,int &lno)
 {
   if(!calls->s.size())return false;
   File_Position fp;
@@ -67,13 +70,15 @@ bool FunctionManager::leaveFunction(FILE **f)
   calls->s.pop();
   fsetpos(fp.file,&fp.position);
   *f = fp.file;
+  lno = fp.lineno;
   return true;
 }
 
-bool FunctionManager::createFunction(char *name, FILE *f)
+bool FunctionManager::createFunction(char *name, FILE *f, int lno)
 {
   File_Position fp;
   fp.file = f;
+  fp.lineno = lno;
   fgetpos(fp.file,&fp.position);
   (functions->m)[name] = fp;
   return true;

@@ -17,9 +17,9 @@ class FunctionManager
     static FunctionManager *instance;
   public :
     static FunctionManager* Instance();
-    bool enterFunction (char *name, FILE **f) const;
-    bool createFunction  (char *name, FILE *f);
-    bool leaveFunction (FILE **f);
+    bool enterFunction (char *name, FILE **f, int &) const;
+    bool createFunction  (char *name, FILE *f, int);
+    bool leaveFunction (FILE **f, int &);
 };
 
 #endif
