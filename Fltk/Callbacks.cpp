@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.176 2003-06-13 22:41:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.177 2003-06-19 16:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1735,7 +1735,7 @@ static void _new_surface_volume(int mode)
         List_Reset(Liste1);
         List_Add(Liste2, &zone);
         while(1) {
-          Msg(STATUS3N, "Select holes ('q'=quit)");
+          Msg(STATUS3N, "Select hole boundary ('q'=quit)");
           ib = SelectEntity(type, &v, &c, &s);
           if(ib <= 0) {
             ZeroHighlight(THEM);
