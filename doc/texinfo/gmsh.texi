@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.76 2003-07-23 18:39:00 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.77 2003-07-23 18:45:06 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -299,9 +299,8 @@ License}). Further information about this license is available from the GNU
 Project webpage @uref{http://www.gnu.org/copyleft/gpl-faq.html}.
 Detailed copyright information can be found in @ref{Credits}.
 
-The source code and various pre-compiled versions of Gmsh (for most of the
-classical UNIX platforms, for Windows and for Mac OS) can be downloaded from
-the webpage @value{GMSH-WEB}.
+The source code and various pre-compiled versions of Gmsh (for Unix, Windows
+and Mac OS) can be downloaded from the webpage @value{GMSH-WEB}.
 
 If you use Gmsh, we would appreciate that you mention it in your
 work. References, as well as the latest news about Gmsh development, are
