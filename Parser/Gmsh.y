@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.183 2004-11-09 19:54:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.184 2004-11-19 22:54:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -58,6 +58,7 @@ static Surface *STL_Surf;
 static ExtrudeParams extr;
 static Post_View *View;
 static int ntmp;
+static int ViewErrorFlags[VIEW_NB_ELEMENT_TYPES];
 
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
@@ -70,10 +71,11 @@ static char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 void UpdateViewsInGUI();
 #endif
 
-void yyerror (char *s);
-void yymsg (int type, char *fmt, ...);
-void skip_until (char *skip, char *until);
-int PrintListOfDouble (char *format, List_T *list, char *buffer);
+void yyerror(char *s);
+void yymsg(int type, char *fmt, ...);
+void skip_until(char *skip, char *until);
+int PrintListOfDouble(char *format, List_T *list, char *buffer);
+int CheckViewErrorFlags(Post_View *v);
 %}
 
 %union {
@@ -438,11 +440,13 @@ Printf :
 View :
     tSTRING tBIGSTR '{' Views '}' tEND
     { 
-      if(!strcmp($1, "View")) EndView(View, 1, yyname, $2); 
+      if(!strcmp($1, "View") && !CheckViewErrorFlags(View))
+	EndView(View, 1, yyname, $2);
     }
   | tSTRING tBIGSTR tSTRING VExpr '{' Views '}' tEND
     {
-      if(!strcmp($1, "View")) EndView(View, 1, yyname, $2);
+      if(!strcmp($1, "View") && !CheckViewErrorFlags(View))
+	EndView(View, 1, yyname, $2);
     }  
 ;
 
@@ -450,6 +454,9 @@ Views :
     // nothing
     {
       View = BeginView(1); 
+      for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++){
+	ViewErrorFlags[i] = 0;
+      }
     }
   | Views ScalarPoint
   | Views VectorPoint
@@ -515,9 +522,7 @@ VectorPoint :
     }
     '{' VectorPointValues '}' tEND
     {
-      if((List_Nbr(View->VP) - ntmp) % 3)
-	yymsg(GERROR, "Wrong number of values for vector point "
-	      "(%d is not a multiple of 3)", List_Nbr(View->VP) - ntmp);
+      if((List_Nbr(View->VP) - ntmp) % 3) ViewErrorFlags[1]++;
       View->NbVP++;
     }
 ;
@@ -538,9 +543,7 @@ TensorPoint :
     }
     '{' TensorPointValues '}' tEND
     {
-      if((List_Nbr(View->TP) - ntmp) % 9)
-	yymsg(GERROR, "Wrong number of values for tensor point "
-	      "(%d is not a multiple of 9)", List_Nbr(View->TP) - ntmp);
+      if((List_Nbr(View->TP) - ntmp) % 9) ViewErrorFlags[2]++;
       View->NbTP++;
     }
 ;
@@ -563,9 +566,7 @@ ScalarLine :
     }
     '{' ScalarLineValues '}' tEND
     {
-      if((List_Nbr(View->SL) - ntmp) % 2)
-	yymsg(GERROR, "Wrong number of values for scalar line "
-	      "(%d is not a multiple of 2)", List_Nbr(View->SL) - ntmp);
+      if((List_Nbr(View->SL) - ntmp) % 2) ViewErrorFlags[3]++;
       View->NbSL++;
     }
 ;
@@ -588,9 +589,7 @@ VectorLine :
     }
     '{' VectorLineValues '}' tEND
     {
-      if((List_Nbr(View->VL) - ntmp) % 6)
-	yymsg(GERROR, "Wrong number of values for vector line "
-	      "(%d is not a multiple of 6)", List_Nbr(View->VL) - ntmp);
+      if((List_Nbr(View->VL) - ntmp) % 6) ViewErrorFlags[4]++;
       View->NbVL++;
     }
 ;
@@ -613,9 +612,7 @@ TensorLine :
     }
     '{' TensorLineValues '}' tEND
     {
-      if((List_Nbr(View->TL) - ntmp) % 18)
-	yymsg(GERROR, "Wrong number of values for tensor line "
-	      "(%d is not a multiple of 18)", List_Nbr(View->TL) - ntmp);
+      if((List_Nbr(View->TL) - ntmp) % 18) ViewErrorFlags[5]++;
       View->NbTL++;
     }
 ;
@@ -642,11 +639,7 @@ ScalarTriangle :
     }
     '{' ScalarTriangleValues '}' tEND
     {
-      // FIXME: removed this sanity chack for high-order views (need
-      // to make the check elsewhere!)
-      // if((List_Nbr(View->ST) - ntmp) % 3)
-      //   yymsg(GERROR, "Wrong number of values for scalar triangle "
-      //         "(%d is not a multiple of 3)", List_Nbr(View->ST) - ntmp);
+      if((List_Nbr(View->ST) - ntmp) % 3) ViewErrorFlags[6]++;
       View->NbST++;
     }
 ;
@@ -673,9 +666,7 @@ VectorTriangle :
     }
     '{' VectorTriangleValues '}' tEND
     {
-      if((List_Nbr(View->VT) - ntmp) % 9)
-	yymsg(GERROR, "Wrong number of values for vector triangle "
-	      "(%d is not a multiple of 9)", List_Nbr(View->VT) - ntmp);
+      if((List_Nbr(View->VT) - ntmp) % 9) ViewErrorFlags[7]++;
       View->NbVT++;
     }
 ;
@@ -702,9 +693,7 @@ TensorTriangle :
     }
     '{' TensorTriangleValues '}' tEND
     {
-      if((List_Nbr(View->TT) - ntmp) % 27)
-	yymsg(GERROR, "Wrong number of values for tensor triangle "
-	      "(%d is not a multiple of 27)", List_Nbr(View->TT) - ntmp);
+      if((List_Nbr(View->TT) - ntmp) % 27) ViewErrorFlags[8]++;
       View->NbTT++;
     }
 ;
@@ -732,9 +721,7 @@ ScalarQuadrangle :
     }
     '{' ScalarQuadrangleValues '}' tEND
     {
-      if((List_Nbr(View->SQ) - ntmp) % 4)
-	yymsg(GERROR, "Wrong number of values for scalar quadrangle "
-	      "(%d is not a multiple of 4)", List_Nbr(View->SQ) - ntmp);
+      if((List_Nbr(View->SQ) - ntmp) % 4) ViewErrorFlags[9]++;
       View->NbSQ++;
     }
 ;
@@ -762,9 +749,7 @@ VectorQuadrangle :
     }
     '{' VectorQuadrangleValues '}' tEND
     {
-      if((List_Nbr(View->VQ) - ntmp) % 12)
-	yymsg(GERROR, "Wrong number of values for vector quadrangle "
-	      "(%d is not a multiple of 12)", List_Nbr(View->VQ) - ntmp);
+      if((List_Nbr(View->VQ) - ntmp) % 12) ViewErrorFlags[10]++;
       View->NbVQ++;
     }
 ;
@@ -792,9 +777,7 @@ TensorQuadrangle :
     }
     '{' TensorQuadrangleValues '}' tEND
     {
-      if((List_Nbr(View->TQ) - ntmp) % 36)
-	yymsg(GERROR, "Wrong number of values for tensor quadrangle "
-	      "(%d is not a multiple of 36)", List_Nbr(View->TQ) - ntmp);
+      if((List_Nbr(View->TQ) - ntmp) % 36) ViewErrorFlags[11]++;
       View->NbTQ++;
     }
 ;
@@ -822,9 +805,7 @@ ScalarTetrahedron :
     }
     '{' ScalarTetrahedronValues '}' tEND
     {
-      if((List_Nbr(View->SS) - ntmp) % 4)
-	yymsg(GERROR, "Wrong number of values for scalar tetrahedron "
-	      "(%d is not a multiple of 4)", List_Nbr(View->SS) - ntmp);
+      if((List_Nbr(View->SS) - ntmp) % 4) ViewErrorFlags[12]++;
       View->NbSS++;
     }
 ;
@@ -852,9 +833,7 @@ VectorTetrahedron :
     }
     '{' VectorTetrahedronValues '}' tEND
     {
-      if((List_Nbr(View->VS) - ntmp) % 12)
-	yymsg(GERROR, "Wrong number of values for vector tetrahedron "
-	      "(%d is not a multiple of 12)", List_Nbr(View->VS) - ntmp);
+      if((List_Nbr(View->VS) - ntmp) % 12) ViewErrorFlags[13]++;
       View->NbVS++;
     }
 ;
@@ -882,9 +861,7 @@ TensorTetrahedron :
     }
     '{' TensorTetrahedronValues '}' tEND
     {
-      if((List_Nbr(View->TS) - ntmp) % 36)
-	yymsg(GERROR, "Wrong number of values for tensor tetrahedron "
-	      "(%d is not a multiple of 36)", List_Nbr(View->TS) - ntmp);
+      if((List_Nbr(View->TS) - ntmp) % 36) ViewErrorFlags[14]++;
       View->NbTS++;
     }
 ;
@@ -922,9 +899,7 @@ ScalarHexahedron :
     }
     '{' ScalarHexahedronValues '}' tEND
     {
-      if((List_Nbr(View->SH) - ntmp) % 8)
-	yymsg(GERROR, "Wrong number of values for scalar hexahedron "
-	      "(%d is not a multiple of 8)", List_Nbr(View->SH) - ntmp);
+      if((List_Nbr(View->SH) - ntmp) % 8) ViewErrorFlags[15]++;
       View->NbSH++;
     }
 ;
@@ -962,9 +937,7 @@ VectorHexahedron :
     }
     '{' VectorHexahedronValues '}' tEND
     {
-      if((List_Nbr(View->VH) - ntmp) % 24)
-	yymsg(GERROR, "Wrong number of values for vector hexahedron "
-	      "(%d is not a multiple of 24)", List_Nbr(View->VH) - ntmp);
+      if((List_Nbr(View->VH) - ntmp) % 24) ViewErrorFlags[16]++;
       View->NbVH++;
     }
 ;
@@ -1002,9 +975,7 @@ TensorHexahedron :
     }
     '{' TensorHexahedronValues '}' tEND
     {
-      if((List_Nbr(View->TH) - ntmp) % 72)
-	yymsg(GERROR, "Wrong number of values for tensor hexahedron "
-	      "(%d is not a multiple of 72)", List_Nbr(View->TH) - ntmp);
+      if((List_Nbr(View->TH) - ntmp) % 72) ViewErrorFlags[17]++;
       View->NbTH++;
     }
 ;
@@ -1037,9 +1008,7 @@ ScalarPrism :
     }
     '{' ScalarPrismValues '}' tEND
     {
-      if((List_Nbr(View->SI) - ntmp) % 6)
-	yymsg(GERROR, "Wrong number of values for scalar prism "
-	      "(%d is not a multiple of 6)", List_Nbr(View->SI) - ntmp);
+      if((List_Nbr(View->SI) - ntmp) % 6) ViewErrorFlags[18]++;
       View->NbSI++;
     }
 ;
@@ -1072,9 +1041,7 @@ VectorPrism :
     }
     '{' VectorPrismValues '}' tEND
     {
-      if((List_Nbr(View->VI) - ntmp) % 18)
-	yymsg(GERROR, "Wrong number of values for vector prism "
-	      "(%d is not a multiple of 18)", List_Nbr(View->VI) - ntmp);
+      if((List_Nbr(View->VI) - ntmp) % 18) ViewErrorFlags[19]++;
       View->NbVI++;
     }
 ;
@@ -1107,9 +1074,7 @@ TensorPrism :
     }
     '{' TensorPrismValues '}' tEND
     {
-      if((List_Nbr(View->TI) - ntmp) % 54)
-	yymsg(GERROR, "Wrong number of values for tensor prism "
-	      "(%d is not a multiple of 54)", List_Nbr(View->TI) - ntmp);
+      if((List_Nbr(View->TI) - ntmp) % 54) ViewErrorFlags[20]++;
       View->NbTI++;
     }
 ;
@@ -1141,9 +1106,7 @@ ScalarPyramid :
     }
     '{' ScalarPyramidValues '}' tEND
     {
-      if((List_Nbr(View->SY) - ntmp) % 5)
-	yymsg(GERROR, "Wrong number of values for scalar pyramid "
-	      "(%d is not a multiple of 5)", List_Nbr(View->SY) - ntmp);
+      if((List_Nbr(View->SY) - ntmp) % 5) ViewErrorFlags[21]++;
       View->NbSY++;
     }
 ;
@@ -1175,9 +1138,7 @@ VectorPyramid :
     }
     '{' VectorPyramidValues '}' tEND
     {
-      if((List_Nbr(View->VY) - ntmp) % 15)
-	yymsg(GERROR, "Wrong number of values for vector pyramid "
-	      "(%d is not a multiple of 15)", List_Nbr(View->VY) - ntmp);
+      if((List_Nbr(View->VY) - ntmp) % 15) ViewErrorFlags[22]++;
       View->NbVY++;
     }
 ;
@@ -1209,9 +1170,7 @@ TensorPyramid :
     }
     '{' TensorPyramidValues '}' tEND
     {
-      if((List_Nbr(View->TY) - ntmp) % 45)
-	yymsg(GERROR, "Wrong number of values for tensor pyramid "
-	      "(%d is not a multiple of 45)", List_Nbr(View->TY) - ntmp);
+      if((List_Nbr(View->TY) - ntmp) % 45) ViewErrorFlags[23]++;
       View->NbTY++;
     }
 ;
@@ -1274,7 +1233,7 @@ InterpolationMatrix :
     tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
-      View -> adaptive = new Adaptive_Post_View(View, $3, $6);
+      View->adaptive = new Adaptive_Post_View(View, $3, $6);
     }
 ;
 
@@ -4128,6 +4087,27 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
   }
   if(j != (int)strlen(format))
     return -1;
+  return 0;
+}
+
+int CheckViewErrorFlags(Post_View *v){
+  if(View->adaptive) return 0; // hope for the best :-)
+
+  char *name[8] = { "point", "line", "triangle", "quadrangle", 
+		    "tetrahedron", "hexahedron", "prism", "pyramid" };
+  char *type[3] = { "scalar", "vector", "tensor" };
+
+  if(8 * 3 != VIEW_NB_ELEMENT_TYPES){
+    Msg(GERROR, "Please upgrade CheckViewErrorFlags!");
+    return 0;
+  }
+  
+  for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++)
+    if(ViewErrorFlags[i])
+      Msg(GERROR, "%d %s %s%s in View[%d] contain%s a wrong number of values",
+	  ViewErrorFlags[i], type[i%3], name[i/3], (ViewErrorFlags[i] > 1) ? "s" : "",
+	  v->Index, (ViewErrorFlags[i] > 1) ? "" : "s");
+  
   return 0;
 }
 
