@@ -3127,7 +3127,8 @@ fi
 
 
   else
-        echo "$as_me:$LINENO: checking for jpeg_destroy_decompress in -ljpeg" >&5
+        LDFLAGS="-L${JPEG_PREFIX}/lib"
+    echo "$as_me:$LINENO: checking for jpeg_destroy_decompress in -ljpeg" >&5
 echo $ECHO_N "checking for jpeg_destroy_decompress in -ljpeg... $ECHO_C" >&6
 if test "${ac_cv_lib_jpeg_jpeg_destroy_decompress+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
