@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.5 2002-02-13 09:20:14 stainier Exp $
+// $Id: ColorTable.cpp,v 1.6 2002-02-14 15:39:09 colignon Exp $
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -104,7 +104,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 255 ; g = 0 ; b = 0 ; 
         }
         break;
-      case 4: /* blue-yellow-white */
+      case 4: /* rainbow modified to add black and white , from EMC2000 */
 #define myfct(a,b,c,d) ((a)+\
                         (b)*(s-bias)+\
                         (c)*(s-bias)*(s-bias)+\
@@ -124,6 +124,32 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
         break;
       case 6: /* monochrome */
         r = g = b = 0 ;
+        break;
+      case 7: /* rainbow modified to add black and white , from EMC2000 */
+        if (s-bias<=0.00) {
+          r = 0 ; g = 0 ; b = 0 ; 
+        }
+        else if(s-bias<=0.2){
+          r = 57*(1-100*((s-bias)-0.1)*((s-bias)-0.1)) ; g = 0 ; b = (int)((s-bias)*(255./0.2)) ;
+        }
+        else if(s-bias<=0.3624){
+          r = 0 ; g = (int)((s-bias-0.2)*(255./0.1624)) ; b = 255 ; 
+        }
+        else if(s-bias<=0.50) {
+          r = 0 ; g = 255 ; b = (int)(255.-(255./0.1376)*(s-bias-0.3624)); 
+        }
+        else if(s-bias<=0.6376){
+          r = (int)((s-bias-0.5)*(255./0.1376)) ; g = 255 ; b = 0 ; 
+        }
+        else if(s-bias<=0.8) {
+          r = 255; g = (int)(255.-(255./0.1624)*(s-bias-0.6376)) ; b = 0 ;
+        }
+        else if(s-bias<=1.0) {
+          r = 255; g = (int)((255./0.2)*(s-bias-0.8)) ; b = (int)(-3187.66*(s-bias)*(s-bias)+7012.76*(s-bias)-3570.61) ;
+        } 
+        else { 
+          r = 255 ; g = 255 ; b = 255 ; 
+        }
         break;
       default: /* grayscale without white */
         if      (s-bias<=0.00){ r = g = b = 0 ; }
