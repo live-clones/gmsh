@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.92 2001-08-12 14:24:50 geuzaine Exp $
+// $Id: Gmsh.y,v 1.93 2001-08-13 16:13:14 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1189,6 +1189,12 @@ Shape :
       $$.Type = MSH_SEGM_CIRC ;
       $$.Num  = (int)$3;
     }
+  | tEllipsis '(' FExpr ')'  tAFFECT ListOfDouble tEND
+    {
+      Cdbseg101((int)$3,MSH_SEGM_ELLI,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+      $$.Type = MSH_SEGM_ELLI ;
+      $$.Num  = (int)$3;
+    }
   | tCircle '(' FExpr ')'  tAFFECT ListOfDouble tPlane VExpr tEND
     {
       List_T *temp;
@@ -1210,12 +1216,6 @@ Shape :
     {
       Cdbseg101((int)$3,MSH_SEGM_PARAMETRIC,2,NULL,NULL,-1,-1,$7,$9,$11,$13,$15);
       $$.Type = MSH_SEGM_PARAMETRIC ;
-      $$.Num  = (int)$3;
-    }
-  | tEllipsis '(' FExpr ')'  tAFFECT ListOfDouble tEND
-    {
-      Cdbseg101((int)$3,MSH_SEGM_ELLI,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
-      $$.Type = MSH_SEGM_ELLI ;
       $$.Num  = (int)$3;
     }
   | tPhysical tLine '(' FExpr ')' tAFFECT ListOfDouble tEND

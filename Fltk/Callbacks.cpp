@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.77 2001-08-12 14:23:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.78 2001-08-13 16:13:14 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -658,8 +658,8 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
 
   n=0;
   while(1){
-    if(n == 0) Msg(STATUS3N,"Select center Point ('q'=quit)");
-    if(n == 1) Msg(STATUS3N,"Select start Point ('q'=quit)");
+    if(n == 0) Msg(STATUS3N,"Select start Point ('q'=quit)");
+    if(n == 1) Msg(STATUS3N,"Select center Point ('q'=quit)");
     if(n == 2) Msg(STATUS3N,"Select end Point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1) { /* left mouse butt */
@@ -672,7 +672,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
       break;
     }
     if(n == 3){
-      add_circ(p[1],p[0],p[2],CTX.filename); /* begin, center, end */
+      add_circ(p[0],p[1],p[2],CTX.filename); /* begin, center, end */
       ZeroHighlight(&M);
       Draw();
       n=0;
@@ -694,9 +694,9 @@ void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
 
   n=0;
   while(1){
-    if(n == 0) Msg(STATUS3N,"Select center Point ('q'=quit)");
-    if(n == 1) Msg(STATUS3N,"Select axis Point ('q'=quit)");
-    if(n == 2) Msg(STATUS3N,"Select start Point ('q'=quit)");
+    if(n == 0) Msg(STATUS3N,"Select start Point ('q'=quit)");
+    if(n == 1) Msg(STATUS3N,"Select center Point ('q'=quit)");
+    if(n == 2) Msg(STATUS3N,"Select major axis Point ('q'=quit)");
     if(n == 3) Msg(STATUS3N,"Select end Point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1) { /* left mouse butt */
@@ -709,7 +709,7 @@ void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
       break;
     }
     if(n == 4){
-      add_ell(p[3],p[2],p[0],p[1],CTX.filename);
+      add_ell(p[0],p[1],p[2],p[3],CTX.filename);
       ZeroHighlight(&M);
       Draw();
       n=0;
