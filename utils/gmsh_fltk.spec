@@ -8,7 +8,7 @@ Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
 Packager: Christophe.Geuzaine@AdValvas.be
 Buildroot: /var/tmp/%{name}-buildroot
-Requires: Mesa >= 3.0
+Requires: Mesa >= 3.2
 
 %description 
 Gmsh is an automatic three-dimensional finite element mesh generator,
