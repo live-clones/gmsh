@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.117 2001-08-03 11:22:50 geuzaine Exp $
+# $Id: Makefile,v 1.118 2001-08-03 11:23:49 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -236,6 +236,7 @@ distrib:
 
 distrib-win:
 	cp $(GMSH_BIN_DIR)/gmsh.exe ../gmsh-distrib
+	cp doc/README.txt ../gmsh-distrib
 	cp -R tutorial ../gmsh-distrib
 	cp -R demos ../gmsh-distrib
 	rm -f ../gmsh-distrib/tutorial/README
