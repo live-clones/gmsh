@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.58 2005-03-24 20:35:44 geuzaine Exp $
+$Id: FAQ,v 1.59 2005-04-04 18:40:13 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -287,19 +287,20 @@ then use 'View->Save As' to save the new view.
 
 * 7.3 Can Gmsh generate isovolumes?
 
-Yes, with the CutMap plugin (set the extractVolume to -1 or 1 to
-extract the positive or negative levelset). 
+Yes, with the CutMap plugin (set the ExtractVolume option to -1 or 1
+to extract the negative or positive levelset).
 
 * 7.4 How do I animate my plots?
 
 If the views contain multiple time steps, you can press the 'play'
-button under the graphic window, or change the time step by hand in
-the view option panel. You can also use the left and right arrow keys
-to change the time step in all visible views in real time.
+button at the bottom of the graphic window, or change the time step by
+hand in the view option panel. You can also use the left and right
+arrow keys on your keyboard to change the time step in all visible
+views in real time.
 
 If you want to loop through different views instead of time steps, you
 can use the 'Loop through views instead of time steps' option in the
-view option panel, or use the up and down arrow keys.
+view option panel, or use the up and down arrow keys on your keyboard.
 
 * 7.5 How do I visualize a deformed mesh?
 
@@ -311,7 +312,7 @@ all numeric input fields to slide the value!)
 
 Another option is to use the "general transformation expressions" (in
 View->Options->Offset) on a scalar view, with the displacement map
-selected as the transformation data source.
+selected as the data source.
 
 * 7.6 Can I visualize a field on a deformed mesh?
 
@@ -329,7 +330,7 @@ deformation, just modify the 'Displacement factor' option.)
 
 Another solution is to use the 'General transformation expressions'
 (in 'View->Options->Offset') on the field you want to display, with
-the displacement map selected as the transformation data source.
+the displacement map selected as the data source.
 
 And yet another solution is to use the DiplacementRaise plugin.
 
@@ -343,17 +344,18 @@ select the scalar view in 'Data source'.
 * 7.8 Can I color isovalue surfaces with data from another scalar
 view?
 
-Yes, using the CutMap plugin.
+Yes, using either the CutMap plugin (with the 'dView' option) or the
+Evaluate plugin.
 
 * 7.9 Is there a way to save animations?
 
 Yes, using scripts. Have a look at 'tutorial/t8.geo' or
-'demos/anim.script' for an example.
+'demos/anim.script' for some examples.
 
 * 7.10 Is there a way to visualize only certain components of
 vector/tensor fields?
 
-Yes: use 'View->Plugin->Extract'.
+Yes, using 'View->Plugin->Extract'.
 
 * 7.11 Can I do arithmetic operations on a view? Can I perform
 operations involving different views?
