@@ -1,4 +1,4 @@
-$Id: TODO,v 1.70 2004-12-06 04:59:08 geuzaine Exp $
+$Id: TODO,v 1.71 2004-12-08 03:10:06 geuzaine Exp $
 
 ********************************************************************
 
@@ -171,59 +171,3 @@ bien toutes les vues, mais tu ne sais acceder qu'a la derniere... Pour
 corriger ca, il faudrait que l'on garde comme info supplementaire dans
 chaque vue quelle etait sa position dans le fichier.
 
-********************************************************************
-
-osterwischc@asme.org
-
-Using Gmsh to post-process structural analysis results would be more
-convenient if there were a plugin to calculate maximum, mid, and
-minimum principal stress from a tensor view (as well as the von mises
-which currently exists).
-
-I'm not familiar enough with the code to do it myself but I would think
-it would work somewhat like the "extract" plugin and create 3 new
-vector views for the results labeled basename_maxprin,
-basename_midprin, and basename_minprin.
-
-Thank you for maintaining this excellent software.
--Carl
-
-********************************************************************
-
-Tenseurs, Laurent Stainier <l.stainier@ulg.ac.be>
-
-L'approche que je suggérerais est la suivante. Tout d'abord, on peut 
-commencer par le cas particulier (mais sans doute le plus courant) des 
-tenseurs symétriques (à valeurs réelles pour être précis). Dans ce cas, 
-les trois valeurs propres, et les vecteurs propres associés, sont bien 
-définies et réelles. On peut également définir les trois invariants du 
-tenseur A: I1=tr(A), I2=0.5*[tr(A)^2-tr(A^2)], I3=det(A), ou 
-alternativement tr(A), tr(A^2), tr(A^3). On peut alors envisager 
-différentes représentations graphiques:
-- la croix de contrainte (généralisée à 3D), composée à partir des 
-valeurs propres et des vecteurs propres;
-- les invariants (sous formes de plusieurs champs scalaires). Le choix 
-des invariants n'est pas évident: en mécanique, les plus intéressants 
-sont certainement I1, J2, I3. Quid en EM ?
-- composante par composante, ce qui serait d'ailleurs bien utile pour 
-les vecteurs également (mais peut-être cela peut-il être fait par 
-plugin, dont je n'ai pas encore étudié le mécanisme ??).
-
-Là où ça se complique franchement, c'est pour les tenseurs non 
-symétriques. Quoique ! Dans ce cas là, plus aucune garantie sur les 
-valeurs propres ... Mais il me semble donc que la solution peut être de 
-se ramener au cas précédent via une décomposition polaire A=R.U ou 
-A=V.R, où U et V sont des tenseurs symétriques et R un tenseur 
-anti-symétrique normé (R^t.R=1 => R^-1=R^t ; U^2=A^t.A, V^2=A.A^t), R 
-représentant une rotation rigide en mécanique. Ce dernier a trois 
-valeurs propres: 1 (avec un vecteur propre correspondant à l'axe de 
-rotation) et exp(+-i \theta) où \theta est l'angle de rotation (à 
-vérifier !!). Pour la représentation graphique, il y a l'option de 
-laisser tomber R. Sinon, il faudrait de fait voir comment représenter U 
-(ou V) avec R.
-
-Remarque finale: le calcul des valeurs et vecteurs propres est 
-évidemment un peu lourd au niveau CPU, mais bon, les tenseurs peuvent 
-être stockés sous cette forme (les invariants sont facilement calculés 
-à partir des v.p.), et cela nous rappelle cette belle expression "No 
-free meal" !

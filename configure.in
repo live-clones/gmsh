@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.56 2004-09-28 17:13:48 geuzaine Exp $
+dnl $Id: configure.in,v 1.57 2004-12-08 03:10:06 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 dnl
@@ -126,7 +126,7 @@ if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshPlugin"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshPlugin -lGmshNumeric"
   GMSH_LIBS="${GMSH_LIBS} -lGmshParallel"
   FLAGS="-DHAVE_FLTK ${FLAGS}"
 

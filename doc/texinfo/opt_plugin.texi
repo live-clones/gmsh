@@ -297,6 +297,21 @@ Default value: @code{-1}
 Default value: @code{0}
 @end table
 
+@item Plugin(PrincipalStresses)
+Plugin(PrincipalStresses) computes the min,
+mid and max principal stresses from the tensor
+view `iView'. If `iView' < 0, the plugin is run on
+the current view.
+
+Plugin(PrincipalStresses) creates three new
+views.
+
+Numeric options:
+@table @code
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(Skin)
 Plugin(Skin) extracts the skin (the boundary) of
 the view `iView'. If `iView' < 0, the plugin is run

@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.64 2004-11-13 22:52:46 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.65 2004-12-08 03:10:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -49,6 +49,7 @@
 #include "SphericalRaise.h"
 #include "DisplacementRaise.h"
 #include "StructuralSolver.h"
+#include "PrincipalStresses.h"
 #include "Evaluate.h"
 #include "Context.h"
 
@@ -194,6 +195,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Integrate", GMSH_RegisterIntegratePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("PrincipalStresses", GMSH_RegisterPrincipalStressesPlugin()));
 #if defined(HAVE_TRIANGLE)
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));
