@@ -11,7 +11,6 @@
 
 General.GraphicsWidth = 320 ; 
 General.GraphicsHeight = 240 ;
-PostProcessing.Link = 1;
 
 For i In {1:View[0].NbTimeStep}
 
@@ -28,7 +27,10 @@ For i In {1:View[0].NbTimeStep}
     Print Sprintf("anim-%g.jpg", i);
     Print Sprintf("anim-%g.gif", i);
   EndIf
-  View[0].TimeStep++;
+
+  For j In {1:PostProcessing.NbViews}
+    View[j-1].TimeStep++;
+  EndFor
 
 EndFor
 
