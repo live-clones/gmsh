@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2004-03-25 07:55:51 geuzaine Exp $
+# $Id: Makefile,v 1.9 2004-12-27 18:09:25 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -50,9 +50,7 @@ infoz: info
 	tar zcvf gmsh-info.tgz gmsh.info*
 
 txt:
-	makeinfo --no-headers gmsh.texi |\
-        sed -n '/...Table of Contents.../,$$p' |\
-        sed 's/...Table of Contents...//' > gmsh.txt
+	makeinfo --no-headers gmsh.texi -o gmsh.txt
 
 all: ps pdf html html1 infoz txt
 
