@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.53 2004-04-19 07:42:26 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.54 2004-05-14 18:23:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -82,13 +82,15 @@ void SetBoundingBox(void)
   }
 }
 
-int ParseFile(char *f, int silent, int close)
+int ParseFile(char *f, int silent, int close, int warn_if_missing)
 {
   char yyname_old[256], tmp[256];
   FILE *yyin_old, *fp;
   int yylineno_old, yyerrorstate_old, status;
 
   if(!(fp = fopen(f, "r"))){
+    if(warn_if_missing)
+      Msg(WARNING, "Unable to open file '%s'", f);
     return 0;
   }
 
@@ -152,15 +154,15 @@ void ParseString(char *str)
   }
 }
 
-int MergeProblem(char *name)
+int MergeProblem(char *name, int warn_if_missing)
 {
   char ext[5], tmp[256];
   int status;
   FILE *fp;
 
   if(!(fp = fopen(name, "r"))){
-    // don't issue an error: this is fine (the same as File->New in
-    // other programs)
+    if(warn_if_missing)
+      Msg(WARNING, "Unable to open file '%s'", name);
     return 0;
   }
 

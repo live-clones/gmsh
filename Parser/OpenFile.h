@@ -20,10 +20,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-int  ParseFile(char *filename, int silent, int close);
+int  ParseFile(char *filename, int silent, int close, int warn_if_missing=0);
 void ParseString(char *str);
 void OpenProblem(char *filename);
-int MergeProblem(char *filename);
+int MergeProblem(char *filename, int warn_if_missing=0);
 void SystemCall(char *command);
 void FixRelativePath(char *in, char *out);
 

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.164 2004-05-12 22:51:09 geuzaine Exp $
+// $Id: Gmsh.y,v 1.165 2004-05-14 18:23:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2330,7 +2330,7 @@ Command :
 	// include many files, use "Merge" instead: some OSes limit
 	// the number of files a process can open simultaneously (500
 	// for OS X)
-	ParseFile(tmpstring, 0, 0);
+	ParseFile(tmpstring, 0, 0, 1);
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
@@ -2352,7 +2352,7 @@ Command :
 	// MergeWithBoundingBox is deprecated
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
-	MergeProblem(tmpstring);
+	MergeProblem(tmpstring, 1);
       }
       else if(!strcmp($1, "System")){
 	SystemCall($2);
