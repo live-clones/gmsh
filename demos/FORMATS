@@ -1,0 +1,173 @@
+
+Gmsh Mesh File Format
+=====================
+
+   The 'msh' file format is the native output file format for
+   Gmsh. The file is divided in two sections (enclosed in $KEY and
+   $ENDKEY pairs): $NOD/$ENDNOD defines the nodes and $ELM/$ENDELM
+   defines the elements.
+
+   $NOD
+   number-of-nodes
+   node-number x-coord y-coord z-coord 
+   ...
+   $ENDNOD
+   $ELM
+   number-of-elements
+   elm-number elm-type elm-region unused number-of-nodes node-numbers
+   ...
+   $ENDELM
+
+   All the syntactic variables stand for integers except x-coord,
+   y-coord and z-coord which stand for floating point values.  The
+   elm-type value defines the geometrical type for the element:
+   
+   1  Line (2 nodes, 1 edge). 
+   2  Triangle (3 nodes, 3 edges). 
+   3  Quadrangle (4 nodes, 4 edges). 
+   4  Tetrahedron (4 nodes, 6 edges, 4 facets). 
+   5  Hexahedron (8 nodes, 12 edges, 6 facets). 
+   6  Prism (6 nodes, 9 edges, 5 facets). 
+   7  Pyramid (5 nodes, 8 edges, 5 facets). 
+   15 Point (1 node). 
+
+   The elm-region value is the number of the physical entity to which
+   the element belongs. 
+
+
+Gmsh Ascii Post-Processing File Format
+======================================
+   
+    A post-processing file is divided in several sections: one
+    format section (enclosed between $PostFormat/$EndPostFormat) and
+    (possibly multiple) post-processing views (enclosed between
+    $View/$EndView pairs). 
+
+    $PostFormat
+    version-number 0
+    $EndPostFormat
+    $View
+    name nb-time-steps
+    nb-SP nb-VP nb-TP
+    nb-SL nb-VL nb-TL
+    nb-ST nb-VT nb-TT
+    nb-SS nb-VS nb-TS
+    time-step-values
+    SP-value SP-value SP-value ...
+    VP-value VP-value VP-value ...
+    TP-value TP-value TP-value ...
+    SL-value SL-value SL-value ...
+    VL-value VL-value VL-value ...
+    TL-value TL-value TL-value ...
+    ST-value ST-value ST-value ...
+    VT-value VT-value VT-value ...
+    TT-value TT-value TT-value ...
+    SS-value SS-value SS-value ...
+    VS-value VS-value VS-value ...
+    TS-value TS-value TS-value ...
+    $endView
+    $View
+    ...
+    $EndView
+    $View
+    ...
+    $EndView
+
+    where
+    - 'version-number' is a double precision number giving the version
+      of Gmsh to which the file is destined (e.g. 0.995)
+    - 'name' is the name of the view
+    - 'nb-time-step' is an integer giving the number of time steps in the view
+    - 'nb-SP', 'nb-VP', 'nb-TP', 'nb-SL', 'nb-VL', 'nb-TL', 'nb-ST', 'nb-VT',
+      'nb-TT', 'nb-SS', 'nb-VS' and 'nb-TS' are integers giving the number of
+      scalar points, vector points, tensor points, scalar lines, vector lines,
+      tensor lines, scalar triangles, vector triangles, tensor triangles,
+      scalar tetrahedra, vector tetrahedra and tensor tetrahedra.
+    - 'SP-value' consists of a list of double precision numbers: the three
+      first represent the coordinates of the point, and the
+      'nb-time-step' following represent the field values.
+
+
+Gmsh Binary Post-Processing File Format
+=======================================
+
+    The binary post-processing file format is the same as the ascii file format,
+    except that:
+    - the format field is the following
+      $PostFormat
+      version-number 1
+      $EndPostFormat
+    - all double precision vectors ('time-step-values', 'SP-values', 'VP-values', etc.)
+      are written in binary format
+    - AND there is an additional integer written before the 'time-step-values', and
+      which contains the value '1'. This integer serves as a test for little/big endian
+      detection.
+
+    Here is an example, of C code to write a view in binary format (nb-SP, nb-VP, ...
+    have their classical meaning; SP-values, VP-values, ... are arrays of double
+    precision numbers containing respectively nb-SP, nb-VP, ... 'SP-value'. 
+    'Time-values' is an array of 'nb-time-step' double precision numbers):
+
+    int one=1;
+
+    fprintf(file, "$View /* test */\n");
+    fprintf(file, "test %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	    nb-time-step, 
+            nb-SP, nb-VP, nb-TP, nb-SL, nb-VL, nb-TL, 
+            nb-ST, nb-VT, nb-TT, nb-SS, nb-VS, nb-TS);
+    fwrite(&one, sizeof(int), 1, file);
+    fwrite(Time-values, sizeof(double), nb-SP, file);
+    fwrite(SP-values, sizeof(double), nb-SP, file);
+    fwrite(VP-values, sizeof(double), nb-VP, file);
+    fwrite(TP-values, sizeof(double), nb-TP, file);
+    fwrite(SL-values, sizeof(double), nb-SL, file);
+    fwrite(VL-values, sizeof(double), nb-VL, file);
+    fwrite(TL-values, sizeof(double), nb-TL, file);
+    fwrite(ST-values, sizeof(double), nb-ST, file);
+    fwrite(VT-values, sizeof(double), nb-VT, file);
+    fwrite(TT-values, sizeof(double), nb-TT, file);
+    fwrite(SS-values, sizeof(double), nb-SS, file);
+    fwrite(VS-values, sizeof(double), nb-VS, file);
+    fwrite(TS-values, sizeof(double), nb-TS, file);
+    fprintf(file, "$EndView\n");
+
+
+Gmsh Parsed Post-Processing Format
+==================================
+
+   For testing purposes (or with very small data sets), there is an additional,
+   post-processing format which is parsed by the same grammar analyser as the
+   geometry. You can thus for example embed small post-processing views into your
+   geometrical descriptions.
+
+   View "name" {
+     type_of_element (list_of_coordinates) {list_of_values} ;
+     ...
+   }	
+
+   12 base objects can be displayed:
+
+                       type_of_element   list_of_coordinates    list_of_values
+   --------------------------------------------------------------------------------
+   scalar point        SP                3                      1  * nb time steps
+   vector point        VP                3                      3  * nb time steps
+   tensor point        TP                3                      9  * nb time steps
+   scalar line         SL                6                      2  * nb time steps
+   vector line         VL                6                      6  * nb time steps
+   tensor line         TL                6                      18 * nb time steps
+   scalar triangle     ST                9                      3  * nb time steps
+   vector triangle     VT                9                      9  * nb time steps
+   tensor triangle     TT                9                      27 * nb time steps
+   scalar tetrahedron  SS                12                     4  * nb time steps
+   vector tetrahedron  VS                12                     12 * nb time steps
+   tensor tetrahedron  TS                12                     36 * nb time steps
+
+
+   The coordinates are given "by node", that is (x,y,z) for a point, (x1,y1,z1,x2,y2,z2)
+   for a line, (x1,y1,z1,x2,y2,z2,x3,y3,z3) for a triangle, ...
+ 
+   The values are given by timestep, by node and by component. That is, for a vector line,
+   {valxnode1time1,valynode1time1,valznode1time1, valxnode2time1,valynode2time1,valznode2time1,
+    valxnode1time2,valynode1time2,valznode1time2, valxnode2time2,valynode2time2,valznode2time2, ...}
+
+
