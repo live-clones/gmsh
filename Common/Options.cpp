@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.210 2004-12-09 03:31:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.211 2004-12-22 16:43:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -911,7 +911,7 @@ char *opt_general_graphics_font(OPT_ARGS_STR)
       CTX.gl_font_enum = FL_HELVETICA;
     }
     else
-      CTX.gl_font_enum = (int)menu_font_names[index].user_data();
+      CTX.gl_font_enum = (long)menu_font_names[index].user_data();
   }
   if(WID && (action & GMSH_GUI)){
     WID->gen_choice[1]->value(index);

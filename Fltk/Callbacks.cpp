@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.304 2004-12-21 03:11:48 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.305 2004-12-22 16:43:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2886,7 +2886,7 @@ void solver_cb(CALLBACK_ARGS)
 {
   char file[256], tmp[256];
   static int init = 0, first[MAXSOLVERS];
-  int i, num = (int)data;
+  long i, num = (long)data;
 
   if(!init) {
     for(i = 0; i < MAXSOLVERS; i++)
@@ -2914,7 +2914,7 @@ void solver_cb(CALLBACK_ARGS)
 void solver_file_open_cb(CALLBACK_ARGS)
 {
   char tmp[256];
-  int num = (int)data;
+  long num = (long)data;
   sprintf(tmp, "*%s", SINFO[num].extension);
 
   // We allow to create the .pro file... Or should we add a "New file"
@@ -2935,7 +2935,7 @@ void solver_file_open_cb(CALLBACK_ARGS)
 void solver_file_edit_cb(CALLBACK_ARGS)
 {
   char prog[1024], file[1024], cmd[1024];
-  int num = (int)data;
+  long num = (long)data;
   FixWindowsPath(CTX.editor, prog);
   FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
   _replace_multi_format(prog, file, cmd);
@@ -2944,7 +2944,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 
 void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
-  int num = (int)data;
+  long num = (long)data;
   if(file_chooser(0, 0, "Open mesh file", "*.msh", 0))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
@@ -3003,7 +3003,7 @@ void solver_command_cb(CALLBACK_ARGS)
 
 void solver_kill_cb(CALLBACK_ARGS)
 {
-  int num = (int)data;
+  long num = (long)data;
   if(SINFO[num].pid > 0) {
     kill(SINFO[num].pid, 9);
     Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
@@ -3013,7 +3013,7 @@ void solver_kill_cb(CALLBACK_ARGS)
 
 void solver_choose_executable_cb(CALLBACK_ARGS)
 {
-  int num = (int)data;
+  long num = (long)data;
   if(file_chooser(0, 0, "Choose executable",
 #if defined(WIN32)
                   "*.exe"
@@ -3026,7 +3026,7 @@ void solver_choose_executable_cb(CALLBACK_ARGS)
 
 void solver_ok_cb(CALLBACK_ARGS)
 {
-  int num = (int)data;
+  long num = (long)data;
   int retry = 0;
   opt_solver_popup_messages(num, GMSH_SET, WID->solver[num].butt[0]->value());
   opt_solver_merge_views(num, GMSH_SET, WID->solver[num].butt[1]->value());
@@ -3360,7 +3360,7 @@ void view_plugin_options_cb(CALLBACK_ARGS)
 
 void view_options_custom_cb(CALLBACK_ARGS)
 {
-  int custom = (int)data;
+  long custom = (long)data;
     
   if(custom){
     WID->view_value[31]->activate();
@@ -3374,12 +3374,12 @@ void view_options_custom_cb(CALLBACK_ARGS)
 
 void view_options_timestep_cb(CALLBACK_ARGS)
 {
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  long links = (long)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == (long int)data)) {
-      opt_view_timestep(i, GMSH_SET, (int)((Fl_Value_Input *) w)->value());
+      opt_view_timestep(i, GMSH_SET, (long)((Fl_Value_Input *) w)->value());
     }
   }
   Draw();
@@ -3387,7 +3387,7 @@ void view_options_timestep_cb(CALLBACK_ARGS)
 
 void view_options_timestep_decr_cb(CALLBACK_ARGS)
 {
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  long links = (long)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
@@ -3401,7 +3401,7 @@ void view_options_timestep_decr_cb(CALLBACK_ARGS)
 
 void view_options_timestep_incr_cb(CALLBACK_ARGS)
 {
-  int links = (int)opt_post_link(0, GMSH_GET, 0);
+  long links = (long)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
