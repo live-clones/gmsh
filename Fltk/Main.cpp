@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.68 2004-05-17 17:40:03 geuzaine Exp $
+// $Id: Main.cpp,v 1.69 2004-05-17 18:04:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -102,10 +102,6 @@ int main(int argc, char *argv[])
   // Read configuration files and command line options
 
   Get_Options(argc, argv, &nbf);
-
-  // This does not work with FLTK right now...
-
-  CTX.overlay = 0;
 
   // Always print info on terminal for non-interactive execution
 

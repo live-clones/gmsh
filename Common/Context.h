@@ -102,7 +102,6 @@ public :
   double lc_order;            // and never used in mesh generation (->only for geo/post) 
 
   int db;                     // double buffer? 
-  int overlay;                // overlay graphic window? 
   int ortho;                  // orthogonal projection? 
   int fast;                   // inhibit mesh and postpro drawing when changing r,s,t 
   int command_win;            // command window? 

@@ -260,9 +260,7 @@ public:
   void check();
   void wait();
   void make_opengl_current();
-  void make_overlay_current();
   void redraw_opengl();
-  void redraw_overlay();
   void set_size(int w, int h);
   void set_menu_size(int nb_butt);
   void set_context(Context_Item menu[], int flag);

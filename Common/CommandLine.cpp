@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.38 2004-05-17 17:40:02 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.39 2004-05-17 18:04:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -516,10 +516,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       else if(!strcmp(argv[i] + 1, "nocommand") ||
               !strcmp(argv[i] + 1, "noc")) {
         CTX.command_win = 0;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "overlay") || !strcmp(argv[i] + 1, "ov")) {
-        CTX.overlay = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "perspective") ||

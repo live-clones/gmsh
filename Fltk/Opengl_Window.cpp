@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.34 2004-05-17 17:40:03 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.35 2004-05-17 18:04:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -125,15 +125,6 @@ void Opengl_Window::draw()
   locked = 0;
 }
 
-void Opengl_Window::draw_overlay()
-{
-}
-
-void Opengl_Window::clear_overlay()
-{
-}
-
-
 // The event model in FLTK is pretty different from other toolkits:
 // the events are passed to the widget handle of the widget that has
 // the focus. If this handle returns 1, then the event is considered
@@ -194,7 +185,6 @@ int Opengl_Window::handle(int event)
         xc2 = ZOOM_X1 / CTX.s[0] - CTX.t[0];
         yc2 = ZOOM_Y1 / CTX.s[1] - CTX.t[1];
         ZoomClick = 0;
-        clear_overlay();
         if(ZOOM_X0 != ZOOM_X1 && ZOOM_Y0 != ZOOM_Y1)
           myZoom(ZOOM_X0, ZOOM_X1, ZOOM_Y0, ZOOM_Y1, xc1, xc2, yc1, yc2);
       }
@@ -210,7 +200,6 @@ int Opengl_Window::handle(int event)
       }
       else {
         ZoomClick = 0;
-        clear_overlay();
       }
     }
     else {
@@ -232,7 +221,6 @@ int Opengl_Window::handle(int event)
       }
       else {
         ZoomClick = 0;
-        clear_overlay();
       }
     }
     return 1;
@@ -257,8 +245,6 @@ int Opengl_Window::handle(int event)
       redraw();
     }
     else {
-      clear_overlay();
-
       if(FirstClick) {
         xc1 =
           (((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin)

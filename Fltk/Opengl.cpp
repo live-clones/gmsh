@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.37 2004-05-17 17:56:37 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.38 2004-05-17 18:04:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -51,12 +51,6 @@ void InitOpengl(void)
 void SetOpenglContext(void)
 {
   WID->make_opengl_current();
-}
-
-void InitOverlay(void)
-{
-  WID->make_overlay_current();
-  Orthogonalize(0, 0);
 }
 
 void ClearOpengl(void)

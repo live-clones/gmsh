@@ -31,7 +31,6 @@
 #define SELECTION_BUFFER_SIZE  1024
 
 void InitOpengl(void);
-void InitOverlay(void);
 void InitRenderModel(void);
 void InitPosition(void);
 
