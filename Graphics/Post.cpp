@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.37 2002-08-28 01:45:12 geuzaine Exp $
+// $Id: Post.cpp,v 1.38 2002-08-28 03:16:09 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -386,6 +386,15 @@ void Draw_Post (void) {
 	
 	if(v->NbST && v->DrawTriangles && v->DrawScalars){
 	  nb = List_Nbr(v->ST) / v->NbST ;
+	  if(CTX.alpha){ // sort the triangles % eye
+	    if(ColorTable_IsAlpha(&v->CT) && changedEye()){
+	      Msg(INFO, "Resorting triangles (eye=%g %g %g)", 
+		  storedEye[0],storedEye[1],storedEye[2]);
+	      qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
+	      v->Changed = 1;
+	      Msg(INFO, "End sorting triangles");
+	    }
+	  }
 	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
 	    Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
 	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
@@ -398,17 +407,6 @@ void Draw_Post (void) {
 				  (double*)List_Pointer_Fast(v->ST,i+9));
 	    }
 	  }
-
-	  if(CTX.alpha){ // sort the triangles % eye
-	    if(ColorTable_IsAlpha(&v->CT) && changedEye()){
-	      Msg(INFO, "Resorting triangles (eye=%g %g %g)", 
-		  storedEye[0],storedEye[1],storedEye[2]);
-	      v->Changed = 1;
-	      qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
-	      Msg(INFO, "End sorting triangles");
-	    }
-	  }
-
 	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
 	    Get_Coords(v->Explode, v->Offset, 3, 
 		       (double*)List_Pointer_Fast(v->ST,i), 
