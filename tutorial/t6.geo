@@ -127,9 +127,9 @@ Transfinite Line{32,27,49,45,43}                  = nbpt_shell ;
 Transfinite Line{33,28,46,50,52}                  = nbpt_far Using Progression 1.2 ;
 Transfinite Line{34,29,51,47,53}                  = nbpt_inf Using Progression 1.05;
 
-// *All* 2D and 3D transfinite entities are defined in respect to
-// points. The ordering of the points defines the ordering of the mesh
-// elements.
+// 2D transfinite entities are defined in respect to points. The
+// ordering of the points defines the ordering of the mesh elements.
+// A transfinite surface can have either 3 or 4 sides.
 
 Transfinite Surface{55} = {1,14,16,18};
 Transfinite Surface{57} = {14,2,19,16};
@@ -176,9 +176,9 @@ Transfinite Surface{117} = {13,5,25,26};
 
 Recombine Surface {55:127};
 
-// *All* 2D and 3D transfinite entities are defined in respect to
-// points. The ordering of the points defines the ordering of the mesh
-// elements.
+// 3D transfinite entities are defined in respect to points. The
+// ordering of the points defines the ordering of the mesh elements.
+// A transfinite volume can have either 6 or 8 faces.
 
 Transfinite Volume{129} = {1,14,15,18,16,17};
 Transfinite Volume{131} = {17,16,14,15,20,19,2,10};
