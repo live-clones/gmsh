@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.68 2004-06-28 19:00:22 geuzaine Exp $
+# $Id: Makefile,v 1.69 2004-06-30 21:15:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -247,7 +247,7 @@ depend:
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
   Face.h Edge.h ../Geo/ExtrudeParams.h STL.h ../Common/VertexArray.h \
-  Metric.h Matrix.h ../Numeric/Numeric.h ../Common/Context.h
+  Metric.h Matrix.h Create.h ../Numeric/Numeric.h ../Common/Context.h
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \

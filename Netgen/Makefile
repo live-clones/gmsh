@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2004-06-30 16:38:58 geuzaine Exp $
+# $Id: Makefile,v 1.4 2004-06-30 21:15:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -2958,4 +2958,4 @@ nglib_addon.o: nglib_addon.cpp libsrc/include/meshing.hpp \
   libsrc/meshing/bisect.hpp libsrc/meshing/clusters.hpp \
   libsrc/meshing/meshfunc.hpp libsrc/meshing/hprefinement.hpp \
   libsrc/meshing/boundarylayer.hpp libsrc/meshing/specials.hpp \
-  libsrc/interface/nglib.h
+  libsrc/interface/nglib.h ../Common/Message.h
