@@ -1,4 +1,5 @@
 #include "CutPlane.h"
+ #include "List.h"
 
 /*
   Plugin Entry : GMSH_RegisterPlugin
@@ -15,7 +16,8 @@ StringXNumber CutPlaneOptions_Number[] = {
   { GMSH_FULLRC, "A" , opt_cut_plane_A , 1. },
   { GMSH_FULLRC, "B" , opt_cut_plane_A , 1. },
   { GMSH_FULLRC, "C" , opt_cut_plane_A , 1. },
-  { GMSH_FULLRC, "D" , opt_cut_plane_A , 1. }
+  { GMSH_FULLRC, "D" , opt_cut_plane_A , 1. },
+  { GMSH_FULLRC, "iView" , opt_cut_plane_A , 1. }
 };
 
 extern "C"
@@ -64,6 +66,27 @@ double GMSH_CutPlanePlugin :: levelset (double x, double y, double z, double val
   return a * x + b * y + c * z + d;
 }
 
+extern List_T *Post_ViewList;
+Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
+{
+
+  a = CutPlaneOptions_Number[0].def;
+  b = CutPlaneOptions_Number[1].def;
+  c = CutPlaneOptions_Number[2].def;
+  d = CutPlaneOptions_Number[3].def;
+  int iView = (int)CutPlaneOptions_Number[4].def;
+  
+  if(v)return GMSH_LevelsetPlugin::execute(v);
+  else
+    {
+      if(List_Nbr(Post_ViewList) < iView)
+	{
+	  Msg(WARNING,"Plugin CutPlane, view %d not loaded\n",iView);
+	  return 0;
+	}
+      return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView));
+    }
+}
 
 
 

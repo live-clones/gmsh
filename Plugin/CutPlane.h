@@ -21,5 +21,6 @@ public:
   virtual void CatchErrorMessage (char *errorMessage) const;
   virtual int getNbOptions() const;
   virtual StringXNumber *GetOption (int iopt);  
+  virtual Post_View *execute (Post_View *);
 };
 #endif

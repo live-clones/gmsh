@@ -1,5 +1,5 @@
 #include "CutMap.h"
-#include "List.h"
+  #include "List.h"
 double opt_cut_map_A(OPT_ARGS_NUM)
 {
   return 0;
@@ -38,7 +38,7 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text)
 
 int GMSH_CutMapPlugin::getNbOptions() const
 {
-  return 2;
+  return 5;
 }
 
 StringXNumber *GMSH_CutMapPlugin:: GetOption (int iopt)
@@ -59,7 +59,7 @@ double GMSH_CutMapPlugin :: levelset (double x, double y, double z, double val) 
   return A - val;
 }
 
-extern List_T *Post_ViewList;
+ extern List_T *Post_ViewList;
 
 Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 {
