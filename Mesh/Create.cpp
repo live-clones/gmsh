@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.32 2001-12-04 12:06:49 geuzaine Exp $
+// $Id: Create.cpp,v 1.33 2002-01-23 16:28:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -422,6 +422,11 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
   pC->Circle.n[0] = 0.0;
   pC->Circle.n[1] = 0.0;
   pC->Circle.n[2] = 1.0;
+  for(i=0;i<4;i++){
+    pC->ipar[i] = 0;
+    pC->dpar[i] = 0.0;
+  }
+
   if (Typ == MSH_SEGM_SPLN){
     for (i = 0; i < 4; i++)
       for (j = 0; j < 4; j++)
@@ -516,6 +521,7 @@ void Free_Curve(void *a, void *b){
 
 Surface * Create_Surface (int Num, int Typ){
   Surface *pS;
+  int i;
 
   pS = (Surface *) Malloc (sizeof (Surface));
   pS->Dirty = 0;
@@ -524,6 +530,7 @@ Surface * Create_Surface (int Num, int Typ){
   THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum,Num);
   pS->Typ = Typ;
   pS->Method = LIBRE;
+  for(i=0;i<5;i++) pS->ipar[i] = 0;
   pS->Recombine = 0;
   pS->RecombineAngle = 30;
   pS->Simplexes = Tree_Create (sizeof (Simplex *), compareQuality);
@@ -563,6 +570,7 @@ void Free_Surface(void *a, void *b){
 
 Volume * Create_Volume (int Num, int Typ){
   Volume *pV;
+  int i;
 
   pV = (Volume *) Malloc (sizeof (Volume));
   pV->Dirty = 0;
@@ -571,6 +579,7 @@ Volume * Create_Volume (int Num, int Typ){
   THEM->MaxVolumeNum = IMAX(THEM->MaxVolumeNum,Num);
   pV->Typ = Typ;
   pV->Method = LIBRE;
+  for(i=0;i<8;i++) pV->ipar[i] = 0;
   pV->Surfaces = List_Create (1, 2, sizeof (Surface *));
   pV->Simplexes = Tree_Create (sizeof (Simplex *), compareQuality);
   pV->Vertices = Tree_Create (sizeof (Vertex *), compareVertex);

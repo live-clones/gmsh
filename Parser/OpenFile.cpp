@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.26 2001-12-06 10:10:42 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.27 2002-01-23 16:28:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -88,7 +88,6 @@ void ParseString(char *str){
 
 void MergeProblem(char *name){
   ParseFile(name,0);  
-  if (yyerrorstate) return;
 }
 
 void OpenProblem(char *name){
@@ -143,11 +142,12 @@ void OpenProblem(char *name){
     Maillage_Dimension_0(&M);
   }
 
-#ifndef _BLACKBOX
-  ZeroHighlight(&M); 
 #if _FLTK
   if(!CTX.batch) WID->reset_visibility();
 #endif
+
+#ifndef _BLACKBOX
+  ZeroHighlight(&M); 
 #endif
   
   if(List_Nbr(CTX.post.list) > nb)
