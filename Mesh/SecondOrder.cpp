@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.19 2004-04-18 03:36:07 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.20 2004-04-18 17:45:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -31,17 +31,16 @@
 // - middle face nodes for quads, hexas, prisms and pyramids
 
 // we really need to remove the quads from the simplex tree: it's a
-// real mess right now (EdgesInVolume makes sense only if we don't try
-// to do a 3D mesh with quads on surfaces)
-
-// -> add a Quad tree in Surface (like the Hax/Prism/Pyramid tree in
-// Volume); generalize Edge in terms of Element, and dynamic cast to
-// Simplex, Quandrangle, Hexahdra, etc.
+// real mess right now -> add a Quad tree in Surface (like the
+// Hax/Prism/Pyramid tree in Volume); generalize Edge in terms of
+// Element, and dynamic cast to Simplex, Quandrangle, Hexahdra, etc.
 
 extern Mesh *THEM;
 
-static Surface *THES;
-static Curve *THEC;
+static Surface *THES = NULL;
+static Curve *THEC = NULL;
+static EdgesContainer *edges = NULL;
+static List_T *VerticesToDelete = NULL;
 
 Vertex *oncurve(Vertex * v1, Vertex * v2)
 {
@@ -121,9 +120,20 @@ Vertex *onsurface(Vertex * v1, Vertex * v2)
   return pv;
 }
 
-extern int edges_tetra[6][2];
-extern int edges_quad[4][2];
-extern int EdgesInVolume;
+static int edges_tetra[6][2] = {
+  {0, 1},
+  {1, 2},
+  {2, 0},
+  {3, 0},
+  {3, 2},
+  {3, 1}
+};
+static int edges_quad[4][2] = {
+  {0, 1},
+  {1, 2},
+  {2, 3},
+  {3, 0}
+};
 
 void PutMiddlePoint(void *a, void *b)
 {
@@ -157,7 +167,7 @@ void PutMiddlePoint(void *a, void *b)
 
   for(i = 0; i < List_Nbr(ed->Simplexes); i++) {
     List_Read(ed->Simplexes, i, &s);
-    if(s->V[3] && EdgesInVolume) { // tetrahedron
+    if(s->V[3] && !THES) { // tetrahedron
       if(!s->VSUP)
         s->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
       N = 6;
@@ -201,9 +211,6 @@ void PutMiddlePoint(void *a, void *b)
   }
 }
 
-static Tree_T *TreeEdges = NULL;
-static List_T *VerticesToDelete = NULL;
-
 void ResetDegre2_Vertex(void *a, void *b)
 {
   Vertex *v = *(Vertex**)a;
@@ -242,9 +249,9 @@ void ResetDegre2_Volume(void *a, void *b)
 void Degre1()
 {
   // (re-)initialize the global tree of edges
-  if(TreeEdges)
-    Tree_Delete(TreeEdges);
-  TreeEdges = Tree_Create(sizeof(Edge), compareedge);
+  if(edges)
+    delete edges;
+  edges = new EdgesContainer();
 
   // reset VSUP in each element
   Tree_Action(THEM->Curves, ResetDegre2_Curve);
@@ -267,22 +274,20 @@ void Degre2_Curve(void *a, void *b)
 {
   Curve *c = *(Curve**)a;
   if(c->Dirty) return;
+  edges->AddTree(c->Simplexes, false);
   THEC = c;
   THES = NULL;
-  EdgesInVolume = 0;
-  crEdges(c->Simplexes, TreeEdges);
-  Tree_Action(TreeEdges, PutMiddlePoint);
+  Tree_Action(edges->AllEdges, PutMiddlePoint);
 }
 
 void Degre2_Surface(void *a, void *b)
 {
   Surface *s = *(Surface**)a;
   if(s->Dirty) return;
+  edges->AddTree(s->Simplexes, false);
   THEC = NULL;
   THES = s;
-  EdgesInVolume = 0;
-  crEdges(s->Simplexes, TreeEdges);
-  Tree_Action(TreeEdges, PutMiddlePoint);
+  Tree_Action(edges->AllEdges, PutMiddlePoint);
 }
 
 void Degre2_Volume(void *a, void *b)
@@ -297,36 +302,14 @@ void Degre2_Volume(void *a, void *b)
     return;
   }
 
+  edges->AddTree(v->Simplexes, true);
   THEC = NULL;
   THES = NULL;
-  EdgesInVolume = 1;
-  crEdges(v->Simplexes, TreeEdges);
-  Tree_Action(TreeEdges, PutMiddlePoint);
+  Tree_Action(edges->AllEdges, PutMiddlePoint);
 }
 
 void Degre2(int dim)
 {
-  int old = EdgesInVolume;
-
-  Degre1();
-  if(dim >= 1)
-    Tree_Action(THEM->Curves, Degre2_Curve);
-  if(dim >= 2)
-    Tree_Action(THEM->Surfaces, Degre2_Surface);
-  if(dim >= 3)
-    Tree_Action(THEM->Volumes, Degre2_Volume);
-
-  EdgesInVolume = old;
-}
-
-/* new interface
-EdgesContainer *edges = NULL;
-
-void Degre2(int dim)
-{
-  if(edges)
-    delete edges;
-  edges = new EdgesContainer();
   Degre1();
   if(dim >= 1)
     Tree_Action(THEM->Curves, Degre2_Curve);
@@ -335,4 +318,3 @@ void Degre2(int dim)
   if(dim >= 3)
     Tree_Action(THEM->Volumes, Degre2_Volume);
 }
-*/

@@ -495,7 +495,6 @@ void Projette_Plan_Moyen (void *a, void *b);
 void Projette_Inverse (void *a, void *b);
 void Freeze_Vertex (void *a, void *b);
 void deFreeze_Vertex (void *a, void *b);
-void crEdges (Tree_T * TreeElem, Tree_T * treeedges);
 
 double Lc_XYZ (double X, double Y, double Z, Mesh * m);
 void Degre1();

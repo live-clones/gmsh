@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.17 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.18 2004-04-18 17:45:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,8 +29,7 @@
 
 extern Context_T CTX;
 
-static Tree_T *RecEdges, *Triangles;
-static Tree_T *RecSimplex, *TREEELM;
+static Tree_T *RecEdges, *Triangles, *RecSimplex, *TREEELM;
 static double ALPHA;
 static int RECNUM;
 
@@ -98,7 +97,7 @@ void Recombine_Farce(void *a, void *b)
 
 int Recombine(Tree_T * TreeAllVert, Tree_T * TreeAllElg, double a)
 {
-  Tree_T *TreeEdges, *tnxe;
+  Tree_T *tnxe;
   int ntot;
 
   ALPHA = a;
@@ -109,16 +108,15 @@ int Recombine(Tree_T * TreeAllVert, Tree_T * TreeAllElg, double a)
 
     /* Initialisation */
     RECNUM = 0;
-    TreeEdges = Tree_Create(sizeof(Edge), compareedge);
     RecEdges = Tree_Create(sizeof(Edge), compareedge_angle);
     RecSimplex = Tree_Create(sizeof(Simplex *), compareSimplex);
     Triangles = Tree_Create(sizeof(Simplex *), compareSimplex);
 
     /* Recombinaison */
     Tree_Action(TreeAllElg, addTriangles);
-    crEdges(Triangles, TreeEdges);
-    Tree_Action(TreeEdges, CalculeAngles);
-    Tree_Action(TreeEdges, addrecedges);
+    EdgesContainer edges(Triangles, false);
+    Tree_Action(edges.AllEdges, CalculeAngles);
+    Tree_Action(edges.AllEdges, addrecedges);
     Tree_Action(RecEdges, Recombine_Farce);
 
     /* Lissage */
@@ -133,7 +131,6 @@ int Recombine(Tree_T * TreeAllVert, Tree_T * TreeAllElg, double a)
     }
 
     /* Destruction */
-    Tree_Delete(TreeEdges);
     Tree_Delete(RecEdges);
     Tree_Delete(RecSimplex);
     Tree_Delete(Triangles);

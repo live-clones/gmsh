@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.31 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.32 2004-04-18 17:45:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -38,12 +38,6 @@ static List_T *Teti;
 List_T *Missing, *MissingF, *MissingS;
 Tree_T *EdgesTree, *FacesTree, *swaps, *touchedvertex;
 
-int edges_quad[4][2] = {
-  {0, 1},
-  {1, 2},
-  {2, 3},
-  {3, 0}
-};
 int edges_tetra[6][2] = {
   {0, 1},
   {1, 2},
@@ -53,7 +47,6 @@ int edges_tetra[6][2] = {
   {3, 1}
 };
 int edges_non[3] = { 2, 0, 1 };
-int EdgesInVolume = 1;
 
 int memesens(Vertex * v1, Vertex * v2, Vertex * v3,
              Vertex * c1, Vertex * c2, Vertex * c3)
@@ -243,17 +236,11 @@ void create_Edge(void *a, void *b)
   s = *ps;
   int edges[6][2];
 
-  if(s->V[3] && EdgesInVolume) {
+  if(s->V[3]) {
     N = 6;
     for(i = 0; i < N; i++)
       for(j = 0; j < 2; j++)
         edges[i][j] = edges_tetra[i][j];
-  }
-  else if(s->V[3]) {
-    N = 4;
-    for(i = 0; i < N; i++)
-      for(j = 0; j < 2; j++)
-        edges[i][j] = edges_quad[i][j];
   }
   else if(s->V[2]) {
     N = 3;
@@ -317,14 +304,6 @@ void create_Edges(Volume * V)
     Tree_Action(S->Simplexes, create_Edge);
   }
 }
-
-
-void crEdges(Tree_T * TreeElem, Tree_T * treeedges)
-{
-  EdgesTree = treeedges;
-  Tree_Action(TreeElem, create_Edge);
-}
-
 
 void find_missing(void *a, void *b)
 {
