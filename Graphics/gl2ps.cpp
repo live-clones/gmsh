@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.62 2003-03-07 18:53:21 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.63 2003-03-10 16:21:38 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -30,7 +30,7 @@
 #include "gl2ps.h"
 
 /* The gl2ps context. gl2ps is not thread safe (we should create a
-   local GL2PScontext during gl2psBeginPage). */
+   local GL2PScontext during gl2psBeginPage) */
 
 GL2PScontext *gl2ps = NULL;
 
@@ -50,9 +50,7 @@ void gl2psMsg(GLint level, char *fmt, ...){
     va_end(args);
     fprintf(stderr, "\n");
   }
-  /*
-    if(level == GL2PS_ERROR) exit(1);
-  */
+  /* if(level == GL2PS_ERROR) exit(1); */
 }
 
 void *gl2psMalloc(size_t size){
@@ -197,9 +195,9 @@ void gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
     c[2] = c[2] / norm;
   }
   else{
-    /* The plane is still wrong, despite our tests in
-       gl2psGetPlane... Let's return a dummy value (this is a hack: we
-       should do more tests in GetPlane): */
+    /* FIXME: the plane is still wrong, despite our tests in
+       gl2psGetPlane... Let's return a dummy value for now (this is a
+       hack: we should do more tests in GetPlane) */
     c[0] = c[1] = 0.;
     c[2] = 1.;
   }
@@ -840,17 +838,17 @@ void gl2psSplitPrimitive2D(GL2PSprimitive *prim,
 			   GL2PSprimitive **front, 
 			   GL2PSprimitive **back){
 
-  /* cur will hold the position of current vertex
-     prev will holds the position of previous vertex
-     prev0 will holds the position of vertex number 0
-     v1 and v2 represent the current and previous vertexs respectively
-     flag will represents that should the current be checked against the plane */
+  /* cur will hold the position of the current vertex
+     prev will hold the position of the previous vertex
+     prev0 will hold the position of the vertex number 0
+     v1 and v2 represent the current and previous vertices, respectively
+     flag is set if the current vertex should be checked against the plane */
   GLint cur = -1, prev = -1, i, v1 = 0, v2 = 0, flag = 1, prev0 = -1;
   
-  /* list of vertexs which will go in front and back Primitive */
+  /* list of vertices that will go in front and back primitive */
   GL2PSvertex *front_list = NULL, *back_list = NULL;
   
-  /* number of vertex in front and back list */
+  /* number of vertices in front and back list */
   GLint front_count = 0, back_count = 0;
 
   for(i = 0; i <= prim->numverts; i++){
@@ -922,6 +920,13 @@ void gl2psSplitPrimitive2D(GL2PSprimitive *prim,
 GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree){
   GLint ret = 0;
   GL2PSprimitive *frontprim = NULL, *backprim = NULL;
+  
+  /* FIXME: until we consider the actual extent of text strings and
+     pixmaps, never cull them. Otherwise the whole string/pixmap gets
+     culled as soon as the reference point is hidden */
+  if(prim->type == GL2PS_PIXMAP || prim->type == GL2PS_TEXT){
+    return 1;
+  }
 
   if(*tree == NULL){
     gl2psAddPlanesInBspTreeImage(prim, tree);
@@ -982,14 +987,14 @@ void gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
       b = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
       b->type = GL2PS_LINE;
       b->dash = prim->dash;
-      b->depth = prim->depth; /* this is wrong */
+      b->depth = prim->depth; /* FIXME: this is wrong */
       b->culled = prim->culled;
       b->width = prim->width;
       b->boundary = 0;
       b->numverts = 2;
       b->verts = (GL2PSvertex *)gl2psMalloc(2 * sizeof(GL2PSvertex));
 
-#if 0 /* need to work on boundary offset... */
+#if 0 /* FIXME: need to work on boundary offset... */
       v[0] = c[0] - prim->verts[i].xyz[0];
       v[1] = c[1] - prim->verts[i].xyz[1];
       v[2] = 0.;
@@ -1080,7 +1085,7 @@ void gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   }
   else if(offset && type == GL2PS_TRIANGLE){
 
-    /* This needs some more work... */
+    /* FIXME: this needs some more work... */
 
     if(gl2ps->sort == GL2PS_SIMPLE_SORT){    
       factor = gl2ps->offset[0];
@@ -1286,8 +1291,6 @@ GLboolean gl2psVertsSameColor(const GL2PSprimitive *prim){
   return 1;
 }
 
-GLint gl2psPrintPrimitives(void);
-
 /* The PostScript routines. Other (vector) image formats should be
    easy to generate by creating the three corresponding routines
    (gl2psPrintXXXHeader, gl2psPrintXXXPrimitive, gl2psPrintXXXFooter,
@@ -1319,7 +1322,7 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
   unsigned int row, col, col_max;
   float dr, dg, db, fgrey;
   Uchar red, green, blue, b, grey;
-  /* Options */
+  /* FIXME: this has to be generalized... */
   int shade = 0;
   int nbit = 4;
 
@@ -1704,7 +1707,7 @@ void gl2psPrintPostScriptPrimitive(void *a, void *b){
 
   prim = *(GL2PSprimitive**)a;
 
-  if(gl2ps->options & GL2PS_OCCLUSION_CULL && prim->culled) return;
+  if((gl2ps->options & GL2PS_OCCLUSION_CULL) && prim->culled) return;
 
   switch(prim->type){
   case GL2PS_PIXMAP :
@@ -1830,6 +1833,7 @@ void gl2psPrintPostScriptBeginViewport(GLint viewport[4]){
 
 GLint gl2psPrintPostScriptEndViewport(void){
   GLint res;
+  GLint gl2psPrintPrimitives(void);
 
   res = gl2psPrintPrimitives();
   fprintf(gl2ps->stream, "grestore\n");
@@ -1898,73 +1902,71 @@ GLint gl2psPrintTeXEndViewport(void){
 GLint gl2psPrintPrimitives(void){
   GL2PSbsptree *root;
   GL2PSxyz eye = {0., 0., 100000.};
-  GLint shademodel, res;
+  GLint shademodel, res = GL2PS_SUCCESS;
   void (*pprim)(void *a, void *b) = 0;
 
   glGetIntegerv(GL_SHADE_MODEL, &shademodel);
   gl2ps->shade = (shademodel == GL_SMOOTH);
 
-  if(gl2ps->format == GL2PS_TEX){
-    res = GL2PS_SUCCESS;
-  }
-  else{
+  if(gl2ps->format == GL2PS_PS || gl2ps->format == GL2PS_EPS){
     res = gl2psParseFeedbackBuffer();
   }
 
-  if(res == GL2PS_SUCCESS){
-
-    switch(gl2ps->format){
-    case GL2PS_TEX :
-      pprim = gl2psPrintTeXPrimitive;
-      break;
-    case GL2PS_PS :
-    case GL2PS_EPS :
-      pprim = gl2psPrintPostScriptPrimitive;
-      break;
-    }
-
-    switch(gl2ps->sort){
-    case GL2PS_NO_SORT :
-      gl2psListAction(gl2ps->primitives, pprim);
-      gl2psListAction(gl2ps->primitives, gl2psFreePrimitive);
-      /* reset the primitive list, waiting for the next viewport */
-      gl2psListReset(gl2ps->primitives);
-      break;
-    case GL2PS_SIMPLE_SORT :
-      gl2psListSort(gl2ps->primitives, gl2psCompareDepth);
-      if(gl2ps->options & GL2PS_OCCLUSION_CULL){
-	gl2psListAction(gl2ps->primitives, gl2psAddInImageTree);
-        gl2psFreeBspImageTree(&gl2ps->imagetree);
-      }
-      gl2psListActionInverse(gl2ps->primitives, pprim);
-      gl2psListAction(gl2ps->primitives, gl2psFreePrimitive);
-      /* reset the primitive list, waiting for the next viewport */
-      gl2psListReset(gl2ps->primitives);
-      break;
-    case GL2PS_BSP_SORT :
-      root = (GL2PSbsptree*)gl2psMalloc(sizeof(GL2PSbsptree));
-      gl2psBuildBspTree(root, gl2ps->primitives);
-      if(gl2ps->boundary) gl2psBuildPolygonBoundary(root);
-      if(gl2ps->options & GL2PS_OCCLUSION_CULL){
-	gl2psTraverseBspTree(root, eye, -(float)GL2PS_EPSILON, gl2psLess,
-			     gl2psAddInImageTree);
-	gl2psFreeBspImageTree(&gl2ps->imagetree);
-      }
-      gl2psTraverseBspTree(root, eye, (float)GL2PS_EPSILON, gl2psGreater, 
-			   pprim);
-      gl2psFreeBspTree(&root);
-      /* reallocate the primitive list (it's been deleted by
-	 gl2psBuildBspTree) in case there is another viewport */
-      gl2ps->primitives = gl2psListCreate(500, 500, sizeof(GL2PSprimitive*));
-      break;
-    default :
-      gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm: %d", gl2ps->sort);
-      res = GL2PS_ERROR;
-      break;
-    }
-    fflush(gl2ps->stream);
-
+  if(res != GL2PS_SUCCESS){
+    return res;
   }
+
+  switch(gl2ps->format){
+  case GL2PS_TEX :
+    pprim = gl2psPrintTeXPrimitive;
+    break;
+  case GL2PS_PS :
+  case GL2PS_EPS :
+    pprim = gl2psPrintPostScriptPrimitive;
+    break;
+  }
+  
+  switch(gl2ps->sort){
+  case GL2PS_NO_SORT :
+    gl2psListAction(gl2ps->primitives, pprim);
+    gl2psListAction(gl2ps->primitives, gl2psFreePrimitive);
+    /* reset the primitive list, waiting for the next viewport */
+    gl2psListReset(gl2ps->primitives);
+    break;
+  case GL2PS_SIMPLE_SORT :
+    gl2psListSort(gl2ps->primitives, gl2psCompareDepth);
+    if(gl2ps->options & GL2PS_OCCLUSION_CULL){
+      gl2psListAction(gl2ps->primitives, gl2psAddInImageTree);
+      gl2psFreeBspImageTree(&gl2ps->imagetree);
+    }
+    gl2psListActionInverse(gl2ps->primitives, pprim);
+    gl2psListAction(gl2ps->primitives, gl2psFreePrimitive);
+    /* reset the primitive list, waiting for the next viewport */
+    gl2psListReset(gl2ps->primitives);
+    break;
+  case GL2PS_BSP_SORT :
+    root = (GL2PSbsptree*)gl2psMalloc(sizeof(GL2PSbsptree));
+    gl2psBuildBspTree(root, gl2ps->primitives);
+    if(gl2ps->boundary) gl2psBuildPolygonBoundary(root);
+    if(gl2ps->options & GL2PS_OCCLUSION_CULL){
+      gl2psTraverseBspTree(root, eye, -(float)GL2PS_EPSILON, gl2psLess,
+			   gl2psAddInImageTree);
+      gl2psFreeBspImageTree(&gl2ps->imagetree);
+    }
+    gl2psTraverseBspTree(root, eye, (float)GL2PS_EPSILON, gl2psGreater, 
+			 pprim);
+    gl2psFreeBspTree(&root);
+    /* reallocate the primitive list (it's been deleted by
+       gl2psBuildBspTree) in case there is another viewport */
+    gl2ps->primitives = gl2psListCreate(500, 500, sizeof(GL2PSprimitive*));
+    break;
+  default :
+    gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm: %d", gl2ps->sort);
+    res = GL2PS_ERROR;
+    break;
+  }
+
+  fflush(gl2ps->stream);
 
   return res;
 }
@@ -2205,7 +2207,7 @@ GL2PSDLL_API GLint gl2psDrawPixels(GLsizei width, GLsizei height,
   prim->image->height = height;
   prim->image->format = format;
   prim->image->type = type;
-  size = height*width*3*sizeof(GLfloat); /* FIXME: generalize to other types/formats */
+  size = height*width*3*sizeof(GLfloat); /* FIXME: handle other types/formats */
   prim->image->pixels = (GLfloat*)gl2psMalloc(size);
   memcpy(prim->image->pixels, pixels, size);
 
