@@ -834,6 +834,8 @@ Optional Features:
   --enable-gui            build the graphical user interface (default=yes)
   --enable-parallel       enable parallel version (default=no)
   --enable-triangle       compile Triangle if available (default=yes)
+  --enable-jpeg           enable JPEG support (default=yes)
+  --enable-png            enable PNG support (default=yes)
   --enable-static         GCC only: build a statically linked executable
                           (default=no)
 
@@ -1268,6 +1270,16 @@ fi;
 # Check whether --enable-triangle or --disable-triangle was given.
 if test "${enable_triangle+set}" = set; then
   enableval="$enable_triangle"
+
+fi;
+# Check whether --enable-jpeg or --disable-jpeg was given.
+if test "${enable_jpeg+set}" = set; then
+  enableval="$enable_jpeg"
+
+fi;
+# Check whether --enable-png or --disable-png was given.
+if test "${enable_png+set}" = set; then
+  enableval="$enable_png"
 
 fi;
 # Check whether --enable-static or --disable-static was given.
@@ -2864,10 +2876,11 @@ echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
   GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
   INCLS="${INCLS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
-    if test "x${JPEG_PREFIX}" != "x"; then
-    LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
-  fi
-  echo "$as_me:$LINENO: checking for main in -ljpeg" >&5
+  if test "x$enable_jpeg" != "xno"; then
+        if test "x${JPEG_PREFIX}" != "x"; then
+      LDFLAGS="-L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib ${LDFLAGS}"
+    fi
+    echo "$as_me:$LINENO: checking for main in -ljpeg" >&5
 echo $ECHO_N "checking for main in -ljpeg... $ECHO_C" >&6
 if test "${ac_cv_lib_jpeg_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -2922,20 +2935,22 @@ else
   JPEG="no"
 fi
 
-  if test "x${JPEG}" = "xyes"; then
-    FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
-    if test "x${JPEG_PREFIX}" = "x"; then
-      GMSH_LIBS="${GMSH_LIBS} -ljpeg"
-    else
-            GMSH_LIBS="${GMSH_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
-      INCLS="${INCLS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+    if test "x${JPEG}" = "xyes"; then
+      FLAGS="-DHAVE_LIBJPEG ${FLAGS}"
+      if test "x${JPEG_PREFIX}" = "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -ljpeg"
+      else
+                GMSH_LIBS="${GMSH_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
+        INCLS="${INCLS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+      fi
     fi
   fi
 
-    if test "x${Z_PREFIX}" != "x"; then
-    LDFLAGS="-L${Z_PREFIX} -L${Z_PREFIX}/lib ${LDFLAGS}"
-  fi
-  echo "$as_me:$LINENO: checking for main in -lz" >&5
+  if test "x$enable_png" != "xno"; then
+        if test "x${Z_PREFIX}" != "x"; then
+      LDFLAGS="-L${Z_PREFIX} -L${Z_PREFIX}/lib ${LDFLAGS}"
+    fi
+    echo "$as_me:$LINENO: checking for main in -lz" >&5
 echo $ECHO_N "checking for main in -lz... $ECHO_C" >&6
 if test "${ac_cv_lib_z_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -2990,11 +3005,11 @@ else
   Z="no"
 fi
 
-  if test "x${Z}" = "xyes"; then
-        if test "x${PNG_PREFIX}" != "x"; then
-      LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
-    fi
-    echo "$as_me:$LINENO: checking for main in -lpng" >&5
+    if test "x${Z}" = "xyes"; then
+            if test "x${PNG_PREFIX}" != "x"; then
+        LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
+      fi
+      echo "$as_me:$LINENO: checking for main in -lpng" >&5
 echo $ECHO_N "checking for main in -lpng... $ECHO_C" >&6
 if test "${ac_cv_lib_png_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -3049,17 +3064,18 @@ else
   PNG="no"
 fi
 
-    if test "x${PNG}" = "xyes"; then
-      FLAGS="-DHAVE_LIBPNG ${FLAGS}"
-            if test "x${PNG_PREFIX}" != "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -L${PNG_PREFIX} -L${PNG_PREFIX}/lib"
-        INCLS="${INCLS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
+      if test "x${PNG}" = "xyes"; then
+        FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+                if test "x${PNG_PREFIX}" != "x"; then
+          GMSH_LIBS="${GMSH_LIBS} -L${PNG_PREFIX} -L${PNG_PREFIX}/lib"
+          INCLS="${INCLS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
+        fi
+        if test "x${Z_PREFIX}" != "x"; then
+          GMSH_LIBS="${GMSH_LIBS} -L${Z_PREFIX} -L${Z_PREFIX}/lib -lz"
+          INCLS="${INCLS} -I${Z_PREFIX} -I${Z_PREFIX}/include"
+        fi
+        GMSH_LIBS="${GMSH_LIBS} -lpng -lz"
       fi
-      if test "x${Z_PREFIX}" != "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -L${Z_PREFIX} -L${Z_PREFIX}/lib -lz"
-        INCLS="${INCLS} -I${Z_PREFIX} -I${Z_PREFIX}/include"
-      fi
-      GMSH_LIBS="${GMSH_LIBS} -lpng -lz"
     fi
   fi
 
