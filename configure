@@ -3220,6 +3220,7 @@ fi
 
     if test "x${Z}" = "xyes"; then
       FLAGS="-DHAVE_LIBZ ${FLAGS}"
+      GMSH_LIBS="${GMSH_LIBS} ${ZLD} -lz"
             if test "x${PNG_PREFIX}" != "x"; then
         LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
       fi
@@ -3289,7 +3290,7 @@ fi
           ZLD="-L${Z_PREFIX} -L${Z_PREFIX}/lib"
           INCLS="${INCLS} -I${Z_PREFIX} -I${Z_PREFIX}/include"
         fi
-        GMSH_LIBS="${GMSH_LIBS} ${PNGLD} -lpng ${ZLD} -lz"
+        GMSH_LIBS="${GMSH_LIBS} ${PNGLD} -lpng"
       fi
     fi
   fi
