@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.41 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: Post.cpp,v 1.42 2002-11-06 02:52:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -214,6 +214,10 @@ void Draw_ScalarList(Post_View *v, double ValMin, double ValMax, double Raise[3]
     nb = List_Nbr(list) / nbelm ;
     if(smoothnormals && v->Light && v->SmoothNormals && v->Changed && 
        v->IntervalsType != DRAW_POST_ISO){
+      v->reset_normals(); // we might save some normal stuff by
+			  // checking if the change actually changed
+			  // the "geometry"... Should put
+			  // e.g. Change=2 if timestep chnaged, etc.
       Msg(DEBUG, "Preprocessing of normals in view %d", v->Num);
       for(i = 0 ; i < List_Nbr(list) ; i+=nb){
 	Get_Coords(v->Explode, v->Offset, nbnod, 
