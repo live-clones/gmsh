@@ -66,6 +66,7 @@ void Draw_Vector (int Type, int Fill,
                   double *Offset, double Raise[3][5]);
 void Draw_Mesh_Volumes(void *a, void *b);
 void Draw_Mesh_Surfaces(void *a, void *b);
+void Draw_Mesh_Extruded_Surfaces(void *a, void *b);
 void Draw_Mesh_Curves(void *a, void *b);
 void Draw_Mesh_Points(void *a, void *b);
 void Draw_Simplex_Surfaces (void *a, void *b);

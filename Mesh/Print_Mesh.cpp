@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.21 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.22 2001-06-25 13:05:16 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -32,7 +32,8 @@ extern Context_T CTX ;
 
 static FILE *mshfile;
 static int MSH_NODE_NUM;
-static int MSH_VOL_NUM, MSH_ELEMENT_NUM, MSH_ADD;
+static int MSH_VOL_NUM, MSH_SUR_NUM, MSH_LIN_NUM;
+static int MSH_ELEMENT_NUM, MSH_ADD;
 static int MSH_PHYSICAL_NUM, MSH_PHYSICAL_ORI;
 
 void print_msh_node (void *a, void *b){
@@ -83,6 +84,12 @@ void add_msh_simplex (void *a, void *b){
   S = (Simplex **) a;
 
   if (MSH_VOL_NUM && (MSH_VOL_NUM != (*S)->iEnt))
+    return;
+
+  if (MSH_SUR_NUM && (MSH_SUR_NUM != (*S)->iEnt))
+    return;
+
+  if (MSH_LIN_NUM && (MSH_LIN_NUM != (*S)->iEnt))
     return;
 
   if (!MSH_ADD){
@@ -251,7 +258,7 @@ void add_msh_elements (Mesh * M){
   for (i = 0; i < List_Nbr (M->PhysicalGroups); i++){
     List_Read (M->PhysicalGroups, i, &p);
     MSH_PHYSICAL_NUM = p->Num;
-    MSH_VOL_NUM = 0;
+    MSH_VOL_NUM = MSH_SUR_NUM = MSH_LIN_NUM = 0;
 
     switch (p->Typ){
 
@@ -267,28 +274,53 @@ void add_msh_elements (Mesh * M){
       break;
 
     case MSH_PHYSICAL_LINE:
-      for (j = 0; j < List_Nbr (p->Entities); j++){
-        pc = &c;
-        List_Read (p->Entities, j, &Num);
-        pc->Num = abs (Num);
-        MSH_PHYSICAL_ORI = sign (Num);
-        if (Tree_Query (M->Curves, &pc))
-          Tree_Action (pc->Simplexes, add_msh_simplex);
-      }
-      break;
-
-    case MSH_PHYSICAL_SURFACE:
-      for (j = 0; j < List_Nbr (p->Entities); j++){
-        ps = &s;
-        List_Read (p->Entities, j, &Num);
-        ps->Num = abs (Num);
-        MSH_PHYSICAL_ORI = sign (Num);
-        if (Tree_Query (M->Surfaces, &ps)){
-          Tree_Action (ps->Simplexes, add_msh_simplex);
+      if(CTX.mesh.oldxtrude){//for old extrusion mesh generator
+	for (k = 0; k < List_Nbr (ListVolumes); k++){
+	  List_Read (ListVolumes, k, &pV);
+	  for (j = 0; j < List_Nbr (p->Entities); j++){
+	    List_Read (p->Entities, j, &Num);
+	    MSH_LIN_NUM = abs (Num);
+	    MSH_PHYSICAL_ORI = sign (Num);
+	    Tree_Action (pV->Simp_Surf, add_msh_simplex);
+	  }
 	}
+	break;//done
+      }
+      
+      for (j = 0; j < List_Nbr (p->Entities); j++){
+	pc = &c;
+	List_Read (p->Entities, j, &Num);
+	pc->Num = abs (Num);
+	MSH_PHYSICAL_ORI = sign (Num);
+	if (Tree_Query (M->Curves, &pc))
+	  Tree_Action (pc->Simplexes, add_msh_simplex);
       }
       break;
-
+      
+    case MSH_PHYSICAL_SURFACE:
+      if(CTX.mesh.oldxtrude){//for old extrusion mesh generator
+	for (k = 0; k < List_Nbr (ListVolumes); k++){
+	  List_Read (ListVolumes, k, &pV);
+	  for (j = 0; j < List_Nbr (p->Entities); j++){
+	    List_Read (p->Entities, j, &Num);
+	    MSH_SUR_NUM = abs (Num);
+	    MSH_PHYSICAL_ORI = sign (Num);
+	    Tree_Action (pV->Simp_Surf, add_msh_simplex);
+	  }
+	}
+	break;//done
+      }
+      
+      for (j = 0; j < List_Nbr (p->Entities); j++){
+	ps = &s;
+	List_Read (p->Entities, j, &Num);
+	ps->Num = abs (Num);
+	MSH_PHYSICAL_ORI = sign (Num);
+	if (Tree_Query (M->Surfaces, &ps))
+	  Tree_Action (ps->Simplexes, add_msh_simplex);
+      }
+      break;
+      
     case MSH_PHYSICAL_VOLUME:
       for (k = 0; k < List_Nbr (ListVolumes); k++){
         List_Read (ListVolumes, k, &pV);

@@ -262,6 +262,7 @@ typedef struct {
   Tree_T *Edges;
   Tree_T *Faces;
   Tree_T *Simplexes;
+  Tree_T *Simp_Surf;//for old extrusion mesh generator
   Tree_T *Hexahedra;
   Tree_T *Prisms;
 }Volume;

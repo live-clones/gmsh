@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.20 2001-06-07 14:20:08 remacle Exp $
+// $Id: Generator.cpp,v 1.21 2001-06-25 13:05:16 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -114,7 +114,14 @@ void Maillage_Dimension_3 (Mesh * M){
   }
   List_Delete (list);
   Tree_Insert (M->Volumes, &v);
-  Tree_Action (M->Volumes, Maillage_Volume);
+
+  if(CTX.mesh.oldxtrude){//old automatic extrusion algorithm
+    void Extrude_Mesh_Old(Mesh *M);
+    Extrude_Mesh_Old(M);
+  }
+  else{
+    Tree_Action (M->Volumes, Maillage_Volume);
+  }
 
   t2 = Cpu();
 

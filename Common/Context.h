@@ -146,6 +146,7 @@ public :
 	cut_planec * z + cut_planed; 
       return val;
     }
+    int oldxtrude, oldxtrude_recombine;
   } mesh;
 
   // post processing options 

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.30 2001-06-12 08:29:52 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.31 2001-06-25 13:05:16 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -86,6 +86,8 @@ void Draw_Mesh (Mesh *M) {
        (CTX.mesh.surfaces || CTX.mesh.surfaces_num) &&
        CTX.render_mode != GMSH_SELECT){
       Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
+      if(CTX.mesh.oldxtrude)//old extrusion algo
+	Tree_Action(M->Surfaces, Draw_Mesh_Extruded_Surfaces);
     }
     /* fall-through! */
   case 1 :  
@@ -135,6 +137,13 @@ void Draw_Mesh_Surfaces (void *a,void *b){
   iColor++;
   Tree_Action((*s)->Simplexes, Draw_Simplex_Surfaces);
 }
+
+void Draw_Mesh_Extruded_Surfaces(void *a, void *b){
+  Volume **v;
+  v = (Volume**)a;
+  Tree_Action((*v)->Simp_Surf, Draw_Simplex_Surfaces);
+}
+
 
 void Draw_Mesh_Curves (void *a, void *b){
   Curve **c;
@@ -573,9 +582,9 @@ void Draw_Hexahedron_Volume (void *a, void *b){
     glColor4ubv((GLubyte*)&CTX.color.mesh.hexahedron);
 
   for (i=0 ; i<8 ; i++) {
-    X[i] = Xc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.X - Xc);
-    Y[i] = Yc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Y - Yc);
-    Z[i] = Zc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Z - Zc);
+    X[i] = Xc + CTX.mesh.explode * ((*h)->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * ((*h)->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * ((*h)->V[i]->Pos.Z - Zc);
   }
 
   glBegin(GL_LINE_LOOP);

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.20 2001-06-07 14:20:08 remacle Exp $
+// $Id: Create.cpp,v 1.21 2001-06-25 13:05:16 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -590,6 +590,7 @@ Volume * Create_Volume (int Num, int Typ, int Mat){
   pV->Vertices = Tree_Create (sizeof (Vertex *), compareVertex);
   pV->Hexahedra = Tree_Create (sizeof (Hexahedron *), compareHexahedron);
   pV->Prisms = Tree_Create (sizeof (Prism *), comparePrism);
+  pV->Simp_Surf = Tree_Create(sizeof(Simplex*),compareSimplex);// for old extrusion mesh generator
   pV->Extrude = NULL;
   pV->Edges = NULL;
   pV->Faces = NULL;
@@ -603,6 +604,7 @@ void Free_Volume(void *a, void *b){
     List_Delete(pV->Surfaces); //surfaces freed elsewhere
     Tree_Action(pV->Simplexes, Free_Simplex);
     Tree_Delete(pV->Simplexes);
+    Tree_Delete(pV->Simp_Surf); // for old extrusion mesh generator
     Tree_Delete(pV->Vertices); //vertices freed elsewhere
     Tree_Action(pV->Hexahedra, Free_Hexahedron);
     Tree_Delete(pV->Hexahedra);
