@@ -1,13 +1,13 @@
-$Id: CONTRIBUTORS,v 1.13 2002-12-04 17:19:37 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.14 2002-12-04 19:29:25 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
-    Jean-François Remacle <remacle@scorec.rpi.edu> and
-    Christophe Geuzaine <christophe.geuzaine@ulg.ac.be>
+    Jean-François Remacle <remacle@gce.ucl.ac.be> and
+    Christophe Geuzaine <geuzaine@acm.caltech.edu>
 
 Parts of the code have been contributed by
 
-    David Colignon <david.colignon@ulg.ac.be>
+    David Colignon <David.Colignon@univ.u-3mrs.fr>
       - New colormaps
     Patrick Dular <patrick.dular@ulg.ac.be>
       - Transfinite mesh fixes
