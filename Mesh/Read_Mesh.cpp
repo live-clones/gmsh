@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.14 2001-05-23 07:29:42 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.15 2001-05-24 10:11:28 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -210,11 +210,16 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     Gamma_Maillage(M, &M->Statistics[17], &M->Statistics[18], &M->Statistics[19]);
     Eta_Maillage(M, &M->Statistics[20], &M->Statistics[21], &M->Statistics[22]);
     R_Maillage(M, &M->Statistics[23], &M->Statistics[24], &M->Statistics[25]);
+    M->Statistics[6]=Tree_Nbr(M->Vertices); //incorrect, mais...
   }
-  else if(Tree_Nbr(M->Surfaces))
+  else if(Tree_Nbr(M->Surfaces)){
     M->status = 2 ;
-  else if(Tree_Nbr(M->Curves))
+    M->Statistics[5]=Tree_Nbr(M->Vertices); //incorrect, mais...
+  }
+  else if(Tree_Nbr(M->Curves)){
     M->status = 1 ;
+    M->Statistics[4]=Tree_Nbr(M->Vertices); //incorrect, mais...
+  }
   else if(Tree_Nbr(M->Points))
     M->status = 0 ;
   else

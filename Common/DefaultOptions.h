@@ -24,7 +24,7 @@ StringXString GeneralOptions_String[] = {
   { F|S, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" ,
     "File into which the log is saved if a fatal error occurs" },
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
-    "File created in your home directory with 'Options->Save options', and which is read on startup" },
+    "File created in your home directory with 'Options->Save options now', and which is read on startup" },
 #ifdef WIN32
   { F|O, "TextEditor" , opt_general_editor , "notepad %s" , 
 #else

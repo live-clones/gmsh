@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.79 2001-05-23 07:29:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.80 2001-05-24 10:11:28 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -63,7 +63,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Geometry...",        FL_SHIFT+'g', (Fl_Callback *)opt_geometry_cb, 0},
     {"Mesh...",            FL_SHIFT+'m', (Fl_Callback *)opt_mesh_cb, 0},
     {"Post-processing...", FL_SHIFT+'p', (Fl_Callback *)opt_post_cb, 0, FL_MENU_DIVIDER},
-    {"Save options",       0,            (Fl_Callback *)opt_save_cb, 0},
+    {"Save options now",   0,            (Fl_Callback *)opt_save_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
     {"Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},

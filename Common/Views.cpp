@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.37 2001-04-29 14:35:32 geuzaine Exp $
+// $Id: Views.cpp,v 1.38 2001-05-24 10:11:28 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -87,6 +87,7 @@ void BeginView(int allocate){
     ActualView->SS = NULL; ActualView->VS = NULL; ActualView->TS = NULL;
   }
 
+  // Copy all options from the reference view initialized in InitOptions()
   CopyViewOptions(Post_ViewReference, ActualView);
 
   ActualView->Changed = 1;
@@ -98,10 +99,6 @@ void BeginView(int allocate){
     ActualView->BBox[2*i] = 1.e200;
     ActualView->BBox[2*i+1] = -1.e200;
   }
-  ActualView->CT.size = 255;
-  ActualView->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
-  ColorTable_InitParam(1, &ActualView->CT, 1, 1);
-  ColorTable_Recompute(&ActualView->CT, 1, 1);
 
 }
 

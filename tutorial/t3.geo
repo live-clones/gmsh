@@ -62,4 +62,5 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
 // will dump all current options to the terminal. To save all
 // available options to a file, use the 'File->Save as->GEO complete
 // options' menu. To save the current options as the default options
-// for all future Gmsh sessions, use the 'Options->Save options' menu.
+// for all future Gmsh sessions, use the 'Options->Save options now'
+// menu.

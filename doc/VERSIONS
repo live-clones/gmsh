@@ -1,9 +1,9 @@
-$Id: VERSIONS,v 1.18 2001-05-23 07:29:42 geuzaine Exp $
+$Id: VERSIONS,v 1.19 2001-05-24 10:11:29 geuzaine Exp $
 
-New in 1.20: Various bug fixes (Includes & Functions, solver
-command...) and small enhancements (menu reorganization, constrained
-background mesh, mesh visibility options, geometry edition, quality
-histograms...)
+New in 1.20: Various bug fixes (Functions in Includes, solver command,
+ColorTable option, ...) and small enhancements (menu reorganization,
+constrained background mesh, mesh visibility options, geometry
+edition, mesh quality histograms, ...)
 
 New in 1.19: Fixed seg. fault for scalar simplex post-processing; new
 Solver menu; interface for GetDP solver through sockets; fixed
