@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.19 2004-11-02 17:55:15 geuzaine Exp $
+$Id: CREDITS,v 1.20 2004-12-06 07:06:21 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2004 
 
@@ -95,4 +95,5 @@ Jose Miguel Pasini <jmp84 at cornell.edu>, Philippe Lussou <plussou at
 necs.fr>, Jacques Kools <JKools at veeco.com>, Bayram Yenikaya
 <yenikaya at math.umn.edu>, Peter Hornby <p.hornby at arrc.csiro.au>,
 Krishna Mohan Gundu <gkmohan at gmail.com>, Chris Stott
-<C.Stott@surrey.ac.uk>, Timmy Schumacher <Tim.Schumacher@colorado.edu>.
+<C.Stott@surrey.ac.uk>, Timmy Schumacher
+<Tim.Schumacher@colorado.edu>, Chris Stott <C.Stott@surrey.ac.uk>.
