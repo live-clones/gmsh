@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.27 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: Entity.cpp,v 1.28 2003-11-18 20:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -258,66 +258,6 @@ void Draw_Vector(int Type, int Fill,
 
   switch (Type) {
 
-  case DRAW_POST_ARROW:
-
-    b = 0.0666 * d;
-
-    f1 = 0.85;
-    f2 = 0.8;
-
-
-    b *= 2;
-    f1 /= 1.5;
-    f2 /= 1.5;
-
-    if(Fill) {
-      glBegin(GL_LINES);
-      glVertex3d(x, y, z);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
-
-      glBegin(GL_TRIANGLES);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
-                 z + f2 * dz + b * (t[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
-                 z + f2 * dz + b * (-t[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
-                 z + f2 * dz + b * (-u[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
-                 z + f2 * dz + b * (u[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glEnd();
-    }
-    else {
-      glBegin(GL_LINE_STRIP);
-      glVertex3d(x, y, z);
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
-                 z + f2 * dz + b * (t[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
-                 z + f2 * dz + b * (-t[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
-                 z + f2 * dz + b * (-u[2]));
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
-                 z + f2 * dz + b * (u[2]));
-      glVertex3d(x + dx, y + dy, z + dz);
-      glEnd();
-    }
-    break;
-
   case DRAW_POST_PYRAMID:
 
     b = .1333 * d;
@@ -461,8 +401,65 @@ void Draw_Vector(int Type, int Fill,
     }
     break;
 
+  case DRAW_POST_ARROW:
   default:
-    //Msg(GERROR, "Unknown type of vector to draw");
+
+    b = 0.0666 * d;
+
+    f1 = 0.85;
+    f2 = 0.8;
+
+
+    b *= 2;
+    f1 /= 1.5;
+    f2 /= 1.5;
+
+    if(Fill) {
+      glBegin(GL_LINES);
+      glVertex3d(x, y, z);
+      glVertex3d(x + dx, y + dy, z + dz);
+      glEnd();
+
+      glBegin(GL_TRIANGLES);
+      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
+                 z + f2 * dz + b * (t[2]));
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+
+      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
+                 z + f2 * dz + b * (-t[2]));
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+
+      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
+                 z + f2 * dz + b * (-u[2]));
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+
+      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
+                 z + f2 * dz + b * (u[2]));
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      glEnd();
+    }
+    else {
+      glBegin(GL_LINE_STRIP);
+      glVertex3d(x, y, z);
+      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
+                 z + f2 * dz + b * (t[2]));
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
+                 z + f2 * dz + b * (-t[2]));
+      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
+                 z + f2 * dz + b * (-u[2]));
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
+      glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
+                 z + f2 * dz + b * (u[2]));
+      glVertex3d(x + dx, y + dy, z + dz);
+      glEnd();
+    }
     break;
   }
 

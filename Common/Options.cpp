@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.117 2003-11-08 04:08:20 geuzaine Exp $
+// $Id: Options.cpp,v 1.118 2003-11-18 20:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2616,8 +2616,6 @@ double opt_general_light52(OPT_ARGS_NUM)
   return CTX.light_position[5][2];
 }
 
-
-
 double opt_geometry_auto_coherence(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3238,8 +3236,17 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
 
 double opt_mesh_algo(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX.mesh.algo = (int)val;
+  if(action & GMSH_SET){
+    int algo = (int)val;
+    if(algo != DELAUNAY_ISO &&
+       algo != DELAUNAY_SHEWCHUK &&
+       algo != DELAUNAY_ANISO){
+      Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
+    }
+    else{
+      CTX.mesh.algo = algo;
+    }
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     WID->mesh_butt[0]->value(CTX.mesh.algo == DELAUNAY_ISO);
@@ -3654,8 +3661,6 @@ double opt_post_nb_views(OPT_ARGS_NUM)
   return List_Nbr(CTX.post.list);
 }
 
-
-
 double opt_view_nb_timestep(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
@@ -3885,8 +3890,17 @@ double opt_view_intervals_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->IntervalsType = (int)val;
-    v->Changed = 1;
+    int type = (int)val;
+    if(type != DRAW_POST_ISO &&
+       type != DRAW_POST_DISCRETE &&
+       type != DRAW_POST_CONTINUOUS &&
+       type != DRAW_POST_NUMERIC){
+      Msg(WARNING, "Unknown interval type: keeping existing value");
+    }
+    else{
+      v->IntervalsType = type;
+      v->Changed = 1;
+    }
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
@@ -3928,8 +3942,16 @@ double opt_view_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Type = (int)val;
-    v->Changed = 1;
+    int type = (int)val;
+    if(type != DRAW_POST_3D &&
+       type != DRAW_POST_2D_SPACE &&
+       type != DRAW_POST_2D_TIME){
+      Msg(WARNING, "Unknown view type: keeping existing value");
+    }
+    else{
+      v->Type = type;
+      v->Changed = 1;
+    }
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
@@ -4338,8 +4360,16 @@ double opt_view_scale_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ScaleType = (int)val;
-    v->Changed = 1;
+    int type = (int)val;
+    if(type != DRAW_POST_LINEAR &&
+       type != DRAW_POST_LOGARITHMIC &&
+       type != DRAW_POST_DOUBLELOGARITHMIC){
+      Msg(WARNING, "Unknown scale type: keeping existing value");
+    }
+    else{
+      v->ScaleType = type;
+      v->Changed = 1;
+    }
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
