@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.151 2002-02-13 09:20:41 stainier Exp $
+// $Id: GUI.cpp,v 1.152 2002-02-16 00:18:29 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -306,17 +306,29 @@ int GUI::global_shortcuts(int event){
     mod_geometry_cb(0,0);
     return 1;
   }
+#if (FL_MAJOR_VERSION == 2)
+  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F(1))){
+#else
   else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F+1)){
+#endif
     mesh_1d_cb(0,0);
     mod_mesh_cb(0,0);
     return 1;
   }
+#if (FL_MAJOR_VERSION == 2)
+  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F(2))){
+#else
   else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F+2)){
+#endif
     mesh_2d_cb(0,0);
     mod_mesh_cb(0,0);
     return 1;
   }
+#if (FL_MAJOR_VERSION == 2)
+  else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F(3))){
+#else
   else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F+3)){
+#endif
     mesh_3d_cb(0,0);
     mod_mesh_cb(0,0);
     return 1;
@@ -1041,7 +1053,6 @@ void GUI::create_general_options_window(){
       gen_value[5]->step(1);
       gen_value[5]->labelsize(CTX.fontsize);
       gen_value[5]->textsize(CTX.fontsize);
-      gen_value[5]->type(FL_HORIZONTAL);
       gen_value[5]->align(FL_ALIGN_RIGHT);
       gen_input[0] = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Default file name");
       gen_input[1] = new Fl_Input(2*WB, 2*WB+6*BH, IW, BH, "Temporary file");
@@ -1078,7 +1089,6 @@ void GUI::create_general_options_window(){
       for(i=6 ; i<= 7 ; i++){
 	gen_value[i]->labelsize(CTX.fontsize);
 	gen_value[i]->textsize(CTX.fontsize);
-	gen_value[i]->type(FL_HORIZONTAL);
 	gen_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1093,7 +1103,6 @@ void GUI::create_general_options_window(){
       gen_value[0]->step(1);
       gen_value[0]->labelsize(CTX.fontsize);
       gen_value[0]->textsize(CTX.fontsize);
-      gen_value[0]->type(FL_HORIZONTAL);
       gen_value[0]->align(FL_ALIGN_RIGHT);
       gen_value[0]->callback(opt_general_color_scheme_cb);
       
@@ -1136,7 +1145,6 @@ void GUI::create_general_options_window(){
       for(i=1 ; i<5 ; i++){
 	gen_value[i]->labelsize(CTX.fontsize);
 	gen_value[i]->textsize(CTX.fontsize);
-	gen_value[i]->type(FL_HORIZONTAL);
 	gen_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1221,7 +1229,6 @@ void GUI::create_geometry_options_window(){
       for(i=0 ; i<2 ; i++){
 	geo_value[i]->labelsize(CTX.fontsize);
 	geo_value[i]->textsize(CTX.fontsize);
-	geo_value[i]->type(FL_HORIZONTAL);
 	geo_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1241,7 +1248,6 @@ void GUI::create_geometry_options_window(){
       for(i=3 ; i<= 4 ; i++){
 	geo_value[i]->labelsize(CTX.fontsize);
 	geo_value[i]->textsize(CTX.fontsize);
-	geo_value[i]->type(FL_HORIZONTAL);
 	geo_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1256,7 +1262,6 @@ void GUI::create_geometry_options_window(){
       geo_value[2]->step(1);
       geo_value[2]->labelsize(CTX.fontsize);
       geo_value[2]->textsize(CTX.fontsize);
-      geo_value[2]->type(FL_HORIZONTAL);
       geo_value[2]->align(FL_ALIGN_RIGHT);
       geo_value[2]->callback(opt_geometry_color_scheme_cb);
       
@@ -1335,7 +1340,6 @@ void GUI::create_mesh_options_window(){
       for(i = 0 ; i<4 ; i++){
 	mesh_value[i]->labelsize(CTX.fontsize);
 	mesh_value[i]->textsize(CTX.fontsize);
-	mesh_value[i]->type(FL_HORIZONTAL);
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
       
@@ -1412,7 +1416,6 @@ void GUI::create_mesh_options_window(){
       for(i=4 ; i<9 ; i++){
 	mesh_value[i]->labelsize(CTX.fontsize);
 	mesh_value[i]->textsize(CTX.fontsize);
-	mesh_value[i]->type(FL_HORIZONTAL);
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1445,7 +1448,6 @@ void GUI::create_mesh_options_window(){
       for(i=9 ; i<= 11 ; i++){
 	mesh_value[i]->labelsize(CTX.fontsize);
 	mesh_value[i]->textsize(CTX.fontsize);
-	mesh_value[i]->type(FL_HORIZONTAL);
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
       o->end();
@@ -1466,7 +1468,6 @@ void GUI::create_mesh_options_window(){
       mesh_value[12]->step(1);
       mesh_value[12]->labelsize(CTX.fontsize);
       mesh_value[12]->textsize(CTX.fontsize);
-      mesh_value[12]->type(FL_HORIZONTAL);
       mesh_value[12]->align(FL_ALIGN_RIGHT);
       mesh_value[12]->callback(opt_mesh_color_scheme_cb);
       
@@ -1621,7 +1622,6 @@ void GUI::create_post_options_window(){
       post_value[0]->step(0.01);
       post_value[0]->labelsize(CTX.fontsize);
       post_value[0]->textsize(CTX.fontsize);
-      post_value[0]->type(FL_HORIZONTAL);
       post_value[0]->align(FL_ALIGN_RIGHT);
 
       post_butt[6] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Cycle through views instead of time steps");
@@ -1732,7 +1732,6 @@ void GUI::create_statistics_window(){
   for(i=0 ; i<num ; i++){
     stat_value[i]->labelsize(CTX.fontsize);
     stat_value[i]->textsize(CTX.fontsize);
-    stat_value[i]->type(FL_HORIZONTAL);
     stat_value[i]->align(FL_ALIGN_RIGHT);
     stat_value[i]->value(0);
   }
@@ -1887,7 +1886,6 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
 	pdb->view_value[i] = new Fl_Value_Input(2*WB, 2*WB+(i+1)*BH, IW, BH, sxn->str);
 	pdb->view_value[i]->labelsize(CTX.fontsize);
 	pdb->view_value[i]->textsize(CTX.fontsize);
-	pdb->view_value[i]->type(FL_HORIZONTAL);
 	pdb->view_value[i]->align(FL_ALIGN_RIGHT);
 	pdb->view_value[i]->value(sxn->def);
       }
@@ -2258,7 +2256,6 @@ void GUI::create_view_options_window(int num){
       view_value[50] = new Fl_Value_Input(2*WB+sw, 2*WB+6*BH, IW-2*sw, BH);
       view_value[50]->labelsize(CTX.fontsize);
       view_value[50]->textsize(CTX.fontsize);
-      view_value[50]->type(FL_HORIZONTAL);
       view_value[50]->align(FL_ALIGN_RIGHT);
       view_value[50]->minimum(0); 
       view_value[50]->maximum(0); 
@@ -2277,7 +2274,6 @@ void GUI::create_view_options_window(int num){
       for(i=20 ; i<=23 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);
-	view_value[i]->type(FL_HORIZONTAL);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2330,7 +2326,6 @@ void GUI::create_view_options_window(int num){
       for(i=10 ; i<=12 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);
-	view_value[i]->type(FL_HORIZONTAL);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2375,7 +2370,6 @@ void GUI::create_view_options_window(int num){
       for(i=25 ; i<=26 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);
-	view_value[i]->type(FL_HORIZONTAL);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2391,7 +2385,6 @@ void GUI::create_view_options_window(int num){
       view_value[30] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Intervals");
       view_value[30]->labelsize(CTX.fontsize);
       view_value[30]->textsize(CTX.fontsize);
-      view_value[30]->type(FL_HORIZONTAL);
       view_value[30]->align(FL_ALIGN_RIGHT);
       view_value[30]->minimum(1); 
       view_value[30]->maximum(256); 
@@ -2426,7 +2419,6 @@ void GUI::create_view_options_window(int num){
       for(i=31 ; i<=32 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);
-	view_value[i]->type(FL_HORIZONTAL);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
@@ -2469,7 +2461,6 @@ void GUI::create_view_options_window(int num){
       for(i=40 ; i<=45 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);
-	view_value[i]->type(FL_HORIZONTAL);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }	
@@ -2521,7 +2512,6 @@ void GUI::create_view_options_window(int num){
       for(i=60 ; i<=62 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);
-	view_value[i]->type(FL_HORIZONTAL);
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.105 2002-02-08 17:33:52 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.106 2002-02-16 00:19:22 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -563,6 +563,13 @@ void opt_save_cb(CALLBACK_ARGS) {
 
 // Option Visibility Menu
 
+#if (FL_MAJOR_VERSION == 2) //disabled for fltk 2 at the moment
+void select_vis_browser(int mode){}
+void opt_visibility_cb(CALLBACK_ARGS) {}
+void opt_visibility_ok_cb(CALLBACK_ARGS) {}
+void opt_visibility_sort_cb(CALLBACK_ARGS){}
+void opt_visibility_number_cb(CALLBACK_ARGS){}
+#else
 void select_vis_browser(int mode){
   int i;
   Entity *e;
@@ -690,6 +697,7 @@ void opt_visibility_number_cb(CALLBACK_ARGS){
 
   Draw();
 }
+#endif
 
 // Help Menu
 
