@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.14 2000-12-05 18:45:13 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.15 2000-12-05 18:54:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -470,13 +470,13 @@ void CreateWidgets_G(Widgets_T *w){
   XtManageChild(w->G.Butt[2]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("1")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("1:1")); i++;
   XtSetArg(arg[i], XmNtraversalOn, False); i++;
   w->G.Butt[3] = XmCreatePushButton(w->G.bottomForm, "GButt3", arg, i);
   XtManageChild(w->G.Butt[3]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("g")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("?")); i++;
   XtSetArg(arg[i], XmNtraversalOn, False); i++;
   w->G.Butt[4] = XmCreatePushButton(w->G.bottomForm, "GButt4", arg, i);
   XtManageChild(w->G.Butt[4]);
