@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.45 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.46 2003-02-12 09:20:41 remacle Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ extern int         FACE_DIMENSION;
 
 static Tree_T *Tsd, *Sim_Sur_Le_Bord, *POINTS_TREE;
 static List_T *Simplexes_Destroyed, *Simplexes_New, *Suppress;
-static List_T *LLL, *POINTS;
+static List_T *LLL, *POINTS_LIST;
 static Simplex *THES;
 static Vertex *THEV;
 static Tree_T *SimXFac;
@@ -125,7 +125,7 @@ void add_points (void *a, void *b){
 }
 
 void add_points_2 (void *a, void *b){
-  List_Add (POINTS, a);
+  List_Add (POINTS_LIST, a);
 }
 
 
@@ -769,7 +769,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       THEV->Pos.Z -= dz;          
       if(count > 5){
         N++;
-        List_Add(POINTS,&THEV);
+        List_Add(POINTS_LIST,&THEV);
         Msg(WARNING, "Unable to add point %d (will try it later)", THEV->Num);
         break;
       }
@@ -865,7 +865,7 @@ void Maillage_Volume (void *data, void *dum){
     s = &S;
     
     POINTS_TREE = Tree_Create (sizeof (Vertex *), comparePosition);
-    POINTS = List_Create (100, 100, sizeof (Vertex *));
+    POINTS_LIST = List_Create (100, 100, sizeof (Vertex *));
     LOCAL->Simplexes = v->Simplexes;
     LOCAL->Vertices = v->Vertices;
     
@@ -876,7 +876,7 @@ void Maillage_Volume (void *data, void *dum){
     Tree_Action (POINTS_TREE, add_points_2);
     Tree_Delete (POINTS_TREE);
     
-    N = List_Nbr (POINTS);
+    N = List_Nbr (POINTS_LIST);
     n = N / 30 + 1;
 
     if(!N) return;
@@ -885,7 +885,7 @@ void Maillage_Volume (void *data, void *dum){
     
     Msg(STATUS2, "Mesh 3D... (initial)");
     
-    Convex_Hull_Mesh (POINTS, LOCAL);
+    Convex_Hull_Mesh (POINTS_LIST, LOCAL);
     
     if(!Coherence (v, LOCAL)) 
       Msg(GERROR, "Surface recovery failed (send a bug report with the geo file to <gmsh@geuz.org>!)");

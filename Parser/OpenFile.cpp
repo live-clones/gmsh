@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.37 2003-02-11 09:18:48 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.38 2003-02-12 09:20:41 remacle Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,7 @@
 #include "Views.h"
 #include "MinMax.h"
 #include "Visibility.h"
+#include "ReadImg.h"
 
 #ifndef _BLACKBOX
 #include "GmshUI.h"
@@ -105,8 +106,24 @@ void ParseString(char *str){
   }
 }
 
-void MergeProblem(char *name){
-  ParseFile(name,0);  
+
+int MergeProblem(char *name){
+
+  char ext[5];
+
+  strncpy (ext,&name[strlen(name)-4],5);
+  /// a jpg file is used as an inpu, we transform it onto 
+  /// a post pro file that could be used as a background mesh
+
+  if(!strcmp(ext,".ppm") ||!strcmp(ext,".pnm"))
+    {
+      read_pnm (name);
+      return 1;
+    }
+  else
+    {
+      return ParseFile(name,0);  
+    }
 }
 
 void MergeProblemWithBoundingBox(char *name){
@@ -146,6 +163,7 @@ void OpenProblem(char *name){
      !strcmp(ext,".msh") || !strcmp(ext,".MSH") ||
      !strcmp(ext,".stl") || !strcmp(ext,".STL") ||
      !strcmp(ext,".sms") || !strcmp(ext,".SMS") ||
+     !strcmp(ext,".ppm") || !strcmp(ext,".pnm") ||
      !strcmp(ext,".pos") || !strcmp(ext,".POS")){
     CTX.base_filename[strlen(name)-4] = '\0';
   }
@@ -161,7 +179,8 @@ void OpenProblem(char *name){
 
   int nb = List_Nbr(CTX.post.list);
 
-  int status = ParseFile(CTX.filename,0);
+  int status = MergeProblem(CTX.filename);
+    //ParseFile(CTX.filename,0);
 
   ApplyLcFactor(THEM);
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.42 2003-02-11 08:54:56 geuzaine Exp $
+# $Id: Makefile,v 1.43 2003-02-12 09:20:41 remacle Exp $
 
 include ../variables
 
@@ -14,6 +14,7 @@ SRC = Draw.cpp \
       PostElement.cpp \
       Iso.cpp \
       Entity.cpp \
+      ReadImg.cpp \
       Visibility.cpp \
       Scale.cpp \
       Graph2D.cpp \
