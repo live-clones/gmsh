@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.366 2004-09-01 22:07:29 geuzaine Exp $
+# $Id: Makefile,v 1.367 2004-09-11 06:38:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -210,7 +210,7 @@ package-mac:
         "    <key>CFBundlePackageType</key><string>APPL</string>\n"\
         "    <key>CFBundleVersion</key><string>${GMSH_VERSION}</string>\n"\
         "    <key>CFBundleShortVersionString</key><string>${GMSH_VERSION}</string>\n"\
-        "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
+        "    <key>CFBundleIconFile</key><string>Gmsh.icns</string>\n"\
         "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
         "    <key>CFBundleGetInfoString</key><string>Gmsh version ${GMSH_VERSION}, "\
                   "Copyright (C) 1997-2004 C. Geuzaine and J.-F. Remacle</string>\n"\
@@ -219,21 +219,21 @@ package-mac:
         "      <array>\n"\
         "        <dict>\n"\
         "          <key>CFBundleTypeExtensions</key><array><string>geo</string></array>\n"\
-        "          <key>CFBundleTypeIconFile</key><string>gmsh.icns</string>\n"\
+        "          <key>CFBundleTypeIconFile</key><string>GmshGeo.icns</string>\n"\
         "          <key>CFBundleTypeName</key><string>Gmsh Geometry File</string>\n"\
         "          <key>CFBundleTypeOSTypes</key><array><string>GGEO</string></array>\n"\
         "          <key>CFBundleTypeRole</key><string>Editor</string>\n"\
         "        </dict>\n"\
         "        <dict>\n"\
         "          <key>CFBundleTypeExtensions</key><array><string>msh</string></array>\n"\
-        "          <key>CFBundleTypeIconFile</key><string>gmsh.icns</string>\n"\
+        "          <key>CFBundleTypeIconFile</key><string>GmshMsh.icns</string>\n"\
         "          <key>CFBundleTypeName</key><string>Gmsh Mesh File</string>\n"\
         "          <key>CFBundleTypeOSTypes</key><array><string>GMSH</string></array>\n"\
         "          <key>CFBundleTypeRole</key><string>Viewer</string>\n"\
         "        </dict>\n"\
         "        <dict>\n"\
         "          <key>CFBundleTypeExtensions</key><array><string>pos</string></array>\n"\
-        "          <key>CFBundleTypeIconFile</key><string>gmsh.icns</string>\n"\
+        "          <key>CFBundleTypeIconFile</key><string>GmshPos.icns</string>\n"\
         "          <key>CFBundleTypeName</key><string>Gmsh Post-Processing File</string>\n"\
         "          <key>CFBundleTypeOSTypes</key><array><string>GPOS</string></array>\n"\
         "          <key>CFBundleTypeRole</key><string>Viewer</string>\n"\
@@ -243,7 +243,10 @@ package-mac:
         "</plist>" > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Info.plist
 	cp bin/gmsh gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS/Gmsh
 	strip gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS/Gmsh
-	cp Fltk/MacIcons.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/gmsh.icns
+	cp Fltk/MacIcons.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/Gmsh.icns
+	cp Fltk/MacIconsGeo.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshGeo.icns
+	cp Fltk/MacIconsMsh.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshMsh.icns
+	cp Fltk/MacIconsPos.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshPos.icns
 	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_VERSION}
 	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt

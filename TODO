@@ -1,4 +1,4 @@
-$Id: TODO,v 1.61 2004-09-01 20:23:49 geuzaine Exp $
+$Id: TODO,v 1.62 2004-09-11 06:38:22 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -6,6 +6,13 @@ surface loops and lines in line loops
 (To make things simple, all line loops should be oriented "aire a
 gauche", and all surface loops whould be oriented with exterior
 normals...)
+
+********************************************************************
+
+template the view handling/drawing routines so that we can actually
+use post-pro files with float values (50% file savings can be nice
+for very large maps; would bring the format up to par with an 
+index-based format)
 
 ********************************************************************
 

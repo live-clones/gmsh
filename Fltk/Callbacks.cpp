@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.267 2004-09-03 19:00:51 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.268 2004-09-11 06:38:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -94,6 +94,8 @@ int file_chooser(int multi, int create, const char *message,
     fc->type(Fl_File_Chooser::SINGLE);
 
   fc->show();
+  //fc->newButton->parent()->parent()->position(200,200);
+  //fc->newButton->parent()->parent()->show();
 
   while(fc->shown())
     Fl::wait();
