@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.32 2001-06-28 15:16:09 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.33 2001-06-28 17:42:08 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -69,7 +69,7 @@ void Draw_Mesh (Mesh *M) {
       glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
 
   glPointSize(2); gl2psPointSize(2);
-  glLineWidth(1); gl2psLineWidth(1);
+  glLineWidth(1); gl2psLineWidth(1*CTX.print.mesh_line_width);
   iColor = 0;
 
   if(CTX.mesh.hidden) glEnable(GL_POLYGON_OFFSET_FILL);
@@ -115,9 +115,6 @@ void Draw_Mesh (Mesh *M) {
   }
 
   if(CTX.mesh.hidden) glDisable(GL_POLYGON_OFFSET_FILL);
-
-  glPointSize(2); gl2psPointSize(2);
-  glLineWidth(1); gl2psLineWidth(1);
 
   if(CTX.render_mode != GMSH_SELECT){
     if(CTX.axes) Draw_Axes(CTX.lc_middle/4.);

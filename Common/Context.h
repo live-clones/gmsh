@@ -165,7 +165,7 @@ public :
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
     char *font;
     int font_size, gl_fonts;
-    int geom_line_width;
+    int geom_line_width, mesh_line_width, post_line_width;
   } print;
 
   // color options

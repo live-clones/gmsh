@@ -233,6 +233,8 @@ double opt_print_gif_interlace(OPT_ARGS_NUM);
 double opt_print_gif_transparent(OPT_ARGS_NUM);
 double opt_print_font_size(OPT_ARGS_NUM);
 double opt_print_geom_line_width(OPT_ARGS_NUM);
+double opt_print_mesh_line_width(OPT_ARGS_NUM);
+double opt_print_post_line_width(OPT_ARGS_NUM);
 
 // COLORS
 

@@ -505,8 +505,12 @@ StringXNumber PrintOptions_Number[] = {
     "Output transparent GIF image" },
   { F|O, "FontSize" , opt_print_font_size , 12. ,
     "Font size used for postscript printing" },
-  { F|O, "GeometryLineWidth" , opt_print_geom_line_width , 1. ,
+  { F|O, "GeometryLineWidth" , opt_print_geom_line_width , 2. ,
     "Width factor for geometry lines in postscript output (10 looks nice for geometry+mesh display)" },
+  { F|O, "MeshLineWidth" , opt_print_mesh_line_width , 1. ,
+    "Width factor for mesh lines in postscript output (1 looks nice for geometry+mesh display)" },
+  { F|O, "PostProcessingLineWidth" , opt_print_post_line_width , 2. ,
+    "Width factor for post-processing lines in postscript output" },
   { 0, NULL , NULL , 0. }
 } ;
 

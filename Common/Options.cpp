@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.30 2001-06-28 15:16:09 geuzaine Exp $
+// $Id: Options.cpp,v 1.31 2001-06-28 17:42:08 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1996,6 +1996,16 @@ double opt_print_geom_line_width(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.print.geom_line_width = (int)val;
   return CTX.print.geom_line_width;
+}
+double opt_print_mesh_line_width(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.mesh_line_width = (int)val;
+  return CTX.print.mesh_line_width;
+}
+double opt_print_post_line_width(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.post_line_width = (int)val;
+  return CTX.print.post_line_width;
 }
 
 // ************** Color option routines ****************************

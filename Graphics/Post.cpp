@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.15 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: Post.cpp,v 1.16 2001-06-28 17:42:08 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "Views.h"
 #include "Context.h"
+#include "gl2ps.h"
 
 extern Context_T   CTX;
 
@@ -91,6 +92,9 @@ void Draw_Post (void) {
   Post_View     *v;
 
   if(!Post_ViewList) return;
+
+  glPointSize(2); gl2psPointSize(2);
+  glLineWidth(1); gl2psLineWidth(1*CTX.print.post_line_width);
 
   if(!CTX.post.draw){ // draw only the bbox of the visible views
     for(iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
