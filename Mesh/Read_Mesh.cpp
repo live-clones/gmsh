@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.36 2001-12-04 09:31:18 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.37 2001-12-12 14:04:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -53,7 +53,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
   Surface S , *s , **ss;
   Volume  V , *v , **vv;
   Tree_T *Duplicates ;
-  List_T *Physicals ;
 
   while (1) {
     do { 
@@ -112,8 +111,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
       if(CTX.mesh.check_duplicates)
 	Duplicates = Tree_Create (sizeof (Vertex *), comparePosition);
 
-      Physicals = List_Create(10,10,sizeof(int));
-
       for (i_Element = 0 ; i_Element < Nbr_Elements ; i_Element++) {
         
 	// HACK FROM JF
@@ -121,8 +118,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
         //       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes) ;
         fscanf(File_GEO, "%d %d %d %d %d", 
                &Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
-
-        List_Insert(Physicals, &Elementary, fcmp_int);
 
         for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;
