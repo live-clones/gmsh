@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.181 2002-01-19 01:17:50 geuzaine Exp $
+# $Id: Makefile,v 1.182 2002-01-19 01:20:34 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 33
@@ -162,7 +162,9 @@ src:
 
 distrib:
 	mkdir gmsh-$(GMSH_RELEASE)
+	strip $(GMSH_BIN_DIR)/gmsh
 	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)
+	strip $(GMSH_BIN_DIR)/gmsh-batch
 	cp $(GMSH_BIN_DIR)/gmsh-batch gmsh-$(GMSH_RELEASE)
 	cp doc/gmsh.1 doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS gmsh-$(GMSH_RELEASE)
 	cp -R tutorial gmsh-$(GMSH_RELEASE)
@@ -176,6 +178,7 @@ distrib:
 	rm -rf gmsh-$(GMSH_RELEASE)
 
 distrib-win:
+	strip $(GMSH_BIN_DIR)/gmsh.exe
 	cp $(GMSH_BIN_DIR)/gmsh.exe ../gmsh-distrib
 	cp doc/README.txt ../gmsh-distrib
 	cp doc/FORMATS ../gmsh-distrib/FORMATS.txt
@@ -194,9 +197,6 @@ distrib-win:
 	rm -rf ../gmsh-distrib/*.txt
 	rm -rf ../gmsh-distrib/tutorial
 	rm -rf ../gmsh-distrib/demos
-
-strip-bin:
-	strip $(GMSH_BIN_DIR)/gmsh
 
 dem:
 	gtar zcvf gmsh-demos.tgz $(GMSH_DEMO_DIR)
@@ -338,10 +338,8 @@ distrib-linux-gcc-2.95:
            "GUI_INCLUDE=" \
         ); done
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm -ldl
-	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make linux-gcc-2.95
-	make strip-bin
 	make distrib
 rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
@@ -398,10 +396,8 @@ distrib-dec:
            "GUI_INCLUDE=" \
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make dec
-	make strip-bin
 	make distrib
 #
 # HP-UX
@@ -434,10 +430,8 @@ distrib-hp:
            "GUI_INCLUDE=" \
         ); done
 	g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make hp
-	make strip-bin
 	make distrib
 #
 # IBM AIX
@@ -469,10 +463,8 @@ distrib-ibm:
            "GUI_INCLUDE=" \
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make ibm
-	make strip-bin
 	make distrib
 #
 # SGI Irix
@@ -508,10 +500,8 @@ distrib-sgi:
            "GUI_INCLUDE=" \
         ); done
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make sgi
-	make strip-bin
 	make distrib
 #
 # Mingw
@@ -554,7 +544,6 @@ distrib-cygwin:
 	make tag
 	make clean
 	make cygwin
-	strip $(GMSH_BIN_DIR)/gmsh.exe
 	make distrib-win
 #
 # Cygwin with fltk 1.1
@@ -644,10 +633,8 @@ distrib-sun:
            "GUI_INCLUDE=" \
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
-	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make sun
-	make strip-bin
 	make distrib
 #
 # Solaris SCOREC
