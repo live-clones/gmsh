@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.193 2002-03-31 01:48:29 geuzaine Exp $
+# $Id: Makefile,v 1.194 2002-04-10 01:59:05 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 34
@@ -549,14 +549,14 @@ distrib-cygwin:
 	make cygwin
 	make distrib-win
 #
-# Cygwin with fltk 1.1
+# Cygwin with fltk 1.1 (add '-lole32 -luuid' after -lgdi32 when DND is ready (gcc>3))
 #
 compile-cygwin1: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
            "OPT_FLAGS=-O2" \
-           "OS_FLAGS=-mwindows -DWIN32 -fvtable-thunks -D_LITTLE_ENDIAN" \
+           "OS_FLAGS=-mwindows -DWIN32 -D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
@@ -566,7 +566,7 @@ link-cygwin1:
                  Common/Icon.res $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
                  -lglu32 -lopengl32\
                  $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a\
-                 -lgdi32 -lole32 -luuid -lwsock32 -lm
+                 -lgdi32 -lwsock32 -lm
 cygwin1: compile-cygwin1 link-cygwin1
 
 #
