@@ -191,6 +191,28 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(Eigenvectors)
+Plugin(Eigenvectors) computes the three
+(right) eigenvectors of each tensor in the
+view `iView' and sorts them according to
+the value of the associated eigenvalues.
+If `ScaleByEigenvalues' is set, each
+eigenvector is scaled by its associated
+eigenvalue. The plugin gives an error if
+the eigenvalues are complex. If `iView'
+< 0, the plugin is on the current view.
+
+Plugin(Eigenvectors) creates three new
+vector views.
+
+Numeric options:
+@table @code
+@item ScaleByEigenvalues
+Default value: @code{1}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(Evaluate)
 Plugin(Evaluate) sets the `Component'-th
 component of the `TimeStep'-th time step
@@ -295,21 +317,6 @@ Numeric options:
 Default value: @code{-1}
 @item computeLevelsetPositive
 Default value: @code{0}
-@end table
-
-@item Plugin(PrincipalStresses)
-Plugin(PrincipalStresses) computes the min,
-mid and max principal stresses of the tensor
-view `iView'. If `iView' < 0, the plugin is run on
-the current view.
-
-Plugin(PrincipalStresses) creates three new
-vector views.
-
-Numeric options:
-@table @code
-@item iView
-Default value: @code{-1}
 @end table
 
 @item Plugin(Skin)

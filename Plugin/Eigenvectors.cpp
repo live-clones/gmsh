@@ -1,4 +1,4 @@
-// $Id: PrincipalStresses.cpp,v 1.6 2004-12-08 18:41:54 geuzaine Exp $
+// $Id: Eigenvectors.cpp,v 1.1 2004-12-10 03:35:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
-#include "PrincipalStresses.h"
+#include "Eigenvectors.h"
 #include "List.h"
 #include "Views.h"
 #include "Context.h"
@@ -29,55 +29,61 @@
 
 extern Context_T CTX;
 
-StringXNumber PrincipalStressesOptions_Number[] = {
+StringXNumber EigenvectorsOptions_Number[] = {
+  {GMSH_FULLRC, "ScaleByEigenvalues", NULL, 1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterPrincipalStressesPlugin()
+  GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin()
   {
-    return new GMSH_PrincipalStressesPlugin();
+    return new GMSH_EigenvectorsPlugin();
   }
 }
 
-GMSH_PrincipalStressesPlugin::GMSH_PrincipalStressesPlugin()
+GMSH_EigenvectorsPlugin::GMSH_EigenvectorsPlugin()
 {
   ;
 }
 
-void GMSH_PrincipalStressesPlugin::getName(char *name) const
+void GMSH_EigenvectorsPlugin::getName(char *name) const
 {
-  strcpy(name, "Principal Stresses");
+  strcpy(name, "Eigenvectors");
 }
 
-void GMSH_PrincipalStressesPlugin::getInfos(char *author, char *copyright, char *help_text) const
+void GMSH_EigenvectorsPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(PrincipalStresses) computes the min,\n"
-	 "mid and max principal stresses of the tensor\n"
-	 "view `iView'. If `iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
+         "Plugin(Eigenvectors) computes the three\n"
+	 "(right) eigenvectors of each tensor in the\n"
+	 "view `iView' and sorts them according to\n"
+	 "the value of the associated eigenvalues.\n"
+	 "If `ScaleByEigenvalues' is set, each\n"
+	 "eigenvector is scaled by its associated\n"
+	 "eigenvalue. The plugin gives an error if\n"
+	 "the eigenvalues are complex. If `iView'\n"
+	 "< 0, the plugin is on the current view.\n"
 	 "\n"
-	 "Plugin(PrincipalStresses) creates three new\n"
+	 "Plugin(Eigenvectors) creates three new\n"
 	 "vector views.\n");
 }
 
-int GMSH_PrincipalStressesPlugin::getNbOptions() const
+int GMSH_EigenvectorsPlugin::getNbOptions() const
 {
-  return sizeof(PrincipalStressesOptions_Number) / sizeof(StringXNumber);
+  return sizeof(EigenvectorsOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_PrincipalStressesPlugin::getOption(int iopt)
+StringXNumber *GMSH_EigenvectorsPlugin::getOption(int iopt)
 {
-  return &PrincipalStressesOptions_Number[iopt];
+  return &EigenvectorsOptions_Number[iopt];
 }
 
-void GMSH_PrincipalStressesPlugin::catchErrorMessage(char *errorMessage) const
+void GMSH_EigenvectorsPlugin::catchErrorMessage(char *errorMessage) const
 {
-  strcpy(errorMessage, "PrincipalStresses failed...");
+  strcpy(errorMessage, "Eigenvectors failed...");
 }
 
 static int nonzero(double v[3])
@@ -87,10 +93,11 @@ static int nonzero(double v[3])
   return 0;
 }
 
-static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
-			       List_T *minList, int *minNb, 
-			       List_T *midList, int *midNb, 
-			       List_T *maxList, int *maxNb)
+static void eigenvectors(List_T *inList, int inNb, 
+			 int nbNod, int nbTime, int scale,
+			 List_T *minList, int *minNb, 
+			 List_T *midList, int *midNb, 
+			 List_T *maxList, int *maxNb)
 {
   if(!inNb) return;
 
@@ -120,10 +127,8 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
 	EigSolve(3, A, wr, wi, B, itmp, dtmp);
 	EigSort(3, wr, wi, B);
 	nbcomplex += nonzero(wi); 
-	//printf("djf=%g %g %g\n", wr[0], wr[1], wr[2]);
-	//printf("vec1=%g %g %g\n", B[0][0], B[1][0], B[2][0]);
-	//printf("vec1=%g %g %g\n", B[0][1], B[1][1], B[2][1]);
-	//printf("vec1=%g %g %g\n", B[0][2], B[1][2], B[2][2]);
+	if(!scale)
+	  wr[0] = wr[1] = wr[2] = 1.;
 	for(int l = 0; l < 3; l++){
 	  double res;
 	  // wrong if there are complex eigenvals (B contains both
@@ -150,9 +155,10 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
     Msg(GERROR, "%d tensors have complex eigenvalues/eigenvectors", nbcomplex);
 }
 
-Post_View *GMSH_PrincipalStressesPlugin::execute(Post_View * v)
+Post_View *GMSH_EigenvectorsPlugin::execute(Post_View * v)
 {
-  int iView = (int)PrincipalStressesOptions_Number[0].def;
+  int scale = (int)EigenvectorsOptions_Number[0].def;
+  int iView = (int)EigenvectorsOptions_Number[1].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
@@ -167,22 +173,22 @@ Post_View *GMSH_PrincipalStressesPlugin::execute(Post_View * v)
   Post_View *mid = BeginView(1);
   Post_View *max = BeginView(1);
 
-  principal_stresses(v1->TP, v1->NbTP, 1, v1->NbTimeStep,
- 		     min->VP, &min->NbVP, mid->VP, &mid->NbVP, max->VP, &max->NbVP);
-  principal_stresses(v1->TL, v1->NbTL, 2, v1->NbTimeStep,
-		     min->VL, &min->NbVL, mid->VL, &mid->NbVL, max->VL, &max->NbVL);
-  principal_stresses(v1->TT, v1->NbTT, 3, v1->NbTimeStep,
-		     min->VT, &min->NbVT, mid->VT, &mid->NbVT, max->VT, &max->NbVT);
-  principal_stresses(v1->TQ, v1->NbTQ, 4, v1->NbTimeStep,
-		     min->VQ, &min->NbVQ, mid->VQ, &mid->NbVQ, max->VQ, &max->NbVQ);
-  principal_stresses(v1->TS, v1->NbTS, 4, v1->NbTimeStep,
-		     min->VS, &min->NbVS, mid->VS, &mid->NbVS, max->VS, &max->NbVS);
-  principal_stresses(v1->TH, v1->NbTH, 8, v1->NbTimeStep,
-		     min->VH, &min->NbVH, mid->VH, &mid->NbVH, max->VH, &max->NbVH);
-  principal_stresses(v1->TI, v1->NbTI, 6, v1->NbTimeStep,
-		     min->VI, &min->NbVI, mid->VI, &mid->NbVI, max->VI, &max->NbVI);
-  principal_stresses(v1->TY, v1->NbTY, 5, v1->NbTimeStep,
-		     min->VY, &min->NbVY, mid->VY, &mid->NbVY, max->VY, &max->NbVY);
+  eigenvectors(v1->TP, v1->NbTP, 1, v1->NbTimeStep, scale,
+	       min->VP, &min->NbVP, mid->VP, &mid->NbVP, max->VP, &max->NbVP);
+  eigenvectors(v1->TL, v1->NbTL, 2, v1->NbTimeStep, scale,
+	       min->VL, &min->NbVL, mid->VL, &mid->NbVL, max->VL, &max->NbVL);
+  eigenvectors(v1->TT, v1->NbTT, 3, v1->NbTimeStep, scale,
+	       min->VT, &min->NbVT, mid->VT, &mid->NbVT, max->VT, &max->NbVT);
+  eigenvectors(v1->TQ, v1->NbTQ, 4, v1->NbTimeStep, scale,
+	       min->VQ, &min->NbVQ, mid->VQ, &mid->NbVQ, max->VQ, &max->NbVQ);
+  eigenvectors(v1->TS, v1->NbTS, 4, v1->NbTimeStep, scale,
+	       min->VS, &min->NbVS, mid->VS, &mid->NbVS, max->VS, &max->NbVS);
+  eigenvectors(v1->TH, v1->NbTH, 8, v1->NbTimeStep, scale,
+	       min->VH, &min->NbVH, mid->VH, &mid->NbVH, max->VH, &max->NbVH);
+  eigenvectors(v1->TI, v1->NbTI, 6, v1->NbTimeStep, scale,
+	       min->VI, &min->NbVI, mid->VI, &mid->NbVI, max->VI, &max->NbVI);
+  eigenvectors(v1->TY, v1->NbTY, 5, v1->NbTimeStep, scale,
+	       min->VY, &min->NbVY, mid->VY, &mid->NbVY, max->VY, &max->NbVY);
 
   // copy time data
   for(int i = 0; i < List_Nbr(v1->Time); i++){
@@ -192,14 +198,14 @@ Post_View *GMSH_PrincipalStressesPlugin::execute(Post_View * v)
   }
   // finalize
   char name[1024], filename[1024];
-  sprintf(name, "%s_MinPrincipalStress", v1->Name);
-  sprintf(filename, "%s_MinPrincipalStress.pos", v1->Name);
+  sprintf(name, "%s_MinEigenvectors", v1->Name);
+  sprintf(filename, "%s_MinEigenvectors.pos", v1->Name);
   EndView(min, 1, filename, name);
-  sprintf(name, "%s_MidPrincipalStress", v1->Name);
-  sprintf(filename, "%s_MidPrincipalStress.pos", v1->Name);
+  sprintf(name, "%s_MidEigenvector", v1->Name);
+  sprintf(filename, "%s_MidEigenvectors.pos", v1->Name);
   EndView(mid, 1, filename, name);
-  sprintf(name, "%s_MaxPrincipalStress", v1->Name);
-  sprintf(filename, "%s_MaxPrincipalStress.pos", v1->Name);
+  sprintf(name, "%s_MaxEigenvector", v1->Name);
+  sprintf(filename, "%s_MaxEigenvectors.pos", v1->Name);
   EndView(max, 1, filename, name);
 
   return NULL;

@@ -1,5 +1,5 @@
-#ifndef _PRINCIPAL_STRESSES_H_
-#define _PRINCIPAL_STRESSES_H_
+#ifndef _EIGEN_VECTORS_H_
+#define _EIGEN_VECTORS_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -25,13 +25,13 @@
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterPrincipalStressesPlugin();
+  GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin();
 }
 
-class GMSH_PrincipalStressesPlugin : public GMSH_Post_Plugin
+class GMSH_EigenvectorsPlugin : public GMSH_Post_Plugin
 {
  public:
-  GMSH_PrincipalStressesPlugin();
+  GMSH_EigenvectorsPlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;

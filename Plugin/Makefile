@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.63 2004-12-08 03:10:06 geuzaine Exp $
+# $Id: Makefile,v 1.64 2004-12-10 03:35:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -31,7 +31,7 @@ SRC = Plugin.cpp\
           CutPlane.cpp CutSphere.cpp CutMap.cpp \
         Smooth.cpp CutParametric.cpp\
         Gradient.cpp Lambda2.cpp\
-        PrincipalStresses.cpp\
+        Eigenvectors.cpp\
 	Octree.cpp OctreeInternals.cpp OctreePost.cpp\
           StreamLines.cpp CutGrid.cpp\
         Transform.cpp\
@@ -80,7 +80,7 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
   ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/GmshUI.h \
-  PrincipalStresses.h Evaluate.h ../Common/Context.h
+  Eigenvectors.h Evaluate.h ../Common/Context.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -129,10 +129,10 @@ Lambda2.o: Lambda2.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Lambda2.h \
   ../Numeric/Numeric.h ../Common/Context.h
-PrincipalStresses.o: PrincipalStresses.cpp Plugin.h ../Common/Options.h \
+Eigenvectors.o: Eigenvectors.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h PrincipalStresses.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Eigenvectors.h \
   ../Common/Context.h ../DataStr/Malloc.h ../Numeric/Numeric.h
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals.o: OctreeInternals.cpp ../Common/Message.h \
