@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.57 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.58 2004-05-26 00:33:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -804,7 +804,7 @@ void Maillage_Surface(void *data, void *dum)
     Tree_Delete(s->Vertices);
   s->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
 
-  Msg(STATUS3, "Meshing Surface %d", s->Num);
+  Msg(STATUS3, "Meshing surface %d", s->Num);
 
   if(MeshTransfiniteSurface(s) ||
      MeshEllipticSurface(s) ||
@@ -836,7 +836,7 @@ void Maillage_Surface(void *data, void *dum)
       Mesh_Shewchuk(s);
     
     if(CTX.mesh.nb_smoothing) {
-      Msg(STATUS3, "Mesh smoothing");
+      Msg(STATUS3, "Smoothing surface %d", s->Num);
       tnxe = Tree_Create(sizeof(NXE), compareNXE);
       create_NXE(s->Vertices, s->Simplexes, tnxe);
       for(int i = 0; i < CTX.mesh.nb_smoothing; i++)
@@ -844,9 +844,11 @@ void Maillage_Surface(void *data, void *dum)
       delete_NXE(tnxe);
     }
     
-    if(s->Recombine)
+    if(s->Recombine){
+      Msg(STATUS3, "Recombining surface %d", s->Num);
       Recombine(s->Vertices, s->Simplexes, s->Quadrangles, s->RecombineAngle);
-    
+    }
+
     s->Typ = TypSurface;
     
     if(s->Typ != MSH_SURF_PLAN) {

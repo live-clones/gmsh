@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.20 2004-05-25 23:16:26 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.21 2004-05-26 00:33:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -130,7 +130,6 @@ int Recombine(Tree_T * Vertices, Tree_T * Simplexes, Tree_T * Quadrangles,
 
     // Smoothing
     if(CTX.mesh.nb_smoothing) {
-      Msg(STATUS3, "Mesh smoothing");
       tnxe = Tree_Create(sizeof(NXE), compareNXE);
       create_NXE(Vertices, Simplexes, tnxe);
       for(int i = 0; i < CTX.mesh.nb_smoothing; i++)
@@ -163,7 +162,7 @@ int Recombine(Tree_T * Vertices, Tree_T * Simplexes, Tree_T * Quadrangles,
   }
   List_Delete(SimplexesToRemove);
 
-  Msg(STATUS2, "Recombined %d Quadrangles", ntot);
+  Msg(STATUS2, "Recombined %d quadrangles", ntot);
 
   return ntot;
 }

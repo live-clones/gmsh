@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Old.cpp,v 1.12 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 3D_Mesh_Old.cpp,v 1.13 2004-05-26 00:33:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -895,7 +895,7 @@ void Maillage_Volume(void *data, void *dum)
 
     if(CTX.mesh.nb_smoothing) {
       /*
-         Msg(STATUS3, "Laplacian smoothing");
+         Msg(STATUS3, "Smoothing volume %d", v->Num);
          tnxe = Tree_Create (sizeof (NXE), compareNXE);
          create_NXE (v->Vertices, v->Simplexes, tnxe);
          for (int i = 0; i < CTX.mesh.nb_smoothing; i++)

@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.78 2004-05-25 04:42:02 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.79 2004-05-26 00:33:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1102,7 +1102,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
       s = FindSurface(ep->geo.Source, THEM);
       if(s) {
-        Msg(STATUS3, "Meshing Volume %d", NUM);
+        Msg(STATUS3, "Meshing volume %d", NUM);
         Extrude_Surface1(s);
       }
     }
@@ -1139,7 +1139,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) {
       s = FindSurface(ep->geo.Source, THEM);
       if(s) {
-        Msg(STATUS3, "Meshing Volume %d", NUM);
+        Msg(STATUS3, "Meshing volume %d", NUM);
         Extrude_Surface3(s);
       }
     }
@@ -1164,7 +1164,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     Tree_Action(s->Simplexes, Free_NegativeSimplex);
     Tree_Delete(s->Simplexes);
     s->Simplexes = tmp;
-    Msg(STATUS3, "Coherence Surface %d", s->Num);
+    Msg(STATUS3, "Coherence surface %d", s->Num);
     Extrude_Mesh(s);
   }
 

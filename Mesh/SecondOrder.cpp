@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.24 2004-05-25 23:16:27 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.25 2004-05-26 00:33:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -428,7 +428,9 @@ void Degre1()
 void Degre2_Curve(void *a, void *b)
 {
   Curve *c = *(Curve**)a;
-  if(c->Dirty) return;
+  if(c->Dirty || c->Num < 0) return;
+
+  Msg(STATUS3, "Second order curve %d", c->Num);
 
   edges->AddSimplexTree(c->Simplexes);
   THEC = c;
@@ -440,6 +442,8 @@ void Degre2_Surface(void *a, void *b)
 {
   Surface *s = *(Surface**)a;
   if(s->Dirty) return;
+
+  Msg(STATUS3, "Second order surface %d", s->Num);
 
   edges->AddSimplexTree(s->Simplexes);
   edges->AddQuadrangleTree(s->Quadrangles);
@@ -455,6 +459,8 @@ void Degre2_Volume(void *a, void *b)
 {
   Volume *v = *(Volume**)a;
   if(v->Dirty) return;
+
+  Msg(STATUS3, "Second order volume %d", v->Num);
 
   edges->AddSimplexTree(v->Simplexes);
   edges->AddHexahedronTree(v->Hexahedra);

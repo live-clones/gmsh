@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.39 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.40 2004-05-26 00:33:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -142,7 +142,7 @@ void Maillage_Curve(void *data, void *dummy)
     return;
   }
 
-  Msg(STATUS3, "Meshing Curve %d", c->Num);
+  Msg(STATUS3, "Meshing curve %d", c->Num);
 
   Points = List_Create(10, 10, sizeof(IntPoint));
   c->l = Integration(c->ubeg, c->uend, F_One, Points, 1.e-4);

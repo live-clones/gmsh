@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.22 2004-05-12 22:51:07 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.23 2004-05-26 00:33:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -214,7 +214,7 @@ int MeshTransfiniteVolume(Volume * vol)
   if(List_Nbr(vol->TrsfPoints) != nbp)
     return 0;
 
-  Msg(STATUS3, "Meshing Volume %d", vol->Num);
+  Msg(STATUS3, "Meshing volume %d", vol->Num);
 
   for(i = 0; i < 6; i++)
     G[i] = NULL;
