@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.132 2004-09-18 01:12:16 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.133 2004-10-04 01:07:43 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -328,7 +328,7 @@ hexahedra and pyramids), arranged in such a way that if two of them
 intersect, they do so along a face, an edge or a node, and never
 otherwise. All the finite element meshes produced by Gmsh are considered as
 ``unstructured'', even if they were generated in a ``structured'' way
-(e.g.@: by extrusion). This implies that the elementary geometrical elements
+(e.g., by extrusion). This implies that the elementary geometrical elements
 are defined only by an ordered list of their nodes but that no predefined
 order relation is assumed between any two elements.
 
@@ -414,7 +414,7 @@ displacement maps. Post-processing functions include section computation,
 offset, elevation, boundary and component extraction, color map and range
 modification, animation, vector graphic output, etc. All post-processing
 options can be accessed either interactively or through the input ASCII text
-files. Scripting permits to automate all post-processing operations, e.g.@:
+files. Scripting permits to automate all post-processing operations, e.g.,
 for the creation of animations. User-defined operations can also be
 performed on post-processing views through dynamically loadable plugins.
 
@@ -441,7 +441,7 @@ parameterize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
 @ref{Expressions}, and @ref{Geometry commands});
 @item
-generate 1D, 2D and 3D simplicial (i.e.@: using line segments, triangles and
+generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles and
 tetrahedra) finite element meshes. The performance of the 1D and 2D
 algorithms is pretty good; the 3D algorithm is still experimental and slow
 (see @ref{Mesh module}, and @ref{Tutorial});
@@ -544,7 +544,7 @@ that metasyntactic variable definitions stay valid throughout the manual
 @item 
 Keywords and literal symbols are printed like @code{this}.
 @item 
-Metasyntactic variables (i.e.@: text bits that are not part of the syntax,
+Metasyntactic variables (i.e., text bits that are not part of the syntax,
 but stand for other text bits) are printed like @var{this}.
 @item 
 A colon (@code{:}) after a metasyntactic variable separates the variable
@@ -751,7 +751,7 @@ Character expressions are defined as:
 @end example
 
 @noindent The second case in this definition permits to take the
-prefix of a string (e.g.@: for removing the extension from a file name). The
+prefix of a string (e.g., for removing the extension from a file name). The
 third case permits to concatenate two character expressions, and the fourth
 is an equivalent of the @code{sprintf} C function (where
 @var{char-expression} is a format string that can contain floating point
@@ -898,7 +898,7 @@ argument.
 
 The evaluation priorities are summarized below@footnote{The affectation
 operators are introduced in @ref{General commands}.} (from stronger to
-weaker, i.e.@: @code{*} has a highest evaluation priority than @code{+}).
+weaker, i.e., @code{*} has a highest evaluation priority than @code{+}).
 Parentheses @code{()} may be used anywhere to change the order of
 evaluation:
 
@@ -1455,7 +1455,9 @@ point of the arc; the second @var{expression} gives the identification
 number of the center of the ellipse; the third @var{expression} gives the
 identification number of any point located on the major axis of the ellipse;
 the last @var{expression} gives the identification number of the end point
-of the arc.  (A deprecated synonym for @code{Ellipse} is @code{Ellipsis}.)
+of the arc.
+
+(A deprecated synonym for @code{Ellipse} is @code{Ellipsis}.)
 
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
 Creates a straight line segment. The @var{expression} inside the parentheses
@@ -1524,9 +1526,14 @@ plane surface's identification number; the @var{expression-list} on the
 right hand side should contain the identification numbers of all the line
 loops defining the surface. The first line loop defines the exterior
 boundary of the surface; all other line loops define holes in the surface.
+A line loop defining a hole should not have any lines in common with the
+exterior line loop (in which case it is not a hole, and the two surfaces
+should be defined separately). Likewise, a line loop defining a hole should
+not have any lines in common with another line loop defining a hole in the
+same surface (in which case the two line loops should be combined).
 
 @item Ruled Surface ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a ruled surface, i.e.@: a surface that can be interpolated using
+Creates a ruled surface, i.e., a surface that can be interpolated using
 transfinite interpolation. The @var{expression} inside the parentheses is
 the ruled surface's identification number; the @var{expression-list} on the
 right hand side should the identification number of a single line loop,
@@ -1572,8 +1579,15 @@ Creates a volume. The @var{expression} inside the parentheses is the
 volume's identification number; the @var{expression-list} on the right hand
 side should contain the identification numbers of all the surface loops
 defining the volume. The first surface loop defines the exterior boundary of
-the volume; all other surface loops define holes in the volume. (A
-deprecated synonym for @code{Volume} is @code{Complex Volume}.)
+the volume; all other surface loops define holes in the volume.  A surface
+loop defining a hole should not have any surfaces in common with the
+exterior surface loop (in which case it is not a hole, and the two volumes
+should be defined separately). Likewise, a surface loop defining a hole
+should not have any surfaces in common with another surface loop defining a
+hole in the same volume (in which case the two surface loops should be
+combined).
+
+(A deprecated synonym for @code{Volume} is @code{Complex Volume}.)
 
 @item Physical Volume ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a physical volume. The @var{expression} inside the parentheses is
@@ -1693,7 +1707,7 @@ Here is a list of all other geometry commands currently available:
 
 @ftable @code
 @item Coherence;
-Removes all duplicate elementary geometrical entities (e.g.@: points having
+Removes all duplicate elementary geometrical entities (e.g., points having
 identical coordinates). Note that Gmsh executes the @code{Coherence} command
 automatically after each geometrical transformation, unless
 @code{Geometry.AutoCoherence} is set to zero (@pxref{Geometry options}).
@@ -1772,6 +1786,10 @@ triangles by default, but quadrangles can be obtained by using the
 tetrahedra, hexahedra, prisms and pyramids, depending on the type of the
 surface meshes they are based on.
 
+@c todo: explain what happens if we have a degenerate geometry (incorrect
+@c holes with surfaces in contact with the exterior shell, intersecting
+@c primitives, etc.)
+
 @menu
 * Elementary vs physical entities::  
 * Mesh commands::               
@@ -1812,7 +1830,7 @@ overlapping groups, and to control the orientation of the elements in these
 groups. If physical entities are defined, the output mesh only contains
 those elements that belong to physical entities. The introduction of such
 physical entities in large models usually greatly facilitates the
-manipulation of the model (e.g.@: using `Tools->Visibility' in the GUI) and
+manipulation of the model (e.g., using `Tools->Visibility' in the GUI) and
 the interfacing with external solvers.
 
 @c -------------------------------------------------------------------------
@@ -1868,7 +1886,7 @@ element sizes.
 
 This method works with all the algorithms implemented in the mesh
 module. The final element sizes are of course constrained by the structured
-algorithms for which the element sizes are explicitly specified (e.g.@:
+algorithms for which the element sizes are explicitly specified (e.g.,
 transfinite and extruded grids: see @ref{Structured grids}).
 @item
 You can use geometrical ``attractors'', an elaborate version of the method
@@ -1984,7 +2002,9 @@ progression (@code{Progression 2} meaning for example that each line element
 in the series will be twice as long as the preceding one). The optional
 argument `@code{Using Bump @var{expression}}' instructs the transfinite
 algorithm to distribute the nodes with a refinement at both ends of the
-line.  (A deprecated synonym for @code{Progression} is @code{Power}.)
+line.
+
+(A deprecated synonym for @code{Progression} is @code{Power}.)
 
 @item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @};
 Selects the surface @var{expression} to be meshed with the 2D transfinite
@@ -2086,20 +2106,20 @@ Five external solvers can be interfaced simultaneously with Gmsh.
 
 If you just want to start a solver from the solver module, with no further
 interactions between the solver and Gmsh, just edit the options relative to
-one of the five available solvers (e.g.@: @code{Solver.Name0},
+one of the five available solvers (e.g., @code{Solver.Name0},
 @code{Solver.Executable0}, @dots{}; see @ref{Solver options}), and set the
 corresponding ``client-server'' option to zero
-(e.g.@: @code{Solver.ClientServer0 = 0}). This doesn't require any
+(e.g., @code{Solver.ClientServer0 = 0}). This doesn't require any
 modification to be made to the solver.
 
 If you want the solver to interact with Gmsh (for error messages, option
 definitions, post-processing, etc.), you need to link your solver with the
 @file{GmshClient.c} file and add the appropriate function calls inside your
 program. You can then proceed as in the previous case, but this time you
-should set the client-server option to 1 (e.g.@: @code{Solver.ClientServer0
+should set the client-server option to 1 (e.g., @code{Solver.ClientServer0
 = 1}), so that Gmsh and the solver can communicate through a Unix
 socket. See @ref{Solver example}, for an example of how to interface a C
-solver. Bindings for solvers written in other languages (e.g.@: Perl) are
+solver. Bindings for solvers written in other languages (e.g., Perl) are
 available on @value{GMSH-WEB}.
 
 @menu
@@ -2197,7 +2217,7 @@ and the abscissa is the time step.
 Although visualization is usually mostly an interactive task, Gmsh exposes
 all the post-processing commands and options to the user in its scripting
 language to permit a complete automation of the post-processing process (see
-e.g.@: @ref{t8.geo}, and @ref{t9.geo}).
+e.g., @ref{t8.geo}, and @ref{t9.geo}).
 
 The two following sections summarize all available post-processing commands
 and options. Most options apply to both 2D and 3D plots (colormaps,
@@ -2258,7 +2278,7 @@ Saves the the @var{expression}-th post-processing view in a file named
 Creates a new post-processing view, named @code{"@var{string}"}. This is the
 easiest way to create a post-processing view, but also the least efficient
 (the view is read through Gmsh's script parser, which can become quite slow
-if the view is large---e.g.@: with more than 100,000 elements).  Though,
+if the view is large---e.g., with more than 100,000 elements).  Though,
 this ``parsed'' post-processing format (explained in detail in @ref{Gmsh
 parsed post-processing file format}) is very powerful for testing proposes,
 since all the values are @var{expressions}. Two other formats, better
@@ -2490,7 +2510,7 @@ example with:
 
 Note that, even if it is often handy to define the variables and the points
 directly in the ASCII input files (you can use any text editor for this
-purpose, e.g.@: Wordpad on Windows, or Emacs on Unix), it is almost always
+purpose, e.g., Wordpad on Windows, or Emacs on Unix), it is almost always
 simpler to define the lines, the surfaces and the volumes interactively. To
 do so, just follow the context dependent buttons in the Geometry module. For
 example, to create a spline, select `Geometry' in the module menu, and then
@@ -2502,7 +2522,7 @@ automatically added at the end of the currently opened project file.
 Gmsh's second operating mode is the non-interactive mode. In this mode,
 there is no graphical user interface, and all operations are performed
 without any user interaction@footnote{If you compile Gmsh without the
-graphical user interface, i.e.@: with @code{./configure --disable-gui}, this
+graphical user interface, i.e., with @code{./configure --disable-gui}, this
 is the only mode you have access to.}. To mesh the first tutorial in
 non-interactive mode, just type:
 
@@ -3138,7 +3158,7 @@ the same for all other kinds of values.
 For relatively small data sets Gmsh provides an additional post-processing
 format, which is read by Gmsh's script parser. You can thus, for example,
 embed small post-processing views directly into your geometrical
-descriptions (see e.g.@: @ref{t4.geo}). This format is also useful for
+descriptions (see e.g., @ref{t4.geo}). This format is also useful for
 testing purposes: its syntax is very permissive, and you can easily generate
 it by hand or on the fly. The format of the parsed post-processing file is
 the following:
@@ -3383,14 +3403,14 @@ to make the code easy to read/debug/maintain:
 
 @enumerate
 @item
-please enable full warnings for your compiler (e.g.@: add @code{-Wall} to
+please enable full warnings for your compiler (e.g., add @code{-Wall} to
 @code{FLAGS} in the @file{variables} file);
 @item
 always use the @code{Msg()} function to print information, errors, @dots{};
 @item 
 indent your files using @file{utils/misc/indent.sh};
 @item
-if working on Windows, don't leave tabs in your files (e.g.@: untabify them
+if working on Windows, don't leave tabs in your files (e.g., untabify them
 with @file{utils/misc/untabify.sh}).
 @end enumerate
 
