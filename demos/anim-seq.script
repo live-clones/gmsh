@@ -4,8 +4,6 @@
 // 
 // Requirements: mpeg_encode, whirlgif and a UNIX shell
 //
-// Usage: gmsh file(s) anim-seq.script
-//
 // Output: anim.mpg and anim.gif
 //
 

@@ -1,6 +1,6 @@
 //
-// Animate all visible views and save the animation as a 320x240 mpeg
-// and a 320x240 animated gif
+// Animate all views (together) and save the animation as a 320x240
+// mpeg and a 320x240 animated gif
 // 
 // Requirements: mpeg_encode, whirlgif and a UNIX shell
 //
