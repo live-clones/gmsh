@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.71 2004-09-18 01:51:56 geuzaine Exp $
+// $Id: Main.cpp,v 1.72 2004-09-28 17:13:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
   char *cmdline, currtime[100];
   time_t now;
 
-  // log some info
-
+  // Log some info
+  
   time(&now);
   strcpy(currtime, ctime(&now));
   currtime[strlen(currtime) - 1] = '\0';

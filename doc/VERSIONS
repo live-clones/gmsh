@@ -1,11 +1,12 @@
-$Id: VERSIONS,v 1.247 2004-09-18 20:25:26 geuzaine Exp $
+$Id: VERSIONS,v 1.248 2004-09-28 17:13:49 geuzaine Exp $
 
 New since 1.55: new post-processing option to draw a scalar view
 raised by a displacement view without using Plugin(DisplacementRaise)
 (makes drawing arbitrary scalar fields on deformed meshes much
 easier); better post-processing menu (arbitrary number of
-views+scrollable+show view number); improved view->combine; small bug
-fixes.
+views+scrollable+show view number); improved view->combine; Gmsh now
+requires FLTK >= 1.1.5 (the scroll widget in FLTK < 1.1.5rc1 is
+buggy); small bug fixes.
 
 New in 1.55: added background mesh support for Triangle; meshes can
 now be displayed using "smoothed" normals (like post-processing
@@ -40,7 +41,7 @@ options can now be set in the option file (like all other options);
 added "undo" capability during geometry creation; rewrote the contour
 guessing routines so that entities can be selected in an arbitrary
 order; Mac users can now double click on geo/msh/pos files in the
-Finder to launch Gmsh; removed support for fltk 1.0; rewrote most of
+Finder to launch Gmsh; removed support for FLTK 1.0; rewrote most of
 the code related to quadrangles; fixed 2d elliptic algorithm; removed
 all OpenGL display list code and options; fixed light positioning; new
 BoundingBox command to set the bounding box explicitly; added support

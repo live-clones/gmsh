@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.353 2004-09-25 06:16:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.354 2004-09-28 17:13:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -108,7 +108,7 @@ Fl_Menu_Item m_menubar_table[] = {
 // menu window; removed File->Quit; changed capitalization to match
 // Apple's guidelines)
 
-#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+#if defined(__APPLE__)
 Fl_Menu_Item m_sys_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
@@ -848,14 +848,14 @@ void GUI::create_menu_window(int argc, char **argv)
   int width = 14 * fontsize;
 
   // this is the initial height: no dynamic button is shown!
-#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+#if defined(__APPLE__)
   if(CTX.system_menu_bar){
     MH = BH + 6;  // the menu bar is not in the application!
   }
   else{
 #endif
     MH = BH + BH + 6;
-#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+#if defined(__APPLE__)
   }
 #endif
 
@@ -863,7 +863,7 @@ void GUI::create_menu_window(int argc, char **argv)
   m_window->box(WINDOW_BOX);
   m_window->callback(file_quit_cb);
 
-#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+#if defined(__APPLE__)
   if(CTX.system_menu_bar){
     // the system menubar is kind of a hack in fltk--it still creates
     // a real (invisible) menubar. So we make it a 1x1 pixel rectangle
@@ -886,7 +886,7 @@ void GUI::create_menu_window(int argc, char **argv)
     Fl_Box *o = new Fl_Box(0, BH, width, BH + 6);
     o->box(FL_UP_BOX);
     y = BH + 3;
-#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+#if defined(__APPLE__)
   }
 #endif
 
