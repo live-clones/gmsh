@@ -1,4 +1,3 @@
-/* $Id: ColorTable.h,v 1.1 2000-12-08 10:56:36 geuzaine Exp $ */
 #ifndef _COLORTABLE_H_
 #define _COLORTABLE_H_
 

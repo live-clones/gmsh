@@ -1,4 +1,4 @@
-/* $Id: SwapEdge.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
+// $Id: SwapEdge.cpp,v 1.5 2001-01-08 08:05:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

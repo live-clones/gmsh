@@ -1,4 +1,5 @@
-/* $Id: 3D_Mesh.cpp,v 1.12 2000-12-27 17:25:52 geuzaine Exp $ */
+// $Id: 3D_Mesh.cpp,v 1.13 2001-01-08 08:05:45 geuzaine Exp $
+
 /*
  
   J-F Remacle 1995

@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.11 2000-12-29 10:27:00 geuzaine Exp $ */
+// $Id: Scale.cpp,v 1.12 2001-01-08 08:05:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"

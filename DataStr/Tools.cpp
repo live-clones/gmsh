@@ -1,10 +1,10 @@
-/* $Id: Tools.cpp,v 1.3 2000-11-26 18:43:48 geuzaine Exp $ */
+// $Id: Tools.cpp,v 1.4 2001-01-08 08:05:41 geuzaine Exp $
 
 #include <stdlib.h>
 #include <math.h>
 #include "Tools.h"
 
-/* Comparison functions */
+// Comparison functions
 
 int fcmp_int(const void *a, const void *b){
   return(*(int*)a - *(int*)b );
@@ -23,7 +23,7 @@ int fcmp_double(const void *a, const void *b){
   else                    return  0 ;
 }
 
-/* Tree ==> List transfer */
+// Tree ==> List transfer
 
 List_T *pListeTransfert;
 
@@ -38,7 +38,7 @@ List_T *Tree2List(Tree_T *pTree){
   return(pListeTransfert);
 }
 
-/* Algebraic utilities */
+// Algebraic utilities
 
 Tree_T *pTreeTransfert;
 Tree_T *pTreeTransfert2;

@@ -1,4 +1,4 @@
-/* $Id: lubksb.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
+// $Id: lubksb.cpp,v 1.4 2001-01-08 08:05:40 geuzaine Exp $
 void 
 lubksb (float **a, int n, int *indx, float b[])
 {
@@ -25,4 +25,3 @@ lubksb (float **a, int n, int *indx, float b[])
       b[i] = sum / a[i][i];
     }
 }
-/* (C) Copr. 1986-92 Numerical Recipes Software J!0. */

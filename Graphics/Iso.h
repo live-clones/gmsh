@@ -1,4 +1,3 @@
-/* $Id: Iso.h,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
 #ifndef _ISO_H_
 #define _ISO_H_
 

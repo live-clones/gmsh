@@ -1,4 +1,3 @@
-/* $Id: Widgets.h,v 1.11 2000-12-20 15:28:48 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 

@@ -1,4 +1,4 @@
-/* $Id: Geom.cpp,v 1.7 2000-12-18 14:18:16 geuzaine Exp $ */
+// $Id: Geom.cpp,v 1.8 2001-01-08 08:05:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -784,15 +784,8 @@ void ZeroHighlight(Mesh *m){
 void BeginHighlight(void){
   if(CTX.geom.highlight){
     Highlighted = 1;
-    if(CTX.overlay){ 
-      InitOv();
-    }
-    else{ 
-      Init();
-    }
     glPushMatrix();
     InitPosition();    
-    if(CTX.db) glDrawBuffer(GL_FRONT);
   }  
 }
 
@@ -806,7 +799,6 @@ void EndHighlight(int permanent){
   else{
     if(CTX.geom.highlight) {
       glPopMatrix();
-      if(CTX.db) glDrawBuffer(GL_BACK);
     }
   }
 }
@@ -835,10 +827,6 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
     if(permanent && s->Mat == 1) return;
     if(permanent) s->Mat = 1;
     if(CTX.geom.highlight) Draw_Surface(&s,NULL);
-    /*
-    if(s->Typ == MSH_SURF_PLAN)sprintf(Message,"Plan Surf %d {",s->Num);
-    else if(s->Typ == MSH_SURF_REGL)sprintf(Message,"Ruld Surf %d {",s->Num);
-    else*/
     sprintf(Message,"Surface %d {",s->Num);
 
     nbg = List_Nbr(s->s.Generatrices) ;

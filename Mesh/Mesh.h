@@ -1,4 +1,3 @@
-/* $Id: Mesh.h,v 1.11 2000-12-26 17:40:18 geuzaine Exp $ */
 #ifndef _MESH_H_
 #define _MESH_H_
 

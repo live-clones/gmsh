@@ -1,29 +1,28 @@
-# $Id: Makefile,v 1.10 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.11 2001-01-08 08:05:43 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
 
 .IGNORE:
 
-CC            = c++
-C_FLAGS       = -g -Wall
+CC       = c++
+RANLIB   = ranlib
+RM       = rm
+LIB      = ../lib/libGraphics.a
+INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics\
+           -I../Motif -I../Fltk -I../Mesh -I../Parser -I../jpeg
 
-VERSION_FLAGS = 
-OS_FLAGS      = -D_XMOTIF
+C_FLAGS       = -g -Wall
+OS_FLAGS      = -D_LITTLE_ENDIAN
+VERSION_FLAGS = -D_XMOTIF
 
 GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
                 -I$(HOME)/SOURCES/Mesa-3.1/include/GL
-MOTIF_INCLUDE = -I/usr/X11R6/LessTif/Motif1.2/include
+GUI_INCLUDE   = -I/usr/X11R6/LessTif/Motif1.2/include
 
-RANLIB   = ranlib
-RM       = rm
 RMFLAGS  = -f
-
-LIB      = ../lib/libGraphics.a
-INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Unix -I../Mesh -I../jpeg
-
 CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-           $(GL_INCLUDE) $(MOTIF_INCLUDE)
+           $(GL_INCLUDE) $(GUI_INCLUDE)
 
 SRC = Draw.cpp \
       Mesh.cpp \
@@ -75,7 +74,7 @@ Draw.o: Draw.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/Metric.h Draw.h ../Common/Views.h ../Common/Const.h \
   ../Common/ColorTable.h ../Common/Context.h ../Geo/MinMax.h \
-  ../Unix/CbGeneral.h ../Unix/Widgets.h ../Unix/XContext.h
+  ../Motif/CbGeneral.h
 Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
@@ -119,7 +118,7 @@ Scale.o: Scale.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h gl2ps.h \
-  ../Unix/XContext.h
+  ../Motif/XContext.h
 Axes.o: Axes.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
@@ -130,9 +129,9 @@ CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Unix/Main.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Parser/OpenFile.h \
   ../Common/Const.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/Context.h ../Unix/Widgets.h ../Unix/XContext.h XDump.h \
+  ../Common/Context.h ../Motif/Widgets.h ../Motif/XContext.h XDump.h \
   gl2ps.h gl2gif.h gl2jpeg.h gl2ppm.h gl2yuv.h
 XDump.o: XDump.cpp
 gl2ps.o: gl2ps.cpp gl2ps.h

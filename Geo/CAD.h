@@ -1,4 +1,3 @@
-/* $Id: CAD.h,v 1.5 2000-12-13 22:27:45 geuzaine Exp $ */
 #ifndef _CAD_H_
 #define _CAD_H_
 

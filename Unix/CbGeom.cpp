@@ -1,4 +1,4 @@
-/* $Id: CbGeom.cpp,v 1.10 2000-12-13 14:08:12 geuzaine Exp $ */
+// $Id: CbGeom.cpp,v 1.11 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -8,7 +8,7 @@
 #include "Widgets.h"
 #include "Context.h"
 #include "Verif.h"
-#include "Main.h"
+#include "OpenFile.h"
 
 #include "CbGeom.h"
 
@@ -16,7 +16,6 @@ extern Context_T  CTX;
 extern Widgets_T  WID;
 
 extern Mesh  M;
-extern char  TheFileName[256];
 
 extern char  x_text[100], y_text[100], z_text[100], l_text[100];
 extern char  tx_text[100], ty_text[100], tz_text[100];
@@ -81,13 +80,13 @@ void geom_event_handler (int event) {
   switch (event) {
 
   case GEOM_PARSE :
-    OpenProblem(TheFileName);
+    OpenProblem(CTX.filename);
     Init();
     Draw();
     break;
 
   case GEOM_ELEM_ADD_NEW_POINT :
-    add_point(TheFileName);
+    add_point(CTX.filename);
     ZeroHighlight(&M);
     Replot();
     break;
@@ -106,10 +105,10 @@ void geom_event_handler (int event) {
       if (ib == -1){ /* 'e' */
         if(n >= 2) {
           switch(event){
-          case GEOM_ELEM_ADD_NEW_LINE   : add_multline(n,p,TheFileName); break;
-          case GEOM_ELEM_ADD_NEW_SPLINE : add_spline  (n,p,TheFileName); break;
-          case GEOM_ELEM_ADD_NEW_BEZIER : add_bezier  (n,p,TheFileName); break;
-          case GEOM_ELEM_ADD_NEW_BSPLINE: add_bspline (n,p,TheFileName); break;
+          case GEOM_ELEM_ADD_NEW_LINE   : add_multline(n,p,CTX.filename); break;
+          case GEOM_ELEM_ADD_NEW_SPLINE : add_spline  (n,p,CTX.filename); break;
+          case GEOM_ELEM_ADD_NEW_BEZIER : add_bezier  (n,p,CTX.filename); break;
+          case GEOM_ELEM_ADD_NEW_BSPLINE: add_bspline (n,p,CTX.filename); break;
           }
         }
         n=0;
@@ -142,7 +141,7 @@ void geom_event_handler (int event) {
         break;
       }
       if(n == 3){
-        add_circ(p[1],p[0],p[2],TheFileName); /* begin, center, end */
+        add_circ(p[1],p[0],p[2],CTX.filename); /* begin, center, end */
         ZeroHighlight(&M);
         Replot();
         n=0;
@@ -168,7 +167,7 @@ void geom_event_handler (int event) {
         break;
       }
       if(n == 4){
-        add_ell(p[3],p[2],p[0],p[1],TheFileName);
+        add_ell(p[3],p[2],p[0],p[1],CTX.filename);
         ZeroHighlight(&M);
         Replot();
         n=0;
@@ -201,9 +200,9 @@ void geom_event_handler (int event) {
         }       
         if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
           if(type==ENT_LINE) 
-            add_loop(Liste1,TheFileName,&zone);
+            add_loop(Liste1,CTX.filename,&zone);
           else
-            add_vol(Liste1,TheFileName,&zone);
+            add_vol(Liste1,CTX.filename,&zone);
           List_Reset(Liste1);
           List_Add(Liste2,&zone);
           while(1){
@@ -216,18 +215,18 @@ void geom_event_handler (int event) {
             }
             if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
               if(type==ENT_LINE) 
-                add_loop(Liste1,TheFileName,&zone);
+                add_loop(Liste1,CTX.filename,&zone);
               else
-                add_vol(Liste1,TheFileName,&zone);
+                add_vol(Liste1,CTX.filename,&zone);
               List_Reset(Liste1);
               List_Add(Liste2,&zone);
             }
           }
           if(List_Nbr(Liste2)){
             switch(event){
-            case GEOM_ELEM_ADD_NEW_RULED_SURF : add_surf(Liste2,TheFileName,0,1); break;
-            case GEOM_ELEM_ADD_NEW_PLANE_SURF : add_surf(Liste2,TheFileName,0,2); break;
-            case GEOM_ELEM_ADD_NEW_VOLUME :  add_multvol(Liste2,TheFileName); break;
+            case GEOM_ELEM_ADD_NEW_RULED_SURF : add_surf(Liste2,CTX.filename,0,1); break;
+            case GEOM_ELEM_ADD_NEW_PLANE_SURF : add_surf(Liste2,CTX.filename,0,2); break;
+            case GEOM_ELEM_ADD_NEW_VOLUME :  add_multvol(Liste2,CTX.filename); break;
             }
             ZeroHighlight(&M);
             Replot();
@@ -251,7 +250,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      translate_pt(event==GEOM_ELEM_ADD_TRANSLATE_POINT?1:0,v->Num,TheFileName);
+      translate_pt(event==GEOM_ELEM_ADD_TRANSLATE_POINT?1:0,v->Num,CTX.filename);
       ZeroHighlight(&M);
       Replot();
     }
@@ -265,7 +264,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      translate_seg(event==GEOM_ELEM_ADD_TRANSLATE_LINE?1:0,c->Num,TheFileName);
+      translate_seg(event==GEOM_ELEM_ADD_TRANSLATE_LINE?1:0,c->Num,CTX.filename);
       ZeroHighlight(&M);
       Replot();
     }
@@ -279,7 +278,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      translate_surf(event==GEOM_ELEM_ADD_TRANSLATE_SURF?1:0,s->Num,TheFileName);
+      translate_surf(event==GEOM_ELEM_ADD_TRANSLATE_SURF?1:0,s->Num,CTX.filename);
       ZeroHighlight(&M);
       Replot();
     }
@@ -295,7 +294,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      rotate(event==GEOM_ELEM_ADD_ROTATE_POINT?1:0,v->Num,TheFileName,"Point");
+      rotate(event==GEOM_ELEM_ADD_ROTATE_POINT?1:0,v->Num,CTX.filename,"Point");
       ZeroHighlight(&M);
       Replot();
     }
@@ -309,7 +308,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      rotate(event==GEOM_ELEM_ADD_ROTATE_LINE?1:0,c->Num,TheFileName,"Line");
+      rotate(event==GEOM_ELEM_ADD_ROTATE_LINE?1:0,c->Num,CTX.filename,"Line");
       ZeroHighlight(&M);
       Replot();
     }
@@ -323,7 +322,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      rotate(event==GEOM_ELEM_ADD_ROTATE_SURF?1:0,s->Num,TheFileName,"Surface");
+      rotate(event==GEOM_ELEM_ADD_ROTATE_SURF?1:0,s->Num,CTX.filename,"Surface");
       ZeroHighlight(&M);
       Replot();
     }
@@ -341,8 +340,8 @@ void geom_event_handler (int event) {
         break;
       }
       event==GEOM_ELEM_EXTRUDE_TRANSLATE_POINT ? 
-        extrude(v->Num,TheFileName, "Point") :
-        protude(v->Num,TheFileName, "Point") ;
+        extrude(v->Num,CTX.filename, "Point") :
+        protude(v->Num,CTX.filename, "Point") ;
       ZeroHighlight(&M);
       Replot();
     }
@@ -357,8 +356,8 @@ void geom_event_handler (int event) {
         break;
       }
       event==GEOM_ELEM_EXTRUDE_TRANSLATE_LINE ? 
-        extrude(c->Num,TheFileName, "Line") :
-        protude(c->Num,TheFileName, "Line") ;
+        extrude(c->Num,CTX.filename, "Line") :
+        protude(c->Num,CTX.filename, "Line") ;
       ZeroHighlight(&M);
       Replot();
     }
@@ -373,8 +372,8 @@ void geom_event_handler (int event) {
         break;
       }
       event==GEOM_ELEM_EXTRUDE_TRANSLATE_SURF ? 
-        extrude(s->Num,TheFileName, "Surface") :
-        protude(s->Num,TheFileName, "Surface") ;
+        extrude(s->Num,CTX.filename, "Surface") :
+        protude(s->Num,CTX.filename, "Surface") ;
       ZeroHighlight(&M);
       Replot();
     }
@@ -394,16 +393,16 @@ void geom_event_handler (int event) {
       }
       switch(event){
       case GEOM_ELEM_ADD_DILATE_POINT :
-	dilate(1,v->Num,TheFileName,"Point");
+	dilate(1,v->Num,CTX.filename,"Point");
 	break;
       case GEOM_ELEM_MOVE_DILATE_POINT :
-	dilate(0,v->Num,TheFileName,"Point");
+	dilate(0,v->Num,CTX.filename,"Point");
 	break;
       case GEOM_ELEM_ADD_SYMMETRY_POINT :
-	symmetry(1,v->Num,TheFileName,"Point");
+	symmetry(1,v->Num,CTX.filename,"Point");
 	break;
       case GEOM_ELEM_MOVE_SYMMETRY_POINT :
-	symmetry(0,v->Num,TheFileName,"Point");
+	symmetry(0,v->Num,CTX.filename,"Point");
 	break;
       }
       ZeroHighlight(&M);
@@ -423,16 +422,16 @@ void geom_event_handler (int event) {
       }
       switch(event){
       case GEOM_ELEM_ADD_DILATE_LINE :
-	dilate(1,c->Num,TheFileName,"Line");
+	dilate(1,c->Num,CTX.filename,"Line");
 	break;
       case GEOM_ELEM_MOVE_DILATE_LINE :
-	dilate(0,c->Num,TheFileName,"Line");
+	dilate(0,c->Num,CTX.filename,"Line");
 	break;
       case GEOM_ELEM_ADD_SYMMETRY_LINE :
-	symmetry(1,c->Num,TheFileName,"Line");
+	symmetry(1,c->Num,CTX.filename,"Line");
 	break;
       case GEOM_ELEM_MOVE_SYMMETRY_LINE :
-	symmetry(0,c->Num,TheFileName,"Line");
+	symmetry(0,c->Num,CTX.filename,"Line");
 	break;
       }
       ZeroHighlight(&M);
@@ -452,16 +451,16 @@ void geom_event_handler (int event) {
       }
       switch(event){
       case GEOM_ELEM_ADD_DILATE_SURF :
-	dilate(1,s->Num,TheFileName,"Surface");
+	dilate(1,s->Num,CTX.filename,"Surface");
 	break;
       case GEOM_ELEM_MOVE_DILATE_SURF :
-	dilate(0,s->Num,TheFileName,"Surface");
+	dilate(0,s->Num,CTX.filename,"Surface");
 	break;
       case GEOM_ELEM_ADD_SYMMETRY_SURF :
-	symmetry(1,s->Num,TheFileName,"Surface");
+	symmetry(1,s->Num,CTX.filename,"Surface");
 	break;
       case GEOM_ELEM_MOVE_SYMMETRY_SURF :
-	symmetry(0,s->Num,TheFileName,"Surface");
+	symmetry(0,s->Num,CTX.filename,"Surface");
 	break;
       }
       ZeroHighlight(&M);
@@ -480,7 +479,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      del_pnt(v->Num,TheFileName);
+      del_pnt(v->Num,CTX.filename);
       ZeroHighlight(&M);
       Replot();
     }
@@ -493,7 +492,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      del_seg(c->Num,TheFileName);
+      del_seg(c->Num,CTX.filename);
       ZeroHighlight(&M);
       Replot();
     }
@@ -506,7 +505,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      del_srf(s->Num,TheFileName);
+      del_srf(s->Num,CTX.filename);
       ZeroHighlight(&M);
       Replot();
     }
@@ -515,7 +514,7 @@ void geom_event_handler (int event) {
 
   case GEOM_ELEM_SKETCH :
     Msg(STATUS,"Verifying Geometry");
-    add_infile("Coherence;",TheFileName);
+    add_infile("Coherence;",CTX.filename);
     ZeroHighlight(&M);
     Replot();
     break;
@@ -549,7 +548,7 @@ void geom_event_handler (int event) {
       }
       if(ib == -1){ /* end */
         if(List_Nbr(Liste1)){
-          add_physical_entity(Liste1,TheFileName,type,&zone);
+          add_physical_entity(Liste1,CTX.filename,type,&zone);
           List_Reset(Liste1);
           ZeroHighlight(&M);
           Replot();
@@ -596,7 +595,7 @@ void GeomCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   switch((long int)client_data){
 
-  case GEOM_PARAMETER_ADD   : add_param(name_text,value_text,TheFileName); break;
+  case GEOM_PARAMETER_ADD   : add_param(name_text,value_text,CTX.filename); break;
   case GEOM_PARAMETER_NAME  : strcpy(name_text,XmTextGetString(w)); break;
   case GEOM_PARAMETER_VALUE : strcpy(value_text,XmTextGetString(w)); break;
   case GEOM_POINT_ADD  : geom_event_handler(GEOM_ELEM_ADD_NEW_POINT); Replot(); break;

@@ -1,4 +1,4 @@
-/* $Id: avl.cpp,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
+// $Id: avl.cpp,v 1.5 2001-01-08 08:05:41 geuzaine Exp $
 
 /*
  * This is a modified version for Gmsh (for c++, 64-bit architectures, etc.)

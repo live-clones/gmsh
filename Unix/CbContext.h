@@ -1,4 +1,3 @@
-/* $Id: CbContext.h,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 #ifndef _CB_CONTEXT_H_
 #define _CB_CONTEXT_H_
 

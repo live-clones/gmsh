@@ -1,4 +1,4 @@
-/* $Id: CbColorbar.cpp,v 1.4 2000-12-08 10:56:51 geuzaine Exp $ */
+// $Id: CbColorbar.cpp,v 1.5 2001-01-08 08:03:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"

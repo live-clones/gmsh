@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.11 2000-12-13 13:56:58 geuzaine Exp $ */
+// $Id: Geo.cpp,v 1.12 2001-01-08 08:05:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

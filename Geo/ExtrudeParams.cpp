@@ -1,4 +1,4 @@
-/* $Id: ExtrudeParams.cpp,v 1.3 2000-11-23 14:11:30 geuzaine Exp $ */
+// $Id: ExtrudeParams.cpp,v 1.4 2001-01-08 08:05:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"

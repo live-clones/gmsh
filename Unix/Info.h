@@ -1,4 +1,3 @@
-/* $Id: Info.h,v 1.3 2000-11-24 12:57:25 geuzaine Exp $ */
 #ifndef _INFO_H_
 #define _INFO_H_
 

@@ -1,4 +1,4 @@
-/* $Id: 1D_Mesh.cpp,v 1.9 2000-12-06 18:28:30 remacle Exp $ */
+// $Id: 1D_Mesh.cpp,v 1.10 2001-01-08 08:05:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

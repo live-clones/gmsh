@@ -1,4 +1,4 @@
-/* $Id: Metric.cpp,v 1.4 2000-11-28 11:28:32 geuzaine Exp $ */
+// $Id: Metric.cpp,v 1.5 2001-01-08 08:05:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

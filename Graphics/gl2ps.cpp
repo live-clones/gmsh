@@ -1,4 +1,5 @@
-/* $Id: gl2ps.cpp,v 1.4 2000-12-17 21:17:29 remacle Exp $ */
+// $Id: gl2ps.cpp,v 1.5 2001-01-08 08:05:44 geuzaine Exp $
+
 /*
  * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
  * Copyright (C) 1999-2000  Christophe Geuzaine 

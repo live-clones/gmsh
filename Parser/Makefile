@@ -1,30 +1,36 @@
-# $Id: Makefile,v 1.10 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.11 2001-01-08 08:05:47 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
 
 .IGNORE:
 
-CC        = c++
-C_FLAGS   = -g -Wall
-
-OS_FLAGS  = -D_XMOTIF
-
+CC       = c++
 AR       = ar ruvs
 RANLIB   = ranlib
 RM       = rm
-RMFLAGS  = -f
 YACC     = bison
 LEX      = flex
 
 LIB      = ../lib/libParser.a
 INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
-           -I../Mesh -I../Unix
+           -I../Mesh -I../Motif -I../Fltk
 
-CFLAGS = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE) 
+C_FLAGS       = -g -Wall
+OS_FLAGS      = -D_LITTLE_ENDIAN
+VERSION_FLAGS = -D_XMOTIF
+
+GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
+                -I$(HOME)/SOURCES/Mesa-3.1/include/GL
+GUI_INCLUDE   = -I/usr/X11R6/LessTif/Motif1.2/include
+
+RMFLAGS  = -f
+CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+           $(GL_INCLUDE) $(GUI_INCLUDE)
 
 SRC =  	Gmsh.yy.cpp \
 	Gmsh.tab.cpp\
+        OpenFile.cpp\
 	FunctionManager.cpp
 
 OBJ = $(SRC:.cpp=.o)
@@ -70,5 +76,14 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
   ../Mesh/Create.h ../Common/Views.h ../Common/ColorTable.h \
   ../Geo/StepGeomDatabase.h ../Common/Options.h ../Graphics/Draw.h \
-  ../Common/Colors.h Parser.h ../Unix/Main.h FunctionManager.h
+  ../Common/Colors.h Parser.h OpenFile.h FunctionManager.h \
+  ../Common/Timer.h
+OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
+  ../Common/Context.h Parser.h OpenFile.h ../Geo/Geo.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Geo/MinMax.h ../Common/GmshUI.h \
+  ../Graphics/Draw.h ../Motif/Widgets.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

@@ -1,4 +1,3 @@
-/* $Id: Verif.h,v 1.2 2000-11-23 14:11:31 geuzaine Exp $ */
 #ifndef _VERIF_H_
 #define _VERIF_H_
 

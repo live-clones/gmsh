@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.19 2000-12-29 14:04:29 geuzaine Exp $ */
+// $Id: CbOptions.cpp,v 1.20 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,15 +11,13 @@
 #include "Context.h"
 #include "XContext.h"
 #include "Register.h"
+#include "Timer.h"
 
 #include "CbGeneral.h"
 #include "CbOptions.h"
 #include "CbGeom.h"
 #include "CbMesh.h"
 #include "CbPost.h"
-
-#include <sys/time.h>
-#include <unistd.h>
 
 extern Context_T  CTX;
 extern XContext_T XCTX ;
@@ -36,12 +34,6 @@ static long anim_time ;
 /* ------------------------------------------------------------------------ 
     O p t i o n s C b                                                       
    ------------------------------------------------------------------------ */
-
-long Get_AnimTime(){
-  struct timeval tp;
-  gettimeofday(&tp, (struct timezone *) 0);
-  return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
-}
 
 void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   int                i, e;
@@ -325,7 +317,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     stop_anim = 0 ;
     Set_AnimPixmap(&WID, &PIX, 0) ;
     Set_AnimCallback(&WID, 0) ;
-    anim_time = Get_AnimTime();
+    anim_time = GetTime();
     while(1){
       if(XtAppPending(XCTX.AppContext)){
         XtAppNextEvent(XCTX.AppContext,&event);
@@ -333,8 +325,8 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
         if(stop_anim) break ;
       }
       else{
-        if(Get_AnimTime() - anim_time > CTX.post.anim_delay){
-          anim_time = Get_AnimTime();
+        if(GetTime() - anim_time > CTX.post.anim_delay){
+          anim_time = GetTime();
           MarkAllViewsChanged(2);
           Init(); Draw();
         }

@@ -1,4 +1,4 @@
-/* $Id: fmin.cpp,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
+// $Id: fmin.cpp,v 1.3 2001-01-08 08:05:40 geuzaine Exp $
 #define NRANSI
 #include "nrutil.h"
 
@@ -18,4 +18,3 @@ fmin (float x[])
   return 0.5 * sum;
 }
 #undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software J!0. */

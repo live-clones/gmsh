@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.12 2000-12-09 22:26:12 geuzaine Exp $ */
+// $Id: 3D_BGMesh.cpp,v 1.13 2001-01-08 08:05:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"

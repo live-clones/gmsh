@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.15 2000-12-22 20:10:32 geuzaine Exp $ */
+// $Id: CbInput.cpp,v 1.16 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -532,7 +532,7 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
 	(CTX.vymax - CTX.vymin) ;
       if(CTX.overlay) {
         movzx = xz - xb; movzy = yz - yb;
-        InitOv();
+        InitOverlay();
         glLineWidth(1.);
         glClearIndex(0);
         glClear(GL_COLOR_BUFFER_BIT);  

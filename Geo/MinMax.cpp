@@ -1,4 +1,4 @@
-/* $Id: MinMax.cpp,v 1.3 2000-11-26 15:43:45 geuzaine Exp $ */
+// $Id: MinMax.cpp,v 1.4 2001-01-08 08:05:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

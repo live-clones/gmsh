@@ -1,4 +1,3 @@
-/* $Id: Matrix.h,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
 

@@ -1,5 +1,3 @@
-/* $Id: XRessources.h,v 1.4 2000-12-20 15:28:48 geuzaine Exp $ */
-
 /* 
    Les resources ci-dessous sont prises en compte par defaut. Toutre 
    resource definie dans ~/.gmshrc ou dans APP_DEFAULTS/.gmshrc est 

@@ -1,21 +1,22 @@
-# $Id: Makefile,v 1.3 2000-11-25 15:26:10 geuzaine Exp $
+# $Id: Makefile,v 1.4 2001-01-08 08:05:40 geuzaine Exp $
 #
-# Makefile for "libSataStr.a"
+# Makefile for "libDataStr.a"
 #
 
 .IGNORE:
 
-CC        = c++
-C_FLAGS   = -g -Wall
-
+CC       = c++
 RM       = rm
-RMFLAGS  = -f
 RANLIB   = ranlib
-
 LIB      = ../lib/libDataStr.a
 INCLUDE  = -I../Common
 
-CFLAGS = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE)
+C_FLAGS       = -g -Wall
+OS_FLAGS      = 
+VERSION_FLAGS = 
+
+RMFLAGS  = -f
+CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 
 SRC = List.cpp \
       Malloc.cpp \

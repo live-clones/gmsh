@@ -1,4 +1,5 @@
-/* $Id: gl2gif.cpp,v 1.7 2000-12-29 14:04:28 geuzaine Exp $ */
+// $Id: gl2gif.cpp,v 1.8 2001-01-08 08:05:43 geuzaine Exp $
+
 /* 
  * gl2gif: an OpenGL to GIF printing library
  *

@@ -1,24 +1,22 @@
-# $Id: Makefile,v 1.3 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.4 2001-01-08 08:05:40 geuzaine Exp $
 #
 # Makefile for ".a"
 #
 
 .IGNORE:
 
-CC            = c++
-C_FLAGS       = -g
-
-VERSION_FLAGS = 
-OS_FLAGS      = 
-
+CC       = c++
 RM       = rm
-RMFLAGS  = -f
 RANLIB   = ranlib
-
 LIB      = ../lib/libBox.a
 INCLUDE  = -I../Common -I../DataStr -I../Geo\
-           -I../Graphics -I../Mesh -I../Parser -I../Unix
+           -I../Graphics -I../Mesh -I../Parser -I../Motif -I../Fltk
 
+C_FLAGS       = -g
+OS_FLAGS      = 
+VERSION_FLAGS = 
+
+RMFLAGS  = -f
 CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = Box.cpp

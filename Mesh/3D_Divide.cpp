@@ -1,4 +1,4 @@
-/* $Id: 3D_Divide.cpp,v 1.6 2000-11-26 18:43:48 geuzaine Exp $ */
+// $Id: 3D_Divide.cpp,v 1.7 2001-01-08 08:05:45 geuzaine Exp $
 
 /* Routine de division des elements tetraedriques
    ou triangulaires

@@ -1,4 +1,3 @@
-/* $Id: Draw.h,v 1.8 2000-12-20 10:40:52 geuzaine Exp $ */
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
@@ -12,10 +11,11 @@
 #define TO_FILE    2
 
 void Init(void);
-void InitOv(void);
+void InitOverlay(void);
 void InitShading(void);
 void InitNoShading(void);
 void InitPosition(void);
+void Orthogonalize(int x, int y);
 
 void Replot(void);
 
@@ -33,6 +33,8 @@ void HighlightEntityNum(int v, int c, int s, int permanant);
 
 void Draw3d(void);
 void Draw2d(void);
+void DrawUI(void);
+void DrawOverlay(void);
 void Draw(void);
 
 void Draw_String(char *s);

@@ -1,4 +1,3 @@
-/* $Id: XContext.h,v 1.3 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _XCONTEXT_H_
 #define _XCONTEXT_H_
 

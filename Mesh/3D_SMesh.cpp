@@ -1,4 +1,5 @@
-/* $Id: 3D_SMesh.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
+// $Id: 3D_SMesh.cpp,v 1.6 2001-01-08 08:05:45 geuzaine Exp $
+
 /*  
   Maillage transfini volumique
 

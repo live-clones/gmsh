@@ -1,4 +1,4 @@
-/* $Id: XCursor.cpp,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+// $Id: XCursor.cpp,v 1.3 2001-01-08 08:03:41 geuzaine Exp $
 
 #include <X11/cursorfont.h>
 

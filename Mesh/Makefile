@@ -1,24 +1,24 @@
-# $Id: Makefile,v 1.7 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.8 2001-01-08 08:05:45 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
 
 .IGNORE:
 
-CC        = c++
-C_FLAGS   = -g -Wall
-
-OS_FLAGS = -D_XMOTIF
-
-RM       = rm
-RMFLAGS  = -f
+CC      = c++
+RM      = rm
 RANLIB  = ranlib
 
 LIB     = ../lib/libMesh.a
 INCLUDE = -I../Adapt -I../Common -I../DataStr -I../Geo -I../Mesh\
-          -I../Graphics -I../Unix
+          -I../Graphics -I../Motif -I../Parser -I../Fltk
 
-CFLAGS  = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE)
+C_FLAGS       = -g -Wall
+OS_FLAGS      = -D_LITTLE_ENDIAN
+VERSION_FLAGS = 
+
+RMFLAGS  = -f
+CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE)
 
 SRC = 1D_Mesh.cpp \
       2D_Mesh.cpp \
@@ -203,12 +203,13 @@ Create.o: Create.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Mesh.h Numeric.h
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Mesh.h Numeric.h \
+  ../Common/Context.h
 Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h Mesh.h Vertex.h \
   Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h Create.h \
-  ../Common/Context.h ../Unix/Main.h
+  ../Common/Context.h ../Parser/OpenFile.h
 Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
@@ -264,7 +265,8 @@ CrossData.o: CrossData.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h Metric.h
 Vertex.o: Vertex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Vertex.h ../Common/Context.h
+  ../DataStr/avl.h ../DataStr/Tools.h Vertex.h ../Common/Context.h \
+  ../Common/Const.h
 Edge.o: Edge.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h \

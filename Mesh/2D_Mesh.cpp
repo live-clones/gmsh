@@ -1,4 +1,5 @@
-/* $Id: 2D_Mesh.cpp,v 1.13 2000-12-18 08:31:58 geuzaine Exp $ */
+// $Id: 2D_Mesh.cpp,v 1.14 2001-01-08 08:05:44 geuzaine Exp $
+
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 

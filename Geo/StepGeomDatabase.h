@@ -1,4 +1,3 @@
-/* $Id: StepGeomDatabase.h,v 1.3 2000-11-26 15:43:45 geuzaine Exp $ */
 #ifndef _STEP_GEOM_DATABASE_H_
 #define _STEP_GEOM_DATABASE_H_
 

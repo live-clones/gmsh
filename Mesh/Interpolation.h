@@ -1,4 +1,3 @@
-/* $Id: Interpolation.h,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _INTERPOLATION_H_
 #define _INTERPOLATION_H_
 

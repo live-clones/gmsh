@@ -1,8 +1,8 @@
-/* $Id: CbFile.cpp,v 1.20 2000-12-29 10:27:00 geuzaine Exp $ */
+// $Id: CbFile.cpp,v 1.21 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Main.h"
+#include "OpenFile.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Widgets.h"

@@ -1,4 +1,4 @@
-/* $Id: Numeric.cpp,v 1.12 2000-12-18 14:20:45 geuzaine Exp $ */
+// $Id: Numeric.cpp,v 1.13 2001-01-08 08:05:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

@@ -1,4 +1,3 @@
-/* $Id: CbPost.h,v 1.4 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _CB_POST_H_
 #define _CB_POST_H_
 

@@ -1,4 +1,3 @@
-/* $Id: Colors.h,v 1.4 2000-12-08 22:17:47 geuzaine Exp $ */
 #ifndef _COLORS_H_
 #define _COLORS_H_
 

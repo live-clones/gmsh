@@ -1,23 +1,24 @@
-# $Id: Makefile,v 1.7 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.8 2001-01-08 08:05:42 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
 
 .IGNORE:
 
-CC        = c++
-C_FLAGS   = -g -Wall
+CC      = c++
+RANLIB  = ranlib
+RM      = rm
 
-OS_FLAGS  = -D_XMOTIF
+LIB       = ../lib/libGeo.a
+INCLUDE   = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Parser\
+            -I../Motif -I../Fltk
 
-RANLIB   = ranlib
-RM       = rm
+C_FLAGS       = -g -Wall
+OS_FLAGS      = 
+VERSION_FLAGS = 
+
 RMFLAGS  = -f
-
-LIB         = ../lib/libGeo.a
-INCLUDE     = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Parser -I../Unix
-
-CFLAGS = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE)
+CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 
 SRC =  	CAD.cpp \
         DataBase.cpp \
@@ -93,4 +94,5 @@ Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h CAD.h ../Common/Context.h
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h CAD.h ../Common/Context.h \
+  ../Common/Const.h

@@ -1,4 +1,4 @@
-/* $Id: fdjac.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
+// $Id: fdjac.cpp,v 1.4 2001-01-08 08:05:39 geuzaine Exp $
 #include <math.h>
 #define NRANSI
 #include "nrutil.h"
@@ -29,4 +29,3 @@ fdjac (int n, float x[], float fvec[], float **df,
 }
 #undef EPS
 #undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software J!0. */

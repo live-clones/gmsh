@@ -1,4 +1,3 @@
-/* $Id: Gmsh.h,v 1.3 2000-11-23 17:16:37 geuzaine Exp $ */
 #ifndef _GMSH_H_
 #define _GMSH_H_
 

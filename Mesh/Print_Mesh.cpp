@@ -1,4 +1,4 @@
-/* $Id: Print_Mesh.cpp,v 1.9 2000-11-30 10:14:09 geuzaine Exp $ */
+// $Id: Print_Mesh.cpp,v 1.10 2001-01-08 08:05:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

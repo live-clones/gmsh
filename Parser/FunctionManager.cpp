@@ -1,4 +1,5 @@
-/* $Id: FunctionManager.cpp,v 1.5 2001-01-01 20:48:40 geuzaine Exp $ */
+// $Id: FunctionManager.cpp,v 1.6 2001-01-08 08:05:47 geuzaine Exp $
+
 #include <stdio.h>
 #include <stack>
 #include <map>

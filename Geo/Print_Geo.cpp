@@ -1,4 +1,4 @@
-/* $Id: Print_Geo.cpp,v 1.10 2000-12-10 00:15:33 geuzaine Exp $ */
+// $Id: Print_Geo.cpp,v 1.11 2001-01-08 08:05:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"

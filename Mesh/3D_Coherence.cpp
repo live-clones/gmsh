@@ -1,4 +1,4 @@
-/* $Id: 3D_Coherence.cpp,v 1.9 2000-12-03 16:25:42 geuzaine Exp $ */
+// $Id: 3D_Coherence.cpp,v 1.10 2001-01-08 08:05:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

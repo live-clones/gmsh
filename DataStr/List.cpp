@@ -1,4 +1,4 @@
-/* $Id: List.cpp,v 1.11 2000-12-26 20:45:42 geuzaine Exp $ */
+// $Id: List.cpp,v 1.12 2001-01-08 08:05:40 geuzaine Exp $
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -137,7 +137,7 @@ void *List_Pointer(List_T *liste, int index)
   if ((index < 0) || (index >= liste->n))
     Msg(FATAL, "Wrong List Index in List_Pointer");
     
-  liste->isorder = 0; /* getdp: a examiner... */
+  liste->isorder = 0;
   return(&liste->array[index * liste->size]);
 }
 
@@ -159,7 +159,7 @@ void *List_Pointer_Test(List_T *liste, int index)
   if ((index < 0) || (index >= liste->n))
     return NULL;
     
-  liste->isorder = 0; /* getdp: a examiner... */
+  liste->isorder = 0;
   return(&liste->array[index * liste->size]);
 }
 

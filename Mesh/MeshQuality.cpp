@@ -1,4 +1,4 @@
-/* $Id: MeshQuality.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+// $Id: MeshQuality.cpp,v 1.3 2001-01-08 08:05:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

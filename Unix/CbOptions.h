@@ -1,4 +1,3 @@
-/* $Id: CbOptions.h,v 1.13 2000-12-29 14:04:29 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.32 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.33 2001-01-08 08:05:39 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -15,28 +15,37 @@
                    -I$(HOME)/SOURCES/Mesa-3.1/include\
                    -I$(HOME)/SOURCES/Mesa-3.1/include/GL
        MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
+        FLTK_INC = -I$(HOME)/SOURCES/fltk
 
-      OPENGL_LIB = -lGLw -lGLU -lGL
-        MESA_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLw -lGLU -lGL
- MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a\
-                   $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
+      OPENGL_LIB = -lGLU -lGL
+OPENGL_MOTIF_LIB = -lGLw
+        MESA_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL
+  MESA_MOTIF_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLw
+ MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
                    $(HOME)/SOURCES/Mesa-static/lib/libGL.a
-#      MOTIF_LIB = /usr/local/lib/libXm.so.2
-       MOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm 
-           X_LIB = -L/usr/X11R6/lib -lXt -lX11 -lXext
+MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
+#     XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
+      XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
+                   -L/usr/X11R6/lib -lXt -lX11 -lXext 
+        FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
+                   -L/usr/X11R6/lib -lXext -lX11
       THREAD_LIB = -L/usr/lib -lpthread
         JPEG_LIB = jpeg/libjpeg.a
 
-        GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Unix jpeg
-GMSH_DISTRIB_DIR = $(GMSH_DIR) utils
+        GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk jpeg utils
+ GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
+   GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg
     GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser
+  GMSH_UTILS_DIR = utils
     GMSH_BIN_DIR = bin
     GMSH_LIB_DIR = lib
     GMSH_DOC_DIR = doc
    GMSH_DEMO_DIR = demos
   GMSH_TUTOR_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
-        GMSH_LIB = -L$(GMSH_LIB_DIR) -lUnix -lGraphics -lParser -lMesh -lGeo\
+ GMSH_XMOTIF_LIB = -L$(GMSH_LIB_DIR) -lMotif -lGraphics -lParser -lMesh -lGeo\
+                                     -lAdapt -lCommon -lDataStr $(JPEG_LIB)
+   GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
                                      -lAdapt -lCommon -lDataStr $(JPEG_LIB)
     GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
                                      -lAdapt -lCommon -lDataStr
@@ -50,73 +59,92 @@ GMSH_ARCHIVE_DIR = archives
       GMSH_UNAME = `uname`
 
 default: initialtag
-	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
-           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
+        ); done
+
+fltk: initialtag
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=$(FLAGS)" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
 threads: initialtag
-	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
-           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
 profile: initialtag
-	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=-O3 -pg" \
-           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
-	$(CC) -pg -o $(GMSH_BIN_DIR)/gmsh-profile $(GMSH_LIB) $(OPENGL_LIB) \
-                 $(MOTIF_LIB) $(X_LIB) $(THREAD_LIB) -lm
+	$(CC) -pg -o $(GMSH_BIN_DIR)/gmsh-profile $(GMSH_XMOTIF_LIB)\
+              $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
 
 gmsh:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB) $(OPENGL_LIB) \
-                 $(MOTIF_LIB) $(X_LIB) $(THREAD_LIB) -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+              $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
 
 gmsh2:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB) $(MESA_LIB) \
-                 $(MOTIF_LIB) $(X_LIB) $(THREAD_LIB) -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+              $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
+
+gmsh3:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+                 $(FLTK_LIB) $(THREAD_LIB) -lm
+
+gmsh4:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+                 $(FLTK_LIB) -lfltk_gl $(THREAD_LIB) -lm
 
 gmshm:
-	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_LIB) $(MESA_STATIC_LIB) \
-                 $(MOTIF_LIB) $(X_LIB) $(THREAD_LIB) -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_XMOTIF_LIB)\
+              $(MESA_MOTIF_STATIC_LIB) $(MESA_STATIC_LIB)\
+              $(XMOTIF_LIB) $(THREAD_LIB) -lm
 
 parser:
 	cd Parser && $(MAKE) parser
 
 purge:
-	for i in "." $(GMSH_DISTRIB_DIR) $(GMSH_LIB_DIR) $(GMSH_ARCHIVE_DIR)\
+	for i in "." $(GMSH_DIR) $(GMSH_LIB_DIR) $(GMSH_ARCHIVE_DIR)\
                      $(GMSH_DEMO_DIR) $(GMSH_TUTOR_DIR) $(GMSH_DOC_DIR) $(GMSH_BOX_DIR); \
         do (cd $$i && $(RM) $(RMFLAGS) *~ *~~); \
         done
 
 clean:
-	for i in $(GMSH_DISTRIB_DIR) $(GMSH_DOC_DIR) $(GMSH_LIB_DIR) ; \
+	for i in $(GMSH_DIR) $(GMSH_DOC_DIR) $(GMSH_LIB_DIR) ; \
         do (cd $$i && $(MAKE) clean); \
         done
 
 depend:
-	for i in $(GMSH_DISTRIB_DIR); \
+	for i in $(GMSH_DIR); \
         do (cd $$i && $(MAKE) depend \
            "CC=$(CC)" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC) $(FLTK_INC)" \
         ); done
 
 nodepend:
-	for i in $(GMSH_DISTRIB_DIR) ; do \
+	for i in $(GMSH_DIR) ; do \
           (cd $$i && (sed '/^# DO NOT DELETE THIS LINE/q' Makefile) > Makefile.new \
           && cp Makefile Makefile.bak \
           && cp Makefile.new Makefile \
@@ -165,9 +193,9 @@ bb: tag
            "CC=$(CC)" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
-           "VERSION_FLAGS=" \
+           "VERSION_FLAGS=-D_BLACKBOX" \
            "GL_INCLUDE=" \
-           "MOTIF_INCLUDE=" \
+           "GUI_INCLUDE=" \
         ); done
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-box $(GMSH_BOX_LIB) -lm
 
@@ -176,9 +204,9 @@ bbn: tag
            "CC=g++ -mno-cygwin -I/mingw/include" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
-           "VERSION_FLAGS=" \
+           "VERSION_FLAGS=-D_BLACKBOX" \
            "GL_INCLUDE=" \
-           "MOTIF_INCLUDE=" \
+           "GUI_INCLUDE=" \
         ); done
 	g++ -o $(GMSH_BIN_DIR)/gmsh.exe -mno-cygwin -L/mingw/lib $(GMSH_BOX_LIB) -lm
 
@@ -217,90 +245,90 @@ strip_bin:
 	strip $(GMSH_BIN_DIR)/gmsh
 
 compile_little_endian:
-	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
 compile_little_endian_2952:
-	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
 compile_little_endian_threads:
-	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-D_REENTRANT -O3" \
-           "OS_FLAGS=-D_XMOTIF -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_USETHREADS" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_XMOTIF -D_USETHREADS" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
 compile_big_endian:
-	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_XMOTIF" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
 # special car -O2 merde dans 3d_smesh.c sur TransfiniteHex()
 compile_sgi:
-	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
+	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
            "C_FLAGS=-O2 -o32 -Olimit 3000" \
            "RANLIB=true"\
            "AR=CC -o32 -ar -o"\
-           "OS_FLAGS=-D_XMOTIF" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 	@for i in Mesh; do (cd $$i && $(MAKE) \
            "CC=CC" \
            "C_FLAGS=-O1 -o32" \
            "AR=CC -o32 -ar -o"\
            "RANLIB=true"\
-           "OS_FLAGS=-D_XMOTIF" \
-           "VERSION_FLAGS=" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
-           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+           "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
 link_sgi:
-	CC -O2 -o32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB) $(OPENGL_LIB) \
-              $(MOTIF_LIB) $(X_LIB) -lm
+	CC -O2 -o32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+           $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) -lm
 
 link_opengl:
-	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
-               $(OPENGL_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+            $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) -lm
 
 link_mesa:
-	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
-               $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+            $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
 
 link_mesa_2952:
-	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
-               $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+               $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
 
 link_mesa_threads:
-	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
-               $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) $(THREAD_LIB) -lm
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+               $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
 
 # special car +s necessaire pour shared libs avec SHLIB_PATH variable.
 link_hp:
-	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_LIB)\
-                      $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
+                      $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
 

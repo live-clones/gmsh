@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.20 2000-12-26 20:45:42 geuzaine Exp $ */
+// $Id: Views.cpp,v 1.21 2001-01-08 08:05:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Views.h"

@@ -1,4 +1,3 @@
-/* $Id: Create.h,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _CREATE_H_
 #define _CREATE_H_
 

@@ -1,4 +1,3 @@
-/* $Id: List.h,v 1.7 2000-12-11 16:22:43 geuzaine Exp $ */
 #ifndef _LIST_H_
 #define _LIST_H_
 

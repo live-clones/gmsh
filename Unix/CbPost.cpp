@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.10 2000-12-29 10:27:00 geuzaine Exp $ */
+// $Id: CbPost.cpp,v 1.11 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,7 +10,7 @@
 #include "Widgets.h"
 #include "Context.h"
 #include "XContext.h"
-#include "Main.h"
+#include "OpenFile.h"
 
 #include "CbPost.h"
 #include "CbGeom.h"

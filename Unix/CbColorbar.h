@@ -1,6 +1,5 @@
-/* $Id: CbColorbar.h,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
-#ifndef _COLORBAR_H
-#define _COLORBAR_H
+#ifndef _CB_COLORBAR_H
+#define _CB_COLORBAR_H
 
 typedef struct _colorbar {
   Window window;

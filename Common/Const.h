@@ -1,4 +1,3 @@
-/* $Id: Const.h,v 1.5 2000-11-26 18:43:48 geuzaine Exp $ */
 #ifndef _CONSTS_H_
 #define _CONSTS_H_
 

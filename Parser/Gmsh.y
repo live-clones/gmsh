@@ -1,4 +1,6 @@
-%{ /* $Id: Gmsh.y,v 1.50 2000-12-21 10:20:05 geuzaine Exp $ */
+%{ 
+
+// $Id: Gmsh.y,v 1.51 2001-01-08 08:05:47 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -15,9 +17,10 @@
 #include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
-#include "Main.h"
+#include "OpenFile.h"
 #include "FunctionManager.h"
 #include "ColorTable.h"
+#include "Timer.h"
 
 #ifdef __DECCXX // bug in bison
 #include <alloca.h>
@@ -1656,10 +1659,9 @@ Command :
     {
       if(!strcmp($1, "Sleep")){
 
-	extern long Get_AnimTime();
-	long sleep_time = Get_AnimTime();
+	long sleep_time = GetTime();
 	while(1){
-	  if(Get_AnimTime() - sleep_time > (long)($2*1.e6)) break;
+	  if(GetTime() - sleep_time > (long)($2*1.e6)) break;
 	}
       
       }
@@ -1682,10 +1684,12 @@ Command :
 	if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
 	  Last_NumberOfPoints = Tree_Nbr(THEM->Points);
 	  Replot();
+	  DrawUI();
 	}
 	else{
 	  Init();
 	  Draw();
+	  DrawUI();
 	}
       }
     }
@@ -2716,4 +2720,5 @@ void vyyerror(char *fmt, ...){
   Msg(PARSER_ERROR, "'%s', line %d : %s", yyname, yylineno-1, tmp);
   yyerrorstate=1;
 }
+
 

@@ -1,4 +1,4 @@
-/* $Id: XDump.cpp,v 1.1 2000-12-29 10:28:40 geuzaine Exp $ */
+// $Id: XDump.cpp,v 1.2 2001-01-08 08:05:43 geuzaine Exp $
 
 /* This is a modified version for Gmsh (mainly for c++ compliance) */
 

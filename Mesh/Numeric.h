@@ -1,4 +1,3 @@
-/* $Id: Numeric.h,v 1.4 2000-12-18 08:31:58 geuzaine Exp $ */
 #ifndef _NUMERIC_H_
 #define _NUMERIC_H_
 

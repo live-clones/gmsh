@@ -1,4 +1,4 @@
-/* $Id: newt.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
+// $Id: newt.cpp,v 1.4 2001-01-08 08:05:40 geuzaine Exp $
 #include <math.h>
 #define NRANSI
 #include "nrutil.h"
@@ -105,4 +105,3 @@ newt (float x[], int n, int *check,
 #undef STPMX
 #undef FREERETURN
 #undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software J!0. */

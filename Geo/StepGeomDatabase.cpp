@@ -1,4 +1,4 @@
-/* $Id: StepGeomDatabase.cpp,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
+// $Id: StepGeomDatabase.cpp,v 1.5 2001-01-08 08:05:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

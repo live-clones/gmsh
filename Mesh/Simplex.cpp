@@ -1,4 +1,4 @@
-/* $Id: Simplex.cpp,v 1.9 2000-11-28 17:18:33 geuzaine Exp $ */
+// $Id: Simplex.cpp,v 1.10 2001-01-08 08:05:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

@@ -1,9 +1,9 @@
-/* $Id: CreateFile.cpp,v 1.1 2000-12-29 10:27:29 geuzaine Exp $ */
+// $Id: CreateFile.cpp,v 1.2 2001-01-08 08:05:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Mesh.h"
-#include "Main.h"
+#include "OpenFile.h"
 #include "Draw.h"
 #include "Context.h"
 
@@ -27,11 +27,15 @@ extern XContext_T  XCTX;
 
 
 void CreateFile (char *name, int format) {
-  FILE    *tmp, *fp;
+  FILE    *fp;
   GLint    size3d;
-  char     cmd[1000], ext[10];
-  char     *tmpFileName="tmp.xwd";
+  char     ext[10];
   int      res;
+
+#ifdef _XMOTIF
+  FILE    *tmp;
+  char     cmd[1000], *tmpFileName="tmp.xwd";
+#endif
 
   CTX.print.gl_fonts = 1;
 
@@ -192,7 +196,7 @@ void CreateFile (char *name, int format) {
       res = GL2PS_OVERFLOW ;
       while(res == GL2PS_OVERFLOW){
 	size3d += 2048*2048 ;
-	gl2psBeginPage(TheBaseFileName, "Gmsh", 
+	gl2psBeginPage(CTX.basefilename, "Gmsh", 
 		       (CTX.print.eps_quality == 1 ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
 		       GL2PS_SIMPLE_LINE_OFFSET | GL2PS_DRAW_BACKGROUND,
 		       GL_RGBA, 0, NULL, size3d, fp);

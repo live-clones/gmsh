@@ -1,4 +1,4 @@
-/* $Id: gl2yuv.cpp,v 1.2 2000-12-28 18:58:20 geuzaine Exp $ */
+// $Id: gl2yuv.cpp,v 1.3 2001-01-08 08:05:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -40,7 +40,7 @@ void create_yuv(FILE *outfile, int width, int height){
     first = 0;
   }
 
-  /* yuv format assumes even number of rows and columns */
+  // yuv format assumes even number of rows and columns
   height -= height%2;
   width -= width%2;
 
@@ -65,7 +65,7 @@ void create_yuv(FILE *outfile, int width, int height){
     orig_cb[y] = (unsigned char *) Malloc(sizeof(char) * width / 2);
   }
   
-  /* assume ydivisor = 1, so cdivisor = 4 */
+  // assume ydivisor = 1, so cdivisor = 4
   cdivisor = 4;
   
   for (y = 0; y < height; y += 2){
@@ -122,27 +122,24 @@ void create_yuv(FILE *outfile, int width, int height){
     }
   }
 
-  for (y = height-1; y >=0; y--)                      /* Y */
-    fwrite(orig_y[y], 1, width, outfile);
+  // Y
+  for (y = height-1; y >=0; y--) fwrite(orig_y[y], 1, width, outfile);
   
-  for (y = height/2-1; y >=0; y--)                    /* U */
-    fwrite(orig_cb[y], 1, width / 2, outfile);
+  // U
+  for (y = height/2-1; y >=0; y--) fwrite(orig_cb[y], 1, width / 2, outfile);
   
-  for (y = height/2-1; y >=0; y--)                    /* V */
-    fwrite(orig_cr[y], 1, width / 2, outfile);
+  // V
+  for (y = height/2-1; y >=0; y--) fwrite(orig_cr[y], 1, width / 2, outfile);
 
   Free(pixels);
 
-  for (y = 0; y < height; y++)
-    Free(orig_y[y]);
+  for (y = 0; y < height; y++) Free(orig_y[y]);
   Free(orig_y);
 
-  for (y = 0; y < height / 2; y++)
-    Free(orig_cr[y]);
+  for (y = 0; y < height / 2; y++) Free(orig_cr[y]);
   Free(orig_cr);
   
-  for (y = 0; y < height / 2; y++)
-    Free(orig_cb[y]);
+  for (y = 0; y < height / 2; y++) Free(orig_cb[y]);
   Free(orig_cb);
 
 }

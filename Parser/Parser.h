@@ -1,4 +1,3 @@
-/* $Id: Parser.h,v 1.4 2000-12-11 16:23:15 geuzaine Exp $ */
 #ifndef _PARSER_H_
 #define _PARSER_H_
 

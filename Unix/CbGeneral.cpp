@@ -1,4 +1,4 @@
-/* $Id: CbGeneral.cpp,v 1.6 2000-12-10 00:06:50 geuzaine Exp $ */
+// $Id: CbGeneral.cpp,v 1.7 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"

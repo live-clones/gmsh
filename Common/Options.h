@@ -1,4 +1,3 @@
-/* $Id: Options.h,v 1.16 2001-01-01 14:57:35 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -14,6 +13,7 @@ extern Context_T   CTX ;
 // STRINGS
 
 StringXString GeneralOptions_String[] = {
+  { "Display" , &CTX.display , "" },
   { NULL , NULL , NULL }
 } ;
 
@@ -41,6 +41,7 @@ StringXNumber GeneralOptions_Number[] = {
   { "Viewport1"    , GMSH_INT,    (void*)&CTX.viewport[1]    , 0. }, 
   { "Viewport2"    , GMSH_INT,    (void*)&CTX.viewport[2]    , 1. }, 
   { "Viewport3"    , GMSH_INT,    (void*)&CTX.viewport[3]    , 1. }, 
+  { "FontSize"     , GMSH_INT,    (void*)&CTX.fontsize      , 12. }, 
   { "Rotation0"    , GMSH_DOUBLE, (void*)&CTX.r[0]          , 0.0 }, 
   { "Rotation1"    , GMSH_DOUBLE, (void*)&CTX.r[1]          , 0.0 }, 
   { "Rotation2"    , GMSH_DOUBLE, (void*)&CTX.r[2]          , 0.0 }, 
@@ -146,6 +147,7 @@ StringXNumber GeometryOptions_Number[] = {
   { "HiddenLines"     , GMSH_INT,    (void*)&CTX.geom.hidden       , 0. }, 
   { "Shading"         , GMSH_INT,    (void*)&CTX.geom.shade        , 0. }, 
   { "Highlight"       , GMSH_INT,    (void*)&CTX.geom.highlight    , 1. }, 
+  { "OldCircle"       , GMSH_INT,    (void*)&CTX.geom.old_circle   , 0. }, 
   { "ScalingFactor"   , GMSH_DOUBLE, (void*)&CTX.geom.scaling_factor , 1.0 }, 
   { NULL              , GMSH_DOUBLE, NULL , 0. }
 } ;

@@ -1,27 +1,34 @@
-# $Id: Makefile,v 1.7 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.8 2001-01-08 08:05:40 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
 
 .IGNORE:
 
-CC        = c++
-C_FLAGS   = -g -Wall
+CC      = c++
+RANLIB  = ranlib
+RM      = rm
 
-OS_FLAGS  = -D_XMOTIF
+LIB     = ../lib/libCommon.a
+INCLUDE = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
+          -I../Mesh -I../Parser -I../Motif -I../Fltk
 
-RANLIB   = ranlib
-RM       = rm
-RMFLAGS  = -f
+C_FLAGS       = -g -Wall
+OS_FLAGS      = -D_LITTLE_ENDIAN
+VERSION_FLAGS = 
 
-LIB      = ../lib/libCommon.a
-INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
-           -I../Mesh -I../Parser -I../Unix
+GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
+                -I$(HOME)/SOURCES/Mesa-3.1/include/GL
+GUI_INCLUDE   = -I/usr/X11R6/LessTif/Motif1.2/include
 
-CFLAGS = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE) $(GL_INCLUDE)
+RMFLAGS = -f
+CFLAGS  = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+          $(GL_INCLUDE) $(GUI_INCLUDE)
 
 SRC =  	Context.cpp\
         Views.cpp\
+        GetOptions.cpp\
+        Timer.cpp\
         ColorTable.cpp
 
 OBJ = $(SRC:.cpp=.o)
@@ -59,6 +66,12 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Views.h Const.h \
   ColorTable.h Context.h
+GetOptions.o: GetOptions.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  Const.h Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h Views.h ColorTable.h Version.h
+Timer.o: Timer.cpp
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ColorTable.h Context.h
+  ColorTable.h Context.h Const.h

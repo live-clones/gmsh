@@ -1,4 +1,4 @@
-/* $Id: Message.cpp,v 1.6 2000-11-26 15:43:48 geuzaine Exp $ */
+// $Id: Message.cpp,v 1.7 2001-01-08 08:03:40 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>

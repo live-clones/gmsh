@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.24 2000-12-22 17:01:37 geuzaine Exp $ */
+// $Id: Context.cpp,v 1.25 2001-01-08 08:05:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

@@ -1,4 +1,3 @@
-/* $Id: CbMesh.h,v 1.3 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _CB_MESH_H_
 #define _CB_MESH_H_
 

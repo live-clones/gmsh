@@ -1,4 +1,4 @@
-/* $Id: Create.cpp,v 1.6 2000-11-26 15:43:47 geuzaine Exp $ */
+// $Id: Create.cpp,v 1.7 2001-01-08 08:05:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -6,9 +6,11 @@
 #include "CAD.h"
 #include "Mesh.h"
 #include "Numeric.h"
+#include "Context.h"
 
-extern Mesh *THEM;
-extern int CurrentSimplexNumber, FLAG_OLD_CIRCLE;
+extern Mesh      *THEM;
+extern Context_T  CTX;
+extern int        CurrentSimplexNumber;
 
 //static double CIRC_GRAN = 2.2;
 
@@ -262,7 +264,7 @@ void End_Curve (Curve * c){
     mat[0][1] = Curve->Circle.invmat[1][0] = dir12[1];
     mat[0][2] = Curve->Circle.invmat[2][0] = dir12[2];
     
-    if(FLAG_OLD_CIRCLE){
+    if(CTX.geom.old_circle){
       if(n[0] == 0.0 && n[1] == 0.0){
         mat[2][0] = Curve->Circle.invmat[0][2] = 0;
         mat[2][1] = Curve->Circle.invmat[1][2] = 0;

@@ -1,4 +1,3 @@
-/* $Id: Vertex.h,v 1.4 2000-11-25 15:26:11 geuzaine Exp $ */
 #ifndef _VERTEX_H_
 #define _VERTEX_H_
 

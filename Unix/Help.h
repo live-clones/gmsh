@@ -1,4 +1,3 @@
-/* $Id: Help.h,v 1.6 2000-12-26 11:59:06 geuzaine Exp $ */
 #ifndef _HELP_H_
 #define _HELP_H_
 

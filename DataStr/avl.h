@@ -1,4 +1,3 @@
-/* $Id: avl.h,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
 #ifndef _AVL_H_
 #define _AVL_H_
 

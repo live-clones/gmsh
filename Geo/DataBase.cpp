@@ -1,4 +1,4 @@
-/* $Id: DataBase.cpp,v 1.6 2000-12-21 12:30:37 geuzaine Exp $ */
+// $Id: DataBase.cpp,v 1.7 2001-01-08 08:05:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

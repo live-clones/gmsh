@@ -1,4 +1,3 @@
-/* $Id: CbFile.h,v 1.7 2000-12-21 14:53:10 geuzaine Exp $ */
 #ifndef _CB_FILE_H_
 #define _CB_FILE_H_
 

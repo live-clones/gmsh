@@ -1,4 +1,4 @@
-/* $Id: ColorTable.cpp,v 1.1 2000-12-08 10:56:36 geuzaine Exp $ */
+// $Id: ColorTable.cpp,v 1.2 2001-01-08 08:05:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "ColorTable.h"

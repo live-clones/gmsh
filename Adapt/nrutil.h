@@ -1,4 +1,3 @@
-/* $Id: nrutil.h,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
 #ifndef _NR_UTILS_H_
 #define _NR_UTILS_H_
 

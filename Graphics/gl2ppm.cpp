@@ -1,4 +1,4 @@
-/* $Id: gl2ppm.cpp,v 1.4 2000-12-28 18:58:20 geuzaine Exp $ */
+// $Id: gl2ppm.cpp,v 1.5 2001-01-08 08:05:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"

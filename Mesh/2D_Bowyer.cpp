@@ -1,4 +1,5 @@
-/* $Id: 2D_Bowyer.cpp,v 1.4 2000-11-26 15:43:46 geuzaine Exp $ */
+// $Id: 2D_Bowyer.cpp,v 1.5 2001-01-08 08:05:44 geuzaine Exp $
+
 /*
 
    A L G O R I T H M E       D E      B O W Y E R  -  W A T S O N

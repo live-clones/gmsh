@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2000-12-29 10:27:00 geuzaine Exp $
+# $Id: Makefile,v 1.7 2001-01-08 08:05:39 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -6,18 +6,18 @@
 .IGNORE:
 
 CC        = c++
-C_FLAGS   = -g
-
-OS_FLAGS  = -D_XMOTIF
-
 RM        = rm
-RMFLAGS   = -f
 RANLIB    = ranlib
 
 LIB       = ../lib/libAdapt.a
 INCLUDE   = -I../Common -I../DataStr
 
-CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE) 
+C_FLAGS       = -g -Wall
+OS_FLAGS      = 
+VERSION_FLAGS = 
+
+RMFLAGS   = -f
+CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = Adapt.cpp \
       mnbrak.cpp \

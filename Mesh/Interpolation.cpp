@@ -1,4 +1,4 @@
-/* $Id: Interpolation.cpp,v 1.6 2000-11-30 14:57:52 geuzaine Exp $ */
+// $Id: Interpolation.cpp,v 1.7 2001-01-08 08:05:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"

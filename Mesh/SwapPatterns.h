@@ -1,4 +1,3 @@
-/* $Id: SwapPatterns.h,v 1.2 2000-11-23 14:11:36 geuzaine Exp $ */
 #ifndef _SWAP_PATTERNS_H_
 #define _SWAP_PATTERNS_H_
 

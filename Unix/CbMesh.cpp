@@ -1,4 +1,4 @@
-/* $Id: CbMesh.cpp,v 1.5 2000-11-26 15:43:48 geuzaine Exp $ */
+// $Id: CbMesh.cpp,v 1.6 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,7 +12,6 @@
 extern Widgets_T  WID;
 extern Context_T  CTX;
 extern Mesh       M;
-extern char       TheFileName[NAME_STR_L];
 
 extern char   trsf_pts_text[100], trsf_type_text[100];
 extern char   trsf_vol_text[100], char_length_text[100];
@@ -142,7 +141,7 @@ void mesh_event_handler (int event) {
       }
       if (ib == -1){ /* 'e' */
         if(n >= 1) {
-          add_charlength(n,p,TheFileName); break;
+          add_charlength(n,p,CTX.filename); break;
         }
         n=0;
         ZeroHighlight(&M);
@@ -167,7 +166,7 @@ void mesh_event_handler (int event) {
       }
       if (ib == -1){ /* 'e' */
         if(n >= 1) {
-          add_recosurf(n,p,TheFileName); break;
+          add_recosurf(n,p,CTX.filename); break;
         }
         n=0;
         ZeroHighlight(&M);
@@ -215,13 +214,13 @@ void mesh_event_handler (int event) {
               switch (event) {    
               case MESH_DEFINE_TRSF_SURFACE :
                 if(n == 3+1 || n == 4+1)
-                  add_trsfsurf(n,p,TheFileName); 
+                  add_trsfsurf(n,p,CTX.filename); 
                 else
                   Msg(INFO, "Wrong Number of Points for Transfinite Surface");
                 break;
               case MESH_DEFINE_TRSF_VOLUME :
                 if(n == 6 || n == 8)
-                  add_trsfvol(n,p,TheFileName);
+                  add_trsfvol(n,p,CTX.filename);
                 else
                   Msg(INFO, "Wrong Number of Points for Transfinite Volume");
                 break;
@@ -243,7 +242,7 @@ void mesh_event_handler (int event) {
       }
       if (ib == -1){ /* 'e' */
         if (event == MESH_DEFINE_TRSF_LINE){ 
-          if(n >= 1) add_trsfline(n,p,TheFileName);
+          if(n >= 1) add_trsfline(n,p,CTX.filename);
         }
         n=0;
         ZeroHighlight(&M);

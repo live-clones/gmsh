@@ -1,4 +1,3 @@
-/* $Id: Register.h,v 1.5 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _REGISTER_H_
 #define _REGISTER_H_
 

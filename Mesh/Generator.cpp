@@ -1,11 +1,11 @@
-/* $Id: Generator.cpp,v 1.7 2000-11-26 15:43:47 geuzaine Exp $ */
+// $Id: Generator.cpp,v 1.8 2001-01-08 08:05:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
 #include "Mesh.h"
 #include "Create.h"
 #include "Context.h"
-#include "Main.h"
+#include "OpenFile.h"
 
 extern Mesh     *THEM;
 extern Context_T CTX;
@@ -195,7 +195,7 @@ void mai3d (Mesh * M, int Asked){
 
   if ((Asked > oldstatus && Asked >= 0 && oldstatus < 0) ||
       (Asked < oldstatus)){
-    OpenProblem (TheFileName);
+    OpenProblem (CTX.filename);
     M->status = 0;
   }
   

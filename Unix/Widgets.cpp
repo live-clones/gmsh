@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.28 2000-12-29 14:04:29 geuzaine Exp $ */
+// $Id: Widgets.cpp,v 1.29 2001-01-08 08:03:41 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"

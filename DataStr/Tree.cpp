@@ -1,4 +1,4 @@
-/* $Id: Tree.cpp,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
+// $Id: Tree.cpp,v 1.5 2001-01-08 08:05:41 geuzaine Exp $
 
 #include <stdlib.h>
 #include <string.h>

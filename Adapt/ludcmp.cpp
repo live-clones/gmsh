@@ -1,4 +1,4 @@
-/* $Id: ludcmp.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
+// $Id: ludcmp.cpp,v 1.4 2001-01-08 08:05:40 geuzaine Exp $
 #include <math.h>
 #define NRANSI
 #include "nrutil.h"
@@ -70,4 +70,3 @@ ludcmp (float **a, int n, int *indx, float *d)
 }
 #undef TINY
 #undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software J!0. */

@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.19 2000-12-29 14:04:29 geuzaine Exp $ */
+// $Id: Register.cpp,v 1.20 2001-01-08 08:03:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"

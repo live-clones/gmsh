@@ -1,4 +1,3 @@
-/* $Id: CbGeom.h,v 1.3 2000-12-13 13:57:00 geuzaine Exp $ */
 #ifndef _CB_GEOM_H_
 #define _CB_GEOM_H_
 

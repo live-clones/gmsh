@@ -1,4 +1,5 @@
-/* $Id: 2D_DivAndConq.cpp,v 1.7 2000-11-28 12:59:24 geuzaine Exp $ */
+// $Id: 2D_DivAndConq.cpp,v 1.8 2001-01-08 08:05:44 geuzaine Exp $
+
 /*
 
    A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   
