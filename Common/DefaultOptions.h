@@ -1005,6 +1005,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Boundary" , opt_view_boundary , 0. ,
     "Draw the `N minus b'-dimensional boundary of the simplex (N=simplex dimension, b=option value)" },
 
+  { F|O, "Colormap" , opt_view_default_colormap , 1. ,
+    "Default colormap number" },
   { F,   "CustomMax" , opt_view_custom_max , 0. , 
     "User-defined maximum value to be displayed" },
   { F,   "CustomMin" , opt_view_custom_min , 0. , 

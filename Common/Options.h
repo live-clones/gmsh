@@ -484,6 +484,7 @@ double opt_view_saturate_values(OPT_ARGS_NUM);
 double opt_view_max_recursion_level(OPT_ARGS_NUM);
 double opt_view_target_error(OPT_ARGS_NUM);
 double opt_view_alpha_channel(OPT_ARGS_NUM);
+double opt_view_default_colormap(OPT_ARGS_NUM);
 double opt_view_external_view(OPT_ARGS_NUM);
 double opt_view_gen_raise_view(OPT_ARGS_NUM);
 double opt_view_gen_raise_factor(OPT_ARGS_NUM);
@@ -627,7 +628,7 @@ StringXColor * Get_ColorOptionCategory(char * cat);
 
 void Set_DefaultStringOptions(int num, StringXString s[]);
 void Set_DefaultNumberOptions(int num, StringXNumber s[]);
-void Set_DefaultColorOptions(int num, StringXColor s[], int scheme);
+void Set_DefaultColorOptions(int num, StringXColor s[]);
 
 void Set_StringOptions_GUI(int num, StringXString s[]);
 void Set_NumberOptions_GUI(int num, StringXNumber s[]);

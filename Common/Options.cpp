@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.211 2004-12-22 16:43:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.212 2004-12-23 22:26:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,7 +42,7 @@ extern Post_View *Post_ViewReference;
 
 void Init_Options_Safe(int num)
 {
-  ColorTable_InitParam(1, &Post_ViewReference->CT);
+  ColorTable_InitParam(1, 1., &Post_ViewReference->CT);
   ColorTable_Recompute(&Post_ViewReference->CT);
 
   // Default string options
@@ -64,13 +64,13 @@ void Init_Options_Safe(int num)
   Set_DefaultNumberOptions(num, PrintOptions_Number);
 
   // Default color options
-  Set_DefaultColorOptions(num, GeneralOptions_Color, CTX.color_scheme);
-  Set_DefaultColorOptions(num, GeometryOptions_Color, CTX.color_scheme);
-  Set_DefaultColorOptions(num, MeshOptions_Color, CTX.color_scheme);
-  Set_DefaultColorOptions(num, SolverOptions_Color, CTX.color_scheme);
-  Set_DefaultColorOptions(num, PostProcessingOptions_Color, CTX.color_scheme);
-  Set_DefaultColorOptions(num, ViewOptions_Color, CTX.color_scheme);
-  Set_DefaultColorOptions(num, PrintOptions_Color, CTX.color_scheme);
+  Set_DefaultColorOptions(num, GeneralOptions_Color);
+  Set_DefaultColorOptions(num, GeometryOptions_Color);
+  Set_DefaultColorOptions(num, MeshOptions_Color);
+  Set_DefaultColorOptions(num, SolverOptions_Color);
+  Set_DefaultColorOptions(num, PostProcessingOptions_Color);
+  Set_DefaultColorOptions(num, ViewOptions_Color);
+  Set_DefaultColorOptions(num, PrintOptions_Color);
 }
 
 char *gmsh_getenv(char *var)
@@ -675,16 +675,11 @@ StringXColor *Get_ColorOptionCategory(char *cat)
     return NULL;
 }
 
-void Set_DefaultColorOptions(int num, StringXColor s[], int scheme)
+void Set_DefaultColorOptions(int num, StringXColor s[])
 {
   int i = 0;
-  switch (scheme) {
-  case 0:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET, s[i].def1);
-      i++;
-    }
-    break;
+  // Warning: this assumes that CTX.color_scheme is set...
+  switch (CTX.color_scheme) {
   case 1:
     while(s[i].str) {
       s[i].function(num, GMSH_SET, s[i].def2);
@@ -694,6 +689,12 @@ void Set_DefaultColorOptions(int num, StringXColor s[], int scheme)
   case 2:
     while(s[i].str) {
       s[i].function(num, GMSH_SET, s[i].def3);
+      i++;
+    }
+    break;
+  default:
+    while(s[i].str) {
+      s[i].function(num, GMSH_SET, s[i].def1);
       i++;
     }
     break;
@@ -727,7 +728,13 @@ void Print_ColorOptions(int num, int level, int diff, StringXColor s[],
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
-      if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def1)){
+      unsigned int def;
+      switch (CTX.color_scheme) {
+      case 1: def = s[i].def2; break;
+      case 2: def = s[i].def3; break;
+      default: def = s[i].def1; break;
+      }
+      if(!diff || (s[i].function(num, GMSH_GET, 0) != def)){
 	sprintf(tmp, "%sColor.%s = {%d,%d,%d}; // %s",
 		prefix, s[i].str,
 		UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
@@ -2590,9 +2597,9 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     CTX.color_scheme = (int)val;
     if(CTX.color_scheme > 2)
       CTX.color_scheme = 0;
-    Set_DefaultColorOptions(0, GeneralOptions_Color, CTX.color_scheme);
-    Set_DefaultColorOptions(0, GeometryOptions_Color, CTX.color_scheme);
-    Set_DefaultColorOptions(0, MeshOptions_Color, CTX.color_scheme);
+    Set_DefaultColorOptions(0, GeneralOptions_Color);
+    Set_DefaultColorOptions(0, GeometryOptions_Color);
+    Set_DefaultColorOptions(0, MeshOptions_Color);
     Set_ColorOptions_GUI(0, GeneralOptions_Color);
     Set_ColorOptions_GUI(0, GeometryOptions_Color);
     Set_ColorOptions_GUI(0, MeshOptions_Color);
@@ -5395,13 +5402,22 @@ double opt_view_alpha_channel(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    if(val > 0.0 && val < 1.0){
-      ColorTable_SetAlpha(&v->CT, val);
-      v->Changed = 1;
-    }
-    v->AlphaChannel = val;
+    ColorTable_InitParam(v->CT.ipar[COLORTABLE_NUMBER], val, &v->CT);
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
   }
-  return v->AlphaChannel;
+  return v->CT.dpar[COLORTABLE_ALPHAVAL];
+}
+
+double opt_view_default_colormap(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    ColorTable_InitParam((int)val, v->CT.dpar[COLORTABLE_ALPHAVAL], &v->CT);
+    ColorTable_Recompute(&v->CT);
+    v->Changed = 1;
+  }
+  return v->CT.ipar[COLORTABLE_NUMBER];
 }
 
 double opt_view_external_view(OPT_ARGS_NUM)

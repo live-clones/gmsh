@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.23 2004-07-08 18:57:29 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.24 2004-12-23 22:26:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,7 @@
 
 extern Context_T CTX;
 
-void ColorTable_InitParam(int number, GmshColorTable * ct)
+void ColorTable_InitParam(int number, double alpha, GmshColorTable * ct)
 {
   ct->size = 255;
   ct->ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
@@ -43,35 +43,57 @@ void ColorTable_InitParam(int number, GmshColorTable * ct)
   ct->ipar[COLORTABLE_SWAP] = 0;
   ct->ipar[COLORTABLE_ROTATE] = 0;
 
-  ct->fpar[COLORTABLE_CURVE] = 0.0;
-  ct->fpar[COLORTABLE_BIAS] = 0.0;
-  ct->fpar[COLORTABLE_BETA] = 0.0;
-  ct->fpar[COLORTABLE_ALPHAPOW] = 1.;
-  ct->fpar[COLORTABLE_ALPHAVAL] = 255.;
+  ct->dpar[COLORTABLE_CURVE] = 0.0;
+  ct->dpar[COLORTABLE_BIAS] = 0.0;
+  ct->dpar[COLORTABLE_BETA] = 0.0;
+  ct->dpar[COLORTABLE_ALPHAVAL] = alpha;
+}
+
+static double gray(double s)
+{
+  return s < 0. ? 0. : (s < 1. ? s : 1.);
+}
+
+static double hot_r(double s)
+{
+  return s < 0. ? 0. : (s < 3./8. ? 8./3. * s : 1.);
+}
+
+static double hot_g(double s)
+{
+  return s < 3./8. ? 0. : (s < 6./8. ? 8./3. * (s - 3./8.) : 1.);
+}
+
+static double hot_b(double s)
+{
+  return s < 6./8. ? 0. : (s < 1. ? 8./2. * (s - 6./8.) : 1.);
+}
+
+static double cubic(double a, double b, double c, double d, double x)
+{
+  return a + b * x + c * x * x + d * x * x * x;
 }
 
 void ColorTable_Recompute(GmshColorTable * ct)
 {
-  float curve, bias;
-  double gamma;
+  double curve, bias, s, t, gamma;
   int i, r, g, b, a, rotate;
-  float s, t;
 
   ct->ipar[COLORTABLE_CHANGED] = 1;
 
-  bias = ct->fpar[COLORTABLE_BIAS];
-  curve = ct->fpar[COLORTABLE_CURVE];
+  bias = ct->dpar[COLORTABLE_BIAS];
+  curve = ct->dpar[COLORTABLE_CURVE];
   rotate = ct->ipar[COLORTABLE_ROTATE];
 
   for(i = 0; i < ct->size; i++) {
 
     if(ct->size > 1) {
       if(i + rotate < 0)
-        s = (float)(i + rotate + ct->size) / (float)(ct->size - 1);
+        s = (double)(i + rotate + ct->size) / (double)(ct->size - 1);
       else if(i + rotate > ct->size - 1)
-        s = (float)(i + rotate - ct->size) / (float)(ct->size - 1);
+        s = (double)(i + rotate - ct->size) / (double)(ct->size - 1);
       else
-        s = (float)(i + rotate) / (float)(ct->size - 1);
+        s = (double)(i + rotate) / (double)(ct->size - 1);
     }
     else
       s = 0.;
@@ -86,8 +108,33 @@ void ColorTable_Recompute(GmshColorTable * ct)
       g = (int)(128.0 + 127.0 * (2 * exp(-7 * t * t) - 1));
       b = (int)(128.0 + 127.0 * atan(-7.0 * t) / 1.57);
       break;
-    case 2:  // samcef
-      if(s - bias <= 0.00) {
+    case 2: // matlab "jet"
+      {
+	double ii = (double)(s-bias)*128.;
+	if(ii < 0) ii = 0;
+	if(ii > 128) ii = 128;
+	double rr = 
+	  ii <= 46 ? 0. : 
+	  ii >= 111 ? -0.03125*(ii - 111) + 1. :
+	  ii >= 78 ? 1. : 
+	  0.03125*(ii - 46);
+	double gg = 
+	  ii <= 14 || ii >= 111 ? 0. : 
+	  ii >= 79 ? -0.03125*(ii - 111) : 
+	  ii <= 46 ? 0.03125*(ii - 14) : 
+	  1.;
+	double bb =
+	  ii >= 79 ? 0. :
+	  ii >= 47 ? -0.03125*(ii - 79) :
+	  ii <= 14 ? 0.03125*(ii - 14) + 1.:
+	  1.;
+	r = (int)(rr*255.);
+	g = (int)(gg*255.);
+	b = (int)(bb*255.);
+      }
+      break;
+    case 3:  // samcef
+      if(s - bias <= 0.) {
 	r = 0;
 	g = 0;
 	b = 255;
@@ -102,7 +149,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	g = 255;
 	b = 0;
       }
-      else if(s - bias <= 1.00) {
+      else if(s - bias <= 1.) {
 	r = 255;
 	g = (int)(255. - 637.5 * (s - bias - 0.6));
 	b = 0;
@@ -113,8 +160,8 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = 0;
       }
       break;
-    case 3:  // rainbow (matlab, etc.)
-      if(s - bias <= 0.00) {
+    case 4:  // rainbow
+      if(s - bias <= 0.) {
 	r = 0;
 	g = 0;
 	b = 255;
@@ -138,7 +185,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	g = 255;
 	b = 0;
       }
-      else if(s - bias <= 1.00) {
+      else if(s - bias <= 1.) {
 	curve = (curve == -0.25) ? -0.26 : curve;
 	r = 255;
 	g =
@@ -151,37 +198,8 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = 0;
       }
       break;
-    case 4:  // darkblue-red-yellow-white
-#define myfct(a,b,c,d) ((a)+			\
-                        (b)*(s-bias)+		\
-                        (c)*(s-bias)*(s-bias)+		\
-                        (d)*(s-bias)*(s-bias)*(s-bias))
-#define clamp(x) x = (x)<0?0:((x)>255?255:(x))
-      r = (int)(255. * myfct(-0.0506169, 2.81633, -1.87033, 0.0524573));
-      g = (int)(255. * myfct(0.0485868, -1.26109, 6.3074, -4.12498));
-      b = (int)(255. * myfct(0.364662, 1.50814, -7.36756, 6.51847));
-      clamp(r);
-      clamp(g);
-      clamp(b);
-#undef myfct
-#undef clamp
-      break;
-    case 5:  // grayscale
-      if(s - bias <= 0.00) {
-	r = g = b = 0;
-      }
-      else if(s - bias <= 1.00) {
-	r = g = b = (int)(255 * (s - bias));
-      }
-      else {
-	r = g = b = 255;
-      }
-      break;
-    case 6:  // monochrome
-      r = g = b = 0;
-      break;
-    case 7:  // rainbow modified to add black and white , from EMC2000
-      if(s - bias <= 0.00) {
+    case 5: // emc2000 (rainbow with black and white)
+      if(s - bias <= 0.) {
 	r = 0;
 	g = 0;
 	b = 0;
@@ -214,9 +232,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
       else if(s - bias <= 1.0) {
 	r = 255;
 	g = (int)((255. / 0.2) * (s - bias - 0.8));
-	b =
-	  (int)(-3187.66 * (s - bias) * (s - bias) + 7012.76 * (s - bias) -
-		3570.61);
+	b = (int)(-3187.66 * (s - bias) * (s - bias) + 7012.76 * (s - bias) - 3570.61);
       }
       else {
 	r = 255;
@@ -224,25 +240,51 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = 255;
       }
       break;
-    case 8:  // grayscale, without white
-    default:
-      if(s - bias <= 0.00) {
+    case 6:  // darkblue->red->yellow->white
+      r = (int)(255. * cubic(-0.0506169, 2.81633, -1.87033, 0.0524573, s-bias));
+      g = (int)(255. * cubic(0.0485868, -1.26109, 6.3074, -4.12498, s-bias));
+      b = (int)(255. * cubic(0.364662, 1.50814, -7.36756, 6.51847, s-bias));
+      break;
+    case 7:  // matlab "hot"
+      r = (int)(255. * hot_r(s-bias));
+      g = (int)(255. * hot_g(s-bias));
+      b = (int)(255. * hot_b(s-bias));
+      break;
+    case 8: // matlab "pink"
+      r = (int)(255. * sqrt((2.*gray(s-bias) + hot_r(s-bias))/3.));
+      g = (int)(255. * sqrt((2.*gray(s-bias) + hot_g(s-bias))/3.));
+      b = (int)(255. * sqrt((2.*gray(s-bias) + hot_b(s-bias))/3.));
+      break;
+    case 9:  // grayscale
+      if(s - bias <= 0.) {
 	r = g = b = 0;
       }
-      else if(s - bias <= 1.00) {
-	r = g = b = (int)(220 * (s - bias));
+      else if(s - bias <= 1.) {
+	r = g = b = (int)(255 * (1. - curve) * (s - bias));
       }
       else {
-	r = g = b = 220;
+	r = g = b = (int)(255 * (1. - curve));
       }
       break;
+    case 0:  // all black
+    default:
+      r = g = b = 0;
+      break;
     }
+
+    a = (int)(255. * ct->dpar[COLORTABLE_ALPHAVAL]);
+
+    // clamp to [0,255]
+    r = r < 0 ? 0 : (r > 255 ? 255 : r);
+    g = g < 0 ? 0 : (g > 255 ? 255 : g);
+    b = b < 0 ? 0 : (b > 255 ? 255 : b);
+    a = a < 0 ? 0 : (a > 255 ? 255 : a);
     
-    if(ct->fpar[COLORTABLE_BETA]) {
-      if(ct->fpar[COLORTABLE_BETA] > 0.0)
-	gamma = 1. - ct->fpar[COLORTABLE_BETA];
+    if(ct->dpar[COLORTABLE_BETA]) {
+      if(ct->dpar[COLORTABLE_BETA] > 0.0)
+	gamma = 1. - ct->dpar[COLORTABLE_BETA];
       else
-	gamma = 1. / (1.001 + ct->fpar[COLORTABLE_BETA]);     // beta is thresholded to [-1,1]
+	gamma = 1. / (1.001 + ct->dpar[COLORTABLE_BETA]);     // beta is thresholded to [-1,1]
       r = (int)(255. * pow((double)r / 255., gamma));
       g = (int)(255. * pow((double)g / 255., gamma));
       b = (int)(255. * pow((double)b / 255., gamma));
@@ -254,9 +296,6 @@ void ColorTable_Recompute(GmshColorTable * ct)
       b = 255 - b;
     }
     
-    a = (int)(ct->fpar[COLORTABLE_ALPHAVAL] *
-	      ct->fpar[COLORTABLE_ALPHAPOW]);
-
     ct->table[i] = PACK_COLOR(r, g, b, a);
   }
 
@@ -269,7 +308,7 @@ void ColorTable_Copy(GmshColorTable * ct)
   clip.size = ct->size;
   memcpy(clip.table, ct->table, ct->size * sizeof(unsigned int));
   memcpy(clip.ipar, ct->ipar, COLORTABLE_NBMAX_PARAM * sizeof(int));
-  memcpy(clip.fpar, ct->fpar, COLORTABLE_NBMAX_PARAM * sizeof(float));
+  memcpy(clip.dpar, ct->dpar, COLORTABLE_NBMAX_PARAM * sizeof(double));
 }
 
 void ColorTable_Paste(GmshColorTable * ct)
@@ -277,7 +316,7 @@ void ColorTable_Paste(GmshColorTable * ct)
   ct->size = clip.size;
   memcpy(ct->table, clip.table, clip.size * sizeof(unsigned int));
   memcpy(ct->ipar, clip.ipar, COLORTABLE_NBMAX_PARAM * sizeof(int));
-  memcpy(ct->fpar, clip.fpar, COLORTABLE_NBMAX_PARAM * sizeof(float));
+  memcpy(ct->dpar, clip.dpar, COLORTABLE_NBMAX_PARAM * sizeof(double));
 }
 
 int ColorTable_Diff(GmshColorTable * ct1, GmshColorTable * ct2)
@@ -315,7 +354,6 @@ void ColorTable_Print(GmshColorTable * ct, FILE * fp)
     fprintf(fp, "%s\n", tmp1);
   else
     Msg(DIRECT, tmp1);
-
 }
 
 int ColorTable_IsAlpha(GmshColorTable * ct)
@@ -329,14 +367,3 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
   return 0;
 }
 
-int ColorTable_SetAlpha(GmshColorTable * ct, double alpha)
-{
-  int i, r, g, b;
-  for(i = 0; i < ct->size; i++) {
-    r = UNPACK_RED(ct->table[i]);
-    g = UNPACK_GREEN(ct->table[i]);
-    b = UNPACK_BLUE(ct->table[i]);
-    ct->table[i] = PACK_COLOR(r, g, b, (int)(255. * alpha));
-  }
-  return 0;
-}

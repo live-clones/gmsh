@@ -27,15 +27,13 @@ typedef struct{
   unsigned int table[COLORTABLE_NBMAX_COLOR];
   int size; // must be >= 2
   int ipar[COLORTABLE_NBMAX_PARAM];
-  float fpar[COLORTABLE_NBMAX_PARAM];
+  double dpar[COLORTABLE_NBMAX_PARAM];
 }GmshColorTable;
-
 
 // COLORTABLE_MODE
 
 #define COLORTABLE_RGB  1
 #define COLORTABLE_HSV  2
-
 
 // integrer parameters indices
 
@@ -46,21 +44,19 @@ typedef struct{
 #define COLORTABLE_ROTATE    4  // rotate
 #define COLORTABLE_MODE      5  // mode (rgb, hsv)
 
-// float parameters indices
+// double parameters indices
 
 #define COLORTABLE_CURVE     0  // curvature
 #define COLORTABLE_BIAS      1  // offset
-#define COLORTABLE_ALPHAPOW  2  // alpha channel power
-#define COLORTABLE_ALPHAVAL  3  // alpha channel value
-#define COLORTABLE_BETA      4  // beta coeff for brighten
+#define COLORTABLE_ALPHAVAL  2  // alpha channel value
+#define COLORTABLE_BETA      3  // beta coeff for brighten
 
-void ColorTable_InitParam (int number, GmshColorTable * ct);
-void ColorTable_Recompute (GmshColorTable * ct);
+void ColorTable_InitParam(int number, double alpha, GmshColorTable *ct);
+void ColorTable_Recompute(GmshColorTable *ct);
 void ColorTable_Copy(GmshColorTable *ct);
 void ColorTable_Paste(GmshColorTable *ct);
 void ColorTable_Print(GmshColorTable *ct, FILE *fp) ;
 int  ColorTable_IsAlpha(GmshColorTable *ct) ;
-int  ColorTable_SetAlpha(GmshColorTable * ct, double alpha);
-int  ColorTable_Diff(GmshColorTable * ct1, GmshColorTable * ct2);
+int  ColorTable_Diff(GmshColorTable *ct1, GmshColorTable *ct2);
 
 #endif

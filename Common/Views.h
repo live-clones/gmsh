@@ -82,7 +82,7 @@ class Post_View{
   double Normals, Tangents;
   int Visible, IntervalsType, NbIso, NbAbscissa, ArrowSizeProportional;
   int Light, LightTwoSide, SmoothNormals;
-  double AngleSmoothNormals, AlphaChannel;
+  double AngleSmoothNormals;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
   int ScaleType, RangeType;

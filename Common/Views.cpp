@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.149 2004-12-13 15:57:29 geuzaine Exp $
+// $Id: Views.cpp,v 1.150 2004-12-23 22:26:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -621,7 +621,6 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;
-  dest->AlphaChannel = src->AlphaChannel;
   dest->Boundary = src->Boundary;
   dest->NbAbscissa = src->NbAbscissa;
   dest->NbIso = src->NbIso;
@@ -698,8 +697,16 @@ void Print_ColorTable(int num, int diff, char *prefix, FILE * file)
     v = *vv;
   }
 
-  if(diff && !ColorTable_Diff(&Post_ViewReference->CT, &v->CT))
-    return;
+  if(diff){
+    // compare the current colormap with a vanilla colormap having the
+    // same index number
+    GmshColorTable ref;
+    ColorTable_InitParam(v->CT.ipar[COLORTABLE_NUMBER], 
+			 v->CT.dpar[COLORTABLE_ALPHAVAL], &ref);
+    ColorTable_Recompute(&ref);
+    if(!ColorTable_Diff(&ref, &v->CT))
+      return;
+  }
 
   sprintf(tmp, "%s = {", prefix);
   if(file)

@@ -15,10 +15,6 @@ EndFor
 Delete View[0];
 Combine Views;
 
-For i In {1:nbIso}
-  Delete View[0];
-EndFor
-
 Plugin(DecomposeInSimplex).iView = 0;
 Plugin(DecomposeInSimplex).Run;
 

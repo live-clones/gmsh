@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.38 2004-05-22 01:24:17 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.39 2004-12-23 22:26:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -118,7 +118,7 @@ static void HSV_to_RGB(double H, double S, double V,
 int Colorbar_Window::x_to_index(int x)
 {
   int index;
-  index = (int)(x * (float)ct->size / (float)w());
+  index = (int)(x * (double)ct->size / (double)w());
   if(index < 0)
     index = 0;
   else if(index >= ct->size)
@@ -131,7 +131,7 @@ int Colorbar_Window::x_to_index(int x)
 int Colorbar_Window::index_to_x(int index)
 {
   int x;
-  x = (int)(index * (float)w() / (float)(ct->size - 1));
+  x = (int)(index * (double)w() / (double)(ct->size - 1));
   if(x >= w())
     x = w() - 1;
   return x;
@@ -142,7 +142,7 @@ int Colorbar_Window::index_to_x(int index)
 int Colorbar_Window::intensity_to_y(int intensity)
 {
   int y;
-  y = (int)(wedge_y - intensity * (float)wedge_y / 255.);
+  y = (int)(wedge_y - intensity * (double)wedge_y / 255.);
   if(y < 0)
     y = 0;
   else if(y >= wedge_y)
@@ -155,7 +155,7 @@ int Colorbar_Window::intensity_to_y(int intensity)
 int Colorbar_Window::y_to_intensity(int y)
 {
   int intensity;
-  intensity = (int)((wedge_y - y) * 255. / (float)wedge_y);
+  intensity = (int)((wedge_y - y) * 255. / (double)wedge_y);
   if(intensity < 0)
     intensity = 0;
   else if(intensity > 255)
@@ -287,7 +287,7 @@ void Colorbar_Window::redraw_range(int a, int b)
   int xx0 = 10, xx1 = 12 * font_height, yy0 = 10;
   if(help_flag) {
     i = 0;
-    fl_draw("1, 2, ..., 8", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("0, 1, 2, ..., 9", xx0, yy0 + (i + 1) * font_height);
     fl_draw("select predefined colormap", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * font_height);
@@ -317,14 +317,14 @@ void Colorbar_Window::redraw_range(int a, int b)
     fl_draw("up, down", xx0, yy0 + (i + 1) * font_height);
     fl_draw("modify color curvature", xx1, yy0 + (i + 1) * font_height);
     i++;
-    fl_draw("Ctrl+up, Ctrl+down", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("incr. or decr. alpha channel", xx1, yy0 + (i + 1) * font_height);
-    i++;
-    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("invert x or y range", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("increase or decrease alpha", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * font_height);
     fl_draw("increase or decrease gamma", xx1, yy0 + (i + 1) * font_height);
+    i++;
+    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("invert x or y range", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("h", xx0, yy0 + (i + 1) * font_height);
     fl_draw("show this help message", xx1, yy0 + (i + 1) * font_height);
@@ -343,7 +343,7 @@ void Colorbar_Window::redraw_marker()
 {
   int x, y0, y1;
   char str[50];
-  float val;
+  double val;
 
   make_current();
 
@@ -363,7 +363,7 @@ void Colorbar_Window::redraw_marker()
   // draw marker value
   fl_font(FL_HELVETICA, font_height);
   val =
-    minval + (maxval - minval) * ((float)marker_pos / (float)(ct->size - 1));
+    minval + (maxval - minval) * ((double)marker_pos / (double)(ct->size - 1));
   sprintf(str, "%g", val);
   fl_draw(str, 10, label_y);
 }
@@ -386,7 +386,7 @@ void Colorbar_Window::draw()
 
 // Update
 
-void Colorbar_Window::update(char *name, float min, float max,
+void Colorbar_Window::update(char *name, double min, double max,
                              GmshColorTable * table, int *changed)
 {
   label = name;
@@ -422,43 +422,43 @@ int Colorbar_Window::handle(int event)
   case FL_SHORTCUT:
   case FL_KEYBOARD:
     if(Fl::test_shortcut('0')) {
-      ColorTable_InitParam(0, ct);
+      ColorTable_InitParam(0, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('1')) {
-      ColorTable_InitParam(1, ct);
+      ColorTable_InitParam(1, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('2')) {
-      ColorTable_InitParam(2, ct);
+      ColorTable_InitParam(2, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('3')) {
-      ColorTable_InitParam(3, ct);
+      ColorTable_InitParam(3, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('4')) {
-      ColorTable_InitParam(4, ct);
+      ColorTable_InitParam(4, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('5')) {
-      ColorTable_InitParam(5, ct);
+      ColorTable_InitParam(5, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('6')) {
-      ColorTable_InitParam(6, ct);
+      ColorTable_InitParam(6, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('7')) {
-      ColorTable_InitParam(7, ct);
+      ColorTable_InitParam(7, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('8')) {
-      ColorTable_InitParam(8, ct);
+      ColorTable_InitParam(8, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('9')) {
-      ColorTable_InitParam(9, ct);
+      ColorTable_InitParam(9, 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('c')) {
@@ -473,7 +473,7 @@ int Colorbar_Window::handle(int event)
       draw();
     }
     else if(Fl::test_shortcut('r')) {
-      ColorTable_InitParam(ct->ipar[COLORTABLE_NUMBER], ct);
+      ColorTable_InitParam(ct->ipar[COLORTABLE_NUMBER], 1., ct);
       compute = 1;
     }
     else if(Fl::test_shortcut('m')) {
@@ -492,19 +492,31 @@ int Colorbar_Window::handle(int event)
       compute = 1;
     }
     else if(Fl::test_shortcut('b')) {
-      ct->fpar[COLORTABLE_BETA] += 0.05;
-      if(ct->fpar[COLORTABLE_BETA] > 1.0)
-        ct->fpar[COLORTABLE_BETA] = 1.0;
+      ct->dpar[COLORTABLE_BETA] += 0.05;
+      if(ct->dpar[COLORTABLE_BETA] > 1.0)
+        ct->dpar[COLORTABLE_BETA] = 1.0;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'b')) {
-      ct->fpar[COLORTABLE_BETA] -= 0.05;
-      if(ct->fpar[COLORTABLE_BETA] < -1.0)
-        ct->fpar[COLORTABLE_BETA] = -1.0;
+      ct->dpar[COLORTABLE_BETA] -= 0.05;
+      if(ct->dpar[COLORTABLE_BETA] < -1.0)
+        ct->dpar[COLORTABLE_BETA] = -1.0;
+      compute = 1;
+    }
+    else if(Fl::test_shortcut('a')) {
+      ct->dpar[COLORTABLE_ALPHAVAL] -= 0.05;
+      if(ct->dpar[COLORTABLE_ALPHAVAL] < 0.0)
+        ct->dpar[COLORTABLE_ALPHAVAL] = 0.0;
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + 'a')) {
+      ct->dpar[COLORTABLE_ALPHAVAL] += 0.05;
+      if(ct->dpar[COLORTABLE_ALPHAVAL] > 1.0)
+        ct->dpar[COLORTABLE_ALPHAVAL] = 1.0;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Left)) {
-      ct->fpar[COLORTABLE_BIAS] -= 0.05;
+      ct->dpar[COLORTABLE_BIAS] -= 0.05;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + FL_Left)) {
@@ -514,7 +526,7 @@ int Colorbar_Window::handle(int event)
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Right)) {
-      ct->fpar[COLORTABLE_BIAS] += 0.05;
+      ct->dpar[COLORTABLE_BIAS] += 0.05;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + FL_Right)) {
@@ -524,23 +536,11 @@ int Colorbar_Window::handle(int event)
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Up)) {
-      ct->fpar[COLORTABLE_CURVE] -= 0.05;
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + FL_Up)) {
-      ct->fpar[COLORTABLE_ALPHAPOW] += 0.05;
-      if(ct->fpar[COLORTABLE_ALPHAPOW] > 1.0)
-        ct->fpar[COLORTABLE_ALPHAPOW] = 1.0;
+      ct->dpar[COLORTABLE_CURVE] -= 0.05;
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_Down)) {
-      ct->fpar[COLORTABLE_CURVE] += 0.05;
-      compute = 1;
-    }
-    else if(Fl::test_shortcut(FL_CTRL + FL_Down)) {
-      ct->fpar[COLORTABLE_ALPHAPOW] -= 0.05;
-      if(ct->fpar[COLORTABLE_ALPHAPOW] < 0.0)
-        ct->fpar[COLORTABLE_ALPHAPOW] = 0.0;
+      ct->dpar[COLORTABLE_CURVE] += 0.05;
       compute = 1;
     }
     else {

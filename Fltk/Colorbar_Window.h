@@ -38,7 +38,7 @@ class Colorbar_Window : public Fl_Window {
   int font_height, marker_height, wedge_height;
   char *label;
 
-  float minval, maxval;  // min and max data values
+  double minval, maxval;  // min and max data values
   int wedge_y;     // top coord of color wedge
   int marker_y;    // top coord of marker arrow
   int label_y;     // y coord of text labels
@@ -52,7 +52,7 @@ class Colorbar_Window : public Fl_Window {
 public:
 
   Colorbar_Window(int x,int y,int w,int h,const char *l=0);
-  void update(char *name, float min, float max, GmshColorTable *ct, int *changed);
+  void update(char *name, double min, double max, GmshColorTable *ct, int *changed);
 
 };
 
