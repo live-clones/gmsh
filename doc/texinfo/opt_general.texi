@@ -36,7 +36,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.TextEditor
 System command to launch a text editor@*
-Default value: @code{"emacs %s &"}@*
+Default value: @code{"open -e %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
@@ -46,7 +46,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.WebBrowser
 System command to launch a web browser@*
-Default value: @code{"if [[ $(ps -e|grep mozilla|grep -v grep) ]]; then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &"}@*
+Default value: @code{"open %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AlphaBlending
@@ -329,6 +329,11 @@ Z position of light source 0@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.Light0W
+Divisor of the X, Y and Z coordinates of light source 0 (W=0 means infinitely far source)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Light1
 Enable light source 1@*
 Default value: @code{0}@*
@@ -347,6 +352,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Light1Z
 Z position of light source 1@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light1W
+Divisor of the X, Y and Z coordinates of light source 1 (W=0 means infinitely far source)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light2
@@ -369,6 +379,11 @@ Z position of light source 2@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.Light2W
+Divisor of the X, Y and Z coordinates of light source 2 (W=0 means infinitely far source)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Light3
 Enable light source 3@*
 Default value: @code{0}@*
@@ -387,6 +402,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Light3Z
 Z position of light source 3@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light3W
+Divisor of the X, Y and Z coordinates of light source 3 (W=0 means infinitely far source)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light4
@@ -409,6 +429,11 @@ Z position of light source 4@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.Light4W
+Divisor of the X, Y and Z coordinates of light source 4 (W=0 means infinitely far source)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Light5
 Enable light source 5@*
 Default value: @code{0}@*
@@ -427,6 +452,11 @@ Saved in: @code{General.OptionsFileName}
 @item General.Light5Z
 Z position of light source 5@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light5W
+Divisor of the X, Y and Z coordinates of light source 5 (W=0 means infinitely far source)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.LineWidth

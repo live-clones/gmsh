@@ -244,6 +244,11 @@ Vertical position (in pixels) of the upper left corner of the scale or 2D graph@
 Default value: @code{50}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.RaisedScalarView
+Index of the scalar view raised by the displacement field@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.RaiseX
 Elevation of the view along X-axis (in model coordinates)@*
 Default value: @code{0}@*
@@ -315,7 +320,7 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item View.VectorType
-Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)@*
+Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=raised scalar view)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 

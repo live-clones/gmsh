@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.27 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: Skin.cpp,v 1.28 2004-09-16 19:15:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -274,19 +274,13 @@ Post_View *GMSH_SkinPlugin::execute(Post_View * v)
   Tree_Action(_skin, addInView);
   Tree_Delete(_skin);
 
-  if(v2->empty()) {
-    RemoveViewByNumber(v2->Num);
-    return v1;
-  }
-  else{
-    // copy time data
-    for(int i = 0; i < List_Nbr(v1->Time); i++)
-      List_Add(v2->Time, List_Pointer(v1->Time, i));
-    // finalize
-    char name[1024], filename[1024];
-    sprintf(name, "%s_Skin", v1->Name);
-    sprintf(filename, "%s_Skin.pos", v1->Name);
-    EndView(v2, 1, filename, name);
-    return v2;
-  }
+  // copy time data
+  for(int i = 0; i < List_Nbr(v1->Time); i++)
+    List_Add(v2->Time, List_Pointer(v1->Time, i));
+  // finalize
+  char name[1024], filename[1024];
+  sprintf(name, "%s_Skin", v1->Name);
+  sprintf(filename, "%s_Skin.pos", v1->Name);
+  EndView(v2, 1, filename, name);
+  return v2;
 }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.341 2004-09-14 17:43:40 geuzaine Exp $
+// $Id: GUI.cpp,v 1.342 2004-09-16 19:15:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -55,11 +55,14 @@
 #include "CommandLine.h"
 #include "Solvers.h"
 
-#define WINDOW_BOX FL_FLAT_BOX
-#define TOGGLE_BOX FL_DOWN_BOX
+#define NB_BUTT_SCROLL 25
+#define NB_HISTORY_MAX 1000
+
+#define WINDOW_BOX   FL_FLAT_BOX
+#define TOGGLE_BOX   FL_DOWN_BOX
 #define TOGGLE_COLOR FL_BLACK
-#define RADIO_BOX  FL_ROUND_DOWN_BOX
-#define RADIO_COLOR FL_BLACK
+#define RADIO_BOX    FL_ROUND_DOWN_BOX
+#define RADIO_COLOR  FL_BLACK
 
 #define IW (10*fontsize)  // input field width
 #define BB (7*fontsize)   // width of a button with internal label
@@ -812,7 +815,6 @@ void GUI::wait()
 
 // Create the menu window
 
-
 void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
 {
   char name[256], menuname[256];
@@ -831,14 +833,14 @@ void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
 
 void GUI::create_menu_window(int argc, char **argv)
 {
-  int i, y;
+  int y;
 
   if(m_window) {
     m_window->show(1, argv);
     return;
   }
 
-  int width = 13 * fontsize - fontsize / 2 - 2;
+  int width = 14 * fontsize;
 
   // this is the initial height: no dynamic button is shown!
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
@@ -852,7 +854,7 @@ void GUI::create_menu_window(int argc, char **argv)
   }
 #endif
 
-  m_window = new Fl_Window(width, MH, "Gmsh");
+  m_window = new Fl_Window(width, MH + NB_BUTT_SCROLL * BH, "Gmsh");
   m_window->box(WINDOW_BOX);
   m_window->callback(file_quit_cb);
 
@@ -883,17 +885,15 @@ void GUI::create_menu_window(int argc, char **argv)
   }
 #endif
 
-  m_navig_butt[0] = new Fl_Button(1, y, 18, BH / 2, "@#<");
+  m_navig_butt[0] = new Fl_Button(1, y, 18, BH / 2, "@#-1<");
   m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
-  m_navig_butt[0]->labelsize(11);
   m_navig_butt[0]->box(FL_FLAT_BOX);
   m_navig_butt[0]->selection_color(FL_WHITE);
   m_navig_butt[0]->callback(mod_back_cb);
   m_navig_butt[0]->tooltip("Go back one in the menu history (<)");
 
-  m_navig_butt[1] = new Fl_Button(1, y + BH / 2, 18, BH / 2, "@#>");
+  m_navig_butt[1] = new Fl_Button(1, y + BH / 2, 18, BH / 2, "@#-1>");
   m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
-  m_navig_butt[1]->labelsize(11);
   m_navig_butt[1]->box(FL_FLAT_BOX);
   m_navig_butt[1]->selection_color(FL_WHITE);
   m_navig_butt[1]->callback(mod_forward_cb);
@@ -907,78 +907,16 @@ void GUI::create_menu_window(int argc, char **argv)
   // time we select one of the categories, even if the category is not
   // changed):
   m_module_butt->when(FL_WHEN_RELEASE_ALWAYS);
-  y = MH;
 
-  for(i = 0; i < NB_BUTT_MAX; i++) {
-    m_push_butt[i] = new Fl_Button(0, y + i * BH, width, BH);
-    m_push_butt[i]->hide();
+  // create an empty scroll area that will get populated dynamically
+  // in set_context()
+  m_scroll = new Fl_Scroll(0, MH, width, NB_BUTT_SCROLL * BH); 
+  m_scroll->type(Fl_Scroll::VERTICAL);
+  m_scroll->end();
 
-    m_toggle_butt[i] = new Fl_Light_Button(0, y + i * BH, width - (fontsize + 4), BH);
-    m_toggle_butt[i]->callback(view_toggle_cb, (void *)i);
-    m_toggle_butt[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    m_toggle_butt[i]->hide();
-
-    m_toggle2_butt[i] = new Fl_Button(width - (fontsize + 4), y + i * BH, (fontsize + 4), BH, "@#>");
-    m_toggle2_butt[i]->labeltype(FL_SYMBOL_LABEL);
-    m_toggle2_butt[i]->labelsize(11);
-    m_toggle2_butt[i]->align(FL_ALIGN_CENTER);
-    m_toggle2_butt[i]->hide();
-    m_toggle2_butt[i]->tooltip("Show view option menu (Shift+w)");
-
-    m_popup_butt[i] = new Fl_Menu_Button(width - (fontsize + 4), y + i * BH, (fontsize + 4), BH);
-    m_popup_butt[i]->type(Fl_Menu_Button::POPUP123);
-
-    m_popup2_butt[i] = new Fl_Menu_Button(0, y + i * BH, width - (fontsize + 4), BH);
-    m_popup2_butt[i]->type(Fl_Menu_Button::POPUP3);
-
-    for(int j = 0; j < 2; j++) {
-      Fl_Menu_Button *pop = j ? m_popup2_butt[i] : m_popup_butt[i];
-      pop->add("Reload/View", 0, (Fl_Callback *) view_reload_cb, (void *)i, 0);
-      pop->add("Reload/All views", 0, (Fl_Callback *) view_reload_all_cb, (void *)i, 0);
-      pop->add("Reload/All visible views", 0, (Fl_Callback *) view_reload_visible_cb, (void *)i, 0);
-      pop->add("Remove/View", FL_Delete, (Fl_Callback *) view_remove_cb, (void *)i, 0);
-      pop->add("Remove/All views", 0, (Fl_Callback *) view_remove_all_cb, (void *)i, 0);
-      pop->add("Remove/All visible views", 0, (Fl_Callback *) view_remove_visible_cb, (void *)i, 0);
-      pop->add("Remove/All invisible views", 0, (Fl_Callback *) view_remove_invisible_cb, (void *)i, 0);
-      pop->add("Duplicate/View without options", 0, (Fl_Callback *) view_duplicate_cb, (void *)i, 0);
-      pop->add("Duplicate/View with options", 0, (Fl_Callback *) view_duplicate_with_options_cb, (void *)i, 0);
-      pop->add("Combine/Elements/From all views", 0, 
-	       (Fl_Callback *) view_combine_all_cb, (void *)i, 0);
-      pop->add("Combine/Elements/From all views (and remove originals)", 0, 
-	       (Fl_Callback *) view_combine_all_and_remove_cb, (void *)i, 0);
-      pop->add("Combine/Elements/From visible views", 0, 
-	       (Fl_Callback *) view_combine_visible_cb, (void *)i, 0);
-      pop->add("Combine/Elements/From visible views (and remove originals)", 0, 
-	       (Fl_Callback *) view_combine_visible_and_remove_cb, (void *)i, 0);
-      pop->add("Combine/Time steps/From all views", 0, 
-	       (Fl_Callback *) view_combine_time_all_cb, (void *)i, 0);
-      pop->add("Combine/Time steps/From all views (and remove originals)", 0, 
-	       (Fl_Callback *) view_combine_time_all_and_remove_cb, (void *)i, 0);
-      pop->add("Combine/Time steps/From visible views", 0, 
-	       (Fl_Callback *) view_combine_time_visible_cb, (void *)i, 0);
-      pop->add("Combine/Time steps/From visible views (and remove originals)", 0, 
-	       (Fl_Callback *) view_combine_time_visible_and_remove_cb, (void *)i, 0);
-      pop->add("Combine/Time steps/By view name", 0, 
-	       (Fl_Callback *) view_combine_time_by_name_cb, (void *)i, 0);
-      pop->add("Combine/Time steps/By view name (and remove originals)", 0, 
-	       (Fl_Callback *) view_combine_time_by_name_and_remove_cb, (void *)i, 0);
-      pop->add("Save as/ASCII view...", 0, (Fl_Callback *) view_save_ascii_cb, (void *)i, 0);
-      pop->add("Save as/Binary view...", 0, (Fl_Callback *) view_save_binary_cb, (void *)i, 0);
-      add_post_plugins(pop, i);
-      pop->add("Apply as background mesh", 0, (Fl_Callback *) view_applybgmesh_cb, (void *)i, FL_MENU_DIVIDER);
-      pop->add("Options...", 'o', (Fl_Callback *) view_options_cb, (void *)i, 0);
-      pop->hide();
-    }
-  }
+  m_window->size(width, MH);
   m_window->position(CTX.position[0], CTX.position[1]);
   m_window->end();
-}
-
-// Dynamically set the height of the menu window
-
-void GUI::set_menu_size(int nb_butt)
-{
-  m_window->size(m_window->w(), MH + nb_butt * BH);
 }
 
 // Dynamically set the context
@@ -988,18 +926,16 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   static int nb_back = 0, nb_forward = 0, init_context = 0;
   static Context_Item *menu_history[NB_HISTORY_MAX];
   Context_Item *menu;
-  Post_View *v;
-  int i;
 
   if(!init_context) {
     init_context = 1;
-    for(i = 0; i < NB_HISTORY_MAX; i++) {
+    for(int i = 0; i < NB_HISTORY_MAX; i++) {
       menu_history[i] = NULL;
     }
   }
 
   if(nb_back > NB_HISTORY_MAX - 2)
-    nb_back = 1;        // we should do a circular list
+    nb_back = 1; // we should do a circular list
 
   if(flag == -1) {
     if(nb_back > 1) {
@@ -1027,16 +963,27 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     nb_forward = 0;
   }
 
-  int nb = 0;
-
-  if(menu[0].label[0] == '0')
+  if(menu[0].label[0] == '0'){
     m_module_butt->value(0);
-  else if(menu[0].label[0] == '1')
+  }
+  else if(menu[0].label[0] == '1'){
     m_module_butt->value(1);
-  else if(menu[0].label[0] == '2')
+  }
+  else if(menu[0].label[0] == '2'){
     m_module_butt->value(2);
-  else if(menu[0].label[0] == '3')
+    menu[1].label = opt_solver_name0(0, GMSH_GET, 0);
+    menu[2].label = opt_solver_name1(0, GMSH_GET, 0);
+    menu[3].label = opt_solver_name2(0, GMSH_GET, 0);
+    menu[4].label = opt_solver_name3(0, GMSH_GET, 0);
+    menu[5].label = opt_solver_name4(0, GMSH_GET, 0);
+    for(int i = 0; i < MAXSOLVERS; i++) {
+      if(!strlen(menu[i + 1].label))
+	menu[i + 1].label = NULL;
+    }
+  }
+  else if(menu[0].label[0] == '3'){
     m_module_butt->value(3);
+  }
   else {
     Msg(WARNING, "Something is wrong in your dynamic context definition");
     return;
@@ -1044,77 +991,133 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 
   Msg(STATUS2N, menu[0].label + 1);
 
-  switch (m_module_butt->value()) {
-  case 3:      // post-processing contexts
-    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-      if(i == NB_BUTT_MAX)
-        break;
+  // free all the children (m_push*, m_toggle*, m_pop*)
+  m_scroll->clear();
+  // reset the vectors
+  m_push_butt.clear();
+  m_toggle_butt.clear();
+  m_toggle2_butt.clear();
+  m_popup_butt.clear();
+  m_popup2_butt.clear();
+  for(unsigned int i = 0; i < m_pop_label.size(); i++)
+    delete [] m_pop_label[i];
+  m_pop_label.clear();
+
+  int width = m_window->w();
+  int right_pop_width = 4 * fontsize + 3;
+
+  // construct the dynamic menu
+  int nb = 0;
+  if(m_module_butt->value() == 3){ // post-processing context
+    for(nb = 0; nb < List_Nbr(CTX.post.list); nb++) {
+      Post_View *v = (Post_View *) List_Pointer(CTX.post.list, nb);
+      
+      Fl_Light_Button *b1 = new Fl_Light_Button(0, MH + nb * BH, width - right_pop_width, BH);
+      b1->callback(view_toggle_cb, (void *)nb);
+      b1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      b1->value(v->Visible);
+      b1->label(v->Name);
+      b1->tooltip(v->FileName);
+      
+      char *tmp = new char[32];
+      sprintf(tmp, "[%d]@#-1>", nb);
+      Fl_Button *b2 = new Fl_Button(width - right_pop_width, MH + nb * BH, right_pop_width, BH, tmp);
+      m_pop_label.push_back(tmp);
+      b2->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      b2->tooltip("Show view option menu (Shift+w)");
+  
+      Fl_Menu_Button *p[2];
+      p[0] = new Fl_Menu_Button(width - right_pop_width, MH + nb * BH, right_pop_width, BH);
+      p[0]->type(Fl_Menu_Button::POPUP123);
+  
+      p[1] = new Fl_Menu_Button(0, MH + nb * BH, width - right_pop_width, BH);
+      p[1]->type(Fl_Menu_Button::POPUP3);
+  
+      for(int j = 0; j < 2; j++) {
+	p[j]->add("Reload/View", 0, 
+		  (Fl_Callback *) view_reload_cb, (void *)nb, 0);
+	p[j]->add("Reload/All views", 0, 
+		  (Fl_Callback *) view_reload_all_cb, (void *)nb, 0);
+	p[j]->add("Reload/All visible views", 0, 
+		  (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
+	p[j]->add("Remove/View", FL_Delete, 
+		  (Fl_Callback *) view_remove_cb, (void *)nb, 0);
+	p[j]->add("Remove/All views", 0, 
+		  (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
+	p[j]->add("Remove/All visible views", 0, 
+		  (Fl_Callback *) view_remove_visible_cb, (void *)nb, 0);
+	p[j]->add("Remove/All invisible views", 0, 
+		  (Fl_Callback *) view_remove_invisible_cb, (void *)nb, 0);
+	p[j]->add("Remove/All empty views", 0, 
+		  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
+	p[j]->add("Duplicate/View without options", 0, 
+		  (Fl_Callback *) view_duplicate_cb, (void *)nb, 0);
+	p[j]->add("Duplicate/View with options", 0, 
+		  (Fl_Callback *) view_duplicate_with_options_cb, (void *)nb, 0);
+	p[j]->add("Combine/Elements/From all views", 0, 
+		  (Fl_Callback *) view_combine_all_cb, (void *)nb, 0);
+	p[j]->add("Combine/Elements/From all views (and remove originals)", 0, 
+		  (Fl_Callback *) view_combine_all_and_remove_cb, (void *)nb, 0);
+	p[j]->add("Combine/Elements/From visible views", 0, 
+		  (Fl_Callback *) view_combine_visible_cb, (void *)nb, 0);
+	p[j]->add("Combine/Elements/From visible views (and remove originals)", 0, 
+		  (Fl_Callback *) view_combine_visible_and_remove_cb, (void *)nb, 0);
+	p[j]->add("Combine/Time steps/From all views", 0, 
+		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
+	p[j]->add("Combine/Time steps/From all views (and remove originals)", 0, 
+		  (Fl_Callback *) view_combine_time_all_and_remove_cb, (void *)nb, 0);
+	p[j]->add("Combine/Time steps/From visible views", 0, 
+		  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
+	p[j]->add("Combine/Time steps/From visible views (and remove originals)", 0, 
+		  (Fl_Callback *) view_combine_time_visible_and_remove_cb, (void *)nb, 0);
+	p[j]->add("Combine/Time steps/By view name", 0, 
+		 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
+	p[j]->add("Combine/Time steps/By view name (and remove originals)", 0, 
+		  (Fl_Callback *) view_combine_time_by_name_and_remove_cb, (void *)nb, 0);
+	p[j]->add("Save as/ASCII view...", 0, 
+		  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
+	p[j]->add("Save as/Binary view...", 0, 
+		  (Fl_Callback *) view_save_binary_cb, (void *)nb, 0);
+	add_post_plugins(p[j], nb);
+	p[j]->add("Apply as background mesh", 0, 
+		  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
+	p[j]->add("Options...", 'o', 
+		  (Fl_Callback *) view_options_cb, (void *)nb, 0);
+      }
+
+      m_toggle_butt.push_back(b1);
+      m_toggle2_butt.push_back(b2);
+      m_popup_butt.push_back(p[0]);
+      m_popup2_butt.push_back(p[1]);
+      m_scroll->add(b1);
+      m_scroll->add(b2);
+      m_scroll->add(p[0]);
+      m_scroll->add(p[1]);
+    }
+  }
+  else{ // geometry, mesh and solver contexts
+    while(menu[nb + 1].label) {
+      Fl_Button *b = new Fl_Button(0, MH + nb * BH, width, BH);
+      b->label(menu[nb + 1].label);
+      b->callback(menu[nb + 1].callback, menu[nb + 1].arg);
+      m_push_butt.push_back(b);
+      m_scroll->add(b);
       nb++;
-      v = (Post_View *) List_Pointer(CTX.post.list, i);
-      m_push_butt[i]->hide();
-      m_toggle_butt[i]->show();
-      m_toggle_butt[i]->value(v->Visible);
-      m_toggle_butt[i]->label(v->Name);
-      m_toggle_butt[i]->tooltip(v->FileName);
-      m_toggle2_butt[i]->show();
-      m_popup_butt[i]->show();
-      m_popup2_butt[i]->show();
     }
-    for(i = List_Nbr(CTX.post.list); i < NB_BUTT_MAX; i++) {
-      m_push_butt[i]->hide();
-      m_toggle_butt[i]->hide();
-      m_toggle2_butt[i]->hide();
-      m_popup_butt[i]->hide();
-      m_popup2_butt[i]->hide();
-    }
-    break;
-  default:     // geometry, mesh, solver contexts
-    if(m_module_butt->value() == 2) {   //solver
-      // should handle MAXSOLVERS
-      menu[1].label = opt_solver_name0(0, GMSH_GET, 0);
-      menu[2].label = opt_solver_name1(0, GMSH_GET, 0);
-      menu[3].label = opt_solver_name2(0, GMSH_GET, 0);
-      menu[4].label = opt_solver_name3(0, GMSH_GET, 0);
-      menu[5].label = opt_solver_name4(0, GMSH_GET, 0);
-      for(i = 0; i < MAXSOLVERS; i++) {
-        if(!strlen(menu[i + 1].label))
-          menu[i + 1].label = NULL;
-      }
-    }
-    for(i = 0; i < NB_BUTT_MAX; i++) {
-      m_toggle_butt[i]->hide();
-      m_toggle2_butt[i]->hide();
-      m_popup_butt[i]->hide();
-      m_popup2_butt[i]->hide();
-      if(menu[i + 1].label) {
-        m_push_butt[i]->label(menu[i + 1].label);
-        m_push_butt[i]->callback(menu[i + 1].callback, menu[i + 1].arg);
-        m_push_butt[i]->redraw();
-        m_push_butt[i]->show();
-        nb++;
-      }
-      else
-        break;
-    }
-    for(i = nb; i < NB_BUTT_MAX; i++) {
-      m_toggle_butt[i]->hide();
-      m_toggle2_butt[i]->hide();
-      m_popup_butt[i]->hide();
-      m_popup2_butt[i]->hide();
-      m_push_butt[i]->hide();
-    }
-    break;
   }
 
-  set_menu_size(nb);
+  m_scroll->redraw();
 
+  if(nb <= NB_BUTT_SCROLL)
+    m_window->size(width, MH + nb * BH);
+  else
+    m_window->size(width, MH + NB_BUTT_SCROLL * BH);
 }
 
 int GUI::get_context()
 {
   return m_module_butt->value();
 }
-
 
 // Create the graphic window
 
@@ -1402,8 +1405,6 @@ void GUI::reset_option_browser()
   opt_browser->add("Solver");
   opt_browser->add("Post-processing");
   for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-    if(i == NB_BUTT_MAX)
-      break;
     sprintf(str, "View [%d]", i);
     opt_browser->add(str);
   }
@@ -1459,6 +1460,7 @@ void GUI::create_option_window()
   // Selection browser
 
   opt_browser = new Fl_Hold_Browser(WB, WB, BROWSERW - WB, height - 3 * WB - BH);
+  opt_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   reset_option_browser();
   opt_browser->callback(options_browser_cb);
   opt_browser->value(1);
@@ -3276,8 +3278,6 @@ void GUI::reset_clip_browser()
   clip_browser->add("Geometry");
   clip_browser->add("Mesh");
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    if(i == NB_BUTT_MAX)
-      break;
     sprintf(str, "View [%d]", i);
     clip_browser->add(str);
   }
@@ -3792,4 +3792,3 @@ void GUI::create_solver_window(int num)
   solver[num].window->position(CTX.solver_position[0], CTX.solver_position[1]);
   solver[num].window->end();
 }
-

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.37 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.38 2004-09-16 19:15:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -65,8 +65,8 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
 	 "corresponding time step in `dView'. If `dView'\n"
 	 "< 0, the plugin uses `iView' as the value source.\n"
 	 "\n"
-	 "Plugin(CutMap) creates (at most) as many views\n"
-	 "as there are time steps in `iView'.\n");
+	 "Plugin(CutMap) creates as many views as there are\n"
+	 "time steps in `iView'.\n");
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const

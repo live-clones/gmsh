@@ -47,11 +47,10 @@
 #include <FL/fl_ask.H>
 #include <FL/Fl_Tooltip.H>
 
+#include <vector>
+
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
-
-#define NB_BUTT_MAX    100
-#define NB_HISTORY_MAX 1000
 
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
 #include <FL/Fl_Sys_Menu_Bar.H>
@@ -119,6 +118,7 @@ struct SolverDialogBox
 class GUI{
 
   int MH, fontsize ;
+  Fl_Scroll *m_scroll;
 
   // Bitmaps
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *about_bmp ;
@@ -137,11 +137,12 @@ public:
   Fl_Menu_Bar      *m_menu_bar ;
   Fl_Choice        *m_module_butt ;
   Fl_Button        *m_navig_butt  [2] ;
-  Fl_Button        *m_push_butt   [NB_BUTT_MAX] ;
-  Fl_Light_Button  *m_toggle_butt [NB_BUTT_MAX] ;
-  Fl_Button        *m_toggle2_butt[NB_BUTT_MAX] ;
-  Fl_Menu_Button   *m_popup_butt  [NB_BUTT_MAX] ;
-  Fl_Menu_Button   *m_popup2_butt [NB_BUTT_MAX] ;
+  std::vector<Fl_Button*>       m_push_butt ;
+  std::vector<Fl_Light_Button*> m_toggle_butt ;
+  std::vector<Fl_Button*>       m_toggle2_butt ;
+  std::vector<Fl_Menu_Button*>  m_popup_butt ;
+  std::vector<Fl_Menu_Button*>  m_popup2_butt ;
+  std::vector<char*>            m_pop_label ;
 
   // graphic window
   Fl_Window        *g_window ;
@@ -273,7 +274,6 @@ public:
   void make_opengl_current();
   void redraw_opengl();
   void set_size(int w, int h);
-  void set_menu_size(int nb_butt);
   void set_context(Context_Item menu[], int flag);
   int  get_context();
   void set_anim_buttons(int mode);

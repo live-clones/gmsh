@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.11 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: Extract.cpp,v 1.12 2004-09-16 19:15:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -244,19 +244,13 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
   extract(expr, v1->VY, v1->NbVY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v1->NbTimeStep, 5, 3);
   extract(expr, v1->TY, v1->NbTY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v1->NbTimeStep, 5, 9);
 
-  if(v2->empty()) {
-    RemoveViewByNumber(v2->Num);
-    return v1;
-  }
-  else{
-    // copy time data
-    for(int i = 0; i < List_Nbr(v1->Time); i++)
-      List_Add(v2->Time, List_Pointer(v1->Time, i));
-    // finalize
-    char name[1024], filename[1024];
-    sprintf(name, "%s_Extract", v1->Name);
-    sprintf(filename, "%s_Extract.pos", v1->Name);
-    EndView(v2, 1, filename, name);
-    return v2;
-  }
+  // copy time data
+  for(int i = 0; i < List_Nbr(v1->Time); i++)
+    List_Add(v2->Time, List_Pointer(v1->Time, i));
+  // finalize
+  char name[1024], filename[1024];
+  sprintf(name, "%s_Extract", v1->Name);
+  sprintf(filename, "%s_Extract.pos", v1->Name);
+  EndView(v2, 1, filename, name);
+  return v2;
 }

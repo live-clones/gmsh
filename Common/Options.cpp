@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.182 2004-09-12 17:02:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.183 2004-09-16 19:15:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1723,7 +1723,7 @@ char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
 int _gui_action_valid(int action, int num)
 {
   return ((WID) &&
-	  (num < NB_BUTT_MAX) &&
+	  (num < (int)WID->m_toggle_butt.size()) &&
 	  (action & GMSH_GUI) && 
 	  (num == WID->view_number));
 }
@@ -1735,7 +1735,7 @@ char *opt_view_name(OPT_ARGS_STR)
   if(action & GMSH_SET) {
     strcpy(v->Name, val);
 #if defined(HAVE_FLTK)
-    if(WID && (num < NB_BUTT_MAX)) {
+    if(WID && (num < (int)WID->m_toggle_butt.size())) {
       // this is OK even if v->Name is not static or allocated, since
       // we reset it correctly in the main GUI routines when the view
       // associated with the button changes (i.e., when views are
@@ -4424,7 +4424,7 @@ double opt_view_visible(OPT_ARGS_NUM)
     v->Visible = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num < NB_BUTT_MAX))
+  if(WID && (action & GMSH_GUI) && (num < (int)WID->m_toggle_butt.size()))
     WID->m_toggle_butt[num]->value(v->Visible);
 #endif
   Msg(DEBUG1, "View %d", v->Num);

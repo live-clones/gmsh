@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.268 2004-09-11 06:38:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.269 2004-09-16 19:15:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3108,6 +3108,21 @@ void view_remove_invisible_cb(CALLBACK_ARGS)
   for(i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
     if(!opt_view_visible(i, GMSH_GET, 0))
       view_remove_cb(NULL, (void *)i);
+  REMOVE_ALL_VIEWS = 0;
+  Draw();
+}
+
+void view_remove_empty_cb(CALLBACK_ARGS)
+{
+  int i;
+  if(!CTX.post.list)
+    return;
+  REMOVE_ALL_VIEWS = 1;
+  for(i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
+    Post_View *v = (Post_View*) List_Pointer(CTX.post.list, i);
+    if(v->empty())
+      view_remove_cb(NULL, (void *)i);
+  }
   REMOVE_ALL_VIEWS = 0;
   Draw();
 }

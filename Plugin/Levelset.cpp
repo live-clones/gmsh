@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.14 2004-05-13 17:48:56 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.15 2004-09-16 19:15:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -521,28 +521,13 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   executeList(v, v->TY, v->NbTY, 9, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
 
   for(unsigned int i = 0; i < out.size(); i++) {
-    // create time data
-    // FIXME: todo
+    // FIXME: create time data
     // finalize
     char name[1024], filename[1024];
     sprintf(name, "%s_Levelset_%d", v->Name, i);
     sprintf(filename, "%s_Levelset_%d.pos", v->Name, i);
     EndView(out[i], 1, filename, name);
   }
-
-  // remove empty views
-  List_T *to_remove = List_Create(10, 10, sizeof(int));
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    w = (Post_View*) List_Pointer(CTX.post.list, i);
-    if(w->empty())
-      List_Insert(to_remove, &w->Num, fcmp_int);
-  }
-  for(int i = 0; i < List_Nbr(to_remove); i++) {
-    int num;
-    List_Read(to_remove, i, &num);
-    RemoveViewByNumber(num);
-  }
-  List_Delete(to_remove);
 
   return 0;
 }
