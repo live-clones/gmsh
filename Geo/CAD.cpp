@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.5 2000-11-24 08:04:14 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.6 2000-11-24 10:21:21 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1419,8 +1419,8 @@ void RotateShapes (double Ax,double Ay,double Az,
   ReplaceAllDuplicates ( THEM );
 }
 
-void SymetryShapes (double A,double B,double C,
-                    double D, List_T *ListShapes, int x){
+void SymmetryShapes (double A,double B,double C,
+		     double D, List_T *ListShapes, int x){
   double matrix[4][4];
   SetSymmetryMatrix(matrix,A,B,C,D);
   ApplicationOnShapes(matrix,ListShapes);

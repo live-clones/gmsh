@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.5 2000-11-24 09:44:00 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.6 2000-11-24 10:21:24 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -67,7 +67,7 @@ void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tPower tBump tProgression tAssociation
-%token tRotate tTranslate tSymetry tDilate tExtrude tDuplicata
+%token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tInclude tRecombine tDelete tCoherence
 %token tView tOffset tAttractor tLayers
 %token tScalarSimplex tVectorSimplex tTensorSimplex
@@ -787,9 +787,9 @@ Transform :
       RotateShapes($3[0],$3[1],$3[2],$5[0],$5[1],$5[2],$7,$10);
       $$ = $10;
     }
-  | tSymetry '(' VExpr ')'  '{' MultipleShape '}'
+  | tSymmetry '(' VExpr ')'  '{' MultipleShape '}'
     {
-      SymetryShapes($3[0],$3[1],$3[2],$3[3],$6,1);
+      SymmetryShapes($3[0],$3[1],$3[2],$3[3],$6,1);
       $$ = $6;
     }
   | tDilate '(' VExpr ',' FExpr ')'  '{' MultipleShape '}'

@@ -1,4 +1,4 @@
-/* $Id: CAD.h,v 1.2 2000-11-23 14:11:30 geuzaine Exp $ */
+/* $Id: CAD.h,v 1.3 2000-11-24 10:21:21 geuzaine Exp $ */
 #ifndef _CAD_H_
 #define _CAD_H_
 
@@ -42,8 +42,8 @@ void DilatShapes(double X,double Y,double Z, double A,
 void RotateShapes (double Ax,double Ay,double Az,
 		   double Px,double Py, double Pz,
                    double alpha, List_T *ListShapes);
-void SymetryShapes (double A,double B,double C,
-		    double D, List_T *ListShapes, int x);
+void SymmetryShapes (double A,double B,double C,
+		     double D, List_T *ListShapes, int x);
 void CopyShape(int Type, int Num, int *New);
 
 void DeletePoint(int ip);

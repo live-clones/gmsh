@@ -56,7 +56,7 @@ typedef union {
 #define	tAssociation	305
 #define	tRotate	306
 #define	tTranslate	307
-#define	tSymetry	308
+#define	tSymmetry	308
 #define	tDilate	309
 #define	tExtrude	310
 #define	tDuplicata	311

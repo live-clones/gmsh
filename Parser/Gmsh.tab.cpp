@@ -55,7 +55,7 @@
 #define	tAssociation	305
 #define	tRotate	306
 #define	tTranslate	307
-#define	tSymetry	308
+#define	tSymmetry	308
 #define	tDilate	309
 #define	tExtrude	310
 #define	tDuplicata	311
@@ -146,7 +146,7 @@
 #define	UMINUS	396
 
 #line 1 "Gmsh.y"
- /* $Id: Gmsh.tab.cpp,v 1.5 2000-11-24 09:44:00 geuzaine Exp $ */
+ /* $Id: Gmsh.tab.cpp,v 1.6 2000-11-24 10:21:24 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -504,7 +504,7 @@ static const char * const yytname[] = {   "$","error","$undefined.","tDOUBLE",
 "tFabs","tFloor","tCeil","tFmod","tModulo","tHypot","tPoint","tCircle","tEllipsis",
 "tLine","tSurface","tSpline","tVolume","tCharacteristic","tLength","tParametric",
 "tElliptic","tPlane","tRuled","tTransfinite","tComplex","tPhysical","tUsing",
-"tPower","tBump","tProgression","tAssociation","tRotate","tTranslate","tSymetry",
+"tPower","tBump","tProgression","tAssociation","tRotate","tTranslate","tSymmetry",
 "tDilate","tExtrude","tDuplicata","tLoop","tInclude","tRecombine","tDelete",
 "tCoherence","tView","tOffset","tAttractor","tLayers","tScalarSimplex","tVectorSimplex",
 "tTensorSimplex","tScalarTriangle","tVectorTriangle","tTensorTriangle","tScalarLine",
@@ -2645,7 +2645,7 @@ case 122:
 case 123:
 #line 791 "Gmsh.y"
 {
-      SymetryShapes(yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-4].v[3],yyvsp[-1].l,1);
+      SymmetryShapes(yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-4].v[3],yyvsp[-1].l,1);
       yyval.l = yyvsp[-1].l;
     ;
     break;}
