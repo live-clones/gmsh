@@ -1,4 +1,4 @@
-// $Id: SmoothNormals.cpp,v 1.1 2004-07-16 18:02:19 geuzaine Exp $
+// $Id: SmoothNormals.cpp,v 1.2 2004-07-16 18:04:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -78,7 +78,6 @@ void xyzv::update(int n, double *v)
     nboccurences = 0;
   }
   else if(nbvals != n) {
-    printf("throw!!\n");
     throw n;
   }
 
