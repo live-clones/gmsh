@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.95 2003-05-14 13:35:50 stainier Exp $
+// $Id: Views.cpp,v 1.96 2003-05-14 14:23:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -156,10 +156,6 @@ Post_View *BeginView(int allocate)
 
   return v;
 }
-
-// utility function
-
-double ComputeVonMises(double*); // prototype
 
 double ComputeVonMises(double *V) {
   static const double THIRD = 1.e0 / 3.e0;

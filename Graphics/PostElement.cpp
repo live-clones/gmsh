@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.15 2003-05-14 13:35:50 stainier Exp $
+// $Id: PostElement.cpp,v 1.16 2003-05-14 14:23:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1009,8 +1009,6 @@ void Draw_VectorPyramid(ARGS)
 
 // Tensor Elements
 
-extern double ComputeVonMises(double*);
-
 void Draw_TensorElement(int type, Post_View * View,
                         double ValMin, double ValMax, double Raise[3][8],
                         double *X, double *Y, double *Z, double *V)
@@ -1044,56 +1042,44 @@ void Draw_TensorElement(int type, Post_View * View,
     break;
   }
 
-  /// by lack of any current better solution,
-  /// tensors are displayed as their Von Mises
-  /// invariant (J2 invariant)
-  /// this will simply call the scalar function
-  if(View->TensorType == DRAW_POST_VONMISES) {
+  /// By lack of any current better solution, tensors are displayed as
+  /// their Von Mises invariant (J2 invariant); this will simply call
+  /// the scalar function...
 
-    double V_VonMises[8];
-    for(int i = 0; i < nbnod; i++)
-      V_VonMises[i] = ComputeVonMises(V + 9*i);
+  // View->TensorType == DRAW_POST_VONMISES 
 
-    switch (type) {
-    case POINT:
-      Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
-      break;
-    case LINE:
-      Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
-      break;
-    case TRIANGLE:
-      Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, X, Y, Z,
-                          V_VonMises);
-      break;
-    case QUADRANGLE:
-      Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, X, Y, Z,
-                            V_VonMises);
-      break;
-    case TETRAHEDRON:
-      Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, X, Y, Z,
-                             V_VonMises);
-      break;
-    case HEXAHEDRON:
-      Draw_ScalarHexahedron(View, 0, ValMin, ValMax, Raise, X, Y, Z,
-                            V_VonMises);
-      break;
-    case PRISM:
-      Draw_ScalarPrism(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
-      break;
-    case PYRAMID:
-      Draw_ScalarPyramid(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
-      break;
-    }
+  double V_VonMises[8];
+  for(int i = 0; i < nbnod; i++){
+    V_VonMises[i] = ComputeVonMises(V + 9*i);
   }
-  else {
-    static int error = 0;
-    if(!error) {
-      error = 1;
-      Msg(GERROR, "Tensor field visualization is not implemented");
-      Msg(GERROR, "We *need* some ideas on how to implement this!");
-      Msg(GERROR, "Send your ideas to <gmsh@geuz.org>!");
-    }
+
+  switch (type) {
+  case POINT:
+    Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
+  case LINE:
+    Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
+  case TRIANGLE:
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
+  case QUADRANGLE:
+    Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
+  case TETRAHEDRON:
+    Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
+  case HEXAHEDRON:
+    Draw_ScalarHexahedron(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
+  case PRISM:
+    Draw_ScalarPrism(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
+  case PYRAMID:
+    Draw_ScalarPyramid(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
+    break;
   }
+
 }
 
 #define ARGS Post_View *View, 					\
@@ -1139,3 +1125,6 @@ void Draw_TensorPyramid(ARGS)
 {
   Draw_TensorElement(PYRAMID, View, ValMin, ValMax, Raise, X, Y, Z, V);
 }
+
+#undef ARGS
+

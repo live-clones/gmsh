@@ -1,4 +1,7 @@
-$Id: VERSIONS,v 1.142 2003-04-21 01:32:54 geuzaine Exp $
+$Id: VERSIONS,v 1.143 2003-05-14 14:23:10 geuzaine Exp $
+
+New in 1.45: small bug fixes (min/max computation for tensor views,
+physical points in read mesh, etc.); documentation updates;
 
 New in 1.44: new reference manual; added support for PNG output; fixed
 small configure script bugs;

@@ -159,4 +159,6 @@ Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double
 GmshColorTable *Get_ColorTable(int num);
 void Print_ColorTable(int num, char *prefix, FILE *file);
 
+double ComputeVonMises(double* val);
+
 #endif
