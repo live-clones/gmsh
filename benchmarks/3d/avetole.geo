@@ -1,4 +1,6 @@
-// (c)patrick lefevre
+// (c) patrick lefevre
+
+Geometry.AutoCoherence = 0;//speed up!
 
 mm = 0.001 ; // 1 milimetre = 0.001 metre
 lc = 7.3*mm ; // unite de base min pour la taille caracteristique du maillage
@@ -234,6 +236,8 @@ For i In {0:totaim}
   yBox=yancaim[i]; zBox= eppba ; lcBox=lc; thetaBox= anglerot[i];
   Include "BOX.geo"; 
 EndFor
+
+Coherence;
 
 For tx In {1:nbx} // creation des lignes manquantes sur l'axe x
   divline = newreg;

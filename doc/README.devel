@@ -19,11 +19,12 @@ default value for this option.
 3) Create the handling routine opt_XXX in Common/Options.cpp (and add
 the prototype in Common/Options.h).
 
+Optional:
+
 4) Create the associated widget in Fltk/GUI.cpp
 
 5) If no special callback is to be associated to the widget, add the
 handling routine opt_XXX to the OK callback for the corresponding
 option panel (in Fltk/Callbacks.cpp).
 
-6) That's it!
 
