@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.22 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Utils.cpp,v 1.23 2004-03-28 01:16:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -356,7 +356,7 @@ void invert_singular_matrix3x3(double _M[3][3], double _I[3][3])
 void XYZtoUV(Surface * s, double X, double Y, double Z, double *U, double *V,
              double relax)
 {
-  double Unew, Vnew, err;
+  double Unew = 0., Vnew = 0., err;
   int iter;
   Vertex D_u, D_v, P;
   double mat[3][3], jac[3][3];
