@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.9 2003-04-11 23:36:18 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.10 2003-04-14 17:13:17 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -165,8 +165,8 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 
 Introduction
 
-* What Gmsh is good at...::     
-* ... and what Gmsh sucks at::  
+* What Gmsh is pretty good at...::  
+* ... and what it is not so good at::  
 * Syntactic rules::             
 
 Overview
@@ -268,73 +268,119 @@ developments and download information, are always available on
 @unnumbered Introduction
 
 @cindex Introduction
-@cindex Reading, guidelines
+@cindex Overview
 
 Gmsh is an automatic three-dimensional finite element mesh generator,
 primarily Delaunay, with built-in pre- and post-processing facilities. Its
 primal design goal is to provide a simple meshing tool for academic test
-cases with parametric input and up to date visualization capabilities.
-
-One of the strengths of Gmsh is its ability to respect a characteristic
-length field for the generation of adapted meshes on lines, surfaces and
+cases with parametric input and up to date visualization capabilities.  One
+of the strengths of Gmsh is its ability to respect a characteristic length
+field for the generation of adapted meshes on lines, surfaces and
 volumes. These adapted meshes can be mixed with simple structured
-(transfinite, elliptic, etc.)  meshes in order to augment the flexibility.
-
+(transfinite, extruded, etc.) meshes in order to augment the flexibility.
 All geometrical, mesh, solver and post-processing instructions are
-prescribed in a language analyzed by Lex and Yacc. The code itself is
-written in C++, while the graphics are rendered with OpenGL and the user
-interface is based on the FLTK widget set. @xref{Programming comments}, for
-some development comments.
+prescribed either interactively using the graphical user interface or in
+ASCII data files using Gmsh's own scripting language.
 
 @menu
-* What Gmsh is good at...::     
-* ... and what Gmsh sucks at::  
+* What Gmsh is pretty good at...::  
+* ... and what it is not so good at::  
 * Syntactic rules::             
 @end menu
 
 @c -------------------------------------------------------------------------
-@c What Gmsh is good at
+@c What Gmsh is pretty good at
 @c -------------------------------------------------------------------------
 
-@node What Gmsh is good at..., ... and what Gmsh sucks at, Introduction, Introduction
-@section What Gmsh is good at...
+@node What Gmsh is pretty good at..., ... and what it is not so good at, Introduction, Introduction
+@section What Gmsh is pretty good at...
 
-Gmsh should be pretty good at
-
-
+@itemize @bullet
+@item
+Describe quickly simple and/or ``repetitive'' geometries. Models are
+constructed by defining successively points, curves, surfaces and volumes
+(@pxref{Geometry}). Loops and includes can be used to perform repetitive
+tasks (@pxref{Loops and tests}, @pxref{General commands}).
+@item
+Parameterize these geometries: the model is described in Gmsh's own
+language, where all commands and command arguments can depend on previous
+calculations.
+@item
+Generate 1D, 2D and 3D simplicial (i.e. using line segments, triangles and
+tetrahedra) finite element meshes. The 1D and 2D algorithms should have
+pretty good performance in most cases. The 3D algorithm is still more
+experimental.
+@item
+Specify target element sizes: Gmsh provides several mechanisms to control
+the size of the elements in the final (interpolation from geometrical point
+characteristic lengths, explicit background mesh, attractors).
+@item
+Create simple extruded geometries and meshes.
+@item
+Interact with your solver: Gmsh provides C/C++ and perl interfaces, and
+others can be easily added (@pxref{Solver}).
+@item
+Visualize computational results in a great variety of ways. Gmsh can
+display scalar, vector and tensor data sets in many different ways.
+@item
+Perform various operations on the post-processing views using plugins
+(@pxref{Post-processing}).
+@item
+Exports plots in many different formats (vector PostScript or encapsulated
+PostScript, LaTeX, PNG, JPEG, GIF, etc.).
+@item
+Generate complex animations.
+@item
+Run on low end machines and/or machines without graphic systems: Gmsh can be
+compiled with or without the graphical user interface; graphical versions
+can be used either interactively or without graphicak output, directly from
+the command-line.
+@item
+Configure your preferred options for all subsequent operations: Gmsh has a
+large number of configurations options that can be set interactively,
+scattered inside command files (and changed on the fly in scripts), set in
+per-user configuration files, or specified on the command-line
+(@pxref{Options}).
+@end itemize
 
 @c -------------------------------------------------------------------------
-@c ... and what Gmsh sucks at
+@c ... and what it is not so good at
 @c -------------------------------------------------------------------------
 
-@node ... and what Gmsh sucks at, Syntactic rules, What Gmsh is good at..., Introduction
-@section ... and what Gmsh sucks at
+@node ... and what it is not so good at, Syntactic rules, What Gmsh is pretty good at..., Introduction
+@section ... and what it is not so good at
 
-Gmsh is not an primarily a structured mesh generator. You can transfinite,
-extruded
-
-Related to the previous point: there is no automatic quadrilateral or
-hexahedral meshing algorithm implemented. If you want quads, you have to use
-transfinite or extruded meshes (see XXX) or recombine unstructured
-triangular meshes. For hexahedra, your only choice is transfinite or
-extruded meshes.
-
+@itemize @bullet
+@item
+The bottom-up approach for describing geometries can become tedious for
+complex structures.
+@item
+There is no support for NURBS and only very limited support for trimmed
+surfaces.
+@item
+Gmsh is not primarily a structured mesh generator: no automatic
+quadrilateral or hexahedral meshing algorithm is provided. If you want
+quadrangles, you have to use transfinite or extruded meshes (@pxref{Mesh})
+or recombine unstructured triangular meshes. For hexahedra, your only choice
+is transfinite or extruded meshes.
+@item
 Gmsh is not a multibloc generator: all meshes produced by Gmsh are
-conforming in the sense of finite element meshes 
-(see XXX)
-
-Gmsh was designed for solving academic/verification test-cases, not
-industrial-size problems. - very large problems: (> million elements) both
-for geometry, mesh and post-processing. Gmsh is NOT optimized for
-speed. Your mileage may vary, of course, depending of what you consider a
-``large'' problem...
-
+conforming in the sense of finite element meshes (@pxref{Mesh})
+@item
+There is not support for curved mesh elements as of this writing (Gmsh
+1.44).
+@item
+Gmsh is designed for solving academic test-cases, not industrial-size
+problems. You may find that Gmsh is too slow for large problems (with
+thousands of geometric primitives; or millions of mesh/post-processing
+elements).
+@end itemize
 
 @c -------------------------------------------------------------------------
 @c Syntactic Rules Used in this Document
 @c -------------------------------------------------------------------------
 
-@node Syntactic rules,  , ... and what Gmsh sucks at, Introduction
+@node Syntactic rules,  , ... and what it is not so good at, Introduction
 @section Syntactic rules used in this document
 
 @cindex Syntax, rules
@@ -349,8 +395,7 @@ speed. Your mileage may vary, of course, depending of what you consider a
 
 Here are the rules we tried to follow when writing this user's guide. Note
 that metasyntactic variable definitions stay valid throughout all the manual
-(and not only in the sections where the definitions
-appear). 
+(and not only in the sections where the definitions appear).
 
 @enumerate
 @item 
@@ -368,9 +413,6 @@ Multiple choices are separated by @code{|}.
 @item 
 Three dots (@dots{}) indicate a possible repetition of the preceding rule.
 @item 
-For conciseness, the notation @code{@var{rule} <, @var{rule} > @dots{}}
-is replaced by @code{@var{rule} <,@dots{}>}.
-@item 
 The @var{etc} symbol replaces nonlisted rules.
 @end enumerate
 
@@ -386,18 +428,12 @@ The @var{etc} symbol replaces nonlisted rules.
 Gmsh is structured around four modules: geometry, mesh, solver and
 post-processing. The specification of any input to these modules is done
 either interactively, or in text data files (interactive specifications
-generate language bits in the input file, and XXXlatin vice versa). The
-accessibility of most features in the ASCII text file makes it possible to
-automate all treatments (loops, tests and external access methods permit
-advanced scripting capabilities). The internal kernel of Gmsh reflects this
+generate language bits in the input file, and vice versa). The accessibility
+of most features in the ASCII text file makes it possible to automate all
+treatments (loops, tests and external access methods permit advanced
+scripting capabilities). The internal kernel of Gmsh reflects this
 structure: it is built around a geometry, mesh, solver and post-processing
-database. It is interesting to notice that the data can be provided to these
-databases either in the native format or thanks to dynamically loadable
-modules (plug-ins). This is most interesting to convert CAD data from other
-description languages (e.g. DXF or STEP), to launch external applications
-from inside Gmsh (e.g. GetDP or other solvers) or to apply complex
-user-defined treatments to geometry, mesh or post-processing data.  A brief
-description of the four modules is given hereafter.
+module. A brief description of these four modules is given hereafter.
 
 @menu
 * Geometry::                    
@@ -430,17 +466,16 @@ of all geometrical entities.
 @node Mesh, Solver, Geometry, Overview
 @section Mesh: finite element mesh generation
 
-A finite element mesh is a tessellation of a given subset of
-R<sup>3</sup> by elementary geometrical elements of various shapes (in
-this case lines, triangles, quadrangles, tetrahedra, prisms, hexahedra
-and pyramids), arranged in such a way that if two of them intersect,
-they do so along a face, an edge or a node, and never otherwise. All
-the finite element meshes produced by Gmsh as unstructured, even if
-they were generated in a structured way. This implies that the
-elementary geometrical elements are defined only by an ordered list of
-their vertices (which allows the orientation of all their lower order
-geometrical entities) but no predefined relation is assumed between
-any two elementary elements.
+A finite element mesh is a tessellation of a given subset of R3 by
+elementary geometrical elements of various shapes (in this case lines,
+triangles, quadrangles, tetrahedra, prisms, hexahedra and pyramids),
+arranged in such a way that if two of them intersect, they do so along a
+face, an edge or a node, and never otherwise. All the finite element meshes
+produced by Gmsh as unstructured, even if they were generated in a
+structured way. This implies that the elementary geometrical elements are
+defined only by an ordered list of their vertices (which allows the
+orientation of all their lower order geometrical entities) but no predefined
+relation is assumed between any two elementary elements.
 
 The mesh generation is performed in the same order as the geometry
 creation: curves are discretized first; the mesh of the curves is then
@@ -458,23 +493,24 @@ as additional constraints for the unstructured parts. The implemented
 Delaunay algorithm is subdivided in the following five steps for
 surface/volume discretization:
 
-1. trivial meshing of a box including the convex polygon/polyhedron
-defined by the boundary nodes resulting from the discretization of the
-curves/surfaces;
-
-2. creation of the initial mesh by insertion of all the nodes on the
+@enumerate
+@item
+trivial meshing of a box including the convex polygon/polyhedron defined by
+the boundary nodes resulting from the discretization of the curves/surfaces;
+@item
+creation of the initial mesh by insertion of all the nodes on the
 curves/surfaces thanks to the Bowyer algorithm;
-
-3. boundary restoration to force all the edges/faces of the
-curves/surfaces to be present in the initial mesh;
-
-4. suppression of all the unwanted triangles/tetrahedra (in
-particular those containing the nodes of the initial box);
-
-5. insertion of new nodes by the Bowyer algorithm until the
-characteristic size of each simplex is lower or equal to the
-characteristic length field evaluated at the center of its
-circumscribed circle/sphere.
+@item
+boundary restoration to force all the edges/faces of the curves/surfaces to
+be present in the initial mesh;
+@item
+suppression of all the unwanted triangles/tetrahedra (in particular those
+containing the nodes of the initial box);
+@item
+insertion of new nodes by the Bowyer algorithm until the characteristic size
+of each simplex is lower or equal to the characteristic length field
+evaluated at the center of its circumscribed circle/sphere.
+@end enumerate
 
 @c -------------------------------------------------------------------------
 @c Solver: external solver interface
@@ -483,14 +519,12 @@ circumscribed circle/sphere.
 @node Solver, Post-processing, Mesh, Overview
 @section Solver: external solver interface
 
-External solvers can be interfaced with Gmsh through a socket
-mechanism, which permits to easily launch computations either locally
-or on remote computers, and to collect and exploit the simulation
-results within Gmsh. The default solver interfaced with Gmsh is <a
-href="/getdp/">GetDP</a>. Check the <a href="#mysolver">solver
-examples</a> to see how to define your own solver (be sure to also
-read the answer to the question 6.1 in the <a
-HREF="/gmsh/doc/FAQ">FAQ</a>).
+External solvers can be interfaced with Gmsh through Unix sockets, which
+permits to easily launch computations either locally or on remote computers,
+and to collect and exploit the simulation results within Gmsh. The default
+solver interfaced with Gmsh is GetDP
+(@uref{http://www.geuz.org/getdp/}). @xref{Solver}, to see how to define
+your own solver.
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar and vector field visualization
@@ -499,17 +533,17 @@ HREF="/gmsh/doc/FAQ">FAQ</a>).
 @node Post-processing,  , Solver, Overview
 @section Post-processing: scalar and vector field visualization
 
-Multiple post-processing scalar or vector maps can be loaded and
-manipulated (globally or individually) along with the geometry and the
-mesh. Scalar fields are represented by iso-value curves/surfaces or
-color maps and vector fields by three-dimensional arrows or
-displacement maps. Post-processing functions include arbitrary section
-computation, offset, elevation, boundary extraction, color map and
-range modification, animation, <a href="/gl2ps/">vector graphic
-output</a>, etc. All post-processing options can be accessed either
-interactively or through the input ASCII text files. Scripting permits
-to automate all the post-processing operations (e.g. for the creation
-of complex animations).
+Multiple post-processing scalar or vector maps can be loaded and manipulated
+(globally or individually) along with the geometry and the mesh. Scalar
+fields are represented by iso-value curves/surfaces or color maps and vector
+fields by three-dimensional arrows or displacement maps. Post-processing
+functions include arbitrary section computation, offset, elevation, boundary
+extraction, color map and range modification, animation, vector graphic
+output, etc. All post-processing options can be accessed either
+interactively or through the input ASCII text files. Scripting permits to
+automate all the post-processing operations (e.g. for the creation of
+complex animations). User-defined operations can also be performed on
+post-proessing views through to dynamically loadable modules (plug-ins).
 
 @c =========================================================================
 @c General tools
@@ -835,14 +869,13 @@ i.e.@: @code{^} has the highest evaluation priority). Parentheses
 
 
 @c -------------------------------------------------------------------------
-@c Functions
+@c Built-in functions
 @c -------------------------------------------------------------------------
 
-@node Functions, General commands, Operators, General tools
-@section Functions
+@node Built-in functions, General commands, Operators, General tools
+@section Built-in functions
 
-@cindex Function, definition
-@cindex Built-in functions
+@cindex Functions, built-in
 
 @vindex @var{function-id}
 
@@ -967,6 +1000,45 @@ Hyperbolic tangent of @var{expression}.
 @end ftable
 
 @c -------------------------------------------------------------------------
+@c User-defined functions
+@c -------------------------------------------------------------------------
+
+@node User-defined functions, General commands, Operators, General tools
+@section User-defined Functions
+
+@cindex Function, user-defined
+
+@ftable @code
+
+@item Call
+@code{"@var{expression-char}"}
+
+@item Function
+
+@item Return
+
+@end ftable
+
+@c -------------------------------------------------------------------------
+@c Loops and tests
+@c -------------------------------------------------------------------------
+
+@node Loops and tests, General commands, Operators, General tools
+@section Loops and tests
+
+@ftable @code
+
+@item For
+
+@item EndFor
+
+@item EndIf
+
+@item If
+
+@end ftable
+
+@c -------------------------------------------------------------------------
 @c General commands
 @c -------------------------------------------------------------------------
 
@@ -975,28 +1047,13 @@ Hyperbolic tangent of @var{expression}.
 
 @ftable @code
 
-@item Call
-@code{"@var{expression-char}"}
-
-@item EndFor
-
-@item EndIf
-
 @item Exit
-
-@item For
-
-@item Function
-
-@item If
 
 @item MPI_Rank
 
 @item MPI_Size
 
 @item Printf
-
-@item Return
 
 @item Sprintf
 
@@ -1060,13 +1117,6 @@ same line is ignored. XXX verify this
 @code{#include @var{expression-char}} 
 @end example
 
-unused keywords:
-Bounds
-Complex
-Ellipse         
-Extrude         
-ELLIPSE
-
 @c -------------------------------------------------------------------------
 @c Option database
 @c -------------------------------------------------------------------------
@@ -1103,12 +1153,14 @@ XXX
 @item Delete          
 @item Dilate          
 @item Duplicata       
-@item Ellipsis        
+@item Ellipsis
+(synonym: Ellipse)
 @item Intersect       
 @item Knots		
 @item Line            
 @item Loop            
-@item Nurbs		
+@item Nurbs Surface
+@item Nurbs Surface With Bounds
 @item Order
 @item Physical        
 @item Plane           
@@ -1121,7 +1173,8 @@ XXX
 @item Triangulation   
 @item Translate       
 @item Trimmed		
-@item Volume          
+@item Volume
+(synonym: Complex Volume)
 @end ftable
 
 @c =========================================================================
@@ -1138,6 +1191,7 @@ XXX
 @item Bump
 @item Characteristic
 @item Elliptic
+@item Extrude
 @item Length
 @item Layers          
 @item Meshes          
@@ -1403,9 +1457,21 @@ dans Gmsh...
 @cindex @code{yacc}
 @cindex @code{bison}
 
-The analysis of the syntax is performed by Lex and Yacc, the software being
-written in C++ (but most of it was initially written in C, which results in
-some hybrid code...).
+The analysis of the syntax is performed by Lex and Yacc.
+
+The code itself is in C++ (but most of it was initially written in C, which
+results in some hybrid code...).
+
+All graphics are rendered using OpenGL.
+
+The user interface is based on the FLTK widget set. 
+
+
+@uref{http://www.opengl.org}
+@uref{http://www.mesa3d.org}
+@uref{http://www.fltk.org}
+@uref{http://www.cygwin.com}
+
 
 @c =========================================================================
 @c Bugs, versions and contributors

@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.46 2003-04-10 13:12:36 remacle Exp $
+// $Id: Gmsh.l,v 1.47 2003-04-14 17:13:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ stepid  {dieze}({digit})*
 
 %%
 
-[\ \t\n\r\f]		/* none */ ;
+[\ \t\n\r\f]		/* none */;
 ";"                     return tEND;
 "/*"			skipcomments();
 "//"			skipline();
@@ -93,31 +93,31 @@ stepid  {dieze}({digit})*
 "news"  		{yylval.d = NEWSURFACE(); return tDOUBLE;}
 "newv"  		{yylval.d = NEWVOLUME(); return tDOUBLE;}
 "="                     return tAFFECT;
-"+="                    return tAFFECTPLUS ;
-"-="                    return tAFFECTMINUS ;
-"*="                    return tAFFECTTIMES ;
-"/="                    return tAFFECTDIVIDE ;
+"+="                    return tAFFECTPLUS;
+"-="                    return tAFFECTMINUS;
+"*="                    return tAFFECTTIMES;
+"/="                    return tAFFECTDIVIDE;
 ":"                     return tDOTS;
 "..."                   return tDOTS;
-"/\\"                   return tCROSSPRODUCT ;
-"||"                    return tOR ;
-"&&"                    return tAND ;
-"++"                    return tPLUSPLUS ;
-"--"                    return tMINUSMINUS ;
-"=="                    return tEQUAL ;
-"!="                    return tNOTEQUAL ;
-"~="                    return tAPPROXEQUAL ;
-"<="                    return tLESSOREQUAL ;
-">="                    return tGREATEROREQUAL ;
+"/\\"                   return tCROSSPRODUCT;
+"||"                    return tOR;
+"&&"                    return tAND;
+"++"                    return tPLUSPLUS;
+"--"                    return tMINUSMINUS;
+"=="                    return tEQUAL;
+"!="                    return tNOTEQUAL;
+"~="                    return tAPPROXEQUAL;
+"<="                    return tLESSOREQUAL;
+">="                    return tGREATEROREQUAL;
 
-Acos                    return tAcos ;
-ArcCos                  return tAcos ;
+Acos                    return tAcos;
+ArcCos                  return tAcos;
 Asin                    return tAsin;
 ArcSin                  return tAsin;
-Atan                    return tAtan ;
-ArcTan                  return tAtan ;
-Atan2                   return tAtan2 ;
-ArcTan2                 return tAtan2 ;
+Atan                    return tAtan;
+ArcTan                  return tAtan;
+Atan2                   return tAtan2;
+ArcTan2                 return tAtan2;
 Attractor		return tAttractor;
 
 Bezier			return tBezier;
@@ -125,9 +125,9 @@ Bump                    return tBump;
 BSpline			return tBSpline;
 Bounds			return tBounds;
 
-Ceil                    return tCeil ;
-Cosh                    return tCosh ;
-Cos                     return tCos ;
+Ceil                    return tCeil;
+Cosh                    return tCosh;
+Cos                     return tCos;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
 Coherence               return tCoherence;
@@ -142,23 +142,22 @@ Dilate                  return tDilate;
 Duplicata               return tDuplicata;
 Draw                    return tDraw;
 
-Exp                     return tExp ;
+Exp                     return tExp;
 Ellipsis                return tEllipse;
 Ellipse                 return tEllipse;
 Extrude                 return tExtrude;
 Elliptic		return tElliptic;
-ELLIPSE                 return tELLIPSE;
 EndFor                  return tEndFor;
 EndIf                   return tEndIf;
 Exit                    return tExit;
 
-Fabs                    return tFabs ;
-Floor                   return tFloor ;
-Fmod                    return tFmod ;
+Fabs                    return tFabs;
+Floor                   return tFloor;
+Fmod                    return tFmod;
 For                     return tFor;
 Function                return tFunction;
 
-Hypot                   return tHypot ;
+Hypot                   return tHypot;
 
 In                      return tIn;
 If                      return tIf;
@@ -169,11 +168,11 @@ Knots			return tKnots;
 Length                  return tLength;
 Line                    return tLine;
 Loop                    return tLoop;
-Log                     return tLog ;
-Log10                   return tLog10 ;
+Log                     return tLog;
+Log10                   return tLog10;
 Layers                  return tLayers;
 
-Modulo                  return tModulo ;
+Modulo                  return tModulo;
 Meshes                  return tMesh;
 MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
@@ -198,20 +197,20 @@ Ruled                   return tRuled;
 Rand                    return tRand;
 Return                  return tReturn;
 
-Sqrt                    return tSqrt ;
-Sin                     return tSin ;
-Sinh                    return tSinh ;
+Sqrt                    return tSqrt;
+Sin                     return tSin;
+Sinh                    return tSinh;
 Spline                  return tSpline;
 Surface                 return tSurface;
 Symmetry                return tSymmetry;
-Sprintf                 return tSprintf ;
-StrCat                  return tStrCat ;
-StrPrefix               return tStrPrefix ;
+Sprintf                 return tSprintf;
+StrCat                  return tStrCat;
+StrPrefix               return tStrPrefix;
 
 Triangulation           return tTriangulation;
 Transfinite             return tTransfinite;
 Translate               return tTranslate;
-Tanh                    return tTanh ;
+Tanh                    return tTanh;
 Tan                     return tTan;
 Trimmed			return tTrimmed;
 
@@ -261,6 +260,7 @@ B_SPLINE_CURVE_WITH_KNOTS          return tB_SPLINE_CURVE_WITH_KNOTS;
 ORIENTED_EDGE                      return tORIENTED_EDGE;
 EDGE_CURVE			   return tEDGE_CURVE;
 EDGE_LOOP 			   return tEDGE_LOOP;
+ELLIPSE                            return tELLIPSE;
 VERTEX_POINT			   return tVERTEX_POINT;
 FACE_OUTER_BOUND     		   return tFACE_OUTER_BOUND;
 FACE_BOUND		     	   return tFACE_BOUND;
@@ -326,7 +326,7 @@ void skipcomments(void) {
   while (1) {
     while ((c=yyinput()) != '*'){
       if(c == EOF){
-        Msg(GERROR, "End of file in commented region") ;
+        Msg(GERROR, "End of file in commented region");
         return;
       }
     }
@@ -354,7 +354,7 @@ char *strsave(char *ptr){
 }
 
 void skipline(void){
-   while (yyinput() != '\n') ;
+   while (yyinput() != '\n');
 }
 
 void skip_until(char *skip, char *until){
@@ -362,12 +362,12 @@ void skip_until(char *skip, char *until){
   int l, l_skip, l_until;
   char chars[256];
 
-  nb_skip = 0 ;
+  nb_skip = 0;
 
   if(skip)
     l_skip = strlen(skip);
   else
-    l_skip = 0 ;
+    l_skip = 0;
 
   l_until = strlen(until);
 
@@ -375,15 +375,15 @@ void skip_until(char *skip, char *until){
     while (1){
       chars[0] = yyinput();
       if(chars[0] == (char)EOF){
-        Msg(GERROR, "Unexpected end of file") ;
+        Msg(GERROR, "Unexpected end of file");
 	return;
       }
       if(chars[0] == until[0]) break;
       if(skip && chars[0] == skip[0]) break;
     }
 
-    l = MAX(l_skip,l_until) ;
-    for(i=1 ; i<l ; i++){
+    l = MAX(l_skip,l_until);
+    for(i=1; i<l; i++){
       chars[i] = yyinput();
       if(chars[i] == (char)EOF){
 	l = i;

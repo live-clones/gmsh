@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.136 2003-04-10 13:12:37 remacle Exp $
+// $Id: Gmsh.y,v 1.137 2003-04-14 17:13:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -117,7 +117,7 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %token tText2D tText3D
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tReturn tCall tFunction tMesh
+%token tReturn tCall tFunction tMesh tTrimmed
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -129,7 +129,7 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %token tFACE_BOUND tCYLINDRICAL_SURFACE tCONICAL_SURFACE tCIRCLE tTRIMMED_CURVE
 %token tGEOMETRIC_SET tCOMPOSITE_CURVE_SEGMENT tCOMPOSITE_CURVE_SEGMENT tCONTINUOUS
 %token tCOMPOSITE_CURVE tTOROIDAL_SURFACE tPRODUCT_DEFINITION tPRODUCT_DEFINITION_SHAPE
-%token tSHAPE_DEFINITION_REPRESENTATION tELLIPSE tTrimmed
+%token tSHAPE_DEFINITION_REPRESENTATION tELLIPSE
 
 %token tSolid tEndSolid tVertex tFacet tNormal tOuter tLoopSTL tEndLoop tEndFacet
 
