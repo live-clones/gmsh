@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.165 2001-11-20 08:04:59 geuzaine Exp $
+# $Id: Makefile,v 1.166 2001-11-23 13:51:14 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 31
@@ -462,6 +462,28 @@ link_cygwin:
                  Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 cygwin: tag compile_cygwin link_cygwin
+	strip $(GMSH_BIN_DIR)/gmsh.exe
+
+#
+# Cygwin with fltk 1.1
+#
+compile_cygwin1:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CXX=g++" \
+           "CC=gcc" \
+           "OPT_FLAGS=-O2" \
+           "OS_FLAGS=-DWIN32 -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
+        ); done
+link_cygwin1:
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
+                 Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk_gl.a\
+                 -lglu32 -lopengl32\
+                 $(HOME)/SOURCES/fltk/lib/libfltk.a\
+                 -lgdi32 -lwsock32 -lm
+cygwin1: tag compile_cygwin1 link_cygwin1
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
