@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.41 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.42 2001-09-05 09:35:29 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -551,27 +551,20 @@ void Draw_Simplex_Curves(void *a,void *b){
 
   s = *(Simplex**)a;
 
+  if(!EntiteEstElleVisible (s->iEnt)) return;
+
   Xc = 0.5 * (s->V[0]->Pos.X + s->V[1]->Pos.X);
   Yc = 0.5 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y);
   Zc = 0.5 * (s->V[0]->Pos.Z + s->V[1]->Pos.Z);
 
-  /*
-  double X[2],Y[2],Z[2]
+  double X[2],Y[2],Z[2];
   for (int i=0 ; i<2 ; i++) {
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
-  
-  if(CTX.mesh.lines){
-    glColor4ubv((GLubyte*)&CTX.color.mesh.line);
-    glBegin(GL_LINES);
-    glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[1], Y[1], Z[1]);
-    glEnd();    
-  }
-  */
 
+  /*
   if(CTX.mesh.points){
     glColor4ubv((GLubyte*)&CTX.color.mesh.vertex);
     glBegin(GL_POINTS);
@@ -585,9 +578,21 @@ void Draw_Simplex_Curves(void *a,void *b){
       glEnd();    
     }
   }
+  */
+
+  if(CTX.mesh.color_carousel)
+    ColorSwitch(iColor);
+  else
+    glColor4ubv((GLubyte*)&CTX.color.mesh.line);
+
+  if(CTX.mesh.lines){
+    glBegin(GL_LINES);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glEnd();    
+  }
 
   if(CTX.mesh.lines_num){
-    glColor4ubv((GLubyte*)&CTX.color.mesh.line);
     sprintf(Num,"%d",s->Num);
     glRasterPos3d(Xc + 3*CTX.pixel_equiv_x/CTX.s[0],
                   Yc + 3*CTX.pixel_equiv_x/CTX.s[1], 

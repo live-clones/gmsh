@@ -1,8 +1,9 @@
-$Id: VERSIONS,v 1.67 2001-09-04 16:25:06 geuzaine Exp $
+$Id: VERSIONS,v 1.68 2001-09-05 09:35:29 geuzaine Exp $
 
 New in 1.26: Enhanced 2D anisotropic mesh generator (metric
 intersections); fixed (yet another) bug in 3D initial mesh;
 alternative syntax for built-in functions (for GetDP compatibility);
+draw line elements;
 
 New in 1.25: Fixed bug with mixed recombined/non-recombined extruded
 meshes; Linux versions are now build with no optimization, due to bugs
