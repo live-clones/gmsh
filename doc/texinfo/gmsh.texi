@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.66 2003-06-23 18:16:34 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.67 2003-06-23 18:18:25 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2137,6 +2137,8 @@ and options.
 @c -------------------------------------------------------------------------
 @c Two- and three-dimensional plots
 @c -------------------------------------------------------------------------
+
+@c todo: explain 2D vs. 3D plots
 
 @c @node Two- and three-dimensional plots, , 
 @c @section Two- and three-dimensional plots
