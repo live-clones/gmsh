@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.96 2004-01-25 09:32:36 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.97 2004-01-29 22:04:03 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -665,6 +665,7 @@ parsing of the data file:
   @var{real} |
   @var{string} |
   @var{string} [ @var{expression} ] |
+  # @var{string} [ ] |
   ( @var{expression} ) |
   @var{operator-unary-left} @var{expression} |
   @var{expression} @var{operator-unary-right} |
@@ -900,7 +901,7 @@ Parentheses @code{()} may be used anywhere to change the order of
 evaluation:
 
 @enumerate
-@item @code{()}, @code{[]}, @code{.}
+@item @code{()}, @code{[]}, @code{.}, @code{#}
 @item @code{^}
 @item @code{!}, @code{++}, @code{--}, @code{-} (unary)
 @item @code{*}, @code{/}, @code{%}

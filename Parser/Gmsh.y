@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.156 2004-01-25 09:32:33 geuzaine Exp $
+// $Id: Gmsh.y,v 1.157 2004-01-29 22:03:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -159,7 +159,7 @@ void FixRelativePath(char *in, char *out);
 %left    '*' '/' '%' tCROSSPRODUCT
 %right   '!' tPLUSPLUS tMINUSMINUS UNARYPREC
 %right   '^'
-%left    '(' ')' '[' ']' '.'
+%left    '(' ')' '[' ']' '.' '#'
 
 %start All
 
@@ -2883,6 +2883,18 @@ FExpr_Single :
 	  yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, (int)$3) ;
 	  $$ = 0. ;
 	}
+      }
+    }
+
+  | '#' tSTRING '[' ']'
+    {
+      TheSymbol.Name = $2 ;
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+	yymsg(GERROR, "Unknown variable '%s'", $2) ;
+	$$ = 0. ;
+      }
+      else{
+	$$ = List_Nbr(pSymbol->val);
       }
     }
 
