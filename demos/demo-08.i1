@@ -1,7 +1,7 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
 
-   Rotor pole definition. Included by ex05.geo.
+   Rotor pole definition. Included by demo-08.geo.
 
    All important comments are marked with "README"
 */
