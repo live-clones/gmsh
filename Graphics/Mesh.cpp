@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.67 2004-03-04 23:08:31 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.68 2004-04-18 03:12:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -268,7 +268,10 @@ void Draw_Mesh_Points(void *a, void *b)
     glPushName(v->Num);
   }
 
-  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
+  if(v->Degree == 2)
+    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_deg2);
+  else
+    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
 
   if(CTX.mesh.points) {
     if(CTX.mesh.point_type) {
@@ -295,14 +298,27 @@ void Draw_Mesh_Points(void *a, void *b)
   }
 }
 
-// Draw simplex
+void glNormal3verts(Vertex *v0, Vertex *v1, Vertex *v2, double n[3])
+{
+  double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
+  x1x0 = v1->Pos.X - v0->Pos.X;
+  y1y0 = v1->Pos.Y - v0->Pos.Y;
+  z1z0 = v1->Pos.Z - v0->Pos.Z;
+  x2x0 = v2->Pos.X - v0->Pos.X;
+  y2y0 = v2->Pos.Y - v0->Pos.Y;
+  z2z0 = v2->Pos.Z - v0->Pos.Z;
+  n[0] = y1y0 * z2z0 - z1z0 * y2y0;
+  n[1] = z1z0 * x2x0 - x1x0 * z2z0;
+  n[2] = x1x0 * y2y0 - y1y0 * x2x0;
+  glNormal3dv(n);
+}
 
 void Draw_Simplex_Volume(void *a, void *b)
 {
   Simplex *s;
   char Num[100];
   int fulldraw = 0;
-  double tmp, X[4], Y[4], Z[4];
+  double tmp, X[4], Y[4], Z[4], X2[6], Y2[6], Z2[6];
 
   s = *(Simplex **) a;
 
@@ -365,36 +381,51 @@ void Draw_Simplex_Volume(void *a, void *b)
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
-  // this is killing us!!!
   for(int i = 0; i < 4; i++) {
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
+  if(s->VSUP){
+    for(int i = 0; i < 6; i++) {
+      X2[i] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
+      Y2[i] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
+      Z2[i] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);
+    }
+  }
 
   if(CTX.mesh.volumes) {
-    glBegin(GL_LINES);
-    glVertex3d(X[1], Y[1], Z[1]);
-    glVertex3d(X[0], Y[0], Z[0]);
+    if(!s->VSUP){
+      glBegin(GL_LINES);
+      glVertex3d(X[0], Y[0], Z[0]); glVertex3d(X[1], Y[1], Z[1]);
+      glVertex3d(X[1], Y[1], Z[1]); glVertex3d(X[2], Y[2], Z[2]);
+      glVertex3d(X[2], Y[2], Z[2]); glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X[3], Y[3], Z[3]); glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X[3], Y[3], Z[3]); glVertex3d(X[2], Y[2], Z[2]); 
+      glVertex3d(X[3], Y[3], Z[3]); glVertex3d(X[1], Y[1], Z[1]);
+      glEnd();
+    }
+    else{
+      glBegin(GL_LINES);
+      glVertex3d(X[0], Y[0], Z[0]); glVertex3d(X2[0], Y2[0], Z2[0]); 
+      glVertex3d(X2[0], Y2[0], Z2[0]); glVertex3d(X[1], Y[1], Z[1]);
 
-    glVertex3d(X[2], Y[2], Z[2]);
-    glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X[1], Y[1], Z[1]); glVertex3d(X2[1], Y2[1], Z2[1]); 
+      glVertex3d(X2[1], Y2[1], Z2[1]); glVertex3d(X[2], Y[2], Z[2]);
 
-    glVertex3d(X[3], Y[3], Z[3]);
-    glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X[2], Y[2], Z[2]); glVertex3d(X2[2], Y2[2], Z2[2]); 
+      glVertex3d(X2[2], Y2[2], Z2[2]); glVertex3d(X[0], Y[0], Z[0]);
 
-    glVertex3d(X[3], Y[3], Z[3]);
-    glVertex3d(X[1], Y[1], Z[1]);
+      glVertex3d(X[3], Y[3], Z[3]); glVertex3d(X2[3], Y2[3], Z2[3]); 
+      glVertex3d(X2[3], Y2[3], Z2[3]); glVertex3d(X[0], Y[0], Z[0]);
 
-    glVertex3d(X[3], Y[3], Z[3]);
-    glVertex3d(X[2], Y[2], Z[2]);
+      glVertex3d(X[3], Y[3], Z[3]); glVertex3d(X2[4], Y2[4], Z2[4]); 
+      glVertex3d(X2[4], Y2[4], Z2[4]); glVertex3d(X[2], Y[2], Z[2]); 
 
-    glVertex3d(X[1], Y[1], Z[1]);
-    glVertex3d(X[2], Y[2], Z[2]);
-
-    glVertex3d(X[2], Y[2], Z[2]);
-    glVertex3d(X[3], Y[3], Z[3]);
-    glEnd();
+      glVertex3d(X[3], Y[3], Z[3]); glVertex3d(X2[5], Y2[5], Z2[5]); 
+      glVertex3d(X2[5], Y2[5], Z2[5]); glVertex3d(X[1], Y[1], Z[1]);
+      glEnd();
+    }
   }
 
   if(CTX.mesh.volumes_num) {
@@ -429,8 +460,6 @@ void Draw_Simplex_Volume(void *a, void *b)
   if(!fulldraw)
     return;
 
-  double n[4], x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
-
   if(theColor.type)
     glColor4ubv((GLubyte *) & theColor.mesh);
   else if(CTX.mesh.color_carousel == 1)
@@ -443,85 +472,27 @@ void Draw_Simplex_Volume(void *a, void *b)
     glColor4ubv((GLubyte *) & CTX.color.mesh.tetrahedron);
 
   if(CTX.mesh.solid) {
-
+    double n[3];
+    // FIXME: should subdivide if s->VSUP
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
-
-    if(CTX.mesh.light) {
-      x1x0 = X[2] - X[0];
-      y1y0 = Y[2] - Y[0];
-      z1z0 = Z[2] - Z[0];
-      x2x0 = X[1] - X[0];
-      y2y0 = Y[1] - Y[0];
-      z2z0 = Z[1] - Z[0];
-      n[0] = y1y0 * z2z0 - z1z0 * y2y0;
-      n[1] = z1z0 * x2x0 - x1x0 * z2z0;
-      n[2] = x1x0 * y2y0 - y1y0 * x2x0;
-      glNormal3dv(n);
-    }
-
     glBegin(GL_TRIANGLES);
+    if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[2], s->V[1], n);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[2], Y[2], Z[2]);
     glVertex3d(X[1], Y[1], Z[1]);
-    glEnd();
-
-    if(CTX.mesh.light) {
-      x1x0 = X[1] - X[0];
-      y1y0 = Y[1] - Y[0];
-      z1z0 = Z[1] - Z[0];
-      x2x0 = X[3] - X[0];
-      y2y0 = Y[3] - Y[0];
-      z2z0 = Z[3] - Z[0];
-      n[0] = y1y0 * z2z0 - z1z0 * y2y0;
-      n[1] = z1z0 * x2x0 - x1x0 * z2z0;
-      n[2] = x1x0 * y2y0 - y1y0 * x2x0;
-      glNormal3dv(n);
-    }
-
-    glBegin(GL_TRIANGLES);
+    if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[1], s->V[3], n);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
     glVertex3d(X[3], Y[3], Z[3]);
-    glEnd();
-
-    if(CTX.mesh.light) {
-      x1x0 = X[3] - X[0];
-      y1y0 = Y[3] - Y[0];
-      z1z0 = Z[3] - Z[0];
-      x2x0 = X[2] - X[0];
-      y2y0 = Y[2] - Y[0];
-      z2z0 = Z[2] - Z[0];
-      n[0] = y1y0 * z2z0 - z1z0 * y2y0;
-      n[1] = z1z0 * x2x0 - x1x0 * z2z0;
-      n[2] = x1x0 * y2y0 - y1y0 * x2x0;
-      glNormal3dv(n);
-    }
-
-    glBegin(GL_TRIANGLES);
+    if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[3], s->V[2], n);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[3], Y[3], Z[3]);
     glVertex3d(X[2], Y[2], Z[2]);
-    glEnd();
-
-    if(CTX.mesh.light) {
-      x1x0 = X[3] - X[1];
-      y1y0 = Y[3] - Y[1];
-      z1z0 = Z[3] - Z[1];
-      x2x0 = X[2] - X[1];
-      y2y0 = Y[2] - Y[1];
-      z2z0 = Z[2] - Z[1];
-      n[0] = y1y0 * z2z0 - z1z0 * y2y0;
-      n[1] = z1z0 * x2x0 - x1x0 * z2z0;
-      n[2] = x1x0 * y2y0 - y1y0 * x2x0;
-      glNormal3dv(n);
-    }
-
-    glBegin(GL_TRIANGLES);
+    if(CTX.mesh.light) glNormal3verts(s->V[3], s->V[1], s->V[2], n);
     glVertex3d(X[3], Y[3], Z[3]);
     glVertex3d(X[1], Y[1], Z[1]);
     glVertex3d(X[2], Y[2], Z[2]);
     glEnd();
-
     glDisable(GL_LIGHTING);
   }
 }
@@ -529,27 +500,15 @@ void Draw_Simplex_Volume(void *a, void *b)
 void Draw_Simplex_Surface_Common(Simplex * s, double *pX, double *pY,
                                  double *pZ, double n[3])
 {
-  double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
   int i, K, L;
 
   L = (s->VSUP) ? 1 : 0;
   K = (s->V[3]) ? 4 : 3;
 
-  if(CTX.mesh.normals || CTX.mesh.light) {
-    x1x0 = s->V[1]->Pos.X - s->V[0]->Pos.X;
-    y1y0 = s->V[1]->Pos.Y - s->V[0]->Pos.Y;
-    z1z0 = s->V[1]->Pos.Z - s->V[0]->Pos.Z;
-    x2x0 = s->V[2]->Pos.X - s->V[0]->Pos.X;
-    y2y0 = s->V[2]->Pos.Y - s->V[0]->Pos.Y;
-    z2z0 = s->V[2]->Pos.Z - s->V[0]->Pos.Z;
-    n[0] = y1y0 * z2z0 - z1z0 * y2y0;
-    n[1] = z1z0 * x2x0 - x1x0 * z2z0;
-    n[2] = x1x0 * y2y0 - y1y0 * x2x0;
-    glNormal3dv(n);
-  }
+  if(CTX.mesh.normals || CTX.mesh.light)
+    glNormal3verts(s->V[0], s->V[1], s->V[2], n);
 
   if(CTX.mesh.surfaces && CTX.mesh.lines) {
-
     if(!CTX.mesh.solid) {
       if(theColor.type)
 	glColor4ubv((GLubyte *) & theColor.mesh);
@@ -612,10 +571,33 @@ void Draw_Simplex_Surface_Common(Simplex * s, double *pX, double *pY,
 
     if(pX && pY && pZ) {        // using precomputed vertices
       if(L) {
-        glBegin(GL_POLYGON);
-        for(i = 0; i < K * (1 + L); i++)
-          glVertex3d(pX[i], pY[i], pZ[i]);
-        glEnd();
+	if(K == 4){
+	  // FIXME: should subdivide...
+	  glBegin(GL_POLYGON);
+	  for(i = 0; i < K * (1 + L); i++)
+	    glVertex3d(pX[i], pY[i], pZ[i]);
+	  glEnd();
+	}
+	else{
+	  glBegin(GL_TRIANGLES);
+	  glNormal3verts(s->V[0], s->VSUP[0], s->VSUP[2], n);
+	  glVertex3d(pX[0], pY[0], pZ[0]);
+	  glVertex3d(pX[1], pY[1], pZ[1]);
+	  glVertex3d(pX[5], pY[5], pZ[5]);
+	  glNormal3verts(s->VSUP[0], s->V[1], s->VSUP[1], n);
+	  glVertex3d(pX[1], pY[1], pZ[1]);
+	  glVertex3d(pX[2], pY[2], pZ[2]);
+	  glVertex3d(pX[3], pY[3], pZ[3]);
+	  glNormal3verts(s->VSUP[1], s->V[2], s->VSUP[2], n);
+	  glVertex3d(pX[3], pY[3], pZ[3]);
+	  glVertex3d(pX[4], pY[4], pZ[4]);
+	  glVertex3d(pX[5], pY[5], pZ[5]);
+	  glNormal3verts(s->VSUP[0], s->VSUP[1], s->VSUP[2], n);
+	  glVertex3d(pX[1], pY[1], pZ[1]);
+	  glVertex3d(pX[3], pY[3], pZ[3]);
+	  glVertex3d(pX[5], pY[5], pZ[5]);
+	  glEnd();
+	}
       }
       else if(K == 4) {
         glBegin(GL_QUADS);
@@ -635,12 +617,35 @@ void Draw_Simplex_Surface_Common(Simplex * s, double *pX, double *pY,
     }
     else {      // using the element's unmodified coordinates
       if(L) {
-        glBegin(GL_POLYGON);
-        for(i = 0; i < K; i++) {
-          glVertex3d(s->V[i]->Pos.X, s->V[i]->Pos.Y, s->V[i]->Pos.Z);
-          glVertex3d(s->VSUP[i]->Pos.X, s->VSUP[i]->Pos.Y, s->VSUP[i]->Pos.Z);
-        }
-        glEnd();
+   	if(K == 4) {
+	  // FIXME: should subdivide...
+	  glBegin(GL_POLYGON);
+	  for(i = 0; i < K; i++) {
+	    glVertex3d(s->V[i]->Pos.X, s->V[i]->Pos.Y, s->V[i]->Pos.Z);
+	    glVertex3d(s->VSUP[i]->Pos.X, s->VSUP[i]->Pos.Y, s->VSUP[i]->Pos.Z);
+	  }
+	  glEnd();
+	}
+	else{
+	  glBegin(GL_TRIANGLES);
+	  glNormal3verts(s->V[0], s->VSUP[0], s->VSUP[2], n);
+	  glVertex3d(s->V[0]->Pos.X, s->V[0]->Pos.Y, s->V[0]->Pos.Z);
+	  glVertex3d(s->VSUP[0]->Pos.X, s->VSUP[0]->Pos.Y, s->VSUP[0]->Pos.Z);
+	  glVertex3d(s->VSUP[2]->Pos.X, s->VSUP[2]->Pos.Y, s->VSUP[2]->Pos.Z);
+	  glNormal3verts(s->VSUP[0], s->V[1], s->VSUP[1], n);
+	  glVertex3d(s->VSUP[0]->Pos.X, s->VSUP[0]->Pos.Y, s->VSUP[0]->Pos.Z);
+	  glVertex3d(s->V[1]->Pos.X, s->V[1]->Pos.Y, s->V[1]->Pos.Z);
+	  glVertex3d(s->VSUP[1]->Pos.X, s->VSUP[1]->Pos.Y, s->VSUP[1]->Pos.Z);
+	  glNormal3verts(s->VSUP[1], s->V[2], s->VSUP[2], n);
+	  glVertex3d(s->VSUP[1]->Pos.X, s->VSUP[1]->Pos.Y, s->VSUP[1]->Pos.Z);
+	  glVertex3d(s->V[2]->Pos.X, s->V[2]->Pos.Y, s->V[2]->Pos.Z);
+	  glVertex3d(s->VSUP[2]->Pos.X, s->VSUP[2]->Pos.Y, s->VSUP[2]->Pos.Z);
+	  glNormal3verts(s->VSUP[0], s->VSUP[1], s->VSUP[2], n);
+	  glVertex3d(s->VSUP[0]->Pos.X, s->VSUP[0]->Pos.Y, s->VSUP[0]->Pos.Z);
+	  glVertex3d(s->VSUP[1]->Pos.X, s->VSUP[1]->Pos.Y, s->VSUP[1]->Pos.Z);
+	  glVertex3d(s->VSUP[2]->Pos.X, s->VSUP[2]->Pos.Y, s->VSUP[2]->Pos.Z);
+	  glEnd();
+	}
       }
       else if(K == 4) {
         glBegin(GL_QUADS);
