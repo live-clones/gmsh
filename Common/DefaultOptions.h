@@ -910,7 +910,7 @@ StringXNumber ViewOptions_Number[] = {
     "Relative radius of arrow head" },
   { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 
     "Arrow location (1=cog, 2=node)" },
-  { F|O, "ArrowSize" , opt_view_arrow_size , 50. ,
+  { F|O, "ArrowSize" , opt_view_arrow_size , 60. ,
     "Display size of arrows (in pixels)" },
   { F|O, "ArrowStemLength" , opt_view_arrow_stem_length , 0.56 ,
     "Relative length of arrow stem" },
