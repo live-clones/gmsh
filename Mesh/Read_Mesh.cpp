@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.40 2002-04-26 00:15:30 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.41 2002-04-26 16:37:40 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -286,11 +286,10 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 /* ------------------------------------------------------------------------ */
 /*  R e a d _ M e s h                                                       */
 /* ------------------------------------------------------------------------ */
+
 void Read_Mesh_SMS (Mesh *m, FILE *File_GEO);
 
 void Read_Mesh (Mesh *M, FILE *File_GEO, int type){
-
-  double s[50];
   switch(type){
   case FORMAT_MSH : Read_Mesh_MSH(M,File_GEO); break;
   case FORMAT_SMS : Read_Mesh_SMS(M,File_GEO); break;
