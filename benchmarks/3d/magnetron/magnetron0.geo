@@ -234,7 +234,7 @@ For i In {0:totaim}
   iBox=i; wBox=largaim[i]; lBox=longaim[i]; hBox=hautaim[i]; 
   xBox=xancaim[i]; 
   yBox=yancaim[i]; zBox= eppba ; lcBox=lc; thetaBox= anglerot[i];
-  Include "BOX.geo"; 
+  Include "box-old.geo"; 
 EndFor
 
 Coherence;
