@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.249 2003-01-24 23:13:34 geuzaine Exp $
+# $Id: Makefile,v 1.250 2003-01-25 01:04:57 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 37
@@ -179,8 +179,8 @@ link-linux-gcc-2.95:
                  -L/usr/X11R6/lib -lX11 -lm -ldl
 linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95
 distrib-linux-gcc-2.95:
-	make tag
 	make clean
+	make tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
            "CC=$(HOME)/gcc-2.95.3/bin/gcc" \
@@ -239,8 +239,8 @@ link-osf1:
                  -lX11 -lm
 osf1: compile-osf1 link-osf1
 distrib-osf1:
-	make tag
 	make clean
+	make tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -274,8 +274,8 @@ link-hpux:
                       -lX11 -lm
 hpux: compile-hpux link-hpux
 distrib-hpux:
-	make tag
 	make clean
+	make tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -308,8 +308,8 @@ link-aix:
                   -lX11 -lm
 aix: compile-aix link-aix
 distrib-aix:
-	make tag
 	make clean
+	make tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -343,8 +343,8 @@ link-irix:
                -L$(FLTK_DIR)/lib -lfltk_gl -lfltk -lX11 -lGLU -lGL -lm
 irix: compile-irix link-irix
 distrib-irix:
-	make tag
 	make clean
+	make tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=CC" \
            "CC=cc" \
@@ -381,8 +381,8 @@ link-cygwin:
                  -lole32 -luuid -lcomctl32 -lwsock32 -lm
 cygwin: compile-cygwin link-cygwin
 distrib-cygwin:
-	make tag
 	make clean
+	make tag
 	make cygwin
 	make distrib-win
 
@@ -441,8 +441,8 @@ link-sunos:
                  -lX11 -lXext -lsocket -lnsl -ldl -lm
 sunos: compile-sunos link-sunos
 distrib-sunos:
-	make tag
 	make clean
+	make tag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -499,8 +499,8 @@ link-macosx:
 # "distrib-mac" step.
 macosx: compile-macosx link-macosx
 distrib-macosx:
-	make tag
 	make clean
+	make tag
 	make macosx
 	make distrib-mac
 
