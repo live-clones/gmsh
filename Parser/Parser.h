@@ -28,8 +28,6 @@ typedef struct {
 } Symbol;
 
 void InitSymbols (void);
-void DeleteSymbols(void);
-int CompareSymbols (const void *a, const void *b);
 
 extern Tree_T *Symbol_T;
 
