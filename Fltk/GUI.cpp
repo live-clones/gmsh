@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.371 2004-10-27 20:53:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.372 2004-10-28 03:44:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -791,7 +791,7 @@ GUI::GUI(int argc, char **argv)
     solver[i].window = NULL;
     create_solver_window(i);
   }
-  call_for_solver_plugin (-1);
+  call_for_solver_plugin(-1);
 
   // Draw the scene
   g_opengl_window->redraw();
@@ -3644,14 +3644,11 @@ void GUI::create_geometry_context_window(int num)
 
 void GUI::call_for_solver_plugin (int dim)
 { 
-   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
-   if (sp)
-     {
-       sp->popupPropertiesForPhysicalEntity(dim);
-     }
+  GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
+  if (sp) {
+    sp->popupPropertiesForPhysicalEntity(dim);
+  }
 }
-
-
 
 // Create the window for mesh context dependant definitions
 

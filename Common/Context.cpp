@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.51 2004-10-11 17:21:16 geuzaine Exp $
+// $Id: Context.cpp,v 1.52 2004-10-28 03:44:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -79,14 +79,14 @@ void Context_T::buildRotmatrix(void)
   }
 }
 
-void Context_T::addQuaternion(float p1x, float p1y, float p2x, float p2y)
+void Context_T::addQuaternion(double p1x, double p1y, double p2x, double p2y)
 {
-  float quat[4];
+  double quat[4];
   trackball(quat, p1x, p1y, p2x, p2y);
   add_quats(quat, quaternion, quaternion);
 }
 
-void Context_T::setQuaternion(float q0, float q1, float q2, float q3)
+void Context_T::setQuaternion(double q0, double q1, double q2, double q3)
 {
   quaternion[0] = q0;
   quaternion[1] = q1;

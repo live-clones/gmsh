@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.39 2004-09-12 04:13:59 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.40 2004-10-28 03:44:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,9 +42,6 @@ void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2, GLdouble Xc1,
             GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 int check_type(int type, Vertex * v, Curve * c, Surface * s);
-
-static int ZOOM = 0;
-static double ZOOM_X0, ZOOM_Y0, ZOOM_X1, ZOOM_Y1;
 
 void Opengl_Window::draw()
 {
@@ -133,13 +130,6 @@ void Opengl_Window::draw()
 
 int Opengl_Window::handle(int event)
 {
-  static int xpos, ypos, xmov, ymov, ibut, hits;
-  static int ZoomClick = 0, FirstClick = 0;
-  static GLdouble xc, yc, xc1, yc1, xc2, yc2, xt1, yt1, xscale1, yscale1;
-  static Vertex *v = NULL, *ov;
-  static Curve *c = NULL, *oc;
-  static Surface *s = NULL, *os;
-
   GLuint ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
 
   switch (event) {

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.62 2004-09-03 19:00:52 geuzaine Exp $
+// $Id: Draw.cpp,v 1.63 2004-10-28 03:44:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -217,7 +217,7 @@ void InitPosition(void)
 		 CTX.rotation_center[2]);
   
   CTX.buildRotmatrix();
-  glMultMatrixf(&(CTX.rot[0][0]));
+  glMultMatrixd(&(CTX.rot[0][0]));
 
   if(CTX.rotation_center_cg)
     glTranslated(-CTX.cg[0], -CTX.cg[1], -CTX.cg[2]);
@@ -225,6 +225,10 @@ void InitPosition(void)
     glTranslated(-CTX.rotation_center[0],
 		 -CTX.rotation_center[1],
 		 -CTX.rotation_center[2]);
+
+  // store the modelview and projection matrices
+  glGetDoublev(GL_MODELVIEW_MATRIX, &(CTX.mod[0][0]));
+  glGetDoublev(GL_PROJECTION_MATRIX, &(CTX.proj[0][0]));
 }
 
 // Entity selection
@@ -308,7 +312,7 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
   set_s(0, CTX.s[0] * (CTX.vxmax - CTX.vxmin) / (X2 - X1));
   set_s(1, CTX.s[1] * (CTX.vymax - CTX.vymin) / (Y1 - Y2));
   //set_s(2, 0.5 * (CTX.s[0] + CTX.s[1])); // bof, bof. bof: can cause normal clamping
-  set_s(2, MAX(CTX.s[0], CTX.s[1])); // not much better...
+  set_s(2, MIN(CTX.s[0], CTX.s[1])); // better, but not great...
   set_t(0, CTX.t[0] * (xscale1 / CTX.s[0]) - 
 	((Xc1 + Xc2) / 2.) * (1. - (xscale1 / CTX.s[0])));
   set_t(1, CTX.t[1] * (yscale1 / CTX.s[1]) - 
@@ -317,3 +321,34 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
   Draw();
 }
 
+// Takes a cursor position in window coordinates and returns the line
+// (given by a point and a unit direction vector), in real space, that
+// corresponds to that cursor position
+
+void unproject(double x, double y, double p[3], double d[3])
+{
+  GLint viewport[4];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+
+  y = viewport[3]-y;
+
+  GLdouble x0, y0, z0, x1, y1, z1;
+  
+  if(!gluUnProject(x, y, 0.0, &(CTX.mod[0][0]), &(CTX.proj[0][0]),
+		   viewport, &x0, &y0, &z0))
+    Msg(WARNING, "unproject1 failed");
+  if(!gluUnProject(x, y, 1.0, &(CTX.mod[0][0]), &(CTX.proj[0][0]),
+		   viewport, &x1, &y1, &z1))
+    Msg(WARNING, "unproject2 failed");
+  
+  p[0] = x0;
+  p[1] = y0;
+  p[2] = z0;
+  d[0] = x1-x0;
+  d[1] = y1-y0;
+  d[2] = z1-z0;
+  double len = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+  d[0] /= len;
+  d[1] /= len;
+  d[2] /= len;
+}

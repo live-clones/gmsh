@@ -42,6 +42,8 @@ void set_r(int i, double val);
 void set_t(int i, double val);
 void set_s(int i, double val);
 
+void unproject(double x, double y, double p[3], double d[3]);
+
 unsigned int PaletteContinuous(Post_View * View, double min, double max, double val);
 unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);

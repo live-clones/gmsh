@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.291 2004-10-26 01:04:51 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.292 2004-10-28 03:44:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1666,6 +1666,33 @@ void geometry_elementary_add_new_parameter_cb(CALLBACK_ARGS)
 void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(1);
+
+#if 0
+  WID->try_selection = 0;
+  while(1) {
+    Msg(STATUS3N, "Creating point");
+    Msg(ONSCREEN, "Click or enter coordinates\n"
+	"[Press 'q' to abort]");
+    WID->wait();
+    if(WID->quit_selection) {
+      WID->quit_selection = 0;
+      return;
+    }
+    if(WID->try_selection) {
+      WID->try_selection = 0;
+      double p[3], d[3];
+      unproject(WID->g_opengl_window->xpos, WID->g_opengl_window->ypos, p, d);
+      //printf("click: %d %d  -> p=%g %g %g  d=%g %g %g\n",
+      //	     WID->g_opengl_window->xpos, WID->g_opengl_window->ypos,
+      //	     p[0], p[1], p[2], d[0], d[1], d[2]);
+      // and find e.g. closest point to the cg update fields in dialog
+      char str[32];
+      sprintf(str, "%g", p[0]); WID->context_geometry_input[2]->value(str);
+      sprintf(str, "%g", p[1]); WID->context_geometry_input[3]->value(str);
+      sprintf(str, "%g", p[2]); WID->context_geometry_input[4]->value(str);
+    }
+  }
+#endif
 }
 
 static void _new_multiline(int type)

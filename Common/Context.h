@@ -88,12 +88,14 @@ public :
   int initial_context;        // 0=automatic; 1=geom; 2=mesh; 3=solver; 4=post 
   int verbosity;              // 0=silent -> 3=debug 
 
-  float rot[4][4];            // current rotation matrix 
+  double rot[4][4];           // current rotation matrix 
+  double mod[4][4];           // current modelview matrix 
+  double proj[4][4];          // current projection matrix
   double r[3];                // position angles (if succ. rot. along x, y and z) 
   double t[3], s[3];          // current translation and scale 
   int rlock[3], tlock[3], slock[3];
                               // locks for r, t and s 
-  float quaternion[4];        // the actual quaternion used for "trackball" rotating 
+  double quaternion[4];       // the actual quaternion used for "trackball" rotating 
   int useTrackball;           // do or do not use the trackball for rotations 
   double rotation_center[3];  // point around which to rotate the scene
   int rotation_center_cg;     // rotate around the center of mass instead of rotation_center[]
@@ -235,8 +237,8 @@ public :
   
   // trackball functions 
   void buildRotmatrix(void);
-  void setQuaternion (float p1x, float p1y, float p2x, float p2y);
-  void addQuaternion (float p1x, float p1y, float p2x, float p2y);
+  void setQuaternion (double p1x, double p1y, double p2x, double p2y);
+  void addQuaternion (double p1x, double p1y, double p2x, double p2y);
 };
 
 #endif

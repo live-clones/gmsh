@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.64 2004-10-27 20:37:10 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.65 2004-10-28 03:44:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -172,10 +172,9 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   yylineno = yylineno_old;
 
   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-  if (sp)
-    {
-      sp->readSolverFile(f);
-    }
+  if(sp) {
+    sp->readSolverFile(f);
+  }
 
   return status;
 }

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.72 2004-10-15 18:36:04 geuzaine Exp $
+// $Id: Geom.cpp,v 1.73 2004-10-28 03:44:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -73,17 +73,15 @@ void Draw_Geo_Point(void *a, void *b)
         Draw_Sphere(CTX.geom.point_size, v->Pos.X, v->Pos.Y, v->Pos.Z,
 		    CTX.geom.light);
     }
-    else if (CTX.geom.point_type == 2)
-      {
-	GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-	if (sp)
-	  {
-	    sp-> GL_enhancePoint (v);
-	  }
-	glBegin(GL_POINTS);
-	glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
-	glEnd();
+    else if(CTX.geom.point_type == 2) {
+      GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+      if(sp) {
+	sp-> GL_enhancePoint (v);
       }
+      glBegin(GL_POINTS);
+      glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
+      glEnd();
+    }
     else {
       glBegin(GL_POINTS);
       glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
@@ -165,7 +163,7 @@ void Draw_Curve(void *a, void *b)
       List_Delete(temp);
     }
     else {
-      if(CTX.geom.line_type>=1) {
+      if(CTX.geom.line_type >= 1) {
         for(int i = 0; i < N - 1; i++) {
           v = InterpolateCurve(c, (double)i / (double)(N - 1), 0);
           dv = InterpolateCurve(c, (double)(i + 1) / (double)(N - 1), 0);
@@ -178,20 +176,18 @@ void Draw_Curve(void *a, void *b)
           Draw_Cylinder(c->ipar[3] ? CTX.geom.line_sel_width : CTX.geom.line_width,
 			x, y, z, CTX.geom.light);
         }
-	if(CTX.geom.line_type==2) 
-	  {
-	    GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
-	    if (sp)
-	      {
-		int NN=(N>1)?N:1;
-		const double eps=0.e-2;
-		for(int i = 0; i < NN - 1; i++) {
-		  v = InterpolateCurve(c, (double)i / (double)(NN - 1)-eps, 0);
-		  dv = InterpolateCurve(c, (double)(i + 1) / (double)(NN - 1)+eps, 0);
-		  sp-> GL_enhanceLine (c->Num,&v,&dv);
-		}
-	      }
+	if(CTX.geom.line_type == 2) {
+	  GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+	  if(sp) {
+	    int NN=(N>1)?N:1;
+	    const double eps=0.e-2;
+	    for(int i = 0; i < NN - 1; i++) {
+	      v = InterpolateCurve(c, (double)i / (double)(NN - 1)-eps, 0);
+	      dv = InterpolateCurve(c, (double)(i + 1) / (double)(NN - 1)+eps, 0);
+	      sp-> GL_enhanceLine (c->Num,&v,&dv);
+	    }
 	  }
+	}
       }
       else {
         glBegin(GL_LINE_STRIP);

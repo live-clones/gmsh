@@ -1,4 +1,4 @@
-/* $Id: Trackball.cpp,v 1.2 2002-05-19 19:49:41 geuzaine Exp $ */
+/* $Id: Trackball.cpp,v 1.3 2004-10-28 03:44:36 geuzaine Exp $ */
 /*
  * (c) Copyright 1993, 1994, Silicon Graphics, Inc.
  * ALL RIGHTS RESERVED
@@ -65,11 +65,11 @@
 /*
  * Local function prototypes (not defined in trackball.h)
  */
-static float tb_project_to_sphere(float, float, float);
-static void normalize_quat(float [4]);
+static double tb_project_to_sphere(double, double, double);
+static void normalize_quat(double [4]);
 
 void
-vzero(float *v)
+vzero(double *v)
 {
     v[0] = 0.0;
     v[1] = 0.0;
@@ -77,7 +77,7 @@ vzero(float *v)
 }
 
 void
-vset(float *v, float x, float y, float z)
+vset(double *v, double x, double y, double z)
 {
     v[0] = x;
     v[1] = y;
@@ -85,7 +85,7 @@ vset(float *v, float x, float y, float z)
 }
 
 void
-vsub(const float *src1, const float *src2, float *dst)
+vsub(const double *src1, const double *src2, double *dst)
 {
     dst[0] = src1[0] - src2[0];
     dst[1] = src1[1] - src2[1];
@@ -93,7 +93,7 @@ vsub(const float *src1, const float *src2, float *dst)
 }
 
 void
-vcopy(const float *v1, float *v2)
+vcopy(const double *v1, double *v2)
 {
     register int i;
     for (i = 0 ; i < 3 ; i++)
@@ -101,9 +101,9 @@ vcopy(const float *v1, float *v2)
 }
 
 void
-vcross(const float *v1, const float *v2, float *cross)
+vcross(const double *v1, const double *v2, double *cross)
 {
-    float temp[3];
+    double temp[3];
 
     temp[0] = (v1[1] * v2[2]) - (v1[2] * v2[1]);
     temp[1] = (v1[2] * v2[0]) - (v1[0] * v2[2]);
@@ -111,14 +111,14 @@ vcross(const float *v1, const float *v2, float *cross)
     vcopy(temp, cross);
 }
 
-float
-vlength(const float *v)
+double
+vlength(const double *v)
 {
     return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
 void
-vscale(float *v, float div)
+vscale(double *v, double div)
 {
     v[0] *= div;
     v[1] *= div;
@@ -126,19 +126,19 @@ vscale(float *v, float div)
 }
 
 void
-vnormal(float *v)
+vnormal(double *v)
 {
     vscale(v,1.0/vlength(v));
 }
 
-float
-vdot(const float *v1, const float *v2)
+double
+vdot(const double *v1, const double *v2)
 {
     return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
 void
-vadd(const float *src1, const float *src2, float *dst)
+vadd(const double *src1, const double *src2, double *dst)
 {
     dst[0] = src1[0] + src2[0];
     dst[1] = src1[1] + src2[1];
@@ -158,12 +158,12 @@ vadd(const float *src1, const float *src2, float *dst)
  * (-1.0 ... 1.0)
  */
 void
-trackball(float q[4], float p1x, float p1y, float p2x, float p2y)
+trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
 {
-    float a[3]; /* Axis of rotation */
-    float phi;  /* how much to rotate about axis */
-    float p1[3], p2[3], d[3];
-    float t;
+    double a[3]; /* Axis of rotation */
+    double phi;  /* how much to rotate about axis */
+    double p1[3], p2[3], d[3];
+    double t;
 
     if (p1x == p2x && p1y == p2y) {
         /* Zero rotation */
@@ -204,7 +204,7 @@ trackball(float q[4], float p1x, float p1y, float p2x, float p2y)
  *  Given an axis and angle, compute quaternion.
  */
 void
-axis_to_quat(float a[3], float phi, float q[4])
+axis_to_quat(double a[3], double phi, double q[4])
 {
     vnormal(a);
     vcopy(a,q);
@@ -216,10 +216,10 @@ axis_to_quat(float a[3], float phi, float q[4])
  * Project an x,y pair onto a sphere of radius r OR a hyperbolic sheet
  * if we are away from the center of the sphere.
  */
-static float
-tb_project_to_sphere(float r, float x, float y)
+static double
+tb_project_to_sphere(double r, double x, double y)
 {
-    float d, t, z;
+    double d, t, z;
 
     d = sqrt(x*x + y*y);
     if (d < r * 0.70710678118654752440) {    /* Inside sphere */
@@ -245,11 +245,11 @@ tb_project_to_sphere(float r, float x, float y)
 #define RENORMCOUNT 97
 
 void
-add_quats(float q1[4], float q2[4], float dest[4])
+add_quats(double q1[4], double q2[4], double dest[4])
 {
     static int count=0;
-    float t1[4], t2[4], t3[4];
-    float tf[4];
+    double t1[4], t2[4], t3[4];
+    double tf[4];
 
     vcopy(q1,t1);
     vscale(t1,q2[3]);
@@ -286,10 +286,10 @@ add_quats(float q1[4], float q2[4], float dest[4])
  *   graphics, The Visual Computer 5, 2-13, 1989.
  */
 static void
-normalize_quat(float q[4])
+normalize_quat(double q[4])
 {
     int i;
-    float mag;
+    double mag;
 
     mag = (q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
     for (i = 0; i < 4; i++) q[i] /= mag;
@@ -300,7 +300,7 @@ normalize_quat(float q[4])
  *
  */
 void
-build_rotmatrix(float m[4][4], float q[4])
+build_rotmatrix(double m[4][4], double q[4])
 {
     m[0][0] = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2]);
     m[0][1] = 2.0 * (q[0] * q[1] - q[2] * q[3]);
