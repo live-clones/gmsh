@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.24 2001-05-24 10:11:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.25 2001-05-25 11:03:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,11 +7,11 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"
-#include "Solvers.h"
 
 extern Context_T   CTX ;
 
 #ifdef _FLTK
+#include "Solvers.h"
 #include "GUI.h"
 extern GUI        *WID ;
 #endif
@@ -491,12 +491,12 @@ char * opt_general_editor(OPT_ARGS_STR){
 }
 
 char * opt_solver_getdp_command(OPT_ARGS_STR){
-  if(action & GMSH_SET) strcpy(GetDP_Info.command, val);
 #ifdef _FLTK
+  if(action & GMSH_SET) strcpy(GetDP_Info.command, val);
   if(WID && (action & GMSH_GUI))
     WID->getdp_input[2]->value(GetDP_Info.command);
-#endif
   return GetDP_Info.command;
+#endif
 }
 
 char * opt_view_name(OPT_ARGS_STR){
@@ -1477,22 +1477,22 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM){
 
 
 double opt_solver_getdp_popupmessages(OPT_ARGS_NUM){
+#ifdef _FLTK
   if(action & GMSH_SET)
     GetDP_Info.popupmessages = (int)val;
-#ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->getdp_butt[0]->value(GetDP_Info.popupmessages);
-#endif
   return GetDP_Info.popupmessages;
+#endif
 }
 double opt_solver_getdp_mergeviews(OPT_ARGS_NUM){
+#ifdef _FLTK
   if(action & GMSH_SET)
     GetDP_Info.mergeviews = (int)val;
-#ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->getdp_butt[1]->value(GetDP_Info.mergeviews);
-#endif
   return GetDP_Info.mergeviews;
+#endif
 }
 
 

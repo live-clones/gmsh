@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.23 2001-05-23 07:29:42 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.24 2001-05-25 11:03:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,8 +67,10 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -perspective          set projection mode to perspective");
 #endif
   Msg(DIRECT, "Other options:");      
+#ifndef _BLACKBOX
   Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or");
   Msg(DIRECT, "                        post-processing mode (default: automatic)");
+#endif
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
 #ifdef _XMOTIF
   Msg(DIRECT, "  -nothreads            disable threads");

@@ -1,6 +1,11 @@
-// $Id: Main.cpp,v 1.4 2001-05-22 08:30:26 geuzaine Exp $
+// $Id: Main.cpp,v 1.5 2001-05-25 11:03:38 geuzaine Exp $
 
 #include <signal.h>
+
+#include <signal.h>
+#if !defined(WIN32) || defined(__CYGWIN__)
+#include <sys/resource.h>
+#endif
 
 #include "Gmsh.h"
 #include "GmshVersion.h"
@@ -67,30 +72,44 @@ int main(int argc, char *argv[]){
 
   Get_Options(argc, argv, &nbf);
 
-  signal(SIGINT,  Signal); 
+  M.Vertices = NULL ;
+  M.VertexEdges = NULL ;
+  M.Simplexes = NULL ;
+  M.Points = NULL ;
+  M.Curves = NULL ;
+  M.SurfaceLoops = NULL ;
+  M.EdgeLoops = NULL ;
+  M.Surfaces = NULL ;
+  M.Volumes = NULL ;
+  M.PhysicalGroups = NULL ;
+  M.Metric = NULL ;
+
+  signal(SIGINT,  Signal);
   signal(SIGSEGV, Signal);
-  signal(SIGFPE,  Signal); 
+  signal(SIGFPE,  Signal);
 
   OpenProblem(CTX.filename);
   if(yyerrorstate)
     exit(1);
   else{
-    if(nbf>1){
-      for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
-    }
+    for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
     if(TheBgmFileName){
       MergeProblem(TheBgmFileName);
       if(List_Nbr(Post_ViewList))
         BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
       else
-        fprintf(stderr, ERROR_STR "Invalid BGM (no view)\n"); exit(1);
+        fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n"); exit(1);
     }
     if(CTX.batch > 0){
       mai3d(THEM, CTX.batch);
       Print_Mesh(THEM,CTX.output_filename,CTX.mesh.format);
     }
+    else
+      Print_Geo(THEM, CTX.output_filename);
+    if(CTX.mesh.histogram)
+      Print_Histogram(THEM->Histogram[0]);
     exit(1);
-  }    
+  }
 
 }
 
@@ -125,7 +144,7 @@ void Msg(int level, char *fmt, ...){
   switch(level){
 
   case DIRECT :
-    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    vfprintf(stdout, fmt, args); fprintf(stdout, "\n");
     break;
 
   case FATAL :
@@ -194,8 +213,24 @@ void Msg(int level, char *fmt, ...){
 /*  C p u                                                                   */
 /* ------------------------------------------------------------------------ */
 
+void GetResources(long *s, long *us, long *mem){
+#if !defined(WIN32) || defined(__CYGWIN__)
+  static struct rusage r;
+
+  getrusage(RUSAGE_SELF,&r);
+  *s   = (long)r.ru_utime.tv_sec ;
+  *us  = (long)r.ru_utime.tv_usec ;
+  *mem = (long)r.ru_maxrss ;
+#else
+  *s = *us = *mem = 0;
+#endif
+
+}
+
 double Cpu(void){
-  return 0.;
+  long s, us, mem;
+  GetResources(&s, &us, &mem);
+  return (double)s + (double)us/1.e6 ;
 }
 
 /* ------------------------------------------------------------------------ */
