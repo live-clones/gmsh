@@ -1,7 +1,8 @@
-$Date: 2002-02-12 23:26:04 $
+$Date: 2002-02-14 23:13:28 $
 
 New in 1.34: Improved surface mesh of non-plane surfaces; minor user
-interface polish; small bug fixes;
+interface polish and additions, mostly for post-processing options;
+small bug fixes;
 
 New in 1.33: New parameterizable solver interface (allowing up to 5
 user-defined solvers); enhanced 2D aniso algorithm; 3D initial mesh
