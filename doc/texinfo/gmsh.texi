@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.65 2003-06-23 16:52:17 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.66 2003-06-23 18:16:34 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1741,6 +1741,17 @@ the signification of the `Saved in:' field in the following list, see
 
 Gmsh's mesh module regroups several 1D, 2D and 3D mesh algorithms, all
 producing grids conforming in the sense of finite elements (@pxref{Mesh}).
+
+The 2D unstructured algorithms generate triangles or both triangles and
+quadrangles (when @code{Recombine Surface} is used: see @ref{Miscellaneous
+mesh commands}). The 3D unstructured algorithm only generates tetrahedra.
+
+The 2D structured algorithms (transfinite and extrusion) generate triangles
+by default, but quadrangles can be obtained by using the @code{Recombine}
+commands (see @ref{Structured grids}, and @ref{Miscellaneous mesh
+commands}). The 3D structured algorithms generate tetrahedra, hexahedra,
+prisms and pyramids, depending on the type of the surface meshes they are
+based on.
 
 @menu
 * Elementary vs physical entities::  
