@@ -1,12 +1,33 @@
-/* $Id: dxf2geo.c,v 1.2 2001-04-23 07:01:50 geuzaine Exp $ */
+// $Id: dxf2geo.c,v 1.3 2003-02-25 16:53:16 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA.
+// 
+// Please report all bugs and problems to "gmsh@geuz.org".
 
-/* 
-   AutoCAD DXF to Gmsh GEO Data File Converter
-   
-   This is a hack from the DXF to DKB translator by Aaron A. Collins (8/13/90)
-
-   Christophe.Geuzaine@AdValvas.be
-*/
+// This is a simple AutoCAD DXF to Gmsh GEO Data File Converter
+//   
+// It was created from the AutoCAD DXF file to DKB data file converter
+// written and placed in the public domain 8/13/90 by Aaron
+// A. Collins (http://www.sdsc.edu/~mjb/mae152/dxf.spec.txt).
+//   
+// It parses a limited, but useful, subset of the AutoCAD DXF file
+// format. No effort has been made to handle the complete range of
+// possible DXF opcodes and commands.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,11 +39,14 @@
 #define BUFSIZE    2048
 #define GEOLINE    1
 #define GEOCIRCLE  2
+#define GEOTRI     3
+#define GEOQUAD    4
 
 FILE   *infile, *outfile;
 char    inname[80], outname[80], curobj[80], linbuf[BUFSIZE];
 long    primitives = 0L, degenerates = 0L;
 int     groupcode, curcolor, ints[10], nump=1 , numc=1;
+int     cpt_vert_node=1, num_vert_node[1024];
 float   curthick, xcoords[10], ycoords[10], zcoords[10], floats[10], angles[10];
 float   max_x, max_y, max_z, min_x, min_y, min_z ;
 float   THETOL, THEROT=0., THETRANSX=0., THETRANSY=0. ;
@@ -41,7 +65,7 @@ int fcmpPoint (const void *a, const void *b){
   
   if(fabs(q->x - w->x) < THETOL &&
      fabs(q->y - w->y) < THETOL &&
-     fabs(q->x - w->x) < THETOL) return 0;
+     fabs(q->z - w->z) < THETOL) return 0;
 
   if(q->x > w->x) return(1);
   if(q->x < w->x) return(-1);
@@ -116,10 +140,6 @@ void writecurve(void *a, void *b){
     break ;
   }
 }
-
-
-
-
 
 int checkdegen(int a, int b, int c){ /* check for degenerate triangle structure */
   if ( (xcoords[a] == xcoords[b] &&
@@ -243,10 +263,29 @@ void addobj(void){ /* dump out current object we should have all info on */
   else if (strstr(curobj, "POLYLINE")){ /* these look fairly hard */
   }
   else if (strstr(curobj, "VERTEX")){ /* these look fairly hard */
+    if (ints[0] == 192) {
+      p.x = xcoords[0] ; p.y = ycoords[0] ; p.z = zcoords[0] ; 
+      num_vert_node[cpt_vert_node] = addpoint(&p) ; 
+      // printf("cpt_vert-node = %d : new number = %d\n",cpt_vert_node,num_vert_node[cpt_vert_node]);
+      cpt_vert_node++ ;
+    }
+    else if (ints[0] == 128) {
+      c.type = GEOLINE ; c.a = num_vert_node[ints[1]] ; c.b = num_vert_node[ints[2]] ; addcurve(&c) ;
+      c.type = GEOLINE ; c.a = num_vert_node[ints[2]] ; c.b = num_vert_node[ints[3]] ; addcurve(&c) ;
+      if (ints[4] == 0 ) {
+	c.type = GEOLINE ; c.a = num_vert_node[ints[3]] ; c.b = num_vert_node[ints[1]] ; addcurve(&c) ;
+      }
+      else {
+	c.type = GEOLINE ; c.a = num_vert_node[ints[3]] ; c.b = num_vert_node[ints[4]] ; addcurve(&c) ;
+	c.type = GEOLINE ; c.a = num_vert_node[ints[4]] ; c.b = num_vert_node[ints[1]] ; addcurve(&c) ;
+      }
+    }
+    ints[0]=ints[1]=ints[2]=ints[3]=ints[4]=ints[5]=0;
   }
   else if (strstr(curobj, "SEQEND")){ /* these look fairly hard */
   }
   else if (strstr(curobj, "3DFACE")){ /* 1 or 2 triangles */
+#if 0 //removed by David Colignon
     if (checkdegen(0, 1, 2)){
       degenerates++;
       return;
@@ -261,6 +300,21 @@ void addobj(void){ /* dump out current object we should have all info on */
       return;
     }
     /* add triangle 0 3 2 */
+#else   
+    p.x = xcoords[0] ; p.y = ycoords[0] ; p.z = zcoords[0] ; num[0] = addpoint(&p) ;
+    p.x = xcoords[1] ; p.y = ycoords[1] ; p.z = zcoords[1] ; num[1] = addpoint(&p) ;
+    p.x = xcoords[2] ; p.y = ycoords[2] ; p.z = zcoords[2] ; num[2] = addpoint(&p) ;
+    c.type = GEOLINE ; c.a = num[0] ; c.b = num[1] ; addcurve(&c) ;
+    c.type = GEOLINE ; c.a = num[1] ; c.b = num[2] ; addcurve(&c) ;
+    if (xcoords[3] == xcoords[2] && ycoords[3] == ycoords[2] && zcoords[3] == zcoords[2]){
+      c.type = GEOLINE ; c.a = num[2] ; c.b = num[0] ; addcurve(&c) ;
+    }
+    else {
+      p.x = xcoords[3] ; p.y = ycoords[3] ; p.z = zcoords[3] ; num[3] = addpoint(&p) ;
+      c.type = GEOLINE ; c.a = num[2] ; c.b = num[3] ; addcurve(&c) ;
+      c.type = GEOLINE ; c.a = num[3] ; c.b = num[0] ; addcurve(&c) ;
+    }    
+#endif
   }
   else if (strstr(curobj, "DIMENSION")){  /* not implemented for now */
   }
@@ -310,7 +364,8 @@ int main(int argc, char *argv[]){
     fclose(infile);
     exit(1);
   }
-  
+
+  ints[0] = ints[1] = ints[2] = ints[3] = ints[4] = ints[5] = 0;
   curobj[0] = '\0'; /* not working on any object currently */
   curcolor = 7; /* and it also doesn't have a color yet... */
   max_x = max_y = max_z = -10000000.0; /* init bounding limits */
@@ -408,7 +463,7 @@ find:
     else if (groupcode == 66){ /* "entities follow" flag */
     }
     else if (groupcode >= 70 && groupcode < 79){ /* misc ints */
-      sscanf(linbuf, "%f", &(ints[groupcode-70]));
+      sscanf(linbuf, "%d", &(ints[groupcode-70]));
     }
     else if (groupcode == 210 || groupcode == 220 || groupcode == 230){
       /* X, Y, Z components of extrusion direction */

@@ -1,7 +1,10 @@
-$Date: 2003-02-20 01:03:06 $
+$Date: 2003-02-25 16:53:16 $
+
+New in 1.40: indent code;
 
 New in 1.39: removed all non-free routines; more build system work;
-implemented Von-Mises tensor display for all element types;
+implemented Von-Mises tensor display for all element types; fixed
+small GUI bugs;
 
 New in 1.38: fixed custom range selection for 3D iso graphs; New build
 system based on autoconf; New image reading code to import bitmaps as
