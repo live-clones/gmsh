@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.45 2002-06-04 22:29:05 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.46 2002-06-05 03:38:22 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -711,19 +711,22 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   prim->boundary = boundary;
 
   if(gl2ps->options & GL2PS_SIMPLE_LINE_OFFSET){
+
     if(type == GL2PS_LINE){
       if(gl2ps->sort == GL2PS_SIMPLE_SORT){
-	prim->verts[0].xyz[2] -= 1.;
-	prim->verts[1].xyz[2] -= 1.;
+	prim->verts[0].xyz[2] -= GL2PS_SIMPLE_OFFSET_LARGE;
+	prim->verts[1].xyz[2] -= GL2PS_SIMPLE_OFFSET_LARGE;
       }
       else{
 	prim->verts[0].xyz[2] -= GL2PS_SIMPLE_OFFSET;
 	prim->verts[1].xyz[2] -= GL2PS_SIMPLE_OFFSET;
       }
     }
+
   }
   else if(offset && type == GL2PS_TRIANGLE){
 
+    /* needs some more work... */
     if(gl2ps->sort == GL2PS_SIMPLE_SORT){    
       factor = gl2ps->offset[0];
       units = gl2ps->offset[1];
@@ -940,8 +943,6 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
   glGetIntegerv(GL_VIEWPORT, viewport);
 
   /* 
-     This is the format of the available primitives:
-
      RGB color: r g b C (replace C by G in output to change from rgb to gray)
      Greyscale: r g b G
      Font choose: size fontname FC
