@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.340 2004-09-04 07:45:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.341 2004-09-14 17:43:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -778,12 +778,12 @@ GUI::GUI(int argc, char **argv)
   create_clip_window();
   create_about_window();
   create_geometry_context_window(0);
-  call_for_solver_plugin (-1);
   create_mesh_context_window(0);
   for(i = 0; i < MAXSOLVERS; i++) {
     solver[i].window = NULL;
     create_solver_window(i);
   }
+  call_for_solver_plugin (-1);
 
   // Draw the scene
   g_opengl_window->redraw();
