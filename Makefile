@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.50 2001-02-06 07:52:51 geuzaine Exp $
+# $Id: Makefile,v 1.51 2001-02-06 11:21:48 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -15,8 +15,8 @@
                         -I$(HOME)/SOURCES/Mesa-3.1/include\
                         -I$(HOME)/SOURCES/Mesa-3.1/include/GL
             MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
-            FLTK_INC   = -I$(HOME)/SOURCES/fltk
-	    FLTK_INC_SCOREC = -I/users/develop/develop/visual/fltk/1.0/include
+           FLTK_INC   = -I$(HOME)/SOURCES/fltk
+      FLTK_INC_SCOREC = -I/users/develop/develop/visual/fltk/1.0/include
 
            OPENGL_LIB = -lGLU -lGL
      OPENGL_MOTIF_LIB = -lGLw
@@ -25,14 +25,14 @@
       MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
                         $(HOME)/SOURCES/Mesa-static/lib/libGL.a
 MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
-          XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
-#           XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
+           XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
+#          XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
                         -L/usr/X11R6/lib -lXt -lX11 -lXext 
              FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
                         -L/usr/X11R6/lib -lXext -lX11
-             FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
+FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                         -L/usr/X11R6/lib -lXext -lX11
-             FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
+FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
                         -L/usr/X11R6/lib -lXext -lX11
 
            THREAD_LIB = -L/usr/lib -lpthread
