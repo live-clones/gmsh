@@ -1,4 +1,4 @@
-// $Id: MinMax.cpp,v 1.13 2003-03-26 16:57:07 geuzaine Exp $
+// $Id: MinMax.cpp,v 1.14 2003-03-26 21:01:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 
 extern Context_T CTX;
 
-void minmax(void *a, void *b)
+static void minmax(void *a, void *b)
 {
   Vertex *v;
   v = *(Vertex **) a;
