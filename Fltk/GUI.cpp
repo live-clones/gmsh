@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.119 2001-10-29 16:06:55 geuzaine Exp $
+// $Id: GUI.cpp,v 1.120 2001-10-29 16:35:15 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2081,9 +2081,9 @@ void GUI::create_view_options_window(int num){
       }
       // 2D
       { 
-	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
-	o->labelsize(CTX.fontsize);
-        o->hide();
+	view_2d = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
+	view_2d->labelsize(CTX.fontsize);
+        view_2d->hide();
 	
 	view_value[20] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "X position");
 	view_value[21] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Y position");
@@ -2097,7 +2097,7 @@ void GUI::create_view_options_window(int num){
 	  view_value[i]->callback(set_changed_cb, 0);
 	}
 
-        o->end();
+        view_2d->end();
       }
       // Range
       { 
@@ -2325,6 +2325,16 @@ void GUI::update_view_window(int num){
   opt_view_draw_tensors(num, GMSH_GUI, 0);
 
   //2D
+  if(v->NbSP){
+    view_2d->activate();
+    view_butt[2]->activate();
+    view_butt[3]->activate();
+  }
+  else{
+    view_2d->deactivate();
+    view_butt[2]->deactivate();
+    view_butt[3]->deactivate();
+  }
   opt_view_graph_position0(num, GMSH_GUI, 0);
   opt_view_graph_position1(num, GMSH_GUI, 0);
   opt_view_graph_size0(num, GMSH_GUI, 0);
