@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.49 2005-01-08 20:15:21 geuzaine Exp $
+$Id: FAQ,v 1.50 2005-01-09 05:17:59 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -313,7 +313,7 @@ Yes: load both the vector and the scalar fields (the two views must
 have the same number of elements) and, in the vector field options,
 select the scalar view in 'Data source'.
 
-* 7.8 Can I color iso-value surfaces with data from another scalar
+* 7.8 Can I color isovalue surfaces with data from another scalar
 view?
 
 Yes, using the CutMap plugin.
@@ -328,8 +328,8 @@ vector/tensor fields?
 
 Yes: use 'View->Plugin->Extract'.
 
-* 7.11 Can I do operations on a view? Can I perform operations
-involving different views?
+* 7.11 Can I do arithmetic operations on a view? Can I perform
+operations involving different views?
 
 Yes, with the Evaluate plugin.
 
@@ -339,8 +339,9 @@ There can be several reasons:
 
 - the plugin might be written for specific element types only (for
   example, only for scalar triangles or tetrahedra). In that case, you
-  should transform you view into a simplectic view with
-  Plugin(DecomposeinSimplex) first.
+  should transform your view before running the plugin (you can use
+  Plugin(DecomposeinSimplex) to transform all quads, hexas, prisms and
+  pyramids into triangles and tetrahedra).
 
 - the plugin might expect a mesh while all you provide is a point
   cloud. In 2D, you can use Plugin(Triangulate) to transform a point
