@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.35 2005-04-05 05:56:48 geuzaine Exp $
+// $Id: List.cpp,v 1.36 2005-04-06 19:09:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,10 @@ void List_Realloc(List_T * liste, int n)
     return;
 
   if(liste->array == NULL) {
-    liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
+    // This does not permit to allocate lists smaller that liste->incr:
+    //liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
+    // So this is much better
+    liste->nmax = n;
     liste->array = (char *)Malloc(liste->nmax * liste->size);
   }
   else if(n > liste->nmax) {
