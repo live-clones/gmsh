@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.5 2001-01-09 14:24:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.6 2001-01-09 15:45:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -279,7 +279,7 @@ void file_quit_cb(CALLBACK_ARGS) {
 // Option General Menu
 
 void opt_general_cb(CALLBACK_ARGS) {
-  WID->opt_general();
+  WID->create_general_options_window();
 }
 void opt_general_moving_axes_cb(CALLBACK_ARGS){
   CTX.axes = !CTX.axes ;
@@ -305,6 +305,8 @@ void opt_general_orthographic_cb(CALLBACK_ARGS){
 }
 void opt_general_color_cb(CALLBACK_ARGS){
   Init_Colors((int)((Fl_Value_Input*)w)->value()-1);
+  Init();
+  Draw();
 }
 void opt_general_shininess_cb(CALLBACK_ARGS){
   CTX.shine = ((Fl_Value_Input*)w)->value();
@@ -316,7 +318,7 @@ void opt_general_light_cb(CALLBACK_ARGS){
 // Option Geometry Menu
 
 void opt_geometry_cb(CALLBACK_ARGS) {
-  WID->opt_geometry();
+  WID->create_geometry_options_window();
 }
 void opt_geometry_entity_cb(CALLBACK_ARGS) {
   switch((int)data){
@@ -357,7 +359,7 @@ void opt_geometry_tangents_cb(CALLBACK_ARGS) {
 // Option Mesh Menu
 
 void opt_mesh_cb(CALLBACK_ARGS) {
-  WID->opt_mesh();
+  WID->create_mesh_options_window();
 }
 void opt_mesh_entity_cb(CALLBACK_ARGS) {
   switch((int)data){
@@ -379,33 +381,64 @@ void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) {
   opt_geometry_show_by_entity_num_cb(w,data);
 }
 void opt_mesh_show_by_quality_cb(CALLBACK_ARGS) {
-  const char * c = ((Fl_Input*)w)->value(); 
-  if (!strcmp(c,"all") || !strcmp(c,"*"))
-    CTX.mesh.limit_gamma = 0.0 ;
-  else
-    CTX.mesh.limit_gamma = atof(c);
+  CTX.mesh.limit_gamma = ((Fl_Value_Input*)w)->value();
 }
-
+void opt_mesh_normals_cb(CALLBACK_ARGS) {
+  CTX.mesh.normals = ((Fl_Value_Input*)w)->value();
+}
+void opt_mesh_degree_cb(CALLBACK_ARGS){
+  if(CTX.mesh.degree==2) CTX.mesh.degree = 1;
+  else CTX.mesh.degree = 2;
+}
+void opt_mesh_algo_cb(CALLBACK_ARGS){
+  if(CTX.mesh.algo==DELAUNAY_OLDALGO) CTX.mesh.algo = DELAUNAY_NEWALGO;
+  else CTX.mesh.algo = DELAUNAY_OLDALGO;
+}
+void opt_mesh_smoothing_cb(CALLBACK_ARGS){
+  CTX.mesh.nb_smoothing = (int)((Fl_Value_Input*)w)->value();
+}
+void opt_mesh_interactive_cb(CALLBACK_ARGS){
+  CTX.mesh.interactive = !CTX.mesh.interactive;
+}
+void opt_mesh_explode_cb(CALLBACK_ARGS){
+  CTX.mesh.explode = ((Fl_Value_Input*)w)->value();
+}
+void opt_mesh_aspect_cb(CALLBACK_ARGS){
+  switch((int)data){
+  case 0 : CTX.mesh.hidden = 0; CTX.mesh.shade = 0; break; 
+  case 1 : CTX.mesh.hidden = 1; CTX.mesh.shade = 0; break; 
+  case 2 : CTX.mesh.hidden = 1; CTX.mesh.shade = 1; break; 
+  }
+}
 
 // Option Post Menu
 
 void opt_post_cb(CALLBACK_ARGS) {
-  WID->opt_post();
+  WID->create_post_options_window();
+}
+void opt_post_link_cb(CALLBACK_ARGS) {
+  CTX.post.link = (int)data;
+}
+void opt_post_anim_delay_cb(CALLBACK_ARGS) {
+  CTX.post.anim_delay = (long)(1.e5*((Fl_Value_Input*)w)->value());
 }
 
 // Option Statistics Menu
 
 void opt_statistics_cb(CALLBACK_ARGS) {
-  WID->opt_statistics();
+  WID->create_statistics_window();
+}
+void opt_statistics_update_cb(CALLBACK_ARGS) {
+  WID->set_statistics();
 }
 
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS){
-  WID->help_short();
+  WID->create_help_window();
 }
 void help_about_cb(CALLBACK_ARGS){
-  WID->help_about();
+  WID->create_about_window();
 }
 
 // Module Menu
@@ -766,17 +799,23 @@ void view_duplicate_cb(CALLBACK_ARGS){
 }
 
 void view_lighting_cb(CALLBACK_ARGS){
-  printf("Light view %d \n", (int)data);
+  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
+  v->Light = !v->Light;
+  v->Changed = 1;
+  Init() ;
+  Draw() ;
 }
 void view_elements_cb(CALLBACK_ARGS){
-  printf("Show Elements view %d \n", (int)data);
+  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
+  v->ShowElement = !v->ShowElement;
+  v->Changed = 1;
+  Init() ;
+  Draw() ;
 }
 void view_applybgmesh_cb(CALLBACK_ARGS){
-  printf("Apply bgmesh view %d \n", (int)data);
-}
-void view_timestep_cb(CALLBACK_ARGS){
-  printf("Timestep view %d \n", (int)data);
+  Post_View *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
+  BGMWithView(v); 
 }
 void view_options_cb(CALLBACK_ARGS){
-  WID->opt_view();
+  WID->create_view_window();
 }

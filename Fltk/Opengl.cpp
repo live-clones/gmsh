@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.3 2001-01-09 13:28:44 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.4 2001-01-09 15:45:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -234,7 +234,7 @@ int Opengl_Window::handle(int event) {
   switch (event) {
 
   /* -------------------------------------------------------------
-     K e y s 
+     S h o r t c u t s
      ------------------------------------------------------------- */
 
   case FL_SHORTCUT:
@@ -244,34 +244,6 @@ int Opengl_Window::handle(int event) {
     */
     return 0;
 
-  case FL_ENTER :
-  case FL_LEAVE :
-    ButtonPressed = 0;
-    Modifier = 0;
-    return Fl_Gl_Window::handle(event);
-    
-  case FL_FOCUS:
-    return 1;
-
-  case FL_UNFOCUS:
-    return 1;
-
-  case FL_KEYBOARD:
-    
-    switch(Fl::event_key()){
-    case FL_Control_L : case FL_Control_R : 
-      printf("got a ctrl\n");
-      Modifier = 1; 
-      return 1;
-    case FL_Alt_L : case FL_Alt_R : 
-    case FL_Meta_L : case FL_Meta_R : 
-      Modifier = 2; 
-      return 1;
-    default:
-      return Fl_Gl_Window::handle(event);
-    }
-    break;
-    
   /* -------------------------------------------------------------
      B u t t o n P r e s s
      ------------------------------------------------------------- */
@@ -469,8 +441,7 @@ int Opengl_Window::handle(int event) {
       O t h er
      ------------------------------------------------------------- */
 
-  default:
-    // pass other events to the base class...
+  default: // pass other events to the base class...
     return Fl_Gl_Window::handle(event);
 
   }

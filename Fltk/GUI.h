@@ -18,7 +18,7 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Input.H>
-#include <FL/Fl_Value_Output.H>
+#include <FL/Fl_Output.H>
 #include <FL/Fl_Multiline_Output.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Bitmap.H>
@@ -124,12 +124,12 @@ class GUI{
   Fl_Value_Input   *post_value[20] ;
 
   // statistics window
-  Fl_Value_Output  *stat_value[40] ;
+  Fl_Output        *stat_value[50] ;
 
   // view options window
   Fl_Check_Button  *view_butt[20] ;
-  Fl_Value_Input   *view_value[10] ;
-  Fl_Input         *view_input[10] ;
+  Fl_Value_Input   *view_value[20] ;
+  Fl_Input         *view_input[20] ;
 
 public:
 
@@ -145,18 +145,17 @@ public:
   int  get_context();
   void set_anim(int mode);
   void set_status(char *msg, int num);
+  void set_statistics();
 
-  // create option windows
-  void opt_general();
-  void opt_geometry();
-  void opt_mesh();
-  void opt_post();
-  void opt_statistics();
-  void opt_view();
-
-  // create help windows
-  void help_short();
-  void help_about();
+  // create additional windows
+  void create_general_options_window();
+  void create_geometry_options_window();
+  void create_mesh_options_window();
+  void create_post_options_window();
+  void create_statistics_window();
+  void create_view_window();
+  void create_help_window();
+  void create_about_window();
 
 };
 

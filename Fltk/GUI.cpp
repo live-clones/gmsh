@@ -310,8 +310,6 @@ GUI::GUI() {
 			   (Fl_Callback *)view_elements_cb, (void*)i, 0);
       m_popup_butt[i]->add("Apply as Background Mesh", 0,
 			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
-      m_popup_butt[i]->add("Time Step...", 0,
-			   (Fl_Callback *)view_timestep_cb, (void*)i, 0);
       m_popup_butt[i]->add("Options...", 0,
 			   (Fl_Callback *)view_options_cb, (void*)i, 0);
       m_popup_butt[i]->textsize(CTX.fontsize);
@@ -410,6 +408,62 @@ void GUI::set_anim(int mode){
 void GUI::set_status(char *msg, int num){
   g_status_label[num]->label(msg);
   g_status_label[num]->redraw();
+}
+
+// Set the statistics
+void GUI::set_statistics(){
+  static double  s[50];
+  static char    label[50][256];
+
+  GetStatistics(s);
+
+  // geom
+  sprintf(label[0], "%g", s[0]); stat_value[0]->value(label[0]);
+  sprintf(label[1], "%g", s[1]); stat_value[1]->value(label[1]);
+  sprintf(label[2], "%g", s[2]); stat_value[2]->value(label[2]);
+  sprintf(label[3], "%g", s[3]); stat_value[3]->value(label[3]);
+                                                
+  // mesh
+  sprintf(label[4], "%g", s[4]); stat_value[4]->value(label[4]);
+  sprintf(label[5], "%g", s[5]); stat_value[5]->value(label[5]);
+  sprintf(label[6], "%g", s[6]); stat_value[6]->value(label[6]);
+  sprintf(label[7], "%g", s[7]-s[8]); stat_value[7]->value(label[7]);
+  sprintf(label[8], "%g", s[8]); stat_value[8]->value(label[8]);
+  sprintf(label[9], "%g", s[9]); stat_value[9]->value(label[9]);
+  sprintf(label[10], "%g", s[10]); stat_value[10]->value(label[10]);
+  sprintf(label[11], "%g", s[11]); stat_value[11]->value(label[11]);
+
+  sprintf(label[12], "%g", s[12]); stat_value[12]->value(label[12]);
+  sprintf(label[13], "%g", s[13]); stat_value[13]->value(label[13]);
+  sprintf(label[14], "%g", s[14]); stat_value[14]->value(label[14]);
+
+  sprintf(label[15], "%.4g (%.4g->%.4g)", s[17], s[19], s[18]); stat_value[15]->value(label[15]);
+  sprintf(label[16], "%.4g (%.4g->%.4g)", s[20], s[22], s[21]); stat_value[16]->value(label[16]);
+  sprintf(label[17], "%.4g (%.4g->%.4g)", s[23], s[25], s[24]); stat_value[17]->value(label[17]);
+
+  // post
+  
+  s[15] = List_Nbr(Post_ViewList) ;
+  sprintf(label[18], "%g", s[15]);   stat_value[18]->value(label[18]);
+
+  s[16] = s[17] = s[18] = s[19] = 0 ;
+  for(int i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+    Post_View *v = (Post_View*)List_Pointer(Post_ViewList, i);
+    if(v->Visible){
+      s[16] += v->NbSP + v->NbVP + v->NbTP;
+      s[17] += v->NbSL + v->NbVL + v->NbTL;
+      s[18] += v->NbST + v->NbVT + v->NbTT;
+      s[19] += v->NbSS + v->NbVS + v->NbTS;
+    }
+  }
+  sprintf(label[19], "%g", s[16]); stat_value[19]->value(label[19]);
+  sprintf(label[20], "%g", s[17]); stat_value[20]->value(label[20]);
+  sprintf(label[21], "%g", s[18]); stat_value[21]->value(label[21]);
+  sprintf(label[22], "%g", s[19]); stat_value[22]->value(label[22]);
+
+  for(int i=0 ; i<23 ; i++)
+    stat_value[16]->redraw();
+
 }
 
 // set the current drawing context to the main opengl window
@@ -549,7 +603,7 @@ int GUI::get_context(){
 
 // Create the window for general options
 
-void GUI::opt_general(){
+void GUI::create_general_options_window(){
   static int init_opt_general = 0;
 
   if(!init_opt_general){
@@ -680,7 +734,7 @@ void GUI::opt_general(){
 
 // Create the window for geometry options
 
-void GUI::opt_geometry(){
+void GUI::create_geometry_options_window(){
   static int init_opt_geometry = 0;
 
   if(!init_opt_geometry){
@@ -782,7 +836,7 @@ void GUI::opt_geometry(){
 
 // Create the window for mesh options
 
-void GUI::opt_mesh(){
+void GUI::create_mesh_options_window(){
   static int init_opt_mesh = 0;
 
   if(!init_opt_mesh){
@@ -801,8 +855,14 @@ void GUI::opt_mesh(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+BH, 100, BH, "Second Order");
+	mesh_butt[0]->callback(opt_mesh_degree_cb, (void*)0);
+	mesh_butt[0]->value(CTX.mesh.degree==2);
         mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 100, BH, "Interactive");
+	mesh_butt[1]->callback(opt_mesh_interactive_cb, (void*)0);
+	mesh_butt[1]->value(CTX.mesh.interactive);
         mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Anisotropic");
+	mesh_butt[2]->callback(opt_mesh_algo_cb, (void*)0);
+	mesh_butt[2]->value(CTX.mesh.algo==DELAUNAY_NEWALGO);
 	for(int i=0 ; i<3 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
@@ -810,38 +870,69 @@ void GUI::opt_mesh(){
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
         mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, 40, BH, "Smoothing Steps");
-	mesh_value[0]->minimum(0); mesh_value[0]->maximum(1000); mesh_value[0]->step(1);
-	for(int i=0 ; i<1 ; i++){
-	  mesh_value[i]->labelsize(CTX.fontsize);
-	  mesh_value[i]->type(FL_HORIZONTAL);
-	  mesh_value[i]->align(FL_ALIGN_RIGHT);
-	}
+	mesh_value[0]->minimum(0);
+	mesh_value[0]->maximum(100); 
+	mesh_value[0]->step(1);
+	mesh_value[0]->callback(opt_mesh_smoothing_cb);
+	mesh_value[0]->value(CTX.mesh.nb_smoothing);
+	mesh_value[0]->labelsize(CTX.fontsize);
+	mesh_value[0]->type(FL_HORIZONTAL);
+	mesh_value[0]->align(FL_ALIGN_RIGHT);
+
         o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
         mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+BH, 100, BH, "Points");
+	mesh_butt[3]->callback(opt_mesh_entity_cb, (void*)0);
+	mesh_butt[3]->value(CTX.mesh.points);
         mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 100, BH, "Curves");
+	mesh_butt[4]->callback(opt_mesh_entity_cb, (void*)1);
+	mesh_butt[4]->value(CTX.mesh.lines);
         mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Surfaces");
+	mesh_butt[5]->callback(opt_mesh_entity_cb, (void*)2);
+	mesh_butt[5]->value(CTX.mesh.surfaces);
         mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+4*BH, 100, BH, "Volumes");
-        mesh_butt[7] = new Fl_Check_Button(2*WB+120, 2*WB+BH, 100, BH, "Point Numebers");
+	mesh_butt[6]->callback(opt_mesh_entity_cb, (void*)3);
+	mesh_butt[6]->value(CTX.mesh.volumes);
+        mesh_butt[7] = new Fl_Check_Button(2*WB+120, 2*WB+BH, 100, BH, "Point Numbers");
+	mesh_butt[7]->callback(opt_mesh_entity_cb, (void*)0);
+	mesh_butt[7]->value(CTX.mesh.points_num);
         mesh_butt[8] = new Fl_Check_Button(2*WB+120, 2*WB+2*BH, 100, BH, "Curve Numbers");
+	mesh_butt[8]->callback(opt_mesh_entity_cb, (void*)1);
+	mesh_butt[8]->value(CTX.mesh.lines_num);
         mesh_butt[9] = new Fl_Check_Button(2*WB+120, 2*WB+3*BH, 100, BH, "Surface Numbers");
+	mesh_butt[9]->callback(opt_mesh_entity_cb, (void*)2);
+	mesh_butt[9]->value(CTX.mesh.surfaces_num);
         mesh_butt[10] = new Fl_Check_Button(2*WB+120, 2*WB+4*BH, 100, BH, "Volume Numbers");
+	mesh_butt[10]->callback(opt_mesh_entity_cb, (void*)3);
+	mesh_butt[10]->value(CTX.mesh.volumes_num);
 	for(int i=3 ; i<11 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
-        mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+5*BH, 100, BH, "Entity Number");
-	mesh_value[1]->minimum(0); mesh_value[1]->maximum(1000); mesh_value[1]->step(1);
-        mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, 100, BH, "Element Quality");
-	mesh_value[2]->minimum(0); mesh_value[2]->maximum(1000); mesh_value[2]->step(1);
-	mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+7*BH, 100, BH, "Normals");
-	mesh_value[3]->minimum(0); mesh_value[3]->maximum(100); mesh_value[3]->step(1);
-	for(int i=1 ; i<4 ; i++){
+        mesh_input = new Fl_Input(2*WB, 2*WB+5*BH, 100, BH, "Entity Number");
+	mesh_input->callback(opt_mesh_show_by_entity_num_cb);
+	mesh_input->labelsize(CTX.fontsize);
+	mesh_input->type(FL_HORIZONTAL);
+	mesh_input->align(FL_ALIGN_RIGHT);
+
+        mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+6*BH, 100, BH, "Element Quality");
+	mesh_value[1]->minimum(0); 
+	mesh_value[1]->maximum(1);
+	mesh_value[1]->step(0.001);
+	mesh_value[1]->callback(opt_mesh_show_by_quality_cb);
+	mesh_value[1]->value(CTX.mesh.limit_gamma);
+	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+7*BH, 100, BH, "Normals");
+	mesh_value[2]->minimum(0); 
+	mesh_value[2]->maximum(100);
+	mesh_value[2]->step(1);
+	mesh_value[2]->callback(opt_mesh_normals_cb);
+	mesh_value[2]->value(CTX.mesh.normals);
+	for(int i=1 ; i<3 ; i++){
 	  mesh_value[i]->labelsize(CTX.fontsize);
 	  mesh_value[i]->type(FL_HORIZONTAL);
 	  mesh_value[i]->align(FL_ALIGN_RIGHT);
@@ -853,22 +944,30 @@ void GUI::opt_mesh(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         mesh_butt[11] = new Fl_Check_Button(2*WB, 2*WB+BH, 100, BH, "Wireframe");
+	mesh_butt[11]->callback(opt_mesh_aspect_cb, (void*)0);
+	mesh_butt[11]->value(!CTX.mesh.hidden);
         mesh_butt[12] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 100, BH, "Hidden lines");
+	mesh_butt[12]->callback(opt_mesh_aspect_cb, (void*)1);
+	mesh_butt[12]->value(CTX.mesh.hidden);
         mesh_butt[13] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Solid");
+	mesh_butt[13]->callback(opt_mesh_aspect_cb, (void*)2);
+	mesh_butt[13]->value(CTX.mesh.shade);
 	for(int i=11 ; i<14 ; i++){
-	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
+	  mesh_butt[i]->type(FL_RADIO_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
         mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+4*BH, 40, BH, "Explode");
-	mesh_value[4]->minimum(0); mesh_value[4]->maximum(100); mesh_value[4]->step(1);
+	mesh_value[4]->minimum(0);
+	mesh_value[4]->maximum(100);
+	mesh_value[4]->step(1);
+	mesh_value[4]->callback(opt_mesh_explode_cb);
+	mesh_value[4]->value(CTX.mesh.explode);
+	mesh_value[4]->labelsize(CTX.fontsize);
+	mesh_value[4]->type(FL_HORIZONTAL);
+	mesh_value[4]->align(FL_ALIGN_RIGHT);
         o->end();
-	for(int i=4 ; i<5 ; i++){
-	  mesh_value[i]->labelsize(CTX.fontsize);
-	  mesh_value[i]->type(FL_HORIZONTAL);
-	  mesh_value[i]->align(FL_ALIGN_RIGHT);
-	}
       }
       o->end();
     }
@@ -900,7 +999,7 @@ void GUI::opt_mesh(){
 
 // Create the window for post-processing options
 
-void GUI::opt_post(){
+void GUI::create_post_options_window(){
   static int init_opt_post = 0;
 
   if(!init_opt_post){
@@ -918,8 +1017,14 @@ void GUI::opt_post(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Links");
 	o->labelsize(CTX.fontsize);
         post_butt[0] = new Fl_Check_Button(2*WB, 2*WB+BH, 150, BH, "No link between views");
-        post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 150, BH, "Link all views");
-        post_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 150, BH, "Link visible views");
+	post_butt[0]->callback(opt_post_link_cb, (void*)0);
+	post_butt[0]->value(CTX.post.link==0);
+        post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 150, BH, "Link visible views");
+	post_butt[1]->callback(opt_post_link_cb, (void*)1);
+	post_butt[1]->value(CTX.post.link==1);
+        post_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 150, BH, "Link all views");
+	post_butt[2]->callback(opt_post_link_cb, (void*)2);
+	post_butt[2]->value(CTX.post.link==2);
 	for(int i=0 ; i<3 ; i++){
 	  post_butt[i]->type(FL_RADIO_BUTTON);
 	  post_butt[i]->labelsize(CTX.fontsize);
@@ -932,12 +1037,14 @@ void GUI::opt_post(){
 	o->labelsize(CTX.fontsize);
 	o->hide();
         post_value[0] = new Fl_Value_Input(2*WB, 2*WB+BH, 40, BH, "Animation delay");
-	post_value[0]->minimum(0); post_value[0]->maximum(10); post_value[0]->step(0.1);
-	for(int i=0 ; i<1 ; i++){
-	  post_value[i]->labelsize(CTX.fontsize);
-	  post_value[i]->type(FL_HORIZONTAL);
-	  post_value[i]->align(FL_ALIGN_RIGHT);
-	}
+	post_value[0]->minimum(0);
+	post_value[0]->maximum(10); 
+	post_value[0]->step(0.1);
+	post_value[0]->callback(opt_post_anim_delay_cb);
+	post_value[0]->value(CTX.post.anim_delay);
+	post_value[0]->labelsize(CTX.fontsize);
+	post_value[0]->type(FL_HORIZONTAL);
+	post_value[0]->align(FL_ALIGN_RIGHT);
 	o->end();
       }
       o->end();
@@ -969,7 +1076,7 @@ void GUI::opt_post(){
 
 // Create the window for the statistics
 
-void GUI::opt_statistics(){
+void GUI::create_statistics_window(){
   static int init_opt_statistics = 0;
 
   if(!init_opt_statistics){
@@ -987,40 +1094,40 @@ void GUI::opt_statistics(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Geometry");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-        stat_value[0] = new Fl_Value_Output(110+2*WB, 2*WB+BH, 100, BH, "Number of points");
-        stat_value[1] = new Fl_Value_Output(110+2*WB, 2*WB+2*BH, 100, BH, "Number of curves");
-        stat_value[2] = new Fl_Value_Output(110+2*WB, 2*WB+3*BH, 100, BH, "Number of surfaces");
-        stat_value[3] = new Fl_Value_Output(110+2*WB, 2*WB+4*BH, 100, BH, "Number of volumes");
+        stat_value[0] = new Fl_Output(110+2*WB, 2*WB+BH, 100, BH, "Number of points");
+        stat_value[1] = new Fl_Output(110+2*WB, 2*WB+2*BH, 100, BH, "Number of curves");
+        stat_value[2] = new Fl_Output(110+2*WB, 2*WB+3*BH, 100, BH, "Number of surfaces");
+        stat_value[3] = new Fl_Output(110+2*WB, 2*WB+4*BH, 100, BH, "Number of volumes");
         o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Mesh");
 	o->labelsize(CTX.fontsize);
-        stat_value[4] = new Fl_Value_Output(110+2*WB, 2*WB+BH, 100, BH, "Nodes on curves");
-        stat_value[5] = new Fl_Value_Output(110+2*WB, 2*WB+2*BH, 100, BH, "Nodes on surfaces");
-        stat_value[6] = new Fl_Value_Output(110+2*WB, 2*WB+3*BH, 100, BH, "Nodes in Volumes");
-        stat_value[7] = new Fl_Value_Output(110+2*WB, 2*WB+4*BH, 100, BH, "Triangles");
-        stat_value[8] = new Fl_Value_Output(110+2*WB, 2*WB+5*BH, 100, BH, "Quadrangles");
-        stat_value[9] = new Fl_Value_Output(110+2*WB, 2*WB+6*BH, 100, BH, "Tetrahedra");
-        stat_value[10] = new Fl_Value_Output(110+2*WB, 2*WB+7*BH, 100, BH, "Hexahedra");
-        stat_value[11] = new Fl_Value_Output(110+2*WB, 2*WB+8*BH, 100, BH, "Prisms");
-        stat_value[12] = new Fl_Value_Output(110+2*WB, 2*WB+9*BH, 100, BH, "Time for 1D mesh");
-        stat_value[13] = new Fl_Value_Output(110+2*WB, 2*WB+10*BH, 100, BH, "Time for 2D mesh");
-        stat_value[14] = new Fl_Value_Output(110+2*WB, 2*WB+11*BH, 100, BH, "Time for 3D mesh");
-        stat_value[15] = new Fl_Value_Output(110+2*WB, 2*WB+12*BH, 100, BH, "Gamma factor");
-        stat_value[16] = new Fl_Value_Output(110+2*WB, 2*WB+13*BH, 100, BH, "Eta factor");
-        stat_value[17] = new Fl_Value_Output(110+2*WB, 2*WB+14*BH, 100, BH, "Rho factor");
+        stat_value[4] = new Fl_Output(110+2*WB, 2*WB+BH, 100, BH, "Nodes on curves");
+        stat_value[5] = new Fl_Output(110+2*WB, 2*WB+2*BH, 100, BH, "Nodes on surfaces");
+        stat_value[6] = new Fl_Output(110+2*WB, 2*WB+3*BH, 100, BH, "Nodes in Volumes");
+        stat_value[7] = new Fl_Output(110+2*WB, 2*WB+4*BH, 100, BH, "Triangles");
+        stat_value[8] = new Fl_Output(110+2*WB, 2*WB+5*BH, 100, BH, "Quadrangles");
+        stat_value[9] = new Fl_Output(110+2*WB, 2*WB+6*BH, 100, BH, "Tetrahedra");
+        stat_value[10] = new Fl_Output(110+2*WB, 2*WB+7*BH, 100, BH, "Hexahedra");
+        stat_value[11] = new Fl_Output(110+2*WB, 2*WB+8*BH, 100, BH, "Prisms");
+        stat_value[12] = new Fl_Output(110+2*WB, 2*WB+9*BH, 100, BH, "Time for 1D mesh");
+        stat_value[13] = new Fl_Output(110+2*WB, 2*WB+10*BH, 100, BH, "Time for 2D mesh");
+        stat_value[14] = new Fl_Output(110+2*WB, 2*WB+11*BH, 100, BH, "Time for 3D mesh");
+        stat_value[15] = new Fl_Output(110+2*WB, 2*WB+12*BH, 100, BH, "Gamma factor");
+        stat_value[16] = new Fl_Output(110+2*WB, 2*WB+13*BH, 100, BH, "Eta factor");
+        stat_value[17] = new Fl_Output(110+2*WB, 2*WB+14*BH, 100, BH, "Rho factor");
         o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Post-processing");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-        stat_value[18] = new Fl_Value_Output(110+2*WB, 2*WB+BH, 100, BH, "Views loaded");
-        stat_value[19] = new Fl_Value_Output(110+2*WB, 2*WB+2*BH, 100, BH, "Visible Points");
-        stat_value[20] = new Fl_Value_Output(110+2*WB, 2*WB+3*BH, 100, BH, "Visible Lines");
-        stat_value[21] = new Fl_Value_Output(110+2*WB, 2*WB+4*BH, 100, BH, "Visible Triangles");
-        stat_value[22] = new Fl_Value_Output(110+2*WB, 2*WB+5*BH, 100, BH, "Visible Tetrahedra");
+        stat_value[18] = new Fl_Output(110+2*WB, 2*WB+BH, 100, BH, "Views loaded");
+        stat_value[19] = new Fl_Output(110+2*WB, 2*WB+2*BH, 100, BH, "Visible Points");
+        stat_value[20] = new Fl_Output(110+2*WB, 2*WB+3*BH, 100, BH, "Visible Lines");
+        stat_value[21] = new Fl_Output(110+2*WB, 2*WB+4*BH, 100, BH, "Visible Triangles");
+        stat_value[22] = new Fl_Output(110+2*WB, 2*WB+5*BH, 100, BH, "Visible Tetrahedra");
         o->end();
       }
       o->end();
@@ -1030,6 +1137,7 @@ void GUI::opt_statistics(){
       stat_value[i]->labelsize(CTX.fontsize);
       stat_value[i]->type(FL_HORIZONTAL);
       stat_value[i]->align(FL_ALIGN_LEFT);
+      stat_value[i]->value(0);
     }
 
     { 
@@ -1038,20 +1146,22 @@ void GUI::opt_statistics(){
       o->callback(cancel_cb, (void*)stat_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "update");
       o->labelsize(CTX.fontsize);
-      o->callback(ok_cb);
+      o->callback(opt_statistics_update_cb);
     }
 
     stat_window->end();
+    set_statistics();
     stat_window->show();
   }
   else{
     if(stat_window->shown())
       stat_window->hide();
-    else
-      stat_window->show();
-    
+    else{
+      set_statistics();
+      stat_window->show();     
+    }
   }
 
 }
@@ -1060,7 +1170,7 @@ void GUI::opt_statistics(){
 
 #include "Help.h"
 
-void GUI::help_short(){
+void GUI::create_help_window(){
   static int init_help_short = 0;
 
   if(!init_help_short){
@@ -1104,7 +1214,7 @@ void GUI::help_short(){
 
 // Create the about window
 
-void GUI::help_about(){
+void GUI::create_about_window(){
   static int init_help_about = 0;
 
   if(!init_help_about){
@@ -1151,7 +1261,7 @@ void GUI::help_about(){
 
 // Create the window for view options
 
-void GUI::opt_view(){
+void GUI::create_view_window(){
   static int init_opt_view = 0;
 
   if(!init_opt_view){
@@ -1238,34 +1348,33 @@ void GUI::opt_view(){
 	view_value[2]->step(1);
         o->end();
       }
-      // Offset
+      // Offset and Raise
       { 
-	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset");
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset and raise");
 	o->labelsize(CTX.fontsize);
         o->hide();
 	view_value[3] = new Fl_Value_Input(2*WB, 2*WB+ BH, 100, BH, "X");
         view_value[4] = new Fl_Value_Input(2*WB, 2*WB+2*BH, 100, BH, "Y");
 	view_value[5] = new Fl_Value_Input(2*WB, 2*WB+3*BH, 100, BH, "Z");
-	for(int i=3 ; i<6 ; i++){
+	view_value[6] = new Fl_Value_Input(2*WB, 2*WB+ BH, 100, BH, "X");
+        view_value[7] = new Fl_Value_Input(2*WB, 2*WB+2*BH, 100, BH, "Y");
+	view_value[8] = new Fl_Value_Input(2*WB, 2*WB+3*BH, 100, BH, "Z");
+	for(int i=3 ; i<9 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
 	  view_value[i]->align(FL_ALIGN_RIGHT);
 	}	
 	o->end();
       }
-      // Raise
+      // Time step
       { 
-	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Raise");
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Time step");
 	o->labelsize(CTX.fontsize);
         o->hide();
-	view_value[6] = new Fl_Value_Input(2*WB, 2*WB+ BH, 100, BH, "X");
-        view_value[7] = new Fl_Value_Input(2*WB, 2*WB+2*BH, 100, BH, "Y");
-	view_value[8] = new Fl_Value_Input(2*WB, 2*WB+3*BH, 100, BH, "Z");
-	for(int i=6 ; i<9 ; i++){
-	  view_value[i]->labelsize(CTX.fontsize);
-	  view_value[i]->type(FL_HORIZONTAL);
-	  view_value[i]->align(FL_ALIGN_RIGHT);
-	}	
+	view_value[9] = new Fl_Value_Input(2*WB, 2*WB+ BH, 100, BH, "Time step");
+	view_value[9]->labelsize(CTX.fontsize);
+	view_value[9]->type(FL_HORIZONTAL);
+	view_value[9]->align(FL_ALIGN_RIGHT);
 	o->end();
       }
       o->end();
@@ -1294,3 +1403,4 @@ void GUI::opt_view(){
   }
 
 }
+

@@ -68,14 +68,23 @@ void opt_mesh_num_cb(CALLBACK_ARGS) ;
 void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) ;
 void opt_mesh_show_by_quality_cb(CALLBACK_ARGS) ;
 void opt_mesh_normals_cb(CALLBACK_ARGS) ;
+void opt_mesh_degree_cb(CALLBACK_ARGS) ;
+void opt_mesh_algo_cb(CALLBACK_ARGS) ;
+void opt_mesh_smoothing_cb(CALLBACK_ARGS) ;
+void opt_mesh_interactive_cb(CALLBACK_ARGS) ;
+void opt_mesh_explode_cb(CALLBACK_ARGS) ;
+void opt_mesh_aspect_cb(CALLBACK_ARGS) ;
 
 // Option Post Menu
 
 void opt_post_cb(CALLBACK_ARGS) ;
+void opt_post_link_cb(CALLBACK_ARGS) ;
+void opt_post_anim_delay_cb(CALLBACK_ARGS) ;
 
 // Option Statistics Menu
 
 void opt_statistics_cb(CALLBACK_ARGS) ;
+void opt_statistics_update_cb(CALLBACK_ARGS) ;
 
 // Help Menu
 
@@ -173,7 +182,6 @@ void view_duplicate_cb(CALLBACK_ARGS) ;
 void view_lighting_cb(CALLBACK_ARGS) ;
 void view_elements_cb(CALLBACK_ARGS) ;
 void view_applybgmesh_cb(CALLBACK_ARGS) ;
-void view_timestep_cb(CALLBACK_ARGS) ;
 void view_options_cb(CALLBACK_ARGS) ;
 
 
