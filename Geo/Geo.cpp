@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.19 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Geo.cpp,v 1.20 2001-07-30 12:40:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -25,12 +25,9 @@ char angle_text[100] = "3.14159/2" ;
 char ax_text[100] = "0.0", ay_text[100] = "0.0", az_text[100] = "1.0";
 char dx_text[100] = "0.0", dy_text[100] = "0.0", dz_text[100] = "0.0", df_text[100] = "1.0";
 char sa_text[100] = "0.0", sb_text[100] = "0.0", sc_text[100] = "0.0", sd_text[100] = "0.0";
-char nb_pts[100] ="10", mode_value[100] = "1";
-char trsf_pts_text[100] = "2", trsf_type_text[100] = "Power 1.0";
+char trsf_pts_text[100] = "2", trsf_type_text[100] = "Progression 1.";
 char trsf_vol_text[100] = "1";
-char char_length_text[100] = "1.0";
-
-int Mode_Transfinite = 0;
+char char_length_text[100] = "1.";
 
 double evaluate_scalarfunction (char *var, double val, char *funct){
   FILE *tempf;
@@ -100,8 +97,8 @@ void add_trsfsurf (int N, int *l, char *fich){
   int i;
   sprintf(text,"Transfinite Surface {%d} = {",l[0]);
   for(i=1;i<N;i++){
-    if(i==1)sprintf(text2,"%d ",l[i]);
-    else sprintf(text2,",%d ",l[i]);
+    if(i==1)sprintf(text2,"%d",l[i]);
+    else sprintf(text2,",%d",l[i]);
     strcat(text,text2);
   }
   sprintf(text2,"};");
@@ -115,8 +112,8 @@ void add_ellipticsurf (int N, int *l, char *fich){
   int i;
   sprintf(text,"Elliptic Surface {%d} = {",l[0]);
   for(i=1;i<N;i++){
-    if(i==1)sprintf(text2,"%d ",l[i]);
-    else sprintf(text2,",%d ",l[i]);
+    if(i==1)sprintf(text2,"%d",l[i]);
+    else sprintf(text2,",%d",l[i]);
     strcat(text,text2);
   }
   sprintf(text2,"};");
@@ -130,8 +127,8 @@ void add_charlength (int N, int *l, char *fich){
   int i;
   sprintf(text,"Characteristic Length {");
   for(i=0;i<N;i++){
-    if(i==0)sprintf(text2,"%d ",l[i]);
-    else sprintf(text2,",%d ",l[i]);
+    if(i==0)sprintf(text2,"%d",l[i]);
+    else sprintf(text2,",%d",l[i]);
     strcat(text,text2);
   }
   sprintf(text2,"} = %s;", char_length_text);
@@ -145,8 +142,8 @@ void add_recosurf (int N, int *l, char *fich){
   int i;
   sprintf(text,"Recombine Surface {");
   for(i=0;i<N;i++){
-    if(i==0)sprintf(text2,"%d ",l[i]);
-    else sprintf(text2,",%d ",l[i]);
+    if(i==0)sprintf(text2,"%d",l[i]);
+    else sprintf(text2,",%d",l[i]);
     strcat(text,text2);
   }
   sprintf(text2,"};");
@@ -161,16 +158,14 @@ void add_trsfline (int N, int *l, char *fich){
   int i;
   sprintf(text,"Transfinite Line {");
   for(i=0;i<N;i++){
-    if(!i)sprintf(text2,"%d ",l[i]);
-    else sprintf(text2,",%d ",l[i]);
+    if(!i)sprintf(text2,"%d",l[i]);
+    else sprintf(text2,",%d",l[i]);
     strcat(text,text2);
   }
-  if(Mode_Transfinite == 0)
-    sprintf(text2,"} = %s;",nb_pts);
-  else if(Mode_Transfinite == 1)
-   sprintf(text2,"} = %s Using Progression %s;",nb_pts,mode_value);
-  else if(Mode_Transfinite == 2)
-    sprintf(text2,"} = %s Using Bump %s;",nb_pts,mode_value);
+  if(strlen(trsf_type_text))
+    sprintf(text2,"} = %s Using %s;", trsf_pts_text, trsf_type_text);
+  else
+    sprintf(text2,"} = %s;", trsf_pts_text);
   strcat(text,text2);
   add_infile(text,fich);
 }
@@ -404,8 +399,8 @@ void add_trsfvol(int N, int *l, char *fich){
 
   sprintf(text,"Transfinite Volume{%s} = {", trsf_vol_text);
   for(i=0;i<N;i++){
-    if(i==0)sprintf(text2,"%d ",l[i]);
-    else sprintf(text2,",%d ",l[i]);
+    if(i==0)sprintf(text2,"%d",l[i]);
+    else sprintf(text2,",%d",l[i]);
     strcat(text,text2);
   }
   sprintf(text2,"};");
@@ -495,6 +490,3 @@ void protude(int s, char *fich, char *what){
           az_text,px_text,py_text,pz_text,angle_text);
   add_infile(text,fich);
 }
-
-
-
