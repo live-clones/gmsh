@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.62 2001-12-04 09:28:31 geuzaine Exp $
+// $Id: Views.cpp,v 1.63 2002-01-18 23:46:38 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -392,12 +392,12 @@ void FreeView(Post_View *v){
     //+ the reload does not work (e.g. the file is gone). This way,
     //the next Free stuff will still work gracefully.
     v->Time = NULL;
-    v->SP = v->VP = v->TP;
-    v->SL = v->VL = v->TL;
-    v->ST = v->VT = v->TT;
-    v->SS = v->VS = v->TS;
-    v->T2D = v->T2C;
-    v->T3D = v->T3C;
+    v->SP = v->VP = v->TP = NULL;
+    v->SL = v->VL = v->TL = NULL;
+    v->ST = v->VT = v->TT = NULL;
+    v->SS = v->VS = v->TS = NULL;
+    v->T2D = v->T2C = NULL;
+    v->T3D = v->T3C = NULL;
     v->reset_normals();
   }
 
