@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.114 2002-04-06 00:59:48 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.115 2002-04-12 18:43:23 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -32,7 +32,7 @@ extern Context_T  CTX;
 
 // File chooser (re)definitions
 
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
+#if (FL_MAJOR_VERSION == 1 || FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0)
 
 #include <FL/fl_file_chooser.H>
 
@@ -51,6 +51,7 @@ char* file_chooser_get_name(int num){
 #else
 
 #include <FL/filename.H>
+
 #include <FL/Fl_File_Chooser.H>
 
 static Fl_File_Chooser *fc = NULL;

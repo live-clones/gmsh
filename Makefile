@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.194 2002-04-10 01:59:05 geuzaine Exp $
+# $Id: Makefile,v 1.195 2002-04-12 18:43:23 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 34
@@ -306,7 +306,6 @@ link-fltk2:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk_gl.so.2\
                  $(OPENGL_LIB) \
-                 $(HOME)/SOURCES/fltk-2.0/lib/libfltk_forms.so.2 \
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk.so.2 \
                  -L/usr/X11R6/lib $(X11_LIB) -lm
 fltk2: compile-fltk2 link-fltk2

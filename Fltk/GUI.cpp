@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.162 2002-04-06 00:59:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.163 2002-04-12 18:43:23 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -565,10 +565,12 @@ GUI::GUI(int argc, char **argv) {
   Fl::add_handler(SetGlobalShortcut);
 
   // set default font size
+#if !((FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0))
   FL_NORMAL_SIZE = CTX.fontsize;
+#endif
 
   // handle themes and tooltip font size
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+#if !((FL_MAJOR_VERSION == 1 || FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0))
   if(strlen(CTX.theme)) Fl::scheme(CTX.theme);
   Fl_Tooltip::size(CTX.fontsize);
 #endif
