@@ -1,4 +1,4 @@
-// $Id: ExtractContour.cpp,v 1.6 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: ExtractContour.cpp,v 1.7 2005-03-15 20:13:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,7 @@ void recurFindLinkedEdges(int ed, List_T * edges, Tree_T * points, Tree_T * link
   }
 }
 
-void createEdgeLinks(Tree_T *links)
+int createEdgeLinks(Tree_T *links)
 {
   lnk li, *pli;
   nxa na;
@@ -96,6 +96,11 @@ void createEdgeLinks(Tree_T *links)
 
   for(int i = 0; i < List_Nbr(temp); i++) {
     List_Read(temp, i, &c);
+    if(!c->beg || !c->end){
+      List_Delete(temp);
+      Msg(GERROR, "Cannot link curves with no begin or end points");
+      return 0;
+    }
     if(c->Num > 0) {
       na.a = c->Num;
       int ip[2];
@@ -115,6 +120,7 @@ void createEdgeLinks(Tree_T *links)
     }
   }
   List_Delete(temp);
+  return 1;
 }
 
 void orientAndSortEdges(List_T *edges, Tree_T *links)
@@ -176,7 +182,8 @@ int allEdgesLinked(int ed, List_T * edges)
   Tree_T *links = Tree_Create(sizeof(lnk), complink);
   Tree_T *points = Tree_Create(sizeof(int), fcmp_int);
 
-  createEdgeLinks(links);
+  if(!createEdgeLinks(links))
+    return 0;
 
   // initialize point tree with all hanging points
   for(int i = 0; i < List_Nbr(edges); i++){
