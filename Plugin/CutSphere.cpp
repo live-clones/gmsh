@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.7 2001-07-31 10:24:56 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.8 2001-07-31 11:13:16 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -38,9 +38,8 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright, char *help_te
 {
   strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright,"DGR (www.multiphysics.com)");
-  strcpy(help_text,
-	 "This Plugins cuts a view\n"
-	 "with the sphere (x-xc)^2 + (y-yc)^2 + (z-zc)^2  = r^20\n");
+  strcpy(help_text, "This Plugins cuts a view with the sphere "
+	 " (x-xc)^2 + (y-yc)^2 + (z-zc)^2  = r^20");
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const

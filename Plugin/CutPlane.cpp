@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.8 2001-07-31 10:24:56 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.9 2001-07-31 11:13:16 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -37,7 +37,7 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright, char *help_tex
 {
   strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright,"DGR (www.multiphysics.com)");
-  strcpy(help_text,"This Plugins cuts a view \n with a plane a x + b y + c z + d = 0\n");
+  strcpy(help_text,"This Plugins cuts a view with a plane a x + b y + c z + d = 0");
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const

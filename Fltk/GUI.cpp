@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.96 2001-07-31 09:56:52 geuzaine Exp $
+// $Id: GUI.cpp,v 1.97 2001-07-31 11:13:16 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -638,11 +638,11 @@ void GUI::create_menu_window(int argc, char **argv){
 			   (Fl_Callback *)view_save_ascii_cb, (void*)i, 0) ;
       m_popup_butt[i]->add("Save as/Binary View...", 0,
 			   (Fl_Callback *)view_save_binary_cb, (void*)i, 0) ;
+      add_post_plugins ( m_popup_butt[i] , i);
       m_popup_butt[i]->add("Apply as Background Mesh", 0,
 			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
       m_popup_butt[i]->add("Options...", 0,
 			   (Fl_Callback *)view_options_cb, (void*)i, 0);
-      add_post_plugins ( m_popup_butt[i] , i);
       m_popup_butt[i]->textsize(CTX.fontsize);
       m_popup_butt[i]->hide();
     }
@@ -1691,50 +1691,81 @@ void GUI::set_statistics(){
 
 PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
   char buffer[1024],namep[1024],copyright[256],author[256],help[1024];
+  
+  // get plugin info
 
-  PluginDialogBox *pdb = new PluginDialogBox;
   int n = p->getNbOptions();
   p->getName(namep);
   p->getInfos(author,copyright,help);
+  std::pair<int,GMSH_Plugin*> *pair = new std::pair<int,GMSH_Plugin*>(iView,p);
+
+  // create window
+
   int width = 20*CTX.fontsize;
-  int height = (n+2)*BH ;
-  Fl_Window *pl_window = new Fl_Window(width,height);
-  pdb->main_window = pl_window;
-  pl_window->box(WINDOW_BOX);
+  int height = (n+2)*BH + 5*WB;
+
+  PluginDialogBox *pdb = new PluginDialogBox;
+  pdb->main_window = new Fl_Window(width,height);
+  pdb->main_window->box(WINDOW_BOX);
   sprintf(buffer,"%s Plugin",namep);
   char *nbuffer = new char[strlen(buffer)+1];
   strcpy(nbuffer,buffer);
-  pl_window->label(nbuffer);
+  pdb->main_window->label(nbuffer);
 
-  if(n > 20)Msg(GERROR,"Plugin has too much parameters");
+  { 
+    Fl_Tabs *o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-1*BH);
+    { 
+      Fl_Group *g = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Options");
+      g->labelsize(CTX.fontsize);
 
-  for(int i=0;i<n;i++)
-    {
-      StringXNumber *sxn;
-      sxn = p->GetOption(i);
-      pdb->view_value[i] = new Fl_Value_Input(2*WB, 2*WB+(i)*BH, IW, BH, sxn->str);
-      pdb->view_value[i]->labelsize(CTX.fontsize);
-      pdb->view_value[i]->textsize(CTX.fontsize);
-      pdb->view_value[i]->type(FL_HORIZONTAL);
-      pdb->view_value[i]->align(FL_ALIGN_RIGHT);
-      pdb->view_value[i]->value(sxn->def);
+      if(n > 20)Msg(GERROR, "Plugin has too many parameters");
+      
+      for(int i=0;i<n;i++){
+	StringXNumber *sxn;
+	sxn = p->GetOption(i);
+	pdb->view_value[i] = new Fl_Value_Input(2*WB, 2*WB+(i+1)*BH, IW, BH, sxn->str);
+	pdb->view_value[i]->labelsize(CTX.fontsize);
+	pdb->view_value[i]->textsize(CTX.fontsize);
+	pdb->view_value[i]->type(FL_HORIZONTAL);
+	pdb->view_value[i]->align(FL_ALIGN_RIGHT);
+	pdb->view_value[i]->value(sxn->def);
+      }
+
+      g->end();
     }
+    { 
+      Fl_Group *g = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "About");
+      g->labelsize(CTX.fontsize);
 
-  Fl_Button* cancel     = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Close");
+      Fl_Browser *o = new Fl_Browser(2*WB, 2*WB+1*BH, width-4*WB, height-5*WB-2*BH);
+      o->add("");
+      o->add(namep);
+      o->add("");
+      o->add(help);
+      o->add("");
+      o->add(author);
+      o->add(copyright);
+      o->textsize(CTX.fontsize);
+      
+      g->end();
+    }
+    o->end();
+  }
+
+  Fl_Button* cancel = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Close");
+  cancel->labelsize(CTX.fontsize);
+  cancel->callback(cancel_cb, (void*)pdb->main_window);
+
   Fl_Button* ok = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Run");
   ok->labelsize(CTX.fontsize);
-  std::pair<int,GMSH_Plugin*> *pair = 
-    new  std::pair<int,GMSH_Plugin*>(iView,p);
   ok->callback(view_plugin_cb, (void*)pair);
-  cancel->labelsize(CTX.fontsize);
-  cancel->callback(cancel_cb, (void*)pl_window);
 
   if(CTX.center_windows)
-    pl_window->position(m_window->x()+m_window->w()/2-width/2,
-			m_window->y()+9*BH-height/2);
+    pdb->main_window->position(m_window->x()+m_window->w()/2-width/2,
+			       m_window->y()+9*BH-height/2);
 
-  pl_window->end();
-   
+  pdb->main_window->end();  
+
   return pdb;
 }
 

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.10 2001-07-31 10:28:50 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.11 2001-07-31 11:13:16 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -30,10 +30,9 @@ void GMSH_CutMapPlugin::getName(char *name) const
 
 void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
-  strcpy(copyright,"DGR (www.multiphysics.com)");
-  strcpy(help_text,
-	 "This Plugins extracts the isovalue surface of value 'Value'\n");
+  strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
+  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(help_text, "This Plugins extracts the isovalue surface of value 'Value'");
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const
