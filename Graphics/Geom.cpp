@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.75 2004-12-21 03:13:02 geuzaine Exp $
+// $Id: Geom.cpp,v 1.76 2004-12-21 04:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -350,14 +350,11 @@ void Draw_Triangulated_Surface(Surface * s)
 
 void Draw_Plane_Surface(Surface * s)
 {
-  int i, j, k;
   Curve *c;
-  double minx = 0., miny = 0., maxx = 0., maxy = 0., t, n[3];
-  Vertex P1, P2, P3, V[4], vv, vv1, vv2;
-  char Num[100];
-  const int numPoints = 100;
+  Vertex V[4], vv, vv1, vv2;
+  double n[3];
 
-  if (s->thePolyRep) {
+  if(s->thePolyRep) {
     Draw_Triangulated_Surface(s);
     return;
   }
@@ -366,27 +363,26 @@ void Draw_Plane_Surface(Surface * s)
     CTX.threads_lock = 1;
 
     List_T *points = List_Create(10, 10, sizeof(Vertex *));
-    for(i = 0; i < List_Nbr(s->Generatrices); i++) {
+    for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
       List_Read(s->Generatrices, i, &c);
-      for(j = 0; j < List_Nbr(c->Control_Points); j++) {
+      for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
         List_Add(points, List_Pointer(c->Control_Points, j));
       }
     }
     MeanPlane(points, s);
     List_Delete(points);
-
-    k = 0;
-
-    for(i = 0; i < List_Nbr(s->Generatrices); i++) {
+    
+    // compute (rough) bounding box of surface
+    double minx = 0., miny = 0., maxx = 0., maxy = 0.;
+    for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
       List_Read(s->Generatrices, i, &c);
-      P1 = InterpolateCurve(c, 0.0, 0);
-      P2 = InterpolateCurve(c, 0.5, 0);
-      P3 = InterpolateCurve(c, 1.0, 0);
+      Vertex P1 = InterpolateCurve(c, 0.0, 0);
+      Vertex P2 = InterpolateCurve(c, 0.5, 0);
+      Vertex P3 = InterpolateCurve(c, 1.0, 0);
       Projette(&P1, s->plan);
       Projette(&P2, s->plan);
       Projette(&P3, s->plan);
-      if(!k) {
-        k = 1;
+      if(!i) {
         minx = maxx = P1.Pos.X;
         miny = maxy = P1.Pos.Y;
       }
@@ -405,7 +401,7 @@ void Draw_Plane_Surface(Surface * s)
     V[3].Pos.X = minx;
     V[3].Pos.Y = maxy;
 
-    for(i = 0; i < 4; i++) {
+    for(int i = 0; i < 4; i++) {
       V[i].Pos.Z = 0.0;
       putZ(&V[i], s);
     }
@@ -415,65 +411,56 @@ void Draw_Plane_Surface(Surface * s)
     n[2] = s->plan[2][2];
     norme(n);
 
-    k = 0;
-    for(i = 0; i < numPoints; i++) {
-      t = (double)i / (double)(numPoints-1);
-      vv.Pos.X = t * 0.5 * (V[0].Pos.X + V[1].Pos.X) + (1. - t) *
-        0.5 * (V[2].Pos.X + V[3].Pos.X);
-      vv.Pos.Y = t * 0.5 * (V[0].Pos.Y + V[1].Pos.Y) + (1. - t) *
-        0.5 * (V[2].Pos.Y + V[3].Pos.Y);
-      vv.Pos.Z = t * 0.5 * (V[0].Pos.Z + V[1].Pos.Z) + (1. - t) *
-        0.5 * (V[2].Pos.Z + V[3].Pos.Z);
-
-      if(isPointOnPlanarSurface(s, vv.Pos.X, vv.Pos.Y, vv.Pos.Z, n)) {
-        if(!k) {
-          List_Add(s->Orientations, &vv);
-          k = 1;
-        }
+    // compute which parts of the "middle cross" lie inside the surface
+    const int numPoints = 200;
+    for(int cross = 0; cross < 2; cross++) {
+      int k = 0;
+      for(int i = 0; i < numPoints; i++) {
+	double t = (double)i / (double)(numPoints-1);
+	if(!cross){
+	  vv.Pos.X = t * 0.5 * (V[0].Pos.X + V[1].Pos.X) + 
+	    (1. - t) * 0.5 * (V[2].Pos.X + V[3].Pos.X);
+	  vv.Pos.Y = t * 0.5 * (V[0].Pos.Y + V[1].Pos.Y) + 
+	    (1. - t) * 0.5 * (V[2].Pos.Y + V[3].Pos.Y);
+	  vv.Pos.Z = t * 0.5 * (V[0].Pos.Z + V[1].Pos.Z) + 
+	    (1. - t) * 0.5 * (V[2].Pos.Z + V[3].Pos.Z);
+	}
+	else{
+	  vv.Pos.X = t * .5 * (V[0].Pos.X + V[3].Pos.X) + 
+	    (1. - t) * .5 * (V[2].Pos.X + V[1].Pos.X);
+	  vv.Pos.Y = t * .5 * (V[0].Pos.Y + V[3].Pos.Y) + 
+	    (1. - t) * .5 * (V[2].Pos.Y + V[1].Pos.Y);
+	  vv.Pos.Z = t * .5 * (V[0].Pos.Z + V[3].Pos.Z) + 
+	    (1. - t) * .5 * (V[2].Pos.Z + V[1].Pos.Z);
+	}
+	if(isPointOnPlanarSurface(s, vv.Pos.X, vv.Pos.Y, vv.Pos.Z, n)) {
+	  if(!k) {
+	    List_Add(s->Orientations, &vv);
+	    k = 1;
+	  }
+	}
+	else {
+	  if(k) {
+	    List_Add(s->Orientations, &vv);
+	    k = 0;
+	  }
+	}
       }
-      else {
-        if(k) {
-          List_Add(s->Orientations, &vv);
-          k = 0;
-        }
-      }
+      if(k)
+	List_Add(s->Orientations, &vv);
     }
-    if(k)
-      List_Add(s->Orientations, &vv);
 
-    k = 0;
-    for(i = 0; i < numPoints; i++) {
-      t = (double)i / (double)(numPoints-1);
-      vv.Pos.X = t * .5 * (V[0].Pos.X + V[3].Pos.X) + 
-	(1. - t) * .5 * (V[2].Pos.X + V[1].Pos.X);
-      vv.Pos.Y = t * .5 * (V[0].Pos.Y + V[3].Pos.Y) + 
-	(1. - t) * .5 * (V[2].Pos.Y + V[1].Pos.Y);
-      vv.Pos.Z = t * .5 * (V[0].Pos.Z + V[3].Pos.Z) + 
-	(1. - t) * .5 * (V[2].Pos.Z + V[1].Pos.Z);
-      if(isPointOnPlanarSurface(s, vv.Pos.X, vv.Pos.Y, vv.Pos.Z, n)) {
-        if(!k) {
-          List_Add(s->Orientations, &vv);
-          k = 1;
-        }
-      }
-      else {
-        if(k) {
-          List_Add(s->Orientations, &vv);
-          k = 0;
-        }
-      }
+    Msg(STATUS2, "Plane Surface %d (%d cross points)", 
+	s->Num, List_Nbr(s->Orientations));
+    
+    if(!List_Nbr(s->Orientations)){ // add dummy
+      List_Add(s->Orientations, &vv);
+      //printf("surf %d: min=%g %g max=%g %g\n", s->Num, minx, miny, maxx, maxy);
     }
-    if(k)
-      List_Add(s->Orientations, &vv);
-
-    Msg(STATUS2, "Plane Surface %d (%d points)", s->Num, List_Nbr(s->Orientations));
-
-    if(!List_Nbr(s->Orientations)) // add dummy
-      List_Add(s->Orientations, &vv);
 
     CTX.threads_lock = 0;
   }
-
+  
   if(List_Nbr(s->Orientations) > 1) {
 
     if(CTX.geom.surfaces) {
@@ -481,7 +468,7 @@ void Draw_Plane_Surface(Surface * s)
       glLineStipple(1, 0x1F1F);
       gl2psEnable(GL2PS_LINE_STIPPLE);
       glBegin(GL_LINES);
-      for(i = 0; i < List_Nbr(s->Orientations); i++) {
+      for(int i = 0; i < List_Nbr(s->Orientations); i++) {
 	List_Read(s->Orientations, i, &vv);
 	glVertex3d(vv.Pos.X, vv.Pos.Y, vv.Pos.Z);
       }
@@ -493,6 +480,7 @@ void Draw_Plane_Surface(Surface * s)
     if(CTX.geom.surfaces_num) {
       List_Read(s->Orientations, 0, &vv1);
       List_Read(s->Orientations, 1, &vv2);
+      char Num[100];
       sprintf(Num, "%d", s->Num);
       double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
       glRasterPos3d((vv2.Pos.X + vv1.Pos.X) / 2. + offset / CTX.s[0],
