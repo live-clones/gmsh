@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.174 2001-12-05 09:33:53 geuzaine Exp $
+# $Id: Makefile,v 1.175 2001-12-05 09:43:57 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
@@ -206,7 +206,7 @@ dem:
 # Black Box
 # ----------------------------------------------------------------------
 
-bb: tag
+bb: initialtag
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -218,7 +218,7 @@ bb: tag
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
 
-bb-parallel: tag
+bb-parallel: initialtag
 	PARALLEL=1
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=mpiCC" \
@@ -231,7 +231,7 @@ bb-parallel: tag
         ); done
 	mpiCC -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
 
-bb-mingw: tag
+bb-mingw: initialtag
 	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -250,7 +250,7 @@ bb-mingw: tag
 #
 # Linux standard
 #
-compile-linux:
+compile-linux: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -263,12 +263,12 @@ compile-linux:
 link-linux:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux: tag compile-linux link-linux strip-bin
+linux: compile-linux link-linux strip-bin
 
 #
 # Test for fltk 1.1
 #
-compile-fltk1:
+compile-fltk1: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -289,7 +289,7 @@ fltk1: compile-fltk1 link-fltk1
 #
 # Test for fltk 2.0
 #
-compile-fltk2:
+compile-fltk2: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -311,7 +311,7 @@ fltk2: compile-fltk2 link-fltk2
 #
 # Linux, gcc-2.95.x (optimized build is very buggy)
 # 
-compile-linux-gcc-2.95:
+compile-linux-gcc-2.95: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
            "CC=$(HOME)/gcc-2.95.3/bin/gcc" \
@@ -324,8 +324,9 @@ compile-linux-gcc-2.95:
 link-linux-gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux-gcc-2.95: tag compile-linux-gcc-2.95 link-linux-gcc-2.95 strip-bin
+linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95 strip-bin
 linux-gcc-2.95-distrib:
+	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
@@ -350,7 +351,7 @@ rpm: src
 #
 # Linux SCOREC
 #
-compile-linux-scorec :
+compile-linux-scorec: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -364,12 +365,12 @@ link-linux-scorec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl 
-linux-scorec : compile-linux-scorec link-linux-scorec strip-bin 
+linux-scorec: compile-linux-scorec link-linux-scorec strip-bin 
 
 #
 # Digital (Compaq) Tru64
 #
-compile-dec:
+compile-dec: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -382,8 +383,9 @@ compile-dec:
 link-dec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-dec: tag compile-dec link-dec strip-bin
+dec: compile-dec link-dec strip-bin
 dec-distrib:
+	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
@@ -402,7 +404,7 @@ dec-distrib:
 #
 # HP-UX
 #
-compile-hp:
+compile-hp: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -416,8 +418,9 @@ link-hp:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                       -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB)\
                       -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-hp: tag compile-hp link-hp strip-bin
+hp: compile-hp link-hp strip-bin
 hp-distrib:
+	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
@@ -436,7 +439,7 @@ hp-distrib:
 #
 # IBM Aix
 #
-compile-ibm:
+compile-ibm: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -449,8 +452,9 @@ compile-ibm:
 link-ibm:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
-ibm: tag compile-ibm link-ibm strip-bin
+ibm: compile-ibm link-ibm strip-bin
 ibm-distrib:
+	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
@@ -469,7 +473,7 @@ ibm-distrib:
 #
 # SGI Irix
 #
-compile-sgi:
+compile-sgi: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=CC" \
            "CC=cc" \
@@ -484,8 +488,9 @@ compile-sgi:
 link-sgi:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) $(OPENGL_LIB) -lm
-sgi: tag compile-sgi link-sgi strip-bin
+sgi: compile-sgi link-sgi strip-bin
 sgi-distrib:
+	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=CC" \
@@ -506,7 +511,7 @@ sgi-distrib:
 #
 # Mingw
 #
-compile-mingw:
+compile-mingw: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -520,13 +525,13 @@ link-mingw:
 	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
                  Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-mingw: tag compile-mingw link-mingw
+mingw: compile-mingw link-mingw
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
 # Cygwin
 #
-compile-cygwin:
+compile-cygwin: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -540,13 +545,16 @@ link-cygwin:
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
                  Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-cygwin: tag compile-cygwin link-cygwin
+cygwin: compile-cygwin link-cygwin
 	strip $(GMSH_BIN_DIR)/gmsh.exe
-
+cygwin-distrib:
+	make tag
+	make cygwin
+	make distrib-win
 #
 # Cygwin with fltk 1.1
 #
-compile-cygwin1:
+compile-cygwin1: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -562,13 +570,13 @@ link-cygwin1:
                  -lglu32 -lopengl32\
                  $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a\
                  -lgdi32 -lwsock32 -lm
-cygwin1: tag compile-cygwin1 link-cygwin1
+cygwin1: compile-cygwin1 link-cygwin1
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 #
-# Cygwin gertha_buro
+# Cygwin gertha-buro
 #
-cygwin_gertha_buro: tag
+cygwin-gertha-buro: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -585,7 +593,7 @@ cygwin_gertha_buro: tag
 #
 # Cygwin laptop jf
 #
-cygwin_laptopjf: 
+cygwin-laptopjf: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -598,12 +606,12 @@ cygwin_laptopjf:
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB)\
                  Common/Icon.res ../fltk-1.0.9/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-cygwin_laptopjf_tag: tag cygwin_laptopjf
+cygwin-laptopjf_tag: tag cygwin-laptopjf
 
 #
 # Sun SunOS
 #
-compile-sun:
+compile-sun: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -618,8 +626,9 @@ link-sun:
                  -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB)\
                  $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
-sun: tag compile-sun link-sun strip-bin
+sun: compile-sun link-sun strip-bin
 sun-distrib:
+	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
@@ -638,7 +647,7 @@ sun-distrib:
 #
 # Solaris SCOREC
 #
-compile-solaris-scorec :
+compile-solaris-scorec: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -652,5 +661,5 @@ link-solaris-scorec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
-solaris-scorec : compile-solaris-scorec link-solaris-scorec strip-bin 
+solaris-scorec: compile-solaris-scorec link-solaris-scorec strip-bin 
 
