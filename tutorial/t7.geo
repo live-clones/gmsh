@@ -37,6 +37,6 @@ Line(5) = {11,22};
 
 // Anisotropic attractors can be defined on points and lines:
 
-//Attractor Line{5} = {.1, 0.01, 17};
+Attractor Line{5} = {.1, 0.01, 17};
 
 Attractor Line{1,2} = {0.1, 0.005, 3};

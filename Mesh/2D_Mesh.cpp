@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.24 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.25 2001-06-03 11:19:52 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -1033,7 +1033,7 @@ void ActionEndTheCurve (void *a, void *b){
 void Maillage_Surface (void *data, void *dum){
   Surface  **pS, *s;
   Tree_T    *tnxe;
-  int        ori;
+  int        ori, nbqua = 0;
 
   pS = (Surface **) data;
   s = *pS;
@@ -1105,8 +1105,9 @@ void Maillage_Surface (void *data, void *dum){
     Tree_Delete (tnxe);
   }
 
+
   if (s->Recombine)
-    Recombine (s->Vertices, s->Simplexes, s->RecombineAngle);
+    nbqua = Recombine (s->Vertices, s->Simplexes, s->RecombineAngle);
 
   s->Typ = TypSurface;
 
@@ -1138,6 +1139,7 @@ void Maillage_Surface (void *data, void *dum){
     Degre2 (THEM->Vertices, THEM->VertexEdges, s->Simplexes, NULL, THESUPPORT);
 
   THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
-  THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);
+  THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes); // tri+qua
+  THEM->Statistics[8] += nbqua;
 
 }

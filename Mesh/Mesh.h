@@ -59,7 +59,6 @@ typedef struct _CONTOUR ContourRecord, *ContourPeek;
 typedef struct _DOC DocRecord, *DocPeek;
 typedef struct _CDLIST DListRecord, *DListPeek;
 typedef struct _MAILLAGE maillage, *maipeek;
-typedef struct _MAICON maillage_c;
 typedef struct _DELAUNAY Delaunay, *delpeek;
 typedef int PointNumero;
 class STL_Data;
@@ -142,11 +141,6 @@ struct _CONTOUR{
   PointRecord *oriented_points;
   MPoint *perturbations;
   int numpoints, numerocontour, numerozon, info;
-};
-
-struct _MAICON{
-  PointRecord *points;
-  int numpoints, numcontour, numeroseg;
 };
 
 struct _MAILLAGE{
@@ -444,7 +438,7 @@ void Degre2 (Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
              Curve * c, Surface * s);
 void ActionLiss (void *data, void *dummy);
 void ActionLissSurf (void *data, void *dummy);
-void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
+int  Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
 void ApplyLcFactor(Mesh *M);
 
 void Gamma_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);

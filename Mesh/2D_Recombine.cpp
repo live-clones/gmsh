@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.5 2001-01-12 13:29:00 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.6 2001-06-03 11:19:52 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -6,8 +6,9 @@
 #include "2D_Mesh.h"
 #include "Create.h"
 #include "Numeric.h"
+#include "Context.h"
 
-extern Mesh     *THEM; 
+extern Context_T CTX;
 
 Tree_T    *RecEdges,*Triangles;
 Tree_T    *RecSimplex,*TREEELM;
@@ -66,7 +67,7 @@ void Recombine_Farce (void *a, void *b){
   }
 }
 
-void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
+int Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
   Tree_T *TreeEdges,*tnxe;
   int ntot;
 
@@ -91,12 +92,14 @@ void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
     Tree_Action(RecEdges,Recombine_Farce);
 
     /* Lissage */
-    tnxe = Tree_Create(sizeof(NXE),compareNXE);
-    create_NXE(TreeAllVert,TreeAllElg,tnxe);
-    Tree_Action(tnxe,ActionLissSurf);
-    Tree_Action(tnxe,ActionLissSurf);
-    Tree_Action(tnxe,ActionLissSurf);
-    Tree_Delete(tnxe);
+    if(CTX.mesh.nb_smoothing){
+      Msg(STATUS3, "Mesh smoothing");
+      tnxe = Tree_Create(sizeof(NXE),compareNXE);
+      create_NXE(TreeAllVert,TreeAllElg,tnxe);
+      for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
+	Tree_Action(tnxe,ActionLissSurf);
+      Tree_Delete(tnxe);
+    }
 
     /* Destruction */
     Tree_Delete(TreeEdges);
@@ -111,8 +114,7 @@ void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
 
   Msg(STATUS2, "Recombined %d Quadrangles",ntot); 
 
-  THEM->Statistics[7] -= ntot/2; 
-  THEM->Statistics[8] += ntot; 
+  return ntot ;
   
 }
 

@@ -1,4 +1,4 @@
-// $Id: 2D_SMesh.cpp,v 1.6 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: 2D_SMesh.cpp,v 1.7 2001-06-03 11:21:02 geuzaine Exp $
 
 /*  
   Maillage transfini surfacique                                                 
@@ -277,7 +277,7 @@ int MeshTransfiniteSurface (Surface *sur) {
     return(0);
   }  
 
-  free(list);
+  Free(list);
 
   // We count this here, to be able to distinguish very quickly
   // between triangles and quadrangles later

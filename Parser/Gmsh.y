@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.77 2001-05-16 15:11:45 geuzaine Exp $
+// $Id: Gmsh.y,v 1.78 2001-06-03 11:21:36 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1889,13 +1889,9 @@ Transfini :
 	List_Read($3,i,&d);
 	j = (int)d;
 	s = FindSurface(j,THEM);
-	if(!s){
-	  /* Allow generic lists, even if the surfaces don't exist
-	     vyyerror("Unkown Surface %d", j); */
-	}
-	else{
+	if(s){
 	  s->Recombine = 1;
-	  s->RecombineAngle = $5;
+	  s->RecombineAngle = ($5 > 0 && $5 < 90) ? $5 : 90;
 	}
       }
       List_Delete($3);
@@ -1907,11 +1903,7 @@ Transfini :
 	List_Read($3,i,&d);
 	j = (int)d;
         s = FindSurface(j,THEM);
-	if(!s){
-	  /* Allow generic lists, even if the surfaces don't exist
-	     vyyerror("Unkown Surface %d", j); */
-	}
-	else{
+	if(s){
 	  s->Recombine = 1;
 	  s->RecombineAngle = 30.;
         }
