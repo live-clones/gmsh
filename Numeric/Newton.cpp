@@ -1,4 +1,4 @@
-// $Id: Newton.cpp,v 1.1 2002-05-18 21:34:29 geuzaine Exp $
+// $Id: Newton.cpp,v 1.2 2002-06-03 21:31:11 geuzaine Exp $
 
 /* (C) Copr. 1986-92 Numerical Recipes Software J!0. */
 
@@ -32,9 +32,9 @@ fmin (double x[])
 // newt.cpp
 
 #define MAXITS 200
-#define TOLF 1.0e-10 /* 1.0e-4 */
-#define TOLMIN 1.0e-12 /* 1.0e-6 */
-#define TOLX 1.0e-14 /* 1.0e-7 */
+#define TOLF 1.0e-4 /* 1.0e-4 */
+#define TOLMIN 1.0e-6 /* 1.0e-6 */
+#define TOLX 1.0e-7 /* 1.0e-7 */
 #define STPMX 100.0
 #define FREERETURN {free_dvector(fvec,1,n);free_dvector(xold,1,n);\
         free_dvector(p,1,n);free_dvector(g,1,n);free_dmatrix(fjac,1,n,1,n);\
@@ -132,8 +132,8 @@ newt (double x[], int n, int *check,
 
 // lnsrch.cpp
 
-#define ALF 1.0e-8 /* 1.0e-4 */
-#define TOLX 1.0e-14 /* 1.0e-7 */
+#define ALF 1.0e-4 /* 1.0e-4 */
+#define TOLX 1.0e-7 /* 1.0e-7 */
 
 void
 lnsrch (int n, double xold[], double fold, double g[], double p[], double x[],
