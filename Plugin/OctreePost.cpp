@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.6 2004-04-24 05:53:25 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.7 2004-06-01 03:36:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 #include "Numeric.h"
 #include "Message.h"
 
-static double computeBarycentricTriangle(double *X , double *Y, double *Z, 
+static double computeBarycentricTriangle(double *X, double *Y, double *Z, 
 					 double *P, double *U)
 {
   double mat[2][2], b[2];
@@ -135,7 +135,7 @@ int PostTriangleInEle(void *a, double *x)
   return 1;
 }
 
-void PostTriangleCentroid(void *a , double *x)
+void PostTriangleCentroid(void *a, double *x)
 {
   double *X = (double*) a;
   double *Y = &X[3];
@@ -253,9 +253,13 @@ bool OctreePost::searchVector(double x,
 			      int timestep)
 {
   double P[3] = {x,y,z};
-  for (int i = 0; i < 3*theView->NbTimeStep; ++i)
-    values[i] = 0.0; 
 
+  if(timestep < 0)
+    for (int i = 0; i < 3*theView->NbTimeStep; ++i)
+      values[i] = 0.0; 
+  else
+    values[0] = values[1] = values[2] = 0.0;
+  
   void * inVT = Octree_Search(P, VT);
 
   // values[0] = -0.5*y;
@@ -372,8 +376,11 @@ bool OctreePost::searchScalar(double x,
   double P[3] = {x,y,z};
   void * inST = Octree_Search(P, ST);
 
-  for(int i = 0; i <theView->NbTimeStep; ++i)
-    values[i] = 0.0; 
+  if(timestep < 0)
+    for(int i = 0; i <theView->NbTimeStep; ++i)
+      values[i] = 0.0; 
+  else
+    values[0] = 0.0;
 
   if(inST){
     double U[3];
@@ -407,7 +414,7 @@ bool OctreePost::searchScalar(double x,
     double *Y = &X[4];
     double *Z = &X[8];
     double *V = &X[12];
-    computeBarycentricSimplex(X , Y, Z, P, U);      
+    computeBarycentricSimplex(X, Y, Z, P, U);      
     if(timestep < 0){
       for (int i = 0; i < theView->NbTimeStep; ++i){
 	values[i] = 

@@ -31,18 +31,18 @@ class GMSH_StreamLinesPlugin : public GMSH_Post_Plugin
 {
 public:
   GMSH_StreamLinesPlugin();
-  void getName  (char *name) const;
-  void getInfos (char *author, 
-  		 char *copyright,
-  		 char *help_text) const;
+  void getName(char *name) const;
+  void getInfos(char *author, 
+		char *copyright,
+		char *help_text) const;
   void catchErrorMessage (char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber *getOption (int iopt);  
-  Post_View *execute (Post_View *);
-  virtual int getNbU () const ;
-  virtual int getNbV () const ;
+  StringXNumber *getOption(int iopt);  
+  Post_View *execute(Post_View *);
+  virtual int getNbU() const ;
+  virtual int getNbV() const ;
   virtual void getPoint(int iU, int iV, double *X ) const  ;
-  virtual Post_View * GenerateView (Post_View * v) const ;
+  virtual Post_View * GenerateView(int iView, int dView) const ;
 };
 
 #endif

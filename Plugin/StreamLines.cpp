@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.9 2004-05-31 21:37:23 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.10 2004-06-01 03:36:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,7 @@ StringXNumber StreamLinesOptions_Number[] = {
   {GMSH_FULLRC, "nPointsV", NULL, 1},
   {GMSH_FULLRC, "MaxIter", NULL, 100},
   {GMSH_FULLRC, "DT", NULL, .1},
+  {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -72,7 +73,9 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
 	 "Plugin(StreamLines) computes stream lines\n"
-	 "from a vector view `iView'. It takes as input a\n"
+	 "from a vector view `iView' and optionally\n"
+	 "interpolates the scalar view `dView' on the\n"
+	 "resulting stream lines. It takes as input a\n"
 	 "grid defined by the 3 points (`X0',`Y0',`Z0')\n"
 	 "(origin), (`X1',`Y1',`Z1') (axis of U) and\n"
 	 "(`X2',`Y2',`Z2') (axis of V). The number of points\n"
@@ -86,7 +89,9 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
 	 "scheme is a RK44. If `iView' < 0, the plugin is run\n"
 	 "on the current view.\n"
 	 "\n"
-	 "Plugin(StreamLines) creates one new view.\n");
+	 "Plugin(StreamLines) creates one new view. This\n"
+	 "view contains multi-step vector points if `dView'\n"
+	 "< 0, or single-step scalar lines if `dView' >= 0.\n");
 }
 
 int GMSH_StreamLinesPlugin::getNbOptions() const
@@ -129,73 +134,109 @@ void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X) const
     v  * (StreamLinesOptions_Number[8].def-StreamLinesOptions_Number[2].def) ;
 }
 
-Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const 
+Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const 
 {
-  Post_View * View = BeginView(1);
-
-  View->VectorType = DRAW_POST_DISPLACEMENT;
-  View->NbTimeStep = (int) StreamLinesOptions_Number[11].def;
-
-  double XINIT[3];
-  double X[3],DX[3];
-  double X1[3];
-  double X2[3];
-  double X3[3];
-  double X4[3];
-  double VALUES [24];
-  const double b1=1./3.,b2=2./3.,b3=1./3.,b4=1./6.,a1=0.5,a2=0.5,a3=1.0,a4=1.0;
-  OctreePost o(v);
-
+  const double b1=1./3., b2=2./3., b3=1./3., b4=1./6.;
+  const double a1=0.5, a2=0.5, a3=1.0, a4=1.0;
   const double DT = StreamLinesOptions_Number[12].def;
+  double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
+  double sizeElem = 0.033, val[3], *val2 = NULL;
+
+  Post_View *v1 = (Post_View*)List_Pointer_Test(CTX.post.list, iView);
+  Post_View *v2 = (Post_View*)List_Pointer_Test(CTX.post.list, dView);
+
+  if(!v1) {
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return NULL;
+  }
+
+  OctreePost o(v1);
+  OctreePost *o2 = NULL;
+
+  if(v2){
+    val2 = new double[v2->NbTimeStep];
+    o2 = new OctreePost(v2);
+  }
+
+  Post_View *View = BeginView(1);
+
   for(int i = 0; i < getNbU(); ++i){
     for(int j = 0; j < getNbV(); ++j){
       getPoint(i, j, XINIT);
       getPoint(i, j, X);
 	  
-      int ITER = 0;
-      
-      View->NbVP++;
-      
-      List_Add(View->VP, &X[0]);
-      List_Add(View->VP, &X[1]);
-      List_Add(View->VP, &X[2]);	      
-      
-      while (ITER++ < (int) StreamLinesOptions_Number[11].def){
+      if(v2){
+	o2->searchScalar(X[0], X[1], X[2], val2, -1);
+      }
+      else{
+	View->NbVP++;
+	List_Add(View->VP, &X[0]);
+	List_Add(View->VP, &X[1]);
+	List_Add(View->VP, &X[2]);	      
+      }
+
+      for(int iter = 0; iter < (int)StreamLinesOptions_Number[11].def; iter++){
+
+	double XPREV[3] = { X[0], X[1], X[2] };
+
 	// dX/dt = V
 	// X1 = X + a1 * DT * V(X)
 	// X2 = X + a2 * DT * V(X1)
 	// X3 = X + a3 * DT * V(X2)
 	// X4 = X + a4 * DT * V(X3)
 	// X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
-	double sizeElem = 0.033;
-	o.searchVector(X[0], X[1], X[2], VALUES, &sizeElem, 0);
-	// sizeElem = 0.1;
-	//double normV = sqrt(VALUES[0]*VALUES[0]+
-	//		      VALUES[1]*VALUES[1]+
-	//		      VALUES[2]*VALUES[2]);	     
+
+	o.searchVector(X[0], X[1], X[2], val, &sizeElem, 0);
+	// double normV = sqrt(val[0]*val[0]+
+	//	 	       val[1]*val[1]+
+	//		       val[2]*val[2]);	     
 	// if (normV==0.0) normV = 1.0;
 	// double DT = sizeElem / normV ; /// CFL = 1 ==> secure 
-	for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * VALUES[k] * a1;
-	o.searchVector(X1[0], X1[1], X1[2], VALUES, &sizeElem, 0);
-	for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * VALUES[k] * a2;
-	o.searchVector(X2[0], X2[1], X2[2], VALUES, &sizeElem, 0);
-	for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * VALUES[k] * a3;
-	o.searchVector(X3[0], X3[1], X3[2], VALUES, &sizeElem, 0);
-	for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * VALUES[k] * a4;
+	for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
+	o.searchVector(X1[0], X1[1], X1[2], val, &sizeElem, 0);
+	for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
+	o.searchVector(X2[0], X2[1], X2[2], val, &sizeElem, 0);
+	for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
+	o.searchVector(X3[0], X3[1], X3[2], val, &sizeElem, 0);
+	for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
 	for(int k = 0; k < 3; k++) X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
 					    b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
 	for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
 
-	List_Add(View->VP, &DX[0]);
-	List_Add(View->VP, &DX[1]);
-	List_Add(View->VP, &DX[2]);	      
+	if(v2){
+	  View->NbSL++;
+	  List_Add(View->SL, &XPREV[0]);
+	  List_Add(View->SL, &X[0]);
+	  List_Add(View->SL, &XPREV[1]);
+	  List_Add(View->SL, &X[1]);
+	  List_Add(View->SL, &XPREV[2]);
+	  List_Add(View->SL, &X[2]);
+	  for(int k = 0; k < v2->NbTimeStep; k++)
+	    List_Add(View->SL, &val2[k]);
+	  o2->searchScalar(X[0], X[1], X[2], val2, -1);
+	  for(int k = 0; k < v2->NbTimeStep; k++)
+	    List_Add(View->SL, &val2[k]);
+	}
+	else{
+	  List_Add(View->VP, &DX[0]);
+	  List_Add(View->VP, &DX[1]);
+	  List_Add(View->VP, &DX[2]);	      
+	}
       }
     }
   }
 
+  if(v2){
+    delete [] val2;
+    delete o2;
+  }
+  else{
+    View->VectorType = DRAW_POST_DISPLACEMENT;
+  }
+
   char name[1024], filename[1024];
-  sprintf(name, "%s_StreamLines", v->Name);
-  sprintf(filename, "%s_StreamLines.pos", v->Name);
+  sprintf(name, "%s_StreamLines", v1->Name);
+  sprintf(filename, "%s_StreamLines.pos", v1->Name);
   EndView(View, 1, filename, name);
 
   return View;
@@ -203,17 +244,11 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
 
 Post_View *GMSH_StreamLinesPlugin::execute(Post_View * v)
 {
-  int iView = (int)StreamLinesOptions_Number[13].def;
+  int iView = (int)StreamLinesOptions_Number[14].def;
+  int dView = (int)StreamLinesOptions_Number[13].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
-
-  return GenerateView(v1);
+  return GenerateView(iView, dView);
 }
