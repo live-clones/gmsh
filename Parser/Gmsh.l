@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.14 2000-12-07 16:03:43 remacle Exp $ */
+%{ /* $Id: Gmsh.l,v 1.15 2000-12-08 22:17:47 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,6 +157,7 @@ Printf                  return tPrintf ;
 Recombine               return tRecombine;
 Rotate                  return tRotate;
 Ruled                   return tRuled;
+Rand                    return tRand;
 
 Sqrt                    return tSqrt ;
 Sin                     return tSin ;

@@ -7,22 +7,23 @@ typedef union {
   Shape    s;
   List_T  *l;
 } YYSTYPE;
-#define	tDOUBLE	258
-#define	tSTRING	259
-#define	tBIGSTR	260
-#define	tEND	261
-#define	tAFFECT	262
-#define	tDOTS	263
-#define	tPi	264
-#define	tExp	265
-#define	tLog	266
-#define	tLog10	267
-#define	tSqrt	268
-#define	tSin	269
-#define	tAsin	270
-#define	tCos	271
-#define	tAcos	272
-#define	tTan	273
+#define	tDOUBLE	257
+#define	tSTRING	258
+#define	tBIGSTR	259
+#define	tEND	260
+#define	tAFFECT	261
+#define	tDOTS	262
+#define	tPi	263
+#define	tExp	264
+#define	tLog	265
+#define	tLog10	266
+#define	tSqrt	267
+#define	tSin	268
+#define	tAsin	269
+#define	tCos	270
+#define	tAcos	271
+#define	tTan	272
+#define	tRand	273
 #define	tAtan	274
 #define	tAtan2	275
 #define	tSinh	276

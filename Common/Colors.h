@@ -1,4 +1,4 @@
-/* $Id: Colors.h,v 1.3 2000-12-05 15:23:54 geuzaine Exp $ */
+/* $Id: Colors.h,v 1.4 2000-12-08 22:17:47 geuzaine Exp $ */
 #ifndef _COLORS_H_
 #define _COLORS_H_
 
@@ -17,7 +17,6 @@ StringX4Int ColorString[] = {
   { "BlanchedAlmond"           ,  255, 235, 205, 255 } , 
   { "Bisque"                   ,  255, 228, 196, 255 } , 
   { "PeachPuff"                ,  255, 218, 185, 255 } , 
-  { "Navajo white"             ,  255, 222, 173, 255 } , 
   { "NavajoWhite"              ,  255, 222, 173, 255 } , 
   { "Moccasin"                 ,  255, 228, 181, 255 } , 
   { "Cornsilk"                 ,  255, 248, 220, 255 } , 

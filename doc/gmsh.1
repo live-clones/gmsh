@@ -2,10 +2,10 @@
 .\"
 .\" This is the manual page for Gmsh
 .\" 
-.\" Copyright (c) 2000 C. Geuzaine, J.-F. Remacle
+.\" Copyright (c) 2000 J.-F. Remacle, C. Geuzaine
 .\" 
 .\" ======================================================================
-.TH Gmsh 0.995 "23 November 2000"
+.TH Gmsh 0.995 "08 December 2000"
 .UC 4
 .\" ======================================================================
 .SH NAME
@@ -30,7 +30,7 @@ Parameterized geometries are created by successively defining points,
 oriented curves (segments, circles, ellipsis, splines, etc.), oriented
 surfaces (plane surfaces, ruled surfaces, etc.)  and volumes. Compound
 groups of geometrical entities can be defined, based on these elementary
-parameterized geometric entities.
+parameterized and scriptable geometric entities.
 .SS Mesh Generation
 A finite element mesh is a tessellation of a given subset of R^3 by
 elementary geometrical elements of various shapes (in this case lines,
@@ -89,16 +89,14 @@ mesh. Scalar fields are represented by iso-value curves or color maps
 and vector fields by three-dimensional arrows or displacement
 maps. Post-processor functions include offsets, elevation, interactive
 color map modification, range clamping, interactive animation, vector
-postscript output, etc.
+postscript output, etc. All post-processing options can be accessed
+either interactively or through the input ascii files.
 .\" ======================================================================
-.SH MESH OPTIONS
-.TP 4
-.B file[s]
-one or more ASCII file(s) containing the geometrical, mesh or
-post-processing descriptions.
+.SH GEOMETRY OPTIONS
 .TP 4
 .B \-0
-parse all input files and exit. 
+parse all input files, output flattened geometry, and exit. 
+.SH MESH OPTIONS
 .TP 4
 .B \-1
 perform the one-dimensional mesh, i.e. discretize all the curves in
@@ -112,6 +110,12 @@ the geometry.
 perform the three-dimensional mesh, i.e. discretize all the volumes in
 the geometry.
 .TP 4
+.B \-format msh|unv|gref
+set output mesh format (default: msh)
+.TP 4
+.B \-algo iso|aniso
+select the two-dimensional mesh algorithm (default: iso)
+.TP 4
 .B \-smooth int
 set the number of smoothing passes (default value is 3).
 .TP 4
@@ -122,14 +126,16 @@ set the degree of the generated elements (default value is 1).
 apply a global scaling factor to the generated mesh (default value is
 1.0).
 .TP 4
+.B \-clscale float
+apply a global scaling factor to all the characteristic lenghts in the
+mesh (default value is 1.0).
+.TP 4
 .B \-bgm file
 load view in file as current background mesh.
 .TP 4
-.B \-extrude
-extrude 2-dimensional mesh (interactively)
-.TP 4
-.B \-recombine
-recombine extruded meshes
+.B \-interactive
+display the 2D mesh construction interactively if the anisotropic mesh
+algorithm is selected
 .\" ======================================================================
 .SH POST-PROCESSING OPTIONS
 .TP 4
@@ -138,6 +144,10 @@ enable OpenGL display lists.
 .TP 4
 .B \-noview
 hide all views at startup.
+.TP 4
+.B \-link
+link all views (all interactive option modifications will apply to all
+views) at startup.
 .\" ======================================================================
 .SH DISPLAY OPTIONS
 .TP 4
@@ -151,8 +161,8 @@ suppress overlay visual.
 .B \-alpha
 enable alpha blending.
 .TP 4
-.B \-info
-show visual info at startup.
+.B \-notrack
+don't use trackball mode for rotations.
 .TP 4
 .B \-geometry geom
 specify main window geometry.
@@ -174,21 +184,27 @@ force same visual for OpenGL and GUI.
 .\" ======================================================================
 .SH OTHER OPTIONS
 .TP 4
-.B \-threads
-enable threads.
+.B \-v int
+set verbosity level (0=quiet, 3=debug; default:2).
+.TP 4
+.B \-nothreads
+disable threads.
 .TP 4
 .B \-path string
 set the path for included files.
 .TP 4
 .B \-version
-show version information.
+show version number.
+.TP 4
+.B \-info
+show detailed version information.
 .TP 4
 .B \-help
 show help message.
 .\" ======================================================================
 .SH AUTHORS
 Christophe Geuzaine (Christope.Geuzaine@ulg.ac.be) and Jean-Francois
-Remacle (remacle@scorec.rpi.edu). 
+Remacle (Remacle@scorec.rpi.edu). 
 .\" ======================================================================
 .SH SEE ALSO
 Gmsh homepage at \fIhttp://www.geuz.org/gmsh/\fR

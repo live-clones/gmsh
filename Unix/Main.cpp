@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.25 2000-12-08 13:12:18 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.26 2000-12-08 22:17:48 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -43,12 +43,12 @@ char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Geometry options:\n"
-  "  -0                    output flattened geometry and exit\n"
+  "  -0                    parse input files, output flattened geometry, and exit\n"
   "Mesh options:\n"
   "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
-  "  -script               gmsh in script mode\n"
+//  "  -script               gmsh in script mode\n"
   "  -format msh|unv|gref  set output mesh format (default: msh)\n"
-  "  -algo iso|aniso       select mesh algorithm (default: iso)\n"
+  "  -algo iso|aniso       select 2D mesh algorithm (default: iso)\n"
   "  -smooth int           set mesh smoothing (default: 0)\n"
   "  -degree int           set mesh degree (default: 1)\n"
   "  -scale float          set global scaling factor (default: 1.0)\n"
@@ -57,8 +57,8 @@ char gmsh_help[]      =
   "  -interactive          display 2D mesh construction interactively\n"
   "Post Processing options:\n"
   "  -dl                   enable display lists\n"
-  "  -noview               hide all views at startup\n"
-  "  -link                 link all views at startup\n"
+  "  -noview               hide all views on startup\n"
+  "  -link                 link all views on startup\n"
   "Display options:\n"    
   "  -nodb                 disable double buffering\n"
   "  -noov                 disable overlay visual\n"

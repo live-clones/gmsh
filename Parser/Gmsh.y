@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.30 2000-12-08 13:06:53 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.31 2000-12-08 22:17:47 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -73,7 +73,7 @@ void  vyyerror (char *fmt, ...);
 %token <c> tSTRING tBIGSTR
 
 %token tEND tAFFECT tDOTS tPi
-%token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan
+%token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tPrintf tDraw tSleep
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
@@ -1655,33 +1655,31 @@ Macro :
 Command :
    tPrintf tBIGSTR tEND
    {
-     char ext[6];
-     strcpy(ext,$2+(strlen($2)-4));
-     Replot();
-     extern void CreateImage (FILE *fp);
-     FILE *fp = 0;
-     if(!strcmp(ext,".gif"))
-       {
+     if(!CTX.interactive){ // we're in interactive mode
+       char ext[6];
+       strcpy(ext,$2+(strlen($2)-4));
+       Replot();
+       extern void CreateImage (FILE *fp);
+       FILE *fp = 0;
+       if(!strcmp(ext,".gif")){
 	 fp = fopen($2,"wb");
 	 CTX.print.type = PRINT_GL2GIF;
        }
-     else if(!strcmp(ext,".eps"))
-       {
+       else if(!strcmp(ext,".eps")){
 	 fp = fopen($2,"w");
 	 CTX.print.type =  PRINT_GL2PS_RECURSIVE;
        } 
-     else if(!strcmp(ext,".xpm"))
-       {
+       else if(!strcmp(ext,".xpm")){
 	 fp = fopen($2,"wb");
 	 CTX.print.type =  PRINT_XDUMP;
 	 CTX.print.format = FORMAT_XPM;
        } 
 
-     if(fp)
-       {
+       if(fp){
 	 CreateImage(fp);
 	 fclose(fp);
        }
+     }
    } 
    | tExit tEND
    {
@@ -1695,15 +1693,16 @@ Command :
    }
    | tDraw tEND
    {
-     if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
-       Last_NumberOfPoints = Tree_Nbr(THEM->Points);
-       Replot();
+     if(!CTX.interactive){ // we're in interactive mode
+       if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
+	 Last_NumberOfPoints = Tree_Nbr(THEM->Points);
+	 Replot();
+       }
+       else{
+	 Init();
+	 Draw();
+       }
      }
-     else{
-       Init();
-       Draw();
-     }
-       
    }
    | tSleep FExpr tEND
    {
@@ -2101,7 +2100,8 @@ FExpr :
   | tCeil   '(' FExpr ')'            { $$ = ceil($3);     }
   | tFmod   '(' FExpr ',' FExpr ')'  { $$ = fmod($3,$5);  }
   | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3,$5);  }
-  | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3*$3+$5*$5);  }
+  | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3*$3+$5*$5); }
+  | tRand   '(' FExpr ')'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
 ;
 
 FExpr_Single :
