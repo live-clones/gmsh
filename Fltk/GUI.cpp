@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.377 2004-11-09 16:27:49 remacle Exp $
+// $Id: GUI.cpp,v 1.378 2004-11-09 20:02:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1443,8 +1443,16 @@ void GUI::reset_option_browser()
   }
   int item = (select <= opt_browser->size()) ? select : opt_browser->size();
   opt_browser->value(item);
-  if(opt_window->shown())
-    options_browser_cb(NULL, NULL);
+  hide_all_option_groups();
+  switch(item){
+  case 0: break;
+  case 1: gen_group->show(); break;
+  case 2: geo_group->show(); break;
+  case 3: mesh_group->show(); break;
+  case 4: solver_group->show(); break;
+  case 5: post_group->show(); break;
+  default: update_view_window(item - 6); view_group->show(); break;
+  }
 }
 
 void GUI::reset_external_view_list()
@@ -2664,7 +2672,7 @@ void GUI::create_option_window()
 
         view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
         view_choice[10]->align(FL_ALIGN_RIGHT);
-	reset_external_view_list();
+	view_choice[10]->add("Self");
 
         static Fl_Menu_Item menu_vecloc[] = {
           {"Cell centered", 0, 0, 0},
