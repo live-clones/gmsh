@@ -36,7 +36,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.TextEditor
 System command to launch a text editor@*
-Default value: @code{"open -e %s"}@*
+Default value: @code{"emacs %s &"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
@@ -46,7 +46,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.WebBrowser
 System command to launch a web browser@*
-Default value: @code{"open %s"}@*
+Default value: @code{"if [[ $(ps -e|grep mozilla|grep -v grep) ]]; then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AlphaBlending
@@ -705,7 +705,7 @@ Default value: @code{@{255,255,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.AmbientLight
-Ambiant light color@*
+Ambient light color@*
 Default value: @code{@{25,25,25@}}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1126,7 +1126,7 @@ StringXColor GeneralOptions_Color[] = {
     PACK_COLOR(25, 25, 25, 255),
     PACK_COLOR(25, 25, 25, 255),
     PACK_COLOR(25, 25, 25, 255),
-    "Ambiant light color" },
+    "Ambient light color" },
   { F|O, "DiffuseLight" , opt_general_color_diffuse_light,
     PACK_COLOR(255, 255, 255, 255),
     PACK_COLOR(255, 255, 255, 255),
