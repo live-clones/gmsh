@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.31 2000-12-08 22:17:47 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.32 2000-12-08 22:29:50 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -2254,7 +2254,7 @@ FExpr_Range :
 VExpr :
     VExpr_Single
     {
-      $$ = $1;
+      for(i=0 ; i<6 ; i++) $$[i] = $1[i];
     }
   | '-' VExpr %prec UNARYPREC
     {
@@ -2262,7 +2262,7 @@ VExpr :
     }
   | '+' VExpr %prec UNARYPREC
     { 
-      $$ = $2;
+      for(i=0 ; i<6 ; i++) $$[i] = $2[i];
     }
   | VExpr '-' VExpr
     { 
