@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.183 2002-01-22 17:05:16 geuzaine Exp $
+# $Id: Makefile,v 1.184 2002-01-23 16:28:21 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 33
-GMSH_PATCH_VERSION = 1
+GMSH_PATCH_VERSION = 2
 
 MAKE = make
 CXX = c++
@@ -155,6 +155,9 @@ tgz:
 	tar cvf $(GMSH_ARCHIVE).tar $(GMSH_SOURCES)
 	gzip $(GMSH_ARCHIVE).tar
 	chmod 640 $(GMSH_ARCHIVE).tar.gz
+
+minizip:
+	tar jcvf gmsh.tar.bz2 `ls Makefile */Makefile */*.[chyl] */*.cpp`
 
 src:
 	tar cvf $(GMSH_SRCRPM).tar $(GMSH_SOURCES)
