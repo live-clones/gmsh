@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.44 2002-06-04 21:52:26 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.45 2002-06-04 22:29:05 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -260,19 +260,6 @@ GLvoid gl2psCutEdge(GL2PSvertex a, GL2PSvertex b, GL2PSplane plane,
   c->rgba[3] = (1.-sect) * a.rgba[3] + sect * b.rgba[3];
 }
 
-GLvoid gl2psFreePrimitive(GLvoid *a, GLvoid *b){
-  GL2PSprimitive *q ;
-  
-  q = *(GL2PSprimitive**)a;
-  gl2psFree(q->verts);
-  if(q->type == GL2PS_TEXT){
-    gl2psFree(q->text->str);
-    gl2psFree(q->text->fontname);
-    gl2psFree(q->text);
-  }
-  gl2psFree(q);
-}
-
 GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
 				    GL2PSprimitive **child, GLshort numverts,
 				    GLshort *index0, GLshort *index1){
@@ -487,6 +474,18 @@ GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root){
   }
 }
 
+GLvoid gl2psFreePrimitive(GLvoid *a, GLvoid *b){
+  GL2PSprimitive *q ;
+  
+  q = *(GL2PSprimitive**)a;
+  gl2psFree(q->verts);
+  if(q->type == GL2PS_TEXT){
+    gl2psFree(q->text->str);
+    gl2psFree(q->text->fontname);
+    gl2psFree(q->text);
+  }
+  gl2psFree(q);
+}
 
 GLvoid gl2psAddPrimitiveInList(GL2PSprimitive *prim, GL2PSlist *list){
   GL2PSprimitive *t1, *t2;
@@ -927,7 +926,7 @@ GLboolean gl2psVertsSameColor(const GL2PSprimitive *prim){
   return 1;
 }
 
-/* The postscript routines. Other (vector) image formats should be
+/* The PostScript routines. Other (vector) image formats should be
    easy to generate by creating the three corresponding routines for
    the new format. */
 
@@ -941,6 +940,8 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
   glGetIntegerv(GL_VIEWPORT, viewport);
 
   /* 
+     This is the format of the available primitives:
+
      RGB color: r g b C (replace C by G in output to change from rgb to gray)
      Greyscale: r g b G
      Font choose: size fontname FC
@@ -1023,10 +1024,12 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[0] : viewport[1],
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
+
   if (gl2ps->options & GL2PS_LANDSCAPE)
     fprintf(gl2ps->stream,
 	    "%d 0 translate 90 rotate\n",
 	    viewport[3]);
+
   fprintf(gl2ps->stream, 
 	  "%%%%EndPageSetup\n"
 	  "mark\n"
