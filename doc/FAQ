@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.42 2004-10-26 01:04:53 geuzaine Exp $
+$Id: FAQ,v 1.43 2004-10-26 08:11:12 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -254,7 +254,15 @@ If you want to loop through different views instead of time steps, you
 can use the 'Loop through views instead of time steps' option in the
 view option panel, or use the up and down arrow keys.
 
-* 7.3 Can I visualize a field on a deformed mesh?
+* 7.3 How do I visualize a deformed mesh?
+
+Load a vector view containing the displacement field, and select
+'Vector type->Displacement' in the view options. If the displacement
+is too small (or too large), you can scale it with the 'Displacement
+factor' option. (Remember that you can drag the mouse in all numeric
+input fields to slide the value!)
+
+* 7.4 Can I visualize a field on a deformed mesh?
 
 Yes, there are several ways to do that. 
 
@@ -264,31 +272,30 @@ mesh), and the second one containing the field you want to display
 (this view has to contain the same number of elements as the
 displacement view). You should then set 'Vector type' to
 'Displacement' in the first view, as well as set 'External data
-source' to the second view. (You might want to make the second view
-invisible, too. If you want to amplify or decrease the amount of
-deformation, just modify the 'Displacement factor' option.)
+source' to point to the second view. (You might want to make the
+second view invisible, too. If you want to amplify or decrease the
+amount of deformation, just modify the 'Displacement factor' option.)
 
 Another solution is to use the DiplacementRaise plugin.
 
-* 7.4 Can I color the arrows representing a vector field with data
+* 7.5 Can I color the arrows representing a vector field with data
 from a scalar field?
 
 Yes: load both the vector and the scalar fields (the two views must
 have the same number of elements) and, in the vector field options,
-set 'External data source' to the scalar view.
+select the scalar view in 'External data source'.
 
-* 7.5 Can I color iso-value surfaces with data from another scalar
+* 7.6 Can I color iso-value surfaces with data from another scalar
 view?
 
 Yes, using the CutMap plugin.
 
-* 7.6 Is there a way to save animations?
+* 7.7 Is there a way to save animations?
 
 Yes. For example, have a look at tutorial/t8.geo or
 demos/anim-seq.script.
 
-* 7.7 Is there a way to visualize only certain components of
+* 7.8 Is there a way to visualize only certain components of
 vector/tensor fields?
 
 Yes: use 'View->Plugin->Extract'.
-
