@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.19 2001-07-30 18:34:26 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.20 2001-07-31 07:18:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -49,11 +49,25 @@ void Draw_ScalarLine(Post_View *View,
 
   int     i,k,nb=0;
   double  d;
-  double  Xp[5],Yp[5],Zp[5],value[5],thev;
+  double  Xp[5],Yp[5],Zp[5],Val[5],value[5],thev;
   char    Num[100] ;
 
+  double *vv = &V[2*View->TimeStep];
+  if(View->SaturateValues){
+    for(i=0;i<2;i++){
+      if(vv[i] > ValMax) Val[i] = ValMax;
+      else if(vv[i] < ValMin) Val[i] = ValMin;
+      else Val[i] = vv[i];
+    }
+  }
+  else{
+    for(i=0;i<2;i++){	      
+      Val[i] = vv[i];
+    }
+  }
+
   for(k=0 ; k<2 ; k++)
-    RaiseFill(k, V[2*View->TimeStep+k], ValMin, Raise);
+    RaiseFill(k, Val[k], ValMin, Raise);
 
   if(View->ShowElement){
     glColor4ubv((GLubyte*)&CTX.color.fg);
@@ -62,7 +76,7 @@ void Draw_ScalarLine(Post_View *View,
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
-    d = (V[2*View->TimeStep]+V[2*View->TimeStep+1]) / 2.;
+    d = (Val[0]+Val[1]) / 2.;
 
     if(d >= ValMin && d <= ValMax){
       Palette2(View,ValMin,ValMax,d);
@@ -78,14 +92,14 @@ void Draw_ScalarLine(Post_View *View,
 
     if(View->IntervalsType==DRAW_POST_CONTINUOUS){
 
-      if(V[2*View->TimeStep]  >=ValMin && V[2*View->TimeStep]  <=ValMax &&
-         V[2*View->TimeStep+1]>=ValMin && V[2*View->TimeStep+1]<=ValMax){
+      if(Val[0]>=ValMin && Val[0]<=ValMax &&
+         Val[1]>=ValMin && Val[1]<=ValMax){
 	glBegin(GL_LINES);
-	Palette2(View,ValMin,ValMax,V[2*View->TimeStep]);
+	Palette2(View,ValMin,ValMax,Val[0]);
 	glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
 		   Y[0]+View->Offset[1]+Raise[1][0],
 		   Z[0]+View->Offset[2]+Raise[2][0]);
-	Palette2(View,ValMin,ValMax,V[2*View->TimeStep+1]);
+	Palette2(View,ValMin,ValMax,Val[1]);
 	glVertex3d(X[1]+View->Offset[0]+Raise[0][1],
 		   Y[1]+View->Offset[1]+Raise[1][1],
 		   Z[1]+View->Offset[2]+Raise[2][1]);
@@ -100,7 +114,7 @@ void Draw_ScalarLine(Post_View *View,
       for(k=0 ; k<View->NbIso ; k++){
 	Palette(View,View->NbIso,k);
 	if(View->IntervalsType==DRAW_POST_DISCRETE){
-	  CutLine1D(X,Y,Z,&V[2*View->TimeStep],
+	  CutLine1D(X,Y,Z,&Val[0],
 		    View->GVFI(ValMin,ValMax,View->NbIso+1,k),
 		    View->GVFI(ValMin,ValMax,View->NbIso+1,k+1),
 		    ValMin,ValMax,Xp,Yp,Zp,&nb,value);    
@@ -111,7 +125,7 @@ void Draw_ScalarLine(Post_View *View,
 	}
 	else{
 	  thev = View->GVFI(ValMin,ValMax,View->NbIso,k);
-	  CutLine0D(X,Y,Z,&V[2*View->TimeStep],
+	  CutLine0D(X,Y,Z,&Val[0],
 		    thev, ValMin,ValMax,Xp,Yp,Zp,&nb);    
 	  if(nb){
 	    RaiseFill(0,thev,ValMin,Raise);
@@ -339,7 +353,7 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
   }
 
   for(k=0 ; k<4 ; k++)
-    RaiseFill(k, V[4*View->TimeStep+k], ValMin, Raise);
+    RaiseFill(k, Val[k], ValMin, Raise);
 
   if(!preproNormals && View->ShowElement){
     glColor4ubv((GLubyte*)&CTX.color.fg);
