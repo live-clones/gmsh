@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.29 2003-01-23 20:19:19 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.30 2003-02-14 03:45:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -267,14 +267,14 @@ void Colorbar_Window::redraw_range(int a, int b){
    // print colortable mode and help
    fl_font(FL_HELVETICA, font_height);
    fl_color(fl_contrast(FL_BLACK,color_bg));
-   int xx0=10, xx1=13*font_height, yy0=10;
+   int xx0=10, xx1=12*font_height, yy0=10;
    if (help_flag){
      i = 0;
      fl_draw("1, 2, ..., 8", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "select predefined colormap", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("mouse1", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "draw red or hue channel", xx1,yy0+(i+1)*font_height); i++;
-     fl_draw("mouse2 or Shift+mouse1", xx0,yy0+(i+1)*font_height); 
+     fl_draw("mouse2", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "draw green or saturation channel", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("mouse3", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "draw blue or value channel", xx1,yy0+(i+1)*font_height); i++;
@@ -285,7 +285,9 @@ void Colorbar_Window::redraw_range(int a, int b){
      fl_draw("m", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "toggle RGB/HSV mode", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("left, right", xx0,yy0+(i+1)*font_height); 
-     fl_draw(    "move or rotate colormap", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw(    "move colormap", xx1,yy0+(i+1)*font_height); i++;
+     fl_draw("Ctrl+left, Ctrl+right", xx0,yy0+(i+1)*font_height); 
+     fl_draw(    "rotate colormap", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("up, down", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "modify color curvature", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("Ctrl+up, Ctrl+down", xx0,yy0+(i+1)*font_height); 
