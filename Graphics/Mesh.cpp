@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.73 2004-04-20 20:55:41 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.74 2004-04-20 21:47:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -368,7 +368,10 @@ void Draw_Simplex_Volume(void *a, void *b)
       return;
   }
 
-  if(!CTX.mesh.solid){
+  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+  }
+  else{
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -380,8 +383,6 @@ void Draw_Simplex_Volume(void *a, void *b)
     else
       glColor4ubv((GLubyte *) & CTX.color.mesh.tetrahedron);
   }
-  else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
   for(int i = 0; i < 4; i++) {
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
@@ -459,7 +460,7 @@ void Draw_Simplex_Volume(void *a, void *b)
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if(CTX.mesh.volumes_faces && CTX.mesh.solid){
+  if(CTX.mesh.volumes_faces){
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -579,7 +580,10 @@ void Draw_Simplex_Surface_Common(Simplex * s, int L, int K,
   if(CTX.mesh.normals || CTX.mesh.light)
     glNormal3verts(s->V[0], s->V[1], s->V[2], n);
 
-  if(!CTX.mesh.solid){
+  if(CTX.mesh.surfaces_faces){
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+  }
+  else{
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -593,9 +597,6 @@ void Draw_Simplex_Surface_Common(Simplex * s, int L, int K,
     else
       glColor4ubv((GLubyte *) & CTX.color.mesh.quadrangle);
   }
-  else {
-    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-  }
 
   if(CTX.mesh.surfaces_edges){
     glBegin(GL_LINE_LOOP);
@@ -605,7 +606,7 @@ void Draw_Simplex_Surface_Common(Simplex * s, int L, int K,
     glEnd();
   }
 
-  if(CTX.mesh.surfaces_faces && CTX.mesh.solid) {
+  if(CTX.mesh.surfaces_faces) {
 
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
@@ -790,7 +791,7 @@ void Draw_Simplex_Surface(void *a, void *b)
   Draw_Simplex_Surface_Common(s, L, K, pX, pY, pZ, n);
 
   if(CTX.mesh.surfaces_num) {
-    if(CTX.mesh.solid)
+    if(CTX.mesh.surfaces_faces)
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     sprintf(Num, "%d", s->Num);
     glRasterPos3d(Xc, Yc, Zc);
@@ -931,7 +932,10 @@ void Draw_Hexahedron_Volume(void *a, void *b)
       return;
   }
 
-  if(!CTX.mesh.solid){
+  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+  }
+  else{
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -943,8 +947,6 @@ void Draw_Hexahedron_Volume(void *a, void *b)
     else
       glColor4ubv((GLubyte *) & CTX.color.mesh.hexahedron);
   }
-  else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
   for(i = 0; i < 8; i++) {
     X[i] = Xc + CTX.mesh.explode * (h->V[i]->Pos.X - Xc);
@@ -1085,7 +1087,10 @@ void Draw_Prism_Volume(void *a, void *b)
       return;
   }
 
-  if(!CTX.mesh.solid){
+  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+  }
+  else{
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -1097,8 +1102,6 @@ void Draw_Prism_Volume(void *a, void *b)
     else
       glColor4ubv((GLubyte *) & CTX.color.mesh.prism);
   }
-  else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
   for(i = 0; i < 6; i++) {
     X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);
@@ -1221,7 +1224,10 @@ void Draw_Pyramid_Volume(void *a, void *b)
       return;
   }
 
-  if(!CTX.mesh.solid){
+  if(CTX.mesh.surfaces_faces || CTX.mesh.volumes_faces){
+    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+  }
+  else{
     if(theColor.type)
       glColor4ubv((GLubyte *) & theColor.mesh);
     else if(CTX.mesh.color_carousel == 1)
@@ -1233,8 +1239,6 @@ void Draw_Pyramid_Volume(void *a, void *b)
     else
       glColor4ubv((GLubyte *) & CTX.color.mesh.pyramid);
   }
-  else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.line);
 
   for(i = 0; i < 5; i++) {
     X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);

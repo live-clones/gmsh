@@ -363,7 +363,6 @@ double opt_mesh_point_size(OPT_ARGS_NUM);
 double opt_mesh_point_type(OPT_ARGS_NUM);
 double opt_mesh_line_width(OPT_ARGS_NUM);
 double opt_mesh_line_type(OPT_ARGS_NUM);
-double opt_mesh_solid(OPT_ARGS_NUM);
 double opt_mesh_light(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);

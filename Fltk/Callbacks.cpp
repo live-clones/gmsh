@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.215 2004-04-19 21:59:14 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.216 2004-04-20 21:47:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1087,7 +1087,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[13]->value());
   opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[14]->value());
   opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[15]->value());
-  opt_mesh_solid(0, GMSH_SET, WID->mesh_butt[16]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_color_carousel(0, GMSH_SET,
 			  WID->mesh_butt[18]->value()? 0 :
