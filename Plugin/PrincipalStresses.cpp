@@ -1,4 +1,4 @@
-// $Id: PrincipalStresses.cpp,v 1.2 2004-12-08 05:38:56 geuzaine Exp $
+// $Id: PrincipalStresses.cpp,v 1.3 2004-12-08 06:22:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -144,7 +144,7 @@ static void principal_stresses(List_T *inList, int inNb, int nbNod, int nbTime,
   delete [] B;
 
   if(nbcomplex)
-    Msg(GERROR, "%d elements have complex eigenvalues/eigenvectors");
+    Msg(GERROR, "%d tensors have complex eigenvalues/eigenvectors");
 }
 
 Post_View *GMSH_PrincipalStressesPlugin::execute(Post_View * v)
