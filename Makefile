@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.202 2002-04-13 04:32:30 geuzaine Exp $
+# $Id: Makefile,v 1.203 2002-04-13 04:50:34 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -10,9 +10,6 @@ CC = cc
 FLAGS = -g -Wall
 RM = rm
 RMFLAGS = -f 
-OPENGL_LIB = -lGLU -lGL
-FLTK_LIB = -lfltk
-X11_LIB = -lX11
 
 # ----------------------------------------------------------------------
 #  Gmsh definitions
@@ -56,12 +53,13 @@ default: initialtag
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 
 gmsh:
-	$(CXX) $(FLAGS) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm
+	$(CXX) $(FLAGS) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+               -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+               -L/usr/X11R6/lib -lX11 -lm
 
 static:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -79,13 +77,14 @@ static:
                  $(HOME)/SOURCES/fltk-static/lib/libfltk.a -lX11 -lm
 
 purify:
-	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) -lGLU -lGL \
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
 
 efence:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lefence -lm
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L/usr/X11R6/lib -lX11 -lefence -lm
 
 # ----------------------------------------------------------------------
 # Utilities
@@ -265,8 +264,8 @@ compile-linux: initialtag
         ); done
 link-linux:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl $(OPENGL_LIB) -lfltk\
-                 -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L/usr/X11R6/lib -lX11 -lm -ldl
 linux: compile-linux link-linux
 
 #
@@ -285,9 +284,9 @@ compile-fltk2: initialtag
 link-fltk2:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk_gl.so.2\
-                 $(OPENGL_LIB) \
+                 -lGLU -lGL \
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk.so.2 \
-                 -L/usr/X11R6/lib $(X11_LIB) -lm
+                 -L/usr/X11R6/lib -lX11 -lm
 fltk2: compile-fltk2 link-fltk2
 
 #
@@ -305,8 +304,8 @@ compile-linux-gcc-2.95: initialtag
         ); done
 link-linux-gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl $(OPENGL_LIB) -lfltk\
-                 -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -L/usr/X11R6/lib -lX11 -lm -ldl
 linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95
 distrib-linux-gcc-2.95:
 	make tag
@@ -344,7 +343,7 @@ compile-linux-scorec: initialtag
            "GUI_INCLUDE=-I/users/develop/develop/visual/fltk/1.0/include" \
         ); done
 link-linux-scorec:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) -lGLU -lGL \
                  /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl 
 linux-scorec: compile-linux-scorec link-linux-scorec
@@ -364,8 +363,8 @@ compile-dec: initialtag
         ); done
 link-dec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl $(OPENGL_LIB) -lfltk\
-                 $(X11_LIB) -lm
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                 -lX11 -lm
 dec: compile-dec link-dec
 distrib-dec:
 	make tag
@@ -394,12 +393,13 @@ compile-hp: initialtag
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 link-hp:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                      -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB)\
-                      -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
+                      -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
+                      -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL -lfltk\
+                      -lX11 -lm
 hp: compile-hp link-hp
 distrib-hp:
 	make tag
@@ -432,8 +432,8 @@ compile-ibm: initialtag
         ); done
 link-ibm:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl $(OPENGL_LIB) -lfltk\
-                  $(X11_LIB) -lm
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
+                  -lX11 -lm
 ibm: compile-ibm link-ibm
 distrib-ibm:
 	make tag
@@ -468,7 +468,7 @@ compile-sgi: initialtag
         ); done
 link-sgi:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-               -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lfltk $(X11_LIB) $(OPENGL_LIB) -lm
+               -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lfltk -lX11 -lGLU -lGL -lm
 sgi: compile-sgi link-sgi
 distrib-sgi:
 	make tag
@@ -564,8 +564,8 @@ compile-sun: initialtag
 link-sun:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
-                 -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) -lfltk\
-                 $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
+                 -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL -lfltk\
+                 -lX11 -lXext -lsocket -lnsl -ldl -lm
 sun: compile-sun link-sun
 distrib-sun:
 	make tag
@@ -597,7 +597,7 @@ compile-solaris-scorec: initialtag
            "GUI_INCLUDE=-I/users/develop/develop/visual/fltk/1.0/include" \
         ); done
 link-solaris-scorec:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) -lGLU -lGL \
                  /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                  -L/usr/X11R6/lib -lX11 -lm -ldl -lsocket
 solaris-scorec: compile-solaris-scorec link-solaris-scorec
