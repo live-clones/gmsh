@@ -21,6 +21,8 @@
 // Please report all bugs and problems to "gmsh@geuz.org".
 
 #include "Plugin.h"
+#include "List.h"
+#include "Tree.h"
 
 extern "C"
 {
@@ -29,7 +31,18 @@ extern "C"
 
 class GMSH_SkinPlugin : public GMSH_Post_Plugin
 {
-public:
+  typedef struct{
+    double coord[12];
+    double *val;
+  } Elm;
+  static List_T *_list;
+  static Tree_T *_skin;
+  static int *_nbList, _nbNod, _nbComp, _nbTimeStep;
+  static int fcmpElm(const void *a, const void *b);
+  static void addInView(void *a, void *b);
+  void skinList(List_T *inList, int inNbList, 
+		int inNbNod, int inNbFac, int fxn[6][4]);
+ public:
   GMSH_SkinPlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
