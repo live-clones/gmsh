@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.56 2004-04-08 18:14:27 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.57 2004-04-08 19:26:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -261,7 +261,7 @@ void CreateOutputFile(char *name, int format)
 	size3d += 2048 * 2048;
 	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
 		       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
-		       0, 0, 0, size3d, fp, name);
+		       15, 20, 10, size3d, fp, name);
 	if(raster){
 	  glMatrixMode(GL_PROJECTION);
 	  glLoadIdentity();
