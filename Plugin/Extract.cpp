@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.2 2004-03-07 23:49:11 geuzaine Exp $
+// $Id: Extract.cpp,v 1.3 2004-03-08 23:15:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -166,8 +166,6 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
 
   if(view->empty()) {
     RemoveViewByNumber(view->Num);
-    printf("aaa\n");
-
   }
   else{
     // copy time data
