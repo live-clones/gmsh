@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.101 2001-09-25 08:21:14 geuzaine Exp $
+// $Id: Gmsh.y,v 1.102 2001-10-04 11:41:20 gyselinc Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1600,39 +1600,24 @@ Loop :
 
     tFor '(' FExpr tDOTS FExpr ')'
     {
-      FILE* ff;
-      if(RecursionLevel)
-	ff = yyinTab[RecursionLevel-1];
-      else
-	ff = yyin;
       // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
       LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
     }
   | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')'
     {
-      FILE* ff;
-      if(RecursionLevel)
-	ff = yyinTab[RecursionLevel-1];
-      else
-	ff = yyin;
       // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7 ;
       LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
     {
-      FILE* ff;
-      if(RecursionLevel)
-	ff = yyinTab[RecursionLevel-1];
-      else
-	ff = yyin;
       // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
@@ -1649,15 +1634,10 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       }
       
-      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
     {
-      FILE* ff;
-      if(RecursionLevel)
-	ff = yyinTab[RecursionLevel-1];
-      else
-	ff = yyin;
       // here, we seek remember the position in yyin
       LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
       LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
@@ -1674,18 +1654,12 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       }
       
-      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+      fgetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
     }
   | tEndFor 
     {
       if(LoopControlVariablesTab[ImbricatedLoop-1][1] >  
 	 LoopControlVariablesTab[ImbricatedLoop-1][0]){
-	FILE* ff;
-	if(RecursionLevel)
-	  ff = yyinTab[RecursionLevel-1];
-	else
-	  ff = yyin;
-	
 	LoopControlVariablesTab[ImbricatedLoop-1][0] +=
 	  LoopControlVariablesTab[ImbricatedLoop-1][2];
 	
