@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.23 2000-12-21 14:53:10 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.24 2000-12-26 08:13:19 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -239,7 +239,7 @@ void CreateWidgets_M(Widgets_T *w){
   XtManageChild(w->M.helpSep[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("About Gmsh...")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("About...")); i++;
   w->M.helpButt[1] = XmCreatePushButton(w->M.helpPane, "MhelpButt1", arg, i);
   XtManageChild(w->M.helpButt[1]);
 
@@ -1228,7 +1228,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtSetArg(arg[i], XmNminimum, 0); i++;
   XtSetArg(arg[i], XmNmaximum, 100); i++;
   XtSetArg(arg[i], XmNdecimalPoints, 1); i++;
-  XtSetArg(arg[i], XmNshowValue, true); i++;
+  XtSetArg(arg[i], XmNshowValue, True); i++;
   XtSetArg(arg[i], XmNvalue, CTX.post.anim_delay/1.e5); i++;
   XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
   w->OD.postAnimScale = XmCreateScale(w->OD.postAnimFrameRowCol, "ODpostAnimScale", arg, i);
@@ -1321,7 +1321,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtSetArg(arg[i], XmNminimum, 0); i++;
   XtSetArg(arg[i], XmNmaximum, 2); i++;
   XtSetArg(arg[i], XmNdecimalPoints, 0); i++;
-  XtSetArg(arg[i], XmNshowValue, true); i++;
+  XtSetArg(arg[i], XmNshowValue, True); i++;
   XtSetArg(arg[i], XmNvalue, CTX.color.id); i++;
   XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
   w->OD.miscColorSchemeScale = XmCreateScale(w->OD.miscColorSchemeFrameRowCol, "ODmiscColorSchemeScale", arg, i);
@@ -1402,7 +1402,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtSetArg(arg[i], XmNminimum, 0); i++;
   XtSetArg(arg[i], XmNmaximum, 25); i++;
   XtSetArg(arg[i], XmNdecimalPoints, 0); i++;
-  XtSetArg(arg[i], XmNshowValue, false); i++;
+  XtSetArg(arg[i], XmNshowValue, False); i++;
   XtSetArg(arg[i], XmNvalue, (int)25*CTX.shine); i++;
   XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
   w->OD.miscShineScale = XmCreateScale(w->OD.miscShineFrameRowCol, "ODmiscShineScale", arg, i);
@@ -1724,7 +1724,7 @@ void CreateWidgets_HD(Widgets_T *w){
 
   /* about */
   i=0;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("About Gmsh...")); i++;
+  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("About Gmsh")); i++;
   XtSetArg(arg[i], XmNautoUnmanage, True); i++;
   XtSetArg(arg[i], XmNmessageString, XmStringCreateLtoR(TextAbout,XmFONTLIST_DEFAULT_TAG)); i++;
   w->HD.aboutDialog = XmCreateInformationDialog(w->M.shell, "HDaboutDialog", arg, i);
