@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.30 2002-08-28 07:14:55 geuzaine Exp $
+// $Id: Message.cpp,v 1.31 2002-08-28 21:26:40 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -124,15 +124,17 @@ void Msg(int level, char *fmt, ...){
 
   static char buff1[1024], buff2[1024], buff[4][1024];
 
-  if(!WID)
-    window = -1;
-  else 
-    WID->check(); 
-  // this is pretty costly, but permits to keep the app
-  // responsive... the downside is that it can cause race
-  // conditions
-
   if(CTX.verbosity >= verb){
+
+    if(!WID)
+      window = -1;
+    else 
+      WID->check(); 
+    // this is pretty costly, but permits to keep the app
+    // responsive... the downside is that it can cause race
+    // conditions. Let's move it in here at least, so that we don;t
+    // check() on DEBUG calls when not in debug mode.
+
     va_start (args, fmt);
 
     if(window >= 0){
@@ -155,9 +157,9 @@ void Msg(int level, char *fmt, ...){
       }
     }
     va_end (args);
-  }
 
-  if(CTX.terminal) fflush(stderr);
+    if(CTX.terminal) fflush(stderr);
+  }
 
   if(abort){
     Debug();
