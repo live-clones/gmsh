@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.15 2001-05-24 10:11:28 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.16 2001-06-02 19:44:35 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -90,8 +90,11 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
       for (i_Element = 0 ; i_Element < Nbr_Elements ; i_Element++) {
         
+	// HACK FROM JF
+	//        fscanf(File_GEO, "%d %d %d %d %d", 
+        //       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes) ;
         fscanf(File_GEO, "%d %d %d %d %d", 
-               &Num, &Type, &Physical, &Elementary, &Nbr_Nodes) ;
+               &Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
         
         for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;

@@ -169,7 +169,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.87 2001-05-16 15:11:45 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.88 2001-06-02 19:44:35 remacle Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
