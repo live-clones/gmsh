@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.216 2002-05-18 19:01:18 geuzaine Exp $
+# $Id: Makefile,v 1.217 2002-05-18 19:31:10 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -56,7 +56,7 @@ default:
 	@echo "  make clean                remove .o files and libraries"
 	@echo "You need fltk (http://www.fltk.org) version 1.1.x installed"
 	@echo "in $(HOME)/SOURCES/fltk-1.1/."
-	@echo "If you system is not listed above, edit the Makefile."
+	@echo "If your system is not listed above, edit the Makefile."
 
 # ----------------------------------------------------------------------
 # Rules for developers
