@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.41 2001-02-07 13:25:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.42 2001-02-09 07:59:50 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -36,9 +36,7 @@ Fl_Menu_Item m_menubar_table[] = {
       {"GREF...",              0, (Fl_Callback *)file_save_as_gref_cb, 0},
       {"EPS simple sort...",   0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
       {"EPS accurate sort...", 0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
-#ifndef WIN32
       {"JPEG...",              0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
-#endif
       {"GIF...",               0, (Fl_Callback *)file_save_as_gif_cb, 0},
       {"GIF dithered...",      0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
       {"GIF transparent...",   0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},

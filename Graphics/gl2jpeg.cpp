@@ -1,6 +1,4 @@
-// $Id: gl2jpeg.cpp,v 1.6 2001-01-11 16:00:28 colignon Exp $
-
-#if !defined(WIN32)
+// $Id: gl2jpeg.cpp,v 1.7 2001-02-09 07:59:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -59,7 +57,4 @@ void create_jpeg(FILE *outfile, int width, int height, int quality){
 
   Free(pixels);
 }
-
-
-#endif //if !defined(WIN32)
 

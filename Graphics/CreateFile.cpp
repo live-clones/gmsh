@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.14 2001-02-08 16:32:15 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.15 2001-02-09 07:59:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,11 +21,7 @@ extern XContext_T  XCTX;
 
 #include "gl2ps.h"
 #include "gl2gif.h"
-
-#if !defined(WIN32)
 #include "gl2jpeg.h"
-#endif
-
 #include "gl2ppm.h"
 #include "gl2yuv.h"
 
@@ -112,7 +108,6 @@ void CreateOutputFile (char *name, int format) {
     break;
 #endif
 
-#if !defined(WIN32)
   case FORMAT_JPEG :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
@@ -126,7 +121,6 @@ void CreateOutputFile (char *name, int format) {
     Msg(STATUS2, "Wrote File '%s'", name);
     fclose(fp);
     break;
-#endif
 
   case FORMAT_GIF :
     if(!(fp = fopen(name,"wb"))) {

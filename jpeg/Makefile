@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2001-02-09 07:42:03 geuzaine Exp $
+# $Id: Makefile,v 1.6 2001-02-09 07:55:32 geuzaine Exp $
 #
 # Makefile for "libJpeg.a"
 #
@@ -22,10 +22,7 @@ CFLAGS   = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 SRC = jcomapi.c jutils.c jerror.c jmemmgr.c jmemnobs.c \
       jcapi.c jcparam.c jdatadst.c jcmaster.c jcmarker.c jcmainct.c \
       jcprepct.c jccoefct.c jccolor.c jcsample.c jchuff.c jcdctmgr.c \
-      jfdctfst.c jfdctflt.c jfdctint.c \
-      jdapi.c jdatasrc.c jdmaster.c jdmarker.c jdmainct.c jdcoefct.c \
-      jdpostct.c jddctmgr.c jidctfst.c jidctflt.c jidctint.c jidctred.c \
-      jdhuff.c jdsample.c jdcolor.c jquant1.c jquant2.c jdmerge.c
+      jfdctfst.c jfdctflt.c jfdctint.c
 
 OBJ = $(SRC:.c=.o)
 
@@ -93,39 +90,3 @@ jfdctflt.o: jfdctflt.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
  jpegint.h jerror.h jdct.h
 jfdctint.o: jfdctint.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
  jpegint.h jerror.h jdct.h
-jdapi.o: jdapi.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h \
- jerror.h
-jdatasrc.o: jdatasrc.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jerror.h
-jdmaster.o: jdmaster.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jdmarker.o: jdmarker.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jdmainct.o: jdmainct.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jdcoefct.o: jdcoefct.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jdpostct.o: jdpostct.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jddctmgr.o: jddctmgr.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h jdct.h
-jidctfst.o: jidctfst.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h jdct.h
-jidctflt.o: jidctflt.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h jdct.h
-jidctint.o: jidctint.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h jdct.h
-jidctred.o: jidctred.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h jdct.h
-jdhuff.o: jdhuff.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h \
- jerror.h
-jdsample.o: jdsample.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jdcolor.o: jdcolor.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jquant1.o: jquant1.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jquant2.o: jquant2.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
-jdmerge.o: jdmerge.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \
- jpegint.h jerror.h
