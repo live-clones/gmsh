@@ -13,21 +13,21 @@ View.ColorTable = {Red,Green,Blue};
 
 // Let's load the views one by one:
 
-For i In {0:1000} // we have 1001 views
+For i In {1:4}
 
-  If (!i)
+  If (i==1)
     // we force the bounding box to be the one of the first view:
-    MergeWithBoundingBox "view0.pos";
+    MergeWithBoundingBox "../../tutorial/view1.pos";
   EndIf
-  If (i)
+  If (i>1)
     // we merge the other views using the same bounding box as the
     // first one:
-    Merge Sprintf("view%g.pos",i);
+    Merge Sprintf("../../tutorial/view%g.pos",i);
   EndIf
 
   Draw;
 
-  Print Sprintf("out%g.jpeg",i);
+  Print Sprintf("out%g.gif",i);
 
   // and we delete the view:
   Delete View[0];
