@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.48 2002-06-21 17:15:17 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.49 2002-06-21 21:09:11 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -240,28 +240,28 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
   }
 }
 
-GLvoid gl2psCutEdge(GL2PSvertex a, GL2PSvertex b, GL2PSplane plane, 
+GLvoid gl2psCutEdge(GL2PSvertex *a, GL2PSvertex *b, GL2PSplane plane, 
 		    GL2PSvertex *c){
   GL2PSxyz v;
   GLfloat  sect;
 
-  v[0] = b.xyz[0] - a.xyz[0];
-  v[1] = b.xyz[1] - a.xyz[1];
-  v[2] = b.xyz[2] - a.xyz[2];
-  sect = - gl2psComparePointPlane(a.xyz, plane) / gl2psPsca(plane, v);
+  v[0] = b->xyz[0] - a->xyz[0];
+  v[1] = b->xyz[1] - a->xyz[1];
+  v[2] = b->xyz[2] - a->xyz[2];
+  sect = - gl2psComparePointPlane(a->xyz, plane) / gl2psPsca(plane, v);
 
-  c->xyz[0] = a.xyz[0] + v[0] * sect;
-  c->xyz[1] = a.xyz[1] + v[1] * sect;
-  c->xyz[2] = a.xyz[2] + v[2] * sect;
+  c->xyz[0] = a->xyz[0] + v[0] * sect;
+  c->xyz[1] = a->xyz[1] + v[1] * sect;
+  c->xyz[2] = a->xyz[2] + v[2] * sect;
   
-  c->rgba[0] = (1.-sect) * a.rgba[0] + sect * b.rgba[0];
-  c->rgba[1] = (1.-sect) * a.rgba[1] + sect * b.rgba[1];
-  c->rgba[2] = (1.-sect) * a.rgba[2] + sect * b.rgba[2];
-  c->rgba[3] = (1.-sect) * a.rgba[3] + sect * b.rgba[3];
+  c->rgba[0] = (1.-sect) * a->rgba[0] + sect * b->rgba[0];
+  c->rgba[1] = (1.-sect) * a->rgba[1] + sect * b->rgba[1];
+  c->rgba[2] = (1.-sect) * a->rgba[2] + sect * b->rgba[2];
+  c->rgba[3] = (1.-sect) * a->rgba[3] + sect * b->rgba[3];
 }
 
 GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
-				    GL2PSprimitive **child, GLshort numverts,
+				    GL2PSprimitive *child, GLshort numverts,
 				    GLshort *index0, GLshort *index1){
   GLshort i;
 
@@ -271,23 +271,23 @@ GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
   }
 
   switch(numverts){
-  case 1 : (*child)->type = GL2PS_POINT; break; 
-  case 2 : (*child)->type = GL2PS_LINE; break; 
-  case 3 : (*child)->type = GL2PS_TRIANGLE; break; 
-  case 4 : (*child)->type = GL2PS_QUADRANGLE; break;    
+  case 1 : child->type = GL2PS_POINT; break; 
+  case 2 : child->type = GL2PS_LINE; break; 
+  case 3 : child->type = GL2PS_TRIANGLE; break; 
+  case 4 : child->type = GL2PS_QUADRANGLE; break;    
   }
-  (*child)->boundary = 0; /* not done! */
-  (*child)->dash = parent->dash;
-  (*child)->width = parent->width;
-  (*child)->numverts = numverts;
-  (*child)->verts = (GL2PSvertex *)gl2psMalloc(numverts * sizeof(GL2PSvertex));
+  child->boundary = 0; /* not done! */
+  child->dash = parent->dash;
+  child->width = parent->width;
+  child->numverts = numverts;
+  child->verts = (GL2PSvertex *)gl2psMalloc(numverts * sizeof(GL2PSvertex));
 
   for(i=0 ; i<numverts ; i++){
     if(index1[i] < 0)
-      (*child)->verts[i] = parent->verts[index0[i]];
+      child->verts[i] = parent->verts[index0[i]];
     else
-      gl2psCutEdge(parent->verts[index0[i]], parent->verts[index1[i]], 
-		   plane, &(*child)->verts[i]);
+      gl2psCutEdge(&parent->verts[index0[i]], &parent->verts[index1[i]], 
+		   plane, &child->verts[i]);
   }
 }
 
@@ -389,8 +389,8 @@ GLint gl2psSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane,
   if(type == GL2PS_SPANNING){
     *back = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
     *front = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
-    gl2psCreateSplittedPrimitive(prim, plane, back, out, out0, out1);
-    gl2psCreateSplittedPrimitive(prim, plane, front, in, in0, in1);
+    gl2psCreateSplittedPrimitive(prim, plane, *back, out, out0, out1);
+    gl2psCreateSplittedPrimitive(prim, plane, *front, in, in0, in1);
   }
 
   return type;
@@ -971,7 +971,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 
   /* 
      RGB color: r g b C (replace C by G in output to change from rgb to gray)
-     Greyscale: r g b G
+     Grayscale: r g b G
      Font choose: size fontname FC
      String primitive: (string) x y size fontname S
      Point primitive: x y size P
@@ -1078,7 +1078,7 @@ GLvoid gl2psResetPostScriptColor(){
 GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
   GL2PSprimitive *prim;
 
-  prim = *(GL2PSprimitive**) a;
+  prim = *(GL2PSprimitive**)a;
 
   if(gl2ps->options & GL2PS_OCCLUSION_CULL && prim->depth >= 0.) return;
 
@@ -1195,7 +1195,7 @@ GLvoid gl2psPrintTeXHeader(GLvoid){
 GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
   GL2PSprimitive *prim;
 
-  prim = *(GL2PSprimitive**) a;
+  prim = *(GL2PSprimitive**)a;
 
   switch(prim->type){
   case GL2PS_TEXT :
