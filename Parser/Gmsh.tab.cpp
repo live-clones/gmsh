@@ -191,7 +191,7 @@
 
 #line 1 "Gmsh.y"
  
-// $Id: Gmsh.tab.cpp,v 1.175 2003-12-11 18:37:53 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.176 2003-12-12 16:55:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -6414,7 +6414,7 @@ case 273:
 #line 1942 "Gmsh.y"
 {
       if(!strcmp(yyvsp[-1].c, "Meshes") || !strcmp(yyvsp[-1].c, "All"))
-	Init_Mesh(THEM, 1);
+	Init_Mesh(THEM);
     ;
     break;}
 case 274:
