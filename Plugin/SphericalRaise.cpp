@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.20 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.21 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,7 @@ GMSH_SphericalRaisePlugin::GMSH_SphericalRaisePlugin()
 
 void GMSH_SphericalRaisePlugin::getName(char *name) const
 {
-  strcpy(name, "Spherical raise");
+  strcpy(name, "Spherical Raise");
 }
 
 void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,

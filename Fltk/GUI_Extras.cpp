@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.2 2004-12-30 23:25:03 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.3 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -174,7 +174,7 @@ int jpeg_dialog(char *name, int TeX)
   if(!dialog){
     dialog = new _jpeg_dialog;
     int h = 3*10 + 25 + 2*25, y = 0;
-    dialog->window = new Fl_Window(200, h, "JPEG options"); y = 10;
+    dialog->window = new Fl_Window(200, h, "JPEG Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->s[0] = new Fl_Value_Slider(10, y, 100, 25, "Quality"); y += 25;
     dialog->s[0]->type(FL_HOR_SLIDER);
@@ -234,7 +234,7 @@ int gif_dialog(char *name)
   if(!dialog){
     dialog = new _gif_dialog;
     int h = 3*10 + 25 + 4*25, y = 0;
-    dialog->window = new Fl_Window(200, h, "GIF options"); y = 10;
+    dialog->window = new Fl_Window(200, h, "GIF Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->b[0] = new Fl_Check_Button(10, y, 180, 25, "Dither"); y += 25;
     dialog->b[1] = new Fl_Check_Button(10, y, 180, 25, "Interlace"); y += 25;
@@ -460,7 +460,7 @@ int msh_dialog(char *name)
   if(!dialog){
     dialog = new _msh_dialog;
     int h = 3*10 + 25 + 2*25, y = 0;
-    dialog->window = new Fl_Window(200, h, "MSH options"); y = 10;
+    dialog->window = new Fl_Window(200, h, "MSH Options"); y = 10;
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(10, y, 130, 25, "Format"); y+= 25;
     dialog->c->menu(versionmenu);

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.52 2004-12-27 00:46:59 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.53 2004-12-31 04:04:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,50 +67,50 @@ char gmsh_email[]     = "Mailing list   : gmsh@geuz.org" ;
 void Print_Usage(char *name){
   Msg(DIRECT, "Usage: %s [options] [files]", name);
   Msg(DIRECT, "Geometry options:");
-  Msg(DIRECT, "  -0                    parse input files, output unrolled geometry, and exit");
+  Msg(DIRECT, "  -0                    Parse input files, output unrolled geometry, and exit");
   Msg(DIRECT, "Mesh options:");
-  Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
-  Msg(DIRECT, "  -saveall              save all elements (discard physical group definitions)");
-  Msg(DIRECT, "  -o file               specify mesh output file name");
-  Msg(DIRECT, "  -format string        set output mesh format (msh, unv, gref)");
-  Msg(DIRECT, "  -algo string          select mesh algorithm (iso, tri, aniso, netgen)");
-  Msg(DIRECT, "  -smooth int           set number of mesh smoothing steps");
-  Msg(DIRECT, "  -optimize             optimize quality of tetrahedral elements");
-  Msg(DIRECT, "  -order int            set mesh order (1, 2)");
-  Msg(DIRECT, "  -scale float          set global scaling factor");
-  Msg(DIRECT, "  -meshscale float      set mesh scaling factor");
-  Msg(DIRECT, "  -clscale float        set characteristic length scaling factor");
-  Msg(DIRECT, "  -rand float           set random perturbation factor");
-  Msg(DIRECT, "  -bgm file             load backround mesh from file");
-  Msg(DIRECT, "  -constrain            constrain background mesh with characteristic lengths");
-  Msg(DIRECT, "  -histogram            print mesh quality histogram");
-  Msg(DIRECT, "  -extrude              use old extrusion mesh generator");
-  Msg(DIRECT, "  -recombine            recombine meshes from old extrusion mesh generator");
+  Msg(DIRECT, "  -1, -2, -3            Perform batch 1D, 2D and 3D mesh generation");
+  Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
+  Msg(DIRECT, "  -o file               Specify mesh output file name");
+  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, gref)");
+  Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, aniso, netgen)");
+  Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
+  Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
+  Msg(DIRECT, "  -order int            Set mesh order (1, 2)");
+  Msg(DIRECT, "  -scale float          Set global scaling factor");
+  Msg(DIRECT, "  -meshscale float      Set mesh scaling factor");
+  Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
+  Msg(DIRECT, "  -rand float           Set random perturbation factor");
+  Msg(DIRECT, "  -bgm file             Load backround mesh from file");
+  Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
+  Msg(DIRECT, "  -histogram            Print mesh quality histogram");
+  Msg(DIRECT, "  -extrude              Use old extrusion mesh generator");
+  Msg(DIRECT, "  -recombine            Recombine meshes from old extrusion mesh generator");
 #if defined(HAVE_FLTK)
-  Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
+  Msg(DIRECT, "  -interactive          Display 2D mesh construction interactively");
   Msg(DIRECT, "Post-processing options:");
-  Msg(DIRECT, "  -noview               hide all views on startup");
-  Msg(DIRECT, "  -link int             select link mode between views (0, 1, 2, 3, 4)");
-  Msg(DIRECT, "  -combine              combine input views into multi-time-step ones");
+  Msg(DIRECT, "  -noview               Hide all views on startup");
+  Msg(DIRECT, "  -link int             Select link mode between views (0, 1, 2, 3, 4)");
+  Msg(DIRECT, "  -combine              Combine input views into multi-time-step ones");
   Msg(DIRECT, "Display options:");    
-  Msg(DIRECT, "  -nodb                 disable double buffering");
-  Msg(DIRECT, "  -fontsize int         specify the font size for the GUI");
-  Msg(DIRECT, "  -scheme string        specify FLTK GUI scheme");
-  Msg(DIRECT, "  -display string       specify display");
+  Msg(DIRECT, "  -nodb                 Disable double buffering");
+  Msg(DIRECT, "  -fontsize int         Specify the font size for the GUI");
+  Msg(DIRECT, "  -scheme string        Specify FLTK GUI scheme");
+  Msg(DIRECT, "  -display string       Specify display");
 #endif
   Msg(DIRECT, "Other options:");      
 #if defined(HAVE_FLTK)
-  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or post-processing mode");
+  Msg(DIRECT, "  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
-  Msg(DIRECT, "  -pid                  print process id on stdout");
-  Msg(DIRECT, "  -v int                set verbosity level");
-  Msg(DIRECT, "  -nopopup              don't popup dialog windows in scripts");
-  Msg(DIRECT, "  -string \"string\"      parse string before project file");
-  Msg(DIRECT, "  -option file          parse option file before GUI creation");
-  Msg(DIRECT, "  -convert file file    perform batch conversion of views and meshes into latest file formats");
-  Msg(DIRECT, "  -version              show version number");
-  Msg(DIRECT, "  -info                 show detailed version information");
-  Msg(DIRECT, "  -help                 show this message");
+  Msg(DIRECT, "  -pid                  Print process id on stdout");
+  Msg(DIRECT, "  -v int                Set verbosity level");
+  Msg(DIRECT, "  -nopopup              Don't popup dialog windows in scripts");
+  Msg(DIRECT, "  -string \"string\"      Parse string before project file");
+  Msg(DIRECT, "  -option file          Parse option file before GUI creation");
+  Msg(DIRECT, "  -convert file file    Perform batch conversion of views and meshes into latest file formats");
+  Msg(DIRECT, "  -version              Show version number");
+  Msg(DIRECT, "  -info                 Show detailed version information");
+  Msg(DIRECT, "  -help                 Show this message");
 }
 
 char *Get_BuildOptions(void)

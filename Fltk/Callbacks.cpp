@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.318 2004-12-30 23:53:53 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.319 2004-12-31 04:04:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -265,7 +265,7 @@ void status_cancel_cb(CALLBACK_ARGS)
 void file_new_cb(CALLBACK_ARGS)
 {
  test:
-  if(file_chooser(0, 1, "New project file", "*", 0)) {
+  if(file_chooser(0, 1, "New", "*", 0)) {
     char *name = file_chooser_get_name(1);
     struct stat buf;
     if(!stat(name, &buf)){
@@ -291,7 +291,7 @@ void file_new_cb(CALLBACK_ARGS)
 void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0, 0, "Open project file", "*", 0)) {
+  if(file_chooser(0, 0, "Open", "*", 0)) {
     OpenProblem(file_chooser_get_name(1));
     Draw();
   }
@@ -302,7 +302,7 @@ void file_open_cb(CALLBACK_ARGS)
 void file_merge_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  int f = file_chooser(1, 0, "Merge file(s)", "*", 0);
+  int f = file_chooser(1, 0, "Merge", "*", 0);
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeProblem(file_chooser_get_name(i));
@@ -366,27 +366,27 @@ int _save_vrml(char *name)
 
 int _save_ps(char *name)
 {
-  return gl2ps_dialog(name, "PS options", 0, 0);
+  return gl2ps_dialog(name, "PS Options", 0, 0);
 }
 
 int _save_eps(char *name)
 {
-  return gl2ps_dialog(name, "EPS options", 1, 0);
+  return gl2ps_dialog(name, "EPS Options", 1, 0);
 }
 
 int _save_epstex(char *name)
 {
-  return gl2ps_dialog(name, "EPS options", 1, 1);
+  return gl2ps_dialog(name, "EPS Options", 1, 1);
 }
 
 int _save_pdf(char *name)
 {
-  return gl2ps_dialog(name, "PDF options", 2, 0);
+  return gl2ps_dialog(name, "PDF Options", 2, 0);
 }
 
 int _save_pdftex(char *name)
 {
-  return gl2ps_dialog(name, "PDF options", 2, 1);
+  return gl2ps_dialog(name, "PDF Options", 2, 1);
 }
 
 int _save_jpegtex(char *name)
@@ -489,7 +489,7 @@ void file_save_as_cb(CALLBACK_ARGS)
   }
 
  test:
-  if(file_chooser(0, 1, "Save file as", pat, patindex)) {
+  if(file_chooser(0, 1, "Save As", pat, patindex)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -512,7 +512,7 @@ void file_save_as_cb(CALLBACK_ARGS)
 void file_rename_cb(CALLBACK_ARGS)
 {
  test:
-  if(file_chooser(0, 1, "Rename project file", "*", 0, CTX.filename)) {
+  if(file_chooser(0, 1, "Rename", "*", 0, CTX.filename)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -704,7 +704,7 @@ void general_arrow_param_cb(CALLBACK_ARGS)
   double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
   double b = opt_general_arrow_stem_length(0, GMSH_GET, 0);
   double c = opt_general_arrow_stem_radius(0, GMSH_GET, 0);
-  while(arrow_editor("Arrow editor", a, b, c)){
+  while(arrow_editor("Arrow Editor", a, b, c)){
     opt_general_arrow_head_radius(0, GMSH_SET, a);
     opt_general_arrow_stem_length(0, GMSH_SET, b);
     opt_general_arrow_stem_radius(0, GMSH_SET, c);
@@ -935,7 +935,7 @@ void message_clear_cb(CALLBACK_ARGS)
 void message_save_cb(CALLBACK_ARGS)
 {
  test:
-  if(file_chooser(0, 1, "Save messages", "*", 0)) {
+  if(file_chooser(0, 1, "Save", "*", 0)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -1187,70 +1187,70 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "Keyboard shortcuts:");
 #endif
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Left arrow    go to previous time step"); 
-  Msg(DIRECT, "  Right arrow   go to next time step"); 
-  Msg(DIRECT, "  Up arrow      make previous view visible"); 
-  Msg(DIRECT, "  Down arrow    make next view visible"); 
+  Msg(DIRECT, "  Left arrow    Go to previous time step"); 
+  Msg(DIRECT, "  Right arrow   Go to next time step"); 
+  Msg(DIRECT, "  Up arrow      Make previous view visible"); 
+  Msg(DIRECT, "  Down arrow    Make next view visible"); 
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  <             go back to previous context");
-  Msg(DIRECT, "  >             go forward to next context");
-  Msg(DIRECT, "  0 or Esc      reload project file");
-  Msg(DIRECT, "  1 or F1       mesh lines");
-  Msg(DIRECT, "  2 or F2       mesh surfaces");
-  Msg(DIRECT, "  3 or F3       mesh volumes");
+  Msg(DIRECT, "  <             Go back to previous context");
+  Msg(DIRECT, "  >             Go forward to next context");
+  Msg(DIRECT, "  0 or Esc      Reload project file");
+  Msg(DIRECT, "  1 or F1       Mesh lines");
+  Msg(DIRECT, "  2 or F2       Mesh surfaces");
+  Msg(DIRECT, "  3 or F3       Mesh volumes");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  g             go to geometry module");
-  Msg(DIRECT, "  m             go to mesh module");
-  Msg(DIRECT, "  p             go to post-processing module");
-  Msg(DIRECT, "  s             go to solver module");
+  Msg(DIRECT, "  g             Go to geometry module");
+  Msg(DIRECT, "  m             Go to mesh module");
+  Msg(DIRECT, "  p             Go to post-processing module");
+  Msg(DIRECT, "  s             Go to solver module");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Shift+g       show geometry options");
-  Msg(DIRECT, "  Shift+m       show mesh options");
-  Msg(DIRECT, "  Shift+o       show general options"); 
-  Msg(DIRECT, "  Shift+p       show post-processing options");
-  Msg(DIRECT, "  Shift+s       show solver options"); 
-  Msg(DIRECT, "  Shift+w       show post-processing view options");
+  Msg(DIRECT, "  Shift+g       Show geometry options");
+  Msg(DIRECT, "  Shift+m       Show mesh options");
+  Msg(DIRECT, "  Shift+o       Show general options"); 
+  Msg(DIRECT, "  Shift+p       Show post-processing options");
+  Msg(DIRECT, "  Shift+s       Show solver options"); 
+  Msg(DIRECT, "  Shift+w       Show post-processing view options");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Ctrl+a        bring all windows to front");
-  Msg(DIRECT, "  Ctrl+i        show statistics window"); 
-  Msg(DIRECT, "  Ctrl+l        show message console");
-  Msg(DIRECT, "  Ctrl+m        merge file"); 
-  Msg(DIRECT, "  Ctrl+n        new project file"); 
-  Msg(DIRECT, "  Ctrl+o        open project file"); 
-  Msg(DIRECT, "  Ctrl+q        quit");
-  Msg(DIRECT, "  Ctrl+r        rename project file");
-  Msg(DIRECT, "  Ctrl+s        save file as");
+  Msg(DIRECT, "  Ctrl+a        Bring all windows to front");
+  Msg(DIRECT, "  Ctrl+i        Show statistics window"); 
+  Msg(DIRECT, "  Ctrl+l        Show message console");
+  Msg(DIRECT, "  Ctrl+m        Merge file"); 
+  Msg(DIRECT, "  Ctrl+n        Create new project file"); 
+  Msg(DIRECT, "  Ctrl+o        Open project file"); 
+  Msg(DIRECT, "  Ctrl+q        Quit");
+  Msg(DIRECT, "  Ctrl+r        Rename project file");
+  Msg(DIRECT, "  Ctrl+s        Save file as");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Shift+Ctrl+c  show clipping plane window");
-  Msg(DIRECT, "  Shift+Ctrl+o  show option window"); 
-  Msg(DIRECT, "  Shift+Ctrl+s  save mesh in default format");
-  Msg(DIRECT, "  Shift+Ctrl+v  show visibility window");
+  Msg(DIRECT, "  Shift+Ctrl+c  Show clipping plane window");
+  Msg(DIRECT, "  Shift+Ctrl+o  Show option window"); 
+  Msg(DIRECT, "  Shift+Ctrl+s  Save mesh in default format");
+  Msg(DIRECT, "  Shift+Ctrl+v  Show visibility window");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Alt+a         hide/show small axes"); 
-  Msg(DIRECT, "  Alt+b         hide/show bounding boxes");
-  Msg(DIRECT, "  Alt+c         loop through predefined color schemes");
-  Msg(DIRECT, "  Alt+d         change surface mesh display mode (solid/wireframe)");
-  Msg(DIRECT, "  Alt+f         change redraw mode (fast/full)"); 
-  Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
-  Msg(DIRECT, "  Alt+i         hide/show all post-processing view scales");
-  Msg(DIRECT, "  Alt+l         hide/show geometry lines");
-  Msg(DIRECT, "  Alt+m         toggle visibility of all mesh entities");
-  Msg(DIRECT, "  Alt+n         hide/show all post-processing view annotations");
-  Msg(DIRECT, "  Alt+o         change projection mode (orthographic/perspective)");
-  Msg(DIRECT, "  Alt+p         hide/show geometry points");
-  Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
-  Msg(DIRECT, "  Alt+t         loop through interval modes for all post-processing views"); 
-  Msg(DIRECT, "  Alt+v         hide/show geometry volumes");
-  Msg(DIRECT, "  Alt+w         enable/disable all lighting");
-  Msg(DIRECT, "  Alt+x         set X view"); 
-  Msg(DIRECT, "  Alt+y         set Y view"); 
-  Msg(DIRECT, "  Alt+z         set Z view"); 
+  Msg(DIRECT, "  Alt+a         Hide/show small axes"); 
+  Msg(DIRECT, "  Alt+b         Hide/show bounding boxes");
+  Msg(DIRECT, "  Alt+c         Loop through predefined color schemes");
+  Msg(DIRECT, "  Alt+d         Change surface mesh display mode (solid/wireframe)");
+  Msg(DIRECT, "  Alt+f         Change redraw mode (fast/full)"); 
+  Msg(DIRECT, "  Alt+h         Hide/show all post-processing views"); 
+  Msg(DIRECT, "  Alt+i         Hide/show all post-processing view scales");
+  Msg(DIRECT, "  Alt+l         Hide/show geometry lines");
+  Msg(DIRECT, "  Alt+m         Toggle visibility of all mesh entities");
+  Msg(DIRECT, "  Alt+n         Hide/show all post-processing view annotations");
+  Msg(DIRECT, "  Alt+o         Change projection mode (orthographic/perspective)");
+  Msg(DIRECT, "  Alt+p         Hide/show geometry points");
+  Msg(DIRECT, "  Alt+s         Hide/show geometry surfaces");
+  Msg(DIRECT, "  Alt+t         Loop through interval modes for all post-processing views"); 
+  Msg(DIRECT, "  Alt+v         Hide/show geometry volumes");
+  Msg(DIRECT, "  Alt+w         Enable/disable all lighting");
+  Msg(DIRECT, "  Alt+x         Set X view"); 
+  Msg(DIRECT, "  Alt+y         Set Y view"); 
+  Msg(DIRECT, "  Alt+z         Set Z view"); 
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Alt+Shift+a   hide/show moving axes"); 
-  Msg(DIRECT, "  Alt+Shift+l   hide/show surface mesh edges");
-  Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
-  Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
-  Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
+  Msg(DIRECT, "  Alt+Shift+a   Hide/show moving axes"); 
+  Msg(DIRECT, "  Alt+Shift+l   Hide/show surface mesh edges");
+  Msg(DIRECT, "  Alt+Shift+p   Hide/show mesh points");
+  Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surfaces");
+  Msg(DIRECT, "  Alt+Shift+v   Hide/show mesh volumes");
   Msg(DIRECT, " ");
   WID->create_message_window();
 }
@@ -1260,20 +1260,20 @@ void help_mouse_cb(CALLBACK_ARGS)
   Msg(DIRECT, " ");
   Msg(DIRECT, "Mouse actions:");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  move                - highlight the elementary geometrical entity");
+  Msg(DIRECT, "  move                - Highlight the elementary geometrical entity");
   Msg(DIRECT, "                        currently under the mouse pointer and display");
   Msg(DIRECT, "                        its properties in the status bar");
-  Msg(DIRECT, "                      - size a rubber zoom started with Ctrl+Left button");
-  Msg(DIRECT, "  Left button         - rotate");
-  Msg(DIRECT, "                      - accept a rubber zoom started with Ctrl+Left button"); 
-  Msg(DIRECT, "  Ctrl+Left button    start (anisotropic) rubber zoom"); 
-  Msg(DIRECT, "  Middle button       - zoom (isotropic)");
-  Msg(DIRECT, "                      - cancel a rubber zoom");
-  Msg(DIRECT, "  Ctrl+Middle button  orthogonalize display"); 
-  Msg(DIRECT, "  Right button        - pan");
-  Msg(DIRECT, "                      - cancel a rubber zoom");
-  Msg(DIRECT, "                      - pop up menu on post-processing view button");
-  Msg(DIRECT, "  Ctrl+Right button   reset to default viewpoint");   
+  Msg(DIRECT, "                      - Size a rubber zoom started with Ctrl+Left button");
+  Msg(DIRECT, "  Left button         - Rotate");
+  Msg(DIRECT, "                      - Accept a rubber zoom started with Ctrl+Left button"); 
+  Msg(DIRECT, "  Ctrl+Left button    Start (anisotropic) rubber zoom"); 
+  Msg(DIRECT, "  Middle button       - Zoom (isotropic)");
+  Msg(DIRECT, "                      - Cancel a rubber zoom");
+  Msg(DIRECT, "  Ctrl+Middle button  Orthogonalize display"); 
+  Msg(DIRECT, "  Right button        - Pan");
+  Msg(DIRECT, "                      - Cancel a rubber zoom");
+  Msg(DIRECT, "                      - Pop up menu on post-processing view button");
+  Msg(DIRECT, "  Ctrl+Right button   Reset to default viewpoint");   
   Msg(DIRECT, " ");   
   Msg(DIRECT, "  For a 2 button mouse, Middle button = Shift+Left button");
   Msg(DIRECT, "  For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button");
@@ -2671,7 +2671,7 @@ void solver_file_open_cb(CALLBACK_ARGS)
 
   // We allow to create the .pro file... Or should we add a "New file"
   // button?
-  if(file_chooser(0, 1, "Open problem definition file", tmp, 0)) {
+  if(file_chooser(0, 1, "Choose", tmp, 0)) {
     WID->solver[num].input[0]->value(file_chooser_get_name(1));
     if(SINFO[num].nboptions) {
       char file[1024];
@@ -2697,7 +2697,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
   int num = (long)data;
-  if(file_chooser(0, 0, "Open mesh file", "*.msh", 0))
+  if(file_chooser(0, 0, "Choose", "*.msh", 0))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
 
@@ -2766,7 +2766,7 @@ void solver_kill_cb(CALLBACK_ARGS)
 void solver_choose_executable_cb(CALLBACK_ARGS)
 {
   int num = (long)data;
-  if(file_chooser(0, 0, "Choose executable",
+  if(file_chooser(0, 0, "Choose",
 #if defined(WIN32)
                   "*.exe"
 #else
@@ -2908,7 +2908,7 @@ void view_save_ascii_cb(CALLBACK_ARGS)
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
   
  test:
-  if(file_chooser(0, 1, "Save view in ASCII format", "*", 0, v->FileName)) {
+  if(file_chooser(0, 1, "Save As ASCII View", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -2925,7 +2925,7 @@ void view_save_binary_cb(CALLBACK_ARGS)
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
 
  test:
-  if(file_chooser(0, 1, "Save view in binary format", "*", 0, v->FileName)) {
+  if(file_chooser(0, 1, "Save As Binary View", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -2942,7 +2942,7 @@ void view_save_parsed_cb(CALLBACK_ARGS)
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
 
  test:
-  if(file_chooser(0, 1, "Save view in parsed format", "*", 0, v->FileName)) {
+  if(file_chooser(0, 1, "Save As Parsed View", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -3657,7 +3657,7 @@ void view_arrow_param_cb(CALLBACK_ARGS)
   double a = opt_view_arrow_head_radius(WID->view_number, GMSH_GET, 0);
   double b = opt_view_arrow_stem_length(WID->view_number, GMSH_GET, 0);
   double c = opt_view_arrow_stem_radius(WID->view_number, GMSH_GET, 0);
-  while(arrow_editor("Arrow editor", a, b, c)){
+  while(arrow_editor("Arrow Editor", a, b, c)){
     opt_view_arrow_head_radius(WID->view_number, GMSH_SET, a);
     opt_view_arrow_stem_length(WID->view_number, GMSH_SET, b);
     opt_view_arrow_stem_radius(WID->view_number, GMSH_SET, c);

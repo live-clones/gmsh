@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.157 2004-12-30 05:45:24 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.158 2004-12-31 04:04:51 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2535,11 +2535,11 @@ the surfaces---as well as all the lines if `1D' was not called before; `3D'
 will mesh all the volumes---and all the surfaces if `2D' was not called
 before). To save the resulting mesh in the current mesh format, choose
 `Save' in the context-dependent buttons, or select the appropriate format
-with the `File->Save as' menu. The default mesh file name is based on the
+with the `File->Save As' menu. The default mesh file name is based on the
 name of the first input file on the command line (or @file{untitled} if
 there wasn't any input file given), with an appended extension depending on
 the mesh format@footnote{Nearly all the interactive commands have shortcuts:
-see @ref{Keyboard shortcuts}, or select `Help->Keyboard shortcuts' in the
+see @ref{Keyboard shortcuts}, or select `Help->Keyboard Shortcuts' in the
 menu.}.
 
 To create a new geometry or to modify an existing geometry, select
@@ -2578,7 +2578,7 @@ for all views' option in the `Tools->Options->Post-processing' menu.
 
 Note that all the options specified interactively can also be directly
 specified in the ASCII input files. All available options, with their
-current values, can be saved into a file by selecting `File->Save as->Gmsh
+current values, can be saved into a file by selecting `File->Save As->Gmsh
 options', or simply viewed by pressing the `?' button in the status bar. To
 save the current options as your default preferences for all future Gmsh
 sessions, use the `Tools->Options->Save' button.
@@ -2641,18 +2641,18 @@ In the following, for a 2 button mouse, @kbd{Middle button} =
 @kbd{Move the mouse}:
 @itemize @bullet
 @item
-highlight the elementary geometrical entity currently under the mouse
+Highlight the elementary geometrical entity currently under the mouse
 pointer and display its properties in the status bar
 @item
-size a rubber zoom started with @kbd{Ctrl+Left button}
+Size a rubber zoom started with @kbd{Ctrl+Left button}
 @end itemize
 
 @kbd{Left button}:
 @itemize @bullet
 @item
-rotate
+Rotate
 @item
-accept a rubber zoom started with @kbd{Ctrl+Left button}
+Accept a rubber zoom started with @kbd{Ctrl+Left button}
 @end itemize
 
 @kbd{Ctrl+Left button}: start (anisotropic) rubber zoom
@@ -2660,9 +2660,9 @@ accept a rubber zoom started with @kbd{Ctrl+Left button}
 @kbd{Middle button}:
 @itemize @bullet
 @item
-zoom (isotropic)
+Zoom (isotropic)
 @item
-cancel a rubber zoom
+Cancel a rubber zoom
 @end itemize
 
 @kbd{Ctrl+Middle button}: orthogonalize display
@@ -2670,11 +2670,11 @@ cancel a rubber zoom
 @kbd{Right button}:
 @itemize @bullet
 @item
-pan
+Pan
 @item
-cancel a rubber zoom
+Cancel a rubber zoom
 @item
-pop up menu on post-processing view button
+Pop up menu on post-processing view button
 @end itemize
 
 @kbd{Ctrl+Right button}: reset to default viewpoint
@@ -2997,7 +2997,7 @@ which is useful for (very) large data sets.
 Gmsh can convert any format to any other, either in a script (cf. @code{Save
 View} and @code{PostProcessing.Format} in @ref{Post-processing commands},
 and @ref{Post-processing options}, respectively) or in the graphical user
-interface (using the `View->Save as' menu).
+interface (using the `View->Save As' menu).
 
 @menu
 * Parsed post-processing file format::  
@@ -3703,7 +3703,7 @@ button moves one step per pixel, the middle by 10 * step, and the right
 button by 100 * step;
 @item
 selecting the content of an input field, or lines in the message console
-(Tools->Message console), copies the selected text to the clipboard;
+(`Tools->Message Console'), copies the selected text to the clipboard;
 @end itemize
 
 @item

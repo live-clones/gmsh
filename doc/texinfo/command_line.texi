@@ -2,7 +2,7 @@
 
 @ftable @code
 @item -0
-parse input files, output unrolled geometry, and exit
+Parse input files, output unrolled geometry, and exit
 @end ftable
 
 @sp 1 
@@ -11,41 +11,41 @@ parse input files, output unrolled geometry, and exit
 
 @ftable @code
 @item -1, -2, -3
-perform batch 1D, 2D and 3D mesh generation
+Perform batch 1D, 2D and 3D mesh generation
 @item -saveall
-save all elements (discard physical group definitions)
+Save all elements (discard physical group definitions)
 @item -o file
-specify mesh output file name
+Specify mesh output file name
 @item -format string
-set output mesh format (msh, unv, gref)
+Set output mesh format (msh, unv, gref)
 @item -algo string
-select 2D mesh algorithm (iso, tri, aniso, netgen)
+Select 2D mesh algorithm (iso, tri, aniso, netgen)
 @item -smooth int
-set mesh smoothing
+Set mesh smoothing
 @item -optimize
-optimize quality of tetrahedral elements
+Optimize quality of tetrahedral elements
 @item -order int
-set the order of the generated elements (1, 2)
+Set the order of the generated elements (1, 2)
 @item -scale float
-set global scaling factor
+Set global scaling factor
 @item -meshscale float
-set mesh scaling factor
+Set mesh scaling factor
 @item -clscale float
-set characteristic length scaling factor
+Set characteristic length scaling factor
 @item -rand float
-set random perturbation factor
+Set random perturbation factor
 @item -bgm file
-load backround mesh from file
+Load backround mesh from file
 @item -constrain
-constrain background mesh with characteristic lengths
+Constrain background mesh with characteristic lengths
 @item -histogram
-print mesh quality histogram
+Print mesh quality histogram
 @item -extrude
-use old extrusion mesh generator
+Use old extrusion mesh generator
 @item -recombine
-recombine meshes from old extrusion mesh generator
+Recombine meshes from old extrusion mesh generator
 @item -interactive
-display 2D mesh construction interactively
+Display 2D mesh construction interactively
 @end ftable
 
 @sp 1 
@@ -54,13 +54,13 @@ display 2D mesh construction interactively
 
 @ftable @code
 @item -noview
-hide all views on startup
+Hide all views on startup
 @item -link int
-select link mode between views (0, 1, 2, 3, 4)
+Select link mode between views (0, 1, 2, 3, 4)
 @item -smoothview
-smooth views
+Smooth views
 @item -combine
-combine input views into multi-time-step ones
+Combine input views into multi-time-step ones
 @end ftable
 
 @sp 1 
@@ -69,13 +69,13 @@ combine input views into multi-time-step ones
 
 @ftable @code
 @item -nodb
-disable double buffering
+Disable double buffering
 @item -fontsize int
-specify the font size for the GUI
+Specify the font size for the GUI
 @item -scheme string
-specify FLTK GUI scheme
+Specify FLTK GUI scheme
 @item -display string
-specify display
+Specify display
 @end ftable
 
 @sp 1
@@ -84,23 +84,23 @@ specify display
 
 @ftable @code
 @item -a, -g, -m, -s, -p
-start in automatic, geometry, mesh, solver or post-processing mode
+Start in automatic, geometry, mesh, solver or post-processing mode
 @item -pid
-print pid on stdout
+Print pid on stdout
 @item -v int
-set verbosity level
+Set verbosity level
 @item -nopopup
-don't popup dialog windows in scripts
+Don't popup dialog windows in scripts
 @item -string "string"
-parse string before project file
+Parse string before project file
 @item -option file
-parse option file before GUI creation
+Parse option file before GUI creation
 @item -convert file file
-perform batch conversion of views and meshes into latest file formats
+Perform batch conversion of views and meshes into latest file formats
 @item -version
-show version number
+Show version number
 @item -info
-show detailed version information
+Show detailed version information
 @item -help
-show this message
+Show this message
 @end ftable

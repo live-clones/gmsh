@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.12 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.13 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -165,7 +165,7 @@ double GMSH_CutGridPlugin::callbackV(int num, int action, double value)
 
 void GMSH_CutGridPlugin::getName(char *name) const
 {
-  strcpy(name, "Cut grid");
+  strcpy(name, "Cut Grid");
 }
 
 void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,

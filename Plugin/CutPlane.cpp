@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.42 2004-12-28 17:25:44 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.43 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -115,7 +115,7 @@ double GMSH_CutPlanePlugin::callbackD(int num, int action, double value)
 
 void GMSH_CutPlanePlugin::getName(char *name) const
 {
-  strcpy(name, "Cut plane");
+  strcpy(name, "Cut Plane");
 }
 
 void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,

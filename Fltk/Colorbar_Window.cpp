@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.45 2004-12-26 18:37:01 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.46 2004-12-31 04:04:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -227,49 +227,49 @@ void Colorbar_Window::redraw_range(int a, int b)
   if(help_flag) {
     i = 0;
     fl_draw("1, 2, ..., Ctrl+1, Ctrl+2, ...", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("select predefined colormap", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Select predefined colormap", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("draw red or hue channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("mouse2", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("draw green or saturation channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Draw green or saturation channel", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("mouse3", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("draw blue or value channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Draw blue or value channel", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("Ctrl+mouse1", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("draw alpha channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Draw alpha channel", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("copy, paste or reset colormap", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Copy, paste or reset colormap", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("m", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("toggle RGB/HSV mode", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Toggle RGB/HSV mode", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("left, right", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("translate abscissa", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Translate abscissa", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("rotate abscissa", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Rotate abscissa", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("invert abscissa or ordinate", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Invert abscissa or ordinate", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("up, down", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("modify curvature of color channels", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Modify curvature of color channels", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("modify alpha coefficient", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Modify alpha coefficient", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("modify alpha channel power law", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Modify alpha channel power law", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("modify gamma correction", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Modify gamma correction", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("h", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("show this help message", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Show this help message", xx1, yy0 + (i + 1) * font_height);
     i++;
   }
   else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)

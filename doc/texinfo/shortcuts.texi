@@ -2,139 +2,139 @@ Keyboard shortcuts:
 
 @table @kbd
 @item Left arrow
-go to previous time step 
+Go to previous time step 
 @item Right arrow
-go to next time step 
+Go to next time step 
 @item Up arrow
-make previous view visible 
+Make previous view visible 
 @item Down arrow
-make next view visible 
+Make next view visible 
 
 @sp 1 @c ----------------------------------------------
 
 @item <
-go back to previous context
+Go back to previous context
 @item >
-go forward to next context
+Go forward to next context
 @item 0 or Esc
-reload project file
+Reload project file
 @item 1 or F1
-mesh lines
+Mesh lines
 @item 2 or F2
-mesh surfaces
+Mesh surfaces
 @item 3 or F3
-mesh volumes
+Mesh volumes
 
 @sp 1 @c ----------------------------------------------
 
 @item g
-go to geometry module
+Go to geometry module
 @item m
-go to mesh module
+Go to mesh module
 @item p
-go to post-processing module
+Go to post-processing module
 @item s
-go to solver module
+Go to solver module
 
 @sp 1 @c ----------------------------------------------
 
 @item Shift+g
-show geometry options
+Show geometry options
 @item Shift+m
-show mesh options
+Show mesh options
 @item Shift+o
-show general options 
+Show general options 
 @item Shift+p
-show post-processing options
+Show post-processing options
 @item Shift+s
-show solver options 
+Show solver options 
 @item Shift+w
-show post-processing view options
+Show post-processing view options
 
 @sp 1 @c ----------------------------------------------
 
 @item Ctrl+a
-bring all windows to front
+Bring all windows to front
 @item Ctrl+i
-show statistics window 
+Show statistics window 
 @item Ctrl+l
-show message console
+Show message console
 @item Ctrl+m
-merge file(s)
+Merge file(s)
 @item Ctrl+n
-new project file 
+Create new project file 
 @item Ctrl+o
-open project file
+Open project file
 @item Ctrl+q
-quit
+Quit
 @item Ctrl+r
-rename project file
+Rename project file
 @item Ctrl+s
-save file as
+Save file
 
 @sp 1 @c ----------------------------------------------
 
 @item Shift+Ctrl+c
-show clipping plane window
+Show clipping plane window
 @item Shift+Ctrl+o
-show option window 
+Show option window 
 @item Shift+Ctrl+s
-save mesh in default format
+Save mesh in default format
 @item Shift+Ctrl+v
-show visibility window
+Show visibility window
 
 @sp 1 @c ----------------------------------------------
 
 @item Alt+a
-hide/show small axes 
+Hide/show small axes 
 @item Alt+b
-hide/show bounding boxes
+Hide/show bounding boxes
 @item Alt+c
-loop through predefined color schemes
+Loop through predefined color schemes
 @item Alt+d
-change surface mesh display mode (solid/wireframe)
+Change surface mesh display mode (solid/wireframe)
 @item Alt+f
-change redraw mode (fast/full) 
+Change redraw mode (fast/full) 
 @item Alt+h
-hide/show all post-processing views 
+Hide/show all post-processing views 
 @item Alt+i
-hide/show all post-processing view scales
+Hide/show all post-processing view scales
 @item Alt+l
-hide/show geometry lines
+Hide/show geometry lines
 @item Alt+m
-toggle visibility of all mesh entities
+Toggle visibility of all mesh entities
 @item Alt+n
-hide/show all post-processing view annotations
+Hide/show all post-processing view annotations
 @item Alt+o
-change projection mode (orthographic/perspective)
+Change projection mode (orthographic/perspective)
 @item Alt+p
-hide/show geometry points
+Hide/show geometry points
 @item Alt+s
-hide/show geometry surfaces
+Hide/show geometry surfaces
 @item Alt+t
-loop through interval modes for all post-processing views 
+Loop through interval modes for all post-processing views 
 @item Alt+v
-hide/show geometry volumes
+Hide/show geometry volumes
 @item Alt+w
-enable/disable all lighting
+Enable/disable all lighting
 @item Alt+x
-set X view 
+Set X view 
 @item Alt+y
-set Y view 
+Set Y view 
 @item Alt+z
-set Z view 
+Set Z view 
 
 @sp 1 @c ----------------------------------------------
 
 @item Alt+Shift+a
-hide/show moving axes 
+Hide/show moving axes 
 @item Alt+Shift+l
-hide/show surface mesh edges
+Hide/show surface mesh edges
 @item Alt+Shift+p
-hide/show mesh points
+Hide/show mesh points
 @item Alt+Shift+s
-hide/show mesh surfaces
+Hide/show mesh surfaces
 @item Alt+Shift+v
-hide/show mesh volumes
+Hide/show mesh volumes
 
 @end table

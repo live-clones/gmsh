@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.39 2004-12-28 17:25:44 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.40 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -119,7 +119,7 @@ double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
 
 void GMSH_CutSpherePlugin::getName(char *name) const
 {
-  strcpy(name, "Cut sphere");
+  strcpy(name, "Cut Sphere");
 }
 
 void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,

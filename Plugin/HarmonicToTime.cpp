@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.3 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.4 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ GMSH_HarmonicToTimePlugin::GMSH_HarmonicToTimePlugin()
 
 void GMSH_HarmonicToTimePlugin::getName(char *name) const
 {
-  strcpy(name, "Harmonic to time");
+  strcpy(name, "Harmonic to Time");
 }
 
 void GMSH_HarmonicToTimePlugin::getInfos(char *author, char *copyright,

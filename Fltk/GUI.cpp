@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.401 2004-12-30 23:46:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.402 2004-12-31 04:04:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,15 @@
 //
 // The "Cancel" button, if present, should always be the last (-> at
 // right)
+
+// Only 'title-capitalize' titles and menus (Rules: 1. Always
+// capitalize the first and the last word. 2. Capitalize all nouns,
+// pronouns, adjectives, verbs, adverbs, and subordinate
+// conjunctions. 3. Lowercase all articles, coordinate conjunctions,
+// and prepositions, when they are other than the first or last
+// word. 4. Lowercase the "to" in an infinitive.)
+//
+// Capitalize everything else as english sentences
 
 // Don't indent this file
 // *INDENT-OFF*
@@ -85,6 +94,9 @@ extern Context_T CTX;
 //   provide tools that help create or manage the content in the main
 //   window and are frequently left open to assist in accomplishing the
 //   task of the main window. Examples: Info and Show Tools.
+//
+// The window title should be exactly the same as the menu item (without
+// the ellipsis character if there is one)
 
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
@@ -92,24 +104,24 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"M&erge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
-    {"Save &as...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
-    {"Sa&ve mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0, FL_MENU_DIVIDER},
+    {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
+    {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0, FL_MENU_DIVIDER},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",      FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&Clipping planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
+    {"&Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
-    {"M&essage console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
+    {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
-    {"On&line documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"M&ouse actions",        0, (Fl_Callback *)help_mouse_cb, 0},
-    {"&Keyboard shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
-    {"C&ommand line options", 0, (Fl_Callback *)help_command_line_cb, 0},
-    {"&Current options",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
-    {"&About...",             0, (Fl_Callback *)help_about_cb, 0},
+    {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
+    {"M&ouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
+    {"&Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
+    {"C&ommand Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
+    {"&Current Options",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
+    {"&About Gmsh...",        0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -1136,48 +1148,48 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       for(int j = 0; j < 2; j++) {
 	p[j]->add("Reload/View", 0, 
 		  (Fl_Callback *) view_reload_cb, (void *)nb, 0);
-	p[j]->add("Reload/All views", 0, 
+	p[j]->add("Reload/All Views", 0, 
 		  (Fl_Callback *) view_reload_all_cb, (void *)nb, 0);
-	p[j]->add("Reload/All visible views", 0, 
+	p[j]->add("Reload/All Visible Views", 0, 
 		  (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
 	p[j]->add("Remove/View", FL_Delete, 
 		  (Fl_Callback *) view_remove_cb, (void *)nb, 0);
-	p[j]->add("Remove/All views", 0, 
+	p[j]->add("Remove/All Views", 0, 
 		  (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
-	p[j]->add("Remove/All visible views", 0, 
+	p[j]->add("Remove/All Visible Views", 0, 
 		  (Fl_Callback *) view_remove_visible_cb, (void *)nb, 0);
-	p[j]->add("Remove/All invisible views", 0, 
+	p[j]->add("Remove/All Invisible Views", 0, 
 		  (Fl_Callback *) view_remove_invisible_cb, (void *)nb, 0);
-	p[j]->add("Remove/All empty views", 0, 
+	p[j]->add("Remove/All Empty Views", 0, 
 		  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
-	p[j]->add("Duplicate/View without options", 0, 
+	p[j]->add("Duplicate/View without Options", 0, 
 		  (Fl_Callback *) view_duplicate_cb, (void *)nb, 0);
-	p[j]->add("Duplicate/View with options", 0, 
+	p[j]->add("Duplicate/View with Options", 0, 
 		  (Fl_Callback *) view_duplicate_with_options_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/From all views", 0, 
+	p[j]->add("Combine/Elements/From All Views", 0, 
 		  (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/From visible views", 0, 
+	p[j]->add("Combine/Elements/From Visible Views", 0, 
 		  (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/By view name", 0, 
+	p[j]->add("Combine/Elements/By View Name", 0, 
 		  (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time steps/From all views", 0, 
+	p[j]->add("Combine/Time Steps/From All Views", 0, 
 		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time steps/From visible views", 0, 
+	p[j]->add("Combine/Time Steps/From Visible Views", 0, 
 		  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time steps/By view name", 0, 
+	p[j]->add("Combine/Time Steps/By View Name", 0, 
 		 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
-	p[j]->add("Set visibility/All on", 0, 
+	p[j]->add("Set Visibility/All On", 0, 
 		  (Fl_Callback *) view_all_visible_cb, (void *)1, 0);
-	p[j]->add("Set visibility/All off", 0, 
+	p[j]->add("Set Visibility/All Off", 0, 
 		  (Fl_Callback *) view_all_visible_cb, (void *)0, 0);
-	p[j]->add("Save as/Parsed view...", 0, 
+	p[j]->add("Save As/Parsed View...", 0, 
 		  (Fl_Callback *) view_save_parsed_cb, (void *)nb, 0);
-	p[j]->add("Save as/ASCII view...", 0, 
+	p[j]->add("Save As/ASCII View...", 0, 
 		  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
-	p[j]->add("Save as/Binary view...", 0, 
+	p[j]->add("Save As/Binary View...", 0, 
 		  (Fl_Callback *) view_save_binary_cb, (void *)nb, 0);
 	add_post_plugins(p[j], nb);
-	p[j]->add("Apply as background mesh", 0, 
+	p[j]->add("Apply As Background Mesh", 0, 
 		  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
 	p[j]->add("Options...", 'o', 
 		  (Fl_Callback *) view_options_cb, (void *)nb, 0);
@@ -3325,7 +3337,7 @@ void GUI::create_message_window()
   int width = CTX.msg_size[0];
   int height = CTX.msg_size[1];
 
-  msg_window = new Fl_Window(width, height, "Messages");
+  msg_window = new Fl_Window(width, height, "Message Console");
   msg_window->box(GMSH_WINDOW_BOX);
 
   msg_browser = new Fl_Browser(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -3697,7 +3709,7 @@ void GUI::create_geometry_context_window(int num)
   int width = 31 * fontsize;
   int height = 5 * WB + 9 * BH;
 
-  context_geometry_window = new Fl_Window(width, height, "Contextual geometry definitions");
+  context_geometry_window = new Fl_Window(width, height, "Contextual Geometry Definitions");
   context_geometry_window->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -3845,7 +3857,7 @@ void GUI::create_mesh_context_window(int num)
   int width = 31 * fontsize;
   int height = 5 * WB + 5 * BH;
 
-  context_mesh_window = new Fl_Window(width, height, "Contextual mesh definitions");
+  context_mesh_window = new Fl_Window(width, height, "Contextual Mesh Definitions");
   context_mesh_window->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);

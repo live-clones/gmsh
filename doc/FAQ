@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.47 2004-12-27 17:51:55 geuzaine Exp $
+$Id: FAQ,v 1.48 2004-12-31 04:04:51 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -242,7 +242,7 @@ Section 7: Post-processing module
 
 * 7.1 How do I compute a section of a plot?
 
-Use 'View->Plugins->Cut plane'.
+Use 'View->Plugins->Cut Plane'.
 
 * 7.2 How do I animate my plots?
 

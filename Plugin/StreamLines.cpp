@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.17 2004-12-28 17:24:25 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.18 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -161,7 +161,7 @@ double GMSH_StreamLinesPlugin::callbackV(int num, int action, double value)
 
 void GMSH_StreamLinesPlugin::getName(char *name) const
 {
-  strcpy(name, "Stream lines");
+  strcpy(name, "Stream Lines");
 }
 
 void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,

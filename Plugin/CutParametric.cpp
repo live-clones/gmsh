@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.6 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.7 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,7 +67,7 @@ GMSH_CutParametricPlugin::GMSH_CutParametricPlugin()
 
 void GMSH_CutParametricPlugin::getName(char *name) const
 {
-  strcpy(name, "Cut parametric");
+  strcpy(name, "Cut Parametric");
 }
 
 void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,

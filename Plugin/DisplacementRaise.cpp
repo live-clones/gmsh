@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.17 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.18 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ GMSH_DisplacementRaisePlugin::GMSH_DisplacementRaisePlugin()
 
 void GMSH_DisplacementRaisePlugin::getName(char *name) const
 {
-  strcpy(name, "Displacement raise");
+  strcpy(name, "Displacement Raise");
 }
 
 void GMSH_DisplacementRaisePlugin::getInfos(char *author, char *copyright,

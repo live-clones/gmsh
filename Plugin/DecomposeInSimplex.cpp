@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.14 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.15 2004-12-31 04:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ GMSH_DecomposeInSimplexPlugin::GMSH_DecomposeInSimplexPlugin()
 
 void GMSH_DecomposeInSimplexPlugin::getName(char *name) const
 {
-  strcpy(name, "Decompose in simplex");
+  strcpy(name, "Decompose in Simplex");
 }
 
 void GMSH_DecomposeInSimplexPlugin::getInfos(char *author, char *copyright,
