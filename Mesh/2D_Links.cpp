@@ -1,4 +1,4 @@
-// $Id: 2D_Links.cpp,v 1.15 2003-03-21 00:52:40 geuzaine Exp $
+// $Id: 2D_Links.cpp,v 1.16 2003-03-30 22:26:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -158,9 +158,11 @@ int CreateLinks(List_T * ListDelaunay, int NumDelaunay,
   MPoint pt;
   Delaunay *del_Pi, *del_Pj;
 
-  ListEdges = (edge *) Malloc((3 * NumDelaunay + 2) * sizeof(edge));
+  ListEdges = (edge *) Malloc((3 * NumDelaunay + 1) * sizeof(edge));
 
-  ListEdges[3 * NumDelaunay + 1].num = 0;
+  ListEdges[3 * NumDelaunay].num = 0;
+  ListEdges[3 * NumDelaunay].from = 0;
+  ListEdges[3 * NumDelaunay].to = 0;
 
   for(i = 0; i < NumDelaunay; i++) {
 
@@ -210,11 +212,12 @@ int CreateLinks(List_T * ListDelaunay, int NumDelaunay,
 
   do {
 
-    if((ListEdges[i].from == ListEdges[i + 1].from) && (ListEdges[i].to == ListEdges[i + 1].to)) {      /* create link */
+    if((ListEdges[i].from == ListEdges[i + 1].from) &&
+       (ListEdges[i].to == ListEdges[i + 1].to)) { 
+      /* create link */
 
       del_Pi = *(Delaunay **) List_Pointer(ListDelaunay, ListEdges[i].num);
-      del_Pj =
-        *(Delaunay **) List_Pointer(ListDelaunay, ListEdges[i + 1].num);
+      del_Pj = *(Delaunay **) List_Pointer(ListDelaunay, ListEdges[i + 1].num);
 
       if((del_Pi->t.position != EXTERN) &&
          (del_Pj->t.position != EXTERN) &&
@@ -240,8 +243,9 @@ int CreateLinks(List_T * ListDelaunay, int NumDelaunay,
       }
       i += 2;
     }
-    else
+    else{
       i++;
+    }
   } while(i < 3 * NumDelaunay);
 
   Free(ListEdges);
