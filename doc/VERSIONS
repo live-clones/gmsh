@@ -1,6 +1,7 @@
-$Id: VERSIONS,v 1.8 2001-04-22 18:13:03 geuzaine Exp $
+$Id: VERSIONS,v 1.9 2001-04-25 07:40:16 geuzaine Exp $
 
-New in 1.18: More coherence throughout post-processing;
+New in 1.18: Fixed many small bugs and incoherences in
+post-processing;
 
 New in 1.17: Corrected physical points saving; fixed parsing of DOS
 files (carriage return problems); easier geometrical selections
