@@ -1,4 +1,4 @@
-/* $Id: gl2gif.cpp,v 1.20 2003-10-29 19:51:43 geuzaine Exp $ */
+/* $Id: gl2gif.cpp,v 1.21 2003-11-04 17:10:29 geuzaine Exp $ */
 /*
  * GL2GIF, an OpenGL to GIF Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -11,7 +11,7 @@
  * option) any later version; or
  *
  * b) the GL2PS License as published by Christophe Geuzaine, either
- * version 1 of the License, or (at your option) any later version.
+ * version 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
