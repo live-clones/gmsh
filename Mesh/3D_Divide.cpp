@@ -1,4 +1,4 @@
-/* $Id: 3D_Divide.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 3D_Divide.cpp,v 1.4 2000-11-24 08:04:14 geuzaine Exp $ */
 /* Routine de division des elements tetraedriques
    ou triangulaires
 
@@ -56,9 +56,9 @@ void Remise_A_Zero (void){
 void Impression_Resultats (void){
 
   Msg(INFOS,    "===================================================\n"
-      WHITE_STR "Surface Coherence Results (Number of Intersections)\n"
-      WHITE_STR "%d EV, %d EE, %d FV, %d FF, %d FE, %d EEE, %d EEEE\n"
-      WHITE_STR "===================================================",
+      INFOS_NIL "Surface Coherence Results (Number of Intersections)\n"
+      INFOS_NIL "%d EV, %d EE, %d FV, %d FF, %d FE, %d EEE, %d EEEE\n"
+      INFOS_NIL "===================================================",
       EV, EE, FV, FF, FE, EEE, EEEE); 
 }
 

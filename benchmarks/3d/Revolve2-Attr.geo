@@ -15,3 +15,5 @@ Extrude Surface(6, {0.0,1,0}, {0,0.0,0.0},  3.14159/2);
 Coherence;               
   
 Attractor Line (.1,.1,1.0) = {14};  
+Surface Loop(29) = {15,6,19,23,27,28};
+Complex Volume(30) = {29};

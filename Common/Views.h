@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.2 2000-11-23 14:11:28 geuzaine Exp $ */
+/* $Id: Views.h,v 1.3 2000-11-24 08:04:14 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -28,37 +28,6 @@ typedef struct{
   double *V;
 }Post_Point;
 
-/* Post_XXX.Type. The keys are important ! */
-#define DRAW_POST_SCALAR 1
-#define DRAW_POST_VECTOR 3
-#define DRAW_POST_TENSOR 9
-
-/* IntervalsType */
-#define DRAW_POST_ISO          1
-#define DRAW_POST_CONTINUOUS   2
-#define DRAW_POST_DISCRETE     3
-#define DRAW_POST_NUMERIC      4
-
-/* ArrowType */
-#define DRAW_POST_SEGMENT      1
-#define DRAW_POST_ARROW        2
-#define DRAW_POST_PYRAMID      3
-#define DRAW_POST_CONE         4
-#define DRAW_POST_DISPLACEMENT 5
-#define DRAW_POST_ARROW_HEAD   6
-
-/* ArrowLovation */
-#define DRAW_POST_LOCATE_COG     1
-#define DRAW_POST_LOCATE_VERTEX  2
-
-/* ScaleType */
-#define DRAW_POST_DEFAULT 1
-#define DRAW_POST_CUSTOM  2
-
-/* RangeType */
-#define DRAW_POST_LINEAR       1
-#define DRAW_POST_LOGARITHMIC  2
-
 #include "ColorTable.h"
 
 typedef struct{
@@ -78,7 +47,38 @@ typedef struct{
   int (*GIFV) (double min, double max, int nb, double value);
 }Post_View;
 
+/* Type (The keys are important!) */
+#define DRAW_POST_SCALAR  1
+#define DRAW_POST_VECTOR  3
+#define DRAW_POST_TENSOR  9
 
+/* IntervalsType */
+#define DRAW_POST_ISO          1
+#define DRAW_POST_CONTINUOUS   2
+#define DRAW_POST_DISCRETE     3
+#define DRAW_POST_NUMERIC      4
+
+/* ArrowType */
+#define DRAW_POST_SEGMENT      1
+#define DRAW_POST_ARROW        2
+#define DRAW_POST_PYRAMID      3
+#define DRAW_POST_CONE         4
+#define DRAW_POST_DISPLACEMENT 5
+#define DRAW_POST_ARROW_HEAD   6
+
+/* ArrowLocation */
+#define DRAW_POST_LOCATE_COG     1
+#define DRAW_POST_LOCATE_VERTEX  2
+
+/* ScaleType */
+#define DRAW_POST_DEFAULT 1
+#define DRAW_POST_CUSTOM  2
+
+/* RangeType */
+#define DRAW_POST_LINEAR       1
+#define DRAW_POST_LOGARITHMIC  2
+
+/* Public functions */
 
 void BeginView (int alloc);
 void EndView (char *Name, double XOffset, double YOffset, double ZOffset);
@@ -138,8 +138,8 @@ void AddView_TensorPoint(double x0,double y0,double z0,
 			 List_T *v);
 
 int BGMWithView (Post_View *ErrView);
-int  CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
-	       double OptiValue, double *ObjFunct, char *OutFile);
+int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
+	      double OptiValue, double *ObjFunct, char *OutFile);
 double ErrorInView(Post_View * ErrView, int *n);
 
 #endif

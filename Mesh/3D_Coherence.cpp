@@ -1,4 +1,4 @@
-/* $Id: 3D_Coherence.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 3D_Coherence.cpp,v 1.6 2000-11-24 08:04:14 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -573,11 +573,11 @@ Vertex *Edge_Face (Edge * e, Face * f){
   if (res[0] == 1.0 || res[2] == 0.0 || res[0] == 0.0 ||
       res[1] == 1. - res[0] || res[1] == 0.0 || res[0] == 1.0)
     Msg(DEBUG, "Face p1  %g %g %g\n"
-	WHITE_STR "facette p2  %g %g %g\n"
-	WHITE_STR "facette p3  %g %g %g\n"
-	WHITE_STR "edge    e2  %g %g %g\n"
-	WHITE_STR "edge    e3  %g %g %g\n"
-	WHITE_STR "%g %g %g",
+	DEBUG_NIL "facette p2  %g %g %g\n"
+	DEBUG_NIL "facette p3  %g %g %g\n"
+	DEBUG_NIL "edge    e2  %g %g %g\n"
+	DEBUG_NIL "edge    e3  %g %g %g\n"
+	DEBUG_NIL "%g %g %g",
 	f->V[0]->Pos.X, f->V[0]->Pos.Y, f->V[0]->Pos.Z,
 	f->V[1]->Pos.X, f->V[1]->Pos.Y, f->V[1]->Pos.Z,
 	f->V[2]->Pos.X, f->V[2]->Pos.Y, f->V[2]->Pos.Z,
@@ -1173,8 +1173,8 @@ int Coherence (Volume * v, Mesh * m){
   Msg(INFOS, "Volume = %g", volume);
 
   Msg(INFOS,    "===================================================\n"
-      WHITE_STR "(1) Number of Missing Edges = %d\n"
-      WHITE_STR "===================================================",
+      INFOS_NIL "(1) Number of Missing Edges = %d\n"
+      INFOS_NIL "===================================================",
       List_Nbr (Missing));
 
   for (i = 0; i < List_Nbr (Missing); i++){
@@ -1223,8 +1223,8 @@ int Coherence (Volume * v, Mesh * m){
   /* Missing Faces */
 
   Msg(INFOS,    "===================================================\n"
-      WHITE_STR "(1) Number of Missing Faces = %d\n" 
-      WHITE_STR "===================================================",
+      INFOS_NIL "(1) Number of Missing Faces = %d\n" 
+      INFOS_NIL "===================================================",
       List_Nbr (MissingFaces));
 
   for (i = 0; i < List_Nbr (MissingS); i++){

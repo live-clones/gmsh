@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.5 2000-11-24 08:04:14 geuzaine Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -257,9 +257,9 @@ void Plan_Moyen (void *data, void *dum){
     s->plan[2][i] = res[i];
 
   Msg(DEBUG, "Plan   : (%g x + %g y + %g z = %g)\n"
-      WHITE_STR "Normal : (%g , %g , %g )\n"
-      WHITE_STR "t1     : (%g , %g , %g )\n"
-      WHITE_STR "t2     : (%g , %g , %g )",
+      DEBUG_NIL "Normal : (%g , %g , %g )\n"
+      DEBUG_NIL "t1     : (%g , %g , %g )\n"
+      DEBUG_NIL "t2     : (%g , %g , %g )",
       s->a, s->b, s->c, s->d,
       res[0], res[1], res[2],
       t1[0], t1[1], t1[2],

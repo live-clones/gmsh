@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.4 2000-11-23 23:20:34 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.5 2000-11-24 08:04:14 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1378,7 +1378,8 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
       ApplicationOnSurface(O.Num,matrix);
       break;
     default:
-      printf("Impossible de translater le truc %d de type %d\n",O.Num,O.Type);
+      Msg(ERROR, "Impossible to Translate Entity %d (of Type %d)", 
+	  O.Num, O.Type);
       break;
     }
   }
@@ -1462,7 +1463,7 @@ void CopyShape(int Type, int Num, int *New){
     *New = news->Num;
     break;
   default:
-    printf("Impossible de copier le truc %d de type %d\n",Num,Type);
+    Msg(ERROR, "Impossible to Copy the Entity %d (of Type %d)", Num, Type);
     break;
   }
 }
@@ -1538,7 +1539,7 @@ void DeleteShape(int Type, int Num){
     DeleteSurf(Num);
     break;
   default:
-    printf("Impossible de copier le truc %d de type %d\n",Num,Type);
+    Msg(ERROR, "Impossible to Delete the Entity %d (of Type %d)", Num, Type);
     break;
   }
 }

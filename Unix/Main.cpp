@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.8 2000-11-24 00:50:53 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.9 2000-11-24 08:04:14 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -58,7 +58,6 @@ char gmsh_help[]      =
   "  -nodb                 no double buffer\n"
   "  -noov                 no overlay visual\n"
   "  -alpha                enable alpha blending\n"
-  "  -visinfo              show visual information at startup\n"
   "  -geometry geom        specify main window geometry\n"
   "  -viewport 9*float     specify rotation, translation and scale\n"
   "  -display disp         specify display\n"
@@ -252,7 +251,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	if(argv[i]!=NULL){
 	  CTX.mesh.degree = atoi(argv[i]); i++;
 	  if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
-	    fprintf(stderr, ERROR_STR "Wrong degree\n");
+	    fprintf(stderr, ERROR_STR "Wrong Degree\n");
 	    exit(1);
 	  }
 	}
@@ -281,13 +280,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	    CTX.mesh.format = FORMAT_GREF ;
 	  }
 	  else{
-	    fprintf(stderr, ERROR_STR "Unknown mesh format\n");
+	    fprintf(stderr, ERROR_STR "Unknown Mesh Format\n");
 	    exit(1);
 	  }
 	  i++;
 	}
 	else {	  
-	  fprintf(stderr, ERROR_STR "Missing format\n");
+	  fprintf(stderr, ERROR_STR "Missing Format\n");
 	  exit(1);
 	}
       }
@@ -299,13 +298,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	  else if(!strcmp(argv[i],"aniso"))
 	    CTX.mesh.algo = DELAUNAY_NEWALGO ;
 	  else{
-	    fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
+	    fprintf(stderr, ERROR_STR "Unknown Mesh Algorithm\n");
 	    exit(1);
 	  }
 	  i++;
 	}
 	else {	  
-	  fprintf(stderr, ERROR_STR "Missing algorithm\n");
+	  fprintf(stderr, ERROR_STR "Missing Algorithm\n");
 	  exit(1);
 	}
       }
@@ -414,7 +413,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	exit(1);
       }
       else{
-	fprintf(stderr, "Unknown option '%s'\n", argv[i]);
+	fprintf(stderr, "Unknown Option '%s'\n", argv[i]);
 	fprintf(stderr, gmsh_help, argv[0]);
 	exit(1);
       }
@@ -424,7 +423,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       if(*nbfiles < MAX_OPEN_FILES)
 	TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       else{
-	fprintf(stderr, ERROR_STR "Too many input files\n");
+	fprintf(stderr, ERROR_STR "Too Many Input Files\n");
 	exit(1);
       }
     }
@@ -566,14 +565,14 @@ int main(int argc, char *argv[]){
 
   if(!XCTX.display)
     Msg(FATAL, "Unable to open the specified display. Set the `DISPLAY'\n"
-   	WHITE_STR "environment variable properly or use the `xhost' command\n"
-	WHITE_STR "to authorize access to the display");
+   	FATAL_NIL "environment variable properly or use the `xhost' command\n"
+	FATAL_NIL "to authorize access to the display");
 
   /* Check for GLX extension; for Mesa, this is always OK */
   
   if(!glXQueryExtension(XCTX.display,NULL,NULL))
     Msg(FATAL, "The specified display does not support the OpenGL extension (GLX).\n"
-	WHITE_STR "You may consider using Mesa instead");
+	FATAL_NIL "You may consider using Mesa instead");
   
   /* Init with default screen num and default depth */
   
@@ -667,7 +666,7 @@ int main(int argc, char *argv[]){
 					  XCTX.glo.visinfo->visual, AllocNone);
       if(!XCTX.glo.colormap)
 	Msg(FATAL, "Unable to Create Private Colormap for Overlay Window\n"
-	    WHITE_STR "(Try '-noov' and/or '-flash' Options)");
+	    FATAL_NIL "(Try '-noov' and/or '-flash' Options)");
     }
   }
   

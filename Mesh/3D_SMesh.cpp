@@ -1,4 +1,4 @@
-/* $Id: 3D_SMesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 3D_SMesh.cpp,v 1.4 2000-11-24 08:04:14 geuzaine Exp $ */
 /*  
   Maillage transfini volumique
 
@@ -217,8 +217,8 @@ int MeshTransfiniteVolume (Volume *vol) {
 
   if(nbs == 5 && NbFacesFound != 5) {
     Msg(WARNING,  "Wrong Definition of Prismatic Transfinite Volume %d\n"
-	WHITE_STR "Possibly because the first and fourth points are not the\n"
-	WHITE_STR "degenerated ones", vol->Num); 
+	WARNING_NIL "Possibly because the first and fourth points are not the\n"
+	WARNING_NIL "degenerated ones", vol->Num); 
     return(0);
   }
 
@@ -236,8 +236,8 @@ int MeshTransfiniteVolume (Volume *vol) {
       if(i != 3) {
 	if(G[i] == NULL) {
 	  Msg(WARNING,  "Wrong Definition of Prismatic Transfinite Volume %d\n"
-	      WHITE_STR "Possibly because the first and fourth points are not the\n"
-	      WHITE_STR "degenerated ones", vol->Num); 
+	      WARNING_NIL "Possibly because the first and fourth points are not the\n"
+	      WARNING_NIL "degenerated ones", vol->Num); 
 	  return(0);
 	}
       }
