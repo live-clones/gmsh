@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.29 2001-11-07 08:36:52 geuzaine Exp $
+// $Id: Generator.cpp,v 1.30 2001-11-07 09:33:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -14,12 +14,16 @@ static List_T *Curves;
 
 void GetStatistics (double s[50]){
   int i;
-  if(!THEM) return;
-  THEM->Statistics[0] = Tree_Nbr (THEM->Points);
-  THEM->Statistics[1] = Tree_Nbr (THEM->Curves);
-  THEM->Statistics[2] = Tree_Nbr (THEM->Surfaces);
-  THEM->Statistics[3] = Tree_Nbr (THEM->Volumes);
-  for (i = 0; i < 50; i++) s[i] = THEM->Statistics[i];
+  if(!THEM){
+    for (i = 0; i < 50; i++) s[i] = 0.;
+  }
+  else{
+    THEM->Statistics[0] = Tree_Nbr (THEM->Points);
+    THEM->Statistics[1] = Tree_Nbr (THEM->Curves);
+    THEM->Statistics[2] = Tree_Nbr (THEM->Surfaces);
+    THEM->Statistics[3] = Tree_Nbr (THEM->Volumes);
+    for (i = 0; i < 50; i++) s[i] = THEM->Statistics[i];
+  }
 }
 
 void ApplyLcFactor_Point(void *a, void *b){
