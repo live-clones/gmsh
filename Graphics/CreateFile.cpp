@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.67 2005-02-28 23:57:59 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.68 2005-03-09 02:18:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -241,12 +241,21 @@ void CreateOutputFile(char *name, int format)
 		       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
 		       15, 20, 10, size3d, fp, name);
 	if(CTX.print.eps_quality == 0){
+	  double modelview[16], projection[16];
+	  glGetDoublev(GL_PROJECTION_MATRIX, projection);
+	  glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
 	  glMatrixMode(GL_PROJECTION);
 	  glLoadIdentity();
-	  glPushMatrix();
-	  glRasterPos2d(-1., -1.);
+	  glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
+		  (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+	  glMatrixMode(GL_MODELVIEW);
+	  glLoadIdentity();
+	  glRasterPos2d(0, 0);
 	  gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, pixels);
-	  glPopMatrix();  
+	  glMatrixMode(GL_PROJECTION);
+	  glLoadMatrixd(projection);
+	  glMatrixMode(GL_MODELVIEW);
+	  glLoadMatrixd(modelview);
 	  delete [] pixels;
 	}
 	else{

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.72 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Draw.cpp,v 1.73 2005-03-09 02:18:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -77,9 +77,7 @@ void Draw3d(void)
 
   InitRenderModel();
 
-  glPushMatrix();
   Draw_Mesh(&M);
-  glPopMatrix();
 }
 
 void Draw2d(void)
@@ -96,7 +94,6 @@ void Draw2d(void)
   glTranslated(0., 0., CTX.clip_factor > 1. ? 1./CTX.clip_factor : CTX.clip_factor);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glPushMatrix();
   Draw_Graph2D();
   Draw_Text2D();
   Draw_OnScreenMessages();
@@ -104,7 +101,6 @@ void Draw2d(void)
     Draw_Scales();
   if(CTX.small_axes)
     Draw_SmallAxes();
-  glPopMatrix();
 }
 
 void DrawPlugin(void (*draw)(void))

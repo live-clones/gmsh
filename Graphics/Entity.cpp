@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.53 2005-01-21 22:54:04 geuzaine Exp $
+// $Id: Entity.cpp,v 1.54 2005-03-09 02:18:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -135,7 +135,7 @@ void Draw_Sphere(double size, double x, double y, double z, int light)
   if(light) glEnable(GL_LIGHTING);
   static GLUquadricObj *qua;
   static int first = 1, listnum;
-  double s = size * CTX.pixel_equiv_x / CTX.s[0];        // size is in pixels
+  double s = size * CTX.pixel_equiv_x / CTX.s[0]; // size is in pixels
   if(first) {
     first = 0;
     qua = gluNewQuadric();

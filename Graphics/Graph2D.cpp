@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.45 2005-01-18 06:22:03 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.46 2005-03-09 02:18:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -421,6 +421,21 @@ void Draw_Graph2D(void)
 
 // Text strings
 
+void FixText2DCoordinates(double *x, double *y)
+{
+  if(*x < 0) // measure from right border
+    *x = CTX.viewport[2] + *x;
+  else if(*x > 99999) // by convention, x-centered
+    *x = CTX.viewport[2]/2;
+
+  if(*y < 0) // measure from bottom border
+    *y = -(*y);
+  else if(*y > 99999) // by convention, y-centered
+    *y = CTX.viewport[3]/2.;
+  else
+    *y = CTX.viewport[3] - *y;
+}
+
 // Parser format: T2(x,y,style){"str","str",...};
 // T2D list of double : x,y,style,index,x,y,style,index,...
 // T2C list of chars  : string\0,string\0,string\0,string\0,...
@@ -460,16 +475,9 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T * td, List_T * tc)
     d2 = (double *)List_Pointer_Test(td, (j + 1) * nbd);
     if(dim == 2) {
       x = d1[0];
-      if(x < 0) // measure from right border
-        x = CTX.viewport[2] + x;
-      else if(x > 99999) // by convention, x-centered
-	x = CTX.viewport[2]/2;
-      y = CTX.viewport[3] - d1[1];
-      if(d1[1] < 0) // measure from bottom border
-        y = -d1[1];
-      else if(d1[1] > 99999) // by convention, y-centered
-	y = CTX.viewport[3]/2.;
+      y = d1[1];
       z = 0.;
+      FixText2DCoordinates(&x, &y);
       style = d1[2];
       index = (int)d1[3];
       if(d2)

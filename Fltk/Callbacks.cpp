@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.337 2005-02-28 23:57:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.338 2005-03-09 02:18:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3140,11 +3140,18 @@ void view_plugin_run_cb(CALLBACK_ARGS)
   }
 }
 
-void view_plugin_input_cb(CALLBACK_ARGS)
+void view_plugin_input_value_cb(CALLBACK_ARGS)
 {
   double (*f)(int, int, double) = (double (*)(int, int, double)) data;
   Fl_Value_Input *input = (Fl_Value_Input*) w;
   f(-1, 0, input->value());
+}
+
+void view_plugin_input_cb(CALLBACK_ARGS)
+{
+  char* (*f)(int, int, char*) = (char* (*)(int, int, char*)) data;
+  Fl_Input *input = (Fl_Input*) w;
+  f(-1, 0, (char*)input->value());
 }
 
 void view_plugin_options_cb(CALLBACK_ARGS)
@@ -3159,18 +3166,28 @@ void view_plugin_options_cb(CALLBACK_ARGS)
   p->dialogBox->current_view_index = iView;
   p->dialogBox->run_button->callback(view_plugin_run_cb, (void *)p);
 
-  // configure the input fields (we get step, min and max by calling
-  // the option function with action==1, 2 and 3, respectively) and
-  // set the Fl_Value_Input callbacks
+  // configure the input value fields (we get step, min and max by
+  // calling the option function with action==1, 2 and 3,
+  // respectively) and set the Fl_Value_Input callbacks
   int n = p->getNbOptions();
   if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
   for(int i = 0; i < n; i++) {
     StringXNumber *sxn = p->getOption(i);
     if(sxn->function){
-      p->dialogBox->value[i]->callback(view_plugin_input_cb, (void*)sxn->function);
+      p->dialogBox->value[i]->callback(view_plugin_input_value_cb, (void*)sxn->function);
       p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.));
       p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
       p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
+    }
+  }
+
+  // set the Fl_Input callbacks
+  int m = p->getNbOptionsStr();
+  if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+  for(int i = 0; i < m; i++) {
+    StringXString *sxs = p->getOptionStr(i);
+    if(sxs->function){
+      p->dialogBox->input[i]->callback(view_plugin_input_cb, (void*)sxs->function);
     }
   }
 

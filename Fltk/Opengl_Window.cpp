@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.45 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.46 2005-03-09 02:18:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -77,14 +77,11 @@ void Opengl_Window::draw()
     Draw2d();
   }
   else {
-    glPopMatrix();
     glDisable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
     glLoadIdentity();
     gluOrtho2D(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax);
     glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
     glColor3f(1., 1., 1.);
@@ -111,10 +108,6 @@ void Opengl_Window::draw()
     glEnd();
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
     ZoomMode = false;
   }
   locked = 0;
