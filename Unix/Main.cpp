@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.12 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.13 2000-11-25 23:10:37 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -115,6 +115,10 @@ void ParseFile(char *f){
     else{
       Msg(WARNING, "No Post-Processing View Available to set Colors From");
     }
+  }
+  else if(!strncmp(String, "$PostFormat", 11) ||
+	  !strncmp(String, "$View", 5)){
+    Read_View(yyin, yyname);
   }
   else{
     while(!feof(yyin)) yyparse();

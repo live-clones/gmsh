@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.3 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.4 2000-11-25 23:10:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -34,6 +34,8 @@ void BeginView(int allocate){
   ActualView->NbSS = ActualView->NbVS = ActualView->NbTS = 0;
 
   if(allocate){
+    ActualView->Time = List_Create(100,1000,sizeof(double));
+
     ActualView->SP = List_Create(100,1000,sizeof(double));
     ActualView->VP = List_Create(100,1000,sizeof(double));
     ActualView->TP = List_Create(100,1000,sizeof(double));
@@ -62,6 +64,7 @@ void BeginView(int allocate){
   ActualView->IntervalsType = CTX.post.initial_intervals;
   ActualView->Light = 0;
   ActualView->ShowElement = 0;
+  ActualView->ShowTime = 1;
   ActualView->Visible = CTX.post.initial_visibility;
   ActualView->TimeStep = 0;
   ActualView->ArrowScale = 100.; 
@@ -88,6 +91,7 @@ void BeginView(int allocate){
 void EndView(int AddInUI, int Number, char *FileName, char *Name, 
 	     double XOffset, double YOffset, double ZOffset){
   int i, nb;
+  double d;
   extern void AddViewInUI(int , char *, int);
 
   // Points
@@ -174,6 +178,14 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
 			    nb-12, (double*)List_Pointer(ActualView->TS,i+12));
   }
 
+  // Dummy time values if using old parsed format...
+  if(!List_Nbr(ActualView->Time)){
+    for(i=0 ; i<ActualView->NbTimeStep ; i++){
+      d = (double)i;
+      List_Add(ActualView->Time, &d);
+    }
+  }
+
   strcpy(ActualView->FileName,FileName);
   strcpy(ActualView->Name,Name);
   strcpy(ActualView->Format, "%.3e");
@@ -233,6 +245,8 @@ void FreeView(Post_View *v){
 
   if(free && !v->Links){
     Msg(DEBUG, " ->Freeing View");
+
+    List_Delete(v->Time);
 
     List_Delete(v->SP); List_Delete(v->VP); List_Delete(v->TP);
     List_Delete(v->Points);
@@ -345,8 +359,128 @@ void AddView_TensorSimplex(int dim, double *coord, int N, double *v){
 /*  R e a d _ V i e w                                                       */
 /* ------------------------------------------------------------------------ */
 
-void Read_View(char *FileName){
+extern int Force_ViewNumber;
 
-  
+void Read_View(FILE *file, char *filename){
+  char   str[NAME_STR_L], name[NAME_STR_L];
+  int    nb, format, nbtimestep;
+  double version;
+
+  while (1) {
+
+    do { 
+      fgets(str, NAME_STR_L, file) ; 
+      if (feof(file))  break ;
+    } while (str[0] != '$') ;  
+
+    if (feof(file))  break ;
+
+    /*  F o r m a t  */
+
+    if (!strncmp(&str[1], "PostFormat", 10)){
+      fscanf(file, "%lf %d\n", &version, &format) ;
+      if(version < 0.995){
+	Msg(ERROR, "The Version of this File is too old (<0.995)");
+	return;
+      }
+      if(format == 0) format = LIST_FORMAT_ASCII ;
+      else if(format == 1) format = LIST_FORMAT_BINARY ;
+      else Msg(FATAL, "Unknown Format for View");
+    }
+
+    /*  V i e w  */
+
+    if (!strncmp(&str[1], "View", 4)) {
+
+      BeginView(0);
+
+      fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	     name, &nbtimestep,
+	     &ActualView->NbSP, &ActualView->NbVP, &ActualView->NbTP, 
+	     &ActualView->NbSL, &ActualView->NbVL, &ActualView->NbTL, 
+	     &ActualView->NbST, &ActualView->NbVT, &ActualView->NbTT, 
+	     &ActualView->NbSS, &ActualView->NbVS, &ActualView->NbTS);
+
+      Msg(DEBUG, "View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d",
+	  name, nbtimestep,
+	  ActualView->NbSP, ActualView->NbVP, ActualView->NbTP, 
+	  ActualView->NbSL, ActualView->NbVL, ActualView->NbTL, 
+	  ActualView->NbST, ActualView->NbVT, ActualView->NbTT, 
+	  ActualView->NbSS, ActualView->NbVS, ActualView->NbTS);
+
+      ActualView->Time = List_CreateFromFile(nbtimestep, sizeof(double), file, format);
+
+      if((nb = ActualView->NbSP + ActualView->NbVP + ActualView->NbTP))
+	ActualView->Points = List_Create(nb,1,sizeof(Post_Simplex));
+      else
+	ActualView->Points = NULL ;
+      nb = ActualView->NbSP ? 
+	ActualView->NbSP * nbtimestep     + ActualView->NbSP * 3 : 0 ;
+      ActualView->SP = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbVP ?
+	ActualView->NbVP * nbtimestep * 3 + ActualView->NbVP * 3 : 0 ;
+      ActualView->VP = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbTP ? 
+	ActualView->NbTP * nbtimestep * 9 + ActualView->NbTP * 3 : 0 ;
+      ActualView->TP = List_CreateFromFile(nb, sizeof(double), file, format);
+
+      if((nb = ActualView->NbSL + ActualView->NbVL + ActualView->NbTL))
+	ActualView->Lines = List_Create(nb,1,sizeof(Post_Simplex));
+      else
+	ActualView->Lines = NULL ;
+      nb = ActualView->NbSL ? 
+	ActualView->NbSL * nbtimestep * 2     + ActualView->NbSL * 6 : 0 ;
+      ActualView->SL = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbVL ?
+	ActualView->NbVL * nbtimestep * 2 * 3 + ActualView->NbVL * 6 : 0 ;
+      ActualView->VL = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbTL ?
+	ActualView->NbTL * nbtimestep * 2 * 9 + ActualView->NbTL * 6 : 0 ;
+      ActualView->TL = List_CreateFromFile(nb, sizeof(double), file, format);
+
+      if((nb = ActualView->NbST + ActualView->NbVT + ActualView->NbTT))
+	ActualView->Triangles = List_Create(nb,1,sizeof(Post_Simplex));
+      else
+	ActualView->Triangles = NULL ;
+      nb = ActualView->NbST ? 
+	ActualView->NbST * nbtimestep * 3     + ActualView->NbST * 9 : 0 ;
+      ActualView->ST = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbVT ? 
+	ActualView->NbVT * nbtimestep * 3 * 3 + ActualView->NbVT * 9 : 0 ;
+      ActualView->VT = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbTT ? 
+	ActualView->NbTT * nbtimestep * 3 * 9 + ActualView->NbTT * 9 : 0 ;
+      ActualView->TT = List_CreateFromFile(nb, sizeof(double), file, format);
+
+      if((nb = ActualView->NbSS + ActualView->NbVS + ActualView->NbTS))
+	ActualView->Tetrahedra = List_Create(nb,1,sizeof(Post_Simplex));
+      else
+	ActualView->Tetrahedra = NULL ;
+      nb = ActualView->NbSS ?
+	ActualView->NbSS * nbtimestep * 4     + ActualView->NbSS * 12 : 0 ;
+      ActualView->SS = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbVS ? 
+	ActualView->NbVS * nbtimestep * 4 * 3 + ActualView->NbVS * 12 : 0 ;
+      ActualView->VS = List_CreateFromFile(nb, sizeof(double), file, format);
+      nb = ActualView->NbTS ?
+	ActualView->NbTS * nbtimestep * 4 * 9 + ActualView->NbTS * 12 : 0 ;
+      ActualView->TS = List_CreateFromFile(nb, sizeof(double), file, format);
+
+      Msg(DEBUG, "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d",
+	  name, nbtimestep,
+	  List_Nbr(ActualView->SP), List_Nbr(ActualView->VP), List_Nbr(ActualView->TP), 
+	  List_Nbr(ActualView->SL), List_Nbr(ActualView->VL), List_Nbr(ActualView->TL), 
+	  List_Nbr(ActualView->ST), List_Nbr(ActualView->VT), List_Nbr(ActualView->TT), 
+	  List_Nbr(ActualView->SS), List_Nbr(ActualView->VS), List_Nbr(ActualView->TS));
+
+      EndView(1, Force_ViewNumber, filename, name, 0., 0., 0.); 
+    }
+
+    do {
+      fgets(str, NAME_STR_L, file) ;
+      if (feof(file)) Msg(ERROR,"Prematured End of File");
+    } while (str[0] != '$') ;
+
+  }   /* while 1 ... */
 
 }

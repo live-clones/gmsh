@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.4 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.5 2000-11-25 23:10:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -130,6 +130,7 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
     }
   }
 
+  v2->Time        = v1->Time;
   v2->Points      = v1->Points;
   v2->Lines       = v1->Lines;
   v2->Triangles   = v1->Triangles;
@@ -144,6 +145,8 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   Draw();
 }
 
+static int All = 0;
+
 void ReloadViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   Post_View  *v ;
   char filename[NAME_STR_L];
@@ -156,7 +159,19 @@ void ReloadViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   FreeView(v);
   MergeProblem(filename);
   Force_ViewNumber = 0 ;
-  
+  if(!All){
+    Init();
+    Draw();
+  }
+}
+
+void ReloadAllViewsCb(Widget w, XtPointer client_data, XtPointer call_data){
+  int i;
+  if(!Post_ViewList) return;
+  All = 1;
+  for(i = 1 ; i<=List_Nbr(Post_ViewList) ; i++)
+    ReloadViewCb(NULL, (XtPointer)i, NULL);
+  All = 0;
   Init();
   Draw();
 }
@@ -243,6 +258,7 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     XtVaSetValues(WID.PD.scaleShowButt, XmNset, v->ShowScale?True:False, NULL);
     XtVaSetValues(WID.PD.scaleTransButt, XmNset, v->TransparentScale?True:False, NULL);
+    XtVaSetValues(WID.PD.scaleTimeButt, XmNset, v->ShowTime?True:False, NULL);
 
     XtVaSetValues(WID.PD.scaleText[0], XmNvalue, v->Format, NULL);
     XtSetSensitive(WID.PD.scaleText[0], v->ShowScale?1:0);
@@ -423,6 +439,7 @@ void PostCb (Widget w, XtPointer client_data, XtPointer call_data){
       break;
     case POST_SCALE_SHOW: 
     case POST_SCALE_TRANSPARENCY: 
+    case POST_SCALE_TIME: 
     case POST_SCALE_FORMAT: 
     case POST_SCALE_LABEL:
     case POST_SCALE_MIN:
@@ -585,6 +602,9 @@ void ChangeViewParam (Post_View *v, XtPointer client_data, XtPointer call_data){
     break;
   case POST_SCALE_TRANSPARENCY: 
     v->TransparentScale = !v->TransparentScale; 
+    break;
+  case POST_SCALE_TIME: 
+    v->ShowTime = !v->ShowTime; 
     break;
   case POST_SCALE_FORMAT: 
     c = XmTextGetString(WID.PD.scaleText[0]); strcpy(v->Format,c); 

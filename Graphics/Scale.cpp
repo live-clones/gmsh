@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.3 2000-11-23 16:51:29 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.4 2000-11-25 23:10:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -209,7 +209,10 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   /* the label */
   
   glRasterPos2d(cv_xmin,ymin);
-  sprintf(label, "%s", v->Name);
+  if(List_Nbr(v->Time)>1 && v->ShowTime)
+    sprintf(label, "%s (%g)", v->Name, *(double*)List_Pointer(v->Time,v->TimeStep));
+  else
+    sprintf(label, "%s", v->Name);
   Draw_String(label); CHECK_W;
 
 

@@ -1,7 +1,11 @@
-/* $Id: List.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
-/* $Id: List.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
+/* $Id: List.h,v 1.3 2000-11-25 23:10:37 geuzaine Exp $ */
 #ifndef _LIST_H_
 #define _LIST_H_
+
+#include <stdio.h>
+
+#define LIST_FORMAT_ASCII       0
+#define LIST_FORMAT_BINARY      1
 
 typedef struct {
   int nmax;
@@ -41,6 +45,8 @@ void    List_Reset(List_T *liste);
 void    List_Action(List_T *liste, void (*action)(void *data, void *dummy));
 void    List_Action_Inverse(List_T *liste, void (*action)(void *data, void *dummy));
 void    List_Copy(List_T *a , List_T *b);
+List_T *List_CreateFromFile(int n, int size, FILE *file, int format);
+void    List_WriteToFile(List_T *liste, FILE *file, int format);
 
 #endif
 

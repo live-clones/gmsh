@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.9 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.10 2000-11-25 23:10:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -104,11 +104,29 @@ void CreateWidgets_M(Widgets_T *w){
   XtManageChild(w->M.fileSep[1]);
 
   i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Reload All Views")); i++;
+  XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-l)")); i++;
+  XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>l:"); i++;
+  w->M.fileButt[5] = XmCreatePushButton(w->M.filePane, "MfileButt5", arg, i);
+  XtManageChild(w->M.fileButt[5]);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Remove All Views")); i++;
+  XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-r)")); i++;
+  XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>r:"); i++;
+  w->M.fileButt[6] = XmCreatePushButton(w->M.filePane, "MfileButt6", arg, i);
+  XtManageChild(w->M.fileButt[6]);
+
+  i=0;
+  w->M.fileSep[2] = XmCreateSeparator(w->M.filePane, "MfileSep2", arg, i);
+  XtManageChild(w->M.fileSep[2]);
+
+  i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Quit")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-q)")); i++;
   XtSetArg(arg[i], XmNaccelerator, "Ctrl<Key>q:"); i++;
-  w->M.fileButt[5] = XmCreatePushButton(w->M.filePane, "MfileButt5", arg, i);
-  XtManageChild(w->M.fileButt[5]);
+  w->M.fileButt[7] = XmCreatePushButton(w->M.filePane, "MfileButt7", arg, i);
+  XtManageChild(w->M.fileButt[7]);
 
   i=0;
   XtSetArg(arg[i], XmNsubMenuId, w->M.filePane); i++;
@@ -2378,14 +2396,24 @@ void CreateWidgets_PD(Widgets_T *w){
   XtManageChild(w->PD.scaleFrameRowCol[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Visibility")); i++;
-  w->PD.scaleShowButt = XmCreateToggleButton(w->PD.scaleFrameRowCol[0], "PDscaleShowButt", arg, i);
+  XtSetArg(arg[i], XmNnumColumns, 2); i++;
+  w->PD.scaleCheck = XmCreateSimpleCheckBox(w->PD.scaleFrameRowCol[0], "PDscaleCheck", arg, i);
+  XtManageChild(w->PD.scaleCheck);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Show")); i++;
+  w->PD.scaleShowButt = XmCreateToggleButton(w->PD.scaleCheck, "PDscaleShowButt", arg, i);
   XtManageChild(w->PD.scaleShowButt);
 
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Transparency")); i++;
-  w->PD.scaleTransButt = XmCreateToggleButton(w->PD.scaleFrameRowCol[0], "PDscaleTransButt", arg, i);
+  w->PD.scaleTransButt = XmCreateToggleButton(w->PD.scaleCheck, "PDscaleTransButt", arg, i);
   XtManageChild(w->PD.scaleTransButt);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Time Display")); i++;
+  w->PD.scaleTimeButt = XmCreateToggleButton(w->PD.scaleCheck, "PDscaleTimeButt", arg, i);
+  XtManageChild(w->PD.scaleTimeButt);
 
   for(n=0 ; n<2 ; n++){
     i=0;
@@ -2422,6 +2450,7 @@ void CreateWidgets_PD(Widgets_T *w){
   }
 
   i=0;
+  XtSetArg(arg[i], XmNnumColumns, 2); i++;
   w->PD.scaleTypeCheck = XmCreateRadioBox(w->PD.scaleFrameRowCol[1], "PDscaleTypeCheck", arg, i);
   XtManageChild(w->PD.scaleTypeCheck);
 

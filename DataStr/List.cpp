@@ -1,5 +1,5 @@
-/* $Id: List.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
-#define RCSID "$Id: List.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $"
+/* $Id: List.cpp,v 1.4 2000-11-25 23:10:37 geuzaine Exp $ */
+#define RCSID "$Id: List.cpp,v 1.4 2000-11-25 23:10:37 geuzaine Exp $"
 /* Original author: Marc UME */
 
 #include <stdlib.h>
@@ -36,6 +36,7 @@ List_T *List_Create(int n, int incr, int size)
 
 void List_Delete(List_T *liste)
 {
+  if(!liste) return ;
   Free(liste->array);
   Free(liste);
 }
@@ -334,5 +335,45 @@ void List_Copy(List_T *a , List_T *b){
   N = List_Nbr(a);
   for(i=0;i<N;i++){
     List_Add(b,List_Pointer(a,i));
+  }
+}
+
+List_T *List_CreateFromFile(int n, int size, FILE *file, int format){
+  int i;
+  List_T *liste;
+
+  if(!n) return NULL;
+  
+  liste = List_Create(n, 1, size);
+  liste->n = n;
+  switch(format){
+  case LIST_FORMAT_ASCII :
+    for(i=0;i<n;i++) fscanf(file, "%lf ", (double*)&liste->array[i*size]) ;
+    return liste;
+  case LIST_FORMAT_BINARY :
+    fread(liste->array, size, n, file);
+    return liste;
+  default :
+    Msg(ERROR, "Unknown List Format");
+    return NULL;
+  }
+
+}
+
+void List_WriteToFile(List_T *liste, FILE *file, int format){
+  int i, n;
+
+  if(!(n=List_Nbr(liste))) return ;
+
+  switch(format){
+  case LIST_FORMAT_ASCII :
+    for(i=0;i<n;i++) fprintf(file, "%g ", *((double*)&liste->array[i*liste->size])) ;
+    fprintf(file, "\n");
+    break;
+  case LIST_FORMAT_BINARY :
+    fwrite(liste->array, liste->size, n, file);
+    break;
+  default :
+    Msg(ERROR, "Unknown List Format");
   }
 }

@@ -1,4 +1,4 @@
-/* $Id: CbPost.h,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: CbPost.h,v 1.3 2000-11-25 23:10:37 geuzaine Exp $ */
 #ifndef _CB_POST_H_
 #define _CB_POST_H_
 
@@ -40,6 +40,7 @@
 #define  POST_SCALE_INTERVALS_TYPE_NUMERIC         433
 #define  POST_SCALE_INTERVALS_SCALE                434
 #define  POST_SCALE_INTERVALS_TEXT                 435
+#define  POST_SCALE_TIME                           436
 
 #define  POST_COLOR_REPLOT                         440
 

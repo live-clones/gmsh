@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.7 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.8 2000-11-25 23:10:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -25,7 +25,9 @@ void RegisterCallbacks_M(Widgets_T *w){
   register_activate_cb (w->M.fileButt[2],   FileCb,             FILE_SAVE_MESH);
   register_activate_cb (w->M.fileButt[3],   ManageCb,           w->FD.saveAsDialog);
   register_activate_cb (w->M.fileButt[4],   ManageCb,           w->FD.printDialog);
-  register_activate_cb (w->M.fileButt[5],   ExitCb,             NULL);
+  register_activate_cb (w->M.fileButt[5],   ReloadAllViewsCb,   NULL);
+  register_activate_cb (w->M.fileButt[6],   RemoveAllViewsCb,   NULL);
+  register_activate_cb (w->M.fileButt[7],   ExitCb,             NULL);
 
   register_activate_cb (w->M.moduleButt[0], ActualizeContextCb, CONTEXT_GEOM);
   register_activate_cb (w->M.moduleButt[1], ActualizeContextCb, CONTEXT_MESH);
@@ -333,6 +335,7 @@ void RegisterCallbacks_PD(Widgets_T *w){
   register_cancel_cb   (w->PD.scaleDialog,       ManageCb,  w->PD.scaleDialog); 
   register_valchg_cb   (w->PD.scaleShowButt,     PostCb,    POST_SCALE_SHOW);
   register_valchg_cb   (w->PD.scaleTransButt,    PostCb,    POST_SCALE_TRANSPARENCY);
+  register_valchg_cb   (w->PD.scaleTimeButt,     PostCb,    POST_SCALE_TIME);
   register_valchg_cb   (w->PD.scaleText[0],      PostCb,    POST_SCALE_FORMAT);
   register_valchg_cb   (w->PD.scaleText[1],      PostCb,    POST_SCALE_LABEL);
   register_valchg_cb   (w->PD.scaleRangeButt,    PostCb,    POST_SCALE_FORCE_RANGE);

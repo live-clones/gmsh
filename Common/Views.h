@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.4 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Views.h,v 1.5 2000-11-25 23:10:37 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -17,11 +17,13 @@ typedef struct{
   double Min, Max, CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale;
   int Visible, ScalarOnly;
-  int IntervalsType, NbIso, Light, ShowElement;
+  int IntervalsType, NbIso, Light, ShowElement, ShowTime;
   int ShowScale, TransparentScale, ScaleType, RangeType;
   int ArrowType, ArrowLocation;
   int TimeStep, NbTimeStep;
   ColorTable CT;
+
+  List_T *Time;
 
   int NbSP, NbVP, NbTP;
   List_T *SP, *VP, *TP, *Points; // points
@@ -76,6 +78,8 @@ void BeginView (int alloc);
 void EndView (int AddInUI, int Number, char *FileName, char *Name, 
 	      double XOffset, double YOffset, double ZOffset);
 void FreeView(Post_View *v);
+
+void Read_View(FILE *file, char *filename);
 
 void AddView_ScalarSimplex(int dim, double *coord, int N, double *v);
 void AddView_VectorSimplex(int dim, double *coord, int N, double *v);
