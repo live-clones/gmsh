@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.39 2003-02-12 20:27:14 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.40 2003-02-27 00:21:22 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -130,13 +130,19 @@ int MergeProblem(char *name){
 void MergeProblemWithBoundingBox(char *name){
   int nb = List_Nbr(CTX.post.list);
   int status = ParseFile(name,0);
-  if(List_Nbr(CTX.post.list) > nb)
+  if(List_Nbr(CTX.post.list) > nb){
+    // if we merged a view, use it
     CalculateMinMax(NULL, ((Post_View*)List_Pointer
 			   (CTX.post.list,List_Nbr(CTX.post.list)-1))->BBox);
-  else if(!status) 
+  }
+  else if(!status) {
+    // else, if we did not read a mesh, use the geomnetry
     CalculateMinMax(THEM->Points,NULL);
-  else
+  }
+  else{
+    // else, use the mesh
     CalculateMinMax(THEM->Vertices,NULL);
+  }
 }
 
 void OpenProblem(char *name){
@@ -183,7 +189,6 @@ void OpenProblem(char *name){
   if(!CTX.batch) WID->set_title(CTX.filename);
 #endif
 
-  int nb = List_Nbr(CTX.post.list);
   int status = MergeProblem(CTX.filename);
 
   ApplyLcFactor(THEM);
@@ -199,14 +204,20 @@ void OpenProblem(char *name){
   if(!CTX.batch) WID->reset_visibility();
   ZeroHighlight(&M); 
 #endif
-
-  if(List_Nbr(CTX.post.list) > nb)
+  
+  if(!Tree_Nbr(THEM->Points) && !Tree_Nbr(THEM->Points) && List_Nbr(CTX.post.list)){
+    // if there are no points or vertices and there is a view, use it
     CalculateMinMax(NULL, ((Post_View*)List_Pointer
 			   (CTX.post.list,List_Nbr(CTX.post.list)-1))->BBox);
-  else if(!status) 
+  }
+  else if(!status){
+    // else, if we don't have a mesh, use the geometry
     CalculateMinMax(THEM->Points,NULL);
-  else
+  }
+  else{
+    // else, suppose we have a mesh (or use a default bbox if empty)
     CalculateMinMax(THEM->Vertices,NULL);
+  }
 
 }
 
