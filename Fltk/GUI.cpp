@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.311 2004-06-01 22:16:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.312 2004-06-01 22:23:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1141,6 +1141,7 @@ void GUI::create_graphic_window(int argc, char **argv)
   g_status_butt[4]->tooltip("Set orthographic/perspective projection");
   ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
   persp_bmp = new Fl_Bitmap(persp_bits, persp_width, persp_height);
+  persp_bmp->label(g_status_butt[4]);
 
   g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
   x += sw;
