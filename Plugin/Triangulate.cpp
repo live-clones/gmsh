@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.21 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.22 2004-05-17 21:28:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -170,7 +170,7 @@ void Triangulate(Post_View * vin, Post_View * vout)
   out.edgemarkerlist = NULL;
 
   char opts[128] = "z";
-  if(CTX.verbosity < 3)
+  if(CTX.verbosity < 4)
     strcat(opts, "Q");
   triangulate(opts, &in, &out, NULL);
 

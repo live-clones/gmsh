@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.6 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.7 2004-05-17 21:28:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -183,7 +183,7 @@ int Mesh_Shewchuk(Surface * s)
   // triangulate the points with minimum angle > 20 deg, with no boundary breaking
 
   strcpy(opts, "pqzY");
-  if(CTX.verbosity < 3)
+  if(CTX.verbosity < 4)
     strcat(opts, "Q");
   triangulate(opts, &in, &mid, NULL);
 
@@ -230,7 +230,7 @@ int Mesh_Shewchuk(Surface * s)
 
   //strcpy(opts, "praqzBPY");
   strcpy(opts, CTX.mesh.triangle_options);
-  if(CTX.verbosity < 3)
+  if(CTX.verbosity < 4)
     strcat(opts, "Q");
   triangulate(opts, &mid, &out, NULL);
 
