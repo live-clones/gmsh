@@ -266,7 +266,9 @@ Default value: @code{-1}
 
 @item Plugin(StreamLines)
 Plugin(StreamLines) computes stream lines
-from a vector view `iView'. It takes as input a
+from a vector view `iView' and optionally
+interpolates the scalar view `dView' on the
+resulting stream lines. It takes as input a
 grid defined by the 3 points (`X0',`Y0',`Z0')
 (origin), (`X1',`Y1',`Z1') (axis of U) and
 (`X2',`Y2',`Z2') (axis of V). The number of points
@@ -280,7 +282,9 @@ the options `MaxIter' and `DT'. The time stepping
 scheme is a RK44. If `iView' < 0, the plugin is run
 on the current view.
 
-Plugin(StreamLines) creates one new view.
+Plugin(StreamLines) creates one new view. This
+view contains multi-step vector points if `dView'
+< 0, or single-step scalar lines if `dView' >= 0.
 
 Numeric options:
 @table @code
@@ -310,6 +314,8 @@ Default value: @code{1}
 Default value: @code{100}
 @item DT
 Default value: @code{0.1}
+@item dView
+Default value: @code{-1}
 @item iView
 Default value: @code{-1}
 @end table
