@@ -185,7 +185,7 @@ public :
   // post processing options 
   struct{
     List_T *list ;
-    int force_num, compute_bb, display_lists;
+    int force_num, compute_bb, vertex_arrays;
     int draw, scales, link ;
     int smooth, anim_cycle, combine_time ;
     double anim_delay ;

@@ -51,8 +51,6 @@ display 2D mesh construction interactively
 @noindent Post-processing options:
 
 @ftable @code
-@item -dl
-enable display lists
 @item -noview
 hide all views on startup
 @item -link int

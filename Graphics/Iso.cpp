@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.23 2004-05-08 00:19:47 geuzaine Exp $
+// $Id: Iso.cpp,v 1.24 2004-05-29 10:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,6 @@ void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
     InterpolateIso(X, Y, Z, Val, V, 1, 2, &Xp[*nb], &Yp[*nb], &Zp[*nb]);
     (*nb)++;
   }
-
 }
 
 // Contour computation for triangles
@@ -281,7 +280,6 @@ void CutLine1D(double *X, double *Y, double *Z, double *Val,
     Vp2[1] = V2;
     InterpolateIso(X, Y, Z, Val, V2, io[0], io[1], &Xp2[1], &Yp2[1], &Zp2[1]);
   }
-
 }
 
 // compute the gradient of a linear interpolation in a tetrahedron
@@ -328,11 +326,6 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
      v = unknown field we wanna draw
    */
 
-  if(!View->Light) {
-    norms = NULL;       // we don't need to compute these
-    return;
-  }
-
   double v1[3] = { Xp[2] - Xp[0], Yp[2] - Yp[0], Zp[2] - Zp[0] };
   double v2[3] = { Xp[1] - Xp[0], Yp[1] - Yp[0], Zp[1] - Zp[0] };
   double gr[3];
@@ -372,11 +365,8 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
         norms[3 * i] = n[0];
         norms[3 * i + 1] = n[1];
         norms[3 * i + 2] = n[2];
-        if(!View->
-           get_normal(Xp[i], Yp[i], Zp[i], norms[3 * i], norms[3 * i + 1],
-                      norms[3 * i + 2])) {
-          //Msg(WARNING, "Oups, did not find smoothed normal");
-        }
+        View->get_normal
+	  (Xp[i], Yp[i], Zp[i], norms[3 * i], norms[3 * i + 1], norms[3 * i + 2]);
       }
     }
   }
@@ -387,13 +377,11 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
       norms[3 * i + 2] = n[2];
     }
   }
-
 }
 
-void IsoSimplex(Post_View * View,
-                int preproNormals,
+void IsoSimplex(Post_View * View, int preproNormals,
                 double *X, double *Y, double *Z, double *Val,
-                double V)
+                double V, unsigned int color)
 {
   int nb;
   double Xp[6], Yp[6], Zp[6], PVals[6];
@@ -434,13 +422,42 @@ void IsoSimplex(Post_View * View,
   if(preproNormals)
     return;
 
-  double Raise[3][8];
-  for(int i = 0; i < 3; i++)
-    for(int k = 0; k < nb; k++)
-      Raise[i][k] = View->Raise[i] * V;
-
-  if(nb == 3)
-    Draw_Triangle(Xp, Yp, Zp, norms, Raise, View->Light, false);
-  else if(nb == 4)
-    Draw_Quadrangle(Xp, Yp, Zp, norms, Raise, View->Light, false);
+  if(View->FillVertexArray){
+    for(int i = 2; i < nb; i++){
+      View->VertexArray->add(Xp[0] + View->Raise[0] * V,
+			     Yp[0] + View->Raise[1] * V,
+			     Zp[0] + View->Raise[2] * V,
+			     norms[0], norms[1], norms[2], color);
+      View->VertexArray->add(Xp[i-1] + View->Raise[0] * V,
+			     Yp[i-1] + View->Raise[1] * V,
+			     Zp[i-1] + View->Raise[2] * V,
+			     norms[3*(i-1)], norms[3*(i-1)+1], norms[3*(i-1)+2], color);
+      View->VertexArray->add(Xp[i] + View->Raise[0] * V,
+			     Yp[i] + View->Raise[1] * V,
+			     Zp[i] + View->Raise[2] * V,
+			     norms[3*i], norms[3*i+1], norms[3*i+2], color);
+      View->VertexArray->num_triangles++;
+    }
+  }
+  else{
+    if(View->Light) glEnable(GL_LIGHTING);
+    glColor4ubv((GLubyte *) & color);
+    glBegin(GL_TRIANGLES);
+    for(int i = 2; i < nb; i++){
+      if(View->Light) glNormal3dv(&norms[0]);
+      glVertex3d(Xp[0] + View->Raise[0] * V, 
+		 Yp[0] + View->Raise[1] * V, 
+		 Zp[0] + View->Raise[2] * V);
+      if(View->Light) glNormal3dv(&norms[3*(i-1)]);
+      glVertex3d(Xp[i-1] + View->Raise[0] * V, 
+		 Yp[i-1] + View->Raise[1] * V, 
+		 Zp[i-1] + View->Raise[2] * V);
+      if(View->Light) glNormal3dv(&norms[3*i]);
+      glVertex3d(Xp[i] + View->Raise[0] * V, 
+		 Yp[i] + View->Raise[1] * V, 
+		 Zp[i] + View->Raise[2] * V);
+    }
+    glEnd();
+    glDisable(GL_LIGHTING);
+  }
 }

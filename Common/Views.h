@@ -22,6 +22,7 @@
 
 #include "ColorTable.h"
 #include "List.h"
+#include "VertexArray.h"
 
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
 #define VIEW_MAX_ELEMENT_NODES  8
@@ -32,7 +33,7 @@ class smooth_container;
 class Post_View{
   public :
   // intrinsic to a view
-  int Num, Index, Changed, DuplicateOf, Links, Dirty, DisplayListNum;
+  int Num, Index, Changed, DuplicateOf, Links, Dirty;
   char FileName[256], Name[256], AbscissaName[256];
 
   // the data
@@ -58,6 +59,10 @@ class Post_View{
   List_T *SY, *VY, *TY; // pyramids
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
+
+  // a vertex array to draw triangles efficiently
+  triangleVertexArray *VertexArray;
+  int FillVertexArray, UseVertexArray;
 
   // options
   int Type, Position[2], AutoPosition, Size[2];

@@ -36,7 +36,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.TextEditor
 System command to launch a text editor@*
-Default value: @code{"emacs %s &"}@*
+Default value: @code{"open -e %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
@@ -46,7 +46,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.WebBrowser
 System command to launch a web browser@*
-Default value: @code{"if [[ $(ps -e|grep mozilla|grep -v grep) ]]; then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &"}@*
+Default value: @code{"open %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AlphaBlending

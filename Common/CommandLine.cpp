@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.39 2004-05-17 18:04:53 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.40 2004-05-29 10:11:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -89,7 +89,6 @@ void Print_Usage(char *name){
 #if defined(HAVE_FLTK)
   Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
   Msg(DIRECT, "Post-processing options:");
-  Msg(DIRECT, "  -dl                   enable display lists");
   Msg(DIRECT, "  -noview               hide all views on startup");
   Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
   Msg(DIRECT, "  -smoothview           smooth views");
@@ -541,14 +540,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       }
       else if(!strcmp(argv[i] + 1, "nodb")) {
         CTX.db = 0;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "dl")) {
-        CTX.post.display_lists = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "nodl")) {
-        CTX.post.display_lists = 0;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "fontsize")) {

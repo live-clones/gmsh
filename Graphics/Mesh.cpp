@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.88 2004-05-28 21:06:11 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.89 2004-05-29 10:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -232,7 +232,7 @@ void Draw_Mesh_Surface(void *a, void *b)
   if(CTX.mesh.vertex_arrays && Tree_Nbr(s->Simplexes) && !CTX.threads_lock){
     CTX.threads_lock = 1;
     if(CTX.mesh.changed){
-      printf("generate vertex array\n");
+      Msg(DEBUG, "regenerate mesh vertex array");
       if(s->vertexArray) delete s->vertexArray;
       s->vertexArray = new triangleVertexArray(Tree_Nbr(s->Simplexes));
       theVertexArray = s->vertexArray;
@@ -536,20 +536,23 @@ void Draw_Mesh_Triangle(void *a, void *b)
 		   X[2], Y[2], Z[2], n);
 
   if(fillTheVertexArray && !s->VSUP){
-    int iv = theVertexArray->num_triangles * 9;
-    int in = theVertexArray->num_triangles * 9;
-    int ic = theVertexArray->num_triangles * 12;
     for(int i = 0; i < 3; i++) {
-      theVertexArray->vertices[iv++] = X[i];
-      theVertexArray->vertices[iv++] = Y[i];
-      theVertexArray->vertices[iv++] = Z[i];
-      theVertexArray->normals[in++] = n[0];
-      theVertexArray->normals[in++] = n[1];
-      theVertexArray->normals[in++] = n[2];
-      theVertexArray->colors[ic++] = UNPACK_RED(col);
-      theVertexArray->colors[ic++] = UNPACK_GREEN(col);
-      theVertexArray->colors[ic++] = UNPACK_BLUE(col);
-      theVertexArray->colors[ic++] = UNPACK_ALPHA(col);
+      float x = X[i], y = Y[i], z = Z[i];
+      float n0 = n[0], n1 = n[1], n2 = n[2];
+      unsigned char r = UNPACK_RED(col);
+      unsigned char g = UNPACK_GREEN(col);
+      unsigned char b = UNPACK_BLUE(col);
+      unsigned char a = UNPACK_ALPHA(col);
+      List_Add(theVertexArray->vertices, &x);
+      List_Add(theVertexArray->vertices, &y);
+      List_Add(theVertexArray->vertices, &z);
+      List_Add(theVertexArray->normals, &n0);
+      List_Add(theVertexArray->normals, &n1);
+      List_Add(theVertexArray->normals, &n2);
+      List_Add(theVertexArray->colors, &r);
+      List_Add(theVertexArray->colors, &g);
+      List_Add(theVertexArray->colors, &b);
+      List_Add(theVertexArray->colors, &a);
     }
     theVertexArray->num_triangles++;
   }    
@@ -630,9 +633,9 @@ void Draw_Mesh_Triangle_Array(triangleVertexArray *va)
   if(!va->num_triangles)
     return;
 
-  glVertexPointer(3, GL_FLOAT, 0, va->vertices);
-  glNormalPointer(GL_FLOAT, 0, va->normals);
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors);
+  glVertexPointer(3, GL_FLOAT, 0, va->vertices->array);
+  glNormalPointer(GL_FLOAT, 0, va->normals->array);
+  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
 
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);

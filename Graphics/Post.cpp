@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.60 2004-04-27 00:11:55 geuzaine Exp $
+// $Id: Post.cpp,v 1.61 2004-05-29 10:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -101,19 +101,21 @@ int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso,
 
 // Color Palette
 
-void PaletteContinuous(Post_View * v, double min, double max, double val)
+unsigned int PaletteContinuous(Post_View * v, double min, double max, double val)
 {       /* val in [min,max] */
   int index = v->GIFV(min, max, v->CT.size, val);
   glColor4ubv((GLubyte *) & v->CT.table[index]);
+  return v->CT.table[index];
 }
 
-void PaletteContinuousLinear(Post_View * v, double min, double max, double val)
+unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val)
 {       /* val in [min,max] */
   int index = GiveIndexFromValue_Lin(min, max, v->CT.size, val);
   glColor4ubv((GLubyte *) & v->CT.table[index]);
+  return v->CT.table[index];
 }
 
-void PaletteDiscrete(Post_View * v, int nbi, int i)
+unsigned int PaletteDiscrete(Post_View * v, int nbi, int i)
 {       /* i in [0,nbi-1] */
   int index;
 
@@ -121,6 +123,7 @@ void PaletteDiscrete(Post_View * v, int nbi, int i)
     v->CT.size / 2 : (int)(i / (double)(nbi - 1) * (v->CT.size - 1) + 0.5);
 
   glColor4ubv((GLubyte *) & v->CT.table[index]);
+  return v->CT.table[index];
 }
 
 // Compute node coordinates taking Offset and Explode into account
@@ -266,7 +269,7 @@ void Draw_ScalarList(Post_View * v, double ValMin, double ValMax,
 }
 
 void Draw_VectorList(Post_View * v, double ValMin, double ValMax,
-                     List_T * list, int nbelm, int nbnod,
+                     List_T * list, int nbelm, int nbnod, 
                      void (*draw) (Post_View *, double, double,
                                    double *, double *, double *, double *))
 {
@@ -287,7 +290,7 @@ void Draw_VectorList(Post_View * v, double ValMin, double ValMax,
 }
 
 void Draw_TensorList(Post_View * v, double ValMin, double ValMax,
-                     List_T * list, int nbelm, int nbnod,
+                     List_T * list, int nbelm, int nbnod, 
                      void (*draw) (Post_View *, double, double,
                                    double *, double *, double *, double *))
 {
@@ -367,195 +370,198 @@ void Draw_Post(void)
 
     if(v->Visible && !v->Dirty) {
 
-      // Sort the data % eye for transparency. Hybrid views (e.g. tri
-      // + qua) or multiple views will be sorted incorrectly... You
-      // can use Plugin(DecomposeInSimplex) and/or View->Combine for
-      // this.
-
-      if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && 
-	 (changedEye() || v->Changed)) {
-        Msg(DEBUG, "Sorting view %d", v->Num);
-
-        if(v->DrawScalars) {
-
-          if(v->IntervalsType != DRAW_POST_ISO) {
-
-            if(v->NbST && v->DrawTriangles) {
-              nb = List_Nbr(v->ST) / v->NbST;
-              qsort(v->ST->array, v->NbST, nb * sizeof(double), compareEye3Nodes);
-              v->Changed = 1;
-            }
-            if(v->NbSQ && v->DrawQuadrangles) {
-              nb = List_Nbr(v->SQ) / v->NbSQ;
-              qsort(v->SQ->array, v->NbSQ, nb * sizeof(double), compareEye4Nodes);
-              v->Changed = 1;
-            }
-
-          }
-
-          // The following is of course not rigorous: we should store
-          // the triangles generated during the iso computation, and
-          // sort these... But this is better than doing nothing. If
-          // you want a rigorous sorting of the iso-surfaces, just use
-          // Plugin(CutMap).
-
-          if(v->NbSS && v->DrawTetrahedra) {
-            nb = List_Nbr(v->SS) / v->NbSS;
-            qsort(v->SS->array, v->NbSS, nb * sizeof(double), compareEye4Nodes);
-            v->Changed = 1;
-          }
-          if(v->NbSH && v->DrawHexahedra) {
-            nb = List_Nbr(v->SH) / v->NbSH;
-            qsort(v->SH->array, v->NbSH, nb * sizeof(double), compareEye8Nodes);
-            v->Changed = 1;
-          }
-          if(v->NbSI && v->DrawPrisms) {
-            nb = List_Nbr(v->SI) / v->NbSI;
-            qsort(v->SI->array, v->NbSI, nb * sizeof(double), compareEye6Nodes);
-            v->Changed = 1;
-          }
-          if(v->NbSY && v->DrawPyramids) {
-            nb = List_Nbr(v->SY) / v->NbSY;
-            qsort(v->SY->array, v->NbSY, nb * sizeof(double), compareEye5Nodes);
-            v->Changed = 1;
-          }
-
-        }
-
+      glPointSize(v->PointSize);
+      gl2psPointSize(v->PointSize * CTX.print.eps_point_size_factor);
+      
+      glLineWidth(v->LineWidth);
+      gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
+      
+      switch (v->RangeType) {
+      case DRAW_POST_RANGE_DEFAULT:
+	ValMin = v->Min;
+	ValMax = v->Max;
+	break;
+      case DRAW_POST_RANGE_CUSTOM:
+	ValMin = v->CustomMin;
+	ValMax = v->CustomMax;
+	break;
+      case DRAW_POST_RANGE_PER_STEP:
+	ValMin = v->TimeStepMin[v->TimeStep];
+	ValMax = v->TimeStepMax[v->TimeStep];
+	break;
+      }
+      
+      switch (v->ScaleType) {
+      case DRAW_POST_LINEAR:
+	v->GIFV = GiveIndexFromValue_Lin;
+	v->GVFI = GiveValueFromIndex_Lin;
+	break;
+      case DRAW_POST_LOGARITHMIC:
+	v->GIFV = GiveIndexFromValue_Log;
+	v->GVFI = GiveValueFromIndex_Log;
+	break;
+      case DRAW_POST_DOUBLELOGARITHMIC:
+	v->GIFV = GiveIndexFromValue_DoubleLog;
+	v->GVFI = GiveValueFromIndex_DoubleLog;
+	break;
       }
 
-      if(CTX.post.display_lists && !v->Changed && v->DisplayListNum > 0) {
-
-        Msg(DEBUG, "Call display List %d", v->DisplayListNum);
-        glCallList(v->DisplayListNum);
-
+      // if we don't use vertex arrays, do a simple sort of
+      // transparent views (hybrid views will be sorted incorrectly;
+      // use Plugin(DecomposeInSimplex) and View->Combine to do remedy
+      // this limitation)
+      if(!CTX.post.vertex_arrays && CTX.alpha && ColorTable_IsAlpha(&v->CT) && 
+	 v->DrawScalars && (changedEye() || v->Changed)) {
+	Msg(DEBUG, "Sorting for transparency (NO vertex array)");
+	if(v->IntervalsType != DRAW_POST_ISO) {
+	  if(v->NbST && v->DrawTriangles) {
+	    nb = List_Nbr(v->ST) / v->NbST;
+	    qsort(v->ST->array, v->NbST, nb * sizeof(double), compareEye3Nodes);
+	  }
+	  if(v->NbSQ && v->DrawQuadrangles) {
+	    nb = List_Nbr(v->SQ) / v->NbSQ;
+	    qsort(v->SQ->array, v->NbSQ, nb * sizeof(double), compareEye4Nodes);
+	  }
+	}
+	if(v->NbSS && v->DrawTetrahedra) {
+	  nb = List_Nbr(v->SS) / v->NbSS;
+	  qsort(v->SS->array, v->NbSS, nb * sizeof(double), compareEye4Nodes);
+	}
+	if(v->NbSH && v->DrawHexahedra) {
+	  nb = List_Nbr(v->SH) / v->NbSH;
+	  qsort(v->SH->array, v->NbSH, nb * sizeof(double), compareEye8Nodes);
+	}
+	if(v->NbSI && v->DrawPrisms) {
+	  nb = List_Nbr(v->SI) / v->NbSI;
+	  qsort(v->SI->array, v->NbSI, nb * sizeof(double), compareEye6Nodes);
+	}
+	if(v->NbSY && v->DrawPyramids) {
+	  nb = List_Nbr(v->SY) / v->NbSY;
+	  qsort(v->SY->array, v->NbSY, nb * sizeof(double), compareEye5Nodes);
+	}
       }
-      else {
-
-        if(CTX.post.display_lists) {
-          if(v->DisplayListNum > 0) {
-            Msg(DEBUG, "Delete display List %d", v->DisplayListNum);
-            glDeleteLists(v->DisplayListNum, 1);
-          }
-          else {
-            v->DisplayListNum = glGenLists(1);
-            Msg(DEBUG, "Gen display list -> %d", v->DisplayListNum);
-          }
-
-          if(v->DisplayListNum > 0) {
-            Msg(DEBUG, "New display List %d", v->DisplayListNum);
-            glNewList(v->DisplayListNum, GL_COMPILE_AND_EXECUTE);
-          }
-          else
-            Msg(GERROR, "Unable to create display list");
-        }
-
-        glPointSize(v->PointSize);
-        gl2psPointSize(v->PointSize * CTX.print.eps_point_size_factor);
-
-        glLineWidth(v->LineWidth);
-        gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
-
-        switch (v->RangeType) {
-        case DRAW_POST_RANGE_DEFAULT:
-          ValMin = v->Min;
-          ValMax = v->Max;
-          break;
-        case DRAW_POST_RANGE_CUSTOM:
-          ValMin = v->CustomMin;
-          ValMax = v->CustomMax;
-          break;
-        case DRAW_POST_RANGE_PER_STEP:
-          ValMin = v->TimeStepMin[v->TimeStep];
-          ValMax = v->TimeStepMax[v->TimeStep];
-          break;
-        }
-
-        switch (v->ScaleType) {
-        case DRAW_POST_LINEAR:
-          v->GIFV = GiveIndexFromValue_Lin;
-          v->GVFI = GiveValueFromIndex_Lin;
-          break;
-        case DRAW_POST_LOGARITHMIC:
-          v->GIFV = GiveIndexFromValue_Log;
-          v->GVFI = GiveValueFromIndex_Log;
-          break;
-        case DRAW_POST_DOUBLELOGARITHMIC:
-          v->GIFV = GiveIndexFromValue_DoubleLog;
-          v->GVFI = GiveValueFromIndex_DoubleLog;
-          break;
-        }
-
-        // Points
-        if(v->DrawPoints) {
-          if(v->Type == DRAW_POST_3D)
-            Draw_ScalarList(v, ValMin, ValMax, v->SP, v->NbSP, 1, 0, Draw_ScalarPoint);
-          Draw_VectorList(v, ValMin, ValMax, v->VP, v->NbVP, 1, Draw_VectorPoint);
-          Draw_TensorList(v, ValMin, ValMax, v->TP, v->NbTP, 1, Draw_TensorPoint);
-        }
-
-        // Lines
-        if(v->DrawLines) {
-          Draw_ScalarList(v, ValMin, ValMax, v->SL, v->NbSL, 2, 0, Draw_ScalarLine);
-          Draw_VectorList(v, ValMin, ValMax, v->VL, v->NbVL, 2, Draw_VectorLine);
-          Draw_TensorList(v, ValMin, ValMax, v->TL, v->NbTL, 2, Draw_TensorLine);
-        }
-
-        // Triangles
-        if(v->DrawTriangles) {
-          Draw_ScalarList(v, ValMin, ValMax, v->ST, v->NbST, 3, 1, Draw_ScalarTriangle);
-          Draw_VectorList(v, ValMin, ValMax, v->VT, v->NbVT, 3, Draw_VectorTriangle);
-          Draw_TensorList(v, ValMin, ValMax, v->TT, v->NbTT, 3, Draw_TensorTriangle);
-        }
-
-        // Quadrangles
-        if(v->DrawQuadrangles) {
-          Draw_ScalarList(v, ValMin, ValMax, v->SQ, v->NbSQ, 4, 1, Draw_ScalarQuadrangle);
-          Draw_VectorList(v, ValMin, ValMax, v->VQ, v->NbVQ, 4, Draw_VectorQuadrangle);
-          Draw_TensorList(v, ValMin, ValMax, v->TQ, v->NbTQ, 4, Draw_TensorQuadrangle);
-        }
-
-        // Tetrahedra
-        if(v->DrawTetrahedra) {
-          Draw_ScalarList(v, ValMin, ValMax, v->SS, v->NbSS, 4, 1, Draw_ScalarTetrahedron);
-          Draw_VectorList(v, ValMin, ValMax, v->VS, v->NbVS, 4, Draw_VectorTetrahedron);
-          Draw_TensorList(v, ValMin, ValMax, v->TS, v->NbTS, 4, Draw_TensorTetrahedron);
-        }
-
-        // Hexahedra
-        if(v->DrawHexahedra) {
-          Draw_ScalarList(v, ValMin, ValMax, v->SH, v->NbSH, 8, 1, Draw_ScalarHexahedron);
-          Draw_VectorList(v, ValMin, ValMax, v->VH, v->NbVH, 8, Draw_VectorHexahedron);
-          Draw_TensorList(v, ValMin, ValMax, v->TH, v->NbTH, 8, Draw_TensorHexahedron);
-        }
-
-        // Prisms
-        if(v->DrawPrisms) {
-          Draw_ScalarList(v, ValMin, ValMax, v->SI, v->NbSI, 6, 1, Draw_ScalarPrism);
-          Draw_VectorList(v, ValMin, ValMax, v->VI, v->NbVI, 6, Draw_VectorPrism);
-          Draw_TensorList(v, ValMin, ValMax, v->TI, v->NbTI, 6, Draw_TensorPrism);
-        }
-
-        // Pyramids
-        if(v->DrawPyramids) {
-          Draw_ScalarList(v, ValMin, ValMax, v->SY, v->NbSY, 5, 1, Draw_ScalarPyramid);
-          Draw_VectorList(v, ValMin, ValMax, v->VY, v->NbVY, 5, Draw_VectorPyramid);
-          Draw_TensorList(v, ValMin, ValMax, v->TY, v->NbTY, 5, Draw_TensorPyramid);
-        }
-
-        // Strings
-        if(v->DrawStrings) {
-          glColor4ubv((GLubyte *) & CTX.color.text);
-          Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);
-        }
-
-        if(CTX.post.display_lists)
-          glEndList();
-
-        v->Changed = 0;
+      
+      if(v->DrawPoints) {
+	if(v->Type == DRAW_POST_3D)
+	  Draw_ScalarList(v, ValMin, ValMax, v->SP, v->NbSP, 1, 0, Draw_ScalarPoint);
+	Draw_VectorList(v, ValMin, ValMax, v->VP, v->NbVP, 1, Draw_VectorPoint);
+	Draw_TensorList(v, ValMin, ValMax, v->TP, v->NbTP, 1, Draw_TensorPoint);
+      }
+      if(v->DrawLines) {
+	Draw_ScalarList(v, ValMin, ValMax, v->SL, v->NbSL, 2, 0, Draw_ScalarLine);
+	Draw_VectorList(v, ValMin, ValMax, v->VL, v->NbVL, 2, Draw_VectorLine);
+	Draw_TensorList(v, ValMin, ValMax, v->TL, v->NbTL, 2, Draw_TensorLine);
       }
 
+      for(int p = 0; p < 2; p++){ // two-passes for vertex arrays
+	int skip_2d = 0, skip_3d = 0;
+	if(p == 0){
+	  if(CTX.post.vertex_arrays && !CTX.threads_lock){
+	    CTX.threads_lock = 1;
+	    if(v->Changed){
+	      Msg(DEBUG, "regenerate View[%d] vertex array", v->Num);
+	      if(v->VertexArray) delete v->VertexArray;
+	      v->VertexArray = new triangleVertexArray(10000);
+	      v->FillVertexArray = 1;
+	    }
+	    else
+	      goto pass2;
+	  }
+	  else
+	    goto pass2;
+	}
+	if(p == 1){
+	  if(CTX.post.vertex_arrays && v->VertexArray){
+	    v->UseVertexArray = 1;
+	    if(v->Boundary < 1 && !v->ShowElement &&
+	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO)
+	      skip_2d = 1;
+	    if(v->Boundary < 2 && !v->ShowElement &&
+	       v->IntervalsType != DRAW_POST_NUMERIC)
+	      skip_3d = 1;
+	  }
+	}
+
+	if(v->DrawTriangles) {
+	  if(!skip_2d)
+	    Draw_ScalarList(v, ValMin, ValMax, v->ST, v->NbST, 3, 1, Draw_ScalarTriangle);
+	  Draw_VectorList(v, ValMin, ValMax, v->VT, v->NbVT, 3, Draw_VectorTriangle);
+	  Draw_TensorList(v, ValMin, ValMax, v->TT, v->NbTT, 3, Draw_TensorTriangle);
+	}
+	if(v->DrawQuadrangles) {
+	  if(!skip_2d)
+	    Draw_ScalarList(v, ValMin, ValMax, v->SQ, v->NbSQ, 4, 1, Draw_ScalarQuadrangle);
+	  Draw_VectorList(v, ValMin, ValMax, v->VQ, v->NbVQ, 4, Draw_VectorQuadrangle);
+	  Draw_TensorList(v, ValMin, ValMax, v->TQ, v->NbTQ, 4, Draw_TensorQuadrangle);
+	}
+	if(v->DrawTetrahedra) {
+	  if(!skip_3d)
+	    Draw_ScalarList(v, ValMin, ValMax, v->SS, v->NbSS, 4, 1, Draw_ScalarTetrahedron);
+	  Draw_VectorList(v, ValMin, ValMax, v->VS, v->NbVS, 4, Draw_VectorTetrahedron);
+	  Draw_TensorList(v, ValMin, ValMax, v->TS, v->NbTS, 4, Draw_TensorTetrahedron);
+	}
+	if(v->DrawHexahedra) {
+	  if(!skip_3d)
+	    Draw_ScalarList(v, ValMin, ValMax, v->SH, v->NbSH, 8, 1, Draw_ScalarHexahedron);
+	  Draw_VectorList(v, ValMin, ValMax, v->VH, v->NbVH, 8, Draw_VectorHexahedron);
+	  Draw_TensorList(v, ValMin, ValMax, v->TH, v->NbTH, 8, Draw_TensorHexahedron);
+	}
+	if(v->DrawPrisms) {
+	  if(!skip_3d)
+	    Draw_ScalarList(v, ValMin, ValMax, v->SI, v->NbSI, 6, 1, Draw_ScalarPrism);
+	  Draw_VectorList(v, ValMin, ValMax, v->VI, v->NbVI, 6, Draw_VectorPrism);
+	  Draw_TensorList(v, ValMin, ValMax, v->TI, v->NbTI, 6, Draw_TensorPrism);
+	}
+	if(v->DrawPyramids) {
+	  if(!skip_3d)
+	    Draw_ScalarList(v, ValMin, ValMax, v->SY, v->NbSY, 5, 1, Draw_ScalarPyramid);
+	  Draw_VectorList(v, ValMin, ValMax, v->VY, v->NbVY, 5, Draw_VectorPyramid);
+	  Draw_TensorList(v, ValMin, ValMax, v->TY, v->NbTY, 5, Draw_TensorPyramid);
+	}
+
+      pass2:
+	v->FillVertexArray = 0;
+	v->UseVertexArray = 0;
+	CTX.threads_lock = 0;
+      }
+
+      if(CTX.post.vertex_arrays && v->VertexArray){
+	if(v->VertexArray->num_triangles){
+
+	  if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && (changedEye() || v->Changed)){
+	    Msg(DEBUG, "Sorting for transparency (WITH vertex array)");
+	    v->VertexArray->sort(storedEye);
+	  }
+
+	  glVertexPointer(3, GL_FLOAT, 0, v->VertexArray->vertices->array);
+	  glNormalPointer(GL_FLOAT, 0, v->VertexArray->normals->array);
+	  glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->VertexArray->colors->array);
+
+	  glEnableClientState(GL_VERTEX_ARRAY);
+	  glEnableClientState(GL_COLOR_ARRAY);
+	  glEnableClientState(GL_NORMAL_ARRAY);
+
+	  if(v->Light)
+	    glEnable(GL_LIGHTING);
+	  else
+	    glDisableClientState(GL_NORMAL_ARRAY);
+	  glEnable(GL_POLYGON_OFFSET_FILL);
+	  glDrawArrays(GL_TRIANGLES, 0, 3 * v->VertexArray->num_triangles);
+	  glDisable(GL_POLYGON_OFFSET_FILL);
+	  glDisable(GL_LIGHTING);
+	}
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+      }
+
+      if(v->DrawStrings) {
+	glColor4ubv((GLubyte *) & CTX.color.text);
+	Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);
+      }
+      
+      v->Changed = 0;
     }
-
   }
 }

@@ -9,11 +9,6 @@ Cycle through views instead of time steps in automatic animation mode@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item PostProcessing.DisplayLists
-Use OpenGL display lists for drawing post-processing views@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item PostProcessing.Link
 Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)@*
 Default value: @code{0}@*
@@ -32,6 +27,11 @@ Saved in: @code{General.OptionsFileName}
 @item PostProcessing.Smoothing
 Apply (non-reversible) smoothing to post-processing view when merged@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.VertexArrays
+Use OpenGL vertex arrays to draw triangles in post-processing views?@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable

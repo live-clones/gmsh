@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.307 2004-05-27 06:23:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.308 2004-05-29 10:11:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1439,27 +1439,26 @@ void GUI::create_option_window()
       gen_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Show small axes");
       gen_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW, BH, "Enable fast redraw");
       gen_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Enable double buffering");
-      gen_butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Use display lists");
-      gen_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW, BH, "Enable alpha blending");
-      gen_butt[6] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, BW, BH, "Use trackball rotation mode");
-      for(i = 0; i < 7; i++) {
+      gen_butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Enable alpha blending");
+      gen_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW, BH, "Use trackball rotation mode");
+      for(i = 0; i < 6; i++) {
         gen_butt[i]->type(FL_TOGGLE_BUTTON);
         gen_butt[i]->down_box(TOGGLE_BOX);
         gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
 
-      gen_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 9 * BH, BW, BH, "Rotate around pseudo center of gravity");
+      gen_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, BW, BH, "Rotate around pseudo center of gravity");
       gen_butt[15]->type(FL_TOGGLE_BUTTON);
       gen_butt[15]->down_box(TOGGLE_BOX);
       gen_butt[15]->selection_color(TOGGLE_COLOR);
       gen_butt[15]->callback(general_options_rotation_center_cb);
 
-      gen_push_butt[0] = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 10 * BH, BB, BH, "Select");
+      gen_push_butt[0] = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 9 * BH, BB, BH, "Select");
       gen_push_butt[0]->callback(general_options_rotation_center_select_cb);
 
-      gen_value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 10 * BH, IW / 3, BH);
-      gen_value[9] = new Fl_Value_Input(2 * WB + IW / 3, 2 * WB + 10 * BH, IW / 3, BH);
-      gen_value[10] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3, BH, "Rotation center");
+      gen_value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 9 * BH, IW / 3, BH);
+      gen_value[9] = new Fl_Value_Input(2 * WB + IW / 3, 2 * WB + 9 * BH, IW / 3, BH);
+      gen_value[10] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 9 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
 
       o->end();

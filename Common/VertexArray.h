@@ -1,5 +1,5 @@
-#ifndef _ISO_H_
-#define _ISO_H_
+#ifndef _VERTEX_ARRAY_H_
+#define _VERTEX_ARRAY_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,24 +20,17 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Views.h"
+#include "List.h"
 
-void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
-		   double V, double *Xp, double *Yp, double *Zp, int *nb);
+class triangleVertexArray{
+ public:
+  int num_triangles;
+  List_T *vertices, *normals, *colors;
+  triangleVertexArray(int nb);
+  ~triangleVertexArray();
+  void add(float x, float y, float z, float n0, 
+	   float n1, float n2, unsigned int col);
+  void sort(double eye[3]);
+};
 
-void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
-		   double V1, double V2, double *Xp, double *Yp, double *Zp, 
-		   int *nb, double *value);
-
-void CutLine0D(double *X, double *Y, double *Z, double *Val,
-	       double V, double *Xp, double *Yp, double *Zp, int *nb);
-
-void CutLine1D(double *X, double *Y, double *Z, double *Val,
-	       double V1, double V2, double *Xp, double *Yp, double *Zp,
-	       int *nb, double *value);
-
-void IsoSimplex(Post_View *View, int preproNormals, 
-		double *X, double *Y, double *Z, double *Val, double V,
-		unsigned int color);
-  
 #endif

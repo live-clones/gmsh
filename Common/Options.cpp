@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.158 2004-05-28 23:11:56 geuzaine Exp $
+// $Id: Options.cpp,v 1.159 2004-05-29 10:11:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2320,7 +2320,7 @@ double opt_general_alpha_blending(OPT_ARGS_NUM)
     CTX.alpha = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[5]->value(CTX.alpha);
+    WID->gen_butt[4]->value(CTX.alpha);
 #endif
   return CTX.alpha;
 }
@@ -2403,7 +2403,7 @@ double opt_general_trackball(OPT_ARGS_NUM)
     CTX.useTrackball = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[6]->value(CTX.useTrackball);
+    WID->gen_butt[5]->value(CTX.useTrackball);
 #endif
   return CTX.useTrackball;
 }
@@ -3817,20 +3817,12 @@ double opt_solver_merge_views4(OPT_ARGS_NUM)
   return opt_solver_merge_views(4, action, val);
 }
 
-double opt_post_display_lists(OPT_ARGS_NUM)
+double opt_post_vertex_arrays(OPT_ARGS_NUM)
 {
-  int i;
   if(action & GMSH_SET) {
-    CTX.post.display_lists = (int)val;
-    if(CTX.post.display_lists)
-      for(i = 0; i < List_Nbr(CTX.post.list); i++)
-        ((Post_View *) List_Pointer_Test(CTX.post.list, i))->Changed = 1;
+    CTX.post.vertex_arrays = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->gen_butt[4]->value(CTX.post.display_lists);
-#endif
-  return CTX.post.display_lists;
+  return CTX.post.vertex_arrays;
 }
 
 double opt_post_scales(OPT_ARGS_NUM)
@@ -4066,7 +4058,6 @@ double opt_view_arrow_size(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->ArrowSize = val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4082,7 +4073,6 @@ double opt_view_arrow_head_radius(OPT_ARGS_NUM)
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
     v->ArrowRelHeadRadius = val;
-    v->Changed = 1;
   }
   return v->ArrowRelHeadRadius;
 }
@@ -4094,7 +4084,6 @@ double opt_view_arrow_stem_length(OPT_ARGS_NUM)
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
     v->ArrowRelStemLength = val;
-    v->Changed = 1;
   }
   return v->ArrowRelStemLength;
 }
@@ -4106,7 +4095,6 @@ double opt_view_arrow_stem_radius(OPT_ARGS_NUM)
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
     v->ArrowRelStemRadius = val;
-    v->Changed = 1;
   }
   return v->ArrowRelStemRadius;
 }
@@ -4240,7 +4228,6 @@ double opt_view_position0(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Position[0] = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4254,7 +4241,6 @@ double opt_view_position1(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Position[1] = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4268,7 +4254,6 @@ double opt_view_auto_position(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->AutoPosition = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -4283,7 +4268,6 @@ double opt_view_size0(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Size[0] = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4297,7 +4281,6 @@ double opt_view_size1(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Size[1] = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4311,7 +4294,6 @@ double opt_view_grid(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Grid = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -4326,7 +4308,6 @@ double opt_view_nb_abscissa(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->NbAbscissa = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -4370,7 +4351,6 @@ double opt_view_light(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Light = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4412,7 +4392,6 @@ double opt_view_show_element(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->ShowElement = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4452,7 +4431,6 @@ double opt_view_draw_strings(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->DrawStrings = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4466,7 +4444,6 @@ double opt_view_draw_points(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->DrawPoints = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4480,7 +4457,6 @@ double opt_view_draw_lines(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->DrawLines = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4748,7 +4724,6 @@ double opt_view_arrow_location(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->ArrowLocation = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -4771,7 +4746,6 @@ double opt_view_point_size(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->PointSize = val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4785,7 +4759,6 @@ double opt_view_line_width(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->LineWidth = val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -4799,7 +4772,6 @@ double opt_view_point_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->PointType = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -4814,7 +4786,6 @@ double opt_view_line_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->LineType = (int)val;
-    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {

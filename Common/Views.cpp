@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.118 2004-05-22 01:24:16 geuzaine Exp $
+// $Id: Views.cpp,v 1.119 2004-05-29 10:11:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,9 @@ Post_View *BeginView(int allocate)
 
   v->Index = i;
   v->Dirty = 1;
-  v->DisplayListNum = -1;
+  v->VertexArray = NULL;
+  v->FillVertexArray = 0;
+  v->UseVertexArray = 0;
   v->NbTimeStep = 0;
   v->TimeStepMin = NULL;
   v->TimeStepMax = NULL;
@@ -594,6 +596,9 @@ void FreeView(Post_View * v)
     v->T2D = v->T2C = NULL;
     v->T3D = v->T3C = NULL;
     v->reset_normals();
+    if(v->VertexArray) 
+      delete v->VertexArray;
+    v->VertexArray = NULL;
   }
 
 }

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.40 2004-05-28 21:06:11 geuzaine Exp $
+// $Id: Entity.cpp,v 1.41 2004-05-29 10:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -123,75 +123,6 @@ void Draw_Line(int type, double width, double *x, double *y, double *z,
     glVertex3d(X[1], Y[1], Z[1]);
     glEnd();
   }
-}
-
-void Draw_Triangle(double *x, double *y, double *z, double *n,
-                   double Raise[3][8], int light, bool polygon_offset)
-{
-  double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
-
-  if(light) glEnable(GL_LIGHTING);
-  if(polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
-
-  glBegin(GL_TRIANGLES);
-  if(light) {
-    if(!n) {
-      x1x0 = (x[1] + Raise[0][1]) - (x[0] + Raise[0][0]);
-      y1y0 = (y[1] + Raise[1][1]) - (y[0] + Raise[1][0]);
-      z1z0 = (z[1] + Raise[2][1]) - (z[0] + Raise[2][0]);
-      x2x0 = (x[2] + Raise[0][2]) - (x[0] + Raise[0][0]);
-      y2y0 = (y[2] + Raise[1][2]) - (y[0] + Raise[1][0]);
-      z2z0 = (z[2] + Raise[2][2]) - (z[0] + Raise[2][0]);
-      nn[0] = y1y0 * z2z0 - z1z0 * y2y0;
-      nn[1] = z1z0 * x2x0 - x1x0 * z2z0;
-      nn[2] = x1x0 * y2y0 - y1y0 * x2x0;
-      norme(nn);
-      glNormal3dv(nn);
-    }
-    else
-      glNormal3dv(&n[0]);
-  }
-
-  glVertex3d(x[0] + Raise[0][0], y[0] + Raise[1][0], z[0] + Raise[2][0]);
-
-  if(light && n)
-    glNormal3dv(&n[3]);
-
-  glVertex3d(x[1] + Raise[0][1], y[1] + Raise[1][1], z[1] + Raise[2][1]);
-
-  if(light && n)
-    glNormal3dv(&n[6]);
-
-  glVertex3d(x[2] + Raise[0][2], y[2] + Raise[1][2], z[2] + Raise[2][2]);
-  glEnd();
-
-  glDisable(GL_POLYGON_OFFSET_FILL);
-  glDisable(GL_LIGHTING);
-}
-
-void Draw_Quadrangle(double *x, double *y, double *z, double *n,
-                     double Raise[3][8], int light, bool polygon_offset)
-{
-  double x2[3] = { x[2], x[3], x[0] };
-  double y2[3] = { y[2], y[3], y[0] };
-  double z2[3] = { z[2], z[3], z[0] };
-
-  Draw_Triangle(x, y, z, n, Raise, light, polygon_offset);
-  if(n) {
-    double n2[9];
-    n2[0] = n[6];
-    n2[1] = n[7];
-    n2[2] = n[8];
-    n2[3] = n[9];
-    n2[4] = n[10];
-    n2[5] = n[11];
-    n2[6] = n[0];
-    n2[7] = n[1];
-    n2[8] = n[2];
-    Draw_Triangle(x2, y2, z2, n2, Raise, light, polygon_offset);
-  }
-  else
-    Draw_Triangle(x2, y2, z2, n, Raise, light, polygon_offset);
 }
 
 void Draw_SimpleVector(int arrow, int fill,

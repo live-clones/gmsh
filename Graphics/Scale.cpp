@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.42 2004-04-27 00:11:55 geuzaine Exp $
+// $Id: Scale.cpp,v 1.43 2004-05-29 10:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -140,7 +140,6 @@ void draw_scale(Post_View * v,
   cv_bh = height / nbv;
 
   glColor4ubv((GLubyte *) & CTX.color.text);
-
 
   if(nbv < 0) { // only min and max if not enough room
     if(v->IntervalsType == DRAW_POST_DISCRETE ||

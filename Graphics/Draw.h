@@ -42,9 +42,9 @@ void set_r(int i, double val);
 void set_t(int i, double val);
 void set_s(int i, double val);
 
-void PaletteContinuous(Post_View * View, double min, double max, double val);
-void PaletteContinuousLinear(Post_View * v, double min, double max, double val);
-void PaletteDiscrete(Post_View * View, int nbi, int i);
+unsigned int PaletteContinuous(Post_View * View, double min, double max, double val);
+unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
+unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);
 
 char SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
 void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
@@ -72,10 +72,6 @@ void Draw_Point(int type, double size, double *x, double *y, double *z,
 		double Raise[3][8], int light);
 void Draw_Line(int type, double width, double *x, double *y, double *z,
 	       double Raise[3][8], int light);
-void Draw_Triangle(double *x, double *y, double *z,double *n,
-		   double Raise[3][8], int light, bool polygon_offset);
-void Draw_Quadrangle(double *x, double *y, double *z, double *n,
-		     double Raise[3][8], int light, bool polygon_offset);
 void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,

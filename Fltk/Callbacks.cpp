@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.241 2004-05-28 19:22:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.242 2004-05-29 10:11:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -853,9 +853,8 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
   if(opt_general_double_buffer(0, GMSH_GET, 0) != WID->gen_butt[3]->value())
     opt_general_double_buffer(0, GMSH_SET, WID->gen_butt[3]->value());
-  opt_post_display_lists(0, GMSH_SET, WID->gen_butt[4]->value());       //this has to move
-  opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[5]->value());
-  opt_general_trackball(0, GMSH_SET, WID->gen_butt[6]->value());
+  opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[4]->value());
+  opt_general_trackball(0, GMSH_SET, WID->gen_butt[5]->value());
   opt_general_terminal(0, GMSH_SET, WID->gen_butt[7]->value());
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, WID->gen_butt[8]->value());

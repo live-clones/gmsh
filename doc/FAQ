@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.36 2004-05-25 04:10:10 geuzaine Exp $
+$Id: FAQ,v 1.37 2004-05-29 10:11:12 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -214,9 +214,4 @@ Section 7: Post-processing module
 
 Are you are executing Gmsh from a remote host (via the network) without GLX?
 You should turn double buffering off (with the -nodb command line option).
-
-* 7.2 Big post-processing scenes are slow to display.
-
-Try display lists (Tools->Options->Display->Use display lists).
-
 

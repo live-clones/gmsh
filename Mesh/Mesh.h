@@ -28,6 +28,7 @@
 #include "Edge.h"
 #include "ExtrudeParams.h"
 #include "STL.h"
+#include "VertexArray.h"
 
 #define FORMAT_MSH           1
 #define FORMAT_UNV           2
@@ -221,24 +222,6 @@ class DrawingColor{
  public:
   int type;
   unsigned int geom, mesh;
-};
-
-class triangleVertexArray{
- public:
-  int num_triangles;
-  float *vertices, *normals;
-  unsigned char *colors;
-  triangleVertexArray(int nb){
-    num_triangles = 0;
-    vertices = new float[nb * 3 * 3];
-    normals = new float[nb * 3 * 3];
-    colors = new unsigned char[nb * 3 * 4];
-  }
-  ~triangleVertexArray(){
-    delete [] vertices;
-    delete [] normals;
-    delete [] colors;
-  }
 };
 
 struct _Surf{
