@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.29 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.30 2001-08-23 17:19:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -252,12 +252,12 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
       }
       else{
 	for(i=0;i<3;i++){
+	  norms[3*i] = nn[0];
+	  norms[3*i+1] = nn[1];
+	  norms[3*i+2] = nn[2];
 	  if(!View->get_normal(X[i]+Raise[0][i],Y[i]+Raise[1][i],Z[i]+Raise[2][i],
 			       norms[3*i],norms[3*i+1],norms[3*i+2])){
 	    Msg(WARNING, "Oups, did not find smoothed normal");
-	    norms[3*i] = nn[0];
-	    norms[3*i+1] = nn[1];
-	    norms[3*i+2] = nn[2];
 	  }
 	}
       }

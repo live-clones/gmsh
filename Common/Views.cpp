@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.51 2001-08-15 06:56:22 geuzaine Exp $
+// $Id: Views.cpp,v 1.52 2001-08-23 17:19:03 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -403,6 +403,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->NbIso = src->NbIso;
   dest->Light = src->Light ;
   dest->SmoothNormals = src->SmoothNormals ;
+  dest->angle_smooth_normals = src->angle_smooth_normals ;
   dest->ShowElement = src->ShowElement;
   dest->ShowTime = src->ShowTime;
   dest->ShowScale = src->ShowScale;
@@ -731,7 +732,7 @@ void xyzv::update (int n, double *v){
 // (eps2) de p2.val, et qui renvoie le xyzv qui a le xyz dans eps ET
 // val eps2... Sinon, pour un smoothing de normales, les "coins"
 // deviennent de la bouillie.
-
+/*
 struct lessthanxyzv{
   bool operator () (const xyzv & p2, const xyzv &p1) const{
     if( p1.x - p2.x > xyzv::eps)return true;
@@ -742,9 +743,10 @@ struct lessthanxyzv{
     return false;  
   }
 };
-/*
-double angle (double * aa, double * bb){
-  double angplan, cosc, sinc, a[3],b[3],c[3];
+*/
+
+double angle_normals (double * aa, double * bb){ 
+ double angplan, cosc, sinc, a[3],b[3],c[3];
   if(!aa || !bb) return 0.;
   a[0] = aa[0];
   a[1] = aa[1];
@@ -760,6 +762,7 @@ double angle (double * aa, double * bb){
   angplan = myatan2 (sinc, cosc);
   return angplan*180./Pi;
 }
+
 struct lessthanxyzv{
   bool operator () (const xyzv & p2, const xyzv &p1) const{
     if( p1.x - p2.x > xyzv::eps)return true;
@@ -768,12 +771,9 @@ struct lessthanxyzv{
     if( p1.y - p2.y <-xyzv::eps)return false;
     if( p1.z - p2.z > xyzv::eps)return true;
     if( p1.z - p2.z <-xyzv::eps)return false;
-    double a = angle(p1.vals,p2.vals);
-    if( a < 30 ) return true;
     return false;
   }
 };
-*/
 
 typedef set<xyzv,lessthanxyzv> mycont;
 typedef mycont::const_iterator iter;
@@ -868,9 +868,12 @@ void Post_View :: reset_normals(){
 void Post_View :: add_normal(double x, double y, double z, 
 			     double nx, double ny, double nz){
   if(!normals) normals = new smooth_container;
-  xyzv xyz(x,y,z);
+
   double n[3] = {nx,ny,nz};
+  xyzv xyz(x,y,z);
+
   iter it = normals->c.find(xyz);
+
   if(it == normals->c.end()){
     xyz.update(3,n);
     normals->c.insert(xyz);
@@ -880,39 +883,28 @@ void Post_View :: add_normal(double x, double y, double z,
     xx->update(3,n);
   }
 }
-/*
-void Post_View :: add_normal(double x, double y, double z, 
-			     double nx, double ny, double nz){
-  if(!normals) normals = new smooth_container;
-  double *n = new double[3];
-  n[0] = nx;
-  n[1] = ny;
-  n[2] = nz;
-  xyzv xyz(x,y,z,n);
-  iter it = normals->c.find(xyz);
 
-  xyzv xyz2(x,y,z);
-  double n2[3]={nx,ny,nz};
 
-  if(it == normals->c.end()){
-    xyz2.update(3,n2);
-    normals->c.insert(xyz2);
-  }
-  else{
-    xyzv *xx = (xyzv*) &(*it); 
-    xx->update(3,n);
-  }
-}
-*/
 bool Post_View :: get_normal(double x, double y, double z, 
 			     double &nx, double &ny, double &nz){
   if(!normals) return false;
+
+  double n[3] = {nx,ny,nz};
   xyzv xyz(x,y,z);
+
   iter it = normals->c.find(xyz);
+
   if(it == normals->c.end()) return false;
-  nx = (*it).vals[0];
-  ny = (*it).vals[1];
-  nz = (*it).vals[2];
+
+  double angle = angle_normals ((*it).vals, n);
+
+  if(fabs(angle) < angle_smooth_normals)
+    {
+      nx = (*it).vals[0];
+      ny = (*it).vals[1];
+      nz = (*it).vals[2];
+    }
+
   return true;
 }
 

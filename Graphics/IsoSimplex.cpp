@@ -96,11 +96,11 @@ void EnhanceSimplexPolygon (Post_View *View,
     }
     else{
       for(i=0;i<nb;i++){
+	norms[3*i] = n[0];
+	norms[3*i+1] = n[1];
+	norms[3*i+2] = n[2];
 	if(!View->get_normal(Xp[i],Yp[i],Zp[i],norms[3*i],norms[3*i+1],norms[3*i+2])){
 	  //Msg(WARNING, "Oups, did not find smoothed normal");
-	  norms[3*i] = n[0];
-	  norms[3*i+1] = n[1];
-	  norms[3*i+2] = n[2];
 	}	      
       }	  
     }
