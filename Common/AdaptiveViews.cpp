@@ -37,6 +37,7 @@ std::list<adapt_triangle*> adapt_triangle::all_elems;
 std::list<adapt_tet*> adapt_tet::all_elems;
 std::list<adapt_quad*> adapt_quad::all_elems;
 std::list<adapt_hex*> adapt_hex::all_elems;
+#define MAX_NB_NOD 8
 int adapt_triangle::nbNod = 3;
 int adapt_tet::nbNod = 4;
 int adapt_quad::nbNod = 4;
@@ -656,7 +657,9 @@ void Adaptive_Post_View:: setAdaptiveResolutionLevel_TEMPL (Post_View * view , i
   
   if (*counter)
     {
-      double sf[ELEM::nbNod];
+      //double sf[ELEM::nbNod]; // does not compile on my mac (iso c++
+      //forbids variable-size arrays)
+      double sf[MAX_NB_NOD];
       ELEM::Create ( level, _coefs, _eexps );
       std::set<adapt_point>::iterator it  = adapt_point::all_points.begin();
       std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
