@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.12 2004-12-08 20:01:21 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.13 2004-12-21 21:13:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -237,6 +237,8 @@ void Netgen::TransferVolumeMesh()
 				   vtable[tmp[2]-1], vtable[tmp[3]-1]);
     simp->iEnt = _vol->Num;
     Tree_Add(_vol->Simplexes, &simp);
+    // also add a cpoy in the global simplex tree
+    Tree_Add(THEM->Simplexes, &simp);
   }
   
   Free(vtable);
