@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.180 2002-06-15 21:25:27 geuzaine Exp $
+// $Id: GUI.cpp,v 1.181 2002-06-21 06:47:07 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -72,6 +72,7 @@ Fl_Menu_Item m_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
+    {"Save",             FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
       {"By extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
       {"Geometry",  0, 0, 0, FL_SUBMENU},
@@ -388,10 +389,12 @@ int GUI::global_shortcuts(int event){
     quit_selection = 1;
     return 1;
   }
+/* I made this one more visible, as File->Save
   else if(Fl::test_shortcut(FL_CTRL+'s')){
     mesh_save_cb(0,0);
     return 1;
   }
+*/
   else if(Fl::test_shortcut(FL_CTRL+FL_SHIFT+'d')){
     opt_post_anim_delay(0,GMSH_SET|GMSH_GUI,opt_post_anim_delay(0,GMSH_GET,0) + 0.01);
     return 1;
