@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.104 2003-11-27 02:33:31 geuzaine Exp $
+// $Id: Views.cpp,v 1.105 2003-11-29 01:38:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -579,6 +579,7 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;
+  dest->AlphaChannel = src->AlphaChannel;
   dest->Boundary = src->Boundary;
   dest->NbAbscissa = src->NbAbscissa;
   dest->NbIso = src->NbIso;
@@ -1103,68 +1104,74 @@ class smooth_container
   public: mycont c;
 };
 
-void generate_connectivities(List_T * SS, int NbTimeStep, int nbvert, int nb,
+void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVert,
                              mycont & connectivities)
 {
   double *x, *y, *z, *v;
   int i, j, k;
-  // double vals[NbTimeStep]; // sgi compiler does not allow this
-  double *vals = new double[NbTimeStep];
 
-  for(i = 0; i < List_Nbr(SS); i += nb) {
-    x = (double *)List_Pointer_Fast(SS, i);
-    y = (double *)List_Pointer_Fast(SS, i + nbvert);
-    z = (double *)List_Pointer_Fast(SS, i + 2 * nbvert);
-    v = (double *)List_Pointer_Fast(SS, i + 3 * nbvert);
+  if(!nbList) return;
 
-    for(j = 0; j < nbvert; j++) {
-      for(k = 0; k < NbTimeStep; k++)
-        vals[k] = v[j + k * nbvert];
+  double *vals = new double[nbTimeStep];
+  int nb = List_Nbr(list)/nbList;
+  for(i = 0; i < List_Nbr(list); i += nb) {
+    x = (double *)List_Pointer_Fast(list, i);
+    y = (double *)List_Pointer_Fast(list, i + nbVert);
+    z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
+
+    for(j = 0; j < nbVert; j++) {
+      for(k = 0; k < nbTimeStep; k++)
+        vals[k] = v[j + k * nbVert];
       xyzv xyz(x[j], y[j], z[j]);
       iter it = connectivities.find(xyz);
       if(it == connectivities.end()) {
-        xyz.update(NbTimeStep, vals);
+        xyz.update(nbTimeStep, vals);
         connectivities.insert(xyz);
       }
       else {
         // a little weird ... because we know that this will not
         // destroy the set ordering
         xyzv *xx = (xyzv *) & (*it);
-        xx->update(NbTimeStep, vals);
+        xx->update(nbTimeStep, vals);
       }
     }
   }
   delete[]vals;
 }
 
-void smooth_list(List_T * SS, double *min, double *max,
-                 int NbTimeStep, int nbvert, int nb, mycont & connectivities)
+void smooth_list(List_T * list, int nbList, double *min, double *max,
+                 int nbTimeStep, int nbVert, mycont & connectivities)
 {
   double *x, *y, *z, *v;
   int i, j, k;
+
+  if(!nbList)
+    return;
+
   *min = VAL_INF;
   *max = -VAL_INF;
 
-  for(i = 0; i < List_Nbr(SS); i += nb) {
-    x = (double *)List_Pointer_Fast(SS, i);
-    y = (double *)List_Pointer_Fast(SS, i + nbvert);
-    z = (double *)List_Pointer_Fast(SS, i + 2 * nbvert);
-    v = (double *)List_Pointer_Fast(SS, i + 3 * nbvert);
-    for(j = 0; j < nbvert; j++) {
+  int nb = List_Nbr(list)/nbList;
+  for(i = 0; i < List_Nbr(list); i += nb) {
+    x = (double *)List_Pointer_Fast(list, i);
+    y = (double *)List_Pointer_Fast(list, i + nbVert);
+    z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
+    for(j = 0; j < nbVert; j++) {
       xyzv xyz(x[j], y[j], z[j]);
       iter it = connectivities.find(xyz);
       if(it != connectivities.end()) {
-        for(k = 0; k < NbTimeStep; k++) {
-          v[j + k * nbvert] = (*it).vals[k];
-          if(v[j + k * nbvert] < *min)
-            *min = v[j + k * nbvert];
-          if(v[j + k * nbvert] > *max)
-            *max = v[j + k * nbvert];
+        for(k = 0; k < nbTimeStep; k++) {
+          v[j + k * nbVert] = (*it).vals[k];
+          if(v[j + k * nbVert] < *min)
+            *min = v[j + k * nbVert];
+          if(v[j + k * nbVert] > *max)
+            *max = v[j + k * nbVert];
         }
       }
     }
   }
-
 }
 
 void Post_View::smooth()
@@ -1173,53 +1180,23 @@ void Post_View::smooth()
 
   if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
     mycont con;
-    int nbl = 0, nbt = 0, nbq = 0, nbs = 0, nbh = 0, nbi = 0, nby = 0;
-    Msg(INFO, "Smoothing scalar primitives in view...");
-    if(NbSL) {
-      nbt = List_Nbr(SL) / NbSL;
-      generate_connectivities(SL, NbTimeStep, 2, nbl, con);
-    }
-    if(NbST) {
-      nbt = List_Nbr(ST) / NbST;
-      generate_connectivities(ST, NbTimeStep, 3, nbt, con);
-    }
-    if(NbSQ) {
-      nbq = List_Nbr(SQ) / NbSQ;
-      generate_connectivities(SQ, NbTimeStep, 4, nbq, con);
-    }
-    if(NbSS) {
-      nbs = List_Nbr(SS) / NbSS;
-      generate_connectivities(SS, NbTimeStep, 4, nbs, con);
-    }
-    if(NbSH) {
-      nbh = List_Nbr(SH) / NbSH;
-      generate_connectivities(SH, NbTimeStep, 8, nbh, con);
-    }
-    if(NbSI) {
-      nbi = List_Nbr(SI) / NbSI;
-      generate_connectivities(SI, NbTimeStep, 6, nbi, con);
-    }
-    if(NbSY) {
-      nby = List_Nbr(SY) / NbSY;
-      generate_connectivities(SY, NbTimeStep, 5, nby, con);
-    }
-    if(nbl)
-      smooth_list(SL, &Min, &Max, NbTimeStep, 2, nbl, con);
-    if(nbt)
-      smooth_list(ST, &Min, &Max, NbTimeStep, 3, nbt, con);
-    if(nbq)
-      smooth_list(SQ, &Min, &Max, NbTimeStep, 4, nbq, con);
-    if(nbs)
-      smooth_list(SS, &Min, &Max, NbTimeStep, 4, nbs, con);
-    if(nbh)
-      smooth_list(SH, &Min, &Max, NbTimeStep, 8, nbh, con);
-    if(nbi)
-      smooth_list(SI, &Min, &Max, NbTimeStep, 6, nbi, con);
-    if(nby)
-      smooth_list(SY, &Min, &Max, NbTimeStep, 5, nby, con);
-    Msg(INFO, "...done");
+    Msg(INFO, "Smoothing scalar primitives in View[%d]", Index);
+    generate_connectivities(SL, NbSL, NbTimeStep, 2, con);
+    generate_connectivities(ST, NbST, NbTimeStep, 3, con);
+    generate_connectivities(SQ, NbSQ, NbTimeStep, 4, con);
+    generate_connectivities(SS, NbSS, NbTimeStep, 4, con);
+    generate_connectivities(SH, NbSH, NbTimeStep, 8, con);
+    generate_connectivities(SI, NbSI, NbTimeStep, 6, con);
+    generate_connectivities(SY, NbSY, NbTimeStep, 5, con);
+    smooth_list(SL, NbSL, &Min, &Max, NbTimeStep, 2, con);
+    smooth_list(ST, NbST, &Min, &Max, NbTimeStep, 3, con);
+    smooth_list(SQ, NbSQ, &Min, &Max, NbTimeStep, 4, con);
+    smooth_list(SS, NbSS, &Min, &Max, NbTimeStep, 4, con);
+    smooth_list(SH, NbSH, &Min, &Max, NbTimeStep, 8, con);
+    smooth_list(SI, NbSI, &Min, &Max, NbTimeStep, 6, con);
+    smooth_list(SY, NbSY, &Min, &Max, NbTimeStep, 5, con);
+    Changed = 1;
   }
-
 }
 
 // Normal smoothing
@@ -1307,17 +1284,20 @@ static void transform(double mat[3][3], double v[3],
   *z = mat[2][0] * v[0] + mat[2][1] * v[1] + mat[2][2] * v[2];
 }
 
-static void transform_list(List_T * V, int NbTimeStep, int nbvert,
-                           int nb, double mat[3][3])
+static void transform_list(List_T *list, int nbList, 
+			   int nbVert, double mat[3][3])
 {
   double *x, *y, *z, v[3];
   int i, j;
 
-  for(i = 0; i < List_Nbr(V); i += nb) {
-    x = (double *)List_Pointer_Fast(V, i);
-    y = (double *)List_Pointer_Fast(V, i + nbvert);
-    z = (double *)List_Pointer_Fast(V, i + 2 * nbvert);
-    for(j = 0; j < nbvert; j++) {
+  if(!nbList) return;
+
+  int nb = List_Nbr(list) / nbList;
+  for(i = 0; i < List_Nbr(list); i += nb) {
+    x = (double *)List_Pointer_Fast(list, i);
+    y = (double *)List_Pointer_Fast(list, i + nbVert);
+    z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    for(j = 0; j < nbVert; j++) {
       v[0] = x[j];
       v[1] = y[j];
       v[2] = z[j];
@@ -1328,79 +1308,39 @@ static void transform_list(List_T * V, int NbTimeStep, int nbvert,
 
 void Post_View::transform(double mat[3][3])
 {
-  int nb;
+  transform_list(SP, NbSP, 1, mat);
+  transform_list(SL, NbSL, 2, mat);
+  transform_list(ST, NbST, 3, mat);
+  transform_list(SQ, NbSQ, 4, mat);
+  transform_list(SS, NbSS, 4, mat);
+  transform_list(SH, NbSH, 8, mat);
+  transform_list(SI, NbSI, 6, mat);
+  transform_list(SY, NbSY, 5, mat);
 
-  if(NbSP) {
-    nb = List_Nbr(SP) / NbSP;
-    transform_list(SP, NbTimeStep, 1, nb, mat);
-  }
-  if(NbSL) {
-    nb = List_Nbr(SL) / NbSL;
-    transform_list(SL, NbTimeStep, 2, nb, mat);
-  }
-  if(NbST) {
-    nb = List_Nbr(ST) / NbST;
-    transform_list(ST, NbTimeStep, 3, nb, mat);
-  }
-  if(NbSQ) {
-    nb = List_Nbr(SQ) / NbSQ;
-    transform_list(SQ, NbTimeStep, 4, nb, mat);
-  }
-  if(NbSS) {
-    nb = List_Nbr(SS) / NbSS;
-    transform_list(SS, NbTimeStep, 4, nb, mat);
-  }
-  if(NbSH) {
-    nb = List_Nbr(SH) / NbSH;
-    transform_list(SH, NbTimeStep, 8, nb, mat);
-  }
-  if(NbSI) {
-    nb = List_Nbr(SI) / NbSI;
-    transform_list(SI, NbTimeStep, 6, nb, mat);
-  }
-  if(NbSY) {
-    nb = List_Nbr(SY) / NbSY;
-    transform_list(SY, NbTimeStep, 5, nb, mat);
-  }
+  transform_list(VP, NbVP, 1, mat);
+  transform_list(VL, NbVL, 2, mat);
+  transform_list(VT, NbVT, 3, mat);
+  transform_list(VQ, NbVQ, 4, mat);
+  transform_list(VS, NbVS, 4, mat);
+  transform_list(VH, NbVH, 8, mat);
+  transform_list(VI, NbVI, 6, mat);
+  transform_list(VY, NbVY, 5, mat);
 
+  transform_list(TP, NbTP, 1, mat);
+  transform_list(TL, NbTL, 2, mat);
+  transform_list(TT, NbTT, 3, mat);
+  transform_list(TQ, NbTQ, 4, mat);
+  transform_list(TS, NbTS, 4, mat);
+  transform_list(TH, NbTH, 8, mat);
+  transform_list(TI, NbTI, 6, mat);
+  transform_list(TY, NbTY, 5, mat);
 
-  if(NbVP) {
-    nb = List_Nbr(VP) / NbVP;
-    transform_list(VP, NbTimeStep, 1, nb, mat);
-  }
-  if(NbVL) {
-    nb = List_Nbr(VL) / NbVL;
-    transform_list(VL, NbTimeStep, 2, nb, mat);
-  }
-  if(NbVT) {
-    nb = List_Nbr(VT) / NbVT;
-    transform_list(VT, NbTimeStep, 3, nb, mat);
-  }
-  if(NbVQ) {
-    nb = List_Nbr(VQ) / NbVQ;
-    transform_list(VQ, NbTimeStep, 4, nb, mat);
-  }
-  if(NbVS) {
-    nb = List_Nbr(VS) / NbVS;
-    transform_list(VS, NbTimeStep, 4, nb, mat);
-  }
-  if(NbVH) {
-    nb = List_Nbr(VH) / NbVH;
-    transform_list(VH, NbTimeStep, 8, nb, mat);
-  }
-  if(NbVI) {
-    nb = List_Nbr(VI) / NbVI;
-    transform_list(VI, NbTimeStep, 6, nb, mat);
-  }
-  if(NbVY) {
-    nb = List_Nbr(VY) / NbVY;
-    transform_list(VY, NbTimeStep, 5, nb, mat);
-  }
+  Changed = 1;
 }
 
-// merge lists
+// combine lists
 
-static void merge(List_T * a, List_T * b)
+static void combine(List_T * a, List_T * b)
 {
   if(!a || !b)
     return;
@@ -1409,7 +1349,7 @@ static void merge(List_T * a, List_T * b)
   }
 }
 
-void MergeViews(int all)
+void CombineViews(int all)
 {
   // sanity check
   int first = 1, nbt = 0;
@@ -1422,7 +1362,7 @@ void MergeViews(int all)
       }
       else{
 	if(v->NbTimeStep != nbt){
-	  Msg(GERROR, "Cannot merge views having different number of time steps");
+	  Msg(GERROR, "Cannot combine views having different number of time steps");
 	  return;
 	}
       }
@@ -1435,40 +1375,40 @@ void MergeViews(int all)
     if(all || v->Visible) {
       Msg(DEBUG, "Merging view %d", i);
       // *INDENT-OFF*
-      merge(v->SP,vm->SP); vm->NbSP += v->NbSP;
-      merge(v->VP,vm->VP); vm->NbVP += v->NbVP; 
-      merge(v->TP,vm->TP); vm->NbTP += v->NbTP;
-      merge(v->SL,vm->SL); vm->NbSL += v->NbSL;
-      merge(v->VL,vm->VL); vm->NbVL += v->NbVL;
-      merge(v->TL,vm->TL); vm->NbTL += v->NbTL;
-      merge(v->ST,vm->ST); vm->NbST += v->NbST;
-      merge(v->VT,vm->VT); vm->NbVT += v->NbVT;
-      merge(v->TT,vm->TT); vm->NbTT += v->NbTT;
-      merge(v->SQ,vm->SQ); vm->NbSQ += v->NbSQ;
-      merge(v->VQ,vm->VQ); vm->NbVQ += v->NbVQ;
-      merge(v->TQ,vm->TQ); vm->NbTQ += v->NbTQ;
-      merge(v->SS,vm->SS); vm->NbSS += v->NbSS;
-      merge(v->VS,vm->VS); vm->NbVS += v->NbVS;
-      merge(v->TS,vm->TS); vm->NbTS += v->NbTS;
-      merge(v->SH,vm->SH); vm->NbSH += v->NbSH;
-      merge(v->VH,vm->VH); vm->NbVH += v->NbVH;
-      merge(v->TH,vm->TH); vm->NbTH += v->NbTH;
-      merge(v->SI,vm->SI); vm->NbSI += v->NbSI;
-      merge(v->VI,vm->VI); vm->NbVI += v->NbVI;
-      merge(v->TI,vm->TI); vm->NbTI += v->NbTI;
-      merge(v->SY,vm->SY); vm->NbSY += v->NbSY;
-      merge(v->VY,vm->VY); vm->NbVY += v->NbVY;
-      merge(v->TY,vm->TY); vm->NbTY += v->NbTY;
+      combine(v->SP,vm->SP); vm->NbSP += v->NbSP;
+      combine(v->VP,vm->VP); vm->NbVP += v->NbVP; 
+      combine(v->TP,vm->TP); vm->NbTP += v->NbTP;
+      combine(v->SL,vm->SL); vm->NbSL += v->NbSL;
+      combine(v->VL,vm->VL); vm->NbVL += v->NbVL;
+      combine(v->TL,vm->TL); vm->NbTL += v->NbTL;
+      combine(v->ST,vm->ST); vm->NbST += v->NbST;
+      combine(v->VT,vm->VT); vm->NbVT += v->NbVT;
+      combine(v->TT,vm->TT); vm->NbTT += v->NbTT;
+      combine(v->SQ,vm->SQ); vm->NbSQ += v->NbSQ;
+      combine(v->VQ,vm->VQ); vm->NbVQ += v->NbVQ;
+      combine(v->TQ,vm->TQ); vm->NbTQ += v->NbTQ;
+      combine(v->SS,vm->SS); vm->NbSS += v->NbSS;
+      combine(v->VS,vm->VS); vm->NbVS += v->NbVS;
+      combine(v->TS,vm->TS); vm->NbTS += v->NbTS;
+      combine(v->SH,vm->SH); vm->NbSH += v->NbSH;
+      combine(v->VH,vm->VH); vm->NbVH += v->NbVH;
+      combine(v->TH,vm->TH); vm->NbTH += v->NbTH;
+      combine(v->SI,vm->SI); vm->NbSI += v->NbSI;
+      combine(v->VI,vm->VI); vm->NbVI += v->NbVI;
+      combine(v->TI,vm->TI); vm->NbTI += v->NbTI;
+      combine(v->SY,vm->SY); vm->NbSY += v->NbSY;
+      combine(v->VY,vm->VY); vm->NbVY += v->NbVY;
+      combine(v->TY,vm->TY); vm->NbTY += v->NbTY;
       // *INDENT-ON*
       /* this more complicated: have to change the indices
-         merge(v->T2D,vm->T2D);
-         merge(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
-         merge(v->T3D,vm->T3D);
-         merge(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
+         combine(v->T2D,vm->T2D);
+         combine(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
+         combine(v->T3D,vm->T3D);
+         combine(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
        */
     }
   }
-  EndView(vm, 1, "merged.pos", "merged");
+  EndView(vm, 1, "combined.pos", "combined");
 }
 
 // generic access functions

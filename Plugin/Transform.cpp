@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.20 2003-11-23 02:56:02 geuzaine Exp $
+// $Id: Transform.cpp,v 1.21 2003-11-29 01:38:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -120,7 +120,7 @@ Post_View *GMSH_TransformPlugin::execute(Post_View * v)
   }
 
   vv->transform(mat);
-  vv->Changed = 1;
-  return vv;
+
+  return 0;
 }
 

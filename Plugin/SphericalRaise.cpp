@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.10 2003-11-23 02:56:02 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.11 2003-11-29 01:38:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -98,10 +98,10 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
   double *x, *y, *z, *val, d[3], coef;
   int nb, i, j;
 
-  if(nbElm)
-    v->Changed = 1;
-  else
+  if(!nbElm)
     return;
+
+  v->Changed = 1;
 
   if(timeStep < 0 || timeStep > v->NbTimeStep - 1){
     Msg(WARNING, "Invalid TimeStep (%d) in View[%d]: choosing TimeStep 0",

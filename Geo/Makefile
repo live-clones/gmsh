@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.39 2003-03-21 00:52:38 geuzaine Exp $
+# $Id: Makefile,v 1.40 2003-11-29 01:38:50 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -63,13 +63,13 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Numeric/Numeric.h Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h DataBase.h ../Mesh/Interpolation.h \
-  ../Mesh/Create.h CAD.h ExtrudeParams.h ../Common/Context.h
+  ../Mesh/Create.h CAD.h ../Common/Context.h
 DataBase.o: DataBase.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Geo.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  CAD.h ExtrudeParams.h ../Mesh/Create.h Verif.h ../Common/Context.h
+  CAD.h ../Mesh/Create.h Verif.h ../Common/Context.h
 MinMax.o: MinMax.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \
@@ -78,14 +78,13 @@ ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ExtrudeParams.h
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h
 Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h Geo.h CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ExtrudeParams.h DataBase.h \
-  ../Parser/Parser.h ../Common/Context.h
+  ../Mesh/Metric.h ../Mesh/Matrix.h DataBase.h ../Parser/Parser.h \
+  ../Common/Context.h
 StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
@@ -96,10 +95,10 @@ Verif.o: Verif.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ExtrudeParams.h DataBase.h
+  DataBase.h
 Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  CAD.h ExtrudeParams.h ../Common/Context.h
+  CAD.h ../Common/Context.h

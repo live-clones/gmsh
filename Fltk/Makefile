@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.46 2003-05-09 16:29:57 geuzaine Exp $
+# $Id: Makefile,v 1.47 2003-11-29 01:38:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -63,32 +63,33 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Main.o: Main.cpp ../Plugin/PluginManager.h ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Common/GmshUI.h ../Common/GmshVersion.h ../Geo/Geo.h ../Geo/Verif.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/Context.h ../Common/Options.h ../Parser/Parser.h GUI.h \
-  Opengl_Window.h Colorbar_Window.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h ../Numeric/Numeric.h
+Main.o: Main.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Common/Gmsh.h \
+  ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../DataStr/Tools.h ../Common/GmshUI.h ../Common/GmshVersion.h \
+  ../Geo/Geo.h ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h \
+  ../Common/Context.h ../Parser/Parser.h GUI.h Opengl_Window.h \
+  Colorbar_Window.h ../Parser/OpenFile.h ../Common/CommandLine.h \
+  ../Numeric/Numeric.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
   ../Common/GmshVersion.h ../Common/Context.h ../Common/Options.h GUI.h \
   Opengl_Window.h Colorbar_Window.h ../Common/ColorTable.h
 GUI.o: GUI.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../Common/Gmsh.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
-  ../Numeric/Numeric.h ../Common/GmshVersion.h ../Common/Context.h \
-  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h GUI.h Opengl_Window.h Colorbar_Window.h \
-  Callbacks.h Bitmaps.h Win32Icon.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h Solvers.h
+  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Common/Gmsh.h \
+  ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../DataStr/Tools.h ../Common/GmshUI.h ../Numeric/Numeric.h \
+  ../Common/GmshVersion.h ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Graphics/Draw.h GUI.h Opengl_Window.h Colorbar_Window.h Callbacks.h \
+  Bitmaps.h Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h \
+  Solvers.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
@@ -123,9 +124,9 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
 GmshServer.o: GmshServer.cpp
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../utils/solvers/GmshClient.h GmshServer.h \
-  ../Parser/OpenFile.h Solvers.h ../Common/GmshUI.h GUI.h Opengl_Window.h \
-  Colorbar_Window.h ../Common/ColorTable.h ../Mesh/Mesh.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../utils/solvers/GmshClient.h \
+  GmshServer.h ../Parser/OpenFile.h Solvers.h ../Common/GmshUI.h GUI.h \
+  Opengl_Window.h Colorbar_Window.h ../Common/ColorTable.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Graphics/Draw.h ../Common/Views.h ../Common/Context.h

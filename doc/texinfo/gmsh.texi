@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.87 2003-11-26 22:48:41 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.88 2003-11-29 01:38:55 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,8 +37,8 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.14
-@set GMSH-VERSION   1.48
+@set EDITION        1.15
+@set GMSH-VERSION   1.49
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
@@ -2147,6 +2147,9 @@ Sample post-processing files in human-readable ``parsed'' format
 @cindex Commands, post-processing
 
 @ftable @code
+@item Combine Views;
+Combines all post-processing views in a single new view.
+
 @item Delete View[@var{expression}];
 Deletes (removes) the @var{expression}-th post-processing view. Note that
 post-processing view numbers start at 0.

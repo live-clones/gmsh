@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.188 2003-11-23 03:38:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.189 2003-11-29 01:38:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2837,15 +2837,15 @@ void view_duplicate_with_options_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void view_merge_all_cb(CALLBACK_ARGS)
+void view_combine_all_cb(CALLBACK_ARGS)
 {
-  MergeViews(1);
+  CombineViews(1);
   Draw();
 }
 
-void view_merge_visible_cb(CALLBACK_ARGS)
+void view_combine_visible_cb(CALLBACK_ARGS)
 {
-  MergeViews(0);
+  CombineViews(0);
   Draw();
 }
 

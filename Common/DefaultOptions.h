@@ -856,6 +856,8 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber ViewOptions_Number[] = {
+  { F|O, "AlphaChannel" , opt_view_alpha_channel , 1.0 ,
+    "Global alpha channel value (used only if != 1)" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 15. ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 

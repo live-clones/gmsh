@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.10 2003-11-23 02:56:02 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.11 2003-11-29 01:38:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -190,6 +190,7 @@ Post_View *GMSH_DisplacementRaisePlugin::execute(Post_View * v)
   }
 
   displacementRaise(vv, ww, factor, dTimeStep);
+
   return vv;
 }
 

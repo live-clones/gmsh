@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.149 2003-11-27 04:32:18 geuzaine Exp $
+// $Id: Gmsh.y,v 1.150 2003-11-29 01:38:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -111,7 +111,7 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %token tScalarHexahedron tVectorHexahedron tTensorHexahedron
 %token tScalarPrism tVectorPrism tTensorPrism
 %token tScalarPyramid tVectorPyramid tTensorPyramid
-%token tText2D tText3D
+%token tText2D tText3D tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tMesh tTrimmed
@@ -2021,6 +2021,13 @@ Command :
     if(CTX.default_plugins)
       GMSH_PluginManager::instance()->action($3, $6, 0); 
    }
+   | tCombine tSTRING tEND
+    {
+      if(!strcmp($2, "Views"))
+	CombineViews(1);
+      else
+	yymsg(GERROR, "Unknown Combine command");
+    } 
    | tExit tEND
     {
       exit(0);

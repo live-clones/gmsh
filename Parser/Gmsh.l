@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.48 2003-08-06 21:00:15 geuzaine Exp $
+// $Id: Gmsh.l,v 1.49 2003-11-29 01:38:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -127,6 +127,7 @@ BSpline			return tBSpline;
 Bounds			return tBounds;
 
 Ceil                    return tCeil;
+Combine                 return tCombine;
 Cosh                    return tCosh;
 Cos                     return tCos;
 Characteristic          return tCharacteristic;

@@ -60,5 +60,6 @@ void ColorTable_Copy(GmshColorTable *ct);
 void ColorTable_Paste(GmshColorTable *ct);
 void ColorTable_Print(GmshColorTable *ct, FILE *fp) ;
 int  ColorTable_IsAlpha(GmshColorTable *ct) ;
+int  ColorTable_SetAlpha(GmshColorTable * ct, double alpha);
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.120 2003-11-27 07:14:56 geuzaine Exp $
+// $Id: Options.cpp,v 1.121 2003-11-29 01:38:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -4535,6 +4535,18 @@ double opt_view_line_type(OPT_ARGS_NUM)
   return v->LineType;
 }
 
+double opt_view_alpha_channel(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    if(val > 0.0 && val < 1.0){
+      ColorTable_SetAlpha(&v->CT, val);
+      v->Changed = 1;
+    }
+    v->AlphaChannel = val;
+  }
+  return v->AlphaChannel;
+}
 
 double opt_print_format(OPT_ARGS_NUM)
 {

@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.5 2003-11-23 02:56:02 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.6 2003-11-29 01:38:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ GMSH_DecomposeInSimplexPlugin::GMSH_DecomposeInSimplexPlugin()
 
 void GMSH_DecomposeInSimplexPlugin::getName(char *name) const
 {
-  strcpy(name, "DecomposeInSimplex");
+  strcpy(name, "Decompose in simplex");
 }
 
 void GMSH_DecomposeInSimplexPlugin::getInfos(char *author, char *copyright,
@@ -57,12 +57,14 @@ void GMSH_DecomposeInSimplexPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(DecomposeInSimplex) decomposes any non-\n"
-	 "simplectic element in the view 'iView' into\n"
-	 "simplices. If 'iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
+         "Plugin(DecomposeInSimplex) decomposes all\n"
+	 "non-simplectic elements (quadrangles, prisms\n"
+	 "pyramids, hexahedra) in the view 'iView' into\n"
+	 "simplices (triangles, tetrahedra). If 'iView' < 0,\n"
+	 "the plugin is run on the current view.\n"
 	 "\n"
-	 "Plugin(DecomposeInSimplex) is executed in-place.\n");
+	 "Plugin(DecomposeInSimplex) is executed\n"
+	 "in-place.\n");
 }
 
 int GMSH_DecomposeInSimplexPlugin::getNbOptions() const
@@ -78,6 +80,45 @@ StringXNumber *GMSH_DecomposeInSimplexPlugin::getOption(int iopt)
 void GMSH_DecomposeInSimplexPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "DecomposeInSimplex failed...");
+}
+
+static void decomposeList(Post_View *v, int nbNod, int nbComp,
+			  List_T *listIn, int *nbIn, List_T *listOut, int *nbOut)
+{
+  double xNew[4], yNew[4], zNew[4];
+  double *valNew = new double[v->NbTimeStep * nbComp * nbNod];
+  DecomposeInSimplex dec(nbNod, nbComp, v->NbTimeStep);
+
+  if(!(*nbIn))
+    return;
+
+  v->Changed = 1;
+
+  int nb = List_Nbr(listIn) / (*nbIn);
+  for(int i = 0; i < List_Nbr(listIn); i += nb){
+    double *x = (double *)List_Pointer(listIn, i);
+    double *y = (double *)List_Pointer(listIn, i + nbNod);
+    double *z = (double *)List_Pointer(listIn, i + 2 * nbNod);
+    double *val = (double *)List_Pointer(listIn, i + 3 * nbNod); 
+    for(int j = 0; j < dec.numSimplices(); j++){
+      dec.decompose(j, x, y, z, val, xNew, yNew, zNew, valNew);
+      for(int k = 0; k < dec.numSimplexNodes(); k++)
+	List_Add(listOut, &xNew[k]);
+      for(int k = 0; k < dec.numSimplexNodes(); k++)
+	List_Add(listOut, &yNew[k]);
+      for(int k = 0; k < dec.numSimplexNodes(); k++)
+	List_Add(listOut, &zNew[k]);
+      for(int k = 0; k < dec.numSimplexNodes()*v->NbTimeStep*nbComp; k++)
+	List_Add(listOut, &valNew[k]);
+      (*nbOut)++;
+    }
+  }
+
+  delete [] valNew;
+
+  List_Delete(listIn);
+  listIn = NULL;
+  *nbIn = 0;
 }
 
 Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
@@ -97,22 +138,42 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
     }
   }
 
-  if(vv->NbSQ || vv->NbVQ || vv->NbTQ) { // quad
+  // Bail out if the view is a duplicate or if other views duplicate it
+  if(vv->DuplicateOf || vv->Links) {
+    Msg(WARNING, "DecomposeInSimplex cannot be applied to a duplicated view");
+    return 0;
   }
 
-  if(vv->NbSH || vv->NbVH || vv->NbTH) { // hexa
-  }
+  // quads
+  decomposeList(vv, 4, 1, vv->SQ, &vv->NbSQ, vv->ST, &vv->NbST);
+  decomposeList(vv, 4, 3, vv->VQ, &vv->NbVQ, vv->VT, &vv->NbVT);
+  decomposeList(vv, 4, 9, vv->TQ, &vv->NbTQ, vv->TT, &vv->NbTT);
+		          
+  // hexas	          
+  decomposeList(vv, 8, 1, vv->SH, &vv->NbSH, vv->SS, &vv->NbSS);
+  decomposeList(vv, 8, 3, vv->VH, &vv->NbVH, vv->VS, &vv->NbVS);
+  decomposeList(vv, 8, 9, vv->TH, &vv->NbTH, vv->TS, &vv->NbTS);
+		          
+  // prisms	          
+  decomposeList(vv, 6, 1, vv->SI, &vv->NbSI, vv->SS, &vv->NbSS);
+  decomposeList(vv, 6, 3, vv->VI, &vv->NbVI, vv->VS, &vv->NbVS);
+  decomposeList(vv, 6, 9, vv->TI, &vv->NbTI, vv->TS, &vv->NbTS);
+		          
+  // pyramids	          
+  decomposeList(vv, 5, 1, vv->SY, &vv->NbSY, vv->SS, &vv->NbSS);
+  decomposeList(vv, 5, 3, vv->VY, &vv->NbVY, vv->VS, &vv->NbVS);
+  decomposeList(vv, 5, 9, vv->TY, &vv->NbTY, vv->TS, &vv->NbTS);
 
-  if(vv->NbSI || vv->NbVI || vv->NbTI) { // prism
-  }
-
-  if(vv->NbSY || vv->NbVY || vv->NbTY) { // pyram
-  }
-
-  return 0;
+  return vv;
 }
 
 // Utility class 
+
+DecomposeInSimplex::DecomposeInSimplex(int numNodes, int numComponents, int numTimeSteps)
+  : _numNodes(numNodes), _numComponents(numComponents), _numTimeSteps(numTimeSteps) 
+{
+  ; 
+}
 
 int DecomposeInSimplex::numSimplices()
 {
@@ -141,8 +202,13 @@ void DecomposeInSimplex::reorder(int map[4], int n,
     xn[i] = x[map[i]];
     yn[i] = y[map[i]];
     zn[i] = z[map[i]];
-    for(int j = 0; j < _numComponents; j++)
-      valn[i*_numComponents+j] = val[map[i]*_numComponents+j];
+  }
+
+  for(int ts = 0; ts < _numTimeSteps; ts++)
+    for(int i = 0; i < n; i++) {
+      for(int j = 0; j < _numComponents; j++)
+	valn[ts*n*_numComponents + i*_numComponents + j] = 
+	  val[ts*_numNodes*_numComponents + map[i]*_numComponents + j];
   }
 }
 

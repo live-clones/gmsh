@@ -24,6 +24,11 @@ Default post-processing view name@*
 Default value: @code{""}@*
 Saved in: @code{-}
 
+@item View.AlphaChannelValue
+Global alpha channel value (used only if != 1)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{15}@*

@@ -64,7 +64,7 @@ class Post_View{
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowSize, DisplacementFactor, Explode;
   int Visible, IntervalsType, NbIso, NbAbscissa, Light, SmoothNormals ;
-  double AngleSmoothNormals;
+  double AngleSmoothNormals, AlphaChannel;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
   int TransparentScale, ScaleType, RangeType;
@@ -151,7 +151,8 @@ bool RemoveViewByNumber(int num);
 void ReadView(FILE *file, char *filename);
 void WriteView(int Flag_BIN, Post_View *v, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);
-void MergeViews(int all);
+void CombineViews(int all);
+void CombineViews(List_T *num);
 
 int BGMWithView (Post_View *ErrView);
 double ErrorInView(Post_View * ErrView, int *n);

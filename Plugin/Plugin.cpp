@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.43 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.44 2003-11-29 01:38:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -140,12 +140,11 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		    ("CutSphere", GMSH_RegisterCutSpherePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Skin", GMSH_RegisterSkinPlugin()));
-#if 0 // not ready yet
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Harmonic2Time", GMSH_RegisterHarmonic2TimePlugin()));
+  // not ready yet
+  // allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+  //                  ("Harmonic2Time", GMSH_RegisterHarmonic2TimePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("DecomposeInSimplex", GMSH_RegisterDecomposeInSimplexPlugin()));
-#endif
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Smooth", GMSH_RegisterSmoothPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >

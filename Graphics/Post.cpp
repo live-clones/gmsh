@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.48 2003-06-23 16:52:17 geuzaine Exp $
+// $Id: Post.cpp,v 1.49 2003-11-29 01:38:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -373,12 +373,13 @@ void Draw_Post(void)
 
     if(v->Visible && !v->Dirty) {
 
-      // sort the data % eye for transparency. Hybrid views
-      // (e.g. tri+qua) or multiple views will be sorted
-      // incorrectly... One should have a function (plugin?) to
-      // merge+decompose in simplices a group of views.
+      // Sort the data % eye for transparency. Hybrid views (e.g. tri
+      // + qua) or multiple views will be sorted incorrectly... You
+      // can use Plugin(DecomposeInSimplex) and/or View->Combine for
+      // this.
 
-      if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && changedEye()) {
+      if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && 
+	 (changedEye() || v->Changed)) {
         Msg(DEBUG, "Sorting view %d", v->Num);
 
         if(v->DrawScalars) {
@@ -400,9 +401,12 @@ void Draw_Post(void)
 
           }
 
-          // the following is of course not rigorous (we should store
+          // The following is of course not rigorous: we should store
           // the triangles generated during the iso computation, and
-          // sort these... But this is better than doing nothing :-)
+          // sort these... But this is better than doing nothing. If
+          // you want a rigorous sorting of the iso-surfaces, just use
+          // Plugin(CutMap).
+
           if(v->NbSS && v->DrawTetrahedra) {
             nb = List_Nbr(v->SS) / v->NbSS;
             qsort(v->SS->array, v->NbSS, nb * sizeof(double),

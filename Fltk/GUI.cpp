@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.254 2003-11-27 02:33:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.255 2003-11-29 01:38:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -884,8 +884,8 @@ void GUI::create_menu_window(int argc, char **argv)
       pop->add("Remove/All invisible views", 0, (Fl_Callback *) view_remove_invisible_cb, (void *)i, 0);
       pop->add("Duplicate/View without options", 0, (Fl_Callback *) view_duplicate_cb, (void *)i, 0);
       pop->add("Duplicate/View with options", 0, (Fl_Callback *) view_duplicate_with_options_cb, (void *)i, 0);
-      pop->add("Combine/All views", 0, (Fl_Callback *) view_merge_all_cb, (void *)i, 0);
-      pop->add("Combine/All visible views", 0, (Fl_Callback *) view_merge_visible_cb, (void *)i, 0);
+      pop->add("Combine/All views", 0, (Fl_Callback *) view_combine_all_cb, (void *)i, 0);
+      pop->add("Combine/All visible views", 0, (Fl_Callback *) view_combine_visible_cb, (void *)i, 0);
       pop->add("Save as/ASCII view...", 0, (Fl_Callback *) view_save_ascii_cb, (void *)i, 0);
       pop->add("Save as/Binary view...", 0, (Fl_Callback *) view_save_binary_cb, (void *)i, 0);
       add_post_plugins(pop, i);

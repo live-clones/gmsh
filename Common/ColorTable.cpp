@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.17 2003-03-21 00:52:34 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.18 2003-11-29 01:38:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -337,6 +337,18 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
     a = UNPACK_ALPHA(ct->table[i]);
     if(a < 255)
       return 1;
+  }
+  return 0;
+}
+
+int ColorTable_SetAlpha(GmshColorTable * ct, double alpha)
+{
+  int i, r, g, b;
+  for(i = 0; i < ct->size; i++) {
+    r = UNPACK_RED(ct->table[i]);
+    g = UNPACK_GREEN(ct->table[i]);
+    b = UNPACK_BLUE(ct->table[i]);
+    ct->table[i] = PACK_COLOR(r, g, b, (int)(255. * alpha));
   }
   return 0;
 }

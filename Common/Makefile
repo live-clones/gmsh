@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2003-10-29 19:51:42 geuzaine Exp $
+# $Id: Makefile,v 1.46 2003-11-29 01:38:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -73,8 +73,7 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
   ../Common/ColorTable.h Context.h Options.h ../Fltk/Solvers.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
-  ../Common/GmshUI.h
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   GmshUI.h GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h \
@@ -87,5 +86,5 @@ ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ColorTable.h Context.h
 Trackball.o: Trackball.cpp Trackball.h
-License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h
+License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h

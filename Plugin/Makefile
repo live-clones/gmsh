@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2003-11-21 07:56:32 geuzaine Exp $
+# $Id: Makefile,v 1.39 2003-11-29 01:38:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -62,45 +62,53 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   PluginManager.h CutMap.h Levelset.h CutPlane.h CutSphere.h Skin.h \
-  Smooth.h Transform.h Triangulate.h SphericalRaise.h
-Levelset.o: Levelset.cpp Levelset.h Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Graphics/Iso.h \
-  ../Numeric/Numeric.h ../DataStr/Malloc.h
+  ../DataStr/Tree.h ../DataStr/avl.h Harmonic2Time.h DecomposeInSimplex.h \
+  Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h
+Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h DecomposeInSimplex.h ../Graphics/Iso.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/Malloc.h
 CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
-  ../Common/Context.h
+  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Common/Context.h
 CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
-  ../Common/Context.h
-CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
-  ../Common/Context.h
+  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Common/Context.h
+CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/Context.h
 Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
-  Smooth.h ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h Smooth.h \
   ../Common/Context.h
 Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
-  ../Common/Message.h Transform.h ../DataStr/List.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/Context.h
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h Transform.h ../Common/Context.h
 Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Plugin.h ../Common/Options.h \
-  Triangulate.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/Views.h ../Common/ColorTable.h Triangulate.h \
   ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h ../Mesh/Create.h
 SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
-  ../Common/Message.h SphericalRaise.h ../DataStr/List.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h SphericalRaise.h ../Common/Context.h \
   ../Numeric/Numeric.h
-Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h Skin.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/Context.h ../DataStr/Malloc.h
-DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h\
-  ../Common/Message.h DecomposeInSimplex.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/Context.h ../DataStr/Malloc.h
+DisplacementRaise.o: DisplacementRaise.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h DisplacementRaise.h ../Common/Context.h \
+  ../Numeric/Numeric.h
+Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h Skin.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
+  ../DataStr/Malloc.h
+DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h DecomposeInSimplex.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Common/Context.h ../DataStr/Malloc.h
 Harmonic2Time.o: Harmonic2Time.cpp Plugin.h ../Common/Options.h \
-  ../Common/Message.h Harmonic2Time.h ../DataStr/List.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/Context.h ../Numeric/Numeric.h
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h Harmonic2Time.h ../Common/Context.h \
+  ../Numeric/Numeric.h

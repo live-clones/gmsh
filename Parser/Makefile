@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.50 2003-09-17 18:00:56 geuzaine Exp $
+# $Id: Makefile,v 1.51 2003-11-29 01:38:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -68,16 +68,16 @@ Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h Gmsh.tab.hpp
-Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Parallel/ParUtil.h \
-  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Geo/DataBase.h ../Graphics/Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Mesh/Create.h ../Geo/StepGeomDatabase.h \
-  ../Common/Options.h ../Common/Colors.h Parser.h OpenFile.h \
-  ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
+Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../DataStr/List.h ../Parallel/ParUtil.h \
+  ../Common/Gmsh.h ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../DataStr/Tools.h ../Numeric/Numeric.h ../Common/Context.h \
+  ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Geo/DataBase.h ../Graphics/Draw.h \
+  ../Mesh/Create.h ../Geo/StepGeomDatabase.h ../Common/Colors.h Parser.h \
+  OpenFile.h ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
   ../Graphics/CreateFile.h
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
