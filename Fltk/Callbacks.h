@@ -250,6 +250,7 @@ void mesh_1d_cb(CALLBACK_ARGS) ;
 void mesh_2d_cb(CALLBACK_ARGS) ; 
 void mesh_3d_cb(CALLBACK_ARGS) ; 
 void mesh_degree_cb(CALLBACK_ARGS) ; 
+void mesh_optimize_cb(CALLBACK_ARGS) ; 
 void mesh_define_length_cb (CALLBACK_ARGS) ;
 void mesh_define_recombine_cb (CALLBACK_ARGS) ;
 void mesh_define_transfinite_cb (CALLBACK_ARGS) ; 

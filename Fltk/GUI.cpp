@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.318 2004-06-22 17:39:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.319 2004-06-30 07:51:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -287,6 +287,9 @@ Context_Item menu_mesh[] = {
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
   { "First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   { "Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
+#if defined(HAVE_NETGEN)
+  { "Optimize 3D", (Fl_Callback *)mesh_optimize_cb } , 
+#endif
   { "Save",   (Fl_Callback *)mesh_save_cb } ,
   { NULL } 
 };  

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.250 2004-06-22 17:39:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.251 2004-06-30 07:51:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2483,6 +2483,20 @@ void mesh_degree_cb(CALLBACK_ARGS)
     Degre1();
     break;
   }
+  CTX.mesh.changed = 1;
+  Draw();
+  Msg(STATUS3N, "Ready");
+}
+
+void mesh_optimize_cb(CALLBACK_ARGS)
+{
+  List_T *list = Tree2List(THEM->Volumes);
+  for(int i = 0; i < List_Nbr(list); i++){
+    Volume *v;
+    List_Read(list, i, &v);
+    Optimize_Netgen(v);
+  }
+  List_Delete(list);
   CTX.mesh.changed = 1;
   Draw();
   Msg(STATUS3N, "Ready");
