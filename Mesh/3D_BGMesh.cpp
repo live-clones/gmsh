@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.33 2004-12-31 17:50:34 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.34 2004-12-31 18:15:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,19 @@ extern Context_T CTX;
 
 void ExportLcField(Mesh * M, char *filename, int volume, int surface)
 {
+  if(!Tree_Nbr(M->Volumes) && !Tree_Nbr(M->Surfaces)){
+    Msg(GERROR, "No volumes or surfaces to save");
+    return;
+  }
+  else if(volume && !surface && !Tree_Nbr(M->Volumes)){
+    Msg(GERROR, "No volumes to save");
+    return;
+  }
+  else if(!volume && surface && !Tree_Nbr(M->Surfaces)){
+    Msg(GERROR, "No surfaces to save");
+    return;
+  }
+
   FILE *f = fopen(filename, "w");
 
   if(!f) {
@@ -39,7 +52,7 @@ void ExportLcField(Mesh * M, char *filename, int volume, int surface)
     return;
   }
 
-  if(volume){
+  if(volume && Tree_Nbr(M->Volumes)){
     List_T *l = Tree2List(M->Volumes);
     fprintf(f, "View \"Volume LC Field\" {\n");
     for(int i = 0; i < List_Nbr(l); i++) {
@@ -71,7 +84,7 @@ void ExportLcField(Mesh * M, char *filename, int volume, int surface)
     fprintf(f, "};\n");
   }
   
-  if(surface){
+  if(surface && Tree_Nbr(M->Surfaces)){
     List_T *l = Tree2List(M->Surfaces);
     fprintf(f, "View \"Surface LC Field\" {\n");
     for(int i = 0; i < List_Nbr(l); i++) {
