@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.74 2002-09-01 22:10:13 geuzaine Exp $
+// $Id: Views.cpp,v 1.75 2002-09-02 22:39:40 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -607,85 +607,49 @@ void Read_View(FILE *file, char *filename){
       // Time values
       v->Time = List_CreateFromFile(v->NbTimeStep, size, file, format, swap);
 
+#define LL List_CreateFromFile(nb, size, file, format, swap)
+
       // Points
-      nb = v->NbSP ? v->NbSP * (v->NbTimeStep  +3) : 0 ;
-      v->SP = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbVP ? v->NbVP * (v->NbTimeStep*3+3) : 0 ;
-      v->VP = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTP ? v->NbTP * (v->NbTimeStep*9+3) : 0 ;
-      v->TP = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSP ? v->NbSP * (v->NbTimeStep  +3) : 0 ; v->SP = LL;
+      nb = v->NbVP ? v->NbVP * (v->NbTimeStep*3+3) : 0 ; v->VP = LL;
+      nb = v->NbTP ? v->NbTP * (v->NbTimeStep*9+3) : 0 ; v->TP = LL;
 
       // Lines
-      nb = v->NbSL ? v->NbSL * (v->NbTimeStep*2  +6) : 0 ;
-      v->SL = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbVL ? v->NbVL * (v->NbTimeStep*2*3+6) : 0 ;
-      v->VL = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTL ? v->NbTL * (v->NbTimeStep*2*9+6) : 0 ;
-      v->TL = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSL ? v->NbSL * (v->NbTimeStep*2  +6) : 0 ; v->SL = LL;
+      nb = v->NbVL ? v->NbVL * (v->NbTimeStep*2*3+6) : 0 ; v->VL = LL;
+      nb = v->NbTL ? v->NbTL * (v->NbTimeStep*2*9+6) : 0 ; v->TL = LL;
 
       // Triangles
-      nb = v->NbST ? v->NbST * (v->NbTimeStep*3  +9) : 0 ;
-      v->ST = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbVT ? v->NbVT * (v->NbTimeStep*3*3+9) : 0 ;
-      v->VT = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTT ? v->NbTT * (v->NbTimeStep*3*9+9) : 0 ;
-      v->TT = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbST ? v->NbST * (v->NbTimeStep*3  +9) : 0 ; v->ST = LL;
+      nb = v->NbVT ? v->NbVT * (v->NbTimeStep*3*3+9) : 0 ; v->VT = LL;
+      nb = v->NbTT ? v->NbTT * (v->NbTimeStep*3*9+9) : 0 ; v->TT = LL;
 
       // Quadrangles
-      nb = v->NbSQ ? v->NbSQ * (v->NbTimeStep*4  +12) : 0 ;
-      v->SQ = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbVQ ? v->NbVQ * (v->NbTimeStep*4*3+12) : 0 ;
-      v->VQ = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTQ ? v->NbTQ * (v->NbTimeStep*4*9+12) : 0 ;
-      v->TQ = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSQ ? v->NbSQ * (v->NbTimeStep*4  +12) : 0 ; v->SQ = LL;
+      nb = v->NbVQ ? v->NbVQ * (v->NbTimeStep*4*3+12) : 0 ; v->VQ = LL;
+      nb = v->NbTQ ? v->NbTQ * (v->NbTimeStep*4*9+12) : 0 ; v->TQ = LL;
 
       // Tetrahedra
-      nb = v->NbSS ? v->NbSS * (v->NbTimeStep*4  +12) : 0 ;
-      v->SS = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbVS ? v->NbVS * (v->NbTimeStep*4*3+12) : 0 ;
-      v->VS = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTS ? v->NbTS * (v->NbTimeStep*4*9+12) : 0 ;
-      v->TS = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSS ? v->NbSS * (v->NbTimeStep*4  +12) : 0 ; v->SS = LL;
+      nb = v->NbVS ? v->NbVS * (v->NbTimeStep*4*3+12) : 0 ; v->VS = LL;
+      nb = v->NbTS ? v->NbTS * (v->NbTimeStep*4*9+12) : 0 ; v->TS = LL;
 
       // Hexahedra
-      nb = v->NbSH ? v->NbSH * (v->NbTimeStep*8  +24) : 0 ;
-      v->SH = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbVH ? v->NbVH * (v->NbTimeStep*8*3+24) : 0 ;
-      v->VH = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTH ? v->NbTH * (v->NbTimeStep*8*9+24) : 0 ;
-      v->TH = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSH ? v->NbSH * (v->NbTimeStep*8  +24) : 0 ; v->SH = LL;
+      nb = v->NbVH ? v->NbVH * (v->NbTimeStep*8*3+24) : 0 ; v->VH = LL;
+      nb = v->NbTH ? v->NbTH * (v->NbTimeStep*8*9+24) : 0 ; v->TH = LL;
 
       // Prisms
-      nb = v->NbSI ? v->NbSI * (v->NbTimeStep*6  +18) : 0 ;
-      v->SI = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbVI ? v->NbVI * (v->NbTimeStep*6*3+18) : 0 ;
-      v->VI = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTI ? v->NbTI * (v->NbTimeStep*6*9+18) : 0 ;
-      v->TI = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSI ? v->NbSI * (v->NbTimeStep*6  +18) : 0 ; v->SI = LL;
+      nb = v->NbVI ? v->NbVI * (v->NbTimeStep*6*3+18) : 0 ; v->VI = LL;
+      nb = v->NbTI ? v->NbTI * (v->NbTimeStep*6*9+18) : 0 ; v->TI = LL;
 
       // Pyramids
-      nb = v->NbSY ? v->NbSY * (v->NbTimeStep*5  +15) : 0 ;
-      v->SY = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSY ? v->NbSY * (v->NbTimeStep*5  +15) : 0 ; v->SY = LL;
+      nb = v->NbVY ? v->NbVY * (v->NbTimeStep*5*3+15) : 0 ; v->VY = LL;
+      nb = v->NbTY ? v->NbTY * (v->NbTimeStep*5*9+15) : 0 ; v->TY = LL;
 
-      nb = v->NbVY ? v->NbVY * (v->NbTimeStep*5*3+15) : 0 ;
-      v->VY = List_CreateFromFile(nb, size, file, format, swap);
-
-      nb = v->NbTY ? v->NbTY * (v->NbTimeStep*5*9+15) : 0 ;
-      v->TY = List_CreateFromFile(nb, size, file, format, swap);
+#undef LL
 
       // Strings
       nb = v->NbT2 ? v->NbT2 * 4 : 0 ;
