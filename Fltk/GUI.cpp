@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.312 2004-06-01 22:23:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.313 2004-06-02 00:16:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1135,13 +1135,14 @@ void GUI::create_graphic_window(int argc, char **argv)
   g_status_butt[3]->callback(status_xyz1p_cb, (void *)3);
   g_status_butt[3]->tooltip("Set unit scale");
 
-  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4);
-  x += sw;
-  g_status_butt[4]->callback(status_xyz1p_cb, (void *)4);
-  g_status_butt[4]->tooltip("Set orthographic/perspective projection");
+  //FIXME: remove this until we do the perspective projection properly
+  //g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  //x += sw;
+  //g_status_butt[4]->callback(status_xyz1p_cb, (void *)4);
+  //g_status_butt[4]->tooltip("Set orthographic/perspective projection");
   ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
   persp_bmp = new Fl_Bitmap(persp_bits, persp_width, persp_height);
-  persp_bmp->label(g_status_butt[4]);
+  //persp_bmp->label(g_status_butt[4]);
 
   g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
   x += sw;
@@ -1166,9 +1167,12 @@ void GUI::create_graphic_window(int argc, char **argv)
   g_status_butt[7]->deactivate();
 
   for(i = 0; i < 8; i++) {
-    g_status_butt[i]->box(FL_FLAT_BOX);
-    g_status_butt[i]->selection_color(FL_WHITE);
-    g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    //FIXME:
+    if(i != 4){
+      g_status_butt[i]->box(FL_FLAT_BOX);
+      g_status_butt[i]->selection_color(FL_WHITE);
+      g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    }
   }
 
   g_status_label[0] = new Fl_Box(x, glheight + 2, (width - x) / 3, sh - 4);

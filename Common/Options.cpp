@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.162 2004-06-01 22:16:24 geuzaine Exp $
+// $Id: Options.cpp,v 1.163 2004-06-02 00:16:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2228,15 +2228,14 @@ double opt_general_orthographic(OPT_ARGS_NUM)
     if(CTX.ortho){
       WID->gen_butt[10]->value(1);
       WID->gen_butt[11]->value(0);
-      WID->persp_bmp->label(WID->g_status_butt[4]);
-
+      //WID->persp_bmp->label(WID->g_status_butt[4]);
     }
     else{
       WID->gen_butt[10]->value(0);
       WID->gen_butt[11]->value(1);
-      WID->ortho_bmp->label(WID->g_status_butt[4]);
+      //WID->ortho_bmp->label(WID->g_status_butt[4]);
     }
-    WID->g_status_butt[4]->redraw();
+    //WID->g_status_butt[4]->redraw();
   }
 #endif
   return CTX.ortho;
