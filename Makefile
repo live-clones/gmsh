@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.97 2001-05-07 07:35:40 geuzaine Exp $
+# $Id: Makefile,v 1.98 2001-05-08 16:53:03 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -511,7 +511,7 @@ fltk_mingw: tag
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
-	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
+	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
 fltk_cygwin: tag
@@ -523,7 +523,7 @@ fltk_cygwin: tag
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
@@ -536,7 +536,7 @@ fltk_cygwin_gertha_buro: tag
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC_GERTHA_BURO)" \
         ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
                  ../fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
@@ -549,12 +549,10 @@ fltk_cygwin_laptopjf:
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC_LAPTOPJF)" \
         ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB) \
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB) Common/Icon.res \
                  ../fltk-1.0.9/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 #	strip $(GMSH_BIN_DIR)/gmsh-cyg.exe
 
 fltk_cygwin_laptopjf_tag: tag fltk_cygwin_laptopjf
-
-
 
 

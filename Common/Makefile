@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2001-04-23 10:38:07 geuzaine Exp $
+# $Id: Makefile,v 1.19 2001-05-08 16:53:03 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -49,6 +49,9 @@ clean:
 
 lint:
 	$(LINT) $(CFLAGS) $(SRC)
+
+res:
+	windres Icon.rc -O coff Icon.res
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
