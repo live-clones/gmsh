@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.36 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: Views.cpp,v 1.37 2001-04-29 14:35:32 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -717,7 +717,7 @@ void xyzv::update (int n, double *v)
   if(!vals)
     {
       vals = new double[n];
-      for(i=0;i<nbvals;i++)vals[i] = 0.0;
+      for(i=0;i<n;i++)vals[i] = 0.0;
       nbvals = n;
       nboccurences = 0;
     }
