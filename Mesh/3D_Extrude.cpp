@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.49 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.50 2001-11-14 19:00:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -806,7 +806,7 @@ int Extrude_Mesh (Curve * c){
 void copy_mesh (Surface * from, Surface * to){
   List_T *list = Tree2List (from->Simplexes);
   Simplex *s, *news;
-  Vertex **pV, *vi[3], *v;
+  Vertex **pV, *vi[4], *v;
 
   int nb = Tree_Nbr(to->Simplexes);
   if(nb){
@@ -816,25 +816,25 @@ void copy_mesh (Surface * from, Surface * to){
     return;
   }
 
-  for (int i = 0; i < List_Nbr (list); i++){
+  for (int i = 0; i < List_Nbr(list); i++){
     List_Read (list, i, &s);
     for (int j = 0; j < 4; j++){
       if(s->V[j]){
 	v = s->V[j];
-	vi[j] = Create_Vertex (++THEM->MaxPointNum, v->Pos.X,
-			       v->Pos.Y, v->Pos.Z, v->lc, v->u);
-	ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		     vi[j]->Pos.X, vi[j]->Pos.Y, vi[j]->Pos.Z);
-	if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &vi[j]))){
-	  //Crash gcc2.95! Free_Vertex(&vi[j],0);
+	vi[j] = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
+			      v->Pos.Y, v->Pos.Z, v->lc, v->u);
+	ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+		    vi[j]->Pos.X, vi[j]->Pos.Y, vi[j]->Pos.Z);
+	if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery(Vertex_Bound, &vi[j]))){
+	  Free_Vertex(&vi[j],0);
 	  vi[j] = *pV;
 	}
 	else{
-	  Tree_Insert (THEM->Vertices, &vi[j]);
-	  Tree_Insert (Vertex_Bound, &vi[j]);
+	  Tree_Insert(THEM->Vertices, &vi[j]);
+	  Tree_Insert(Vertex_Bound, &vi[j]);
 	}
-	if (ToAdd)
-	  Tree_Insert (ToAdd, &vi[j]);
+	if(ToAdd)
+	  Tree_Insert(ToAdd, &vi[j]);
       }
       else{
 	vi[j] = NULL;

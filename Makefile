@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.161 2001-11-13 13:22:21 geuzaine Exp $
+# $Id: Makefile,v 1.162 2001-11-14 19:00:05 geuzaine Exp $
 
-GMSH_RELEASE = 1.29
+GMSH_RELEASE = 1.30
 
 MAKE = make
 CXX = c++
@@ -306,7 +306,7 @@ compile_linux_gcc-2.95:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
            "CC=$(HOME)/gcc-2.95.3/bin/gcc" \
-           "OPT_FLAGS=-O0" \
+           "OPT_FLAGS=-g" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I/usr/X11R6/include" \

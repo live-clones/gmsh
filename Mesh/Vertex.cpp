@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.11 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.12 2001-11-14 19:00:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -111,7 +111,6 @@ int compareVertex (const void *a, const void *b){
   w = (Vertex **) b;
   i = abs ((*q)->Num);
   j = abs ((*w)->Num);
-
   return (i - j);
 }
 
