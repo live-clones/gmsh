@@ -31,4 +31,4 @@ General.Color.Text = Black;
 General.Color.SmallAxes = Black;
 Draw;
 
-// Save View[0];
+//Save View[0] "iso.pos";

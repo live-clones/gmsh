@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.6 2003-11-29 01:38:54 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.7 2003-11-29 19:55:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -83,7 +83,7 @@ void GMSH_DecomposeInSimplexPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void decomposeList(Post_View *v, int nbNod, int nbComp,
-			  List_T *listIn, int *nbIn, List_T *listOut, int *nbOut)
+			  List_T **listIn, int *nbIn, List_T *listOut, int *nbOut)
 {
   double xNew[4], yNew[4], zNew[4];
   double *valNew = new double[v->NbTimeStep * nbComp * nbNod];
@@ -94,12 +94,12 @@ static void decomposeList(Post_View *v, int nbNod, int nbComp,
 
   v->Changed = 1;
 
-  int nb = List_Nbr(listIn) / (*nbIn);
-  for(int i = 0; i < List_Nbr(listIn); i += nb){
-    double *x = (double *)List_Pointer(listIn, i);
-    double *y = (double *)List_Pointer(listIn, i + nbNod);
-    double *z = (double *)List_Pointer(listIn, i + 2 * nbNod);
-    double *val = (double *)List_Pointer(listIn, i + 3 * nbNod); 
+  int nb = List_Nbr(*listIn) / (*nbIn);
+  for(int i = 0; i < List_Nbr(*listIn); i += nb){
+    double *x = (double *)List_Pointer(*listIn, i);
+    double *y = (double *)List_Pointer(*listIn, i + nbNod);
+    double *z = (double *)List_Pointer(*listIn, i + 2 * nbNod);
+    double *val = (double *)List_Pointer(*listIn, i + 3 * nbNod); 
     for(int j = 0; j < dec.numSimplices(); j++){
       dec.decompose(j, x, y, z, val, xNew, yNew, zNew, valNew);
       for(int k = 0; k < dec.numSimplexNodes(); k++)
@@ -116,8 +116,8 @@ static void decomposeList(Post_View *v, int nbNod, int nbComp,
 
   delete [] valNew;
 
-  List_Delete(listIn);
-  listIn = NULL;
+  List_Delete(*listIn);
+  *listIn = NULL;
   *nbIn = 0;
 }
 
@@ -145,24 +145,24 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
   }
 
   // quads
-  decomposeList(vv, 4, 1, vv->SQ, &vv->NbSQ, vv->ST, &vv->NbST);
-  decomposeList(vv, 4, 3, vv->VQ, &vv->NbVQ, vv->VT, &vv->NbVT);
-  decomposeList(vv, 4, 9, vv->TQ, &vv->NbTQ, vv->TT, &vv->NbTT);
+  decomposeList(vv, 4, 1, &vv->SQ, &vv->NbSQ, vv->ST, &vv->NbST);
+  decomposeList(vv, 4, 3, &vv->VQ, &vv->NbVQ, vv->VT, &vv->NbVT);
+  decomposeList(vv, 4, 9, &vv->TQ, &vv->NbTQ, vv->TT, &vv->NbTT);
 		          
   // hexas	          
-  decomposeList(vv, 8, 1, vv->SH, &vv->NbSH, vv->SS, &vv->NbSS);
-  decomposeList(vv, 8, 3, vv->VH, &vv->NbVH, vv->VS, &vv->NbVS);
-  decomposeList(vv, 8, 9, vv->TH, &vv->NbTH, vv->TS, &vv->NbTS);
+  decomposeList(vv, 8, 1, &vv->SH, &vv->NbSH, vv->SS, &vv->NbSS);
+  decomposeList(vv, 8, 3, &vv->VH, &vv->NbVH, vv->VS, &vv->NbVS);
+  decomposeList(vv, 8, 9, &vv->TH, &vv->NbTH, vv->TS, &vv->NbTS);
 		          
   // prisms	          
-  decomposeList(vv, 6, 1, vv->SI, &vv->NbSI, vv->SS, &vv->NbSS);
-  decomposeList(vv, 6, 3, vv->VI, &vv->NbVI, vv->VS, &vv->NbVS);
-  decomposeList(vv, 6, 9, vv->TI, &vv->NbTI, vv->TS, &vv->NbTS);
+  decomposeList(vv, 6, 1, &vv->SI, &vv->NbSI, vv->SS, &vv->NbSS);
+  decomposeList(vv, 6, 3, &vv->VI, &vv->NbVI, vv->VS, &vv->NbVS);
+  decomposeList(vv, 6, 9, &vv->TI, &vv->NbTI, vv->TS, &vv->NbTS);
 		          
   // pyramids	          
-  decomposeList(vv, 5, 1, vv->SY, &vv->NbSY, vv->SS, &vv->NbSS);
-  decomposeList(vv, 5, 3, vv->VY, &vv->NbVY, vv->VS, &vv->NbVS);
-  decomposeList(vv, 5, 9, vv->TY, &vv->NbTY, vv->TS, &vv->NbTS);
+  decomposeList(vv, 5, 1, &vv->SY, &vv->NbSY, vv->SS, &vv->NbSS);
+  decomposeList(vv, 5, 3, &vv->VY, &vv->NbVY, vv->VS, &vv->NbVS);
+  decomposeList(vv, 5, 9, &vv->TY, &vv->NbTY, vv->TS, &vv->NbTS);
 
   return vv;
 }
