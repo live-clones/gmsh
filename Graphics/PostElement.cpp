@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.32 2004-05-29 20:25:29 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.33 2004-05-29 23:22:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -394,7 +394,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       Raise[i][k] = View->Raise[i] * Val[k];
 
   if(View->Light && 
-     (!View->VertexArray || (View->VertexArray && View->VertexArray->fill))) {
+     (!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill))) {
     x1x0 = (X[1] + Raise[0][1]) - (X[0] + Raise[0][0]);
     y1y0 = (Y[1] + Raise[1][1]) - (Y[0] + Raise[1][0]);
     z1z0 = (Z[1] + Raise[2][1]) - (Z[0] + Raise[2][0]);
@@ -454,22 +454,22 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   }
 
   if(View->IntervalsType == DRAW_POST_CONTINUOUS &&
-     (!View->VertexArray || (View->VertexArray && View->VertexArray->fill))) {
+     (!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill))) {
     if(Val[0] >= ValMin && Val[0] <= ValMax &&
        Val[1] >= ValMin && Val[1] <= ValMax &&
        Val[2] >= ValMin && Val[2] <= ValMax) {
-      if(View->VertexArray && View->VertexArray->fill){
+      if(View->TriVertexArray && View->TriVertexArray->fill){
 	unsigned int col;
 	col = PaletteContinuous(View, ValMin, ValMax, Val[0]);
-	View->VertexArray->add(X[0] + Raise[0][0], Y[0] + Raise[1][0], Z[0] + Raise[2][0],
-			       norms[0], norms[1], norms[2], col);
+	View->TriVertexArray->add(X[0] + Raise[0][0], Y[0] + Raise[1][0], Z[0] + Raise[2][0],
+				  norms[0], norms[1], norms[2], col);
 	col = PaletteContinuous(View, ValMin, ValMax, Val[1]);
-	View->VertexArray->add(X[1] + Raise[0][1], Y[1] + Raise[1][1], Z[1] + Raise[2][1],
-			       norms[3], norms[4], norms[5], col);
+	View->TriVertexArray->add(X[1] + Raise[0][1], Y[1] + Raise[1][1], Z[1] + Raise[2][1],
+				  norms[3], norms[4], norms[5], col);
 	col = PaletteContinuous(View, ValMin, ValMax, Val[2]);
-	View->VertexArray->add(X[2] + Raise[0][2], Y[2] + Raise[1][2], Z[2] + Raise[2][2],
-			       norms[6], norms[7], norms[8], col);
-	View->VertexArray->num_triangles++;
+	View->TriVertexArray->add(X[2] + Raise[0][2], Y[2] + Raise[1][2], Z[2] + Raise[2][2],
+				  norms[6], norms[7], norms[8], col);
+	View->TriVertexArray->num++;
       }
       else{
 	if(View->Light) glEnable(GL_LIGHTING);
@@ -492,25 +492,25 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     else {
       CutTriangle2D(X, Y, Z, Val, ValMin, ValMax, Xp, Yp, Zp, &nb, value);
       if(nb >= 3) {
-	if(View->VertexArray && View->VertexArray->fill){
+	if(View->TriVertexArray && View->TriVertexArray->fill){
 	  for(int i = 2; i < nb; i++) {
 	    unsigned int col;
 	    col = PaletteContinuous(View, ValMin, ValMax, value[0]);
-	    View->VertexArray->add(Xp[0] + View->Raise[0] * value[0],
-				   Yp[0] + View->Raise[1] * value[0],
-				   Zp[0] + View->Raise[2] * value[0],
-				   norms[0], norms[1], norms[2], col);
+	    View->TriVertexArray->add(Xp[0] + View->Raise[0] * value[0],
+				      Yp[0] + View->Raise[1] * value[0],
+				      Zp[0] + View->Raise[2] * value[0],
+				      norms[0], norms[1], norms[2], col);
 	    col = PaletteContinuous(View, ValMin, ValMax, value[i-1]);
-	    View->VertexArray->add(Xp[i-1] + View->Raise[0] * value[i-1],
-				   Yp[i-1] + View->Raise[1] * value[i-1],
-				   Zp[i-1] + View->Raise[2] * value[i-1],
-				   norms[0], norms[1], norms[2], col);
+	    View->TriVertexArray->add(Xp[i-1] + View->Raise[0] * value[i-1],
+				      Yp[i-1] + View->Raise[1] * value[i-1],
+				      Zp[i-1] + View->Raise[2] * value[i-1],
+				      norms[0], norms[1], norms[2], col);
 	    col = PaletteContinuous(View, ValMin, ValMax, value[i]);
-	    View->VertexArray->add(Xp[i] + View->Raise[0] * value[i],
-				   Yp[i] + View->Raise[1] * value[i],
-				   Zp[i] + View->Raise[2] * value[i],
-				   norms[0], norms[1], norms[2], col);
-	    View->VertexArray->num_triangles++;	    
+	    View->TriVertexArray->add(Xp[i] + View->Raise[0] * value[i],
+				      Yp[i] + View->Raise[1] * value[i],
+				      Zp[i] + View->Raise[2] * value[i],
+				      norms[0], norms[1], norms[2], col);
+	    View->TriVertexArray->num++;	    
 	  }
 	}
 	else{
@@ -532,7 +532,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   }
 
   if(View->IntervalsType == DRAW_POST_DISCRETE &&
-     (!View->VertexArray || (View->VertexArray && View->VertexArray->fill))) {
+     (!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill))) {
     for(int k = 0; k < View->NbIso; k++) {
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
       CutTriangle2D(X, Y, Z, Val,
@@ -540,21 +540,21 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 		    View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
 		    Xp, Yp, Zp, &nb, value);
       if(nb >= 3) {
-	if(View->VertexArray && View->VertexArray->fill){
+	if(View->TriVertexArray && View->TriVertexArray->fill){
 	  for(int i = 2; i < nb; i++) {
-	    View->VertexArray->add(Xp[0] + View->Raise[0] * value[0],
-				   Yp[0] + View->Raise[1] * value[0],
-				   Zp[0] + View->Raise[2] * value[0],
-				   norms[0], norms[1], norms[2], col);
-	    View->VertexArray->add(Xp[i-1] + View->Raise[0] * value[i-1],
-				   Yp[i-1] + View->Raise[1] * value[i-1],
-				   Zp[i-1] + View->Raise[2] * value[i-1],
-				   norms[0], norms[1], norms[2], col);
-	    View->VertexArray->add(Xp[i] + View->Raise[0] * value[i],
-				   Yp[i] + View->Raise[1] * value[i],
-				   Zp[i] + View->Raise[2] * value[i],
-				   norms[0], norms[1], norms[2], col);
-	    View->VertexArray->num_triangles++;
+	    View->TriVertexArray->add(Xp[0] + View->Raise[0] * value[0],
+				      Yp[0] + View->Raise[1] * value[0],
+				      Zp[0] + View->Raise[2] * value[0],
+				      norms[0], norms[1], norms[2], col);
+	    View->TriVertexArray->add(Xp[i-1] + View->Raise[0] * value[i-1],
+				      Yp[i-1] + View->Raise[1] * value[i-1],
+				      Zp[i-1] + View->Raise[2] * value[i-1],
+				      norms[0], norms[1], norms[2], col);
+	    View->TriVertexArray->add(Xp[i] + View->Raise[0] * value[i],
+				      Yp[i] + View->Raise[1] * value[i],
+				      Zp[i] + View->Raise[2] * value[i],
+				      norms[0], norms[1], norms[2], col);
+	    View->TriVertexArray->num++;
 	  }
 	}
 	else{
@@ -646,7 +646,7 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
       Draw_String(Num);
     }
   }
-  else if(!View->VertexArray || (View->VertexArray && View->VertexArray->fill)){
+  else if(!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill)){
     for(int k = 0; k < View->NbIso; k++) {
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
       IsoSimplex(View, preproNormals, X, Y, Z, Val,

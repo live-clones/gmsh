@@ -84,12 +84,12 @@ void Draw_Mesh_Curve(void *a, void *b);
 void Draw_Mesh_Point(void *a, void *b);
 void Draw_Mesh_Line(void *a, void *b);
 void Draw_Mesh_Triangle(void *a, void *b);
-void Draw_Mesh_Triangle_Array(triangleVertexArray *va);
 void Draw_Mesh_Quadrangle(void *a, void *b);
 void Draw_Mesh_Tetrahedron(void *a, void *b);
 void Draw_Mesh_Hexahedron(void *a, void *b);
 void Draw_Mesh_Prism(void *a, void *b);
 void Draw_Mesh_Pyramid(void *a, void *b);
+void Draw_Mesh_Array(VertexArray *va, int faces, int edges);
 
 void Draw_ScalarPoint(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax, 

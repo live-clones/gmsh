@@ -256,7 +256,8 @@ struct _Surf{
   POLY_rep *thePolyRep;
   int Dirty; // flag to prevent any meshing
   DrawingColor Color;
-  triangleVertexArray * vertexArray;
+  VertexArray * TriVertexArray;
+  VertexArray * QuadVertexArray;
 };
 
 typedef struct _Surf Surface;

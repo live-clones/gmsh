@@ -61,7 +61,7 @@ class Post_View{
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
   // a vertex array to draw triangles efficiently
-  triangleVertexArray *VertexArray;
+  VertexArray *TriVertexArray;
 
   // options
   int Type, Position[2], AutoPosition, Size[2];

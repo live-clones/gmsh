@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.91 2004-05-29 20:25:28 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.92 2004-05-29 23:22:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -231,24 +231,37 @@ void Draw_Mesh_Surface(void *a, void *b)
 
   if(CTX.mesh.vertex_arrays){
     if(CTX.mesh.changed){
-      Msg(DEBUG, "regenerate mesh vertex array");
-      if(s->vertexArray) delete s->vertexArray;
-      s->vertexArray = new triangleVertexArray(Tree_Nbr(s->Simplexes));
-      s->vertexArray->fill = 1;
+      Msg(DEBUG, "regenerate surface mesh vertex arrays");
+      // triangles
+      if(s->TriVertexArray) delete s->TriVertexArray;
+      s->TriVertexArray = new VertexArray(3, Tree_Nbr(s->Simplexes));
+      s->TriVertexArray->fill = 1;
       Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
-      if(s->vertexArray)
-	s->vertexArray->fill = 0;
+      if(s->TriVertexArray) s->TriVertexArray->fill = 0;
+      // quads
+      if(s->QuadVertexArray) delete s->QuadVertexArray;
+      s->QuadVertexArray = new VertexArray(4, Tree_Nbr(s->Quadrangles));
+      s->QuadVertexArray->fill = 1;
+      Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
+      if(s->QuadVertexArray) s->QuadVertexArray->fill = 0;
     }
-    if(s->vertexArray)
-      Draw_Mesh_Triangle_Array(s->vertexArray);
+    if(s->TriVertexArray)
+      Draw_Mesh_Array(s->TriVertexArray,
+		      CTX.mesh.surfaces_faces, CTX.mesh.surfaces_edges);
+    if(s->QuadVertexArray)
+      Draw_Mesh_Array(s->QuadVertexArray,
+		      CTX.mesh.surfaces_faces, CTX.mesh.surfaces_edges);
   }
     
-  if(!s->vertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num || CTX.mesh.normals){
+  if(!s->TriVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num || CTX.mesh.normals){
     Msg(DEBUG, "classic triangle data path");
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
   }
 
-  Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
+  if(!s->QuadVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num || CTX.mesh.normals){
+    Msg(DEBUG, "classic quadrangle data path");
+    Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
+  }
 
   theSurface = NULL;
 }
@@ -422,7 +435,6 @@ void _normal3points(double x0, double y0, double z0,
   n[1] = z1z0 * x2x0 - x1x0 * z2z0;
   n[2] = x1x0 * y2y0 - y1y0 * x2x0;
   norme(n);
-  glNormal3dv(n);
 }
 
 void _triFace(double x0, double y0, double z0,
@@ -430,8 +442,10 @@ void _triFace(double x0, double y0, double z0,
 	      double x2, double y2, double z2)
 {
   double n[3];
-  if(CTX.mesh.light) 
+  if(CTX.mesh.light){
     _normal3points(x0, y0, z0, x1, y1, z1, x2, y2, z2, n);
+    glNormal3dv(n);
+  }
   glVertex3d(x0, y0, z0);
   glVertex3d(x1, y1, z1);
   glVertex3d(x2, y2, z2);
@@ -452,10 +466,12 @@ void _quadFace(double *x, double *y, double *z,
 	       int i0, int i1, int i2, int i3)
 {
   double n[3];
-  if(CTX.mesh.light) 
+  if(CTX.mesh.light){
     _normal3points(x[i0], y[i0], z[i0],
 		   x[i1], y[i1], z[i1],
 		   x[i2], y[i2], z[i2], n);
+    glNormal3dv(n);
+  }
   glVertex3d(x[i0], y[i0], z[i0]);
   glVertex3d(x[i1], y[i1], z[i1]);
   glVertex3d(x[i2], y[i2], z[i2]);
@@ -475,6 +491,47 @@ void _quadFace2(double *x, double *y, double *z,
   _triFace(x2[j2], y2[j2], z2[j2], x[i3], y[i3], z[i3], x2[j4], y2[j4], z2[j4]);
   _triFace(x[i3], y[i3], z[i3], x2[j3], y2[j3], z2[j3], x2[j4], y2[j4], z2[j4]);
   _triFace(x2[j3], y2[j3], z2[j3], x[i0], y[i0], z[i0], x2[j4], y2[j4], z2[j4]);
+}
+
+void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
+{
+  if(!va->num)
+    return;
+
+  glVertexPointer(3, GL_FLOAT, 0, va->vertices->array);
+  glNormalPointer(GL_FLOAT, 0, va->normals->array);
+  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
+
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glEnableClientState(GL_NORMAL_ARRAY);
+
+  if(faces){
+    if(edges)
+      glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.mesh.light)
+      glEnable(GL_LIGHTING);
+    else
+      glDisableClientState(GL_NORMAL_ARRAY);
+    glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_LIGHTING);
+  }
+      
+  if(edges){
+    if(faces || CTX.mesh.surfaces_faces){
+      glDisableClientState(GL_COLOR_ARRAY);
+      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+    }
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  }
+
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
 }
 
 void Draw_Mesh_Triangle(void *a, void *b)
@@ -520,10 +577,10 @@ void Draw_Mesh_Triangle(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
   if(s->VSUP){
-    if(theSurface && theSurface->vertexArray){
+    if(theSurface && theSurface->TriVertexArray){
       // vertex arrays not implemented for second order elements
-      delete theSurface->vertexArray;
-      theSurface->vertexArray = NULL;
+      delete theSurface->TriVertexArray;
+      theSurface->TriVertexArray = NULL;
     }
     for(int i = 0; i < 3; i++) {
       X2[i] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
@@ -533,32 +590,18 @@ void Draw_Mesh_Triangle(void *a, void *b)
   }
 
   if(CTX.mesh.normals || CTX.mesh.light ||
-     (theSurface && theSurface->vertexArray && theSurface->vertexArray->fill))
+     (theSurface && theSurface->TriVertexArray && theSurface->TriVertexArray->fill)){
     _normal3points(X[0], Y[0], Z[0], 
 		   X[1], Y[1], Z[1],
 		   X[2], Y[2], Z[2], n);
+    glNormal3dv(n);
+  }
 
-  if(theSurface && theSurface->vertexArray){
-    if(theSurface->vertexArray->fill){
-      for(int i = 0; i < 3; i++) {
-	float x = X[i], y = Y[i], z = Z[i];
-	float n0 = n[0], n1 = n[1], n2 = n[2];
-	unsigned char r = UNPACK_RED(col);
-	unsigned char g = UNPACK_GREEN(col);
-	unsigned char b = UNPACK_BLUE(col);
-	unsigned char a = UNPACK_ALPHA(col);
-	List_Add(theSurface->vertexArray->vertices, &x);
-	List_Add(theSurface->vertexArray->vertices, &y);
-	List_Add(theSurface->vertexArray->vertices, &z);
-	List_Add(theSurface->vertexArray->normals, &n0);
-	List_Add(theSurface->vertexArray->normals, &n1);
-	List_Add(theSurface->vertexArray->normals, &n2);
-	List_Add(theSurface->vertexArray->colors, &r);
-	List_Add(theSurface->vertexArray->colors, &g);
-	List_Add(theSurface->vertexArray->colors, &b);
-	List_Add(theSurface->vertexArray->colors, &a);
-      }
-      theSurface->vertexArray->num_triangles++;
+  if(theSurface && theSurface->TriVertexArray){
+    if(theSurface->TriVertexArray->fill){
+      for(int i = 0; i < 3; i++)
+	theSurface->TriVertexArray->add(X[i], Y[i], Z[i], n[0], n[1], n[2], col);
+      theSurface->TriVertexArray->num++;
     }
   }    
   else{
@@ -574,6 +617,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
       }
       glEnd();
     }
+
     if(CTX.mesh.surfaces_faces) {
       glColor4ubv((GLubyte *) & col);      
       if(CTX.mesh.light) glEnable(GL_LIGHTING);
@@ -632,47 +676,6 @@ void Draw_Mesh_Triangle(void *a, void *b)
   }
 }
 
-void Draw_Mesh_Triangle_Array(triangleVertexArray *va)
-{
-  if(!va->num_triangles)
-    return;
-
-  glVertexPointer(3, GL_FLOAT, 0, va->vertices->array);
-  glNormalPointer(GL_FLOAT, 0, va->normals->array);
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->colors->array);
-
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  glEnableClientState(GL_NORMAL_ARRAY);
-
-  if(CTX.mesh.surfaces_faces){
-    if(CTX.mesh.surfaces_edges)
-      glEnable(GL_POLYGON_OFFSET_FILL);
-    if(CTX.mesh.light)
-      glEnable(GL_LIGHTING);
-    else
-      glDisableClientState(GL_NORMAL_ARRAY);
-    glDrawArrays(GL_TRIANGLES, 0, 3 * va->num_triangles);
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
-  }
-      
-  if(CTX.mesh.surfaces_edges){
-    if(CTX.mesh.surfaces_faces){
-      glDisableClientState(GL_COLOR_ARRAY);
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    }
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays(GL_TRIANGLES, 0, 3 * va->num_triangles);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  }
-
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-  glDisableClientState(GL_NORMAL_ARRAY);
-}
-
 void Draw_Mesh_Quadrangle(void *a, void *b)
 {
   double X[4], Y[4], Z[4], X2[5], Y2[5], Z2[5];
@@ -716,6 +719,11 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (q->V[i]->Pos.Z - Zc);
   }
   if(q->VSUP){
+    if(theSurface && theSurface->QuadVertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theSurface->QuadVertexArray;
+      theSurface->QuadVertexArray = NULL;
+    }
     for(int i = 0; i < 5; i++) {
       X2[i] = Xc + CTX.mesh.explode * (q->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (q->VSUP[i]->Pos.Y - Yc);
@@ -723,44 +731,55 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.normals || CTX.mesh.light)
+  if(CTX.mesh.normals || CTX.mesh.light ||
+     (theSurface && theSurface->QuadVertexArray && theSurface->QuadVertexArray->fill)){
     _normal3points(X[0], Y[0], Z[0], 
 		   X[1], Y[1], Z[1],
 		   X[2], Y[2], Z[2], n);
-
-  if(CTX.mesh.surfaces_edges){
-    if(CTX.mesh.surfaces_faces)
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    else
-      glColor4ubv((GLubyte *) & col);
-    glBegin(GL_LINE_LOOP);
-    for(int i = 0; i < 4; i++){
-      glVertex3d(X[i], Y[i], Z[i]);
-      if(q->VSUP)
-	glVertex3d(X2[i], Y2[i], Z2[i]);
-    }
-    glEnd();
+    glNormal3dv(n);
   }
 
-  if(CTX.mesh.surfaces_faces) {
-    glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    if(!q->VSUP) {
-      glBegin(GL_QUADS);
-      glVertex3d(X[0], Y[0], Z[0]);
-      glVertex3d(X[1], Y[1], Z[1]);
-      glVertex3d(X[2], Y[2], Z[2]);
-      glVertex3d(X[3], Y[3], Z[3]);
+  if(theSurface && theSurface->QuadVertexArray){
+    if(theSurface->QuadVertexArray->fill){
+      for(int i = 0; i < 4; i++)
+	theSurface->QuadVertexArray->add(X[i], Y[i], Z[i], n[0], n[1], n[2], col);
+      theSurface->QuadVertexArray->num++;
+    }
+  }    
+  else{
+    if(CTX.mesh.surfaces_edges){
+      if(CTX.mesh.surfaces_faces)
+	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+      else
+	glColor4ubv((GLubyte *) & col);
+      glBegin(GL_LINE_LOOP);
+      for(int i = 0; i < 4; i++){
+	glVertex3d(X[i], Y[i], Z[i]);
+	if(q->VSUP) glVertex3d(X2[i], Y2[i], Z2[i]);
+      }
       glEnd();
     }
-    else {
-      glBegin(GL_TRIANGLES);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 2, 3, 0, 1, 2, 3, 4);
-      glEnd();
+
+    if(CTX.mesh.surfaces_faces) {
+      glColor4ubv((GLubyte *) & col);
+      if(CTX.mesh.light) glEnable(GL_LIGHTING);
+      glEnable(GL_POLYGON_OFFSET_FILL);
+      if(!q->VSUP) {
+	glBegin(GL_QUADS);
+	glVertex3d(X[0], Y[0], Z[0]);
+	glVertex3d(X[1], Y[1], Z[1]);
+	glVertex3d(X[2], Y[2], Z[2]);
+	glVertex3d(X[3], Y[3], Z[3]);
+	glEnd();
+      }
+      else {
+	glBegin(GL_TRIANGLES);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 2, 3, 0, 1, 2, 3, 4);
+	glEnd();
+      }
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glDisable(GL_LIGHTING);
     }
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
   }
 
   if(CTX.mesh.dual) {

@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.25 2004-05-29 20:25:28 geuzaine Exp $
+// $Id: Iso.cpp,v 1.26 2004-05-29 23:22:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -422,21 +422,21 @@ void IsoSimplex(Post_View * View, int preproNormals,
   if(preproNormals)
     return;
 
-  if(View->VertexArray && View->VertexArray->fill){
+  if(View->TriVertexArray && View->TriVertexArray->fill){
     for(int i = 2; i < nb; i++){
-      View->VertexArray->add(Xp[0] + View->Raise[0] * V,
-			     Yp[0] + View->Raise[1] * V,
-			     Zp[0] + View->Raise[2] * V,
-			     norms[0], norms[1], norms[2], color);
-      View->VertexArray->add(Xp[i-1] + View->Raise[0] * V,
-			     Yp[i-1] + View->Raise[1] * V,
-			     Zp[i-1] + View->Raise[2] * V,
-			     norms[3*(i-1)], norms[3*(i-1)+1], norms[3*(i-1)+2], color);
-      View->VertexArray->add(Xp[i] + View->Raise[0] * V,
-			     Yp[i] + View->Raise[1] * V,
-			     Zp[i] + View->Raise[2] * V,
-			     norms[3*i], norms[3*i+1], norms[3*i+2], color);
-      View->VertexArray->num_triangles++;
+      View->TriVertexArray->add(Xp[0] + View->Raise[0] * V,
+				Yp[0] + View->Raise[1] * V,
+				Zp[0] + View->Raise[2] * V,
+				norms[0], norms[1], norms[2], color);
+      View->TriVertexArray->add(Xp[i-1] + View->Raise[0] * V,
+				Yp[i-1] + View->Raise[1] * V,
+				Zp[i-1] + View->Raise[2] * V,
+				norms[3*(i-1)], norms[3*(i-1)+1], norms[3*(i-1)+2], color);
+      View->TriVertexArray->add(Xp[i] + View->Raise[0] * V,
+				Yp[i] + View->Raise[1] * V,
+				Zp[i] + View->Raise[2] * V,
+				norms[3*i], norms[3*i+1], norms[3*i+2], color);
+      View->TriVertexArray->num++;
     }
   }
   else{

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.168 2004-05-25 23:16:32 geuzaine Exp $
+// $Id: Gmsh.y,v 1.169 2004-05-29 23:22:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1807,6 +1807,32 @@ Shape :
 				-1, -1, 0., 1.);
 	Tree_Add(THEM->Curves, &c);
 	CreateReversedCurve(THEM, c);
+	List_Delete(temp);
+      }
+      List_Delete($6);
+      $$.Type = MSH_SEGM_ELLI;
+      $$.Num = num;
+    }
+  | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble tPlane VExpr tEND
+    {
+      int num = (int)$3;
+      if(FindCurve(num, THEM)){
+	yymsg(GERROR, "Curve %d already exists", num);
+      }
+      else{
+	List_T *temp = ListOfDouble2ListOfInt($6);
+	Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
+				-1, -1, 0., 1.);
+	c->Circle.n[0] = $8[0];
+	c->Circle.n[1] = $8[1];
+	c->Circle.n[2] = $8[2];
+	End_Curve(c);
+	Tree_Add(THEM->Curves, &c);
+	Curve *rc = CreateReversedCurve(THEM, c);
+	rc->Circle.n[0] = $8[0];
+	rc->Circle.n[1] = $8[1];
+	rc->Circle.n[2] = $8[2];
+	End_Curve(c);
 	List_Delete(temp);
       }
       List_Delete($6);

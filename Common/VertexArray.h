@@ -22,14 +22,14 @@
 
 #include "List.h"
 
-class triangleVertexArray{
+class VertexArray{
  public:
-  int num_triangles, fill;
+  int type, num, fill;
   List_T *vertices, *normals, *colors;
-  triangleVertexArray(int nb);
-  ~triangleVertexArray();
-  void add(float x, float y, float z, float n0, 
-	   float n1, float n2, unsigned int col);
+  VertexArray(int numNodesPerElement, int numElements);
+  ~VertexArray();
+  void add(float x, float y, float z, 
+	   float n0, float n1, float n2, unsigned int col);
   void sort(double eye[3]);
 };
 

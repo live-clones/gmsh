@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.2 2004-05-29 20:25:28 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.3 2004-05-29 23:22:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,25 +24,31 @@
 #include "Context.h"
 #include "Numeric.h"
 
-triangleVertexArray::triangleVertexArray(int nb)
+VertexArray::VertexArray(int numNodesPerElement, int numElements) 
 {
-  num_triangles = fill = 0;
-  if(!nb)
-    nb = 1000;
-  vertices = List_Create(nb * 3 * 3, 9000, sizeof(float));
-  normals = List_Create(nb * 3 * 3, 9000, sizeof(float));
-  colors = List_Create(nb * 3 * 4, 12000, sizeof(unsigned char));
+  type = numNodesPerElement;
+  if(type != 3 && type != 4){
+    Msg(GERROR, "Vertex arrays should only contain triangles or quadrangles");
+    type = 3;
+  }
+  num = fill = 0;
+  if(!numElements)
+    numElements = 1;
+  int nb = numElements * numNodesPerElement;
+  vertices = List_Create(nb * 3, 3000, sizeof(float));
+  normals = List_Create(nb * 3, 3000, sizeof(float));
+  colors = List_Create(nb * 4, 4000, sizeof(unsigned char));
 }
 
-triangleVertexArray::~triangleVertexArray()
+VertexArray::~VertexArray()
 {
   List_Delete(vertices);
   List_Delete(normals);
   List_Delete(colors);
 }
 
-void triangleVertexArray::add(float x, float y, float z, float n0, 
-			      float n1, float n2, unsigned int col)
+void VertexArray::add(float x, float y, float z, 
+		      float n0, float n1, float n2, unsigned int col)
 {
   unsigned char r = UNPACK_RED(col);
   unsigned char g = UNPACK_GREEN(col);
@@ -85,8 +91,13 @@ int compareTriEye(const void *a, const void *b)
   return 0;
 }
 
-void triangleVertexArray::sort(double eye[3])
+void VertexArray::sort(double eye[3])
 {
+  if(type != 3){
+    Msg(GERROR, "VertexArray sort only implemented for triangles");
+    return;
+  }
+
   theeye[0] = eye[0];
   theeye[1] = eye[1];
   theeye[2] = eye[2];
@@ -95,7 +106,7 @@ void triangleVertexArray::sort(double eye[3])
   float *tmp = new float[nb];
   
   int iv = 0, in = 0, ic = 0, k = 0;
-  for(int i = 0; i < num_triangles; i++){
+  for(int i = 0; i < num; i++){
     for(int j = 0; j < 9; j++)
       List_Read(vertices, iv++, &tmp[k++]);
     for(int j = 0; j < 9; j++)
@@ -111,10 +122,10 @@ void triangleVertexArray::sort(double eye[3])
   List_Reset(normals);
   List_Reset(colors);
 
-  qsort(tmp, num_triangles, (9+9+12)*sizeof(float), compareTriEye);
+  qsort(tmp, num, (9+9+12)*sizeof(float), compareTriEye);
 
   k = 0;
-  for(int i = 0; i < num_triangles; i++){
+  for(int i = 0; i < num; i++){
     for(int j = 0; j < 9; j++)
       List_Add(vertices, &tmp[k++]);
     for(int j = 0; j < 9; j++)
@@ -127,3 +138,4 @@ void triangleVertexArray::sort(double eye[3])
 
   delete [] tmp;
 }
+

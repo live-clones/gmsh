@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.64 2004-05-29 20:25:29 geuzaine Exp $
+// $Id: Post.cpp,v 1.65 2004-05-29 23:22:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -453,9 +453,9 @@ void Draw_Post(void)
 	  if(CTX.post.vertex_arrays){
 	    if(v->Changed){
 	      Msg(DEBUG, "regenerate View[%d] vertex array", v->Index);
-	      if(v->VertexArray) delete v->VertexArray;
-	      v->VertexArray = new triangleVertexArray(10000);
-	      v->VertexArray->fill = 1;
+	      if(v->TriVertexArray) delete v->TriVertexArray;
+	      v->TriVertexArray = new VertexArray(3, 10000);
+	      v->TriVertexArray->fill = 1;
 	      goto pass_0;
 	    }
 	  }
@@ -463,7 +463,7 @@ void Draw_Post(void)
 	}
 	else{
 	  // don't even enter the classic data path if we don't have to
-	  if(v->VertexArray){
+	  if(v->TriVertexArray){
 	    if(v->Boundary < 1 && !v->ShowElement &&
 	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
 	      Msg(DEBUG, "Skiping 2D scalar pass alltogether!");
@@ -516,20 +516,20 @@ void Draw_Post(void)
 	}
 
       pass_1:
-	if(v->VertexArray)
-	  v->VertexArray->fill = 0;
+	if(v->TriVertexArray)
+	  v->TriVertexArray->fill = 0;
       }
 
-      if(v->VertexArray && v->VertexArray->num_triangles){
+      if(v->TriVertexArray && v->TriVertexArray->num){
 
 	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && (changedEye() || v->Changed)){
 	  Msg(DEBUG, "Sorting for transparency (WITH vertex array)");
-	  v->VertexArray->sort(storedEye);
+	  v->TriVertexArray->sort(storedEye);
 	}
 
-	glVertexPointer(3, GL_FLOAT, 0, v->VertexArray->vertices->array);
-	glNormalPointer(GL_FLOAT, 0, v->VertexArray->normals->array);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->VertexArray->colors->array);
+	glVertexPointer(3, GL_FLOAT, 0, v->TriVertexArray->vertices->array);
+	glNormalPointer(GL_FLOAT, 0, v->TriVertexArray->normals->array);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->TriVertexArray->colors->array);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
@@ -540,7 +540,7 @@ void Draw_Post(void)
 	else
 	  glDisableClientState(GL_NORMAL_ARRAY);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glDrawArrays(GL_TRIANGLES, 0, 3 * v->VertexArray->num_triangles);
+	glDrawArrays(GL_TRIANGLES, 0, 3 * v->TriVertexArray->num);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_LIGHTING);
       
