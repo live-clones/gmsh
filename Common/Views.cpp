@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.8 2000-11-27 14:23:18 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.9 2000-11-27 14:27:34 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -338,6 +338,8 @@ void Stat_VectorSimplex(int nbnod, double *coord, int N, double *V){
     if(l0 < ActualView->Min) ActualView->Min = l0 ;
     if(l0 > ActualView->Max) ActualView->Max = l0 ;
   }
+
+  ActualView->ScalarOnly = 0;
 
   switch(nbnod){
   case 1 : NbPoints++; break;

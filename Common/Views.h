@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.7 2000-11-27 10:58:18 geuzaine Exp $ */
+/* $Id: Views.h,v 1.8 2000-11-27 14:23:18 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -78,9 +78,9 @@ void FreeView(Post_View *v);
 void Read_View(FILE *file, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);
 
-void Stat_ScalarSimplex(int dim, double *coord, int N, double *v);
-void Stat_VectorSimplex(int dim, double *coord, int N, double *v);
-void Stat_TensorSimplex(int dim, double *coord, int N, double *v);
+void Stat_ScalarSimplex(int nbnod, double *coord, int N, double *v);
+void Stat_VectorSimplex(int nbnod, double *coord, int N, double *v);
+void Stat_TensorSimplex(int nbnod, double *coord, int N, double *v);
 
 int BGMWithView (Post_View *ErrView);
 int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,

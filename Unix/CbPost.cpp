@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.7 2000-11-27 10:58:59 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.8 2000-11-27 14:23:21 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -128,7 +128,19 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
     }
   }
 
-  v2->Time        = v1->Time;
+  v2->Time = v1->Time;
+  v2->NbSP = v1->NbSP; v2->SP = v1->SP; 
+  v2->NbVP = v1->NbVP; v2->VP = v1->VP; 
+  v2->NbTP = v1->NbTP; v2->TP = v1->TP;
+  v2->NbSL = v1->NbSL; v2->SL = v1->SL; 
+  v2->NbVL = v1->NbVL; v2->VL = v1->VL; 
+  v2->NbTL = v1->NbTL; v2->TL = v1->TL;
+  v2->NbST = v1->NbST; v2->ST = v1->ST; 
+  v2->NbVT = v1->NbVT; v2->VT = v1->VT; 
+  v2->NbTT = v1->NbTT; v2->TT = v1->TT;
+  v2->NbSS = v1->NbSS; v2->SS = v1->SS; 
+  v2->NbVS = v1->NbVS; v2->VS = v1->VS; 
+  v2->NbTS = v1->NbTS; v2->TS = v1->TS;
   v2->ScalarOnly  = v1->ScalarOnly;
   v2->Min         = v1->Min;       
   v2->Max         = v1->Max;      
