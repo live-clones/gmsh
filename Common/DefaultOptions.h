@@ -57,7 +57,7 @@ StringXString GeneralOptions_String[] = {
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "Option file into which session specific information is saved; automatically read on startup" },
   { F|S, "Scheme" , opt_general_scheme , "" ,
-    "FLTK graphical user interface scheme (try e.g. plastic)" },
+    "FLTK user interface scheme (try e.g. plastic)" },
 
   { F|O, "TextEditor" , opt_general_editor , 
 #if defined(WIN32)
@@ -450,7 +450,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "FastRedraw" , opt_general_fast_redraw , 1. ,
     "Fast redraw (no mesh or view display) when interacting with the model" },
   { F|S, "FontSize" , opt_general_fontsize , 12. , 
-    "Size of the font in the graphical user interface" },
+    "Size of the font in the user interface" },
 
   { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 14. ,
     "Size of the font in the graphic window" }, 
@@ -595,7 +595,7 @@ StringXNumber GeneralOptions_Number[] = {
 #endif
     "Should information be printed on the terminal (if available)?" },
   { F|O, "Tooltips" , opt_general_tooltips , 1. ,
-    "Show tooltips in the graphical user interface" },
+    "Show tooltips in the user interface" },
   { F|O, "Trackball" , opt_general_trackball , 1. ,
     "Use trackball rotation mode" },
   { F,   "TrackballQuaternion0" , opt_general_quaternion0 , 0.0 , 
