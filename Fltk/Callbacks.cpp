@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.128 2002-05-28 21:00:56 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.129 2002-06-15 21:25:27 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2130,50 +2130,70 @@ void view_options_ok_cb(CALLBACK_ARGS){
 		      WID->view_butt[2]->value()?DRAW_POST_2D_SPACE:
 		      DRAW_POST_2D_TIME);
 
-      if(force || WID->view_butt[35]->changed() ||
-	 WID->view_butt[36]->changed() ||
-	 WID->view_butt[37]->changed())
-	opt_view_scale_type(i, GMSH_SET, 
-			    WID->view_butt[35]->value()?DRAW_POST_LINEAR:
-			    WID->view_butt[36]->value()?DRAW_POST_LOGARITHMIC:
-			    DRAW_POST_DOUBLELOGARITHMIC);
+      if(force || WID->view_choice[1]->changed()){
+	int val;
+	switch(WID->view_choice[1]->value()){
+	case 0 : val = DRAW_POST_LINEAR; break;
+	case 1 : val = DRAW_POST_LOGARITHMIC; break;
+	default : val = DRAW_POST_DOUBLELOGARITHMIC; break;
+	}
+	opt_view_scale_type(i, GMSH_SET, val);
+      }
 
       if(force || WID->view_butt[38]->changed())
 	opt_view_saturate_values(i, GMSH_SET, 
 				 WID->view_butt[38]->value());
-      
-      if(force || WID->view_butt[30]->changed() ||
-	 WID->view_butt[31]->changed() ||
-	 WID->view_butt[32]->changed() ||
-	 WID->view_butt[33]->changed())
-	opt_view_intervals_type(i, GMSH_SET, 
-				WID->view_butt[30]->value()?DRAW_POST_ISO:
-				WID->view_butt[31]->value()?DRAW_POST_DISCRETE:
-				WID->view_butt[32]->value()?DRAW_POST_CONTINUOUS:
-				DRAW_POST_NUMERIC);
 
-      if(force || WID->view_butt[60]->changed() ||
-	 WID->view_butt[61]->changed() ||
-	 WID->view_butt[62]->changed() ||
-	 WID->view_butt[63]->changed())
-	opt_view_arrow_type(i, GMSH_SET, 
-			    WID->view_butt[60]->value()?DRAW_POST_SEGMENT:
-			    WID->view_butt[61]->value()?DRAW_POST_ARROW:
-			    WID->view_butt[62]->value()?DRAW_POST_CONE:
-			    DRAW_POST_DISPLACEMENT);
+      if(force || WID->view_choice[0]->changed()){
+	int val;
+	switch(WID->view_choice[0]->value()){
+	case 0 : val = DRAW_POST_ISO; break;
+	case 1 : val = DRAW_POST_DISCRETE; break;
+	case 2 : val = DRAW_POST_CONTINUOUS; break;
+	default : val = DRAW_POST_NUMERIC; break;
+	}
+	opt_view_intervals_type(i, GMSH_SET, val);
+      }
 
+      if(force || WID->view_choice[5]->changed()){
+	int val;
+	switch(WID->view_choice[5]->value()){
+	case 0 : val = 0; break;
+	default : val = 1; break;
+	}
+	opt_view_point_type(i, GMSH_SET, val);
+      }
 
-      if(force || WID->view_butt[66]->changed() ||
-	 WID->view_butt[67]->changed())
-	opt_view_tensor_type(i, GMSH_SET, 
-			    WID->view_butt[66]->value()?DRAW_POST_VONMISES:
-			    DRAW_POST_EIGENVECTORS);      
+      if(force || WID->view_choice[2]->changed()){
+	int val;
+	switch(WID->view_choice[2]->value()){
+	case 0 : val = DRAW_POST_SEGMENT; break;
+	case 1 : val = DRAW_POST_ARROW; break;
+	case 2 : val = DRAW_POST_ARROW3D; break;
+	case 3 : val = DRAW_POST_CONE; break;
+	case 4 : val = DRAW_POST_CONE3D; break;
+	default : val = DRAW_POST_DISPLACEMENT; break;
+	}
+	opt_view_arrow_type(i, GMSH_SET, val);
+      }
 
-      if(force || WID->view_butt[64]->changed() ||
-	 WID->view_butt[65]->changed())
-	opt_view_arrow_location(i, GMSH_SET, 
-				WID->view_butt[64]->value()?DRAW_POST_LOCATE_COG:
-				DRAW_POST_LOCATE_VERTEX);
+      if(force || WID->view_choice[3]->changed()){
+	int val;
+	switch(WID->view_choice[3]->value()){
+	case 0 : val = DRAW_POST_LOCATE_COG; break;
+	default : val = DRAW_POST_LOCATE_VERTEX; break;
+	}
+	opt_view_arrow_location(i, GMSH_SET, val);
+      }
+
+      if(force || WID->view_choice[4]->changed()){
+	int val;
+	switch(WID->view_choice[4]->value()){
+	case 0 : val = DRAW_POST_VONMISES; break;
+	default : val = DRAW_POST_EIGENVECTORS; break;
+	}
+	opt_view_tensor_type(i, GMSH_SET, val);
+      }
 
       if(force || WID->view_butt[10]->changed())
 	opt_view_show_element(i, GMSH_SET, WID->view_butt[10]->value());
@@ -2314,6 +2334,7 @@ void view_options_ok_cb(CALLBACK_ARGS){
     if(WID->view_butt[i]) WID->view_butt[i]->clear_changed();
     if(WID->view_value[i]) WID->view_value[i]->clear_changed();
     if(WID->view_input[i]) WID->view_input[i]->clear_changed();
+    if(WID->view_choice[i]) WID->view_choice[i]->clear_changed();
     WID->view_colorbar_window->clear_changed();
   }
 

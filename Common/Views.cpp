@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.71 2002-06-15 17:41:35 geuzaine Exp $
+// $Id: Views.cpp,v 1.72 2002-06-15 21:25:27 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -66,6 +66,7 @@ Post_View * BeginView(int allocate){
 
   v->Index = i;
   v->Dirty = 1;
+  v->DisplayListNum = -1;
   v->NbTimeStep = 0;
   v->NbSP = v->NbVP = v->NbTP = 0;
   v->NbSL = v->NbVL = v->NbTL = 0;

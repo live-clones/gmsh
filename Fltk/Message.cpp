@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.28 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: Message.cpp,v 1.29 2002-06-15 21:25:27 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -153,6 +153,8 @@ void Msg(int level, char *fmt, ...){
     }
     va_end (args);
   }
+
+  if(CTX.terminal) fflush(stderr);
 
   if(abort){
     Debug();

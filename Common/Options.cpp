@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.81 2002-06-15 17:41:35 geuzaine Exp $
+// $Id: Options.cpp,v 1.82 2002-06-15 21:25:27 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2315,10 +2315,12 @@ double opt_view_intervals_type(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    WID->view_butt[30]->value(v->IntervalsType==DRAW_POST_ISO);
-    WID->view_butt[31]->value(v->IntervalsType==DRAW_POST_DISCRETE);
-    WID->view_butt[32]->value(v->IntervalsType==DRAW_POST_CONTINUOUS);
-    WID->view_butt[33]->value(v->IntervalsType==DRAW_POST_NUMERIC);
+    switch(v->IntervalsType){
+    case DRAW_POST_ISO: WID->view_choice[0]->value(0); break;
+    case DRAW_POST_DISCRETE: WID->view_choice[0]->value(1); break;
+    case DRAW_POST_CONTINUOUS: WID->view_choice[0]->value(2); break;
+    case DRAW_POST_NUMERIC: WID->view_choice[0]->value(3); break;
+    }
   }
 #endif
   return v->IntervalsType;
@@ -2659,9 +2661,11 @@ double opt_view_scale_type(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    WID->view_butt[35]->value(v->ScaleType==DRAW_POST_LINEAR);
-    WID->view_butt[36]->value(v->ScaleType==DRAW_POST_LOGARITHMIC);
-    WID->view_butt[37]->value(v->ScaleType==DRAW_POST_DOUBLELOGARITHMIC);
+    switch(v->ScaleType){
+    case DRAW_POST_LINEAR: WID->view_choice[0]->value(0); break;
+    case DRAW_POST_LOGARITHMIC: WID->view_choice[0]->value(1); break;
+    case DRAW_POST_DOUBLELOGARITHMIC: WID->view_choice[0]->value(2); break;
+    }
   }
 #endif
   return v->ScaleType;
@@ -2686,8 +2690,10 @@ double opt_view_tensor_type(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    WID->view_butt[66]->value(v->TensorType==DRAW_POST_VONMISES);
-    WID->view_butt[67]->value(v->TensorType==DRAW_POST_EIGENVECTORS);
+    switch(v->ScaleType){
+    case DRAW_POST_VONMISES: WID->view_choice[4]->value(0); break;
+    case DRAW_POST_EIGENVECTORS: WID->view_choice[4]->value(1); break;
+    }
   }
 #endif
   return v->TensorType;
@@ -2700,10 +2706,14 @@ double opt_view_arrow_type(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    WID->view_butt[60]->value(v->ArrowType==DRAW_POST_SEGMENT);
-    WID->view_butt[61]->value(v->ArrowType==DRAW_POST_ARROW);
-    WID->view_butt[62]->value(v->ArrowType==DRAW_POST_CONE);
-    WID->view_butt[63]->value(v->ArrowType==DRAW_POST_DISPLACEMENT);
+    switch(v->ScaleType){
+    case DRAW_POST_SEGMENT: WID->view_choice[2]->value(0); break;
+    case DRAW_POST_ARROW: WID->view_choice[2]->value(1); break;
+    case DRAW_POST_ARROW3D: WID->view_choice[2]->value(2); break;
+    case DRAW_POST_CONE: WID->view_choice[2]->value(3); break;
+    case DRAW_POST_CONE3D: WID->view_choice[2]->value(4); break;
+    case DRAW_POST_DISPLACEMENT: WID->view_choice[2]->value(5); break;
+    }
   }
 #endif
   return v->ArrowType;
@@ -2716,8 +2726,10 @@ double opt_view_arrow_location(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    WID->view_butt[64]->value(v->ArrowLocation==DRAW_POST_LOCATE_COG);
-    WID->view_butt[65]->value(v->ArrowLocation==DRAW_POST_LOCATE_VERTEX);
+    switch(v->ScaleType){
+    case DRAW_POST_LOCATE_COG: WID->view_choice[3]->value(0); break;
+    case DRAW_POST_LOCATE_VERTEX: WID->view_choice[3]->value(1); break;
+    }
   }
 #endif
   return v->ArrowLocation;
@@ -2752,6 +2764,11 @@ double opt_view_point_type(OPT_ARGS_NUM){
     v->PointType = (int)val;
     v->Changed = 1;
   }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_choice[5]->value(v->PointType?1:0);
+  }
+#endif
   return v->PointType;
 }
 

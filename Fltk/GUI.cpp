@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.179 2002-05-23 17:25:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.180 2002-06-15 21:25:27 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2208,6 +2208,7 @@ void GUI::create_view_options_window(int num){
     view_butt[i] = NULL;
     view_value[i] = NULL;
     view_input[i] = NULL;
+    view_choice[i] = NULL;
   }
   
   view_window = new Fl_Window(width,height);
@@ -2359,50 +2360,44 @@ void GUI::create_view_options_window(int num){
       view_value[30]->maximum(256); 
       view_value[30]->step(1);
       view_value[30]->callback(set_changed_cb, 0);
-      
-      {
-	Fl_Group *o2 = new Fl_Group(2*WB, 2*WB+2*BH, width/2, 4*BH, 0);
-	view_butt[30] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Iso-values");
-	view_butt[31] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Filled iso-values");
-	view_butt[32] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW/2-WB, BH, "Continuous map");
-	view_butt[33] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW/2-WB, BH, "Numeric values");
-	for(i=30 ; i<=33 ; i++){
-	  view_butt[i]->type(FL_RADIO_BUTTON);
-	  view_butt[i]->down_box(RADIO_BOX);
-	  view_butt[i]->selection_color(RADIO_COLOR);
-	  view_butt[i]->callback(set_changed_cb, 0);
-	}
-	o2->end();
-      }
-      
-      view_butt[34] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW/2-WB, BH, "Custom range");
+
+      static Fl_Menu_Item menu_iso[] = {
+	{"Iso-values",        0, 0, 0},
+	{"Filled iso-values", 0, 0, 0},
+	{"Continuous map",    0, 0, 0},
+	{"Numeric values",    0, 0, 0},
+	{0}
+      };
+      view_choice[0] = new Fl_Choice(2*WB, 2*WB+2*BH, IW, BH, "Intervals type");
+      view_choice[0]->menu(menu_iso);
+      view_choice[0]->align(FL_ALIGN_RIGHT);
+      view_choice[0]->callback(set_changed_cb, 0);
+
+      view_butt[34] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Custom range");
       view_butt[34]->type(FL_TOGGLE_BUTTON);
       view_butt[34]->down_box(TOGGLE_BOX);
       view_butt[34]->selection_color(TOGGLE_COLOR);
       //no set_changed since customrange has its own callback
       
-      view_value[31] = new Fl_Value_Input(width/2, 2*WB+3*BH, IW, BH, "Minimum");
-      view_value[32] = new Fl_Value_Input(width/2, 2*WB+4*BH, IW, BH, "Maximum");
+      view_value[31] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Minimum");
+      view_value[32] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Maximum");
       for(i=31 ; i<=32 ; i++){
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
+
+      static Fl_Menu_Item menu_scale[] = {
+	{"Linear",             0, 0, 0},
+	{"Logarithmic",        0, 0, 0},
+	{"Double logarithmic", 0, 0, 0},
+	{0}
+      };
+      view_choice[1] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Scale");
+      view_choice[1]->menu(menu_scale);
+      view_choice[1]->align(FL_ALIGN_RIGHT);
+      view_choice[1]->callback(set_changed_cb, 0);
       
-      {
-	Fl_Group *o2 = new Fl_Group(width/2, 2*WB+5*BH, width-4*WB, 3*BH, 0);
-	view_butt[35] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW/2-WB, BH, "Linear");
-	view_butt[36] = new Fl_Check_Button(width/2, 2*WB+6*BH, BW/2-WB, BH, "Logarithmic");
-	view_butt[37] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW/2-WB, BH, "Double logarithmic");
-	for(i=35 ; i<=37 ; i++){
-	  view_butt[i]->type(FL_RADIO_BUTTON);
-	  view_butt[i]->down_box(RADIO_BOX);
-	  view_butt[i]->selection_color(RADIO_COLOR);
-	  view_butt[i]->callback(set_changed_cb, 0);
-	}
-	o2->end();
-      }
-      
-      view_butt[38] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "Saturate values");
+      view_butt[38] = new Fl_Check_Button(2*WB, 2*WB+7*BH, IW, BH, "Saturate values");
       view_butt[38]->type(FL_TOGGLE_BUTTON);
       view_butt[38]->down_box(TOGGLE_BOX);
       view_butt[38]->selection_color(TOGGLE_COLOR);
@@ -2431,53 +2426,75 @@ void GUI::create_view_options_window(int num){
       Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
       o->hide();
       
-      {
-	view_vector = new Fl_Group(width/2, WB+BH, width-2*WB, height-3*WB-2*BH, 0);
-	{
-	  Fl_Group *o = new Fl_Group(width/2, 2*WB+2*BH, width-4*WB, 4*BH, 0);
-	  view_butt[60] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "Line");
-	  view_butt[61] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW/2-WB, BH, "Arrow");
-	  view_butt[62] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW/2-WB, BH, "Cone");
-	  view_butt[63] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW/2-WB, BH, "Displacement");
-	  o->end();
-	}
-	{
-	  Fl_Group *o = new Fl_Group(width/2, 2*WB+6*BH, width-4*WB, 2*BH, 0);
-	  view_butt[64] = new Fl_Check_Button(width/2, 2*WB+6*BH, BW/2-WB, BH, "Cell centered");
-	  view_butt[65] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW/2-WB, BH, "Vertex centered");
-	  o->end();
-	}
-	{
-	  Fl_Group *o = new Fl_Group(width/2, 2*WB+8*BH, width-4*WB, 2*BH, 0);
-	  view_butt[66] = new Fl_Check_Button(width/2, 2*WB+8*BH, BW/2-WB, BH, "Von-Mises");
-	  view_butt[67] = new Fl_Check_Button(width/2, 2*WB+9*BH, BW/2-WB, BH, "Eigenvectors");
-	  o->end();
-	}
-	for(i=60 ; i<=67 ; i++){
-	  view_butt[i]->type(FL_RADIO_BUTTON);
-	  view_butt[i]->down_box(RADIO_BOX);
-	  view_butt[i]->selection_color(RADIO_COLOR);
-	  view_butt[i]->callback(set_changed_cb, 0);
-	}
-	
-	view_value[60] = new Fl_Value_Input(width/2, 2*WB+ 1*BH, IW, BH, "Vector size");
-	view_value[60]->minimum(0); 
-	view_vector->end();
-      }
-      
       view_value[61] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "Point size");
       view_value[61]->minimum(0.1); 
       view_value[61]->maximum(50);
       view_value[61]->step(0.1);
-      view_value[62] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Line width");
+      view_value[61]->align(FL_ALIGN_RIGHT);
+      view_value[61]->callback(set_changed_cb, 0);
+
+      static Fl_Menu_Item menu_pointtype[] = {
+	{"Color dot",   0, 0, 0},
+	{"3D Sphere",   0, 0, 0},
+	{0}
+      };
+      view_choice[5] = new Fl_Choice(2*WB, 2*WB+ 2*BH, IW, BH, "Point type");
+      view_choice[5]->menu(menu_pointtype);
+      view_choice[5]->align(FL_ALIGN_RIGHT);
+      view_choice[5]->callback(set_changed_cb, 0);
+      
+      view_value[62] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Line width");
       view_value[62]->minimum(0.1); 
       view_value[62]->maximum(50);
       view_value[62]->step(0.1);
-      for(i=60 ; i<=62 ; i++){
-	view_value[i]->align(FL_ALIGN_RIGHT);
-	view_value[i]->callback(set_changed_cb, 0);
-      }
+      view_value[62]->align(FL_ALIGN_RIGHT);
+      view_value[62]->callback(set_changed_cb, 0);
 
+      {
+	view_vector = new Fl_Group(2*WB, 2*WB+ 4*BH, width/2, 5*BH, 0);
+
+	view_value[60] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Vector size");
+	view_value[60]->minimum(0); 
+	view_value[60]->align(FL_ALIGN_RIGHT);
+	view_value[60]->callback(set_changed_cb, 0);
+
+	static Fl_Menu_Item menu_vectype[] = {
+	  {"Line",         0, 0, 0},
+	  {"Arrow",        0, 0, 0},
+	  {"3D Arrow",     0, 0, 0},
+	  {"Cone",         0, 0, 0},
+	  {"3D cone",      0, 0, 0},
+	  {"Displacement", 0, 0, 0},
+	  {0}
+	};
+	view_choice[2] = new Fl_Choice(2*WB, 2*WB+5*BH, IW, BH, "Arrow type");
+	view_choice[2]->menu(menu_vectype);
+	view_choice[2]->align(FL_ALIGN_RIGHT);
+	view_choice[2]->callback(set_changed_cb, 0);
+
+	static Fl_Menu_Item menu_vecloc[] = {
+	  {"Cell centered",   0, 0, 0},
+	  {"Vertex centered", 0, 0, 0},
+	  {0}
+	};
+	view_choice[3] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Arrow location");
+	view_choice[3]->menu(menu_vecloc);
+	view_choice[3]->align(FL_ALIGN_RIGHT);
+	view_choice[3]->callback(set_changed_cb, 0);
+
+	static Fl_Menu_Item menu_tensor[] = {
+	  {"Von-Mises",    0, 0, 0},
+	  {"Eigenvectors", 0, 0, 0},
+	  {0}
+	};
+	view_choice[4] = new Fl_Choice(2*WB, 2*WB+7*BH, IW, BH, "Tensor type");
+	view_choice[4]->menu(menu_tensor);
+	view_choice[4]->align(FL_ALIGN_RIGHT);
+	view_choice[4]->callback(set_changed_cb, 0);
+	
+	view_vector->end();
+      }
+      
       o->end();
     }
     // Colors
@@ -2629,6 +2646,7 @@ void GUI::update_view_window(int num){
   if(v->ScalarOnly) view_vector->deactivate();
   else view_vector->activate();
   opt_view_point_size(num, GMSH_GUI, 0);
+  opt_view_point_type(num, GMSH_GUI, 0);
   opt_view_line_width(num, GMSH_GUI, 0);
   opt_view_arrow_type(num, GMSH_GUI, 0);
   opt_view_arrow_scale(num, GMSH_GUI, 0);

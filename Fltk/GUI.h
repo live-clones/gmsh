@@ -206,6 +206,7 @@ public:
   Fl_Value_Input   *view_value[VIEW_OPT_BUTT] ;
   Fl_Input         *view_input[VIEW_OPT_BUTT] ;
   Fl_Repeat_Button *view_butt_rep[VIEW_OPT_BUTT] ;
+  Fl_Choice        *view_choice[VIEW_OPT_BUTT] ;
 
   Colorbar_Window  *view_colorbar_window ;
   Fl_Return_Button *view_ok ;

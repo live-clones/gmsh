@@ -27,7 +27,7 @@ class smooth_container;
 class Post_View{
   public :
   // intrinsic to a view
-  int Num, Index, Changed, DuplicateOf, Links, Dirty;
+  int Num, Index, Changed, DuplicateOf, Links, Dirty, DisplayListNum;
   char FileName[256], Name[256], AbscissaName[256];
 
   // the data
@@ -98,7 +98,8 @@ class Post_View{
 #define DRAW_POST_PYRAMID      3
 #define DRAW_POST_CONE         4
 #define DRAW_POST_DISPLACEMENT 5
-#define DRAW_POST_ARROW_HEAD   6
+#define DRAW_POST_ARROW3D      6
+#define DRAW_POST_CONE3D       7
 
 // ArrowLocation
 #define DRAW_POST_LOCATE_COG     1

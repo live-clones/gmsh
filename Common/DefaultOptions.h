@@ -879,7 +879,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "PointSize" , opt_view_point_size , 2. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. , 
-    "Display points as solid colors or 3D spheres" },
+    "Display points as solid color dots or 3D spheres" },
   { F|O, "PositionX" , opt_view_position0 , 80. , 
     "Horizontal position (in pixels) of the upper left corner of the scale or 2D graph" }, 
   { F|O, "PositionY" , opt_view_position1 , 50. , 
