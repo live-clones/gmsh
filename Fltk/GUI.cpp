@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.266 2004-01-13 12:39:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.267 2004-01-25 09:32:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -923,8 +923,26 @@ void GUI::create_menu_window(int argc, char **argv)
       pop->add("Remove/All invisible views", 0, (Fl_Callback *) view_remove_invisible_cb, (void *)i, 0);
       pop->add("Duplicate/View without options", 0, (Fl_Callback *) view_duplicate_cb, (void *)i, 0);
       pop->add("Duplicate/View with options", 0, (Fl_Callback *) view_duplicate_with_options_cb, (void *)i, 0);
-      pop->add("Combine/All views", 0, (Fl_Callback *) view_combine_all_cb, (void *)i, 0);
-      pop->add("Combine/All visible views", 0, (Fl_Callback *) view_combine_visible_cb, (void *)i, 0);
+      pop->add("Combine/Elements/From all views", 0, 
+	       (Fl_Callback *) view_combine_all_cb, (void *)i, 0);
+      pop->add("Combine/Elements/From all views (and remove originals)", 0, 
+	       (Fl_Callback *) view_combine_all_and_remove_cb, (void *)i, 0);
+      pop->add("Combine/Elements/From visible views", 0, 
+	       (Fl_Callback *) view_combine_visible_cb, (void *)i, 0);
+      pop->add("Combine/Elements/From visible views (and remove originals)", 0, 
+	       (Fl_Callback *) view_combine_visible_and_remove_cb, (void *)i, 0);
+      pop->add("Combine/Time steps/From all views", 0, 
+	       (Fl_Callback *) view_combine_time_all_cb, (void *)i, 0);
+      pop->add("Combine/Time steps/From all views (and remove originals)", 0, 
+	       (Fl_Callback *) view_combine_time_all_and_remove_cb, (void *)i, 0);
+      pop->add("Combine/Time steps/From visible views", 0, 
+	       (Fl_Callback *) view_combine_time_visible_cb, (void *)i, 0);
+      pop->add("Combine/Time steps/From visible views (and remove originals)", 0, 
+	       (Fl_Callback *) view_combine_time_visible_and_remove_cb, (void *)i, 0);
+      pop->add("Combine/Time steps/By view name", 0, 
+	       (Fl_Callback *) view_combine_time_by_name_cb, (void *)i, 0);
+      pop->add("Combine/Time steps/By view name (and remove originals)", 0, 
+	       (Fl_Callback *) view_combine_time_by_name_and_remove_cb, (void *)i, 0);
       pop->add("Save as/ASCII view...", 0, (Fl_Callback *) view_save_ascii_cb, (void *)i, 0);
       pop->add("Save as/Binary view...", 0, (Fl_Callback *) view_save_binary_cb, (void *)i, 0);
       add_post_plugins(pop, i);
@@ -1881,7 +1899,7 @@ void GUI::create_option_window()
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Views");
+      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Link");
       post_butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Independent views");
       post_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Apply next changes to all visible views");
       post_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Apply next changes to all views");
@@ -1895,17 +1913,9 @@ void GUI::create_option_window()
       o->end();
     }
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Smoothing");
-      post_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Smooth views during merge");
-      post_butt[5]->type(FL_TOGGLE_BUTTON);
-      post_butt[5]->down_box(TOGGLE_BOX);
-      post_butt[5]->selection_color(TOGGLE_COLOR);
-      o->end();
-    }
-    {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Animation");
+      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Miscellaneous");
       o->hide();
-      post_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Delay");
+      post_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Animation delay");
       post_value[0]->minimum(0);
       post_value[0]->maximum(10);
       post_value[0]->step(0.01);
@@ -1915,6 +1925,11 @@ void GUI::create_option_window()
       post_butt[6]->type(FL_TOGGLE_BUTTON);
       post_butt[6]->down_box(TOGGLE_BOX);
       post_butt[6]->selection_color(TOGGLE_COLOR);
+
+      post_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Smooth views during merge");
+      post_butt[5]->type(FL_TOGGLE_BUTTON);
+      post_butt[5]->down_box(TOGGLE_BOX);
+      post_butt[5]->selection_color(TOGGLE_COLOR);
       o->end();
     }
     o->end();

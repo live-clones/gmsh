@@ -97,6 +97,7 @@ class Post_View{
   int get_val(int list, int node, int timestep, double *value);
   void add_val(int list, int node, int timestep, double value);
   int empty();
+  void get_raw_data(int type, List_T **list, int **nbe, int *nbc, int *nbn);
 };
 
 // Type
@@ -152,8 +153,8 @@ bool RemoveViewByNumber(int num);
 void ReadView(FILE *file, char *filename);
 void WriteView(int Flag_BIN, Post_View *v, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);
-void CombineViews(int all);
-void CombineViews(List_T *num);
+void CombineViews(int all, int remove);
+void CombineViews_Time(int how, int remove);
 
 int BGMWithView (Post_View *ErrView);
 double ErrorInView(Post_View * ErrView, int *n);

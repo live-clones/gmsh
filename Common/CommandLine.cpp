@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.24 2004-01-13 12:39:44 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.25 2004-01-25 09:32:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -92,6 +92,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -noview               hide all views on startup");
   Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
   Msg(DIRECT, "  -smoothview           smooth views");
+  Msg(DIRECT, "  -combine              combine input views into multi time step ones");
   Msg(DIRECT, "  -convert file file    convert an ascii view into a binary one");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
@@ -498,6 +499,10 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       }
       else if(!strcmp(argv[i] + 1, "smoothview")) {
         CTX.post.smooth = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "combine")) {
+        CTX.post.combine_time = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "nbiso")) {

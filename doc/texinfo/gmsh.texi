@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.95 2003-12-11 17:15:39 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.96 2004-01-25 09:32:36 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2188,6 +2188,10 @@ Sample post-processing files in human-readable ``parsed'' format
 @cindex Commands, post-processing
 
 @ftable @code
+@item Combine TimeSteps;
+Combines the data from all the post-processing views having the same name
+into new multi time step views.
+
 @item Combine Views;
 Combines all post-processing views in a single new view.
 

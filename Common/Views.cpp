@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.107 2004-01-13 12:39:44 geuzaine Exp $
+// $Id: Views.cpp,v 1.108 2004-01-25 09:32:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -446,8 +446,6 @@ void DuplicateView(Post_View * v1, int withoptions)
 
   // When we duplicate a view, we just point to a reference view: we
   // DON'T allocate a new data set!
-  // *INDENT-OFF*
-
   v2->Time = v1->Time;
   v2->TimeStepMin = v1->TimeStepMin;
   v2->TimeStepMax = v1->TimeStepMax;
@@ -495,8 +493,6 @@ void DuplicateView(Post_View * v1, int withoptions)
   v2->NbTimeStep  = v1->NbTimeStep;
   for(int i=0 ; i<6 ; i++)
     v2->BBox[i]   = v1->BBox[i];
-
-  // *INDENT-ON*
 
   if(withoptions)
     CopyViewOptions(v1, v2);
@@ -576,7 +572,6 @@ void FreeView(Post_View * v)
     List_Delete(v->Time);
     Free(v->TimeStepMin);
     Free(v->TimeStepMax);
-    // *INDENT-OFF*
     List_Delete(v->SP); List_Delete(v->VP); List_Delete(v->TP);
     List_Delete(v->SL); List_Delete(v->VL); List_Delete(v->TL);
     List_Delete(v->ST); List_Delete(v->VT); List_Delete(v->TT);
@@ -587,7 +582,6 @@ void FreeView(Post_View * v)
     List_Delete(v->SY); List_Delete(v->VY); List_Delete(v->TY);
     List_Delete(v->T2D); List_Delete(v->T2C);
     List_Delete(v->T3D); List_Delete(v->T3C);
-    // *INDENT-ON*
     //set to NULL in case we don't free v (e.g. when doing a 'reload')
     //+ the reload does not work (e.g. the file is gone). This way,
     //the next Free stuff will still work gracefully.
@@ -1391,7 +1385,7 @@ void Post_View::transform(double mat[3][3])
   Changed = 1;
 }
 
-// combine lists
+// Combine views (spatially)
 
 static void combine(List_T * a, List_T * b)
 {
@@ -1402,11 +1396,11 @@ static void combine(List_T * a, List_T * b)
   }
 }
 
-void CombineViews(int all)
+void CombineViews(int all, int remove)
 {
   // sanity check
   int first = 1, nbt = 0;
-  for(int i = 0; i < List_Nbr(CTX.post.list) - 1; i++) {
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
     if(all || v->Visible) {
       if(first){
@@ -1422,11 +1416,13 @@ void CombineViews(int all)
     }
   }
 
+  List_T *to_remove = List_Create(10, 10, sizeof(int));
+
   Post_View *vm = BeginView(1);
   for(int i = 0; i < List_Nbr(CTX.post.list) - 1; i++) {
     Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
     if(all || v->Visible) {
-      // *INDENT-OFF*
+      List_Insert(to_remove, &v->Num, fcmp_int);
       combine(v->SP,vm->SP); vm->NbSP += v->NbSP;
       combine(v->VP,vm->VP); vm->NbVP += v->NbVP; 
       combine(v->TP,vm->TP); vm->NbTP += v->NbTP;
@@ -1451,8 +1447,7 @@ void CombineViews(int all)
       combine(v->SY,vm->SY); vm->NbSY += v->NbSY;
       combine(v->VY,vm->VY); vm->NbVY += v->NbVY;
       combine(v->TY,vm->TY); vm->NbTY += v->NbTY;
-      // *INDENT-ON*
-      /* this more complicated: have to change the indices
+      /* this more complicated: we have to recompute the indices
          combine(v->T2D,vm->T2D);
          combine(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
          combine(v->T3D,vm->T3D);
@@ -1461,6 +1456,142 @@ void CombineViews(int all)
     }
   }
   EndView(vm, 1, "combined.pos", "combined");
+
+  // remove original views?
+  if(remove){
+    for(int i = 0; i < List_Nbr(to_remove); i++) {
+      int num;
+      List_Read(to_remove, i, &num);
+      RemoveViewByNumber(num);
+    }
+  }
+  List_Delete(to_remove);
+}
+
+// Combine views (merge time steps)
+
+struct nameidx{
+  char *name;
+  List_T *indices;
+};
+
+int fcmp_name(const void *a, const void *b){
+  char *name1 = ((struct nameidx*)a)->name;
+  char *name2 = ((struct nameidx*)b)->name;
+  return strcmp(name1, name2);
+}
+
+void combine_time(struct nameidx *id, List_T *to_remove)
+{
+  int index, *nbe=0, *nbe2=0, nbn, nbn2, nbc, nbc2;
+  List_T *list=0, *list2=0;
+  
+  if(List_Nbr(id->indices) < 2){
+    return; // nothing to do
+  }
+
+  Post_View *vm = BeginView(1);
+
+  // use the first view as the reference
+  List_Read(id->indices, 0, &index);
+  Post_View *v = (Post_View*)List_Pointer(CTX.post.list, index);
+  for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++){
+    vm->get_raw_data(i, &list, &nbe, &nbc, &nbn);
+    v->get_raw_data(i, &list2, &nbe2, &nbc2, &nbn2);
+    *nbe = *nbe2;
+  }
+
+  // merge values
+  for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++){
+    vm->get_raw_data(i, &list, &nbe, &nbc, &nbn);
+    for(int j = 0; j < *nbe; j++){
+      for(int k = 0; k < List_Nbr(id->indices); k++){
+	List_Read(id->indices, k, &index);
+	v = (Post_View*)List_Pointer(CTX.post.list, index);
+	v->get_raw_data(i, &list2, &nbe2, &nbc2, &nbn2);
+	if(nbe && *nbe == *nbe2){
+	  List_Insert(to_remove, &v->Num, fcmp_int);
+	  int nb2 = List_Nbr(list2) / *nbe2;
+	  if(!k){
+	    // copy coordinates of elm j
+	    for(int l = 0; l < 3*nbn2; l++){
+	      List_Add(list, List_Pointer(list2, j*nb2+l));
+	    }
+	  }
+	  // copy values of elm j
+	  for(int l = 0; l < v->NbTimeStep*nbc2*nbn2; l++){
+	    List_Add(list, List_Pointer(list2, j*nb2+3*nbn2+l));
+	  }
+	}
+      }
+    }
+  }
+
+  if(vm->empty()) {
+    RemoveViewByNumber(vm->Num);
+  }
+  else{
+    // create the time data
+    for(int i = 0; i < List_Nbr(id->indices); i++){
+      List_Read(id->indices, i, &index);
+      v = (Post_View*)List_Pointer(CTX.post.list, index);
+      for(int j = 0; j < List_Nbr(v->Time); j++){
+	List_Add(vm->Time, List_Pointer(v->Time, j));
+      }
+    }
+    // finalize
+    char name[256], filename[256];
+    sprintf(name, "combined-%s", id->name);
+    sprintf(filename, "combined-%s.pos", id->name);
+    EndView(vm, 1, filename, name);
+  }
+}
+
+void CombineViews_Time(int how, int remove)
+{
+  // how==0: try to combine all visible views
+  // how==1: try to combine all views
+  // how==2: try to combine all views having identical names
+
+  List_T *ids = List_Create(10, 10, sizeof(nameidx));
+  List_T *to_remove = List_Create(10, 10, sizeof(int));
+  struct nameidx *pid;
+
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    if(how || v->Visible) {
+      nameidx id;
+      if(how == 2)
+	id.name = v->Name;
+      else
+	id.name = "all";
+      if((pid = (struct nameidx*)List_PQuery(ids, &id, fcmp_name))){
+	List_Add(pid->indices, &i);
+      }
+      else{
+	id.indices = List_Create(10, 10, sizeof(int));
+	List_Add(id.indices, &i);
+	List_Add(ids, &id);
+      }
+    }
+  }
+
+  for(int i = 0; i < List_Nbr(ids); i++){
+    pid = (struct nameidx*)List_Pointer(ids, i);
+    combine_time(pid, to_remove);
+    List_Delete(pid->indices);
+  }
+  List_Delete(ids);
+
+  // remove original view?
+  if(remove){
+    for(int i = 0; i < List_Nbr(to_remove); i++){
+      int num;
+      List_Read(to_remove, i, &num);
+      RemoveViewByNumber(num);
+    }
+  }
+  List_Delete(to_remove);
 }
 
 // generic access functions
@@ -1488,4 +1619,36 @@ int Post_View::empty(){
     return 0;
   else
     return 1;
+}
+
+void Post_View::get_raw_data(int type, List_T **list, int **nbe, int *nbc, int *nbn){
+  switch(type){
+  case 0 : *list = SP; *nbe = &NbSP; *nbc = 1; *nbn = 1; break;
+  case 1 : *list = VP; *nbe = &NbVP; *nbc = 3; *nbn = 1; break;
+  case 2 : *list = TP; *nbe = &NbTP; *nbc = 9; *nbn = 1; break;
+  case 3 : *list = SL; *nbe = &NbSL; *nbc = 1; *nbn = 2; break;
+  case 4 : *list = VL; *nbe = &NbVL; *nbc = 3; *nbn = 2; break;
+  case 5 : *list = TL; *nbe = &NbTL; *nbc = 9; *nbn = 2; break;
+  case 6 : *list = ST; *nbe = &NbST; *nbc = 1; *nbn = 3; break;
+  case 7 : *list = VT; *nbe = &NbVT; *nbc = 3; *nbn = 3; break;
+  case 8 : *list = TT; *nbe = &NbTT; *nbc = 9; *nbn = 3; break;
+  case 9 : *list = SQ; *nbe = &NbSQ; *nbc = 1; *nbn = 4; break;
+  case 10: *list = VQ; *nbe = &NbVQ; *nbc = 3; *nbn = 4; break;
+  case 11: *list = TQ; *nbe = &NbTQ; *nbc = 9; *nbn = 4; break;
+  case 12: *list = SS; *nbe = &NbSS; *nbc = 1; *nbn = 4; break;
+  case 13: *list = VS; *nbe = &NbVS; *nbc = 3; *nbn = 4; break;
+  case 14: *list = TS; *nbe = &NbTS; *nbc = 9; *nbn = 4; break;
+  case 15: *list = SH; *nbe = &NbSH; *nbc = 1; *nbn = 8; break;
+  case 16: *list = VH; *nbe = &NbVH; *nbc = 3; *nbn = 8; break;
+  case 17: *list = TH; *nbe = &NbTH; *nbc = 9; *nbn = 8; break;
+  case 18: *list = SI; *nbe = &NbSI; *nbc = 1; *nbn = 6; break;
+  case 19: *list = VI; *nbe = &NbVI; *nbc = 3; *nbn = 6; break;
+  case 20: *list = TI; *nbe = &NbTI; *nbc = 9; *nbn = 6; break;
+  case 21: *list = SY; *nbe = &NbSY; *nbc = 1; *nbn = 5; break;
+  case 22: *list = VY; *nbe = &NbVY; *nbc = 3; *nbn = 5; break;
+  case 23: *list = TY; *nbe = &NbTY; *nbc = 9; *nbn = 5; break;
+  default: 
+    Msg(FATAL, "Wrong type in Post_View::get_raw_data");
+    *list = NULL; *nbc = 0; *nbn = 0; break;
+  }
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.52 2003-12-01 21:51:24 geuzaine Exp $
+# $Id: Makefile,v 1.53 2004-01-25 09:32:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -78,7 +78,7 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h ../Geo/DataBase.h ../Graphics/Draw.h \
   ../Mesh/Create.h ../Geo/StepGeomDatabase.h ../Common/Colors.h Parser.h \
   OpenFile.h ../Common/CommandLine.h FunctionManager.h ../Common/Timer.h \
-  ../Graphics/CreateFile.h
+  ../Graphics/CreateFile.h ../Common/Visibility.h
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \

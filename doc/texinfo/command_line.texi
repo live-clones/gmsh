@@ -59,6 +59,8 @@ hide all views on startup
 select link mode between views (default: 0)
 @item -smoothview
 smooth views
+@item -combine
+combine input views into multi time step ones
 @item -convert file file
 convert an ascii view into a binary one
 @end ftable

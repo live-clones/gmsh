@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.39 2003-11-29 01:38:54 geuzaine Exp $
+# $Id: Makefile,v 1.40 2004-01-25 09:32:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -68,7 +68,8 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
-  ../DataStr/List.h DecomposeInSimplex.h ../Graphics/Iso.h \
+  ../DataStr/List.h DecomposeInSimplex.h ../DataStr/Tools.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Graphics/Iso.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/Malloc.h
 CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \

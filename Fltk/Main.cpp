@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.54 2003-12-07 00:23:07 geuzaine Exp $
+// $Id: Main.cpp,v 1.55 2004-01-25 09:32:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -134,6 +134,8 @@ int main(int argc, char *argv[])
     else {
       for(i = 1; i < nbf; i++)
         MergeProblem(TheFileNameTab[i]);
+      if(CTX.post.combine_time)
+	CombineViews_Time(2, 1);
       if(TheBgmFileName) {
         MergeProblem(TheBgmFileName);
         if(List_Nbr(CTX.post.list))
@@ -203,15 +205,14 @@ int main(int argc, char *argv[])
 
   WID->check();
 
-  // Open project file
+  // Open project file and merge all other input files
 
   OpenProblem(CTX.filename);
-
-  // Merge all other input files
-
   for(i = 1; i < nbf; i++)
     MergeProblem(TheFileNameTab[i]);
-
+  if(CTX.post.combine_time)
+    CombineViews_Time(2, 1);
+  
   // Init first context
 
   switch (CTX.initial_context) {

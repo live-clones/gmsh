@@ -1,4 +1,13 @@
-$Id: TODO,v 1.29 2004-01-13 12:39:44 geuzaine Exp $
+$Id: TODO,v 1.30 2004-01-25 09:32:30 geuzaine Exp $
+
+degre2: remove from after each 1d/2d/3d step, and add a global
+"add_degre2_nodes" and "remove_degre2_nodes" menu
+
+********************************************************************
+
+fix drawing of 2nd oder surface elements (subdivide?)
+
+********************************************************************
 
 add nicer 3d drawing code for arrows (cylinder+cone, with lights)
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.199 2004-01-13 12:39:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.200 2004-01-25 09:32:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2937,13 +2937,61 @@ void view_duplicate_with_options_cb(CALLBACK_ARGS)
 
 void view_combine_all_cb(CALLBACK_ARGS)
 {
-  CombineViews(1);
+  CombineViews(1, 0);
+  Draw();
+}
+
+void view_combine_all_and_remove_cb(CALLBACK_ARGS)
+{
+  CombineViews(1, 1);
   Draw();
 }
 
 void view_combine_visible_cb(CALLBACK_ARGS)
 {
-  CombineViews(0);
+  CombineViews(0, 0);
+  Draw();
+}
+
+void view_combine_visible_and_remove_cb(CALLBACK_ARGS)
+{
+  CombineViews(0, 1);
+  Draw();
+}
+
+void view_combine_time_all_cb(CALLBACK_ARGS)
+{
+  CombineViews_Time(1, 0);
+  Draw();
+}
+
+void view_combine_time_all_and_remove_cb(CALLBACK_ARGS)
+{
+  CombineViews_Time(1, 1);
+  Draw();
+}
+
+void view_combine_time_visible_cb(CALLBACK_ARGS)
+{
+  CombineViews_Time(0, 0);
+  Draw();
+}
+
+void view_combine_time_visible_and_remove_cb(CALLBACK_ARGS)
+{
+  CombineViews_Time(0, 1);
+  Draw();
+}
+
+void view_combine_time_by_name_cb(CALLBACK_ARGS)
+{
+  CombineViews_Time(2, 0);
+  Draw();
+}
+
+void view_combine_time_by_name_and_remove_cb(CALLBACK_ARGS)
+{
+  CombineViews_Time(2, 1);
   Draw();
 }
 

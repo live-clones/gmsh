@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.155 2003-12-12 16:54:38 geuzaine Exp $
+// $Id: Gmsh.y,v 1.156 2004-01-25 09:32:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2070,7 +2070,9 @@ Command :
    | tCombine tSTRING tEND
     {
       if(!strcmp($2, "Views"))
-	CombineViews(1);
+	CombineViews(1, 0);
+      else if(!strcmp($2, "TimeSteps"))
+	CombineViews_Time(2, 0);
       else
 	yymsg(GERROR, "Unknown Combine command");
     } 
