@@ -1,0 +1,28 @@
+
+HOWTO distribute the Mac version...
+====================================
+
+The old way (using resource forks)
+
+- compile
+
+- append the resources to the executable:
+
+  /Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh $(FLTK_DIR)/FL/mac.r
+
+- copy all the stuff you want to distribute (using the finder or
+  'ditto'! copying with 'cp' in a shell will destroy the resources!)
+  to a distribution folder
+
+- a) use the DiskCopy utility to create a disk image (.dmg)
+
+  b) you can also create the disk image on the command line, using
+     utils/make-dmg.sh (WARNING: modify the script to suit your needs)
+
+
+The new way:
+
+- use the new XML-based scheme: see 'make distrib-mac'
+
+- and just 'tar zcvf' the directory! No more resources!
+
