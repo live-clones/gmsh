@@ -79,6 +79,7 @@ class GUI{
 
   int BH; // generic button height
   int WB; // generic window border
+  int IW; // generic input field width
   int MH; // height of the unchangeable part of the menu window
   // All other diemnsions are automatic, or governed by CTX
   
