@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.11 2001-05-21 13:01:13 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.12 2001-08-26 12:12:18 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -182,7 +182,7 @@ int Socket_Connect(char *sockname){
   int len, sock;
   int tries;
 
-  /* slight delay to be sure that the socket is bind by the
+  /* slight delay to be sure that the socket is bound by the
      server before we attempt to connect to it... */
   Socket_Idle(0.1);
 

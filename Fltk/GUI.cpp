@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.110 2001-08-23 18:03:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.111 2001-08-26 12:12:18 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1205,38 +1205,27 @@ void GUI::create_mesh_options_window(){
 	o->hide();
 
 	mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Isotropic");
-	mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Triangle");
+	mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Isotropic (Triangle)");
 	mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Anisotropic");
 	for(i=0 ; i<3 ; i++){
 	  mesh_butt[i]->type(FL_RADIO_BUTTON);
-	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
 
-	mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Second order elements");
-	mesh_butt[3]->deactivate();//2nd order elements do not work. Disable the graphical option.
-	mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Interactive");
-	mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Constrained background mesh");
-	for(i=3 ; i<6 ; i++){
-	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
-	  mesh_butt[i]->down_box(FL_DOWN_BOX);
-	  mesh_butt[i]->labelsize(CTX.fontsize);
-	  mesh_butt[i]->selection_color(FL_YELLOW);
-	}
-	mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Number of smoothing steps");
+	mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Number of smoothing steps");
 	mesh_value[0]->minimum(0);
 	mesh_value[0]->maximum(100); 
 	mesh_value[0]->step(1);
-	mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW, BH, "Mesh scaling factor");
+	mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Mesh scaling factor");
 	mesh_value[1]->minimum(0.001);
 	mesh_value[1]->maximum(1000); 
 	mesh_value[1]->step(0.001);
-	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+9*BH, IW, BH, "Characteristic length factor");
+	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Characteristic length factor");
 	mesh_value[2]->minimum(0.001);
 	mesh_value[2]->maximum(1000); 
 	mesh_value[2]->step(0.001);
-	mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+10*BH, IW, BH, "Random perturbation factor");
+	mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Random perturbation factor");
 	mesh_value[3]->minimum(1.e-6);
 	mesh_value[3]->maximum(1.e-1); 
 	mesh_value[3]->step(1.e-6);
@@ -1245,6 +1234,17 @@ void GUI::create_mesh_options_window(){
 	  mesh_value[i]->textsize(CTX.fontsize);
 	  mesh_value[i]->type(FL_HORIZONTAL);
 	  mesh_value[i]->align(FL_ALIGN_RIGHT);
+	}
+
+	mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW, BH, "Second order elements");
+	mesh_butt[3]->deactivate();//2nd order elements do not work. Disable the graphical option.
+	mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+9*BH, BW, BH, "Interactive");
+	mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+10*BH, BW, BH, "Constrained background mesh");
+	for(i=3 ; i<6 ; i++){
+	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
+	  mesh_butt[i]->down_box(FL_DOWN_BOX);
+	  mesh_butt[i]->labelsize(CTX.fontsize);
+	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
 	o->end();
       }
@@ -1305,7 +1305,6 @@ void GUI::create_mesh_options_window(){
 	mesh_butt[16] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Solid");
 	for(i=14 ; i<17 ; i++){
 	  mesh_butt[i]->type(FL_RADIO_BUTTON);
-	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
