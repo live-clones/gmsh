@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.7 2004-11-26 10:29:20 remacle Exp $
+// $Id: Integrate.cpp,v 1.8 2004-11-26 15:06:50 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -144,8 +144,8 @@ static double integrate(int nbList, List_T *list, int dim,
 			double ONES[]       = { 1.0 , 1.0 , 1.0 , 1.0}; 
 			const double area   = q.integrate(ONES);
 			const double SUM    = v[0] + v[1] + v[2] + v[3];
-			const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]) + fabs (v[3]);		
-			if(SUMABS){
+			const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]) + fabs (v[3]);
+			if(SUMABS != 0.0){
 			    const double XI     = SUM / SUMABS;
 			    res                += area * (1 - XI) * 0.5 ;
 			}
@@ -204,10 +204,9 @@ static double integrate(int nbList, List_T *list, int dim,
 		if(nbComp == 1) res += p.integrate(v); 
 	    }
 	}
-	
-// printf("integration res = %22.15E\n",res);
-	return res;
     }
+// printf("integration res = %22.15E\n",res);
+    return res;
 }
 Post_View *GMSH_IntegratePlugin::execute(Post_View * v)
 {
