@@ -33,3 +33,5 @@ For i In {1:70}
 EndFor
 
 Coherence;
+Geometry.OldNewReg=1;
+Geometry.AutoCoherence=1;
