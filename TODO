@@ -1,4 +1,8 @@
-$Id: TODO,v 1.39 2004-03-30 18:17:06 geuzaine Exp $
+$Id: TODO,v 1.40 2004-04-06 19:21:08 geuzaine Exp $
+
+generalize Plugin(Triangulate) to vector and tensor points
+
+********************************************************************
 
 lighting of the new 3D arrows seems to behave in a weird way for
 "negative" vectors on Linux (as if the cone surface has an interior
