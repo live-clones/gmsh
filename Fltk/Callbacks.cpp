@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.238 2004-05-19 03:56:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.239 2004-05-19 04:50:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1753,12 +1753,15 @@ static void _new_multiline(int type)
     Draw();
   }
 
-  Msg(ONSCREEN, "Select control points\n"
-      "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-
   n = 0;
   while(1) {
     Msg(STATUS3N, "Creating curve");
+    if(n == 0)
+      Msg(ONSCREEN, "Select control points\n"
+	  "[Press 'e' to end selection or 'q' to abort]");
+    else
+      Msg(ONSCREEN, "Select control points\n"
+	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = v->Num;
@@ -1824,7 +1827,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     Msg(STATUS3N, "Creating straight line");
     if(n == 0)
       Msg(ONSCREEN, "Select start point\n"
-	  "[Press 'u' to undo last selection or 'q' to abort]");
+	  "[Press 'q' to abort]");
     if(n == 1)
       Msg(ONSCREEN, "Select end point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
@@ -1883,7 +1886,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     Msg(STATUS3N, "Creating circle");
     if(n == 0)
       Msg(ONSCREEN, "Select start point\n"
-	  "[Press 'u' to undo last selection or 'q' to abort]");
+	  "[Press 'q' to abort]");
     if(n == 1)
       Msg(ONSCREEN, "Select center point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
@@ -1935,7 +1938,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     Msg(STATUS3N, "Creating ellipse");
     if(n == 0)
       Msg(ONSCREEN, "Select start point\n"
-	  "[Press 'u' to undo last selection or 'q' to abort]");
+	  "[Press 'q' to abort]");
     if(n == 1)
       Msg(ONSCREEN, "Select center point\n"
 	  "[Press 'u' to undo last selection or 'q' to abort]");
@@ -2005,13 +2008,21 @@ static void _new_surface_volume(int mode)
     while(1) {
       if(type == ENT_LINE){
 	Msg(STATUS3N, "Creating surface");
-	Msg(ONSCREEN, "Select surface boundary\n"
-	    "[Press 'u' to undo last selection or 'q' to abort]");
+	if(!List_Nbr(List1))
+	  Msg(ONSCREEN, "Select surface boundary\n"
+	      "[Press 'q' to abort]");
+	else
+	  Msg(ONSCREEN, "Select surface boundary\n"
+	      "[Press 'u' to undo last selection or 'q' to abort]");
       }
       else{
 	Msg(STATUS3N, "Creating volume");
-	Msg(ONSCREEN, "Select volume boundary\n"
-	    "[Press 'u' to undo last selection or 'q' to abort]");
+	if(!List_Nbr(List1))
+	  Msg(ONSCREEN, "Select volume boundary\n"
+	      "[Press 'q' to abort]");
+	else
+	  Msg(ONSCREEN, "Select volume boundary\n"
+	      "[Press 'u' to undo last selection or 'q' to abort]");
       }
 
       char ib = SelectEntity(type, &v, &c, &s);
@@ -2040,8 +2051,12 @@ static void _new_surface_volume(int mode)
 	  List_Reset(List1);
 	  List_Add(List2, &num);
 	  while(1) {
-	    Msg(ONSCREEN, "Select hole boundaries (if none, press 'e')\n"
-		"[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+	    if(!List_Nbr(List1))
+	      Msg(ONSCREEN, "Select hole boundaries (if none, press 'e')\n"
+		  "[Press 'e' to end selection or 'q' to abort]");
+	    else
+	      Msg(ONSCREEN, "Select hole boundaries\n"
+		  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
 	    ib = SelectEntity(type, &v, &c, &s);
 	    if(ib == 'q') {
 	      ZeroHighlight(THEM);
@@ -2529,12 +2544,15 @@ static void _add_physical(char *what)
     return;
   }
 
-  Msg(ONSCREEN, "Select %s\n"
-      "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
-
   List1 = List_Create(5, 5, sizeof(int));
   while(1) {
     Msg(STATUS3N, "Creating physical %s", str);
+    if(!List_Nbr(List1))
+      Msg(ONSCREEN, "Select %s\n"
+	  "[Press 'e' to end selection or 'q' to abort]", str);
+    else
+      Msg(ONSCREEN, "Select %s\n"
+	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
     char ib = SelectEntity(type, &v, &c, &s);
     if(ib == 'l') {
       switch (type) {
@@ -2674,11 +2692,14 @@ void mesh_define_length_cb(CALLBACK_ARGS)
 
   WID->create_mesh_context_window(0);
 
-  Msg(ONSCREEN, "Select points\n"
-      "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-
   while(1) {
     Msg(STATUS3N, "Setting characteristic length");
+    if(n == 0)
+      Msg(ONSCREEN, "Select points\n"
+	  "[Press 'e' to end selection or 'q' to abort]");
+    else
+      Msg(ONSCREEN, "Select points\n"
+	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = v->Num;
@@ -2719,12 +2740,15 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
     Draw();
   }
 
-  Msg(ONSCREEN, "Select surfaces\n"
-      "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
-
   n = 0;
   while(1) {
     Msg(STATUS3N, "Selecting recombined surfaces");
+    if(n == 0)
+      Msg(ONSCREEN, "Select surfaces\n"
+	  "[Press 'e' to end selection or 'q' to abort]");
+    else
+      Msg(ONSCREEN, "Select surfaces\n"
+	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = s->Num;
@@ -2797,8 +2821,12 @@ static void _add_transfinite(int dim)
     Msg(STATUS3N, "Setting transfinite contraints");
     switch (dim) {
     case 1:
-      Msg(ONSCREEN, "Select lines\n"
-	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+      if(n == 0)
+	Msg(ONSCREEN, "Select lines\n"
+	    "[Press 'e' to end selection or 'q' to abort]");
+      else
+	Msg(ONSCREEN, "Select lines\n"
+	    "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
       ib = SelectEntity(ENT_LINE, &v, &c, &s);
       break;
     case 2:
@@ -2845,8 +2873,12 @@ static void _add_transfinite(int dim)
         p[n++] = s->Num; // fall-through
       case 3:
         while(1) {
-	  Msg(ONSCREEN, "Select boundary points (in order)\n"
-	      "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+	  if(n == ((dim == 2) ? 1 : 0))
+	    Msg(ONSCREEN, "Select (ordered) boundary points\n"
+		"[Press 'e' to end selection or 'q' to abort]");
+	  else
+	    Msg(ONSCREEN, "Select (ordered) boundary points\n"
+		"[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
           ib = SelectEntity(ENT_POINT, &v, &c, &s);
           if(ib == 'l') {
             p[n++] = v->Num;
