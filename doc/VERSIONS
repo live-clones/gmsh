@@ -1,4 +1,6 @@
-$Date: 2001-11-12 15:58:48 $
+$Date: 2001-11-14 14:39:39 $
+
+New in 1.30: Interface polish;
 
 New in 1.29: Translations and rotations can now be combined in
 extrusions; fixed coherence bug in Extrude Line; various small

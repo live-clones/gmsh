@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.92 2001-11-13 08:10:00 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.93 2001-11-14 14:39:39 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -487,7 +487,6 @@ void opt_statistics_histogram_cb(CALLBACK_ARGS) {
   int i, type=(int)data;
 
   Print_Histogram(M.Histogram[type]);
-  //WID->create_message_window();
 
   double *x=(double*)Malloc(NB_HISTOGRAM*sizeof(double));
   double *y=(double*)Malloc(NB_HISTOGRAM*sizeof(double));

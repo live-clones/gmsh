@@ -90,7 +90,6 @@ class GUI{
 public:
 
   // menu window
-  int init_menu_window;
   Fl_Window        *m_window ;
   Fl_Menu_Bar      *m_menu_bar ;
   Fl_Choice        *m_module_butt ;
@@ -100,14 +99,12 @@ public:
   Fl_Menu_Button   *m_popup_butt  [NB_BUTT_MAX] ;
 
   // graphic window
-  int init_graphic_window;
   Fl_Window        *g_window ;
   Opengl_Window    *g_opengl_window ;
   Fl_Button        *g_status_butt[7] ;
   Fl_Box           *g_status_label[3] ;
 
   // general options window
-  int init_general_options_window;
   Fl_Window        *gen_window ;
   Fl_Check_Button  *gen_butt[20] ;
   Fl_Value_Input   *gen_value[10] ;
@@ -115,7 +112,6 @@ public:
   Fl_Input         *gen_input[10] ;
 
   // geometry options window
-  int init_geometry_options_window;
   Fl_Window        *geo_window ;
   Fl_Check_Button  *geo_butt[10] ;
   Fl_Input         *geo_input ;
@@ -123,7 +119,6 @@ public:
   Fl_Button        *geo_col[50] ;
   
   // mesh options window
-  int init_mesh_options_window;
   Fl_Window        *mesh_window ;
   Fl_Check_Button  *mesh_butt[20] ;
   Fl_Input         *mesh_input ;
@@ -131,33 +126,28 @@ public:
   Fl_Button        *mesh_col[50] ;
 
   // solver options window
-  int init_solver_options_window;
   Fl_Window        *solver_window ;
   Fl_Check_Button  *solver_butt[20] ;
   Fl_Value_Input   *solver_value[20] ;
 
   // post-processing options window
-  int init_post_options_window;
   Fl_Window        *post_window ;
   Fl_Check_Button  *post_butt[20] ;
   Fl_Value_Input   *post_value[20] ;
 
   // statistics window
-  int init_statistics_window;
   Fl_Window        *stat_window ;
   Fl_Output        *stat_value[50] ;
 
   // message window
-  int init_message_window;
   Fl_Window        *msg_window ;
   Fl_Browser       *msg_browser ;
 
   // about window
-  int init_about_window;
   Fl_Window        *about_window ;
 
   // view options window
-  int init_view_window, view_number ;
+  int view_number ;
   Fl_Window        *view_window ;
   Fl_Group         *view_3d, *view_2d, *view_range, *view_timestep, *view_vector ;
 #define VIEW_OPT_BUTT 100
@@ -168,17 +158,14 @@ public:
   Fl_Return_Button *view_ok ;
   
   // geometry context window
-  int init_geometry_context_window;
   Fl_Window        *context_geometry_window ;
   Fl_Input         *context_geometry_input[30] ;
 
   // mesh context window
-  int init_mesh_context_window;
   Fl_Window        *context_mesh_window ;
   Fl_Input         *context_mesh_input[20] ;
 
   // solver windows
-  int init_getdp_window;
   Fl_Window        *getdp_window ;
   Fl_Input         *getdp_input[50] ;
   Fl_Choice        *getdp_choice[10] ;

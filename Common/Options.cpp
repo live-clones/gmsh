@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.60 2001-11-13 13:22:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.61 2001-11-14 14:39:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -2401,17 +2401,8 @@ double opt_print_gif_transparent(OPT_ARGS_NUM){
 #ifdef _FLTK
 
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-
-#define CCC(col,but)							\
-  if(WID && (action & GMSH_GUI)){					\
-    Fl_Color c = fl_color_cube(UNPACK_RED(col)*FL_NUM_RED/256, 		\
-			       UNPACK_GREEN(col)*FL_NUM_GREEN/256,	\
-			       UNPACK_BLUE(col)*FL_NUM_BLUE/256);	\
-    (but)->color(c);							\
-    (but)->redraw();							\
-  }
-
-#else
+#define contrast fl_contrast
+#endif
 
 #define CCC(col,but)							\
   if(WID && (action & GMSH_GUI)){					\
@@ -2422,8 +2413,6 @@ double opt_print_gif_transparent(OPT_ARGS_NUM){
     (but)->labelcolor(contrast(FL_BLACK,c));				\
     (but)->redraw();							\
   }
-
-#endif
 
 #endif
 

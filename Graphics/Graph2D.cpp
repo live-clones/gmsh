@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.10 2001-11-05 09:27:28 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.11 2001-11-14 14:39:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -338,7 +338,7 @@ void Draw_Graph2D(void){
   for(i=0;i<List_Nbr(CTX.post.list);i++){
     v = (Post_View*)List_Pointer(CTX.post.list,i);
     if(v->Visible && v->NbSP && v->Type!=DRAW_POST_3D){
-      tic = 4+v->LineWidth;
+      tic = 5;
       dx = dy = 0.;
       if(v->ShowScale){
 	gl_font(FL_HELVETICA,CTX.gl_fontsize);

@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.14 2001-11-13 13:22:21 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.15 2001-11-14 14:39:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,6 +12,10 @@ extern Context_T  CTX;
 
 #define UNDEFINED   0
 #define EPS         1.e-10
+
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+#define contrast fl_contrast
+#endif
 
 // This file defines the Colorbar_Window class (subclass of Fl_Window)
 
@@ -217,10 +221,7 @@ void Colorbar_Window::redraw_range(int a, int b){
      x = index_to_x(i);
      y = intensity_to_y(UNPACK_ALPHA(ct->table[i]));
      if (i!=a){
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-#else
        fl_color(contrast(FL_BLACK,color_bg));
-#endif
        fl_line(px,py,x,y);
      }
      px = x;  py = y;
@@ -241,10 +242,7 @@ void Colorbar_Window::redraw_range(int a, int b){
 
    // print colortable mode and help
    fl_font(FL_HELVETICA, font_height);
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-#else
    fl_color(contrast(FL_BLACK,color_bg));
-#endif
    int xx0=10, xx1=13*font_height, yy0=10;
    if (help_flag){
      i = 0;
@@ -300,10 +298,7 @@ void Colorbar_Window::redraw_marker(){
   
   // draw marker below color wedge
   x = index_to_x(marker_pos);
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-#else
   fl_color(contrast(FL_BLACK,color_bg));   
-#endif
   fl_line(x, marker_y, x, marker_y+marker_height);
   fl_line(x, marker_y, x-3, marker_y+6);
   fl_line(x, marker_y, x+3, marker_y+6);
