@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.20 2001-08-20 08:03:00 geuzaine Exp $
+# $Id: Makefile,v 1.21 2001-08-20 08:25:24 geuzaine Exp $
 #
 # Makefile for "libJpeg.a"
 #
 
 .IGNORE:
 
-CC       = c++
+CXX      = c++
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
@@ -27,14 +27,14 @@ SRC = jcomapi.c jutils.c jerror.c jmemmgr.c jmemnobs.c \
 
 OBJ = $(SRC:.c=.o)
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: .o .c
 
 $(LIB): $(OBJ) 
 	$(AR) $(LIB) $(OBJ) 
 	$(RANLIB) $(LIB)
 
-.cpp.o:
-	$(CC) $(CFLAGS) -c $<
+.c.o:
+	$(CXX) $(CFLAGS) -c $<
 
 clean:
 	$(RM) $(RMFLAGS) *.o
@@ -44,7 +44,7 @@ lint:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CC) -MM $(CFLAGS) ${SRC} \
+	$(CXX) -MM $(CFLAGS) ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile

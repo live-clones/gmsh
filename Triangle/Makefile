@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2001-08-20 08:03:00 geuzaine Exp $
+# $Id: Makefile,v 1.3 2001-08-20 08:25:24 geuzaine Exp $
 #
 # Makefile for "libTriangle.a"
 #
@@ -24,7 +24,7 @@
 
 .IGNORE:
 
-FORCE_CC = cc
+CC       = cc
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
@@ -34,7 +34,7 @@ LIB     = ../lib/libTriangle.a
 RMFLAGS  = -f
 
 # Do not optimize Triangle: it fucks up on Linux
-CFLAGS   = $(OS_FLAGS) -O0 -DTRILIBRARY
+CFLAGS   = -O0 $(OS_FLAGS) -DTRILIBRARY
 
 SRC = triangle.c
 
@@ -47,14 +47,14 @@ $(LIB): $(OBJ)
 	$(RANLIB) $(LIB)
 
 .c.o:
-	$(FORCE_CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -c $<
 
 clean:
 	$(RM) $(RMFLAGS) *.o triangle showme tricall *.?.poly *.?.node *.?.ele
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(FORCE_CC) -MM $(CFLAGS) ${SRC} \
+	$(CC) -MM $(CFLAGS) ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile

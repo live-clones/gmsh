@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2001-08-20 08:03:00 geuzaine Exp $
+# $Id: Makefile,v 1.5 2001-08-20 08:25:24 geuzaine Exp $
 #
 # Makefile for "libParallel.a"
 #
@@ -28,7 +28,7 @@ $(LIB): $(OBJ)
 	$(RANLIB) $(LIB)
 
 .cpp.o:
-	$(CC) $(CFLAGS) -c $<
+	$(CXX) $(CFLAGS) -c $<
 
 clean:
 	$(RM) $(RMFLAGS) *.o
@@ -38,7 +38,7 @@ lint:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CC) -MM $(CFLAGS) ${SRC} \
+	$(CXX) -MM $(CFLAGS) ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile

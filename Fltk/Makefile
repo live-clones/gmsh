@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.26 2001-08-20 08:03:00 geuzaine Exp $
+# $Id: Makefile,v 1.27 2001-08-20 08:25:23 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
 
 .IGNORE:
 
-CC       = c++
+CXX      = c++
 AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
@@ -46,7 +46,7 @@ $(LIB): $(OBJ)
 	$(RANLIB) $(LIB)
 
 .cpp.o:
-	$(CC) $(CFLAGS) -c $<
+	$(CXX) $(CFLAGS) -c $<
 
 clean:
 	$(RM) $(RMFLAGS) *.o
@@ -56,7 +56,7 @@ lint:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CC) -MM $(CFLAGS) ${SRC} \
+	$(CXX) -MM $(CFLAGS) ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
