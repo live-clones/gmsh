@@ -7,6 +7,7 @@
 #include <FL/filename.H>
 #include "CutPlane.h"
 #include "CutSphere.h"
+#include "CutMap.h"
 
 using namespace std;
 
@@ -48,7 +49,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
 
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Plane" ,GMSH_RegisterCutPlanePlugin()));
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Sphere" ,GMSH_RegisterCutSpherePlugin()));
-
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Map" ,GMSH_RegisterCutMapPlugin()));
 
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins)return;
