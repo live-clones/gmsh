@@ -1,9 +1,6 @@
 
-Options{
-  Mesh{
-    Algorithm = 2 ;
-  }
-}
+Mesh.Algorithm = 2 ;
+
 
 Point(1) = {0.0,0.0,0.0,.2};
 Point(2) = {1,0.0,0.0,.2};
