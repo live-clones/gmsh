@@ -1,0 +1,153 @@
+Menu bar shortcuts:
+
+@table @kbd
+@item <
+go back to previous context
+
+@item >
+go forward to next context
+
+@item g
+go to geometry module
+
+@item Shift+g
+show geometry options
+
+@item Shift+i
+show statistics window
+
+@item m
+go to mesh module
+
+@item Shift+m
+show mesh options
+
+@item Ctrl+m
+merge file
+
+@item Shift+n
+show general options
+
+@item Ctrl+o
+open file
+
+@item p
+go to post-processor module
+
+@item Shift+p
+show post-processing general options
+
+@item Ctrl+q
+quit
+
+@item Ctrl+s
+save mesh in default format
+
+@item Ctrl+Shift+s
+save file as
+
+@end table
+
+
+
+Other shortcuts:
+
+@table @kbd
+@item 0
+@item Esc
+reload geometry input file
+
+@item 1
+@item F1
+mesh curves
+
+@item 2
+@item F2
+mesh surfaces
+
+@item 3
+@item F3
+mesh volumes
+
+@item Alt+a
+hide/show small axes
+
+@item Alt+Shift+a
+hide/show big moving axes
+
+@item Alt+b
+hide/show all post-processing scales
+
+@item Alt+c
+alternate between predefined color schemes
+
+@item Alt+d
+alternate between mesh wire frame, hidden lines and shading modes
+
+@item Shift+d
+decrease animation delay
+
+@item Ctrl+Shift+d
+increase animation delay
+
+@item Alt+f
+toggle redraw mode (fast/full)
+
+@item Alt+h
+hide/show all post-processing views
+
+@item Alt+l
+hide/show geometry lines
+
+@item Alt+Shift+l
+hide/show mesh lines
+
+@item Alt+m
+toggle visibility of all mesh entities
+
+@item Alt+o
+change projection mode
+
+@item Alt+p
+hide/show geometry points
+
+@item Alt+Shift+p
+hide/show mesh points
+
+@item Alt+s
+hide/show geometry surfaces
+
+@item Alt+Shift+s
+hide/show mesh surfaces
+
+@item Alt+t
+alternate intervals mode for visible post-processing views
+
+@item Alt+v
+hide/show geometry volumes
+
+@item Alt+Shift+v
+hide/show mesh volumes
+
+@item Alt+x
+set X view
+
+@item Alt+y
+set Y view
+
+@item Alt+z
+set Z view
+
+@item Left arrow
+previous time step
+
+@item Right arrow
+next time step
+
+@item Up arrow
+previous view
+
+@item Down arrow
+next view
+
+@end table

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.16 2003-03-21 00:52:34 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.17 2003-04-14 22:37:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -59,6 +59,10 @@ char gmsh_host[]      = "Build host     : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager       : " GMSH_PACKAGER ;
 char gmsh_url[]       = "Web site       : http://www.geuz.org/gmsh/" ;
 char gmsh_email[]     = "Mailing list   : gmsh@geuz.org" ;
+
+// If you change the following, please also change
+// * the texinfo documentation (doc/texinfo/command_line.texi)
+// * the man page (doc/gmsh.1)
 
 void Print_Usage(char *name){
   Msg(DIRECT, "Usage: %s [options] [files]", name);

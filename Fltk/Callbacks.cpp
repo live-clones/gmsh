@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.174 2003-04-02 06:25:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.175 2003-04-14 22:37:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1316,6 +1316,9 @@ void visibility_number_cb(CALLBACK_ARGS)
 #else
 #define XX "Ctrl"
 #endif
+
+// If you change the following, please also change the texinfo
+// documentation (doc/texinfo/shortcuts.texi)
 
 void help_short_cb(CALLBACK_ARGS)
 {
