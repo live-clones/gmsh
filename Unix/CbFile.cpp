@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.15 2000-12-21 08:02:06 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.16 2000-12-21 14:53:10 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -25,8 +25,6 @@ extern XContext_T  XCTX;
 extern Widgets_T   WID;
 extern Mesh        M;
 
-static int WARNING_OVERRIDE = 0;
-
 /* ------------------------------------------------------------------------ */
 /*  C r e a t e I m a g e                                                   */
 /* ------------------------------------------------------------------------ */
@@ -36,11 +34,10 @@ void SaveToDisk (char *FileName, Widget warning,
   FILE    *fp ;
   static char KeepFileName[256];
 
-  if(!WARNING_OVERRIDE){
+  if(FileName){
     fp = fopen(FileName,"r");
     if(fp) {      
       XtManageChild(warning);
-      WARNING_OVERRIDE = 1;
       strcpy(KeepFileName,FileName);
       fclose(fp);
       return;
@@ -51,8 +48,6 @@ void SaveToDisk (char *FileName, Widget warning,
   }
 
   function(KeepFileName, CTX.print.format);
-
-  WARNING_OVERRIDE = 0;
 }
 
 void CreateFile (char *name, int format) {
@@ -112,7 +107,6 @@ void CreateFile (char *name, int format) {
   case FORMAT_XPM :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
-      WARNING_OVERRIDE = 0;
       return;
     }
     Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), fp);    
@@ -124,7 +118,6 @@ void CreateFile (char *name, int format) {
   case FORMAT_JPEG :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
-      WARNING_OVERRIDE = 0;
       return;
     }
     Replot();
@@ -139,7 +132,6 @@ void CreateFile (char *name, int format) {
     // have to replot for filling again buffer ...
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
-      WARNING_OVERRIDE = 0;
       return;
     }
     Replot();
@@ -153,7 +145,6 @@ void CreateFile (char *name, int format) {
   case FORMAT_PPM :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
-      WARNING_OVERRIDE = 0;
       return;
     }
     Replot();
@@ -171,7 +162,6 @@ void CreateFile (char *name, int format) {
     case 0 : // Bitmap EPS
       if(!(fp = fopen(name,"w"))) {
 	Msg(WARNING, "Unable to Open File '%s'", name); 
-	WARNING_OVERRIDE = 0;
 	return;
       }
       if(!(tmp = fopen(tmpFileName,"w"))){
@@ -192,7 +182,6 @@ void CreateFile (char *name, int format) {
     default : // Vector EPS
       if(!(fp = fopen(name,"w"))) {
 	Msg(WARNING, "Unable to Open File '%s'", name); 
-	WARNING_OVERRIDE = 0;
 	return;
       }
       CTX.print.gl_fonts = 0;
@@ -234,9 +223,13 @@ void CreateFile (char *name, int format) {
 void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   char      *c;
   XmString  xms;
-  
-  if((long int)client_data == FILE_SAVE_MESH){
+
+  switch ((long int)client_data) {
+  case FILE_SAVE_MESH :
     Print_Mesh(&M, NULL, CTX.mesh.format); 
+    return;
+  case FILE_SAVE_AS_OVERWRITE :
+    SaveToDisk(NULL, WID.ED.saveAsDialog, CreateFile);
     return;
   }
 
@@ -247,7 +240,6 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   switch ((long int)client_data) {
   case FILE_LOAD_GEOM       : OpenProblem(c); Init(); Draw(); break;
   case FILE_LOAD_POST       : MergeProblem(c); ColorBarRedraw(); Init(); Draw(); break;
-  case FILE_CANCEL          : WARNING_OVERRIDE = 0; break;
   case FILE_SAVE_AS         : SaveToDisk(c, WID.ED.saveAsDialog, CreateFile); break;
   case FILE_SAVE_OPTIONS_AS : Print_Context(c); break;
   default :

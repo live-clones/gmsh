@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.22 2000-12-21 08:02:06 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.23 2000-12-21 14:53:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -562,6 +562,7 @@ void CreateWidgets_ED(Widgets_T *w){
   i=0 ;
   XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Warning")); i++;
   XtSetArg(arg[i], XmNmessageString, XmStringCreateSimple("File exists")); i++;
+  XtSetArg(arg[i], XmNautoUnmanage, True); i++;
   w->ED.saveAsDialog = XmCreateWarningDialog(w->M.shell, "EDsaveAsDialog", arg, i);
 
   tmp = XmMessageBoxGetChild(w->ED.saveAsDialog, XmDIALOG_HELP_BUTTON); 

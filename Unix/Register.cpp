@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.16 2000-12-21 08:02:06 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.17 2000-12-21 14:53:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -121,8 +121,7 @@ void RegisterCallbacks_C(Widgets_T *w){
 
 void RegisterCallbacks_ED(Widgets_T *w){
 
-  register_ok_cb     (w->ED.saveAsDialog, FileCb, FILE_SAVE_AS);
-  register_cancel_cb (w->ED.saveAsDialog, FileCb, FILE_CANCEL);
+  register_ok_cb     (w->ED.saveAsDialog, FileCb,   FILE_SAVE_AS_OVERWRITE);
 
 }
 
