@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.203 2002-04-13 04:50:34 geuzaine Exp $
+# $Id: Makefile,v 1.204 2002-04-13 05:18:19 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -69,12 +69,13 @@ static:
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-static/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB)\
+                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a
                  $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
                  $(HOME)/SOURCES/Mesa-static/lib/libGL.a\
-                 $(HOME)/SOURCES/fltk-static/lib/libfltk.a -lX11 -lm
+                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a -lX11 -lm
 
 purify:
 	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) -lGLU -lGL \
@@ -114,7 +115,7 @@ depend:
            "CC=$(CC)" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 
 nodepend:
