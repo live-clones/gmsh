@@ -161,7 +161,7 @@ Plugin(Evaluate) is executed in-place.
 String options:
 @table @code
 @item Expression
-Default value: @code{"v * (x+y+z)"}
+Default value: @code{"Sin(v) * Sqrt(x^2+y^2)"}
 @end table
 Numeric options:
 @table @code
