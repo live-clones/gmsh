@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.159 2001-10-30 08:18:49 geuzaine Exp $
+# $Id: Makefile,v 1.160 2001-11-12 16:01:35 geuzaine Exp $
 
-GMSH_RELEASE = 1.28
+GMSH_RELEASE = 1.29
 
 MAKE = make
 CXX = c++
