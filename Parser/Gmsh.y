@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.13 2000-12-05 15:23:57 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.14 2000-12-05 15:30:32 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -20,8 +20,8 @@
 #include <alloca.h>
 #endif
 
-int            Force_ViewNumber = 0 ;
-List_T         *Symbol_L;
+int      Force_ViewNumber = 0 ;
+List_T  *Symbol_L;
 
 extern Mesh     *THEM;
 extern Post_View *ActualView;
@@ -1722,9 +1722,9 @@ void yyerror(char *s){
   yyerrorstate=1;
 }
 
-void  vyyerror (char *fmt, ...){
+void vyyerror(char *fmt, ...){
   va_list args;
-  char    tmp[TEXT_BUFFER_SIZE];
+  char tmp[TEXT_BUFFER_SIZE];
 
   va_start (args, fmt);
   vsprintf (tmp, fmt, args);
