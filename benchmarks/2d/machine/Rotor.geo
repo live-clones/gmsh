@@ -39,8 +39,8 @@ Printf("Inner rotor iron : line loop %g", newreg);
 LineLoop_[] = LineLoop6[] ; NbrLines_ = NbrLines6; InnerRotor = newreg; Call ConnectLine; 
 
 Printf("Rotor airgap layer : physical surface %g", RotorAirgapLayer);
-mmm = newreg; Plane Surface(mmm) = {InnerMB_,InnerAirgap};
-Physical Surface(RotorAirgapLayer) = {mmm};
+mmm1 = newreg; Plane Surface(mmm1) = {InnerMB_,InnerAirgap};
+Physical Surface(RotorAirgapLayer) = {mmm1};
 
 
 Printf("RotorIron : physical surface %g", RotorIron);
@@ -48,7 +48,7 @@ mmm = newreg; Plane Surface(mmm) = {InnerRotor,OuterShaft_};
 Physical Surface(RotorIron) = {mmm};
 
 Rotate{ {0,0,1},{0,0,0}, 0*Pi/180 }{
-  Surface{ mmm };
+  Surface{ mmm1, mmm };
   Surface{ geuz1[{0:NbrSect_-1}] };
   Surface{ geuz[{0:NbrSect_-1}] };
 }
