@@ -59,6 +59,7 @@ void Draw2d(void);
 void Draw(void);
 
 void Draw_String(char *s);
+void Draw_String(char *s, double style);
 void Draw_Geom(Mesh *m);
 void Draw_Post(void);
 void Draw_Graph2D(void);

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.151 2004-12-27 00:47:04 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.152 2004-12-27 03:57:23 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -3232,8 +3232,9 @@ is a list of 4 double precision numbers:
 @end example
 where @var{coord1} and @var{coord2} give the coordinates of the leftmost
 element of the 2D string in screen coordinates, @var{index} gives the
-starting index of the string in @var{text2d-chars} and @var{style} is
-currently unused.
+starting index of the string in @var{text2d-chars} and, if nonzero, the
+eight lower bits in @var{style} give the font size (the rest of @var{style}
+is reserved for future use).
 
 @item @var{text2d-chars}
 is a list of @var{nb-text2d-chars} characters. Substrings are separated with
@@ -3246,8 +3247,9 @@ is a list of 5 double precision numbers
 @end example
 where @var{coord1}, @var{coord2} and @var{coord3} give the coordinates of
 the leftmost element of the 3D string in model (real world) coordinates,
-@var{index} gives the starting index of the string in @var{text3d-chars} and
-@var{style} is currently unused.
+@var{index} gives the starting index of the string in @var{text3d-chars}
+and, if nonzero, the eight lower bits in @var{style} give the font size (the
+rest of @var{style} is reserved for future use).
 
 @item @var{text3d-chars}
 is a list of @var{nb-text3d-chars} chars. Substrings are separated with the

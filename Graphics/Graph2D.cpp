@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.38 2004-11-25 02:10:32 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.39 2004-12-27 03:57:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -490,9 +490,9 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T * td, List_T * tc)
         l++;
     }
     if(k < nbchar && l == timestep)
-      Draw_String(&c[k]);
+      Draw_String(&c[k], style);
     else
-      Draw_String(c);
+      Draw_String(c, style);
   }
 }
 

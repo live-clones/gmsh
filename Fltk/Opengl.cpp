@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.43 2004-10-28 06:11:22 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.44 2004-12-27 03:57:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -78,6 +78,17 @@ void Draw_String(char *s)
       return;
     gl2psText(s, CTX.gl_font, CTX.gl_fontsize);
   }
+}
+
+void Draw_String(char *s, double style)
+{
+  int size = (int)style, oldsize = CTX.gl_fontsize;
+  // extract the 8 lower bits of style to get the font size (and
+  // ignore if size==0):
+  size &= 0xff;
+  if(size) CTX.gl_fontsize = size;
+  Draw_String(s);
+  if(size) CTX.gl_fontsize = oldsize;
 }
 
 void Draw_OnScreenMessages()
