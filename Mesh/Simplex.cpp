@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.12 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.13 2001-05-29 13:31:25 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -353,8 +353,11 @@ Simplex *Create_Simplex (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
 }
 
 void Free_Simplex (void *a, void *b){
-  //  Simplex *s = *(Simplex**)a;
-  //if(s) Free(s);
+  Simplex *s = *(Simplex**)a;
+  if(s){
+    Free(s);
+    s = NULL;
+  }
 }
 
 Simplex *Create_Quadrangle (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
