@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.201 2004-02-05 02:10:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.202 2004-02-05 16:53:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2890,8 +2890,8 @@ test:
           goto test;
     }
   save:
-    WriteView(0, (Post_View *) List_Pointer(CTX.post.list, (long int)data),
-              name);
+    WriteView((Post_View *) List_Pointer(CTX.post.list, (long int)data),
+              name, 0, 0);
   }
 }
 
@@ -2909,8 +2909,8 @@ test:
           goto test;
     }
   save:
-    WriteView(1, (Post_View *) List_Pointer(CTX.post.list, (long int)data),
-              name);
+    WriteView((Post_View *) List_Pointer(CTX.post.list, (long int)data),
+              name, 1, 0);
   }
 }
 

@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.157 2004-01-29 22:03:59 geuzaine Exp $
+// $Id: Gmsh.y,v 1.158 2004-02-05 16:53:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2034,7 +2034,7 @@ Command :
 	Post_View *v = (Post_View *)List_Pointer_Test(CTX.post.list, (int)$4);
 	if(v){
 	  FixRelativePath($6, tmpstring);
-	  WriteView(0, v, tmpstring);
+	  WriteView(v, tmpstring, 0, 0);
 	}
       }
       else{

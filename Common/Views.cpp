@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.111 2004-02-05 02:10:42 geuzaine Exp $
+// $Id: Views.cpp,v 1.112 2004-02-05 16:53:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -787,7 +787,7 @@ void ReadView(FILE *file, char *filename)
                &v->NbSL, &v->NbVL, &v->NbTL,
                &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS, &v->NbVS, &v->NbTS);
         v->NbT2 = t2l = v->NbT3 = t3l = 0;
-        Msg(INFO, "Detected post-processing view format <= 1.0");
+        Msg(DEBUG, "Detected post-processing view format <= 1.0");
       }
       else if(version == 1.1) {
         fscanf(file,
@@ -795,7 +795,7 @@ void ReadView(FILE *file, char *filename)
                name, &v->NbTimeStep, &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL,
                &v->NbVL, &v->NbTL, &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS,
                &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(INFO, "Detected post-processing view format 1.1");
+        Msg(DEBUG, "Detected post-processing view format 1.1");
       }
       else if(version == 1.2) {
         fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
@@ -809,7 +809,7 @@ void ReadView(FILE *file, char *filename)
                &v->NbSH, &v->NbVH, &v->NbTH,
                &v->NbSI, &v->NbVI, &v->NbTI,
                &v->NbSY, &v->NbVY, &v->NbTY, &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(INFO, "Detected post-processing view format 1.2");
+        Msg(DEBUG, "Detected post-processing view format 1.2");
       }
       else {
         Msg(GERROR, "Unknown post-processing file format (version %g)",
@@ -952,27 +952,30 @@ void ReadView(FILE *file, char *filename)
 // FIXME: add a format similar to the msh format (node list + simplex list)
 // FIXME: add a structured format
 
-void WriteView(int Flag_BIN, Post_View * v, char *filename)
+void WriteView(Post_View *v, char *filename, int binary, int append)
 {
   FILE *file;
   char name[256];
   int i, f, One = 1;
 
   if(filename) {
-    file = fopen(filename, Flag_BIN ? "wb" : "w");
+    file = fopen(filename, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
     if(!file) {
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
-    Msg(INFO, "Writing post-processing file '%s'", filename);
+    if(!append)
+      Msg(INFO, "Writing post-processing file '%s'", filename);
   }
   else
     file = stdout;
 
-  fprintf(file, "$PostFormat /* Gmsh 1.2, %s */\n",
-          Flag_BIN ? "binary" : "ascii");
-  fprintf(file, "1.2 %d %d\n", Flag_BIN, (int)sizeof(double));
-  fprintf(file, "$EndPostFormat\n");
+  if(!append){
+    fprintf(file, "$PostFormat /* Gmsh 1.2, %s */\n",
+	    binary ? "binary" : "ascii");
+    fprintf(file, "1.2 %d %d\n", binary, (int)sizeof(double));
+    fprintf(file, "$EndPostFormat\n");
+  }
 
   for(i = 0; i < (int)strlen(v->Name); i++) {
     if(v->Name[i] == ' ')
@@ -992,7 +995,7 @@ void WriteView(int Flag_BIN, Post_View * v, char *filename)
           v->NbSS, v->NbVS, v->NbTS, v->NbSH, v->NbVH, v->NbTH,
           v->NbSI, v->NbVI, v->NbTI, v->NbSY, v->NbVY, v->NbTY,
           v->NbT2, List_Nbr(v->T2C), v->NbT3, List_Nbr(v->T3C));
-  if(Flag_BIN) {
+  if(binary) {
     f = LIST_FORMAT_BINARY;
     fwrite(&One, sizeof(int), 1, file);
   }
@@ -1032,7 +1035,7 @@ void WriteView(int Flag_BIN, Post_View * v, char *filename)
 
   if(filename) {
     fclose(file);
-    Msg(INFO, "Wrote post-processing file '%s'", filename);
+    Msg(INFO, "Wrote view '%s' in post-processing file '%s'", v->Name, filename);
     Msg(STATUS2N, "Wrote '%s'", filename);
   }
 

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.25 2004-01-25 09:32:30 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.26 2004-02-05 16:53:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -264,15 +264,13 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         i++;
         CTX.terminal = 1;
         if(argv[i] && argv[i + 1]) {
-          ParseFile(argv[i], 0, 1);
-          if(List_Nbr(CTX.post.list))
-            WriteView(1, (Post_View *) List_Pointer(CTX.post.list, 0),
-                      argv[i + 1]);
-          else
-            fprintf(stderr, ERROR_STR "No view to convert\n");
+          MergeProblem(argv[i]);
+          for(int j = 0; j < List_Nbr(CTX.post.list); j++)
+            WriteView((Post_View *) List_Pointer(CTX.post.list, j),
+                      argv[i + 1], 1, j ? 1 : 0);
         }
         else
-          fprintf(stderr, "Usage: %s -convert view.ascii view.binary\n",
+          fprintf(stderr, "Usage: %s -convert ViewFile BinaryViewFile\n",
                   argv[0]);
         exit(1);
       }

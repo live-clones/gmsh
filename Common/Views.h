@@ -151,7 +151,7 @@ void FreeView(Post_View *v);
 bool RemoveViewByIndex(int index);
 bool RemoveViewByNumber(int num);
 void ReadView(FILE *file, char *filename);
-void WriteView(int Flag_BIN, Post_View *v, char *filename);
+void WriteView(Post_View *v, char *filename, int binary, int append);
 void CopyViewOptions(Post_View *src, Post_View *dest);
 void CombineViews(int all, int remove);
 void CombineViews_Time(int how, int remove);

@@ -191,7 +191,7 @@
 
 #line 1 "Gmsh.y"
  
-// $Id: Gmsh.tab.cpp,v 1.178 2004-01-29 22:03:58 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.179 2004-02-05 16:53:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -6574,7 +6574,7 @@ case 280:
 	Post_View *v = (Post_View *)List_Pointer_Test(CTX.post.list, (int)yyvsp[-3].d);
 	if(v){
 	  FixRelativePath(yyvsp[-1].c, tmpstring);
-	  WriteView(0, v, tmpstring);
+	  WriteView(v, tmpstring, 0, 0);
 	}
       }
       else{
