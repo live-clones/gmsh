@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.171 2003-04-01 17:05:31 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.172 2003-04-01 17:14:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -817,9 +817,16 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   Msg(STATUS3N, "Select Point ('q'=quit)");
   ib = SelectEntity(ENT_POINT, &v, &c, &s);
   if(ib == 1) {
-    opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, v->Pos.X);
-    opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, v->Pos.Y);
-    opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, v->Pos.Z);
+    // This would bypass the "Apply" button... Not necessarily bad,
+    // but it's not consistent with the rest of the GUI.
+    //opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, v->Pos.X);
+    //opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, v->Pos.Y);
+    //opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, v->Pos.Z);
+
+    // This is more conform to the way we do things elsewhere:
+    WID->gen_value[8]->value(v->Pos.X);
+    WID->gen_value[9]->value(v->Pos.Y);
+    WID->gen_value[10]->value(v->Pos.Z);
   }
   ZeroHighlight(THEM);
   Draw();
