@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.233 2004-07-02 23:16:02 geuzaine Exp $
+$Id: VERSIONS,v 1.234 2004-07-05 15:31:59 geuzaine Exp $
+
+New since 1.54: small bug fixes.
 
 New in 1.54: integrated Netgen (3D mesh quality optimization +
 alternative 3D algorithm); Extrude Surface now always automatically
