@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.163 2005-01-08 20:15:21 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.164 2005-01-09 03:01:56 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -1568,7 +1568,7 @@ composed of either three or four elementary lines.
 Creates a discrete surface, i.e., a surface defined by a polygonal
 discretization (usually a triangulation).  The two @var{expression}s on the
 right hand side define the number of points and the number of polygons in
-the discretisation, respectively. The first @var{expression-list} gives the
+the discretization, respectively. The first @var{expression-list} gives the
 list of discretization points and their associated normals, by groups of six
 @var{expression}s (three node coordinates and three normal components for
 each point). The second @var{expression-list} gives the list of polygons, by
