@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.2 2001-01-09 08:58:38 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.3 2001-01-09 13:28:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -24,6 +24,7 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 /* ------------------------------------------------------------------------ */
 
 void Init(void){
+  WID->make_gl_current();
 }
 
 void InitOverlay(void){

@@ -125,12 +125,16 @@ class GUI{
   Fl_Value_Output  *stat_value[40] ;
 
   // view options window
+  Fl_Check_Button  *view_butt[20] ;
+  Fl_Value_Input   *view_value[10] ;
+  Fl_Input         *view_input[10] ;
 
 public:
 
   GUI();
   void run();
   void check();
+  void make_gl_current();
   void draw_gl();
   void draw_gl_overlay();
   void set_gl_size(int w, int h);
@@ -146,6 +150,7 @@ public:
   void opt_mesh();
   void opt_post();
   void opt_stat();
+  void opt_view();
 
   // create help windows
   void help_short();

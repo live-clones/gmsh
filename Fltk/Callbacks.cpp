@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.3 2001-01-09 11:17:13 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.4 2001-01-09 13:28:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "Views.h"
 #include "Timer.h"
+#include "CreateFile.h"
 #include "OpenFile.h"
 #include "Context.h"
 #include "GUI.h"
@@ -152,7 +153,7 @@ void file_open_cb(CALLBACK_ARGS) {
 
 void file_merge_cb(CALLBACK_ARGS) {
   char *newfile;
-  newfile = fl_file_chooser("Merge File", "*.{geo,pos,msh}", NULL);
+  newfile = fl_file_chooser("Merge File", "*", NULL);
   if (newfile != NULL) {
     MergeProblem(newfile); 
     Init();
@@ -164,74 +165,87 @@ void file_save_cb(CALLBACK_ARGS) {
   Print_Mesh(&M, NULL, CTX.mesh.format);
 }
 
-void file_save_as_cb(CALLBACK_ARGS) {
+
+void file_save_as_auto_cb(CALLBACK_ARGS) {
   char *newfile;
-  newfile = fl_file_chooser("Save File", "*.{geo,pos,msh}", NULL);
-  void CreateFile (char *name, int format) ;
+  if((newfile = fl_file_chooser("Save File by Extension", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = FORMAT_AUTO); 
+}
 
-  /*
+void file_save_as_geo_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save GEO File", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = FORMAT_GEO); 
+}
 
-  case OPTIONS_SAVE_MSH  : 
-    CTX.print.format = CTX.mesh.format = FORMAT_MSH; 
-    break;
-  case OPTIONS_SAVE_UNV  : 
-    CTX.print.format = CTX.mesh.format = FORMAT_UNV; 
-    break;
-  case OPTIONS_SAVE_GREF : 
-    CTX.print.format = CTX.mesh.format = FORMAT_GREF; 
-    break;
-  case OPTIONS_SAVE_GEO  : 
-    CTX.print.format = FORMAT_GEO; 
-    break;
-  case OPTIONS_SAVE_AUTO : 
-    CTX.print.format = FORMAT_AUTO; 
-    break;
-  case OPTIONS_SAVE_XPM  : 
-    CTX.print.format = FORMAT_XPM; 
-    break;
-  case OPTIONS_SAVE_GIF  : 
-    CTX.print.format = FORMAT_GIF;
+void file_save_as_msh_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save MSH File", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+}
+void file_save_as_unv_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save UNV File", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_UNV); 
+}
+void file_save_as_gref_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save GREF File", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_GREF); 
+}
+void file_save_as_eps_simple_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save EPS File", "*", NULL))){
+    CTX.print.eps_quality = 1; 
+    CreateFile(newfile, CTX.print.format = FORMAT_EPS); 
+  }
+}
+void file_save_as_eps_accurate_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save EPS File", "*", NULL))){
+    CTX.print.eps_quality = 2; 
+    CreateFile(newfile, CTX.print.format = FORMAT_EPS); 
+  }
+}
+void file_save_as_jpeg_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save JPEG File", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = FORMAT_JPEG); 
+}
+
+void file_save_as_gif_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
     CTX.print.gif_dither = 0;
-    CTX.print.gif_transparent = 0; 
-    break;
-  case OPTIONS_SAVE_GIF_DITHERED : 
-    CTX.print.format = FORMAT_GIF;
+    CTX.print.gif_transparent = 0;
+    CreateFile(newfile, CTX.print.format = FORMAT_GIF); 
+  }
+}
+void file_save_as_gif_dithered_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
     CTX.print.gif_dither = 1; 
     CTX.print.gif_transparent = 0; 
-    break;
-  case OPTIONS_SAVE_GIF_TRANSPARENT :
-    CTX.print.format = FORMAT_GIF;
+    CreateFile(newfile, CTX.print.format = FORMAT_GIF); 
+  }
+}
+void file_save_as_gif_transparent_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
     CTX.print.gif_dither = 0;
     CTX.print.gif_transparent = 1; 
-    break;
-  case OPTIONS_SAVE_JPEG :
-    CTX.print.format = FORMAT_JPEG; 
-    break;
-  case OPTIONS_SAVE_PPM :
-    CTX.print.format = FORMAT_PPM; 
-    break;
-  case OPTIONS_SAVE_YUV :
-    CTX.print.format = FORMAT_YUV; 
-    break;
-  case OPTIONS_SAVE_EPS_IMAGE : 
-    CTX.print.format = FORMAT_EPS; 
-    CTX.print.eps_quality = 0;
-    break;
-  case OPTIONS_SAVE_EPS_SIMPLE :
-    CTX.print.format = FORMAT_EPS; 
-    CTX.print.eps_quality = 1; 
-    break;
-  case OPTIONS_SAVE_EPS_COMPLEX :
-    CTX.print.format = FORMAT_EPS; 
-    CTX.print.eps_quality = 2; 
-    break;
-
-  */
-
-
-
-  if (newfile != NULL)
-    CreateFile(newfile, FORMAT_AUTO); 
+    CreateFile(newfile, CTX.print.format = FORMAT_GIF);
+  }
+}
+void file_save_as_ppm_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save PPM File", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = FORMAT_PPM); 
+}
+void file_save_as_yuv_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save YUV File", "*", NULL)))
+    CreateFile(newfile, CTX.print.format = FORMAT_YUV); 
 }
 
 static int RELOAD_ALL_VIEWS = 0 ;
@@ -702,5 +716,5 @@ void view_timestep_cb(CALLBACK_ARGS){
   printf("Timestep view %d \n", (int)data);
 }
 void view_options_cb(CALLBACK_ARGS){
-  printf("Options view %d \n", (int)data);
+  WID->opt_view();
 }

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.51 2001-01-08 08:05:47 geuzaine Exp $
+// $Id: Gmsh.y,v 1.52 2001-01-09 13:28:49 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -21,6 +21,7 @@
 #include "FunctionManager.h"
 #include "ColorTable.h"
 #include "Timer.h"
+#include "CreateFile.h"
 
 #ifdef __DECCXX // bug in bison
 #include <alloca.h>
@@ -57,8 +58,6 @@ static unsigned int   *pColOpt;
 static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
 static StringXColor   *pColCat;
-
-void CreateFile (char *name, int format);
 
 char *strsave(char *ptr);
 void  yyerror (char *s);

@@ -27,7 +27,21 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"Save",             FL_CTRL+'s', (Fl_Callback *)file_save_cb, 0},
-    {"Save As...",       FL_CTRL+'p', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
+    {"Save As",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
+      {"By extension...",      0, (Fl_Callback *)file_save_as_auto_cb, 0},
+      {"GEO...",               0, (Fl_Callback *)file_save_as_geo_cb, 0},
+      {"MSH...",               0, (Fl_Callback *)file_save_as_msh_cb, 0},
+      {"UNV...",               0, (Fl_Callback *)file_save_as_unv_cb, 0},
+      {"GREF...",              0, (Fl_Callback *)file_save_as_gref_cb, 0},
+      {"EPS simple sort...",   0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
+      {"EPS accurate sort...", 0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
+      {"JPEG...",              0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
+      {"GIF...",               0, (Fl_Callback *)file_save_as_gif_cb, 0},
+      {"GIF dithered...",      0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
+      {"GIF transparent...",   0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
+      {"PPM...",               0, (Fl_Callback *)file_save_as_ppm_cb, 0},
+      {"UCB YUV...",           0, (Fl_Callback *)file_save_as_yuv_cb, 0},
+      {0},
     {"Reload All Views", FL_CTRL+'l', (Fl_Callback *)file_reload_all_views_cb, 0},
     {"Remove All Views", FL_CTRL+'r', (Fl_Callback *)file_remove_all_views_cb, 0, FL_MENU_DIVIDER},
     {"Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
@@ -242,6 +256,7 @@ GUI::GUI() {
 
     m_window = new Fl_Window(width,MH);
     m_window->box(FL_THIN_UP_BOX);
+    m_window->label("Gmsh");
 
     {
       Fl_Menu_Bar *o = new Fl_Menu_Bar(0,0,width,BH); 
@@ -398,6 +413,12 @@ void GUI::set_status(char *msg, int num){
   g_status_label[num]->redraw();
 }
 
+// set the current drawing context to the main opengl window
+
+void GUI::make_gl_current(){
+  g_opengl_window->make_current();
+}
+
 // Draw the opengl window
 
 void GUI::draw_gl(){
@@ -540,6 +561,7 @@ void GUI::opt_general(){
     
     gen_window = new Fl_Window(width,height);
     gen_window->box(FL_THIN_UP_BOX);
+    gen_window->label("General Options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -670,6 +692,7 @@ void GUI::opt_geometry(){
     
     geo_window = new Fl_Window(width,height);
     geo_window->box(FL_THIN_UP_BOX);
+    geo_window->label("Geometry Options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -742,6 +765,7 @@ void GUI::opt_mesh(){
     
     mesh_window = new Fl_Window(width,height);
     mesh_window->box(FL_THIN_UP_BOX);
+    mesh_window->label("Mesh Options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -859,6 +883,7 @@ void GUI::opt_post(){
     
     post_window = new Fl_Window(width,height);
     post_window->box(FL_THIN_UP_BOX);
+    post_window->label("Post Processing Options");
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -927,6 +952,7 @@ void GUI::opt_stat(){
     
     stat_window = new Fl_Window(width,height);
     stat_window->box(FL_THIN_UP_BOX);
+    stat_window->label("Statistics");
     {
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
@@ -1017,6 +1043,7 @@ void GUI::help_short(){
     
     help_window = new Fl_Window(width,height);
     help_window->box(FL_THIN_UP_BOX);
+    help_window->label("Short Help");
 
     Fl_Scroll*o = new Fl_Scroll(WB, WB, width-2*WB, height-3*WB-BH);
     {
@@ -1060,6 +1087,7 @@ void GUI::help_about(){
     
     about_window = new Fl_Window(width,height);
     about_window->box(FL_THIN_UP_BOX);
+    about_window->label("About Gmsh");
 
     Fl_Box *o = new Fl_Box(2*WB, WB, about_width, height-2*WB);
     about_bmp = new Fl_Bitmap(about_bits,about_width,about_height);
@@ -1089,6 +1117,152 @@ void GUI::help_about(){
       about_window->hide();
     else
       about_window->show();
+  }
+
+}
+
+// Create the window for view options
+
+void GUI::opt_view(){
+  static int init_opt_view = 0;
+
+  if(!init_opt_view){
+    init_opt_view = 1 ;
+
+    int width = 280;
+    int height = 5*WB+9*BH ;
+    
+    view_window = new Fl_Window(width,height);
+    view_window->box(FL_THIN_UP_BOX);
+    view_window->label("View Options");
+    { 
+      Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Color bar");
+	o->labelsize(CTX.fontsize);
+        o->hide();
+        view_butt[0] = new Fl_Check_Button(2*WB, 2*WB+BH, 100, BH, "Show color bar");
+        view_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 100, BH, "Display time");
+        view_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Transparent bar");
+	for(int i=0 ; i<3 ; i++){
+	  view_butt[i]->type(FL_TOGGLE_BUTTON);
+	  view_butt[i]->down_box(FL_DOWN_BOX);
+	  view_butt[i]->labelsize(CTX.fontsize);
+	  view_butt[i]->selection_color(FL_YELLOW);
+	}
+	view_input[0] = new Fl_Input (2*WB, 2*WB+4*BH, 100, BH, "Title");
+	view_input[1] = new Fl_Input (2*WB, 2*WB+5*BH, 100, BH, "Number format");
+	for(int i=0 ; i<2 ; i++){
+	  view_input[i]->labelsize(CTX.fontsize);
+	  view_input[i]->type(FL_HORIZONTAL);
+	  view_input[i]->align(FL_ALIGN_RIGHT);
+	}
+        o->end();
+      }
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
+	o->labelsize(CTX.fontsize);
+
+	{
+	  Fl_Group* o = new Fl_Group(WB, 2*WB+BH, width-2*WB, 2*BH, 0);
+	  view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+  BH, 100, BH, "Linear");
+	  view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 100, BH, "Logarithmic");
+	  for(int i=4 ; i<6 ; i++){
+	    view_butt[i]->type(FL_RADIO_BUTTON);
+	    view_butt[i]->labelsize(CTX.fontsize);
+	    view_butt[i]->selection_color(FL_YELLOW);
+	  }
+	  o->end();
+	}
+
+        view_butt[3] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Custom");
+	view_butt[3]->type(FL_TOGGLE_BUTTON);
+	view_butt[3]->down_box(FL_DOWN_BOX);
+	view_butt[3]->labelsize(CTX.fontsize);
+	view_butt[3]->selection_color(FL_YELLOW);
+
+        view_value[0] = new Fl_Value_Input(2*WB+120, 2*WB+3*BH, 100, BH, "minimum");
+        view_value[1] = new Fl_Value_Input(2*WB+120, 2*WB+4*BH, 100, BH, "maximum");
+	for(int i=0 ; i<2 ; i++){
+	  view_value[i]->labelsize(CTX.fontsize);
+	  view_value[i]->type(FL_HORIZONTAL);
+	  view_value[i]->align(FL_ALIGN_LEFT);
+	}
+
+	{
+	  Fl_Group* o =  new Fl_Group       (WB,       2*WB+6*BH, width-2*WB, 2*BH, 0);
+	  view_butt[6] = new Fl_Check_Button(2*WB,     2*WB+6*BH, 100, BH, "Iso");
+	  view_butt[7] = new Fl_Check_Button(2*WB,     2*WB+7*BH, 100, BH, "Filled iso");
+	  view_butt[8] = new Fl_Check_Button(2*WB+120, 2*WB+6*BH, 100, BH, "Continuous");
+	  view_butt[9] = new Fl_Check_Button(2*WB+120, 2*WB+7*BH, 100, BH, "Numeric");
+	  for(int i=6 ; i<10 ; i++){
+	    view_butt[i]->type(FL_RADIO_BUTTON);
+	    view_butt[i]->labelsize(CTX.fontsize);
+	    view_butt[i]->selection_color(FL_YELLOW);
+	  }
+	  o->end();
+	}
+
+	view_value[2] = new Fl_Value_Input(2*WB, 2*WB+5*BH, 40, BH, "Intervals");
+	view_value[2]->labelsize(CTX.fontsize);
+	view_value[2]->type(FL_HORIZONTAL);
+	view_value[2]->align(FL_ALIGN_RIGHT);
+	view_value[2]->minimum(1); 
+	view_value[2]->maximum(256); 
+	view_value[2]->step(1);
+        o->end();
+      }
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Offset");
+	o->labelsize(CTX.fontsize);
+        o->hide();
+	view_value[3] = new Fl_Value_Input(2*WB, 2*WB+ BH, 100, BH, "X");
+        view_value[4] = new Fl_Value_Input(2*WB, 2*WB+2*BH, 100, BH, "Y");
+	view_value[5] = new Fl_Value_Input(2*WB, 2*WB+3*BH, 100, BH, "Z");
+	for(int i=3 ; i<6 ; i++){
+	  view_value[i]->labelsize(CTX.fontsize);
+	  view_value[i]->type(FL_HORIZONTAL);
+	  view_value[i]->align(FL_ALIGN_RIGHT);
+	}	
+	o->end();
+      }
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Raise");
+	o->labelsize(CTX.fontsize);
+        o->hide();
+	view_value[6] = new Fl_Value_Input(2*WB, 2*WB+ BH, 100, BH, "X");
+        view_value[7] = new Fl_Value_Input(2*WB, 2*WB+2*BH, 100, BH, "Y");
+	view_value[8] = new Fl_Value_Input(2*WB, 2*WB+3*BH, 100, BH, "Z");
+	for(int i=6 ; i<9 ; i++){
+	  view_value[i]->labelsize(CTX.fontsize);
+	  view_value[i]->type(FL_HORIZONTAL);
+	  view_value[i]->align(FL_ALIGN_RIGHT);
+	}	
+	o->end();
+      }
+      o->end();
+    }
+
+    { 
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)view_window);
+    }
+    { 
+      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      o->labelsize(CTX.fontsize);
+      o->callback(ok_cb);
+    }
+
+    view_window->end();
+    view_window->show();
+  }
+  else{
+    if(view_window->shown())
+      view_window->hide();
+    else
+      view_window->show();
+    
   }
 
 }

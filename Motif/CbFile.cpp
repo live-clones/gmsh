@@ -1,4 +1,4 @@
-// $Id: CbFile.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbFile.cpp,v 1.2 2001-01-09 13:28:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "Widgets.h"
 #include "Context.h"
+#include "CreateFile.h"
 
 #include "CbFile.h"
 #include "CbColorbar.h"
@@ -39,8 +40,6 @@ void SaveToDisk (char *FileName, Widget warning,
 /* ------------------------------------------------------------------------ 
     F i l e C b                                                       
    ------------------------------------------------------------------------ */
-
-extern void CreateFile (char *name, int format) ;
 
 void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   char      *c;

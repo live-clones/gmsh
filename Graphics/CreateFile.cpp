@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.2 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.3 2001-01-09 13:28:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -36,6 +36,8 @@ void CreateFile (char *name, int format) {
   FILE    *tmp;
   char     cmd[1000], *tmpFileName="tmp.xwd";
 #endif
+
+  if(!name || !strlen(name)) return;
 
   CTX.print.gl_fonts = 1;
 
