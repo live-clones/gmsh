@@ -43,6 +43,7 @@ public:
   void show(){
     if(_win){
       _win->show();
+      rescan(); // necessary since fltk 1.1.7
       if(_in)
 	_in->take_focus();
       else

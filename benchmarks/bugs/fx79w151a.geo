@@ -1,6 +1,10 @@
 
 // This works great on my Mac (with clscale = 1, 0.9, 0.7, 0.6, 0.5); fails with 0.8
 
+// OK too gmsh fx79w151a.geo -clscale 0.3 -rand 1.e-5
+//        gmsh fx79w151a.geo -clscale 0.2 -rand 1.e-6
+
+
 // fails miserably with clscale = 1 on Linux, but works for clscale 0.9 and 0.5
 
 // Gmesh input File created by Gmeshgen.pl
