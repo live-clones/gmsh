@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.8 2004-07-05 19:51:37 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.9 2004-07-07 20:36:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -209,37 +209,39 @@ OctreePost::OctreePost(Post_View *v)
 		    v->BBox[3]-v->BBox[2],
 		    v->BBox[5]-v->BBox[4]};		    
   
-  ST = Octree_Create(1000, min, size, 
+  const int maxElePerBucket = 100; // trade-off memory vs. speed
+
+  ST = Octree_Create(maxElePerBucket, min, size, 
 		     PostTriangleBB,
 		     PostTriangleCentroid,
 		     PostTriangleInEle);
   addListOfStuff(ST, v->ST, 9 + 3 * v->NbTimeStep);
 
-  VT = Octree_Create(1000, min, size, 
+  VT = Octree_Create(maxElePerBucket, min, size, 
 		     PostTriangleBB,
 		     PostTriangleCentroid,
 		     PostTriangleInEle);
   addListOfStuff(VT, v->VT, 9 + 9 * v->NbTimeStep);
 
-  TT = Octree_Create(1000, min, size, 
+  TT = Octree_Create(maxElePerBucket, min, size, 
 		     PostTriangleBB,
 		     PostTriangleCentroid,
 		     PostTriangleInEle);
   addListOfStuff(TT, v->TT, 9 + 27 * v->NbTimeStep);
 
-  SS = Octree_Create(1000, min, size, 
+  SS = Octree_Create(maxElePerBucket, min, size, 
 		     PostSimplexBB,
 		     PostSimplexCentroid,
 		     PostSimplexInEle);
   addListOfStuff(SS, v->SS, 12 + 4 * v->NbTimeStep);
 
-  VS = Octree_Create(1000, min, size, 
+  VS = Octree_Create(maxElePerBucket, min, size, 
 		     PostSimplexBB,
 		     PostSimplexCentroid,
 		     PostSimplexInEle);
   addListOfStuff(VS, v->VS, 12 + 12 * v->NbTimeStep);
 
-  TS = Octree_Create(1000, min, size, 
+  TS = Octree_Create(maxElePerBucket, min, size, 
 		     PostSimplexBB,
 		     PostSimplexCentroid,
 		     PostSimplexInEle);
