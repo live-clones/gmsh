@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.422 2005-03-11 08:56:38 geuzaine Exp $
+// $Id: GUI.cpp,v 1.423 2005-03-11 09:21:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3825,11 +3825,11 @@ void GUI::create_manip_window()
   }
 
   {
-    Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Reset");
+    Fl_Return_Button *o = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Reset");
     o->callback(status_xyz1p_cb, (void *)6);
   }
   {
-    Fl_Return_Button *o = new Fl_Return_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+    Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
     o->callback(cancel_cb, (void *)manip_window);
   }
 
