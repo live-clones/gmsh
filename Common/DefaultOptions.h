@@ -73,7 +73,7 @@ StringXString GeneralOptions_String[] = {
     "explorer.exe %s" , 
 #elif defined(__APPLE__)
     "open %s" ,
-#elif defined(__FreeBSD__)
+#elif defined (__FreeBSD__) || defined (__NetBSD__) || defined (__OpenBSD__)
     "if [[ $(ps -ax|grep mozilla|grep -v grep) ]]; "
     "then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &" ,
 #else
