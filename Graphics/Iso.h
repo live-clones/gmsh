@@ -25,9 +25,9 @@
 void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
 		   double V, double *Xp, double *Yp, double *Zp, int *nb);
 
-void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
-		   double V1, double V2, double *Xp, double *Yp, double *Zp, 
-		   int *nb, double *value);
+int CutTriangle2D(double *X, double *Y, double *Z, double *Val,
+		  double V1, double V2, double *Xp, double *Yp, double *Zp, 
+		  int *nb, double *value);
 
 void CutLine0D(double *X, double *Y, double *Z, double *Val,
 	       double V, double *Xp, double *Yp, double *Zp, int *nb);

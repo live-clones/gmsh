@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.35 2004-05-30 19:17:58 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.36 2004-07-02 21:43:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -535,11 +535,16 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
      (!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill))) {
     for(int k = 0; k < View->NbIso; k++) {
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
-      CutTriangle2D(X, Y, Z, Val,
-		    View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
-		    View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
-		    Xp, Yp, Zp, &nb, value);
+      int cut = CutTriangle2D(X, Y, Z, Val,
+			      View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
+			      View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
+			      Xp, Yp, Zp, &nb, value);
       if(nb >= 3) {
+	int n1 = 0, n2 = 0;
+	if(!cut){
+	  n1 = 3;
+	  n2 = 6;
+	}
 	if(View->TriVertexArray && View->TriVertexArray->fill){
 	  for(int i = 2; i < nb; i++) {
 	    View->TriVertexArray->add(Xp[0] + View->Raise[0] * value[0],
@@ -549,11 +554,11 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	    View->TriVertexArray->add(Xp[i-1] + View->Raise[0] * value[i-1],
 				      Yp[i-1] + View->Raise[1] * value[i-1],
 				      Zp[i-1] + View->Raise[2] * value[i-1],
-				      norms[0], norms[1], norms[2], col);
+				      norms[n1], norms[n1+1], norms[n1+2], col);
 	    View->TriVertexArray->add(Xp[i] + View->Raise[0] * value[i],
 				      Yp[i] + View->Raise[1] * value[i],
 				      Zp[i] + View->Raise[2] * value[i],
-				      norms[0], norms[1], norms[2], col);
+				      norms[n2], norms[n2+1], norms[n2+2], col);
 	    View->TriVertexArray->num++;
 	  }
 	}
