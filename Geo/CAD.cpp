@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.38 2001-11-12 13:33:57 geuzaine Exp $
+// $Id: CAD.cpp,v 1.39 2001-11-12 13:44:41 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -274,7 +274,7 @@ void CopySurface (Surface *s, Surface *ss){
   for(i=0;i<3;i++)for(j=0;j<3;j++)ss->invplan[i][j] = s->invplan[i][j];
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices),1,sizeof(Curve*));
   List_Copy(s->Generatrices,ss->Generatrices);
-  if( s->Control_Points ){
+  if(s->Control_Points){
     ss->Control_Points = List_Create(List_Nbr(s->Control_Points),1,sizeof(Vertex*));
     List_Copy(s->Control_Points,ss->Control_Points);
   }
@@ -608,7 +608,7 @@ static void GramSchmidt (double v1[3], double v2[3], double v3[3]){
   norme(v3);
 }
 
-void SetRotationMatrix( double matrix[4][4],double Axe[3], double alpha){
+void SetRotationMatrix(double matrix[4][4],double Axe[3], double alpha){
   double t1[3],t2[3];
   if(Axe[0] != 0.0){
     t1[0] = 0.0;
@@ -1337,12 +1337,12 @@ void ReplaceDuplicatePoints(Mesh *m){
 
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
-    Tree_Query( allNonDulpicatedPoints,&c->beg);
-    Tree_Query( allNonDulpicatedPoints,&c->end);
+    Tree_Query(allNonDulpicatedPoints,&c->beg);
+    Tree_Query(allNonDulpicatedPoints,&c->end);
     for(j=0;j<List_Nbr(c->Control_Points);j++){
       List_Write(c->Control_Points,j,
-                 Tree_PQuery( allNonDulpicatedPoints,
-                              List_Pointer(c->Control_Points,j)));
+                 Tree_PQuery(allNonDulpicatedPoints,
+			     List_Pointer(c->Control_Points,j)));
     }
   }
   List_Delete(All);
@@ -1354,8 +1354,8 @@ void ReplaceDuplicatePoints(Mesh *m){
     List_Read(All,i,&s);
     for(j=0;j<List_Nbr(s->Control_Points);j++){
       List_Write(s->Control_Points,j,
-                 Tree_PQuery( allNonDulpicatedPoints,
-                              List_Pointer(s->Control_Points,j)));
+                 Tree_PQuery(allNonDulpicatedPoints,
+			     List_Pointer(s->Control_Points,j)));
     }
   }
   
@@ -1420,8 +1420,8 @@ void ReplaceDuplicateCurves(Mesh *m){
     List_Read(All,i,&s);
     for(j=0;j<List_Nbr(s->Generatrices);j++){
       List_Write(s->Generatrices,j,
-                 Tree_PQuery( allNonDulpicatedCurves,
-                              List_Pointer(s->Generatrices,j)));
+                 Tree_PQuery(allNonDulpicatedCurves,
+			     List_Pointer(s->Generatrices,j)));
       // Arghhh. Revoir compareTwoCurves !
       End_Curve(*(Curve**)List_Pointer(s->Generatrices,j));
     }
@@ -1470,8 +1470,8 @@ void ReplaceDuplicateSurfaces(Mesh *m){
     List_Read(All,i,&vol);
     for(j=0;j<List_Nbr(vol->Surfaces);j++){
       List_Write(vol->Surfaces,j,
-                 Tree_PQuery( allNonDulpicatedSurfaces,
-                              List_Pointer(vol->Surfaces,j)));
+                 Tree_PQuery(allNonDulpicatedSurfaces,
+			     List_Pointer(vol->Surfaces,j)));
     }
   }
 
@@ -1546,9 +1546,9 @@ static double projectPC (double u){
   if(u<CURVE->ubeg)u = CURVE->ubeg;
   Vertex c;
   c = InterpolateCurve(CURVE,u,0);
-  return sqrt(  DSQR(c.Pos.X -VERTEX->Pos.X)+
-                DSQR(c.Pos.Y -VERTEX->Pos.Y)+
-                DSQR(c.Pos.Z -VERTEX->Pos.Z));
+  return sqrt(DSQR(c.Pos.X -VERTEX->Pos.X)+
+	      DSQR(c.Pos.Y -VERTEX->Pos.Y)+
+	      DSQR(c.Pos.Z -VERTEX->Pos.Z));
 }
 
 static int UFIXED=0;
@@ -1595,8 +1595,8 @@ bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
   return true;
 }
 
-bool search_in_boundary ( Surface *s, Vertex *p, double t, int Fixu, 
-                          double *uu, double *vv){
+bool search_in_boundary (Surface *s, Vertex *p, double t, int Fixu, 
+			 double *uu, double *vv){
   double l,umin,vmin,lmin = 1.e24;
   int i,N;
   Vertex vr;
