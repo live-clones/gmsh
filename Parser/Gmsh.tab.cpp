@@ -166,7 +166,7 @@
 #define	tMINUSMINUS	416
 
 #line 1 "Gmsh.y"
- /* $Id: Gmsh.tab.cpp,v 1.42 2000-12-10 23:32:39 geuzaine Exp $ */
+ /* $Id: Gmsh.tab.cpp,v 1.43 2000-12-11 00:14:04 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -5674,31 +5674,31 @@ case 293:
 {
       memcpy(yyval.v, yyvsp[0].v, 5*sizeof(double)) ;
       //??? Avec ce qui suit, bison se plante sur DEC
-      //for(i=0 ; i<6 ; i++) $$[i] = $1[i];
+      //for(i=0 ; i<5 ; i++) $$[i] = $1[i];
     ;
     break;}
 case 294:
 #line 2350 "Gmsh.y"
 {
-      for(i=0 ; i<6 ; i++) yyval.v[i] = -yyvsp[0].v[i] ;
+      for(i=0 ; i<5 ; i++) yyval.v[i] = -yyvsp[0].v[i] ;
     ;
     break;}
 case 295:
 #line 2354 "Gmsh.y"
 { 
-      for(i=0 ; i<6 ; i++) yyval.v[i] = yyvsp[0].v[i];
+      for(i=0 ; i<5 ; i++) yyval.v[i] = yyvsp[0].v[i];
     ;
     break;}
 case 296:
 #line 2358 "Gmsh.y"
 { 
-      for(i=0 ; i<6 ; i++) yyval.v[i] = yyvsp[-2].v[i] - yyvsp[0].v[i] ;
+      for(i=0 ; i<5 ; i++) yyval.v[i] = yyvsp[-2].v[i] - yyvsp[0].v[i] ;
     ;
     break;}
 case 297:
 #line 2362 "Gmsh.y"
 {
-      for(i=0 ; i<6 ; i++) yyval.v[i] = yyvsp[-2].v[i] + yyvsp[0].v[i] ;
+      for(i=0 ; i<5 ; i++) yyval.v[i] = yyvsp[-2].v[i] + yyvsp[0].v[i] ;
     ;
     break;}
 case 298:

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.38 2000-12-10 23:32:39 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.39 2000-12-11 00:14:04 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -2344,23 +2344,23 @@ VExpr :
     {
       memcpy($$, $1, 5*sizeof(double)) ;
       //??? Avec ce qui suit, bison se plante sur DEC
-      //for(i=0 ; i<6 ; i++) $$[i] = $1[i];
+      //for(i=0 ; i<5 ; i++) $$[i] = $1[i];
     }
   | '-' VExpr %prec UNARYPREC
     {
-      for(i=0 ; i<6 ; i++) $$[i] = -$2[i] ;
+      for(i=0 ; i<5 ; i++) $$[i] = -$2[i] ;
     }
   | '+' VExpr %prec UNARYPREC
     { 
-      for(i=0 ; i<6 ; i++) $$[i] = $2[i];
+      for(i=0 ; i<5 ; i++) $$[i] = $2[i];
     }
   | VExpr '-' VExpr
     { 
-      for(i=0 ; i<6 ; i++) $$[i] = $1[i] - $3[i] ;
+      for(i=0 ; i<5 ; i++) $$[i] = $1[i] - $3[i] ;
     }
   | VExpr '+' VExpr
     {
-      for(i=0 ; i<6 ; i++) $$[i] = $1[i] + $3[i] ;
+      for(i=0 ; i<5 ; i++) $$[i] = $1[i] + $3[i] ;
     }
 
 VExpr_Single :
