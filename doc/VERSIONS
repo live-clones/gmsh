@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.138 2003-03-26 20:59:14 geuzaine Exp $
+$Id: VERSIONS,v 1.139 2003-04-02 05:56:15 geuzaine Exp $
+
+New in 1.44: added support for PNG output;
 
 New in 1.43: fixed solver interface problem on Mac OS X; new option to
 specify the interactive rotation center (default is now the pseudo
@@ -167,7 +169,7 @@ etc.); corrected the handling of simple triangular surfaces with large
 characteristic lengths in the 2D isotropic algorithm; added an ASCII
 to binary post-processing view converter;
 
-New in 1.13: added jpeg output on Windows;
+New in 1.13: added support for JPEG output on Windows;
 
 New in 1.12: corrected vector lines in the post-processing parsed
 format; corrected animation on Windows; corrected file creation in
