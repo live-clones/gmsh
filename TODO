@@ -1,4 +1,4 @@
-$Id: TODO,v 1.89 2005-03-12 08:18:53 geuzaine Exp $
+$Id: TODO,v 1.90 2005-03-13 09:13:50 geuzaine Exp $
 
 ********************************************************************
 
@@ -49,21 +49,12 @@ disable all replacements)
 
 ********************************************************************
 
-change handling of x,y position of graphs so that -x means "from the
-right", etc.  also, val>99999 == center
-
-********************************************************************
-
 Add a "bitmap" object in the views, e.g. to add a logo
 
 ********************************************************************
 
 reduce cpu during 'sleep' by using small 'usleep' calls instead of a
 simple while(1) loop
-
-********************************************************************
-
-add the ability to create tensors with Plugin(Extract)?
 
 ********************************************************************
 
