@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.28 2001-09-05 19:14:05 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.29 2001-09-05 19:22:28 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -386,25 +386,21 @@ void add_msh_elements (Mesh * M){
 
 void add_all_msh_curves (void *a, void *b){
   Curve *c = *(Curve**)a;
-  MSH_PHYSICAL_ORI = sign(c->Num);
   Tree_Action (c->Simplexes, add_msh_simplex);
 }
 
 void add_all_msh_surfaces (void *a, void *b){
   Surface *s = *(Surface**)a;
-  MSH_PHYSICAL_ORI = sign(s->Num);
   Tree_Action (s->Simplexes, add_msh_simplex);
 }
 
 void add_all_msh_simpsurf (void *a, void *b){
   Volume *v = *(Volume**)a;
-  MSH_PHYSICAL_ORI = sign(v->Num);
   Tree_Action (v->Simp_Surf, add_msh_simplex);
 }
 
 void add_all_msh_volumes (void *a, void *b){
   Volume *v = *(Volume**)a;
-  MSH_PHYSICAL_ORI = sign(v->Num);
   Tree_Action (v->Simplexes, add_msh_simplex);
   Tree_Action (v->Hexahedra, add_msh_hexahedron);
   Tree_Action (v->Prisms, add_msh_prism);
@@ -413,9 +409,10 @@ void add_all_msh_volumes (void *a, void *b){
 
 void add_all_msh_elements (Mesh * M){
   MSH_PHYSICAL_NUM = 0;
+  MSH_PHYSICAL_ORI = 1;
   MSH_LIN_NUM = MSH_SUR_NUM = MSH_VOL_NUM = 0;
-  MSH_3D = 0;
 
+  MSH_3D = 0;
   if(CTX.mesh.oldxtrude){
     Tree_Action(M->Volumes, add_all_msh_simpsurf);
   }
