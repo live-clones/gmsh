@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.8 2003-11-19 01:52:32 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.9 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -79,12 +79,12 @@ int GMSH_SphericalRaisePlugin::getNbOptions() const
   return sizeof(SphericalRaiseOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_SphericalRaisePlugin::GetOption(int iopt)
+StringXNumber *GMSH_SphericalRaisePlugin::getOption(int iopt)
 {
   return &SphericalRaiseOptions_Number[iopt];
 }
 
-void GMSH_SphericalRaisePlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_SphericalRaisePlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "SphericalRaise failed...");
 }
@@ -173,12 +173,3 @@ Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
   return vv;
 }
 
-void GMSH_SphericalRaisePlugin::Run()
-{
-  execute(0);
-}
-
-void GMSH_SphericalRaisePlugin::Save()
-{
-  ;
-}

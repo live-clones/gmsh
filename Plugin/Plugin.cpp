@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.42 2003-11-13 17:39:03 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.43 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ using namespace std;
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
-GMSH_PluginManager *GMSH_PluginManager::instance = 0;
+GMSH_PluginManager *GMSH_PluginManager::_instance = 0;
 
 GMSH_PluginManager::GMSH_PluginManager()
 {
@@ -68,24 +68,24 @@ GMSH_Plugin *GMSH_PluginManager::find(char *pluginName)
   return (*it).second;
 }
 
-void GMSH_PluginManager::Action(char *pluginName, char *action, void *data)
+void GMSH_PluginManager::action(char *pluginName, char *action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) {
     throw 1;
   }
   if(!strcmp(action, "Run")) {
-    plugin->Run();
+    plugin->run();
   }
   else if(!strcmp(action, "Save")) {
-    plugin->Save();
+    plugin->save();
   }
   else {
     throw 1;
   }
 }
 
-void GMSH_PluginManager::SetPluginOption(char *pluginName, char *option,
+void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
                                          char *value)
 {
   GMSH_Plugin *plugin = find(pluginName);
@@ -94,14 +94,14 @@ void GMSH_PluginManager::SetPluginOption(char *pluginName, char *option,
     throw "Unknown plugin name";
 
   if(!strcmp(option, "OutputFileName"))
-    strcpy(plugin->OutputFileName, value);
+    strcpy(plugin->outputFileName, value);
   else if(!strcmp(option, "InputFileName"))
-    strcpy(plugin->InputFileName, value);
+    strcpy(plugin->inputFileName, value);
   else
     throw "Unknown plugin option name";
 }
 
-void GMSH_PluginManager::SetPluginOption(char *pluginName, char *option,
+void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
                                          double value)
 {
   GMSH_Plugin *plugin = find(pluginName);
@@ -112,7 +112,7 @@ void GMSH_PluginManager::SetPluginOption(char *pluginName, char *option,
   for(int i = 0; i < plugin->getNbOptions(); i++) {
     StringXNumber *sxn;
     // get the ith option of the plugin
-    sxn = plugin->GetOption(i);
+    sxn = plugin->getOption(i);
     // look if it's the good option name
     if(!strcmp(sxn->str, option)) {
       sxn->def = value;
@@ -122,15 +122,15 @@ void GMSH_PluginManager::SetPluginOption(char *pluginName, char *option,
   throw "Unknown plugin option name";
 }
 
-GMSH_PluginManager *GMSH_PluginManager::Instance()
+GMSH_PluginManager *GMSH_PluginManager::instance()
 {
-  if(!instance) {
-    instance = new GMSH_PluginManager;
+  if(!_instance) {
+    _instance = new GMSH_PluginManager;
   }
-  return instance;
+  return _instance;
 }
 
-void GMSH_PluginManager::RegisterDefaultPlugins()
+void GMSH_PluginManager::registerDefaultPlugins()
 {
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("CutMap", GMSH_RegisterCutMapPlugin()));
@@ -177,7 +177,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
     if(strlen(name) > 3) {
       strcpy(ext, name + (strlen(name) - 3));
       if(!strcmp(ext, ".so") || !strcmp(ext, "dll")) {
-        AddPlugin(homeplugins, name);
+        addPlugin(homeplugins, name);
       }
     }
   }
@@ -187,7 +187,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
 #endif
 }
 
-void GMSH_PluginManager::AddPlugin(char *dirName, char *pluginName)
+void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
 {
 #if defined(_NO_DLL) || !defined(HAVE_FLTK)
   Msg(WARNING, "No dynamic plugin loading on this platform");
@@ -198,7 +198,7 @@ void GMSH_PluginManager::AddPlugin(char *dirName, char *pluginName)
   char plugin_author[256];
   char plugin_copyright[256];
   char plugin_help[256];
-  class GMSH_Plugin *(*RegisterPlugin) (void);
+  class GMSH_Plugin *(*registerPlugin) (void);
   sprintf(dynamic_lib, "%s/%s", dirName, pluginName);
   Msg(INFO, "Opening Plugin '%s'", dynamic_lib);
   void *hlib = dlopen(dynamic_lib, RTLD_NOW);
@@ -207,7 +207,7 @@ void GMSH_PluginManager::AddPlugin(char *dirName, char *pluginName)
     Msg(WARNING, "Error in opening %s (dlerror = %s)", dynamic_lib, err);
     return;
   }
-  RegisterPlugin =
+  registerPlugin =
     (class GMSH_Plugin * (*)(void))dlsym(hlib, GMSH_PluginEntry);
   err = (char*)dlerror();
   if(err != NULL) {
@@ -216,7 +216,7 @@ void GMSH_PluginManager::AddPlugin(char *dirName, char *pluginName)
     return;
   }
 
-  GMSH_Plugin *p = RegisterPlugin();
+  GMSH_Plugin *p = registerPlugin();
   p->hlib = hlib;
   p->getName(plugin_name);
   p->getInfos(plugin_author, plugin_copyright, plugin_help);

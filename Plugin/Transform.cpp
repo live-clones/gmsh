@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.18 2003-11-14 21:28:30 geuzaine Exp $
+// $Id: Transform.cpp,v 1.19 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -79,12 +79,12 @@ int GMSH_TransformPlugin::getNbOptions() const
   return sizeof(TransformOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_TransformPlugin::GetOption(int iopt)
+StringXNumber *GMSH_TransformPlugin::getOption(int iopt)
 {
   return &TransformOptions_Number[iopt];
 }
 
-void GMSH_TransformPlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_TransformPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "Transform failed...");
 }
@@ -122,12 +122,3 @@ Post_View *GMSH_TransformPlugin::execute(Post_View * v)
   return vv;
 }
 
-void GMSH_TransformPlugin::Run()
-{
-  execute(0);
-}
-
-void GMSH_TransformPlugin::Save()
-{
-  ;
-}

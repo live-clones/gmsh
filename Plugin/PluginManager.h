@@ -1,5 +1,5 @@
-#ifndef _PLUGINMANAGER_H_
-#define _PLUGINMANAGER_H_
+#ifndef _PLUGIN_MANAGER_H_
+#define _PLUGIN_MANAGER_H_
 
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,8 @@
 #include <map>
 #include <iosfwd>
 
-class GMSH_Plugin;
+#include "Plugin.h"
+
 struct ltstrpg
 {
   bool operator()(const char* s1, const char* s2) const
@@ -35,7 +36,7 @@ struct ltstrpg
 class GMSH_PluginManager
 {
   GMSH_PluginManager();
-  static GMSH_PluginManager *instance;
+  static GMSH_PluginManager *_instance;
   std::map<const char*,GMSH_Plugin*,ltstrpg> allPlugins;
 public :
   virtual ~GMSH_PluginManager();
@@ -48,18 +49,18 @@ public :
   // is usually called a 'plugin'. We should call the plugins
   // 'modules'. A plugin is an _executable_, but that can only be
   // executed from inside another program...
-  void RegisterDefaultPlugins();
-  static GMSH_PluginManager *Instance();
+  void registerDefaultPlugins();
+  static GMSH_PluginManager *instance();
 
   // Dynamically add a plugin pluginName.so in dirName
-  void AddPlugin(char *dirName, char *pluginName);
+  void addPlugin(char *dirName, char *pluginName);
 
   // Uninstall a given plugin
-  void UninstallPlugin (char *pluginName);
+  void uninstallPlugin (char *pluginName);
 
   // Set an option to a value in plugin named pluginName
-  void SetPluginOption (char *pluginName, char *option, double value);
-  void SetPluginOption (char *pluginName, char *option, char * value);
+  void setPluginOption (char *pluginName, char *option, double value);
+  void setPluginOption (char *pluginName, char *option, char * value);
 
   // Iterator on plugins
   inline iter begin() {return allPlugins.begin();}
@@ -70,7 +71,7 @@ public :
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.
-  void Action (char *pluginMane , char *action , void *data); 
+  void action (char *pluginMane , char *action , void *data); 
 };
 #endif
 

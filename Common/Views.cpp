@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.100 2003-11-12 21:42:10 geuzaine Exp $
+// $Id: Views.cpp,v 1.101 2003-11-21 07:56:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -30,8 +30,8 @@
 extern Context_T CTX;
 
 #if defined(HAVE_FLTK)
-extern int AddViewInUI(int, char *, int);
-extern int RemoveViewInUI(int);
+void AddViewInUI();
+void RemoveViewInUI();
 #endif
 
 #define VAL_INF 1.e200
@@ -356,7 +356,7 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
 
 #if defined(HAVE_FLTK)
   if(!CTX.post.force_num && add_in_gui)
-    AddViewInUI(List_Nbr(CTX.post.list), v->Name, v->Num);
+    AddViewInUI();
 #endif
 
   v->Dirty = 0; //the view is complete, we may draw it
@@ -448,31 +448,38 @@ void DuplicateView(Post_View * v1, int withoptions)
     CopyViewOptions(v1, v2);
 
 #if defined(HAVE_FLTK)
-  AddViewInUI(List_Nbr(CTX.post.list), v2->Name, v2->Num);
+  AddViewInUI();
 #endif
 }
 
-bool FreeView(int num)
+bool RemoveViewByIndex(int index)
 {
   Post_View *v;
 
-  Msg(DEBUG, "Trying to free view %d", num);
-
-  if(num < 0 || num >= List_Nbr(CTX.post.list)) {
+  if(index < 0 || index >= List_Nbr(CTX.post.list)) {
     return false;
   }
-  v = (Post_View *) List_Pointer(CTX.post.list, num);
+  v = (Post_View *) List_Pointer(CTX.post.list, index);
   FreeView(v);
-  List_PSuppress(CTX.post.list, num);
+  List_PSuppress(CTX.post.list, index);
 
 #if defined(HAVE_FLTK)
-  RemoveViewInUI(num);
+  RemoveViewInUI();
 #endif
 
-  Msg(INFO, "View %d deleted (%d views left)", num, List_Nbr(CTX.post.list));
+  Msg(INFO, "View %d removed (%d views left)", index, List_Nbr(CTX.post.list));
   return true;
 }
 
+bool RemoveViewByNumber(int num)
+{
+  Post_View vv;
+
+  vv.Num = num;
+  int i = List_ISearch(CTX.post.list, &vv, fcmpPostViewNum);
+  
+  return RemoveViewByIndex(i);
+}
 
 void FreeView(Post_View * v)
 {
@@ -1461,4 +1468,19 @@ int Post_View::get_val(int list, int node, int timestep, double *value)
 void Post_View::add_val(int list, int node, int timestep, double value)
 {
   ;
+}
+
+int Post_View::empty(){
+  if(NbSP || NbVP || NbTP ||
+     NbSL || NbVL || NbTL ||
+     NbST || NbVT || NbTT ||
+     NbSQ || NbVQ || NbTQ ||
+     NbSS || NbVS || NbTS ||
+     NbSH || NbVH || NbTH ||
+     NbSI || NbVI || NbTI ||
+     NbSY || NbVY || NbTY ||
+     NbT2 || NbT3)
+    return 0;
+  else
+    return 1;
 }

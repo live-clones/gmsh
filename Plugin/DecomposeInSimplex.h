@@ -20,24 +20,44 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "Plugin.h"
+
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterDecomposeInSimplexPlugin ();
+  GMSH_Plugin *GMSH_RegisterDecomposeInSimplexPlugin();
 }
 
 class GMSH_DecomposeInSimplexPlugin : public GMSH_Post_Plugin
 {
 public:
   GMSH_DecomposeInSimplexPlugin();
-  void Run();
-  void Save();
-  void getName  (char *name) const;
-  void getInfos (char *author, 
-  		 char *copyright,
-  		 char *help_text) const;
-  void CatchErrorMessage (char *errorMessage) const;
+  void getName(char *name) const;
+  void getInfos(char *author, char *copyright, char *help_text) const;
+  void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* GetOption (int iopt);  
-  Post_View *execute (Post_View *);
+  StringXNumber* getOption(int iopt);  
+  Post_View *execute(Post_View *);
 };
+
+class DecomposeInSimplex{
+ private:
+  // how many nodes in the element to decompose
+  int _numNodes;
+  // how many field components
+  int _numComponents;
+  // how many time steps
+  int _numTimeSteps;
+ public:
+  // default constructor
+  DecomposeInSimplex(int numNodes, int numComponents, int numTimeSteps)
+    : _numNodes(numNodes), _numComponents(numComponents), 
+    _numTimeSteps(numTimeSteps) { ; }
+  // the number of simplices into which the element is decomposed
+  int num();
+  // the number of nodes of the simplex
+  int numNodes();
+  // returns the i-th simplex in the decomposition
+  void decompose();
+};
+
 #endif

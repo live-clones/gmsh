@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.145 2003-10-29 22:24:24 geuzaine Exp $
+// $Id: Gmsh.y,v 1.146 2003-11-21 07:56:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1508,7 +1508,7 @@ Affectation :
     {
       if(CTX.default_plugins){
 	try {
-	  GMSH_PluginManager::Instance()->SetPluginOption($3, $6, $8); 
+	  GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
 	}
 	catch (...) {
 	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
@@ -1520,7 +1520,7 @@ Affectation :
     {
       if(CTX.default_plugins){
 	try {
-	  GMSH_PluginManager::Instance()->SetPluginOption($3, $6, $8); 
+	  GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
 	}
 	catch (...) {
 	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
@@ -1926,7 +1926,7 @@ Delete :
     }
     | tDelete tSTRING '[' FExpr ']' tEND
     {
-      if(!strcmp($2, "View")) FreeView((int)$4);
+      if(!strcmp($2, "View")) RemoveViewByIndex((int)$4);
     }
     | tDelete tMesh tEND
     {
@@ -1952,7 +1952,6 @@ Command :
     tSTRING StringExpr tEND
     {
       if(!strcmp($1, "Include")){
-
 	yyinTab[RecursionLevel++] = yyin;
 
 	if($2[0] == '/' || $2[0] == '\\' || (strlen($2)>2 && $2[1] == ':')){
@@ -2001,36 +2000,40 @@ Command :
 	CreateOutputFile($2, CTX.mesh.format);
 #endif
       }
-
       else if(!strcmp($1, "Merge")){
-
 	FILE *ff = yyin;
 	MergeProblem($2);
 	yyin = ff;
-
       }
       else if(!strcmp($1, "MergeWithBoundingBox")){
-
 	FILE *ff = yyin;
 	MergeProblemWithBoundingBox($2);
 	yyin = ff;
-
       }
       else if(!strcmp($1, "Open")){
-
 	FILE *ff = yyin;
 	OpenProblem($2);
 	yyin = ff;
-
       }
       else if(!strcmp($1, "System")){
-	
 	SystemCall($2);
-
       }
-      else
+      else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
+      }
     } 
+  | tSTRING tSTRING '[' FExpr ']' StringExpr tEND
+    {
+      if(!strcmp($1, "Save") && !strcmp($2, "View")){
+	Post_View *v = (Post_View *)List_Pointer_Test(CTX.post.list, (int)$4);
+	if(v){
+	  WriteView(0, v, $6);
+	}
+      }
+      else{
+	yymsg(GERROR, "Unknown command '%s'", $1);
+      }
+    }
   | tSTRING FExpr tEND
     {
       if(!strcmp($1, "Sleep")){
@@ -2054,7 +2057,7 @@ Command :
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
    {
     if(CTX.default_plugins)
-      GMSH_PluginManager::Instance()->Action($3, $6, 0); 
+      GMSH_PluginManager::instance()->action($3, $6, 0); 
    }
    | tExit tEND
     {

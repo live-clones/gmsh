@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.251 2003-11-18 05:29:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.252 2003-11-21 07:56:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -762,8 +762,8 @@ void GUI::wait()
 void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
 {
   char name[256], menuname[256];
-  for(GMSH_PluginManager::iter it = GMSH_PluginManager::Instance()->begin();
-      it != GMSH_PluginManager::Instance()->end(); ++it) {
+  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
+      it != GMSH_PluginManager::instance()->end(); ++it) {
     GMSH_Plugin *p = (*it).second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
       p->getName(name);
@@ -2623,7 +2623,7 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
 
       for(int i = 0; i < n; i++) {
         StringXNumber *sxn;
-        sxn = p->GetOption(i);
+        sxn = p->getOption(i);
         pdb->view_value[i] = new Fl_Value_Input(2 * WB, 2 * WB + (i + 1) * BH, IW, BH, sxn->str);
         pdb->view_value[i]->align(FL_ALIGN_RIGHT);
         pdb->view_value[i]->value(sxn->def);

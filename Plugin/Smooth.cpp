@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.14 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.15 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -66,12 +66,12 @@ int GMSH_SmoothPlugin::getNbOptions() const
   return sizeof(SmoothOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_SmoothPlugin::GetOption(int iopt)
+StringXNumber *GMSH_SmoothPlugin::getOption(int iopt)
 {
   return &SmoothOptions_Number[iopt];
 }
 
-void GMSH_SmoothPlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_SmoothPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "Smooth failed...");
 }
@@ -96,12 +96,3 @@ Post_View *GMSH_SmoothPlugin::execute(Post_View * v)
   return vv;
 }
 
-void GMSH_SmoothPlugin::Run()
-{
-  execute(0);
-}
-
-void GMSH_SmoothPlugin::Save()
-{
-  ;
-}

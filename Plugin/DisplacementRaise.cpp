@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.7 2003-11-19 01:52:32 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.8 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -76,12 +76,12 @@ int GMSH_DisplacementRaisePlugin::getNbOptions() const
   return sizeof(DisplacementRaiseOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_DisplacementRaisePlugin::GetOption(int iopt)
+StringXNumber *GMSH_DisplacementRaisePlugin::getOption(int iopt)
 {
   return &DisplacementRaiseOptions_Number[iopt];
 }
 
-void GMSH_DisplacementRaisePlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_DisplacementRaisePlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "DisplacementRaise failed...");
 }
@@ -90,11 +90,11 @@ static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm,
 				  Post_View * dView, List_T * dList, int dNbElm,
 				  int nbVert, double factor, int dTimeStep)
 {
-  if(!iNbElm)
+  if(!iNbElm || !dNbElm)
     return;
 
   if(iNbElm != dNbElm){
-    Msg(GERROR, "View[%d] and View[%d] have different number of elements (%d != %d)",
+    Msg(WARNING, "View[%d] and View[%d] have a different number of elements (%d != %d)",
 	iView->Index, dView->Index, iNbElm, dNbElm);
     return;
   }
@@ -191,12 +191,3 @@ Post_View *GMSH_DisplacementRaisePlugin::execute(Post_View * v)
   return vv;
 }
 
-void GMSH_DisplacementRaisePlugin::Run()
-{
-  execute(0);
-}
-
-void GMSH_DisplacementRaisePlugin::Save()
-{
-  ;
-}

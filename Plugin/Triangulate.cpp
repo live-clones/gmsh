@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.12 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.13 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@
 #include "Mesh.h"
 #include "Utils.h"
 #include "Create.h"
-
 
 extern Context_T CTX;
 
@@ -75,12 +74,12 @@ int GMSH_TriangulatePlugin::getNbOptions() const
   return sizeof(TriangulateOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_TriangulatePlugin::GetOption(int iopt)
+StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
 {
   return &TriangulateOptions_Number[iopt];
 }
 
-void GMSH_TriangulatePlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_TriangulatePlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "Triangulate failed...");
 }
@@ -233,12 +232,3 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
 
 }
 
-void GMSH_TriangulatePlugin::Run()
-{
-  execute(0);
-}
-
-void GMSH_TriangulatePlugin::Save()
-{
-  ;
-}

@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.27 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.28 2003-11-21 07:56:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -58,10 +58,10 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutPlane) cuts the simplectic 3D scalar\n"
-	 "view 'iView' with the plane 'A'*X + 'B'*Y + 'C'*Z +\n"
-	 "'D' = 0. If 'iView' < 0, the plugin is run on the\n"
-	 "current view.\n");
+         "Plugin(CutPlane) cuts the view 'iView' with\n"
+	 "the plane 'A'*X + 'B'*Y + 'C'*Z + 'D' = 0. If\n"
+	 "'iView' < 0, the plugin is run on the current\n"
+	 "view.\n");
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const
@@ -69,12 +69,12 @@ int GMSH_CutPlanePlugin::getNbOptions() const
   return sizeof(CutPlaneOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_CutPlanePlugin::GetOption(int iopt)
+StringXNumber *GMSH_CutPlanePlugin::getOption(int iopt)
 {
   return &CutPlaneOptions_Number[iopt];
 }
 
-void GMSH_CutPlanePlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_CutPlanePlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "CutPlane failed...");
 }
@@ -91,10 +91,13 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   Post_View *vv;
 
   int iView = (int)CutPlaneOptions_Number[4].def;
-  _orientation = ORIENT_PLANE;
   _ref[0] = CutPlaneOptions_Number[0].def;
   _ref[1] = CutPlaneOptions_Number[1].def;
   _ref[2] = CutPlaneOptions_Number[2].def;
+  _valueIndependent = 1;
+  _targetView = -1;
+  _orientation = GMSH_LevelsetPlugin::PLANE;
+  _timeStep = -1;
 
   if(v && iView < 0)
     vv = v;

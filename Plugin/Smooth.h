@@ -20,24 +20,23 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "Plugin.h"
+
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterSmoothPlugin ();
+  GMSH_Plugin *GMSH_RegisterSmoothPlugin();
 }
 
 class GMSH_SmoothPlugin : public GMSH_Post_Plugin
 {
 public:
   GMSH_SmoothPlugin();
-  void Run();
-  void Save();
-  void getName  (char *name) const;
-  void getInfos (char *author, 
-  		 char *copyright,
-  		 char *help_text) const;
-  void CatchErrorMessage (char *errorMessage) const;
+  void getName(char *name) const;
+  void getInfos(char *author, char *copyright, char *help_text) const;
+  void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* GetOption (int iopt);  
-  Post_View *execute (Post_View *);
+  StringXNumber* getOption(int iopt);  
+  Post_View *execute(Post_View *);
 };
+
 #endif

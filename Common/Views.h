@@ -21,6 +21,7 @@
 // Please report all bugs and problems to "gmsh@geuz.org".
 
 #include "ColorTable.h"
+#include "List.h"
 
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
 #define VIEW_MAX_ELEMENT_NODES  8
@@ -95,6 +96,7 @@ class Post_View{
   // some generic access functions
   int get_val(int list, int node, int timestep, double *value);
   void add_val(int list, int node, int timestep, double value);
+  int empty();
 };
 
 // Type
@@ -144,7 +146,8 @@ void EndView (Post_View *v, int AddInUI, char *FileName, char *Name);
 void DuplicateView(Post_View *v1, int withoptions);
 void DuplicateView(int num, int withoptions);
 void FreeView(Post_View *v);
-bool FreeView(int num);
+bool RemoveViewByIndex(int index);
+bool RemoveViewByNumber(int num);
 void ReadView(FILE *file, char *filename);
 void WriteView(int Flag_BIN, Post_View *v, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);

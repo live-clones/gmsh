@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.31 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.32 2003-11-21 07:56:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,8 @@ extern Context_T CTX;
 
 StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "A", NULL, 1.},
-  {GMSH_FULLRC, "iField", NULL, 0.},
+  {GMSH_FULLRC, "TimeStep", NULL, -1.},
+  {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -38,7 +39,6 @@ extern "C"
     return new GMSH_CutMapPlugin();
   }
 }
-
 
 GMSH_CutMapPlugin::GMSH_CutMapPlugin()
 {
@@ -57,10 +57,13 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutMap) extracts the isovalue surface of\n"
-         "value 'A' from the simplectic 3D scalar view\n"
-	 "'iView' and draws the 'iField'-th component of\n"
-	 "the field on the iso. If 'iView' < 0, the plugin\n"
-	 "is run on the current view.\n");
+         "value 'A' from the view 'iView' and draws the\n"
+	 "'TimeStep'-th value of the view 'dView' on this\n"
+	 "isovalue surface. If 'iView' < 0, the plugin is\n"
+	 "run on the current view. If 'TimeStep' < 0, the\n"
+	 "plugin uses, for each time step in 'iView', the\n"
+	 "corresponding time step in 'dView'. If 'dView'\n"
+	 "< 0, the plugin uses 'iView' as the field source.\n");
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const
@@ -68,12 +71,12 @@ int GMSH_CutMapPlugin::getNbOptions() const
   return sizeof(CutMapOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_CutMapPlugin::GetOption(int iopt)
+StringXNumber *GMSH_CutMapPlugin::getOption(int iopt)
 {
   return &CutMapOptions_Number[iopt];
 }
 
-void GMSH_CutMapPlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_CutMapPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "CutMap failed...");
 }
@@ -90,9 +93,11 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
 {
   Post_View *vv;
 
-  _ith_field_to_draw_on_the_iso = (int)CutMapOptions_Number[1].def;
-  int iView = (int)CutMapOptions_Number[2].def;
-  _orientation = ORIENT_MAP;
+  int iView = (int)CutMapOptions_Number[3].def;
+  _valueIndependent = 0;
+  _targetView = (int)CutMapOptions_Number[2].def;
+  _orientation = GMSH_LevelsetPlugin::MAP;
+  _timeStep = (int)CutMapOptions_Number[1].def;
 
   if(v && iView < 0)
     vv = v;

@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.2 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.3 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -68,12 +68,12 @@ int GMSH_DecomposeInSimplexPlugin::getNbOptions() const
   return sizeof(DecomposeInSimplexOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_DecomposeInSimplexPlugin::GetOption(int iopt)
+StringXNumber *GMSH_DecomposeInSimplexPlugin::getOption(int iopt)
 {
   return &DecomposeInSimplexOptions_Number[iopt];
 }
 
-void GMSH_DecomposeInSimplexPlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_DecomposeInSimplexPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "DecomposeInSimplex failed...");
 }
@@ -110,12 +110,50 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
   return 0;
 }
 
-void GMSH_DecomposeInSimplexPlugin::Run()
+// Utility class 
+int DecomposeInSimplex::num()
 {
-  execute(0);
+  switch(_numNodes){
+  case 4 : return 2; // quad -> 2 tris
+  case 5 : return 2; // pyramid -> 2 tets
+  case 6 : return 3; // prism -> 3 tets
+  case 8 : return 6; // hexa -> 6 tets
+  }
 }
 
-void GMSH_DecomposeInSimplexPlugin::Save()
+int DecomposeInSimplex::numNodes()
 {
-  ;
+  if(_numNodes == 4)
+    return 3; // quad -> tris
+  else
+    return 4; // all others -> tets
+}
+
+void DecomposeInSimplex::decompose()
+{
+#if 0
+  switch(_numNodes){
+  case 4: // quad
+    0 1 2
+    0 2 3
+    break ;
+	
+  case 8: // hexa
+    0 1 2 5
+    0 2 5 6    
+    0 4 5 6
+    0 2 3 6
+    0 4 6 7
+    0 3 6 7
+	
+  case 6: // prism
+    0 1 2 4 
+    0 2 4 5 
+    0 3 4 5 
+
+  case 5: // pyramid
+    0 1 3 4
+    1 2 3 4
+  }
+#endif
 }

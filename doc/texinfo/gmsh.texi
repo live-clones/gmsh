@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.84 2003-10-29 20:15:10 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.85 2003-11-21 07:56:33 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2162,6 +2162,10 @@ Several plugins are loaded by default: see e.g.@: @ref{t9.geo}.
 Sets a floating point (@var{expression}) or a character
 (@var{char-expression}) option for a given plugin. See @ref{t9.geo}, for an
 example.
+
+@item Save View[@var{expression}] @var{char-expression};
+Saves the the @var{expression}-th post-processing view in a file named
+@var{char-expression}.
 
 @item View "@var{string}" @{ @var{string} ( @var{expression-list} ) @{ @var{expression-list} @}; @dots{} @}
 Creates a new post-processing view, named @code{"@var{string}"}. This is the

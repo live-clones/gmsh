@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.18 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: Skin.cpp,v 1.19 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -57,8 +57,8 @@ void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) c
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Skin) extracts the skin (the boundary) of\n"
-	 "the scalar view 'iView'. If 'iView' < 0, the plugin\n"
-	 "is run on the current view.\n");
+	 "the simplectic view 'iView'. If 'iView' < 0, the\n"
+	 "plugin is run on the current view.\n");
 }
 
 int GMSH_SkinPlugin::getNbOptions() const
@@ -66,12 +66,12 @@ int GMSH_SkinPlugin::getNbOptions() const
   return sizeof(SkinOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_SkinPlugin::GetOption(int iopt)
+StringXNumber *GMSH_SkinPlugin::getOption(int iopt)
 {
   return &SkinOptions_Number[iopt];
 }
 
-void GMSH_SkinPlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_SkinPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "Skin failed...");
 }
@@ -238,18 +238,9 @@ Post_View *GMSH_SkinPlugin::execute(Post_View * v)
       return View;
     }
     else
-      FreeView(View->Index);
+      RemoveViewByNumber(View->Num);
   }
 
   return 0;
 }
 
-void GMSH_SkinPlugin::Run()
-{
-  execute(0);
-}
-
-void GMSH_SkinPlugin::Save()
-{
-  ;
-}

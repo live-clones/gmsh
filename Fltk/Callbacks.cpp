@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.185 2003-11-12 21:42:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.186 2003-11-21 07:56:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -140,29 +140,23 @@ int file_chooser_get_filter()
 
 // Compatibility/local routines
 
-int AddViewInUI(int i, char *Name, int Num)
+void AddViewInUI()
 {
-  if(i > NB_BUTT_MAX - 1)
-    return 1;
   if(WID) {
     if(WID->get_context() == 3)
       WID->set_context(menu_post, 0);
     WID->reset_option_browser();
   }
-  return 0;
 }
 
-int RemoveViewInUI(int i)
+void RemoveViewInUI()
 {
-  if(i > NB_BUTT_MAX - 1)
-    return 1;
   if(WID) {
     WID->check_anim_buttons();
     if(WID->get_context() == 3)
       WID->set_context(menu_post, 0);
     WID->reset_option_browser();
   }
-  return 0;
 }
 
 int SetGlobalShortcut(int event)
@@ -2777,7 +2771,7 @@ void view_remove_invisible_cb(CALLBACK_ARGS)
 
 void view_remove_cb(CALLBACK_ARGS)
 {
-  FreeView((long int)data);
+  RemoveViewByIndex((long int)data);
 
   if(!REMOVE_ALL_VIEWS)
     Draw();
@@ -2875,7 +2869,7 @@ void view_plugin_cb(CALLBACK_ARGS)
       Msg(GERROR, "Plugin has too many parameters");
     for(int i = 0; i < n; i++) {
       StringXNumber *sxn;
-      sxn = p->GetOption(i);
+      sxn = p->getOption(i);
       sxn->def = p->dialogBox->view_value[i]->value();
     }
   }
@@ -2886,7 +2880,7 @@ void view_plugin_cb(CALLBACK_ARGS)
     Draw();
   }
   catch(GMSH_Plugin * err) {
-    p->CatchErrorMessage(name);
+    p->catchErrorMessage(name);
     Msg(WARNING, "%s", name);
   }
 }

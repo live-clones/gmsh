@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.49 2003-06-17 19:26:59 geuzaine Exp $
+// $Id: Main.cpp,v 1.50 2003-11-21 07:56:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 
   // Register Default Plugins (in test ...)
   if(CTX.default_plugins)
-    GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
+    GMSH_PluginManager::instance()->registerDefaultPlugins();
 
   // Initialize the static Mesh
 

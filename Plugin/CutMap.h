@@ -1,5 +1,5 @@
-#ifndef _CUTMAP_H_
-#define _CUTMAP_H
+#ifndef _CUT_MAP_H_
+#define _CUT_MAP_H
 
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -20,25 +20,23 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-#include "LevelsetPlugin.h"
+#include "Levelset.h"
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterCutMapPlugin ();
+  GMSH_Plugin *GMSH_RegisterCutMapPlugin();
 }
 
 class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
 {
-  double levelset (double x, double y, double z, double val) const;
-public:
+  double levelset(double x, double y, double z, double val) const;
+ public:
   GMSH_CutMapPlugin();
-  void getName  (char *name) const;
-  void getInfos (char *author, 
-  		 char *copyright,
-  		 char *help_text) const;
-  void CatchErrorMessage (char *errorMessage) const;
+  void getName(char *name) const;
+  void getInfos(char *author, char *copyright, char *helpText) const;
+  void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* GetOption (int iopt);  
+  StringXNumber* getOption (int iopt);  
   Post_View *execute (Post_View *);
 };
 

@@ -1,5 +1,5 @@
-#ifndef _LEVELSETPLUGIN_H_
-#define _LEVELSETPLUGIN_H_
+#ifndef _LEVELSET_H_
+#define _LEVELSET_H_
 
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -22,25 +22,33 @@
 
 #include "Plugin.h"
 
-#define ORIENT_NONE   0
-#define ORIENT_MAP    1
-#define ORIENT_PLANE  2
-#define ORIENT_SPHERE 3
+#include <vector>
+using namespace std;
 
 class GMSH_LevelsetPlugin : public GMSH_Post_Plugin
 {
+public:
+  typedef enum {NONE, PLANE, SPHERE, MAP} ORIENTATION ;
 protected:
-  int _ith_field_to_draw_on_the_iso;
-  int _orientation;
   double _ref[3];
+  int _timeStep, _targetView, _valueIndependent;
+  ORIENTATION _orientation;
 private:
-  virtual double levelset     (double x, double y, double z, double val) const = 0;
-  virtual double what_to_draw (double x, double y, double z, 
-			       int p1, int p2, double coef, double *val) const;
+  double _invert;
+  virtual double levelset(double x, double y, double z, double val) const = 0;
+  int zeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
+		   double *x, double *y, double *z, 
+		   double *iVal, int iNbComp, double *dVal, int dNbComp,
+		   vector<Post_View*> out);
+  void executeList(Post_View * iView, List_T * iList, 
+		   int iNbElm, int iNbComp,
+		   Post_View * dView, List_T * dList, 
+		   int dNbElm, int dNbComp,
+		   int nbVert, int nbEdg, int exn[12][2], 
+		   vector<Post_View *> out);
 public:
   GMSH_LevelsetPlugin();
-  virtual Post_View *execute (Post_View *);
-  virtual void Run();
-  virtual void Save();
+  virtual Post_View *execute(Post_View *);
 };
+
 #endif

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2003-11-13 17:39:03 geuzaine Exp $
+# $Id: Makefile,v 1.38 2003-11-21 07:56:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -27,7 +27,7 @@ INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo\
 CFLAGS  = -DMPICH_SKIP_MPICXX ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Plugin.cpp\
-        LevelsetPlugin.cpp\
+        Levelset.cpp\
           CutPlane.cpp CutSphere.cpp CutMap.cpp\
         Smooth.cpp\
         Transform.cpp\
@@ -62,19 +62,19 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
-  PluginManager.h CutMap.h LevelsetPlugin.h CutPlane.h CutSphere.h Skin.h \
+  PluginManager.h CutMap.h Levelset.h CutPlane.h CutSphere.h Skin.h \
   Smooth.h Transform.h Triangulate.h SphericalRaise.h
-LevelsetPlugin.o: LevelsetPlugin.cpp LevelsetPlugin.h Plugin.h \
+Levelset.o: Levelset.cpp Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
   ../Common/Views.h ../Common/ColorTable.h ../Graphics/Iso.h \
   ../Numeric/Numeric.h ../DataStr/Malloc.h
-CutPlane.o: CutPlane.cpp CutPlane.h LevelsetPlugin.h Plugin.h \
+CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
   ../Common/Context.h
-CutSphere.o: CutSphere.cpp CutSphere.h LevelsetPlugin.h Plugin.h \
+CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
   ../Common/Context.h
-CutMap.o: CutMap.cpp CutMap.h LevelsetPlugin.h Plugin.h \
+CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
   ../Common/Context.h
 Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \

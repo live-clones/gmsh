@@ -1,5 +1,5 @@
-#ifndef _HARMONIC2TIME_H_
-#define _HARMONIC2TIME_H
+#ifndef _HARMONIC_2_TIME_H_
+#define _HARMONIC_2_TIME_H
 
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -20,24 +20,23 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "Plugin.h"
+
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterHarmonic2TimePlugin ();
+  GMSH_Plugin *GMSH_RegisterHarmonic2TimePlugin();
 }
 
 class GMSH_Harmonic2TimePlugin : public GMSH_Post_Plugin
 {
 public:
   GMSH_Harmonic2TimePlugin();
-  void Run();
-  void Save();
-  void getName  (char *name) const;
-  void getInfos (char *author, 
-  		 char *copyright,
-  		 char *help_text) const;
-  void CatchErrorMessage (char *errorMessage) const;
+  void getName(char *name) const;
+  void getInfos(char *author, char *copyright, char *help_text) const;
+  void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* GetOption (int iopt);  
-  Post_View *execute (Post_View *);
+  StringXNumber* getOption(int iopt);  
+  Post_View *execute(Post_View *);
 };
+
 #endif

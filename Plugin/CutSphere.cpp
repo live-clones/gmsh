@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.26 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.27 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -59,10 +59,10 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutSphere) cuts the simplectic 3D scalar\n"
-	 "view 'iView' with the sphere (X-'Xc')^2 + (Y-'Yc')^2 +\n"
-	 "(Z-'Zc')^2 = 'R'^2. If 'iView' < 0, the plugin is\n"
-	 "run on the current view.\n");
+         "Plugin(CutSphere) cuts the view 'iView' with the\n"
+	 "sphere (X-'Xc')^2 + (Y-'Yc')^2 + (Z-'Zc')^2 = 'R'^2.\n"
+	 "If 'iView' < 0, the plugin is run on the current\n"
+	 "view.\n");
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const
@@ -70,12 +70,12 @@ int GMSH_CutSpherePlugin::getNbOptions() const
   return sizeof(CutSphereOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_CutSpherePlugin::GetOption(int iopt)
+StringXNumber *GMSH_CutSpherePlugin::getOption(int iopt)
 {
   return &CutSphereOptions_Number[iopt];
 }
 
-void GMSH_CutSpherePlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_CutSpherePlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "CutSphere failed...");
 }
@@ -95,10 +95,13 @@ Post_View *GMSH_CutSpherePlugin::execute(Post_View * v)
   Post_View *vv;
 
   int iView = (int)CutSphereOptions_Number[4].def;
-  _orientation = ORIENT_SPHERE;
   _ref[0] = CutSphereOptions_Number[0].def;
   _ref[1] = CutSphereOptions_Number[1].def;
   _ref[2] = CutSphereOptions_Number[2].def;
+  _valueIndependent = 1;
+  _targetView = -1;
+  _orientation = GMSH_LevelsetPlugin::SPHERE;
+  _timeStep = -1;
 
   if(v && iView < 0)
     vv = v;

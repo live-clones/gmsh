@@ -33,20 +33,21 @@
 
 #include <string.h>
 #include <stdio.h>
+
 #include "Options.h"
 #include "Message.h"
-
+#include "Views.h"
 
 class PluginDialogBox;
-class Post_View;
+
 class GMSH_Plugin
 {
 public :
   // output file name
-  char OutputFileName[256];
+  char outputFileName[256];
 
   //input file name
-  char InputFileName[256];
+  char inputFileName[256];
 
   // a dialog box for user interface
   PluginDialogBox *dialogBox;
@@ -63,20 +64,18 @@ public :
   // returns the type of plugin for downcasting GMSH_Plugin into
   // GMSH_CAD_Plugin, GMSH_Mesh_Plugin and GMSH_Post_Plugin
   virtual GMSH_PLUGIN_TYPE getType() const = 0;
-  virtual void getName (char *name) const = 0;
-  virtual void getInfos (char *author, 
-			 char *copyright,
-			 char *help_text) const = 0;
+  virtual void getName(char *name) const = 0;
+  virtual void getInfos(char *author, char *copyright, char *helpText) const = 0;
 
   // When an error is thrown by the plugin, the plugin manager will
   // show the message and hopefully continue
-  virtual void CatchErrorMessage (char *errorMessage) const = 0;
+  virtual void catchErrorMessage(char *errorMessage) const = 0;
 
   // gmsh style option, ca be loaded, saved and set
   virtual int getNbOptions() const = 0;
-  virtual StringXNumber *GetOption (int iopt) = 0;
-  virtual void Save() = 0;
-  virtual void Run() = 0;
+  virtual StringXNumber *getOption(int iopt) = 0;
+  virtual void save() = 0;
+  virtual void run() = 0;
 };
 
 
@@ -85,15 +84,15 @@ public :
 
 class GMSH_Post_Plugin : public GMSH_Plugin
 {
- protected:
-  Post_View *processed;
 public:
-  inline GMSH_PLUGIN_TYPE getType() const 
-    {return GMSH_Plugin::GMSH_POST_PLUGIN;}
-
+  inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
+  virtual void save(){
+    Msg(WARNING, "Plugin().Save is deprecated: use 'Save View[num]' instead");
+  }
+  virtual void run(){ execute(0); }
   // If returned pointer is the same as the argument, then view is
   // simply modified, else, a new view is added in the view list
-  virtual Post_View *execute (Post_View *) = 0;
+  virtual Post_View *execute(Post_View *) = 0;
 };
 
 #endif

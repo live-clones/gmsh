@@ -1,4 +1,4 @@
-// $Id: Harmonic2Time.cpp,v 1.6 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: Harmonic2Time.cpp,v 1.7 2003-11-21 07:56:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -75,12 +75,12 @@ int GMSH_Harmonic2TimePlugin::getNbOptions() const
   return sizeof(Harmonic2TimeOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_Harmonic2TimePlugin::GetOption(int iopt)
+StringXNumber *GMSH_Harmonic2TimePlugin::getOption(int iopt)
 {
   return &Harmonic2TimeOptions_Number[iopt];
 }
 
-void GMSH_Harmonic2TimePlugin::CatchErrorMessage(char *errorMessage) const
+void GMSH_Harmonic2TimePlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "Harmonic2Time failed...");
 }
@@ -140,12 +140,3 @@ Post_View *GMSH_Harmonic2TimePlugin::execute(Post_View * v)
   return 0;
 }
 
-void GMSH_Harmonic2TimePlugin::Run()
-{
-  execute(0);
-}
-
-void GMSH_Harmonic2TimePlugin::Save()
-{
-  ;
-}
