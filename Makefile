@@ -6,6 +6,7 @@
 
             MAKE = make
               CC = g++
+           FLAGS = -g -Wall
               RM = rm
          RMFLAGS = -f 
 
@@ -47,7 +48,7 @@ GMSH_ARCHIVE_DIR = archives
 default: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-g -Wall" \
+           "C_FLAGS=$(FLAGS)" \
            "OS_FLAGS=-D_UNIX -D_LITTLE" \
            "VERSION_FLAGS=-D_NOTHREADS" \
            "GL_INCLUDE=$(OPENGL_INC)" \
