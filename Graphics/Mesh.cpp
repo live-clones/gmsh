@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.25 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.26 2001-05-21 20:19:08 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -14,8 +14,6 @@
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
-
-static int        iVolume;
 
 /* ------------------------------------------------------------------------ */
 /*  D r a w _ M e s h                                                       */
@@ -44,6 +42,8 @@ void draw_polygon_2d (double r, double g, double b, int n,
 
 }
 
+static int iColor;
+
 void ColorSwitch(int i){
   glColor4ubv((GLubyte*)&CTX.color.mesh.carousel[i%10]);
 }
@@ -70,6 +70,7 @@ void Draw_Mesh (Mesh *M) {
 
   glPointSize(2);
   glLineWidth(1);
+  iColor = 0;
 
   if(CTX.mesh.hidden) glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -122,26 +123,24 @@ void Draw_Mesh (Mesh *M) {
 void Draw_Mesh_Volumes(void *a, void *b){
   Volume **v;
   v = (Volume**)a;
+  iColor++;
   Tree_Action((*v)->Simplexes, Draw_Simplex_Volume);
   Tree_Action((*v)->Hexahedra, Draw_Hexahedron_Volume);
   Tree_Action((*v)->Prisms, Draw_Prism_Volume);
 }
 
-void PremierVolume(int iSurf, int *iVol);
-
 void Draw_Mesh_Surfaces (void *a,void *b){
   Surface **s;
   s = (Surface**)a;
-  PremierVolume(abs((*s)->Num),&iVolume);
-  iVolume = -iVolume;
+  iColor++;
   Tree_Action((*s)->Simplexes, Draw_Simplex_Surfaces);
 }
 
 void Draw_Mesh_Curves (void *a, void *b){
   Curve **c;
-
   c = (Curve**)a;
   if((*c)->Num < 0)return;
+  iColor++;
   Tree_Action((*c)->Simplexes,Draw_Simplex_Points);
 }
 
@@ -226,7 +225,7 @@ void Draw_Simplex_Volume (void *a, void *b){
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*s)->iEnt+1);
+    ColorSwitch((*s)->iEnt);
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);    
 
@@ -458,7 +457,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
   }
   
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*s)->iEnt);
+    ColorSwitch(iColor);
   else{
     if(K==3)
       glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
@@ -565,7 +564,7 @@ void Draw_Hexahedron_Volume (void *a, void *b){
   }
 
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*h)->iEnt+1);  
+    ColorSwitch((*h)->iEnt);  
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.hexahedron);
 
@@ -658,7 +657,7 @@ void Draw_Prism_Volume (void *a, void *b){
   if(!EntiteEstElleVisible((*p)->iEnt)) return;
   
   if(CTX.mesh.color_carousel)
-    ColorSwitch((*p)->iEnt+1);
+    ColorSwitch((*p)->iEnt);
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.prism);
 

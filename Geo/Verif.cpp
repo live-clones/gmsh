@@ -1,4 +1,4 @@
-// $Id: Verif.cpp,v 1.7 2001-01-09 14:24:08 geuzaine Exp $
+// $Id: Verif.cpp,v 1.8 2001-05-21 20:19:07 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -256,29 +256,5 @@ int allfaceslinked (int iz , List_T *Liste , List_T *old){
   Tree_Delete(treefaces);
 
   return(CONTOUR_TROUVE);
-}
-
-void PremierVolume(int iSurf, int *iVol){
-  int i,j;
-  Surface *sur;
-  Volume *vol;
-
-  *iVol = 0;
-
-  List_T *temp = Tree2List(THEM->Volumes);
-  for(i=0;i<List_Nbr(temp);i++){
-        List_Read(temp,i,&vol);
-    for(j=0;j<List_Nbr(vol->Surfaces);j++){
-        List_Read(vol->Surfaces,j,&sur);
-        if(abs(sur->Num) == iSurf){
-                List_Delete(temp);
-            *iVol = i+1;
-            return;
-        }
-    }
-  }
-  if(*iVol == 0) *iVol = iSurf;
-
-  List_Delete(temp);
 }
 
