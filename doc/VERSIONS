@@ -1,4 +1,7 @@
-$Date: 2001-11-05 08:37:43 $
+$Date: 2001-11-12 08:21:18 $
+
+New in 1.29: Translations and rotations can now be combined in
+extrusions;
 
 New in 1.28: Corrected the 'Using Progression' attribute for
 tranfinite meshes to actually match a real geometric progression; new

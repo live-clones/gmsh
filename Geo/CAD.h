@@ -24,17 +24,21 @@ bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
 bool ProjectPointOnSurface (Surface *s, Vertex &p);
 bool ProjectPointOnSurface (Surface *s, Vertex *p,double *u, double *v);
 
-void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
-                          double X, double Y, double Z, double alpha,
-                          Curve **pc, Curve **prc, ExtrudeParams *e);
-Surface *Extrude_ProtudeCurve(int ep, int ic,
-                              double A, double B, double C,
-                              double X, double Y, double Z,
-                              double alpha, ExtrudeParams *e);
-void Extrude_ProtudeSurface(int ep, int is,
-                            double A, double B, double C,
-                            double X, double Y, double Z,
-                            double alpha,
+void Extrude_ProtudePoint(int type, int ip, 
+			  double T0, double T1, double T2,
+			  double A0, double A1, double A2,
+                          double X0, double X1, double X2, double alpha,
+                          Curve **pc, Curve **prc, 
+			  ExtrudeParams *e);
+Surface *Extrude_ProtudeCurve(int type, int ic,
+			      double T0, double T1, double T2,
+			      double A0, double A1, double A2,
+			      double X0, double X1, double X2, double alpha,
+			      ExtrudeParams *e);
+void Extrude_ProtudeSurface(int type, int is,
+			    double T0, double T1, double T2,
+			    double A0, double A1, double A2,
+			    double X0, double X1, double X2, double alpha,
                             int NewVolume, ExtrudeParams *e);
 void ProtudeXYZ ( double &x, double &y, double &z, ExtrudeParams *e);
 void ReplaceAllDuplicates ( Mesh *m );

@@ -24,15 +24,22 @@ Extrude Surface { 6, {0,0,h} } {
   Layers { {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} } ; 
 } ;
 
-// The extrusion can also be combined with a rotation, and the
-// extruded 3D mesh can be recombined into prisms (wedges) if the
-// surface elements are triangles, or hexahedra if the surface
-// elements are quadrangles. All rotations are specified by an axis
-// direction ({0,1,0}), an axis point ({-0.1,0,0.1}) and a rotation
-// angle (-Pi/2):
+// The extrusion can also performed with a rotation instead of a
+// translation, and the resulting mesh can be recombined into prisms
+// (wedges) if the surface elements are triangles, or hexahedra if the
+// surface elements are quadrangles. All rotations are specified by an
+// axis direction ({0,1,0}), an axis point ({-0.1,0,0.1}) and a
+// rotation angle (-Pi/2):
 
 Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
   Recombine ; Layers { 7, 9004, 1 } ; 
+};
+
+// A translation ({-2*h,0,0}) and a rotation ({1,0,0} , {0,0.15,0.25},
+// Pi/4) can be combined:
+
+Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
+  Layers {10,9004,1}; Recombine; 
 };
 
 Physical Volume(101) = {9000:9004};

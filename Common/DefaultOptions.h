@@ -333,6 +333,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Use old newreg definition for geometrical transformations (compatibility option for old Gmsh geometries)" },
   { F|O, "CirclePoints" , opt_geometry_circle_points, 20. ,
     "Number of points used to draw a circle/ellipsis" },
+  { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
+    "Number of control points for splines created during extrusion" },
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 , 
     "Global geometry scaling factor" },
   { F|O, "ColorScheme" , opt_geometry_color_scheme , 0. , 

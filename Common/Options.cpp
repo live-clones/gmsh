@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.57 2001-11-09 11:20:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.58 2001-11-12 08:21:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1245,6 +1245,11 @@ double opt_geometry_circle_points(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.geom.circle_points = (int)val;
   return CTX.geom.circle_points;
+}
+double opt_geometry_extrude_spline_points(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.extrude_spline_points = (int)val;
+  return CTX.geom.extrude_spline_points;
 }
 double opt_geometry_scaling_factor(OPT_ARGS_NUM){
   if(action & GMSH_SET) 

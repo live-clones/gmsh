@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.26 2001-11-05 08:37:43 geuzaine Exp $
+$Id: tutorial.html,v 1.27 2001-11-12 08:21:18 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -298,7 +298,7 @@ Extrude Surface { 11, {0, 0, h} } ;
 </FONT></I><I><FONT COLOR="#B22222">// manually a characteristic length for some of the automatically
 </FONT></I><I><FONT COLOR="#B22222">// created points:
 </FONT></I>
-Characteristic Length{6,2,52,3,16,12} = lc * 2 ;
+Characteristic Length{6,22,2,3,16,12} = lc * 2 ;
 
 <I><FONT COLOR="#B22222">// If the transformation tools are handy to create complex geometries,
 </FONT></I><I><FONT COLOR="#B22222">// it is sometimes useful to generate the flat geometry, consisting
@@ -362,15 +362,22 @@ Extrude Surface { 6, {0,0,h} } {
   Layers { {8,4,2,1}, {9000:9003}, {0.25,0.5,0.75,1} } ; 
 } ;
 
-<I><FONT COLOR="#B22222">// The extrusion can also be combined with a rotation, and the
-</FONT></I><I><FONT COLOR="#B22222">// extruded 3D mesh can be recombined into prisms (wedges) if the
-</FONT></I><I><FONT COLOR="#B22222">// surface elements are triangles, or hexahedra if the surface
-</FONT></I><I><FONT COLOR="#B22222">// elements are quadrangles. All rotations are specified by an axis
-</FONT></I><I><FONT COLOR="#B22222">// direction ({0,1,0}), an axis point ({-0.1,0,0.1}) and a rotation
-</FONT></I><I><FONT COLOR="#B22222">// angle (-Pi/2):
+<I><FONT COLOR="#B22222">// The extrusion can also performed with a rotation instead of a
+</FONT></I><I><FONT COLOR="#B22222">// translation, and the resulting mesh can be recombined into prisms
+</FONT></I><I><FONT COLOR="#B22222">// (wedges) if the surface elements are triangles, or hexahedra if the
+</FONT></I><I><FONT COLOR="#B22222">// surface elements are quadrangles. All rotations are specified by an
+</FONT></I><I><FONT COLOR="#B22222">// axis direction ({0,1,0}), an axis point ({-0.1,0,0.1}) and a
+</FONT></I><I><FONT COLOR="#B22222">// rotation angle (-Pi/2):
 </FONT></I>
 Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
   Recombine ; Layers { 7, 9004, 1 } ; 
+};
+
+<I><FONT COLOR="#B22222">// A translation ({-2*h,0,0}) and a rotation ({1,0,0} , {0,0.15,0.25},
+</FONT></I><I><FONT COLOR="#B22222">// Pi/4) can be combined:
+</FONT></I>
+Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
+  Layers {10,9004,1}; Recombine; 
 };
 
 Physical Volume(101) = {9000:9004};

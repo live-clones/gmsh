@@ -109,7 +109,7 @@ public :
     int point_sel_size, line_sel_width;
     int hidden, shade;
     int highlight;
-    int level, old_circle, circle_points, old_newreg;
+    int level, old_circle, circle_points, extrude_spline_points, old_newreg;
     double normals, tangents;
     double scaling_factor;
     int color_scheme ;

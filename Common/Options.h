@@ -155,6 +155,7 @@ double opt_geometry_highlight(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_old_newreg(OPT_ARGS_NUM);
 double opt_geometry_circle_points(OPT_ARGS_NUM);
+double opt_geometry_extrude_spline_points(OPT_ARGS_NUM);
 double opt_geometry_scaling_factor(OPT_ARGS_NUM);
 double opt_geometry_color_scheme(OPT_ARGS_NUM);
 double opt_mesh_quality(OPT_ARGS_NUM);

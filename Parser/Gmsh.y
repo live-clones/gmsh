@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.107 2001-11-07 09:30:26 geuzaine Exp $
+// $Id: Gmsh.y,v 1.108 2001-11-12 08:21:18 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1451,7 +1451,7 @@ Transform :
       SymmetryShapes($2[0],$2[1],$2[2],$2[3],$4,1);
       $$ = $4;
     }
-  | tDilate '{' VExpr ',' FExpr '}'  '{' MultipleShape '}'
+  | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
       DilatShapes($3[0],$3[1],$3[2],$5,$8,1);
       $$ = $8;
@@ -1765,53 +1765,88 @@ Extrude :
     tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,&pc,&prc,NULL);
+      Extrude_ProtudePoint(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
+			   0.,0.,0.,0.,0.,0.,0.,
+			   &pc,&prc,NULL);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
+      Extrude_ProtudePoint(ROTATE,(int)$4,0.,0.,0.,
+			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
 			   &pc,&prc,NULL);
     }
-
+  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}' tEND
+    {
+      Curve *pc, *prc;
+      Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
+			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
+			   &pc,&prc,NULL);
+    }
   /* -------- Lines -------- */ 
 
-  | tExtrude tLine'{' FExpr ',' VExpr '}' tEND
+  | tExtrude tLine '{' FExpr ',' VExpr '}' tEND
     {
-      Extrude_ProtudeCurve(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,NULL);
+      Extrude_ProtudeCurve(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
+			   0.,0.,0.,0.,0.,0.,0.,NULL);
     }
-  | tExtrude tLine'{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
+  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      Extrude_ProtudeCurve(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,NULL);
+      Extrude_ProtudeCurve(ROTATE,(int)$4,0.,0.,0.,
+			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,NULL);
     }
-  | tExtrude tLine'{' FExpr ',' VExpr '}'
+  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
+    {
+      Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
+			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,NULL);
+    }
+  | tExtrude tLine '{' FExpr ',' VExpr '}'
     {
       extr.mesh.ExtrudeMesh = false;
       extr.mesh.Recombine = false;
     }
-                      '{' ExtrudeParameters '}' tEND
+                   '{' ExtrudeParameters '}' tEND
     {
-      Extrude_ProtudeCurve(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,&extr);
+      Extrude_ProtudeCurve(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
+			   0.,0.,0.,0.,0.,0.,0.,&extr);
     }
-  | tExtrude tLine'{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
+  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
       extr.mesh.ExtrudeMesh = false;
       extr.mesh.Recombine = false;
     }
-                      '{' ExtrudeParameters '}' tEND
+                   '{' ExtrudeParameters '}' tEND
     {
-      Extrude_ProtudeCurve(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,&extr);
+      Extrude_ProtudeCurve(ROTATE,(int)$4,0.,0.,0.,
+			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,&extr);
+    }
+  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+                   '{' ExtrudeParameters '}' tEND
+    {
+      Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
+			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,&extr);
     }
 
   /* -------- Surfaces -------- */ 
 
   | tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
     {
-      Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,0,NULL);
+      Extrude_ProtudeSurface(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
+			     0.,0.,0.,0.,0.,0.,0.,0,NULL);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,0,NULL);
+      Extrude_ProtudeSurface(ROTATE,(int)$4,0.,0.,0.,
+			     $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,0,NULL);
+    }
+  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
+    {
+      Extrude_ProtudeSurface(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
+			     $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,0,NULL);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr '}'
     {
@@ -1821,7 +1856,8 @@ Extrude :
                       '{' ExtrudeParameters '}' tEND
     {
       int vol = NEWREG();
-      Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,vol,&extr);
+      Extrude_ProtudeSurface(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
+			     0.,0.,0.,0.,0.,0.,0.,vol,&extr);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' 
     {
@@ -1832,7 +1868,20 @@ Extrude :
                       '{' ExtrudeParameters '}'tEND
     {
       int vol = NEWREG();
-      Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,vol,&extr);
+      Extrude_ProtudeSurface(ROTATE,(int)$4,0.,0.,0.,
+			     $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,vol,&extr);
+    }
+  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+  
+                      '{' ExtrudeParameters '}'tEND
+    {
+      int vol = NEWREG();
+      Extrude_ProtudeSurface(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
+			     $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,vol,&extr);
     }
 ;
 

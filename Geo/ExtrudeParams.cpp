@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.6 2001-09-25 08:21:14 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.7 2001-11-12 08:21:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -24,23 +24,28 @@ ExtrudeParams :: ExtrudeParams (int ModeEx){
 }
 
 
-void ExtrudeParams :: fill (int ep , double A, double B, double C,
-                            double X, double Y, double Z, double angle){
-  geo.axe[0] = A;
-  geo.axe[1] = B;
-  geo.axe[2] = C;
-  geo.pt[0] = X;
-  geo.pt[1] = Y;
-  geo.pt[2] = Z;
+void ExtrudeParams :: fill (int type ,
+			    double T0, double T1, double T2,
+			    double A0, double A1, double A2,
+                            double X0, double X1, double X2, double angle){
+  geo.trans[0] = T0;
+  geo.trans[1] = T1;
+  geo.trans[2] = T2;
+  geo.axe[0] = A0;
+  geo.axe[1] = A1;
+  geo.axe[2] = A2;
+  geo.pt[0] = X0;
+  geo.pt[1] = X1;
+  geo.pt[2] = X2;
   geo.angle = angle;
-  geo.Type = ep;
+  geo.Type = type;
 }
 
 void ExtrudeParams :: Extrude ( int iLayer, int iElemLayer,
                                 double &x, double &y, double &z){
 
   double dx0,dy0,dz0,dx1,dy1,dz1;
-  double dx,dy,dz;
+  double dx,dy,dz,angle;
   if(!iLayer){
     dx0=dy0=dz0=0.0;
     dx1 = mesh.hLayer[0];
@@ -56,40 +61,71 @@ void ExtrudeParams :: Extrude ( int iLayer, int iElemLayer,
     dz1 = mesh.hLayer[iLayer];
   }
   double t = (double) iElemLayer /(double)mesh.NbElmLayer[iLayer];
-  if(geo.Type){
-    dx = geo.axe[0]*(dx0 + t * (dx1-dx0));
-    dy = geo.axe[1]*(dy0 + t * (dy1-dy0));
-    dz = geo.axe[2]*(dz0 + t * (dz1-dz0));
+  switch(geo.Type){
+  case TRANSLATE :
+    dx = geo.trans[0]*(dx0 + t * (dx1-dx0));
+    dy = geo.trans[1]*(dy0 + t * (dy1-dy0));
+    dz = geo.trans[2]*(dz0 + t * (dz1-dz0));
     x+=dx;y+=dy;z+=dz;
-  }
-  else{
-    double angle = geo.angle;
+    break;
+  case ROTATE :
+    angle = geo.angle;
     geo.angle = geo.angle*(dx0 + t * (dx1-dx0));
     ProtudeXYZ(x,y,z,this);
     geo.angle = angle;
+    break;
+  case TRANSLATE_ROTATE :
+    angle = geo.angle;
+    geo.angle = geo.angle*(dx0 + t * (dx1-dx0));
+    ProtudeXYZ(x,y,z,this);
+    geo.angle = angle;
+    dx = geo.trans[0]*(dx0 + t * (dx1-dx0));
+    dy = geo.trans[1]*(dy0 + t * (dy1-dy0));
+    dz = geo.trans[2]*(dz0 + t * (dz1-dz0));
+    x+=dx;y+=dy;z+=dz;
+    break;
+  default :
+    Msg(GERROR, "Unknown extrusion type");
+    break;
   }
 }
 
 void ExtrudeParams :: Rotate(double matr[3][3]){
+  Projette(geo.trans,matr);
   Projette(geo.axe,matr);
   Projette(geo.pt,matr);
   geo.angle = -geo.angle;
 }
 
 void ExtrudeParams :: Extrude (double t, double &x, double &y, double &z){
+  double dx,dy,dz,angle;
 
-  double dx,dy,dz;
-  if(geo.Type){
-    dx = geo.axe[0]*t;
-    dy = geo.axe[1]*t;
-    dz = geo.axe[2]*t;
+  switch(geo.Type){
+  case TRANSLATE :
+    dx = geo.trans[0]*t;
+    dy = geo.trans[1]*t;
+    dz = geo.trans[2]*t;
     x+=dx;y+=dy;z+=dz;
-  }
-  else{
-    double angle = geo.angle;
+    break;
+  case ROTATE :
+    angle = geo.angle;
     geo.angle = geo.angle*t;
     ProtudeXYZ(x,y,z,this);
     geo.angle = angle;
+    break;
+  case TRANSLATE_ROTATE :
+    angle = geo.angle;
+    geo.angle = geo.angle*t;
+    ProtudeXYZ(x,y,z,this);
+    geo.angle = angle;
+    dx = geo.trans[0]*t;
+    dy = geo.trans[1]*t;
+    dz = geo.trans[2]*t;
+    x+=dx;y+=dy;z+=dz;
+    break;
+  default :
+    Msg(GERROR, "Unknown extrusion type");
+    break;
   }
 }
 
