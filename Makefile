@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.273 2003-03-07 23:35:01 geuzaine Exp $
+# $Id: Makefile,v 1.274 2003-03-12 23:43:45 geuzaine Exp $
 
 include variables
 
@@ -50,7 +50,7 @@ source-common:
 
 source: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-           NR Triangle/triangle.*
+           doc/texinfo NR Triangle/triangle.*
 	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
 
 source-nonfree: source-common
