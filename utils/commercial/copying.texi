@@ -1,7 +1,7 @@
 The precise licensing conditions for this version of Gmsh can be found in
-the @file{doc/LICENSE} file that accompanies the source code
-(@pxref{License}). Detailed copyright information can be found in
-@ref{Credits}.
+the @file{doc/LICENSE} file that accompanies the source code, or in
+@ref{License}. Detailed copyright information can be found in the
+@file{doc/CREDITS} file, or in @ref{Credits}.
 
 Please send all Gmsh-related questions to the Gmsh mailing list at
 @email{gmsh@@geuz.org}.
