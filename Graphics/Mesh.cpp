@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.51 2002-05-20 18:28:26 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.52 2002-09-20 19:53:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -119,43 +119,34 @@ void Draw_Mesh (Mesh *M) {
 
   iColor = 0;
 
-  switch(M->status) {
-  case 3 :
-    if(CTX.mesh.draw && 
-       (CTX.mesh.volumes || CTX.mesh.volumes_num) &&
-       CTX.render_mode != GMSH_SELECT)
+  if(CTX.mesh.draw && CTX.render_mode != GMSH_SELECT){
+
+    if(M->status >= 3 && (CTX.mesh.volumes || CTX.mesh.volumes_num)){
       Tree_Action(M->Volumes, Draw_Mesh_Volumes);
-    /* fall-through! */
-  case 2 :
-    if(CTX.mesh.draw && 
-       (CTX.mesh.surfaces || CTX.mesh.surfaces_num) &&
-       CTX.render_mode != GMSH_SELECT){
+    }
+
+    if(M->status >= 2 && (CTX.mesh.surfaces || CTX.mesh.surfaces_num)){
       Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
       if(CTX.mesh.oldxtrude)//old extrusion algo
-	Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
+      Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
     }
-    /* fall-through! */
-  case 1 :  
-    if(CTX.mesh.draw && 
-       (CTX.mesh.lines || CTX.mesh.lines_num) &&
-       CTX.render_mode != GMSH_SELECT){
+
+    if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num)){
       Tree_Action(M->Curves, Draw_Mesh_Curves);
       DrawVertexSupp = 1 ; 
       Tree_Action(M->VertexEdges, Draw_Mesh_Points);
     }
-    /* fall-through! */
-  case 0 :  
-    if(CTX.mesh.draw && 
-       (CTX.mesh.points || CTX.mesh.points_num) &&
-       CTX.render_mode != GMSH_SELECT){
+
+    if(M->status >= 0 && (CTX.mesh.points || CTX.mesh.points_num)){
       DrawVertexSupp = 0 ; 
       Tree_Action(M->Vertices, Draw_Mesh_Points);
     }
+
+  }
+
+  if(M->status >= 0){
     if(!CTX.geom.shade) InitNoShading();
     Draw_Geom(M);
-    break;
-  default :
-    break;
   }
 
   if(CTX.mesh.hidden) glDisable(GL_POLYGON_OFFSET_FILL);
@@ -180,20 +171,37 @@ void Draw_Mesh_Volumes(void *a, void *b){
   Tree_Action(v->Pyramids, Draw_Pyramid_Volume);
 }
 
+int Test_Simple_Surface_Draw(){
+  if(CTX.mesh.use_cut_plane ||
+     CTX.mesh.explode != 1.0 ||
+     CTX.mesh.dual ||
+     CTX.mesh.surfaces_num ||
+     CTX.mesh.normals)
+    return 0;
+  //printf("simple simplex surface drawing\n");
+  return 1;
+}
+
 void Draw_Mesh_Surfaces (void *a,void *b){
   Surface *s;
   s = *(Surface**)a;
   iColor++;
   theColor = s->Color;
   if(!(s->Visible & VIS_MESH)) return;
-  Tree_Action(s->Simplexes, Draw_Simplex_Surfaces);
+  if(!Test_Simple_Surface_Draw())
+    Tree_Action(s->Simplexes, Draw_Simplex_Surface);
+  else
+    Tree_Action(s->Simplexes, Draw_Simplex_Surface_Simple);
 }
 
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b){
   Volume *v;
   v = *(Volume**)a;
   if(!(v->Visible & VIS_MESH)) return;
-  Tree_Action(v->Simp_Surf, Draw_Simplex_Surfaces);
+  if(!Test_Simple_Surface_Draw())
+    Tree_Action(v->Simp_Surf, Draw_Simplex_Surface);
+  else
+    Tree_Action(v->Simp_Surf, Draw_Simplex_Surface_Simple);
 }
 
 void Draw_Mesh_Curves (void *a, void *b){
@@ -293,10 +301,11 @@ void Draw_Simplex_Volume (void *a, void *b){
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);
 
+  // this is killing us!!!
   for (int i=0 ; i<4 ; i++) {
-     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
-     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
-     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
+    X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
 
   if(CTX.mesh.volumes && !(fulldraw && CTX.mesh.shade)){
@@ -429,11 +438,146 @@ void Draw_Simplex_Volume (void *a, void *b){
 
 }
 
+void Draw_Simplex_Surface_Common(Simplex *s, double *pX, double *pY, double *pZ, double n[3]){
+  double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
+  int i, K, L;
 
-void Draw_Simplex_Surfaces (void *a, void *b){
+  L = (s->VSUP) ? 1 : 0;
+  K = (s->V[3]) ? 4 : 3;
+
+  if(CTX.mesh.normals || CTX.mesh.shade){
+    x1x0 = s->V[1]->Pos.X - s->V[0]->Pos.X; 
+    y1y0 = s->V[1]->Pos.Y - s->V[0]->Pos.Y;
+    z1z0 = s->V[1]->Pos.Z - s->V[0]->Pos.Z; 
+    x2x0 = s->V[2]->Pos.X - s->V[0]->Pos.X;
+    y2y0 = s->V[2]->Pos.Y - s->V[0]->Pos.Y; 
+    z2z0 = s->V[2]->Pos.Z - s->V[0]->Pos.Z;
+    n[0] = y1y0 * z2z0 - z1z0 * y2y0 ;
+    n[1] = z1z0 * x2x0 - x1x0 * z2z0 ;
+    n[2] = x1x0 * y2y0 - y1y0 * x2x0;
+  }
+
+  if(CTX.mesh.hidden && CTX.mesh.shade) glNormal3dv(n);
+  
+  if(CTX.mesh.surfaces && CTX.mesh.lines){
+
+    if(CTX.mesh.color_carousel && ! (CTX.mesh.hidden || CTX.mesh.shade)){
+      if(theColor.type)
+	glColor4ubv((GLubyte*)&theColor.mesh);
+      else
+	ColorSwitch(iColor);
+    }
+    else{
+      glColor4ubv((GLubyte*)&CTX.color.mesh.line);
+    }
+
+    if(pX && pY && pZ){ // using precomputed vertices
+      glBegin(GL_LINE_LOOP);
+      for(i=0 ; i<K*(1+L) ; i++){
+	glVertex3d(pX[i],pY[i],pZ[i]);
+      }
+      glEnd();    
+    }
+    else{ // using the element's unmodified coordinates
+      if(!L){
+	glBegin(GL_LINE_LOOP);
+	for(i=0 ; i<K ; i++){
+	  glVertex3d(s->V[i]->Pos.X,s->V[i]->Pos.Y,s->V[i]->Pos.Z);
+	}
+	glEnd();    
+      }
+      else{
+	for(i=0 ; i<K ; i++){
+	  glVertex3d(s->V[i]->Pos.X,s->V[i]->Pos.Y,s->V[i]->Pos.Z);
+	  glVertex3d(s->VSUP[i]->Pos.X,s->VSUP[i]->Pos.Y,s->VSUP[i]->Pos.Z);
+	}
+      }
+    }
+
+  }
+
+  if(CTX.mesh.color_carousel){
+    if(theColor.type)
+      glColor4ubv((GLubyte*)&theColor.mesh);
+    else
+      ColorSwitch(iColor);
+  }
+  else{
+    if(K==3)
+      glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
+    else
+      glColor4ubv((GLubyte*)&CTX.color.mesh.quadrangle);
+  }
+
+  if(CTX.mesh.surfaces && CTX.mesh.hidden){
+
+    if(pX && pY && pZ){ // using precomputed vertices
+      if(L){
+	glBegin(GL_POLYGON);
+	for(i=0 ; i<K*(1+L) ; i++) glVertex3d(pX[i], pY[i], pZ[i]);
+	glEnd();
+      }
+      else if(K==4){
+	glBegin(GL_QUADS);
+	glVertex3d(pX[0], pY[0], pZ[0]);
+	glVertex3d(pX[1], pY[1], pZ[1]);
+	glVertex3d(pX[2], pY[2], pZ[2]);
+	glVertex3d(pX[3], pY[3], pZ[3]);
+	glEnd();
+      }
+      else{
+	glBegin(GL_TRIANGLES);
+	glVertex3d(pX[0], pY[0], pZ[0]);
+	glVertex3d(pX[1], pY[1], pZ[1]);
+	glVertex3d(pX[2], pY[2], pZ[2]);
+	glEnd();
+      }
+    }
+    else{ // using the element's unmodified coordinates
+      if(L){
+	glBegin(GL_POLYGON);
+	for(i=0 ; i<K ; i++){
+	  glVertex3d(s->V[i]->Pos.X,s->V[i]->Pos.Y,s->V[i]->Pos.Z);
+	  glVertex3d(s->VSUP[i]->Pos.X,s->VSUP[i]->Pos.Y,s->VSUP[i]->Pos.Z);
+	}
+	glEnd();
+      }
+      else if(K==4){
+	glBegin(GL_QUADS);
+	glVertex3d(s->V[0]->Pos.X,s->V[0]->Pos.Y,s->V[0]->Pos.Z);
+	glVertex3d(s->V[1]->Pos.X,s->V[1]->Pos.Y,s->V[1]->Pos.Z);
+	glVertex3d(s->V[2]->Pos.X,s->V[2]->Pos.Y,s->V[2]->Pos.Z);
+	glVertex3d(s->V[3]->Pos.X,s->V[3]->Pos.Y,s->V[3]->Pos.Z);
+	glEnd();
+      }
+      else{
+	glBegin(GL_TRIANGLES);
+	glVertex3d(s->V[0]->Pos.X,s->V[0]->Pos.Y,s->V[0]->Pos.Z);
+	glVertex3d(s->V[1]->Pos.X,s->V[1]->Pos.Y,s->V[1]->Pos.Z);
+	glVertex3d(s->V[2]->Pos.X,s->V[2]->Pos.Y,s->V[2]->Pos.Z);
+	glEnd();
+      }
+    }
+
+  }
+
+}
+
+void Draw_Simplex_Surface_Simple (void *a, void *b){
   Simplex *s;
-  double X[4],Y[4],Z[4],Xc,Yc,Zc,pX[8],pY[8],pZ[8];
-  double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, n[3], m[3], mm;
+  double n[3];
+
+  s = *(Simplex**)a;
+
+  if(!s->V[2] || !(s->Visible & VIS_MESH)) return ;
+
+  Draw_Simplex_Surface_Common(s, NULL, NULL, NULL, n);
+}
+
+void Draw_Simplex_Surface (void *a, void *b){
+  Simplex *s;
+  double Xc,Yc,Zc,pX[8],pY[8],pZ[8];
+  double n[3], nn;
   int i,j,K,L,k;
   char Num[256];
   
@@ -441,11 +585,10 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
   if(!s->V[2] || !(s->Visible & VIS_MESH)) return ;
 
-  if(s->VSUP) L=1;
-  else L=0;
-
-  if (s->V[3]) {
-    K = 4;
+  L = (s->VSUP) ? 1 : 0;
+  K = (s->V[3]) ? 4 : 3;
+   
+  if(K == 4) {
     Xc = .25 * (s->V[0]->Pos.X + s->V[1]->Pos.X + 
                 s->V[2]->Pos.X + s->V[3]->Pos.X);
     Yc = .25 * (s->V[0]->Pos.Y + s->V[1]->Pos.Y + 
@@ -454,14 +597,13 @@ void Draw_Simplex_Surfaces (void *a, void *b){
                 s->V[2]->Pos.Z + s->V[3]->Pos.Z);
   }
   else {
-    K = 3;
     Xc = (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X) / 3. ;
     Yc = (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y) / 3. ;
     Zc = (s->V[0]->Pos.Z + s->V[1]->Pos.Z + s->V[2]->Pos.Z) / 3. ;
   }
 
   if(CTX.mesh.use_cut_plane){
-    if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+    if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0) return;
   }
 
   k=0;
@@ -482,7 +624,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     }
   }
 
-  if (CTX.mesh.dual){
+  if(CTX.mesh.dual){
     glColor4ubv((GLubyte*)&CTX.color.fg);
     glEnable(GL_LINE_STIPPLE);
     glLineStipple(1,0x0F0F);
@@ -498,93 +640,22 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-  if (CTX.mesh.normals || CTX.mesh.shade){
-    for (i=0 ; i<K ; i++) {
-     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
-     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
-     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
-    }
-    x1x0 = X[1]-X[0]; y1y0 = Y[1]-Y[0];
-    z1z0 = Z[1]-Z[0]; x2x0 = X[2]-X[0];
-    y2y0 = Y[2]-Y[0]; z2z0 = Z[2]-Z[0];
-    n[0] = m[0] = y1y0 * z2z0 - z1z0 * y2y0 ;
-    n[1] = m[1] = z1z0 * x2x0 - x1x0 * z2z0 ;
-    n[2] = m[2] = x1x0 * y2y0 - y1y0 * x2x0;
-  }
-
-  if (CTX.mesh.hidden && CTX.mesh.shade){
-    glNormal3dv(n);
-  }
-  
-  if(CTX.mesh.color_carousel){
-    if(theColor.type)
-      glColor4ubv((GLubyte*)&theColor.mesh);
-    else
-      ColorSwitch(iColor);
-  }
-  else{
-    if(K==3)
-      glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
-    else
-      glColor4ubv((GLubyte*)&CTX.color.mesh.quadrangle);
-  }
+  Draw_Simplex_Surface_Common(s, pX, pY, pZ, n);
 
   if(CTX.mesh.surfaces_num){
     sprintf(Num,"%d",s->Num);
     glRasterPos3d(Xc,Yc,Zc);
     Draw_String(Num);
   }
-
-
-  if(CTX.mesh.surfaces){
-
-    
-    if(CTX.mesh.lines){
-      if(CTX.mesh.color_carousel && ! (CTX.mesh.hidden || CTX.mesh.shade)){
-	if(theColor.type)
-	  glColor4ubv((GLubyte*)&theColor.mesh);
-	else
-	  ColorSwitch(iColor);
-      }
-      else{
-	glColor4ubv((GLubyte*)&CTX.color.mesh.line);
-      }
-      glBegin(GL_LINE_LOOP);
-      for(i=0 ; i<K*(1+L) ; i++){
-        glVertex3d(pX[i],pY[i],pZ[i]);
-      }
-      glEnd();    
-    }
-
-    if(CTX.mesh.color_carousel){
-      if(theColor.type)
-	glColor4ubv((GLubyte*)&theColor.mesh);
-      else
-	ColorSwitch(iColor);
-    }
-    else{
-      if(K==3)
-	glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
-      else
-	glColor4ubv((GLubyte*)&CTX.color.mesh.quadrangle);
-    }
-    if (CTX.mesh.hidden) { 
-      glBegin(GL_POLYGON);
-      for(i=0 ; i<K*(1+L) ; i++) glVertex3d(pX[i], pY[i], pZ[i]);
-      glEnd();
-    }
-
-
-  }
   
   if(CTX.mesh.normals) {
-    norme(m);
+    norme(n);
     glColor4ubv((GLubyte*)&CTX.color.mesh.normals);
-    m[0] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[0] ;
-    m[1] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[1] ;
-    m[2] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[2] ;
-    mm=sqrt(m[0]*m[0]+m[1]*m[1]+m[2]*m[2]);
-    Draw_Vector(DRAW_POST_ARROW, 0, Xc,Yc,Zc, mm, m[0],m[1],m[2],NULL);
+    n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[0] ;
+    n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[1] ;
+    n[2] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[2] ;
+    nn = sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
+    Draw_Vector(DRAW_POST_ARROW, 0, Xc,Yc,Zc, nn, n[0],n[1],n[2],NULL);
   }
   
 
@@ -736,7 +807,7 @@ void Draw_Hexahedron_Volume (void *a, void *b){
     Draw_String(Num);
   }
 
-  if (CTX.mesh.dual){
+  if(CTX.mesh.dual){
 
     glColor4ubv((GLubyte*)&CTX.color.fg);
     glEnable(GL_LINE_STIPPLE);

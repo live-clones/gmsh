@@ -90,7 +90,8 @@ void Draw_Mesh_Curves(void *a, void *b);
 void Draw_Mesh_Points(void *a, void *b);
 
 void Draw_Simplex_Volume (void *a, void *b);
-void Draw_Simplex_Surfaces (void *a, void *b);
+void Draw_Simplex_Surface (void *a, void *b);
+void Draw_Simplex_Surface_Simple (void *a, void *b);
 void Draw_Simplex_Curves(void *a,void *b);
 
 void Draw_Hexahedron_Volume (void *a, void *b);

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.41 2002-05-30 15:53:06 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.42 2002-09-20 19:53:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -32,9 +32,9 @@
 
 */
 
-#include <time.h>
 #include <vector>
 #include <algorithm>
+#include <time.h>
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
