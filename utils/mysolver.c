@@ -1,4 +1,4 @@
-/* $Id: mysolver.c,v 1.6 2003-03-01 22:36:44 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.7 2003-03-01 23:03:23 geuzaine Exp $ */
 /*
   Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 
@@ -81,7 +81,7 @@ void work()
 
 int main(int argc, char *argv[])
 {
-  action what;
+  action what = run;
   int i = 0, s;
   char *name = NULL, *option = NULL, *socket = NULL, tmp[256];
   FILE *file;

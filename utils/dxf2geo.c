@@ -1,4 +1,4 @@
-// $Id: dxf2geo.c,v 1.4 2003-03-01 22:36:44 geuzaine Exp $
+// $Id: dxf2geo.c,v 1.5 2003-03-01 23:03:23 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,8 @@ int fcmpPoint(const void *a, const void *b)
   w = (struct Point *)b;
 
   if(fabs(q->x - w->x) < THETOL &&
-     fabs(q->y - w->y) < THETOL && fabs(q->z - w->z) < THETOL)
+     fabs(q->y - w->y) < THETOL &&
+     fabs(q->z - w->z) < THETOL)
     return 0;
 
   if(q->x > w->x)
@@ -81,6 +82,8 @@ int fcmpPoint(const void *a, const void *b)
     return (1);
   if(q->z < w->z)
     return (-1);
+
+  return 0;
 }
 
 int addpoint(struct Point *p)
@@ -171,10 +174,9 @@ int checkdegen(int a, int b, int c)
 
 void addobj(void)
 {       /* dump out current object we should have all info on */
-  struct Point p, *pp;
+  struct Point p;
   struct Curve c;
   int num[10];
-  float tmp;
 
   if(strstr(curobj, "POINT")) {
     p.x = xcoords[0];
@@ -624,7 +626,7 @@ stopit:
   printf("bounding box [%g,%g] [%g,%g] [%g,%g]\n",
          min_x, max_x, min_y, max_y, min_z, max_z);
   printf
-    ("tolerance %g: %d points / %d curves / %d degenerate entities removed\n",
+    ("tolerance %g: %d points / %d curves / %ld degenerate entities removed\n",
      THETOL, Tree_Nbr(Point_T), Tree_Nbr(Curve_T), degenerates);
   Tree_Delete(Point_T);
   Tree_Delete(Curve_T);
