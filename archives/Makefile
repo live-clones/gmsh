@@ -1,0 +1,4 @@
+
+purge:
+	$(RM) $(RMFLAGS) *~
+

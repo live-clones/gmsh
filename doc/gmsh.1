@@ -1,0 +1,200 @@
+.\" ======================================================================
+.\"
+.\" This is the manual page for Gmsh
+.\" 
+.\" Copyright (c) 2000 C. Geuzaine, J.-F. Remacle
+.\" 
+.\" ======================================================================
+.TH Gmsh 0.995 "23 November 2000"
+.UC 4
+.\" ======================================================================
+.SH NAME
+Gmsh \- a 3D mesh generator with built-in pre- and post-processing
+facilities
+.\" ======================================================================
+.SH SYNOPSIS
+.B gmsh [file(s)] [option(s)]
+.\" ======================================================================
+.SH DESCRIPTION
+\fIGmsh\fR is an automatic three-dimensional finite element mesh
+generator, primarily Delaunay, with built-in pre- and post-processing
+facilities. Its primal goal is to provide a simple meshing tool for
+academic test cases with parametric input and up to date visualization
+capabilities. One of the strengths of \fIGmsh\fR is its ability to
+respect a characteristic length field for the generation of adapted
+meshes on lines, surfaces and volumes. These adapted meshes can be
+mixed with simple structured (transfinite, elliptic, etc.)  meshes in
+order to augment the flexibility.
+.SS Geometrical Entity Definition
+Parameterized geometries are created by successively defining points,
+oriented curves (segments, circles, ellipsis, splines, etc.), oriented
+surfaces (plane surfaces, ruled surfaces, etc.)  and volumes. Compound
+groups of geometrical entities can be defined, based on these elementary
+parameterized geometric entities.
+.SS Mesh Generation
+A finite element mesh is a tessellation of a given subset of R^3 by
+elementary geometrical elements of various shapes (in this case lines,
+triangles, quadrangles, tetrahedra, prisms and hexahedra), arranged in
+such a way that two of them intersect, if they do, along a common
+face, edge or node, and never otherwise. All the finite element meshes
+produced by \fIGmsh\fR as unstructured, even if they were generated in
+a structured way. This implies that the elementary geometrical
+elements are defined only by an ordered list of their vertices (which
+allows the orientation of all their lower order geometrical entities)
+but no predefined relation is assumed between any two elementary
+elements.
+.PP
+The procedure follows the same order as for the geometry creation:
+curves are discretized first; the mesh of the curves is then used to
+mesh the surfaces; then the mesh of the surfaces is used to mesh the
+volumes. This automatically assures the continuity of the mesh when,
+for example, two surfaces share a common curve. Every meshing step is
+constrained by the characteristic length field, which can be uniform,
+specified by characteristic length associated to elementary
+geometrical entities, or associated to another mesh (the background
+mesh).
+.PP
+For each meshing step (i.e. the discretization of lines, surfaces and
+volumes), all structured mesh directives are executed first, and serve
+as additional constraints for the unstructured parts. The implemented
+Delaunay algorithm is subdivided in the following five steps for
+surface/volume discretization:
+.TP 4
+.B 1.
+trivial meshing of a box including the convex polygon/polyhedron
+defined by the boundary nodes resulting from the discretization of the
+curves/surfaces; 
+.TP 4
+.B 2.
+creation of the initial mesh by insertion of all the nodes on the
+curves/surfaces thanks to the Bowyer algorithm; 
+.TP 4
+.B 3.
+boundary restoration to force all the edges/faces of the
+curves/surfaces to be present in the initial mesh;
+.TP 4
+.B 4.
+suppression of all the undesired triangles/tetrahedra (in
+particular those containing the nodes of the initial box); 
+.TP 4
+.B 5.
+insertion of new nodes by the Bowyer algorithm until the
+characteristic size of each simplex is lower or equal to the
+characteristic length field evaluated at the center of its
+circumscribed circle/sphere.
+.SS Scalar, vector and tensor field Visualization
+Multiple post-processing scalar or vector maps can be loaded and
+manipulated (globally or individually) along with the geometry and the
+mesh. Scalar fields are represented by iso-value curves or color maps
+and vector fields by three-dimensional arrows or displacement
+maps. Post-processor functions include offsets, elevation, interactive
+color map modification, range clamping, interactive animation, vector
+postscript output, etc.
+.\" ======================================================================
+.SH MESH OPTIONS
+.TP 4
+.B file[s]
+one or more ASCII file(s) containing the geometrical, mesh or
+post-processing descriptions.
+.TP 4
+.B \-0
+parse all input files and exit. 
+.TP 4
+.B \-1
+perform the one-dimensional mesh, i.e. discretize all the curves in
+the geometry.
+.TP 4
+.B \-2
+perform the two-dimensional mesh, i.e. discretize all the surfaces in
+the geometry.
+.TP 4
+.B \-3
+perform the three-dimensional mesh, i.e. discretize all the volumes in
+the geometry.
+.TP 4
+.B \-smooth int
+set the number of smoothing passes (default value is 3).
+.TP 4
+.B \-degree int
+set the degree of the generated elements (default value is 1).
+.TP 4
+.B \-scale float
+apply a global scaling factor to the generated mesh (default value is
+1.0).
+.TP 4
+.B \-bgm file
+load view in file as current background mesh.
+.TP 4
+.B \-extrude
+extrude 2-dimensional mesh (interactively)
+.TP 4
+.B \-recombine
+recombine extruded meshes
+.\" ======================================================================
+.SH POST-PROCESSING OPTIONS
+.TP 4
+.B \-dl
+enable OpenGL display lists.
+.TP 4
+.B \-noview
+hide all views at startup.
+.\" ======================================================================
+.SH DISPLAY OPTIONS
+.TP 4
+.B \-nodb
+suppress the double buffer. Use this options if you use \fIGmsh\fR on
+a remote host without GLX.
+.TP 4
+.B \-noov
+suppress overlay visual.
+.TP 4
+.B \-alpha
+enable alpha blending.
+.TP 4
+.B \-info
+show visual info at startup.
+.TP 4
+.B \-geometry geom
+specify main window geometry.
+.TP 4
+.B \-viewport 9*float.
+specify rotation, translation and scale
+.TP 4
+.B \-display disp.
+specify display.
+.TP 4
+.B \-perspective
+use perspective instead of orthographic projection.
+.TP 4
+.B \-flash
+allow colormap flashing.
+.TP 4
+.B \-samevisual
+force same visual for OpenGL and GUI.
+.\" ======================================================================
+.SH OTHER OPTIONS
+.TP 4
+.B \-threads
+enable threads.
+.TP 4
+.B \-path string
+set the path for included files.
+.TP 4
+.B \-version
+show version information.
+.TP 4
+.B \-help
+show help message.
+.\" ======================================================================
+.SH AUTHORS
+Christophe Geuzaine (Christope.Geuzaine@ulg.ac.be) and Jean-Francois
+Remacle (remacle@scorec.rpi.edu). 
+.\" ======================================================================
+.SH SEE ALSO
+Gmsh homepage at \fIhttp://www.geuz.org/gmsh/\fR
+.PP
+Gmsh example files in \fI/usr/doc/gmsh-0.995/\fR
+.PP
+GetDP (a scientific computation software for the numerical solution of
+integro-differential equations, using finite element and integral type
+methods) at \fIhttp://www.geuz.org/getdp/\fR

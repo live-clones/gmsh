@@ -1,0 +1,7 @@
+
+some rules to follow:
+
+- please!, enable full warnings with your compiler (e.g. gcc -Wall)
+- use Msg() to print information/erros/etc.
+- indent your files and suppress the tabs (untabify)
+

@@ -1,0 +1,8 @@
+#!/bin/bash -
+
+for A in  $*
+do
+sed "s/msh_include/msh_Include/g" $A > $A.XXX
+/bin/rm -f $A
+mv $A.XXX $A   
+done
