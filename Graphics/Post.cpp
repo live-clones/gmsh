@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.20 2001-07-31 06:02:56 geuzaine Exp $
+// $Id: Post.cpp,v 1.21 2001-07-31 06:11:24 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -274,31 +274,21 @@ void Draw_Post (void) {
 	
 	if(v->NbST && v->DrawTriangles && v->DrawScalars){
 	  nb = List_Nbr(v->ST) / v->NbST ;
-	  if(v->Light && v->SmoothNormals && v->IntervalsType != DRAW_POST_ISO){
-	    if(v->Changed){
-	      Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
-	      for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
-		Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise,
-				    (double*)List_Pointer_Fast(v->ST,i),
-				    (double*)List_Pointer_Fast(v->ST,i+3),
-				    (double*)List_Pointer_Fast(v->ST,i+6),
-				    (double*)List_Pointer_Fast(v->ST,i+9));
-	    }
+	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
+	    Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
 	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
-	      Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise,
+	      Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise,
 				  (double*)List_Pointer_Fast(v->ST,i),
 				  (double*)List_Pointer_Fast(v->ST,i+3),
 				  (double*)List_Pointer_Fast(v->ST,i+6),
 				  (double*)List_Pointer_Fast(v->ST,i+9));
 	  }
-	  else{
-	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
-	      Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise,
-				  (double*)List_Pointer_Fast(v->ST,i),
-				  (double*)List_Pointer_Fast(v->ST,i+3),
-				  (double*)List_Pointer_Fast(v->ST,i+6),
-				  (double*)List_Pointer_Fast(v->ST,i+9));
-	  }
+	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
+	    Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise,
+				(double*)List_Pointer_Fast(v->ST,i),
+				(double*)List_Pointer_Fast(v->ST,i+3),
+				(double*)List_Pointer_Fast(v->ST,i+6),
+				(double*)List_Pointer_Fast(v->ST,i+9));
 	}
 	if(v->NbVT && v->DrawTriangles && v->DrawVectors){
 	  nb = List_Nbr(v->VT) / v->NbVT ;
@@ -323,31 +313,21 @@ void Draw_Post (void) {
 	
 	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
 	  nb = List_Nbr(v->SS) / v->NbSS ;
-	  if(v->Light && v->SmoothNormals && v->IntervalsType != DRAW_POST_ISO){
-	    if(v->Changed){
-	      Msg(DEBUG, "Preprocessing of tets normals in view %d", v->Num);
-	      for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-		Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
-				       (double*)List_Pointer_Fast(v->SS,i),
-				       (double*)List_Pointer_Fast(v->SS,i+4),
-				       (double*)List_Pointer_Fast(v->SS,i+8),
-				       (double*)List_Pointer_Fast(v->SS,i+12));
-	    }
+	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
+	    Msg(DEBUG, "Preprocessing of tets normals in view %d", v->Num);
 	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	      Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
+	      Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
 				     (double*)List_Pointer_Fast(v->SS,i),
 				     (double*)List_Pointer_Fast(v->SS,i+4),
 				     (double*)List_Pointer_Fast(v->SS,i+8),
 				     (double*)List_Pointer_Fast(v->SS,i+12));
 	  }
-	  else{
-	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	      Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
-				     (double*)List_Pointer_Fast(v->SS,i),
-				     (double*)List_Pointer_Fast(v->SS,i+4),
-				     (double*)List_Pointer_Fast(v->SS,i+8),
-				     (double*)List_Pointer_Fast(v->SS,i+12));
-	  }
+	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
+	    Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
+				   (double*)List_Pointer_Fast(v->SS,i),
+				   (double*)List_Pointer_Fast(v->SS,i+4),
+				   (double*)List_Pointer_Fast(v->SS,i+8),
+				   (double*)List_Pointer_Fast(v->SS,i+12));
 	}
 	if(v->NbVS && v->DrawTetrahedra && v->DrawVectors){
 	  nb = List_Nbr(v->VS) / v->NbVS ;
