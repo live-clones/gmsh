@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.146 2003-11-21 07:56:30 geuzaine Exp $
+// $Id: Gmsh.y,v 1.147 2003-11-26 16:35:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -79,6 +79,7 @@ void yyerror (char *s);
 void yymsg (int type, char *fmt, ...);
 void skip_until (char *skip, char *until);
 int PrintListOfDouble (char *format, List_T *list, char *buffer);
+ void FixRelativePath(char *in, char *out);
 %}
 
 %union {
@@ -1952,21 +1953,8 @@ Command :
     tSTRING StringExpr tEND
     {
       if(!strcmp($1, "Include")){
+	FixRelativePath($2, tmpstring);
 	yyinTab[RecursionLevel++] = yyin;
-
-	if($2[0] == '/' || $2[0] == '\\' || (strlen($2)>2 && $2[1] == ':')){
-	  // do nothing: $2 is an absolute path
-	  strcpy(tmpstring, $2);
-	}
-	else{
-	  // append $2 to the path of the parent file
-	  strcpy(tmpstring, yyname);
-	  i = strlen(yyname)-1 ;
-	  while(i >= 0 && yyname[i] != '/' && yyname[i] != '\\') i-- ;
-	  tmpstring[i+1] = '\0';
-	  strcat(tmpstring, $2);
-	}
-
 	if((yyin = fopen(tmpstring,"r"))){
 	  Msg(INFO, "Including '%s'", tmpstring); 
 	  strcpy(yynameTab[RecursionLevel-1], yyname);
@@ -1988,31 +1976,37 @@ Command :
 	  yymsg(GERROR, "Unknown file '%s'", tmpstring) ;  
 	  yyin = yyinTab[--RecursionLevel];
 	}
-
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
-	if(!CTX.batch) CreateOutputFile($2, CTX.print.format);
+	if(!CTX.batch){
+	  FixRelativePath($2, tmpstring);
+	  CreateOutputFile(tmpstring, CTX.print.format);
+	}
 #endif
       }
       else if(!strcmp($1, "Save")){
 #if defined(HAVE_FLTK)
-	CreateOutputFile($2, CTX.mesh.format);
+	FixRelativePath($2, tmpstring);
+	CreateOutputFile(tmpstring, CTX.mesh.format);
 #endif
       }
       else if(!strcmp($1, "Merge")){
 	FILE *ff = yyin;
-	MergeProblem($2);
+	FixRelativePath($2, tmpstring);
+	MergeProblem(tmpstring);
 	yyin = ff;
       }
       else if(!strcmp($1, "MergeWithBoundingBox")){
 	FILE *ff = yyin;
-	MergeProblemWithBoundingBox($2);
+	FixRelativePath($2, tmpstring);
+	MergeProblemWithBoundingBox(tmpstring);
 	yyin = ff;
       }
       else if(!strcmp($1, "Open")){
 	FILE *ff = yyin;
-	OpenProblem($2);
+	FixRelativePath($2, tmpstring);
+	OpenProblem(tmpstring);
 	yyin = ff;
       }
       else if(!strcmp($1, "System")){
@@ -2027,7 +2021,8 @@ Command :
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
 	Post_View *v = (Post_View *)List_Pointer_Test(CTX.post.list, (int)$4);
 	if(v){
-	  WriteView(0, v, $6);
+	  FixRelativePath($6, tmpstring);
+	  WriteView(0, v, tmpstring);
 	}
       }
       else{
@@ -2037,22 +2032,19 @@ Command :
   | tSTRING FExpr tEND
     {
       if(!strcmp($1, "Sleep")){
-
 	long sleep_time = GetTime();
 	while(1){
 	  if(GetTime() - sleep_time > (long)($2*1.e6)) break;
 	}
-      
       }
       else if(!strcmp($1, "Mesh")){
-
 	//Maillage_Dimension_0(THEM);
 	//mai3d(THEM, (int)$2);
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
-
       }
-      else
+      else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
+      }
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
    {
@@ -3439,6 +3431,21 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
   if(j != (int)strlen(format))
     return -1;
   return 0;
+}
+
+void FixRelativePath(char *in, char *out){
+  if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
+    // do nothing: 'in' is an absolute path
+    strcpy(out, in);
+  }
+  else{
+    // append 'in' to the path of the parent file
+    strcpy(out, yyname);
+    int i = strlen(out)-1 ;
+    while(i >= 0 && yyname[i] != '/' && yyname[i] != '\\') i-- ;
+    out[i+1] = '\0';
+    strcat(out, in);
+  }
 }
 
 void yyerror(char *s){
