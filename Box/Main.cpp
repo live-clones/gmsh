@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.19 2002-05-18 09:16:52 geuzaine Exp $
+// $Id: Main.cpp,v 1.20 2002-05-18 09:28:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -156,10 +156,8 @@ void Signal (int sig_num){
 // General purpose message routine
 
 void Msg(int level, char *fmt, ...){
-
   va_list  args;
   int      abort=0;
-  int      nb, nbvis;
 
   va_start (args, fmt);
 
