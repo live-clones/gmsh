@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.70 2001-05-05 08:56:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.71 2001-05-05 10:14:21 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2345,6 +2345,8 @@ void GUI::create_getdp_window(){
   int i;
   static Fl_Group *g[10];
 
+  int LL = (int)(1.75*IW);
+
   if(!init_getdp_window){
     init_getdp_window = 1 ;
 
@@ -2360,7 +2362,7 @@ void GUI::create_getdp_window(){
 	g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
 	g[0]->labelsize(CTX.fontsize);
 
-	getdp_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, BW, BH, "Problem");
+	getdp_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Problem");
 	Fl_Button *b1 = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
 	b1->callback(getdp_file_open_cb);
 	b1->labelsize(CTX.fontsize);
@@ -2368,10 +2370,10 @@ void GUI::create_getdp_window(){
 	b2->callback(getdp_file_edit_cb);
 	b2->labelsize(CTX.fontsize);
 
-	getdp_choice[0] = new Fl_Choice(2*WB, 4*WB+3*BH, BW, BH,"Resolution");
-	getdp_choice[1] = new Fl_Choice(2*WB, 5*WB+4*BH, BW, BH,"PostOperation");
+	getdp_choice[0] = new Fl_Choice(2*WB, 4*WB+3*BH, LL, BH,"Resolution");
+	getdp_choice[1] = new Fl_Choice(2*WB, 5*WB+4*BH, LL, BH,"Post operation");
 
-	getdp_input[1] = new Fl_Input(2*WB, 6*WB+5*BH, BW, BH, "Mesh");
+	getdp_input[1] = new Fl_Input(2*WB, 6*WB+5*BH, LL, BH, "Mesh");
 	Fl_Button *b3 = new Fl_Button(2*WB, 7*WB+6*BH, BB, BH, "Choose");
 	b3->callback(getdp_choose_mesh_cb);
 	b3->labelsize(CTX.fontsize);
@@ -2393,14 +2395,14 @@ void GUI::create_getdp_window(){
 	g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Options");
 	g[1]->labelsize(CTX.fontsize);
 
-	getdp_input[2] = new Fl_Input(2*WB, 2*WB+1*BH, BW, BH, "Command");
+	getdp_input[2] = new Fl_Input(2*WB, 2*WB+1*BH, LL, BH, "Command");
 	Fl_Button *b = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
 	b->callback(getdp_choose_command_cb);
 	b->labelsize(CTX.fontsize);
 	
-	getdp_butt[0] = new Fl_Check_Button(2*WB, 4*WB+3*BH, BW, BH, 
+	getdp_butt[0] = new Fl_Check_Button(2*WB, 4*WB+3*BH, LL, BH, 
 					    "Automatic message display");
-	getdp_butt[1] = new Fl_Check_Button(2*WB, 4*WB+4*BH, BW, BH, 
+	getdp_butt[1] = new Fl_Check_Button(2*WB, 4*WB+4*BH, LL, BH, 
 					    "Automatic view merge");
 
 	getdp_input[2]->labelsize(CTX.fontsize);

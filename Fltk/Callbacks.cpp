@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.52 2001-05-05 08:56:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.53 2001-05-05 10:14:21 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1379,7 +1379,10 @@ void getdp_post_cb(CALLBACK_ARGS){
   GetDP(arg);
 }
 void getdp_kill_cb(CALLBACK_ARGS){
-  if(GetDP_Info.pid > 0) kill(GetDP_Info.pid, 9);
+  if(GetDP_Info.pid > 0){
+    kill(GetDP_Info.pid, 9);
+    Msg(INFO, "Killed GetDP pid %d", GetDP_Info.pid);
+  }
   GetDP_Info.pid = -1;
 }
 void getdp_choose_command_cb(CALLBACK_ARGS){
