@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.11 2001-01-09 19:40:56 remacle Exp $
+// $Id: 3D_Coherence.cpp,v 1.12 2001-01-11 22:27:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -569,19 +569,14 @@ Vertex *Edge_Face (Edge * e, Face * f){
 
 
   if (res[0] == 1.0 || res[2] == 0.0 || res[0] == 0.0 ||
-      res[1] == 1. - res[0] || res[1] == 0.0 || res[0] == 1.0)
-    Msg(DEBUG, "Face p1  %g %g %g\n"
-        DEBUG_NIL "facette p2  %g %g %g\n"
-        DEBUG_NIL "facette p3  %g %g %g\n"
-        DEBUG_NIL "edge    e2  %g %g %g\n"
-        DEBUG_NIL "edge    e3  %g %g %g\n"
-        DEBUG_NIL "%g %g %g",
-        f->V[0]->Pos.X, f->V[0]->Pos.Y, f->V[0]->Pos.Z,
-        f->V[1]->Pos.X, f->V[1]->Pos.Y, f->V[1]->Pos.Z,
-        f->V[2]->Pos.X, f->V[2]->Pos.Y, f->V[2]->Pos.Z,
-        e->V[0]->Pos.X, e->V[0]->Pos.Y, e->V[0]->Pos.Z,
-        e->V[1]->Pos.X, e->V[1]->Pos.Y, e->V[1]->Pos.Z,
-        res[0], res[1], res[2]);
+      res[1] == 1. - res[0] || res[1] == 0.0 || res[0] == 1.0){
+    Msg(DEBUG1, "Face p1  %g %g %g", f->V[0]->Pos.X, f->V[0]->Pos.Y, f->V[0]->Pos.Z);
+    Msg(DEBUG2, "facette p2  %g %g %g", f->V[1]->Pos.X, f->V[1]->Pos.Y, f->V[1]->Pos.Z);
+    Msg(DEBUG2, "facette p3  %g %g %g", f->V[2]->Pos.X, f->V[2]->Pos.Y, f->V[2]->Pos.Z);
+    Msg(DEBUG2, "edge    e2  %g %g %g", e->V[0]->Pos.X, e->V[0]->Pos.Y, e->V[0]->Pos.Z);
+    Msg(DEBUG2, "edge    e3  %g %g %g", e->V[1]->Pos.X, e->V[1]->Pos.Y, e->V[1]->Pos.Z);
+    Msg(DEBUG3, "%g %g %g", res[0], res[1], res[2]);
+  }
 
   v = Create_Vertex (++CurrentNodeNumber,
                      (1. - res[2]) * e->V[0]->Pos.X + res[2] * e->V[1]->Pos.X,
@@ -1170,10 +1165,9 @@ int Coherence (Volume * v, Mesh * m){
   Tree_Action (v->Simplexes, VSIM);
   Msg(INFOS, "Volume = %g", volume);
 
-  Msg(INFOS,    "===================================================\n"
-      INFOS_NIL "(1) Number of Missing Edges = %d\n"
-      INFOS_NIL "===================================================",
-      List_Nbr (Missing));
+  Msg(INFOS1, "===================================================");
+  Msg(INFOS2, "(1) Number of Missing Edges = %d", List_Nbr (Missing));
+  Msg(INFOS3, "===================================================");
 
   for (i = 0; i < List_Nbr (Missing); i++){
     
@@ -1220,10 +1214,9 @@ int Coherence (Volume * v, Mesh * m){
 
   /* Missing Faces */
 
-  Msg(INFOS,    "===================================================\n"
-      INFOS_NIL "(1) Number of Missing Faces = %d\n" 
-      INFOS_NIL "===================================================",
-      List_Nbr (MissingFaces));
+  Msg(INFOS1, "===================================================");
+  Msg(INFOS2, "(1) Number of Missing Faces = %d", List_Nbr (MissingFaces));
+  Msg(INFOS3, "===================================================");
 
   for (i = 0; i < List_Nbr (MissingS); i++){
     List_Read (MissingS, i, &simp);

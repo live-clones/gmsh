@@ -1,4 +1,4 @@
-// $Id: CbPost.cpp,v 1.2 2001-01-09 14:24:11 geuzaine Exp $
+// $Id: CbPost.cpp,v 1.3 2001-01-11 22:27:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -83,12 +83,11 @@ void SwapViewCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
 
-  Msg(DEBUG,    "View %d\n"
-      DEBUG_NIL "  -> Name '%s'\n"
-      DEBUG_NIL "  -> FileName '%s'\n"
-      DEBUG_NIL "  -> DuplicateOf %d\n"
-      DEBUG_NIL "  -> Links %d",
-      v->Num, v->Name, v->FileName, v->DuplicateOf, v->Links);
+  Msg(DEBUG1, "View %d", v->Num);
+  Msg(DEBUG2, "  -> Name '%s'", v->Name);
+  Msg(DEBUG2, "  -> FileName '%s'", v->FileName);
+  Msg(DEBUG2, "  -> DuplicateOf %d", v->DuplicateOf);
+  Msg(DEBUG3, "  -> Links %d", v->Links);
 
   v->Visible = !v->Visible;
 

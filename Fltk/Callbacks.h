@@ -89,6 +89,11 @@ void opt_post_anim_delay_cb(CALLBACK_ARGS) ;
 void opt_statistics_cb(CALLBACK_ARGS) ;
 void opt_statistics_update_cb(CALLBACK_ARGS) ;
 
+// Option Message Menu
+
+void opt_message_cb(CALLBACK_ARGS) ;
+void opt_message_save_cb(CALLBACK_ARGS) ;
+
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS) ;
@@ -167,11 +172,6 @@ void     geometry_physical_add_point_cb (CALLBACK_ARGS) ;
 void     geometry_physical_add_curve_cb (CALLBACK_ARGS) ;
 void     geometry_physical_add_surface_cb (CALLBACK_ARGS) ;
 void     geometry_physical_add_volume_cb (CALLBACK_ARGS) ;
-void   geometry_physical_delete_cb(CALLBACK_ARGS) ;
-void     geometry_physical_delete_point_cb(CALLBACK_ARGS) ;
-void     geometry_physical_delete_curve_cb(CALLBACK_ARGS) ;
-void     geometry_physical_delete_surface_cb(CALLBACK_ARGS) ;
-void     geometry_physical_delete_volume_cb(CALLBACK_ARGS) ;
 void geometry_reload_cb(CALLBACK_ARGS) ; 
 
 void con_geometry_define_parameter_cb(CALLBACK_ARGS) ;
@@ -194,10 +194,9 @@ void mesh_define_transfinite_line_cb(CALLBACK_ARGS) ;
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS) ;
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS) ; 
 
+void con_mesh_define_length_cb(CALLBACK_ARGS) ;
 void con_mesh_define_transfinite_line_cb(CALLBACK_ARGS) ;
 void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS) ;
-void con_mesh_define_length_cb(CALLBACK_ARGS) ;
-void con_mesh_define_attractor_cb(CALLBACK_ARGS) ;
 
 // Dynamic post menus
 

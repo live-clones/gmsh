@@ -19,7 +19,7 @@
 
 extern Context_T  CTX;
 
-// Definition of the static menus
+//******************* Definition of the static menus ***********************************
 
 Fl_Menu_Item m_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
@@ -52,6 +52,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Post-Processing...", FL_SHIFT+'p', (Fl_Callback *)opt_post_cb, 0, FL_MENU_DIVIDER},
     {"General...",         FL_SHIFT+'o', (Fl_Callback *)opt_general_cb, 0},
     {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)opt_statistics_cb, 0},
+    {"Message log...",     FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
     {"Short Help...",   0, (Fl_Callback *)help_short_cb, 0, FL_MENU_DIVIDER},
@@ -67,7 +68,7 @@ Fl_Menu_Item m_module_table[] = {
   {0}
 };
 
-// Definition of the dynamic contexts
+//********************* Definition of the dynamic contexts *****************************
 
 Context_Item menu_geometry[] = 
 { { "0", NULL } ,
@@ -195,7 +196,6 @@ Context_Item menu_geometry[] =
     Context_Item menu_geometry_physical[] = 
     { { "0Physical", NULL } ,
       { "Add",    (Fl_Callback *)geometry_physical_add_cb } ,
-      { "Delete", (Fl_Callback *)geometry_physical_delete_cb } ,
       { NULL } 
     };  
         Context_Item menu_geometry_physical_add[] = 
@@ -204,14 +204,6 @@ Context_Item menu_geometry[] =
 	  { "Curve",   (Fl_Callback *)geometry_physical_add_curve_cb  } ,
 	  { "Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
 	  { "Volume",  (Fl_Callback *)geometry_physical_add_volume_cb  } ,
-	  { NULL } 
-	};  
-        Context_Item menu_geometry_physical_delete[] = 
-	{ { "0Physical Delete", NULL } ,
-	  { "Point",   (Fl_Callback *)geometry_physical_delete_point_cb } ,
-	  { "Line",    (Fl_Callback *)geometry_physical_delete_curve_cb } ,
-	  { "Surface", (Fl_Callback *)geometry_physical_delete_surface_cb } ,
-	  { "Volume",  (Fl_Callback *)geometry_physical_delete_volume_cb } ,
 	  { NULL } 
 	};  
 
@@ -242,7 +234,7 @@ Context_Item menu_post[] =
 { { "2", NULL } ,
   { NULL } };
 
-// Global shortcuts
+//********************** Definition of global shortcuts ********************************
 
 int GUI::global_shortcuts(int event){
   // we only handle shortcuts here
@@ -274,7 +266,7 @@ int GUI::global_shortcuts(int event){
 }
 
 
-// The GUI constructor
+//***************************** The GUI constructor ************************************
 
 GUI::GUI() {
 
@@ -302,6 +294,7 @@ GUI::GUI() {
   create_geometry_options_window();
   create_mesh_options_window();
   create_post_options_window();
+  create_message_window();
   create_help_window();
   create_about_window();
 
@@ -309,120 +302,6 @@ GUI::GUI() {
 
   g_opengl_window->redraw();
 
-}
-
-// Set graphic window title
-
-void GUI::set_title(char *str){
-  g_window->label(str);
-}
-
-// Set animation button
-
-void GUI::set_anim(int mode){
-  if(mode){
-    g_status_butt[5]->callback(status_play_cb);
-    start_bmp->label(g_status_butt[5]);
-  }
-  else{
-    g_status_butt[5]->callback(status_pause_cb);
-    stop_bmp->label(g_status_butt[5]);
-  }
-}
-
-// Set the status messages
-
-void GUI::set_status(char *msg, int num){
-  g_status_label[num]->label(msg);
-  g_status_label[num]->redraw();
-}
-
-// Set the statistics
-void GUI::set_statistics(){
-
-  int i;	
-  static double  s[50];
-  static char    label[50][256];
-
-  GetStatistics(s);
-
-  // geom
-  sprintf(label[0], "%g", s[0]); stat_value[0]->value(label[0]);
-  sprintf(label[1], "%g", s[1]); stat_value[1]->value(label[1]);
-  sprintf(label[2], "%g", s[2]); stat_value[2]->value(label[2]);
-  sprintf(label[3], "%g", s[3]); stat_value[3]->value(label[3]);
-                                                
-  // mesh
-  sprintf(label[4], "%g", s[4]); stat_value[4]->value(label[4]);
-  sprintf(label[5], "%g", s[5]); stat_value[5]->value(label[5]);
-  sprintf(label[6], "%g", s[6]); stat_value[6]->value(label[6]);
-  sprintf(label[7], "%g", s[7]-s[8]); stat_value[7]->value(label[7]);
-  sprintf(label[8], "%g", s[8]); stat_value[8]->value(label[8]);
-  sprintf(label[9], "%g", s[9]); stat_value[9]->value(label[9]);
-  sprintf(label[10], "%g", s[10]); stat_value[10]->value(label[10]);
-  sprintf(label[11], "%g", s[11]); stat_value[11]->value(label[11]);
-
-  sprintf(label[12], "%g", s[12]); stat_value[12]->value(label[12]);
-  sprintf(label[13], "%g", s[13]); stat_value[13]->value(label[13]);
-  sprintf(label[14], "%g", s[14]); stat_value[14]->value(label[14]);
-
-  sprintf(label[15], "%.4g (%.4g->%.4g)", s[17], s[19], s[18]); stat_value[15]->value(label[15]);
-  sprintf(label[16], "%.4g (%.4g->%.4g)", s[20], s[22], s[21]); stat_value[16]->value(label[16]);
-  sprintf(label[17], "%.4g (%.4g->%.4g)", s[23], s[25], s[24]); stat_value[17]->value(label[17]);
-
-  // post
-  
-  s[15] = List_Nbr(Post_ViewList) ;
-  sprintf(label[18], "%g", s[15]);   stat_value[18]->value(label[18]);
-
-  s[16] = s[17] = s[18] = s[19] = 0 ;
-  for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
-    Post_View *v = (Post_View*)List_Pointer(Post_ViewList, i);
-    if(v->Visible){
-      s[16] += v->NbSP + v->NbVP + v->NbTP;
-      s[17] += v->NbSL + v->NbVL + v->NbTL;
-      s[18] += v->NbST + v->NbVT + v->NbTT;
-      s[19] += v->NbSS + v->NbVS + v->NbTS;
-    }
-  }
-  sprintf(label[19], "%g", s[16]); stat_value[19]->value(label[19]);
-  sprintf(label[20], "%g", s[17]); stat_value[20]->value(label[20]);
-  sprintf(label[21], "%g", s[18]); stat_value[21]->value(label[21]);
-  sprintf(label[22], "%g", s[19]); stat_value[22]->value(label[22]);
-
-  for(i=0 ; i<23 ; i++)
-    stat_value[16]->redraw();
-
-}
-
-// set the current drawing context to the main opengl window
-
-void GUI::make_current(){
-  g_opengl_window->make_current();
-}
-
-
-// set the current drawing context to the overlay opengl window
-
-void GUI::make_overlay_current(){
-  g_opengl_window->make_overlay_current();
-}
-// swap buffer
-
-void GUI::swap_buffers(){
-  g_opengl_window->swap_buffers();
-}
-
-// Draw the opengl window
-
-void GUI::draw(){
-  g_opengl_window->redraw();
-}
-
-// Draw the opengl overlay window
-
-void GUI::draw_overlay(){
-  g_opengl_window->redraw_overlay();
 }
 
 // Run the GUI until no window is left
@@ -437,10 +316,89 @@ void GUI::check(){
   Fl::check();
 }
 
-// Set the size of the graphical window
+//********************************* Create the menu window *****************************
 
-void GUI::set_size(int new_w, int new_h){
-  g_window->size(new_w,new_h+g_window->h()-g_opengl_window->h());
+void GUI::create_menu_window(){
+  static int init_menu_window = 0;
+  int i, y;
+
+  if(!init_menu_window){
+    init_menu_window = 1 ;
+
+    int width = 155 ;
+    MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
+
+    m_window = new Fl_Window(width,MH);
+    m_window->box(FL_THIN_UP_BOX);
+    m_window->label("Gmsh");
+
+    m_menu_bar = new Fl_Menu_Bar(0,0,width,BH); 
+    m_menu_bar->menu(m_menubar_table);
+    m_menu_bar->textsize(CTX.fontsize);
+    m_menu_bar->box(FL_UP_BOX);
+    m_menu_bar->global();
+
+    Fl_Box *o = new Fl_Box(0,BH,width,BH+6);
+    o->box(FL_UP_BOX);
+
+    y = BH + 3;
+    
+    m_navig_butt[0] = new Fl_Button(2,y,20,BH/2,"@<");
+    m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
+    m_navig_butt[0]->box(FL_FLAT_BOX);
+    m_navig_butt[0]->selection_color(FL_WHITE);
+    m_navig_butt[0]->callback(mod_back_cb);
+    m_navig_butt[1] = new Fl_Button(2,y+BH/2,20,BH/2,"@>");
+    m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
+    m_navig_butt[1]->box(FL_FLAT_BOX);
+    m_navig_butt[1]->selection_color(FL_WHITE);
+    m_navig_butt[1]->callback(mod_forward_cb);
+    
+    m_module_butt = new Fl_Choice(22,y,width-28,BH);
+    m_module_butt->menu(m_module_table);
+    m_module_butt->textsize(CTX.fontsize);
+    m_module_butt->box(FL_THIN_DOWN_BOX);
+    
+    y = MH ;
+    
+    for(i=0; i<NB_BUTT_MAX; i++){
+      m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
+      m_push_butt[i]->labelsize(CTX.fontsize);
+      m_push_butt[i]->hide();
+      m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width,BH); 
+      m_toggle_butt[i]->labelsize(CTX.fontsize); 
+      m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
+      m_toggle_butt[i]->hide();
+      m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH);
+      m_popup_butt[i]->type(Fl_Menu_Button::POPUP3);
+      m_popup_butt[i]->add("Reload", 0, 
+			   (Fl_Callback *)view_reload_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Remove", 0, 
+			   (Fl_Callback *)view_remove_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Duplicate", 0,
+			   (Fl_Callback *)view_duplicate_cb, (void*)i, FL_MENU_DIVIDER) ;
+      m_popup_butt[i]->add("Lighting", 0,
+			   (Fl_Callback *)view_lighting_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Show Elements", 0,
+			   (Fl_Callback *)view_elements_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Apply as Background Mesh", 0,
+			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
+      m_popup_butt[i]->add("Options...", 0,
+			   (Fl_Callback *)view_options_cb, (void*)i, 0);
+      m_popup_butt[i]->textsize(CTX.fontsize);
+      m_popup_butt[i]->hide();
+    }
+    
+    m_window->position(800,50);
+    m_window->end();
+  }
+  else{
+    if(m_window->shown())
+      m_window->redraw();
+    else
+      m_window->show();
+    
+  }
 }
 
 // Dynamically set the height of the menu window
@@ -551,95 +509,7 @@ int GUI::get_context(){
 }
 
 
-
-
-// Create the menu window
-
-void GUI::create_menu_window(){
-  static int init_menu_window = 0;
-  int i, y;
-
-  if(!init_menu_window){
-    init_menu_window = 1 ;
-
-    int width = 155 ;
-    MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
-
-    m_window = new Fl_Window(width,MH);
-    m_window->box(FL_THIN_UP_BOX);
-    m_window->label("Gmsh");
-
-    m_menu_bar = new Fl_Menu_Bar(0,0,width,BH); 
-    m_menu_bar->menu(m_menubar_table);
-    m_menu_bar->textsize(CTX.fontsize);
-    m_menu_bar->box(FL_UP_BOX);
-    m_menu_bar->global();
-
-    Fl_Box *o = new Fl_Box(0,BH,width,BH+6);
-    o->box(FL_UP_BOX);
-
-    y = BH + 3;
-    
-    m_navig_butt[0] = new Fl_Button(2,y,20,BH/2,"@<");
-    m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
-    m_navig_butt[0]->box(FL_FLAT_BOX);
-    m_navig_butt[0]->selection_color(FL_WHITE);
-    m_navig_butt[0]->callback(mod_back_cb);
-    m_navig_butt[1] = new Fl_Button(2,y+BH/2,20,BH/2,"@>");
-    m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
-    m_navig_butt[1]->box(FL_FLAT_BOX);
-    m_navig_butt[1]->selection_color(FL_WHITE);
-    m_navig_butt[1]->callback(mod_forward_cb);
-    
-    m_module_butt = new Fl_Choice(22,y,width-28,BH);
-    m_module_butt->menu(m_module_table);
-    m_module_butt->textsize(CTX.fontsize);
-    m_module_butt->box(FL_THIN_DOWN_BOX);
-    
-    y = MH ;
-    
-    for(i=0; i<NB_BUTT_MAX; i++){
-      m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
-      m_push_butt[i]->labelsize(CTX.fontsize);
-      m_push_butt[i]->hide();
-      m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width,BH); 
-      m_toggle_butt[i]->labelsize(CTX.fontsize); 
-      m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
-      m_toggle_butt[i]->hide();
-      m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH);
-      m_popup_butt[i]->type(Fl_Menu_Button::POPUP3);
-      m_popup_butt[i]->add("Reload", 0, 
-			   (Fl_Callback *)view_reload_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Remove", 0, 
-			   (Fl_Callback *)view_remove_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Duplicate", 0,
-			   (Fl_Callback *)view_duplicate_cb, (void*)i, FL_MENU_DIVIDER) ;
-      m_popup_butt[i]->add("Lighting", 0,
-			   (Fl_Callback *)view_lighting_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Show Elements", 0,
-			   (Fl_Callback *)view_elements_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Apply as Background Mesh", 0,
-			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
-      m_popup_butt[i]->add("Options...", 0,
-			   (Fl_Callback *)view_options_cb, (void*)i, 0);
-      m_popup_butt[i]->textsize(CTX.fontsize);
-      m_popup_butt[i]->hide();
-    }
-    
-    m_window->position(800,50);
-    m_window->end();
-  }
-  else{
-    if(m_window->shown())
-      m_window->redraw();
-    else
-      m_window->show();
-    
-  }
-}
-
-
-// Create the graphic window
+//******************************** Create the graphic window ***************************
 
 void GUI::create_graphic_window(){
   static int init_graphic_window = 0;
@@ -713,7 +583,69 @@ void GUI::create_graphic_window(){
   }
 }
 
-// Create the window for general options
+// Set the size of the graphical window
+
+void GUI::set_size(int new_w, int new_h){
+  g_window->size(new_w,new_h+g_window->h()-g_opengl_window->h());
+}
+
+// Set graphic window title
+
+void GUI::set_title(char *str){
+  g_window->label(str);
+}
+
+// Set animation button
+
+void GUI::set_anim(int mode){
+  if(mode){
+    g_status_butt[5]->callback(status_play_cb);
+    start_bmp->label(g_status_butt[5]);
+  }
+  else{
+    g_status_butt[5]->callback(status_pause_cb);
+    stop_bmp->label(g_status_butt[5]);
+  }
+}
+
+// Set the status messages
+
+void GUI::set_status(char *msg, int num){
+  g_status_label[num]->label(msg);
+  g_status_label[num]->redraw();
+}
+
+// set the current drawing context to the main opengl window
+
+void GUI::make_current(){
+  g_opengl_window->make_current();
+}
+
+// set the current drawing context to the overlay opengl window
+
+void GUI::make_overlay_current(){
+  g_opengl_window->make_overlay_current();
+}
+
+// swap buffer
+
+void GUI::swap_buffers(){
+  g_opengl_window->swap_buffers();
+}
+
+// Draw the opengl window
+
+void GUI::draw(){
+  g_opengl_window->redraw();
+}
+
+// Draw the opengl overlay window
+
+void GUI::draw_overlay(){
+  g_opengl_window->redraw_overlay();
+}
+
+//************************ Create the window for general options ***********************
 
 void GUI::create_general_options_window(){
   static int init_general_options_window = 0;
@@ -844,7 +776,7 @@ void GUI::create_general_options_window(){
 
 }
 
-// Create the window for geometry options
+//************************ Create the window for geometry options **********************
 
 void GUI::create_geometry_options_window(){
   static int init_geometry_options_window = 0;
@@ -945,7 +877,7 @@ void GUI::create_geometry_options_window(){
 
 }
 
-// Create the window for mesh options
+//****************************** Create the window for mesh options ********************
 
 void GUI::create_mesh_options_window(){
   static int init_mesh_options_window = 0;
@@ -981,7 +913,8 @@ void GUI::create_mesh_options_window(){
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
-        mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Number of smoothing steps");
+        mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH,
+					   "Number of smoothing steps");
 	mesh_value[0]->minimum(0);
 	mesh_value[0]->maximum(100); 
 	mesh_value[0]->step(1);
@@ -1009,16 +942,16 @@ void GUI::create_mesh_options_window(){
 	mesh_butt[6]->callback(opt_mesh_entity_cb, (void*)3);
 	mesh_butt[6]->value(CTX.mesh.volumes);
         mesh_butt[7] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point Numbers");
-	mesh_butt[7]->callback(opt_mesh_entity_cb, (void*)0);
+	mesh_butt[7]->callback(opt_mesh_num_cb, (void*)0);
 	mesh_butt[7]->value(CTX.mesh.points_num);
         mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve Numbers");
-	mesh_butt[8]->callback(opt_mesh_entity_cb, (void*)1);
+	mesh_butt[8]->callback(opt_mesh_num_cb, (void*)1);
 	mesh_butt[8]->value(CTX.mesh.lines_num);
         mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface Numbers");
-	mesh_butt[9]->callback(opt_mesh_entity_cb, (void*)2);
+	mesh_butt[9]->callback(opt_mesh_num_cb, (void*)2);
 	mesh_butt[9]->value(CTX.mesh.surfaces_num);
         mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume Numbers");
-	mesh_butt[10]->callback(opt_mesh_entity_cb, (void*)3);
+	mesh_butt[10]->callback(opt_mesh_num_cb, (void*)3);
 	mesh_butt[10]->value(CTX.mesh.volumes_num);
 	for(i=3 ; i<11 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
@@ -1107,7 +1040,7 @@ void GUI::create_mesh_options_window(){
 }
 
 
-// Create the window for post-processing options
+//******************** Create the window for post-processing options *******************
 
 void GUI::create_post_options_window(){
   static int init_post_options_window = 0;
@@ -1184,7 +1117,7 @@ void GUI::create_post_options_window(){
 
 }
 
-// Create the window for the statistics
+//*********************** Create the window for the statistics *************************
 
 void GUI::create_statistics_window(){
   static int init_statistics_window = 0;
@@ -1277,7 +1210,128 @@ void GUI::create_statistics_window(){
 
 }
 
-// Create the short help window
+void GUI::set_statistics(){
+
+  int i;	
+  static double  s[50];
+  static char    label[50][256];
+
+  GetStatistics(s);
+
+  // geom
+  sprintf(label[0], "%g", s[0]); stat_value[0]->value(label[0]);
+  sprintf(label[1], "%g", s[1]); stat_value[1]->value(label[1]);
+  sprintf(label[2], "%g", s[2]); stat_value[2]->value(label[2]);
+  sprintf(label[3], "%g", s[3]); stat_value[3]->value(label[3]);
+                                                
+  // mesh
+  sprintf(label[4], "%g", s[4]); stat_value[4]->value(label[4]);
+  sprintf(label[5], "%g", s[5]); stat_value[5]->value(label[5]);
+  sprintf(label[6], "%g", s[6]); stat_value[6]->value(label[6]);
+  sprintf(label[7], "%g", s[7]-s[8]); stat_value[7]->value(label[7]);
+  sprintf(label[8], "%g", s[8]); stat_value[8]->value(label[8]);
+  sprintf(label[9], "%g", s[9]); stat_value[9]->value(label[9]);
+  sprintf(label[10], "%g", s[10]); stat_value[10]->value(label[10]);
+  sprintf(label[11], "%g", s[11]); stat_value[11]->value(label[11]);
+
+  sprintf(label[12], "%g", s[12]); stat_value[12]->value(label[12]);
+  sprintf(label[13], "%g", s[13]); stat_value[13]->value(label[13]);
+  sprintf(label[14], "%g", s[14]); stat_value[14]->value(label[14]);
+
+  sprintf(label[15], "%.4g (%.4g->%.4g)", s[17], s[19], s[18]); 
+  stat_value[15]->value(label[15]);
+  sprintf(label[16], "%.4g (%.4g->%.4g)", s[20], s[22], s[21]); 
+  stat_value[16]->value(label[16]);
+  sprintf(label[17], "%.4g (%.4g->%.4g)", s[23], s[25], s[24]);
+  stat_value[17]->value(label[17]);
+
+  // post
+  
+  s[15] = List_Nbr(Post_ViewList) ;
+  sprintf(label[18], "%g", s[15]);   stat_value[18]->value(label[18]);
+
+  s[16] = s[17] = s[18] = s[19] = 0 ;
+  for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+    Post_View *v = (Post_View*)List_Pointer(Post_ViewList, i);
+    if(v->Visible){
+      s[16] += v->NbSP + v->NbVP + v->NbTP;
+      s[17] += v->NbSL + v->NbVL + v->NbTL;
+      s[18] += v->NbST + v->NbVT + v->NbTT;
+      s[19] += v->NbSS + v->NbVS + v->NbTS;
+    }
+  }
+  sprintf(label[19], "%g", s[16]); stat_value[19]->value(label[19]);
+  sprintf(label[20], "%g", s[17]); stat_value[20]->value(label[20]);
+  sprintf(label[21], "%g", s[18]); stat_value[21]->value(label[21]);
+  sprintf(label[22], "%g", s[19]); stat_value[22]->value(label[22]);
+
+  for(i=0 ; i<23 ; i++)
+    stat_value[16]->redraw();
+
+}
+
+//********************** Create the window for the messages ****************************
+
+void GUI::create_message_window(){
+  static int init_message_window = 0;
+
+  if(!init_message_window){
+    init_message_window = 1 ;
+
+    int width = 400;
+    int height = 400 ;
+    
+    msg_window = new Fl_Window(width,height);
+    msg_window->box(FL_THIN_UP_BOX);
+    msg_window->label("Messages");
+    
+    msg_browser = new Fl_Browser(WB, WB, width-2*WB, height-3*WB-BH);
+    msg_browser->textfont(FL_COURIER);
+    msg_browser->textsize(CTX.fontsize);
+
+    { 
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)msg_window);
+    }
+    { 
+      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "save");
+      o->labelsize(CTX.fontsize);
+      o->callback(opt_message_save_cb);
+    }
+
+    msg_window->resizable(msg_browser);
+    msg_window->end();
+  }
+  else{
+    if(msg_window->shown())
+      msg_window->redraw();
+    else
+      msg_window->show();
+  }
+
+}
+
+void GUI::add_message(char *msg){
+  msg_browser->add(msg,0);
+}
+
+void GUI::save_message(char *name){
+  FILE *fp;
+
+  if(!(fp = fopen(name,"w"))) {
+    Msg(WARNING, "Unable to Open File '%s'", name); 
+    return;
+  }
+  for(int i = 1 ; i<=msg_browser->size() ; i++)
+    fprintf(fp, "%s\n", msg_browser->text(i));
+
+  Msg(INFOS, "Log Creation Complete '%s'", name);
+  Msg (INFO, "Wrote File '%s'", name);
+  fclose(fp);
+}
+
+//***************************** Create the short help window ***************************
 
 #include "Help.h"
 
@@ -1322,7 +1376,7 @@ void GUI::create_help_window(){
 
 }
 
-// Create the about window
+//******************************* Create the about window ******************************
 
 void GUI::create_about_window(){
   static int init_about_window = 0;
@@ -1366,8 +1420,7 @@ void GUI::create_about_window(){
 
 }
 
-// Create the window for view options
-// on fourgue num a tous les callbacks
+//************************* Create the window for view options *************************
 
 void GUI::create_view_window(int num){
   static int init_view_window = 0;
@@ -1662,11 +1715,11 @@ void GUI::activate_custom(int val){
   }
 }
 
-// Create the window for geometry context dependant definitions
+//*************** Create the window for geometry context dependant definitions *********
 
 void GUI::create_geometry_context_window(int num){
   static int init_geometry_context_window = 0;
-  static Fl_Group *g[5];
+  static Fl_Group *g[10];
   int i;
 
   if(!init_geometry_context_window){
@@ -1701,10 +1754,14 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Point");
 	g[1]->labelsize(CTX.fontsize);
-	context_geometry_input[2] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X coordinate");
-	context_geometry_input[3] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y coordinate");
-	context_geometry_input[4] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z coordinate");
-	context_geometry_input[5] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Characteristic length");
+	context_geometry_input[2] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
+						  "X coordinate");
+	context_geometry_input[3] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
+						  "Y coordinate");
+	context_geometry_input[4] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, 
+						  "Z coordinate");
+	context_geometry_input[5] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, 
+						  "Characteristic length");
 	for(i=2 ; i<6 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
@@ -1738,13 +1795,20 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[3] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Rotation");
 	g[3]->labelsize(CTX.fontsize);
-	context_geometry_input[9]  = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X coordinate of an axis point");
-	context_geometry_input[10] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y coordinate of an axis point");
-	context_geometry_input[11] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z coordinate of an axis point");
-	context_geometry_input[12] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "X component of direction");
-	context_geometry_input[13] = new Fl_Input (2*WB, 2*WB+5*BH, IW, BH, "Y component of direction");
-	context_geometry_input[14] = new Fl_Input (2*WB, 2*WB+6*BH, IW, BH, "Z component of direction");
-	context_geometry_input[15] = new Fl_Input (2*WB, 2*WB+7*BH, IW, BH, "Angle in degrees");
+	context_geometry_input[9]  = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
+						   "X coordinate of an axis point");
+	context_geometry_input[10] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
+						   "Y coordinate of an axis point");
+	context_geometry_input[11] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, 
+						   "Z coordinate of an axis point");
+	context_geometry_input[12] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, 
+						   "X component of direction");
+	context_geometry_input[13] = new Fl_Input (2*WB, 2*WB+5*BH, IW, BH, 
+						   "Y component of direction");
+	context_geometry_input[14] = new Fl_Input (2*WB, 2*WB+6*BH, IW, BH, 
+						   "Z component of direction");
+	context_geometry_input[15] = new Fl_Input (2*WB, 2*WB+7*BH, IW, BH, 
+						   "Angle in radians");
 	for(i=9 ; i<16 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
@@ -1760,10 +1824,14 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[4] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Scale");
 	g[4]->labelsize(CTX.fontsize);
-	context_geometry_input[16] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "X component of direction");
-	context_geometry_input[17] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Y component of direction");
-	context_geometry_input[18] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z component of direction");
-	context_geometry_input[19] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Factor");
+	context_geometry_input[16] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
+						   "X component of direction");
+	context_geometry_input[17] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
+						   "Y component of direction");
+	context_geometry_input[18] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, 
+						   "Z component of direction");
+	context_geometry_input[19] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, 
+						   "Factor");
 	for(i=16 ; i<20 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
@@ -1779,10 +1847,14 @@ void GUI::create_geometry_context_window(int num){
       { 
 	g[5] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Symmetry");
 	g[5]->labelsize(CTX.fontsize);
-	context_geometry_input[20] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "1st plane equation coefficient");
-	context_geometry_input[21] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "2nd plane equation coefficient");
-	context_geometry_input[22] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "3rd plane equation coefficient");
-	context_geometry_input[23] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "4th plane equation coefficient");
+	context_geometry_input[20] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, 
+						   "1st plane equation coefficient");
+	context_geometry_input[21] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, 
+						   "2nd plane equation coefficient");
+	context_geometry_input[22] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH,
+						   "3rd plane equation coefficient");
+	context_geometry_input[23] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH,
+						   "4th plane equation coefficient");
 	for(i=20 ; i<24 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
@@ -1848,20 +1920,106 @@ char *GUI::get_geometry_symmetry(int num){//a, b, c, d
 }
 
 
-// Create the window for mesh context dependant definitions
+//************** Create the window for mesh context dependant definitions **************
 
 void GUI::create_mesh_context_window(int num){
+  static int init_mesh_context_window = 0;
+  static Fl_Group *g[10];
+  int i;
 
+  if(!init_mesh_context_window){
+    init_mesh_context_window = 1 ;
+
+    int width = 370;
+    int height = 5*WB+5*BH ;
+    
+    context_mesh_window = new Fl_Window(width,height);
+    context_mesh_window->box(FL_THIN_UP_BOX);
+    context_mesh_window->label("Contextual Mesh Definitions");
+    { 
+      Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      // 0: Characteristic length
+      { 
+	g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Characteristic length");
+	g[0]->labelsize(CTX.fontsize);
+	context_mesh_input[0] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Value");
+	context_mesh_input[0]->labelsize(CTX.fontsize);
+	context_mesh_input[0]->align(FL_ALIGN_RIGHT);
+	{ 
+	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+3*BH, 60, BH, "set");
+	  o->labelsize(CTX.fontsize);
+	  o->callback(con_mesh_define_length_cb);
+	}
+        g[0]->end();
+      }
+      // 1: Transfinite line
+      { 
+	g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Transfinite line");
+	g[1]->labelsize(CTX.fontsize);
+	context_mesh_input[1] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Number of points");
+	context_mesh_input[2] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Distribution");
+	for(i=1 ; i<3 ; i++){
+	  context_mesh_input[i]->labelsize(CTX.fontsize);
+	  context_mesh_input[i]->align(FL_ALIGN_RIGHT);
+	}
+	{ 
+	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+3*BH, 60, BH, "set");
+	  o->labelsize(CTX.fontsize);
+	  o->callback(con_mesh_define_transfinite_line_cb);
+	}
+        g[1]->end();
+      }
+      // 2: Transfinite volume
+      { 
+	g[2] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Transfinite volume");
+	g[2]->labelsize(CTX.fontsize);
+	context_mesh_input[3] = new Fl_Input (2*WB, 2*WB+1*BH, IW, BH, "Volume number");
+	context_mesh_input[3]->labelsize(CTX.fontsize);
+	context_mesh_input[3]->align(FL_ALIGN_RIGHT);
+	{ 
+	  Fl_Return_Button* o = new Fl_Return_Button(width-60-2*WB, 2*WB+3*BH, 60, BH, "set");
+	  o->labelsize(CTX.fontsize);
+	  o->callback(con_mesh_define_transfinite_line_cb);
+	}
+        g[2]->end();
+      }
+      o->end();
+    }
+
+    { 
+      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "close");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)context_mesh_window);
+    }
+
+    for(i=0 ; i<3 ; i++) g[i]->hide();
+    g[num]->show();
+    context_mesh_window->end();
+    context_mesh_window->show();
+  }
+  else{
+    if(context_mesh_window->shown()){
+      for(i=0 ; i<3 ; i++) g[i]->hide();
+      g[num]->show();
+    }
+    else{
+      for(i=0 ; i<3 ; i++) g[i]->hide();
+      g[num]->show();
+      context_mesh_window->show();
+    }
+    
+  }
 }
 
-char *GUI::get_mesh_transfinite(int num){
-  return "0.0";
+char *GUI::get_mesh_length(){//val
+  return (char*)context_mesh_input[0]->value();
 }
 
-char *GUI::get_mesh_length(int num){
-  return "0.0";
+char *GUI::get_mesh_transfinite_line(int num){//pts, distrib
+  return (char*)context_mesh_input[num+1]->value();
 }
 
-char *GUI::get_mesh_attractor(int num){
-  return "0.0";
+char *GUI::get_mesh_transfinite_volume(){//numvol
+  return (char*)context_mesh_input[3]->value();
 }
+

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.11 2001-01-11 12:25:23 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.12 2001-01-11 22:27:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -137,7 +137,7 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
         BeginHighlight();
         HighlightEntity(*v,*c,*s,1);
         EndHighlight(1);
-        return(Fl::event_button());
+        return(1);
       }
     }
   }

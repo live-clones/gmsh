@@ -86,10 +86,7 @@ extern char char_length_text[100];
 
 double evaluate_scalarfunction (char *var, double val, char *funct);
 
-void del_pnt(int p1, char *fich);
-void del_seg(int p1, char *fich);
-void del_srf(int p1, char *fich);
-
+void delet(int p1, char *fich, char *what);
 void add_infile(char *text, char *fich);
 void add_trsfsurf (int N, int *l, char *fich);
 void add_trsfvol (int N, int *l, char *fich);
@@ -107,20 +104,16 @@ void add_spline(int N, int *p, char *fich);
 void add_bezier(int N, int *p, char *fich);
 void add_bspline(int N, int *p, char *fich);
 void add_multline(int N, int *p, char *fich);
-
 void add_loop(List_T *list, char *fich, int *numloop);
 void add_surf(List_T *list, char *fich, int support, int typ);
 void add_vol(List_T *list, char *fich, int *numvol);
 void add_multvol(List_T *list, char *fich);
-void add_physical_entity(List_T *list, char *fich, int type, int *num);
-
+void add_physical(List_T *list, char *fich, int type, int *num);
+void translate(int add, int s, char *fich, char*what);
+void rotate(int add, int s, char *fich, char *what);
+void dilate(int add, int s, char *fich, char *what);
+void symmetry(int add, int s, char *fich, char *what);
 void extrude(int s, char *fich, char *what);
-void translate_seg(int add, int s, char *fich);
-void translate_surf(int add, int s, char *fich);
-void translate_pt(int add, int s, char *fich);
-void rotate(int add, int s, char *fich, char *quoi);
-void dilate(int add, int s, char *fich, char *quoi);
-void symmetry(int add, int s, char *fich, char *quoi);
 void protude(int s, char *fich, char *what);
 
 #endif

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.55 2001-01-11 16:34:38 colignon Exp $
+// $Id: Gmsh.y,v 1.56 2001-01-11 22:27:56 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -1629,12 +1629,12 @@ Command :
 
       }
       else if(!strcmp($1, "Print")){
-#ifndef WIN32 // comprends pas pq ca ne marche pas
+#if !defined(__CYGWIN__) // comprends pas pq ca ne marche pas
 	if(!CTX.interactive) CreateFile($2, CTX.print.format);
 #endif
       }
       else if(!strcmp($1, "Save")){
-#ifndef WIN32 // comprends pas pq ca ne marche pas
+#if !defined(__CYGWIN__) // comprends pas pq ca ne marche pas
 	CreateFile($2, CTX.mesh.format);
 #endif
       }

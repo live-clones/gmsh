@@ -20,6 +20,7 @@
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Multiline_Output.H>
 #include <FL/Fl_Bitmap.H>
+#include <FL/Fl_Browser.H>
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
@@ -52,7 +53,6 @@ extern            Context_Item menu_geometry_elementary_extrude_rotate[];
 extern        Context_Item menu_geometry_elementary_delete[]; 
 extern    Context_Item menu_geometry_physical[]; 
 extern        Context_Item menu_geometry_physical_add[]; 
-extern        Context_Item menu_geometry_physical_delete[]; 
 extern Context_Item menu_mesh[]; 
 extern    Context_Item menu_mesh_define[]; 
 extern        Context_Item menu_mesh_define_transfinite[]; 
@@ -119,6 +119,10 @@ class GUI{
   Fl_Window        *stat_window ;
   Fl_Output        *stat_value[50] ;
 
+  // message window
+  Fl_Window        *msg_window ;
+  Fl_Browser       *msg_browser ;
+
   // help window
   Fl_Window        *help_window ;
     
@@ -155,6 +159,7 @@ public:
   void create_post_options_window();
   void create_statistics_window();
   void create_view_window(int numview);
+  void create_message_window();
   void create_help_window();
   void create_about_window();
   void create_geometry_context_window(int num);
@@ -174,6 +179,8 @@ public:
   int  get_context();
   void set_anim(int mode);
   void set_status(char *msg, int num);
+  void add_message(char *msg);
+  void save_message(char *filename);
   void set_statistics();
   void set_title(char *str);
   void activate_custom(int val);
@@ -190,9 +197,10 @@ public:
   char *get_geometry_symmetry(int num);
 
   // mesh contexts queries
-  char *get_mesh_transfinite(int num);
-  char *get_mesh_length(int num);
-  char *get_mesh_attractor(int num);
+  char *get_mesh_length();
+  char *get_mesh_transfinite_line(int num);
+  char *get_mesh_transfinite_volume();
+
 
 };
 

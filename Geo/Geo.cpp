@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.14 2001-01-10 08:41:06 geuzaine Exp $
+// $Id: Geo.cpp,v 1.15 2001-01-11 22:27:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -84,24 +84,10 @@ void add_infile(char *text, char *fich){
   AddALineInTheEditGeometryForm (text);
 }
 
-void del_pnt(int p1, char *fich){
+void delet(int p1, char *fich, char *what){
   char text[BUFFSIZE];
 
-  sprintf(text,"Delete {\n Point{%d};\n}",p1);
-  add_infile(text,fich);
-}
-
-void del_seg(int p1, char *fich){
-  char text[BUFFSIZE];
-
-  sprintf(text,"Delete {\n Line{%d};\n}",p1);
-  add_infile(text,fich);
-}
-
-void del_srf(int p1, char *fich){
-  char text[BUFFSIZE];
-
-  sprintf(text,"Delete {\n Surface{%d};\n}",p1);
+  sprintf(text,"Delete {\n %s{%d};\n}",what,p1);
   add_infile(text,fich);
 }
 
@@ -425,7 +411,7 @@ void add_trsfvol(int N, int *l, char *fich){
 }
 
 
-void add_physical_entity(List_T *list, char *fich, int type, int *num){
+void add_physical(List_T *list, char *fich, int type, int *num){
   char text[BUFFSIZE], text2[BUFFSIZE];
   int  i, elementary_entity;
 
@@ -448,49 +434,17 @@ void add_physical_entity(List_T *list, char *fich, int type, int *num){
   add_infile(text, fich);
 }
 
-void extrude(int s, char *fich, char *what){
-  char text[BUFFSIZE];
-
-  sprintf(text,"Extrude %s {%d, {%s,%s,%s}};",what,s,tx_text,ty_text,tz_text);
-  add_infile(text,fich);
-}
-void translate_seg(int add, int s, char *fich){
+void translate(int add, int s, char *fich, char *what){
   char text[BUFFSIZE];
 
   if(add)
-    sprintf(text,"Translate {%s,%s,%s} {\n  Duplicata { Line{%d}; }\n}",
-            tx_text,ty_text,tz_text,s);
+    sprintf(text,"Translate {%s,%s,%s} {\n  Duplicata { %s{%d}; }\n}",
+            tx_text,ty_text,tz_text,what,s);
   else
-    sprintf(text,"Translate {%s,%s,%s} {\n  Line{%d};\n}",
-            tx_text,ty_text,tz_text,s);
+    sprintf(text,"Translate {%s,%s,%s} {\n  %s{%d};\n}",
+            tx_text,ty_text,tz_text,what,s);
   add_infile(text,fich);
 }
-
-
-void translate_surf(int add, int s, char *fich){
-  char text[BUFFSIZE];
-
-  if(add)
-    sprintf(text,"Translate {%s,%s,%s} {\n  Duplicata { Surface{%d}; }\n}",
-            tx_text,ty_text,tz_text,s);
-  else
-    sprintf(text,"Translate {%s,%s,%s} {\n  Surface{%d};\n}",
-            tx_text,ty_text,tz_text,s);
-  add_infile(text,fich);
-}
-
-void translate_pt(int add, int s, char *fich){
-  char text[BUFFSIZE];
-
-  if(add)
-    sprintf(text,"Translate {%s,%s,%s} {\n  Duplicata { Point{%d}; }\n}",
-            tx_text,ty_text,tz_text,s);
-  else
-    sprintf(text,"Translate {%s,%s,%s} {\n  Point{%d};\n}",
-            tx_text,ty_text,tz_text,s);
-  add_infile(text,fich);
-}
-
 void rotate(int add, int s, char *fich, char *quoi){
   char text[BUFFSIZE];
 
@@ -502,7 +456,6 @@ void rotate(int add, int s, char *fich, char *quoi){
             ax_text,ay_text,az_text,px_text,py_text,pz_text,angle_text, quoi,s);
   add_infile(text,fich);
 }
-
 void dilate(int add, int s, char *fich, char *quoi){
   char text[BUFFSIZE];
 
@@ -514,7 +467,6 @@ void dilate(int add, int s, char *fich, char *quoi){
             dx_text,dy_text,dz_text,df_text, quoi,s);
   add_infile(text,fich);
 }
-
 void symmetry(int add, int s, char *fich, char *quoi){
   char text[BUFFSIZE];
 
@@ -527,7 +479,12 @@ void symmetry(int add, int s, char *fich, char *quoi){
   add_infile(text,fich);
 
 }
+void extrude(int s, char *fich, char *what){
+  char text[BUFFSIZE];
 
+  sprintf(text,"Extrude %s {%d, {%s,%s,%s}};",what,s,tx_text,ty_text,tz_text);
+  add_infile(text,fich);
+}
 void protude(int s, char *fich, char *what){
   char text[BUFFSIZE];
 

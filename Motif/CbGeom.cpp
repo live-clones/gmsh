@@ -1,4 +1,4 @@
-// $Id: CbGeom.cpp,v 1.2 2001-01-10 08:41:07 geuzaine Exp $
+// $Id: CbGeom.cpp,v 1.3 2001-01-11 22:27:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -242,7 +242,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      translate_pt(event==GEOM_ELEM_ADD_TRANSLATE_POINT?1:0,v->Num,CTX.filename);
+      translate(event==GEOM_ELEM_ADD_TRANSLATE_POINT?1:0,v->Num,CTX.filename, "Point");
       ZeroHighlight(&M);
       Replot();
     }
@@ -256,7 +256,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      translate_seg(event==GEOM_ELEM_ADD_TRANSLATE_LINE?1:0,c->Num,CTX.filename);
+      translate(event==GEOM_ELEM_ADD_TRANSLATE_LINE?1:0,c->Num,CTX.filename, "Line");
       ZeroHighlight(&M);
       Replot();
     }
@@ -270,7 +270,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      translate_surf(event==GEOM_ELEM_ADD_TRANSLATE_SURF?1:0,s->Num,CTX.filename);
+      translate(event==GEOM_ELEM_ADD_TRANSLATE_SURF?1:0,s->Num,CTX.filename, "Surface");
       ZeroHighlight(&M);
       Replot();
     }
@@ -471,7 +471,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      del_pnt(v->Num,CTX.filename);
+      delet(v->Num,CTX.filename, "Point");
       ZeroHighlight(&M);
       Replot();
     }
@@ -484,7 +484,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      del_seg(c->Num,CTX.filename);
+      del(c->Num,CTX.filename, "Line");
       ZeroHighlight(&M);
       Replot();
     }
@@ -497,7 +497,7 @@ void geom_event_handler (int event) {
         Replot();
         break;
       }
-      del_srf(s->Num,CTX.filename);
+      delet(s->Num,CTX.filename, "Surface");
       ZeroHighlight(&M);
       Replot();
     }
@@ -540,7 +540,7 @@ void geom_event_handler (int event) {
       }
       if(ib == -1){ /* end */
         if(List_Nbr(Liste1)){
-          add_physical_entity(Liste1,CTX.filename,type,&zone);
+          add_physical(Liste1,CTX.filename,type,&zone);
           List_Reset(Liste1);
           ZeroHighlight(&M);
           Replot();

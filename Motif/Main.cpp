@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.3 2001-01-10 08:50:31 geuzaine Exp $
+// $Id: Main.cpp,v 1.4 2001-01-11 22:27:55 geuzaine Exp $
 
 #include <signal.h>
 
@@ -153,17 +153,19 @@ int main(int argc, char *argv[]){
   XCTX.display = XtOpenDisplay(XCTX.AppContext, NULL, "gmshGW", ".gmshrc", 
                                NULL, 0, &argc, argv);
 
-  if(!XCTX.display)
-    Msg(FATAL, "Unable to open the specified display. Set the `DISPLAY'\n"
-        FATAL_NIL "environment variable properly or use the `xhost' command\n"
-        FATAL_NIL "to authorize access to the display");
+  if(!XCTX.display){
+    Msg(FATAL1, "Unable to open the specified display. Set the `DISPLAY'");
+    Msg(FATAL2, "environment variable properly or use the `xhost' command");
+    Msg(FATAL3, "to authorize access to the display");
+  }
 
   /* Check for GLX extension; for Mesa, this is always OK */
   
-  if(!glXQueryExtension(XCTX.display,NULL,NULL))
-    Msg(FATAL, "The specified display does not support the OpenGL extension (GLX).\n"
-        FATAL_NIL "You may consider using Mesa instead");
-  
+  if(!glXQueryExtension(XCTX.display,NULL,NULL)){
+    Msg(FATAL1, "The specified display does not support the OpenGL extension (GLX).");
+    Msg(FATAL3, "You may consider using Mesa instead");
+  }
+
   /* Init with default screen num and default depth */
   
   XCTX.scrnum = DefaultScreen(XCTX.display);
@@ -254,9 +256,10 @@ int main(int argc, char *argv[]){
       Msg(DEBUG, "Making Another Colormap for Overlay Window");
       XCTX.glo.colormap = XCreateColormap(XCTX.display, RootWindow(XCTX.display,XCTX.scrnum),
                                           XCTX.glo.visinfo->visual, AllocNone);
-      if(!XCTX.glo.colormap)
-        Msg(FATAL, "Unable to Create Private Colormap for Overlay Window\n"
-            FATAL_NIL "(Try '-noov' and/or '-flash' Options)");
+      if(!XCTX.glo.colormap){
+        Msg(FATAL1, "Unable to Create Private Colormap for Overlay Window");
+	Msg(FATAL3, "(Try '-noov' and/or '-flash' Options)");
+      }
     }
   }
   

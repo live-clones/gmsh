@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.15 2001-01-09 19:40:56 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.16 2001-01-11 22:27:55 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -260,14 +260,10 @@ void Plan_Moyen (void *data, void *dum){
   for (i = 0; i < 3; i++)
     s->plan[2][i] = res[i];
 
-  Msg(DEBUG, "Plan   : (%g x + %g y + %g z = %g)\n"
-      DEBUG_NIL "Normal : (%g , %g , %g )\n"
-      DEBUG_NIL "t1     : (%g , %g , %g )\n"
-      DEBUG_NIL "t2     : (%g , %g , %g )",
-      s->a, s->b, s->c, s->d,
-      res[0], res[1], res[2],
-      t1[0], t1[1], t1[2],
-      t2[0], t2[1], t2[2]);
+  Msg(DEBUG1, "Plan   : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
+  Msg(DEBUG2, "Normal : (%g , %g , %g )", res[0], res[1], res[2]);
+  Msg(DEBUG2, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
+  Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
 
   /* Matrice orthogonale */
 

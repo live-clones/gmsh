@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.16 2001-01-11 16:00:28 colignon Exp $
+// $Id: Callbacks.cpp,v 1.17 2001-01-11 22:27:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -534,6 +534,17 @@ void opt_statistics_update_cb(CALLBACK_ARGS) {
   WID->set_statistics();
 }
 
+// Option Messages Menu
+
+void opt_message_cb(CALLBACK_ARGS) {
+  WID->create_message_window();
+}
+void opt_message_save_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save Log", "*", NULL)))
+    WID->save_message(newfile); 
+}
+
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS){
@@ -561,7 +572,7 @@ void mod_forward_cb(CALLBACK_ARGS){
   WID->set_context(NULL, 1);
 }
 
-// Dynamic Menus
+// Dynamic Geomtry Menus
 
 void geometry_elementary_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary, 0);
@@ -587,7 +598,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(1);
 }
 
-static void _new_line_spline(int mode){
+static void _new_line_spline(int dim){
   Vertex   *v;
   Curve    *c;
   Surface  *s;
@@ -603,7 +614,7 @@ static void _new_line_spline(int mode){
     }
     if (ib == -1){ /* 'e' */
       if(n >= 2) {
-	switch(mode){
+	switch(dim){
 	case 0 : add_multline(n,p,CTX.filename); break;
 	case 1 : add_spline(n,p,CTX.filename); break;
 	}
@@ -705,7 +716,7 @@ static void _new_surface_volume(int mode){
   if(mode == 2)
     type = ENT_SURFACE;
   else
-    type = ENT_LINE;      
+    type = ENT_LINE;
   
   while(1){      
     List_Reset(Liste1);
@@ -745,8 +756,8 @@ static void _new_surface_volume(int mode){
 	}
 	if(List_Nbr(Liste2)){
 	  switch(mode){
-	  case 0 : add_surf(Liste2,CTX.filename,0,1); break;
-	  case 1 : add_surf(Liste2,CTX.filename,0,2); break;
+	  case 0 : add_surf(Liste2,CTX.filename,0,2); break;
+	  case 1 : add_surf(Liste2,CTX.filename,0,1); break;
 	  case 2 : add_multvol(Liste2,CTX.filename); break;
 	  }
 	  ZeroHighlight(&M);
@@ -772,55 +783,44 @@ void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS){
   _new_surface_volume(2);
 }
 
+static void _transform_point_curve_surface(int transfo, int mode, char *what){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int type, num;
 
-static void _translate_point(int mode){
-  Vertex   *v;
-  Curve    *c;
-  Surface  *s;
-  while(1){
-    Msg(STATUS,"Select Point ('q'=quit)");
-    if(!SelectEntity(ENT_POINT, &v,&c,&s)){
-      ZeroHighlight(&M);
-      DrawUpdate();
-      break;
-    }
-    translate_pt(mode,v->Num,CTX.filename);
-    ZeroHighlight(&M);
-    DrawUpdate();
-  }
-}
+  if(!strcmp(what,"Point")) 
+    type = ENT_POINT;
+  else if(!strcmp(what,"Line"))
+    type = ENT_LINE; 
+  else
+    type = ENT_SURFACE;
 
-static void _translate_curve(int mode){
-  Vertex   *v;
-  Curve    *c;
-  Surface  *s;
   while(1){
-    Msg(STATUS,"Select Line ('q'=quit)");
-    if(!SelectEntity(ENT_LINE, &v,&c,&s)){
+    Msg(STATUS,"Select %s ('q'=quit)", what);
+    if(!SelectEntity(type, &v,&c,&s)){
       ZeroHighlight(&M);
       DrawUpdate();
       break;
     }
-    translate_seg(mode,c->Num,CTX.filename);
-    ZeroHighlight(&M);
-    DrawUpdate();
-  }
-}
-static void _translate_surface(int mode){
-  Vertex   *v;
-  Curve    *c;
-  Surface  *s;
-  while(1){
-    Msg(STATUS,"Select Surface ('q'=quit)");
-    if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
-      ZeroHighlight(&M);
-      DrawUpdate();
-      break;
+    switch(type){
+    case ENT_POINT: num = v->Num; break;
+    case ENT_LINE: num = c->Num; break;
+    case ENT_SURFACE: num = s->Num; break;
     }
-    translate_surf(mode,s->Num,CTX.filename);
+    switch(transfo){
+    case 0: translate(mode,num,CTX.filename,what); break;
+    case 1: rotate(mode,num,CTX.filename,what); break;
+    case 2: dilate(mode,num,CTX.filename,what); break;
+    case 3: symmetry(mode,num,CTX.filename,what); break;
+    case 4: extrude(num,CTX.filename,what); break;
+    case 5: protude(num,CTX.filename,what); break;
+    case 6: delet(num,CTX.filename,what); break;
+    }
     ZeroHighlight(&M);
     DrawUpdate();
   }
+  Msg(STATUS,"Ready");
 }
 
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS){
@@ -828,134 +828,124 @@ void geometry_elementary_add_translate_cb(CALLBACK_ARGS){
 }
 void geometry_elementary_add_translate_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  _translate_point(1);
+  _transform_point_curve_surface(0,1,"Point");
 }
 void geometry_elementary_add_translate_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  _translate_curve(1);
+  _transform_point_curve_surface(0,1,"Line");
 }
 void geometry_elementary_add_translate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  _translate_surface(1);
+  _transform_point_curve_surface(0,1,"Surface");
 }
 void geometry_elementary_translate_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_translate, 0);
 }
 void geometry_elementary_translate_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  _translate_point(0);
+  _transform_point_curve_surface(0,0,"Point");
 }
 void geometry_elementary_translate_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  _translate_curve(0);
+  _transform_point_curve_surface(0,0,"Line");
 }
 void geometry_elementary_translate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  _translate_surface(0);
+  _transform_point_curve_surface(0,0,"Surface");
 }
-
-
-
 
 void geometry_elementary_add_rotate_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_add_rotate, 0);
 }
 void geometry_elementary_add_rotate_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("rotate point\n");
+  _transform_point_curve_surface(1,1,"Point");
 }
 void geometry_elementary_add_rotate_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("rotate curve\n");
+  _transform_point_curve_surface(1,1,"Line");
 }
 void geometry_elementary_add_rotate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("rotate surf\n");
+  _transform_point_curve_surface(1,1,"Surface");
 }
 void geometry_elementary_rotate_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_rotate, 0);
 }
 void geometry_elementary_rotate_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("rot point\n");
+  _transform_point_curve_surface(1,0,"Point");
 }
 void geometry_elementary_rotate_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("rot curve\n");
+  _transform_point_curve_surface(1,0,"Line");
 }
 void geometry_elementary_rotate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("rot surf\n");
+  _transform_point_curve_surface(1,0,"Surface");
 }
-
-
 
 void geometry_elementary_add_scale_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_add_scale, 0);
 }
 void geometry_elementary_add_scale_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(4);
-  printf("scale point\n");
+  _transform_point_curve_surface(2,1,"Point");
 }
 void geometry_elementary_add_scale_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(4);
-  printf("scale curve\n");
+  _transform_point_curve_surface(2,1,"Line");
 }
 void geometry_elementary_add_scale_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(4);
-  printf("scale surface\n");
+  _transform_point_curve_surface(2,1,"Surface");
 }
 void geometry_elementary_scale_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_scale, 0);
 }
 void geometry_elementary_scale_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(4);
-  printf("scale point\n");
+  _transform_point_curve_surface(2,0,"Point");
 }
 void geometry_elementary_scale_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(4);
-  printf("scale curve\n");
+  _transform_point_curve_surface(2,0,"Line");
 }
 void geometry_elementary_scale_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(4);
-  printf("scale surf\n");
+  _transform_point_curve_surface(2,0,"Surface");
 }
-
-
-
 
 void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_add_symmetry, 0);
 }
 void geometry_elementary_add_symmetry_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(5);
-  printf("symm point\n");
+  _transform_point_curve_surface(3,1,"Point");
 }
 void geometry_elementary_add_symmetry_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(5);
-  printf("symm curve\n");
+  _transform_point_curve_surface(3,1,"Line");
 }
 void geometry_elementary_add_symmetry_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(5);
-  printf("symm surf\n");
+  _transform_point_curve_surface(3,1,"Surface");
 }
 void geometry_elementary_symmetry_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_symmetry, 0);
 }
 void geometry_elementary_symmetry_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(5);
-  printf("symm point\n");
+  _transform_point_curve_surface(3,0,"Point");
 }
 void geometry_elementary_symmetry_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(5);
-  printf("symm curve\n");
+  _transform_point_curve_surface(3,0,"Line");
 }
 void geometry_elementary_symmetry_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(5);
-  printf("symm surf\n");
+  _transform_point_curve_surface(3,0,"Surface");
 }
-
-
 
 void geometry_elementary_extrude_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_extrude, 0);
@@ -965,73 +955,110 @@ void geometry_elementary_extrude_translate_cb(CALLBACK_ARGS){
 }
 void geometry_elementary_extrude_translate_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  printf("extr point\n");
+  _transform_point_curve_surface(4,0,"Point");
 }
 void geometry_elementary_extrude_translate_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  printf("extr curve\n");
+  _transform_point_curve_surface(4,0,"Line");
 }
 void geometry_elementary_extrude_translate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(2);
-  printf("extr surf\n");
+  _transform_point_curve_surface(4,0,"Surface");
 }
 void geometry_elementary_extrude_rotate_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_extrude_rotate, 0);
 }
 void geometry_elementary_extrude_rotate_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("extr point\n");
+  _transform_point_curve_surface(5,0,"Point");
 }
 void geometry_elementary_extrude_rotate_curve_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("extr curve\n");
+  _transform_point_curve_surface(5,0,"Line");
 }
 void geometry_elementary_extrude_rotate_surface_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(3);
-  printf("extr surf\n");
+  _transform_point_curve_surface(5,0,"Surface");
 }
+
 void geometry_elementary_delete_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_delete, 0);
 }
 void geometry_elementary_delete_point_cb(CALLBACK_ARGS){
-  printf("del point\n");
+  _transform_point_curve_surface(6,0,"Point");
 }
 void geometry_elementary_delete_curve_cb(CALLBACK_ARGS){
-  printf("del curve\n");
+  _transform_point_curve_surface(6,0,"Line");
 }
 void geometry_elementary_delete_surface_cb(CALLBACK_ARGS){
-  printf("del surf\n");
+  _transform_point_curve_surface(6,0,"Surface");
 }
+
+static void _add_physical(char *what){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib, type, zone;
+  List_T  *Liste1;
+
+  if(!strcmp(what,"Point")) 
+    type = ENT_POINT;
+  else if(!strcmp(what,"Line"))
+    type = ENT_LINE; 
+  else if(!strcmp(what,"Surface"))
+    type = ENT_SURFACE;
+  else{
+    Msg(GERROR, "Interactive Volume Selection not done: "
+	"Please edit the input file manually");
+    return;
+  }
+
+  Liste1 = List_Create(5,5,sizeof(int));
+  while(1){
+    Msg(STATUS,"Select %s ('e'=end, 'q'=quit)", what); 
+    ib = SelectEntity(type, &v,&c,&s);
+    if(ib == 1){ /* left mouse */
+      switch(type){
+      case ENT_POINT: List_Add(Liste1, &v->Num); break;
+      case ENT_LINE:  List_Add(Liste1, &c->Num); break;
+      case ENT_SURFACE:  List_Add(Liste1, &s->Num); break;
+      }
+    }
+    if(ib == -1){ /* end */
+      if(List_Nbr(Liste1)){
+	add_physical(Liste1,CTX.filename,type,&zone);
+	List_Reset(Liste1);
+	ZeroHighlight(&M);
+	DrawUpdate();
+      }
+    }
+    if(ib == 0){
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+  }
+  Msg(STATUS,"Ready");
+}
+
 void geometry_physical_add_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_physical_add, 0);
 }
 void geometry_physical_add_point_cb (CALLBACK_ARGS){
-  printf("phys add point\n");
+  _add_physical("Point");
 }
 void geometry_physical_add_curve_cb (CALLBACK_ARGS){
-  printf("phys add curve\n");
+  _add_physical("Line");
 }
 void geometry_physical_add_surface_cb (CALLBACK_ARGS){
-  printf("phys add surf\n");
+  _add_physical("Surface");
 }
 void geometry_physical_add_volume_cb (CALLBACK_ARGS){
-  printf("phys add vol\n");
+  _add_physical("Volume");
 }
-void geometry_physical_delete_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_physical_delete, 0);
-}
-void geometry_physical_delete_point_cb(CALLBACK_ARGS){
-  printf("phys delpoint\n");
-}
-void geometry_physical_delete_curve_cb(CALLBACK_ARGS){
-  printf("phys del curve\n");
-}
-void geometry_physical_delete_surface_cb(CALLBACK_ARGS){
-  printf("phys adel surf\n");
-}
-void geometry_physical_delete_volume_cb(CALLBACK_ARGS){
-  printf("phys del vol\n");
-}
+
+// Dynamic Mesh Menus
+
 void mesh_define_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh_define, 0);
 }
@@ -1047,6 +1074,7 @@ void mesh_1d_cb(CALLBACK_ARGS){
     mai3d(&M, 1); 
   Init(); 
   Draw();
+  Msg(STATUS,"Ready");
 }
 void mesh_2d_cb(CALLBACK_ARGS){
 #ifdef _USETHREADS
@@ -1060,6 +1088,7 @@ void mesh_2d_cb(CALLBACK_ARGS){
     mai3d(&M, 2);
   Init(); 
   Draw();
+  Msg(STATUS,"Ready");
 } 
 void mesh_3d_cb(CALLBACK_ARGS){
 #ifdef _USETHREADS
@@ -1073,6 +1102,7 @@ void mesh_3d_cb(CALLBACK_ARGS){
     mai3d(&M, 3); 
   Init(); 
   Draw();
+  Msg(STATUS,"Ready");
 } 
 void mesh_define_length_cb (CALLBACK_ARGS){
   Vertex   *v;
@@ -1108,34 +1138,145 @@ void mesh_define_length_cb (CALLBACK_ARGS){
   Msg(STATUS,"Ready");
 }
 void mesh_define_recombine_cb (CALLBACK_ARGS){
-  printf("mesh define reco\n");
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib;
+  static int n, p[100];
+
+  n=0;
+  while(1){
+    Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
+    ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
+    if(ib == 1){ /* left mouse butt */
+      p[n++] = s->Num; 
+    }
+    if (ib == -1){ /* 'e' */
+      if(n >= 1) {
+	add_recosurf(n,p,CTX.filename); break;
+      }
+      n=0;
+      ZeroHighlight(&M);
+      DrawUpdate();
+    }
+    if(ib == 0){ /* 'q' */
+      n=0 ;
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+  }
+  Msg(STATUS, "Ready");
 }
 void mesh_define_transfinite_cb (CALLBACK_ARGS){
   WID->set_context(menu_mesh_define_transfinite, 0);
 } 
+
+static void _add_transfinite(int dim){
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib;
+  static int n, p[100];
+
+  n=0;
+  while(1){
+    switch (dim) {
+    case 1 :
+      Msg(STATUS,"Select Line ('e'=end, 'q'=quit)");
+      ib = SelectEntity(ENT_LINE, &v,&c,&s);
+      break ;
+    case 2 :
+      Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
+      ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
+      break;
+    case 3 :
+      ib = 1;
+      break;
+    }
+    if(ib == 1){ /* left mouse butt */
+      switch (dim) {    
+      case 1 : p[n++] = c->Num ; break ;
+      case 2 : p[n++] = s->Num; // fall-through
+      case 3 :
+	while(1){
+	  Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+	  ib = SelectEntity(ENT_POINT, &v,&c,&s);
+	  if(ib == 1){ /* left mouse butt */
+	    p[n++] = v->Num ;
+	  }
+	  if (ib == -1){ /* 'e' */
+	    switch (dim) {    
+	    case 2 :
+	      if(n == 3+1 || n == 4+1)
+		add_trsfsurf(n,p,CTX.filename); 
+	      else
+		Msg(INFO, "Wrong Number of Points for Transfinite Surface");
+	      break;
+	    case 3 :
+	      if(n == 6 || n == 8)
+		add_trsfvol(n,p,CTX.filename);
+	      else
+		Msg(INFO, "Wrong Number of Points for Transfinite Volume");
+	      break;
+	    }
+	    n=0;
+	    ZeroHighlight(&M);
+	    DrawUpdate();
+	    break;
+	  }
+	  if(ib == 0){ /* 'q' */
+	    n=0 ;
+	    ZeroHighlight(&M);
+	    DrawUpdate();
+	    break;
+	  }
+	}
+	break ;
+      }
+    }
+    if (ib == -1){ /* 'e' */
+      if (dim == 1){ 
+	if(n >= 1) add_trsfline(n,p,CTX.filename);
+      }
+      n=0;
+      ZeroHighlight(&M);
+      DrawUpdate();
+    }
+    if(ib == 0){ /* 'q' */
+      n=0 ;
+      ZeroHighlight(&M);
+      DrawUpdate();
+      break;
+    }
+  }
+  Msg(STATUS, "Ready");
+}
+
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS){
   WID->create_mesh_context_window(1);
-  printf("mesh define tr line\n");
+  _add_transfinite(1);
 }
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS){
-  printf("mesh define tr su\n");
+  _add_transfinite(2);
 }
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
-  WID->create_mesh_context_window(3);
-  printf("mesh define tr vol\n");
+  WID->create_mesh_context_window(2);
+  _add_transfinite(3);
 } 
+
+// Dynamic Post Menus
 
 void view_toggle_cb(CALLBACK_ARGS){
   if(!Post_ViewList) return;
 
   Post_View  *v = (Post_View*)List_Pointer(Post_ViewList,(int)data);
 
-  Msg(DEBUG,    "View %d\n"
-      DEBUG_NIL "  -> Name '%s'\n"
-      DEBUG_NIL "  -> FileName '%s'\n"
-      DEBUG_NIL "  -> DuplicateOf %d\n"
-      DEBUG_NIL "  -> Links %d",
-      v->Num, v->Name, v->FileName, v->DuplicateOf, v->Links);
+  Msg(DEBUG1, "View %d", v->Num);
+  Msg(DEBUG2, "  -> Name '%s'", v->Name);
+  Msg(DEBUG2, "  -> FileName '%s'", v->FileName);
+  Msg(DEBUG2, "  -> DuplicateOf %d", v->DuplicateOf);
+  Msg(DEBUG3, "  -> Links %d", v->Links);
 
   v->Visible = !v->Visible;
 
@@ -1313,13 +1454,11 @@ void view_options_custom_range_cb(CALLBACK_ARGS){
 }
 void view_options_custom_min_cb(CALLBACK_ARGS){
   STARTVIEWMOD
-    //printf("set cust min %d %d %g\n", v->Num, i, ((Fl_Value_Input*)w)->value());
     v->CustomMin = ((Fl_Value_Input*)w)->value() ;
   ENDVIEWMOD
 }
 void view_options_custom_max_cb(CALLBACK_ARGS){
   STARTVIEWMOD
-    //printf("set cust max %d %d %g\n", v->Num, i, ((Fl_Value_Input*)w)->value());
     v->CustomMax = ((Fl_Value_Input*)w)->value() ;
   ENDVIEWMOD
 }
@@ -1461,7 +1600,7 @@ void view_options_vector_vertex_cb(CALLBACK_ARGS){
 #undef STARTVIEWMOD
 #undef ENDVIEWMOD
 
-// Context geometry
+// Contextual windows for geometry
 
 void con_geometry_define_parameter_cb(CALLBACK_ARGS){
   add_param(WID->get_geometry_parameter(0),
@@ -1510,23 +1649,18 @@ void con_geometry_define_symmetry_cb(CALLBACK_ARGS){
 }
 
 
-// Context mesh
+// Contextual windows for mesh
+
+void con_mesh_define_length_cb(CALLBACK_ARGS){
+  strcpy(char_length_text, WID->get_mesh_length());
+}
 
 void con_mesh_define_transfinite_line_cb(CALLBACK_ARGS){
-  strcpy(trsf_pts_text, WID->get_mesh_transfinite(0));
-  strcpy(trsf_type_text, WID->get_mesh_transfinite(1));
+  strcpy(trsf_pts_text, WID->get_mesh_transfinite_line(0));
+  strcpy(trsf_type_text, WID->get_mesh_transfinite_line(1));
 }
 
 void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
-  strcpy(trsf_vol_text, WID->get_mesh_transfinite(2));
+  strcpy(trsf_vol_text, WID->get_mesh_transfinite_volume());
 }
 
-void con_mesh_define_length_cb(CALLBACK_ARGS){
-  strcpy(char_length_text, WID->get_mesh_length(0));
-}
-
-void con_mesh_define_attractor_cb(CALLBACK_ARGS){
-  strcpy(attrx_text, WID->get_mesh_attractor(0));
-  strcpy(attry_text, WID->get_mesh_attractor(1));
-  strcpy(attrz_text, WID->get_mesh_attractor(2));
-}
