@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.73 2001-05-08 11:34:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.74 2001-05-08 12:09:31 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -472,11 +472,14 @@ GUI::GUI(int argc, char **argv) {
   create_graphic_window(argc, argv);
 
 #ifdef WIN32
-  HICON icon = CreateIcon(NULL, 32, 32, 1, 1,
+  HICON icon = CreateIcon(NULL, 
+			  GetSystemMetrics(SM_CXICON), 
+			  GetSystemMetrics(SM_CYICON), 
+			  1, 1,
 			  (CONST BYTE *)gmsh_and_bits,
 			  (CONST BYTE *)gmsh_xor_bits);
-  m_window->icon((char *)icon); 
-  g_window->icon((char *)icon);
+  //m_window->icon((char *)icon); 
+  //g_window->icon((char *)icon);
 #else
   fl_open_display();
   Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
