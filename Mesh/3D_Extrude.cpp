@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.35 2001-08-15 08:16:30 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.36 2001-08-15 11:49:29 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -748,9 +748,9 @@ void copy_mesh (Surface * from, Surface * to){
 }
 
 int Extrude_Mesh (Surface * s){
-  int i;
+  int i, j;
   Vertex *v1;
-  Curve *cc;
+  Curve *c;
   extern int FACE_DIMENSION;
 
   if (!s->Extrude || !s->Extrude->mesh.ExtrudeMesh) return false;
@@ -766,29 +766,28 @@ int Extrude_Mesh (Surface * s){
   ToAdd = s->Vertices;
 
   for (i = 0; i < List_Nbr (s->Generatrices); i++){
-    List_Read (s->Generatrices, i, &cc);
-    for (int j = 0; j < List_Nbr (cc->Vertices); j++){
-      List_Read (cc->Vertices, j, &v1);
+    List_Read (s->Generatrices, i, &c);
+    for (j = 0; j < List_Nbr (c->Vertices); j++){
+      List_Read (c->Vertices, j, &v1);
       Tree_Insert (Vertex_Bound, &v1);
     }
   }
   if (ep->geo.Mode == EXTRUDED_ENTITY){
-    Curve *c = FindCurve (abs(ep->geo.Source), THEM);
+    c = FindCurve (abs(ep->geo.Source), THEM);
     if (!c) return false;
     for (i = 0; i < List_Nbr (c->Vertices); i++){
       List_Read (c->Vertices, i, &v1);
       Extrude_Vertex (&v1, NULL);
     }
     Extrude_Curve (&c, NULL);
-    return true;
   }
   else{
     Surface *ss = FindSurface (ep->geo.Source, THEM);
     if (!ss) return false;
     copy_mesh (ss, s);
-    return true;
   }
 
+  return true;
 }
 
 static Tree_T* tmp;

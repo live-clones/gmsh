@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.131 2001-08-15 10:03:33 geuzaine Exp $
+# $Id: Makefile,v 1.132 2001-08-15 11:49:29 geuzaine Exp $
 
 GMSH_RELEASE = 1.23
 
@@ -259,12 +259,21 @@ link_linux:
 linux: tag compile_linux link_linux strip_bin
 
 #
-# Linux, gcc-2.95.x
+# Linux, gcc-2.95.x (optimized build is still buggy)
 # 
 compile_linux_gcc-2.95:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.3/bin/g++" \
            "C_FLAGS=-O2" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=-I/usr/X11R6/include" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+        ); done
+	rm -f Mesh/3D_Extrude.o
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(HOME)/gcc-2.95.3/bin/g++" \
+           "C_FLAGS=-O0" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=-I/usr/X11R6/include" \

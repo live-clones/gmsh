@@ -35,3 +35,5 @@ Line Loop(25) = {-12,-4,8};
 Ruled Surface(26) = {25};
 Line Loop(27) = {-6,2,10};
 Ruled Surface(28) = {27};
+Surface Loop(29) = {26,24,22,28,14,16,18,20};
+Volume(30) = {29};
