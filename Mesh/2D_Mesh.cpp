@@ -25,8 +25,10 @@
 
 extern Mesh       *THEM;
 extern Context_T   CTX;
-extern int         CurrentNodeNumber, LocalNewPoint;
+extern int         CurrentNodeNumber;
 extern double      LC, FACTEUR_MULTIPLICATIF;
+
+int LocalNewPoint;
 
 PointRecord   *gPointArray;
 DocRecord     *BGMESH, *FGMESH;
@@ -861,11 +863,8 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
     liste[i] = cp;
   }
 
-  if (pS->Method){
-    /* lets force this, since it's the only one that works... */
-    LocalNewPoint = CENTER_CIRCCIRC;
+  if (pS->Method)
     mesh_domain (liste, List_Nbr (pS->Contours), &M, &N, NULL, 0);
-  }
 
   for (i = 0; i < M.numpoints; i++){
     if (gPointArray[i].initial < 0){
@@ -1012,6 +1011,8 @@ void Maillage_Surface (void *data, void *dum){
 
   THESUPPORT = s->Support;
   THESURFACE = s;
+
+  LocalNewPoint = CTX.mesh.point_insertion;
 
   if (Tree_Nbr (s->Simplexes))
     Tree_Delete (s->Simplexes);

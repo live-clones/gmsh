@@ -27,9 +27,10 @@ extern Pixmaps_T  PIX;
 extern Mesh       M;
 extern Tree_T    *EntitesVisibles;
 extern double   LC;
-extern int      ACTUAL_ENTITY, SHOW_ALL;
 
-static int stop_anim ;
+int SHOW_ALL_ENTITIES ;
+
+static int  stop_anim ;
 static long anim_time ;
 
 /* ------------------------------------------------------------------------ 
@@ -214,6 +215,8 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     (CTX.mesh.algo==DELAUNAY_OLDALGO) ?
       CTX.mesh.algo=DELAUNAY_NEWALGO :
 	CTX.mesh.algo=DELAUNAY_OLDALGO; break ;
+  case OPTIONS_MESH_INTERACTIVE : 
+    CTX.mesh.interactive = !CTX.mesh.interactive; break ;
   case OPTIONS_MESH_SMOOTHING_SCALE : 
     XmScaleGetValue(WID.OD.meshSmoothingScale, &e); CTX.mesh.nb_smoothing = e ;  
     sprintf(label,"%d",CTX.mesh.nb_smoothing);   
@@ -288,19 +291,19 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_HIDE_SHOW :  
     c = XmTextGetString(w); 
     if (!strcmp(c,"all") || !strcmp(c,"*")){
-      if(SHOW_ALL){ 
-	RemplirEntitesVisibles(0); SHOW_ALL = 0; 
+      if(SHOW_ALL_ENTITIES){ 
+	RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; 
       }
       else { 
-	RemplirEntitesVisibles(1); SHOW_ALL = 1; 
+	RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; 
       }
     }
     else{
-      ACTUAL_ENTITY = atoi(c);
-      if(EntiteEstElleVisible(ACTUAL_ENTITY))
-	ToutesLesEntitesRelatives(ACTUAL_ENTITY,EntitesVisibles,0);
+      i = atoi(c);
+      if(EntiteEstElleVisible(i))
+	ToutesLesEntitesRelatives(i,EntitesVisibles,0);
       else
-	ToutesLesEntitesRelatives(ACTUAL_ENTITY,EntitesVisibles,1);
+	ToutesLesEntitesRelatives(i,EntitesVisibles,1);
     }
     break;
 

@@ -8,15 +8,12 @@
 #include "Create.h"
 
 extern Mesh      *THEM;
-extern Context_T  CTX;
 extern int        CurrentNodeNumber;
 
 static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
-
-Surface *THES;
-Volume *THEV;
-int TEST_IS_ALL_OK;
-
+static int TEST_IS_ALL_OK;
+static Surface *THES;
+static Volume *THEV;
 static ExtrudeParams *ep;
 
 typedef struct{
@@ -112,7 +109,7 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
   pS = (Simplex **) data;
   s = *pS;
 
-  if(s->V[3] && !CTX.mesh.reco_extrude){
+  if(s->V[3] && !ep->mesh.Recombine){
     Msg(ERROR, "Use '-recombine' to extrude with quadrangles");
   }
 
@@ -142,7 +139,7 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
       k++;
       if (ep->mesh.ZonLayer[i]){
 
-	if(CTX.mesh.reco_extrude){
+	if(ep->mesh.Recombine){
 	  if(s->V[3]){
 	    newh = Create_Hexahedron(v1,v2,v3,v4,v5,v6,v7,v8);
 	    newh->iEnt = ep->mesh.ZonLayer[i];
@@ -349,7 +346,7 @@ void Extrude_Vertex (void *data, void *dum){
 void Extrude_Surface1 (Surface * s){
   THES = s;
   Tree_Action (s->Vertices, Extrude_Vertex);
-  if(!CTX.mesh.reco_extrude) Tree_Action (s->Simplexes, Extrude_Simplex_Phase1);
+  if(!ep->mesh.Recombine) Tree_Action (s->Simplexes, Extrude_Simplex_Phase1);
 }
 
 void Extrude_Surface2 (Surface * s){
@@ -376,7 +373,7 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
       List_Read (V2->Extruded_Points, k, &v2);
       List_Read (V1->Extruded_Points, k + 1, &v3);
       List_Read (V2->Extruded_Points, k + 1, &v4);
-      if(CTX.mesh.reco_extrude){
+      if(ep->mesh.Recombine){
 	s = Create_Quadrangle(v1,v2,v4,v3);
 	s->iEnt = THES->Num;
 	Tree_Add(THES->Simplexes,&s);
@@ -628,7 +625,7 @@ int Extrude_Mesh (Volume * v){
     List_Delete (list);
     Extrude_Surface1 (s);
     
-    if(!CTX.mesh.reco_extrude){
+    if(!ep->mesh.Recombine){
       j = TEST_IS_ALL_OK;
       do{
 	TEST_IS_ALL_OK = 0;

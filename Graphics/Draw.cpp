@@ -7,6 +7,8 @@
 #include "Context.h"
 #include "MinMax.h"
 
+#include "CbGeneral.h"
+
 #ifdef _UNIX
 #include "Widgets.h"
 #include "XContext.h"
@@ -14,15 +16,10 @@ extern XContext_T   XCTX ;
 extern Widgets_T    WID ;
 #endif
 
-void set_r(int i, double val);
-void set_t(int i, double val);
-void set_s(int i, double val);
-
 extern Context_T    CTX ;
 extern GLdouble     vxmin, vxmax, vymin, vymax;
 extern Mesh         M;
 extern double       LC;
-extern int          BD_EXISTS, EXPOSE;
 extern List_T      *Post_ViewList;
 
 /* ------------------------------------------------------------------------ */
@@ -440,7 +437,7 @@ void ExposeCb(Widget w,XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
     return;
   }
 
-  if(!BD_EXISTS || !EXPOSE) return;
+  if(!CTX.expose) return;
   Init();
   Draw(); 
 

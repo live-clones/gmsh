@@ -8,8 +8,7 @@
 
 extern Mesh     *THEM;
 extern Context_T CTX;
-extern int TYPBGMESH,LocalNewPoint;
-extern int Alerte_Point_Exterieur;
+extern int TYPBGMESH;
 extern int CurrentNodeNumber, CurrentSimplexNumber;
 
 static List_T *Curves;
@@ -155,15 +154,12 @@ void Init_Mesh (Mesh * M, int all){
   M->Metric = new GMSHMetric;
   M->BGM.bgm = NULL;
 
-  /* Dirt */
-
-  LocalNewPoint = CENTER_CIRCCIRC;
-  Alerte_Point_Exterieur = 0;
   CurrentNodeNumber = 1;
   CurrentSimplexNumber = 0;
 
   M->MeshParams.DelaunayAlgorithm = CTX.mesh.algo ;
   M->MeshParams.NbSmoothing = CTX.mesh.nb_smoothing ;
+  M->MeshParams.InteractiveDelaunay = CTX.mesh.interactive ;
   M->status = 0;
 }
 

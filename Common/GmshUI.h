@@ -8,7 +8,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glx.h>
-#include <GL/GLwMDrawA.h>
+#include <GLwMDrawA.h>
 
 #else
 

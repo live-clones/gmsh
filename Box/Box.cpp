@@ -13,7 +13,9 @@
 
 #include "Static.h"
 
-int VERBOSE = 0 ;
+char *TheFileNameTab[MAX_OPEN_FILES];
+char *ThePathForIncludes=NULL, *TheBgmFileName=NULL;
+int   VERBOSE = 0 ;
 
 char progname[]  = "This is Gmsh (non-interactive)" ;
 char copyright[] = "Copyright (C) 1997-2000 C. Geuzaine, J.-F. Remacle" ;
@@ -27,7 +29,6 @@ char clargs[]    =
   "  -format msh|unv|gref  mesh format (default: msh)\n"
   "  -algo iso|aniso       mesh algorithm (default: iso)\n"
   "  -scale float          scaling factor (default: 1.0)\n"
-  "  -recombine            recombine extruded meshes\n"
   "  -bgm file             load backround mesh from file\n"
   "Other options:\n"	  
   "  -v                    print debug information\n"
@@ -74,7 +75,6 @@ void OpenProblem(char *name){
   
   InitSymbols();
   Init_Mesh(&M, 1);
-  BD_EXISTS = 1;
 
   strncpy(TheFileName,name,NAME_STR_L);
   strncpy(TheBaseFileName,name,NAME_STR_L);
@@ -107,12 +107,13 @@ void OpenProblem(char *name){
 /*  G e t _ O p t i o n s                                                   */
 /* ------------------------------------------------------------------------ */
 
-void Get_Options (int argc, char *argv[]) {
+void Get_Options (int argc, char *argv[], int *nbfiles) {
   int i=1;
 
   if(argc < 2) Info(0,argv[0]);
 
-  strncpy(TheFileNameTab[0], "unnamed.geo",NAME_STR_L);
+  TheFileNameTab[0] = "unnamed.geo" ;
+  *nbfiles = 0;
   
   while (i < argc) {
     
@@ -135,20 +136,15 @@ void Get_Options (int argc, char *argv[]) {
       }
       else if(!strcmp(argv[i]+1, "path")){ 
 	i++;
-	if(argv[i] != NULL){
-	  strncpy(ThePathForIncludes,argv[i++],NAME_STR_L);
-	}
+	if(argv[i] != NULL) ThePathForIncludes = argv[i++];
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
 	i++;
-	if(argv[i] != NULL){
-	  strncpy(TheBgmFileName,argv[i++],NAME_STR_L);
-	  INITIALBGMESH = ONFILE;
-	}
+	if(argv[i] != NULL) TheBgmFileName = argv[i++];
       }
       else if(!strcmp(argv[i]+1, "smooth")){ 
 	i++;
-	LISSAGE = atoi(argv[i]); i++;
+	CTX.mesh.nb_smoothing = atoi(argv[i]); i++;
       }
       else if(!strcmp(argv[i]+1, "scale")){
 	i++;
@@ -222,8 +218,8 @@ void Get_Options (int argc, char *argv[]) {
     }
 
     else {
-      if(NbFileName<MAX_OPEN_FILES){
-	strncpy(TheFileNameTab[NbFileName++], argv[i++], NAME_STR_L); 
+      if(*nbfiles < MAX_OPEN_FILES){
+	TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       }
       else{
 	fprintf(stderr, "Error: Too many input files\n");
@@ -242,10 +238,10 @@ void Get_Options (int argc, char *argv[]) {
 /* ------------------------------------------------------------------------ */
 
 int main(int argc, char *argv[]){
-  int     i;
+  int     i, nbf;
 
   InitContext(&CTX);
-  Get_Options(argc, argv);
+  Get_Options(argc, argv, &nbf);
 
   signal(SIGINT,  Signal); 
   signal(SIGSEGV, Signal);
@@ -255,10 +251,10 @@ int main(int argc, char *argv[]){
   if(yyerrorstate)
     exit(1);
   else{
-    if(NbFileName>1){
-      for(i=1;i<NbFileName;i++) MergeProblem(TheFileNameTab[i]);
+    if(nbf>1){
+      for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
     }
-    if(INITIALBGMESH == ONFILE){
+    if(TheBgmFileName){
       MergeProblem(TheBgmFileName);
       if(List_Nbr(Post_ViewList)){
 	BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));

@@ -7,7 +7,6 @@
 #include "Views.h"
 #include "Numeric.h"
 
-extern int Alerte_Point_Exterieur;
 extern double FACTEUR_MULTIPLICATIF;
 
 static Mesh m;
@@ -104,7 +103,7 @@ double Lc_XYZ (double X, double Y, double Z, Mesh * m){
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.2));
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.5));
     else{
-      Alerte_Point_Exterieur = 1;
+      Msg(WARNING, "Exterior Point");
       l = 1.e-25;
     }
     break;

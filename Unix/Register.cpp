@@ -182,6 +182,7 @@ void RegisterCallbacks_OD(Widgets_T *w){
   register_cancel_cb  (w->OD.meshDialog,         ManageCb,   w->OD.meshDialog); 
   register_valchg_cb  (w->OD.meshAlgoButt[0],    OptionsCb,  OPTIONS_MESH_DEGRE2);
   register_valchg_cb  (w->OD.meshAlgoButt[1],    OptionsCb,  OPTIONS_MESH_ANISOTROPIC);
+  register_valchg_cb  (w->OD.meshAlgoButt[2],    OptionsCb,  OPTIONS_MESH_INTERACTIVE);
   register_valchg_cb  (w->OD.meshSmoothingScale, OptionsCb,  OPTIONS_MESH_SMOOTHING_SCALE);
   register_drag_cb    (w->OD.meshSmoothingScale, OptionsCb,  OPTIONS_MESH_SMOOTHING_SCALE);
   register_activate_cb(w->OD.meshSmoothingText,  OptionsCb,  OPTIONS_MESH_SMOOTHING_TEXT);

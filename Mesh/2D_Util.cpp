@@ -4,7 +4,7 @@
 #include "Mesh.h"
 #include "2D_Mesh.h"
 
-extern int           LocalNewPoint, FindQualityMethod;
+extern int           LocalNewPoint;
 extern PointRecord  *gPointArray;
 extern Mesh         *THEM;
 

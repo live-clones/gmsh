@@ -12,9 +12,6 @@
 
 #define CONV_VALUE    0.8
 
-#define GREEN_INTERPOLATION 1
-#define FEM_INTERPOLATION   2
-
 #define NOTTOLINK 1
 #define TOLINK    2
 

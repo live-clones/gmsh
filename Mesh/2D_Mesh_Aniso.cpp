@@ -31,7 +31,6 @@ MeshParameters:: MeshParameters ():
 
 extern Simplex MyNewBoundary;
 extern Mesh *THEM;
-extern int SPEED_MAX;
 extern int CurrentNodeNumber;
 extern double MAXIMUM_LC_FOR_SURFACE, LC, FACTEUR_MULTIPLICATIF;
 extern int Alerte_Point_Scabreux;
@@ -588,7 +587,7 @@ bool Bowyer_Watson_2D (Surface * sur, Vertex * v, Simplex * S, int force){
 
   /* calcul des volumes des simplexes crees */
 
-  if (Alerte_Point_Scabreux || !SPEED_MAX){
+  if (Alerte_Point_Scabreux || !CTX.mesh.speed_max){
     volume = 0.0;
     for (i = 0; i < List_Nbr (Simplexes_Destroyed); i++){
       VSIM_2D (List_Pointer (Simplexes_Destroyed, i), NULL);
@@ -977,7 +976,6 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
   FACE_DIMENSION = 1;
 
   SURF = s;
-  SPEED_MAX = 0;
   LOCAL = NULL;
 
   if (s->Typ == MSH_SURF_PLAN || s->Typ == MSH_SURF_REGL || s->Typ == MSH_SURF_TRIC)

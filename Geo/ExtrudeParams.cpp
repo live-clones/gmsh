@@ -19,6 +19,7 @@ ExtrudeParams :: ExtrudeParams (int ModeEx){
   mesh.ExtrudeMesh = false;
   geo.Mode = ModeEx;
   mesh.Simplexes = true;
+  mesh.Recombine = false;
 }
 
 

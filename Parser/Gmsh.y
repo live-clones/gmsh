@@ -15,12 +15,12 @@
 #include "Parser.h"
 
 extern Mesh    *THEM;
-extern char     ThePathForIncludes[NAME_STR_L];
+extern char    *ThePathForIncludes;
 
-FILE           *yyinTab[20];
-int             yylinenoTab[20];
-char            yynameTab[20][256];
-char            tmpstring[256];
+FILE           *yyinTab[MAX_OPEN_FILES];
+int             yylinenoTab[MAX_OPEN_FILES];
+char            yynameTab[MAX_OPEN_FILES][NAME_STR_L];
+char            tmpstring[NAME_STR_L];
 Symbol          TheSymbol;
 Surface        *STL_Surf;
 Shape           TheShape;
@@ -955,6 +955,10 @@ ExtrudeParameter :
 	List_Read($7,i,&d);
 	extr.mesh.hLayer[i] = d;
       }
+    }
+  | tRecombine tEND
+    {
+      extr.mesh.Recombine = true;
     }
 ;
 

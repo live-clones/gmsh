@@ -7,9 +7,9 @@
 #define COPIED_ENTITY 2
 
 class ExtrudeParams{
-  public :
 
-    ExtrudeParams(int Mode = EXTRUDED_ENTITY);
+public :
+  ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill (int ep,double A, double B, double C,
 	     double X, double Y, double Z, double angle);
   void Extrude (  int iLayer, int iElemLayer,
@@ -18,7 +18,7 @@ class ExtrudeParams{
   void Rotate(double matr[3][3]);
   struct{
     bool    ExtrudeMesh;
-    bool    Simplexes;
+    bool    Simplexes, Recombine;
     int     NbLayer;
     int     NbElmLayer [NB_LAYER_MAX];
     int     ZonLayer   [NB_LAYER_MAX];
@@ -32,6 +32,7 @@ class ExtrudeParams{
     double pt[3];
     double angle;
   }geo;
+
 };
 
 #endif

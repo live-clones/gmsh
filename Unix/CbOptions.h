@@ -79,8 +79,9 @@
 #define  OPTIONS_MESH_SMOOTHING_TEXT            219
 #define  OPTIONS_MESH_DEGRE2                    220
 #define  OPTIONS_MESH_ANISOTROPIC               221
-#define  OPTIONS_MESH_VISIBILITY_ENTITY         222
-#define  OPTIONS_MESH_VISIBILITY_NUMBER         223
+#define  OPTIONS_MESH_INTERACTIVE               222
+#define  OPTIONS_MESH_VISIBILITY_ENTITY         223
+#define  OPTIONS_MESH_VISIBILITY_NUMBER         224
 
 /* options post */
 

@@ -7,8 +7,7 @@
 #include "Numeric.h"
 
 extern Mesh *THEM;
-extern int Alerte_Point_Scabreux;
-extern int CurrentSimplexNumber;
+extern int CurrentSimplexNumber, FLAG_OLD_CIRCLE;
 
 //static double CIRC_GRAN = 2.2;
 
@@ -262,19 +261,19 @@ void End_Curve (Curve * c){
     mat[0][1] = Curve->Circle.invmat[1][0] = dir12[1];
     mat[0][2] = Curve->Circle.invmat[2][0] = dir12[2];
     
-    /*
+    if(FLAG_OLD_CIRCLE){
       if(n[0] == 0.0 && n[1] == 0.0){
-      mat[2][0] = Curve->Circle.invmat[0][2] = 0;
-      mat[2][1] = Curve->Circle.invmat[1][2] = 0;
-      mat[2][2] = Curve->Circle.invmat[2][2] = 1;
-      mat[1][0] = Curve->Circle.invmat[0][1] = 0;
-      mat[1][1] = Curve->Circle.invmat[1][1] = 1;
-      mat[1][2] = Curve->Circle.invmat[2][1] = 0;
-      mat[0][0] = Curve->Circle.invmat[0][0] = 1;
-      mat[0][1] = Curve->Circle.invmat[1][0] = 0;
-      mat[0][2] = Curve->Circle.invmat[2][0] = 0;
+	mat[2][0] = Curve->Circle.invmat[0][2] = 0;
+	mat[2][1] = Curve->Circle.invmat[1][2] = 0;
+	mat[2][2] = Curve->Circle.invmat[2][2] = 1;
+	mat[1][0] = Curve->Circle.invmat[0][1] = 0;
+	mat[1][1] = Curve->Circle.invmat[1][1] = 1;
+	mat[1][2] = Curve->Circle.invmat[2][1] = 0;
+	mat[0][0] = Curve->Circle.invmat[0][0] = 1;
+	mat[0][1] = Curve->Circle.invmat[1][0] = 0;
+	mat[0][2] = Curve->Circle.invmat[2][0] = 0;
       }
-    */
+    }
 
     Projette (&v1, mat);
     Projette (&v3, mat);

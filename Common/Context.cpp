@@ -128,6 +128,7 @@ void InitColors(rgbacolors * col, int num){
 void InitContext(Context_T *ctx){
 
   ctx->interactive       = 0 ;
+  ctx->expose            = 0 ;
 
   ctx->r[0]              = 0.0 ;
   ctx->r[1]              = 0.0 ;
@@ -220,11 +221,14 @@ void InitContext(Context_T *ctx){
   ctx->mesh.format       = FORMAT_MSH ;
   ctx->mesh.nb_smoothing = 0 ;
   ctx->mesh.algo         = DELAUNAY_OLDALGO ;
+  ctx->mesh.point_insertion = CENTER_CIRCCIRC;
+  ctx->mesh.speed_max    = 0 ;
   ctx->mesh.degree       = 1 ;
-  ctx->mesh.is_limit_gamma = 0 ;
-  ctx->mesh.limit_gamma  = 0.1 ;
+  ctx->mesh.limit_gamma  = 0.0 ;
+  ctx->mesh.limit_eta    = 0.0 ;
+  ctx->mesh.limit_rho    = 0.0 ;
   ctx->mesh.dual         = 0 ;
-  ctx->mesh.reco_extrude = 0 ;
+  ctx->mesh.interactive  = 0 ;
 
   ctx->post.draw         = 1 ;
   ctx->post.scales       = 1 ;
@@ -236,13 +240,8 @@ void InitContext(Context_T *ctx){
   ctx->post.initial_nbiso = 15 ;
   ctx->post.anim_delay    = 0 ;
 
-#ifdef _UNIX
   ctx->print.type        = GLPRPAINTER ;
   ctx->print.format      = FORMAT_EPS ;
-#else
-  ctx->print.type        = -1 ;
-  ctx->print.format      = -1 ;
-#endif
 
   ctx->color.id = -1;
   InitColors(&ctx->color, 0) ;

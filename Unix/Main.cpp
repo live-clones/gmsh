@@ -27,6 +27,9 @@
 #include "Static.h"
 #include "XStatic.h"
 
+char *TheFileNameTab[MAX_OPEN_FILES];
+char *ThePathForIncludes=NULL, *TheBgmFileName=NULL;
+
 /* ------------------------------------------------------------------------ */
 /*  P a r s e                                                               */
 /* ------------------------------------------------------------------------ */
@@ -68,6 +71,8 @@ void ParseFile(char *f){
   fclose(yyin);
 }
 
+extern int SHOW_ALL_ENTITIES ;
+
 void MergeProblem(char *name){
   Msg(INFOS, "Merging %s",name); 
 
@@ -76,7 +81,7 @@ void MergeProblem(char *name){
 
   if (!EntitesVisibles) {
     RemplirEntitesVisibles(1);
-    SHOW_ALL=1;
+    SHOW_ALL_ENTITIES = 1;
   }
 }
 
@@ -85,7 +90,6 @@ void OpenProblem(char *name){
   
   InitSymbols();
   Init_Mesh(&M, 1);
-  BD_EXISTS = 1;
 
   strncpy(TheFileName,name,NAME_STR_L);
   strncpy(TheBaseFileName,name,NAME_STR_L);
@@ -120,7 +124,7 @@ void OpenProblem(char *name){
   CalculateMinMax(THEM->Points);  
   if (!EntitesVisibles) {
     RemplirEntitesVisibles(1);
-    SHOW_ALL=1;
+    SHOW_ALL_ENTITIES = 1;
   }
 
 }
@@ -130,10 +134,11 @@ void OpenProblem(char *name){
 /*  G e t _ O p t i o n s                                                   */
 /* ------------------------------------------------------------------------ */
 
-void Get_Options (int argc, char *argv[]) {
+void Get_Options (int argc, char *argv[], int *nbfiles) {
   int i=1;
   
-  strncpy(TheFileNameTab[0], "unnamed.geo",NAME_STR_L);
+  TheFileNameTab[0] = "unnamed.geo" ;
+  *nbfiles = 0;
   
   while (i < argc) {
     
@@ -153,16 +158,11 @@ void Get_Options (int argc, char *argv[]) {
       }
       else if(!strcmp(argv[i]+1, "path")){ 
 	i++;
-	if(argv[i] != NULL){
-	  strncpy(ThePathForIncludes,argv[i++],NAME_STR_L);
-	}
+	if(argv[i] != NULL) ThePathForIncludes = argv[i++];
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
 	i++;
-	if(argv[i] != NULL){
-	  strncpy(TheBgmFileName,argv[i++],NAME_STR_L);
-	  INITIALBGMESH = ONFILE;
-	}
+	if(argv[i] != NULL) TheBgmFileName = argv[i++];
       }
       else if(!strcmp(argv[i]+1, "alpha")){ 
 	CTX.alpha = 1; i++;
@@ -176,9 +176,6 @@ void Get_Options (int argc, char *argv[]) {
       else if(!strcmp(argv[i]+1, "dual")){ 
 	CTX.mesh.dual = 1; i++;
       }
-      else if(!strcmp(argv[i]+1, "recombine")){
-	CTX.mesh.reco_extrude = 1; i++;
-      }
       else if(!strcmp(argv[i]+1, "samevisual")){ 
 	CTX.same_visual = 1; i++;
       }
@@ -186,17 +183,20 @@ void Get_Options (int argc, char *argv[]) {
 	i++;
 	FACTEUR_MULTIPLICATIF = atof(argv[i]); i++;
       }
+      else if(!strcmp(argv[i]+1, "interactive")){ 
+	CTX.mesh.interactive = 1; i++;
+      }
       else if(!strcmp(argv[i]+1, "scale") ||
 	      !strcmp(argv[i]+1, "scaling")){
 	i++;
 	GLOBALSCALINGFACTOR = atof(argv[i]); i++;
       }
       else if(!strcmp(argv[i]+1, "raw")){ 
-	LISSAGE = 0; i++;
+	CTX.mesh.nb_smoothing = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "smooth")){ 
 	i++;
-	LISSAGE = atoi(argv[i]); i++;
+	CTX.mesh.nb_smoothing = atoi(argv[i]); i++;
       }
       else if(!strcmp(argv[i]+1, "degree")){  
 	i++;
@@ -246,9 +246,9 @@ void Get_Options (int argc, char *argv[]) {
 	i++;
 	if(argv[i]!=NULL){
 	  if(!strcmp(argv[i],"iso"))
-	    CTX.mesh.algo = DELAUNAT_OLDALGO ;
+	    CTX.mesh.algo = DELAUNAY_OLDALGO ;
 	  else if(!strcmp(argv[i],"aniso"))
-	    CTX.mesh.algo = DELAUNAT_NEWALGO ;
+	    CTX.mesh.algo = DELAUNAY_NEWALGO ;
 	  else{
 	    fprintf(stderr, "Error: Unknown mesh algorithm\n");
 	    exit(1);
@@ -354,9 +354,8 @@ void Get_Options (int argc, char *argv[]) {
     }
 
     else {
-      if(NbFileName<MAX_OPEN_FILES){
-	strncpy(TheFileNameTab[NbFileName++], argv[i++], NAME_STR_L); 
-      }
+      if(*nbfiles < MAX_OPEN_FILES)
+	TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       else{
 	fprintf(stderr, "Error: Too many input files\n");
 	exit(1);
@@ -384,16 +383,17 @@ char* ShowVisualClass(int cls){
 /* ------------------------------------------------------------------------ */
 
 int main(int argc, char *argv[]){
-  int     i;
+  int     i, nbf;
   XColor  ov_color_def, ov_color_exact;
-  
+  extern char  *TextBuffer, TextAbout[1024];
+ 
   /* Gmsh default context options */
   
   InitContext(&CTX);
 
   /* Command line options */
 
-  Get_Options(argc, argv);
+  Get_Options(argc, argv, &nbf);
 
   /* Initialize the static Mesh */
 
@@ -422,10 +422,10 @@ int main(int argc, char *argv[]){
     if(yyerrorstate)
       exit(1);
     else{
-      if(NbFileName>1){
-	for(i=1;i<NbFileName;i++) MergeProblem(TheFileNameTab[i]);
+      if(nbf > 1){
+	for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
       }
-      if(INITIALBGMESH == ONFILE){
+      if(TheBgmFileName){
 	MergeProblem(TheBgmFileName);
 	if(List_Nbr(Post_ViewList)){
 	  BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
@@ -556,7 +556,7 @@ int main(int argc, char *argv[]){
 #endif
 
   if(CTX.overlay){
-    Msg(INFO,"Overlay Visual id=%lx depth=%d screen=%d bits/rgb=%d class=%s\n",
+    Msg(INFO,"Overlay Visual id=%lx depth=%d screen=%d bits/rgb=%d class=%s",
 	XCTX.glo.visinfo->visualid, XCTX.glo.visinfo->depth, 
 	XCTX.glo.visinfo->screen, XCTX.glo.visinfo->bits_per_rgb, 
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -722,8 +722,8 @@ int main(int argc, char *argv[]){
 
   /* Merge all Input Files if any, then init first context (geometry or post) */
 
-  if(NbFileName>1){
-    for(i=1;i<NbFileName;i++) MergeProblem(TheFileNameTab[i]);
+  if(nbf > 1){
+    for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
     ActualizeContextCb (NULL,(XtPointer)CONTEXT_POST,NULL); 
   }
   else {
@@ -732,7 +732,7 @@ int main(int argc, char *argv[]){
 
   /* Read background mesh on disk if any */ 
 
-  if(INITIALBGMESH == ONFILE){
+  if(TheBgmFileName){
     MergeProblem(TheBgmFileName);
     if(List_Nbr(Post_ViewList)){
       BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
@@ -745,7 +745,7 @@ int main(int argc, char *argv[]){
   }
   
   /* Compute viewport and Draw */
-  EXPOSE = 1;
+  CTX.expose = 1 ;
   Init();
   Draw();
   

@@ -26,11 +26,11 @@ char clargs[]    =
   "  -1, -2, -3            batch 1-, 2- or 3-dimensional mesh\n"
   "  -format msh|unv       mesh format (default: msh)\n"
   "  -algo iso|aniso       mesh algorithm (default: iso)\n"
-  "  -smooth int           mesh smoothing (default: 3)\n"
+  "  -smooth int           mesh smoothing (default: 0)\n"
   "  -degree int           mesh degree (default: 1)\n"
   "  -scale float          scaling factor (default: 1.0)\n"
   "  -bgm file             load backround mesh from file\n"
-  "  -recombine            recombine extruded meshes\n"
+  "  -interactive          display the mesh construction\n"
   "Post Processing options:\n"
   "  -dl                   enable display lists\n"
   "  -noview               hide all views at startup\n"
@@ -104,7 +104,7 @@ void Signal (int sig_num){
 /*  M s g                                                                   */
 /* ------------------------------------------------------------------------ */
 
-extern char      *TextBuffer;
+char *TextBuffer;
 
 #define PUT_IN_COMMAND_WIN						\
   vsprintf(TextBuffer, fmt, args);					\

@@ -22,25 +22,22 @@
 #include "Numeric.h"
 #include "Context.h"
 
-extern Mesh *THEM, *LOCAL;
-extern Context_T CTX;
-extern int TYPBGMESH, SPEED_MAX;
-extern int CurrentNodeNumber;
-extern int Alerte_Point_Scabreux;
-extern int NbComplexVolumes, FACE_DIMENSION;
-extern double LC;
+extern Mesh       *THEM, *LOCAL;
+extern Context_T   CTX;
+extern int         TYPBGMESH, CurrentNodeNumber, FACE_DIMENSION;
+extern double      LC;
 
 static Tree_T *Tsd, *Sim_Sur_Le_Bord, *POINTS_TREE;
 static List_T *Simplexes_Destroyed, *Simplexes_New, *Suppress;
 static List_T *LLL, *POINTS;
 static Simplex *THES;
 static Vertex *THEV;
-
 static Tree_T *SimXFac;
 static double volume;
 static int ZONEELIMINEE, Methode = 0;
 
-Simplex MyNewBoundary;
+Simplex  MyNewBoundary;
+int      Alerte_Point_Scabreux;
 
 void DebugSimplexe (Simplex * s){
   int i;
@@ -513,7 +510,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
 
   /* calcul des volumes des simplexes crees */
 
-  if (Alerte_Point_Scabreux || !SPEED_MAX){
+  if (Alerte_Point_Scabreux || !CTX.mesh.speed_max){
     volume = 0.0;
     for (i = 0; i < List_Nbr (Simplexes_Destroyed); i++){
       VSIM (List_Pointer (Simplexes_Destroyed, i), NULL);

@@ -50,6 +50,7 @@ typedef struct{
 typedef struct {
 
   int interactive;		/* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
+  int expose;                   /* 1 if everything is ready to expose and draw */
 
   double r[3], t[3], s[3];	/* current rotation, translation and scale */
   int rlock[3], tlock[3], slock[3];	/* locks for r, t and s */
@@ -103,11 +104,11 @@ typedef struct {
     int draw;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
-    int is_limit_gamma, dual;
-    double limit_gamma;
+    double limit_gamma, limit_eta, limit_rho;
+    int dual, interactive;
     int hidden, shade;
     int format, nb_smoothing, algo, degree;
-    int reco_extrude;
+    int point_insertion, speed_max;
     double normals, tangents, explode;
   } mesh;
 

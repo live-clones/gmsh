@@ -190,12 +190,15 @@ void Draw_Simplex_Volume (void *a, void *b){
 
   if(!(*s)->V[3]) return;
 
-  /*
-  if(CTX.mesh.is_limit_gamma)
-  {
-        if((*s)->GammaShapeMeasure() > CTX.mesh.limit_gamma)return;
+  if(CTX.mesh.limit_gamma){
+    if((*s)->GammaShapeMeasure() > CTX.mesh.limit_gamma) return;
   }
-  */
+  if(CTX.mesh.limit_eta){
+    if((*s)->EtaShapeMeasure() > CTX.mesh.limit_eta) return;
+  }
+  if(CTX.mesh.limit_rho){
+    if((*s)->RhoShapeMeasure() > CTX.mesh.limit_rho) return;
+  }
 
   ColorSwitch((*s)->iEnt+1);
 

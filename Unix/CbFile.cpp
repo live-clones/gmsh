@@ -22,13 +22,13 @@ extern Context_T   CTX;
 extern XContext_T  XCTX;
 extern Widgets_T   WID;
 extern Mesh        M;
-extern int         WARNING_OVERRIDE;
+
+static int WARNING_OVERRIDE = 0;
+static char KeepFileName[256];
 
 /* ------------------------------------------------------------------------ */
 /*  C r e a t e I m a g e                                                   */
 /* ------------------------------------------------------------------------ */
-
-static char KeepFileName[256];
 
 void SaveToDisk (char *FileName, Widget warning, 
 		 void (*function)(FILE *file)){

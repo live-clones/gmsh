@@ -954,6 +954,12 @@ void CreateWidgets_OD(Widgets_T *w){
   w->OD.meshAlgoButt[1] = XmCreateToggleButton(w->OD.meshAlgoCheck, "ODmeshAlgoButt1", arg, i);
   XtManageChild(w->OD.meshAlgoButt[1]);
 
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Interactive")); i++;
+  XtSetArg(arg[i], XmNset, CTX.mesh.interactive?True:False); i++;
+  w->OD.meshAlgoButt[2] = XmCreateToggleButton(w->OD.meshAlgoCheck, "ODmeshAlgoButt2", arg, i);
+  XtManageChild(w->OD.meshAlgoButt[2]);
+
   /* Mesh - smoothing */
 
   i=0;
@@ -1703,7 +1709,7 @@ void CreateWidgets_OD(Widgets_T *w){
     HELP DIALOGS
    ------------------------------------------------------------------------ */
 
-extern char TextAbout[1024];
+char TextAbout[1024];
 
 void CreateWidgets_HD(Widgets_T *w){
   int     i;

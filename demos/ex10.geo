@@ -105,9 +105,6 @@ Coherence;
 Extrude(31, {0,0,hg} );
 Coherence;
 
-Surface Loop(127) = {60,-27,-43,61,46,49,52,55,58};
-Complex Volume(128) = {127};
-
 Extrude (105, {0,0,hcav-hg} );
 Coherence;
 
@@ -116,12 +113,6 @@ Coherence;
 
 Characteristic Length {58,71} = 0.01; 
 
-Surface Loop(196) = {31,-115,-117,-96,-99,-102,-104,-173,-184,-186,-165,-168,-171,-195};
-Complex Volume(197) = {196};
-
-Surface Loop(198) = {93,-29,-76,104,173,-144,174,-147,-60,-81,-150,-153,-84,-87,-156,-159,-90,162,165,96,99,102,171,168};
-
-Complex Volume(199) = {198};
 
 GO      = 1 ;
 CAV     = 2 ;
@@ -135,5 +126,3 @@ Physical Volume (DIS)    = 197;
 Physical Volume (CLDSRC) = 46;
 Physical Volume (CLD)    = {61,49,27,52,55,58,81,150,147,84,153,87,156,90,159,29,31,174,195};
 
-
-Point(85) = {0.0,0.0,0.0,1.0};
