@@ -4,13 +4,22 @@ oldw = General.GraphicsWidth;
 oldh = General.GraphicsHeight;
 
 all = GetValue("Animate one view at a time, or all views together (0=one, 1=all)?", 1) ;
-General.GraphicsWidth = GetValue("Width of animation?", 320); 
-General.GraphicsHeight = GetValue("Height of animation?", 240) ;
-format = GetValue("Animation format? (0=mpeg, 1=gif)?", 0) ;
-MPEG = 0;
-GIF = 1;
+General.GraphicsWidth = GetValue("Width of animation?", 640); 
+General.GraphicsHeight = GetValue("Height of animation?", 640) ;
+method = GetValue("Animation method? (0=mpeg_encode, 1=mencoder, 2=whirlgif)?", 0) ;
+MPEG_ENCODE = 0;
+MENCODER = 1;
+WHIRLGIF = 2;
 
 Print.JpegQuality = 100;
+
+// Clean-up temp files from previous run
+If(method == WHIRLGIF)
+  System "rm -f /tmp/tmp*.gif" ;
+EndIf
+If(method == MPEG_ENCODE || method == MENCODER)
+  System "rm -f /tmp/tmp*.jpg /tmp/tmp.par" ;
+EndIf
 
 If(all)
   For i In {1:PostProcessing.NbViews}
@@ -20,10 +29,10 @@ If(all)
   frame = View[0].NbTimeStep;
   For index In {1:View[0].NbTimeStep}
     Draw;
-    If(format == GIF)
+    If(method == WHIRLGIF)
       Print Sprintf("/tmp/tmp%03g.gif", index);
     EndIf
-    If(format == MPEG)
+    If(method == MPEG_ENCODE || method == MENCODER)
       Print Sprintf("/tmp/tmp%03g.jpg", index);
     EndIf
     For i In {1:PostProcessing.NbViews}
@@ -46,10 +55,10 @@ If(!all)
     For j In {1:View[i-1].NbTimeStep}
       index++;
       Draw;
-      If(format == GIF)
+      If(method == WHIRLGIF)
         Print Sprintf("/tmp/tmp%03g.gif", index);
       EndIf
-      If(format == MPEG)
+      If(method == MPEG_ENCODE || method == MENCODER)
         Print Sprintf("/tmp/tmp%03g.jpg", index);
       EndIf
       View[i-1].TimeStep++;
@@ -58,14 +67,18 @@ If(!all)
   EndFor
 EndIf
 
-If(format == GIF)
+If(method == WHIRLGIF)
   // Call whirlgif
   System "whirlgif -minimize -loop -o /tmp/animation.gif /tmp/tmp*.gif" ;
-  // Clean-up
-  System "rm -f /tmp/tmp*.gif" ;
 EndIf
 
-If(format == MPEG)
+If(method == MENCODER)
+  // Call mencoder
+  System "mencoder 'mf:///tmp/tmp*.jpg' -mf fps=5 -o /tmp/animation.mpg -ovc lavc -lavcopts vcodec=mpeg4:vhq";
+  // System "mencoder 'mf:///tmp/tmp*.jpg' -mf fps=5 -o /tmp/animation.mpg -ovc lavc -lavcopts vcodec=mpeg1video:vhq";
+EndIf
+
+If(method == MPEG_ENCODE)
   // create the parameter file for mpeg_encode
   System 'echo "PATTERN          I"                > /tmp/tmp.par' ;
   System 'echo "BASE_FILE_FORMAT JPEG"            >> /tmp/tmp.par' ;
@@ -87,8 +100,6 @@ If(format == MPEG)
   System 'echo "END_INPUT"                        >> /tmp/tmp.par' ;
   // Call mpeg_encode
   System "mpeg_encode /tmp/tmp.par" ;
-  // Clean-up
-  System "rm -f /tmp/tmp*.jpg /tmp/tmp.par" ;
 EndIf
 
 General.GraphicsWidth = oldw;
