@@ -102,16 +102,11 @@ For num In {1:255}
     Sleep 0.01; // sleep for 0.01 second
     Draw; // draw the scene
 
-    If ((num == 3) && (num2 < 10))
+    If (num == 3)
       // The `Print' command saves the graphical window; the `Sprintf'
       // function permits to create the file names on the fly:
-      Print Sprintf("t8-0%g.gif", num2);
-      Print Sprintf("t8-0%g.jpg", num2);
-    EndIf
-
-    If ((num == 3) && (num2 >= 10))
-       Print Sprintf("t8-%g.gif", num2);
-       Print Sprintf("t8-%g.jpg", num2);
+      Print Sprintf("t8-%02g.gif", num2);
+      Print Sprintf("t8-%02g.jpg", num2);
     EndIf
 
   EndFor
