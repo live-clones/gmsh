@@ -1,11 +1,14 @@
-// $Id: Plugin.cpp,v 1.19 2001-08-06 11:00:26 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.20 2001-08-07 21:00:10 remacle Exp $
 
 #ifndef _NODLL
 #include <dlfcn.h>
 #endif
 
 #include <map>
+
+#ifdef _FLTK
 #include <FL/filename.H>
+#endif
 
 #include "Plugin.h"
 #include "PluginManager.h"
@@ -116,6 +119,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Transform",
 						  GMSH_RegisterTransformPlugin()));
 
+#ifdef _FLTK
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins)return;
   int nbFiles = filename_list(homeplugins,&list);
@@ -131,11 +135,12 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
   }
   for(int i=0;i<nbFiles;i++)free(list[i]);
   free (list);
+#endif
 }
 
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName){
 
-#if ( defined(WIN32) && !defined(__CYGWIN__) ) || defined(_NODLL)
+#if ( defined(WIN32) && !defined(__CYGWIN__) ) || defined(_NODLL) || !defined(_FLTK)
   Msg(WARNING,"No dynamic plugin loading on this platform");
   return;
 #else

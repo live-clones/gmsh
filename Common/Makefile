@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.22 2001-07-30 15:39:56 geuzaine Exp $
+# $Id: Makefile,v 1.23 2001-08-07 21:00:10 remacle Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -28,6 +28,7 @@ CFLAGS  = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
 
 SRC =  	Context.cpp\
         Views.cpp\
+        Iso.cpp\
         Options.cpp\
         GetOptions.cpp\
         Timer.cpp\
@@ -62,32 +63,3 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Const.h ../Geo/Geo.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Context.h \
- Options.h DefaultOptions.h trackball.c trackball.h
-Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Views.h Const.h ColorTable.h Context.h Options.h
-Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Context.h \
- Const.h Options.h ../Fltk/Solvers.h ../Fltk/GUI.h \
- ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
-GetOptions.o: GetOptions.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h GmshUI.h GmshVersion.h Const.h Context.h Options.h \
- ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
- ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Views.h \
- ColorTable.h ../Parser/OpenFile.h ../Common/Const.h \
- ../Parser/Parser.h
-Timer.o: Timer.cpp
-ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h ColorTable.h Context.h Const.h

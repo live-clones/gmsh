@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2001-07-30 15:39:57 geuzaine Exp $
+# $Id: Makefile,v 1.8 2001-08-07 21:00:10 remacle Exp $
 #
 # Makefile for "libDataStr.a"
 #
@@ -52,8 +52,3 @@ depend:
 
 
 # DO NOT DELETE THIS LINE
-List.o: List.cpp Malloc.h List.h ../Common/Message.h
-Malloc.o: Malloc.cpp Malloc.h ../Common/Message.h
-Tree.o: Tree.cpp Malloc.h Tree.h avl.h ../Common/Message.h
-avl.o: avl.cpp avl.h Malloc.h
-Tools.o: Tools.cpp Tools.h List.h Tree.h avl.h

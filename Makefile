@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.121 2001-08-06 18:14:26 geuzaine Exp $
+# $Id: Makefile,v 1.122 2001-08-07 21:00:10 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -56,7 +56,7 @@ FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libf
                           Motif Fltk Plugin jpeg utils
         GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
           GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin
-           GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser
+           GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin
            GMSH_BIN_DIR = bin
            GMSH_LIB_DIR = lib
            GMSH_DOC_DIR = doc
@@ -70,7 +70,7 @@ FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libf
           GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
                                             -lAdapt -lCommon -lDataStr -lJpeg -lPlugin 
            GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
-                                            -lAdapt -lCommon -lDataStr
+                                            -lAdapt -lPlugin -lCommon -lDataStr
            GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
             GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
            GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
@@ -268,11 +268,11 @@ bb: tag
            "CC=$(CC)" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_BLACKBOX -D_NOPLUGIN" \
+           "VERSION_FLAGS=-D_BLACKBOX" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_BOX_LIB) -lm
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
 
 bbn: tag
 	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \
