@@ -455,6 +455,8 @@ StringXNumber ViewOptions_Number[] = {
     "Draw the N-b dimensional boundary of the simplex (N=dimension, b=option value" },
   { F|O, "Light" , opt_view_light , 0. ,
     "Enable light sources?" },
+  { F|O, "SmoothNormals" , opt_view_smooth_normals , 1. ,
+    "Smooth the normals?" },
   { F|O, "ShowElement" , opt_view_show_element , 0. ,
     "Show element boundaries?" },
   { F|O, "ShowTime" , opt_view_show_time , 1. ,

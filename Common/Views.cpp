@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.42 2001-07-26 21:45:48 remacle Exp $
+// $Id: Views.cpp,v 1.43 2001-07-30 18:34:26 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -409,6 +409,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->Boundary = src->Boundary ;
   dest->NbIso = src->NbIso;
   dest->Light = src->Light ;
+  dest->SmoothNormals = src->SmoothNormals ;
   dest->ShowElement = src->ShowElement;
   dest->ShowTime = src->ShowTime;
   dest->ShowScale = src->ShowScale;

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.8 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Entity.cpp,v 1.9 2001-07-30 18:34:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -48,42 +48,35 @@ void Draw_Triangle (double *x, double *y, double *z, double *n,
 
   glBegin(GL_TRIANGLES);
   if (shade){
-    if(!n)
-      {
-	x1x0 = (x[1]+Raise[0][1]) - (x[0]+Raise[0][0]); 
-	y1y0 = (y[1]+Raise[1][1]) - (y[0]+Raise[1][0]);
-	z1z0 = (z[1]+Raise[2][1]) - (z[0]+Raise[2][0]); 
-	x2x0 = (x[2]+Raise[0][2]) - (x[0]+Raise[0][0]);
-	y2y0 = (y[2]+Raise[1][2]) - (y[0]+Raise[1][0]); 
-	z2z0 = (z[2]+Raise[2][2]) - (z[0]+Raise[2][0]);
-	nn[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
-	nn[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
-	nn[2]  = x1x0 * y2y0 - y1y0 * x2x0 ;
-      }
-  }
-
-  if (shade){
-    if(!n)
+    if(!n){
+      x1x0 = (x[1]+Raise[0][1]) - (x[0]+Raise[0][0]); 
+      y1y0 = (y[1]+Raise[1][1]) - (y[0]+Raise[1][0]);
+      z1z0 = (z[1]+Raise[2][1]) - (z[0]+Raise[2][0]); 
+      x2x0 = (x[2]+Raise[0][2]) - (x[0]+Raise[0][0]);
+      y2y0 = (y[2]+Raise[1][2]) - (y[0]+Raise[1][0]); 
+      z2z0 = (z[2]+Raise[2][2]) - (z[0]+Raise[2][0]);
+      nn[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
+      nn[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
+      nn[2]  = x1x0 * y2y0 - y1y0 * x2x0 ;
       glNormal3dv(nn);
+    }
     else
       glNormal3dv(&n[0]);
   }
-
+  
   glVertex3d(x[0]+Offset[0]+Raise[0][0],
              y[0]+Offset[1]+Raise[1][0],
              z[0]+Offset[2]+Raise[2][0]);
 
-  if (shade && n){
+  if (shade && n)
     glNormal3dv(&n[3]);
-  }
 
   glVertex3d(x[1]+Offset[0]+Raise[0][1],
              y[1]+Offset[1]+Raise[1][1],
              z[1]+Offset[2]+Raise[2][1]);
 
-  if (shade && n){
+  if (shade && n)
     glNormal3dv(&n[6]);
-  }
 
   glVertex3d(x[2]+Offset[0]+Raise[0][2],
              y[2]+Offset[1]+Raise[1][2],
@@ -103,30 +96,27 @@ void Draw_Quadrangle (double *x, double *y, double *z, double *n,
     I think this gives better results
   */
   
-
   double x2[3]={x[2],x[3],x[0]};
   double y2[3]={y[2],y[3],y[0]};
   double z2[3]={z[2],z[3],z[0]};
+
   Draw_Triangle(x,y,z,n,Offset,Raise,shade);
-  if (n)
-    {
-      double n2[9]; 
-      n2[0] = n[6];
-      n2[1] = n[7];
-      n2[2] = n[8];
-      n2[3] = n[9];
-      n2[4] = n[10];
-      n2[5] = n[11];
-      n2[6] = n[0];
-      n2[7] = n[1];
-      n2[8] = n[2];
-      Draw_Triangle(x2,y2,z2,n2,Offset,Raise,shade);
-    }
+  if (n){
+    double n2[9]; 
+    n2[0] = n[6];
+    n2[1] = n[7];
+    n2[2] = n[8];
+    n2[3] = n[9];
+    n2[4] = n[10];
+    n2[5] = n[11];
+    n2[6] = n[0];
+    n2[7] = n[1];
+    n2[8] = n[2];
+    Draw_Triangle(x2,y2,z2,n2,Offset,Raise,shade);
+  }
   else
     Draw_Triangle(x2,y2,z2,n,Offset,Raise,shade);
 
-
-  return;
 }
 
 /* ------------------------------------------------------------------------ */

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.65 2001-07-26 18:47:59 remacle Exp $
+// $Id: Callbacks.cpp,v 1.66 2001-07-30 18:34:26 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1679,6 +1679,7 @@ void view_options_ok_cb(CALLBACK_ARGS){
       opt_view_show_time(i, GMSH_SET, WID->view_butt[15]->value());
       opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[16]->value());
       opt_view_light(i,GMSH_SET,WID->view_butt[17]->value());
+      opt_view_smooth_normals(i,GMSH_SET,WID->view_butt[27]->value());
       opt_view_draw_points(i, GMSH_SET, WID->view_butt[18]->value());
       opt_view_draw_lines(i, GMSH_SET, WID->view_butt[19]->value());
       opt_view_draw_triangles(i, GMSH_SET, WID->view_butt[20]->value());

@@ -94,7 +94,7 @@ void Draw_VectorLine(Post_View *View,
 void Draw_TensorLine(Post_View *View, 
 		     double ValMin, double ValMax, double Raise[3][5],
 		     double *X, double *Y, double *Z, double *V);
-void Draw_ScalarTriangle(Post_View *View, 
+void Draw_ScalarTriangle(Post_View *View, int preproNormals,
 			 double ValMin, double ValMax, double Raise[3][5],
 			 double *X, double *Y, double *Z, double *V);
 void Draw_VectorTriangle(Post_View *View, 
@@ -103,8 +103,7 @@ void Draw_VectorTriangle(Post_View *View,
 void Draw_TensorTriangle(Post_View *View, 
 			 double ValMin, double ValMax, double Raise[3][5],
 			 double *X, double *Y, double *Z, double *V);
-void Draw_ScalarTetrahedron(Post_View *View, 
-			    int preproNormals,
+void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
 			    double ValMin, double ValMax, double Raise[3][5],
 			    double *X, double *Y, double *Z, double *V);
 void Draw_VectorTetrahedron(Post_View *View, 

@@ -30,7 +30,7 @@ class Post_View{
   char   Format[NAME_STR_L];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale;
-  int Visible, IntervalsType, NbIso, Light ;
+  int Visible, IntervalsType, NbIso, Light, SmoothNormals ;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
   int TransparentScale, ScaleType, RangeType;

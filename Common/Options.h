@@ -209,6 +209,7 @@ double opt_view_saturate_values(OPT_ARGS_NUM);
 double opt_view_nb_iso(OPT_ARGS_NUM);
 double opt_view_boundary(OPT_ARGS_NUM);
 double opt_view_light(OPT_ARGS_NUM);
+double opt_view_smooth_normals(OPT_ARGS_NUM);
 double opt_view_show_element(OPT_ARGS_NUM);
 double opt_view_show_time(OPT_ARGS_NUM);
 double opt_view_show_scale(OPT_ARGS_NUM);

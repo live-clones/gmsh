@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.18 2001-07-26 18:47:59 remacle Exp $
+// $Id: PostSimplex.cpp,v 1.19 2001-07-30 18:34:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -125,45 +125,35 @@ void Draw_ScalarLine(Post_View *View,
 
 }
 
-void Draw_ScalarTriangle(Post_View *View, 
+void Draw_ScalarTriangle(Post_View *View, int preproNormals,
 			 double ValMin, double ValMax, double Raise[3][5],
 			 double *X, double *Y, double *Z, double *V){
 
   int     i, k, nb=0;
   double  d;
-  double  x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
+  double  x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3], norms[9];
   double  Xp[5],Yp[5],Zp[5],Val[3],value[5],thev;
   char    Num[100] ;
 
-  /** JF 
-     Saturation of values 
-  */
-  {
-    double *vv = &V[3*View->TimeStep];
-    if(View->SaturateValues)
-      {
-	for(i=0;i<3;i++)
-	  {
-	    
-	    if(vv[i] > ValMax) Val[i] = ValMax;
-	    else if(vv[i] < ValMin) Val[i] = ValMin;
-	    else Val[i] = vv[i];
-	  }
-      }
-    else
-      {
-	for(i=0;i<3;i++)
-	  {	      
-	    Val[i] = vv[i];
-	  }
-      }
+  double *vv = &V[3*View->TimeStep];
+  if(View->SaturateValues){
+    for(i=0;i<3;i++){
+      if(vv[i] > ValMax) Val[i] = ValMax;
+      else if(vv[i] < ValMin) Val[i] = ValMin;
+      else Val[i] = vv[i];
+    }
   }
-  /** - END JF - **/
+  else{
+    for(i=0;i<3;i++){	      
+      Val[i] = vv[i];
+    }
+  }
 
   for(k=0 ; k<3 ; k++)
     RaiseFill(k, Val[k], ValMin, Raise);
 
   if(View->Light){
+
     x1x0 = (X[1]+Raise[0][1]) - (X[0]+Raise[0][0]); 
     y1y0 = (Y[1]+Raise[1][1]) - (Y[0]+Raise[1][0]);
     z1z0 = (Z[1]+Raise[2][1]) - (Z[0]+Raise[2][0]); 
@@ -173,8 +163,38 @@ void Draw_ScalarTriangle(Post_View *View,
     nn[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
     nn[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
     nn[2]  = x1x0 * y2y0 - y1y0 * x2x0 ;
+
+    if(View->SmoothNormals){
+      if(preproNormals){
+	for(i=0;i<3;i++){
+	  View->add_normal(X[i]+Raise[0][i],Y[i]+Raise[1][i],Z[i]+Raise[2][i],
+			   nn[0],nn[1],nn[2]);
+	}
+	return;
+      }
+      else{
+	for(i=0;i<3;i++){
+	  if(!View->get_normal(X[i]+Raise[0][i],Y[i]+Raise[1][i],Z[i]+Raise[2][i],
+			       norms[3*i],norms[3*i+1],norms[3*i+2])){
+	    //Msg(WARNING, "Oups, did not find smoothed normal");
+	    norms[3*i] = nn[0];
+	    norms[3*i+1] = nn[1];
+	    norms[3*i+2] = nn[2];
+	  }
+	}
+      }
+    }
+    else{
+      for(i=0;i<3;i++){
+	norms[3*i] = nn[0];
+	norms[3*i+1] = nn[1];
+	norms[3*i+2] = nn[2];
+      }
+    }
     glNormal3dv(nn);
   }
+
+  if(preproNormals) return;
 
   if(View->ShowElement){
     glColor4ubv((GLubyte*)&CTX.color.fg);
@@ -210,14 +230,17 @@ void Draw_ScalarTriangle(Post_View *View,
          Val[2]>=ValMin && Val[2]<=ValMax){
         glBegin(GL_TRIANGLES);
 	Palette2(View,ValMin,ValMax,Val[0]);
+	glNormal3dv(&norms[0]);
         glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
                    Y[0]+View->Offset[1]+Raise[1][0],
                    Z[0]+View->Offset[2]+Raise[2][0]);
 	Palette2(View,ValMin,ValMax,Val[1]);
+	glNormal3dv(&norms[3]);
         glVertex3d(X[1]+View->Offset[0]+Raise[0][1],
                    Y[1]+View->Offset[1]+Raise[1][1],
                    Z[1]+View->Offset[2]+Raise[2][1]);
 	Palette2(View,ValMin,ValMax,Val[2]);
+	glNormal3dv(&norms[6]);
         glVertex3d(X[2]+View->Offset[0]+Raise[0][2],
                    Y[2]+View->Offset[1]+Raise[1][2],
                    Z[2]+View->Offset[2]+Raise[2][2]);
@@ -271,22 +294,16 @@ void Draw_ScalarTriangle(Post_View *View,
     
 }
 
-void Draw_ScalarTetrahedron(Post_View *View,
-			    int preproNormals,
-			    double ValMin, 
-			    double ValMax, 
-			    double Raise[3][5],
-			    double *X, 
-			    double *Y, 
-			    double *Z, 
-			    double *V){
+void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
+			    double ValMin, double ValMax, double Raise[3][5],
+			    double *X, double *Y, double *Z, double *V){
 
   int     k,i;
-  double  d, xx[4], yy[4], zz[4], vv[4];
+  double  d, xx[4], yy[4], zz[4];
   char Num[100];
   double Val[4];
 
-  if(View->Boundary == 2){
+  if(!preproNormals && View->Boundary == 2){
     // boundary == 0 should draw the tet
     // boundary == 1 should draw the faces
     // boundary == 2 should draw the edges
@@ -295,46 +312,36 @@ void Draw_ScalarTetrahedron(Post_View *View,
     Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//12
     Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[2], &Y[2], &Z[2], &V[2]);//23
     // beeek...
-    xx[0] = X[0]; yy[0] = Y[0]; zz[0] = Z[0]; vv[0] = V[0];
-    xx[1] = X[2]; yy[1] = Y[2]; zz[1] = Z[2]; vv[1] = V[2];
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv);//02
-    xx[1] = X[3]; yy[1] = Y[3]; zz[1] = Z[3]; vv[1] = V[3];
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv);//03
-    xx[0] = X[1]; yy[0] = Y[1]; zz[0] = Z[1]; vv[0] = V[1];
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv);//13
+    xx[0] = X[0]; yy[0] = Y[0]; zz[0] = Z[0]; Val[0] = V[0];
+    xx[1] = X[2]; yy[1] = Y[2]; zz[1] = Z[2]; Val[1] = V[2];
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, Val);//02
+    xx[1] = X[3]; yy[1] = Y[3]; zz[1] = Z[3]; Val[1] = V[3];
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, Val);//03
+    xx[0] = X[1]; yy[0] = Y[1]; zz[0] = Z[1]; Val[0] = V[1];
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, Val);//13
     return;
   }
 
-  /** JF 
-     Saturation of values 
-  */
-  {
-    double *vv = &V[4*View->TimeStep];
-    if(View->SaturateValues)
-      {
-	for(i=0;i<4;i++)
-	  {
-	    
-	    if(vv[i] > ValMax) Val[i] = ValMax;
-	    else if(vv[i] < ValMin) Val[i] = ValMin;
-	    else Val[i] = vv[i];
-	  }
-      }
-    else
-      {
-	for(i=0;i<4;i++)
-	  {	      
-	    Val[i] = vv[i];
-	  }
-      }
-  }
-  /** - END JF - **/
+  // Saturation of values 
 
+  double *vv = &V[4*View->TimeStep];
+  if(View->SaturateValues){
+    for(i=0;i<4;i++){
+      if(vv[i] > ValMax) Val[i] = ValMax;
+      else if(vv[i] < ValMin) Val[i] = ValMin;
+      else Val[i] = vv[i];
+    }
+  }
+  else{
+    for(i=0;i<4;i++){	      
+      Val[i] = vv[i];
+    }
+  }
 
   for(k=0 ; k<4 ; k++)
     RaiseFill(k, V[4*View->TimeStep+k], ValMin, Raise);
 
-  if(View->ShowElement){
+  if(!preproNormals && View->ShowElement){
     glColor4ubv((GLubyte*)&CTX.color.fg);
     for(k=0 ; k<4 ; k++){
       xx[k] = X[k]+View->Offset[0]+Raise[0][k] ;
@@ -351,7 +358,7 @@ void Draw_ScalarTetrahedron(Post_View *View,
     glEnd();
   }
 
-  if(View->IntervalsType == DRAW_POST_NUMERIC && !preproNormals){
+  if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC){
 
     d = 0.25 * (Val[0]  +Val[1]+Val[2] + Val[3]);
     if(d >= ValMin && d <= ValMax){
@@ -369,11 +376,10 @@ void Draw_ScalarTetrahedron(Post_View *View,
   }
   else{
     for(k=0 ; k<View->NbIso ; k++){
-      if(!preproNormals)Palette(View,View->NbIso,k);
-      IsoSimplex(View,preproNormals,
-		 X, Y, Z, Val,
+      if(!preproNormals) Palette(View,View->NbIso,k);
+      IsoSimplex(View, preproNormals, X, Y, Z, Val,
 		 View->GVFI(ValMin,ValMax,View->NbIso,k), 
-		 ValMin, ValMax, View->Offset, Raise, View->Light);
+		 ValMin, ValMax, View->Offset, Raise);
     }
 
   }

@@ -10,11 +10,9 @@
 
 extern Context_T   CTX;
 
-/*
-  compute the gradient of a linear interpolation in a tetrahedron
-*/
-void gradSimplex (double *x, double *y, double *z, double *v, double *grad)
-{
+// compute the gradient of a linear interpolation in a tetrahedron
+
+void gradSimplex (double *x, double *y, double *z, double *v, double *grad){
   /*
     p = p1 * (1-u-v-w) + p2 u + p3 v + p4 w
    */
@@ -36,10 +34,6 @@ void gradSimplex (double *x, double *y, double *z, double *v, double *grad)
   sys3x3 (mat, b, grad, &det); 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  S i m p l e x                                                           */
-/* ------------------------------------------------------------------------ */
-
 void EnhanceSimplexPolygon (Post_View *View,
 			    int nb, // nb of points in polygon 
 			    double *Xp, // x positions
@@ -52,8 +46,7 @@ void EnhanceSimplexPolygon (Post_View *View,
 			    double *Val, // values at simplex points
 			    double *norms, // output : normals at points
 			    int preproNormals  // do we compute normals or do we get them
-			    )
-{
+			    ){
   /*
     3 possibilities for quads
       -) 0,2,5,3
@@ -65,24 +58,28 @@ void EnhanceSimplexPolygon (Post_View *View,
   int i;
   double Xpi[6],Ypi[6],Zpi[6];
 
-  if(nb == 4)
-    {
-      double xx =  Xp[3];
-      double yy =  Yp[3];
-      double zz =  Zp[3];
-      Xp[3] = Xp[2]; 
-      Yp[3] = Yp[2]; 
-      Zp[3] = Zp[2];
-      Xp[2] = xx;
-      Yp[2] = yy;
-      Zp[2] = zz;
-    }
+  if(nb == 4){
+    double xx =  Xp[3];
+    double yy =  Yp[3];
+    double zz =  Zp[3];
+    Xp[3] = Xp[2]; 
+    Yp[3] = Yp[2]; 
+    Zp[3] = Zp[2];
+    Xp[2] = xx;
+    Yp[2] = yy;
+    Zp[2] = zz;
+  }
 
   /*
     for having a nice isosurface, we should have n . grad v > 0
     n = normal to the polygon
     v = unknown field we wanna draw
    */
+
+  if(!View->Light){
+    norms = NULL; // we don't need to compute these
+    return;
+  }
 
   double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
   double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
@@ -93,49 +90,50 @@ void EnhanceSimplexPolygon (Post_View *View,
   gradSimplex(X,Y,Z,Val,gr);      
   prosca(gr,n,&xx);
   
-  if(xx > 0)
-    {
-      for(i=0;i<nb;i++)
-	{
-	  Xpi[i] = Xp[i];
-	  Ypi[i] = Yp[i];
-	  Zpi[i] = Zp[i];
-	}
-      for(i=0;i<nb;i++)
-	{
-	  Xp[i] = Xpi[nb-i-1];
-	  Yp[i] = Ypi[nb-i-1];
-	  Zp[i] = Zpi[nb-i-1];	      
-	}
+  if(xx > 0){
+    for(i=0;i<nb;i++){
+      Xpi[i] = Xp[i];
+      Ypi[i] = Yp[i];
+      Zpi[i] = Zp[i];
     }
-  else
-    {
-      n[0] = -n[0];
-      n[1] = -n[1];
-      n[2] = -n[2];
+    for(i=0;i<nb;i++){
+      Xp[i] = Xpi[nb-i-1];
+      Yp[i] = Ypi[nb-i-1];
+      Zp[i] = Zpi[nb-i-1];	      
     }
-
-  if(preproNormals)
-    {
-      for(i=0;i<nb;i++)
-	{
-	  View->add_normal(Xp[i],Yp[i],Zp[i],n[0],n[1],n[2]);
-	}
+  }
+  else{
+    n[0] = -n[0];
+    n[1] = -n[1];
+    n[2] = -n[2];
+  }
+  
+  if(View->SmoothNormals){
+    if(preproNormals){
+      for(i=0;i<nb;i++){
+	View->add_normal(Xp[i],Yp[i],Zp[i],n[0],n[1],n[2]);
+      }
       return;
     }
-  else
-    {
-      for(i=0;i<nb;i++)
-	{
-	  if(!View->get_normal(Xp[i],Yp[i],Zp[i],norms[3*i],norms[3*i+1],norms[3*i+2]))
-	    {
-	      //printf("coucou\n");
-	      norms[3*i] = n[0];
-	      norms[3*i+1] = n[1];
-	      norms[3*i+2] = n[2];
-	    }	      
-	}	  
-    }  
+    else{
+      for(i=0;i<nb;i++){
+	if(!View->get_normal(Xp[i],Yp[i],Zp[i],norms[3*i],norms[3*i+1],norms[3*i+2])){
+	  //Msg(WARNING, "Oups, did not find smoothed normal");
+	  norms[3*i] = n[0];
+	  norms[3*i+1] = n[1];
+	  norms[3*i+2] = n[2];
+	}	      
+      }	  
+    }
+  }
+  else{
+    for(i=0;i<nb;i++){
+      norms[3*i] = n[0];
+      norms[3*i+1] = n[1];
+      norms[3*i+2] = n[2];
+    }
+  }
+
 }
 
 
@@ -143,7 +141,7 @@ void IsoSimplex( Post_View *View,
 		 int preproNormals,
 		 double *X, double *Y, double *Z, double *Val, 
 		 double V, double Vmin, double Vmax, 
-		 double *Offset, double Raise[3][5], int shade){
+		 double *Offset, double Raise[3][5]){
   int    nb;
   double Xp[6],Yp[6],Zp[6],PVals[6];
   double norms[12];
@@ -198,8 +196,8 @@ void IsoSimplex( Post_View *View,
   if(preproNormals)return;
 
   if(nb == 3) 
-    Draw_Triangle(Xp,Yp,Zp,norms,Offset,Raise,shade);
+    Draw_Triangle(Xp,Yp,Zp,norms,Offset,Raise,View->Light);
   else if(nb == 4)
-    Draw_Quadrangle(Xp,Yp,Zp,norms,Offset,Raise,shade);  
+    Draw_Quadrangle(Xp,Yp,Zp,norms,Offset,Raise,View->Light);  
 }
 

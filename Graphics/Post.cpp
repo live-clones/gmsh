@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.17 2001-07-26 18:47:59 remacle Exp $
+// $Id: Post.cpp,v 1.18 2001-07-30 18:34:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -159,7 +159,7 @@ void Draw_Post (void) {
 
         if(CTX.display_lists){
           if(glIsList(v->Num)) glDeleteLists(v->Num,1);
-          // Msg(STATUS2, "New Display List");
+          Msg(DEBUG, "New Display List");
           glNewList(v->Num, GL_COMPILE_AND_EXECUTE);
         }
 
@@ -274,12 +274,28 @@ void Draw_Post (void) {
 	
 	if(v->NbST && v->DrawTriangles && v->DrawScalars){
 	  nb = List_Nbr(v->ST) / v->NbST ;
-	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
-	    Draw_ScalarTriangle(v, ValMin, ValMax, Raise,
-				(double*)List_Pointer_Fast(v->ST,i),
-				(double*)List_Pointer_Fast(v->ST,i+3),
-				(double*)List_Pointer_Fast(v->ST,i+6),
-				(double*)List_Pointer_Fast(v->ST,i+9));
+	  if(v->Light && v->SmoothNormals){ //two passes 
+	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
+	      Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise,
+				  (double*)List_Pointer_Fast(v->ST,i),
+				  (double*)List_Pointer_Fast(v->ST,i+3),
+				  (double*)List_Pointer_Fast(v->ST,i+6),
+				  (double*)List_Pointer_Fast(v->ST,i+9));
+	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
+	      Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise,
+				  (double*)List_Pointer_Fast(v->ST,i),
+				  (double*)List_Pointer_Fast(v->ST,i+3),
+				  (double*)List_Pointer_Fast(v->ST,i+6),
+				  (double*)List_Pointer_Fast(v->ST,i+9));
+	  }
+	  else{
+	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
+	      Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise,
+				  (double*)List_Pointer_Fast(v->ST,i),
+				  (double*)List_Pointer_Fast(v->ST,i+3),
+				  (double*)List_Pointer_Fast(v->ST,i+6),
+				  (double*)List_Pointer_Fast(v->ST,i+9));
+	  }
 	}
 	if(v->NbVT && v->DrawTriangles && v->DrawVectors){
 	  nb = List_Nbr(v->VT) / v->NbVT ;
@@ -313,18 +329,28 @@ void Draw_Post (void) {
 	
 	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
 	  nb = List_Nbr(v->SS) / v->NbSS ;
-	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	    Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
-				   (double*)List_Pointer_Fast(v->SS,i),
-				   (double*)List_Pointer_Fast(v->SS,i+4),
-				   (double*)List_Pointer_Fast(v->SS,i+8),
-				   (double*)List_Pointer_Fast(v->SS,i+12));
-	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	    Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
-				   (double*)List_Pointer_Fast(v->SS,i),
-				   (double*)List_Pointer_Fast(v->SS,i+4),
-				   (double*)List_Pointer_Fast(v->SS,i+8),
-				   (double*)List_Pointer_Fast(v->SS,i+12));
+	  if(v->Light && v->SmoothNormals){ //two passes 
+	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
+	      Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
+				     (double*)List_Pointer_Fast(v->SS,i),
+				     (double*)List_Pointer_Fast(v->SS,i+4),
+				     (double*)List_Pointer_Fast(v->SS,i+8),
+				     (double*)List_Pointer_Fast(v->SS,i+12));
+	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
+	      Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
+				     (double*)List_Pointer_Fast(v->SS,i),
+				     (double*)List_Pointer_Fast(v->SS,i+4),
+				     (double*)List_Pointer_Fast(v->SS,i+8),
+				     (double*)List_Pointer_Fast(v->SS,i+12));
+	  }
+	  else{
+	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
+	      Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
+				     (double*)List_Pointer_Fast(v->SS,i),
+				     (double*)List_Pointer_Fast(v->SS,i+4),
+				     (double*)List_Pointer_Fast(v->SS,i+8),
+				     (double*)List_Pointer_Fast(v->SS,i+12));
+	  }
 	}
 	if(v->NbVS && v->DrawTetrahedra && v->DrawVectors){
 	  nb = List_Nbr(v->VS) / v->NbVS ;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.92 2001-07-26 21:36:31 remacle Exp $
+// $Id: GUI.cpp,v 1.93 2001-07-30 18:34:26 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1899,7 +1899,13 @@ void GUI::create_view_options_window(int num){
         view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Show color bar");
         view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Display time");
         view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Transparent color bar");
-	view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, IW, BH, "Enable Lighting");
+	view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Enable Lighting");
+
+	view_butt[27] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Smooth normals");	
+	view_butt[27]->type(FL_TOGGLE_BUTTON);
+	view_butt[27]->down_box(FL_DOWN_BOX);
+	view_butt[27]->labelsize(CTX.fontsize);
+	view_butt[27]->selection_color(FL_YELLOW);
 
         view_butt[18] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "Draw points");
         view_butt[19] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Draw lines");
@@ -1915,13 +1921,15 @@ void GUI::create_view_options_window(int num){
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	}
-	view_input[0] = new Fl_Input(2*WB, 2*WB+6*BH, IW, BH, "Name");
-	view_input[1] = new Fl_Input(2*WB, 2*WB+7*BH, IW, BH, "Format");
+
+	view_input[0] = new Fl_Input(2*WB, 2*WB+7*BH, IW, BH, "Name");
+	view_input[1] = new Fl_Input(2*WB, 2*WB+8*BH, IW, BH, "Format");
 	for(i=0 ; i<2 ; i++){
 	  view_input[i]->labelsize(CTX.fontsize);
 	  view_input[i]->textsize(CTX.fontsize);
 	  view_input[i]->align(FL_ALIGN_RIGHT);
 	}
+
         o->end();
       }
       // Range
@@ -2186,6 +2194,7 @@ void GUI::update_view_window(int num){
 
   // light
   opt_view_light(num, GMSH_GUI, 0);
+  opt_view_smooth_normals(num, GMSH_GUI, 0);
 
   // OK
   view_ok->callback(view_options_ok_cb, (void*)num);
