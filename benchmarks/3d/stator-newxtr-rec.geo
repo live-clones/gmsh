@@ -63,148 +63,68 @@ Plane Surface(10) = {9};
 
 // 1st gap
 
-Extrude Surface {2, {0,0,1}, {0,0,0}, Pi/180}{  
-Recombine ; Layers { {1}, {9000+100}, {1} } ;
-};
-Extrude Surface {4, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9004+100}, {1} } ;
-};
-Extrude Surface {6, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9008+100}, {1} } ;
-};
-Extrude Surface {8, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9012+100}, {1} } ;
-};
-Extrude Surface {10, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9016+100}, {1} } ;
-};
+Extrude Surface {2, {0,0,1}, {0,0,0}, Pi/180}{ Recombine ; Layers { 1, 9000+100, 1 } ;};
+Extrude Surface {4, {0,0,1}, {0,0,0}, Pi/180}{ Recombine ; Layers { 1, 9004+100, 1 } ;};
+Extrude Surface {6, {0,0,1}, {0,0,0}, Pi/180}{ Recombine ; Layers { 1, 9008+100, 1 } ;};
+Extrude Surface {8, {0,0,1}, {0,0,0}, Pi/180}{ Recombine ; Layers { 1, 9012+100, 1 } ;};
+Extrude Surface {10, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { 1, 9016+100, 1 } ;};
 
 // 1st piezo
-
-Extrude Surface {37, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{                     
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9000,9000,9000,9000,9000,9000,9000 },{0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {59, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9004,9004,9004,9004,9004,9004,9004 },{0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1 } } ;
-};
-Extrude Surface {81, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9008,9008,9008,9008,9008,9008,9008},{0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1 } } ;
-};
-Extrude Surface {103, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9012,9012,9012,9012,9012,9012,9012 },{0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1 } } ;
-};
-Extrude Surface {125, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9016,9016,9016,9016,9016,9016,9016 },{0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1 } } ;
-};
+ne[] = {1,1,1,nArc,1,1,1};
+nd[] = {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1};
+Extrude Surface {37, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{ Recombine ; Layers { ne[], {9000,9000,9000,9000,9000,9000,9000}, nd[]} ;};
+Extrude Surface {59, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{ Recombine ; Layers { ne[], {9004,9004,9004,9004,9004,9004,9004}, nd[]} ;};
+Extrude Surface {81, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{ Recombine ; Layers { ne[], {9008,9008,9008,9008,9008,9008,9008}, nd[]} ;};
+Extrude Surface {103, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{ Recombine ; Layers { ne[], {9012,9012,9012,9012,9012,9012,9012 },nd[] } ;};
+Extrude Surface {125, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{ Recombine ; Layers { ne[], {9016,9016,9016,9016,9016,9016,9016 },nd[] } ;};
 
 // 2nd gap
 
-Extrude Surface {147, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9001+200}, {1} } ;
-};
-Extrude Surface {169, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9005+200}, {1} } ;
-};
-Extrude Surface {191, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9009+200}, {1} } ;
-};
-Extrude Surface {213, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9013+200}, {1} } ;
-};
-Extrude Surface {235, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9017+200}, {1} } ;
-};
+Extrude Surface {147, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9001+200}, {1} } ;};
+Extrude Surface {169, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9005+200}, {1} } ;};
+Extrude Surface {191, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9009+200}, {1} } ;};
+Extrude Surface {213, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9013+200}, {1} } ;};
+Extrude Surface {235, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9017+200}, {1} } ;};
 
 // 2nd pizeo
 
-Extrude Surface {257, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9001,9001,9001,9001,9001,9001,9001,9001}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {279, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9005, 9005,9005,9005, 9005,9005,9005}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {301, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9009, 9009,9009,9009, 9009,9009,9009}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {323, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9013, 9013,9013,9013, 9013,9013,9013}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {345, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9017, 9017,9017,9017, 9017,9017,9017}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
+Extrude Surface {257, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9001, 9001,9001,9001, 9001,9001,9001}, nd[] } ;};
+Extrude Surface {279, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9005, 9005,9005,9005, 9005,9005,9005}, nd[] } ;};
+Extrude Surface {301, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9009, 9009,9009,9009, 9009,9009,9009}, nd[] } ;};
+Extrude Surface {323, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9013, 9013,9013,9013, 9013,9013,9013}, nd[] } ;};
+Extrude Surface {345, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9017, 9017,9017,9017, 9017,9017,9017}, nd[] } ;};
 
 // 3rd gap
 
-Extrude Surface {257+110, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9002+300}, {1} } ;
-};
-Extrude Surface {279+110, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9006+300}, {1} } ;
-};
-Extrude Surface {301+110, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9010+300}, {1} } ;
-};
-Extrude Surface {323+110, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9014+300}, {1} } ;
-};
-Extrude Surface {345+110, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9018+300}, {1} } ;
-};
+Extrude Surface {257+110, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9002+300}, {1} } ;};
+Extrude Surface {279+110, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9006+300}, {1} } ;};
+Extrude Surface {301+110, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9010+300}, {1} } ;};
+Extrude Surface {323+110, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9014+300}, {1} } ;};
+Extrude Surface {345+110, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9018+300}, {1} } ;};
 
 // 3rd piezo
 
-Extrude Surface {257+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9002, 9002,9002,9002, 9002,9002,9002 }, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {279+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9006, 9006,9006,9006, 9006,9006,9006}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {301+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9010, 9010,9010,9010, 9010,9010,9010}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {323+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9014, 9014,9014,9014, 9014,9014,9014}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {345+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9018, 9018,9018,9018, 9018,9018,9018}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
+Extrude Surface {257+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9002, 9002,9002,9002, 9002,9002,9002}, nd[] } ;};
+Extrude Surface {279+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9006, 9006,9006,9006, 9006,9006,9006}, nd[] } ;};
+Extrude Surface {301+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9010, 9010,9010,9010, 9010,9010,9010}, nd[] } ;};
+Extrude Surface {323+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9014, 9014,9014,9014, 9014,9014,9014}, nd[] } ;};
+Extrude Surface {345+220, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9018, 9018,9018,9018, 9018,9018,9018}, nd[] } ;};
 
 // 4th gap
 
-Extrude Surface {257+330, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9003+400}, {1} } ;
-};
-Extrude Surface {279+330, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9007+400}, {1} } ;
-};
-Extrude Surface {301+330, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9011+400}, {1} } ;
-};
-Extrude Surface {323+330, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9015+400}, {1} } ;
-};
-Extrude Surface {345+330, {0,0,1}, {0,0,0}, Pi/180}{
-Recombine ; Layers { {1}, {9019+400}, {1} } ;
-};
+Extrude Surface {257+330, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9003+400}, {1} } ;};
+Extrude Surface {279+330, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9007+400}, {1} } ;};
+Extrude Surface {301+330, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9011+400}, {1} } ;};
+Extrude Surface {323+330, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9015+400}, {1} } ;};
+Extrude Surface {345+330, {0,0,1}, {0,0,0}, Pi/180}{Recombine ; Layers { {1}, {9019+400}, {1} } ;};
 
 // 4th pizeo
 
-Extrude Surface {257+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1 }, {9003,9003,9003,9003,9003,9003,9003},{0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {279+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9007,9007,9007,9007,9007,9007,9007}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {301+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9011,9011,9011,9011,9011,9011,9011}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1}} ;
-};
-Extrude Surface {323+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9015,9015,9015,9015,9015,9015,9015}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-Extrude Surface {345+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{
-Recombine ; Layers { {1,1,1,nArc,1,1,1}, {9019,9019,9019,9019,9019,9019,9019}, {0.02, 0.05, 0.09, 0.91, 0.95, 0.98, 1} } ;
-};
-
+Extrude Surface {257+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9003,9003,9003,9003,9003,9003,9003}, nd[] } ;};
+Extrude Surface {279+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9007,9007,9007,9007,9007,9007,9007}, nd[] } ;};
+Extrude Surface {301+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9011,9011,9011,9011,9011,9011,9011}, nd[] } ;};
+Extrude Surface {323+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9015,9015,9015,9015,9015,9015,9015}, nd[] } ;};
+Extrude Surface {345+440, {0,0,1}, {0,0,0}, Pi/2-Pi/180}{Recombine ; Layers { ne[], {9019,9019,9019,9019,9019,9019,9019}, nd[] } ;};
 
 PZTA = 1000;
 PZTB = 1500;
