@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.42 2001-11-12 15:37:48 geuzaine Exp $
+// $Id: CAD.cpp,v 1.43 2001-11-28 16:39:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1296,7 +1296,7 @@ void MaxNumSurface(void *a, void *b){
 void ReplaceDuplicatePoints(Mesh *m){
   List_T *All;
   Tree_T *allNonDulpicatedPoints;
-  Vertex *v;
+  Vertex *v, **pv, **pv2;
   Curve *c;
   Surface *s;
   int i,j,start,end;
@@ -1343,12 +1343,16 @@ void ReplaceDuplicatePoints(Mesh *m){
   All = Tree2List(m->Curves);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
-    Tree_Query(allNonDulpicatedPoints,&c->beg);
-    Tree_Query(allNonDulpicatedPoints,&c->end);
+    if(!Tree_Query(allNonDulpicatedPoints,&c->beg))
+      Msg(GERROR, "Weird point %d in Coherence", c->beg->Num);
+    if(!Tree_Query(allNonDulpicatedPoints,&c->end))
+      Msg(GERROR, "Weird point %d in Coherence", c->end->Num);
     for(j=0;j<List_Nbr(c->Control_Points);j++){
-      List_Write(c->Control_Points,j,
-                 Tree_PQuery(allNonDulpicatedPoints,
-			     List_Pointer(c->Control_Points,j)));
+      pv = (Vertex**)List_Pointer(c->Control_Points,j);
+      if(!(pv2 = (Vertex**)Tree_PQuery(allNonDulpicatedPoints, pv)))
+	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+      else
+	List_Write(c->Control_Points,j,pv2);
     }
   }
   List_Delete(All);
@@ -1359,9 +1363,11 @@ void ReplaceDuplicatePoints(Mesh *m){
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
     for(j=0;j<List_Nbr(s->Control_Points);j++){
-      List_Write(s->Control_Points,j,
-                 Tree_PQuery(allNonDulpicatedPoints,
-			     List_Pointer(s->Control_Points,j)));
+      pv = (Vertex**)List_Pointer(s->Control_Points,j);
+      if(!(pv2 = (Vertex**)Tree_PQuery(allNonDulpicatedPoints,pv)))
+	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+      else
+	List_Write(s->Control_Points,j,pv2);
     }
   }
   List_Delete(All);
@@ -1840,7 +1846,7 @@ bool IntersectCurves (Curve *c1, Curve *c2,
   if(x[1] >= c1->uend)return false;
   if(x[2] <= c2->ubeg)return false;
   if(x[2] >= c2->uend)return false;
-  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-06 * CTX.lc)return false;
+  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-08 * CTX.lc)return false;
   *v = Create_Vertex(NEWPOINT(), v1.Pos.X,v1.Pos.Y,v1.Pos.Z,v1.lc,x[1]);
   Tree_Insert(THEM->Points,v);
   DivideCurve(c1,x[1],*v,c11,c12);

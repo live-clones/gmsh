@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.60 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: Views.cpp,v 1.61 2001-11-28 16:39:42 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -879,7 +879,7 @@ void smooth_list (List_T *SS ,
 }
 
 void Post_View :: smooth (){
-  xyzv::eps = CTX.lc * 1.e-6;
+  xyzv::eps = CTX.lc * 1.e-8;
   int nb;
   
   if(NbSS){
