@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.18 2005-03-03 22:06:06 geuzaine Exp $
+// $Id: Extract.cpp,v 1.19 2005-03-04 19:08:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -33,6 +33,7 @@
 extern Context_T CTX;
 
 StringXNumber ExtractOptions_Number[] = {
+  {GMSH_FULLRC, "TimeStep", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -72,22 +73,24 @@ void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Extract) extracts a combination of\n"
-	 "components from the view `iView'. If only\n"
-	 "`Expression0' is given (and `Expression1',\n"
-	 "..., `Expression8' are all empty), the plugin\n"
-	 "creates a scalar view. If `Expression0',\n"
-	 "`Expression1' and/or `Expression2' are given\n"
-	 "(and `Expression3', ..., `Expression8' are all\n"
-	 "empty) the plugin creates a vector view.\n"
-	 "Otherwise the plugin creates a tensor view.\n"
-	 "In addition to the usual mathematical functions\n"
-	 "(Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and\n"
-	 "operators (+, -, *, /, ^), all expressions\n"
-	 "can contain the symbols v0, v1, v2, ..., vn,\n"
-	 "which represent the n components of the field,\n"
-	 "and the symbols x, y and z, which represent\n"
-	 "the three spatial coordinates. If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
+	 "components from the `TimeStep'th time step\n"
+	 "in the view `iView'. If only `Expression0' is\n"
+	 "given (and `Expression1', ..., `Expression8' are\n"
+	 "all empty), the plugin creates a scalar view.\n"
+	 "If `Expression0', `Expression1' and/or\n"
+	 "`Expression2' are given (and `Expression3',\n"
+	 "..., `Expression8' are all empty) the plugin\n"
+	 "creates a vector view. Otherwise the plugin\n"
+	 "creates a tensor view. In addition to the usual\n"
+	 "mathematical functions (Exp, Log, Sqrt, Sin, Cos,\n"
+	 "Fabs, etc.) and operators (+, -, *, /, ^), all\n"
+	 "expressions can contain the symbols v0, v1, v2,\n"
+	 " ..., vn, which represent the n components of the\n"
+	 "field, and the symbols x, y and z, which represent\n"
+	 "the three spatial coordinates. If `TimeStep' < 0,\n"
+	 "the plugin extracts data from all the time steps\n"
+	 "in the view. If `iView' < 0, the plugin is run on\n"
+	 "the current view.\n"
 	 "\n"
 	 "Plugin(Extract) creates one new view.\n");
 }
@@ -121,7 +124,7 @@ static void extract(char *expr[9], List_T *inList, int inNb,
 		    List_T *outListScalar, int *outNbScalar, 
 		    List_T *outListVector, int *outNbVector, 
 		    List_T *outListTensor, int *outNbTensor, 
-		    int nbTime, int nbNod, int nbComp)
+		    int timeStep, int nbNod, int nbComp)
 {
   if(!inNb)
     return;
@@ -183,6 +186,9 @@ static void extract(char *expr[9], List_T *inList, int inNb,
   }
 #endif
 
+  int timeBeg = (timeStep < 0) ? 0 : timeStep;
+  int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
+
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
     double *x = (double *)List_Pointer_Fast(inList, i);
@@ -190,7 +196,7 @@ static void extract(char *expr[9], List_T *inList, int inNb,
     double *z = (double *)List_Pointer_Fast(inList, i + 2 * nbNod);
     for(int j = 0; j < 3 * nbNod; j++)
       List_Add(outList, List_Pointer_Fast(inList, i + j));
-    for(int j = 0; j < nbTime; j++){
+    for(int j = timeBeg; j < timeEnd; j++){
       for(int k = 0; k < nbNod; k++){
 	double xx = x[k];
 	double yy = y[k];
@@ -221,7 +227,8 @@ static void extract(char *expr[9], List_T *inList, int inNb,
 
 Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
 {
-  int iView = (int)ExtractOptions_Number[0].def;
+  int step = (int)ExtractOptions_Number[0].def;
+  int iView = (int)ExtractOptions_Number[1].def;
   char *expr[9] = { ExtractOptions_String[0].def, 
 		    ExtractOptions_String[1].def,
 		    ExtractOptions_String[2].def,
@@ -243,66 +250,78 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   Post_View *v2 = BeginView(1);
 
+  if(step < 0){
+    step = - v1->NbTimeStep;
+  }
+  else if(step > v1->NbTimeStep-1){
+    Msg(GERROR, "Invalid time step (%d) in View[%d]: using all steps instead",
+	step, v1->Num);
+    step = - v1->NbTimeStep;
+  }
+
   // points
   extract(expr, v1->SP, v1->NbSP, v2->SP, &v2->NbSP, v2->VP, &v2->NbVP, v2->TP, &v2->NbTP, 
-	  v1->NbTimeStep, 1, 1);
+	  step, 1, 1);
   extract(expr, v1->VP, v1->NbVP, v2->SP, &v2->NbSP, v2->VP, &v2->NbVP, v2->TP, &v2->NbTP, 
-	  v1->NbTimeStep, 1, 3);
+	  step, 1, 3);
   extract(expr, v1->TP, v1->NbTP, v2->SP, &v2->NbSP, v2->VP, &v2->NbVP, v2->TP, &v2->NbTP, 
-	  v1->NbTimeStep, 1, 9);
+	  step, 1, 9);
   // lines			                                  	              	
   extract(expr, v1->SL, v1->NbSL, v2->SL, &v2->NbSL, v2->VL, &v2->NbVL, v2->TL, &v2->NbTL, 
-	  v1->NbTimeStep, 2, 1);
+	  step, 2, 1);
   extract(expr, v1->VL, v1->NbVL, v2->SL, &v2->NbSL, v2->VL, &v2->NbVL, v2->TL, &v2->NbTL, 
-	  v1->NbTimeStep, 2, 3);
+	  step, 2, 3);
   extract(expr, v1->TL, v1->NbTL, v2->SL, &v2->NbSL, v2->VL, &v2->NbVL, v2->TL, &v2->NbTL, 
-	  v1->NbTimeStep, 2, 9);
+	  step, 2, 9);
   // triangles			                                  	              	
   extract(expr, v1->ST, v1->NbST, v2->ST, &v2->NbST, v2->VT, &v2->NbVT, v2->TT, &v2->NbTT, 
-	  v1->NbTimeStep, 3, 1);
+	  step, 3, 1);
   extract(expr, v1->VT, v1->NbVT, v2->ST, &v2->NbST, v2->VT, &v2->NbVT, v2->TT, &v2->NbTT, 
-	  v1->NbTimeStep, 3, 3);
+	  step, 3, 3);
   extract(expr, v1->TT, v1->NbTT, v2->ST, &v2->NbST, v2->VT, &v2->NbVT, v2->TT, &v2->NbTT, 
-	  v1->NbTimeStep, 3, 9);
+	  step, 3, 9);
   // quadrangles		                                  	              	
   extract(expr, v1->SQ, v1->NbSQ, v2->SQ, &v2->NbSQ, v2->VQ, &v2->NbVQ, v2->TQ, &v2->NbTQ, 
-	  v1->NbTimeStep, 4, 1);
+	  step, 4, 1);
   extract(expr, v1->VQ, v1->NbVQ, v2->SQ, &v2->NbSQ, v2->VQ, &v2->NbVQ, v2->TQ, &v2->NbTQ, 
-	  v1->NbTimeStep, 4, 3);
+	  step, 4, 3);
   extract(expr, v1->TQ, v1->NbTQ, v2->SQ, &v2->NbSQ, v2->VQ, &v2->NbVQ, v2->TQ, &v2->NbTQ, 
-	  v1->NbTimeStep, 4, 9);
+	  step, 4, 9);
   // tets			                                  	              	
   extract(expr, v1->SS, v1->NbSS, v2->SS, &v2->NbSS, v2->VS, &v2->NbVS, v2->TS, &v2->NbTS, 
-	  v1->NbTimeStep, 4, 1);
+	  step, 4, 1);
   extract(expr, v1->VS, v1->NbVS, v2->SS, &v2->NbSS, v2->VS, &v2->NbVS, v2->TS, &v2->NbTS, 
-	  v1->NbTimeStep, 4, 3);
+	  step, 4, 3);
   extract(expr, v1->TS, v1->NbTS, v2->SS, &v2->NbSS, v2->VS, &v2->NbVS, v2->TS, &v2->NbTS, 
-	  v1->NbTimeStep, 4, 9);
+	  step, 4, 9);
   // hexas			                                  	              	
   extract(expr, v1->SH, v1->NbSH, v2->SH, &v2->NbSH, v2->VH, &v2->NbVH, v2->TH, &v2->NbTH, 
-	  v1->NbTimeStep, 8, 1);
+	  step, 8, 1);
   extract(expr, v1->VH, v1->NbVH, v2->SH, &v2->NbSH, v2->VH, &v2->NbVH, v2->TH, &v2->NbTH, 
-	  v1->NbTimeStep, 8, 3);
+	  step, 8, 3);
   extract(expr, v1->TH, v1->NbTH, v2->SH, &v2->NbSH, v2->VH, &v2->NbVH, v2->TH, &v2->NbTH, 
-	  v1->NbTimeStep, 8, 9);
+	  step, 8, 9);
   // prisms			                                  	              	
   extract(expr, v1->SI, v1->NbSI, v2->SI, &v2->NbSI, v2->VI, &v2->NbVI, v2->TI, &v2->NbTI, 
-	  v1->NbTimeStep, 6, 1);
+	  step, 6, 1);
   extract(expr, v1->VI, v1->NbVI, v2->SI, &v2->NbSI, v2->VI, &v2->NbVI, v2->TI, &v2->NbTI, 
-	  v1->NbTimeStep, 6, 3);
+	  step, 6, 3);
   extract(expr, v1->TI, v1->NbTI, v2->SI, &v2->NbSI, v2->VI, &v2->NbVI, v2->TI, &v2->NbTI, 
-	  v1->NbTimeStep, 6, 9);
+	  step, 6, 9);
   // pyramids			                                  	              	
   extract(expr, v1->SY, v1->NbSY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v2->TY, &v2->NbTY, 
-	  v1->NbTimeStep, 5, 1);
+	  step, 5, 1);
   extract(expr, v1->VY, v1->NbVY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v2->TY, &v2->NbTY, 
-	  v1->NbTimeStep, 5, 3);
+	  step, 5, 3);
   extract(expr, v1->TY, v1->NbTY, v2->SY, &v2->NbSY, v2->VY, &v2->NbVY, v2->TY, &v2->NbTY, 
-	  v1->NbTimeStep, 5, 9);
+	  step, 5, 9);
 
   // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
+  if(step < 0)
+    for(int i = 0; i < List_Nbr(v1->Time); i++)
+      List_Add(v2->Time, List_Pointer(v1->Time, i));
+  else
+    List_Add(v2->Time, List_Pointer(v1->Time, step));
   // finalize
   char name[1024], filename[1024];
   sprintf(name, "%s_Extract", v1->Name);
