@@ -68,6 +68,7 @@ int compareSimplex(const void *a, const void *b);
 int compareFace (const void *a, const void *b);
 
 Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
+Simplex *Create_Simplex_Fast (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
 void Free_Simplex (void *a, void *b);
 
 

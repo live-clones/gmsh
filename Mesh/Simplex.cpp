@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.34 2004-07-21 22:19:56 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.35 2004-11-18 23:42:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -357,9 +357,18 @@ void Simplex::Fourre_Simplexe(Vertex * v1, Vertex * v2, Vertex * v3,
 
 Simplex *Create_Simplex(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
 {
-  Simplex *s;
+  return new Simplex(v1, v2, v3, v4);
+}
 
-  s = new Simplex(v1, v2, v3, v4);
+Simplex *Create_Simplex_Fast(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
+{
+  // bypasses Fourre_Simplex (use for visualization only!)
+  Simplex *s = new Simplex();
+  s->V[0] = v1;
+  s->V[1] = v2;
+  s->V[2] = v3;
+  s->V[3] = v4;
+  s->VSUP = NULL;
   return s;
 }
 

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.78 2004-10-08 02:41:20 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.79 2004-11-18 23:42:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -306,7 +306,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case LGN2:
 	  c = addElementaryCurve(M, abs(Elementary));
 	  addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
-          simp = Create_Simplex(vertsp[0], vertsp[1], NULL, NULL);
+          simp = Create_Simplex_Fast(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = Add_MeshPartition(Partition, M);
@@ -324,7 +324,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case TRI2:
 	  s = addElementarySurface(M, Elementary);
 	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
-          simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
+          simp = Create_Simplex_Fast(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = Add_MeshPartition(Partition, M);
@@ -364,7 +364,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case TET2:
 	  v = addElementaryVolume(M, Elementary);
 	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
-          simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+          simp = Create_Simplex_Fast(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = Add_MeshPartition(Partition, M);
