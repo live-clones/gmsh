@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.226 2003-02-11 03:13:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.227 2003-02-24 20:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2923,7 +2923,7 @@ void GUI::create_mesh_context_window(int num){
       context_mesh_input[3]->align(FL_ALIGN_RIGHT);
       { 
 	Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 2*WB+3*BH, BB, BH, "Set");
-	o->callback(con_mesh_define_transfinite_line_cb);
+	o->callback(con_mesh_define_transfinite_volume_cb);
       }
       g[2]->end();
     }
