@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.83 2002-07-31 03:59:08 geuzaine Exp $
+// $Id: Options.cpp,v 1.84 2002-08-07 00:30:25 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2698,7 +2698,7 @@ double opt_view_tensor_type(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    switch(v->ScaleType){
+    switch(v->TensorType){
     case DRAW_POST_VONMISES: WID->view_choice[4]->value(0); break;
     case DRAW_POST_EIGENVECTORS: WID->view_choice[4]->value(1); break;
     }
@@ -2714,13 +2714,12 @@ double opt_view_arrow_type(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    switch(v->ScaleType){
+    switch(v->ArrowType){
     case DRAW_POST_SEGMENT: WID->view_choice[2]->value(0); break;
     case DRAW_POST_ARROW: WID->view_choice[2]->value(1); break;
-    case DRAW_POST_ARROW3D: WID->view_choice[2]->value(2); break;
+    case DRAW_POST_PYRAMID: WID->view_choice[2]->value(2); break;
     case DRAW_POST_CONE: WID->view_choice[2]->value(3); break;
-    case DRAW_POST_CONE3D: WID->view_choice[2]->value(4); break;
-    case DRAW_POST_DISPLACEMENT: WID->view_choice[2]->value(5); break;
+    case DRAW_POST_DISPLACEMENT: WID->view_choice[2]->value(4); break;
     }
   }
 #endif
@@ -2734,7 +2733,7 @@ double opt_view_arrow_location(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    switch(v->ScaleType){
+    switch(v->ArrowLocation){
     case DRAW_POST_LOCATE_COG: WID->view_choice[3]->value(0); break;
     case DRAW_POST_LOCATE_VERTEX: WID->view_choice[3]->value(1); break;
     }

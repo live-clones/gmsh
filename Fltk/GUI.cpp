@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.188 2002-08-06 21:14:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.189 2002-08-07 00:30:25 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2471,9 +2471,8 @@ void GUI::create_view_options_window(int num){
 	static Fl_Menu_Item menu_vectype[] = {
 	  {"Line",         0, 0, 0},
 	  {"Arrow",        0, 0, 0},
-	  {"3D Arrow",     0, 0, 0},
+	  {"Pyramid",      0, 0, 0},
 	  {"Cone",         0, 0, 0},
-	  {"3D cone",      0, 0, 0},
 	  {"Displacement", 0, 0, 0},
 	  {0}
 	};

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.136 2002-08-06 06:39:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.137 2002-08-07 00:30:25 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2331,9 +2331,8 @@ void view_options_ok_cb(CALLBACK_ARGS){
 	switch(WID->view_choice[2]->value()){
 	case 0 : val = DRAW_POST_SEGMENT; break;
 	case 1 : val = DRAW_POST_ARROW; break;
-	case 2 : val = DRAW_POST_ARROW3D; break;
+	case 2 : val = DRAW_POST_PYRAMID; break;
 	case 3 : val = DRAW_POST_CONE; break;
-	case 4 : val = DRAW_POST_CONE3D; break;
 	default : val = DRAW_POST_DISPLACEMENT; break;
 	}
 	opt_view_arrow_type(i, GMSH_SET, val);
