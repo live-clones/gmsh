@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.28 2002-09-06 19:19:49 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.29 2002-11-12 19:11:50 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -55,7 +55,7 @@
 #endif /* __APPLE__ */
 
 
-#define GL2PS_VERSION                    0.62
+#define GL2PS_VERSION                    0.63
 #define GL2PS_NONE                       0
 
 /* Output file format */
@@ -186,18 +186,18 @@ typedef struct {
 extern "C" {
 #endif
 
-GL2PSDLL_API GLvoid gl2psBeginPage(char *title, char *producer, 
-				   GLint format, GLint sort, GLint options, 
-				   GLint colormode, GLint colorsize, 
-				   GL2PSrgba *colormap, GLint buffersize, 
-				   FILE *stream, char *filename);
-GL2PSDLL_API GLint  gl2psEndPage(GLvoid);
-GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint size);
-GL2PSDLL_API GLvoid gl2psEnable(GLint mode);
-GL2PSDLL_API GLvoid gl2psDisable(GLint mode);
-GL2PSDLL_API GLvoid gl2psPointSize(GLfloat value);
-GL2PSDLL_API GLvoid gl2psLineWidth(GLfloat value);
-GL2PSDLL_API GLvoid gl2psNumShadeColors(GLint nr, GLint ng, GLint nb);
+GL2PSDLL_API void  gl2psBeginPage(char *title, char *producer, 
+				  GLint format, GLint sort, GLint options, 
+				  GLint colormode, GLint colorsize, 
+				  GL2PSrgba *colormap, GLint buffersize, 
+				  FILE *stream, char *filename);
+GL2PSDLL_API GLint gl2psEndPage(void);
+GL2PSDLL_API void  gl2psText(char *str, char *fontname, GLint size);
+GL2PSDLL_API void  gl2psEnable(GLint mode);
+GL2PSDLL_API void  gl2psDisable(GLint mode);
+GL2PSDLL_API void  gl2psPointSize(GLfloat value);
+GL2PSDLL_API void  gl2psLineWidth(GLfloat value);
+GL2PSDLL_API void  gl2psNumShadeColors(GLint nr, GLint ng, GLint nb);
 
 #ifdef __cplusplus
 };

@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.50 2002-09-06 19:19:49 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.51 2002-11-12 19:11:50 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -37,7 +37,7 @@ GL2PScontext *gl2ps=NULL;
 
 /* Some 'system' utility routines */
 
-GLvoid gl2psMsg(GLint level, char *fmt, ...){
+void gl2psMsg(GLint level, char *fmt, ...){
   va_list args;
 
   if(!(gl2ps->options & GL2PS_SILENT)){
@@ -54,8 +54,8 @@ GLvoid gl2psMsg(GLint level, char *fmt, ...){
   if(level == GL2PS_ERROR) exit(1);
 }
 
-GLvoid *gl2psMalloc(size_t size){
-  GLvoid *ptr;
+void *gl2psMalloc(size_t size){
+  void *ptr;
 
   if(!size) return(NULL);
   ptr = malloc(size);
@@ -63,21 +63,21 @@ GLvoid *gl2psMalloc(size_t size){
   return(ptr);
 }
 
-GLvoid *gl2psRealloc(GLvoid *ptr, size_t size){
+void *gl2psRealloc(void *ptr, size_t size){
   if(!size) return(NULL);
   ptr = realloc(ptr, size);
   if(!ptr) gl2psMsg(GL2PS_ERROR, "Couldn't reallocate requested memory");
   return(ptr);
 }
 
-GLvoid gl2psFree(GLvoid *ptr){
+void gl2psFree(void *ptr){
   if(!ptr) return;
   free(ptr);
 }
 
 /* The list handling routines */
 
-GLvoid gl2psListRealloc(GL2PSlist *list, GLint n){
+void gl2psListRealloc(GL2PSlist *list, GLint n){
   if(n <= 0) return;
   if(!list->array){
     list->nmax = ((n - 1) / list->incr + 1) * list->incr;
@@ -106,12 +106,12 @@ GL2PSlist *gl2psListCreate(GLint n, GLint incr, GLint size){
   return(list);
 }
 
-GLvoid gl2psListDelete(GL2PSlist *list){
+void gl2psListDelete(GL2PSlist *list){
   gl2psFree(list->array);
   gl2psFree(list);
 }
 
-GLvoid gl2psListAdd(GL2PSlist *list, GLvoid *data){
+void gl2psListAdd(GL2PSlist *list, void *data){
   list->n++;
   gl2psListRealloc(list, list->n);
   memcpy(&list->array[(list->n - 1) * list->size], data, list->size);
@@ -121,27 +121,27 @@ GLint gl2psListNbr(GL2PSlist *list){
   return(list->n);
 }
 
-GLvoid *gl2psListPointer(GL2PSlist *list, GLint index){
+void *gl2psListPointer(GL2PSlist *list, GLint index){
   if((index < 0) || (index >= list->n))
     gl2psMsg(GL2PS_ERROR, "Wrong list index in gl2psListPointer");
   return(&list->array[index * list->size]);
 }
 
-GLvoid gl2psListSort(GL2PSlist *list,
+void gl2psListSort(GL2PSlist *list,
 		     int (*fcmp)(const void *a, const void *b)){
   qsort(list->array, list->n, list->size, fcmp);
 }
 
-GLvoid gl2psListAction(GL2PSlist *list, 
-		       GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
+void gl2psListAction(GL2PSlist *list, 
+		       void (*action)(void *data, void *dummy)){
   GLint i, dummy;
 
   for(i=0 ; i<gl2psListNbr(list) ; i++)
     (*action)(gl2psListPointer(list, i), &dummy);
 }
 
-GLvoid gl2psListActionInverse(GL2PSlist *list, 
-			      GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
+void gl2psListActionInverse(GL2PSlist *list, 
+			      void (*action)(void *data, void *dummy)){
   GLint i, dummy;
 
   for(i=gl2psListNbr(list) ; i>0 ; i--)
@@ -161,7 +161,7 @@ GLfloat gl2psPsca(GLfloat *a, GLfloat *b){
   return(a[0]*b[0] + a[1]*b[1] + a[2]*b[2]);
 }
 
-GLvoid gl2psPvec(GLfloat *a, GLfloat *b, GLfloat *c){
+void gl2psPvec(GLfloat *a, GLfloat *b, GLfloat *c){
   c[0] = a[1]*b[2] - a[2]*b[1];
   c[1] = a[2]*b[0] - a[0]*b[2];
   c[2] = a[0]*b[1] - a[1]*b[0];
@@ -171,7 +171,7 @@ GLfloat gl2psNorm(GLfloat *a){
   return sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
 }
 
-GLvoid gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
+void gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
   GLfloat norm;
   gl2psPvec(a, b, c);
   if(!GL2PS_ZERO(norm = gl2psNorm(c))){
@@ -183,7 +183,7 @@ GLvoid gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
     gl2psMsg(GL2PS_WARNING, "Bad plane in BSP tree");
 }
 
-GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
+void gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
   GL2PSxyz v={0., 0., 0.}, w={0., 0., 0.};
 
   switch(prim->type){
@@ -240,7 +240,7 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
   }
 }
 
-GLvoid gl2psCutEdge(GL2PSvertex *a, GL2PSvertex *b, GL2PSplane plane, 
+void gl2psCutEdge(GL2PSvertex *a, GL2PSvertex *b, GL2PSplane plane, 
 		    GL2PSvertex *c){
   GL2PSxyz v;
   GLfloat  sect;
@@ -260,7 +260,7 @@ GLvoid gl2psCutEdge(GL2PSvertex *a, GL2PSvertex *b, GL2PSplane plane,
   c->rgba[3] = (1.-sect) * a->rgba[3] + sect * b->rgba[3];
 }
 
-GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
+void gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
 				    GL2PSprimitive *child, GLshort numverts,
 				    GLshort *index0, GLshort *index1){
   GLshort i;
@@ -291,7 +291,7 @@ GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
   }
 }
 
-GLvoid gl2psAddIndex(GLshort *index0, GLshort *index1, GLshort *nb, 
+void gl2psAddIndex(GLshort *index0, GLshort *index1, GLshort *nb, 
 		     GLshort i, GLshort j){
   GLint k;
 
@@ -396,7 +396,7 @@ GLint gl2psSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane,
   return type;
 }
 
-GLvoid gl2psDivideQuad(GL2PSprimitive *quad, 
+void gl2psDivideQuad(GL2PSprimitive *quad, 
 		       GL2PSprimitive **t1, GL2PSprimitive **t2){
   *t1 = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
   *t2 = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
@@ -474,7 +474,7 @@ GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root){
   }
 }
 
-GLvoid gl2psFreePrimitive(GLvoid *a, GLvoid *b){
+void gl2psFreePrimitive(void *a, void *b){
   GL2PSprimitive *q ;
   
   q = *(GL2PSprimitive**)a;
@@ -487,7 +487,7 @@ GLvoid gl2psFreePrimitive(GLvoid *a, GLvoid *b){
   gl2psFree(q);
 }
 
-GLvoid gl2psAddPrimitiveInList(GL2PSprimitive *prim, GL2PSlist *list){
+void gl2psAddPrimitiveInList(GL2PSprimitive *prim, GL2PSlist *list){
   GL2PSprimitive *t1, *t2;
 
   if(prim->type != GL2PS_QUADRANGLE){
@@ -502,7 +502,7 @@ GLvoid gl2psAddPrimitiveInList(GL2PSprimitive *prim, GL2PSlist *list){
   
 }
 
-GLvoid gl2psFreeBspTree(GL2PSbsptree *tree){
+void gl2psFreeBspTree(GL2PSbsptree *tree){
   if(tree->back){
     gl2psFreeBspTree(tree->back);
     gl2psFree(tree->back);
@@ -527,7 +527,7 @@ GLboolean gl2psLess(GLfloat f1, GLfloat f2){
   else return 0;
 }
 
-GLvoid gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
+void gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
   GL2PSprimitive *prim, *frontprim, *backprim;
   GL2PSlist      *frontlist, *backlist;
   GLint          i, index;
@@ -586,9 +586,9 @@ GLvoid gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
   gl2psListDelete(primitives);
 }
 
-GLvoid  gl2psTraverseBspTree(GL2PSbsptree *tree, GL2PSxyz eye, GLfloat epsilon,
+void  gl2psTraverseBspTree(GL2PSbsptree *tree, GL2PSxyz eye, GLfloat epsilon,
 			     GLboolean (*compare)(GLfloat f1, GLfloat f2),
-			     GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
+			     void (*action)(void *data, void *dummy)){
   GLfloat result;
 
   if(!tree) return;
@@ -615,7 +615,7 @@ GLvoid  gl2psTraverseBspTree(GL2PSbsptree *tree, GL2PSxyz eye, GLfloat epsilon,
 
 #define GL2PS_BOUNDARY_OFFSET 0
 
-GLvoid gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
+void gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
   GL2PSprimitive *b;
   GLshort         i;
   GL2PSxyz        c;
@@ -679,7 +679,7 @@ GLvoid gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
 
 }
 
-GLvoid  gl2psBuildPolygonBoundary(GL2PSbsptree *tree){
+void  gl2psBuildPolygonBoundary(GL2PSbsptree *tree){
   GLint          i, n;
   GL2PSprimitive *prim;
 
@@ -695,7 +695,7 @@ GLvoid  gl2psBuildPolygonBoundary(GL2PSbsptree *tree){
 
 /* The feedback buffer parser */
 
-GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts, 
+void gl2psAddPolyPrimitive(GLshort type, GLshort numverts, 
 			     GL2PSvertex *verts, GLint offset, 
 			     GLshort dash, GLfloat width,
 			     GLshort boundary){
@@ -800,7 +800,7 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
   }
 }
 
-GLint gl2psParseFeedbackBuffer(GLvoid){
+GLint gl2psParseFeedbackBuffer(void){
   GLint        i, used, count, v, vtot, offset=0;
   GLshort      boundary, flag, dash=0;
   GLfloat      lwidth=1., psize=1.;
@@ -936,7 +936,7 @@ GLboolean gl2psVertsSameColor(const GL2PSprimitive *prim){
    (gl2psPrintXXXHeader, gl2psPrintXXXPrimitive and
    gl2psPrintXXXFooter) for the new format. */
 
-GLvoid gl2psPrintPostScriptHeader(GLvoid){
+void gl2psPrintPostScriptHeader(void){
   GLint   viewport[4], index;
   GLfloat rgba[4];
   time_t  now;
@@ -994,17 +994,22 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "%%%%BeginProlog\n"
 	  "/gl2psdict 64 dict def gl2psdict begin\n"
 	  "1 setlinecap 1 setlinejoin\n"
+	  "/tryPS3shading %s def %% set to false to force subdivision\n"
+	  "/rThreshold %g def %% red component subdivision threshold\n"
+	  "/gThreshold %g def %% green component subdivision threshold\n"
+	  "/bThreshold %g def %% blue component subdivision threshold\n"
 	  "/BD { bind def } bind def\n"
 	  "/C  { setrgbcolor } BD\n"
-	  "/G  { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add\n"
-	  "      setgray } BD\n"
+	  "/G  { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add setgray } BD\n"
 	  "/W  { setlinewidth } BD\n"
 	  "/FC { findfont exch scalefont setfont } BD\n"
 	  "/S  { FC moveto show } BD\n"
 	  "/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
 	  "/L  { newpath moveto lineto stroke } BD\n"
 	  "/SL { C moveto C lineto stroke } BD\n"
-	  "/T  { newpath moveto lineto lineto closepath fill } BD\n");
+	  "/T  { newpath moveto lineto lineto closepath fill } BD\n",
+	  (gl2ps->options & GL2PS_NO_PS3_SHADING) ? "false" : "true",
+          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2]);
 
   /* Smooth-shaded triangle with PostScript level 3 shfill operator:
         x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STshfill */
@@ -1061,38 +1066,49 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
           /* stack : (V3) (V13) (V23) (V13) (V12) (V23) (V13) (V1) (V12) (V23) (V12) (V2) */
           "      STnoshfill STnoshfill STnoshfill STnoshfill } BD\n");
 
-  /* Gourad shaded triangle using recursive subdivision until the difference
+  /* Gouraud shaded triangle using recursive subdivision until the difference
      between corner colors does not exceed the thresholds:
         x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STnoshfill  */
 
   fprintf(gl2ps->stream,
           "/STnoshfill {\n"
-	  "      2 index 8 index sub abs %g gt { STsplit }\n" /* |r1-r2|>rth */
-          "      { 1 index 7 index sub abs %g gt { STsplit }\n" /* |g1-g2|>gth */
-          "        { dup 6 index sub abs %g gt { STsplit }\n" /* |b1-b2|>bth */
-          "          { 2 index 13 index sub abs %g gt { STsplit }\n" /* |r1-r3|>rht */
-          "            { 1 index 12 index sub abs %g gt { STsplit }\n" /* |g1-g3|>gth */
-          "              { dup 11 index sub abs %g gt { STsplit }\n" /* |b1-b3|>bth */
-          "                { 7 index 13 index sub abs %g gt { STsplit }\n" /* |r2-r3|>rht */
-          "                  { 6 index 12 index sub abs %g gt { STsplit }\n" /* |g2-g3|>gth */
-          "                    { 5 index 11 index sub abs %g gt { STsplit }\n" /* |b2-b3|>bth */
-          "                      { Tm\n" /* all colors sufficiently similar */
-          "                      } ifelse\n"
-          "                    } ifelse\n"
-          "                  } ifelse\n"
-          "                } ifelse\n"
-          "              } ifelse\n"
-          "            } ifelse\n"
-          "          } ifelse\n"
-          "        } ifelse\n"
-          "      } ifelse } BD\n",
-          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2],
-          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2],
-          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2]);
+	  "      2 index 8 index sub abs rThreshold gt\n" /* |r1-r2|>rth */
+	  "      { STsplit }\n"
+          "      { 1 index 7 index sub abs gThreshold gt\n" /* |g1-g2|>gth */
+	  "        { STsplit }\n"
+          "        { dup 6 index sub abs bThreshold gt\n" /* |b1-b2|>bth */
+	  "          { STsplit }\n"
+          "          { 2 index 13 index sub abs rThreshold gt\n" /* |r1-r3|>rht */
+	  "            { STsplit }\n"
+          "            { 1 index 12 index sub abs gThreshold gt\n" /* |g1-g3|>gth */
+	  "              { STsplit }\n"
+          "              { dup 11 index sub abs bThreshold gt\n" /* |b1-b3|>bth */
+	  "                { STsplit }\n"
+          "                { 7 index 13 index sub abs rThreshold gt\n" /* |r2-r3|>rht */
+	  "                  { STsplit }\n"
+          "                  { 6 index 12 index sub abs gThreshold gt\n" /* |g2-g3|>gth */
+	  "                    { STsplit }\n"
+          "                    { 5 index 11 index sub abs bThreshold gt\n" /* |b2-b3|>bth */
+	  "                      { STsplit }\n"
+          "                      { Tm }\n" /* all colors sufficiently similar */
+          "                      ifelse }\n"
+          "                    ifelse }\n"
+          "                  ifelse }\n"
+          "                ifelse }\n"
+          "              ifelse }\n"
+          "            ifelse }\n"
+          "          ifelse }\n"
+          "        ifelse }\n"
+          "      ifelse } BD\n");
 
   fprintf(gl2ps->stream,
-	  (gl2ps->options & GL2PS_NO_PS3_SHADING) ? "/ST { STnoshfill } BD\n" :
-	  "/shfill where { pop /ST { STshfill } BD } { /ST { STnoshfill } BD } ifelse\n");
+	  "tryPS3shading\n"
+	  "{ /shfill where\n"
+	  "  { /ST { STshfill } BD }\n"
+	  "  { /ST { STnoshfill } BD }\n"
+	  "  ifelse }\n"
+	  "{ /ST { STnoshfill } BD }\n"
+	  "ifelse\n");
 
   fprintf(gl2ps->stream,
 	  "end\n"
@@ -1135,7 +1151,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
   }
 }
 
-GLvoid gl2psPrintPostScriptColor(GL2PSrgba rgba){
+void gl2psPrintPostScriptColor(GL2PSrgba rgba){
   if(!gl2psSameColor(gl2ps->lastrgba, rgba)){
     gl2ps->lastrgba[0] = rgba[0];
     gl2ps->lastrgba[1] = rgba[1];
@@ -1144,11 +1160,11 @@ GLvoid gl2psPrintPostScriptColor(GL2PSrgba rgba){
   }
 }
 
-GLvoid gl2psResetPostScriptColor(){
+void gl2psResetPostScriptColor(){
   gl2ps->lastrgba[0] = gl2ps->lastrgba[1] = gl2ps->lastrgba[2] = -1.;
 }
 
-GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
+void gl2psPrintPostScriptPrimitive(void *a, void *b){
   GL2PSprimitive *prim;
 
   prim = *(GL2PSprimitive**)a;
@@ -1222,7 +1238,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
   }
 }
 
-void gl2psPrintPostScriptFooter(GLvoid){
+void gl2psPrintPostScriptFooter(void){
   fprintf(gl2ps->stream,
 	  "grestore\n"
 	  "showpage\n"
@@ -1235,7 +1251,7 @@ void gl2psPrintPostScriptFooter(GLvoid){
 
 /* The LaTeX routines. */
 
-GLvoid gl2psPrintTeXHeader(GLvoid){
+void gl2psPrintTeXHeader(void){
   GLint   viewport[4];
   char    name[256];
   int     i;
@@ -1265,7 +1281,7 @@ GLvoid gl2psPrintTeXHeader(GLvoid){
 	  viewport[2],viewport[3]);
 }
 
-GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
+void gl2psPrintTeXPrimitive(void *a, void *b){
   GL2PSprimitive *prim;
 
   prim = *(GL2PSprimitive**)a;
@@ -1280,7 +1296,7 @@ GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
   }
 }
 
-void gl2psPrintTeXFooter(GLvoid){
+void gl2psPrintTeXFooter(void){
   fprintf(gl2ps->stream, "\\end{picture}%s\n",
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? "}" : "");
 }
@@ -1288,7 +1304,7 @@ void gl2psPrintTeXFooter(GLvoid){
 
 /* The public routines */
 
-GL2PSDLL_API GLvoid gl2psBeginPage(char *title, char *producer, 
+GL2PSDLL_API void gl2psBeginPage(char *title, char *producer, 
 				   GLint format, GLint sort, GLint options, 
 				   GLint colormode, GLint colorsize, 
 				   GL2PSrgba *colormap, GLint buffersize, 
@@ -1336,13 +1352,13 @@ GL2PSDLL_API GLvoid gl2psBeginPage(char *title, char *producer,
   glRenderMode(GL_FEEDBACK);  
 }
 
-GL2PSDLL_API GLint gl2psEndPage(GLvoid){
+GL2PSDLL_API GLint gl2psEndPage(void){
   GL2PSbsptree   *root;
   GL2PSxyz        eye={0., 0., 100000.};
   GLint           shademodel, res;
-  void          (*phead)(GLvoid) = 0;
-  void          (*pprim)(GLvoid *a, GLvoid *b) = 0;
-  void          (*pfoot)(GLvoid) = 0;
+  void          (*phead)(void) = 0;
+  void          (*pprim)(void *a, void *b) = 0;
+  void          (*pfoot)(void) = 0;
 
   if(!gl2ps) 
     gl2psMsg(GL2PS_ERROR, "Uninitialized gl2ps context");
@@ -1422,7 +1438,7 @@ GL2PSDLL_API GLint gl2psEndPage(GLvoid){
   return res;
 }
 
-GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
+GL2PSDLL_API void gl2psText(char *str, char *fontname, GLint fontsize){
   GLfloat         pos[4];
   GL2PSprimitive  *prim;
   GLboolean       valid;
@@ -1458,7 +1474,7 @@ GL2PSDLL_API GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   gl2psListAdd(gl2ps->primitives, &prim);
 }
 
-GL2PSDLL_API GLvoid gl2psEnable(GLint mode){
+GL2PSDLL_API void gl2psEnable(GLint mode){
   if(!gl2ps) return;
 
   switch(mode){
@@ -1479,7 +1495,7 @@ GL2PSDLL_API GLvoid gl2psEnable(GLint mode){
   }
 }
 
-GL2PSDLL_API GLvoid gl2psDisable(GLint mode){
+GL2PSDLL_API void gl2psDisable(GLint mode){
   if(!gl2ps) return;
 
   switch(mode){
@@ -1498,21 +1514,21 @@ GL2PSDLL_API GLvoid gl2psDisable(GLint mode){
   }
 }
 
-GL2PSDLL_API GLvoid gl2psPointSize(GLfloat value){
+GL2PSDLL_API void gl2psPointSize(GLfloat value){
   if(!gl2ps) return;
 
   glPassThrough(GL2PS_SET_POINT_SIZE);
   glPassThrough(value);
 }
 
-GL2PSDLL_API GLvoid gl2psLineWidth(GLfloat value){
+GL2PSDLL_API void gl2psLineWidth(GLfloat value){
   if(!gl2ps) return;
 
   glPassThrough(GL2PS_SET_LINE_WIDTH);
   glPassThrough(value);
 }
 
-GL2PSDLL_API GLvoid gl2psNumShadeColors(GLint nr, GLint ng, GLint nb){
+GL2PSDLL_API void gl2psNumShadeColors(GLint nr, GLint ng, GLint nb){
   if(!gl2ps) return;
 
   gl2ps->threshold[0] = nr ? 1./(GLfloat)nr : 1.;
