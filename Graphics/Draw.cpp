@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.56 2004-05-30 19:17:58 geuzaine Exp $
+// $Id: Draw.cpp,v 1.57 2004-06-01 17:14:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -281,20 +281,16 @@ void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2)
 {
-  GLdouble xscale1, yscale1;
-
-  xscale1 = CTX.s[0];
-  yscale1 = CTX.s[1];
+  GLdouble xscale1 = CTX.s[0];
+  GLdouble yscale1 = CTX.s[1];
   set_s(0, CTX.s[0] * (CTX.vxmax - CTX.vxmin) / (X2 - X1));
   set_s(1, CTX.s[1] * (CTX.vymax - CTX.vymin) / (Y1 - Y2));
-  set_s(2, 0.5 * (CTX.s[0] + CTX.s[1]));
-  set_t(0,
-        CTX.t[0] * (xscale1 / CTX.s[0]) - ((Xc1 + Xc2) / 2.) * (1. -
-                                                                (xscale1 /
-                                                                 CTX.s[0])));
-  set_t(1,
-        CTX.t[1] * (yscale1 / CTX.s[1]) - ((Yc1 + Yc2) / 2.) * (1. -
-                                                                (yscale1 /
-                                                                 CTX.s[1])));
+  //set_s(2, 0.5 * (CTX.s[0] + CTX.s[1])); // bof, bof. bof: can cause normal clamping
+  set_s(2, MAX(CTX.s[0], CTX.s[1])); // not much better...
+  set_t(0, CTX.t[0] * (xscale1 / CTX.s[0]) - 
+	((Xc1 + Xc2) / 2.) * (1. - (xscale1 / CTX.s[0])));
+  set_t(1, CTX.t[1] * (yscale1 / CTX.s[1]) - 
+	((Yc1 + Yc2) / 2.) * (1. - (yscale1 / CTX.s[1])));
+  InitPosition();
   Draw();
 }
