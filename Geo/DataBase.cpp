@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.7 2001-01-08 08:05:42 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.8 2001-03-23 08:55:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -223,9 +223,10 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
                 int support, List_T *ListCP, List_T *liste,
                 List_T *intlist){
 
-  int      i,j;
+  int      i,j,k,nb, *pj, *pl;
   double   f;
-  List_T *templist;
+  List_T *templist, *templist2;
+  Curve *c1, *c2;
 
   if(liste){
     templist = List_Create(List_Nbr(liste),1,sizeof(int));
@@ -249,7 +250,33 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
     Add_SurfaceLoop(izon,templist,THEM);
   }
   else  if(typzon == MSH_SEGM_LOOP){
-    Add_EdgeLoop(izon,templist,THEM);
+
+    nb = List_Nbr(templist);
+    templist2 = List_Create(List_Nbr(templist),1,sizeof(int));
+
+    pj = (int*)List_Pointer_Fast(templist,0);
+    List_Add(templist2, pj);
+
+    while(List_Nbr(templist2) != nb){
+      pj = (int*)List_Pointer_Fast(templist2,List_Nbr(templist2)-1);
+      c1 = FindCurve(*pj, THEM);
+
+      //printf("last = %d \n", *pj);
+
+      for(k=0; k<List_Nbr(templist) ; k++){
+	pl = (int*)List_Pointer_Fast(templist,k);
+	//printf("testing %d \n", *pl);
+
+	c2 = FindCurve(*pl, THEM);
+	if(c2->beg == c1->end){
+	  List_Add(templist2, pl);
+	  //printf("adding %d \n", *pl);
+	  break;
+	}
+      }
+    }  
+
+    Add_EdgeLoop(izon,templist2,THEM);
   }
   else  if(typzon == MSH_VOLUME){
     CreateVolumeFromOldCrappyDatabase (izon,templist,THEM);
