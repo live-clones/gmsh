@@ -117,16 +117,25 @@ For num In {1:255}
   EndFor
 
   If(num == 3)
-    // We could make a system call here to generate the mpeg animation
-    // (uncomment the following if mpeg_encode is installed on your
-    // computer):
-    // System "mpeg_encode t8.par";
+    // Here we could make a system call to generate a movie. For example,
 
-    // We could also call whirlgif to create an animated gif file:
+    // with whirlgif:
+    //
     // System "whirlgif -minimize -loop -o t8.gif t8-*.gif";
 
-    // Or, we could call mencoder to create an mpeg4 movie:
-    // System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc vcoldec=mpeg4:vhq";
+    // with mpeg_encode:
+    //
+    // System "mpeg_encode t8.par";
+
+    // with mencoder:
+    //
+    // System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc -lavcopts vcodec=mpeg1video:vhq";
+    // System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc -lavcopts vcodec=mpeg4:vhq";
+
+    // with ffmpeg:
+    //
+    // System "ffmpeg -hq -r 5 -b 800 -vcodec mpeg1video -i t8-%02d.jpg t8.mpg"
+    // System "ffmpeg -hq -r 5 -b 800 -i t8-%02d.jpg t8.asf"
   EndIf
 
 EndFor
