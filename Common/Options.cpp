@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.72 2002-02-22 16:44:09 geuzaine Exp $
+// $Id: Options.cpp,v 1.73 2002-02-22 23:07:01 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -965,7 +965,7 @@ double opt_general_rotation1(OPT_ARGS_NUM){
 }
 double opt_general_rotation2(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.r[2] = val;
-  return CTX.r[3];
+  return CTX.r[2];
 }
 double opt_general_quaternion0(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.quaternion[0] = val;
