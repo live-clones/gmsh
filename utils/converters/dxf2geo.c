@@ -1,4 +1,4 @@
-// $Id: dxf2geo.c,v 1.7 2003-03-21 00:52:49 geuzaine Exp $
+// $Id: dxf2geo.c,v 1.1 2003-05-09 16:29:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //

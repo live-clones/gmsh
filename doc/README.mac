@@ -1,4 +1,4 @@
-$Id: README.mac,v 1.4 2003-03-06 23:01:17 geuzaine Exp $
+$Id: README.mac,v 1.5 2003-05-09 16:29:57 geuzaine Exp $
 
 How to make a version recognized by the Mac Finder?
 
@@ -17,7 +17,7 @@ The old way (using resource forks):
 - a) use the DiskCopy utility to create a disk image (.dmg)
 
   b) you can also create the disk image on the command line, using
-     utils/make-dmg.sh (WARNING: modify the script to suit your needs)
+     utils/misc/makedmg.sh (WARNING: modify the script to suit your needs)
 
 The new way:
 

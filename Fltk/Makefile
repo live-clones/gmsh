@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2003-03-21 00:52:37 geuzaine Exp $
+# $Id: Makefile,v 1.46 2003-05-09 16:29:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -22,8 +22,8 @@
 include ../variables
 
 LIB     = ../lib/libGmshFltk.a
-INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo\
-          -I../Mesh -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils
+INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo -I../Mesh\
+          -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils/solvers
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Main.cpp \
@@ -123,7 +123,7 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/Gmsh.h \
 GmshServer.o: GmshServer.cpp
 Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../utils/GmshClient.h GmshServer.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../utils/solvers/GmshClient.h GmshServer.h \
   ../Parser/OpenFile.h Solvers.h ../Common/GmshUI.h GUI.h Opengl_Window.h \
   Colorbar_Window.h ../Common/ColorTable.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \

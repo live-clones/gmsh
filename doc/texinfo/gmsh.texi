@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.54 2003-05-06 00:21:23 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.55 2003-05-09 16:29:57 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2055,12 +2055,12 @@ available on @value{GMSH-WEB}.
 @cindex Example, solver
 
 Here is a small example of how to interface a C solver with Gmsh. The
-following listing reproduces the @file{utils/mysolver.c} file from the Gmsh
-source distribution.
+following listing reproduces the @file{utils/solvers/mysolver.c} file from
+the Gmsh source distribution.
 
 @sp 1
 
-@verbatiminclude ../../utils/mysolver.c
+@verbatiminclude ../../utils/solvers/mysolver.c
 
 @sp 1
 
@@ -2071,7 +2071,7 @@ options}):
 
 @sp 1
 
-@verbatiminclude ../../utils/mysolver.opt
+@verbatiminclude ../../utils/solvers/mysolver.opt
 
 @c =========================================================================
 @c Post-processing module
@@ -3106,10 +3106,10 @@ please enable full warnings for your compiler (e.g.@: add @code{-Wall} to
 @item
 always use the @code{Msg()} function to print information, errors, @dots{};
 @item 
-indent your files using @file{utils/indent.sh};
+indent your files using @file{utils/misc/indent.sh};
 @item
 if working on Windows, don't leave tabs in your files (e.g.@: untabify them
-with @file{utils/untabify}).
+with @file{utils/misc/untabify.sh}).
 @end enumerate
 
 @sp 2

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: myperlsolver.pl,v 1.3 2003-04-19 04:14:53 geuzaine Exp $
+# $Id: myperlsolver.pl,v 1.1 2003-05-09 16:30:01 geuzaine Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 #

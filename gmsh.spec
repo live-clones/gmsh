@@ -31,7 +31,7 @@ and/or post-processor.
 
 %build
 make distrib-unix
-make utilities
+make converters
 make doc-pdf
 make doc-info
 rm -rf CVS */CVS */*/CVS

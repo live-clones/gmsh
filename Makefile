@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.283 2003-04-21 01:38:40 geuzaine Exp $
+# $Id: Makefile,v 1.284 2003-05-09 16:29:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -59,10 +59,10 @@ variables: configure
 
 source-common:
 	rm -rf gmsh-${GMSH_RELEASE}
-	tar zcvf gmsh.tgz `ls TODO README* */README* configure *.in Makefile */Makefile\
-                           */*.[chylr] */*.[ch]pp */*.rc */*.res */*.ico */*.icns\
-                           */*.p[lm] */*.sh */*.opt */*.spec`\
-                           doc demos tutorial
+	tar zcvf gmsh.tgz `ls TODO README* */README* configure *.in *.spec Makefile\
+                           */Makefile */*.[chylr] */*.[ch]pp */*.rc */*.res */*.ico\
+                           */*.icns`\
+                           doc demos tutorial utils
 	mkdir gmsh-${GMSH_RELEASE}
 	cd gmsh-${GMSH_RELEASE} && tar zxvf ../gmsh.tgz
 	rm -f gmsh.tgz
@@ -79,8 +79,8 @@ source-nonfree: source-common
 parser:
 	cd Parser && ${MAKE} parser
 
-utilities:
-	cd utils && ${MAKE}
+converters:
+	cd utils/converters && ${MAKE}
 
 doc-info:
 	cd doc/texinfo && ${MAKE} info
@@ -188,13 +188,14 @@ package-windows:
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
 	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
 	cp doc/COPYING gmsh-${GMSH_RELEASE}/COPYING.txt
-	cd utils && unix2dos ../gmsh-${GMSH_RELEASE}/*.txt
+	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_RELEASE}/*.txt
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
 	rm -f gmsh-${GMSH_RELEASE}/*/*.msh
 	rm -f gmsh-${GMSH_RELEASE}/*/*~
-	cd utils && unix2dos ../gmsh-${GMSH_RELEASE}/tutorial/* ../gmsh-${GMSH_RELEASE}/demos/*
+	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_RELEASE}/tutorial/*\
+                                       ../../gmsh-${GMSH_RELEASE}/demos/*
 	cd gmsh-${GMSH_RELEASE} && zip -r gmsh-${GMSH_RELEASE}-Windows.zip *
 	mv gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-Windows.zip .
 
@@ -239,13 +240,13 @@ package-mac:
 rpmold:
 	tar zcvf gmsh-${GMSH_RELEASE}.tar.gz ${GMSH_SOURCES}
 	mv gmsh-${GMSH_RELEASE}.tar.gz /usr/src/redhat/SOURCES
-	rpm -bb --define 'gmshversion ${GMSH_RELEASE}' utils/gmsh.spec
+	rpm -bb --define 'gmshversion ${GMSH_RELEASE}' gmsh.spec
 	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_RELEASE}-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-${UNAME}.tgz .
 
 rpm:
 	tar zcvf gmsh-${GMSH_RELEASE}.tar.gz ${GMSH_SOURCES}
 	mv gmsh-${GMSH_RELEASE}.tar.gz /usr/src/redhat/SOURCES
-	rpmbuild -bb --define 'gmshversion ${GMSH_RELEASE}' utils/gmsh.spec
+	rpmbuild -bb --define 'gmshversion ${GMSH_RELEASE}' gmsh.spec
 	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_RELEASE}-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-${UNAME}.tgz .
