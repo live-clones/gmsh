@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.79 2004-10-11 19:18:59 geuzaine Exp $
+// $Id: Post.cpp,v 1.80 2004-10-21 17:02:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -243,7 +243,7 @@ void Draw_List(Post_View * v, double ValMin, double ValMax,
     nb = List_Nbr(list) / nbelm;
 
     v->ViewForDisplacement = 
-      (Post_View*)List_Pointer_Test(CTX.post.list, v->RaisedScalarView);
+      (Post_View*)List_Pointer_Test(CTX.post.list, v->RaisedView);
 
     if(v->Light && v->SmoothNormals && v->Changed) {
       Msg(DEBUG, "Preprocessing of normals in View[%d]", v->Index);

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.366 2004-10-20 15:32:59 geuzaine Exp $
+// $Id: GUI.cpp,v 1.367 2004-10-21 17:02:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2612,7 +2612,7 @@ void GUI::create_option_window()
           {"Pyramid", 0, 0, 0},
           {"3D arrow", 0, 0, 0},
           {"Displacement", 0, 0, 0},
-          {"Raised scalar view", 0, 0, 0},
+          {"Raised view", 0, 0, 0},
           {0}
         };
         view_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
@@ -2633,7 +2633,7 @@ void GUI::create_option_window()
         view_value[63]->step(0.01);
         view_value[63]->align(FL_ALIGN_RIGHT);
 
-        view_value[64] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Raised scalar view number");
+        view_value[64] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Raised view number");
         view_value[64]->minimum(0);
         view_value[64]->maximum(10);
         view_value[64]->step(1);
@@ -2850,7 +2850,7 @@ void GUI::update_view_window(int num)
   view_value[63]->step(val3/100.);
   view_value[63]->maximum(val3);
 
-  opt_view_raised_scalar_view(num, GMSH_GUI, 0);
+  opt_view_raised_view(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
   //opt_view_tensor_type(num, GMSH_GUI, 0);
   view_push_butt[0]->callback(view_arrow_param_cb, (void*)num);

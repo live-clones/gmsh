@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.286 2004-10-20 15:32:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.287 2004-10-21 17:02:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3427,7 +3427,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double timestep = opt_view_timestep(current, GMSH_GET, 0);
   double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
   double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
-  double raised_scalar_view = opt_view_raised_scalar_view(current, GMSH_GET, 0);
+  double raised_view = opt_view_raised_view(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
@@ -3708,8 +3708,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_displacement_factor(i, GMSH_SET, val);
 
       val = WID->view_value[64]->value();
-      if(force || (val != raised_scalar_view))
-        opt_view_raised_scalar_view(i, GMSH_SET, val);
+      if(force || (val != raised_view))
+        opt_view_raised_view(i, GMSH_SET, val);
 
       val = WID->view_value[61]->value();
       if(force || (val != point_size))

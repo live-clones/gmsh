@@ -165,7 +165,7 @@ class Post_View{
   int Boundary, Grid, PointType, LineType;
   double PointSize, LineWidth;
   GmshColorTable CT;
-  int RaisedScalarView;
+  int RaisedView;
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);

@@ -1045,8 +1045,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "PositionY" , opt_view_position1 , 50. , 
     "Vertical position (in pixels) of the upper left corner of the scale or 2D graph" }, 
 
-  { F|O, "RaisedScalarView" , opt_view_raised_scalar_view , 0. ,
-    "Index of the scalar view raised by the displacement field" },
+  { F|O, "RaisedView" , opt_view_raised_view , 0. ,
+    "Index of the view raised by the displacement field" },
   { F,   "RaiseX" , opt_view_raise0 , 0. , 
     "Elevation of the view along X-axis (in model coordinates)" },
   { F,   "RaiseY" , opt_view_raise1 , 0. , 
@@ -1076,7 +1076,7 @@ StringXNumber ViewOptions_Number[] = {
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
 
   { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW3D ,
-    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=raised scalar view)" },
+    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=raised view)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
 
