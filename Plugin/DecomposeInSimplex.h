@@ -45,19 +45,22 @@ class DecomposeInSimplex{
   int _numNodes;
   // how many field components
   int _numComponents;
-  // how many time steps
-  int _numTimeSteps;
+  // create a simplex
+  void reorder(int map[4], int n,
+	       double *x, double *y, double *z, double *val,
+	       double *xn, double *yn, double *zn, double *valn);
  public:
   // default constructor
-  DecomposeInSimplex(int numNodes, int numComponents, int numTimeSteps)
-    : _numNodes(numNodes), _numComponents(numComponents), 
-    _numTimeSteps(numTimeSteps) { ; }
+  DecomposeInSimplex(int numNodes, int numComponents)
+    : _numNodes(numNodes), _numComponents(numComponents) { ; }
   // the number of simplices into which the element is decomposed
-  int num();
+  int numSimplices();
   // the number of nodes of the simplex
-  int numNodes();
+  int numSimplexNodes();
   // returns the i-th simplex in the decomposition
-  void decompose();
+  void decompose(int num, 
+		 double *x, double *y, double *z, double *val,
+		 double *xn, double *yn, double *zn, double *valn);
 };
 
 #endif

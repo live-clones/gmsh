@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.3 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.4 2003-11-22 01:45:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -111,17 +111,19 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
 }
 
 // Utility class 
-int DecomposeInSimplex::num()
+
+int DecomposeInSimplex::numSimplices()
 {
-  switch(_numNodes){
-  case 4 : return 2; // quad -> 2 tris
-  case 5 : return 2; // pyramid -> 2 tets
-  case 6 : return 3; // prism -> 3 tets
-  case 8 : return 6; // hexa -> 6 tets
+  switch(_numNodes) {
+  case 4: return 2; // quad -> 2 tris
+  case 5: return 2; // pyramid -> 2 tets
+  case 6: return 3; // prism -> 3 tets
+  case 8: return 6; // hexa -> 6 tets
   }
+  return 0;
 }
 
-int DecomposeInSimplex::numNodes()
+int DecomposeInSimplex::numSimplexNodes()
 {
   if(_numNodes == 4)
     return 3; // quad -> tris
@@ -129,31 +131,37 @@ int DecomposeInSimplex::numNodes()
     return 4; // all others -> tets
 }
 
-void DecomposeInSimplex::decompose()
+void DecomposeInSimplex::reorder(int map[4], int n,
+				 double *x, double *y, double *z, double *val,
+				 double *xn, double *yn, double *zn, double *valn)
 {
-#if 0
-  switch(_numNodes){
-  case 4: // quad
-    0 1 2
-    0 2 3
-    break ;
-	
-  case 8: // hexa
-    0 1 2 5
-    0 2 5 6    
-    0 4 5 6
-    0 2 3 6
-    0 4 6 7
-    0 3 6 7
-	
-  case 6: // prism
-    0 1 2 4 
-    0 2 4 5 
-    0 3 4 5 
-
-  case 5: // pyramid
-    0 1 3 4
-    1 2 3 4
+  for(int i = 0; i < n; i++) {
+    xn[i] = x[map[i]];
+    yn[i] = y[map[i]];
+    zn[i] = z[map[i]];
+    for(int j = 0; j < _numComponents; j++)
+      valn[i*_numComponents+j] = val[map[i]*_numComponents+j];
   }
-#endif
+}
+
+void DecomposeInSimplex::decompose(int num, 
+				   double *x, double *y, double *z, double *val,
+				   double *xn, double *yn, double *zn, double *valn)
+{
+  int quadTri[2][4] = {{0,1,2,-1}, {0,2,3,-1}};
+  int hexaTet[6][4] = {{0,1,2,5}, {0,2,5,6}, {0,4,5,6}, {0,2,3,6}, {0,4,6,7}, {0,3,6,7}};
+  int prisTet[3][4] = {{0,1,2,4}, {0,2,4,5}, {0,3,4,5}};
+  int pyraTet[2][4] = {{0,1,3,4}, {1,2,3,4}};
+
+  if(num < 0 || num > numSimplices()-1) {
+    Msg(GERROR, "Invalid decomposition");
+    num = 0;
+  }
+    
+  switch(_numNodes) {
+  case 4: reorder(quadTri[num], 3, x, y, z, val, xn, yn, zn, valn); break ;
+  case 8: reorder(hexaTet[num], 4, x, y, z, val, xn, yn, zn, valn); break ;
+  case 6: reorder(prisTet[num], 4, x, y, z, val, xn, yn, zn, valn); break ;
+  case 5: reorder(pyraTet[num], 4, x, y, z, val, xn, yn, zn, valn); break ;
+  }
 }

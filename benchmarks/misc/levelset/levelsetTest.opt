@@ -1,0 +1,18 @@
+Plugin(CutPlane).A = 1;
+Plugin(CutPlane).B = 0;
+Plugin(CutPlane).C = 0;
+Plugin(CutPlane).D = 0;
+Plugin(CutPlane).Run;
+
+Plugin(CutPlane).D = -2.5;
+Plugin(CutPlane).Run;
+
+Plugin(CutPlane).D = -4.1;
+Plugin(CutPlane).Run;
+
+Plugin(CutMap).A = 1;
+Plugin(CutMap).Run;
+
+Plugin(CutMap).A = 22;
+Plugin(CutMap).Run;
+
