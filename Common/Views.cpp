@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.91 2003-03-11 07:16:10 geuzaine Exp $
+// $Id: Views.cpp,v 1.92 2003-03-11 17:57:07 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1364,7 +1364,7 @@ void MergeViews(int all)
 {
   // sanity check
   int first = 1, nbt;
-  for(int i = 1; i < List_Nbr(CTX.post.list) - 1; i++) {
+  for(int i = 0; i < List_Nbr(CTX.post.list) - 1; i++) {
     Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
     if(all || v->Visible) {
       if(first){
