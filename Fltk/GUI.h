@@ -84,6 +84,7 @@ class GUI{
   // Bitmaps
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *about_bmp ;
   void add_post_plugins ( Fl_Menu_Button *button , int iView);
+  void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
 public:
 

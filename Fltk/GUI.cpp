@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.98 2001-07-31 14:06:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.99 2001-07-31 18:07:57 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1688,14 +1688,32 @@ void GUI::set_statistics(){
   sprintf(label[22], "%g/%g", p[8],p[4]); stat_value[22]->value(label[22]);
 }
 
-/*
-   A plugin has n options, we also show infos about
-   the plugin on the top of the window
-*/
+
+//*********************** Create the window for the plugins *************************
+
+void GUI::add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str){
+  int start = 0, len;
+  char *buff;
+  if(!strlen(str) || !strcmp(str, "\n")){
+    o->add("");
+    return;
+  }
+  for(unsigned int i=0 ; i<strlen(str) ; i++){
+    if(i==strlen(str)-1 || str[i]=='\n'){
+      len = i-start+(str[i]=='\n'?0:1);
+      buff = new char[len+strlen(prefix)+2];
+      strcpy(buff, prefix);
+      strncat(buff, &str[start], len);
+      buff[len+strlen(prefix)]='\0';
+      o->add(buff);
+      start = i+1;
+    }
+  }
+}
 
 PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
   char buffer[1024],namep[1024],copyright[256],author[256],help[1024];
-  
+
   // get plugin info
 
   int n = p->getNbOptions();
@@ -1706,7 +1724,7 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
   // create window
 
   int width = 20*CTX.fontsize;
-  int height = (n+2)*BH + 5*WB;
+  int height = ((n>5?n:5)+2)*BH + 5*WB;
 
   PluginDialogBox *pdb = new PluginDialogBox;
   pdb->main_window = new Fl_Window(width,height);
@@ -1742,15 +1760,18 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
       g->labelsize(CTX.fontsize);
 
       Fl_Browser *o = new Fl_Browser(2*WB, 2*WB+1*BH, width-4*WB, height-5*WB-2*BH);
+
       o->add("");
-      o->add(namep);
+      add_multiline_in_browser(o, "@c@b@.", namep);
       o->add("");
-      o->add(help);
+      add_multiline_in_browser(o, "", help);
       o->add("");
-      o->add(author);
-      o->add(copyright);
+      add_multiline_in_browser(o, "Author(s): ", author);
+      add_multiline_in_browser(o, "Copyright: ", copyright);
       o->textsize(CTX.fontsize);
       
+      pdb->main_window->resizable(o);
+
       g->end();
     }
     o->end();

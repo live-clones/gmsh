@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.9 2001-07-31 11:13:16 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.10 2001-07-31 18:07:57 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -37,7 +37,10 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright, char *help_tex
 {
   strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright,"DGR (www.multiphysics.com)");
-  strcpy(help_text,"This Plugins cuts a view with a plane a x + b y + c z + d = 0");
+  strcpy(help_text,
+	 "Cuts a 3D scalar view view with the plane\n"
+	 "A*X + B*Y + C*Z + D = 0.\n"
+	 "Script name: Plugin(CutPlane).");
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const
