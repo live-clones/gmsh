@@ -9,6 +9,7 @@
 
 General.GraphicsWidth = 320 ; 
 General.GraphicsHeight = 240 ;
+Print.JpegQuality = 100;
 
 // Hide all views
 
