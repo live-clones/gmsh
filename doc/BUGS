@@ -1,4 +1,4 @@
-$Id: BUGS,v 1.7 2003-03-03 16:07:15 geuzaine Exp $
+$Id: BUGS,v 1.8 2003-03-03 19:58:06 geuzaine Exp $
 
 * All surface meshes are made in a mean plane. If your surface cannot
 be projected into a plane with a 1-to-1 correspondance between the
@@ -8,7 +8,7 @@ these cases.
 * Improve Triangle integration: bgmesh on file, 2nd intermediate
 mesh?, etc.
 
-* purify, purify... The old 2D algorithm (mainly, mesh_domain(), if
-full of memory leaks.
+* purify, purify... The old 2D algorithm (mainly mesh_domain()) is
+full of large memory leaks.
 
 
