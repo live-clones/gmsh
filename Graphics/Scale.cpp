@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.38 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: Scale.cpp,v 1.39 2004-04-19 22:54:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -212,7 +212,7 @@ void Draw_Scales(void)
   int i;
   double xmin, ymin, width, height, xsep, ysep;
   double oldwidth, totalwidth;
-  double dx = 0., dy = 0., tic = 5., space = 10.;
+  double dx = 0., dy = 0., tic = 10., space = 10.;
   char label[1024];
   Post_View *v;
 

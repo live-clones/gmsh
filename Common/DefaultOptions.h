@@ -369,7 +369,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Relative length of arrow stem" },
   { F|O, "ArrowStemRadius" , opt_general_arrow_stem_radius , 0.02 ,
     "Relative radius of arrow stem" },
-  { F|O, "Axes" , opt_general_axes , 1. ,
+  { F|O, "Axes" , opt_general_axes , 0. ,
     "Display the axes linked to the model" },
 
   { F,   "Clip0" , opt_general_clip0 , 0. ,
@@ -451,7 +451,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "FontSize" , opt_general_fontsize , 12. , 
     "Size of the font in the graphical user interface" },
 
-  { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 11. , 
+  { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 12. ,
     "Size of the font in the graphic window" }, 
   { F|S, "GraphicsHeight" , opt_general_viewport3 , 500. , 
     "Height (in pixels) of the graphic window" }, 
