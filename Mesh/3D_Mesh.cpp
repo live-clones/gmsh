@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.52 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.53 2003-06-14 05:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -896,8 +896,18 @@ void Maillage_Volume(void *data, void *dum)
   }
 
   if(Extrude_Mesh(v)) {
+
+    if(CTX.mesh.order == 2){
+      Msg(GERROR, "Second order 3D extruded meshes not implemented");
+    }
+
   }
   else if(MeshTransfiniteVolume(v)) {
+
+    if(CTX.mesh.order == 2){
+      Msg(GERROR, "Second order 3D transfinite meshes not implemented");
+    }
+
   }
   else if(v->Typ == 99999) {
 

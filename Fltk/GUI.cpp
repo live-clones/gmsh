@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.238 2003-06-13 22:41:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.239 2003-06-14 05:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1634,11 +1634,10 @@ void GUI::create_option_window()
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      mesh_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Second order elements");
+      mesh_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW, BH, "Second order elements (simplices and quadrangles only)");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->down_box(TOGGLE_BOX);
       mesh_butt[3]->selection_color(TOGGLE_COLOR);
-      mesh_butt[3]->deactivate();
 
       mesh_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Constrain background mesh");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
