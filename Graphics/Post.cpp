@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.94 2005-01-14 22:53:20 geuzaine Exp $
+// $Id: Post.cpp,v 1.95 2005-03-11 05:47:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -291,6 +291,15 @@ void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
 				v->ViewIndexForGenRaise);
     ApplyGeneralizedRaise(v, nbnod, ext_nbcomp, ext_vals, x2, y2, z2);
   }
+
+  for(int i = 0; i < nbnod; i++){
+    if(x2[i] < v->TmpBBox[0]) v->TmpBBox[0] = x2[i];
+    if(x2[i] > v->TmpBBox[1]) v->TmpBBox[1] = x2[i];
+    if(y2[i] < v->TmpBBox[2]) v->TmpBBox[2] = y2[i];
+    if(y2[i] > v->TmpBBox[3]) v->TmpBBox[3] = y2[i];
+    if(z2[i] < v->TmpBBox[4]) v->TmpBBox[4] = z2[i];
+    if(z2[i] > v->TmpBBox[5]) v->TmpBBox[5] = z2[i];
+  }
 }
 
 // Compare barycenters with viewpoint (eye)
@@ -552,6 +561,13 @@ void Draw_Post(void)
       if(v->UseGenRaise)
 	InitGeneralizedRaise(v);
 
+      if(v->Changed){
+	for(int i = 0; i < 3; i++) {
+	  v->TmpBBox[2 * i] = VAL_INF;
+	  v->TmpBBox[2 * i + 1] = -VAL_INF;
+	}
+      }
+
       // initialize alpha blending for transparency
       if(CTX.alpha && ColorTable_IsAlpha(&v->CT)){
 	if(v->FakeTransparency){
@@ -763,14 +779,26 @@ void Draw_Post(void)
 	Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);
       }
 
+      for(int i = 0; i < 6; i++)
+	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+
+      if(v->Grid && v->Type == DRAW_POST_3D){
+	int ok = 1;
+	for(int i = 0; i < 6; i++) {
+	  if(fabs(v->TmpBBox[i]) == VAL_INF){
+	    ok = 0;
+	    break;
+	  }
+	}
+	if(ok)
+	  Draw_3DGrid(v->Grid, v->NbAbscissa, v->AbscissaFormat, v->TmpBBox);
+      }
+      
       // reset alpha blending
       if(CTX.alpha){
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
       }
-
-      for(int i = 0; i < 6; i++)
-	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
       v->Changed = 0;
     }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.420 2005-03-09 09:21:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.421 2005-03-11 05:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -439,18 +439,39 @@ char *GetFontName(int index)
 int GetFontAlign(char *alignstr)
 {
   if(alignstr){
-    if(!strcmp(alignstr, "left") || !strcmp(alignstr, "Left"))
+    if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
+       !strcmp(alignstr, "left"))
       return 0;
-    else if(!strcmp(alignstr, "center") || !strcmp(alignstr, "Center"))
+    else if(!strcmp(alignstr, "BottomCenter") || !strcmp(alignstr, "Center") ||
+	    !strcmp(alignstr, "center"))
       return 1;
-    else if(!strcmp(alignstr, "right") || !strcmp(alignstr, "Right"))
+    else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
+	    !strcmp(alignstr, "right"))
       return 2;
+    else if(!strcmp(alignstr, "TopLeft"))
+      return 3;
+    else if(!strcmp(alignstr, "TopCenter"))
+      return 4;
+    else if(!strcmp(alignstr, "TopRight"))
+      return 5;
+    else if(!strcmp(alignstr, "CenterLeft"))
+      return 6;
+    else if(!strcmp(alignstr, "CenterCenter"))
+      return 7;
+    else if(!strcmp(alignstr, "CenterRight"))
+      return 8;
   }
   Msg(GERROR, "Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
   Msg(INFO, "Available font alignments:");
-  Msg(INFO, "  \"Left\"");
-  Msg(INFO, "  \"Center\"");
-  Msg(INFO, "  \"Right\"");
+  Msg(INFO, "  \"Left\" (or \"BottomLeft\")");
+  Msg(INFO, "  \"Center\" (or \"BottomCenter\")");
+  Msg(INFO, "  \"Right\" (or \"BottomRight\")");
+  Msg(INFO, "  \"TopLeft\"");
+  Msg(INFO, "  \"TopCenter\"");
+  Msg(INFO, "  \"TopRight\"");
+  Msg(INFO, "  \"CenterLeft\"");
+  Msg(INFO, "  \"CenterCenter\"");
+  Msg(INFO, "  \"CenterRight\"");
   return 0;
 }
 
@@ -709,6 +730,14 @@ int GUI::global_shortcuts(int event)
                                 (j == DRAW_POST_DISCRETE) ? DRAW_POST_CONTINUOUS :
                                 DRAW_POST_ISO);
       }
+    }
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + 'g')) {
+    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_grid(i, GMSH_SET | GMSH_GUI, opt_view_grid(i, GMSH_GET, 0)+1);
     }
     redraw_opengl();
     return 1;
@@ -2474,38 +2503,34 @@ void GUI::create_option_window()
       view_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Name");
       view_input[0]->align(FL_ALIGN_RIGHT);
 
-      view_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Format");
+      view_input[1] = new Fl_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Number format");
       view_input[1]->align(FL_ALIGN_RIGHT);
 
-      {
-	view_2d = new Fl_Group(L + 2 * WB, 2 * WB + 7 * BH, width - 2 * WB, 4 * BH, 0);
-	
-	view_input[2] = new Fl_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Abscissa name");
-	view_input[2]->align(FL_ALIGN_RIGHT);
-	
-	view_input[3] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Abscissa format");
-	view_input[3]->align(FL_ALIGN_RIGHT);
-	
-	view_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Number of abscissa points");
-	view_value[25]->minimum(0.);
-	view_value[25]->step(1);
-	view_value[25]->maximum(256);
-	view_value[25]->align(FL_ALIGN_RIGHT);
-	
-	static Fl_Menu_Item menu_grid_mode[] = {
-	  {"None", 0, 0, 0},
-	  {"Axes", 0, 0, 0},
-	  {"Box", 0, 0, 0},
-	  {"Full", 0, 0, 0},
-	  {0}
-	};
-	view_choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Grid mode");
-	view_choice[8]->menu(menu_grid_mode);
-	view_choice[8]->align(FL_ALIGN_RIGHT);
-	
-	view_2d->end();
-      }
+      static Fl_Menu_Item menu_grid_mode[] = {
+	{"None", 0, 0, 0},
+	{"Axes", 0, 0, 0},
+	{"Box", 0, 0, 0},
+	{"Full grid", 0, 0, 0},
+	{"Open grid", 0, 0, 0},
+	{0}
+      };
+      view_choice[8] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Grid mode");
+      view_choice[8]->menu(menu_grid_mode);
+      view_choice[8]->align(FL_ALIGN_RIGHT);
+      view_choice[8]->tooltip("(Alt+g)");
 
+      view_input[3] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Grid number format");
+      view_input[3]->align(FL_ALIGN_RIGHT);
+      
+      view_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Axis tics");
+      view_value[25]->minimum(0.);
+      view_value[25]->step(1);
+      view_value[25]->maximum(256);
+      view_value[25]->align(FL_ALIGN_RIGHT);
+
+      view_input[2] = new Fl_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Abscissa name");
+      view_input[2]->align(FL_ALIGN_RIGHT);
+      
       view_butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Set position automatically");
       view_butt[7]->type(FL_TOGGLE_BUTTON);
       view_butt[7]->down_box(GMSH_TOGGLE_BOX);
@@ -3006,14 +3031,15 @@ void GUI::update_view_window(int num)
   opt_view_normals(num, GMSH_GUI, 0);
   opt_view_tangents(num, GMSH_GUI, 0);
 
-  if(v->NbSP)
-    view_2d->activate();
-  else
-    view_2d->deactivate();
-  opt_view_abscissa_name(num, GMSH_GUI, NULL);
+  opt_view_grid(num, GMSH_GUI, 0);
   opt_view_abscissa_format(num, GMSH_GUI, NULL);
   opt_view_nb_abscissa(num, GMSH_GUI, 0);
-  opt_view_grid(num, GMSH_GUI, 0);
+
+  if(v->NbSP)
+    view_input[2]->activate();
+  else
+    view_input[2]->deactivate();
+  opt_view_abscissa_name(num, GMSH_GUI, NULL);
 
   opt_view_nb_iso(num, GMSH_GUI, 0);
   opt_view_intervals_type(num, GMSH_GUI, 0);

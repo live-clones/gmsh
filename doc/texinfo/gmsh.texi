@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.173 2005-02-20 06:36:59 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.174 2005-03-11 05:47:56 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2316,10 +2316,9 @@ e.g., @ref{t8.geo}, and @ref{t9.geo}).
 The two following sections summarize all available post-processing commands
 and options. Most options apply to both 2D and 3D plots (colormaps,
 point/line sizes, interval types, time step selection, etc.), but some are
-peculiar to 3D (lightning, element selection, etc.) or 2D plots (graph
-style, labels, etc.). Note that 2D plots can be positioned explicitly
-inside the graphical window, or be automatically positioned in order to
-avoid overlaps.
+peculiar to 3D (lightning, element selection, etc.) or 2D plots (abscissa
+labels, etc.). Note that 2D plots can be positioned explicitly inside the
+graphical window, or be automatically positioned in order to avoid overlaps.
 
 Sample post-processing files in human-readable ``parsed'' format
 (@pxref{Parsed post-processing file format}) are available in the
@@ -3182,12 +3181,14 @@ coordinates, measured from the top-left corner of the window. If the first
 from the right (respectively bottom) edge of the window. If the value of the
 first (respectively second) @var{expression} is larger than 99999, the
 string is centered horizontally (respectively vertically). If the third
-@var{expression} is equal to zero, the text is left-aligned and displayed
-using the default font and size. Otherwise, the third @var{expression} is
-converted into an integer whose eight lower bits give the font size, whose
-eight next bits select the font (the index corresponds to the position in
-the font menu in the GUI), and whose eight next bits define the text
-alignment (0=left, 1=center, 2=right).
+@var{expression} is equal to zero, the text is aligned bottom-left and
+displayed using the default font and size. Otherwise, the third
+@var{expression} is converted into an integer whose eight lower bits give
+the font size, whose eight next bits select the font (the index corresponds
+to the position in the font menu in the GUI), and whose eight next bits
+define the text alignment (0=bottom-left, 1=bottom-center, 2=bottom-right,
+3=top-left, 4=top-center, 5=top-right, 6=center-left, 7=center-center,
+8=center-right).
 
 For the 3D text objects, the three first @w{@var{expression}s} in
 @var{list-of-coords} give the position of the leftmost element of the string
@@ -3332,12 +3333,13 @@ where @var{index} gives the starting index of the string in
 the position is measured from the right (respectively bottom) edge of the
 window. If @var{coord1} (respectively @var{coord2}) is larger than 99999,
 the string is centered horizontally (respectively vertically).  If
-@var{style} is equal to zero, the text is left-aligned and displayed using
-the default font and size. Otherwise, @var{style} is converted into an
+@var{style} is equal to zero, the text is aligned bottom-left and displayed
+using the default font and size. Otherwise, @var{style} is converted into an
 integer whose eight lower bits give the font size, whose eight next bits
 select the font (the index corresponds to the position in the font menu in
-the GUI), and whose eight next bits define the text alignment (0=left,
-1=center, 2=right).
+the GUI), and whose eight next bits define the text alignment
+(0=bottom-left, 1=bottom-center, 2=bottom-right, 3=top-left, 4=top-center,
+5=top-right, 6=center-left, 7=center-center, 8=center-right).
 
 @item @var{text2d-chars}
 is a list of @var{nb-text2d-chars} characters. Substrings are separated with

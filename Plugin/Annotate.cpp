@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.8 2005-03-09 07:35:11 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.9 2005-03-11 05:47:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -67,9 +67,7 @@ static double getStyle()
   int fontsize = (int)AnnotateOptions_Number[4].def, font = 0, align = 0;
 #if defined(HAVE_FLTK)
   font = GetFontIndex(AnnotateOptions_String[1].def);
-  // align only makes sense in screen coordinates at the moment:
-  if(!AnnotateOptions_Number[3].def)
-    align = GetFontAlign(AnnotateOptions_String[2].def);
+  align = GetFontAlign(AnnotateOptions_String[2].def);
 #endif
   return (double)((align<<16)|(font<<8)|(fontsize));
 }
@@ -203,14 +201,14 @@ void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Annotate) adds the text string `Text' in\n"
-	 "font `Font' and size `FontSize' in the view `iView'.\n"
+         "Plugin(Annotate) adds the text string `Text', in\n"
+	 "font `Font' and size `FontSize', in the view `iView'.\n"
 	 "If `3D' is equal to 1, the plugin inserts the\n"
 	 "string in model coordinates at the position\n"
 	 "(`X',`Y',`Z'). If `3D' is equal to 0, the plugin\n"
 	 "inserts the string in screen coordinates at the\n"
-	 "position (`X',`Y'), and aligns it according to\n"
-	 "`Align'. If `iView' < 0, the plugin is run on the\n"
+	 "position (`X',`Y'). The string is aligned according\n"
+	 "to `Align'. If `iView' < 0, the plugin is run on the\n"
 	 "current view.\n"
 	 "\n"
 	 "Plugin(Annotate) is executed in-place.\n");

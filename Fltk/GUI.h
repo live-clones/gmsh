@@ -197,7 +197,7 @@ public:
   // view options
   int view_number ;
   Fl_Group         *view_group ;
-  Fl_Group         *view_2d, *view_range, *view_vector ;
+  Fl_Group         *view_range, *view_vector ;
   Fl_Check_Button  *view_butt[100] ;
   Fl_Value_Input   *view_value[100] ;
   Fl_Input         *view_input[100] ;

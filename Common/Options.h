@@ -268,6 +268,7 @@ double opt_general_orthographic(OPT_ARGS_NUM);
 double opt_general_draw_bounding_box(OPT_ARGS_NUM);
 double opt_general_fast_redraw(OPT_ARGS_NUM);
 double opt_general_axes(OPT_ARGS_NUM);
+double opt_general_axes_size(OPT_ARGS_NUM);
 double opt_general_small_axes(OPT_ARGS_NUM);
 double opt_general_small_axes_position0(OPT_ARGS_NUM);
 double opt_general_small_axes_position1(OPT_ARGS_NUM);

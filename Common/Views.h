@@ -114,6 +114,7 @@ class Post_View{
   int (*GIFV) (double min, double max, int nb, double value);
   int ExternalElementIndex;
   double ExternalMin, ExternalMax;
+  double TmpBBox[6]; // dynamically computed during drawing
 
   // smooth the view
   void smooth();

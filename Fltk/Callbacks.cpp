@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.339 2005-03-09 09:21:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.340 2005-03-11 05:47:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1307,6 +1307,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+c         Loop through predefined color schemes");
   Msg(DIRECT, "  Alt+d         Change surface mesh display mode (solid/wireframe)");
   Msg(DIRECT, "  Alt+f         Change redraw mode (fast/full)"); 
+  Msg(DIRECT, "  Alt+g         Loop through grid modes for all post-processing views"); 
   Msg(DIRECT, "  Alt+h         Hide/show all post-processing views"); 
   Msg(DIRECT, "  Alt+i         Hide/show all post-processing view scales");
   Msg(DIRECT, "  Alt+l         Hide/show geometry lines");

@@ -94,6 +94,8 @@ Loop through predefined color schemes
 Change surface mesh display mode (solid/wireframe)
 @item Alt+f
 Change redraw mode (fast/full) 
+@item Alt+g
+Loop through grid modes for all post-processing views 
 @item Alt+h
 Hide/show all post-processing views 
 @item Alt+i

@@ -1,4 +1,4 @@
-// $Id: Axes.cpp,v 1.25 2005-01-02 18:10:12 geuzaine Exp $
+// $Id: Axes.cpp,v 1.26 2005-03-11 05:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -29,20 +29,20 @@
 
 extern Context_T CTX;
 
-void Draw_Axes(double s)
+void Draw_Axes()
 {
-  double f, g, b, c;
+  if(!CTX.range[0] && !CTX.range[1] && !CTX.range[2])
+    return;
+
+  double s = CTX.axes_size * CTX.pixel_equiv_x / CTX.s[0];
 
   if(s == 0.)
     return;
 
-  if(!CTX.range[0] && !CTX.range[1] && !CTX.range[2])
-    return;
-
-  f = 0.666 * s;
-  g = 1.233 * s;
-  b = .1 * s;
-  c = 0.666 * b;
+  double f = 0.666 * s;
+  double g = 1.233 * s;
+  double b = .1 * s;
+  double c = 0.666 * b;
 
   glLineWidth(CTX.line_width);
   gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);

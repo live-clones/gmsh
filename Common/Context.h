@@ -90,8 +90,6 @@ public :
   int nopopup;                // never popup dialogs in scripts (use default values instead)
 
   double rot[16];             // current rotation matrix 
-  double mod[16];             // current modelview matrix 
-  double proj[16];            // current projection matrix
   double r[3];                // position angles (if succ. rot. along x, y and z) 
   double t[3], s[3];          // current translation and scale 
   double clip_factor;         // clipping plane distance factor
@@ -113,7 +111,8 @@ public :
   int draw_bbox;              // always draw the bounding boxes?
   int fast_redraw;            // only draw the bbox when rotating/panning the model?
   int axes, small_axes;       // draw axes? 
-  int small_axes_pos[2], small_axes_size; // small axes position and size
+  int axes_size, small_axes_size; // axes size
+  int small_axes_pos[2];      // small axes position
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
   int alpha;                  // enable alpha blending 
   double zoom_factor;         // mouse2 zoom coefficient

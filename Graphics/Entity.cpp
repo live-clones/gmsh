@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.56 2005-03-09 09:21:26 geuzaine Exp $
+// $Id: Entity.cpp,v 1.57 2005-03-11 05:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Numeric.h"
 #include "Draw.h"
 #include "Context.h"
+#include "gl2ps.h"
 
 extern Context_T CTX;
 
@@ -499,5 +500,178 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 		     p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);
       }
     }
+  }
+}
+
+int Draw_Tics(int comp, int n, char *format, 
+	      double p1[3], double p2[3], double perp[3])
+{
+  // draws n tic marks (in direction perp) and labels along the line p1->p2
+
+  if(n < 2) return 0;
+
+  if(!strlen(format)) return n;
+
+  double t[3] = { p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2] };
+  double l = norme(t);
+  norme(perp);
+  double w = 10 * CTX.pixel_equiv_x / CTX.s[0]; // big tics 10 pixels
+  double w2 = 4 * CTX.pixel_equiv_x / CTX.s[0]; // small tics 4 pixels
+
+  double tmp = 2. * CTX.gl_fontsize * CTX.pixel_equiv_x / CTX.s[0];
+  if(n * tmp > l) n = 3;
+  if(n * tmp > l) n = 2;
+  
+  double step = l/(double)(n-1);
+
+  for(int i = 0; i < n; i++){
+    double d = i * step;
+    double p[3] = { p1[0]+t[0]*d, p1[1]+t[1]*d, p1[2]+t[2]*d };
+    double q[3] = { p[0]+perp[0]*w, p[1]+perp[1]*w, p[2]+perp[2]*w };
+    double r[3] = { p[0]+perp[0]*w*1.4, p[1]+perp[1]*w*1.4, p[2]+perp[2]*w*1.4 };
+
+    glBegin(GL_LINES);
+    glVertex3d(p[0], p[1], p[2]);
+    glVertex3d(q[0], q[1], q[2]);
+    glEnd();
+
+    if(i < n-1){
+      for(int j = 1; j < 10; j++){
+	double dd = d + j * step/10.;
+	double pp[3] = { p1[0]+t[0]*dd, p1[1]+t[1]*dd, p1[2]+t[2]*dd };
+	double qq[3] = { pp[0]+perp[0]*w2, pp[1]+perp[1]*w2, pp[2]+perp[2]*w2 };
+	glBegin(GL_LINES);
+	glVertex3d(pp[0], pp[1], pp[2]);
+	glVertex3d(qq[0], qq[1], qq[2]);
+	glEnd();
+      }
+    }
+
+    char label[256];
+    sprintf(label, format, p[comp]);
+    double winp[3], winr[3];
+    World2Viewport(p, winp);
+    World2Viewport(r, winr);
+    gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+    if(fabs(winr[0] - winp[0]) < 2.) // center align
+      winr[0] -= gl_width(label) / 2.;
+    else if(winr[0] < winp[0]) // right align
+      winr[0] -= gl_width(label);
+    if(fabs(winr[1] - winp[1]) < 2.) // center align
+      winr[1] -= gl_height() / 3.;
+    else if(winr[1] < winp[1]) // top align
+      winr[1] -= gl_height();
+    Viewport2World(winr, r);
+    glRasterPos3d(r[0], r[1], r[2]);
+    Draw_String(label);
+  }
+
+  return n;
+}
+
+void Draw_GridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
+{
+  double t1[3] = { p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2] };
+  double t2[3] = { p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2] };
+  double l1 = norme(t1);
+  double l2 = norme(t2);
+
+  glEnable(GL_LINE_STIPPLE);
+  glLineStipple(1, 0x1111);
+  gl2psEnable(GL2PS_LINE_STIPPLE);
+  glBegin(GL_LINES);
+  
+  for(int i = 1; i < n1-1; i++){
+    double d = (double)i/(double)(n1-1) * l1;
+    glVertex3d(p1[0] + t1[0]*d,
+	       p1[1] + t1[1]*d,
+	       p1[2] + t1[2]*d);
+    glVertex3d(p1[0] + t1[0]*d + t2[0]*l2, 
+	       p1[1] + t1[1]*d + t2[1]*l2, 
+	       p1[2] + t1[2]*d + t2[2]*l2);
+  }
+  for(int i = 1; i < n2-1; i++){
+    double d = (double)i/(double)(n2-1) * l2;
+    glVertex3d(p1[0] + t2[0]*d, 
+	       p1[1] + t2[1]*d, 
+	       p1[2] + t2[2]*d);
+    glVertex3d(p1[0] + t2[0]*d + t1[0]*l1, 
+	       p1[1] + t2[1]*d + t1[1]*l1, 
+	       p1[2] + t2[2]*d + t1[2]*l1);
+  }
+
+  glEnd();
+  glDisable(GL_LINE_STIPPLE);
+  gl2psDisable(GL2PS_LINE_STIPPLE);
+}
+
+void Draw_3DGrid(int mode, int tics, char *format, double bb[6])
+{
+  // mode 0: nothing
+  //      1: axes
+  //      2: box
+  //      3: full grid
+  //      4: open grid
+
+  if( (mode < 1) || 
+      (bb[0] == bb[1] && bb[2] == bb[3]) ||
+      (bb[0] == bb[1] && bb[4] == bb[5]) ||
+      (bb[2] == bb[3] && bb[4] == bb[5]) )
+    return;
+  
+  double xmin = bb[0], xmax = bb[1];
+  double ymin = bb[2], ymax = bb[3];
+  double zmin = bb[4], zmax = bb[5];
+
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+
+  glBegin(GL_LINES);
+  // 3 axes
+  glVertex3d(xmin, ymin, zmin); glVertex3d(xmax, ymin, zmin);
+  glVertex3d(xmin, ymin, zmin); glVertex3d(xmin, ymax, zmin);
+  glVertex3d(xmin, ymin, zmin); glVertex3d(xmin, ymin, zmax);
+  // open box
+  if(mode > 1){
+    glVertex3d(xmin, ymax, zmin); glVertex3d(xmax, ymax, zmin);
+    glVertex3d(xmax, ymin, zmin); glVertex3d(xmax, ymax, zmin);
+    glVertex3d(xmin, ymin, zmax); glVertex3d(xmax, ymin, zmax);
+    glVertex3d(xmax, ymin, zmin); glVertex3d(xmax, ymin, zmax);
+    glVertex3d(xmin, ymin, zmax); glVertex3d(xmin, ymax, zmax);
+    glVertex3d(xmin, ymax, zmin); glVertex3d(xmin, ymax, zmax);
+  }
+  // closed box
+  if(mode == 2 || mode == 3){
+    glVertex3d(xmax, ymax, zmax); glVertex3d(xmin, ymax, zmax);
+    glVertex3d(xmax, ymax, zmax); glVertex3d(xmax, ymin, zmax);
+    glVertex3d(xmax, ymax, zmax); glVertex3d(xmax, ymax, zmin);
+  }
+  glEnd();
+
+  double orig[3] = {xmin, ymin, zmin};
+  double xx[3] = {xmax, ymin, zmin};
+  double yy[3] = {xmin, ymax, zmin};
+  double zz[3] = {xmin, ymin, zmax};
+  double dxm[3] = {0., (ymin != ymax) ? -1. : 0., (zmin != zmax) ? -1. : 0.};
+  double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
+  double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
+
+  int nx = (xmin != xmax) ? Draw_Tics(0, tics, format, orig, xx, dxm) : 0;
+  int ny = (ymin != ymax) ? Draw_Tics(1, tics, format, orig, yy, dym) : 0;
+  int nz = (zmin != zmax) ? Draw_Tics(2, tics, format, orig, zz, dzm) : 0;
+  
+  if(mode > 2){
+    Draw_GridStipple(nx, ny, orig, xx, yy);
+    Draw_GridStipple(ny, nz, orig, yy, zz);
+    Draw_GridStipple(nx, nz, orig, xx, zz);
+  }
+
+  if(mode == 3){
+    double orig2[3] = {xmax, ymax, zmax};
+    double xy[3] = {xmax, ymax, zmin};
+    double yz[3] = {xmin, ymax, zmax};
+    double xz[3] = {xmax, ymin, zmax};
+    if(zmin != zmax) Draw_GridStipple(nx, ny, orig2, yz, xz);
+    if(xmin != xmax) Draw_GridStipple(ny, nz, orig2, xz, xy);
+    if(ymin != ymax) Draw_GridStipple(nx, nz, orig2, yz, xy);
   }
 }

@@ -74,6 +74,11 @@ Display the axes linked to the model@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.AxesSize
+Size (in pixels) of moving axes@*
+Default value: @code{100}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Clip0
 Enable clipping plane 0 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*

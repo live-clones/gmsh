@@ -62,6 +62,7 @@ double myacos(double a);
 void prodve(double a[3], double b[3], double c[3]);
 void prosca(double a[3], double b[3], double *c);
 void matvec(double mat[3][3], double vec[3], double res[3]);
+double norm3(double a[3]);
 double norme(double a[3]);
 void normal3points(double x0, double y0, double z0,
 		   double x1, double y1, double z1,

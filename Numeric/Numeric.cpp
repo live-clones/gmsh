@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.22 2005-01-12 19:10:41 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.23 2005-03-11 05:47:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -113,9 +113,14 @@ void prosca(double a[3], double b[3], double *c)
   *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
+double norm3(double a[3])
+{
+  return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+}
+
 double norme(double a[3])
 {
-  double mod = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+  double mod = norm3(a);
   if(mod != 0.0){
     a[0] /= mod;
     a[1] /= mod;

@@ -1,13 +1,13 @@
 @ftable @code
 @item Plugin(Annotate)
-Plugin(Annotate) adds the text string `Text' in
-font `Font' and size `FontSize' in the view `iView'.
+Plugin(Annotate) adds the text string `Text', in
+font `Font' and size `FontSize', in the view `iView'.
 If `3D' is equal to 1, the plugin inserts the
 string in model coordinates at the position
 (`X',`Y',`Z'). If `3D' is equal to 0, the plugin
 inserts the string in screen coordinates at the
-position (`X',`Y'), and aligns it according to
-`Align'. If `iView' < 0, the plugin is run on the
+position (`X',`Y'). The string is aligned according
+to `Align'. If `iView' < 0, the plugin is run on the
 current view.
 
 Plugin(Annotate) is executed in-place.

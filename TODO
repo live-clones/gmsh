@@ -1,4 +1,4 @@
-$Id: TODO,v 1.86 2005-02-28 23:57:59 geuzaine Exp $
+$Id: TODO,v 1.87 2005-03-11 05:47:53 geuzaine Exp $
 
 ********************************************************************
 
@@ -90,11 +90,6 @@ template the view handling/drawing routines so that we can actually
 use post-pro files with float values (50% file savings can be nice
 for very large maps; would bring the format up to par with an 
 index-based format)
-
-********************************************************************
-
-Should Raise & offsets modify the bounding boxes? (I don't think
-so --Christophe)
 
 ********************************************************************
 

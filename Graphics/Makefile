@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.67 2005-01-08 20:15:12 geuzaine Exp $
+# $Id: Makefile,v 1.68 2005-03-11 05:47:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -134,7 +134,7 @@ Entity.o: Entity.cpp ../Mesh/Mesh.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/Tools.h ../Common/GmshUI.h ../Numeric/Numeric.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/GmshMatrix.h \
-  ../Common/AdaptiveViews.h ../Common/Context.h
+  ../Common/AdaptiveViews.h ../Common/Context.h gl2ps.h
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.164 2005-01-24 17:39:28 geuzaine Exp $
+// $Id: Views.cpp,v 1.165 2005-03-11 05:47:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -176,8 +176,8 @@ Post_View *BeginView(int allocate)
   v->Max = -VAL_INF;
   v->adaptive = 0;
   for(i = 0; i < 3; i++) {
-    v->BBox[2 * i] = VAL_INF;
-    v->BBox[2 * i + 1] = -VAL_INF;
+    v->BBox[2 * i] = v->TmpBBox[2 * i] = VAL_INF;
+    v->BBox[2 * i + 1] = v->TmpBBox[2 * i + 1] = -VAL_INF;
   }
   for(i = 0; i < 3; i++)
     v->GenRaise_f[i] = NULL;
@@ -777,6 +777,7 @@ Post_View *Create2DGraph(char *xname, char *yname,
   sprintf(filename, "%s.pos", yname);
   EndView(v, 1, filename, yname);
   v->Type = DRAW_POST_2D_SPACE;
+  v->Grid = 2;
   strcpy(v->AbscissaName, xname);
   return v;
 }

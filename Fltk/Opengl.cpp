@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.49 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.50 2005-03-11 05:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,7 @@ void Draw(void)
   WID->redraw_opengl();
 }
 
-void SanitizeTexString(char *in, char *out)
+void SanitizeTeXString(char *in, char *out)
 {
   // if there is a '$' or a '\' in the string, assume the author knows
   // what he's doing:
@@ -96,14 +96,25 @@ void Draw_String(char *s, char *font_name, int font_enum, int font_size, int ali
       GLboolean valid;
       glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
       if(valid == GL_TRUE){
-	GLfloat pos[4];
-	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+	GLdouble pos[4];
+	glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
+	double x[3], w[3] = {pos[0], pos[1], pos[2]};
 	gl_font(font_enum, font_size);
 	float width = gl_width(s);
-	if(align == 1) // center
-	  glRasterPos2d(pos[0]-width/2., pos[1]);
-	else if(align == 2) // right
-	  glRasterPos2d(pos[0]-width, pos[1]);
+	float height = gl_height();
+	switch(align){
+	case 1: w[0] -= width/2.;                     break; // bottom center
+	case 2: w[0] -= width;                        break; // bottom right
+	case 3:                    w[1] -= height;    break; // top left
+	case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
+	case 5: w[0] -= width;     w[1] -= height;    break; // top right
+	case 6:                    w[1] -= height/2.; break; // center left
+	case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
+	case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
+	default: break;
+	}
+	Viewport2World(w, x);
+	glRasterPos3d(x[0], x[1], x[2]);
       }
     }
   }
@@ -118,11 +129,20 @@ void Draw_String(char *s, char *font_name, int font_enum, int font_size, int ali
       return;
     if(CTX.print.format == FORMAT_TEX){
       char tmp[1024];
-      SanitizeTexString(s, tmp);
-      gl2psTextOpt(tmp, font_name, font_size, 
-		   (align == 0) ? GL2PS_TEXT_BL :
-		   (align == 1) ? GL2PS_TEXT_B :
-		   GL2PS_TEXT_BR, 0.);
+      SanitizeTeXString(s, tmp);
+      int opt;
+      switch(align){
+      case 1: opt = GL2PS_TEXT_B;   break; // bottom center
+      case 2: opt = GL2PS_TEXT_BR;  break; // bottom right
+      case 3: opt = GL2PS_TEXT_TL;  break; // top left
+      case 4: opt = GL2PS_TEXT_T;   break; // top center
+      case 5: opt = GL2PS_TEXT_TR;  break; // top right
+      case 6: opt = GL2PS_TEXT_CL;  break; // center left
+      case 7: opt = GL2PS_TEXT_C;   break; // center center
+      case 8: opt = GL2PS_TEXT_CR;  break; // center right
+      default: opt = GL2PS_TEXT_BL; break; // bottom left
+      }
+      gl2psTextOpt(tmp, font_name, font_size, opt, 0.);
     }
     else
       gl2psText(s, font_name, font_size);
@@ -164,7 +184,6 @@ void Draw_String(char *s, double style)
 
 void Draw_OnScreenMessages()
 {
-
   glColor4ubv((GLubyte *) & CTX.color.text);
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   double h = gl_height();

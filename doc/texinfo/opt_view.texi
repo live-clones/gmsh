@@ -5,7 +5,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AbscissaFormat
-Abscissa number format for 2D graphs (in standard C form)@*
+Abscissa number format (in standard C form)@*
 Default value: @code{"%.3g"}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -230,8 +230,8 @@ Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Grid
-Grid mode for 2D graphs (0=none, 1=simple, 2=frame, 3=grid)@*
-Default value: @code{2}@*
+Grid mode (0=none, 1=axes, 2=box, 3=full grid, 4=open grid)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Height
@@ -305,7 +305,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.NbAbscissa
-Number of abscissa intervals for 2D graphs@*
+Number of tics on the grid axes@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 

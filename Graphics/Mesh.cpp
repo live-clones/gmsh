@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.120 2005-01-09 02:18:59 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.121 2005-03-11 05:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -250,7 +250,7 @@ void Draw_Mesh(Mesh * M)
   // draw the big moving axes
 
   if(CTX.axes)
-    Draw_Axes(CTX.lc_middle / 4.);
+    Draw_Axes();
 
   // draw any plugin-specific stuff
   

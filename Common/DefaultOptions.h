@@ -366,7 +366,7 @@ StringXString ViewOptions_String[] = {
   { F|O, "AbscissaName" , opt_view_abscissa_name , "" , 
     "Abscissa name for 2D graphs" },
   { F|O, "AbscissaFormat" , opt_view_abscissa_format , "%.3g" , 
-    "Abscissa number format for 2D graphs (in standard C form)" },
+    "Abscissa number format (in standard C form)" },
 
   { F,   "FileName" , opt_view_filename , "" , 
     "Default post-processing view file name" },
@@ -403,6 +403,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Relative radius of arrow stem" },
   { F|O, "Axes" , opt_general_axes , 0. ,
     "Display the axes linked to the model" },
+  { F|O, "AxesSize" , opt_general_axes_size , 100. ,
+    "Size (in pixels) of moving axes" },
   { F,   "Clip0" , opt_general_clip0 , 0. ,
     "Enable clipping plane 0 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))" },
   { F,   "Clip0A" , opt_general_clip0a , 1.0 ,
@@ -811,7 +813,7 @@ StringXNumber MeshOptions_Number[] = {
     "Only display elements whose Gamma factor is smaller than GammaSup" },
 
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
-    "Show the construction of the 2D mesh in real time (only with the 2D anisotropic algorithm)" },
+    "Show the construction of 2D anisotropic mesh in real time" },
 
   { F|O, "Light" , opt_mesh_light , 0. , 
     "Enable lighting for the mesh" },
@@ -1075,8 +1077,8 @@ StringXNumber ViewOptions_Number[] = {
     "Generalized raise amplification factor" },
   { F|O, "GeneralizedRaiseView" , opt_view_gen_raise_view , -1. ,
     "Index of the view used for generalized raise (-1=self)" },
-  { F|O, "Grid" , opt_view_grid , 2 ,
-    "Grid mode for 2D graphs (0=none, 1=simple, 2=frame, 3=grid)" },
+  { F|O, "Grid" , opt_view_grid , 0 ,
+    "Grid mode (0=none, 1=axes, 2=box, 3=full grid, 4=open grid)" },
 
   { F|O, "Height" , opt_view_size1 , 200. , 
     "Height (in pixels) of the scale or 2D graph" }, 
@@ -1111,7 +1113,7 @@ StringXNumber ViewOptions_Number[] = {
     "Minimum view coordinate along the Z-axis (read-only)" }, 
 
   { F|O, "NbAbscissa" , opt_view_nb_abscissa , 5. ,
-    "Number of abscissa intervals for 2D graphs" },
+    "Number of tics on the grid axes" },
   { F|O, "NbIso" , opt_view_nb_iso , 15. ,
     "Number of intervals" },
   { F,   "NbTimeStep" , opt_view_nb_timestep , 1. ,

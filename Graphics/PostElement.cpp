@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.61 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.62 2005-03-11 05:47:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -911,6 +911,13 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
       xx[k] = X[k] + fact * Val[k][0];
       yy[k] = Y[k] + fact * Val[k][1];
       zz[k] = Z[k] + fact * Val[k][2];
+      // update the dynamic bounding box
+      if(xx[k] < View->TmpBBox[0]) View->TmpBBox[0] = xx[k];
+      if(xx[k] > View->TmpBBox[1]) View->TmpBBox[1] = xx[k];
+      if(yy[k] < View->TmpBBox[2]) View->TmpBBox[2] = yy[k];
+      if(yy[k] > View->TmpBBox[3]) View->TmpBBox[3] = yy[k];
+      if(zz[k] < View->TmpBBox[4]) View->TmpBBox[4] = zz[k];
+      if(zz[k] > View->TmpBBox[5]) View->TmpBBox[5] = zz[k];
     }
     
     int ts = View->TimeStep;

@@ -110,7 +110,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Interactive
-Show the construction of the 2D mesh in real time (only with the 2D anisotropic algorithm)@*
+Show the construction of 2D anisotropic mesh in real time@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.73 2005-03-09 02:18:40 geuzaine Exp $
+// $Id: Draw.cpp,v 1.74 2005-03-11 05:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ int NeedPolygonOffset()
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
     Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, i);
     if(v->Visible){
-      if(v->ShowElement)
+      if(v->ShowElement || v->Grid)
 	return 1;
       if((v->NbST || v->NbSQ) && (v->IntervalsType == DRAW_POST_ISO))
 	return 1;
@@ -275,10 +275,6 @@ void InitPosition(void)
     glTranslated(-CTX.rotation_center[0],
 		 -CTX.rotation_center[1],
 		 -CTX.rotation_center[2]);
-
-  // store the modelview and projection matrices
-  glGetDoublev(GL_MODELVIEW_MATRIX, CTX.mod);
-  glGetDoublev(GL_PROJECTION_MATRIX, CTX.proj);
 }
 
 // Entity selection
@@ -377,15 +373,18 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 void unproject(double x, double y, double p[3], double d[3])
 {
   GLint viewport[4];
+  GLdouble model[16], proj[16];
   glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
 
   y = viewport[3]-y;
 
   GLdouble x0, y0, z0, x1, y1, z1;
   
-  if(!gluUnProject(x, y, 0.0, CTX.mod, CTX.proj, viewport, &x0, &y0, &z0))
+  if(!gluUnProject(x, y, 0.0, model, proj, viewport, &x0, &y0, &z0))
     Msg(WARNING, "unproject1 failed");
-  if(!gluUnProject(x, y, 1.0, CTX.mod, CTX.proj, viewport, &x1, &y1, &z1))
+  if(!gluUnProject(x, y, 1.0, model, proj, viewport, &x1, &y1, &z1))
     Msg(WARNING, "unproject2 failed");
   
   p[0] = x0;
@@ -398,4 +397,24 @@ void unproject(double x, double y, double p[3], double d[3])
   d[0] /= len;
   d[1] /= len;
   d[2] /= len;
+}
+
+void Viewport2World(double win[3], double xyz[3])
+{
+  GLint viewport[4];
+  GLdouble model[16], proj[16];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
+  gluUnProject(win[0], win[1], win[2], model, proj, viewport, &xyz[0], &xyz[1], &xyz[2]);
+}
+
+void World2Viewport(double xyz[3], double win[3])
+{
+  GLint viewport[4];
+  GLdouble model[16], proj[16];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, proj);
+  glGetDoublev(GL_MODELVIEW_MATRIX, model);
+  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &win[0], &win[1], &win[2]);
 }

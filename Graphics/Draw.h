@@ -43,6 +43,8 @@ void set_t(int i, double val);
 void set_s(int i, double val);
 
 void unproject(double x, double y, double p[3], double d[3]);
+void Viewport2World(double win[3], double xyz[3]);
+void World2Viewport(double xyz[3], double win[3]);
 
 unsigned int PaletteContinuous(Post_View * View, double min, double max, double val);
 unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
@@ -71,7 +73,7 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
 void FixText2DCoordinates(double *x, double *y);
 void Draw_OnScreenMessages(void);
 void Draw_Scales(void);
-void Draw_Axes(double s);
+void Draw_Axes(void);
 void Draw_SmallAxes(void);
 void Draw_Disk(double size, double rint, double x, double y, double z, int light);
 void Draw_Sphere(double size, double x, double y, double z, int light);
@@ -84,6 +86,10 @@ void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,
 		 int light);
+void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
+			     double xmax, double ymax, double zmax,
+			     double a, double b, double c, double d);
+void Draw_3DGrid(int mode, int tics, char *format, double bbox[6]);
 
 void Draw_Mesh(Mesh *M);
 void Draw_Mesh_Volume(void *a, void *b);
@@ -99,10 +105,6 @@ void Draw_Mesh_Hexahedron(void *a, void *b);
 void Draw_Mesh_Prism(void *a, void *b);
 void Draw_Mesh_Pyramid(void *a, void *b);
 void Draw_Mesh_Array(VertexArray *va, int faces, int edges);
-
-void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
-			     double xmax, double ymax, double zmax,
-			     double a, double b, double c, double d);
 
 #define ARGS Post_View *View, int preproNormals, \
              double ValMin, double ValMax, 	 \
