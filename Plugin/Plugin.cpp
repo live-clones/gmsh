@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.67 2004-12-27 03:57:23 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.68 2004-12-27 05:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,7 @@
 #include "HarmonicToTime.h"
 #include "Integrate.h"
 #include "Annotate.h"
+#include "Remove.h"
 #include "DecomposeInSimplex.h"
 #include "Smooth.h"
 #include "Transform.h"
@@ -198,6 +199,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Integrate", GMSH_RegisterIntegratePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Annotate", GMSH_RegisterAnnotatePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Remove", GMSH_RegisterRemovePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Eigenvectors", GMSH_RegisterEigenvectorsPlugin()));
 #if defined(HAVE_TRIANGLE)

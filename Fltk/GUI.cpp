@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.391 2004-12-25 00:37:33 geuzaine Exp $
+// $Id: GUI.cpp,v 1.392 2004-12-27 05:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3209,8 +3209,8 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
     {
       Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Options");
 
-      if(m > 20) m = 20;
-      if(n > 20) n = 20;
+      if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+      if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
 
       int k = 0;
       for(int i = 0; i < m; i++) {

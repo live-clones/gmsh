@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.309 2004-12-24 23:10:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.310 2004-12-27 05:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3313,8 +3313,8 @@ void view_plugin_run_cb(CALLBACK_ARGS)
     iView = p->dialogBox->current_view_index;
     int m = p->getNbOptionsStr();
     int n = p->getNbOptions();
-    if(m > 20) m = 20;
-    if(n > 20) n = 20;
+    if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+    if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
     for(int i = 0; i < m; i++) {
       StringXString *sxs = p->getOptionStr(i);
       sxs->def = (char*)p->dialogBox->input[i]->value();
@@ -3364,7 +3364,7 @@ void view_plugin_options_cb(CALLBACK_ARGS)
   // the option function with action==1, 2 and 3, respectively) and
   // set the Fl_Value_Input callbacks
   int n = p->getNbOptions();
-  if(n > 20) n = 20;
+  if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
   for(int i = 0; i < n; i++) {
     StringXNumber *sxn = p->getOption(i);
     if(sxn->function){

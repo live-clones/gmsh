@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.66 2004-12-27 03:57:23 geuzaine Exp $
+# $Id: Makefile,v 1.67 2004-12-27 05:26:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -44,7 +44,7 @@ SRC = Plugin.cpp\
         DecomposeInSimplex.cpp\
         Evaluate.cpp\
         Integrate.cpp\
-        Annotate.cpp\
+        Annotate.cpp Remove.cpp\
         HarmonicToTime.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -76,8 +76,8 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h PluginManager.h \
   CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h CutParametric.h \
   CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h Extract.h \
-  HarmonicToTime.h Integrate.h Annotate.h DecomposeInSimplex.h Smooth.h \
-  Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
+  HarmonicToTime.h Integrate.h Annotate.h Remove.h DecomposeInSimplex.h \
+  Smooth.h Transform.h Triangulate.h SphericalRaise.h DisplacementRaise.h \
   StructuralSolver.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
@@ -220,6 +220,11 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Annotate.h \
+  ../Common/Context.h ../Numeric/Numeric.h
+Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Remove.h \
   ../Common/Context.h ../Numeric/Numeric.h
 HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \

@@ -94,13 +94,15 @@ class GMSH_Plugin;
 
 // A generalized dialogbox for plugins
 
+#define MAX_PLUGIN_OPTIONS 50
+
 struct PluginDialogBox
 {
   int current_view_index;
   Fl_Window *main_window;
   Fl_Return_Button *run_button;
-  Fl_Value_Input *value[20];
-  Fl_Input *input[20] ;
+  Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
+  Fl_Input *input[MAX_PLUGIN_OPTIONS] ;
 };
 
 // The dialog for solvers
