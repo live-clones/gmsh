@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.57 2001-10-30 16:02:29 geuzaine Exp $
+// $Id: Views.cpp,v 1.58 2001-10-31 08:34:18 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -98,6 +98,7 @@ Post_View * BeginView(int allocate){
   v->Links = 0;
   v->DuplicateOf = 0;
   v->ScalarOnly = 1;
+  v->TextOnly = 1;
   v->normals = NULL;
   v->Min = INFINITY;
   v->Max = -INFINITY;
@@ -134,6 +135,8 @@ void Stat_ScalarSimplex(Post_View *v, int nbnod, int N,
     if(Z[i] < v->BBox[4]) v->BBox[4] = Z[i] ;
     if(Z[i] > v->BBox[5]) v->BBox[5] = Z[i] ;
   }
+
+  v->TextOnly = 0;
 }
 
 void Stat_VectorSimplex(Post_View *v, int nbnod, int N, 
@@ -166,6 +169,7 @@ void Stat_VectorSimplex(Post_View *v, int nbnod, int N,
   }
 
   v->ScalarOnly = 0;
+  v->TextOnly = 0;
 }
 
 void Stat_TensorSimplex(Post_View *v, int nbnod, int N, 
@@ -405,6 +409,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;
   dest->GraphType = src->GraphType;
+  dest->GraphGrid = src->GraphGrid;
   dest->GraphPosition[0] = src->GraphPosition[0];
   dest->GraphPosition[1] = src->GraphPosition[1];
   dest->GraphSize[0] = src->GraphSize[0];
@@ -424,6 +429,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->DrawScalars = src->DrawScalars;
   dest->DrawVectors = src->DrawVectors;
   dest->DrawTensors = src->DrawTensors;
+  dest->DrawStrings = src->DrawStrings;
   dest->TransparentScale = src->TransparentScale;
   dest->ScaleType = src->ScaleType;
   dest->RangeType = src->RangeType;
@@ -471,7 +477,7 @@ void Print_ColorTable(int num, char *prefix, FILE *file){
 
 void Read_View(FILE *file, char *filename){
   char   str[256], name[256];
-  int    nb, format, size, testone, swap, t2l, t3l;
+  int    i, nb, format, size, testone, swap, t2l, t3l;
   double version;
   Post_View *v;
 
@@ -535,6 +541,8 @@ void Read_View(FILE *file, char *filename){
 	       &v->NbSS, &v->NbVS, &v->NbTS);
 	v->NbT2 = t2l = v->NbT3 = t3l = 0;
       }
+
+      for(i=0;i<(int)strlen(name);i++) if(name[i]=='^') name[i]=' '; 
 
       swap = 0 ;
       if(format == LIST_FORMAT_BINARY){
@@ -635,8 +643,12 @@ void Read_View(FILE *file, char *filename){
 /*  W r i t e _ V i e w                                                     */
 /* ------------------------------------------------------------------------ */
 
+// Ajouter un entier par simplexe (num de region)?
+// Format liste de noeuds + liste de simplexes ?
+
 void Write_View(int Flag_BIN, Post_View *v, char *filename){
   FILE *file;
+  char name[256];
   int i, f, One=1;
 
   if(filename){
@@ -648,17 +660,19 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   }
   else
     file = stdout;
- 
+
   fprintf(file, "$PostFormat /* Gmsh 1.1, %s */\n", Flag_BIN ? "binary" : "ascii") ;
   fprintf(file, "1.1 %d %d\n", Flag_BIN, (int)sizeof(double)) ;
   fprintf(file, "$EndPostFormat\n") ;
-  for(i=0;i<(int)strlen(v->Name);i++) if(v->Name[i]==' ') v->Name[i]='_'; 
-  // -> Il faudra changer le format de post pour autoriser les blancs.
-  // On ajoutera aussi un entier par simplexe (num de region).
-  // Devrait-on passer a un format liste de noeuds + liste de
-  // simplexes ?
+
+  for(i=0;i<(int)strlen(v->Name);i++){
+    if(v->Name[i]==' ') name[i]='^'; 
+    else name[i]=v->Name[i];
+  }
+  name[i]='\0';
+
   fprintf(file, "$View /* %s */\n", v->Name);
-  fprintf(file, "%s ", v->Name);
+  fprintf(file, "%s ", name);
   fprintf(file, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
 	  List_Nbr(v->Time),
 	  v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL, 
@@ -679,7 +693,7 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   List_WriteToFile(v->VS, file, f); List_WriteToFile(v->TS, file, f);
   List_WriteToFile(v->T2D, file, f); List_WriteToFile(v->T2C, file, f);
   List_WriteToFile(v->T3D, file, f); List_WriteToFile(v->T3C, file, f);
-  if(Flag_BIN) fprintf(file, "\n");
+  fprintf(file, "\n");
   fprintf(file, "$EndView\n");
 
   if(filename){

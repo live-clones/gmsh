@@ -13,7 +13,7 @@ class Post_View{
 
   // the data
   int datasize; // size(double) or sizeof(float)
-  int NbTimeStep, ScalarOnly;
+  int NbTimeStep, ScalarOnly, TextOnly;
   double Min, Max, BBox[6];
   List_T *Time;
   int NbSP, NbVP, NbTP;
@@ -43,7 +43,7 @@ class Post_View{
   int DrawScalars, DrawVectors, DrawTensors;
   int Boundary, PointSize, LineWidth;
   ColorTable CT;
-  int GraphType, GraphPosition[2], GraphSize[2];
+  int GraphType, GraphPosition[2], GraphSize[2], GraphGrid;
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);

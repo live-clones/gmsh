@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.27 2001-10-30 14:27:47 geuzaine Exp $
+// $Id: Post.cpp,v 1.28 2001-10-31 08:34:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -424,7 +424,7 @@ void Draw_Post (void) {
 	}
 
 	if(v->DrawStrings){
-	  glColor4ubv((GLubyte*)&CTX.color.fg);
+	  glColor4ubv((GLubyte*)&CTX.color.text);
 	  Draw_Text2D3D(3, v->TimeStep, v->NbT3, v->T3D, v->T3C);
 	}
 

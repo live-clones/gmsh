@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.24 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: Scale.cpp,v 1.25 2001-10-31 08:34:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -215,7 +215,8 @@ void Draw_Scales(void){
 
   for(i=0;i<List_Nbr(CTX.post.list);i++){
     v = (Post_View*)List_Pointer(CTX.post.list,i);
-    if(v->Visible && v->ShowScale && v->GraphType==DRAW_POST_3D) List_Add(todraw,&v);
+    if(v->Visible && v->ShowScale && v->GraphType==DRAW_POST_3D && !v->TextOnly) 
+      List_Add(todraw,&v);
   }
   
   if(!List_Nbr(todraw)){

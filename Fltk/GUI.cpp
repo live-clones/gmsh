@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.123 2001-10-30 14:33:52 geuzaine Exp $
+// $Id: GUI.cpp,v 1.124 2001-10-31 08:34:19 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -456,7 +456,7 @@ int GUI::global_shortcuts(int event){
   else if(Fl::test_shortcut(FL_ALT+'n')){
     for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
       if(opt_view_visible(i,GMSH_GET,0))
-	opt_view_draw_strings(i, GMSH_SET|GMSH_GUI,!opt_view_draw_strings(0,GMSH_GET,0));
+	opt_view_draw_strings(i, GMSH_SET|GMSH_GUI,!opt_view_draw_strings(i,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
@@ -2084,9 +2084,9 @@ void GUI::create_view_options_window(int num){
       }
       // 3D
       { 
-	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "3D");
-	o->labelsize(CTX.fontsize);
-        o->hide();
+	view_3d = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "3D");
+	view_3d->labelsize(CTX.fontsize);
+        view_3d->hide();
 
         view_butt[10] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "Show elements");
 	view_butt[11] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Enable Lighting");
@@ -2133,7 +2133,7 @@ void GUI::create_view_options_window(int num){
 	  view_butt[i]->callback(set_changed_cb, 0);
 	}
 
-        o->end();
+        view_3d->end();
       }
       // 2D
       { 
@@ -2145,7 +2145,11 @@ void GUI::create_view_options_window(int num){
 	view_value[21] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Y position");
 	view_value[22] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Width");
 	view_value[23] = new Fl_Value_Input(2*WB, 2*WB+ 4*BH, IW, BH, "Height");
-	for(i=20 ; i<=23 ; i++){
+        view_value[24] = new Fl_Value_Input(2*WB, 2*WB+ 5*BH, IW, BH, "Grid mode");
+	view_value[24]->minimum(0.); 
+	view_value[24]->step(1); 
+	view_value[24]->maximum(3); 
+	for(i=20 ; i<=24 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->textsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
@@ -2157,9 +2161,9 @@ void GUI::create_view_options_window(int num){
       }
       // Range
       { 
-	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
-	o->labelsize(CTX.fontsize);
-	o->hide();
+	view_range = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
+	view_range->labelsize(CTX.fontsize);
+	view_range->hide();
 
 	view_value[30] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Intervals");
 	view_value[30]->labelsize(CTX.fontsize);
@@ -2224,7 +2228,7 @@ void GUI::create_view_options_window(int num){
 	view_butt[38]->selection_color(FL_YELLOW);
 	view_butt[38]->callback(set_changed_cb, 0);
 
-	o->end();
+	view_range->end();
       }
       // Offset and Raise
       { 
@@ -2382,6 +2386,16 @@ void GUI::update_view_window(int num){
   opt_view_transparent_scale(num, GMSH_GUI, 0);
 
   //3D
+  if(v->TextOnly){
+    view_3d->deactivate();
+    view_range->deactivate();
+    view_butt[1]->deactivate();
+  }
+  else{
+    view_3d->activate();
+    view_range->activate();
+    view_butt[1]->activate();
+  }
   opt_view_show_element(num, GMSH_GUI, 0);
   opt_view_light(num, GMSH_GUI, 0);
   opt_view_smooth_normals(num, GMSH_GUI, 0);
@@ -2411,6 +2425,7 @@ void GUI::update_view_window(int num){
   opt_view_graph_position1(num, GMSH_GUI, 0);
   opt_view_graph_size0(num, GMSH_GUI, 0);
   opt_view_graph_size1(num, GMSH_GUI, 0);
+  opt_view_graph_grid(num, GMSH_GUI, 0);
 
   // range
   opt_view_nb_iso(num, GMSH_GUI, 0);

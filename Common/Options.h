@@ -222,6 +222,7 @@ double opt_view_visible(OPT_ARGS_NUM);
 double opt_view_intervals_type(OPT_ARGS_NUM);
 double opt_view_saturate_values(OPT_ARGS_NUM);
 double opt_view_graph_type(OPT_ARGS_NUM);
+double opt_view_graph_grid(OPT_ARGS_NUM);
 double opt_view_graph_position0(OPT_ARGS_NUM);
 double opt_view_graph_position1(OPT_ARGS_NUM);
 double opt_view_graph_size0(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.89 2001-10-30 14:27:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.90 2001-10-31 08:34:19 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1672,7 +1672,10 @@ static void _duplicate_view(int num, int options){
   v2->NbSS = v1->NbSS; v2->SS = v1->SS; 
   v2->NbVS = v1->NbVS; v2->VS = v1->VS; 
   v2->NbTS = v1->NbTS; v2->TS = v1->TS;
+  v2->NbT2 = v1->NbT2; v2->T2D = v1->T2D; v2->T2C = v1->T2C;
+  v2->NbT3 = v1->NbT3; v2->T3D = v1->T3D; v2->T3C = v1->T3C;
   v2->ScalarOnly  = v1->ScalarOnly;
+  v2->TextOnly    = v1->TextOnly;
   v2->Min         = v1->Min;       
   v2->Max         = v1->Max;      
   v2->NbTimeStep  = v1->NbTimeStep;
@@ -1690,7 +1693,7 @@ void view_duplicate_with_options_cb(CALLBACK_ARGS){
 
 void view_applybgmesh_cb(CALLBACK_ARGS){
   Post_View *v = (Post_View*)List_Pointer(CTX.post.list,(int)data);
-  if(!v->ScalarOnly){
+  if(!v->ScalarOnly || v->TextOnly){
     Msg(GERROR, "Background mesh generation impossible with non-scalar view");
     return;
   }
@@ -1933,6 +1936,9 @@ void view_options_ok_cb(CALLBACK_ARGS){
 
       if(force || WID->view_value[23]->changed())
 	opt_view_graph_size1(i,GMSH_SET,WID->view_value[23]->value());
+
+      if(force || WID->view_value[24]->changed())
+	opt_view_graph_grid(i,GMSH_SET,WID->view_value[24]->value());
 
       // view_inputs
 

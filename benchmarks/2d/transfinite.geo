@@ -27,7 +27,7 @@ Plane Surface(10) = {9};
 Line Loop(11) = {2,3,4,1};
 Plane Surface(12) = {11,9};
 
-Transfinite Line {5:8} = 10 Using Progression 5;
+Transfinite Line {5:8} = 10 Using Progression 0.7;
 
 Transfinite Surface{10} = {1,3,4,2};
 Recombine Surface {10} = 30;

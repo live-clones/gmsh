@@ -481,6 +481,8 @@ StringXNumber ViewOptions_Number[] = {
     "Saturate the view values to custom min and max (1=true, 0=false)" },
   { F|O, "GraphType" , opt_view_graph_type , DRAW_POST_3D ,
     "Graph type (1=3D, 2=2D-space, 3=2D-time)" },
+  { F|O, "GraphGrid" , opt_view_graph_grid , 1 ,
+    "Grid mode for 2D graphs (0=none, 1=simple, 2=frame, 3=grid)" },
   { F|O, "GraphPositionX" , opt_view_graph_position0 , 100. , 
     "Horizontal position (in pixels) of the upper left corner of a 2D graph" }, 
   { F|O, "GraphPositionY" , opt_view_graph_position1 , 100. , 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.53 2001-10-30 14:27:47 geuzaine Exp $
+// $Id: Options.cpp,v 1.54 2001-10-31 08:34:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1925,6 +1925,20 @@ double opt_view_graph_size1(OPT_ARGS_NUM){
     WID->view_value[23]->value(v->GraphSize[1]);
 #endif
   return v->GraphSize[1];
+}
+
+double opt_view_graph_grid(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->GraphGrid = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_value[24]->value(v->GraphGrid);
+  }
+#endif
+  return v->GraphGrid;
 }
 
 double opt_view_nb_iso(OPT_ARGS_NUM){
