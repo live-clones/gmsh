@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2001-01-09 14:24:09 geuzaine Exp $
+# $Id: Makefile,v 1.13 2001-01-10 10:06:17 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -74,7 +74,7 @@ Draw.o: Draw.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h ../Common/Views.h \
  ../Common/Const.h ../Common/ColorTable.h ../Common/Context.h \
- ../Geo/MinMax.h ../Motif/CbGeneral.h
+ ../Geo/MinMax.h
 Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
@@ -120,7 +120,7 @@ Scale.o: Scale.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
  ../Common/Const.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Draw.h \
- ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h gl2ps.h \
+ ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
  ../Motif/XContext.h
 Axes.o: Axes.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

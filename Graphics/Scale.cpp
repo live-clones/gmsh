@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.13 2001-01-09 14:24:09 geuzaine Exp $
+// $Id: Scale.cpp,v 1.14 2001-01-10 10:06:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,51 +7,31 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Views.h"
-#include "gl2ps.h"
 
 extern Context_T   CTX;
 
 #ifdef _XMOTIF
+
 #include "XContext.h"
 extern XContext_T  XCTX;
-#define FONTHEIGHT  XCTX.xfont.helve_h
-#define FONTASCENT  XCTX.xfont.helve_a
-#else
-#define FONTHEIGHT  21
-#define FONTASCENT  21
-#endif
-
-/* Even if all computations in these routines are made in window
-   coordinates, double precision is used to work at subpixel accuracy */
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ S t r i n g                                                   */
-/* ------------------------------------------------------------------------ */
-
-void Draw_String(char *s){
-
-  if(CTX.stream == TO_FILE){
-    if(!CTX.print.gl_fonts && CTX.print.eps_quality > 0){
-      gl2psText(s,CTX.print.font,CTX.print.font_size);
-      return ;
-    }
-  }
-
-  glListBase(CTX.font_base);
-  glCallLists(strlen(s), GL_UNSIGNED_BYTE, (GLubyte *)s);
-}
-
-
-#ifdef _XMOTIF
 static int          dir,ascent, descent;
 static XCharStruct  overall;
 #define CHECK_W                                                                         \
   XTextExtents(XCTX.xfont.helve, label, strlen(label), &dir,&ascent,&descent,&overall); \
   if(overall.width > cv_w) cv_w=overall.width
+#define FONTHEIGHT XCTX.xfont.helve_h
+#define FONTASCENT XCTX.xfont.helve_a
+
 #else
+
 #define CHECK_W  cv_w=200
+#define FONTHEIGHT 21
+#define FONTASCENT 21
+
 #endif
 
+/* Even if all computations in these routines are made in window
+   coordinates, double precision is used to work at subpixel accuracy */
 
 /* ------------------------------------------------------------------------ */
 /*  D r a w _ S c a l e                                                     */
@@ -69,6 +49,14 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   double    cv_xmin, cv_ymin, cv_h, cv_w, cv_bh;
   char      label[128] ;
   double    Val, ValMin, ValMax;
+
+#ifdef _XMOTIF
+  font_h  = FONTHEIGHT ;      /* hauteur totale de la fonte */
+  font_a  = FONTASCENT ;      /* hauteur de la fonte au dessus de pt de ref */
+#else
+  font_h  = 21 ;
+  font_a  = 21 ;
+#endif
 
   font_h  = FONTHEIGHT ;              /* hauteur totale de la fonte */
   font_a  = FONTASCENT ;              /* hauteur de la fonte au dessus de pt de ref */

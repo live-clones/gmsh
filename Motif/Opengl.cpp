@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.2 2001-01-10 10:06:18 geuzaine Exp $
 
 #include <X11/IntrinsicP.h>
 
@@ -11,6 +11,7 @@
 #include "MinMax.h"
 #include "Widgets.h"
 #include "XContext.h"
+#include "gl2ps.h"
 
 extern XContext_T   XCTX ;
 extern Widgets_T    WID ;
@@ -67,6 +68,19 @@ void DrawOverlay(void){
 }
 
 void DrawUI(void){
+}
+
+void Draw_String(char *s){
+
+  if(CTX.stream == TO_FILE){
+    if(!CTX.print.gl_fonts && CTX.print.eps_quality > 0){
+      gl2psText(s,CTX.print.font,CTX.print.font_size);
+      return ;
+    }
+  }
+
+  glListBase(CTX.font_base);
+  glCallLists(strlen(s), GL_UNSIGNED_BYTE, (GLubyte *)s);
 }
 
 /* ------------------------------------------------------------------------ */

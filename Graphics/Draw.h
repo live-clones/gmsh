@@ -17,6 +17,10 @@ void InitNoShading(void);
 void InitPosition(void);
 void Orthogonalize(int x, int y);
 
+void set_r(int i, double val);
+void set_t(int i, double val);
+void set_s(int i, double val);
+
 void Replot(void);
 
 void RaiseFill (int i, double Val, double ValMin, double Raise[3][5]);

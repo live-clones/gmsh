@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.15 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Draw.cpp,v 1.16 2001-01-10 10:06:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,7 +7,6 @@
 #include "Draw.h"
 #include "Context.h"
 #include "MinMax.h"
-#include "CbGeneral.h"
 
 extern Context_T    CTX ;
 extern Mesh         M;

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
+// $Id: Message.cpp,v 1.2 2001-01-10 10:06:18 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -60,7 +60,7 @@ void Msg(int level, char *fmt, ...){
   Arg      arg[2];
   int      nb, nbvis;
 
-  if(level != FATAL && level != ERROR && level != PARSER_ERROR &&
+  if(level != FATAL && level != GERROR && level != PARSER_ERROR &&
      CTX.interactive && !CTX.verbosity) 
     return ;
 
@@ -73,7 +73,7 @@ void Msg(int level, char *fmt, ...){
     fprintf(stderr, "\n");
     abort = 1; 
     break;
-  case ERROR :
+  case GERROR :
     if(CTX.interactive || !CTX.command_win){
       fprintf(stderr, ERROR_STR);
       vfprintf(stderr, fmt, args); 

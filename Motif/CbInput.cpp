@@ -1,4 +1,4 @@
-// $Id: CbInput.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbInput.cpp,v 1.2 2001-01-10 10:06:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,7 +10,6 @@
 #include "Register.h"
 
 #include "CbContext.h"
-#include "CbGeneral.h"
 #include "CbGeom.h"
 #include "CbPost.h"
 #include "CbMesh.h"

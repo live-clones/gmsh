@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.1 2001-01-10 09:08:59 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.2 2001-01-10 10:06:16 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,6 +10,8 @@
 #include "GUI.h"
 #include "Opengl_Window.h"
 
+// This file defines the Opengl_Window class (subclass of Fl_GL_Window)
+
 extern GUI *WID;
 extern Mesh M;
 extern Context_T CTX;
@@ -19,99 +21,6 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
                             Curve **thec, Surface **thes, Mesh *m);
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
-
-/* ------------------------------------------------------------------------ */
-/*  Init/Draw                                                               */
-/* ------------------------------------------------------------------------ */
-
-void Init(void){
-  WID->make_gl_current();
-}
-
-void InitOverlay(void){
-}
-
-void Draw(void){
-  WID->draw_gl();
-}
-
-void DrawOverlay(void){
-  WID->draw_gl_overlay();
-}
-
-void DrawUI(void){
-  WID->check();
-}
-
-
-/* ------------------------------------------------------------------------ 
-    set_XXX
-   ------------------------------------------------------------------------ */
-
-void set_r(int i, double val){
-  if(!CTX.useTrackball){
-    if(!CTX.rlock[i]){
-      CTX.r[i] = val;
-    }
-  }
-}
-
-void set_t(int i, double val){
-  if(!CTX.tlock[i]){
-    CTX.t[i] = val;
-  }
-}
-
-void set_s(int i, double val){
-  if(!CTX.slock[i]){
-    CTX.s[i] = val;
-  }
-}
-
-
-/* ------------------------------------------------------------------------ */
-/*  SelectEntity                                                            */
-/* ------------------------------------------------------------------------ */
-
-int check_type(int type, Vertex *v, Curve *c, Surface *s){
-  return ( (type==ENT_POINT   && v) ||
-           (type==ENT_LINE    && c) ||
-           (type==ENT_SURFACE && s) ) ;
-}
-
-int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
-  int             hits;
-  GLuint          ii[SELECTION_BUFFER_SIZE],jj[SELECTION_BUFFER_SIZE];
-  int event;
-
-  *v = NULL; *c = NULL; *s = NULL;
-
-  printf("select entity...\n");
-
-  while(1){
-    Fl::check();
-    if((event = Fl::event_key())){
-      if(event == 'q') return(0);
-      if(event == 'e') return(-1);
-    }
-    if(Fl::event_is_click()){
-      Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
-      Filter_SelectionBuffer(hits,ii,jj,v,c,s,&M);
-      if(check_type(type,*v,*c,*s)){
-        BeginHighlight();
-        HighlightEntity(*v,*c,*s,1);
-        EndHighlight(1);
-        return(Fl::event_button());
-      }
-    }
-  }
-
-}
-
-
-/* ------------------------------------------------------------------------ */
-/*  The OpenGL Widget                                                       */
-/* ------------------------------------------------------------------------ */
 
 void Opengl_Window::draw() {
   if (!valid()) {

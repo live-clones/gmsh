@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.1 2001-01-10 09:08:59 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.2 2001-01-10 10:06:16 geuzaine Exp $
 
 #if 0
 
@@ -7,6 +7,8 @@
 #include "GUI.h"
 #include "ColorTable.h"
 #include "Colorbar.h"
+
+// This file defines the Colorbar_Window class (subclass of Fl_Window)
 
 extern XContext_T  XCTX ;
 extern Widgets_T   WID;

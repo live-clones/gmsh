@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2001-01-09 14:24:13 geuzaine Exp $
+# $Id: Makefile,v 1.13 2001-01-10 10:06:20 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -77,7 +77,7 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Mesh/Create.h ../Common/Views.h ../Common/ColorTable.h \
  ../Geo/StepGeomDatabase.h ../Common/Options.h ../Graphics/Draw.h \
  ../Common/Colors.h Parser.h OpenFile.h FunctionManager.h \
- ../Common/Timer.h
+ ../Common/Timer.h ../Graphics/CreateFile.h
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \

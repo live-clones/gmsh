@@ -1,4 +1,4 @@
-// $Id: CbOptions.cpp,v 1.2 2001-01-09 14:24:11 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.3 2001-01-10 10:06:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -14,7 +14,6 @@
 #include "Timer.h"
 #include "Visibility.h"
 
-#include "CbGeneral.h"
 #include "CbOptions.h"
 #include "CbGeom.h"
 #include "CbMesh.h"

@@ -77,7 +77,7 @@ Context_Item menu_geometry[] =
   { NULL }
 };  
     Context_Item menu_geometry_elementary[] = 
-    { { "0", NULL } ,
+    { { "0Elementary", NULL } ,
       { "Add",       (Fl_Callback *)geometry_elementary_add_cb } ,
       { "Translate", (Fl_Callback *)geometry_elementary_translate_cb } ,
       { "Rotate",    (Fl_Callback *)geometry_elementary_rotate_cb } ,
@@ -88,16 +88,16 @@ Context_Item menu_geometry[] =
       { NULL } 
     };  
         Context_Item menu_geometry_elementary_add[] = 
-	{ { "0", NULL } ,
+	{ { "0Elementary Add", NULL } ,
           { "New",       (Fl_Callback *)geometry_elementary_add_new_cb } ,
 	  { "Translate", (Fl_Callback *)geometry_elementary_add_translate_cb } ,
 	  { "Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb } ,
-	  { "Scale",    (Fl_Callback *)geometry_elementary_add_scale_cb } ,
+	  { "Scale",     (Fl_Callback *)geometry_elementary_add_scale_cb } ,
 	  { "Symmetry",  (Fl_Callback *)geometry_elementary_add_symmetry_cb } ,
 	  { NULL } 
 	};  
             Context_Item menu_geometry_elementary_add_new[] = 
-	    { { "0", NULL } ,
+	    { { "0Elementary Add New", NULL } ,
               { "Parameter",     (Fl_Callback *)geometry_elementary_add_new_parameter_cb } ,
 	      { "Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb } ,
 	      { "Line",          (Fl_Callback *)geometry_elementary_add_new_line_cb } ,
@@ -110,96 +110,96 @@ Context_Item menu_geometry[] =
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_translate[] = 
-	    { { "0", NULL } ,
+	    { { "0Elementary Add Translate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_translate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_translate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_rotate[] = 
-	    { { "0", NULL } ,
+	    { { "0Elementary Add Rotate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_rotate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_rotate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_scale[] = 
-	    { { "0", NULL } ,
+	    { { "0Elementary Add Scale", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_scale_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_scale_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_scale_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_symmetry[] = 
-	    { { "0", NULL } ,
+	    { { "0Elementary Add Symmetry", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_symmetry_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_symmetry_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_symmetry_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_translate[] = 
-	{ { "0", NULL } ,
+	{ { "0Elementary Translate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_translate_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_translate_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_translate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_rotate[] = 
-	{ { "0", NULL } ,
+	{ { "0Elementary Rotate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_rotate_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_rotate_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_rotate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_scale[] = 
-	{ { "0", NULL } ,
+	{ { "0Elementary Scale", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_scale_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_scale_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_scale_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_symmetry[] = 
-	{ { "0", NULL } ,
+	{ { "0Elementary Symmetry", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_symmetry_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_symmetry_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_symmetry_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_extrude[] = 
-	{ { "0", NULL } ,
+	{ { "0Elementary Extrude", NULL } ,
 	  { "Translate",   (Fl_Callback *)geometry_elementary_extrude_translate_cb } ,
 	  { "Rotate",   (Fl_Callback *)geometry_elementary_extrude_rotate_cb } ,
 	  { NULL } 
  	};  
             Context_Item menu_geometry_elementary_extrude_translate[] = 
-	    { { "0", NULL } ,
+	    { { "0Elementary Extrude Translate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_translate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_extrude_translate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_extrude_rotate[] = 
-	    { { "0", NULL } ,
+	    { { "0Elementary Extrude Rotate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_extrude_rotate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_delete[] = 
-	{ { "0", NULL } ,
+	{ { "0Elementary Delete", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_delete_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_delete_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_delete_surface_cb } ,
 	  { NULL } 
 	};  
     Context_Item menu_geometry_physical[] = 
-    { { "0", NULL } ,
+    { { "0Physical", NULL } ,
       { "Add",    (Fl_Callback *)geometry_physical_add_cb } ,
       { "Delete", (Fl_Callback *)geometry_physical_delete_cb } ,
       { NULL } 
     };  
         Context_Item menu_geometry_physical_add[] = 
-	{ { "0", NULL } ,
+	{ { "0Physical Add", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_physical_add_point_cb  } ,
 	  { "Curve",   (Fl_Callback *)geometry_physical_add_curve_cb  } ,
 	  { "Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
@@ -207,7 +207,7 @@ Context_Item menu_geometry[] =
 	  { NULL } 
 	};  
         Context_Item menu_geometry_physical_delete[] = 
-	{ { "0", NULL } ,
+	{ { "0Physical Delete", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_physical_delete_point_cb } ,
 	  { "Line",    (Fl_Callback *)geometry_physical_delete_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_physical_delete_surface_cb } ,
@@ -224,14 +224,14 @@ Context_Item menu_mesh[] =
   { NULL } 
 };  
     Context_Item menu_mesh_define[] = 
-    { { "1", NULL } ,
+    { { "1Mesh Define", NULL } ,
       { "Length",      (Fl_Callback *)mesh_define_length_cb  } ,
       { "Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       { "Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
       { NULL } 
     };  
         Context_Item menu_mesh_define_transfinite[] = 
-	{ { "1", NULL } ,
+	{ { "1Mesh Define Transfinite", NULL } ,
 	  { "Line",    (Fl_Callback *)mesh_define_transfinite_line_cb } ,
 	  { "Surface", (Fl_Callback *)mesh_define_transfinite_surface_cb } ,
 	  { "Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb } , 
@@ -575,8 +575,14 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
   }
 
   int nb = 0;
-
-  m_module_butt->value(atoi(menu[0].label));
+  
+  if(menu[0].label[0] == '0')      m_module_butt->value(0);
+  else if(menu[0].label[0] == '1') m_module_butt->value(1);
+  else if(menu[0].label[0] == '2') m_module_butt->value(2);
+  else {
+    Msg(WARNING, "Something Wrong in your Context Definition");
+    return;
+  }
 
   if(m_module_butt->value() == 2){ // post-processing contexts
     for(i = 0 ; i < List_Nbr(Post_ViewList) ; i++) {
@@ -598,6 +604,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     }
   }
   else{ // geometry and mesh contexts
+    Msg(INFO, menu[0].label+1);
     for(i=0 ; i < NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();

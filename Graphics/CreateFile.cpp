@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.5 2001-01-10 08:50:30 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.6 2001-01-10 10:06:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -88,7 +88,6 @@ void CreateFile (char *name, int format) {
     break;
 
 #ifdef _XMOTIF
-
   case FORMAT_XPM :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
@@ -99,8 +98,8 @@ void CreateFile (char *name, int format) {
     Msg (INFO, "Wrote File '%s'", name);
     fclose(fp);
     break;
-
 #endif
+
 #ifndef WIN32
   case FORMAT_JPEG :
     if(!(fp = fopen(name,"wb"))) {
@@ -116,6 +115,7 @@ void CreateFile (char *name, int format) {
     fclose(fp);
     break;
 #endif
+
   case FORMAT_GIF :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
