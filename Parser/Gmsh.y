@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.191 2004-12-30 00:30:04 geuzaine Exp $
+// $Id: Gmsh.y,v 1.192 2004-12-30 01:36:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2661,31 +2661,33 @@ Loop :
     }
   | tEndFor 
     {
-      double x0 = LoopControlVariablesTab[ImbricatedLoop-1][0];
-      double x1 = LoopControlVariablesTab[ImbricatedLoop-1][1];
-      double step = LoopControlVariablesTab[ImbricatedLoop-1][2];
-      int do_next = (step > 0.) ? (x0+step <= x1) : (x0+step >= x1);
-      if(do_next){
-	LoopControlVariablesTab[ImbricatedLoop-1][0] +=
-	  LoopControlVariablesTab[ImbricatedLoop-1][2];
-	if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
-	  Symbol TheSymbol;
-	  TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
-	  Symbol *pSymbol;
-	  if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
-	    yymsg(GERROR, "Unknown loop variable");
-	  else
-	    *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
-	      LoopControlVariablesTab[ImbricatedLoop-1][2];
-	}
-	fsetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
-	yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
+      if(ImbricatedLoop <= 0){
+	yymsg(GERROR, "Invalid For/EndFor loop");
+	ImbricatedLoop = 0;
       }
       else{
-	ImbricatedLoop--;
-	if(ImbricatedLoop < 0){
-	  yymsg(GERROR, "Problem with imbricated loops");
-	  ImbricatedLoop = 0;
+	double x0 = LoopControlVariablesTab[ImbricatedLoop-1][0];
+	double x1 = LoopControlVariablesTab[ImbricatedLoop-1][1];
+	double step = LoopControlVariablesTab[ImbricatedLoop-1][2];
+	int do_next = (step > 0.) ? (x0+step <= x1) : (x0+step >= x1);
+	if(do_next){
+	  LoopControlVariablesTab[ImbricatedLoop-1][0] +=
+	    LoopControlVariablesTab[ImbricatedLoop-1][2];
+	  if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
+	    Symbol TheSymbol;
+	    TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
+	    Symbol *pSymbol;
+	    if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
+	      yymsg(GERROR, "Unknown loop variable");
+	    else
+	      *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
+		LoopControlVariablesTab[ImbricatedLoop-1][2];
+	  }
+	  fsetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
+	  yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
+	}
+	else{
+	  ImbricatedLoop--;
 	}
       }
     }
