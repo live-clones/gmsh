@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.32 2003-11-04 20:13:12 geuzaine Exp $
+$Id: FAQ,v 1.33 2004-02-28 01:23:38 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -26,9 +26,8 @@ GNU foundation's web site at http://www.gnu.org.
 
 Nothing ;-)
 
-(People tend to pronounce 'Gmsh' as 'Gee-mesh'. Since Gmsh is
-distributed under the GNU General Public License, a nice way of
-pronouncing it could be 'Gnu-mesh'...)
+(Note that in the US, people tend to pronounce 'Gmsh' as
+'Gee-mesh'. Yeah.)
 
 * 1.4 Where can I find more information?
 
