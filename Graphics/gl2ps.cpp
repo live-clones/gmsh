@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.79 2003-11-04 17:10:29 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.80 2003-11-04 23:07:27 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -1694,9 +1694,10 @@ void gl2psPrintPostScriptHeader(void){
   time_t now;
 
 #ifdef GL2PS_HAVE_ZLIB
-  char tmp[10] = {0x1f,0x8b /* magic numbers */, 8 /* compression method */,
-		  0 /* flags */, 0,0,0,0 /* time */, 2 /* xflags: max compression */,
-		  0x03 /* FIXME: OS code */};
+  char tmp[10] = {(char)0x1f,(char)0x8b /* magic numbers */,
+		  8 /* compression method */, 0 /* flags */, 
+		  0,0,0,0 /* time */, 2 /* xflags: max compression */,
+		  (char)0x03 /* FIXME: OS code */};
 
   if(gl2ps->options & GL2PS_COMPRESS){
     gl2psSetupCompress();
@@ -2626,7 +2627,6 @@ int gl2psPrintPDFSinglePage(){
 		  "/Resources\n" 
 		  "<<\n" 
 		  "/ProcSet [/PDF /Text /ImageB /ImageC]  %%/ImageI\n"
-		  "/Length 5 0 R\n"
 		  "/ExtGState\n" 
 		  "<<\n"
 		  "/GS1 7 0 R\n"
