@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.154 2004-12-27 21:05:06 geuzaine Exp $
+// $Id: Views.cpp,v 1.155 2004-12-28 06:03:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1300,6 +1300,45 @@ static void combine(List_T * a, List_T * b)
   }
 }
 
+static void combine_strings(Post_View *a, Post_View *b)
+{
+  double d, beg, end;
+  char *c;
+  for(int i = 0; i < List_Nbr(a->T2D); i+=4){
+    List_Add(b->T2D, List_Pointer(a->T2D, i));
+    List_Add(b->T2D, List_Pointer(a->T2D, i+1));
+    List_Add(b->T2D, List_Pointer(a->T2D, i+2)); 
+    d = List_Nbr(b->T2C);
+    List_Add(b->T2D, &d);
+    List_Read(a->T2D, i+3, &beg); 
+    c = (char*)List_Pointer(a->T2C, (int)beg);
+    if(i > List_Nbr(a->T2D) - 8)
+      end = (double)List_Nbr(a->T2C);
+    else
+      List_Read(a->T2D, i+3+4, &end); 
+    for(int j = 0; j < (int)(end-beg); j++)
+      List_Add(b->T2C, &c[j]); 
+    b->NbT2++;
+  }
+  for(int i = 0; i < List_Nbr(a->T3D); i+=5){
+    List_Add(b->T3D, List_Pointer(a->T3D, i));
+    List_Add(b->T3D, List_Pointer(a->T3D, i+1));
+    List_Add(b->T3D, List_Pointer(a->T3D, i+2)); 
+    List_Add(b->T3D, List_Pointer(a->T3D, i+3)); 
+    d = List_Nbr(b->T3C);
+    List_Add(b->T3D, &d);
+    List_Read(a->T3D, i+4, &beg); 
+    c = (char*)List_Pointer(a->T3C, (int)beg);
+    if(i > List_Nbr(a->T3D) - 10)
+      end = (double)List_Nbr(a->T3C);
+    else
+      List_Read(a->T3D, i+4+5, &end); 
+    for(int j = 0; j < (int)(end-beg); j++)
+      List_Add(b->T3C, &c[j]); 
+    b->NbT3++;
+  }
+}
+
 static void combine_space(struct nameidx *id, List_T *to_remove)
 {
   int index;
@@ -1349,13 +1388,18 @@ static void combine_space(struct nameidx *id, List_T *to_remove)
     combine(v->SY,vm->SY); vm->NbSY += v->NbSY;
     combine(v->VY,vm->VY); vm->NbVY += v->NbVY;
     combine(v->TY,vm->TY); vm->NbTY += v->NbTY;
-    /* this more complicated: we have to recompute the indices
-       combine(v->T2D,vm->T2D);
-       combine(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
-       combine(v->T3D,vm->T3D);
-       combine(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
-    */
+    combine_strings(v,vm);
   }
+
+#if 0
+  // debug strings:
+  for(int i=0; i<List_Nbr(vm->T2D); i++)
+    printf("%g ", *(double*)List_Pointer(vm->T2D, i));
+  printf("\n");
+  for(int i=0; i<List_Nbr(vm->T2C); i++)
+    printf("%c ", *(char*)List_Pointer(vm->T2C, i));
+  printf("\n");
+#endif
 
   // finalize
   char name[256], filename[256], tmp[256];
@@ -1415,6 +1459,8 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
       }
     }
   }
+
+  // FIXME: still need to do the work for strings (T2 and T3)
 
   // create the time data
   for(int i = 0; i < List_Nbr(id->indices); i++){
