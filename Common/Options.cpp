@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.111 2003-06-23 05:34:54 geuzaine Exp $
+// $Id: Options.cpp,v 1.112 2003-06-23 16:52:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3813,18 +3813,32 @@ double opt_view_raise2(OPT_ARGS_NUM)
   return v->Raise[2];
 }
 
-double opt_view_arrow_scale(OPT_ARGS_NUM)
+double opt_view_arrow_size(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ArrowScale = val;
+    v->ArrowSize = val;
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_value[60]->value(v->ArrowScale);
+    WID->view_value[60]->value(v->ArrowSize);
 #endif
-  return v->ArrowScale;
+  return v->ArrowSize;
+}
+
+double opt_view_displacement_factor(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->DisplacementFactor = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_value[63]->value(v->DisplacementFactor);
+#endif
+  return v->DisplacementFactor;
 }
 
 double opt_view_explode(OPT_ARGS_NUM)
@@ -4373,16 +4387,16 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
   return v->TensorType;
 }
 
-double opt_view_arrow_type(OPT_ARGS_NUM)
+double opt_view_vector_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ArrowType = (int)val;
+    v->VectorType = (int)val;
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)) {
-    switch (v->ArrowType) {
+    switch (v->VectorType) {
     case DRAW_POST_SEGMENT:
       WID->view_choice[2]->value(0);
       break;
@@ -4401,7 +4415,7 @@ double opt_view_arrow_type(OPT_ARGS_NUM)
     }
   }
 #endif
-  return v->ArrowType;
+  return v->VectorType;
 }
 
 double opt_view_arrow_location(OPT_ARGS_NUM)

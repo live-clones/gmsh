@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.47 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: Post.cpp,v 1.48 2003-06-23 16:52:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -608,7 +608,7 @@ void Draw_Post(void)
 
         v->Changed = 0;
 
-        if(v->ShowElement || v->ArrowType == DRAW_POST_DISPLACEMENT)
+        if(v->ShowElement || v->VectorType == DRAW_POST_DISPLACEMENT)
           glDisable(GL_POLYGON_OFFSET_FILL);
 
       }

@@ -34,14 +34,9 @@ Arrow location (1=cog, 2=vertex)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.ArrowScale
-Size of vectors (arrow size in pixels or displacement factor)@*
+@item View.ArrowSize
+Size of vectors arrows (in pixels)@*
 Default value: @code{50}@*
-Saved in: @code{General.OptionsFileName}
-
-@item View.ArrowType
-Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)@*
-Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AutoPosition
@@ -63,6 +58,11 @@ Saved in: @code{-}
 User-defined minimum value to be displayed@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item View.DisplacementFactor
+Displacement amplification@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
 
 @item View.DrawHexahedra
 Display post-processing hexahedra?@*
@@ -287,6 +287,11 @@ Saved in: @code{General.OptionsFileName}
 @item View.Type
 Type of graph (1=3D, 2=2D-space, 3=2D-time)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.VectorType
+Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Visible

@@ -858,10 +858,8 @@ StringXNumber ViewOptions_Number[] = {
     "Threshold angle below which normals are not smoothed" },
   { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 
     "Arrow location (1=cog, 2=vertex)" },
-  { F|O, "ArrowScale" , opt_view_arrow_scale , 50. ,
-    "Size of vectors (arrow size in pixels or displacement factor)" },
-  { F|O, "ArrowType" , opt_view_arrow_type , DRAW_POST_ARROW ,
-    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)" },
+  { F|O, "ArrowSize" , opt_view_arrow_size , 50. ,
+    "Size of vectors arrows (in pixels)" },
   { F|O, "AutoPosition" , opt_view_auto_position , 1. , 
     "Position the scale or the 2D graph automatically to avoid overlaps" }, 
 
@@ -873,6 +871,8 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "CustomMin" , opt_view_custom_min , 0. , 
     "User-defined minimum value to be displayed" },
 
+  { F|O, "DisplacementFactor" , opt_view_displacement_factor , 1. ,
+    "Displacement amplification" },
   { F|O, "DrawHexahedra" , opt_view_draw_hexahedra , 1. , 
     "Display post-processing hexahedra?" },
   { F|O, "DrawLines" , opt_view_draw_lines , 1. , 
@@ -975,6 +975,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Type" , opt_view_type , DRAW_POST_3D ,
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
 
+  { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW ,
+    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
 

@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.16 2003-05-14 14:23:10 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.17 2003-06-23 16:52:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -808,9 +808,9 @@ void Draw_VectorElement(int type, Post_View * View,
     RaiseFill(k, d[k], ValMin, Raise);
   }
 
-  if(View->ArrowType == DRAW_POST_DISPLACEMENT) {
+  if(View->VectorType == DRAW_POST_DISPLACEMENT) {
 
-    fact = View->ArrowScale / 50.;
+    fact = View->DisplacementFactor;
     for(k = 0; k < nbnod; k++) {
       xx[k] = X[k] + fact * Val[k][0] + Raise[0][k];
       yy[k] = Y[k] + fact * Val[k][1] + Raise[1][k];
@@ -918,7 +918,7 @@ void Draw_VectorElement(int type, Post_View * View,
         Draw_String(Num);
       }
       else {
-        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowScale / ValMax;
+        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / ValMax;
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
           dx /= dd;
           dy /= dd;
@@ -929,7 +929,7 @@ void Draw_VectorElement(int type, Post_View * View,
           dz *= dd;
         }
         RaiseFill(0, dd, ValMin, Raise);
-        Draw_Vector(View->ArrowType, View->IntervalsType != DRAW_POST_ISO,
+        Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
                     xc, yc, zc, fact * dd, fact * dx, fact * dy, fact * dz,
                     Raise);
       }
@@ -940,7 +940,7 @@ void Draw_VectorElement(int type, Post_View * View,
       if(d[k] != 0.0 && d[k] >= ValMin && d[k] <= ValMax) {
         Palette1(View, View->NbIso,
                  View->GIFV(ValMin, ValMax, View->NbIso, d[k]));
-        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowScale / ValMax;
+        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / ValMax;
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
           Val[k][0] /= d[k];
           Val[k][1] /= d[k];
@@ -951,7 +951,7 @@ void Draw_VectorElement(int type, Post_View * View,
           Val[k][2] *= d[k];
         }
         RaiseFill(0, d[k], ValMin, Raise);
-        Draw_Vector(View->ArrowType, View->IntervalsType != DRAW_POST_ISO,
+        Draw_Vector(View->VectorType, View->IntervalsType != DRAW_POST_ISO,
                     X[k], Y[k], Z[k],
                     fact * d[k], fact * Val[k][0], fact * Val[k][1],
                     fact * Val[k][2], Raise);

@@ -58,16 +58,16 @@ class Post_View{
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
   // options
-  int Type, Position[2], AutoPosition, Size[2],TensorType;
+  int Type, Position[2], AutoPosition, Size[2];
   char   Format[256], AbscissaFormat[256];
   double CustomMin, CustomMax;
-  double Offset[3], Raise[3], ArrowScale, Explode;
+  double Offset[3], Raise[3], ArrowSize, DisplacementFactor, Explode;
   int Visible, IntervalsType, NbIso, NbAbscissa, Light, SmoothNormals ;
   double AngleSmoothNormals;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
   int TransparentScale, ScaleType, RangeType;
-  int ArrowType, ArrowLocation;
+  int VectorType, TensorType, ArrowLocation;
   int TimeStep;
   int DrawStrings;
   int DrawPoints, DrawLines, DrawTriangles, DrawQuadrangles;
@@ -108,7 +108,7 @@ class Post_View{
 #define DRAW_POST_DISCRETE     3
 #define DRAW_POST_NUMERIC      4
 
-// ArrowType
+// VectorType
 #define DRAW_POST_SEGMENT      1
 #define DRAW_POST_ARROW        2
 #define DRAW_POST_PYRAMID      3
@@ -121,7 +121,7 @@ class Post_View{
 #define DRAW_POST_LOCATE_COG     1
 #define DRAW_POST_LOCATE_VERTEX  2
 
-// Tensor Type
+// TensorType
 #define DRAW_POST_VONMISES      0
 #define DRAW_POST_EIGENVECTORS  1
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.180 2003-06-23 05:34:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.181 2003-06-23 16:52:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3031,7 +3031,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
           val = DRAW_POST_DISPLACEMENT;
           break;
         }
-        opt_view_arrow_type(i, GMSH_SET, val);
+        opt_view_vector_type(i, GMSH_SET, val);
       }
 
       if(force || WID->view_choice[3]->changed()) {
@@ -3150,7 +3150,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_timestep(i, GMSH_SET, WID->view_value[50]->value());
 
       if(force || WID->view_value[60]->changed())
-        opt_view_arrow_scale(i, GMSH_SET, WID->view_value[60]->value());
+        opt_view_arrow_size(i, GMSH_SET, WID->view_value[60]->value());
+
+      if(force || WID->view_value[63]->changed())
+        opt_view_displacement_factor(i, GMSH_SET, WID->view_value[63]->value());
 
       if(force || WID->view_value[61]->changed())
         opt_view_point_size(i, GMSH_SET, WID->view_value[61]->value());

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.97 2003-05-14 14:49:28 geuzaine Exp $
+// $Id: Views.cpp,v 1.98 2003-06-23 16:52:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -551,7 +551,8 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->Raise[0] = src->Raise[0];
   dest->Raise[1] = src->Raise[1];
   dest->Raise[2] = src->Raise[2];
-  dest->ArrowScale = src->ArrowScale;
+  dest->ArrowSize = src->ArrowSize;
+  dest->DisplacementFactor = src->DisplacementFactor;
   dest->Explode = src->Explode;
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
@@ -580,7 +581,7 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->TransparentScale = src->TransparentScale;
   dest->ScaleType = src->ScaleType;
   dest->RangeType = src->RangeType;
-  dest->ArrowType = src->ArrowType;
+  dest->VectorType = src->VectorType;
   dest->ArrowLocation = src->ArrowLocation;
   dest->TensorType = src->TensorType;
   dest->TimeStep = src->TimeStep;

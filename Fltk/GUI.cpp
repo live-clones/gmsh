@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.242 2003-06-23 05:34:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.243 2003-06-23 16:52:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1552,28 +1552,28 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
-      geo_value[3] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Point size");
+      geo_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH, "Point display");
+      geo_choice[0]->menu(menu_point_display);
+      geo_choice[0]->align(FL_ALIGN_RIGHT);
+
+      geo_value[3] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Point size");
       geo_value[3]->minimum(0.1);
       geo_value[3]->maximum(50);
       geo_value[3]->step(0.1);
 
-      geo_value[5] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Highlighted point size");
+      geo_value[5] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Highlighted point size");
       geo_value[5]->minimum(0.1);
       geo_value[5]->maximum(50);
       geo_value[5]->step(0.1);
 
-      geo_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 3 * BH, IW, BH, "Point display");
-      geo_choice[0]->menu(menu_point_display);
-      geo_choice[0]->align(FL_ALIGN_RIGHT);
+      geo_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
+      geo_choice[1]->menu(menu_line_display);
+      geo_choice[1]->align(FL_ALIGN_RIGHT);
 
-      geo_value[4] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line width");
+      geo_value[4] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       geo_value[4]->minimum(0.1);
       geo_value[4]->maximum(50);
       geo_value[4]->step(0.1);
-
-      geo_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Line display");
-      geo_choice[1]->menu(menu_line_display);
-      geo_choice[1]->align(FL_ALIGN_RIGHT);
 
       for(i = 3; i <= 5; i++) {
         geo_value[i]->align(FL_ALIGN_RIGHT);
@@ -1730,11 +1730,11 @@ void GUI::create_option_window()
       mesh_value[9]->minimum(0);
       mesh_value[9]->maximum(1);
       mesh_value[9]->step(0.01);
-      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Point size");
+      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Point size");
       mesh_value[10]->minimum(0.1);
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(0.1);
-      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
+      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);
@@ -1742,11 +1742,11 @@ void GUI::create_option_window()
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Point display");
+      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Point display");
       mesh_choice[0]->menu(menu_point_display);
       mesh_choice[0]->align(FL_ALIGN_RIGHT);
 
-      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 8 * BH, IW, BH, "Line display");
+      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 7 * BH, IW, BH, "Line display");
       mesh_choice[1]->menu(menu_line_display);
       mesh_choice[1]->align(FL_ALIGN_RIGHT);
 
@@ -2080,37 +2080,32 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
 
-      view_value[61] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Point size");
+      view_choice[5] = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH, "Point display");
+      view_choice[5]->menu(menu_point_display);
+      view_choice[5]->align(FL_ALIGN_RIGHT);
+      view_choice[5]->callback(set_changed_cb, 0);
+
+      view_value[61] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Point size");
       view_value[61]->minimum(0.1);
       view_value[61]->maximum(50);
       view_value[61]->step(0.1);
       view_value[61]->align(FL_ALIGN_RIGHT);
       view_value[61]->callback(set_changed_cb, 0);
 
-      view_choice[5] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
-      view_choice[5]->menu(menu_point_display);
-      view_choice[5]->align(FL_ALIGN_RIGHT);
-      view_choice[5]->callback(set_changed_cb, 0);
+      view_choice[6] = new Fl_Choice(2 * WB, 2 * WB + 3 * BH, IW, BH, "Line display");
+      view_choice[6]->menu(menu_line_display);
+      view_choice[6]->align(FL_ALIGN_RIGHT);
+      view_choice[6]->callback(set_changed_cb, 0);
 
-      view_value[62] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Line width");
+      view_value[62] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line width");
       view_value[62]->minimum(0.1);
       view_value[62]->maximum(50);
       view_value[62]->step(0.1);
       view_value[62]->align(FL_ALIGN_RIGHT);
       view_value[62]->callback(set_changed_cb, 0);
 
-      view_choice[6] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
-      view_choice[6]->menu(menu_line_display);
-      view_choice[6]->align(FL_ALIGN_RIGHT);
-      view_choice[6]->callback(set_changed_cb, 0);
-
       {
-        view_vector = new Fl_Group(2 * WB, 2 * WB + 4 * BH, width / 2, 5 * BH, 0);
-
-        view_value[60] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Vector size");
-        view_value[60]->minimum(0);
-        view_value[60]->align(FL_ALIGN_RIGHT);
-        view_value[60]->callback(set_changed_cb, 0);
+        view_vector = new Fl_Group(2 * WB, 2 * WB + 4 * BH, width / 2, 6 * BH, 0);
 
         static Fl_Menu_Item menu_vectype[] = {
           {"Line", 0, 0, 0},
@@ -2120,27 +2115,38 @@ void GUI::create_option_window()
           {"Displacement", 0, 0, 0},
           {0}
         };
-        view_choice[2] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
+        view_choice[2] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Vector display");
         view_choice[2]->menu(menu_vectype);
         view_choice[2]->align(FL_ALIGN_RIGHT);
         view_choice[2]->callback(set_changed_cb, 0);
+
+        view_value[60] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Arrow size");
+        view_value[60]->minimum(0);
+        view_value[60]->maximum(1000);
+        view_value[60]->step(1);
+        view_value[60]->align(FL_ALIGN_RIGHT);
+        view_value[60]->callback(set_changed_cb, 0);
 
         static Fl_Menu_Item menu_vecloc[] = {
           {"Cell centered", 0, 0, 0},
           {"Vertex centered", 0, 0, 0},
           {0}
         };
-        view_choice[3] = new Fl_Choice(2 * WB, 2 * WB + 7 * BH, IW, BH, "Vector location");
+        view_choice[3] = new Fl_Choice(2 * WB, 2 * WB + 7 * BH, IW, BH, "Arrow location");
         view_choice[3]->menu(menu_vecloc);
         view_choice[3]->align(FL_ALIGN_RIGHT);
         view_choice[3]->callback(set_changed_cb, 0);
+
+        view_value[63] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
+        view_value[63]->align(FL_ALIGN_RIGHT);
+        view_value[63]->callback(set_changed_cb, 0);
 
         static Fl_Menu_Item menu_tensor[] = {
           {"Von-Mises", 0, 0, 0},
           //{"Eigenvectors", 0, 0, 0}, //not implemented yet
           {0}
         };
-        view_choice[4] = new Fl_Choice(2 * WB, 2 * WB + 8 * BH, IW, BH, "Tensor display");
+        view_choice[4] = new Fl_Choice(2 * WB, 2 * WB + 9 * BH, IW, BH, "Tensor display");
         view_choice[4]->menu(menu_tensor);
         view_choice[4]->align(FL_ALIGN_RIGHT);
         view_choice[4]->callback(set_changed_cb, 0);
@@ -2295,8 +2301,9 @@ void GUI::update_view_window(int num)
   opt_view_point_type(num, GMSH_GUI, 0);
   opt_view_line_width(num, GMSH_GUI, 0);
   opt_view_line_type(num, GMSH_GUI, 0);
-  opt_view_arrow_type(num, GMSH_GUI, 0);
-  opt_view_arrow_scale(num, GMSH_GUI, 0);
+  opt_view_vector_type(num, GMSH_GUI, 0);
+  opt_view_arrow_size(num, GMSH_GUI, 0);
+  opt_view_displacement_factor(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
   opt_view_tensor_type(num, GMSH_GUI, 0);
 

@@ -1,4 +1,9 @@
 @ftable @code
+@item Mesh.TriangleOptions
+Options for Jonathan Shewchuk's Triangle isotropic algorithm@*
+Default value: @code{"praqzBPY"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Algorithm
 2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)@*
 Default value: @code{1}@*
