@@ -194,7 +194,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.213 2004-12-13 15:57:29 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.214 2004-12-17 05:11:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -7963,7 +7963,7 @@ case 343:
 	int k = List_Nbr(yyvsp[-1].l);
 	if(k != 3 && k != 4){
 	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
-		"%d points instead of 3 or 4" , yyvsp[-4].d, k);
+		"%d points instead of 3 or 4" , (int)yyvsp[-4].d, k);
 	}
 	else{
 	  for(int i = 0; i < k; i++){
@@ -7992,7 +7992,7 @@ case 344:
         int k = List_Nbr(yyvsp[-1].l);
         if(k != 4)
 	  yymsg(GERROR, "Wrong definition of Elliptic Surface %d: "
-		"%d points instead of 4" , yyvsp[-4].d, k);
+		"%d points instead of 4" , (int)yyvsp[-4].d, k);
         else{
 	  for(int i = 0; i < k; i++){
 	    double d;
@@ -8020,7 +8020,7 @@ case 345:
 	int k = List_Nbr(yyvsp[-1].l);
 	if(k != 6 && k != 8)
 	  yymsg(GERROR, "Wrong definition of Transfinite Volume %d: "
-		"%d points instead of 6 or 8" , yyvsp[-4].d, k);
+		"%d points instead of 6 or 8" , (int)yyvsp[-4].d, k);
 	else{
 	  for(int i = 0; i < k; i++){
 	    double d;

@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.20 2004-12-17 04:12:13 geuzaine Exp $
+// $Id: 2D_Elliptic.cpp,v 1.21 2004-12-17 05:11:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -121,9 +121,14 @@ int MeshEllipticSurface(Surface * sur)
 			    (S[2]->lc * (1 - u) * (1. - v)) +
 			    (S[3]->lc * (1 + u) * (1. - v)));
         list[i + N1 * j] = Create_Vertex(++THEM->MaxPointNum, x, y, z, lc, 0.0);
-	Tree_Insert(sur->Vertices, &list[i + N1 * j]);
-        List_Add(sur->TrsfVertices, &list[i + N1 * j]);
       }
+    }
+  }
+
+  for(int i = 0; i < N1; i++){
+    for(int j = 0; j < N2; j++){
+      Tree_Insert(sur->Vertices, &list[i + N1 * j]);
+      List_Add(sur->TrsfVertices, &list[i + N1 * j]);
     }
   }
 
@@ -157,7 +162,7 @@ int MeshEllipticSurface(Surface * sur)
 				(v23->Pos.X - v21->Pos.X) +
 				(v32->Pos.Y - v12->Pos.Y) *
 				(v23->Pos.Y - v21->Pos.Y));
-
+	
         v22->Pos.X = 0.5 * (alpha * (v32->Pos.X + v12->Pos.X) +
                             gamma * (v23->Pos.X + v21->Pos.X) -
                             2. * beta * (v33->Pos.X - v13->Pos.X -
@@ -176,6 +181,7 @@ int MeshEllipticSurface(Surface * sur)
       }
     }
   }
+
   for(int i = 0; i < N1 - 1; i++) {
     for(int j = 0; j < N2 - 1; j++) {
       if(sur->Recombine) {

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.186 2004-12-13 15:57:35 geuzaine Exp $
+// $Id: Gmsh.y,v 1.187 2004-12-17 05:12:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3244,7 +3244,7 @@ Transfinite :
 	int k = List_Nbr($7);
 	if(k != 3 && k != 4){
 	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
-		"%d points instead of 3 or 4" , $4, k);
+		"%d points instead of 3 or 4" , (int)$4, k);
 	}
 	else{
 	  for(int i = 0; i < k; i++){
@@ -3271,7 +3271,7 @@ Transfinite :
         int k = List_Nbr($7);
         if(k != 4)
 	  yymsg(GERROR, "Wrong definition of Elliptic Surface %d: "
-		"%d points instead of 4" , $4, k);
+		"%d points instead of 4" , (int)$4, k);
         else{
 	  for(int i = 0; i < k; i++){
 	    double d;
@@ -3297,7 +3297,7 @@ Transfinite :
 	int k = List_Nbr($7);
 	if(k != 6 && k != 8)
 	  yymsg(GERROR, "Wrong definition of Transfinite Volume %d: "
-		"%d points instead of 6 or 8" , $4, k);
+		"%d points instead of 6 or 8" , (int)$4, k);
 	else{
 	  for(int i = 0; i < k; i++){
 	    double d;
