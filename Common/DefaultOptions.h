@@ -167,7 +167,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Use trackball rotation mode" },
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 1.1 ,
     "'Speed' of the middle mouse button zoom" },
-  { F|O, "DefaultPlugins" , opt_general_default_plugins , 1. ,
+  { F|O, "DefaultPlugins" , opt_general_default_plugins , 0. ,
     "Load default plugins on startup" },
   { F, "Clip0" , opt_general_clip0 , 0. ,
     "Enable clip plane 0" },

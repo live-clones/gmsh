@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.95 2001-07-31 09:51:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.96 2001-07-31 09:56:52 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1689,8 +1689,7 @@ void GUI::set_statistics(){
    the plugin on the top of the window
 */
 
-PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView)
-{
+PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
   char buffer[1024],namep[1024],copyright[256],author[256],help[1024];
 
   PluginDialogBox *pdb = new PluginDialogBox;
@@ -1729,6 +1728,11 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView)
   ok->callback(view_plugin_cb, (void*)pair);
   cancel->labelsize(CTX.fontsize);
   cancel->callback(cancel_cb, (void*)pl_window);
+
+  if(CTX.center_windows)
+    pl_window->position(m_window->x()+m_window->w()/2-width/2,
+			m_window->y()+9*BH-height/2);
+
   pl_window->end();
    
   return pdb;
