@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.2 2004-12-28 20:37:19 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.3 2004-12-28 21:54:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -109,10 +109,6 @@ void GMSH_AnnotatePlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "Annotate failed...");
 }
-
-#if defined(HAVE_FLTK)
-extern Fl_Menu_Item menu_font_names[];
-#endif
 
 Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
 {
