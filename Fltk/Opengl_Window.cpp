@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.2 2001-01-10 10:06:16 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.3 2001-01-10 20:14:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -36,14 +36,13 @@ void Opengl_Window::draw() {
   }
   if((w() != CTX.viewport[2]-CTX.viewport[0]) ||
      (h() != CTX.viewport[3]-CTX.viewport[1])){
-    WID->set_gl_size(CTX.viewport[2]-CTX.viewport[0],
-		     CTX.viewport[3]-CTX.viewport[1]);
+    WID->set_size(CTX.viewport[2]-CTX.viewport[0],
+		  CTX.viewport[3]-CTX.viewport[1]);
     glViewport(CTX.viewport[0],
 	       CTX.viewport[1],
 	       CTX.viewport[2],
 	       CTX.viewport[3]);
   }
-
   Orthogonalize(0,0);
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
                UNPACK_GREEN(CTX.color.bg)/255.,
@@ -52,6 +51,22 @@ void Opengl_Window::draw() {
   glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
   Draw3d();
   Draw2d();
+}
+
+// one should not call Opengl_Window::draw() from the handle(), but
+// rather the following:
+
+void DrawUpdate(){
+  WID->make_current();
+  Orthogonalize(0,0);
+  glClearColor(UNPACK_RED(CTX.color.bg)/255.,
+               UNPACK_GREEN(CTX.color.bg)/255.,
+               UNPACK_BLUE(CTX.color.bg)/255.,
+               0.);
+  glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+  Draw3d();
+  Draw2d();
+  WID->swap_buffers();
 }
 
 void Opengl_Window::clear_overlay() {
@@ -123,6 +138,12 @@ void Opengl_Window::draw_overlay() {
 
 static int Modifier=0;
 
+// le principe de FLTK est assez diffrent des autres toolkits: les
+// events sont passes au handle du widget qui a le focus. Si ce handle
+// revoie 1, alors l'event est considere comme traite, et est
+// supprime. Si le handle retourne 0, l'event est passe au handle du
+// parent.
+
 int Opengl_Window::handle(int event) {
   GLuint          ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
   int             previous_mesh_draw, previous_post_draw ;
@@ -143,23 +164,7 @@ int Opengl_Window::handle(int event) {
 
   switch (event) {
 
-  /* -------------------------------------------------------------
-     S h o r t c u t s
-     ------------------------------------------------------------- */
-
-  case FL_SHORTCUT:
-    /*
-    m = menu->test_shortcut();
-    if (m) {m->do_callback(this, (void*)m); return 1;}
-    */
-    return 0;
-
-  /* -------------------------------------------------------------
-     B u t t o n P r e s s
-     ------------------------------------------------------------- */
-
   case FL_PUSH:
-
     ButtonPressed++;
     FirstClick=1;
     ibut = Fl::event_button();
@@ -191,8 +196,7 @@ int Opengl_Window::handle(int event) {
         Modifier = 0;
         set_s(1, CTX.s[0]);
         set_s(2, CTX.s[0]);
-        Init();
-        Draw();
+        DrawUpdate();
       }
       else{
         ZoomClick=0;
@@ -210,8 +214,7 @@ int Opengl_Window::handle(int event) {
 	}
         set_t(0,0.); set_t(1,0.); set_t(2,0.);
         set_s(0,1.); set_s(1,1.); set_s(2,1.);
-        Init();
-        Draw();
+        DrawUpdate();
       }
       else{
         ZoomClick=0;
@@ -222,12 +225,7 @@ int Opengl_Window::handle(int event) {
 
     return 1;
 
-  /* -------------------------------------------------------------
-      B u t t o n R e l e a s e
-     ------------------------------------------------------------- */
-
   case FL_RELEASE:
-
     if(ButtonPressed>0){
       ButtonPressed--;
       ibut = Fl::event_button();
@@ -235,26 +233,19 @@ int Opengl_Window::handle(int event) {
       y    = Fl::event_y();
     }
     if(!ZoomClick){
-      Init();
       previous_mesh_draw = CTX.mesh.draw ;
       previous_post_draw = CTX.post.draw ;
       if(ButtonPressed>0){
         if(CTX.fast) CTX.mesh.draw = CTX.post.draw = 0;
       }
-      Draw();
+      DrawUpdate();
       CTX.mesh.draw = previous_mesh_draw ;
       CTX.post.draw = previous_post_draw ;
     }
-
     return 1;
 
       
-  /* -------------------------------------------------------------
-      M o t i o n N o t i f y 
-     ------------------------------------------------------------- */
-
   case FL_DRAG:
-
     movx = Fl::event_x()-x;
     movy = Fl::event_y()-y;
 
@@ -270,88 +261,99 @@ int Opengl_Window::handle(int event) {
       draw_overlay();
     }
     else {
-      if(ButtonPressed){
+      clear_overlay();
 
-	clear_overlay();
-
-        if(FirstClick){
-          xc1 = ( ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin) 
-		  + CTX.vxmin )/CTX.s[0] - CTX.t[0];
-          yc1 = ( CTX.vymax - ((GLdouble) y / height) * 
-		  (CTX.vymax - CTX.vymin))/CTX.s[1] - CTX.t[1];
-          xt1 = CTX.t[0];
-          yt1 = CTX.t[1];
-          xscale1 = CTX.s[0];
-          yscale1 = CTX.s[1];
-          FirstClick=0;
-        }
-
-        switch(ibut){
-        case 1:
-	  
-	  if(CTX.useTrackball){
-	    CTX.addQuaternion ((2.0*x - width) / width,
-			       (height - 2.0*y) / height,
-			       (2.0*Fl::event_x() - width) / width,
-			       (height - 2.0*Fl::event_y()) / height);
-	  }
-	  else{
-	    set_r(1, CTX.r[1] + ((abs(movx) > abs(movy))?180*(float)movx/(float)width:0));
-	    set_r(0, CTX.r[0] + ((abs(movx) > abs(movy))?0:180*(float)movy/(float)height));
-	  }
-          break;
-        case 2:
-	  if(!CTX.useTrackball)
-	    set_r(2, CTX.r[2] + ((abs(movy) > abs(movx))?0:-180*(float)movx/(float)width));         
-
-          set_s(0, CTX.s[0] * ( (abs(movy) > abs(movx)) ?
-                                ( (movy>0) ? (float)(1.04*(abs(movy)+height))/(float)height
-                                  : (float)(height)/(float)(1.04*(abs(movy)+height)) )
-                                : 1.) );                    
-          set_s(1, CTX.s[0]);
-          set_s(2, CTX.s[0]);
-
-          if(abs(movy) > abs(movx)){
-            set_t(0, xt1*(xscale1/CTX.s[0])-xc1*(1.-(xscale1/CTX.s[0])));
-            set_t(1, yt1*(yscale1/CTX.s[1])-yc1*(1.-(yscale1/CTX.s[1])));
-          }
-          break;
-        case 3:
-          xc = ( ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin) + 
-		 CTX.vxmin ) / CTX.s[0];
-          yc = ( CTX.vymax - ((GLdouble) y / height) *
-		 (CTX.vymax - CTX.vymin)) / CTX.s[1];
-          set_t(0, xc-xc1);
-          set_t(1, yc-yc1);
-          set_t(2, 0.);
-          break;
-        }
-        Init();
-        previous_mesh_draw = CTX.mesh.draw ;
-        previous_post_draw = CTX.post.draw ;
-        if(CTX.fast) CTX.mesh.draw = CTX.post.draw = 0;
-        Draw();
-        CTX.mesh.draw = previous_mesh_draw ;
-        CTX.post.draw = previous_post_draw ;
+      if(FirstClick){
+	xc1 = ( ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin) 
+		+ CTX.vxmin )/CTX.s[0] - CTX.t[0];
+	yc1 = ( CTX.vymax - ((GLdouble) y / height) * 
+		(CTX.vymax - CTX.vymin))/CTX.s[1] - CTX.t[1];
+	xt1 = CTX.t[0];
+	yt1 = CTX.t[1];
+	xscale1 = CTX.s[0];
+	yscale1 = CTX.s[1];
+	FirstClick=0;
       }
-      else{
-        Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
-        ov = v; oc = c; os = s; 
-        v = NULL; c = NULL; s = NULL;
-        Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
-	draw_overlay_highlight();
+
+      switch(ibut){
+      case 1:
+	if(CTX.useTrackball){
+	  CTX.addQuaternion ((2.0*x - width) / width,
+			     (height - 2.0*y) / height,
+			     (2.0*Fl::event_x() - width) / width,
+			     (height - 2.0*Fl::event_y()) / height);
+	}
+	else{
+	  set_r(1, CTX.r[1] + ((abs(movx) > abs(movy))?180*(float)movx/(float)width:0));
+	  set_r(0, CTX.r[0] + ((abs(movx) > abs(movy))?0:180*(float)movy/(float)height));
+	}
+	break;
+      case 2:
+	if(!CTX.useTrackball)
+	  set_r(2, CTX.r[2] + ((abs(movy) > abs(movx))?0:-180*(float)movx/(float)width));         
+	set_s(0, CTX.s[0] * ( (abs(movy) > abs(movx)) ?
+			      ( (movy>0) ? (float)(1.04*(abs(movy)+height))/(float)height
+				: (float)(height)/(float)(1.04*(abs(movy)+height)) )
+			      : 1.) );                    
+	set_s(1, CTX.s[0]);
+	set_s(2, CTX.s[0]);
+	if(abs(movy) > abs(movx)){
+	  set_t(0, xt1*(xscale1/CTX.s[0])-xc1*(1.-(xscale1/CTX.s[0])));
+	  set_t(1, yt1*(yscale1/CTX.s[1])-yc1*(1.-(yscale1/CTX.s[1])));
+	}
+	break;
+      case 3:
+	xc = ( ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin) + 
+	       CTX.vxmin ) / CTX.s[0];
+	yc = ( CTX.vymax - ((GLdouble) y / height) *
+	       (CTX.vymax - CTX.vymin)) / CTX.s[1];
+	set_t(0, xc-xc1);
+	set_t(1, yc-yc1);
+	set_t(2, 0.);
+	break;
       }
-      x += movx; 
-      y += movy; 
+      previous_mesh_draw = CTX.mesh.draw ;
+      previous_post_draw = CTX.post.draw ;
+      if(CTX.fast){
+	CTX.mesh.draw = 0 ;
+	CTX.post.draw = 0;
+      }
+      DrawUpdate();
+      CTX.mesh.draw = previous_mesh_draw ;
+      CTX.post.draw = previous_post_draw ;
     }
+    x += movx; 
+    y += movy; 
+    return 1;
+    
 
+  case FL_MOVE:
+    movx = Fl::event_x()-x;
+    movy = Fl::event_y()-y;
+    Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
+    ov = v; oc = c; os = s; v = NULL; c = NULL; s = NULL;
+    Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
+#if 0
+    // l'overlay ne marche pas, meme dans les demos de fltk!
+    // soumettre un bug ?
+    if(ov != v || oc != c || os != s) { 
+      WID->make_overlay_current();
+      if(ov != v || oc != c || os != s) { 
+	glClearIndex(0);
+	glClear(GL_COLOR_BUFFER_BIT);  
+	glIndexi((CTX.color.bg<CTX.color.fg)?FL_WHITE:FL_BLACK);
+	BeginHighlight();
+	HighlightEntity(v,c,s,0);
+	EndHighlight(0);
+      }
+      WID->make_current();
+    }
+#endif
+    x += movx; 
+    y += movy; 
     return 1;
 
-  /* -------------------------------------------------------------
-      O t h er
-     ------------------------------------------------------------- */
-
-  default: // pass other events to the base class...
+  default:
     return Fl_Gl_Window::handle(event);
 
   }

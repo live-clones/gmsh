@@ -27,7 +27,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"Save",             FL_CTRL+'s', (Fl_Callback *)file_save_cb, 0},
     {"Save As",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
-      {"By extension...",      0, (Fl_Callback *)file_save_as_auto_cb, 0},
+      {"By extension...",      FL_CTRL+'p', (Fl_Callback *)file_save_as_auto_cb, 0},
       {"GEO...",               0, (Fl_Callback *)file_save_as_geo_cb, 0},
       {"GEO options...",       0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
       {"MSH...",               0, (Fl_Callback *)file_save_as_msh_cb, 0},
@@ -242,13 +242,26 @@ Context_Item menu_post[] =
 { { "2", NULL } ,
   { NULL } };
 
-// The GUI constructor creates ONLY the widgets that always exist (we
-// want the lowest memory footprint for the interface and the fastest
-// startup time). All optional dialogs are also created only once, but
-// on demand.
+// Global shortcuts
+
+int GUI::global_shortcuts(int event){
+  // we only handle shortcuts here
+  if(event != FL_SHORTCUT) return 0 ;
+
+  // test...
+  if(Fl::test_shortcut(FL_CTRL+'z')){
+    gen_butt[0]->do_callback();
+    printf("CACACACAC\n");
+    return 1;
+  }
+
+  return 0;
+}
+
+
+// The GUI constructor
 
 GUI::GUI() {
-  int i, x, y;
 
   BH = 2*CTX.fontsize+2; // button height
   WB = CTX.fontsize-6; // window border width
@@ -257,148 +270,25 @@ GUI::GUI() {
 
   if(strlen(CTX.display)) Fl::display(CTX.display);
 
+  Fl::add_handler(SetGlobalShortcut);
+
   // Icons
 
   icon1_bmp = new Fl_Bitmap(g1_bits,g1_width,g1_height);
   icon2_bmp = new Fl_Bitmap(g2_bits,g2_width,g2_height);
   icon3_bmp = new Fl_Bitmap(g3_bits,g3_width,g3_height);
 
-  // Menu Window
-
-  {
-    int width = 155 ;
-    MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
-
-    m_window = new Fl_Window(width,MH);
-    m_window->box(FL_THIN_UP_BOX);
-    m_window->label("Gmsh");
-
-    {
-      Fl_Menu_Bar *o = new Fl_Menu_Bar(0,0,width,BH); 
-      o->menu(m_menubar_table);
-      o->global();
-      o->textsize(CTX.fontsize);
-      o->box(FL_UP_BOX);
-    }
-
-    Fl_Box *o = new Fl_Box(0,BH,width,BH+6);
-    o->box(FL_UP_BOX);
-
-    y = BH + 3;
-    
-    m_navig_butt[0] = new Fl_Button(2,y,20,BH/2,"@<");
-    m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
-    m_navig_butt[0]->box(FL_FLAT_BOX);
-    m_navig_butt[0]->selection_color(FL_WHITE);
-    m_navig_butt[0]->callback(mod_back_cb);
-    m_navig_butt[1] = new Fl_Button(2,y+BH/2,20,BH/2,"@>");
-    m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
-    m_navig_butt[1]->box(FL_FLAT_BOX);
-    m_navig_butt[1]->selection_color(FL_WHITE);
-    m_navig_butt[1]->callback(mod_forward_cb);
-    
-    m_module_butt = new Fl_Choice(22,y,width-28,BH);
-    m_module_butt->menu(m_module_table);
-    m_module_butt->textsize(CTX.fontsize);
-    m_module_butt->box(FL_THIN_DOWN_BOX);
-    
-    y = MH ;
-    
-    for(i=0; i<NB_BUTT_MAX; i++){
-      m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
-      m_push_butt[i]->labelsize(CTX.fontsize);
-      m_push_butt[i]->hide();
-      m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width,BH); 
-      m_toggle_butt[i]->labelsize(CTX.fontsize); 
-      m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
-      m_toggle_butt[i]->hide();
-      m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH);
-      m_popup_butt[i]->type(Fl_Menu_Button::POPUP3);
-      m_popup_butt[i]->add("Reload", 0, 
-			   (Fl_Callback *)view_reload_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Remove", 0, 
-			   (Fl_Callback *)view_remove_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Duplicate", 0,
-			   (Fl_Callback *)view_duplicate_cb, (void*)i, FL_MENU_DIVIDER) ;
-      m_popup_butt[i]->add("Lighting", 0,
-			   (Fl_Callback *)view_lighting_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Show Elements", 0,
-			   (Fl_Callback *)view_elements_cb, (void*)i, 0);
-      m_popup_butt[i]->add("Apply as Background Mesh", 0,
-			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
-      m_popup_butt[i]->add("Options...", 0,
-			   (Fl_Callback *)view_options_cb, (void*)i, 0);
-      m_popup_butt[i]->textsize(CTX.fontsize);
-      m_popup_butt[i]->hide();
-    }
-    
-    m_window->position(800,50);
-    m_window->end();
-    m_window->show();
-
-  }
-    
-  // Graphic Window
-
-  {
-    g_window = new Fl_Window(700,520);
-    g_opengl_window = new Opengl_Window(0,0,700,500);
-    
-    {
-      Fl_Group *o = new Fl_Group(0,500,700,20);
-      o->box(FL_THIN_UP_BOX);
-
-      x = 2;
-      
-      g_status_butt[0] = new Fl_Button(x,502,15,16,"X"); x+=15;
-      g_status_butt[0]->callback(status_xyz1p_cb, (void*)0);
-      //g_status_butt[0]->tooltip("Set X view");
-      g_status_butt[1] = new Fl_Button(x,502,15,16,"Y"); x+=15;
-      g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
-      g_status_butt[2] = new Fl_Button(x,502,15,16,"Z"); x+=15;
-      g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
-      g_status_butt[3] = new Fl_Button(x,502,20,16,"1:1"); x+=20;
-      g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
-      g_status_butt[4] = new Fl_Button(x,502,15,16,"?"); x+=15;
-      g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
-
-      g_status_butt[5] = new Fl_Button(x,502,15,16); x+=15;
-      g_status_butt[5]->callback(status_play_cb);
-      start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
-      start_bmp->label(g_status_butt[5]);
-      stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
-
-      g_status_butt[6] = new Fl_Button(x,502,15,16); x+=15;
-      g_status_butt[6]->callback(status_cancel_cb);
-      abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
-      abort_bmp->label(g_status_butt[6]);
-      g_status_butt[6]->deactivate();
-
-      for(i = 0 ; i<7 ; i++){
-	g_status_butt[i]->box(FL_FLAT_BOX);
-	g_status_butt[i]->selection_color(FL_WHITE);
-	g_status_butt[i]->labelsize(CTX.fontsize);
-	g_status_butt[i]->align(FL_ALIGN_CENTER|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
-      }
-
-      g_status_label[0] = new Fl_Box(x,502,(700-x)/3,16);
-      g_status_label[1] = new Fl_Box(x+(700-x)/3,502,(700-x)/3,16);
-      g_status_label[2] = new Fl_Box(x+2*(700-x)/3,502,(700-x)/3-2,16);
-      for(i = 0 ; i<3 ; i++){
-	g_status_label[i]->box(FL_FLAT_BOX);
-	g_status_label[i]->labelsize(CTX.fontsize);
-	g_status_label[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
-      }
-      
-      o->end();
-    }
-
-    g_window->resizable(g_opengl_window);
-    g_window->position(20,30);
-    g_window->end();
-    g_window->show();
-    
-  }
+  // All static windows are contructed (even if some are not
+  // displayed) since the shortcuts should be valid even for hidden
+  // windows
+  create_menu_window();  m_window->show();
+  create_graphic_window();  g_window->show();
+  create_general_options_window();
+  create_geometry_options_window();
+  create_mesh_options_window();
+  create_post_options_window();
+  create_help_window();
+  create_about_window();
 
   // Draw the actual scene
 
@@ -492,19 +382,31 @@ void GUI::set_statistics(){
 
 // set the current drawing context to the main opengl window
 
-void GUI::make_gl_current(){
+void GUI::make_current(){
   g_opengl_window->make_current();
+}
+
+
+// set the current drawing context to the overlay opengl window
+
+void GUI::make_overlay_current(){
+  g_opengl_window->make_overlay_current();
+}
+// swap buffer
+
+void GUI::swap_buffers(){
+  g_opengl_window->swap_buffers();
 }
 
 // Draw the opengl window
 
-void GUI::draw_gl(){
+void GUI::draw(){
   g_opengl_window->redraw();
 }
 
 // Draw the opengl overlay window
 
-void GUI::draw_gl_overlay(){
+void GUI::draw_overlay(){
   g_opengl_window->redraw_overlay();
 }
 
@@ -522,7 +424,7 @@ void GUI::check(){
 
 // Set the size of the graphical window
 
-void GUI::set_gl_size(int new_w, int new_h){
+void GUI::set_size(int new_w, int new_h){
   g_window->size(new_w,new_h+g_window->h()-g_opengl_window->h());
 }
 
@@ -631,6 +533,169 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
 
 int GUI::get_context(){
   return m_module_butt->value();
+}
+
+
+
+
+// Create the menu window
+
+void GUI::create_menu_window(){
+  static int init_menu_window = 0;
+  int i, y;
+
+  if(!init_menu_window){
+    init_menu_window = 1 ;
+
+    int width = 155 ;
+    MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
+
+    m_window = new Fl_Window(width,MH);
+    m_window->box(FL_THIN_UP_BOX);
+    m_window->label("Gmsh");
+
+    m_menu_bar = new Fl_Menu_Bar(0,0,width,BH); 
+    m_menu_bar->menu(m_menubar_table);
+    m_menu_bar->textsize(CTX.fontsize);
+    m_menu_bar->box(FL_UP_BOX);
+    m_menu_bar->global();
+
+    Fl_Box *o = new Fl_Box(0,BH,width,BH+6);
+    o->box(FL_UP_BOX);
+
+    y = BH + 3;
+    
+    m_navig_butt[0] = new Fl_Button(2,y,20,BH/2,"@<");
+    m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
+    m_navig_butt[0]->box(FL_FLAT_BOX);
+    m_navig_butt[0]->selection_color(FL_WHITE);
+    m_navig_butt[0]->callback(mod_back_cb);
+    m_navig_butt[1] = new Fl_Button(2,y+BH/2,20,BH/2,"@>");
+    m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
+    m_navig_butt[1]->box(FL_FLAT_BOX);
+    m_navig_butt[1]->selection_color(FL_WHITE);
+    m_navig_butt[1]->callback(mod_forward_cb);
+    
+    m_module_butt = new Fl_Choice(22,y,width-28,BH);
+    m_module_butt->menu(m_module_table);
+    m_module_butt->textsize(CTX.fontsize);
+    m_module_butt->box(FL_THIN_DOWN_BOX);
+    
+    y = MH ;
+    
+    for(i=0; i<NB_BUTT_MAX; i++){
+      m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
+      m_push_butt[i]->labelsize(CTX.fontsize);
+      m_push_butt[i]->hide();
+      m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width,BH); 
+      m_toggle_butt[i]->labelsize(CTX.fontsize); 
+      m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
+      m_toggle_butt[i]->hide();
+      m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH);
+      m_popup_butt[i]->type(Fl_Menu_Button::POPUP3);
+      m_popup_butt[i]->add("Reload", 0, 
+			   (Fl_Callback *)view_reload_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Remove", 0, 
+			   (Fl_Callback *)view_remove_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Duplicate", 0,
+			   (Fl_Callback *)view_duplicate_cb, (void*)i, FL_MENU_DIVIDER) ;
+      m_popup_butt[i]->add("Lighting", 0,
+			   (Fl_Callback *)view_lighting_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Show Elements", 0,
+			   (Fl_Callback *)view_elements_cb, (void*)i, 0);
+      m_popup_butt[i]->add("Apply as Background Mesh", 0,
+			   (Fl_Callback *)view_applybgmesh_cb, (void*)i, FL_MENU_DIVIDER);
+      m_popup_butt[i]->add("Options...", 0,
+			   (Fl_Callback *)view_options_cb, (void*)i, 0);
+      m_popup_butt[i]->textsize(CTX.fontsize);
+      m_popup_butt[i]->hide();
+    }
+    
+    m_window->position(800,50);
+    m_window->end();
+  }
+  else{
+    if(m_window->shown())
+      m_window->redraw();
+    else
+      m_window->show();
+    
+  }
+}
+
+
+// Create the graphic window
+
+void GUI::create_graphic_window(){
+  static int init_graphic_window = 0;
+  int i, x;
+
+  if(!init_graphic_window){
+    init_graphic_window = 1 ;
+
+    g_window = new Fl_Window(700,520);
+    g_opengl_window = new Opengl_Window(0,0,700,500);
+    
+    {
+      Fl_Group *o = new Fl_Group(0,500,700,20);
+      o->box(FL_THIN_UP_BOX);
+
+      x = 2;
+      
+      g_status_butt[0] = new Fl_Button(x,502,15,16,"X"); x+=15;
+      g_status_butt[0]->callback(status_xyz1p_cb, (void*)0);
+      //g_status_butt[0]->tooltip("Set X view");
+      g_status_butt[1] = new Fl_Button(x,502,15,16,"Y"); x+=15;
+      g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
+      g_status_butt[2] = new Fl_Button(x,502,15,16,"Z"); x+=15;
+      g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
+      g_status_butt[3] = new Fl_Button(x,502,20,16,"1:1"); x+=20;
+      g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
+      g_status_butt[4] = new Fl_Button(x,502,15,16,"?"); x+=15;
+      g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
+
+      g_status_butt[5] = new Fl_Button(x,502,15,16); x+=15;
+      g_status_butt[5]->callback(status_play_cb);
+      start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
+      start_bmp->label(g_status_butt[5]);
+      stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
+
+      g_status_butt[6] = new Fl_Button(x,502,15,16); x+=15;
+      g_status_butt[6]->callback(status_cancel_cb);
+      abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
+      abort_bmp->label(g_status_butt[6]);
+      g_status_butt[6]->deactivate();
+
+      for(i = 0 ; i<7 ; i++){
+	g_status_butt[i]->box(FL_FLAT_BOX);
+	g_status_butt[i]->selection_color(FL_WHITE);
+	g_status_butt[i]->labelsize(CTX.fontsize);
+	g_status_butt[i]->align(FL_ALIGN_CENTER|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
+      }
+
+      g_status_label[0] = new Fl_Box(x,502,(700-x)/3,16);
+      g_status_label[1] = new Fl_Box(x+(700-x)/3,502,(700-x)/3,16);
+      g_status_label[2] = new Fl_Box(x+2*(700-x)/3,502,(700-x)/3-2,16);
+      for(i = 0 ; i<3 ; i++){
+	g_status_label[i]->box(FL_FLAT_BOX);
+	g_status_label[i]->labelsize(CTX.fontsize);
+	g_status_label[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
+      }
+      
+      o->end();
+    }
+
+    g_window->resizable(g_opengl_window);
+    g_window->position(20,30);
+    g_window->end();   
+  }
+  else{
+    if(g_window->shown())
+      g_window->redraw();
+    else
+      g_window->show();
+    
+  }
 }
 
 // Create the window for general options
@@ -753,7 +818,6 @@ void GUI::create_general_options_window(){
     }
 
     gen_window->end();
-    gen_window->show();
   }
   else{
     if(gen_window->shown())
@@ -856,7 +920,6 @@ void GUI::create_geometry_options_window(){
     }
 
     geo_window->end();
-    geo_window->show();
   }
   else{
     if(geo_window->shown())
@@ -1019,7 +1082,6 @@ void GUI::create_mesh_options_window(){
     }
 
     mesh_window->end();
-    mesh_window->show();
   }
   else{
     if(mesh_window->shown())
@@ -1098,7 +1160,6 @@ void GUI::create_post_options_window(){
     }
 
     post_window->end();
-    post_window->show();
   }
   else{
     if(post_window->shown())
@@ -1237,7 +1298,6 @@ void GUI::create_help_window(){
 
     help_window->resizable(o);
     help_window->end();
-    help_window->show();
   }
   else{
     if(help_window->shown())
@@ -1283,7 +1343,6 @@ void GUI::create_about_window(){
     o2->callback(cancel_cb, (void*)about_window);
 
     about_window->end();
-    about_window->show();
   }
   else{
     if(about_window->shown())

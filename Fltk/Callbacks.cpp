@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.10 2001-01-10 12:12:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.11 2001-01-10 20:14:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -62,6 +62,10 @@ void MarkAllViewsChanged(int action){
 
 void CancelMeshThread(void){
   
+}
+
+int SetGlobalShortcut(int event){
+  return WID->global_shortcuts(event);
 }
 
 // Common callbacks 

@@ -3,6 +3,8 @@
 
 #define CALLBACK_ARGS   Fl_Widget* w, void* data
 
+int SetGlobalShortcut(int event);
+
 // Common callbacks
 
 void cancel_cb(CALLBACK_ARGS) ;

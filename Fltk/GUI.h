@@ -82,6 +82,7 @@ class GUI{
 
   // menu window
   Fl_Window        *m_window ;
+  Fl_Menu_Bar      *m_menu_bar ;
   Fl_Choice        *m_module_butt ;
   Fl_Button        *m_navig_butt  [2] ;
   Fl_Button        *m_push_butt   [NB_BUTT_MAX] ;
@@ -147,13 +148,29 @@ public:
   // the constructor
   GUI();
 
+  // create the windows
+  void create_menu_window();
+  void create_graphic_window();
+  void create_general_options_window();
+  void create_geometry_options_window();
+  void create_mesh_options_window();
+  void create_post_options_window();
+  void create_statistics_window();
+  void create_view_window(int numview);
+  void create_help_window();
+  void create_about_window();
+  void create_geometry_context_window(int num);
+  void create_mesh_context_window(int num);
+
   // general purpose interaction
   void run();
   void check();
-  void make_gl_current();
-  void draw_gl();
-  void draw_gl_overlay();
-  void set_gl_size(int w, int h);
+  void make_current();
+  void make_overlay_current();
+  void swap_buffers();
+  void draw();
+  void draw_overlay();
+  void set_size(int w, int h);
   void set_menu_size(int nb_butt);
   void set_context(Context_Item menu[], int flag);
   int  get_context();
@@ -162,6 +179,8 @@ public:
   void set_statistics();
   void set_title(char *str);
   void activate_custom(int val);
+  void add_handler();
+  int  global_shortcuts(int event);
 
   // geometry contexts queries
   char *get_geometry_parameter(int num);
@@ -176,17 +195,6 @@ public:
   char *get_mesh_length(int num);
   char *get_mesh_attractor(int num);
 
-  // create additional windows
-  void create_general_options_window();
-  void create_geometry_options_window();
-  void create_mesh_options_window();
-  void create_post_options_window();
-  void create_statistics_window();
-  void create_view_window(int numview);
-  void create_help_window();
-  void create_about_window();
-  void create_geometry_context_window(int num);
-  void create_mesh_context_window(int num);
 };
 
 

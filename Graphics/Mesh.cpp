@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.15 2001-01-09 14:24:09 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.16 2001-01-10 20:14:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -112,7 +112,7 @@ void Draw_Mesh (Mesh *M) {
   if(CTX.render_mode != GMSH_SELECT){
     if(CTX.axes) 
       Draw_Axes(CTX.lc_middle/4.);
-    if(CTX.post.draw) /* les init de shading se font par view */
+    if(CTX.post.draw) // les init de shading se font par view
       Draw_Post();
   }
 }

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.6 2001-01-10 10:06:38 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.7 2001-01-10 20:14:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -25,18 +25,19 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 /* ------------------------------------------------------------------------ */
 
 void Init(void){
-  WID->make_gl_current();
+  //WID->make_current();
 }
 
 void InitOverlay(void){
+  WID->make_overlay_current();
 }
 
 void Draw(void){
-  WID->draw_gl();
+  WID->draw();
 }
 
 void DrawOverlay(void){
-  WID->draw_gl_overlay();
+  WID->draw_overlay();
 }
 
 void DrawUI(void){
@@ -51,9 +52,10 @@ void Draw_String(char *s){
       return ;
     }
   }
-
+  /*
   glListBase(CTX.font_base);
   glCallLists(strlen(s), GL_UNSIGNED_BYTE, (GLubyte *)s);
+  */
 }
 
 /* ------------------------------------------------------------------------ 
@@ -92,6 +94,8 @@ int check_type(int type, Vertex *v, Curve *c, Surface *s){
 }
 
 int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
+  return 0;
+  /*
   int             hits;
   GLuint          ii[SELECTION_BUFFER_SIZE],jj[SELECTION_BUFFER_SIZE];
   int event;
@@ -117,7 +121,7 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
       }
     }
   }
-
+  */
 }
 
 
