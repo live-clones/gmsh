@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.3 2004-04-24 03:52:00 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.4 2004-04-24 05:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,6 +42,7 @@ static double computeBarycentricTriangle(double *X , double *Y, double *Z,
   sys2x2(mat, b, U);
   return 0.5 * ( mat[0][0] * mat[1][1] - mat[1][0] *mat[0][1]);
 }
+
 static void computeBarycentricSimplex(double *X, double *Y, double *Z, 
 				      double *P, double *U)
 {
@@ -63,12 +64,12 @@ static void computeBarycentricSimplex(double *X, double *Y, double *Z,
   sys3x3(mat, b, U, &det);
 }
 
-static void minmax (int n,
-		    double *X, 
-		    double *Y, 
-		    double *Z,
-		    double *min,
-		    double *max)
+static void minmax(int n,
+		   double *X, 
+		   double *Y, 
+		   double *Z,
+		   double *min,
+		   double *max)
 {
   min[0] = X[0];
   min[1] = Y[0];
@@ -130,7 +131,7 @@ int PostTriangleInEle(void *a, double *x)
   double W = 1.-U[0]-U[1];
   if (U[0] < -eps || U[0] > 1+eps || 
       U[1] < -eps || U[1] > 1+eps ||
-      W    < -eps || W    > 1+eps ) return 0;
+      W    < -eps || W    > 1+eps) return 0;
   return 1;
 }
 
@@ -142,7 +143,7 @@ void PostTriangleCentroid(void *a , double *x)
   centroid(3, X, Y, Z, x);
 }
 
-void PostSimplexBB (void *a, double *min, double *max)
+void PostSimplexBB(void *a, double *min, double *max)
 {
   double *X = (double*) a;
   double *Y = &X[4];
@@ -164,7 +165,7 @@ int PostSimplexInEle(void *a, double *x)
   if(U[0] < -eps || U[0] > 1+eps || 
      U[1] < -eps || U[1] > 1+eps ||
      U[2] < -eps || U[2] > 1+eps ||
-     W    < -eps || W    > 1+eps ) return 0;
+     W    < -eps || W    > 1+eps) return 0;
   return 1;
 }
 
@@ -233,7 +234,7 @@ OctreePost::OctreePost(Post_View *v)
 		     PostSimplexBB,
 		     PostSimplexCentroid,
 		     PostSimplexInEle);
-  addListOfStuff(VS, v->VS, 12 + 12 * v->NbTimeStep );
+  addListOfStuff(VS, v->VS, 12 + 12 * v->NbTimeStep);
   
   Octree_Arrange(ST);
   Octree_Arrange(VT);
@@ -308,7 +309,7 @@ bool OctreePost::searchVector(double x,
     return true;
   } 
 
-  void * inVS = Octree_Search (P, VS);
+  void * inVS = Octree_Search(P, VS);
 
   if(inVS){
     double U[3];
@@ -329,12 +330,12 @@ bool OctreePost::searchVector(double x,
 	values[3*i+1] = 
 	  V[12*i+4]   * U[0] + 
 	  V[12*i+9]   * U[1] + 
-	  V[12*i+10]   * U[2] + 
+	  V[12*i+10]  * U[2] + 
 	  V[12*i+1]   * (1-U[0]-U[1]-U[2]); 
 	values[3*i+2] = 
 	  V[12*i+5]   * U[0] + 
 	  V[12*i+7]   * U[1] + 
-	  V[12*i+11]   * U[2] + 
+	  V[12*i+11]  * U[2] + 
 	  V[12*i+2]   * (1-U[0]-U[1]-U[2]); 
       }
     }
@@ -347,13 +348,13 @@ bool OctreePost::searchVector(double x,
       values[1] = 
 	V[12*timestep+4]   * U[0] + 
 	V[12*timestep+7]   * U[1] + 
-	V[12*timestep+10]   * U[2] + 
-	V[12*timestep+1 ]   * (1-U[0]-U[1]-U[2]); 
+	V[12*timestep+10]  * U[2] + 
+	V[12*timestep+1 ]  * (1-U[0]-U[1]-U[2]); 
       values[2] = 
-	V[12*timestep+5 ]   * U[0] + 
-	V[12*timestep+8 ]   * U[1] + 
-	V[12*timestep+11]   * U[2] + 
-	V[12*timestep+2 ]   * (1-U[0]-U[1]-U[2]); 
+	V[12*timestep+5 ]  * U[0] + 
+	V[12*timestep+8 ]  * U[1] + 
+	V[12*timestep+11]  * U[2] + 
+	V[12*timestep+2 ]  * (1-U[0]-U[1]-U[2]); 
     }
     return true;
   } 
@@ -414,14 +415,13 @@ bool OctreePost::searchScalar(double x,
 	  V[3*i+0] * (1.-U[0]-U[1]-U[2]); 
       }
     }
-    else
-      {
-	values[0] = 
-	  V[3*timestep+1]   * U[0] + 
-	  V[3*timestep+2] * U[1] + 
-	  V[3*timestep+3] * U[2] + 
-	  V[3*timestep  ] * (1-U[0]-U[1]-U[2]); 
-      }
+    else{
+      values[0] = 
+	V[3*timestep+1]   * U[0] + 
+	V[3*timestep+2] * U[1] + 
+	V[3*timestep+3] * U[2] + 
+	V[3*timestep  ] * (1-U[0]-U[1]-U[2]); 
+    }
     return true;
   } 
   

@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.4 2004-04-24 04:46:20 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.5 2004-04-24 05:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -102,7 +102,7 @@ int GMSH_CutGridPlugin::getNbV()const
   return   (int)CutGridOptions_Number[10].def;
 }
 
-void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X )const 
+void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X) const 
 {
   double u = (double)iU / (double)(getNbU () - 1.);
   double v = (double)iV / (double)(getNbV () - 1.);

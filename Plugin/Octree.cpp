@@ -1,4 +1,4 @@
-// $Id: Octree.cpp,v 1.1 2004-04-24 03:52:00 geuzaine Exp $
+// $Id: Octree.cpp,v 1.2 2004-04-24 05:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -56,8 +56,8 @@ void Octree_Insert(void * element, Octree *myOctree)
   (*(myOctree->function_BB))(element, minBB, maxBB);
   (*(myOctree->function_centroid))(element, centroid);
   bucket = findElementBucket(myOctree->root, centroid);
-  addElement2Bucket (bucket, element, minBB, maxBB,
-                            centroid,myOctree->info);	
+  addElement2Bucket(bucket, element, minBB, maxBB,
+		    centroid, myOctree->info);	
 }
 
 void Octree_Arrange(Octree *myOctree)

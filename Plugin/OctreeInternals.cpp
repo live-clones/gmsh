@@ -1,4 +1,4 @@
-// $Id: OctreeInternals.cpp,v 1.1 2004-04-24 03:52:00 geuzaine Exp $
+// $Id: OctreeInternals.cpp,v 1.2 2004-04-24 05:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -164,7 +164,7 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
   printf(" numElements = %d\n",_bucket->numElements); 
   printf("the element is add to this bucket: (%f, %f, %f) to (%f, %f, %f)\n",
 	 _bucket->minPt[0],_bucket->minPt[1], _bucket->minPt[2], _bucket->maxPt[0],
-	 _bucket->maxPt[1], _bucket->maxPt[2] );
+	 _bucket->maxPt[1], _bucket->maxPt[2]);
 #endif
 
   // check whether the number of elements in the bucket > maxElements 
@@ -201,7 +201,7 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
   return 1;
 }
 
-int checkElementInBucket (octantBucket *_bucket, void* _element)
+int checkElementInBucket(octantBucket *_bucket, void* _element)
 // Given an elememt and an octant bucket, check if the element     
 // exists in the bucket's element list. return 1 if already exits, 
 // otherwise, return 0                                             
@@ -249,7 +249,7 @@ octantBucket *findElementBucket(octantBucket *_buckets_head, double *_pt)
 }
 
 
-int subdivideOctantBucket (octantBucket *_bucket, globalInfo *_globalPara)
+int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
 // To many elements are in this octant bucket, so try to refine      
 // Returns 1 for success, 0 for failure (no memory left).       
 {
@@ -278,7 +278,7 @@ int subdivideOctantBucket (octantBucket *_bucket, globalInfo *_globalPara)
   
   tmp1 = 2;
   for (i = 0; i < 3; i++) {
-    tmp[i] = ((double )(_bucket->maxPt[i]-_bucket->minPt[i]))/tmp1;
+    tmp[i] = ((double)(_bucket->maxPt[i]-_bucket->minPt[i]))/tmp1;
   }
 
   for (k = 0; k < tmp1; k++) {
