@@ -1,10 +1,6 @@
-$Id: TODO,v 1.51 2004-06-23 19:53:52 geuzaine Exp $
+$Id: TODO,v 1.52 2004-06-24 07:13:18 geuzaine Exp $
 
 add ternary operator and <,>,<=,>=,== tests in MathEval
-
-********************************************************************
-
-generalize Plugin(Triangulate) to vector and tensor points
 
 ********************************************************************
 

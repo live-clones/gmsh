@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.22 2004-05-17 21:28:02 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.23 2004-06-24 07:13:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -63,8 +63,8 @@ void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Triangulate) triangulates the points\n"
-	 "in the scalar view `iView', assuming that all\n"
-         "the points belong to a surface that can be\n"
+	 "in the view `iView', assuming that all the\n"
+         "points belong to a surface that can be\n"
 	 "univoquely projected into a plane. If `iView'\n"
 	 "< 0, the plugin is run on the current view.\n"
 	 "\n"
@@ -88,7 +88,8 @@ void GMSH_TriangulatePlugin::catchErrorMessage(char *errorMessage) const
 
 #if !defined(HAVE_TRIANGLE)
 
-void Triangulate(Post_View * vin, Post_View * vout)
+void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
+		 int nbTimeStep, int nbComp)
 {
   Msg(GERROR, "Triangle is not compiled in this version of Gmsh");
 }
@@ -103,34 +104,35 @@ extern "C"
 #include "triangle.h"
 }
 
-void Triangulate(Post_View * vin, Post_View * vout)
+void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
+		 int nbTimeStep, int nbComp)
 {
-  int nb, i, j = 0, j0, j1, j2;
-  Surface *s;
-  Vertex *v;
-  struct triangulateio in, out;
+  if(!nbIn)
+    return;
 
-  List_T *points = List_Create(vin->NbSP, 1, sizeof(Vertex *));
-  nb = List_Nbr(vin->SP) / vin->NbSP;
-
-  for(i = 0; i < List_Nbr(vin->SP); i += nb) {
-    v = Create_Vertex(j++,
-                      *(double *)List_Pointer_Fast(vin->SP, i),
-                      *(double *)List_Pointer_Fast(vin->SP, i + 1),
-                      *(double *)List_Pointer_Fast(vin->SP, i + 2), 1., 0.);
+  List_T *points = List_Create(nbIn, 1, sizeof(Vertex *));
+  int nb = List_Nbr(inList) / nbIn;
+  int j = 0;
+  for(int i = 0; i < List_Nbr(inList); i += nb) {
+    Vertex *v = Create_Vertex(j++,
+			      *(double *)List_Pointer_Fast(inList, i),
+			      *(double *)List_Pointer_Fast(inList, i + 1),
+			      *(double *)List_Pointer_Fast(inList, i + 2), 1., 0.);
     List_Add(points, &v);
   }
 
-  s = Create_Surface(1, MSH_SURF_PLAN);
+  Surface *s = Create_Surface(1, MSH_SURF_PLAN);
   MeanPlane(points, s);
 
-  for(i = 0; i < List_Nbr(points); i++) {
+  for(int i = 0; i < List_Nbr(points); i++) {
+    Vertex *v;
     List_Read(points, i, &v);
     Projette(v, s->plan);
   }
 
   Free_Surface(&s, NULL);
 
+  struct triangulateio in;
   in.numberofpoints = List_Nbr(points);
   in.pointlist = (REAL *) Malloc(in.numberofpoints * 2 * sizeof(REAL));
   in.numberofpointattributes = 0;
@@ -145,19 +147,22 @@ void Triangulate(Post_View * vin, Post_View * vout)
   in.holelist = NULL;
 
   j = 0;
-  for(i = 0; i < List_Nbr(points); i++) {
+  for(int i = 0; i < List_Nbr(points); i++) {
+    Vertex *v;
     List_Read(points, i, &v);
     in.pointlist[j] = v->Pos.X;
     in.pointlist[j + 1] = v->Pos.Y;
     j += 2;
   }
 
-  for(i = 0; i < List_Nbr(points); i++) {
+  for(int i = 0; i < List_Nbr(points); i++) {
+    Vertex *v;
     List_Read(points, i, &v);
     Free_Vertex(&v, NULL);
   }
   List_Delete(points);
 
+  struct triangulateio out;
   out.pointlist = NULL;
   out.pointattributelist = NULL;
   out.pointmarkerlist = NULL;
@@ -177,25 +182,27 @@ void Triangulate(Post_View * vin, Post_View * vout)
   Free(in.pointlist);
   Free(out.pointlist);
 
-  for(i = 0; i < out.numberoftriangles; i++) {
-    j0 = out.trianglelist[i * out.numberofcorners + 0];
-    j1 = out.trianglelist[i * out.numberofcorners + 1];
-    j2 = out.trianglelist[i * out.numberofcorners + 2];
-    for(j = 0; j < 3; j++) {
-      List_Add(vout->ST, List_Pointer(vin->SP, (j0 * nb) + j));
-      List_Add(vout->ST, List_Pointer(vin->SP, (j1 * nb) + j));
-      List_Add(vout->ST, List_Pointer(vin->SP, (j2 * nb) + j));
+  for(int i = 0; i < out.numberoftriangles; i++) {
+    int j0 = out.trianglelist[i * out.numberofcorners + 0];
+    int j1 = out.trianglelist[i * out.numberofcorners + 1];
+    int j2 = out.trianglelist[i * out.numberofcorners + 2];
+    for(int j = 0; j < 3; j++) {
+      List_Add(outList, List_Pointer(inList, (j0 * nb) + j));
+      List_Add(outList, List_Pointer(inList, (j1 * nb) + j));
+      List_Add(outList, List_Pointer(inList, (j2 * nb) + j));
     }
-    for(j = 0; j < vin->NbTimeStep; j++) {
-      List_Add(vout->ST, List_Pointer(vin->SP, (j0 * nb) + 3 + j));
-      List_Add(vout->ST, List_Pointer(vin->SP, (j1 * nb) + 3 + j));
-      List_Add(vout->ST, List_Pointer(vin->SP, (j2 * nb) + 3 + j));
+    for(int j = 0; j < nbTimeStep; j++) {
+      for(int k = 0; k < nbComp; k++)
+	List_Add(outList, List_Pointer(inList, (j0 * nb) + 3 + j*nbComp + k));
+      for(int k = 0; k < nbComp; k++)
+	List_Add(outList, List_Pointer(inList, (j1 * nb) + 3 + j*nbComp + k));
+      for(int k = 0; k < nbComp; k++)
+	List_Add(outList, List_Pointer(inList, (j2 * nb) + 3 + j*nbComp + k));
     }
-    vout->NbST++;
+    (*nbOut)++;
   }
 
   Free(out.trianglelist);
-
 }
 
 #endif // !HAVE_TRIANGLE
@@ -212,24 +219,24 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
     return v;
   }
 
+  if(v->NbSP < 2 && v->NbVP < 2 && v->NbTP < 2)
+    return v;
+
+  Post_View *v2 = BeginView(1);
   Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+
+  Triangulate(v1->NbSP, v1->SP, &v2->NbST, v2->ST, v1->NbTimeStep, 1);
+  Triangulate(v1->NbVP, v1->VP, &v2->NbVT, v2->VT, v1->NbTimeStep, 3);
+  Triangulate(v1->NbTP, v1->TP, &v2->NbTT, v2->TT, v1->NbTimeStep, 9);
+
+  // copy time data
+  for(int i = 0; i < List_Nbr(v1->Time); i++)
+    List_Add(v2->Time, List_Pointer(v1->Time, i));
   
-  if(v1->NbSP > 2) {
-    // FIXME: this is not secure: if BeginView forces a post.list
-    // reallocation, v1 could be wrong
-    Post_View *v2 = BeginView(1);
-    Triangulate(v1, v2);
-    // copy time data
-    for(int i = 0; i < List_Nbr(v1->Time); i++)
-      List_Add(v2->Time, List_Pointer(v1->Time, i));
-    // finalize
-    char name[1024], filename[1024];
-    sprintf(name, "%s_Triangulate", v1->Name);
-    sprintf(filename, "%s_Triangulate.pos", v1->Name);
-    EndView(v2, 1, filename, name);
-    return v2;
-  }
-
-  return v1;
+  // finalize
+  char name[1024], filename[1024];
+  sprintf(name, "%s_Triangulate", v1->Name);
+  sprintf(filename, "%s_Triangulate.pos", v1->Name);
+  EndView(v2, 1, filename, name);
+  return v2;
 }
-
