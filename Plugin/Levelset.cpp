@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.21 2004-11-26 15:13:07 remacle Exp $
+// $Id: Levelset.cpp,v 1.22 2004-12-22 18:10:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -553,7 +553,7 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
 */
 
 
-static bool recur_sign_change (_triangle *t, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change (adapt_triangle *t, double val, const GMSH_LevelsetPlugin *plug)
 {
 
   if (!t->t[0]|| t->visible)
@@ -586,7 +586,7 @@ static bool recur_sign_change (_triangle *t, double val, const GMSH_LevelsetPlug
     }      
 }
 
-static bool recur_sign_change (_tet *t, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change (adapt_tet *t, double val, const GMSH_LevelsetPlugin *plug)
 {
 
   if (!t->t[0] || t->visible)
@@ -628,7 +628,7 @@ static bool recur_sign_change (_tet *t, double val, const GMSH_LevelsetPlugin *p
     }      
 }
 
-static bool recur_sign_change (_hex *t, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change (adapt_hex *t, double val, const GMSH_LevelsetPlugin *plug)
 {
 
   if (!t->h[0]|| t->visible)
@@ -674,7 +674,7 @@ static bool recur_sign_change (_hex *t, double val, const GMSH_LevelsetPlugin *p
     }      
 }
 
-static bool recur_sign_change (_quad *q, double val, const GMSH_LevelsetPlugin *plug)
+static bool recur_sign_change (adapt_quad *q, double val, const GMSH_LevelsetPlugin *plug)
 {
 
   if (!q->q[0]|| q->visible)
@@ -710,24 +710,24 @@ static bool recur_sign_change (_quad *q, double val, const GMSH_LevelsetPlugin *
 
 void GMSH_LevelsetPlugin::assign_specific_visibility () const
 {
-  if (_triangle::all_triangles.size())
+  if (adapt_triangle::all_triangles.size())
     {
-      _triangle *t  = *_triangle::all_triangles.begin();
+      adapt_triangle *t  = *adapt_triangle::all_triangles.begin();
       t->visible = !recur_sign_change (t, _valueView, this);
     }
-  if (_tet::all_tets.size())
+  if (adapt_tet::all_tets.size())
     {
-      _tet *te  = *_tet::all_tets.begin();
+      adapt_tet *te  = *adapt_tet::all_tets.begin();
       te->visible = !recur_sign_change (te, _valueView, this);
     }
-  if (_quad::all_quads.size())
+  if (adapt_quad::all_quads.size())
     {
-      _quad *qe  = *_quad::all_quads.begin();
+      adapt_quad *qe  = *adapt_quad::all_quads.begin();
       qe->visible = !recur_sign_change (qe, _valueView, this);
     }
-  if (_hex::all_hexes.size())
+  if (adapt_hex::all_hexes.size())
     {
-      _hex *he  = *_hex::all_hexes.begin();
+      adapt_hex *he  = *adapt_hex::all_hexes.begin();
       he->visible = !recur_sign_change (he, _valueView, this);
     }
 }

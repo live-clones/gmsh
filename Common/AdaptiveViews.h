@@ -34,18 +34,18 @@ class GMSH_Post_Plugin;
 // phi_i being polynomials of order p, i goes from 1...(p+1)(p+2)/2
 // and phi_i = \sum_j coeffs_{ij} monomials_j and
 // monomials are 1,x,y,x^2,xy,y^2,x^3,x^2y,xy^2,y^3...
-class _point
+class adapt_point
 {
 public :
   double x,y,z;
   double X,Y,Z,val;
   double shape_functions[128];
-  static _point * New ( double x, double y, double z, Double_Matrix *coeffs, Double_Matrix *eexps); 
+  static adapt_point * New ( double x, double y, double z, Double_Matrix *coeffs, Double_Matrix *eexps); 
   void print ()const
   {
     printf ("p %g %g\n" ,x,y);
   }
-  bool operator < ( const _point & other ) const
+  bool operator < ( const adapt_point & other ) const
   {
     if ( other.x < x) return true;
     if ( other.x > x) return false;
@@ -54,13 +54,13 @@ public :
     if ( other.z < z) return true;
     return false;
   }
-  static std::set<_point> all_points;
+  static std::set<adapt_point> all_points;
 };
 
-class _triangle
+class adapt_triangle
 {
 public:
-  _triangle (_point *p1,_point *p2,_point *p3)    
+  adapt_triangle (adapt_point *p1,adapt_point *p2,adapt_point *p3)    
     : visible (false)
   {
     p[0] = p1;
@@ -79,19 +79,19 @@ public:
   }
   static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
-  static void Recur_Create (_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Recur_Create (adapt_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
-  static void Recur_Error ( _triangle *t, double AVG, double tol );
+  static void Recur_Error ( adapt_triangle *t, double AVG, double tol );
   bool visible;
-  _point     *p[3];
-  _triangle  *t[4];
-  static std::list<_triangle*> all_triangles;
+  adapt_point     *p[3];
+  adapt_triangle  *t[4];
+  static std::list<adapt_triangle*> all_triangles;
 };
 
-class _quad
+class adapt_quad
 {
 public:
-  _quad (_point *p1,_point *p2,_point *p3,_point *p4)    
+  adapt_quad (adapt_point *p1,adapt_point *p2,adapt_point *p3,adapt_point *p4)    
     : visible (false)
   {
     p[0] = p1;
@@ -111,19 +111,19 @@ public:
   }
   static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
-  static void Recur_Create (_quad *q, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Recur_Create (adapt_quad *q, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
-  static void Recur_Error ( _quad *q, double AVG, double tol );
+  static void Recur_Error ( adapt_quad *q, double AVG, double tol );
   bool visible;
-  _point     *p[4];
-  _quad  *q[4];
-  static std::list<_quad*> all_quads;
+  adapt_point     *p[4];
+  adapt_quad  *q[4];
+  static std::list<adapt_quad*> all_quads;
 };
 
-class _tet
+class adapt_tet
 {
 public:
-  _tet (_point *p1,_point *p2,_point *p3,_point *p4)    
+  adapt_tet (adapt_point *p1,adapt_point *p2,adapt_point *p3,adapt_point *p4)    
     : visible (false)
   {
     p[0] = p1;
@@ -144,19 +144,19 @@ public:
   }
   static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
-  static void Recur_Create (_tet *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Recur_Create (adapt_tet *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
-  static void Recur_Error ( _tet *t, double AVG, double tol );
+  static void Recur_Error ( adapt_tet *t, double AVG, double tol );
   bool visible;
-  _point     *p[4];
-  _tet  *t[8];
-  static std::list<_tet*> all_tets;
+  adapt_point     *p[4];
+  adapt_tet  *t[8];
+  static std::list<adapt_tet*> all_tets;
 };
 
-class _hex
+class adapt_hex
 {
 public:
-  _hex (_point *p1,_point *p2,_point *p3,_point *p4,_point *p5,_point *p6,_point *p7,_point *p8)    
+  adapt_hex (adapt_point *p1,adapt_point *p2,adapt_point *p3,adapt_point *p4,adapt_point *p5,adapt_point *p6,adapt_point *p7,adapt_point *p8)    
     : visible (false)
   {
     p[0] = p1;
@@ -181,13 +181,13 @@ public:
   }
   static void clean ();
   static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
-  static void Recur_Create (_hex *h, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Recur_Create (adapt_hex *h, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error ( double AVG , double tol );
-  static void Recur_Error ( _hex *h, double AVG, double tol );
+  static void Recur_Error ( adapt_hex *h, double AVG, double tol );
   bool visible;
-  _point     *p[8];
-  _hex *h[8];
-  static std::list<_hex*> all_hexes;
+  adapt_point     *p[8];
+  adapt_hex *h[8];
+  static std::list<adapt_hex*> all_hexes;
 };
 
 class Adaptive_Post_View 
