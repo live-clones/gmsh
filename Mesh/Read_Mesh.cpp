@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.76 2004-05-31 01:54:19 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.77 2004-07-01 15:00:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -100,6 +100,28 @@ Volume *addElementaryVolume(Mesh * M, int Num)
     Tree_Add(M->Volumes, &v);
   }
   return v;
+}
+
+int getNbrNodes(int Type)
+{
+  switch (Type) {
+  case PNT : return 1;
+  case LGN1: return 2;
+  case LGN2: return 2 + 1;
+  case TRI1: return 3;
+  case TRI2: return 3 + 3;
+  case QUA1: return 4;
+  case QUA2: return 4 + 4 + 1;
+  case TET1: return 4;
+  case TET2: return 4 + 6;
+  case HEX1: return 8;
+  case HEX2: return 8 + 12 + 6 + 1;
+  case PRI1: return 6;
+  case PRI2: return 6 + 9 + 3;
+  case PYR1: return 5;
+  case PYR2: return 5 + 8 + 1;
+  default: return 0;
+  }
 }
 
 void Read_Mesh_MSH(Mesh * M, FILE * fp)
@@ -221,6 +243,15 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  fscanf(fp, "%d %d %d %d %d",
 		 &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
 	  Partition = Physical;
+	  int Nbr_Nodes_Check = getNbrNodes(Type);
+	  if(!Nbr_Nodes_Check){
+	    Msg(GERROR, "Unknown type for element %d", Num); 
+	    return;
+	  }
+	  if(Nbr_Nodes != Nbr_Nodes_Check){
+	    Msg(GERROR, "Wrong number of nodes for element %d", Num);
+	    return;
+	  }
 	}
 	else{
 	  fscanf(fp, "%d %d %d", &Num, &Type, &NbTags);
@@ -235,22 +266,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      Partition = Tag;
 	    // ignore any other tags for now
 	  }
-	  switch (Type) {
-	  case PNT : Nbr_Nodes = 1; break;
-	  case LGN1: Nbr_Nodes = 2; break;
-	  case LGN2: Nbr_Nodes = 2 + 1; break;
-	  case TRI1: Nbr_Nodes = 3; break;
-	  case TRI2: Nbr_Nodes = 3 + 3; break;
-	  case QUA1: Nbr_Nodes = 4; break;
-	  case QUA2: Nbr_Nodes = 4 + 4 + 1; break;
-	  case TET1: Nbr_Nodes = 4; break;
-	  case TET2: Nbr_Nodes = 4 + 6; break;
-	  case HEX1: Nbr_Nodes = 8; break;
-	  case HEX2: Nbr_Nodes = 8 + 12 + 6 + 1; break;
-	  case PRI1: Nbr_Nodes = 6; break;
-	  case PRI2: Nbr_Nodes = 6 + 9 + 3; break;
-	  case PYR1: Nbr_Nodes = 5; break;
-	  case PYR2: Nbr_Nodes = 5 + 8 + 1; break;
+	  Nbr_Nodes = getNbrNodes(Type);
+	  if(!Nbr_Nodes){
+	    Msg(GERROR, "Unknown type for element %d", Num); 
+	    return;
 	  }
 	}
 
@@ -436,7 +455,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  }
           break;
         default:
-          Msg(WARNING, "Unknown type of element in Read_Mesh");
+	  Msg(GERROR, "Unknown type for element %d", Num); 
           break;
         }
       }
