@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.11 2003-03-02 00:48:37 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.12 2003-03-02 01:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -402,6 +402,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         exit(1);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
+        fprintf(stderr, "%s\n", gmsh_progname);
         fprintf(stderr, "%s\n", gmsh_copyright);
         fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION,
                 GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
