@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.17 2000-12-05 15:47:07 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.18 2000-12-05 18:38:11 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -61,6 +61,7 @@ char gmsh_help[]      =
   "  -nodb                 disable double buffering\n"
   "  -noov                 disable overlay visual\n"
   "  -alpha                enable alpha blending\n"
+  "  -notrack              use old interactive rotation mode\n"
   "  -geometry geom        specify main window geometry\n"
   "  -viewport 9*float     specify rotation, translation and scale\n"
   "  -display disp         specify display\n"
@@ -232,6 +233,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "alpha")){ 
         CTX.alpha = 1; i++;
+      }
+      else if(!strcmp(argv[i]+1, "notrack")){ 
+        CTX.useTrackball = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "flash")){ 
         CTX.flash = 1; i++;

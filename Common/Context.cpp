@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.11 2000-12-05 16:59:11 remacle Exp $ */
+/* $Id: Context.cpp,v 1.12 2000-12-05 18:38:08 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -346,10 +346,6 @@ void Init_Context(void){
   // Default color options
   Init_Colors(0);
 
-  CTX.useTrackball = 1;
-  trackball(CTX.quaternion, 0.0, 0.0, 0.0, 0.0);  
-
-  //Print_Context(stdout);
 }
 
 void Print_Context(FILE *file){
@@ -396,20 +392,25 @@ void Print_Context(FILE *file){
 
 void Context_T::buildRotmatrix(float m[4][4])
 {
+  double r0, r1, r2;
+  extern void set_r(int i, double val);
+
   build_rotmatrix(m, quaternion);
 
-  r[1] = atan2(-m[0][2],sqrt(m[1][2]*m[1][2] + m[2][2]*m[2][2]));
+  r1 = atan2(-m[0][2],sqrt(m[1][2]*m[1][2] + m[2][2]*m[2][2]));
 
-  double c = cos(r[1]);  
+  double c = cos(r1);  
   if(c != 0.0)
     {
-      r[0] = atan2(m[1][2]/c,m[2][2]/c);
-      r[2] = atan2(-m[1][0]/c,m[0][0]/c);
-      r[0] *= 180./(Pi);
-      r[2] *= 180./(Pi);
+      r0 = atan2(m[1][2]/c,m[2][2]/c) ;
+      r2 = atan2(-m[1][0]/c,m[0][0]/c) ;
+      r0 *= 180./(Pi);
+      r2 *= 180./(Pi);
     }
   // lazyyyyyy
-  r[1] *= 180./(Pi);
+  set_r(0, r0);
+  set_r(1, r1 * 180./(Pi));
+  set_r(2, r2);
 }
 
 void Context_T::addQuaternion (float p1x, float p1y, float p2x, float p2y)
@@ -419,3 +420,7 @@ void Context_T::addQuaternion (float p1x, float p1y, float p2x, float p2y)
   add_quats(quat, quaternion, quaternion);  
 }
 
+void Context_T::setQuaternion (float p1x, float p1y, float p2x, float p2y)
+{
+  trackball(quaternion,p1x,p1y,p2x,p2y);
+}

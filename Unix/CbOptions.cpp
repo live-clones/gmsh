@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.9 2000-12-05 15:23:58 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.10 2000-12-05 18:38:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -95,11 +95,29 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_SCALEX_LOCKED : CTX.slock[0] = !CTX.slock[0];  break;
   case OPTIONS_SCALEY_LOCKED : CTX.slock[1] = !CTX.slock[1];  break;
   case OPTIONS_SCALEZ_LOCKED : CTX.slock[2] = !CTX.slock[2];  break;
-  case OPTIONS_XVIEW : set_r(0,0.);  set_r(1,90.);set_r(2,0.); Init(); Draw(); break;
-  case OPTIONS_YVIEW : set_r(0,-90.);set_r(1,0.); set_r(2,0.); Init(); Draw(); break;
-  case OPTIONS_ZVIEW : set_r(0,0.);  set_r(1,0.); set_r(2,0.); Init(); Draw(); break;
-  case OPTIONS_CVIEW : set_t(0,0.);  set_t(1,0.); set_t(2,0.); 
-                       set_s(0,1.);  set_s(1,1.); set_s(2,1.); Init(); Draw(); break;
+  case OPTIONS_XVIEW : 
+    if(CTX.useTrackball)
+      CTX.setQuaternion(0.,0.,1.,0.);
+    set_r(0,0.);  set_r(1,90.);set_r(2,0.); 
+    Init(); Draw(); 
+    break;
+  case OPTIONS_YVIEW : 
+    if(CTX.useTrackball)
+      CTX.setQuaternion(0.,-1.,0.,0.);
+    set_r(0,-90.);set_r(1,0.); set_r(2,0.); 
+    Init(); Draw(); 
+    break;
+  case OPTIONS_ZVIEW :
+    if(CTX.useTrackball)
+      CTX.setQuaternion(0.,0.,0.,0.);
+    set_r(0,0.);  set_r(1,0.); set_r(2,0.); 
+    Init(); Draw(); 
+    break;
+  case OPTIONS_CVIEW : 
+    set_t(0,0.);  set_t(1,0.); set_t(2,0.); 
+    set_s(0,1.);  set_s(1,1.); set_s(2,1.); 
+    Init(); Draw(); 
+    break;
   case OPTIONS_PVIEW :
     XGetWindowAttributes(XtDisplay(WID.G.shell),XtWindow(WID.G.shell),&xattrib);
     fprintf(stderr, "-geometry %dx%d -viewport %g %g %g %g %g %g %g %g %g\n",

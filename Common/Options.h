@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.1 2000-12-05 15:28:22 geuzaine Exp $ */
+/* $Id: Options.h,v 1.2 2000-12-05 18:38:09 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -56,6 +56,7 @@ StringXNumber GeneralOptions_Number[] = {
   { "SameVisual"   , GMSH_INT,    (void*)&CTX.same_visual   , 0. },
   { "Flash"        , GMSH_INT,    (void*)&CTX.flash         , 0. },
   { "AlphaBlending", GMSH_INT,    (void*)&CTX.alpha         , 0. },
+  { "Trackball"    , GMSH_INT,    (void*)&CTX.useTrackball  , 1. },
   { "Clip0"        , GMSH_INT,    (void*)&CTX.clip[0]       , 0. },
   { "Clip1"        , GMSH_INT,    (void*)&CTX.clip[1]       , 0. },
   { "Clip2"        , GMSH_INT,    (void*)&CTX.clip[2]       , 0. },
@@ -140,6 +141,8 @@ StringXNumber PrintOptions_Number[] = {
 // ARRAYS
 
 StringXArray GeneralOptions_Array[] = {
+  { "TrackballQuaternion" , 
+                       GMSH_FLOAT,  CTX.quaternion    , 0., 0., 0., 1. }, 
   { "ClipPlane0"     , GMSH_DOUBLE, CTX.clip_plane[0] , 0., 0., 0., 0. }, 
   { "ClipPlane1"     , GMSH_DOUBLE, CTX.clip_plane[1] , 0., 0., 0., 0. }, 
   { "ClipPlane2"     , GMSH_DOUBLE, CTX.clip_plane[2] , 0., 0., 0., 0. }, 

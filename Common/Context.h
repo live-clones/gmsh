@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.12 2000-12-05 16:59:11 remacle Exp $ */
+/* $Id: Context.h,v 1.13 2000-12-05 18:38:08 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -146,6 +146,7 @@ class Context_T {
 
   // trackball functions 
   void buildRotmatrix(float m[4][4]);
+  void setQuaternion (float p1x, float p1y, float p2x, float p2y);
   void addQuaternion (float p1x, float p1y, float p2x, float p2y);
 };
 
