@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.43 2001-11-28 16:39:42 geuzaine Exp $
+// $Id: CAD.cpp,v 1.44 2001-11-28 17:35:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1385,7 +1385,7 @@ void ReplaceDuplicatePoints(Mesh *m){
 void ReplaceDuplicateCurves(Mesh *m){
   List_T *All;
   Tree_T *allNonDulpicatedCurves;
-  Curve *c,*c2;
+  Curve *c,*c2,**pc,**pc2;
   Surface *s;
   int i,j,start,end;
 
@@ -1440,11 +1440,14 @@ void ReplaceDuplicateCurves(Mesh *m){
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
     for(j=0;j<List_Nbr(s->Generatrices);j++){
-      List_Write(s->Generatrices,j,
-                 Tree_PQuery(allNonDulpicatedCurves,
-			     List_Pointer(s->Generatrices,j)));
-      // Arghhh. Revoir compareTwoCurves !
-      End_Curve(*(Curve**)List_Pointer(s->Generatrices,j));
+      pc = (Curve**)List_Pointer(s->Generatrices,j);
+      if(!(pc2 = (Curve**)Tree_PQuery(allNonDulpicatedCurves,pc)))
+	Msg(GERROR, "Weird curve %d in Coherence", (*pc)->Num);
+      else{
+	List_Write(s->Generatrices,j,pc2);
+	// Arghhh. Revoir compareTwoCurves !
+	End_Curve(*pc2);
+      }
     }
   }
   List_Delete(All);
@@ -1455,7 +1458,7 @@ void ReplaceDuplicateCurves(Mesh *m){
 void ReplaceDuplicateSurfaces(Mesh *m){
   List_T *All;
   Tree_T *allNonDulpicatedSurfaces;
-  Surface *s;
+  Surface *s, **ps, **ps2;
   Volume *vol;
   int i,j,start,end;
 
@@ -1498,9 +1501,11 @@ void ReplaceDuplicateSurfaces(Mesh *m){
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&vol);
     for(j=0;j<List_Nbr(vol->Surfaces);j++){
-      List_Write(vol->Surfaces,j,
-                 Tree_PQuery(allNonDulpicatedSurfaces,
-			     List_Pointer(vol->Surfaces,j)));
+      ps = (Surface**)List_Pointer(vol->Surfaces,j);
+      if(!(ps2 = (Surface**)Tree_PQuery(allNonDulpicatedSurfaces,ps)))
+	Msg(GERROR, "Weird surface %d in Coherence", (*ps)->Num);
+      else
+	List_Write(vol->Surfaces,j,ps2);
     }
   }
   List_Delete(All);
