@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.3 2004-06-26 17:58:14 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.4 2004-06-30 00:57:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,12 +23,14 @@
 #include "Geo.h"
 #include "CAD.h"
 #include "Mesh.h"
+#include "Numeric.h"
 
 extern Mesh *THEM;
 
-// A small function to sort the edges in an EdgeLoop. Without this
-// sort, it is very difficult to write general scriptable surface
-// generation in complex cases
+// This function sorts the edges in an EdgeLoop and detects any
+// subloops. Warning: the input edges are supposed to be *oriented*
+// (Without this sort, it is very difficult to write general
+// scriptable surface generation in complex cases)
 
 void sortEdgesInLoop(int num, List_T *edges)
 {
@@ -94,17 +96,33 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
       return;
     }
     else {
-      for(int j = 0; j < List_Nbr(el->Curves); j++) {
-	int ic;
-        List_Read(el->Curves, j, &ic);
-	Curve *c;
-        if(!(c = FindCurve(ic, THEM))) {
-          Msg(GERROR, "Unknown Curve %d", ic);
-          List_Delete(s->Generatrices);
-          return;
-        }
-        else
-          List_Add(s->Generatrices, &c);
+      int ic;
+      Curve *c;
+      if(i == 0){ // exterior boundary
+	for(int j = 0; j < List_Nbr(el->Curves); j++) {
+	  List_Read(el->Curves, j, &ic);
+	  if(!(c = FindCurve(ic, THEM))) {
+	    Msg(GERROR, "Unknown Curve %d", ic);
+	    List_Delete(s->Generatrices);
+	    return;
+	  }
+	  else
+	    List_Add(s->Generatrices, &c);
+	}
+      }
+      else{ // holes, assuming that their orientation is consistent
+	    // with the orientation of the exterior boundary!
+	for(int j = List_Nbr(el->Curves)-1; j >= 0; j--) {
+	  List_Read(el->Curves, j, &ic);
+	  ic *= -1;
+	  if(!(c = FindCurve(ic, THEM))) {
+	    Msg(GERROR, "Unknown Curve %d", ic);
+	    List_Delete(s->Generatrices);
+	    return;
+	  }
+	  else
+	    List_Add(s->Generatrices, &c);
+	}
       }
     }
   }
@@ -140,7 +158,8 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
         }
         else{
           List_Add(v->Surfaces, &s);
-	  int tmp = (is > 0) ? 1 : -1;
+	  int tmp = sign(is);
+	  if(i > 0) tmp *= -1; // this is a hole
 	  List_Add(v->SurfacesOrientations, &tmp);
 	}
       }

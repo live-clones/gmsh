@@ -1,4 +1,4 @@
-// $Id: ExtractContour.cpp,v 1.3 2004-05-19 04:03:51 geuzaine Exp $
+// $Id: ExtractContour.cpp,v 1.4 2004-06-30 00:57:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "GeoUtils.h"
 #include "CAD.h"
 #include "Mesh.h"
+#include "Numeric.h"
 
 // Note: we use List_ISearchSeq so that the input lists don't get
 // sorted: it's less efficient, but it allows us to do multi-level
@@ -114,6 +115,9 @@ void createEdgeLinks(Tree_T *links)
 
 void orientAndSortEdges(List_T *edges, Tree_T *links)
 {
+  // this orients all the edges in a line loop in a consistent manner
+  // (left- or right-oriented, depending on the orientation of the
+  // first edge) *and* sorts them so that they form a path
   int num;
   lnk lk;
   nxa na;
@@ -185,11 +189,12 @@ int allEdgesLinked(int ed, List_T * edges)
 
   int found = 0;
 
-  if(!Tree_Nbr(points))
+  if(!Tree_Nbr(points)){
     found = 1;
-
-  if(found)
+    // we can only orient things now since we allow to select
+    // disconnected parts of the loop interactively
     orientAndSortEdges(edges, links);
+  }
 
   Tree_Delete(links);
   Tree_Delete(points);
@@ -258,6 +263,60 @@ void createFaceLinks(Tree_T * links)
   List_Delete(temp);
 }
 
+void recurOrientFace(int face, List_T *faces, List_T *available, Tree_T *links)
+{
+  Surface *s = FindSurface(abs(face), THEM);
+  int ori = sign(face);
+
+  for(int i = 0; i < List_Nbr(s->Generatrices); i++){
+    Curve *c;
+    List_Read(s->Generatrices, i, &c);
+    lnk lk;
+    lk.n = abs(c->Num);
+    Tree_Query(links, &lk);
+    for(int j = 0; j < List_Nbr(lk.l); j++){
+      nxa na;
+      List_Read(lk.l, j, &na);
+      int num = abs(na.a);
+      if(num != abs(s->Num) && List_Search(available, &num, fcmp_absint) &&
+	 List_ISearchSeq(faces, &num, fcmp_absint) < 0){
+	Surface *s2 = FindSurface(num, THEM);
+	for(int k = 0; k < List_Nbr(s2->Generatrices); k++){
+	  Curve *c2;
+	  List_Read(s2->Generatrices, k, &c2);
+	  if(abs(c->Num) == abs(c2->Num)){
+	    if(c->Num * c2->Num > 0)
+	      num *= -ori;
+	    else
+	      num *= ori;
+	    List_Add(faces, &num);
+	    recurOrientFace(num, faces, available, links);
+	    break;
+	  }
+	}
+      }
+    }
+  }
+}
+
+void orientFaces(List_T *faces, Tree_T *links)
+{
+  // this orients all the faces in a surface loop in a consistent
+  // manner (all normals pointing inside or outside--depending on the
+  // orientation of the first face)
+
+  List_T *temp = List_Create(List_Nbr(faces), 1, sizeof(int));
+  List_Copy(faces, temp);
+  List_Reset(faces);
+
+  int num;
+  List_Read(temp, 0, &num);
+  List_Add(faces, &num);
+  recurOrientFace(num, faces, temp, links);
+
+  List_Delete(temp);
+}
+
 int allFacesLinked(int fac, List_T * faces)
 {
   Tree_T *links = Tree_Create(sizeof(lnk), complink);
@@ -284,13 +343,21 @@ int allFacesLinked(int fac, List_T * faces)
 
   if(List_ISearchSeq(faces, &fac, fcmp_absint) < 0){
     List_Add(faces, &fac);
+    // Warning: this is correct ONLY if the surfaces are defined
+    // correctly, i.e., if the surface hole boundaries are oriented
+    // consistently with the surface exterior boundaries. There is
+    // currently *nothing* in the code that checks this.
     recurFindLinkedFaces(fac, faces, edges, links);
   }
 
   int found = 0;
 
-  if(!Tree_Nbr(edges))
+  if(!Tree_Nbr(edges)){
     found = 1;
+    // we can only orient things now since we allow to select
+    // disconnected parts of the loop interactively
+    orientFaces(faces, links);
+  }
 
   Tree_Delete(links);
   Tree_Delete(edges);

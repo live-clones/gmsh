@@ -1,4 +1,9 @@
-$Id: TODO,v 1.52 2004-06-24 07:13:18 geuzaine Exp $
+$Id: TODO,v 1.53 2004-06-30 00:57:49 geuzaine Exp $
+
+add an interactive way to choose the orientation of surfaces in
+surface loops and lines in line loops?
+
+********************************************************************
 
 add ternary operator and <,>,<=,>=,== tests in MathEval
 

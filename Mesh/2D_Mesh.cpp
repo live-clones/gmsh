@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.66 2004-06-23 22:25:01 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.67 2004-06-30 00:57:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -805,6 +805,9 @@ void ReOrientSurfaceMesh(Surface *s)
   if(List_Nbr(c->Vertices) < 2)
     return;
 
+  // take the first edge (even if there are holes, we know that this
+  // edge belongs to the exterior loop, due to the ordering of
+  // s->Generatrices)
   Vertex *v1, *v2;
   List_Read(c->Vertices, 0, &v1);
   List_Read(c->Vertices, 1, &v2);
