@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.102 2003-11-23 02:54:59 geuzaine Exp $
+// $Id: Views.cpp,v 1.103 2003-11-23 03:23:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -471,7 +471,7 @@ bool RemoveViewByIndex(int index)
 
   // recalculate the indices
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
-    v = (Post_View *) List_Pointer(CTX.post.list, index);
+    v = (Post_View *) List_Pointer(CTX.post.list, i);
     v->Index = i;
   }
 
