@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.15 2000-12-20 12:17:03 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.16 2000-12-21 08:02:05 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -22,7 +22,7 @@ char *ThePathForIncludes=NULL, *TheBgmFileName=NULL;
 int   VERBOSE = 0 ;
 
 char gmsh_progname[]  = "This is Gmsh (non-interactive)" ;
-char gmsh_copyright[] = "Copyright (C) 1997-2000 J.-F. Remacle, C. Geuzaine";
+char gmsh_copyright[] = "Copyright (C) 1997-2001 J.-F. Remacle, C. Geuzaine";
 char gmsh_version[]   = "Version          : " ;
 char gmsh_os[]        = "Operating System : " GMSH_OS ;
 char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
@@ -77,10 +77,10 @@ void Info (int level, char *arg0){
     fprintf(stderr, gmsh_help, arg0);
     exit(1);
   case 1:
-    fprintf(stderr, "%.3f\n", GMSH_VERSION);
+    fprintf(stderr, "%.2f\n", GMSH_VERSION);
     exit(1) ; 
   case 2:
-    fprintf(stderr, "%s%.3f\n", gmsh_version, GMSH_VERSION);
+    fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
     fprintf(stderr, "%s\n", gmsh_os);
     fprintf(stderr, "%s\n", gmsh_date);
     fprintf(stderr, "%s\n", gmsh_host);

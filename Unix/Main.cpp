@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.31 2000-12-20 15:28:48 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.32 2000-12-21 08:02:06 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -31,7 +31,7 @@
 #include "Version.h"
 
 char gmsh_progname[]  = "This is Gmsh" ;
-char gmsh_copyright[] = "Copyright (C) 1997-2000 J.-F. Remacle, C. Geuzaine";
+char gmsh_copyright[] = "Copyright (C) 1997-2001 J.-F. Remacle, C. Geuzaine";
 char gmsh_version[]   = "Version          : " ;
 char gmsh_os[]        = "Operating System : " GMSH_OS ;
 char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
@@ -466,12 +466,12 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "version") || 
               !strcmp(argv[i]+1, "-version")){
-        fprintf(stderr, "%.3f\n", GMSH_VERSION);
+        fprintf(stderr, "%.2f\n", GMSH_VERSION);
         exit(1);
       }
       else if(!strcmp(argv[i]+1, "info") || 
               !strcmp(argv[i]+1, "-info")){
-        fprintf(stderr, "%s%.3f\n", gmsh_version, GMSH_VERSION);
+        fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
         fprintf(stderr, "%s\n", gmsh_os);
         fprintf(stderr, "%s\n", gmsh_date);
         fprintf(stderr, "%s\n", gmsh_host);
@@ -537,7 +537,7 @@ int main(int argc, char *argv[]){
   Get_Options(argc, argv, &nbf);
 
   if(CTX.verbosity)
-    fprintf(stderr, "%s, Version %.3f\n", gmsh_progname, GMSH_VERSION);
+    fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
 
   /* Initialize the static Mesh */
 
@@ -593,7 +593,7 @@ int main(int argc, char *argv[]){
 
   /* Text for about window */
 
-  sprintf(TextAbout, "%s\n \n%s%.3f\n%s\n%s\n%s\n%s\n%s\n%s\n \n%s\n \n"
+  sprintf(TextAbout, "%s\n \n%s%.2f\n%s\n%s\n%s\n%s\n%s\n%s\n \n%s\n \n"
           "Type 'gmsh -help' for command line options",
           gmsh_progname, gmsh_version, GMSH_VERSION, 
           gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
@@ -855,7 +855,7 @@ int main(int argc, char *argv[]){
 
   TextBuffer = (char*)Malloc(1024*sizeof(char));
   Msg(STATUS, "Ready");
-  Msg(SELECT, "Gmsh %.3f", GMSH_VERSION);
+  Msg(SELECT, "Gmsh %.2f", GMSH_VERSION);
 
   /* Open input file */
 

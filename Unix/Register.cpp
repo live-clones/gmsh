@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.15 2000-12-20 12:17:13 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.16 2000-12-21 08:02:06 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -142,11 +142,12 @@ void RegisterCallbacks_FD(Widgets_T *w){
   register_activate_cb (w->FD.saveAsButt[2],  OptionsCb, OPTIONS_SAVE_MSH);
   register_activate_cb (w->FD.saveAsButt[3],  OptionsCb, OPTIONS_SAVE_UNV);
   register_activate_cb (w->FD.saveAsButt[4],  OptionsCb, OPTIONS_SAVE_GREF);
-  register_activate_cb (w->FD.saveAsButt[5],  OptionsCb, OPTIONS_SAVE_GL2PS_SIMPLE);
-  register_activate_cb (w->FD.saveAsButt[6],  OptionsCb, OPTIONS_SAVE_GL2PS_COMPLEX);
-  register_activate_cb (w->FD.saveAsButt[7],  OptionsCb, OPTIONS_SAVE_XDUMP);
-  register_activate_cb (w->FD.saveAsButt[8],  OptionsCb, OPTIONS_SAVE_GL2JPEG);
-  register_activate_cb (w->FD.saveAsButt[9],  OptionsCb, OPTIONS_SAVE_GL2GIF);
+  register_activate_cb (w->FD.saveAsButt[5],  OptionsCb, OPTIONS_SAVE_EPS_SIMPLE);
+  register_activate_cb (w->FD.saveAsButt[6],  OptionsCb, OPTIONS_SAVE_EPS_COMPLEX);
+  register_activate_cb (w->FD.saveAsButt[7],  OptionsCb, OPTIONS_SAVE_XPM);
+  register_activate_cb (w->FD.saveAsButt[8],  OptionsCb, OPTIONS_SAVE_JPEG);
+  register_activate_cb (w->FD.saveAsButt[9],  OptionsCb, OPTIONS_SAVE_GIF);
+  register_activate_cb (w->FD.saveAsButt[10], OptionsCb, OPTIONS_SAVE_PPM);
 
   register_ok_cb       (w->FD.saveOptionsAsDialog,   FileCb,    FILE_SAVE_OPTIONS_AS);
   register_cancel_cb   (w->FD.saveOptionsAsDialog,   ManageCb,  w->FD.saveOptionsAsDialog);

@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.21 2000-12-20 15:28:48 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.22 2000-12-21 08:02:06 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -667,6 +667,10 @@ void CreateWidgets_FD(Widgets_T *w){
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GIF")); i++;
   w->FD.saveAsButt[9] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt9", arg, i);
   XtManageChild(w->FD.saveAsButt[9]);
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("PPM")); i++;
+  w->FD.saveAsButt[10] = XmCreatePushButton(w->FD.saveAsPane[0], "MsaveAsButt10", arg, i);
+  XtManageChild(w->FD.saveAsButt[10]);
 
   i=0;
   XtSetArg(arg[i], XmNsubMenuId, w->FD.saveAsPane[0]); i++;

@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.14 2000-12-20 12:17:13 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.15 2000-12-21 08:02:06 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -131,20 +131,21 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     /* save */
 
-  case OPTIONS_SAVE_MSH          : CTX.print.format = CTX.mesh.format = FORMAT_MSH; break;
-  case OPTIONS_SAVE_UNV          : CTX.print.format = CTX.mesh.format = FORMAT_UNV; break;
-  case OPTIONS_SAVE_GREF         : CTX.print.format = CTX.mesh.format = FORMAT_GREF; break;
-  case OPTIONS_SAVE_GEO          : CTX.print.format = FORMAT_GEO; break;
-  case OPTIONS_SAVE_AUTO         : CTX.print.format = FORMAT_AUTO; break;
-  case OPTIONS_SAVE_XDUMP        : CTX.print.format = FORMAT_XPM; break;
-  case OPTIONS_SAVE_GL2GIF       : CTX.print.format = FORMAT_GIF; break;
-  case OPTIONS_SAVE_GL2JPEG      : CTX.print.format = FORMAT_JPEG; break;
-  case OPTIONS_SAVE_GL2PS_SIMPLE : CTX.print.format = FORMAT_EPS; 
-                                    CTX.print.eps_quality = 1; break;
-  case OPTIONS_SAVE_GL2PS_COMPLEX: CTX.print.format = FORMAT_EPS; 
-                                    CTX.print.eps_quality = 2; break;
-  case OPTIONS_SAVE_GL2PS_IMAGE  : CTX.print.format = FORMAT_EPS; 
-                                    CTX.print.eps_quality = 0; break;
+  case OPTIONS_SAVE_MSH        : CTX.print.format = CTX.mesh.format = FORMAT_MSH; break;
+  case OPTIONS_SAVE_UNV        : CTX.print.format = CTX.mesh.format = FORMAT_UNV; break;
+  case OPTIONS_SAVE_GREF       : CTX.print.format = CTX.mesh.format = FORMAT_GREF; break;
+  case OPTIONS_SAVE_GEO        : CTX.print.format = FORMAT_GEO; break;
+  case OPTIONS_SAVE_AUTO       : CTX.print.format = FORMAT_AUTO; break;
+  case OPTIONS_SAVE_XPM        : CTX.print.format = FORMAT_XPM; break;
+  case OPTIONS_SAVE_GIF        : CTX.print.format = FORMAT_GIF; break;
+  case OPTIONS_SAVE_JPEG       : CTX.print.format = FORMAT_JPEG; break;
+  case OPTIONS_SAVE_PPM        : CTX.print.format = FORMAT_PPM; break;
+  case OPTIONS_SAVE_EPS_SIMPLE : CTX.print.format = FORMAT_EPS; 
+                                 CTX.print.eps_quality = 1; break;
+  case OPTIONS_SAVE_EPS_COMPLEX: CTX.print.format = FORMAT_EPS; 
+                                 CTX.print.eps_quality = 2; break;
+  case OPTIONS_SAVE_EPS_IMAGE  : CTX.print.format = FORMAT_EPS; 
+                                 CTX.print.eps_quality = 0; break;
 
     /* geometrie */
 

@@ -1,4 +1,4 @@
-/* $Id: CbOptions.h,v 1.10 2000-12-20 12:17:13 geuzaine Exp $ */
+/* $Id: CbOptions.h,v 1.11 2000-12-21 08:02:06 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 
@@ -99,13 +99,14 @@
 #define  OPTIONS_SAVE_MSH                      401
 #define  OPTIONS_SAVE_UNV                      402
 #define  OPTIONS_SAVE_GREF                     403
-#define  OPTIONS_SAVE_XDUMP                    404
-#define  OPTIONS_SAVE_GL2PS_SIMPLE             405
-#define  OPTIONS_SAVE_GL2PS_COMPLEX            406
-#define  OPTIONS_SAVE_GL2PS_IMAGE              407
-#define  OPTIONS_SAVE_GL2GIF                   408
+#define  OPTIONS_SAVE_XPM                      404
+#define  OPTIONS_SAVE_EPS_SIMPLE               405
+#define  OPTIONS_SAVE_EPS_COMPLEX              406
+#define  OPTIONS_SAVE_EPS_IMAGE                407
+#define  OPTIONS_SAVE_GIF                      408
 #define  OPTIONS_SAVE_GEO                      409
-#define  OPTIONS_SAVE_GL2JPEG                  410
+#define  OPTIONS_SAVE_JPEG                     410
+#define  OPTIONS_SAVE_PPM                      411
 
 
 

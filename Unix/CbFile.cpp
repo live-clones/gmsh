@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.14 2000-12-20 12:17:13 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.15 2000-12-21 08:02:06 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -18,6 +18,7 @@
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
+#include "gl2ppm.h"
 
 extern Context_T   CTX;
 extern XContext_T  XCTX;
@@ -77,6 +78,7 @@ void CreateFile (char *name, int format) {
       else if(!strcmp(ext,".jpg")) CreateFile(name, FORMAT_JPEG);
       else if(!strcmp(ext,".eps")) CreateFile(name, FORMAT_EPS);
       else if(!strcmp(ext,".xpm")) CreateFile(name, FORMAT_XPM);
+      else if(!strcmp(ext,".ppm")) CreateFile(name, FORMAT_PPM);
       else {
 	if(strlen(name) < 5)
 	  Msg(ERROR, "Unknown Extension for Automatic Format Detection");
@@ -144,6 +146,20 @@ void CreateFile (char *name, int format) {
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
                CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFOS, "GIF Creation Complete '%s'", name);
+    Msg (INFO, "Wrote File '%s'", name);
+    fclose(fp);
+    break;
+
+  case FORMAT_PPM :
+    if(!(fp = fopen(name,"wb"))) {
+      Msg(WARNING, "Unable to Open File '%s'", name); 
+      WARNING_OVERRIDE = 0;
+      return;
+    }
+    Replot();
+    create_ppm(fp, CTX.viewport[2]-CTX.viewport[0],
+	       CTX.viewport[3]-CTX.viewport[1]);
+    Msg(INFOS, "PPM Creation Complete '%s'", name);
     Msg (INFO, "Wrote File '%s'", name);
     fclose(fp);
     break;

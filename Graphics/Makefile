@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2000-12-20 10:40:52 geuzaine Exp $
+# $Id: Makefile,v 1.8 2000-12-21 08:02:05 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -36,7 +36,8 @@ SRC = Draw.cpp \
       Axes.cpp \
       gl2ps.cpp\
       gl2gif.cpp\
-      gl2jpeg.cpp
+      gl2jpeg.cpp\
+      gl2ppm.cpp
 
 
 OBJ = $(SRC:.cpp=.o)
