@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.59 2004-06-23 22:23:42 geuzaine Exp $
+// $Id: Create.cpp,v 1.60 2004-06-26 05:07:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -719,6 +719,7 @@ Volume *Create_Volume(int Num, int Typ)
     pV->ipar[i] = 0;
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
+  pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));
   pV->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
   pV->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   pV->Hexahedra = Tree_Create(sizeof(Hexahedron *), compareHexahedron);
@@ -739,6 +740,7 @@ void Free_Volume(void *a, void *b)
   if(pV) {
     List_Delete(pV->TrsfPoints);
     List_Delete(pV->Surfaces);  // surfaces freed elsewhere
+    List_Delete(pV->SurfacesOrientations);
     Tree_Action(pV->Simplexes, Free_Simplex);
     Tree_Delete(pV->Simplexes);
     Tree_Delete(pV->Simp_Surf); // for old extrusion mesh generator

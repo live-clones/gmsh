@@ -301,6 +301,7 @@ typedef struct {
   ExtrudeParams *Extrude;
   List_T *TrsfPoints;
   List_T *Surfaces;
+  List_T *SurfacesOrientations;
   Tree_T *Vertices;
   Tree_T *Edges;
   Tree_T *Faces;

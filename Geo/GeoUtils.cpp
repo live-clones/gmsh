@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.1 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.2 2004-06-26 05:07:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -115,14 +115,14 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
 
 void setVolumeSurfaces(Volume *v, List_T * loops)
 {
-  v->Surfaces = List_Create(4, 1, sizeof(Surface *));
+  List_Reset(v->Surfaces);
+  List_Reset(v->SurfacesOrientations);
   for(int i = 0; i < List_Nbr(loops); i++) {
     int il;
     List_Read(loops, i, &il);
     SurfaceLoop *sl;
     if(!(sl = FindSurfaceLoop(il, THEM))) {
       Msg(GERROR, "Unknown Surface Loop %d", il);
-      List_Delete(v->Surfaces);
       return;
     }
     else {
@@ -130,13 +130,19 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
 	int is;
         List_Read(sl->Surfaces, j, &is);
 	Surface *s;
+	// FIXME: this is a little bit tricky: contrary to curves in
+	// edge loops, we don't actually create "negative"
+	// surfaces. So we just store the signs in another list
+	// (beeerk...)
         if(!(s = FindSurface(abs(is), THEM))) {
           Msg(GERROR, "Unknown Surface %d", is);
-          List_Delete(v->Surfaces);
           return;
         }
-        else
+        else{
           List_Add(v->Surfaces, &s);
+	  int tmp = (s->Num > 0) ? 1 : -1;
+	  List_Add(v->SurfacesOrientations, &tmp);
+	}
       }
     }
   }
