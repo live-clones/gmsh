@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.45 2003-04-24 00:53:08 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.46 2003-04-24 15:26:40 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1924,18 +1924,21 @@ line.  (A deprecated synonym for @code{Progression} is @code{Power}.)
 
 @item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @};
 Selects the surface @var{expression} to be meshed with the 2D transfinite
-algorithm. The @var{expression-list} should contain the identification
-numbers of the points on the boundary of the surface. The ordering of these
-point numbers defines the ordering and orientation of the mesh
-elements. Note that a transfinite surface can only have three or four sides.
+algorithm (the surface can only have three or four sides). The
+@var{expression-list} should contain the identification numbers of the
+points on the boundary of the surface. The ordering of these point numbers
+defines the ordering and orientation of the mesh elements, and should thus
+follow the node ordering for triangles or quadrangles given in @ref{Gmsh
+node ordering}.
 
 @item Transfinite Volume @{ @var{expression} @} = @{ @var{expression-list} @};
 Selects the volume @var{expression} to be meshed with the 3D transfinite
-algorithm.  The @var{expression-list} should contain the identification
-numbers of the points on the boundary of the volume. The ordering of these
-point numbers defines the ordering and orientation of the mesh
-elements. Note that a transfinite volume can only have six or eight
-faces.
+algorithm (the volume can only have six or eight faces).  The
+@var{expression-list} should contain the identification numbers of the
+points on the boundary of the volume. The ordering of these point numbers
+defines the ordering and orientation of the mesh elements, and should thus
+follow the node ordering for prisms or hexahedra given in @ref{Gmsh node
+ordering}.
 @end ftable
 
 @c .........................................................................
