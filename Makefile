@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2000-11-26 18:43:48 geuzaine Exp $
+# $Id: Makefile,v 1.8 2000-11-27 08:24:51 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -49,14 +49,14 @@ GMSH_ARCHIVE_DIR = archives
 default: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-D_REENTRANT $(FLAGS)" \
+           "C_FLAGS=$(FLAGS)" \
            "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_USETHREADS" \
+           "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
 
-nothreads: initialtag
+threads: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
