@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.57 2001-05-22 08:30:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.58 2001-05-22 11:30:51 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1394,7 +1394,11 @@ void getdp_kill_cb(CALLBACK_ARGS){
 }
 void getdp_choose_command_cb(CALLBACK_ARGS){
   char *newfile;
+#if defined(WIN32)
+  newfile = fl_file_chooser("Choose executable", "*.[Ee][Xx][Ee]", NULL);
+#else
   newfile = fl_file_chooser("Choose executable", "*", NULL);
+#endif
   if (newfile != NULL) WID->getdp_input[2]->value(newfile);
 }
 void getdp_ok_cb(CALLBACK_ARGS){
