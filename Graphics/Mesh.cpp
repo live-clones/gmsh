@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.60 2003-06-13 21:14:20 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.61 2003-06-13 22:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -812,7 +812,7 @@ void Draw_Simplex_Curves(void *a, void *b)
     glDisable(GL_LIGHTING);
 
   if(CTX.mesh.lines) {
-    glBegin(GL_LINES);
+    glBegin(GL_LINE_STRIP);
     for(int i = 0; i < N; i++){
       glVertex3d(X[i], Y[i], Z[i]);
     }

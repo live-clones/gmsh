@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.19 2003-06-13 16:53:07 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.20 2003-06-13 22:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -75,7 +75,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
   Msg(DIRECT, "  -algo iso|tri|aniso   select 2D mesh algorithm (default: iso)");
   Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
-  //  Msg(DIRECT, "  -degree int           set mesh degree (default: 1)");
+  Msg(DIRECT, "  -order int            set mesh order (default: 1)");
   Msg(DIRECT, "  -scale float          set global scaling factor (default: 1.0)");
   Msg(DIRECT, "  -meshscale float      set mesh scaling factor (default: 1.0)");
   Msg(DIRECT, "  -clscale float        set characteristic length scaling factor (default: 1.0)");
@@ -348,10 +348,10 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
           exit(1);
         }
       }
-      else if(!strcmp(argv[i] + 1, "degree")) {
+      else if(!strcmp(argv[i] + 1, "order") || !strcmp(argv[i] + 1, "degree")) {
         i++;
         if(argv[i] != NULL)
-          opt_mesh_degree(0, GMSH_SET, atof(argv[i++]));
+          opt_mesh_order(0, GMSH_SET, atof(argv[i++]));
         else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);

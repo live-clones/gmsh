@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.14 2003-06-13 21:14:20 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.15 2003-06-13 22:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -38,17 +38,46 @@ Vertex *middlecurve(Vertex * v1, Vertex * v2)
   if(!THEC)
     return NULL;
 
-  if((v1->ListCurves && List_Nbr(v1->ListCurves) != 1) ||
-     (v2->ListCurves && List_Nbr(v2->ListCurves) != 1)) {
+  int ok1 = 1, ok2 = 1;
+  double u1 = 0., u2 = 0.;
+
+  if(List_Nbr(v1->ListCurves) == 1){
+    u1 = v1->u;
+  }
+  else if(v1->Num == THEC->beg->Num){
+    u1 = THEC->ubeg;
+  }
+  else if(v1->Num == THEC->end->Num){
+    u1 = THEC->uend;
+  }
+  else{
+    ok1 = 0;
+  }
+
+  if(List_Nbr(v2->ListCurves) == 1){
+    u2 = v2->u;
+  }
+  else if(v2->Num == THEC->beg->Num){
+    u2 = THEC->ubeg;
+  }
+  else if(v2->Num == THEC->end->Num){
+    u2 = THEC->uend;
+  }
+  else{
+    ok2 = 0;
+  }
+
+  if(ok1 && ok2){
+    v = InterpolateCurve(THEC, 0.5 * (u1 + u2), 0);
+  }
+  else{
+    // too bad (should normally not happen)
     v.Pos.X = (v1->Pos.X + v2->Pos.X) * 0.5;
     v.Pos.Y = (v1->Pos.Y + v2->Pos.Y) * 0.5;
     v.Pos.Z = (v1->Pos.Z + v2->Pos.Z) * 0.5;
   }
-  else
-    v = InterpolateCurve(THEC, 0.5 * (v1->u + v2->u), 0);
 
-  pv =
-    Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
+  pv = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
 
   if(!pv->ListCurves) {
     pv->ListCurves = List_Create(1, 1, sizeof(Curve *));
@@ -73,8 +102,7 @@ Vertex *middleface(Vertex * v1, Vertex * v2)
   U = 0.5 * (U1 + U2);
   V = 0.5 * (V1 + V2);
   v = InterpolateSurface(THES, U, V, 0, 0);
-  pv =
-    Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
+  pv = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
   return pv;
 }
 
@@ -93,22 +121,30 @@ void PutMiddlePoint(void *a, void *b)
 
   ed = (Edge *) a;
 
-  if(ed->newv)
+  if(ed->newv){
     v = ed->newv;
-  else if((v = middlecurve(ed->V[0], ed->V[1])));
-  else if((v = middleface(ed->V[0], ed->V[1])));
-  else
+  }
+  else if((v = middlecurve(ed->V[0], ed->V[1]))){
+    ;
+  }
+  else if((v = middleface(ed->V[0], ed->V[1]))){
+    ;
+  }
+  else{
     v = Create_Vertex(++THEM->MaxPointNum,
                       0.5 * (ed->V[0]->Pos.X + ed->V[1]->Pos.X),
                       0.5 * (ed->V[0]->Pos.Y + ed->V[1]->Pos.Y),
                       0.5 * (ed->V[0]->Pos.Z + ed->V[1]->Pos.Z),
                       0.5 * (ed->V[0]->lc + ed->V[1]->lc),
                       0.5 * (ed->V[0]->u + ed->V[1]->u));
+  }
+
   ed->newv = v;
   Tree_Insert(THET, &v);
+
   for(i = 0; i < List_Nbr(ed->Simplexes); i++) {
     List_Read(ed->Simplexes, i, &s);
-    if(s->V[3] && EdgesInVolume) {
+    if(s->V[3] && EdgesInVolume) { // tetrahedron
       if(!s->VSUP)
         s->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
       N = 6;
@@ -116,7 +152,7 @@ void PutMiddlePoint(void *a, void *b)
         for(j = 0; j < 2; j++)
           edges[k][j] = edges_tetra[k][j];
     }
-    else if(s->V[3]) {
+    else if(s->V[3]) { // quadrangle
       if(!s->VSUP)
         s->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
       N = 4;
@@ -124,7 +160,7 @@ void PutMiddlePoint(void *a, void *b)
         for(j = 0; j < 2; j++)
           edges[k][j] = edges_quad[k][j];
     }
-    else if(s->V[2]) {
+    else if(s->V[2]) { // triangle
       if(!s->VSUP)
         s->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
       N = 3;
@@ -132,7 +168,7 @@ void PutMiddlePoint(void *a, void *b)
         for(j = 0; j < 2; j++)
           edges[k][j] = edges_tetra[k][j];
     }
-    else {
+    else { // line
       if(!s->VSUP)
         s->VSUP = (Vertex **) Malloc(sizeof(Vertex *));
       N = 1;

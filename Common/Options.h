@@ -356,7 +356,7 @@ double opt_mesh_point_insertion(OPT_ARGS_NUM);
 double opt_mesh_speed_max(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
 double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM);
-double opt_mesh_degree(OPT_ARGS_NUM);
+double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_interactive(OPT_ARGS_NUM);
 double opt_mesh_use_cut_plane(OPT_ARGS_NUM);

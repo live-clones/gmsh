@@ -690,13 +690,13 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "CutPlaneD" , opt_mesh_cut_planed , 0. , 
     "Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')" },
 
-  { F|O, "Degree" , opt_mesh_degree , 1. ,
-    "Element order" },
   { F|O, "DisplayLists" , opt_mesh_display_lists , 0. ,
     "Use OpenGL display lists for drawing meshes" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
+  { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is already a lex token
+    "Element order (1=linear elements, 2=quadratic elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Display mesh with non adjacent elements (factor between 0 and 1)" },
 

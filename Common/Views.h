@@ -151,8 +151,6 @@ void CopyViewOptions(Post_View *src, Post_View *dest);
 void MergeViews(int all);
 
 int BGMWithView (Post_View *ErrView);
-int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
-              double OptiValue, double *ObjFunct, char *OutFile);
 double ErrorInView(Post_View * ErrView, int *n);
 Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double *y);
 

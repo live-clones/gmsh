@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Old.cpp,v 1.7 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: 3D_Mesh_Old.cpp,v 1.8 2003-06-13 22:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -906,7 +906,7 @@ void Maillage_Volume(void *data, void *dum)
        */
     }
 
-    if(CTX.mesh.degree == 2)
+    if(CTX.mesh.order == 2)
       Degre2(THEM->Vertices, THEM->VertexEdges, v->Simplexes, NULL, NULL);
 
     List_Delete(Simplexes_New);

@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.32 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.33 2003-06-13 22:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -251,7 +251,7 @@ void Maillage_Curve(void *data, void *dummy)
     List_Add(c->TrsfSimplexes, &s);
   }
 
-  if(CTX.mesh.degree == 2)
+  if(CTX.mesh.order == 2)
     Degre2(THEM->Vertices, THEM->VertexEdges, c->Simplexes, c, NULL);
 
   THEM->Statistics[4] += List_Nbr(c->Vertices);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.175 2003-04-14 22:37:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.176 2003-06-13 22:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -959,7 +959,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
                 WID->mesh_butt[0]->value()? DELAUNAY_ISO :
                 WID->mesh_butt[1]->value()? DELAUNAY_SHEWCHUK :
                 DELAUNAY_ANISO);
-  opt_mesh_degree(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
+  opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
   opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[4]->value());
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());

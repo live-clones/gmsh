@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.108 2003-06-13 21:14:20 geuzaine Exp $
+// $Id: Options.cpp,v 1.109 2003-06-13 22:41:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -3264,15 +3264,15 @@ double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM)
   return CTX.mesh.constrained_bgmesh;
 }
 
-double opt_mesh_degree(OPT_ARGS_NUM)
+double opt_mesh_order(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.degree = (int)val;
+    CTX.mesh.order = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[3]->value(CTX.mesh.degree == 2);
+    WID->mesh_butt[3]->value(CTX.mesh.order == 2);
 #endif
-  return CTX.mesh.degree;
+  return CTX.mesh.order;
 }
 
 double opt_mesh_dual(OPT_ARGS_NUM)
