@@ -1,12 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <sys/types.h>
+#include <signal.h>
 
 int main(void)
 {
   int i, pid;
   FILE *fp;
-  char str[32];
 
   for(i = 0; i < 5; i++){
     system("gmsh -pid fichier.msh fichier.pos > /tmp/gmsh.pid &");
@@ -18,7 +18,6 @@ int main(void)
     fscanf(fp, "%d", &pid);
     fclose(fp);
 
-    sprintf(str, "kill %d", pid);
-    system(str);
+    kill(pid, 9);
   }    
 } 
