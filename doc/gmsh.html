@@ -8,11 +8,9 @@ built-in pre- and post-processing facilities</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"> 
 
-<meta name="keywords" content="free mesh generator, free finite element
-software, mesh generation, mesh refinement, free, delaunay triangulation,
-automatic, maillages automatiques, mailleur, modelisation, opengl,
-maillages 3D, 3D meshes, 3-D meshes, maillages 3-D, voronoi,
-adaptation de maillages, mesh adaptation, modeling">
+<meta name="keywords" content="free finite element mesh generator, 
+delaunay triangulation, automatic, maillages, mailleur, 3D, mesh adaptation,
+finite element postprocessing, CAD">
 
 <meta name="Autor-Handle" content="Christophe.Geuzaine@advalvas.be">
 
@@ -28,7 +26,7 @@ generator with built-in pre- and post-processing facilities</h1>
 <p>
 <h3 align="center">Christophe Geuzaine and Jean-François Remacle</h3>
 <p>
-<h3 align=center>Version <a href="doc/VERSIONS">1.37</a>, 25 January 2003</h3>
+<h3 align=center>Version <a href="doc/VERSIONS">1.38</a>, ? February 2003</h3>
 <p>
 <center>
   <a href="#Description">Description</a> |
@@ -195,29 +193,26 @@ of complex animations).
 
 <h2><a name="Download"></a>Download</h2>
 
-<!--
-Gmsh is available under the <a href="http://www.gnu.org/">GNU General
-Public License</a> (GPL), with some exceptions (see the sources for
-more information).  Executable versions of Gmsh are also available for
--->
-                    Executable versions of Gmsh are available for
-Windows and for most of the classical UNIX platforms. These versions
-are dynamically linked with OpenGL<a href="#opengl-footnote"
-name="opengl-footmark"><sup>1</sup></a>. The tutorial and demo files
+Gmsh is freely available under the terms of the <a
+href="/gmsh/doc/COPYING">GNU General Public License (GNU
+GPL)</a>. Pre-compiled binaries (dynamically linked with OpenGL<a
+href="#opengl-footnote" name="opengl-footmark"><sup>1</sup></a>) are
+available for Windows, Mac OS X and Linux. The tutorial and demo files
 are included in the archives.
+
 <ul>
-<li><a href="/gmsh/bin/gmsh-1.37.1-Windows.zip">Windows zip archive (95/98/NT/XP)</a>
-<li><a href="/gmsh/bin/gmsh-1.37.1-1.i386.rpm">Linux RPM (i386, Red Hat >= 6.2 and compatible)</a>
-<li><a href="/gmsh/bin/gmsh-1.37.1-Linux.tgz">Linux tarball (i386, glibc 2.1)</a> 
-<li><a href="/gmsh/bin/gmsh-1.37.1-MacOSX.tgz">Mac OS X tarball (Mac OS X 10.2)</a>
-<li><a href="/gmsh/bin/gmsh-1.37.1-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</a>
-<li><a href="/gmsh/bin/gmsh-1.37.1-SunOS.tgz">Sun tarball (SunOS 5.8)</a>
-<li><a href="/gmsh/bin/gmsh-1.37.1-AIX.tgz">IBM tarball (AIX)</a>
-<li><a href="/gmsh/bin/gmsh-1.37.1-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</a>
-<!--
-<li><a href="/gmsh/bin/gmsh-1.37.1-HP-UX.tgz">HP tarball (HPUX 10.20)</a>
-<li><a href="/gmsh/bin/gmsh-1.37.1-source.tgz">Source tarball</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-Windows.zip">Windows zip archive (95/98/NT/XP)</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-1.i386.rpm">Linux RPM (i386, Red Hat >= 6.2 and compatible)</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-Linux.tgz">Linux tarball (i386, glibc 2.1)</a> 
+<li><a href="/gmsh/bin/gmsh-1.38.0-MacOSX.tgz">Mac OS X tarball (Mac OS X 10.2)</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-source.tgz">Source tarball</a>
     <a href="#fltk-footnote" name="fltk-footmark"><sup>2</sup></a>
+<!--
+<li><a href="/gmsh/bin/gmsh-1.38.0-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-SunOS.tgz">Sun tarball (SunOS 5.8)</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-AIX.tgz">IBM tarball (AIX)</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</a>
+<li><a href="/gmsh/bin/gmsh-1.38.0-HP-UX.tgz">HP tarball (HPUX 10.20)</a>
 -->
 </ul>
 <p>
@@ -231,16 +226,15 @@ at <A href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>.
 Remember that you may have to reconfigure the loader (ldconfig under
 Linux) or modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP) environment
 variable in order for Gmsh to find the libraries.
-<!--
 <p>
 <a name="fltk-footnote"></a><a
 href="#fltk-footmark"><sup>2</sup></a>You need the <a
-href="http://www.fltk.org/">FLTK</a> libaries and header files
-(version 1.1.x) properly installed on your system in order to compile
-the graphic user interface. Command-line only (i.e. non-interactive)
-versions can be compiled without FLTK. Compiling Windows versions
-requires the <a href="http://www.cygwin.com">Cygwin</a> tools.
--->
+href="http://sources.redhat.com/gsl/">GSL</a> and <a
+href="http://www.fltk.org/">FLTK (1.1.x)</a> libraries and header
+files properly installed on your system in order to compile
+Gmsh. Non-graphical versions can be compiled without FLTK. Compiling
+Windows versions requires the <a
+href="http://www.cygwin.com">Cygwin</a> tools.
 
 <h2><a name="Credits"></a>Credits</h2>
 
