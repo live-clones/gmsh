@@ -1,5 +1,5 @@
 /*
-This is a very simple control sequense
+This is a very simple control sequence
 with 2 imbricated loops
 */
 
