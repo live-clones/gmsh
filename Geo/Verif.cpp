@@ -1,4 +1,4 @@
-/* $Id: Verif.cpp,v 1.2 2000-11-23 14:11:31 geuzaine Exp $ */
+/* $Id: Verif.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -13,7 +13,6 @@ extern Mesh *THEM;
 static Tree_T *treelink;
 static Tree_T *treeedges;
 static Tree_T *treefaces;
-static List_T *listlink;
 
 typedef struct {
   int n,a,arbre;
@@ -154,7 +153,6 @@ void CreeLiens ( void ) {
      }
    }
   }
-  listlink = Tree2List(treelink);
 }
 
 
@@ -186,7 +184,6 @@ void CreeLiens2 ( void ) {
     }
   }
   List_Delete(temp);
-  listlink = Tree2List(treelink);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: StepGeomDatabase.cpp,v 1.2 2000-11-23 14:11:31 geuzaine Exp $ */
+/* $Id: StepGeomDatabase.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -485,13 +485,12 @@ void Resolve_BREP (void){
   Step_Oriented_Edge_t     *poe;
   Step_Axis2_Placement3D_t *axs;
   Step_Closed_Shell_t      cs;
-  List_T  *ListInt,*ListIntBis,*ListDouble;
+  List_T  *ListInt,*ListIntBis;
   double ubeg,uend,n[3],t[3],p[3],XMIN,XMAX,YMIN,YMAX,ZMIN,ZMAX,L;
   int fob;
 
   ListInt    = List_Create(2,2,sizeof(int));
   ListIntBis = List_Create(2,2,sizeof(int));
-  ListDouble = List_Create(2,2,sizeof(double));
 
   for(i=0;i<List_Nbr(BREP->AllCartesian_Points);i++){
     List_Read(BREP->AllCartesian_Points,i,&cp);

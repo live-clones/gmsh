@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.4 2000-11-23 16:07:12 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.5 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -183,7 +183,7 @@ int BGMWithView (Post_View * ErrView){
 	Tree_Add (Pts, &v);
       }
     }
-    si = Create_Simplex (ver[0], ver[1], ver[2], ver[4]);
+    si = Create_Simplex (ver[0], ver[1], ver[2], ver[3]);
     Tree_Add (m.Simplexes, &si);
   }
   

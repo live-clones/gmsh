@@ -1,4 +1,4 @@
-/* $Id: 3D_Bricks.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 3D_Bricks.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -110,7 +110,7 @@ void AddSimplexInGrid (Mesh * m, Simplex * s, int boule_boite){
       ZmaxBox = DMAX (ZmaxBox, s->V[i]->Pos.Z);
     }
   }
-  else if ((boule_boite = BOULE)){
+  else if (boule_boite == BOULE){
     XminBox = s->Center.X - s->Radius;
     XmaxBox = s->Center.X + s->Radius;
     YminBox = s->Center.Y - s->Radius;

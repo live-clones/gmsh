@@ -1,4 +1,4 @@
-/* $Id: 1D_Mesh.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 1D_Mesh.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -13,7 +13,6 @@ extern Context_T  CTX;
 extern int        CurrentNodeNumber;
 
 Curve *THEC;
-static Vertex *p0, *pn;
 
 double Fun (double t){
   Vertex der;
@@ -98,9 +97,6 @@ void Maillage_Curve (void *data, void *dummy){
     List_Delete (Points);
   }
   else{
-    p0 = c->beg;
-    pn = c->end;
-    
     Points = List_Create (10, 10, sizeof (IntPoint));
     c->l = Integration (c->ubeg, c->uend, Fun, Points, 1.e-5);
     List_Delete (Points);

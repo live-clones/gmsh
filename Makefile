@@ -184,7 +184,7 @@ sgi: tag
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
-	@for i in mesh; do (cd $$i && $(MAKE) \
+	@for i in Mesh; do (cd $$i && $(MAKE) \
            "CC=CC" \
            "C_FLAGS=-O1 -o32" \
            "RANLIB=true"\

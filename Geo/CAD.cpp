@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.2 2000-11-23 14:11:30 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.3 2000-11-23 17:16:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -240,7 +240,7 @@ static double projectPC (double u){
                 DSQR(c.Pos.Z -VERTEX->Pos.Z));
 }
 
-static int UFIXED=0,VFIXED=0;
+static int UFIXED=0;
 static double FIX;
 static double projectPCS (double u){
   //x[1] = u x[2] = v
@@ -267,11 +267,10 @@ static double projectPCS (double u){
 }
 
 bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
-  double x,xmin;
-  int check;
+  double xmin;
   CURVE = c;
   VERTEX = v;
-  x = min1d ( projectPC, &xmin);
+  min1d ( projectPC, &xmin);
   *RES = InterpolateCurve(CURVE,xmin,0);
   *DER = InterpolateCurve(CURVE,xmin,1);
   if(xmin > c->uend){
@@ -282,7 +281,6 @@ bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
     *RES = InterpolateCurve(CURVE,c->ubeg,0);
     *DER = InterpolateCurve(CURVE,c->ubeg,1);
   }
-  if(!check)return false;
   return true;
 }
 
@@ -325,11 +323,10 @@ bool search_in_boundary ( Surface *s, Vertex *p, double t, int Fixu,
 
   FIX = t;
   UFIXED = Fixu;
-  VFIXED = !Fixu;
-  double xm,xq;
+  double xm;
   if(Fixu)xm = vmin;
   else xm = umin;
-  if(lmin > 1.e-3)xq = min1d ( projectPCS, &xm);
+  if(lmin > 1.e-3) min1d ( projectPCS, &xm);
   if(Fixu){
     *uu = t;
     *vv = xm;
@@ -555,15 +552,17 @@ Surface *DuplicateSurface (Surface *s, int addthesurf){
   Surface *ps;
   Curve *c,*newc;
   Vertex *v,*newv;
+  int i;
+
   ps = Create_Surface(addthesurf?MAXREG++:-MAXREG,0,0);
   CopySurface(s,ps);
-  for(int i=0;i<List_Nbr(ps->s.Generatrices);i++){
+  for(i=0;i<List_Nbr(ps->s.Generatrices);i++){
     List_Read(ps->s.Generatrices,i,&c);
     newc = DuplicateCurve(c);
     List_Write(ps->s.Generatrices,i,&newc);
   }
   
-  for(int i=0;i<List_Nbr(ps->Control_Points);i++){
+  for(i=0;i<List_Nbr(ps->Control_Points);i++){
     List_Read(ps->Control_Points,i,&v);
     newv = DuplicateVertex(v);
     List_Write(ps->Control_Points,i,&newv);
@@ -606,12 +605,14 @@ void ApplyTransformationToPoint ( double matrix[4][4], Vertex *v ){
 /* Linear Applications */
 
 void SetTranslationMatrix (double matrix[4][4],double T[3]){
-  for(int i=0;i<4;i++){
-    for(int j=0;j<4;j++){
+  int i, j;
+
+  for(i=0;i<4;i++){
+    for(j=0;j<4;j++){
       matrix[i][j] = (i==j)? 1.0:0.0;
     }
   }
-  for(int i=0;i<3;i++)matrix[i][3] = T[i];
+  for(i=0;i<3;i++)matrix[i][3] = T[i];
 }
 
 void SetSymmetryMatrix (double matrix[4][4],double A, double B, double C, double D){
@@ -782,12 +783,13 @@ void ApplyTransformationToCurve (double matrix[4][4],Curve *c){
 void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
   Curve *c;
   Vertex *v;
-  
-  for(int i=0;i<List_Nbr(s->s.Generatrices);i++){
+  int i;
+
+  for(i=0;i<List_Nbr(s->s.Generatrices);i++){
     List_Read(s->s.Generatrices,i,&c);
     ApplyTransformationToCurve (matrix,c);
   }
-  for(int i=0;i<List_Nbr(s->Control_Points);i++){
+  for(i=0;i<List_Nbr(s->Control_Points);i++){
     List_Read(s->Control_Points,i,&v);
     ApplyTransformationToPoint (matrix,v);
   }
@@ -1185,7 +1187,7 @@ int compareTwoCurves (const void *a, const void *b){
   if(comp)return comp;
   // a finir pour des splines !!
   return 0;
-  return c1->Num - c2->Num;
+  //return c1->Num - c2->Num;
 }
 
 int compareAbsCurve (const void *a, const void *b){

@@ -1,4 +1,4 @@
-/* $Id: 3D_Coherence.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 3D_Coherence.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -166,14 +166,11 @@ void swap_quads (void *a, void *b){
 
 void swap_quads2 (void *a, void *b){
   Edge *q;
-  int  K;
   Simplex *s1, *s2;
 
   q = (Edge *) a;
   List_Read (q->Simplexes, 0, &s1);
   List_Read (q->Simplexes, 1, &s2);
-
-  K = -1;
 
   if (memesens (s1->V[0], s1->V[1], s1->V[2], q->O[0], q->O[1], q->V[0])){
     s1->V[0] = q->O[0];
@@ -320,10 +317,9 @@ void crEdges (Tree_T * TreeElem, Tree_T * treeedges){
 
 void find_missing (void *a, void *b){
   Edge *e;
-  exf_T exf;
 
   e = (Edge *) a;
-  exf.e1 = exf.e2 = *e;
+
   if (!Tree_Search (EdgesTree, e)){
     List_Add (Missing, e);
     Tree_Add (EdgesTree, e);
@@ -387,11 +383,11 @@ Face *f1;
 int Cloture;
 
 void fillRi (void *a, void *b){
-  int i, c, l;
+  int i, c;
   Simplex *s;
 
   s = *(Simplex **) a;
-  c = l = 0;
+  c = 0;
   for (i = 0; i < 4; i++){
     if (!compareVertex (&e1, &s->V[i]))
       c++;
@@ -615,7 +611,8 @@ Vertex *Edge_Face (Edge * e, Face * f){
 
 Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
   Vertex *v;
-  int dir, dx1, dx2, dy1, dy2, dz1, dz2;
+  int dir;
+  //int dx1, dx2, dy1, dy2, dz1, dz2;
   double mat[2][2];
   double b[3], res[3];
   double XmaxS, XminS, YmaxS, YminS, ZmaxS, ZminS, lc;
@@ -653,6 +650,7 @@ Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
 
   lc = myhypot (myhypot (XminV - XmaxV, YminV - YmaxV), ZminV - ZmaxV);
 
+  /*
   if (e->V[1]->Pos.X != e->V[0]->Pos.X &&
       fabs (e->V[1]->Pos.X - e->V[0]->Pos.X) / lc > 1.e-2)
     dx1 = 1;
@@ -685,42 +683,42 @@ Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
   else
     dz2 = 0;
 
-  /*
-     if(dx1 && dx2){
-     mat[0][0] = e->V[1]->Pos.X - e->V[0]->Pos.X;
-     mat[0][1] = v1->Pos.X - v2->Pos.X;
-     b[0] = - e->V[0]->Pos.X + v1->Pos.X;
-     if(dy1 || dy2){
-     mat[1][0] = e->V[1]->Pos.Y - e->V[0]->Pos.Y;
-     mat[1][1] = v1->Pos.Y - v2->Pos.Y;
-     b[1] = - e->V[0]->Pos.Y + v1->Pos.Y;
-     dir = 2;
-     }
-     else if(dz1 || dz2){
-     mat[1][0] = e->V[1]->Pos.Z - e->V[0]->Pos.Z;
-     mat[1][1] = v1->Pos.Z - v2->Pos.Z;
-     b[1] = - e->V[0]->Pos.Z + v1->Pos.Z;
-     dir = 3;
-     }
-     }
-     else if (dy1 && dy2){
-     mat[0][0] = e->V[1]->Pos.Y - e->V[0]->Pos.Y;
-     mat[0][1] = v1->Pos.Y - v2->Pos.Y;
-     b[0] = - e->V[0]->Pos.Y + v1->Pos.Y;
-     if(dy1 || dy2){
-     mat[1][0] = e->V[1]->Pos.Y - e->V[0]->Pos.Y;
-     mat[1][1] = v1->Pos.Y - v2->Pos.Y;
-     b[1] = - e->V[0]->Pos.Y + v1->Pos.Y;
-     dir = 2;
-     }
-     else if(dz1 || dz2){
-     mat[1][0] = e->V[1]->Pos.Z - e->V[0]->Pos.Z;
-     mat[1][1] = v1->Pos.Z - v2->Pos.Z;
-     b[1] = - e->V[0]->Pos.Z + v1->Pos.Z;
-     dir = 3;
-     }
-     }
-   */
+  if(dx1 && dx2){
+    mat[0][0] = e->V[1]->Pos.X - e->V[0]->Pos.X;
+    mat[0][1] = v1->Pos.X - v2->Pos.X;
+    b[0] = - e->V[0]->Pos.X + v1->Pos.X;
+    if(dy1 || dy2){
+      mat[1][0] = e->V[1]->Pos.Y - e->V[0]->Pos.Y;
+      mat[1][1] = v1->Pos.Y - v2->Pos.Y;
+      b[1] = - e->V[0]->Pos.Y + v1->Pos.Y;
+      dir = 2;
+    }
+    else if(dz1 || dz2){
+      mat[1][0] = e->V[1]->Pos.Z - e->V[0]->Pos.Z;
+      mat[1][1] = v1->Pos.Z - v2->Pos.Z;
+      b[1] = - e->V[0]->Pos.Z + v1->Pos.Z;
+      dir = 3;
+    }
+  }
+  else if (dy1 && dy2){
+    mat[0][0] = e->V[1]->Pos.Y - e->V[0]->Pos.Y;
+    mat[0][1] = v1->Pos.Y - v2->Pos.Y;
+    b[0] = - e->V[0]->Pos.Y + v1->Pos.Y;
+    if(dy1 || dy2){
+      mat[1][0] = e->V[1]->Pos.Y - e->V[0]->Pos.Y;
+      mat[1][1] = v1->Pos.Y - v2->Pos.Y;
+      b[1] = - e->V[0]->Pos.Y + v1->Pos.Y;
+      dir = 2;
+    }
+    else if(dz1 || dz2){
+      mat[1][0] = e->V[1]->Pos.Z - e->V[0]->Pos.Z;
+      mat[1][1] = v1->Pos.Z - v2->Pos.Z;
+      b[1] = - e->V[0]->Pos.Z + v1->Pos.Z;
+      dir = 3;
+    }
+  }
+  */
+
 
   mat[0][0] = e->V[1]->Pos.X - e->V[0]->Pos.X;
   mat[0][1] = v1->Pos.X - v2->Pos.X;
@@ -1151,7 +1149,8 @@ Simplex * Create_Simplex_MemeSens (Simplex * sold, Vertex * v1, Vertex * v2, Ver
 int Coherence (Volume * v, Mesh * m){
   int i, j, k, Np, Nh;
   Surface *s;
-  Vertex *ver1, V1, *ver2, V2;
+  Vertex V1, V2 ;
+  //Vertex *ver1, *ver2 ;
   Face Face;
   static Edge E, *pE1, *pE2, *pE3;
   Simplex *simp, *simp1;
@@ -1159,8 +1158,8 @@ int Coherence (Volume * v, Mesh * m){
 
   FACE_DIMENSION = 2;
 
-  ver1 = &V1;
-  ver2 = &V2;
+  //ver1 = &V1;
+  //ver2 = &V2;
 
   THEVOL = v;
 
