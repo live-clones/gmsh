@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.18 2000-12-05 18:38:11 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.19 2000-12-05 19:38:25 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -37,8 +37,9 @@ char gmsh_os[]        = "Operating System : " GMSH_OS ;
 char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
 char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
-char gmsh_email[]     = "E-Mail           : " GMSH_EMAIL ;
-char gmsh_url[]       = "URL              : " GMSH_URL ;
+char gmsh_url[]       = "URL              : http://www.geuz.org/gmsh/" ;
+char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
+                        "                   Remacle@scorec.rpi.edu" ;
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Geometry options:\n"
@@ -481,8 +482,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         fprintf(stderr, "%s\n", gmsh_date);
         fprintf(stderr, "%s\n", gmsh_host);
         fprintf(stderr, "%s\n", gmsh_packager);
-        fprintf(stderr, "%s\n", gmsh_email);
         fprintf(stderr, "%s\n", gmsh_url);
+        fprintf(stderr, "%s\n", gmsh_email);
         exit(1) ; 
       }
       else if(!strcmp(argv[i]+1, "help") || 
@@ -602,7 +603,7 @@ int main(int argc, char *argv[]){
           "Type 'gmsh -help' for command line options",
           gmsh_progname, gmsh_version, GMSH_VERSION, 
           gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
-          gmsh_email, gmsh_url, gmsh_copyright);
+          gmsh_url, gmsh_email, gmsh_copyright);
   
   /* Xlib Threads init */
   
