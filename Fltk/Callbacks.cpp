@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.95 2001-11-19 13:43:33 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.96 2001-11-19 18:40:58 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -114,7 +114,7 @@ void status_xyz1p_cb(CALLBACK_ARGS){
   extern void set_t(int i, double val);
   extern void set_s(int i, double val);
 
-  switch((int)data){
+  switch((long int)data){
   case 0 : 
     if(CTX.useTrackball)
       CTX.setQuaternion(0.,-1./sqrt(2.),0.,1./sqrt(2.));
@@ -511,7 +511,7 @@ void opt_statistics_update_cb(CALLBACK_ARGS) {
   WID->set_statistics();
 }
 void opt_statistics_histogram_cb(CALLBACK_ARGS) {
-  int i, type=(int)data;
+  int i, type=(long int)data;
 
   Print_Histogram(M.Histogram[type]);
 
@@ -1571,7 +1571,7 @@ void getdp_ok_cb(CALLBACK_ARGS){
 // Dynamic Post Menus
 
 void view_toggle_cb(CALLBACK_ARGS){
-  opt_view_visible((int)data, GMSH_SET, WID->m_toggle_butt[(int)data]->value());
+  opt_view_visible((long int)data, GMSH_SET, WID->m_toggle_butt[(long int)data]->value());
   Draw();
 }
 
@@ -1602,7 +1602,7 @@ void view_reload_cb(CALLBACK_ARGS){
 
   if(!CTX.post.list) return;
 
-  Post_View *v = (Post_View*)List_Pointer(CTX.post.list,(int)data);
+  Post_View *v = (Post_View*)List_Pointer(CTX.post.list,(long int)data);
   strcpy(filename, v->FileName);
   CopyViewOptions(v, &tmp);
 
@@ -1611,7 +1611,7 @@ void view_reload_cb(CALLBACK_ARGS){
   MergeProblem(filename);
   CTX.post.force_num = 0 ;
   
-  v = (Post_View*)List_Pointer(CTX.post.list,(int)data);
+  v = (Post_View*)List_Pointer(CTX.post.list,(long int)data);
   CopyViewOptions(&tmp, v);
 
   // In case the reloaded view has a different number of time steps
@@ -1646,7 +1646,7 @@ void view_remove_visible_cb(CALLBACK_ARGS) {
 void view_remove_cb(CALLBACK_ARGS){
   int i, play=0;
 
-  FreeView((int)data);
+  FreeView((long int)data);
 
   for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
     if(((Post_View*)List_Pointer(CTX.post.list,i))->NbTimeStep > 1){
@@ -1665,13 +1665,13 @@ void view_remove_cb(CALLBACK_ARGS){
 void view_save_ascii_cb(CALLBACK_ARGS){
   char *newfile;
   if((newfile = fl_file_chooser("Save view in ASCII format", "*", NULL)))
-    Write_View(0, (Post_View*)List_Pointer(CTX.post.list,(int)data), newfile); 
+    Write_View(0, (Post_View*)List_Pointer(CTX.post.list,(long int)data), newfile); 
 }
 
 void view_save_binary_cb(CALLBACK_ARGS){
   char *newfile;
   if((newfile = fl_file_chooser("Save view in binary format", "*", NULL)))
-    Write_View(1, (Post_View*)List_Pointer(CTX.post.list,(int)data), newfile); 
+    Write_View(1, (Post_View*)List_Pointer(CTX.post.list,(long int)data), newfile); 
 }
 
 static void _duplicate_view(int num, int options){
@@ -1726,14 +1726,14 @@ static void _duplicate_view(int num, int options){
   Draw();
 }
 void view_duplicate_cb(CALLBACK_ARGS){
-  _duplicate_view((int)data,0);
+  _duplicate_view((long int)data,0);
 }
 void view_duplicate_with_options_cb(CALLBACK_ARGS){
-  _duplicate_view((int)data,1);
+  _duplicate_view((long int)data,1);
 }
 
 void view_applybgmesh_cb(CALLBACK_ARGS){
-  Post_View *v = (Post_View*)List_Pointer(CTX.post.list,(int)data);
+  Post_View *v = (Post_View*)List_Pointer(CTX.post.list,(long int)data);
   if(!v->ScalarOnly || v->TextOnly){
     Msg(GERROR, "Background mesh generation impossible with non-scalar view");
     return;
@@ -1741,7 +1741,7 @@ void view_applybgmesh_cb(CALLBACK_ARGS){
   BGMWithView(v); 
 }
 void view_options_cb(CALLBACK_ARGS){
-  WID->create_view_options_window((int)data);
+  WID->create_view_options_window((long int)data);
 }
 
 void view_plugin_cb(CALLBACK_ARGS){
@@ -1802,7 +1802,7 @@ void view_options_timestep_cb(CALLBACK_ARGS){
   for(int i=0 ; i<List_Nbr(CTX.post.list) ; i++){
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == (int)data)){
+       (links == 0 && i == (long int)data)){
       opt_view_timestep(i, GMSH_SET, (int)((Fl_Value_Input*)w)->value());
     }
   }
@@ -1817,7 +1817,7 @@ void view_options_ok_cb(CALLBACK_ARGS){
   for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == (int)data)){
+       (links == 0 && i == (long int)data)){
 
       if(links == 3 || links == 4) force = 1;
 
@@ -2001,8 +2001,8 @@ void view_options_ok_cb(CALLBACK_ARGS){
 
       // colorbar window
 
-      if(force || (WID->view_colorbar_window->changed() && i!=(int)data)){
-	ColorTable_Copy(&((Post_View*)List_Pointer(CTX.post.list,(int)data))->CT);
+      if(force || (WID->view_colorbar_window->changed() && i!=(long int)data)){
+	ColorTable_Copy(&((Post_View*)List_Pointer(CTX.post.list,(long int)data))->CT);
 	ColorTable_Paste(&((Post_View*)List_Pointer(CTX.post.list,i))->CT);
       }
     }

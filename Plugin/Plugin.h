@@ -34,10 +34,10 @@ public :
    used by the PluginManager, just forget it*/
   void *hlib;
   /* 3 kind of plugins, one for cad, one for mesh, one for postpro*/
-  typedef enum GMSH_PLUGIN_TYPE {GMSH_CAD_PLUGIN, 
-				 GMSH_MESH_PLUGIN, 
-				 GMSH_POST_PLUGIN, 
-				 GMSH_SOLVE_PLUGIN};
+  typedef enum {GMSH_CAD_PLUGIN, 
+		GMSH_MESH_PLUGIN, 
+		GMSH_POST_PLUGIN, 
+		GMSH_SOLVE_PLUGIN} GMSH_PLUGIN_TYPE ;
   /* returns the type of plugin for downcasting GMSH_Plugin into
      GMSH_CAD_Plugin, GMSH_Mesh_Plugin and GMSH_Post_Plugin */
   virtual GMSH_PLUGIN_TYPE getType() const = 0;
