@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.97 2005-03-12 07:52:56 geuzaine Exp $
+// $Id: Post.cpp,v 1.98 2005-03-13 20:36:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -784,6 +784,8 @@ void Draw_Post(void)
 
       if(v->Axes && v->Type == DRAW_POST_3D){
 	glColor4ubv((GLubyte *) & CTX.color.fg);
+	glLineWidth(CTX.line_width);
+	gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
 	if(!v->AxesAutoPosition){
 	  Draw_Axes(v->Axes, v->AxesTics, v->AxesFormat, v->AxesLabel, v->AxesPosition);
 	}
