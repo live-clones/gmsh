@@ -1,4 +1,4 @@
-// $Id: mshsort.cpp,v 1.4 2004-11-08 17:03:07 geuzaine Exp $
+// $Id: mshsort.cpp,v 1.5 2004-12-17 06:15:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -201,7 +201,8 @@ double readMesh(FILE *fp, map<int, node*> &nodes, vector<element*> &elements)
   return version;
 }
 
-void printMesh(FILE *fp, double version, map<int, node*> nodes, vector<element*> elements)
+void printMesh(FILE *fp, double version, map<int, node*> nodes, vector<element*> elements,
+	       int nodeStartIndex=1, int elementStartIndex=1)
 {
   map<int, node*>::const_iterator it = nodes.begin();
   map<int, node*>::const_iterator ite = nodes.end();
@@ -216,9 +217,8 @@ void printMesh(FILE *fp, double version, map<int, node*> nodes, vector<element*>
     fprintf(fp, "$NOD\n");
   fprintf(fp, "%d\n", (int)nodes.size());
 
-  int index = 1;
   for(;it!=ite;++it){
-    it->second->setNum(index++);
+    it->second->setNum(nodeStartIndex++);
     it->second->print(fp, version);
   }
 
@@ -233,7 +233,7 @@ void printMesh(FILE *fp, double version, map<int, node*> nodes, vector<element*>
   fprintf(fp, "%d\n", (int)elements.size());
 
   for(unsigned int i = 0; i < elements.size(); i++){
-    elements[i]->setNum(i+1);
+    elements[i]->setNum(elementStartIndex++);
     elements[i]->print(fp, version);
   }
 
@@ -245,9 +245,10 @@ void printMesh(FILE *fp, double version, map<int, node*> nodes, vector<element*>
 
 int main(int argc, char **argv)
 {
-  if(argc < 2 || argc > 3){
+  if(argc < 2){
     fprintf(stderr, "mshsort, a utility to reorder the node and element lists in Gmsh MSH files\n");
-    fprintf(stderr, "Usage: %s in.msh [out.msh]\n", argv[0]);
+    fprintf(stderr, "Usage: %s in.msh [out.msh] [node_start_index] [element_start_index]\n",
+	    argv[0]);
     exit(1);
   }
 
@@ -256,7 +257,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "Error: Unable to open input file '%s'\n", argv[1]);
     exit(1);
   }
-  if(argc == 3){
+  if(argc >= 3){
     if(!(out = fopen(argv[2], "w"))){
       fprintf(stderr, "Error: Unable to open output file '%s'\n", argv[2]);
       exit(1);
@@ -265,9 +266,12 @@ int main(int argc, char **argv)
   else{
     out = stdout;
   }
+  
+  int nodeStartIndex = (argc >= 4) ? atoi(argv[3]) : 1;
+  int elementStartIndex = (argc >= 5) ? atoi(argv[4]) : 1;    
 
   map<int, node*> nodes;
   vector<element*> elements;
   double version = readMesh(in, nodes, elements);
-  printMesh(out, version, nodes, elements);
+  printMesh(out, version, nodes, elements, nodeStartIndex, elementStartIndex);
 }
