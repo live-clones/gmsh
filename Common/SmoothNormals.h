@@ -20,7 +20,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <set>
 
 using namespace std;
 
@@ -55,6 +54,7 @@ struct lessthanxyzv
   }
 };
 
+#include <set>
 typedef set < xyzv, lessthanxyzv > xyzcont;
 typedef xyzcont::const_iterator xyziter;
 
