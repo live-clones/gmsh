@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.159 2004-05-29 10:11:10 geuzaine Exp $
+// $Id: Options.cpp,v 1.160 2004-05-30 04:17:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4351,6 +4351,7 @@ double opt_view_light(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Light = (int)val;
+    v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
