@@ -41,114 +41,23 @@ generator with built-in pre- and post-processing facilities</h1>
 
 <h2><a name="Description"></a>Description</h2>
 
-Gmsh is an automatic three-dimensional finite element mesh generator,
-primarily Delaunay, with built-in pre- and post-processing
-facilities. Its primal design goal is to provide a simple meshing tool
-for academic test cases with parametric input and up to date
-visualization capabilities. One of the strengths of Gmsh is its
-ability to respect a characteristic length field for the generation of
-adapted meshes on lines, surfaces and volumes. These adapted meshes
-can be mixed with simple structured (transfinite, elliptic, etc.)
-meshes in order to augment the flexibility.
-
-Gmsh is structured around four modules: <a
-href="#geometry">geometry</a>, <a href="#mesh">mesh</a>, <a
-href="#solver">solver</a> and <a
-href="#post-processing">post-processing</a>. The specification of any
-input to these modules is done either interactively, or in text data
-files (interactive specifications generate language bits in the input
-file, and vice versa). The accessibility of most features in the ASCII
-text file makes it possible to automate all treatments (loops, tests
-and external access methods permit advanced scripting capabilities). A
-brief description of the four modules is given hereafter.
-
-<h3><a name="geometry"></a>Geometry: geometrical entity definition</h3>
-
-Geometries are created in a bottom-up flow by successively defining
-points, oriented curves (segments, circles, ellipses, splines, etc.),
-oriented surfaces (plane surfaces, ruled surfaces, etc.) and
-volumes. Compound groups of geometrical entities can be defined, based
-on these elementary parametrized geometric entities. Data can be
-defined either interactively thanks to the menu system, or directly in
-the ASCII input files.  The scripting possibilities (with loops,
-tests, arrays of variables, etc.) allow fully parametrized definitions
-of all geometrical entities.
-
-<h3><a name="mesh"></a>Mesh: finite element mesh generation</h3>
-
-A finite element mesh is a tessellation of a given subset of
-R<sup>3</sup> by elementary geometrical elements of various shapes (in
-this case lines, triangles, quadrangles, tetrahedra, prisms, hexahedra
-and pyramids), arranged in such a way that if two of them intersect,
-they do so along a face, an edge or a node, and never otherwise. All
-the finite element meshes produced by Gmsh as unstructured, even if
-they were generated in a structured way. This implies that the
-elementary geometrical elements are defined only by an ordered list of
-their vertices (which allows the orientation of all their lower order
-geometrical entities) but no predefined relation is assumed between
-any two elementary elements.
+Gmsh is an automatic 3D finite element mesh generator (primarily
+Delaunay) with build-in CAD and post-processing facilities. Its primal
+design goal is to provide a simple meshing tool for academic test
+cases with parametric input and up to date visualization
+capabilities. One of its strengths is the ability to respect a
+characteristic length field for the generation of adapted meshes on
+lines, surfaces and volumes, and to mix these with simple structured
+meshes.
 <p>
-The mesh generation is performed in the same order as the geometry
-creation: curves are discretized first; the mesh of the curves is then
-used to mesh the surfaces; then the mesh of the surfaces is used to
-mesh the volumes. This automatically assures the continuity of the
-mesh when, for example, two surfaces share a common curve. Every
-meshing step is constrained by the characteristic length field, which
-can be uniform, specified by characteristic length associated to
-elementary geometrical entities, or associated to another mesh (the
-background mesh).
+Gmsh is built around four modules: geometry, mesh, solver and
+post-processing. The specification of any input to these modules is
+done either interactively using the graphical user interface or in
+ASCII text data files using Gmsh's own scripting language.
 <p>
-For each meshing step (i.e. the discretization of lines, surfaces and
-volumes), all structured mesh directives are executed first, and serve
-as additional constraints for the unstructured parts. The implemented
-Delaunay algorithm is subdivided in the following five steps for
-surface/volume discretization:
-<p>
-<ol>
-<li>trivial meshing of a box including the convex polygon/polyhedron
-defined by the boundary nodes resulting from the discretization of the
-curves/surfaces;
-
-<li>creation of the initial mesh by insertion of all the nodes on the
-curves/surfaces thanks to the Bowyer algorithm;
-
-<li>boundary restoration to force all the edges/faces of the
-curves/surfaces to be present in the initial mesh;
-
-<li>suppression of all the unwanted triangles/tetrahedra (in
-particular those containing the nodes of the initial box);
-
-<li>insertion of new nodes by the Bowyer algorithm until the
-characteristic size of each simplex is lower or equal to the
-characteristic length field evaluated at the center of its
-circumscribed circle/sphere.
-</ol>
-
-<h3><a name="solver"></a>Solver: external solver interface</h3>
-
-External solvers can be interfaced with Gmsh through a socket
-mechanism, which permits to easily launch computations either locally
-or on remote computers, and to collect and exploit the simulation
-results within Gmsh. The default solver interfaced with Gmsh is <a
-href="/getdp/">GetDP</a>. Check the <a href="#mysolver">solver
-examples</a> to see how to define your own solver (be sure to also
-read the answer to the question 6.1 in the <a
-HREF="/gmsh/doc/FAQ">FAQ</a>).
-
-<h3><a name="post-processing"></a>Post-processing: scalar and vector field visualization</h3>
-
-Multiple post-processing scalar or vector maps can be loaded and
-manipulated (globally or individually) along with the geometry and the
-mesh. Scalar fields are represented by iso-value curves/surfaces or
-color maps and vector fields by three-dimensional arrows or
-displacement maps. Post-processing functions include arbitrary section
-computation, offset, elevation, boundary extraction, color map and
-range modification, animation, <a href="/gl2ps/">vector graphic
-output</a>, etc. All post-processing options can be accessed either
-interactively or through the input ASCII text files. Scripting permits
-to automate all the post-processing operations (e.g. for the creation
-of complex animations).
-
+See Gmsh's reference manual for a more thorough <a
+href="/gmsh/doc/texinfo/gmsh_2.html">overview of Gmsh's
+capabilities</a>.
 
 <h2><a name="Documentation"></a>Documentation</h2>
 
@@ -156,7 +65,8 @@ of complex animations).
   <li><a href="/gmsh/doc/texinfo/gmsh.html">Reference manual</a> 
       (also available in
       <a href="/gmsh/doc/texinfo/gmsh.ps">postscript</a>,
-      <a href="/gmsh/doc/texinfo/gmsh.pdf">pdf</a> and 
+      <a href="/gmsh/doc/texinfo/gmsh.pdf">pdf</a>,
+      <a href="/gmsh/doc/texinfo/gmsh.txt">text</a> and 
       <a href="/gmsh/doc/texinfo/gmsh-info.tgz">info</a> formats)
   <li><a href="/gmsh/doc/FAQ">Frequently asked questions (FAQ)</a>
   <li><a href="/gmsh/doc/VERSIONS">Version history</a>

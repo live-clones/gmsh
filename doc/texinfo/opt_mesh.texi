@@ -85,7 +85,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=MSH, 2=UNV)@*
+Mesh output format (1=MSH, 2=UNV, 3=GREF, 19=VRML)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

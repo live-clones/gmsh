@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.21 2003-04-15 18:35:46 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.22 2003-04-16 01:51:44 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -47,7 +47,7 @@
 @set EDITION        1.0
 @set GMSH-VERSION   1.44
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
-@set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Francois Remacle
+@set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -92,7 +92,7 @@ Copyright @value{COPYRIGHT}
 @subtitle Edition @value{EDITION} (@today{})
 
 @author Christophe Geuzaine
-@author Jean-Francois Remacle
+@author Jean-Fran@,{c}ois Remacle
 
 @page
 @vskip 0pt plus 1filll
@@ -119,7 +119,7 @@ all copies.
 @node Top, Copying conditions, (dir), (dir)
 @top Gmsh
 
-Christophe Geuzaine and Jean-Francois Remacle
+Christophe Geuzaine and Jean-Fran@,{c}ois Remacle
 
 Gmsh is an automatic 3D finite element mesh generator with build-in pre- and
 post-processing facilities. This is edition @value{EDITION} (@today{}) of
@@ -141,7 +141,7 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 * Tutorial::                    A step-by-step tutorial.
 * Running Gmsh::                How to run Gmsh on your operating system.
 * File formats::                Input and output file formats.
-* Programming comments::        Some random notes for developpers.
+* Programming notes::           
 * Bugs and versions::           Contact information, version history and list of contributors.
 * Tips and tricks::             Some tips to make your life easier with Gmsh.
 * GNU General Public License::  Copy of the GNU GPL.
@@ -272,12 +272,11 @@ Project webpage @uref{http://www.gnu.org/copyleft/gpl-faq.html}.
 
 The source code and various pre-compiled versions of Gmsh (for most of the
 classical UNIX platforms, for Windows and for Mac OS) can be downloaded from
-the web site @value{GMSH-WEB}.
+the webpage @value{GMSH-WEB}.
 
 If you use Gmsh, we would appreciate that you mention it in your
-work. Published references, as well as the latest news about Gmsh
-developments and download information, are always available on
-@value{GMSH-WEB}.
+work. References, as well as the latest news about Gmsh development, are
+always available on @value{GMSH-WEB}.
 
 @end ifclear
 
@@ -295,23 +294,18 @@ Gmsh is an automatic three-dimensional finite element mesh generator,
 primarily Delaunay, with built-in pre- and post-processing facilities. Its
 primal design goal is to provide a simple meshing tool for academic test
 cases with parametric input and up to date visualization capabilities.  One
-of the strengths of Gmsh is its ability to respect a characteristic length
-field for the generation of adapted meshes on lines, surfaces and
-volumes. These adapted meshes can be mixed with simple structured
-(transfinite, extruded, etc.) meshes in order to augment the flexibility.
-All geometrical, mesh, solver and post-processing instructions are
-prescribed either interactively using the graphical user interface or in
-ASCII data files using Gmsh's own scripting language.
+of its strengths is the ability to respect a characteristic length field for
+the generation of adapted meshes on lines, surfaces and volumes, and to mix
+these with simple structured (transfinite, extruded, etc.) meshes.  
 
 Gmsh is structured around four modules: geometry, mesh, solver and
-post-processing. The specification of any input to these modules is done
-either interactively, or in text data files (interactive specifications
-generate language bits in the input file, and vice versa). The accessibility
-of most features in the ASCII text file makes it possible to automate all
-treatments (loops, tests and external access methods permit advanced
-scripting capabilities). The internal kernel of Gmsh reflects this
-structure: it is built around a geometry, mesh, solver and post-processing
-module. A brief description of these four modules is given hereafter.
+post-processing. All geometrical, mesh, solver and post-processing
+instructions are prescribed either interactively using the graphical user
+interface or in ASCII data files using Gmsh's own scripting language.
+Interactive actions generate language bits in the input files, and vice
+versa. This makes it possible to automate all treatments, using loops,
+conditionals and external system calls. A brief description of the four
+modules is given hereafter.
 
 @menu
 * Geometry::                    
@@ -330,15 +324,12 @@ module. A brief description of these four modules is given hereafter.
 @node Geometry, Mesh, Overview, Overview
 @section Geometry: geometrical entity definition
 
-Geometries are created in a bottom-up flow by successively defining
-points, oriented curves (segments, circles, ellipses, splines, etc.),
-oriented surfaces (plane surfaces, ruled surfaces, etc.) and
-volumes. Compound groups of geometrical entities can be defined, based
-on these elementary parametrized geometric entities. Data can be
-defined either interactively thanks to the menu system, or directly in
-the ASCII input files.  The scripting possibilities (with loops,
-tests, arrays of variables, etc.) allow fully parametrized definitions
-of all geometrical entities.
+Geometries are created in a bottom-up flow by successively defining points,
+oriented curves (segments, circles, ellipses, splines, @dots{}), oriented
+surfaces (plane surfaces, ruled surfaces, @dots{}) and volumes. Compound
+groups of geometrical entities can be defined, based on these elementary
+geometric entities. Gmsh's scripting language allows all geometrical
+entities to be fully parameterized.
 
 @c -------------------------------------------------------------------------
 @c Mesh: finite element mesh generation
@@ -347,21 +338,22 @@ of all geometrical entities.
 @node Mesh, Solver, Geometry, Overview
 @section Mesh: finite element mesh generation
 
-A finite element mesh is a tessellation of a given subset of R3 by
-elementary geometrical elements of various shapes (in this case lines,
-triangles, quadrangles, tetrahedra, prisms, hexahedra and pyramids),
-arranged in such a way that if two of them intersect, they do so along a
-face, an edge or a node, and never otherwise. All the finite element meshes
-produced by Gmsh as unstructured, even if they were generated in a
-structured way. This implies that the elementary geometrical elements are
-defined only by an ordered list of their vertices (which allows the
-orientation of all their lower order geometrical entities) but no predefined
-relation is assumed between any two elementary elements.
+A finite element mesh is a tessellation of a given subset of the
+three-dimensional space by elementary geometrical elements of various shapes
+(in Gmsh's case: lines, triangles, quadrangles, tetrahedra, prisms,
+hexahedra and pyramids), arranged in such a way that if two of them
+intersect, they do so along a face, an edge or a node, and never
+otherwise. All the finite element meshes produced by Gmsh as unstructured,
+even if they were generated in a structured way (e.g. by extrusion). This
+implies that the elementary geometrical elements are defined only by an
+ordered list of their vertices (which allows the orientation of all their
+lower order geometrical entities) but no predefined relation is assumed
+between any two elementary elements.
 
 The mesh generation is performed in the same order as the geometry
 creation: curves are discretized first; the mesh of the curves is then
 used to mesh the surfaces; then the mesh of the surfaces is used to
-mesh the volumes. This automatically assures the continuity of the
+mesh the volumes. This automatically assures the conformity of the
 mesh when, for example, two surfaces share a common curve. Every
 meshing step is constrained by the characteristic length field, which
 can be uniform, specified by characteristic length associated to
@@ -401,30 +393,30 @@ evaluated at the center of its circumscribed circle/sphere.
 @section Solver: external solver interface
 
 External solvers can be interfaced with Gmsh through Unix sockets, which
-permits to easily launch computations either locally or on remote computers,
-and to collect and exploit the simulation results within Gmsh. The default
+permits to easily launch external computations and to collect and exploit
+the simulation results within Gmsh's post-processing module. The default
 solver interfaced with Gmsh is GetDP
-(@uref{http://www.geuz.org/getdp/}). @xref{Solver}, to see how to define
-your own solver.
+(@uref{http://www.geuz.org/getdp/}).
 
 @c -------------------------------------------------------------------------
-@c Post-processing: scalar and vector field visualization
+@c Post-processing: scalar, vector and tensor field visualization
 @c -------------------------------------------------------------------------
 
 @node Post-processing, What Gmsh is pretty good at, Solver, Overview
-@section Post-processing: scalar and vector field visualization
+@section Post-processing: scalar, vector and tensor field visualization
 
-Multiple post-processing scalar or vector maps can be loaded and manipulated
-(globally or individually) along with the geometry and the mesh. Scalar
-fields are represented by iso-value curves/surfaces or color maps and vector
-fields by three-dimensional arrows or displacement maps. Post-processing
-functions include arbitrary section computation, offset, elevation, boundary
-extraction, color map and range modification, animation, vector graphic
-output, etc. All post-processing options can be accessed either
-interactively or through the input ASCII text files. Scripting permits to
-automate all the post-processing operations (e.g. for the creation of
-complex animations). User-defined operations can also be performed on
-post-proessing views through to dynamically loadable modules (plug-ins).
+Multiple post-processing scalar, vector or tensor maps can be loaded and
+manipulated (globally or individually) along with the geometry and the
+mesh. Scalar fields are represented by iso-value curves/surfaces or color
+maps, while vector and tensor fields are represented by three-dimensional
+arrows or displacement maps. Post-processing functions include arbitrary
+section computation, offset, elevation, boundary extraction, color map and
+range modification, animation, vector graphic output, etc. All
+post-processing options can be accessed either interactively or through the
+input ASCII text files. Scripting permits to automate all post-processing
+operations, e.g. for the creation of animations. User-defined operations can
+also be performed on post-proessing views through to dynamically loadable
+plugins.
 
 @c -------------------------------------------------------------------------
 @c What Gmsh is pretty good at...
@@ -433,53 +425,62 @@ post-proessing views through to dynamically loadable modules (plug-ins).
 @node What Gmsh is pretty good at, and what it is not so good at, Post-processing, Overview
 @section What Gmsh is pretty good at @dots{}
 
+Gmsh is a (relatively) small program, and was principally developped ``in
+academia, to solve academic problems''@dots{} Nevertheless, over the
+years, many people outside universities have found Gmsh useful in their
+day-to-day jobs. So here is a tentative list of what Gmsh does best:
+
 @itemize @bullet
 @item
-Describe quickly simple and/or ``repetitive'' geometries. Models are
-constructed by defining successively points, curves, surfaces and volumes
-(@pxref{Geometry}). Loops and includes can be used to perform repetitive
-tasks (@pxref{Loops and tests}, @pxref{General commands}).
+Quickly describe simple and/or ``repetitive'' geometries, thanks to
+user-defined functions, loops, conditionals and includes (see
+@ref{User-defined functions}, @ref{Loops and tests} and @pxref{General
+commands}).
 @item
-Parameterize these geometries: the model is described in Gmsh's own
-language, where all commands and command arguments can depend on previous
-calculations.
+Parameterize these geometries. Gmsh's scripting language permits all
+commands and command arguments to depend on previous calculations (see
+@ref{Expressions} and @ref{Geometry commands}).
 @item
 Generate 1D, 2D and 3D simplicial (i.e. using line segments, triangles and
 tetrahedra) finite element meshes. The 1D and 2D algorithms should have
-pretty good performance in most cases. The 3D algorithm is still more
-experimental.
+pretty good performance in most cases; the 3D algorithm is still somewhat
+experimental and slow (see @ref{Mesh module} and @ref{Tutorial}).
 @item
-Specify target element sizes: Gmsh provides several mechanisms to control
-the size of the elements in the final (interpolation from geometrical point
-characteristic lengths, explicit background mesh, attractors).
+Specify target element sizes. Gmsh provides several mechanisms to control
+the size of the elements in the final mesh: through interpolation from
+geometrical point characteristic lengths or geometrical attractors, or from
+a user-defined background mesh (@pxref{Mesh commands}).
 @item
-Create simple extruded geometries and meshes.
+Create simple extruded geometries and meshes (see @ref{Geometry commands}
+and @ref{Mesh commands}).
 @item
-Interact with your solver: Gmsh provides C/C++ and perl interfaces, and
+Interact with external solvers. Gmsh provides C/C++ and Perl interfaces, and
 others can be easily added (@pxref{Solver}).
 @item
-Visualize computational results in a great variety of ways. Gmsh can
-display scalar, vector and tensor data sets in many different ways.
+Visualize computational results in a great variety of ways. Gmsh can display
+scalar, vector and tensor data sets, and can perform various operations on
+the resulting post-processing views (@pxref{Post-processing}).
 @item
-Perform various operations on the post-processing views using plugins
-(@pxref{Post-processing}).
+Export plots in many different formats: vector PostScript or encapsulated
+PostScript, LaTeX, PNG, JPEG, @dots{} (@pxref{General options}).
 @item
-Exports plots in many different formats (vector PostScript or encapsulated
-PostScript, LaTeX, PNG, JPEG, GIF, etc.).
+Generate complex animations (see @ref{General tools} and @ref{t8.geo}).
 @item
-Generate complex animations.
+Run on low end machines and/or machines with no graphic system. Gmsh can be
+compiled with or without the graphical user interface, and all versions can
+be used either interactively or not, directly from the command line
+(@pxref{Running Gmsh}).
 @item
-Run on low end machines and/or machines without graphic systems: Gmsh can be
-compiled with or without the graphical user interface; graphical versions
-can be used either interactively or without graphicak output, directly from
-the command-line.
+Configure your preferred options. Gmsh has a large number of configurations
+options that can be set interactively using the GUI, scattered inside
+command files, changed on the fly in scripts, set in per-user configuration
+files, or specified on the command-line (see @ref{General options},
+@ref{Geometry options}, @ref{Mesh options}, @ref{Post-processing options}
+and @ref{Running Gmsh}).
 @item
-Configure your preferred options for all subsequent operations: Gmsh has a
-large number of configurations options that can be set interactively,
-scattered inside command files (and changed on the fly in scripts), set in
-per-user configuration files, or specified on the command-line
-(@pxref{General options}, @ref{Geometry options}, @ref{Mesh options},
-@ref{Post-processing options} and @ref{Running Gmsh}).
+Do all the above on various platforms, for free (@pxref{Copying
+conditions}), using clear-text ASCII files and/or a small but powerful
+graphical user interface.
 @end itemize
 
 @c -------------------------------------------------------------------------
@@ -489,31 +490,38 @@ per-user configuration files, or specified on the command-line
 @node and what it is not so good at, Syntactic rules, What Gmsh is pretty good at, Overview
 @section @dots{} and what it is not so good at
 
+Due to its small size, its academic roots and limited developer manpower,
+Gmsh has also some (a lot of?) weaknesses:
+
 @itemize @bullet
 @item
-The bottom-up approach for describing geometries can become tedious for
-complex structures.
+The bottom-up approach for describing geometries can become impractical for
+complex models.
 @item
 There is no support for NURBS and only very limited support for trimmed
 surfaces.
 @item
 Gmsh is not primarily a structured mesh generator: no automatic
 quadrilateral or hexahedral meshing algorithm is provided. If you want
-quadrangles, you have to use transfinite or extruded meshes (@pxref{Mesh})
-or recombine unstructured triangular meshes. For hexahedra, your only choice
-is transfinite or extruded meshes.
+quadrangles, you have to use transfinite or extruded meshes or recombine
+unstructured triangular meshes. For hexahedra, your only choice is
+transfinite or extruded meshes.
 @item
 Gmsh is not a multibloc generator: all meshes produced by Gmsh are
-conforming in the sense of finite element meshes (@pxref{Mesh})
+conforming in the sense of finite element meshes.
 @item
 There is not support for curved mesh elements as of this writing (Gmsh
 1.44).
 @item
-Gmsh is designed for solving academic test-cases, not industrial-size
+Gmsh was designed to solve academic test-cases, not industrial-size
 problems. You may find that Gmsh is too slow for large problems (with
-thousands of geometric primitives; or millions of mesh/post-processing
+thousands of geometric primitives, or millions of mesh/post-processing
 elements).
 @end itemize
+
+If you have the skill and time, feel free to contribute to the project: we
+will gladly accept any code contributions (@pxref{Programming notes}) to
+remedy these (and all other) shortcommings!
 
 @c -------------------------------------------------------------------------
 @c Syntactic Rules Used in this Document
@@ -1645,7 +1653,7 @@ pop up menu on post-processing view button
 @c File Formats
 @c =========================================================================
 
-@node File formats, Programming comments, Running Gmsh, Top
+@node File formats, Programming notes, Running Gmsh, Top
 @chapter File formats
 
 @cindex File formats
@@ -2000,34 +2008,34 @@ The same 26 base objects can be displayed as in the ASCII or binary
 post-processing file formats:
 
 @example
-                    type  #list-of-coords #list-of-values
+                    @var{type}  #@var{list-of-coords}  #@var{list-of-values}
 ------------------------------------------------------------
-scalar point        SP    3               1  * @var{nb-time-step}
-vector point        VP    3               3  * @var{nb-time-step}
-tensor point        TP    3               9  * @var{nb-time-step}
-scalar line         SL    6               2  * @var{nb-time-step}
-vector line         VL    6               6  * @var{nb-time-step}
-tensor line         TL    6               18 * @var{nb-time-step}
-scalar triangle     ST    9               3  * @var{nb-time-step}
-vector triangle     VT    9               9  * @var{nb-time-step}
-tensor triangle     TT    9               27 * @var{nb-time-step}
-scalar quadrangle   SQ    12              4  * @var{nb-time-step}
-vector quadrangle   VQ    12              12 * @var{nb-time-step}
-tensor quadrangle   TQ    12              36 * @var{nb-time-step}
-scalar tetrahedron  SS    12              4  * @var{nb-time-step}
-vector tetrahedron  VS    12              12 * @var{nb-time-step}
-tensor tetrahedron  TS    12              36 * @var{nb-time-step}
-scalar hexahedron   SH    24              8  * @var{nb-time-step}
-vector hexahedron   VH    24              24 * @var{nb-time-step}
-tensor hexahedron   TH    24              72 * @var{nb-time-step}
-scalar prism        SI    18              6  * @var{nb-time-step}
-vector prism        VI    18              18 * @var{nb-time-step}
-tensor prism        TI    18              54 * @var{nb-time-step}
-scalar pyramid      SY    15              5  * @var{nb-time-step}
-vector pyramid      VY    15              15 * @var{nb-time-step}
-tensor pyramid      TY    15              45 * @var{nb-time-step}
-text 2d             T2    4               arbitrary
-text 3d             T3    5               arbitrary
+scalar point        SP    3            1  * @var{nb-time-step}
+vector point        VP    3            3  * @var{nb-time-step}
+tensor point        TP    3            9  * @var{nb-time-step}
+scalar line         SL    6            2  * @var{nb-time-step}
+vector line         VL    6            6  * @var{nb-time-step}
+tensor line         TL    6            18 * @var{nb-time-step}
+scalar triangle     ST    9            3  * @var{nb-time-step}
+vector triangle     VT    9            9  * @var{nb-time-step}
+tensor triangle     TT    9            27 * @var{nb-time-step}
+scalar quadrangle   SQ    12           4  * @var{nb-time-step}
+vector quadrangle   VQ    12           12 * @var{nb-time-step}
+tensor quadrangle   TQ    12           36 * @var{nb-time-step}
+scalar tetrahedron  SS    12           4  * @var{nb-time-step}
+vector tetrahedron  VS    12           12 * @var{nb-time-step}
+tensor tetrahedron  TS    12           36 * @var{nb-time-step}
+scalar hexahedron   SH    24           8  * @var{nb-time-step}
+vector hexahedron   VH    24           24 * @var{nb-time-step}
+tensor hexahedron   TH    24           72 * @var{nb-time-step}
+scalar prism        SI    18           6  * @var{nb-time-step}
+vector prism        VI    18           18 * @var{nb-time-step}
+tensor prism        TI    18           54 * @var{nb-time-step}
+scalar pyramid      SY    15           5  * @var{nb-time-step}
+vector pyramid      VY    15           15 * @var{nb-time-step}
+tensor pyramid      TY    15           45 * @var{nb-time-step}
+text 2d             T2    4            arbitrary
+text 3d             T3    5            arbitrary
 @end example
 
 But, for historical rerasons, contrary to the ASCII and binary
@@ -2187,11 +2195,11 @@ Pyramid:
  @end example
 
 @c =========================================================================
-@c Programming Comments
+@c Programming notes
 @c =========================================================================
 
-@node Programming comments, Bugs and versions, File formats, Top
-@chapter Programming comments
+@node Programming notes, Bugs and versions, File formats, Top
+@chapter Programming notes
 
 todo: ceci peut constituer une intro a un futur guide de programmation
 dans Gmsh...
@@ -2230,7 +2238,7 @@ The user interface is based on the FLTK widget set.
 
 @ifclear COMMERCIAL
 
-@node Bugs and versions, Tips and tricks, Programming comments, Top
+@node Bugs and versions, Tips and tricks, Programming notes, Top
 @chapter Bugs, versions and contributors
 
 @menu
