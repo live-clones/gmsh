@@ -1,3 +1,8 @@
+@c
+@c This file is generated automatically by running "gmsh -doc".
+@c Do not edit by hand!
+@c
+
 @ftable @code
 @item Print.EpsBackground
 Save image background in PostScript/PDF output@*

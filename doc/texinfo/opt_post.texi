@@ -1,3 +1,8 @@
+@c
+@c This file is generated automatically by running "gmsh -doc".
+@c Do not edit by hand!
+@c
+
 @ftable @code
 @item PostProcessing.AnimationDelay
 Delay (in seconds) between frames in automatic animation mode@*

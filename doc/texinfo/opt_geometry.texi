@@ -1,3 +1,8 @@
+@c
+@c This file is generated automatically by running "gmsh -doc".
+@c Do not edit by hand!
+@c
+
 @ftable @code
 @item Geometry.AutoCoherence
 Should all duplicate entities be automatically removed?@*

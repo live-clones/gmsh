@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.238 2005-04-04 18:19:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.239 2005-04-04 19:17:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -239,8 +239,8 @@ void Print_Options(int num, int level, int diff, char *filename)
     fprintf(file, "// Gmsh Option File\n");
     fprintf(file, "//\n");
     fprintf(file, "// This file contains configuration options (preferences) that\n");
-    fprintf(file, "// should be loaded each time Gmsh is launched. You can create\n");
-    fprintf(file, "// this file by hand, or let Gmsh generate it for you (with\n");
+    fprintf(file, "// are loaded each time Gmsh is launched. You can create this\n");
+    fprintf(file, "// file by hand, or let Gmsh generate it for you (with\n");
     fprintf(file, "// 'Tools->Options->Save'). This file can also be automatically\n");
     fprintf(file, "// saved every time you quit Gmsh if the option 'General.SaveOptions'\n");
     fprintf(file, "// is set.\n");
@@ -336,14 +336,19 @@ char * Get_OptionSaveLevel(int level){
 
 void Print_OptionsDoc()
 {
-  FILE * file;
+  FILE *file;
+  char *warn =
+    "@c\n"
+    "@c This file is generated automatically by running \"gmsh -doc\".\n"
+    "@c Do not edit by hand!\n"
+    "@c\n\n";
   
   file = fopen("opt_general.texi", "w");
   if(!file) {
     Msg(GERROR, "Unable to open file 'opt_general.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   Print_StringOptionsDoc(GeneralOptions_String, "General.", file);
   Print_NumberOptionsDoc(GeneralOptions_Number, "General.", file);
   Print_ColorOptionsDoc(GeneralOptions_Color, "General.", file);
@@ -355,7 +360,7 @@ void Print_OptionsDoc()
     Msg(GERROR, "Unable to open file 'opt_print.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   Print_StringOptionsDoc(PrintOptions_String, "Print.", file);
   Print_NumberOptionsDoc(PrintOptions_Number, "Print.", file);
   Print_ColorOptionsDoc(PrintOptions_Color, "Print.", file);
@@ -367,7 +372,7 @@ void Print_OptionsDoc()
     Msg(GERROR, "Unable to open file 'opt_geometry.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   Print_StringOptionsDoc(GeometryOptions_String, "Geometry.", file);
   Print_NumberOptionsDoc(GeometryOptions_Number, "Geometry.", file);
   Print_ColorOptionsDoc(GeometryOptions_Color, "Geometry.", file);
@@ -379,7 +384,7 @@ void Print_OptionsDoc()
     Msg(GERROR, "Unable to open file 'opt_mesh.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   Print_StringOptionsDoc(MeshOptions_String, "Mesh.", file);
   Print_NumberOptionsDoc(MeshOptions_Number, "Mesh.", file);
   Print_ColorOptionsDoc(MeshOptions_Color, "Mesh.", file);
@@ -391,7 +396,7 @@ void Print_OptionsDoc()
     Msg(GERROR, "Unable to open file 'opt_solver.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   Print_StringOptionsDoc(SolverOptions_String, "Solver.", file);
   Print_NumberOptionsDoc(SolverOptions_Number, "Solver.", file);
   Print_ColorOptionsDoc(SolverOptions_Color, "Solver.", file);
@@ -403,7 +408,7 @@ void Print_OptionsDoc()
     Msg(GERROR, "Unable to open file 'opt_post.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   Print_StringOptionsDoc(PostProcessingOptions_String, "PostProcessing.", file);
   Print_NumberOptionsDoc(PostProcessingOptions_Number, "PostProcessing.", file);
   Print_ColorOptionsDoc(PostProcessingOptions_Color, "PostProcessing.", file);
@@ -415,7 +420,7 @@ void Print_OptionsDoc()
     Msg(GERROR, "Unable to open file 'opt_view.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   Print_StringOptionsDoc(ViewOptions_String, "View.", file);
   Print_NumberOptionsDoc(ViewOptions_Number, "View.", file);
   Print_ColorOptionsDoc(ViewOptions_Color, "View.", file);
@@ -432,7 +437,7 @@ void Print_OptionsDoc()
     Msg(GERROR, "Unable to open file 'opt_plugin.texi'");
     return;
   }
-  fprintf(file, "@ftable @code\n");
+  fprintf(file, "%s@ftable @code\n", warn);
   char author[256], copyright[256], help[4096];
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
       it != GMSH_PluginManager::instance()->end(); ++it) {
