@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.34 2002-09-09 18:30:27 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.35 2002-10-11 07:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -47,10 +47,11 @@ void CreateOutputFile (char *name, int format) {
   FILE    *fp;
   GLint    size3d;
   char     ext[256];
-  int      res, i, psformat, pssort, psoptions;
+  int      res, i, oldformat, psformat, pssort, psoptions;
 
   if(!name || !strlen(name)) return;
 
+  oldformat = CTX.print.format;
   CTX.print.format = format;
 
   switch(format){
@@ -226,6 +227,7 @@ void CreateOutputFile (char *name, int format) {
     break;
   }
 
+  CTX.print.format = oldformat;
 
 }
 
