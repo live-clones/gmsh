@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.11 2001-11-14 14:39:39 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.12 2001-11-19 13:43:33 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -160,7 +160,7 @@ static void Draw_Graph2D(Post_View *v,
     if(v->ShowScale){
       glColor4ubv((GLubyte*)&CTX.color.text);
       sprintf(label, v->Format, (i==nb)?ValMin:(ValMax-i*dv));
-      if(CTX.stream == TO_FILE)
+      if(!CTX.print.gl_fonts)
 	glRasterPos2d(xtop-gl_width(label)-3*tic,ytop-i*dy-font_a/3.);
       else
 	glRasterPos2d(xtop-gl_width(label)-tic,ytop-i*dy-font_a/3.);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.62 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: Options.cpp,v 1.63 2001-11-19 13:43:33 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -94,6 +94,7 @@ void Init_Options(int num){
   CTX.post.draw = 1 ;
   CTX.post.list = NULL ;
   CTX.post.force_num = 0 ;
+  CTX.print.gl_fonts = 1;
   CTX.threads_lock = 0 ; //very primitive locking during mesh generation
   CTX.mesh.histogram = 0 ;
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; //old extrusion mesh generator

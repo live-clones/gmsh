@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.129 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.130 2001-11-19 13:43:33 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -66,8 +66,9 @@ Fl_Menu_Item m_menubar_table[] = {
       {"Image",  0, 0, 0, FL_SUBMENU},
          {"PostScript, fast (ps)...",  0, (Fl_Callback *)file_save_as_ps_simple_cb, 0},
          {"PostScript, accurate...",   0, (Fl_Callback *)file_save_as_ps_accurate_cb, 0},
-         {"LaTeX, PS part, fast...",      0, (Fl_Callback *)file_save_as_pstex_simple_cb, 0},
-         {"LaTeX, PS part, accurate...",  0, (Fl_Callback *)file_save_as_pstex_accurate_cb, 0},
+         {"LaTeX, PS part, fast...",   0, (Fl_Callback *)file_save_as_pstex_simple_cb, 0},
+         {"LaTeX, PS part, accurate...", 0, (Fl_Callback *)file_save_as_pstex_accurate_cb, 0},
+         {"LaTeX, Jpeg part...",       0, (Fl_Callback *)file_save_as_jpegtex_cb, 0},
          {"LaTeX, TeX part (tex)...",  0, (Fl_Callback *)file_save_as_tex_cb, 0},
          {"Jpeg (jpg)...",             0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
          {"GIF (gif)...",              0, (Fl_Callback *)file_save_as_gif_cb, 0},

@@ -33,6 +33,7 @@ void file_save_as_ps_simple_cb(CALLBACK_ARGS) ;
 void file_save_as_ps_accurate_cb(CALLBACK_ARGS) ;
 void file_save_as_pstex_simple_cb(CALLBACK_ARGS) ;
 void file_save_as_pstex_accurate_cb(CALLBACK_ARGS) ;
+void file_save_as_jpegtex_cb(CALLBACK_ARGS) ;
 void file_save_as_tex_cb(CALLBACK_ARGS) ;
 void file_save_as_jpeg_cb(CALLBACK_ARGS) ;
 void file_save_as_gif_cb(CALLBACK_ARGS) ;

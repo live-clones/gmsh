@@ -1,8 +1,10 @@
-// $Id: nrutil.cpp,v 1.4 2001-01-08 08:05:40 geuzaine Exp $
+// $Id: nrutil.cpp,v 1.5 2001-11-19 13:43:33 geuzaine Exp $
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <malloc.h>
+
+#include "Gmsh.h"
 
 
 #define NR_END 1
@@ -11,10 +13,13 @@
 void nrerror(char error_text[])
 /* Numerical Recipes standard error handler */
 {
+  Msg(GERROR, "%s", error_text);
+  /*
         fprintf(stderr,"Numerical Recipes run-time error...\n");
         fprintf(stderr,"%s\n",error_text);
         fprintf(stderr,"...now exiting to system...\n");
         exit(1);
+  */
 }
 
 float *vector(long nl, long nh)

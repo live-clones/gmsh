@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.94 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.95 2001-11-19 13:43:33 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -275,6 +275,11 @@ void file_save_as_pstex_accurate_cb(CALLBACK_ARGS) {
     CreateOutputFile(newfile, CTX.print.format = FORMAT_PSTEX); 
     CTX.print.eps_quality = old; 
   }
+}
+void file_save_as_jpegtex_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save LaTeX file (Jpeg part)", "*", NULL)))
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_JPEGTEX); 
 }
 void file_save_as_tex_cb(CALLBACK_ARGS) {
   char *newfile;

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.24 2001-11-19 10:43:16 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.25 2001-11-19 13:43:33 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -32,8 +32,6 @@ void CreateOutputFile (char *name, int format) {
 
   if(!name || !strlen(name)) return;
 
-  CTX.print.gl_fonts = 1;
-
   switch(format){
 
   case FORMAT_AUTO :
@@ -56,6 +54,7 @@ void CreateOutputFile (char *name, int format) {
     else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_PS);
     else if(!strcmp(ext,".tex")) CreateOutputFile(name, FORMAT_TEX);
     else if(!strcmp(ext,".pstex")) CreateOutputFile(name, FORMAT_PSTEX);
+    else if(!strcmp(ext,".jpegtex")) CreateOutputFile(name, FORMAT_JPEGTEX);
     else if(!strcmp(ext,".ppm")) CreateOutputFile(name, FORMAT_PPM);
     else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
     else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
@@ -84,11 +83,14 @@ void CreateOutputFile (char *name, int format) {
     break;
 
   case FORMAT_JPEG :
+  case FORMAT_JPEGTEX :
     if(!(fp = fopen(name,"wb"))) {
       Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
+    if(format == FORMAT_JPEGTEX) CTX.print.gl_fonts = 0;
     FillBuffer();
+    CTX.print.gl_fonts = 1;
     create_jpeg(fp, CTX.viewport[2]-CTX.viewport[0],
 		CTX.viewport[3]-CTX.viewport[1],
 		CTX.print.jpeg_quality);
@@ -149,7 +151,6 @@ void CreateOutputFile (char *name, int format) {
       Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
-    CTX.print.gl_fonts = 0;
     size3d = 0 ;
     res = GL2PS_OVERFLOW ;
     while(res == GL2PS_OVERFLOW){
@@ -162,14 +163,15 @@ void CreateOutputFile (char *name, int format) {
 		     (format==FORMAT_PSTEX ? GL2PS_NO_TEXT : 0),
 		     GL_RGBA, 0, NULL, size3d, fp, name);
       CTX.stream = TO_FILE ;
+      CTX.print.gl_fonts = 0;
       FillBuffer();
+      CTX.print.gl_fonts = 1;
       CTX.stream = TO_SCREEN ;
       res = gl2psEndPage();
     }
     Msg(INFO, "EPS creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
-    CTX.print.gl_fonts = 1;
     break ;
 
   case FORMAT_TEX :
@@ -183,8 +185,8 @@ void CreateOutputFile (char *name, int format) {
     CTX.stream = TO_FILE ;
     CTX.print.gl_fonts = 0;
     FillBuffer();
-    CTX.stream = TO_SCREEN ;
     CTX.print.gl_fonts = 1;
+    CTX.stream = TO_SCREEN ;
     res = gl2psEndPage();
     Msg(INFO, "TEX creation complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
