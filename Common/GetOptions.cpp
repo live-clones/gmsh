@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.46 2002-03-31 00:50:39 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.47 2002-04-24 22:12:43 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -39,7 +39,7 @@ char gmsh_email[]     = "Mailing list   : gmsh@geuz.org" ;
 void Print_Usage(char *name){
   Msg(DIRECT, "Usage: %s [options] [files]", name);
   Msg(DIRECT, "Geometry options:");
-  Msg(DIRECT, "  -0                    parse input files, output flattened geometry, and exit");
+  Msg(DIRECT, "  -0                    parse input files, output unrolled geometry, and exit");
   Msg(DIRECT, "Mesh options:");
   Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
   Msg(DIRECT, "  -saveall              save all elements (discard physical group definitions)");

@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.32 2001-12-06 10:34:04 geuzaine Exp $
+$Id: tutorial.html,v 1.33 2002-04-24 22:12:43 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -120,10 +120,10 @@ all the other views, select the 'Apply next changes to all views' or
 [NOTE: All the options specified interactively can also be directly
 specified in the ascii input files. All available options, with their
 current values, can be saved into a file by selecting 'File-&gt;Save
-as-&gt;GEO complete options', or simply viewed by pressing the '?' button
-in the status bar. To save the current options as your default
-preferences for all future Gmsh sessions, use the 'Options-&gt;Save
-options now' menu.]
+as-&gt;Geometry-&gt;Gmsh current options', or simply viewed by pressing the
+'?' button in the status bar. To save the current options as your
+default preferences for all future Gmsh sessions, use the
+'Options-&gt;Save options now' menu.]
 
 
 OK, that's all, folks. Enjoy the tutorial.
@@ -304,8 +304,8 @@ Characteristic Length{6,22,2,3,16,12} = lc * 2 ;
 <I><FONT COLOR="#B22222">// If the transformation tools are handy to create complex geometries,
 </FONT></I><I><FONT COLOR="#B22222">// it is sometimes useful to generate the flat geometry, consisting
 </FONT></I><I><FONT COLOR="#B22222">// only of the explicit list elementary entities. This can be achieved
-</FONT></I><I><FONT COLOR="#B22222">// by selecting the 'File-&gt;Save as-&gt;GEO flattened geometry' menu or 
-</FONT></I><I><FONT COLOR="#B22222">// by typing
+</FONT></I><I><FONT COLOR="#B22222">// by selecting the 'File-&gt;Save as-&gt;Geometry-&gt;Gmsh unrolled geometry'
+</FONT></I><I><FONT COLOR="#B22222">// menu or by typing
 </FONT></I><I><FONT COLOR="#B22222">//
 </FONT></I><I><FONT COLOR="#B22222">// &gt; gmsh t2.geo -0
 </FONT></I><I><FONT COLOR="#B22222">//
@@ -413,10 +413,10 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
 </FONT></I>
 <I><FONT COLOR="#B22222">// A click on the '?'  button in the status bar of the graphic window
 </FONT></I><I><FONT COLOR="#B22222">// will dump all current options to the terminal. To save all
-</FONT></I><I><FONT COLOR="#B22222">// available options to a file, use the 'File-&gt;Save as-&gt;GEO complete
-</FONT></I><I><FONT COLOR="#B22222">// options' menu. To save the current options as the default options
-</FONT></I><I><FONT COLOR="#B22222">// for all future Gmsh sessions, use the 'Options-&gt;Save options now'
-</FONT></I><I><FONT COLOR="#B22222">// menu.
+</FONT></I><I><FONT COLOR="#B22222">// available options to a file, use the 'File-&gt;Save as-&gt;Geometry-&gt;Gmsh
+</FONT></I><I><FONT COLOR="#B22222">// current options' menu. To save the current options as the default
+</FONT></I><I><FONT COLOR="#B22222">// options for all future Gmsh sessions, use the 'Options-&gt;Save
+</FONT></I><I><FONT COLOR="#B22222">// options now' menu.
 </FONT></I></PRE>
 <HR>
 <A NAME="file5">
@@ -1073,7 +1073,7 @@ Include &quot;view4.pos&quot; ;
 <I><FONT COLOR="#B22222">// Some general options are set (all the options specified
 </FONT></I><I><FONT COLOR="#B22222">// interactively can be directly specified in the ascii input
 </FONT></I><I><FONT COLOR="#B22222">// files. The current options can be saved into a file by selecting
-</FONT></I><I><FONT COLOR="#B22222">// 'File-&gt;Save as-&gt;GEO complete options').
+</FONT></I><I><FONT COLOR="#B22222">// 'File-&gt;Save as-&gt;Geometry-&gt;Gmsh current options').
 </FONT></I>
 General.Trackball = 0 ;
 General.RotationX = 0 ;
