@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.433 2005-03-15 17:53:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.434 2005-03-20 20:45:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -611,7 +611,10 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'i')) {
-    opt_post_scales(0, GMSH_SET | GMSH_GUI, !opt_post_scales(0, GMSH_GET, 0));
+    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+	opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
+			    !opt_view_show_scale(i, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -639,8 +642,9 @@ int GUI::global_shortcuts(int event)
     opt_mesh_light(0, GMSH_SET | GMSH_GUI,
 		   !opt_mesh_light(0, GMSH_GET, 0));
     for(i = 0; i < List_Nbr(CTX.post.list); i++)
-      opt_view_light(i, GMSH_SET | GMSH_GUI,
-		     !opt_view_light(i, GMSH_GET, 0));
+      if(opt_view_visible(i, GMSH_GET, 0))
+	opt_view_light(i, GMSH_SET | GMSH_GUI,
+		       !opt_view_light(i, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -747,10 +751,9 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'g')) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+    for(i = 0; i < List_Nbr(CTX.post.list); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_axes(i, GMSH_SET | GMSH_GUI, opt_view_axes(i, GMSH_GET, 0)+1);
-    }
     redraw_opengl();
     return 1;
   }

@@ -39,11 +39,6 @@ Enable default post-processing plugins?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item PostProcessing.Scales
-Show value scales@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item PostProcessing.Smoothing
 Apply (non-reversible) smoothing to post-processing view when merged@*
 Default value: @code{0}@*

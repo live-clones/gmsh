@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.76 2005-03-12 07:52:55 geuzaine Exp $
+// $Id: Draw.cpp,v 1.77 2005-03-20 20:45:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -97,7 +97,7 @@ void Draw2d(void)
   Draw_Graph2D();
   Draw_Text2D();
   Draw_OnScreenMessages();
-  if(CTX.post.draw && CTX.post.scales)
+  if(CTX.post.draw)
     Draw_Scales();
   if(CTX.small_axes)
     Draw_SmallAxes();

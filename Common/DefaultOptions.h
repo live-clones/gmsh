@@ -1028,8 +1028,6 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Plugins" , opt_post_plugins , 1. ,
     "Enable default post-processing plugins?" },
 
-  { F|O, "Scales" , opt_post_scales , 1. , 
-    "Show value scales" },
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 

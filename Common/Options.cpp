@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.235 2005-03-14 18:55:22 geuzaine Exp $
+// $Id: Options.cpp,v 1.236 2005-03-20 20:45:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4647,13 +4647,6 @@ double opt_post_vertex_arrays(OPT_ARGS_NUM)
     CTX.post.vertex_arrays = (int)val;
   }
   return CTX.post.vertex_arrays;
-}
-
-double opt_post_scales(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.post.scales = (int)val;
-  return CTX.post.scales;
 }
 
 double opt_post_horizontal_scales(OPT_ARGS_NUM)

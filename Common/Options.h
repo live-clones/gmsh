@@ -474,7 +474,6 @@ double opt_solver_merge_views2(OPT_ARGS_NUM);
 double opt_solver_merge_views3(OPT_ARGS_NUM);
 double opt_solver_merge_views4(OPT_ARGS_NUM);
 double opt_post_vertex_arrays(OPT_ARGS_NUM);
-double opt_post_scales(OPT_ARGS_NUM);
 double opt_post_horizontal_scales(OPT_ARGS_NUM);
 double opt_post_link(OPT_ARGS_NUM);
 double opt_post_smooth(OPT_ARGS_NUM);
