@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.48 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: Main.cpp,v 1.49 2003-06-17 19:26:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,7 @@ GUI *WID = NULL;
 int main(int argc, char *argv[])
 {
   int i, nbf;
-  char cmdline[1000] = "", currtime[100];
+  char *cmdline, currtime[100];
   time_t now;
 
   // log some info
@@ -58,10 +58,15 @@ int main(int argc, char *argv[])
   strcpy(currtime, ctime(&now));
   currtime[strlen(currtime) - 1] = '\0';
 
+  int cll = 0;
   for(i = 0; i < argc; i++) {
-    if(i)
-      strcat(cmdline, " ");
+    cll += strlen(argv[i]);
+  }
+  cmdline = (char*)Malloc((cll+argc+1)*sizeof(char));
+  cmdline[0] = '\0';
+  for(i = 0; i < argc; i++) {
     strcat(cmdline, argv[i]);
+    strcat(cmdline, " ");
   }
 
   // Gmsh default options
@@ -186,6 +191,8 @@ int main(int argc, char *argv[])
   Msg(LOG_INFO, "Launch date    : %s", currtime);
   Msg(LOG_INFO, "Command line   : %s", cmdline);
   Msg(LOG_INFO, "-------------------------------------------------------");
+
+  Free(cmdline);
 
   // Check for buggy obsolete GSL versions
 
