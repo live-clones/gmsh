@@ -499,6 +499,16 @@ Normal vector color@*
 Default value: @code{@{255,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.Color.Text2D
+2D text color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Text3D
+3D text color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ColorTable
 Color table used to draw the view@*
 Saved in: @code{General.OptionsFileName}

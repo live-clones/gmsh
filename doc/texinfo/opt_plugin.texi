@@ -6,8 +6,9 @@ equal to 1, the plugin inserts the string
 in model coordinates at the position (`X',`Y',`Z').
 If `3D' is equal to 0, the plugin inserts the
 string in screen coordinates at the position
-(`X',`Y'). If `iView' < 0, the plugin is run on
-the current view.
+(`X',`Y'), and aligns it according to `Align'.
+If `iView' < 0, the plugin is run on the current
+view.
 
 Plugin(Annotate) is executed in-place.
 
@@ -15,13 +16,17 @@ String options:
 @table @code
 @item Text
 Default value: @code{"My Text"}
+@item Font
+Default value: @code{"Helvetica"}
+@item Align
+Default value: @code{"Left"}
 @end table
 Numeric options:
 @table @code
 @item X
-Default value: @code{20}
+Default value: @code{50}
 @item Y
-Default value: @code{20}
+Default value: @code{30}
 @item Z
 Default value: @code{0}
 @item 3D

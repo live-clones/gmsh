@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.312 2004-12-28 20:37:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.313 2004-12-28 20:46:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -261,7 +261,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   extern void set_t(int i, double val);
   extern void set_s(int i, double val);
 
-  switch ((long int)data) {
+  switch ((long)data) {
   case 0:
     if(CTX.useTrackball)
       CTX.setQuaternion(0., -1. / sqrt(2.), 0., 1. / sqrt(2.));
@@ -1152,7 +1152,7 @@ void statistics_update_cb(CALLBACK_ARGS)
 
 void statistics_histogram_cb(CALLBACK_ARGS)
 {
-  int i, type = (long int)data;
+  int i, type = (long)data;
 
   Print_Histogram(THEM->Histogram[type]);
 
@@ -1354,7 +1354,7 @@ void visibility_ok_cb(CALLBACK_ARGS)
 
 void visibility_sort_cb(CALLBACK_ARGS)
 {
-  int i, val = (long int)data, selectall;
+  int i, val = (long)data, selectall;
 
   if(!val) {
     selectall = 0;
@@ -1377,7 +1377,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
 
 void visibility_number_cb(CALLBACK_ARGS)
 {
-  int pos, mode, type = WID->vis_input_mode->value(), val = (long int)data;
+  int pos, mode, type = WID->vis_input_mode->value(), val = (long)data;
   char *str = (char *)WID->vis_input->value();
 
   if(val){ // show
@@ -2637,7 +2637,7 @@ void mesh_3d_cb(CALLBACK_ARGS)
 
 void mesh_degree_cb(CALLBACK_ARGS)
 {
-  switch ((long int)data) {
+  switch ((long)data) {
   case 2: 
     Degre2(THEM->status);
     break;
@@ -2918,7 +2918,7 @@ void solver_cb(CALLBACK_ARGS)
 {
   char file[256], tmp[256];
   static int init = 0, first[MAXSOLVERS];
-  long i, num = (long)data;
+  int i, num = (long)data;
 
   if(!init) {
     for(i = 0; i < MAXSOLVERS; i++)
@@ -2946,7 +2946,7 @@ void solver_cb(CALLBACK_ARGS)
 void solver_file_open_cb(CALLBACK_ARGS)
 {
   char tmp[256];
-  long num = (long)data;
+  int num = (long)data;
   sprintf(tmp, "*%s", SINFO[num].extension);
 
   // We allow to create the .pro file... Or should we add a "New file"
@@ -2967,7 +2967,7 @@ void solver_file_open_cb(CALLBACK_ARGS)
 void solver_file_edit_cb(CALLBACK_ARGS)
 {
   char prog[1024], file[1024], cmd[1024];
-  long num = (long)data;
+  int num = (long)data;
   FixWindowsPath(CTX.editor, prog);
   FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
   _replace_multi_format(prog, file, cmd);
@@ -2976,7 +2976,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 
 void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
-  long num = (long)data;
+  int num = (long)data;
   if(file_chooser(0, 0, "Open mesh file", "*.msh", 0))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
@@ -3035,7 +3035,7 @@ void solver_command_cb(CALLBACK_ARGS)
 
 void solver_kill_cb(CALLBACK_ARGS)
 {
-  long num = (long)data;
+  int num = (long)data;
   if(SINFO[num].pid > 0) {
     kill(SINFO[num].pid, 9);
     Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
@@ -3045,7 +3045,7 @@ void solver_kill_cb(CALLBACK_ARGS)
 
 void solver_choose_executable_cb(CALLBACK_ARGS)
 {
-  long num = (long)data;
+  int num = (long)data;
   if(file_chooser(0, 0, "Choose executable",
 #if defined(WIN32)
                   "*.exe"
@@ -3058,8 +3058,7 @@ void solver_choose_executable_cb(CALLBACK_ARGS)
 
 void solver_ok_cb(CALLBACK_ARGS)
 {
-  long num = (long)data;
-  int retry = 0;
+  int num = (long)data, retry = 0;
   opt_solver_popup_messages(num, GMSH_SET, WID->solver[num].butt[0]->value());
   opt_solver_merge_views(num, GMSH_SET, WID->solver[num].butt[1]->value());
   opt_solver_client_server(num, GMSH_SET, WID->solver[num].butt[2]->value());
@@ -3076,8 +3075,8 @@ void solver_ok_cb(CALLBACK_ARGS)
 
 void view_toggle_cb(CALLBACK_ARGS)
 {
-  opt_view_visible((long int)data, GMSH_SET,
-                   WID->m_toggle_butt[(long int)data]->value());
+  opt_view_visible((long)data, GMSH_SET,
+                   WID->m_toggle_butt[(long)data]->value());
   Draw();
 }
 
@@ -3111,7 +3110,7 @@ void view_reload_cb(CALLBACK_ARGS)
   if(!CTX.post.list)
     return;
 
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
 
   struct stat buf;
   if(stat(v->FileName, &buf)){
@@ -3123,7 +3122,7 @@ void view_reload_cb(CALLBACK_ARGS)
   MergeProblem(v->FileName);
   CTX.post.force_num = 0;
 
-  Post_View *v2 = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
+  Post_View *v2 = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
   CopyViewOptions(v, v2);
 
   // In case the reloaded view has a different number of time steps
@@ -3179,14 +3178,14 @@ void view_remove_empty_cb(CALLBACK_ARGS)
 
 void view_remove_cb(CALLBACK_ARGS)
 {
-  RemoveViewByIndex((long int)data);
+  RemoveViewByIndex((long)data);
   UpdateViewsInGUI();
   Draw();
 }
 
 void view_save_ascii_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
   
 test:
   if(file_chooser(0, 1, "Save view in ASCII format", "*", 0, v->FileName)) {
@@ -3206,7 +3205,7 @@ test:
 
 void view_save_binary_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
 
 test:
   if(file_chooser(0, 1, "Save view in binary format", "*", 0, v->FileName)) {
@@ -3226,7 +3225,7 @@ test:
 
 void view_save_parsed_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
 
 test:
   if(file_chooser(0, 1, "Save view in parsed format", "*", 0, v->FileName)) {
@@ -3246,13 +3245,13 @@ test:
 
 void view_duplicate_cb(CALLBACK_ARGS)
 {
-  DuplicateView((long int)data, 0);
+  DuplicateView((long)data, 0);
   Draw();
 }
 
 void view_duplicate_with_options_cb(CALLBACK_ARGS)
 {
-  DuplicateView((long int)data, 1);
+  DuplicateView((long)data, 1);
   Draw();
 }
 
@@ -3295,13 +3294,13 @@ void view_combine_time_by_name_cb(CALLBACK_ARGS)
 void view_all_visible_cb(CALLBACK_ARGS)
 {
   for(int i = 0; i < List_Nbr(CTX.post.list); i ++)
-    opt_view_visible(i, GMSH_SET | GMSH_GUI, (long int)data ? 1 : 0);
+    opt_view_visible(i, GMSH_SET | GMSH_GUI, (long)data ? 1 : 0);
   Draw();
 }
 
 void view_applybgmesh_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
   if(!v->ScalarOnly || v->TextOnly) {
     Msg(GERROR, "Background mesh generation impossible with non-scalar view");
     return;
@@ -3311,7 +3310,7 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
 
 void view_options_cb(CALLBACK_ARGS)
 {
-  WID->create_view_options_window((long int)data);
+  WID->create_view_options_window((long)data);
 }
 
 void view_plugin_cancel_cb(CALLBACK_ARGS)
@@ -3403,7 +3402,7 @@ void view_plugin_options_cb(CALLBACK_ARGS)
 
 void view_options_custom_cb(CALLBACK_ARGS)
 {
-  long custom = (long)data;
+  int custom = (long)data;
     
   if(custom){
     WID->view_value[31]->activate();
@@ -3417,12 +3416,12 @@ void view_options_custom_cb(CALLBACK_ARGS)
 
 void view_options_timestep_cb(CALLBACK_ARGS)
 {
-  long links = (long)opt_post_link(0, GMSH_GET, 0);
+  int links = (long)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == WID->view_number)) {
-      opt_view_timestep(i, GMSH_SET, (long)((Fl_Value_Input *) w)->value());
+      opt_view_timestep(i, GMSH_SET, ((Fl_Value_Input *) w)->value());
     }
   }
   Draw();
@@ -3430,7 +3429,7 @@ void view_options_timestep_cb(CALLBACK_ARGS)
 
 void view_options_timestep_decr_cb(CALLBACK_ARGS)
 {
-  long links = (long)opt_post_link(0, GMSH_GET, 0);
+  int links = (long)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
@@ -3444,7 +3443,7 @@ void view_options_timestep_decr_cb(CALLBACK_ARGS)
 
 void view_options_timestep_incr_cb(CALLBACK_ARGS)
 {
-  long links = (long)opt_post_link(0, GMSH_GET, 0);
+  int links = (long)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
@@ -3460,13 +3459,13 @@ void view_options_ok_cb(CALLBACK_ARGS)
 {
   int links, force = 0;
 
-  if((long int)data < 0)
+  if((long)data < 0)
     return;
 
   links = (int)opt_post_link(0, GMSH_GET, 0);
 
   // get the old values for the current view
-  int current = (long int)data;
+  int current = (long)data;
 
   double scale_type = opt_view_scale_type(current, GMSH_GET, 0);
   double intervals_type = opt_view_intervals_type(current, GMSH_GET, 0);

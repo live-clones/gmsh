@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.71 2004-12-28 20:37:19 geuzaine Exp $
+# $Id: Makefile,v 1.72 2004-12-28 20:46:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -225,7 +225,12 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Annotate.h \
-  ../Common/Context.h ../Numeric/Numeric.h
+  ../Common/Context.h ../Numeric/Numeric.h ../Common/GmshUI.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Mesh/Mesh.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Fltk/Colorbar_Window.h \
+  ../Fltk/File_Picker.h
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
