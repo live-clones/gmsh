@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.11 2001-01-09 19:40:56 remacle Exp $
+// $Id: Print_Mesh.cpp,v 1.12 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -984,7 +984,7 @@ void ConsecutiveNodes (Mesh * M, Tree_T * ConsecutiveNTree, Tree_T * Consecutive
   }
   nbedges = -newnum - nbnod;
   nbdof = nbnod + nbedges;
-  Msg(INFOS, "%d Dofs", nbdof);
+  Msg(INFO, "%d Dofs", nbdof);
 }
 
 void EndConsecutiveNodes (Mesh * M){
@@ -1030,12 +1030,12 @@ void Print_Mesh (Mesh * M, char *c, int Type){
       Msg(WARNING, "Unable to Open File '%s'", name);
       return;
     }
-    Msg (INFOS, "Writing File '%s'", name);
+    Msg(INFO, "Writing File '%s'", name);
     process_msh_nodes (M);
     process_msh_elements (M);
-    Msg (INFOS, "Msh Ouput Complete '%s' (%d Nodes, %d Elements)",
+    Msg(INFO, "Msh Ouput Complete '%s' (%d Nodes, %d Elements)",
          name, MSH_NODE_NUM, MSH_ELEMENT_NUM - 1);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
     fclose (mshfile);
   }
   else if (Type == FORMAT_UNV){
@@ -1045,7 +1045,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
       Msg(WARNING, "Unable to Open File '%s'", name);
       return;
     }
-    Msg (INFOS, "Writing File '%s'", name);
+    Msg(INFO, "Writing File '%s'", name);
     process_nodes (unvfile, M);
     fprintf (unvfile, "%6d\n", -1);
     fprintf (unvfile, "%6d\n", ELEMENTS);
@@ -1056,8 +1056,8 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     fprintf (unvfile, "%6d\n", -1);
     PrintGroups (M);
     fclose (unvfile);
-    Msg (INFOS, "Unv Ouput Complete '%s'", name);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(INFO, "Unv Ouput Complete '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
   }
   else if (Type == FORMAT_GREF){
     c ? strcpy (name, c) : strcat (name, ".Gref");
@@ -1068,7 +1068,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
       Msg(WARNING, "Unable to Open File '%s'", name);
       return;
     }
-    Msg (INFOS, "Writing File '%s'", name);
+    Msg(INFO, "Writing File '%s'", name);
     process_Gref_nodes (Greffile, M, TRN, TRE);
     process_Gref_elements (Greffile, M, Tree_Nbr (TRN));
     process_Gref_poundarybonditions (Greffile, M, TRN, TRE);
@@ -1076,7 +1076,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     Tree_Delete (TRN);
     Tree_Delete (TRE);
     EndConsecutiveNodes (M);
-    Msg (INFOS, "Gref Ouput Complete '%s'", name);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(INFO, "Gref Ouput Complete '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
   }
 }

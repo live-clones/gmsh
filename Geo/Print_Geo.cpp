@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.12 2001-01-09 19:40:56 remacle Exp $
+// $Id: Print_Geo.cpp,v 1.13 2001-01-12 13:28:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -239,8 +239,8 @@ void Print_Geo(Mesh *M, char *filename){
   List_Action(M->PhysicalGroups,Print_PhysicalGroups);
 
   if(filename){
-    Msg (INFOS, "Geo Output Complete '%s'", filename);
-    Msg (INFO, "Wrote File '%s'", filename);
+    Msg(INFO, "Geo Output Complete '%s'", filename);
+    Msg(STATUS2, "Wrote File '%s'", filename);
     fclose(FOUT);
   }
 

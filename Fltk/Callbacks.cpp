@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.18 2001-01-12 00:43:05 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.19 2001-01-12 13:28:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -86,7 +86,7 @@ pthread_t  MeshThread ;
 void* StartMeshThread(void * data){
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
   mai3d(&M,MeshDim);
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
   CTX.mesh.draw = 1;
   CTX.threads_lock = 0;
   XtSetSensitive(WID.G.Butt[6], 0);
@@ -102,9 +102,9 @@ void CancelMeshThread(void){
     CTX.mesh.draw = 1;
     CTX.threads_lock = 0;
     XtSetSensitive(WID.G.Butt[6], 0);    
-    Msg(INFO,"Mesh Aborted");
+    Msg(STATUS2,"Mesh Aborted");
     mesh_event_handler(MESH_DELETE);
-    Msg(STATUS,"Ready");
+    Msg(STATUS3N,"Ready");
     Init();
     Draw();
   }
@@ -607,7 +607,7 @@ static void _new_line_spline(int dim){
 
   n = 0;
   while(1){
-    Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+    Msg(STATUS3N,"Select Point ('e'=end, 'q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1){ /* left mouse butt */
       p[n++] = v->Num; 
@@ -630,7 +630,7 @@ static void _new_line_spline(int dim){
       break;
     }
   }
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 
 void geometry_elementary_add_new_line_cb(CALLBACK_ARGS){
@@ -648,9 +648,9 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
 
   n=0;
   while(1){
-    if(n == 0) Msg(STATUS,"Select Center ('q'=quit)");
-    if(n == 1) Msg(STATUS,"Select Starting Point ('q'=quit)");
-    if(n == 2) Msg(STATUS,"Select Ending Point ('q'=quit)");
+    if(n == 0) Msg(STATUS3N,"Select Center ('q'=quit)");
+    if(n == 1) Msg(STATUS3N,"Select Starting Point ('q'=quit)");
+    if(n == 2) Msg(STATUS3N,"Select Ending Point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1) { /* left mouse butt */
       p[n++] = v->Num; 
@@ -668,7 +668,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
       n=0;
     }
   }
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
   Vertex   *v;
@@ -679,10 +679,10 @@ void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
 
   n=0;
   while(1){
-    if(n == 0) Msg(STATUS,"Select Center ('q'=quit)");
-    if(n == 1) Msg(STATUS,"Select an Axis Point ('q'=quit)");
-    if(n == 2) Msg(STATUS,"Select Starting Point ('q'=quit)");
-    if(n == 3) Msg(STATUS,"Select Ending Point ('q'=quit)");
+    if(n == 0) Msg(STATUS3N,"Select Center ('q'=quit)");
+    if(n == 1) Msg(STATUS3N,"Select an Axis Point ('q'=quit)");
+    if(n == 2) Msg(STATUS3N,"Select Starting Point ('q'=quit)");
+    if(n == 3) Msg(STATUS3N,"Select Ending Point ('q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1) { /* left mouse butt */
       p[n++] = v->Num; 
@@ -700,7 +700,7 @@ void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
       n=0;
     }
   }
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 
 static void _new_surface_volume(int mode){
@@ -723,7 +723,7 @@ static void _new_surface_volume(int mode){
     List_Reset(Liste2);
     
     while(1) {        
-      Msg(STATUS,"Select Boundary ('q'=quit)");
+      Msg(STATUS3N,"Select Boundary ('q'=quit)");
       ib = SelectEntity(type, &v,&c,&s);
       if(ib <= 0){
 	ZeroHighlight(&M);
@@ -738,7 +738,7 @@ static void _new_surface_volume(int mode){
 	List_Reset(Liste1);
 	List_Add(Liste2,&zone);
 	while(1){
-	  Msg(STATUS,"Select Holes ('q'=quit)");
+	  Msg(STATUS3N,"Select Holes ('q'=quit)");
 	  ib = SelectEntity(type, &v,&c,&s); 
 	  if(ib <= 0){
 	    ZeroHighlight(&M);
@@ -770,7 +770,7 @@ static void _new_surface_volume(int mode){
   stopall : ;
   List_Delete(Liste1);
   List_Delete(Liste2);
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 
 void geometry_elementary_add_new_planesurface_cb(CALLBACK_ARGS){
@@ -797,7 +797,7 @@ static void _transform_point_curve_surface(int transfo, int mode, char *what){
     type = ENT_SURFACE;
 
   while(1){
-    Msg(STATUS,"Select %s ('q'=quit)", what);
+    Msg(STATUS3N,"Select %s ('q'=quit)", what);
     if(!SelectEntity(type, &v,&c,&s)){
       ZeroHighlight(&M);
       DrawUpdate();
@@ -820,7 +820,7 @@ static void _transform_point_curve_surface(int transfo, int mode, char *what){
     ZeroHighlight(&M);
     DrawUpdate();
   }
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS){
@@ -1015,7 +1015,7 @@ static void _add_physical(char *what){
 
   Liste1 = List_Create(5,5,sizeof(int));
   while(1){
-    Msg(STATUS,"Select %s ('e'=end, 'q'=quit)", what); 
+    Msg(STATUS3N,"Select %s ('e'=end, 'q'=quit)", what); 
     ib = SelectEntity(type, &v,&c,&s);
     if(ib == 1){ /* left mouse */
       switch(type){
@@ -1038,7 +1038,7 @@ static void _add_physical(char *what){
       break;
     }
   }
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 
 void geometry_physical_add_cb(CALLBACK_ARGS){
@@ -1074,7 +1074,7 @@ void mesh_1d_cb(CALLBACK_ARGS){
     mai3d(&M, 1); 
   Init(); 
   Draw();
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 void mesh_2d_cb(CALLBACK_ARGS){
 #ifdef _USETHREADS
@@ -1088,7 +1088,7 @@ void mesh_2d_cb(CALLBACK_ARGS){
     mai3d(&M, 2);
   Init(); 
   Draw();
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 } 
 void mesh_3d_cb(CALLBACK_ARGS){
 #ifdef _USETHREADS
@@ -1102,7 +1102,7 @@ void mesh_3d_cb(CALLBACK_ARGS){
     mai3d(&M, 3); 
   Init(); 
   Draw();
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 } 
 void mesh_define_length_cb (CALLBACK_ARGS){
   Vertex   *v;
@@ -1114,7 +1114,7 @@ void mesh_define_length_cb (CALLBACK_ARGS){
   WID->create_mesh_context_window(0);
 
   while(1){
-    Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+    Msg(STATUS3N,"Select Point ('e'=end, 'q'=quit)");
     ib = SelectEntity(ENT_POINT, &v,&c,&s);
     if(ib == 1){ /* left mouse butt */
       p[n++] = v->Num; 
@@ -1135,7 +1135,7 @@ void mesh_define_length_cb (CALLBACK_ARGS){
       break;
     }
   }
-  Msg(STATUS,"Ready");
+  Msg(STATUS3N,"Ready");
 }
 void mesh_define_recombine_cb (CALLBACK_ARGS){
   Vertex   *v;
@@ -1146,7 +1146,7 @@ void mesh_define_recombine_cb (CALLBACK_ARGS){
 
   n=0;
   while(1){
-    Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
+    Msg(STATUS3N,"Select Surface ('e'=end, 'q'=quit)");
     ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
     if(ib == 1){ /* left mouse butt */
       p[n++] = s->Num; 
@@ -1166,7 +1166,7 @@ void mesh_define_recombine_cb (CALLBACK_ARGS){
       break;
     }
   }
-  Msg(STATUS, "Ready");
+  Msg(STATUS3N, "Ready");
 }
 void mesh_define_transfinite_cb (CALLBACK_ARGS){
   WID->set_context(menu_mesh_define_transfinite, 0);
@@ -1183,11 +1183,11 @@ static void _add_transfinite(int dim){
   while(1){
     switch (dim) {
     case 1 :
-      Msg(STATUS,"Select Line ('e'=end, 'q'=quit)");
+      Msg(STATUS3N,"Select Line ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_LINE, &v,&c,&s);
       break ;
     case 2 :
-      Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
+      Msg(STATUS3N,"Select Surface ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
       break;
     case 3 :
@@ -1200,7 +1200,7 @@ static void _add_transfinite(int dim){
       case 2 : p[n++] = s->Num; // fall-through
       case 3 :
 	while(1){
-	  Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+	  Msg(STATUS3N,"Select Point ('e'=end, 'q'=quit)");
 	  ib = SelectEntity(ENT_POINT, &v,&c,&s);
 	  if(ib == 1){ /* left mouse butt */
 	    p[n++] = v->Num ;
@@ -1211,13 +1211,13 @@ static void _add_transfinite(int dim){
 	      if(n == 3+1 || n == 4+1)
 		add_trsfsurf(n,p,CTX.filename); 
 	      else
-		Msg(INFO, "Wrong Number of Points for Transfinite Surface");
+		Msg(STATUS2, "Wrong Number of Points for Transfinite Surface");
 	      break;
 	    case 3 :
 	      if(n == 6 || n == 8)
 		add_trsfvol(n,p,CTX.filename);
 	      else
-		Msg(INFO, "Wrong Number of Points for Transfinite Volume");
+		Msg(STATUS2, "Wrong Number of Points for Transfinite Volume");
 	      break;
 	    }
 	    n=0;
@@ -1250,7 +1250,7 @@ static void _add_transfinite(int dim){
       break;
     }
   }
-  Msg(STATUS, "Ready");
+  Msg(STATUS3N, "Ready");
 }
 
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS){

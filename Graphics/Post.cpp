@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.10 2001-01-09 14:24:09 geuzaine Exp $
+// $Id: Post.cpp,v 1.11 2001-01-12 13:28:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -99,7 +99,7 @@ void Draw_Post (void) {
 
         if(CTX.display_lists){
           if(glIsList(v->Num)) glDeleteLists(v->Num,1);
-          // Msg(INFO, "New Display List");
+          // Msg(STATUS2, "New Display List");
           glNewList(v->Num, GL_COMPILE_AND_EXECUTE);
         }
 

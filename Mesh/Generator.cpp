@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.8 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: Generator.cpp,v 1.9 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -203,11 +203,11 @@ void mai3d (Mesh * M, int Asked){
   
   if ((Asked > oldstatus && Asked > 0 && oldstatus < 1) ||
       (Asked < oldstatus && Asked > 0)){
-    Msg (INFO, "Mesh 1D...");
+    Msg(STATUS2, "Mesh 1D...");
     t1 = Cpu();
     Maillage_Dimension_1 (M);
     t2 = Cpu();
-    Msg (INFO, "Mesh 1D complete (%g s)", t2 - t1);
+    Msg(STATUS2, "Mesh 1D complete (%g s)", t2 - t1);
     M->status = 1;
   }
   
@@ -215,11 +215,11 @@ void mai3d (Mesh * M, int Asked){
   
   if ((Asked > oldstatus && Asked > 1 && oldstatus < 2) ||
       (Asked < oldstatus && Asked > 1)){
-    Msg (INFO, "Mesh 2D...");
+    Msg(STATUS2, "Mesh 2D...");
     t1 = Cpu();
     Maillage_Dimension_2 (M);
     t2 = Cpu();
-    Msg (INFO, "Mesh 2D complete (%g s)", t2 - t1);
+    Msg(STATUS2, "Mesh 2D complete (%g s)", t2 - t1);
     M->status = 2;
   }
 
@@ -227,11 +227,11 @@ void mai3d (Mesh * M, int Asked){
 
   if ((Asked > oldstatus && Asked > 2 && oldstatus < 3) ||
       (Asked < oldstatus && Asked > 2)){
-    Msg (INFO, "Mesh 3D...");
+    Msg(STATUS2, "Mesh 3D...");
     t1 = Cpu();
     Maillage_Dimension_3 (M);
     t2 = Cpu();
-    Msg (INFO, "Mesh 3D complete (%g s)", t2 - t1);
+    Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
     M->status = 3;
   }
 

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.7 2001-01-11 12:25:23 geuzaine Exp $
+// $Id: Main.cpp,v 1.8 2001-01-12 13:28:55 geuzaine Exp $
 
 #include <signal.h>
 
@@ -95,8 +95,13 @@ int main(int argc, char *argv[]){
 
   // Say welcome!
 
-  Msg(STATUS, "Ready");
-  Msg(SELECT, "Gmsh %.2f", GMSH_VERSION);
+  Msg(STATUS3, "Ready");
+  Msg(STATUS1, "Gmsh %.2f", GMSH_VERSION);
+
+  Msg(LOG_INFO, gmsh_os);
+  Msg(LOG_INFO, gmsh_date);
+  Msg(LOG_INFO, gmsh_host);
+  Msg(LOG_INFO, gmsh_packager);
 
   // Display the GUI to have a quick "a la Windows" launch time
 

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.9 2001-01-11 16:00:28 colignon Exp $
+// $Id: CreateFile.cpp,v 1.10 2001-01-12 13:28:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -98,8 +98,8 @@ void CreateFile (char *name, int format) {
       return;
     }
     Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), fp);    
-    Msg(INFOS, "XPM Creation Complete '%s'", name);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(INFO, "XPM Creation Complete '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
     fclose(fp);
     break;
 #endif
@@ -114,8 +114,8 @@ void CreateFile (char *name, int format) {
     create_jpeg(fp, CTX.viewport[2]-CTX.viewport[0],
 		CTX.viewport[3]-CTX.viewport[1],
 		CTX.print.jpeg_quality);
-    Msg(INFOS, "JPEG Creation Complete '%s'", name);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(INFO, "JPEG Creation Complete '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
     fclose(fp);
     break;
 #endif
@@ -135,8 +135,8 @@ void CreateFile (char *name, int format) {
 	       UNPACK_RED(CTX.color.bg),
 	       UNPACK_GREEN(CTX.color.bg),
 	       UNPACK_BLUE(CTX.color.bg));
-    Msg(INFOS, "GIF Creation Complete '%s'", name);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(INFO, "GIF Creation Complete '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
     fclose(fp);
     break;
 
@@ -148,8 +148,8 @@ void CreateFile (char *name, int format) {
     DrawUpdate();
     create_ppm(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
-    Msg(INFOS, "PPM Creation Complete '%s'", name);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(INFO, "PPM Creation Complete '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
     fclose(fp);
     break;
 
@@ -161,8 +161,8 @@ void CreateFile (char *name, int format) {
     DrawUpdate();
     create_yuv(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
-    Msg(INFOS, "YUV Creation Complete '%s'", name);
-    Msg (INFO, "Wrote File '%s'", name);
+    Msg(INFO, "YUV Creation Complete '%s'", name);
+    Msg(STATUS2, "Wrote File '%s'", name);
     fclose(fp);
     break;
 
@@ -183,11 +183,11 @@ void CreateFile (char *name, int format) {
       Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), tmp);
       fclose(tmp);
       sprintf(cmd, "xpr -device ps -gray 4 %s >%s", tmpFileName, name);
-      Msg(INFOS, "Executing '%s'", cmd);
+      Msg(INFO, "Executing '%s'", cmd);
       system(cmd);
       unlink(tmpFileName);
-      Msg(INFOS, "Bitmap EPS Creation Complete '%s'", name);
-      Msg (INFO, "Wrote File '%s'", name);
+      Msg(INFO, "Bitmap EPS Creation Complete '%s'", name);
+      Msg(STATUS2, "Wrote File '%s'", name);
       fclose(fp);
       break;
 #endif
@@ -211,8 +211,8 @@ void CreateFile (char *name, int format) {
 	CTX.stream = TO_SCREEN ;
 	res = gl2psEndPage();
       }
-      Msg(INFOS, "EPS Creation Complete '%s'", name);
-      Msg (INFO, "Wrote File '%s'", name);
+      Msg(INFO, "EPS Creation Complete '%s'", name);
+      Msg(STATUS2, "Wrote File '%s'", name);
       fclose(fp);
       CTX.print.gl_fonts = 1;
       break;

@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.10 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.11 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -97,7 +97,7 @@ void Maillage_Curve (void *data, void *dummy){
   if (c->Num < 0)
     return;
 
-  Msg(STATUS, "Meshing Curve %d", c->Num);
+  Msg(STATUS3, "Meshing Curve %d", c->Num);
 
   Points = List_Create (10, 10, sizeof (IntPoint));
   c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-4);

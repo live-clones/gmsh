@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.16 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.17 2001-01-12 13:29:00 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -1040,7 +1040,7 @@ void Maillage_Surface (void *data, void *dum){
     Tree_Delete (s->Vertices);
   s->Vertices = Tree_Create (sizeof (Vertex *), compareVertex);
 
-  Msg(STATUS, "Meshing Surface %d", s->Num);
+  Msg(STATUS3, "Meshing Surface %d", s->Num);
 
   if (MeshTransfiniteSurface (s) ||
       MeshEllipticSurface (s) ||
@@ -1084,7 +1084,7 @@ void Maillage_Surface (void *data, void *dum){
     AlgorithmeMaillage2DAnisotropeModeJF (s);
 
   if(CTX.mesh.nb_smoothing){
-    Msg(STATUS, "Mesh Smoothing");
+    Msg(STATUS3, "Mesh Smoothing");
     tnxe = Tree_Create (sizeof (NXE), compareNXE);
     create_NXE (s->Vertices, s->Simplexes, tnxe);
     for (int i = 0; i < CTX.mesh.nb_smoothing; i++)

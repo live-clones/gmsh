@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.4 2001-01-10 08:41:08 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.5 2001-01-12 13:29:04 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -34,7 +34,7 @@ void ParseFile(char *f){
   yylineno=1;
 
   if(!(yyin = fopen(yyname,"r"))){
-    //Msg(INFO, "File '%s' Does not Exist", f);
+    //Msg(STATUS2, "File '%s' Does not Exist", f);
     return;
   }
   
@@ -60,7 +60,7 @@ void ParseFile(char *f){
 }
 
 void MergeProblem(char *name){
-  Msg(INFOS, "Merging '%s'",name); 
+  Msg(INFO, "Merging '%s'",name); 
 
   ParseFile(name);  
   if (yyerrorstate) return;
@@ -106,7 +106,7 @@ void OpenProblem(char *name){
 #endif
   }
 
-  Msg(INFOS, "Opening '%s'", CTX.filename); 
+  Msg(INFO, "Opening '%s'", CTX.filename); 
 
   ParseFile(CTX.filename);  
 

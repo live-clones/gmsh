@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.14 2001-01-09 19:40:56 remacle Exp $
+// $Id: 3D_BGMesh.cpp,v 1.15 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -225,7 +225,7 @@ int BGMWithView (Post_View * ErrView){
 
   Tree_Action (m.Simplexes, AIG);
 
-  Msg(INFOS, "Background Mesh Loaded (%d Nodes, %d Elements)",
+  Msg(INFO, "Background Mesh Loaded (%d Nodes, %d Elements)",
       Tree_Nbr(m.Vertices), Tree_Nbr(m.Simplexes)); 
 
   return (1);
@@ -385,7 +385,7 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   fprintf (f, "};\n");
   fclose (f);
 
-  Msg(INFOS, "Background Mesh Wriiten in '%s'", OutFile); 
+  Msg(INFO, "Background Mesh Wriiten in '%s'", OutFile); 
 
   return 1;
 

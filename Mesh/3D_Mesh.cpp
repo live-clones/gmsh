@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.14 2001-01-09 19:40:56 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.15 2001-01-12 13:29:00 geuzaine Exp $
 
 /*
  
@@ -578,7 +578,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   N = List_Nbr (Points);
   n = IMAX (N / 20, 1);
 
-  Msg(INFO, "Mesh 3D... (Initial)");
+  Msg(STATUS2, "Mesh 3D... (Initial)");
 
   Box_6_Tetraedron (Points, m);
   // List_Sort (Points, comparePosition);
@@ -602,8 +602,8 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
     if (i % n == n - 1){
       volume = 0.0;
       Tree_Action (m->Simplexes, VSIM);
-      Msg(STATUS, "Nod=%d/%d Elm=%d", i+1,N,Tree_Nbr(m->Simplexes)); 
-      Msg(SELECT, "Vol=%g",volume); 
+      Msg(STATUS3, "Nod=%d/%d Elm=%d", i+1,N,Tree_Nbr(m->Simplexes)); 
+      Msg(STATUS1, "Vol=%g",volume); 
     }
     if (!THES){
       Msg(WARNING, "Vertex (%g,%g,%g) in no Simplex",
@@ -616,7 +616,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
     bool  ca_marche = Bowyer_Watson (m, THEV, THES, 1);
     int count = 0;
     while(!ca_marche){
-      //Msg(INFOS, "Unable to Add Point %d (%g,%g,%g)",
+      //Msg(INFO, "Unable to Add Point %d (%g,%g,%g)",
       //	  THEV->Num, THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z );
       count ++;
       double dx = rand_sign() * 1000 * CTX.mesh.rand_factor * LC3D *
@@ -726,7 +726,7 @@ void Maillage_Volume (void *data, void *dum){
     MeshTransfiniteVolume (v);
   }
   else if (v->Typ == 99999){
-    Msg(STATUS, "Nod=0 Elm=0"); 
+    Msg(STATUS3, "Nod=0 Elm=0"); 
 
     LOCAL = &M;
     Create_BgMesh (THEM->BGM.Typ, .2, LOCAL);
@@ -790,7 +790,7 @@ void Maillage_Volume (void *data, void *dum){
     Bgm_With_Points (THEM, LOCAL);
     POINTS_TREE = THEM->Simplexes;
     
-    Msg(INFO, "Mesh 3D... (Final)");
+    Msg(STATUS2, "Mesh 3D... (Final)");
 
     Tree_Right (LOCAL->Simplexes, &simp);
     i = 0;
@@ -823,9 +823,9 @@ void Maillage_Volume (void *data, void *dum){
       if (i % n == n - 1){
         volume = 0.0;
         Tree_Action (LOCAL->Simplexes, VSIM);
-        Msg(STATUS, "Nod=%d Elm=%d",
+        Msg(STATUS3, "Nod=%d Elm=%d",
             Tree_Nbr (LOCAL->Vertices), Tree_Nbr (LOCAL->Simplexes));
-        Msg(SELECT, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
+        Msg(STATUS1, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
         double adv = 100. * (CONV_VALUE / simp->Quality);
         Progress ((int) adv);
       }
@@ -842,23 +842,23 @@ void Maillage_Volume (void *data, void *dum){
 
     if (CTX.mesh.quality){
       extern void SwapEdges3D (Mesh * M, Volume * v, double GammaPrescribed, bool order);
-      Msg(STATUS, "Swapping Edges (1st pass)");
+      Msg(STATUS3, "Swapping Edges (1st pass)");
       SwapEdges3D (THEM, v, CTX.mesh.quality, true);
-      Msg(STATUS, "Swapping Edges (2nd pass)");
+      Msg(STATUS3, "Swapping Edges (2nd pass)");
       SwapEdges3D (THEM, v, CTX.mesh.quality, false);
-      Msg(STATUS, "Swapping Edges (last pass)");
+      Msg(STATUS3, "Swapping Edges (last pass)");
       SwapEdges3D (THEM, v, CTX.mesh.quality, true);
     }
 
     if (CTX.mesh.nb_smoothing){
       /*
-      Msg(STATUS, "Laplacian Smoothing");
+      Msg(STATUS3, "Laplacian Smoothing");
       tnxe = Tree_Create (sizeof (NXE), compareNXE);
       create_NXE (v->Vertices, v->Simplexes, tnxe);
       for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
         Tree_Action (tnxe, ActionLiss);
       Tree_Delete (tnxe);
-      Msg(STATUS, "Swapping Edges (last pass)");
+      Msg(STATUS3, "Swapping Edges (last pass)");
       SwapEdges3D (THEM, v, 0.5, true);
       */
     }

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.6 2001-01-09 19:40:56 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.7 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -57,7 +57,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     if (!strncmp(&String[1], "PTS", 3)) {
 
       fscanf(File_GEO, "%d", &Nbr_Nodes) ;
-      Msg(INFOS, "%d Points", Nbr_Nodes);
+      Msg(INFO, "%d Points", Nbr_Nodes);
 
       for (i_Node = 0 ; i_Node < Nbr_Nodes ; i_Node++) {
         fscanf(File_GEO, "%d %lf %lf %lf %lf %lf", &Num, &x, &y, &z, &lc1, &lc2) ;
@@ -71,7 +71,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     if (!strncmp(&String[1], "NO", 2)) { /* $NOE or $NOD */
 
       fscanf(File_GEO, "%d", &Nbr_Nodes) ;
-      Msg(INFOS, "%d Nodes", Nbr_Nodes);
+      Msg(INFO, "%d Nodes", Nbr_Nodes);
 
       for (i_Node = 0 ; i_Node < Nbr_Nodes ; i_Node++) {
         fscanf(File_GEO, "%d %lf %lf %lf", &Num, &x, &y, &z) ;
@@ -85,7 +85,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     else if (!strncmp(&String[1], "ELM", 3)) {
 
       fscanf(File_GEO, "%d", &Nbr_Elements) ;
-      Msg(INFOS, "%d Elements", Nbr_Elements);
+      Msg(INFO, "%d Elements", Nbr_Elements);
 
       for (i_Element = 0 ; i_Element < Nbr_Elements ; i_Element++) {
         

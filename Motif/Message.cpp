@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.2 2001-01-10 10:06:18 geuzaine Exp $
+// $Id: Message.cpp,v 1.3 2001-01-12 13:29:02 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -95,10 +95,10 @@ void Msg(int level, char *fmt, ...){
       PUT_IN_COMMAND_WIN ;
     }
     break;
-  case INFOS :
+  case INFO :
     if(CTX.interactive || !CTX.command_win){
       if(CTX.verbosity > 1){
-        fprintf(stderr, INFOS_STR);
+        fprintf(stderr, INFO_STR);
         vfprintf(stderr, fmt, args); 
         fprintf(stderr, "\n");
       }
@@ -107,10 +107,10 @@ void Msg(int level, char *fmt, ...){
       PUT_IN_COMMAND_WIN ;
     }
     break;
-  case INFO :
+  case STATUS2 :
     if(CTX.interactive){
       if(CTX.verbosity > 1){
-        fprintf(stderr, INFO_STR);
+        fprintf(stderr, STATUS_STR);
         vfprintf(stderr, fmt, args);
         fprintf(stderr, "\n");
       }
@@ -122,10 +122,10 @@ void Msg(int level, char *fmt, ...){
       XmUpdateDisplay(WID.G.infoLabel);
     }
     break;
-  case SELECT :
+  case STATUS1:
     if(CTX.interactive){
       if(CTX.verbosity > 1){
-        fprintf(stderr, SELECT_STR);
+        fprintf(stderr, STATUS_STR);
         vfprintf(stderr, fmt, args); 
         fprintf(stderr, "\n");
       }
@@ -137,7 +137,7 @@ void Msg(int level, char *fmt, ...){
       XmUpdateDisplay(WID.G.selectLabel);
     }
     break;
-  case STATUS :
+  case STATUS3:
     if(CTX.interactive){
       if(CTX.verbosity > 1){
         fprintf(stderr, STATUS_STR);

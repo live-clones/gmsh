@@ -1,4 +1,4 @@
-// $Id: CbGeom.cpp,v 1.3 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: CbGeom.cpp,v 1.4 2001-01-12 13:29:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -89,7 +89,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_NEW_BSPLINE :
     n=0;
     while(1){
-      Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+      Msg(STATUS3,"Select Point ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
         p[n++] = v->Num; 
@@ -119,9 +119,9 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_NEW_CIRCLE :
     n=0;
     while(1){
-      if(n == 0) Msg(STATUS,"Select Center ('q'=quit)");
-      if(n == 1) Msg(STATUS,"Select Starting Point ('q'=quit)");
-      if(n == 2) Msg(STATUS,"Select Ending Point ('q'=quit)");
+      if(n == 0) Msg(STATUS3,"Select Center ('q'=quit)");
+      if(n == 1) Msg(STATUS3,"Select Starting Point ('q'=quit)");
+      if(n == 2) Msg(STATUS3,"Select Ending Point ('q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1) { /* left mouse butt */
         p[n++] = v->Num; 
@@ -144,10 +144,10 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_NEW_ELLIPSIS :
     n = 0;
     while(1){
-      if(n == 0) Msg(STATUS,"Select Center ('q'=quit)");
-      if(n == 1) Msg(STATUS,"Select an Axis Point ('q'=quit)");
-      if(n == 2) Msg(STATUS,"Select Starting Point ('q'=quit)");
-      if(n == 3) Msg(STATUS,"Select Ending Point ('q'=quit)");
+      if(n == 0) Msg(STATUS3,"Select Center ('q'=quit)");
+      if(n == 1) Msg(STATUS3,"Select an Axis Point ('q'=quit)");
+      if(n == 2) Msg(STATUS3,"Select Starting Point ('q'=quit)");
+      if(n == 3) Msg(STATUS3,"Select Ending Point ('q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1) { /* left mouse butt */
         p[n++] = v->Num; 
@@ -183,7 +183,7 @@ void geom_event_handler (int event) {
       List_Reset(Liste2);
       
       while(1) {        
-        Msg(STATUS,"Select Boundary ('q'=quit)");
+        Msg(STATUS3,"Select Boundary ('q'=quit)");
         ib = SelectEntity(type, &v,&c,&s);
         if(ib <= 0){
           ZeroHighlight(&M);
@@ -198,7 +198,7 @@ void geom_event_handler (int event) {
           List_Reset(Liste1);
           List_Add(Liste2,&zone);
           while(1){
-            Msg(STATUS,"Select Holes ('q'=quit)");
+            Msg(STATUS3,"Select Holes ('q'=quit)");
             ib = SelectEntity(type, &v,&c,&s); 
             if(ib <= 0){
               ZeroHighlight(&M);
@@ -236,7 +236,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_TRANSLATE_POINT :
   case GEOM_ELEM_MOVE_TRANSLATE_POINT :
     while(1){
-      Msg(STATUS,"Select Point ('q'=quit)");
+      Msg(STATUS3,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -250,7 +250,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_TRANSLATE_LINE :
   case GEOM_ELEM_MOVE_TRANSLATE_LINE :
     while(1){
-      Msg(STATUS,"Select Line ('q'=quit)");
+      Msg(STATUS3,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -264,7 +264,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_TRANSLATE_SURF :
   case GEOM_ELEM_MOVE_TRANSLATE_SURF :
     while(1){
-      Msg(STATUS,"Select Surface ('q'=quit)");
+      Msg(STATUS3,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -280,7 +280,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_ROTATE_POINT :
   case GEOM_ELEM_MOVE_ROTATE_POINT :
     while(1){
-      Msg(STATUS,"Select Point ('q'=quit)");
+      Msg(STATUS3,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -294,7 +294,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_ROTATE_LINE :
   case GEOM_ELEM_MOVE_ROTATE_LINE :
     while(1){
-      Msg(STATUS,"Select Line ('q'=quit)");
+      Msg(STATUS3,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -308,7 +308,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_ROTATE_SURF :
   case GEOM_ELEM_MOVE_ROTATE_SURF :
     while(1){
-      Msg(STATUS,"Select Surface ('q'=quit)");
+      Msg(STATUS3,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -325,7 +325,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_EXTRUDE_TRANSLATE_POINT :
   case GEOM_ELEM_EXTRUDE_ROTATE_POINT :
     while(1){
-      Msg(STATUS,"Select Point ('q'=quit)");
+      Msg(STATUS3,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot(); 
@@ -341,7 +341,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_EXTRUDE_TRANSLATE_LINE :
   case GEOM_ELEM_EXTRUDE_ROTATE_LINE :
     while(1){
-      Msg(STATUS,"Select Line ('q'=quit)");
+      Msg(STATUS3,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -357,7 +357,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_EXTRUDE_TRANSLATE_SURF :
   case GEOM_ELEM_EXTRUDE_ROTATE_SURF :
     while(1){
-      Msg(STATUS,"Select Surface ('q'=quit)");
+      Msg(STATUS3,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -377,7 +377,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_SYMMETRY_POINT :
   case GEOM_ELEM_MOVE_SYMMETRY_POINT :
     while(1){
-      Msg(STATUS,"Select Point ('q'=quit)");
+      Msg(STATUS3,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -406,7 +406,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_SYMMETRY_LINE :
   case GEOM_ELEM_MOVE_SYMMETRY_LINE :
     while(1){
-      Msg(STATUS,"Select Line ('q'=quit)");
+      Msg(STATUS3,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -435,7 +435,7 @@ void geom_event_handler (int event) {
   case GEOM_ELEM_ADD_SYMMETRY_SURF :
   case GEOM_ELEM_MOVE_SYMMETRY_SURF :
     while(1){
-      Msg(STATUS,"Select Surface ('q'=quit)");
+      Msg(STATUS3,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -465,7 +465,7 @@ void geom_event_handler (int event) {
 
   case GEOM_ELEM_DELETE_POINT :
     while(1){
-      Msg(STATUS,"Select Point ('q'=quit)");
+      Msg(STATUS3,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -478,20 +478,20 @@ void geom_event_handler (int event) {
     break;
   case GEOM_ELEM_DELETE_LINE :
     while(1){
-      Msg(STATUS,"Select Line ('q'=quit)");
+      Msg(STATUS3,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
         break;
       }
-      del(c->Num,CTX.filename, "Line");
+      delet(c->Num,CTX.filename, "Line");
       ZeroHighlight(&M);
       Replot();
     }
     break;
   case GEOM_ELEM_DELETE_SURF :
     while(1){
-      Msg(STATUS,"Select Point ('q'=quit)");
+      Msg(STATUS3,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
         ZeroHighlight(&M);
         Replot();
@@ -505,7 +505,7 @@ void geom_event_handler (int event) {
 
 
   case GEOM_ELEM_SKETCH :
-    Msg(STATUS,"Verifying Geometry");
+    Msg(STATUS3,"Verifying Geometry");
     add_infile("Coherence;",CTX.filename);
     ZeroHighlight(&M);
     Replot();
@@ -518,15 +518,15 @@ void geom_event_handler (int event) {
     while(1){
       switch(event){
         case GEOM_PHYS_ADD_POINT:
-          Msg(STATUS,"Select Point ('e'=end, 'q'=quit)"); 
+          Msg(STATUS3,"Select Point ('e'=end, 'q'=quit)"); 
           type = ENT_POINT;
           break;
         case GEOM_PHYS_ADD_LINE:
-          Msg(STATUS,"Select Line ('e'=end, 'q'=quit)"); 
+          Msg(STATUS3,"Select Line ('e'=end, 'q'=quit)"); 
           type = ENT_LINE;
           break;
         case GEOM_PHYS_ADD_SURF:
-          Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)"); 
+          Msg(STATUS3,"Select Surface ('e'=end, 'q'=quit)"); 
           type = ENT_SURFACE;
           break;
       }
@@ -575,7 +575,7 @@ void geom_event_handler (int event) {
 
   }
 
-  Msg(STATUS,"Ready");
+  Msg(STATUS3,"Ready");
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.7 2001-01-12 00:43:05 geuzaine Exp $
+// $Id: Message.cpp,v 1.8 2001-01-12 13:28:55 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -51,109 +51,84 @@ void Signal (int sig_num){
 
 void Msg(int level, char *fmt, ...){
   va_list  args;
-  int      abort=0, verb;
-  char     *str;
-  static char buff1[1024], buff2[1024];
-
-  if(level != FATAL && level != GERROR && level != PARSER_ERROR &&
-     CTX.interactive && !CTX.verbosity) 
-    return ;
-
-  WID->check();
-
-  va_start (args, fmt);
+  int      abort = 0, verb = 0, window = -1, log = 1;
+  char     *str = NULL;
 
   switch(level){
-  case INFO :
-    if(CTX.interactive){
-      if(CTX.verbosity > 1){
-        fprintf(stderr, INFO_STR);
-        vfprintf(stderr, fmt, args);
-        fprintf(stderr, "\n");
-      }
-    }
-    else{
-      static char buffer[128];
-      vsprintf(buffer, fmt, args);
-      WID->set_status(buffer, 1) ;
-    }
-    va_end (args);
-    return ;
-  case SELECT :
-    if(CTX.interactive){
-      if(CTX.verbosity > 1){
-        fprintf(stderr, SELECT_STR);
-        vfprintf(stderr, fmt, args); 
-        fprintf(stderr, "\n");
-      }
-    }
-    else{
-      static char buffer[128];
-      vsprintf(buffer, fmt, args);
-      WID->set_status(buffer, 0) ;
-    }
-    va_end (args);
-    return ;
-  case STATUS :
-    if(CTX.interactive){
-      if(CTX.verbosity > 1){
-        fprintf(stderr, STATUS_STR);
-        vfprintf(stderr, fmt, args);
-        fprintf(stderr, "\n");
-      }
-    }
-    else{
-      static char buffer[128];
-      vsprintf(buffer, fmt, args);
-      WID->set_status(buffer, 2) ;
-    }
-    va_end (args);
-    return ;
-  }
+  case STATUS1N : log = 0; //fallthrough
+  case STATUS1  : window = 0; break ;
+  case STATUS2N : log = 0; //fallthrough
+  case STATUS2  : window = 1; break ;
+  case STATUS3N : log = 0; //fallthrough
+  case STATUS3  : window = 2; break ;
 
-  switch(level){
-  case FATAL : str = FATAL_STR ; abort = 1; verb=0; break ;
-  case FATAL1 : str = FATAL_STR ; abort = 0; verb=0; break ;
-  case FATAL2 : str = FATAL_NIL ; abort = 0; verb=0; break ;
-  case FATAL3 : str = FATAL_NIL ; abort = 1; verb=0; break ;
-  case GERROR :
-  case GERROR1 : str = ERROR_STR ; verb = 0; break ;
-  case GERROR2 : 
-  case GERROR3 : str = ERROR_NIL ; verb = 0; break ;
-  case WARNING : 
-  case WARNING1 : str = WARNING_STR ; verb = 1; break ;
-  case WARNING2 : 
-  case WARNING3 : str = WARNING_NIL ; verb = 1; break ;
-  case INFOS :
-  case INFOS1 : str = INFOS_STR ; verb = 2; break ;
-  case INFOS2 :
-  case INFOS3 : str = INFOS_NIL ; verb = 2; break ;
-  case PARSER_ERROR : str = PARSER_ERROR_STR ; verb = 0; break ;
+  case FATAL    : str = FATAL_STR; abort = 1; break ;
+  case FATAL1   : str = FATAL_STR; break ;
+  case FATAL2   : str = FATAL_NIL; break ;
+  case FATAL3   : str = FATAL_NIL; abort = 1; break ;
+				     		  
+  case GERROR   : 		     		  
+  case GERROR1  : str = ERROR_STR; break ;
+  case GERROR2  : 		     
+  case GERROR3  : str = ERROR_NIL; break ;
+				     	  
+  case WARNING  : 		     	  
+  case WARNING1 : str = WARNING_STR; verb = 1; break ;
+  case WARNING2 : 		     	  
+  case WARNING3 : str = WARNING_NIL; verb = 1; break ;
+				     	  
+  case INFO     :		     	  
+  case INFO1    : str = INFO_STR; verb = 2; break ;
+  case INFO2    :		     	  
+  case INFO3    : str = INFO_NIL; verb = 2; break ;
+				     	  
+  case DEBUG    :		     	  
+  case DEBUG1   : str = DEBUG_STR; verb = 3; break ;
+  case DEBUG2   :		     	  
+  case DEBUG3   : str = DEBUG_NIL; verb = 3; break ;
+
+  case PARSER_ERROR : str = PARSER_ERROR_STR ; break ;
+
   case PARSER_INFO : str = PARSER_INFO_STR ; verb = 2; break ;
-  case DEBUG :
-  case DEBUG1 : str = DEBUG_STR ; verb = 3; break ;
-  case DEBUG2 :
-  case DEBUG3 : str = DEBUG_NIL ; verb = 3; break ;
-  default : str = NULL ; verb = 3; break ;
+
+  case LOG_INFO : verb = 2 ; window = 3; break ;
+
+  default : return;
   }
+
+  static char buff1[1024], buff2[1024], buff[4][1024];
+
+  if(CTX.interactive){
+    if(verb) return;
+    window = -1;
+  }
+  else 
+    WID->check();
 
   if(CTX.verbosity >= verb){
-    strcpy(buff1, "@C1");
-    if(str) strcat(buff1, str);
-    vsprintf(buff2, fmt, args); 
-    strcat(buff1,buff2);
-    fprintf(stderr, "%s\n", &buff1[3]);
-    if(!CTX.interactive){
-      if(verb<2)
-	WID->add_message(buff1);
-      else
-	WID->add_message(&buff1[3]);
+    va_start (args, fmt);
+
+    if(window >= 0){
+      vsprintf(buff[window], fmt, args); 
+      if(window <= 2) WID->set_status(buff[window], window);
+      if(log && strlen(buff[window])) WID->add_message(buff[window]);
     }
+    else{
+      strcpy(buff1, "@C1");
+      if(str && window<0) strcat(buff1, str);
+      vsprintf(buff2, fmt, args); 
+      strcat(buff1,buff2);
+      fprintf(stderr, "%s\n", &buff1[3]);
+      if(!CTX.interactive){
+	if(verb<2)
+	  WID->add_message(buff1);
+	else
+	  WID->add_message(&buff1[3]);
+	if(!verb) WID->create_message_window();
+      }
+    }
+    va_end (args);
   }
-
-  va_end (args);
-
-  if(!verb) WID->create_message_window();
 
   if(abort){
     WID->save_message("error.log");

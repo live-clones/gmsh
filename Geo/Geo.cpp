@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.15 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: Geo.cpp,v 1.16 2001-01-12 13:28:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -72,7 +72,7 @@ void add_infile(char *text, char *fich){
     return;
   }
   fprintf(yyin,"%s\n",text);
-  Msg(SELECT,"%s",text);
+  Msg(STATUS1,"%s",text);
   fclose(yyin);
   yyin = fopen("gmsh.tmp","r");
   while(!feof(yyin)){

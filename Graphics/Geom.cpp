@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.11 2001-01-11 14:11:57 geuzaine Exp $
+// $Id: Geom.cpp,v 1.12 2001-01-12 13:28:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -481,7 +481,7 @@ void Draw_Plane_Surface (Surface *s){
     }
     if(k)List_Add(s->Orientations,&vv);
 
-    Msg(INFO, "Plane Surface %d (%d points)",s->Num,List_Nbr(s->Orientations)); 
+    Msg(STATUS2, "Plane Surface %d (%d points)",s->Num,List_Nbr(s->Orientations)); 
   }
 
   if(CTX.geom.surfaces){
@@ -814,7 +814,7 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
   if(v){
     if(permanent) v->Frozen = 1;
     if(CTX.geom.highlight) Draw_GeoPoint(&v,NULL);
-    Msg(SELECT,"Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
+    Msg(STATUS1N,"Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
   }
   else if(c){
     if(permanent) c->ipar[3] = 1;
@@ -822,7 +822,7 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
 
     List_Read(c->Control_Points,0,&v1);
     List_Read(c->Control_Points,List_Nbr(c->Control_Points)-1,&v2);
-    Msg(SELECT,"Curve %d  {%d->%d}",c->Num,v1->Num,v2->Num);
+    Msg(STATUS1N,"Curve %d  {%d->%d}",c->Num,v1->Num,v2->Num);
   }
   else if(s){
     if(permanent && s->Mat == 1) return;
@@ -844,10 +844,10 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
       strcat(Message,"...");
     }
     strcat(Message,"}");
-    Msg(SELECT,Message);
+    Msg(STATUS1N,Message);
   }
   else{
-    Msg(SELECT," ");
+    Msg(STATUS1N," ");
   }
 
 }

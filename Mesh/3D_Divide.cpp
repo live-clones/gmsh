@@ -1,4 +1,4 @@
-// $Id: 3D_Divide.cpp,v 1.9 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: 3D_Divide.cpp,v 1.10 2001-01-12 13:29:00 geuzaine Exp $
 
 /* Routine de division des elements tetraedriques
    ou triangulaires
@@ -56,11 +56,11 @@ void Remise_A_Zero (void){
 
 void Impression_Resultats (void){
 
-  Msg(INFOS1, "===================================================");
-  Msg(INFOS2, "Surface Coherence Results (Number of Intersections)");
-  Msg(INFOS2, "%d EV, %d EE, %d FV, %d FF, %d FE, %d EEE, %d EEEE",
+  Msg(INFO1, "===================================================");
+  Msg(INFO2, "Surface Coherence Results (Number of Intersections)");
+  Msg(INFO2, "%d EV, %d EE, %d FV, %d FF, %d FE, %d EEE, %d EEEE",
       EV, EE, FV, FF, FE, EEE, EEEE);
-  Msg(INFOS3, "===================================================");
+  Msg(INFO3, "===================================================");
 	  
 }
 
@@ -73,7 +73,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   Simplex *news;
   Vertex *e1;
 
-  Msg(INFOS, "Prism Cut");
+  Msg(INFO, "Prism Cut");
 
   /* test des meilleures aretes a creer */
   /*
@@ -213,7 +213,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   else if (are_exists (v6, v1) &&
            are_exists (v5, v3) &&
            are_exists (v4, v2)) {
-    Msg(INFOS, "Found Steiner Prism 1!");
+    Msg(INFO, "Found Steiner Prism 1!");
     
     e1 = Create_Vertex 
       (++CurrentNodeNumber,
@@ -246,7 +246,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   else if (are_exists (v4, v3) &&
            are_exists (v6, v2) &&
            are_exists (v5, v1)){
-    Msg(INFOS, "Found Steiner Prism 2!");
+    Msg(INFO, "Found Steiner Prism 2!");
 
     e1 = Create_Vertex 
       (++CurrentNodeNumber,

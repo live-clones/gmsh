@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.22 2001-01-09 19:40:56 remacle Exp $
+// $Id: Views.cpp,v 1.23 2001-01-12 13:28:54 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -281,7 +281,7 @@ bool FreeView(int num){
   List_Suppress(Post_ViewList, v, fcmpPostViewNum);
   CTX.post.nb_views = List_Nbr(Post_ViewList);
 
-  Msg(INFOS, "View %d deleted (%d views left)",num, List_Nbr(Post_ViewList));
+  Msg(INFO, "View %d deleted (%d views left)",num, List_Nbr(Post_ViewList));
   return true;
 }
 
@@ -530,7 +530,7 @@ void Read_View(FILE *file, char *filename){
       if(format == LIST_FORMAT_BINARY){
 	fread(&testone, sizeof(int), 1, file);
 	if(testone != 1){
-	  Msg(INFOS, "Swapping Bytes from Binary File");
+	  Msg(INFO, "Swapping Bytes from Binary File");
 	  swap = 1;
 	}
       }

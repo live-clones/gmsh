@@ -1,4 +1,4 @@
-// $Id: 2D_Cylindrical.cpp,v 1.4 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Cylindrical.cpp,v 1.5 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -17,9 +17,9 @@ void ChangePi (void *a, void *dum){
   v = *(Vertex **) a;
 
   if ((v->Pos.X / SURF->Cyl.radius1) >= TETAMIN + .99999 * Pi){
-    Msg(INFOS, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
+    Msg(INFO, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
     v->Pos.X -= (2. * Pi) * SURF->Cyl.radius1;
-    Msg(INFOS, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
+    Msg(INFO, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
   }
 }
 

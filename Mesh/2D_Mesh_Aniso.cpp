@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.10 2001-01-09 19:40:56 remacle Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.11 2001-01-12 13:29:00 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -301,7 +301,7 @@ void Recover_Edge (Surface * s, Edge * e, EdgesContainer & Edges){
   coquille = List_Create (3, 3, sizeof (Edge *));
   /*On cherche la coquille */
   Tree_Action (Edges.AllEdges, putaindecoquille_2D);
-  Msg(INFOS, "Edge %d->%d, %d Intersections", 
+  Msg(INFO, "Edge %d->%d, %d Intersections", 
       e->V[0]->Num, e->V[1]->Num, List_Nbr (coquille));
 
   if(List_Nbr(coquille)==1){
@@ -330,7 +330,7 @@ void Recover_Edge (Surface * s, Edge * e, EdgesContainer & Edges){
 
   List_Delete (coquille);
 
-  Msg(INFOS, "Edge Recovered");
+  Msg(INFO, "Edge Recovered");
   /*On swappe */
 }
 
@@ -376,7 +376,7 @@ void missing_edges_2d (Surface * s){
       e.V[0] = v1;
       e.V[1] = v2;
       if (!EdgesOnSurface.Search (v1, v2)) {
-        Msg(INFOS, "Missing Edge %d->%d", v1->Num, v2->Num);
+        Msg(INFO, "Missing Edge %d->%d", v1->Num, v2->Num);
         Recover_Edge (s, &e, EdgesOnSurface);
       }
     }
@@ -662,7 +662,7 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
 
   N = List_Nbr (Points);
 
-  Msg(INFO, "Mesh 2D... (Initial)");
+  Msg(STATUS2, "Mesh 2D... (Initial)");
 
   Box_2_Triangles (Points, s);
   for (i = 0; i < N; i++){
@@ -673,7 +673,7 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
       if(i%n == n-1){
         volume = 0.0;
         Tree_Action(s->Simplexes,VSIM_2D);
-        Msg(STATUS, %d->%d Nodes, %d Elements",i+1,N,Tree_Nbr(s->Simplexes));
+        Msg(STATUS3, %d->%d Nodes, %d Elements",i+1,N,Tree_Nbr(s->Simplexes));
       } 
     */
     if (!THES){
@@ -848,7 +848,7 @@ void Restore_Surface (Surface * s){
     iSurface = isListaSurface (ListCurves, s);
     
     N = Tree_Nbr (keep);
-    Msg (INFOS, "Initial Mesh of Surface %d: %d Simplices, %d/%d Curves, %d Faces",
+    Msg(INFO, "Initial Mesh of Surface %d: %d Simplices, %d/%d Curves, %d Faces",
          iSurface, N, List_Nbr (ListCurves), List_Nbr (ListAllCurves),
          Tree_Nbr (FacesTree));
 
@@ -1053,8 +1053,8 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
              (simp->S[1] == &MyNewBoundary || !simp->S[1]->Pt_In_Simplex_2D (newv)) &&
              (simp->S[2] == &MyNewBoundary || !simp->S[2]->Pt_In_Simplex_2D (newv))){
         /*
-          Msg(INFO,"pt : %12.5E %12.5E",newv->Pos.X,newv->Pos.Y);
-          Msg(INFO,"not in : (%12.5E %12.5E) (%12.5E %12.5E) (%12.5E %12.5E)",
+          Msg(STATUS2,"pt : %12.5E %12.5E",newv->Pos.X,newv->Pos.Y);
+          Msg(STATUS2,"not in : (%12.5E %12.5E) (%12.5E %12.5E) (%12.5E %12.5E)",
           simp->V[0]->Pos.X,simp->V[0]->Pos.Y,simp->V[1]->Pos.X,
           simp->V[1]->Pos.Y,simp->V[2]->Pos.X,simp->V[2]->Pos.Y);
         */
@@ -1072,9 +1072,9 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
       if (i % n == n - 1){
         volume = 0.0;
         Tree_Action (s->Simplexes, VSIM_2D);
-        Msg(STATUS, "Nod=%d Elm=%d",
+        Msg(STATUS3, "Nod=%d Elm=%d",
             Tree_Nbr (s->Vertices), Tree_Nbr (s->Simplexes));
-        Msg(SELECT, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
+        Msg(STATUS1, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
       }
       Bowyer_Watson_2D (s, newv, simp, 0);
       Tree_Right (s->Simplexes, &simp);

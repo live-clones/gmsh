@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.7 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: Create.cpp,v 1.8 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -489,7 +489,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
   else {
     if ((v = FindVertex (p1, THEM))){
       pC->beg = v;
-      Msg(INFOS, "Curve %d First Control Point %d ", pC->Num, v->Num);
+      Msg(INFO, "Curve %d First Control Point %d ", pC->Num, v->Num);
     }
     else{
       List_Read (pC->Control_Points, 0, &pC->beg);
@@ -497,7 +497,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
     }
     if ((v = FindVertex (p2, THEM))){
       pC->end = v;
-      Msg(INFOS, "Curve %d First Control Point %d ", pC->Num, v->Num);
+      Msg(INFO, "Curve %d First Control Point %d ", pC->Num, v->Num);
     }
     else{
       List_Read (pC->Control_Points, List_Nbr (pC->Control_Points) - 1, &pC->end);

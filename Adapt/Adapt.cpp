@@ -1,4 +1,4 @@
-// $Id: Adapt.cpp,v 1.4 2001-01-09 19:40:56 remacle Exp $
+// $Id: Adapt.cpp,v 1.5 2001-01-12 13:28:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Adapt.h"
@@ -134,7 +134,7 @@ double AdaptMesh (int N,        /* Number of elements */
     }
     contr = fabs(minf);
 
-    Msg(INFOS, "H-Refinement 1, Error %g=>%g, Objective %g, Reduction Factor %g->%g",
+    Msg(INFO, "H-Refinement 1, Error %g=>%g, Objective %g, Reduction Factor %g->%g",
         e0, sqrt(obj), -minf, minri, maxri);
     break;
 
@@ -153,7 +153,7 @@ double AdaptMesh (int N,        /* Number of elements */
     }
     contr = sqrt(fabs(minf));
 
-    Msg(INFOS, "H-Refinement 2, Elements %g=>%g, Objective %g, Reduction Factor %g->%g",
+    Msg(INFO, "H-Refinement 2, Elements %g=>%g, Objective %g, Reduction Factor %g->%g",
         e0, obj, 100. * sqrt(fabs(minf)), minri, maxri);
     break;
 
@@ -175,7 +175,7 @@ double AdaptMesh (int N,        /* Number of elements */
     }
     contr = fabs(minf);
 
-    Msg(INFOS, "P-Refinement, Error %g=%g=>%g, Objective %g",
+    Msg(INFO, "P-Refinement, Error %g=%g=>%g, Objective %g",
         e0, sqrt(obj), sqrt(obj2), minf);
     break;
 

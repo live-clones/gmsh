@@ -1,4 +1,4 @@
-// $Id: CbContext.cpp,v 1.3 2001-01-10 08:50:31 geuzaine Exp $
+// $Id: CbContext.cpp,v 1.4 2001-01-12 13:29:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -149,135 +149,135 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     XtVaSetValues(WID.M.modButt, XmNlabelString, XmStringCreateSimple("Geometry"), NULL);
     CTX.geom.level = ELEMENTARY;
     //if(M.status>0) mesh_event_handler(MESH_DELETE);
-    Msg(INFO, "");
+    Msg(STATUS2, "");
     ButtonText = txt_geom;
     break;
 
   case CONTEXT_GEOM_ELEM :
     actual_global_context = CONTEXT_GEOM;
     CTX.geom.level = ELEMENTARY;
-    Msg(INFO, "Elementary");
+    Msg(STATUS2, "Elementary");
     ButtonText = txt_elem;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD :       
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Add");
+    Msg(STATUS2, "Elementary Add");
     ButtonText = txt_add;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_NEW :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Add Create");
+    Msg(STATUS2, "Elementary Add Create");
     ButtonText = txt_new;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_TRANSLATE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Add Translate");
+    Msg(STATUS2, "Elementary Add Translate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_ROTATE : 
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Add Rotate");
+    Msg(STATUS2, "Elementary Add Rotate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_DILATE : 
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Add Dilate"); 
+    Msg(STATUS2, "Elementary Add Dilate"); 
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_SYMMETRY :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Add Symmetry");
+    Msg(STATUS2, "Elementary Add Symmetry");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Move");
+    Msg(STATUS2, "Elementary Move");
     ButtonText = txt_move;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE_TRANSLATE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Move Translate");
+    Msg(STATUS2, "Elementary Move Translate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE_ROTATE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Move Rotate");
+    Msg(STATUS2, "Elementary Move Rotate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE_DILATE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Move Dilate");
+    Msg(STATUS2, "Elementary Move Dilate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE_SYMMETRY :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Move Symmetry");
+    Msg(STATUS2, "Elementary Move Symmetry");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Extrude");
+    Msg(STATUS2, "Elementary Extrude");
     ButtonText = txt_move;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE_TRANSLATE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Extrude Translate");
+    Msg(STATUS2, "Elementary Extrude Translate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE_ROTATE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Extrude Rotate");
+    Msg(STATUS2, "Elementary Extrude Rotate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE_DILATE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Extrude Dilate");
+    Msg(STATUS2, "Elementary Extrude Dilate");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE_SYMMETRY :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Extrude Symmetry");
+    Msg(STATUS2, "Elementary Extrude Symmetry");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_DELETE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Delete");
+    Msg(STATUS2, "Elementary Delete");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_PHYS :
     actual_global_context = CONTEXT_GEOM;
     CTX.geom.level = PHYSICAL;
-    Msg(INFO, "Physical");
+    Msg(STATUS2, "Physical");
     ButtonText = txt_phys;
     break;
 
   case CONTEXT_GEOM_PHYS_ADD :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Physical Add");
+    Msg(STATUS2, "Physical Add");
     ButtonText = txt_phys_add;
     break;
 
   case CONTEXT_GEOM_PHYS_DELETE :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Physical Delete");
+    Msg(STATUS2, "Physical Delete");
     ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
@@ -285,13 +285,13 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     actual_global_context = CONTEXT_MESH;
     XtVaSetValues(WID.M.modButt, XmNlabelString, 
                   XmStringCreateSimple("Mesh"), NULL); 
-    Msg(INFO,"");
+    Msg(STATUS2,"");
     ButtonText = txt_mesh;
     break;
 
   case CONTEXT_MESH_DEFINE :
     actual_global_context = CONTEXT_MESH;
-    Msg(INFO,"Define");
+    Msg(STATUS2,"Define");
     ButtonText = txt_mesh_define;
     break;
 
@@ -299,7 +299,7 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     actual_global_context = CONTEXT_POST;
     XtVaSetValues(WID.M.modButt, XmNlabelString, 
                   XmStringCreateSimple("Post Processing"), NULL);
-    Msg(INFO,"");
+    Msg(STATUS2,"");
     UpdatePostButtons();
     return;    
 

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.14 2001-01-09 19:40:56 remacle Exp $
+// $Id: CAD.cpp,v 1.15 2001-01-12 13:28:57 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1164,7 +1164,7 @@ bool IntersectAllSegmentsTogether (void) {
         List_Read(TempList,j,&c2);
         if(c1->Num > 0 && c2->Num >0 && i!=j && intersectionfound == false){
           if(IntersectCurves(c1,c2,&c11,&c12,&c21,&c22,&v)){
-            Msg(INFOS, "Intersection Curve %d->%d",c1->Num,c2->Num);
+            Msg(INFO, "Intersection Curve %d->%d",c1->Num,c2->Num);
             intersectionfound = true;
             DeleteCurve(c1->Num);
             DeleteCurve(c2->Num);

@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.4 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.5 2001-01-12 13:29:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -109,7 +109,7 @@ void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
     if(!RECNUM)break;
   }
 
-  Msg(INFO, "Recombined %d Quadrangles",ntot); 
+  Msg(STATUS2, "Recombined %d Quadrangles",ntot); 
 
   THEM->Statistics[7] -= ntot/2; 
   THEM->Statistics[8] += ntot; 

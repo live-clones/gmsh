@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.31 2001-01-11 12:53:57 geuzaine Exp $
+// $Id: Context.cpp,v 1.32 2001-01-12 13:28:54 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -280,8 +280,8 @@ void Print_Context(char *filename){
   Print_ColorOptions(PrintOptions_Color, "Print.", file);
 
   if(filename){
-    Msg (INFOS, "Options Output Complete '%s'", filename);
-    Msg (INFO, "Wrote File '%s'", filename);
+    Msg(INFO, "Options Output Complete '%s'", filename);
+    Msg(STATUS2, "Wrote File '%s'", filename);
     fclose(file);
   }
 }

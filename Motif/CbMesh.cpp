@@ -1,4 +1,4 @@
-// $Id: CbMesh.cpp,v 1.2 2001-01-11 07:32:35 geuzaine Exp $
+// $Id: CbMesh.cpp,v 1.3 2001-01-12 13:29:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -31,7 +31,7 @@ void* StartMeshThread(void * data){
   //  pthread_mutex_unlock(&MeshMutex);
 
   mai3d(&M,MeshDim);
-  Msg(STATUS,"Ready");
+  Msg(STATUS3,"Ready");
   CTX.mesh.draw = 1;
   CTX.threads_lock = 0;
   XtSetSensitive(WID.G.Butt[6], 0);
@@ -51,9 +51,9 @@ void CancelMeshThread(void){
     CTX.mesh.draw = 1;
     CTX.threads_lock = 0;
     XtSetSensitive(WID.G.Butt[6], 0);    
-    Msg(INFO,"Mesh Aborted");
+    Msg(STATUS2,"Mesh Aborted");
     mesh_event_handler(MESH_DELETE);
-    Msg(STATUS,"Ready");
+    Msg(STATUS3,"Ready");
     Init();
     Draw();
   }
@@ -130,7 +130,7 @@ void mesh_event_handler (int event) {
   case MESH_DEFINE_CHAR_LENGTH :
     n=0;
     while(1){
-      Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+      Msg(STATUS3,"Select Point ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
         p[n++] = v->Num; 
@@ -155,7 +155,7 @@ void mesh_event_handler (int event) {
   case MESH_DEFINE_RECOMBINE :
     n=0;
     while(1){
-      Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
+      Msg(STATUS3,"Select Surface ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
         p[n++] = s->Num; 
@@ -184,11 +184,11 @@ void mesh_event_handler (int event) {
     while(1){
       switch (event) {    
       case MESH_DEFINE_TRSF_LINE :
-        Msg(STATUS,"Select Line ('e'=end, 'q'=quit)");
+        Msg(STATUS3,"Select Line ('e'=end, 'q'=quit)");
         ib = SelectEntity(ENT_LINE, &v,&c,&s);
         break ;
       case MESH_DEFINE_TRSF_SURFACE :
-        Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
+        Msg(STATUS3,"Select Surface ('e'=end, 'q'=quit)");
         ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
         break;
       case MESH_DEFINE_TRSF_VOLUME :
@@ -201,7 +201,7 @@ void mesh_event_handler (int event) {
         case MESH_DEFINE_TRSF_SURFACE : p[n++] = s->Num;
         case MESH_DEFINE_TRSF_VOLUME :
           while(1){
-            Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+            Msg(STATUS3,"Select Point ('e'=end, 'q'=quit)");
             ib = SelectEntity(ENT_POINT, &v,&c,&s);
             if(ib == 1){ /* left mouse butt */
               p[n++] = v->Num ;
@@ -212,13 +212,13 @@ void mesh_event_handler (int event) {
                 if(n == 3+1 || n == 4+1)
                   add_trsfsurf(n,p,CTX.filename); 
                 else
-                  Msg(INFO, "Wrong Number of Points for Transfinite Surface");
+                  Msg(STATUS2, "Wrong Number of Points for Transfinite Surface");
                 break;
               case MESH_DEFINE_TRSF_VOLUME :
                 if(n == 6 || n == 8)
                   add_trsfvol(n,p,CTX.filename);
                 else
-                  Msg(INFO, "Wrong Number of Points for Transfinite Volume");
+                  Msg(STATUS2, "Wrong Number of Points for Transfinite Volume");
                 break;
               }
               n=0;
@@ -265,7 +265,7 @@ void mesh_event_handler (int event) {
   }
 
   if(!CTX.threads){
-    Msg(STATUS,"Ready");
+    Msg(STATUS3,"Ready");
     Init();
     Draw();
   }

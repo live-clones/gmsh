@@ -479,7 +479,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     }
   }
   else{ // geometry and mesh contexts
-    Msg(INFO, menu[0].label+1);
+    Msg(STATUS2, menu[0].label+1);
     for(i=0 ; i < NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();
@@ -1326,8 +1326,8 @@ void GUI::save_message(char *name){
   for(int i = 1 ; i<=msg_browser->size() ; i++)
     fprintf(fp, "%s\n", msg_browser->text(i));
 
-  Msg(INFOS, "Log Creation Complete '%s'", name);
-  Msg (INFO, "Wrote File '%s'", name);
+  Msg(INFO, "Log Creation Complete '%s'", name);
+  Msg(STATUS2, "Wrote File '%s'", name);
   fclose(fp);
 }
 

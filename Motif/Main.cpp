@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.4 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: Main.cpp,v 1.5 2001-01-12 13:29:02 geuzaine Exp $
 
 #include <signal.h>
 
@@ -374,8 +374,8 @@ int main(int argc, char *argv[]){
   /* Say welcome! */
 
   TextBuffer = (char*)Malloc(1024*sizeof(char));
-  Msg(STATUS, "Ready");
-  Msg(SELECT, "Gmsh %.2f", GMSH_VERSION);
+  Msg(STATUS3, "Ready");
+  Msg(STATUS1, "Gmsh %.2f", GMSH_VERSION);
 
   /* Open input file */
 

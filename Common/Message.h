@@ -3,36 +3,43 @@
 
 #include <stdarg.h>
 
-#define FATAL          0  // Fatal error (causes Gmsh to exit)
-#define FATAL1        10  
-#define FATAL2        20  
-#define FATAL3        30  
+#define FATAL          1  // Fatal error (causes Gmsh to exit)
+#define FATAL1         2  // First part of a multiline FATAL message 
+#define FATAL2         3  // Middle part of a multiline FATAL message
+#define FATAL3         4  // Last part of a multiline FATAL message  
 
-#define GERROR         1  // Error (but Gmsh can live with it)
-#define GERROR1       11
-#define GERROR2       21
-#define GERROR3       31
+#define GERROR         5  // Error (but Gmsh can live with it)
+#define GERROR1        6  // First part of a multiline ERROR message 
+#define GERROR2        7  // Middle part of a multiline ERROR message
+#define GERROR3        8  // Last part of a multiline ERROR message  
 
-#define WARNING        2  // Warning
-#define WARNING1      12
-#define WARNING2      22
-#define WARNING3      32
+#define WARNING        9  // Warning
+#define WARNING1      10  // First part of a multiline WARNING message 
+#define WARNING2      11  // Middle part of a multiline WARNING message
+#define WARNING3      12  // Last part of a multiline WARNING message  
 
-#define INFOS          3  // Long informations
-#define INFOS1        13
-#define INFOS2        23
-#define INFOS3        33
+#define INFO          13  // Long informations
+#define INFO1         14  // First part of a multiline INFO message 
+#define INFO2         15  // Middle part of a multiline INFO message
+#define INFO3         16  // Last part of a multiline INFO message  
 
-#define INFO           4  // Small information in status bar
-#define SELECT         5  // Small interaction message in status bar, e.g. for select
-#define STATUS         6  // Gmsh status in status bar
-#define PARSER_ERROR   7  // Error during syntax parsing
-#define PARSER_INFO    8  // Info during syntax parsing
+#define DEBUG         17  // Long debug information
+#define DEBUG1        18  // First part of a multiline DEBUG message 
+#define DEBUG2        19  // Middle part of a multiline DEBUG message
+#define DEBUG3        20  // Last part of a multiline DEBUG message  
 
-#define DEBUG          9  // Long debug information
-#define DEBUG1        19
-#define DEBUG2        29
-#define DEBUG3        39
+#define STATUS1       21  // Small information in status bar (left)
+#define STATUS2       22  // Small interaction in status bar (middle)
+#define STATUS3       23  // Small interaction in status bar (right)
+
+#define STATUS1N      24  // Same as STATUS1, but not going into the log file
+#define STATUS2N      25  // Same as STATUS2, but not going into the log file
+#define STATUS3N      26  // Same as STATUS3, but not going into the log file
+
+#define PARSER_ERROR  27  // Error during syntax parsing
+#define PARSER_INFO   28  // Info during syntax parsing
+#define LOG_INFO      29  // Info put only in the logfile
+
 
 #define FATAL_STR          "Fatal Error : "
 #define FATAL_NIL          "            : "
@@ -40,13 +47,10 @@
 #define ERROR_NIL          "      : "
 #define WARNING_STR        "Warning : "
 #define WARNING_NIL        "        : "
-#define INFOS_STR          "Info : "
-#define INFOS_NIL          "     : "
+#define INFO_STR           "Info : "
+#define INFO_NIL           "     : "
 #define DEBUG_STR          "Debug : "
 #define DEBUG_NIL          "      : "
-
-#define INFO_STR           "Info : "
-#define SELECT_STR         "Info : "
 #define STATUS_STR         "Info : "
 #define PARSER_ERROR_STR   "Parse Error : "
 #define PARSER_INFO_STR    "Parse Info : "
