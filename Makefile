@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.173 2001-12-05 09:24:39 geuzaine Exp $
+# $Id: Makefile,v 1.174 2001-12-05 09:33:53 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
@@ -163,6 +163,7 @@ src:
 distrib:
 	mkdir gmsh-$(GMSH_RELEASE)
 	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)
+	cp $(GMSH_BIN_DIR)/gmsh-batch gmsh-$(GMSH_RELEASE)
 	cp doc/gmsh.1 doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS gmsh-$(GMSH_RELEASE)
 	cp -R tutorial gmsh-$(GMSH_RELEASE)
 	cp -R demos gmsh-$(GMSH_RELEASE)
@@ -326,8 +327,6 @@ link-linux-gcc-2.95:
 linux-gcc-2.95: tag compile-linux-gcc-2.95 link-linux-gcc-2.95 strip-bin
 linux-gcc-2.95-distrib:
 	make clean
-	make linux-gcc-2.95
-	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
            "CC=$(HOME)/gcc-2.95.3/bin/gcc" \
@@ -339,6 +338,8 @@ linux-gcc-2.95-distrib:
         ); done
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm -ldl
 	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make clean
+	make linux-gcc-2.95
 	make distrib
 rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
@@ -384,8 +385,6 @@ link-dec:
 dec: tag compile-dec link-dec strip-bin
 dec-distrib:
 	make clean
-	make dec
-	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -397,6 +396,8 @@ dec-distrib:
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make clean
+	make dec
 	make distrib
 #
 # HP-UX
@@ -418,8 +419,6 @@ link-hp:
 hp: tag compile-hp link-hp strip-bin
 hp-distrib:
 	make clean
-	make hp
-	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -431,6 +430,8 @@ hp-distrib:
         ); done
 	g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make clean
+	make hp
 	make distrib
 #
 # IBM Aix
@@ -451,8 +452,6 @@ link-ibm:
 ibm: tag compile-ibm link-ibm strip-bin
 ibm-distrib:
 	make clean
-	make ibm
-	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -464,6 +463,8 @@ ibm-distrib:
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make clean
+	make ibm
 	make distrib
 #
 # SGI Irix
@@ -486,8 +487,6 @@ link-sgi:
 sgi: tag compile-sgi link-sgi strip-bin
 sgi-distrib:
 	make clean
-	make sgi
-	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=CC" \
            "CC=cc" \
@@ -501,6 +500,8 @@ sgi-distrib:
         ); done
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh-batch -lm
 	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make clean
+	make sgi
 	make distrib
 #
 # Mingw
@@ -620,8 +621,6 @@ link-sun:
 sun: tag compile-sun link-sun strip-bin
 sun-distrib:
 	make clean
-	make sun
-	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -633,6 +632,8 @@ sun-distrib:
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch -lm
 	strip $(GMSH_BIN_DIR)/gmsh-batch
+	make clean
+	make sun
 	make distrib
 #
 # Solaris SCOREC

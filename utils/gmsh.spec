@@ -29,7 +29,7 @@ and/or post-processor.
 %setup -c -q
 
 %build
-make linux_gcc-2.95-distrib
+make linux-gcc-2.95-distrib
 make utilities
 rm -rf CVS */CVS */*/CVS
 
