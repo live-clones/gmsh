@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.27 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.28 2002-05-18 09:14:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -29,9 +29,6 @@
 
 extern Context_T CTX ;
 extern double LC2D ;
-
-void draw_polygon_2d (double r, double g, double b, int n, 
-                      double *x, double *y, double *z);
 
 inline void cgsmpl (Simplex *s, double &x, double &y)
 {
@@ -563,10 +560,14 @@ bool draw_simplex2d (Surface * sur, Simplex * s, bool nouv){
   z[1] = v2.Pos.Z;
   z[2] = v3.Pos.Z;
 
+#ifndef _BLACKBOX
+  void draw_polygon_2d (double r, double g, double b, int n, 
+			double *x, double *y, double *z);
   if (nouv)
     draw_polygon_2d (1., 0., 0., 3, x, y, z);
   else
     draw_polygon_2d (0., 0., 0., 3, x, y, z);
+#endif
 
   return true;
 }

@@ -1,20 +1,20 @@
-# $Id: Makefile,v 1.33 2002-05-18 07:17:59 geuzaine Exp $
+# $Id: Makefile,v 1.34 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshCommon.a"
 #
 
 .IGNORE:
 
-CXX     = c++
-AR      = ar ruvs
-RANLIB  = ranlib
-RM      = rm
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
 LIB     = ../lib/libGmshCommon.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Numeric -I../Parser -I../Fltk
 
-OPT_FLAGS     = -g -Wall
+OPT_FLAGS     =
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = -D_FLTK
 
@@ -22,13 +22,13 @@ RMFLAGS = -f
 CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
           $(GL_INCLUDE) $(GUI_INCLUDE)
 
-SRC =  	Context.cpp\
-        Views.cpp\
-        Options.cpp\
-        GetOptions.cpp\
-        Timer.cpp\
-        ColorTable.cpp\
-        Trackball.cpp
+SRC = Context.cpp\
+      Views.cpp\
+      Options.cpp\
+      GetOptions.cpp\
+      Timer.cpp\
+      ColorTable.cpp\
+      Trackball.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -43,9 +43,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

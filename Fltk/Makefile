@@ -1,26 +1,26 @@
-# $Id: Makefile,v 1.33 2002-05-18 07:18:00 geuzaine Exp $
+# $Id: Makefile,v 1.34 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshFltk.a"
 #
 
 .IGNORE:
 
-CXX      = c++
-AR       = ar ruvs
-RM       = rm
-RANLIB   = ranlib
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-LIB      = ../lib/libGmshFltk.a
-INCLUDE  = -I../Common -I../DataStr -I../Graphics -I../Geo\
-           -I../Mesh -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils
+LIB     = ../lib/libGmshFltk.a
+INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo\
+          -I../Mesh -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = -D_FLTK
 
-RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-           $(GUI_INCLUDE) $(GL_INCLUDE)
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+          $(GUI_INCLUDE) $(GL_INCLUDE)
 
 SRC = Main.cpp \
       Message.cpp \
@@ -49,9 +49,6 @@ res:
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

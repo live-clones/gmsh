@@ -1,33 +1,33 @@
-# $Id: Makefile,v 1.38 2002-05-18 07:18:05 geuzaine Exp $
+# $Id: Makefile,v 1.39 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshParser.a"
 #
 
 .IGNORE:
 
-CXX      = c++
-AR       = ar ruvs
-RANLIB   = ranlib
-RM       = rm
-YACC     = bison
-LEX      = flex
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
+YACC   = bison
+LEX    = flex
 
-LIB      = ../lib/libGmshParser.a
-INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics\
-           -I../Mesh -I../Numeric -I../Fltk -I../Plugin -I../Parallel
+LIB     = ../lib/libGmshParser.a
+INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
+          -I../Mesh -I../Numeric -I../Fltk -I../Plugin -I../Parallel
 
-OPT_FLAGS     = -g -Wall
+OPT_FLAGS     =
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = 
 
-RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-           $(GL_INCLUDE) $(GUI_INCLUDE)
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+          $(GL_INCLUDE) $(GUI_INCLUDE)
 
-SRC =  	Gmsh.yy.cpp \
-	Gmsh.tab.cpp\
-        OpenFile.cpp\
-	FunctionManager.cpp
+SRC = Gmsh.yy.cpp\
+      Gmsh.tab.cpp\
+      OpenFile.cpp\
+      FunctionManager.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -46,9 +46,6 @@ parser:
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

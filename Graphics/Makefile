@@ -1,25 +1,26 @@
-# $Id: Makefile,v 1.37 2002-05-18 07:18:01 geuzaine Exp $
+# $Id: Makefile,v 1.38 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshGraphics.a"
 #
 
 .IGNORE:
 
-CXX      = c++
-AR       = ar ruvs
-RANLIB   = ranlib
-RM       = rm
-LIB      = ../lib/libGmshGraphics.a
-INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics\
-           -I../Fltk -I../Mesh -I../Numeric -I../Parser -I../jpeg
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-OPT_FLAGS     = -g -Wall
+LIB     = ../lib/libGmshGraphics.a
+INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
+          -I../Fltk -I../Mesh -I../Numeric -I../Parser -I../jpeg
+
+OPT_FLAGS     =
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = 
 
-RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-           $(GL_INCLUDE) $(GUI_INCLUDE)
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
+          $(GL_INCLUDE) $(GUI_INCLUDE)
 
 SRC = Draw.cpp \
       Mesh.cpp \
@@ -53,9 +54,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

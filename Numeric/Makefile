@@ -1,24 +1,24 @@
-# $Id: Makefile,v 1.1 2002-05-18 07:18:03 geuzaine Exp $
+# $Id: Makefile,v 1.2 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshNumeric.a"
 #
 
 .IGNORE:
 
-CXX       = c++
-AR        = ar ruvs
-RM        = rm
-RANLIB    = ranlib
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-LIB       = ../lib/libGmshNumeric.a
-INCLUDE   = -I../Common -I../DataStr
+LIB     = ../lib/libGmshNumeric.a
+INCLUDE = -I../Common -I../DataStr
 
-OPT_FLAGS     = -g -Wall
-OS_FLAGS      = 
+OPT_FLAGS     =
+OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = 
 
-RMFLAGS   = -f
-CFLAGS    = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = Numeric.cpp\
       mnbrak.cpp \
@@ -45,9 +45,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o 
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

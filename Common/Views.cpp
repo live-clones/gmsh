@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.68 2002-05-18 07:56:47 geuzaine Exp $
+// $Id: Views.cpp,v 1.69 2002-05-18 09:14:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -224,7 +224,6 @@ void Stat_TensorSimplex(Post_View *v, int nbnod, int N,
 void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
   int i, nb;
   double d;
-  extern int AddViewInUI(int , char *, int);
 
   // Points
 
@@ -371,8 +370,11 @@ void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
 
   if(CTX.post.smooth) v->smooth();
 
+#ifndef _BLACKBOX
+  extern int AddViewInUI(int, char *, int);
   if(!CTX.post.force_num && add_in_gui)
     AddViewInUI(List_Nbr(CTX.post.list), v->Name, v->Num);
+#endif
 
   v->Dirty = 0; //the view is complete, we may draw it
 }

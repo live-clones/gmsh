@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.120 2002-05-18 07:56:51 geuzaine Exp $
+// $Id: Gmsh.y,v 1.121 2002-05-18 09:14:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1623,11 +1623,16 @@ Command :
 
       }
       else if(!strcmp($1, "Print")){
+#ifndef _BLACKBOX
 	if(!CTX.batch) CreateOutputFile($2, CTX.print.format);
+#endif
       }
       else if(!strcmp($1, "Save")){
+#ifndef _BLACKBOX
 	CreateOutputFile($2, CTX.mesh.format);
+#endif
       }
+
       else if(!strcmp($1, "Merge")){
 
 	FILE *ff = yyin;

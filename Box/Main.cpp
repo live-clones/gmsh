@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.17 2002-05-18 07:56:47 geuzaine Exp $
+// $Id: Main.cpp,v 1.18 2002-05-18 09:14:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -49,10 +49,7 @@ Mesh        M, *THEM=NULL, *LOCAL=NULL;
 // Dummy definitions for link purposes. These should be removed as
 // soon as the library structure will be cleaned.
 
-void AddViewInUI(int, char *, int){}
-void draw_polygon_2d (double, double, double, int, double *, double *, double *){}
 void set_r(int, double){}
-void CreateOutputFile(char *, int){}
 
 // Print some help/info messages
 

@@ -1,26 +1,26 @@
-# $Id: Makefile,v 1.24 2002-05-18 07:18:05 geuzaine Exp $
+# $Id: Makefile,v 1.25 2002-05-18 09:14:34 geuzaine Exp $
 #
 # Makefile for "libGmshPlugin.a"
 #
 
 .IGNORE:
 
-CXX       = c++
-AR        = ar ruvs
-RM        = rm
-RANLIB    = ranlib
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-LIB       = ../lib/libGmshPlugin.a
-INCLUDE   = -I../Common -I../Graphics -I../DataStr -I../Geo\
+LIB     = ../lib/libGmshPlugin.a
+INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo\
             -I../Mesh -I../Numeric -I../Triangle
 
-OPT_FLAGS     = -g -Wall
+OPT_FLAGS     =
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
-RMFLAGS   = -f
-CFLAGS    = -DMPICH_SKIP_MPICXX $(OPT_FLAGS) $(OS_FLAGS)\
-             $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
+RMFLAGS = -f
+CFLAGS  = -DMPICH_SKIP_MPICXX $(OPT_FLAGS) $(OS_FLAGS)\
+           $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
 
 SRC = Plugin.cpp\
         LevelsetPlugin.cpp\
@@ -43,9 +43,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o 
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

@@ -1,24 +1,25 @@
-# $Id: Makefile,v 1.16 2002-05-18 07:17:59 geuzaine Exp $
+# $Id: Makefile,v 1.17 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshBox.a"
 #
 
 .IGNORE:
 
-CXX      = c++
-AR       = ar ruvs
-RM       = rm
-RANLIB   = ranlib
-LIB      = ../lib/libGmshBox.a
-INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Mesh -I../Numeric\
-           -I../Parser -I../Fltk -I../Plugin -I../Parallel
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-OPT_FLAGS     = -g
-OS_FLAGS      = 
+LIB     = ../lib/libGmshBox.a
+INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Mesh -I../Numeric\
+          -I../Parser -I../Fltk -I../Plugin -I../Parallel
+
+OPT_FLAGS     =
+OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = 
 
-RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = Main.cpp
 
@@ -35,9 +36,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

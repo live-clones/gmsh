@@ -1,21 +1,24 @@
-# $Id: Makefile,v 1.9 2002-05-18 00:55:14 geuzaine Exp $
+# $Id: Makefile,v 1.10 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshParallel.a"
 #
 
 .IGNORE:
-AR       = ar ruvs
-RM       = rm
-RANLIB   = ranlib
-LIB      = ../lib/libGmshParallel.a
-CC       = gcc
 
-OPT_FLAGS     = -g
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
+
+LIB     = ../lib/libGmshParallel.a
+INCLUDE =
+
+OPT_FLAGS     =
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
-RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = ParUtil.cpp
 
@@ -32,9 +35,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

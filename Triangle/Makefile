@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2002-05-18 07:18:06 geuzaine Exp $
+# $Id: Makefile,v 1.7 2002-05-18 09:14:34 geuzaine Exp $
 #
 # Makefile for "libGmshTriangle.a"
 #
@@ -24,17 +24,16 @@
 
 .IGNORE:
 
-CC       = gcc
-AR       = ar ruvs
-RM       = rm
-RANLIB   = ranlib
+CC     = gcc
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-LIB     = ../lib/libGmshTriangle.a
-
-RMFLAGS  = -f
+LIB = ../lib/libGmshTriangle.a
 
 # Do not optimize Triangle: it fucks up on Linux
-CFLAGS   = -O0 $(OS_FLAGS) -DTRILIBRARY
+RMFLAGS = -f
+CFLAGS  = -O0 $(OS_FLAGS) -DTRILIBRARY
 
 SRC = triangle.c
 

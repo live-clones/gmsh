@@ -1,24 +1,24 @@
-# $Id: Makefile,v 1.22 2002-05-18 00:55:14 geuzaine Exp $
+# $Id: Makefile,v 1.23 2002-05-18 09:14:34 geuzaine Exp $
 #
 # Makefile for "libGmshJpeg.a"
 #
 
 .IGNORE:
 
-CXX      = c++
-AR       = ar ruvs
-RM       = rm
-RANLIB   = ranlib
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-LIB      = ../lib/libGmshJpeg.a
-INCLUDE  = -I.
+LIB     = ../lib/libGmshJpeg.a
+INCLUDE = -I.
 
-OPT_FLAGS     = -g -Wall
+OPT_FLAGS     =
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
-RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 
 SRC = jcomapi.c jutils.c jerror.c jmemmgr.c jmemnobs.c \
       jcapi.c jcparam.c jdatadst.c jcmaster.c jcmarker.c jcmainct.c \
@@ -38,9 +38,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	$(LINT) $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

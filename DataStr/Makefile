@@ -1,23 +1,24 @@
-# $Id: Makefile,v 1.14 2002-05-18 00:55:14 geuzaine Exp $
+# $Id: Makefile,v 1.15 2002-05-18 09:14:33 geuzaine Exp $
 #
 # Makefile for "libGmshDataStr.a"
 #
 
 .IGNORE:
 
-CXX      = c++
-AR       = ar ruvs
-RM       = rm
-RANLIB   = ranlib
-LIB      = ../lib/libGmshDataStr.a
-INCLUDE  = -I../Common
+CXX    = c++
+AR     = ar ruvs
+RM     = rm
+RANLIB = ranlib
 
-OPT_FLAGS     = -g -Wall
-OS_FLAGS      = 
+LIB     = ../lib/libGmshDataStr.a
+INCLUDE = -I../Common
+
+OPT_FLAGS     =
+OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = 
 
-RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+RMFLAGS = -f
+CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
 
 SRC = List.cpp \
       Malloc.cpp \
@@ -38,9 +39,6 @@ $(LIB): $(OBJ)
 
 clean:
 	$(RM) $(RMFLAGS) *.o
-
-lint:
-	lint $(CFLAGS) $(SRC)
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
