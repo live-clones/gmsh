@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2000-12-18 14:54:46 geuzaine Exp $
+# $Id: Makefile,v 1.27 2000-12-20 10:40:28 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -25,8 +25,9 @@
        MOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm 
            X_LIB = -L/usr/X11R6/lib -lXt -lX11 -lXext
       THREAD_LIB = -L/usr/lib -lpthread
+        JPEG_LIB = jpeg/libjpeg.a
 
-        GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Unix
+        GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Unix jpeg
 GMSH_DISTRIB_DIR = $(GMSH_DIR) utils
     GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser
     GMSH_BIN_DIR = bin
@@ -36,7 +37,7 @@ GMSH_DISTRIB_DIR = $(GMSH_DIR) utils
   GMSH_TUTOR_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
         GMSH_LIB = -L$(GMSH_LIB_DIR) -lUnix -lGraphics -lParser -lMesh -lGeo\
-                                     -lAdapt -lCommon -lDataStr
+                                     -lAdapt -lCommon -lDataStr $(JPEG_LIB)
     GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
                                      -lAdapt -lCommon -lDataStr
     GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
