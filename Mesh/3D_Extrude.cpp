@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.65 2003-10-26 16:53:12 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.66 2003-10-29 22:24:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -898,7 +898,7 @@ int Extrude_Mesh(Curve * c)
       List_Add(c->Vertices, &newv);
     }
 
-    int k = 0, iEnt;
+    int k = 0;
     for(i = 0; i < ep->mesh.NbLayer; i++) {
       for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
 	if(k >= List_Nbr(c->Vertices) - 1){

@@ -189,7 +189,7 @@
 
 #line 1 "Gmsh.y"
  
-// $Id: Gmsh.tab.cpp,v 1.164 2003-09-22 07:26:38 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.165 2003-10-29 22:24:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -8390,7 +8390,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
   char tmp1[256], tmp2[256];
 
   j=0;
-  while(j < strlen(format) && format[j]!='%') j++;
+  while(j < (int)strlen(format) && format[j]!='%') j++;
   strncpy(buffer, format, j); 
   buffer[j]='\0'; 
   for(i = 0; i < List_Nbr(list); i++){
