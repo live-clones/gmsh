@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.53 2004-06-15 16:17:59 remacle Exp $
+// $Id: Plugin.cpp,v 1.54 2004-06-15 18:20:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,7 @@
 #include "CutGrid.h"
 #include "StreamLines.h"
 #include "CutPlane.h"
-#include "CutCircle.h"
+#include "CutParametric.h"
 #include "CutSphere.h"
 #include "Skin.h"
 #include "Extract.h"
@@ -147,7 +147,7 @@ void GMSH_PluginManager::registerDefaultPlugins()
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("CutPlane", GMSH_RegisterCutPlanePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("CutCircle", GMSH_RegisterCutCirclePlugin()));
+		    ("CutParametric", GMSH_RegisterCutParametricPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("CutSphere", GMSH_RegisterCutSpherePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >

@@ -1,5 +1,5 @@
-#ifndef _CUT_CIRCLE_H_
-#define _CUT_CIRCLE_H
+#ifndef _CUT_PARAMETRIC_H_
+#define _CUT_PARAMETRIC_H
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,19 +20,17 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "CutCurve.h"
+#include "Plugin.h"
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterCutCirclePlugin ();
+  GMSH_Plugin *GMSH_RegisterCutParametricPlugin ();
 }
 
-class GMSH_CutCirclePlugin : public GMSH_CutCurvePlugin 
+class GMSH_CutParametricPlugin : public GMSH_Post_Plugin 
 { 
-  virtual void getPoint ( const double &u , double &x, double &y, double &z) const ;
-  virtual int  getNbPoints ( ) const ;
 public:
-  GMSH_CutCirclePlugin();
+  GMSH_CutParametricPlugin();
   void getName  (char *name) const;
   void getInfos (char *author, 
   		 char *copyright,
@@ -40,6 +38,8 @@ public:
   void catchErrorMessage (char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber *getOption (int iopt);  
+  int getNbOptionsStr() const;
+  StringXString* getOptionStr(int iopt);  
   Post_View *execute (Post_View *);
 };
 
