@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.21 2001-08-09 20:53:23 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.22 2001-08-11 23:25:50 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -68,6 +68,7 @@ Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
   
   int iView = (int)CutMapOptions_Number[1].def;
   _ith_field_to_draw_on_the_iso = (int)CutMapOptions_Number[2].def;
+  _orientation = ORIENT_MAP;
 
   if(v && iView < 0)
     vv = v;

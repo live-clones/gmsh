@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.16 2001-08-09 20:53:23 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.17 2001-08-11 23:25:50 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -69,7 +69,12 @@ extern List_T *Post_ViewList;
 Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
 {
   Post_View *vv;
+
   int iView = (int)CutSphereOptions_Number[4].def;
+  _orientation = ORIENT_SPHERE;
+  _ref[0] = CutSphereOptions_Number[0].def;
+  _ref[1] = CutSphereOptions_Number[1].def;
+  _ref[2] = CutSphereOptions_Number[2].def;
 
   if(v && iView < 0)
     vv = v;

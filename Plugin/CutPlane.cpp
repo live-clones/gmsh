@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.17 2001-08-09 20:53:23 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.18 2001-08-11 23:25:50 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -69,6 +69,10 @@ Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
   Post_View *vv;
 
   int iView = (int)CutPlaneOptions_Number[4].def;
+  _orientation = ORIENT_PLANE;
+  _ref[0] = CutPlaneOptions_Number[0].def;
+  _ref[1] = CutPlaneOptions_Number[1].def;
+  _ref[2] = CutPlaneOptions_Number[2].def;
 
   if(v && iView < 0)
     vv = v;
