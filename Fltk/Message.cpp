@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.19 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: Message.cpp,v 1.20 2001-05-20 19:24:53 geuzaine Exp $
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -145,7 +145,6 @@ void Msg(int level, char *fmt, ...){
 void Free_DisplayLists(void);
 
 void Exit(int level){
-  //if(CTX.display_lists) Free_DisplayLists(); //bug in XFree86?
   if(WID && !CTX.batch){
     if(CTX.session_save){
       CTX.position[0] = WID->m_window->x();

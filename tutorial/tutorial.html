@@ -22,7 +22,7 @@
 <H1>README 1/9</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.9 2001-04-25 15:55:51 geuzaine Exp $
+$Id: tutorial.html,v 1.10 2001-05-20 19:24:53 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -50,10 +50,12 @@ required dimension in the context-dependent buttons ('1D' will mesh
 all the curves; '2D' will mesh all the surfaces ---as well as all the
 curves if '1D' was not called before; '3D' will mesh all the volumes
 ---and all the surfaces if '2D' was not called before). To save the
-resulting mesh, select 'File-&gt;Save_Mesh' in the menu bar. The default
-mesh file name is based on the name of the first input file on the
-command line (or 'unnamed' if there wasn't any input file given), with
-an appended extension depending on the mesh format.
+resulting mesh in the current mesh format, choose 'Save' in the
+context-dependent buttons, or select the appropriate format with the
+'File-&gt;Save as' menu. The default mesh file name is based on the name
+of the first input file on the command line (or 'unnamed' if there
+wasn't any input file given), with an appended extension depending on
+the mesh format.
 
 [NOTE: Nearly all the interactive commands have shortcuts. Select
 'Help-&gt;Shortcuts' in the menu bar to learn about these shortcuts.]
@@ -111,15 +113,15 @@ map&quot; and &quot;a vector map&quot;. A left mouse click toggles the visibilit
 the selected view. A right mouse click provides access to the view's
 options. If you want the modifications made to one view to affect also
 all the other views, select the 'Link all views' option in the
-'Options-&gt;Post-Processing' menu.
+'Options-&gt;Post-processing' menu.
 
 [NOTE: All the options specified interactively can also be directly
 specified in the ascii input files. All available options, with their
 current values, can be saved into a file by selecting
-'File-&gt;Save_as-&gt;GEO complete options', or simply viewed by pressing
-the '?' button in the status bar. To save the current options as the
-default options for all future Gmsh sessions, use the
-'File-&gt;Save_Options' menu.]
+'File-&gt;Save as-&gt;GEO complete options', or simply viewed by pressing
+the '?' button in the status bar. To save the current options as your
+default preferences for all future Gmsh sessions, use the
+'Options-&gt;Save current options' menu.]
 
 
 OK, that's all, folks. Enjoy the tutorial.
@@ -293,7 +295,8 @@ Characteristic Length{6,22,2,3,16,12} = lc * 3 ;
 <I><FONT COLOR="#B22222">// If the transformation tools are handy to create complex geometries,
 </FONT></I><I><FONT COLOR="#B22222">// it is sometimes useful to generate the flat geometry, consisting
 </FONT></I><I><FONT COLOR="#B22222">// only of the explicit list elementary entities. This can be achieved
-</FONT></I><I><FONT COLOR="#B22222">// by selecting the 'File-&gt;Print-&gt;Geo' menu or by typing
+</FONT></I><I><FONT COLOR="#B22222">// by selecting the 'File-&gt;Save as-&gt;GEO flattened geometry' menu or 
+</FONT></I><I><FONT COLOR="#B22222">// by typing
 </FONT></I><I><FONT COLOR="#B22222">//
 </FONT></I><I><FONT COLOR="#B22222">// &gt; gmsh t2.geo -0
 </FONT></I><I><FONT COLOR="#B22222">//
@@ -387,9 +390,10 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
 </FONT></I>
 <I><FONT COLOR="#B22222">// A click on the '?'  button in the status bar of the graphic window
 </FONT></I><I><FONT COLOR="#B22222">// will dump all current options to the terminal. To save all
-</FONT></I><I><FONT COLOR="#B22222">// available options to a file, use the 'File-&gt;Save_as-&gt;GEO complete
+</FONT></I><I><FONT COLOR="#B22222">// available options to a file, use the 'File-&gt;Save as-&gt;GEO complete
 </FONT></I><I><FONT COLOR="#B22222">// options' menu. To save the current options as the default options
-</FONT></I><I><FONT COLOR="#B22222">// for all future Gmsh sessions, use the 'File-&gt;Save_Options' menu.
+</FONT></I><I><FONT COLOR="#B22222">// for all future Gmsh sessions, use the 'Options-&gt;Save current
+</FONT></I><I><FONT COLOR="#B22222">// options' menu.
 </FONT></I></PRE>
 <HR>
 <A NAME="file5">
@@ -1034,7 +1038,7 @@ Include &quot;view1.pos&quot; ;
 <I><FONT COLOR="#B22222">// Some general options are set (all the options specified
 </FONT></I><I><FONT COLOR="#B22222">// interactively can be directly specified in the ascii input
 </FONT></I><I><FONT COLOR="#B22222">// files. The current options can be saved into a file by selecting
-</FONT></I><I><FONT COLOR="#B22222">// 'File-&gt;Save_Options_as')...
+</FONT></I><I><FONT COLOR="#B22222">// 'File-&gt;Save as-&gt;GEO complete options')...
 </FONT></I>
 General.Trackball = 0 ;
 General.RotationX = 0 ;
@@ -1072,7 +1076,7 @@ For num In {1:255}
 
   t = (View[0].TimeStep &lt; View[0].NbTimeStep-1) ? t+1 : 0 ;
   
-  View[0].RaiseZ += 0.001*t ;
+  View[0].RaiseZ += 0.01*t ;
 
   If (num == 3)
     <I><FONT COLOR="#B22222">// We want to use mpeg_encode to create a nice 320x240 animation

@@ -16,7 +16,7 @@ Include "view1.pos" ;
 // Some general options are set (all the options specified
 // interactively can be directly specified in the ascii input
 // files. The current options can be saved into a file by selecting
-// 'File->Save_Options_as')...
+// 'File->Save as->GEO complete options')...
 
 General.Trackball = 0 ;
 General.RotationX = 0 ;

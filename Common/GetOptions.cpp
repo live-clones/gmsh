@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.19 2001-05-17 07:11:49 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.20 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -42,9 +42,10 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -clscale float        set characteristic length scaling factor (default: 1.0)");
   Msg(DIRECT, "  -rand float           set random perturbation factor (default: 1.e-4)");
   Msg(DIRECT, "  -bgm file             load backround mesh from file");
+  Msg(DIRECT, "  -constrain            constrain background mesh with characteristic lengths");
 #ifndef _BLACKBOX
   Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
-  Msg(DIRECT, "Post Processing options:");
+  Msg(DIRECT, "Post-processing options:");
   Msg(DIRECT, "  -dl                   enable display lists");
   Msg(DIRECT, "  -noview               hide all views on startup");
   Msg(DIRECT, "  -link                 link all views on startup");
@@ -54,9 +55,9 @@ void Print_Usage(char *name){
 #ifdef _XMOTIF
   Msg(DIRECT, "  -noov                 disable overlay visual");
   Msg(DIRECT, "  -flash                allow colormap flashing");
-  Msg(DIRECT, "  -samevisual           force same visual for graphics and UI");
+  Msg(DIRECT, "  -samevisual           force same visual for graphics and GUI");
 #else
-  Msg(DIRECT, "  -fontsize int         size of the font for the user interface (default: 12)");
+  Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
 #endif
   Msg(DIRECT, "  -alpha                enable alpha blending");
   Msg(DIRECT, "  -notrack              don't use trackball mode for rotations");
@@ -64,7 +65,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -perspective          set projection mode to perspective");
 #endif
   Msg(DIRECT, "Other options:");      
-  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in auto, geometry, mesh, solver or post mode (default: auto)");
+  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or");
+  Msg(DIRECT, "                        post-processing mode (default: automatic)");
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
 #ifdef _XMOTIF
   Msg(DIRECT, "  -nothreads            disable threads");
@@ -126,6 +128,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i]+1, "constrain")){ 
+	CTX.mesh.constrained_bgmesh = 1;
       }
       else if(!strcmp(argv[i]+1, "convert")){ 
 	i++;

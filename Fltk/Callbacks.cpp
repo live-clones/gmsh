@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.55 2001-05-18 11:47:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.56 2001-05-20 19:24:53 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -186,14 +186,6 @@ void file_merge_cb(CALLBACK_ARGS) {
     WID->set_context(menu_post, 0);
 }
 
-void file_save_mesh_cb(CALLBACK_ARGS) {
-  Print_Mesh(&M, NULL, CTX.mesh.format);
-}
-
-void file_save_options_cb(CALLBACK_ARGS) {
-  Print_Options(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
-}
-
 void file_save_as_auto_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save file by extension", "*", NULL)))
@@ -373,34 +365,38 @@ void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) {
   opt_geometry_show_by_entity_num_cb(w,data);
 }
 void opt_mesh_color_scheme_cb(CALLBACK_ARGS){
-  opt_mesh_color_scheme(0,GMSH_SET, WID->mesh_value[7]->value());
+  opt_mesh_color_scheme(0,GMSH_SET, WID->mesh_value[10]->value());
   Draw();
 }
 void opt_mesh_ok_cb(CALLBACK_ARGS) {
   opt_mesh_degree(0, GMSH_SET, WID->mesh_butt[0]->value()?2:1);
   opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[1]->value());
   opt_mesh_algo(0, GMSH_SET, WID->mesh_butt[2]->value()?DELAUNAY_NEWALGO:DELAUNAY_OLDALGO);
-  opt_mesh_points(0, GMSH_SET, WID->mesh_butt[3]->value());
-  opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[4]->value());
-  opt_mesh_surfaces(0, GMSH_SET, WID->mesh_butt[5]->value());
-  opt_mesh_volumes(0, GMSH_SET, WID->mesh_butt[6]->value());
-  opt_mesh_points_num(0, GMSH_SET, WID->mesh_butt[7]->value());
-  opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[8]->value());
-  opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[9]->value());
-  opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[10]->value());
+  opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[3]->value());
+  opt_mesh_points(0, GMSH_SET, WID->mesh_butt[4]->value());
+  opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[5]->value());
+  opt_mesh_surfaces(0, GMSH_SET, WID->mesh_butt[6]->value());
+  opt_mesh_volumes(0, GMSH_SET, WID->mesh_butt[7]->value());
+  opt_mesh_points_num(0, GMSH_SET, WID->mesh_butt[8]->value());
+  opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[9]->value());
+  opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[10]->value());
+  opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[11]->value());
   opt_mesh_aspect(0, GMSH_SET, 
-		  WID->mesh_butt[11]->value()?0:
-		  WID->mesh_butt[12]->value()?1:
+		  WID->mesh_butt[12]->value()?0:
+		  WID->mesh_butt[13]->value()?1:
 		  2);
-  opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_butt[14]->value());
+  opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_butt[15]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
   opt_mesh_rand_factor(0, GMSH_SET, WID->mesh_value[3]->value());
-  opt_mesh_limit_gamma(0, GMSH_SET, WID->mesh_value[4]->value());
-  opt_mesh_normals(0, GMSH_SET, WID->mesh_value[5]->value());
-  opt_mesh_explode(0, GMSH_SET, WID->mesh_value[6]->value());
+  opt_mesh_gamma_inf(0, GMSH_SET, WID->mesh_value[4]->value());
+  opt_mesh_gamma_sup(0, GMSH_SET, WID->mesh_value[5]->value());
+  opt_mesh_radius_inf(0, GMSH_SET, WID->mesh_value[6]->value());
+  opt_mesh_radius_sup(0, GMSH_SET, WID->mesh_value[7]->value());
+  opt_mesh_normals(0, GMSH_SET, WID->mesh_value[8]->value());
+  opt_mesh_explode(0, GMSH_SET, WID->mesh_value[9]->value());
 
   Draw();
 }
@@ -440,6 +436,9 @@ void opt_message_save_cb(CALLBACK_ARGS) {
   if((newfile = fl_file_chooser("Save messages", "*", NULL)))
     WID->save_message(newfile); 
 }
+void opt_save_cb(CALLBACK_ARGS) {
+  Print_Options(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
+}
 
 // Help Menu
 
@@ -450,7 +449,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  move          - highlight the elementary geometrical entity");
   Msg(DIRECT, "                  currently under the mouse pointer and display");
   Msg(DIRECT, "                  its properties in the status bar");
-  Msg(DIRECT, "                - size a rubber zoom started with (Ctrl+mouse1)");
+  Msg(DIRECT, "                - size a rubber zoom started with Ctrl+mouse1");
   Msg(DIRECT, "  mouse1        - rotate");
   Msg(DIRECT, "                - accept a rubber zoom started by Ctrl+mouse1"); 
   Msg(DIRECT, "  Ctrl+mouse1   start (anisotropic) rubber zoom"); 
@@ -460,9 +459,8 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Ctrl+mouse2   orthogonalize display"); 
   Msg(DIRECT, "  mouse3        - pan");
   Msg(DIRECT, "                - cancel a rubber zoom");
-  Msg(DIRECT, "                - pop up menu on module name");
   Msg(DIRECT, "                - pop up menu on post-processing view button");
-  Msg(DIRECT, "  Ctrl+mouse3   reset viewpoint to default");   
+  Msg(DIRECT, "  Ctrl+mouse3   reset to default viewpoint");   
   Msg(DIRECT, "");
   Msg(DIRECT, "Menu bar shortcuts:");
   Msg(DIRECT, "");
@@ -476,11 +474,11 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Ctrl+m        merge file"); 
   Msg(DIRECT, "  Shift+o       show general options"); 
   Msg(DIRECT, "  Ctrl+o        open file"); 
-  Msg(DIRECT, "  p             go to post processor module");
+  Msg(DIRECT, "  p             go to post-processor module");
   Msg(DIRECT, "  Shift+p       show post-processing general options");
   Msg(DIRECT, "  Ctrl+p        save file by extension");
   Msg(DIRECT, "  Ctrl+q        quit");
-  Msg(DIRECT, "  Ctrl+s        save mesh");
+  Msg(DIRECT, "  Ctrl+s        save mesh in default format");
   Msg(DIRECT, "");
   Msg(DIRECT, "Other shortcuts");
   Msg(DIRECT, "");
@@ -490,7 +488,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  3 or F3       mesh volumes");
   Msg(DIRECT, "  Alt+a         hide/show small axes"); 
   Msg(DIRECT, "  Alt+Shift+a   hide/show big moving axes"); 
-  Msg(DIRECT, "  Alt+b         hide/show all post processing scales");
+  Msg(DIRECT, "  Alt+b         hide/show all post-processing scales");
   Msg(DIRECT, "  Alt+c         alternate between predefined color schemes");
   Msg(DIRECT, "  Alt+d         alternate between mesh wire frame, hidden lines and shading modes");
   Msg(DIRECT, "  Alt+f         toggle redraw mode (fast/full)"); 
@@ -551,6 +549,12 @@ void geometry_elementary_cb(CALLBACK_ARGS){
 void geometry_physical_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_physical, 0);
 }
+void geometry_edit_cb(CALLBACK_ARGS){
+  char cmd[1000];
+  sprintf(cmd, CTX.editor, CTX.filename);
+  Msg(INFO, "Starting text editor '%s'", cmd);
+  system(cmd);
+} 
 void geometry_reload_cb(CALLBACK_ARGS){
   OpenProblem(CTX.filename);
   Draw();
@@ -1088,6 +1092,9 @@ void geometry_physical_add_volume_cb (CALLBACK_ARGS){
 
 // Dynamic Mesh Menus
 
+void mesh_save_cb(CALLBACK_ARGS) {
+  Print_Mesh(&M, NULL, CTX.mesh.format);
+}
 void mesh_define_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh_define, 0);
 }

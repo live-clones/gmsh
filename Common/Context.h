@@ -125,12 +125,12 @@ public :
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
     double quality;
-    double limit_gamma, limit_eta, limit_rho;
+    double gamma_inf, gamma_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
     int hidden, shade;
     int format, nb_smoothing, algo, degree;
-    int point_insertion, speed_max, min_circ_points;
+    int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
     double normals, tangents, explode;
     int color_scheme, color_carousel ;
     int use_cut_plane;

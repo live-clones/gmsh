@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.20 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.21 2001-05-20 19:24:53 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -34,7 +34,7 @@ int LocalNewPoint;
 PointRecord   *gPointArray;
 DocRecord     *BGMESH, *FGMESH;
 double         qual, newqual, L;
-int            is_3D = 0, UseBGMesh;
+int            is_3D = 0;
 double         LC2D ;
 
 static Surface  *THESURFACE, *THESUPPORT;
@@ -432,8 +432,7 @@ Delaunay * testconv (avlptr * root, int *conv, DocRecord * ptr){
 
 
 int mesh_domain (ContourPeek * ListContours, int numcontours,
-                 maillage * mai, int *numpoints, DocRecord * BGMesh,
-                 int OnlyTheInitialMesh){
+                 maillage * mai, int *numpoints, int OnlyTheInitialMesh){
   List_T *kill_L, *del_L ;
   MPoint pt;
   DocRecord docm, *doc;
@@ -495,13 +494,9 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
   Conversion (doc);
   remove_all_dlist (doc->numPoints, doc->points);
 
-  if (!is_3D){
-    if (UseBGMesh == 1)
-      BGMESH = BGMesh;
-    else{
-      BGMESH = doc;
-      InitBricks (BGMESH);
-    }
+  if (!is_3D || CTX.mesh.constrained_bgmesh){
+    BGMESH = doc;
+    InitBricks (BGMESH);
   }
 
   /* elimination des triangles exterieurs + verification de l'existence
@@ -840,7 +835,6 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
 
   if (m->BGM.Typ == WITHPOINTS){
     is_3D = 0;
-    UseBGMesh = 0;
   }
   else{
     is_3D = 1;
@@ -878,9 +872,12 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       cp->oriented_points[j].where.h = v->Pos.X;
       cp->oriented_points[j].where.v = v->Pos.Y;
 
-      cp->perturbations[j].h = CTX.mesh.rand_factor /* /(100*v->lc) */  * LC2D * 
+      // On pourrait imaginer diviser les perturbations par un facteur
+      // dependant de v->lc, mais ca n'a pas l'air d'ameliorer le bignou
+
+      cp->perturbations[j].h = CTX.mesh.rand_factor * LC2D * 
 	(double)rand()/(double)RAND_MAX;
-      cp->perturbations[j].v = CTX.mesh.rand_factor /* /(100.*v->lc) */ * LC2D *
+      cp->perturbations[j].v = CTX.mesh.rand_factor * LC2D *
 	(double)rand()/(double)RAND_MAX;
 
       cp->oriented_points[j].numcontour = i;
@@ -893,7 +890,7 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
   }
 
   if (pS->Method)
-    mesh_domain (liste, List_Nbr (pS->Contours), &M, &N, NULL, 0);
+    mesh_domain (liste, List_Nbr (pS->Contours), &M, &N, 0);
 
   for (i = 0; i < M.numpoints; i++){
     if (gPointArray[i].initial < 0){
@@ -990,7 +987,17 @@ void filldel (Delaunay * deladd, int aa, int bb, int cc,
     v = Create_Vertex (-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
     Calcule_Z_Plan (&v, &dum);
     Projette_Inverse (&v, &dum);
-    newqual = Lc_XYZ (v->Pos.X, v->Pos.Y, v->Pos.Z, THEM);
+    qual = Lc_XYZ (v->Pos.X, v->Pos.Y, v->Pos.Z, THEM);
+    if(CTX.mesh.constrained_bgmesh){
+      if (mesh){
+	newqual = MIN(qual,find_quality (pt2, mesh));
+      }
+      else{
+	newqual = MIN(qual, (points[aa].quality + points[bb].quality + points[cc].quality) / 3.);
+      }
+    }
+    else
+      newqual = qual;
     Free (v);
   }
 

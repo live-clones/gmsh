@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.14 2001-04-25 20:42:39 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.15 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -79,21 +79,24 @@ double F_Transfini (double t){
 
 double F_Lc (double t){
   Vertex  der, point;
-  double  Lc;
+  double  Lc, d;
 
   if (CTX.mesh.algo == DELAUNAY_OLDALGO && THEM->BGM.Typ == ONFILE){
     der = InterpolateCurve(THEC, t, 1);
     point = InterpolateCurve(THEC, t, 0);  
     Lc = Lc_XYZ(point.Pos.X, point.Pos.Y, point.Pos.Z, THEM);
+    d = sqrt(DSQR(der.Pos.X)+DSQR(der.Pos.Y)+DSQR(der.Pos.Z));
     if(!Lc){
       Msg(GERROR, "Null characteristic length in background mesh");
-      return sqrt(DSQR(der.Pos.X)+DSQR(der.Pos.Y)+DSQR(der.Pos.Z));
+      return d;
     }
-    return sqrt(DSQR(der.Pos.X)+DSQR(der.Pos.Y)+DSQR(der.Pos.Z))/Lc;  
+    if(CTX.mesh.constrained_bgmesh)
+      return MAX(d/Lc,THEM->Metric->getLc(t, THEC));
+    else
+      return d/Lc;
   }
-  else{
+  else
     return THEM->Metric->getLc(t, THEC);
-  }
 }
 
 void Maillage_Curve (void *data, void *dummy){

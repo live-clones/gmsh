@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.13 2001-05-17 07:11:50 geuzaine Exp $
+// $Id: Create.cpp,v 1.14 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -479,6 +479,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
   }
   else {
     //End_Curve(pC);
+    pC->Control_Points = NULL;
     pC->Extrude = NULL;
     return pC;
   }

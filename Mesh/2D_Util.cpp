@@ -1,10 +1,12 @@
-// $Id: 2D_Util.cpp,v 1.9 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.10 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
 #include "Mesh.h"
 #include "2D_Mesh.h"
+#include "Context.h"
 
+extern Context_T     CTX;
 extern int           LocalNewPoint;
 extern PointRecord  *gPointArray;
 extern Mesh         *THEM;
@@ -56,6 +58,7 @@ int Delete_Triangle ( avlstruct **root, Delaunay * del ){
 int Insert_Point (MPoint pt, int *numpoints, int *numalloc, 
                   DocRecord *doc, DocRecord *BGM, int is3d){
   Vertex *v,*dum;
+  double qual;
 
   if ( *numpoints >= *numalloc ) {
     gPointArray = (PointRecord *) Realloc(gPointArray, 
@@ -74,7 +77,11 @@ int Insert_Point (MPoint pt, int *numpoints, int *numalloc,
     v = Create_Vertex (-1,pt.h,pt.v,0.0,0.0,0.0);
     Calcule_Z_Plan(&v, &dum);
     Projette_Inverse(&v, &dum);
-    gPointArray[*numpoints].quality = Lc_XYZ ( v->Pos.X,v->Pos.Y,v->Pos.Z,THEM);
+    qual = Lc_XYZ ( v->Pos.X,v->Pos.Y,v->Pos.Z,THEM) ;
+    if(CTX.mesh.constrained_bgmesh)
+      gPointArray[*numpoints].quality = MIN(find_quality(pt,BGM),qual);
+    else 
+      gPointArray[*numpoints].quality = qual;
     Free(v);
   }
     

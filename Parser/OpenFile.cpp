@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.14 2001-05-01 18:58:24 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.15 2001-05-20 19:24:53 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -131,9 +131,10 @@ void OpenProblem(char *name){
 
   ApplyLcFactor(THEM);
 
-  if(!status) mai3d(THEM,0);  
-
-  Maillage_Dimension_0(&M);
+  if(!status){
+    mai3d(THEM,0);  
+    Maillage_Dimension_0(&M);
+  }
 
 #ifndef _BLACKBOX
   ZeroHighlight(&M); 

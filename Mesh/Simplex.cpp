@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.11 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.12 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -6,6 +6,9 @@
 #include "Mesh.h"
 #include "Simplex.h"
 #include "Numeric.h"
+#include "Context.h"
+
+extern Context_T   CTX;
 
 int Simplex::TotalAllocated = 0;
 int Simplex::TotalNumber = 0;
@@ -322,17 +325,19 @@ void Simplex::Fourre_Simplexe (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v
   
   Center_Circum ();
 
-  Quality = (double) N *Radius / (V[0]->lc + V[1]->lc + V[2]->lc
-                                  + ((V[3]) ? V[3]->lc : 0.0));
-
   /*
-     if(LOCAL != NULL){
-     Quality = fabs(Radius) / Lc_XYZ(Center.X, Center.Y, Center.Z, LOCAL);
-     if(Quality < 0.)
-     Quality = N * Radius / (V[0]->lc + V[1]->lc + V[2]->lc
-     +((V[3])? V[3]->lc:0.0));
-     }
-   */
+  extern Mesh *THEM, *LOCAL;
+  if (LOCAL && N == 4 && CTX.mesh.algo == DELAUNAY_OLDALGO && THEM->BGM.Typ == ONFILE){
+    Quality = fabs(Radius) / Lc_XYZ(Center.X, Center.Y, Center.Z, LOCAL);
+    if(Quality < 0.){
+      Msg(WARNING, "Negative simplex quality !?");
+      Quality = 4 * Radius / (V[0]->lc + V[1]->lc + V[2]->lc + V[3]->lc);
+    }
+  }
+  */
+
+  Quality = (double) N * Radius / (V[0]->lc + V[1]->lc + V[2]->lc
+				   + ((V[3]) ? V[3]->lc : 0.0));
 
   for (i = 0; i < N; i++)
     qsort (F[i].V, N - 1, sizeof (Vertex *), compareVertex);

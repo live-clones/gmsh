@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.24 2001-04-26 17:58:00 remacle Exp $
+// $Id: Mesh.cpp,v 1.25 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -152,11 +152,9 @@ void Draw_Mesh_Points (void *a, void *b){
 
   v = (Vertex**)a;
 
-
-  if(CTX.mesh.use_cut_plane)
-    {
-      if(CTX.mesh.evalCutPlane((*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z) < 0)return;
-    }
+  if(CTX.mesh.use_cut_plane){
+    if(CTX.mesh.evalCutPlane((*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z) < 0)return;
+  }
   
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(0);
@@ -195,11 +193,25 @@ void Draw_Mesh_Points (void *a, void *b){
 void Draw_Simplex_Volume (void *a, void *b){
   Simplex **s;
   char Num[100];
-  double X[4],Y[4],Z[4];
+  int fulldraw = 0;
+  double tmp, X[4],Y[4],Z[4];
 
   s = (Simplex**)a;
 
+  if(!(*s)->V[3]) return;
+
   if(!EntiteEstElleVisible((*s)->iEnt)) return;
+
+  if(CTX.mesh.gamma_sup){
+    tmp = (*s)->GammaShapeMeasure();
+    if(tmp < CTX.mesh.gamma_inf || tmp > CTX.mesh.gamma_sup) return;
+    fulldraw = 1;
+  }
+
+  if(CTX.mesh.radius_sup){
+    if((*s)->Radius < CTX.mesh.radius_inf || (*s)->Radius > CTX.mesh.radius_sup) return;
+    fulldraw = 1;
+  }
 
   double Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
                      (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
@@ -208,21 +220,9 @@ void Draw_Simplex_Volume (void *a, void *b){
   double Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + 
                      (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
 
-  if(CTX.mesh.use_cut_plane)
-    {
-      if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
-    }
-  
-  if(!(*s)->V[3]) return;
-
-  if(CTX.mesh.limit_gamma){
-    if((*s)->GammaShapeMeasure() > CTX.mesh.limit_gamma) return;
-  }
-  if(CTX.mesh.limit_eta){
-    if((*s)->EtaShapeMeasure() > CTX.mesh.limit_eta) return;
-  }
-  if(CTX.mesh.limit_rho){
-    if((*s)->RhoShapeMeasure() > CTX.mesh.limit_rho) return;
+  if(CTX.mesh.use_cut_plane){
+    if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0) return;
+    fulldraw = 1;
   }
 
   if(CTX.mesh.color_carousel)
@@ -287,11 +287,14 @@ void Draw_Simplex_Volume (void *a, void *b){
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-#if 1 /* never here for the moment */
+  if(!fulldraw) return ;
 
   double n[4], x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
 
-  ColorSwitch((*s)->iEnt);
+  if(CTX.mesh.color_carousel)
+    ColorSwitch((*s)->iEnt);
+  else
+    glColor4ubv((GLubyte*)&CTX.color.mesh.tetrahedron);    
 
   if (CTX.mesh.hidden) {
 
@@ -354,8 +357,6 @@ void Draw_Simplex_Volume (void *a, void *b){
 
   }
 
-#endif
-
 }
 
 
@@ -372,7 +373,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
   if(!(*s)->V[2]) return ;
 
   if(!EntiteEstElleVisible ((*s)->iEnt)) return;
-  
+
   if((*s)->VSUP) L=1;
   else L=0;
 
@@ -392,10 +393,9 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     Zc = ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + (*s)->V[2]->Pos.Z) / 3. ;
   }
 
-  if(CTX.mesh.use_cut_plane)
-    {
-      if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
-    }
+  if(CTX.mesh.use_cut_plane){
+    if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+  }
 
   k=0;
   for (i=0 ; i<K ; i++) {
@@ -560,10 +560,9 @@ void Draw_Hexahedron_Volume (void *a, void *b){
   Zc *= .125 ; 
   Yc *= .125 ; 
 
-  if(CTX.mesh.use_cut_plane)
-    {
-      if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
-    }
+  if(CTX.mesh.use_cut_plane){
+    if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+  }
 
   if(CTX.mesh.color_carousel)
     ColorSwitch((*h)->iEnt+1);  

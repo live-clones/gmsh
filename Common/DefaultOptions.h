@@ -20,17 +20,17 @@ StringXString GeneralOptions_String[] = {
   { F|S, "DefaultFileName" , opt_general_default_filename , "unnamed.geo" ,
     "Default project file name" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
-    "Temporary file name (saved in the 'home' directory)" },
+    "Temporary file (created in your home directory)" },
   { F|S, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" ,
     "File into which the log is saved if a fatal error occurs" },
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
-    "Option file created in the 'home' directory with the 'File->Save Options' menu, and which is read on startup" },
+    "File created in your home directory with 'Options->Save options', and which is read on startup" },
 #ifdef WIN32
   { F|O, "TextEditor" , opt_general_editor , "notepad %s" , 
 #else
   { F|O, "TextEditor" , opt_general_editor , "emacs %s &" ,
 #endif
-    "System command to launch a text editor (may contain '%%s')" },
+    "System command to launch a text editor" },
   { 0, NULL , NULL , NULL , NULL }
 } ;
 
@@ -318,7 +318,7 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Quality" , opt_mesh_quality , 0.0 ,
-    "Only display elements of quality inferior to this factor" },
+    "Target quality for tetrahedral elements (not fully functional)" },
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Size of the normal vectors" }, 
   { F|O, "Tangents" , opt_mesh_tangents , 0.0 , 
@@ -331,12 +331,14 @@ StringXNumber MeshOptions_Number[] = {
     "Factor applied to all charcteristic lenghts (and background meshes)" },
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-4 ,
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
-  { F|O, "GammaLimit" , opt_mesh_limit_gamma , 0.0 , 
-    "Target quality for tetrahedral elements (not fully functional)" },
-  { F|O, "EtaLimit" , opt_mesh_limit_eta , 0.0 , 
-    "Target quality for tetrahedral elements (not fully functional)" },
-  { F|O, "RhoLimit" , opt_mesh_limit_rho , 0.0 , 
-    "Target quality for tetrahedral elements (not fully functional)" },
+  { F|O, "GammaInf" , opt_mesh_gamma_inf , 0.0 , 
+    "Only display elements whose Gamma factor is greater than GammaInf" },
+  { F|O, "GammaSup" , opt_mesh_gamma_sup , 0.0 , 
+    "Only display elements whose Gamma factor is smaller than GammaSup" },
+  { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 , 
+    "Only display elements whose Radius is greater than RadiusInf" },
+  { F|O, "RadiusSup" , opt_mesh_radius_sup , 0.0 , 
+    "Only display elements whose Radius is smaller than RadiusSup" },
   { F|O, "Points" , opt_mesh_points , 1. , 
     "Display mesh vertices?" },
   { F|O, "Lines" , opt_mesh_lines , 1. , 
@@ -367,6 +369,8 @@ StringXNumber MeshOptions_Number[] = {
     "Disable dubious point insertion tests" },
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
+  { F|O, "ConstrainedBackgroundMesh" , opt_mesh_constrained_bgmesh, 0. ,
+    "Should the background mesh be constrained by the characteristic lengths associated with the geometry?" },
   { F|O, "Degree" , opt_mesh_degree , 1. ,
     "Element order" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,

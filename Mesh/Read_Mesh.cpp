@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.12 2001-04-26 17:58:00 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.13 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -43,7 +43,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
   Curve   C , *c , **cc;
   Surface S , *s , **ss;
   Volume  V , *v , **vv;
-
+  
   while (1) {
     do { 
       fgets(String,sizeof(String), File_GEO) ; 
@@ -102,7 +102,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	      c = &C; c->Num = Elementary;
 	      if(!(cc = (Curve**)Tree_PQuery(M->Curves, &c))){
 		c = Create_Curve(Elementary, MSH_SEGM_LINE, 0, NULL,
-				 NULL, 0, 1, 0., 1.);
+				 NULL, -1, -1, 0., 1.);
 		Tree_Add(M->Curves, &c);
 	      }
 	      else
@@ -152,6 +152,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	      simp->iEnt = Elementary ;
 	      Tree_Insert(s->Simplexes, &simp) ;
 	      Tree_Insert(M->Simplexes, &simp) ;
+	      M->Statistics[7]++;
 	      break;
 	    case QUA1:
 	      simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
@@ -159,6 +160,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	      simp->iEnt = Elementary ;
 	      Tree_Insert(s->Simplexes, &simp) ;
 	      Tree_Insert(M->Simplexes, &simp) ;
+	      M->Statistics[8]++;
 	      break;
 	    case TET1:
 	      simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
@@ -166,6 +168,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	      simp->iEnt = Elementary ;
 	      Tree_Insert(v->Simplexes, &simp) ;
 	      Tree_Insert(M->Simplexes, &simp) ;
+	      M->Statistics[9]++;
 	      break;
 	    case HEX1:
 	      hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
@@ -173,6 +176,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	      hex->Num = Num ;
 	      hex->iEnt = Elementary ;
 	      Tree_Insert(v->Hexahedra, &hex) ;
+	      M->Statistics[10]++;
 	      break;
 	    case PRI1:
 	      pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2], 
@@ -180,6 +184,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	      pri->Num = Num ;
 	      pri->iEnt = Elementary ;
 	      Tree_Insert(v->Prisms, &pri) ;
+	      M->Statistics[11]++;
 	      break;
 	    case PNT:
 	      break;
@@ -209,6 +214,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     M->status = 0 ;
   else
     M->status = -1 ;
+
 }
 
 /* ------------------------------------------------------------------------ */

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.16 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.17 2001-05-20 19:24:53 geuzaine Exp $
 
 /*
  
@@ -129,8 +129,9 @@ int Pt_In_Volume (double X, double Y, double Z, Mesh * m,
 
   B = LaBrique (&m->Grid, X, Y, Z);
 
-  if (B.N < 0)
+  if (B.N < 0){
     return (0);
+  }
 
   for (i = 0; i < List_Nbr (B.pT); i++){
     List_Read (B.pT, i, &s);
@@ -677,7 +678,7 @@ void add_in_bgm (void *a, void *b){
   List_Add (LLL, S);
 }
 
-void Bgm_With_Points (Mesh * m, Mesh * bgm){
+void Bgm_With_Points (Mesh * bgm){
   int i;
   Simplex *s;
 
@@ -753,7 +754,6 @@ void Maillage_Volume (void *data, void *dum){
     
     Convex_Hull_Mesh (POINTS, LOCAL);
     
-    //if (!Coherence (v, LOCAL)) return;
     while (!Coherence (v, LOCAL));
 
     Link_Simplexes (NULL, LOCAL->Simplexes);
@@ -767,10 +767,8 @@ void Maillage_Volume (void *data, void *dum){
     }
     List_Delete (Suppress);
 
-    /* Suppression des elements dont
-       - le num de vol == 0 (cad qui n'appartiennent a auncun volume defini)
-       - le num de vol == num de vol transfini
-    */
+    /* Suppression des elements dont le num de vol == 0 (cad qui
+       n'appartiennent a auncun volume defini) */
 
     Suppress = List_Create (10, 10, sizeof (Simplex *));
     Tree_Action (v->Simplexes, suppress_simplex);
@@ -787,7 +785,7 @@ void Maillage_Volume (void *data, void *dum){
     
     v->Simplexes = LOCAL->Simplexes;
     
-    Bgm_With_Points (THEM, LOCAL);
+    Bgm_With_Points (LOCAL);
     POINTS_TREE = THEM->Simplexes;
     
     Msg(STATUS2, "Mesh 3D... (final)");

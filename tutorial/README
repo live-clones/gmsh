@@ -1,4 +1,4 @@
-$Id: README,v 1.10 2001-04-25 15:55:51 geuzaine Exp $
+$Id: README,v 1.11 2001-05-20 19:24:53 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -26,10 +26,12 @@ required dimension in the context-dependent buttons ('1D' will mesh
 all the curves; '2D' will mesh all the surfaces ---as well as all the
 curves if '1D' was not called before; '3D' will mesh all the volumes
 ---and all the surfaces if '2D' was not called before). To save the
-resulting mesh, select 'File->Save_Mesh' in the menu bar. The default
-mesh file name is based on the name of the first input file on the
-command line (or 'unnamed' if there wasn't any input file given), with
-an appended extension depending on the mesh format.
+resulting mesh in the current mesh format, choose 'Save' in the
+context-dependent buttons, or select the appropriate format with the
+'File->Save as' menu. The default mesh file name is based on the name
+of the first input file on the command line (or 'unnamed' if there
+wasn't any input file given), with an appended extension depending on
+the mesh format.
 
 [NOTE: Nearly all the interactive commands have shortcuts. Select
 'Help->Shortcuts' in the menu bar to learn about these shortcuts.]
@@ -87,15 +89,15 @@ map" and "a vector map". A left mouse click toggles the visibility of
 the selected view. A right mouse click provides access to the view's
 options. If you want the modifications made to one view to affect also
 all the other views, select the 'Link all views' option in the
-'Options->Post-Processing' menu.
+'Options->Post-processing' menu.
 
 [NOTE: All the options specified interactively can also be directly
 specified in the ascii input files. All available options, with their
-current values, can be saved into a file by selecting
-'File->Save_as->GEO complete options', or simply viewed by pressing
-the '?' button in the status bar. To save the current options as the
-default options for all future Gmsh sessions, use the
-'File->Save_Options' menu.]
+current values, can be saved into a file by selecting 'File->Save
+as->GEO complete options', or simply viewed by pressing the '?' button
+in the status bar. To save the current options as your default
+preferences for all future Gmsh sessions, use the 'Options->Save
+options' menu.]
 
 
 OK, that's all, folks. Enjoy the tutorial.

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.18 2001-05-07 06:25:25 geuzaine Exp $
+// $Id: Options.cpp,v 1.19 2001-05-20 19:24:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -137,23 +137,27 @@ void Print_Options(int num, int level, char *filename){
 
   if((level & GMSH_SESSIONRC) && file){
     fprintf(file, "// Gmsh Session File\n");
+    fprintf(file, "//\n");
     fprintf(file, "// This file takes session specific info (that is info\n");
     fprintf(file, "// you want to keep between two Gmsh sessions). You are\n");
     fprintf(file, "// not supposed to edit it manually, but of course you\n");
     fprintf(file, "// can do. This file will be entirely rewritten every time\n");
     fprintf(file, "// you quit Gmsh if the option 'General.SaveSession' is\n");
     fprintf(file, "// set. If this file isn't found, defaults are used.\n");
+    fprintf(file, "//\n");
   }
 
   if((level & GMSH_OPTIONSRC) && file){
     fprintf(file, "// Gmsh Option File\n");
-    fprintf(file, "// This file takes configuration options that should\n");
-    fprintf(file, "// be loaded each time Gmsh is launched. You can create\n");
+    fprintf(file, "//\n");
+    fprintf(file, "// This file takes configuration options (preferences) that\n");
+    fprintf(file, "// should be loaded each time Gmsh is launched. You can create\n");
     fprintf(file, "// this file by hand, or let Gmsh generate it for you (with\n");
-    fprintf(file, "// the 'File->Save Options' menu button). This file can\n");
+    fprintf(file, "// the 'Options->Save options' menu button). This file can\n");
     fprintf(file, "// also be automatically regenerated every time you quit\n");
     fprintf(file, "// Gmsh if the option 'General.SaveOptions' is set. If\n");
     fprintf(file, "// this file isn't found, defaults are used.\n");
+    fprintf(file, "//\n");
   }
 
   Print_OptionCategory(level, "General options", file);
@@ -1176,17 +1180,13 @@ double opt_mesh_normals(OPT_ARGS_NUM){
     CTX.mesh.normals = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_value[5]->value(CTX.mesh.normals);
+    WID->mesh_value[8]->value(CTX.mesh.normals);
 #endif
   return CTX.mesh.normals;
 }
 double opt_mesh_tangents(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.mesh.tangents = val;
-#ifdef _FLTK
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[1]->value(CTX.mesh.tangents);
-#endif
   return CTX.mesh.tangents;
 }
 double opt_mesh_explode(OPT_ARGS_NUM){
@@ -1194,7 +1194,7 @@ double opt_mesh_explode(OPT_ARGS_NUM){
     CTX.mesh.explode = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_value[6]->value(CTX.mesh.explode);
+    WID->mesh_value[9]->value(CTX.mesh.explode);
 #endif
   return CTX.mesh.explode;
 }
@@ -1225,31 +1225,48 @@ double opt_mesh_rand_factor(OPT_ARGS_NUM){
 #endif
   return CTX.mesh.rand_factor;
 }
-double opt_mesh_limit_gamma(OPT_ARGS_NUM){
+double opt_mesh_gamma_inf(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.mesh.limit_gamma = val;
+    CTX.mesh.gamma_inf = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_value[4]->value(CTX.mesh.limit_gamma);
+    WID->mesh_value[4]->value(CTX.mesh.gamma_inf);
 #endif
-  return CTX.mesh.limit_gamma;
+  return CTX.mesh.gamma_inf;
 }
-double opt_mesh_limit_eta(OPT_ARGS_NUM){
+double opt_mesh_gamma_sup(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.mesh.limit_eta = val;
-  return CTX.mesh.limit_eta;
+    CTX.mesh.gamma_sup = val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[5]->value(CTX.mesh.gamma_sup);
+#endif
+  return CTX.mesh.gamma_sup;
 }
-double opt_mesh_limit_rho(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
-    CTX.mesh.limit_rho = val;
-  return CTX.mesh.limit_rho;
+double opt_mesh_radius_inf(OPT_ARGS_NUM){
+  if(action & GMSH_SET)
+    CTX.mesh.radius_inf = val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[6]->value(CTX.mesh.radius_inf);
+#endif
+  return CTX.mesh.radius_inf;
+}
+double opt_mesh_radius_sup(OPT_ARGS_NUM){
+  if(action & GMSH_SET)
+    CTX.mesh.radius_sup = val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[7]->value(CTX.mesh.radius_sup);
+#endif
+  return CTX.mesh.radius_sup;
 }
 double opt_mesh_points(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.mesh.points = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[3]->value(CTX.mesh.points);
+    WID->mesh_butt[4]->value(CTX.mesh.points);
 #endif
   return CTX.mesh.points;
 }
@@ -1258,7 +1275,7 @@ double opt_mesh_lines(OPT_ARGS_NUM){
     CTX.mesh.lines = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[4]->value(CTX.mesh.lines);
+    WID->mesh_butt[5]->value(CTX.mesh.lines);
 #endif
   return CTX.mesh.lines;
 }
@@ -1267,7 +1284,7 @@ double opt_mesh_surfaces(OPT_ARGS_NUM){
     CTX.mesh.surfaces = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[5]->value(CTX.mesh.surfaces);
+    WID->mesh_butt[6]->value(CTX.mesh.surfaces);
 #endif
   return CTX.mesh.surfaces;
 }
@@ -1276,7 +1293,7 @@ double opt_mesh_volumes(OPT_ARGS_NUM){
     CTX.mesh.volumes = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[6]->value(CTX.mesh.volumes);
+    WID->mesh_butt[7]->value(CTX.mesh.volumes);
 #endif
   return CTX.mesh.volumes;
 }
@@ -1285,7 +1302,7 @@ double opt_mesh_points_num(OPT_ARGS_NUM){
     CTX.mesh.points_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[7]->value(CTX.mesh.points_num);
+    WID->mesh_butt[8]->value(CTX.mesh.points_num);
 #endif
   return CTX.mesh.points_num;
 }
@@ -1294,7 +1311,7 @@ double opt_mesh_lines_num(OPT_ARGS_NUM){
     CTX.mesh.lines_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[8]->value(CTX.mesh.lines_num);
+    WID->mesh_butt[9]->value(CTX.mesh.lines_num);
 #endif
   return CTX.mesh.lines_num;
 }
@@ -1303,7 +1320,7 @@ double opt_mesh_surfaces_num(OPT_ARGS_NUM){
     CTX.mesh.surfaces_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[9]->value(CTX.mesh.surfaces_num);
+    WID->mesh_butt[10]->value(CTX.mesh.surfaces_num);
 #endif
   return CTX.mesh.surfaces_num;
 }
@@ -1312,7 +1329,7 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM){
     CTX.mesh.volumes_num = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[10]->value(CTX.mesh.volumes_num);
+    WID->mesh_butt[11]->value(CTX.mesh.volumes_num);
 #endif
   return CTX.mesh.volumes_num;
 }
@@ -1326,9 +1343,9 @@ double opt_mesh_aspect(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI)){
-    WID->mesh_butt[11]->value(!CTX.mesh.hidden && !CTX.mesh.shade);
-    WID->mesh_butt[12]->value(CTX.mesh.hidden && !CTX.mesh.shade);
-    WID->mesh_butt[13]->value(CTX.mesh.hidden && CTX.mesh.shade);
+    WID->mesh_butt[12]->value(!CTX.mesh.hidden && !CTX.mesh.shade);
+    WID->mesh_butt[13]->value(CTX.mesh.hidden && !CTX.mesh.shade);
+    WID->mesh_butt[14]->value(CTX.mesh.hidden && CTX.mesh.shade);
   }
 #endif
   if(CTX.mesh.hidden && !CTX.mesh.shade) return 1;
@@ -1372,6 +1389,15 @@ double opt_mesh_min_circ_points(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.mesh.min_circ_points = (int)val;
   return CTX.mesh.min_circ_points;
+}
+double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.mesh.constrained_bgmesh = (int)val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[3]->value(CTX.mesh.constrained_bgmesh);
+#endif
+  return CTX.mesh.constrained_bgmesh;
 }
 double opt_mesh_degree(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
@@ -1430,7 +1456,7 @@ double opt_mesh_color_scheme(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_value[7]->value(CTX.mesh.color_scheme);
+    WID->mesh_value[10]->value(CTX.mesh.color_scheme);
 #endif
   return CTX.mesh.color_scheme;
 }
@@ -1439,7 +1465,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM){
     CTX.mesh.color_carousel = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[14]->value(CTX.mesh.color_carousel);
+    WID->mesh_butt[15]->value(CTX.mesh.color_carousel);
 #endif
   return CTX.mesh.color_carousel;
 }

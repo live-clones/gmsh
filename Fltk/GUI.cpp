@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.77 2001-05-10 12:08:01 geuzaine Exp $
+// $Id: GUI.cpp,v 1.78 2001-05-20 19:24:53 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -38,38 +38,37 @@ Fl_Menu_Item m_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
-    {"Save Mesh",        FL_CTRL+'s', (Fl_Callback *)file_save_mesh_cb, 0},
-    {"Save Options",     0,           (Fl_Callback *)file_save_options_cb, 0},
-    {"Save As",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
-      {"By extension...",      FL_CTRL+'p', (Fl_Callback *)file_save_as_auto_cb, 0},
-      {"GEO complete options...",  0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
-      {"GEO flattened...",     0, (Fl_Callback *)file_save_as_geo_cb, 0},
-      {"MSH...",               0, (Fl_Callback *)file_save_as_msh_cb, 0},
-      {"UNV...",               0, (Fl_Callback *)file_save_as_unv_cb, 0},
-      {"GREF...",              0, (Fl_Callback *)file_save_as_gref_cb, 0},
-      {"EPS simple sort...",   0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
-      {"EPS accurate sort...", 0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
-      {"JPEG...",              0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
-      {"GIF...",               0, (Fl_Callback *)file_save_as_gif_cb, 0},
-      {"GIF dithered...",      0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
-      {"GIF transparent...",   0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
-      {"PPM...",               0, (Fl_Callback *)file_save_as_ppm_cb, 0},
-      {"UCB YUV...",           0, (Fl_Callback *)file_save_as_yuv_cb, 0},
+    {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
+      {"By extension...",        FL_CTRL+'p', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
+      {"MSH native mesh format...",       0, (Fl_Callback *)file_save_as_msh_cb, 0},
+      {"UNV universal mesh format...",    0, (Fl_Callback *)file_save_as_unv_cb, 0},
+      {"GREF gref mesh format...",        0, (Fl_Callback *)file_save_as_gref_cb, 0},
+      {"GEO flattened geometry...",       0, (Fl_Callback *)file_save_as_geo_cb, 0},
+      {"GEO complete options...",         0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
+      {"EPS simple sort postscript...",   0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
+      {"EPS accurate sort postscript...", 0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
+      {"JPEG...",                0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
+      {"GIF...",                 0, (Fl_Callback *)file_save_as_gif_cb, 0},
+      {"GIF dithered...",        0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
+      {"GIF transparent...",     0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
+      {"PPM...",                 0, (Fl_Callback *)file_save_as_ppm_cb, 0},
+      {"UCB YUV...",             0, (Fl_Callback *)file_save_as_yuv_cb, 0},
       {0},
+    {"Messages...",      FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
+    {"Statistics...",    FL_SHIFT+'i', (Fl_Callback *)opt_statistics_cb, 0, FL_MENU_DIVIDER},
     {"Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"Options",0,0,0,FL_SUBMENU},
-    {"General...",         FL_SHIFT+'o', (Fl_Callback *)opt_general_cb, 0},
+    {"General...",         FL_SHIFT+'o', (Fl_Callback *)opt_general_cb, 0, FL_MENU_DIVIDER},
     {"Geometry...",        FL_SHIFT+'g', (Fl_Callback *)opt_geometry_cb, 0},
     {"Mesh...",            FL_SHIFT+'m', (Fl_Callback *)opt_mesh_cb, 0},
-    {"Post-Processing...", FL_SHIFT+'p', (Fl_Callback *)opt_post_cb, 0, FL_MENU_DIVIDER},
-    {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)opt_statistics_cb, 0},
-    {"Message log...",     FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
+    {"Post-processing...", FL_SHIFT+'p', (Fl_Callback *)opt_post_cb, 0, FL_MENU_DIVIDER},
+    {"Save options",       0,            (Fl_Callback *)opt_save_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
-    {"Shortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
-    {"Command line options...",  0, (Fl_Callback *)help_command_line_cb, 0},
     {"Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
+    {"Shortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
+    {"Command line options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"About...",                 0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
@@ -79,7 +78,7 @@ Fl_Menu_Item m_module_table[] = {
   {"Geometry",        'g', (Fl_Callback *)mod_geometry_cb, 0},
   {"Mesh",            'm', (Fl_Callback *)mod_mesh_cb, 0},
   {"Solver",          's', (Fl_Callback *)mod_solver_cb, 0},
-  {"Post-Processing", 'p', (Fl_Callback *)mod_post_cb, 0},
+  {"Post-processing", 'p', (Fl_Callback *)mod_post_cb, 0},
   {0}
 };
 
@@ -89,6 +88,7 @@ Context_Item menu_geometry[] =
 { { "0Geometry", NULL } ,
   { "Elementary", (Fl_Callback *)geometry_elementary_cb } ,
   { "Physical",   (Fl_Callback *)geometry_physical_cb } ,
+  { "Edit",       (Fl_Callback *)geometry_edit_cb } , 
   { "Reload",     (Fl_Callback *)geometry_reload_cb } , 
   { NULL }
 };  
@@ -228,6 +228,7 @@ Context_Item menu_mesh[] =
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
+  { "Save",   (Fl_Callback *)mesh_save_cb } ,
   { NULL } 
 };  
     Context_Item menu_mesh_define[] = 
@@ -251,7 +252,7 @@ Context_Item menu_solver[] =
   { NULL } };
 
 Context_Item menu_post[] = 
-{ { "3Post-Processing", NULL } ,
+{ { "3Post-processing", NULL } ,
   { NULL } };
 
 //********************** Definition of global shortcuts ********************************
@@ -270,18 +271,22 @@ int GUI::global_shortcuts(int event){
   }
   if(Fl::test_shortcut('0') || Fl::test_shortcut(FL_Escape)){
     geometry_reload_cb(0,0);
+    mod_geometry_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F+1)){
     mesh_1d_cb(0,0);
+    mod_mesh_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F+2)){
     mesh_2d_cb(0,0);
+    mod_mesh_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F+3)){
     mesh_3d_cb(0,0);
+    mod_mesh_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut('g')){
@@ -301,11 +306,11 @@ int GUI::global_shortcuts(int event){
     return 1;
   }
   else if(Fl::test_shortcut('b')){
-    set_context(NULL, -1);
+    mod_back_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut('f')){
-    set_context(NULL, 1);
+    mod_forward_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut('e')){
@@ -314,6 +319,10 @@ int GUI::global_shortcuts(int event){
   }
   else if(Fl::test_shortcut('q')){
     quit_selection = 1;
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_CTRL+'s')){
+    mesh_save_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut(FL_CTRL+FL_SHIFT+'s')){
@@ -1173,7 +1182,7 @@ void GUI::create_mesh_options_window(){
     init_mesh_options_window = 1 ;
     
     int width = 25*CTX.fontsize;
-    int height = 5*WB+9*BH ;
+    int height = 5*WB+10*BH ;
     
     mesh_window = new Fl_Window(width,height);
     mesh_window->box(WINDOW_BOX);
@@ -1187,25 +1196,26 @@ void GUI::create_mesh_options_window(){
 	mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Second order elements");
 	mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Interactive");
 	mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Anisotropic");
-	for(i=0 ; i<3 ; i++){
+	mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Constrained background mesh");
+	for(i=0 ; i<4 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
-	mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Number of smoothing steps");
+	mesh_value[0] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Number of smoothing steps");
 	mesh_value[0]->minimum(0);
 	mesh_value[0]->maximum(100); 
 	mesh_value[0]->step(1);
-	mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Mesh scaling factor");
+	mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Mesh scaling factor");
 	mesh_value[1]->minimum(0.001);
 	mesh_value[1]->maximum(1000); 
 	mesh_value[1]->step(0.001);
-	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Characteristic length factor");
+	mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Characteristic length factor");
 	mesh_value[2]->minimum(0.001);
 	mesh_value[2]->maximum(1000); 
 	mesh_value[2]->step(0.001);
-	mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Random perturbation factor");
+	mesh_value[3] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW, BH, "Random perturbation factor");
 	mesh_value[3]->minimum(1.e-6);
 	mesh_value[3]->maximum(1.e-1); 
 	mesh_value[3]->step(1.e-6);
@@ -1220,15 +1230,15 @@ void GUI::create_mesh_options_window(){
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Visibility");
 	o->labelsize(CTX.fontsize);
-	mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
-	mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
-	mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
-	mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
-	mesh_butt[7] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point Numbers");
-	mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve Numbers");
-	mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface Numbers");
-	mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume Numbers");
-	for(i=3 ; i<11 ; i++){
+	mesh_butt[4] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Points");
+	mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
+	mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
+	mesh_butt[7] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
+	mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point Numbers");
+	mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve Numbers");
+	mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface Numbers");
+	mesh_butt[11] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume Numbers");
+	for(i=4 ; i<12 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
@@ -1241,15 +1251,23 @@ void GUI::create_mesh_options_window(){
 	mesh_input->callback(opt_mesh_show_by_entity_num_cb);
 	mesh_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 
-	mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Show by element quality");
+	mesh_value[4] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW/2, BH);
 	mesh_value[4]->minimum(0); 
 	mesh_value[4]->maximum(1);
 	mesh_value[4]->step(0.001);
-	mesh_value[5] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Normals");
+	mesh_value[5] = new Fl_Value_Input(2*WB+IW/2, 2*WB+6*BH, IW/2, BH, "Quality range");
 	mesh_value[5]->minimum(0); 
-	mesh_value[5]->maximum(100);
-	mesh_value[5]->step(1);
-	for(i=4 ; i<6 ; i++){
+	mesh_value[5]->maximum(1);
+	mesh_value[5]->step(0.001);
+
+	mesh_value[6] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW/2, BH);
+	mesh_value[7] = new Fl_Value_Input(2*WB+IW/2, 2*WB+7*BH, IW/2, BH, "Size range");
+
+	mesh_value[8] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW, BH, "Normals");
+	mesh_value[8]->minimum(0); 
+	mesh_value[8]->maximum(100);
+	mesh_value[8]->step(1);
+	for(i=4 ; i<9 ; i++){
 	  mesh_value[i]->labelsize(CTX.fontsize);
 	  mesh_value[i]->textsize(CTX.fontsize);
 	  mesh_value[i]->type(FL_HORIZONTAL);
@@ -1261,44 +1279,44 @@ void GUI::create_mesh_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	mesh_butt[11] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Wireframe");
-	mesh_butt[12] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Hidden lines");
-	mesh_butt[13] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Solid");
-	for(i=11 ; i<14 ; i++){
+	mesh_butt[12] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Wireframe");
+	mesh_butt[13] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Hidden lines");
+	mesh_butt[14] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Solid");
+	for(i=12 ; i<15 ; i++){
 	  mesh_butt[i]->type(FL_RADIO_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
 	  mesh_butt[i]->selection_color(FL_YELLOW);
 	}
-	mesh_value[6] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Explode elements");
-	mesh_value[6]->minimum(0);
-	mesh_value[6]->maximum(1);
-	mesh_value[6]->step(0.01);
-	mesh_value[6]->labelsize(CTX.fontsize);
-	mesh_value[6]->textsize(CTX.fontsize);
-	mesh_value[6]->type(FL_HORIZONTAL);
-	mesh_value[6]->align(FL_ALIGN_RIGHT);
+	mesh_value[9] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Explode elements");
+	mesh_value[9]->minimum(0);
+	mesh_value[9]->maximum(1);
+	mesh_value[9]->step(0.01);
+	mesh_value[9]->labelsize(CTX.fontsize);
+	mesh_value[9]->textsize(CTX.fontsize);
+	mesh_value[9]->type(FL_HORIZONTAL);
+	mesh_value[9]->align(FL_ALIGN_RIGHT);
 	o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Colors");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	mesh_butt[14] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Switch color by geometrical entity");
-	mesh_butt[14]->type(FL_TOGGLE_BUTTON);
-	mesh_butt[14]->down_box(FL_DOWN_BOX);
-	mesh_butt[14]->labelsize(CTX.fontsize);
-	mesh_butt[14]->selection_color(FL_YELLOW);
+	mesh_butt[15] = new Fl_Check_Button(2*WB, 2*WB+1*BH, IW, BH, "Switch color by entity");
+	mesh_butt[15]->type(FL_TOGGLE_BUTTON);
+	mesh_butt[15]->down_box(FL_DOWN_BOX);
+	mesh_butt[15]->labelsize(CTX.fontsize);
+	mesh_butt[15]->selection_color(FL_YELLOW);
 
-	mesh_value[7] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Predefined color scheme");
-	mesh_value[7]->minimum(0); 
-	mesh_value[7]->maximum(2); 
-	mesh_value[7]->step(1);
-	mesh_value[7]->labelsize(CTX.fontsize);
-	mesh_value[7]->textsize(CTX.fontsize);
-	mesh_value[7]->type(FL_HORIZONTAL);
-	mesh_value[7]->align(FL_ALIGN_RIGHT);
-	mesh_value[7]->callback(opt_mesh_color_scheme_cb);
+	mesh_value[10] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Predefined color scheme");
+	mesh_value[10]->minimum(0); 
+	mesh_value[10]->maximum(2); 
+	mesh_value[10]->step(1);
+	mesh_value[10]->labelsize(CTX.fontsize);
+	mesh_value[10]->textsize(CTX.fontsize);
+	mesh_value[10]->type(FL_HORIZONTAL);
+	mesh_value[10]->align(FL_ALIGN_RIGHT);
+	mesh_value[10]->callback(opt_mesh_color_scheme_cb);
 
 	Fl_Scroll* s = new Fl_Scroll(2*WB, 3*WB+3*BH, IW+20, height-3*WB-5*BH);
 	i = 0;
@@ -1349,8 +1367,8 @@ void GUI::create_post_options_window(){
   if(!init_post_options_window){
     init_post_options_window = 1 ;
 
-    int width = 17*CTX.fontsize;
-    int height = 5*WB+5*BH ;
+    int width = 20*CTX.fontsize;
+    int height = 5*WB+8*BH ;
 
     post_window = new Fl_Window(width,height);
     post_window->box(WINDOW_BOX);
@@ -1358,16 +1376,22 @@ void GUI::create_post_options_window(){
     { 
       Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
       { 
-	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Links");
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Views");
 	o->labelsize(CTX.fontsize);
 	post_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "No link between views");
-	post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Link visible views");
+	post_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Link all visible views");
 	post_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Link all views");
 	for(i=0 ; i<3 ; i++){
 	  post_butt[i]->type(FL_RADIO_BUTTON);
 	  post_butt[i]->labelsize(CTX.fontsize);
 	  post_butt[i]->selection_color(FL_YELLOW);
 	}
+	Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+4*BH, width-4*WB, 2*BH,
+				   "Individual view options are available "
+				   "by right-clicking on each view button "
+				   "in the post-processing menu");
+	text->align(FL_ALIGN_LEFT|FL_ALIGN_TOP|FL_ALIGN_INSIDE|FL_ALIGN_WRAP);
+	text->labelsize(CTX.fontsize);
 	o->end();
       }
       { 
