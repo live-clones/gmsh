@@ -1022,7 +1022,7 @@ StringXNumber PrintOptions_Number[] = {
     "Compress PostScript/PDF output using zlib" },
   { F|O, "EpsFontSize" , opt_print_eps_font_size , 12. ,
     "Font size used in PostScript/PDF output" },
-  { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 1.0 ,
+  { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 0.5 ,
     "Width factor for lines in PostScript/PDF output" },
   { F|O, "EpsOcclusionCulling" , opt_print_eps_occlusion_culling , 1. ,
     "Cull occluded primitives (to reduce PostScript/PDF file size)" },
