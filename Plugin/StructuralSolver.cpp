@@ -448,8 +448,10 @@ void StructuralSolver :: addPhysicalLine (int id)
   lines[id] = info;
 #endif  
 }
+
 void StructuralSolver :: addPhysicalPoint (int id)
 { 
+#ifdef HAVE_FLTK 
   PhysicalPointInfo info;
 
   info.disp[0] = _choice[POINT_X_] ->value();
@@ -469,11 +471,10 @@ void StructuralSolver :: addPhysicalPoint (int id)
   if (info.disp[2] == 0)
     MAX_FORCE = (MAX_FORCE>info.val[2])?MAX_FORCE:info.val[2];
 
-
   points[id] = info;
-
-  
+#endif
 }
+
 void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 {
   char name[256];
