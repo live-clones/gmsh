@@ -1,6 +1,7 @@
-# $Id: Makefile,v 1.130 2001-08-14 16:10:47 geuzaine Exp $
+# $Id: Makefile,v 1.131 2001-08-15 10:03:33 geuzaine Exp $
 
 GMSH_RELEASE = 1.23
+
 MAKE = make
 CC = c++
 FLAGS = -g -Wall
@@ -14,29 +15,30 @@ X11_LIB = -lX11
 #  Gmsh definitions
 # ----------------------------------------------------------------------
 
-GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk\
-           Plugin jpeg utils Parallel
-GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk\
-                jpeg Plugin Parallel
-GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser Plugin Parallel
+GMSH_COMMON_DIR = Adapt Common DataStr Geo Mesh Parallel Parser Plugin
+GMSH_BOX_DIR =$(GMSH_COMMON_DIR) Box
+GMSH_FLTK_DIR = $(GMSH_COMMON_DIR) Graphics Fltk jpeg
+GMSH_DIR = $(GMSH_COMMON_DIR) Box Graphics Motif Fltk jpeg utils
 GMSH_BIN_DIR = bin
 GMSH_LIB_DIR = lib
 GMSH_DOC_DIR = doc
 GMSH_DEMO_DIR = demos
-GMSH_TUTOR_DIR = tutorial
+GMSH_TUTORIAL_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
-GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh\
-                -lGeo -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel
+
 GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo -lAdapt\
                -lPlugin -lCommon -lDataStr -lParallel
+GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh\
+                -lGeo -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel
+
 GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
 GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
+GMSH_UNAME = `uname`
 GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
                        -a ! -name "*.o"    -a ! -name "lib*.a"   \
                        -a ! -name "*.msh"  -a ! -name "*.bak" \
                        -a ! -name "gmsh"   -a ! -name "gmsh-*"\
                        -a ! -type d \)`
-GMSH_UNAME = `uname`
 
 # ----------------------------------------------------------------------
 # Rules for developers
@@ -93,7 +95,8 @@ efence:
 
 gmsh2:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -lfltk_gl -L/usr/X11R6/lib $(X11_LIB) -lpthread -lm
+                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -lfltk_gl\
+                 -L/usr/X11R6/lib $(X11_LIB) -lpthread -lm
 
 # ----------------------------------------------------------------------
 # Utilities
@@ -107,7 +110,7 @@ utilities:
 
 purge:
 	for i in "." $(GMSH_DIR) $(GMSH_LIB_DIR) $(GMSH_ARCHIVE_DIR)\
-                     $(GMSH_DEMO_DIR) $(GMSH_TUTOR_DIR) $(GMSH_DOC_DIR) $(GMSH_BOX_DIR); \
+                     $(GMSH_DEMO_DIR) $(GMSH_TUTORIAL_DIR) $(GMSH_DOC_DIR); \
         do (cd $$i && $(RM) $(RMFLAGS) *~ *~~ .gmsh-tmp .gmsh-errors gmon.out); \
         done
 
@@ -194,7 +197,7 @@ strip_bin:
 
 dem:
 	gtar zcvf gmsh-demos.tgz $(GMSH_DEMO_DIR)
-	gtar zcvf gmsh-tutorial.tgz $(GMSH_TUTOR_DIR)
+	gtar zcvf gmsh-tutorial.tgz $(GMSH_TUTORIAL_DIR)
 
 # ----------------------------------------------------------------------
 # Black Box
