@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.1 2001-08-07 21:00:43 remacle Exp $
+// $Id: Iso.cpp,v 1.2 2001-08-09 13:27:41 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -261,3 +261,24 @@ void CutLine1D(double *X, double *Y, double *Z, double *Val,
 
 }
 
+void gradSimplex (double *x, double *y, double *z, double *v, double *grad){
+  /*
+    p = p1 * (1-u-v-w) + p2 u + p3 v + p4 w
+   */
+
+  double mat[3][3];
+  double det,b[3];
+  mat[0][0] = x[1]-x[0];
+  mat[1][0] = x[2]-x[0];
+  mat[2][0] = x[3]-x[0];
+  mat[0][1] = y[1]-y[0];
+  mat[1][1] = y[2]-y[0];
+  mat[2][1] = y[3]-y[0];
+  mat[0][2] = z[1]-z[0];
+  mat[1][2] = z[2]-z[0];
+  mat[2][2] = z[3]-z[0];
+  b[0] = v[1]-v[0];
+  b[1] = v[2]-v[0];
+  b[2] = v[3]-v[0];
+  sys3x3 (mat, b, grad, &det); 
+}

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2001-08-07 21:00:10 remacle Exp $
+# $Id: Makefile,v 1.13 2001-08-09 13:27:41 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -11,7 +11,7 @@ RM        = rm
 RANLIB    = ranlib
 
 LIB       = ../lib/libPlugin.a
-INCLUDE   = -I../Common -I../Graphics -I../DataStr
+INCLUDE   = -I../Common -I../Graphics -I../DataStr -I../Mesh
 
 C_FLAGS       = -g -Wall
 OS_FLAGS      = 

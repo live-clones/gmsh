@@ -1,9 +1,15 @@
-// $Id: LevelsetPlugin.cpp,v 1.11 2001-08-06 11:00:26 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.12 2001-08-09 13:27:41 remacle Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
 #include "Views.h"
 #include "Iso.h"
+
+/// Includes are basdly designed, i prefer forward decls.
+void prodve (double a[3], double b[3], double c[3]);
+void prosca (double a[3], double b[3], double *c);
+void norme (double a[3]);
+int sys3x3 (double mat[3][3], double b[3], double res[3], double *det);
 
 GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 {
@@ -33,6 +39,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
     a cut of the actual view with a levelset.
    */
   int k,i,nb,edtet[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
+  double Xpi[6],Ypi[6],Zpi[6];
   Post_View *View;
 
   //   for all scalar simplices 
@@ -90,6 +97,28 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	      for(k=1;k<4;k++)List_Add(View->ST, &myVals[k %4]);
 	      View->NbST++;
 	    }
+
+	  double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
+	  double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
+	  double gr[3];
+	  double n[3],xx;
+	  prodve(v1,v2,n);
+	  norme(n);
+	  gradSimplex(X,Y,Z,VAL,gr);      
+	  prosca(gr,n,&xx);
+	  
+	  if(xx > 0){
+	    for(i=0;i<nb;i++){
+	      Xpi[i] = Xp[i];
+	      Ypi[i] = Yp[i];
+	      Zpi[i] = Zp[i];
+	    }
+	    for(i=0;i<nb;i++){
+	      Xp[i] = Xpi[nb-i-1];
+	      Yp[i] = Ypi[nb-i-1];
+	      Zp[i] = Zpi[nb-i-1];	      
+	    }
+	  }	  
 	}
       char name[1024],filename[1024];
 

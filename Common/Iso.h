@@ -1,6 +1,8 @@
 #ifndef _ISO_H_
 #define _ISO_H_
 
+void gradSimplex (double *x, double *y, double *z, double *v, double *grad);
+
 void CutTriangle1D (double *X, double *Y, double *Z, double *Val,
                     double V, double Vmin, double Vmax,
                     double *Xp, double *Yp, double *Zp, int *nb);
