@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2002-05-18 21:08:22 geuzaine Exp $
+# $Id: Makefile,v 1.9 2002-05-19 20:29:47 geuzaine Exp $
 
 CXX       = c++
 OPT_FLAGS = -g
@@ -8,7 +8,7 @@ RMFLAGS = -f
 
 dxf2geo: dxf2geo.c message.c 
 	$(CXX) $(OPT_FLAGS) -o ../bin/dxf2geo -I../DataStr\
-              dxf2geo.c message.c ../lib/libDataStr.a -lm
+              dxf2geo.c message.c ../lib/libGmshDataStr.a -lm
 
 mysolver: mysolver.c
 	$(CXX) $(OPT_FLAGS) -o mysolver.exe mysolver.c GmshClient.c

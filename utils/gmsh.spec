@@ -4,7 +4,7 @@ Name: gmsh
 Version: %{gmshversion}
 Source: gmsh-%{version}.tar.gz
 Release: 1
-Copyright: distributable
+Copyright: GPL
 Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
 Packager: geuz@geuz.org
