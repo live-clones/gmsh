@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.110 2004-02-03 22:34:16 geuzaine Exp $
+// $Id: Views.cpp,v 1.111 2004-02-05 02:10:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,8 +30,7 @@
 extern Context_T CTX;
 
 #if defined(HAVE_FLTK)
-void AddViewInUI();
-void RemoveViewInUI();
+void UpdateViewsInGUI();
 #endif
 
 #define VAL_INF 1.e200
@@ -406,7 +405,7 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
 
 #if defined(HAVE_FLTK)
   if(!CTX.post.force_num && add_in_gui)
-    AddViewInUI();
+    UpdateViewsInGUI();
 #endif
 
   v->Dirty = 0; //the view is complete, we may draw it
@@ -498,7 +497,7 @@ void DuplicateView(Post_View * v1, int withoptions)
     CopyViewOptions(v1, v2);
 
 #if defined(HAVE_FLTK)
-  AddViewInUI();
+  UpdateViewsInGUI();
 #endif
 }
 
@@ -520,7 +519,7 @@ bool RemoveViewByIndex(int index)
   }
 
 #if defined(HAVE_FLTK)
-  RemoveViewInUI();
+  UpdateViewsInGUI();
 #endif
   Msg(DEBUG, "Removed View[%d] (%d views left)", index, List_Nbr(CTX.post.list));
   return true;
@@ -1455,7 +1454,7 @@ void CombineViews(int all, int remove)
        */
     }
   }
-  EndView(vm, 1, "combined.pos", "combined");
+  EndView(vm, 0, "combined.pos", "combined");
 
   // remove original views?
   if(remove){
@@ -1466,6 +1465,10 @@ void CombineViews(int all, int remove)
     }
   }
   List_Delete(to_remove);
+
+#if defined(HAVE_FLTK)
+  UpdateViewsInGUI();
+#endif
 }
 
 // Combine views (merge time steps)
@@ -1543,7 +1546,7 @@ void combine_time(struct nameidx *id, List_T *to_remove)
     char name[256], filename[256];
     sprintf(name, "combined-%s", id->name);
     sprintf(filename, "combined-%s.pos", id->name);
-    EndView(vm, 1, filename, name);
+    EndView(vm, 0, filename, name);
   }
 }
 
@@ -1592,6 +1595,10 @@ void CombineViews_Time(int how, int remove)
     }
   }
   List_Delete(to_remove);
+
+#if defined(HAVE_FLTK)
+  UpdateViewsInGUI();
+#endif
 }
 
 // generic access functions

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.200 2004-01-25 09:32:31 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.201 2004-02-05 02:10:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -145,16 +145,7 @@ int file_chooser_get_filter()
 
 // Compatibility/local routines
 
-void AddViewInUI()
-{
-  if(WID) {
-    if(WID->get_context() == 3)
-      WID->set_context(menu_post, 0);
-    WID->reset_option_browser();
-  }
-}
-
-void RemoveViewInUI()
+void UpdateViewsInGUI()
 {
   if(WID) {
     WID->check_anim_buttons();
