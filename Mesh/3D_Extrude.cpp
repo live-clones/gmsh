@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.17 2001-08-02 07:59:44 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.18 2001-08-02 17:33:27 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -415,7 +415,9 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
           Tree_Add (THES->Simplexes, &s);
         }
         else{
-          are_cree (v1, v4, Tree_Ares);
+	  //JF, je ne pense pas que ceci soit correct...
+          //are_cree (v1, v4, Tree_Ares);
+	  
           s = Create_Simplex (v3, v4, v1, NULL);
           s->iEnt = THES->Num;
 	  s->Num = -s->Num; //Tag triangles to re-extrude
