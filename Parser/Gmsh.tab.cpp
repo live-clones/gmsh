@@ -169,7 +169,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.84 2001-04-17 06:55:47 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.85 2001-04-20 08:52:24 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -3303,7 +3303,7 @@ case 68:
 	  strcat(tmpstring, tmpstring3);
 	}
 	else{
-	  vyyerror("Missing %d Parameter(s) in Printf Format",
+	  vyyerror("Missing %d parameter(s) in Printf format",
 		   List_Nbr(yyvsp[-2].l)-i);
 	  break ;
 	}
@@ -3650,7 +3650,7 @@ case 139:
 	  List_Add(Symbol_L, &TheSymbol);
 	}
 	else
-	  vyyerror("Unknown Variable '%s'", yyvsp[-3].c) ;
+	  vyyerror("Unknown variable '%s'", yyvsp[-3].c) ;
       }
       else{
 	pd = (double*)List_Pointer_Fast(pSymbol->val, 0) ; 
@@ -3661,7 +3661,7 @@ case 139:
 	case 3 : *pd *= yyvsp[-1].d ; break ;
 	case 4 : 
 	  if(yyvsp[-1].d) *pd /= yyvsp[-1].d ; 
-	  else vyyerror("Division by Zero in '%s /= %g'", yyvsp[-3].c, yyvsp[-1].d);
+	  else vyyerror("Division by zero in '%s /= %g'", yyvsp[-3].c, yyvsp[-1].d);
 	  break;
 	}
       }
@@ -3678,7 +3678,7 @@ case 140:
 	  List_Add(Symbol_L, &TheSymbol);
 	}
 	else
-	  vyyerror("Unknown Variable '%s'", yyvsp[-6].c) ;
+	  vyyerror("Unknown variable '%s'", yyvsp[-6].c) ;
       }
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)yyvsp[-4].d))){
@@ -3689,7 +3689,7 @@ case 140:
 	  case 3 : *pd *= yyvsp[-1].d ; break ;
 	  case 4 : 
 	    if(yyvsp[-1].d) *pd /= yyvsp[-1].d ; 
-	    else vyyerror("Division by Zero in '%s[%d] /= %g'", yyvsp[-6].c, (int)yyvsp[-4].d, yyvsp[-1].d);
+	    else vyyerror("Division by zero in '%s[%d] /= %g'", yyvsp[-6].c, (int)yyvsp[-4].d, yyvsp[-1].d);
 	    break;
 	  }
 	}
@@ -3697,7 +3697,7 @@ case 140:
 	  if(!yyvsp[-2].i)
 	    List_Put(pSymbol->val, (int)yyvsp[-4].d, &yyvsp[-1].d);
 	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-6].c, (int)yyvsp[-4].d) ;
+	    vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-6].c, (int)yyvsp[-4].d) ;
 	}
       }
     ;
@@ -3719,7 +3719,7 @@ case 141:
 	    }
 	  }
 	  else
-	    vyyerror("Unknown Variable '%s'", yyvsp[-8].c) ;
+	    vyyerror("Unknown variable '%s'", yyvsp[-8].c) ;
 	}
 	else{
 	  for(i=0 ; i<List_Nbr(yyvsp[-5].l) ; i++){
@@ -3733,7 +3733,7 @@ case 141:
 	      case 3 : *pd *= d ; break ;
 	      case 4 : 
 		if(yyvsp[-1].l) *pd /= d ; 
-		else vyyerror("Division by Zero in '%s[%d] /= %g'", yyvsp[-8].c, j, d);
+		else vyyerror("Division by zero in '%s[%d] /= %g'", yyvsp[-8].c, j, d);
 		break;
 	      }
 	    }
@@ -3741,7 +3741,7 @@ case 141:
 	      if(!yyvsp[-2].i)
 		List_Put(pSymbol->val, j, &d);
 	      else
-		vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-8].c, j) ;	  
+		vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-8].c, j) ;	  
 	    }
 	  }
 	}
@@ -3771,7 +3771,7 @@ case 143:
 {
       TheSymbol.Name = yyvsp[-2].c;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", yyvsp[-2].c) ; 
+	vyyerror("Unknown variable '%s'", yyvsp[-2].c) ; 
       else
 	*(double*)List_Pointer_Fast(pSymbol->val, 0) += yyvsp[-1].i; 
     ;
@@ -3781,12 +3781,12 @@ case 144:
 {
       TheSymbol.Name = yyvsp[-5].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", yyvsp[-5].c) ; 
+	vyyerror("Unknown variable '%s'", yyvsp[-5].c) ; 
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)yyvsp[-3].d)))
 	  *pd += yyvsp[-1].i ;
 	else
-	  vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-5].c, (int)yyvsp[-3].d) ;
+	  vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-5].c, (int)yyvsp[-3].d) ;
       }
     ;
     break;}
@@ -3794,10 +3794,10 @@ case 145:
 #line 906 "Gmsh.y"
 { 
       if(!(pStrCat = Get_StringOptionCategory(yyvsp[-5].c)))
-	vyyerror("Unknown String Option Class '%s'", yyvsp[-5].c);
+	vyyerror("Unknown string option class '%s'", yyvsp[-5].c);
       else{
 	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption(yyvsp[-3].c, pStrCat)))
-	  vyyerror("Unknown String Option '%s.%s'", yyvsp[-5].c, yyvsp[-3].c);
+	  vyyerror("Unknown string option '%s.%s'", yyvsp[-5].c, yyvsp[-3].c);
 	else
 	  pStrOpt(0,GMSH_SET|GMSH_GUI,yyvsp[-1].c) ;
       }
@@ -3807,10 +3807,10 @@ case 146:
 #line 918 "Gmsh.y"
 { 
       if(!(pStrCat = Get_StringOptionCategory(yyvsp[-8].c)))
-	vyyerror("Unknown String Option Class '%s'", yyvsp[-8].c);
+	vyyerror("Unknown string option class '%s'", yyvsp[-8].c);
       else{
 	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption(yyvsp[-3].c, pStrCat)))
-	  vyyerror("Unknown String Option '%s[%d].%s'", yyvsp[-8].c, (int)yyvsp[-6].d, yyvsp[-3].c);
+	  vyyerror("Unknown string option '%s[%d].%s'", yyvsp[-8].c, (int)yyvsp[-6].d, yyvsp[-3].c);
 	else
 	  pStrOpt((int)yyvsp[-6].d,GMSH_SET|GMSH_GUI,yyvsp[-1].c) ;
       }
@@ -3820,10 +3820,10 @@ case 147:
 #line 932 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-5].c)))
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-5].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-5].c);
       else{
 	if(!(pNumOpt = (double (*) (int, int, double))Get_NumberOption(yyvsp[-3].c, pNumCat)))
-	  vyyerror("Unknown Numeric Option '%s.%s'", yyvsp[-5].c, yyvsp[-3].c);
+	  vyyerror("Unknown numeric option '%s.%s'", yyvsp[-5].c, yyvsp[-3].c);
 	else{
 	  switch(yyvsp[-2].i){
 	  case 0 : d = yyvsp[-1].d ; break ;
@@ -3832,7 +3832,7 @@ case 147:
 	  case 3 : d = pNumOpt(0,GMSH_GET,0) * yyvsp[-1].d ; break ;
 	  case 4 : 
 	    if(yyvsp[-1].d) d = pNumOpt(0,GMSH_GET,0) / yyvsp[-1].d ; 
-	    else vyyerror("Division by Zero in '%s.%s /= %g'", yyvsp[-5].c, yyvsp[-3].c, yyvsp[-1].d);
+	    else vyyerror("Division by zero in '%s.%s /= %g'", yyvsp[-5].c, yyvsp[-3].c, yyvsp[-1].d);
 	    break;
 	  }
 	  pNumOpt(0,GMSH_SET|GMSH_GUI, d) ;
@@ -3844,10 +3844,10 @@ case 148:
 #line 955 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-8].c)))
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-8].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-8].c);
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption(yyvsp[-3].c, pNumCat)))
-	  vyyerror("Unknown Numeric Option '%s[%d].%s'", yyvsp[-8].c, (int)yyvsp[-6].d, yyvsp[-3].c);
+	  vyyerror("Unknown numeric option '%s[%d].%s'", yyvsp[-8].c, (int)yyvsp[-6].d, yyvsp[-3].c);
 	else{
 	  switch(yyvsp[-2].i){
 	  case 0 : d = yyvsp[-1].d; break ;
@@ -3856,7 +3856,7 @@ case 148:
 	  case 3 : d = pNumOpt((int)yyvsp[-6].d,GMSH_GET,0) * yyvsp[-1].d ; break ;
 	  case 4 : 
 	    if(yyvsp[-1].d) d = pNumOpt((int)yyvsp[-6].d,GMSH_GET,0) / yyvsp[-1].d ;
-	    else vyyerror("Division by Zero in '%s[%d].%s /= %g'", 
+	    else vyyerror("Division by zero in '%s[%d].%s /= %g'", 
 			  yyvsp[-8].c, (int)yyvsp[-6].d, yyvsp[-3].c, yyvsp[-1].d);
 	    break;
 	  }
@@ -3869,10 +3869,10 @@ case 149:
 #line 979 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-4].c)))
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-4].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-4].c);
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption(yyvsp[-2].c, pNumCat)))
-	  vyyerror("Unknown Numeric Option '%s.%s'", yyvsp[-4].c, yyvsp[-2].c);
+	  vyyerror("Unknown numeric option '%s.%s'", yyvsp[-4].c, yyvsp[-2].c);
 	else
 	  pNumOpt(0,GMSH_SET|GMSH_GUI,pNumOpt(0,GMSH_GET,0)+yyvsp[-1].i) ;
       }
@@ -3882,10 +3882,10 @@ case 150:
 #line 991 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-7].c)))
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-7].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-7].c);
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption(yyvsp[-2].c, pNumCat)))
-	  vyyerror("Unknown Numeric Option '%s[%d].%s'", yyvsp[-7].c, (int)yyvsp[-5].d, yyvsp[-2].c);
+	  vyyerror("Unknown numeric option '%s[%d].%s'", yyvsp[-7].c, (int)yyvsp[-5].d, yyvsp[-2].c);
 	else
 	  pNumOpt((int)yyvsp[-5].d,GMSH_SET|GMSH_GUI,pNumOpt((int)yyvsp[-5].d,GMSH_GET,0)+yyvsp[-1].i) ;
       }
@@ -3895,10 +3895,10 @@ case 151:
 #line 1005 "Gmsh.y"
 {
       if(!(pColCat = Get_ColorOptionCategory(yyvsp[-7].c)))
-	vyyerror("Unknown Color Option Class '%s'", yyvsp[-7].c);
+	vyyerror("Unknown color option class '%s'", yyvsp[-7].c);
       else{
 	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption(yyvsp[-3].c, pColCat)))
-	  vyyerror("Unknown Color Option '%s.Color.%s'", yyvsp[-7].c, yyvsp[-3].c);
+	  vyyerror("Unknown color option '%s.Color.%s'", yyvsp[-7].c, yyvsp[-3].c);
 	else
 	  pColOpt(0,GMSH_SET|GMSH_GUI,yyvsp[-1].u) ;
       }
@@ -3908,10 +3908,10 @@ case 152:
 #line 1017 "Gmsh.y"
 {
       if(!(pColCat = Get_ColorOptionCategory(yyvsp[-10].c)))
-	vyyerror("Unknown Color Option Class '%s'", yyvsp[-10].c);
+	vyyerror("Unknown color option class '%s'", yyvsp[-10].c);
       else{
 	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption(yyvsp[-3].c, pColCat)))
-	  vyyerror("Unknown Color Option '%s[%d].Color.%s'", yyvsp[-10].c, (int)yyvsp[-8].d, yyvsp[-3].c);
+	  vyyerror("Unknown color option '%s[%d].Color.%s'", yyvsp[-10].c, (int)yyvsp[-8].d, yyvsp[-3].c);
 	else
 	  pColOpt((int)yyvsp[-8].d,GMSH_SET|GMSH_GUI,yyvsp[-1].u) ;
       }
@@ -3926,7 +3926,7 @@ case 153:
       else{
 	ct->size = List_Nbr(yyvsp[-1].l);
 	if(ct->size > COLORTABLE_NBMAX_COLOR)
-	  vyyerror("Too Many (%d>%d) Colors in View[%d].ColorTable", 
+	  vyyerror("Too many (%d>%d) colors in View[%d].ColorTable", 
 		   ct->size, COLORTABLE_NBMAX_COLOR, 0);
 	else
 	  for(i=0 ; i<ct->size ; i++) List_Read(yyvsp[-1].l, i, &ct->table[i]);
@@ -3943,7 +3943,7 @@ case 154:
       else{
 	ct->size = List_Nbr(yyvsp[-1].l);
 	if(ct->size > COLORTABLE_NBMAX_COLOR)
-	  vyyerror("Too Many (%d>%d) Colors in View[%d].ColorTable", 
+	  vyyerror("Too many (%d>%d) colors in View[%d].ColorTable", 
 		   ct->size, COLORTABLE_NBMAX_COLOR, (int)yyvsp[-6].d);
 	else
 	  for(i=0 ; i<ct->size ; i++) List_Read(yyvsp[-1].l, i, &ct->table[i]);
@@ -4118,7 +4118,7 @@ case 170:
       int i;
       double d;
       if((int)yyvsp[-1].d + 1 + List_Nbr(yyvsp[-5].l) != List_Nbr(yyvsp[-3].l)){
-	vyyerror("Wrong Definition of Nurbs Curve %d: "
+	vyyerror("Wrong definition of Nurbs Curve %d: "
 		"[Degree]%d + 1 + [NbPts]%d != [NbKnots]%d",
 		(int)yyvsp[-8].d, (int)yyvsp[-1].d, List_Nbr(yyvsp[-5].l), List_Nbr(yyvsp[-3].l));
       }
@@ -4179,7 +4179,7 @@ case 174:
       i = (int)d;
       EdgeLoop *el = FindEdgeLoop(i,THEM);
       if(!el)
-	vyyerror("Unkown Loop %d", i);
+	vyyerror("Unkown Line Loop %d", i);
       else{
 	j = List_Nbr(el->Curves);
 	if(j==4)
@@ -4187,8 +4187,8 @@ case 174:
 	else if(j==3)
 	  yyval.s.Type  = MSH_SURF_TRIC;
 	else
-	  vyyerror("Wrong Definition of Ruled Surface %d: "
-		   "%d Borders Instead of 3 or 4", 
+	  vyyerror("Wrong definition of Ruled Surface %d: "
+		   "%d borders instead of 3 or 4", 
 		   (int)yyvsp[-4].d, j);
 	Cdbz101((int)yyvsp[-4].d,yyval.s.Type,0,0,0,0,0,NULL,yyvsp[-1].l,NULL);
 	yyval.s.Num = (int)yyvsp[-4].d;
@@ -4375,7 +4375,7 @@ case 196:
 	  yylineno = yylinenoTab[RecursionLevel];
 	}
 	else{
-	  vyyerror("Unknown File '%s'", tmpstring) ;  
+	  vyyerror("Unknown file '%s'", tmpstring) ;  
 	  yyin = yyinTab[--RecursionLevel];
 	}
 
@@ -4400,7 +4400,7 @@ case 196:
 
       }
       else
-	vyyerror("Unknown Command '%s'", yyvsp[-2].c);
+	vyyerror("Unknown command '%s'", yyvsp[-2].c);
     ;
     break;}
 case 197:
@@ -4422,7 +4422,7 @@ case 197:
 
       }
       else
-	vyyerror("Unknown Command '%s'", yyvsp[-2].c);
+	vyyerror("Unknown command '%s'", yyvsp[-2].c);
     ;
     break;}
 case 198:
@@ -4580,7 +4580,7 @@ case 207:
 #line 1650 "Gmsh.y"
 {
       if(!FunctionManager::Instance()->enterFunction(yyvsp[-1].c,&yyin,yylineno))
-	vyyerror("Unknown Function %s",yyvsp[-1].c);
+	vyyerror("Unknown function %s",yyvsp[-1].c);
     ;
     break;}
 case 208:
@@ -4755,8 +4755,8 @@ case 225:
 	s->Method = TRANSFINI;
 	k = List_Nbr(yyvsp[-1].l);
 	if(k!=3 && k!=4){
-	  vyyerror("Wrong Definition of Transfinite Surface %d: "
-		   "%d Points Instead of 3 or 4" , yyvsp[-4].d, k) ;
+	  vyyerror("Wrong definition of Transfinite Surface %d: "
+		   "%d points instead of 3 or 4" , yyvsp[-4].d, k) ;
 	}
 	else{
 	  for(i=0;i<k;i++){
@@ -4779,8 +4779,8 @@ case 226:
         s->Method = ELLIPTIC;
         k = List_Nbr(yyvsp[-1].l);
         if(k != 4)
-	  vyyerror("Wrong Definition of Elliptic Surface %d: "
-		   "%d Points Instead of 4" , yyvsp[-4].d, k) ;
+	  vyyerror("Wrong definition of Elliptic Surface %d: "
+		   "%d points instead of 4" , yyvsp[-4].d, k) ;
         else{
 	  for(i=0;i<k;i++){
 	    List_Read(yyvsp[-1].l,i,&d);
@@ -4802,8 +4802,8 @@ case 227:
 	v->Method = TRANSFINI;
 	k = List_Nbr(yyvsp[-1].l);
 	if(k!=6 && k!=8)
-	  vyyerror("Wrong Definition of Transfinite Volume %d: "
-		   "%d Points Instead of 6 or 8" , yyvsp[-4].d, k) ;
+	  vyyerror("Wrong definition of Transfinite Volume %d: "
+		   "%d points instead of 6 or 8" , yyvsp[-4].d, k) ;
 	else{
 	  for(i=0;i<k;i++){
 	    List_Read(yyvsp[-1].l,i,&d);
@@ -4923,7 +4923,7 @@ case 245:
 #line 1944 "Gmsh.y"
 { 
       if(!yyvsp[0].d)
-	vyyerror("Division by Zero in '%g / %g'", yyvsp[-2].d, yyvsp[0].d);
+	vyyerror("Division by zero in '%g / %g'", yyvsp[-2].d, yyvsp[0].d);
       else
 	yyval.d = yyvsp[-2].d / yyvsp[0].d ;     
     ;
@@ -5069,7 +5069,7 @@ case 280:
 {
       TheSymbol.Name = yyvsp[0].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[0].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[0].c) ;
 	yyval.d = 0. ;
       }
       else
@@ -5081,14 +5081,14 @@ case 281:
 {
       TheSymbol.Name = yyvsp[-3].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-3].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-3].c) ;
 	yyval.d = 0. ;
       }
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)yyvsp[-1].d)))
 	  yyval.d = *pd ;
 	else{
-	  vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-3].c, (int)yyvsp[-1].d) ;
+	  vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-3].c, (int)yyvsp[-1].d) ;
 	  yyval.d = 0. ;
 	}
       }
@@ -5099,7 +5099,7 @@ case 282:
 {
       TheSymbol.Name = yyvsp[-1].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-1].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-1].c) ;
 	yyval.d = 0. ;
       }
       else
@@ -5111,14 +5111,14 @@ case 283:
 {
       TheSymbol.Name = yyvsp[-4].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-4].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-4].c) ;
 	yyval.d = 0. ;
       }
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)yyvsp[-2].d)))
 	  yyval.d = (*pd += yyvsp[0].i) ;
 	else{
-	  vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-4].c, (int)yyvsp[-2].d) ;
+	  vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-4].c, (int)yyvsp[-2].d) ;
 	  yyval.d = 0. ;
 	}
       }
@@ -5128,12 +5128,12 @@ case 284:
 #line 2054 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-2].c))){
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-2].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-2].c);
 	yyval.d = 0. ;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption(yyvsp[0].c, pNumCat))){
-	  vyyerror("Unknown Numeric Option '%s.%s'", yyvsp[-2].c, yyvsp[0].c);
+	  vyyerror("Unknown numeric option '%s.%s'", yyvsp[-2].c, yyvsp[0].c);
 	  yyval.d = 0. ;
 	}
 	else
@@ -5145,12 +5145,12 @@ case 285:
 #line 2070 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-5].c))){
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-5].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-5].c);
 	yyval.d = 0. ;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption(yyvsp[0].c, pNumCat))){
-	  vyyerror("Unknown Numeric Option '%s[%d].%s'", yyvsp[-5].c, (int)yyvsp[-3].d, yyvsp[0].c);
+	  vyyerror("Unknown numeric option '%s[%d].%s'", yyvsp[-5].c, (int)yyvsp[-3].d, yyvsp[0].c);
 	  yyval.d = 0. ;
 	}
 	else
@@ -5162,12 +5162,12 @@ case 286:
 #line 2086 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-3].c))){
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-3].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-3].c);
 	yyval.d = 0. ;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption(yyvsp[-1].c, pNumCat))){
-	  vyyerror("Unknown Numeric Option '%s.%s'", yyvsp[-3].c, yyvsp[-1].c);
+	  vyyerror("Unknown numeric option '%s.%s'", yyvsp[-3].c, yyvsp[-1].c);
 	  yyval.d = 0. ;
 	}
 	else
@@ -5179,12 +5179,12 @@ case 287:
 #line 2102 "Gmsh.y"
 {
       if(!(pNumCat = Get_NumberOptionCategory(yyvsp[-6].c))){
-	vyyerror("Unknown Numeric Option Class '%s'", yyvsp[-6].c);
+	vyyerror("Unknown numeric option class '%s'", yyvsp[-6].c);
 	yyval.d = 0. ;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption(yyvsp[-1].c, pNumCat))){
-	  vyyerror("Unknown Numeric Option '%s[%d].%s'", yyvsp[-6].c, (int)yyvsp[-4].d, yyvsp[-1].c);
+	  vyyerror("Unknown numeric option '%s[%d].%s'", yyvsp[-6].c, (int)yyvsp[-4].d, yyvsp[-1].c);
 	  yyval.d = 0. ;
 	}
 	else
@@ -5205,7 +5205,7 @@ case 289:
 {
       yyval.l = List_Create(2,1,sizeof(double)) ; 
       if(!yyvsp[0].d || (yyvsp[-4].d<yyvsp[-2].d && yyvsp[0].d<0) || (yyvsp[-4].d>yyvsp[-2].d && yyvsp[0].d>0)){
-        vyyerror("Wrong Increment in '%g:%g:%g'", yyvsp[-4].d, yyvsp[-2].d, yyvsp[0].d) ;
+        vyyerror("Wrong increment in '%g:%g:%g'", yyvsp[-4].d, yyvsp[-2].d, yyvsp[0].d) ;
 	List_Add(yyval.l, &(yyvsp[-4].d)) ;
       }
       else
@@ -5358,7 +5358,7 @@ case 313:
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-2].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-2].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-2].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
       }
@@ -5374,7 +5374,7 @@ case 314:
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-2].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-2].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-2].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
       }
@@ -5392,7 +5392,7 @@ case 315:
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-5].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-5].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-5].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
       }
@@ -5402,7 +5402,7 @@ case 315:
 	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
 	    List_Add(yyval.l, pd) ;
 	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-5].c, j) ;	  
+	    vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-5].c, j) ;	  
 	}
       }
       List_Delete(yyvsp[-2].l);
@@ -5414,7 +5414,7 @@ case 316:
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-5].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-5].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-5].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
       }
@@ -5426,7 +5426,7 @@ case 316:
 	    List_Add(yyval.l, &d) ;
 	  }
 	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-5].c, j) ;	  
+	    vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-5].c, j) ;	  
 	}
       }
       List_Delete(yyvsp[-2].l);
@@ -5458,7 +5458,7 @@ case 320:
 {
       TheSymbol.Name = yyvsp[-2].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-2].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-2].c) ;
       }
       else{
 	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
@@ -5471,7 +5471,7 @@ case 321:
 {
       TheSymbol.Name = yyvsp[-2].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-2].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-2].c) ;
       }
       else{
 	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
@@ -5486,7 +5486,7 @@ case 322:
 {
       TheSymbol.Name = yyvsp[-5].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-5].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-5].c) ;
       }
       else{
 	for(i = 0 ; i < List_Nbr(yyvsp[-2].l) ; i++){
@@ -5494,7 +5494,7 @@ case 322:
 	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
 	    List_Add(yyval.l, pd) ;
 	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-5].c, j) ;	  
+	    vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-5].c, j) ;	  
 	}
       }
       List_Delete(yyvsp[-2].l);
@@ -5505,7 +5505,7 @@ case 323:
 {
       TheSymbol.Name = yyvsp[-5].c ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
-	vyyerror("Unknown Variable '%s'", yyvsp[-5].c) ;
+	vyyerror("Unknown variable '%s'", yyvsp[-5].c) ;
       }
       else{
 	for(i = 0 ; i < List_Nbr(yyvsp[-2].l) ; i++){
@@ -5515,7 +5515,7 @@ case 323:
 	    List_Add(yyval.l, &d) ;
 	  }
 	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", yyvsp[-5].c, j) ;	  
+	    vyyerror("Uninitialized variable '%s[%d]'", yyvsp[-5].c, j) ;	  
 	}
       }
       List_Delete(yyvsp[-2].l);
@@ -5537,26 +5537,26 @@ case 326:
 #line 2415 "Gmsh.y"
 {
       yyval.u = Get_ColorForString(ColorString, (int)yyvsp[-1].d, yyvsp[-3].c, &flag);
-      if(flag) vyyerror("Unknown Color '%s'", yyvsp[-3].c);
+      if(flag) vyyerror("Unknown color '%s'", yyvsp[-3].c);
     ;
     break;}
 case 327:
 #line 2420 "Gmsh.y"
 {
       yyval.u = Get_ColorForString(ColorString, -1, yyvsp[0].c, &flag);
-      if(flag) vyyerror("Unknown Color '%s'", yyvsp[0].c);
+      if(flag) vyyerror("Unknown color '%s'", yyvsp[0].c);
     ;
     break;}
 case 328:
 #line 2425 "Gmsh.y"
 {
       if(!(pColCat = Get_ColorOptionCategory(yyvsp[-4].c))){
-	vyyerror("Unknown Color Option Class '%s'", yyvsp[-4].c);
+	vyyerror("Unknown color option class '%s'", yyvsp[-4].c);
 	yyval.u = 0 ;
       }
       else{
 	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption(yyvsp[0].c, pColCat))){
-	  vyyerror("Unknown Color Option '%s.Color.%s'", yyvsp[-4].c, yyvsp[0].c);
+	  vyyerror("Unknown color option '%s.Color.%s'", yyvsp[-4].c, yyvsp[0].c);
 	  yyval.u = 0 ;
 	}
 	else{
@@ -5625,7 +5625,7 @@ case 335:
 	  strcat(tmpstring, tmpstring3);
 	}
 	else{
-	  vyyerror("Missing %d Parameter(s) in Sprintf Format",
+	  vyyerror("Missing %d parameter(s) in Sprintf format",
 		   List_Nbr(yyvsp[-1].l)-i);
 	  break ;
 	}

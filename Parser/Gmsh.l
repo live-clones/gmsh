@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.28 2001-03-09 08:02:58 geuzaine Exp $
+// $Id: Gmsh.l,v 1.29 2001-04-20 08:52:23 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -281,9 +281,9 @@ void skipcomments(void) {
 
   while (1) {
     while ((c=yyinput()) != '*'){
-      if(c == EOF) {
-        fprintf(stderr, "Error: End of File in Commented Region\n") ;
-        exit(1);
+      if(c == EOF){
+        Msg(GERROR, "End of file in commented region") ;
+        return;
       }
     }
     if ((c = yyinput()) == '/')
@@ -330,10 +330,7 @@ void skip_until(char *skip, char *until){
   while(1){
     while (1){
       chars[0] = yyinput();
-      if(chars[0] == (char)EOF){
-	fprintf(stderr, "Error: Unexpected End Of File\n") ;
-	exit(1);
-      }
+      if(chars[0] == (char)EOF) Msg(FATAL, "Unexpected end of file") ;
       if(chars[0] == until[0]) break;
       if(skip && chars[0] == skip[0]) break;
     }
