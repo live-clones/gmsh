@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.12 2002-11-13 19:33:10 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.13 2002-12-04 17:19:37 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
@@ -17,12 +17,10 @@ Parts of the code have been contributed by
       - Mac OS port
 
 Special thanks to the following folks who have greatly contributed by
-providing fresh ideas on theoretical or programming topics, or who
-have sent patches, requests, warnings, or pleas for changes or
-improvements. While attempts were made to be as complete as possible,
-it is inevitable that some contributors have been omitted. If you are
-in this situation, just send an e-mail to one of the authors, and you
-will be added to the list!
+providing fresh ideas on theoretical or programming topics, who have
+sent patches, requests, warnings, or pleas for changes or
+improvements, or who gave us access to exotic machines for
+testing/building the code:
 
     Juan Abanto <juanabanto@yahoo.com>
     Olivier Adam <o.adam@ulg.ac.be>
@@ -35,6 +33,7 @@ will be added to the list!
     François Henrotte <fhenrott@esat.kuleuven.ac.be>
     Benoît Meys <bmeys@techspace-aero.be>
     Nicolas Moës <moes@tam9.mech.nwu.edu>
+    Chad Schmutzer <schmutze@acm.caltech.edu>
     Nicolas Tardieu <nicolas.tardieu@edf.fr>
 
 Finally, thanks to all of you who sent e-mail showing interest. This

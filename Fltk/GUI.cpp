@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.222 2002-11-20 23:26:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.223 2002-12-04 17:19:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2038,7 +2038,7 @@ void GUI::create_option_window(){
 
 	static Fl_Menu_Item menu_tensor[] = {
 	  {"Von-Mises",    0, 0, 0},
-	  {"Eigenvectors", 0, 0, 0},
+	  //{"Eigenvectors", 0, 0, 0}, //not implemented yet
 	  {0}
 	};
 	view_choice[4] = new Fl_Choice(2*WB, 2*WB+8*BH, IW, BH, "Tensor display");
