@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.263 2003-02-20 17:09:32 geuzaine Exp $
+# $Id: Makefile,v 1.264 2003-02-20 17:52:38 geuzaine Exp $
 
 include variables
 
@@ -69,9 +69,7 @@ purge:
         done
 
 clean:
-	for i in doc lib ${GMSH_DIRS}; \
-        do (cd $$i && ${MAKE} clean); \
-        done
+	for i in doc lib ${GMSH_DIRS}; do (cd $$i && ${MAKE} clean); done
 	rm -f ${GMSH_VERSION_FILE}
 
 depend:
