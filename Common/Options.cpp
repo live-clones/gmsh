@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.132 2004-02-05 22:52:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.133 2004-02-06 17:53:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -720,8 +720,11 @@ char *opt_general_default_filename(OPT_ARGS_STR)
 
 char *opt_general_tmp_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.tmp_filename = val;
+    strcpy(CTX.tmprc_filename, CTX.home_dir);
+    strcat(CTX.tmprc_filename, CTX.tmp_filename);
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->gen_input[1]->value(CTX.tmp_filename);
@@ -731,8 +734,11 @@ char *opt_general_tmp_filename(OPT_ARGS_STR)
 
 char *opt_general_error_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.error_filename = val;
+    strcpy(CTX.errorrc_filename, CTX.home_dir);
+    strcat(CTX.errorrc_filename, CTX.error_filename);
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->gen_input[2]->value(CTX.error_filename);

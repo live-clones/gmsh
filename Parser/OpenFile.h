@@ -26,5 +26,6 @@ void OpenProblem(char *filename);
 int MergeProblem(char *filename);
 void MergeProblemWithBoundingBox(char *filename);
 void SystemCall(char *command);
+void FixRelativePath(char *in, char *out);
 
 #endif

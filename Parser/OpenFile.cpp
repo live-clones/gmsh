@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.47 2003-12-12 16:54:38 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.48 2004-02-06 17:53:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,21 @@ extern GUI *WID;
 
 extern Mesh *THEM, M;
 extern Context_T CTX;
+
+void FixRelativePath(char *in, char *out){
+  if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
+    // do nothing: 'in' is an absolute path
+    strcpy(out, in);
+  }
+  else{
+    // append 'in' to the path of the parent file
+    strcpy(out, yyname);
+    int i = strlen(out)-1 ;
+    while(i >= 0 && yyname[i] != '/' && yyname[i] != '\\') i-- ;
+    out[i+1] = '\0';
+    strcat(out, in);
+  }
+}
 
 int ParseFile(char *f, int silent, int close)
 {
@@ -98,10 +113,10 @@ void ParseString(char *str)
   FILE *fp;
   if(!str)
     return;
-  if((fp = fopen(CTX.tmp_filename, "w"))) {
+  if((fp = fopen(CTX.tmprc_filename, "w"))) {
     fprintf(fp, "%s\n", str);
     fclose(fp);
-    ParseFile(CTX.tmp_filename, 0, 1);
+    ParseFile(CTX.tmprc_filename, 0, 1);
   }
 }
 

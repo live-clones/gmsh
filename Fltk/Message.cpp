@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.44 2004-01-13 12:39:45 geuzaine Exp $
+// $Id: Message.cpp,v 1.45 2004-02-06 17:53:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -191,8 +191,8 @@ void Msg(int level, char *fmt, ...)
   if(abort) {
     Debug();
     if(WID) {
-      WID->save_message(CTX.error_filename);
-      WID->fatal_error(CTX.error_filename);
+      WID->save_message(CTX.errorrc_filename);
+      WID->fatal_error(CTX.errorrc_filename);
     }
     Exit(1);
   }
@@ -224,7 +224,7 @@ void Exit(int level)
     if(CTX.options_save)
       Print_Options(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
   }
-  unlink(CTX.tmp_filename);     //delete temp file
+  unlink(CTX.tmprc_filename);     //delete temp file
   exit(level);
 }
 
