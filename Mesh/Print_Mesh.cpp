@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.43 2003-11-27 02:33:31 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.44 2003-11-27 07:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,8 @@
 
 extern Context_T CTX;
 
+static FILE *meshfile;
+
 // M S H   F O R M A T
 
 #define LINE            1
@@ -47,7 +49,6 @@ extern Context_T CTX;
 #define PYRAMID_2      14
 #define POINT          15
 
-static FILE *mshfile;
 static int MSH_VOL_NUM, MSH_SUR_NUM, MSH_LIN_NUM;
 static int MSH_NODE_NUM, MSH_ELEMENT_NUM, MSH_3D, MSH_ADD;
 static int MSH_PHYSICAL_NUM, MSH_PHYSICAL_ORI;
@@ -58,7 +59,7 @@ void print_msh_node(void *a, void *b)
 
   V = (Vertex **) a;
 
-  fprintf(mshfile, "%d %.16g %.16g %.16g\n",
+  fprintf(meshfile, "%d %.16g %.16g %.16g\n",
           (*V)->Num,
           (*V)->Pos.X * CTX.mesh.scaling_factor,
           (*V)->Pos.Y * CTX.mesh.scaling_factor,
@@ -88,10 +89,10 @@ void process_msh_nodes(Mesh * M)
 
   MSH_NODE_NUM = Tree_Nbr(M->Vertices);
 
-  fprintf(mshfile, "$NOD\n");
-  fprintf(mshfile, "%d\n", MSH_NODE_NUM);
+  fprintf(meshfile, "$NOD\n");
+  fprintf(meshfile, "%d\n", MSH_NODE_NUM);
   Tree_Action(M->Vertices, print_msh_node);
-  fprintf(mshfile, "$ENDNOD\n");
+  fprintf(meshfile, "$ENDNOD\n");
 }
 
 void print_msh_simplex(void *a, void *b)
@@ -160,7 +161,7 @@ void print_msh_simplex(void *a, void *b)
     }
   }
 
-  fprintf(mshfile, "%d %d %d %d %d",
+  fprintf(meshfile, "%d %d %d %d %d",
           //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*S)->Num, type, 
           MSH_ELEMENT_NUM++, type,
           MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*S)->iEnt, (*S)->iEnt,
@@ -168,18 +169,18 @@ void print_msh_simplex(void *a, void *b)
 
   if(MSH_PHYSICAL_ORI > 0) {
     for(i = 0; i < nbn; i++)
-      fprintf(mshfile, " %d", (*S)->V[i]->Num);
+      fprintf(meshfile, " %d", (*S)->V[i]->Num);
     for(i = 0; i < nbs; i++)
-      fprintf(mshfile, " %d", (*S)->VSUP[i]->Num);
+      fprintf(meshfile, " %d", (*S)->VSUP[i]->Num);
   }
   else {
     for(i = 0; i < nbn; i++)
-      fprintf(mshfile, " %d", (*S)->V[nbn - i - 1]->Num);
+      fprintf(meshfile, " %d", (*S)->V[nbn - i - 1]->Num);
     for(i = 0; i < nbs; i++)
-      fprintf(mshfile, " %d", (*S)->VSUP[nbs - i - 1]->Num);
+      fprintf(meshfile, " %d", (*S)->VSUP[nbs - i - 1]->Num);
   }
 
-  fprintf(mshfile, "\n");
+  fprintf(meshfile, "\n");
 }
 
 void print_msh_hexahedron(void *a, void *b)
@@ -205,18 +206,18 @@ void print_msh_hexahedron(void *a, void *b)
   else
     type = HEXAHEDRON;
 
-  fprintf(mshfile, "%d %d %d %d %d",
+  fprintf(meshfile, "%d %d %d %d %d",
           //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*H)->Num, type,
           MSH_ELEMENT_NUM++, type,
           MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*H)->iEnt, (*H)->iEnt,
           nbn + nbs);
 
   for(i = 0; i < nbn; i++)
-    fprintf(mshfile, " %d", (*H)->V[i]->Num);
+    fprintf(meshfile, " %d", (*H)->V[i]->Num);
   for(i = 0; i < nbs; i++)
-    fprintf(mshfile, " %d", (*H)->VSUP[i]->Num);
+    fprintf(meshfile, " %d", (*H)->VSUP[i]->Num);
 
-  fprintf(mshfile, "\n");
+  fprintf(meshfile, "\n");
 }
 
 void print_msh_prism(void *a, void *b)
@@ -243,18 +244,18 @@ void print_msh_prism(void *a, void *b)
     type = PRISM;
   }
 
-  fprintf(mshfile, "%d %d %d %d %d",
+  fprintf(meshfile, "%d %d %d %d %d",
           //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*P)->Num, type, 
           MSH_ELEMENT_NUM++, type,
           MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
           nbn + nbs);
 
   for(i = 0; i < nbn; i++)
-    fprintf(mshfile, " %d", (*P)->V[i]->Num);
+    fprintf(meshfile, " %d", (*P)->V[i]->Num);
   for(i = 0; i < nbs; i++)
-    fprintf(mshfile, " %d", (*P)->VSUP[i]->Num);
+    fprintf(meshfile, " %d", (*P)->VSUP[i]->Num);
 
-  fprintf(mshfile, "\n");
+  fprintf(meshfile, "\n");
 }
 
 void print_msh_pyramid(void *a, void *b)
@@ -281,18 +282,18 @@ void print_msh_pyramid(void *a, void *b)
     type = PYRAMID;
   }
 
-  fprintf(mshfile, "%d %d %d %d %d",
+  fprintf(meshfile, "%d %d %d %d %d",
           //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*P)->Num, type,
           MSH_ELEMENT_NUM++, type,
           MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
           nbn + nbs);
 
   for(i = 0; i < nbn; i++)
-    fprintf(mshfile, " %d", (*P)->V[i]->Num);
+    fprintf(meshfile, " %d", (*P)->V[i]->Num);
   for(i = 0; i < nbs; i++)
-    fprintf(mshfile, " %d", (*P)->VSUP[i]->Num);
+    fprintf(meshfile, " %d", (*P)->VSUP[i]->Num);
 
-  fprintf(mshfile, "\n");
+  fprintf(meshfile, "\n");
 }
 
 void print_msh_point(Vertex * V)
@@ -302,7 +303,7 @@ void print_msh_point(Vertex * V)
     return;
   }
 
-  fprintf(mshfile, "%d %d %d %d 1 %d\n",
+  fprintf(meshfile, "%d %d %d %d 1 %d\n",
           //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : V->Num, POINT, 
           MSH_ELEMENT_NUM++, POINT,
           MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num, V->Num);
@@ -470,8 +471,8 @@ void process_msh_elements(Mesh * M)
   else
     print_msh_elements(M);
 
-  fprintf(mshfile, "$ELM\n");
-  fprintf(mshfile, "%d\n", MSH_ELEMENT_NUM - 1);
+  fprintf(meshfile, "$ELM\n");
+  fprintf(meshfile, "%d\n", MSH_ELEMENT_NUM - 1);
 
   if(MSH_ELEMENT_NUM == 1)
     Msg(WARNING, "No elements to save");
@@ -482,7 +483,7 @@ void process_msh_elements(Mesh * M)
     print_all_msh_elements(M);
   else
     print_msh_elements(M);
-  fprintf(mshfile, "$ENDELM\n");
+  fprintf(meshfile, "$ENDELM\n");
 }
 
 
@@ -511,7 +512,6 @@ void process_msh_elements(Mesh * M)
 #define SOLIDFEM2    118
 
 static int ELEMENT_ID;
-static FILE *unvfile;
 static Tree_T *tree;
 static int UNV_VOL_NUM;
 
@@ -524,8 +524,8 @@ void process_unv_nodes(Mesh * M)
 
   List_T *Nodes = Tree2List(M->Vertices);
 
-  fprintf(unvfile, "%6d\n", -1);
-  fprintf(unvfile, "%6d\n", NODES);
+  fprintf(meshfile, "%6d\n", -1);
+  fprintf(meshfile, "%6d\n", NODES);
   nbnod = List_Nbr(Nodes);
 
   for(i = 0; i < nbnod; i++) {
@@ -534,12 +534,12 @@ void process_unv_nodes(Mesh * M)
     x = v->Pos.X * CTX.mesh.scaling_factor;
     y = v->Pos.Y * CTX.mesh.scaling_factor;
     z = v->Pos.Z * CTX.mesh.scaling_factor;
-    fprintf(unvfile, "%10d%10d%10d%10d\n", idnod, 1, 1, 11);
-    fprintf(unvfile, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", x, y, z);
+    fprintf(meshfile, "%10d%10d%10d%10d\n", idnod, 1, 1, 11);
+    fprintf(meshfile, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", x, y, z);
   }
 
   List_Delete(Nodes);
-  fprintf(unvfile, "%6d\n", -1);
+  fprintf(meshfile, "%6d\n", -1);
 }
 
 int process_unv_2D_elements(Mesh * m)
@@ -593,25 +593,25 @@ int process_unv_2D_elements(Mesh * m)
           }
         }
         geo = s->Num;
-        fprintf(unvfile, "%10d%10d%10d%10d%10d%10d\n",
+        fprintf(meshfile, "%10d%10d%10d%10d%10d%10d\n",
                 /*ELEMENT_ID++ */ abs(sx->Num), fetyp, geo, geo, 7, n + nsup);
         //'abs' since extrusion can tag triangles
         // with a negative number
         ntot = 0;
         for(k = 0; k < n; k++) {
-          fprintf(unvfile, "%10d", sx->V[k]->Num);
+          fprintf(meshfile, "%10d", sx->V[k]->Num);
           if(ntot % 8 == 7)
-            fprintf(unvfile, "\n");
+            fprintf(meshfile, "\n");
           ntot++;
         }
         for(k = 0; k < nsup; k++) {
-          fprintf(unvfile, "%10d", sx->VSUP[k]->Num);
+          fprintf(meshfile, "%10d", sx->VSUP[k]->Num);
           if(ntot % 8 == 7)
-            fprintf(unvfile, "\n");
+            fprintf(meshfile, "\n");
           ntot++;
         }
         if(ntot - 1 % 8 != 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
       }
       List_Delete(Elements);
     }
@@ -662,24 +662,24 @@ int process_unv_1D_elements(Mesh * m)
           nsup = 0;
         }
         geo = c->Num;
-        fprintf(unvfile, "%10d%10d%10d%10d%10d%10d\n",
+        fprintf(meshfile, "%10d%10d%10d%10d%10d%10d\n",
                 /*ELEMENT_ID++ */ sx->Num, fetyp, geo, geo, 7, n + nsup);
         ntot = 0;
-        fprintf(unvfile, "%10d%10d%10d\n", 0, 0, 0);
+        fprintf(meshfile, "%10d%10d%10d\n", 0, 0, 0);
         for(k = 0; k < n; k++) {
-          fprintf(unvfile, "%10d", sx->V[k]->Num);
+          fprintf(meshfile, "%10d", sx->V[k]->Num);
           if(ntot % 8 == 7)
-            fprintf(unvfile, "\n");
+            fprintf(meshfile, "\n");
           ntot++;
         }
         for(k = 0; k < nsup; k++) {
-          fprintf(unvfile, "%10d", sx->VSUP[k]->Num);
+          fprintf(meshfile, "%10d", sx->VSUP[k]->Num);
           if(ntot % 8 == 7)
-            fprintf(unvfile, "\n");
+            fprintf(meshfile, "\n");
           ntot++;
         }
         if(ntot - 1 % 8 != 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
       }
 
       List_Delete(Elements);
@@ -726,23 +726,23 @@ int process_unv_3D_elements(Mesh * m)
           Msg(WARNING, "Negative volume for simplex %d", sx->Num);
       }
       geo = v->Num;
-      fprintf(unvfile, "%10d%10d%10d%10d%10d%10d\n",
+      fprintf(meshfile, "%10d%10d%10d%10d%10d%10d\n",
               ELEMENT_ID++, fetyp, geo, geo, 7, n + nsup);
       ntot = 0;
       for(k = 0; k < n; k++) {
-        fprintf(unvfile, "%10d", sx->V[k]->Num);
+        fprintf(meshfile, "%10d", sx->V[k]->Num);
         if(ntot % 8 == 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
         ntot++;
       }
       for(k = 0; k < nsup; k++) {
-        fprintf(unvfile, "%10d", sx->VSUP[k]->Num);
+        fprintf(meshfile, "%10d", sx->VSUP[k]->Num);
         if(ntot % 8 == 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
         ntot++;
       }
       if(ntot - 1 % 8 != 7)
-        fprintf(unvfile, "\n");
+        fprintf(meshfile, "\n");
     }
     List_Delete(Elements);
     nb += Tree_Nbr(v->Simplexes);
@@ -763,23 +763,23 @@ int process_unv_3D_elements(Mesh * m)
       }
 
       geo = v->Num;
-      fprintf(unvfile, "%10d%10d%10d%10d%10d%10d\n",
+      fprintf(meshfile, "%10d%10d%10d%10d%10d%10d\n",
               ELEMENT_ID++, fetyp, geo, geo, 7, n + nsup);
       ntot = 0;
       for(k = 0; k < n; k++) {
-        fprintf(unvfile, "%10d", px->V[k]->Num);
+        fprintf(meshfile, "%10d", px->V[k]->Num);
         if(ntot % 8 == 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
         ntot++;
       }
       for(k = 0; k < nsup; k++) {
-        fprintf(unvfile, "%10d", px->VSUP[k]->Num);
+        fprintf(meshfile, "%10d", px->VSUP[k]->Num);
         if(ntot % 8 == 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
         ntot++;
       }
       if(ntot - 1 % 8 != 7)
-        fprintf(unvfile, "\n");
+        fprintf(meshfile, "\n");
     }
     List_Delete(Elements);
     nb += Tree_Nbr(v->Prisms);
@@ -800,23 +800,23 @@ int process_unv_3D_elements(Mesh * m)
       }
 
       geo = v->Num;
-      fprintf(unvfile, "%10d%10d%10d%10d%10d%10d\n",
+      fprintf(meshfile, "%10d%10d%10d%10d%10d%10d\n",
               ELEMENT_ID++, fetyp, geo, geo, 7, n + nsup);
       ntot = 0;
       for(k = 0; k < n; k++) {
-        fprintf(unvfile, "%10d", hx->V[k]->Num);
+        fprintf(meshfile, "%10d", hx->V[k]->Num);
         if(ntot % 8 == 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
         ntot++;
       }
       for(k = 0; k < nsup; k++) {
-        fprintf(unvfile, "%10d", hx->VSUP[k]->Num);
+        fprintf(meshfile, "%10d", hx->VSUP[k]->Num);
         if(ntot % 8 == 7)
-          fprintf(unvfile, "\n");
+          fprintf(meshfile, "\n");
         ntot++;
       }
       if(ntot - 1 % 8 != 7)
-        fprintf(unvfile, "\n");
+        fprintf(meshfile, "\n");
     }
     List_Delete(Elements);
     nb += Tree_Nbr(v->Hexahedra);
@@ -832,11 +832,11 @@ void add_unv_vertex(void *a, void *b)
   if(Tree_Search(tree, &v->Num))
     return;
   Tree_Add(tree, &v->Num);
-  fprintf(unvfile, "%10d%10d%2d%2d%2d%2d%2d%2d\n", v->Num, 1, 0, 1, 0, 0, 0,
+  fprintf(meshfile, "%10d%10d%2d%2d%2d%2d%2d%2d\n", v->Num, 1, 0, 1, 0, 0, 0,
           0);
-  fprintf(unvfile, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", 0., 1., 0.);
-  fprintf(unvfile, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", 0., 0., 0.);
-  fprintf(unvfile, "%10d%10d%10d%10d%10d%10d\n", 0, 0, 0, 0, 0, 0);
+  fprintf(meshfile, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", 0., 1., 0.);
+  fprintf(meshfile, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", 0., 0., 0.);
+  fprintf(meshfile, "%10d%10d%10d%10d%10d%10d\n", 0, 0, 0, 0, 0, 0);
 }
 
 void add_unv_simplex_vertices(void *a, void *b)
@@ -889,10 +889,10 @@ void process_unv_groups(Mesh * m)
 
     List_Read(m->PhysicalGroups, i, &p);
 
-    fprintf(unvfile, "%6d\n", -1);
-    fprintf(unvfile, "%6d\n", GROUPOFNODES);
-    fprintf(unvfile, "%10d%10d\n", p->Num, 1);
-    fprintf(unvfile, "LOAD SET %2d\n", 1);
+    fprintf(meshfile, "%6d\n", -1);
+    fprintf(meshfile, "%6d\n", GROUPOFNODES);
+    fprintf(meshfile, "%10d%10d\n", p->Num, 1);
+    fprintf(meshfile, "LOAD SET %2d\n", 1);
 
     tree = Tree_Create(sizeof(int), fcmp_absint);
 
@@ -940,7 +940,7 @@ void process_unv_groups(Mesh * m)
 
     Tree_Delete(tree);
 
-    fprintf(unvfile, "%6d\n", -1);
+    fprintf(meshfile, "%6d\n", -1);
   }
 }
 
@@ -1152,8 +1152,6 @@ void process_Gref_elements(FILE * fGref, Mesh * M, int nn)
   List_Delete(ListSurfaces);
 }
 
-FILE *Greffile;
-
 void ConsecutiveNodes(Mesh * M, Tree_T * ConsecutiveNTree,
                       Tree_T * ConsecutiveETree)
 {
@@ -1241,13 +1239,12 @@ void EndConsecutiveNodes(Mesh * M)
 
 //  V R M L 1   F O R M A T
 
-static FILE *wrlfile;
 static List_T *wrlnodes = NULL;
 
 void print_wrl_node(void *a, void *b)
 {
   Vertex *V = *(Vertex **) a;
-  fprintf(wrlfile, "%.16g %.16g %.16g,\n",
+  fprintf(meshfile, "%.16g %.16g %.16g,\n",
           V->Pos.X * CTX.mesh.scaling_factor,
           V->Pos.Y * CTX.mesh.scaling_factor,
           V->Pos.Z * CTX.mesh.scaling_factor);
@@ -1260,13 +1257,13 @@ void process_wrl_nodes(Mesh * M)
     wrlnodes = List_Create(Tree_Size(M->Vertices), 100, sizeof(int));
   else
     List_Reset(wrlnodes);
-  fprintf(wrlfile, "#VRML V1.0 ascii\n");
-  fprintf(wrlfile, "#created by Gmsh\n");
-  fprintf(wrlfile, "Coordinate3 {\n");
-  fprintf(wrlfile, "  point [\n");
+  fprintf(meshfile, "#VRML V1.0 ascii\n");
+  fprintf(meshfile, "#created by Gmsh\n");
+  fprintf(meshfile, "Coordinate3 {\n");
+  fprintf(meshfile, "  point [\n");
   Tree_Action(M->Vertices, print_wrl_node);
-  fprintf(wrlfile, "  ]\n");
-  fprintf(wrlfile, "}\n");
+  fprintf(meshfile, "  ]\n");
+  fprintf(meshfile, "}\n");
 }
 
 void print_wrl_simplex(void *a, void *b)
@@ -1278,10 +1275,10 @@ void print_wrl_simplex(void *a, void *b)
     if(j < 0)
       Msg(GERROR, "Unknown node %d in simplex %d", S->V[i]->Num, S->Num);
     else
-      fprintf(wrlfile, "%d,", j);
+      fprintf(meshfile, "%d,", j);
     i++;
   }
-  fprintf(wrlfile, "-1,\n");
+  fprintf(meshfile, "-1,\n");
 }
 
 void print_all_wrl_curves(void *a, void *b)
@@ -1289,21 +1286,21 @@ void print_all_wrl_curves(void *a, void *b)
   Curve *c = *(Curve **) a;
   if(c->Num < 0)
     return;
-  fprintf(wrlfile, "DEF Curve%d IndexedLineSet {\n", c->Num);
-  fprintf(wrlfile, "  coordIndex [\n");
+  fprintf(meshfile, "DEF Curve%d IndexedLineSet {\n", c->Num);
+  fprintf(meshfile, "  coordIndex [\n");
   Tree_Action(c->Simplexes, print_wrl_simplex);
-  fprintf(wrlfile, "  ]\n");
-  fprintf(wrlfile, "}\n");
+  fprintf(meshfile, "  ]\n");
+  fprintf(meshfile, "}\n");
 }
 
 void print_all_wrl_surfaces(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
-  fprintf(wrlfile, "DEF Surface%d IndexedFaceSet {\n", s->Num);
-  fprintf(wrlfile, "  coordIndex [\n");
+  fprintf(meshfile, "DEF Surface%d IndexedFaceSet {\n", s->Num);
+  fprintf(meshfile, "  coordIndex [\n");
   Tree_Action(s->Simplexes, print_wrl_simplex);
-  fprintf(wrlfile, "  ]\n");
-  fprintf(wrlfile, "}\n");
+  fprintf(meshfile, "  ]\n");
+  fprintf(meshfile, "}\n");
 }
 
 void process_wrl_elements(Mesh * M)
@@ -1321,82 +1318,81 @@ void process_wrl_elements(Mesh * M)
 
 void Print_Mesh(Mesh * M, char *c, int Type)
 {
-  char name[256];
+  char name[256], ext[10]="";
 
   if(CTX.threads_lock) {
     Msg(INFO, "I'm busy! Ask me that later...");
     return;
   }
+
   CTX.threads_lock = 1;
 
   strcpy(name, M->name);
 
+  switch(Type){
+  case FORMAT_MSH:
+    strcpy(ext, ".msh"); 
+    break;
+  case FORMAT_VRML:
+    strcpy(ext, ".wrl"); 
+    break;
+  case FORMAT_UNV:
+    strcpy(ext, ".unv");
+    break;
+  case FORMAT_GREF: 
+    strcpy(ext, ".Gref");
+    break;
+  default:
+    Msg(GERROR, "Unknown mesh file format %d", Type);
+    return;
+  }
+  
+  c ? strcpy(name, c) : strcat(name, ext);
+
   Msg(INFO, "Writing mesh file '%s'", name);
 
-  if(Type == FORMAT_MSH) {
-    c ? strcpy(name, c) : strcat(name, ".msh");
-    mshfile = fopen(name, "w");
-    if(!mshfile) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      CTX.threads_lock = 0;
-      return;
-    }
+  meshfile = fopen(name, "w");
+  if(!meshfile) {
+    Msg(GERROR, "Unable to open file '%s'", name);
+    CTX.threads_lock = 0;
+    return;
+  }
+
+  switch(Type){
+  case FORMAT_MSH:
     process_msh_nodes(M);
     process_msh_elements(M);
     Msg(INFO, "%d nodes", MSH_NODE_NUM);
     Msg(INFO, "%d elements", MSH_ELEMENT_NUM - 1);
-    fclose(mshfile);
-  }
-  else if(Type == FORMAT_VRML) {
-    c ? strcpy(name, c) : strcat(name, ".wrl");
-    wrlfile = fopen(name, "w");
-    if(!wrlfile) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      CTX.threads_lock = 0;
-      return;
-    }
+    break;
+  case FORMAT_VRML:
     process_wrl_nodes(M);
     process_wrl_elements(M);
-    fclose(wrlfile);
-  }
-  else if(Type == FORMAT_UNV) {
-    c ? strcpy(name, c) : strcat(name, ".unv");
-    unvfile = fopen(name, "w");
-    if(!unvfile) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      CTX.threads_lock = 0;
-      return;
-    }
+    break;
+  case FORMAT_UNV:
     process_unv_nodes(M);
-    fprintf(unvfile, "%6d\n", -1);
-    fprintf(unvfile, "%6d\n", ELEMENTS);
+    fprintf(meshfile, "%6d\n", -1);
+    fprintf(meshfile, "%6d\n", ELEMENTS);
     ELEMENT_ID = 1;
     process_unv_3D_elements(M);
     process_unv_2D_elements(M);
     // process_1D_elements (M);
-    fprintf(unvfile, "%6d\n", -1);
+    fprintf(meshfile, "%6d\n", -1);
     process_unv_groups(M);
-    fclose(unvfile);
-  }
-  else if(Type == FORMAT_GREF) {
-    c ? strcpy(name, c) : strcat(name, ".Gref");
+    break;
+  case FORMAT_GREF:
     Tree_T *TRN = Tree_Create(sizeof(Vertex *), compareFrozen);
     Tree_T *TRE = Tree_Create(sizeof(Vertex *), compareFrozen);
-    Greffile = fopen(name, "w");
-    if(!Greffile) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      CTX.threads_lock = 0;
-      return;
-    }
-    process_Gref_nodes(Greffile, M, TRN, TRE);
-    process_Gref_elements(Greffile, M, Tree_Nbr(TRN));
-    process_Gref_poundarybonditions(Greffile, M, TRN, TRE);
-    fclose(Greffile);
+    process_Gref_nodes(meshfile, M, TRN, TRE);
+    process_Gref_elements(meshfile, M, Tree_Nbr(TRN));
+    process_Gref_poundarybonditions(meshfile, M, TRN, TRE);
     Tree_Delete(TRN);
     Tree_Delete(TRE);
     EndConsecutiveNodes(M);
+    break;
   }
 
+  fclose(meshfile);
   Msg(INFO, "Wrote mesh file '%s'", name);
   Msg(STATUS2N, "Wrote '%s'", name);
 
