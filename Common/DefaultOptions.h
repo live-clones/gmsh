@@ -99,6 +99,9 @@ StringXString MeshOptions_String[] = {
 } ;
 
 StringXString SolverOptions_String[] = {
+  { F|O, "SocketName" , opt_solver_socket_name , ".gmshsock" ,
+    "Name of socket (TCP/IP if it contains the `:' character, UNIX otherwise)" },
+
   { F|O, "Name0" , opt_solver_name0 , "GetDP" ,
     "Name of solver 0" },
   { F|O, "Help0" , opt_solver_help0 , 

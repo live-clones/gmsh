@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.5 2004-05-22 01:24:19 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.6 2004-12-06 06:54:32 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -39,6 +39,8 @@
 #include <sys/un.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 /* private functions */
 
@@ -76,27 +78,63 @@ static void Socket_Idle(double delay)
 
 int Gmsh_Connect(char *sockname)
 {
-  struct sockaddr_un addr;
+  struct sockaddr_un addr_un;
+  struct sockaddr_in addr_in;
   int len, sock;
   int tries;
+  struct hostent *server;
+  int portno, remotelen;
+  char remote[256], *port;
 
   /* slight delay to be sure that the socket is bound by the
      server before we attempt to connect to it... */
   Socket_Idle(0.1);
 
+  if((port = strstr(sockname, ":"))){
+    /* we have an INET socket */
+    portno = atoi(port+1);
+    remotelen = strlen(sockname) - strlen(port);
+    if(remotelen > 0)
+      strncpy(remote, sockname, remotelen);
+    remote[remotelen] = '\0';
+  }
+  else{
+    portno = -1;
+  }
+  
   /* create socket */
-  sock = socket(PF_UNIX, SOCK_STREAM, 0);
-  if(sock < 0)
-    return -1;  /* Error: Couldn't create socket */
 
-  /* try to connect socket to given name */
-  strcpy(addr.sun_path, sockname);
-  addr.sun_family = AF_UNIX;
-  len = strlen(addr.sun_path) + sizeof(addr.sun_family);
-  for(tries = 0; tries < 5; tries++) {
-    if(connect(sock, (struct sockaddr *)&addr, len) >= 0)
-      return sock;
-    Socket_Idle(0.1);
+  if(portno < 0){ /* UNIX socket */
+    sock = socket(PF_UNIX, SOCK_STREAM, 0);
+    if(sock < 0)
+      return -1;  /* Error: Couldn't create socket */
+    /* try to connect socket to given name */
+    strcpy(addr_un.sun_path, sockname);
+    addr_un.sun_family = AF_UNIX;
+    len = strlen(addr_un.sun_path) + sizeof(addr_un.sun_family);
+    for(tries = 0; tries < 5; tries++) {
+      if(connect(sock, (struct sockaddr *)&addr_un, len) >= 0)
+	return sock;
+      Socket_Idle(0.1);
+    }
+  }
+  else{ /* TCP/IP socket */
+    /* try to connect socket to given name */
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(sock < 0)
+      return -1;  /* Error: Couldn't create socket */
+    if(!(server = gethostbyname(remote)))
+      return -3; /* Error: No such host */
+    bzero((char *) &addr_in, sizeof(addr_in));
+    addr_in.sin_family = AF_INET;
+    bcopy((char *)server->h_addr, (char *)&addr_in.sin_addr.s_addr, server->h_length);
+    addr_in.sin_port = htons(portno);
+    addr_in.sin_addr.s_addr = INADDR_ANY;
+    for(tries = 0; tries < 5; tries++) {
+      if(connect(sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0)
+	return sock;
+      Socket_Idle(0.1);
+    }
   }
 
   return -2;    /* Error: Couldn't connect */

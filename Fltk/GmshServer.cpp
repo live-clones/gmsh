@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.18 2004-10-16 22:15:17 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.19 2004-12-06 06:54:32 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -45,6 +45,7 @@ void SystemCall(char *str);
 #include <sys/un.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <netinet/in.h>
 
 /* private functions */
 
@@ -83,16 +84,20 @@ static int Socket_UnlinkName(char *name)
 
 int Gmsh_StartClient(char *command, char *sockname)
 {
-  int s, sock;
+  static int init = 0;
+  static int s;
+  int sock;
 #if defined(linux) || defined(_AIX) || defined(__FreeBSD__)
   socklen_t len;
 #else
   int len;
 #endif
-  struct sockaddr_un addr, from;
+  struct sockaddr_un addr_un, from_un;
+  struct sockaddr_in addr_in, from_in;
   fd_set rfds;
   struct timeval tv;
-  int retval;
+  int retval, portno;
+  char *port;
 
   /* no socket? launch the command! */
   if(!sockname) {
@@ -101,23 +106,52 @@ int Gmsh_StartClient(char *command, char *sockname)
     return 1;
   }
 
-  /* first delete the socket's name if it exists */
-  Socket_UnlinkName(sockname);
+  if((port = strstr(sockname, ":"))){ /* INET socket */
+    portno = atoi(port+1);
+  }
+  else{
+    portno = -1;
+  }
 
-  /* make the socket */
-  s = socket(PF_UNIX, SOCK_STREAM, 0);
-  if(s < 0)
-    return -1;  /* Error: Couldn't create socket */
+  if(portno < 0){ /* UNIX socket */
+    /* delete the file if it already exists */
+    Socket_UnlinkName(sockname);
 
-  /* bind the socket to its name */
-  strcpy(addr.sun_path, sockname);
-  addr.sun_family = AF_UNIX;
-  if(bind(s, (struct sockaddr *)&addr,
-          strlen(addr.sun_path) + sizeof(addr.sun_family)) < 0)
-    return -2;  /* Error: Couldn't bind socket to name */
+    /* make the socket */
+    s = socket(PF_UNIX, SOCK_STREAM, 0);
+    if(s < 0)
+      return -1;  /* Error: Couldn't create socket */
 
-  /* change permissions on the socket name in case it has to be rm'd later */
-  chmod(sockname, 0666);
+    /* bind the socket to its name */
+    strcpy(addr_un.sun_path, sockname);
+    addr_un.sun_family = AF_UNIX;
+    if(bind(s, (struct sockaddr *)&addr_un,
+	    strlen(addr_un.sun_path) + sizeof(addr_un.sun_family)) < 0)
+      return -2;  /* Error: Couldn't bind socket to name */
+
+    /* change permissions on the socket name in case it has to be rm'd later */
+    chmod(sockname, 0666);
+  }
+  else{ /* INET socket */
+    if(init != portno){ /* FIXME: need a better solution to deal with
+			   addresses that have already been bound! */
+      init = portno;
+
+      /* make the socket */
+      s = socket(AF_INET, SOCK_STREAM, 0);
+      if(s < 0)
+	return -1;  /* Error: Couldn't create socket */
+      
+      /* bind the socket to its name */
+      bzero((char *) &addr_in, sizeof(addr_in));
+      addr_in.sin_family = AF_INET;
+      addr_in.sin_addr.s_addr = INADDR_ANY;
+      addr_in.sin_port = htons(portno);
+      
+      if(bind(s, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0)
+	return -2;  /* Error: Couldn't bind socket to name */
+    }
+  }
 
   /* Start the external function via system() call */
   //system(command);
@@ -127,8 +161,7 @@ int Gmsh_StartClient(char *command, char *sockname)
   if(listen(s, 20))
     return -3;  /* Error: Socket listen failed */
 
-  /* Watch s to see when it has input. */
-  /* Wait up to 4 seconds */
+  /* Watch s to see when it has input; wait up to N seconds */
   //tv.tv_sec = 4;
   tv.tv_sec = CTX.solver.max_delay;
   tv.tv_usec = 0;
@@ -139,11 +172,16 @@ int Gmsh_StartClient(char *command, char *sockname)
   if(!retval)
     return -4;  /* Error: Socket listening timeout */
 
-  len = sizeof(from);
-  if((sock = accept(s, (struct sockaddr *)&from, &len)) < 0)
-    return -5;  /* Error: Socket accept failed */
-
-  close(s);     /* don't need this socket anymore */
+  if(portno < 0){
+    len = sizeof(from_un);
+    if((sock = accept(s, (struct sockaddr *)&from_un, &len)) < 0)
+      return -5;  /* Error: Socket accept failed */
+  }
+  else{
+    len = sizeof(from_in);
+    if((sock = accept(s, (struct sockaddr *)&from_in, &len)) < 0)
+      return -5;  /* Error: Socket accept failed */
+  }
 
   return sock;
 }
@@ -164,8 +202,10 @@ int Gmsh_ReceiveString(int socket, int *type, char str[])
 
 int Gmsh_StopClient(char *sockname, int sock)
 {
-  if(Socket_UnlinkName(sockname) == -1)
-    return -1;  /* Impossible to unlink the socket */
+  if(!strstr(sockname, ":"))
+    if(Socket_UnlinkName(sockname) == -1)
+      return -1;  /* Impossible to unlink the socket */
+
   close(sock);
   return 0;
 }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.300 2004-11-25 02:10:31 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.301 2004-12-06 06:54:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1087,6 +1087,8 @@ void solver_options_cb(CALLBACK_ARGS)
 void solver_options_ok_cb(CALLBACK_ARGS)
 {
   opt_solver_max_delay(0, GMSH_SET, WID->solver_value[0]->value());
+
+  opt_solver_socket_name(0, GMSH_SET, (char *)WID->solver_input[0]->value());
 }
 
 // Post options

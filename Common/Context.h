@@ -206,6 +206,7 @@ public :
   // solver options 
   struct{
     int max_delay, plugins ;
+    char *socket_name ;
   }solver;
 
   // print options 

@@ -47,6 +47,7 @@ char * opt_general_web_browser(OPT_ARGS_STR);
 char * opt_general_scheme(OPT_ARGS_STR);
 char * opt_general_graphics_font(OPT_ARGS_STR);
 char * opt_mesh_triangle_options(OPT_ARGS_STR);
+char * opt_solver_socket_name(OPT_ARGS_STR);
 char * opt_solver_name(OPT_ARGS_STR);
 char * opt_solver_name0(OPT_ARGS_STR);
 char * opt_solver_name1(OPT_ARGS_STR);

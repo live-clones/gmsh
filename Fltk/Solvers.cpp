@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.29 2004-10-25 18:48:37 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.30 2004-12-06 06:54:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -59,9 +59,14 @@ int Solver(int num, char *args)
     return 1;
   }
 
-  sprintf(str, "%s.gmshsock-%d", CTX.home_dir, num);
-  FixWindowsPath(str, socket_name);
-  
+  if(!strstr(CTX.solver.socket_name, ":")){
+    // file socket
+    sprintf(str, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
+    FixWindowsPath(str, socket_name);
+  }
+  else
+    strcpy(socket_name, CTX.solver.socket_name);
+
   sprintf(str, "\"%s\"", socket_name);
   sprintf(buffer, SINFO[num].socket_command, str);
   

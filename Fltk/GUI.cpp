@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.385 2004-11-25 02:10:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.386 2004-12-06 06:54:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2285,6 +2285,9 @@ void GUI::create_option_window()
 	solver_value[0]->maximum(10);
 	solver_value[0]->step(1);
 	solver_value[0]->align(FL_ALIGN_RIGHT);
+
+	solver_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Socket name");
+	solver_input[0]->align(FL_ALIGN_RIGHT);
 	
 	o->end();
       }

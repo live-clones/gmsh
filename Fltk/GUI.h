@@ -187,6 +187,7 @@ public:
   Fl_Group         *solver_group ;
   Fl_Check_Button  *solver_butt[20] ;
   Fl_Value_Input   *solver_value[20] ;
+  Fl_Input         *solver_input[20] ;
 
   // post-processing options
   Fl_Group         *post_group ;
