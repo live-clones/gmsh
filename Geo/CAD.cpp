@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.17 2001-02-23 00:07:51 remacle Exp $
+// $Id: CAD.cpp,v 1.18 2001-04-07 07:20:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1062,8 +1062,10 @@ void Extrude_ProtudeSurface(int ep, int is,
     List_Read(ps->s.Generatrices,i,&c2);
     List_Read(chapeau->s.Generatrices,i,&c);
     if(c->Num<0)
-      if(!(c = FindCurve(-c->Num,THEM)))
-         Msg(FATAL, "Unknown Curve %d", -c->Num);
+      if(!(c = FindCurve(-c->Num,THEM))){
+         Msg(GERROR, "Unknown Curve %d", -c->Num);
+	 return;
+      }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
     c->Extrude->geo.Source = abs(c2->Num);
@@ -1318,14 +1320,20 @@ void ReplaceAllDuplicates ( Mesh *m ){
     if(c->Num > 0){
       if(!Tree_Search(allNonDulpicatedCurves,&c)){
         Tree_Insert(allNonDulpicatedCurves,&c);
-        if(!(c2 = FindCurve(-c->Num,m)))
-          Msg(FATAL, "Unknown Curve %d", -c->Num);
+        if(!(c2 = FindCurve(-c->Num,m))){
+          Msg(GERROR, "Unknown Curve %d", -c->Num);
+	  List_Delete(All);
+	  return;
+	}
         Tree_Insert(allNonDulpicatedCurves,&c2);
       }
       else{
         Tree_Suppress(m->Curves,&c);
-        if(!(c2 = FindCurve(-c->Num,m)))
-          Msg(FATAL, "Unknown Curve %d", -c->Num);
+        if(!(c2 = FindCurve(-c->Num,m))){
+          Msg(GERROR, "Unknown Curve %d", -c->Num);
+	  List_Delete(All);
+	  return;
+	}
         Tree_Suppress(m->Curves,&c2);
       }
     }
@@ -1495,8 +1503,10 @@ void CopyShape(int Type, int Num, int *New){
 
   switch(Type){
   case MSH_POINT:
-    if(!(v = FindPoint(Num,THEM)))
-      Msg(FATAL, "Unknown Vertex %d", Num);
+    if(!(v = FindPoint(Num,THEM))){
+      Msg(GERROR, "Unknown Vertex %d", Num);
+      return;
+    }
     newv = DuplicateVertex(v);
     *New = newv->Num;
     break;
@@ -1505,8 +1515,10 @@ void CopyShape(int Type, int Num, int *New){
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:
-    if(!(c = FindCurve(Num,THEM)))
-      Msg(FATAL, "Unknown Curve %d", Num);
+    if(!(c = FindCurve(Num,THEM))){
+      Msg(GERROR, "Unknown Curve %d", Num);
+      return;
+    }
     newc = DuplicateCurve(c);
     *New = newc->Num;
     break;
@@ -1514,8 +1526,10 @@ void CopyShape(int Type, int Num, int *New){
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
-    if(!(s = FindSurface(Num,THEM)))
-      Msg(FATAL, "Unknown Surface %d", Num);
+    if(!(s = FindSurface(Num,THEM))){
+      Msg(GERROR, "Unknown Surface %d", Num);
+      return;
+    }
     news = DuplicateSurface(s,1);
     *New = news->Num;
     break;

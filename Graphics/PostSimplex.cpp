@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.14 2001-04-06 10:26:36 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.15 2001-04-07 07:20:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -27,7 +27,7 @@ void Draw_ScalarPoint(Post_View *View,
     Palette2(View,ValMin,ValMax,d);
     if(View->IntervalsType == DRAW_POST_NUMERIC){
       glRasterPos3d(X[0],Y[0],Z[0]);
-      sprintf(Num, "%g", d);
+      sprintf(Num, View->Format, d);
       Draw_String(Num);
     }
     else
@@ -108,7 +108,7 @@ void Draw_ScalarLine(Post_View *View,
     if(d >= ValMin && d <= ValMax){
       RaiseFill(0, d, ValMin, Raise);
       Palette2(View,ValMin,ValMax,d);
-      sprintf(Num, "%g", d);
+      sprintf(Num, View->Format, d);
       glRasterPos3d((X[0] + X[1])/2.,
 		    (Y[0] + Y[1])/2.,
 		    (Z[0] + Z[1])/2.);
@@ -242,7 +242,7 @@ void Draw_ScalarTriangle(Post_View *View,
     if(d >= ValMin && d <= ValMax){
       RaiseFill(0, d, ValMin, Raise);
       Palette2(View,ValMin,ValMax,d);
-      sprintf(Num, "%g", d);
+      sprintf(Num, View->Format, d);
       glRasterPos3d((X[0] + X[1] + X[2])/3.+Raise[0][0],
 		    (Y[0] + Y[1] + Y[2])/3.+Raise[1][0],
 		    (Z[0] + Z[1] + Z[2])/3.+Raise[2][0]);
@@ -445,13 +445,34 @@ void Draw_ScalarTetrahedron(Post_View *View,
 			    double *V){
 
   int     k;
+  double  d;
+  char Num[100];
 
-  for(k=0 ; k<View->NbIso ; k++){
-    if(!preproNormals)Palette(View,View->NbIso,k);
-    IsoSimplex(View,preproNormals,
-	       X, Y, Z, &V[4*View->TimeStep],
-	       View->GVFI(ValMin,ValMax,View->NbIso,k), 
-	       ValMin, ValMax, View->Offset, Raise, View->Light);
+  if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC){
+
+    d = (V[4*View->TimeStep]  +V[4*View->TimeStep+1]+
+	 V[4*View->TimeStep+2]+V[4*View->TimeStep+4]) / 4.;
+    if(d >= ValMin && d <= ValMax){
+      RaiseFill(0, d, ValMin, Raise);
+      Palette2(View,ValMin,ValMax,d);
+      sprintf(Num, View->Format, d);
+      glRasterPos3d((X[0] + X[1] + X[2] + X[3])/4.+Raise[0][0],
+		    (Y[0] + Y[1] + Y[2] + Y[3])/4.+Raise[1][0],
+		    (Z[0] + Z[1] + Z[2] + Z[3])/4.+Raise[2][0]);
+      Draw_String(Num);
+    }
+
+  }
+  else{
+
+    for(k=0 ; k<View->NbIso ; k++){
+      if(!preproNormals)Palette(View,View->NbIso,k);
+      IsoSimplex(View,preproNormals,
+		 X, Y, Z, &V[4*View->TimeStep],
+		 View->GVFI(ValMin,ValMax,View->NbIso,k), 
+		 ValMin, ValMax, View->Offset, Raise, View->Light);
+    }
+
   }
 
 }

@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.9 2001-03-23 14:41:52 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.10 2001-04-07 07:20:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -121,13 +121,21 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
   s->s.Generatrices = List_Create(4, 1, sizeof(Curve*));
   for(i=0;i<NbLoop;i++){
     List_Read(loops,i,&iLoop);
-    if(!(el = FindEdgeLoop(iLoop,THEM)))
-      Msg(FATAL, "Unknown Loop %d", iLoop);
+    if(!(el = FindEdgeLoop(iLoop,THEM))){
+      Msg(GERROR, "Unknown Loop %d", iLoop);
+      List_Delete(s->s.Generatrices);
+      Free(s);
+      return;
+    }
     else{
       for(j=0;j<List_Nbr(el->Curves);j++){
         List_Read(el->Curves,j,&ic);
-        if(!(c = FindCurve(ic,THEM)))
-          Msg(FATAL, "Unknown Curve %d", ic);
+        if(!(c = FindCurve(ic,THEM))){
+          Msg(GERROR, "Unknown Curve %d", ic);
+	  List_Delete(s->s.Generatrices);
+	  Free(s);
+	  return;
+	}
         else
           List_Add (s->s.Generatrices, &c);
       }
@@ -155,13 +163,21 @@ void CreateSurfaceFromOldCrappyDatabase (int izon, int typzon, int o1, int o2,
   s->s.Generatrices = List_Create(4, 1, sizeof(Curve*));
   for(i=0;i<NbLoop;i++){
     List_Read(loops,i,&iLoop);
-    if(!(el = FindEdgeLoop(iLoop,THEM)))
-      Msg(FATAL, "Unknown Line Loop %d", iLoop);
+    if(!(el = FindEdgeLoop(iLoop,THEM))){
+      Msg(GERROR, "Unknown Line Loop %d", iLoop);
+      List_Delete(s->s.Generatrices);
+      Free(s);
+      return;
+    }	  
     else{
       for(j=0;j<List_Nbr(el->Curves);j++){
         List_Read(el->Curves,j,&ic);
-        if(!(c = FindCurve(ic,THEM)))
-          Msg(FATAL, "Unknown Curve %d", ic);
+        if(!(c = FindCurve(ic,THEM))){
+          Msg(GERROR, "Unknown Curve %d", ic);
+	  List_Delete(s->s.Generatrices);
+	  Free(s);
+	  return;
+	}
         else
           List_Add (s->s.Generatrices, &c);
       }
@@ -203,13 +219,21 @@ void CreateVolumeFromOldCrappyDatabase (int izon, List_T *loops, Mesh *M){
   v->Surfaces = List_Create(4, 1, sizeof(Surface*));
   for(i=0;i<List_Nbr(loops);i++){
     List_Read(loops,i,&iLoop);
-    if(!(sl = FindSurfaceLoop(iLoop,THEM)))
-      Msg(FATAL, "Unknown Surface Loop %d", iLoop);
+    if(!(sl = FindSurfaceLoop(iLoop,THEM))){
+      Msg(GERROR, "Unknown Surface Loop %d", iLoop);
+      List_Delete(v->Surfaces);
+      Free(v);
+      return;
+    }
     else{
       for(j=0;j<List_Nbr(sl->Surfaces);j++){
         List_Read(sl->Surfaces,j,&is);
-        if(!(s = FindSurface(abs(is),THEM)))
-          Msg(FATAL, "Unknown Surface %d", is);
+        if(!(s = FindSurface(abs(is),THEM))){
+          Msg(GERROR, "Unknown Surface %d", is);
+	  List_Delete(v->Surfaces);
+	  Free(v);
+	  return;
+	}
         else
           List_Add (v->Surfaces, &s);
       }
@@ -317,8 +341,10 @@ void CreateNurbsSurfaceSupport (int Num , int Order1, int Order2 ,
   Nv = List_Nbr(ListOfDouble_L);
   Cdbz101(Num,MSH_SURF_NURBS,Order1,Order2,Nv,Nu,0,ListCP,NULL,NULL);
 
-  if(!(s = FindSurface(Num,THEM)))
-    Msg(FATAL, "Unknown Surface Loop %d", Num);
+  if(!(s = FindSurface(Num,THEM))){
+    Msg(GERROR, "Unknown Surface Loop %d", Num);
+    return;
+  }
   else{
     s->ku = (float*)malloc(List_Nbr(ku)*sizeof(float));
     s->kv = (float*)malloc(List_Nbr(kv)*sizeof(float));
@@ -389,8 +415,12 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
   else{
     Loop[0] = NEWREG();
     Cdbseg101(Loop[0],TypLine,Order1,ListOfDouble_L,NULL,-1,-1,kumin,kumax,NULL,NULL,NULL);
-    if(!(cc = FindCurve(Loop[0],THEM)))
-      Msg(FATAL, "Unknown Curve %d", Loop[0]);
+    if(!(cc = FindCurve(Loop[0],THEM))){
+      Msg(GERROR, "Unknown Curve %d", Loop[0]);
+      List_Delete(Listint);
+      List_Delete(ListCP);
+      return;
+    }
     else{
       cc->k = (float*)malloc(4*List_Nbr(ku)*sizeof(float));
       for(i=0;i<List_Nbr(ku);i++){
@@ -412,8 +442,12 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
   else{
     Loop[2] = NEWREG();
     Cdbseg101(Loop[2],TypLine,Order1,ListOfDouble_L,NULL,-1,-1,kumin,kumax,NULL,NULL,NULL);
-    if(!(cc = FindCurve(Loop[2],THEM)))
-      Msg(FATAL, "Unknown Curve %d", Loop[2]);
+    if(!(cc = FindCurve(Loop[2],THEM))){
+      Msg(GERROR, "Unknown Curve %d", Loop[2]);
+      List_Delete(Listint);
+      List_Delete(ListCP);
+      return;
+    }
     else{
       cc->k = (float*)malloc(4*List_Nbr(ku)*sizeof(float));
       for(i=0;i<List_Nbr(ku);i++){
@@ -443,8 +477,14 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
   else{
     Loop[1] = NEWREG();
     Cdbseg101(Loop[1],TypLine,Order2,List1,NULL,-1,-1,kvmin,kvmax,NULL,NULL,NULL);
-    if(!(cc = FindCurve(Loop[1],THEM)))
-      Msg(FATAL, "Unknown Curve %d", Loop[1]);
+    if(!(cc = FindCurve(Loop[1],THEM))){
+      Msg(GERROR, "Unknown Curve %d", Loop[1]);
+      List_Delete(List1);
+      List_Delete(List2);
+      List_Delete(Listint);
+      List_Delete(ListCP);
+      return;
+    }
     else{
       cc->k = (float*)malloc(4*List_Nbr(kv) * sizeof(float));
       for(i=0;i<List_Nbr(kv);i++){
@@ -466,7 +506,7 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
     Loop[3] = NEWREG();
     Cdbseg101(Loop[3],TypLine,Order2,List2,NULL,-1,-1,kvmin,kvmax,NULL,NULL,NULL);
     if(!(cc = FindCurve(Loop[3],THEM)))
-      Msg(FATAL, "Unknown Curve %d", Loop[3]);
+      Msg(GERROR, "Unknown Curve %d", Loop[3]);
     else{
       cc->k = (float*)malloc(4*List_Nbr(kv)*sizeof(float));
       for(i=0;i<List_Nbr(kv);i++){

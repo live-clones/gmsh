@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.10 2001-02-23 00:07:51 remacle Exp $
+// $Id: Create.cpp,v 1.11 2001-04-07 07:20:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -474,7 +474,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
       if ((v = FindPoint (iPnt, THEM)))
         List_Add (pC->Control_Points, &v);
       else
-        Msg(FATAL, "Unknown Control Point %d in Curve %d", iPnt, pC->Num);
+        Msg(GERROR, "Unknown Control Point %d in Curve %d", iPnt, pC->Num);
     }
   }
   else {
