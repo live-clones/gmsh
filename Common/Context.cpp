@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.29 2001-01-10 12:12:17 geuzaine Exp $
+// $Id: Context.cpp,v 1.30 2001-01-10 21:20:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -198,8 +198,10 @@ void Init_Context(void){
   CTX.threads      = 1 ; // effective on Unix only with -D_USETHREADS
   CTX.threads_lock = 0 ;
 
+  // only used for motif
   CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
   CTX.fixed_font = "fixed" ;
+  // end(only used for motif)
 
   CTX.lc = 1.0 ;
   CTX.min[0]   = CTX.min[1]   = CTX.min[2]   = 0.0 ;

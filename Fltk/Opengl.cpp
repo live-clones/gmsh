@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.8 2001-01-10 20:23:36 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.9 2001-01-10 21:20:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,10 +67,10 @@ void Draw_String(char *s){
       return ;
     }
   }
-  /*
-  glListBase(CTX.font_base);
-  glCallLists(strlen(s), GL_UNSIGNED_BYTE, (GLubyte *)s);
-  */
+
+  gl_font(FL_HELVETICA, CTX.glfontsize);
+  gl_draw(s);
+
 }
 
 /* ------------------------------------------------------------------------ 

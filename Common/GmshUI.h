@@ -19,7 +19,7 @@
 #elif _FLTK // FLTK for both Unix and Windows
 
 #include <FL/Fl.H>
-#include <GL/gl.h>
+#include <FL/gl.h>
 #include <GL/glu.h>
 
 #endif

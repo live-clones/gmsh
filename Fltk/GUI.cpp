@@ -807,12 +807,12 @@ void GUI::create_general_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)gen_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
@@ -882,7 +882,6 @@ void GUI::create_geometry_options_window(){
         geo_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity number");
 	geo_input->callback(opt_geometry_show_by_entity_num_cb);
 	geo_input->labelsize(CTX.fontsize);
-	geo_input->type(FL_HORIZONTAL);
 	geo_input->align(FL_ALIGN_RIGHT);
 
 	geo_value[0] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Normals");
@@ -909,12 +908,12 @@ void GUI::create_geometry_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)geo_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
@@ -1015,7 +1014,6 @@ void GUI::create_mesh_options_window(){
         mesh_input = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Show by entity Number");
 	mesh_input->callback(opt_mesh_show_by_entity_num_cb);
 	mesh_input->labelsize(CTX.fontsize);
-	mesh_input->type(FL_HORIZONTAL);
 	mesh_input->align(FL_ALIGN_RIGHT);
 
         mesh_value[1] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Show by element quality");
@@ -1071,12 +1069,12 @@ void GUI::create_mesh_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)mesh_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
@@ -1149,12 +1147,12 @@ void GUI::create_post_options_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)post_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
@@ -1239,7 +1237,7 @@ void GUI::create_statistics_window(){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)stat_window);
     }
@@ -1291,7 +1289,7 @@ void GUI::create_help_window(){
     o->end();
     
     { 
-      Fl_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)help_window);
     }
@@ -1389,7 +1387,6 @@ void GUI::create_view_window(int num){
 	view_input[1] = new Fl_Input (2*WB, 2*WB+5*BH, IW, BH, "Format");
 	for(i=0 ; i<2 ; i++){
 	  view_input[i]->labelsize(CTX.fontsize);
-	  view_input[i]->type(FL_HORIZONTAL);
 	  view_input[i]->align(FL_ALIGN_RIGHT);
 	}
         view_colorbar->end();
@@ -1522,12 +1519,12 @@ void GUI::create_view_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)view_window);
     }
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "apply");
       o->labelsize(CTX.fontsize);
       o->callback(ok_cb);
     }
@@ -1676,7 +1673,6 @@ void GUI::create_geometry_context_window(int num){
 	context_geometry_input[1] = new Fl_Input (2*WB, 2*WB+2*BH, IW, BH, "Value");
 	for(i=0 ; i<2 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
-	  context_geometry_input[i]->type(FL_HORIZONTAL);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
@@ -1696,7 +1692,6 @@ void GUI::create_geometry_context_window(int num){
 	context_geometry_input[5] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Characteristic length");
 	for(i=2 ; i<6 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
-	  context_geometry_input[i]->type(FL_HORIZONTAL);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
@@ -1715,7 +1710,6 @@ void GUI::create_geometry_context_window(int num){
 	context_geometry_input[8] = new Fl_Input (2*WB, 2*WB+3*BH, IW, BH, "Z component");
 	for(i=6 ; i<9 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
-	  context_geometry_input[i]->type(FL_HORIZONTAL);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
@@ -1738,7 +1732,6 @@ void GUI::create_geometry_context_window(int num){
 	context_geometry_input[15] = new Fl_Input (2*WB, 2*WB+7*BH, IW, BH, "Angle in degrees");
 	for(i=9 ; i<16 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
-	  context_geometry_input[i]->type(FL_HORIZONTAL);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
@@ -1758,7 +1751,6 @@ void GUI::create_geometry_context_window(int num){
 	context_geometry_input[19] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Factor");
 	for(i=16 ; i<20 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
-	  context_geometry_input[i]->type(FL_HORIZONTAL);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
@@ -1778,7 +1770,6 @@ void GUI::create_geometry_context_window(int num){
 	context_geometry_input[23] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "4th plane equation coefficient");
 	for(i=20 ; i<24 ; i++){
 	  context_geometry_input[i]->labelsize(CTX.fontsize);
-	  context_geometry_input[i]->type(FL_HORIZONTAL);
 	  context_geometry_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	{ 
@@ -1792,7 +1783,7 @@ void GUI::create_geometry_context_window(int num){
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "cancel");
+      Fl_Button* o = new Fl_Button(width-60-WB, height-BH-WB, 60, BH, "close");
       o->labelsize(CTX.fontsize);
       o->callback(cancel_cb, (void*)context_geometry_window);
     }

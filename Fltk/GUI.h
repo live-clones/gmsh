@@ -12,15 +12,13 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Toggle_Button.H>
-#include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Input.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Multiline_Output.H>
-#include <FL/Fl_Browser.H>
 #include <FL/Fl_Bitmap.H>
 
 #include "Opengl_Window.h"

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.14 2001-01-10 10:06:17 geuzaine Exp $
+// $Id: Scale.cpp,v 1.15 2001-01-10 21:20:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,7 +10,7 @@
 
 extern Context_T   CTX;
 
-#ifdef _XMOTIF
+#if _XMOTIF
 
 #include "XContext.h"
 extern XContext_T  XCTX;
@@ -21,6 +21,12 @@ static XCharStruct  overall;
   if(overall.width > cv_w) cv_w=overall.width
 #define FONTHEIGHT XCTX.xfont.helve_h
 #define FONTASCENT XCTX.xfont.helve_a
+
+#elif _FLTK
+
+#define CHECK_W     cv_w=gl_width(label)
+#define FONTHEIGHT  gl_height()
+#define FONTASCENT (gl_height()-gl_descent())
 
 #else
 

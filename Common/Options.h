@@ -42,6 +42,8 @@ StringXNumber GeneralOptions_Number[] = {
   { "Viewport2"    , GMSH_INT,    (void*)&CTX.viewport[2]    , 1. }, 
   { "Viewport3"    , GMSH_INT,    (void*)&CTX.viewport[3]    , 1. }, 
   { "FontSize"     , GMSH_INT,    (void*)&CTX.fontsize      , 12. }, 
+  { "GraphicFontSize" , 
+                     GMSH_INT,    (void*)&CTX.glfontsize    , 12. }, 
   { "Rotation0"    , GMSH_DOUBLE, (void*)&CTX.r[0]          , 0.0 }, 
   { "Rotation1"    , GMSH_DOUBLE, (void*)&CTX.r[1]          , 0.0 }, 
   { "Rotation2"    , GMSH_DOUBLE, (void*)&CTX.r[2]          , 0.0 }, 

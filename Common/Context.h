@@ -84,16 +84,20 @@ class Context_T {
   int fast;                   // inhibit mesh and postpro drawing when changing r,s,t 
   int command_win;            // command window? 
   int display_lists;          // use display lists? 
-  int font_base;              // display list indice for the font 
   int axes, small_axes;       // draw axes? 
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
   int alpha;                  // enable alpha blending 
   int flash;                  // authorize colormap flashing (beek) 
   int same_visual;            // force same visual for GUI and Graphics 
-  
-  char *font;                 // main font for UI
-  int fontsize;               // font size for UI
+
+  //only used for Motif
+  int font_base;              // display list index for the font 
+  char *font;                 // main font
   char *fixed_font;           // font for colorbar 
+  //end(only used for Motif)
+
+  int fontsize;               // font size for fltk UI
+  int glfontsize;             // font size for opengl graphics
 
   // OpenGL stuff 
   int viewport[4];            // current viewport 
