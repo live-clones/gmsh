@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.14 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.15 2001-06-02 13:09:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -119,8 +119,8 @@ int sys3x3_with_tol (double mat[3][3], double b[3], double res[3], double *det){
 
   out = sys3x3(mat,b,res,det);
 
-  if (fabs(*det) < 1.e-12){
-    Msg(DEBUG, "Assuming 3x3 matrix is singular (is this OK?)");
+  if (fabs(*det) < 1.e-14){
+    Msg(DEBUG, "Assuming 3x3 matrix is singular (det == %g)", fabs(*det));
     res[0] = res[1] = res[2] = 0.0 ;
     return (0);
   }

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.16 2001-05-29 13:28:26 geuzaine Exp $
+// $Id: Create.cpp,v 1.17 2001-06-02 13:09:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -544,6 +544,8 @@ Surface * Create_Surface (int Num, int Typ, int Mat){
   pS->Orientations = NULL;
   pS->Support = pS;
   pS->Control_Points = List_Create (1, 10, sizeof (Vertex *));
+  pS->s.Generatrices = NULL;
+  pS->Edges = NULL;
   pS->Extrude = NULL;
   pS->STL = NULL;
   return (pS);
@@ -555,10 +557,12 @@ void Free_Surface(void *a, void *b){
     Tree_Action(pS->Simplexes, Free_Simplex);
     Tree_Delete(pS->Simplexes);
     List_Delete(pS->TrsfSimplexes);
-    Tree_Delete(pS->Vertices); //the vertices are freed globally before
+    //Tree_Delete(pS->Vertices);//fait planter l'extrusion (1D-2D-1D boum)
+                      //the vertices are freed globally before
     List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);
     List_Delete(pS->Control_Points);
+    List_Delete(pS->s.Generatrices);
     Free(pS);
     pS = NULL;
   }
