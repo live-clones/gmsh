@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.190 2004-12-27 01:13:57 geuzaine Exp $
+// $Id: Gmsh.y,v 1.191 2004-12-30 00:30:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -440,13 +440,15 @@ Printf :
 View :
     tSTRING tBIGSTR '{' Views '}' tEND
     { 
-      if(!strcmp($1, "View") && !CheckViewErrorFlags(View))
-	EndView(View, 1, yyname, $2);
+      if(!strcmp($1, "View") && !CheckViewErrorFlags(View)){
+	EndView(View, 0, yyname, $2);
+      }
     }
   | tSTRING tBIGSTR tSTRING VExpr '{' Views '}' tEND
     {
-      if(!strcmp($1, "View") && !CheckViewErrorFlags(View))
-	EndView(View, 1, yyname, $2);
+      if(!strcmp($1, "View") && !CheckViewErrorFlags(View)){
+	EndView(View, 0, yyname, $2);
+      }
     }  
 ;
 
@@ -2392,6 +2394,10 @@ Delete :
 	  if(v->empty())
 	    RemoveViewByIndex(i);
 	}
+#if defined(HAVE_FLTK)
+	if(!CTX.batch)
+	  UpdateViewsInGUI();
+#endif
       }
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s %s'", $2, $3);

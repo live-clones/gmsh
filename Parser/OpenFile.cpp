@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.66 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.67 2004-12-30 00:30:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,6 +42,7 @@
 #include "Draw.h"
 #include "GUI.h"
 extern GUI *WID;
+void UpdateViewsInGUI();
 #endif
 
 extern Mesh *THEM, M;
@@ -117,7 +118,7 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
 {
   char yyname_old[256], tmp[256];
   FILE *yyin_old, *fp;
-  int yylineno_old, yyerrorstate_old, status;
+  int yylineno_old, yyerrorstate_old, numviews_old, status;
 
   if(!(fp = fopen(f, "r"))){
     if(warn_if_missing)
@@ -129,7 +130,8 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   yyin_old = yyin;
   yyerrorstate_old = yyerrorstate;
   yylineno_old = yylineno;
-  
+  numviews_old = List_Nbr(CTX.post.list);
+
   strncpy(yyname, f, 255);
   yyin = fp;
   yyerrorstate = 0;
@@ -171,6 +173,12 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   yyerrorstate = yyerrorstate_old;
   yylineno = yylineno_old;
 
+  if(List_Nbr(CTX.post.list) > numviews_old){
+#if defined(HAVE_FLTK)
+    UpdateViewsInGUI();
+#endif
+  }
+  
   GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
   if(sp) {
     sp->readSolverFile(f);

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.157 2004-12-29 04:14:27 geuzaine Exp $
+// $Id: Views.cpp,v 1.158 2004-12-30 00:30:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -426,7 +426,7 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
     v->smooth();
 
 #if defined(HAVE_FLTK)
-  if(!CTX.post.force_num && add_in_gui)
+  if(add_in_gui)
     UpdateViewsInGUI();
 #endif
 
@@ -984,7 +984,8 @@ void ReadView(FILE *file, char *filename)
           List_Nbr(v->T2D), List_Nbr(v->T2C), List_Nbr(v->T3D),
           List_Nbr(v->T3C));
 
-      EndView(v, 1, filename, name);
+      // don't update the ui after each view, but only at the end
+      EndView(v, 0, filename, name); 
     }
 
     do {
@@ -994,6 +995,10 @@ void ReadView(FILE *file, char *filename)
     } while(str[0] != '$');
 
   }     /* while 1 ... */
+
+#if defined(HAVE_FLTK)
+  UpdateViewsInGUI();
+#endif
 
   Msg(INFO, "Read post-processing file '%s'", filename);
   Msg(STATUS2N, "Read '%s'", filename);
