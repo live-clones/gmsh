@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.2 2002-10-24 23:39:31 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.3 2002-10-25 01:16:02 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -518,7 +518,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 
       else{
 #ifdef __APPLE__ 
-	// Macs launch programs with special command line options... Just ignore them.
+	// The Mac Finder launches programs with special command line
+	// arguments: just ignore them (and don't exit!)
         fprintf(stderr, "Unknown option '%s'\n", argv[i]);
 	i++;
 #else
