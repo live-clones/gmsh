@@ -64,9 +64,12 @@ extern "C"
 struct Structural_BeamSection
 {
   Mesh m;
+  double xc,yc,area,Iy,Iz;
   std::string name;
   Structural_BeamSection ( const char *direct, std::string _name );
   ~Structural_BeamSection();
+  void computeGeometricalProperties();
+  void GL_DrawBeam (double pinit[3], double dir[3]);
 };
 
 struct Structural_Material
@@ -107,7 +110,7 @@ class StructuralSolver : public GMSH_Solve_Plugin
 #endif
   double MAX_FORCE;
   double MAX_DISPLACEMENT;
-
+  Structural_BeamSection* GetBeamSection (const std::string & name);
 public:
   StructuralSolver();
   virtual ~StructuralSolver();
@@ -128,6 +131,7 @@ public:
   virtual void writeSolverFile ( const char *geom_file ) const; 
   virtual void readSolverFile  ( const char *geom_file );
   bool GL_enhancePoint ( Vertex *v) ;
+  bool GL_enhanceLine (  int CurveId , Vertex *v1, Vertex *v2) ;
 };
 
 #endif

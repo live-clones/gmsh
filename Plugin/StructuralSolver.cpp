@@ -2,6 +2,8 @@
 #include "Context.h"
 #include "Tools.h"
 #include "Draw.h"
+#include "Utils.h"
+#include "Numeric.h"
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
@@ -31,6 +33,19 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
 : name (_name)
 {    
   Mesh *kk = THEM;
+  m.Vertices = NULL;
+  m.Simplexes = NULL;
+  m.Points = NULL;
+  m.Curves = NULL;
+  m.SurfaceLoops = NULL;
+  m.EdgeLoops = NULL;
+  m.Surfaces = NULL;
+  m.Volumes = NULL;
+  m.PhysicalGroups = NULL;
+  m.Partitions = NULL;
+  m.Metric = NULL;
+  m.BGM.bgm = NULL;
+  m.Grid.init = 0;
   Init_Mesh(&m);
 
   char temp[256];
@@ -41,9 +56,150 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
   fclose(f);
   // get rid of the extension
   name.erase(name.find("."));
-  printf("%s\n",name.c_str());
+ // compute center of gravity, Area, Iy and Iz
+  computeGeometricalProperties();
+  CTX.mesh.changed = 0;
   THEM=kk;
 }
+
+
+void Structural_BeamSection :: computeGeometricalProperties ()
+{
+  xc=yc=area=0.0;
+  List_T *surfaces = Tree2List (m.Surfaces);
+  for (int i=0;i<List_Nbr(surfaces);++i)
+    {
+      Surface *s;
+      List_Read(surfaces,i,&s);
+      List_T *triangles = Tree2List(s->Simplexes);
+      for(int j=0;j<List_Nbr(triangles);++j)
+	{
+	  Simplex *simp;
+	  List_Read(triangles,j,&simp);
+	  Vertex v = *simp->V[0]+*simp->V[1]+*simp->V[2];
+	  double A = simp->surfsimpl();
+	  area+=A;
+	  xc += v.Pos.X*A;
+	  yc += v.Pos.Y*A;
+	}
+      xc/=area;
+      yc/=area;
+      List_Delete(triangles);
+    }
+  List_Delete(surfaces);  
+  printf("%s %g %g %g\n",name.c_str(),area,xc,yc);
+}
+
+void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3])
+{
+#ifdef HAVE_FLTK
+
+
+  double X[3] = {dir[0],dir[1],dir[2]};
+  double Y[3];
+  double Z[3] = {0,0,1};
+  double nn = norme(X);
+  prodve(X,Z,Y);
+  double transl[3] = {pinit[0]-xc,pinit[1]-yc,pinit[2]};
+  double rot[3][3] = {{Z[0],Y[0],X[0]},
+		      {Z[1],Y[1],X[1]},
+		      {Z[2],Y[2],X[2]}};
+  
+  double invrot[3][3] = {{Z[0],Z[1],Z[2]},
+			 {Y[0],Y[1],Y[2]},
+			 {X[0],X[1],X[2]}};
+  
+  List_T *vertices = Tree2List (m.Vertices);
+  Vertex *vert;
+  for (int i=0;i<List_Nbr(vertices);++i)
+    {
+      List_Read ( vertices,i,&vert);
+      Projette ( vert, rot);
+      vert->Pos.X += transl[0];
+      vert->Pos.Y += transl[1];
+      vert->Pos.Z += transl[2];
+    }
+
+  List_T *surfaces = Tree2List (m.Surfaces);
+  List_T *curves = Tree2List (m.Curves);
+  if(CTX.geom.light) glEnable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  for (int i=0;i<List_Nbr(surfaces);++i)
+    {
+      Surface *s;
+      List_Read(surfaces,i,&s);
+      List_T *triangles = Tree2List(s->Simplexes);
+      //      printf("%g %g %d %d\n",xc,yc,List_Nbr(vertices),List_Nbr(triangles));
+      for(int j=0;j<List_Nbr(triangles);++j)
+	{
+	  Simplex *simp;
+	  List_Read(triangles,j,&simp);	
+	  glBegin(GL_TRIANGLES);
+	  glNormal3d ( -X[0],-X[1],-X[2] );
+	  glVertex3d ( simp->V[0]->Pos.X,simp->V[0]->Pos.Y,simp->V[0]->Pos.Z);
+	  glNormal3d ( -X[0],-X[1],-X[2] );
+	  glVertex3d ( simp->V[1]->Pos.X,simp->V[1]->Pos.Y,simp->V[1]->Pos.Z);
+	  glNormal3d ( -X[0],-X[1],-X[2] );
+	  glVertex3d ( simp->V[2]->Pos.X,simp->V[2]->Pos.Y,simp->V[2]->Pos.Z);
+	  glEnd();
+	  glBegin(GL_TRIANGLES);
+	  glNormal3d ( X[0],X[1],X[2] );
+	  glVertex3d ( simp->V[0]->Pos.X+dir[0],simp->V[0]->Pos.Y+dir[1],simp->V[0]->Pos.Z+dir[2]);
+	  glNormal3d ( X[0],X[1],X[2] );
+	  glVertex3d ( simp->V[1]->Pos.X+dir[0],simp->V[1]->Pos.Y+dir[1],simp->V[1]->Pos.Z+dir[2]);
+	  glNormal3d ( X[0],X[1],X[2] );
+	  glVertex3d ( simp->V[2]->Pos.X+dir[0],simp->V[2]->Pos.Y+dir[1],simp->V[2]->Pos.Z+dir[2]);
+	  glEnd();
+	}
+      List_Delete(triangles);
+    }
+  for (int i=0;i<List_Nbr(curves);++i)
+    {
+      Curve *c;
+      List_Read(curves,i,&c);
+      List_T *lines = Tree2List(c->Simplexes);
+      //      printf("%g %g %d %d\n",xc,yc,List_Nbr(vertices),List_Nbr(triangles));
+      for(int j=0;j<List_Nbr(lines);++j)
+	{
+	  Simplex *simp;
+	  List_Read(lines,j,&simp);	
+	  double dir1[3] = { simp->V[0]->Pos.X-simp->V[1]->Pos.X,
+			     simp->V[0]->Pos.Y-simp->V[1]->Pos.Y,
+			     simp->V[0]->Pos.Z-simp->V[1]->Pos.Z};
+	  double dir2[3];
+	  norme(dir1);
+	  prodve(dir1,X,dir2);
+
+	  glBegin(GL_POLYGON);
+	  glNormal3dv (dir2); 
+	  glVertex3d ( simp->V[0]->Pos.X,simp->V[0]->Pos.Y,simp->V[0]->Pos.Z);
+	  glNormal3dv (dir2); 
+	  glVertex3d ( simp->V[1]->Pos.X,simp->V[1]->Pos.Y,simp->V[1]->Pos.Z);
+	  glNormal3dv (dir2); 
+	  glVertex3d ( simp->V[1]->Pos.X+dir[0],simp->V[1]->Pos.Y+dir[1],simp->V[1]->Pos.Z+dir[2]);
+	  glNormal3dv (dir2); 
+	  glVertex3d ( simp->V[0]->Pos.X+dir[0],simp->V[0]->Pos.Y+dir[1],simp->V[0]->Pos.Z+dir[2]);
+	  glEnd();
+	}
+      List_Delete(lines);
+    }
+  List_Delete(curves);  
+  List_Delete(surfaces);  
+
+  for (int i=0;i<List_Nbr(vertices);++i)
+    {
+      List_Read ( vertices,i,&vert);
+      vert->Pos.X -= transl[0];
+      vert->Pos.Y -= transl[1];
+      vert->Pos.Z -= transl[2];
+      Projette ( vert, invrot);
+    }
+  List_Delete (vertices);
+
+#endif
+}
+
+
 
 void StructuralSolver :: RegisterBeamSections ()
 {
@@ -133,6 +289,7 @@ StructuralSolver :: StructuralSolver ()
   RegisterBeamSections ();
   RegisterMaterials ();
 }
+
 StructuralSolver :: ~StructuralSolver ()
 {
   std::list<struct Structural_BeamSection* > :: iterator it  = beam_sections.begin();
@@ -145,6 +302,18 @@ StructuralSolver :: ~StructuralSolver ()
 #ifdef HAVE_FLTK 
   if(_window)delete _window;;
 #endif
+}
+
+Structural_BeamSection * StructuralSolver :: GetBeamSection (const std::string & name)
+{
+  std::list<struct Structural_BeamSection* > :: iterator it  = beam_sections.begin();
+  std::list<struct Structural_BeamSection* > :: iterator ite = beam_sections.end();
+
+  for (;it!=ite;++it)
+    {
+      if ((*it)->name == name)
+	return *it;
+    }
 }
 
 
@@ -339,10 +508,10 @@ void StructuralSolver :: readSolverFile ( const char *geom_file )
   sprintf(name,"%s.str",geom_file);
   FILE *f = fopen(name,"r");  
   if (!f)return;
+
   while(!feof(f))
     {
       fgets(line,256,f);
-      printf("%s\n",line);
       sscanf (line,"%s",name);
       if (!strcmp(name,"BEAM"))
 	{
@@ -408,12 +577,40 @@ bool StructuralSolver :: GL_enhancePoint ( Vertex *v)
 		      Draw_String(Num);
 		    } 
 		}
+	      return true;
 	    }
 	}
       }
     }
-  return true;
-#else
-  return false;
 #endif
+  return false;
+}
+
+bool StructuralSolver :: GL_enhanceLine ( int CurveId, Vertex *v1, Vertex *v2) 
+{
+#ifdef HAVE_FLTK  
+  PhysicalGroup *p;
+  for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++) 
+    { 
+      char Num[100];
+      List_Read(THEM->PhysicalGroups, i, &p);
+      if(p->Typ == MSH_PHYSICAL_LINE) {
+	if(List_Search(p->Entities, &CurveId, fcmp_absint)) { 
+	  std::map<int,struct PhysicalLineInfo>::const_iterator it = lines.find(p->Num);
+	  if (it !=lines.end())
+	    {	      
+	      double pinit [3] = {v1->Pos.X,v1->Pos.Y,v1->Pos.Z};
+	      double dir [3] = {v2->Pos.X-v1->Pos.X,v2->Pos.Y-v1->Pos.Y,v2->Pos.Z-v1->Pos.Z};
+	      Structural_BeamSection *section =  GetBeamSection (it->second.section);
+	      if (section)
+		{
+		  section -> GL_DrawBeam (pinit,dir);
+		  return true;
+		}
+	    }
+	}
+      }
+    }
+#endif
+  return false;
 }

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.69 2004-08-06 14:48:32 remacle Exp $
+// $Id: Geom.cpp,v 1.70 2004-08-11 13:28:30 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -182,6 +182,18 @@ void Draw_Curve(void *a, void *b)
         glEnd();
       }
     }
+
+    GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+    if (sp)
+      {
+        for(int i = 0; i < N - 1; i++) {
+          v = InterpolateCurve(c, (double)i / (double)(N - 1), 0);
+          dv = InterpolateCurve(c, (double)(i + 1) / (double)(N - 1), 0);
+	  sp-> GL_enhanceLine (c->Num,&v,&dv);
+	}
+      }
+
+
   }
 
   if(CTX.geom.lines_num) {
