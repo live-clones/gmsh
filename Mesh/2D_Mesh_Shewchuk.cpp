@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Shewchuk.cpp,v 1.2 2001-08-21 06:21:47 geuzaine Exp $
+// $Id: 2D_Mesh_Shewchuk.cpp,v 1.3 2001-08-21 06:29:41 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -7,8 +7,8 @@
 
 #define ANSI_DECLARATORS
 #define REAL double
-//#define OPT "Q"
-#define OPT ""
+#define OPT "Q"
+//#define OPT ""
 
 extern "C" {
 #include "triangle.h"
@@ -17,21 +17,20 @@ extern "C" {
 extern int         CurrentNodeNumber;
 extern Context_T   CTX;
 
-void AddInMesh(Surface *sur, Vertex **vertexbound,
-	       struct triangulateio *in,
+void AddInMesh(Surface *sur, int nbbound, Vertex **vertexbound,
 	       struct triangulateio *out){
   int i;
   Vertex **vtable;
   Simplex *s;
 
-  Msg(INFO, "Converting...");
+  Msg(INFO, "Add in database...");
 
   vtable = (Vertex**) Malloc(out->numberofpoints*sizeof(Vertex*));
 
-  for (i = 0; i < in->numberofpoints; i++) vtable[i] = vertexbound[i];
+  for (i = 0; i < nbbound; i++) vtable[i] = vertexbound[i];
   Free(vertexbound);
   
-  for (i = in->numberofpoints; i < out->numberofpoints; i++) {
+  for (i = nbbound; i < out->numberofpoints; i++) {
     vtable[i] = Create_Vertex (++CurrentNodeNumber, 
 			       out->pointlist[i * 2], out->pointlist[i * 2 + 1], 0.0, 
 			       out->pointattributelist[i], 0.0);
@@ -54,7 +53,7 @@ void AddInMesh(Surface *sur, Vertex **vertexbound,
   Free(out->trianglelist);
   Free(out->triangleattributelist);
 
-  Msg(INFO, "...Done");
+  Msg(INFO, "...done");
 }
 
 // This is horrible...
@@ -148,7 +147,13 @@ int Mesh_Shewchuk(Surface *s){
 
   triangulate("pqzY" OPT, &in, &mid, NULL);
 
-  //AddInMesh(s, &mid); return 0;
+  Free(in.pointlist);
+  Free(in.pointattributelist);
+  Free(in.pointmarkerlist);
+  Free(in.regionlist);
+  Free(in.segmentlist);
+  Free(in.segmentmarkerlist);
+  Free(in.holelist);
 
 #ifndef BGMESH
 
@@ -190,15 +195,7 @@ int Mesh_Shewchuk(Surface *s){
   Free(mid.segmentlist);
   Free(mid.segmentmarkerlist);
 
-  AddInMesh(s, vtable, &in, &out);
-
-  Free(in.pointlist);
-  Free(in.pointattributelist);
-  Free(in.pointmarkerlist);
-  Free(in.regionlist);
-  Free(in.segmentlist);
-  Free(in.segmentmarkerlist);
-  Free(in.holelist);
+  AddInMesh(s, NbPts, vtable, &out);
 
   return 0;
 
