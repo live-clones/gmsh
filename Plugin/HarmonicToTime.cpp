@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.1 2004-10-30 15:23:45 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.2 2004-10-31 01:50:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -179,8 +179,8 @@ Post_View *GMSH_HarmonicToTimePlugin::execute(Post_View * v)
   }
   // finalize
   char name[1024], filename[1024];
-  sprintf(name, "%s_Skin", v1->Name);
-  sprintf(filename, "%s_Skin.pos", v1->Name);
+  sprintf(name, "%s_HarmonicToTime", v1->Name);
+  sprintf(filename, "%s_HarmonicToTime.pos", v1->Name);
   EndView(v2, 1, filename, name);
 
   return v2;
