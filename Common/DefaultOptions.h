@@ -304,11 +304,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Z-axis translation (in model units)" },
 
 
-#ifdef _BLACKBOX
-  { F|O, "Verbosity" , opt_general_verbosity , 0. , 
-#else
   { F|O, "Verbosity" , opt_general_verbosity , 2. ,
-#endif
     "Level of information printed during processing (0=no information)" },
 
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 1.1 ,
