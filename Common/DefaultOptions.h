@@ -622,8 +622,8 @@ StringXColor GeometryOptions_Color[] = {
 #define COLW  PACK_COLOR( 255, 255, 255, 255 )
 #define COLT  PACK_COLOR( 160, 150, 255, 255 )
 #define COLQ  PACK_COLOR( 130, 120, 225, 255 )
-#define COLP  PACK_COLOR( 100,  90, 195, 255 )
-#define COLY  PACK_COLOR(  70,  60, 165, 255 )
+#define COLP  PACK_COLOR( 232, 210, 23, 255  )
+#define COLY  PACK_COLOR( 217, 113, 38, 255  )
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 
