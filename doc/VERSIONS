@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.274 2004-12-10 03:35:29 geuzaine Exp $
+$Id: VERSIONS,v 1.275 2004-12-13 15:58:39 geuzaine Exp $
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored
@@ -7,13 +7,14 @@ high order visualization mode; new options (Solver.SocketCommand,
 Solver.NameCommand, View.ArrowSizeProportional, View.Normals,
 View.Tangents and General.ClipFactor); fixed display of undesired
 solver plugin popups; enhanced interactive plugin behaviour; new
-plugins (HarmonicToTime, Integrate, Eigenvectors); tetrahedral
-mesh file reading speedup (50% faster on large meshes); large memory
+plugins (HarmonicToTime, Integrate, Eigenvectors); tetrahedral mesh
+file reading speedup (50% faster on large meshes); large memory
 footprint reduction (up to 50%) for the visualization of
 triangular/tetrahadral meshes; the solver interface now supports
 TCP/IP connections; new generalized raise mode (allows to use complex
 expressions to offset post-processing maps); upgraded netgen kernel to
-version 4.4; various small bug fixes and enhancements;
+version 4.4; new optional TIME list in parsed views to specify the
+values of the time steps; various small bug fixes and enhancements;
 
 New in 1.56: new post-processing option to draw a scalar view raised
 by a displacement view without using Plugin(DisplacementRaise) (makes
