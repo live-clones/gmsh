@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.76 2001-05-09 07:18:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.77 2001-05-10 12:08:01 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -472,9 +472,8 @@ GUI::GUI(int argc, char **argv) {
   create_graphic_window(argc, argv);
 
 #ifdef WIN32
-  //m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
-  //				   IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
-  m_window->icon((char *)LoadIcon(fl_display, MAKEINTRESOURCE(IDI_ICON)));
+  m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
+  				   IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #else
   fl_open_display();
   Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
