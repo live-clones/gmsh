@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.5 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.6 2003-03-02 05:23:11 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -38,8 +38,8 @@ double fn1(double x, void *params)
 
 #define MAXITER 100
 
-// Returns the minimum betwen ax and bx to a given tol using brent's
-// method.
+// Returns the minimum betwen ax and cx to a given tolerance tol using
+// brent's method.
 
 double brent(double ax, double bx, double cx,
              double (*f) (double), double tol, double *xmin)

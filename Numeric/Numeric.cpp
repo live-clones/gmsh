@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.7 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.8 2003-03-02 05:26:29 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 
-// Check GSL version. We need at least 1.2, since all versions >=
+// Check GSL version. We need at least 1.2, since all versions <=
 // 1.1.1 have a buggy SVD routine (infinite loop fixed on Sun Jun 16
 // 11:45:29 2002 in GSL's cvs tree). We check this at run time since
 // Gmsh could be distributed with the gsl dynamically linked.
