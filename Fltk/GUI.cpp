@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.39 2001-02-05 07:56:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.40 2001-02-05 14:20:14 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -871,10 +871,6 @@ void GUI::make_opengl_current(){
 
 void GUI::make_overlay_current(){
   g_opengl_window->make_overlay_current();
-}
-
-void GUI::make_colorbar_current(){
-  view_colorbar_window->make_current();
 }
 
 // Draw the opengl window

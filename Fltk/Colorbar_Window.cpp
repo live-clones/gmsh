@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.6 2001-02-04 10:23:56 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.7 2001-02-05 14:20:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -133,7 +133,7 @@ void Colorbar_Window::redraw_range(int a, int b){
    int intensity;
    double H,S,V;
 
-   WID->make_colorbar_current();
+   make_current();
 
    if(a < 0)  a = 0;
    if(b >= ct->size)  b = ct->size-1;
@@ -283,7 +283,7 @@ void Colorbar_Window::redraw_marker(){
   char str[50];
   float val;
 
-  WID->make_colorbar_current();
+  make_current();
 
   y0 = marker_y;
   y1 = h() - 1;

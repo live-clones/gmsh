@@ -186,7 +186,6 @@ public:
   void check();
   void wait();
   void make_opengl_current();
-  void make_colorbar_current();
   void make_overlay_current();
   void redraw_opengl();
   void redraw_overlay();
