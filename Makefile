@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.108 2001-07-29 09:41:37 geuzaine Exp $
+# $Id: Makefile,v 1.109 2001-08-01 08:05:13 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -20,8 +20,8 @@
                           -I$(HOME)/SOURCES/Mesa-3.1/include\
                           -I$(HOME)/SOURCES/Mesa-3.1/include/GL
               MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
-             FLTK_INC   = -I$(HOME)/SOURCES/fltk
-      FLTK_INC_SCOREC   = -I/users/develop/develop/visual/fltk/1.0/include
+               FLTK_INC = -I$(HOME)/SOURCES/fltk
+        FLTK_INC_SCOREC = -I/users/develop/develop/visual/fltk/1.0/include
       FLTK_INC_LAPTOPJF = -I../../fltk-1.0.9
    FLTK_INC_GERTHA_BURO = -I../../fltk
 
@@ -39,8 +39,8 @@
 #            XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
              XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
                           -L/usr/X11R6/lib -lXt -lX11 -lXext 
-               FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
-                          -L/usr/X11R6/lib -lX11
+               FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk -L/usr/X11R6/lib -lX11
+        FLTK_STATIC_LIB = -L$(HOME)/SOURCES/fltk-static/lib -lfltk -L/usr/X11R6/lib -lX11
 FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                           -L/usr/X11R6/lib -lX11
   FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
@@ -94,6 +94,18 @@ default: initialtag
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+static:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-static/include -I$(HOME)/SOURCES/Mesa-static/include/GL" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB) $(MESA_STATIC_LIB) \
+                 $(FLTK_STATIC_LIB) -lm
+
 win: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
@@ -123,10 +135,6 @@ gmsh:
 efence:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lefence -lm
-
-gmshm:
-	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB) $(MESA_STATIC_LIB) \
-                 $(FLTK_LIB) -lm
 
 gmsh2:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
@@ -408,7 +416,7 @@ fltk_compile_big_endian:
            "C_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GL_INCLUDE=-I/usr/include/X11/GLw -I$(HOME)/SOURCES/Mesa-3.1/include -I$(HOME)/SOURCES/Mesa-3.1/include/GL" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
