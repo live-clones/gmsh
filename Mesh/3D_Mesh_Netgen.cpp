@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.2 2004-06-26 21:34:50 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.3 2004-06-27 00:20:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,9 @@
 #include "Numeric.h"
 #include "Context.h"
 
+extern Context_T CTX;
+extern Mesh *THEM;
+
 #if !defined(HAVE_NETGEN)
 
 int Mesh_Netgen(Volume * v)
@@ -48,9 +51,6 @@ extern "C"
 {
 #include "nglib.h"
 }
-
-extern Context_T CTX;
-extern Mesh *THEM;
 
 class Netgen{
  private:
