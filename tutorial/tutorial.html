@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.34 2002-09-11 18:30:11 geuzaine Exp $
+$Id: tutorial.html,v 1.35 2002-10-20 04:48:31 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -1107,7 +1107,7 @@ View[2].AutoPosition = 0;
 View[2].PositionX = 85;
 View[2].PositionY = 50;
 View[2].Width = 200;
-View[2].Height = 150;
+View[2].Height = 130;
 
 View[3].Type = 3;
 View[3].RangeType = 2;
@@ -1184,15 +1184,18 @@ EndFor
 
 <I><FONT COLOR="#B22222">// Here is the list of available scripting commands:
 </FONT></I><I><FONT COLOR="#B22222">//  
-</FONT></I><I><FONT COLOR="#B22222">//  Merge string;     (to merge a file)
-</FONT></I><I><FONT COLOR="#B22222">//  Draw;             (to draw the scene)
-</FONT></I><I><FONT COLOR="#B22222">//  Mesh int;         (to perform the mesh generation; 'int' = 0, 1, 2 or 3)
-</FONT></I><I><FONT COLOR="#B22222">//  Save string;      (to save the mesh)
-</FONT></I><I><FONT COLOR="#B22222">//  Print string;     (to print the graphic window)
-</FONT></I><I><FONT COLOR="#B22222">//  Sleep expr;       (to sleep during expr seconds)
-</FONT></I><I><FONT COLOR="#B22222">//  Delete View[int]; (to free the view int)
-</FONT></I><I><FONT COLOR="#B22222">//  Delete Meshes;    (to free all meshes)
-</FONT></I><I><FONT COLOR="#B22222">//  System string;    (to execute a system call)
+</FONT></I><I><FONT COLOR="#B22222">//  Merge string;                (to merge a file)
+</FONT></I><I><FONT COLOR="#B22222">//  MergeWithBoundingBox string; (to merge a file and force the recalculation
+</FONT></I><I><FONT COLOR="#B22222">//                                of the scene's bounding box)
+</FONT></I><I><FONT COLOR="#B22222">//  Draw;                        (to redraw the scene)
+</FONT></I><I><FONT COLOR="#B22222">//  Save string;                 (to save the mesh)
+</FONT></I><I><FONT COLOR="#B22222">//  Print string;                (to print the graphic window in the format
+</FONT></I><I><FONT COLOR="#B22222">//                                defined in Print.Format)
+</FONT></I><I><FONT COLOR="#B22222">//  Sleep expr;                  (to sleep during expr seconds)
+</FONT></I><I><FONT COLOR="#B22222">//  Delete View[int];            (to free the view int)
+</FONT></I><I><FONT COLOR="#B22222">//  Delete Meshes;               (to free all meshes)
+</FONT></I><I><FONT COLOR="#B22222">//  Duplicata View[int];         (to duplicate the view int)
+</FONT></I><I><FONT COLOR="#B22222">//  System string;               (to execute a system call)
 </FONT></I></PRE>
 <HR>
 <A NAME="file10">
