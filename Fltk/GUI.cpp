@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.261 2003-12-03 04:14:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.262 2003-12-03 04:15:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -145,7 +145,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
     {"S&hortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
-    {"On&line Documentation",     0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
+    {"On&line documentation",     0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"&About...",                 0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
