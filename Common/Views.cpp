@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.11 2000-11-27 17:34:00 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.12 2000-11-27 18:59:28 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -90,6 +90,63 @@ void BeginView(int allocate){
   ActualView->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
   ColorTable_InitParam(1, &ActualView->CT, 1, 1);
   ColorTable_Recompute(&ActualView->CT, 1, 1);
+}
+
+void Stat_ScalarSimplex(int nbnod, int N, double *V){
+  int i;
+
+  if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
+    ActualView->Min = V[0];
+    ActualView->Max = V[0];
+    ActualView->NbTimeStep = N/nbnod;
+  }
+  else if(N/nbnod < ActualView->NbTimeStep)
+    ActualView->NbTimeStep = N/nbnod ;
+
+  for(i=0 ; i<N ; i++){
+    if(V[i] < ActualView->Min) ActualView->Min = V[i] ;
+    if(V[i] > ActualView->Max) ActualView->Max = V[i] ;
+  }
+
+  switch(nbnod){
+  case 1 : NbPoints++; break;
+  case 2 : NbLines++; break;
+  case 3 : NbTriangles++; break;
+  case 4 : NbTetrahedra++; break;
+  }
+}
+
+void Stat_VectorSimplex(int nbnod, int N, double *V){
+  double l0;
+  int i;
+
+  if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
+    l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
+    ActualView->Min = l0;
+    ActualView->Max = l0;
+    ActualView->NbTimeStep = N/(3*nbnod) ;
+  }
+  else if(N/(3*nbnod) < ActualView->NbTimeStep)
+    ActualView->NbTimeStep = N/(3*nbnod) ;
+
+  for(i=0 ; i<N ; i+=3){
+    l0 = sqrt(DSQR(V[i])+DSQR(V[i+1])+DSQR(V[i+2]));
+    if(l0 < ActualView->Min) ActualView->Min = l0 ;
+    if(l0 > ActualView->Max) ActualView->Max = l0 ;
+  }
+
+  ActualView->ScalarOnly = 0;
+
+  switch(nbnod){
+  case 1 : NbPoints++; break;
+  case 2 : NbLines++; break;
+  case 3 : NbTriangles++; break;
+  case 4 : NbTetrahedra++; break;
+  }
+}
+
+void Stat_TensorSimplex(int nbnod, int N, double *v){
+  Msg(ERROR, "Tensor Field Views not Implemented Yet");
 }
 
 void EndView(int AddInUI, int Number, char *FileName, char *Name, 
@@ -275,68 +332,6 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
 }
 
 /* ------------------------------------------------------------------------ */
-/*  S t a t _ X X X  S i m p l e x                                          */
-/* ------------------------------------------------------------------------ */
-
-void Stat_ScalarSimplex(int nbnod, int N, double *V){
-  int i;
-
-  if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
-    ActualView->Min = V[0];
-    ActualView->Max = V[0];
-    ActualView->NbTimeStep = N/nbnod;
-  }
-  else if(N/nbnod < ActualView->NbTimeStep)
-    ActualView->NbTimeStep = N/nbnod ;
-
-  for(i=0 ; i<N ; i++){
-    if(V[i] < ActualView->Min) ActualView->Min = V[i] ;
-    if(V[i] > ActualView->Max) ActualView->Max = V[i] ;
-  }
-
-  switch(nbnod){
-  case 1 : NbPoints++; break;
-  case 2 : NbLines++; break;
-  case 3 : NbTriangles++; break;
-  case 4 : NbTetrahedra++; break;
-  }
-}
-
-void Stat_VectorSimplex(int nbnod, int N, double *V){
-  double l0;
-  int i;
-
-  if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
-    l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
-    ActualView->Min = l0;
-    ActualView->Max = l0;
-    ActualView->NbTimeStep = N/(3*nbnod) ;
-  }
-  else if(N/(3*nbnod) < ActualView->NbTimeStep)
-    ActualView->NbTimeStep = N/(3*nbnod) ;
-
-  for(i=0 ; i<N ; i+=3){
-    l0 = sqrt(DSQR(V[i])+DSQR(V[i+1])+DSQR(V[i+2]));
-    if(l0 < ActualView->Min) ActualView->Min = l0 ;
-    if(l0 > ActualView->Max) ActualView->Max = l0 ;
-  }
-
-  ActualView->ScalarOnly = 0;
-
-  switch(nbnod){
-  case 1 : NbPoints++; break;
-  case 2 : NbLines++; break;
-  case 3 : NbTriangles++; break;
-  case 4 : NbTetrahedra++; break;
-  }
-}
-
-void Stat_TensorSimplex(int nbnod, int N, double *v){
-  Msg(ERROR, "Tensor Field Views not Implemented Yet");
-}
-
-
-/* ------------------------------------------------------------------------ */
 /*  R e a d _ V i e w                                                       */
 /* ------------------------------------------------------------------------ */
 
@@ -382,13 +377,6 @@ void Read_View(FILE *file, char *filename){
              &ActualView->NbST, &ActualView->NbVT, &ActualView->NbTT, 
              &ActualView->NbSS, &ActualView->NbVS, &ActualView->NbTS);
 
-      Msg(DEBUG, "View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d",
-          name, ActualView->NbTimeStep,
-          ActualView->NbSP, ActualView->NbVP, ActualView->NbTP, 
-          ActualView->NbSL, ActualView->NbVL, ActualView->NbTL, 
-          ActualView->NbST, ActualView->NbVT, ActualView->NbTT, 
-          ActualView->NbSS, ActualView->NbVS, ActualView->NbTS);
-
       if(format == LIST_FORMAT_BINARY){
 	fread(&testone, sizeof(int), 1, file);
 	if(testone != 1){
@@ -402,60 +390,52 @@ void Read_View(FILE *file, char *filename){
 					     sizeof(double), file, format, swap);
 
       // Points
-      nb = ActualView->NbSP ? 
-        ActualView->NbSP * ActualView->NbTimeStep     + ActualView->NbSP * 3 : 0 ;
+      nb = ActualView->NbSP ? ActualView->NbSP * (ActualView->NbTimeStep  +3) : 0 ;
       ActualView->SP = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbVP ?
-        ActualView->NbVP * ActualView->NbTimeStep * 3 + ActualView->NbVP * 3 : 0 ;
+      nb = ActualView->NbVP ? ActualView->NbVP * (ActualView->NbTimeStep*3+3) : 0 ;
       ActualView->VP = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbTP ? 
-        ActualView->NbTP * ActualView->NbTimeStep * 9 + ActualView->NbTP * 3 : 0 ;
+      nb = ActualView->NbTP ? ActualView->NbTP * (ActualView->NbTimeStep*9+3) : 0 ;
       ActualView->TP = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
       // Lines
-      nb = ActualView->NbSL ? 
-        ActualView->NbSL * ActualView->NbTimeStep * 2     + ActualView->NbSL * 6 : 0 ;
+      nb = ActualView->NbSL ? ActualView->NbSL * (ActualView->NbTimeStep*2  +6) : 0 ;
       ActualView->SL = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbVL ?
-        ActualView->NbVL * ActualView->NbTimeStep * 2 * 3 + ActualView->NbVL * 6 : 0 ;
+      nb = ActualView->NbVL ? ActualView->NbVL * (ActualView->NbTimeStep*2*3+6) : 0 ;
       ActualView->VL = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbTL ?
-        ActualView->NbTL * ActualView->NbTimeStep * 2 * 9 + ActualView->NbTL * 6 : 0 ;
+      nb = ActualView->NbTL ? ActualView->NbTL * (ActualView->NbTimeStep*2*9+6) : 0 ;
       ActualView->TL = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
       // Triangles
-      nb = ActualView->NbST ? 
-        ActualView->NbST * ActualView->NbTimeStep * 3     + ActualView->NbST * 9 : 0 ;
+      nb = ActualView->NbST ? ActualView->NbST * (ActualView->NbTimeStep*3  +9) : 0 ;
       ActualView->ST = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbVT ? 
-        ActualView->NbVT * ActualView->NbTimeStep * 3 * 3 + ActualView->NbVT * 9 : 0 ;
+      nb = ActualView->NbVT ? ActualView->NbVT * (ActualView->NbTimeStep*3*3+9) : 0 ;
       ActualView->VT = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbTT ? 
-        ActualView->NbTT * ActualView->NbTimeStep * 3 * 9 + ActualView->NbTT * 9 : 0 ;
+      nb = ActualView->NbTT ? ActualView->NbTT * (ActualView->NbTimeStep*3*9+9) : 0 ;
       ActualView->TT = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
       // Tetrahedra
-      nb = ActualView->NbSS ?
-        ActualView->NbSS * ActualView->NbTimeStep * 4     + ActualView->NbSS * 12 : 0 ;
+      nb = ActualView->NbSS ? ActualView->NbSS * (ActualView->NbTimeStep*4  +12) : 0 ;
       ActualView->SS = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbVS ? 
-        ActualView->NbVS * ActualView->NbTimeStep * 4 * 3 + ActualView->NbVS * 12 : 0 ;
+      nb = ActualView->NbVS ? ActualView->NbVS * (ActualView->NbTimeStep*4*3+12) : 0 ;
       ActualView->VS = List_CreateFromFile(nb, sizeof(double), file, format, swap);
 
-      nb = ActualView->NbTS ?
-        ActualView->NbTS * ActualView->NbTimeStep * 4 * 9 + ActualView->NbTS * 12 : 0 ;
+      nb = ActualView->NbTS ? ActualView->NbTS * (ActualView->NbTimeStep*4*9+12) : 0 ;
       ActualView->TS = List_CreateFromFile(nb, sizeof(double), file, format, swap);
-
 
       Msg(DEBUG, "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d",
           name, ActualView->NbTimeStep,
+          ActualView->NbSP, ActualView->NbVP, ActualView->NbTP, 
+          ActualView->NbSL, ActualView->NbVL, ActualView->NbTL, 
+          ActualView->NbST, ActualView->NbVT, ActualView->NbTT, 
+          ActualView->NbSS, ActualView->NbVS, ActualView->NbTS);
+      Msg(DEBUG, "List_Nbrs: %d %d %d %d %d %d %d %d %d %d %d %d",
           List_Nbr(ActualView->SP), List_Nbr(ActualView->VP), List_Nbr(ActualView->TP), 
           List_Nbr(ActualView->SL), List_Nbr(ActualView->VL), List_Nbr(ActualView->TL), 
           List_Nbr(ActualView->ST), List_Nbr(ActualView->VT), List_Nbr(ActualView->TT), 

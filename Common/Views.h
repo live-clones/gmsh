@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.9 2000-11-27 17:34:00 geuzaine Exp $ */
+/* $Id: Views.h,v 1.10 2000-11-27 18:59:28 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -12,13 +12,13 @@ typedef struct{
 
   /* the data */
   List_T *Time;
-  int NbPoints, NbSP, NbVP, NbTP;
+  int NbSP, NbVP, NbTP;
   List_T *SP, *VP, *TP; // points
-  int NbLines, NbSL, NbVL, NbTL;
+  int NbSL, NbVL, NbTL;
   List_T *SL, *VL, *TL; // lines
-  int NbTriangles, NbST, NbVT, NbTT;
+  int NbST, NbVT, NbTT;
   List_T *ST, *VT, *TT; // triangles
-  int NbTetrahedra, NbSS, NbVS, NbTS;
+  int NbSS, NbVS, NbTS;
   List_T *SS, *VS, *TS; // tetrahedra
   int NbTimeStep, ScalarOnly;
   double Min, Max;
@@ -74,13 +74,8 @@ void BeginView (int alloc);
 void EndView (int AddInUI, int Number, char *FileName, char *Name, 
               double XOffset, double YOffset, double ZOffset);
 void FreeView(Post_View *v);
-
 void Read_View(FILE *file, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);
-
-void Stat_ScalarSimplex(int nbnod, int N, double *v);
-void Stat_VectorSimplex(int nbnod, int N, double *v);
-void Stat_TensorSimplex(int nbnod, int N, double *v);
 
 int BGMWithView (Post_View *ErrView);
 int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
