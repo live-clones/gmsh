@@ -1,8 +1,8 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2003  Christophe Geuzaine 
+ * Copyright (C) 1999-2003 Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.64 2003-04-14 22:55:56 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.65 2003-06-02 18:26:22 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -21,6 +21,20 @@
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
+ * Contributor(s):
+ *   Michael Sweet <mike@easysw.com>
+ *   Marc Ume <marc.ume@digitalgraphics.be>
+ *   Jean-Francois Remacle <remacle@scorec.rpi.edu>
+ *   Bart Kaptein <B.L.Kaptein@lumc.nl>
+ *   Quy Nguyen-Dai<quy@vnilux.com>
+ *   Sam Buss <sbuss@ucsd.edu>
+ *   Shane Hill <Shane.Hill@dsto.defence.gov.au>
+ *   Romain Boman <r_boman@yahoo.fr>
+ *   Rouben Rostamian <rostamian@umbc.edu>
+ *   Diego Santa Cruz <Diego.SantaCruz@epfl.ch>
+ *   Shahzad Muzaffar <Shahzad.Muzaffar@cern.ch>
+ *   Lassi Tuura <lassi.tuura@cern.ch>
+ *   Guy Barrand <barrand@lal.in2p3.fr>
  */
 
 #include <string.h>
@@ -1467,7 +1481,7 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
   }
 
   if(status == 0){
-    gl2psMsg(GL2PS_ERROR, "Problem to retreive some pixel rgb");
+    gl2psMsg(GL2PS_ERROR, "Problem to retrieve some pixel rgb");
   }
   fprintf(stream, "grestore\n");
 }
@@ -1488,13 +1502,14 @@ void gl2psPrintPostScriptHeader(void){
 
   fprintf(gl2ps->stream, 
 	  "%%%%Title: %s\n"
-	  "%%%%Creator: GL2PS, an OpenGL to PostScript Printing Library, v. %g\n"
+	  "%%%%Creator: GL2PS %d.%d.%d, an OpenGL to PostScript Printing Library\n"
 	  "%%%%For: %s\n"
 	  "%%%%CreationDate: %s"
 	  "%%%%LanguageLevel: 3\n"
 	  "%%%%DocumentData: Clean7Bit\n"
 	  "%%%%Pages: 1\n",
-	  gl2ps->title, GL2PS_VERSION, gl2ps->producer, ctime(&now));
+	  gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION,
+	  gl2ps->producer, ctime(&now));
 
   if(gl2ps->format == GL2PS_PS){
     fprintf(gl2ps->stream, 
@@ -1735,7 +1750,7 @@ void gl2psPrintPostScriptPrimitive(void *a, void *b){
     if(prim->dash){
       fprintf(gl2ps->stream, "[%d] 0 setdash\n", prim->dash);
     }
-    if(gl2ps->shade && !gl2psVertsSameColor(prim)){
+    if(!gl2psVertsSameColor(prim)){
       gl2psResetPostScriptColor();
       fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
@@ -1755,7 +1770,7 @@ void gl2psPrintPostScriptPrimitive(void *a, void *b){
     }
     break;
   case GL2PS_TRIANGLE :
-    if(gl2ps->shade && !gl2psVertsSameColor(prim)){
+    if(!gl2psVertsSameColor(prim)){
       gl2psResetPostScriptColor();
       fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
 	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
@@ -1902,11 +1917,8 @@ GLint gl2psPrintTeXEndViewport(void){
 GLint gl2psPrintPrimitives(void){
   GL2PSbsptree *root;
   GL2PSxyz eye = {0., 0., 100000.};
-  GLint shademodel, res = GL2PS_SUCCESS;
+  GLint res = GL2PS_SUCCESS;
   void (*pprim)(void *a, void *b) = 0;
-
-  glGetIntegerv(GL_SHADE_MODEL, &shademodel);
-  gl2ps->shade = (shademodel == GL_SMOOTH);
 
   if(gl2ps->format == GL2PS_PS || gl2ps->format == GL2PS_EPS){
     res = gl2psParseFeedbackBuffer();

@@ -1,8 +1,8 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2003  Christophe Geuzaine
+ * Copyright (C) 1999-2003 Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.38 2003-03-10 16:21:38 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.39 2003-06-02 18:26:22 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -30,8 +30,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-/* To generate a Windows dll, you have to define GL2PSDLL at compile
-   time */
+/* To generate a Windows dll, define GL2PSDLL at compile time */
 
 #ifdef WIN32
 #  include <windows.h>
@@ -54,91 +53,97 @@
 #  include <GL/gl.h>
 #endif
 
+/* Version number */
 
-#define GL2PS_VERSION                    0.8
-#define GL2PS_NONE                       0
+#define GL2PS_MAJOR_VERSION 0
+#define GL2PS_MINOR_VERSION 9
+#define GL2PS_PATCH_VERSION 0
+
+#define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
+                       0.01 * GL2PS_MINOR_VERSION + \
+                       0.0001 * GL2PS_PATCH_VERSION)
 
 /* Output file format */
 
-#define GL2PS_PS                         1
-#define GL2PS_EPS                        2
-#define GL2PS_TEX                        3
+#define GL2PS_PS  1
+#define GL2PS_EPS 2
+#define GL2PS_TEX 3
 
 /* Sorting algorithms */
 
-#define GL2PS_NO_SORT                    1
-#define GL2PS_SIMPLE_SORT                2
-#define GL2PS_BSP_SORT                   3
+#define GL2PS_NO_SORT     1
+#define GL2PS_SIMPLE_SORT 2
+#define GL2PS_BSP_SORT    3
 
 /* Options for gl2psBeginPage */
 
-#define GL2PS_DRAW_BACKGROUND            (1<<0)
-#define GL2PS_SIMPLE_LINE_OFFSET         (1<<1)
-#define GL2PS_SILENT                     (1<<2)
-#define GL2PS_BEST_ROOT                  (1<<3)
-#define GL2PS_OCCLUSION_CULL             (1<<4)
-#define GL2PS_NO_TEXT                    (1<<5)
-#define GL2PS_LANDSCAPE                  (1<<6)
-#define GL2PS_NO_PS3_SHADING             (1<<7)
-#define GL2PS_NO_PIXMAP                  (1<<8)
+#define GL2PS_NONE               0
+#define GL2PS_DRAW_BACKGROUND    (1<<0)
+#define GL2PS_SIMPLE_LINE_OFFSET (1<<1)
+#define GL2PS_SILENT             (1<<2)
+#define GL2PS_BEST_ROOT          (1<<3)
+#define GL2PS_OCCLUSION_CULL     (1<<4)
+#define GL2PS_NO_TEXT            (1<<5)
+#define GL2PS_LANDSCAPE          (1<<6)
+#define GL2PS_NO_PS3_SHADING     (1<<7)
+#define GL2PS_NO_PIXMAP          (1<<8)
 
 /* Arguments for gl2psEnable/gl2psDisable */
 
-#define GL2PS_POLYGON_OFFSET_FILL        1
-#define GL2PS_POLYGON_BOUNDARY           2
-#define GL2PS_LINE_STIPPLE               3
+#define GL2PS_POLYGON_OFFSET_FILL 1
+#define GL2PS_POLYGON_BOUNDARY    2
+#define GL2PS_LINE_STIPPLE        3
 
 /* Magic numbers */
 
-#define GL2PS_EPSILON                    5.e-3
-#define GL2PS_DEPTH_FACT                 1000.0
-#define GL2PS_SIMPLE_OFFSET              0.05
-#define GL2PS_SIMPLE_OFFSET_LARGE        1.0
-#define GL2PS_ZERO(arg)                  (fabs(arg)<1.e-20)
-/*#define GL2PS_ZERO(arg)                ((arg)==0.0)*/
+#define GL2PS_EPSILON             5.e-3
+#define GL2PS_DEPTH_FACT          1000.0
+#define GL2PS_SIMPLE_OFFSET       0.05
+#define GL2PS_SIMPLE_OFFSET_LARGE 1.0
+#define GL2PS_ZERO(arg)           (fabs(arg)<1.e-20)
 
 /* Message levels and error codes */
 
-#define GL2PS_SUCCESS                    0
-#define GL2PS_INFO                       1
-#define GL2PS_WARNING                    2
-#define GL2PS_ERROR                      3
-#define GL2PS_NO_FEEDBACK                4
-#define GL2PS_OVERFLOW                   5
-#define GL2PS_UNINITIALIZED              6
+#define GL2PS_SUCCESS       0
+#define GL2PS_INFO          1
+#define GL2PS_WARNING       2
+#define GL2PS_ERROR         3
+#define GL2PS_NO_FEEDBACK   4
+#define GL2PS_OVERFLOW      5
+#define GL2PS_UNINITIALIZED 6
 
 /* Primitive types */
 
-#define GL2PS_TEXT                       1
-#define GL2PS_POINT                      2
-#define GL2PS_LINE                       3
-#define GL2PS_QUADRANGLE                 4
-#define GL2PS_TRIANGLE                   5
-#define GL2PS_PIXMAP                     6
+#define GL2PS_TEXT       1
+#define GL2PS_POINT      2
+#define GL2PS_LINE       3
+#define GL2PS_QUADRANGLE 4
+#define GL2PS_TRIANGLE   5
+#define GL2PS_PIXMAP     6
 
 /* BSP tree primitive comparison */
 
-#define GL2PS_COINCIDENT                 1
-#define GL2PS_IN_FRONT_OF                2
-#define GL2PS_IN_BACK_OF                 3
-#define GL2PS_SPANNING                   4
+#define GL2PS_COINCIDENT  1
+#define GL2PS_IN_FRONT_OF 2
+#define GL2PS_IN_BACK_OF  3
+#define GL2PS_SPANNING    4
 
 /* 2D BSP tree primitive comparison */
 
-#define GL2PS_POINT_COINCIDENT           0
-#define GL2PS_POINT_INFRONT              1
-#define GL2PS_POINT_BACK                 2
+#define GL2PS_POINT_COINCIDENT 0
+#define GL2PS_POINT_INFRONT    1
+#define GL2PS_POINT_BACK       2
 
 /* Pass through options */
 
-#define GL2PS_BEGIN_POLYGON_OFFSET_FILL  1
-#define GL2PS_END_POLYGON_OFFSET_FILL    2
-#define GL2PS_BEGIN_POLYGON_BOUNDARY     3
-#define GL2PS_END_POLYGON_BOUNDARY       4
-#define GL2PS_BEGIN_LINE_STIPPLE         5
-#define GL2PS_END_LINE_STIPPLE           6
-#define GL2PS_SET_POINT_SIZE             7
-#define GL2PS_SET_LINE_WIDTH             8
+#define GL2PS_BEGIN_POLYGON_OFFSET_FILL 1
+#define GL2PS_END_POLYGON_OFFSET_FILL   2
+#define GL2PS_BEGIN_POLYGON_BOUNDARY    3
+#define GL2PS_END_POLYGON_BOUNDARY      4
+#define GL2PS_BEGIN_LINE_STIPPLE        5
+#define GL2PS_END_LINE_STIPPLE          6
+#define GL2PS_SET_POINT_SIZE            7
+#define GL2PS_SET_LINE_WIDTH            8
 
 typedef GLfloat GL2PSrgba[4];
 typedef GLfloat GL2PSxyz[3];
@@ -192,7 +197,7 @@ typedef struct {
 typedef struct {
   GLint format, sort, options, colorsize, colormode, buffersize, maxbestroot;
   const char *title, *producer, *filename;
-  GLboolean shade, boundary;
+  GLboolean boundary;
   GLfloat *feedback, offset[2];
   GLint viewport[4];
   GL2PSrgba *colormap, lastrgba, threshold;
