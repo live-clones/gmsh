@@ -14,7 +14,7 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutMapPlugin ()
   {
-    return new GMSH_CutMapPlugin (1.0,1);
+    return new GMSH_CutMapPlugin (1.5,1);
   }
 }
 
@@ -41,9 +41,9 @@ int GMSH_CutMapPlugin::getNbOptions() const
   return 2;
 }
 
-void GMSH_CutMapPlugin:: GetOption (int iopt, StringXNumber *option) const
+StringXNumber *GMSH_CutMapPlugin:: GetOption (int iopt)
 {
-  *option = CutMapOptions_Number[iopt];
+  return &CutMapOptions_Number[iopt];
 }
 
 void GMSH_CutMapPlugin::CatchErrorMessage (char *errorMessage) const
@@ -51,10 +51,12 @@ void GMSH_CutMapPlugin::CatchErrorMessage (char *errorMessage) const
   strcpy(errorMessage,"CutMap Failed...");
 }
 
-double GMSH_CutMapPlugin :: levelset (double x, double y, double z) const
+double GMSH_CutMapPlugin :: levelset (double x, double y, double z, double val) const
 {
   // we must look into the map for A - Map(x,y,z)
-  return A;
+  // this is the case when the map is the same as the view,
+  // the result is the extraction of isovalue A
+  return A - val;
 }
 
 

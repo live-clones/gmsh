@@ -46,7 +46,9 @@ public :
   virtual void CatchErrorMessage (char *errorMessage) const = 0;
   /* gmsh style option, ca be loaded, saved and set*/
   virtual int getNbOptions() const = 0;
-  virtual void GetOption (int iopt, StringXNumber *option) const = 0;  
+  virtual StringXNumber *GetOption (int iopt) = 0;
+  virtual void Save() const = 0;
+  virtual void Run() const = 0;
 };
 
 /* Base class for Post-Processing Plugins
@@ -55,9 +57,12 @@ public :
 class GMSH_Post_Plugin : public GMSH_Plugin
 {
 public:
-  GMSH_PLUGIN_TYPE getType() const {return GMSH_Plugin::GMSH_POST_PLUGIN;}
+  inline GMSH_PLUGIN_TYPE getType() const 
+    {return GMSH_Plugin::GMSH_POST_PLUGIN;}
   /* If returned pointer is the same as the argument, then view is simply modified,
     else, a new view is added in the view list */
+  virtual void Run() const {};
+  virtual void Save() const {};
   virtual Post_View *execute (Post_View *) = 0;
 };
 

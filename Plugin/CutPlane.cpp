@@ -49,9 +49,9 @@ int GMSH_CutPlanePlugin::getNbOptions() const
   return 4;
 }
 
-void GMSH_CutPlanePlugin:: GetOption (int iopt, StringXNumber *option) const
+StringXNumber* GMSH_CutPlanePlugin:: GetOption (int iopt)
 {
-  *option = CutPlaneOptions_Number[iopt];
+  return  &CutPlaneOptions_Number[iopt];
 }
 
 void GMSH_CutPlanePlugin::CatchErrorMessage (char *errorMessage) const
@@ -59,12 +59,10 @@ void GMSH_CutPlanePlugin::CatchErrorMessage (char *errorMessage) const
   strcpy(errorMessage,"CutPlane Failed...");
 }
 
-double GMSH_CutPlanePlugin :: levelset (double x, double y, double z) const
+double GMSH_CutPlanePlugin :: levelset (double x, double y, double z, double val) const
 {
   return a * x + b * y + c * z + d;
 }
-
-
 
 
 

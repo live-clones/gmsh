@@ -37,6 +37,53 @@ GMSH_PluginManager::~GMSH_PluginManager()
       ++it)delete (*it).second;
 }
 
+GMSH_Plugin* GMSH_PluginManager::find (char *pluginName) 
+{
+  iter it = allPlugins.find(pluginName);
+  if ( it == allPlugins.end()) return 0;
+  return (*it).second;
+}
+
+void GMSH_PluginManager::Action( char *pluginName, char *action, void *data) 
+{
+  GMSH_Plugin * plugin = find(pluginName);
+  if(!plugin)
+    {
+      throw 1;
+    }
+  if(!strcmp(action,"Run"))
+    {
+      plugin->Run();
+    }
+  else if(!strcmp(action,"Save"))
+    {
+      plugin->Save();
+    }
+  else
+    {
+      throw 1;
+    }
+}
+
+void GMSH_PluginManager::SetPluginOption (char *pluginName, char *option, double value)
+{
+  GMSH_Plugin *plugin = find(pluginName);
+  if(!plugin)throw "Unknown Plugin Name";
+  for(int i=0 ; i<plugin->getNbOptions();i++)
+    {
+      StringXNumber *sxn;
+      // get the ith option of the plugin
+      sxn = plugin->GetOption(i);
+      // look if it's the good option name
+      if(!strcmp (sxn->str,option))
+	{
+	  sxn->def = value;
+	  return;
+	}
+    }
+  throw "Unknown Plugin Option Name";
+}
+
 GMSH_PluginManager* GMSH_PluginManager::Instance()
 {
   if(!instance)
@@ -51,9 +98,9 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
   struct dirent **list;
   char ext[6];
 
-  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Plane" ,GMSH_RegisterCutPlanePlugin()));
-  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Sphere" ,GMSH_RegisterCutSpherePlugin()));
-  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Cut Map" ,GMSH_RegisterCutMapPlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutPlane" ,GMSH_RegisterCutPlanePlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutSphere" ,GMSH_RegisterCutSpherePlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("CutMap" ,GMSH_RegisterCutMapPlugin()));
 
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins)return;

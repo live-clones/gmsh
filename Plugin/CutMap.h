@@ -11,7 +11,7 @@ class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
   /*we cut the othe map by the iso A of the View iView */
   double A;
   int iView;
-  virtual double levelset (double x, double y, double z) const;
+  virtual double levelset (double x, double y, double z, double val) const;
 public:
   GMSH_CutMapPlugin(double A, int IVIEW);
   virtual void getName  (char *name) const;
@@ -20,6 +20,6 @@ public:
 			 char *help_text) const;
   virtual void CatchErrorMessage (char *errorMessage) const;
   virtual int getNbOptions() const;
-  virtual void GetOption (int iopt, StringXNumber *option) const;  
+  virtual StringXNumber* GetOption (int iopt);  
 };
 #endif

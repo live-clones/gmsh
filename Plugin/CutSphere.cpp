@@ -45,9 +45,9 @@ int GMSH_CutSpherePlugin::getNbOptions() const
   return 4;
 }
 
-void GMSH_CutSpherePlugin:: GetOption (int iopt, StringXNumber *option) const
+StringXNumber* GMSH_CutSpherePlugin:: GetOption (int iopt)
 {
-  *option = CutSphereOptions_Number[iopt];
+  return &CutSphereOptions_Number[iopt];
 }
 
 void GMSH_CutSpherePlugin::CatchErrorMessage (char *errorMessage) const
@@ -55,7 +55,7 @@ void GMSH_CutSpherePlugin::CatchErrorMessage (char *errorMessage) const
   strcpy(errorMessage,"CutSphere Failed...");
 }
 
-double GMSH_CutSpherePlugin :: levelset (double x, double y, double z) const
+double GMSH_CutSpherePlugin :: levelset (double x, double y, double z, double val) const
 {
   return (x-a)*(x-a) + (y-b)*(y-b) + (z-c)*(z-c) - r*r;
 }

@@ -37,12 +37,20 @@ public :
   static GMSH_PluginManager *Instance();
   /** Dynamically add a plugin pluginName.so in dirName*/
   void AddPlugin(char *dirName, char *pluginName);
-  void CallPlugin (char *name);
-  void DestroyPlugin (char *name);
-  void StPluginOption (char *pluginName, char *option, void *value);
-  iter begin() {return allPlugins.begin();}
-  iter end() {return allPlugins.end();}
-  iter find(char *c) {return allPlugins.find(c);}
+  // uninstall a given plugin
+  void UninstallPlugin (char *pluginName);
+  // set an option to a value in plugin named pluginName
+  void SetPluginOption (char *pluginName, char *option, double value);
+  void SetPluginOption (char *pluginName, char *option, char * value);
+  // iterator on plugins
+  inline iter begin() {return allPlugins.begin();}
+  inline iter end() {return allPlugins.end();}
+  // find a plugin named pluginName
+  GMSH_Plugin *find(char *pluginName);
+  // perform an action on the plugin
+  // default action are Run and Save
+  // other plugins may perform other actions
+  void Action (char *pluginMane , char *action , void *data); 
 };
 #endif
 

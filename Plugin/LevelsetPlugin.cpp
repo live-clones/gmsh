@@ -24,8 +24,8 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	  double *X   = (double*)List_Pointer_Fast(v->SS,i);
 	  double *Y   = (double*)List_Pointer_Fast(v->SS,i+4);
 	  double *Z   = (double*)List_Pointer_Fast(v->SS,i+8);
-	  for(int j=0;j<4;j++)levels[j] = levelset(X[j],Y[j],Z[j]);
 	  double *VAL = (double*)List_Pointer_Fast(v->SS,i+12);
+	  for(int j=0;j<4;j++)levels[j] = levelset(X[j],Y[j],Z[j],VAL[j]);
 	  int nx = 0;
 	  for(k=0;k<6;k++)
 	    {
@@ -69,8 +69,11 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
       sprintf(name,"cut-%s",v->Name);
       sprintf(filename,"cut-%s",v->FileName);
       EndView(1, filename, name);
+      Msg(INFO, "new %s view with %d tris\n",name,List_Nbr(ActualView->ST));
       return ActualView;
     }
+  Msg(INFO, "nothing ta da\n");
+
   return 0;
 }
 
