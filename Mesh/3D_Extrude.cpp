@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.16 2001-08-02 07:26:13 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.17 2001-08-02 07:59:44 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -53,11 +53,8 @@ void InitExtrude (){
 
   List_Delete(l1);
   List_Delete(l2);
-
-  //Vertex_Bound = THEM->Vertices;
 }
 
-/* MEMORY LEAK JF */
 void ExitExtrude (){
   if (Tree_Ares)Tree_Delete(Tree_Ares);
   if (Tree_Swaps)Tree_Delete(Tree_Swaps);
@@ -339,10 +336,9 @@ void Extrude_Vertex (void *data, void *dum){
   pV = (Vertex **) data;
   v = *pV;
 
-  // BUG FOR MULTIPLE POINTS IN EXTRUSION No: 1 point can be extruded
-  // along several directions
-  // (cf. benchmarks/3d/Torus-ExtrMesh.geo). The return was OK for the
-  // old mesh generator (only 1 extrusion)
+  // We should _not_ return here, since 1 point can be extruded along
+  // several directions (this was of course not the case in the old
+  // extrusion generator...)
   if (v->Extruded_Points) //return;
     List_Delete (v->Extruded_Points);
 
@@ -356,7 +352,6 @@ void Extrude_Vertex (void *data, void *dum){
       ep->Extrude (i, j + 1, newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
 
       if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &newv))){
-	// MEMORY LEAK (JF)
 	Free_Vertex (&newv,0);
         List_Add (v->Extruded_Points, pV);
         if (ToAdd)
@@ -412,23 +407,22 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
         if (are_exist (v3, v2, Tree_Ares)){
           s = Create_Simplex (v3, v2, v1, NULL);
           s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Trick to tag triangles to re-extrude!
+	  s->Num = -s->Num; //Tag triangles to re-extrude
           Tree_Add (THES->Simplexes, &s);
           s = Create_Simplex (v3, v4, v2, NULL);
           s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Trick to tag triangles to re-extrude!
+	  s->Num = -s->Num; //Tag triangles to re-extrude
           Tree_Add (THES->Simplexes, &s);
         }
         else{
-	  /// BUG FOUND FOR NON MATCHING SURFACES
           are_cree (v1, v4, Tree_Ares);
           s = Create_Simplex (v3, v4, v1, NULL);
           s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Trick to tag triangles to re-extrude!
+	  s->Num = -s->Num; //Tag triangles to re-extrude
           Tree_Add (THES->Simplexes, &s);
           s = Create_Simplex (v1, v4, v2, NULL);
           s->iEnt = THES->Num;
-	  s->Num = -s->Num; //Trick to tag triangles to re-extrude!
+	  s->Num = -s->Num; //Tag triangles to re-extrude
           Tree_Add (THES->Simplexes, &s);
         }
       }
@@ -465,10 +459,10 @@ int Extrude_Mesh (Curve * c){
 
   InitExtrude();
 
-  //  Vertex_Bound = NULL;
-  ep = c->Extrude;
+  //Vertex_Bound = NULL;
+  //Tree_Ares = Tree_Swaps = NULL;
 
-  //  Tree_Ares = Tree_Swaps = NULL;
+  ep = c->Extrude;
 
   if (ep->geo.Mode == EXTRUDED_ENTITY){
     Extrude_Vertex (&c->beg, NULL);
@@ -534,12 +528,10 @@ void copy_mesh (Surface * from, Surface * to){
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                  v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
     
-    if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v1)))
-      {
-	// MEMORY LEAK (JF)
-	Free_Vertex(&v1,0);
-	v1 = *pV;
-      }
+    if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v1))){
+      Free_Vertex(&v1,0);
+      v1 = *pV;
+    }
     else{
       Tree_Insert (THEM->Vertices, &v1);
       Tree_Insert (Vertex_Bound, &v1);
@@ -553,12 +545,10 @@ void copy_mesh (Surface * from, Surface * to){
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                  v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
     
-    if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v2)))
-      {
-	// MEMORY LEAK (JF)
-	Free_Vertex(&v2,0);
-	v2 = *pV;
-      }
+    if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v2))){
+      Free_Vertex(&v2,0);
+      v2 = *pV;
+    }
     else{
       Tree_Insert (THEM->Vertices, &v2);
       Tree_Insert (Vertex_Bound, &v2);
@@ -572,12 +562,10 @@ void copy_mesh (Surface * from, Surface * to){
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                  v3->Pos.X, v3->Pos.Y, v3->Pos.Z);
     
-    if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v3)))
-      {
-	// MEMORY LEAK (JF)
-	Free_Vertex(&v3,0);
-	v3 = *pV;
-      }
+    if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v3))){
+      Free_Vertex(&v3,0);
+      v3 = *pV;
+    }
     else{
       Tree_Insert (THEM->Vertices, &v3);
       Tree_Insert (Vertex_Bound, &v3);
@@ -598,13 +586,16 @@ int Extrude_Mesh (Surface * s){
   Curve *cc;
   extern int FACE_DIMENSION;
 
-  InitExtrude ();
   if (!s->Extrude)
     return 0;
   if (!s->Extrude->mesh.ExtrudeMesh)
     return false;
+
+  InitExtrude ();
+
+  //Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
+
   FACE_DIMENSION = 2;
-  //  Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
 
   ep = s->Extrude;
   THES = s;
