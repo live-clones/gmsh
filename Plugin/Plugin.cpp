@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.37 2003-03-01 22:36:44 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.38 2003-03-02 01:18:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -145,9 +145,11 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
   allPlugins.insert(std::pair < char *,
                     GMSH_Plugin * >("Transform",
                                     GMSH_RegisterTransformPlugin()));
+#if defined(HAVE_TRIANGLE)
   allPlugins.insert(std::pair < char *,
                     GMSH_Plugin * >("Triangulate",
                                     GMSH_RegisterTriangulatePlugin()));
+#endif
   allPlugins.insert(std::pair < char *,
                     GMSH_Plugin * >("SphericalRaise",
                                     GMSH_RegisterSphericalRaisePlugin()));
