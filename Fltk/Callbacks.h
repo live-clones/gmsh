@@ -57,6 +57,11 @@ void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) ;
 void opt_mesh_color_scheme_cb(CALLBACK_ARGS) ;
 void opt_mesh_ok_cb(CALLBACK_ARGS) ;
 
+// Option Solver Menu
+
+void opt_solver_cb(CALLBACK_ARGS) ;
+void opt_solver_ok_cb(CALLBACK_ARGS) ;
+
 // Option Post Menu
 
 void opt_post_cb(CALLBACK_ARGS) ;

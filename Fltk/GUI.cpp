@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.80 2001-05-24 10:11:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.81 2001-05-25 08:43:24 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -62,6 +62,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"General...",         FL_SHIFT+'o', (Fl_Callback *)opt_general_cb, 0, FL_MENU_DIVIDER},
     {"Geometry...",        FL_SHIFT+'g', (Fl_Callback *)opt_geometry_cb, 0},
     {"Mesh...",            FL_SHIFT+'m', (Fl_Callback *)opt_mesh_cb, 0},
+    {"Solver...",          FL_SHIFT+'s', (Fl_Callback *)opt_solver_cb, 0},
     {"Post-processing...", FL_SHIFT+'p', (Fl_Callback *)opt_post_cb, 0, FL_MENU_DIVIDER},
     {"Save options now",   0,            (Fl_Callback *)opt_save_cb, 0},
     {0},
@@ -325,11 +326,11 @@ int GUI::global_shortcuts(int event){
     mesh_save_cb(0,0);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_CTRL+FL_SHIFT+'s')){
+  else if(Fl::test_shortcut(FL_CTRL+FL_SHIFT+'d')){
     opt_post_anim_delay(0,GMSH_SET|GMSH_GUI,opt_post_anim_delay(0,GMSH_GET,0) + 0.01);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_SHIFT+'s')){
+  else if(Fl::test_shortcut(FL_SHIFT+'d')){
     opt_post_anim_delay(0,GMSH_SET|GMSH_GUI,opt_post_anim_delay(0,GMSH_GET,0) - 0.01);
     return 1;
   }
@@ -460,6 +461,7 @@ GUI::GUI(int argc, char **argv) {
   init_general_options_window = 0;
   init_geometry_options_window = 0;
   init_mesh_options_window = 0;
+  init_solver_options_window = 0;
   init_post_options_window = 0;
   init_statistics_window = 0;
   init_message_window = 0;
@@ -499,6 +501,7 @@ GUI::GUI(int argc, char **argv) {
   create_general_options_window();
   create_geometry_options_window();
   create_mesh_options_window();
+  create_solver_options_window();
   create_post_options_window();
   create_view_options_window(-1);
   create_message_window();
@@ -1353,6 +1356,59 @@ void GUI::create_mesh_options_window(){
       mesh_window->redraw();
     else
       mesh_window->show();
+
+  }
+
+}
+
+//******************** Create the window for solver options *******************
+
+void GUI::create_solver_options_window(){
+
+  if(!init_solver_options_window){
+    init_solver_options_window = 1 ;
+
+    int width = 20*CTX.fontsize;
+    int height = 5*WB+8*BH ;
+
+    solver_window = new Fl_Window(width,height);
+    solver_window->box(WINDOW_BOX);
+    solver_window->label("Solver options");
+    { 
+      Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Solvers");
+	o->labelsize(CTX.fontsize);
+	Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+1*BH, width-4*WB, 2*BH,
+				   "There are no global solver options available yet");
+	text->align(FL_ALIGN_LEFT|FL_ALIGN_TOP|FL_ALIGN_INSIDE|FL_ALIGN_WRAP);
+	text->labelsize(CTX.fontsize);
+	o->end();
+      }
+      o->end();
+    }
+
+    { 
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+      o->labelsize(CTX.fontsize);
+      o->callback(opt_solver_ok_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
+      o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)solver_window);
+    }
+
+    if(CTX.center_windows)
+      solver_window->position(m_window->x()+m_window->w()/2-width/2,
+			      m_window->y()+9*BH-height/2);
+    solver_window->end();
+  }
+  else{
+    if(solver_window->shown())
+      solver_window->redraw();
+    else
+      solver_window->show();
 
   }
 

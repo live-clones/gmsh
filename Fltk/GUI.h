@@ -128,6 +128,12 @@ public:
   Fl_Value_Input   *mesh_value[20] ;
   Fl_Button        *mesh_col[50] ;
 
+  // solver options window
+  int init_solver_options_window;
+  Fl_Window        *solver_window ;
+  Fl_Check_Button  *solver_butt[20] ;
+  Fl_Value_Input   *solver_value[20] ;
+
   // post-processing options window
   int init_post_options_window;
   Fl_Window        *post_window ;
@@ -184,6 +190,7 @@ public:
   void create_general_options_window();
   void create_geometry_options_window();
   void create_mesh_options_window();
+  void create_solver_options_window();
   void create_post_options_window();
   PluginDialogBox *create_plugin_window(GMSH_Plugin *, int);
   void create_view_options_window(int numview);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.59 2001-05-23 07:29:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.60 2001-05-25 08:43:24 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -401,6 +401,14 @@ void opt_mesh_ok_cb(CALLBACK_ARGS) {
   Draw();
 }
 
+// Option Solver Menu
+
+void opt_solver_cb(CALLBACK_ARGS) {
+  WID->create_solver_options_window();
+}
+void opt_solver_ok_cb(CALLBACK_ARGS) {
+}
+
 // Option Post Menu
 
 void opt_post_cb(CALLBACK_ARGS) {
@@ -495,6 +503,8 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Alt+b         hide/show all post-processing scales");
   Msg(DIRECT, "  Alt+c         alternate between predefined color schemes");
   Msg(DIRECT, "  Alt+d         alternate between mesh wire frame, hidden lines and shading modes");
+  Msg(DIRECT, "  Shift+d       decrease animation delay");
+  Msg(DIRECT, "  Ctrl+Shift+d  increase animation delay");
   Msg(DIRECT, "  Alt+f         toggle redraw mode (fast/full)"); 
   Msg(DIRECT, "  Alt+l         hide/show geometry lines");
   Msg(DIRECT, "  Alt+Shift+l   hide/show mesh lines");
@@ -502,8 +512,6 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Alt+o         change projection mode");
   Msg(DIRECT, "  Alt+p         hide/show geometry points");
   Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
-  Msg(DIRECT, "  Shift+s       decrease animation delay");
-  Msg(DIRECT, "  Ctrl+Shift+s  increase animation delay");
   Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
   Msg(DIRECT, "  Alt+t         alternate intervals mode for all post-processing views"); 
