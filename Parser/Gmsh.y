@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.44 2000-12-14 12:25:15 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.45 2000-12-17 21:17:30 remacle Exp $ */
 
 #include <stdarg.h>
 
@@ -55,10 +55,10 @@ static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
 static StringXColor   *pColCat;
 
-void yyerror (char *s);
-void vyyerror (char *fmt, ...);
-void skip_until (char *until);
-
+char *strsave(char *ptr);
+void  yyerror (char *s);
+void  vyyerror (char *fmt, ...);
+void skip_until (char *);
 %}
 
 %union {
@@ -91,7 +91,7 @@ void skip_until (char *until);
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
 %token tColor tFor tIn tEndFor tIf tEndIf tExit
-%token tReturn tCall tFunction
+%token tReturn tCall tFunction tMesh
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -1582,6 +1582,14 @@ Delete :
 	DeleteShape(TheShape.Type,TheShape.Num);
       }
     }
+    | tDelete tView '[' FExpr ']' tEND
+      {
+	FreeView((int)$4);
+      }
+    | tDelete tMesh tEND
+    {
+      Init_Mesh(THEM, 1);
+    }
 ;
 
 
@@ -2172,7 +2180,7 @@ FExpr_Single :
       else{
 	$$ = *(double*)List_Pointer_Fast(pSymbol->val, 0) ;
       }
-      Free($1);
+      //      Free($1);
     }
   | tSTRING '[' FExpr ']'
     {
@@ -2189,7 +2197,7 @@ FExpr_Single :
 	  $$ = 0. ;
 	}
       }
-      Free($1);
+      //Free($1);
     }
 
   | tSTRING tPLUSPLUS
@@ -2202,7 +2210,7 @@ FExpr_Single :
       else{
 	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) += 1.0) ;
       }
-      Free($1);
+      //Free($1);
     }
   | tSTRING '[' FExpr ']' tPLUSPLUS
     {
@@ -2219,7 +2227,7 @@ FExpr_Single :
 	  $$ = 0. ;
 	}
       }
-      Free($1);
+      //Free($1);
     }
 
   | tSTRING tMINUSMINUS
@@ -2232,7 +2240,7 @@ FExpr_Single :
       else{
 	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) -= 1.0) ;
       }
-      Free($1);
+      //Free($1);
     }
   | tSTRING '[' FExpr ']' tMINUSMINUS
     {
@@ -2249,7 +2257,7 @@ FExpr_Single :
 	  $$ = 0. ;
 	}
       }
-      Free($1);
+      //Free($1);
     }
 
   /* -------- Option Strings -------- */ 
@@ -2618,7 +2626,6 @@ ColorExpr :
     }
 ;
 
-
 ListOfColor :
     '{' RecursiveListOfColor '}'
     {
@@ -2689,7 +2696,7 @@ StringExpr :
 	  break ;
 	}
       }
-      $$ = (char*)Malloc(strlen(tmpstring));
+      $$ = (char*)Malloc(strlen(tmpstring)+1);
       strcpy($$, tmpstring);
     }
 ;

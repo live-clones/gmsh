@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2000-12-13 13:21:13 geuzaine Exp $
+# $Id: Makefile,v 1.24 2000-12-17 21:17:29 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -21,8 +21,8 @@
  MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-3.0-static/lib/libGLw.a\
                    $(HOME)/SOURCES/Mesa-3.0-static/lib/libGLU.a\
                    $(HOME)/SOURCES/Mesa-3.0-static/lib/libGL.a
-#       MOTIF_LIB = /usr/local/lib/libXm.so.2
-       MOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm 
+       MOTIF_LIB = /usr/local/lib/libXm.so.2
+//       MOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm 
            X_LIB = -L/usr/X11R6/lib -lXt -lX11 -lXext
       THREAD_LIB = -L/usr/lib -lpthread
 

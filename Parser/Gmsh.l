@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.21 2000-12-13 22:27:45 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.22 2000-12-17 21:17:29 remacle Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,6 +147,7 @@ Log10                   return tLog10 ;
 Layers                  return tLayers;
 
 Modulo                  return tModulo ;
+Meshes                  return tMesh;
 
 Nurbs			return tNurbs;
 

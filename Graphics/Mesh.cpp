@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.11 2000-12-05 23:01:06 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.12 2000-12-17 21:17:29 remacle Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -435,7 +435,9 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     glNormal3dv(n);
   }
   
-  ColorSwitch(abs(iVolume));
+  //  ColorSwitch(abs(iVolume));
+  //  printf("%d\n",(*s)->iEnt);
+  ColorSwitch((*s)->iEnt);
 
   if(CTX.mesh.surfaces_num){
     sprintf(Num,"%d",(*s)->Num);

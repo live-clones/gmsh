@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.16 2000-12-11 22:09:42 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.17 2000-12-17 21:17:29 remacle Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -264,6 +264,22 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
 
   ActualView = NULL;
 }
+
+bool FreeView(int num){
+  Post_View *v;
+
+  printf("trying to free view %d\n",num);
+  
+  if(num < 0 || num >= List_Nbr(Post_ViewList)){
+    return false ;
+  }
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+  FreeView(v);
+  List_Suppress(Post_ViewList, v, fcmpPostViewNum);
+  printf("view deleted, %d views left %d\n",num,List_Nbr(Post_ViewList));
+  return true;
+}
+
 
 void FreeView(Post_View *v){
   Post_View vv,*v2;

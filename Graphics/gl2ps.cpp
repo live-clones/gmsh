@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.4 2000-12-17 21:17:29 remacle Exp $ */
 /*
  * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
  * Copyright (C) 1999-2000  Christophe Geuzaine 
@@ -1199,7 +1199,7 @@ GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options,
   gl2ps.sort = sort;
   gl2ps.options = options;
   gl2ps.colormode = colormode;
-  gl2ps.buffersize = buffersize > 0 ? buffersize : 1024 * 1024;
+  gl2ps.buffersize = buffersize > 0 ? buffersize : 2048 * 2048;
   gl2ps.feedback = (GLfloat*)gl2psMalloc(gl2ps.buffersize * sizeof(GLfloat));
   gl2ps.primitives = gl2psListCreate(500, 500, sizeof(GL2PSprimitive*));
 

@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.13 2000-12-08 10:56:36 geuzaine Exp $ */
+/* $Id: Views.h,v 1.14 2000-12-17 21:17:29 remacle Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -74,6 +74,7 @@ void BeginView (int alloc);
 void EndView (int AddInUI, int Number, char *FileName, char *Name, 
               double XOffset, double YOffset, double ZOffset);
 void FreeView(Post_View *v);
+bool FreeView(int);
 void Read_View(FILE *file, char *filename);
 void CopyViewOptions(Post_View *src, Post_View *dest);
 

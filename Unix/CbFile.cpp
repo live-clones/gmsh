@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.11 2000-12-09 17:33:40 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.12 2000-12-17 21:17:30 remacle Exp $ */
 
 #include <unistd.h>
 
@@ -103,7 +103,7 @@ void CreateImage (char *name, FILE *fp) {
     size3d = 0 ;
     res = GL2PS_OVERFLOW ;
     while(res == GL2PS_OVERFLOW){
-      size3d += 1024*1024 ;
+      size3d += 2048*2048 ;
       gl2psBeginPage(TheBaseFileName, "Gmsh", 
                      (CTX.print.type == PRINT_GL2PS_SIMPLE ? 
                       GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
