@@ -57,13 +57,13 @@ For num In {1:255}
   PostProcessing.View[0].Raise2 += 0.001*t ;
 
   If (num == 3)
-// We want to use mpeg_encode when num==3, so we set the width and
-// height of the graphic window have to be multiple of 16!
+    // We want to use mpeg_encode to create a nice 320x240 animation
+    // for all frames when num==3:
     General.Viewport2 = 320 ; 
     General.Viewport3 = 240 ;
   EndIf
 
-// It is possible to nest loops:
+  // It is possible to nest loops:
 
   For num2 In {1:50}
 
@@ -75,15 +75,18 @@ For num In {1:255}
     Draw; // draw the scene
 
     If ((num == 3) && (num2 < 10))
-      Print Sprintf("t8-0%g.jpg", num2); // print the scene in a jpeg file
+      // The Sprintf function permits to create complex strings using
+      // variables (since all Gmsh variables are treated internally as
+      // double precision numbers, the format should only contain valid
+      // double precision number format specifiers):
+      Print Sprintf("t8-0%g.jpg", num2);
     EndIf
 
     If ((num == 3) && (num2 >= 10))
-      Print Sprintf("t8-%g.jpg", num2); // print the scene in a jpeg file
+      Print Sprintf("t8-%g.jpg", num2);
     EndIf
 
   EndFor
-
 
   If(num == 3)
     // We make a system call to generate the mpeg
