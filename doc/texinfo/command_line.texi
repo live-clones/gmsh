@@ -61,8 +61,6 @@ select link mode between views (default: 0)
 smooth views
 @item -combine
 combine input views into multi time step ones
-@item -convert file file
-perform batch conversion of view(s)/mesh into new file formats
 @end ftable
 
 @sp 1 
@@ -100,6 +98,8 @@ set verbosity level (default: 2)
 parse string before project file
 @item -option file
 parse option file before GUI creation
+@item -convert file file
+perform batch conversion of view(s)/mesh into new file formats
 @item -version
 show version number
 @item -info

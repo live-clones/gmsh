@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.32 2004-04-21 23:14:47 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.33 2004-04-21 23:16:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -94,7 +94,6 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
   Msg(DIRECT, "  -smoothview           smooth views");
   Msg(DIRECT, "  -combine              combine input views into multi time step ones");
-  Msg(DIRECT, "  -convert file file    perform batch conversion of view(s)/mesh into new file formats");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
   Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
@@ -112,6 +111,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
   Msg(DIRECT, "  -string \"string\"      parse string before project file");
   Msg(DIRECT, "  -option file          parse option file before GUI creation");
+  Msg(DIRECT, "  -convert file file    perform batch conversion of view(s)/mesh into new file formats");
   Msg(DIRECT, "  -version              show version number");
   Msg(DIRECT, "  -info                 show detailed version information");
   Msg(DIRECT, "  -help                 show this message");
