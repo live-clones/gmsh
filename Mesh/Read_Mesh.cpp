@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.16 2001-06-02 19:44:35 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.17 2001-06-25 13:30:57 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -144,11 +144,11 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    
 	    switch(Type){
 	    case LGN1:
-	      simp = Create_Simplex(vertsp[0], vertsp[1], NULL , NULL);
-	      simp->Num = Num ;
-	      simp->iEnt = Elementary ;
-	      Tree_Insert(c->Simplexes, &simp) ;
-	      Tree_Insert(M->Simplexes, &simp) ; 
+	      //simp = Create_Simplex(vertsp[0], vertsp[1], NULL , NULL);
+	      //simp->Num = Num ;
+	      //simp->iEnt = Elementary ;
+	      //Tree_Insert(c->Simplexes, &simp) ;
+	      //Tree_Insert(M->Simplexes, &simp) ; 
 	      break;
 	    case TRI1:
 	      simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);

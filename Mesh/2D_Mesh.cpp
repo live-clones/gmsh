@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.27 2001-06-06 21:29:58 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.28 2001-06-25 13:30:57 remacle Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -456,6 +456,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
   gPointArray = doc->points;
 
   numaloc = nump;
+  doc->delaunay = 0;
   doc->numPoints = nump;
   doc->numTriangles = 0;
   mai->numtriangles = 0;
@@ -819,6 +820,9 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       mai->listdel[i]->t.b = a;
     }
   }
+  // MEMORY LEAK (JF)
+  //  Free(doc->delaunay);
+  //  doc->delaunay = 0;
   return 1;
 }
 
@@ -929,7 +933,11 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       s->iEnt = pS->Num;
       Tree_Insert (pS->Simplexes, &s);
     }
+    // MEMORY LEAK (JF)
+    //    Free(M.listdel[i]);
   }
+  // ANOTHER ONE (JF)
+  Free (M.listdel);
   Free (gPointArray);
 }
 
@@ -938,6 +946,7 @@ void Make_Mesh_With_Points (DocRecord * ptr, PointRecord * Liste, int Numpoints)
   ptr->numTriangles = 0;
   ptr->points = Liste;
   ptr->numPoints = Numpoints;
+  ptr->delaunay = 0;
   DelaunayAndVoronoi (ptr);
   Conversion (ptr);
   remove_all_dlist (ptr->numPoints, ptr->points);

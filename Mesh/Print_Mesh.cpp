@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.22 2001-06-25 13:05:16 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.23 2001-06-25 13:30:57 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -133,16 +133,16 @@ void add_msh_simplex (void *a, void *b){
       type = TETRAHEDRON;
   }
   
-#if 0 // JF, je comprends pas !?
+#if 1 // JF, je comprends pas !?
   if(type == TETRAHEDRON)
     {
-      if ((*S)->Volume_Simplexe () > 0){
+      if ((*S)->Volume_Simplexe () < 0){
         Vertex *temp;
         temp = (*S)->V[0];
         (*S)->V[0] = (*S)->V[1];
         (*S)->V[1] = temp;
 	//        if ((*S)->Volume_Simplexe () < 0)
-          Msg(WARNING, "Negative volume for simplex %d", (*S)->Num);
+	//          Msg(WARNING, "Negative volume for simplex %d", (*S)->Num);
       }
     }
 #endif

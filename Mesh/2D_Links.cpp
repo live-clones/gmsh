@@ -1,4 +1,4 @@
-// $Id: 2D_Links.cpp,v 1.7 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: 2D_Links.cpp,v 1.8 2001-06-25 13:30:57 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -79,6 +79,8 @@ int Conversion(DocPeek doc ){
   /* nombre de triangles que l'on doit obtenir */
   count2 = 2 * (n - 1) - count2;        
         
+  if(doc->delaunay)Free (doc->delaunay);
+
   doc->delaunay = (Delaunay *) Malloc(2*count2 * sizeof(Delaunay));
 
   for (i=0;i<n;i++){
