@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.3 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.4 2001-05-22 08:30:26 geuzaine Exp $
 
 #include <signal.h>
 
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]){
     }
     if(CTX.batch > 0){
       mai3d(THEM, CTX.batch);
-      Print_Mesh(THEM,NULL,CTX.mesh.format);
+      Print_Mesh(THEM,CTX.output_filename,CTX.mesh.format);
     }
     exit(1);
   }    

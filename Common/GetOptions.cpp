@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.21 2001-05-21 08:56:35 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.22 2001-05-22 08:30:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -33,6 +33,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -0                    parse input files, output flattened geometry, and exit");
   Msg(DIRECT, "Mesh options:");
   Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
+  Msg(DIRECT, "  -o file               specify output file name");
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
   Msg(DIRECT, "  -algo iso|aniso       select 2D mesh algorithm (default: iso)");
   Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
@@ -120,6 +121,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "3")){ 
         CTX.batch = 3; i++;
+      }
+      else if(!strcmp(argv[i]+1, "o")){ 
+        i++;
+        if(argv[i] != NULL) CTX.output_filename = argv[i++];
+        else {    
+          fprintf(stderr, ERROR_STR "Missing file name\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
         i++;

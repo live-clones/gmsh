@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.56 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.57 2001-05-22 08:30:26 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1093,7 +1093,7 @@ void geometry_physical_add_volume_cb (CALLBACK_ARGS){
 // Dynamic Mesh Menus
 
 void mesh_save_cb(CALLBACK_ARGS) {
-  Print_Mesh(&M, NULL, CTX.mesh.format);
+  Print_Mesh(&M, CTX.output_filename, CTX.mesh.format);
 }
 void mesh_define_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh_define, 0);
@@ -1319,7 +1319,7 @@ void getdp_cb(CALLBACK_ARGS){
   static int first=1;
   if(first){
     first = 0;
-    strcpy(file,CTX.basefilename);
+    strcpy(file,CTX.base_filename);
     strcat(file,".pro");
     WID->getdp_input[0]->value(file);
   }

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.15 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.16 2001-05-22 08:30:26 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -98,7 +98,7 @@ void OpenProblem(char *name){
   Init_Mesh(&M, 1);
 
   strncpy(CTX.filename,name,NAME_STR_L);
-  strncpy(CTX.basefilename,name,NAME_STR_L);
+  strncpy(CTX.base_filename,name,NAME_STR_L);
 
   strcpy(ext,name+(strlen(name)-4));
   if(!strcmp(ext,".geo") || !strcmp(ext,".GEO") ||
@@ -106,19 +106,19 @@ void OpenProblem(char *name){
      !strcmp(ext,".stl") || !strcmp(ext,".STL") ||
      !strcmp(ext,".sms") || !strcmp(ext,".SMS") ||
      !strcmp(ext,".pos") || !strcmp(ext,".POS")){
-    CTX.basefilename[strlen(name)-4] = '\0';
+    CTX.base_filename[strlen(name)-4] = '\0';
   }
   else{
     strcat(CTX.filename,".geo");
   }
 
-  strncpy(THEM->name, CTX.basefilename,NAME_STR_L);
+  strncpy(THEM->name, CTX.base_filename,NAME_STR_L);
 
   if(!CTX.batch){
 #if _XMOTIF
     XtVaSetValues(WID.G.shell,
                   XmNtitle, CTX.filename,
-                  XmNiconName, CTX.basefilename,
+                  XmNiconName, CTX.base_filename,
                   NULL);
 #elif _FLTK
     WID->set_title(CTX.filename);

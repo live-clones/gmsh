@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.17 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.18 2001-05-22 08:30:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -204,7 +204,7 @@ void CreateOutputFile (char *name, int format) {
       res = GL2PS_OVERFLOW ;
       while(res == GL2PS_OVERFLOW){
 	size3d += 2048*2048 ;
-	gl2psBeginPage(CTX.basefilename, "Gmsh", 
+	gl2psBeginPage(CTX.base_filename, "Gmsh", 
 		       (CTX.print.eps_quality == 1 ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
 		       GL2PS_SIMPLE_LINE_OFFSET | GL2PS_DRAW_BACKGROUND,
 		       GL_RGBA, 0, NULL, size3d, fp);

@@ -27,15 +27,17 @@ public :
 
   // general options
   char filename[NAME_STR_L];  // the name of the currently opened file
-  char basefilename[NAME_STR_L]; // the same without the extension
+  char base_filename[NAME_STR_L]; // the same without the extension
+  char *output_filename;      // output file specified with command line option '-o'
   char *default_filename;     // the name of the default file
   char *tmp_filename;         // the name of the temp file
   char *session_filename, sessionrc_filename[NAME_STR_L];
                               // the name of the sessionrc configuration file
   char *options_filename, optionsrc_filename[NAME_STR_L]; 
                               // the name of the optionrc configuration file
-  int session_save, options_save; // save session/option file on exit
   char *error_filename;       // the name of the error file
+
+  int session_save, options_save; // save session/option file on exit
   char *display;              // forced display host:0.0 under X11 
   int  terminal;              // show we print to the terminal console?
   char *editor;               // text editor command (with included '%s')
