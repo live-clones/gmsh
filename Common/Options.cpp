@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.209 2004-12-07 04:52:25 geuzaine Exp $
+// $Id: Options.cpp,v 1.210 2004-12-09 03:31:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1811,7 +1811,6 @@ char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
 int _gui_action_valid(int action, int num)
 {
   return ((WID) &&
-	  (num < (int)WID->m_toggle_butt.size()) &&
 	  (action & GMSH_GUI) && 
 	  (num == WID->view_number));
 }
