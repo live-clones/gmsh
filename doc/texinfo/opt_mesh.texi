@@ -109,6 +109,11 @@ Enable lighting for the mesh@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.LightTwoSide
+Light both sides of mesh elements (leads to slower rendering)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Lines
 Display mesh lines (1D elements)?@*
 Default value: @code{0}@*

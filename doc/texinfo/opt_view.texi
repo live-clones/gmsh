@@ -169,6 +169,11 @@ Enable lighting for the view@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.LightTwoSide
+Light both sides of view elements (leads to slower rendering)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.LineType
 Display lines as solid color segments (0) or 3D cylinders (1)@*
 Default value: @code{0}@*
