@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.98 2001-09-04 08:05:47 geuzaine Exp $
+// $Id: Gmsh.y,v 1.99 2001-09-04 16:25:05 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -2058,6 +2058,28 @@ FExpr :
   | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3,$5);  }
   | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3*$3+$5*$5); }
   | tRand   '(' FExpr ')'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
+  /* for GetDP compatibility */
+  | tExp    '[' FExpr ']'            { $$ = exp($3);      }
+  | tLog    '[' FExpr ']'            { $$ = log($3);      }
+  | tLog10  '[' FExpr ']'            { $$ = log10($3);    }
+  | tSqrt   '[' FExpr ']'            { $$ = sqrt($3);     }
+  | tSin    '[' FExpr ']'            { $$ = sin($3);      }
+  | tAsin   '[' FExpr ']'            { $$ = asin($3);     }
+  | tCos    '[' FExpr ']'            { $$ = cos($3);      }
+  | tAcos   '[' FExpr ']'            { $$ = acos($3);     }
+  | tTan    '[' FExpr ']'            { $$ = tan($3);      }
+  | tAtan   '[' FExpr ']'            { $$ = atan($3);     }
+  | tAtan2  '[' FExpr ',' FExpr ']'  { $$ = atan2($3,$5); }
+  | tSinh   '[' FExpr ']'            { $$ = sinh($3);     }
+  | tCosh   '[' FExpr ']'            { $$ = cosh($3);     }
+  | tTanh   '[' FExpr ']'            { $$ = tanh($3);     }
+  | tFabs   '[' FExpr ']'            { $$ = fabs($3);     }
+  | tFloor  '[' FExpr ']'            { $$ = floor($3);    }
+  | tCeil   '[' FExpr ']'            { $$ = ceil($3);     }
+  | tFmod   '[' FExpr ',' FExpr ']'  { $$ = fmod($3,$5);  }
+  | tModulo '[' FExpr ',' FExpr ']'  { $$ = fmod($3,$5);  }
+  | tHypot  '[' FExpr ',' FExpr ']'  { $$ = sqrt($3*$3+$5*$5); }
+  | tRand   '[' FExpr ']'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
 ;
 
 /* Pour etre vraiment complet, il faudrait encore ajouter +=, -=, *= et /= */

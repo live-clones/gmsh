@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Shewchuk.cpp,v 1.5 2001-08-24 06:58:19 geuzaine Exp $
+// $Id: 2D_Mesh_Shewchuk.cpp,v 1.6 2001-09-04 16:25:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -21,7 +21,7 @@ void AddInMesh(Surface *sur, int nbbound, Vertex **vertexbound,
   Vertex **vtable;
   Simplex *s;
 
-  Msg(INFO, "Add in database...");
+  //Msg(INFO, "Add in database...");
 
   vtable = (Vertex**) Malloc(out->numberofpoints*sizeof(Vertex*));
 
@@ -51,7 +51,7 @@ void AddInMesh(Surface *sur, int nbbound, Vertex **vertexbound,
   Free(out->trianglelist);
   Free(out->triangleattributelist);
 
-  Msg(INFO, "...done");
+  //Msg(INFO, "...done");
 }
 
 // This is horrible...

@@ -1,4 +1,4 @@
-// $Id: 3D_Divide.cpp,v 1.12 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 3D_Divide.cpp,v 1.13 2001-09-04 16:25:05 geuzaine Exp $
 
 /* Routine de division des elements tetraedriques
    ou triangulaires
@@ -73,7 +73,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   Simplex *news;
   Vertex *e1;
 
-  Msg(INFO, "Prism cut");
+  //Msg(INFO, "Prism cut");
 
   /* test des meilleures aretes a creer */
   /*

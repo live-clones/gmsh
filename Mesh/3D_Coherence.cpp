@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.21 2001-09-04 13:27:00 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.22 2001-09-04 16:25:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1177,8 +1177,9 @@ int Coherence (Volume * v, Mesh * m){
         }
       }
     */
-    Msg(INFO, "Edge %d->%d => %d division(s)", 
-        pE1->V[0]->Num, pE1->V[1]->Num, List_Nbr(NewPoints));
+    Msg(INFO, "%d/%d: Edge %d->%d => %d division(s)", 
+        i+1, List_Nbr(Missing), pE1->V[0]->Num, pE1->V[1]->Num, 
+	List_Nbr(NewPoints));
 
     if (!List_Nbr (NewPoints))
       Msg(GERROR, "Missing edge without any intersection (%g,%g,%g) (%g,%g,%g)",
@@ -1201,7 +1202,8 @@ int Coherence (Volume * v, Mesh * m){
   for (i = 0; i < List_Nbr (MissingS); i++){
     List_Read (MissingS, i, &simp);
     TheFace = &simp->F[0];
-    Msg(INFO, "Face %d %d %d", simp->F[0].V[0]->Num, 
+    Msg(INFO, "%d/%d: Face %d %d %d", 
+	i+1, List_Nbr (MissingS), simp->F[0].V[0]->Num, 
         simp->F[0].V[1]->Num, simp->F[0].V[2]->Num);
     E.V[0] = simp->F[0].V[0];
     E.V[1] = simp->F[0].V[1];

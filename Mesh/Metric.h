@@ -1,19 +1,18 @@
 #ifndef _METRIC_H_
 #define _METRIC_H_
 
-class GMSHMetric{
-
-public:
+#include "Matrix.h"
+class GMSHMetric
+{
+ public:
   double m[3][3];
-  double min_cos;
-  double max_dist;
-  bool apply_costest;
-  bool apply_disttest;
   double limite_aniso;
+  double min_cos;
   int quality_measure;
   List_T  *Attractors;
   GMSHMetric();
   void Identity ();
+  Matrix3x3 Intersect2Metrics (Matrix3x3 *M[2]);
   double EdgeLengthOnSurface (Surface *s , Vertex *v[2], int cuts);
   double LengthVector (Vertex *v);
   void setMetric (double u,double v ,Surface *s);
@@ -26,10 +25,8 @@ public:
   double operator () (int i,int j);
   double * operator [] (int i);
   double Local_Metric_Of_Attractors (double X, double Y, double Z,
-                                     double metric[3][3]);
+				     double metric[3][3]);
   double getWorstEdge (Simplex *s, Surface *surf, Vertex *v[2]);
-
 } ;
 
 #endif
-
