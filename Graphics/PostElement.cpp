@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.29 2004-05-28 21:06:11 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.30 2004-05-29 00:47:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -404,6 +404,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     nn[0] = y1y0 * z2z0 - z1z0 * y2y0;
     nn[1] = z1z0 * x2x0 - x1x0 * z2z0;
     nn[2] = x1x0 * y2y0 - y1y0 * x2x0;
+    norme(nn);
 
     if(View->SmoothNormals) {
       if(preproNormals) {
@@ -434,9 +435,6 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
         norms[3 * i + 2] = nn[2];
       }
     }
-    norme(&norms[0]);
-    norme(&norms[3]);
-    norme(&norms[6]);
     glNormal3dv(norms);
   }
 
