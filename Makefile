@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2000-12-08 15:06:08 geuzaine Exp $
+# $Id: Makefile,v 1.17 2000-12-08 22:34:53 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -188,7 +188,7 @@ bbn: tag
 sgi: tag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
-           "C_FLAGS=-O2 -o32" \
+           "C_FLAGS=-O2 -o32 -Olimit 3000" \
            "RANLIB=true"\
            "OS_FLAGS=-D_UNIX" \
            "VERSION_FLAGS=" \
