@@ -1,7 +1,25 @@
-$Id: CREDITS,v 1.5 2003-08-08 16:05:42 geuzaine Exp $
+$Id: CREDITS,v 1.6 2003-08-22 05:34:55 geuzaine Exp $
 
-Gmsh is copyright (c) 1997-2003 Christophe Geuzaine <geuzaine at
-acm.caltech.edu> and Jean-Francois Remacle <remacle at gce.ucl.ac.be>.
+             Gmsh is copyright (c) 1997-2003 
+
+                   Christophe Geuzaine 
+              <geuzaine at acm.caltech.edu> 
+
+                           and 
+
+                  Jean-Francois Remacle 
+               <remacle at gce.ucl.ac.be>
+
+and is distributed under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version. Gmsh is distributed in
+the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more
+details. You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+USA.
 
 The AVL tree code (DataStr/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (c) 1988-1993, 1995 The Regents of
