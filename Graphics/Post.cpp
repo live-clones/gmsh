@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.81 2004-10-26 00:43:23 geuzaine Exp $
+// $Id: Post.cpp,v 1.82 2004-10-27 17:27:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -241,9 +241,6 @@ void Draw_List(Post_View * v, double ValMin, double ValMax,
 
   if(nbelm) {
     nb = List_Nbr(list) / nbelm;
-
-    v->ExternalView = 
-      (Post_View*)List_Pointer_Test(CTX.post.list, v->ExternalViewIndex);
 
     if(v->Light && v->SmoothNormals && v->Changed) {
       Msg(DEBUG, "Preprocessing of normals in View[%d]", v->Index);

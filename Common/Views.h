@@ -171,7 +171,6 @@ class Post_View{
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
   int ExternalElementIndex;
-  Post_View *ExternalView;
   double ExternalMin, ExternalMax;
 
   // smooth the view

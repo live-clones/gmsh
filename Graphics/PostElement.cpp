@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.50 2004-10-26 01:04:53 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.51 2004-10-27 17:27:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -893,77 +893,88 @@ void Draw_ScalarElement(int type, Post_View * View, int preproNormals,
   }
 }
 
-int GetDataFromOtherView(int type, int nbnod, Post_View *v, int *nbcomp,
+int GetDataFromOtherView(int type, Post_View *v, int *nbcomp,
 			 double *norm, double **vals, int *vectype)
 {
-  static int error1 = -1;
-  static int error2 = -1;
-  Post_View *v2 = v->ExternalView;
-  int num = v->ExternalElementIndex;
+  static int lastnum = -1;
+  static int lastnum2 = -1;
+
+  Post_View *v2 = (Post_View*)List_Pointer_Test(CTX.post.list, v->ExternalViewIndex);
 
   if(!v2){
-    if(error1 != v->Num){
+    if(lastnum != v->Num || lastnum2 != v->ExternalViewIndex){
       Msg(GERROR, "Nonexistent external view");
-      error1 = v->Num;
     }
+    lastnum = v->Num;
+    lastnum2 = v->ExternalViewIndex;
     return 0;
   }
 
-  int nbelm = 0, comp = 0;
+  int nbelm = 0, comp = 0, nbnod = 0;
   List_T *l;
   switch (type) {
-  case POINT: 
+  case POINT:
+    nbnod = 1;
     if(v->NbVP == v2->NbSP){ nbelm = v2->NbSP; l = v2->SP; comp = 1; }
     else if(v->NbVP == v2->NbVP){ nbelm = v2->NbVP; l = v2->VP; comp = 3; }
     else if(v->NbVP == v2->NbTP){ nbelm = v2->NbTP; l = v2->TP; comp = 9; }
     break;
-  case LINE: 
+  case LINE:
+    nbnod = 2;
     if(v->NbVL == v2->NbSL){ nbelm = v2->NbSL; l = v2->SL; comp = 1; } 
     else if(v->NbVL == v2->NbVL){ nbelm = v2->NbVL; l = v2->VL; comp = 3; } 
     else if(v->NbVL == v2->NbTL){ nbelm = v2->NbTL; l = v2->TL; comp = 9; } 
     break;
-  case TRIANGLE: 
+  case TRIANGLE:
+    nbnod = 3;
     if(v->NbVT == v2->NbST){ nbelm = v2->NbST; l = v2->ST; comp = 1;  } 
     else if(v->NbVT == v2->NbVT){ nbelm = v2->NbVT; l = v2->VT; comp = 3;  } 
     else if(v->NbVT == v2->NbTT){ nbelm = v2->NbTT; l = v2->TT; comp = 9;  } 
     break;
-  case QUADRANGLE: 
+  case QUADRANGLE:
+    nbnod = 4;
     if(v->NbVQ == v2->NbSQ){ nbelm = v2->NbSQ; l = v2->SQ; comp = 1;  } 
     else if(v->NbVQ == v2->NbVQ){ nbelm = v2->NbVQ; l = v2->VQ; comp = 3;  } 
     else if(v->NbVQ == v2->NbTQ){ nbelm = v2->NbTQ; l = v2->TQ; comp = 9;  } 
     break;
-  case TETRAHEDRON: 
+  case TETRAHEDRON:
+    nbnod = 4;
     if(v->NbVS == v2->NbSS){ nbelm = v2->NbSS; l = v2->SS; comp = 1;  } 
     else if(v->NbVS == v2->NbVS){ nbelm = v2->NbVS; l = v2->VS; comp = 3;  } 
     else if(v->NbVS == v2->NbTS){ nbelm = v2->NbTS; l = v2->TS; comp = 9;  } 
     break;
   case HEXAHEDRON:
+    nbnod = 8;
     if(v->NbVH == v2->NbSH){ nbelm = v2->NbSH; l = v2->SH; comp = 1;  }
     else if(v->NbVH == v2->NbVH){ nbelm = v2->NbVH; l = v2->VH; comp = 3;  }
     else if(v->NbVH == v2->NbTH){ nbelm = v2->NbTH; l = v2->TH; comp = 9;  }
     break;
   case PRISM:
+    nbnod = 6;
     if(v->NbVI == v2->NbSI){ nbelm = v2->NbSI; l = v2->SI; comp = 1;  }
     else if(v->NbVI == v2->NbVI){ nbelm = v2->NbVI; l = v2->VI; comp = 3;  }
     else if(v->NbVI == v2->NbTI){ nbelm = v2->NbTI; l = v2->TI; comp = 9;  }
     break;
-  case PYRAMID: 
+  case PYRAMID:
+    nbnod = 5;
     if(v->NbVY == v2->NbSY){ nbelm = v2->NbSY; l = v2->SY; comp = 1;  } 
     else if(v->NbVY == v2->NbVY){ nbelm = v2->NbVY; l = v2->VY; comp = 3;  } 
     else if(v->NbVY == v2->NbTY){ nbelm = v2->NbTY; l = v2->TY; comp = 9;  } 
     break;
   }
 
-  if(!nbelm || num < 0 || v2->NbTimeStep != v->NbTimeStep){
-    if(error2 != v->Num){
+  if(!nbelm || v2->NbTimeStep != v->NbTimeStep ||
+     v->ExternalElementIndex < 0 || v->ExternalElementIndex >= nbelm){
+    if(lastnum != v->Num || lastnum2 != v->ExternalViewIndex){
       Msg(GERROR, "Incompatible external view");
-      error2 = v->Num;
     }
+    lastnum = v->Num;
+    lastnum2 = v->ExternalViewIndex;
     return 0;
   }
 
   int nb = List_Nbr(l) / nbelm;
-  double *vv = (double *)List_Pointer(l, num * nb + 3 * nbnod + 
+  double *vv = (double *)List_Pointer(l, v->ExternalElementIndex * nb + 3 * nbnod + 
 				      comp * nbnod * v->TimeStep);
   for(int k = 0; k < nbnod; k++){
     if(comp == 1)
@@ -1005,6 +1016,8 @@ int GetDataFromOtherView(int type, int nbnod, Post_View *v, int *nbcomp,
     *vectype = v2->VectorType;
   *nbcomp = comp;
 
+  lastnum = v->Num;
+  lastnum2 = v->ExternalViewIndex;
   return 1;
 }
 
@@ -1041,7 +1054,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     ext_norm[k] = norm[k];
   
   if(View->ExternalViewIndex >= 0){
-    GetDataFromOtherView(type, nbnod, View, &ext_nbcomp, ext_norm, &ext_vals, &ext_vectype);
+    GetDataFromOtherView(type, View, &ext_nbcomp, ext_norm, &ext_vals, &ext_vectype);
     ext_min = View->ExternalMin;
     ext_max = View->ExternalMax;
   }
