@@ -38,6 +38,8 @@ Go to solver module
 
 @sp 1 @c ----------------------------------------------
 
+@item Shift+a
+Bring all windows to front
 @item Shift+g
 Show geometry options
 @item Shift+m
@@ -53,8 +55,6 @@ Show post-processing view options
 
 @sp 1 @c ----------------------------------------------
 
-@item Ctrl+a
-Bring all windows to front
 @item Ctrl+i
 Show statistics window 
 @item Ctrl+l

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.319 2004-12-31 04:04:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.320 2004-12-31 07:55:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1182,7 +1182,7 @@ void help_short_cb(CALLBACK_ARGS)
 {
   Msg(DIRECT, " ");
 #if defined(__APPLE__)
-  Msg(DIRECT, "Keyboard shortcuts (Ctrl and Cmd can be used interchangeably):");
+  Msg(DIRECT, "Keyboard shortcuts (Ctrl and Command can be used interchangeably):");
 #else
   Msg(DIRECT, "Keyboard shortcuts:");
 #endif
@@ -1204,6 +1204,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  p             Go to post-processing module");
   Msg(DIRECT, "  s             Go to solver module");
   Msg(DIRECT, " ");
+  Msg(DIRECT, "  Shift+a       Bring all windows to front");
   Msg(DIRECT, "  Shift+g       Show geometry options");
   Msg(DIRECT, "  Shift+m       Show mesh options");
   Msg(DIRECT, "  Shift+o       Show general options"); 
@@ -1211,7 +1212,6 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+s       Show solver options"); 
   Msg(DIRECT, "  Shift+w       Show post-processing view options");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "  Ctrl+a        Bring all windows to front");
   Msg(DIRECT, "  Ctrl+i        Show statistics window"); 
   Msg(DIRECT, "  Ctrl+l        Show message console");
   Msg(DIRECT, "  Ctrl+m        Merge file"); 
