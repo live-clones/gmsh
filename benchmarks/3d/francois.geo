@@ -29,5 +29,5 @@ Physical Surface(55) = {11};
 Physical Surface(56) = {40,44,48,52};
 Physical Surface(57) = {53};
 
-Surface Loop(58) = {53,24,11,28,32,36,40,44,48,52};
-Complex Volume(59) = {58};
+//Surface Loop(58) = {53,24,11,28,32,36,40,44,48,52};
+//Complex Volume(59) = {58};
