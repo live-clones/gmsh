@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.197 2003-12-07 05:37:00 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.198 2003-12-07 15:30:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -430,27 +430,36 @@ void _save_geo(char *name)
 }
 void _save_msh(char *name)
 {
+  double ver = CTX.mesh.msh_file_version;
+  CTX.mesh.msh_file_version = 1.0;
   CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
+  CTX.mesh.msh_file_version = ver;
 }
 void _save_msh_all(char *name)
 {
   int all = CTX.mesh.save_all;
+  double ver = CTX.mesh.msh_file_version;
+  CTX.mesh.msh_file_version = 1.0;
   CTX.mesh.save_all = 1;
   CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
   CTX.mesh.save_all = all;
+  CTX.mesh.msh_file_version = ver;
 }
 void _save_msh_v2(char *name)
 {
   double ver = CTX.mesh.msh_file_version;
   CTX.mesh.msh_file_version = 2.0;
-  _save_msh(name);
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
   CTX.mesh.msh_file_version = ver;
 }
 void _save_msh_all_v2(char *name)
 {
+  int all = CTX.mesh.save_all;
   double ver = CTX.mesh.msh_file_version;
   CTX.mesh.msh_file_version = 2.0;
-  _save_msh_all(name);
+  CTX.mesh.save_all = 1;
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
+  CTX.mesh.save_all = all;
   CTX.mesh.msh_file_version = ver;
 }
 void _save_gref(char *name)
