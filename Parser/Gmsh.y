@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.68 2001-03-22 16:09:32 geuzaine Exp $
+// $Id: Gmsh.y,v 1.69 2001-03-22 22:10:28 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -50,7 +50,6 @@ static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
 static int            Last_NumberOfPoints = 0;
 static double         d, *pd;
 static ExtrudeParams  extr;
-static List_T         *ListOfListOfDouble_L, *ListOfColor_L=NULL;
 static char           *str;
 static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
@@ -118,8 +117,10 @@ void  skip_until (char *skip, char *until);
 %type <c> StringExpr
 %type <l> FExpr_Range
 %type <l> ListOfDouble RecursiveListOfDouble
+%type <l> ListOfListOfDouble RecursiveListOfListOfDouble 
+%type <l> ListOfColor RecursiveListOfColor 
 %type <l> ListOfShapes Duplicata Transform MultipleShape
-%type <l> ListOfStrings ListOfListOfDouble ListOfColor
+%type <l> ListOfStrings
 %type <s> Shape
 
 /* ------------------------------------------------------------------ */
@@ -416,6 +417,7 @@ Printf :
 	}
       }
       Msg(DIRECT, tmpstring);
+      List_Delete($5);
     }
 ;
 
@@ -805,9 +807,56 @@ Affectation :
 	  if(!$5)
 	    List_Put(pSymbol->val, (int)$3, &$6);
 	  else
-	    vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;	  
+	    vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
 	}
       }
+    }
+
+  | tSTRING '[' '{' RecursiveListOfDouble '}' ']' NumericAffectation ListOfDouble tEND
+    {
+      if(List_Nbr($4) != List_Nbr($8))
+	vyyerror("Incompatible array dimensions in affectation");
+      else{
+	TheSymbol.Name = $1;
+	if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	  TheSymbol.val = List_Create(5,5,sizeof(double));
+	  if(!$7){
+	    for(i=0 ; i<List_Nbr($4) ; i++){
+	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer($4,i)),
+		       (double*)List_Pointer($8,i));
+	      List_Add(Symbol_L, &TheSymbol);
+	    }
+	  }
+	  else
+	    vyyerror("Unknown Variable '%s'", $1) ;
+	}
+	else{
+	  for(i=0 ; i<List_Nbr($4) ; i++){
+	    j = (int)(*(double*)List_Pointer($4,i)) ;
+	    d = *(double*)List_Pointer($8,i) ;
+	    if((pd = (double*)List_Pointer_Test(pSymbol->val, j))){
+	      switch($7){
+	      case 0 : *pd = d; break ;
+	      case 1 : *pd += d ; break ;
+	      case 2 : *pd -= d ; break ;
+	      case 3 : *pd *= d ; break ;
+	      case 4 : 
+		if($8) *pd /= d ; 
+		else vyyerror("Division by Zero in '%s[%d] /= %g'", $1, j, d);
+		break;
+	      }
+	    }
+	    else{
+	      if(!$7)
+		List_Put(pSymbol->val, j, &d);
+	      else
+		vyyerror("Uninitialized Variable '%s[%d]'", $1, j) ;	  
+	    }
+	  }
+	}
+      }
+      List_Delete($4);
+      List_Delete($8);
     }
 
   | tSTRING '[' ']' tAFFECT ListOfDouble tEND
@@ -822,6 +871,7 @@ Affectation :
 	List_Reset(pSymbol->val);
 	List_Copy($5, pSymbol->val);
       }
+      List_Delete($5);
     }
 
   | tSTRING NumericIncrement tEND
@@ -986,6 +1036,7 @@ Affectation :
 	else
 	  for(i=0 ; i<ct->size ; i++) List_Read($5, i, &ct->table[i]);
       }
+      List_Delete($5);
     }
 
   | tSTRING '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND 
@@ -1001,6 +1052,7 @@ Affectation :
 	else
 	  for(i=0 ; i<ct->size ; i++) List_Read($8, i, &ct->table[i]);
       }
+      List_Delete($8);
     }
 ;
 
@@ -1675,6 +1727,9 @@ ExtrudeParameter :
 	List_Read($7,i,&d);
 	extr.mesh.hLayer[i] = d;
       }
+      List_Delete($3);
+      List_Delete($5);
+      List_Delete($7);
     }
   | tRecombine tEND
     {
@@ -1703,6 +1758,7 @@ Transfini :
 	  c->dpar[0] = 1.0;
 	}
       }
+      List_Delete($3);
     }
   | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tProgression FExpr tEND
     {
@@ -1720,6 +1776,7 @@ Transfini :
 	  c->dpar[0] = fabs($8);
 	}
       }
+      List_Delete($3);
     }
   | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tBump FExpr tEND
     {
@@ -1737,6 +1794,7 @@ Transfini :
 	  c->dpar[0] = fabs($8);
 	}
       }
+      List_Delete($3);
     }
   | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
@@ -1758,6 +1816,7 @@ Transfini :
 	  }
 	}
       }
+      List_Delete($7);
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
@@ -1778,6 +1837,7 @@ Transfini :
 	  }
 	}
       }
+      List_Delete($7);
     }
   | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
@@ -1798,6 +1858,7 @@ Transfini :
 	  }
 	}
       }
+      List_Delete($7);
     }
   | tRecombine tSurface ListOfDouble tAFFECT FExpr tEND
     {
@@ -1815,6 +1876,7 @@ Transfini :
 	  s->RecombineAngle = $5;
 	}
       }
+      List_Delete($3);
     }
   | tRecombine tSurface ListOfDouble tEND
     {
@@ -1832,7 +1894,8 @@ Transfini :
 	  s->RecombineAngle = 30.;
         }
       }
-    }  
+      List_Delete($3);
+    }
 ;
 
 
@@ -2138,31 +2201,28 @@ ListOfListOfDouble :
     }
   | '{' RecursiveListOfListOfDouble '}'
     {
-       $$=ListOfListOfDouble_L;
+       $$=$2;
     }
   | '(' RecursiveListOfListOfDouble ')'
     {
-       $$=ListOfListOfDouble_L;
+       $$=$2;
     }
 ;
 
 RecursiveListOfListOfDouble :
     ListOfDouble
     {
-      ListOfListOfDouble_L = List_Create(2,1,sizeof(List_T*)) ;
-      List_Add(ListOfListOfDouble_L, &($1)) ;
+      $$ = List_Create(2,1,sizeof(List_T*)) ;
+      List_Add($$, &($1)) ;
     }
   | RecursiveListOfListOfDouble ',' ListOfDouble
     {
-      List_Add(ListOfListOfDouble_L, &($3)) ;
+      List_Add($$, &($3)) ;
     }
 ;
 
 ListOfDouble :
-    /* none */
-    {
-    }
-  | FExpr
+    FExpr
     {
       $$ = List_Create(2,1,sizeof(double)) ;
       List_Add($$, &($1)) ;
@@ -2199,6 +2259,7 @@ ListOfDouble :
 	    vyyerror("Uninitialized Variable '%s[%d]'", $1, j) ;	  
 	}
       }
+      List_Delete($4);
     }
   | '{' RecursiveListOfDouble '}'
     {
@@ -2245,6 +2306,7 @@ RecursiveListOfDouble :
 	    vyyerror("Uninitialized Variable '%s[%d]'", $1, j) ;	  
 	}
       }
+      List_Delete($4);
     }
   | RecursiveListOfDouble ',' FExpr
     {
@@ -2283,6 +2345,7 @@ RecursiveListOfDouble :
 	    vyyerror("Uninitialized Variable '%s[%d]'", $3, j) ;	  
 	}
       }
+      List_Delete($6);
     }
 ;
 
@@ -2326,37 +2389,30 @@ ColorExpr :
 ListOfColor :
     '{' RecursiveListOfColor '}'
     {
-      $$ = ListOfColor_L;
+      $$ = $2;
     }
   | tSTRING '[' FExpr ']' '.' tColorTable
     {
-      if(!ListOfColor_L)
-	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
-      else
-	List_Reset(ListOfColor_L) ;
+      $$ = List_Create(256,10,sizeof(unsigned int)) ;
       ColorTable *ct = Get_ColorTable((int)$3);
       if(!ct)
 	vyyerror("View[%d] does not exist", (int)$3);
       else{
 	for(i=0 ; i<ct->size ; i++) 
-	  List_Add(ListOfColor_L, &ct->table[i]);
+	  List_Add($$, &ct->table[i]);
       }
-      $$ = ListOfColor_L;
     }
 ;
 
 RecursiveListOfColor :
     ColorExpr
     {
-      if(!ListOfColor_L)
-	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
-      else
-	List_Reset(ListOfColor_L) ;
-      List_Add(ListOfColor_L, &($1)) ;
+      $$ = List_Create(256,10,sizeof(unsigned int)) ;
+      List_Add($$, &($1)) ;
     }
   | RecursiveListOfColor ',' ColorExpr
     {
-      List_Add(ListOfColor_L, &($3)) ;
+      List_Add($$, &($3)) ;
     }
 ;
 
@@ -2391,6 +2447,7 @@ StringExpr :
       }
       $$ = (char*)Malloc(strlen(tmpstring)+1);
       strcpy($$, tmpstring);
+      List_Delete($5);
     }
 ;
 
