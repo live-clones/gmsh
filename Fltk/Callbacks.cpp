@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.231 2004-05-17 17:40:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.232 2004-05-18 04:54:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -222,38 +222,38 @@ int SetGlobalShortcut(int event)
   return WID->global_shortcuts(event);
 }
 
-int SelectContour(int type, int num, List_T * Liste1)
+int SelectContour(int type, int num, List_T * List1)
 {
   int k = 0, ip, i;
 
-  if(!List_Nbr(Liste1)) {
+  if(!List_Nbr(List1)) {
     switch (type) {
     case ENT_LINE:
-      k = alledgeslinked(num, Liste1, (List_T *) NULL);
+      k = alledgeslinked(num, List1, (List_T *) NULL);
       break;
     case ENT_SURFACE:
-      k = allfaceslinked(num, Liste1, (List_T *) NULL);
+      k = allfaceslinked(num, List1, (List_T *) NULL);
       break;
     }
   }
   else {
-    List_T *Liste2 = List_Create(1, 1, sizeof(int));
-    for(i = 0; i < List_Nbr(Liste1); i++)
-      List_Add(Liste2, List_Pointer(Liste1, i));
-    List_Reset(Liste1);
+    List_T *List2 = List_Create(1, 1, sizeof(int));
+    for(i = 0; i < List_Nbr(List1); i++)
+      List_Add(List2, List_Pointer(List1, i));
+    List_Reset(List1);
     switch (type) {
     case ENT_LINE:
-      k = alledgeslinked(num, Liste1, Liste2);
+      k = alledgeslinked(num, List1, List2);
       break;
     case ENT_SURFACE:
-      k = allfaceslinked(num, Liste1, Liste2);
+      k = allfaceslinked(num, List1, List2);
       break;
     }
-    List_Delete(Liste2);
+    List_Delete(List2);
   }
 
-  for(i = 0; i < List_Nbr(Liste1); i++) {
-    List_Read(Liste1, i, &ip);
+  for(i = 0; i < List_Nbr(List1); i++) {
+    List_Read(List1, i, &ip);
     switch (type) {
     case ENT_LINE:
       HighlightEntityNum(0, abs(ip), 0, 1);
@@ -1003,16 +1003,15 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib;
 
   if(!opt_geometry_points(0, GMSH_GET, 0)) {
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
     Draw();
   }
 
-  Msg(STATUS3N, "Select point ('q'=quit)");
-  ib = SelectEntity(ENT_POINT, &v, &c, &s);
-  if(ib == 1) {
+  Msg(STATUS3N, "Select point ('q'=abort)");
+  char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+  if(ib == 'l') {
     // This would bypass the "Apply" button... Not necessarily bad,
     // but it's not consistent with the rest of the GUI.
     //opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, v->Pos.X);
@@ -1766,8 +1765,7 @@ static void _new_multiline(int type)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib;
-  static int n, p[100];
+  int n, p[100];
 
   if(!opt_geometry_points(0, GMSH_GET, 0)) {
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1776,12 +1774,12 @@ static void _new_multiline(int type)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Select point ('e'=end, 'q'=quit)");
-    ib = SelectEntity(ENT_POINT, &v, &c, &s);
-    if(ib == 1) {       /* left mouse butt */
+    Msg(STATUS3N, "Select points ('e'=end, 'u'=undo, 'q'=abort)");
+    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    if(ib == 'l') {
       p[n++] = v->Num;
     }
-    if(ib == -1) {      /* 'e' */
+    if(ib == 'e') {
       if(n >= 2) {
         switch (type) {
         case 0:
@@ -1798,12 +1796,18 @@ static void _new_multiline(int type)
           break;
         }
       }
-      n = 0;
       ZeroHighlight(THEM);
       Draw();
-    }
-    if(ib == 0) {       /* 'q' */
       n = 0;
+    }
+    if(ib == 'u') {
+      if(n > 0){
+	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	Draw(); // inefficient, but hard to do otherwise
+	n--;
+      }
+    }
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
@@ -1822,8 +1826,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib;
-  static int n, p[100];
+  int n, p[100];
 
   if(!opt_geometry_points(0, GMSH_GET, 0)) {
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1833,15 +1836,21 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   n = 0;
   while(1) {
     if(n == 0)
-      Msg(STATUS3N, "Select start point ('q'=quit)");
+      Msg(STATUS3N, "Select start point ('u'=undo, 'q'=abort)");
     if(n == 1)
-      Msg(STATUS3N, "Select end point ('q'=quit)");
-    ib = SelectEntity(ENT_POINT, &v, &c, &s);
-    if(ib == 1) {       /* left mouse butt */
+      Msg(STATUS3N, "Select end point ('u'=undo, 'q'=abort)");
+    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    if(ib == 'l') {
       p[n++] = v->Num;
     }
-    if(ib == 0) {       /* 'q' */
-      n = 0;
+    if(ib == 'u') {
+      if(n > 0){
+	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	Draw(); // inefficient, but hard to do otherwise
+	n--;
+      }
+    }
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
@@ -1871,8 +1880,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib;
-  static int n, p[100];
+  int n, p[100];
 
   if(!opt_geometry_points(0, GMSH_GET, 0)) {
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1882,17 +1890,23 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   n = 0;
   while(1) {
     if(n == 0)
-      Msg(STATUS3N, "Select start point ('q'=quit)");
+      Msg(STATUS3N, "Select start point ('u'=undo, 'q'=abort)");
     if(n == 1)
-      Msg(STATUS3N, "Select center point ('q'=quit)");
+      Msg(STATUS3N, "Select center point ('u'=undo, 'q'=abort)");
     if(n == 2)
-      Msg(STATUS3N, "Select end point ('q'=quit)");
-    ib = SelectEntity(ENT_POINT, &v, &c, &s);
-    if(ib == 1) {       /* left mouse butt */
+      Msg(STATUS3N, "Select end point ('u'=undo, 'q'=abort)");
+    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    if(ib == 'l') {
       p[n++] = v->Num;
     }
-    if(ib == 0) {       /* 'q' */
-      n = 0;
+    if(ib == 'u') {
+      if(n > 0){
+	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	Draw(); // inefficient, but hard to do otherwise
+	n--;
+      }
+    }
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
@@ -1912,8 +1926,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib;
-  static int n, p[100];
+  int n, p[100];
 
   if(!opt_geometry_points(0, GMSH_GET, 0)) {
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1923,19 +1936,25 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   n = 0;
   while(1) {
     if(n == 0)
-      Msg(STATUS3N, "Select start point ('q'=quit)");
+      Msg(STATUS3N, "Select start point ('u'=undo, 'q'=abort)");
     if(n == 1)
-      Msg(STATUS3N, "Select center point ('q'=quit)");
+      Msg(STATUS3N, "Select center point ('u'=undo, 'q'=abort)");
     if(n == 2)
-      Msg(STATUS3N, "Select major axis point ('q'=quit)");
+      Msg(STATUS3N, "Select major axis point ('u'=undo, 'q'=abort)");
     if(n == 3)
-      Msg(STATUS3N, "Select end point ('q'=quit)");
-    ib = SelectEntity(ENT_POINT, &v, &c, &s);
-    if(ib == 1) {       /* left mouse butt */
+      Msg(STATUS3N, "Select end point ('u'=undo, 'q'=abort)");
+    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    if(ib == 'l') {
       p[n++] = v->Num;
     }
-    if(ib == 0) {       /* 'q' */
-      n = 0;
+    if(ib == 'u') {
+      if(n > 0){
+	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	Draw(); // inefficient, but hard to do otherwise
+	n--;
+      }
+    }
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
@@ -1955,11 +1974,11 @@ static void _new_surface_volume(int mode)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib, type, zone;
-  List_T *Liste1, *Liste2;
+  int type, num;
 
-  Liste1 = List_Create(10, 10, sizeof(int));
-  Liste2 = List_Create(10, 10, sizeof(int));
+  List_T *List1 = List_Create(10, 10, sizeof(int));
+  List_T *List2 = List_Create(10, 10, sizeof(int));
+  List_T *ListUnsorted = List_Create(10, 10, sizeof(int));
 
   if(mode == 2) {
     type = ENT_SURFACE;
@@ -1977,64 +1996,115 @@ static void _new_surface_volume(int mode)
   }
 
   while(1) {
-    List_Reset(Liste1);
-    List_Reset(Liste2);
+    List_Reset(List1);
+    List_Reset(List2);
+    List_Reset(ListUnsorted);
 
     while(1) {
-      Msg(STATUS3N, "Select exterior boundary ('q'=quit)");
-      ib = SelectEntity(type, &v, &c, &s);
-      if(ib <= 0) {
+      Msg(STATUS3N, "Select exterior boundary ('u'=undo, 'q'=abort)");
+      char ib = SelectEntity(type, &v, &c, &s);
+      if(ib == 'q') {
         ZeroHighlight(THEM);
         Draw();
         goto stopall;
       }
-      if(SelectContour(type, (type == ENT_LINE) ? c->Num : s->Num, Liste1)) {
-        if(type == ENT_LINE)
-          add_loop(Liste1, CTX.filename, &zone);
-        else
-          add_vol(Liste1, CTX.filename, &zone);
-        List_Reset(Liste1);
-        List_Add(Liste2, &zone);
-        while(1) {
-          Msg(STATUS3N, "Select hole boundary ('q'=quit)");
-          ib = SelectEntity(type, &v, &c, &s);
-          if(ib <= 0) {
-            ZeroHighlight(THEM);
-            Draw();
-            break;
-          }
-          if(SelectContour
-             (type, (type == ENT_LINE) ? c->Num : s->Num, Liste1)) {
-            if(type == ENT_LINE)
-              add_loop(Liste1, CTX.filename, &zone);
-            else
-              add_vol(Liste1, CTX.filename, &zone);
-            List_Reset(Liste1);
-            List_Add(Liste2, &zone);
-          }
-        }
-        if(List_Nbr(Liste2)) {
-          switch (mode) {
-          case 0:
-            add_surf(Liste2, CTX.filename, 0, 2);
-            break;
-          case 1:
-            add_surf(Liste2, CTX.filename, 0, 1);
-            break;
-          case 2:
-            add_multvol(Liste2, CTX.filename);
-            break;
-          }
-          ZeroHighlight(THEM);
-          Draw();
-          break;
-        }
+      if(ib == 'u') {
+	if(List_Nbr(ListUnsorted) > 0){
+	  for(int i = 0; i < List_Nbr(List1); i++){
+	    List_Read(List1, i, &num);	    
+	    ZeroHighlightEntityNum(0,
+				   (type == ENT_LINE) ? abs(num) : 0, 
+				   (type != ENT_LINE) ? abs(num) : 0);
+	  }
+	  List_Reset(List1);
+	  List_Pop(ListUnsorted);
+	  for(int i = 0; i < List_Nbr(ListUnsorted); i++){
+	    List_Read(ListUnsorted, i, &num);
+	    List_Add(List1, &num);
+	    HighlightEntityNum(0, 
+			       (type == ENT_LINE) ? abs(num) : 0, 
+			       (type != ENT_LINE) ? abs(num) : 0, 1);
+	  }
+	  Draw();
+	}
+      }
+      if(ib == 'l') {
+	int num = (type == ENT_LINE) ? c->Num : s->Num;
+	List_Add(ListUnsorted, &num);
+	if(SelectContour(type, num, List1)) {
+	  if(type == ENT_LINE)
+	    add_loop(List1, CTX.filename, &num);
+	  else
+	    add_vol(List1, CTX.filename, &num);
+	  List_Reset(List1);
+	  List_Reset(ListUnsorted);
+	  List_Add(List2, &num);
+	  while(1) {
+	    Msg(STATUS3N, "Select hole boundaries ('e'=end, 'u'=undo, 'q'=abort)");
+	    ib = SelectEntity(type, &v, &c, &s);
+	    if(ib == 'q') {
+	      ZeroHighlight(THEM);
+	      Draw();
+	      goto stopall;
+	    }
+	    if(ib == 'e') {
+	      ZeroHighlight(THEM);
+	      Draw();
+	      break;
+	    }
+	    if(ib == 'u') {
+	      if(List_Nbr(ListUnsorted) > 0){
+		for(int i = 0; i < List_Nbr(List1); i++){
+		  List_Read(List1, i, &num);	    
+		  ZeroHighlightEntityNum(0,
+					 (type == ENT_LINE) ? abs(num) : 0, 
+					 (type != ENT_LINE) ? abs(num) : 0);
+		}
+		List_Reset(List1);
+		List_Pop(ListUnsorted);
+		for(int i = 0; i < List_Nbr(ListUnsorted); i++){
+		  List_Read(ListUnsorted, i, &num);
+		  List_Add(List1, &num);
+		  HighlightEntityNum(0, 
+				     (type == ENT_LINE) ? abs(num) : 0, 
+				     (type != ENT_LINE) ? abs(num) : 0, 1);
+		}
+		Draw();
+	      }
+	    }
+	    if(ib == 'l') {
+	      num = (type == ENT_LINE) ? c->Num : s->Num;
+	      List_Add(ListUnsorted, &num);
+	      if(SelectContour(type, num, List1)) {
+		if(type == ENT_LINE)
+		  add_loop(List1, CTX.filename, &num);
+		else
+		  add_vol(List1, CTX.filename, &num);
+		List_Reset(List1);
+		List_Reset(ListUnsorted);
+		List_Add(List2, &num);
+	      }
+	    }
+	  }
+	  if(List_Nbr(List2)) {
+	    switch (mode) {
+	    case 0: add_surf(List2, CTX.filename, 0, 2); break;
+	    case 1: add_surf(List2, CTX.filename, 0, 1); break;
+	    case 2: add_multvol(List2, CTX.filename); break;
+	    }
+	    ZeroHighlight(THEM);
+	    Draw();
+	    break;
+	  }
+	} // if SelectContour
       }
     }
   }
+
 stopall:;
-  List_Delete(Liste1);
-  List_Delete(Liste2);
+  List_Delete(List1);
+  List_Delete(List2);
+  List_Delete(ListUnsorted);
   Msg(STATUS3N, "Ready");
 }
 
@@ -2059,9 +2129,11 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   Curve *c;
   Surface *s;
   int type, num = 0;
+  char *str;
 
   if(!strcmp(what, "Point")) {
     type = ENT_POINT;
+    str = "points";
     if(!opt_geometry_points(0, GMSH_GET, 0)) {
       opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2069,6 +2141,7 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   }
   else if(!strcmp(what, "Line")) {
     type = ENT_LINE;
+    str = "lines";
     if(!opt_geometry_lines(0, GMSH_GET, 0)) {
       opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2076,6 +2149,7 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   }
   else {
     type = ENT_SURFACE;
+    str = "surfaces";
     if(!opt_geometry_surfaces(0, GMSH_GET, 0)) {
       opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2083,48 +2157,80 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   }
 
   while(1) {
-    Msg(STATUS3N, "Select %s ('q'=quit)", what);
-    if(!SelectEntity(type, &v, &c, &s)) {
+    Msg(STATUS3N, "Select %s ('q'=abort)", str);
+    char ib = SelectEntity(type, &v, &c, &s);
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
     }
-    switch (type) {
-    case ENT_POINT:
-      num = v->Num;
-      break;
-    case ENT_LINE:
-      num = c->Num;
-      break;
-    case ENT_SURFACE:
-      num = s->Num;
-      break;
+    if(ib == 'l') {
+      switch (type) {
+      case ENT_POINT:
+	num = v->Num;
+	break;
+      case ENT_LINE:
+	num = c->Num;
+	break;
+      case ENT_SURFACE:
+	num = s->Num;
+	break;
+      }
+      switch (transfo) {
+      case 0:
+	translate(mode, num, CTX.filename, what,
+		  (char*)WID->context_geometry_input[6]->value(),
+		  (char*)WID->context_geometry_input[7]->value(),
+		  (char*)WID->context_geometry_input[8]->value());
+	break;
+      case 1:
+	rotate(mode, num, CTX.filename, what,
+	       (char*)WID->context_geometry_input[12]->value(),
+	       (char*)WID->context_geometry_input[13]->value(),
+	       (char*)WID->context_geometry_input[14]->value(),
+	       (char*)WID->context_geometry_input[9]->value(),
+	       (char*)WID->context_geometry_input[10]->value(),
+	       (char*)WID->context_geometry_input[11]->value(),
+	       (char*)WID->context_geometry_input[15]->value());
+	break;
+      case 2:
+	dilate(mode, num, CTX.filename, what,
+	       (char*)WID->context_geometry_input[16]->value(),
+	       (char*)WID->context_geometry_input[17]->value(),
+	       (char*)WID->context_geometry_input[18]->value(),
+	       (char*)WID->context_geometry_input[19]->value());
+	break;
+      case 3:
+	symmetry(mode, num, CTX.filename, what,
+		 (char*)WID->context_geometry_input[20]->value(),
+		 (char*)WID->context_geometry_input[21]->value(),
+		 (char*)WID->context_geometry_input[22]->value(),
+		 (char*)WID->context_geometry_input[23]->value());
+	break;
+      case 4:
+	extrude(num, CTX.filename, what,
+		(char*)WID->context_geometry_input[6]->value(),
+		(char*)WID->context_geometry_input[7]->value(),
+		(char*)WID->context_geometry_input[8]->value());
+	break;
+      case 5:
+	protude(num, CTX.filename, what,
+		(char*)WID->context_geometry_input[12]->value(),
+		(char*)WID->context_geometry_input[13]->value(),
+		(char*)WID->context_geometry_input[14]->value(),
+		(char*)WID->context_geometry_input[9]->value(),
+		(char*)WID->context_geometry_input[10]->value(),
+		(char*)WID->context_geometry_input[11]->value(),
+		(char*)WID->context_geometry_input[15]->value());
+	break;
+      case 6:
+	delet(num, CTX.filename, what);
+	break;
+      }
+      ZeroHighlight(THEM);
+      CalculateMinMax(THEM->Points, NULL);
+      Draw();
     }
-    switch (transfo) {
-    case 0:
-      translate(mode, num, CTX.filename, what);
-      break;
-    case 1:
-      rotate(mode, num, CTX.filename, what);
-      break;
-    case 2:
-      dilate(mode, num, CTX.filename, what);
-      break;
-    case 3:
-      symmetry(mode, num, CTX.filename, what);
-      break;
-    case 4:
-      extrude(num, CTX.filename, what);
-      break;
-    case 5:
-      protude(num, CTX.filename, what);
-      break;
-    case 6:
-      delet(num, CTX.filename, what);
-      break;
-    }
-    ZeroHighlight(THEM);
-    Draw();
   }
   Msg(STATUS3N, "Ready");
 }
@@ -2389,11 +2495,13 @@ static void _add_physical(char *what)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib, type, zone;
-  List_T *Liste1;
+  int type, num;
+  char *str;
+  List_T *List1;
 
   if(!strcmp(what, "Point")) {
     type = ENT_POINT;
+    str = "points";
     if(!opt_geometry_points(0, GMSH_GET, 0)) {
       opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2401,6 +2509,7 @@ static void _add_physical(char *what)
   }
   else if(!strcmp(what, "Line")) {
     type = ENT_LINE;
+    str = "lines";
     if(!opt_geometry_lines(0, GMSH_GET, 0)) {
       opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2408,52 +2517,66 @@ static void _add_physical(char *what)
   }
   else if(!strcmp(what, "Surface")) {
     type = ENT_SURFACE;
+    str = "surfaces";
     if(!opt_geometry_surfaces(0, GMSH_GET, 0)) {
       opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
     }
   }
   else {
-    Msg(GERROR, "Interactive volume selection not done "
-        "(you will have to edit the input file manually)");
+    type = ENT_VOLUME;
+    str = "volumes";
     if(!opt_geometry_volumes(0, GMSH_GET, 0)) {
       opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
     }
+    Msg(GERROR, "Interactive volume selection not done "
+        "(you will have to edit the input file manually)");
     return;
   }
 
-  Liste1 = List_Create(5, 5, sizeof(int));
+  List1 = List_Create(5, 5, sizeof(int));
   while(1) {
-    Msg(STATUS3N, "Select %s ('e'=end, 'q'=quit)", what);
-    ib = SelectEntity(type, &v, &c, &s);
-    if(ib == 1) {       /* left mouse */
+    Msg(STATUS3N, "Select %s ('e'=end, 'u'=undo, 'q'=abort)", str);
+    char ib = SelectEntity(type, &v, &c, &s);
+    if(ib == 'l') {
       switch (type) {
       case ENT_POINT:
-        List_Add(Liste1, &v->Num);
+        List_Add(List1, &v->Num);
         break;
       case ENT_LINE:
-        List_Add(Liste1, &c->Num);
+        List_Add(List1, &c->Num);
         break;
       case ENT_SURFACE:
-        List_Add(Liste1, &s->Num);
+        List_Add(List1, &s->Num);
         break;
       }
     }
-    if(ib == -1) {      /* end */
-      if(List_Nbr(Liste1)) {
-        add_physical(Liste1, CTX.filename, type, &zone);
-        List_Reset(Liste1);
+    if(ib == 'u') {
+      if(List_Nbr(List1)) {
+	List_Read(List1, List_Nbr(List1)-1, &num);
+	ZeroHighlightEntityNum((type == ENT_POINT) ? num : 0,
+			       (type == ENT_LINE) ? num : 0,
+			       (type == ENT_SURFACE) ? num : 0);
+	Draw(); // inefficient, but hard to do otherwise
+	List_Pop(List1);
+      }
+    }
+    if(ib == 'e') {
+      if(List_Nbr(List1)) {
+        add_physical(List1, CTX.filename, type, &num);
+        List_Reset(List1);
         ZeroHighlight(THEM);
         Draw();
       }
     }
-    if(ib == 0) {
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
     }
   }
+  List_Delete(List1);
   Msg(STATUS3N, "Ready");
 }
 
@@ -2544,8 +2667,7 @@ void mesh_define_length_cb(CALLBACK_ARGS)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib;
-  static int n = 0, p[100];
+  int n = 0, p[100];
 
   if(!opt_geometry_points(0, GMSH_GET, 0)) {
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2555,22 +2677,26 @@ void mesh_define_length_cb(CALLBACK_ARGS)
   WID->create_mesh_context_window(0);
 
   while(1) {
-    Msg(STATUS3N, "Select point ('e'=end, 'q'=quit)");
-    ib = SelectEntity(ENT_POINT, &v, &c, &s);
-    if(ib == 1) {       /* left mouse butt */
+    Msg(STATUS3N, "Select points ('e'=end, 'u'=undo, 'q'=qbort)");
+    char ib = SelectEntity(ENT_POINT, &v, &c, &s);
+    if(ib == 'l') {
       p[n++] = v->Num;
     }
-    if(ib == -1) {      /* 'e' */
-      if(n >= 1) {
-        add_charlength(n, p, CTX.filename);
-        n = 0;
-        ZeroHighlight(THEM);
-        Draw();
-        break;
+    if(ib == 'e') {
+      if(n > 0)
+        add_charlength(n, p, CTX.filename, (char*)WID->context_mesh_input[0]->value());
+      ZeroHighlight(THEM);
+      Draw();
+      n = 0;
+    }
+    if(ib == 'u') {
+      if(n > 0){
+	ZeroHighlightEntityNum(p[n-1], 0, 0);
+	Draw(); // inefficient, but hard to do otherwise
+	n--;
       }
     }
-    if(ib == 0) {       /* 'q' */
-      n = 0;
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
@@ -2584,8 +2710,7 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib;
-  static int n, p[100];
+  int n, p[100];
 
   if(!opt_geometry_surfaces(0, GMSH_GET, 0)) {
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
@@ -2594,22 +2719,26 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Select surface ('e'=end, 'q'=quit)");
-    ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
-    if(ib == 1) {       /* left mouse butt */
+    Msg(STATUS3N, "Select surface ('e'=end, 'u'=undo, 'q'=qbort)");
+    char ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
+    if(ib == 'l') {
       p[n++] = s->Num;
     }
-    if(ib == -1) {      /* 'e' */
-      if(n >= 1) {
+    if(ib == 'e') {
+      if(n > 0)
         add_recosurf(n, p, CTX.filename);
-        break;
-      }
-      n = 0;
       ZeroHighlight(THEM);
       Draw();
-    }
-    if(ib == 0) {       /* 'q' */
       n = 0;
+    }
+    if(ib == 'u') {
+      if(n > 0){
+	ZeroHighlightEntityNum(0, 0, p[n-1]);
+	Draw(); // inefficient, but hard to do otherwise
+	n--;
+      }
+    }
+    if(ib == 'q') {
       ZeroHighlight(THEM);
       Draw();
       break;
@@ -2628,8 +2757,8 @@ static void _add_transfinite(int dim)
   Vertex *v;
   Curve *c;
   Surface *s;
-  int ib = 0;
-  static int n, p[100];
+  char ib;
+  int n, p[100];
 
   if(!opt_geometry_points(0, GMSH_GET, 0)) {
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -2661,78 +2790,98 @@ static void _add_transfinite(int dim)
   while(1) {
     switch (dim) {
     case 1:
-      Msg(STATUS3N, "Select line ('e'=end, 'q'=quit)");
+      Msg(STATUS3N, "Select lines ('e'=end, 'u'=undo, 'q'=abort)");
       ib = SelectEntity(ENT_LINE, &v, &c, &s);
       break;
     case 2:
-      Msg(STATUS3N, "Select surface ('e'=end, 'q'=quit)");
+      Msg(STATUS3N, "Select surface ('q'=abort)");
       ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
       break;
-    case 3:
-      ib = 1;
+    default:
+      ib = 'l';
       break;
     }
-    if(ib == 1) {       /* left mouse butt */
+
+    if(ib == 'e') {
+      if(dim == 1) {
+        if(n > 0)
+          add_trsfline(n, p, CTX.filename,
+		       (char*)WID->context_mesh_choice[0]->text(),
+		       (char*)WID->context_mesh_input[2]->value(),
+		       (char*)WID->context_mesh_input[1]->value());
+      }
+      ZeroHighlight(THEM);
+      Draw();
+      n = 0;
+    }
+    if(ib == 'u') {
+      if(dim == 1) {
+        if(n > 0){
+	  ZeroHighlightEntityNum(0, p[n-1], 0);
+	  Draw(); // inefficient, but hard to do otherwise
+	  n--;
+	}
+      }
+    }
+    if(ib == 'q') {
+      ZeroHighlight(THEM);
+      Draw();
+      break;
+    }
+    if(ib == 'l') {
       switch (dim) {
       case 1:
         p[n++] = c->Num;
         break;
       case 2:
-        p[n++] = s->Num;        // fall-through
+        p[n++] = s->Num; // fall-through
       case 3:
         while(1) {
-          Msg(STATUS3N, "Select point ('e'=end, 'q'=quit)");
+          Msg(STATUS3N, "Select points ('e'=end, 'u'=undo, 'q'=quit)");
           ib = SelectEntity(ENT_POINT, &v, &c, &s);
-          if(ib == 1) { /* left mouse butt */
+          if(ib == 'l') {
             p[n++] = v->Num;
           }
-          if(ib == -1) {        /* 'e' */
+	  if(ib == 'u') {
+	    if(n > ((dim == 2) ? 1 : 0)){
+	      ZeroHighlightEntityNum(p[n-1], 0, 0);
+	      Draw(); // inefficient, but hard to do otherwise
+	      n--;
+	    }
+	  }
+          if(ib == 'e') {
             switch (dim) {
             case 2:
               if(n == 3 + 1 || n == 4 + 1)
                 add_trsfsurf(n, p, CTX.filename);
               else
-                Msg(STATUS2,
-                    "Wrong number of points for transfinite surface");
+                Msg(STATUS2, "Wrong number of points for transfinite surface");
               break;
             case 3:
               if(n == 6 || n == 8)
-                add_trsfvol(n, p, CTX.filename);
+                add_trsfvol(n, p, CTX.filename, 
+			    (char*)WID->context_mesh_input[3]->value());
               else
                 Msg(STATUS2, "Wrong number of points for transfinite volume");
               break;
             }
-            n = 0;
             ZeroHighlight(THEM);
             Draw();
+            n = 0;
             break;
           }
-          if(ib == 0) { /* 'q' */
-            n = 0;
+          if(ib == 'q') {
             ZeroHighlight(THEM);
             Draw();
-            break;
+            goto stopall;
           }
         }
         break;
       }
     }
-    if(ib == -1) {      /* 'e' */
-      if(dim == 1) {
-        if(n >= 1)
-          add_trsfline(n, p, CTX.filename);
-      }
-      n = 0;
-      ZeroHighlight(THEM);
-      Draw();
-    }
-    if(ib == 0) {       /* 'q' */
-      n = 0;
-      ZeroHighlight(THEM);
-      Draw();
-      break;
-    }
   }
+
+stopall:
   Msg(STATUS3N, "Ready");
 }
 
@@ -3607,67 +3756,13 @@ void con_geometry_define_parameter_cb(CALLBACK_ARGS)
 
 void con_geometry_define_point_cb(CALLBACK_ARGS)
 {
-  strcpy(x_text, (char *)WID->context_geometry_input[2]->value());
-  strcpy(y_text, WID->context_geometry_input[3]->value());
-  strcpy(z_text, WID->context_geometry_input[4]->value());
-  strcpy(l_text, WID->context_geometry_input[5]->value());
-  add_point(CTX.filename);
+  add_point(CTX.filename,
+	    (char*)WID->context_geometry_input[2]->value(),
+	    (char*)WID->context_geometry_input[3]->value(),
+	    (char*)WID->context_geometry_input[4]->value(),
+	    (char*)WID->context_geometry_input[5]->value());
   ZeroHighlight(THEM);
   CalculateMinMax(THEM->Points, NULL);
   Draw();
 }
 
-void con_geometry_define_translation_cb(CALLBACK_ARGS)
-{
-  strcpy(tx_text, WID->context_geometry_input[6]->value());
-  strcpy(ty_text, WID->context_geometry_input[7]->value());
-  strcpy(tz_text, WID->context_geometry_input[8]->value());
-}
-
-void con_geometry_define_rotation_cb(CALLBACK_ARGS)
-{
-  strcpy(px_text, WID->context_geometry_input[9]->value());
-  strcpy(py_text, WID->context_geometry_input[10]->value());
-  strcpy(pz_text, WID->context_geometry_input[11]->value());
-  strcpy(ax_text, WID->context_geometry_input[12]->value());
-  strcpy(ay_text, WID->context_geometry_input[13]->value());
-  strcpy(az_text, WID->context_geometry_input[14]->value());
-  strcpy(angle_text, WID->context_geometry_input[15]->value());
-}
-
-void con_geometry_define_scale_cb(CALLBACK_ARGS)
-{
-  strcpy(dx_text, WID->context_geometry_input[16]->value());
-  strcpy(dy_text, WID->context_geometry_input[17]->value());
-  strcpy(dz_text, WID->context_geometry_input[18]->value());
-  strcpy(df_text, WID->context_geometry_input[19]->value());
-}
-
-void con_geometry_define_symmetry_cb(CALLBACK_ARGS)
-{
-  strcpy(sa_text, WID->context_geometry_input[20]->value());
-  strcpy(sb_text, WID->context_geometry_input[21]->value());
-  strcpy(sc_text, WID->context_geometry_input[22]->value());
-  strcpy(sd_text, WID->context_geometry_input[23]->value());
-}
-
-
-// Contextual windows for mesh
-
-void con_mesh_define_length_cb(CALLBACK_ARGS)
-{
-  strcpy(char_length_text, WID->context_mesh_input[0]->value());
-}
-
-void con_mesh_define_transfinite_line_cb(CALLBACK_ARGS)
-{
-  strcpy(trsf_pts_text, WID->context_mesh_input[1]->value());
-  strcpy(trsf_type_text,
-         (!WID->context_mesh_choice[0]->value())? "Progression" : "Bump");
-  strcpy(trsf_typearg_text, WID->context_mesh_input[2]->value());
-}
-
-void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS)
-{
-  strcpy(trsf_vol_text, WID->context_mesh_input[3]->value());
-}

@@ -47,10 +47,11 @@ void PaletteContinuousLinear(Post_View * v, double min, double max, double val);
 void PaletteDiscrete(Post_View * View, int nbi, int i);
 void ColorSwitch(int i);
 
-int  SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
-void ZeroHighlight(Mesh *m);
+char SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
 void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
 void HighlightEntityNum(int v, int c, int s, int permanant);
+void ZeroHighlight(Mesh *m);
+void ZeroHighlightEntityNum(int v, int c, int s);
 
 void Draw3d(void);
 void Draw2d(void);

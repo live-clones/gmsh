@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.38 2004-05-17 18:04:54 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.39 2004-05-18 04:54:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -120,7 +120,7 @@ int check_type(int type, Vertex * v, Curve * c, Surface * s)
 	  (type == ENT_SURFACE && s));
 }
 
-int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
+char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
 {
   int hits;
   GLuint ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
@@ -129,6 +129,7 @@ int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
   WID->try_selection = 0;
   WID->quit_selection = 0;
   WID->end_selection = 0;
+  WID->undo_selection = 0;
 
   while(1) {
     *v = NULL;
@@ -139,12 +140,16 @@ int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
     if(WID->quit_selection) {
       WID->quit_selection = 0;
       WID->selection = 0;
-      return 0;
+      return 'q';
     }
     if(WID->end_selection) {
       WID->end_selection = 0;
       WID->selection = 0;
-      return -1;
+      return 'e';
+    }
+    if(WID->undo_selection) {
+      WID->undo_selection = 0;
+      return 'u';
     }
     if(WID->try_selection) {
       WID->try_selection = 0;
@@ -153,7 +158,7 @@ int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
       if(check_type(type, *v, *c, *s)) {
         HighlightEntity(*v, *c, *s, 1);
         WID->selection = 0;
-        return 1;
+        return 'l';
       }
     }
   }

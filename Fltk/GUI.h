@@ -280,7 +280,7 @@ public:
   int  arrow_shortcuts();
   void reset_visibility();
   void reset_option_browser();
-  int  selection, try_selection, quit_selection, end_selection;
+  int  selection, try_selection, quit_selection, end_selection, undo_selection;
 
 };
 

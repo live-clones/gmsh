@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.39 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: Geo.cpp,v 1.40 2004-05-18 04:54:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -41,22 +41,6 @@ int snprintf(char *str, size_t size, const char* fmt, ...){
   return ret;
 }
 #endif
-
-// This is truly horrible :-)
-
-char x_text[100] = "0.0", y_text[100] = "0.0", z_text[100] = "0.0";
-char l_text[100] = "1.0";
-char tx_text[100] = "0.0", ty_text[100] = "0.0", tz_text[100] = "0.0";
-char attrx_text[100] = "1.0", attry_text[100] = "1.0", attrz_text[100] = "1.0";
-char attrdec_text[100] = "2.0";
-char px_text[100] = "0.0", py_text[100] = "0.0", pz_text[100] = "0.0";
-char angle_text[100] = "3.14159/2";
-char ax_text[100] = "0.0", ay_text[100] = "0.0", az_text[100] = "1.0";
-char dx_text[100] = "0.0", dy_text[100] = "0.0", dz_text[100] = "0.0", df_text[100] = "1.0";
-char sa_text[100] = "0.0", sb_text[100] = "0.0", sc_text[100] = "0.0", sd_text[100] = "0.0";
-char trsf_pts_text[100] = "2", trsf_type_text[100] = "Progression", trsf_typearg_text[100] = "1.";
-char trsf_vol_text[100] = "1";
-char char_length_text[100] = "1.";
 
 double evaluate_scalarfunction(char *var, double val, char *funct)
 {
@@ -119,7 +103,7 @@ void delet(int p1, char *fich, char *what)
 {
   char text[BUFFSIZE];
 
-  snprintf(text, BUFFSIZE, "Delete {\n %s{%d};\n}", what, p1);
+  snprintf(text, BUFFSIZE, "Delete {\n  %s{%d};\n}", what, p1);
   add_infile(text, fich);
 }
 
@@ -159,7 +143,7 @@ void add_ellipticsurf(int N, int *l, char *fich)
   add_infile(text, fich);
 }
 
-void add_charlength(int N, int *l, char *fich)
+void add_charlength(int N, int *l, char *fich, char *lc)
 {
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
@@ -172,7 +156,7 @@ void add_charlength(int N, int *l, char *fich)
       snprintf(text2, BUFFSIZE, ",%d", l[i]);
     strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  snprintf(text2, BUFFSIZE, "} = %s;", char_length_text);
+  snprintf(text2, BUFFSIZE, "} = %s;", lc);
   strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
@@ -196,7 +180,7 @@ void add_recosurf(int N, int *l, char *fich)
 }
 
 
-void add_trsfline(int N, int *l, char *fich)
+void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts)
 {
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
@@ -209,11 +193,10 @@ void add_trsfline(int N, int *l, char *fich)
       snprintf(text2, BUFFSIZE, ",%d", l[i]);
     strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  if(strlen(trsf_typearg_text))
-    snprintf(text2, BUFFSIZE, "} = %s Using %s %s;", trsf_pts_text,
-             trsf_type_text, trsf_typearg_text);
+  if(strlen(typearg))
+    snprintf(text2, BUFFSIZE, "} = %s Using %s %s;", pts, type, typearg);
   else
-    snprintf(text2, BUFFSIZE, "} = %s;", trsf_pts_text);
+    snprintf(text2, BUFFSIZE, "} = %s;", pts);
   strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
@@ -226,31 +209,25 @@ void add_param(char *par, char *value, char *fich)
   add_infile(text, fich);
 }
 
-void add_point(char *fich)
+void add_point(char *fich, char *x, char *y, char *z, char *lc)
 {
   char text[BUFFSIZE];
-  int ip;
-
-  ip = NEWPOINT();
-  snprintf(text, BUFFSIZE, "Point(%d) = {%s,%s,%s,%s};", ip, x_text, y_text,
-           z_text, l_text);
+  int ip = NEWPOINT();
+  snprintf(text, BUFFSIZE, "Point(%d) = {%s,%s,%s,%s};", ip, x, y, z, lc);
   add_infile(text, fich);
 }
 
-void add_attractor(char *fich, int ip, int typ)
+void add_attractor(char *fich, int ip, int typ, char *ax, char *ay, char *ad)
 {
   char text[BUFFSIZE];
   if(typ == 0) {
-    snprintf(text, BUFFSIZE, "Attractor Point {%d} = {%s,%s,%s} = ;",
-             ip, attrx_text, attry_text, attrdec_text);
+    snprintf(text, BUFFSIZE, "Attractor Point {%d} = {%s,%s,%s} = ;", ip, ax, ay, ad);
   }
   else if(typ == 1) {
-    snprintf(text, BUFFSIZE, "Attractor Line {%d} = {%s,%s,%s};",
-             ip, attrx_text, attry_text, attrdec_text);
+    snprintf(text, BUFFSIZE, "Attractor Line {%d} = {%s,%s,%s};", ip, ax, ay, ad);
   }
   else if(typ == 2) {
-    snprintf(text, BUFFSIZE, "Attractor Surface {%d} = {%s,%s,%s};",
-             ip, attrx_text, attry_text, attrdec_text);
+    snprintf(text, BUFFSIZE, "Attractor Surface {%d} = {%s,%s,%s};", ip, ax, ay, ad);
   }
   add_infile(text, fich);
 }
@@ -459,12 +436,12 @@ void add_multvol(List_T * list, char *fich)
   add_infile(text, fich);
 }
 
-void add_trsfvol(int N, int *l, char *fich)
+void add_trsfvol(int N, int *l, char *fich, char *vol)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
   int i;
 
-  snprintf(text, BUFFSIZE, "Transfinite Volume{%s} = {", trsf_vol_text);
+  snprintf(text, BUFFSIZE, "Transfinite Volume{%s} = {", vol);
   for(i = 0; i < N; i++) {
     if(i == 0)
       snprintf(text2, BUFFSIZE, "%d", l[i]);
@@ -510,81 +487,76 @@ void add_physical(List_T * list, char *fich, int type, int *num)
   add_infile(text, fich);
 }
 
-void translate(int add, int s, char *fich, char *what)
+void translate(int add, int s, char *fich, char *what, char *tx, char *ty, char *tz)
 {
   char text[BUFFSIZE];
 
   if(add)
     snprintf(text, BUFFSIZE,
-             "Translate {%s,%s,%s} {\n  Duplicata { %s{%d}; }\n}", tx_text,
-             ty_text, tz_text, what, s);
+             "Translate {%s,%s,%s} {\n  Duplicata { %s{%d}; }\n}", tx, ty, tz, what, s);
   else
-    snprintf(text, BUFFSIZE, "Translate {%s,%s,%s} {\n  %s{%d};\n}",
-             tx_text, ty_text, tz_text, what, s);
+    snprintf(text, BUFFSIZE, "Translate {%s,%s,%s} {\n  %s{%d};\n}", tx, ty, tz, what, s);
   add_infile(text, fich);
 }
 
-void rotate(int add, int s, char *fich, char *quoi)
+void rotate(int add, int s, char *fich, char *what, char *ax, char *ay, char *az,
+	    char *px, char *py, char *pz, char *angle)
 {
   char text[BUFFSIZE];
 
   if(add)
     snprintf(text, BUFFSIZE,
              "Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n  Duplicata { %s{%d}; }\n}",
-             ax_text, ay_text, az_text, px_text, py_text, pz_text, angle_text,
-             quoi, s);
+             ax, ay, az, px, py, pz, angle, what, s);
   else
     snprintf(text, BUFFSIZE,
-             "Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n   %s{%d};\n  }",
-             ax_text, ay_text, az_text, px_text, py_text, pz_text, angle_text,
-             quoi, s);
+             "Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n  %s{%d};\n}",
+             ax, ay, az, px, py, pz, angle, what, s);
   add_infile(text, fich);
 }
 
-void dilate(int add, int s, char *fich, char *quoi)
+void dilate(int add, int s, char *fich, char *what, char *dx, char *dy, char *dz, char *df)
 {
   char text[BUFFSIZE];
 
   if(add)
     snprintf(text, BUFFSIZE,
              "Dilate { {%s,%s,%s},%s } {\n  Duplicata { %s{%d}; }\n}",
-             dx_text, dy_text, dz_text, df_text, quoi, s);
+             dx, dy, dz, df, what, s);
   else
-    snprintf(text, BUFFSIZE, "Dilate { {%s,%s,%s},%s } {\n   %s{%d};\n  }",
-             dx_text, dy_text, dz_text, df_text, quoi, s);
+    snprintf(text, BUFFSIZE, "Dilate { {%s,%s,%s},%s } {\n  %s{%d};\n}",
+             dx, dy, dz, df, what, s);
   add_infile(text, fich);
 }
 
-void symmetry(int add, int s, char *fich, char *quoi)
+void symmetry(int add, int s, char *fich, char *what, char *sa, char *sb, char *sc, char *sd)
 {
   char text[BUFFSIZE];
 
   if(add)
     snprintf(text, BUFFSIZE,
              "Symmetry { %s,%s,%s,%s } {\n  Duplicata { %s{%d}; }\n}",
-             sa_text, sb_text, sc_text, sd_text, quoi, s);
+             sa, sb, sc, sd, what, s);
   else
-    snprintf(text, BUFFSIZE, "Symmetry { %s,%s,%s,%s } {\n   %s{%d};\n  }",
-             sa_text, sb_text, sc_text, sd_text, quoi, s);
+    snprintf(text, BUFFSIZE, "Symmetry { %s,%s,%s,%s } {\n  %s{%d};\n}",
+             sa, sb, sc, sd, what, s);
   add_infile(text, fich);
-
 }
 
-void extrude(int s, char *fich, char *what)
+void extrude(int s, char *fich, char *what, char *tx, char *ty, char *tz)
 {
   char text[BUFFSIZE];
 
-  snprintf(text, BUFFSIZE, "Extrude %s {%d, {%s,%s,%s}};", what, s, tx_text,
-           ty_text, tz_text);
+  snprintf(text, BUFFSIZE, "Extrude %s {%d, {%s,%s,%s}};", what, s, tx, ty, tz);
   add_infile(text, fich);
 }
 
-void protude(int s, char *fich, char *what)
+void protude(int s, char *fich, char *what, char *ax, char *ay, char *az,
+	     char *px, char *py, char *pz, char *angle)
 {
   char text[BUFFSIZE];
 
   snprintf(text, BUFFSIZE, "Extrude %s {%d, {%s,%s,%s}, {%s,%s,%s}, %s};",
-           what, s, ax_text, ay_text, az_text, px_text, py_text, pz_text,
-           angle_text);
+           what, s, ax, ay, az, px, py, pz, angle);
   add_infile(text, fich);
 }

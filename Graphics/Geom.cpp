@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.56 2004-05-17 18:46:51 geuzaine Exp $
+// $Id: Geom.cpp,v 1.57 2004-05-18 04:54:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -309,7 +309,10 @@ void Draw_Plane_Surface(Surface * s)
   static List_T *points;
   static int deb = 1;
 
-  if(!s->Orientations) {
+  if(!s->Orientations)
+    s->Orientations = List_Create(20, 2, sizeof(Vertex));
+
+  if(!List_Nbr(s->Orientations)) {
 
     s->Orientations = List_Create(20, 2, sizeof(Vertex));
 
@@ -698,21 +701,21 @@ void HighlightEntityNum(int v, int c, int s, int permanent)
   }
 }
 
-void ZeroPoint(void *a, void *b)
+void ZeroHighlightPoint(void *a, void *b)
 {
   Vertex *v;
   v = *(Vertex **) a;
   v->Frozen = 0;
 }
 
-void ZeroCurve(void *a, void *b)
+void ZeroHighlightCurve(void *a, void *b)
 {
   Curve *c;
   c = *(Curve **) a;
   c->ipar[3] = 0;
 }
 
-void ZeroSurface(void *a, void *b)
+void ZeroHighlightSurface(void *a, void *b)
 {
   Surface *s;
   s = *(Surface **) a;
@@ -721,7 +724,26 @@ void ZeroSurface(void *a, void *b)
 
 void ZeroHighlight(Mesh * m)
 {
-  Tree_Action(m->Points, ZeroPoint);
-  Tree_Action(m->Curves, ZeroCurve);
-  Tree_Action(m->Surfaces, ZeroSurface);
+  Tree_Action(m->Points, ZeroHighlightPoint);
+  Tree_Action(m->Curves, ZeroHighlightCurve);
+  Tree_Action(m->Surfaces, ZeroHighlightSurface);
+}
+
+void ZeroHighlightEntityNum(int v, int c, int s)
+{
+  if(v) {
+    Vertex *pv = FindPoint(v, THEM);
+    if(pv)
+      ZeroHighlightPoint(&pv, NULL);
+  }
+  if(c) {
+    Curve *pc = FindCurve(c, THEM);
+    if(pc)
+      ZeroHighlightCurve(&pc, NULL);
+  }
+  if(s) {
+    Surface *ps = FindSurface(s, THEM);
+    if(ps)
+      ZeroHighlightSurface(&ps, NULL);
+  }
 }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.299 2004-05-17 18:04:53 geuzaine Exp $
+// $Id: GUI.cpp,v 1.300 2004-05-18 04:54:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -480,6 +480,10 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut('e')) {
     end_selection = 1;
+    return 0;   // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut('u')) {
+    undo_selection = 1;
     return 0;   // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('q')) {
@@ -3160,7 +3164,9 @@ void GUI::create_geometry_context_window(int num)
     {
       g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Parameter");
       context_geometry_input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Name");
+      context_geometry_input[0]->value("lc");
       context_geometry_input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Value");
+      context_geometry_input[1]->value("1.0");
       for(i = 0; i < 2; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -3174,9 +3180,13 @@ void GUI::create_geometry_context_window(int num)
     {
       g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Point");
       context_geometry_input[2] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate");
+      context_geometry_input[2]->value("0.0");
       context_geometry_input[3] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y coordinate");
+      context_geometry_input[3]->value("0.0");
       context_geometry_input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
+      context_geometry_input[4]->value("0.0");
       context_geometry_input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Characteristic length");
+      context_geometry_input[5]->value("1.0");
       for(i = 2; i < 6; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -3190,14 +3200,13 @@ void GUI::create_geometry_context_window(int num)
     {
       g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Translation");
       context_geometry_input[6] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component");
+      context_geometry_input[6]->value("1.0");
       context_geometry_input[7] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component");
+      context_geometry_input[7]->value("0.0");
       context_geometry_input[8] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z component");
+      context_geometry_input[8]->value("0.0");
       for(i = 6; i < 9; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
-      }
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Set");
-        o->callback(con_geometry_define_translation_cb);
       }
       g[2]->end();
     }
@@ -3205,18 +3214,21 @@ void GUI::create_geometry_context_window(int num)
     {
       g[3] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Rotation");
       context_geometry_input[9] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate of an axis point");
+      context_geometry_input[9]->value("0.0");
       context_geometry_input[10] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y coordinate of an axis point");
+      context_geometry_input[10]->value("0.0");
       context_geometry_input[11] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate of an axis point");
+      context_geometry_input[11]->value("0.0");
       context_geometry_input[12] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "X component of direction");
+      context_geometry_input[12]->value("0.0");
       context_geometry_input[13] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Y component of direction");
+      context_geometry_input[13]->value("1.0");
       context_geometry_input[14] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Z component of direction");
+      context_geometry_input[14]->value("0.0");
       context_geometry_input[15] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle in radians");
+      context_geometry_input[15]->value("Pi/4");
       for(i = 9; i < 16; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
-      }
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Set");
-        o->callback(con_geometry_define_rotation_cb);
       }
       g[3]->end();
     }
@@ -3224,15 +3236,15 @@ void GUI::create_geometry_context_window(int num)
     {
       g[4] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Scale");
       context_geometry_input[16] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component of direction");
+      context_geometry_input[16]->value("1.0");
       context_geometry_input[17] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component of direction");
+      context_geometry_input[17]->value("0.0");
       context_geometry_input[18] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z component of direction");
+      context_geometry_input[18]->value("0.0");
       context_geometry_input[19] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Factor");
+      context_geometry_input[19]->value("2.0");
       for(i = 16; i < 20; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
-      }
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Set");
-        o->callback(con_geometry_define_scale_cb);
       }
       g[4]->end();
     }
@@ -3240,15 +3252,15 @@ void GUI::create_geometry_context_window(int num)
     {
       g[5] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Symmetry");
       context_geometry_input[20] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "1st plane equation coefficient");
+      context_geometry_input[20]->value("1.0");
       context_geometry_input[21] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "2nd plane equation coefficient");
+      context_geometry_input[21]->value("0.0");
       context_geometry_input[22] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "3rd plane equation coefficient");
+      context_geometry_input[22]->value("0.0");
       context_geometry_input[23] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "4th plane equation coefficient");
+      context_geometry_input[23]->value("1.0");
       for(i = 20; i < 24; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
-      }
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Set");
-        o->callback(con_geometry_define_symmetry_cb);
       }
       g[5]->end();
     }
@@ -3290,18 +3302,17 @@ void GUI::create_mesh_context_window(int num)
     {
       g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Characteristic length");
       context_mesh_input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
+      context_mesh_input[0]->value("1.0");
       context_mesh_input[0]->align(FL_ALIGN_RIGHT);
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 3 * BH, BB, BH, "Set");
-        o->callback(con_mesh_define_length_cb);
-      }
       g[0]->end();
     }
     // 1: Transfinite line
     {
       g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite line");
       context_mesh_input[1] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of points");
-      context_mesh_input[2] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH);
+      context_mesh_input[1]->value("10");
+      context_mesh_input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");
+      context_mesh_input[2]->value("1.0");
       for(i = 1; i < 3; i++) {
         context_mesh_input[i]->align(FL_ALIGN_RIGHT);
       }
@@ -3310,23 +3321,17 @@ void GUI::create_mesh_context_window(int num)
         {"Bump", 0, 0, 0},
         {0}
       };
-      context_mesh_choice[0] = new Fl_Choice(2 * WB + IW, 2 * WB + 2 * BH, IW, BH);
+      context_mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Type");
       context_mesh_choice[0]->menu(menu_trsf_mesh);
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 3 * BH, BB, BH, "Set");
-        o->callback(con_mesh_define_transfinite_line_cb);
-      }
+      context_mesh_choice[0]->align(FL_ALIGN_RIGHT);
       g[1]->end();
     }
     // 2: Transfinite volume
     {
       g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Transfinite volume");
       context_mesh_input[3] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Volume number");
+      context_mesh_input[3]->value("1");
       context_mesh_input[3]->align(FL_ALIGN_RIGHT);
-      {
-        Fl_Return_Button *o = new Fl_Return_Button(width - BB - 2 * WB, 2 * WB + 3 * BH, BB, BH, "Set");
-        o->callback(con_mesh_define_transfinite_volume_cb);
-      }
       g[2]->end();
     }
     o->end();

@@ -239,10 +239,6 @@ void geometry_reload_cb(CALLBACK_ARGS) ;
 
 void con_geometry_define_parameter_cb(CALLBACK_ARGS) ;
 void con_geometry_define_point_cb(CALLBACK_ARGS) ;
-void con_geometry_define_translation_cb(CALLBACK_ARGS) ;
-void con_geometry_define_rotation_cb(CALLBACK_ARGS) ;
-void con_geometry_define_scale_cb(CALLBACK_ARGS) ;
-void con_geometry_define_symmetry_cb(CALLBACK_ARGS) ;
 
 // Dynamic Mesh Menus
 
@@ -259,10 +255,6 @@ void mesh_define_transfinite_cb (CALLBACK_ARGS) ;
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS) ;
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS) ;
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS) ; 
-
-void con_mesh_define_length_cb(CALLBACK_ARGS) ;
-void con_mesh_define_transfinite_line_cb(CALLBACK_ARGS) ;
-void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS) ;
 
 // Dynamic Solver Menus
 

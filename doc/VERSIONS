@@ -1,11 +1,12 @@
-$Id: VERSIONS,v 1.206 2004-05-15 08:37:18 geuzaine Exp $
+$Id: VERSIONS,v 1.207 2004-05-18 04:54:51 geuzaine Exp $
 
 New since 1.52: various background mesh fixes and enhancements; new
 Plugin(Evaluate) to evaluate arbitrary expressions on post-processing
 views; generalized Plugin(Extract) to handle any combination of
 components; generalized "Coherence" to handle transfinite
 surface/volume attributes; plugin options can now be set in the option
-file (like all other options); many small cleanups;
+file (like all other options); added "undo" capability during geometry
+creation; many small cleanups;
 
 New in 1.52: new raster ("bitmap") PostScript/EPS/PDF output formats;
 new Plugin(Extract) to extract a given component from a

@@ -92,34 +92,18 @@ typedef struct {
   } obj;
 } Shape;
 
-// static strings for parser interaction
-extern char x_text[100], y_text[100], z_text[100];
-extern char l_text[100];
-extern char tx_text[100], ty_text[100], tz_text[100];
-extern char attrx_text[100], attry_text[100], attrz_text[100];
-extern char attrdec_text[100];
-extern char px_text[100], py_text[100], pz_text[100];
-extern char angle_text[100] ;
-extern char ax_text[100], ay_text[100], az_text[100];
-extern char dx_text[100], dy_text[100], dz_text[100], df_text[100];
-extern char sa_text[100], sb_text[100], sc_text[100], sd_text[100];
-extern char nb_pts[100], mode_value[100];
-extern char trsf_pts_text[100], trsf_type_text[100], trsf_typearg_text[100];
-extern char trsf_vol_text[100];
-extern char char_length_text[100];
-
 double evaluate_scalarfunction (char *var, double val, char *funct);
 
 void delet(int p1, char *fich, char *what);
 void add_infile(char *text, char *fich);
-void add_trsfsurf (int N, int *l, char *fich);
-void add_trsfvol (int N, int *l, char *fich);
-void add_ellipticsurf (int N, int *l, char *fich);
-void add_charlength (int N, int *l, char *fich);
-void add_recosurf (int N, int *l, char *fich);
-void add_trsfline (int N, int *l, char *fich);
-void add_param (char *par, char *value, char *fich);
-void add_point(char *fich);
+void add_trsfsurf(int N, int *l, char *fich);
+void add_trsfvol(int N, int *l, char *fich, char *vol);
+void add_ellipticsurf(int N, int *l, char *fich);
+void add_charlength(int N, int *l, char *fich, char *lc);
+void add_recosurf(int N, int *l, char *fich);
+void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts);
+void add_param(char *par, char *value, char *fich);
+void add_point(char *fich, char *x, char *y, char *z, char *lc);
 void add_attractor(char *fich, int ip, int typ);
 void add_line(int p1, int p2, char *fich);
 void add_circ(int p1, int p2, int p3, char *fich);
@@ -133,11 +117,13 @@ void add_surf(List_T *list, char *fich, int support, int typ);
 void add_vol(List_T *list, char *fich, int *numvol);
 void add_multvol(List_T *list, char *fich);
 void add_physical(List_T *list, char *fich, int type, int *num);
-void translate(int add, int s, char *fich, char*what);
-void rotate(int add, int s, char *fich, char *what);
-void dilate(int add, int s, char *fich, char *what);
-void symmetry(int add, int s, char *fich, char *what);
-void extrude(int s, char *fich, char *what);
-void protude(int s, char *fich, char *what);
+void translate(int add, int s, char *fich, char *what, char *tx, char *ty, char *tz);
+void rotate(int add, int s, char *fich, char *what, char *ax, char *ay, char *az,
+	    char *px, char *py, char *pz, char *angle);
+void dilate(int add, int s, char *fich, char *what, char *dx, char *dy, char *dz, char *df);
+void symmetry(int add, int s, char *fich, char *what, char *sa, char *sb, char *sc, char *sd);
+void extrude(int s, char *fich, char *what, char *tx, char *ty, char *tz);
+void protude(int s, char *fich, char *what, char *ax, char *ay, char *az,
+	     char *px, char *py, char *pz, char *angle);
 
 #endif
