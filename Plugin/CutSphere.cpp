@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.33 2004-10-30 03:07:29 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.34 2004-10-30 04:23:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -65,6 +65,7 @@ void GMSH_CutSpherePlugin::draw()
   glGetIntegerv(GL_POLYGON_MODE, mode);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glPushMatrix();
+  glColor4ubv((GLubyte *) & CTX.color.fg);
   glTranslated(CutSphereOptions_Number[0].def,
 	       CutSphereOptions_Number[1].def,
 	       CutSphereOptions_Number[2].def);
