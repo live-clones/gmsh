@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.43 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.44 2005-01-09 21:36:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -351,23 +351,22 @@ void getbb(double pos[2], double width, double height,
            double dx, double dy, double tic, double space,
            double bbtot[4], double bb[4])
 {
-  bbtot[0] = pos[0] - dx - space;       //topleft x
+  bbtot[0] = pos[0] - dx - space; //topleft x
   bb[0] = bbtot[0];
 
-  //don't recompute bbtot[1].
-  bb[1] = pos[1] - 1.5 * dy - space;    //topleft y
+  //don't recompute bbtot[1]
+  bb[1] = pos[1] - 1.5 * dy - space; //topleft y
 
-  bbtot[2] = MAX(bbtot[2], pos[0] + width + (dx - tic) / 2 + space);    //bottomright x
+  bbtot[2] = MAX(bbtot[2], pos[0] + width + (dx - tic) / 2 + space); //bottomright x
   bb[2] = pos[0] + width + (dx - tic) / 2 + space;
 
-  bbtot[3] = pos[1] + height + 2 * dy + space;  //bottomright y
+  bbtot[3] = pos[1] + height + 2 * dy + space; //bottomright y
   bb[3] = bbtot[3];
 }
 
 void Draw_Graph2D(void)
 {
-  int i, nbauto = 0;
-  Post_View *v;
+  int nbauto = 0;
   double dx, dy, bb[4], bbtot[4] = { 0., 0., 0., 0. }, pos[2] = {0., 0.}, tic;
   double space = 10.;
   char label[1024];
@@ -375,8 +374,8 @@ void Draw_Graph2D(void)
   if(!CTX.post.list)
     return;
 
-  for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-    v = *(Post_View **) List_Pointer(CTX.post.list, i);
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(v->Visible && !v->Dirty && v->NbSP && v->Type != DRAW_POST_3D) {
       tic = 5;
       dx = dy = 0.;
@@ -398,12 +397,14 @@ void Draw_Graph2D(void)
         Draw_Graph2D(v, pos[0], pos[1], v->Size[0], v->Size[1], tic, bb);
       }
       else {
-        if(bbtot[3] + v->Size[1] + 3 * dy + 2 * space < CTX.viewport[3]) {      //try to put below
+        if(bbtot[3] + v->Size[1] + 3 * dy + 2 * space < CTX.viewport[3]) { 
+	  //try to put below
           pos[1] = bbtot[3] + 1.5 * dy + space;
           getbb(pos, v->Size[0], v->Size[1], dx, dy, tic, space, bbtot, bb);
           Draw_Graph2D(v, pos[0], pos[1], v->Size[0], v->Size[1], tic, bb);
         }
-        else {  //start a new column
+        else { 
+	  //start a new column
           pos[0] = bbtot[2] + dx + space;
           pos[1] = bbtot[1] + 1.5 * dy + space;
           getbb(pos, v->Size[0], v->Size[1], dx, dy, tic, space, bbtot, bb);
@@ -501,20 +502,14 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T * td, List_T * tc)
 
 void Draw_Text2D(void)
 {
-  int i;
-  Post_View *v;
-
   if(!CTX.post.list)
     return;
 
-  glColor4ubv((GLubyte *) & CTX.color.text);
-
-  for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-    v = *(Post_View **) List_Pointer(CTX.post.list, i);
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(v->Visible && !v->Dirty && v->DrawStrings){
       glColor4ubv((GLubyte *) & v->color.text2d);
       Draw_Text2D3D(2, v->TimeStep, v->NbT2, v->T2D, v->T2C);
     }
   }
-
 }
