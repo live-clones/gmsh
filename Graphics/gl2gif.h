@@ -3,9 +3,9 @@
 
 /*
  * GL2GIF, an OpenGL to GIF Printing Library
- * Copyright (C) 1999-2002  Christophe Geuzaine 
+ * Copyright (C) 1999-2003 Christophe Geuzaine 
  *
- * $Id: gl2gif.h,v 1.11 2003-03-02 18:44:16 geuzaine Exp $
+ * $Id: gl2gif.h,v 1.12 2003-04-02 06:02:01 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public

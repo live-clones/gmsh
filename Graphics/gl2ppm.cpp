@@ -1,8 +1,8 @@
 /*
  * GL2PPM, an OpenGL to PPM Printing Library
- * Copyright (C) 1999-2002  Christophe Geuzaine 
+ * Copyright (C) 1999-2003 Christophe Geuzaine 
  *
- * $Id: gl2ppm.cpp,v 1.10 2003-03-01 22:36:40 geuzaine Exp $
+ * $Id: gl2ppm.cpp,v 1.11 2003-04-02 06:02:01 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public

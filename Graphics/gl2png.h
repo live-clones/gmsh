@@ -2,10 +2,10 @@
 #define _GL2PNG_H_
 
 /*
- * GL2JPEG, an OpenGL to JPEG Printing Library
- * Copyright (C) 2003  Christophe Geuzaine 
+ * GL2PNG, an OpenGL to PNG Printing Library
+ * Copyright (C) 2003 Christophe Geuzaine 
  *
- * $Id: gl2png.h,v 1.1 2003-04-02 05:53:23 geuzaine Exp $
+ * $Id: gl2png.h,v 1.2 2003-04-02 06:02:01 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public

@@ -3,9 +3,9 @@
 
 /*
  * GL2YUV, an OpenGL to YUV Printing Library
- * Copyright (C) 1999-2002  Christophe Geuzaine 
+ * Copyright (C) 1999-2003 Christophe Geuzaine 
  *
- * $Id: gl2yuv.h,v 1.6 2003-03-02 18:44:16 geuzaine Exp $
+ * $Id: gl2yuv.h,v 1.7 2003-04-02 06:02:01 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
