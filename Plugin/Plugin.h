@@ -24,6 +24,10 @@ class Post_View;
 class GMSH_Plugin
 {
 public :
+  /*output file name*/
+  char OutputFileName[256];
+  /*input file name*/
+  char InputFileName[256];
   /* a dialog box for user interface */
   PluginDialogBox *dialogBox;
   /*this is there for internal use, this variable will be
@@ -47,8 +51,8 @@ public :
   /* gmsh style option, ca be loaded, saved and set*/
   virtual int getNbOptions() const = 0;
   virtual StringXNumber *GetOption (int iopt) = 0;
-  virtual void Save() const = 0;
-  virtual void Run() const = 0;
+  virtual void Save() = 0;
+  virtual void Run() = 0;
 };
 
 /* Base class for Post-Processing Plugins
@@ -56,13 +60,13 @@ public :
    a Post_View */
 class GMSH_Post_Plugin : public GMSH_Plugin
 {
+ protected:
+  Post_View *processed;
 public:
   inline GMSH_PLUGIN_TYPE getType() const 
     {return GMSH_Plugin::GMSH_POST_PLUGIN;}
   /* If returned pointer is the same as the argument, then view is simply modified,
     else, a new view is added in the view list */
-  virtual void Run() const {};
-  virtual void Save() const {};
   virtual Post_View *execute (Post_View *) = 0;
 };
 

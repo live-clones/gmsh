@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.91 2001-07-26 18:47:59 remacle Exp $
+// $Id: GUI.cpp,v 1.92 2001-07-26 21:36:31 remacle Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1710,9 +1710,9 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView)
 
   for(int i=0;i<n;i++)
     {
-      StringXNumber sxn;
-      p->GetOption(i,&sxn);
-      pdb->view_value[i] = new Fl_Value_Input(2*WB, 2*WB+(i)*BH, IW, BH, sxn.str);
+      StringXNumber *sxn;
+      sxn = p->GetOption(i);
+      pdb->view_value[i] = new Fl_Value_Input(2*WB, 2*WB+(i)*BH, IW, BH, sxn->str);
       pdb->view_value[i]->labelsize(CTX.fontsize);
       pdb->view_value[i]->textsize(CTX.fontsize);
       pdb->view_value[i]->type(FL_HORIZONTAL);

@@ -6,6 +6,25 @@
 // that's the bad part of the story ...
 extern Post_View *ActualView;
 
+GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
+{
+  processed = 0;
+  strcpy (OutputFileName,"levelset.pos");
+}
+
+void GMSH_LevelsetPlugin::Save ()
+{
+  printf("coucou saving ...\n");
+  if(processed)
+    Write_View(0, processed, OutputFileName);
+}
+
+void GMSH_LevelsetPlugin::Run () 
+{ 
+  printf("coucou running ...\n");
+  execute (0);
+}
+
 Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 {
   /*
@@ -14,6 +33,9 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
    */
   int k,i,nb,edtet[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   //   for all scalar simplices 
+
+  printf("processing view with %d tets\n",v->NbSS);
+
   if(v->NbSS)
     {
       BeginView(1);
@@ -66,12 +88,18 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	    }
 	}
       char name[1024],filename[1024];
+
       sprintf(name,"cut-%s",v->Name);
       sprintf(filename,"cut-%s",v->FileName);
       EndView(1, filename, name);
+      
+      printf("okay\n");
+
       Msg(INFO, "new %s view with %d tris\n",name,List_Nbr(ActualView->ST));
+      processed = ActualView;
       return ActualView;
     }
+
   Msg(INFO, "nothing ta da\n");
 
   return 0;

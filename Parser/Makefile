@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.22 2001-07-26 18:48:00 remacle Exp $
+# $Id: Makefile,v 1.23 2001-07-26 21:36:32 remacle Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -14,7 +14,7 @@ LEX      = flex
 
 LIB      = ../lib/libParser.a
 INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
-           -I../Mesh -I../Motif -I../Fltk
+           -I../Mesh -I../Motif -I../Fltk -I../Plugin
 
 C_FLAGS       = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN

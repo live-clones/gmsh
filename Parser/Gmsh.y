@@ -1,13 +1,15 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.81 2001-07-25 13:11:07 geuzaine Exp $
+// $Id: Gmsh.y,v 1.82 2001-07-26 21:36:32 remacle Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
   // 
 
 #include <stdarg.h>
-
+#ifndef _NOPLUGIN
+#include "PluginManager.h"
+#endif
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -88,7 +90,7 @@ void  skip_until (char *skip, char *until);
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
-%token tUsing tBump tProgression
+%token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
 %token tAttractor tLayers
@@ -1062,6 +1064,33 @@ Affectation :
       }
       List_Delete($8);
     }
+    // P l u g i n s ...
+  | tPlugin '(' tBIGSTR ')' '.' tBIGSTR tAFFECT FExpr tEND 
+  {
+#ifndef _NOPLUGIN
+    try 
+      {
+	GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
+      }
+    catch (...)
+      {
+	Msg(WARNING,"Unknown Option %s or plugin %s\n",$6,$3);
+      }
+#endif
+  }
+  | tPlugin '(' tBIGSTR ')' '.' tBIGSTR tAFFECT tBIGSTR tEND 
+  {
+#ifndef _NOPLUGIN
+    try 
+      {
+	GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
+      }
+    catch (...)
+      {
+	Msg(WARNING,"Unknown Option %s or plugin %s\n",$6,$3);
+      }
+#endif
+  }
 ;
 
 
@@ -1522,11 +1551,17 @@ Command :
       else
 	vyyerror("Unknown command '%s'", $1);
     }
-  | tExit tEND
+   | tPlugin '(' tBIGSTR ')' '.' tBIGSTR tEND
+   {
+#ifndef _NOPLUGIN
+    GMSH_PluginManager::Instance()->Action($3,$6,0); 
+#endif
+   }
+   | tExit tEND
     {
       exit(0);
     } 
-  | tDraw tEND
+   | tDraw tEND
     {
       if(!CTX.batch){ // we're in interactive mode
 	if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){

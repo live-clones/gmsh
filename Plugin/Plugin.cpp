@@ -41,6 +41,7 @@ GMSH_Plugin* GMSH_PluginManager::find (char *pluginName)
 {
   iter it = allPlugins.find(pluginName);
   if ( it == allPlugins.end()) return 0;
+
   return (*it).second;
 }
 
@@ -52,7 +53,7 @@ void GMSH_PluginManager::Action( char *pluginName, char *action, void *data)
       throw 1;
     }
   if(!strcmp(action,"Run"))
-    {
+    {      
       plugin->Run();
     }
   else if(!strcmp(action,"Save"))
@@ -65,10 +66,34 @@ void GMSH_PluginManager::Action( char *pluginName, char *action, void *data)
     }
 }
 
-void GMSH_PluginManager::SetPluginOption (char *pluginName, char *option, double value)
+void GMSH_PluginManager::SetPluginOption (char *pluginName, char *option, char *value)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin)throw "Unknown Plugin Name";
+  
+  if(!strcmp(option,"OutputFileName"))
+    {
+      strcpy(plugin->OutputFileName,value);
+    }
+  else if(!strcmp(option,"InputFileName"))
+    {
+      strcpy(plugin->InputFileName,value);
+    }
+  else
+    {
+      throw "Unknown Plugin Option Name";
+    }
+}
+
+void GMSH_PluginManager::SetPluginOption (char *pluginName, char *option, double value)
+{
+  GMSH_Plugin *plugin = find(pluginName);
+  if(!plugin)
+    {
+      Msg(WARNING,"Unknown plugin %s\n",pluginName);
+      throw "Unknown Plugin Name";
+    }
+
   for(int i=0 ; i<plugin->getNbOptions();i++)
     {
       StringXNumber *sxn;
