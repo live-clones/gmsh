@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.86 2001-08-01 13:34:16 geuzaine Exp $
+// $Id: Gmsh.y,v 1.87 2001-08-01 14:30:40 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1745,23 +1745,30 @@ Extrude :
     {
       Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,0,NULL);
     }
-  | tExtrude tSurface '{' FExpr ',' VExpr '}' '{' ExtrudeParameters '}' tEND
-  {
-    int vol = NEWREG();
-    Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,vol,&extr);
-  }
-  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' '{' ExtrudeParameters '}'tEND
-  {
-    int vol = NEWREG();
-    Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,vol,&extr);
-  }
-;
-
-ExtrudeParameters :
+  | tExtrude tSurface '{' FExpr ',' VExpr '}'
     {
       extr.mesh.ExtrudeMesh = false;
       extr.mesh.Recombine = false;
     }
+                      '{' ExtrudeParameters '}' tEND
+    {
+      int vol = NEWREG();
+      Extrude_ProtudeSurface(1,(int)$4,$6[0],$6[1],$6[2],0.,0.,0.,0.,vol,&extr);
+    }
+  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' 
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+  
+                      '{' ExtrudeParameters '}'tEND
+    {
+      int vol = NEWREG();
+      Extrude_ProtudeSurface(0,(int)$4,$6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,vol,&extr);
+    }
+;
+
+ExtrudeParameters :
     ExtrudeParameter
     {
     }
