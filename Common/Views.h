@@ -95,6 +95,39 @@ public:
   static std::list<_triangle*> all_triangles;
 };
 
+class _tet
+{
+public:
+  _tet (_point *p1,_point *p2,_point *p3,_point *p4)    
+    : visible (false)
+  {
+    p[0] = p1;
+    p[1] = p2;
+    p[2] = p3;
+    p[3] = p4;
+    t[0]=t[1]=t[2]=t[3]=0;
+    t[4]=t[5]=t[6]=t[7]=0;
+  }
+
+  inline double V () const
+  {
+    return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val)/4.;    
+  }
+  void print ()
+  {
+    printf ("p1 %g %g p2 %g %g p3 %g %g \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y,p[2]->x,p[2]->y);
+  }
+  static void clean ();
+  static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
+  static void Recur_Create (_tet *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Error ( double AVG , double tol );
+  static void Recur_Error ( _tet *t, double AVG, double tol );
+  bool visible;
+  _point     *p[4];
+  _tet  *t[8];
+  static std::list<_tet*> all_tets;
+};
+
 
 class Adaptive_Post_View 
 {
@@ -124,6 +157,8 @@ public:
   double getTolerance () const {return tol;}
   void zoomElement (Post_View * view ,
 		    int ielem, int level, GMSH_Post_Plugin *plug);
+  void zoomTet (Post_View * view ,
+		int ielem, int level, GMSH_Post_Plugin *plug);
 
 };
 
