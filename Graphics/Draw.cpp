@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.65 2004-11-16 21:04:54 geuzaine Exp $
+// $Id: Draw.cpp,v 1.66 2004-11-18 16:35:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -127,7 +127,7 @@ void Orthogonalize(int x, int y)
   if(CTX.ortho) {
     double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
     if(maxz < CTX.lc) maxz = CTX.lc;
-    double clip = maxz * CTX.s[2] * 10;
+    double clip = maxz * CTX.s[2] * CTX.clip_factor;
     glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();

@@ -93,6 +93,7 @@ public :
   double proj[16];            // current projection matrix
   double r[3];                // position angles (if succ. rot. along x, y and z) 
   double t[3], s[3];          // current translation and scale 
+  double clip_factor;         // clipping plane distance factor
   int rlock[3], tlock[3], slock[3];
                               // locks for r, t and s 
   double quaternion[4];       // the actual quaternion used for "trackball" rotating 

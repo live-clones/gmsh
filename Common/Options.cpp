@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.204 2004-11-13 22:52:44 geuzaine Exp $
+// $Id: Options.cpp,v 1.205 2004-11-18 16:35:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2248,6 +2248,13 @@ double opt_general_scale2(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.s[2] = val ? val : 1.0;
   return CTX.s[2];
+}
+
+double opt_general_clip_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.clip_factor = val;
+  return CTX.clip_factor;
 }
 
 double opt_general_point_size(OPT_ARGS_NUM)

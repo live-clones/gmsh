@@ -246,6 +246,7 @@ double opt_general_translation2(OPT_ARGS_NUM);
 double opt_general_scale0(OPT_ARGS_NUM);
 double opt_general_scale1(OPT_ARGS_NUM);
 double opt_general_scale2(OPT_ARGS_NUM);
+double opt_general_clip_factor(OPT_ARGS_NUM);
 double opt_general_point_size(OPT_ARGS_NUM);
 double opt_general_line_width(OPT_ARGS_NUM);
 double opt_general_shine(OPT_ARGS_NUM);
