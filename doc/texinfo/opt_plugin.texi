@@ -45,13 +45,13 @@ Plugin(CutGrid) creates one new view.
 Numeric options:
 @table @code
 @item X0
-Default value: @code{-1}
+Default value: @code{0}
 @item Y0
-Default value: @code{-1}
+Default value: @code{0}
 @item Z0
 Default value: @code{0}
 @item X1
-Default value: @code{-1}
+Default value: @code{1}
 @item Y1
 Default value: @code{0}
 @item Z1
@@ -59,7 +59,7 @@ Default value: @code{0}
 @item X2
 Default value: @code{0}
 @item Y2
-Default value: @code{-1}
+Default value: @code{1}
 @item Z2
 Default value: @code{0}
 @item nPointsU
@@ -264,7 +264,7 @@ Plugin(Evaluate) is executed in-place.
 String options:
 @table @code
 @item Expression
-Default value: @code{"0.01*(Fabs(Sin(30*y)*Fabs(Cos(30*x)))+0.3)"}
+Default value: @code{"Fabs(Sin(x)*Cos(y))"}
 @end table
 Numeric options:
 @table @code
@@ -491,25 +491,25 @@ view contains multi-step vector points if `dView'
 Numeric options:
 @table @code
 @item X0
-Default value: @code{2.39}
+Default value: @code{0}
 @item Y0
-Default value: @code{0.445}
+Default value: @code{0}
 @item Z0
 Default value: @code{0}
 @item X1
-Default value: @code{2.39}
+Default value: @code{1}
 @item Y1
-Default value: @code{0.94}
+Default value: @code{0}
 @item Z1
 Default value: @code{0}
 @item X2
-Default value: @code{2.39}
+Default value: @code{0}
 @item Y2
-Default value: @code{0.445}
-@item Z2
 Default value: @code{1}
+@item Z2
+Default value: @code{0}
 @item nPointsU
-Default value: @code{20}
+Default value: @code{10}
 @item nPointsV
 Default value: @code{1}
 @item MaxIter

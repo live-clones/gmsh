@@ -1,9 +1,10 @@
-$Id: VERSIONS,v 1.285 2004-12-27 07:35:13 geuzaine Exp $
+$Id: VERSIONS,v 1.286 2004-12-27 17:08:26 geuzaine Exp $
 
 New since 1.57: new File->Rename menu; new colormaps+improved colormap
 handling; new color+min/max options in views; new GetValue() function
 to ask for values interactively in scripts; generalized For/EndFor
-loops in parser; new plugins (Annotate, Remove, Probe);
+loops in parser; new plugins (Annotate, Remove, Probe); various other
+small enhancements and bug fixes.
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored
