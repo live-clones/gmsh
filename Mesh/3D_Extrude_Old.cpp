@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.12 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.13 2001-08-14 16:10:47 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -567,7 +567,7 @@ void Extrude_Mesh_Old(Mesh *M){
   Tree_Action(M->Surfaces, Extrude_Surface1);
 
   if(!CTX.mesh.oldxtrude_recombine){
-    j = TEST_IS_ALL_OK;
+    j = 0;
     do{
       TEST_IS_ALL_OK=0;
       Tree_Action ( M->Surfaces , Extrude_Surface2 );

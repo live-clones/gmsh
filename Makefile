@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.129 2001-08-14 12:53:17 geuzaine Exp $
+# $Id: Makefile,v 1.130 2001-08-14 16:10:47 geuzaine Exp $
 
 GMSH_RELEASE = 1.23
 MAKE = make
@@ -267,19 +267,10 @@ compile_linux_gcc-2.95:
            "GL_INCLUDE=-I/usr/X11R6/include" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-	rm -f Mesh/3D_Extrude.o
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(HOME)/gcc-2.95.3/bin/g++" \
-           "C_FLAGS=-O0" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=-I/usr/X11R6/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
-        ); done
 link_linux_gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux_gcc-2.95: tag compile_linux_gcc-2.95 link_linux-2.95 strip_bin
+linux_gcc-2.95: tag compile_linux_gcc-2.95 link_linux_gcc-2.95 strip_bin
 rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
 	rpm -bb utils/gmsh_fltk.spec

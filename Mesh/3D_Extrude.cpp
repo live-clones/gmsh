@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.31 2001-08-14 15:39:56 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.32 2001-08-14 16:10:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -695,6 +695,8 @@ int Extrude_Mesh (Volume * v){
 
   if (!v->Extrude || !v->Extrude->mesh.ExtrudeMesh) return false;
 
+  InitExtrude ();
+
   Msg(STATUS3, "Meshing Volume %d", v->Num);
 
   ep = v->Extrude;
@@ -714,19 +716,10 @@ int Extrude_Mesh (Volume * v){
       List_Delete (list);
     }
 
-    /* Hey, qu'est-ce que ca fout encore la, ca ?
-    list = Tree2List (s->Vertices);
-    for (i = 0; i < List_Nbr (list); i++){
-      List_Read (list, i, &v1);
-      Extrude_Vertex (&v1, NULL);
-    }
-    List_Delete (list);
-    */
-
     Extrude_Surface1 (s);
     
     if(!ep->mesh.Recombine){
-      j = TEST_IS_ALL_OK;
+      j = 0;
       do{
         TEST_IS_ALL_OK = 0;
         Extrude_Surface2 (s);
