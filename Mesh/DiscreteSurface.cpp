@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.3 2005-02-20 07:11:04 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.4 2005-02-20 16:41:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -445,7 +445,7 @@ void STLAddFacet(double x1, double y1, double z1,
   }
 }
 
-// Representation of discrete surfaces
+// Representation of discrete curves
 
 SEGM_rep::SEGM_rep()
   : num_points(0)
@@ -579,7 +579,7 @@ int MeshDiscreteCurve(Curve *c)
     SEGM_rep_To_Mesh(c->theSegmRep, c);
     return 1;
   }
-  else if(c->Typ == MSH_SURF_DISCRETE){
+  else if(c->Typ == MSH_SEGM_DISCRETE){
     // nothing else to do: we assume that the elements have alreay
     // been created
     return 1;
