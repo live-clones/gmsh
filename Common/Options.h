@@ -5,6 +5,10 @@
 #define GMSH_GET       (1<<1)
 #define GMSH_GUI       (1<<2)
 
+#define GMSH_SESSIONRC (1<<0)
+#define GMSH_OPTIONSRC (1<<1)
+#define GMSH_FULLRC    (1<<2)
+
 #define OPT_ARGS_STR   int num, int action, char *val
 #define OPT_ARGS_NUM   int num, int action, double val
 #define OPT_ARGS_COL   int num, int action, unsigned int val
@@ -15,6 +19,11 @@
 // STRINGS
 
 char * opt_general_display(OPT_ARGS_STR);
+char * opt_general_default_filename(OPT_ARGS_STR);
+char * opt_general_tmp_filename(OPT_ARGS_STR);
+char * opt_general_error_filename(OPT_ARGS_STR);
+char * opt_general_session_filename(OPT_ARGS_STR);
+char * opt_general_options_filename(OPT_ARGS_STR);
 char * opt_view_name(OPT_ARGS_STR);
 char * opt_view_format(OPT_ARGS_STR);
 char * opt_view_filename(OPT_ARGS_STR);
@@ -22,17 +31,21 @@ char * opt_print_font(OPT_ARGS_STR);
 
 // NUMBERS
 
-double opt_general_viewport0(OPT_ARGS_NUM);
-double opt_general_viewport1(OPT_ARGS_NUM);
-double opt_general_viewport2(OPT_ARGS_NUM);
-double opt_general_viewport3(OPT_ARGS_NUM);
+double opt_general_fontsize(OPT_ARGS_NUM);
+double opt_general_graphics_fontsize(OPT_ARGS_NUM);
 double opt_general_graphics_position0(OPT_ARGS_NUM);
 double opt_general_graphics_position1(OPT_ARGS_NUM);
-double opt_general_graphics_fontsize(OPT_ARGS_NUM);
+double opt_general_viewport2(OPT_ARGS_NUM);
+double opt_general_viewport3(OPT_ARGS_NUM);
 double opt_general_menu_position0(OPT_ARGS_NUM);
 double opt_general_menu_position1(OPT_ARGS_NUM);
-double opt_general_menu_fontsize(OPT_ARGS_NUM);
+double opt_general_message_position0(OPT_ARGS_NUM);
+double opt_general_message_position1(OPT_ARGS_NUM);
+double opt_general_message_size0(OPT_ARGS_NUM);
+double opt_general_message_size1(OPT_ARGS_NUM);
 double opt_general_center_windows(OPT_ARGS_NUM);
+double opt_general_session_save(OPT_ARGS_NUM);
+double opt_general_options_save(OPT_ARGS_NUM);
 double opt_general_rotation0(OPT_ARGS_NUM);
 double opt_general_rotation1(OPT_ARGS_NUM);
 double opt_general_rotation2(OPT_ARGS_NUM);
@@ -88,6 +101,7 @@ double opt_general_clip5a(OPT_ARGS_NUM);
 double opt_general_clip5b(OPT_ARGS_NUM);
 double opt_general_clip5c(OPT_ARGS_NUM);
 double opt_general_clip5d(OPT_ARGS_NUM);
+double opt_general_moving_light(OPT_ARGS_NUM);
 double opt_general_light0(OPT_ARGS_NUM);
 double opt_general_light00(OPT_ARGS_NUM);
 double opt_general_light01(OPT_ARGS_NUM);
@@ -122,11 +136,11 @@ double opt_geometry_points_num(OPT_ARGS_NUM);
 double opt_geometry_lines_num(OPT_ARGS_NUM);
 double opt_geometry_surfaces_num(OPT_ARGS_NUM);
 double opt_geometry_volumes_num(OPT_ARGS_NUM);
-double opt_geometry_hidden(OPT_ARGS_NUM);
-double opt_geometry_shade(OPT_ARGS_NUM);
+double opt_geometry_aspect(OPT_ARGS_NUM);
 double opt_geometry_highlight(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_scaling_factor(OPT_ARGS_NUM);
+double opt_geometry_color_scheme(OPT_ARGS_NUM);
 double opt_mesh_quality(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
 double opt_mesh_tangents(OPT_ARGS_NUM);
@@ -145,8 +159,7 @@ double opt_mesh_points_num(OPT_ARGS_NUM);
 double opt_mesh_lines_num(OPT_ARGS_NUM);
 double opt_mesh_surfaces_num(OPT_ARGS_NUM);
 double opt_mesh_volumes_num(OPT_ARGS_NUM);
-double opt_mesh_hidden(OPT_ARGS_NUM);
-double opt_mesh_shade(OPT_ARGS_NUM);
+double opt_mesh_aspect(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_algo(OPT_ARGS_NUM);
@@ -161,6 +174,8 @@ double opt_mesh_cut_planea(OPT_ARGS_NUM);
 double opt_mesh_cut_planeb(OPT_ARGS_NUM);
 double opt_mesh_cut_planec(OPT_ARGS_NUM);
 double opt_mesh_cut_planed(OPT_ARGS_NUM);
+double opt_mesh_color_scheme(OPT_ARGS_NUM);
+double opt_mesh_color_carousel(OPT_ARGS_NUM);
 double opt_post_scales(OPT_ARGS_NUM);
 double opt_post_link(OPT_ARGS_NUM);
 double opt_post_smooth(OPT_ARGS_NUM);
@@ -169,6 +184,7 @@ double opt_post_initial_intervals(OPT_ARGS_NUM);
 double opt_post_initial_nbiso(OPT_ARGS_NUM);
 double opt_post_anim_delay(OPT_ARGS_NUM);
 double opt_post_nb_views(OPT_ARGS_NUM);
+double opt_post_color_scheme(OPT_ARGS_NUM);
 double opt_view_nb_timestep(OPT_ARGS_NUM);
 double opt_view_timestep(OPT_ARGS_NUM);
 double opt_view_min(OPT_ARGS_NUM);
@@ -255,18 +271,21 @@ typedef struct {
 } StringX4Int;
 
 typedef struct {
+  int level;
   char *str ;
   char * (*function)(int num, int action, char *val) ;
   char *def ;
 } StringXString ;
 
 typedef struct {
+  int level;
   char *str;
   double (*function)(int num, int action, double val) ;
   double def ;
 } StringXNumber ;
 
 typedef struct {
+  int level;
   char *str ; 
   unsigned int (*function)(int num, int action, unsigned int val) ;
   unsigned int def1, def2, def3 ;
@@ -279,6 +298,10 @@ StringXColor * Get_ColorOptionCategory(char * cat);
 void Set_DefaultStringOptions(int num, StringXString s[]);
 void Set_DefaultNumberOptions(int num, StringXNumber s[]);
 void Set_DefaultColorOptions(int num, StringXColor s[], int scheme);
+
+void Set_StringOptions_GUI(int num, StringXString s[]);
+void Set_NumberOptions_GUI(int num, StringXNumber s[]);
+void Set_ColorOptions_GUI(int num, StringXColor s[]);
 
 void * Get_StringOption(char *str, StringXString s[]);
 void * Get_NumberOption(char *str, StringXNumber s[]);

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.29 2001-02-12 17:38:02 geuzaine Exp $
+// $Id: Views.cpp,v 1.30 2001-02-17 21:56:58 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -7,12 +7,12 @@
 #include "Options.h"
 #include "ColorTable.h"
 
-List_T  *Post_ViewList = NULL;
-Post_View  *ActualView;
+List_T     *Post_ViewList = NULL;
+Post_View  *Post_ViewReference = NULL, *ActualView;
 
 extern Context_T   CTX ;
 
-static int  ActualViewNum=0;
+static int  ActualViewNum=0, ActualViewIndex=0;
 static int  NbPoints, NbLines, NbTriangles, NbTetrahedra;
 
 /* ------------------------------------------------------------------------ */
@@ -33,7 +33,8 @@ void BeginView(int allocate, int force_number){
   if(!Post_ViewList) Post_ViewList = List_Create(100,1,sizeof(Post_View));
 
   if(!force_number){
-    v.Num = ++ActualViewNum;    
+    // each view MUST have a unique, non-reattributable, number
+    v.Num = ++ActualViewNum;
     List_Add(Post_ViewList, &v);
   }
   else{
@@ -43,7 +44,8 @@ void BeginView(int allocate, int force_number){
 
   CTX.post.nb_views = List_Nbr(Post_ViewList);
 
-  ActualView = (Post_View*)List_PQuery(Post_ViewList, &v, fcmpPostViewNum);
+  ActualViewIndex = List_ISearch(Post_ViewList, &v, fcmpPostViewNum);
+  ActualView = (Post_View*)List_Pointer(Post_ViewList, ActualViewIndex);
 
   NbPoints = NbLines = NbTriangles = NbTetrahedra = 0;
 
@@ -81,19 +83,18 @@ void BeginView(int allocate, int force_number){
     ActualView->SS = NULL; ActualView->VS = NULL; ActualView->TS = NULL;
   }
 
+  CopyViewOptions(Post_ViewReference, ActualView);
+
   ActualView->Changed = 1;
   ActualView->Links = 0;
   ActualView->DuplicateOf = 0;
   ActualView->ScalarOnly = 1;
   ActualView->normals = NULL;
-
-  Set_DefaultStringOptions(ActualView->Num-1, ViewOptions_String);
-  Set_DefaultNumberOptions(ActualView->Num-1, ViewOptions_Number);
-  Set_DefaultColorOptions(ActualView->Num-1, ViewOptions_Color, 0);
   ActualView->CT.size = 255;
   ActualView->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
   ColorTable_InitParam(1, &ActualView->CT, 1, 1);
   ColorTable_Recompute(&ActualView->CT, 1, 1);
+
 }
 
 void Stat_ScalarSimplex(int nbnod, int N, double *V){
@@ -232,26 +233,26 @@ void EndView(int add_in_gui, int force_number, char *file_name, char *name){
   }
 
   // Dummy time values if using old parsed format...
-  if(!List_Nbr(ActualView->Time)){
+  if(ActualView->Time && !List_Nbr(ActualView->Time)){
     for(i=0 ; i<ActualView->NbTimeStep ; i++){
       d = (double)i;
       List_Add(ActualView->Time, &d);
     }
   }
 
-  opt_view_name(ActualView->Num-1, GMSH_SET|GMSH_GUI, name);
-  opt_view_filename(ActualView->Num-1, GMSH_SET|GMSH_GUI, file_name);
-  opt_view_nb_timestep(ActualView->Num-1, GMSH_GUI, 0);
+  opt_view_name(ActualViewIndex, GMSH_SET|GMSH_GUI, name);
+  opt_view_filename(ActualViewIndex, GMSH_SET|GMSH_GUI, file_name);
+  opt_view_nb_timestep(ActualViewIndex, GMSH_GUI, 0);
   if(ActualView->Min > ActualView->Max){
-    opt_view_min(ActualView->Num-1, GMSH_SET|GMSH_GUI, 0.);
-    opt_view_max(ActualView->Num-1, GMSH_SET|GMSH_GUI, 0.);
+    opt_view_min(ActualViewIndex, GMSH_SET|GMSH_GUI, 0.);
+    opt_view_max(ActualViewIndex, GMSH_SET|GMSH_GUI, 0.);
   }
   else{
-    opt_view_min(ActualView->Num-1, GMSH_GUI, 0);
-    opt_view_max(ActualView->Num-1, GMSH_GUI, 0);
+    opt_view_min(ActualViewIndex, GMSH_GUI, 0);
+    opt_view_max(ActualViewIndex, GMSH_GUI, 0);
   }
-  opt_view_custom_min(ActualView->Num-1, GMSH_SET|GMSH_GUI, ActualView->Min);
-  opt_view_custom_max(ActualView->Num-1, GMSH_SET|GMSH_GUI, ActualView->Max);
+  opt_view_custom_min(ActualViewIndex, GMSH_SET|GMSH_GUI, ActualView->Min);
+  opt_view_custom_max(ActualViewIndex, GMSH_SET|GMSH_GUI, ActualView->Max);
 
   if(CTX.post.smooth) ActualView->smooth();
 
@@ -269,7 +270,7 @@ bool FreeView(int num){
   }
   v = (Post_View*)List_Pointer(Post_ViewList, num);
   FreeView(v);
-  List_Suppress(Post_ViewList, v, fcmpPostViewNum);
+  List_PSuppress(Post_ViewList, num);
   CTX.post.nb_views = List_Nbr(Post_ViewList);
 
   Msg(INFO, "View %d deleted (%d views left)",num, List_Nbr(Post_ViewList));
@@ -279,33 +280,34 @@ bool FreeView(int num){
 
 void FreeView(Post_View *v){
   Post_View vv,*v2;
-  int free = 1;
+  int i, numdup, free = 1;
 
   if(v->DuplicateOf){
     vv.Num = v->DuplicateOf ;
-    Msg(DEBUG, "This View is a Duplicata");
+    Msg(DEBUG, "This view is a duplicata");
     if(!(v2 = (Post_View*)List_PQuery(Post_ViewList, &vv, fcmpPostViewNum))){
-      Msg(DEBUG, " ->The Original View is Gone");
-      if(!(v2 = (Post_View*)List_PQuery(Post_ViewList, v, fcmpPostViewDuplicateOf))){
-        Msg(DEBUG, " ->There are no other duplicata");
+      Msg(DEBUG, "  -the original view is gone");
+      numdup = 0;
+      for(i=0 ; i<List_Nbr(Post_ViewList); i++)
+	numdup += (((Post_View*)List_Pointer(Post_ViewList, i))->DuplicateOf == v->DuplicateOf);
+      if(numdup == 1){
+        Msg(DEBUG, "  -there are no other duplicata, so I can free");
         free = 1 ;
       }
       else{
+        Msg(DEBUG, "  -there are still duplicata, so I cannot free");
         free = 0 ;
       }
     }
     else{
       v2->Links--;
       free = 0 ;
-      Msg(DEBUG, " ->The original still exists, so I dont't free anything now");
+      Msg(DEBUG, "  -the original still exists, so I cannot free");
     }
   }
 
-  if(v->Links)
-    Msg(DEBUG, " ->This view is linked: Cannot free");
-
   if(free && !v->Links){
-    Msg(DEBUG, " ->Freeing View");
+    Msg(DEBUG, "FREEING VIEW");
     List_Delete(v->Time);
     List_Delete(v->SP); List_Delete(v->VP); List_Delete(v->TP);
     List_Delete(v->SL); List_Delete(v->VL); List_Delete(v->TL);
@@ -345,7 +347,12 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
 
 ColorTable *Get_ColorTable(int num){
   Post_View *v;
-  if((v = (Post_View*)List_Pointer_Test(Post_ViewList, num)))
+
+  if(!Post_ViewList)
+    v = Post_ViewReference ;
+  else
+    v = (Post_View*)List_Pointer_Test(Post_ViewList, num);
+  if(v)
     return &v->CT ;
   else
     return NULL ;
@@ -353,7 +360,11 @@ ColorTable *Get_ColorTable(int num){
 
 void Print_ColorTable(int num, char *prefix, FILE *file){
   char tmp[1024];
-  Post_View *v = (Post_View*)List_Pointer_Test(Post_ViewList, num);
+  Post_View *v;
+  if(!Post_ViewList)
+    v = Post_ViewReference ;
+  else
+    v = (Post_View*)List_Pointer_Test(Post_ViewList, num);
   if(!v) return;
   sprintf(tmp, "%s = {", prefix);
   if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
@@ -501,6 +512,65 @@ void Read_View(FILE *file, char *filename){
   }   /* while 1 ... */
 
 }
+
+/* ------------------------------------------------------------------------ */
+/*  W r i t e _ V i e w                                                     */
+/* ------------------------------------------------------------------------ */
+
+void Write_View(int Flag_BIN, Post_View *v, char *filename){
+  FILE *file;
+  int i, f, One=1;
+
+  if(filename){
+    file = fopen(filename,"w");
+    if(!file){
+      Msg(WARNING, "Unable to Open File '%s'", filename);
+      return;
+    }
+  }
+  else
+    file = stdout;
+ 
+  fprintf(file, "$PostFormat /* Gmsh 1.0, %s */\n",
+	  Flag_BIN ? "binary" : "ascii") ;
+  fprintf(file, "1.0 %d %d\n", Flag_BIN, sizeof(double)) ;
+  fprintf(file, "$EndPostFormat\n") ;
+  for(i=0;i<(int)strlen(v->Name);i++)
+    if(v->Name[i]==' ') v->Name[i]='_'; 
+  // -> Il faudra changer le format de post pour autoriser les blancs.
+  // On ajoutera aussi un entier par simplexe (num de region).
+  // Devrait-on passer a un format liste de noeuds + liste de
+  // simplexes ?
+  fprintf(file, "$View /* %s */\n", v->Name);
+  fprintf(file, "%s ", v->Name);
+  fprintf(file, "%d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	  List_Nbr(v->Time),
+	  v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL, 
+	  v->NbST, v->NbVT, v->NbTT, v->NbSS, v->NbVS, v->NbTS);
+  if(Flag_BIN){
+    f = LIST_FORMAT_BINARY;
+    fwrite(&One, sizeof(int), 1, file);
+  }
+  else
+    f = LIST_FORMAT_ASCII;
+  List_WriteToFile(v->Time, file, f); 
+  List_WriteToFile(v->SP, file, f); List_WriteToFile(v->VP, file, f);
+  List_WriteToFile(v->TP, file, f); List_WriteToFile(v->SL, file, f);
+  List_WriteToFile(v->VL, file, f); List_WriteToFile(v->TL, file, f);
+  List_WriteToFile(v->ST, file, f); List_WriteToFile(v->VT, file, f);
+  List_WriteToFile(v->TT, file, f); List_WriteToFile(v->SS, file, f);
+  List_WriteToFile(v->VS, file, f); List_WriteToFile(v->TS, file, f);
+  if(Flag_BIN) fprintf(file, "\n");
+  fprintf(file, "$EndView\n");
+
+  if(filename){
+    Msg(INFO, "View Output Complete '%s'", filename);
+    Msg(STATUS2, "Wrote '%s'", filename);
+    fclose(file);
+  }
+
+}
+
 
 
 /*

@@ -1,10 +1,11 @@
-// $Id: GetOptions.cpp,v 1.10 2001-02-12 17:38:02 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.11 2001-02-17 21:56:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
 #include "Const.h"
 #include "Context.h"
+#include "Options.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Views.h"
@@ -27,54 +28,55 @@ char gmsh_url[]       = "URL              : http://www.geuz.org/gmsh/" ;
 char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
                         "                   Remacle@scorec.rpi.edu" ;
 
-char gmsh_options[]   =
-  "Usage: %s [options] [files]\n"
-  "Geometry options:\n"
-  "  -0                    parse input files, output flattened geometry, and exit\n"
-  "Mesh options:\n"
-  "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
-  "  -format msh|unv|gref  set output mesh format (default: msh)\n"
-  "  -algo iso|aniso       select 2D mesh algorithm (default: iso)\n"
-  "  -smooth int           set mesh smoothing (default: 0)\n"
-  "  -degree int           set mesh degree (default: 1)\n"
-  "  -scale float          set global scaling factor (default: 1.0)\n"
-  "  -meshscale float      set mesh scaling factor (default: 1.0)\n"
-  "  -clscale float        set characteristic length scaling factor (default: 1.0)\n"
-  "  -rand float           set random perturbation factor (default: 1.e-5)\n"
-  "  -bgm file             load backround mesh from file\n"
+void Print_Options(char *name){
+  Msg(DIRECT, "Usage: %s [options] [files]", name);
+  Msg(DIRECT, "Geometry options:");
+  Msg(DIRECT, "  -0                    parse input files, output flattened geometry, and exit");
+  Msg(DIRECT, "Mesh options:");
+  Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
+  Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
+  Msg(DIRECT, "  -algo iso|aniso       select 2D mesh algorithm (default: iso)");
+  Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
+  Msg(DIRECT, "  -degree int           set mesh degree (default: 1)");
+  Msg(DIRECT, "  -scale float          set global scaling factor (default: 1.0)");
+  Msg(DIRECT, "  -meshscale float      set mesh scaling factor (default: 1.0)");
+  Msg(DIRECT, "  -clscale float        set characteristic length scaling factor (default: 1.0)");
+  Msg(DIRECT, "  -rand float           set random perturbation factor (default: 1.e-4)");
+  Msg(DIRECT, "  -bgm file             load backround mesh from file");
 #ifndef _BLACKBOX
-  "  -interactive          display 2D mesh construction interactively\n"
-  "Post Processing options:\n"
-  "  -dl                   enable display lists\n"
-  "  -noview               hide all views on startup\n"
-  "  -link                 link all views on startup\n"
-  "Display options:\n"    
+  Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
+  Msg(DIRECT, "Post Processing options:");
+  Msg(DIRECT, "  -dl                   enable display lists");
+  Msg(DIRECT, "  -noview               hide all views on startup");
+  Msg(DIRECT, "  -link                 link all views on startup");
+  Msg(DIRECT, "  -convert file file    convert an ascii view into a binary one");
+  Msg(DIRECT, "Display options:");    
 #ifdef _MOTIF
-  "  -nodb                 disable double buffering\n"
-  "  -noov                 disable overlay visual\n"
-  "  -flash                allow colormap flashing\n"
-  "  -samevisual           force same visual for graphics and UI\n"
+  Msg(DIRECT, "  -nodb                 disable double buffering");
+  Msg(DIRECT, "  -noov                 disable overlay visual");
+  Msg(DIRECT, "  -flash                allow colormap flashing");
+  Msg(DIRECT, "  -samevisual           force same visual for graphics and UI");
 #else
-  "  -fontsize int         size of the font for the user interface (default: 12)\n"
+  Msg(DIRECT, "  -fontsize int         size of the font for the user interface (default: 12)");
 #endif
-  "  -alpha                enable alpha blending\n"
-  "  -notrack              don't use trackball mode for rotations\n"
-  "  -display string       specify display\n"
-  "  -perspective          set projection mode to perspective\n"
+  Msg(DIRECT, "  -alpha                enable alpha blending");
+  Msg(DIRECT, "  -notrack              don't use trackball mode for rotations");
+  Msg(DIRECT, "  -display string       specify display");
+  Msg(DIRECT, "  -perspective          set projection mode to perspective");
 #endif
-  "Other options:\n"      
+  Msg(DIRECT, "Other options:");      
 #ifndef _BLACKBOX
-  "  -v int                set verbosity level (default: 2)\n"
+  Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
 #else
-  "  -v                    be verbose\n"
+  Msg(DIRECT, "  -v                    be verbose");
 #endif
 #ifdef _MOTIF
-  "  -nothreads            disable threads\n"
+  Msg(DIRECT, "  -nothreads            disable threads");
 #endif
-  "  -version              show version number\n"
-  "  -info                 show detailed version information\n"
-  "  -help                 show this message\n"
-  ;
+  Msg(DIRECT, "  -version              show version number");
+  Msg(DIRECT, "  -info                 show detailed version information");
+  Msg(DIRECT, "  -help                 show this message");
+}
 
 
 void Get_Options (int argc, char *argv[], int *nbfiles) {
@@ -85,14 +87,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
   if(argc < 2) Info(0,argv[0]);
 #endif
 
-  // Get default options in the configuration file
-  // we should do something more clever here (in $HOME?)
-  CTX.configfilename = ".gmshrc"; 
-  ParseFile(CTX.configfilename);
+  // Parse session and option files
+
+  ParseFile(CTX.sessionrc_filename);
+  ParseFile(CTX.optionsrc_filename);
 
   // Get command line options
 
-  TheFileNameTab[0] = "unnamed.geo" ;
+  TheFileNameTab[0] = CTX.default_filename ;
   *nbfiles = 0;
   
   while (i < argc) {
@@ -118,6 +120,20 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           fprintf(stderr, ERROR_STR "Missing File Name\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i]+1, "convert")){ 
+	i++;
+	CTX.terminal = 1;
+	if(argv[i] && argv[i+1]){
+	  ParseFile(argv[i]);
+	  if(List_Nbr(Post_ViewList))
+	    Write_View(1,(Post_View*)List_Pointer(Post_ViewList, 0),argv[i+1]);
+	  else
+	    fprintf(stderr, ERROR_STR "No view to convert\n");
+	}
+	else
+	  fprintf(stderr, "Usage: %s -convert view.ascii view.binary\n", argv[0]);
+	exit(1);
       }
       else if(!strcmp(argv[i]+1, "old")){ 
         CTX.geom.old_circle = 1; i++;
@@ -267,7 +283,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
               !strcmp(argv[i]+1, "-help")){
         fprintf(stderr, "%s\n", gmsh_progname);
         fprintf(stderr, "%s\n", gmsh_copyright);
-        fprintf(stderr, gmsh_options, argv[0]);
+	CTX.terminal = 1 ;
+        Print_Options(argv[0]);
         exit(1);
       }
 
@@ -285,8 +302,11 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "noterminal")){ 
+      else if(!strcmp(argv[i]+1, "noterm")){ 
         CTX.terminal = 0; i++;
+      }
+      else if(!strcmp(argv[i]+1, "term")){ 
+        CTX.terminal = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "alpha")){ 
         CTX.alpha = 1; i++;
@@ -307,17 +327,18 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         CTX.mesh.interactive = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "noview")){ 
-        CTX.post.initial_visibility = 0 ; i++;
+        opt_view_visible(0, GMSH_SET, 0); i++;
       }
       else if(!strcmp(argv[i]+1, "link")){ 
         CTX.post.link = 2 ; i++;
       }
       else if(!strcmp(argv[i]+1, "fill")){ 
-        CTX.post.initial_intervals = DRAW_POST_CONTINUOUS ; i++;
+        opt_view_intervals_type(0, GMSH_SET, DRAW_POST_CONTINUOUS) ; i++;
       }
       else if(!strcmp(argv[i]+1, "nbiso")){ 
         i++ ;
-        if(argv[i]!=NULL) CTX.post.initial_nbiso = atoi(argv[i++]);
+        if(argv[i]!=NULL)
+	  opt_view_nb_iso(0, GMSH_SET, atoi(argv[i++]));
         else{
           fprintf(stderr, ERROR_STR "Missing Number\n");
           exit(1);
@@ -395,7 +416,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 
       else{
         fprintf(stderr, "Unknown Option '%s'\n", argv[i]);
-        fprintf(stderr, gmsh_options, argv[0]);
+	CTX.terminal = 1 ;
+        Print_Options(argv[0]);
         exit(1);
       }
     }

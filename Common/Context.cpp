@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.36 2001-02-12 17:38:02 geuzaine Exp $
+// $Id: Context.cpp,v 1.37 2001-02-17 21:56:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -10,7 +10,7 @@
 #include "DefaultOptions.h"
 #include "trackball.c"
 
-extern Context_T CTX ;
+extern Context_T  CTX ;
 
 // STRING OPTIONS
 
@@ -29,7 +29,7 @@ void Set_DefaultStringOptions(int num, StringXString s[]){
   while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def) ;
 }
 
-void UpdateGUI_StringOptions(int num, StringXString s[]){
+void Set_StringOptions_GUI(int num, StringXString s[]){
   int i = 0;
   while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
 }
@@ -43,12 +43,14 @@ void * Get_StringOption(char *str, StringXString s[]){
     return (void*)s[i].function;
 }
 
-void Print_StringOptions(int num, StringXString s[], char *prefix, FILE *file){
+void Print_StringOptions(int num, int level, StringXString s[], char *prefix, FILE *file){
   int i = 0;
   char tmp[1024];
   while(s[i].str){
-    sprintf(tmp, "%s%s = \"%s\";", prefix, s[i].str, s[i].function(num, GMSH_GET, NULL)) ;
-    if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, "%s", tmp);
+    if(s[i].level & level){
+      sprintf(tmp, "%s%s = \"%s\";", prefix, s[i].str, s[i].function(num, GMSH_GET, NULL)) ;
+      if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, "%s", tmp);
+    }
     i++;
   }
 }
@@ -70,7 +72,7 @@ void Set_DefaultNumberOptions(int num, StringXNumber s[]){
   while(s[i].str) s[i].function(num, GMSH_SET, s[i++].def) ;
 }
 
-void UpdateGUI_NumberOptions(int num, StringXNumber s[]){
+void Set_NumberOptions_GUI(int num, StringXNumber s[]){
   int i = 0;
   while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
 }
@@ -86,12 +88,14 @@ void * Get_NumberOption(char *str, StringXNumber s[]){
   }
 }
 
-void Print_NumberOptions(int num, StringXNumber s[], char *prefix, FILE *file){
+void Print_NumberOptions(int num, int level, StringXNumber s[], char *prefix, FILE *file){
   int i = 0;
   char tmp[1024];
   while(s[i].str){
-    sprintf(tmp, "%s%s = %g;", prefix, s[i].str, s[i].function(num, GMSH_GET, 0));
-    if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
+    if(s[i].level & level){
+      sprintf(tmp, "%s%s = %g;", prefix, s[i].str, s[i].function(num, GMSH_GET, 0));
+      if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
+    }
     i++;
   }
 }
@@ -117,7 +121,7 @@ void Set_DefaultColorOptions(int num, StringXColor s[], int scheme){
   }
 }
 
-void UpdateGUI_ColorOptions(int num, StringXColor s[]){
+void Set_ColorOptions_GUI(int num, StringXColor s[]){
   int i = 0;
   while(s[i].str) s[i++].function(num, GMSH_GUI, 0) ;
 }
@@ -131,16 +135,18 @@ void * Get_ColorOption(char *str, StringXColor s[]) {
     return (void*)s[i].function;
 }
 
-void Print_ColorOptions(int num, StringXColor s[], char *prefix, FILE *file){
+void Print_ColorOptions(int num, int level, StringXColor s[], char *prefix, FILE *file){
   int i = 0;
   char tmp[1024];
   while(s[i].str){
-    sprintf(tmp, "%sColor.%s = {%d,%d,%d};", 
-	    prefix, s[i].str,
-	    UNPACK_RED  (s[i].function(num, GMSH_GET, 0)),
-	    UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
-	    UNPACK_BLUE (s[i].function(num, GMSH_GET, 0)));
-    if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
+    if(s[i].level & level){
+      sprintf(tmp, "%sColor.%s = {%d,%d,%d};", 
+	      prefix, s[i].str,
+	      UNPACK_RED  (s[i].function(num, GMSH_GET, 0)),
+	      UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
+	      UNPACK_BLUE (s[i].function(num, GMSH_GET, 0)));
+      if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
+    }
     i++;
   }
 }
@@ -163,47 +169,19 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 
 void Init_Context(int num){
 
-  // Cannot be set by the user 
-  CTX.expose       = 0 ;
-  CTX.db           = 1 ;
-  CTX.overlay      = 1 ;
-  CTX.stream       = TO_SCREEN ;
-  CTX.command_win  = 0 ;
-  CTX.threads      = 1 ; // effective on Unix only with -D_USETHREADS
-  CTX.threads_lock = 0 ;
-
-  CTX.gl_fontheight = 12;
-  CTX.gl_fontascent = 8;
-
-  // only used for motif
-  CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
-  CTX.fixed_font = "fixed" ;
-  // end(only used for motif)
-
-  // only for fltk
-  CTX.fontsize = 12;
-  // end(fltk)
-
-  CTX.lc = 1.0 ;
-  CTX.min[0]   = CTX.min[1]   = CTX.min[2]   = 0.0 ;
-  CTX.max[0]   = CTX.max[1]   = CTX.max[2]   = 1.0 ;
-  CTX.range[0] = CTX.range[1] = CTX.range[2] = 1.0 ;
-
-  CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0. ;
-
-  CTX.render_mode    = GMSH_RENDER ;
-  CTX.pixel_equiv_x  = CTX.pixel_equiv_y = 0. ; 
-  CTX.geom.vis_type  = 0 ;
-  CTX.geom.level     = ELEMENTARY ;
-  CTX.mesh.vis_type  = 0 ;
-  CTX.mesh.draw      = 1 ;  
-  CTX.post.draw      = 1 ;
+  // Reference view storing default options
+  Post_ViewReference = (Post_View*)Malloc(sizeof(Post_View)) ;
+  Post_ViewReference->CT.size = 255;
+  Post_ViewReference->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
+  ColorTable_InitParam(1, &Post_ViewReference->CT, 1, 1);
+  ColorTable_Recompute(&Post_ViewReference->CT, 1, 1);
 
   // Default string options
   Set_DefaultStringOptions(num, GeneralOptions_String);
   Set_DefaultStringOptions(num, GeometryOptions_String);
   Set_DefaultStringOptions(num, MeshOptions_String);
   Set_DefaultStringOptions(num, PostProcessingOptions_String);
+  Set_DefaultStringOptions(num, ViewOptions_String);
   Set_DefaultStringOptions(num, PrintOptions_String);
 
   // Default number options
@@ -211,41 +189,65 @@ void Init_Context(int num){
   Set_DefaultNumberOptions(num, GeometryOptions_Number);
   Set_DefaultNumberOptions(num, MeshOptions_Number);
   Set_DefaultNumberOptions(num, PostProcessingOptions_Number);
+  Set_DefaultNumberOptions(num, ViewOptions_Number);
   Set_DefaultNumberOptions(num, PrintOptions_Number);
 
   // Default color options
-  Init_Colors(num);
-}
-
-void Init_Colors(int num){
   Set_DefaultColorOptions(num, GeneralOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, GeometryOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, MeshOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, PostProcessingOptions_Color, CTX.color_scheme);
+  Set_DefaultColorOptions(num, ViewOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, PrintOptions_Color, CTX.color_scheme);
+
+  // The following cannot be set by the user 
+  CTX.expose = 0 ;
+  CTX.db = 1 ; // motif only
+  CTX.overlay = 1 ; // motif only
+  CTX.stream = TO_SCREEN ;
+  CTX.command_win = 0 ; // motif only
+  CTX.threads = 1 ; // motif only
+  CTX.threads_lock = 0 ; // motif only
+  CTX.gl_fontheight = 12;
+  CTX.gl_fontascent = 8;
+  CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ; // motif only
+  CTX.fixed_font = "fixed" ; // motif only
+  CTX.lc = 1.0 ;
+  CTX.viewport[0] = CTX.viewport[1] = 0 ;
+  CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0 ;
+  CTX.max[0] = CTX.max[1] = CTX.max[2] = 1.0 ;
+  CTX.range[0] = CTX.range[1] = CTX.range[2] = 1.0 ;
+  CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0. ;
+  CTX.render_mode = GMSH_RENDER ;
+  CTX.pixel_equiv_x = CTX.pixel_equiv_y = 0. ; 
+  CTX.geom.vis_type = 0 ;
+  CTX.geom.level = ELEMENTARY ;
+  CTX.mesh.vis_type = 0 ;
+  CTX.mesh.draw = 1 ;  
+  CTX.post.draw = 1 ;
 }
 
-void UpdateGUI_Context(int num){
-  UpdateGUI_StringOptions(num, GeneralOptions_String);
-  UpdateGUI_StringOptions(num, GeometryOptions_String);
-  UpdateGUI_StringOptions(num, MeshOptions_String);
-  UpdateGUI_StringOptions(num, PostProcessingOptions_String);
-  UpdateGUI_StringOptions(num, PrintOptions_String);
+void Init_Context_GUI(int num){
+  Set_StringOptions_GUI(num, GeneralOptions_String);
+  Set_StringOptions_GUI(num, GeometryOptions_String);
+  Set_StringOptions_GUI(num, MeshOptions_String);
+  Set_StringOptions_GUI(num, PostProcessingOptions_String);
+  Set_StringOptions_GUI(num, PrintOptions_String);
       
-  UpdateGUI_NumberOptions(num, GeneralOptions_Number);
-  UpdateGUI_NumberOptions(num, GeometryOptions_Number);
-  UpdateGUI_NumberOptions(num, MeshOptions_Number);
-  UpdateGUI_NumberOptions(num, PostProcessingOptions_Number);
-  UpdateGUI_NumberOptions(num, PrintOptions_Number);
+  Set_NumberOptions_GUI(num, GeneralOptions_Number);
+  Set_NumberOptions_GUI(num, GeometryOptions_Number);
+  Set_NumberOptions_GUI(num, MeshOptions_Number);
+  Set_NumberOptions_GUI(num, PostProcessingOptions_Number);
+  Set_NumberOptions_GUI(num, PrintOptions_Number);
 
-  UpdateGUI_ColorOptions(num, GeneralOptions_Color);
-  UpdateGUI_ColorOptions(num, GeometryOptions_Color);
-  UpdateGUI_ColorOptions(num, MeshOptions_Color);
-  UpdateGUI_ColorOptions(num, PostProcessingOptions_Color);
-  UpdateGUI_ColorOptions(num, PrintOptions_Color);
+  Set_ColorOptions_GUI(num, GeneralOptions_Color);
+  Set_ColorOptions_GUI(num, GeometryOptions_Color);
+  Set_ColorOptions_GUI(num, MeshOptions_Color);
+  Set_ColorOptions_GUI(num, PostProcessingOptions_Color);
+  Set_ColorOptions_GUI(num, PrintOptions_Color);
 }
 
-void Print_Context(int num, char *filename){
+void Print_Context(int num, int level, char *filename){
   FILE *file;
   char tmp[256];
   int i ;
@@ -260,66 +262,65 @@ void Print_Context(int num, char *filename){
   else
     file = NULL ;
 
-  Print_StringOptions(num, GeneralOptions_String, "General.", file);
-  Print_NumberOptions(num, GeneralOptions_Number, "General.", file);
-  Print_ColorOptions(num, GeneralOptions_Color, "General.", file);
-  Print_StringOptions(num, GeometryOptions_String, "Geometry.", file);
-  Print_NumberOptions(num, GeometryOptions_Number, "Geometry.", file);
-  Print_ColorOptions(num, GeometryOptions_Color, "Geometry.", file);
-  Print_StringOptions(num, MeshOptions_String, "Mesh.", file);
-  Print_NumberOptions(num, MeshOptions_Number, "Mesh.", file);
-  Print_ColorOptions(num, MeshOptions_Color, "Mesh.", file);
-  Print_StringOptions(num, PostProcessingOptions_String, "PostProcessing.", file);
-  Print_NumberOptions(num, PostProcessingOptions_Number, "PostProcessing.", file);
-  Print_ColorOptions(num, PostProcessingOptions_Color, "PostProcessing.", file);
-  for(i=0; i<List_Nbr(Post_ViewList) ; i++){
-    sprintf(tmp, "View[%d].", i);
-    Print_StringOptions(i, ViewOptions_String, tmp, file);
-    Print_NumberOptions(i, ViewOptions_Number, tmp, file);
-    Print_ColorOptions(i, ViewOptions_Color, tmp, file);
-    strcat(tmp, "ColorTable");
-    Print_ColorTable(i, tmp, file);
+  if((level & GMSH_SESSIONRC) && file){
+    fprintf(file, "// Gmsh Session File\n");
+    fprintf(file, "// This file takes session specific info (that is info\n");
+    fprintf(file, "// you want to keep between two Gmsh sessions). You are\n");
+    fprintf(file, "// not supposed to edit it manually, but of course you\n");
+    fprintf(file, "// can do. This file will be entirely rewritten every time\n");
+    fprintf(file, "// you quit Gmsh. If this file isn't found, defaults\n");
+    fprintf(file, "// are used.\n");
   }
-  Print_StringOptions(num, PrintOptions_String, "Print.", file);
-  Print_NumberOptions(num, PrintOptions_Number, "Print.", file);
-  Print_ColorOptions(num, PrintOptions_Color, "Print.", file);
+
+  if((level & GMSH_OPTIONSRC) && file){
+    fprintf(file, "// Gmsh Option File\n");
+    fprintf(file, "// This file takes configuration options that should\n");
+    fprintf(file, "// be loaded each time Gmsh is launched. You can create\n");
+    fprintf(file, "// this file by hand, or let Gmsh generate it for you (with\n");
+    fprintf(file, "// the 'File->Save Options' menu button). If this file\n");
+    fprintf(file, "// isn't found, defaults are used.\n");
+  }
+
+  Print_StringOptions(num, level, GeneralOptions_String, "General.", file);
+  Print_NumberOptions(num, level, GeneralOptions_Number, "General.", file);
+  Print_ColorOptions(num, level, GeneralOptions_Color, "General.", file);
+  Print_StringOptions(num, level, GeometryOptions_String, "Geometry.", file);
+  Print_NumberOptions(num, level, GeometryOptions_Number, "Geometry.", file);
+  Print_ColorOptions(num, level, GeometryOptions_Color, "Geometry.", file);
+  Print_StringOptions(num, level, MeshOptions_String, "Mesh.", file);
+  Print_NumberOptions(num, level, MeshOptions_Number, "Mesh.", file);
+  Print_ColorOptions(num, level, MeshOptions_Color, "Mesh.", file);
+  Print_StringOptions(num, level, PostProcessingOptions_String, "PostProcessing.", file);
+  Print_NumberOptions(num, level, PostProcessingOptions_Number, "PostProcessing.", file);
+  Print_ColorOptions(num, level, PostProcessingOptions_Color, "PostProcessing.", file);
+  if(level & GMSH_FULLRC){
+    for(i=0; i<List_Nbr(Post_ViewList) ; i++){
+      sprintf(tmp, "View[%d].", i);
+      Print_StringOptions(i, level, ViewOptions_String, tmp, file);
+      Print_NumberOptions(i, level, ViewOptions_Number, tmp, file);
+      Print_ColorOptions(i, level, ViewOptions_Color, tmp, file);
+      strcat(tmp, "ColorTable");
+      Print_ColorTable(i, tmp, file);
+    }
+  }
+  else if(level & GMSH_OPTIONSRC){
+    Print_StringOptions(num, level, ViewOptions_String, "View.", file);
+    Print_NumberOptions(num, level, ViewOptions_Number, "View.", file);
+    Print_ColorOptions(num, level, ViewOptions_Color, "View.", file);
+    Print_ColorTable(num, "View.ColorTable", file);
+  }
+  Print_StringOptions(num, level, PrintOptions_String, "Print.", file);
+  Print_NumberOptions(num, level, PrintOptions_Number, "Print.", file);
+  Print_ColorOptions(num, level, PrintOptions_Color, "Print.", file);
 
   if(filename){
-    Msg(INFO, "Options Output Complete '%s'", filename);
-    Msg(STATUS2, "Wrote File '%s'", filename);
+    if((level & GMSH_OPTIONSRC) || (level & GMSH_FULLRC)){
+      Msg(INFO, "Options Output Complete '%s'", filename);
+      Msg(STATUS2, "Wrote '%s'", filename);
+    }
     fclose(file);
   }
 }
-
-void Print_Configuration(int num, char *filename){
-  FILE *file;
-  
-  file = fopen(filename,"w");
-  if(!file){
-    Msg(WARNING, "Unable to Open File '%s'", filename);
-    return;
-  }
-
-  fprintf(file, "// Gmsh sessionrc\n");
-  fprintf(file, "// This file takes session-specific info (that is info\n");
-  fprintf(file, "// you want to keep between two Gmsh sessions). You are\n");
-  fprintf(file, "// not supposed to edit it manually, but of course you\n");
-  fprintf(file, "// can do. This file will be entirely rewritten every time\n");
-  fprintf(file, "// you quit Gmsh. If this file isn't found, defaults\n");
-  fprintf(file, "// are used.\n");
-  fprintf(file, "General.Viewport0 = %d;\n", CTX.viewport[0]);
-  fprintf(file, "General.Viewport1 = %d;\n", CTX.viewport[1]);
-  fprintf(file, "General.Viewport2 = %d;\n", CTX.viewport[2]);
-  fprintf(file, "General.Viewport3 = %d;\n", CTX.viewport[3]);
-  fprintf(file, "General.GraphicsFontSize = %d;\n", CTX.gl_fontsize);
-  fprintf(file, "General.GraphicsPosition0 = %d;\n", CTX.gl_position[0]);
-  fprintf(file, "General.GraphicsPosition1 = %d;\n", CTX.gl_position[1]);
-  fprintf(file, "General.MenuFontSize = %d;\n", CTX.fontsize);
-  fprintf(file, "General.MenuPosition0 = %d;\n", CTX.position[0]);
-  fprintf(file, "General.MenuPosition1 = %d;\n", CTX.position[1]);
-  fclose(file);
-}
-
 
 /*
   3 rotations successives autour de x, y et z:

@@ -28,12 +28,21 @@ public :
   // general options
   char filename[NAME_STR_L];  // the name of the currently opened file
   char basefilename[NAME_STR_L]; // the same without the extension
-  char *configfilename;       // the name of the configuration file
+  char *default_filename;     // the name of the default file
+  char *tmp_filename;         // the name of the temp file
+  char *session_filename, sessionrc_filename[NAME_STR_L];
+                              // the name of the sessionrc configuration file
+  char *options_filename, optionsrc_filename[NAME_STR_L]; 
+                              // the name of the optionrc configuration file
+  int session_save, options_save; // save session/option file on exit
+  char *error_filename;       // the name of the error file
   char *display;              // forced display host:0.0 under X11 
   int  terminal;              // show we print to the terminal console?
 
   int position[2];            // position of the menu window on the screen
   int gl_position[2];         // position of the graphic window on the screen
+  int msg_position[2];        // position of the message window on the screen
+  int msg_size[2];            // size of the message window on the screen
   int center_windows;         // center popup windows on the menu window
 
   int interactive;            // 0=full gfx; -1=just parse; 1,2,3=batch mesh 
@@ -83,13 +92,14 @@ public :
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
   int light[6];               // status of light 
   float light_position[6][4]; // light sources positions 
+  int moving_light;           // type of light (follows the model or not)
   float shine;                // specular value 
   int render_mode;            // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   int clip[6];                // status of clip planes 
   double clip_plane[6][4];    // clip planes 
   double pixel_equiv_x, pixel_equiv_y ; 
                               // approximative equivalent model length of a pixel 
-  int color_scheme ;
+  int color_scheme ;          // general color scheme
 
   // geometry options 
   struct{
@@ -101,6 +111,7 @@ public :
     int level, old_circle;
     double normals, tangents;
     double scaling_factor;
+    int color_scheme ;
   } geom;
 
   // mesh options 
@@ -117,6 +128,7 @@ public :
     int format, nb_smoothing, algo, degree;
     int point_insertion, speed_max, min_circ_points;
     double normals, tangents, explode;
+    int color_scheme, color_carousel ;
     int use_cut_plane;
     double cut_planea,cut_planeb,cut_planec,cut_planed;
     double evalCutPlane (double x, double y, double z)
@@ -132,7 +144,7 @@ public :
   struct{
     int draw, scales, link ;
     int smooth ;
-    int  initial_visibility, initial_nbiso, initial_intervals, nb_views ;
+    int nb_views ;
     double anim_delay ;
   }post;
 
@@ -170,9 +182,7 @@ public :
 };
 
 void Init_Context (int num);
-void Init_Colors (int num);
-void UpdateGUI_Context (int num);
-void Print_Context(int num, char *filename);
-void Print_Configuration(int num, char *filename);
+void Init_Context_GUI (int num);
+void Print_Context(int num, int level, char *filename);
 
 #endif
