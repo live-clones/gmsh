@@ -85,6 +85,7 @@ void help_about_cb(CALLBACK_ARGS) ;
 
 void mod_geometry_cb(CALLBACK_ARGS) ;
 void mod_mesh_cb(CALLBACK_ARGS) ;
+void mod_solver_cb(CALLBACK_ARGS) ;
 void mod_post_cb(CALLBACK_ARGS) ;
 void mod_back_cb(CALLBACK_ARGS) ;
 void mod_forward_cb(CALLBACK_ARGS) ;

@@ -59,6 +59,7 @@ extern        Context_Item menu_geometry_physical_add[];
 extern Context_Item menu_mesh[]; 
 extern    Context_Item menu_mesh_define[]; 
 extern        Context_Item menu_mesh_define_transfinite[]; 
+extern Context_Item menu_solver[]; 
 extern Context_Item menu_post[]; 
 
 // Forward Declarations

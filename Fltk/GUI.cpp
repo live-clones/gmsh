@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.62 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: GUI.cpp,v 1.63 2001-05-01 18:58:24 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -77,6 +77,7 @@ Fl_Menu_Item m_menubar_table[] = {
 Fl_Menu_Item m_module_table[] = {
   {"Geometry",        'g', (Fl_Callback *)mod_geometry_cb, 0},
   {"Mesh",            'm', (Fl_Callback *)mod_mesh_cb, 0},
+  {"Solver",          's', (Fl_Callback *)mod_solver_cb, 0},
   {"Post-Processing", 'p', (Fl_Callback *)mod_post_cb, 0},
   {0}
 };
@@ -243,8 +244,12 @@ Context_Item menu_mesh[] =
 	  { NULL } 
 	};  
 
+Context_Item menu_solver[] = 
+{ { "2Solver", NULL } ,
+  { NULL } };
+
 Context_Item menu_post[] = 
-{ { "2Post-Processing", NULL } ,
+{ { "3Post-Processing", NULL } ,
   { NULL } };
 
 //********************** Definition of global shortcuts ********************************
@@ -285,6 +290,10 @@ int GUI::global_shortcuts(int event){
     mod_mesh_cb(0,0);
     return 1;
   }
+  else if(Fl::test_shortcut('s')){
+    mod_solver_cb(0,0);
+    return 1;
+  }
   else if(Fl::test_shortcut('p')){
     mod_post_cb(0,0);
     return 1;
@@ -305,7 +314,7 @@ int GUI::global_shortcuts(int event){
     quit_selection = 1;
     return 1;
   }
-  else if(Fl::test_shortcut('s')){
+  else if(Fl::test_shortcut(FL_CTRL+FL_SHIFT+'s')){
     opt_post_anim_delay(0,GMSH_SET|GMSH_GUI,opt_post_anim_delay(0,GMSH_GET,0) + 0.01);
     return 1;
   }
@@ -682,6 +691,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
   if(menu[0].label[0] == '0')      m_module_butt->value(0);
   else if(menu[0].label[0] == '1') m_module_butt->value(1);
   else if(menu[0].label[0] == '2') m_module_butt->value(2);
+  else if(menu[0].label[0] == '3') m_module_butt->value(3);
   else {
     Msg(WARNING, "Something is wrong in your dynamic context definition");
     return;
@@ -689,7 +699,8 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
   
   Msg(STATUS2, menu[0].label+1);
   
-  if(m_module_butt->value() == 2){ // post-processing contexts
+  switch(m_module_butt->value()){
+  case 3 : // post-processing contexts
     for(i = 0 ; i < List_Nbr(Post_ViewList) ; i++) {
       if(i == NB_BUTT_MAX) break;
       nb++ ;
@@ -705,8 +716,10 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();
     }
-  }
-  else{ // geometry and mesh contexts
+    break;
+  case 2 : // solver contexts
+    break;
+  default : // geometry or mesh contexts
     for(i=0 ; i < NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();
@@ -725,6 +738,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_popup_butt[i]->hide();
       m_push_butt[i]->hide();
     }
+    break ;
   }
   
   set_menu_size(nb);

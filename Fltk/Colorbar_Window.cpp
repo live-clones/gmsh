@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.9 2001-02-18 18:04:03 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.10 2001-05-01 18:58:24 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,7 +7,6 @@
 #include "Colorbar_Window.h"
 #include "Context.h"
 
-extern GUI *WID;
 extern Context_T  CTX;
 
 #define UNDEFINED   0

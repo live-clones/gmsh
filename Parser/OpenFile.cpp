@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.13 2001-04-26 17:58:00 remacle Exp $
+// $Id: OpenFile.cpp,v 1.14 2001-05-01 18:58:24 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -103,7 +103,7 @@ void OpenProblem(char *name){
   strcpy(ext,name+(strlen(name)-4));
   if(!strcmp(ext,".geo") || !strcmp(ext,".GEO") ||
      !strcmp(ext,".msh") || !strcmp(ext,".MSH") ||
-     !strcmp(ext,".stl") || !strcmp(ext,".MSH") ||
+     !strcmp(ext,".stl") || !strcmp(ext,".STL") ||
      !strcmp(ext,".sms") || !strcmp(ext,".SMS") ||
      !strcmp(ext,".pos") || !strcmp(ext,".POS")){
     CTX.basefilename[strlen(name)-4] = '\0';

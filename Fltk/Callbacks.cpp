@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.45 2001-04-29 14:36:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.46 2001-05-01 18:58:24 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -30,7 +30,7 @@ extern Context_T  CTX;
 
 int AddViewInUI(int i, char *Name, int Num){
   if(i > NB_BUTT_MAX -1) return 1;
-  if(WID && (WID->get_context() == 2))
+  if(WID && (WID->get_context() == 3))
     WID->set_context(menu_post,0);
   return 0;
 }
@@ -498,8 +498,8 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Alt+o         change projection mode");
   Msg(DIRECT, "  Alt+p         hide/show geometry points");
   Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
-  Msg(DIRECT, "  s             increase animation delay");
   Msg(DIRECT, "  Shift+s       decrease animation delay");
+  Msg(DIRECT, "  Ctrl+Shift+s  increase animation delay");
   Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
   Msg(DIRECT, "  Alt+t         alternate intervals mode for all post-processing views"); 
@@ -527,6 +527,9 @@ void mod_geometry_cb(CALLBACK_ARGS){
 }
 void mod_mesh_cb(CALLBACK_ARGS){
   WID->set_context(menu_mesh, 0);
+}
+void mod_solver_cb(CALLBACK_ARGS){
+  WID->set_context(menu_solver, 0);
 }
 void mod_post_cb(CALLBACK_ARGS){
   WID->set_context(menu_post, 0);
@@ -1361,7 +1364,7 @@ void view_remove_cb(CALLBACK_ARGS){
     }
   if(!play) WID->g_status_butt[5]->deactivate();
 
-  if(WID->get_context() == 2)
+  if(WID->get_context() == 3)
     WID->set_context(menu_post, 0);  
 
   if(!REMOVE_ALL_VIEWS)
