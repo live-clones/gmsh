@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.42 2004-06-20 23:25:32 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.43 2004-08-09 10:29:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -61,8 +61,15 @@ double Interpole_lcTriangle(Simplex * s, Vertex * vv)
 {
   double Xp, Yp, X[3], Y[3], det, u, v, q1, q2, q3;
 
-  if(THEM->BGM.Typ == ONFILE)
-    return Lc_XYZ(vv->Pos.X, vv->Pos.Y, 0., THEM);
+  if(THEM->BGM.Typ == ONFILE){
+    Vertex *v2 = Create_Vertex(-1, vv->Pos.X, vv->Pos.Y, 0.0, 0.0, 0.0);
+    Vertex *dum;
+    Calcule_Z_Plan(&v2, &dum);
+    Projette_Inverse(&v2, &dum);
+    double val = Lc_XYZ(v2->Pos.X, v2->Pos.Y, v2->Pos.Z, THEM);
+    Free_Vertex(&v2, 0);
+    return val;
+  }
 
   Xp = vv->Pos.X;
   Yp = vv->Pos.Y;

@@ -33,7 +33,6 @@ Structural_BeamSection:: Structural_BeamSection( const char *direct, std::string
   Mesh *kk = THEM;
   Init_Mesh(&m);
 
-  size_t l = name.size();
   char temp[256];
   sprintf(temp, "%s/%s", direct,name.c_str());
   // read the section (msh format)
@@ -265,7 +264,8 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
       _value[9]->align(FL_ALIGN_RIGHT);
       
       g[1]->end();
-    }    
+    }
+    o->end();
   }
 #endif
 }
@@ -412,5 +412,8 @@ bool StructuralSolver :: GL_enhancePoint ( Vertex *v)
 	}
       }
     }
+  return true;
+#else
+  return false;
 #endif
 }

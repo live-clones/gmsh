@@ -84,7 +84,7 @@ struct PhysicalPointInfo
 
 struct PhysicalLineInfo 
 {
-  PhysicalLineInfo() : fx1(0),fy1(0),fx2(0),fy2(0){}
+  PhysicalLineInfo() : fx1(0),fx2(0),fy1(0),fy2(0){}
   std::string material, section;
   double fx1,fx2,fy1,fy2;
 };
@@ -110,7 +110,7 @@ class StructuralSolver : public GMSH_Solve_Plugin
 
 public:
   StructuralSolver();
-  ~StructuralSolver();
+  virtual ~StructuralSolver();
   virtual void getName(char *name) const;
   virtual void getInfos(char *author, char *copyright, char *helpText) const;
 

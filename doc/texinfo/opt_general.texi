@@ -505,7 +505,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.RotationCenterGravity
-Rotate around the center of gravity instead of (RotationCenterX, RotationCenterY, RotationCenterZ)@*
+Rotate around the (pseudo) center of mass instead of (RotationCenterX, RotationCenterY, RotationCenterZ)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

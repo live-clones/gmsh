@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.331 2004-08-07 06:59:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.332 2004-08-09 10:29:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2205,14 +2205,6 @@ void GUI::create_option_window()
 
   // View options
 
-  // WARNING! Don't forget to add the set_changed_cb() callback to any new widget!
-  // initialise all buttons to NULL (see the clear_changed() in view_options_ok_cb)
-  for(int i = 0; i < VIEW_OPT_BUTT; i++) {
-    view_butt[i] = NULL;
-    view_value[i] = NULL;
-    view_input[i] = NULL;
-    view_choice[i] = NULL;
-  }
   view_number = -1;
 
   view_window = new Fl_Window(BROWSERW, 0, width, height, "View options");
@@ -2226,60 +2218,49 @@ void GUI::create_option_window()
       view_butt[1]->type(FL_RADIO_BUTTON);
       view_butt[1]->down_box(RADIO_BOX);
       view_butt[1]->selection_color(RADIO_COLOR);
-      view_butt[1]->callback(set_changed_cb, 0);
 
       view_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "2D space table");
       view_butt[2]->type(FL_RADIO_BUTTON);
       view_butt[2]->down_box(RADIO_BOX);
       view_butt[2]->selection_color(RADIO_COLOR);
-      view_butt[2]->callback(set_changed_cb, 0);
 
       view_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "2D time table");
       view_butt[3]->type(FL_RADIO_BUTTON);
       view_butt[3]->down_box(RADIO_BOX);
       view_butt[3]->selection_color(RADIO_COLOR);
-      view_butt[3]->callback(set_changed_cb, 0);
 
       int sw = (int)(1.5 * fontsize);
       view_butt_rep[0] = new Fl_Repeat_Button(2 * WB, 2 * WB + 4 * BH, sw, BH, "-");
-      //no set_changed since has its own callback
       view_butt_rep[1] = new Fl_Repeat_Button(2 * WB + IW - sw, 2 * WB + 4 * BH, sw, BH, "+");
-      //no set_changed since has its own callback
       view_value[50] = new Fl_Value_Input(2 * WB + sw, 2 * WB + 4 * BH, IW - 2 * sw, BH);
       view_value[50]->align(FL_ALIGN_RIGHT);
       view_value[50]->minimum(0);
       view_value[50]->maximum(0);
       view_value[50]->step(1);
-      //no set_changed since has its own callback
       Fl_Box *a = new Fl_Box(2 * WB + IW, 2 * WB + 4 * BH, IW / 2, BH, "Step");
       a->box(FL_NO_BOX);
       a->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
       view_input[0] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Name");
       view_input[0]->align(FL_ALIGN_RIGHT);
-      view_input[0]->callback(set_changed_cb, 0);
 
       view_input[1] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Format");
       view_input[1]->align(FL_ALIGN_RIGHT);
-      view_input[1]->callback(set_changed_cb, 0);
 
       {
 	view_2d = new Fl_Group(2 * WB, 2 * WB + 7 * BH, width - 2 * WB, 4 * BH, 0);
 	
 	view_input[2] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Abscissa name");
 	view_input[2]->align(FL_ALIGN_RIGHT);
-	view_input[2]->callback(set_changed_cb, 0);
 	
 	view_input[3] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Abscissa format");
 	view_input[3]->align(FL_ALIGN_RIGHT);
-	view_input[3]->callback(set_changed_cb, 0);
 	
 	view_value[25] = new Fl_Value_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Number of abscissa points");
 	view_value[25]->minimum(0.);
 	view_value[25]->step(1);
 	view_value[25]->maximum(256);
 	view_value[25]->align(FL_ALIGN_RIGHT);
-	view_value[25]->callback(set_changed_cb, 0);
 	
 	static Fl_Menu_Item menu_grid_mode[] = {
 	  {"None", 0, 0, 0},
@@ -2291,7 +2272,6 @@ void GUI::create_option_window()
 	view_choice[8] = new Fl_Choice(2 * WB, 2 * WB + 10 * BH, IW, BH, "Grid mode");
 	view_choice[8]->menu(menu_grid_mode);
 	view_choice[8]->align(FL_ALIGN_RIGHT);
-	view_choice[8]->callback(set_changed_cb, 0);
 	
 	view_2d->end();
       }
@@ -2300,30 +2280,25 @@ void GUI::create_option_window()
       view_butt[7]->type(FL_TOGGLE_BUTTON);
       view_butt[7]->down_box(TOGGLE_BOX);
       view_butt[7]->selection_color(TOGGLE_COLOR);
-      view_butt[7]->callback(set_changed_cb, 0);
       
       view_value[20] = new Fl_Value_Input(width /2, 2 * WB + 2 * BH, IW / 2, BH);
       view_value[20]->align(FL_ALIGN_RIGHT);
-      view_value[20]->callback(set_changed_cb, 0);
       view_value[20]->minimum(0);
       view_value[20]->maximum(1024);
       view_value[20]->step(1);
       view_value[21] = new Fl_Value_Input(width / 2 + IW / 2, 2 * WB + 2 * BH, IW / 2, BH, "Position");
       view_value[21]->align(FL_ALIGN_RIGHT);
-      view_value[21]->callback(set_changed_cb, 0);
       view_value[21]->minimum(0);
       view_value[21]->maximum(1024);
       view_value[21]->step(1);
 
       view_value[22] = new Fl_Value_Input(width /2, 2 * WB + 3 * BH, IW / 2, BH);
       view_value[22]->align(FL_ALIGN_RIGHT);
-      view_value[22]->callback(set_changed_cb, 0);
       view_value[22]->minimum(0);
       view_value[22]->maximum(1024);
       view_value[22]->step(1);
       view_value[23] = new Fl_Value_Input(width / 2 + IW / 2, 2 * WB + 3 * BH, IW / 2, BH, "Size");
       view_value[23]->align(FL_ALIGN_RIGHT);
-      view_value[23]->callback(set_changed_cb, 0);
       view_value[23]->minimum(0);
       view_value[23]->maximum(1024);
       view_value[23]->step(1);
@@ -2338,75 +2313,63 @@ void GUI::create_option_window()
       view_butt[13]->type(FL_TOGGLE_BUTTON);
       view_butt[13]->down_box(TOGGLE_BOX);
       view_butt[13]->selection_color(TOGGLE_COLOR);
-      view_butt[13]->callback(set_changed_cb, 0);
 
       view_butt[14] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       view_butt[14]->type(FL_TOGGLE_BUTTON);
       view_butt[14]->down_box(TOGGLE_BOX);
       view_butt[14]->selection_color(TOGGLE_COLOR);
-      view_butt[14]->callback(set_changed_cb, 0);
 
       view_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Triangles");
       view_butt[15]->type(FL_TOGGLE_BUTTON);
       view_butt[15]->down_box(TOGGLE_BOX);
       view_butt[15]->selection_color(TOGGLE_COLOR);
-      view_butt[15]->callback(set_changed_cb, 0);
 
       view_butt[16] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Quadrangles");
       view_butt[16]->type(FL_TOGGLE_BUTTON);
       view_butt[16]->down_box(TOGGLE_BOX);
       view_butt[16]->selection_color(TOGGLE_COLOR);
-      view_butt[16]->callback(set_changed_cb, 0);
 
       view_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Tetrahedra");
       view_butt[17]->type(FL_TOGGLE_BUTTON);
       view_butt[17]->down_box(TOGGLE_BOX);
       view_butt[17]->selection_color(TOGGLE_COLOR);
-      view_butt[17]->callback(set_changed_cb, 0);
 
       view_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Hexahedra");
       view_butt[18]->type(FL_TOGGLE_BUTTON);
       view_butt[18]->down_box(TOGGLE_BOX);
       view_butt[18]->selection_color(TOGGLE_COLOR);
-      view_butt[18]->callback(set_changed_cb, 0);
 
       view_butt[19] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW / 2 - WB, BH, "Prisms");
       view_butt[19]->type(FL_TOGGLE_BUTTON);
       view_butt[19]->down_box(TOGGLE_BOX);
       view_butt[19]->selection_color(TOGGLE_COLOR);
-      view_butt[19]->callback(set_changed_cb, 0);
 
       view_butt[20] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Pyramids");
       view_butt[20]->type(FL_TOGGLE_BUTTON);
       view_butt[20]->down_box(TOGGLE_BOX);
       view_butt[20]->selection_color(TOGGLE_COLOR);
-      view_butt[20]->callback(set_changed_cb, 0);
 
       view_butt[4] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Scale");
       view_butt[4]->tooltip("(Alt+i)");
       view_butt[4]->type(FL_TOGGLE_BUTTON);
       view_butt[4]->down_box(TOGGLE_BOX);
       view_butt[4]->selection_color(TOGGLE_COLOR);
-      view_butt[4]->callback(set_changed_cb, 0);
 
       view_butt[8] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Step value");
       view_butt[8]->type(FL_TOGGLE_BUTTON);
       view_butt[8]->down_box(TOGGLE_BOX);
       view_butt[8]->selection_color(TOGGLE_COLOR);
-      view_butt[8]->callback(set_changed_cb, 0);
 
       view_butt[5] = new Fl_Check_Button(width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Annotations");
       view_butt[5]->tooltip("(Alt+n)");
       view_butt[5]->type(FL_TOGGLE_BUTTON);
       view_butt[5]->down_box(TOGGLE_BOX);
       view_butt[5]->selection_color(TOGGLE_COLOR);
-      view_butt[5]->callback(set_changed_cb, 0);
 
       view_butt[10] = new Fl_Check_Button(width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Element edges");
       view_butt[10]->type(FL_TOGGLE_BUTTON);
       view_butt[10]->down_box(TOGGLE_BOX);
       view_butt[10]->selection_color(TOGGLE_COLOR);
-      view_butt[10]->callback(set_changed_cb, 0);
 
       static Fl_Menu_Item menu_boundary[] = {
 	{"None", 0, 0, 0},
@@ -2418,25 +2381,21 @@ void GUI::create_option_window()
       view_choice[9] = new Fl_Choice(width / 2, 2 * WB + 5 * BH, IW, BH, "Boundary");
       view_choice[9]->menu(menu_boundary);
       view_choice[9]->align(FL_ALIGN_RIGHT);
-      view_choice[9]->callback(set_changed_cb, 0);
 
       view_butt[21] = new Fl_Check_Button(width / 2, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Scalar values");
       view_butt[21]->type(FL_TOGGLE_BUTTON);
       view_butt[21]->down_box(TOGGLE_BOX);
       view_butt[21]->selection_color(TOGGLE_COLOR);
-      view_butt[21]->callback(set_changed_cb, 0);
 
       view_butt[22] = new Fl_Check_Button(width / 2, 2 * WB + 7 * BH, BW / 2 - WB, BH, "Vector values");
       view_butt[22]->type(FL_TOGGLE_BUTTON);
       view_butt[22]->down_box(TOGGLE_BOX);
       view_butt[22]->selection_color(TOGGLE_COLOR);
-      view_butt[22]->callback(set_changed_cb, 0);
 
       view_butt[23] = new Fl_Check_Button(width / 2, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Tensor values");
       view_butt[23]->type(FL_TOGGLE_BUTTON);
       view_butt[23]->down_box(TOGGLE_BOX);
       view_butt[23]->selection_color(TOGGLE_COLOR);
-      view_butt[23]->callback(set_changed_cb, 0);
       
       o->end();
     }
@@ -2449,7 +2408,6 @@ void GUI::create_option_window()
       view_value[30]->minimum(1);
       view_value[30]->maximum(256);
       view_value[30]->step(1);
-      view_value[30]->callback(set_changed_cb, 0);
 
       static Fl_Menu_Item menu_iso[] = {
         {"Iso-values", 0, 0, 0},
@@ -2461,7 +2419,6 @@ void GUI::create_option_window()
       view_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Intervals type");
       view_choice[0]->menu(menu_iso);
       view_choice[0]->align(FL_ALIGN_RIGHT);
-      view_choice[0]->callback(set_changed_cb, 0);
       view_choice[0]->tooltip("(Alt+t)");
 
       static Fl_Menu_Item menu_range[] = {
@@ -2473,17 +2430,12 @@ void GUI::create_option_window()
       view_choice[7] = new Fl_Choice(2 * WB, 2 * WB + 3 * BH, IW, BH, "Range type");
       view_choice[7]->menu(menu_range);
       view_choice[7]->align(FL_ALIGN_RIGHT);
-      // won't work, since the items have their own callbaks; the
-      // changed flag has to be set in view_options_custom_cb!
-      //view_choice[7]->callback(set_changed_cb, 0);
 
       view_value[31] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Custom minimum");
       view_value[31]->align(FL_ALIGN_RIGHT);
-      view_value[31]->callback(set_changed_cb, 0);
 
       view_value[32] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Custom maximum");
       view_value[32]->align(FL_ALIGN_RIGHT);
-      view_value[32]->callback(set_changed_cb, 0);
 
       static Fl_Menu_Item menu_scale[] = {
         {"Linear", 0, 0, 0},
@@ -2494,13 +2446,11 @@ void GUI::create_option_window()
       view_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Scale");
       view_choice[1]->menu(menu_scale);
       view_choice[1]->align(FL_ALIGN_RIGHT);
-      view_choice[1]->callback(set_changed_cb, 0);
 
       view_butt[38] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW, BH, "Saturate values");
       view_butt[38]->type(FL_TOGGLE_BUTTON);
       view_butt[38]->down_box(TOGGLE_BOX);
       view_butt[38]->selection_color(TOGGLE_COLOR);
-      view_butt[38]->callback(set_changed_cb, 0);
 
       view_range->end();
     }
@@ -2510,27 +2460,21 @@ void GUI::create_option_window()
 
       view_value[40] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X offset");
       view_value[40]->align(FL_ALIGN_RIGHT);
-      view_value[40]->callback(set_changed_cb, 0);
 
       view_value[41] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y offset");
       view_value[41]->align(FL_ALIGN_RIGHT);
-      view_value[41]->callback(set_changed_cb, 0);
 
       view_value[42] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z offset");
       view_value[42]->align(FL_ALIGN_RIGHT);
-      view_value[42]->callback(set_changed_cb, 0);
 
       view_value[43] = new Fl_Value_Input(width / 2, 2 * WB + 1 * BH, IW, BH, "X raise");
       view_value[43]->align(FL_ALIGN_RIGHT);
-      view_value[43]->callback(set_changed_cb, 0);
 
       view_value[44] = new Fl_Value_Input(width / 2, 2 * WB + 2 * BH, IW, BH, "Y raise");
       view_value[44]->align(FL_ALIGN_RIGHT);
-      view_value[44]->callback(set_changed_cb, 0);
 
       view_value[45] = new Fl_Value_Input(width / 2, 2 * WB + 3 * BH, IW, BH, "Z raise");
       view_value[45]->align(FL_ALIGN_RIGHT);
-      view_value[45]->callback(set_changed_cb, 0);
 
       o->end();
     }
@@ -2543,31 +2487,26 @@ void GUI::create_option_window()
       view_value[12]->step(0.01);
       view_value[12]->maximum(1.);
       view_value[12]->align(FL_ALIGN_RIGHT);
-      view_value[12]->callback(set_changed_cb, 0);
 
       view_choice[5] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
       view_choice[5]->menu(menu_point_display);
       view_choice[5]->align(FL_ALIGN_RIGHT);
-      view_choice[5]->callback(set_changed_cb, 0);
 
       view_value[61] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Point size");
       view_value[61]->minimum(0.1);
       view_value[61]->maximum(50);
       view_value[61]->step(0.1);
       view_value[61]->align(FL_ALIGN_RIGHT);
-      view_value[61]->callback(set_changed_cb, 0);
 
       view_choice[6] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
       view_choice[6]->menu(menu_line_display);
       view_choice[6]->align(FL_ALIGN_RIGHT);
-      view_choice[6]->callback(set_changed_cb, 0);
 
       view_value[62] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       view_value[62]->minimum(0.1);
       view_value[62]->maximum(50);
       view_value[62]->step(0.1);
       view_value[62]->align(FL_ALIGN_RIGHT);
-      view_value[62]->callback(set_changed_cb, 0);
 
       {
         view_vector = new Fl_Group(2 * WB, 2 * WB + 6 * BH, width - 2 * WB, 5 * BH, 0);
@@ -2583,7 +2522,6 @@ void GUI::create_option_window()
         view_choice[2] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
         view_choice[2]->menu(menu_vectype);
         view_choice[2]->align(FL_ALIGN_RIGHT);
-        view_choice[2]->callback(set_changed_cb, 0);
 
 	view_push_butt[0] = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 6 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
       
@@ -2592,11 +2530,9 @@ void GUI::create_option_window()
         view_value[60]->maximum(500);
         view_value[60]->step(1);
         view_value[60]->align(FL_ALIGN_RIGHT);
-        view_value[60]->callback(set_changed_cb, 0);
 
         view_value[63] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view_value[63]->align(FL_ALIGN_RIGHT);
-        view_value[63]->callback(set_changed_cb, 0);
 
         static Fl_Menu_Item menu_vecloc[] = {
           {"Cell centered", 0, 0, 0},
@@ -2606,7 +2542,6 @@ void GUI::create_option_window()
         view_choice[3] = new Fl_Choice(2 * WB, 2 * WB + 9 * BH, IW, BH, "Arrow location");
         view_choice[3]->menu(menu_vecloc);
         view_choice[3]->align(FL_ALIGN_RIGHT);
-        view_choice[3]->callback(set_changed_cb, 0);
 
         static Fl_Menu_Item menu_tensor[] = {
           {"Von-Mises", 0, 0, 0},
@@ -2616,7 +2551,6 @@ void GUI::create_option_window()
         view_choice[4] = new Fl_Choice(2 * WB, 2 * WB + 10 * BH, IW, BH, "Tensor display");
         view_choice[4]->menu(menu_tensor);
         view_choice[4]->align(FL_ALIGN_RIGHT);
-        view_choice[4]->callback(set_changed_cb, 0);
 
         view_vector->end();
       }
@@ -2632,26 +2566,22 @@ void GUI::create_option_window()
       view_butt[11]->type(FL_TOGGLE_BUTTON);
       view_butt[11]->down_box(TOGGLE_BOX);
       view_butt[11]->selection_color(TOGGLE_COLOR);
-      view_butt[11]->callback(set_changed_cb, 0);
 
       view_butt[9]  = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Use two-side lighting");
       view_butt[9]->type(FL_TOGGLE_BUTTON);
       view_butt[9]->down_box(TOGGLE_BOX);
       view_butt[9]->selection_color(TOGGLE_COLOR);
-      view_butt[9]->callback(set_changed_cb, 0);
 
       view_butt[12] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Smooth normals");
       view_butt[12]->type(FL_TOGGLE_BUTTON);
       view_butt[12]->down_box(TOGGLE_BOX);
       view_butt[12]->selection_color(TOGGLE_COLOR);
-      view_butt[12]->callback(set_changed_cb, 0);
 
       view_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing threshold angle");
       view_value[10]->minimum(0.);
       view_value[10]->step(1.);
       view_value[10]->maximum(180.);
       view_value[10]->align(FL_ALIGN_RIGHT);
-      view_value[10]->callback(set_changed_cb, 0);
       
       o->end();
     }
@@ -2661,7 +2591,6 @@ void GUI::create_option_window()
 
       view_colorbar_window = new Colorbar_Window(2 * WB, 2 * WB + BH, width - 4 * WB, height - 4 * WB - BH);
       view_colorbar_window->end();
-      // no 'set_changed' since Colorbar_Window has its own callbacks
 
       // this exposes the MacOSX clipping bug with a regular subwindow:
       //view_colorbar_window->hide();

@@ -192,13 +192,12 @@ public:
   int view_number ;
   Fl_Window        *view_window ;
   Fl_Group         *view_2d, *view_range, *view_vector ;
-#define VIEW_OPT_BUTT 100
-  Fl_Check_Button  *view_butt[VIEW_OPT_BUTT] ;
-  Fl_Value_Input   *view_value[VIEW_OPT_BUTT] ;
-  Fl_Input         *view_input[VIEW_OPT_BUTT] ;
-  Fl_Repeat_Button *view_butt_rep[VIEW_OPT_BUTT] ;
-  Fl_Button        *view_push_butt[VIEW_OPT_BUTT] ;
-  Fl_Choice        *view_choice[VIEW_OPT_BUTT] ;
+  Fl_Check_Button  *view_butt[100] ;
+  Fl_Value_Input   *view_value[100] ;
+  Fl_Input         *view_input[100] ;
+  Fl_Repeat_Button *view_butt_rep[100] ;
+  Fl_Button        *view_push_butt[100] ;
+  Fl_Choice        *view_choice[100] ;
 
   Colorbar_Window  *view_colorbar_window ;
   Fl_Return_Button *view_ok ;

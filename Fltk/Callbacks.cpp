@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.262 2004-08-06 14:48:32 remacle Exp $
+// $Id: Callbacks.cpp,v 1.263 2004-08-09 10:29:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -237,11 +237,6 @@ void color_cb(CALLBACK_ARGS)
   if(fl_color_chooser("Color Chooser", r, g, b))
     fct(0, GMSH_SET | GMSH_GUI, PACK_COLOR(r, g, b, 255));
   Draw();
-}
-
-void set_changed_cb(CALLBACK_ARGS)
-{
-  w->set_changed();
 }
 
 void redraw_cb(CALLBACK_ARGS)
@@ -3310,8 +3305,6 @@ void view_options_custom_cb(CALLBACK_ARGS)
     WID->view_value[31]->deactivate();
     WID->view_value[32]->deactivate();
   }
-
-  if(w) w->set_changed();
 }
 
 void view_options_timestep_cb(CALLBACK_ARGS)
@@ -3364,324 +3357,393 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
   links = (int)opt_post_link(0, GMSH_GET, 0);
 
+  // get the old values for the current view
+  int current = (long int)data;
+
+  double scale_type = opt_view_scale_type(current, GMSH_GET, 0);
+  double intervals_type = opt_view_intervals_type(current, GMSH_GET, 0);
+  double point_type = opt_view_point_type(current, GMSH_GET, 0);
+  double line_type = opt_view_line_type(current, GMSH_GET, 0);
+  double vector_type = opt_view_vector_type(current, GMSH_GET, 0);
+  double arrow_location = opt_view_arrow_location(current, GMSH_GET, 0);
+  double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
+  double range_type = opt_view_range_type(current, GMSH_GET, 0);
+  double grid = opt_view_grid(current, GMSH_GET, 0);
+  double boundary = opt_view_boundary(current, GMSH_GET, 0);
+
+  double type = opt_view_type(current, GMSH_GET, 0);
+  double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
+  double show_element = opt_view_show_element(current, GMSH_GET, 0);
+  double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
+  double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
+  double show_time = opt_view_show_time(current, GMSH_GET, 0);
+  double draw_strings = opt_view_draw_strings(current, GMSH_GET, 0);
+  double light = opt_view_light(current, GMSH_GET, 0);
+  double light_two_side = opt_view_light_two_side(current, GMSH_GET, 0);
+  double smooth_normals = opt_view_smooth_normals(current, GMSH_GET, 0);
+  double draw_points = opt_view_draw_points(current, GMSH_GET, 0);
+  double draw_lines = opt_view_draw_lines(current, GMSH_GET, 0);
+  double draw_triangles = opt_view_draw_triangles(current, GMSH_GET, 0);
+  double draw_quadrangles = opt_view_draw_quadrangles(current, GMSH_GET, 0);
+  double draw_tetrahedra = opt_view_draw_tetrahedra(current, GMSH_GET, 0);
+  double draw_hexahedra = opt_view_draw_hexahedra(current, GMSH_GET, 0);
+  double draw_prisms = opt_view_draw_prisms(current, GMSH_GET, 0);
+  double draw_pyramids = opt_view_draw_pyramids(current, GMSH_GET, 0);
+  double draw_scalars = opt_view_draw_scalars(current, GMSH_GET, 0);
+  double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
+  double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
+
+  double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
+  double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
+  double nb_iso = opt_view_nb_iso(current, GMSH_GET, 0);
+  double offset0 = opt_view_offset0(current, GMSH_GET, 0);
+  double offset1 = opt_view_offset1(current, GMSH_GET, 0);
+  double offset2 = opt_view_offset2(current, GMSH_GET, 0);
+  double raise0 = opt_view_raise0(current, GMSH_GET, 0);
+  double raise1 = opt_view_raise1(current, GMSH_GET, 0);
+  double raise2 = opt_view_raise2(current, GMSH_GET, 0);
+  double timestep = opt_view_timestep(current, GMSH_GET, 0);
+  double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
+  double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
+  double point_size = opt_view_point_size(current, GMSH_GET, 0);
+  double line_width = opt_view_line_width(current, GMSH_GET, 0);
+  double explode = opt_view_explode(current, GMSH_GET, 0);
+  double angle_smooth_normals = opt_view_angle_smooth_normals(i, GMSH_GET, 0);
+  double position0 = opt_view_position0(current, GMSH_GET, 0);
+  double position1 = opt_view_position1(current, GMSH_GET, 0);
+  double size0 = opt_view_size0(current, GMSH_GET, 0);
+  double size1 = opt_view_size1(current, GMSH_GET, 0);
+  double nb_abscissa = opt_view_nb_abscissa(current, GMSH_GET, 0);
+
+  char name[256];
+  strcpy(name, opt_view_name(current, GMSH_GET, NULL));
+  char format[256];
+  strcpy(format, opt_view_format(current, GMSH_GET, NULL));
+  char abscissa_name[256];
+  strcpy(abscissa_name, opt_view_abscissa_name(current, GMSH_GET, NULL));
+  char abscissa_format[256];
+  strcpy(abscissa_format, opt_view_abscissa_format(current, GMSH_GET, NULL));
+
+  // modify only the views that need to be updated
   for(i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
-       (links == 0 && i == (long int)data)) {
+       (links == 0 && i == current)) {
 
       if(links == 3 || links == 4)
         force = 1;
 
+      double val;
+
       // view_choice
 
-      if(force || WID->view_choice[1]->changed()) {
-        int val;
-        switch (WID->view_choice[1]->value()) {
-        case 0:
-          val = DRAW_POST_LINEAR;
-          break;
-        case 1:
-          val = DRAW_POST_LOGARITHMIC;
-          break;
-        default:
-          val = DRAW_POST_DOUBLELOGARITHMIC;
-          break;
-        }
+      switch (WID->view_choice[1]->value()) {
+      case 0:
+	val = DRAW_POST_LINEAR;
+	break;
+      case 1:
+	val = DRAW_POST_LOGARITHMIC;
+	break;
+      default:
+	val = DRAW_POST_DOUBLELOGARITHMIC;
+	break;
+      }
+      if(force || (val != scale_type))
         opt_view_scale_type(i, GMSH_SET, val);
-      }
 
-      if(force || WID->view_choice[0]->changed()) {
-        int val;
-        switch (WID->view_choice[0]->value()) {
-        case 0:
-          val = DRAW_POST_ISO;
-          break;
-        case 1:
-          val = DRAW_POST_DISCRETE;
-          break;
-        case 2:
-          val = DRAW_POST_CONTINUOUS;
-          break;
-        default:
-          val = DRAW_POST_NUMERIC;
-          break;
-        }
-        opt_view_intervals_type(i, GMSH_SET, val);
+      switch (WID->view_choice[0]->value()) {
+      case 0:
+	val = DRAW_POST_ISO;
+	break;
+      case 1:
+	val = DRAW_POST_DISCRETE;
+	break;
+      case 2:
+	val = DRAW_POST_CONTINUOUS;
+	break;
+      default:
+	val = DRAW_POST_NUMERIC;
+	break;
       }
-
-      if(force || WID->view_choice[5]->changed()) {
-        int val;
-        switch (WID->view_choice[5]->value()) {
-        case 0:
-          val = 0;
-          break;
-        default:
-          val = 1;
-          break;
-        }
-        opt_view_point_type(i, GMSH_SET, val);
-      }
-
-      if(force || WID->view_choice[6]->changed()) {
-        int val;
-        switch (WID->view_choice[6]->value()) {
-        case 0:
-          val = 0;
-          break;
-        default:
-          val = 1;
-          break;
-        }
+      if(force || (val != intervals_type))
+	opt_view_intervals_type(i, GMSH_SET, val);
+      
+      val = WID->view_choice[5]->value();
+      if(force || (val != point_type))
+	opt_view_point_type(i, GMSH_SET, val);
+      
+      val = WID->view_choice[6]->value();
+      if(force || (val != line_type))
         opt_view_line_type(i, GMSH_SET, val);
-      }
 
-      if(force || WID->view_choice[2]->changed()) {
-        int val;
-        switch (WID->view_choice[2]->value()) {
-        case 0:
-          val = DRAW_POST_SEGMENT;
-          break;
-        case 1:
-          val = DRAW_POST_ARROW;
-          break;
-        case 2:
-          val = DRAW_POST_PYRAMID;
-          break;
-        case 4:
-          val = DRAW_POST_DISPLACEMENT;
-	  break;
-	default: // 3
-          val = DRAW_POST_ARROW3D;
-          break;
-        }
+      switch (WID->view_choice[2]->value()) {
+      case 0:
+	val = DRAW_POST_SEGMENT;
+	break;
+      case 1:
+	val = DRAW_POST_ARROW;
+	break;
+      case 2:
+	val = DRAW_POST_PYRAMID;
+	break;
+      case 4:
+	val = DRAW_POST_DISPLACEMENT;
+	break;
+      default: // 3
+	val = DRAW_POST_ARROW3D;
+	break;
+      }
+      if(force || (val != vector_type))
         opt_view_vector_type(i, GMSH_SET, val);
-      }
 
-      if(force || WID->view_choice[3]->changed()) {
-        int val;
-        switch (WID->view_choice[3]->value()) {
-        case 0:
-          val = DRAW_POST_LOCATE_COG;
-          break;
-        default:
-          val = DRAW_POST_LOCATE_VERTEX;
-          break;
-        }
+      switch (WID->view_choice[3]->value()) {
+      case 0:
+	val = DRAW_POST_LOCATE_COG;
+	break;
+      default:
+	val = DRAW_POST_LOCATE_VERTEX;
+	break;
+      }
+      if(force || (val != arrow_location))
         opt_view_arrow_location(i, GMSH_SET, val);
-      }
 
-      if(force || WID->view_choice[4]->changed()) {
-        int val;
-        switch (WID->view_choice[4]->value()) {
-        case 0:
-          val = DRAW_POST_VONMISES;
-          break;
-        default:
-          val = DRAW_POST_EIGENVECTORS;
-          break;
-        }
+      switch (WID->view_choice[4]->value()) {
+      case 0:
+	val = DRAW_POST_VONMISES;
+	break;
+      default:
+	val = DRAW_POST_EIGENVECTORS;
+	break;
+      }
+      if(force || (val != tensor_type))
         opt_view_tensor_type(i, GMSH_SET, val);
-      }
 
-      if(force || WID->view_choice[7]->changed()) {
-        int val;
-        switch (WID->view_choice[7]->value()) {
-        case 0:
-          val = DRAW_POST_RANGE_DEFAULT;
-          break;
-        case 1:
-          val = DRAW_POST_RANGE_PER_STEP;
-          break;
-        default:
-          val = DRAW_POST_RANGE_CUSTOM;
-          break;
-        }
+      switch (WID->view_choice[7]->value()) {
+      case 0:
+	val = DRAW_POST_RANGE_DEFAULT;
+	break;
+      case 1:
+	val = DRAW_POST_RANGE_PER_STEP;
+	break;
+      default:
+	val = DRAW_POST_RANGE_CUSTOM;
+	break;
+      }
+      if(force || (val != range_type))
         opt_view_range_type(i, GMSH_SET, val);
-      }
 
-      if(force || WID->view_choice[8]->changed()) {
-        opt_view_grid(i, GMSH_SET, WID->view_choice[8]->value());
-      }
+      val = WID->view_choice[8]->value();
+      if(force || (val != grid))
+        opt_view_grid(i, GMSH_SET, val);
 
-      if(force || WID->view_choice[9]->changed()) {
-        opt_view_boundary(i, GMSH_SET, WID->view_choice[9]->value());
-      }
+      val = WID->view_choice[9]->value();
+      if(force || (val != boundary))
+        opt_view_boundary(i, GMSH_SET, val);
 
       // view_butts
 
-      if(force || WID->view_butt[1]->changed() ||
-         WID->view_butt[2]->changed() || WID->view_butt[3]->changed())
-        opt_view_type(i, GMSH_SET,
-                      WID->view_butt[1]->value()? DRAW_POST_3D :
-                      WID->view_butt[2]->value()? DRAW_POST_2D_SPACE :
-                      DRAW_POST_2D_TIME);
+      val = WID->view_butt[1]->value() ? DRAW_POST_3D :
+	WID->view_butt[2]->value() ? DRAW_POST_2D_SPACE : DRAW_POST_2D_TIME;
+      if(force || (val != type))
+        opt_view_type(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[38]->changed())
-        opt_view_saturate_values(i, GMSH_SET, WID->view_butt[38]->value());
+      val = WID->view_butt[38]->value();
+      if(force || (val != saturate_values))
+        opt_view_saturate_values(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[10]->changed())
-        opt_view_show_element(i, GMSH_SET, WID->view_butt[10]->value());
+      val = WID->view_butt[10]->value();
+      if(force || (val != show_element))
+        opt_view_show_element(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[4]->changed())
-        opt_view_show_scale(i, GMSH_SET, WID->view_butt[4]->value());
+      val = WID->view_butt[4]->value();
+      if(force || (val != show_scale))
+        opt_view_show_scale(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[7]->changed())
-        opt_view_auto_position(i, GMSH_SET, WID->view_butt[7]->value());
+      val = WID->view_butt[7]->value();
+      if(force || (val != auto_position))
+        opt_view_auto_position(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[8]->changed())
-        opt_view_show_time(i, GMSH_SET, WID->view_butt[8]->value());
+      val = WID->view_butt[8]->value();
+      if(force || (val != show_time))
+        opt_view_show_time(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[5]->changed())
-        opt_view_draw_strings(i, GMSH_SET, WID->view_butt[5]->value());
+      val = WID->view_butt[5]->value();
+      if(force || (val != draw_strings))
+        opt_view_draw_strings(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[11]->changed())
-        opt_view_light(i, GMSH_SET, WID->view_butt[11]->value());
+      val = WID->view_butt[11]->value();
+      if(force || (val != light))
+        opt_view_light(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[9]->changed())
-        opt_view_light_two_side(i, GMSH_SET, WID->view_butt[9]->value());
+      val = WID->view_butt[9]->value();
+      if(force || (val != light_two_side))
+        opt_view_light_two_side(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[12]->changed())
-        opt_view_smooth_normals(i, GMSH_SET, WID->view_butt[12]->value());
+      val = WID->view_butt[12]->value();
+      if(force || (val != smooth_normals))
+        opt_view_smooth_normals(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[13]->changed())
-        opt_view_draw_points(i, GMSH_SET, WID->view_butt[13]->value());
+      val = WID->view_butt[13]->value();
+      if(force || (val != draw_points))
+        opt_view_draw_points(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[14]->changed())
-        opt_view_draw_lines(i, GMSH_SET, WID->view_butt[14]->value());
+      val = WID->view_butt[14]->value();
+      if(force || (val != draw_lines))
+        opt_view_draw_lines(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[15]->changed())
-        opt_view_draw_triangles(i, GMSH_SET, WID->view_butt[15]->value());
+      val = WID->view_butt[15]->value();
+      if(force || (val != draw_triangles))
+        opt_view_draw_triangles(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[16]->changed())
-        opt_view_draw_quadrangles(i, GMSH_SET, WID->view_butt[16]->value());
+      val = WID->view_butt[16]->value();
+      if(force || (val != draw_quadrangles))
+        opt_view_draw_quadrangles(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[17]->changed())
-        opt_view_draw_tetrahedra(i, GMSH_SET, WID->view_butt[17]->value());
+      val = WID->view_butt[17]->value();
+      if(force || (val != draw_tetrahedra))
+        opt_view_draw_tetrahedra(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[18]->changed())
-        opt_view_draw_hexahedra(i, GMSH_SET, WID->view_butt[18]->value());
+      val = WID->view_butt[18]->value();
+      if(force || (val != draw_hexahedra))
+        opt_view_draw_hexahedra(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[19]->changed())
-        opt_view_draw_prisms(i, GMSH_SET, WID->view_butt[19]->value());
+      val = WID->view_butt[19]->value();
+      if(force || (val != draw_prisms))
+        opt_view_draw_prisms(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[20]->changed())
-        opt_view_draw_pyramids(i, GMSH_SET, WID->view_butt[20]->value());
+      val = WID->view_butt[20]->value();
+      if(force || (val != draw_pyramids))
+        opt_view_draw_pyramids(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[21]->changed())
-        opt_view_draw_scalars(i, GMSH_SET, WID->view_butt[21]->value());
+      val = WID->view_butt[21]->value();
+      if(force || (val != draw_scalars))
+        opt_view_draw_scalars(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[22]->changed())
-        opt_view_draw_vectors(i, GMSH_SET, WID->view_butt[22]->value());
+      val = WID->view_butt[22]->value();
+      if(force || (val != draw_vectors))
+        opt_view_draw_vectors(i, GMSH_SET, val);
 
-      if(force || WID->view_butt[23]->changed())
-        opt_view_draw_tensors(i, GMSH_SET, WID->view_butt[23]->value());
+      val = WID->view_butt[23]->value();
+      if(force || (val != draw_tensors))
+        opt_view_draw_tensors(i, GMSH_SET, val);
 
       // view_values
+      
+      val = WID->view_value[31]->value();
+      if(force || (val != custom_min))
+        opt_view_custom_min(i, GMSH_SET, val);
 
-      if(force || WID->view_value[31]->changed())
-        opt_view_custom_min(i, GMSH_SET, WID->view_value[31]->value());
+      val = WID->view_value[32]->value();
+      if(force || (val != custom_max))
+        opt_view_custom_max(i, GMSH_SET, val);
 
-      if(force || WID->view_value[32]->changed())
-        opt_view_custom_max(i, GMSH_SET, WID->view_value[32]->value());
+      val = WID->view_value[30]->value();
+      if(force || (val != nb_iso))
+        opt_view_nb_iso(i, GMSH_SET, val);
 
-      if(force || WID->view_value[30]->changed())
-        opt_view_nb_iso(i, GMSH_SET, WID->view_value[30]->value());
+      val = WID->view_value[40]->value();
+      if(force || (val != offset0))
+        opt_view_offset0(i, GMSH_SET, val);
 
-      if(force || WID->view_value[40]->changed())
-        opt_view_offset0(i, GMSH_SET, WID->view_value[40]->value());
+      val = WID->view_value[41]->value();
+      if(force || (val != offset1))
+        opt_view_offset1(i, GMSH_SET, val);
 
-      if(force || WID->view_value[41]->changed())
-        opt_view_offset1(i, GMSH_SET, WID->view_value[41]->value());
+      val = WID->view_value[42]->value();
+      if(force || (val != offset2))
+        opt_view_offset2(i, GMSH_SET, val);
 
-      if(force || WID->view_value[42]->changed())
-        opt_view_offset2(i, GMSH_SET, WID->view_value[42]->value());
+      val = WID->view_value[43]->value();
+      if(force || (val != raise0))
+        opt_view_raise0(i, GMSH_SET, val);
 
-      if(force || WID->view_value[43]->changed())
-        opt_view_raise0(i, GMSH_SET, WID->view_value[43]->value());
+      val = WID->view_value[44]->value();
+      if(force || (val != raise1))
+        opt_view_raise1(i, GMSH_SET, val);
 
-      if(force || WID->view_value[44]->changed())
-        opt_view_raise1(i, GMSH_SET, WID->view_value[44]->value());
+      val = WID->view_value[45]->value();
+      if(force || (val != raise2))
+        opt_view_raise2(i, GMSH_SET, val);
 
-      if(force || WID->view_value[45]->changed())
-        opt_view_raise2(i, GMSH_SET, WID->view_value[45]->value());
+      val = WID->view_value[50]->value();
+      if(force || (val != timestep))
+        opt_view_timestep(i, GMSH_SET, val);
 
-      if(force || WID->view_value[50]->changed())
-        opt_view_timestep(i, GMSH_SET, WID->view_value[50]->value());
+      val = WID->view_value[60]->value();
+      if(force || (val != arrow_size))
+        opt_view_arrow_size(i, GMSH_SET, val);
 
-      if(force || WID->view_value[60]->changed())
-        opt_view_arrow_size(i, GMSH_SET, WID->view_value[60]->value());
+      val = WID->view_value[63]->value();
+      if(force || (val != displacement_factor))
+        opt_view_displacement_factor(i, GMSH_SET, val);
 
-      if(force || WID->view_value[63]->changed())
-        opt_view_displacement_factor(i, GMSH_SET, WID->view_value[63]->value());
+      val = WID->view_value[61]->value();
+      if(force || (val != point_size))
+        opt_view_point_size(i, GMSH_SET, val);
 
-      if(force || WID->view_value[61]->changed())
-        opt_view_point_size(i, GMSH_SET, WID->view_value[61]->value());
+      val = WID->view_value[62]->value();
+      if(force || (val != line_width))
+        opt_view_line_width(i, GMSH_SET, val);
 
-      if(force || WID->view_value[62]->changed())
-        opt_view_line_width(i, GMSH_SET, WID->view_value[62]->value());
+      val = WID->view_value[12]->value();
+      if(force || (val != explode))
+        opt_view_explode(i, GMSH_SET, val);
 
-      if(force || WID->view_value[12]->changed())
-        opt_view_explode(i, GMSH_SET, WID->view_value[12]->value());
+      val = WID->view_value[10]->value();
+      if(force || (val != angle_smooth_normals))
+        opt_view_angle_smooth_normals(i, GMSH_SET, val);
 
-      if(force || WID->view_value[10]->changed())
-        opt_view_angle_smooth_normals(i, GMSH_SET,
-                                      WID->view_value[10]->value());
+      val = WID->view_value[20]->value();
+      if(force || (val != position0))
+        opt_view_position0(i, GMSH_SET, val);
 
-      if(force || WID->view_value[20]->changed())
-        opt_view_position0(i, GMSH_SET, WID->view_value[20]->value());
+      val = WID->view_value[21]->value();
+      if(force || (val != position1))
+        opt_view_position1(i, GMSH_SET, val);
 
-      if(force || WID->view_value[21]->changed())
-        opt_view_position1(i, GMSH_SET, WID->view_value[21]->value());
-
-      if(force || WID->view_value[22]->changed())
-        opt_view_size0(i, GMSH_SET, WID->view_value[22]->value());
-
-      if(force || WID->view_value[23]->changed())
-        opt_view_size1(i, GMSH_SET, WID->view_value[23]->value());
-
-      if(force || WID->view_value[25]->changed())
-        opt_view_nb_abscissa(i, GMSH_SET, WID->view_value[25]->value());
+      val = WID->view_value[22]->value();
+      if(force || (val != size0))
+        opt_view_size0(i, GMSH_SET, val);
+      
+      val = WID->view_value[23]->value();
+      if(force || (val != size1))
+        opt_view_size1(i, GMSH_SET, val);
+      
+      val = WID->view_value[25]->value();
+      if(force || (val != nb_abscissa))
+        opt_view_nb_abscissa(i, GMSH_SET, val);
 
       // view_inputs
 
-      if(force || WID->view_input[0]->changed())
-        opt_view_name(i, GMSH_SET, (char *)WID->view_input[0]->value());
+      char *str;
 
-      if(force || WID->view_input[1]->changed())
-        opt_view_format(i, GMSH_SET, (char *)WID->view_input[1]->value());
+      str = (char *)WID->view_input[0]->value();
+      if(force || strcmp(str, name))
+        opt_view_name(i, GMSH_SET, str);
 
-      if(force || WID->view_input[2]->changed())
-        opt_view_abscissa_name(i, GMSH_SET,
-                               (char *)WID->view_input[2]->value());
+      str = (char *)WID->view_input[1]->value();
+      if(force || strcmp(str, format))
+        opt_view_format(i, GMSH_SET, str);
 
-      if(force || WID->view_input[3]->changed())
-        opt_view_abscissa_format(i, GMSH_SET,
-                                 (char *)WID->view_input[3]->value());
+      str = (char *)WID->view_input[2]->value();
+      if(force || strcmp(str, abscissa_name))
+        opt_view_abscissa_name(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[3]->value();
+      if(force || strcmp(str, abscissa_format))
+        opt_view_abscissa_format(i, GMSH_SET, str);
 
       // colorbar window
 
-      if(force
-         || (WID->view_colorbar_window->changed() && i != (long int)data)) {
-        ColorTable_Copy(&
-                        ((Post_View *)
-                         List_Pointer(CTX.post.list, (long int)data))->CT);
-        ColorTable_Paste(&((Post_View *) List_Pointer(CTX.post.list, i))->CT);
+      if(force || (WID->view_colorbar_window->changed() && i != current)) {
+        ColorTable_Copy(&((Post_View *)List_Pointer(CTX.post.list, current))->CT);
+        ColorTable_Paste(&((Post_View *)List_Pointer(CTX.post.list, i))->CT);
       }
     }
   }
 
-  // we clear all the flags
-  for(i = 0; i < VIEW_OPT_BUTT; i++) {
-    if(WID->view_butt[i])
-      WID->view_butt[i]->clear_changed();
-    if(WID->view_value[i])
-      WID->view_value[i]->clear_changed();
-    if(WID->view_input[i])
-      WID->view_input[i]->clear_changed();
-    if(WID->view_choice[i])
-      WID->view_choice[i]->clear_changed();
-    WID->view_colorbar_window->clear_changed();
-  }
+  // clear the changed flag on the colorbar
+  WID->view_colorbar_window->clear_changed();
 }
 
 void view_arrow_param_cb(CALLBACK_ARGS)

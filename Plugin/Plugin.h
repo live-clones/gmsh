@@ -115,7 +115,7 @@ public:
   virtual void receiveNewPhysicalGroup (int dim, int id) = 0;// add the given group to the solver data's
   virtual void readSolverFile  ( const char * ) = 0;  // load the solver input file related to the gmsh geo file
   virtual void writeSolverFile ( const char *) const = 0;  // save the solver file  
-  virtual bool GL_enhancePoint ( Vertex *v) {}; // enhance graphics for a giver geo point
+  virtual bool GL_enhancePoint ( Vertex *v) { return false; }; // enhance graphics for a giver geo point
 };
 
 #endif
