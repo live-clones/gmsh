@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.55 2004-05-07 18:42:48 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.56 2004-05-22 01:29:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -833,7 +833,7 @@ void Maillage_Surface(void *data, void *dum)
   Tree_Action(s->Vertices, Projette_Plan_Moyen);
   Tree_Action(THEM->Curves, ActionEndTheCurve);
   s->Typ = MSH_SURF_PLAN;
-  End_Surface(s);
+  End_Surface(s, 0);
 
   ori = Calcule_Contours(s);
 
@@ -880,8 +880,8 @@ void Maillage_Surface(void *data, void *dum)
   Tree_Action(s->Vertices, Add_In_Mesh);
 
   Tree_Action(THEM->Curves, ActionEndTheCurve);
-  End_Surface(s->Support);
-  End_Surface(s);
+  End_Surface(s->Support, 0);
+  End_Surface(s, 0);
 
   THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
   THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);       // tri+qua

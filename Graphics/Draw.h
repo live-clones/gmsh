@@ -55,7 +55,6 @@ void ZeroHighlightEntityNum(int v, int c, int s);
 
 void Draw3d(void);
 void Draw2d(void);
-void DrawUI(void);
 void Draw(void);
 
 void Draw_String(char *s);

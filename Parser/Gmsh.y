@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.165 2004-05-14 18:23:58 geuzaine Exp $
+// $Id: Gmsh.y,v 1.166 2004-05-22 01:29:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2415,10 +2415,8 @@ Command :
    | tDraw tEND
     {
 #if defined(HAVE_FLTK)
-      if(!CTX.batch){ // we're in interactive mode
+      if(!CTX.batch) // we're in interactive mode
 	Draw();
-	DrawUI();
-      }
 #endif
     }
 ;

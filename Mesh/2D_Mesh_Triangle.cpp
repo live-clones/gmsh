@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.8 2004-05-22 01:24:17 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.9 2004-05-22 01:29:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -200,17 +200,33 @@ int Mesh_Shewchuk(Surface * s)
     return 0;
   }
 
-  // generalize this if we have a bgmesh!
   mid.trianglearealist =
     (REAL *) Malloc(mid.numberoftriangles * sizeof(REAL));
   for(i = 0; i < mid.numberoftriangles; i++) {
-    val = 0;
-    for(j = 0; j < mid.numberofcorners; j++) {
-      k = mid.trianglelist[i * mid.numberofcorners + j];
-      val += mid.pointattributelist[k];
+    //if(THEM->BGM.Typ == ONFILE) {
+    if(0) { 
+      double xx = 0.0, yy = 0.0;
+      for(j = 0; j < mid.numberofcorners; j++) {
+	k = mid.trianglelist[i * mid.numberofcorners + j];
+	xx += mid.pointlist[2 * k];
+	yy += mid.pointlist[2 * k + 1];
+      }
+      xx /= mid.numberofcorners;
+      yy /= mid.numberofcorners;
+      // project the point in real space; this is a mess, since we
+      // actually change the parameters of the surface in 2d_Mesh.cpp
+      // x =, y = , z = ; 
+      //val = Lc_XYZ(x, y, z, THEM);
     }
-    val /= mid.numberofcorners;
-    val = val * val / 1.5; // approx (we want isotropic meshes)
+    else {
+      val = 0;
+      for(j = 0; j < mid.numberofcorners; j++) {
+	k = mid.trianglelist[i * mid.numberofcorners + j];
+	val += mid.pointattributelist[k];
+      }
+      val /= mid.numberofcorners;
+      val = val * val / 1.5; // approx (we want isotropic meshes)
+    }
     mid.trianglearealist[i] = val;
   }
 

@@ -69,7 +69,7 @@ void Free_EdgeLoop(void *a, void *b);
 void Free_SurfaceLoop(void *a, void *b);
 
 void End_Curve(Curve * c);
-void End_Surface(Surface * s);
+void End_Surface(Surface * s, int reset_orientations=1);
 
 int  Add_MeshPartition(int Num, Mesh * M);
 

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.61 2004-05-19 18:43:15 geuzaine Exp $
+// $Id: Geom.cpp,v 1.62 2004-05-22 01:29:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -256,9 +256,9 @@ int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z,
 
   }
 
-  //printf(" %d -> angle %g\n", S->Num, fabs(Angle));
+  // if Angle == 2*pi, we're inside
 
-  if(fabs(Angle) > 6.0 && fabs(Angle) < 7.0)    // Should be 2 * Pi or 0
+  if(fabs(Angle) > 2*M_PI-0.5 && fabs(Angle) < 2*M_PI+0.5) 
     return 1;
   return 0;
 }
@@ -300,13 +300,15 @@ void Draw_Plane_Surface(Surface * s)
   double minx = 0., miny = 0., maxx = 0., maxy = 0., t, n[3];
   Vertex P1, P2, P3, V[4], vv, vv1, vv2;
   char Num[100];
+  const int numPoints = 100;
 
   if (s->thePolyRep) {
     Draw_Triangulated_Surface(s);
     return;
   }
 
-  if(List_Nbr(s->Orientations) < 1) {
+  if(!CTX.threads_lock && List_Nbr(s->Orientations) < 1) {
+    CTX.threads_lock = 1;
 
     List_T *points = List_Create(10, 10, sizeof(Vertex *));
     for(i = 0; i < List_Nbr(s->Generatrices); i++) {
@@ -359,8 +361,8 @@ void Draw_Plane_Surface(Surface * s)
     norme(n);
 
     k = 0;
-    for(i = 0; i < 100; i++) {
-      t = (double)i / (double)(100);
+    for(i = 0; i < numPoints; i++) {
+      t = (double)i / (double)(numPoints-1);
       vv.Pos.X = t * 0.5 * (V[0].Pos.X + V[1].Pos.X) + (1. - t) *
         0.5 * (V[2].Pos.X + V[3].Pos.X);
       vv.Pos.Y = t * 0.5 * (V[0].Pos.Y + V[1].Pos.Y) + (1. - t) *
@@ -385,8 +387,8 @@ void Draw_Plane_Surface(Surface * s)
       List_Add(s->Orientations, &vv);
 
     k = 0;
-    for(i = 0; i < 100; i++) {
-      t = (double)i / (double)(100);
+    for(i = 0; i < numPoints; i++) {
+      t = (double)i / (double)(numPoints-1);
       vv.Pos.X = t * .5 * (V[0].Pos.X + V[3].Pos.X) + 
 	(1. - t) * .5 * (V[2].Pos.X + V[1].Pos.X);
       vv.Pos.Y = t * .5 * (V[0].Pos.Y + V[3].Pos.Y) + 
@@ -413,6 +415,8 @@ void Draw_Plane_Surface(Surface * s)
 
     if(!List_Nbr(s->Orientations)) // add dummy
       List_Add(s->Orientations, &vv);
+
+    CTX.threads_lock = 0;
   }
 
   if(List_Nbr(s->Orientations) > 1) {

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.53 2004-05-22 01:24:18 geuzaine Exp $
+// $Id: Create.cpp,v 1.54 2004-05-22 01:29:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -507,12 +507,12 @@ void End_Curve(Curve * c)
 
 }
 
-void End_Surface(Surface * s)
+void End_Surface(Surface * s, int reset_orientations)
 {
   int i;
   Vertex *v;
   
-  if(s->Orientations) 
+  if(reset_orientations) 
     List_Reset(s->Orientations);
 
   if(!s->Control_Points || !List_Nbr(s->Control_Points))

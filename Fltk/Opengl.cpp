@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.41 2004-05-19 07:44:51 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.42 2004-05-22 01:29:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -66,14 +66,8 @@ void Draw(void)
   WID->redraw_opengl();
 }
 
-void DrawUI(void)
-{
-  WID->check();
-}
-
 void Draw_String(char *s)
 {
-
   if(CTX.print.gl_fonts) {
     gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
     gl_draw(s);

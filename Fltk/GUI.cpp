@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.304 2004-05-22 01:24:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.305 2004-05-22 01:29:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -874,7 +874,11 @@ void GUI::create_menu_window(int argc, char **argv)
   m_module_butt = new Fl_Choice(19, y, width - 24, BH);
   m_module_butt->menu(m_module_table);
   m_module_butt->box(FL_THIN_DOWN_BOX);
-
+  // force the executation of the callback even if we didn't change
+  // the selection (we want to go back to the top-level menu every
+  // time we select one of the categories, even if the category is not
+  // changed):
+  m_module_butt->when(FL_WHEN_RELEASE_ALWAYS);
   y = MH;
 
   for(i = 0; i < NB_BUTT_MAX; i++) {
@@ -1265,7 +1269,9 @@ void GUI::make_opengl_current()
 
 void GUI::redraw_opengl()
 {
+  g_opengl_window->make_current();
   g_opengl_window->redraw();
+  check();
 }
 
 // Create the option window
