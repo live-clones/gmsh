@@ -1,4 +1,7 @@
-$Date: 2002-08-28 21:40:06 $
+$Date: 2002-09-01 22:14:58 $
+
+New in 1.36: New post-processing file format (version 1.2) supporting
+quadrangles, hexahedra, prisms and pyramids;
 
 New in 1.35: Graphical user interface upgraded to FLTK 1.1 (tooltips,
 new file chooser with multiple selection, full keyboard navigation,
