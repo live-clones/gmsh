@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.20 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: Message.cpp,v 1.21 2001-05-25 14:27:20 geuzaine Exp $
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -53,7 +53,7 @@ void Msg(int level, char *fmt, ...){
   char     *str = NULL;
 
   switch(level){
-  case DIRECT : verb = 2; break ;
+  case DIRECT   : verb = 2; break ;
 
   case STATUS1N : log = 0; //fallthrough
   case STATUS1  : verb = 1; window = 0; break ;
@@ -141,8 +141,6 @@ void Msg(int level, char *fmt, ...){
 /* ------------------------------------------------------------------------ */
 /*  Exit                                                                    */
 /* ------------------------------------------------------------------------ */
-
-void Free_DisplayLists(void);
 
 void Exit(int level){
   if(WID && !CTX.batch){

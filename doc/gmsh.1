@@ -5,7 +5,7 @@
 .\" Copyright (c) 2000-2001 J.-F. Remacle, C. Geuzaine
 .\" 
 .\" ======================================================================
-.TH Gmsh 1 "15 February 2001" "Version 1.19" "Gmsh Manual Pages"
+.TH Gmsh 1 "15 February 2001" "Version 1.20" "Gmsh Manual Pages"
 .UC 4
 .\" ======================================================================
 .SH NAME
@@ -96,6 +96,7 @@ either interactively or through the input ascii files.
 .TP 4
 .B \-0
 parse all input files, output flattened geometry, and exit. 
+.\" ======================================================================
 .SH MESH OPTIONS
 .TP 4
 .B \-1
@@ -110,14 +111,14 @@ the geometry.
 perform the three-dimensional mesh, i.e. discretize all the volumes in
 the geometry.
 .TP 4
+.B \-o file
+specify mesh output file name.
+.TP 4
 .B \-format msh|unv|gref
-set output mesh format (default: msh)
+set output mesh format (default: msh).
 .TP 4
 .B \-algo iso|aniso
-select the two-dimensional mesh algorithm (default: iso)
-.TP 4
-.B \-rand float
-set random perturbation factor (default: 1.e-5)
+select the two-dimensional mesh algorithm (default: iso).
 .TP 4
 .B \-smooth int
 set the number of smoothing passes (default value is 3).
@@ -136,12 +137,21 @@ apply a global scaling factor to all generated elements (default value is 1.0).
 apply a global scaling factor to all the characteristic lengths in the
 mesh (default value is 1.0).
 .TP 4
+.B \-rand float
+set random perturbation factor (default: 1.e-4).
+.TP 4
 .B \-bgm file
 load view in file as current background mesh.
 .TP 4
+.B \-constrain
+constrain background mesh with characteristic lengths.
+.TP 4
+.B \-histogram
+print mesh quality histogram.
+.TP 4
 .B \-interactive
 display the 2D mesh construction interactively if the anisotropic mesh
-algorithm is selected
+algorithm is selected.
 .\" ======================================================================
 .SH POST-PROCESSING OPTIONS
 .TP 4
@@ -154,6 +164,9 @@ hide all views at startup.
 .B \-link
 link all views (all interactive option modifications will apply to all
 views) at startup.
+.TP 4
+.B \-convert file file
+convert an ascii view into a binary one.
 .\" ======================================================================
 .SH DISPLAY OPTIONS
 .TP 4
@@ -170,34 +183,20 @@ enable alpha blending.
 .B \-notrack
 don't use trackball mode for rotations.
 .TP 4
-.B \-geometry geom
-specify main window geometry.
-.TP 4
-.B \-viewport 9*float.
-(Motif versions only) specify rotation, translation and scale
-.TP 4
-.B \-display disp.
+.B \-display disp
 specify display.
 .TP 4
 .B \-perspective
 use perspective instead of orthographic projection.
-.TP 4
-.B \-flash
-(Motif versions only) allow colormap flashing.
-.TP 4
-.B \-samevisual
-(Motif versions only) force same visual for OpenGL and GUI.
 .\" ======================================================================
 .SH OTHER OPTIONS
 .TP 4
+.B \-a, \-g, \-m, \-s, \-p
+start in automatic, geometry, mesh, solver or post-processing mode
+(default: automatic).
+.TP 4
 .B \-v int
 set verbosity level (default:2).
-.TP 4
-.B \-nothreads
-(Motif versions only) disable threads.
-.TP 4
-.B \-path string
-set the path for included files.
 .TP 4
 .B \-version
 show version number.
@@ -215,7 +214,7 @@ Remacle (Remacle@scorec.rpi.edu).
 .SH SEE ALSO
 Gmsh homepage at \fIhttp://www.geuz.org/gmsh/\fR
 .PP
-Gmsh example files in \fI/usr/doc/gmsh-1.19/\fR
+Gmsh example files in \fI/usr/doc/gmsh-1.20/\fR
 .PP
 GetDP (a scientific computation software for the numerical solution of
 integro-differential equations, using finite element and integral type

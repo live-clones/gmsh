@@ -1,7 +1,7 @@
 Summary: A 3D mesh generator with pre- and post-processing facilities
 Name: gmsh
-Version: 1.19
-Source: gmsh-1.19.tar.gz
+Version: 1.20
+Source: gmsh-1.20.tar.gz
 Release: 1
 Copyright: distributable
 Group: Applications/Engineering
@@ -30,6 +30,7 @@ post-processor.
 %build
 make fltk_linux_2952
 #make fltk_linux
+make distrib
 make utilities
 rm -rf CVS */CVS */*/CVS
 

@@ -1,9 +1,9 @@
-# $Id: Makefile,v 1.101 2001-05-17 07:11:49 geuzaine Exp $
+# $Id: Makefile,v 1.102 2001-05-25 14:27:20 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
 
-           GMSH_RELEASE = 1.19
+           GMSH_RELEASE = 1.20
 
                    MAKE = make
                      CC = c++
@@ -208,7 +208,7 @@ src:
 	tar cvf $(GMSH_SRCRPM).tar $(GMSH_SOURCES)
 	gzip $(GMSH_SRCRPM).tar
 
-compress_bin:
+distrib:
 	mkdir gmsh-$(GMSH_RELEASE)
 	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)
 	cp -R tutorial gmsh-$(GMSH_RELEASE)
@@ -259,22 +259,22 @@ bbn: tag
 	g++ -o $(GMSH_BIN_DIR)/gmsh.exe -mno-cygwin -L/mingw/lib $(GMSH_BOX_LIB) -lm
 
 # ----------------------------------------------------------------------
-# Ready to compile for somes platforms with MOTIF
+# Ready to compile for some platforms with MOTIF
 # ----------------------------------------------------------------------
 
-motif_dec: tag motif_compile_little_endian motif_link_opengl strip_bin compress_bin
+motif_dec: tag motif_compile_little_endian motif_link_opengl strip_bin
 
-motif_linux: tag motif_compile_little_endian motif_link_mesa strip_bin compress_bin
+motif_linux: tag motif_compile_little_endian motif_link_mesa strip_bin
 
-motif_linux_2952: tag motif_compile_little_endian_2952 motif_link_mesa_2952 strip_bin compress_bin
+motif_linux_2952: tag motif_compile_little_endian_2952 motif_link_mesa_2952 strip_bin
 
-motif_ibm: tag motif_compile_big_endian motif_link_mesa strip_bin compress_bin
+motif_ibm: tag motif_compile_big_endian motif_link_mesa strip_bin
 
-motif_sun: tag motif_compile_big_endian motif_link_opengl strip_bin compress_bin
+motif_sun: tag motif_compile_big_endian motif_link_opengl strip_bin
 
-motif_hp: tag motif_compile_big_endian motif_link_hp strip_bin compress_bin
+motif_hp: tag motif_compile_big_endian motif_link_hp strip_bin
 
-motif_sgi: tag motif_compile_sgi motif_link_sgi strip_bin compress_bin
+motif_sgi: tag motif_compile_sgi motif_link_sgi strip_bin
 
 motif_rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
@@ -509,9 +509,9 @@ fltk_link_cygwin:
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
-fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin compress_bin
+fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin
 
-fltk_linux_2952: tag fltk_compile_little_endian_2952 fltk_link_mesa_2952 strip_bin compress_bin
+fltk_linux_2952: tag fltk_compile_little_endian_2952 fltk_link_mesa_2952 strip_bin
 
 fltk_rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
@@ -519,24 +519,24 @@ fltk_rpm: src
 	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
 	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
 
-fltk_dec: tag fltk_compile_little_endian fltk_link_opengl strip_bin compress_bin
+fltk_dec: tag fltk_compile_little_endian fltk_link_opengl strip_bin
 
-fltk_sun: tag fltk_compile_big_endian fltk_link_sun strip_bin compress_bin
+fltk_sun: tag fltk_compile_big_endian fltk_link_sun strip_bin
 
-fltk_hp: tag fltk_compile_big_endian fltk_link_hp strip_bin compress_bin
+fltk_hp: tag fltk_compile_big_endian fltk_link_hp strip_bin
 
-fltk_ibm: tag fltk_compile_ibm fltk_link_ibm strip_bin compress_bin
+fltk_ibm: tag fltk_compile_ibm fltk_link_ibm strip_bin
 
 fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
 
 fltk_linux_scorec : fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin 
 
-fltk_sgi: tag fltk_compile_sgi fltk_link_sgi strip_bin compress_bin
+fltk_sgi: tag fltk_compile_sgi fltk_link_sgi strip_bin
 
 fltk_mingw: tag fltk_compile_mingw fltk_link_mingw
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
-fltk_cygwin: tag fltk_compile_cygwin fltk_link_cygwin strip_bin
+fltk_cygwin: tag fltk_compile_cygwin fltk_link_cygwin
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 fltk_cygwin_gertha_buro: tag
