@@ -1,4 +1,4 @@
-/* $Id: mysolver.c,v 1.1 2002-01-03 10:25:06 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.2 2002-01-21 19:56:36 geuzaine Exp $ */
 
 /* This file contains a dummy client solver for Gmsh. It does not
    solve anything, but shows how to program your own solver to interact
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
       
       /* 3.2.2. If what==run, the solver runs the chosen option,
          updates the progress message, issues some information data,
-         produces a post-processing map and asks to Gmsh to merge it: */
+         produces a post-processing map and asks Gmsh to merge it: */
 
     case run :
       sprintf(tmp, "Running %s with option %s...", name, option);
