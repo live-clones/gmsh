@@ -550,8 +550,13 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Shininess
-Material shininess (must be > 0)@*
+Material shininess@*
 Default value: @code{0.4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ShininessExponent
+Material shininess exponent (0 to 128)@*
+Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxes
@@ -696,6 +701,21 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Color.SmallAxes
 Small axes color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.AmbientLight
+Ambiant light color@*
+Default value: @code{@{25,25,25@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.DiffuseLight
+Diffuse light color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.SpecularLight
+Specular light color@*
 Default value: @code{@{255,255,255@}}@*
 Saved in: @code{General.OptionsFileName}
 

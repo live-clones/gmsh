@@ -1,4 +1,4 @@
-$Id: TODO,v 1.59 2004-07-30 12:22:01 geuzaine Exp $
+$Id: TODO,v 1.60 2004-08-20 17:54:20 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -6,6 +6,10 @@ surface loops and lines in line loops
 (To make things simple, all line loops should be oriented "aire a
 gauche", and all surface loops whould be oriented with exterior
 normals...)
+
+********************************************************************
+
+Test and reintroduce the cylindrical surfaces (cylinder, cone, torus)
 
 ********************************************************************
 
