@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.41 2004-05-15 08:07:20 geuzaine Exp $
+// $Id: Main.cpp,v 1.42 2004-05-17 16:28:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -232,7 +232,7 @@ void Msg(int level, char *fmt, ...)
   case DEBUG1:
   case DEBUG2:
   case DEBUG3:
-    if(CTX.verbosity >= 3 && ParUtil::Instance()->master()) {
+    if(CTX.verbosity >= 4 && ParUtil::Instance()->master()) {
       fprintf(stderr, DEBUG_STR);
       vfprintf(stderr, fmt, args);
       fprintf(stderr, "\n");
@@ -240,7 +240,7 @@ void Msg(int level, char *fmt, ...)
     break;
 
   default:
-    if(CTX.verbosity >= 1 && ParUtil::Instance()->master()) {
+    if(CTX.verbosity >= 2 && ParUtil::Instance()->master()) {
       fprintf(stderr, INFO_STR);
       vfprintf(stderr, fmt, args);
       fprintf(stderr, "\n");
