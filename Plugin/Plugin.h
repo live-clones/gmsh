@@ -39,6 +39,7 @@
 #include "Views.h"
 
 class PluginDialogBox;
+class Vertex;
 
 class GMSH_Plugin
 {
@@ -112,8 +113,9 @@ public:
   virtual void run() {};// do nothing
   virtual void popupPropertiesForPhysicalEntity (int dim) = 0;// popup dialog box
   virtual void receiveNewPhysicalGroup (int dim, int id) = 0;// add the given group to the solver data's
-  virtual void loadSolverFile  ( FILE *f ) = 0;  // load the solver input file related to the gmsh geo file
-  virtual void writeSolverFile ( FILE *f ) const = 0;  // save the solver file 
+  virtual void readSolverFile  ( const char * ) = 0;  // load the solver input file related to the gmsh geo file
+  virtual void writeSolverFile ( const char *) const = 0;  // save the solver file  
+  virtual bool GL_enhancePoint ( Vertex *v) {}; // enhance graphics for a giver geo point
 };
 
 #endif

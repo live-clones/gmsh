@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.60 2004-07-02 20:48:42 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.61 2004-08-06 14:48:33 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "Parser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
+#include "PluginManager.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Views.h"
@@ -147,6 +148,12 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   yyin = yyin_old;
   yyerrorstate = yyerrorstate_old;
   yylineno = yylineno_old;
+
+  GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+  if (sp)
+    {
+      sp->readSolverFile(f);
+    }
 
   return status;
 }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.261 2004-08-03 15:22:18 remacle Exp $
+// $Id: Callbacks.cpp,v 1.262 2004-08-06 14:48:32 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,6 +42,7 @@
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Plugin.h"
+#include "PluginManager.h"
 #include "Visibility.h"
 #include "MinMax.h"
 
@@ -2461,6 +2462,14 @@ static void _add_physical(char *what)
     if(ib == 'e') {
       if(List_Nbr(List1)) {
         add_physical(List1, CTX.filename, type, &num);
+
+	GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+	if (sp)
+	  {
+	    sp->receiveNewPhysicalGroup(type,num);
+	    sp->writeSolverFile(CTX.filename);
+	  }
+
         List_Reset(List1);
         ZeroHighlight(THEM);
         Draw();
@@ -2484,6 +2493,7 @@ void geometry_physical_add_cb(CALLBACK_ARGS)
 
 void geometry_physical_add_point_cb(CALLBACK_ARGS)
 {
+  WID->call_for_solver_plugin(0);
   _add_physical("Point");
 }
 

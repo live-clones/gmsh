@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.68 2004-06-23 18:52:45 geuzaine Exp $
+// $Id: Geom.cpp,v 1.69 2004-08-06 14:48:32 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,8 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Interpolation.h"
+#include "Plugin.h"
+#include "PluginManager.h"
 #include "STL.h"
 #include "gl2ps.h"
 
@@ -76,6 +78,12 @@ void Draw_Geo_Point(void *a, void *b)
       glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
       glEnd();
     }
+
+    GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();
+    if (sp)
+      {
+	sp-> GL_enhancePoint (v);
+      }
   }
 
   if(CTX.geom.points_num) {
