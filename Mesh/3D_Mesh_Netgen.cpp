@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.6 2004-06-28 20:36:14 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.7 2004-06-30 07:27:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 
 #include "Gmsh.h"
 #include "Mesh.h"
+#include "Create.h"
 #include "Numeric.h"
 #include "Context.h"
 
@@ -52,7 +53,7 @@ void Optimize_Netgen(Volume * v)
 
 class Netgen{
  private:
-  List_T *_vertices;
+  List_T *_vertices, *_volverts;
   Volume *_vol;
   Ng_Mesh *_ngmesh;
  public:
@@ -60,36 +61,50 @@ class Netgen{
   Netgen(Surface *s, int importSurfaceMesh = 0);
   ~Netgen();
   void MeshVolume();
+  void TransferVolumeMesh();
   void OptimizeVolume();
 };
 
 Netgen::Netgen(Volume *vol, int importVolumeMesh)
-  : _vol(vol)
+  : _volverts(0), _vol(vol)
 {
   // creates Netgen mesh structure
   Ng_Init();
   _ngmesh = Ng_NewMesh();
-
-  if(importVolumeMesh){
-    _vertices = Tree2List(_vol->Vertices);
+  
+  // Get all surface vertices (the same vertex can belong to several
+  // surfaces...)
+  Tree_T *tree = Tree_Create(sizeof(Vertex*), compareVertex);
+  for(int i = 0; i < List_Nbr(_vol->Surfaces); i++) {
+    Surface *s;
+    List_Read(_vol->Surfaces, i, &s);
+    Tree_Unit(tree, s->Vertices);
   }
-  else{
-    // Transfer all surface vertices we must *not* add 2 times the
-    // same vertex (the same vertex can belong to several surfaces)
-    Tree_T *tree = Tree_Create(sizeof(Vertex*), compareVertex);
-    for(int i = 0; i < List_Nbr(_vol->Surfaces); i++) {
-      Surface *s;
-      List_Read(_vol->Surfaces, i, &s);
-      Tree_Unit(tree, s->Vertices);
-    }
-    _vertices = Tree2List(tree);
-  }
+  _vertices = Tree2List(tree);
   List_Sort(_vertices, compareVertex);
 
+  if(importVolumeMesh){
+    Tree_T *tree2 = Tree_Soustraction(_vol->Vertices, tree);
+    _volverts = Tree2List(tree2);
+    List_Sort(_volverts, compareVertex);
+    Tree_Delete(tree2);
+  }
+
+  Tree_Delete(tree);
+  
   // Transfer the vertices
   for(int i = 0; i < List_Nbr(_vertices); i++){
     Vertex *v;
     List_Read(_vertices, i, &v);
+    double tmp[3];
+    tmp[0] = v->Pos.X;
+    tmp[1] = v->Pos.Y;
+    tmp[2] = v->Pos.Z;
+    Ng_AddPoint(_ngmesh, tmp);
+  }
+  for(int i = 0; i < List_Nbr(_volverts); i++){
+    Vertex *v;
+    List_Read(_volverts, i, &v);
     double tmp[3];
     tmp[0] = v->Pos.X;
     tmp[1] = v->Pos.Y;
@@ -132,11 +147,21 @@ Netgen::Netgen(Volume *vol, int importVolumeMesh)
     for(int i = 0; i < List_Nbr(simplist); i++) {
       Simplex *simp;
       List_Read(simplist, i, &simp);
+      if(simp->Volume_Simplexe() > 0) { // FIXME: check this!
+	Vertex *temp = simp->V[0];
+	simp->V[0] = simp->V[1];
+	simp->V[1] = temp;
+      }
       int tmp[4];
       tmp[0] = 1 + List_ISearch(_vertices, &simp->V[0], compareVertex);
       tmp[1] = 1 + List_ISearch(_vertices, &simp->V[1], compareVertex);
       tmp[2] = 1 + List_ISearch(_vertices, &simp->V[2], compareVertex);
       tmp[3] = 1 + List_ISearch(_vertices, &simp->V[3], compareVertex);
+      int n = List_Nbr(_vertices) + 1;
+      if(!tmp[0]) tmp[0] = n + List_ISearch(_volverts, &simp->V[0], compareVertex);
+      if(!tmp[1]) tmp[1] = n + List_ISearch(_volverts, &simp->V[1], compareVertex);
+      if(!tmp[2]) tmp[2] = n + List_ISearch(_volverts, &simp->V[2], compareVertex);
+      if(!tmp[3]) tmp[3] = n + List_ISearch(_volverts, &simp->V[3], compareVertex);
       Ng_AddVolumeElement(_ngmesh, NG_TET, tmp);
     }
     List_Delete(simplist);    
@@ -151,6 +176,7 @@ Netgen::Netgen(Surface *sur, int importSurfaceMesh)
 Netgen::~Netgen()
 {
   List_Delete(_vertices);
+  List_Delete(_volverts);
   Ng_DeleteMesh(_ngmesh);
   Ng_Exit();
 }
@@ -162,12 +188,15 @@ void Netgen::MeshVolume()
   mp.fineness = 1;
   mp.secondorder = 0;
   Ng_GenerateVolumeMesh(_ngmesh, &mp);
+}
 
+void Netgen::TransferVolumeMesh()
+{
   // Gets total number of vertices of Netgen's mesh
   int nbv = Ng_GetNP(_ngmesh);
   Vertex **vtable = (Vertex **)Malloc(nbv * sizeof(Vertex*));
   
-  // Get existing vertices
+  // Get existing unmodified surface vertices
   for(int i = 0; i < List_Nbr(_vertices); i++){
     List_Read(_vertices, i, &vtable[i]);
     Tree_Insert(_vol->Vertices, &vtable[i]);
@@ -199,17 +228,32 @@ void Netgen::MeshVolume()
   Free(vtable);
 }
 
+static void suppressSimplex(void *a, void *b)
+{
+  Tree_Suppress(THEM->Simplexes, a);
+}
+
 void Netgen::OptimizeVolume()
 {
   Ng_Meshing_Parameters mp;
   mp.maxh = 1;
   mp.fineness = 1;
   mp.secondorder = 0;
-  // remove the pure volume vertices from THEM->Vertices and v->Vertices
-  // remove the tets from THEM->Simplexes
-  // reset v->Simplexes
+
+  // remove the pure volume vertices from the mesh
+  for(int i = 0; i < List_Nbr(_volverts); i++){
+    Vertex *v;
+    List_Read(_volverts, i, &v);
+    Tree_Suppress(_vol->Vertices, &v);
+    Tree_Suppress(THEM->Vertices, &v);
+  }
+  // remove the tets
+  Tree_Action(_vol->Simplexes, suppressSimplex);
+  Tree_Action(_vol->Simplexes, Free_Simplex);
+  Tree_Delete(_vol->Simplexes);
+  _vol->Simplexes = Tree_Create(sizeof(Simplex*), compareQuality);
+
   NgAddOn_OptimizeVolumeMesh(_ngmesh, &mp);
-  // transfer vertices and tets back into v and THEM
 }
 
 int Mesh_Netgen(Volume * v)
@@ -225,6 +269,7 @@ int Mesh_Netgen(Volume * v)
   Msg(STATUS3, "Meshing volume %d", v->Num);
   Netgen ng(v);
   ng.MeshVolume();
+  ng.TransferVolumeMesh();
   
   return 1;
 }
@@ -234,6 +279,7 @@ void Optimize_Netgen(Volume * v)
   Msg(STATUS3, "Optimizing volume %d", v->Num);
   Netgen ng(v, 1);
   ng.OptimizeVolume();
+  ng.TransferVolumeMesh();
 }
 
 #endif // !HAVE_NETGEN
