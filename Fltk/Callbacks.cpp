@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.332 2005-02-02 18:47:55 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.333 2005-02-05 21:49:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -265,7 +265,7 @@ void status_cancel_cb(CALLBACK_ARGS)
 void file_new_cb(CALLBACK_ARGS)
 {
  test:
-  if(file_chooser(0, 1, "New", "*", 0)) {
+  if(file_chooser(0, 1, "New", "*")) {
     char *name = file_chooser_get_name(1);
     struct stat buf;
     if(!stat(name, &buf)){
@@ -300,7 +300,7 @@ static char *file_types =
 void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0, 0, "Open", file_types, 0)) {
+  if(file_chooser(0, 0, "Open", file_types)) {
     OpenProblem(file_chooser_get_name(1));
     Draw();
   }
@@ -311,7 +311,7 @@ void file_open_cb(CALLBACK_ARGS)
 void file_merge_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  int f = file_chooser(1, 0, "Merge", file_types, 0);
+  int f = file_chooser(1, 0, "Merge", file_types);
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeProblem(file_chooser_get_name(i));
@@ -450,7 +450,6 @@ typedef struct{
 void file_save_as_cb(CALLBACK_ARGS)
 {
   int i, nbformats;
-  static int patindex = 0;
   static char *pat = NULL;
   static patXfunc formats[] = {
     {"By extension (*)", _save_auto},
@@ -497,7 +496,7 @@ void file_save_as_cb(CALLBACK_ARGS)
   }
 
  test:
-  if(file_chooser(0, 1, "Save As", pat, patindex)) {
+  if(file_chooser(0, 1, "Save As", pat)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -513,14 +512,12 @@ void file_save_as_cb(CALLBACK_ARGS)
     else        // handle any additional automatic fltk filter
       _save_auto(name);
   }
-
-  patindex = file_chooser_get_filter();
 }
 
 void file_rename_cb(CALLBACK_ARGS)
 {
  test:
-  if(file_chooser(0, 1, "Rename", "*", 0, CTX.filename)) {
+  if(file_chooser(0, 1, "Rename", "*", CTX.filename)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -946,7 +943,7 @@ void message_clear_cb(CALLBACK_ARGS)
 void message_save_cb(CALLBACK_ARGS)
 {
  test:
-  if(file_chooser(0, 1, "Save", "*", 0)) {
+  if(file_chooser(0, 1, "Save", "*")) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -2691,7 +2688,7 @@ void solver_file_open_cb(CALLBACK_ARGS)
 
   // We allow to create the .pro file... Or should we add a "New file"
   // button?
-  if(file_chooser(0, 1, "Choose", tmp, 0)) {
+  if(file_chooser(0, 1, "Choose", tmp)) {
     WID->solver[num].input[0]->value(file_chooser_get_name(1));
     if(SINFO[num].nboptions) {
       char file[1024];
@@ -2717,7 +2714,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
   int num = (int)(long)data;
-  if(file_chooser(0, 0, "Choose", "*.msh", 0))
+  if(file_chooser(0, 0, "Choose", "*.msh"))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
 
@@ -2792,7 +2789,7 @@ void solver_choose_executable_cb(CALLBACK_ARGS)
 #else
                   "*"
 #endif
-                  , 0))
+                  ))
     WID->solver[num].input[2]->value(file_chooser_get_name(1));
 }
 
@@ -2932,7 +2929,7 @@ static void _view_save_as(int view_num, char *title, int type)
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, view_num);
   
  test:
-  if(file_chooser(0, 1, title, "*", 0, v->FileName)) {
+  if(file_chooser(0, 1, title, "*", v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;

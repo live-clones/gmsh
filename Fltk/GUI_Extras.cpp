@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.7 2005-01-18 19:03:07 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.8 2005-02-05 21:49:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -40,18 +40,24 @@ extern Context_T CTX;
 static File_Picker *fc = NULL;
 
 int file_chooser(int multi, int create, const char *message,
-		 const char *pat, int patindex, char *fname)
+		 const char *filter, char *fname)
 {
-  static char oldfilter[1024];
+  static char thefilter[1024] = "";
+  static int thefilterindex = 0;
 
   Fl_File_Chooser::show_label = "Format:";
   Fl_File_Chooser::all_files_label = "All files (*)";
 
+  if(strncmp(thefilter, filter, 1024)) {
+    // reset the filter and the selection if the filter has changed
+    strncpy(thefilter, filter, 1024);
+    thefilterindex = 0;
+  }
+
   if(!fc) {
-    fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, pat, 
-			      Fl_File_Chooser::SINGLE, message);
+    fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, thefilter, 
+			 Fl_File_Chooser::SINGLE, message);
     fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
-    strncpy(oldfilter, pat, 1024);
   }
 
   fc->label(message);
@@ -59,11 +65,8 @@ int file_chooser(int multi, int create, const char *message,
   if(fname)
     fc->value(fname);
 
-  if(strncmp(oldfilter, pat, 1024)) {
-    strncpy(oldfilter, pat, 1024);
-    fc->filter(pat);
-    fc->filter_value(patindex);
-  }
+  fc->filter(thefilter);
+  fc->filter_value(thefilterindex);
 
   if(multi)
     fc->type(Fl_File_Chooser::MULTI);
@@ -76,6 +79,8 @@ int file_chooser(int multi, int create, const char *message,
 
   while(fc->shown())
     Fl::wait();
+
+  thefilterindex = fc->filter_value();
 
   if(fc->value())
     return fc->count();

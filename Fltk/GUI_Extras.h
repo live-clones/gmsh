@@ -21,7 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 int file_chooser(int multi, int create, const char *message,
-		 const char *pat, int patindex, char *fname=NULL);
+		 const char *pat, char *fname=NULL);
 char *file_chooser_get_name(int num);
 int file_chooser_get_filter();
 void file_chooser_get_position(int *x, int *y);

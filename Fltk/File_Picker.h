@@ -46,7 +46,7 @@ public:
       if(_in)
 	_in->take_focus();
       else
-	_win->take_focus();	
+	_win->take_focus();
     }
     else
       Fl_File_Chooser::show();
