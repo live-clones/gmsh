@@ -1,4 +1,4 @@
-$Id: README,v 1.5 2001-02-19 14:58:41 geuzaine Exp $
+$Id: README,v 1.6 2001-02-19 15:58:30 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -33,7 +33,7 @@ any input file given), with an appended extension depending on the
 mesh format.
 
 Note: nearly all the interactive commands have shortcuts. Select
-'Help->Short_Help' in the menu bar to learn about these shortcuts.
+'Help->Shortcuts' in the menu bar to learn about these shortcuts.
 
 Instead of opening the tutorial with the 'File->Open' menu, it is
 often more convenient to put the file name on the command line, here
