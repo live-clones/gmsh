@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.49 2001-02-19 21:55:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.50 2001-02-20 08:23:36 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1607,7 +1607,7 @@ void GUI::create_about_window(){
     init_about_window = 1 ;
 
     int width = 40*CTX.fontsize;
-    int height = 3*WB+10*BH ;
+    int height = 10*BH ;
 
     about_window = new Fl_Window(width,height);
     about_window->box(WINDOW_BOX);
