@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.8 2000-12-04 11:28:37 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.9 2000-12-05 15:23:58 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -55,24 +55,24 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     
   case OPTIONS_REPLOT        : Init(); Draw(); break;
   case OPTIONS_AXES          : CTX.axes = !CTX.axes; break;
-  case OPTIONS_LITTLE_AXES   : CTX.little_axes = !CTX.little_axes; break;
+  case OPTIONS_LITTLE_AXES   : CTX.small_axes = !CTX.small_axes; break;
   case OPTIONS_FAST_REDRAW   : CTX.fast = !CTX.fast ; break ;
   case OPTIONS_DISPLAY_LISTS : CTX.display_lists = !CTX.display_lists ; break ;
   case OPTIONS_ALPHA_BLENDING: CTX.alpha = !CTX.alpha; break;
   case OPTIONS_COLOR_SCHEME_SCALE: 
-    XmScaleGetValue(WID.OD.miscColorSchemeScale, &e); InitColors(&CTX.color, e);
+    XmScaleGetValue(WID.OD.miscColorSchemeScale, &e); Init_Colors(e);
     Init(); Draw();
     break ;
   case OPTIONS_ORTHOGRAPHIC  : CTX.ortho = 1; break;
   case OPTIONS_PERSPECTIVE   : CTX.ortho = 0; break;
   case OPTIONS_LIGHT_X_SCALE : 
-    XmScaleGetValue(WID.OD.miscLightScale[0], &e); CTX.light0[0] = 0.04*e ;
+    XmScaleGetValue(WID.OD.miscLightScale[0], &e); CTX.light_position[0][0] = 0.04*e ;
     MarkAllViewsChanged (0); break ;
   case OPTIONS_LIGHT_Y_SCALE : 
-    XmScaleGetValue(WID.OD.miscLightScale[1], &e); CTX.light0[1] = 0.04*e ; 
+    XmScaleGetValue(WID.OD.miscLightScale[1], &e); CTX.light_position[0][1] = 0.04*e ; 
     MarkAllViewsChanged (0); break ;
   case OPTIONS_LIGHT_Z_SCALE : 
-    XmScaleGetValue(WID.OD.miscLightScale[2], &e); CTX.light0[2] = 0.04*e ; 
+    XmScaleGetValue(WID.OD.miscLightScale[2], &e); CTX.light_position[0][2] = 0.04*e ; 
     MarkAllViewsChanged (0);break ;
   case OPTIONS_SHINE_SCALE   :
     XmScaleGetValue(WID.OD.miscShineScale, &e); CTX.shine = 0.04*e ; 
@@ -107,7 +107,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
             CTX.r[0],CTX.r[1],CTX.r[2],
             CTX.t[0],CTX.t[1],CTX.t[2],
             CTX.s[0],CTX.s[1],CTX.s[2]);
-    PrintContext(&CTX, stderr);
+    Print_Context(stderr);
     break ;
 
     /* print */

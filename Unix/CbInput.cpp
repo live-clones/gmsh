@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.7 2000-11-26 18:43:48 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.8 2000-12-05 15:23:58 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -211,9 +211,9 @@ void KeyboardAccel(XEvent *event){
         Msg(INFOS, "Highlight Disabled");
       break;
     case XK_c : case XK_C :
-      if(CTX.color.id==0) InitColors(&CTX.color,1);
-      else if(CTX.color.id==1) InitColors(&CTX.color,2);
-      else InitColors(&CTX.color,0);
+      if(CTX.color.id==0) Init_Colors(1);
+      else if(CTX.color.id==1) Init_Colors(2);
+      else Init_Colors(0);
       XtVaSetValues(WID.OD.miscColorSchemeScale,XmNvalue, CTX.color.id, NULL);
       XmUpdateDisplay(WID.OD.miscColorSchemeScale);  
       Init(); Draw();
@@ -242,8 +242,8 @@ void KeyboardAccel(XEvent *event){
       set_r(0,0.);  set_r(1,0.); set_r(2,0.); Init(); Draw(); 
       break;
     case XK_a :
-      CTX.little_axes = !CTX.little_axes;
-      XtVaSetValues(WID.OD.miscMiscButt[1], XmNset, CTX.little_axes, NULL);
+      CTX.small_axes = !CTX.small_axes;
+      XtVaSetValues(WID.OD.miscMiscButt[1], XmNset, CTX.small_axes, NULL);
       XmUpdateDisplay(WID.OD.miscMiscCheck);
       Init(); Draw();
       break;

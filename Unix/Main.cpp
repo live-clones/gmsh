@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.15 2000-11-26 18:43:48 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.16 2000-12-05 15:23:58 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -42,7 +42,7 @@ char gmsh_url[]       = "URL              : " GMSH_URL ;
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Geometry options:\n"
-  "  -0                    output flattened parsed geometry and exit\n"
+  "  -0                    output current options, flattened geometry and exit\n"
   "Mesh options:\n"
   "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
   "  -format msh|unv|gref  set output mesh format (default: msh)\n"
@@ -531,7 +531,7 @@ int main(int argc, char *argv[]){
  
   /* Gmsh default context options */
   
-  InitContext(&CTX);
+  Init_Context();
 
   /* Command line options */
 
@@ -582,6 +582,7 @@ int main(int argc, char *argv[]){
         Print_Mesh(THEM,NULL,CTX.mesh.format);
       }
       else{
+        Print_Context(stdout);
         Print_Geo(THEM, NULL);
       }
       exit(1);
@@ -787,15 +788,15 @@ int main(int argc, char *argv[]){
   }
 
   /* X font initialisation */
-  XCTX.xfont.helve = XLoadQueryFont(XCTX.display, CTX.font_string); 
-  XCTX.xfont.fixed = XLoadQueryFont(XCTX.display, CTX.colorbar_font_string);
+  XCTX.xfont.helve = XLoadQueryFont(XCTX.display, CTX.font); 
+  XCTX.xfont.fixed = XLoadQueryFont(XCTX.display, CTX.fixed_font);
 
   if(XCTX.xfont.helve == NULL){
-    Msg(WARNING, "Unable to Load Font '%s'", CTX.font_string);
+    Msg(WARNING, "Unable to Load Font '%s'", CTX.font);
     XCTX.xfont.helve = XCTX.xfont.fixed ;
   }
   if(XCTX.xfont.fixed == NULL)
-    Msg(FATAL, "Unable to Load Font '%s'", CTX.colorbar_font_string);
+    Msg(FATAL, "Unable to Load Font '%s'", CTX.fixed_font);
   
   XCTX.xfont.helve_h = XCTX.xfont.helve->max_bounds.ascent + 
     XCTX.xfont.helve->max_bounds.descent;

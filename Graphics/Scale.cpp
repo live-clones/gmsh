@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.6 2000-12-04 11:28:26 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.7 2000-12-05 15:23:56 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -34,7 +34,7 @@ void Draw_String(char *s){
   if(CTX.stream == TO_FILE){
     if(CTX.print.type == PRINT_GL2PS_SIMPLE ||
        CTX.print.type == PRINT_GL2PS_RECURSIVE) {
-      gl2psText(s,CTX.print.font,CTX.print.fontsize);
+      gl2psText(s,CTX.print.font,CTX.print.font_size);
       return ;
     }
   }
@@ -303,7 +303,7 @@ void Draw_SmallAxes(void){
   yx = -l*cos(b)*sin(c) ; yy = -l*(sin(a)*sin(b)*sin(c)-cos(a)*cos(c)) ;
   zx =  l*sin(b)        ; zy = -l*sin(a)*cos(b) ;
 
-  glColor4ubv((GLubyte*)&CTX.color.little_axes);
+  glColor4ubv((GLubyte*)&CTX.color.small_axes);
 
   glBegin(GL_LINES);
   glVertex2d(cx,cy); glVertex2d(cx+xx,cy+xy);

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.6 2000-12-04 09:29:38 colignon Exp $ */
+%{ /* $Id: Gmsh.l,v 1.7 2000-12-05 15:23:57 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,7 +96,6 @@ Coherence               return tCoherence;
 Complex                 return tComplex;
 Color                   return tColor;
 CatmullRom		return tSpline;
-Clip                    return tClip;
 
 Delete                  return tDelete;
 Dilate                  return tDilate;
@@ -135,6 +134,7 @@ Nurbs			return tNurbs;
 
 Offset                  return tOffset;
 Order			return tOrder;
+Options                 return tOptions;
 
 Physical                return tPhysical;
 Pi                      return tPi;
@@ -143,6 +143,8 @@ Point                   return tPoint;
 Power                   return tProgression;
 Progression             return tProgression;
 Parametric		return tParametric;
+PostProcessing          return tPostProcessing;
+Print                   return tPrint;
 
 Recombine               return tRecombine;
 Rotate                  return tRotate;

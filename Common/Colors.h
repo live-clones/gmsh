@@ -1,62 +1,8 @@
-/* $Id: Colors.h,v 1.2 2000-11-23 14:11:27 geuzaine Exp $ */
+/* $Id: Colors.h,v 1.3 2000-12-05 15:23:54 geuzaine Exp $ */
 #ifndef _COLORS_H_
 #define _COLORS_H_
 
 #include "Context.h"
-
-extern Context_T   CTX ;
-
-StringXPointer ColorGeneral[] = {
-  { "Background" , &CTX.color.bg          },
-  { "Foreground" , &CTX.color.fg          },
-  { "Text"       , &CTX.color.text        },
-  { "Axes"       , &CTX.color.axes        },
-  { "SmallAxes"  , &CTX.color.little_axes },
-  { NULL         , NULL                }
-} ;
-
-StringXPointer ColorGeometry[] = {
-  { "Points"             , &CTX.color.geom.point        },
-  { "Lines"              , &CTX.color.geom.line         },
-  { "Surfaces"           , &CTX.color.geom.surface      },
-  { "Volumes"            , &CTX.color.geom.volume       },
-  { "PointsSelect"       , &CTX.color.geom.point_sel    },
-  { "LinesSelect"        , &CTX.color.geom.line_sel     },
-  { "SurfacesSelect"     , &CTX.color.geom.surface_sel  },
-  { "VolumesSelect"      , &CTX.color.geom.volume_sel   },
-  { "PointsHighlight"    , &CTX.color.geom.point_hlt    },
-  { "LinesHighlight"     , &CTX.color.geom.line_hlt     },
-  { "SurfacesHighlight"  , &CTX.color.geom.surface_hlt  },
-  { "VolumesHighlight"   , &CTX.color.geom.volume_hlt   },
-  { "Tangents"           , &CTX.color.geom.tangents     },
-  { "Normals"            , &CTX.color.geom.normals      },
-  { NULL                 , NULL                         }
-} ;
-
-StringXPointer ColorMesh[] = {
-  { "Points"             , &CTX.color.mesh.vertex       },
-  { "PointsSupp"         , &CTX.color.mesh.vertex_supp  },
-  { "Lines"              , &CTX.color.mesh.line         },
-  { "Triangles"          , &CTX.color.mesh.triangle     },
-  { "Quadrangles"        , &CTX.color.mesh.quadrangle   },
-  { "Tetrahedra"         , &CTX.color.mesh.tetrahedron  },
-  { "Hexahedra"          , &CTX.color.mesh.hexahedron   },
-  { "Prisms"             , &CTX.color.mesh.prism        },
-  { "Pyramids"           , &CTX.color.mesh.pyramid      },
-  { "Tangents"           , &CTX.color.mesh.tangents     },
-  { "Normals"            , &CTX.color.mesh.normals      },
-  { "One"                , &CTX.color.mesh.carousel[0]  },
-  { "Two"                , &CTX.color.mesh.carousel[1]  },
-  { "Three"              , &CTX.color.mesh.carousel[2]  },
-  { "Four"               , &CTX.color.mesh.carousel[3]  },
-  { "Five"               , &CTX.color.mesh.carousel[4]  },
-  { "Six"                , &CTX.color.mesh.carousel[5]  },
-  { "Seven"              , &CTX.color.mesh.carousel[6]  },
-  { "Eight"              , &CTX.color.mesh.carousel[7]  },
-  { "Nine"               , &CTX.color.mesh.carousel[8]  },
-  { "Ten"                , &CTX.color.mesh.carousel[9]  },
-  { NULL                 , NULL                         }
-} ;
 
 StringX4Int ColorString[] = {
   { "Snow"                     ,  255, 250, 250, 255 } , 
@@ -720,6 +666,8 @@ StringX4Int ColorString[] = {
   { NULL                       ,  0  ,   0,   0, 255 }
 } ;
 
+int Get_ColorForString(StringX4Int SX4I[], int alpha, 
+		       char * string, int * FlagError);
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.9 2000-12-04 11:28:11 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.10 2000-12-05 15:23:54 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -7,394 +7,386 @@
 #include "Draw.h"
 #include "Context.h"
 
-void InitColors(rgbacolors * col, int num){
+extern Context_T CTX ;
 
-  if(col->id == num){
-    return ;
+extern StringXString GeneralOptions_String[] ;
+extern StringXString GeometryOptions_String[] ;
+extern StringXString MeshOptions_String[] ;
+extern StringXString PostProcessingOptions_String[] ;
+extern StringXString PrintOptions_String[] ;
+
+extern StringXNumber GeneralOptions_Number[] ;
+extern StringXNumber GeometryOptions_Number[] ;
+extern StringXNumber MeshOptions_Number[] ;
+extern StringXNumber PostProcessingOptions_Number[] ;
+extern StringXNumber PrintOptions_Number[] ;
+
+extern StringXArray GeneralOptions_Array[] ;
+extern StringXArray GeometryOptions_Array[] ;
+extern StringXArray MeshOptions_Array[] ;
+extern StringXArray PostProcessingOptions_Array[] ;
+extern StringXArray PrintOptions_Array[] ;
+
+extern StringXColor GeneralOptions_Color[] ;
+extern StringXColor GeometryOptions_Color[] ;
+extern StringXColor MeshOptions_Color[] ;
+extern StringXColor PostProcessingOptions_Color[] ;
+extern StringXColor PrintOptions_Color[] ;
+
+
+// STRING OPTIONS
+
+void Set_DefaultStringOptions(StringXString s[]){
+  int i = 0;
+  while(s[i].str){
+    *s[i].ptr = s[i].def ;
+    i++;
   }
+}
 
-  col->id = num ;
+int Set_StringOption(char *str, StringXString s[], char *val){
+  int  i = 0 ;
 
-  switch(num){
+  while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
+  if(!s[i].str)
+    return 0;
+  else{
+    *s[i].ptr = val ;
+    return 1;
+  }
+}
 
-  case 0 : /* default drawing colors: black background */
-  case 1 : /* alternative drawing colors: white background */
-    switch(num){
-    case 0 :
-      col->bg               = PACK_COLOR(0,   0,   0,   255) ;
-      col->fg               = PACK_COLOR(255, 255, 255, 255) ;
-      col->text             = PACK_COLOR(255, 255, 255, 255) ;
-      col->axes             = PACK_COLOR(255, 255, 0,   255) ;
-      col->little_axes      = PACK_COLOR(255, 255, 255, 255) ;
-      break;              
-    case 1 :              
-      col->bg               = PACK_COLOR(255, 255, 255, 255) ;
-      col->fg               = PACK_COLOR(0,   0,   0,   255) ;
-      col->text             = PACK_COLOR(0,   0,   0,   255) ;
-      col->axes             = PACK_COLOR(128, 128, 128, 255) ;
-      col->little_axes      = PACK_COLOR(0,   0,   0,   255) ;
+void Print_StringOptions(StringXString s[], FILE *file){
+  int i = 0;
+
+  while(s[i].str){
+    fprintf(file, "    %s = \"%s\";\n", s[i].str, *s[i].ptr) ;
+    i++;
+  }
+}
+
+// NUMBER OPTIONS
+
+void Set_DefaultNumberOptions(StringXNumber s[]){
+  int i = 0;
+  
+  while(s[i].str){
+    switch(s[i].type){
+    case GMSH_INT: *(int*)s[i].ptr = (int)s[i].def; break;
+    case GMSH_LONG: *(long*)s[i].ptr = (long)s[i].def; break;
+    case GMSH_FLOAT: *(float*)s[i].ptr = (float)s[i].def; break;
+    case GMSH_DOUBLE: *(double*)s[i].ptr = (double)s[i].def; break;
+    }
+    i++;
+  }
+}
+
+int Set_NumberOption(char *str, StringXNumber s[], double val){
+  int i = 0;
+
+  while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
+  if(!s[i].str)
+    return 0;
+  else{
+    switch(s[i].type){
+    case GMSH_INT: *(int*)s[i].ptr = (int)val; break;
+    case GMSH_LONG: *(long*)s[i].ptr = (long)val; break;
+    case GMSH_FLOAT: *(float*)s[i].ptr = (float)val; break;
+    case GMSH_DOUBLE: *(double*)s[i].ptr = (double)val; break;
+    }
+    return 1;
+  }
+}
+
+void Print_NumberOptions(StringXNumber s[], FILE *file){
+  int i = 0;
+
+  while(s[i].str){
+    switch(s[i].type){
+    case GMSH_INT : fprintf(file, "    %s = %d;\n", s[i].str, *(int*)s[i].ptr); break;
+    case GMSH_LONG : fprintf(file, "    %s = %ld;\n", s[i].str, *(long*)s[i].ptr); break;
+    case GMSH_FLOAT : fprintf(file, "    %s = %g;\n", s[i].str, *(float*)s[i].ptr); break;
+    case GMSH_DOUBLE : fprintf(file, "    %s = %g;\n", s[i].str, *(double*)s[i].ptr); break;
+    }
+    i++;
+  }
+}
+
+
+// ARRAY OPTIONS
+
+void Set_DefaultArrayOptions(StringXArray s[]){
+  int i = 0;
+  
+  while(s[i].str){
+    switch(s[i].type){
+    case GMSH_INT:
+      ((int*)s[i].ptr)[0] = (int)s[i].def1;
+      ((int*)s[i].ptr)[1] = (int)s[i].def2;
+      ((int*)s[i].ptr)[2] = (int)s[i].def3;
+      ((int*)s[i].ptr)[3] = (int)s[i].def4;
+      break;
+    case GMSH_LONG:
+      ((long*)s[i].ptr)[0] = (long)s[i].def1;
+      ((long*)s[i].ptr)[1] = (long)s[i].def2;
+      ((long*)s[i].ptr)[2] = (long)s[i].def3;
+      ((long*)s[i].ptr)[3] = (long)s[i].def4;
+      break;
+    case GMSH_FLOAT:
+      ((float*)s[i].ptr)[0] = (float)s[i].def1;
+      ((float*)s[i].ptr)[1] = (float)s[i].def2;
+      ((float*)s[i].ptr)[2] = (float)s[i].def3;
+      ((float*)s[i].ptr)[3] = (float)s[i].def4;
+      break;
+    case GMSH_DOUBLE:
+      ((double*)s[i].ptr)[0] = (double)s[i].def1;
+      ((double*)s[i].ptr)[1] = (double)s[i].def2;
+      ((double*)s[i].ptr)[2] = (double)s[i].def3;
+      ((double*)s[i].ptr)[3] = (double)s[i].def4;
       break;
     }
-    col->geom.point         = PACK_COLOR(178, 182, 129, 255) ;
-    col->geom.line          = PACK_COLOR(0,   0,   255, 255) ;
-    col->geom.surface       = PACK_COLOR(128, 128, 128, 255) ;
-    col->geom.volume        = PACK_COLOR(128, 128, 128, 255) ;
-    col->geom.point_sel     = PACK_COLOR(255, 0,   0,   255) ;
-    col->geom.line_sel      = PACK_COLOR(255, 0,   0,   255) ;
-    col->geom.surface_sel   = PACK_COLOR(255, 0,   0,   255) ;
-    col->geom.volume_sel    = PACK_COLOR(255, 0,   0,   255) ;
-    col->geom.point_hlt     = PACK_COLOR(0,   255, 0,   255) ;
-    col->geom.line_hlt      = PACK_COLOR(0,   0,   255, 255) ;
-    col->geom.surface_hlt   = PACK_COLOR(128, 128, 128, 255) ;
-    col->geom.volume_hlt    = PACK_COLOR(128, 128, 128, 255) ;
-    col->geom.tangents      = PACK_COLOR(255, 255, 0,   255) ;
-    col->geom.normals       = PACK_COLOR(255, 0,   0,   255) ;
-
-    col->mesh.vertex        = PACK_COLOR(0  , 123, 59 , 255) ;
-    col->mesh.vertex_supp   = PACK_COLOR(255, 0,   255, 255) ;
-    col->mesh.line          = PACK_COLOR(0,   255, 0,   255) ; 
-    col->mesh.triangle      = PACK_COLOR(0,   255, 0,   255) ;
-    col->mesh.quadrangle    = PACK_COLOR(0,   255, 0,   255) ; 
-    col->mesh.tetrahedron   = PACK_COLOR(0,   255, 0,   255) ;
-    col->mesh.hexahedron    = PACK_COLOR(128, 255, 0,   255) ;
-    col->mesh.prism         = PACK_COLOR(0,   255, 128, 255) ;
-    col->mesh.pyramid       = PACK_COLOR(128, 255, 128, 255) ;
-    col->mesh.tangents      = PACK_COLOR(128, 128, 128, 255) ;
-    col->mesh.normals       = PACK_COLOR(128, 128, 128, 255) ;
-
-    col->mesh.carousel[0]   = PACK_COLOR(0  , 82 , 138, 255) ;
-    col->mesh.carousel[1]   = PACK_COLOR(255, 0  , 0  , 255) ;
-    col->mesh.carousel[2]   = PACK_COLOR(31 , 110, 171, 255) ;
-    col->mesh.carousel[3]   = PACK_COLOR(255, 255, 0  , 255) ; 
-    col->mesh.carousel[4]   = PACK_COLOR(255, 0  , 255, 255) ; 
-    col->mesh.carousel[4]   = PACK_COLOR(0  , 255, 255, 255) ; 
-    col->mesh.carousel[5]   = PACK_COLOR(128, 128, 0  , 255) ; 
-    col->mesh.carousel[6]   = PACK_COLOR(128, 0  , 255, 255) ; 
-    col->mesh.carousel[7]   = PACK_COLOR(128, 128, 255, 255) ; 
-    col->mesh.carousel[8]   = PACK_COLOR(128, 128, 255, 255) ; 
-    col->mesh.carousel[9]   = PACK_COLOR(0  , 0  , 255, 255) ; 
-    break;
-    
-  case 2 : /* grayscale */
-    col->bg                 = PACK_COLOR(255, 255, 255, 255) ;
-    col->fg                 = PACK_COLOR(0,   0,   0,   255) ;
-    col->text               = PACK_COLOR(0,   0,   0,   255) ;
-    col->axes               = PACK_COLOR(0,   0,   0,   255) ;
-    col->little_axes        = PACK_COLOR(0,   0,   0,   255) ;
-    
-    col->geom.point         = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.line          = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.surface       = PACK_COLOR(0,   0,   0,   255) ; 
-    col->geom.volume        = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.point_sel     = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.line_sel      = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.surface_sel   = PACK_COLOR(0,   0,   0,   255) ; 
-    col->geom.volume_sel    = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.point_hlt     = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.line_hlt      = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.surface_hlt   = PACK_COLOR(0,   0,   0,   255) ; 
-    col->geom.volume_hlt    = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.tangents      = PACK_COLOR(0,   0,   0,   255) ;
-    col->geom.normals       = PACK_COLOR(0,   0,   0,   255) ;
-    
-    col->mesh.vertex        = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.vertex_supp   = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.line          = PACK_COLOR(0,   0,   0,   255) ; 
-    col->mesh.triangle      = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.quadrangle    = PACK_COLOR(0,   0,   0,   255) ; 
-    col->mesh.tetrahedron   = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.hexahedron    = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.prism         = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.pyramid       = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.tangents      = PACK_COLOR(0,   0,   0,   255) ;
-    col->mesh.normals       = PACK_COLOR(0,   0,   0,   255) ;
-
-    col->mesh.carousel[0]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[1]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[2]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[3]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[4]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[4]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[5]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[6]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[7]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[8]   = PACK_COLOR(255, 255, 255, 255) ;
-    col->mesh.carousel[9]   = PACK_COLOR(255, 255, 255, 255) ;
-
+    i++;
   }
+}
 
+int Set_ArrayOption(char *str, StringXArray s[], double *val){
+  int i = 0;
+
+  while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
+  if(!s[i].str)
+    return 0;
+  else{
+    switch(s[i].type){
+    case GMSH_INT: 
+      ((int*)s[i].ptr)[0] = (int)val[0]; 
+      ((int*)s[i].ptr)[1] = (int)val[1]; 
+      ((int*)s[i].ptr)[2] = (int)val[2]; 
+      ((int*)s[i].ptr)[3] = (int)val[3]; 
+      break;
+    case GMSH_LONG: 
+      ((long*)s[i].ptr)[0] = (long)val[0]; 
+      ((long*)s[i].ptr)[1] = (long)val[1]; 
+      ((long*)s[i].ptr)[2] = (long)val[2]; 
+      ((long*)s[i].ptr)[3] = (long)val[3]; 
+      break;
+    case GMSH_FLOAT: 
+      ((float*)s[i].ptr)[0] = (float)val[0]; 
+      ((float*)s[i].ptr)[1] = (float)val[1]; 
+      ((float*)s[i].ptr)[2] = (float)val[2]; 
+      ((float*)s[i].ptr)[3] = (float)val[3]; 
+      break;
+    case GMSH_DOUBLE: 
+      ((double*)s[i].ptr)[0] = (double)val[0]; 
+      ((double*)s[i].ptr)[1] = (double)val[1]; 
+      ((double*)s[i].ptr)[2] = (double)val[2]; 
+      ((double*)s[i].ptr)[3] = (double)val[3]; 
+      break;
+    }
+    return 1;
+  }
+}
+
+void Print_ArrayOptions(StringXArray s[], FILE *file){
+  int i = 0;
+
+  while(s[i].str){
+    fprintf(file, "    %s = {", s[i].str);
+    switch(s[i].type){
+    case GMSH_INT : 
+      fprintf(file, "%d,%d,%d,%d};\n", 
+	      ((int*)s[i].ptr)[0], ((int*)s[i].ptr)[1], 
+	      ((int*)s[i].ptr)[2], ((int*)s[i].ptr)[3]); 
+      break;
+    case GMSH_LONG : 
+      fprintf(file, "%ld,%ld,%ld,%ld};\n", 
+	      ((long*)s[i].ptr)[0], ((long*)s[i].ptr)[1], 
+	      ((long*)s[i].ptr)[2], ((long*)s[i].ptr)[3]); 
+      break;
+    case GMSH_FLOAT : 
+      fprintf(file, "%g,%g,%g,%g};\n", 
+	      ((float*)s[i].ptr)[0], ((float*)s[i].ptr)[1], 
+	      ((float*)s[i].ptr)[2], ((float*)s[i].ptr)[3]); 
+      break;
+    case GMSH_DOUBLE : 
+      fprintf(file, "%g,%g,%g,%g};\n", 
+	      ((double*)s[i].ptr)[0], ((double*)s[i].ptr)[1], 
+	      ((double*)s[i].ptr)[2], ((double*)s[i].ptr)[3]); 
+      break;
+    }
+    i++;
+  }
 }
 
 
-void InitContext(Context_T *ctx){
+// COLORS
 
-  ctx->interactive  = 0 ;
-  ctx->verbosity    = 2 ;
-  ctx->expose       = 0 ;
+void Set_DefaultColorOptions(StringXColor s[], int num){
+  int i = 0;
 
-  ctx->r[0]  = 0.0 ;
-  ctx->r[1]  = 0.0 ;
-  ctx->r[2]  = 0.0 ;
-  ctx->t[0]  = 0.0 ;
-  ctx->t[1]  = 0.0 ;
-  ctx->t[2]  = 0.0 ;
-  ctx->s[0]  = 1.0 ;
-  ctx->s[1]  = 1.0 ;
-  ctx->s[2]  = 1.0 ;
-
-  ctx->min[0]     = 0.0 ;
-  ctx->min[1]     = 0.0 ;
-  ctx->min[2]     = 0.0 ;
-  ctx->max[0]     = 0.0 ;
-  ctx->max[1]     = 0.0 ;
-  ctx->max[2]     = 0.0 ;
-  ctx->range[0]   = 0.0 ;
-  ctx->range[1]   = 0.0 ;
-  ctx->range[2]   = 0.0 ;
-
-  ctx->viewport[0]     = 0 ;
-  ctx->viewport[1]     = 0 ;
-  ctx->viewport[2]     = 1 ;
-  ctx->viewport[3]     = 1 ;
-  ctx->vxmin           = 0. ;
-  ctx->vymin           = 0. ;
-  ctx->vxmax           = 0. ;
-  ctx->vymax           = 0. ;
-  ctx->render_mode     = GMSH_RENDER ;
-  ctx->pixel_equiv_x   = 0. ;
-  ctx->pixel_equiv_y   = 0. ; 
-  ctx->clip[0]         = 0;
-  ctx->clip[1]         = 0;
-  ctx->clip[2]         = 0;
-  ctx->clip[3]         = 0;
-  ctx->clip[4]         = 0;
-  ctx->clip[5]         = 0;
-
-  ctx->font_string          = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*";
-  ctx->colorbar_font_string = "fixed";
-
-  ctx->light0[0]         = 0.5 ;
-  ctx->light0[1]         = 0.3 ;
-  ctx->light0[2]         = 1.0 ;
-  ctx->light0[3]         = 0.0 ;
-  ctx->shine             = 0.4 ;
-  ctx->alpha             = 0 ; /* disable alpha blending by default */
-  ctx->flash             = 0 ;
-  ctx->same_visual       = 0 ;
-
-  ctx->db                = 1 ;
-  ctx->overlay           = 1 ;
-  ctx->stream            = TO_SCREEN ;
-  ctx->axes              = 1 ;
-  ctx->little_axes       = 1 ;
-  ctx->ortho             = 1 ;
-  ctx->fast              = 1 ;
-  ctx->display_lists     = 0 ; 
-  ctx->command_win       = 0 ;
-  ctx->threads           = 1 ; // effective on Unix only with -D_USETHREADS
-  ctx->threads_lock      = 0 ;
-
-  ctx->geom.vis_type     = 0 ;
-  ctx->geom.points       = 1 ;
-  ctx->geom.lines        = 1 ;
-  ctx->geom.surfaces     = 0 ;
-  ctx->geom.volumes      = 0 ;
-  ctx->geom.points_num   = 0 ;
-  ctx->geom.lines_num    = 0 ;
-  ctx->geom.surfaces_num = 0 ;
-  ctx->geom.volumes_num  = 0 ;
-  ctx->geom.level        = ELEMENTARY ;
-  ctx->geom.normals      = 0.0 ;
-  ctx->geom.tangents     = 0.0 ;
-  ctx->geom.highlight    = 1 ;
-  ctx->geom.hidden       = 0 ;
-  ctx->geom.shade        = 0 ;
-
-  ctx->mesh.vis_type          = 0 ;
-  ctx->mesh.draw              = 1 ;  
-  ctx->mesh.points            = 1 ;
-  ctx->mesh.lines             = 1 ;
-  ctx->mesh.surfaces          = 1 ;
-  ctx->mesh.volumes           = 1 ;
-  ctx->mesh.points_num        = 0 ;
-  ctx->mesh.lines_num         = 0 ;
-  ctx->mesh.surfaces_num      = 0 ;
-  ctx->mesh.volumes_num       = 0 ;
-  ctx->mesh.normals           = 0.0 ;
-  ctx->mesh.tangents          = 0.0 ;  
-  ctx->mesh.explode           = 1.0 ;
-  ctx->mesh.hidden            = 0 ;  
-  ctx->mesh.shade             = 0 ;  
-  ctx->mesh.format            = FORMAT_MSH ;
-  ctx->mesh.nb_smoothing      = 0 ;
-  ctx->mesh.algo              = DELAUNAY_OLDALGO ;
-  ctx->mesh.point_insertion   = CENTER_CIRCCIRC;
-  ctx->mesh.speed_max         = 0 ;
-  ctx->mesh.degree            = 1 ;
-  ctx->mesh.scaling_factor    = 1.0 ;
-  ctx->mesh.lc_factor         = 1.0 ;
-  ctx->mesh.rand_factor       = 1.e-5 ;
-  ctx->mesh.limit_gamma       = 0.0 ;
-  ctx->mesh.limit_eta         = 0.0 ;
-  ctx->mesh.limit_rho         = 0.0 ;
-  ctx->mesh.dual              = 0 ;
-  ctx->mesh.interactive       = 0 ;
-
-  ctx->post.draw                   = 1 ;
-  ctx->post.scales                 = 1 ;
-  ctx->post.link                   = 0 ;
-  ctx->post.initial_visibility     = 1 ;
-  ctx->post.initial_intervals      = DRAW_POST_ISO ;
-  ctx->post.initial_nbiso          = 15 ;
-  ctx->post.anim_delay             = 0 ;
-
-  ctx->print.type      = PRINT_GL2PS_SIMPLE ;
-  ctx->print.format    = FORMAT_EPS ;
-  ctx->print.font      = "Courier" ;
-  ctx->print.fontsize  = 12 ;
-
-  ctx->color.id = -1;
-  InitColors(&ctx->color, 0) ;
-
+  while(s[i].str){
+    switch(num){
+    case 0 : *s[i].ptr = s[i].def1; break;
+    case 1 : *s[i].ptr = s[i].def2; break;
+    case 2 : *s[i].ptr = s[i].def3; break;
+    }
+    i++;
+  }
 }
 
-#define UNPACK_RGB(thecol) \
-   UNPACK_RED(thecol), UNPACK_GREEN(thecol), UNPACK_BLUE(thecol)
+int Set_ColorOption(char *str, StringXColor s[], unsigned int val) {
+  int  i = 0 ;
 
-void PrintContext(Context_T *ctx, FILE *file){
-  int i;
+  while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
+  if(!s[i].str)
+    return 0;
+  else{
+    *s[i].ptr = val ;
+    return 1;
+  }
+}
 
-  fprintf(file, "Options {\n");
+void Print_ColorOptions(StringXColor s[], FILE *file){
+  int i = 0;
 
-  fprintf(file, "  General {\n");
-  fprintf(file, "    Interactive = %d;\n", ctx->verbosity);
-  fprintf(file, "    Rotation = {%g, %g, %g};\n", ctx->r[0], ctx->r[1], ctx->r[2]);
-  fprintf(file, "    Translation = {%g, %g, %g};\n", ctx->t[0], ctx->t[1], ctx->t[2]);
-  fprintf(file, "    Scale = {%g, %g, %g};\n", ctx->s[0], ctx->s[1], ctx->s[2]);
-  for(i = 0 ; i < 6 ; i++)
-    if(ctx->clip[i])
-      fprintf(file, "    Clip Plane (%d) = {%g, %g, %g, %g};\n", 
-	      ctx->clip[i], ctx->s[0], ctx->s[1], ctx->s[2], ctx->s[3]);
-  fprintf(file, "    Proportional Font = \"%s\";\n", ctx->font_string);
-  fprintf(file, "    Fixed Font = \"%s\"\n", ctx->colorbar_font_string);
-  fprintf(file, "    Light (0) = {%g, %g, %g, %g};\n", 
-	  ctx->light0[0],ctx->light0[1],ctx->light0[2],ctx->light0[3]);
-  fprintf(file, "    Shine = %g;\n", ctx->shine);
-  fprintf(file, "    Alpha = %d;\n", ctx->alpha);
-  fprintf(file, "    Axes = %d;\n", ctx->axes);
-  fprintf(file, "    Little Axes = %d;\n", ctx->little_axes);
-  fprintf(file, "    Ortho = %d;\n", ctx->ortho);
-  fprintf(file, "    Fast = %d;\n", ctx->fast);
-  fprintf(file, "    Display Lists = %d;\n", ctx->display_lists);
-  fprintf(file, "    Colors {\n");
-  fprintf(file, "      Background = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.bg));
-  fprintf(file, "      Foreground = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.fg));
-  fprintf(file, "      Text = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.text));
-  fprintf(file, "      Axes = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.axes));
-  fprintf(file, "      Little Axes = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.little_axes));
+  fprintf(file, "    Color {\n");
+  while(s[i].str){
+    fprintf(file, "      %s = {%d,%d,%d};\n", 
+	    s[i].str,
+	    UNPACK_RED(*s[i].ptr),
+	    UNPACK_GREEN(*s[i].ptr),
+	    UNPACK_BLUE(*s[i].ptr));
+    i++;
+  }
   fprintf(file, "    }\n");
+}
+
+int Get_ColorForString(StringX4Int SX4I[], int alpha, 
+		       char * str, int * FlagError) {
+  int  i = 0 ;
+  while ((SX4I[i].str != NULL) && (strcmp(SX4I[i].str, str)))  i++ ;
+  *FlagError = (SX4I[i].str == NULL)? 1 : 0 ;
+  if(alpha > 0)
+    return PACK_COLOR(SX4I[i].int1,SX4I[i].int2,SX4I[i].int3,alpha) ;
+  else
+    return PACK_COLOR(SX4I[i].int1,SX4I[i].int2,SX4I[i].int3,SX4I[i].int4) ;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/*  C o n t e x t                                                           */
+/* ------------------------------------------------------------------------ */
+
+void Init_Colors(int num){
+  if(num < 0 || num > 2){
+    Msg(ERROR, "Unknown Default Color Scheme");
+    return;
+  }
+  CTX.color.id = num ;
+  Set_DefaultColorOptions(GeneralOptions_Color, num);
+  Set_DefaultColorOptions(GeometryOptions_Color, num);
+  Set_DefaultColorOptions(MeshOptions_Color, num);
+  Set_DefaultColorOptions(PostProcessingOptions_Color, num);
+  Set_DefaultColorOptions(PrintOptions_Color, num);
+}
+
+void Init_Context(void){
+
+  // Cannot be set by the user
+  CTX.interactive  = 0 ;
+  CTX.expose       = 0 ;
+  CTX.db           = 1 ;
+  CTX.overlay      = 1 ;
+  CTX.stream       = TO_SCREEN ;
+  CTX.command_win  = 0 ;
+  CTX.threads      = 1 ; // effective on Unix only with -D_USETHREADS
+  CTX.threads_lock = 0 ;
+
+  CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
+  CTX.fixed_font = "fixed" ;
+
+  CTX.min[0]   = CTX.min[1]   = CTX.min[2]   = 0.0 ;
+  CTX.max[0]   = CTX.max[1]   = CTX.max[2]   = 0.0 ;
+  CTX.range[0] = CTX.range[1] = CTX.range[2] = 0.0 ;
+
+  CTX.viewport[0] = CTX.viewport[1] = 0 ;
+  CTX.viewport[2] = CTX.viewport[3] = 1 ;
+
+  CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0. ;
+
+  CTX.render_mode    = GMSH_RENDER ;
+  CTX.pixel_equiv_x  = CTX.pixel_equiv_y = 0. ; 
+  CTX.geom.vis_type  = 0 ;
+  CTX.geom.level     = ELEMENTARY ;
+  CTX.mesh.vis_type  = 0 ;
+  CTX.mesh.draw      = 1 ;  
+  CTX.post.draw      = 1 ;
+
+  // Default string options
+  Set_DefaultStringOptions(GeneralOptions_String);
+  Set_DefaultStringOptions(GeometryOptions_String);
+  Set_DefaultStringOptions(MeshOptions_String);
+  Set_DefaultStringOptions(PostProcessingOptions_String);
+  Set_DefaultStringOptions(PrintOptions_String);
+
+  // Default number options
+  Set_DefaultNumberOptions(GeneralOptions_Number);
+  Set_DefaultNumberOptions(GeometryOptions_Number);
+  Set_DefaultNumberOptions(MeshOptions_Number);
+  Set_DefaultNumberOptions(PostProcessingOptions_Number);
+  Set_DefaultNumberOptions(PrintOptions_Number);
+
+  // Default array options
+  Set_DefaultArrayOptions(GeneralOptions_Array);
+  Set_DefaultArrayOptions(GeometryOptions_Array);
+  Set_DefaultArrayOptions(MeshOptions_Array);
+  Set_DefaultArrayOptions(PostProcessingOptions_Array);
+  Set_DefaultArrayOptions(PrintOptions_Array);
+
+  // Default color options
+  Init_Colors(0);
+
+  //Print_Context(stdout);
+}
+
+void Print_Context(FILE *file){
+
+  fprintf(file, "Options{\n");
+
+  fprintf(file, "  General{\n");
+  Print_StringOptions(GeneralOptions_String, file);
+  Print_NumberOptions(GeneralOptions_Number, file);
+  Print_ArrayOptions(GeneralOptions_Array, file);
+  Print_ColorOptions(GeneralOptions_Color, file);
   fprintf(file, "  }\n");
 
-  fprintf(file, "  Geometry {\n");
-  fprintf(file, "    Points = %d;\n", ctx->geom.points);
-  fprintf(file, "    Lines = %d;\n", ctx->geom.lines);
-  fprintf(file, "    Surfaces = %d;\n", ctx->geom.surfaces);
-  fprintf(file, "    Volumes = %d;\n", ctx->geom.volumes);
-  fprintf(file, "    Points Numbers = %d;\n", ctx->geom.points_num);
-  fprintf(file, "    Lines Numbers = %d;\n", ctx->geom.lines_num);
-  fprintf(file, "    Surfaces Numbers = %d;\n", ctx->geom.surfaces_num);
-  fprintf(file, "    Volumes Numbers = %d;\n", ctx->geom.volumes_num);
-  fprintf(file, "    Normals = %g;\n", ctx->geom.normals);
-  fprintf(file, "    Tangents = %g;\n", ctx->geom.tangents);
-  fprintf(file, "    Highlight = %d;\n", ctx->geom.highlight);
-  fprintf(file, "    Hidden = %d;\n", ctx->geom.hidden);
-  fprintf(file, "    Shade = %d;\n", ctx->geom.shade);
-  fprintf(file, "    Colors {\n");
-  fprintf(file, "      Points = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.point));
-  fprintf(file, "      Lines = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.line));
-  fprintf(file, "      Surfaces = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.surface));
-  fprintf(file, "      Volumes = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.volume));
-  fprintf(file, "      PointsSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.point_sel));
-  fprintf(file, "      LinesSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.line_sel));
-  fprintf(file, "      SurfacesSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.surface_sel));
-  fprintf(file, "      VolumesSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.volume_sel));
-  fprintf(file, "      PointsHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.point_hlt));
-  fprintf(file, "      LinesHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.line_hlt));
-  fprintf(file, "      SurfacesHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.surface_hlt));
-  fprintf(file, "      VolumesHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.volume_hlt));
-  fprintf(file, "      Tangents = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.tangents));
-  fprintf(file, "      Normals = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.normals));
-  fprintf(file, "    }\n");
+  fprintf(file, "  Geometry{\n");
+  Print_StringOptions(GeometryOptions_String, file);
+  Print_NumberOptions(GeometryOptions_Number, file);
+  Print_ArrayOptions(GeometryOptions_Array, file);
+  Print_ColorOptions(GeometryOptions_Color, file);
   fprintf(file, "  }\n");
 
-  fprintf(file, "  Mesh {\n");
-  fprintf(file, "    Points = %d;\n", ctx->mesh.points);
-  fprintf(file, "    Lines = %d;\n", ctx->mesh.lines);
-  fprintf(file, "    Surfaces = %d;\n", ctx->mesh.surfaces);
-  fprintf(file, "    Volumes = %d;\n", ctx->mesh.volumes);
-  fprintf(file, "    Points Numbers = %d;\n", ctx->mesh.points_num);
-  fprintf(file, "    Lines Numbers = %d;\n", ctx->mesh.lines_num);
-  fprintf(file, "    Surfaces Numbers = %d;\n", ctx->mesh.surfaces_num);
-  fprintf(file, "    Volumes Numbers = %d;\n", ctx->mesh.volumes_num);
-  fprintf(file, "    Normals = %g;\n", ctx->mesh.normals);
-  fprintf(file, "    Tangents = %g;\n", ctx->mesh.tangents);
-  fprintf(file, "    Explode = %g;\n", ctx->mesh.explode);
-  fprintf(file, "    Hidden = %d;\n", ctx->mesh.hidden);
-  fprintf(file, "    Shade = %d;\n", ctx->mesh.shade);
-  fprintf(file, "    Format = %d;\n", ctx->mesh.format);
-  fprintf(file, "    Smoothing = %d;\n", ctx->mesh.nb_smoothing);
-  fprintf(file, "    Algorithm = %d;\n", ctx->mesh.algo);
-  fprintf(file, "    Degree = %d;\n", ctx->mesh.degree);
-  fprintf(file, "    ScalingFactor = %g;\n", ctx->mesh.scaling_factor);
-  fprintf(file, "    Characteristic Length Factor = %g;\n", ctx->mesh.lc_factor);
-  fprintf(file, "    Random Factor = %g;\n", ctx->mesh.rand_factor);
-  fprintf(file, "    Gamma Limit = %g;\n", ctx->mesh.limit_gamma);
-  fprintf(file, "    Eta Limit = %g;\n", ctx->mesh.limit_eta);
-  fprintf(file, "    Rho Limit = %g;\n", ctx->mesh.limit_rho);
-  fprintf(file, "    Dual = %d;\n", ctx->mesh.dual);
-  fprintf(file, "    interactive = %d;\n", ctx->mesh.interactive);
-  fprintf(file, "    Colors {\n");
-  fprintf(file, "      Vertex = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.vertex));
-  fprintf(file, "      VertexSupp = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.vertex_supp));
-  fprintf(file, "      Line = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.line));
-  fprintf(file, "      Triangle = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.triangle));
-  fprintf(file, "      Quadrangle = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.quadrangle));
-  fprintf(file, "      Tetrahedron = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.tetrahedron));
-  fprintf(file, "      Hexahedron = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.hexahedron));
-  fprintf(file, "      Prism = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.prism));
-  fprintf(file, "      Pyramid = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.pyramid));
-  fprintf(file, "      One = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[0]));
-  fprintf(file, "      Two = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[1]));
-  fprintf(file, "      Three = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[2]));
-  fprintf(file, "      Four = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[3]));
-  fprintf(file, "      Five = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[4]));
-  fprintf(file, "      Six = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[5]));
-  fprintf(file, "      Seven = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[6]));
-  fprintf(file, "      Eight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[7]));
-  fprintf(file, "      Nine = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[8]));
-  fprintf(file, "      Ten = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[9]));
-  fprintf(file, "      Tangents = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.tangents));
-  fprintf(file, "      Normals = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.normals));
-  fprintf(file, "    }\n");
+  fprintf(file, "  Mesh{\n");
+  Print_StringOptions(MeshOptions_String, file);
+  Print_NumberOptions(MeshOptions_Number, file);
+  Print_ArrayOptions(MeshOptions_Array, file);
+  Print_ColorOptions(MeshOptions_Color, file);
   fprintf(file, "  }\n");
 
-  fprintf(file, "  Post {\n");
-  fprintf(file, "    Scales = %d;\n", ctx->post.scales);
-  fprintf(file, "    Link = %d;\n", ctx->post.link);
-  fprintf(file, "    Visibility = %d;\n", ctx->post.initial_visibility);
-  fprintf(file, "    Intervals = %d;\n", ctx->post.initial_intervals);
-  fprintf(file, "    NbIso = %d;\n", ctx->post.initial_nbiso);
-  fprintf(file, "    Animation Delay= %ld;\n", ctx->post.anim_delay);
+  fprintf(file, "  PostProcessing{\n");
+  Print_StringOptions(PostProcessingOptions_String, file);
+  Print_NumberOptions(PostProcessingOptions_Number, file);
+  Print_ArrayOptions(PostProcessingOptions_Array, file);
+  Print_ColorOptions(PostProcessingOptions_Color, file);
   fprintf(file, "  }\n");
 
-
-  fprintf(file, "  Print {\n");
-  fprintf(file, "    Font = \"%s\";\n", ctx->print.font);
-  fprintf(file, "    Font Size = \"%s\";\n", ctx->print.font);
-  fprintf(file, "    Type = %d;\n", ctx->print.type);
-  fprintf(file, "    Format = %d;\n", ctx->print.format);
+  fprintf(file, "  Print{\n");
+  Print_StringOptions(PrintOptions_String, file);
+  Print_NumberOptions(PrintOptions_Number, file);
+  Print_ArrayOptions(PrintOptions_Array, file);
+  Print_ColorOptions(PrintOptions_Color, file);
   fprintf(file, "  }\n");
 
   fprintf(file, "}\n");
-
 }
+

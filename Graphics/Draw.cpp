@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.6 2000-11-26 18:43:48 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.7 2000-12-05 15:23:56 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -80,7 +80,7 @@ void Draw2d(void){
 
   glPushMatrix();
   if(CTX.post.scales) Draw_Scales();
-  if(CTX.little_axes) Draw_SmallAxes();
+  if(CTX.small_axes) Draw_SmallAxes();
   glPopMatrix();
 }
 
@@ -197,11 +197,16 @@ void InitOv(void){
 
 void InitShading(void){
   GLfloat specular[4];
+  int i;
 
-  glLightfv(GL_LIGHT0, GL_POSITION, CTX.light0);
   glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
   glEnable(GL_NORMALIZE);
+  for(i = 0 ; i < 6 ; i++){
+    if(CTX.light[i]){
+      glLightfv(GL_LIGHT0 + i, GL_POSITION, CTX.light_position[i]);
+      glEnable(GL_LIGHT0 + i );
+    }
+  }
 
   /* simple color commands will automatically create appropriate materials */
   glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);

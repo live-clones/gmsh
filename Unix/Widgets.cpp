@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.12 2000-11-28 06:55:11 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.13 2000-12-05 15:23:59 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1322,7 +1322,7 @@ void CreateWidgets_OD(Widgets_T *w){
 
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Show Small Axes")); i++;
-  XtSetArg(arg[i], XmNset, CTX.little_axes?True:False); i++;
+  XtSetArg(arg[i], XmNset, CTX.small_axes?True:False); i++;
   w->OD.miscMiscButt[1] = XmCreateToggleButton(w->OD.miscMiscCheck, "ODmiscMiscButt1", arg, i);
   XtManageChild(w->OD.miscMiscButt[1]);
 
@@ -1421,7 +1421,7 @@ void CreateWidgets_OD(Widgets_T *w){
     XtSetArg(arg[i], XmNmaximum, 25); i++;
     XtSetArg(arg[i], XmNdecimalPoints, 0); i++;
     XtSetArg(arg[i], XmNshowValue, False); i++;
-    XtSetArg(arg[i], XmNvalue, (int)25*CTX.light0[n]); i++;
+    XtSetArg(arg[i], XmNvalue, (int)25*CTX.light_position[0][n]); i++;
     XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
     w->OD.miscLightScale[n] = XmCreateScale(w->OD.miscLightFrameRowCol, "ODmiscLightScalen", arg, i);
     XtManageChild(w->OD.miscLightScale[n]);

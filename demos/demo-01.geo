@@ -58,9 +58,18 @@ Physical Surface(9999) = {6};
    redefines the color of geometry points. See ex03.geo for a more
    complete example. */
 
-Color{
+Options{
+  General{
+    Rotation0 = 10;
+    Color{
+      Background = Red;
+    }
+  }
   Geometry{
-    Points = Orange;
+    Color{
+      Points = Orange;
+      Lines = Blue;
+    }
   }
 }
 

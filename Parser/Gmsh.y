@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.12 2000-12-04 11:28:33 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.13 2000-12-05 15:23:57 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -12,6 +12,7 @@
 #include "Create.h"
 #include "Views.h"
 #include "StepGeomDatabase.h"
+#include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
 
@@ -33,21 +34,15 @@ static char           tmpstring[NAME_STR_L];
 static Symbol         TheSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
-static unsigned int  *ptr ;
 static int            i,j,k,flag,RecursionLevel=0;
 static double         d;
 static ExtrudeParams  extr;
-static StringXPointer *ColorField ;
+static StringXColor   *ColorField ;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
 static List_T         *ListOfListOfDouble_L;
 
 void  yyerror (char *s);
 void  vyyerror (char *fmt, ...);
-int   Get_ColorForString(StringX4Int SX4I[], int alpha, 
-			 char * string, int * FlagError);
-void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
-				int * FlagError, unsigned int **Pointer);
-
 %}
 
 %union {
@@ -78,7 +73,8 @@ void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tGeneral tGeometry tMesh tClip
+%token tColor tOptions
+%token tGeneral tGeometry tMesh tPostProcessing tPrint
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -349,7 +345,7 @@ GeomFormat :
   | Transfini   { return 1; }
   | Coherence   { return 1; }
   | Macro       { return 1; }
-  | Options     { return 1; }
+  | tOptions '{' Options '}' { return 1; }
   | error tEND  { yyerrok; return 1;}
 ;
 
@@ -1310,36 +1306,144 @@ Coherence :
    --------------- */
 
 Options :
-    tColor '{' ColorSections '}'
-  | tClip tPlane '(' FExpr ')' tAFFECT '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
-    {
-      i = (int)$4 ;
-      if(i < 0 || i > 5)
-	vyyerror("Wrong Clip Plane Number %d", i);
-      else{
-	CTX.clip[i] = 1;
-	CTX.clip_plane[i][0] = $8;
-	CTX.clip_plane[i][1] = $10;
-	CTX.clip_plane[i][2] = $12;
-	CTX.clip_plane[i][3] = $14;
-      }
-    }
-;
-
-ColorSections :
   /* empty */
-  | ColorSections ColorSection
+  | Options Option
 ;
 
-ColorSection : 
-    tGeneral 
-    { ColorField = ColorGeneral; }
+Option :
+    tGeneral '{' GeneralOptions '}'
+  | tGeometry '{' GeometryOptions '}'
+  | tMesh '{' MeshOptions '}'
+  | tPostProcessing '{' PostProcessingOptions '}'
+  | tPrint '{' PrintOptions '}'
+;
+
+GeneralOptions :
+  /* empty */
+  | GeneralOptions GeneralOption
+;
+
+GeneralOption :
+    tSTRING tAFFECT tBIGSTR tEND
+    { 
+      if(!Set_StringOption($1, GeneralOptions_String, $3))
+	vyyerror("Unknown General Option (String) '%s'", $1);
+    }
+  | tSTRING tAFFECT FExpr tEND
+    { 
+      if(!Set_NumberOption($1, GeneralOptions_Number, $3))
+	vyyerror("Unknown General Option (Number) '%s'", $1);
+    }
+  | tSTRING tAFFECT VExpr tEND
+    { if(!Set_ArrayOption($1, GeneralOptions_Array, $3)) 
+	vyyerror("Unknown General Option (Array) '%s'", $1);
+    }
+  | tColor 
+    { ColorField = GeneralOptions_Color; }
     '{' ColorAffects '}'
-  | tGeometry 
-    { ColorField = ColorGeometry; }
+;
+
+GeometryOptions :
+  /* empty */
+  | GeometryOptions GeometryOption
+;
+
+GeometryOption :
+    tSTRING tAFFECT tBIGSTR tEND
+    { 
+      if(!Set_StringOption($1, GeometryOptions_String, $3))
+	vyyerror("Unknown Geometry Option (String) '%s'", $1);
+    }
+  | tSTRING tAFFECT FExpr tEND
+    { 
+      if(!Set_NumberOption($1, GeometryOptions_Number, $3))
+	vyyerror("Unknown Geometry Option (Number) '%s'", $1);
+    }
+  | tSTRING tAFFECT VExpr tEND
+    {
+      if(!Set_ArrayOption($1, GeometryOptions_Array, $3))
+	vyyerror("Unknown Geometry Option (Array) '%s'", $1);
+    }
+  | tColor 
+    { ColorField = GeometryOptions_Color; }
     '{' ColorAffects '}'
-  | tMesh
-    { ColorField = ColorMesh; }
+;
+
+MeshOptions :
+  /* empty */
+  | MeshOptions MeshOption
+;
+
+MeshOption :
+    tSTRING tAFFECT tBIGSTR tEND
+    { 
+      if(!Set_StringOption($1, MeshOptions_String, $3))
+	vyyerror("Unknown Mesh Option (String) '%s'", $1);
+    }
+  | tSTRING tAFFECT FExpr tEND
+    {
+      if(!Set_NumberOption($1, MeshOptions_Number, $3))
+	vyyerror("Unknown Mesh Option (Number) '%s'", $1);
+    }
+  | tSTRING tAFFECT VExpr tEND
+    {
+      if(!Set_ArrayOption($1, MeshOptions_Array, $3))
+	vyyerror("Unknown Mesh Option (Array) '%s'", $1);
+    }
+  | tColor 
+    { ColorField = MeshOptions_Color; }
+    '{' ColorAffects '}'
+;
+
+PostProcessingOptions :
+  /* empty */
+  | PostProcessingOptions PostProcessingOption
+;
+
+PostProcessingOption :
+    tSTRING tAFFECT tBIGSTR tEND
+    { 
+      if(!Set_StringOption($1, PostProcessingOptions_String, $3))
+	vyyerror("Unknown PostProcessing Option (String) '%s'", $1);
+    }
+  | tSTRING tAFFECT FExpr tEND
+    { 
+      if(!Set_NumberOption($1, PostProcessingOptions_Number, $3)) 
+	vyyerror("Unknown PostProcessing Option (Number) '%s'", $1);
+    }
+  | tSTRING tAFFECT VExpr tEND
+    { 
+      if(!Set_ArrayOption($1, PostProcessingOptions_Array, $3))
+	vyyerror("Unknown PostProcessing (Array) Option '%s'", $1);
+    }
+  | tColor 
+    { ColorField = PostProcessingOptions_Color; }
+    '{' ColorAffects '}'
+;
+
+PrintOptions :
+  /* empty */
+  | PrintOptions PrintOption
+;
+
+PrintOption :
+    tSTRING tAFFECT tBIGSTR tEND
+    {
+      if(!Set_StringOption($1, PrintOptions_String, $3))
+	vyyerror("Unknown Print Option (String) '%s'", $1);
+    }
+  | tSTRING tAFFECT FExpr tEND
+    {
+      if(!Set_NumberOption($1, PrintOptions_Number, $3)) 
+	vyyerror("Unknown Print Option (Number) '%s'", $1);
+    }
+  | tSTRING tAFFECT VExpr tEND
+    {
+      if(!Set_ArrayOption($1, PrintOptions_Array, $3))
+	vyyerror("Unknown Print Option (Array) '%s'", $1);
+    }
+  | tColor 
+    { ColorField = PrintOptions_Color; }
     '{' ColorAffects '}'
 ;
 
@@ -1353,29 +1457,21 @@ ColorAffect :
     {
       i = Get_ColorForString(ColorString, -1, $3, &flag);
       if(flag) vyyerror("Unknown Color '%s'", $3);
-      Get_ColorPointerForString(ColorField, $1, &flag, &ptr);
-      if(flag)
+      if(!Set_ColorOption($1, ColorField, i))
 	vyyerror("Unknown Color Field '%s'", $1);
-      else
-	*ptr = i ;
     }
   | tSTRING tAFFECT '{' tSTRING ',' FExpr '}' tEND
     {
       i = Get_ColorForString(ColorString, (int)$6, $4, &flag);
       if(flag) vyyerror("Unknown Color '%s'", $4);
-      Get_ColorPointerForString(ColorField, $1, &flag, &ptr);
-      if(flag)
-	vyyerror("Unknown Color Field '%s'", $1);
-      else
-	*ptr = i ;
+      if(!Set_ColorOption($1, ColorField, i))
+	 vyyerror("Unknown Color Field '%s'", $1);
     }
   | tSTRING tAFFECT RGBAExpr tEND
     {
-      Get_ColorPointerForString(ColorField, $1, &flag, &ptr);
-      if(flag)
-	vyyerror("Unknown Color Field '%s'", $3);
-      else
-	*ptr = PACK_COLOR((int)$3[0], (int)$3[1], (int)$3[2], (int)$3[3]);
+      if(!Set_ColorOption($1, ColorField,
+			  PACK_COLOR((int)$3[0], (int)$3[1], (int)$3[2], (int)$3[3])))
+	vyyerror("Unknown Color Field '%s'", $1);
     }
 ;
 
@@ -1395,68 +1491,6 @@ RGBAExpr :
       $$[3]=255.;
     }
 ;
-
-/*
-Context{
-  
-  General{
-    Axes = 1 ;
-    SmallAxes = 1 ;
-    Orthographic = 1 ;
-    FastDraw = 1 ;
-    DisplayLists = 0 ; 
-    Font = "fixed";
-    ColorBarFont = "fixed";
-    Light0 = {0,0,0};
-    Shininess = 0;
-    Alpha = 0;
-    PrintFormat = EPS;
-  }
-
-  Geometry{
-    Points = 1 ;
-    Lines = 1 ;
-    Surfaces = 1 ;
-    Volumes = 1 ;
-    PointNumbers = 1 ;
-    LineNumbers = 1 ;
-    SurfaceNumbers = 1 ;
-    VolumeNumbers = 1 ;
-    Normals = 0.0 ;
-    Tangents = 0.0 ;
-    HiddenLines = 0 ;
-    Shading = 0 ;
-  }
-
-  Mesh{
-    Draw = 0 ;
-    Points = 1 ;
-    Lines = 1 ;
-    Surfaces = 1 ;
-    Volumes = 1 ;
-    PointNumbers = 1 ;
-    LineNumbers = 1 ;
-    SurfaceNumbers = 1 ;
-    VolumeNumbers = 1 ;
-    Normals = 0.0 ;
-    Tangents = 0.0 ;
-    HiddenLines = 0 ;
-    Shading = 0 ;
-    Format = MSH ;
-    Smoothing = 0 ;
-    Algorithm = 1 ;
-    Degree = 1 ;
-    Explode = 100 ;
-  }
-
-  Post{
-    Draw = 1 ;
-    Scales = 1 ;
-    LinkMode = 0 ;
-  }
-
-}
-*/
 
 /* ---------------
     G E N E R A L
@@ -1700,22 +1734,4 @@ void  vyyerror (char *fmt, ...){
   yyerrorstate=1;
 }
 
-int Get_ColorForString(StringX4Int SX4I[], int alpha, 
-		       char * string, int * FlagError) {
-  int  i = 0 ;
-  while ((SX4I[i].string != NULL) && (strcmp(SX4I[i].string, string)))  i++ ;
-  *FlagError = (SX4I[i].string == NULL)? 1 : 0 ;
-  if(alpha > 0)
-    return PACK_COLOR(SX4I[i].int1,SX4I[i].int2,SX4I[i].int3,alpha) ;
-  else
-    return PACK_COLOR(SX4I[i].int1,SX4I[i].int2,SX4I[i].int3,SX4I[i].int4) ;
-}
-
-void Get_ColorPointerForString(StringXPointer SXP[], char * string,
-			  int * FlagError, unsigned int **Pointer) {
-  int  i = 0 ;
-  while ((SXP[i].string != NULL) && (strcmp(SXP[i].string, string)))  i++ ;
-  *FlagError = (SXP[i].string == NULL)? 1 : 0 ;
-  *Pointer = (unsigned int *)SXP[i].Pointer ;
-}
 

@@ -1,10 +1,15 @@
-/* $Id: Context.h,v 1.10 2000-12-04 11:28:11 geuzaine Exp $ */
+/* $Id: Context.h,v 1.11 2000-12-05 15:23:54 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
 /* 
    Interface-independant context
  */
+
+#define GMSH_INT     1
+#define GMSH_LONG    2
+#define GMSH_FLOAT   3
+#define GMSH_DOUBLE  4
 
 /* How RGBA values are packed and unpacked into/from a 4-byte integer */
 
@@ -26,7 +31,7 @@ typedef struct{
   int id;                       /* the current rgbacolors id */
   
   /* general colors */
-  unsigned int bg, fg, text, axes, little_axes;
+  unsigned int bg, fg, text, axes, small_axes;
   
   /* geometry colors */
   struct{
@@ -72,20 +77,21 @@ typedef struct {
   int command_win;            /* command window? */
   int display_lists;          /* use display lists? */
   int font_base;              /* display list indice for the font */
-  int axes, little_axes;      /* draw axes? */
+  int axes, small_axes;       /* draw axes? */
   int threads, threads_lock;  /* threads?, lock (should be a mutex...) */
   int alpha;                  /* enable alpha blending */
   int flash;                  /* authorize colormap flashing (beek) */
   int same_visual;            /* force same visual for GUI and Graphics */
   
-  char *font_string;          /* main font */
-  char *colorbar_font_string; /* font for colorbar */
+  char *font;                 /* main font */
+  char *fixed_font;           /* font for colorbar */
 
   /* OpenGL stuff */
   int viewport[4];            /* current viewport */
   double vxmin, vxmax, vymin, vymax;
                               /* current viewport in real coordinates */
-  float light0[4];            /* light source position */
+  int light[6];               /* status of light */
+  float light_position[6][4]; /* light sources positions */
   float shine;                /* specular value */
   int render_mode;            /* GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK */
   int clip[6];                /* status of clip planes */
@@ -132,23 +138,58 @@ typedef struct {
   struct{
     int format, type;
     char *font;
-    int  fontsize;
+    int  font_size;
   } print;
 
 } Context_T;
 
 typedef struct {
-  char *string ; 
+  char *str ; 
   int int1, int2, int3, int4 ;
 } StringX4Int;
 
 typedef struct {
-  char *string ; 
-  void *Pointer ;
-} StringXPointer ;
+  char *str, **ptr, *def ;
+} StringXString ;
 
-void InitContext (Context_T * ctx);
-void PrintContext(Context_T *ctx, FILE *file);
-void InitColors (rgbacolors * col, int num);
+typedef struct {
+  char *str;
+  int type;
+  void *ptr;
+  double def ;
+} StringXNumber ;
+
+typedef struct {
+  char *str;
+  int type;
+  void *ptr;
+  double def1, def2, def3, def4 ;
+} StringXArray ;
+
+typedef struct {
+  char *str ; 
+  unsigned int *ptr ;
+  unsigned int def1, def2, def3 ;
+} StringXColor ;
+
+
+void Set_DefaultStringOptions(StringXString s[]);
+void Set_DefaultNumberOptions(StringXNumber s[]);
+void Set_DefaultArrayOptions(StringXArray s[]);
+void Set_DefaultColorOptions(StringXColor s[], int num);
+
+int Set_StringOption(char *str, StringXString s[], char *val);
+int Set_NumberOption(char *str, StringXNumber s[], double val);
+int Set_ArrayOption(char *str, StringXArray s[], double *val);
+int Set_ColorOption(char *str, StringXColor s[], unsigned int val);
+
+void Print_StringOptions(StringXString s[], FILE *file);
+void Print_NumberOptions(StringXNumber s[], FILE *file);
+void Print_ArrayOptions(StringXArray s[], FILE *file);
+void Print_ColorOptions(StringXArray s[], FILE *file);
+
+void Init_Colors (int num);
+void Init_Context (void);
+void Print_Context(FILE *file);
 
 #endif
