@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.289 2003-05-26 22:34:21 geuzaine Exp $
+# $Id: Makefile,v 1.290 2003-06-01 00:12:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -116,9 +116,9 @@ tag:
 	echo "#define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION}" >  ${GMSH_VERSION_FILE}
 	echo "#define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION}" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_VERSION  ((double}GMSH_MAJOR_VERSION + \\" >> ${GMSH_VERSION_FILE}
-	echo "                0.01 * (double}GMSH_MINOR_VERSION + \\" >> ${GMSH_VERSION_FILE}
-	echo "              0.0001 * (double}GMSH_PATCH_VERSION}"     >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_VERSION  ((double)GMSH_MAJOR_VERSION + \\" >> ${GMSH_VERSION_FILE}
+	echo "                0.01 * (double)GMSH_MINOR_VERSION + \\" >> ${GMSH_VERSION_FILE}
+	echo "              0.0001 * (double)GMSH_PATCH_VERSION)"     >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_DATE     \"`date`\""      >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_HOST     \"`hostname`\""  >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_PACKAGER \"`whoami`\""    >> ${GMSH_VERSION_FILE}
