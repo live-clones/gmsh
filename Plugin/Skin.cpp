@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.17 2003-03-21 00:52:46 geuzaine Exp $
+// $Id: Skin.cpp,v 1.18 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -56,9 +56,9 @@ void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) c
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Gets the skin (i.e. the boundary) of a view,\n"
-         "eliminating all interior drawing.\n"
-         "Script name: Plugin(Skin).\n");
+         "Plugin(Skin) extracts the skin (the boundary) of\n"
+	 "the scalar view 'iView'. If 'iView' < 0, the plugin\n"
+	 "is run on the current view.\n");
 }
 
 int GMSH_SkinPlugin::getNbOptions() const

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.30 2003-03-21 00:52:45 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.31 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,8 @@ extern Context_T CTX;
 
 StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "A", NULL, 1.},
-  {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "iField", NULL, 0.}
+  {GMSH_FULLRC, "iField", NULL, 0.},
+  {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
@@ -56,9 +56,11 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Extracts the isovalue surface of value A from a\n"
-         "3D scalar map and draw ith component of the field on the iso.\n"
-         "Script name: Plugin(CutMap).");
+         "Plugin(CutMap) extracts the isovalue surface of\n"
+         "value 'A' from the simplectic 3D scalar view\n"
+	 "'iView' and draws the 'iField'-th component of\n"
+	 "the field on the iso. If 'iView' < 0, the plugin\n"
+	 "is run on the current view.\n");
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const
@@ -88,8 +90,8 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
 {
   Post_View *vv;
 
-  int iView = (int)CutMapOptions_Number[1].def;
-  _ith_field_to_draw_on_the_iso = (int)CutMapOptions_Number[2].def;
+  _ith_field_to_draw_on_the_iso = (int)CutMapOptions_Number[1].def;
+  int iView = (int)CutMapOptions_Number[2].def;
   _orientation = ORIENT_MAP;
 
   if(v && iView < 0)

@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.6 2003-03-21 00:52:46 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.7 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -61,14 +61,15 @@ void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "SphericalRaise transforms the coordinates\n"
-         "of the elements in a view according to the\n"
-         "elements' associated values. Instead of\n"
-         "transforming the coordinates along the X,\n"
-         "Y, Z axes (as in Options->Offset->Raise),\n"
-         "the raise is applied along the radius of\n"
-         "a sphere centered at (Xc, Yc, Zc).\n"
-         "Script name: Plugin(SphericalRaise).");
+         "Plugin(SphericalRaise) transforms the coordinates\n"
+         "of the elements in the view 'iView' according to\n"
+         "the elements' associated values. Instead of\n"
+         "elevating the nodes along the X, Y and Z axes\n"
+         "as in View['iView'].RaiseX, View['iView'].RaiseY\n"
+	 "and View['iView'].RaiseZ, the raise is applied\n"
+	 " along the radius of a sphere centered at ('Xc',\n"
+	 "'Yc', 'Zc'). If 'iView' < 0, the plugin is run on\n"
+	 "the current view.\n");
 }
 
 int GMSH_SphericalRaisePlugin::getNbOptions() const

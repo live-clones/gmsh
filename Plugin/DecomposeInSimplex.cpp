@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.1 2003-06-18 20:47:41 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.2 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -57,9 +57,10 @@ void GMSH_DecomposeInSimplexPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Decompose any non-simplectic elements in\n"
-         "the view into simplices.\n"
-         "Script name: Plugin(DecomposeInSimplex).\n");
+         "Plugin(DecomposeInSimplex) decomposes any non-\n"
+	 "simplectic element in the view 'iView' into\n"
+	 "simplices. If 'iView' < 0, the plugin is run on\n"
+	 "the current view.\n");
 }
 
 int GMSH_DecomposeInSimplexPlugin::getNbOptions() const

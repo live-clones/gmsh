@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.3 2003-11-13 19:42:04 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.4 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -60,12 +60,16 @@ void GMSH_DisplacementRaisePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "DisplacementRaise transforms the coordinates\n"
-         "of the elements in a view (iView) according\n"
-         "to the vectorial values (the displacements)\n"
-         "associated with the elements of another\n"
-	 "view (dView).\n"
-         "Script name: Plugin(DisplacementRaise).");
+         "Plugin(DisplacementRaise) transforms the\n"
+         "coordinates of the elements in the view 'iView'\n"
+         "according to the vectorial values (the\n"
+         "displacements) associated with the elements of\n"
+	 "another view ('dView', using the time step\n"
+	 "'TimeStep'). If 'iView' < 0, the plugin is run\n"
+	 "on the current view. If 'dview' is less than\n"
+	 "zero, the plugin looks for the displacements\n"
+	 "in the view located just after 'iView' in the\n"
+	 "view list.\n");
 }
 
 int GMSH_DisplacementRaisePlugin::getNbOptions() const

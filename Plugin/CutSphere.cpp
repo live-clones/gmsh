@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.25 2003-03-21 00:52:45 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.26 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -59,9 +59,10 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Cuts a 3D scalar view with the sphere\n"
-         "(X-Xc)^2 + (Y-Yc)^2 + (Z-Zc)^2  = R^2.\n"
-         "Script name: Plugin(CutSphere).");
+         "Plugin(CutSphere) cuts the simplectic 3D scalar\n"
+	 "view 'iView' with the sphere (X-'Xc')^2 + (Y-'Yc')^2 +\n"
+	 "(Z-'Zc')^2 = 'R'^2. If 'iView' < 0, the plugin is\n"
+	 "run on the current view.\n");
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const

@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.13 2003-03-21 00:52:46 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.14 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -56,8 +56,9 @@ void GMSH_SmoothPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Smoothes a discontinuous view by averaging all the values at each node.\n"
-         "Script name: Plugin(Smooth).");
+         "Plugin(Smooth) averages the values at the nodes\n"
+	 "of the scalar view 'iView'. If 'iView' < 0, the\n"
+	 "plugin is run on the current view.\n");
 }
 
 int GMSH_SmoothPlugin::getNbOptions() const

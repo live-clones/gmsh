@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.26 2003-03-21 00:52:45 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.27 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -58,8 +58,10 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Cuts a 3D scalar view with the plane\n"
-         "A*X + B*Y + C*Z + D = 0.\n" "Script name: Plugin(CutPlane).");
+         "Plugin(CutPlane) cuts the simplectic 3D scalar\n"
+	 "view 'iView' with the plane 'A'*X + 'B'*Y + 'C'*Z +\n"
+	 "'D' = 0. If 'iView' < 0, the plugin is run on the\n"
+	 "current view.\n");
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const

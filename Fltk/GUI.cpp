@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.248 2003-10-29 19:51:43 geuzaine Exp $
+// $Id: GUI.cpp,v 1.249 2003-11-14 21:20:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2592,8 +2592,8 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
 
   // create window
 
-  int width = 20 * fontsize;
-  int height = ((n > 5 ? n : 5) + 2) * BH + 5 * WB;
+  int width = 26 * fontsize;
+  int height = ((n > 8 ? n : 8) + 2) * BH + 5 * WB;
 
   PluginDialogBox *pdb = new PluginDialogBox;
   pdb->main_window = new Fl_Window(width, height);
@@ -2631,8 +2631,8 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
       o->add("");
       add_multiline_in_browser(o, "", help);
       o->add("");
-      add_multiline_in_browser(o, "Author(s): ", author);
-      add_multiline_in_browser(o, "Copyright: ", copyright);
+      add_multiline_in_browser(o, "Author: ", author);
+      add_multiline_in_browser(o, "Copyright (C) ", copyright);
 
       g->end();
     }
@@ -2874,7 +2874,7 @@ void GUI::create_about_window()
     o->add("@c@.A three-dimensional finite element mesh generator");
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add("");
-    o->add("@c@.Copyright (c) 1997-2003");
+    o->add("@c@.Copyright (C) 1997-2003");
 #if defined(__APPLE__)
     o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
 #else

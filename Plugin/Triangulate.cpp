@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.11 2003-03-21 00:52:46 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.12 2003-11-14 21:20:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -63,9 +63,11 @@ void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Triangulates a scalar point view\n"
-         "and outputs a scalar triangle view.\n"
-         "Script name: Plugin(Triangulate).\n");
+         "Plugin(Triangulate) triangulates the points\n"
+	 "in the scalar view 'iView', assuming that all\n"
+         "the points belong to a surface than can be\n"
+	 "univoquely projected into a plane. If 'iView'\n"
+	 "< 0, the plugin is run on the current view.\n");
 }
 
 int GMSH_TriangulatePlugin::getNbOptions() const
