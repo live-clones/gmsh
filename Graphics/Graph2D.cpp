@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.40 2004-12-28 20:37:19 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.41 2004-12-28 23:59:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -458,11 +458,15 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T * td, List_T * tc)
     d2 = (double *)List_Pointer_Test(td, (j + 1) * nbd);
     if(dim == 2) {
       x = d1[0];
-      if(x < 0)
+      if(x < 0) // measure from right border
         x = CTX.viewport[2] + x;
+      else if(x > 99999) // by convention, x-centered
+	x = CTX.viewport[2]/2;
       y = CTX.viewport[3] - d1[1];
-      if(d1[1] < 0)
+      if(d1[1] < 0) // measure from bottom border
         y = -d1[1];
+      else if(d1[1] > 99999) // by convention, y-centered
+	y = CTX.viewport[3]/2.;
       z = 0.;
       style = d1[2];
       index = (int)d1[3];

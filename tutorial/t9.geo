@@ -38,7 +38,10 @@ Plugin(CutPlane).Run ;
 // Add a title
 
 Plugin(Annotate).Text = "A nice title" ; 
-Plugin(Annotate).X = General.GraphicsWidth/2 ; 
+// By convention, a value greater than 99999 represents the center (we
+// could also use `General.GraphicsWidth/2', but that would only center
+// the string for the current window size):
+Plugin(Annotate).X = 1.e6;
 Plugin(Annotate).Y = 50 ; 
 Plugin(Annotate).Font = "Times-BoldItalic" ; 
 Plugin(Annotate).FontSize = 28 ; 

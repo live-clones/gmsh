@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.45 2004-12-28 20:37:19 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.46 2004-12-28 23:59:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -102,14 +102,18 @@ void Draw_String(char *s, double style)
   if(size)
     CTX.gl_fontsize = size;
   if(align > 0){
-    GLfloat pos[4];
-    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-    gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
-    float width = gl_width(s);
-    if(align == 1) // center
-      glRasterPos2d(pos[0]-width/2., pos[1]);
-    else if(align == 2) // right
-      glRasterPos2d(pos[0]-width, pos[1]);
+    GLboolean valid;
+    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+    if(valid == GL_TRUE){
+      GLfloat pos[4];
+      glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+      gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+      float width = gl_width(s);
+      if(align == 1) // center
+	glRasterPos2d(pos[0]-width/2., pos[1]);
+      else if(align == 2) // right
+	glRasterPos2d(pos[0]-width, pos[1]);
+    }
   }
 
   Draw_String(s);
