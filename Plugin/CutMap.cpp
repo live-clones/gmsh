@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.48 2005-01-08 20:15:18 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.49 2005-03-09 08:07:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -122,8 +122,8 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
 	 "corresponding time step in `dView'. If `dView'\n"
 	 "< 0, the plugin uses `iView' as the value source.\n"
 	 "If `ExtractVolume' is nonzero, the plugin\n" 
-	 "extracts the isovolume with values smaller (if\n"
-	 "`ExtractVolume' > 0) or greater (if `ExtractVolume'\n"
+	 "extracts the isovolume with values greater (if\n"
+	 "`ExtractVolume' > 0) or smaller (if `ExtractVolume'\n"
 	 "< 0) than the isosurface `A'.\n"
 	 "\n"
 	 "Plugin(CutMap) creates as many views as there\n"
@@ -147,10 +147,10 @@ void GMSH_CutMapPlugin::catchErrorMessage(char *errorMessage) const
 
 double GMSH_CutMapPlugin::levelset(double x, double y, double z, double val) const
 {
-  // we must look into the map for A - Map(x,y,z)
+  // we must look into the map for Map(x,y,z) - A
   // this is the case when the map is the same as the view,
   // the result is the extraction of isovalue A
-  return CutMapOptions_Number[0].def - val;
+  return val - CutMapOptions_Number[0].def;
 }
 
 Post_View *GMSH_CutMapPlugin::execute(Post_View * v)

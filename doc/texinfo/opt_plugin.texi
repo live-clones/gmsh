@@ -104,8 +104,8 @@ plugin uses, for each time step in `iView', the
 corresponding time step in `dView'. If `dView'
 < 0, the plugin uses `iView' as the value source.
 If `ExtractVolume' is nonzero, the plugin
-extracts the isovolume with values smaller (if
-`ExtractVolume' > 0) or greater (if `ExtractVolume'
+extracts the isovolume with values greater (if
+`ExtractVolume' > 0) or smaller (if `ExtractVolume'
 < 0) than the isosurface `A'.
 
 Plugin(CutMap) creates as many views as there

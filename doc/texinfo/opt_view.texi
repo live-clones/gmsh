@@ -80,7 +80,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Boundary
-Draw the `N minus b'-dimensional boundary of the simplex (N=simplex dimension, b=option value)@*
+Draw the `N minus b'-dimensional boundary of the element (N=element dimension, b=option value)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
