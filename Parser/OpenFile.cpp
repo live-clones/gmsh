@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.16 2001-05-22 08:30:26 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.17 2001-05-29 13:49:32 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -93,7 +93,8 @@ void OpenProblem(char *name){
     Msg(INFO, "I'm busy! Ask me that later...");
     return;
   }
-  
+  CTX.threads_lock = 1;
+
   InitSymbols();
   Init_Mesh(&M, 1);
 
@@ -130,6 +131,8 @@ void OpenProblem(char *name){
   status = ParseFile(CTX.filename);  
 
   ApplyLcFactor(THEM);
+
+  CTX.threads_lock = 0;
 
   if(!status){
     mai3d(THEM,0);  
