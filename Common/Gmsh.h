@@ -20,15 +20,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#undef bool
-#define bool int
-
-#undef true
-#define true  1
-
-#undef false
-#define false 0
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
