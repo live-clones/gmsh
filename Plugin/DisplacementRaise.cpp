@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.4 2003-11-14 21:20:55 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.5 2003-11-14 21:23:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,7 @@ void GMSH_DisplacementRaisePlugin::getInfos(char *author, char *copyright,
          "displacements) associated with the elements of\n"
 	 "another view ('dView', using the time step\n"
 	 "'TimeStep'). If 'iView' < 0, the plugin is run\n"
-	 "on the current view. If 'dview' is less than\n"
+	 "on the current view. If 'dView' is less than\n"
 	 "zero, the plugin looks for the displacements\n"
 	 "in the view located just after 'iView' in the\n"
 	 "view list.\n");
