@@ -49,14 +49,14 @@ void ModifyLcPoint(int ip, double lc);
 
 
 void TranslateShapes(double X,double Y,double Z,
-                     List_T *ListShapes, int isFinal);
+                     List_T *ListShapes, int final);
 void DilatShapes(double X,double Y,double Z, double A,
-                 List_T *ListShapes, int isFinal);
+                 List_T *ListShapes, int final);
 void RotateShapes(double Ax,double Ay,double Az,
 		  double Px,double Py, double Pz,
-		  double alpha, List_T *ListShapes);
+		  double alpha, List_T *ListShapes, int final);
 void SymmetryShapes(double A,double B,double C,
-		    double D, List_T *ListShapes, int x);
+		    double D, List_T *ListShapes, int final);
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color);
@@ -67,7 +67,7 @@ void Extrude_ProtudePoint(int type, int ip,
 			  double T0, double T1, double T2,
 			  double A0, double A1, double A2,
                           double X0, double X1, double X2, double alpha,
-                          Curve **pc, Curve **prc, 
+                          Curve **pc, Curve **prc, int final,
 			  ExtrudeParams *e);
 Surface *Extrude_ProtudeCurve(int type, int ic,
 			      double T0, double T1, double T2,

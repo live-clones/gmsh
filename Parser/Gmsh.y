@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.133 2003-03-11 03:47:06 geuzaine Exp $
+// $Id: Gmsh.y,v 1.134 2003-03-11 05:57:07 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1813,7 +1813,7 @@ Transform :
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      RotateShapes($3[0],$3[1],$3[2],$5[0],$5[1],$5[2],$7,$10);
+      RotateShapes($3[0],$3[1],$3[2],$5[0],$5[1],$5[2],$7,$10,1);
       $$ = $10;
     }
   | tSymmetry  VExpr   '{' MultipleShape '}'
@@ -2191,21 +2191,21 @@ Extrude :
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
 			   0.,0.,0.,0.,0.,0.,0.,
-			   &pc,&prc,NULL);
+			   &pc,&prc,1,NULL);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       Curve *pc, *prc;
       Extrude_ProtudePoint(ROTATE,(int)$4,0.,0.,0.,
 			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
-			   &pc,&prc,NULL);
+			   &pc,&prc,1,NULL);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}' tEND
     {
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
 			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
-			   &pc,&prc,NULL);
+			   &pc,&prc,1,NULL);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr '}'
     {
@@ -2217,7 +2217,7 @@ Extrude :
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
 			   0.,0.,0.,0.,0.,0.,0.,
-			   &pc,&prc,&extr);
+			   &pc,&prc,1,&extr);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2229,7 +2229,7 @@ Extrude :
       Curve *pc, *prc;
       Extrude_ProtudePoint(ROTATE,(int)$4,0.,0.,0.,
 			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
-			   &pc,&prc,&extr);
+			   &pc,&prc,1,&extr);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'
     {
@@ -2241,7 +2241,7 @@ Extrude :
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
 			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
-			   &pc,&prc,&extr);
+			   &pc,&prc,1,&extr);
     }
 
   // Lines

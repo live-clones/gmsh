@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.60 2003-03-04 02:35:30 geuzaine Exp $
+// $Id: CAD.cpp,v 1.61 2003-03-11 05:57:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -603,15 +603,12 @@ Curve *CreateReversedCurve(Mesh * M, Curve * c)
   return newc;
 }
 
-
-
 void ModifyLcPoint(int ip, double lc)
 {
   Vertex *v = FindPoint(ip, THEM);
   if(v)
     v->lc = lc;
 }
-
 
 int recognize_seg(int typ, List_T * liste, int *seg)
 {
@@ -632,8 +629,6 @@ int recognize_seg(int typ, List_T * liste, int *seg)
   List_Delete(temp);
   return 0;
 }
-
-
 
 int recognize_loop(List_T * liste, int *loop)
 {
@@ -958,7 +953,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
 }
 
 void TranslateShapes(double X, double Y, double Z,
-                     List_T * ListShapes, int isFinal)
+                     List_T * ListShapes, int final)
 {
   double T[3], matrix[4][4];
 
@@ -968,12 +963,12 @@ void TranslateShapes(double X, double Y, double Z,
   SetTranslationMatrix(matrix, T);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence && isFinal)
+  if(CTX.geom.auto_coherence && final)
     ReplaceAllDuplicates(THEM);
 }
 
 void DilatShapes(double X, double Y, double Z, double A,
-                 List_T * ListShapes, int isFinal)
+                 List_T * ListShapes, int final)
 {
   double T[3], matrix[4][4];
 
@@ -983,14 +978,14 @@ void DilatShapes(double X, double Y, double Z, double A,
   SetDilatationMatrix(matrix, T, A);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence)
+  if(CTX.geom.auto_coherence && final)
     ReplaceAllDuplicates(THEM);
 }
 
 
 void RotateShapes(double Ax, double Ay, double Az,
                   double Px, double Py, double Pz,
-                  double alpha, List_T * ListShapes)
+                  double alpha, List_T * ListShapes, int final)
 {
   double A[3], T[3], matrix[4][4];
 
@@ -1012,19 +1007,19 @@ void RotateShapes(double Ax, double Ay, double Az,
   SetTranslationMatrix(matrix, T);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence)
+  if(CTX.geom.auto_coherence && final)
     ReplaceAllDuplicates(THEM);
 }
 
 void SymmetryShapes(double A, double B, double C,
-                    double D, List_T * ListShapes, int x)
+                    double D, List_T * ListShapes, int final)
 {
   double matrix[4][4];
 
   SetSymmetryMatrix(matrix, A, B, C, D);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence)
+  if(CTX.geom.auto_coherence && final)
     ReplaceAllDuplicates(THEM);
 }
 
@@ -1062,12 +1057,12 @@ void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams * e)
   List_Reset(ListOfTransformedPoints);
 }
 
-
 void Extrude_ProtudePoint(int type, int ip,
                           double T0, double T1, double T2,
                           double A0, double A1, double A2,
                           double X0, double X1, double X2, double alpha,
-                          Curve ** pc, Curve ** prc, ExtrudeParams * e)
+                          Curve ** pc, Curve ** prc, int final, 
+			  ExtrudeParams * e)
 {
   double xnew, ynew, znew, matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
@@ -1215,6 +1210,9 @@ void Extrude_ProtudePoint(int type, int ip,
   *prc = FindCurve(-c->Num, THEM);
 
   List_Reset(ListOfTransformedPoints);
+
+  if(CTX.geom.auto_coherence && final)
+    ReplaceAllDuplicates(THEM);
 }
 
 Surface *Extrude_ProtudeCurve(int type, int ic,
@@ -1312,10 +1310,10 @@ Surface *Extrude_ProtudeCurve(int type, int ic,
 
   Extrude_ProtudePoint(type, pc->beg->Num, T0, T1, T2,
                        A0, A1, A2, X0, X1, X2, alpha,
-                       &CurveBeg, &ReverseBeg, e);
+                       &CurveBeg, &ReverseBeg, 0, e);
   Extrude_ProtudePoint(type, pc->end->Num, T0, T1, T2,
                        A0, A1, A2, X0, X1, X2, alpha,
-                       &CurveEnd, &ReverseEnd, e);
+                       &CurveEnd, &ReverseEnd, 0, e);
 
   if(!CurveBeg && !CurveEnd)
     return NULL;
@@ -1356,7 +1354,7 @@ Surface *Extrude_ProtudeCurve(int type, int ic,
 
   List_Reset(ListOfTransformedPoints);
 
-  if(final && CTX.geom.auto_coherence) {
+  if(CTX.geom.auto_coherence && final) {
     ReplaceAllDuplicates(THEM);
     return NULL;
   }

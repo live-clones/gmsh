@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.40 2003-03-10 04:26:32 geuzaine Exp $
+// $Id: Generator.cpp,v 1.41 2003-03-11 05:57:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -185,14 +185,16 @@ void Init_Mesh(Mesh * M, int all)
 
   ExitExtrude();
 
+  // During extrusion, 
+
   Tree_Action(M->Vertices, Free_Vertex);  
   Tree_Delete(M->Vertices);
 
-  Tree_Action(M->VertexEdges, Free_Vertex);
-  Tree_Delete(M->VertexEdges);
-
   Tree_Action(M->Points, Free_Vertex);  
   Tree_Delete(M->Points);
+
+  Tree_Action(M->VertexEdges, Free_Vertex);
+  Tree_Delete(M->VertexEdges);
 
   // Note: don't free the simplices here (with 
   // Tree_Action (M->Simplexes, Free_Simplex)): we free them 

@@ -188,7 +188,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.152 2003-03-11 03:47:06 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.153 2003-03-11 05:57:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -6398,7 +6398,7 @@ case 254:
 case 255:
 #line 1815 "Gmsh.y"
 {
-      RotateShapes(yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].d,yyvsp[-1].l);
+      RotateShapes(yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].d,yyvsp[-1].l,1);
       yyval.l = yyvsp[-1].l;
     ;
     break;}
@@ -6801,7 +6801,7 @@ case 287:
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE,(int)yyvsp[-4].d,yyvsp[-2].v[0],yyvsp[-2].v[1],yyvsp[-2].v[2],
 			   0.,0.,0.,0.,0.,0.,0.,
-			   &pc,&prc,NULL);
+			   &pc,&prc,1,NULL);
     ;
     break;}
 case 288:
@@ -6810,7 +6810,7 @@ case 288:
       Curve *pc, *prc;
       Extrude_ProtudePoint(ROTATE,(int)yyvsp[-8].d,0.,0.,0.,
 			   yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-2].d,
-			   &pc,&prc,NULL);
+			   &pc,&prc,1,NULL);
     ;
     break;}
 case 289:
@@ -6819,7 +6819,7 @@ case 289:
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)yyvsp[-10].d,yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],
 			   yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],yyvsp[-4].v[0],yyvsp[-4].v[1],yyvsp[-4].v[2],yyvsp[-2].d,
-			   &pc,&prc,NULL);
+			   &pc,&prc,1,NULL);
     ;
     break;}
 case 290:
@@ -6835,7 +6835,7 @@ case 291:
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE,(int)yyvsp[-8].d,yyvsp[-6].v[0],yyvsp[-6].v[1],yyvsp[-6].v[2],
 			   0.,0.,0.,0.,0.,0.,0.,
-			   &pc,&prc,&extr);
+			   &pc,&prc,1,&extr);
     ;
     break;}
 case 292:
@@ -6851,7 +6851,7 @@ case 293:
       Curve *pc, *prc;
       Extrude_ProtudePoint(ROTATE,(int)yyvsp[-12].d,0.,0.,0.,
 			   yyvsp[-10].v[0],yyvsp[-10].v[1],yyvsp[-10].v[2],yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].d,
-			   &pc,&prc,&extr);
+			   &pc,&prc,1,&extr);
     ;
     break;}
 case 294:
@@ -6867,7 +6867,7 @@ case 295:
       Curve *pc, *prc;
       Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)yyvsp[-14].d,yyvsp[-12].v[0],yyvsp[-12].v[1],yyvsp[-12].v[2],
 			   yyvsp[-10].v[0],yyvsp[-10].v[1],yyvsp[-10].v[2],yyvsp[-8].v[0],yyvsp[-8].v[1],yyvsp[-8].v[2],yyvsp[-6].d,
-			   &pc,&prc,&extr);
+			   &pc,&prc,1,&extr);
     ;
     break;}
 case 296:

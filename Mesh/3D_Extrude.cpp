@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.60 2003-03-01 22:36:41 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.61 2003-03-11 05:57:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -32,15 +32,17 @@ extern Mesh *THEM;
 
 static int DIM, NUM;            // current dimension of parent entity
 static int TEST_IS_ALL_OK;
-static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL, *Vertex_Bound = NULL;
+static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static Curve *THEC = NULL;
 static Surface *THES = NULL;
 static Volume *THEV = NULL;
 static ExtrudeParams *ep;
 
-// Vertex_Bound contains the vertices on the boundary (on the curves
-// for extrude_mesh(surface) and on the surfaces for
-// extrude_mesh(volume))
+// Point_Bound and Vertex_Bound contain the points and vertices on the
+// "boundaries". We cannot check for duplicates in THEM->Points and
+// THEM->Vertices directly since the comparison function for these
+// trees are on the point/vertex numbers, not the position.
+static Tree_T *Point_Bound = NULL, *Vertex_Bound = NULL;
 
 typedef struct
 {
@@ -176,12 +178,12 @@ static int compnxn(const void *a, const void *b)
 
 void ReplaceInVertexBound(void *a, void *b)
 {
-  //Warning! We must do a 'replace', and not an 'add'/'insert'!
-  //Otherwise, we get 'Points' mixed up with 'Vertices'. The old
-  //extrusion (applied to a 2D extruded mesh) would then crash since
-  //only the Vertices are extruded and correctly handled (e.g. for
-  //beg/end curves).
   Tree_Replace(Vertex_Bound, a);
+}
+
+void ReplaceInPointBound(void *a, void *b)
+{
+  Tree_Replace(Point_Bound, a);
 }
 
 void InitExtrude()
@@ -191,14 +193,15 @@ void InitExtrude()
   if(!Tree_Swaps)
     Tree_Swaps = Tree_Create(sizeof(nxn), compnxn);
 
+  if(Point_Bound)
+    Tree_Delete(Point_Bound);
+  Point_Bound = Tree_Create(sizeof(Vertex *), comparePosition);
+
   if(Vertex_Bound)
     Tree_Delete(Vertex_Bound);
   Vertex_Bound = Tree_Create(sizeof(Vertex *), comparePosition);
 
-  //ceci doit etre enleve: ca fout le boxon si des points du maillage
-  //correspondent a des points de controle de la geometrie, lors du Free.
-  //Tree_Action(THEM->Points, ReplaceInVertexBound);
-
+  Tree_Action(THEM->Points, ReplaceInPointBound);
   Tree_Action(THEM->Vertices, ReplaceInVertexBound);
 }
 
@@ -208,9 +211,11 @@ void ExitExtrude()
     Tree_Delete(Tree_Ares);
   if(Tree_Swaps)
     Tree_Delete(Tree_Swaps);
+  if(Point_Bound)
+    Tree_Delete(Point_Bound);
   if(Vertex_Bound)
     Tree_Delete(Vertex_Bound);
-  Tree_Ares = Tree_Swaps = Vertex_Bound = NULL;
+  Tree_Ares = Tree_Swaps = Point_Bound = Vertex_Bound = NULL;
 }
 
 int are_exist(Vertex * v1, Vertex * v2, Tree_T * t)
@@ -589,7 +594,7 @@ void Extrude_Simplex_Phase2(void *data, void *dum)
 
 void Extrude_Vertex(void *data, void *dum)
 {
-  Vertex **pV, *v, *newv;
+  Vertex **vexist, *v, *newv;
   int i, j;
   nxl NXL;
 
@@ -612,12 +617,16 @@ void Extrude_Vertex(void *data, void *dum)
       newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
                            v->Pos.Y, v->Pos.Z, v->lc, v->u);
       ep->Extrude(i, j + 1, newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
-
-      if(Vertex_Bound && (pV = (Vertex **) Tree_PQuery(Vertex_Bound, &newv))) {
+      if(Vertex_Bound && (vexist = (Vertex **) Tree_PQuery(Vertex_Bound, &newv))) {
         Free_Vertex(&newv, 0);
-        List_Add(NXL.List, pV);
+        List_Add(NXL.List, vexist);
       }
-      else {
+      else{
+	if(Point_Bound && (vexist = (Vertex **) Tree_PQuery(Point_Bound, &newv))) {
+	  // keep the new one: we cannot have points and vertices
+	  // pointing to the same memory location
+	  newv->Num = (*vexist)->Num;
+	}
         List_Add(NXL.List, &newv);
         Tree_Insert(THEM->Vertices, &newv);
         Tree_Insert(Vertex_Bound, &newv);
@@ -735,7 +744,7 @@ void Extrude_Curve(void *data, void *dum)
 void copy_mesh(Curve * from, Curve * to, int direction)
 {
   List_T *list = from->Vertices;
-  Vertex *vi, *v, **vexist;
+  Vertex **vexist, *v, *newv;
 
   int nb = List_Nbr(to->Vertices);
   if(nb) {
@@ -755,11 +764,11 @@ void copy_mesh(Curve * from, Curve * to, int direction)
     List_Add(to->Vertices, vexist);
   }
   else {
-    vi = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->ubeg);
-    Tree_Insert(THEM->Vertices, &vi);
-    vi->ListCurves = List_Create(1, 1, sizeof(Curve *));
-    List_Add(vi->ListCurves, &to);
-    List_Add(to->Vertices, &vi);
+    newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->ubeg);
+    Tree_Insert(THEM->Vertices, &newv);
+    newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
+    List_Add(newv->ListCurves, &to);
+    List_Add(to->Vertices, &newv);
   }
 
   for(int i = 1; i < List_Nbr(list) - 1; i++) {
@@ -767,21 +776,33 @@ void copy_mesh(Curve * from, Curve * to, int direction)
       List_Read(list, List_Nbr(list) - 1 - i, &v);
     else
       List_Read(list, i, &v);
-    vi = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
-                       v->Pos.Y, v->Pos.Z, v->lc,
-                       (direction > 0) ? v->u : (1. - v->u));
+    newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
+			 v->Pos.Y, v->Pos.Z, v->lc,
+			 (direction > 0) ? v->u : (1. - v->u));
     ep->Extrude(ep->mesh.NbLayer - 1,
-                ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], vi->Pos.X,
-                vi->Pos.Y, vi->Pos.Z);
-    if(!comparePosition(&vi, &v)) {
-      Free_Vertex(&vi, 0);
-      vi = v;
+                ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], newv->Pos.X,
+                newv->Pos.Y, newv->Pos.Z);
+    if(!comparePosition(&newv, &v)) {
+      Free_Vertex(&newv, 0);
+      newv = v;
     }
-    Tree_Insert(THEM->Vertices, &vi);
-    if(!vi->ListCurves)
-      vi->ListCurves = List_Create(1, 1, sizeof(Curve *));
-    List_Add(vi->ListCurves, &to);
-    List_Add(to->Vertices, &vi);
+    else if(Vertex_Bound && (vexist = (Vertex **) Tree_PQuery(Vertex_Bound, &newv))) {
+      Free_Vertex(&newv, 0);
+      newv = *vexist;
+    }
+    else {
+      if(Point_Bound && (vexist = (Vertex **) Tree_PQuery(Point_Bound, &newv))) {
+	// keep the new one: we cannot have points and vertices
+	// pointing to the same memory location
+	newv->Num = (*vexist)->Num;
+      }
+      Tree_Insert(THEM->Vertices, &newv);
+      Tree_Insert(Vertex_Bound, &newv);
+    }
+    if(!newv->ListCurves)
+      newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
+    List_Add(newv->ListCurves, &to);
+    List_Add(to->Vertices, &newv);
   }
 
   v = to->end;
@@ -792,11 +813,11 @@ void copy_mesh(Curve * from, Curve * to, int direction)
     List_Add(to->Vertices, vexist);
   }
   else {
-    vi = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->uend);
-    Tree_Insert(THEM->Vertices, &vi);
-    vi->ListCurves = List_Create(1, 1, sizeof(Curve *));
-    List_Add(vi->ListCurves, &to);
-    List_Add(to->Vertices, &vi);
+    newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, to->uend);
+    Tree_Insert(THEM->Vertices, &newv);
+    newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
+    List_Add(newv->ListCurves, &to);
+    List_Add(to->Vertices, &newv);
   }
 
 }
@@ -804,7 +825,7 @@ void copy_mesh(Curve * from, Curve * to, int direction)
 int Extrude_Mesh(Curve * c)
 {
   int i;
-  Vertex *v, *pV, **vexist;
+  Vertex **vexist, *v, *newv;
   List_T *L;
 
   if(!c->Extrude || !c->Extrude->mesh.ExtrudeMesh)
@@ -829,11 +850,11 @@ int Extrude_Mesh(Curve * c)
       List_Add(c->Vertices, vexist);
     }
     else {
-      pV = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
-      pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
-      List_Add(pV->ListCurves, &c);
-      Tree_Insert(THEM->Vertices, &pV);
-      List_Add(c->Vertices, &pV);
+      newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
+      newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
+      List_Add(newv->ListCurves, &c);
+      Tree_Insert(THEM->Vertices, &newv);
+      List_Add(c->Vertices, &newv);
     }
 
     for(i = 1; i < List_Nbr(L) - 1; i++) {
@@ -854,11 +875,11 @@ int Extrude_Mesh(Curve * c)
       List_Add(c->Vertices, vexist);
     }
     else {
-      pV = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
-      pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
-      List_Add(pV->ListCurves, &c);
-      Tree_Insert(THEM->Vertices, &pV);
-      List_Add(c->Vertices, &pV);
+      newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
+      newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
+      List_Add(newv->ListCurves, &c);
+      Tree_Insert(THEM->Vertices, &newv);
+      List_Add(c->Vertices, &newv);
     }
     return true;
   }
@@ -875,7 +896,7 @@ void copy_mesh(Surface * from, Surface * to)
 {
   List_T *list = Tree2List(from->Simplexes);
   Simplex *s, *news;
-  Vertex **pV, *vi[4], *v;
+  Vertex **vexist, *v, *newv[4];
 
   int nb = Tree_Nbr(to->Simplexes);
   if(nb) {
@@ -890,32 +911,36 @@ void copy_mesh(Surface * from, Surface * to)
     for(int j = 0; j < 4; j++) {
       if(s->V[j]) {
         v = s->V[j];
-        vi[j] = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
-                              v->Pos.Y, v->Pos.Z, v->lc, v->u);
+        newv[j] = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
+				v->Pos.Y, v->Pos.Z, v->lc, v->u);
         ep->Extrude(ep->mesh.NbLayer - 1,
-                    ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], vi[j]->Pos.X,
-                    vi[j]->Pos.Y, vi[j]->Pos.Z);
-        if(Vertex_Bound
-           && (pV = (Vertex **) Tree_PQuery(Vertex_Bound, &vi[j]))) {
-          Free_Vertex(&vi[j], 0);
-          vi[j] = *pV;
+                    ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], newv[j]->Pos.X,
+                    newv[j]->Pos.Y, newv[j]->Pos.Z);
+        if(Vertex_Bound && (vexist = (Vertex **) Tree_PQuery(Vertex_Bound, &newv[j]))) {
+          Free_Vertex(&newv[j], 0);
+          newv[j] = *vexist;
         }
         else {
-          Tree_Insert(THEM->Vertices, &vi[j]);
-          Tree_Insert(Vertex_Bound, &vi[j]);
+	  if(Point_Bound && (vexist = (Vertex **) Tree_PQuery(Point_Bound, &newv[j]))) {
+	    // keep the new one: we cannot have points and vertices
+	    // pointing to the same memory location
+	    newv[j]->Num = (*vexist)->Num;
+	  }
+          Tree_Insert(THEM->Vertices, &newv[j]);
+          Tree_Insert(Vertex_Bound, &newv[j]);
         }
       }
       else {
-        vi[j] = NULL;
+        newv[j] = NULL;
       }
     }
-    if(vi[3]) {
-      news = Create_Quadrangle(vi[0], vi[1], vi[2], vi[3]);
+    if(newv[3]) {
+      news = Create_Quadrangle(newv[0], newv[1], newv[2], newv[3]);
       // This is horrible
       THEM->Statistics[8] += 1;
     }
     else
-      news = Create_Simplex(vi[0], vi[1], vi[2], NULL);
+      news = Create_Simplex(newv[0], newv[1], newv[2], NULL);
     news->iEnt = to->Num;
     Tree_Add(to->Simplexes, &news);
   }
