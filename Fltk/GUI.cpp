@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.207 2002-11-03 18:32:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.208 2002-11-03 21:55:24 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -761,6 +761,7 @@ void GUI::create_menu_window(int argc, char **argv){
   for(i=0; i<NB_BUTT_MAX; i++){
     m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
     m_push_butt[i]->hide();
+
     m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width-(CTX.fontsize+4),BH); 
     m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
     m_toggle_butt[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
@@ -769,12 +770,14 @@ void GUI::create_menu_window(int argc, char **argv){
     m_toggle2_butt[i]= new Fl_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH,"@>");
     m_toggle2_butt[i]->labelsize(11);
     m_toggle2_butt[i]->align(FL_ALIGN_CENTER);
+    m_toggle2_butt[i]->hide();
 #if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
     m_toggle2_butt[i]->tooltip("Show view option menu");
 #endif
 
     m_popup_butt[i] = new Fl_Menu_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH);
     m_popup_butt[i]->type(Fl_Menu_Button::POPUP123);
+
     m_popup2_butt[i] = new Fl_Menu_Button(0,y+i*BH,width-(CTX.fontsize+4),BH);
     m_popup2_butt[i]->type(Fl_Menu_Button::POPUP3);
 
