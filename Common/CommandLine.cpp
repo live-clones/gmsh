@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.1 2002-09-24 02:04:33 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.2 2002-10-24 23:39:31 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -517,10 +517,16 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 
 
       else{
+#ifdef __APPLE__ 
+	// Macs launch programs with special command line options... Just ignore them.
+        fprintf(stderr, "Unknown option '%s'\n", argv[i]);
+	i++;
+#else
         fprintf(stderr, "Unknown option '%s'\n", argv[i]);
 	CTX.terminal = 1 ;
         Print_Usage(argv[0]);
         exit(1);
+#endif
       }
     }
 
