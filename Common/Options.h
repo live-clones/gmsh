@@ -1,7 +1,7 @@
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #define GMSH_SET       (1<<0)
 #define GMSH_GET       (1<<1)
@@ -192,6 +192,10 @@ double opt_general_fontsize(OPT_ARGS_NUM);
 double opt_general_graphics_fontsize(OPT_ARGS_NUM);
 double opt_general_graphics_position0(OPT_ARGS_NUM);
 double opt_general_graphics_position1(OPT_ARGS_NUM);
+double opt_general_solver_position0(OPT_ARGS_NUM);
+double opt_general_solver_position1(OPT_ARGS_NUM);
+double opt_general_context_position0(OPT_ARGS_NUM);
+double opt_general_context_position1(OPT_ARGS_NUM);
 double opt_general_viewport2(OPT_ARGS_NUM);
 double opt_general_viewport3(OPT_ARGS_NUM);
 double opt_general_menu_position0(OPT_ARGS_NUM);
@@ -208,7 +212,6 @@ double opt_general_statistics_position1(OPT_ARGS_NUM);
 double opt_general_visibility_position0(OPT_ARGS_NUM);
 double opt_general_visibility_position1(OPT_ARGS_NUM);
 double opt_general_visibility_mode(OPT_ARGS_NUM);
-double opt_general_center_windows(OPT_ARGS_NUM);
 double opt_general_session_save(OPT_ARGS_NUM);
 double opt_general_options_save(OPT_ARGS_NUM);
 double opt_general_rotation0(OPT_ARGS_NUM);

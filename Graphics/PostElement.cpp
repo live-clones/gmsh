@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.20 2004-01-13 12:39:45 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.21 2004-02-07 01:40:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 //
 // Contributor(s):
 //   Laurent Stainier

@@ -1,12 +1,12 @@
-// $Id: ColorTable.cpp,v 1.19 2003-12-08 19:18:13 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.20 2004-02-07 01:40:16 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This software is provided "as is" without express or implied warranty.
 // See the file "doc/LICENSE" for the licensing terms.
 //
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 //
 // Contributor(s):
 //   David Colignon

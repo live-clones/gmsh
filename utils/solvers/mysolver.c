@@ -1,6 +1,6 @@
-/* $Id: mysolver.c,v 1.2 2003-10-29 20:43:46 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.3 2004-02-07 01:40:35 geuzaine Exp $ */
 /*
- * Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,7 +24,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  * 
- *  Please report all bugs and problems to "gmsh@geuz.org".
+ *  Please report all bugs and problems to <gmsh@geuz.org>.
  */
 
 /* This file contains a dummy client solver for Gmsh. It does not

@@ -1,6 +1,6 @@
-// $Id: 2D_Mesh.cpp,v 1.50 2003-06-14 05:21:13 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.51 2004-02-07 01:40:20 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)

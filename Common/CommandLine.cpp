@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.27 2004-02-05 16:57:43 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.28 2004-02-07 01:40:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <unistd.h>
 #include "Gmsh.h"

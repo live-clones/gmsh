@@ -1,6 +1,6 @@
-// $Id: 1D_Mesh.cpp,v 1.35 2003-10-26 16:53:12 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.36 2004-02-07 01:40:20 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
 #include "Numeric.h"

@@ -1,6 +1,6 @@
-// $Id: Mesh.cpp,v 1.63 2003-12-07 00:23:07 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.64 2004-02-07 01:40:19 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
 #include "GmshUI.h"

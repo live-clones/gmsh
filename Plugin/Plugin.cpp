@@ -1,6 +1,6 @@
-// $Id: Plugin.cpp,v 1.45 2003-11-29 19:29:27 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.46 2004-02-07 01:40:30 geuzaine Exp $
 //
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #if !defined(_NO_DLL)
 #include <dlfcn.h>

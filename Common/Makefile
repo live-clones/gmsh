@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.47 2003-12-01 21:51:19 geuzaine Exp $
+# $Id: Makefile,v 1.48 2004-02-07 01:40:17 geuzaine Exp $
 #
-# Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+# Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 # 
-# Please report all bugs and problems to "gmsh@geuz.org".
+# Please report all bugs and problems to <gmsh@geuz.org>.
 
 include ../variables
 

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.113 2004-02-05 22:52:32 geuzaine Exp $
+// $Id: Views.cpp,v 1.114 2004-02-07 01:40:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <set>
 #include "Gmsh.h"
