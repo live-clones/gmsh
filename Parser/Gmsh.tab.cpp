@@ -199,7 +199,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.230 2005-01-16 20:44:35 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.231 2005-01-20 19:05:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -6681,7 +6681,7 @@ case 255:
       else{
 	double d;
 	List_Read(yyvsp[-1].l, 0, &d);
-	EdgeLoop *el = FindEdgeLoop((int)d, THEM);
+	EdgeLoop *el = FindEdgeLoop((int)fabs(d), THEM);
 	if(!el){
 	  yymsg(GERROR, "Unknown line loop %d", (int)d);
 	}

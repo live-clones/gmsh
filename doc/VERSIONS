@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.304 2005-01-18 00:12:35 geuzaine Exp $
+$Id: VERSIONS,v 1.305 2005-01-20 19:05:13 geuzaine Exp $
 
 New in 1.59: added support for discrete (triangulated) surfaces,
 either in STL format or with the new "Discrete Surface" command; added
@@ -10,8 +10,9 @@ Plugin(CutGrid); new plugins (Eigenvalues, Gradient, Curl,
 Divergence); changed default colormap to match Matlab's "Jet"
 colormap; new transformation matrix option for views (for
 non-destructive rotations, symmetries, etc.); improved solver
-interface to keep the GUI responsive during solver calls; simplified
-Tools->Visibility GUI; fixed small bugs.
+interface to keep the GUI responsive during solver calls; new C++ and
+Python solver examples; simplified Tools->Visibility GUI; fixed small
+bugs.
 
 New in 1.58: fixed UNIX socket interface on Windows (broken by the TCP
 solver patch in 1.57); bumped version number of default

@@ -1,4 +1,4 @@
-// $Id: GeoUtils.cpp,v 1.6 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: GeoUtils.cpp,v 1.7 2005-01-20 19:05:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -90,34 +90,40 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
     int iLoop;
     List_Read(loops, i, &iLoop);
     EdgeLoop *el;
-    if(!(el = FindEdgeLoop(iLoop, THEM))) {
+    if(!(el = FindEdgeLoop(abs(iLoop), THEM))) {
       Msg(GERROR, "Unknown line loop %d", iLoop);
       List_Delete(s->Generatrices);
+      s->Generatrices = NULL;
       return;
     }
     else {
       int ic;
       Curve *c;
-      if(i == 0){ // exterior boundary
+      if((i == 0 && iLoop > 0) || // exterior boundary
+	 (i != 0 && iLoop < 0)){  // hole
 	for(int j = 0; j < List_Nbr(el->Curves); j++) {
 	  List_Read(el->Curves, j, &ic);
+	  ic *= sign(iLoop);
+	  if(i != 0) ic *= -1; // hole
 	  if(!(c = FindCurve(ic, THEM))) {
 	    Msg(GERROR, "Unknown curve %d", ic);
 	    List_Delete(s->Generatrices);
+	    s->Generatrices = NULL;
 	    return;
 	  }
 	  else
 	    List_Add(s->Generatrices, &c);
 	}
       }
-      else{ // holes, assuming that their orientation is consistent
-	    // with the orientation of the exterior boundary!
+      else{
 	for(int j = List_Nbr(el->Curves)-1; j >= 0; j--) {
 	  List_Read(el->Curves, j, &ic);
-	  ic *= -1;
+	  ic *= sign(iLoop);
+	  if(i != 0) ic *= -1; // hole
 	  if(!(c = FindCurve(ic, THEM))) {
 	    Msg(GERROR, "Unknown curve %d", ic);
 	    List_Delete(s->Generatrices);
+	    s->Generatrices = NULL;
 	    return;
 	  }
 	  else
@@ -139,7 +145,7 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
     int il;
     List_Read(loops, i, &il);
     SurfaceLoop *sl;
-    if(!(sl = FindSurfaceLoop(il, THEM))) {
+    if(!(sl = FindSurfaceLoop(abs(il), THEM))) {
       Msg(GERROR, "Unknown surface loop %d", il);
       return;
     }
@@ -158,7 +164,7 @@ void setVolumeSurfaces(Volume *v, List_T * loops)
         }
         else{
           List_Add(v->Surfaces, &s);
-	  int tmp = sign(is);
+	  int tmp = sign(is) * sign(il);
 	  if(i > 0) tmp *= -1; // this is a hole
 	  List_Add(v->SurfacesOrientations, &tmp);
 	}

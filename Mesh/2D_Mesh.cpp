@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.72 2005-01-10 02:10:59 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.73 2005-01-20 19:05:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -880,6 +880,12 @@ void Maillage_Surface(void *data, void *dum)
     Tree_Action(s->Vertices, Add_In_Mesh);
   }
   else{
+
+    if(!List_Nbr(s->Generatrices)){
+      Msg(GERROR, "Cannot mesh surface with no boundary");
+      return;
+    }
+
     int TypSurface = s->Typ;
     Plan_Moyen(pS, dum);
     Tree_Action(THEM->Points, Freeze_Vertex);

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.200 2005-01-16 20:41:40 geuzaine Exp $
+// $Id: Gmsh.y,v 1.201 2005-01-20 19:05:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2023,7 +2023,7 @@ Shape :
       else{
 	double d;
 	List_Read($7, 0, &d);
-	EdgeLoop *el = FindEdgeLoop((int)d, THEM);
+	EdgeLoop *el = FindEdgeLoop((int)fabs(d), THEM);
 	if(!el){
 	  yymsg(GERROR, "Unknown line loop %d", (int)d);
 	}
