@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.59 2004-10-20 14:38:59 remacle Exp $
+// $Id: Plugin.cpp,v 1.60 2004-10-28 03:40:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -76,16 +76,20 @@ GMSH_Plugin *GMSH_PluginManager::find(char *pluginName)
 
 GMSH_Solve_Plugin *GMSH_PluginManager::findSolverPlugin()
 {
+  // to avoid showing the solver plugin popups for "regular" users,
+  // let's just say for the moment that we don't have any solver
+  // plugins if the environment variable is not defined...
+  if(!getenv("GMSHPLUGINSHOME"))
+    return 0;
+
   iter it  = allPlugins.begin();
   iter ite = allPlugins.end();
-  for (;it!=ite;++it)
-    {
-      GMSH_Plugin *p = (*it).second;
-      if (p->getType() == GMSH_Plugin::GMSH_SOLVE_PLUGIN)
-	{
-	  return (GMSH_Solve_Plugin*)(p);
-	}      
-    }
+  for (;it!=ite;++it) {
+    GMSH_Plugin *p = (*it).second;
+    if (p->getType() == GMSH_Plugin::GMSH_SOLVE_PLUGIN) {
+      return (GMSH_Solve_Plugin*)(p);
+    }      
+  }
   return 0;
 }
 
