@@ -1,4 +1,8 @@
-$Date: 2002-11-16 23:23:35 $
+$Date: 2003-01-24 23:13:36 $
+
+New in 1.37: Generalized smoothing and cuts of post-processing views;
+better Windows integration (solvers, external editors, etc.); small
+bug fixes;
 
 New in 1.36: Enhanced view duplication (one can now use "Duplicata
 View[num]" in the input file); Merged all option dialogs in a new

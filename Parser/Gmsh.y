@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.128 2003-01-23 20:19:24 geuzaine Exp $
+// $Id: Gmsh.y,v 1.129 2003-01-24 23:13:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2019,8 +2019,7 @@ Command :
       }
       else if(!strcmp($1, "System")){
 	
-	Msg(INFO, "Executing system call \"%s\"", $2);
-	system($2);
+	SystemCall($2);
 
       }
       else

@@ -51,7 +51,7 @@ StringXString GeneralOptions_String[] = {
     "File into which session specific information is saved, and which is read on startup" },
 
 #ifdef WIN32
-  { F|O, "TextEditor" , opt_general_editor , "notepad %s &" , 
+  { F|O, "TextEditor" , opt_general_editor , "notepad.exe %s" , 
 #else
   { F|O, "TextEditor" , opt_general_editor , "emacs %s &" ,
 #endif
@@ -82,7 +82,7 @@ StringXString SolverOptions_String[] = {
     "Help string for solver 0" },
   { F|O, "Executable0" , opt_solver_executable0 , 
 #ifdef WIN32
-    "./getdp.exe" , 
+    "getdp.exe" , 
 #else
     "getdp" , 
 #endif
@@ -772,39 +772,43 @@ StringXNumber MeshOptions_Number[] = {
 } ;
 
 StringXNumber SolverOptions_Number[] = {
-  { F|O, "ClientServer0" , opt_solver_client_server0 , 1.0 ,
+  { F|O, "ClientServer0" , opt_solver_client_server0 , 1. ,
     "Connect solver 0 to the Gmsh server" },
-  { F|O, "MergeViews0" , opt_solver_merge_views0 , 1.0 , 
+  { F|O, "MergeViews0" , opt_solver_merge_views0 , 1. , 
     "Automatically merge any post-processing view created by solver 0" },
-  { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 1.0 ,
+#if defined(WIN32)
+  { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 0. , // we already have the transient dos window
+#else
+  { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 1. ,
+#endif
     "Automatically display messages produced by solver 0" },
 
-  { F|O, "ClientServer1" , opt_solver_client_server1 , 0.0 ,
+  { F|O, "ClientServer1" , opt_solver_client_server1 , 0. ,
     "Connect solver 1 to the Gmsh server" },
-  { F|O, "MergeViews1" , opt_solver_merge_views1 , 1.0 , 
+  { F|O, "MergeViews1" , opt_solver_merge_views1 , 1. , 
     "Automatically merge any post-processing view created by solver 1" },
-  { F|O, "PopupMessages1" , opt_solver_popup_messages1 , 1.0 ,
+  { F|O, "PopupMessages1" , opt_solver_popup_messages1 , 1. ,
     "Automatically display messages produced by solver 1" },
 
-  { F|O, "ClientServer2" , opt_solver_client_server2 , 0.0 ,
+  { F|O, "ClientServer2" , opt_solver_client_server2 , 0. ,
     "Connect solver 2 to the Gmsh server" },
-  { F|O, "MergeViews2" , opt_solver_merge_views2 , 1.0 , 
+  { F|O, "MergeViews2" , opt_solver_merge_views2 , 1. , 
     "Automatically merge any post-processing view created by solver 2" },
-  { F|O, "PopupMessages2" , opt_solver_popup_messages2 , 1.0 ,
+  { F|O, "PopupMessages2" , opt_solver_popup_messages2 , 1. ,
     "Automatically display messages produced by solver 2" },
 
-  { F|O, "ClientServer3" , opt_solver_client_server3 , 0.0 ,
+  { F|O, "ClientServer3" , opt_solver_client_server3 , 0. ,
     "Connect solver 3 to the Gmsh server" },
-  { F|O, "MergeViews3" , opt_solver_merge_views3 , 1.0 , 
+  { F|O, "MergeViews3" , opt_solver_merge_views3 , 1. , 
     "Automatically merge any post-processing view created by solver 3" },
-  { F|O, "PopupMessages3" , opt_solver_popup_messages3 , 1.0 ,
+  { F|O, "PopupMessages3" , opt_solver_popup_messages3 , 1. ,
     "Automatically display messages produced by solver 3" },
 
-  { F|O, "ClientServer4" , opt_solver_client_server4 , 0.0 ,
+  { F|O, "ClientServer4" , opt_solver_client_server4 , 0. ,
     "Connect solver 4 to the Gmsh server" },
-  { F|O, "MergeViews4" , opt_solver_merge_views4 , 1.0 , 
+  { F|O, "MergeViews4" , opt_solver_merge_views4 , 1. , 
     "Automatically merge any post-processing view created by solver 4" },
-  { F|O, "PopupMessages4" , opt_solver_popup_messages4 , 1.0 ,
+  { F|O, "PopupMessages4" , opt_solver_popup_messages4 , 1. ,
     "Automatically display messages produced by solver 4" },
 
   { 0, NULL , NULL , 0. , NULL }

@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-11-16 21:53:24 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2003-01-24 23:13:36 $)
 
 1. GENERAL
 ==========
@@ -169,11 +169,9 @@ at http://www.geuz.org/gmsh/doc/mysolver.tgz.
 6.2) On Windows, Gmsh does not seem to find the solver
 executable. What's wrong?
 
-- the shell executable 'sh.exe' has to be in your path;
-- the solver executable (e.g. 'getdp.exe') has to be in the same
-directory as 'sh.exe', unless you configure sh accordingly
-- if an absolute path is given to locate getdp.exe, it should begin
-with /cygwin/drive/.
+The solver executable (e.g. 'getdp.exe') has to be in your path. If
+not, simply go to the solver options (e.g. Solver->GetDP->Options->Executable)
+to specify its location.
 
 
 7. POST-PROCESSING PROBLEMS

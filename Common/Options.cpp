@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.98 2003-01-23 20:19:17 geuzaine Exp $
+// $Id: Options.cpp,v 1.99 2003-01-24 23:13:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -84,13 +84,8 @@ void Init_Options(int num){
   if((tmp = getenv("TMP")))       strcpy(CTX.home_dir, tmp);
   else if((tmp = getenv("TEMP"))) strcpy(CTX.home_dir, tmp);
   else                            strcpy(CTX.home_dir, "");
-  if(strlen(CTX.home_dir)){
-#if defined(WIN32) && !defined(__CYGWIN__)
-    strcat(CTX.home_dir, "\\");
-#else
-    strcat(CTX.home_dir, "/");
-#endif
-  }
+
+  if(strlen(CTX.home_dir)) strcat(CTX.home_dir, "/");
 
   // Reference view storing default options
   Post_ViewReference = (Post_View*)Malloc(sizeof(Post_View)) ;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.160 2003-01-23 20:19:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.161 2003-01-24 23:13:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1147,7 +1147,7 @@ void geometry_edit_cb(CALLBACK_ARGS){
   char cmd[1000];
   sprintf(cmd, CTX.editor, CTX.filename);
   Msg(INFO, "Starting text editor '%s'", cmd);
-  system(cmd);
+  SystemCall(cmd);
 } 
 void geometry_reload_cb(CALLBACK_ARGS){
   OpenProblem(CTX.filename);
@@ -1996,7 +1996,7 @@ void solver_file_edit_cb(CALLBACK_ARGS){
   int num = (int)data;
   sprintf(cmd, CTX.editor, WID->solver[num].input[0]->value());
   Msg(INFO, "Starting text editor '%s'", cmd);
-  system(cmd);
+  SystemCall(cmd);
 }
 void solver_choose_mesh_cb(CALLBACK_ARGS){
   int num = (int)data;

@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.8 2003-01-23 20:19:19 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.9 2003-01-24 23:13:34 geuzaine Exp $ */
 /*
   Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 
@@ -19,6 +19,10 @@
  
   Please report all bugs and problems to "gmsh@geuz.org".
 */
+
+// This is a hacked version using the Gmsh function SystemCall()
+// instead system()
+void SystemCall(char *str);
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +83,8 @@ int Gmsh_StartClient(char *command, char *sockname){
 
   /* no socket? launch the command! */
   if(!sockname){
-    system(command);
+    //system(command);
+    SystemCall(command);
     return 1;
   }
 
@@ -101,8 +106,9 @@ int Gmsh_StartClient(char *command, char *sockname){
   chmod(sockname, 0666);
   
   /* Start the external function via system() call */
-  system(command);
-  
+  //system(command);
+  SystemCall(command);
+
   /* wait for external function to connect */
   if(listen(s, 20)) return -3; /* Error: Socket listen failed */
   

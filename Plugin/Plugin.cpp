@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.31 2003-01-23 20:19:25 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.32 2003-01-24 23:13:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -45,13 +45,6 @@
 using namespace std;
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
-
-#if defined(WIN32) && !defined(__CYGWIN__)
-#define SLASH "\\"
-#else
-#define SLASH "/"
-#endif
-
 
 GMSH_PluginManager *GMSH_PluginManager::instance = 0;
 
@@ -170,7 +163,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName){
 
-#if ( defined(WIN32) && !defined(__CYGWIN__) ) || defined(_NODLL) || !defined(_FLTK)
+#if defined(_NODLL) || !defined(_FLTK)
   Msg(WARNING,"No dynamic plugin loading on this platform");
   return;
 #else
@@ -180,7 +173,7 @@ void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName){
   char plugin_copyright[256];
   char plugin_help[256];
   class GMSH_Plugin* (*RegisterPlugin)(void);
-  sprintf(dynamic_lib,"%s%s%s",dirName,SLASH,pluginName);
+  sprintf(dynamic_lib,"%s/%s",dirName,pluginName);
   Msg(INFO,"Opening Plugin '%s'",dynamic_lib);
   void *hlib = dlopen (dynamic_lib,RTLD_NOW);
   char *err = dlerror();

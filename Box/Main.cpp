@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.24 2003-01-23 20:19:17 geuzaine Exp $
+// $Id: Main.cpp,v 1.25 2003-01-24 23:13:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -20,13 +20,12 @@
 // Please report all bugs and problems to "gmsh@geuz.org".
 
 #include <signal.h>
-#if !defined(WIN32) || defined(__CYGWIN__)
 #include <sys/time.h>
 #include <sys/resource.h>
+
 #ifdef __APPLE__
 #define   RUSAGE_SELF      0
 #define   RUSAGE_CHILDREN -1
-#endif /* __APPLE__ */
 #endif
 
 #include "ParUtil.h"
@@ -229,17 +228,12 @@ void Msg(int level, char *fmt, ...){
 // CPU time computation
 
 void GetResources(long *s, long *us, long *mem){
-#if !defined(WIN32) || defined(__CYGWIN__)
   static struct rusage r;
 
   getrusage(RUSAGE_SELF,&r);
   *s   = (long)r.ru_utime.tv_sec ;
   *us  = (long)r.ru_utime.tv_usec ;
   *mem = (long)r.ru_maxrss ;
-#else
-  *s = *us = *mem = 0;
-#endif
-
 }
 
 double Cpu(void){

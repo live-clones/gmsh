@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.248 2003-01-20 23:36:03 geuzaine Exp $
+# $Id: Makefile,v 1.249 2003-01-24 23:13:34 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
-GMSH_MINOR_VERSION = 36
-GMSH_PATCH_VERSION = 2
+GMSH_MINOR_VERSION = 37
+GMSH_PATCH_VERSION = 0
 
 MAKE = make
 CXX = c++
@@ -34,6 +34,7 @@ GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lGmshFltk -lGmshParser -lGmshGraphics -lGmshM
                 -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin\
                 -lGmshParallel -lGmshTriangle
 
+GMSH_VERSION_FILE = Common/GmshVersion.h
 GMSH_RELEASE = $(GMSH_MAJOR_VERSION).$(GMSH_MINOR_VERSION).$(GMSH_PATCH_VERSION)
 GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
 GMSH_UNAME = `uname`
@@ -75,7 +76,7 @@ source:
 	mkdir gmsh-$(GMSH_RELEASE)
 	cd gmsh-$(GMSH_RELEASE) && tar zxvf ../gmsh.tgz
 	rm -f gmsh.tgz
-	cd gmsh-$(GMSH_RELEASE) && rm -rf CVS */CVS */*/CVS */.globalrc */GmshVersion.h
+	cd gmsh-$(GMSH_RELEASE) && rm -rf CVS */CVS */*/CVS */.globalrc $(GMSH_VERSION_FILE)
 #	cd gmsh-$(GMSH_RELEASE) && zip -r gmsh-$(GMSH_RELEASE)-source.zip *
 #	mv gmsh-$(GMSH_RELEASE)/gmsh-$(GMSH_RELEASE)-source.zip .
 	tar zcvf gmsh-$(GMSH_RELEASE)-source.tgz gmsh-$(GMSH_RELEASE)
@@ -555,6 +556,7 @@ clean:
 	for i in $(GMSH_DIR) $(GMSH_DOC_DIR) $(GMSH_LIB_DIR) ; \
         do (cd $$i && $(MAKE) clean); \
         done
+	$(RM) $(RMFLAGS) $(GMSH_VERSION_FILE)
 
 depend:
 	for i in $(GMSH_DIR); \
@@ -575,20 +577,20 @@ nodepend:
         done 
 
 tag:
-	$(RM) $(RMFLAGS) Common/GmshVersion.h
-	echo "#define GMSH_MAJOR_VERSION $(GMSH_MAJOR_VERSION)" >  Common/GmshVersion.h
-	echo "#define GMSH_MINOR_VERSION $(GMSH_MINOR_VERSION)" >> Common/GmshVersion.h
-	echo "#define GMSH_PATCH_VERSION $(GMSH_PATCH_VERSION)" >> Common/GmshVersion.h
-	echo "#define GMSH_VERSION  ((double)GMSH_MAJOR_VERSION + \\" >> Common/GmshVersion.h
-	echo "                0.01 * (double)GMSH_MINOR_VERSION + \\" >> Common/GmshVersion.h
-	echo "              0.0001 * (double)GMSH_PATCH_VERSION)"     >> Common/GmshVersion.h
-	echo "#define GMSH_DATE     \"`date`\""      >> Common/GmshVersion.h
-	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/GmshVersion.h
-	echo "#define GMSH_PACKAGER \"`whoami`\""    >> Common/GmshVersion.h
-	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/GmshVersion.h
+	$(RM) $(RMFLAGS) $(GMSH_VERSION_FILE)
+	echo "#define GMSH_MAJOR_VERSION $(GMSH_MAJOR_VERSION)" >  $(GMSH_VERSION_FILE)
+	echo "#define GMSH_MINOR_VERSION $(GMSH_MINOR_VERSION)" >> $(GMSH_VERSION_FILE)
+	echo "#define GMSH_PATCH_VERSION $(GMSH_PATCH_VERSION)" >> $(GMSH_VERSION_FILE)
+	echo "#define GMSH_VERSION  ((double)GMSH_MAJOR_VERSION + \\" >> $(GMSH_VERSION_FILE)
+	echo "                0.01 * (double)GMSH_MINOR_VERSION + \\" >> $(GMSH_VERSION_FILE)
+	echo "              0.0001 * (double)GMSH_PATCH_VERSION)"     >> $(GMSH_VERSION_FILE)
+	echo "#define GMSH_DATE     \"`date`\""      >> $(GMSH_VERSION_FILE)
+	echo "#define GMSH_HOST     \"`hostname`\""  >> $(GMSH_VERSION_FILE)
+	echo "#define GMSH_PACKAGER \"`whoami`\""    >> $(GMSH_VERSION_FILE)
+	echo "#define GMSH_OS       \"`uname -sr`\"" >> $(GMSH_VERSION_FILE)
 
 initialtag:
-	@if [ ! -r Common/GmshVersion.h ]; then \
+	@if [ ! -r $(GMSH_VERSION_FILE) ]; then \
           $(MAKE) tag ; \
         fi
 

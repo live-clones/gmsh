@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.14 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.15 2003-01-24 23:13:35 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -49,13 +49,16 @@ int Solver(int num, char *args){
   if(!SINFO[num].client_server){
     sprintf(command, "%s %s &", SINFO[num].executable_name, args);
     Gmsh_StartClient(command, NULL);
-    Msg(INFO, "%s start (%s)", SINFO[num].name, command);
     return 1;
   }
 
   sprintf(socket_name, "%s.gmshsock-%d", CTX.home_dir, num);
-  sprintf(command, "%s %s -socket %s &", SINFO[num].executable_name, 
+  sprintf(command, "%s %s -socket %s", SINFO[num].executable_name, 
 	  args, socket_name);
+#if !defined(WIN32)
+  strcat(command, " &");
+#endif
+
   sock = Gmsh_StartClient(command, socket_name);
   if(sock<0){
     switch(sock){
@@ -70,8 +73,6 @@ int Solver(int num, char *args){
       WID->solver[num].choice[i]->clear();
     return 0;
   }
-
-  Msg(INFO, "%s start (%s)", SINFO[num].name, command);
 
   for(i=0 ; i<SINFO[num].nboptions ; i++) SINFO[num].nbval[i] = 0;
   SINFO[num].pid = 0;
@@ -133,8 +134,6 @@ int Solver(int num, char *args){
 
   if(Gmsh_StopClient(socket_name, sock) < 0)
     Msg(WARNING, "Impossible to unlink the socket '%s'", socket_name);
-
-  Msg(INFO, "%s stop (%s)", SINFO[num].name, command);
 
   return 1;
 }

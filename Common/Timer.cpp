@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.8 2003-01-23 20:19:17 geuzaine Exp $
+// $Id: Timer.cpp,v 1.9 2003-01-24 23:13:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,6 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-#if defined(WIN32) && !defined(__CYGWIN__)
-
-long GetTime(){
-  return 0;
-}
-
-#else
-
 #include <sys/time.h>
 #include <unistd.h>
 long GetTime(){
@@ -34,5 +26,3 @@ long GetTime(){
   gettimeofday(&tp, (struct timezone *)0);
   return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
 }
-
-#endif
