@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.205 2002-11-03 04:26:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.206 2002-11-03 16:49:55 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Bitmaps.h"
-#include "Icon.h"
+#include "Win32Icon.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "Solvers.h"

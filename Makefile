@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.236 2002-11-01 22:30:03 geuzaine Exp $
+# $Id: Makefile,v 1.237 2002-11-03 16:49:55 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -375,7 +375,7 @@ compile-cygwin: initialtag
         ); done
 link-cygwin:
 	g++ -Wl,--subsystem,windows -mwindows -o $(GMSH_BIN_DIR)/gmsh.exe\
-                 $(GMSH_FLTK_LIB) Fltk/Icon.res $(FLTK_DIR)/lib/libfltk_gl.a\
+                 $(GMSH_FLTK_LIB) Fltk/Win32Icon.res $(FLTK_DIR)/lib/libfltk_gl.a\
                  -lglu32 -lopengl32 $(FLTK_DIR)/lib/libfltk.a \
                  -lole32 -luuid -lcomctl32 -lwsock32 -lm
 cygwin: compile-cygwin link-cygwin
@@ -399,7 +399,7 @@ cygwin-gertha-buro: initialtag
            "GUI_INCLUDE=-I../../fltk" \
         ); done
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
-                 Fltk/Icon.res ../fltk/lib/libfltk.a\
+                 Fltk/Win32Icon.res ../fltk/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
 #
@@ -416,7 +416,7 @@ cygwin-laptopjf: initialtag
            "GUI_INCLUDE=-I../../fltk-1.0.9" \
         ); done
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB)\
-                 Fltk/Icon.res ../fltk-1.0.9/lib/libfltk.a\
+                 Fltk/Win32Icon.res ../fltk-1.0.9/lib/libfltk.a\
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 cygwin-laptopjf_tag: tag cygwin-laptopjf
 

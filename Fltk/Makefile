@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2002-09-24 02:04:34 geuzaine Exp $
+# $Id: Makefile,v 1.38 2002-11-03 16:49:55 geuzaine Exp $
 #
 # Makefile for "libGmshFltk.a"
 #
@@ -43,7 +43,7 @@ $(LIB): $(OBJ)
 	$(CXX) $(CFLAGS) -c $<
 
 res:
-	windres Icon.rc -O coff Icon.res
+	windres Win32Icon.rc -O coff Win32Icon.res
 
 clean:
 	$(RM) $(RMFLAGS) *.o
