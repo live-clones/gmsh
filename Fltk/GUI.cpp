@@ -70,9 +70,9 @@ GUI::GUI() {
 
   {
     int width = 152 ;
-    int height = 450 ;
+    MH = 2*BH+6 ; // this is the initial width: no dynamic button is shown!
 
-    m_window = new Fl_Window(width,height);
+    m_window = new Fl_Window(width,MH);
     m_window->box(FL_THIN_UP_BOX);
 
     {
@@ -85,7 +85,7 @@ GUI::GUI() {
     Fl_Box *o = new Fl_Box(0,BH,width,BH+6);
     o->box(FL_UP_BOX);
 
-    y = BH+3;
+    y = BH + 3;
     
     m_navig_butt[0] = new Fl_Button(2,y,20,BH/2,"@<");
     m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
@@ -96,12 +96,12 @@ GUI::GUI() {
     m_navig_butt[1]->box(FL_FLAT_BOX);
     m_navig_butt[1]->selection_color(FL_WHITE);
     
-    m_module_butt = new Fl_Choice(22,y,width-26,BH);
+    m_module_butt = new Fl_Choice(22,y,width-28,BH);
     m_module_butt->menu(m_module_table);
     m_module_butt->textsize(CTX.fontsize);
     m_module_butt->box(FL_THIN_DOWN_BOX);
     
-    y = BH+ BH +6;
+    y = MH ;
     
     for(i=0; i<NB_BUTT_MAX; i++){
       m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
@@ -131,8 +131,6 @@ GUI::GUI() {
       m_popup_butt[i]->textsize(CTX.fontsize);
       if(i>5)m_popup_butt[i]->hide();
     }
-    
-    m_window->resizable(m_window);
     
     m_window->position(800,50);
     m_window->end();
@@ -225,11 +223,18 @@ void GUI::set_size(int w, int h){
   g_window->size(w,h+hh);
 }
 
+void GUI::set_menu_size(int nb_butt){
+  m_window->size(m_window->w(), MH + nb_butt*BH);
+  m_window->redraw();
+}
+
 // The window for general options
 
 static int init_opt_general = 0;
 
 void GUI::opt_general(){
+  set_menu_size(5);
+
   if(!init_opt_general){
     init_opt_general = 1 ;
 
