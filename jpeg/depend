@@ -1,0 +1,58 @@
+cjpeg.o : cjpeg.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h \
+  cderror.h jversion.h 
+djpeg.o : djpeg.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h \
+  cderror.h jversion.h 
+jdatasrc.o : jdatasrc.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h 
+jdatadst.o : jdatadst.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h 
+jcapi.o : jcapi.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jccoefct.o : jccoefct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jccolor.o : jccolor.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jcdctmgr.o : jcdctmgr.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jchuff.o : jchuff.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jcmainct.o : jcmainct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jcmarker.o : jcmarker.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jcmaster.o : jcmaster.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jcomapi.o : jcomapi.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jcparam.o : jcparam.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jcprepct.o : jcprepct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jcsample.o : jcsample.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jdapi.o : jdapi.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jdcoefct.o : jdcoefct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jdcolor.o : jdcolor.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jddctmgr.o : jddctmgr.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jdhuff.o : jdhuff.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jdmainct.o : jdmainct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jdmarker.o : jdmarker.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jdmaster.o : jdmaster.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jdpostct.o : jdpostct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jdsample.o : jdsample.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h 
+jerror.o : jerror.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jversion.h jerror.h 
+jfwddct.o : jfwddct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jmemmgr.o : jmemmgr.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h \
+  jmemsys.h 
+jmemnobs.o : jmemnobs.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h \
+  jerror.h jmemsys.h 
+jrevdct.o : jrevdct.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+jutils.o : jutils.c jinclude.h jconfig.h jpegint.h jpeglib.h jmorecfg.h jerror.h 
+rdppm.o : rdppm.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h \
+  cderror.h 
+wrppm.o : wrppm.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h \
+  cderror.h 
+wrraw.o : wrraw.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h \
+  cderror.h 
+rdraw.o : rdraw.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h \
+  cderror.h 
