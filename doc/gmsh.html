@@ -53,8 +53,7 @@ text file makes it possible to automate all treatments (loops, tests
 and external access methods permit advanced scripting capabilities). A
 brief description of the four modules is given hereafter.
 
-<a name="geometry"></a>
-<h3>Geometry: geometrical entity definition</h3>
+<h3><a name="geometry"></a>Geometry: geometrical entity definition</h3>
 
 Geometries are created in a bottom-up flow by successively defining
 points, oriented curves (segments, circles, ellipses, splines, etc.),
@@ -66,8 +65,7 @@ the ASCII input files.  The scripting possibilities (with loops,
 tests, arrays of variables, etc.) allow fully parametrized definitions
 of all geometrical entities.
 
-<a name="mesh"></a>
-<h3>Mesh: finite element mesh generation</h3>
+<h3><a name="mesh"></a>Mesh: finite element mesh generation</h3>
 
 A finite element mesh is a tessellation of a given subset of
 R<sup>3</sup> by elementary geometrical elements of various shapes (in
@@ -81,15 +79,15 @@ vertices (which allows the orientation of all their lower order
 geometrical entities) but no predefined relation is assumed between
 any two elementary elements.
 <p>
-The procedure follows the same order as for the geometry creation:
-curves are discretized first; the mesh of the curves is then used to
-mesh the surfaces; then the mesh of the surfaces is used to mesh the
-volumes. This automatically assures the continuity of the mesh when,
-for example, two surfaces share a common curve. Every meshing step is
-constrained by the characteristic length field, which can be uniform,
-specified by characteristic length associated to elementary
-geometrical entities, or associated to another mesh (the background
-mesh).
+The mesh generation is performed in the same order as the geometry
+creation: curves are discretized first; the mesh of the curves is then
+used to mesh the surfaces; then the mesh of the surfaces is used to
+mesh the volumes. This automatically assures the continuity of the
+mesh when, for example, two surfaces share a common curve. Every
+meshing step is constrained by the characteristic length field, which
+can be uniform, specified by characteristic length associated to
+elementary geometrical entities, or associated to another mesh (the
+background mesh).
 <p>
 For each meshing step (i.e. the discretization of lines, surfaces and
 volumes), all structured mesh directives are executed first, and serve
@@ -117,8 +115,7 @@ characteristic length field evaluated at the center of its
 circumscribed circle/sphere.
 </ol>
 
-<a name="solver"></a>
-<h3>Solver: external solver interface</h3>
+<h3><a name="solver"></a>Solver: external solver interface</h3>
 
 External solvers can be interfaced with Gmsh through a socket
 mechanism, which permits to easily launch computations either locally
@@ -126,8 +123,7 @@ or on remote computers, and to collect and exploit the simulation
 results within Gmsh.  The only solver currently interfaced is <A
 HREF="/getdp/">GetDP</A>.
 
-<a name="post-processing"></a>
-<h3>Post-processing: scalar and vector field visualization</h3>
+<h3><a name="post-processing"></a>Post-processing: scalar and vector field visualization</h3>
 
 Multiple post-processing scalar or vector maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
@@ -216,14 +212,13 @@ in order for Gmsh to find the libraries.
 <h2>Credits</h2>
 
 Gmsh is developed by <A
-HREF="mailto:Remacle@scorec.rpi.edu">Jean-François Remacle</A>
-(currently with the <a href="http://www.rpi.edu">Rensselaer
-Polytechnic Institute</a>) and <A
 HREF="mailto:Christophe.Geuzaine@ulg.ac.be">Christophe Geuzaine</A>
 (currently with the <a href="http://www.ulg.ac.be">University of
-Liège</a>).  Please use <A
-HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</A> instead of our personal
-e-mails to send questions or bug reports!
+Liège</a>) and <A HREF="mailto:Remacle@scorec.rpi.edu">Jean-François
+Remacle</A> (currently with the <a
+href="http://www.rpi.edu">Rensselaer Polytechnic Institute</a>).
+Please use <A HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</A> instead of
+our personal e-mails to send questions or bug reports!
 
 
 <h2>Gallery</h2>
@@ -272,7 +267,7 @@ Back to <a href="/">geuz.org</a>.
 
 <p>
 
-$Date: 2001-10-13 07:45:49 $
+$Date: 2001-10-13 08:56:10 $
 
 </BODY>
 </HTML>
