@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.37 2001-02-04 12:46:08 geuzaine Exp $
+// $Id: GUI.cpp,v 1.38 2001-02-04 15:52:26 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -535,10 +535,16 @@ void GUI::run(){
   Fl::run();
 }
 
-// Check if any pending events and run them
+// Check (now) if any pending events and run them
 
 void GUI::check(){
   Fl::check();
+}
+
+// Wait for any events and run them
+
+void GUI::wait(){
+  Fl::wait();
 }
 
 //********************************* Create the menu window *****************************

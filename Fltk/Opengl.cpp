@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.17 2001-02-04 12:46:09 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.18 2001-02-04 15:52:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -112,7 +112,7 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
   WID->end_selection = 0;
   
   while(1){
-    Fl::check();
+    WID->wait();
     if(WID->quit_selection){
       WID->quit_selection = 0;
       return 0;

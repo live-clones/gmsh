@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.11 2001-02-04 12:46:09 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.12 2001-02-04 15:52:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -23,7 +23,7 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 
 static int    ZOOM = 0 ;
-static double ZOOM_X0, ZOOM_Y0, ZOOM_X1, ZOOM_Y1, ZOOM_X2, ZOOM_Y2;
+static double ZOOM_X0, ZOOM_Y0, ZOOM_X1, ZOOM_Y1;
 
 void Opengl_Window::draw() {
   if(!valid()){
@@ -68,11 +68,13 @@ void Opengl_Window::draw() {
     glVertex2d(ZOOM_X0, ZOOM_Y1);
     glVertex2d(ZOOM_X0, ZOOM_Y0);
     glEnd();
+    ZOOM_X1 = CTX.vxmin + ((double)Fl::event_x()/(double)w()) * (CTX.vxmax - CTX.vxmin);
+    ZOOM_Y1 = CTX.vymax - ((double)Fl::event_y()/(double)h()) * (CTX.vymax - CTX.vymin);
     glBegin(GL_LINE_STRIP);
     glVertex2d(ZOOM_X0, ZOOM_Y0);
-    glVertex2d(ZOOM_X2, ZOOM_Y0);
-    glVertex2d(ZOOM_X2, ZOOM_Y2);
-    glVertex2d(ZOOM_X0, ZOOM_Y2);
+    glVertex2d(ZOOM_X1, ZOOM_Y0);
+    glVertex2d(ZOOM_X1, ZOOM_Y1);
+    glVertex2d(ZOOM_X0, ZOOM_Y1);
     glVertex2d(ZOOM_X0, ZOOM_Y0);
     glEnd();
     glDisable(GL_BLEND);
@@ -101,8 +103,7 @@ void Opengl_Window::clear_overlay() {
 int Opengl_Window::handle(int event) {
   static int      xpos, ypos, xmov, ymov, ibut, hits;
   static int      ZoomClick=0, FirstClick=0;
-  static GLdouble xc1, yc1, xc2, yc2, xt1, yt1, xscale1, yscale1;
-  static GLdouble xb, yb, xc, yc, xe, ye;
+  static GLdouble xc, yc, xc1, yc1, xc2, yc2, xt1, yt1, xscale1, yscale1;
   static Vertex   *v=NULL, *ov;
   static Curve    *c=NULL, *oc;
   static Surface  *s=NULL, *os;
@@ -119,20 +120,19 @@ int Opengl_Window::handle(int event) {
 
     if(ibut == 1 && !Fl::event_state(FL_SHIFT)){
       if(!ZoomClick && Fl::event_state(FL_CTRL)){
-        xb = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
-        yb = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
-        xc1 = xb/CTX.s[0] - CTX.t[0];
-        yc1 = yb/CTX.s[1] - CTX.t[1];
+        ZOOM_X0 = ZOOM_X1 = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
+        ZOOM_Y0 = ZOOM_Y1 = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
+        xc1 = ZOOM_X0/CTX.s[0] - CTX.t[0];
+        yc1 = ZOOM_Y0/CTX.s[1] - CTX.t[1];
         ZoomClick = 1;
       }
       else if(ZoomClick){
-        xe = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
-        ye = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
-        xc2 = xe/CTX.s[0] - CTX.t[0];
-        yc2 = ye/CTX.s[1] - CTX.t[1];     
+        xc2 = ZOOM_X1/CTX.s[0] - CTX.t[0];
+        yc2 = ZOOM_Y1/CTX.s[1] - CTX.t[1];     
         ZoomClick = 0;
         clear_overlay();
-        if(xb!=xe && yb!=ye) myZoom(xb,xe,yb,ye,xc1,xc2,yc1,yc2);
+        if(ZOOM_X0 != ZOOM_X1 && ZOOM_Y0 != ZOOM_Y1)
+	  myZoom(ZOOM_X0,ZOOM_X1,ZOOM_Y0,ZOOM_Y1,xc1,xc2,yc1,yc2);
       }
       else{
 	WID->try_selection = 1 ;
@@ -183,12 +183,6 @@ int Opengl_Window::handle(int event) {
     ymov = Fl::event_y() - ypos;
 
     if(ZoomClick) {
-      ZOOM_X0 = xb;
-      ZOOM_Y0 = yb;
-      ZOOM_X1 = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
-      ZOOM_Y1 = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
-      ZOOM_X2 = CTX.vxmin + ((double)Fl::event_x()/(double)w()) * (CTX.vxmax - CTX.vxmin);
-      ZOOM_Y2 = CTX.vymax - ((double)Fl::event_y()/(double)h()) * (CTX.vymax - CTX.vymin);
       ZOOM = 1;
       redraw();
     }
@@ -248,8 +242,8 @@ int Opengl_Window::handle(int event) {
       }
       
       redraw();
-
     }
+
     xpos += xmov; 
     ypos += ymov; 
     return 1;
@@ -260,12 +254,6 @@ int Opengl_Window::handle(int event) {
     ymov = Fl::event_y()-ypos;
 
     if(ZoomClick) {
-      ZOOM_X0 = xb;
-      ZOOM_Y0 = yb;
-      ZOOM_X1 = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
-      ZOOM_Y1 = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
-      ZOOM_X2 = CTX.vxmin + ((double)Fl::event_x()/(double)w()) * (CTX.vxmax - CTX.vxmin);
-      ZOOM_Y2 = CTX.vymax - ((double)Fl::event_y()/(double)h()) * (CTX.vymax - CTX.vymin);
       ZOOM = 1;
       redraw();
     }

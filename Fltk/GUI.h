@@ -184,6 +184,7 @@ public:
   // general purpose interaction
   void run();
   void check();
+  void wait();
   void make_opengl_current();
   void make_colorbar_current();
   void make_overlay_current();
