@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.111 2001-11-12 13:33:57 geuzaine Exp $
+// $Id: Gmsh.y,v 1.112 2001-11-13 08:38:01 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -2694,17 +2694,17 @@ StringExpr :
       i = PrintListOfDouble($3,$5,tmpstring);
       if(i<0){
 	vyyerror("Too few arguments in Sprintf");
-	$$ = "";
+	$$ = $3;
       }
       else if(i>0){
 	vyyerror("Too many arguments (%d) in Sprintf", i);
-	$$ = "";
+	$$ = $3;
       }
       else{
 	$$ = (char*)Malloc((strlen(tmpstring)+1)*sizeof(char));
 	strcpy($$, tmpstring);
+	Free($3);
       }
-      Free($3);
       List_Delete($5);
     }
   | tSprintf '(' tSTRING '.' tSTRING ')'

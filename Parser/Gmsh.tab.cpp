@@ -177,7 +177,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.127 2001-11-12 15:53:52 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.128 2001-11-13 08:38:01 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -6166,17 +6166,17 @@ case 383:
       i = PrintListOfDouble(yyvsp[-3].c,yyvsp[-1].l,tmpstring);
       if(i<0){
 	vyyerror("Too few arguments in Sprintf");
-	yyval.c = "";
+	yyval.c = yyvsp[-3].c;
       }
       else if(i>0){
 	vyyerror("Too many arguments (%d) in Sprintf", i);
-	yyval.c = "";
+	yyval.c = yyvsp[-3].c;
       }
       else{
 	yyval.c = (char*)Malloc((strlen(tmpstring)+1)*sizeof(char));
 	strcpy(yyval.c, tmpstring);
+	Free(yyvsp[-3].c);
       }
-      Free(yyvsp[-3].c);
       List_Delete(yyvsp[-1].l);
     ;
     break;}
