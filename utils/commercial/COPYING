@@ -1,1 +1,119 @@
-Commercial License, full text
+			  SOFTWARE AGREEMENT
+
+			       between
+
+				BUYER
+
+				 and
+
+	     Christophe GEUZAINE & Jean-Francois REMACLE
+		Copyright holders of the Gmsh software
+
+
+This Software Agreement (hereinafter referred to as "AGREEMENT") made
+as of the ____ day of ________, 20__, is entered into between
+Christophe Geuzaine and Jean-Francois Remacle (hereinafter referred to
+as "GMSH AUTHOR") and BUYER (hereinafter referred to as "BUYER").
+
+This AGREEMENT governs the use by BUYER of the Gmsh Mesh Generation
+Tool Kit and all its elements (hereinafter referred to as "SOFTWARE"),
+which includes source code and documentation.
+
+This AGREEMENT constitutes the complete and exclusive statement of the
+AGREEMENT between the parties and supersedes all proposals, oral or
+written, and all other communications relating to the subject matter
+of this AGREEMENT.  No modification thereof shall be binding upon GMSH
+AUTHOR unless acknowledged in writing by GMSH AUTHOR authorized
+representative.
+
+1. GRANT AND SCOPE OF LICENSE
+-----------------------------
+
+For the purpose of this Article, the term "BUYERS" shall include all
+buyer's subsidiaries and affiliates which are 50% or more owned or
+controlled by BUYER.
+
+GMSH AUTHOR hereby grants to BUYER a paid-up, non-exclusive, right to
+use, modify or sell the SOFTWARE subject to the following terms,
+conditions, and restrictions:
+
+1.1 Access to the source code of the SOFTWARE in any manner by any
+person not employed by the BUYER is prohibited.
+
+1.2 The BUYER has the right of possession of the source code in
+accordance with this AGREEMENT. The BUYER has the right to modify the
+software to perform any functions which the BUYER deems desirable.
+The source code as so modified, shall nonetheless, remain subject to
+the same restrictions on use, reproduction, transmission, disclosure,
+translation and access as are contained in the AGREEMENT with respect
+to SOFTWARE for a period of 5 years.
+
+2. ERRORS AND WARRANTY
+----------------------
+
+2.1 GMSH AUTHOR shall not be responsible or liable for any damages
+suffered by BUYER or others resulting from use of the SOFTWARE
+including, but not limited to, special, indirect or consequential
+damages arising out of or in connection with any errors in the
+SOFTWARE. BUYER hereby agrees to indemnify and hold harmless GMSH
+AUTHOR with respect to any and all injury, claim, loss, damage, either
+special, indirect, consequential or otherwise, which shall arise from
+the use of the SOFTWARE.
+
+2.2 GMSH AUTHOR MAKES NO WARRANTIES, REPRESENTATIONS OR GUARANTEES,
+INCLUDING BUT NOT LIMITED TO, WARRANTIES OR MERCHANTABILITY OR FITNESS
+FOR INTENDED USE, REGARDING THE SOFTWARE.
+
+3. CONSIDERATION
+----------------
+
+In consideration of the sale of the SOFTWARE granted to BUYER under
+section 1 of this AGREEMENT, BUYER agrees to pay to GMSH AUTHOR, the
+lump sum of _______. BUYER agrees to pay directly to GMSH AUTHOR any
+local, state, or federal taxes which may accrue or be levied due to
+the granting of this license, exclusive, however, of taxes based on
+net income.
+
+4. TITLE/PROPRIETARY RIGHTS
+---------------------------
+
+4.1 GMSH AUTHOR represents that it is the owner and copyright holder
+of the original version of the SOFTWARE. BUYER acknowledges that this
+AGREEMENT grants to it no interest in the title to the original
+version of the software. Any copies of the original version SOFTWARE,
+in whole or part which are made by BUYER shall be and remain the sole
+property of GMSH AUTHOR.
+
+4.2 BUYER acknowledges that pursuant to this AGREEMENT, it obtains
+only the right to use, modify and resell the SOFTWARE but that no
+right, title or interest in or to any copyrights is transferred from
+GMSH AUTHOR to BUYER.
+
+4.3 BUYER shall not remove, alter, cover or obliterate any copyright
+notice placed by GMSH AUTHOR on the SOFTWARE.
+
+4.4 BUYER will make best effort to acknowledge GMSH AUTHOR as the
+developer of the original version of the SOFTWARE in the user
+documentation relating to the use of the SOFTWARE.
+
+
+
+
+___________________________            ___________________________
+Christophe Geuzaine                    Jean-Francois Remacle
+                                       
+
+
+                                       ___________________________
+                                       Date
+
+
+Accepted for BUYER:
+
+
+___________________________            ___________________________
+Name                                   Title
+
+
+___________________________            ___________________________
+Signature                              Date
