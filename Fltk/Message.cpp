@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.38 2003-03-21 00:52:37 geuzaine Exp $
+// $Id: Message.cpp,v 1.39 2003-05-22 19:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -120,7 +120,9 @@ void Msg(int level, char *fmt, ...)
   }
   // *INDENT-ON*
 
-  static char buff1[1024], buff2[1024], buff[4][1024];
+#define BUFFSIZE 1024
+
+  static char buff1[BUFFSIZE], buff2[BUFFSIZE], buff[4][BUFFSIZE];
 
   if(CTX.verbosity >= verb) {
 
@@ -136,7 +138,7 @@ void Msg(int level, char *fmt, ...)
     va_start(args, fmt);
 
     if(window >= 0) {
-      vsprintf(buff[window], fmt, args);
+      vsnprintf(buff[window], BUFFSIZE, fmt, args);
       if(window <= 2)
         WID->set_status(buff[window], window);
       if(log && strlen(buff[window]))
@@ -145,9 +147,9 @@ void Msg(int level, char *fmt, ...)
     else {
       strcpy(buff1, "@C1");
       if(str)
-        strcat(buff1, str);
-      vsprintf(buff2, fmt, args);
-      strcat(buff1, buff2);
+        strncat(buff1, str, BUFFSIZE-4);
+      vsnprintf(buff2, BUFFSIZE, fmt, args);
+      strncat(buff1, buff2, BUFFSIZE-strlen(buff1));
       if(CTX.terminal)
         fprintf(stderr, "%s\n", &buff1[3]);
       if(WID) {

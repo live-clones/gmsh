@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.32 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: Geo.cpp,v 1.33 2003-05-22 19:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 
 extern Context_T CTX;
 
-#define BUFFSIZE 32000
+#define BUFFSIZE 128000
 
 // This is truly horrible :-)
 
@@ -107,7 +107,7 @@ void delet(int p1, char *fich, char *what)
 {
   char text[BUFFSIZE];
 
-  sprintf(text, "Delete {\n %s{%d};\n}", what, p1);
+  snprintf(text, BUFFSIZE, "Delete {\n %s{%d};\n}", what, p1);
   add_infile(text, fich);
 }
 
@@ -116,16 +116,16 @@ void add_trsfsurf(int N, int *l, char *fich)
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
   int i;
-  sprintf(text, "Transfinite Surface {%d} = {", l[0]);
+  snprintf(text, BUFFSIZE, "Transfinite Surface {%d} = {", l[0]);
   for(i = 1; i < N; i++) {
     if(i == 1)
-      sprintf(text2, "%d", l[i]);
+      snprintf(text2, BUFFSIZE, "%d", l[i]);
     else
-      sprintf(text2, ",%d", l[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, ",%d", l[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  sprintf(text2, "};");
-  strcat(text, text2);
+  snprintf(text2, BUFFSIZE, "};");
+  strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
@@ -134,16 +134,16 @@ void add_ellipticsurf(int N, int *l, char *fich)
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
   int i;
-  sprintf(text, "Elliptic Surface {%d} = {", l[0]);
+  snprintf(text, BUFFSIZE, "Elliptic Surface {%d} = {", l[0]);
   for(i = 1; i < N; i++) {
     if(i == 1)
-      sprintf(text2, "%d", l[i]);
+      snprintf(text2, BUFFSIZE, "%d", l[i]);
     else
-      sprintf(text2, ",%d", l[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, ",%d", l[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  sprintf(text2, "};");
-  strcat(text, text2);
+  snprintf(text2, BUFFSIZE, "};");
+  strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
@@ -152,16 +152,16 @@ void add_charlength(int N, int *l, char *fich)
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
   int i;
-  sprintf(text, "Characteristic Length {");
+  snprintf(text, BUFFSIZE, "Characteristic Length {");
   for(i = 0; i < N; i++) {
     if(i == 0)
-      sprintf(text2, "%d", l[i]);
+      snprintf(text2, BUFFSIZE, "%d", l[i]);
     else
-      sprintf(text2, ",%d", l[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, ",%d", l[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  sprintf(text2, "} = %s;", char_length_text);
-  strcat(text, text2);
+  snprintf(text2, BUFFSIZE, "} = %s;", char_length_text);
+  strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
@@ -170,16 +170,16 @@ void add_recosurf(int N, int *l, char *fich)
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
   int i;
-  sprintf(text, "Recombine Surface {");
+  snprintf(text, BUFFSIZE, "Recombine Surface {");
   for(i = 0; i < N; i++) {
     if(i == 0)
-      sprintf(text2, "%d", l[i]);
+      snprintf(text2, BUFFSIZE, "%d", l[i]);
     else
-      sprintf(text2, ",%d", l[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, ",%d", l[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  sprintf(text2, "};");
-  strcat(text, text2);
+  snprintf(text2, BUFFSIZE, "};");
+  strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
@@ -189,20 +189,20 @@ void add_trsfline(int N, int *l, char *fich)
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
   int i;
-  sprintf(text, "Transfinite Line {");
+  snprintf(text, BUFFSIZE, "Transfinite Line {");
   for(i = 0; i < N; i++) {
     if(!i)
-      sprintf(text2, "%d", l[i]);
+      snprintf(text2, BUFFSIZE, "%d", l[i]);
     else
-      sprintf(text2, ",%d", l[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, ",%d", l[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   if(strlen(trsf_typearg_text))
-    sprintf(text2, "} = %s Using %s %s;", trsf_pts_text, trsf_type_text,
-            trsf_typearg_text);
+    snprintf(text2, BUFFSIZE, "} = %s Using %s %s;", trsf_pts_text,
+             trsf_type_text, trsf_typearg_text);
   else
-    sprintf(text2, "} = %s;", trsf_pts_text);
-  strcat(text, text2);
+    snprintf(text2, BUFFSIZE, "} = %s;", trsf_pts_text);
+  strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
@@ -210,7 +210,7 @@ void add_trsfline(int N, int *l, char *fich)
 void add_param(char *par, char *value, char *fich)
 {
   char text[BUFFSIZE];
-  sprintf(text, "%s = %s;", par, value);
+  snprintf(text, BUFFSIZE, "%s = %s;", par, value);
   add_infile(text, fich);
 }
 
@@ -220,8 +220,8 @@ void add_point(char *fich)
   int ip;
 
   ip = NEWPOINT();
-  sprintf(text, "Point(%d) = {%s,%s,%s,%s};", ip, x_text, y_text, z_text,
-          l_text);
+  snprintf(text, BUFFSIZE, "Point(%d) = {%s,%s,%s,%s};", ip, x_text, y_text,
+           z_text, l_text);
   add_infile(text, fich);
 }
 
@@ -229,16 +229,16 @@ void add_attractor(char *fich, int ip, int typ)
 {
   char text[BUFFSIZE];
   if(typ == 0) {
-    sprintf(text, "Attractor Point {%d} = {%s,%s,%s} = ;",
-            ip, attrx_text, attry_text, attrdec_text);
+    snprintf(text, BUFFSIZE, "Attractor Point {%d} = {%s,%s,%s} = ;",
+             ip, attrx_text, attry_text, attrdec_text);
   }
   else if(typ == 1) {
-    sprintf(text, "Attractor Line {%d} = {%s,%s,%s};",
-            ip, attrx_text, attry_text, attrdec_text);
+    snprintf(text, BUFFSIZE, "Attractor Line {%d} = {%s,%s,%s};",
+             ip, attrx_text, attry_text, attrdec_text);
   }
   else if(typ == 2) {
-    sprintf(text, "Attractor Surface {%d} = {%s,%s,%s};",
-            ip, attrx_text, attry_text, attrdec_text);
+    snprintf(text, BUFFSIZE, "Attractor Surface {%d} = {%s,%s,%s};",
+             ip, attrx_text, attry_text, attrdec_text);
   }
   add_infile(text, fich);
 }
@@ -257,7 +257,7 @@ void add_line(int p1, int p2, char *fich)
   }
   List_Delete(list);
 
-  sprintf(text, "Line(%d) = {%d,%d};", NEWLINE(), p1, p2);
+  snprintf(text, BUFFSIZE, "Line(%d) = {%d,%d};", NEWLINE(), p1, p2);
   add_infile(text, fich);
 }
 
@@ -265,7 +265,7 @@ void add_circ(int p1, int p2, int p3, char *fich)
 {
   char text[BUFFSIZE];
 
-  sprintf(text, "Circle(%d) = {%d,%d,%d};", NEWLINE(), p1, p2, p3);
+  snprintf(text, BUFFSIZE, "Circle(%d) = {%d,%d,%d};", NEWLINE(), p1, p2, p3);
   add_infile(text, fich);
 }
 
@@ -273,7 +273,8 @@ void add_ell(int p1, int p2, int p3, int p4, char *fich)
 {
   char text[BUFFSIZE];
 
-  sprintf(text, "Ellipse(%d) = {%d,%d,%d,%d};", NEWLINE(), p1, p2, p3, p4);
+  snprintf(text, BUFFSIZE, "Ellipse(%d) = {%d,%d,%d,%d};", NEWLINE(), p1, p2,
+           p3, p4);
   add_infile(text, fich);
 }
 
@@ -283,13 +284,13 @@ void add_spline(int N, int *p, char *fich)
   char text2[BUFFSIZE];
   int i;
 
-  sprintf(text, "CatmullRom(%d) = {", NEWLINE());
+  snprintf(text, BUFFSIZE, "CatmullRom(%d) = {", NEWLINE());
   for(i = 0; i < N; i++) {
     if(i != N - 1)
-      sprintf(text2, "%d,", p[i]);
+      snprintf(text2, BUFFSIZE, "%d,", p[i]);
     else
-      sprintf(text2, "%d};", p[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", p[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -300,13 +301,13 @@ void add_bezier(int N, int *p, char *fich)
   char text2[BUFFSIZE];
   int i;
 
-  sprintf(text, "Bezier(%d) = {", NEWLINE());
+  snprintf(text, BUFFSIZE, "Bezier(%d) = {", NEWLINE());
   for(i = 0; i < N; i++) {
     if(i != N - 1)
-      sprintf(text2, "%d,", p[i]);
+      snprintf(text2, BUFFSIZE, "%d,", p[i]);
     else
-      sprintf(text2, "%d};", p[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", p[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -318,13 +319,13 @@ void add_bspline(int N, int *p, char *fich)
   char text2[BUFFSIZE];
   int i;
 
-  sprintf(text, "BSpline(%d) = {", NEWLINE());
+  snprintf(text, BUFFSIZE, "BSpline(%d) = {", NEWLINE());
   for(i = 0; i < N; i++) {
     if(i != N - 1)
-      sprintf(text2, "%d,", p[i]);
+      snprintf(text2, BUFFSIZE, "%d,", p[i]);
     else
-      sprintf(text2, "%d};", p[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", p[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -345,13 +346,13 @@ void add_multline(int N, int *p, char *fich)
   }
   List_Delete(list);
 
-  sprintf(text, "Line(%d) = {", NEWLINE());
+  snprintf(text, BUFFSIZE, "Line(%d) = {", NEWLINE());
   for(i = 0; i < N; i++) {
     if(i != N - 1)
-      sprintf(text2, "%d,", p[i]);
+      snprintf(text2, BUFFSIZE, "%d,", p[i]);
     else
-      sprintf(text2, "%d};", p[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", p[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -366,14 +367,14 @@ void add_loop(List_T * list, char *fich, int *numloop)
     return;
 
   *numloop = NEWLINELOOP();
-  sprintf(text, "Line Loop(%d) = {", *numloop);
+  snprintf(text, BUFFSIZE, "Line Loop(%d) = {", *numloop);
   for(i = 0; i < List_Nbr(list); i++) {
     List_Read(list, i, &seg);
     if(i != List_Nbr(list) - 1)
-      sprintf(text2, "%d,", seg);
+      snprintf(text2, BUFFSIZE, "%d,", seg);
     else
-      sprintf(text2, "%d};", seg);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", seg);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -386,21 +387,22 @@ void add_surf(List_T * list, char *fich, int support, int typ)
   int i, seg;
 
   if(typ == 1) {
-    sprintf(text, "Ruled Surface(%d) = {", NEWSURFACE());
+    snprintf(text, BUFFSIZE, "Ruled Surface(%d) = {", NEWSURFACE());
   }
   else if(typ == 2) {
-    sprintf(text, "Plane Surface(%d) = {", NEWSURFACE());
+    snprintf(text, BUFFSIZE, "Plane Surface(%d) = {", NEWSURFACE());
   }
   else {
-    sprintf(text, "Trimmed Surface(%d) = %d {", NEWSURFACE(), support);
+    snprintf(text, BUFFSIZE, "Trimmed Surface(%d) = %d {", NEWSURFACE(),
+             support);
   }
   for(i = 0; i < List_Nbr(list); i++) {
     List_Read(list, i, &seg);
     if(i != List_Nbr(list) - 1)
-      sprintf(text2, "%d,", seg);
+      snprintf(text2, BUFFSIZE, "%d,", seg);
     else
-      sprintf(text2, "%d};", seg);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", seg);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -415,14 +417,14 @@ void add_vol(List_T * list, char *fich, int *numvol)
     return;
 
   *numvol = NEWSURFACELOOP();
-  sprintf(text, "Surface Loop(%d) = {", *numvol);
+  snprintf(text, BUFFSIZE, "Surface Loop(%d) = {", *numvol);
   for(i = 0; i < List_Nbr(list); i++) {
     List_Read(list, i, &seg);
     if(i != List_Nbr(list) - 1)
-      sprintf(text2, "%d,", seg);
+      snprintf(text2, BUFFSIZE, "%d,", seg);
     else
-      sprintf(text2, "%d};", seg);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", seg);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -433,14 +435,14 @@ void add_multvol(List_T * list, char *fich)
   char text2[BUFFSIZE];
   int i, seg;
 
-  sprintf(text, "Volume(%d) = {", NEWVOLUME());
+  snprintf(text, BUFFSIZE, "Volume(%d) = {", NEWVOLUME());
   for(i = 0; i < List_Nbr(list); i++) {
     List_Read(list, i, &seg);
     if(i != List_Nbr(list) - 1)
-      sprintf(text2, "%d,", seg);
+      snprintf(text2, BUFFSIZE, "%d,", seg);
     else
-      sprintf(text2, "%d};", seg);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", seg);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -450,16 +452,16 @@ void add_trsfvol(int N, int *l, char *fich)
   char text[BUFFSIZE], text2[BUFFSIZE];
   int i;
 
-  sprintf(text, "Transfinite Volume{%s} = {", trsf_vol_text);
+  snprintf(text, BUFFSIZE, "Transfinite Volume{%s} = {", trsf_vol_text);
   for(i = 0; i < N; i++) {
     if(i == 0)
-      sprintf(text2, "%d", l[i]);
+      snprintf(text2, BUFFSIZE, "%d", l[i]);
     else
-      sprintf(text2, ",%d", l[i]);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, ",%d", l[i]);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
-  sprintf(text2, "};");
-  strcat(text, text2);
+  snprintf(text2, BUFFSIZE, "};");
+  strncat(text, text2, BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
 
@@ -472,26 +474,26 @@ void add_physical(List_T * list, char *fich, int type, int *num)
   *num = NEWPHYSICAL();
   switch (type) {
   case ENT_POINT:
-    sprintf(text, "Physical Point(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Point(%d) = {", *num);
     break;
   case ENT_LINE:
-    sprintf(text, "Physical Line(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Line(%d) = {", *num);
     break;
   case ENT_SURFACE:
-    sprintf(text, "Physical Surface(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Surface(%d) = {", *num);
     break;
   case ENT_VOLUME:
-    sprintf(text, "Physical Volume(%d) = {", *num);
+    snprintf(text, BUFFSIZE, "Physical Volume(%d) = {", *num);
     break;
   }
 
   for(i = 0; i < List_Nbr(list); i++) {
     List_Read(list, i, &elementary_entity);
     if(i != List_Nbr(list) - 1)
-      sprintf(text2, "%d,", elementary_entity);
+      snprintf(text2, BUFFSIZE, "%d,", elementary_entity);
     else
-      sprintf(text2, "%d};", elementary_entity);
-    strcat(text, text2);
+      snprintf(text2, BUFFSIZE, "%d};", elementary_entity);
+    strncat(text, text2, BUFFSIZE-strlen(text));
   }
   add_infile(text, fich);
 }
@@ -501,11 +503,12 @@ void translate(int add, int s, char *fich, char *what)
   char text[BUFFSIZE];
 
   if(add)
-    sprintf(text, "Translate {%s,%s,%s} {\n  Duplicata { %s{%d}; }\n}",
-            tx_text, ty_text, tz_text, what, s);
+    snprintf(text, BUFFSIZE,
+             "Translate {%s,%s,%s} {\n  Duplicata { %s{%d}; }\n}", tx_text,
+             ty_text, tz_text, what, s);
   else
-    sprintf(text, "Translate {%s,%s,%s} {\n  %s{%d};\n}",
-            tx_text, ty_text, tz_text, what, s);
+    snprintf(text, BUFFSIZE, "Translate {%s,%s,%s} {\n  %s{%d};\n}",
+             tx_text, ty_text, tz_text, what, s);
   add_infile(text, fich);
 }
 
@@ -514,14 +517,15 @@ void rotate(int add, int s, char *fich, char *quoi)
   char text[BUFFSIZE];
 
   if(add)
-    sprintf(text,
-            "Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n  Duplicata { %s{%d}; }\n}",
-            ax_text, ay_text, az_text, px_text, py_text, pz_text, angle_text,
-            quoi, s);
+    snprintf(text, BUFFSIZE,
+             "Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n  Duplicata { %s{%d}; }\n}",
+             ax_text, ay_text, az_text, px_text, py_text, pz_text, angle_text,
+             quoi, s);
   else
-    sprintf(text, "Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n   %s{%d};\n  }",
-            ax_text, ay_text, az_text, px_text, py_text, pz_text, angle_text,
-            quoi, s);
+    snprintf(text, BUFFSIZE,
+             "Rotate { {%s,%s,%s},{%s,%s,%s},%s } {\n   %s{%d};\n  }",
+             ax_text, ay_text, az_text, px_text, py_text, pz_text, angle_text,
+             quoi, s);
   add_infile(text, fich);
 }
 
@@ -530,11 +534,12 @@ void dilate(int add, int s, char *fich, char *quoi)
   char text[BUFFSIZE];
 
   if(add)
-    sprintf(text, "Dilate { {%s,%s,%s},%s } {\n  Duplicata { %s{%d}; }\n}",
-            dx_text, dy_text, dz_text, df_text, quoi, s);
+    snprintf(text, BUFFSIZE,
+             "Dilate { {%s,%s,%s},%s } {\n  Duplicata { %s{%d}; }\n}",
+             dx_text, dy_text, dz_text, df_text, quoi, s);
   else
-    sprintf(text, "Dilate { {%s,%s,%s},%s } {\n   %s{%d};\n  }",
-            dx_text, dy_text, dz_text, df_text, quoi, s);
+    snprintf(text, BUFFSIZE, "Dilate { {%s,%s,%s},%s } {\n   %s{%d};\n  }",
+             dx_text, dy_text, dz_text, df_text, quoi, s);
   add_infile(text, fich);
 }
 
@@ -543,11 +548,12 @@ void symmetry(int add, int s, char *fich, char *quoi)
   char text[BUFFSIZE];
 
   if(add)
-    sprintf(text, "Symmetry { %s,%s,%s,%s } {\n  Duplicata { %s{%d}; }\n}",
-            sa_text, sb_text, sc_text, sd_text, quoi, s);
+    snprintf(text, BUFFSIZE,
+             "Symmetry { %s,%s,%s,%s } {\n  Duplicata { %s{%d}; }\n}",
+             sa_text, sb_text, sc_text, sd_text, quoi, s);
   else
-    sprintf(text, "Symmetry { %s,%s,%s,%s } {\n   %s{%d};\n  }",
-            sa_text, sb_text, sc_text, sd_text, quoi, s);
+    snprintf(text, BUFFSIZE, "Symmetry { %s,%s,%s,%s } {\n   %s{%d};\n  }",
+             sa_text, sb_text, sc_text, sd_text, quoi, s);
   add_infile(text, fich);
 
 }
@@ -556,8 +562,8 @@ void extrude(int s, char *fich, char *what)
 {
   char text[BUFFSIZE];
 
-  sprintf(text, "Extrude %s {%d, {%s,%s,%s}};", what, s, tx_text, ty_text,
-          tz_text);
+  snprintf(text, BUFFSIZE, "Extrude %s {%d, {%s,%s,%s}};", what, s, tx_text,
+           ty_text, tz_text);
   add_infile(text, fich);
 }
 
@@ -565,7 +571,8 @@ void protude(int s, char *fich, char *what)
 {
   char text[BUFFSIZE];
 
-  sprintf(text, "Extrude %s {%d, {%s,%s,%s}, {%s,%s,%s}, %s};", what, s,
-          ax_text, ay_text, az_text, px_text, py_text, pz_text, angle_text);
+  snprintf(text, BUFFSIZE, "Extrude %s {%d, {%s,%s,%s}, {%s,%s,%s}, %s};",
+           what, s, ax_text, ay_text, az_text, px_text, py_text, pz_text,
+           angle_text);
   add_infile(text, fich);
 }

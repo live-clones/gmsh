@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.287 2003-05-16 02:54:31 geuzaine Exp $
+# $Id: Makefile,v 1.288 2003-05-22 19:25:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -40,7 +40,7 @@ compile: variables initialtag
 	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
 
 link: variables
-	${LINKER} -o bin/gmsh ${GMSH_LIBS}
+	${LINKER} ${OPTIM} -o bin/gmsh ${GMSH_LIBS}
 	${POSTBUILD}
 
 install: variables
