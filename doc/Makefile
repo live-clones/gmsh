@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2003-04-15 21:49:43 geuzaine Exp $
+# $Id: Makefile,v 1.11 2003-06-13 16:53:07 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -19,14 +19,6 @@
 # 
 # Please report all bugs and problems to "gmsh@geuz.org".
 
-all:
-	cd texinfo && ${MAKE} all
-	gtar zcvf gmsh-doc.tgz\
-          FAQ CONTRIBUTORS VERSIONS README.win32 \
-          texinfo/gmsh.ps texinfo/gmsh.pdf texinfo/gmsh.txt\
-          texinfo/*.html \
-          texinfo/gmsh-info.tgz gmsh.1 
-
 clean:
-	rm -f *~ .*~ gmsh.ps gmsh.pdf gmsh.info*
+	rm -f *~ .*~
 	cd texinfo && ${MAKE} clean

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2003-04-19 17:24:28 geuzaine Exp $
+# $Id: Makefile,v 1.6 2003-06-13 16:53:07 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -59,5 +59,5 @@ all: ps pdf html html1 infoz txt
 clean:
 	rm -f *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv*\
           *.log *.toc *.aux *.dvi *.html *.txt\
-          gmsh.ps gmsh.pdf gmsh.info* gmsh-info.tgz gmsh-doc.tgz
+          gmsh.ps gmsh.pdf gmsh.info* gmsh-info.tgz
 

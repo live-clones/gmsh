@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.290 2003-06-01 00:12:53 geuzaine Exp $
+# $Id: Makefile,v 1.291 2003-06-13 16:53:07 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -82,17 +82,19 @@ parser:
 converters:
 	cd utils/converters/autocad && ${MAKE}
 
+.PHONY: doc
+doc:
+	cd doc/texinfo && ${MAKE} all
+	cd doc && tar zcvf ../gmsh-${GMSH_RELEASE}-doc.tgz\
+          FAQ CONTRIBUTORS VERSIONS README.win32 gmsh.1\
+          texinfo/gmsh.ps texinfo/gmsh.pdf texinfo/gmsh.txt\
+          texinfo/*.html texinfo/gmsh-info.tgz
+
 doc-info:
 	cd doc/texinfo && ${MAKE} info
 
-doc-ps:
-	cd doc/texinfo && ${MAKE} ps
-
-doc-pdf:
-	cd doc/texinfo && ${MAKE} pdf
-
 purge:
-	for i in . bin lib utils archives demos tutorial doc ${GMSH_DIRS}; \
+	for i in . bin lib utils archives demos tutorial doc doc/texinfo ${GMSH_DIRS}; \
         do (cd $$i && rm -f *~ *~~ .gmsh-tmp .gmsh-errors gmon.out); \
         done
 

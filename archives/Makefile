@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2003-03-21 00:52:46 geuzaine Exp $
+# $Id: Makefile,v 1.6 2003-06-13 16:53:07 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -19,6 +19,6 @@
 # 
 # Please report all bugs and problems to "gmsh@geuz.org".
 
-purge:
+clean:
 	rm -f *~
 

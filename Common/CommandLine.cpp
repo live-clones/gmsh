@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.18 2003-04-19 22:11:42 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.19 2003-06-13 16:53:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -122,13 +122,16 @@ char *Get_BuildOptions(void)
   
   if(first){
 #if defined(HAVE_GSL)
-    strcat(opt, "HAVE_GSL ");
+    strcat(opt, "GSL ");
 #endif
 #if defined(HAVE_TRIANGLE)
-    strcat(opt, "HAVE_TRIANGLE ");
+    strcat(opt, "TRIANGLE ");
 #endif
 #if defined(HAVE_LIBJPEG)
-    strcat(opt, "HAVE_LIBJPEG ");
+    strcat(opt, "JPEG ");
+#endif
+#if defined(HAVE_LIBPNG)
+    strcat(opt, "PNG ");
 #endif
     first = 0;
   }
