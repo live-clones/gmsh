@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.91 2002-11-08 18:56:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.92 2002-11-08 20:17:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2096,7 +2096,6 @@ double opt_mesh_cpu_time(OPT_ARGS_NUM){
   return s[13]+s[14]+s[15];
 }
 double opt_mesh_display_lists(OPT_ARGS_NUM){
-  int i;
   if(action & GMSH_SET){
     CTX.mesh.display_lists = (int)val;
     CTX.mesh.changed = 1;
