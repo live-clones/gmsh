@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2001-05-11 09:13:17 geuzaine Exp $
+# $Id: Makefile,v 1.21 2001-05-22 11:34:08 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -139,7 +139,8 @@ depend:
 2D_Util.o: 2D_Util.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h Mesh.h Vertex.h \
- Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h 2D_Mesh.h
+ Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h 2D_Mesh.h \
+ ../Common/Context.h
 2D_Links.o: 2D_Links.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h Mesh.h Vertex.h \
@@ -289,4 +290,4 @@ Simplex.o: Simplex.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
  Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h \
- Numeric.h
+ Numeric.h ../Common/Context.h

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2001-05-11 09:13:15 geuzaine Exp $
+# $Id: Makefile,v 1.19 2001-05-22 11:34:06 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -128,4 +128,4 @@ Solvers.o: Solvers.cpp ../Common/Gmsh.h ../Common/Message.h \
  Colorbar_Window.h ../Common/ColorTable.h ../Mesh/Mesh.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h
+ ../Common/Views.h ../Common/Context.h
