@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.36 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.37 2004-03-23 02:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -187,13 +187,11 @@ void Box_2_Triangles(List_T * P, Surface * s)
 
   int i, j;
   static int pts[4][2] = { {0, 0},
-  {1, 0},
-  {1, 1},
-  {0, 1}
-  };
+			   {1, 0},
+			   {1, 1},
+			   {0, 1} };
   static int tri[2][3] = { {1, 4, 2},
-  {2, 4, 3}
-  };
+			   {2, 4, 3} };
   double Xm = 0., Ym = 0., XM = 0., YM = 0., Xc = 0., Yc = 0.;
   Simplex *S, *ps;
   Vertex *V, *v, *pv;
