@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.71 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.72 2005-01-10 02:10:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -325,7 +325,6 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
       List_Add(del_L, &del_P);
   }
   doc->numTriangles = List_Nbr(del_L);
-
   verify_edges(del_L, ListContours, numcontours);
   verify_inside(doc->delaunay, doc->numTriangles);
 
