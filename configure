@@ -1297,13 +1297,11 @@ if test "${enable_gui+set}" = set; then
   enableval="$enable_gui"
 
 fi;
-
 # Check whether --enable-parallel or --disable-parallel was given.
 if test "${enable_parallel+set}" = set; then
   enableval="$enable_parallel"
 
 fi;
-
 # Check whether --enable-triangle or --disable-triangle was given.
 if test "${enable_triangle+set}" = set; then
   enableval="$enable_triangle"

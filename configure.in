@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.14 2003-02-12 20:30:54 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.15 2003-02-12 20:37:24 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -28,21 +28,24 @@ AC_INIT(Parser/Gmsh.y)
 
 dnl Parse --with command-line options
 AC_ARG_WITH(gsl-prefix,
-            [  --with-gsl-prefix=PFX   prefix where GSL is installed],
+            AC_HELP_STRING([--with-gsl-prefix=PFX],
+                           [prefix where GSL is installed]),
             [GSL_PREFIX=$withval],[GSL_PREFIX="$GSL_DIR"])
 AC_ARG_WITH(fltk-prefix,
-            [  --with-fltk-prefix=PFX  prefix where FLTK is installed],
+            AC_HELP_STRING([--with-fltk-prefix=PFX],
+                           [prefix where FLTK is installed]),
             [FLTK_PREFIX=$withval],[FLTK_PREFIX="$FLTK_DIR"])
 
 dnl Parse --enable command line options
 AC_ARG_ENABLE(gui,
-            [  --enable-gui            build the graphical user interface (default=yes)])
-
+              AC_HELP_STRING([--enable-gui],
+                             [build the graphical user interface (default=yes)]))
 AC_ARG_ENABLE(parallel,
-            [  --enable-parallel       enable parallel version (default=no)])
-
+              AC_HELP_STRING([--enable-parallel],
+                             [enable parallel version (default=no)]))
 AC_ARG_ENABLE(triangle,
-            [  --enable-triangle       compile Triangle if available (default=yes)])
+              AC_HELP_STRING([--enable-triangle],
+                             [compile Triangle if available (default=yes)]))
 
 dnl Get the operating system and version number
 UNAME=`uname`
