@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.39 2004-10-11 17:22:57 geuzaine Exp $
+$Id: FAQ,v 1.40 2004-10-23 23:53:31 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -91,6 +91,12 @@ sources.
 partially hide the graphical window.
 
 Disable opaque move in your window manager.
+
+* 3.3 The graphics display very slowly.
+
+Are you are executing Gmsh from a remote host (via the network)
+without GLX?  You should turn double buffering off (with the -nodb
+command line option).
 
 ********************************************************************
 
@@ -185,6 +191,13 @@ only work as expected when displaying Elementary entities. To
 visualize extruded Physical entities, the only solution is to save the
 mesh, and to read it again.
 
+* 5.9 Does Gmsh support curved elements?
+
+Yes, Gmsh can generate both 1st order and 2nd order elements. To
+generate second order elements, click on 'Second order elements' in
+the mesh menu after the mesh is completed, or select the 'Generate
+second order elements' in the mesh options.
+
 ********************************************************************
 
 Section 6: Solver module
@@ -216,12 +229,54 @@ On recent versions of Microsoft Windows (XP SP2), it seems that you
 need to execute the solver (e.g. launch 'getdp.exe') at least once
 independently of Gmsh in order to authorize future executions.
 
+* 6.3 Can I launch Gmsh from my solver (instead of launching my solver
+from Gmsh) in order to monitor a solution?
+
+Sure. A simple C program showing how to do this is given in
+'utils/misc/callgmsh.c'.
+
 ********************************************************************
 
 Section 7: Post-processing module
 
-* 7.1 The graphics display very slowly.
+* 7.1 How do I compute a section of a plot?
 
-Are you are executing Gmsh from a remote host (via the network) without GLX?
-You should turn double buffering off (with the -nodb command line option).
+Use 'View->Plugins->Cut plane'.
+
+* 7.2 How do I animate my plots?
+
+If the views contain multiple time steps, you can press the 'play'
+button under the graphic window, or change the time step by hand in
+the view option panel. You can also use the left and right arrow keys
+to change the time step in all visible views in real time.
+
+If you want to loop through different views instead of time steps, you
+can use the 'Loop through views instead of time steps' option in the
+view option panel, or use the up and down arrow keys.
+
+* 7.3 Can I visualize a field on a deformed mesh?
+
+Yes, there are several ways to do that. 
+
+The easiest is to load two views: the first one containing a
+displacement field (a vector view that will be used to deform the
+mesh), and the second one containing the field you want to display
+(this view has to contain the same number of elements as the
+displacement view). You should then set 'Vector type' to 'Raised view'
+in the first view, as well as set the 'Raised view number' to the
+actual number of the second view. (You might want to make the second
+view invisible, too. If you want to amplify or decrease the amount of
+deformation, just modify the 'Displacement factor' option.)
+
+Another solution is to use the DiplacementRaise plugin.
+
+* 7.4 Is there a way to save animations?
+
+Yes. For example, have a look at tutorial/t8.geo or
+demos/anim-seq.script.
+
+* 7.5 Is there a way to visualize only certain components of
+vector/tensor fields?
+
+Yes: use 'View->Plugin->Extract'.
 

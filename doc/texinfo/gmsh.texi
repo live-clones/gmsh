@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.141 2004-10-16 19:30:31 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.142 2004-10-23 23:53:32 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,7 +37,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.26
+@set EDITION        1.27
 @set GMSH-VERSION   1.56
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2004 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -137,6 +137,7 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 * Programming notes::           Random notes for developers.
 * Bugs and versions::           Contact information and ChangeLog
 * Tips and tricks::             Some tips to make your life easier with Gmsh.
+* Frequently asked questions::  The Gmsh FAQ
 * License::                     Complete copy of the license.
 * Concept index::               Index of concepts.
 * Syntax index::                Index of reserved keywords in the Gmsh language.
@@ -245,6 +246,11 @@ Gmsh post-processing file formats
 * Parsed post-processing file format::  
 * ASCII post-processing file format::  
 * Binary post-processing file format::  
+
+Programming notes
+
+* Coding style::                
+* Option handling::             
 
 Bugs, versions and credits
 
@@ -3463,8 +3469,20 @@ Gmsh's build system is based on autoconf, and should work on most modern
 platforms providing standard compliant C and C++ compilers. Practical notes
 on how to compile Gmsh's source code are included in the distribution. Note
 that compiling the Windows version requires the Cygwin tools (freely
-available from @uref{http://www.cygwin.com}). See the @file{FAQ} for more
-information.
+available from @uref{http://www.cygwin.com}). See @ref{Frequently asked
+questions}, for more information.
+
+@menu
+* Coding style::                
+* Option handling::             
+@end menu
+
+@c -------------------------------------------------------------------------
+@c Coding style
+@c -------------------------------------------------------------------------
+
+@node Coding style, Option handling, Programming notes, Programming notes
+@section Coding style
 
 If you plan to contribute code to the Gmsh project, here are some easy rules
 to make the code easy to read/debug/maintain:
@@ -3477,13 +3495,36 @@ please enable full warnings for your compiler (e.g., add @code{-Wall} to
 always use the @code{Msg()} function to print information, errors, @dots{};
 @item 
 indent your files using @file{utils/misc/indent.sh};
-@item
-if working on Windows, don't leave tabs in your files (e.g., untabify them
-with @file{utils/misc/untabify.sh}).
 @end enumerate
 
-@sp 2
-(More to come...)
+@c -------------------------------------------------------------------------
+@c Option handling
+@c -------------------------------------------------------------------------
+
+@node Option handling,  , Coding style, Programming notes
+@section Option handling
+
+To add a new option in Gmsh:
+
+@enumerate
+@item
+create the option in the @code{Context_T} class (@file{Common/Context.h}) if
+it's a classical option, or in the @code{Post_View} class
+(@file{Common/View.h}) if it's a post-processing view-dependent option;
+@item
+in @file{Common/DefaultOptions.h}, give a name (for the parser to be able to
+access it), a reference to a handling routine (i.e. @code{opt_XXX}) and a
+default value for this option;
+@item
+create the handling routine @code{opt_XXX} in @file{Common/Options.cpp} (and
+add the prototype in @file{Common/Options.h});
+@item
+optional: create the associated widget in @file{Fltk/GUI.cpp};
+@item
+optional: if no special callback is to be associated to the widget, add the
+handling routine @code{opt_XXX} to the OK callback for the corresponding
+option panel (in @file{Fltk/Callbacks.cpp}).
+@end enumerate
 
 @c todo:
 @c Tools to check memory leaks
@@ -3528,8 +3569,8 @@ files that produce the bug. Don't forget to mention both the version of Gmsh
 and the version of your operation system (@pxref{Command-line options} to
 see how to get this information).
 
-See the @file{FAQ} and @file{TODO} files in the distribution to check the
-problems we already know about.
+See @ref{Frequently asked questions}, and the @file{TODO} file in the
+distribution to see which problems we already know about.
 
 @c -------------------------------------------------------------------------
 @c Versions
@@ -3561,7 +3602,7 @@ problems we already know about.
 @c Tips ans Tricks
 @c =========================================================================
 
-@node Tips and tricks, License, Bugs and versions, Top
+@node Tips and tricks, Frequently asked questions, Bugs and versions, Top
 @appendix Tips and tricks
 
 @cindex Tips
@@ -3613,14 +3654,27 @@ selecting the content of an input field, or lines in the message console
 @end itemize
 
 @item
-Read the @file{FAQ}...
+Read @ref{Frequently asked questions}...
 @end itemize
+
+@c =========================================================================
+@c Frequently asked questions
+@c =========================================================================
+
+@node Frequently asked questions, License, Tips and tricks, Top
+@appendix Frequently asked questions
+
+@cindex Frequently asked questions
+@cindex Questions, frequently asked
+@cindex FAQ
+
+@verbatiminclude ../FAQ
 
 @c =========================================================================
 @c License
 @c =========================================================================
 
-@node  License, Concept index, Tips and tricks, Top
+@node License, Concept index, Frequently asked questions, Top
 @appendix License
 
 @cindex License
