@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.68 2004-06-04 02:07:07 geuzaine Exp $
+// $Id: Post.cpp,v 1.69 2004-06-04 03:05:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -409,18 +409,19 @@ void Draw_Post(void)
 
       // initialize alpha blending for transparency
       if(CTX.alpha && ColorTable_IsAlpha(&v->CT)){
-	if(CTX.fake_transparency){ // "a la xpost"
+	if(CTX.fake_transparency){
+	  // simple additive blending "a la xpost"
 	  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	  glEnable(GL_BLEND);
 	  glDisable(GL_DEPTH_TEST);
 	}
 	else{
+	  // real translucent blending (requires back-to-front traversal)
 	  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	  glEnable(GL_BLEND);
-	  // if we don't use vertex arrays, do a simple sort of
-	  // transparent views (hybrid views will be sorted incorrectly;
-	  // use Plugin(DecomposeInSimplex) and View->Combine to do remedy
-	  // this limitation)
+	  // if we don't use vertex arrays, do the sorting here - it's
+	  // incorrect for hybrid views (use Plugin(DecomposeInSimplex)
+	  // for that)
 	  if(!CTX.post.vertex_arrays && v->DrawScalars && 
 	     (changedEye() || v->Changed)) {
 	    Msg(DEBUG, "Sorting View[%d] for transparency (NO vertex array)", v->Index);
