@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.7 2001-06-06 21:29:58 remacle Exp $
+// $Id: 2D_Recombine.cpp,v 1.8 2001-06-28 07:46:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -59,10 +59,10 @@ void Recombine_Farce (void *a, void *b){
     if(s2->V[3]) return;
     Tree_Add(RecSimplex,&s1);
     Tree_Suppress(TREEELM,&s1);
-    s2->V[0] = ed->V[0];
-    s2->V[1] = ed->O[0];
-    s2->V[2] = ed->V[1];
-    s2->V[3] = ed->O[1];
+    s2->V[3] = ed->V[0];
+    s2->V[2] = ed->O[0];
+    s2->V[1] = ed->V[1];
+    s2->V[0] = ed->O[1];
     RECNUM++;
   }
 }
