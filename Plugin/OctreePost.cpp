@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.12 2005-01-09 02:15:07 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.13 2005-01-24 17:39:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 static double computeBarycentricTriangle(double *X, double *Y, double *Z, 
 					 double *P, double *U)
 {
+  // FIXME: only valid for triangles in the XY-plane
   double mat[2][2], b[2];
   U[2] = 0.0;
   mat[0][0] = X[1]-X[0];
@@ -37,7 +38,6 @@ static double computeBarycentricTriangle(double *X, double *Y, double *Z,
   mat[1][1] = Y[2]-Y[0];
   b[0] = P[0] -X[0];
   b[1] = P[1] -Y[0];
-  //  Msg(WARNING, "louloutte %lf %lf %lf %lf %lf",P[0],P[1],X[0],Y[0]);
 
   sys2x2(mat, b, U);
   return 0.5 * ( mat[0][0] * mat[1][1] - mat[1][0] *mat[0][1]);
@@ -116,6 +116,7 @@ void PostTriangleBB(void *a, double *min, double *max)
 
   minmax(3, X, Y, Z, min, max);
 
+  // FIXME: only valid for triangles in the XY-plane
   min[2] = -1;
   max[2] =  1;
 }
@@ -185,7 +186,6 @@ static void addListOfStuff(Octree *o,
  
   for(int i = 0; i < List_Nbr(l); i += nbelm){
     double * X = (double *)List_Pointer_Fast(l, i);
-    // Msg(WARNING, "Add in view : %lf %lf %lf %d %d %d", X[0],X[1],X[2],i,List_Nbr(l),nbelm);
     Octree_Insert(X, o);
   }
 }
@@ -315,12 +315,6 @@ bool OctreePost::searchVector(double x,
 	V[9*timestep+5] * U[0] + 
 	V[9*timestep+8] * U[1] + 
 	V[9*timestep+2] * (1-U[0]-U[1]); 
-      /* Msg(WARNING, "found %lf %lf %lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-	  values[0],values[1],values[2],
-	  U[0],U[1],
-	  X[0],X[1],X[2],
-	  Y[0],Y[1],Y[2],
-	  Z[0],Z[1],Z[2]); */
     }
     return true;
   } 

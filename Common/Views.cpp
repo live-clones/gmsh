@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.163 2005-01-13 20:36:27 geuzaine Exp $
+// $Id: Views.cpp,v 1.164 2005-01-24 17:39:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1208,14 +1208,14 @@ void WriteView(Post_View *v, char *filename, int format, int append)
   int binary = (format == 1) ? 1 : 0;
   int parsed = (format == 2);
   int stl = (format == 3);
-  int txtpts = (format == 4);
+  int txt = (format == 4);
 
   if(stl){
     WriteViewSTL(v, filename);
     return;
   }
   
-  if(txtpts){
+  if(txt){
     WriteViewTXT(v, filename);
     return;
   }
