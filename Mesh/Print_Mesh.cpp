@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.25 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.26 2001-08-13 20:05:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -431,7 +431,7 @@ int process_2D_elements (FILE * funv, Mesh * m){
   List_T *AllSurfaces = List_Create (2, 2, sizeof (Surface *));
   Simplex *sx;
   Surface *s;
-  int nbtri = 0, i, j, nsup, n, ntot, k, geo, fetyp;
+  int i, j, nsup, n, ntot, k, geo, fetyp;
 
   for (i = 0; i < List_Nbr (ListVolumes); i++){
     List_Read (ListVolumes, i, &vol);
@@ -494,7 +494,6 @@ int process_2D_elements (FILE * funv, Mesh * m){
           fprintf (funv, "\n");
       }
       List_Delete (Elements);
-      nbtri += Tree_Nbr (s->Simplexes);
     }
   }
   List_Delete (ListSurfaces);
@@ -511,7 +510,7 @@ int process_1D_elements (FILE * funv, Mesh * m){
   Simplex *sx;
   Curve *c;
   Surface *surf;
-  int nblig = 0, k, ntot, i, j, geo, fetyp, n, nsup;
+  int k, ntot, i, j, geo, fetyp, n, nsup;
 
   for (i = 0; i < List_Nbr (ListSurfaces); i++){
     List_Read (ListSurfaces, i, &surf);
@@ -530,7 +529,6 @@ int process_1D_elements (FILE * funv, Mesh * m){
     if (!List_Search (AllCurves, &c, compareCurve)){
       Elements = Tree2List (c->Simplexes);
       for (j = 0; j < List_Nbr (Elements); j++){
-        nblig++;
         List_Read (Elements, j, &sx);
         if (sx->VSUP){
           fetyp = BEAM2;
