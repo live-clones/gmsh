@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.73 2005-03-13 17:58:38 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.74 2005-04-01 15:48:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -311,7 +311,8 @@ int MergeProblem(char *name, int warn_if_missing)
     if(!strcmp(ext, ".gz")) {
       // the real solution would be to rewrite all our I/O functions in
       // terms of gzFile, but until then, this is better than nothing
-      if(fl_ask("File '%s' is in gzip format.\n\nDo you want to uncompress it?", name)){
+      if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
+		   "Cancel", "Uncompress", NULL, name)){
 	fclose(fp);
 	sprintf(tmp, "gunzip -c %s > %s", name, base);
 	SystemCall(tmp);

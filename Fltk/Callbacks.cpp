@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.349 2005-03-21 00:42:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.350 2005-04-01 15:48:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -501,7 +501,8 @@ void file_new_cb(CALLBACK_ARGS)
     char *name = file_chooser_get_name(1);
     struct stat buf;
     if(!stat(name, &buf)){
-      if(fl_ask("File '%s' already exists.\n\nDo you want to erase it?", name))
+      if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
+		   "Cancel", "Erase", NULL, name))
 	unlink(name);
       else
 	goto test;
@@ -740,7 +741,8 @@ void file_save_as_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+		      "Cancel", "Replace", NULL, name))
           goto test;
     }
     i = file_chooser_get_filter();
@@ -761,7 +763,8 @@ void file_rename_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+		      "Cancel", "Replace", NULL, name))
           goto test;
     }
     rename(CTX.filename, name);
@@ -1216,7 +1219,8 @@ void message_save_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
+		      "Cancel", "Replace", NULL, name))
           goto test;
     }
     WID->save_message(name);
@@ -3246,7 +3250,8 @@ static void _view_save_as(int view_num, char *title, int type)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("File '%s' already exists.\n\nDo you want to replace it?", name))
+        if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
+		      "Cancel", "Replace", NULL, name))
           goto test;
     }
     WriteView(v, name, type, 0);
