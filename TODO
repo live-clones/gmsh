@@ -1,4 +1,23 @@
-$Id: TODO,v 1.8 2003-01-29 17:36:55 geuzaine Exp $
+$Id: TODO,v 1.9 2003-02-05 02:05:21 geuzaine Exp $
+
+=================================================================================
+
+* Combine view + save view with != nb of time steps
+
+gmsh tutorial/view*.pos
+View->Combine->All
+save merged view as ascii view
+
+The resulting view is corrupted. This is due to the fact that
+ascii/binary views do not support different number of time steps per
+element type (here, we have e.g. 5 time steps for ST and only 1 for
+SS), and the merge routine just adds everything instead of just the
+values up to MIN(NbTimeStep for all merged views).
+
+-> need to make merge() more intelligent. First pass on NbTimeStep,
+then List_Add() only up to common TimeStep value.
+
+=================================================================================
 
 * Two-field plots <nicolas.moes@ec-nantes.fr>
 

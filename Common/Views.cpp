@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.85 2003-01-23 20:19:17 geuzaine Exp $
+// $Id: Views.cpp,v 1.86 2003-02-05 02:05:21 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1270,7 +1270,7 @@ void MergeViews(int all){
       merge(v->SY,vm->SY); vm->NbSY += v->NbSY;
       merge(v->VY,vm->VY); vm->NbVY += v->NbVY;
       merge(v->TY,vm->TY); vm->NbTY += v->NbTY;
-      /* this more complicted: have to change the indices
+      /* this more complicated: have to change the indices
 	 merge(v->T2D,vm->T2D);
 	 merge(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
 	 merge(v->T3D,vm->T3D);
