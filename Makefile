@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.98 2001-05-08 16:53:03 geuzaine Exp $
+# $Id: Makefile,v 1.99 2001-05-09 07:18:35 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -445,6 +445,26 @@ fltk_compile_sgi:
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+fltk_compile_mingw:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++ -mno-cygwin -I/mingw/include" \
+           "C_FLAGS=-O2 -DWIN32" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
+fltk_compile_cygwin:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-O2 -DWIN32" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
 fltk_link_solaris_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl
@@ -477,10 +497,23 @@ fltk_link_ibm:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm
 
+fltk_link_mingw:
+	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
+                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+
+fltk_link_cygwin:
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
+                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
 fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin compress_bin
 
 fltk_linux_2952: tag fltk_compile_little_endian_2952 fltk_link_mesa_2952 strip_bin compress_bin
+
+fltk_rpm: src
+	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
+	rpm -bb utils/gmsh_fltk.spec
+	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
+	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
 
 fltk_dec: tag fltk_compile_little_endian fltk_link_opengl strip_bin compress_bin
 
@@ -496,35 +529,10 @@ fltk_linux_scorec : fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin
 
 fltk_sgi: tag fltk_compile_sgi fltk_link_sgi strip_bin compress_bin
 
-fltk_rpm: src
-	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
-	rpm -bb utils/gmsh_fltk.spec
-	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
-	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
+fltk_mingw: tag fltk_compile_mingw fltk_link_mingw
+	strip $(GMSH_BIN_DIR)/gmsh.exe
 
-fltk_mingw: tag
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++ -mno-cygwin -I/mingw/include" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
-        ); done
-	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
-                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-
-fltk_cygwin: tag
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=g++" \
-           "C_FLAGS=-O2 -DWIN32" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
-        ); done
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
-                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+fltk_cygwin: tag fltk_compile_cygwin fltk_kink_cygwin strip_bin
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 fltk_cygwin_gertha_buro: tag
@@ -538,7 +546,6 @@ fltk_cygwin_gertha_buro: tag
         ); done
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) Common/Icon.res \
                  ../fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 fltk_cygwin_laptopjf: 
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -551,7 +558,6 @@ fltk_cygwin_laptopjf:
         ); done
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh-cyg.exe $(GMSH_FLTK_LIB) Common/Icon.res \
                  ../fltk-1.0.9/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-#	strip $(GMSH_BIN_DIR)/gmsh-cyg.exe
 
 fltk_cygwin_laptopjf_tag: tag fltk_cygwin_laptopjf
 
