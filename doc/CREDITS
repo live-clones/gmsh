@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.13 2004-06-04 18:58:46 geuzaine Exp $
+$Id: CREDITS,v 1.14 2004-06-23 19:53:52 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2004 
 
@@ -9,6 +9,18 @@ $Id: CREDITS,v 1.13 2004-06-04 18:58:46 geuzaine Exp $
 
                   Jean-Francois Remacle 
                <remacle at gce.ucl.ac.be>
+
+Major code contributions to Gmsh have been provided by Nicolas Tardieu
+<ntardieu@giref.ulaval.ca> (help with the GSL integration, new "STL to
+elementary geometry" interface, Netgen integration).
+
+Other code contributors include: David Colignon <David.Colignon at
+univ.u-3mrs.fr> for new colormaps; Patrick Dular <patrick.dular at
+ulg.ac.be> for transfinite mesh bug fixes; Laurent Stainier
+<l.stainier at ulg.ac.be> for help with the MacOS port and the tensor
+display code; Pierre Badel <badel at freesurf.fr> for help with the
+GSL integration; and Marc Ume <Marc.Ume at digitalgraphics.be> for the
+original list code.
 
 The AVL tree code (DataStr/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -49,37 +61,27 @@ from the Vis5d program for visualizing five dimensional gridded data
 sets, copyright (C) 1990-1995, Bill Hibbard, Brian Paul, Dave Santek,
 and Andre Battaiola.
 
-This version of Gmsh may also contain code (in the Triangle
-subdirectory) copyright (C) 1993, 1995, 1997, 1998, 2002, Jonathan
-Richard Shewchuk: check the configuration options.
+This version of Gmsh may contain code (in the Triangle subdirectory)
+copyright (C) 1993, 1995, 1997, 1998, 2002, Jonathan Richard Shewchuk:
+check the configuration options.
 
-Special thanks to David Colignon <David.Colignon at univ.u-3mrs.fr>
-for new colormaps; Patrick Dular <patrick.dular at ulg.ac.be> for
-transfinite mesh bug fixes; Laurent Stainier <l.stainier at ulg.ac.be>
-for help with the MacOS port and the tensor display code; Nicolas
-Tardieu <nicolas.tardieu at edf.fr> for help with the GSL integration
-and the new "STL to elementary geometry" interface; Pierre Badel
-<badel at freesurf.fr> for help with the GSL integration; and Marc Ume
-<Marc.Ume at digitalgraphics.be> for the original list code.
+Special thanks to Bill Spitzak <spitzak at users.sourceforge.net>,
+Michael Sweet <easysw at users.sourceforge.net>, Matthias Melcher <mm
+at matthiasm.com> and others for the Fast Light Tool Kit on which
+Gmsh's GUI is based. See http://www.fltk.org for more info on this
+excellent object-oriented, cross-platform toolkit.
 
-Special thanks also to Bill Spitzak <spitzak at
-users.sourceforge.net>, Michael Sweet <easysw at
-users.sourceforge.net>, Matthias Melcher <mm at matthiasm.com> and
-others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
-http://www.fltk.org for more info on this excellent object-oriented,
-cross-platform toolkit.
-
-Finally, thanks to the following folks who have contributed by
-providing fresh ideas on theoretical or programming topics, who have
-sent patches, requests for changes or improvements, or who gave us
-access to exotic machines for testing Gmsh: Juan Abanto <juanabanto at
-yahoo.com>, Olivier Adam <o.adam at ulg.ac.be>, Guillaume Alleon
-<guillaume.alleon at airbus.aeromatra.com>, Eric Bechet <eric.bechet
-at epost.de>, Laurent Champaney <laurent.champaney at meca.uvsq.fr>,
-Pascal Dupuis <Pascal.Dupuis at esat.kuleuven.ac.be>, Philippe
-Geuzaine <geuzaine at gnat.colorado.edu>, Johan Gyselinck
-<johan.gyselinck at ulg.ac.be>, Francois Henrotte <fhenrott at
-esat.kuleuven.ac.be>, Benoit Meys <bmeys at techspace-aero.be>,
-Nicolas Moes <moes at tam9.mech.nwu.edu>, Osamu Nakamura <naka at
+Thanks to the following folks who have contributed by providing fresh
+ideas on theoretical or programming topics, who have sent patches,
+requests for changes or improvements, or who gave us access to exotic
+machines for testing Gmsh: Juan Abanto <juanabanto at yahoo.com>,
+Olivier Adam <o.adam at ulg.ac.be>, Guillaume Alleon <guillaume.alleon
+at airbus.aeromatra.com>, Eric Bechet <eric.bechet at epost.de>,
+Laurent Champaney <laurent.champaney at meca.uvsq.fr>, Pascal Dupuis
+<Pascal.Dupuis at esat.kuleuven.ac.be>, Philippe Geuzaine <geuzaine at
+gnat.colorado.edu>, Johan Gyselinck <johan.gyselinck at ulg.ac.be>,
+Francois Henrotte <fhenrott at esat.kuleuven.ac.be>, Benoit Meys
+<bmeys at techspace-aero.be>, Nicolas Moes <moes at
+tam9.mech.nwu.edu>, Osamu Nakamura <naka at
 hasaki.sumitomometals.co.jp> and Chad Schmutzer <schmutze at
 acm.caltech.edu>.

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.96 2004-06-01 16:49:01 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.97 2004-06-23 19:53:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -165,12 +165,12 @@ void Draw_Mesh(Mesh * M)
     glRasterPos3d(CTX.min[0] + offset / CTX.s[0], 
 		  CTX.min[1] + offset / CTX.s[0], 
 		  CTX.min[2] + offset / CTX.s[0]);
-    sprintf(label, "(%.1g,%.1g,%.1g)", CTX.min[0], CTX.min[1], CTX.min[2]);
+    sprintf(label, "(%g,%g,%g)", CTX.min[0], CTX.min[1], CTX.min[2]);
     Draw_String(label);
     glRasterPos3d(CTX.max[0] + offset / CTX.s[0], 
 		  CTX.max[1] + offset / CTX.s[0], 
 		  CTX.max[2] + offset / CTX.s[0]);
-    sprintf(label, "(%.1g,%.1g,%.1g)", CTX.max[0], CTX.max[1], CTX.max[2]);
+    sprintf(label, "(%g,%g,%g)", CTX.max[0], CTX.max[1], CTX.max[2]);
     Draw_String(label);
   }
 

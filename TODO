@@ -1,4 +1,4 @@
-$Id: TODO,v 1.50 2004-06-23 03:57:43 geuzaine Exp $
+$Id: TODO,v 1.51 2004-06-23 19:53:52 geuzaine Exp $
 
 add ternary operator and <,>,<=,>=,== tests in MathEval
 
@@ -31,12 +31,6 @@ find a better way to display the time/timestep in the scale...
 
 make Recombine work the same as "Second order"? (i.e., allow for
 interactive use?)
-
-********************************************************************
-
-Find a better solution for the orientation of the surface mesh
-elements. The current "a posteriori re-orientation" solution is a
-real crime against good taste :-)
 
 ********************************************************************
 
@@ -99,7 +93,7 @@ the same).
 
 ********************************************************************
 
-Include the 3D frontal algo from Netgen? (it's LGPL now...)
+Include the 2D and 3D frontal algos from Netgen (it's LGPL now...)
 
 ********************************************************************
 
@@ -170,4 +164,3 @@ Remarque finale: le calcul des valeurs et vecteurs propres est
 être stockés sous cette forme (les invariants sont facilement calculés 
 à partir des v.p.), et cela nous rappelle cette belle expression "No 
 free meal" !
-
