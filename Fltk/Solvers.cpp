@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.32 2005-01-13 23:39:10 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.33 2005-01-14 01:40:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/poll.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -118,56 +119,87 @@ int Solver(int num, char *args)
     SINFO[num].nbval[i] = 0;
   SINFO[num].pid = 0;
 
+  struct pollfd pfd;
+  pfd.fd = sock;
+  pfd.events = POLLIN|POLLPRI;
+  
   while(1) {
-    if(SINFO[num].pid < 0)
-      break;
-    Gmsh_ReceiveString(sock, &type, str);
-    switch (type) {
-    case GMSH_CLIENT_START:
-      SINFO[num].pid = atoi(str);
-      break;
-    case GMSH_CLIENT_STOP:
-      SINFO[num].pid = -1;
-      stop = 1;
-      break;
-    case GMSH_CLIENT_PROGRESS:
-      Msg(STATUS3N, "%s %s", SINFO[num].name, str);
-      break;
-    case GMSH_CLIENT_OPTION_1:
-    case GMSH_CLIENT_OPTION_2:
-    case GMSH_CLIENT_OPTION_3:
-    case GMSH_CLIENT_OPTION_4:
-    case GMSH_CLIENT_OPTION_5:
-      i = type - GMSH_CLIENT_OPTION;
-      strcpy(SINFO[num].option[i][SINFO[num].nbval[i]++], str);
-      break;
-    case GMSH_CLIENT_VIEW:
-      if(SINFO[num].merge_views) {
-        n = List_Nbr(CTX.post.list);
-        MergeProblem(str);
-        Draw();
-        if(n != List_Nbr(CTX.post.list))
-          WID->set_context(menu_post, 0);
+    // poll the socket file descriptor every 10 milliseconds until
+    // data is avalable; when nothing is available, just tend to
+    // pending GUI events. (This is much easier to manage than
+    // non-blocking IO. The real solution is of course to use threads,
+    // but that's still a bit of a nightmare to maintain in a portable
+    // way on all the platforms.)
+    while(1){
+      if(SINFO[num].pid < 0){ // process has been killed
+	stop = 1;
+	break;
       }
-      break;
-    case GMSH_CLIENT_INFO:
-      Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
-      break;
-    case GMSH_CLIENT_WARNING:
-    case GMSH_CLIENT_ERROR:
-      Msg(SOLVERR, "%-8.8s: %s", SINFO[num].name, str);
-      break;
-    default:
-      Msg(WARNING, "Unknown type of message received from %s",
-          SINFO[num].name);
-      Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
-      break;
+      int ret = poll(&pfd, 1, 10);
+      if(ret == 0){ // nothing available
+	WID->check();
+      }
+      else if(ret > 0){ // data is there
+        break;
+      }
+      else{ // error
+        stop = 1;
+        break;
+      }
     }
-    WID->check(); // update the GUI
+  
+    if(stop)
+      break;
+
+    if(Gmsh_ReceiveString(sock, &type, str)){
+      switch (type) {
+      case GMSH_CLIENT_START:
+	SINFO[num].pid = atoi(str);
+	break;
+      case GMSH_CLIENT_STOP:
+	SINFO[num].pid = -1;
+	stop = 1;
+	break;
+      case GMSH_CLIENT_PROGRESS:
+	Msg(STATUS3N, "%s %s", SINFO[num].name, str);
+	break;
+      case GMSH_CLIENT_OPTION_1:
+      case GMSH_CLIENT_OPTION_2:
+      case GMSH_CLIENT_OPTION_3:
+      case GMSH_CLIENT_OPTION_4:
+      case GMSH_CLIENT_OPTION_5:
+	i = type - GMSH_CLIENT_OPTION;
+	strcpy(SINFO[num].option[i][SINFO[num].nbval[i]++], str);
+	break;
+      case GMSH_CLIENT_VIEW:
+	if(SINFO[num].merge_views) {
+	  n = List_Nbr(CTX.post.list);
+	  MergeProblem(str);
+	  Draw();
+	  if(n != List_Nbr(CTX.post.list))
+	    WID->set_context(menu_post, 0);
+	}
+	break;
+      case GMSH_CLIENT_INFO:
+	Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
+	break;
+      case GMSH_CLIENT_WARNING:
+      case GMSH_CLIENT_ERROR:
+	Msg(SOLVERR, "%-8.8s: %s", SINFO[num].name, str);
+	break;
+      default:
+	Msg(WARNING, "Unknown type of message received from %s",
+	    SINFO[num].name);
+	Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
+	break;
+      }
+      WID->check();
+    }
+
     if(stop)
       break;
   }
-
+  
   for(i = 0; i < SINFO[num].nboptions; i++) {
     if(SINFO[num].nbval[i]) {
       WID->solver[num].choice[i]->clear();
