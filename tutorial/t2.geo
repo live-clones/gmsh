@@ -27,7 +27,11 @@ Translate {-0.05,0,0} { Point{3}; }
 // The resulting point can also be duplicated and translated by 0.1
 // along the y axis:
 
-Translate {0,0.1,0} { Duplicata{ Point{3}; } }
+newpt[] = Translate {0,0.1,0} { Duplicata{ Point{3}; } } ;
+
+// In this case, we assign the result of the Translate command to a
+// list, so that we can retrieve the number of the newly created point
+// later.
 
 // Of course, these transformation commands not only apply to points,
 // but also to lines and surfaces. The following command extrudes the
@@ -37,8 +41,8 @@ Translate {0,0.1,0} { Duplicata{ Point{3}; } }
 h = 0.12;
 Extrude Surface { 6, {0, 0, h} };
 
-Line(7) = {3, 6};
-Line(8) = {6,5};
+Line(7) = {3,newpt[0]};
+Line(8) = {newpt[0],5};
 
 Line Loop(10) = {5,-8,-7,3};
 Plane Surface(11) = {10};
@@ -49,7 +53,7 @@ Extrude Surface { 11, {0, 0, h} };
 // elementary entities. The following command permits to manually
 // specify a characteristic length for some of the new points:
 
-Characteristic Length {6, 22, 2, 3, 16, 12} = lc * 2;
+Characteristic Length {newpt[0], 22, 2, 3, 16, 12} = lc * 2;
 
 // Note that, if the transformation tools are handy to create complex
 // geometries, it is also sometimes useful to generate the `flat'

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.80 2003-08-22 05:52:43 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.81 2003-09-19 17:22:27 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -29,8 +29,7 @@
 @c Indexing:
 @c
 @c * @cindex = concept index, e.g. "File formats"
-@c * @tindex + @findex = type + function index (= reserved keywords),
-@c   e.g. "Spline"
+@c * @tindex + @findex = type + function index, e.g. "Sqrt(expression)"
 @c
 @c Before release, run C-u C-c C-u C-a in GNU Emacs. This updates all node
 @c pointers and menus.
@@ -46,8 +45,8 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.12
-@set GMSH-VERSION   1.46
+@set EDITION        1.13
+@set GMSH-VERSION   1.47
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
@@ -457,13 +456,13 @@ Multiple post-processing scalar, vector or tensor maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
 mesh. Scalar fields are represented by iso-value lines/surfaces or color
 maps, while vector and tensor fields are represented by three-dimensional
-arrows or displacement maps. Post-processing functions include arbitrary
-section computation, offset, elevation, boundary extraction, color map and
-range modification, animation, vector graphic output, etc. All
+arrows or displacement maps. Post-processing functions include section
+computation of scalar views, offset, elevation, boundary extraction, color
+map and range modification, animation, vector graphic output, etc. All
 post-processing options can be accessed either interactively or through the
 input ASCII text files. Scripting permits to automate all post-processing
-operations, e.g.@: for the creation of animations. User-defined operations can
-also be performed on post-processing views through dynamically loadable
+operations, e.g.@: for the creation of animations. User-defined operations
+can also be performed on post-processing views through dynamically loadable
 plugins.
 
 @c -------------------------------------------------------------------------
@@ -748,7 +747,11 @@ List of expressions are also widely used, and are defined as:
   @var{expression} : @var{expression} |
   @var{expression} : @var{expression} : @var{expression} |
   @var{string} [ ] |
-  @var{string} [ @{ @var{expression-list} @} ]
+  @var{string} [ @{ @var{expression-list} @} ] |
+  Point @{ @var{expression} @} |
+  @var{transform} |
+  @var{extrude}
+@c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
 The second case in this last definition permits to create a list containing
@@ -757,14 +760,18 @@ unit incrementation step. The third case also permits to create a list
 containing the range of numbers comprised between two @w{@var{expression}s},
 but with a positive or negative incrementation step equal to the third
 @var{expression}. The fourth case permits to reference an expression list.
-The last case permits to reference an expression sublist (whose elements are
-those corresponding to the indices provided by the
-@var{expression-list}). To see the practical use of such expressions, have a
-look at the first couple of examples in @ref{Tutorial}.
+The fifth case permits to reference an expression sublist (whose elements
+are those corresponding to the indices provided by the
+@var{expression-list}). The sixth case permits to retrieve the coordinates
+of a given geometry point (@pxref{Points}). The last two cases permit to
+retreive the indices of entities created through geometrical transformations
+(see @ref{Transformations}, and @ref{Extrusions}).
 
-Note that, in order to lighten the syntax, you can always omit the braces
-@code{@{@}} enclosing an @var{expression-list} if this @var{expression-list}
-only contains a single item.
+To see the practical use of such expressions, have a look at the first
+couple of examples in @ref{Tutorial}. Note that, in order to lighten the
+syntax, you can always omit the braces @code{@{@}} enclosing an
+@var{expression-list} if this @var{expression-list} only contains a single
+item.
 
 @c .........................................................................
 @c Character expressions
@@ -848,6 +855,12 @@ See @ref{t3.geo}, for an example of the use of color expressions.
 @cindex Unary operators
 @cindex Binary operators
 @cindex Ternary operators
+@findex @var{operator-unary-left}
+@findex @var{operator-unary-right}
+@findex @var{operator-binary}
+@findex @var{operator-unary-left}
+@findex @var{operator-ternary-left}
+@findex @var{operator-ternary-right}
 
 Gmsh's operators are similar to the corresponding operators in C and
 C++. Here is the list of the unary, binary and ternary operators currently
@@ -956,6 +969,7 @@ evaluation:
 @section Built-in functions
 
 @cindex Functions, built-in
+@findex @var{build-in-function}
 
 A built-in function is composed of an identifier followed by a pair of
 parentheses containing an @var{expression-list} (the list of its
@@ -1605,12 +1619,14 @@ volume.
 
 @cindex Extrusion, geometry
 @cindex Geometry, extrusion
+@findex @var{extrude}
 
 Lines, surfaces and volumes can also be created through extrusion of points,
 lines and surfaces, respectively. Here is the syntax of the geometrical
 extrusion commands (go to @ref{Structured grids}, to see how these commands
 can be extended in order to also extrude the mesh):
 
+@var{extrude}:
 @ftable @code
 @item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @} ;
 Extrudes the @var{expression}-th point, line or surface using a
@@ -1650,6 +1666,7 @@ giving the X, Y and Z components of any point on this axis; the last
 @cindex Scale
 @cindex Symmetry
 @cindex Translation
+@findex @var{transform}
 
 Geometrical transformations can be applied to elementary entities, or to
 copies of geometrical entities (using the @code{Duplicata} command: see

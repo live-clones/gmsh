@@ -1,6 +1,5 @@
 %{ 
-
-// $Id: Gmsh.y,v 1.141 2003-09-17 18:00:54 geuzaine Exp $
+// $Id: Gmsh.y,v 1.142 2003-09-19 17:22:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -141,7 +140,7 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
 %type <l> ListOfListOfDouble RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
-%type <l> ListOfShapes Duplicata Transform MultipleShape
+%type <l> ListOfShapes Duplicata Transform Extrude MultipleShape
 %type <l> ListOfStrings
 %type <s> Shape
 
@@ -185,7 +184,7 @@ STLFormatItem :
     tSolid
     {
       yymsg(INFO, "STL file format");
-      STL_Surf = Create_Surface(1,MSH_SURF_STL);
+      STL_Surf = Create_Surface(1, MSH_SURF_STL);
       STL_Surf->STL = new STL_Data;
       return 1;
     }
@@ -256,7 +255,7 @@ StepHeaderItem :
 StepDataItem  :
     tDOUBLE tAFFECT tCARTESIAN_POINT '(' tBIGSTR ',' VExpr ')' tEND
     {
-        Add_Cartesian_Point((int)$1,$5,$7[0],$7[1],$7[2]);
+        Add_Cartesian_Point((int)$1, $5, $7[0], $7[1], $7[2]);
     }
   | tDOUBLE tAFFECT tB_SPLINE_CURVE_WITH_KNOTS 
     '(' tBIGSTR ',' FExpr ',' ListOfDouble ',' BoolExpr ',' BoolExpr ',' 
@@ -279,31 +278,31 @@ StepDataItem  :
     }
   | tDOUBLE tAFFECT tFACE_OUTER_BOUND '(' tBIGSTR ',' tDOUBLE ','  BoolExpr  ')' tEND
     {
-      Add_Face_Outer_Bound((int)$1,$5,(int)$7,$9,1);
+      Add_Face_Outer_Bound((int)$1, $5, (int)$7, $9, 1);
     }
   | tDOUBLE tAFFECT tFACE_BOUND '(' tBIGSTR ',' tDOUBLE ','  BoolExpr  ')' tEND
     {
       // check the norm! Face_Bound : hole outside surface!
       yymsg(INFO, "Found a face bound");
-      Add_Face_Outer_Bound((int)$1,$5,(int)$7,$9,0);
+      Add_Face_Outer_Bound((int)$1, $5, (int)$7, $9, 0);
     }
   | tDOUBLE tAFFECT tORIENTED_EDGE '(' tBIGSTR ',' '*' ','  '*' ','  FExpr ',' 
                                        BoolExpr ')' tEND
     {
-      Add_Oriented_Edge((int)$1,$5,(int)$11,$13);
+      Add_Oriented_Edge((int)$1, $5, (int)$11, $13);
     }
   | tDOUBLE tAFFECT tEDGE_LOOP '(' tBIGSTR ',' ListOfDouble ')' tEND
     {
-      Add_Edge_Loop((int)$1,$5,$7);
+      Add_Edge_Loop((int)$1, $5, $7);
     }
   | tDOUBLE tAFFECT tADVANCED_FACE '(' tBIGSTR ',' ListOfDouble ',' 
                                        tDOUBLE ',' BoolExpr ')' tEND
     {
-      Add_Advanced_Face((int)$1,$5,$7,(int)$9,$11);
+      Add_Advanced_Face((int)$1, $5, $7, (int)$9, $11);
     }
   | tDOUBLE tAFFECT tVERTEX_POINT '(' tBIGSTR ',' tDOUBLE ')'  tEND
     {
-      Add_Vertex_Point((int)$1,$5,(int)$7);
+      Add_Vertex_Point((int)$1, $5, (int)$7);
     }
   | tDOUBLE tAFFECT tVECTOR '(' tBIGSTR ',' tDOUBLE ',' FExpr ')'  tEND
     {
@@ -319,7 +318,7 @@ StepDataItem  :
     }
   | tDOUBLE tAFFECT tPLANE '(' tBIGSTR ',' tDOUBLE ')' tEND
     {
-      Add_Plane((int)$1,$5,(int)$7);
+      Add_Plane((int)$1, $5, (int)$7);
     }
   | tDOUBLE tAFFECT tLine '(' tBIGSTR ',' tDOUBLE ',' tDOUBLE ')'  tEND
     {
@@ -343,11 +342,11 @@ StepDataItem  :
     }
   | tDOUBLE tAFFECT tCONICAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
     {
-      Add_Cone ((int)$1, $5 , (int)$7, $9,$11);
+      Add_Cone ((int)$1, $5 , (int)$7, $9, $11);
     }
   | tDOUBLE tAFFECT tTOROIDAL_SURFACE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
     {
-      Add_Torus ((int)$1, $5 , (int)$7, $9,$11);
+      Add_Torus ((int)$1, $5 , (int)$7, $9, $11);
     }
   | tDOUBLE tAFFECT tCIRCLE '(' tBIGSTR ',' tDOUBLE ',' FExpr ')' tEND
     {
@@ -418,11 +417,11 @@ Printf :
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
-      i = PrintListOfDouble($3,$5,tmpstring);
-      if(i<0) 
+      i = PrintListOfDouble($3, $5, tmpstring);
+      if(i < 0) 
 	yymsg(GERROR, "Too few arguments in Printf");
-      else if(i>0)
-	yymsg(GERROR, "Too many arguments (%d) in Printf", i);
+      else if(i > 0)
+	yymsg(GERROR, "%d extra argument%s in Printf", i, (i>1)?"s":"");
       else
 	Msg(DIRECT, tmpstring);
       List_Delete($5);
@@ -1120,12 +1119,12 @@ TensorPyramid :
 Text2DValues :
     StringExpr
     { 
-      for(i=0; i<(int)strlen($1)+1; i++) List_Add(View->T2C, &$1[i]) ; 
+      for(i = 0; i < (int)strlen($1)+1; i++) List_Add(View->T2C, &$1[i]) ; 
       Free($1);
     }
   | Text2DValues ',' StringExpr
     { 
-      for(i=0; i<(int)strlen($3)+1; i++) List_Add(View->T2C, &$3[i]) ; 
+      for(i = 0; i < (int)strlen($3)+1; i++) List_Add(View->T2C, &$3[i]) ; 
       Free($3);
     }
   ;
@@ -1147,12 +1146,12 @@ Text2D :
 Text3DValues :
     StringExpr
     { 
-      for(i=0; i<(int)strlen($1)+1; i++) List_Add(View->T3C, &$1[i]) ; 
+      for(i = 0; i < (int)strlen($1)+1; i++) List_Add(View->T3C, &$1[i]) ; 
       Free($1);
     }
   | Text3DValues ',' StringExpr
     { 
-      for(i=0; i<(int)strlen($3)+1; i++) List_Add(View->T3C, &$3[i]) ; 
+      for(i = 0; i < (int)strlen($3)+1; i++) List_Add(View->T3C, &$3[i]) ; 
       Free($3);
     }
   ;
@@ -1194,8 +1193,8 @@ Affectation :
     tSTRING NumericAffectation FExpr tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	TheSymbol.val = List_Create(1,1,sizeof(double));
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	TheSymbol.val = List_Create(1, 1, sizeof(double));
 	if(!$2){
 	  List_Put(TheSymbol.val, 0, &$3);
 	  Tree_Add(Symbol_T, &TheSymbol);
@@ -1221,8 +1220,8 @@ Affectation :
   | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	TheSymbol.val = List_Create(5,5,sizeof(double));
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	TheSymbol.val = List_Create(5, 5, sizeof(double));
 	if(!$5){
 	  List_Put(TheSymbol.val, (int)$3, &$6);
 	  Tree_Add(Symbol_T, &TheSymbol);
@@ -1258,12 +1257,12 @@ Affectation :
 	yymsg(GERROR, "Incompatible array dimensions in affectation");
       else{
 	TheSymbol.Name = $1;
-	if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	  TheSymbol.val = List_Create(5,5,sizeof(double));
+	if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	  TheSymbol.val = List_Create(5, 5, sizeof(double));
 	  if(!$7){
-	    for(i=0 ; i<List_Nbr($4) ; i++){
-	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer($4,i)),
-		       (double*)List_Pointer($8,i));
+	    for(i = 0; i < List_Nbr($4); i++){
+	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer($4, i)),
+		       (double*)List_Pointer($8, i));
 	    }
 	    Tree_Add(Symbol_T, &TheSymbol);
 	  }
@@ -1271,9 +1270,9 @@ Affectation :
 	    yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	}
 	else{
-	  for(i=0 ; i<List_Nbr($4) ; i++){
-	    j = (int)(*(double*)List_Pointer($4,i)) ;
-	    d = *(double*)List_Pointer($8,i) ;
+	  for(i = 0; i < List_Nbr($4); i++){
+	    j = (int)(*(double*)List_Pointer($4, i)) ;
+	    d = *(double*)List_Pointer($8, i) ;
 	    if((pd = (double*)List_Pointer_Test(pSymbol->val, j))){
 	      switch($7){
 	      case 0 : *pd = d; break ;
@@ -1302,9 +1301,9 @@ Affectation :
   | tSTRING '[' ']' tAFFECT ListOfDouble tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	TheSymbol.val = List_Create(5,5,sizeof(double));
-	List_Copy($5,TheSymbol.val);
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	TheSymbol.val = List_Create(5, 5, sizeof(double));
+	List_Copy($5, TheSymbol.val);
 	Tree_Add(Symbol_T, &TheSymbol);
       }
       else{
@@ -1317,7 +1316,7 @@ Affectation :
   | tSTRING NumericIncrement tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(GERROR, "Unknown variable '%s'", $1) ; 
       else
 	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2; 
@@ -1326,7 +1325,7 @@ Affectation :
   | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(GERROR, "Unknown variable '%s'", $1) ; 
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
@@ -1346,7 +1345,7 @@ Affectation :
 	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($3, pStrCat)))
 	  yymsg(GERROR, "Unknown string option '%s.%s'", $1, $3);
 	else
-	  pStrOpt(0,GMSH_SET|GMSH_GUI,$5) ;
+	  pStrOpt(0, GMSH_SET|GMSH_GUI, $5) ;
       }
     }
 
@@ -1358,7 +1357,7 @@ Affectation :
 	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($6, pStrCat)))
 	  yymsg(GERROR, "Unknown string option '%s[%d].%s'", $1, (int)$3, $6);
 	else
-	  pStrOpt((int)$3,GMSH_SET|GMSH_GUI,$8) ;
+	  pStrOpt((int)$3, GMSH_SET|GMSH_GUI, $8) ;
       }
     }
 
@@ -1374,15 +1373,15 @@ Affectation :
 	else{
 	  switch($4){
 	  case 0 : d = $5 ; break ;
-	  case 1 : d = pNumOpt(0,GMSH_GET,0) + $5 ; break ;
-	  case 2 : d = pNumOpt(0,GMSH_GET,0) - $5 ; break ;
-	  case 3 : d = pNumOpt(0,GMSH_GET,0) * $5 ; break ;
+	  case 1 : d = pNumOpt(0, GMSH_GET, 0) + $5 ; break ;
+	  case 2 : d = pNumOpt(0, GMSH_GET, 0) - $5 ; break ;
+	  case 3 : d = pNumOpt(0, GMSH_GET, 0) * $5 ; break ;
 	  case 4 : 
-	    if($5) d = pNumOpt(0,GMSH_GET,0) / $5 ; 
+	    if($5) d = pNumOpt(0, GMSH_GET, 0) / $5 ; 
 	    else yymsg(GERROR, "Division by zero in '%s.%s /= %g'", $1, $3, $5);
 	    break;
 	  }
-	  pNumOpt(0,GMSH_SET|GMSH_GUI, d) ;
+	  pNumOpt(0, GMSH_SET|GMSH_GUI, d) ;
 	}
       }
     }
@@ -1397,16 +1396,16 @@ Affectation :
 	else{
 	  switch($7){
 	  case 0 : d = $8; break ;
-	  case 1 : d = pNumOpt((int)$3,GMSH_GET,0) + $8 ; break ;
-	  case 2 : d = pNumOpt((int)$3,GMSH_GET,0) - $8 ; break ;
-	  case 3 : d = pNumOpt((int)$3,GMSH_GET,0) * $8 ; break ;
+	  case 1 : d = pNumOpt((int)$3, GMSH_GET, 0) + $8 ; break ;
+	  case 2 : d = pNumOpt((int)$3, GMSH_GET, 0) - $8 ; break ;
+	  case 3 : d = pNumOpt((int)$3, GMSH_GET, 0) * $8 ; break ;
 	  case 4 : 
-	    if($8) d = pNumOpt((int)$3,GMSH_GET,0) / $8 ;
+	    if($8) d = pNumOpt((int)$3, GMSH_GET, 0) / $8 ;
 	    else yymsg(GERROR, "Division by zero in '%s[%d].%s /= %g'", 
 		       $1, (int)$3, $6, $8);
 	    break;
 	  }
-	  pNumOpt((int)$3,GMSH_SET|GMSH_GUI,d) ;
+	  pNumOpt((int)$3, GMSH_SET|GMSH_GUI, d) ;
 	}
       }
     }
@@ -1419,7 +1418,7 @@ Affectation :
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat)))
 	  yymsg(GERROR, "Unknown numeric option '%s.%s'", $1, $3);
 	else
-	  pNumOpt(0,GMSH_SET|GMSH_GUI,pNumOpt(0,GMSH_GET,0)+$4) ;
+	  pNumOpt(0, GMSH_SET|GMSH_GUI, pNumOpt(0, GMSH_GET, 0)+$4) ;
       }
     }
 
@@ -1431,7 +1430,7 @@ Affectation :
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat)))
 	  yymsg(GERROR, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
 	else
-	  pNumOpt((int)$3,GMSH_SET|GMSH_GUI,pNumOpt((int)$3,GMSH_GET,0)+$7) ;
+	  pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7) ;
       }
     }
 
@@ -1445,7 +1444,7 @@ Affectation :
 	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($5, pColCat)))
 	  yymsg(GERROR, "Unknown color option '%s.Color.%s'", $1, $5);
 	else
-	  pColOpt(0,GMSH_SET|GMSH_GUI,$7) ;
+	  pColOpt(0, GMSH_SET|GMSH_GUI, $7) ;
       }
     }
 
@@ -1457,7 +1456,7 @@ Affectation :
 	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($8, pColCat)))
 	  yymsg(GERROR, "Unknown color option '%s[%d].Color.%s'", $1, (int)$3, $8);
 	else
-	  pColOpt((int)$3,GMSH_SET|GMSH_GUI,$10) ;
+	  pColOpt((int)$3, GMSH_SET|GMSH_GUI, $10) ;
       }
     }
 
@@ -1474,7 +1473,7 @@ Affectation :
 	  yymsg(GERROR, "Too many (%d>%d) colors in View[%d].ColorTable", 
 		ct->size, COLORTABLE_NBMAX_COLOR, 0);
 	else
-	  for(i=0 ; i<ct->size ; i++) List_Read($5, i, &ct->table[i]);
+	  for(i = 0; i < ct->size; i++) List_Read($5, i, &ct->table[i]);
 	if(ct->size == 1){
 	  ct->size = 2;
 	  ct->table[1] = ct->table[0];
@@ -1494,7 +1493,7 @@ Affectation :
 	  yymsg(GERROR, "Too many (%d>%d) colors in View[%d].ColorTable", 
 		   ct->size, COLORTABLE_NBMAX_COLOR, (int)$3);
 	else
-	  for(i=0 ; i<ct->size ; i++) List_Read($8, i, &ct->table[i]);
+	  for(i = 0; i < ct->size; i++) List_Read($8, i, &ct->table[i]);
 	if(ct->size == 1){
 	  ct->size = 2;
 	  ct->table[1] = ct->table[0];
@@ -1509,10 +1508,10 @@ Affectation :
     {
       if(CTX.default_plugins){
 	try {
-	  GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
+	  GMSH_PluginManager::Instance()->SetPluginOption($3, $6, $8); 
 	}
 	catch (...) {
-	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'",$6,$3);
+	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
 	}
       }
     }
@@ -1521,10 +1520,10 @@ Affectation :
     {
       if(CTX.default_plugins){
 	try {
-	  GMSH_PluginManager::Instance()->SetPluginOption($3,$6,$8); 
+	  GMSH_PluginManager::Instance()->SetPluginOption($3, $6, $8); 
 	}
 	catch (...) {
-	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'",$6,$3);
+	  yymsg(WARNING, "Unknown option '%s' or plugin '%s'", $6, $3);
 	}
       }
     }
@@ -1539,14 +1538,14 @@ Shape :
 
     tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
-      Cdbpts101((int)$3,$6[0],$6[1],$6[2],$6[3],$6[4]);
+      Cdbpts101((int)$3, $6[0], $6[1], $6[2], $6[3], $6[4]);
       $$.Type = MSH_POINT;
       $$.Num  = (int)$3;
     }
 
   | tPhysical tPoint '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$4,MSH_PHYSICAL_POINT,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, MSH_PHYSICAL_POINT, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num  = (int)$4;
     }
@@ -1556,24 +1555,24 @@ Shape :
       Attractor *a;
       double p;
       int ip;
-      for(int i=0;i<List_Nbr($3);i++){
-      	List_Read($3,i,&p);
+      for(int i = 0; i < List_Nbr($3); i++){
+      	List_Read($3, i, &p);
         ip = (int)p;
-        v = FindPoint(ip,THEM);
+        v = FindPoint(ip, THEM);
         if(!v)
 	  yymsg(WARNING, "Unknown Point %d", ip);
 	else{
 	  a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
-			       $6,$8,$10,v,NULL,NULL);
-	  List_Add(THEM->Metric->Attractors,&a);
+			       $6, $8, $10, v, NULL, NULL);
+	  List_Add(THEM->Metric->Attractors, &a);
         }
       }
     }
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
     {
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
-	Vertex *v = FindPoint((int)d,THEM);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read($3, i, &d);
+	Vertex *v = FindPoint((int)d, THEM);
 	if(!v)
 	  yymsg(WARNING, "Unknown Point %d", (int)d);
 	else
@@ -1585,13 +1584,13 @@ Shape :
 
   | tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbseg101((int)$3,MSH_SEGM_LINE,1,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+      Cdbseg101((int)$3, MSH_SEGM_LINE, 1, $6, NULL, -1, -1, 0., 1., NULL, NULL, NULL);
       $$.Type = MSH_SEGM_LINE;
       $$.Num  = (int)$3;
     }
   | tSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbseg101((int)$3,MSH_SEGM_SPLN,3,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+      Cdbseg101((int)$3, MSH_SEGM_SPLN, 3, $6, NULL, -1, -1, 0., 1., NULL, NULL, NULL);
       $$.Type = MSH_SEGM_SPLN;
       $$.Num  = (int)$3;
     }
@@ -1601,41 +1600,41 @@ Shape :
       Attractor *a;
       double p;
       int ip;
-      for(int i=0;i<List_Nbr($3);i++){
-      	List_Read($3,i,&p);
+      for(int i = 0; i < List_Nbr($3); i++){
+      	List_Read($3, i, &p);
         ip = (int)p;
-        c = FindCurve(ip,THEM);
+        c = FindCurve(ip, THEM);
         if(!c)
 	  yymsg(WARNING, "Unknown Curve %d", ip);
 	else{
 	  a = Create_Attractor(List_Nbr(THEM->Metric->Attractors)+1,
-			       $6,$8,$10,NULL,c,NULL);
-	  List_Add(THEM->Metric->Attractors,&a);
+			       $6, $8, $10, NULL, c, NULL);
+	  List_Add(THEM->Metric->Attractors, &a);
         }
       }
     }
   | tCircle '(' FExpr ')'  tAFFECT ListOfDouble tEND
     {
-      Cdbseg101((int)$3,MSH_SEGM_CIRC,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+      Cdbseg101((int)$3, MSH_SEGM_CIRC, 2, $6, NULL, -1, -1, 0., 1., NULL, NULL, NULL);
       $$.Type = MSH_SEGM_CIRC ;
       $$.Num  = (int)$3;
     }
   | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble tEND
     {
-      Cdbseg101((int)$3,MSH_SEGM_ELLI,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+      Cdbseg101((int)$3, MSH_SEGM_ELLI, 2, $6, NULL, -1, -1, 0., 1., NULL, NULL, NULL);
       $$.Type = MSH_SEGM_ELLI ;
       $$.Num  = (int)$3;
     }
   | tCircle '(' FExpr ')'  tAFFECT ListOfDouble tPlane VExpr tEND
     {
       List_T *temp;
-      int i,j;
+      int i, j;
       double d;
-      temp = List_Create(List_Nbr($6),1,sizeof(int));
-      for(i=0;i<List_Nbr($6);i++){
-      	List_Read($6,i,&d);
+      temp = List_Create(List_Nbr($6), 1, sizeof(int));
+      for(i = 0; i < List_Nbr($6); i++){
+      	List_Read($6, i, &d);
         j = (int)d;
-        List_Add(temp,&j);
+        List_Add(temp, &j);
       }
       AddCircleInDataBase ((int) $3, MSH_SEGM_CIRC, temp, $8);
       List_Delete(temp);
@@ -1645,26 +1644,26 @@ Shape :
   | tParametric '(' FExpr ')' tAFFECT 
       '{' FExpr ',' FExpr ',' tBIGSTR ',' tBIGSTR ',' tBIGSTR '}' tEND
     {
-      Cdbseg101((int)$3,MSH_SEGM_PARAMETRIC,2,NULL,NULL,-1,-1,$7,$9,$11,$13,$15);
+      Cdbseg101((int)$3, MSH_SEGM_PARAMETRIC, 2, NULL, NULL, -1, -1, $7, $9, $11, $13, $15);
       $$.Type = MSH_SEGM_PARAMETRIC ;
       $$.Num  = (int)$3;
     }
   | tPhysical tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$4,MSH_PHYSICAL_LINE,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, MSH_PHYSICAL_LINE, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Type = MSH_PHYSICAL_LINE;
       $$.Num  = (int)$4;
     }
   | tLine tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       $$.Type = MSH_SEGM_LOOP;
-      Cdbz101((int)$4,$$.Type,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, $$.Type, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Num = (int)$4;
     }
   | tBSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       if(List_Nbr($6) > 3){
-	Cdbseg101((int)$3,MSH_SEGM_BSPLN,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+	Cdbseg101((int)$3, MSH_SEGM_BSPLN, 2, $6, NULL, -1, -1, 0., 1., NULL, NULL, NULL);
 	$$.Type = MSH_SEGM_BSPLN;
 	$$.Num  = (int)$3;
       }
@@ -1675,7 +1674,7 @@ Shape :
   | tBezier '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       if(List_Nbr($6) > 3){
-	Cdbseg101((int)$3,MSH_SEGM_BEZIER,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+	Cdbseg101((int)$3, MSH_SEGM_BEZIER, 2, $6, NULL, -1, -1, 0., 1., NULL, NULL, NULL);
 	$$.Type = MSH_SEGM_BSPLN;
 	$$.Num  = (int)$3;
       }
@@ -1695,13 +1694,13 @@ Shape :
 	      List_Nbr($8), List_Nbr($6), (int)$10, List_Nbr($6) + (int)$10 + 1);
       }
       else{
-	Temp = List_Create(List_Nbr($6),1,sizeof(int));
-	for(i=0;i<List_Nbr($6);i++) {
-	  List_Read($6,i,&d);
+	Temp = List_Create(List_Nbr($6), 1, sizeof(int));
+	for(i = 0; i < List_Nbr($6); i++) {
+	  List_Read($6, i, &d);
 	  j = (int)d;
-	  List_Add(Temp,&j);
+	  List_Add(Temp, &j);
 	}
-	AddCurveInDataBase ((int)$3,MSH_SEGM_NURBS,(int)$10,Temp,$8,-1,-1,0.,1.);
+	AddCurveInDataBase ((int)$3, MSH_SEGM_NURBS, (int)$10, Temp, $8, -1, -1, 0., 1.);
 	List_Delete(Temp);
       }
     }
@@ -1710,19 +1709,19 @@ Shape :
 
   | tPlane tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$4,MSH_SURF_PLAN,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, MSH_SURF_PLAN, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Type = MSH_SURF_PLAN;
       $$.Num  = (int)$4;
     }
   | tTrimmed tSurface '(' FExpr ')' tAFFECT '{' FExpr ',' ListOfDouble '}' tEND
     {
       Surface *s,*support;
-      support = FindSurface((int)$8,THEM);
+      support = FindSurface((int)$8, THEM);
       if(!support)
 	yymsg(GERROR, "Unknown Surface %d", (int)$8);
       else{
-	Cdbz101((int)$4,MSH_SURF_PLAN,0,0,0,0,0,NULL,$10,NULL);
-	s = FindSurface((int)$4,THEM);
+	Cdbz101((int)$4, MSH_SURF_PLAN, 0, 0, 0, 0, 0, NULL, $10, NULL);
+	s = FindSurface((int)$4, THEM);
 	if(!s)
 	  yymsg(GERROR, "Unknown Surface %d", (int)$4);
 	else{
@@ -1735,9 +1734,9 @@ Shape :
     }
   | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      List_Read($7,0,&d);
+      List_Read($7, 0, &d);
       i = (int)d;
-      EdgeLoop *el = FindEdgeLoop(i,THEM);
+      EdgeLoop *el = FindEdgeLoop(i, THEM);
       if(!el)
 	yymsg(GERROR, "Unknown Line Loop %d", i);
       else{
@@ -1745,19 +1744,19 @@ Shape :
 	if(j==4)
 	  $$.Type = MSH_SURF_REGL;
 	else if(j==3)
-	  $$.Type  = MSH_SURF_TRIC;
+	  $$.Type = MSH_SURF_TRIC;
 	else
 	  yymsg(GERROR, "Wrong definition of Ruled Surface %d: "
 		   "%d borders instead of 3 or 4", 
 		   (int)$4, j);
-	Cdbz101((int)$4,$$.Type,0,0,0,0,0,NULL,$7,NULL);
+	Cdbz101((int)$4, $$.Type, 0, 0, 0, 0, 0, NULL, $7, NULL);
 	$$.Num = (int)$4;
       }
     }
 
   | tTriangulation tSurface '(' FExpr ')' tAFFECT '(' FExpr ',' FExpr ')' ListOfDouble ListOfDouble tEND
   {
-    AddTriangulationToSurface ((int) $4, (int) $8, (int) $10,$12,$13);
+    AddTriangulationToSurface ((int) $4, (int) $8, (int) $10, $12, $13);
     $$.Num = (int)$4;
   }
 
@@ -1766,7 +1765,7 @@ Shape :
     tOrder '{' FExpr ',' FExpr '}' tEND
     {
       CreateNurbsSurface ( (int) $6 , (int)$18 , (int)$20  , $9, $12, $14);
-      $$.Type  = MSH_SURF_NURBS;
+      $$.Type = MSH_SURF_NURBS;
       $$.Num = (int)$6;
     }
   | tNurbs  tSurface '(' FExpr ')' tAFFECT 
@@ -1777,13 +1776,13 @@ Shape :
     }
   | tPhysical tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$4,MSH_PHYSICAL_SURFACE,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, MSH_PHYSICAL_SURFACE, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num  = (int)$4;
     }
   | tSurface tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$4,MSH_SURF_LOOP,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, MSH_SURF_LOOP, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Type = MSH_SURF_LOOP;
       $$.Num  = (int)$4;
     }
@@ -1792,19 +1791,19 @@ Shape :
 
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$4,MSH_VOLUME,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, MSH_VOLUME, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Type = MSH_VOLUME;
       $$.Num  = (int)$4;      
     }
   | tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$3,MSH_VOLUME,0,0,0,0,0,NULL,$6,NULL);
+      Cdbz101((int)$3, MSH_VOLUME, 0, 0, 0, 0, 0, NULL, $6, NULL);
       $$.Type = MSH_VOLUME;
       $$.Num  = (int)$3;
     }
   | tPhysical tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbz101((int)$4,MSH_PHYSICAL_VOLUME,0,0,0,0,0,NULL,$7,NULL);
+      Cdbz101((int)$4, MSH_PHYSICAL_VOLUME, 0, 0, 0, 0, 0, NULL, $7, NULL);
       $$.Type = MSH_PHYSICAL_VOLUME;
       $$.Num  = (int)$4;
     }
@@ -1815,22 +1814,22 @@ Shape :
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
-      TranslateShapes ($2[0],$2[1],$2[2],$4,1);
+      TranslateShapes ($2[0], $2[1], $2[2], $4, 1);
       $$ = $4;
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      RotateShapes($3[0],$3[1],$3[2],$5[0],$5[1],$5[2],$7,$10,1);
+      RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10, 1);
       $$ = $10;
     }
   | tSymmetry  VExpr   '{' MultipleShape '}'
     {
-      SymmetryShapes($2[0],$2[1],$2[2],$2[3],$4,1);
+      SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4, 1);
       $$ = $4;
     }
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      DilatShapes($3[0],$3[1],$3[2],$5,$8,1);
+      DilatShapes($3[0], $3[1], $3[2], $5, $8, 1);
       $$ = $8;
     }
 ;
@@ -1844,57 +1843,53 @@ MultipleShape :
 ListOfShapes : 
     /* none */
     {
-      $$ = List_Create(3,3,sizeof(Shape));
+      $$ = List_Create(3, 3, sizeof(Shape));
     }   
   | ListOfShapes Shape
     {
-      List_Add($$,&$2);
-      $$ = $1;
+      List_Add($$, &$2);
     }
   | ListOfShapes tPoint '{' RecursiveListOfDouble '}' tEND
     {
-      for(i=0;i<List_Nbr($4);i++){
+      for(i = 0; i < List_Nbr($4); i++){
 	List_Read($4, i, &d);
 	TheShape.Num = (int)d;
-	Vertex *v = FindPoint(TheShape.Num,THEM);
+	Vertex *v = FindPoint(TheShape.Num, THEM);
 	if(!v)
 	  yymsg(WARNING, "Unknown Point %d", TheShape.Num);
 	else{
 	  TheShape.Type = MSH_POINT;
-	  List_Add($$,&TheShape);
+	  List_Add($$, &TheShape);
 	}
       }
-      $$ = $1;
     }
   | ListOfShapes tLine '{' RecursiveListOfDouble '}' tEND
     {
-      for(i=0;i<List_Nbr($4);i++){
+      for(i = 0; i < List_Nbr($4); i++){
 	List_Read($4, i, &d);
 	TheShape.Num = (int)d;
-	Curve *c = FindCurve(TheShape.Num,THEM);
+	Curve *c = FindCurve(TheShape.Num, THEM);
 	if(!c)
 	  yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
 	else{
 	  TheShape.Type = c->Typ;
-	  List_Add($$,&TheShape);
+	  List_Add($$, &TheShape);
 	}
       }
-      $$ = $1;
     }
   | ListOfShapes tSurface '{' RecursiveListOfDouble '}' tEND
     {
-      for(i=0;i<List_Nbr($4);i++){
+      for(i = 0; i < List_Nbr($4); i++){
 	List_Read($4, i, &d);
 	TheShape.Num = (int)d;
-	Surface *s = FindSurface(TheShape.Num,THEM);
+	Surface *s = FindSurface(TheShape.Num, THEM);
 	if(!s)
 	  yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
 	else{
 	  TheShape.Type = s->Typ;
-	  List_Add($$,&TheShape);
+	  List_Add($$, &TheShape);
 	}
       }
-      $$ = $1;
     }
 ;
 
@@ -1903,17 +1898,18 @@ ListOfShapes :
 Duplicata :
     tDuplicata '{' ListOfShapes '}'
     {
-      $$ = List_Create(3,3,sizeof(Shape));
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read ($3,i,&TheShape);
-	CopyShape(TheShape.Type,TheShape.Num,&j);
+      $$ = List_Create(3, 3, sizeof(Shape));
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read ($3, i, &TheShape);
+	CopyShape(TheShape.Type, TheShape.Num, &j);
 	TheShape.Num = j;
-	List_Add($$,&TheShape);
+	List_Add($$, &TheShape);
       }
     }
   | tDuplicata tSTRING '[' FExpr ']' tEND
     {
-      if(!strcmp($2, "View")) DuplicateView((int)$4,0);
+      if(!strcmp($2, "View")) DuplicateView((int)$4, 0);
+      $$ = NULL;
     }
 ;
 
@@ -1923,9 +1919,9 @@ Duplicata :
 Delete :
     tDelete '{' ListOfShapes '}'
     {
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read ($3,i,&TheShape);
-	DeleteShape(TheShape.Type,TheShape.Num);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read ($3, i, &TheShape);
+	DeleteShape(TheShape.Type, TheShape.Num);
       }
     }
     | tDelete tSTRING '[' FExpr ']' tEND
@@ -1943,9 +1939,9 @@ Delete :
 Colorify :
     tColor ColorExpr '{' ListOfShapes '}'
     {
-      for(i=0;i<List_Nbr($4);i++){
-	List_Read ($4,i,&TheShape);
-	ColorShape(TheShape.Type,TheShape.Num,$2);
+      for(i = 0; i < List_Nbr($4); i++){
+	List_Read ($4, i, &TheShape);
+	ColorShape(TheShape.Type, TheShape.Num, $2);
       }
     }
 ;
@@ -1974,18 +1970,19 @@ Command :
 
 	if((yyin = fopen(tmpstring,"r"))){
 	  Msg(INFO, "Including '%s'", tmpstring); 
-	  strcpy(yynameTab[RecursionLevel-1],yyname);
-	  yylinenoTab[RecursionLevel-1]=yylineno;
-	  yylineno=1;
-	  strcpy(yyname,tmpstring);
+	  strcpy(yynameTab[RecursionLevel-1], yyname);
+	  yylinenoTab[RecursionLevel-1] = yylineno;
+	  yylineno = 1;
+	  strcpy(yyname, tmpstring);
 	  while(!feof(yyin)){
 	    yyparse();
 	  }
-	  // FIXME: If we do fclose, we cannot call a Function defined
-	  // in another file...
+	  // warning, warning... If we close the stream, we cannot
+	  // call a Function defined in another file... So we just
+	  // leave it open (arghhh)
 	  //fclose(yyin);
 	  yyin = yyinTab[--RecursionLevel];
-	  strcpy(yyname,yynameTab[RecursionLevel]);
+	  strcpy(yyname, yynameTab[RecursionLevel]);
 	  yylineno = yylinenoTab[RecursionLevel];
 	}
 	else{
@@ -2047,7 +2044,7 @@ Command :
       else if(!strcmp($1, "Mesh")){
 
 	//Maillage_Dimension_0(THEM);
-	//mai3d(THEM,(int)$2);
+	//mai3d(THEM, (int)$2);
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
 
       }
@@ -2057,7 +2054,7 @@ Command :
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
    {
     if(CTX.default_plugins)
-      GMSH_PluginManager::Instance()->Action($3,$6,0); 
+      GMSH_PluginManager::Instance()->Action($3, $6, 0); 
    }
    | tExit tEND
     {
@@ -2113,8 +2110,8 @@ Loop :
       LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
       
       TheSymbol.Name = $2;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	TheSymbol.val = List_Create(1,1,sizeof(double));
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	TheSymbol.val = List_Create(1, 1, sizeof(double));
 	List_Put(TheSymbol.val, 0, &$5);
 	Tree_Add(Symbol_T, &TheSymbol);
       }
@@ -2134,8 +2131,8 @@ Loop :
       LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
 
       TheSymbol.Name = $2;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
-	TheSymbol.val = List_Create(1,1,sizeof(double));
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	TheSymbol.val = List_Create(1, 1, sizeof(double));
 	List_Put(TheSymbol.val, 0, &$5);
 	Tree_Add(Symbol_T, &TheSymbol);
       }
@@ -2170,19 +2167,19 @@ Loop :
     }
   | tFunction tSTRING
     {
-      if(!FunctionManager::Instance()->createFunction($2,yyin,yyname,yylineno))
-	yymsg(GERROR, "Redefinition of function %s",$2);
+      if(!FunctionManager::Instance()->createFunction($2, yyin, yyname, yylineno))
+	yymsg(GERROR, "Redefinition of function %s", $2);
       skip_until(NULL, "Return");
     }
   | tReturn
     {
-      if(!FunctionManager::Instance()->leaveFunction(&yyin,yyname,yylineno))
+      if(!FunctionManager::Instance()->leaveFunction(&yyin, yyname, yylineno))
 	yymsg(GERROR, "Error while exiting function");
     } 
   | tCall tSTRING tEND
     {
-      if(!FunctionManager::Instance()->enterFunction($2,&yyin,yyname,yylineno))
-	yymsg(GERROR, "Unknown function %s",$2);
+      if(!FunctionManager::Instance()->enterFunction($2, &yyin, yyname, yylineno))
+	yymsg(GERROR, "Unknown function %s", $2);
     } 
   | tIf '(' FExpr ')'
     {
@@ -2199,27 +2196,35 @@ Loop :
 Extrude :
 
   // Points
-
     tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			   0.,0.,0.,0.,0.,0.,0.,
-			   &pc,&prc,1,NULL);
+      TheShape.Num = Extrude_ProtudePoint(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
+					  0., 0., 0., 0., 0., 0., 0.,
+					  &pc, &prc, 1, NULL);
+      TheShape.Type = MSH_POINT;
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(ROTATE,(int)$4,0.,0.,0.,
-			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
-			   &pc,&prc,1,NULL);
+      TheShape.Num = Extrude_ProtudePoint(ROTATE, (int)$4, 0., 0., 0.,
+					  $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
+					  &pc, &prc, 1, NULL);
+      TheShape.Type = MSH_POINT;
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
-			   &pc,&prc,1,NULL);
+      TheShape.Num = Extrude_ProtudePoint(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
+					  $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
+					  &pc, &prc, 1, NULL);
+      TheShape.Type = MSH_POINT;
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr '}'
     {
@@ -2229,9 +2234,12 @@ Extrude :
                    '{' ExtrudeParameters '}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			   0.,0.,0.,0.,0.,0.,0.,
-			   &pc,&prc,1,&extr);
+      TheShape.Num = Extrude_ProtudePoint(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
+					  0., 0., 0., 0., 0., 0., 0.,
+					  &pc, &prc, 1, &extr);
+      TheShape.Type = MSH_POINT;
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2241,9 +2249,12 @@ Extrude :
                    '{' ExtrudeParameters '}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(ROTATE,(int)$4,0.,0.,0.,
-			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,
-			   &pc,&prc,1,&extr);
+      TheShape.Num = Extrude_ProtudePoint(ROTATE, (int)$4, 0., 0., 0.,
+					  $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
+					  &pc, &prc, 1, &extr);
+      TheShape.Type = MSH_POINT;
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'
     {
@@ -2253,27 +2264,66 @@ Extrude :
                    '{' ExtrudeParameters '}' tEND
     {
       Curve *pc, *prc;
-      Extrude_ProtudePoint(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,
-			   &pc,&prc,1,&extr);
+      TheShape.Num = Extrude_ProtudePoint(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
+					  $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
+					  &pc, &prc, 1, &extr);
+      TheShape.Type = MSH_POINT;
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
 
   // Lines
 
   | tExtrude tLine '{' FExpr ',' VExpr '}' tEND
     {
-      Extrude_ProtudeCurve(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			   0.,0.,0.,0.,0.,0.,0.,1,NULL);
+      Surface *ps;
+      TheShape.Num = Extrude_ProtudeCurve(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
+					  0., 0., 0., 0., 0., 0., 0., 
+					  &ps, 1, NULL);
+      Curve *c = FindCurve(TheShape.Num, THEM);
+      if(!c){
+	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = c->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      Extrude_ProtudeCurve(ROTATE,(int)$4,0.,0.,0.,
-			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,1,NULL);
+      Surface *ps;
+      TheShape.Num = Extrude_ProtudeCurve(ROTATE, (int)$4, 0., 0., 0.,
+					  $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10, 
+					  &ps, 1, NULL);
+      Curve *c = FindCurve(TheShape.Num, THEM);
+      if(!c){
+	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = c->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,1,NULL);
+      Surface *ps;
+      TheShape.Num = Extrude_ProtudeCurve(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
+					  $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12, 
+					  &ps, 1, NULL);
+      Curve *c = FindCurve(TheShape.Num, THEM);
+      if(!c){
+	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = c->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tLine '{' FExpr ',' VExpr '}'
     {
@@ -2282,8 +2332,20 @@ Extrude :
     }
                    '{' ExtrudeParameters '}' tEND
     {
-      Extrude_ProtudeCurve(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			   0.,0.,0.,0.,0.,0.,0.,1,&extr);
+      Surface *ps;
+      TheShape.Num = Extrude_ProtudeCurve(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
+					  0., 0., 0., 0., 0., 0., 0., 
+					  &ps, 1, &extr);
+      Curve *c = FindCurve(TheShape.Num, THEM);
+      if(!c){
+	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = c->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2292,8 +2354,20 @@ Extrude :
     }
                    '{' ExtrudeParameters '}' tEND
     {
-      Extrude_ProtudeCurve(ROTATE,(int)$4,0.,0.,0.,
-			   $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,1,&extr);
+      Surface *ps;
+      TheShape.Num = Extrude_ProtudeCurve(ROTATE, (int)$4, 0., 0., 0.,
+					  $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10, 
+					  &ps, 1, &extr);
+      Curve *c = FindCurve(TheShape.Num, THEM);
+      if(!c){
+	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = c->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2302,26 +2376,71 @@ Extrude :
     }
                    '{' ExtrudeParameters '}' tEND
     {
-      Extrude_ProtudeCurve(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			   $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,1,&extr);
+      Surface *ps;
+      TheShape.Num = Extrude_ProtudeCurve(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
+					  $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12, 
+					  &ps, 1, &extr);
+      Curve *c = FindCurve(TheShape.Num, THEM);
+      if(!c){
+	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = c->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
 
   // Surfaces
 
   | tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
     {
-      Extrude_ProtudeSurface(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			     0.,0.,0.,0.,0.,0.,0.,0,NULL);
+      TheShape.Num = Extrude_ProtudeSurface(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
+					    0., 0., 0., 0., 0., 0., 0., 
+					    0, NULL);
+      Surface *s = FindSurface(TheShape.Num, THEM);
+      if(!s){
+	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = s->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      Extrude_ProtudeSurface(ROTATE,(int)$4,0.,0.,0.,
-			     $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,0,NULL);
+      TheShape.Num = Extrude_ProtudeSurface(ROTATE, (int)$4, 0., 0., 0.,
+					    $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
+					    0, NULL);
+      Surface *s = FindSurface(TheShape.Num, THEM);
+      if(!s){
+	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = s->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      Extrude_ProtudeSurface(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			     $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,0,NULL);
+      TheShape.Num = Extrude_ProtudeSurface(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
+					    $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
+					    0, NULL);
+      Surface *s = FindSurface(TheShape.Num, THEM);
+      if(!s){
+	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = s->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr '}'
     {
@@ -2331,8 +2450,19 @@ Extrude :
                       '{' ExtrudeParameters '}' tEND
     {
       int vol = NEWREG();
-      Extrude_ProtudeSurface(TRANSLATE,(int)$4,$6[0],$6[1],$6[2],
-			     0.,0.,0.,0.,0.,0.,0.,vol,&extr);
+      TheShape.Num = Extrude_ProtudeSurface(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
+					    0., 0., 0., 0., 0., 0., 0., 
+					    vol, &extr);
+      Surface *s = FindSurface(TheShape.Num, THEM);
+      if(!s){
+	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = s->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' 
     {
@@ -2343,8 +2473,19 @@ Extrude :
                       '{' ExtrudeParameters '}'tEND
     {
       int vol = NEWREG();
-      Extrude_ProtudeSurface(ROTATE,(int)$4,0.,0.,0.,
-			     $6[0],$6[1],$6[2],$8[0],$8[1],$8[2],$10,vol,&extr);
+      TheShape.Num = Extrude_ProtudeSurface(ROTATE, (int)$4, 0., 0., 0.,
+					    $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10, 
+					    vol, &extr);
+      Surface *s = FindSurface(TheShape.Num, THEM);
+      if(!s){
+	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = s->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2355,8 +2496,19 @@ Extrude :
                       '{' ExtrudeParameters '}'tEND
     {
       int vol = NEWREG();
-      Extrude_ProtudeSurface(TRANSLATE_ROTATE,(int)$4,$6[0],$6[1],$6[2],
-			     $8[0],$8[1],$8[2],$10[0],$10[1],$10[2],$12,vol,&extr);
+      TheShape.Num = Extrude_ProtudeSurface(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
+					    $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
+					    vol, &extr);
+      Surface *s = FindSurface(TheShape.Num, THEM);
+      if(!s){
+	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	TheShape.Type = 0;
+      }
+      else{
+	TheShape.Type = s->Typ;
+      }
+      $$ = List_Create(1, 1, sizeof(Shape));
+      List_Add($$, &TheShape);
     }
 ;
 
@@ -2379,12 +2531,12 @@ ExtrudeParameter :
 	extr.mesh.NbElmLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
 	extr.mesh.ZonLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
 	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
-	for(int i=0;i<List_Nbr($3);i++){
-	  List_Read($3,i,&d);
+	for(int i = 0; i < List_Nbr($3); i++){
+	  List_Read($3, i, &d);
 	  extr.mesh.NbElmLayer[i] = (d>0)?(int)d:1;
-	  List_Read($5,i,&d);
+	  List_Read($5, i, &d);
 	  extr.mesh.ZonLayer[i] = (int)d;
-	  List_Read($7,i,&d);
+	  List_Read($7, i, &d);
 	  extr.mesh.hLayer[i] = d;
 	}
       }
@@ -2405,11 +2557,11 @@ ExtrudeParameter :
 	extr.mesh.NbElmLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
 	extr.mesh.ZonLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
 	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
-	for(int i=0;i<List_Nbr($3);i++){
-	  List_Read($3,i,&d);
+	for(int i = 0; i < List_Nbr($3); i++){
+	  List_Read($3, i, &d);
 	  extr.mesh.NbElmLayer[i] = (d>0)?(int)d:1;
 	  extr.mesh.ZonLayer[i] = 0;
-	  List_Read($5,i,&d);
+	  List_Read($5, i, &d);
 	  extr.mesh.hLayer[i] = d;
 	}
       }
@@ -2432,10 +2584,10 @@ Transfini :
     tTransfinite tLine ListOfDouble tAFFECT FExpr tEND
     {
       Curve *c;
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read($3, i, &d);
 	j = (int)fabs(d);
-        c = FindCurve(j,THEM);
+        c = FindCurve(j, THEM);
 	if(!c)
 	  yymsg(WARNING, "Unknown Curve %d", j);
 	else{
@@ -2450,10 +2602,10 @@ Transfini :
   | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tProgression FExpr tEND
     {
       Curve *c;
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read($3, i, &d);
 	j = (int)fabs(d);
-        c = FindCurve(j,THEM);
+        c = FindCurve(j, THEM);
 	if(!c)
 	  yymsg(WARNING, "Unknown Curve %d", j);
 	else{
@@ -2468,10 +2620,10 @@ Transfini :
   | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tBump FExpr tEND
     {
       Curve *c;
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read($3, i, &d);
 	j = (int)fabs(d);
-        c = FindCurve(j,THEM);
+        c = FindCurve(j, THEM);
 	if(!c)
 	  yymsg(WARNING, "Unknown Curve %d", j);
 	else{
@@ -2485,7 +2637,7 @@ Transfini :
     }
   | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Surface *s = FindSurface((int)$4,THEM);
+      Surface *s = FindSurface((int)$4, THEM);
       if(!s)
 	yymsg(WARNING, "Unknown Surface %d", (int)$4);
       else{
@@ -2496,8 +2648,8 @@ Transfini :
 		"%d points instead of 3 or 4" , $4, k) ;
 	}
 	else{
-	  for(i=0;i<k;i++){
-	    List_Read($7,i,&d);
+	  for(i = 0; i < k; i++){
+	    List_Read($7, i, &d);
 	    j = (int)fabs(d);
 	    s->ipar[i] = j;
 	  }
@@ -2507,7 +2659,7 @@ Transfini :
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Surface *s = FindSurface((int)$4,THEM);
+      Surface *s = FindSurface((int)$4, THEM);
       if(!s)
 	yymsg(WARNING, "Unknown Surface %d", (int)$4);
       else{
@@ -2517,8 +2669,8 @@ Transfini :
 	  yymsg(GERROR, "Wrong definition of Elliptic Surface %d: "
 		"%d points instead of 4" , $4, k) ;
         else{
-	  for(i=0;i<k;i++){
-	    List_Read($7,i,&d);
+	  for(i = 0; i < k; i++){
+	    List_Read($7, i, &d);
 	    j = (int)fabs(d);
 	    s->ipar[i] = j;
 	  }
@@ -2528,18 +2680,18 @@ Transfini :
     }
   | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Volume *v = FindVolume((int)$4,THEM);
+      Volume *v = FindVolume((int)$4, THEM);
       if(!v)
 	yymsg(WARNING, "Unknown Volume %d", (int)$4);
       else{
 	v->Method = TRANSFINI;
 	k = List_Nbr($7);
-	if(k!=6 && k!=8)
+	if(k != 6 && k != 8)
 	  yymsg(GERROR, "Wrong definition of Transfinite Volume %d: "
 		"%d points instead of 6 or 8" , $4, k) ;
 	else{
-	  for(i=0;i<k;i++){
-	    List_Read($7,i,&d);
+	  for(i = 0; i < k; i++){
+	    List_Read($7, i, &d);
 	    j = (int)fabs(d);
 	    v->ipar[i] = j;
 	  }
@@ -2550,10 +2702,10 @@ Transfini :
   | tRecombine tSurface ListOfDouble tAFFECT FExpr tEND
     {
       Surface *s;
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read($3, i, &d);
 	j = (int)d;
-	s = FindSurface(j,THEM);
+	s = FindSurface(j, THEM);
 	if(s){
 	  s->Recombine = 1;
 	  s->RecombineAngle = ($5 > 0 && $5 < 90) ? $5 : 90;
@@ -2564,10 +2716,10 @@ Transfini :
   | tRecombine tSurface ListOfDouble tEND
     {
       Surface *s;
-      for(i=0;i<List_Nbr($3);i++){
-	List_Read($3,i,&d);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read($3, i, &d);
 	j = (int)d;
-        s = FindSurface(j,THEM);
+        s = FindSurface(j, THEM);
 	if(s){
 	  s->Recombine = 1;
 	  s->RecombineAngle = 30.;
@@ -2619,7 +2771,7 @@ FExpr :
 	$$ = $1 / $3 ;     
     }
   | FExpr '%' FExpr                  { $$ = (int)$1 % (int)$3 ;  }
-  | FExpr '^' FExpr                  { $$ = pow($1,$3) ;  }
+  | FExpr '^' FExpr                  { $$ = pow($1, $3) ;  }
   | FExpr '<' FExpr                  { $$ = $1 < $3 ;     }
   | FExpr '>' FExpr                  { $$ = $1 > $3 ;     }
   | FExpr tLESSOREQUAL FExpr         { $$ = $1 <= $3 ;    }
@@ -2639,15 +2791,15 @@ FExpr :
   | tAcos   '(' FExpr ')'            { $$ = acos($3);     }
   | tTan    '(' FExpr ')'            { $$ = tan($3);      }
   | tAtan   '(' FExpr ')'            { $$ = atan($3);     }
-  | tAtan2  '(' FExpr ',' FExpr ')'  { $$ = atan2($3,$5); }
+  | tAtan2  '(' FExpr ',' FExpr ')'  { $$ = atan2($3, $5); }
   | tSinh   '(' FExpr ')'            { $$ = sinh($3);     }
   | tCosh   '(' FExpr ')'            { $$ = cosh($3);     }
   | tTanh   '(' FExpr ')'            { $$ = tanh($3);     }
   | tFabs   '(' FExpr ')'            { $$ = fabs($3);     }
   | tFloor  '(' FExpr ')'            { $$ = floor($3);    }
   | tCeil   '(' FExpr ')'            { $$ = ceil($3);     }
-  | tFmod   '(' FExpr ',' FExpr ')'  { $$ = fmod($3,$5);  }
-  | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3,$5);  }
+  | tFmod   '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5);  }
+  | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5);  }
   | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3*$3+$5*$5); }
   | tRand   '(' FExpr ')'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
   // The following is for GetDP compatibility
@@ -2661,15 +2813,15 @@ FExpr :
   | tAcos   '[' FExpr ']'            { $$ = acos($3);     }
   | tTan    '[' FExpr ']'            { $$ = tan($3);      }
   | tAtan   '[' FExpr ']'            { $$ = atan($3);     }
-  | tAtan2  '[' FExpr ',' FExpr ']'  { $$ = atan2($3,$5); }
+  | tAtan2  '[' FExpr ',' FExpr ']'  { $$ = atan2($3, $5); }
   | tSinh   '[' FExpr ']'            { $$ = sinh($3);     }
   | tCosh   '[' FExpr ']'            { $$ = cosh($3);     }
   | tTanh   '[' FExpr ']'            { $$ = tanh($3);     }
   | tFabs   '[' FExpr ']'            { $$ = fabs($3);     }
   | tFloor  '[' FExpr ']'            { $$ = floor($3);    }
   | tCeil   '[' FExpr ']'            { $$ = ceil($3);     }
-  | tFmod   '[' FExpr ',' FExpr ']'  { $$ = fmod($3,$5);  }
-  | tModulo '[' FExpr ',' FExpr ']'  { $$ = fmod($3,$5);  }
+  | tFmod   '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5);  }
+  | tModulo '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5);  }
   | tHypot  '[' FExpr ',' FExpr ']'  { $$ = sqrt($3*$3+$5*$5); }
   | tRand   '[' FExpr ']'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
 ;
@@ -2690,7 +2842,7 @@ FExpr_Single :
   | tSTRING
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2701,7 +2853,7 @@ FExpr_Single :
   | tSTRING '[' FExpr ']'
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2718,7 +2870,7 @@ FExpr_Single :
   | tSTRING NumericIncrement
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2729,7 +2881,7 @@ FExpr_Single :
   | tSTRING '[' FExpr ']' NumericIncrement
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2817,38 +2969,38 @@ VExpr :
     }
   | '-' VExpr %prec UNARYPREC
     {
-      for(i=0 ; i<5 ; i++) $$[i] = -$2[i] ;
+      for(i = 0; i < 5; i++) $$[i] = -$2[i] ;
     }
   | '+' VExpr %prec UNARYPREC
     { 
-      for(i=0 ; i<5 ; i++) $$[i] = $2[i];
+      for(i = 0; i < 5; i++) $$[i] = $2[i];
     }
   | VExpr '-' VExpr
     { 
-      for(i=0 ; i<5 ; i++) $$[i] = $1[i] - $3[i] ;
+      for(i = 0; i < 5; i++) $$[i] = $1[i] - $3[i] ;
     }
   | VExpr '+' VExpr
     {
-      for(i=0 ; i<5 ; i++) $$[i] = $1[i] + $3[i] ;
+      for(i = 0; i < 5; i++) $$[i] = $1[i] + $3[i] ;
     }
 ;
 
 VExpr_Single :
     '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr  '}'
     { 
-      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=$8; $$[4]=$10;
+      $$[0] = $2;  $$[1] = $4;  $$[2] = $6;  $$[3] = $8; $$[4] = $10;
     }
   | '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     { 
-      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=$8; $$[4]=1.0;
+      $$[0] = $2;  $$[1] = $4;  $$[2] = $6;  $$[3] = $8; $$[4] = 1.0;
     }
   | '{' FExpr ',' FExpr ',' FExpr '}'
     {
-      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=0.0; $$[4]=1.0;
+      $$[0] = $2;  $$[1] = $4;  $$[2] = $6;  $$[3] = 0.0; $$[4] = 1.0;
     }
   | '(' FExpr ',' FExpr ',' FExpr ')'
     {
-      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=0.0; $$[4]=1.0;
+      $$[0] = $2;  $$[1] = $4;  $$[2] = $6;  $$[3] = 0.0; $$[4] = 1.0;
     }
 ;
 
@@ -2876,18 +3028,18 @@ ListOfListOfDouble :
     }
   | '{' RecursiveListOfListOfDouble '}'
     {
-       $$=$2;
+       $$ = $2;
     }
   | '(' RecursiveListOfListOfDouble ')'
     {
-       $$=$2;
+       $$ = $2;
     }
 ;
 
 RecursiveListOfListOfDouble :
     ListOfDouble
     {
-      $$ = List_Create(2,1,sizeof(List_T*)) ;
+      $$ = List_Create(2, 1, sizeof(List_T*)) ;
       List_Add($$, &($1)) ;
     }
   | RecursiveListOfListOfDouble ',' ListOfDouble
@@ -2900,7 +3052,7 @@ RecursiveListOfListOfDouble :
 ListOfDouble :
     FExpr
     {
-      $$ = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2, 1, sizeof(double)) ;
       List_Add($$, &($1)) ;
     }
   | FExpr_Multi
@@ -2909,59 +3061,44 @@ ListOfDouble :
     }
   | '{' RecursiveListOfDouble '}'
     {
-      $$=$2;
+      $$ = $2;
     }
   | '-' '{' RecursiveListOfDouble '}'
     {
-      $$=$3;
-      for(i=0 ; i<List_Nbr($$) ; i++){
+      $$ = $3;
+      for(i = 0; i < List_Nbr($$); i++){
 	pd = (double*)List_Pointer($$, i);
 	(*pd) = - (*pd);
       }
     }
-/* FIXME: removed until we clean up the syntax, sorry
-  | MultipleShape
-  {
-    $$ = List_Create(List_Nbr($1),1,sizeof(double)) ;
-    for (int i=0;i<List_Nbr($1);i++)
-      {
-	Shape *s = (Shape*) List_Pointer($1,i);
-	double d = s->Num;
-	List_Add($$,&d);
-      }
-  }
-*/
 ;
 
 FExpr_Multi :
     FExpr tDOTS FExpr
     { 
-      $$ = List_Create(2,1,sizeof(double)) ; 
-      for(d=$1 ; ($1<$3)?(d<=$3):(d>=$3) ; ($1<$3)?(d+=1.):(d-=1.)) 
+      $$ = List_Create(2, 1, sizeof(double)) ; 
+      for(d = $1; ($1 < $3) ? (d <= $3) : (d >= $3); ($1 < $3) ? (d += 1.) : (d -= 1.)) 
 	List_Add($$, &d) ;
     }
   | FExpr tDOTS FExpr tDOTS FExpr
-   {
-      $$ = List_Create(2,1,sizeof(double)) ; 
-      if(!$5 || ($1<$3 && $5<0) || ($1>$3 && $5>0)){
+    {
+      $$ = List_Create(2, 1, sizeof(double)) ; 
+      if(!$5 || ($1 < $3 && $5 < 0) || ($1 > $3 && $5 > 0)){
         yymsg(GERROR, "Wrong increment in '%g:%g:%g'", $1, $3, $5) ;
 	List_Add($$, &($1)) ;
       }
       else
-	for(d=$1 ; ($5>0)?(d<=$3):(d>=$3) ; d+=$5)
+	for(d = $1; ($5 > 0) ? (d <= $3) : (d >= $3); d += $5)
 	  List_Add($$, &d) ;
    }
-/* FIXME: removed until we clean up the syntax, sorry
   | tPoint '{' FExpr '}'
     {
-      /// JF Remacle, sept. 2003
-      /// returns the coordinates of a point 
-      /// and fills a list with it
-      /// This allows to ensure e.g. that relative
-      /// point positions are always conserved 
-      Vertex *v = FindPoint((int)$3,THEM);
-      $$ = List_Create(3,1,sizeof(double)) ;      
-      if (!v) {
+      // Returns the coordinates of a point and fills a list with it.
+      // This allows to ensure e.g. that relative point positions are
+      // always conserved
+      Vertex *v = FindPoint((int)$3, THEM);
+      $$ = List_Create(3, 1, sizeof(double)) ;      
+      if(!v) {
 	yymsg(GERROR, "Unknown point '%d'", (int) $3) ;
 	double d = 0.0 ;
 	List_Add($$, &d);
@@ -2974,32 +3111,58 @@ FExpr_Multi :
 	List_Add($$, &v->Pos.Z) ;
       }
     }
-*/
+  | Transform
+    {
+      $$ = List_Create(List_Nbr($1), 1, sizeof(double)) ;
+      for(int i = 0; i < List_Nbr($1); i++){
+	Shape *s = (Shape*) List_Pointer($1, i);
+	double d = s->Num;
+	List_Add($$, &d);
+      }
+    }
+  | Duplicata
+    {
+      $$ = List_Create(List_Nbr($1), 1, sizeof(double)) ;
+      for(int i = 0; i < List_Nbr($1); i++){
+	Shape *s = (Shape*) List_Pointer($1, i);
+	double d = s->Num;
+	List_Add($$, &d);
+      }
+    }
+  | Extrude
+    {
+      $$ = List_Create(List_Nbr($1), 1, sizeof(double)) ;
+      for(int i = 0; i < List_Nbr($1); i++){
+	Shape *s = (Shape*) List_Pointer($1, i);
+	double d = s->Num;
+	List_Add($$, &d);
+      }
+    }
   | tSTRING '[' ']'
     {
-      $$ = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2, 1, sizeof(double)) ;
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	d = 0.0 ;
 	List_Add($$, &d);
       }
       else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
+	for(i = 0; i < List_Nbr(pSymbol->val); i++)
 	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
       }
     }
   | '-' tSTRING '[' ']'
     {
-      $$ = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2, 1, sizeof(double)) ;
       TheSymbol.Name = $2 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $2) ;
 	d = 0.0 ;
 	List_Add($$, &d);
       }
       else{
-	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++){
+	for(i = 0; i < List_Nbr(pSymbol->val); i++){
 	  d = - *(double*)List_Pointer_Fast(pSymbol->val, i);
 	  List_Add($$, &d) ;
 	}
@@ -3007,15 +3170,15 @@ FExpr_Multi :
     }
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
-      $$ = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2, 1, sizeof(double)) ;
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	d = 0.0 ;
 	List_Add($$, &d);
       }
       else{
-	for(i = 0 ; i < List_Nbr($4) ; i++){
+	for(i = 0; i < List_Nbr($4); i++){
 	  j = (int)(*(double*)List_Pointer_Fast($4, i));
 	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
 	    List_Add($$, pd) ;
@@ -3027,15 +3190,15 @@ FExpr_Multi :
     }
   | '-' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
-      $$ = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2, 1, sizeof(double)) ;
       TheSymbol.Name = $2 ;
-      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $2) ;
 	d = 0.0 ;
 	List_Add($$, &d);
       }
       else{
-	for(i = 0 ; i < List_Nbr($5) ; i++){
+	for(i = 0; i < List_Nbr($5); i++){
 	  j = (int)(*(double*)List_Pointer_Fast($5, i));
 	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j))){
 	    d = - *pd;
@@ -3052,7 +3215,7 @@ FExpr_Multi :
 RecursiveListOfDouble :
     FExpr
     {
-      $$ = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2, 1, sizeof(double)) ;
       List_Add($$, &($1)) ;
     }
   | FExpr_Multi
@@ -3065,7 +3228,7 @@ RecursiveListOfDouble :
     }
   | RecursiveListOfDouble ',' FExpr_Multi
     {
-      for(i=0 ; i<List_Nbr($3) ; i++){
+      for(i = 0; i < List_Nbr($3); i++){
 	List_Read($3, i, &d) ;
 	List_Add($$, &d) ;
       }
@@ -3107,7 +3270,7 @@ ColorExpr :
 	  $$ = 0 ;
 	}
 	else{
-	  $$ = pColOpt(0,GMSH_GET,0) ;
+	  $$ = pColOpt(0, GMSH_GET, 0) ;
 	}
       }
     }
@@ -3120,12 +3283,12 @@ ListOfColor :
     }
   | tSTRING '[' FExpr ']' '.' tColorTable
     {
-      $$ = List_Create(256,10,sizeof(unsigned int)) ;
+      $$ = List_Create(256, 10, sizeof(unsigned int)) ;
       GmshColorTable *ct = Get_ColorTable((int)$3);
       if(!ct)
 	yymsg(GERROR, "View[%d] does not exist", (int)$3);
       else{
-	for(i=0 ; i<ct->size ; i++) 
+	for(i = 0; i < ct->size; i++) 
 	  List_Add($$, &ct->table[i]);
       }
     }
@@ -3134,7 +3297,7 @@ ListOfColor :
 RecursiveListOfColor :
     ColorExpr
     {
-      $$ = List_Create(256,10,sizeof(unsigned int)) ;
+      $$ = List_Create(256, 10, sizeof(unsigned int)) ;
       List_Add($$, &($1)) ;
     }
   | RecursiveListOfColor ',' ColorExpr
@@ -3159,14 +3322,14 @@ StringExpr :
   | tStrPrefix '(' StringExpr ')'
     {
       $$ = (char *)Malloc((strlen($3)+1)*sizeof(char)) ;
-      for(i=strlen($3)-1; i>=0; i--){
+      for(i = strlen($3)-1; i >= 0; i--){
 	if($3[i] == '.'){
-	  strncpy($$,$3,i);
+	  strncpy($$, $3, i);
 	  $$[i]='\0';
 	  break;
 	}
       }
-      if(i<=0) strcpy($$,$3);
+      if(i <= 0) strcpy($$, $3);
       Free($3);
     }
   | tSprintf '(' StringExpr ')'
@@ -3175,13 +3338,13 @@ StringExpr :
     }
   | tSprintf '(' StringExpr ',' RecursiveListOfDouble ')'
     {
-      i = PrintListOfDouble($3,$5,tmpstring);
-      if(i<0){
+      i = PrintListOfDouble($3, $5, tmpstring);
+      if(i < 0){
 	yymsg(GERROR, "Too few arguments in Sprintf");
 	$$ = $3;
       }
-      else if(i>0){
-	yymsg(GERROR, "Too many arguments (%d) in Sprintf", i);
+      else if(i > 0){
+	yymsg(GERROR, "%d extra argument%s in Sprintf", i, (i>1)?"s":"");
 	$$ = $3;
       }
       else{
@@ -3199,7 +3362,7 @@ StringExpr :
 	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($5, pStrCat)))
 	  yymsg(GERROR, "Unknown string option '%s.%s'", $3, $5);
 	else{
-	  str = pStrOpt(0,GMSH_GET,NULL) ;
+	  str = pStrOpt(0, GMSH_GET, NULL) ;
 	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
 	  strcpy($$, str);
 	}
@@ -3213,7 +3376,7 @@ StringExpr :
 	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($8, pStrCat)))
 	  yymsg(GERROR, "Unknown string option '%s[%d].%s'", $3, (int)$5, $8);
 	else{
-	  str = pStrOpt((int)$5,GMSH_GET,NULL) ;
+	  str = pStrOpt((int)$5, GMSH_GET, NULL) ;
 	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
 	  strcpy($$, str);
 	}
@@ -3230,7 +3393,7 @@ void DeleteSymbol(void *a, void *b){
 }
 
 int CompareSymbols (const void *a, const void *b){
-  return(strcmp(((Symbol*)a)->Name,((Symbol*)b)->Name));
+  return(strcmp(((Symbol*)a)->Name, ((Symbol*)b)->Name));
 }
 
 void InitSymbols(void){
@@ -3246,28 +3409,27 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
   char tmp1[256], tmp2[256];
 
   j=0;
-  while(format[j]!='%') j++;
+  while(j < strlen(format) && format[j]!='%') j++;
   strncpy(buffer, format, j); 
   buffer[j]='\0'; 
-  for(i = 0 ; i<List_Nbr(list) ; i++){
+  for(i = 0; i < List_Nbr(list); i++){
     k = j;
     j++;
-    if(j<(int)strlen(format)){
-      if(format[j]=='%'){
+    if(j < (int)strlen(format)){
+      if(format[j] == '%'){
 	strcat(buffer, "%");
 	j++;
       }
-      while(format[j]!='%' && j<(int)strlen(format)) j++;
+      while(format[j] != '%' && j < (int)strlen(format)) j++;
       if(k != j){
-	strncpy(tmp1, &(format[k]),j-k);
+	strncpy(tmp1, &(format[k]), j-k);
 	tmp1[j-k]='\0';
-	sprintf(tmp2, tmp1, *(double*)List_Pointer(list,i)); 
+	sprintf(tmp2, tmp1, *(double*)List_Pointer(list, i)); 
 	strcat(buffer, tmp2);
       }
     }
     else{
       return List_Nbr(list)-i;
-      break ;
     }
   }
   if(j != (int)strlen(format))
@@ -3276,7 +3438,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
 }
 
 void yyerror(char *s){
-  Msg(GERROR, "'%s', line %d : %s (%s)",yyname,yylineno-1,s,yytext);
+  Msg(GERROR, "'%s', line %d : %s (%s)", yyname, yylineno-1, s, yytext);
   yyerrorstate=1;
 }
 

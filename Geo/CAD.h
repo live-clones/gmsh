@@ -63,22 +63,23 @@ void ColorShape(int Type, int Num, unsigned int Color);
 
 
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
-void Extrude_ProtudePoint(int type, int ip, 
-			  double T0, double T1, double T2,
-			  double A0, double A1, double A2,
-                          double X0, double X1, double X2, double alpha,
-                          Curve **pc, Curve **prc, int final,
-			  ExtrudeParams *e);
-Surface *Extrude_ProtudeCurve(int type, int ic,
-			      double T0, double T1, double T2,
-			      double A0, double A1, double A2,
-			      double X0, double X1, double X2, double alpha,
-			      int final, ExtrudeParams *e);
-void Extrude_ProtudeSurface(int type, int is,
-			    double T0, double T1, double T2,
-			    double A0, double A1, double A2,
-			    double X0, double X1, double X2, double alpha,
-                            int NewVolume, ExtrudeParams *e);
+int Extrude_ProtudePoint(int type, int ip, 
+			 double T0, double T1, double T2,
+			 double A0, double A1, double A2,
+			 double X0, double X1, double X2, double alpha,
+			 Curve **pc, Curve **prc, int final,
+			 ExtrudeParams *e);
+int Extrude_ProtudeCurve(int type, int ic,
+			 double T0, double T1, double T2,
+			 double A0, double A1, double A2,
+			 double X0, double X1, double X2, double alpha,
+			 Surface **ps, int final, 
+			 ExtrudeParams *e);
+int Extrude_ProtudeSurface(int type, int is,
+			   double T0, double T1, double T2,
+			   double A0, double A1, double A2,
+			   double X0, double X1, double X2, double alpha,
+			   int NewVolume, ExtrudeParams *e);
 
 
 void ReplaceAllDuplicates(Mesh *m);
