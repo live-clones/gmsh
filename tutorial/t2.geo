@@ -83,3 +83,4 @@ Physical Volume (1) = {146,147} ;
 
 // Congratulations! You've created your first fully unstructured
 // tetrahedral 3D mesh!
+Line(147) = {2,8};

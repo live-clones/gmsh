@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.52 2001-01-09 13:28:49 geuzaine Exp $
+// $Id: Gmsh.y,v 1.53 2001-01-11 16:00:28 colignon Exp $
 
 #include <stdarg.h>
 
@@ -1630,12 +1630,12 @@ Command :
       }
       else if(!strcmp($1, "Print")){
 
-	if(!CTX.interactive) CreateFile($2, CTX.print.format);
+	//if(!CTX.interactive) CreateFile($2, CTX.print.format);
 
       }
       else if(!strcmp($1, "Save")){
 
-	CreateFile($2, CTX.mesh.format);
+	//CreateFile($2, CTX.mesh.format);
 
       }
       else if(!strcmp($1, "Merge")){

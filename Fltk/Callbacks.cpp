@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.15 2001-01-11 14:11:56 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.16 2001-01-11 16:00:28 colignon Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -15,7 +15,20 @@
 #include "GUI.h"
 #include "Callbacks.h"
 
+#include <FL/Fl.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Input.H>
 #include <FL/fl_file_chooser.H>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <FL/fl_file_chooser.H>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
 
 extern GUI       *WID;
 extern Mesh       M;

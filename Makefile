@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.36 2001-01-11 14:26:18 geuzaine Exp $
+# $Id: Makefile,v 1.37 2001-01-11 16:00:28 colignon Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -35,6 +35,7 @@ MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
         GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk jpeg utils
  GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
    GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg
+GMSH_FLTKWIN_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk
     GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser
   GMSH_UTILS_DIR = utils
     GMSH_BIN_DIR = bin
@@ -47,6 +48,8 @@ GMSH_ARCHIVE_DIR = archives
                                      -lAdapt -lCommon -lDataStr $(JPEG_LIB)
    GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
                                      -lAdapt -lCommon -lDataStr $(JPEG_LIB)
+GMSH_FLTKWIN_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
+                                     -lAdapt -lCommon -lDataStr
     GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
                                      -lAdapt -lCommon -lDataStr
     GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
@@ -72,6 +75,26 @@ fltk: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
+fltkwin: initialtag
+	@for i in $(GMSH_FLTKWIN_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++ -mno-cygwin -I/mingw/include" \
+           "C_FLAGS=-O2 -DWIN32" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
+fltkcygwin: initialtag
+	@for i in $(GMSH_FLTKWIN_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-O2 -DWIN32" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -113,8 +136,11 @@ gmsh3:
                  $(FLTK_LIB) -lm
 
 gmshwin:
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib -lfltk -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTKWIN_LIB) \
+                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+gmshcygwin:
+	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTKWIN_LIB) \
+                 $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
 gmsh4:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \

@@ -1,6 +1,6 @@
-// $Id: gl2jpeg.cpp,v 1.5 2001-01-11 14:18:07 geuzaine Exp $
+// $Id: gl2jpeg.cpp,v 1.6 2001-01-11 16:00:28 colignon Exp $
 
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -61,5 +61,5 @@ void create_jpeg(FILE *outfile, int width, int height, int quality){
 }
 
 
-#endif //if !defined(__CYGWIN__)
+#endif //if !defined(WIN32)
 
