@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.22 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.23 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -264,7 +264,7 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
 
   int      i,j;
   double   f;
-  List_T  *templist;
+  List_T  *templist = NULL;
   Curve   *c, *c0, *c1, *c2;
 
   if(liste){

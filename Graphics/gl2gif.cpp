@@ -2,7 +2,7 @@
  * GL2GIF, an OpenGL to GIF Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2gif.cpp,v 1.15 2002-05-25 19:17:45 geuzaine Exp $
+ * $Id: gl2gif.cpp,v 1.16 2003-02-25 04:02:50 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -254,7 +254,7 @@ static int sqr(int x){
 }
 
 static int closestcolor(pixel color){
-  int i,r,g,b,d,imin,dmin;
+  int i,r,g,b,d,imin=0,dmin;
   
   r=(int)PPM_GETR(color);
   g=(int)PPM_GETG(color);
@@ -1123,10 +1123,10 @@ void create_gif(FILE *outfile, int width, int height,
   register pixel* pP;
   register int col, row, limitcol, ind;
   int newcolors=256;
-  long *thisrerr, *nextrerr, *thisgerr, *nextgerr;
-  long *thisberr, *nextberr, *temperr;
+  long *thisrerr=NULL, *nextrerr=NULL, *thisgerr=NULL, *nextgerr=NULL;
+  long *thisberr=NULL, *nextberr=NULL, *temperr=NULL;
   register long sr=0, sg=0, sb=0, err=0;
-  int fs_direction;
+  int fs_direction=0;
 
   /* This is stupid, but I couldn't figure out how to pack the data
      directly from the OpenGL frame buffer into unsigned long

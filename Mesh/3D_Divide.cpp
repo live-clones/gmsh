@@ -1,4 +1,4 @@
-// $Id: 3D_Divide.cpp,v 1.18 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 3D_Divide.cpp,v 1.19 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -306,8 +306,9 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
   int i;
   nxn nx;
   Simplex *s;
-  Vertex *common, *other1, *other2, *lonely, *e1, *e2, *point1, *point2, *point3, *point4;
-  Vertex *v1, *v2, *v3, *v4, *v5, *v6, *v7, *v8;
+  Vertex *common, *other1, *other2, *lonely=NULL, *e1, *e2;
+  Vertex *point1=NULL, *point2=NULL, *point3=NULL, *point4=NULL;
+  Vertex *v1=NULL, *v2=NULL, *v3=NULL, *v4=NULL, *v5=NULL, *v6=NULL, *v7=NULL, *v8=NULL;
 
   if (!New_Edges)
     New_Edges = Tree_Create (sizeof (nxn), compnxn);

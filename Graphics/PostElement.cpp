@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.9 2003-02-14 09:32:31 stainier Exp $
+// $Id: PostElement.cpp,v 1.10 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -672,7 +672,7 @@ void Draw_ScalarPyramid(Post_View *View, int preproNormals,
 void Draw_VectorElement(int type, Post_View *View, 
 			double ValMin, double ValMax, double Raise[3][8],
 			double *X, double *Y, double *Z, double *V){
-  int    j, k, nbnod ;
+  int    j, k, nbnod=0 ;
   double fact, xx[8], yy[8], zz[8],  xc=0., yc=0., zc=0., Val[8][3], d[8];
   double dx=0., dy=0., dz=0., dd;
   char   Num[100];
@@ -834,7 +834,7 @@ void Draw_VectorPyramid(ARGS){
 void Draw_TensorElement(int type, Post_View *View, 
 			double ValMin, double ValMax, double Raise[3][8],
 			double *X, double *Y, double *Z, double *V){
-  int nbnod ;
+  int nbnod=0 ;
 
   switch(type){
   case POINT : nbnod = 1; break;

@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.30 2003-02-14 03:45:10 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.31 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -156,9 +156,9 @@ int Colorbar_Window::y_to_intensity(int y){
 
 void Colorbar_Window::redraw_range(int a, int b){
    int i;
-   int x,y, px,py;
+   int x,y, px=0,py=0;
    int x1, y1, x2, y2;
-   int intensity;
+   int intensity=0;
    double H,S,V;
 
    make_current();

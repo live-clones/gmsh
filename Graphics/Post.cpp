@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.44 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: Post.cpp,v 1.45 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -281,7 +281,7 @@ void Draw_TensorList(Post_View *v, double ValMin, double ValMax, double Raise[3]
 
 void Draw_Post(void){
   int            iView,j,k,nb;
-  double         ValMin,ValMax,AbsMax;
+  double         ValMin=0.,ValMax=0.,AbsMax;
   Post_View     *v;
 
   if(!CTX.post.list) return;

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.44 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.45 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -112,7 +112,7 @@ void Plan_Moyen (void *data, void *dum){
 
 
 int Calcule_Contours (Surface * s){
-  int i, j, ori, ORI;
+  int i, j, ori, ORI = 0;
   Vertex *v, *first, *last;
   List_T *l, *linv;
   Curve *c;
@@ -669,7 +669,7 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
   maillage M;
   int err, i, j, k, N, a, b, d;
   Simplex *s;
-  double Xmin, Xmax, Ymin, Ymax;
+  double Xmin=0., Xmax=0., Ymin=0., Ymax=0.;
 
 
   if (m->BGM.Typ == WITHPOINTS){

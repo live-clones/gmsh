@@ -1,4 +1,4 @@
-// $Id: StepGeomDatabase.cpp,v 1.11 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: StepGeomDatabase.cpp,v 1.12 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -489,7 +489,7 @@ Step_Closed_Shell_t *Get_Closed_Shell (int Num){
 void Resolve_BREP (void){
   int i,j,k,l;
   double d;
-  int obj,err,typ;
+  int obj,err;
   Step_Vertex_Point_t      vp;
   Step_Direction_t         *d1,*d2;
   Step_Cartesian_Point_t   *pcp,cp;
@@ -504,7 +504,7 @@ void Resolve_BREP (void){
   Step_Axis2_Placement3D_t *axs;
   Step_Closed_Shell_t      cs;
   List_T  *ListInt,*ListIntBis;
-  double ubeg,uend,n[3],t[3],p[3],XMIN,XMAX,YMIN,YMAX,ZMIN,ZMAX,L;
+  double ubeg,uend,n[3],t[3],p[3],XMIN=0.,XMAX=0.,YMIN=0.,YMAX=0.,ZMIN=0.,ZMAX=0.,L;
   int fob;
 
   ListInt    = List_Create(2,2,sizeof(int));
@@ -512,12 +512,22 @@ void Resolve_BREP (void){
 
   for(i=0;i<List_Nbr(BREP->AllCartesian_Points);i++){
     List_Read(BREP->AllCartesian_Points,i,&cp);
-    XMAX = MAX(cp.Pos.X,XMAX);
-    YMAX = MAX(cp.Pos.Y,YMAX);
-    ZMAX = MAX(cp.Pos.Z,ZMAX);
-    XMIN = MIN(cp.Pos.X,XMIN);
-    YMIN = MIN(cp.Pos.Y,YMIN);
-    ZMIN = MIN(cp.Pos.Z,ZMIN);
+    if(!i){
+      XMAX = cp.Pos.X;
+      YMAX = cp.Pos.Y;
+      ZMAX = cp.Pos.Z;
+      XMIN = cp.Pos.X;
+      YMIN = cp.Pos.Y;
+      ZMIN = cp.Pos.Z;
+    }
+    else{
+      XMAX = MAX(cp.Pos.X,XMAX);
+      YMAX = MAX(cp.Pos.Y,YMAX);
+      ZMAX = MAX(cp.Pos.Z,ZMAX);
+      XMIN = MIN(cp.Pos.X,XMIN);
+      YMIN = MIN(cp.Pos.Y,YMIN);
+      ZMIN = MIN(cp.Pos.Z,ZMIN);
+    }
   }
   CTX.lc = L = sqrt(SQR(XMIN-XMAX) + SQR(YMIN-YMAX) + SQR(ZMIN-ZMAX));
 
@@ -640,6 +650,7 @@ void Resolve_BREP (void){
         n[0] = d1->Pos.X;n[1] = d1->Pos.Y;n[2] = d1->Pos.Z;
         t[0] = d2->Pos.X;t[1] = d2->Pos.Y;t[2] = d2->Pos.Z;
         p[0] = pcp->Pos.X;p[1] = pcp->Pos.Y;p[2] = pcp->Pos.Z;
+	int typ = 0;
         switch(ps->Typ){
         case STEP_CYLD:
           typ = MSH_SURF_CYLNDR;

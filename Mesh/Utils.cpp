@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.15 2003-02-18 05:50:05 geuzaine Exp $
+// $Id: Utils.cpp,v 1.16 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -231,7 +231,7 @@ end:
 
 void find_bestuv (Surface * s, double X, double Y,
                   double *U, double *V, double *Z, int N){
-  double d, mina, min, minu, minv, Unew, Vnew;
+  double d, mina, min=0., minu=0., minv=0., Unew, Vnew;
   static int i, j;
   Vertex P;
 
@@ -399,7 +399,7 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V,
 void XYtoUV (Surface * s, double *X, double *Y,
              double *U, double *V, double *Z, double relax){
 
-  double det, Unew, Vnew, err, mat[2][2], jac[2][2];
+  double det, Unew=0., Vnew=0., err, mat[2][2], jac[2][2];
   int iter;
   Vertex D_u, D_v, P;
   double umin, umax, vmin, vmax;

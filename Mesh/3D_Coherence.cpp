@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.27 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.28 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -592,7 +592,7 @@ Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
   double mat[2][2];
   double b[3], res[3];
   double XmaxS, XminS, YmaxS, YminS, ZmaxS, ZminS, lc;
-  double XmaxV, XminV, YmaxV, YminV, ZmaxV, ZminV, val;
+  double XmaxV, XminV, YmaxV, YminV, ZmaxV, ZminV, val=0.;
 
   if (!compareVertex (&e->V[0], &v1))
     return NULL;
@@ -814,7 +814,7 @@ List_T *NewPoints;
 
 void Intersect_Edge_Simplexe (Edge * e, Simplex * s, Intersection * I){
 
-  int i, NbInt, NbVer, NbEdg, NbFac, j;
+  int i, NbInt=0, NbVer=0, NbEdg=0, NbFac=0, j;
   Vertex *v;
   double XminS, YminS, ZminS, XmaxS, YmaxS, ZmaxS;
   double XminE, YminE, ZminE, XmaxE, YmaxE, ZmaxE;

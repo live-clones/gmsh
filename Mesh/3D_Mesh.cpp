@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.46 2003-02-12 09:20:41 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.47 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -373,7 +373,7 @@ void Box_6_Tetraedron (List_T * P, Mesh * m){
                            {6, 4, 8, 7},
                            {6, 4, 7, 3},
                            {2, 3, 4, 6}};
-  double Xm, Ym, Zm, XM, YM, ZM, Xc, Yc, Zc;
+  double Xm=0., Ym=0., Zm=0., XM=0., YM=0., ZM=0., Xc, Yc, Zc;
   Simplex *S, *ps;
   Vertex *V, *v, *pv;
   List_T *smp;

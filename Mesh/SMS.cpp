@@ -1,4 +1,4 @@
-// $Id: SMS.cpp,v 1.10 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: SMS.cpp,v 1.11 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -139,7 +139,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
   int VertexId1,VertexId2,NbEdgesOnFace,NbFacesOnRegion;
   double x,y,z,u,v;
   List_T *AllEdges,*AllFaces;
-  Vertex *v1,*v2,*v3,*v4;
+  Vertex *v1=NULL,*v2=NULL,*v3=NULL,*v4=NULL;
 
 
   fscanf(in,"%s %d",line,&Dummy);

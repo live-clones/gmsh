@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.6 2003-02-20 17:02:00 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.7 2003-02-25 04:02:52 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,7 @@ void newt(double x[], int n, int *check, void (*func)(int, double [],double []))
   const gsl_multiroot_fsolver_type *T;
   gsl_multiroot_fsolver *s;
   int status;
-  size_t i, iter = 0;
+  size_t iter = 0;
   struct gsl_dummy p = {};
   gsl_multiroot_function f = {&gslfunc, n, &p};
   gsl_vector *xx = gsl_vector_alloc (n);

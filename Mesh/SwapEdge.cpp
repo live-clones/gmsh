@@ -1,4 +1,4 @@
-// $Id: SwapEdge.cpp,v 1.11 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: SwapEdge.cpp,v 1.12 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -143,7 +143,7 @@ bool FindBestPattern (int N, Vertex * Contour[100], Vertex * Ed[2],
 
   old_volume = 0.0;
   worst_tet_old = 1.;
-  int IENT;
+  int IENT = 0;
   for (k = 0; k < List_Nbr (Coquille); k++){
     List_Read (Coquille, k, &s);
     IENT = s->iEnt;

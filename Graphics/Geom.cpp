@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.42 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: Geom.cpp,v 1.43 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -265,7 +265,7 @@ int isPointOnPlanarSurface (Surface *S, double X, double Y, double Z, double n[3
 void Draw_Plane_Surface (Surface *s){
   int     i, j, k;
   Curve  *c;
-  double  minx, miny, maxx, maxy, t, n[3], nn;
+  double  minx=0., miny=0., maxx=0., maxy=0., t, n[3], nn;
   Vertex  P1, P2, P3, V[4], vv, vv1, vv2;
   char    Num[100];
 
@@ -423,7 +423,7 @@ void Draw_Plane_Surface (Surface *s){
 
 void Draw_NonPlane_Surface (Surface *s){
   Vertex   v,n1,n2,n3;
-  int      i,NbTics,N;
+  int      i,NbTics,N=0;
   double   u,n[3],nn,nx[3],ny[3];
   double  tics[20];
   double u0, un,v0,vn;

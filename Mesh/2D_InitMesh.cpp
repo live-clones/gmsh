@@ -1,4 +1,4 @@
-// $Id: 2D_InitMesh.cpp,v 1.16 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 2D_InitMesh.cpp,v 1.17 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -199,7 +199,7 @@ void Print ( void *data , void *dummy){
 
 void SwapED ( void *data , void *dummy){
   ED *e,E;
-  int from,to;
+  int from=0,to=0;
 
   e = (ED*)data;
 

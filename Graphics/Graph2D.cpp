@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.25 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.26 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -97,7 +97,7 @@ static void Draw_Graph2D(Post_View *v,
   double xtop = xx;
   double ytop = CTX.viewport[3]-yy;
   double ybot = ytop-height;
-  double Abs, Val, ValMin, ValMax, AbsMin, AbsMax;
+  double Abs, Val, ValMin=0., ValMax=0., AbsMin, AbsMax;
   double p1[3], p2[3];
 
   if(!v->TransparentScale){

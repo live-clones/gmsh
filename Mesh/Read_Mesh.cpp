@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.48 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.49 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
   Curve   C , *c , **cc;
   Surface S , *s , **ss;
   Volume  V , *v , **vv;
-  Tree_T *Duplicates ;
+  Tree_T *Duplicates=NULL ;
 
   while (1) {
     do { 

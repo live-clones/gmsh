@@ -1,4 +1,4 @@
-// $Id: Metric.cpp,v 1.15 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: Metric.cpp,v 1.16 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -96,7 +96,7 @@ GMSHMetric::GMSHMetric ()
 Matrix3x3 GMSHMetric :: Intersect2Metrics (Matrix3x3 *m1[2])
 {
   double lmax = 0.;
-  int im,ic,io;
+  int im=0,ic=0,io=0;
   Vector3 cmax(0.,0,0,0);
   Matrix3x3 res(0.0);
 
@@ -149,7 +149,7 @@ Local_Metric_Of_Attractors ( double X, double Y, double Z,
 
   int i;
   Attractor *a;
-  double u, x1, x2, d;
+  double u, x1, x2, d=0.;
   Vertex v1 (X, Y, Z), v2,metr;
 
   Matrix3x3 myOldMetric (0.,m);

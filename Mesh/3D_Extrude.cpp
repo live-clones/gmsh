@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.58 2003-02-05 22:48:46 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.59 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -339,7 +339,7 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
   Simplex **pS, *s, *news;
   int i, j, k;
   Vertex *v[8];
-  List_T *L0, *L1, *L2, *L3;
+  List_T *L0, *L1, *L2, *L3=NULL;
 
   pS = (Simplex **) data;
   s = *pS;

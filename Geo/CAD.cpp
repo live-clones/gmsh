@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.57 2003-02-21 09:39:01 remacle Exp $
+// $Id: CAD.cpp,v 1.58 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1697,10 +1697,10 @@ bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
 
 bool search_in_boundary (Surface *s, Vertex *p, double t, int Fixu, 
 			 double *uu, double *vv){
-  double l,umin,vmin,lmin = 1.e24;
-  int i,N;
+  double l, umin = 0., vmin = 0., lmin = 1.e200;
+  int i, N;
   Vertex vr;
-  double tmin, tmax,u,v;
+  double tmin, tmax, u, v;
   
   if(Fixu){
     tmin = s->kv[0];

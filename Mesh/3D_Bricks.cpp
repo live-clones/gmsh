@@ -1,4 +1,4 @@
-// $Id: 3D_Bricks.cpp,v 1.11 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 3D_Bricks.cpp,v 1.12 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -102,7 +102,7 @@ void findminmax (void *a, void *b){
 
 void AddSimplexInGrid (Mesh * m, Simplex * s, int boule_boite){
 
-  double XminBox, XmaxBox, YminBox, YmaxBox, ZmaxBox, ZminBox;
+  double XminBox=0., XmaxBox=0., YminBox=0., YmaxBox=0., ZmaxBox=0., ZminBox=0.;
   int Ix1, Ix2, Iy1, Iy2, Iz1, Iz2;
   int i, j, k, index;
   Brick Br, *pBrick;

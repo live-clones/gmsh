@@ -1,4 +1,4 @@
-// $Id: 2D_Util.cpp,v 1.17 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.18 2003-02-25 04:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -185,9 +185,9 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
   */
 
   MPoint       pt,pta,ptb,ptc,ptm;
-  PointNumero  a,b;
+  PointNumero  a=0,b=0;
   double       p,q,val,vec[2],ro,rm;
-  Delaunay    *v1,*v2,*v3,*del2 ;
+  Delaunay    *v1,*v2,*v3,*del2=NULL;
 
   switch (LocalNewPoint) {
 

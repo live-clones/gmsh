@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.163 2003-01-25 20:31:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.164 2003-02-25 04:02:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -144,7 +144,7 @@ int SetGlobalShortcut(int event){
 }
 
 int SelectContour (int type, int num, List_T *Liste1){
-  int      k,ip,i;
+  int      k=0,ip,i;
   List_T  *Liste2;
 
   Liste2 = List_Create(1,1,sizeof(int));
@@ -1420,7 +1420,7 @@ static void _transform_point_curve_surface(int transfo, int mode, char *what){
   Vertex   *v;
   Curve    *c;
   Surface  *s;
-  int type, num;
+  int type, num=0;
 
   if(!strcmp(what,"Point")) {
     type = ENT_POINT;
@@ -1835,7 +1835,7 @@ static void _add_transfinite(int dim){
   Vertex   *v;
   Curve    *c;
   Surface  *s;
-  int      ib;
+  int      ib=0;
   static int n, p[100];
 
   if(!opt_geometry_points(0,GMSH_GET,0)){
