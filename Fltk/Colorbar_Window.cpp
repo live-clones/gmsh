@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.19 2002-02-14 17:09:45 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.20 2002-02-14 17:22:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -246,7 +246,7 @@ void Colorbar_Window::redraw_range(int a, int b){
    int xx0=10, xx1=13*font_height, yy0=10;
    if (help_flag){
      i = 0;
-     fl_draw("1, 2, ..., 7", xx0,yy0+(i+1)*font_height); 
+     fl_draw("1, 2, ..., 8", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "select predefined colormap", xx1,yy0+(i+1)*font_height); i++;
      fl_draw("mouse1", xx0,yy0+(i+1)*font_height); 
      fl_draw(    "draw red or hue channel", xx1,yy0+(i+1)*font_height); i++;

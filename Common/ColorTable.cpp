@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.7 2002-02-14 17:09:45 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.8 2002-02-14 17:22:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -80,7 +80,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 255 ; g = 0 ; b = 0 ;
         }
         break;
-      case 3: /* rainbow */
+      case 3: /* rainbow (matlab, etc.) */
         if (s-bias<=0.00) {
           r = 0 ; g = 0 ; b = 255 ; 
         }
@@ -90,7 +90,8 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
         }
         else if(s-bias<=0.50) {
 	  curve = (curve == 0.25)? 0.26 : curve;
-          r = 0 ; g = 255 ; b = (int)(255.-(255./(0.25-curve))*(s-bias-0.25-curve)); 
+          r = 0 ; g = 255 ; 
+	  b = (int)(255.-(255./(0.25-curve))*(s-bias-0.25-curve)); 
         }
         else if(s-bias<=0.75-curve){
 	  curve = (curve == 0.25)? 0.26 : curve;
@@ -104,7 +105,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 255 ; g = 0 ; b = 0 ; 
         }
         break;
-      case 4: /* rainbow modified to add black and white , from EMC2000 */
+      case 4: /* darkblue-red-yellow-white */
 #define myfct(a,b,c,d) ((a)+\
                         (b)*(s-bias)+\
                         (c)*(s-bias)*(s-bias)+\
@@ -130,7 +131,8 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 0 ; g = 0 ; b = 0 ; 
         }
         else if(s-bias<=0.2){
-          r = (int)(57*(1-100*((s-bias)-0.1)*((s-bias)-0.1))) ; g = 0 ; b = (int)((s-bias)*(255./0.2)) ;
+          r = (int)(57*(1-100*((s-bias)-0.1)*((s-bias)-0.1))) ; g = 0 ; 
+	  b = (int)((s-bias)*(255./0.2)) ;
         }
         else if(s-bias<=0.3624){
           r = 0 ; g = (int)((s-bias-0.2)*(255./0.1624)) ; b = 255 ; 
@@ -145,13 +147,15 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 255; g = (int)(255.-(255./0.1624)*(s-bias-0.6376)) ; b = 0 ;
         }
         else if(s-bias<=1.0) {
-          r = 255; g = (int)((255./0.2)*(s-bias-0.8)) ; b = (int)(-3187.66*(s-bias)*(s-bias)+7012.76*(s-bias)-3570.61) ;
+          r = 255; g = (int)((255./0.2)*(s-bias-0.8)) ;
+	  b = (int)(-3187.66*(s-bias)*(s-bias)+7012.76*(s-bias)-3570.61) ;
         } 
         else { 
           r = 255 ; g = 255 ; b = 255 ; 
         }
         break;
-      default: /* grayscale without white */
+      case 8:  /* grayscale, without white */
+      default:
         if      (s-bias<=0.00){ r = g = b = 0 ; }
         else if (s-bias<=1.00){ r = g = b = (int)(220*(s-bias)); }
         else                  { r = g = b = 220 ; }
