@@ -336,6 +336,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.ColorTable
 Color table used to draw the view@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @end ftable

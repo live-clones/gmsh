@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.184 2004-09-18 01:12:07 geuzaine Exp $
+// $Id: Options.cpp,v 1.185 2004-09-23 23:14:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -413,7 +413,7 @@ void Print_OptionsDoc()
   Print_ColorOptionsDoc(ViewOptions_Color, "View.", file);
   fprintf(file, "@item View.ColorTable\n");
   fprintf(file, "Color table used to draw the view@*\n");
-  fprintf(file, "Saved in: @code{%s})\n\n",
+  fprintf(file, "Saved in: @code{%s}\n\n",
 	  Get_OptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
   fprintf(file, "@end ftable\n");
   fclose(file);
