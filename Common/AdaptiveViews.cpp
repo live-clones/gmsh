@@ -73,7 +73,7 @@ void _triangle::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexp
   _triangle *t = new _triangle(p1,p2,p3);
   Recur_Create (t, maxlevel,level,coeffs,eexps) ;
 
-  printf("%d _triangle and %d _point created\n",_triangle::all_triangles.size(),_point::all_points.size());
+  printf("%d _triangle and %d _point created\n",(int)_triangle::all_triangles.size(),(int)_point::all_points.size());
 }
 void _triangle::Recur_Create (_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
