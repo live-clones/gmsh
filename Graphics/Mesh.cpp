@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.54 2002-11-08 18:56:21 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.55 2002-11-08 23:35:41 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -122,40 +122,52 @@ void Draw_Mesh (Mesh *M) {
   if(CTX.mesh.draw && CTX.render_mode != GMSH_SELECT){
 
     static int first = 1, listnum;
+
     if(CTX.mesh.display_lists && CTX.mesh.changed){
       if(first) listnum = glGenLists(1);
       first = 0;
-      printf("new list!\n");
-      glNewList(listnum, GL_COMPILE);
+      //printf("new mesh display list\n");
+      glNewList(listnum, GL_COMPILE_AND_EXECUTE);
     }
       
-    if(M->status >= 3 && (CTX.mesh.volumes || CTX.mesh.volumes_num)){
-      Tree_Action(M->Volumes, Draw_Mesh_Volumes);
-    }
+    if(!CTX.mesh.display_lists || (CTX.mesh.display_lists && CTX.mesh.changed)){
+
+      //printf("normal mesh drawing\n");
+
+      if(M->status >= 3 && (CTX.mesh.volumes || CTX.mesh.volumes_num)){
+	Tree_Action(M->Volumes, Draw_Mesh_Volumes);
+      }
+      
+      if(M->status >= 2 && (CTX.mesh.surfaces || CTX.mesh.surfaces_num)){
+	Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
+	if(CTX.mesh.oldxtrude)//old extrusion algo
+	  Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
+      }
+      
+      if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num)){
+	Tree_Action(M->Curves, Draw_Mesh_Curves);
+	DrawVertexSupp = 1 ; 
+	Tree_Action(M->VertexEdges, Draw_Mesh_Points);
+      }
+      
+      if(M->status >= 0 && (CTX.mesh.points || CTX.mesh.points_num)){
+	DrawVertexSupp = 0 ; 
+	Tree_Action(M->Vertices, Draw_Mesh_Points);
+      }
     
-    if(M->status >= 2 && (CTX.mesh.surfaces || CTX.mesh.surfaces_num)){
-      Tree_Action(M->Surfaces, Draw_Mesh_Surfaces);
-      if(CTX.mesh.oldxtrude)//old extrusion algo
-	Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
     }
-    
-    if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num)){
-      Tree_Action(M->Curves, Draw_Mesh_Curves);
-      DrawVertexSupp = 1 ; 
-      Tree_Action(M->VertexEdges, Draw_Mesh_Points);
+    else{
+
+      //printf("calling mesh display list\n");
+      glCallList(listnum);
+
     }
-    
-    if(M->status >= 0 && (CTX.mesh.points || CTX.mesh.points_num)){
-      DrawVertexSupp = 0 ; 
-      Tree_Action(M->Vertices, Draw_Mesh_Points);
-    }
-    
+
     if(CTX.mesh.display_lists){
       if(CTX.mesh.changed){
 	glEndList();
 	CTX.mesh.changed=0;
       }
-      glCallList(listnum);
     }
     
   }
