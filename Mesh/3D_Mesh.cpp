@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.21 2001-06-25 15:22:26 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.22 2001-06-25 15:24:12 remacle Exp $
 
 /*
  
@@ -714,6 +714,9 @@ void Maillage_Volume (void *data, void *dum){
   double uvw[3];
   int i;
 
+  // WE SHOULD ALLOCATE THESE GUYS HERE AND NOT IN Bowyer_Watson 
+  // MEMORY BUG -JF
+
   Simplexes_New = List_Create (10, 10, sizeof (Simplex *));
   Simplexes_Destroyed = List_Create (10, 10, sizeof (Simplex *));
 
@@ -877,6 +880,8 @@ void Maillage_Volume (void *data, void *dum){
     Eta_Maillage (THEM, &THEM->Statistics[20], &THEM->Statistics[21], &THEM->Statistics[22]);
     R_Maillage (THEM, &THEM->Statistics[23], &THEM->Statistics[24], &THEM->Statistics[25]);
   }
+  // WE SHOULD DESALLOCATE THESE GUYS HERE AND NOT NOWHERE ;-)
+  // MEMORY BUG -JF
   List_Delete(Simplexes_New);
   List_Delete(Simplexes_Destroyed);
 }

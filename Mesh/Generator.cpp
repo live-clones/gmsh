@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.22 2001-06-25 13:30:57 remacle Exp $
+// $Id: Generator.cpp,v 1.23 2001-06-25 15:22:26 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -230,6 +230,12 @@ void mai3d (Mesh * M, int Asked){
       (Asked < oldstatus && Asked > 0)){
     Msg(STATUS2, "Mesh 1D...");
     t1 = Cpu();
+
+    if(M->status > 1)
+      {
+	OpenProblem (CTX.filename);
+      }
+
     Maillage_Dimension_1 (M);
     t2 = Cpu();
     Msg(STATUS2, "Mesh 1D complete (%g s)", t2 - t1);
