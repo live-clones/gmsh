@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.79 2002-10-12 19:41:13 geuzaine Exp $
+// $Id: Views.cpp,v 1.80 2002-11-05 19:52:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -588,7 +588,7 @@ Post_View *Create2DGraph(char *xname, char *yname,
 
 // INput/output
 
-void Read_View(FILE *file, char *filename){
+void ReadView(FILE *file, char *filename){
   char   str[256], name[256];
   int    i, nb, format, size, testone, swap, t2l, t3l;
   double version;
@@ -794,7 +794,7 @@ void Read_View(FILE *file, char *filename){
 // FIXME: add a format similar to the msh format (node list + simplex list)
 // FIXME: add a structured format
 
-void Write_View(int Flag_BIN, Post_View *v, char *filename){
+void WriteView(int Flag_BIN, Post_View *v, char *filename){
   FILE *file;
   char name[256];
   int i, f, One=1;
@@ -1195,3 +1195,52 @@ void Post_View :: transform (double mat[3][3]){
   }
 }
 
+// merge lists
+
+static void merge(List_T *a , List_T *b){
+  if(!a || !b) return;
+  for(int i=0;i<List_Nbr(a);i++){
+    List_Add(b,List_Pointer(a,i));
+  }
+}
+
+void MergeViews(int all){
+  Post_View *vm = BeginView(1);
+  for(int i=0; i<List_Nbr(CTX.post.list)-1; i++){
+    Post_View *v = (Post_View*)List_Pointer(CTX.post.list, i);
+    if(all || v->Visible){
+      Msg(DEBUG, "Merging view %d", i);
+      merge(v->SP,vm->SP); vm->NbSP += v->NbSP;
+      merge(v->VP,vm->VP); vm->NbVP += v->NbVP; 
+      merge(v->TP,vm->TP); vm->NbTP += v->NbTP;
+      merge(v->SL,vm->SL); vm->NbSL += v->NbSL;
+      merge(v->VL,vm->VL); vm->NbVL += v->NbVL;
+      merge(v->TL,vm->TL); vm->NbTL += v->NbTL;
+      merge(v->ST,vm->ST); vm->NbST += v->NbST;
+      merge(v->VT,vm->VT); vm->NbVT += v->NbVT;
+      merge(v->TT,vm->TT); vm->NbTT += v->NbTT;
+      merge(v->SQ,vm->SQ); vm->NbSQ += v->NbSQ;
+      merge(v->VQ,vm->VQ); vm->NbVQ += v->NbVQ;
+      merge(v->TQ,vm->TQ); vm->NbTQ += v->NbTQ;
+      merge(v->SS,vm->SS); vm->NbSS += v->NbSS;
+      merge(v->VS,vm->VS); vm->NbVS += v->NbVS;
+      merge(v->TS,vm->TS); vm->NbTS += v->NbTS;
+      merge(v->SH,vm->SH); vm->NbSH += v->NbSH;
+      merge(v->VH,vm->VH); vm->NbVH += v->NbVH;
+      merge(v->TH,vm->TH); vm->NbTH += v->NbTH;
+      merge(v->SI,vm->SI); vm->NbSI += v->NbSI;
+      merge(v->VI,vm->VI); vm->NbVI += v->NbVI;
+      merge(v->TI,vm->TI); vm->NbTI += v->NbTI;
+      merge(v->SY,vm->SY); vm->NbSY += v->NbSY;
+      merge(v->VY,vm->VY); vm->NbVY += v->NbVY;
+      merge(v->TY,vm->TY); vm->NbTY += v->NbTY;
+      /* this more complicted: have to change the indices
+	 merge(v->T2D,vm->T2D);
+	 merge(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
+	 merge(v->T3D,vm->T3D);
+	 merge(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
+      */
+    }
+  }
+  EndView(vm, 1, "merged.pos", "merged");
+}

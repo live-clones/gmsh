@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.208 2002-11-03 21:55:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.209 2002-11-05 19:52:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -801,6 +801,10 @@ void GUI::create_menu_window(int argc, char **argv){
 	       (Fl_Callback *)view_duplicate_cb, (void*)i, 0) ;
       pop->add("Duplicate/View with options", 0,
 	       (Fl_Callback *)view_duplicate_with_options_cb, (void*)i, 0) ;
+      pop->add("Merge/All views", 0,
+	       (Fl_Callback *)view_merge_all_cb, (void*)i, 0) ;
+      pop->add("Merge/All visible views", 0,
+	       (Fl_Callback *)view_merge_visible_cb, (void*)i, 0) ;
       pop->add("Save as/ASCII view...", 0,
 	       (Fl_Callback *)view_save_ascii_cb, (void*)i, 0) ;
       pop->add("Save as/Binary view...", 0,

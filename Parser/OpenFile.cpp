@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.32 2002-10-11 01:38:13 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.33 2002-11-05 19:52:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ int ParseFile(char *f, int silent){
   }
   else if(!strncmp(String, "$PostFormat", 11) ||
           !strncmp(String, "$View", 5)){
-    Read_View(yyin, yyname);
+    ReadView(yyin, yyname);
     status = 0;
   }
   else{

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.147 2002-11-05 02:03:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.148 2002-11-05 19:52:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2136,7 +2136,7 @@ void view_save_ascii_cb(CALLBACK_ARGS){
 	  goto test;
     }
   save:
-    Write_View(0, (Post_View*)List_Pointer(CTX.post.list,(long int)data), name); 
+    WriteView(0, (Post_View*)List_Pointer(CTX.post.list,(long int)data), name); 
   }
 }
 
@@ -2153,7 +2153,7 @@ void view_save_binary_cb(CALLBACK_ARGS){
 	  goto test;
     }
   save:
-    Write_View(1, (Post_View*)List_Pointer(CTX.post.list,(long int)data), name); 
+    WriteView(1, (Post_View*)List_Pointer(CTX.post.list,(long int)data), name); 
   }
 }
 
@@ -2163,6 +2163,16 @@ void view_duplicate_cb(CALLBACK_ARGS){
 }
 void view_duplicate_with_options_cb(CALLBACK_ARGS){
   DuplicateView((long int)data,1);
+  Draw();
+}
+
+void view_merge_all_cb(CALLBACK_ARGS) {
+  MergeViews(1);
+  Draw();
+}
+
+void view_merge_visible_cb(CALLBACK_ARGS) {
+  MergeViews(0);
   Draw();
 }
 

@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.24 2002-05-20 18:28:30 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.25 2002-11-05 19:52:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ void GMSH_LevelsetPlugin::Save ()
 {
   if(processed){
     Msg(INFO, "Writing file '%s'", OutputFileName);
-    Write_View(0, processed, OutputFileName);
+    WriteView(0, processed, OutputFileName);
     Msg(INFO, "Levelset ouput complete '%s'", OutputFileName);
     Msg(STATUS2, "Wrote '%s'", OutputFileName);
   }

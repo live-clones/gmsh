@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.3 2002-10-25 01:16:02 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.4 2002-11-05 19:52:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -210,7 +210,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	if(argv[i] && argv[i+1]){
 	  ParseFile(argv[i],0);
 	  if(List_Nbr(CTX.post.list))
-	    Write_View(1,(Post_View*)List_Pointer(CTX.post.list, 0),argv[i+1]);
+	    WriteView(1,(Post_View*)List_Pointer(CTX.post.list, 0),argv[i+1]);
 	  else
 	    fprintf(stderr, ERROR_STR "No view to convert\n");
 	}
