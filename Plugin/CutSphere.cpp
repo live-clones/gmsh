@@ -1,3 +1,5 @@
+
+#include <string.h>
 #include "CutSphere.h"
 
 double opt_cut_sphere_Xc(OPT_ARGS_NUM)

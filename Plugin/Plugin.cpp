@@ -1,10 +1,11 @@
-#include <stdio.h>
+
 #include <dlfcn.h>
 #include <map>
+#include <FL/filename.H>
+
 #include "Plugin.h"
 #include "PluginManager.h"
-#include "Message.h"
-#include <FL/filename.H>
+
 #include "CutPlane.h"
 #include "CutSphere.h"
 #include "CutMap.h"

@@ -12,8 +12,11 @@
   directly in the executable. I think that it's a good 
   way to start.
 */
+
+#include <string.h>
 #include <stdio.h>
 #include "Options.h"
+#include "Message.h"
 
 
 class PluginDialogBox;

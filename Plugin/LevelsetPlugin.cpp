@@ -1,8 +1,7 @@
-#include "LevelSetPlugin.h"
+#include "LevelsetPlugin.h"
 #include "List.h"
 #include "Views.h"
 #include "Iso.h"
-#include "Message.h"
 
 // that's the bad part of the story ...
 extern Post_View *ActualView;
