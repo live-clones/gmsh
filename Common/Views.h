@@ -196,33 +196,31 @@ class Post_View{
 // levels of accuracy. 
 
 
-
 // Type
 #define DRAW_POST_3D       1
 #define DRAW_POST_2D_SPACE 2
 #define DRAW_POST_2D_TIME  3
 
 // IntervalsType
-#define DRAW_POST_ISO          1
-#define DRAW_POST_CONTINUOUS   2
-#define DRAW_POST_DISCRETE     3
-#define DRAW_POST_NUMERIC      4
+#define DRAW_POST_ISO        1
+#define DRAW_POST_CONTINUOUS 2
+#define DRAW_POST_DISCRETE   3
+#define DRAW_POST_NUMERIC    4
 
 // VectorType
-#define DRAW_POST_SEGMENT               1
-#define DRAW_POST_ARROW                 2
-#define DRAW_POST_PYRAMID               3
-#define DRAW_POST_ARROW3D               4
-#define DRAW_POST_DISPLACEMENT          5
-#define DRAW_POST_DISPLACEMENT_EXTERNAL 6
+#define DRAW_POST_SEGMENT      1
+#define DRAW_POST_ARROW        2
+#define DRAW_POST_PYRAMID      3
+#define DRAW_POST_ARROW3D      4
+#define DRAW_POST_DISPLACEMENT 5
 
 // ArrowLocation
-#define DRAW_POST_LOCATE_COG     1
-#define DRAW_POST_LOCATE_VERTEX  2
+#define DRAW_POST_LOCATE_COG    1
+#define DRAW_POST_LOCATE_VERTEX 2
 
 // TensorType
-#define DRAW_POST_VONMISES      0
-#define DRAW_POST_EIGENVECTORS  1
+#define DRAW_POST_VONMISES     0
+#define DRAW_POST_EIGENVECTORS 1
 
 // RangeType
 #define DRAW_POST_RANGE_DEFAULT  1
@@ -230,9 +228,9 @@ class Post_View{
 #define DRAW_POST_RANGE_PER_STEP 3
 
 // ScaleType
-#define DRAW_POST_LINEAR             1
-#define DRAW_POST_LOGARITHMIC        2
-#define DRAW_POST_DOUBLELOGARITHMIC  3 // for vorticity e.g.
+#define DRAW_POST_LINEAR            1
+#define DRAW_POST_LOGARITHMIC       2
+#define DRAW_POST_DOUBLELOGARITHMIC 3 // for vorticity e.g.
 
 // Public functions
 

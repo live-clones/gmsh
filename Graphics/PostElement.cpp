@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.49 2004-10-26 00:43:23 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.50 2004-10-26 01:04:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -999,13 +999,10 @@ int GetDataFromOtherView(int type, int nbnod, Post_View *v, int *nbcomp,
     break;
   }
 
-  if(comp == 3){
-    if(v2->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL)
-      *vectype = DRAW_POST_ARROW3D; // avoid infinite recursion
-    else
-      *vectype = v2->VectorType;
-  }
-
+  if(v2->VectorType == DRAW_POST_DISPLACEMENT)
+    *vectype = DRAW_POST_ARROW3D; // avoid recursion
+  else
+    *vectype = v2->VectorType;
   *nbcomp = comp;
 
   return 1;
@@ -1037,7 +1034,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     norm[k] = sqrt(Val[k][0] * Val[k][0] + Val[k][1] * Val[k][1] + Val[k][2] * Val[k][2]);
   }
 
-  int ext_nbcomp = 3, ext_vectype = DRAW_POST_ARROW3D;
+  int ext_nbcomp = 1, ext_vectype = DRAW_POST_ARROW3D;
   double *ext_vals = &V[3 * nbnod * View->TimeStep];
   double ext_min = ValMin, ext_max = ValMax, ext_norm[8];
   for(int k = 0; k < nbnod; k++)
@@ -1054,11 +1051,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     for(int k = 0; k < nbnod; k++)
       Raise[i][k] = View->Raise[i] * norm[k];
 
-  if(View->VectorType == DRAW_POST_DISPLACEMENT ||
-     View->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
-
-    if(View->VectorType == DRAW_POST_DISPLACEMENT)
-      ext_nbcomp = 1;
+  if(View->VectorType == DRAW_POST_DISPLACEMENT){
 
     double fact = View->DisplacementFactor;
     double xx[8], yy[8], zz[8];

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.290 2004-10-26 00:43:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.291 2004-10-26 01:04:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3555,9 +3555,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
 	break;
       case 4:
 	val = DRAW_POST_DISPLACEMENT;
-	break;
-      case 5:
-	val = DRAW_POST_DISPLACEMENT_EXTERNAL;
 	break;
       default: // 3
 	val = DRAW_POST_ARROW3D;

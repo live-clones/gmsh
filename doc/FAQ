@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.41 2004-10-26 00:43:23 geuzaine Exp $
+$Id: FAQ,v 1.42 2004-10-26 01:04:53 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -262,11 +262,11 @@ The easiest is to load two views: the first one containing a
 displacement field (a vector view that will be used to deform the
 mesh), and the second one containing the field you want to display
 (this view has to contain the same number of elements as the
-displacement view). You should then set 'Vector type' to 'Raised view'
-in the first view, as well as set 'External data source' to the second
-view. (You might want to make the second view invisible, too. If you
-want to amplify or decrease the amount of deformation, just modify the
-'Displacement factor' option.)
+displacement view). You should then set 'Vector type' to
+'Displacement' in the first view, as well as set 'External data
+source' to the second view. (You might want to make the second view
+invisible, too. If you want to amplify or decrease the amount of
+deformation, just modify the 'Displacement factor' option.)
 
 Another solution is to use the DiplacementRaise plugin.
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.369 2004-10-26 00:43:22 geuzaine Exp $
+// $Id: GUI.cpp,v 1.370 2004-10-26 01:04:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2627,7 +2627,6 @@ void GUI::create_option_window()
           {"Pyramid", 0, 0, 0},
           {"3D arrow", 0, 0, 0},
           {"Displacement", 0, 0, 0},
-          {"Raised view", 0, 0, 0},
           {0}
         };
         view_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
