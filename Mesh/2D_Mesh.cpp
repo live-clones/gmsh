@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.11 2000-12-08 13:55:23 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.12 2000-12-13 20:21:48 geuzaine Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -73,6 +73,8 @@ void Plan_Moyen (void *data, void *dum){
     points = List_Create (10, 10, sizeof (Vertex *));
     deb = 0;
   }
+  else
+    List_Reset (points);
 
   switch (s->Typ){
   case MSH_SURF_PLAN:
@@ -143,7 +145,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = X;
     res[0] = 1.;
     res[1] = res[2] = 0.0;
-    Msg(DEBUG, "Plan Type x = c");
+    Msg(DEBUG, "Mean Plane of Type 'x = c'");
   }
 
   /* y = Y */
@@ -152,7 +154,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = Y;
     res[1] = 1.;
     res[0] = res[2] = 0.0;
-    Msg(DEBUG, "Plan Type y = c");
+    Msg(DEBUG, "Mean Plane of Type 'y = c'");
   }
 
   /* z = Z */
@@ -161,6 +163,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = Z;
     res[2] = 1.;
     res[1] = res[0] = 0.0;
+    Msg(DEBUG, "Mean Plane of Type 'y = c'");
   }
 
   /* by + cz = -x */
@@ -177,7 +180,7 @@ void Plan_Moyen (void *data, void *dum){
       res[0] = 1.;
       res[1] = r2[0];
       res[2] = r2[1];
-      Msg(DEBUG, "Plan Type by + cz = -x");
+      Msg(DEBUG, "Mean Plane of Type 'by + cz = -x'");
     }
 
     /* ax + cz = -y */
@@ -194,7 +197,7 @@ void Plan_Moyen (void *data, void *dum){
         res[0] = r2[0];
         res[1] = 1.;
         res[2] = r2[1];
-        Msg(DEBUG, "Plan Type ax + cz = -y");
+        Msg(DEBUG, "Mean Plane of Type 'ax + cz = -y'");
       }
       
       /* ax + by = -z */
@@ -211,10 +214,10 @@ void Plan_Moyen (void *data, void *dum){
           res[0] = r2[0];
           res[1] = r2[1];
           res[2] = 1.;
-          Msg(DEBUG, "Plan Type ax + by = -z");
+          Msg(DEBUG, "Mean Plane of Type 'ax + by = -z'");
         }
         else{
-          Msg(ERROR, "Mean Plane");
+          Msg(ERROR, "Problem in Mean Plane");
         }
       }
     }
@@ -282,7 +285,7 @@ void Plan_Moyen (void *data, void *dum){
       }
     }
   }
-  List_Reset (points);
+
 }
 
 
