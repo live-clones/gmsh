@@ -258,33 +258,33 @@ bool OctreePost::searchVector ( double x ,
 	  for (int i=0;i<theView->NbTimeStep;++i)
 	    {
 	      values[3*i] = 
-		V[9*i  ]   * U[0] + 
-		V[9*i+3]   * U[1] + 
-		V[9*i+6]   * (1-U[0]-U[1]); 
+		V[9*i+3]   * U[0] + 
+		V[9*i+6]   * U[1] + 
+		V[9*i+0]   * (1-U[0]-U[1]); 
 	      values[3*i+1] = 
-		V[9*i+1]   * U[0] + 
-		V[9*i+4]   * U[1] + 
-		V[9*i+7]   * (1-U[0]-U[1]); 
+		V[9*i+4]   * U[0] + 
+		V[9*i+7]   * U[1] + 
+		V[9*i+1]   * (1-U[0]-U[1]); 
 	      values[3*i+2] = 
-		V[9*i+2]   * U[0] + 
-		V[9*i+5]   * U[1] + 
-		V[9*i+8]   * (1-U[0]-U[1]); 
+		V[9*i+5]   * U[0] + 
+		V[9*i+8]   * U[1] + 
+		V[9*i+2]   * (1-U[0]-U[1]); 
 	    }
 	}
       else
 	{
 	  values[0] = 
-	    V[9*timestep  ] * U[0] + 
-	    V[9*timestep+3] * U[1] + 
-	    V[9*timestep+6] * (1-U[0]-U[1]); 
+	    V[9*timestep+3] * U[0] + 
+	    V[9*timestep+6] * U[1] + 
+	    V[9*timestep+0] * (1-U[0]-U[1]); 
 	  values[1] = 
-	    V[9*timestep+1] * U[0] + 
-	    V[9*timestep+4] * U[1] + 
-	    V[9*timestep+7] * (1-U[0]-U[1]); 
+	    V[9*timestep+4] * U[0] + 
+	    V[9*timestep+7] * U[1] + 
+	    V[9*timestep+1] * (1-U[0]-U[1]); 
 	  values[2] = 
-	    V[9*timestep+2] * U[0] + 
-	    V[9*timestep+5] * U[1] + 
-	    V[9*timestep+8] * (1-U[0]-U[1]); 
+	    V[9*timestep+5] * U[0] + 
+	    V[9*timestep+8] * U[1] + 
+	    V[9*timestep+2] * (1-U[0]-U[1]); 
 	  /*	  Msg(WARNING, "found %lf %lf %lf %lf  %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 	      values[0],values[1],values[2],
 	      U[0],U[1],
@@ -313,39 +313,39 @@ bool OctreePost::searchVector ( double x ,
 	  for (int i=0;i<theView->NbTimeStep;++i)
 	    {
 	      values[3*i] = 
-		V[12*i  ]   * U[0] + 
-		V[12*i+3]   * U[1] + 
-		V[12*i+6]   * U[2] + 
-		V[12*i+9]   * (1-U[0]-U[1]-U[2]); 
-	      values[3*i+1] = 
-		V[12*i+1]   * U[0] + 
-		V[12*i+4]   * U[1] + 
+		V[12*i+3]   * U[0] + 
+		V[12*i+6]   * U[1] + 
 		V[12*i+9]   * U[2] + 
-		V[12*i+10]   * (1-U[0]-U[1]-U[2]); 
+		V[12*i+0]   * (1-U[0]-U[1]-U[2]); 
+	      values[3*i+1] = 
+		V[12*i+4]   * U[0] + 
+		V[12*i+9]   * U[1] + 
+		V[12*i+10]   * U[2] + 
+		V[12*i+1]   * (1-U[0]-U[1]-U[2]); 
 	      values[3*i+2] = 
-		V[12*i+2]   * U[0] + 
-		V[12*i+5]   * U[1] + 
-		V[12*i+7]   * U[2] + 
-		V[12*i+11]   * (1-U[0]-U[1]-U[2]); 
+		V[12*i+5]   * U[0] + 
+		V[12*i+7]   * U[1] + 
+		V[12*i+11]   * U[2] + 
+		V[12*i+2]   * (1-U[0]-U[1]-U[2]); 
 	    }
 	}
       else
 	{
 	  values[0] = 
-	    V[12*timestep  ]   * U[0] + 
-	    V[12*timestep+3]   * U[1] + 
-	    V[12*timestep+6]   * U[2] + 
-	    V[12*timestep+9]   * (1-U[0]-U[1]-U[2]); 
+	    V[12*timestep+3]   * U[0] + 
+	    V[12*timestep+6]   * U[1] + 
+	    V[12*timestep+9]   * U[2] + 
+	    V[12*timestep+0]   * (1-U[0]-U[1]-U[2]); 
 	  values[1] = 
-	    V[12*timestep+1]   * U[0] + 
-	    V[12*timestep+4]   * U[1] + 
-	    V[12*timestep+7]   * U[2] + 
-	    V[12*timestep+10]   * (1-U[0]-U[1]-U[2]); 
+	    V[12*timestep+4]   * U[0] + 
+	    V[12*timestep+7]   * U[1] + 
+	    V[12*timestep+10]   * U[2] + 
+	    V[12*timestep+1 ]   * (1-U[0]-U[1]-U[2]); 
 	  values[2] = 
-	    V[12*timestep+2]   * U[0] + 
-	    V[12*timestep+5]   * U[1] + 
-	    V[12*timestep+8]   * U[2] + 
-	    V[12*timestep+11]   * (1-U[0]-U[1]-U[2]); 
+	    V[12*timestep+5 ]   * U[0] + 
+	    V[12*timestep+8 ]   * U[1] + 
+	    V[12*timestep+11]   * U[2] + 
+	    V[12*timestep+2 ]   * (1-U[0]-U[1]-U[2]); 
 	}
       return true;
     } 
@@ -376,16 +376,18 @@ bool OctreePost::searchScalar ( double x ,
 	{
 	  for (int i=0;i<theView->NbTimeStep;++i)
 	    {
-	      values[i] = V[3*i] * U[0] + 
-		V[3*i+1] * U[1] + 
-		V[3*i+2] * (1-U[0]-U[1]); 
+	      values[i] = 
+		V[3*i+1] * U[0] + 
+		V[3*i+2] * U[1] + 
+		V[3*i+0] * (1-U[0]-U[1]); 
 	    }
 	}
       else
 	{
-	  values[0] = V[3*timestep] * U[0] + 
-	    V[3*timestep+1] * U[1] + 
-	    V[3*timestep+2] * (1-U[0]-U[1]); 
+	  values[0] = 
+	    V[3*timestep+1] * U[0] + 
+	    V[3*timestep+2] * U[1] + 
+	    V[3*timestep+0] * (1-U[0]-U[1]); 
 	}
       return true;
     } 
@@ -405,19 +407,19 @@ bool OctreePost::searchScalar ( double x ,
 	  for (int i=0;i<theView->NbTimeStep;++i)
 	    {
 	      values[i] = 
-		V[3*i  ] * U[0] + 
-		V[3*i+1] * U[1] + 
-		V[3*i+2] * U[2] + 
-		V[3*i+3] * (1.-U[0]-U[1]-U[2]); 
+		V[3*i+1] * U[0] + 
+		V[3*i+2] * U[1] + 
+		V[3*i+3] * U[2] + 
+		V[3*i+0] * (1.-U[0]-U[1]-U[2]); 
 	    }
 	}
       else
 	{
 	  values[0] = 
-	    V[3*timestep]   * U[0] + 
-	    V[3*timestep+1] * U[1] + 
-	    V[3*timestep+2] * U[2] + 
-	    V[3*timestep+3] * (1-U[0]-U[1]-U[2]); 
+	    V[3*timestep+1]   * U[0] + 
+	    V[3*timestep+2] * U[1] + 
+	    V[3*timestep+3] * U[2] + 
+	    V[3*timestep  ] * (1-U[0]-U[1]-U[2]); 
 	}
       return true;
     } 
