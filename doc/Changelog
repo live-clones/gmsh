@@ -1,4 +1,4 @@
-New in 1.13: Added jpeg output for Windows version;
+New in 1.13: Added jpeg output on Windows;
 
 New in 1.12: Corrected vector lines in the post-processing parsed
 format; corrected animation on Windows; corrected file creation in
