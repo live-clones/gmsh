@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.40 2000-12-11 16:23:15 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.41 2000-12-11 19:39:15 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -37,6 +37,7 @@ static double         LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char*          LoopControlVariablesNameTab[MAX_OPEN_FILES];
 static char           yynameTab[MAX_OPEN_FILES][NAME_STR_L];
 static char           tmpstring[NAME_STR_L];
+static char           tmpstring2[NAME_STR_L], tmpstring3[NAME_STR_L];
 static Symbol         TheSymbol, *pSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
@@ -46,7 +47,7 @@ static double         d, *pd;
 static ExtrudeParams  extr;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
 static List_T         *ListOfListOfDouble_L, *ListOfColor_L=NULL;
-
+static char           *str;
 static void           *pNumOpt, *pArrOpt;
 static char          **pStrOpt, *pStrViewOpt;
 static unsigned int   *pColOpt;
@@ -380,8 +381,7 @@ GeomFormat :
   | Extrude     { return 1; }
   | Transfini   { return 1; }
   | Coherence   { return 1; }
-  | Loop        {return 1;}
-/*  | Script      { return 1; }*/
+  | Loop        { return 1; }
   | Command     { return 1; }
   | error tEND  { yyerrok; return 1;}
 ;
@@ -389,11 +389,30 @@ GeomFormat :
 Printf :
     tPrintf '(' tBIGSTR ')' tEND
     {
-      Msg(PARSER_INFO, $3); 
+      fprintf(stderr, $3); 
     }
-  | tPrintf '(' tBIGSTR ',' FExpr ')' tEND
+  | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
-      Msg(PARSER_INFO, $3, $5); 
+      for(i = 0 ; i<List_Nbr(ListOfDouble_L) ; i++){
+	if(!i){
+	  str = strtok($3, "%");
+	  fprintf(stderr, str); 
+	}
+	str = strtok(NULL, "%");
+	if(str){
+	  strcpy(tmpstring, "%");
+	  strcat(tmpstring, str);
+	  fprintf(stderr, tmpstring, *(double*)List_Pointer(ListOfDouble_L,i)); 
+	}
+	else{
+	  fprintf(stderr, "\n"); 
+	  vyyerror("Missing %d Parameter(s) in Printf Format",
+		   List_Nbr(ListOfDouble_L)-i);
+	  break ;
+	}
+      }
+      if(!yyerrorstate)
+	fprintf(stderr, "\n"); 
     }
 ;
 
@@ -2875,9 +2894,26 @@ StringExpr :
     {
       $$ = $3;
     }
-  | tSprintf '(' tBIGSTR ',' FExpr ')'
+  | tSprintf '(' tBIGSTR ',' RecursiveListOfDouble ')'
     {
-      sprintf(tmpstring, $3, $5);
+      for(i = 0 ; i<List_Nbr(ListOfDouble_L) ; i++){
+	if(!i){
+	  str = strtok($3, "%");
+	  strcpy(tmpstring, str);
+	}
+	str = strtok(NULL, "%");
+	if(str){
+	  strcpy(tmpstring2, "%");
+	  strcat(tmpstring2, str);
+	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer(ListOfDouble_L,i)); 
+	  strcat(tmpstring, tmpstring3);
+	}
+	else{
+	  vyyerror("Missing %d Parameter(s) in Sprintf Format",
+		   List_Nbr(ListOfDouble_L)-i);
+	  break ;
+	}
+      }
       $$ = (char*)Malloc(strlen(tmpstring));
       strcpy($$, tmpstring);
     }

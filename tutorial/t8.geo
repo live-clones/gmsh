@@ -73,6 +73,11 @@ For num In {1:255}
 
   If (!(num % 20))
 
+// The Sprintf function permits to create complex strings using
+// variables (since all Gmsh variables are treated internally as
+// double precision numbers, the format should only contain valid
+// double precision number format specifiers):
+
     Print Sprintf("t8-%g.gif", num); // print the scene in a gif file
 
   EndIf

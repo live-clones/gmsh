@@ -136,9 +136,15 @@ For t In {1:5}
   Physical Volume (t) = thehole ;
  
 // The Printf function permits to print the value of variables on the
-// terminal:
+// terminal, in a way similar to the 'printf' C function:
 
-  Printf("The cheese hole has number %g!", thehole) ;
+  Printf("The cheese hole %g (center = {%g,%g,%g}, radius = %g) has number %g!",
+	 t, x, y, z, r, thehole) ;
+
+// Note: All Gmsh variables are treated internally as double precision
+// numbers. The format string should thus only contain valid double
+// precision number format specifiers (see the C or C++ language
+// reference for more details).
 
 EndFor
 
