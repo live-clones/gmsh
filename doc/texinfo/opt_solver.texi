@@ -1,4 +1,9 @@
 @ftable @code
+@item Solver.SocketName
+Name of socket (TCP/IP socket if it contains `:', UNIX socket otherwise)@*
+Default value: @code{".gmshsock"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.Name0
 Name of solver 0@*
 Default value: @code{"GetDP"}@*
