@@ -1,8 +1,8 @@
 @ftable @code
 @item Plugin(CutGrid)
 Plugin(CutGrid) cuts a 3D view with a rectangular
-grid defined by the 3 points {`X0',`Y0',`Z0'} (origin)
-{`X1',`Y1',`Z1'} (axis of U) and {`X2',`Y2',`Z2'} (axis
+grid defined by the 3 points (`X0',`Y0',`Z0') (origin),
+(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis
 of V). The number of points along U and V is set
 with the options `nPointsU' and `nPointsV'. If
 `iView' < 0, the plugin is run on the current view.
@@ -196,8 +196,8 @@ using the values associated with the
 the nodes along the X, Y and Z axes as in
 View[`iView'].RaiseX, View[`iView'].RaiseY
 and View[`iView'].RaiseZ, the raise is applied
- along the radius of a sphere centered at {`Xc',
-`Yc', `Zc'}. If `iView' < 0, the plugin is run
+ along the radius of a sphere centered at (`Xc',
+`Yc', `Zc'). If `iView' < 0, the plugin is run
 on the current view.
 
 Plugin(SphericalRaise) is executed in-place.
@@ -221,9 +221,9 @@ Default value: -1
 @item Plugin(StreamLines)
 Plugin(StreamLines) computes stream lines
 from a vector view `iView'. It takes as input a
-grid defined by the 3 points {`X0',`Y0',`Z0'}
-(origin), {`X1',`Y1',`Z1'} (axis of U) and
-{`X2',`Y2',`Z2'} (axis of V). The number of points
+grid defined by the 3 points (`X0',`Y0',`Z0')
+(origin), (`X1',`Y1',`Z1') (axis of U) and
+(`X2',`Y2',`Z2') (axis of V). The number of points
 that are going to be transported along U and V is
 set with the options `nPointsU' and `nPointsV'.
 Then, we solve the equation DX(t)/dt = V(x,y,z)

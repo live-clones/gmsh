@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.2 2004-04-24 03:51:59 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.3 2004-04-24 04:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -68,8 +68,8 @@ void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutGrid) cuts a 3D view with a rectangular\n"
-	 "grid defined by the 3 points {`X0',`Y0',`Z0'} (origin)\n"
-	 "{`X1',`Y1',`Z1'} (axis of U) and {`X2',`Y2',`Z2'} (axis\n"
+	 "grid defined by the 3 points (`X0',`Y0',`Z0') (origin),\n"
+	 "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis\n"
 	 "of V). The number of points along U and V is set\n"
 	 "with the options `nPointsU' and `nPointsV'. If\n"
 	 "`iView' < 0, the plugin is run on the current view.\n"

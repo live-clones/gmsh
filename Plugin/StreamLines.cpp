@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.2 2004-04-24 03:52:00 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.3 2004-04-24 04:08:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -73,9 +73,9 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
 	 "Plugin(StreamLines) computes stream lines\n"
 	 "from a vector view `iView'. It takes as input a\n"
-	 "grid defined by the 3 points {`X0',`Y0',`Z0'}\n"
-	 "(origin), {`X1',`Y1',`Z1'} (axis of U) and\n"
-	 "{`X2',`Y2',`Z2'} (axis of V). The number of points\n"
+	 "grid defined by the 3 points (`X0',`Y0',`Z0')\n"
+	 "(origin), (`X1',`Y1',`Z1') (axis of U) and\n"
+	 "(`X2',`Y2',`Z2') (axis of V). The number of points\n"
 	 "that are going to be transported along U and V is\n"
 	 "set with the options `nPointsU' and `nPointsV'.\n"
 	 "Then, we solve the equation DX(t)/dt = V(x,y,z)\n"
