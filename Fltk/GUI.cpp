@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.400 2004-12-30 23:39:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.401 2004-12-30 23:46:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3671,8 +3671,8 @@ void GUI::create_about_window()
     o->callback(cancel_cb, (void *)about_window);
   }
 
-  about_window->position(m_window->x() + m_window->w() / 2 - width / 2,
-			 m_window->y());
+  about_window->position(Fl::x() + Fl::w()/2 - width / 2,
+			 Fl::y() + Fl::h()/2 - height / 2);
 
   about_window->set_modal();
   about_window->end();
