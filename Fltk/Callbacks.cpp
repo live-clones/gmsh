@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.306 2004-12-23 03:19:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.307 2004-12-23 03:21:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -785,10 +785,8 @@ test:
           goto test;
     }
   save:
-    if(rename(CTX.filename, name) == -1)
-      Msg(GERROR, "Unable to rename file '%s'", CTX.filename);
-    else
-      OpenProblem(name);
+    rename(CTX.filename, name);
+    OpenProblem(name);
     Draw();
   }
 }
