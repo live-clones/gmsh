@@ -2,7 +2,7 @@
  * GL2PNG, an OpenGL to PNG Printing Library
  * Copyright (C) 2003 Christophe Geuzaine 
  *
- * $Id: gl2png.cpp,v 1.2 2003-04-02 06:02:01 geuzaine Exp $
+ * $Id: gl2png.cpp,v 1.3 2003-04-04 02:37:47 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -53,8 +53,6 @@ void create_png(FILE * file, int width, int height, int quality)
   png_infop info_ptr;
   png_text text_ptr[10];
   unsigned char *pixels;
-  png_byte image[height][width*3];
-  png_bytep row_pointers[height];
   time_t now;
 
   time(&now);
@@ -69,7 +67,7 @@ void create_png(FILE * file, int width, int height, int quality)
   info_ptr = png_create_info_struct(png_ptr);
 
   if(info_ptr == NULL) {
-    png_destroy_write_struct(&png_ptr,  png_infopp_NULL);
+    png_destroy_write_struct(&png_ptr, NULL);
     Msg(GERROR, "Could not create PNG info struct");
     return;
   }
@@ -82,7 +80,7 @@ void create_png(FILE * file, int width, int height, int quality)
   
   png_init_io(png_ptr, file);
   
-  png_set_compression_level (png_ptr, compression_level);
+  png_set_compression_level(png_ptr, compression_level);
 
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB,
 	       PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -99,8 +97,8 @@ void create_png(FILE * file, int width, int height, int quality)
   
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  pixels = (unsigned char *)Malloc(width * 3 * sizeof (unsigned char));
-  for (row = height - 1; row >= 0; row--) {
+  pixels = (unsigned char *)Malloc(width * 3 * sizeof(unsigned char));
+  for(row = height - 1; row >= 0; row--) {
     glReadPixels(0, row, width, 1, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     png_write_row(png_ptr, (png_bytep)pixels);
   }
