@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.435 2005-03-21 00:42:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.436 2005-03-26 04:09:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4096,11 +4096,11 @@ void GUI::create_geometry_context_window(int num)
       context_geometry_input[10]->value("0.0");
       context_geometry_input[11] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate of an axis point");
       context_geometry_input[11]->value("0.0");
-      context_geometry_input[12] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "X component of direction");
+      context_geometry_input[12] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "X component of axis direction");
       context_geometry_input[12]->value("0.0");
-      context_geometry_input[13] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Y component of direction");
+      context_geometry_input[13] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Y component of axis direction");
       context_geometry_input[13]->value("1.0");
-      context_geometry_input[14] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Z component of direction");
+      context_geometry_input[14] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Z component of axis direction");
       context_geometry_input[14]->value("0.0");
       context_geometry_input[15] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle in radians");
       context_geometry_input[15]->value("Pi/4");

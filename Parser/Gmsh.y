@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.204 2005-03-13 07:16:16 geuzaine Exp $
+// $Id: Gmsh.y,v 1.205 2005-03-26 04:09:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -54,8 +54,12 @@ extern Context_T CTX;
 extern Mesh *THEM;
 
 static ExtrudeParams extr;
+
 static Post_View *View;
-static int ntmp;
+static List_T *ViewValueList;
+static double ViewCoord[100];
+static int *ViewNumList, ViewNumNodes, ViewNumComp, ViewNumListTmp;
+static int ViewCoordIdx, ViewElementIdx;
 static int ViewErrorFlags[VIEW_NB_ELEMENT_TYPES];
 
 #define MAX_RECUR_LOOPS 100
@@ -98,14 +102,6 @@ int CheckViewErrorFlags(Post_View *v);
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
 %token tAttractor tLayers tAlias tAliasWithOptions
-%token tScalarPoint tVectorPoint tTensorPoint
-%token tScalarLine tVectorLine tTensorLine
-%token tScalarTriangle tVectorTriangle tTensorTriangle
-%token tScalarQuadrangle tVectorQuadrangle tTensorQuadrangle
-%token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
-%token tScalarHexahedron tVectorHexahedron tTensorHexahedron
-%token tScalarPrism tVectorPrism tTensorPrism
-%token tScalarPyramid tVectorPyramid tTensorPyramid
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
@@ -455,721 +451,243 @@ Views :
 	ViewErrorFlags[i] = 0;
       }
     }
-  | Views ScalarPoint
-  | Views VectorPoint
-  | Views TensorPoint
-  | Views ScalarLine
-  | Views VectorLine
-  | Views TensorLine
-  | Views ScalarTriangle
-  | Views VectorTriangle
-  | Views TensorTriangle
-  | Views ScalarQuadrangle
-  | Views VectorQuadrangle
-  | Views TensorQuadrangle
-  | Views ScalarTetrahedron
-  | Views VectorTetrahedron
-  | Views TensorTetrahedron
-  | Views ScalarHexahedron
-  | Views VectorHexahedron
-  | Views TensorHexahedron
-  | Views ScalarPrism
-  | Views VectorPrism
-  | Views TensorPrism
-  | Views ScalarPyramid
-  | Views VectorPyramid
-  | Views TensorPyramid
+  | Views Element
   | Views Text2D
   | Views Text3D
   | Views InterpolationMatrix
   | Views Time
 ;
 
-ScalarPointValues :
+ElementCoords :
     FExpr
-    { List_Add(View->SP, &$1); }
-  | ScalarPointValues ',' FExpr
-    { List_Add(View->SP, &$3); }
+    { ViewCoord[ViewCoordIdx] = $1; ViewCoordIdx++; }
+  | ElementCoords ',' FExpr
+    { ViewCoord[ViewCoordIdx] = $3; ViewCoordIdx++; }
 ;
 
-ScalarPoint : 
-    tScalarPoint '(' FExpr ',' FExpr ',' FExpr ')'
-    { 
-      List_Add(View->SP, &$3); List_Add(View->SP, &$5);
-      List_Add(View->SP, &$7);      
-    }
-    '{' ScalarPointValues '}' tEND
-    {
-      View->NbSP++;
-    }
-;
-
-VectorPointValues :
+ElementValues :
     FExpr
-    { List_Add(View->VP, &$1); }
-  | VectorPointValues ',' FExpr
-    { List_Add(View->VP, &$3); }
+    { if(ViewValueList) List_Add(ViewValueList, &$1); }
+  | ElementValues ',' FExpr
+    { if(ViewValueList) List_Add(ViewValueList, &$3); }
 ;
 
-VectorPoint : 
-    tVectorPoint '(' FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VP, &$3); List_Add(View->VP, &$5);
-      List_Add(View->VP, &$7); 
-      ntmp = List_Nbr(View->VP);
-    }
-    '{' VectorPointValues '}' tEND
+Element : 
+    tSTRING 
     {
-      if((List_Nbr(View->VP) - ntmp) % 3) ViewErrorFlags[1]++;
-      View->NbVP++;
+      if(!strcmp($1, "SP")){
+	ViewElementIdx = 0; ViewNumNodes = 1; ViewNumComp = 1;
+	ViewValueList = View->SP; ViewNumList = &View->NbSP;
+      }
+      else if(!strcmp($1, "VP")){
+	ViewElementIdx = 1; ViewNumNodes = 1; ViewNumComp = 3;
+	ViewValueList = View->VP; ViewNumList = &View->NbVP;
+      }
+      else if(!strcmp($1, "TP")){
+	ViewElementIdx = 2; ViewNumNodes = 1; ViewNumComp = 9;
+	ViewValueList = View->TP; ViewNumList = &View->NbTP;
+      }
+      else if(!strcmp($1, "SL")){
+	ViewElementIdx = 3; ViewNumNodes = 2; ViewNumComp = 1;
+	ViewValueList = View->SL; ViewNumList = &View->NbSL;
+      }
+      else if(!strcmp($1, "VL")){
+	ViewElementIdx = 4; ViewNumNodes = 2; ViewNumComp = 3;
+	ViewValueList = View->VL; ViewNumList = &View->NbVL;
+      }
+      else if(!strcmp($1, "TL")){
+	ViewElementIdx = 5; ViewNumNodes = 2; ViewNumComp = 9;
+	ViewValueList = View->TL; ViewNumList = &View->NbTL;
+      }
+      else if(!strcmp($1, "ST")){
+	ViewElementIdx = 6; ViewNumNodes = 3; ViewNumComp = 1;
+	ViewValueList = View->ST; ViewNumList = &View->NbST;
+      }
+      else if(!strcmp($1, "VT")){
+	ViewElementIdx = 7; ViewNumNodes = 3; ViewNumComp = 3;
+	ViewValueList = View->VT; ViewNumList = &View->NbVT;
+      }
+      else if(!strcmp($1, "TT")){
+	ViewElementIdx = 8; ViewNumNodes = 3; ViewNumComp = 9;
+	ViewValueList = View->TT; ViewNumList = &View->NbTT;
+      }
+      else if(!strcmp($1, "SQ")){
+	ViewElementIdx = 9; ViewNumNodes = 4; ViewNumComp = 1;
+	ViewValueList = View->SQ; ViewNumList = &View->NbSQ;
+      }
+      else if(!strcmp($1, "VQ")){
+	ViewElementIdx = 10; ViewNumNodes = 4; ViewNumComp = 3;
+	ViewValueList = View->VQ; ViewNumList = &View->NbVQ;
+      }
+      else if(!strcmp($1, "TQ")){
+	ViewElementIdx = 11; ViewNumNodes = 4; ViewNumComp = 9;
+	ViewValueList = View->TQ; ViewNumList = &View->NbTQ;
+      }
+      else if(!strcmp($1, "SS")){
+	ViewElementIdx = 12; ViewNumNodes = 4; ViewNumComp = 1;
+	ViewValueList = View->SS; ViewNumList = &View->NbSS;
+      }
+      else if(!strcmp($1, "VS")){
+	ViewElementIdx = 13; ViewNumNodes = 4; ViewNumComp = 3;
+	ViewValueList = View->VS; ViewNumList = &View->NbVS;
+      }
+      else if(!strcmp($1, "TS")){
+	ViewElementIdx = 14; ViewNumNodes = 4; ViewNumComp = 9;
+	ViewValueList = View->TS; ViewNumList = &View->NbTS;
+      }
+      else if(!strcmp($1, "SH")){
+	ViewElementIdx = 15; ViewNumNodes = 8; ViewNumComp = 1;
+	ViewValueList = View->SH; ViewNumList = &View->NbSH;
+      }
+      else if(!strcmp($1, "VH")){
+	ViewElementIdx = 16; ViewNumNodes = 8; ViewNumComp = 3;
+	ViewValueList = View->VH; ViewNumList = &View->NbVH;
+      }
+      else if(!strcmp($1, "TH")){
+	ViewElementIdx = 17; ViewNumNodes = 8; ViewNumComp = 9;
+	ViewValueList = View->TH; ViewNumList = &View->NbTH;
+      }
+      else if(!strcmp($1, "SI")){
+	ViewElementIdx = 18; ViewNumNodes = 6; ViewNumComp = 1;
+	ViewValueList = View->SI; ViewNumList = &View->NbSI;
+      }
+      else if(!strcmp($1, "VI")){
+	ViewElementIdx = 19; ViewNumNodes = 6; ViewNumComp = 3;
+	ViewValueList = View->VI; ViewNumList = &View->NbVI;
+      }
+      else if(!strcmp($1, "TI")){
+	ViewElementIdx = 20; ViewNumNodes = 6; ViewNumComp = 9;
+	ViewValueList = View->TI; ViewNumList = &View->NbTI;
+      }
+      else if(!strcmp($1, "SY")){
+	ViewElementIdx = 21; ViewNumNodes = 5; ViewNumComp = 1;
+	ViewValueList = View->SY; ViewNumList = &View->NbSY;
+      }
+      else if(!strcmp($1, "VY")){
+	ViewElementIdx = 22; ViewNumNodes = 5; ViewNumComp = 3;
+	ViewValueList = View->VY; ViewNumList = &View->NbVY;
+      }
+      else if(!strcmp($1, "TY")){
+	ViewElementIdx = 23; ViewNumNodes = 5; ViewNumComp = 9;
+	ViewValueList = View->TY; ViewNumList = &View->NbTY;
+      }
+      else if(!strcmp($1, "SL2")){
+	ViewElementIdx = 3; ViewNumNodes = 3; ViewNumComp = 1;
+	ViewValueList = View->SL2; ViewNumList = &View->NbSL2;
+      }
+      else if(!strcmp($1, "VL2")){
+	ViewElementIdx = 4; ViewNumNodes = 3; ViewNumComp = 3;
+	ViewValueList = View->VL2; ViewNumList = &View->NbVL2;
+      }
+      else if(!strcmp($1, "TL2")){
+	ViewElementIdx = 5; ViewNumNodes = 3; ViewNumComp = 9;
+	ViewValueList = View->TL2; ViewNumList = &View->NbTL2;
+      }
+      else if(!strcmp($1, "ST2")){
+	ViewElementIdx = 6; ViewNumNodes = 6; ViewNumComp = 1;
+	ViewValueList = View->ST2; ViewNumList = &View->NbST2;
+      }
+      else if(!strcmp($1, "VT2")){
+	ViewElementIdx = 7; ViewNumNodes = 6; ViewNumComp = 3;
+	ViewValueList = View->VT2; ViewNumList = &View->NbVT2;
+      }
+      else if(!strcmp($1, "TT2")){
+	ViewElementIdx = 8; ViewNumNodes = 6; ViewNumComp = 9;
+	ViewValueList = View->TT2; ViewNumList = &View->NbTT2;
+      }
+      else if(!strcmp($1, "SQ2")){
+	ViewElementIdx = 9; ViewNumNodes = 9; ViewNumComp = 1;
+	ViewValueList = View->SQ2; ViewNumList = &View->NbSQ2;
+      }
+      else if(!strcmp($1, "VQ2")){
+	ViewElementIdx = 10; ViewNumNodes = 9; ViewNumComp = 3;
+	ViewValueList = View->VQ2; ViewNumList = &View->NbVQ2;
+      }
+      else if(!strcmp($1, "TQ2")){
+	ViewElementIdx = 11; ViewNumNodes = 9; ViewNumComp = 9;
+	ViewValueList = View->TQ2; ViewNumList = &View->NbTQ2;
+      }
+      else if(!strcmp($1, "SS2")){
+	ViewElementIdx = 12; ViewNumNodes = 10; ViewNumComp = 1;
+	ViewValueList = View->SS2; ViewNumList = &View->NbSS2;
+      }
+      else if(!strcmp($1, "VS2")){
+	ViewElementIdx = 13; ViewNumNodes = 10; ViewNumComp = 3;
+	ViewValueList = View->VS2; ViewNumList = &View->NbVS2;
+      }
+      else if(!strcmp($1, "TS2")){
+	ViewElementIdx = 14; ViewNumNodes = 10; ViewNumComp = 9;
+	ViewValueList = View->TS2; ViewNumList = &View->NbTS2;
+      }
+      else if(!strcmp($1, "SH2")){
+	ViewElementIdx = 15; ViewNumNodes = 27; ViewNumComp = 1;
+	ViewValueList = View->SH2; ViewNumList = &View->NbSH2;
+      }
+      else if(!strcmp($1, "VH2")){
+	ViewElementIdx = 16; ViewNumNodes = 27; ViewNumComp = 3;
+	ViewValueList = View->VH2; ViewNumList = &View->NbVH2;
+      }
+      else if(!strcmp($1, "TH2")){
+	ViewElementIdx = 17; ViewNumNodes = 27; ViewNumComp = 9;
+	ViewValueList = View->TH2; ViewNumList = &View->NbTH2;
+      }
+      else if(!strcmp($1, "SI2")){
+	ViewElementIdx = 18; ViewNumNodes = 18; ViewNumComp = 1;
+	ViewValueList = View->SI2; ViewNumList = &View->NbSI2;
+      }
+      else if(!strcmp($1, "VI2")){
+	ViewElementIdx = 19; ViewNumNodes = 18; ViewNumComp = 3;
+	ViewValueList = View->VI2; ViewNumList = &View->NbVI2;
+      }
+      else if(!strcmp($1, "TI2")){
+	ViewElementIdx = 20; ViewNumNodes = 18; ViewNumComp = 9;
+	ViewValueList = View->TI2; ViewNumList = &View->NbTI2;
+      }
+      else if(!strcmp($1, "SY2")){
+	ViewElementIdx = 21; ViewNumNodes = 14; ViewNumComp = 1;
+	ViewValueList = View->SY2; ViewNumList = &View->NbSY2;
+      }
+      else if(!strcmp($1, "VY2")){
+	ViewElementIdx = 22; ViewNumNodes = 14; ViewNumComp = 3;
+	ViewValueList = View->VY2; ViewNumList = &View->NbVY2;
+      }
+      else if(!strcmp($1, "TY2")){
+	ViewElementIdx = 23; ViewNumNodes = 14; ViewNumComp = 9;
+	ViewValueList = View->TY2; ViewNumList = &View->NbTY2;
+      }
+      else{
+	yymsg(GERROR, "Unknown element type '%s'", $1);	
+	ViewElementIdx = -1; ViewNumNodes = 0; ViewNumComp = 0;
+	ViewValueList = NULL; ViewNumList = NULL;
+      }
+      Free($1);
+      ViewCoordIdx = 0;
     }
-;
-
-TensorPointValues :
-    FExpr
-    { List_Add(View->TP, &$1); }
-  | TensorPointValues ',' FExpr
-    { List_Add(View->TP, &$3); }
-;
-
-TensorPoint :
-    tTensorPoint '(' FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TP, &$3); List_Add(View->TP, &$5);
-      List_Add(View->TP, &$7);
-      ntmp = List_Nbr(View->TP);
-    }
-    '{' TensorPointValues '}' tEND
+    '(' ElementCoords ')'
     {
-      if((List_Nbr(View->TP) - ntmp) % 9) ViewErrorFlags[2]++;
-      View->NbTP++;
+      if(ViewValueList){
+	if(ViewCoordIdx != 3 * ViewNumNodes){
+	  yymsg(GERROR, "Wrong number of node coordinates (%d != %d)", 
+		ViewCoordIdx, 3 * ViewNumNodes);
+	  double d = 0;
+	  for(int i = 0; i < 3 * ViewNumNodes; i++)
+	    List_Add(ViewValueList, &d);
+	}
+	else{
+	  for(int i = 0; i < 3; i++)
+	    for(int j = 0; j < ViewNumNodes; j++)
+	      List_Add(ViewValueList, &ViewCoord[3*j+i]);
+	}
+	ViewNumListTmp = List_Nbr(ViewValueList);
+      }
     }
-;
-
-ScalarLineValues :
-    FExpr
-    { List_Add(View->SL, &$1); }
-  | ScalarLineValues ',' FExpr
-    { List_Add(View->SL, &$3); }
-;
-
-ScalarLine : 
-    tScalarLine '(' FExpr ',' FExpr ',' FExpr ',' 
-                    FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->SL, &$3); List_Add(View->SL, &$9);
-      List_Add(View->SL, &$5); List_Add(View->SL, &$11);
-      List_Add(View->SL, &$7); List_Add(View->SL, &$13);
-      ntmp = List_Nbr(View->SL);
-    }
-    '{' ScalarLineValues '}' tEND
+    '{' ElementValues '}' tEND
     {
-      if((List_Nbr(View->SL) - ntmp) % 2) ViewErrorFlags[3]++;
-      View->NbSL++;
-    }
-;
-
-VectorLineValues :
-    FExpr
-    { List_Add(View->VL, &$1); }
-  | VectorLineValues ',' FExpr
-    { List_Add(View->VL, &$3); }
-;
-
-VectorLine : 
-    tVectorLine '(' FExpr ',' FExpr ',' FExpr ',' 
-                    FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VL, &$3); List_Add(View->VL, &$9);
-      List_Add(View->VL, &$5); List_Add(View->VL, &$11);
-      List_Add(View->VL, &$7); List_Add(View->VL, &$13);
-      ntmp = List_Nbr(View->VL);
-    }
-    '{' VectorLineValues '}' tEND
-    {
-      if((List_Nbr(View->VL) - ntmp) % 6) ViewErrorFlags[4]++;
-      View->NbVL++;
-    }
-;
-
-TensorLineValues :
-    FExpr
-    { List_Add(View->TL, &$1); }
-  | TensorLineValues ',' FExpr
-    { List_Add(View->TL, &$3); }
-;
-
-TensorLine :
-    tTensorLine '(' FExpr ',' FExpr ',' FExpr ',' 
-                    FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TL, &$3); List_Add(View->TL, &$9);
-      List_Add(View->TL, &$5); List_Add(View->TL, &$11);
-      List_Add(View->TL, &$7); List_Add(View->TL, &$13);
-      ntmp = List_Nbr(View->TL);
-    }
-    '{' TensorLineValues '}' tEND
-    {
-      if((List_Nbr(View->TL) - ntmp) % 18) ViewErrorFlags[5]++;
-      View->NbTL++;
-    }
-;
-
-ScalarTriangleValues :
-    FExpr
-    { List_Add(View->ST, &$1); }
-  | ScalarTriangleValues ',' FExpr
-    { List_Add(View->ST, &$3); }
-;
-
-ScalarTriangle : 
-    tScalarTriangle '(' FExpr ',' FExpr ',' FExpr ',' 
-                        FExpr ',' FExpr ',' FExpr ','
-                        FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->ST, &$3); List_Add(View->ST, &$9);
-      List_Add(View->ST, &$15);
-      List_Add(View->ST, &$5); List_Add(View->ST, &$11);
-      List_Add(View->ST, &$17);
-      List_Add(View->ST, &$7); List_Add(View->ST, &$13);
-      List_Add(View->ST, &$19);
-      ntmp = List_Nbr(View->ST);
-    }
-    '{' ScalarTriangleValues '}' tEND
-    {
-      if((List_Nbr(View->ST) - ntmp) % 3) ViewErrorFlags[6]++;
-      View->NbST++;
-    }
-;
-
-VectorTriangleValues :
-    FExpr
-    { List_Add(View->VT, &$1); }
-  | VectorTriangleValues ',' FExpr
-    { List_Add(View->VT, &$3); }
-;
-
-VectorTriangle : 
-    tVectorTriangle '(' FExpr ',' FExpr ',' FExpr ',' 
-                        FExpr ',' FExpr ',' FExpr ','
-                        FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VT, &$3); List_Add(View->VT, &$9);
-      List_Add(View->VT, &$15);
-      List_Add(View->VT, &$5); List_Add(View->VT, &$11);
-      List_Add(View->VT, &$17);
-      List_Add(View->VT, &$7); List_Add(View->VT, &$13);
-      List_Add(View->VT, &$19);
-      ntmp = List_Nbr(View->VT);
-    }
-    '{' VectorTriangleValues '}' tEND
-    {
-      if((List_Nbr(View->VT) - ntmp) % 9) ViewErrorFlags[7]++;
-      View->NbVT++;
-    }
-;
-
-TensorTriangleValues :
-    FExpr
-    { List_Add(View->TT, &$1); }
-  | TensorTriangleValues ',' FExpr
-    { List_Add(View->TT, &$3); }
-;
-
-TensorTriangle :
-    tTensorTriangle '(' FExpr ',' FExpr ',' FExpr ',' 
-                        FExpr ',' FExpr ',' FExpr ','
-                        FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TT, &$3); List_Add(View->TT, &$9);
-      List_Add(View->TT, &$15);
-      List_Add(View->TT, &$5); List_Add(View->TT, &$11);
-      List_Add(View->TT, &$17);
-      List_Add(View->TT, &$7); List_Add(View->TT, &$13);
-      List_Add(View->TT, &$19);
-      ntmp = List_Nbr(View->TT);
-    }
-    '{' TensorTriangleValues '}' tEND
-    {
-      if((List_Nbr(View->TT) - ntmp) % 27) ViewErrorFlags[8]++;
-      View->NbTT++;
-    }
-;
-
-ScalarQuadrangleValues :
-    FExpr
-    { List_Add(View->SQ, &$1); }
-  | ScalarQuadrangleValues ',' FExpr
-    { List_Add(View->SQ, &$3); }
-;
-
-ScalarQuadrangle : 
-    tScalarQuadrangle '(' FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->SQ, &$3);  List_Add(View->SQ, &$9);
-      List_Add(View->SQ, &$15); List_Add(View->SQ, &$21);
-      List_Add(View->SQ, &$5);  List_Add(View->SQ, &$11);
-      List_Add(View->SQ, &$17); List_Add(View->SQ, &$23);
-      List_Add(View->SQ, &$7);  List_Add(View->SQ, &$13);
-      List_Add(View->SQ, &$19); List_Add(View->SQ, &$25);
-      ntmp = List_Nbr(View->SQ);
-    }
-    '{' ScalarQuadrangleValues '}' tEND
-    {
-      if((List_Nbr(View->SQ) - ntmp) % 4) ViewErrorFlags[9]++;
-      View->NbSQ++;
-    }
-;
-
-VectorQuadrangleValues :
-    FExpr
-    { List_Add(View->VQ, &$1); }
-  | VectorQuadrangleValues ',' FExpr
-    { List_Add(View->VQ, &$3); }
-;
-
-VectorQuadrangle : 
-    tVectorQuadrangle '(' FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VQ, &$3);  List_Add(View->VQ, &$9);
-      List_Add(View->VQ, &$15); List_Add(View->VQ, &$21);
-      List_Add(View->VQ, &$5);  List_Add(View->VQ, &$11);
-      List_Add(View->VQ, &$17); List_Add(View->VQ, &$23);
-      List_Add(View->VQ, &$7);  List_Add(View->VQ, &$13);
-      List_Add(View->VQ, &$19); List_Add(View->VQ, &$25);
-      ntmp = List_Nbr(View->VQ);
-    }
-    '{' VectorQuadrangleValues '}' tEND
-    {
-      if((List_Nbr(View->VQ) - ntmp) % 12) ViewErrorFlags[10]++;
-      View->NbVQ++;
-    }
-;
-
-TensorQuadrangleValues :
-    FExpr
-    { List_Add(View->TQ, &$1); }
-  | TensorQuadrangleValues ',' FExpr
-    { List_Add(View->TQ, &$3); }
-;
-
-TensorQuadrangle :
-    tTensorQuadrangle '(' FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TQ, &$3);  List_Add(View->TQ, &$9);
-      List_Add(View->TQ, &$15); List_Add(View->TQ, &$21);
-      List_Add(View->TQ, &$5);  List_Add(View->TQ, &$11);
-      List_Add(View->TQ, &$17); List_Add(View->TQ, &$23);
-      List_Add(View->TQ, &$7);  List_Add(View->TQ, &$13);
-      List_Add(View->TQ, &$19); List_Add(View->TQ, &$25);
-      ntmp = List_Nbr(View->TQ);
-    }
-    '{' TensorQuadrangleValues '}' tEND
-    {
-      if((List_Nbr(View->TQ) - ntmp) % 36) ViewErrorFlags[11]++;
-      View->NbTQ++;
-    }
-;
-
-ScalarTetrahedronValues :
-    FExpr
-    { List_Add(View->SS, &$1); }
-  | ScalarTetrahedronValues ',' FExpr
-    { List_Add(View->SS, &$3); }
-;
-
-ScalarTetrahedron : 
-    tScalarTetrahedron '(' FExpr ',' FExpr ',' FExpr ',' 
-                           FExpr ',' FExpr ',' FExpr ','
-                           FExpr ',' FExpr ',' FExpr ',' 
-                           FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->SS, &$3);  List_Add(View->SS, &$9);
-      List_Add(View->SS, &$15); List_Add(View->SS, &$21);
-      List_Add(View->SS, &$5);  List_Add(View->SS, &$11);
-      List_Add(View->SS, &$17); List_Add(View->SS, &$23);
-      List_Add(View->SS, &$7);  List_Add(View->SS, &$13);
-      List_Add(View->SS, &$19); List_Add(View->SS, &$25);
-      ntmp = List_Nbr(View->SS);
-    }
-    '{' ScalarTetrahedronValues '}' tEND
-    {
-      if((List_Nbr(View->SS) - ntmp) % 4) ViewErrorFlags[12]++;
-      View->NbSS++;
-    }
-;
-
-VectorTetrahedronValues :
-    FExpr
-    { List_Add(View->VS, &$1); }
-  | VectorTetrahedronValues ',' FExpr
-    { List_Add(View->VS, &$3); }
-;
-
-VectorTetrahedron : 
-    tVectorTetrahedron '(' FExpr ',' FExpr ',' FExpr ',' 
-                           FExpr ',' FExpr ',' FExpr ','
-                           FExpr ',' FExpr ',' FExpr ',' 
-                           FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VS, &$3);  List_Add(View->VS, &$9);
-      List_Add(View->VS, &$15); List_Add(View->VS, &$21);
-      List_Add(View->VS, &$5);  List_Add(View->VS, &$11);
-      List_Add(View->VS, &$17); List_Add(View->VS, &$23);
-      List_Add(View->VS, &$7);  List_Add(View->VS, &$13);
-      List_Add(View->VS, &$19); List_Add(View->VS, &$25);
-      ntmp = List_Nbr(View->VS);
-    }
-    '{' VectorTetrahedronValues '}' tEND
-    {
-      if((List_Nbr(View->VS) - ntmp) % 12) ViewErrorFlags[13]++;
-      View->NbVS++;
-    }
-;
-
-TensorTetrahedronValues :
-    FExpr
-    { List_Add(View->TS, &$1); }
-  | TensorTetrahedronValues ',' FExpr
-    { List_Add(View->TS, &$3); }
-;
-
-TensorTetrahedron :
-    tTensorTetrahedron '(' FExpr ',' FExpr ',' FExpr ',' 
-                           FExpr ',' FExpr ',' FExpr ','
-                           FExpr ',' FExpr ',' FExpr ',' 
-                           FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TS, &$3);  List_Add(View->TS, &$9);
-      List_Add(View->TS, &$15); List_Add(View->TS, &$21);
-      List_Add(View->TS, &$5);  List_Add(View->TS, &$11);
-      List_Add(View->TS, &$17); List_Add(View->TS, &$23);
-      List_Add(View->TS, &$7);  List_Add(View->TS, &$13);
-      List_Add(View->TS, &$19); List_Add(View->TS, &$25);
-      ntmp = List_Nbr(View->TS);
-    }
-    '{' TensorTetrahedronValues '}' tEND
-    {
-      if((List_Nbr(View->TS) - ntmp) % 36) ViewErrorFlags[14]++;
-      View->NbTS++;
-    }
-;
-
-ScalarHexahedronValues :
-    FExpr
-    { List_Add(View->SH, &$1); }
-  | ScalarHexahedronValues ',' FExpr
-    { List_Add(View->SH, &$3); }
-;
-
-ScalarHexahedron : 
-    tScalarHexahedron '(' FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->SH, &$3);  List_Add(View->SH, &$9);
-      List_Add(View->SH, &$15); List_Add(View->SH, &$21);
-      List_Add(View->SH, &$27); List_Add(View->SH, &$33);
-      List_Add(View->SH, &$39); List_Add(View->SH, &$45);
-      List_Add(View->SH, &$5);  List_Add(View->SH, &$11);
-      List_Add(View->SH, &$17); List_Add(View->SH, &$23);
-      List_Add(View->SH, &$29); List_Add(View->SH, &$35);
-      List_Add(View->SH, &$41); List_Add(View->SH, &$47);
-      List_Add(View->SH, &$7);  List_Add(View->SH, &$13);
-      List_Add(View->SH, &$19); List_Add(View->SH, &$25);
-      List_Add(View->SH, &$31); List_Add(View->SH, &$37);
-      List_Add(View->SH, &$43); List_Add(View->SH, &$49);
-      ntmp = List_Nbr(View->SH);
-    }
-    '{' ScalarHexahedronValues '}' tEND
-    {
-      if((List_Nbr(View->SH) - ntmp) % 8) ViewErrorFlags[15]++;
-      View->NbSH++;
-    }
-;
-
-VectorHexahedronValues :
-    FExpr
-    { List_Add(View->VH, &$1); }
-  | VectorHexahedronValues ',' FExpr
-    { List_Add(View->VH, &$3); }
-;
-
-VectorHexahedron : 
-    tVectorHexahedron '(' FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VH, &$3);  List_Add(View->VH, &$9);
-      List_Add(View->VH, &$15); List_Add(View->VH, &$21);
-      List_Add(View->VH, &$27); List_Add(View->VH, &$33);
-      List_Add(View->VH, &$39); List_Add(View->VH, &$45);
-      List_Add(View->VH, &$5);  List_Add(View->VH, &$11);
-      List_Add(View->VH, &$17); List_Add(View->VH, &$23);
-      List_Add(View->VH, &$29); List_Add(View->VH, &$35);
-      List_Add(View->VH, &$41); List_Add(View->VH, &$47);
-      List_Add(View->VH, &$7);  List_Add(View->VH, &$13);
-      List_Add(View->VH, &$19); List_Add(View->VH, &$25);
-      List_Add(View->VH, &$31); List_Add(View->VH, &$37);
-      List_Add(View->VH, &$43); List_Add(View->VH, &$49);
-      ntmp = List_Nbr(View->VH);
-    }
-    '{' VectorHexahedronValues '}' tEND
-    {
-      if((List_Nbr(View->VH) - ntmp) % 24) ViewErrorFlags[16]++;
-      View->NbVH++;
-    }
-;
-
-TensorHexahedronValues :
-    FExpr
-    { List_Add(View->TH, &$1); }
-  | TensorHexahedronValues ',' FExpr
-    { List_Add(View->TH, &$3); }
-;
-
-TensorHexahedron :
-    tTensorHexahedron '(' FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ','
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ',' 
-                          FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TH, &$3);  List_Add(View->TH, &$9);
-      List_Add(View->TH, &$15); List_Add(View->TH, &$21);
-      List_Add(View->TH, &$27); List_Add(View->TH, &$33);
-      List_Add(View->TH, &$39); List_Add(View->TH, &$45);
-      List_Add(View->TH, &$5);  List_Add(View->TH, &$11);
-      List_Add(View->TH, &$17); List_Add(View->TH, &$23);
-      List_Add(View->TH, &$29); List_Add(View->TH, &$35);
-      List_Add(View->TH, &$41); List_Add(View->TH, &$47);
-      List_Add(View->TH, &$7);  List_Add(View->TH, &$13);
-      List_Add(View->TH, &$19); List_Add(View->TH, &$25);
-      List_Add(View->TH, &$31); List_Add(View->TH, &$37);
-      List_Add(View->TH, &$43); List_Add(View->TH, &$49);
-      ntmp = List_Nbr(View->TH);
-    }
-    '{' TensorHexahedronValues '}' tEND
-    {
-      if((List_Nbr(View->TH) - ntmp) % 72) ViewErrorFlags[17]++;
-      View->NbTH++;
-    }
-;
-
-ScalarPrismValues :
-    FExpr
-    { List_Add(View->SI, &$1); }
-  | ScalarPrismValues ',' FExpr
-    { List_Add(View->SI, &$3); }
-;
-
-ScalarPrism : 
-    tScalarPrism '(' FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ','
-                     FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ','
-                     FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->SI, &$3);  List_Add(View->SI, &$9);
-      List_Add(View->SI, &$15); List_Add(View->SI, &$21);
-      List_Add(View->SI, &$27); List_Add(View->SI, &$33);
-      List_Add(View->SI, &$5);  List_Add(View->SI, &$11);
-      List_Add(View->SI, &$17); List_Add(View->SI, &$23);
-      List_Add(View->SI, &$29); List_Add(View->SI, &$35);
-      List_Add(View->SI, &$7);  List_Add(View->SI, &$13);
-      List_Add(View->SI, &$19); List_Add(View->SI, &$25);
-      List_Add(View->SI, &$31); List_Add(View->SI, &$37);
-      ntmp = List_Nbr(View->SI);
-    }
-    '{' ScalarPrismValues '}' tEND
-    {
-      if((List_Nbr(View->SI) - ntmp) % 6) ViewErrorFlags[18]++;
-      View->NbSI++;
-    }
-;
-
-VectorPrismValues :
-    FExpr
-    { List_Add(View->VI, &$1); }
-  | VectorPrismValues ',' FExpr
-    { List_Add(View->VI, &$3); }
-;
-
-VectorPrism : 
-    tVectorPrism '(' FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ','
-                     FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ','
-                     FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VI, &$3);  List_Add(View->VI, &$9);
-      List_Add(View->VI, &$15); List_Add(View->VI, &$21);
-      List_Add(View->VI, &$27); List_Add(View->VI, &$33);
-      List_Add(View->VI, &$5);  List_Add(View->VI, &$11);
-      List_Add(View->VI, &$17); List_Add(View->VI, &$23);
-      List_Add(View->VI, &$29); List_Add(View->VI, &$35);
-      List_Add(View->VI, &$7);  List_Add(View->VI, &$13);
-      List_Add(View->VI, &$19); List_Add(View->VI, &$25);
-      List_Add(View->VI, &$31); List_Add(View->VI, &$37);
-      ntmp = List_Nbr(View->VI);
-    }
-    '{' VectorPrismValues '}' tEND
-    {
-      if((List_Nbr(View->VI) - ntmp) % 18) ViewErrorFlags[19]++;
-      View->NbVI++;
-    }
-;
-
-TensorPrismValues :
-    FExpr
-    { List_Add(View->TI, &$1); }
-  | TensorPrismValues ',' FExpr
-    { List_Add(View->TI, &$3); }
-;
-
-TensorPrism :
-    tTensorPrism '(' FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ','
-                     FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ','
-                     FExpr ',' FExpr ',' FExpr ',' 
-                     FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TI, &$3);  List_Add(View->TI, &$9);
-      List_Add(View->TI, &$15); List_Add(View->TI, &$21);
-      List_Add(View->TI, &$27); List_Add(View->TI, &$33);
-      List_Add(View->TI, &$5);  List_Add(View->TI, &$11);
-      List_Add(View->TI, &$17); List_Add(View->TI, &$23);
-      List_Add(View->TI, &$29); List_Add(View->TI, &$35);
-      List_Add(View->TI, &$7);  List_Add(View->TI, &$13);
-      List_Add(View->TI, &$19); List_Add(View->TI, &$25);
-      List_Add(View->TI, &$31); List_Add(View->TI, &$37);
-      ntmp = List_Nbr(View->TI);
-    }
-    '{' TensorPrismValues '}' tEND
-    {
-      if((List_Nbr(View->TI) - ntmp) % 54) ViewErrorFlags[20]++;
-      View->NbTI++;
-    }
-;
-
-ScalarPyramidValues :
-    FExpr
-    { List_Add(View->SY, &$1); }
-  | ScalarPyramidValues ',' FExpr
-    { List_Add(View->SY, &$3); }
-;
-
-ScalarPyramid : 
-    tScalarPyramid '(' FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ','
-                       FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ','
-                       FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->SY, &$3);  List_Add(View->SY, &$9);
-      List_Add(View->SY, &$15); List_Add(View->SY, &$21);
-      List_Add(View->SY, &$27);
-      List_Add(View->SY, &$5);  List_Add(View->SY, &$11);
-      List_Add(View->SY, &$17); List_Add(View->SY, &$23);
-      List_Add(View->SY, &$29);
-      List_Add(View->SY, &$7);  List_Add(View->SY, &$13);
-      List_Add(View->SY, &$19); List_Add(View->SY, &$25);
-      List_Add(View->SY, &$31);
-      ntmp = List_Nbr(View->SY);
-    }
-    '{' ScalarPyramidValues '}' tEND
-    {
-      if((List_Nbr(View->SY) - ntmp) % 5) ViewErrorFlags[21]++;
-      View->NbSY++;
-    }
-;
-
-VectorPyramidValues :
-    FExpr
-    { List_Add(View->VY, &$1); }
-  | VectorPyramidValues ',' FExpr
-    { List_Add(View->VY, &$3); }
-;
-
-VectorPyramid : 
-    tVectorPyramid '(' FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ','
-                       FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->VY, &$3);  List_Add(View->VY, &$9);
-      List_Add(View->VY, &$15); List_Add(View->VY, &$21);
-      List_Add(View->VY, &$27);
-      List_Add(View->VY, &$5);  List_Add(View->VY, &$11);
-      List_Add(View->VY, &$17); List_Add(View->VY, &$23);
-      List_Add(View->VY, &$29);
-      List_Add(View->VY, &$7);  List_Add(View->VY, &$13);
-      List_Add(View->VY, &$19); List_Add(View->VY, &$25);
-      List_Add(View->VY, &$31);
-      ntmp = List_Nbr(View->VY);
-    }
-    '{' VectorPyramidValues '}' tEND
-    {
-      if((List_Nbr(View->VY) - ntmp) % 15) ViewErrorFlags[22]++;
-      View->NbVY++;
-    }
-;
-
-TensorPyramidValues :
-    FExpr
-    { List_Add(View->TY, &$1); }
-  | TensorPyramidValues ',' FExpr
-    { List_Add(View->TY, &$3); }
-;
-
-TensorPyramid :
-    tTensorPyramid '(' FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ','
-                       FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ',' 
-                       FExpr ',' FExpr ',' FExpr ')' 
-    { 
-      List_Add(View->TY, &$3);  List_Add(View->TY, &$9);
-      List_Add(View->TY, &$15); List_Add(View->TY, &$21);
-      List_Add(View->TY, &$27);
-      List_Add(View->TY, &$5);  List_Add(View->TY, &$11);
-      List_Add(View->TY, &$17); List_Add(View->TY, &$23);
-      List_Add(View->TY, &$29);
-      List_Add(View->TY, &$7);  List_Add(View->TY, &$13);
-      List_Add(View->TY, &$19); List_Add(View->TY, &$25);
-      List_Add(View->TY, &$31);
-      ntmp = List_Nbr(View->TY);
-    }
-    '{' TensorPyramidValues '}' tEND
-    {
-      if((List_Nbr(View->TY) - ntmp) % 45) ViewErrorFlags[23]++;
-      View->NbTY++;
+      if(ViewValueList){  
+	if((List_Nbr(ViewValueList) - ViewNumListTmp) % (ViewNumComp * ViewNumNodes)) 
+	  ViewErrorFlags[ViewElementIdx]++;
+	(*ViewNumList)++;
+      }
     }
 ;
 
@@ -1235,15 +753,12 @@ InterpolationMatrix :
     }
 ;
 
-TimeValues :
-    FExpr
-    { List_Add(View->Time, &$1); }
-  | TimeValues ',' FExpr
-    { List_Add(View->Time, &$3); }
-;
-
 Time :
-    tTime '{' TimeValues '}' tEND
+    tTime 
+    {
+      ViewValueList = View->Time;
+    }
+   '{' ElementValues '}' tEND
     {
     }
 ;

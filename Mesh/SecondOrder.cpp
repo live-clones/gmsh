@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.31 2005-02-20 16:41:24 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.32 2005-03-26 04:09:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -105,6 +105,7 @@ Vertex *onCurve(Vertex * v1, Vertex * v2)
     v.Pos.X = (v1->Pos.X + v2->Pos.X) * 0.5;
     v.Pos.Y = (v1->Pos.Y + v2->Pos.Y) * 0.5;
     v.Pos.Z = (v1->Pos.Z + v2->Pos.Z) * 0.5;
+    v.lc = (v1->lc + v2->lc) * 0.5;
   }
 
   pv = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);

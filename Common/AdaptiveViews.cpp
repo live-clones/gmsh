@@ -649,7 +649,8 @@ void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int lev
 
   if (presentTol==tol && presentZoomLevel == level && !plug)return;
 
-  printf("calling setAdaptive with level = %d and plug = %p tol %g presentTol %g\n",level,plug,tol,presentTol);
+  printf("calling setAdaptive with level = %d and plug = %p tol %g presentTol %g\n",
+	 level,(void*)plug,tol,presentTol);
 
   int *done = new int [_STposX->size1()];
   for (int i=0;i<_STposX->size1();++i)done[i] = 0;

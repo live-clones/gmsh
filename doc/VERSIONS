@@ -1,4 +1,8 @@
-$Id: VERSIONS,v 1.322 2005-03-15 02:18:11 geuzaine Exp $
+$Id: VERSIONS,v 1.323 2005-03-26 04:09:21 geuzaine Exp $
+
+New since 1.60: new stippling options for 2D plots; new version of
+post-processing file formats (1.4) with curved (second order)
+elements;
 
 New in 1.60: added support for discrete curves; new Window menu on Mac
 OS X; generalized all octree-based plugins (CutGrid, StreamLines,

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.170 2005-03-21 00:42:02 geuzaine Exp $
+// $Id: Views.cpp,v 1.171 2005-03-26 04:09:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -98,51 +98,29 @@ Post_View *BeginView(int allocate)
   v->TimeStepMin = NULL;
   v->TimeStepMax = NULL;
   v->NbSP = v->NbVP = v->NbTP = 0;
-  v->NbSL = v->NbVL = v->NbTL = 0;
-  v->NbST = v->NbVT = v->NbTT = 0;
-  v->NbSQ = v->NbVQ = v->NbTQ = 0;
-  v->NbSS = v->NbVS = v->NbTS = 0;
-  v->NbSH = v->NbVH = v->NbTH = 0;
-  v->NbSI = v->NbVI = v->NbTI = 0;
-  v->NbSY = v->NbVY = v->NbTY = 0;
+  v->NbSL = v->NbVL = v->NbTL = v->NbSL2 = v->NbVL2 = v->NbTL2 = 0;
+  v->NbST = v->NbVT = v->NbTT = v->NbST2 = v->NbVT2 = v->NbTT2 = 0;
+  v->NbSQ = v->NbVQ = v->NbTQ = v->NbSQ2 = v->NbVQ2 = v->NbTQ2 = 0;
+  v->NbSS = v->NbVS = v->NbTS = v->NbSS2 = v->NbVS2 = v->NbTS2 = 0;
+  v->NbSH = v->NbVH = v->NbTH = v->NbSH2 = v->NbVH2 = v->NbTH2 = 0;
+  v->NbSI = v->NbVI = v->NbTI = v->NbSI2 = v->NbVI2 = v->NbTI2 = 0;
+  v->NbSY = v->NbVY = v->NbTY = v->NbSY2 = v->NbVY2 = v->NbTY2 = 0;
   v->NbT2 = v->NbT3 = 0;
 
   if(allocate) {
     v->DataSize = sizeof(double);
 
-    v->Time = List_Create(100, 1000, sizeof(double));
-
-    v->SP = List_Create(100, 1000, sizeof(double));
-    v->VP = List_Create(100, 1000, sizeof(double));
-    v->TP = List_Create(100, 1000, sizeof(double));
-
-    v->SL = List_Create(100, 1000, sizeof(double));
-    v->VL = List_Create(100, 1000, sizeof(double));
-    v->TL = List_Create(100, 1000, sizeof(double));
-
-    v->ST = List_Create(100, 1000, sizeof(double));
-    v->VT = List_Create(100, 1000, sizeof(double));
-    v->TT = List_Create(100, 1000, sizeof(double));
-
-    v->SQ = List_Create(100, 1000, sizeof(double));
-    v->VQ = List_Create(100, 1000, sizeof(double));
-    v->TQ = List_Create(100, 1000, sizeof(double));
-
-    v->SS = List_Create(100, 1000, sizeof(double));
-    v->VS = List_Create(100, 1000, sizeof(double));
-    v->TS = List_Create(100, 1000, sizeof(double));
-
-    v->SH = List_Create(100, 1000, sizeof(double));
-    v->VH = List_Create(100, 1000, sizeof(double));
-    v->TH = List_Create(100, 1000, sizeof(double));
-
-    v->SI = List_Create(100, 1000, sizeof(double));
-    v->VI = List_Create(100, 1000, sizeof(double));
-    v->TI = List_Create(100, 1000, sizeof(double));
-
-    v->SY = List_Create(100, 1000, sizeof(double));
-    v->VY = List_Create(100, 1000, sizeof(double));
-    v->TY = List_Create(100, 1000, sizeof(double));
+#define LCD List_Create(100, 1000, sizeof(double))
+    v->Time = LCD;
+    v->SP = LCD; v->VP = LCD; v->TP = LCD;
+    v->SL = LCD; v->VL = LCD; v->TL = LCD; v->SL2 = LCD; v->VL2 = LCD; v->TL2 = LCD; 
+    v->ST = LCD; v->VT = LCD; v->TT = LCD; v->ST2 = LCD; v->VT2 = LCD; v->TT2 = LCD; 
+    v->SQ = LCD; v->VQ = LCD; v->TQ = LCD; v->SQ2 = LCD; v->VQ2 = LCD; v->TQ2 = LCD; 
+    v->SS = LCD; v->VS = LCD; v->TS = LCD; v->SS2 = LCD; v->VS2 = LCD; v->TS2 = LCD; 
+    v->SH = LCD; v->VH = LCD; v->TH = LCD; v->SH2 = LCD; v->VH2 = LCD; v->TH2 = LCD; 
+    v->SI = LCD; v->VI = LCD; v->TI = LCD; v->SI2 = LCD; v->VI2 = LCD; v->TI2 = LCD; 
+    v->SY = LCD; v->VY = LCD; v->TY = LCD; v->SY2 = LCD; v->VY2 = LCD; v->TY2 = LCD; 
+#undef LCD
 
     v->T2D = List_Create(10, 100, sizeof(double));
     v->T2C = List_Create(100, 1000, sizeof(char));
@@ -152,13 +130,13 @@ Post_View *BeginView(int allocate)
   else {
     v->Time = NULL;
     v->SP = v->VP = v->TP = NULL;
-    v->SL = v->VL = v->TL = NULL;
-    v->ST = v->VT = v->TT = NULL;
-    v->SQ = v->VQ = v->TQ = NULL;
-    v->SS = v->VS = v->TS = NULL;
-    v->SH = v->VH = v->TH = NULL;
-    v->SI = v->VI = v->TI = NULL;
-    v->SY = v->VY = v->TY = NULL;
+    v->SL = v->VL = v->TL = v->SL2 = v->VL2 = v->TL2 = NULL;
+    v->ST = v->VT = v->TT = v->ST2 = v->VT2 = v->TT2 = NULL;
+    v->SQ = v->VQ = v->TQ = v->SQ2 = v->VQ2 = v->TQ2 = NULL;
+    v->SS = v->VS = v->TS = v->SS2 = v->VS2 = v->TS2 = NULL;
+    v->SH = v->VH = v->TH = v->SH2 = v->VH2 = v->TH2 = NULL;
+    v->SI = v->VI = v->TI = v->SI2 = v->VI2 = v->TI2 = NULL;
+    v->SY = v->VY = v->TY = v->SY2 = v->VY2 = v->TY2 = NULL;
     v->T2D = v->T2C = NULL;
     v->T3D = v->T3C = NULL;
   }
@@ -365,6 +343,10 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
   // time steps common to all elements.
   Stat_Text(v, v->T2D, v->T2C, 4);
   Stat_Text(v, v->T3D, v->T3C, 5);
+
+  // convert all curved (geometrically 2nd order) elements into linear
+  // elements
+  v->splitCurvedElements();
 
   // Points
   Stat_List(v, v->SP, 0, v->NbSP, 1);
@@ -874,8 +856,32 @@ void ReadView(FILE *file, char *filename)
                &v->NbSS, &v->NbVS, &v->NbTS,
                &v->NbSH, &v->NbVH, &v->NbTH,
                &v->NbSI, &v->NbVI, &v->NbTI,
-               &v->NbSY, &v->NbVY, &v->NbTY, &v->NbT2, &t2l, &v->NbT3, &t3l);
+               &v->NbSY, &v->NbVY, &v->NbTY,
+	       &v->NbT2, &t2l, &v->NbT3, &t3l);
         Msg(DEBUG, "Detected post-processing view format %g", version);
+      }
+      else if(version == 1.4) {
+        fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+	       "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               name, &v->NbTimeStep,
+               &v->NbSP, &v->NbVP, &v->NbTP,
+               &v->NbSL, &v->NbVL, &v->NbTL,
+               &v->NbST, &v->NbVT, &v->NbTT,
+               &v->NbSQ, &v->NbVQ, &v->NbTQ,
+               &v->NbSS, &v->NbVS, &v->NbTS,
+               &v->NbSH, &v->NbVH, &v->NbTH,
+               &v->NbSI, &v->NbVI, &v->NbTI,
+               &v->NbSY, &v->NbVY, &v->NbTY,
+               &v->NbSL2, &v->NbVL2, &v->NbTL2,
+               &v->NbST2, &v->NbVT2, &v->NbTT2,
+               &v->NbSQ2, &v->NbVQ2, &v->NbTQ2,
+               &v->NbSS2, &v->NbVS2, &v->NbTS2,
+               &v->NbSH2, &v->NbVH2, &v->NbTH2,
+               &v->NbSI2, &v->NbVI2, &v->NbTI2,
+               &v->NbSY2, &v->NbVY2, &v->NbTY2,
+	       &v->NbT2, &t2l, &v->NbT3, &t3l);
+        Msg(DEBUG, "Detected post-processing view format 1.4");
       }
       else {
         Msg(GERROR, "Unknown post-processing file format (version %g)",
@@ -904,69 +910,84 @@ void ReadView(FILE *file, char *filename)
       // Note: if nb==0, we still allocates the lists (so that they
       // are ready to be filled later, e.g. in plugins)
 
+#define LCD List_CreateFromFile(nb, 100, size, file, format, swap)
+
       // Points
-      nb = v->NbSP ? v->NbSP * (v->NbTimeStep + 3) : 0;
-      v->SP = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVP ? v->NbVP * (v->NbTimeStep * 3 + 3) : 0;
-      v->VP = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTP ? v->NbTP * (v->NbTimeStep * 9 + 3) : 0;
-      v->TP = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbSP ? v->NbSP * (v->NbTimeStep * 1 + 3) : 0; v->SP = LCD;
+      nb = v->NbVP ? v->NbVP * (v->NbTimeStep * 3 + 3) : 0; v->VP = LCD;
+      nb = v->NbTP ? v->NbTP * (v->NbTimeStep * 9 + 3) : 0; v->TP = LCD;
 
       // Lines
-      nb = v->NbSL ? v->NbSL * (v->NbTimeStep * 2 + 6) : 0;
-      v->SL = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVL ? v->NbVL * (v->NbTimeStep * 2 * 3 + 6) : 0;
-      v->VL = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTL ? v->NbTL * (v->NbTimeStep * 2 * 9 + 6) : 0;
-      v->TL = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbSL ? v->NbSL * (v->NbTimeStep * 2 * 1 + 6) : 0; v->SL = LCD;
+      nb = v->NbVL ? v->NbVL * (v->NbTimeStep * 2 * 3 + 6) : 0; v->VL = LCD;
+      nb = v->NbTL ? v->NbTL * (v->NbTimeStep * 2 * 9 + 6) : 0; v->TL = LCD;
 
       // Triangles
-      nb = v->NbST ? v->NbST * (v->NbTimeStep * 3 + 9) : 0;
-      v->ST = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVT ? v->NbVT * (v->NbTimeStep * 3 * 3 + 9) : 0;
-      v->VT = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTT ? v->NbTT * (v->NbTimeStep * 3 * 9 + 9) : 0;
-      v->TT = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbST ? v->NbST * (v->NbTimeStep * 3 * 1 + 9) : 0; v->ST = LCD;
+      nb = v->NbVT ? v->NbVT * (v->NbTimeStep * 3 * 3 + 9) : 0; v->VT = LCD;
+      nb = v->NbTT ? v->NbTT * (v->NbTimeStep * 3 * 9 + 9) : 0; v->TT = LCD;
 
       // Quadrangles
-      nb = v->NbSQ ? v->NbSQ * (v->NbTimeStep * 4 + 12) : 0;
-      v->SQ = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVQ ? v->NbVQ * (v->NbTimeStep * 4 * 3 + 12) : 0;
-      v->VQ = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTQ ? v->NbTQ * (v->NbTimeStep * 4 * 9 + 12) : 0;
-      v->TQ = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbSQ ? v->NbSQ * (v->NbTimeStep * 4 * 1 + 12) : 0; v->SQ = LCD;
+      nb = v->NbVQ ? v->NbVQ * (v->NbTimeStep * 4 * 3 + 12) : 0; v->VQ = LCD;
+      nb = v->NbTQ ? v->NbTQ * (v->NbTimeStep * 4 * 9 + 12) : 0; v->TQ = LCD;
 
       // Tetrahedra
-      nb = v->NbSS ? v->NbSS * (v->NbTimeStep * 4 + 12) : 0;
-      v->SS = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVS ? v->NbVS * (v->NbTimeStep * 4 * 3 + 12) : 0;
-      v->VS = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTS ? v->NbTS * (v->NbTimeStep * 4 * 9 + 12) : 0;
-      v->TS = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbSS ? v->NbSS * (v->NbTimeStep * 4 * 1 + 12) : 0; v->SS = LCD;
+      nb = v->NbVS ? v->NbVS * (v->NbTimeStep * 4 * 3 + 12) : 0; v->VS = LCD;
+      nb = v->NbTS ? v->NbTS * (v->NbTimeStep * 4 * 9 + 12) : 0; v->TS = LCD;
 
       // Hexahedra
-      nb = v->NbSH ? v->NbSH * (v->NbTimeStep * 8 + 24) : 0;
-      v->SH = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVH ? v->NbVH * (v->NbTimeStep * 8 * 3 + 24) : 0;
-      v->VH = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTH ? v->NbTH * (v->NbTimeStep * 8 * 9 + 24) : 0;
-      v->TH = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbSH ? v->NbSH * (v->NbTimeStep * 8 * 1 + 24) : 0; v->SH = LCD;
+      nb = v->NbVH ? v->NbVH * (v->NbTimeStep * 8 * 3 + 24) : 0; v->VH = LCD;
+      nb = v->NbTH ? v->NbTH * (v->NbTimeStep * 8 * 9 + 24) : 0; v->TH = LCD;
 
       // Prisms
-      nb = v->NbSI ? v->NbSI * (v->NbTimeStep * 6 + 18) : 0;
-      v->SI = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVI ? v->NbVI * (v->NbTimeStep * 6 * 3 + 18) : 0;
-      v->VI = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTI ? v->NbTI * (v->NbTimeStep * 6 * 9 + 18) : 0;
-      v->TI = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbSI ? v->NbSI * (v->NbTimeStep * 6 * 1 + 18) : 0; v->SI = LCD;
+      nb = v->NbVI ? v->NbVI * (v->NbTimeStep * 6 * 3 + 18) : 0; v->VI = LCD;
+      nb = v->NbTI ? v->NbTI * (v->NbTimeStep * 6 * 9 + 18) : 0; v->TI = LCD;
 
       // Pyramids
-      nb = v->NbSY ? v->NbSY * (v->NbTimeStep * 5 + 15) : 0;
-      v->SY = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbVY ? v->NbVY * (v->NbTimeStep * 5 * 3 + 15) : 0;
-      v->VY = List_CreateFromFile(nb, 100, size, file, format, swap);
-      nb = v->NbTY ? v->NbTY * (v->NbTimeStep * 5 * 9 + 15) : 0;
-      v->TY = List_CreateFromFile(nb, 100, size, file, format, swap);
+      nb = v->NbSY ? v->NbSY * (v->NbTimeStep * 5 * 1 + 15) : 0; v->SY = LCD;
+      nb = v->NbVY ? v->NbVY * (v->NbTimeStep * 5 * 3 + 15) : 0; v->VY = LCD;
+      nb = v->NbTY ? v->NbTY * (v->NbTimeStep * 5 * 9 + 15) : 0; v->TY = LCD;
+
+      // 2nd order Lines
+      nb = v->NbSL2 ? v->NbSL2 * (v->NbTimeStep * 3 * 1 + 9) : 0; v->SL2 = LCD;
+      nb = v->NbVL2 ? v->NbVL2 * (v->NbTimeStep * 3 * 3 + 9) : 0; v->VL2 = LCD;
+      nb = v->NbTL2 ? v->NbTL2 * (v->NbTimeStep * 3 * 9 + 9) : 0; v->TL2 = LCD;
+
+      // 2nd order Triangles
+      nb = v->NbST2 ? v->NbST2 * (v->NbTimeStep * 6 * 1 + 18) : 0; v->ST2 = LCD;
+      nb = v->NbVT2 ? v->NbVT2 * (v->NbTimeStep * 6 * 3 + 18) : 0; v->VT2 = LCD;
+      nb = v->NbTT2 ? v->NbTT2 * (v->NbTimeStep * 6 * 9 + 18) : 0; v->TT2 = LCD;
+
+      // 2nd order Quadrangles
+      nb = v->NbSQ2 ? v->NbSQ2 * (v->NbTimeStep * 9 * 1 + 27) : 0; v->SQ2 = LCD;
+      nb = v->NbVQ2 ? v->NbVQ2 * (v->NbTimeStep * 9 * 3 + 27) : 0; v->VQ2 = LCD;
+      nb = v->NbTQ2 ? v->NbTQ2 * (v->NbTimeStep * 9 * 9 + 27) : 0; v->TQ2 = LCD;
+
+      // 2nd order Tetrahedra
+      nb = v->NbSS2 ? v->NbSS2 * (v->NbTimeStep * 10 * 1 + 30) : 0; v->SS2 = LCD;
+      nb = v->NbVS2 ? v->NbVS2 * (v->NbTimeStep * 10 * 3 + 30) : 0; v->VS2 = LCD;
+      nb = v->NbTS2 ? v->NbTS2 * (v->NbTimeStep * 10 * 9 + 30) : 0; v->TS2 = LCD;
+
+      // 2nd order Hexahedra
+      nb = v->NbSH2 ? v->NbSH2 * (v->NbTimeStep * 27 * 1 + 81) : 0; v->SH2 = LCD;
+      nb = v->NbVH2 ? v->NbVH2 * (v->NbTimeStep * 27 * 3 + 81) : 0; v->VH2 = LCD;
+      nb = v->NbTH2 ? v->NbTH2 * (v->NbTimeStep * 27 * 9 + 81) : 0; v->TH2 = LCD;
+
+      // 2nd order Prisms
+      nb = v->NbSI2 ? v->NbSI2 * (v->NbTimeStep * 18 * 1 + 54) : 0; v->SI2 = LCD;
+      nb = v->NbVI2 ? v->NbVI2 * (v->NbTimeStep * 18 * 3 + 54) : 0; v->VI2 = LCD;
+      nb = v->NbTI2 ? v->NbTI2 * (v->NbTimeStep * 18 * 9 + 54) : 0; v->TI2 = LCD;
+
+      // 2nd order Pyramids
+      nb = v->NbSY2 ? v->NbSY2 * (v->NbTimeStep * 14 * 1 + 42) : 0; v->SY2 = LCD;
+      nb = v->NbVY2 ? v->NbVY2 * (v->NbTimeStep * 14 * 3 + 42) : 0; v->VY2 = LCD;
+      nb = v->NbTY2 ? v->NbTY2 * (v->NbTimeStep * 14 * 9 + 42) : 0; v->TY2 = LCD;
+
+#undef LCD
 
       // 2D strings
       nb = v->NbT2 ? v->NbT2 * 4 : 0;
@@ -985,25 +1006,42 @@ void ReadView(FILE *file, char *filename)
 	v->T3C = List_CreateFromFile(t3l, 10, sizeof(char), file, format, swap);
 
       Msg(DEBUG,
-          "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d "
-          "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", name, v->NbTimeStep,
-          v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL, v->NbST,
-          v->NbVT, v->NbTT, v->NbSQ, v->NbVQ, v->NbTQ, v->NbSS, v->NbVS,
-          v->NbTS, v->NbSH, v->NbVH, v->NbTH, v->NbSI, v->NbVI, v->NbTI,
-          v->NbSY, v->NbVY, v->NbTY, v->NbT2, v->NbT3);
-      Msg(DEBUG,
-          "List_Nbrs: " "SP%d VP%d TP%d " "SL%d VL%d TL%d " "ST%d VT%d TT%d "
-          "SQ%d VQ%d TQ%d " "SS%d VS%d TS%d " "SH%d VH%d TH%d "
-          "SI%d VI%d TI%d " "SY%d VY%d TY%d " "T2D%d T2C%d T3D%d T3C%d",
-          List_Nbr(v->SP), List_Nbr(v->VP), List_Nbr(v->TP), List_Nbr(v->SL),
-          List_Nbr(v->VL), List_Nbr(v->TL), List_Nbr(v->ST), List_Nbr(v->VT),
-          List_Nbr(v->TT), List_Nbr(v->SQ), List_Nbr(v->VQ), List_Nbr(v->TQ),
-          List_Nbr(v->SS), List_Nbr(v->VS), List_Nbr(v->TS), List_Nbr(v->SH),
-          List_Nbr(v->VH), List_Nbr(v->TH), List_Nbr(v->SI), List_Nbr(v->VI),
-          List_Nbr(v->TI), List_Nbr(v->SY), List_Nbr(v->VY), List_Nbr(v->TY),
-          List_Nbr(v->T2D), List_Nbr(v->T2C), List_Nbr(v->T3D),
-          List_Nbr(v->T3C));
-
+          "Read View '%s' (%d TimeSteps): "
+	  "SP(%d/%d) VP(%d/%d) TP(%d/%d) "     
+	  "SL(%d/%d) VL(%d/%d) TL(%d/%d) "
+	  "ST(%d/%d) VT(%d/%d) TT(%d/%d) "
+	  "SQ(%d/%d) VQ(%d/%d) TQ(%d/%d) "
+	  "SS(%d/%d) VS(%d/%d) TS(%d/%d) "
+	  "SH(%d/%d) VH(%d/%d) TH(%d/%d) "
+	  "SI(%d/%d) VI(%d/%d) TI(%d/%d) "
+	  "SY(%d/%d) VY(%d/%d) TY(%d/%d) " 
+	  "SL2(%d/%d) VL2(%d/%d) TL2(%d/%d) "
+	  "ST2(%d/%d) VT2(%d/%d) TT2(%d/%d) "
+	  "SQ2(%d/%d) VQ2(%d/%d) TQ2(%d/%d) "
+	  "SS2(%d/%d) VS2(%d/%d) TS2(%d/%d) " 
+	  "SH2(%d/%d) VH2(%d/%d) TH2(%d/%d) "
+	  "SI2(%d/%d) VI2(%d/%d) TI2(%d/%d) "
+	  "SY2(%d/%d) VY2(%d/%d) TY2(%d/%d) "
+	  "T2(%d/%d/%d) T3(%d/%d/%d) ", 
+	  name, v->NbTimeStep,
+          v->NbSP, List_Nbr(v->SP), v->NbVP, List_Nbr(v->VP), v->NbTP, List_Nbr(v->TP),
+          v->NbSL, List_Nbr(v->SL), v->NbVL, List_Nbr(v->VL), v->NbTL, List_Nbr(v->TL),
+          v->NbST, List_Nbr(v->ST), v->NbVT, List_Nbr(v->VT), v->NbTT, List_Nbr(v->TT),
+          v->NbSQ, List_Nbr(v->SQ), v->NbVQ, List_Nbr(v->VQ), v->NbTQ, List_Nbr(v->TQ),
+          v->NbSS, List_Nbr(v->SS), v->NbVS, List_Nbr(v->VS), v->NbTS, List_Nbr(v->TS),
+          v->NbSH, List_Nbr(v->SH), v->NbVH, List_Nbr(v->VH), v->NbTH, List_Nbr(v->TH),
+          v->NbSI, List_Nbr(v->SI), v->NbVI, List_Nbr(v->VI), v->NbTI, List_Nbr(v->TI),
+          v->NbSY, List_Nbr(v->SY), v->NbVY, List_Nbr(v->VY), v->NbTY, List_Nbr(v->TY),
+          v->NbSL2, List_Nbr(v->SL2), v->NbVL2, List_Nbr(v->VL2), v->NbTL2, List_Nbr(v->TL2),
+          v->NbST2, List_Nbr(v->ST2), v->NbVT2, List_Nbr(v->VT2), v->NbTT2, List_Nbr(v->TT2),
+          v->NbSQ2, List_Nbr(v->SQ2), v->NbVQ2, List_Nbr(v->VQ2), v->NbTQ2, List_Nbr(v->TQ2),
+          v->NbSS2, List_Nbr(v->SS2), v->NbVS2, List_Nbr(v->VS2), v->NbTS2, List_Nbr(v->TS2),
+          v->NbSH2, List_Nbr(v->SH2), v->NbVH2, List_Nbr(v->VH2), v->NbTH2, List_Nbr(v->TH2),
+          v->NbSI2, List_Nbr(v->SI2), v->NbVI2, List_Nbr(v->VI2), v->NbTI2, List_Nbr(v->TI2),
+          v->NbSY2, List_Nbr(v->SY2), v->NbVY2, List_Nbr(v->VY2), v->NbTY2, List_Nbr(v->TY2),
+	  v->NbT2, List_Nbr(v->T2D), List_Nbr(v->T2C), 
+	  v->NbT3, List_Nbr(v->T3D), List_Nbr(v->T3C));
+      
       // don't update the ui after each view, but only at the end
       EndView(v, 0, filename, name); 
     }
@@ -1340,6 +1378,113 @@ void WriteView(Post_View *v, char *filename, int format, int append)
     Msg(STATUS2N, "Wrote '%s'", filename);
   }
 
+}
+
+// Transform curved elements into linear ones. This is a temporary
+// solution, until we can use an Adaptive_Post_View on curved
+// elements, too.
+
+void splitCurvedElement(List_T **in, int *nbin, List_T *out, int *nbout, 
+			int nodin, int nodout, int nbcomp, int nbsplit, int split[][8],
+			int remove=1)
+{
+  if(*nbin == 0) return;
+  int nb = List_Nbr(*in) / *nbin;
+  int nbstep = (nb - 3 * nodin) / (nodin * nbcomp); // we don't know this yet for the view
+  for(int i = 0; i < List_Nbr(*in); i += nb) {
+    double *coord = (double *)List_Pointer_Fast(*in, i);
+    double *val = (double *)List_Pointer_Fast(*in, i + 3 * nodin);
+    for(int j = 0; j < nbsplit; j++){
+      for(int k = 0; k < nodout; k++)
+	List_Add(out, &coord[split[j][k]]);
+      for(int k = 0; k < nodout; k++)
+	List_Add(out, &coord[nodin + split[j][k]]);
+      for(int k = 0; k < nodout; k++)
+	List_Add(out, &coord[2 * nodin + split[j][k]]);
+      for(int ts = 0; ts < nbstep; ts++){
+	for(int k = 0; k < nodout; k++){
+	  for(int l = 0; l < nbcomp; l++){
+	    List_Add(out, &val[nodin * nbcomp * ts + nbcomp * split[j][k] + l]);
+	  }
+	}
+      }
+      (*nbout)++;
+    }
+  }
+
+  if(remove){
+    *nbin = 0;
+    List_Delete(*in);
+    *in = NULL;
+  }
+}
+
+void Post_View::splitCurvedElements()
+{
+  // we could keep track of the starting index in SL, VL, ..., so that
+  // we could draw the boundaries correctly
+
+  int lin[2][8] = { // 2-split
+    {0,2}, {2,1}
+  };
+  splitCurvedElement(&SL2, &NbSL2, SL, &NbSL, 3,2, 1, 2, lin);
+  splitCurvedElement(&VL2, &NbVL2, VL, &NbVL, 3,2, 3, 2, lin);
+  splitCurvedElement(&TL2, &NbTL2, TL, &NbTL, 3,2, 9, 2, lin);
+
+  int tri[4][8] = { // 4-split
+    {0,3,5}, {1,4,3}, {2,5,4}, {3,4,5}
+  };
+  splitCurvedElement(&ST2, &NbST2, ST, &NbST, 6,3, 1, 4, tri);
+  splitCurvedElement(&VT2, &NbVT2, VT, &NbVT, 6,3, 3, 4, tri);
+  splitCurvedElement(&TT2, &NbTT2, TT, &NbTT, 6,3, 9, 4, tri);
+
+  int qua[4][8] = { // 4-split
+    {0,4,8,7}, {1,5,8,4}, {2,6,8,5}, {3,7,8,6}
+  };
+  splitCurvedElement(&SQ2, &NbSQ2, SQ, &NbSQ, 9,4, 1, 4, qua);
+  splitCurvedElement(&VQ2, &NbVQ2, VQ, &NbVQ, 9,4, 3, 4, qua);
+  splitCurvedElement(&TQ2, &NbTQ2, TQ, &NbTQ, 9,4, 9, 4, qua);
+
+  int tet[8][8] = { // 8-split
+    {0,4,6,7}, {1,5,4,9}, {2,6,5,8}, {3,9,7,8},
+    {4,6,7,8}, {4,6,5,8}, {4,5,9,8}, {4,7,9,8}
+  };
+  splitCurvedElement(&SS2, &NbSS2, SS, &NbSS, 10,4, 1, 8, tet);
+  splitCurvedElement(&VS2, &NbVS2, VS, &NbVS, 10,4, 3, 8, tet);
+  splitCurvedElement(&TS2, &NbTS2, TS, &NbTS, 10,4, 9, 8, tet);
+
+  int hex[8][8] = { // 8-split
+    {0,8,20,9, 10,21,26,22}, {8,1,11,20, 21,12,23,26},
+    {9,20,13,3, 22,26,24,15}, {20,11,2,13, 26,23,14,24},
+    {10,21,26,22, 4,16,25,17}, {21,12,23,26, 16,5,18,25},
+    {22,26,24,15, 17,25,19,7}, {26,23,14,24, 25,18,6,19}
+  };
+  splitCurvedElement(&SH2, &NbSH2, SH, &NbSH, 27,8, 1, 8, hex);
+  splitCurvedElement(&VH2, &NbVH2, VH, &NbVH, 27,8, 3, 8, hex);
+  splitCurvedElement(&TH2, &NbTH2, TH, &NbTH, 27,8, 9, 8, hex);
+
+  int pri[8][8] = { // 8-split
+    {0,6,7, 8,15,16}, {1,9,6, 10,17,15}, {2,7,9, 11,16,17}, {6,9,7, 15,17,16},
+    {8,15,16, 3,12,13}, {10,17,15, 4,14,12}, {11,16,17, 5,13,14}, {15,17,16, 12,14,13}
+  };
+  splitCurvedElement(&SI2, &NbSI2, SI, &NbSI, 18,6, 1, 8, pri);
+  splitCurvedElement(&VI2, &NbVI2, VI, &NbVI, 18,6, 3, 8, pri);
+  splitCurvedElement(&TI2, &NbTI2, TI, &NbTI, 18,6, 9, 8, pri);
+
+  int pyr[6][8] = { // 6 pyramids
+    {0,5,13,6, 7}, {5,1,8,13, 9}, {6,13,10,3, 12}, {13,8,2,10, 11},
+    {7,9,11,12, 4}, {7,12,11,9, 13}
+  };
+  splitCurvedElement(&SY2, &NbSY2, SY, &NbSY, 14,5, 1, 6, pyr, 0); // don't remove yet
+  splitCurvedElement(&VY2, &NbVY2, VY, &NbVY, 14,5, 3, 6, pyr, 0);
+  splitCurvedElement(&TY2, &NbTY2, TY, &NbTY, 14,5, 9, 6, pyr, 0);
+
+  int pyr2[4][8] = { // + 4 tets to fill the holes
+    {6,12,7,13}, {7,9,5,13}, {9,11,8,13}, {12,10,11,13}
+  };
+  splitCurvedElement(&SY2, &NbSY2, SS, &NbSS, 14,4, 1, 4, pyr2);
+  splitCurvedElement(&VY2, &NbVY2, VS, &NbVS, 14,4, 3, 4, pyr2);
+  splitCurvedElement(&TY2, &NbTY2, TS, &NbTS, 14,4, 9, 4, pyr2);
 }
 
 // Smoothing

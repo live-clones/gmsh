@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.178 2005-03-14 18:12:29 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.179 2005-03-26 04:09:22 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,8 +37,8 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.31
-@set GMSH-VERSION   1.60
+@set EDITION        1.32
+@set GMSH-VERSION   1.61
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2005 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
@@ -3116,39 +3116,60 @@ View "@var{string}" @{
 where the 26 object @w{@var{type}s} that can be displayed are:
 
 @example
-                    @var{type}  #@var{list-of-coords}  #@var{list-of-values}
-------------------------------------------------------------
-scalar point        SP    3            1  * @var{nb-time-steps}
-vector point        VP    3            3  * @var{nb-time-steps}
-tensor point        TP    3            9  * @var{nb-time-steps}
-scalar line         SL    6            2  * @var{nb-time-steps}
-vector line         VL    6            6  * @var{nb-time-steps}
-tensor line         TL    6            18 * @var{nb-time-steps}
-scalar triangle     ST    9            3  * @var{nb-time-steps}
-vector triangle     VT    9            9  * @var{nb-time-steps}
-tensor triangle     TT    9            27 * @var{nb-time-steps}
-scalar quadrangle   SQ    12           4  * @var{nb-time-steps}
-vector quadrangle   VQ    12           12 * @var{nb-time-steps}
-tensor quadrangle   TQ    12           36 * @var{nb-time-steps}
-scalar tetrahedron  SS    12           4  * @var{nb-time-steps}
-vector tetrahedron  VS    12           12 * @var{nb-time-steps}
-tensor tetrahedron  TS    12           36 * @var{nb-time-steps}
-scalar hexahedron   SH    24           8  * @var{nb-time-steps}
-vector hexahedron   VH    24           24 * @var{nb-time-steps}
-tensor hexahedron   TH    24           72 * @var{nb-time-steps}
-scalar prism        SI    18           6  * @var{nb-time-steps}
-vector prism        VI    18           18 * @var{nb-time-steps}
-tensor prism        TI    18           54 * @var{nb-time-steps}
-scalar pyramid      SY    15           5  * @var{nb-time-steps}
-vector pyramid      VY    15           15 * @var{nb-time-steps}
-tensor pyramid      TY    15           45 * @var{nb-time-steps}
-text 2d             T2    3            arbitrary
-text 3d             T3    4            arbitrary
+                                 @var{type}  #@var{list-of-coords}  #@var{list-of-values}
+--------------------------------------------------------------------
+scalar point                     SP    3            1  * @var{nb-time-steps}
+vector point                     VP    3            3  * @var{nb-time-steps}
+tensor point                     TP    3            9  * @var{nb-time-steps}
+scalar line                      SL    6            2  * @var{nb-time-steps}
+vector line                      VL    6            6  * @var{nb-time-steps}
+tensor line                      TL    6            18 * @var{nb-time-steps}
+scalar triangle                  ST    9            3  * @var{nb-time-steps}
+vector triangle                  VT    9            9  * @var{nb-time-steps}
+tensor triangle                  TT    9            27 * @var{nb-time-steps}
+scalar quadrangle                SQ    12           4  * @var{nb-time-steps}
+vector quadrangle                VQ    12           12 * @var{nb-time-steps}
+tensor quadrangle                TQ    12           36 * @var{nb-time-steps}
+scalar tetrahedron               SS    12           4  * @var{nb-time-steps}
+vector tetrahedron               VS    12           12 * @var{nb-time-steps}
+tensor tetrahedron               TS    12           36 * @var{nb-time-steps}
+scalar hexahedron                SH    24           8  * @var{nb-time-steps}
+vector hexahedron                VH    24           24 * @var{nb-time-steps}
+tensor hexahedron                TH    24           72 * @var{nb-time-steps}
+scalar prism                     SI    18           6  * @var{nb-time-steps}
+vector prism                     VI    18           18 * @var{nb-time-steps}
+tensor prism                     TI    18           54 * @var{nb-time-steps}
+scalar pyramid                   SY    15           5  * @var{nb-time-steps}
+vector pyramid                   VY    15           15 * @var{nb-time-steps}
+tensor pyramid                   TY    15           45 * @var{nb-time-steps}
+second order scalar line         SL2   9            3  * @var{nb-time-steps}
+second order vector line         VL2   9            9  * @var{nb-time-steps}
+second order tensor line         TL2   9            27 * @var{nb-time-steps}
+second order scalar triangle     ST2   18           6  * @var{nb-time-steps}
+second order vector triangle     VT2   18           18 * @var{nb-time-steps}
+second order tensor triangle     TT2   18           54 * @var{nb-time-steps}
+second order scalar quadrangle   SQ2   27           9  * @var{nb-time-steps}
+second order vector quadrangle   VQ2   27           27 * @var{nb-time-steps}
+second order tensor quadrangle   TQ2   27           81 * @var{nb-time-steps}
+second order scalar tetrahedron  SS2   30           10 * @var{nb-time-steps}
+second order vector tetrahedron  VS2   30           30 * @var{nb-time-steps}
+second order tensor tetrahedron  TS2   30           90 * @var{nb-time-steps}
+second order scalar hexahedron   SH2   81           27 * @var{nb-time-steps}
+second order vector hexahedron   VH2   81           81 * @var{nb-time-steps}
+second order tensor hexahedron   TH2   81           243* @var{nb-time-steps}
+second order scalar prism        SI2   54           18 * @var{nb-time-steps}
+second order vector prism        VI2   54           54 * @var{nb-time-steps}
+second order tensor prism        TI2   54           162* @var{nb-time-steps}
+second order scalar pyramid      SY2   42           14 * @var{nb-time-steps}
+second order vector pyramid      VY2   42           42 * @var{nb-time-steps}
+second order tensor pyramid      TY2   42           126* @var{nb-time-steps}
+text 2d                          T2    3            arbitrary
+text 3d                          T3    4            arbitrary
 @end example
 
 The coordinates are given `by node'@footnote{Beware that this is different
 from the ordering of the node coordinates in the ASCII and binary
-post-processing file formats.}, i.e.:
+post-processing file formats.}, i.e.,
 
 @itemize @bullet
 @item
@@ -3163,6 +3184,12 @@ post-processing file formats.}, i.e.:
 @item
 etc.
 @end itemize
+
+and the ordering of the nodes is given in @ref{Gmsh node ordering}; for
+second order elements, the first order nodes are given first, followed by
+the nodes associated with the edges, followed by the nodes associated with
+the quadrangular faces (if any), followed by the nodes associated with the
+volume (if any).
 
 The values are given by time step, by node and by component, i.e.:
 @example
@@ -3222,7 +3249,7 @@ one or more post-processing views, enclosed between
 
 @example
 $PostFormat
-1.3 @var{file-type} @var{data-size}
+1.4 @var{file-type} @var{data-size}
 $EndPostFormat
 $View
 @var{view-name} @var{nb-time-steps}
@@ -3234,32 +3261,45 @@ $View
 @var{nb-scalar-hexahedra} @var{nb-vector-hexahedra} @var{nb-tensor-hexahedra}
 @var{nb-scalar-prisms} @var{nb-vector-prisms} @var{nb-tensor-prisms}
 @var{nb-scalar-pyramids} @var{nb-vector-pyramids} @var{nb-tensor-pyramids}
+@var{nb-scalar-lines2} @var{nb-vector-lines2} @var{nb-tensor-lines2}
+@var{nb-scalar-triangles2} @var{nb-vector-triangles2} @var{nb-tensor-triangles2}
+@var{nb-scalar-quadrangles2} @var{nb-vector-quadrangles2} @var{nb-tensor-quadrangles2}
+@var{nb-scalar-tetrahedra2} @var{nb-vector-tetrahedra2} @var{nb-tensor-tetrahedra2}
+@var{nb-scalar-hexahedra2} @var{nb-vector-hexahedra2} @var{nb-tensor-hexahedra2}
+@var{nb-scalar-prisms2} @var{nb-vector-prisms2} @var{nb-tensor-prisms2}
+@var{nb-scalar-pyramids2} @var{nb-vector-pyramids2} @var{nb-tensor-pyramids2}
 @var{nb-text2d} @var{nb-text2d-chars} @var{nb-text3d} @var{nb-text3d-chars}
 @var{time-step-values}
-< @var{scalar-point-value} > @dots{}
-< @var{vector-point-value} > @dots{}
-< @var{tensor-point-value} > @dots{}
-< @var{scalar-line-value} > @dots{}
-< @var{vector-line-value} > @dots{}
-< @var{tensor-line-value} > @dots{}
-< @var{scalar-triangle-value} > @dots{}
-< @var{vector-triangle-value} > @dots{}
-< @var{tensor-triangle-value} > @dots{}
-< @var{scalar-quadrangle-value} > @dots{}
-< @var{vector-quadrangle-value} > @dots{}
-< @var{tensor-quadrangle-value} > @dots{}
-< @var{scalar-tetrahedron-value} > @dots{}
-< @var{vector-tetrahedron-value} > @dots{}
-< @var{tensor-tetrahedron-value} > @dots{}
-< @var{scalar-hexahedron-value} > @dots{}
-< @var{vector-hexahedron-value} > @dots{}
-< @var{tensor-hexahedron-value} > @dots{}
-< @var{scalar-prism-value} > @dots{}
-< @var{vector-prism-value} > @dots{}
-< @var{tensor-prism-value} > @dots{}
-< @var{scalar-pyramid-value} > @dots{}
-< @var{vector-pyramid-value} > @dots{}
-< @var{tensor-pyramid-value} > @dots{}
+< @var{scalar-point-value} > @dots{} < @var{vector-point-value} > @dots{} 
+    < @var{tensor-point-value} > @dots{}
+< @var{scalar-line-value} > @dots{} < @var{vector-line-value} > @dots{} 
+    < @var{tensor-line-value} > @dots{}
+< @var{scalar-triangle-value} > @dots{} < @var{vector-triangle-value} > @dots{}
+    < @var{tensor-triangle-value} > @dots{}
+< @var{scalar-quadrangle-value} > @dots{} < @var{vector-quadrangle-value} > @dots{}
+    < @var{tensor-quadrangle-value} > @dots{}
+< @var{scalar-tetrahedron-value} > @dots{} < @var{vector-tetrahedron-value} > @dots{}
+    < @var{tensor-tetrahedron-value} > @dots{}
+< @var{scalar-hexahedron-value} > @dots{} < @var{vector-hexahedron-value} > @dots{}
+    < @var{tensor-hexahedron-value} > @dots{}
+< @var{scalar-prism-value} > @dots{} < @var{vector-prism-value} > @dots{}
+    < @var{tensor-prism-value} > @dots{}
+< @var{scalar-pyramid-value} > @dots{} < @var{vector-pyramid-value} > @dots{}
+    < @var{tensor-pyramid-value} > @dots{}
+< @var{scalar-line2-value} > @dots{} < @var{vector-line2-value} > @dots{}
+    < @var{tensor-line2-value} > @dots{}
+< @var{scalar-triangle2-value} > @dots{} < @var{vector-triangle2-value} > @dots{}
+    < @var{tensor-triangle2-value} > @dots{}
+< @var{scalar-quadrangle2-value} > @dots{} < @var{vector-quadrangle2-value} > @dots{}
+    < @var{tensor-quadrangle2-value} > @dots{}
+< @var{scalar-tetrahedron2-value} > @dots{} < @var{vector-tetrahedron2-value} > @dots{}
+    < @var{tensor-tetrahedron2-value} > @dots{}
+< @var{scalar-hexahedron2-value} > @dots{} < @var{vector-hexahedron2-value} > @dots{}
+    < @var{tensor-hexahedron2-value} > @dots{}
+< @var{scalar-prism2-value} > @dots{} < @var{vector-prism2-value} > @dots{}
+    < @var{tensor-prism2-value} > @dots{}
+< @var{scalar-pyramid2-value} > @dots{} < @var{vector-pyramid2-value} > @dots{}
+    < @var{tensor-pyramid2-value} > @dots{}
 < @var{text2d} > @dots{} < @var{text2d-chars} > @dots{}
 < @var{text3d} > @dots{} < @var{text3d-chars} > @dots{}
 $EndView
@@ -3396,18 +3436,15 @@ Here is a pseudo C code to write a post-processing file in binary format:
 int one = 1;
 
 fprintf(file, "$PostFormat\n");
-fprintf(file, "%g %d %d\n", 1.3, 1, sizeof(double));
+fprintf(file, "%g %d %d\n", 1.4, 1, sizeof(double));
 fprintf(file, "$EndPostFormat\n");
 fprintf(file, "$View\n");
 fprintf(file, "%s %d "
-  "%d %d %d "
-  "%d %d %d "
-  "%d %d %d "
-  "%d %d %d "
-  "%d %d %d "
-  "%d %d %d "
-  "%d %d %d "
-  "%d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
   "%d %d %d %d\n", 
   view-name, nb-time-steps,
   nb-scalar-points, nb-vector-points, nb-tensor-points,
@@ -3418,6 +3455,13 @@ fprintf(file, "%s %d "
   nb-scalar-hexahedra, nb-vector-hexahedra, nb-tensor-hexahedra,
   nb-scalar-prisms, nb-vector-prisms, nb-tensor-prisms,
   nb-scalar-pyramids, nb-vector-pyramids, nb-tensor-pyramids,
+  nb-scalar-lines2, nb-vector-lines2, nb-tensor-lines2,
+  nb-scalar-triangles2, nb-vector-triangles2, nb-tensor-triangles2,
+  nb-scalar-quadrangles2, nb-vector-quadrangles2, nb-tensor-quadrangles2,
+  nb-scalar-tetrahedra2, nb-vector-tetrahedra2, nb-tensor-tetrahedra2,
+  nb-scalar-hexahedra2, nb-vector-hexahedra2, nb-tensor-hexahedra2,
+  nb-scalar-prisms2, nb-vector-prisms2, nb-tensor-prisms2,
+  nb-scalar-pyramids2, nb-vector-pyramids2, nb-tensor-pyramids2,
   nb-text2d, nb-text2d-chars, nb-text3d, nb-text3d-chars);
 fwrite(&one, sizeof(int), 1, file);
 fwrite(time-step-values, sizeof(double), nb-time-steps, file);

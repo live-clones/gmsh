@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.70 2005-03-13 07:16:13 geuzaine Exp $
+// $Id: Gmsh.l,v 1.71 2005-03-26 04:09:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -232,30 +232,6 @@ Volume                  return tVolume;
 
 With			return tWith;
 
-SP                      return tScalarPoint;
-VP                      return tVectorPoint;
-TP                      return tTensorPoint;
-SL                      return tScalarLine;
-VL                      return tVectorLine;
-TL                      return tTensorLine;
-ST                      return tScalarTriangle;
-VT                      return tVectorTriangle;
-TT                      return tTensorTriangle;
-SQ                      return tScalarQuadrangle;
-VQ                      return tVectorQuadrangle;
-TQ                      return tTensorQuadrangle;
-SS                      return tScalarTetrahedron;
-VS                      return tVectorTetrahedron;
-TS                      return tTensorTetrahedron;
-SH                      return tScalarHexahedron;
-VH                      return tVectorHexahedron;
-TH                      return tTensorHexahedron;
-SI                      return tScalarPrism;
-VI                      return tVectorPrism;
-TI                      return tTensorPrism;
-SY                      return tScalarPyramid;
-VY                      return tVectorPyramid;
-TY                      return tTensorPyramid;
 T2                      return tText2D;
 T3                      return tText3D;
 INTERPOLATION_SCHEME    return tInterpolationScheme;

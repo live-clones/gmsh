@@ -28,7 +28,6 @@
 #include "AdaptiveViews.h"
 
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
-#define VIEW_MAX_ELEMENT_NODES  8
 #define VAL_INF 1.e200
 
 #define POST_POINT           0
@@ -53,20 +52,20 @@ class Post_View{
   List_T *Time;
   int NbSP, NbVP, NbTP;
   List_T *SP, *VP, *TP; // points
-  int NbSL, NbVL, NbTL;
-  List_T *SL, *VL, *TL; // lines
-  int NbST, NbVT, NbTT;
-  List_T *ST, *VT, *TT; // triangles
-  int NbSQ, NbVQ, NbTQ;
-  List_T *SQ, *VQ, *TQ; // quadrangles
-  int NbSS, NbVS, NbTS;
-  List_T *SS, *VS, *TS; // tetrahedra
-  int NbSH, NbVH, NbTH;
-  List_T *SH, *VH, *TH; // hexahedra
-  int NbSI, NbVI, NbTI;
-  List_T *SI, *VI, *TI; // prisms
-  int NbSY, NbVY, NbTY;
-  List_T *SY, *VY, *TY; // pyramids
+  int NbSL, NbVL, NbTL, NbSL2, NbVL2, NbTL2;
+  List_T *SL, *VL, *TL, *SL2, *VL2, *TL2; // lines
+  int NbST, NbVT, NbTT, NbST2, NbVT2, NbTT2;
+  List_T *ST, *VT, *TT, *ST2, *VT2, *TT2; // triangles
+  int NbSQ, NbVQ, NbTQ, NbSQ2, NbVQ2, NbTQ2;
+  List_T *SQ, *VQ, *TQ, *SQ2, *VQ2, *TQ2; // quadrangles
+  int NbSS, NbVS, NbTS, NbSS2, NbVS2, NbTS2;
+  List_T *SS, *VS, *TS, *SS2, *VS2, *TS2; // tetrahedra
+  int NbSH, NbVH, NbTH, NbSH2, NbVH2, NbTH2;
+  List_T *SH, *VH, *TH, *SH2, *VH2, *TH2; // hexahedra
+  int NbSI, NbVI, NbTI, NbSI2, NbVI2, NbTI2;
+  List_T *SI, *VI, *TI, *SI2, *VI2, *TI2; // prisms
+  int NbSY, NbVY, NbTY, NbSY2, NbVY2, NbTY2;
+  List_T *SY, *VY, *TY, *SY2, *VY2, *TY2; // pyramids
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
@@ -131,6 +130,9 @@ class Post_View{
   // some generic access functions
   int empty();
   void get_raw_data(int type, List_T **list, int **nbe, int *nbc, int *nbn);
+
+  // transforms curved elements into linear ones
+  void splitCurvedElements();
 
   // If the view is high order, coeffs are interpreated as
   // coefficients of a high order interpolation. So, a pre-pro

@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.5 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: Element.cpp,v 1.6 2005-03-26 04:09:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -78,11 +78,26 @@ Quadrangle *Create_Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4)
 
 void Quadrangle::ExportLcField(FILE * f)
 {
-  fprintf(f, "SQ(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	  "%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g};\n",
-	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
-	  V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
+  if(!VSUP)
+    fprintf(f, "SQ(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g};\n",
+	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
+	    V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
+  else
+    fprintf(f, "SQ2(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
+	    "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
+	    V[3]->Pos.Y, V[3]->Pos.Z, 
+	    VSUP[0]->Pos.X, VSUP[0]->Pos.Y, VSUP[0]->Pos.Z, VSUP[1]->Pos.X, VSUP[1]->Pos.Y,
+	    VSUP[1]->Pos.Z, VSUP[2]->Pos.X, VSUP[2]->Pos.Y, VSUP[2]->Pos.Z, VSUP[3]->Pos.X,
+	    VSUP[3]->Pos.Y, VSUP[3]->Pos.Z, VSUP[4]->Pos.X, VSUP[4]->Pos.Y, VSUP[4]->Pos.Z, 
+	    V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc, 
+	    VSUP[0]->lc, VSUP[1]->lc, VSUP[2]->lc, VSUP[3]->lc, VSUP[4]->lc);
+    
 }
 
 void Free_Quadrangle(void *a, void *b)
@@ -149,16 +164,30 @@ Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
 
 void Hexahedron::ExportLcField(FILE * f)
 {
-  fprintf(f,"SH(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
-	  "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
-	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
-	  V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
-	  V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[6]->Pos.X, V[6]->Pos.Y, 
-	  V[6]->Pos.Z, V[7]->Pos.X, V[7]->Pos.Y, V[7]->Pos.Z, V[0]->lc, 
-	  V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc, V[5]->lc, V[6]->lc, V[7]->lc);
+  if(!VSUP)
+    fprintf(f,"SH(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
+	    "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
+	    V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
+	    V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[6]->Pos.X, V[6]->Pos.Y, 
+	    V[6]->Pos.Z, V[7]->Pos.X, V[7]->Pos.Y, V[7]->Pos.Z, V[0]->lc, 
+	    V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc, V[5]->lc, V[6]->lc, V[7]->lc);
+  else{
+    fprintf(f,"SH2(%.16g,%.16g,%.16g", V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z);
+    for(int i = 1; i < 8; i++) 
+      fprintf(f,",%.16g,%.16g,%.16g", V[i]->Pos.X, V[i]->Pos.Y, V[i]->Pos.Z);
+    for(int i = 0; i < 19; i++) 
+      fprintf(f,",%.16g,%.16g,%.16g", VSUP[i]->Pos.X, VSUP[i]->Pos.Y, VSUP[i]->Pos.Z);
+    fprintf(f,"){%.16g", V[0]->lc);
+    for(int i = 1; i < 8; i++) 
+      fprintf(f,",%.16g", V[i]->lc);
+    for(int i = 0; i < 19; i++) 
+      fprintf(f,",%.16g", VSUP[i]->lc);
+    fprintf(f,"};\n");
+  }
 }
 
 void Free_Hexahedron(void *a, void *b)
@@ -224,14 +253,28 @@ Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
 
 void Prism::ExportLcField(FILE * f)
 {
-  fprintf(f,"SI(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
-	  "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
-	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
-	  V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
-	  V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc,
-	  V[3]->lc, V[4]->lc, V[5]->lc);
+  if(!VSUP)
+    fprintf(f,"SI(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
+	    "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
+	    V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
+	    V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc,
+	    V[3]->lc, V[4]->lc, V[5]->lc);
+  else{
+    fprintf(f,"SI2(%.16g,%.16g,%.16g", V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z);
+    for(int i = 1; i < 6; i++) 
+      fprintf(f,",%.16g,%.16g,%.16g", V[i]->Pos.X, V[i]->Pos.Y, V[i]->Pos.Z);
+    for(int i = 0; i < 12; i++) 
+      fprintf(f,",%.16g,%.16g,%.16g", VSUP[i]->Pos.X, VSUP[i]->Pos.Y, VSUP[i]->Pos.Z);
+    fprintf(f,"){%.16g", V[0]->lc);
+    for(int i = 1; i < 6; i++) 
+      fprintf(f,",%.16g", V[i]->lc);
+    for(int i = 0; i < 12; i++) 
+      fprintf(f,",%.16g", VSUP[i]->lc);
+    fprintf(f,"};\n");
+  }
 }
 
 void Free_Prism(void *a, void *b)
@@ -295,12 +338,26 @@ Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
 
 void Pyramid::ExportLcField(FILE * f)
 {
-  fprintf(f,"SY(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
-	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g,%.16g};\n",
-	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
-	  V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
-	  V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc);
+  if(!VSUP)
+    fprintf(f,"SY(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
+	    V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
+	    V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc);
+  else{
+    fprintf(f,"SY2(%.16g,%.16g,%.16g", V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z);
+    for(int i = 1; i < 5; i++) 
+      fprintf(f,",%.16g,%.16g,%.16g", V[i]->Pos.X, V[i]->Pos.Y, V[i]->Pos.Z);
+    for(int i = 0; i < 9; i++) 
+      fprintf(f,",%.16g,%.16g,%.16g", VSUP[i]->Pos.X, VSUP[i]->Pos.Y, VSUP[i]->Pos.Z);
+    fprintf(f,"){%.16g", V[0]->lc);
+    for(int i = 1; i < 5; i++) 
+      fprintf(f,",%.16g", V[i]->lc);
+    for(int i = 0; i < 9; i++) 
+      fprintf(f,",%.16g", VSUP[i]->lc);
+    fprintf(f,"};\n");
+  }
 }
 
 void Free_Pyramid(void *a, void *b)
