@@ -1,4 +1,20 @@
-// $Id: Message.cpp,v 1.25 2002-02-13 09:20:41 stainier Exp $
+// $Id: Message.cpp,v 1.26 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <unistd.h>
 #include <signal.h>
@@ -23,14 +39,10 @@
 extern GUI       *WID;
 extern Context_T  CTX;
 
-/* ------------------------------------------------------------------------ */
-/*  S i g n a l                                                             */
-/* ------------------------------------------------------------------------ */
+// Handle signals. It is a crime to call stdio functions in a signal
+// handler. But who cares? ;-)
 
 void Signal (int sig_num){
-
-  /* It is VERY wrong to call stdio functions in a signal handler. But
-     who cares? ;-) */
 
   switch (sig_num){
   case SIGSEGV : 
@@ -53,10 +65,7 @@ void Signal (int sig_num){
   }
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  M s g                                                                   */
-/* ------------------------------------------------------------------------ */
+// General purpose message routine
 
 void Debug(){
 }
@@ -153,9 +162,7 @@ void Msg(int level, char *fmt, ...){
 }
 
 
-/* ------------------------------------------------------------------------ */
-/*  Exit                                                                    */
-/* ------------------------------------------------------------------------ */
+// Clean exit
 
 void Exit(int level){
   if(WID && !CTX.batch){
@@ -177,9 +184,7 @@ void Exit(int level){
   exit(level);
 }
 
-/* ------------------------------------------------------------------------ */
-/*  C p u                                                                   */
-/* ------------------------------------------------------------------------ */
+// CPU time computation, etc.
 
 void GetResources(long *s, long *us, long *mem){
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -205,16 +210,3 @@ double Cpu(void){
   return (double)s + (double)us/1.e6 ;
 }
 
-/* ------------------------------------------------------------------------ */
-/*  P r o g r e s s                                                         */
-/* ------------------------------------------------------------------------ */
-
-void Progress(int i){
-}
-
-/* ------------------------------------------------------------------------ */
-/*  E d i t G e o m e t r y                                                 */
-/* ------------------------------------------------------------------------ */
-
-void AddALineInTheEditGeometryForm (char* line){
-}

@@ -1,4 +1,20 @@
-// $Id: Graph2D.cpp,v 1.16 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.17 2002-05-18 07:18:01 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,9 +27,7 @@
 
 extern Context_T   CTX;
 
-/* ------------------------------------------------------------------------
-    2D graphics (gnuplot style)
-   ------------------------------------------------------------------------ */
+// 2D graphics (gnuplot style)
 
 static void getval(Post_View *v, int i, int j, double *p1, double *p2, 
 		   double *Abs, double *Val){
@@ -94,8 +108,8 @@ static void Draw_Graph2D(Post_View *v,
   }
   
   gl_font(FL_HELVETICA,CTX.gl_fontsize);
-  font_h = gl_height() ; // hauteur totale de la fonte
-  font_a = gl_height()-gl_descent() ; // hauteur de la fonte au dessus de pt de ref
+  font_h = gl_height() ; // total font height
+  font_a = gl_height()-gl_descent() ; // height above ref pt
 
   switch(v->RangeType){
   case DRAW_POST_DEFAULT : ValMin = v->Min ; ValMax = v->Max ; break;
@@ -346,7 +360,7 @@ void Draw_Graph2D(void){
 	if(gl_width(label)+tic > dx) dx = gl_width(label)+tic;
 	sprintf(label,v->Format,v->CustomMax);
 	if(gl_width(label)+tic > dx) dx = gl_width(label)+tic;
-	dy = 1.5*gl_height();//2 en dessous et 1 au dessus !
+	dy = 1.5*gl_height(); //2 below and & above!
       }
       if(!v->AutoPosition || !nbauto){
 	pos[0] = v->Position[0];
@@ -373,10 +387,7 @@ void Draw_Graph2D(void){
   }
 }
 
-
-/* ------------------------------------------------------------------------
-    2D text strings
-   ------------------------------------------------------------------------ */
+// 2D text strings
 
 // T2(x,y,style){"str","str",...};
 // T2D : x,y,style,index,x,y,style,index,...

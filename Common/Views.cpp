@@ -1,4 +1,20 @@
-// $Id: Views.cpp,v 1.66 2002-03-12 19:07:32 geuzaine Exp $
+// $Id: Views.cpp,v 1.67 2002-05-18 07:17:59 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <set>
 #include "Gmsh.h"
@@ -12,12 +28,11 @@ extern Context_T   CTX ;
 
 #define INFINITY 1.e200
 
-//static reference view
+// Static reference view
+
 Post_View  *Post_ViewReference = NULL;
 
-/* ------------------------------------------------------------------------ */
-/*  V i e w s                                                               */
-/* ------------------------------------------------------------------------ */
+// FIXME: the whole View interface should be rewritten in C++...
 
 int fcmpPostViewNum(const void *v1, const void *v2){
   return (((Post_View *)v1)->Num - ((Post_View *)v2)->Num);
@@ -331,7 +346,7 @@ void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
 			 (double*)List_Pointer_Fast(v->TS,i+12));
   }
 
-  // Dummy time values if using old parsed format...
+  // Dummy time values if using old parsed format
   if(v->Time && !List_Nbr(v->Time)){
     for(i=0 ; i<v->NbTimeStep ; i++){
       d = (double)i;
@@ -534,9 +549,7 @@ Post_View *Create2DGraph(char *xname, char *yname,
   return v;
 }
 
-/* ------------------------------------------------------------------------ */
-/*  R e a d _ V i e w                                                       */
-/* ------------------------------------------------------------------------ */
+// INput/output
 
 void Read_View(FILE *file, char *filename){
   char   str[256], name[256];
@@ -702,12 +715,9 @@ void Read_View(FILE *file, char *filename){
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  W r i t e _ V i e w                                                     */
-/* ------------------------------------------------------------------------ */
-
-// Ajouter un entier par simplexe (num de region)?
-// Format liste de noeuds + liste de simplexes ?
+// FIXME: add an integer per simplex (region num)
+// FIXME: add a format similar to the msh format (node list + simplex list)
+// FIXME: add a structured format
 
 void Write_View(int Flag_BIN, Post_View *v, char *filename){
   FILE *file;
@@ -767,10 +777,7 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
 
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  S m o o t h i n g                                                       */
-/* ------------------------------------------------------------------------ */
+// Smoothing
 
 using namespace std;
 
@@ -863,11 +870,8 @@ public :
   mycont c;
 };
 
-void smooth_list (List_T *SS ,
-		  double *min, double *max,
-		  int NbTimeStep,
-		  int nbvert,
-		  int nb, 
+void smooth_list (List_T *SS , double *min, double *max,
+		  int NbTimeStep, int nbvert, int nb, 
 		  mycont & connectivities){
   double *x,*y,*z,*v;
   int i,j,k;
@@ -938,7 +942,7 @@ void Post_View :: smooth (){
   
 }
   
-// a small utility to smooth normals
+// Normal smoothing
 
 void Post_View :: reset_normals(){
   if(normals) delete normals;
@@ -1005,9 +1009,7 @@ bool Post_View :: get_normal(double x, double y, double z,
   return true;
 }
 
-/* ------------------------------------------------------------------------ */
-/*  T r a n s f o r m a t i o n                                             */
-/* ------------------------------------------------------------------------ */
+// Transformation
 
 static void transform(double mat[3][3], double v[3],
 		      double *x, double *y, double *z){
@@ -1016,11 +1018,8 @@ static void transform(double mat[3][3], double v[3],
   *z = mat[2][0]*v[0] + mat[2][1]*v[1] + mat[2][2]*v[2];
 }
 
-static void transform_list(List_T *V ,
-			   int NbTimeStep,
-			   int nbvert,
-			   int nb,
-			   double mat[3][3]){
+static void transform_list(List_T *V , int NbTimeStep, int nbvert,
+			   int nb, double mat[3][3]){
   double *x,*y,*z, v[3];
   int i, j;
 
@@ -1075,3 +1074,4 @@ void Post_View :: transform (double mat[3][3]){
     transform_list(VS, NbTimeStep, 4, nb, mat);
   }
 }
+

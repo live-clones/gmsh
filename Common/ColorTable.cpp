@@ -1,4 +1,24 @@
-// $Id: ColorTable.cpp,v 1.8 2002-02-14 17:22:06 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.9 2002-05-18 07:17:59 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// These routines are loosely based on code from the Vis5d program for
+// visualizing five dimensional gridded data sets Copyright (C) 1990 -
+// 1995 Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -57,13 +77,13 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
     if (rgb_flag) {
 
       switch(ct->ipar[COLORTABLE_NUMBER]){
-      case 1 : /* vis5d */
+      case 1 : // vis5d
         t = (curve+1.4) * (s - (1.+bias)/2.);
         r = (int)( 128.0 + 127.0 * atan( 7.0*t ) / 1.57  );
         g = (int)( 128.0 + 127.0 * (2 * exp(-7*t*t) - 1) );
         b = (int)( 128.0 + 127.0 * atan( -7.0*t ) / 1.57 );
         break;
-      case 2: /* samcef */
+      case 2: // samcef
         if (s-bias<=0.00){ 
           r = 0 ; g = 0 ; b = 255 ;
         }
@@ -80,7 +100,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 255 ; g = 0 ; b = 0 ;
         }
         break;
-      case 3: /* rainbow (matlab, etc.) */
+      case 3: // rainbow (matlab, etc.)
         if (s-bias<=0.00) {
           r = 0 ; g = 0 ; b = 255 ; 
         }
@@ -105,7 +125,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 255 ; g = 0 ; b = 0 ; 
         }
         break;
-      case 4: /* darkblue-red-yellow-white */
+      case 4: // darkblue-red-yellow-white
 #define myfct(a,b,c,d) ((a)+\
                         (b)*(s-bias)+\
                         (c)*(s-bias)*(s-bias)+\
@@ -118,15 +138,15 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
 #undef myfct
 #undef clamp
         break;
-      case 5: /* grayscale */
+      case 5: // grayscale
         if      (s-bias<=0.00){ r = g = b = 0 ; }
         else if (s-bias<=1.00){ r = g = b = (int)(255*(s-bias)); }
         else                  { r = g = b = 255 ; }
         break;
-      case 6: /* monochrome */
+      case 6: // monochrome
         r = g = b = 0 ;
         break;
-      case 7: /* rainbow modified to add black and white , from EMC2000 */
+      case 7: // rainbow modified to add black and white , from EMC2000
         if (s-bias<=0.00) {
           r = 0 ; g = 0 ; b = 0 ; 
         }
@@ -154,7 +174,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 255 ; g = 255 ; b = 255 ; 
         }
         break;
-      case 8:  /* grayscale, without white */
+      case 8:  // grayscale, without white
       default:
         if      (s-bias<=0.00){ r = g = b = 0 ; }
         else if (s-bias<=1.00){ r = g = b = (int)(220*(s-bias)); }
@@ -166,7 +186,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
         if(ct->fpar[COLORTABLE_BETA] > 0.0)
           gamma = 1. - ct->fpar[COLORTABLE_BETA];
 	else 
-	  gamma = 1./(1.001 + ct->fpar[COLORTABLE_BETA]);//beta is thresholded to [-1,1]
+	  gamma = 1./(1.001 + ct->fpar[COLORTABLE_BETA]); // beta is thresholded to [-1,1]
         r = (int)( 255. * pow((double)r/255.,gamma) );
         g = (int)( 255. * pow((double)g/255.,gamma) );
         b = (int)( 255. * pow((double)b/255.,gamma) );

@@ -1,4 +1,20 @@
-// $Id: Main.cpp,v 1.36 2002-04-26 00:15:30 geuzaine Exp $
+// $Id: Main.cpp,v 1.37 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <signal.h>
 #include <time.h>
@@ -16,12 +32,15 @@
 #include "Options.h"
 #include "ColorTable.h"
 #include "Parser.h"
-#include "Static.h"
 #include "GUI.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
 
-GUI *WID = NULL;
+char        yyname[256];
+int         yyerrorstate;
+Context_T   CTX ;
+Mesh        M, *THEM=NULL, *LOCAL=NULL;
+GUI        *WID = NULL;
 
 int main(int argc, char *argv[]){
   int     i, nbf;

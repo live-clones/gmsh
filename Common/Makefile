@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.32 2002-05-18 00:55:14 geuzaine Exp $
+# $Id: Makefile,v 1.33 2002-05-18 07:17:59 geuzaine Exp $
 #
 # Makefile for "libGmshCommon.a"
 #
@@ -12,15 +12,11 @@ RM      = rm
 
 LIB     = ../lib/libGmshCommon.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
-          -I../Mesh -I../Parser -I../Fltk
+          -I../Mesh -I../Numeric -I../Parser -I../Fltk
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = -D_FLTK
-
-GL_INCLUDE    = -I$(HOME)/SOURCES/Mesa-3.1/include\
-                -I$(HOME)/SOURCES/Mesa-3.1/include/GL
-GUI_INCLUDE   = 
 
 RMFLAGS = -f
 CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
@@ -28,12 +24,11 @@ CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
 
 SRC =  	Context.cpp\
         Views.cpp\
-        Iso.cpp\
         Options.cpp\
         GetOptions.cpp\
         Timer.cpp\
         ColorTable.cpp\
-        Numeric.cpp
+        Trackball.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -52,12 +47,9 @@ clean:
 lint:
 	$(LINT) $(CFLAGS) $(SRC)
 
-res:
-	windres Icon.rc -O coff Icon.res
-
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	$(CXX) -MM -MG $(CFLAGS) ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
@@ -65,39 +57,29 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Context.h \
- Options.h DefaultOptions.h trackball.c trackball.h
-Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Numeric.h Views.h ColorTable.h Context.h Options.h
-Iso.o: Iso.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
- ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Numeric.h
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Numeric/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
+  ../Common/ColorTable.h Context.h Options.h DefaultOptions.h Trackball.h
+Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Numeric/Numeric.h Views.h ColorTable.h Context.h Options.h
 Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h \
- ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
- ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Context.h \
- Options.h ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
- ../Fltk/Colorbar_Window.h
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Context.h \
+  Options.h ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Fltk/Colorbar_Window.h
 GetOptions.o: GetOptions.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h GmshUI.h GmshVersion.h Numeric.h Context.h \
- Options.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
- ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
- ../Mesh/Metric.h ../Mesh/Matrix.h Views.h ColorTable.h \
- ../Parser/OpenFile.h ../Parser/Parser.h
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  GmshUI.h GmshVersion.h ../Numeric/Numeric.h Context.h Options.h \
+  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  Views.h ColorTable.h ../Parser/OpenFile.h ../Parser/Parser.h
 Timer.o: Timer.cpp
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h ColorTable.h Context.h
-Numeric.o: Numeric.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Numeric.h
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ColorTable.h Context.h
+Trackball.o: Trackball.cpp Trackball.h

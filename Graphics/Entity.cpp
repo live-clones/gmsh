@@ -1,4 +1,20 @@
-// $Id: Entity.cpp,v 1.12 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Entity.cpp,v 1.13 2002-05-18 07:18:01 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -9,19 +25,11 @@
 
 extern Context_T   CTX;
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ P o i n t                                                     */
-/* ------------------------------------------------------------------------ */
-
 void Draw_Point (double *x, double *y, double *z, double Raise[3][5]){
   glBegin(GL_POINTS);
   glVertex3d(x[0]+Raise[0][0], y[0]+Raise[1][0], z[0]+Raise[2][0]);
   glEnd();
 }
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ L i n e                                                       */
-/* ------------------------------------------------------------------------ */
 
 void Draw_Line (double *x, double *y, double *z, double Raise[3][5]){
   glBegin(GL_LINES);
@@ -29,10 +37,6 @@ void Draw_Line (double *x, double *y, double *z, double Raise[3][5]){
   glVertex3d(x[1]+Raise[0][1], y[1]+Raise[1][1], z[1]+Raise[2][1]);
   glEnd();
 }
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ T r i a n g l e                                               */
-/* ------------------------------------------------------------------------ */
 
 void Draw_Triangle (double *x, double *y, double *z, double *n,
                     double Raise[3][5], int shade){
@@ -73,10 +77,6 @@ void Draw_Triangle (double *x, double *y, double *z, double *n,
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ Q u a d r a n g l e                                           */
-/* ------------------------------------------------------------------------ */
-
 void Draw_Quadrangle (double *x, double *y, double *z, double *n,
                       double Raise[3][5], int shade){
   double x2[3]={x[2],x[3],x[0]};
@@ -102,10 +102,6 @@ void Draw_Quadrangle (double *x, double *y, double *z, double *n,
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ P o l y g o n                                                 */
-/* ------------------------------------------------------------------------ */
-
 void Draw_Polygon (int n, double *x, double *y, double *z,
                    double Raise[3][5]){
   int i;
@@ -116,10 +112,6 @@ void Draw_Polygon (int n, double *x, double *y, double *z,
                               z[i]+Raise[2][i]);
   glEnd();
 }
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ V e c t o r                                                   */
-/* ------------------------------------------------------------------------ */
 
 void Draw_Vector (int Type, int Fill, 
                   double x, double y, double z, 

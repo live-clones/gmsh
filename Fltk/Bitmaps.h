@@ -1,7 +1,23 @@
 #ifndef _BITMAPS_H_
 #define _BITMAPS_H_
 
-// 'Gmsh' (Unix) icon
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// Standard Gmsh Unix icon
 
 #define g1_width 66
 #define g1_height 29
@@ -25,7 +41,7 @@ static char g1_bits[] = {
  0xa5,0x28,0xfd,0x30,0x00,0x00,0x00,0x00,0x24,0x99,0xc8,0xfd,0x00,0x00,0x00,
  0x00,0x00,0x00,0x00,0x00,0xfc};
 
-// 'Gmsh Menu' (Unix) icon
+// Gmsh Menu Unix icon
 
 #define g2_width 66
 #define g2_height 29
@@ -108,7 +124,8 @@ static char about_bits[] = {
  0x00,0x00,0x00,0x00,0xfe,0x00,0x00,0x00,0x00,0x00,0x00,0xfe};
 
 // 'Abort' bitmap
-/* disabled until mesh thread is back
+// disabled until the mesh thread is back
+/* 
 #define abort_width 13
 #define abort_height 13
 static char abort_bits[] = {

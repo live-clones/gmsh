@@ -1,4 +1,20 @@
-// $Id: Numeric.cpp,v 1.5 2002-01-24 17:54:32 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.1 2002-05-18 07:18:03 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -157,3 +173,40 @@ double angle_02pi (double A3){
   return A3;
 }
 
+double InterpolateIso(double *X, double *Y, double *Z, 
+		      double *Val, double V, int I1, int I2, 
+		      double *XI, double *YI ,double *ZI){
+  if(Val[I1] == Val[I2]){
+    *XI = X[I1]; 
+    *YI = Y[I1]; 
+    *ZI = Z[I1]; 
+    return 0;
+  }
+  else{
+    double coef = (V - Val[I1])/(Val[I2]-Val[I1]);
+    *XI= coef*(X[I2]-X[I1]) + X[I1];
+    *YI= coef*(Y[I2]-Y[I1]) + Y[I1];
+    *ZI= coef*(Z[I2]-Z[I1]) + Z[I1];
+    return coef;
+  }
+}
+
+void gradSimplex (double *x, double *y, double *z, double *v, double *grad){
+  // p = p1 * (1-u-v-w) + p2 u + p3 v + p4 w
+
+  double mat[3][3];
+  double det,b[3];
+  mat[0][0] = x[1]-x[0];
+  mat[1][0] = x[2]-x[0];
+  mat[2][0] = x[3]-x[0];
+  mat[0][1] = y[1]-y[0];
+  mat[1][1] = y[2]-y[0];
+  mat[2][1] = y[3]-y[0];
+  mat[0][2] = z[1]-z[0];
+  mat[1][2] = z[2]-z[0];
+  mat[2][2] = z[3]-z[0];
+  b[0] = v[1]-v[0];
+  b[1] = v[2]-v[0];
+  b[2] = v[3]-v[0];
+  sys3x3 (mat, b, grad, &det); 
+}

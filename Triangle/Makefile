@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2002-05-18 00:55:14 geuzaine Exp $
+# $Id: Makefile,v 1.6 2002-05-18 07:18:06 geuzaine Exp $
 #
 # Makefile for "libGmshTriangle.a"
 #
@@ -61,3 +61,4 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
+triangle.o: triangle.c triangle.h

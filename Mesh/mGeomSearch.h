@@ -1,7 +1,9 @@
 #ifndef _MGEOM_SEARCH_H
 #define _MGEOM_SEARCH_H
+
 #include <vector>
 #include <algorithm>
+
 #define MIN(x,y) ((x<y)?(x):(y))
 #define MAX(x,y) ((x>y)?(x):(y))
 #define TOL 1.e-06

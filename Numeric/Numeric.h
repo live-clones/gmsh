@@ -1,6 +1,22 @@
 #ifndef _NUMERIC_H_
 #define _NUMERIC_H_
 
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
 #include <math.h>
 
 #define RADTODEG      57.295779513082321
@@ -45,5 +61,10 @@ int sys3x3_with_tol (double mat[3][3], double b[3], double res[3], double *det);
 int det3x3 (double mat[3][3], double *det);
 int inv3x3 (double mat[3][3], double inv[3][3], double *det);
 double angle_02pi (double A3);
+
+double InterpolateIso(double *X, double *Y, double *Z, 
+		      double *Val, double V, int I1, int I2, 
+		      double *XI, double *YI ,double *ZI);
+void gradSimplex (double *x, double *y, double *z, double *v, double *grad);
 
 #endif

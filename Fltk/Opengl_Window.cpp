@@ -1,4 +1,20 @@
-// $Id: Opengl_Window.cpp,v 1.21 2002-04-12 23:59:22 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.22 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -96,11 +112,11 @@ void Opengl_Window::clear_overlay() {
 }
 
 
-// le principe de FLTK est assez different des autres toolkits: les
-// events sont passes au handle du widget qui a le focus. Si ce handle
-// revoie 1, alors l'event est considere comme traite, et est
-// supprime. Si le handle retourne 0, l'event est passe au handle du
-// parent.
+// The event model in FLTK is pretty different from other toolkits:
+// the events are passed to the widget handle du widget that has the
+// focus. If this handle returns 1, then the event is considered as
+// treated, and is suppressed. If the handle returns 0, the event is
+// passed to the parent.
 
 int Opengl_Window::handle(int event) {
   static int      xpos, ypos, xmov, ymov, ibut, hits;
@@ -109,8 +125,6 @@ int Opengl_Window::handle(int event) {
   static Vertex   *v=NULL, *ov;
   static Curve    *c=NULL, *oc;
   static Surface  *s=NULL, *os;
-
-  //printf("gmsh handle\n");
 
   GLuint  ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
 

@@ -1,4 +1,20 @@
-// $Id: Scale.cpp,v 1.28 2002-02-13 09:20:41 stainier Exp $
+// $Id: Scale.cpp,v 1.29 2002-05-18 07:18:02 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,12 +27,8 @@
 
 extern Context_T   CTX;
 
-/* Even if all computations in these routines are made in window
-   coordinates, double precision is used to work at subpixel accuracy */
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ S c a l e                                                     */
-/* ------------------------------------------------------------------------ */
+// Even if all computations in these routines are made in window
+// coordinates, double precision is used to work at subpixel accuracy
 
 extern double GiveValueFromIndex_Lin(double ValMin, double ValMax, int NbIso, int Iso);
 extern double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso, int Iso);
@@ -34,8 +46,8 @@ void draw_scale(Post_View *v,
   double    Val, ValMin, ValMax;
 
   gl_font(FL_HELVETICA,CTX.gl_fontsize);
-  font_h  = gl_height() ;              // hauteur totale de la fonte
-  font_a  = gl_height()-gl_descent() ; // hauteur de la fonte au dessus de pt de ref
+  font_h  = gl_height() ;              // total font height
+  font_a  = gl_height()-gl_descent() ; // height above ref pt
   cs_bh   = height/(v->NbIso?v->NbIso:1) ; // colorscale box height
   cv_xmin = xmin+width+tic ;  // valuescale xmin
 
@@ -184,7 +196,7 @@ void Draw_Scales(void){
 
   if(!CTX.post.list) return;
 
-  /* scales to draw ? */
+  // scales to draw?
   
   if(!todraw)
     todraw = List_Create(5,5,sizeof(Post_View*));

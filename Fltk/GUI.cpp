@@ -1,4 +1,20 @@
-// $Id: GUI.cpp,v 1.172 2002-05-15 04:37:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.173 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -19,7 +35,6 @@
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Bitmaps.h"
-#include "Icon.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
 
@@ -44,7 +59,7 @@
 
 extern Context_T  CTX;
 
-//******************* Definition of the static menus ***********************************
+// Definition of the static menus
 
 // Don't define shortcuts for FL_CTRL+'n', FL_CTRL+'p', FL_CTRL+'f', FL_CTRL+'b'
 // these are used by fltk for widget navigation (in the same way as the 4 arrow keys)
@@ -111,7 +126,7 @@ Fl_Menu_Item m_module_table[] = {
   {0}
 };
 
-//********************* Definition of the dynamic contexts *****************************
+// Definition of the dynamic contexts
 
 Context_Item menu_geometry[] = 
 { { "0Geometry", NULL } ,
@@ -290,7 +305,7 @@ Context_Item menu_post[] =
 { { "3Post-processing", NULL } ,
   { NULL } };
 
-//********************** Definition of global shortcuts ********************************
+// Definition of global shortcuts
 
 int GUI::global_shortcuts(int event){
   int i, j;
@@ -541,7 +556,7 @@ int GUI::arrow_shortcuts(){
 }
 
 
-//***************************** The GUI constructor ************************************
+// The GUI constructor
 
 GUI::GUI(int argc, char **argv) {
   int i;
@@ -647,7 +662,7 @@ void GUI::wait(){
   Fl::wait();
 }
 
-//********************************* Create the menu window *****************************
+// Create the menu window
 
 
 void GUI::add_post_plugins (Fl_Menu_Button *button , int iView){
@@ -880,7 +895,7 @@ int GUI::get_context(){
 }
 
 
-//******************************** Create the graphic window ***************************
+// Create the graphic window
 
 void GUI::create_graphic_window(int argc, char **argv){
   int i, x;
@@ -1048,7 +1063,7 @@ void GUI::redraw_overlay(){
   g_opengl_window->redraw_overlay();
 }
 
-//************************ Create the window for general options ***********************
+// Create the window for general options
 
 void GUI::create_general_options_window(){
   int i;
@@ -1203,7 +1218,7 @@ void GUI::create_general_options_window(){
   
 }
 
-//************************ Create the window for geometry options **********************
+// Create the window for geometry options
 
 void GUI::create_geometry_options_window(){
   int i;
@@ -1315,7 +1330,7 @@ void GUI::create_geometry_options_window(){
   
 }
 
-//****************************** Create the window for mesh options ********************
+// Create the window for mesh options
 
 void GUI::create_mesh_options_window(){
   int i;
@@ -1505,7 +1520,7 @@ void GUI::create_mesh_options_window(){
   
 }
 
-//******************** Create the window for solver options *******************
+// Create the window for solver options
 
 void GUI::create_solver_options_window(){
 
@@ -1558,7 +1573,7 @@ void GUI::create_solver_options_window(){
 }
 
 
-//******************** Create the window for post-processing options *******************
+// Create the window for post-processing options
 
 void GUI::create_post_options_window(){
   int i;
@@ -1638,7 +1653,7 @@ void GUI::create_post_options_window(){
   
 }
 
-//*********************** Create the window for the statistics *************************
+// Create the window for the statistics
 
 void GUI::create_statistics_window(){
   int i, num=0;
@@ -1806,7 +1821,7 @@ void GUI::set_statistics(){
 }
 
 
-//*********************** Create the window for the plugins *************************
+// Create the window for the plugins
 
 void GUI::add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str){
   int start = 0, len;
@@ -1901,7 +1916,7 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
   return pdb;
 }
 
-//********************** Create the window for the messages ****************************
+// Create the window for the messages
 
 void GUI::create_message_window(){
 
@@ -1975,7 +1990,7 @@ void GUI::fatal_error(char *filename){
 	   "(all messages have been saved in the error log file '%s')", filename);
 }
 
-//********************** Create the visibility window ****************************
+// Create the visibility window
 
 void GUI::reset_visibility(){
   if(vis_window){
@@ -2082,7 +2097,7 @@ void GUI::create_visibility_window(){
   vis_window->end();
 }
 
-//******************************* Create the about window ******************************
+// Create the about window
 
 void GUI::create_about_window(){
   char buffer[1024];
@@ -2143,7 +2158,7 @@ void GUI::create_about_window(){
   
 }
 
-//************************* Create the window for view options *************************
+// Create the window for view options
 
 // WARNING! Don't forget to add the set_changed_cb() callback to any new widget!
 
@@ -2599,7 +2614,7 @@ void GUI::update_view_window(int num){
   view_ok->callback(view_options_ok_cb, (void*)num);
 }
 
-//*************** Create the window for geometry context dependant definitions *********
+// Create the window for geometry context dependant definitions
 
 void GUI::create_geometry_context_window(int num){
   static Fl_Group *g[10];
@@ -2735,7 +2750,7 @@ void GUI::create_geometry_context_window(int num){
   
 }
 
-//************** Create the window for mesh context dependant definitions **************
+// Create the window for mesh context dependant definitions
 
 void GUI::create_mesh_context_window(int num){
   static Fl_Group *g[10];
@@ -2811,7 +2826,7 @@ void GUI::create_mesh_context_window(int num){
 }
 
 
-//************** Create the windows for the solvers **************
+// Create the windows for the solvers
 
 #include "Solvers.h"
 

@@ -1,4 +1,20 @@
-// $Id: Interpolation.cpp,v 1.16 2001-11-29 08:19:06 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.17 2002-05-18 07:18:03 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -8,11 +24,9 @@
 #include "Utils.h"
 #include "Interpolation.h"
 
-/* ------------------------------------------------------------------------ */
-/*  I n t e r p o l a t e C u r v e                                         */
-/* ------------------------------------------------------------------------ */
-
 extern Mesh *THEM;
+
+// Curves
 
 Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
 
@@ -237,9 +251,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  I n t e r p o l a t e S u r f a c e                                     */
-/* ------------------------------------------------------------------------ */
+// Surfaces
 
 /* Interpolation transfinie sur un quadrangle :
    f(u,v) = (1-u)c4(v) + u c2(v) + (1-v)c1(u) + v c3(u)
@@ -455,10 +467,7 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
 
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  I n t e r p o l a t e V o l u m e                                       */
-/* ------------------------------------------------------------------------ */
+// Volumes
 
 /* Interpolation transfinie sur un hexaedre 
                                    prisme (avec s1=s4=a4, s5=s8=a8, a9=a12=f4) 

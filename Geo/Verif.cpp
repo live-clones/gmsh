@@ -1,4 +1,20 @@
-// $Id: Verif.cpp,v 1.9 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: Verif.cpp,v 1.10 2002-05-18 07:18:01 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -8,7 +24,7 @@
 
 extern Mesh *THEM;
 
-/* Contour extraction by a tree method */
+// Contour extraction by a tree method
 
 static Tree_T *treelink;
 static Tree_T *treeedges;
@@ -32,7 +48,7 @@ int complink(const void*a, const void*b){
 
 static int POINT_FINAL;
 static int CONTOUR_TROUVE;
-static List_T *VisitedNodes ; //geuz
+static List_T *VisitedNodes;
 
 void recur_trouvecont(int ip , int ed , List_T *Liste, int gauche , List_T *old ){
   lnk lk;
@@ -48,10 +64,10 @@ void recur_trouvecont(int ip , int ed , List_T *Liste, int gauche , List_T *old 
       if(!old || List_Search(old,&a.a,fcmp_absint) || List_Nbr(lk.l) == 2){
         if(!gauche){
           List_Add(Liste,&a.a);
-          if(List_Search(VisitedNodes, &a.n, fcmp_absint)){//geuz
-            CONTOUR_TROUVE =1;//end geuz
-            return;//end geuz
-          }//geuz
+          if(List_Search(VisitedNodes, &a.n, fcmp_absint)){
+            CONTOUR_TROUVE =1;
+            return;
+          }
         }
         if(a.n == POINT_FINAL){
           CONTOUR_TROUVE = 1;
@@ -62,7 +78,7 @@ void recur_trouvecont(int ip , int ed , List_T *Liste, int gauche , List_T *old 
         if(gauche){
           rev = -a.a;
           List_Add(Liste,&rev);
-          List_Add(VisitedNodes, &a.n); //geuz
+          List_Add(VisitedNodes, &a.n);
         }
       }
     }
@@ -188,12 +204,11 @@ void CreeLiens2 ( void ) {
 
 
 int alledgeslinked ( int ed , List_T *Liste , List_T *old){
-
   int ip1,ip2,i,rev;
   lnk lk;
   nxa a;
 
-  VisitedNodes = List_Create(20,20,sizeof(int)); //geuz
+  VisitedNodes = List_Create(20,20,sizeof(int));
 
   CreeLiens();
 
@@ -229,7 +244,7 @@ int alledgeslinked ( int ed , List_T *Liste , List_T *old){
     recur_trouvecont(ip2,ed,Liste,0,old);
   }
 
-  List_Delete(VisitedNodes); //geuz
+  List_Delete(VisitedNodes);
 
   return(CONTOUR_TROUVE);
 }

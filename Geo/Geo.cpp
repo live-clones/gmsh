@@ -1,4 +1,20 @@
-// $Id: Geo.cpp,v 1.25 2002-04-06 00:59:48 geuzaine Exp $
+// $Id: Geo.cpp,v 1.26 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -12,7 +28,7 @@ extern Context_T CTX ;
 
 #define BUFFSIZE 32000
 
-// Ceci, c'est horrible. 
+// This is truly horrible :-)
 
 char x_text[100]  = "0.0", y_text[100]  = "0.0", z_text[100]  = "0.0";
 char l_text[100] = "1.0" ;
@@ -37,7 +53,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
     return 0.;
   }
 
-  /* On pose la variable = la fonction et on evalue la fonction */
+  // pose "variable = function" and evaluate function
 
   fprintf(yyin,"%s = %.16g ;\n",var,val);
   fprintf(yyin,"ValeurTemporaire__ = %s ;\n",funct);
@@ -80,7 +96,6 @@ void add_infile(char *text, char *fich){
   fclose(yyin);
   fprintf(file,"%s\n",text);
   fclose(file);
-  AddALineInTheEditGeometryForm (text);
 }
 
 void delet(int p1, char *fich, char *what){

@@ -1,4 +1,20 @@
-// $Id: Options.cpp,v 1.77 2002-03-31 00:50:39 geuzaine Exp $
+// $Id: Options.cpp,v 1.78 2002-05-18 07:17:59 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -18,7 +34,7 @@ extern GUI        *WID ;
 
 extern Post_View  *Post_ViewReference;
 
-// ************** General routines ****************************************
+// General routines
 
 void Init_Options(int num){
   char *tmp;
@@ -251,7 +267,7 @@ void Print_Options(int num, int level, char *filename){
   }
 }
 
-// ************** General routines for string options ************************
+// General routines for string options
 
 StringXString * Get_StringOptionCategory(char * cat){
   if     (!strcmp(cat,"General"))        return GeneralOptions_String ;
@@ -302,7 +318,7 @@ void Print_StringOptions(int num, int level, StringXString s[], char *prefix, FI
   }
 }
 
-// ************** General routines for numeric options ************************
+// General routines for numeric options
 
 StringXNumber * Get_NumberOptionCategory(char * cat){
   if     (!strcmp(cat,"General"))        return GeneralOptions_Number ;
@@ -355,7 +371,7 @@ void Print_NumberOptions(int num, int level, StringXNumber s[], char *prefix, FI
   }
 }
 
-// ************** General routines for color options ************************
+// General routines for color options
 
 StringXColor * Get_ColorOptionCategory(char * cat){
   if     (!strcmp(cat,"General"))        return GeneralOptions_Color ;
@@ -441,7 +457,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 
 
 
-// ************** String option routines ****************************
+// String option routines
 
 #define GET_VIEW(error_val)						\
   Post_View *v;								\
@@ -892,7 +908,7 @@ char * opt_print_eps_font(OPT_ARGS_STR){
 }
 
 
-// ************** Numeric option routines ****************************
+// Numeric option routines
 
 
 double opt_general_initial_context(OPT_ARGS_NUM){
@@ -2785,7 +2801,7 @@ double opt_print_gif_transparent(OPT_ARGS_NUM){
   return CTX.print.gif_transparent;
 }
 
-// ************** Color option routines ****************************
+// Color option routines
 
 #ifdef _FLTK
 

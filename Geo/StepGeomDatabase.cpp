@@ -1,4 +1,20 @@
-// $Id: StepGeomDatabase.cpp,v 1.7 2002-04-06 00:59:48 geuzaine Exp $
+// $Id: StepGeomDatabase.cpp,v 1.8 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -33,7 +49,7 @@ Step_Solid_BRep_t *Create_Step_Solid_BRep(void){
   return NEWBREP;
 }
 
-/*---------------- Directions --------------------------------------------*/
+// Directions
 
 void Add_Direction (int Num , char *name , double x, double y, double z ){
   Step_Direction_t Dir;
@@ -57,7 +73,7 @@ Step_Direction_t *Get_Direction (int Num){
   return (Step_Direction_t*)List_PQuery ( BREP->AllDirections,&Dir, comparedir );
 }
 
-/*---------------- Axis2_Placement3D--------------------------------------*/
+// Axis2_Placement3D
 
 void Add_Axis2_Placement3D (int Num, int dir1, int dir2, int ver){
   Step_Axis2_Placement3D_t Axe;
@@ -82,7 +98,7 @@ Step_Axis2_Placement3D_t *Get_Axis2_Placement3D (int Num){
                                                   &Axe, compareax );
 }
 
-/*---------------- Vectors -----------------------------------------------*/
+// Vectors
 
 void Add_Vector (int Num , char *name , int Dir, double l ){
   Step_Vector_t Vec;
@@ -105,7 +121,7 @@ Step_Vector_t *Get_Vector (int Num){
   return (Step_Vector_t*)List_PQuery ( BREP->AllVectors,&Vec, comparevec );
 }
 
-/*---------------- Cartesian_Points --------------------------------------*/
+// Cartesian_Points
 
 void Add_Cartesian_Point (int Num , char *name , double x, double y, double z){
   Step_Cartesian_Point_t CP;
@@ -131,7 +147,7 @@ Step_Cartesian_Point_t *Get_Cartesian_Point (int Num){
   return (Step_Cartesian_Point_t*)List_PQuery ( BREP->AllCartesian_Points,&CP, comparecp );
 }
 
-/*---------------- Vertex_Points -----------------------------------------*/
+// Vertex_Points
 
 void Add_Vertex_Point (int Num , char *name, int cp){
   Step_Vertex_Point_t VP;
@@ -152,7 +168,7 @@ Step_Vertex_Point_t *Get_Vertex_Point (int Num){
 }
 
 
-/*---------------- Curves ------------------------------------------------*/
+// Curves
 
 void Add_Line (int Num, char *name , int begin, int dir){
   Step_Curve_t Curve;
@@ -197,7 +213,7 @@ void Add_BSpline_Curve_With_Knots (int Num, char *name, int Order, List_T *lcp,
   Curve.Typ = STEP_BSPL;
   Curve.Curve.BSpline.ListOf_Knots = List_Create (List_Nbr(lcp) + Order + 1
                                                   ,1,sizeof(double));
-  /* Adding knots with their multiplicity */
+  // Adding knots with their multiplicity
   for(i=0;i<List_Nbr(multk);i++){
     List_Read(multk,i,&d);
     mult = (int)d;
@@ -229,7 +245,7 @@ Step_Curve_t *Get_Curve (int Num){
   return (Step_Curve_t*)List_PQuery ( BREP->AllCurves,&C, comparecur );
 }
 
-/*---------------- Edge_Curves -------------------------------------------*/
+// Edge_Curves
 
 void Add_Edge_Curve (int Num, char *name , int beg, int end, int curve ){
   Step_Edge_Curve_t EC;
@@ -252,7 +268,7 @@ Step_Edge_Curve_t *Get_Edge_Curve (int Num){
   return (Step_Edge_Curve_t*)List_PQuery ( BREP->AllEdge_Curves,&EC, compareec );
 }
 
-/*---------------- Oriented_Edges ----------------------------------------*/
+// Oriented_Edges
 
 void Add_Oriented_Edge (int Num, char *name , int ec, bool dir ){
   Step_Oriented_Edge_t OE;
@@ -274,7 +290,7 @@ Step_Oriented_Edge_t *Get_Oriented_Edge (int Num){
   return (Step_Oriented_Edge_t*)List_PQuery ( BREP->AllOriented_Edges,&OE, compareoe );
 }
 
-/*---------------- Edge_Loops --------------------------------------------*/
+// Edge_Loops
 
 void Add_Edge_Loop (int Num, char *name , List_T *list ){
   Step_Edge_Loop_t EL;
@@ -295,7 +311,7 @@ Step_Edge_Loop_t *Get_Edge_Loop (int Num){
   return (Step_Edge_Loop_t*)List_PQuery ( BREP->AllEdge_Loops,&EL, compareel );
 }
 
-/*---------------- Faces_Outer_Bounds ------------------------------------*/
+// Faces_Outer_Bounds
 
 void Add_Face_Outer_Bound (int Num, char *name , int el, bool dir, bool outer ){
   Step_Face_Outer_Bound_t F;
@@ -318,7 +334,7 @@ Step_Face_Outer_Bound_t *Get_Face_Outer_Bound (int Num){
   return (Step_Face_Outer_Bound_t*)List_PQuery ( BREP->AllFaces_Outer_Bound,&F, comparefab );
 }
 
-/*---------------- Advanced_Faces ----------------------------------------*/
+// Advanced_Faces
 
 void Add_Advanced_Face (int Num, char *name , List_T *el, int surf, bool dir ){
   Step_Advanced_Face_t F;
@@ -341,7 +357,7 @@ Step_Advanced_Face_t *Get_Advanced_Face (int Num){
   return (Step_Advanced_Face_t*)List_PQuery ( BREP->AllAdvanced_Faces,&F, compareaf );
 }
 
-/*---------------- Surfaces ----------------------------------------------*/
+// Surfaces
 
 void Add_Plane (int Num, char *name , int axis){
   Step_Surface_t Surface;
@@ -401,7 +417,7 @@ void Add_BSpline_Surface_With_Knots (int Num,char *name, int OrderU,int OrderV,
   Surface.Surface.BSpline.ListOf_KnotsV =
     List_Create (List_Nbr(lkv) + OrderV + 1,1,sizeof(double));
 
-  /* Adding knots with their multiplicity */
+  // Adding knots with their multiplicity
   for(i=0;i<List_Nbr(lmu);i++){
     List_Read(lmu,i,&d);
     mult = (int)d;
@@ -419,7 +435,7 @@ void Add_BSpline_Surface_With_Knots (int Num,char *name, int OrderU,int OrderV,
     }
   }
 
-  /*Adding the points !*/
+  // Adding the points !
   Surface.Surface.BSpline.ListOf_Cartesian_Points = lcp;
     
   Surface.Num = Num;
@@ -444,7 +460,7 @@ Step_Surface_t *Get_Surface (int Num){
   return (Step_Surface_t*)List_PQuery ( BREP->AllSurfaces,&S, comparesur );
 }
 
-/*---------------- Closed_Shells ----------------------------------------*/
+// Closed_Shells
 
 void Add_Closed_Shell (int Num, char *name , List_T *list ){
   Step_Closed_Shell_t S;
@@ -465,7 +481,7 @@ Step_Closed_Shell_t *Get_Closed_Shell (int Num){
   return (Step_Closed_Shell_t*)List_PQuery ( BREP->AllClosed_Shells,&F, comparecs );
 }
 
-/*---------------- Closed_Shells ----------------------------------------*/
+// Closed_Shells
 
 void Resolve_BREP (void){
   int i,j,k,l;
@@ -502,13 +518,13 @@ void Resolve_BREP (void){
   }
   CTX.lc = L = sqrt(SQR(XMIN-XMAX) + SQR(YMIN-YMAX) + SQR(ZMIN-ZMAX));
 
-  /* resolving cartesian_points */
+  // resolving cartesian_points
   for(i=0;i<List_Nbr(BREP->AllCartesian_Points);i++){
     List_Read(BREP->AllCartesian_Points,i,&cp);
     Cdbpts101(cp.Num,cp.Pos.X,cp.Pos.Y,cp.Pos.Z,L*.01,1);
   }
 
-  /* resolving vertex_points */
+  // resolving vertex_points
   for(i=0;i<List_Nbr(BREP->AllVertex_Points);i++){
     List_Read(BREP->AllVertex_Points,i,&vp);
     if((pcp = Get_Cartesian_Point(vp.Cartesian_Point))){
@@ -516,7 +532,7 @@ void Resolve_BREP (void){
     }
   }
 
-  /* resolving Edge_Curves*/
+  // resolving Edge_Curves
   for(i=0;i<List_Nbr(BREP->AllEdge_Curves);i++){
     List_Read(BREP->AllEdge_Curves,i,&ec);
     if((pc = Get_Curve(ec.Step_Curve))){
@@ -554,15 +570,14 @@ void Resolve_BREP (void){
         List_Add(ListInt,&ec.Step_Vertex_Point_End);
         AddCircleInDataBase ( ec.Num,MSH_SEGM_CIRC ,
                               ListInt,n);
-        /*Cdbseg101(ec.Num,MSH_SEGM_CIRC,1,NULL,
-          ListInt,-1,-1,0.,1.,NULL,NULL,NULL);
-          */
+        // Cdbseg101(ec.Num,MSH_SEGM_CIRC,1,NULL,
+	// ListInt,-1,-1,0.,1.,NULL,NULL,NULL);
         List_Reset(ListInt);
       }
     }
   }
 
-  /* resolving Surfaces */
+  // resolving Surfaces
   for(i=0;i<List_Nbr(BREP->AllSurfaces);i++){
     List_Read(BREP->AllSurfaces,i,&s);
     if(s.Typ == STEP_BSPL){
@@ -577,7 +592,7 @@ void Resolve_BREP (void){
     }
   }
 
-  /*resolving Advanced_Faces*/
+  // resolving Advanced_Faces
 
   for(i=0;i<List_Nbr(BREP->AllAdvanced_Faces);i++){
     err = 0;
@@ -650,7 +665,7 @@ void Resolve_BREP (void){
     List_Reset(ListIntBis);
   }
     
-  /*resolving closed shells (sheila)*/
+  // resolving closed shells (sheila)
   for(i=0;i<List_Nbr(BREP->AllClosed_Shells);i++){
     List_Reset(ListInt);
     List_Read(BREP->AllClosed_Shells,i,&cs);

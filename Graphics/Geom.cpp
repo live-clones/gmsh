@@ -1,4 +1,20 @@
-// $Id: Geom.cpp,v 1.34 2002-02-08 18:07:01 geuzaine Exp $
+// $Id: Geom.cpp,v 1.35 2002-05-18 07:18:01 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -16,9 +32,7 @@
 extern Context_T  CTX;
 extern Mesh      *THEM;
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ P o i n t                                                     */
-/* ------------------------------------------------------------------------ */
+// Points
 
 static int   Highlighted = 0; 
 
@@ -71,10 +85,7 @@ void Draw_GeoPoint (void *a, void *b){
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ C u r v e                                                     */
-/* ------------------------------------------------------------------------ */
-
+// Curves
 
 void Draw_Curve (void *a, void *b){
   int     i,N;
@@ -175,11 +186,7 @@ void Draw_Curve (void *a, void *b){
 
 }
 
-
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ S u r f a c e                                                 */
-/* ------------------------------------------------------------------------ */
+// Surfaces
 
 void put_Z (Vertex *v, Surface *s){
   Vertex V;
@@ -550,10 +557,7 @@ void Draw_Surface (void *a, void *b){
 
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ V o l u m e                                                   */
-/* ------------------------------------------------------------------------ */
+// Volumes
 
 int TheVolume;
 
@@ -601,15 +605,9 @@ void Draw_Curve_For_Volume (void *a, void *b){
 
 void DrawVolumes (Mesh *m){
 
-
 }
 
-
-
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ G e o m                                                       */
-/* ------------------------------------------------------------------------ */
+// Draw geometry
 
 void Draw_Geom (Mesh *m) {
 
@@ -650,10 +648,7 @@ void ZeroHighlight(Mesh *m){
   Tree_Action(m->Surfaces,ZeroSurface);
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  H i g h l i g h t                                                       */
-/* ------------------------------------------------------------------------ */
+// Highlight routines
 
 void BeginHighlight(void){
   if(CTX.geom.highlight){
@@ -680,7 +675,6 @@ void EndHighlight(int permanent){
 }
 
 void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
-
   Curve *cc;
   char Message[256],temp[256];
   int i,nbg;

@@ -1,4 +1,20 @@
-// $Id: Context.cpp,v 1.41 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Context.cpp,v 1.42 2002-05-18 07:17:59 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -8,10 +24,10 @@
 #include "Context.h"
 #include "Options.h"
 #include "DefaultOptions.h"
-#include "trackball.c"
+#include "Trackball.h"
 
 /*
-  3 rotations successives autour de x, y et z:
+  3 successive rotations along x, y and z:
 
            c(y)c(z)    s(x)s(y)c(z)+c(x)s(z)   -c(x)s(y)c(z)+s(x)s(z) 
   t[][] = -c(y)s(z)   -s(x)s(y)s(z)+c(x)c(z)    c(x)s(y)s(z)+s(x)c(z)
@@ -32,14 +48,17 @@
 
 */
 
-void Context_T::buildRotmatrix(void)
-{
+void Context_T::buildRotmatrix(void){
   double x, y, z;
   extern void set_r(int i, double val);
 
   if(useTrackball){
     build_rotmatrix(rot, quaternion);
-    // get the position angles
+    // We should reconstruct the Euler angles from the rotation
+    // matrix. I'm too lazy to do it :-(
+    set_r(0, 0.);
+    set_r(1, 0.);
+    set_r(2, 0.);
     /*
       double x=0., y=0., z=0.
 
@@ -71,12 +90,6 @@ void Context_T::buildRotmatrix(void)
     set_r(1, r1 * 180./(Pi));  // lazyyyyyy
     set_r(2, r2);
     */
-
-    // until we can compute this correctly
-    set_r(0, 0.);
-    set_r(1, 0.);
-    set_r(2, 0.);
-
   }
   else{
     x = r[0] * Pi / 180.;
@@ -102,25 +115,17 @@ void Context_T::buildRotmatrix(void)
     rot[3][1] = 0.0 ;
     rot[3][2] = 0.0 ;
     rot[3][3] = 1.0 ;
-    /*
-    printf("x=%g y=%g z=%g\n", r[0], r[1], r[2]);
-    printf("[%g %g %g]\n", rot[0][0], rot[0][1], rot[0][2]);
-    printf("[%g %g %g]\n", rot[1][0], rot[1][1], rot[1][2]);
-    printf("[%g %g %g]\n", rot[2][0], rot[2][1], rot[2][2]);
-    */
   }
 
 }
 
-void Context_T::addQuaternion (float p1x, float p1y, float p2x, float p2y)
-{
+void Context_T::addQuaternion (float p1x, float p1y, float p2x, float p2y){
   float quat[4];
   trackball(quat,p1x,p1y,p2x,p2y);
   add_quats(quat, quaternion, quaternion);  
 }
 
-void Context_T::setQuaternion (float q0, float q1, float q2, float q3)
-{
+void Context_T::setQuaternion (float q0, float q1, float q2, float q3){
   quaternion[0] = q0;
   quaternion[1] = q1;
   quaternion[2] = q2;

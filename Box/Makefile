@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2002-05-18 00:55:14 geuzaine Exp $
+# $Id: Makefile,v 1.16 2002-05-18 07:17:59 geuzaine Exp $
 #
 # Makefile for "libGmshBox.a"
 #
@@ -10,8 +10,8 @@ AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 LIB      = ../lib/libGmshBox.a
-INCLUDE  = -I../Common -I../DataStr -I../Geo\
-           -I../Graphics -I../Mesh -I../Parser -I../Fltk -I../Plugin -I../Parallel
+INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Mesh -I../Numeric\
+           -I../Parser -I../Fltk -I../Plugin -I../Parallel
 
 OPT_FLAGS     = -g
 OS_FLAGS      = 
@@ -49,12 +49,11 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Main.o: Main.cpp ../Parallel/ParUtil.h ../Plugin/PluginManager.h \
- ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
- ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h ../Common/GmshVersion.h ../Common/Numeric.h \
- ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
- ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
- ../Mesh/Matrix.h ../Common/Views.h ../Common/ColorTable.h \
- ../Parser/Parser.h ../Common/Context.h ../Common/Options.h \
- ../Parser/OpenFile.h ../Common/GetOptions.h ../Geo/MinMax.h \
- ../Common/Static.h
+  ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Common/GmshVersion.h ../Numeric/Numeric.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Parser/Parser.h \
+  ../Common/Context.h ../Common/Options.h ../Parser/OpenFile.h \
+  ../Common/GetOptions.h ../Geo/MinMax.h

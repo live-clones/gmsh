@@ -1,4 +1,20 @@
-// $Id: DataBase.cpp,v 1.18 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.19 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -12,7 +28,7 @@
 extern Context_T  CTX ;
 extern Mesh      *THEM;
 
-/* POINTS */
+// Points
 
 void Cdbpts101(int ip, double x, double y, double z, double l, double w){
   Vertex *v;
@@ -26,7 +42,7 @@ void Cdbpts101(int ip, double x, double y, double z, double l, double w){
   Tree_Insert(THEM->Points,&v);
 }
 
-/* CURVES */
+// Curves
 
 void AddCurveInDataBase (int NumCurve, int TypCurve, int Order,
                          List_T *ControlPoints, List_T *Knots,
@@ -39,7 +55,7 @@ void AddCurveInDataBase (int NumCurve, int TypCurve, int Order,
   c = Create_Curve(NumCurve,TypCurve,Order,ControlPoints,Knots,
                    VertexBeg,VertexEnd,uBeg,uEnd);
 
-  /* Courbe dans l'autre sens */
+  // curve in reverse direction
   
   Curve *rc = CreateReversedCurve(THEM,c);
   Tree_Insert(THEM->Curves,&c);
@@ -60,7 +76,7 @@ void AddCircleInDataBase (int NumCurve, int TypCurve, List_T *ControlPoints,
   
   End_Curve(c);
 
-  /* Courbe dans l'autre sens */
+  // curve in reverse direction
   
   Curve *rc = CreateReversedCurve(THEM,c);
   
@@ -95,7 +111,7 @@ void Cdbseg101(int iseg, int typseg, int degre, List_T *liste, List_T *listint,
 }
 
 
-/* SURFACES AND VOLUMES */
+// Surfaces and volumes
 
 void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
                                   double xaxis[3], double center[3],
@@ -146,7 +162,6 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
 void CreateSurfaceFromOldCrappyDatabase (int izon, int typzon, int o1, int o2,
                                          int nbu, int nbv, int sup,
                                          List_T *liste, List_T *loops, Mesh *M){
-
   int      ic,i,j,l,NbLoop,iLoop;
   Surface *s,*pS;
   Curve   *c;

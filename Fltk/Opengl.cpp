@@ -1,4 +1,20 @@
-// $Id: Opengl.cpp,v 1.26 2001-11-19 13:48:19 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.27 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -20,9 +36,7 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 
-/* ------------------------------------------------------------------------ */
-/*  Draw                                                               */
-/* ------------------------------------------------------------------------ */
+// Draw specialization
 
 void InitOpengl(void){
   WID->make_opengl_current();
@@ -62,9 +76,7 @@ void Draw_String(char *s){
   }
 }
 
-/* ------------------------------------------------------------------------ 
-    set_XXX
-   ------------------------------------------------------------------------ */
+// Euler angles set_XXX
 
 void set_r(int i, double val){
   if(!CTX.useTrackball){
@@ -86,10 +98,7 @@ void set_s(int i, double val){
   }
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  SelectEntity                                                            */
-/* ------------------------------------------------------------------------ */
+// Select entity routines
 
 int check_type(int type, Vertex *v, Curve *c, Surface *s){
   return ( (type==ENT_POINT   && v) ||

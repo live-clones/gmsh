@@ -1,4 +1,20 @@
-// $Id: Axes.cpp,v 1.13 2001-11-22 11:23:52 geuzaine Exp $
+// $Id: Axes.cpp,v 1.14 2002-05-18 07:18:01 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -9,7 +25,6 @@
 #include "gl2ps.h"
 
 extern Context_T   CTX;
-
 
 void Draw_Axes (double s) {
   double  f, g, b, c;
@@ -29,14 +44,14 @@ void Draw_Axes (double s) {
 
   glBegin(GL_LINES);
   if(CTX.range[2] != 0.){
-    /* X */
+    // X
     glVertex3d(0.,   0.,   0.);  
     glVertex3d(s,    0.,   0.);  
     glVertex3d(g-b,  b,    0.);  
     glVertex3d(g+b, -b,    0.);  
     glVertex3d(g,   -b,    b);  
     glVertex3d(g,    b,   -b);  
-    /* Y */
+    // Y
     glVertex3d(0.,   0.,   0.);  
     glVertex3d(0.,   s,    0.);  
     glVertex3d(-b,   g+b,  0.);  
@@ -45,7 +60,7 @@ void Draw_Axes (double s) {
     glVertex3d(0.,   g+b, -b);  
     glVertex3d(0.,   g,    0.);  
     glVertex3d(.5*b, g-b, .5*b);  
-    /* Z */
+    // Z
     glVertex3d(0.,   0.,   0.);  
     glVertex3d(0.,   0.,   s);  
     glVertex3d(-b,   b,    g);  
@@ -56,14 +71,14 @@ void Draw_Axes (double s) {
     glVertex3d(b,   -b,    g);  
   }
   else{
-    /* X */
+    // X
     glVertex3d(0.,   0.,   0.);  
     glVertex3d(s,    0.,   0.);  
     glVertex3d(g-c,  b,    0.);  
     glVertex3d(g+c, -b,    0.);  
     glVertex3d(g-c, -b,    0.);  
     glVertex3d(g+c,  b,    0.);  
-    /* Y */
+    // Y
     glVertex3d(0.,   0.,   0.);  
     glVertex3d(0.,   s,    0.);  
     glVertex3d(-c,   g+b,  0.);  

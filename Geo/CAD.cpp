@@ -1,4 +1,20 @@
-// $Id: CAD.cpp,v 1.47 2002-03-12 19:07:32 geuzaine Exp $
+// $Id: CAD.cpp,v 1.48 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -16,8 +32,7 @@ extern Context_T  CTX;
 
 static List_T  *ListOfTransformedPoints=NULL;
 
-/////////////////////////////////////////////////////////////////////////////////////
-// BASIC FUNCTIONS
+// Basic functions
 
 int NEWPOINT(void){
   return (THEM->MaxPointNum + 1);
@@ -584,8 +599,7 @@ int recognize_surfloop(List_T * liste, int *loop){
   return res;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
-// LINEAR APPLICATIONS
+// Linear applications
 
 void SetTranslationMatrix (double matrix[4][4],double T[3]){
   int i, j;
@@ -877,9 +891,7 @@ void SymmetryShapes (double A,double B,double C,
 }
 
 
-
-/////////////////////////////////////////////////////////////////////////////////////
-// EXTRUSION 
+// Extrusion routines
 
 void ProtudeXYZ (double &x, double &y, double &z, ExtrudeParams *e){
   double matrix[4][4];
@@ -1281,8 +1293,7 @@ void Extrude_ProtudeSurface(int type, int is,
   List_Reset(ListOfTransformedPoints);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
-// REMOVE DUPLICATES
+// Duplicate removal
 
 int compareTwoCurves (const void *a, const void *b){
   Curve *c1, *c2;
@@ -1559,8 +1570,8 @@ void ReplaceAllDuplicates(Mesh *m){
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////
-// INTERSECTIONS
+// Inetersection routines
+// FIXME: this codeis full of crap :-)
 
 /*
   S = (sx(u,v),sy(u,v),sz(u,v))
@@ -1576,9 +1587,21 @@ void ReplaceAllDuplicates(Mesh *m){
 static Curve *CURVE, *CURVE_2;
 static Surface *SURFACE;
 static Vertex *VERTEX;
-extern double min1d (int, double (*funct)(double), double *xmin);
 extern void newt(float x[], int n, int *check,
                  void (*vecfunc)(int, float [], float []));
+
+double min1d (double (*funct)(double), double *xmin){
+  double xx, fx, fb, fa, bx, ax;
+  double brent(double ax, double bx, double cx,
+              double (*f)(double), double tol, double *xmin);
+  void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
+                double *fc, double (*func)(double));
+
+ ax=1.e-15; xx=1.e-12;
+ mnbrak(&ax,&xx,&bx,&fa,&fx,&fb,funct);
+#define TOL 1.e-08
+ return( brent(ax,xx,bx,funct,TOL,xmin) );
+}
 
 static void intersectCS (int N, float x[], float res[]){
   //x[1] = u x[2] = v x[3] = w
@@ -1656,7 +1679,7 @@ bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
   double xmin;
   CURVE = c;
   VERTEX = v;
-  min1d (0, projectPC, &xmin);
+  min1d (projectPC, &xmin);
   *RES = InterpolateCurve(CURVE,xmin,0);
   *DER = InterpolateCurve(CURVE,xmin,1);
   if(xmin > c->uend){
@@ -1712,7 +1735,7 @@ bool search_in_boundary (Surface *s, Vertex *p, double t, int Fixu,
   double xm;
   if(Fixu)xm = vmin;
   else xm = umin;
-  if(lmin > 1.e-3) min1d (0, projectPCS, &xm);
+  if(lmin > 1.e-3) min1d (projectPCS, &xm);
   if(Fixu){
     *uu = t;
     *vv = xm;
@@ -1941,6 +1964,5 @@ bool IntersectAllSegmentsTogether (void) {
 }
 
 void IntersectSurfaces (Surface *s1, Surface *s2){
-
 
 }

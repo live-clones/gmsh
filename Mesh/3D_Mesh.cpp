@@ -1,10 +1,23 @@
-// $Id: 3D_Mesh.cpp,v 1.37 2002-04-26 00:15:30 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.38 2002-05-18 07:18:03 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 /*
- 
-  J-F Remacle 1995
-
-  MAILLAGE DELAUNAY 3D 
+  Isotropic Delaunay 3D
 
   tant que l'arbre des tetraedres de qualites inacceptables 
   n'est pas vide {
@@ -913,7 +926,7 @@ void Maillage_Volume (void *data, void *dum){
     
     Tree_Right (LOCAL->Simplexes, &simp);
     i = 0;
-    Progress (102);
+
     while (simp->Quality > CONV_VALUE){
       newv = NewVertex (simp);
       //double l;
@@ -945,8 +958,6 @@ void Maillage_Volume (void *data, void *dum){
         Msg(STATUS3, "Nod=%d Elm=%d",
             Tree_Nbr (LOCAL->Vertices), Tree_Nbr (LOCAL->Simplexes));
         Msg(STATUS1, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
-        double adv = 100. * (CONV_VALUE / simp->Quality);
-        Progress ((int) adv);
       }
       Bowyer_Watson (LOCAL, newv, simp, 0);
       Tree_Right (LOCAL->Simplexes, &simp);
@@ -957,8 +968,6 @@ void Maillage_Volume (void *data, void *dum){
     POINTS_TREE = THEM->Simplexes;
     Tree_Action (v->Simplexes, add_points);
     
-    Progress(-1);
-
     if (CTX.mesh.quality){
       extern void SwapEdges3D (Mesh * M, Volume * v, double GammaPrescribed, bool order);
       Msg(STATUS3, "Swapping edges (1st pass)");

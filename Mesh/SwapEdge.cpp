@@ -1,4 +1,4 @@
-// $Id: SwapEdge.cpp,v 1.7 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: SwapEdge.cpp,v 1.8 2002-05-18 07:18:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -287,10 +287,8 @@ void SwapEdges3D (Mesh * M, Volume * v, double GammaPrescribed, bool order){
     return;
   EdgesContainer ec (srfs);
   Simplex *s;
-  Progress (102);
+
   for (int i = 0; i < List_Nbr (list); i++){
-    if (i % 100 == 1)
-      Progress ((100 * i) / List_Nbr (list));
     List_Read (list, i, &s);
     if (s->GammaShapeMeasure () < GammaPrescribed){
       int iEdge = GetWorstEdge (s, ec, order);
@@ -298,7 +296,6 @@ void SwapEdges3D (Mesh * M, Volume * v, double GammaPrescribed, bool order){
         SwapEdge (M, v, s, iEdge);
     }
   }
-  Progress (-1);
   List_Delete (srfs);
   List_Delete (list);
 }

@@ -1,8 +1,4 @@
-// $Id: avl.cpp,v 1.6 2001-10-31 16:33:46 remacle Exp $
-
-/*
- * This is a modified version for Gmsh (for c++, 64-bit architectures, etc.)
- */
+// $Id: avl.cpp,v 1.7 2002-05-18 07:18:00 geuzaine Exp $
 
 /*
  * avl package
@@ -28,6 +24,8 @@
  * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN 
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+// Modified for Gmsh (C++, 64 bits, ...)
 
 #include <stdio.h>
 

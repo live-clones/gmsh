@@ -1,4 +1,20 @@
-// $Id: Draw.cpp,v 1.29 2002-03-31 00:50:39 geuzaine Exp $
+// $Id: Draw.cpp,v 1.30 2002-05-18 07:18:01 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,9 +27,7 @@
 extern Context_T    CTX ;
 extern Mesh         M;
 
-/* ------------------------------------------------------------------------ */
-/*  d r a w                                                                 */
-/* ------------------------------------------------------------------------ */
+// Global Draw functions
 
 void Draw3d(void){
   int i;
@@ -74,9 +88,7 @@ void Draw2d(void){
   glPopMatrix();
 }
 
-/* ------------------------------------------------------------------------ */
-/*  o r t h o                                                               */
-/* ------------------------------------------------------------------------ */
+// Ortho
 
 void Orthogonalize(int x, int y){
   double Va,Wa;
@@ -131,13 +143,9 @@ void Orthogonalize(int x, int y){
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  i n i t                                                                 */
-/* ------------------------------------------------------------------------ */
+// Init
 
-
-void InitRenderModel(void)
-{
+void InitRenderModel(void){
   int i;
   float specular[4];
 
@@ -158,8 +166,7 @@ void InitRenderModel(void)
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 }
 
-void InitShading()
-{
+void InitShading(){
   glEnable(GL_LIGHTING);
   glEnable(GL_NORMALIZE);
   glEnable(GL_COLOR_MATERIAL);
@@ -178,20 +185,14 @@ void InitPosition(void){
   glMultMatrixf(&(CTX.rot[0][0]));
 }
 
-/* ------------------------------------------------------------------------ */
-/*  r e p l o t                                                             */
-/* ------------------------------------------------------------------------ */
-
-/* n'est plus utilise que dans les cas ou des points peuvent etre
-   ajoutes dans la base de donnee -> dans cb_geom */
+// Replot
+// this should only be used when some new points get added in the db
 void Replot(void){
   CalculateMinMax(M.Points,NULL);
   Draw();
 }
 
-/* ------------------------------------------------------------------------ */
-/*  e n t i t y   s e l e c t i o n                                         */
-/* ------------------------------------------------------------------------ */
+// Entity selection
 
 void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj){
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
@@ -213,7 +214,7 @@ void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj){
   hits = glRenderMode(GL_RENDER);
   CTX.render_mode = GMSH_RENDER ;
   
-  if(hits<0) return; /* Selection Buffer Overflow */
+  if(hits<0) return; // Selection Buffer Overflow
 
   ptr = (GLint*)selectBuf;
   
@@ -267,10 +268,8 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
   }
 }
 
-/* ------------------------------------------------------------------------ */
-/*  z o o m                                                                 */
-/* ------------------------------------------------------------------------ */
-
+// Zoom
+// FIXME: this is notoriously wrong :-)
 
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2){

@@ -26,6 +26,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+// Modified for Gmsh (C++, 64 bits, ...)
+
 typedef struct avl_node_struct avl_node;
 struct avl_node_struct {
   avl_node *left, *right;

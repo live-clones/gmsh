@@ -1,13 +1,24 @@
-// $Id: Main.cpp,v 1.15 2002-02-13 09:17:48 stainier Exp $
-
-#include <signal.h>
-#include "ParUtil.h"
+// $Id: Main.cpp,v 1.16 2002-05-18 07:17:59 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
-#ifdef __APPLE__
 #include <sys/time.h>
-#endif /* __APPLE__ */
 #include <sys/resource.h>
 #ifdef __APPLE__
 #define   RUSAGE_SELF      0
@@ -15,6 +26,7 @@
 #endif /* __APPLE__ */
 #endif
 
+#include "ParUtil.h"
 #include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshVersion.h"
@@ -28,31 +40,30 @@
 #include "OpenFile.h"
 #include "GetOptions.h"
 #include "MinMax.h"
-#include "Static.h"
 
-/* dummy defs for link purposes */
+char        yyname[256];
+int         yyerrorstate;
+Context_T   CTX ;
+Mesh        M, *THEM=NULL, *LOCAL=NULL;
+
+// Dummy definitions for link purposes. These should be removed as
+// soon as the library structure will be cleaned.
 
 void AddViewInUI(int, char *, int){}
 void draw_polygon_2d (double, double, double, int, double *, double *, double *){}
 void set_r(int, double){}
-void Draw(void){}
-void DrawUI(void){}
-void Replot(void){}
 void CreateOutputFile(char *, int){}
 
-/* ------------------------------------------------------------------------ */
-/*  I n f o                                                                 */
-/* ------------------------------------------------------------------------ */
+// Print some help/info messages
 
 void Info (int level, char *arg0){
   switch(level){
   case 0 :
-    if(ParUtil::Instance()->master())
-      {
-	fprintf(stderr, "%s\n", gmsh_progname);
-	fprintf(stderr, "%s\n", gmsh_copyright);
-	Print_Usage(arg0);
-      }
+    if(ParUtil::Instance()->master()){
+      fprintf(stderr, "%s\n", gmsh_progname);
+      fprintf(stderr, "%s\n", gmsh_copyright);
+      Print_Usage(arg0);
+    }
     ParUtil::Instance()->Exit();
   case 1:
     if(ParUtil::Instance()->master())
@@ -60,26 +71,23 @@ void Info (int level, char *arg0){
 	      GMSH_PATCH_VERSION);
     ParUtil::Instance()->Exit();
   case 2:
-    if(ParUtil::Instance()->master())
-      {
-	fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION, 
-		GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
-	fprintf(stderr, "%s\n", gmsh_os);
-	fprintf(stderr, "%s\n", gmsh_date);
-	fprintf(stderr, "%s\n", gmsh_host);
-	fprintf(stderr, "%s\n", gmsh_packager);
-	fprintf(stderr, "%s\n", gmsh_url);
-	fprintf(stderr, "%s\n", gmsh_email);
-      }
+    if(ParUtil::Instance()->master()){
+      fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION, 
+	      GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
+      fprintf(stderr, "%s\n", gmsh_os);
+      fprintf(stderr, "%s\n", gmsh_date);
+      fprintf(stderr, "%s\n", gmsh_host);
+      fprintf(stderr, "%s\n", gmsh_packager);
+      fprintf(stderr, "%s\n", gmsh_url);
+      fprintf(stderr, "%s\n", gmsh_email);
+    }
     ParUtil::Instance()->Exit();
   default :
     break;
   }
 }
 
-/* ------------------------------------------------------------------------ */
-/*  m a i n                                                                 */
-/* ------------------------------------------------------------------------ */
+// Main routine for the batch (black box) version
 
 int main(int argc, char *argv[]){
   int     i, nbf;
@@ -141,10 +149,7 @@ int main(int argc, char *argv[]){
 }
 
 
-/* ------------------------------------------------------------------------ */
-/*  S i g n a l                                                             */
-/* ------------------------------------------------------------------------ */
-
+// Handle signals. We should not use Msg functions in these...
 
 void Signal (int sig_num){
 
@@ -156,10 +161,7 @@ void Signal (int sig_num){
   }
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  M s g                                                                   */
-/* ------------------------------------------------------------------------ */
+// General purpose message routine
 
 void Msg(int level, char *fmt, ...){
 
@@ -245,9 +247,7 @@ void Msg(int level, char *fmt, ...){
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  C p u                                                                   */
-/* ------------------------------------------------------------------------ */
+// CPU time computation
 
 void GetResources(long *s, long *us, long *mem){
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -268,13 +268,3 @@ double Cpu(void){
   GetResources(&s, &us, &mem);
   return (double)s + (double)us/1.e6 ;
 }
-
-/* ------------------------------------------------------------------------ */
-/*  P r o g r e s s                                                         */
-/* ------------------------------------------------------------------------ */
-
-void Progress(int i){
-}
-
-void   AddALineInTheEditGeometryForm (char* line){
-};

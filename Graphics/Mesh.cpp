@@ -1,4 +1,20 @@
-// $Id: Mesh.cpp,v 1.48 2002-03-12 19:07:32 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.49 2002-05-18 07:18:02 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -14,11 +30,6 @@
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ M e s h                                                       */
-/* ------------------------------------------------------------------------ */
-
 
 void draw_polygon_2d (double r, double g, double b, int n, 
                       double *x, double *y, double *z){
@@ -157,8 +168,8 @@ void Draw_Mesh_Volumes(void *a, void *b){
   v = *(Volume**)a;
   iColor++;
   theColor = v->Color;
-  // Ceci est la bonne methode, mais ne marchera que qd on aura une
-  // structure coherente poue les volumes
+  // FIXME: this is the correct method, but will only work when a
+  // coherent datastruct exists for volumes
   // if(!(v->Visible & VIS_MESH)) return;
   Tree_Action(v->Simplexes, Draw_Simplex_Volume);
   Tree_Action(v->Hexahedra, Draw_Hexahedron_Volume);
@@ -233,9 +244,7 @@ void Draw_Mesh_Points (void *a, void *b){
   }
 }
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ S i m p l e x                                                 */
-/* ------------------------------------------------------------------------ */
+// Draw simplex
 
 void Draw_Simplex_Volume (void *a, void *b){
   Simplex *s;
@@ -247,7 +256,7 @@ void Draw_Simplex_Volume (void *a, void *b){
 
   if(!s->V[3] || !(s->Visible & VIS_MESH)) return;
 
-  // a enlever des qu'on a une structure correcte pour les volumes
+  // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V; if((V = FindVolume(s->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   if(CTX.mesh.gamma_sup){
@@ -656,11 +665,6 @@ void Draw_Simplex_Curves(void *a,void *b){
 
 }
 
-
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ H e x a e d r o n                                             */
-/* ------------------------------------------------------------------------ */
-
 void Draw_Hexahedron_Volume (void *a, void *b){
   Hexahedron *h;
   int i ;
@@ -671,7 +675,7 @@ void Draw_Hexahedron_Volume (void *a, void *b){
 
   if(!(h->Visible & VIS_MESH)) return ;
 
-  // a enlever des qu'on a une structure correcte pour les volumes
+  // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V; if((V = FindVolume(h->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   for(i=0 ; i<8 ; i++){
@@ -773,10 +777,6 @@ void Draw_Hexahedron_Volume (void *a, void *b){
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ P r i s m                                                     */
-/* ------------------------------------------------------------------------ */
-
 void Draw_Prism_Volume (void *a, void *b){
   Prism *p;
   int i ;
@@ -787,7 +787,7 @@ void Draw_Prism_Volume (void *a, void *b){
 
   if(!(p->Visible & VIS_MESH)) return ;
 
-  // a enlever des qu'on a une structure correcte pour les volumes
+  // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V; if((V = FindVolume(p->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   for(i=0 ; i<6 ; i++){
@@ -879,10 +879,6 @@ void Draw_Prism_Volume (void *a, void *b){
 
 }
 
-/* ------------------------------------------------------------------------ */
-/*  D r a w _ P y r a m i d                                                 */
-/* ------------------------------------------------------------------------ */
-
 void Draw_Pyramid_Volume (void *a, void *b){
   Pyramid *p;
   int i ;
@@ -893,7 +889,7 @@ void Draw_Pyramid_Volume (void *a, void *b){
 
   if(!(p->Visible & VIS_MESH)) return ;
 
-  // a enlever des qu'on a une structure correcte pour les volumes
+  // FIXME: remove as soon as a coherent structure exists for volumes
   Volume *V; if((V = FindVolume(p->iEnt,THEM)) && !(V->Visible & VIS_MESH)) return;
 
   for(i=0 ; i<5 ; i++){

@@ -1,13 +1,30 @@
-// $Id: gl2gif.cpp,v 1.11 2001-04-08 20:36:49 geuzaine Exp $
+/*
+ * GL2GIF, an OpenGL to GIF Printing Library
+ * Copyright (C) 1999-2002  Christophe Geuzaine 
+ *
+ * $Id: gl2gif.cpp,v 1.12 2002-05-18 07:18:02 geuzaine Exp $
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 /* 
- * gl2gif: an OpenGL to GIF printing library
- *
  * Warning: This code is really a dirty hack. It SHOULD be cleaned
- * (and most of all, all the static variables should be removed)
+ * (and most of all, all the static variables should be removed).
  * 
- *
- * Based on 
+ * It is Based on 
  *
  *  . libppm3.c - ppm utility library part 3
  *    Copyright (C) 1989, 1991 by Jef Poskanzer.
@@ -38,9 +55,7 @@
 #include "GmshUI.h"
 #include "gl2gif.h"
 
-/* ------------------------------------------------------------------
-   PPM colormap routines
-   ------------------------------------------------------------------ */
+/* PPM colormap routines */
 
 #define HASH_SIZE 20023
 #define ppm_hashpixel(p) ( ( (int) (p) & 0x7fffffff ) % HASH_SIZE )
@@ -270,9 +285,7 @@ static int GetPixel( int x, int y ){
 }
 
 
-/* ------------------------------------------------------------------
-   PPM quantization
-   ------------------------------------------------------------------ */
+/* PPM quantization */
 
 /* #define LARGE_NORM */
 #define LARGE_LUM
@@ -521,9 +534,7 @@ static colorhist_vector mediancut( colorhist_vector chv, int colors,
 }
 
 
-/*------------------------------------------------------------------
-  GIF compression routines
-  ------------------------------------------------------------------*/
+/* GIF compression routines */
 
 #define BITS    12
 #define HSIZE   5003  /* 80% occupancy */
@@ -1093,9 +1104,7 @@ static void GIFEncode( FILE* fp,
 }
 
 
-/* ------------------------------------------------------------------
-   GL2GIF public routine
-   ------------------------------------------------------------------ */
+/* gl2gif public routine */
 
 #define FS_SCALE   1024
 #define MAXCOL2    32767
@@ -1120,9 +1129,8 @@ void create_gif(FILE *outfile, int width, int height,
   int fs_direction;
 
   /* This is stupid, but I couldn't figure out how to pack the data
-   directly from the OpenGL frame buffer into unsigned long pixel[][] */
-
-  //printf("read buff : %g \n", Cpu());
+     directly from the OpenGL frame buffer into unsigned long
+     pixel[][] */
 
   glPixelStorei(GL_PACK_ALIGNMENT,1);
   glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -1147,8 +1155,6 @@ void create_gif(FILE *outfile, int width, int height,
   Free(RedBuffer);
   Free(GreenBuffer);
   Free(BlueBuffer);
-
-  //printf("start gif : %g \n", Cpu());
 
   /* Try to compute color histogram */
 
@@ -1353,8 +1359,6 @@ void create_gif(FILE *outfile, int width, int height,
 
   }
 
-  //printf("ok with colormap : %g \n", Cpu());
-
   /* We now have a colormap of maximum 256 colors */
 
   for ( i = 0; i < static_nbcolors; ++i ){
@@ -1399,8 +1403,6 @@ void create_gif(FILE *outfile, int width, int height,
   else
     transparent = -1 ;
 
-  //printf("ok with sort : %g \n", Cpu());
-
   /* All set, let's do it. */
   GIFEncode(outfile, width, height, interlace, 0, transparent, BitsPerPixel,
 	    static_red, static_green, static_blue, GetPixel );
@@ -1408,8 +1410,6 @@ void create_gif(FILE *outfile, int width, int height,
   for(i = 0 ; i<height ; i++)
     Free(static_pixels[i]);
   Free(static_pixels);
-
-  //printf("finished gif : %g \n", Cpu());
 
 }
 

@@ -1,4 +1,20 @@
-// $Id: MinMax.cpp,v 1.6 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: MinMax.cpp,v 1.7 2002-05-18 07:18:00 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -6,10 +22,6 @@
 #include "Context.h"
 
 extern Context_T    CTX ;
-
-/* ------------------------------------------------------------------------ */
-/*  m i n m a x                                                             */
-/* ------------------------------------------------------------------------ */
 
 void minmax(void *a , void*b){
   Vertex *v;
@@ -106,7 +118,7 @@ void CalculateMinMax (Tree_T *t, double *bbox){
       CTX.lc_middle = CTX.range[2];
   }
 
-  /* CTX.lc_order : CTX.lc == f * 10^CTX.lc_order with -1<f<1  */
+  // CTX.lc_order : CTX.lc == f * 10^CTX.lc_order with -1<f<1 
 
   frac = frexp(CTX.lc, &exp);     
   CTX.lc_order = (int)floor(log10(ldexp(frac,exp)));

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.210 2002-05-18 00:55:14 geuzaine Exp $
+# $Id: Makefile,v 1.211 2002-05-18 07:17:59 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -15,7 +15,7 @@ RMFLAGS = -f
 #  Gmsh definitions
 # ----------------------------------------------------------------------
 
-GMSH_COMMON_DIR = Adapt Common DataStr Geo Mesh Parallel Parser Plugin Triangle
+GMSH_COMMON_DIR = Common DataStr Geo Mesh Numeric Parallel Parser Plugin Triangle
 GMSH_BOX_DIR =$(GMSH_COMMON_DIR) Box
 GMSH_FLTK_DIR = $(GMSH_COMMON_DIR) Graphics Fltk jpeg
 GMSH_DIR = $(GMSH_COMMON_DIR) Box Graphics Fltk jpeg utils
@@ -26,10 +26,10 @@ GMSH_DEMO_DIR = demos
 GMSH_TUTORIAL_DIR = tutorial
 GMSH_ARCHIVE_DIR = archives
 
-GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshAdapt\
+GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshNumeric\
                -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshParallel -lGmshTriangle
 GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh\
-                -lGmshGeo -lGmshAdapt -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin\
+                -lGmshGeo -lGmshNumeric -lGmshCommon -lGmshDataStr -lGmshJpeg -lGmshPlugin\
                 -lGmshParallel -lGmshTriangle
 
 GMSH_RELEASE = $(GMSH_MAJOR_VERSION).$(GMSH_MINOR_VERSION).$(GMSH_PATCH_VERSION)
@@ -249,6 +249,20 @@ bb-mingw: initialtag
 # ----------------------------------------------------------------------
 # Ready to compile for some platforms
 # ----------------------------------------------------------------------
+
+#
+# Source distribution
+#
+source:
+	tar zcvf gmsh.tgz\
+           `ls README* Makefile */Makefile */*.[chyl] */*.cpp` demos tutorial utils
+	mkdir gmsh-$(GMSH_RELEASE)
+	cd gmsh-$(GMSH_RELEASE) && tar zxvf ../gmsh.tgz
+	cd gmsh-$(GMSH_RELEASE) && zip -r gmsh-$(GMSH_RELEASE)-source.zip *
+	mv gmsh-$(GMSH_RELEASE)/gmsh-$(GMSH_RELEASE)-source.zip .
+	rm -f gmsh.tgz
+	tar zcvf gmsh-$(GMSH_RELEASE)-source.tar.gz gmsh-$(GMSH_RELEASE)
+	rm -rf gmsh-$(GMSH_RELEASE)
 
 #
 # Linux

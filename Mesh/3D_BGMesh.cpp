@@ -1,10 +1,25 @@
-// $Id: 3D_BGMesh.cpp,v 1.17 2001-04-25 20:42:39 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.18 2002-05-18 07:18:02 geuzaine Exp $
+//
+// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "Gmsh.h"
 #include "Mesh.h"
 #include "2D_Mesh.h"
 #include "3D_Mesh.h"
-#include "Adapt.h"
 #include "Views.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -267,130 +282,5 @@ double ErrorInView (Post_View * ErrView, int *n){
   *n = j;
 
   return 100 * sqrt (tot);
-}
-
-
-/* ------------------------------------------------------------------------ */
-/*  C r e a t e B G M                                                       */
-/* ------------------------------------------------------------------------ */
-
-int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
-               double OptiValue, double *ObjFunct, char *OutFile){
-  double *h, *p, *e, xc, yc, zc, c[3], *X, *Y, *Z, *Val;
-  int N, i, j, dim, nb;
-  Simplex smp;
-  FILE *f;
-
-  if (ErrView->NbSS)
-    dim = 3;
-  else
-    dim = 2;
-
-  N = ErrView->NbSS + ErrView->NbST + 2;
-
-  h = (double *) malloc (N * sizeof (double));
-  e = (double *) malloc (N * sizeof (double));
-  p = (double *) malloc (N * sizeof (double));
-
-  j = 0;
-
-  if(ErrView->NbST){
-    nb = List_Nbr(ErrView->ST) / ErrView->NbST ;
-    for(i = 0 ; i < List_Nbr(ErrView->ST) ; i+=nb){
-      X = (double*)List_Pointer_Fast(ErrView->ST,i);
-      Y = (double*)List_Pointer_Fast(ErrView->ST,i+3);
-      Z = (double*)List_Pointer_Fast(ErrView->ST,i+6);
-      Val = (double*)List_Pointer_Fast(ErrView->ST,i+9);
-      /*
-	Attention, cette ligne est seulement valable en
-	2d x-y. Si plus, calculer le centre du cercle en
-	3d ou utiliser une autre mesure de taille.
-      */
-      CircumCircle (X[0], Y[0],
-		    X[1], Y[1],
-		    X[2], Y[2],
-		    &xc, &yc);
-      h[j + 1] = sqrt ((xc - X[0]) * (xc - X[0]) +
-		       (yc - Y[0]) * (yc - Y[0]));
-      p[j + 1] = Degree;
-      e[j + 1] = (Val[0] + Val[1] + Val[2]) / 3. ;
-      j++;
-    }
-  }
-
-  if(ErrView->NbSS){
-    nb = List_Nbr(ErrView->SS) / ErrView->NbSS ;
-    for(i = 0 ; i < List_Nbr(ErrView->SS) ; i+=nb){
-      X = (double*)List_Pointer_Fast(ErrView->SS,i);
-      Y = (double*)List_Pointer_Fast(ErrView->SS,i+3);
-      Z = (double*)List_Pointer_Fast(ErrView->SS,i+8);
-      Val = (double*)List_Pointer_Fast(ErrView->SS,i+12);
-    
-      smp.center_tet (X, Y, Z, c);
-      xc = c[0];
-      yc = c[1];
-      zc = c[2];
-    
-      h[j + 1] = sqrt ((xc - X[0]) * (xc - X[0]) +
-		       (yc - X[0]) * (yc - X[0]) +
-		       (zc - Y[0]) * (zc - Y[0]));
-      p[j + 1] = Degree;
-      e[j + 1] = (Val[0] + Val[1] + Val[2] + Val[3]) * 0.25;
-      j++;
-    }
-  }
-
-  *ObjFunct = AdaptMesh (j, OptiMethod, dim, e, h, p, OptiValue);
-
-  f = fopen (OutFile, "w");
-
-  if(!f){
-    Msg(GERROR, "Unable to open file '%s'", OutFile);
-    return 0;
-  }
-
-  fprintf (f, "View \"Auto_BGMesh\" Offset{0,0,0} {\n");
-
-  j = 0;
-
-  if(ErrView->NbST){
-    nb = List_Nbr(ErrView->ST) / ErrView->NbST ;
-    for(i = 0 ; i < List_Nbr(ErrView->ST) ; i+=nb){
-      X = (double*)List_Pointer_Fast(ErrView->ST,i);
-      Y = (double*)List_Pointer_Fast(ErrView->ST,i+3);
-      Z = (double*)List_Pointer_Fast(ErrView->ST,i+6);
-      Val = (double*)List_Pointer_Fast(ErrView->ST,i+9);
-      fprintf (f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-	       X[0], Y[0], Z[0],
-	       X[1], Y[1], Z[1],
-	       X[2], Y[2], Z[2],
-	       h[j], h[j], h[j]);
-      j++;
-    }
-  }
-
-  if(ErrView->NbSS){
-    nb = List_Nbr(ErrView->SS) / ErrView->NbSS ;
-    for(i = 0 ; i < List_Nbr(ErrView->SS) ; i+=nb){
-      X = (double*)List_Pointer_Fast(ErrView->SS,i);
-      Y = (double*)List_Pointer_Fast(ErrView->SS,i+3);
-      Z = (double*)List_Pointer_Fast(ErrView->SS,i+8);
-      Val = (double*)List_Pointer_Fast(ErrView->SS,i+12);
-      fprintf (f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-	       X[0], Y[0], Z[0],
-	       X[1], Y[1], Z[1],
-	       X[2], Y[2], Z[2],
-	       X[3], Y[3], Z[3],
-	       h[j], h[j], h[j], h[j]);
-      j++;
-    }
-  }
-  fprintf (f, "};\n");
-  fclose (f);
-
-  Msg(INFO, "Background mesh written in '%s'", OutFile); 
-
-  return 1;
-
 }
 
