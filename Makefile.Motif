@@ -1,7 +1,4 @@
-# $Id: Makefile.Motif,v 1.1 2001-08-14 12:53:17 geuzaine Exp $
-# ----------------------------------------------------------------------
-#  Old Makefile for Gmsh  
-# ----------------------------------------------------------------------
+# $Id: Makefile.Motif,v 1.2 2001-08-14 13:28:55 geuzaine Exp $
 
            GMSH_RELEASE = 1.23
 
@@ -70,7 +67,7 @@
 # Rules for developers
 # ----------------------------------------------------------------------
 
-motif: initialtag
+default: initialtag
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
@@ -80,15 +77,15 @@ motif: initialtag
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
-motifgl:
+gmsh:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
               $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
 
-motifmesa:
+gmshm:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
               $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
 
-motifmesastatic:
+static:
 	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_XMOTIF_LIB)\
               $(MESA_MOTIF_STATIC_LIB) $(MESA_STATIC_LIB)\
               $(XMOTIF_LIB) $(THREAD_LIB) -lm
@@ -152,101 +149,32 @@ src:
 	tar cvf $(GMSH_SRCRPM).tar $(GMSH_SOURCES)
 	gzip $(GMSH_SRCRPM).tar
 
-distrib:
-	mkdir gmsh-$(GMSH_RELEASE)
-	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)
-	cp -R tutorial gmsh-$(GMSH_RELEASE)
-	cp -R demos gmsh-$(GMSH_RELEASE)
-	rm -rf gmsh-$(GMSH_RELEASE)/*/CVS
-	rm -f gmsh-$(GMSH_RELEASE)/*/*.msh
-	rm -f gmsh-$(GMSH_RELEASE)/*/*~
-	tar cvf gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar gmsh-$(GMSH_RELEASE)
-	gzip gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar
-	mv gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar.gz gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz
-	rm -rf gmsh-$(GMSH_RELEASE)
-
-distrib-win:
-	cp $(GMSH_BIN_DIR)/gmsh.exe ../gmsh-distrib
-	cp doc/README.txt ../gmsh-distrib
-	cp -R tutorial ../gmsh-distrib
-	cp -R demos ../gmsh-distrib
-	rm -f ../gmsh-distrib/tutorial/README
-	rm -rf ../gmsh-distrib/*/CVS
-	rm -f ../gmsh-distrib/*/*.msh
-	rm -f ../gmsh-distrib/*/*~
-	cd ../gmsh-distrib && zip -r gmsh-$(GMSH_RELEASE)-Windows.zip *
-	mv ../gmsh-distrib/gmsh-$(GMSH_RELEASE)-Windows.zip .
-	rm -rf ../gmsh-distrib/tutorial
-	rm -rf ../gmsh-distrib/demos
-
 strip_bin:
 	strip $(GMSH_BIN_DIR)/gmsh
-
-# ----------------------------------------------------------------------
-# Demos
-# ----------------------------------------------------------------------
 
 dem:
 	gtar zcvf gmsh-demos.tgz $(GMSH_DEMO_DIR)
 	gtar zcvf gmsh-tutorial.tgz $(GMSH_TUTOR_DIR)
 
 # ----------------------------------------------------------------------
-# Black Box
+# Ready to compile for some platforms
 # ----------------------------------------------------------------------
 
-bb: tag
-	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(CC)" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_BLACKBOX" \
-           "GL_INCLUDE=" \
-           "GUI_INCLUDE=" \
-        ); done
-	$(CC) -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
+dec: tag compile_little_endian link_opengl strip_bin
 
-bb-parallel: tag
-	PARALLEL=1
-	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
-           "CC=mpiCC" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_BLACKBOX -DPARALLEL" \
-           "GL_INCLUDE=" \
-           "GUI_INCLUDE=" \
-        ); done
-	mpiCC -o $(GMSH_BIN_DIR)/gmsh-bb $(GMSH_BOX_LIB) -lm
+linux: tag compile_little_endian link_mesa strip_bin
 
-bbn: tag
-	@for i in $(GMSH_BOX_DIR) ; do (cd $$i && $(MAKE) \
-           "CC=g++ -mno-cygwin -I/mingw/include" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_BLACKBOX" \
-           "GL_INCLUDE=" \
-           "GUI_INCLUDE=" \
-        ); done
-	g++ -o $(GMSH_BIN_DIR)/gmsh.exe -mno-cygwin -L/mingw/lib $(GMSH_BOX_LIB) -lm
+linux_2952: tag compile_little_endian_2952 link_mesa_2952 strip_bin
 
-# ----------------------------------------------------------------------
-# Ready to compile for some platforms with MOTIF
-# ----------------------------------------------------------------------
+ibm: tag compile_big_endian link_mesa strip_bin
 
-motif_dec: tag motif_compile_little_endian motif_link_opengl strip_bin
+sun: tag compile_big_endian link_opengl strip_bin
 
-motif_linux: tag motif_compile_little_endian motif_link_mesa strip_bin
+hp: tag compile_big_endian link_hp strip_bin
 
-motif_linux_2952: tag motif_compile_little_endian_2952 motif_link_mesa_2952 strip_bin
+sgi: tag compile_sgi link_sgi strip_bin
 
-motif_ibm: tag motif_compile_big_endian motif_link_mesa strip_bin
-
-motif_sun: tag motif_compile_big_endian motif_link_opengl strip_bin
-
-motif_hp: tag motif_compile_big_endian motif_link_hp strip_bin
-
-motif_sgi: tag motif_compile_sgi motif_link_sgi strip_bin
-
-motif_rpm: src
+rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
 	rpm -bb utils/gmsh_motif.spec
 	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
@@ -254,7 +182,7 @@ motif_rpm: src
 	gtar zcvf gmsh-$(GMSH_UNAME).tgz gmsh
 	rm -f gmsh
 
-motif_compile_little_endian:
+compile_little_endian:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O3" \
@@ -264,7 +192,7 @@ motif_compile_little_endian:
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
-motif_compile_little_endian_2952:
+compile_little_endian_2952:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
            "C_FLAGS=-O3" \
@@ -274,7 +202,7 @@ motif_compile_little_endian_2952:
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
-motif_compile_little_endian_threads:
+compile_little_endian_threads:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-D_REENTRANT -O3" \
@@ -284,7 +212,7 @@ motif_compile_little_endian_threads:
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
-motif_compile_big_endian:
+compile_big_endian:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O3" \
@@ -295,7 +223,7 @@ motif_compile_big_endian:
         ); done
 
 # special car -O2 merde dans 3d_smesh.c sur TransfiniteHex()
-motif_compile_sgi:
+compile_sgi:
 	@for i in $(GMSH_XMOTIF_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
            "C_FLAGS=-O2 -o32 -Olimit 3000" \
@@ -317,28 +245,28 @@ motif_compile_sgi:
            "GUI_INCLUDE=$(MOTIF_INC)" \
         ); done
 
-motif_link_sgi:
+link_sgi:
 	CC -O2 -o32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
            $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) -lm
 
-motif_link_opengl:
+link_opengl:
 	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
             $(OPENGL_MOTIF_LIB) $(OPENGL_LIB) $(XMOTIF_LIB) -lm
 
-motif_link_mesa:
+link_mesa:
 	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
             $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
 
-motif_link_mesa_2952:
+link_mesa_2952:
 	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
                $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
 
-motif_link_mesa_threads:
+link_mesa_threads:
 	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
                $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) $(THREAD_LIB) -lm
 
 # special car +s necessaire pour shared libs avec SHLIB_PATH variable.
-motif_link_hp:
+link_hp:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_XMOTIF_LIB)\
                       $(MESA_MOTIF_LIB) $(MESA_LIB) $(XMOTIF_LIB) -lm
 
