@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.218 2002-11-17 03:56:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.219 2002-11-17 06:25:58 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1212,8 +1212,7 @@ void GUI::reset_option_browser(){
   opt_browser->add("Post-processing");
   for(i = 0 ; i < List_Nbr(CTX.post.list) ; i++) {
     if(i == NB_BUTT_MAX) break;
-    Post_View *v = (Post_View*)List_Pointer(CTX.post.list,i);
-    sprintf(str, "View %d (%s)", i, v->Name);
+    sprintf(str, "View [%d]", i);
     opt_browser->add(str);
   }
   if(select<=opt_browser->size())
