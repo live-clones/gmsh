@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.329 2005-01-13 09:22:03 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.330 2005-01-18 00:12:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1108,29 +1108,19 @@ void visibility_sort_cb(CALLBACK_ARGS)
 
 void visibility_number_cb(CALLBACK_ARGS)
 {
-  int pos, mode, type = WID->vis_input_mode->value(), val = (int)(long)data;
-  char *str = (char *)WID->vis_input->value();
+  int pos, mode, type = (int)(long)data;
 
-  if(val){ // show
-    switch (WID->vis_browser_mode->value()) {
-    case 0:
-      mode = VIS_GEOM | VIS_MESH;
-      CTX.mesh.changed = 1;
-      break;
-    case 1:
-      mode = VIS_GEOM;
-      break;
-    default:
-      mode = VIS_MESH;
-      CTX.mesh.changed = 1;
-      break;
-    }
+  if(type >= 100){ // show
+    mode = VIS_GEOM | VIS_MESH;
+    type -= 100;
+    CTX.mesh.changed = 1;
   }
   else{ // hide
     mode = 0;
     CTX.mesh.changed = 1;
   }
-
+  
+  char *str = (char *)WID->vis_input[type]->value();  
   SetVisibilityByNumber(str, type, mode);
   pos = WID->vis_browser->position();
   visibility_cb(NULL, NULL);
