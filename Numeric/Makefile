@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2002-05-18 16:31:16 geuzaine Exp $
+# $Id: Makefile,v 1.4 2002-05-18 21:34:29 geuzaine Exp $
 #
 # Makefile for "libGmshNumeric.a"
 #
@@ -19,16 +19,10 @@ RMFLAGS = -f
 CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = Numeric.cpp\
-      mnbrak.cpp \
-      brent.cpp \
-      nrutil.cpp \
-      dsvdcmp.cpp \
-      newt.cpp \
-      fmin.cpp \
-      fdjac.cpp \
-      lnsrch.cpp \
-      lubksb.cpp \
-      ludcmp.cpp
+      Newton.cpp \
+      Opti.cpp \
+      SVD.cpp \
+      NRUtil.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -53,17 +47,14 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-mnbrak.o: mnbrak.cpp nrutil.h Numeric.h
-brent.o: brent.cpp nrutil.h Numeric.h
-nrutil.o: nrutil.cpp ../Common/Gmsh.h ../Common/Message.h \
+Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
+Newton.o: Newton.cpp NRUtil.h Numeric.h
+Opti.o: Opti.cpp NRUtil.h Numeric.h
+SVD.o: SVD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  NRUtil.h Numeric.h
+NRUtil.o: NRUtil.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h
-dsvdcmp.o: dsvdcmp.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h nrutil.h Numeric.h
-newt.o: newt.cpp nrutil.h Numeric.h
-fmin.o: fmin.cpp nrutil.h Numeric.h
-fdjac.o: fdjac.cpp nrutil.h Numeric.h
-lnsrch.o: lnsrch.cpp nrutil.h Numeric.h
-lubksb.o: lubksb.cpp
-ludcmp.o: ludcmp.cpp nrutil.h Numeric.h

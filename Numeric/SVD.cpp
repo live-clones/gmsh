@@ -1,7 +1,9 @@
-// $Id: dsvdcmp.cpp,v 1.1 2002-05-18 07:18:03 geuzaine Exp $
+// $Id: SVD.cpp,v 1.1 2002-05-18 21:34:29 geuzaine Exp $
+
+/* (C) Copr. 1986-92 Numerical Recipes Software J!0. */
 
 #include "Gmsh.h"
-#include "nrutil.h"
+#include "NRUtil.h"
 
 double dpythag(double a, double b)
 {

@@ -1,4 +1,7 @@
-// $Id: nrutil.cpp,v 1.1 2002-05-18 07:18:03 geuzaine Exp $
+// $Id: NRUtil.cpp,v 1.1 2002-05-18 21:34:29 geuzaine Exp $
+
+/* (C) Copr. 1986-92 Numerical Recipes Software J!0. */
+
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
