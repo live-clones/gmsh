@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.21 2001-08-20 07:38:29 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.22 2001-10-09 14:41:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -30,7 +30,8 @@ double F_One (double t){
 
 double F_Transfini (double t){
   Vertex der;
-  double d, a, b, val, ZePauwer;
+  double d, a, b, val;
+  int i;
 
   der = InterpolateCurve (THEC, t, 1);
   d = sqrt (der.Pos.X * der.Pos.X + der.Pos.Y * der.Pos.Y +
@@ -42,17 +43,16 @@ double F_Transfini (double t){
   else{
     switch (abs (THEC->ipar[1])){
 
-    case 1: // progression
-      if (sign (THEC->ipar[1]) == -1)
-	ZePauwer = 1. / THEC->dpar[0];
+    case 1: // Geometric progression ar^i; Sum of n terms = THEC->l = a (r^n-1)/(r-1)
+      if(THEC->dpar[0] == 1.)
+	a = THEC->l/(double)THEC->ipar[0];
       else
-	ZePauwer = THEC->dpar[0];
-      b = log (1. / ZePauwer) / THEC->l;
-      a = (1. - exp (-b * THEC->l)) / (b * (double) THEC->ipar[0]);
-      val = d / (a * exp (b * (t * THEC->l))) ;
-      break ;
+	a = THEC->l * (THEC->dpar[0]-1.)/(pow(THEC->dpar[0],THEC->ipar[0])-1.) ;
+      i = (int)( log(t*THEC->l/a*(THEC->dpar[0]-1.)+1.) / log(THEC->dpar[0]) );
+      val = d/(a*pow(THEC->dpar[0],(double)i));
+      break;
 
-    case 2: //bump
+    case 2: // Bump
       if (THEC->dpar[0] > 1.0){
         a = -4. * sqrt (THEC->dpar[0] - 1.) * 
           atan2 (1., sqrt (THEC->dpar[0] - 1.)) / 

@@ -1,4 +1,7 @@
-$Date: 2001-10-07 06:54:24 $
+$Date: 2001-10-09 14:41:06 $
+
+New in 1.28: Corrected the 'Using Progression' attribute for
+tranfinite meshes top actually match a real progression;
 
 New in 1.27: Added ability to extrude curves with Layers/Recombine
 attributes; New PointSize/LineWidth options; Fixed For/EndFor loops in
