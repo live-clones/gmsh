@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.14 2004-12-27 09:17:44 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.15 2004-12-27 09:29:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -68,20 +68,12 @@ void GMSH_StreamLinesPlugin::draw()
 #if defined(HAVE_FLTK)
   glColor4ubv((GLubyte *) & CTX.color.fg);
   double p[3];
-  glBegin(GL_LINES);
   for(int i = 0; i < getNbU(); ++i){
-    getPoint(i, 0, p);
-    glVertex3d(p[0], p[1], p[2]);
-    getPoint(i, getNbV()-1, p);
-    glVertex3d(p[0], p[1], p[2]);
+    for(int j = 0; j < getNbV(); ++j){
+      getPoint(i, j, p);
+      Draw_Point(1, 3., &p[0], &p[1], &p[2], 1);
+    }
   }
-  for(int i = 0; i < getNbV(); ++i){
-    getPoint(0, i, p);
-    glVertex3d(p[0], p[1], p[2]);
-    getPoint(getNbU()-1, i, p);
-    glVertex3d(p[0], p[1], p[2]);
-  }
-  glEnd();
 #endif
 }
 
