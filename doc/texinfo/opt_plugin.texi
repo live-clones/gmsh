@@ -352,6 +352,32 @@ Default value: @code{-1}
 Default value: @code{0}
 @end table
 
+@item Plugin(Lambda2)
+Plugin(Lambda2) computes the eigenvalues
+Lambda(1,2,3) of the tensor (S_ik S_kj +
+Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i)
+and Om_ij = 0.5 (ui,j - uj,i) are respectively
+the symmetric and antisymmetric parts of the
+velocity gradient tensor. Vortices are well-
+represented by regions where Lambda(2) is
+negative. If `iView' contains tensor elements,
+the plugin directly uses the tensors as the
+values of the velocity gradient tensor; if
+`iView' contains vector elements, the plugin
+uses them as the velocities from which to derive
+the velocity gradient tensor. If `iView' < 0,
+the plugin is run on the current view.
+
+Plugin(Lambda2) creates one new view.
+
+Numeric options:
+@table @code
+@item Eigenvalue
+Default value: @code{2}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(Probe)
 Plugin(Probe) gets the value of the simplectic view
 `iView' at the point (`X',`Y',`Z'). If `iView' < 0,

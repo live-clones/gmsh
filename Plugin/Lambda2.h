@@ -44,9 +44,6 @@ public:
   StringXNumber* getOption(int iopt);  
 
   Post_View *execute(Post_View *);
-
-
-
-//---------------------------------------------------------
 };
+
 #endif

@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.69 2004-12-27 07:31:14 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.70 2004-12-27 19:18:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -52,6 +52,7 @@
 #include "DisplacementRaise.h"
 #include "StructuralSolver.h"
 #include "Eigenvectors.h"
+#include "Lambda2.h"
 #include "Evaluate.h"
 #include "Probe.h"
 #include "Context.h"
@@ -204,6 +205,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Remove", GMSH_RegisterRemovePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Eigenvectors", GMSH_RegisterEigenvectorsPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Lambda2", GMSH_RegisterLambda2Plugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Probe", GMSH_RegisterProbePlugin()));
 #if defined(HAVE_TRIANGLE)
