@@ -1,3 +1,7 @@
+#
+# WARNING: This file was modified for inclusion in Gmsh
+#
+
 # Generated automatically from Makefile.auto by configure.
 # Makefile for Independent JPEG Group's software
 
