@@ -21,7 +21,8 @@
 #define FORMAT_SMS     14
 #define FORMAT_OPT     15
 #define FORMAT_PSTEX   16
-#define FORMAT_TEX     17
+#define FORMAT_JPEGTEX 17
+#define FORMAT_TEX     18
 
 #define CONV_VALUE    0.8
 

@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.5 2001-11-08 10:16:41 geuzaine Exp $
+// $Id: Utils.cpp,v 1.6 2001-11-19 13:43:17 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -47,7 +47,7 @@ void MeanPlane(List_T *points, Surface *s){
   na = 3;
 
   U = dmatrix(1,ndata,1,na);
-  V = dmatrix(1,ndata,1,ndata);
+  V = dmatrix(1,na,1,na);
   W = dvector(1,na);
 
   for (i=0; i<ndata; i++){
@@ -79,7 +79,7 @@ void MeanPlane(List_T *points, Surface *s){
   norme(res);
 
   free_dmatrix(U,1,ndata,1,na);
-  free_dmatrix(V,1,ndata,1,ndata);
+  free_dmatrix(V,1,na,1,na);
   free_dvector(W,1,na);
 
   // check coherence of results for non-plane surfaces
