@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.19 2001-07-30 20:22:55 geuzaine Exp $
+// $Id: Post.cpp,v 1.20 2001-07-31 06:02:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -274,7 +274,7 @@ void Draw_Post (void) {
 	
 	if(v->NbST && v->DrawTriangles && v->DrawScalars){
 	  nb = List_Nbr(v->ST) / v->NbST ;
-	  if(v->Light && v->SmoothNormals){ //two passes 
+	  if(v->Light && v->SmoothNormals && v->IntervalsType != DRAW_POST_ISO){
 	    if(v->Changed){
 	      Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
 	      for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
@@ -323,7 +323,7 @@ void Draw_Post (void) {
 	
 	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
 	  nb = List_Nbr(v->SS) / v->NbSS ;
-	  if(v->Light && v->SmoothNormals){ //two passes 
+	  if(v->Light && v->SmoothNormals && v->IntervalsType != DRAW_POST_ISO){
 	    if(v->Changed){
 	      Msg(DEBUG, "Preprocessing of tets normals in view %d", v->Num);
 	      for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)

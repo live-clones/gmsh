@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.43 2001-07-30 18:34:26 geuzaine Exp $
+// $Id: Views.cpp,v 1.44 2001-07-31 06:02:56 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -388,8 +388,9 @@ void FreeView(Post_View *v){
     List_Delete(v->SL); List_Delete(v->VL); List_Delete(v->TL);
     List_Delete(v->ST); List_Delete(v->VT); List_Delete(v->TT);
     List_Delete(v->SS); List_Delete(v->VS); List_Delete(v->TS);
+    v->reset_normals();
   }
-  v->reset_normals();
+
 }
 
 void CopyViewOptions(Post_View *src, Post_View *dest){
@@ -655,14 +656,13 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
 }
 
 
-
-/*
-  A little util for smoothing a view.
-*/
+/* ------------------------------------------------------------------------ */
+/*  S m o o t h i n g                                                       */
+/* ------------------------------------------------------------------------ */
 
 using namespace std;
-struct xyzv
-{
+
+struct xyzv{
 private:
 public:
   double x,y,z,*vals;
@@ -678,58 +678,53 @@ public:
 
 double xyzv::eps = 0.0;
 
-xyzv::xyzv (double xx, double yy, double zz) : x(xx),y(yy),z(zz),vals(0),nbvals(0),nboccurences(0){}
-xyzv::~xyzv()
-{
+xyzv::xyzv (double xx, double yy, double zz) 
+  : x(xx),y(yy),z(zz),vals(0),nbvals(0),nboccurences(0){}
+
+xyzv::~xyzv(){
   if(vals)delete [] vals;
 }
-xyzv::xyzv(const xyzv &other)
-{
+
+xyzv::xyzv(const xyzv &other){
   x = other.x;
   y = other.y;
   z = other.z;
   nbvals = other.nbvals;
   nboccurences = other.nboccurences;
-  if(other.vals && other.nbvals)
-    {
+  if(other.vals && other.nbvals){
+    vals = new double[other.nbvals];
+    for(int i=0;i<nbvals;i++)vals[i] = other.vals[i];
+  }
+}
+
+xyzv & xyzv::operator = (const xyzv &other){
+  if(this != &other){ 
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    nbvals = other.nbvals;
+    nboccurences = other.nboccurences;
+    if(other.vals && other.nbvals){
       vals = new double[other.nbvals];
       for(int i=0;i<nbvals;i++)vals[i] = other.vals[i];
     }
-}
-xyzv & xyzv::operator = (const xyzv &other)
-{
-  if(this != &other)
-    { 
-      x = other.x;
-      y = other.y;
-      z = other.z;
-      nbvals = other.nbvals;
-      nboccurences = other.nboccurences;
-      if(other.vals && other.nbvals)
-	{
-	  vals = new double[other.nbvals];
-	  for(int i=0;i<nbvals;i++)vals[i] = other.vals[i];
-	}
-    }
+  }
   return *this;
 }
 
-void xyzv::update (int n, double *v)
-{
+void xyzv::update (int n, double *v){
   int i;
-  if(!vals)
-    {
-      vals = new double[n];
-      for(i=0;i<n;i++)vals[i] = 0.0;
-      nbvals = n;
-      nboccurences = 0;
-    }
-  else if (nbvals != n)
-    {
-      throw n;
-    }
+  if(!vals){
+    vals = new double[n];
+    for(i=0;i<n;i++)vals[i] = 0.0;
+    nbvals = n;
+    nboccurences = 0;
+  }
+  else if (nbvals != n){
+    throw n;
+  }
 
-  //  if(n==3)printf("val(%d,%f,%f,%f) = %f %f %f\n",nboccurences,x,y,z,v[0],v[1],v[2]);
+  //if(n==3)printf("val(%d,%f,%f,%f) = %f %f %f\n",nboccurences,x,y,z,v[0],v[1],v[2]);
 
   double x1 = (double)(nboccurences)/ (double)(nboccurences + 1);
   double x2 = 1./(double)(nboccurences + 1);
@@ -737,16 +732,19 @@ void xyzv::update (int n, double *v)
   nboccurences++;
 }
 
+// trop simple... If faudrait coder une structure qui tient compte des
+// angles entres normales, qui ne smoothe que si p1.val est "proche"
+// (eps2) de p2.val, et qui renvoie le xyzv qui a le xyz dans eps ET
+// val eps2... Sinon, pour un smoothing de normales, les "coins"
+// deviennent de la bouillie.
 
-struct lessthanxyzv
-{
-  bool operator () (const xyzv & p2, const xyzv &p1) const
-  {
-    if( p1.x - p2.x > xyzv::eps)return true;  
-    if( p1.x - p2.x <-xyzv::eps)return false;  
-    if( p1.y - p2.y > xyzv::eps)return true;  
-    if( p1.y - p2.y <-xyzv::eps)return false;  
-    if( p1.z - p2.z > xyzv::eps)return true;  
+struct lessthanxyzv{
+  bool operator () (const xyzv & p2, const xyzv &p1) const{
+    if( p1.x - p2.x > xyzv::eps)return true;
+    if( p1.x - p2.x <-xyzv::eps)return false;
+    if( p1.y - p2.y > xyzv::eps)return true;
+    if( p1.y - p2.y <-xyzv::eps)return false;
+    if( p1.z - p2.z > xyzv::eps)return true;
     return false;  
   }
 };
@@ -754,8 +752,7 @@ struct lessthanxyzv
 typedef set<xyzv,lessthanxyzv> mycont;
 typedef mycont::const_iterator iter;
 
-class smooth_container 
-{
+class smooth_container{
 public :
   mycont c;
 };
@@ -764,63 +761,53 @@ void smooth_list (List_T *SS ,
 		  int NbTimeStep,
 		  int nbvert,
 		  int nb, 
-		  mycont & connectivities)
-{
+		  mycont & connectivities){
   double *x,*y,*z,*v;
   int i,j,k;
   double *vals = new double[NbTimeStep];
-  for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
-    {
-      x = (double*)List_Pointer_Fast(SS,i);
-      y = (double*)List_Pointer_Fast(SS,i+nbvert);
-      z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
-      v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
-      
-      for(j=0;j<nbvert;j++)
-	{
-	  for(k=0;k<NbTimeStep;k++)vals[k] = v[j+k*nbvert];
-	  xyzv xyz(x[j],y[j],z[j]);
-	  iter it = connectivities.find(xyz);
-	  if(it == connectivities.end())
-	    {
-	      xyz.update(NbTimeStep,vals);
-	      connectivities.insert(xyz);
-	    }
-	  else
-	    {
-	      xyzv *xx = (xyzv*) &(*it); // a little weird ... becaus we know that 
-	      // this will not destroy the set ordering
-	      xx->update(NbTimeStep,vals);
-	    }
-	}
-    }   
+  for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
+    x = (double*)List_Pointer_Fast(SS,i);
+    y = (double*)List_Pointer_Fast(SS,i+nbvert);
+    z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
+    v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
+    
+    for(j=0;j<nbvert;j++){
+      for(k=0;k<NbTimeStep;k++)vals[k] = v[j+k*nbvert];
+      xyzv xyz(x[j],y[j],z[j]);
+      iter it = connectivities.find(xyz);
+      if(it == connectivities.end()){
+	xyz.update(NbTimeStep,vals);
+	connectivities.insert(xyz);
+      }
+      else{
+	xyzv *xx = (xyzv*) &(*it); // a little weird ... becaus we know that 
+	// this will not destroy the set ordering
+	xx->update(NbTimeStep,vals);
+      }
+    }
+  }   
   
-  printf("phase 2\n");
-
-  for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
-    {
-      x = (double*)List_Pointer_Fast(SS,i);
-      y = (double*)List_Pointer_Fast(SS,i+nbvert);
-      z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
-      v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
-      for(j=0;j<nbvert;j++)
-	{
-	  xyzv xyz(x[j],y[j],z[j]);
-	  //double l = sqrt((x[j])*(x[j]) + y[j]*y[j] + z[j] * z[j]);
-	  iter it = connectivities.find(xyz);
-	  if(it != connectivities.end())
-	    for(k=0;k<NbTimeStep;k++)v[j+k*nbvert] = (*it).vals[k];
-	  //for(k=0;k<NbTimeStep;k++)v[j+k*8] = l;
-	}
-    } 
+  Msg(DEBUG, "Smotthing phase 2");
+      
+  for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
+    x = (double*)List_Pointer_Fast(SS,i);
+    y = (double*)List_Pointer_Fast(SS,i+nbvert);
+    z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
+    v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
+    for(j=0;j<nbvert;j++){
+      xyzv xyz(x[j],y[j],z[j]);
+      iter it = connectivities.find(xyz);
+      if(it != connectivities.end())
+	for(k=0;k<NbTimeStep;k++)v[j+k*nbvert] = (*it).vals[k];
+    }
+  } 
   delete [] vals;
 }
 
-void Post_View :: smooth ()
-{
+void Post_View :: smooth (){
   xyzv::eps = CTX.lc * 1.e-6;
   int nb;
-
+  
   if(NbSS){
     mycont conSS;
     Msg(INFO,"Smoothing SS vector in a view ...");
@@ -837,44 +824,36 @@ void Post_View :: smooth ()
   }
   
 }
+  
+// a small utility ti smooth normals
 
-/*
-  Another util to smooth normals
-*/
-
-void Post_View :: reset_normals()
-{
-  if(normals)delete normals;
+void Post_View :: reset_normals(){
+  if(normals) delete normals;
   normals  = 0;
 }
 
 void Post_View :: add_normal(double x, double y, double z, 
-			     double nx, double ny, double nz)
-{
-  if(!normals)normals = new smooth_container;
+			     double nx, double ny, double nz){
+  if(!normals) normals = new smooth_container;
   xyzv xyz(x,y,z);
   double n[3] = {nx,ny,nz};
   iter it = normals->c.find(xyz);
-  if(it == normals->c.end())
-    {
-      xyz.update(3,n);
-      normals->c.insert(xyz);
-    }
-  else
-    {
-      xyzv *xx = (xyzv*) &(*it); 
-      xx->update(3,n);
-    }
+  if(it == normals->c.end()){
+    xyz.update(3,n);
+    normals->c.insert(xyz);
+  }
+  else{
+    xyzv *xx = (xyzv*) &(*it); 
+    xx->update(3,n);
+  }
 }
 
 bool Post_View :: get_normal(double x, double y, double z, 
-			     double &nx, double &ny, double &nz)
-{
-  if(!normals)
-    return false;
+			     double &nx, double &ny, double &nz){
+  if(!normals) return false;
   xyzv xyz(x,y,z);
   iter it = normals->c.find(xyz);
-  if(it == normals->c.end())return false;
+  if(it == normals->c.end()) return false;
   nx = (*it).vals[0];
   ny = (*it).vals[1];
   nz = (*it).vals[2];
