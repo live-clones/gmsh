@@ -78,6 +78,7 @@ public :
   int opt_position[2];        // position of the option window on the screen
   int vis_position[2];        // position of the visibility window on the screen
   int clip_position[2];       // position of the clipping planes window on the screen
+  int manip_position[2];      // position of the manipulator window on the screen
   int stat_position[2];       // position of the statistics window on the screen
   int ctx_position[2];        // position of the geo/mesh context windows on the screen
   int solver_position[2];     // position of the solver windows on the screen
@@ -90,12 +91,10 @@ public :
   int nopopup;                // never popup dialogs in scripts (use default values instead)
 
   double rot[16];             // current rotation matrix 
-  double r[3];                // position angles (if succ. rot. along x, y and z) 
+  double r[3];                // current Euler angles (in degrees!) 
   double t[3], s[3];          // current translation and scale 
   double clip_factor;         // clipping plane distance factor
-  int rlock[3], tlock[3], slock[3];
-                              // locks for r, t and s 
-  double quaternion[4];       // the actual quaternion used for "trackball" rotating 
+  double quaternion[4];       // current quaternion used for "trackball" rotation
   int useTrackball;           // do or do not use the trackball for rotations 
   double rotation_center[3];  // point around which to rotate the scene
   int rotation_center_cg;     // rotate around the center of mass instead of rotation_center[]
@@ -103,8 +102,8 @@ public :
   double max[3];              // x, y and z max for the current geometry 
   double cg[3];               // "center of mass" of the current geometry
   double range[3];            // maximum range in the three directions 
-  double lc, lc_middle;       // characteristic lengths for the whole problem, 
-  double lc_order;            // and never used in mesh generation (->only for geo/post) 
+  double lc;                  // characteristic length for the whole problem (never
+                              // used in mesh generation ->only for geo/post) 
 
   int db;                     // double buffer? 
   int ortho;                  // orthogonal projection? 
@@ -240,9 +239,11 @@ public :
   } color;
   
   // trackball functions 
-  void buildRotmatrix(void);
-  void setQuaternion (double p1x, double p1y, double p2x, double p2y);
-  void addQuaternion (double p1x, double p1y, double p2x, double p2y);
+  void buildRotationMatrix(void);
+  void setQuaternion(double p1x, double p1y, double p2x, double p2y);
+  void addQuaternion(double p1x, double p1y, double p2x, double p2y);
+  void setQuaternionFromEulerAngles(void);
+  void setEulerAnglesFromRotationMatrix(void);
 };
 
 #endif

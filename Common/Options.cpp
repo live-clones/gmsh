@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.228 2005-03-11 05:47:54 geuzaine Exp $
+// $Id: Options.cpp,v 1.229 2005-03-11 08:56:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2149,6 +2149,20 @@ double opt_general_clip_position1(OPT_ARGS_NUM)
   return CTX.clip_position[1];
 }
 
+double opt_general_manip_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.manip_position[0] = (int)val;
+  return CTX.manip_position[0];
+}
+
+double opt_general_manip_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.manip_position[1] = (int)val;
+  return CTX.manip_position[1];
+}
+
 double opt_general_visibility_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -2253,6 +2267,10 @@ double opt_general_quaternion0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.quaternion[0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.quaternion[0];
 }
 
@@ -2260,6 +2278,10 @@ double opt_general_quaternion1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.quaternion[1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.quaternion[1];
 }
 
@@ -2267,6 +2289,10 @@ double opt_general_quaternion2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.quaternion[2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.quaternion[2];
 }
 
@@ -2274,6 +2300,10 @@ double opt_general_quaternion3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.quaternion[3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.quaternion[3];
 }
 
@@ -2281,6 +2311,10 @@ double opt_general_translation0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.t[0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.t[0];
 }
 
@@ -2288,6 +2322,10 @@ double opt_general_translation1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.t[1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.t[1];
 }
 
@@ -2295,6 +2333,10 @@ double opt_general_translation2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.t[2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.t[2];
 }
 
@@ -2302,6 +2344,10 @@ double opt_general_scale0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.s[0] = val ? val : 1.0;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.s[0];
 }
 
@@ -2309,6 +2355,10 @@ double opt_general_scale1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.s[1] = val ? val : 1.0;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.s[1];
 }
 
@@ -2316,6 +2366,10 @@ double opt_general_scale2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.s[2] = val ? val : 1.0;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->update_manip_window();
+#endif
   return CTX.s[2];
 }
 

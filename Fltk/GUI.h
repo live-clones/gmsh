@@ -229,6 +229,10 @@ public:
   Fl_Multi_Browser *clip_browser ;
   Fl_Value_Input   *clip_value[4];
 
+  // manipulator window
+  Fl_Window        *manip_window ;
+  Fl_Value_Input   *manip_value[9] ;
+
   // about window
   Fl_Window        *about_window ;
 
@@ -264,6 +268,7 @@ public:
   void create_view_options_window(int numview);
   void create_visibility_window();
   void create_clip_window();
+  void create_manip_window();
   void create_statistics_window();
   void create_message_window();
   void create_about_window();
@@ -297,6 +302,7 @@ public:
   void reset_visibility();
   void reset_option_browser();
   void reset_clip_browser();
+  void update_manip_window(int force=0);
   void reset_external_view_list();
   int  selection, try_selection, quit_selection, end_selection, undo_selection;
 

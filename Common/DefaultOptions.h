@@ -571,6 +571,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "LineWidth" , opt_general_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
+  { F|S, "ManipulatorPositionX" , opt_general_manip_position0 , 650. , 
+    "Horizontal position (in pixels) of the upper left corner of the manipulator window" }, 
+  { F|S, "ManipulatorPositionY" , opt_general_manip_position1 , 150. , 
+    "Vertical position (in pixels) of the upper left corner of the manipulator window" }, 
   { F|S, "MenuPositionX" , opt_general_menu_position0 , 800. , 
     "Horizontal position (in pixels) of the upper left corner of the menu window" }, 
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 50. ,

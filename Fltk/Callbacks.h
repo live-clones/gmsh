@@ -166,6 +166,11 @@ void clip_invert_cb(CALLBACK_ARGS);
 void clip_num_cb(CALLBACK_ARGS);
 void clip_reset_cb(CALLBACK_ARGS);
 
+// Manipulator Menu
+
+void manip_cb(CALLBACK_ARGS);
+void manip_update_cb(CALLBACK_ARGS);
+
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS);

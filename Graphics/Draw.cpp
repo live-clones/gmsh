@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.74 2005-03-11 05:47:55 geuzaine Exp $
+// $Id: Draw.cpp,v 1.75 2005-03-11 08:56:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -266,7 +266,7 @@ void InitPosition(void)
 		 CTX.rotation_center[1],
 		 CTX.rotation_center[2]);
   
-  CTX.buildRotmatrix();
+  CTX.buildRotationMatrix();
   glMultMatrixd(CTX.rot);
 
   if(CTX.rotation_center_cg)
@@ -346,24 +346,6 @@ void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
       }
     }
   }
-}
-
-// FIXME: this is notoriously wrong :-)
-
-void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
-            GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2)
-{
-  GLdouble xscale1 = CTX.s[0];
-  GLdouble yscale1 = CTX.s[1];
-  set_s(0, CTX.s[0] * (CTX.vxmax - CTX.vxmin) / (X2 - X1));
-  set_s(1, CTX.s[1] * (CTX.vymax - CTX.vymin) / (Y1 - Y2));
-  set_s(2, MIN(CTX.s[0], CTX.s[1])); // bof...
-  set_t(0, CTX.t[0] * (xscale1 / CTX.s[0]) - 
-	((Xc1 + Xc2) / 2.) * (1. - (xscale1 / CTX.s[0])));
-  set_t(1, CTX.t[1] * (yscale1 / CTX.s[1]) - 
-	((Yc1 + Yc2) / 2.) * (1. - (yscale1 / CTX.s[1])));
-  InitPosition();
-  Draw();
 }
 
 // Takes a cursor position in window coordinates and returns the line

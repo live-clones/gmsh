@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.421 2005-03-11 05:47:55 geuzaine Exp $
+// $Id: GUI.cpp,v 1.422 2005-03-11 08:56:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -111,7 +111,8 @@ Fl_Menu_Item m_menubar_table[] = {
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
+    {"&Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
+    {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
@@ -143,7 +144,8 @@ Fl_Menu_Item m_sys_menubar_table[] = {
   {"Tools",0,0,0,FL_SUBMENU},
     {"Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
+    {"Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
+    {"Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
     {"Statistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"Message Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
@@ -804,6 +806,7 @@ GUI::GUI(int argc, char **argv)
   msg_window = NULL;
   vis_window = NULL;
   clip_window = NULL;
+  manip_window = NULL;
   about_window = NULL;
   context_geometry_window = NULL;
   context_mesh_window = NULL;
@@ -871,6 +874,7 @@ GUI::GUI(int argc, char **argv)
   create_statistics_window();
   create_visibility_window();
   create_clip_window();
+  create_manip_window();
   create_about_window();
   create_geometry_context_window(0);
   create_mesh_context_window(0);
@@ -3742,6 +3746,95 @@ void GUI::create_clip_window()
 
   clip_window->position(CTX.clip_position[0], CTX.clip_position[1]);
   clip_window->end();
+}
+
+// create the manipulator
+
+void GUI::update_manip_window(int force)
+{
+  if(force || manip_window->shown()){
+    double val1 = CTX.lc;
+    for(int i = 0; i < 3; i++){
+      manip_value[i]->value(CTX.r[i]);
+      manip_value[i]->minimum(-360.);
+      manip_value[i]->maximum(360.);
+      manip_value[i]->step(1.);
+
+      manip_value[i+3]->value(CTX.t[i]);
+      manip_value[i+3]->minimum(-val1);
+      manip_value[i+3]->maximum(val1);
+      manip_value[i+3]->step(val1/200.);
+
+      manip_value[i+6]->value(CTX.s[i]);
+      manip_value[i+6]->minimum(0.01);
+      manip_value[i+6]->maximum(100.);
+      manip_value[i+6]->step(0.01);
+    }
+  }
+}
+
+void GUI::create_manip_window()
+{
+  if(manip_window) {
+    update_manip_window(1);
+    manip_window->show();
+    return;
+  }
+
+  int width = 4 * BB + 2 * WB;
+  int height = 5 * BH + 3 * WB;
+
+  manip_window = new Dialog_Window(width, height, "Manipulator");
+  manip_window->box(GMSH_WINDOW_BOX);
+
+  Fl_Box *top[3], *left[3];
+  top[0] = new Fl_Box(WB + 1 * BB, 1 * WB + 0 * BH, BB, BH, "X");
+  top[1] = new Fl_Box(WB + 2 * BB, 1 * WB + 0 * BH, BB, BH, "Y");
+  top[2] = new Fl_Box(WB + 3 * BB, 1 * WB + 0 * BH, BB, BH, "Z");
+  left[0] = new Fl_Box(WB + 0 * BB, 1 * WB + 1 * BH, BB, BH, "Rotation");
+  left[1] = new Fl_Box(WB + 0 * BB, 1 * WB + 2 * BH, BB, BH, "Translation");
+  left[2] = new Fl_Box(WB + 0 * BB, 1 * WB + 3 * BH, BB, BH, "Scale");
+  for(int i = 0; i < 3; i++){  
+    top[i]->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
+    left[i]->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
+  }
+
+  manip_value[0] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 1 * BH, BB, BH);
+  manip_value[1] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 1 * BH, BB, BH);
+  manip_value[2] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 1 * BH, BB, BH);
+  manip_value[3] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 2 * BH, BB, BH);
+  manip_value[4] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 2 * BH, BB, BH);
+  manip_value[5] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 2 * BH, BB, BH);
+  manip_value[6] = new Fl_Value_Input(WB + 1 * BB, 1 * WB + 3 * BH, BB, BH);
+  manip_value[7] = new Fl_Value_Input(WB + 2 * BB, 1 * WB + 3 * BH, BB, BH);
+  manip_value[8] = new Fl_Value_Input(WB + 3 * BB, 1 * WB + 3 * BH, BB, BH);
+
+  for(int i = 0; i < 9; i++){
+    if(i < 3){
+      manip_value[i]->minimum(0.);
+      manip_value[i]->maximum(360.);
+      manip_value[i]->step(1.);
+    }
+    else if(i > 5){
+      manip_value[i]->minimum(0.1);
+      manip_value[i]->maximum(100.);
+      manip_value[i]->step(0.1);
+    }
+    manip_value[i]->align(FL_ALIGN_RIGHT);
+    manip_value[i]->callback(manip_update_cb);
+  }
+
+  {
+    Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Reset");
+    o->callback(status_xyz1p_cb, (void *)6);
+  }
+  {
+    Fl_Return_Button *o = new Fl_Return_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+    o->callback(cancel_cb, (void *)manip_window);
+  }
+
+  manip_window->position(CTX.manip_position[0], CTX.manip_position[1]);
+  manip_window->end();
 }
 
 // Create the about window

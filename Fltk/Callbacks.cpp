@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.340 2005-03-11 05:47:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.341 2005-03-11 08:56:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -183,42 +183,36 @@ void window_cb(CALLBACK_ARGS)
 
 void status_xyz1p_cb(CALLBACK_ARGS)
 {
-  extern void set_r(int i, double val);
-  extern void set_t(int i, double val);
-  extern void set_s(int i, double val);
-
   switch ((long)data) {
   case 0:
     if(CTX.useTrackball)
       CTX.setQuaternion(0., -1. / sqrt(2.), 0., 1. / sqrt(2.));
-    set_r(0, 0.);
-    set_r(1, 90.);
-    set_r(2, 0.);
+    CTX.r[0] = 0.;
+    CTX.r[1] = 90.;
+    CTX.r[2] = 0.;
     Draw();
     break;
   case 1:
     if(CTX.useTrackball)
       CTX.setQuaternion(1. / sqrt(2.), 0., 0., 1. / sqrt(2.));
-    set_r(0, -90.);
-    set_r(1, 0.);
-    set_r(2, 0.);
+    CTX.r[0] = -90.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 0.;
     Draw();
     break;
+  case 6:
+    CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
+    CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
+    // fall-through
   case 2:
     if(CTX.useTrackball)
       CTX.setQuaternion(0., 0., 0., 1.);
-    set_r(0, 0.);
-    set_r(1, 0.);
-    set_r(2, 0.);
+    CTX.r[0] = CTX.r[1] = CTX.r[2] = 0.;
     Draw();
     break;
   case 3:
-    set_t(0, 0.);
-    set_t(1, 0.);
-    set_t(2, 0.);
-    set_s(0, 1.);
-    set_s(1, 1.);
-    set_s(2, 1.);
+    CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
+    CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
     Draw();
     break;
   case 4:
@@ -231,6 +225,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     WID->create_message_window();
     break;
   }
+  WID->update_manip_window();
 }
 
 static int stop_anim, view_in_cycle = -1;
@@ -1248,6 +1243,28 @@ void clip_reset_cb(CALLBACK_ARGS)
   Draw();
 }
 
+// Manipulator menu
+
+void manip_cb(CALLBACK_ARGS)
+{
+  WID->create_manip_window();
+}
+
+void manip_update_cb(CALLBACK_ARGS)
+{
+  CTX.r[0] = WID->manip_value[0]->value();
+  CTX.r[1] = WID->manip_value[1]->value();
+  CTX.r[2] = WID->manip_value[2]->value();
+  CTX.t[0] = WID->manip_value[3]->value();
+  CTX.t[1] = WID->manip_value[4]->value();
+  CTX.t[2] = WID->manip_value[5]->value();
+  CTX.s[0] = WID->manip_value[6]->value();
+  CTX.s[1] = WID->manip_value[7]->value();
+  CTX.s[2] = WID->manip_value[8]->value();
+  CTX.setQuaternionFromEulerAngles();
+  Draw();
+}
+
 // Help Menu (if you change the following, please also change the
 // texinfo documentation in doc/texinfo/shortcuts.texi)
 
@@ -1297,6 +1314,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Ctrl+s        Save file as");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Shift+Ctrl+c  Show clipping plane window");
+  Msg(DIRECT, "  Shift+Ctrl+m  Show manipulator window"); 
   Msg(DIRECT, "  Shift+Ctrl+n  Show option window"); 
   Msg(DIRECT, "  Shift+Ctrl+o  Merge file(s)"); 
   Msg(DIRECT, "  Shift+Ctrl+s  Save mesh in default format");

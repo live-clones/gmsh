@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.74 2005-02-20 06:36:52 geuzaine Exp $
+# $Id: Makefile,v 1.75 2005-03-11 08:56:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -64,13 +64,12 @@ depend:
 # DO NOT DELETE THIS LINE
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/DiscreteSurface.h \
-  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/GmshMatrix.h ../Common/AdaptiveViews.h \
-  Context.h Options.h DefaultOptions.h Trackball.h
+  ../Numeric/Numeric.h Context.h DefaultOptions.h Options.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/DiscreteSurface.h ../Common/VertexArray.h \
+  ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h Views.h \
+  ColorTable.h GmshMatrix.h AdaptiveViews.h Trackball.h
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \

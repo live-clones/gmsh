@@ -38,10 +38,6 @@ void Orthogonalize(int x, int y);
 void ClearOpengl(void);
 void SetOpenglContext(void);
 
-void set_r(int i, double val);
-void set_t(int i, double val);
-void set_s(int i, double val);
-
 void unproject(double x, double y, double p[3], double d[3]);
 void Viewport2World(double win[3], double xyz[3]);
 void World2Viewport(double xyz[3], double win[3]);

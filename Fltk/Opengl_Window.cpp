@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.46 2005-03-09 02:18:40 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.47 2005-03-11 08:56:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -39,8 +39,6 @@ void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj);
 void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
                             Vertex ** thev, Curve ** thec, Surface ** thes,
                             Mesh * m);
-void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2, GLdouble Xc1,
-            GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 int check_type(int type, Vertex * v, Curve * c, Surface * s);
 
 void Opengl_Window::draw()
@@ -113,6 +111,27 @@ void Opengl_Window::draw()
   locked = 0;
 }
 
+// FIXME: this is notoriously wrong :-)
+
+void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
+            GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2)
+{
+  GLdouble xscale1 = CTX.s[0];
+  GLdouble yscale1 = CTX.s[1];
+  CTX.s[0] *= (CTX.vxmax - CTX.vxmin) / (X2 - X1);
+  CTX.s[1] *= (CTX.vymax - CTX.vymin) / (Y1 - Y2);
+  CTX.s[2] = MIN(CTX.s[0], CTX.s[1]); // bof...
+  CTX.t[0] = CTX.t[0] * (xscale1 / CTX.s[0]) - 
+    ((Xc1 + Xc2) / 2.) * (1. - (xscale1 / CTX.s[0]));
+  CTX.t[1] = CTX.t[1] * (yscale1 / CTX.s[1]) - 
+    ((Yc1 + Yc2) / 2.) * (1. - (yscale1 / CTX.s[1]));
+  
+  WID->update_manip_window();
+  InitPosition();
+  Draw();
+}
+
+
 // The event model in FLTK is pretty different from other toolkits:
 // the events are passed to the widget handle of the widget that has
 // the focus. If this handle returns 1, then the event is considered
@@ -167,8 +186,8 @@ int Opengl_Window::handle(int event)
     }
     else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))) {
       if(Fl::event_state(FL_CTRL) && !ZoomClick) {
-        set_s(1, CTX.s[0]);
-        set_s(2, CTX.s[0]);
+        CTX.s[1] = CTX.s[0];
+        CTX.s[2] = CTX.s[0];
         redraw();
       }
       else {
@@ -179,23 +198,17 @@ int Opengl_Window::handle(int event)
       if(Fl::event_state(FL_CTRL) && !ZoomClick) {
         if(CTX.useTrackball)
           CTX.setQuaternion(0., 0., 0., 1.);
-        else {
-          set_r(0, 0.);
-          set_r(1, 0.);
-          set_r(2, 0.);
-        }
-        set_t(0, 0.);
-        set_t(1, 0.);
-        set_t(2, 0.);
-        set_s(0, 1.);
-        set_s(1, 1.);
-        set_s(2, 1.);
+        else
+          CTX.r[0] = CTX.r[1] = CTX.r[2] = 0.;
+	CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
+	CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
         redraw();
       }
       else {
         ZoomClick = false;
       }
     }
+    WID->update_manip_window();
     return 1;
 
   case FL_RELEASE:
@@ -237,25 +250,22 @@ int Opengl_Window::handle(int event)
                             (2.0 * Fl::event_x() - w()) / w(),
                             (h() - 2.0 * Fl::event_y()) / h());
         else {
-          set_r(1, CTX.r[1] + ((abs(xmov) > abs(ymov)) ?
-			       180 * (double)xmov / (double)w() : 0));
-          set_r(0, CTX.r[0] + ((abs(xmov) > abs(ymov)) ? 
-			       0 : 180 * (double)ymov / (double)h()));
+          CTX.r[1] += ((abs(xmov) > abs(ymov)) ? 180 * (double)xmov / (double)w() : 0);
+	  CTX.r[0] += ((abs(xmov) > abs(ymov)) ? 0 : 180 * (double)ymov / (double)h());
         }
       }
       else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))) {
 	if(!CTX.useTrackball)
-          set_r(2, CTX.r[2] + (abs(ymov) > abs(xmov) ? 
-			       0 : -180 * (double)xmov / (double)w()));
+          CTX.r[2] += (abs(ymov) > abs(xmov) ? 0 : -180 * (double)xmov / (double)w());
 	double zoomfact = (ymov > 0) ? 
 	  (double)(CTX.zoom_factor * abs(ymov) + h()) / (double)h() : 
 	  (double)(h()) / (double)(CTX.zoom_factor * abs(ymov) + h());
-	set_s(0, CTX.s[0] * (abs(ymov) > abs(xmov) ? zoomfact : 1.));
-        set_s(1, CTX.s[0]);
-        set_s(2, CTX.s[0]);
+	CTX.s[0] *= (abs(ymov) > abs(xmov) ? zoomfact : 1.);
+        CTX.s[1] = CTX.s[0];
+        CTX.s[2] = CTX.s[0];
         if(abs(ymov) > abs(xmov)) {
-          set_t(0, xt1 * (xscale1 / CTX.s[0]) - xc1 * (1. - (xscale1 / CTX.s[0])));
-          set_t(1, yt1 * (yscale1 / CTX.s[1]) - yc1 * (1. - (yscale1 / CTX.s[1])));
+          CTX.t[0] = xt1 * (xscale1 / CTX.s[0]) - xc1 * (1. - (xscale1 / CTX.s[0]));
+          CTX.t[1] = yt1 * (yscale1 / CTX.s[1]) - yc1 * (1. - (yscale1 / CTX.s[1]));
         }
       }
       else {
@@ -263,9 +273,9 @@ int Opengl_Window::handle(int event)
           / CTX.s[0];
         yc = (CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin))
           / CTX.s[1];
-        set_t(0, xc - xc1);
-        set_t(1, yc - yc1);
-        set_t(2, 0.);
+        CTX.t[0] = xc - xc1;
+        CTX.t[1] = yc - yc1;
+        CTX.t[2] = 0.;
       }
 
       if(CTX.fast_redraw) {
@@ -278,6 +288,7 @@ int Opengl_Window::handle(int event)
 
     xpos += xmov;
     ypos += ymov;
+    WID->update_manip_window();
     return 1;
 
   case FL_MOVE:

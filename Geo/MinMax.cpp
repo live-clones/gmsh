@@ -1,4 +1,4 @@
-// $Id: MinMax.cpp,v 1.16 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: MinMax.cpp,v 1.17 2005-03-11 08:56:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -57,7 +57,7 @@ void CalculateMinMax(Tree_T * t, double *bbox)
       CTX.min[0] = CTX.min[1] = CTX.min[2] = -1.;
       CTX.max[0] = CTX.max[1] = CTX.max[2] = 1.;
       CTX.range[0] = CTX.range[1] = CTX.range[2] = 0.;
-      CTX.lc = CTX.lc_middle = 1.;
+      CTX.lc = 1.;
       return;
     }
     else {
@@ -95,56 +95,40 @@ void CalculateMinMax(Tree_T * t, double *bbox)
     CTX.max[0] += 1.;
     CTX.max[1] += 1.;
     CTX.lc = 1.;
-    CTX.lc_middle = 0.;
   }
   else if(CTX.range[0] == 0. && CTX.range[1] == 0.) {
-    CTX.lc = CTX.lc_middle = CTX.range[2];
+    CTX.lc = CTX.range[2];
     CTX.min[0] -= CTX.lc;
     CTX.min[1] -= CTX.lc;
     CTX.max[0] += CTX.lc;
     CTX.max[1] += CTX.lc;
   }
   else if(CTX.range[0] == 0. && CTX.range[2] == 0.) {
-    CTX.lc = CTX.lc_middle = CTX.range[1];
+    CTX.lc = CTX.range[1];
     CTX.min[0] -= CTX.lc;
     CTX.max[0] += CTX.lc;
   }
   else if(CTX.range[1] == 0. && CTX.range[2] == 0.) {
-    CTX.lc = CTX.lc_middle = CTX.range[0];
+    CTX.lc = CTX.range[0];
     CTX.min[1] -= CTX.lc;
     CTX.max[1] += CTX.lc;
   }
   else if(CTX.range[0] == 0.) {
     CTX.lc = sqrt(DSQR(CTX.range[1]) + DSQR(CTX.range[2]));
-    CTX.lc_middle = DMIN(CTX.range[1], CTX.range[2]);
     CTX.min[0] -= CTX.lc;
     CTX.max[0] += CTX.lc;
   }
   else if(CTX.range[1] == 0.) {
     CTX.lc = sqrt(DSQR(CTX.range[0]) + DSQR(CTX.range[2]));
-    CTX.lc_middle = DMIN(CTX.range[0], CTX.range[2]);
     CTX.min[1] -= CTX.lc;
     CTX.max[1] += CTX.lc;
   }
   else if(CTX.range[2] == 0.) {
     CTX.lc = sqrt(DSQR(CTX.range[0]) + DSQR(CTX.range[1]));
-    CTX.lc_middle = DMIN(CTX.range[0], CTX.range[1]);
   }
   else {
     CTX.lc =
       sqrt(DSQR(CTX.range[0]) + DSQR(CTX.range[1]) + DSQR(CTX.range[2]));
-    if((CTX.range[1] <= CTX.range[0] && CTX.range[0] <= CTX.range[2])
-       || (CTX.range[2] <= CTX.range[0] && CTX.range[0] <= CTX.range[1]))
-      CTX.lc_middle = CTX.range[0];
-    else if((CTX.range[0] <= CTX.range[1] && CTX.range[1] <= CTX.range[2]) ||
-            (CTX.range[2] <= CTX.range[1] && CTX.range[1] <= CTX.range[0]))
-      CTX.lc_middle = CTX.range[1];
-    else
-      CTX.lc_middle = CTX.range[2];
   }
 
-  // CTX.lc_order : CTX.lc == f * 10^CTX.lc_order with -1<f<1 
-
-  frac = frexp(CTX.lc, &exp);
-  CTX.lc_order = (int)floor(log10(ldexp(frac, exp)));
 }

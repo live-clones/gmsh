@@ -73,6 +73,8 @@ Save file
 
 @item Shift+Ctrl+c
 Show clipping plane window
+@item Shift+Ctrl+m
+Show manipulator window 
 @item Shift+Ctrl+n
 Show option window 
 @item Shift+Ctrl+o

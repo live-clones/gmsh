@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.50 2005-03-11 05:47:55 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.51 2005-03-11 08:56:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -37,9 +37,6 @@ void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj);
 void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
                             Vertex ** thev, Curve ** thec, Surface ** thes,
                             Mesh * m);
-void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2, GLdouble Xc1,
-            GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
-
 // Draw specialization
 
 void InitOpengl(void)
@@ -197,31 +194,6 @@ void Draw_OnScreenMessages()
     double w = gl_width(WID->onscreen_buffer[1]);
     glRasterPos2d(CTX.viewport[2]/2.-w/2., CTX.viewport[3] - 2.4*h);
     gl_draw(WID->onscreen_buffer[1]);
-  }
-}
-
-// Euler angles set_XXX
-
-void set_r(int i, double val)
-{
-  if(!CTX.useTrackball) {
-    if(!CTX.rlock[i]) {
-      CTX.r[i] = val;
-    }
-  }
-}
-
-void set_t(int i, double val)
-{
-  if(!CTX.tlock[i]) {
-    CTX.t[i] = val;
-  }
-}
-
-void set_s(int i, double val)
-{
-  if(!CTX.slock[i]) {
-    CTX.s[i] = val;
   }
 }
 
