@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.43 2002-05-18 16:31:16 geuzaine Exp $
+# $Id: Makefile,v 1.44 2002-05-18 21:35:10 geuzaine Exp $
 #
 # Makefile for "libGmshMesh.a"
 #
@@ -259,7 +259,7 @@ Utils.o: Utils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  Mesh.h Interpolation.h ../Numeric/nrutil.h ../Common/Context.h
+  Mesh.h Interpolation.h ../Numeric/NRUtil.h ../Common/Context.h
 Metric.o: Metric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.50 2002-05-18 16:31:16 geuzaine Exp $
+// $Id: CAD.cpp,v 1.51 2002-05-18 21:35:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1587,8 +1587,8 @@ void ReplaceAllDuplicates(Mesh *m){
 static Curve *CURVE, *CURVE_2;
 static Surface *SURFACE;
 static Vertex *VERTEX;
-extern void newt(float x[], int n, int *check,
-                 void (*vecfunc)(int, float [], float []));
+extern void newt(double x[], int n, int *check,
+                 void (*vecfunc)(int, double [], double []));
 
 double min1d (double (*funct)(double), double *xmin){
   double xx, fx, fb, fa, bx, ax;
@@ -1603,7 +1603,7 @@ double min1d (double (*funct)(double), double *xmin){
  return( brent(ax,xx,bx,funct,TOL,xmin) );
 }
 
-static void intersectCS (int N, float x[], float res[]){
+static void intersectCS (int N, double x[], double res[]){
   //x[1] = u x[2] = v x[3] = w
   Vertex s,c;
   s = InterpolateSurface(SURFACE,x[1],x[2],0,0);
@@ -1613,7 +1613,7 @@ static void intersectCS (int N, float x[], float res[]){
   res[3] = s.Pos.Z - c.Pos.Z;
 }
 
-static void intersectCC (int N, float x[], float res[]){
+static void intersectCC (int N, double x[], double res[]){
   //x[1] = u x[2] = v
   Vertex c2,c;
   c2 = InterpolateCurve(CURVE_2,x[2],0);
@@ -1622,7 +1622,7 @@ static void intersectCC (int N, float x[], float res[]){
   res[2] = c2.Pos.Y - c.Pos.Y;
 }
 
-static void projectPS (int N, float x[], float res[]){
+static void projectPS (int N, double x[], double res[]){
   //x[1] = u x[2] = v
   Vertex du,dv,c;
   c  = InterpolateSurface(SURFACE,x[1],x[2],0,0);
@@ -1763,7 +1763,7 @@ bool try_a_value(Surface *s, Vertex *p, double u, double v,double *uu, double *v
 }
 
 bool ProjectPointOnSurface (Surface *s, Vertex &p){
-  float x[3] = {0.5,0.5,0.5};
+  double x[3] = {0.5,0.5,0.5};
   Vertex vv;
   int check;
   SURFACE = s;
@@ -1789,7 +1789,7 @@ bool ProjectPointOnSurface (Surface *s, Vertex &p){
 }
 
 bool ProjectPointOnSurface (Surface *s, Vertex *p,double *u, double *v){
-  static float x[3];
+  static double x[3];
   int check;
   static int deb = 1;
   double VMIN,VMAX,UMIN,UMAX,l, lmin;
@@ -1869,7 +1869,7 @@ bool ProjectPointOnSurface (Surface *s, Vertex *p,double *u, double *v){
 }
 
 bool IntersectCurveSurface (Curve *c, Surface *s){
-  float x[4];
+  double x[4];
   int check;
   SURFACE = s;
   CURVE = c;
@@ -1893,7 +1893,7 @@ void DivideCurve (Curve *c , double u, Vertex *v, Curve **c1, Curve **c2){
 bool IntersectCurves (Curve *c1, Curve *c2,
                       Curve **c11, Curve **c12,
                       Curve **c21, Curve **c22, Vertex **v){
-  float x[3];
+  double x[3];
   Vertex v1,v2;
   int check;
   

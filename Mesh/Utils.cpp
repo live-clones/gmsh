@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.11 2002-05-18 08:01:39 geuzaine Exp $
+// $Id: Utils.cpp,v 1.12 2002-05-18 21:35:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,7 @@
 #include "CAD.h"
 #include "Mesh.h"
 #include "Interpolation.h"
-#include "nrutil.h"
+#include "NRUtil.h"
 #include "Context.h"
 
 extern Context_T CTX;
