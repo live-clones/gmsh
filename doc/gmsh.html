@@ -1,10 +1,10 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML>
+<html>
 
-<HEAD>
+<head>
 
-<TITLE>Gmsh: a three-dimensional finite element mesh generator with
-built-in pre- and post-processing facilities</TITLE>
+<title>Gmsh: a three-dimensional finite element mesh generator with
+built-in pre- and post-processing facilities</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"> 
 
@@ -14,14 +14,14 @@ automatic, maillages automatiques, mailleur, modelisation, opengl,
 maillages 3D, 3D meshes, 3-D meshes, maillages 3-D, voronoi,
 adaptation de maillages, mesh adaptation, modeling">
 
-<META name="Autor-Handle" content="Christophe.Geuzaine@advalvas.be">
+<meta name="Autor-Handle" content="Christophe.Geuzaine@advalvas.be">
 
-<LINK href="/general.css" rel="stylesheet">
-<LINK REL="shortcut icon" HREF="/favicon.ico" TYPE="image/x-icon">
+<link href="/general.css" rel="stylesheet">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 
-</HEAD>
+</head>
 
-<BODY>
+<body>
 
 <h1 align="center">Gmsh: a three-dimensional finite element mesh
 generator with built-in pre- and post-processing facilities</h1>
@@ -30,8 +30,17 @@ generator with built-in pre- and post-processing facilities</h1>
 <p>
 <h3 align=center>Version <a href="doc/VERSIONS">1.36</a>, 21 November 2002</h3>
 <p>
+<center>
+  <a href="#Description">Description</a> |
+  <a href="#Documentation">Documentation</a> |
+  <a href="#Mailing lists">Mailing lists</a> |
+  <a href="#Download"><b>Download</b></a> |
+  <a href="#Credits">Credits</a> |
+  <a href="#Screenshots">Screenshots</a> |
+  <a href="#Links">Links</a>
+</center>
 
-<h2>Description</h2>
+<h2><a name="Description"></a>Description</h2>
 
 Gmsh <!-- (pronounced "<em>Gnu-mesh</em>") --> is an automatic
 three-dimensional finite element mesh generator, primarily Delaunay,
@@ -122,11 +131,11 @@ circumscribed circle/sphere.
 External solvers can be interfaced with Gmsh through a socket
 mechanism, which permits to easily launch computations either locally
 or on remote computers, and to collect and exploit the simulation
-results within Gmsh. The default solver interfaced with Gmsh is <A
-HREF="/getdp/">GetDP</A>. Check the <A HREF="#mysolver">solver
-examples</A> to see how to define your own solver (be sure to also
-read the answer to the question 6.1 in the <A
-HREF="/gmsh/doc/FAQ">FAQ</A>).
+results within Gmsh. The default solver interfaced with Gmsh is <a
+href="/getdp/">GetDP</a>. Check the <a href="#mysolver">solver
+examples</a> to see how to define your own solver (be sure to also
+read the answer to the question 6.1 in the <a
+HREF="/gmsh/doc/FAQ">FAQ</a>).
 
 <h3><a name="post-processing"></a>Post-processing: scalar and vector field visualization</h3>
 
@@ -143,14 +152,14 @@ to automate all the post-processing operations (e.g. for the creation
 of complex animations).
 
 
-<h2>Documentation</h2>
+<h2><a name="Documentation"></a>Documentation</h2>
 
 <ul>
-  <li><A href="/gmsh/doc/tutorial.html">Online tutorial</A>
+  <li><a href="/gmsh/doc/tutorial.html">Online tutorial</a>
       (Please <b>read</b> this tutorial before sending any question to the mailing list!)
   <li><a href="/gmsh/doc/FAQ">Frequently asked questions (FAQ)</a>
-  <li><A href="/gmsh/doc/VERSIONS">Version history</A>
-  <li><A href="/gmsh/doc/FORMATS">Mesh and post-processing file formats</A>
+  <li><a href="/gmsh/doc/VERSIONS">Version history</a>
+  <li><a href="/gmsh/doc/FORMATS">Mesh and post-processing file formats</a>
   <li><a href="/gmsh/doc/CONTRIBUTORS">List of contributors</a>
   <li><a href="/gmsh/doc/KEYWORDS">List of reserved keywords</a>
   <li><a href="/gmsh/doc/README.txt">For Windows versions only</a>
@@ -162,13 +171,13 @@ of complex animations).
 -->
 </ul>
 
-<FORM METHOD=GET ACTION="http://www.geuz.org/search/search-geuz.cgi">
-<INPUT SIZE=30 NAME="q" VALUE="">&nbsp;
-<INPUT TYPE="submit" VALUE="Search!">
-<INPUT TYPE=HIDDEN NAME="ul" VALUE="/gmsh/">
-</FORM>
+<form method=GET action="http://www.geuz.org/search/search-geuz.cgi">
+<input size=30 name="q" value="">&nbsp;
+<input type="submit" value="Search!">
+<input type=HIDDEN name="ul" value="/gmsh/">
+</form>
 
-<h2>Mailing lists</h2>
+<h2><a name="Mailing lists"></a>Mailing lists</h2>
 
 <ul>
   <li><a href="/mailman/listinfo/gmsh/">gmsh</a> is the public mailing
@@ -184,11 +193,11 @@ of complex animations).
      href="/pipermail/gmsh-announce/">here</a>.
 </ul>
 
-<h2>Download</h2>
+<h2><a name="Download"></a>Download</h2>
 
 <!--
-Gmsh is available under the <A href="http://www.gnu.org/">GNU General
-Public License</A> (GPL), with some exceptions (see the sources for
+Gmsh is available under the <a href="http://www.gnu.org/">GNU General
+Public License</a> (GPL), with some exceptions (see the sources for
 more information).  Executable versions of Gmsh are also available for
 -->
                     Executable versions of Gmsh are available for
@@ -197,17 +206,17 @@ are dynamically linked with OpenGL<a href="#opengl-footnote"
 name="opengl-footmark"><sup>1</sup></a>. The tutorial and demo files
 are included in the archives.
 <ul>
-<li><A href="/gmsh/bin/gmsh-1.36.0-Windows.zip">Windows zip archive (95/98/NT/XP)</A>
-<li><A href="/gmsh/bin/gmsh-1.36.0-1.i386.rpm">Linux RPM (i386, Red Hat >= 6.2 and compatible)</A> 
-<li><A href="/gmsh/bin/gmsh-1.36.0-Linux.tgz">Linux tarball (i386, glibc 2.1)</A> 
-<li><A href="/gmsh/bin/gmsh-1.36.0-MacOSX.tgz">Mac OS X tarball (Mac OS X 10.2)</A>
-<li><A href="/gmsh/bin/gmsh-1.36.0-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</A> 
-<li><A href="/gmsh/bin/gmsh-1.36.0-SunOS.tgz">Sun tarball (SunOS 5.8)</A> 
-<li><A href="/gmsh/bin/gmsh-1.36.0-AIX.tgz">IBM tarball (AIX)</A> 
-<li><A href="/gmsh/bin/gmsh-1.36.0-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</A> 
+<li><a href="/gmsh/bin/gmsh-1.36.0-Windows.zip">Windows zip archive (95/98/NT/XP)</a>
+<li><a href="/gmsh/bin/gmsh-1.36.0-1.i386.rpm">Linux RPM (i386, Red Hat >= 6.2 and compatible)</a>
+<li><a href="/gmsh/bin/gmsh-1.36.0-Linux.tgz">Linux tarball (i386, glibc 2.1)</a> 
+<li><a href="/gmsh/bin/gmsh-1.36.0-MacOSX.tgz">Mac OS X tarball (Mac OS X 10.2)</a>
+<li><a href="/gmsh/bin/gmsh-1.36.0-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</a>
+<li><a href="/gmsh/bin/gmsh-1.36.0-SunOS.tgz">Sun tarball (SunOS 5.8)</a>
+<li><a href="/gmsh/bin/gmsh-1.36.0-AIX.tgz">IBM tarball (AIX)</a>
+<li><a href="/gmsh/bin/gmsh-1.36.0-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</a>
 <!--
-<li><A href="/gmsh/bin/gmsh-1.36.0-HP-UX.tgz">HP tarball (HPUX 10.20)</A>
-<li><A href="/gmsh/bin/gmsh-1.36.0-source.tgz">Source tarball</A>
+<li><a href="/gmsh/bin/gmsh-1.36.0-HP-UX.tgz">HP tarball (HPUX 10.20)</a>
+<li><a href="/gmsh/bin/gmsh-1.36.0-source.tgz">Source tarball</a>
     <a href="#fltk-footnote" name="fltk-footmark"><sup>2</sup></a>
 -->
 </ul>
@@ -234,103 +243,102 @@ versions can be compiled without FLTK. Compiling Windows versions
 requires the <a href="http://www.cygwin.com">Cygwin</a> tools.
 -->
 
-<h2>Credits</h2>
+<h2><a name="Credits"></a>Credits</h2>
 
-Gmsh is developed by <A
-HREF="mailto:Remacle@scorec.rpi.edu">Jean-François Remacle</A>
+Gmsh is developed by <a
+HREF="mailto:Remacle@scorec.rpi.edu">Jean-François Remacle</a>
 (currently with the <a href="http://www.rpi.edu">Rensselaer
-Polytechnic Institute</a>) and <A
-HREF="mailto:geuzaine@acm.caltech.edu">Christophe Geuzaine</A>
+Polytechnic Institute</a>) and <a
+HREF="mailto:geuzaine@acm.caltech.edu">Christophe Geuzaine</a>
 (currently with the <a href="http://www.caltech.edu">California
-Institute of Technology</a>).  Please use <A
-HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</A> instead of our personal
+Institute of Technology</a>).  Please use <a
+HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</a> instead of our personal
 e-mails to send questions or bug reports.
 
 
-<h2>Gallery</h2>
+<h2><a name="Screenshots"></a>Screenshots</h2>
 
 Everybody loves screenshots... So here are some:
-<A href="/gmsh/gallery/screenshot1.gif">screenshot 1</a> 
-(<A href="/gmsh/gallery/screenshot1-small.gif">small</a>),
-<A href="/gmsh/gallery/screenshot2.gif">screenshot 2</a>
-(<A href="/gmsh/gallery/screenshot2-small.gif">small</a>),
-<A href="/gmsh/gallery/screenshot3.gif">screenshot 3</a>
-(<A href="/gmsh/gallery/screenshot3-small.gif">small</a>),
-<A href="/gmsh/gallery/screenshot4.gif">screenshot 4</a>
-(<A href="/gmsh/gallery/screenshot4-small.gif">small</a>).
+<a href="/gmsh/gallery/screenshot1.gif">screenshot 1</a> 
+(<a href="/gmsh/gallery/screenshot1-small.gif">small</a>),
+<a href="/gmsh/gallery/screenshot2.gif">screenshot 2</a>
+(<a href="/gmsh/gallery/screenshot2-small.gif">small</a>),
+<a href="/gmsh/gallery/screenshot3.gif">screenshot 3</a>
+(<a href="/gmsh/gallery/screenshot3-small.gif">small</a>),
+<a href="/gmsh/gallery/screenshot4.gif">screenshot 4</a>
+(<a href="/gmsh/gallery/screenshot4-small.gif">small</a>).
 
 <p>
 Some other pictures made with Gmsh:
 <ul>
 <li>Part of a shoulder bone:
-    <A href="/gmsh/gallery/shoulder1.gif">pict1</a>,
-    <A href="/gmsh/gallery/shoulder2.gif">pict2</a>,
-    <A href="/gmsh/gallery/shoulder3.gif">pict3</a>,
-    <A href="/gmsh/gallery/shoulder4.gif">pict4</a>,
-    <A href="/gmsh/gallery/shoulder5.gif">pict5</a>,
-    <A href="/gmsh/gallery/shoulder6.gif">pict6</a>
+    <a href="/gmsh/gallery/shoulder1.gif">pict1</a>,
+    <a href="/gmsh/gallery/shoulder2.gif">pict2</a>,
+    <a href="/gmsh/gallery/shoulder3.gif">pict3</a>,
+    <a href="/gmsh/gallery/shoulder4.gif">pict4</a>,
+    <a href="/gmsh/gallery/shoulder5.gif">pict5</a>,
+    <a href="/gmsh/gallery/shoulder6.gif">pict6</a>
     (J. Fatemi).
 <li>Parts of a magnetron: 
-    <A href="/gmsh/gallery/magnetron1.gif">pict1</a>,
-    <A href="/gmsh/gallery/magnetron2.gif">pict2</a>,
-    <A href="/gmsh/gallery/magnetron3.gif">pict3</a>,
-    <A href="/gmsh/gallery/magnetron4.gif">pict4</a>
+    <a href="/gmsh/gallery/magnetron1.gif">pict1</a>,
+    <a href="/gmsh/gallery/magnetron2.gif">pict2</a>,
+    <a href="/gmsh/gallery/magnetron3.gif">pict3</a>,
+    <a href="/gmsh/gallery/magnetron4.gif">pict4</a>
     (P. Lefèvre).
 <li>A circuit breaker: 
-    <A href="/gmsh/gallery/breaker.gif">pict1</A>
+    <a href="/gmsh/gallery/breaker.gif">pict1</a>
     (S. K. Choi).
 <li>A mechanical part in the demo files: 
-    <A href="/gmsh/gallery/piece1.gif">pict1</A>, 
-    <A href="/gmsh/gallery/piece2.gif">pict2</A>, 
-    <A href="/gmsh/gallery/piece3.gif">pict3</A>.
+    <a href="/gmsh/gallery/piece1.gif">pict1</a>, 
+    <a href="/gmsh/gallery/piece2.gif">pict2</a>, 
+    <a href="/gmsh/gallery/piece3.gif">pict3</a>.
 <li>The log-periodic antenna in the demo files:
-    <A href="/gmsh/gallery/antenna.gif">pict1</A>.
+    <a href="/gmsh/gallery/antenna.gif">pict1</a>.
 <li>An electrical machine:
-    <A href="/gmsh/gallery/machine.gif">pict1</A>
+    <a href="/gmsh/gallery/machine.gif">pict1</a>
     (J. Gyselinck).
 <li>Breads: 
-    <A href="/gmsh/gallery/tresse1.gif">pict1</A>,
-    <A href="/gmsh/gallery/tresse2.gif">pict2</A>
+    <a href="/gmsh/gallery/tresse1.gif">pict1</a>,
+    <a href="/gmsh/gallery/tresse2.gif">pict2</a>
     (D. Colignon).
 <li>Mach number on a F16:
-    <A href="/gmsh/gallery/f16-1.gif">pict1</A>,
-    <A href="/gmsh/gallery/f16-2.gif">pict2</A>,
-    <A href="/gmsh/gallery/f16-3.gif">pict3</A>,
-    <A href="/gmsh/gallery/f16-5.gif">pict4</A>
+    <a href="/gmsh/gallery/f16-1.gif">pict1</a>,
+    <a href="/gmsh/gallery/f16-2.gif">pict2</a>,
+    <a href="/gmsh/gallery/f16-3.gif">pict3</a>,
+    <a href="/gmsh/gallery/f16-5.gif">pict4</a>
     (P. Geuzaine).
 <li>Stream lines:
-    <A href="/gmsh/gallery/f16_stream.jpg">F16</A>,
-    <A href="/gmsh/gallery/f18_stream.jpg">F18</A>
-    <!-- A href="/gmsh/gallery/valve.jpg">valve</A -->
+    <a href="/gmsh/gallery/f16_stream.jpg">F16</a>,
+    <a href="/gmsh/gallery/f18_stream.jpg">F18</a>
+    <!-- a href="/gmsh/gallery/valve.jpg">valve</a -->
     (P. Geuzaine).
 <li>An example of on-screen information display:
-    <A href="/gmsh/gallery/infodisplay1.gif">pict1</A>, 
-    <A href="/gmsh/gallery/infodisplay2.gif">pict2</A>.
+    <a href="/gmsh/gallery/infodisplay1.gif">pict1</a>, 
+    <a href="/gmsh/gallery/infodisplay2.gif">pict2</a>.
 <li>2D colormap:
-    <A href="/gmsh/gallery/blob.gif">pict1</A>.
+    <a href="/gmsh/gallery/blob.gif">pict1</a>.
 <li>3D quicktime movie:
-    <A href="/gmsh/gallery/density.mov">movie1</A>.
+    <a href="/gmsh/gallery/density.mov">movie1</a>.
 <li>Structured and unstructured mesh of an extruded geometry:
-    <A href="/gmsh/gallery/spirale.gif">pict1</A>.
+    <a href="/gmsh/gallery/spirale.gif">pict1</a>.
 <li>Some didactic animations about computational electromagnetics at 
-    <A href="http://elap.montefiore.ulg.ac.be/elm/demos_en.html">ELAP</A>.
+    <a href="http://elap.montefiore.ulg.ac.be/elm/demos_en.html">ELAP</a>.
 </ul>
 
 
-<h2>Links</h2>
+<h2><a name="Links"></a>Links</h2>
 
-Check out <A HREF="/getdp/">GetDP</A>, a scientific computation
+Check out <a href="/getdp/">GetDP</a>, a scientific computation
 software for the numerical solution of integro-differential equations,
 using finite element and integral type methods.
 
 <p>
 The mesh database that will be used by Gmsh in the future has its
-own homepage: take a look at <A
-HREF="http://www.scorec.rpi.edu/AOMD/">AOMD, the Algorithm Oriented
-Mesh Database</A>.
+own homepage: take a look at <a href="http://www.scorec.rpi.edu/AOMD/">AOMD,
+the Algorithm Oriented Mesh Database</a>.
 
 <p>
 Back to <a href="/">geuz.org</a>
 
-</BODY>
-</HTML>
+</body>
+</html>
