@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.61 2004-12-27 00:46:59 geuzaine Exp $
+// $Id: Gmsh.l,v 1.62 2004-12-30 06:24:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -53,12 +53,12 @@ void   skipline(void);
 	 yylineno++;							\
        }								\
        if ( c == EOF && ferror( yyin ) )				\
-	 YY_FATAL_ERROR( "input in flex scanner failed" );		\
+	 Msg(FATAL,  "input in flex scanner failed" );			\
        result = n;							\
      }									\
    else if ( ((result = fread( buf, 1, max_size, yyin )) == 0)		\
 	     && ferror( yyin ) )					\
-     YY_FATAL_ERROR( "input in flex scanner failed" );
+     Msg(FATAL,  "input in flex scanner failed" );
 
 %}
 
@@ -352,6 +352,10 @@ void parsestring(char endchar){
       Msg(GERROR, "End of file in string");
       break;
     }
+    else if(i >= (int)sizeof(tmp)-1){
+      Msg(GERROR, "String too long");
+      break;
+    }
     else{
       tmp[i++] = (char)c;
     }
@@ -397,6 +401,10 @@ void skip_until(char *skip, char *until){
     }
 
     l = MAX(l_skip,l_until);
+    if(l >= (int)sizeof(chars)){
+      Msg(GERROR, "Search pattern too long in skip_until");
+      return;
+    }
     for(i=1; i<l; i++){
       chars[i] = yyinput();
       if(chars[i] == (char)EOF){
