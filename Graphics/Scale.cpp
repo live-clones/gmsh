@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.47 2004-10-11 19:18:59 geuzaine Exp $
+// $Id: Scale.cpp,v 1.48 2004-10-11 20:48:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -288,10 +288,18 @@ void Draw_Scales(void)
     return;
   }
 
-  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
-
   const double tic = 10., bar_size = 16.;
   double width = 0., width_prev = 0., width_total = 0.;
+
+  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  char label[1024];
+  double largest_number = 0.;
+  for(int i = 0; i < List_Nbr(todraw); i++) {
+    Post_View *v = *(Post_View **) List_Pointer(todraw, i);
+    sprintf(label, v->Format, -100*M_PI);
+    if(largest_number < gl_width(label))
+      largest_number = gl_width(label);
+  }
 
   for(int i = 0; i < List_Nbr(todraw); i++) {
     Post_View *v = *(Post_View **) List_Pointer(todraw, i);
@@ -315,9 +323,7 @@ void Draw_Scales(void)
 		     tic, 1);
 	}
 	else{
-	  char label[1024];
-	  sprintf(label, v->Format, -100*M_PI);
-	  double xsep = gl_width(label)/2. + 20;
+	  double xsep = largest_number/2. + 20;
 	  double ww = (CTX.viewport[2] - CTX.viewport[0]) / 2. - 2 * xsep;
 	  if(ww < 20) ww = 20;
 	  draw_scale(v, 
@@ -329,9 +335,9 @@ void Draw_Scales(void)
       }
       else{
 	double xsep = 20.;
-	double ysep = (CTX.viewport[3] - CTX.viewport[1]) / ((List_Nbr(todraw) == 1) ? 6. : 15.);
 	double dy = 2. * gl_height();
 	if(List_Nbr(todraw) == 1){
+	  double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 6.;
 	  double hh = CTX.viewport[3] - CTX.viewport[1] - 2 * ysep - dy;
 	  draw_scale(v, 
 		     CTX.viewport[0] + xsep, 
@@ -340,6 +346,7 @@ void Draw_Scales(void)
 		     tic, 0);
 	}
 	else{
+	  double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 15.;
 	  double hh = (CTX.viewport[3] - CTX.viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
 	  draw_scale(v, 
 		     CTX.viewport[0] + xsep + width_total + (i / 2) * xsep,
@@ -349,7 +356,6 @@ void Draw_Scales(void)
 	}
 	// compute width
 	width_prev = width;
-	char label[1024];
 	sprintf(label, v->Format, -100*M_PI);
 	width = bar_size + tic + gl_width(label);
 	if(List_Nbr(v->Time) > 1 && v->ShowTime)
