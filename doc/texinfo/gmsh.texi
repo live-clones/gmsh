@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.155 2004-12-28 23:59:48 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.156 2004-12-29 07:18:10 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -3109,7 +3109,7 @@ For the 2D text objects, the two first @var{expression}s in
 @var{list-of-coords} give the X-Y position of the string in screen
 coordinates, measured from the top-left corner of the window. If the first
 (respectively second) @var{expression} is negative, the position is measured
-from the right (respectively left) edge of the window. If the value of the
+from the right (respectively bottom) edge of the window. If the value of the
 first (respectively second) @var{expression} is larger than 99999, the
 string is centered horizontally (respectively vertically). If the third
 @var{expression} is equal to zero, the text is left-aligned and displayed
@@ -3259,7 +3259,7 @@ where @var{coord1} and @var{coord2} give the X-Y position of the 2D string
 in screen coordinates (measured from the top-left corner of the window) and
 where @var{index} gives the starting index of the string in
 @var{text2d-chars}. If @var{coord1} (respectively @var{coord2}) is negative,
-the position is measured from the right (respectively left) edge of the
+the position is measured from the right (respectively bottom) edge of the
 window. If @var{coord1} (respectively @var{coord2}) is larger than 99999,
 the string is centered horizontally (respectively vertically).  If
 @var{style} is equal to zero, the text is left-aligned and displayed using
