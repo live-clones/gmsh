@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.1 2003-07-23 17:55:49 geuzaine Exp $
+$Id: CREDITS,v 1.2 2003-07-23 18:39:00 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2003 by Christophe Geuzaine
 <geuzaine@acm.caltech.edu> and Jean-Francois Remacle
@@ -36,7 +36,7 @@ The GIF routines (Graphics/gl2gif.cpp) are based on code copyright (c)
 
 This version of Gmsh may also contain code (in the Triangle
 subdirectory) copyright (c) 1993, 1995, 1997, 1998, 2002, Jonathan
-Richard Shewchuk.
+Richard Shewchuk: check the configuration options.
 
 Special thanks to David Colignon <David.Colignon@univ.u-3mrs.fr> for
 new colormaps; Patrick Dular <patrick.dular@ulg.ac.be> for transfinite

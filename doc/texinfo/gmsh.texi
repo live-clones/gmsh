@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.75 2003-07-23 17:55:49 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.76 2003-07-23 18:39:00 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -247,7 +247,7 @@ File formats
 Bugs, versions and credits
 
 * Bugs::                        
-* Version history::             
+* Versions::                    
 * Credits::                     
 
 @end detailmenu
@@ -3197,7 +3197,7 @@ with @file{utils/misc/untabify.sh}).
 
 @menu
 * Bugs::                        
-* Version history::             
+* Versions::                    
 * Credits::                     
 @end menu
 
@@ -3205,7 +3205,7 @@ with @file{utils/misc/untabify.sh}).
 @c Bugs
 @c -------------------------------------------------------------------------
 
-@node Bugs, Version history, Bugs and versions, Bugs and versions
+@node Bugs, Versions, Bugs and versions, Bugs and versions
 @section Bugs
 
 @cindex Bugs, reporting
@@ -3229,8 +3229,8 @@ problems we already know about.
 @c Versions
 @c -------------------------------------------------------------------------
 
-@node Version history, Credits, Bugs, Bugs and versions
-@section Version history
+@node Versions, Credits, Bugs, Bugs and versions
+@section Versions
 
 @cindex Versions
 @cindex History, versions
@@ -3242,7 +3242,7 @@ problems we already know about.
 @c Credits
 @c -------------------------------------------------------------------------
 
-@node Credits,  , Version history, Bugs and versions
+@node Credits,  , Versions, Bugs and versions
 @section Credits
 
 @cindex Acknowledgments
