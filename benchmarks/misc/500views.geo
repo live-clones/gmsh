@@ -1,6 +1,6 @@
 
 // this tests that we can still load as many views as we want.
-// (even if only 200 are allowed in the GUI)
+// (even if only 100 are allowed in the GUI)
 
 For i In {1:250}
 
