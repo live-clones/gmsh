@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.10 2004-06-01 03:36:28 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.11 2004-06-01 06:15:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -142,6 +142,7 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
   double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
   double sizeElem = 0.033, val[3], *val2 = NULL;
 
+  Post_View *View = BeginView(1);
   Post_View *v1 = (Post_View*)List_Pointer_Test(CTX.post.list, iView);
   Post_View *v2 = (Post_View*)List_Pointer_Test(CTX.post.list, dView);
 
@@ -157,8 +158,6 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
     val2 = new double[v2->NbTimeStep];
     o2 = new OctreePost(v2);
   }
-
-  Post_View *View = BeginView(1);
 
   for(int i = 0; i < getNbU(); ++i){
     for(int j = 0; j < getNbV(); ++j){
