@@ -34,5 +34,9 @@ Line Loop(25) = {-7,4,9};
 Ruled Surface(26) = {25};
 Line Loop(27) = {4,-12,6};
 Ruled Surface(28) = {27};
+
 Surface Loop(29) = {28,26,16,14,20,24,22,18};
 Complex Volume(30) = {29};
+
+Physical Volume(1) = 30;
+Physical Surface(2) = {14:28:2};
