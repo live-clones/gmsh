@@ -1,8 +1,8 @@
 /*
- * GL2PS, an OpenGL to Postscript Printing Library, version 0.32
+ * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.13 2001-05-23 19:06:41 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.14 2001-06-11 11:21:56 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -34,7 +34,12 @@
 
 #include "gl2ps.h"
 
+/* The static gl2ps structure. gl2ps is not thread safe (we should
+   allocate this structure when doing gl2psBeginPage). */
+
 static GL2PScontext gl2ps;
+
+/* Some 'system' utility routines */
 
 GLvoid gl2psMsg(GLint level, char *fmt, ...){
   va_list args;
@@ -73,6 +78,8 @@ GLvoid gl2psFree(GLvoid *ptr){
   if(!ptr) return;
   free(ptr);
 }
+
+/* The list handling routines */
 
 GLvoid gl2psListRealloc(GL2PSlist *list, GLint n){
   if(n <= 0) return;
@@ -144,6 +151,8 @@ GLvoid gl2psListActionInverse(GL2PSlist *list,
   for(i=gl2psListNbr(list) ; i>0 ; i--)
     (*action)(gl2psListPointer(list, i-1), &dummy);
 }
+
+/* The 3D sorting routines */
 
 GLfloat gl2psComparePointPlane(GL2PSxyz point, GL2PSplane plane){
   return(plane[0] * point[0] + 
@@ -284,6 +293,7 @@ GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
   }
   (*child)->boundary = 0; /* not done! */
   (*child)->dash = parent->dash;
+  (*child)->width = parent->width;
   (*child)->numverts = numverts;
   (*child)->verts = (GL2PSvertex *)gl2psMalloc(numverts * sizeof(GL2PSvertex));
 
@@ -409,6 +419,7 @@ GLvoid gl2psDivideQuad(GL2PSprimitive *quad,
   (*t1)->numverts = (*t2)->numverts = 3;
   (*t1)->depth = (*t2)->depth = quad->depth;
   (*t1)->dash = (*t2)->dash = quad->dash;
+  (*t1)->width = (*t2)->width = quad->width;
   (*t1)->verts = (GL2PSvertex *)gl2psMalloc(3 * sizeof(GL2PSvertex));
   (*t2)->verts = (GL2PSvertex *)gl2psMalloc(3 * sizeof(GL2PSvertex));
   (*t1)->verts[0] = quad->verts[0];
@@ -492,6 +503,31 @@ GLvoid gl2psAddPrimitiveInList(GL2PSprimitive *prim, GL2PSlist *list){
     gl2psFreePrimitive(&prim, NULL);
   }
   
+}
+
+GLvoid gl2psFreeBspTree(GL2PSbsptree *tree){
+  if(tree->back){
+    gl2psFreeBspTree(tree->back);
+    gl2psFree(tree->back);
+  }
+  if(tree->primitives){
+    gl2psListAction(tree->primitives, gl2psFreePrimitive);
+    gl2psListDelete(tree->primitives);
+  }
+  if(tree->front){
+    gl2psFreeBspTree(tree->front);
+    gl2psFree(tree->front);
+  }
+}
+
+GLboolean gl2psGreater(GLfloat f1, GLfloat f2){
+  if(f1 > f2) return 1;
+  else return 0;
+}
+
+GLboolean gl2psLess(GLfloat f1, GLfloat f2){
+  if(f1 < f2) return 1;
+  else return 0;
 }
 
 GLvoid gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
@@ -578,6 +614,8 @@ GLvoid  gl2psTraverseBspTree(GL2PSbsptree *tree, GL2PSxyz eye, GLfloat epsilon,
   }
 }
 
+/* The 2D sorting routines (for occlusion culling). These routines do
+   _not_ work as expected at the moment... */
 
 GLint gl2psSplit2d(GL2PSxyz a, GL2PSxyz b, GL2PSxy tc, GL2PSxy td){
   GLfloat  line[3], n, d[2]; 
@@ -732,6 +770,7 @@ GLvoid gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
       b = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
       b->type = GL2PS_LINE;
       b->dash = prim->dash;
+      b->width = prim->width;
       b->boundary = 0;
       b->numverts = 2;
       b->verts = (GL2PSvertex *)gl2psMalloc(2 * sizeof(GL2PSvertex));
@@ -791,80 +830,11 @@ GLvoid  gl2psBuildPolygonBoundary(GL2PSbsptree *tree){
   gl2psBuildPolygonBoundary(tree->front);
 }
 
-GLvoid gl2psPrintPrimitive(GLvoid *a, GLvoid *b){
-  GL2PSprimitive *prim;
-
-  prim = *(GL2PSprimitive**) a;
-
-  if(gl2ps.options & GL2PS_OCCLUSION_CULL && prim->depth >= 0.) return;
-
-  switch(prim->type){
-  case GL2PS_TEXT :
-    fprintf(gl2ps.stream, "(%s) %g %g %g %g %g %d /%s S\n",
-	    prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	    prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
-	    prim->verts[0].rgba[2], prim->text->fontsize, 
-	    prim->text->fontname);
-    break;
-  case GL2PS_POINT :
-    fprintf(gl2ps.stream, "%g %g %g %g %g P\n", prim->verts[0].xyz[0],
-	    prim->verts[0].xyz[1], prim->verts[0].rgba[0],
-	    prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
-    break;
-  case GL2PS_LINE :
-    if(prim->dash)
-      fprintf(gl2ps.stream, "[%d] 0 setdash\n", prim->dash);
-    if(gl2ps.shade){
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
-	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
-	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
-	      prim->verts[0].xyz[1], prim->verts[0].rgba[0],
-	      prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
-    }
-    else{
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g L\n",
-	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-	      prim->verts[0].rgba[2]);
-    }
-    if(prim->dash)
-      fprintf(gl2ps.stream, "[] 0 setdash\n");
-    break;
-  case GL2PS_TRIANGLE :
-    if(gl2ps.shade){
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
-	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
-	      prim->verts[2].rgba[0], prim->verts[2].rgba[1],
-	      prim->verts[2].rgba[2], prim->verts[1].xyz[0],
-	      prim->verts[1].xyz[1], prim->verts[1].rgba[0],
-	      prim->verts[1].rgba[1], prim->verts[1].rgba[2],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-	      prim->verts[0].rgba[2]);
-    }
-    else{
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g T\n",
-	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
-	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-	      prim->verts[0].rgba[2]);
-    }
-    break;
-  case GL2PS_QUADRANGLE :
-    gl2psMsg(GL2PS_WARNING, "There should not be any quad left to print");
-    break;
-  default :
-    gl2psMsg(GL2PS_ERROR, "Unknown type of primitive to print");
-    break;
-  }
-}
-
+/* The feedback buffer parser */
 
 GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts, 
-			     GL2PSvertex *verts, GLint offset, GLint dash,
+			     GL2PSvertex *verts, GLint offset, 
+			     GLint dash, GLint width,
 			     GLshort boundary){
   GLshort         i;
   GLfloat         factor, units, area, dZ, dZdX, dZdY, maxdZ;
@@ -929,6 +899,7 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
 
   prim->depth = 0.;
   prim->dash = dash;
+  prim->width = width;
 
   if(gl2ps.sort == GL2PS_SIMPLE_SORT){
     for(i = 0; i < numverts; i++) 
@@ -964,7 +935,7 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
 }
 
 GLint gl2psParseFeedbackBuffer(GLvoid){
-  GLint        i, used, count, v, vtot, offset=0, dash=0;
+  GLint        i, used, count, v, vtot, offset=0, dash=0, psize=1, lwidth=1;
   GLshort      boundary, flag;
   GLfloat     *current;
   GL2PSvertex  vertices[3];
@@ -995,7 +966,7 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
       i = gl2psGetVertex(&vertices[0], current);
       current += i;
       used    -= i;
-      gl2psAddPolyPrimitive(GL2PS_POINT, 1, vertices, 0, dash, 0);
+      gl2psAddPolyPrimitive(GL2PS_POINT, 1, vertices, 0, dash, psize, 0);
       break;
     case GL_LINE_TOKEN :
     case GL_LINE_RESET_TOKEN :
@@ -1007,7 +978,7 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
       i = gl2psGetVertex(&vertices[1], current);
       current += i;
       used    -= i;
-      gl2psAddPolyPrimitive(GL2PS_LINE, 2, vertices, 0, dash, 0);
+      gl2psAddPolyPrimitive(GL2PS_LINE, 2, vertices, 0, dash, lwidth, 0);
       break;
     case GL_POLYGON_TOKEN :
       count = (GLint)current[1];
@@ -1030,7 +1001,7 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
 	  else
 	    flag = 0;
 	  gl2psAddPolyPrimitive(GL2PS_TRIANGLE, 3, vertices, 
-				offset, dash, flag);
+				offset, dash, 1, flag);
 	  vertices[1] = vertices[2];
 	}
 	else
@@ -1054,9 +1025,11 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
       case GL2PS_END_POLYGON_BOUNDARY : boundary=0; break;
       case GL2PS_BEGIN_LINE_STIPPLE : dash=4; break;
       case GL2PS_END_LINE_STIPPLE : dash=0; break;
+      case GL2PS_SET_POINT_SIZE : current++; used--; psize=(GLint)*current; break;
+      case GL2PS_SET_LINE_WIDTH : current++; used--; lwidth=(GLint)*current; break;
       }
-      current += 2;
-      used -= 2;
+      current += 2; 
+      used -= 2; 
       break;      
     default :
       gl2psMsg(GL2PS_WARNING, "Unknown token in buffer");
@@ -1068,6 +1041,10 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
   
   return GL2PS_SUCCESS;
 }
+
+/* The postscript routines. Other (vector) image formats should be
+   easy to generate by creating the three corresponding routines for
+   the new format. */
 
 GLvoid gl2psPrintPostscriptHeader(GLvoid){
   GLint   viewport[4], index;
@@ -1083,17 +1060,17 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
      RGB color: r g b C
      Font choose: size fontname FC
      String primitive: (string) x y r g b size fontname S
-     Point primitive: x y r g b P
-     Flat-shaded line: x2 y2 x1 y1 r g b L
+     Point primitive: x y size r g b P
+     Flat-shaded line: x2 y2 x1 y1 r g b width L
      Flat-shaded triangle: x3 y3 x2 y2 x1 y1 r g b T
-     Smooth-shaded line: x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 SL
+     Smooth-shaded line: x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 width SL
      Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST
   */
 
   fprintf(gl2ps.stream, 
 	  "%%!PS-Adobe-3.0\n"
 	  "%%%%Title: %s\n"
-	  "%%%%Creator: GL2PS, an OpenGL to Postscript Printing Library, V. 0.32\n"
+	  "%%%%Creator: GL2PS, an OpenGL to Postscript Printing Library, v. %g\n"
 	  "%%%%For: %s\n"
 	  "%%%%CreationDate: %s"
 	  "%%%%LanguageLevel: 2\n"
@@ -1107,19 +1084,19 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "%%%%EndComments\n"
 	  "%%%%BeginProlog\n"
 	  "/gl2psdict 64 dict def gl2psdict begin\n"
-	  "1 setlinecap 1 setlinejoin 0.2 setlinewidth /bd {bind def} bind def\n"
+	  "1 setlinecap 1 setlinejoin /bd {bind def} bind def\n"
 	  "/G { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add\n"
 	  "setgray } bd /C { setrgbcolor } bd /FC { findfont exch scalefont\n"
-	  "setfont } bd /S { FC C moveto show } bd /P { C newpath 0.5 0.0 360.0\n"
-	  "arc closepath fill } bd /L { C newpath moveto lineto stroke } bd\n"
-	  "/T { C newpath moveto lineto lineto closepath fill } bd /SL { /b1\n"
+	  "setfont } bd /S { FC C moveto show } bd /P { C newpath 0.0 360.0\n"
+	  "arc closepath fill } bd /L { setlinewidth C newpath moveto lineto stroke } bd\n"
+	  "/T { C newpath moveto lineto lineto closepath fill } bd /SL { /lw exch def /b1\n"
 	  "exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
 	  "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
 	  "b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub abs 0.008 gt\n"
 	  "or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
 	  "/rm r1 r2 add 0.5 mul def /ym y1 y2 add 0.5 mul def /xm x1 x2 add\n"
-	  "0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm SL xm ym rm gm bm x2 y2 r2\n"
-	  "g2 b2 SL } { x1 y1 x2 y2 r1 g1 b1 L } ifelse } bd /ST {/b1 exch\n"
+	  "0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm lw SL xm ym rm gm bm x2 y2 r2\n"
+	  "g2 b2 lw SL } { x1 y1 x2 y2 r1 g1 b1 lw L } ifelse } bd /ST {/b1 exch\n"
 	  "def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
 	  "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
 	  "/b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
@@ -1149,8 +1126,8 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "mark\n"
 	  "gsave\n"
 	  "1.0 1.0 scale\n",
-	  gl2ps.title, gl2ps.producer, ctime(&now), viewport[2], viewport[3], 
-	  viewport[0], viewport[1], viewport[2], viewport[3]);
+	  gl2ps.title, GL2PS_VERSION, gl2ps.producer, ctime(&now), 
+	  viewport[2], viewport[3], viewport[0], viewport[1], viewport[2], viewport[3]);
 	  
   if(gl2ps.options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps.colormode == GL_RGBA || gl2ps.colorsize == 0)
@@ -1172,35 +1149,97 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
   }
 }
 
-GLvoid gl2psFreeBspTree(GL2PSbsptree *tree){
-  if(tree->back){
-    gl2psFreeBspTree(tree->back);
-    gl2psFree(tree->back);
-  }
-  if(tree->primitives){
-    gl2psListAction(tree->primitives, gl2psFreePrimitive);
-    gl2psListDelete(tree->primitives);
-  }
-  if(tree->front){
-    gl2psFreeBspTree(tree->front);
-    gl2psFree(tree->front);
+GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
+  GL2PSprimitive *prim;
+
+  prim = *(GL2PSprimitive**) a;
+
+  if(gl2ps.options & GL2PS_OCCLUSION_CULL && prim->depth >= 0.) return;
+
+  switch(prim->type){
+  case GL2PS_TEXT :
+    fprintf(gl2ps.stream, "(%s) %g %g %g %g %g %d /%s S\n",
+	    prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	    prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
+	    prim->verts[0].rgba[2], prim->text->fontsize, 
+	    prim->text->fontname);
+    break;
+  case GL2PS_POINT :
+    fprintf(gl2ps.stream, "%g %g %g %g %g %g P\n", 
+	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 1.0*prim->width, 
+	    prim->verts[0].rgba[0], prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
+    break;
+  case GL2PS_LINE :
+    if(prim->dash)
+      fprintf(gl2ps.stream, "[%d] 0 setdash\n", prim->dash);
+    if(gl2ps.shade){
+      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g %g SL\n",
+	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
+	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
+	      prim->verts[0].xyz[1], prim->verts[0].rgba[0],
+	      prim->verts[0].rgba[1], prim->verts[0].rgba[2],
+	      0.2*prim->width);
+    }
+    else{
+      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g L\n",
+	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	      prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
+	      prim->verts[0].rgba[2], 0.2*prim->width);
+    }
+    if(prim->dash)
+      fprintf(gl2ps.stream, "[] 0 setdash\n");
+    break;
+  case GL2PS_TRIANGLE :
+    if(gl2ps.shade){
+      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
+	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
+	      prim->verts[2].rgba[0], prim->verts[2].rgba[1],
+	      prim->verts[2].rgba[2], prim->verts[1].xyz[0],
+	      prim->verts[1].xyz[1], prim->verts[1].rgba[0],
+	      prim->verts[1].rgba[1], prim->verts[1].rgba[2],
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
+	      prim->verts[0].rgba[2]);
+    }
+    else{
+      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g T\n",
+	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
+	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
+	      prim->verts[0].rgba[2]);
+    }
+    break;
+  case GL2PS_QUADRANGLE :
+    gl2psMsg(GL2PS_WARNING, "There should not be any quad left to print");
+    break;
+  default :
+    gl2psMsg(GL2PS_ERROR, "Unknown type of primitive to print");
+    break;
   }
 }
 
-GLboolean gl2psGreater(GLfloat f1, GLfloat f2){
-  if(f1 > f2) return 1;
-  else return 0;
+void gl2psPrintPostscriptFooter(GLvoid){
+  fprintf(gl2ps.stream,
+	  "grestore\n"
+	  "showpage\n"
+	  "cleartomark\n"
+	  "%%%%PageTrailer\n"
+	  "%%%%Trailer\n"
+	  "end\n"
+	  "%%%%EOF\n");
 }
 
-GLboolean gl2psLess(GLfloat f1, GLfloat f2){
-  if(f1 < f2) return 1;
-  else return 0;
-}
+
+/* The public routines */
 
 GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
 		      GLint colormode, GLint colorsize, GL2PSrgba *colormap,
 		      GLint buffersize, FILE *stream){
 
+  gl2ps.format = GL2PS_EPS;
   gl2ps.title = title;
   gl2ps.producer = producer;
   gl2ps.sort = sort;
@@ -1240,6 +1279,10 @@ GLint gl2psEndPage(GLvoid){
   GL2PSxyz        eye={0., 0., 100000.};
   GLint           shademodel, res;
   
+  void (*phead)(GLvoid);
+  void (*pprim)(GLvoid *a, GLvoid *b);
+  void (*pfoot)(GLvoid);
+
   glGetIntegerv(GL_SHADE_MODEL, &shademodel);
   gl2ps.shade = (shademodel == GL_SMOOTH);
 
@@ -1248,17 +1291,27 @@ GLint gl2psEndPage(GLvoid){
   if(gl2ps.feedback) gl2psFree(gl2ps.feedback);
 
   if(res == GL2PS_SUCCESS){
-    gl2psPrintPostscriptHeader();
+
+    switch(gl2ps.format){
+    case GL2PS_EPS :
+    default :
+      phead = gl2psPrintPostscriptHeader;
+      pprim = gl2psPrintPostscriptPrimitive;
+      pfoot = gl2psPrintPostscriptFooter;
+      break;
+    }
+
+    phead();
     switch(gl2ps.sort){
     case GL2PS_NO_SORT :
-      gl2psListAction(gl2ps.primitives, gl2psPrintPrimitive);
+      gl2psListAction(gl2ps.primitives, pprim);
       gl2psListAction(gl2ps.primitives, gl2psFreePrimitive);
       gl2psListDelete(gl2ps.primitives);
       res = GL2PS_SUCCESS;
       break;
     case GL2PS_SIMPLE_SORT :
       gl2psListSort(gl2ps.primitives, gl2psCompareDepth);
-      gl2psListActionInverse(gl2ps.primitives, gl2psPrintPrimitive);
+      gl2psListActionInverse(gl2ps.primitives, pprim);
       gl2psListAction(gl2ps.primitives, gl2psFreePrimitive);
       gl2psListDelete(gl2ps.primitives);
       res = GL2PS_SUCCESS;
@@ -1272,22 +1325,16 @@ GLint gl2psEndPage(GLvoid){
 			     gl2psAddInImage);
       }
       gl2psTraverseBspTree(root, eye, GL2PS_EPSILON, gl2psGreater, 
-			   gl2psPrintPrimitive);
+			   pprim);
       gl2psFreeBspTree(root);
       res = GL2PS_SUCCESS;
       break;
     default :
       gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm");
     }
-    fprintf(gl2ps.stream,
-	    "grestore\n"
-	    "showpage\n"
-	    "cleartomark\n"
-	    "%%%%PageTrailer\n"
-	    "%%%%Trailer\n"
-	    "end\n"
-	    "%%%%EOF\n");
+    pfoot();
     fflush(gl2ps.stream);
+
   }
 
   if(gl2ps.colormap) gl2psFree(gl2ps.colormap);
@@ -1311,6 +1358,7 @@ GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   prim->verts[0].xyz[2] = pos[2];
   prim->depth = pos[2];
   prim->dash = 0;
+  prim->width = 1;
   glGetFloatv(GL_CURRENT_RASTER_COLOR, prim->verts[0].rgba);
   prim->text = (GL2PSstring*)gl2psMalloc(sizeof(GL2PSstring));
   if((len = strlen(str))){
@@ -1360,3 +1408,12 @@ GLvoid gl2psDisable(GLint mode){
   }
 }
 
+GLvoid gl2psPointSize(GLint value){
+  glPassThrough(GL2PS_SET_POINT_SIZE);
+  glPassThrough(value);
+}
+
+GLvoid gl2psLineWidth(GLint value){
+  glPassThrough(GL2PS_SET_LINE_WIDTH);
+  glPassThrough(value);
+}
