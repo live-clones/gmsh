@@ -1,4 +1,4 @@
-// $Id: 2D_Bowyer.cpp,v 1.12 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 2D_Bowyer.cpp,v 1.13 2003-03-01 22:36:40 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -45,53 +45,54 @@
 
 extern PointRecord *gPointArray;
 
-int Is_pt_in_CircCircle (Delaunay * del, MPoint pt){
-
+int Is_pt_in_CircCircle(Delaunay * del, MPoint pt)
+{
   double rc, dc, Xa, Ya;
   PointNumero a;
 
-  dc = DSQR (del->t.xc - pt.h) + DSQR (del->t.yc - pt.v);
+  dc = DSQR(del->t.xc - pt.h) + DSQR(del->t.yc - pt.v);
 
   a = del->t.a;
 
   Xa = gPointArray[a].where.h;
   Ya = gPointArray[a].where.v;
 
-  rc = DSQR (del->t.xc - Xa) + DSQR (del->t.yc - Ya);
+  rc = DSQR(del->t.xc - Xa) + DSQR(del->t.yc - Ya);
 
-  if (rc >= dc)
+  if(rc >= dc)
     return 1;
   return 0;
 
 }
 
-int PE_Del_Triangle (Delaunay *del , MPoint pt, DListPeek *ListEdges ,
-                     List_T *listkill, List_T *listDelforlink,
-                     int *numlink, int *numdel){
+int PE_Del_Triangle(Delaunay * del, MPoint pt, DListPeek * ListEdges,
+                    List_T * listkill, List_T * listDelforlink,
+                    int *numlink, int *numdel)
+{
   int rslt;
-  PointNumero a,b,c;
-  int count,order[3],same;
+  PointNumero a, b, c;
+  int count, order[3], same;
   DListPeek p;
-  Delaunay *de1,*de2,*de3;
-  
-  rslt = Is_pt_in_CircCircle ( del , pt );
+  Delaunay *de1, *de2, *de3;
 
-  if ( (!rslt) && (*numdel == 0)) {
-    return(0); 
+  rslt = Is_pt_in_CircCircle(del, pt);
+
+  if((!rslt) && (*numdel == 0)) {
+    return (0);
   }
-  if (!rslt) {
+  if(!rslt) {
 
-    /* On retient les triangles du pourtour */ 
-    
+    /* On retient les triangles du pourtour */
+
     del->t.info = NOTTOLINK;
     List_Put(listDelforlink, *numlink, &del);
     (*numlink)++;
 
-    return(1);
-    
+    return (1);
+
   }
-  else { 
-    
+  else {
+
     List_Put(listkill, *numdel, &del);
     (*numdel)++;
 
@@ -99,103 +100,118 @@ int PE_Del_Triangle (Delaunay *del , MPoint pt, DListPeek *ListEdges ,
     b = del->t.b;
     c = del->t.c;
 
-    if ( *ListEdges == NULL ) {
-      
-      rslt  = DListInsert(ListEdges,pt,a);
-      rslt &= DListInsert(ListEdges,pt,b);
-      rslt &= DListInsert(ListEdges,pt,c);
+    if(*ListEdges == NULL) {
+
+      rslt = DListInsert(ListEdges, pt, a);
+      rslt &= DListInsert(ListEdges, pt, b);
+      rslt &= DListInsert(ListEdges, pt, c);
       if(!rslt)
-        Msg(GERROR, "List insert failed in Boyer Watson"); 
-      
+        Msg(GERROR, "List insert failed in Boyer Watson");
+
     }
-    else { 
-      
+    else {
+
       count = 0;
       p = *ListEdges;
       order[0] = order[1] = order[2] = 0;
       same = 0;
-      
-      do {      
-        if (p->point_num == a ) {
+
+      do {
+        if(p->point_num == a) {
           same = same + 1;
-          order[count]=a;
-          count++ ;
+          order[count] = a;
+          count++;
         }
-        if (p->point_num == b ) {
+        if(p->point_num == b) {
           same = same + 10;
-          order[count]=b;
-          count++ ;
+          order[count] = b;
+          count++;
         }
-        if (p->point_num == c ) {
+        if(p->point_num == c) {
           same = same + 100;
-          order[count]=c;
-          count++ ;
+          order[count] = c;
+          count++;
         }
         p = Pred(p);
-      }while ( p != *ListEdges );
-      if (count == 1) {
-        return(0);
+      } while(p != *ListEdges);
+      if(count == 1) {
+        return (0);
       }
-      else if (count == 2) {
-        if (same == 11 ) {
-          rslt = DListInsert(ListEdges,pt,c);
+      else if(count == 2) {
+        if(same == 11) {
+          rslt = DListInsert(ListEdges, pt, c);
         }
-        if (same == 101 ) {
-          rslt = DListInsert(ListEdges,pt,b);
+        if(same == 101) {
+          rslt = DListInsert(ListEdges, pt, b);
         }
-        if (same == 110 ) {
-          rslt = DListInsert(ListEdges,pt,a);
+        if(same == 110) {
+          rslt = DListInsert(ListEdges, pt, a);
         }
       }
-      else if (count == 3) {
-        rslt = DListDelete(ListEdges,order[1]); 
+      else if(count == 3) {
+        rslt = DListDelete(ListEdges, order[1]);
       }
       else {
-        return(0);
+        return (0);
       }
     }
-    
-    de1 = del->v.voisin1; 
+
+    de1 = del->v.voisin1;
     de2 = del->v.voisin2;
     de3 = del->v.voisin3;
-    
-    
-    if(de1 != NULL){
-      if (de1->v.voisin1 == del )de1->v.voisin1 = NULL;
-        else if (de1->v.voisin2 == del )de1->v.voisin2 = NULL;
-      else if (de1->v.voisin3 == del )de1->v.voisin3 = NULL;
-      else
-        Msg(GERROR, "Bad link in Boyer Watson"); 
-    }
-    if(de2 != NULL){
-      if (de2->v.voisin1 == del )de2->v.voisin1 = NULL;
-      else if (de2->v.voisin2 == del )de2->v.voisin2 = NULL;
-      else if (de2->v.voisin3 == del )de2->v.voisin3 = NULL;
-      else
-        Msg(GERROR, "Bad link in Boyer Watson"); 
-    }      
-    if(de3 != NULL){
-      if (de3->v.voisin1 == del )de3->v.voisin1 = NULL;
-      else if (de3->v.voisin2 == del )de3->v.voisin2 = NULL;
-      else if (de3->v.voisin3 == del )de3->v.voisin3 = NULL;
+
+
+    if(de1 != NULL) {
+      if(de1->v.voisin1 == del)
+        de1->v.voisin1 = NULL;
+      else if(de1->v.voisin2 == del)
+        de1->v.voisin2 = NULL;
+      else if(de1->v.voisin3 == del)
+        de1->v.voisin3 = NULL;
       else
         Msg(GERROR, "Bad link in Boyer Watson");
-    }      
-    
-    del->v.voisin1 = NULL ;
-    del->v.voisin2 = NULL ;
-    del->v.voisin3 = NULL ;
-    
-    
-    if ( de1 != NULL ){
-      if(!PE_Del_Triangle ( de1,pt,ListEdges,listkill,listDelforlink, numlink, numdel))return(0);
     }
-    if ( de2 != NULL ){
-      if(!PE_Del_Triangle ( de2,pt,ListEdges,listkill,listDelforlink, numlink, numdel))return(0);
+    if(de2 != NULL) {
+      if(de2->v.voisin1 == del)
+        de2->v.voisin1 = NULL;
+      else if(de2->v.voisin2 == del)
+        de2->v.voisin2 = NULL;
+      else if(de2->v.voisin3 == del)
+        de2->v.voisin3 = NULL;
+      else
+        Msg(GERROR, "Bad link in Boyer Watson");
     }
-    if ( de3 != NULL ){
-      if(!PE_Del_Triangle ( de3,pt,ListEdges,listkill,listDelforlink, numlink, numdel))return(0);
+    if(de3 != NULL) {
+      if(de3->v.voisin1 == del)
+        de3->v.voisin1 = NULL;
+      else if(de3->v.voisin2 == del)
+        de3->v.voisin2 = NULL;
+      else if(de3->v.voisin3 == del)
+        de3->v.voisin3 = NULL;
+      else
+        Msg(GERROR, "Bad link in Boyer Watson");
     }
-    return(1);
+
+    del->v.voisin1 = NULL;
+    del->v.voisin2 = NULL;
+    del->v.voisin3 = NULL;
+
+
+    if(de1 != NULL) {
+      if(!PE_Del_Triangle
+         (de1, pt, ListEdges, listkill, listDelforlink, numlink, numdel))
+        return (0);
+    }
+    if(de2 != NULL) {
+      if(!PE_Del_Triangle
+         (de2, pt, ListEdges, listkill, listDelforlink, numlink, numdel))
+        return (0);
+    }
+    if(de3 != NULL) {
+      if(!PE_Del_Triangle
+         (de3, pt, ListEdges, listkill, listDelforlink, numlink, numdel))
+        return (0);
+    }
+    return (1);
   }
 }

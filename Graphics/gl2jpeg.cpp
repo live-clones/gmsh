@@ -2,7 +2,7 @@
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2jpeg.cpp,v 1.15 2003-02-17 02:08:46 geuzaine Exp $
+ * $Id: gl2jpeg.cpp,v 1.16 2003-03-01 22:36:40 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -25,7 +25,8 @@
 
 #if !defined(HAVE_LIBJPEG)
 
-void create_jpeg(FILE *outfile, int width, int height, int quality){
+void create_jpeg(FILE * outfile, int width, int height, int quality)
+{
   Msg(GERROR, "This version of Gmsh was compiled without jpeg support");
 }
 
@@ -39,12 +40,14 @@ void create_jpeg(FILE *outfile, int width, int height, int quality){
 #define XMD_H
 #endif
 
-extern "C" {
+extern "C"
+{
 #include <jpeglib.h>
 #include <jerror.h>
 }
 
-void my_output_message (j_common_ptr cinfo){
+void my_output_message(j_common_ptr cinfo)
+{
   char buffer[JMSG_LENGTH_MAX];
 
   (*cinfo->err->format_message) (cinfo, buffer);
@@ -52,41 +55,42 @@ void my_output_message (j_common_ptr cinfo){
   Msg(DEBUG, "%s", buffer);
 }
 
-void create_jpeg(FILE *outfile, int width, int height, int quality){
+void create_jpeg(FILE * outfile, int width, int height, int quality)
+{
   int i;
   unsigned char *pixels;
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
   JSAMPROW row_pointer[1];
   int row_stride;
-            
+
   cinfo.err = jpeg_std_error(&jerr);
   cinfo.err->output_message = my_output_message;
 
   jpeg_create_compress(&cinfo);
   jpeg_stdio_dest(&cinfo, outfile);
-  cinfo.image_width = width;       // in pixels
+  cinfo.image_width = width;    // in pixels
   cinfo.image_height = height;
-  cinfo.input_components = 3;      // 3 color components per pixel
+  cinfo.input_components = 3;   // 3 color components per pixel
   cinfo.in_color_space = JCS_RGB;
-  jpeg_set_defaults(&cinfo);                            
+  jpeg_set_defaults(&cinfo);
   jpeg_set_quality(&cinfo, quality, TRUE);
   jpeg_start_compress(&cinfo, TRUE);
 
-  glPixelStorei(GL_PACK_ALIGNMENT,1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-  pixels=(unsigned char *)Malloc(height*width*3);
-  glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  pixels = (unsigned char *)Malloc(height * width * 3);
+  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
   row_stride = width * 3;
-  i=cinfo.image_height-1;
-  while (i >= 0) {
+  i = cinfo.image_height - 1;
+  while(i >= 0) {
     row_pointer[0] = &pixels[i * row_stride];
-    (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+    (void)jpeg_write_scanlines(&cinfo, row_pointer, 1);
     i--;
   }
   jpeg_finish_compress(&cinfo);
-  jpeg_destroy_compress(&cinfo);                                 
+  jpeg_destroy_compress(&cinfo);
 
   Free(pixels);
 }

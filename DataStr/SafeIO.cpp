@@ -1,4 +1,4 @@
-// $Id: SafeIO.cpp,v 1.1 2003-02-10 18:57:02 geuzaine Exp $
+// $Id: SafeIO.cpp,v 1.2 2003-03-01 22:36:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -42,29 +42,31 @@
   Bottom line: don't use safe_fprintf.
 */
 
-int safe_fprintf(FILE *stream, char *fmt, ...){
-  va_list  args;
+int safe_fprintf(FILE * stream, char *fmt, ...)
+{
+  va_list args;
 
-  va_start (args, fmt);
-  vfprintf(stream, fmt, args); 
-  va_end (args);
+  va_start(args, fmt);
+  vfprintf(stream, fmt, args);
+  va_end(args);
 
-  if(ferror(stream)){
+  if(ferror(stream)) {
     Msg(GERROR, strerror(errno));
     clearerr(stream);
     return 1;
   }
-    
+
   return 0;
 }
 
 /* Safe fwrite routine */
 
-int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream){
+int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE * stream)
+{
   size_t result = fwrite(ptr, size, nmemb, stream);
 
-  if(result < nmemb){
-    if(result >= 0) /* Partial write */
+  if(result < nmemb) {
+    if(result >= 0)     /* Partial write */
       Msg(GERROR, "Disk full");
     else
       Msg(GERROR, strerror(errno));

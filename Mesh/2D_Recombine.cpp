@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.14 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.15 2003-03-01 22:36:41 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,55 +29,65 @@
 
 extern Context_T CTX;
 
-static Tree_T    *RecEdges,*Triangles;
-static Tree_T    *RecSimplex,*TREEELM;
-static double     ALPHA;
-static int        RECNUM;
+static Tree_T *RecEdges, *Triangles;
+static Tree_T *RecSimplex, *TREEELM;
+static double ALPHA;
+static int RECNUM;
 
-void addTriangles(void *data, void *dum){
+void addTriangles(void *data, void *dum)
+{
   Simplex *S;
-  S = *(Simplex**)data;
-  if(S->V[2] && !S->V[3])Tree_Add(Triangles,&S);
+  S = *(Simplex **) data;
+  if(S->V[2] && !S->V[3])
+    Tree_Add(Triangles, &S);
 }
 
-void addrecedges (void *a, void *b){
+void addrecedges(void *a, void *b)
+{
   Edge *ed;
-  ed = (Edge*)a;
-  if(ed->a < ALPHA)Tree_Add(RecEdges,ed);
+  ed = (Edge *) a;
+  if(ed->a < ALPHA)
+    Tree_Add(RecEdges, ed);
 }
 
-void CalculeAngles (void *a, void *b){
+void CalculeAngles(void *a, void *b)
+{
   Edge *ed;
   double Angle;
 
-  ed = (Edge*)a;
-  if(List_Nbr(ed->Simplexes) != 2){
+  ed = (Edge *) a;
+  if(List_Nbr(ed->Simplexes) != 2) {
     ed->a = 90.;
     return;
   }
-  
-  Angle = fabs(90. - angle_3pts(ed->O[0],ed->V[0],ed->O[1]));
-  Angle = DMAX(fabs(90. - angle_3pts(ed->V[0],ed->O[1],ed->V[1])),Angle);
-  Angle = DMAX(fabs(90. - angle_3pts(ed->O[1],ed->V[1],ed->O[0])),Angle);
-  Angle = DMAX(fabs(90. - angle_3pts(ed->V[0],ed->O[0],ed->V[1])),Angle);
+
+  Angle = fabs(90. - angle_3pts(ed->O[0], ed->V[0], ed->O[1]));
+  Angle = DMAX(fabs(90. - angle_3pts(ed->V[0], ed->O[1], ed->V[1])), Angle);
+  Angle = DMAX(fabs(90. - angle_3pts(ed->O[1], ed->V[1], ed->O[0])), Angle);
+  Angle = DMAX(fabs(90. - angle_3pts(ed->V[0], ed->O[0], ed->V[1])), Angle);
   ed->a = Angle;
 }
 
 
-void Recombine_Farce (void *a, void *b){
+void Recombine_Farce(void *a, void *b)
+{
   Edge *ed;
-  Simplex *s1,*s2;
-  ed = (Edge*)a;
+  Simplex *s1, *s2;
+  ed = (Edge *) a;
 
-  if (ed->a < ALPHA){
-    List_Read(ed->Simplexes,0,&s1);
-    List_Read(ed->Simplexes,1,&s2);
-    if(Tree_Search(RecSimplex,&s1)) return;
-    if(s1->V[3]) return;
-    if(Tree_Search(RecSimplex,&s2)) return;
-    if(s2->V[3]) return;
-    Tree_Add(RecSimplex,&s1);
-    Tree_Suppress(TREEELM,&s1);
+  if(ed->a < ALPHA) {
+    List_Read(ed->Simplexes, 0, &s1);
+    List_Read(ed->Simplexes, 1, &s2);
+    if(Tree_Search(RecSimplex, &s1))
+      return;
+    if(s1->V[3])
+      return;
+    if(Tree_Search(RecSimplex, &s2))
+      return;
+    if(s2->V[3])
+      return;
+    Tree_Add(RecSimplex, &s1);
+    Tree_Suppress(TREEELM, &s1);
     s2->V[3] = ed->V[0];
     s2->V[2] = ed->O[0];
     s2->V[1] = ed->V[1];
@@ -86,37 +96,38 @@ void Recombine_Farce (void *a, void *b){
   }
 }
 
-int Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
-  Tree_T *TreeEdges,*tnxe;
+int Recombine(Tree_T * TreeAllVert, Tree_T * TreeAllElg, double a)
+{
+  Tree_T *TreeEdges, *tnxe;
   int ntot;
 
   ALPHA = a;
   TREEELM = TreeAllElg;
   ntot = 0;
 
-  while(1){
+  while(1) {
 
     /* Initialisation */
     RECNUM = 0;
-    TreeEdges   = Tree_Create(sizeof(Edge),compareedge);
-    RecEdges    = Tree_Create(sizeof(Edge),compareedge_angle);
-    RecSimplex  = Tree_Create(sizeof(Simplex*),compareSimplex);
-    Triangles   = Tree_Create(sizeof(Simplex*),compareSimplex);
+    TreeEdges = Tree_Create(sizeof(Edge), compareedge);
+    RecEdges = Tree_Create(sizeof(Edge), compareedge_angle);
+    RecSimplex = Tree_Create(sizeof(Simplex *), compareSimplex);
+    Triangles = Tree_Create(sizeof(Simplex *), compareSimplex);
 
     /* Recombinaison */
-    Tree_Action(TreeAllElg,addTriangles);
-    crEdges(Triangles,TreeEdges);
-    Tree_Action(TreeEdges,CalculeAngles);
-    Tree_Action(TreeEdges,addrecedges);
-    Tree_Action(RecEdges,Recombine_Farce);
+    Tree_Action(TreeAllElg, addTriangles);
+    crEdges(Triangles, TreeEdges);
+    Tree_Action(TreeEdges, CalculeAngles);
+    Tree_Action(TreeEdges, addrecedges);
+    Tree_Action(RecEdges, Recombine_Farce);
 
     /* Lissage */
-    if(CTX.mesh.nb_smoothing){
+    if(CTX.mesh.nb_smoothing) {
       Msg(STATUS3, "Mesh smoothing");
-      tnxe = Tree_Create(sizeof(NXE),compareNXE);
-      create_NXE(TreeAllVert,TreeAllElg,tnxe);
-      for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
-	Tree_Action(tnxe,ActionLissSurf);
+      tnxe = Tree_Create(sizeof(NXE), compareNXE);
+      create_NXE(TreeAllVert, TreeAllElg, tnxe);
+      for(int i = 0; i < CTX.mesh.nb_smoothing; i++)
+        Tree_Action(tnxe, ActionLissSurf);
       // MEMORY LEAK (JF)
       delete_NXE(tnxe);
     }
@@ -129,14 +140,12 @@ int Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
 
     /* Si aucune recombinaison -> fin */
     ntot += RECNUM;
-    if(!RECNUM)break;
+    if(!RECNUM)
+      break;
   }
 
-  Msg(STATUS2, "Recombined %d Quadrangles",ntot); 
+  Msg(STATUS2, "Recombined %d Quadrangles", ntot);
 
-  return ntot ;
-  
+  return ntot;
+
 }
-
-
-

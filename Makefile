@@ -1,9 +1,9 @@
-# $Id: Makefile,v 1.267 2003-02-26 03:25:30 geuzaine Exp $
+# $Id: Makefile,v 1.268 2003-03-01 22:36:36 geuzaine Exp $
 
 include variables
 
 GMSH_MAJOR_VERSION = 1
-GMSH_MINOR_VERSION = 40
+GMSH_MINOR_VERSION = 41
 GMSH_PATCH_VERSION = 0
 
 GMSH_VERSION_FILE = Common/GmshVersion.h

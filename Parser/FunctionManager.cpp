@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.17 2003-01-23 20:19:23 geuzaine Exp $
+// $Id: FunctionManager.cpp,v 1.18 2003-03-01 22:36:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -28,19 +28,18 @@ using namespace std;
 
 struct ltstr
 {
-  bool operator()(const char* s1, const char* s2) const
+  bool operator() (const char *s1, const char *s2)const
   {
     return strcmp(s1, s2) < 0;
   }
 };
 
-class File_Position 
+class File_Position
 {
-  public :
-    int lineno;
-    fpos_t position;
-    FILE *file;
-    char filename[256];
+  public:int lineno;
+  fpos_t position;
+  FILE *file;
+  char filename[256];
 };
 
 // Pour utiliser un namespace global sur SGI, il faut compiler avec
@@ -50,12 +49,12 @@ class File_Position
 class mystack
 {
 public:
-  stack<File_Position> s;
+  stack < File_Position > s;
 };
+
 class mymap
 {
-public :
-  map<char*,File_Position,ltstr> m;
+  public: map < char *, File_Position, ltstr > m;
 };
 
 FunctionManager *FunctionManager::instance = 0;
@@ -66,56 +65,55 @@ FunctionManager::FunctionManager()
   calls = new mystack;
 }
 
-FunctionManager* FunctionManager::Instance()
+FunctionManager *FunctionManager::Instance()
 {
-  if(!instance)
-    {
-      instance = new FunctionManager;
-    }
+  if(!instance) {
+    instance = new FunctionManager;
+  }
   return instance;
 }
 
-int FunctionManager::enterFunction(char *name, FILE **f, char *filename, int &lno) const
+int FunctionManager::enterFunction(char *name, FILE ** f, char *filename,
+                                   int &lno) const
 {
-  if(functions->m.find(name) == functions->m.end())return 0;
+  if(functions->m.find(name) == functions->m.end())
+    return 0;
   File_Position fpold;
   fpold.lineno = lno;
-  strcpy(fpold.filename,filename);
+  strcpy(fpold.filename, filename);
   fpold.file = *f;
-  fgetpos(fpold.file,&fpold.position);
+  fgetpos(fpold.file, &fpold.position);
   calls->s.push(fpold);
   File_Position fp = (functions->m)[name];
-  fsetpos(fp.file,&fp.position);
+  fsetpos(fp.file, &fp.position);
   *f = fp.file;
   strcpy(filename, fp.filename);
   lno = fp.lineno;
   return 1;
 }
 
-int FunctionManager::leaveFunction(FILE **f, char *filename, int &lno)
+int FunctionManager::leaveFunction(FILE ** f, char *filename, int &lno)
 {
-  if(!calls->s.size())return 0;
+  if(!calls->s.size())
+    return 0;
   File_Position fp;
   fp = calls->s.top();
   calls->s.pop();
-  fsetpos(fp.file,&fp.position);
+  fsetpos(fp.file, &fp.position);
   *f = fp.file;
   strcpy(filename, fp.filename);
   lno = fp.lineno;
   return 1;
 }
 
-int FunctionManager::createFunction(char *name, FILE *f, char *filename, int lno)
+int FunctionManager::createFunction(char *name, FILE * f, char *filename,
+                                    int lno)
 {
   File_Position fp;
   fp.file = f;
   strcpy(fp.filename, filename);
   fp.lineno = lno;
-  fgetpos(fp.file,&fp.position);
+  fgetpos(fp.file, &fp.position);
   (functions->m)[name] = fp;
   return 1;
 }
-
-
-
-

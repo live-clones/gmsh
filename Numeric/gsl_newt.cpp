@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.7 2003-02-25 04:02:52 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.8 2003-03-01 22:36:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -37,76 +37,85 @@
 #define MAXITER 10000
 #define PREC 1.e-8
 
-int    nrdim;
+int nrdim;
 double nru[MAX_DIM_NEWT], nrv[MAX_DIM_NEWT];
-static void (*nrfunc)(int n, double x[],double y[]);
+static void (*nrfunc) (int n, double x[], double y[]);
 struct gsl_dummy{;};
 
-void convert_vector_from_gsl(const gsl_vector *gv, double * v){
+void convert_vector_from_gsl(const gsl_vector * gv, double *v)
+{
   int i, m;
-  m=gv->size;
-  for (i=0;i<m;i++){
-    v[i+1]=gsl_vector_get(gv,i);
+  m = gv->size;
+  for(i = 0; i < m; i++) {
+    v[i + 1] = gsl_vector_get(gv, i);
   }
 }
 
-void convert_vector_to_gsl(double *v, int n, gsl_vector *gv){
+void convert_vector_to_gsl(double *v, int n, gsl_vector * gv)
+{
   int i;
-  for (i=0;i<n;i++){
-    gsl_vector_set (gv, i, v[i+1]);
+  for(i = 0; i < n; i++) {
+    gsl_vector_set(gv, i, v[i + 1]);
   }
 }
 
-int gslfunc(const gsl_vector *xx, void *params, gsl_vector *f){
-  convert_vector_from_gsl(xx,nru);
-  (*nrfunc)(nrdim,nru,nrv);
+int gslfunc(const gsl_vector * xx, void *params, gsl_vector * f)
+{
+  convert_vector_from_gsl(xx, nru);
+  (*nrfunc) (nrdim, nru, nrv);
   // Msg(INFO, "f(%lf,%lf) = %lf %lf\n",nru[1],nru[2],nrv[1],nrv[2]);
-  convert_vector_to_gsl(nrv,nrdim,f);
+  convert_vector_to_gsl(nrv, nrdim, f);
   return GSL_SUCCESS;
 }
 
 // Warning: for compatibility with the old newt from NR, x[] and the
 // arguments of func() are indexed from 1 to n...
 
-void newt(double x[], int n, int *check, void (*func)(int, double [],double [])){
+void newt(double x[], int n, int *check,
+          void (*func) (int, double[], double[]))
+{
   const gsl_multiroot_fsolver_type *T;
   gsl_multiroot_fsolver *s;
   int status;
   size_t iter = 0;
-  struct gsl_dummy p = {};
-  gsl_multiroot_function f = {&gslfunc, n, &p};
-  gsl_vector *xx = gsl_vector_alloc (n);
+  struct gsl_dummy p = { };
+  gsl_multiroot_function f = { &gslfunc, n, &p };
+  gsl_vector *xx = gsl_vector_alloc(n);
 
-  if(n > MAX_DIM_NEWT-1) Msg(FATAL, "Maximum Newton dimension exceeded\n");
+  if(n > MAX_DIM_NEWT - 1)
+    Msg(FATAL, "Maximum Newton dimension exceeded\n");
   nrdim = n;
 
   nrfunc = func;
-  convert_vector_to_gsl(x,n,xx);
+  convert_vector_to_gsl(x, n, xx);
 
   T = gsl_multiroot_fsolver_hybrid;
   s = gsl_multiroot_fsolver_alloc(T, 2);
   gsl_multiroot_fsolver_set(s, &f, xx);
 
-  do{
+  do {
     iter++;
     status = gsl_multiroot_fsolver_iterate(s);
-    // Msg(INFO, "status %d %d %d %lf %lf\n",status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
-    if(status) break; // solver problem
-    status = gsl_multiroot_test_residual(s->f, n*PREC);
+    // Msg(INFO, "status %d %d %d %lf %lf\n",
+    //     status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
+    if(status)
+      break;    // solver problem
+    status = gsl_multiroot_test_residual(s->f, n * PREC);
   }
   while(status == GSL_CONTINUE && iter < MAXITER);
 
-  if (status == GSL_CONTINUE){
-    *check=1; // problem !!!
+  if(status == GSL_CONTINUE) {
+    *check = 1; // problem !!!
   }
-  else{
-    // Msg(INFO, "status %d %d %d %lf %lf\n",status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
-    convert_vector_from_gsl(s->x,x);
-    *check=0; // converged
+  else {
+    // Msg(INFO, "status %d %d %d %lf %lf\n",
+    //     status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
+    convert_vector_from_gsl(s->x, x);
+    *check = 0; // converged
   }
 
   gsl_multiroot_fsolver_free(s);
-  gsl_vector_free(xx); 
+  gsl_vector_free(xx);
 }
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Timer.cpp,v 1.9 2003-01-24 23:13:34 geuzaine Exp $
+// $Id: Timer.cpp,v 1.10 2003-03-01 22:36:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,9 @@
 
 #include <sys/time.h>
 #include <unistd.h>
-long GetTime(){
+
+long GetTime()
+{
   struct timeval tp;
   gettimeofday(&tp, (struct timezone *)0);
   return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;

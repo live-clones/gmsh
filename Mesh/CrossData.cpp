@@ -1,4 +1,4 @@
-// $Id: CrossData.cpp,v 1.9 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: CrossData.cpp,v 1.10 2003-03-01 22:36:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -35,41 +35,44 @@ NXE::~NXE()
   //  if(Liste)List_Delete(Liste);
 }
 
-void Delete_NXE (void *data, void *dummy)
+void Delete_NXE(void *data, void *dummy)
 {
-  NXE *pnxe = (NXE*)data;
-  if(pnxe->Liste)List_Delete(pnxe->Liste);
+  NXE *pnxe = (NXE *) data;
+  if(pnxe->Liste)
+    List_Delete(pnxe->Liste);
 }
 
-void AddTable (void *data, void *dummy){
+void AddTable(void *data, void *dummy)
+{
   Simplex *s;
   NXE nxe, *pnxe;
   int i;
 
   s = *(Simplex **) data;
 
-  for (i = 0; i < 4; i++){
-    if (s->V[i]){
+  for(i = 0; i < 4; i++) {
+    if(s->V[i]) {
       nxe.v = s->V[i];
-      if ((pnxe = (NXE *) Tree_PQuery (TreeTemp, &nxe))){
-        List_Add (pnxe->Liste, &s);
+      if((pnxe = (NXE *) Tree_PQuery(TreeTemp, &nxe))) {
+        List_Add(pnxe->Liste, &s);
       }
-      else{
-        nxe.Liste = List_Create (1, 1, sizeof (Simplex *));
-        List_Add (nxe.Liste, &s);
-        Tree_Add (TreeTemp, &nxe);
+      else {
+        nxe.Liste = List_Create(1, 1, sizeof(Simplex *));
+        List_Add(nxe.Liste, &s);
+        Tree_Add(TreeTemp, &nxe);
       }
     }
   }
 }
 
-void create_NXE (Tree_T * TreeAllNod, Tree_T * TreeAllElg,
-                 Tree_T * TreeAllNXE){
+void create_NXE(Tree_T * TreeAllNod, Tree_T * TreeAllElg, Tree_T * TreeAllNXE)
+{
   TreeTemp = TreeAllNXE;
-  Tree_Action (TreeAllElg, AddTable);
+  Tree_Action(TreeAllElg, AddTable);
 }
 
-void delete_NXE (Tree_T * TreeAllNXE){
-  Tree_Action (TreeAllNXE, Delete_NXE);
-  Tree_Delete (TreeAllNXE);
+void delete_NXE(Tree_T * TreeAllNXE)
+{
+  Tree_Action(TreeAllNXE, Delete_NXE);
+  Tree_Delete(TreeAllNXE);
 }

@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.20 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.21 2003-03-01 22:36:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -25,12 +25,13 @@
 #include "Mesh.h"
 #include "Context.h"
 
-extern Context_T CTX ;
-extern Mesh *THEM ;
+extern Context_T CTX;
+extern Mesh *THEM;
 
-Vertex::Vertex (){
+Vertex::Vertex()
+{
   Frozen = 0;
-  Visible = VIS_GEOM|VIS_MESH;
+  Visible = VIS_GEOM | VIS_MESH;
   Pos.X = 0.0;
   Pos.Y = 0.0;
   Pos.Z = 0.0;
@@ -41,9 +42,10 @@ Vertex::Vertex (){
   Extruded_Points = NULL;
 }
 
-Vertex::Vertex (double X, double Y, double Z, double l, double W){
+Vertex::Vertex(double X, double Y, double Z, double l, double W)
+{
   Frozen = 0;
-  Visible = VIS_GEOM|VIS_MESH;
+  Visible = VIS_GEOM | VIS_MESH;
   Pos.X = X;
   Pos.Y = Y;
   Pos.Z = Z;
@@ -55,9 +57,10 @@ Vertex::Vertex (double X, double Y, double Z, double l, double W){
   Extruded_Points = NULL;
 }
 
-void Vertex::norme (){
-  double d = sqrt (Pos.X * Pos.X + Pos.Y * Pos.Y + Pos.Z * Pos.Z);
-  if (d == 0.0)
+void Vertex::norme()
+{
+  double d = sqrt(Pos.X * Pos.X + Pos.Y * Pos.Y + Pos.Z * Pos.Z);
+  if(d == 0.0)
     return;
   Pos.X /= d;
   Pos.Y /= d;
@@ -65,78 +68,91 @@ void Vertex::norme (){
 }
 
 
-Vertex Vertex::operator + (const Vertex & other){
-  return Vertex (Pos.X + other.Pos.X, Pos.Y + 
-                 other.Pos.Y, Pos.Z + other.Pos.Z, lc, w);
+Vertex Vertex::operator +(const Vertex & other)
+{
+  return Vertex(Pos.X + other.Pos.X, Pos.Y +
+                other.Pos.Y, Pos.Z + other.Pos.Z, lc, w);
 }
 
-Vertex Vertex::operator - (const Vertex & other){
-  return Vertex (Pos.X - other.Pos.X, Pos.Y - 
-                 other.Pos.Y, Pos.Z - other.Pos.Z, lc, w);
+Vertex Vertex::operator -(const Vertex & other)
+{
+  return Vertex(Pos.X - other.Pos.X, Pos.Y -
+                other.Pos.Y, Pos.Z - other.Pos.Z, lc, w);
 }
 
-Vertex Vertex::operator / (double d){
-  return Vertex (Pos.X / d, Pos.Y / d, Pos.Z / d, lc, w);
-}
-Vertex Vertex::operator * (double d){
-  return Vertex (Pos.X * d, Pos.Y * d, Pos.Z * d, lc, w);
+Vertex Vertex::operator /(double d)
+{
+  return Vertex(Pos.X / d, Pos.Y / d, Pos.Z / d, lc, w);
 }
 
-Vertex Vertex::operator % (Vertex & autre){ // cross product
-  return Vertex (Pos.Y * autre.Pos.Z - Pos.Z * autre.Pos.Y,
-                 -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
-                 Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
+Vertex Vertex::operator *(double d)
+{
+  return Vertex(Pos.X * d, Pos.Y * d, Pos.Z * d, lc, w);
 }
 
-double Vertex::operator * (const Vertex & other){
+Vertex Vertex::operator %(Vertex & autre)
+{       // cross product
+  return Vertex(Pos.Y * autre.Pos.Z - Pos.Z * autre.Pos.Y,
+                -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
+                Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
+}
+
+double Vertex::operator *(const Vertex & other)
+{
   return Pos.X * other.Pos.X + Pos.Y * other.Pos.Y + Pos.Z * other.Pos.Z;
 }
 
-Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double u){
+Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc,
+                      double u)
+{
   Vertex *pV;
 
-  pV = new Vertex (X, Y, Z, lc);
+  pV = new Vertex(X, Y, Z, lc);
   pV->w = 1.0;
   pV->Num = Num;
-  THEM->MaxPointNum = IMAX(THEM->MaxPointNum,Num);
+  THEM->MaxPointNum = IMAX(THEM->MaxPointNum, Num);
   pV->u = u;
   return pV;
 }
 
-void Delete_Vertex ( Vertex *pV ){
-  if(pV){
+void Delete_Vertex(Vertex * pV)
+{
+  if(pV) {
     List_Delete(pV->ListSurf);
     List_Delete(pV->ListCurves);
-    if(CTX.mesh.oldxtrude){//old automatic extrusion algorithm
+    if(CTX.mesh.oldxtrude) {    //old automatic extrusion algorithm
       List_Delete(pV->Extruded_Points);
     }
-    else{
+    else {
       Free_ExtrudedPoints(pV->Extruded_Points);
     }
     delete pV;
   }
 }
 
-void Free_Vertex (void *a, void *b){
-  Vertex *v = *(Vertex**)a;
-  if(v){
+void Free_Vertex(void *a, void *b)
+{
+  Vertex *v = *(Vertex **) a;
+  if(v) {
     Delete_Vertex(v);
     v = NULL;
   }
 }
 
-int compareVertex (const void *a, const void *b){
+int compareVertex(const void *a, const void *b)
+{
   int i, j;
   Vertex **q, **w;
 
   q = (Vertex **) a;
   w = (Vertex **) b;
-  i = abs ((*q)->Num);
-  j = abs ((*w)->Num);
+  i = abs((*q)->Num);
+  j = abs((*w)->Num);
   return (i - j);
 }
 
-int comparePosition (const void *a, const void *b){
+int comparePosition(const void *a, const void *b)
+{
   int i, j;
   Vertex **q, **w;
   // TOLERANCE ! WARNING WARNING
@@ -147,26 +163,26 @@ int comparePosition (const void *a, const void *b){
   i = ((*q)->Num);
   j = ((*w)->Num);
 
-  if ((*q)->Pos.X - (*w)->Pos.X > eps)
+  if((*q)->Pos.X - (*w)->Pos.X > eps)
     return (1);
-  if ((*q)->Pos.X - (*w)->Pos.X < -eps)
+  if((*q)->Pos.X - (*w)->Pos.X < -eps)
     return (-1);
-  if ((*q)->Pos.Y - (*w)->Pos.Y > eps)
+  if((*q)->Pos.Y - (*w)->Pos.Y > eps)
     return (1);
-  if ((*q)->Pos.Y - (*w)->Pos.Y < -eps)
+  if((*q)->Pos.Y - (*w)->Pos.Y < -eps)
     return (-1);
-  if ((*q)->Pos.Z - (*w)->Pos.Z > eps)
+  if((*q)->Pos.Z - (*w)->Pos.Z > eps)
     return (1);
-  if ((*q)->Pos.Z - (*w)->Pos.Z < -eps)
+  if((*q)->Pos.Z - (*w)->Pos.Z < -eps)
     return (-1);
 
-  if (i != j){
+  if(i != j) {
     /*
-       *w = *q;
-       printf("Les points %d et %d sont a la meme position\n",i,j);
-       printf("%12.5E %12.5E %12.5E\n",(*w)->Pos.X,(*w)->Pos.Y,(*w)->Pos.Z);
-       printf("%12.5E %12.5E %12.5E\n",(*q)->Pos.X,(*q)->Pos.Y,(*q)->Pos.Z);
-    */
+     *w = *q;
+     printf("Les points %d et %d sont a la meme position\n",i,j);
+     printf("%12.5E %12.5E %12.5E\n",(*w)->Pos.X,(*w)->Pos.Y,(*w)->Pos.Z);
+     printf("%12.5E %12.5E %12.5E\n",(*q)->Pos.X,(*q)->Pos.Y,(*q)->Pos.Z);
+     */
   }
   return 0;
 

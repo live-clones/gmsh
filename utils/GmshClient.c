@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.4 2003-01-23 20:19:26 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.5 2003-03-01 22:36:44 geuzaine Exp $ */
 /*
   Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 
@@ -35,35 +35,40 @@
 
 /* private functions */
 
-static void Socket_SendData(int socket, void *buffer, int bytes){
+static void Socket_SendData(int socket, void *buffer, int bytes)
+{
   int sofar, remaining, len;
   char *buf;
-  buf = (char*)buffer;
+  buf = (char *)buffer;
   sofar = 0;
   remaining = bytes;
   do {
     len = write(socket, buf + sofar, remaining);
     sofar += len;
     remaining -= len;
-  } while (remaining>0);
+  } while(remaining > 0);
 }
 
-static long Socket_GetTime(){
+static long Socket_GetTime()
+{
   struct timeval tp;
   gettimeofday(&tp, (struct timezone *)0);
   return (long)tp.tv_sec * 1000000 + (long)tp.tv_usec;
 }
 
-static void Socket_Idle(double delay){
+static void Socket_Idle(double delay)
+{
   long t1 = Socket_GetTime();
-  while(1){
-    if(Socket_GetTime() - t1 > 1.e6*delay) break;
+  while(1) {
+    if(Socket_GetTime() - t1 > 1.e6 * delay)
+      break;
   }
 }
 
 /* public interface */
 
-int Gmsh_Connect(char *sockname){
+int Gmsh_Connect(char *sockname)
+{
   struct sockaddr_un addr;
   int len, sock;
   int tries;
@@ -74,27 +79,30 @@ int Gmsh_Connect(char *sockname){
 
   /* create socket */
   sock = socket(PF_UNIX, SOCK_STREAM, 0);
-  if (sock<0) return -1; /* Error: Couldn't create socket */
+  if(sock < 0)
+    return -1;  /* Error: Couldn't create socket */
 
   /* try to connect socket to given name */
   strcpy(addr.sun_path, sockname);
   addr.sun_family = AF_UNIX;
-  len = strlen(addr.sun_path)+sizeof(addr.sun_family);
-  for (tries=0;tries<5;tries++) {
-    if (connect(sock, (struct sockaddr *)&addr, len) >= 0) return sock;
+  len = strlen(addr.sun_path) + sizeof(addr.sun_family);
+  for(tries = 0; tries < 5; tries++) {
+    if(connect(sock, (struct sockaddr *)&addr, len) >= 0)
+      return sock;
   }
-   
-  return -2; /* Error: Couldn't connect */
+
+  return -2;    /* Error: Couldn't connect */
 }
 
-void Gmsh_SendString(int socket, int type, char str[]){
+void Gmsh_SendString(int socket, int type, char str[])
+{
   int len = strlen(str);
   Socket_SendData(socket, &type, sizeof(int));
   Socket_SendData(socket, &len, sizeof(int));
   Socket_SendData(socket, str, len);
 }
 
-void Gmsh_Disconnect(int sock){
+void Gmsh_Disconnect(int sock)
+{
   close(sock);
 }
-

@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.5 2003-01-23 20:19:23 geuzaine Exp $
+// $Id: ParUtil.cpp,v 1.6 2003-03-01 22:36:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,25 +29,26 @@
 #include <sys/time.h>
 #endif
 
-ParUtil* ParUtil::Instance()
+ParUtil *ParUtil::Instance()
 {
-  if(!instance)
-    {
-      instance = new ParUtil;
-    }
+  if(!instance) {
+    instance = new ParUtil;
+  }
   return instance;
 }
 
-ParUtil::~ParUtil() 
+ParUtil::~ParUtil()
 {
+  ;
 }
 
-ParUtil::ParUtil() 
+ParUtil::ParUtil()
 {
+  ;
 }
 
-void ParUtil::init(int &argc, char **&argv) {
-
+void ParUtil::init(int &argc, char **&argv)
+{
 #ifdef PARALLEL
   int namelen;
   char name[1024];
@@ -55,39 +56,38 @@ void ParUtil::init(int &argc, char **&argv) {
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &mysize);
-  
-  MPI_Errhandler_set(MPI_COMM_WORLD,MPI_ERRORS_RETURN);
-  MPI_Get_processor_name(name,&namelen);
-  procName = new char[namelen+1];
-  strcpy(procName,name);
+
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+  MPI_Get_processor_name(name, &namelen);
+  procName = new char[namelen + 1];
+  strcpy(procName, name);
 #endif
 }
 
 double ParUtil::wTime() const
 {
-
 #ifdef PARALLEL
-  return MPI_Wtime(); 
+  return MPI_Wtime();
 #else
   struct timeval tp;
   struct timezone tzp;
   double timeval;
-  
-  gettimeofday(&tp,&tzp);
-  
-  timeval = (double) tp.tv_sec;
-  timeval = timeval + (double) ((double) .000001 * (double) tp.tv_usec);
-  
-  return(timeval);
+
+  gettimeofday(&tp, &tzp);
+
+  timeval = (double)tp.tv_sec;
+  timeval = timeval + (double)((double).000001 * (double)tp.tv_usec);
+
+  return (timeval);
 #endif
 }
 
 void ParUtil::processorName(char *name) const
 {
 #ifdef PARALLEL
-  strcpy(name,procName);
+  strcpy(name, procName);
 #else
-  strcpy(name,"localhost");
+  strcpy(name, "localhost");
 #endif
 }
 
@@ -116,5 +116,4 @@ void ParUtil::Barrier(int line, const char *fn)
 #endif
 }
 
-ParUtil* ParUtil::instance = 0;
-
+ParUtil *ParUtil::instance = 0;

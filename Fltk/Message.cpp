@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.36 2003-02-25 16:49:36 geuzaine Exp $
+// $Id: Message.cpp,v 1.37 2003-03-01 22:36:38 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -36,30 +36,30 @@
 #include "Options.h"
 #include "GUI.h"
 
-extern GUI       *WID;
-extern Context_T  CTX;
+extern GUI *WID;
+extern Context_T CTX;
 
 // Handle signals. It is a crime to call stdio functions in a signal
 // handler. But who cares? ;-)
 
-void Signal (int sig_num){
-
-  switch (sig_num){
-  case SIGSEGV : 
+void Signal(int sig_num)
+{
+  switch (sig_num) {
+  case SIGSEGV:
     Msg(FATAL1, "Segmentation violation (invalid memory reference)");
     Msg(FATAL2, "------------------------------------------------------");
     Msg(FATAL2, "You have discovered a bug in Gmsh! You may report it");
     Msg(FATAL2, "by e-mail (together with any helpful data permitting to");
-    Msg(FATAL3, "reproduce it) to <gmsh@geuz.org>"); 
+    Msg(FATAL3, "reproduce it) to <gmsh@geuz.org>");
     break;
-  case SIGFPE : 
-    Msg(FATAL, "Floating point exception (division by zero?)"); 
+  case SIGFPE:
+    Msg(FATAL, "Floating point exception (division by zero?)");
     break;
-  case SIGINT :
-    Msg(INFO, "Interrupt (generated from terminal special character)"); 
+  case SIGINT:
+    Msg(INFO, "Interrupt (generated from terminal special character)");
     Exit(1);
     break;
-  default :
+  default:
     Msg(FATAL, "Unknown signal");
     break;
   }
@@ -67,13 +67,16 @@ void Signal (int sig_num){
 
 // General purpose message routine
 
-void Debug(){
+void Debug()
+{
+  ;
 }
 
-void Msg(int level, char *fmt, ...){
-  va_list  args;
-  int      abort = 0, verb = 0, window = -1, log = 1;
-  char     *str = NULL;
+void Msg(int level, char *fmt, ...)
+{
+  va_list args;
+  int abort = 0, verb = 0, window = -1, log = 1;
+  char *str = NULL;
 
   // *INDENT-OFF*
   switch(level){
@@ -119,46 +122,52 @@ void Msg(int level, char *fmt, ...){
 
   static char buff1[1024], buff2[1024], buff[4][1024];
 
-  if(CTX.verbosity >= verb){
+  if(CTX.verbosity >= verb) {
 
     if(!WID)
       window = -1;
-    else 
-      WID->check(); 
+    else
+      WID->check();
     // this is pretty costly, but permits to keep the app
     // responsive... the downside is that it can cause race
     // conditions. Let's move it in here at least, so that we don;t
     // check() on DEBUG calls when not in debug mode.
 
-    va_start (args, fmt);
+    va_start(args, fmt);
 
-    if(window >= 0){
-      vsprintf(buff[window], fmt, args); 
-      if(window <= 2) WID->set_status(buff[window], window);
-      if(log && strlen(buff[window])) WID->add_message(buff[window]);
+    if(window >= 0) {
+      vsprintf(buff[window], fmt, args);
+      if(window <= 2)
+        WID->set_status(buff[window], window);
+      if(log && strlen(buff[window]))
+        WID->add_message(buff[window]);
     }
-    else{
+    else {
       strcpy(buff1, "@C1");
-      if(str) strcat(buff1, str);
-      vsprintf(buff2, fmt, args); 
-      strcat(buff1,buff2);
-      if(CTX.terminal) fprintf(stderr, "%s\n", &buff1[3]);
-      if(WID){
-	if(verb<2)
-	  WID->add_message(buff1);
-	else
-	  WID->add_message(&buff1[3]);
-	if(!verb) WID->create_message_window();
+      if(str)
+        strcat(buff1, str);
+      vsprintf(buff2, fmt, args);
+      strcat(buff1, buff2);
+      if(CTX.terminal)
+        fprintf(stderr, "%s\n", &buff1[3]);
+      if(WID) {
+        if(verb < 2)
+          WID->add_message(buff1);
+        else
+          WID->add_message(&buff1[3]);
+        if(!verb)
+          WID->create_message_window();
       }
     }
-    va_end (args);
+    va_end(args);
 
-    if(CTX.terminal) fflush(stderr);
+    if(CTX.terminal)
+      fflush(stderr);
   }
 
-  if(abort){
+  if(abort) {
     Debug();
-    if(WID){
+    if(WID) {
       WID->save_message(CTX.error_filename);
       WID->fatal_error(CTX.error_filename);
     }
@@ -169,9 +178,10 @@ void Msg(int level, char *fmt, ...){
 
 // Clean exit
 
-void Exit(int level){
-  if(WID && !CTX.batch){
-    if(CTX.session_save){
+void Exit(int level)
+{
+  if(WID && !CTX.batch) {
+    if(CTX.session_save) {
       CTX.position[0] = WID->m_window->x();
       CTX.position[1] = WID->m_window->y();
       CTX.gl_position[0] = WID->g_window->x();
@@ -191,28 +201,30 @@ void Exit(int level){
     if(CTX.options_save)
       Print_Options(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
   }
-  unlink(CTX.tmp_filename);//delete temp file
+  unlink(CTX.tmp_filename);     //delete temp file
   exit(level);
 }
 
 // CPU time computation, etc.
 
-void GetResources(long *s, long *us, long *mem){
+void GetResources(long *s, long *us, long *mem)
+{
   static struct rusage r;
 
-  getrusage(RUSAGE_SELF,&r);
-  *s   = (long)r.ru_utime.tv_sec ;
-  *us  = (long)r.ru_utime.tv_usec ;
-  *mem = (long)r.ru_maxrss ;
+  getrusage(RUSAGE_SELF, &r);
+  *s = (long)r.ru_utime.tv_sec;
+  *us = (long)r.ru_utime.tv_usec;
+  *mem = (long)r.ru_maxrss;
 }
 
-void PrintResources(char *fmt, long s, long us, long mem){
+void PrintResources(char *fmt, long s, long us, long mem)
+{
   Msg(DIRECT, "Resources = %scpu %ld.%ld s / mem %ld kb\n", fmt, s, us, mem);
 }
 
-double Cpu(void){
+double Cpu(void)
+{
   long s, us, mem;
   GetResources(&s, &us, &mem);
-  return (double)s + (double)us/1.e6 ;
+  return (double)s + (double)us / 1.e6;
 }
-

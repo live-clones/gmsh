@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.11 2003-01-23 20:19:26 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.12 2003-03-01 22:36:44 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -28,12 +28,12 @@
 extern Context_T CTX;
 
 StringXNumber SmoothOptions_Number[] = {
-  { GMSH_FULLRC, "iView" , NULL , -1. }
+  {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterSmoothPlugin ()
+  GMSH_Plugin *GMSH_RegisterSmoothPlugin()
   {
     return new GMSH_SmoothPlugin();
   }
@@ -42,48 +42,51 @@ extern "C"
 
 GMSH_SmoothPlugin::GMSH_SmoothPlugin()
 {
+  ;
 }
 
 void GMSH_SmoothPlugin::getName(char *name) const
 {
-  strcpy(name,"Smooth");
+  strcpy(name, "Smooth");
 }
 
-void GMSH_SmoothPlugin::getInfos(char *author, char *copyright, char *help_text) const
+void GMSH_SmoothPlugin::getInfos(char *author, char *copyright,
+                                 char *help_text) const
 {
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
-  strcpy(help_text, 
-	 "Smoothes a discontinuous view by averaging all the values at each node.\n"
-	 "Script name: Plugin(Smooth).");
+  strcpy(help_text,
+         "Smoothes a discontinuous view by averaging all the values at each node.\n"
+         "Script name: Plugin(Smooth).");
 }
 
 int GMSH_SmoothPlugin::getNbOptions() const
 {
-  return sizeof(SmoothOptions_Number)/sizeof(StringXNumber);
+  return sizeof(SmoothOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_SmoothPlugin:: GetOption (int iopt)
+StringXNumber *GMSH_SmoothPlugin::GetOption(int iopt)
 {
   return &SmoothOptions_Number[iopt];
 }
 
-void GMSH_SmoothPlugin::CatchErrorMessage (char *errorMessage) const
+void GMSH_SmoothPlugin::CatchErrorMessage(char *errorMessage) const
 {
-  strcpy(errorMessage,"Smooth failed...");
+  strcpy(errorMessage, "Smooth failed...");
 }
 
-Post_View *GMSH_SmoothPlugin::execute (Post_View *v)
+Post_View *GMSH_SmoothPlugin::execute(Post_View * v)
 {
   Post_View *vv;
   int iView = (int)SmoothOptions_Number[0].def;
 
   if(v && iView < 0)
     vv = v;
-  else{
-    if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
-      Msg(WARNING,"View[%d] does not exist",iView);
+  else {
+    if(!v && iView < 0)
+      iView = 0;
+    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
+      Msg(WARNING, "View[%d] does not exist", iView);
       return 0;
     }
   }
@@ -92,11 +95,12 @@ Post_View *GMSH_SmoothPlugin::execute (Post_View *v)
   return vv;
 }
 
-void GMSH_SmoothPlugin::Run ()
+void GMSH_SmoothPlugin::Run()
 {
   execute(0);
 }
 
-void GMSH_SmoothPlugin::Save ()
+void GMSH_SmoothPlugin::Save()
 {
+  ;
 }

@@ -3,7 +3,8 @@ Some easy rules to make the code easy to read/debug/maintain:
 
 - please enable full warnings for your compiler (e.g. gcc -Wall)
 - always use Msg() to print information/errors/etc.
-- indent your files and, if working on Windows, suppress the tabs (untabify)
+- indent your files using ../utils/gmshindent
+- if working on Windows, don't leave tabs in your files (../utils/untabify)
 
 
 How to add an option in the graphical user interface?

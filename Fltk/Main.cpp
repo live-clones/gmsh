@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.43 2003-02-20 16:44:38 geuzaine Exp $
+// $Id: Main.cpp,v 1.44 2003-03-01 22:36:38 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -40,30 +40,32 @@
 #include "CommandLine.h"
 #include "Numeric.h"
 
-char        yyname[256];
-int         yyerrorstate;
-Context_T   CTX ;
-Mesh        M, *THEM=NULL, *LOCAL=NULL;
-GUI        *WID = NULL;
+char yyname[256];
+int yyerrorstate;
+Context_T CTX;
+Mesh M, *THEM = NULL, *LOCAL = NULL;
+GUI *WID = NULL;
 
-int main(int argc, char *argv[]){
-  int     i, nbf;
-  char    cmdline[1000]="", currtime[100];
-  time_t  now;
- 
+int main(int argc, char *argv[])
+{
+  int i, nbf;
+  char cmdline[1000] = "", currtime[100];
+  time_t now;
+
   // log some info
-  
+
   time(&now);
   strcpy(currtime, ctime(&now));
-  currtime[strlen(currtime)-1] = '\0';
+  currtime[strlen(currtime) - 1] = '\0';
 
-  for(i=0;i<argc;i++){ 
-    if(i) strcat(cmdline, " "); 
+  for(i = 0; i < argc; i++) {
+    if(i)
+      strcat(cmdline, " ");
     strcat(cmdline, argv[i]);
   }
 
   // Gmsh default options
-  
+
   Init_Options(0);
 
   // Configuration files and command line options
@@ -72,8 +74,8 @@ int main(int argc, char *argv[]){
 
   // This does not work with FLTK right now...
 
-  CTX.overlay = 0 ;
-  CTX.geom.highlight = 0 ;
+  CTX.overlay = 0;
+  CTX.geom.highlight = 0;
 
   // Always print info on terminal for non-interactive execution
 
@@ -81,9 +83,9 @@ int main(int argc, char *argv[]){
     CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
-    fprintf(stderr, "%s, version %d.%d.%d, started %s\n", 
-	    gmsh_progname, GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
-	    GMSH_PATCH_VERSION, currtime);
+    fprintf(stderr, "%s, version %d.%d.%d, started %s\n",
+            gmsh_progname, GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
+            GMSH_PATCH_VERSION, currtime);
 
   // Register Default Plugins (in test ...)
   if(CTX.default_plugins)
@@ -91,62 +93,65 @@ int main(int argc, char *argv[]){
 
   // Initialize the static Mesh
 
-  M.Vertices = NULL ;
-  M.VertexEdges = NULL ;
-  M.Simplexes = NULL ;
-  M.Points = NULL ;
-  M.Curves = NULL ;
-  M.SurfaceLoops = NULL ;
-  M.EdgeLoops = NULL ;
-  M.Surfaces = NULL ;
-  M.Volumes = NULL ;
-  M.PhysicalGroups = NULL ;
-  M.Metric = NULL ;
+  M.Vertices = NULL;
+  M.VertexEdges = NULL;
+  M.Simplexes = NULL;
+  M.Points = NULL;
+  M.Curves = NULL;
+  M.SurfaceLoops = NULL;
+  M.EdgeLoops = NULL;
+  M.Surfaces = NULL;
+  M.Volumes = NULL;
+  M.PhysicalGroups = NULL;
+  M.Metric = NULL;
 
   // Signal handling
 
-  signal(SIGINT,  Signal); 
+  signal(SIGINT, Signal);
   signal(SIGSEGV, Signal);
-  signal(SIGFPE,  Signal); 
+  signal(SIGFPE, Signal);
 
   // Non-interactive Gmsh
 
-  if(CTX.batch){
+  if(CTX.batch) {
     check_gsl();
     Msg(DIRECT, "Command line : %s", cmdline);
     OpenProblem(CTX.filename);
     if(yyerrorstate)
       exit(1);
     else {
-      for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
-      if(TheBgmFileName){
+      for(i = 1; i < nbf; i++)
+        MergeProblem(TheFileNameTab[i]);
+      if(TheBgmFileName) {
         MergeProblem(TheBgmFileName);
         if(List_Nbr(CTX.post.list))
-          BGMWithView((Post_View*)List_Pointer(CTX.post.list, List_Nbr(CTX.post.list)-1));
+          BGMWithView((Post_View *)
+                      List_Pointer(CTX.post.list,
+                                   List_Nbr(CTX.post.list) - 1));
         else
           Msg(GERROR, "Invalid background mesh (no view)");
       }
-      if(CTX.batch > 0){
+      if(CTX.batch > 0) {
         mai3d(THEM, CTX.batch);
         Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
       }
       else
         Print_Geo(THEM, CTX.output_filename);
-      if(CTX.mesh.histogram){
-	Mesh_Quality(THEM);
-	Print_Histogram(THEM->Histogram[0]);
+      if(CTX.mesh.histogram) {
+        Mesh_Quality(THEM);
+        Print_Histogram(THEM->Histogram[0]);
       }
       exit(1);
-    }    
+    }
   }
-  
+
 
   // Interactive Gmsh
 
-  CTX.batch = -1 ; // The GUI is not ready yet for interactivity
+  CTX.batch = -1;       // The GUI is not ready yet for interactivity
 
   // Create the GUI
-  
+
   WID = new GUI(argc, argv);
 
   // Set all previously defined options in the GUI
@@ -155,16 +160,16 @@ int main(int argc, char *argv[]){
 
   // The GUI is ready
 
-  CTX.batch = 0 ; 
+  CTX.batch = 0;
 
   // Say welcome!
 
   Msg(STATUS3N, "Ready");
-  Msg(STATUS1, "Gmsh %d.%d.%d", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
+  Msg(STATUS1, "Gmsh %d.%d.%d", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
       GMSH_PATCH_VERSION);
 
   // Log the following for bug reports
-  
+
   Msg(LOG_INFO, "-------------------------------------------------------");
   Msg(LOG_INFO, gmsh_os);
   Msg(LOG_INFO, gmsh_date);
@@ -176,7 +181,7 @@ int main(int argc, char *argv[]){
   Msg(LOG_INFO, "-------------------------------------------------------");
 
   // Check for buggy obsolete GSL versions
-  
+
   check_gsl();
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
@@ -189,47 +194,47 @@ int main(int argc, char *argv[]){
 
   // Merge all other input files
 
-  for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
-  
+  for(i = 1; i < nbf; i++)
+    MergeProblem(TheFileNameTab[i]);
+
   // Init first context
 
-  switch(CTX.initial_context){
-  case 1 :
-    WID->set_context(menu_geometry, 0); 
+  switch (CTX.initial_context) {
+  case 1:
+    WID->set_context(menu_geometry, 0);
     break;
-  case 2 :
-    WID->set_context(menu_mesh, 0); 
+  case 2:
+    WID->set_context(menu_mesh, 0);
     break;
-  case 3 :
-    WID->set_context(menu_solver, 0); 
+  case 3:
+    WID->set_context(menu_solver, 0);
     break;
-  case 4 :
-    WID->set_context(menu_post, 0); 
+  case 4:
+    WID->set_context(menu_post, 0);
     break;
-  default : // automatic
+  default:     // automatic
     if(List_Nbr(CTX.post.list))
       WID->set_context(menu_post, 0);
     else
-      WID->set_context(menu_geometry, 0); 
+      WID->set_context(menu_geometry, 0);
     break;
-  }    
+  }
 
   // Read background mesh on disk
 
-  if(TheBgmFileName){
+  if(TheBgmFileName) {
     MergeProblem(TheBgmFileName);
     if(List_Nbr(CTX.post.list))
-      BGMWithView((Post_View*)List_Pointer(CTX.post.list, List_Nbr(CTX.post.list)-1));
+      BGMWithView((Post_View *)
+                  List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
     else
       Msg(GERROR, "Invalid background mesh (no view)");
   }
 
   // Draw the actual scene
   Draw();
-  CTX.expose = 1 ;
+  CTX.expose = 1;
 
   // loop
   WID->run();
-
 }
-  

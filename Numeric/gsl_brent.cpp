@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.4 2003-03-01 22:22:27 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.5 2003-03-01 22:36:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -28,10 +28,10 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_min.h>
 
-static double (*nrfunc)(double);
+static double (*nrfunc) (double);
 
-double fn1 (double x, void * params){
-
+double fn1(double x, void *params)
+{
   double val = nrfunc(x);
   return val;
 }
@@ -41,45 +41,47 @@ double fn1 (double x, void * params){
 // Returns the minimum betwen ax and bx to a given tol using brent's
 // method.
 
-double brent(double ax, double bx, double cx, 
-	     double (*f)(double), double tol, double *xmin){
+double brent(double ax, double bx, double cx,
+             double (*f) (double), double tol, double *xmin)
+{
   int status;
   int iter = 0;
-  double a, b, c; // a < b < c
+  double a, b, c;               // a < b < c
   const gsl_min_fminimizer_type *T;
   gsl_min_fminimizer *s;
   gsl_function F;
 
   // gsl wants a<b
   b = bx;
-  if(ax < cx){
+  if(ax < cx) {
     a = ax;
     c = cx;
   }
-  else{
+  else {
     a = ax;
     c = cx;
   }
 
   // if a-b < tol, return func(a)
-  if(fabs(c-a) < tol){
+  if(fabs(c - a) < tol) {
     *xmin = ax;
-    return(f(*xmin));
+    return (f(*xmin));
   }
- 
+
   nrfunc = f;
-  
+
   F.function = &fn1;
   F.params = 0;
-  
+
   T = gsl_min_fminimizer_brent;
   s = gsl_min_fminimizer_alloc(T);
   gsl_min_fminimizer_set(s, &F, b, a, c);
-  
-  do{
+
+  do {
     iter++;
     status = gsl_min_fminimizer_iterate(s);
-    if(status) break; // solver problem    
+    if(status)
+      break;    // solver problem    
     b = gsl_min_fminimizer_x_minimum(s);
     a = gsl_min_fminimizer_x_lower(s);
     c = gsl_min_fminimizer_x_upper(s);
@@ -88,10 +90,10 @@ double brent(double ax, double bx, double cx,
   while(status == GSL_CONTINUE && iter < MAXITER);
 
   if(status != GSL_SUCCESS)
-    Msg(GERROR, "MIN1D not converged: f(%g) = %g",b,fn1(b,NULL));  
+    Msg(GERROR, "MIN1D not converged: f(%g) = %g", b, fn1(b, NULL));
 
   *xmin = b;
-  gsl_min_fminimizer_free (s);
+  gsl_min_fminimizer_free(s);
   return fn1(b, NULL);
 }
 
@@ -106,63 +108,82 @@ double brent(double ax, double bx, double cx,
 #define MYLIMIT_ 100.0
 #define MYTINY_  1.0e-20
 
-void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
-	    double (*func)(double))
+void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
+            double *fc, double (*func) (double))
 {
-  double ulim,u,r,q,fu;
+  double ulim, u, r, q, fu;
 
   //Msg(INFO, "--MNBRAK1 : ax %12.5E bx = %12.5E",*ax,*bx);  
 
-  *fa=(*func)(*ax);
-  *fb=(*func)(*bx);
-  if (*fb > *fa) {
+  *fa = (*func) (*ax);
+  *fb = (*func) (*bx);
+  if(*fb > *fa) {
     double tmp;
-    tmp = *ax; *ax = *bx; *bx = tmp;
-    tmp = *fb; *fb = *fa; *fa = tmp;
+    tmp = *ax;
+    *ax = *bx;
+    *bx = tmp;
+    tmp = *fb;
+    *fb = *fa;
+    *fa = tmp;
   }
 
   //Msg(INFO, "--MNBRAK2 : ax %12.5E  bx = %12.5E",*ax,*bx);  
 
-  *cx = *bx + MYGOLD_*(*bx-*ax);
-  *fc = (*func)(*cx);
-  while (*fb > *fc) {
-    r=(*bx-*ax)*(*fb-*fc);
-    q=(*bx-*cx)*(*fb-*fa);
-    u=(*bx)-((*bx-*cx)*q-(*bx-*ax)*r)/(2.0*SIGN(MAX(fabs(q-r),MYTINY_),q-r));
+  *cx = *bx + MYGOLD_ * (*bx - *ax);
+  *fc = (*func) (*cx);
+  while(*fb > *fc) {
+    r = (*bx - *ax) * (*fb - *fc);
+    q = (*bx - *cx) * (*fb - *fa);
+    u =
+      (*bx) - ((*bx - *cx) * q -
+               (*bx - *ax) * r) / (2.0 * SIGN(MAX(fabs(q - r), MYTINY_),
+                                              q - r));
 
     //Msg(INFO, "--MNBRAK : %12.5E %12.5E %12.5E %12.5E %12.5E",*ax,*fa,*fb,*fc,u);  
 
-    ulim = *bx + MYLIMIT_*(*cx-*bx);
-    if ((*bx-u)*(u-*cx) > 0.0) {
-      fu=(*func)(u);
-      if (fu < *fc) {
-	*ax = *bx;
-	*bx = u;
-	*fa = *fb;
-	*fb = fu;
-	return;
-      } else if (fu > *fb) {
-	*cx = u;
-	*fc = fu;
-	return;
+    ulim = *bx + MYLIMIT_ * (*cx - *bx);
+    if((*bx - u) * (u - *cx) > 0.0) {
+      fu = (*func) (u);
+      if(fu < *fc) {
+        *ax = *bx;
+        *bx = u;
+        *fa = *fb;
+        *fb = fu;
+        return;
       }
-      u = *cx + MYGOLD_*(*cx-*bx);
-      fu = (*func)(u);
-    } else if ((*cx-u)*(u-ulim) > 0.0) {
-      fu=(*func)(u);
-      if (fu < *fc) {
-        *bx = *cx; *cx = u; u = *cx + MYGOLD_*(*cx-*bx);
-	*fb = *fc; *fc = fu; fu = (*func)(u);
+      else if(fu > *fb) {
+        *cx = u;
+        *fc = fu;
+        return;
       }
-    } else if ((u-ulim)*(ulim-*cx) >= 0.0) {
-      u = ulim;
-      fu = (*func)(u);
-    } else {
-      u = *cx + MYGOLD_*(*cx-*bx);
-      fu = (*func)(u);
+      u = *cx + MYGOLD_ * (*cx - *bx);
+      fu = (*func) (u);
     }
-    *ax = *bx; *bx = *cx; *cx = u;
-    *fa = *fb; *fb = *fc; *fc = fu;
+    else if((*cx - u) * (u - ulim) > 0.0) {
+      fu = (*func) (u);
+      if(fu < *fc) {
+        *bx = *cx;
+        *cx = u;
+        u = *cx + MYGOLD_ * (*cx - *bx);
+        *fb = *fc;
+        *fc = fu;
+        fu = (*func) (u);
+      }
+    }
+    else if((u - ulim) * (ulim - *cx) >= 0.0) {
+      u = ulim;
+      fu = (*func) (u);
+    }
+    else {
+      u = *cx + MYGOLD_ * (*cx - *bx);
+      fu = (*func) (u);
+    }
+    *ax = *bx;
+    *bx = *cx;
+    *cx = u;
+    *fa = *fb;
+    *fb = *fc;
+    *fc = fu;
 
     //Msg(INFO, "MNBRAK : %12.5E %12.5E %12.5E",*ax,*bx,*cx);  
   }

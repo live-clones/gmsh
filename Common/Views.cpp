@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.88 2003-02-25 16:49:36 geuzaine Exp $
+// $Id: Views.cpp,v 1.89 2003-03-01 22:36:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -27,42 +27,46 @@
 #include "Options.h"
 #include "ColorTable.h"
 
-extern Context_T   CTX ;
+extern Context_T CTX;
 
 #define VAL_INF 1.e200
 
 // Static reference view
 
-Post_View  *Post_ViewReference = NULL;
+Post_View *Post_ViewReference = NULL;
 
 // FIXME: the whole View interface should be rewritten in C++...
 
-int fcmpPostViewNum(const void *v1, const void *v2){
-  return (((Post_View *)v1)->Num - ((Post_View *)v2)->Num);
+int fcmpPostViewNum(const void *v1, const void *v2)
+{
+  return (((Post_View *) v1)->Num - ((Post_View *) v2)->Num);
 }
 
-int fcmpPostViewDuplicateOf(const void *v1, const void *v2){
-  return (((Post_View *)v1)->DuplicateOf - ((Post_View *)v2)->DuplicateOf);
+int fcmpPostViewDuplicateOf(const void *v1, const void *v2)
+{
+  return (((Post_View *) v1)->DuplicateOf - ((Post_View *) v2)->DuplicateOf);
 }
 
-Post_View * BeginView(int allocate){
+Post_View *BeginView(int allocate)
+{
   Post_View vv, *v;
-  static int  UniqueNum=0;
+  static int UniqueNum = 0;
   int i;
 
-  if(!CTX.post.list) CTX.post.list = List_Create(100,1,sizeof(Post_View));
+  if(!CTX.post.list)
+    CTX.post.list = List_Create(100, 1, sizeof(Post_View));
 
-  if(!CTX.post.force_num){
-    vv.Num = ++UniqueNum; // each view _must_ have a unique number
+  if(!CTX.post.force_num) {
+    vv.Num = ++UniqueNum;       // each view _must_ have a unique number
     List_Add(CTX.post.list, &vv);
   }
-  else{
-    vv.Num = CTX.post.force_num;    
-    List_Replace(CTX.post.list,&vv,fcmpPostViewNum);
+  else {
+    vv.Num = CTX.post.force_num;
+    List_Replace(CTX.post.list, &vv, fcmpPostViewNum);
   }
 
   i = List_ISearch(CTX.post.list, &vv, fcmpPostViewNum);
-  v = (Post_View*)List_Pointer(CTX.post.list, i);
+  v = (Post_View *) List_Pointer(CTX.post.list, i);
 
   v->Index = i;
   v->Dirty = 1;
@@ -78,49 +82,49 @@ Post_View * BeginView(int allocate){
   v->NbSY = v->NbVY = v->NbTY = 0;
   v->NbT2 = v->NbT3 = 0;
 
-  if(allocate){
+  if(allocate) {
     v->DataSize = sizeof(double);
 
-    v->Time = List_Create(100,1000,sizeof(double));
+    v->Time = List_Create(100, 1000, sizeof(double));
 
-    v->SP = List_Create(100,1000,sizeof(double));
-    v->VP = List_Create(100,1000,sizeof(double));
-    v->TP = List_Create(100,1000,sizeof(double));
-    
-    v->SL = List_Create(100,1000,sizeof(double));
-    v->VL = List_Create(100,1000,sizeof(double));
-    v->TL = List_Create(100,1000,sizeof(double));
-    
-    v->ST = List_Create(100,1000,sizeof(double));
-    v->VT = List_Create(100,1000,sizeof(double));
-    v->TT = List_Create(100,1000,sizeof(double));
+    v->SP = List_Create(100, 1000, sizeof(double));
+    v->VP = List_Create(100, 1000, sizeof(double));
+    v->TP = List_Create(100, 1000, sizeof(double));
 
-    v->SQ = List_Create(100,1000,sizeof(double));
-    v->VQ = List_Create(100,1000,sizeof(double));
-    v->TQ = List_Create(100,1000,sizeof(double));
-    
-    v->SS = List_Create(100,1000,sizeof(double));
-    v->VS = List_Create(100,1000,sizeof(double));
-    v->TS = List_Create(100,1000,sizeof(double));
+    v->SL = List_Create(100, 1000, sizeof(double));
+    v->VL = List_Create(100, 1000, sizeof(double));
+    v->TL = List_Create(100, 1000, sizeof(double));
 
-    v->SH = List_Create(100,1000,sizeof(double));
-    v->VH = List_Create(100,1000,sizeof(double));
-    v->TH = List_Create(100,1000,sizeof(double));
+    v->ST = List_Create(100, 1000, sizeof(double));
+    v->VT = List_Create(100, 1000, sizeof(double));
+    v->TT = List_Create(100, 1000, sizeof(double));
 
-    v->SI = List_Create(100,1000,sizeof(double));
-    v->VI = List_Create(100,1000,sizeof(double));
-    v->TI = List_Create(100,1000,sizeof(double));
+    v->SQ = List_Create(100, 1000, sizeof(double));
+    v->VQ = List_Create(100, 1000, sizeof(double));
+    v->TQ = List_Create(100, 1000, sizeof(double));
 
-    v->SY = List_Create(100,1000,sizeof(double));
-    v->VY = List_Create(100,1000,sizeof(double));
-    v->TY = List_Create(100,1000,sizeof(double));
+    v->SS = List_Create(100, 1000, sizeof(double));
+    v->VS = List_Create(100, 1000, sizeof(double));
+    v->TS = List_Create(100, 1000, sizeof(double));
 
-    v->T2D = List_Create(10,100,sizeof(double));
-    v->T2C = List_Create(100,1000,sizeof(char));
-    v->T3D = List_Create(10,100,sizeof(double));
-    v->T3C = List_Create(100,1000,sizeof(char));
+    v->SH = List_Create(100, 1000, sizeof(double));
+    v->VH = List_Create(100, 1000, sizeof(double));
+    v->TH = List_Create(100, 1000, sizeof(double));
+
+    v->SI = List_Create(100, 1000, sizeof(double));
+    v->VI = List_Create(100, 1000, sizeof(double));
+    v->TI = List_Create(100, 1000, sizeof(double));
+
+    v->SY = List_Create(100, 1000, sizeof(double));
+    v->VY = List_Create(100, 1000, sizeof(double));
+    v->TY = List_Create(100, 1000, sizeof(double));
+
+    v->T2D = List_Create(10, 100, sizeof(double));
+    v->T2C = List_Create(100, 1000, sizeof(char));
+    v->T3D = List_Create(10, 100, sizeof(double));
+    v->T3C = List_Create(100, 1000, sizeof(char));
   }
-  else{
+  else {
     v->Time = NULL;
     v->SP = v->VP = v->TP = NULL;
     v->SL = v->VL = v->TL = NULL;
@@ -145,100 +149,116 @@ Post_View * BeginView(int allocate){
   v->normals = NULL;
   v->Min = VAL_INF;
   v->Max = -VAL_INF;
-  for(i=0;i<3;i++){
-    v->BBox[2*i] = VAL_INF;
-    v->BBox[2*i+1] = -VAL_INF;
+  for(i = 0; i < 3; i++) {
+    v->BBox[2 * i] = VAL_INF;
+    v->BBox[2 * i + 1] = -VAL_INF;
   }
 
   return v;
 }
 
-void Stat_Element(Post_View *v, int type, int nbnod, int N, 
-		  double *X, double *Y, double *Z, double *V){
+void Stat_Element(Post_View * v, int type, int nbnod, int N,
+                  double *X, double *Y, double *Z, double *V)
+{
   int i;
   double l0;
 
-  switch(type){
+  switch (type) {
 
-  case 0 : // scalar
-    if(v->Min == VAL_INF || v->Max == -VAL_INF){
+  case 0:      // scalar
+    if(v->Min == VAL_INF || v->Max == -VAL_INF) {
       v->Min = V[0];
       v->Max = V[0];
-      v->NbTimeStep = N/nbnod;
+      v->NbTimeStep = N / nbnod;
     }
-    else if(N/nbnod < v->NbTimeStep)
-      v->NbTimeStep = N/nbnod ;
-    
-    for(i=0 ; i<N ; i++){
-      if(V[i] < v->Min) v->Min = V[i] ;
-      if(V[i] > v->Max) v->Max = V[i] ;
+    else if(N / nbnod < v->NbTimeStep)
+      v->NbTimeStep = N / nbnod;
+
+    for(i = 0; i < N; i++) {
+      if(V[i] < v->Min)
+        v->Min = V[i];
+      if(V[i] > v->Max)
+        v->Max = V[i];
     }
     break;
 
-  case 1 : // vector
-    if(v->Min == VAL_INF || v->Max == -VAL_INF){
-      l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
+  case 1:      // vector
+    if(v->Min == VAL_INF || v->Max == -VAL_INF) {
+      l0 = sqrt(DSQR(V[0]) + DSQR(V[1]) + DSQR(V[2]));
       v->Min = l0;
       v->Max = l0;
-      v->NbTimeStep = N/(3*nbnod) ;
+      v->NbTimeStep = N / (3 * nbnod);
     }
-    else if(N/(3*nbnod) < v->NbTimeStep)
-      v->NbTimeStep = N/(3*nbnod) ;
-    
-    for(i=0 ; i<N ; i+=3){
-      l0 = sqrt(DSQR(V[i])+DSQR(V[i+1])+DSQR(V[i+2]));
-      if(l0 < v->Min) v->Min = l0 ;
-      if(l0 > v->Max) v->Max = l0 ;
+    else if(N / (3 * nbnod) < v->NbTimeStep)
+      v->NbTimeStep = N / (3 * nbnod);
+
+    for(i = 0; i < N; i += 3) {
+      l0 = sqrt(DSQR(V[i]) + DSQR(V[i + 1]) + DSQR(V[i + 2]));
+      if(l0 < v->Min)
+        v->Min = l0;
+      if(l0 > v->Max)
+        v->Max = l0;
     }
     v->ScalarOnly = 0;
     break;
 
-  case 2 : // tensor - TODO!
-    if(v->Min == VAL_INF || v->Max == -VAL_INF){
-      l0 = sqrt(DSQR(V[0])+DSQR(V[4])+DSQR(V[8]));
+  case 2:      // tensor - TODO!
+    if(v->Min == VAL_INF || v->Max == -VAL_INF) {
+      l0 = sqrt(DSQR(V[0]) + DSQR(V[4]) + DSQR(V[8]));
       v->Min = l0;
       v->Max = l0;
-      v->NbTimeStep = N/(9*nbnod) ;
+      v->NbTimeStep = N / (9 * nbnod);
     }
-    else if(N/(9*nbnod) < v->NbTimeStep)
-      v->NbTimeStep = N/(9*nbnod) ;
+    else if(N / (9 * nbnod) < v->NbTimeStep)
+      v->NbTimeStep = N / (9 * nbnod);
 
-    for(i=0 ; i<N ; i+=9){
-      l0 = sqrt(DSQR(V[i])+DSQR(V[i+4])+DSQR(V[i+8]));
-      if(l0 < v->Min) v->Min = l0 ;
-      if(l0 > v->Max) v->Max = l0 ;
+    for(i = 0; i < N; i += 9) {
+      l0 = sqrt(DSQR(V[i]) + DSQR(V[i + 4]) + DSQR(V[i + 8]));
+      if(l0 < v->Min)
+        v->Min = l0;
+      if(l0 > v->Max)
+        v->Max = l0;
     }
     v->ScalarOnly = 0;
     break;
 
   }
 
-  for(i=0 ; i<nbnod ; i++){
-    if(X[i] < v->BBox[0]) v->BBox[0] = X[i] ;
-    if(X[i] > v->BBox[1]) v->BBox[1] = X[i] ;
-    if(Y[i] < v->BBox[2]) v->BBox[2] = Y[i] ;
-    if(Y[i] > v->BBox[3]) v->BBox[3] = Y[i] ;
-    if(Z[i] < v->BBox[4]) v->BBox[4] = Z[i] ;
-    if(Z[i] > v->BBox[5]) v->BBox[5] = Z[i] ;
+  for(i = 0; i < nbnod; i++) {
+    if(X[i] < v->BBox[0])
+      v->BBox[0] = X[i];
+    if(X[i] > v->BBox[1])
+      v->BBox[1] = X[i];
+    if(Y[i] < v->BBox[2])
+      v->BBox[2] = Y[i];
+    if(Y[i] > v->BBox[3])
+      v->BBox[3] = Y[i];
+    if(Z[i] < v->BBox[4])
+      v->BBox[4] = Z[i];
+    if(Z[i] > v->BBox[5])
+      v->BBox[5] = Z[i];
   }
 
   v->TextOnly = 0;
 }
 
-void Stat_List(Post_View *v, List_T *listelm, int type, int nbelm, int nbnod){
+void Stat_List(Post_View * v, List_T * listelm, int type, int nbelm,
+               int nbnod)
+{
   int i, nb;
-  if(nbelm){
-    nb = List_Nbr(listelm) / nbelm ;
-    for(i = 0 ; i < List_Nbr(listelm) ; i+=nb)
-      Stat_Element(v, type, nbnod, nb-3*nbnod, 
-		   (double*)List_Pointer_Fast(listelm,i),
-		   (double*)List_Pointer_Fast(listelm,i+1*nbnod),
-		   (double*)List_Pointer_Fast(listelm,i+2*nbnod),
-		   (double*)List_Pointer_Fast(listelm,i+3*nbnod));
+  if(nbelm) {
+    nb = List_Nbr(listelm) / nbelm;
+    for(i = 0; i < List_Nbr(listelm); i += nb)
+      Stat_Element(v, type, nbnod, nb - 3 * nbnod,
+                   (double *)List_Pointer_Fast(listelm, i),
+                   (double *)List_Pointer_Fast(listelm, i + 1 * nbnod),
+                   (double *)List_Pointer_Fast(listelm, i + 2 * nbnod),
+                   (double *)List_Pointer_Fast(listelm, i + 3 * nbnod));
   }
 }
 
-void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
+void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
+{
   int i;
   double d;
 
@@ -246,66 +266,67 @@ void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
   Stat_List(v, v->SP, 0, v->NbSP, 1);
   Stat_List(v, v->VP, 1, v->NbVP, 1);
   Stat_List(v, v->TP, 2, v->NbTP, 1);
-	       	         
-  // Lines     	         
+
+  // Lines               
   Stat_List(v, v->SL, 0, v->NbSL, 2);
   Stat_List(v, v->VL, 1, v->NbVL, 2);
   Stat_List(v, v->TL, 2, v->NbTL, 2);
-	       	         
-  // Triangles 	         
+
+  // Triangles           
   Stat_List(v, v->ST, 0, v->NbST, 3);
   Stat_List(v, v->VT, 1, v->NbVT, 3);
   Stat_List(v, v->TT, 2, v->NbTT, 3);
-	       	         
+
   // Quadrangles  
   Stat_List(v, v->SQ, 0, v->NbSQ, 4);
   Stat_List(v, v->VQ, 1, v->NbVQ, 4);
   Stat_List(v, v->TQ, 2, v->NbTQ, 4);
-	       	         
-  // Tetrahedra	         
+
+  // Tetrahedra          
   Stat_List(v, v->SS, 0, v->NbSS, 4);
   Stat_List(v, v->VS, 1, v->NbVS, 4);
   Stat_List(v, v->TS, 2, v->NbTS, 4);
-	       	         
-  // Hexahedra 	         
+
+  // Hexahedra           
   Stat_List(v, v->SH, 0, v->NbSH, 8);
   Stat_List(v, v->VH, 1, v->NbVH, 8);
   Stat_List(v, v->TH, 2, v->NbTH, 8);
-	       	         
-  // Prisms    	         
+
+  // Prisms              
   Stat_List(v, v->SI, 0, v->NbSI, 6);
   Stat_List(v, v->VI, 1, v->NbVI, 6);
   Stat_List(v, v->TI, 2, v->NbTI, 6);
-	       	         
-  // Pyramids  	         
+
+  // Pyramids            
   Stat_List(v, v->SY, 0, v->NbSY, 5);
   Stat_List(v, v->VY, 1, v->NbVY, 5);
   Stat_List(v, v->TY, 2, v->NbTY, 5);
 
   // Dummy time values if using old parsed format
-  if(v->Time && !List_Nbr(v->Time)){
-    for(i=0 ; i<v->NbTimeStep ; i++){
+  if(v->Time && !List_Nbr(v->Time)) {
+    for(i = 0; i < v->NbTimeStep; i++) {
       d = (double)i;
       List_Add(v->Time, &d);
     }
   }
 
-  opt_view_name(v->Index, GMSH_SET|GMSH_GUI, name);
-  opt_view_filename(v->Index, GMSH_SET|GMSH_GUI, file_name);
+  opt_view_name(v->Index, GMSH_SET | GMSH_GUI, name);
+  opt_view_filename(v->Index, GMSH_SET | GMSH_GUI, file_name);
   opt_view_nb_timestep(v->Index, GMSH_GUI, 0);
-  opt_view_timestep(v->Index, GMSH_SET|GMSH_GUI, v->TimeStep);
-  if(v->Min > v->Max){
-    opt_view_min(v->Index, GMSH_SET|GMSH_GUI, 0.);
-    opt_view_max(v->Index, GMSH_SET|GMSH_GUI, 0.);
+  opt_view_timestep(v->Index, GMSH_SET | GMSH_GUI, v->TimeStep);
+  if(v->Min > v->Max) {
+    opt_view_min(v->Index, GMSH_SET | GMSH_GUI, 0.);
+    opt_view_max(v->Index, GMSH_SET | GMSH_GUI, 0.);
   }
-  else{
+  else {
     opt_view_min(v->Index, GMSH_GUI, 0);
     opt_view_max(v->Index, GMSH_GUI, 0);
   }
-  opt_view_custom_min(v->Index, GMSH_SET|GMSH_GUI, v->Min);
-  opt_view_custom_max(v->Index, GMSH_SET|GMSH_GUI, v->Max);
+  opt_view_custom_min(v->Index, GMSH_SET | GMSH_GUI, v->Min);
+  opt_view_custom_max(v->Index, GMSH_SET | GMSH_GUI, v->Max);
 
-  if(CTX.post.smooth) v->smooth();
+  if(CTX.post.smooth)
+    v->smooth();
 
 #if defined(HAVE_FLTK)
   extern int AddViewInUI(int, char *, int);
@@ -316,30 +337,33 @@ void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
   v->Dirty = 0; //the view is complete, we may draw it
 }
 
-void DuplicateView(int num, int withoptions){
-  if(!CTX.post.list || num < 0 || num >= List_Nbr(CTX.post.list)) return;
-  DuplicateView((Post_View*)List_Pointer(CTX.post.list,num), withoptions);
+void DuplicateView(int num, int withoptions)
+{
+  if(!CTX.post.list || num < 0 || num >= List_Nbr(CTX.post.list))
+    return;
+  DuplicateView((Post_View *) List_Pointer(CTX.post.list, num), withoptions);
 }
 
-void DuplicateView(Post_View *v1, int withoptions){
-  Post_View  v, *v2, *v3 ;
+void DuplicateView(Post_View * v1, int withoptions)
+{
+  Post_View v, *v2, *v3;
 
   v2 = BeginView(0);
   EndView(v2, 0, v1->FileName, v1->Name);
 
-  if(!v1->DuplicateOf){
-    v2->DuplicateOf = v1->Num ;
-    v1->Links++ ;
+  if(!v1->DuplicateOf) {
+    v2->DuplicateOf = v1->Num;
+    v1->Links++;
   }
-  else{
-    v.Num = v1->DuplicateOf ;
-    if(!(v3 = (Post_View*)List_PQuery(CTX.post.list, &v, fcmpPostViewNum))){
-      v2->DuplicateOf = v1->Num ;
-      v1->Links++ ;
+  else {
+    v.Num = v1->DuplicateOf;
+    if(!(v3 = (Post_View *) List_PQuery(CTX.post.list, &v, fcmpPostViewNum))) {
+      v2->DuplicateOf = v1->Num;
+      v1->Links++;
     }
-    else{
+    else {
       v2->DuplicateOf = v3->Num;
-      v3->Links++ ;
+      v3->Links++;
     }
   }
 
@@ -394,8 +418,9 @@ void DuplicateView(Post_View *v1, int withoptions){
     v2->BBox[i]   = v1->BBox[i];
 
   // *INDENT-ON*
-  
-  if(withoptions) CopyViewOptions(v1, v2);
+
+  if(withoptions)
+    CopyViewOptions(v1, v2);
 
 #if defined(HAVE_FLTK)
   extern int AddViewInUI(int, char *, int);
@@ -403,52 +428,56 @@ void DuplicateView(Post_View *v1, int withoptions){
 #endif
 }
 
-bool FreeView(int num){
+bool FreeView(int num)
+{
   Post_View *v;
 
-  Msg(DEBUG, "Trying to free view %d",num);
-  
-  if(num < 0 || num >= List_Nbr(CTX.post.list)){
-    return false ;
+  Msg(DEBUG, "Trying to free view %d", num);
+
+  if(num < 0 || num >= List_Nbr(CTX.post.list)) {
+    return false;
   }
-  v = (Post_View*)List_Pointer(CTX.post.list, num);
+  v = (Post_View *) List_Pointer(CTX.post.list, num);
   FreeView(v);
   List_PSuppress(CTX.post.list, num);
 
-  Msg(INFO, "View %d deleted (%d views left)",num, List_Nbr(CTX.post.list));
+  Msg(INFO, "View %d deleted (%d views left)", num, List_Nbr(CTX.post.list));
   return true;
 }
 
 
-void FreeView(Post_View *v){
-  Post_View vv,*v2;
+void FreeView(Post_View * v)
+{
+  Post_View vv, *v2;
   int i, numdup, free = 1;
 
-  if(v->DuplicateOf){
-    vv.Num = v->DuplicateOf ;
+  if(v->DuplicateOf) {
+    vv.Num = v->DuplicateOf;
     Msg(DEBUG, "This view is a duplicata");
-    if(!(v2 = (Post_View*)List_PQuery(CTX.post.list, &vv, fcmpPostViewNum))){
+    if(!(v2 = (Post_View *) List_PQuery(CTX.post.list, &vv, fcmpPostViewNum))) {
       Msg(DEBUG, "  -the original view is gone");
       numdup = 0;
-      for(i=0 ; i<List_Nbr(CTX.post.list); i++)
-	numdup += (((Post_View*)List_Pointer(CTX.post.list, i))->DuplicateOf == v->DuplicateOf);
-      if(numdup == 1){
+      for(i = 0; i < List_Nbr(CTX.post.list); i++)
+        numdup +=
+          (((Post_View *) List_Pointer(CTX.post.list, i))->DuplicateOf ==
+           v->DuplicateOf);
+      if(numdup == 1) {
         Msg(DEBUG, "  -there are no other duplicata, so I can free");
-        free = 1 ;
+        free = 1;
       }
-      else{
+      else {
         Msg(DEBUG, "  -there are still duplicata, so I cannot free");
-        free = 0 ;
+        free = 0;
       }
     }
-    else{
+    else {
       v2->Links--;
-      free = 0 ;
+      free = 0;
       Msg(DEBUG, "  -the original still exists, so I cannot free");
     }
   }
 
-  if(free && !v->Links){
+  if(free && !v->Links) {
     Msg(DEBUG, "FREEING VIEW");
     List_Delete(v->Time);
     // *INDENT-OFF*
@@ -482,7 +511,8 @@ void FreeView(Post_View *v){
 
 }
 
-void CopyViewOptions(Post_View *src, Post_View *dest){
+void CopyViewOptions(Post_View * src, Post_View * dest)
+{
   dest->Type = src->Type;
   dest->Position[0] = src->Position[0];
   dest->Position[1] = src->Position[1];
@@ -505,12 +535,12 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;
-  dest->Boundary = src->Boundary ;
+  dest->Boundary = src->Boundary;
   dest->NbAbscissa = src->NbAbscissa;
   dest->NbIso = src->NbIso;
-  dest->Light = src->Light ;
-  dest->SmoothNormals = src->SmoothNormals ;
-  dest->AngleSmoothNormals = src->AngleSmoothNormals ;
+  dest->Light = src->Light;
+  dest->SmoothNormals = src->SmoothNormals;
+  dest->AngleSmoothNormals = src->AngleSmoothNormals;
   dest->ShowElement = src->ShowElement;
   dest->ShowTime = src->ShowTime;
   dest->ShowScale = src->ShowScale;
@@ -542,50 +572,60 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   ColorTable_Paste(&dest->CT);
 }
 
-GmshColorTable *Get_ColorTable(int num){
+GmshColorTable *Get_ColorTable(int num)
+{
   Post_View *v;
 
   if(!CTX.post.list)
-    v = Post_ViewReference ;
+    v = Post_ViewReference;
   else
-    v = (Post_View*)List_Pointer_Test(CTX.post.list, num);
+    v = (Post_View *) List_Pointer_Test(CTX.post.list, num);
   if(v)
-    return &v->CT ;
+    return &v->CT;
   else
-    return NULL ;
+    return NULL;
 }
 
-void Print_ColorTable(int num, char *prefix, FILE *file){
+void Print_ColorTable(int num, char *prefix, FILE * file)
+{
   char tmp[1024];
   Post_View *v;
   if(!CTX.post.list)
-    v = Post_ViewReference ;
+    v = Post_ViewReference;
   else
-    v = (Post_View*)List_Pointer_Test(CTX.post.list, num);
-  if(!v) return;
+    v = (Post_View *) List_Pointer_Test(CTX.post.list, num);
+  if(!v)
+    return;
   sprintf(tmp, "%s = {", prefix);
-  if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
+  if(file)
+    fprintf(file, "%s\n", tmp);
+  else
+    Msg(DIRECT, tmp);
   ColorTable_Print(&v->CT, file);
   sprintf(tmp, "};");
-  if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
+  if(file)
+    fprintf(file, "%s\n", tmp);
+  else
+    Msg(DIRECT, tmp);
 }
 
-Post_View *Create2DGraph(char *xname, char *yname, 
-			 int nbdata, double *x, double *y){
+Post_View *Create2DGraph(char *xname, char *yname,
+                         int nbdata, double *x, double *y)
+{
   int i;
-  double d=0.;
+  double d = 0.;
   char filename[1024];
   Post_View *v;
 
   v = BeginView(1);
-  for(i=0;i<nbdata;i++){
+  for(i = 0; i < nbdata; i++) {
     List_Add(v->SP, &x[i]);
     List_Add(v->SP, &d);
     List_Add(v->SP, &d);
     List_Add(v->SP, &y[i]);
     v->NbSP++;
   }
-  sprintf(filename,"%s.pos",yname);
+  sprintf(filename, "%s.pos", yname);
   EndView(v, 1, filename, yname);
   v->Type = DRAW_POST_2D_SPACE;
   strcpy(v->AbscissaName, xname);
@@ -594,106 +634,110 @@ Post_View *Create2DGraph(char *xname, char *yname,
 
 // INput/output
 
-void ReadView(FILE *file, char *filename){
-  char   str[256], name[256];
-  int    i, nb, format, size, testone, swap, t2l, t3l;
+void ReadView(FILE * file, char *filename)
+{
+  char str[256], name[256];
+  int i, nb, format, size, testone, swap, t2l, t3l;
   double version;
   Post_View *v;
 
-  while (1) {
+  while(1) {
 
-    do { 
-      fgets(str, 256, file) ; 
-      if (feof(file))  break ;
-    } while (str[0] != '$') ;  
+    do {
+      fgets(str, 256, file);
+      if(feof(file))
+        break;
+    } while(str[0] != '$');
 
-    if (feof(file))  break ;
+    if(feof(file))
+      break;
 
     /*  F o r m a t  */
 
-    if (!strncmp(&str[1], "PostFormat", 10)){
-      fscanf(file, "%lf %d %d\n", &version, &format, &size) ;
-      if(version < 1.0){
-        Msg(GERROR, "The version of this post-processing file is too old (%g < 1.0)", version);
+    if(!strncmp(&str[1], "PostFormat", 10)) {
+      fscanf(file, "%lf %d %d\n", &version, &format, &size);
+      if(version < 1.0) {
+        Msg(GERROR,
+            "The version of this post-processing file is too old (%g < 1.0)",
+            version);
         return;
       }
       if(size == sizeof(double))
-	Msg(DEBUG, "Data is in double precision format (size==%d)", size);
+        Msg(DEBUG, "Data is in double precision format (size==%d)", size);
       else if(size == sizeof(float))
-	Msg(DEBUG, "Data is in single precision format (size==%d)", size);
-      else{
-        Msg(GERROR, "Unknown type of data (size = %d) in post-processing file", 
-	    size);
+        Msg(DEBUG, "Data is in single precision format (size==%d)", size);
+      else {
+        Msg(GERROR,
+            "Unknown type of data (size = %d) in post-processing file", size);
         return;
       }
       if(format == 0)
-	format = LIST_FORMAT_ASCII ;
+        format = LIST_FORMAT_ASCII;
       else if(format == 1)
-	format = LIST_FORMAT_BINARY ;
-      else{
-	Msg(GERROR, "Unknown format for view");
-	return ;
+        format = LIST_FORMAT_BINARY;
+      else {
+        Msg(GERROR, "Unknown format for view");
+        return;
       }
     }
 
     /*  V i e w  */
 
-    if (!strncmp(&str[1], "View", 4)) {
+    if(!strncmp(&str[1], "View", 4)) {
 
       v = BeginView(0);
 
-      if(version <= 1.0){
-	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
-	       name, &v->NbTimeStep,
-	       &v->NbSP, &v->NbVP, &v->NbTP, 
-	       &v->NbSL, &v->NbVL, &v->NbTL, 
-	       &v->NbST, &v->NbVT, &v->NbTT, 
-	       &v->NbSS, &v->NbVS, &v->NbTS);
-	v->NbT2 = t2l = v->NbT3 = t3l = 0;
-	Msg(INFO, "Detected version <= 1.0");
+      if(version <= 1.0) {
+        fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               name, &v->NbTimeStep,
+               &v->NbSP, &v->NbVP, &v->NbTP,
+               &v->NbSL, &v->NbVL, &v->NbTL,
+               &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS, &v->NbVS, &v->NbTS);
+        v->NbT2 = t2l = v->NbT3 = t3l = 0;
+        Msg(INFO, "Detected version <= 1.0");
       }
-      else if(version == 1.1){
-	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
-	       name, &v->NbTimeStep,
-	       &v->NbSP, &v->NbVP, &v->NbTP, 
-	       &v->NbSL, &v->NbVL, &v->NbTL, 
-	       &v->NbST, &v->NbVT, &v->NbTT, 
-	       &v->NbSS, &v->NbVS, &v->NbTS,
-	       &v->NbT2, &t2l, &v->NbT3, &t3l);
-	Msg(INFO, "Detected version 1.1");
+      else if(version == 1.1) {
+        fscanf(file,
+               "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               name, &v->NbTimeStep, &v->NbSP, &v->NbVP, &v->NbTP, &v->NbSL,
+               &v->NbVL, &v->NbTL, &v->NbST, &v->NbVT, &v->NbTT, &v->NbSS,
+               &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l);
+        Msg(INFO, "Detected version 1.1");
       }
-      else if(version == 1.2){
-	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-	       "%d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
-	       name, &v->NbTimeStep,
-	       &v->NbSP, &v->NbVP, &v->NbTP, 
-	       &v->NbSL, &v->NbVL, &v->NbTL, 
-	       &v->NbST, &v->NbVT, &v->NbTT, 
-	       &v->NbSQ, &v->NbVQ, &v->NbTQ, 
-	       &v->NbSS, &v->NbVS, &v->NbTS,
-	       &v->NbSH, &v->NbVH, &v->NbTH,
-	       &v->NbSI, &v->NbVI, &v->NbTI,
-	       &v->NbSY, &v->NbVY, &v->NbTY,
-	       &v->NbT2, &t2l, &v->NbT3, &t3l);
-	Msg(INFO, "Detected version 1.2");
+      else if(version == 1.2) {
+        fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+               "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               name, &v->NbTimeStep,
+               &v->NbSP, &v->NbVP, &v->NbTP,
+               &v->NbSL, &v->NbVL, &v->NbTL,
+               &v->NbST, &v->NbVT, &v->NbTT,
+               &v->NbSQ, &v->NbVQ, &v->NbTQ,
+               &v->NbSS, &v->NbVS, &v->NbTS,
+               &v->NbSH, &v->NbVH, &v->NbTH,
+               &v->NbSI, &v->NbVI, &v->NbTI,
+               &v->NbSY, &v->NbVY, &v->NbTY, &v->NbT2, &t2l, &v->NbT3, &t3l);
+        Msg(INFO, "Detected version 1.2");
       }
-      else{
-	Msg(GERROR, "Unknown post-processing file format (version %g)", version);
-	return;
+      else {
+        Msg(GERROR, "Unknown post-processing file format (version %g)",
+            version);
+        return;
       }
 
-      for(i=0;i<(int)strlen(name);i++) if(name[i]=='^') name[i]=' '; 
+      for(i = 0; i < (int)strlen(name); i++)
+        if(name[i] == '^')
+          name[i] = ' ';
 
-      swap = 0 ;
-      if(format == LIST_FORMAT_BINARY){
-	fread(&testone, sizeof(int), 1, file);
-	if(testone != 1){
-	  Msg(INFO, "Swapping bytes from binary file");
-	  swap = 1;
-	}
+      swap = 0;
+      if(format == LIST_FORMAT_BINARY) {
+        fread(&testone, sizeof(int), 1, file);
+        if(testone != 1) {
+          Msg(INFO, "Swapping bytes from binary file");
+          swap = 1;
+        }
       }
 
-      v->DataSize = size ;
+      v->DataSize = size;
 
       // Time values
       v->Time = List_CreateFromFile(v->NbTimeStep, size, file, format, swap);
@@ -701,98 +745,111 @@ void ReadView(FILE *file, char *filename){
 #define LL List_CreateFromFile(nb, size, file, format, swap)
 
       // Points
-      nb = v->NbSP ? v->NbSP * (v->NbTimeStep  +3) : 0 ; v->SP = LL;
-      nb = v->NbVP ? v->NbVP * (v->NbTimeStep*3+3) : 0 ; v->VP = LL;
-      nb = v->NbTP ? v->NbTP * (v->NbTimeStep*9+3) : 0 ; v->TP = LL;
+      nb = v->NbSP ? v->NbSP * (v->NbTimeStep + 3) : 0;
+      v->SP = LL;
+      nb = v->NbVP ? v->NbVP * (v->NbTimeStep * 3 + 3) : 0;
+      v->VP = LL;
+      nb = v->NbTP ? v->NbTP * (v->NbTimeStep * 9 + 3) : 0;
+      v->TP = LL;
 
       // Lines
-      nb = v->NbSL ? v->NbSL * (v->NbTimeStep*2  +6) : 0 ; v->SL = LL;
-      nb = v->NbVL ? v->NbVL * (v->NbTimeStep*2*3+6) : 0 ; v->VL = LL;
-      nb = v->NbTL ? v->NbTL * (v->NbTimeStep*2*9+6) : 0 ; v->TL = LL;
+      nb = v->NbSL ? v->NbSL * (v->NbTimeStep * 2 + 6) : 0;
+      v->SL = LL;
+      nb = v->NbVL ? v->NbVL * (v->NbTimeStep * 2 * 3 + 6) : 0;
+      v->VL = LL;
+      nb = v->NbTL ? v->NbTL * (v->NbTimeStep * 2 * 9 + 6) : 0;
+      v->TL = LL;
 
       // Triangles
-      nb = v->NbST ? v->NbST * (v->NbTimeStep*3  +9) : 0 ; v->ST = LL;
-      nb = v->NbVT ? v->NbVT * (v->NbTimeStep*3*3+9) : 0 ; v->VT = LL;
-      nb = v->NbTT ? v->NbTT * (v->NbTimeStep*3*9+9) : 0 ; v->TT = LL;
+      nb = v->NbST ? v->NbST * (v->NbTimeStep * 3 + 9) : 0;
+      v->ST = LL;
+      nb = v->NbVT ? v->NbVT * (v->NbTimeStep * 3 * 3 + 9) : 0;
+      v->VT = LL;
+      nb = v->NbTT ? v->NbTT * (v->NbTimeStep * 3 * 9 + 9) : 0;
+      v->TT = LL;
 
       // Quadrangles
-      nb = v->NbSQ ? v->NbSQ * (v->NbTimeStep*4  +12) : 0 ; v->SQ = LL;
-      nb = v->NbVQ ? v->NbVQ * (v->NbTimeStep*4*3+12) : 0 ; v->VQ = LL;
-      nb = v->NbTQ ? v->NbTQ * (v->NbTimeStep*4*9+12) : 0 ; v->TQ = LL;
+      nb = v->NbSQ ? v->NbSQ * (v->NbTimeStep * 4 + 12) : 0;
+      v->SQ = LL;
+      nb = v->NbVQ ? v->NbVQ * (v->NbTimeStep * 4 * 3 + 12) : 0;
+      v->VQ = LL;
+      nb = v->NbTQ ? v->NbTQ * (v->NbTimeStep * 4 * 9 + 12) : 0;
+      v->TQ = LL;
 
       // Tetrahedra
-      nb = v->NbSS ? v->NbSS * (v->NbTimeStep*4  +12) : 0 ; v->SS = LL;
-      nb = v->NbVS ? v->NbVS * (v->NbTimeStep*4*3+12) : 0 ; v->VS = LL;
-      nb = v->NbTS ? v->NbTS * (v->NbTimeStep*4*9+12) : 0 ; v->TS = LL;
+      nb = v->NbSS ? v->NbSS * (v->NbTimeStep * 4 + 12) : 0;
+      v->SS = LL;
+      nb = v->NbVS ? v->NbVS * (v->NbTimeStep * 4 * 3 + 12) : 0;
+      v->VS = LL;
+      nb = v->NbTS ? v->NbTS * (v->NbTimeStep * 4 * 9 + 12) : 0;
+      v->TS = LL;
 
       // Hexahedra
-      nb = v->NbSH ? v->NbSH * (v->NbTimeStep*8  +24) : 0 ; v->SH = LL;
-      nb = v->NbVH ? v->NbVH * (v->NbTimeStep*8*3+24) : 0 ; v->VH = LL;
-      nb = v->NbTH ? v->NbTH * (v->NbTimeStep*8*9+24) : 0 ; v->TH = LL;
+      nb = v->NbSH ? v->NbSH * (v->NbTimeStep * 8 + 24) : 0;
+      v->SH = LL;
+      nb = v->NbVH ? v->NbVH * (v->NbTimeStep * 8 * 3 + 24) : 0;
+      v->VH = LL;
+      nb = v->NbTH ? v->NbTH * (v->NbTimeStep * 8 * 9 + 24) : 0;
+      v->TH = LL;
 
       // Prisms
-      nb = v->NbSI ? v->NbSI * (v->NbTimeStep*6  +18) : 0 ; v->SI = LL;
-      nb = v->NbVI ? v->NbVI * (v->NbTimeStep*6*3+18) : 0 ; v->VI = LL;
-      nb = v->NbTI ? v->NbTI * (v->NbTimeStep*6*9+18) : 0 ; v->TI = LL;
+      nb = v->NbSI ? v->NbSI * (v->NbTimeStep * 6 + 18) : 0;
+      v->SI = LL;
+      nb = v->NbVI ? v->NbVI * (v->NbTimeStep * 6 * 3 + 18) : 0;
+      v->VI = LL;
+      nb = v->NbTI ? v->NbTI * (v->NbTimeStep * 6 * 9 + 18) : 0;
+      v->TI = LL;
 
       // Pyramids
-      nb = v->NbSY ? v->NbSY * (v->NbTimeStep*5  +15) : 0 ; v->SY = LL;
-      nb = v->NbVY ? v->NbVY * (v->NbTimeStep*5*3+15) : 0 ; v->VY = LL;
-      nb = v->NbTY ? v->NbTY * (v->NbTimeStep*5*9+15) : 0 ; v->TY = LL;
+      nb = v->NbSY ? v->NbSY * (v->NbTimeStep * 5 + 15) : 0;
+      v->SY = LL;
+      nb = v->NbVY ? v->NbVY * (v->NbTimeStep * 5 * 3 + 15) : 0;
+      v->VY = LL;
+      nb = v->NbTY ? v->NbTY * (v->NbTimeStep * 5 * 9 + 15) : 0;
+      v->TY = LL;
 
 #undef LL
 
       // Strings
-      nb = v->NbT2 ? v->NbT2 * 4 : 0 ;
+      nb = v->NbT2 ? v->NbT2 * 4 : 0;
       v->T2D = List_CreateFromFile(nb, size, file, format, swap);
-      v->T2C = List_CreateFromFile(t2l, sizeof(char), file, format, swap);      
+      v->T2C = List_CreateFromFile(t2l, sizeof(char), file, format, swap);
 
-      nb = v->NbT3 ? v->NbT3 * 5 : 0 ;
+      nb = v->NbT3 ? v->NbT3 * 5 : 0;
       v->T3D = List_CreateFromFile(nb, size, file, format, swap);
-      v->T3C = List_CreateFromFile(t3l, sizeof(char), file, format, swap);      
+      v->T3C = List_CreateFromFile(t3l, sizeof(char), file, format, swap);
 
 
-      Msg(DEBUG, "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d "
-	  "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-          name, v->NbTimeStep,
-          v->NbSP, v->NbVP, v->NbTP, 
-          v->NbSL, v->NbVL, v->NbTL, 
-          v->NbST, v->NbVT, v->NbTT, 
-          v->NbSQ, v->NbVQ, v->NbTQ, 
-          v->NbSS, v->NbVS, v->NbTS,
-          v->NbSH, v->NbVH, v->NbTH,
-          v->NbSI, v->NbVI, v->NbTI,
-          v->NbSY, v->NbVY, v->NbTY,
-	  v->NbT2, v->NbT3);
-      Msg(DEBUG, "List_Nbrs: "
-	  "SP%d VP%d TP%d "
-	  "SL%d VL%d TL%d "
-	  "ST%d VT%d TT%d "
-	  "SQ%d VQ%d TQ%d "
-	  "SS%d VS%d TS%d "
-	  "SH%d VH%d TH%d "
-	  "SI%d VI%d TI%d "
-	  "SY%d VY%d TY%d "
-	  "T2D%d T2C%d T3D%d T3C%d",
-          List_Nbr(v->SP), List_Nbr(v->VP), List_Nbr(v->TP), 
-          List_Nbr(v->SL), List_Nbr(v->VL), List_Nbr(v->TL), 
-          List_Nbr(v->ST), List_Nbr(v->VT), List_Nbr(v->TT), 
-          List_Nbr(v->SQ), List_Nbr(v->VQ), List_Nbr(v->TQ), 
-          List_Nbr(v->SS), List_Nbr(v->VS), List_Nbr(v->TS),
-          List_Nbr(v->SH), List_Nbr(v->VH), List_Nbr(v->TH),
-          List_Nbr(v->SI), List_Nbr(v->VI), List_Nbr(v->TI),
-          List_Nbr(v->SY), List_Nbr(v->VY), List_Nbr(v->TY),
-	  List_Nbr(v->T2D), List_Nbr(v->T2C), List_Nbr(v->T3D), List_Nbr(v->T3C));
+      Msg(DEBUG,
+          "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d "
+          "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", name, v->NbTimeStep,
+          v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL, v->NbST,
+          v->NbVT, v->NbTT, v->NbSQ, v->NbVQ, v->NbTQ, v->NbSS, v->NbVS,
+          v->NbTS, v->NbSH, v->NbVH, v->NbTH, v->NbSI, v->NbVI, v->NbTI,
+          v->NbSY, v->NbVY, v->NbTY, v->NbT2, v->NbT3);
+      Msg(DEBUG,
+          "List_Nbrs: " "SP%d VP%d TP%d " "SL%d VL%d TL%d " "ST%d VT%d TT%d "
+          "SQ%d VQ%d TQ%d " "SS%d VS%d TS%d " "SH%d VH%d TH%d "
+          "SI%d VI%d TI%d " "SY%d VY%d TY%d " "T2D%d T2C%d T3D%d T3C%d",
+          List_Nbr(v->SP), List_Nbr(v->VP), List_Nbr(v->TP), List_Nbr(v->SL),
+          List_Nbr(v->VL), List_Nbr(v->TL), List_Nbr(v->ST), List_Nbr(v->VT),
+          List_Nbr(v->TT), List_Nbr(v->SQ), List_Nbr(v->VQ), List_Nbr(v->TQ),
+          List_Nbr(v->SS), List_Nbr(v->VS), List_Nbr(v->TS), List_Nbr(v->SH),
+          List_Nbr(v->VH), List_Nbr(v->TH), List_Nbr(v->SI), List_Nbr(v->VI),
+          List_Nbr(v->TI), List_Nbr(v->SY), List_Nbr(v->VY), List_Nbr(v->TY),
+          List_Nbr(v->T2D), List_Nbr(v->T2C), List_Nbr(v->T3D),
+          List_Nbr(v->T3C));
 
-      EndView(v, 1, filename, name); 
+      EndView(v, 1, filename, name);
     }
 
     do {
-      fgets(str, 256, file) ;
-      if (feof(file)) Msg(GERROR,"Prematured end of file");
-    } while (str[0] != '$') ;
+      fgets(str, 256, file);
+      if(feof(file))
+        Msg(GERROR, "Prematured end of file");
+    } while(str[0] != '$');
 
-  }   /* while 1 ... */
+  }     /* while 1 ... */
 
 }
 
@@ -800,14 +857,15 @@ void ReadView(FILE *file, char *filename){
 // FIXME: add a format similar to the msh format (node list + simplex list)
 // FIXME: add a structured format
 
-void WriteView(int Flag_BIN, Post_View *v, char *filename){
+void WriteView(int Flag_BIN, Post_View * v, char *filename)
+{
   FILE *file;
   char name[256];
-  int i, f, One=1;
+  int i, f, One = 1;
 
-  if(filename){
-    file = fopen(filename,"w");
-    if(!file){
+  if(filename) {
+    file = fopen(filename, "w");
+    if(!file) {
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
@@ -815,55 +873,68 @@ void WriteView(int Flag_BIN, Post_View *v, char *filename){
   else
     file = stdout;
 
-  fprintf(file, "$PostFormat /* Gmsh 1.2, %s */\n", Flag_BIN ? "binary" : "ascii") ;
-  fprintf(file, "1.2 %d %d\n", Flag_BIN, (int)sizeof(double)) ;
-  fprintf(file, "$EndPostFormat\n") ;
+  fprintf(file, "$PostFormat /* Gmsh 1.2, %s */\n",
+          Flag_BIN ? "binary" : "ascii");
+  fprintf(file, "1.2 %d %d\n", Flag_BIN, (int)sizeof(double));
+  fprintf(file, "$EndPostFormat\n");
 
-  for(i=0;i<(int)strlen(v->Name);i++){
-    if(v->Name[i]==' ') name[i]='^'; 
-    else name[i]=v->Name[i];
+  for(i = 0; i < (int)strlen(v->Name); i++) {
+    if(v->Name[i] == ' ')
+      name[i] = '^';
+    else
+      name[i] = v->Name[i];
   }
-  name[i]='\0';
+  name[i] = '\0';
 
   fprintf(file, "$View /* %s */\n", v->Name);
   fprintf(file, "%s ", name);
   fprintf(file, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-	  "%d %d %d %d %d %d %d %d %d %d %d %d\n", 
-	  List_Nbr(v->Time),
-	  v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL, 
-	  v->NbST, v->NbVT, v->NbTT, v->NbSQ, v->NbVQ, v->NbTQ, 
-	  v->NbSS, v->NbVS, v->NbTS, v->NbSH, v->NbVH, v->NbTH,
-	  v->NbSI, v->NbVI, v->NbTI, v->NbSY, v->NbVY, v->NbTY,
-	  v->NbT2, List_Nbr(v->T2C), v->NbT3, List_Nbr(v->T3C));
-  if(Flag_BIN){
+          "%d %d %d %d %d %d %d %d %d %d %d %d\n",
+          List_Nbr(v->Time),
+          v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL,
+          v->NbST, v->NbVT, v->NbTT, v->NbSQ, v->NbVQ, v->NbTQ,
+          v->NbSS, v->NbVS, v->NbTS, v->NbSH, v->NbVH, v->NbTH,
+          v->NbSI, v->NbVI, v->NbTI, v->NbSY, v->NbVY, v->NbTY,
+          v->NbT2, List_Nbr(v->T2C), v->NbT3, List_Nbr(v->T3C));
+  if(Flag_BIN) {
     f = LIST_FORMAT_BINARY;
     fwrite(&One, sizeof(int), 1, file);
   }
   else
     f = LIST_FORMAT_ASCII;
-  List_WriteToFile(v->Time, file, f); 
-  List_WriteToFile(v->SP, file, f); List_WriteToFile(v->VP, file, f);
+  List_WriteToFile(v->Time, file, f);
+  List_WriteToFile(v->SP, file, f);
+  List_WriteToFile(v->VP, file, f);
   List_WriteToFile(v->TP, file, f);
-  List_WriteToFile(v->SL, file, f); List_WriteToFile(v->VL, file, f); 
+  List_WriteToFile(v->SL, file, f);
+  List_WriteToFile(v->VL, file, f);
   List_WriteToFile(v->TL, file, f);
-  List_WriteToFile(v->ST, file, f); List_WriteToFile(v->VT, file, f);
-  List_WriteToFile(v->TT, file, f); 
-  List_WriteToFile(v->SQ, file, f); List_WriteToFile(v->VQ, file, f);
-  List_WriteToFile(v->TQ, file, f); 
-  List_WriteToFile(v->SS, file, f); List_WriteToFile(v->VS, file, f);
+  List_WriteToFile(v->ST, file, f);
+  List_WriteToFile(v->VT, file, f);
+  List_WriteToFile(v->TT, file, f);
+  List_WriteToFile(v->SQ, file, f);
+  List_WriteToFile(v->VQ, file, f);
+  List_WriteToFile(v->TQ, file, f);
+  List_WriteToFile(v->SS, file, f);
+  List_WriteToFile(v->VS, file, f);
   List_WriteToFile(v->TS, file, f);
-  List_WriteToFile(v->SH, file, f); List_WriteToFile(v->VH, file, f);
+  List_WriteToFile(v->SH, file, f);
+  List_WriteToFile(v->VH, file, f);
   List_WriteToFile(v->TH, file, f);
-  List_WriteToFile(v->SI, file, f); List_WriteToFile(v->VI, file, f);
+  List_WriteToFile(v->SI, file, f);
+  List_WriteToFile(v->VI, file, f);
   List_WriteToFile(v->TI, file, f);
-  List_WriteToFile(v->SY, file, f); List_WriteToFile(v->VY, file, f);
+  List_WriteToFile(v->SY, file, f);
+  List_WriteToFile(v->VY, file, f);
   List_WriteToFile(v->TY, file, f);
-  List_WriteToFile(v->T2D, file, f); List_WriteToFile(v->T2C, file, f);
-  List_WriteToFile(v->T3D, file, f); List_WriteToFile(v->T3C, file, f);
+  List_WriteToFile(v->T2D, file, f);
+  List_WriteToFile(v->T2C, file, f);
+  List_WriteToFile(v->T3D, file, f);
+  List_WriteToFile(v->T3C, file, f);
   fprintf(file, "\n");
   fprintf(file, "$EndView\n");
 
-  if(filename){
+  if(filename) {
     Msg(INFO, "View output complete '%s'", filename);
     Msg(STATUS2, "Wrote '%s'", filename);
     fclose(file);
@@ -875,265 +946,304 @@ void WriteView(int Flag_BIN, Post_View *v, char *filename){
 
 using namespace std;
 
-struct xyzv{
+struct xyzv
+{
 private:
 public:
-  double x,y,z,*vals;
+  double x, y, z, *vals;
   int nbvals;
   int nboccurences;
   static double eps;
-  void update (int nbVals, double *);
-  xyzv(double x, double y, double z);
-  ~xyzv();
-  xyzv & operator = ( const xyzv &);
-  xyzv ( const xyzv &);
+  void update(int nbVals, double *);
+    xyzv(double x, double y, double z);
+   ~xyzv();
+    xyzv & operator =(const xyzv &);
+    xyzv(const xyzv &);
 };
 
 double xyzv::eps = 0.0;
 
-xyzv::xyzv (double xx, double yy, double zz) 
-  : x(xx),y(yy),z(zz),vals(0),nbvals(0),nboccurences(0){}
-
-xyzv::~xyzv(){
-  if(vals)delete [] vals;
+xyzv::xyzv(double xx, double yy, double zz)
+:x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0)
+{
 }
 
-xyzv::xyzv(const xyzv &other){
+xyzv::~xyzv()
+{
+  if(vals)
+    delete[]vals;
+}
+
+xyzv::xyzv(const xyzv & other)
+{
   x = other.x;
   y = other.y;
   z = other.z;
   nbvals = other.nbvals;
   nboccurences = other.nboccurences;
-  if(other.vals && other.nbvals){
+  if(other.vals && other.nbvals) {
     vals = new double[other.nbvals];
-    for(int i=0;i<nbvals;i++)vals[i] = other.vals[i];
+    for(int i = 0; i < nbvals; i++)
+      vals[i] = other.vals[i];
   }
 }
 
-xyzv & xyzv::operator = (const xyzv &other){
-  if(this != &other){ 
+xyzv & xyzv::operator =(const xyzv & other)
+{
+  if(this != &other) {
     x = other.x;
     y = other.y;
     z = other.z;
     nbvals = other.nbvals;
     nboccurences = other.nboccurences;
-    if(other.vals && other.nbvals){
+    if(other.vals && other.nbvals) {
       vals = new double[other.nbvals];
-      for(int i=0;i<nbvals;i++)vals[i] = other.vals[i];
+      for(int i = 0; i < nbvals; i++)
+        vals[i] = other.vals[i];
     }
   }
   return *this;
 }
 
-void xyzv::update (int n, double *v){
+void xyzv::update(int n, double *v)
+{
   int i;
-  if(!vals){
+  if(!vals) {
     vals = new double[n];
-    for(i=0;i<n;i++)vals[i] = 0.0;
+    for(i = 0; i < n; i++)
+      vals[i] = 0.0;
     nbvals = n;
     nboccurences = 0;
   }
-  else if (nbvals != n){
+  else if(nbvals != n) {
     throw n;
   }
 
-  double x1 = (double)(nboccurences)/ (double)(nboccurences + 1);
-  double x2 = 1./(double)(nboccurences + 1);
-  for(i=0;i<nbvals;i++)vals[i] = (x1 * vals[i] + x2 * v[i]);
+  double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
+  double x2 = 1. / (double)(nboccurences + 1);
+  for(i = 0; i < nbvals; i++)
+    vals[i] = (x1 * vals[i] + x2 * v[i]);
   nboccurences++;
 
   //printf("val(%d,%f,%f,%f) = %f\n",nboccurences,x,y,z,vals[0]);
 }
 
-struct lessthanxyzv{
-  bool operator () (const xyzv & p2, const xyzv &p1) const{
-    if( p1.x - p2.x > xyzv::eps)return true;
-    if( p1.x - p2.x <-xyzv::eps)return false;
-    if( p1.y - p2.y > xyzv::eps)return true;
-    if( p1.y - p2.y <-xyzv::eps)return false;
-    if( p1.z - p2.z > xyzv::eps)return true;
-    return false;  
+struct lessthanxyzv
+{
+  bool operator () (const xyzv & p2, const xyzv & p1)const
+  {
+    if(p1.x - p2.x > xyzv::eps)
+      return true;
+    if(p1.x - p2.x < -xyzv::eps)
+      return false;
+    if(p1.y - p2.y > xyzv::eps)
+      return true;
+    if(p1.y - p2.y < -xyzv::eps)
+      return false;
+    if(p1.z - p2.z > xyzv::eps)
+      return true;
+    return false;
   }
 };
 
-typedef set<xyzv,lessthanxyzv> mycont;
+typedef set < xyzv, lessthanxyzv > mycont;
 typedef mycont::const_iterator iter;
 
-class smooth_container{
-public :
-  mycont c;
+class smooth_container
+{
+  public: mycont c;
 };
 
-void generate_connectivities (List_T *SS , int NbTimeStep, int nbvert, int nb, 
-			      mycont & connectivities){
-  double *x,*y,*z,*v;
-  int i,j,k;
+void generate_connectivities(List_T * SS, int NbTimeStep, int nbvert, int nb,
+                             mycont & connectivities)
+{
+  double *x, *y, *z, *v;
+  int i, j, k;
   // double vals[NbTimeStep]; // sgi compiler does not allow this
   double *vals = new double[NbTimeStep];
 
-  for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
-    x = (double*)List_Pointer_Fast(SS,i);
-    y = (double*)List_Pointer_Fast(SS,i+nbvert);
-    z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
-    v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
-    
-    for(j=0;j<nbvert;j++){
-      for(k=0;k<NbTimeStep;k++)vals[k] = v[j+k*nbvert];
-      xyzv xyz(x[j],y[j],z[j]);
+  for(i = 0; i < List_Nbr(SS); i += nb) {
+    x = (double *)List_Pointer_Fast(SS, i);
+    y = (double *)List_Pointer_Fast(SS, i + nbvert);
+    z = (double *)List_Pointer_Fast(SS, i + 2 * nbvert);
+    v = (double *)List_Pointer_Fast(SS, i + 3 * nbvert);
+
+    for(j = 0; j < nbvert; j++) {
+      for(k = 0; k < NbTimeStep; k++)
+        vals[k] = v[j + k * nbvert];
+      xyzv xyz(x[j], y[j], z[j]);
       iter it = connectivities.find(xyz);
-      if(it == connectivities.end()){
-	xyz.update(NbTimeStep,vals);
-	connectivities.insert(xyz);
+      if(it == connectivities.end()) {
+        xyz.update(NbTimeStep, vals);
+        connectivities.insert(xyz);
       }
-      else{
-	// a little weird ... because we know that this will not
-	// destroy the set ordering
-	xyzv *xx = (xyzv*) &(*it); 
-	xx->update(NbTimeStep,vals);
+      else {
+        // a little weird ... because we know that this will not
+        // destroy the set ordering
+        xyzv *xx = (xyzv *) & (*it);
+        xx->update(NbTimeStep, vals);
       }
     }
   }
-  delete [] vals;
+  delete[]vals;
 }
 
-void smooth_list (List_T *SS , double *min, double *max,
-		  int NbTimeStep, int nbvert, int nb, 
-		  mycont & connectivities){
-  double *x,*y,*z,*v;
-  int i,j,k;
+void smooth_list(List_T * SS, double *min, double *max,
+                 int NbTimeStep, int nbvert, int nb, mycont & connectivities)
+{
+  double *x, *y, *z, *v;
+  int i, j, k;
   *min = VAL_INF;
   *max = -VAL_INF;
 
-  for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
-    x = (double*)List_Pointer_Fast(SS,i);
-    y = (double*)List_Pointer_Fast(SS,i+nbvert);
-    z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
-    v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
-    for(j=0;j<nbvert;j++){
-      xyzv xyz(x[j],y[j],z[j]);
+  for(i = 0; i < List_Nbr(SS); i += nb) {
+    x = (double *)List_Pointer_Fast(SS, i);
+    y = (double *)List_Pointer_Fast(SS, i + nbvert);
+    z = (double *)List_Pointer_Fast(SS, i + 2 * nbvert);
+    v = (double *)List_Pointer_Fast(SS, i + 3 * nbvert);
+    for(j = 0; j < nbvert; j++) {
+      xyzv xyz(x[j], y[j], z[j]);
       iter it = connectivities.find(xyz);
-      if(it != connectivities.end()){
-	for(k=0;k<NbTimeStep;k++){
-	  v[j+k*nbvert] = (*it).vals[k];
-	  if(v[j+k*nbvert] < *min) *min = v[j+k*nbvert] ;
-	  if(v[j+k*nbvert] > *max) *max = v[j+k*nbvert] ;
-	}
+      if(it != connectivities.end()) {
+        for(k = 0; k < NbTimeStep; k++) {
+          v[j + k * nbvert] = (*it).vals[k];
+          if(v[j + k * nbvert] < *min)
+            *min = v[j + k * nbvert];
+          if(v[j + k * nbvert] > *max)
+            *max = v[j + k * nbvert];
+        }
       }
     }
-  } 
-
-}
-
-void Post_View :: smooth (){
-  xyzv::eps = CTX.lc * 1.e-8;
-
-  if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY){
-    mycont con;
-    int nbl=0, nbt=0, nbq=0, nbs=0, nbh=0, nbi=0, nby=0;
-    Msg(INFO,"Smoothing scalar primitives in view...");
-    if(NbSL){
-      nbt = List_Nbr(SL) / NbSL ;
-      generate_connectivities(SL , NbTimeStep, 2, nbl, con);
-    }
-    if(NbST){
-      nbt = List_Nbr(ST) / NbST ;
-      generate_connectivities(ST , NbTimeStep, 3, nbt, con);
-    }
-    if(NbSQ){
-      nbq = List_Nbr(SQ) / NbSQ ;
-      generate_connectivities(SQ , NbTimeStep, 4, nbq, con);
-    }
-    if(NbSS){
-      nbs = List_Nbr(SS) / NbSS ;
-      generate_connectivities(SS , NbTimeStep, 4, nbs, con);
-    }
-    if(NbSH){
-      nbh = List_Nbr(SH) / NbSH ;
-      generate_connectivities(SH , NbTimeStep, 8, nbh, con);
-    }
-    if(NbSI){
-      nbi = List_Nbr(SI) / NbSI ;
-      generate_connectivities(SI , NbTimeStep, 6, nbi, con);
-    }
-    if(NbSY){
-      nby = List_Nbr(SY) / NbSY ;
-      generate_connectivities(SY , NbTimeStep, 5, nby, con);
-    }
-    if(nbl) smooth_list(SL , &Min, &Max, NbTimeStep, 2, nbl, con);
-    if(nbt) smooth_list(ST , &Min, &Max, NbTimeStep, 3, nbt, con);
-    if(nbq) smooth_list(SQ , &Min, &Max, NbTimeStep, 4, nbq, con);
-    if(nbs) smooth_list(SS , &Min, &Max, NbTimeStep, 4, nbs, con);
-    if(nbh) smooth_list(SH , &Min, &Max, NbTimeStep, 8, nbh, con);
-    if(nbi) smooth_list(SI , &Min, &Max, NbTimeStep, 6, nbi, con);
-    if(nby) smooth_list(SY , &Min, &Max, NbTimeStep, 5, nby, con);
-    Msg(INFO,"...done");
   }
 
 }
-  
-// Normal smoothing
 
-void Post_View :: reset_normals(){
-  if(normals) delete normals;
-  normals  = 0;
+void Post_View::smooth()
+{
+  xyzv::eps = CTX.lc * 1.e-8;
+
+  if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
+    mycont con;
+    int nbl = 0, nbt = 0, nbq = 0, nbs = 0, nbh = 0, nbi = 0, nby = 0;
+    Msg(INFO, "Smoothing scalar primitives in view...");
+    if(NbSL) {
+      nbt = List_Nbr(SL) / NbSL;
+      generate_connectivities(SL, NbTimeStep, 2, nbl, con);
+    }
+    if(NbST) {
+      nbt = List_Nbr(ST) / NbST;
+      generate_connectivities(ST, NbTimeStep, 3, nbt, con);
+    }
+    if(NbSQ) {
+      nbq = List_Nbr(SQ) / NbSQ;
+      generate_connectivities(SQ, NbTimeStep, 4, nbq, con);
+    }
+    if(NbSS) {
+      nbs = List_Nbr(SS) / NbSS;
+      generate_connectivities(SS, NbTimeStep, 4, nbs, con);
+    }
+    if(NbSH) {
+      nbh = List_Nbr(SH) / NbSH;
+      generate_connectivities(SH, NbTimeStep, 8, nbh, con);
+    }
+    if(NbSI) {
+      nbi = List_Nbr(SI) / NbSI;
+      generate_connectivities(SI, NbTimeStep, 6, nbi, con);
+    }
+    if(NbSY) {
+      nby = List_Nbr(SY) / NbSY;
+      generate_connectivities(SY, NbTimeStep, 5, nby, con);
+    }
+    if(nbl)
+      smooth_list(SL, &Min, &Max, NbTimeStep, 2, nbl, con);
+    if(nbt)
+      smooth_list(ST, &Min, &Max, NbTimeStep, 3, nbt, con);
+    if(nbq)
+      smooth_list(SQ, &Min, &Max, NbTimeStep, 4, nbq, con);
+    if(nbs)
+      smooth_list(SS, &Min, &Max, NbTimeStep, 4, nbs, con);
+    if(nbh)
+      smooth_list(SH, &Min, &Max, NbTimeStep, 8, nbh, con);
+    if(nbi)
+      smooth_list(SI, &Min, &Max, NbTimeStep, 6, nbi, con);
+    if(nby)
+      smooth_list(SY, &Min, &Max, NbTimeStep, 5, nby, con);
+    Msg(INFO, "...done");
+  }
+
 }
 
-void Post_View :: add_normal(double x, double y, double z, 
-			     double nx, double ny, double nz){
-  if(!normals) normals = new smooth_container;
+// Normal smoothing
 
-  double n[3] = {nx,ny,nz};
-  xyzv xyz(x,y,z);
+void Post_View::reset_normals()
+{
+  if(normals)
+    delete normals;
+  normals = 0;
+}
+
+void Post_View::add_normal(double x, double y, double z,
+                           double nx, double ny, double nz)
+{
+  if(!normals)
+    normals = new smooth_container;
+
+  double n[3] = { nx, ny, nz };
+  xyzv xyz(x, y, z);
 
   iter it = normals->c.find(xyz);
 
-  if(it == normals->c.end()){
-    xyz.update(3,n);
+  if(it == normals->c.end()) {
+    xyz.update(3, n);
     normals->c.insert(xyz);
   }
-  else{
-    xyzv *xx = (xyzv*) &(*it); 
-    xx->update(3,n);
+  else {
+    xyzv *xx = (xyzv *) & (*it);
+    xx->update(3, n);
   }
 }
 
-double get_angle (double * aa, double * bb){ 
- double angplan, cosc, sinc, a[3],b[3],c[3];
-  if(!aa || !bb) return 0.;
+double get_angle(double *aa, double *bb)
+{
+  double angplan, cosc, sinc, a[3], b[3], c[3];
+  if(!aa || !bb)
+    return 0.;
   a[0] = aa[0];
   a[1] = aa[1];
   a[2] = aa[2];
   b[0] = bb[0];
   b[1] = bb[1];
   b[2] = bb[2];
-  norme (a);
-  norme (b);
-  prodve (a, b, c);
-  prosca (a, b, &cosc);
-  sinc = sqrt (c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-  angplan = myatan2 (sinc, cosc);
-  return angplan*180./Pi;
+  norme(a);
+  norme(b);
+  prodve(a, b, c);
+  prosca(a, b, &cosc);
+  sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+  angplan = myatan2(sinc, cosc);
+  return angplan * 180. / Pi;
 }
 
-bool Post_View :: get_normal(double x, double y, double z, 
-			     double &nx, double &ny, double &nz){
-  if(!normals) return false;
+bool Post_View::get_normal(double x, double y, double z,
+                           double &nx, double &ny, double &nz)
+{
+  if(!normals)
+    return false;
 
-  double n[3] = {nx,ny,nz};
-  xyzv xyz(x,y,z);
+  double n[3] = { nx, ny, nz };
+  xyzv xyz(x, y, z);
 
   iter it = normals->c.find(xyz);
 
-  if(it == normals->c.end()) return false;
+  if(it == normals->c.end())
+    return false;
 
-  double angle = get_angle ((*it).vals, n);
+  double angle = get_angle((*it).vals, n);
 
-  if(fabs(angle) < AngleSmoothNormals)
-    {
-      nx = (*it).vals[0];
-      ny = (*it).vals[1];
-      nz = (*it).vals[2];
-    }
+  if(fabs(angle) < AngleSmoothNormals) {
+    nx = (*it).vals[0];
+    ny = (*it).vals[1];
+    nz = (*it).vals[2];
+  }
 
   return true;
 }
@@ -1141,115 +1251,121 @@ bool Post_View :: get_normal(double x, double y, double z,
 // Transformation
 
 static void transform(double mat[3][3], double v[3],
-		      double *x, double *y, double *z){
-  *x = mat[0][0]*v[0] + mat[0][1]*v[1] + mat[0][2]*v[2];
-  *y = mat[1][0]*v[0] + mat[1][1]*v[1] + mat[1][2]*v[2];
-  *z = mat[2][0]*v[0] + mat[2][1]*v[1] + mat[2][2]*v[2];
+                      double *x, double *y, double *z)
+{
+  *x = mat[0][0] * v[0] + mat[0][1] * v[1] + mat[0][2] * v[2];
+  *y = mat[1][0] * v[0] + mat[1][1] * v[1] + mat[1][2] * v[2];
+  *z = mat[2][0] * v[0] + mat[2][1] * v[1] + mat[2][2] * v[2];
 }
 
-static void transform_list(List_T *V , int NbTimeStep, int nbvert,
-			   int nb, double mat[3][3]){
-  double *x,*y,*z, v[3];
+static void transform_list(List_T * V, int NbTimeStep, int nbvert,
+                           int nb, double mat[3][3])
+{
+  double *x, *y, *z, v[3];
   int i, j;
 
-  for(i = 0 ; i < List_Nbr(V) ; i+=nb){
-    x = (double*)List_Pointer_Fast(V,i);
-    y = (double*)List_Pointer_Fast(V,i+nbvert);
-    z = (double*)List_Pointer_Fast(V,i+2*nbvert);
-    for(j=0; j<nbvert; j++){
+  for(i = 0; i < List_Nbr(V); i += nb) {
+    x = (double *)List_Pointer_Fast(V, i);
+    y = (double *)List_Pointer_Fast(V, i + nbvert);
+    z = (double *)List_Pointer_Fast(V, i + 2 * nbvert);
+    for(j = 0; j < nbvert; j++) {
       v[0] = x[j];
       v[1] = y[j];
       v[2] = z[j];
-      transform(mat,v,&x[j],&y[j],&z[j]);
+      transform(mat, v, &x[j], &y[j], &z[j]);
     }
   }
 }
 
-void Post_View :: transform (double mat[3][3]){
+void Post_View::transform(double mat[3][3])
+{
   int nb;
 
-  if(NbSP){
-    nb = List_Nbr(SP) / NbSP ;
+  if(NbSP) {
+    nb = List_Nbr(SP) / NbSP;
     transform_list(SP, NbTimeStep, 1, nb, mat);
   }
-  if(NbSL){
-    nb = List_Nbr(SL) / NbSL ;
+  if(NbSL) {
+    nb = List_Nbr(SL) / NbSL;
     transform_list(SL, NbTimeStep, 2, nb, mat);
   }
-  if(NbST){
-    nb = List_Nbr(ST) / NbST ;
+  if(NbST) {
+    nb = List_Nbr(ST) / NbST;
     transform_list(ST, NbTimeStep, 3, nb, mat);
   }
-  if(NbSQ){
-    nb = List_Nbr(SQ) / NbSQ ;
+  if(NbSQ) {
+    nb = List_Nbr(SQ) / NbSQ;
     transform_list(SQ, NbTimeStep, 4, nb, mat);
   }
-  if(NbSS){
-    nb = List_Nbr(SS) / NbSS ;
+  if(NbSS) {
+    nb = List_Nbr(SS) / NbSS;
     transform_list(SS, NbTimeStep, 4, nb, mat);
   }
-  if(NbSH){
-    nb = List_Nbr(SH) / NbSH ;
+  if(NbSH) {
+    nb = List_Nbr(SH) / NbSH;
     transform_list(SH, NbTimeStep, 8, nb, mat);
   }
-  if(NbSI){
-    nb = List_Nbr(SI) / NbSI ;
+  if(NbSI) {
+    nb = List_Nbr(SI) / NbSI;
     transform_list(SI, NbTimeStep, 6, nb, mat);
   }
-  if(NbSY){
-    nb = List_Nbr(SY) / NbSY ;
+  if(NbSY) {
+    nb = List_Nbr(SY) / NbSY;
     transform_list(SY, NbTimeStep, 5, nb, mat);
   }
 
 
-  if(NbVP){
-    nb = List_Nbr(VP) / NbVP ;
+  if(NbVP) {
+    nb = List_Nbr(VP) / NbVP;
     transform_list(VP, NbTimeStep, 1, nb, mat);
   }
-  if(NbVL){
-    nb = List_Nbr(VL) / NbVL ;
+  if(NbVL) {
+    nb = List_Nbr(VL) / NbVL;
     transform_list(VL, NbTimeStep, 2, nb, mat);
   }
-  if(NbVT){
-    nb = List_Nbr(VT) / NbVT ;
+  if(NbVT) {
+    nb = List_Nbr(VT) / NbVT;
     transform_list(VT, NbTimeStep, 3, nb, mat);
   }
-  if(NbVQ){
-    nb = List_Nbr(VQ) / NbVQ ;
+  if(NbVQ) {
+    nb = List_Nbr(VQ) / NbVQ;
     transform_list(VQ, NbTimeStep, 4, nb, mat);
   }
-  if(NbVS){
-    nb = List_Nbr(VS) / NbVS ;
+  if(NbVS) {
+    nb = List_Nbr(VS) / NbVS;
     transform_list(VS, NbTimeStep, 4, nb, mat);
   }
-  if(NbVH){
-    nb = List_Nbr(VH) / NbVH ;
+  if(NbVH) {
+    nb = List_Nbr(VH) / NbVH;
     transform_list(VH, NbTimeStep, 8, nb, mat);
   }
-  if(NbVI){
-    nb = List_Nbr(VI) / NbVI ;
+  if(NbVI) {
+    nb = List_Nbr(VI) / NbVI;
     transform_list(VI, NbTimeStep, 6, nb, mat);
   }
-  if(NbVY){
-    nb = List_Nbr(VY) / NbVY ;
+  if(NbVY) {
+    nb = List_Nbr(VY) / NbVY;
     transform_list(VY, NbTimeStep, 5, nb, mat);
   }
 }
 
 // merge lists
 
-static void merge(List_T *a , List_T *b){
-  if(!a || !b) return;
-  for(int i=0;i<List_Nbr(a);i++){
-    List_Add(b,List_Pointer(a,i));
+static void merge(List_T * a, List_T * b)
+{
+  if(!a || !b)
+    return;
+  for(int i = 0; i < List_Nbr(a); i++) {
+    List_Add(b, List_Pointer(a, i));
   }
 }
 
-void MergeViews(int all){
+void MergeViews(int all)
+{
   Post_View *vm = BeginView(1);
-  for(int i=0; i<List_Nbr(CTX.post.list)-1; i++){
-    Post_View *v = (Post_View*)List_Pointer(CTX.post.list, i);
-    if(all || v->Visible){
+  for(int i = 0; i < List_Nbr(CTX.post.list) - 1; i++) {
+    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    if(all || v->Visible) {
       Msg(DEBUG, "Merging view %d", i);
       // *INDENT-OFF*
       merge(v->SP,vm->SP); vm->NbSP += v->NbSP;
@@ -1278,11 +1394,11 @@ void MergeViews(int all){
       merge(v->TY,vm->TY); vm->NbTY += v->NbTY;
       // *INDENT-ON*
       /* this more complicated: have to change the indices
-	 merge(v->T2D,vm->T2D);
-	 merge(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
-	 merge(v->T3D,vm->T3D);
-	 merge(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
-      */
+         merge(v->T2D,vm->T2D);
+         merge(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
+         merge(v->T3D,vm->T3D);
+         merge(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
+       */
     }
   }
   EndView(vm, 1, "merged.pos", "merged");
@@ -1290,10 +1406,12 @@ void MergeViews(int all){
 
 // generic access functions
 
-int Post_View::get_val(int list, int node, int timestep, double *value){
+int Post_View::get_val(int list, int node, int timestep, double *value)
+{
   return 0;
 }
 
-void Post_View::add_val(int list, int node, int timestep, double value){
-  
+void Post_View::add_val(int list, int node, int timestep, double value)
+{
+
 }

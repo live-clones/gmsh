@@ -1,4 +1,4 @@
-// $Id: Malloc.cpp,v 1.13 2003-01-23 20:19:18 geuzaine Exp $
+// $Id: Malloc.cpp,v 1.14 2003-03-01 22:36:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -28,35 +28,43 @@
 #include "Malloc.h"
 #include "Message.h"
 
-void *Malloc(size_t size){
+void *Malloc(size_t size)
+{
   void *ptr;
 
-  if (!size) return(NULL);
+  if(!size)
+    return (NULL);
   ptr = malloc(size);
-  if (ptr == NULL)
+  if(ptr == NULL)
     Msg(FATAL, "Out of memory (buy some more RAM!)");
-  return(ptr);
+  return (ptr);
 }
 
-void *Calloc(size_t num, size_t size){
+void *Calloc(size_t num, size_t size)
+{
   void *ptr;
 
-  if (!size) return(NULL);
+  if(!size)
+    return (NULL);
   ptr = calloc(num, size);
-  if (ptr == NULL)
+  if(ptr == NULL)
     Msg(FATAL, "Out of memory (buy some more RAM!)");
-  return(ptr);
+  return (ptr);
 }
 
-void *Realloc(void *ptr, size_t size){
-  if (!size) return(NULL);
-  ptr = realloc(ptr,size);
-  if (ptr == NULL)
+void *Realloc(void *ptr, size_t size)
+{
+  if(!size)
+    return (NULL);
+  ptr = realloc(ptr, size);
+  if(ptr == NULL)
     Msg(FATAL, "Out of memory (buy some more RAM!)");
-  return(ptr);
+  return (ptr);
 }
 
-void Free(void *ptr){
-  if (ptr == NULL) return;
+void Free(void *ptr)
+{
+  if(ptr == NULL)
+    return;
   free(ptr);
 }

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.8 2003-02-25 16:49:36 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.9 2003-03-01 22:36:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -33,16 +33,16 @@
 #include "Parser.h"
 
 #if !defined(GMSH_MAJOR_VERSION)
-#error 
-#error Common/GmshVersion.h is not up-to-date. 
+#error
+#error Common/GmshVersion.h is not up-to-date.
 #error Please run 'make tag'.
 #error
 #endif
 
-extern Context_T  CTX;
+extern Context_T CTX;
 
-char  *TheFileNameTab[MAX_OPEN_FILES];
-char  *TheBgmFileName=NULL, *TheOptString=NULL;
+char *TheFileNameTab[MAX_OPEN_FILES];
+char *TheBgmFileName = NULL, *TheOptString = NULL;
 
 // *INDENT-OFF*
 
@@ -110,256 +110,282 @@ void Print_Usage(char *name){
 
 // *INDENT-ON*
 
-void Get_Options (int argc, char *argv[], int *nbfiles) {
-  int i=1;
+void Get_Options(int argc, char *argv[], int *nbfiles)
+{
+  int i = 1;
+
+  // This symbol context is local to option parsing (the symbols will
+  // not interfere with subsequent OpenFiles)
+
+  InitSymbols();
 
   // Parse session and option files
 
-  InitSymbols(); //this symbol context is local to option parsing (the
-                 //symbols will not interfere with subsequent OpenFiles)
-
-  ParseFile(CTX.sessionrc_filename,1);
-  ParseFile(CTX.optionsrc_filename,1);
+  ParseFile(CTX.sessionrc_filename, 1);
+  ParseFile(CTX.optionsrc_filename, 1);
 
   // Get command line options
 
-  TheFileNameTab[0] = CTX.default_filename ;
+  TheFileNameTab[0] = CTX.default_filename;
   *nbfiles = 0;
-  
-  while (i < argc) {
-    
-    if (argv[i][0] == '-') {
-      
-      if(!strcmp(argv[i]+1, "string")){
-	i++;
-        if(argv[i]!=NULL) TheOptString = argv[i++];
-	else{
+
+  while(i < argc) {
+
+    if(argv[i][0] == '-') {
+
+      if(!strcmp(argv[i] + 1, "string")) {
+        i++;
+        if(argv[i] != NULL)
+          TheOptString = argv[i++];
+        else {
           fprintf(stderr, ERROR_STR "Missing string\n");
           exit(1);
-	}
+        }
       }
-      else if(!strcmp(argv[i]+1, "a")){ 
-        CTX.initial_context = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "g")){ 
-        CTX.initial_context = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "m")){ 
-        CTX.initial_context = 2; i++;
-      }
-      else if(!strcmp(argv[i]+1, "s")){ 
-        CTX.initial_context = 3; i++;
-      }
-      else if(!strcmp(argv[i]+1, "p")){ 
-        CTX.initial_context = 4; i++;
-      }
-      else if(!strcmp(argv[i]+1, "0")){ 
-        CTX.batch = -1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "1")){ 
-        CTX.batch = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "2")){ 
-        CTX.batch = 2; i++;
-      }
-      else if(!strcmp(argv[i]+1, "3")){ 
-        CTX.batch = 3; i++;
-      }
-      else if(!strcmp(argv[i]+1, "saveall")){ 
-        CTX.mesh.save_all = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "extrude")){ //old extrusion mesh generator
-        CTX.mesh.oldxtrude = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "recombine")){ //old extrusion mesh generator
-        CTX.mesh.oldxtrude_recombine = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "dupli")){
-        CTX.mesh.check_duplicates = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "histogram")){ 
-        CTX.mesh.histogram = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "option")){ 
+      else if(!strcmp(argv[i] + 1, "a")) {
+        CTX.initial_context = 0;
         i++;
-        if(argv[i] != NULL) ParseFile(argv[i++],1);
-        else {    
+      }
+      else if(!strcmp(argv[i] + 1, "g")) {
+        CTX.initial_context = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "m")) {
+        CTX.initial_context = 2;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "s")) {
+        CTX.initial_context = 3;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "p")) {
+        CTX.initial_context = 4;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "0")) {
+        CTX.batch = -1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "1")) {
+        CTX.batch = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "2")) {
+        CTX.batch = 2;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "3")) {
+        CTX.batch = 3;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "saveall")) {
+        CTX.mesh.save_all = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "extrude")) {        //old extrusion mesh generator
+        CTX.mesh.oldxtrude = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "recombine")) {      //old extrusion mesh generator
+        CTX.mesh.oldxtrude_recombine = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "dupli")) {
+        CTX.mesh.check_duplicates = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "histogram")) {
+        CTX.mesh.histogram = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "option")) {
+        i++;
+        if(argv[i] != NULL)
+          ParseFile(argv[i++], 1);
+        else {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "o")){ 
+      else if(!strcmp(argv[i] + 1, "o")) {
         i++;
-        if(argv[i] != NULL) CTX.output_filename = argv[i++];
-        else {    
+        if(argv[i] != NULL)
+          CTX.output_filename = argv[i++];
+        else {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "bgm")){ 
+      else if(!strcmp(argv[i] + 1, "bgm")) {
         i++;
-        if(argv[i] != NULL) TheBgmFileName = argv[i++];
-        else {    
+        if(argv[i] != NULL)
+          TheBgmFileName = argv[i++];
+        else {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "constrain")){ 
-	CTX.mesh.constrained_bgmesh = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "convert")){ 
-	i++;
-	CTX.terminal = 1;
-	if(argv[i] && argv[i+1]){
-	  ParseFile(argv[i],0);
-	  if(List_Nbr(CTX.post.list))
-	    WriteView(1,(Post_View*)List_Pointer(CTX.post.list, 0),argv[i+1]);
-	  else
-	    fprintf(stderr, ERROR_STR "No view to convert\n");
-	}
-	else
-	  fprintf(stderr, "Usage: %s -convert view.ascii view.binary\n", argv[0]);
-	exit(1);
-      }
-      else if(!strcmp(argv[i]+1, "old")){ 
-        CTX.geom.old_circle = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "initial")){
+      else if(!strcmp(argv[i] + 1, "constrain")) {
+        CTX.mesh.constrained_bgmesh = 1;
         i++;
-        if(argv[i]!=NULL) CTX.mesh.initial_only = atoi(argv[i++]);
-        else {    
+      }
+      else if(!strcmp(argv[i] + 1, "convert")) {
+        i++;
+        CTX.terminal = 1;
+        if(argv[i] && argv[i + 1]) {
+          ParseFile(argv[i], 0);
+          if(List_Nbr(CTX.post.list))
+            WriteView(1, (Post_View *) List_Pointer(CTX.post.list, 0),
+                      argv[i + 1]);
+          else
+            fprintf(stderr, ERROR_STR "No view to convert\n");
+        }
+        else
+          fprintf(stderr, "Usage: %s -convert view.ascii view.binary\n",
+                  argv[0]);
+        exit(1);
+      }
+      else if(!strcmp(argv[i] + 1, "old")) {
+        CTX.geom.old_circle = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "initial")) {
+        i++;
+        if(argv[i] != NULL)
+          CTX.mesh.initial_only = atoi(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "quality")){
+      else if(!strcmp(argv[i] + 1, "quality")) {
         i++;
-        if(argv[i]!=NULL) CTX.mesh.quality = atof(argv[i++]);
-        else {    
+        if(argv[i] != NULL)
+          CTX.mesh.quality = atof(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "scale")){
+      else if(!strcmp(argv[i] + 1, "scale")) {
         i++;
-        if(argv[i]!=NULL) CTX.geom.scaling_factor = atof(argv[i++]);
-        else {    
+        if(argv[i] != NULL)
+          CTX.geom.scaling_factor = atof(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "meshscale")){
+      else if(!strcmp(argv[i] + 1, "meshscale")) {
         i++;
-        if(argv[i]!=NULL) CTX.mesh.scaling_factor = atof(argv[i++]);
-        else {    
+        if(argv[i] != NULL)
+          CTX.mesh.scaling_factor = atof(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "rand")){
+      else if(!strcmp(argv[i] + 1, "rand")) {
         i++;
-        if(argv[i]!=NULL) CTX.mesh.rand_factor = atof(argv[i++]);
-        else {    
+        if(argv[i] != NULL)
+          CTX.mesh.rand_factor = atof(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "clscale")){
+      else if(!strcmp(argv[i] + 1, "clscale")) {
         i++;
-        if(argv[i]!=NULL){
+        if(argv[i] != NULL) {
           CTX.mesh.lc_factor = atof(argv[i++]);
-          if(CTX.mesh.lc_factor <= 0.0){
-            fprintf(stderr, ERROR_STR 
+          if(CTX.mesh.lc_factor <= 0.0) {
+            fprintf(stderr, ERROR_STR
                     "Characteristic length factor must be > 0\n");
             exit(1);
           }
         }
-        else {    
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "smooth")){ 
+      else if(!strcmp(argv[i] + 1, "smooth")) {
         i++;
-        if(argv[i]!=NULL) CTX.mesh.nb_smoothing = atoi(argv[i++]);
-        else{
+        if(argv[i] != NULL)
+          CTX.mesh.nb_smoothing = atoi(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "degree")){  
+      else if(!strcmp(argv[i] + 1, "degree")) {
         i++;
-        if(argv[i]!=NULL)
+        if(argv[i] != NULL)
           opt_mesh_degree(0, GMSH_SET, atof(argv[i++]));
-        else {    
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "format") ||  
-              !strcmp(argv[i]+1, "f")){  
+      else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;
-        if(argv[i]!=NULL){
-          if(!strcmp(argv[i],"msh") || 
-             !strcmp(argv[i],"MSH") || 
-             !strcmp(argv[i],"gmsh")){
-            CTX.mesh.format = FORMAT_MSH ;
+        if(argv[i] != NULL) {
+          if(!strcmp(argv[i], "msh") ||
+             !strcmp(argv[i], "MSH") || !strcmp(argv[i], "gmsh")) {
+            CTX.mesh.format = FORMAT_MSH;
           }
-          else if(!strcmp(argv[i],"unv") ||
-                  !strcmp(argv[i],"UNV") || 
-                  !strcmp(argv[i],"ideas")){
-            CTX.mesh.format = FORMAT_UNV ;
+          else if(!strcmp(argv[i], "unv") ||
+                  !strcmp(argv[i], "UNV") || !strcmp(argv[i], "ideas")) {
+            CTX.mesh.format = FORMAT_UNV;
           }
-          else if(!strcmp(argv[i],"gref") ||
-                  !strcmp(argv[i],"GREF") || 
-                  !strcmp(argv[i],"Gref")){
-            CTX.mesh.format = FORMAT_GREF ;
+          else if(!strcmp(argv[i], "gref") ||
+                  !strcmp(argv[i], "GREF") || !strcmp(argv[i], "Gref")) {
+            CTX.mesh.format = FORMAT_GREF;
           }
-          else{
+          else {
             fprintf(stderr, ERROR_STR "Unknown mesh format\n");
             exit(1);
           }
           i++;
         }
-        else {    
+        else {
           fprintf(stderr, ERROR_STR "Missing format\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "algo")){  
+      else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
-        if(argv[i]!=NULL){
-          if(!strncmp(argv[i],"iso",3))
-            CTX.mesh.algo = DELAUNAY_ISO ;
-          else if(!strncmp(argv[i],"tri",3))
-            CTX.mesh.algo = DELAUNAY_SHEWCHUK ;
-          else if(!strncmp(argv[i],"aniso",5))
-            CTX.mesh.algo = DELAUNAY_ANISO ;
-          else{
+        if(argv[i] != NULL) {
+          if(!strncmp(argv[i], "iso", 3))
+            CTX.mesh.algo = DELAUNAY_ISO;
+          else if(!strncmp(argv[i], "tri", 3))
+            CTX.mesh.algo = DELAUNAY_SHEWCHUK;
+          else if(!strncmp(argv[i], "aniso", 5))
+            CTX.mesh.algo = DELAUNAY_ANISO;
+          else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);
           }
           i++;
         }
-        else {    
+        else {
           fprintf(stderr, ERROR_STR "Missing algorithm\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "version") || 
-              !strcmp(argv[i]+1, "-version")){
-        fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
-		GMSH_PATCH_VERSION);
+      else if(!strcmp(argv[i] + 1, "version") ||
+              !strcmp(argv[i] + 1, "-version")) {
+        fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
+                GMSH_PATCH_VERSION);
         exit(1);
       }
-      else if(!strcmp(argv[i]+1, "info") || 
-              !strcmp(argv[i]+1, "-info")){
-        fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION, 
-	      GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
+      else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
+        fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION,
+                GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
         fprintf(stderr, "%s\n", gmsh_os);
 #if defined(HAVE_FLTK)
-        fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION, 
-		FL_MINOR_VERSION, FL_PATCH_VERSION);
+        fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION,
+                FL_MINOR_VERSION, FL_PATCH_VERSION);
 #else
         fprintf(stderr, "%snone\n", gmsh_gui);
 #endif
@@ -368,166 +394,187 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         fprintf(stderr, "%s\n", gmsh_packager);
         fprintf(stderr, "%s\n", gmsh_url);
         fprintf(stderr, "%s\n", gmsh_email);
-        exit(1) ; 
+        exit(1);
       }
-      else if(!strcmp(argv[i]+1, "help") || 
-              !strcmp(argv[i]+1, "-help")){
+      else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "%s\n", gmsh_progname);
         fprintf(stderr, "%s\n", gmsh_copyright);
-	CTX.terminal = 1 ;
+        CTX.terminal = 1;
         Print_Usage(argv[0]);
         exit(1);
       }
-      else if(!strcmp(argv[i]+1, "v")){  
+      else if(!strcmp(argv[i] + 1, "v")) {
         i++;
-        if(argv[i]!=NULL) CTX.verbosity = atoi(argv[i++]);
-        else {    
+        if(argv[i] != NULL)
+          CTX.verbosity = atoi(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
 #if defined(HAVE_FLTK)
-      else if(!strcmp(argv[i]+1, "noterm")){ 
-        CTX.terminal = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "term")){ 
-        CTX.terminal = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "alpha")){ 
-        CTX.alpha = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "notrack")){ 
-        CTX.useTrackball = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "dual")){ 
-        CTX.mesh.dual = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "interactive")){ 
-        CTX.mesh.interactive = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "noview")){ 
-        opt_view_visible(0, GMSH_SET, 0); i++;
-      }
-      else if(!strcmp(argv[i]+1, "plugin")){ 
-	opt_general_default_plugins(0, GMSH_SET, 1); i++;
-      }
-      else if(!strcmp(argv[i]+1, "noplugin")){ 
-	opt_general_default_plugins(0, GMSH_SET, 0); i++;
-      }
-      else if(!strcmp(argv[i]+1, "link")){ 
-        i++ ;
-        if(argv[i]!=NULL)
-	  CTX.post.link = atoi(argv[i++]);
-        else{
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
-      }
-      else if(!strcmp(argv[i]+1, "fill")){ 
-        opt_view_intervals_type(0, GMSH_SET, DRAW_POST_CONTINUOUS) ; i++;
-      }
-      else if(!strcmp(argv[i]+1, "smoothview")){ 
-	CTX.post.smooth=1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "nbiso")){ 
-        i++ ;
-        if(argv[i]!=NULL)
-	  opt_view_nb_iso(0, GMSH_SET, atoi(argv[i++]));
-        else{
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
-      }
-      else if(!strcmp(argv[i]+1, "command") || 
-              !strcmp(argv[i]+1, "c")){ 
-        CTX.command_win = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "nocommand") ||
-              !strcmp(argv[i]+1, "noc")){ 
-        CTX.command_win = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "overlay") ||
-              !strcmp(argv[i]+1, "ov")){ 
-        CTX.overlay = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "nooverlay") ||
-              !strcmp(argv[i]+1, "noov")){ 
-        CTX.overlay = CTX.geom.highlight = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "hh")){ 
-        CTX.overlay = 0 ; CTX.geom.highlight = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "perspective") ||
-              !strcmp(argv[i]+1, "p")){ 
-        CTX.ortho = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "ortho") ||
-              !strcmp(argv[i]+1, "o")){ 
-        CTX.ortho = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "threads")){
-        CTX.threads = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "nothreads")){
-        CTX.threads = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "db")){ 
-        CTX.db = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "nodb")){ 
-        CTX.db = 0; CTX.geom.highlight = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "dl")){ 
-        CTX.post.display_lists = 1; i++;
-      }
-      else if(!strcmp(argv[i]+1, "nodl")){ 
-        CTX.post.display_lists = 0; i++;
-      }
-      else if(!strcmp(argv[i]+1, "fontsize")){
+      else if(!strcmp(argv[i] + 1, "noterm")) {
+        CTX.terminal = 0;
         i++;
-        if(argv[i]!=NULL){
-	  CTX.fontsize = atoi(argv[i]);
-          i++;
-	}
-        else {    
+      }
+      else if(!strcmp(argv[i] + 1, "term")) {
+        CTX.terminal = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "alpha")) {
+        CTX.alpha = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "notrack")) {
+        CTX.useTrackball = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "dual")) {
+        CTX.mesh.dual = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "interactive")) {
+        CTX.mesh.interactive = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "noview")) {
+        opt_view_visible(0, GMSH_SET, 0);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "plugin")) {
+        opt_general_default_plugins(0, GMSH_SET, 1);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "noplugin")) {
+        opt_general_default_plugins(0, GMSH_SET, 0);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "link")) {
+        i++;
+        if(argv[i] != NULL)
+          CTX.post.link = atoi(argv[i++]);
+        else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "theme")){
+      else if(!strcmp(argv[i] + 1, "fill")) {
+        opt_view_intervals_type(0, GMSH_SET, DRAW_POST_CONTINUOUS);
         i++;
-        if(argv[i]!=NULL){
-	  CTX.theme = argv[i];
+      }
+      else if(!strcmp(argv[i] + 1, "smoothview")) {
+        CTX.post.smooth = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nbiso")) {
+        i++;
+        if(argv[i] != NULL)
+          opt_view_nb_iso(0, GMSH_SET, atoi(argv[i++]));
+        else {
+          fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "command") || !strcmp(argv[i] + 1, "c")) {
+        CTX.command_win = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nocommand") ||
+              !strcmp(argv[i] + 1, "noc")) {
+        CTX.command_win = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "overlay") || !strcmp(argv[i] + 1, "ov")) {
+        CTX.overlay = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nooverlay") ||
+              !strcmp(argv[i] + 1, "noov")) {
+        CTX.overlay = CTX.geom.highlight = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "hh")) {
+        CTX.overlay = 0;
+        CTX.geom.highlight = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "perspective") ||
+              !strcmp(argv[i] + 1, "p")) {
+        CTX.ortho = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "ortho") || !strcmp(argv[i] + 1, "o")) {
+        CTX.ortho = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "threads")) {
+        CTX.threads = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nothreads")) {
+        CTX.threads = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "db")) {
+        CTX.db = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nodb")) {
+        CTX.db = 0;
+        CTX.geom.highlight = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "dl")) {
+        CTX.post.display_lists = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "nodl")) {
+        CTX.post.display_lists = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "fontsize")) {
+        i++;
+        if(argv[i] != NULL) {
+          CTX.fontsize = atoi(argv[i]);
           i++;
-	}
-        else {    
+        }
+        else {
+          fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "theme")) {
+        i++;
+        if(argv[i] != NULL) {
+          CTX.theme = argv[i];
+          i++;
+        }
+        else {
           fprintf(stderr, ERROR_STR "Missing argument\n");
           exit(1);
         }
       }
-      else if(!strcmp(argv[i]+1, "display")){
+      else if(!strcmp(argv[i] + 1, "display")) {
         i++;
-        if(argv[i]!=NULL){
-	  CTX.display = argv[i];
+        if(argv[i] != NULL) {
+          CTX.display = argv[i];
           i++;
-	}
-        else {    
+        }
+        else {
           fprintf(stderr, ERROR_STR "Missing argument\n");
           exit(1);
         }
       }
 #endif
-
-
-      else{
+      else {
 #if defined(__APPLE__)
-	// The Mac Finder launches programs with special command line
-	// arguments: just ignore them (and don't exit!)
+        // The Mac Finder launches programs with special command line
+        // arguments: just ignore them (and don't exit!)
         fprintf(stderr, "Unknown option '%s'\n", argv[i]);
-	i++;
+        i++;
 #else
         fprintf(stderr, "Unknown option '%s'\n", argv[i]);
-	CTX.terminal = 1 ;
+        CTX.terminal = 1;
         Print_Usage(argv[0]);
         exit(1);
 #endif
@@ -536,8 +583,8 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 
     else {
       if(*nbfiles < MAX_OPEN_FILES)
-        TheFileNameTab[(*nbfiles)++] = argv[i++]; 
-      else{
+        TheFileNameTab[(*nbfiles)++] = argv[i++];
+      else {
         fprintf(stderr, ERROR_STR "Too many input files\n");
         exit(1);
       }
@@ -546,6 +593,4 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
   }
 
   strncpy(CTX.filename, TheFileNameTab[0], 255);
-
 }
-

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.26 2003-02-18 05:50:04 geuzaine Exp $
+// $Id: Main.cpp,v 1.27 2003-03-01 22:36:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -43,17 +43,18 @@
 #include "CommandLine.h"
 #include "MinMax.h"
 
-char        yyname[256];
-int         yyerrorstate;
-Context_T   CTX ;
-Mesh        M, *THEM=NULL, *LOCAL=NULL;
+char yyname[256];
+int yyerrorstate;
+Context_T CTX;
+Mesh M, *THEM = NULL, *LOCAL = NULL;
 
 // Print some help/info messages
 
-void Info (int level, char *arg0){
-  switch(level){
-  case 0 :
-    if(ParUtil::Instance()->master()){
+void Info(int level, char *arg0)
+{
+  switch (level) {
+  case 0:
+    if(ParUtil::Instance()->master()) {
       fprintf(stderr, "%s\n", gmsh_progname);
       fprintf(stderr, "%s\n", gmsh_copyright);
       Print_Usage(arg0);
@@ -61,13 +62,13 @@ void Info (int level, char *arg0){
     ParUtil::Instance()->Exit();
   case 1:
     if(ParUtil::Instance()->master())
-      fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
-	      GMSH_PATCH_VERSION);
+      fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
+              GMSH_PATCH_VERSION);
     ParUtil::Instance()->Exit();
   case 2:
-    if(ParUtil::Instance()->master()){
-      fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION, 
-	      GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
+    if(ParUtil::Instance()->master()) {
+      fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION,
+              GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
       fprintf(stderr, "%s\n", gmsh_os);
       fprintf(stderr, "%s\n", gmsh_date);
       fprintf(stderr, "%s\n", gmsh_host);
@@ -76,39 +77,41 @@ void Info (int level, char *arg0){
       fprintf(stderr, "%s\n", gmsh_email);
     }
     ParUtil::Instance()->Exit();
-  default :
+  default:
     break;
   }
 }
 
 // Main routine for the batch (black box) version
 
-int main(int argc, char *argv[]){
-  int     i, nbf;
+int main(int argc, char *argv[])
+{
+  int i, nbf;
 
-  ParUtil::Instance()->init(argc,argv);
+  ParUtil::Instance()->init(argc, argv);
 
   Init_Options(0);
 
-  if(argc < 2) Info(0,argv[0]);
+  if(argc < 2)
+    Info(0, argv[0]);
 
   Get_Options(argc, argv, &nbf);
 
-  M.Vertices = NULL ;
-  M.VertexEdges = NULL ;
-  M.Simplexes = NULL ;
-  M.Points = NULL ;
-  M.Curves = NULL ;
-  M.SurfaceLoops = NULL ;
-  M.EdgeLoops = NULL ;
-  M.Surfaces = NULL ;
-  M.Volumes = NULL ;
-  M.PhysicalGroups = NULL ;
-  M.Metric = NULL ;
+  M.Vertices = NULL;
+  M.VertexEdges = NULL;
+  M.Simplexes = NULL;
+  M.Points = NULL;
+  M.Curves = NULL;
+  M.SurfaceLoops = NULL;
+  M.EdgeLoops = NULL;
+  M.Surfaces = NULL;
+  M.Volumes = NULL;
+  M.PhysicalGroups = NULL;
+  M.Metric = NULL;
 
-  signal(SIGINT,  Signal);
+  signal(SIGINT, Signal);
   signal(SIGSEGV, Signal);
-  signal(SIGFPE,  Signal);
+  signal(SIGFPE, Signal);
 
   if(CTX.default_plugins)
     GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
@@ -118,28 +121,31 @@ int main(int argc, char *argv[]){
   OpenProblem(CTX.filename);
   if(yyerrorstate)
     ParUtil::Instance()->Abort();
-  else{
-    for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
-    if(TheBgmFileName){
+  else {
+    for(i = 1; i < nbf; i++)
+      MergeProblem(TheFileNameTab[i]);
+    if(TheBgmFileName) {
       MergeProblem(TheBgmFileName);
       if(List_Nbr(CTX.post.list))
-        BGMWithView((Post_View*)List_Pointer(CTX.post.list, List_Nbr(CTX.post.list)-1));
+        BGMWithView((Post_View *)
+                    List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
       else
-        fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n"); exit(1);
+        fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");
+      exit(1);
     }
-    if(CTX.batch > 0){
+    if(CTX.batch > 0) {
       mai3d(THEM, CTX.batch);
-      Print_Mesh(THEM,CTX.output_filename,CTX.mesh.format);
+      Print_Mesh(THEM, CTX.output_filename, CTX.mesh.format);
     }
     else
       Print_Geo(THEM, CTX.output_filename);
     if(CTX.mesh.histogram)
       Print_Histogram(THEM->Histogram[0]);
-    ParUtil::Instance()->Barrier(__LINE__,__FILE__);
+    ParUtil::Instance()->Barrier(__LINE__, __FILE__);
     ParUtil::Instance()->Exit();
     return 1;
   }
-  ParUtil::Instance()->Barrier(__LINE__,__FILE__);
+  ParUtil::Instance()->Barrier(__LINE__, __FILE__);
   ParUtil::Instance()->Exit();
   return 1;
 }
@@ -147,99 +153,117 @@ int main(int argc, char *argv[]){
 
 // Handle signals. We should not use Msg functions in these...
 
-void Signal (int sig_num){
-
-  switch (sig_num){
-  case SIGSEGV : Msg(FATAL, "Segmentation violation (invalid memory reference)"); break;
-  case SIGFPE  : Msg(FATAL, "Floating point exception (division by zero?)"); break;
-  case SIGINT  : Msg(FATAL, "Interrupt (generated from terminal special char)"); break;
-  default      : Msg(FATAL, "Unknown signal"); break;
+void Signal(int sig_num)
+{
+  switch (sig_num) {
+  case SIGSEGV:
+    Msg(FATAL, "Segmentation violation (invalid memory reference)");
+    break;
+  case SIGFPE:
+    Msg(FATAL, "Floating point exception (division by zero?)");
+    break;
+  case SIGINT:
+    Msg(FATAL, "Interrupt (generated from terminal special char)");
+    break;
+  default:
+    Msg(FATAL, "Unknown signal");
+    break;
   }
 }
 
 // General purpose message routine
 
-void Msg(int level, char *fmt, ...){
-  va_list  args;
-  int      abort=0;
+void Msg(int level, char *fmt, ...)
+{
+  va_list args;
+  int abort = 0;
 
-  va_start (args, fmt);
+  va_start(args, fmt);
 
-  switch(level){
+  switch (level) {
 
-  case DIRECT :
-    if(CTX.verbosity >=2 && ParUtil::Instance()->master()) {
-     vfprintf(stdout, fmt, args); fprintf(stdout, "\n");
+  case DIRECT:
+    if(CTX.verbosity >= 2 && ParUtil::Instance()->master()) {
+      vfprintf(stdout, fmt, args);
+      fprintf(stdout, "\n");
     }
     break;
 
-  case FATAL :
-  case FATAL1 :
-  case FATAL2 :
-  case FATAL3 :
-    fprintf(stderr,"On processor %d : ", ParUtil::Instance()->rank());
+  case FATAL:
+  case FATAL1:
+  case FATAL2:
+  case FATAL3:
+    fprintf(stderr, "On processor %d : ", ParUtil::Instance()->rank());
     fprintf(stderr, FATAL_STR);
-    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
-    abort = 1 ;
-    break ;
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, "\n");
+    abort = 1;
+    break;
 
-  case GERROR :
-  case GERROR1 :
-  case GERROR2 :
-  case GERROR3 :
-    fprintf(stderr,"On processor %d : ", ParUtil::Instance()->rank());
+  case GERROR:
+  case GERROR1:
+  case GERROR2:
+  case GERROR3:
+    fprintf(stderr, "On processor %d : ", ParUtil::Instance()->rank());
     fprintf(stderr, ERROR_STR);
-    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
-    break ;
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, "\n");
+    break;
 
-  case WARNING :
-  case WARNING1 :
-  case WARNING2 :
-  case WARNING3 :
-    if(CTX.verbosity >= 1){
-      fprintf(stderr,"On processor %d : ", ParUtil::Instance()->rank());
+  case WARNING:
+  case WARNING1:
+  case WARNING2:
+  case WARNING3:
+    if(CTX.verbosity >= 1) {
+      fprintf(stderr, "On processor %d : ", ParUtil::Instance()->rank());
       fprintf(stderr, WARNING_STR);
-      vfprintf(stderr, fmt,args); fprintf(stderr, "\n");
+      vfprintf(stderr, fmt, args);
+      fprintf(stderr, "\n");
     }
     break;
 
-  case DEBUG    :		     	  
-  case DEBUG1   : 
-  case DEBUG2   :		     	  
-  case DEBUG3   : 
-    if(CTX.verbosity >= 3 && ParUtil::Instance()->master()){
+  case DEBUG:
+  case DEBUG1:
+  case DEBUG2:
+  case DEBUG3:
+    if(CTX.verbosity >= 3 && ParUtil::Instance()->master()) {
       fprintf(stderr, DEBUG_STR);
-      vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+      vfprintf(stderr, fmt, args);
+      fprintf(stderr, "\n");
     }
     break;
 
-  default :
-    if(CTX.verbosity >= 1 && ParUtil::Instance()->master()){
+  default:
+    if(CTX.verbosity >= 1 && ParUtil::Instance()->master()) {
       fprintf(stderr, INFO_STR);
-      vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+      vfprintf(stderr, fmt, args);
+      fprintf(stderr, "\n");
     }
     break;
   }
 
-  va_end (args);
+  va_end(args);
 
-  if(abort) exit(1);
+  if(abort)
+    exit(1);
 
 }
 
 // CPU time computation
 
-void GetResources(long *s, long *us, long *mem){
+void GetResources(long *s, long *us, long *mem)
+{
   static struct rusage r;
 
-  getrusage(RUSAGE_SELF,&r);
-  *s   = (long)r.ru_utime.tv_sec ;
-  *us  = (long)r.ru_utime.tv_usec ;
-  *mem = (long)r.ru_maxrss ;
+  getrusage(RUSAGE_SELF, &r);
+  *s = (long)r.ru_utime.tv_sec;
+  *us = (long)r.ru_utime.tv_usec;
+  *mem = (long)r.ru_maxrss;
 }
 
-double Cpu(void){
+double Cpu(void)
+{
   long s, us, mem;
   GetResources(&s, &us, &mem);
-  return (double)s + (double)us/1.e6 ;
+  return (double)s + (double)us / 1.e6;
 }

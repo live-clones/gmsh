@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.24 2003-01-23 20:19:25 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.25 2003-03-01 22:36:43 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -26,65 +26,65 @@
 extern Context_T CTX;
 
 StringXNumber CutPlaneOptions_Number[] = {
-  { GMSH_FULLRC, "A" , NULL , 1. },
-  { GMSH_FULLRC, "B" , NULL , 0. },
-  { GMSH_FULLRC, "C" , NULL , 0. },
-  { GMSH_FULLRC, "D" , NULL , 0.01 },
-  { GMSH_FULLRC, "iView" , NULL , -1. }
+  {GMSH_FULLRC, "A", NULL, 1.},
+  {GMSH_FULLRC, "B", NULL, 0.},
+  {GMSH_FULLRC, "C", NULL, 0.},
+  {GMSH_FULLRC, "D", NULL, 0.01},
+  {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterCutPlanePlugin ()
+  GMSH_Plugin *GMSH_RegisterCutPlanePlugin()
   {
-    return new GMSH_CutPlanePlugin ();
+    return new GMSH_CutPlanePlugin();
   }
 }
 
 
 GMSH_CutPlanePlugin::GMSH_CutPlanePlugin()
 {
+  ;
 }
 
 void GMSH_CutPlanePlugin::getName(char *name) const
 {
-  strcpy(name,"Cut plane");
+  strcpy(name, "Cut plane");
 }
 
-void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright, char *help_text) const
+void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
+                                   char *help_text) const
 {
-  strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
-  strcpy(copyright,"DGR (www.multiphysics.com)");
+  strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
+  strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-	 "Cuts a 3D scalar view with the plane\n"
-	 "A*X + B*Y + C*Z + D = 0.\n"
-	 "Script name: Plugin(CutPlane).");
+         "Cuts a 3D scalar view with the plane\n"
+         "A*X + B*Y + C*Z + D = 0.\n" "Script name: Plugin(CutPlane).");
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const
 {
-  return sizeof(CutPlaneOptions_Number)/sizeof(StringXNumber);
+  return sizeof(CutPlaneOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber* GMSH_CutPlanePlugin:: GetOption (int iopt)
+StringXNumber *GMSH_CutPlanePlugin::GetOption(int iopt)
 {
-  return  &CutPlaneOptions_Number[iopt];
+  return &CutPlaneOptions_Number[iopt];
 }
 
-void GMSH_CutPlanePlugin::CatchErrorMessage (char *errorMessage) const
+void GMSH_CutPlanePlugin::CatchErrorMessage(char *errorMessage) const
 {
-  strcpy(errorMessage,"CutPlane failed...");
+  strcpy(errorMessage, "CutPlane failed...");
 }
 
-double GMSH_CutPlanePlugin :: levelset (double x, double y, double z, double val) const
+double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) const
 {
   return CutPlaneOptions_Number[0].def * x +
     CutPlaneOptions_Number[1].def * y +
-    CutPlaneOptions_Number[2].def * z +
-    CutPlaneOptions_Number[3].def ;
+    CutPlaneOptions_Number[2].def * z + CutPlaneOptions_Number[3].def;
 }
 
-Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
+Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
 {
   Post_View *vv;
 
@@ -96,14 +96,14 @@ Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 
   if(v && iView < 0)
     vv = v;
-  else{
-    if(!v && iView < 0) iView = 0;
-    if(!(vv = (Post_View*)List_Pointer_Test(CTX.post.list,iView))){
-      Msg(WARNING,"View[%d] does not exist",iView);
+  else {
+    if(!v && iView < 0)
+      iView = 0;
+    if(!(vv = (Post_View *) List_Pointer_Test(CTX.post.list, iView))) {
+      Msg(WARNING, "View[%d] does not exist", iView);
       return 0;
     }
   }
 
   return GMSH_LevelsetPlugin::execute(vv);
 }
-

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.30 2003-01-23 20:19:19 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.31 2003-03-01 22:36:38 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,123 +29,134 @@
 #include "GUI.h"
 #include "gl2ps.h"
 
-extern GUI       *WID;
-extern Mesh       M;
-extern Context_T  CTX;
+extern GUI *WID;
+extern Mesh M;
+extern Context_T CTX;
 
-void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj);
-void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
-                            Curve **thec, Surface **thes, Mesh *m);
-void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
-            GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
+void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj);
+void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
+                            Vertex ** thev, Curve ** thec, Surface ** thes,
+                            Mesh * m);
+void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2, GLdouble Xc1,
+            GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 
 // Draw specialization
 
-void InitOpengl(void){
+void InitOpengl(void)
+{
   WID->make_opengl_current();
-  Orthogonalize(0,0);
+  Orthogonalize(0, 0);
 }
 
-void InitOverlay(void){
+void InitOverlay(void)
+{
   WID->make_overlay_current();
-  Orthogonalize(0,0);
+  Orthogonalize(0, 0);
 }
 
-void ClearOpengl(void){
-  glClearColor(UNPACK_RED(CTX.color.bg)/255.,
-               UNPACK_GREEN(CTX.color.bg)/255.,
-               UNPACK_BLUE(CTX.color.bg)/255.,
-               0.);
-  glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+void ClearOpengl(void)
+{
+  glClearColor(UNPACK_RED(CTX.color.bg) / 255.,
+               UNPACK_GREEN(CTX.color.bg) / 255.,
+               UNPACK_BLUE(CTX.color.bg) / 255., 0.);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
-void Draw(void){
+void Draw(void)
+{
   WID->redraw_opengl();
 }
 
-void DrawUI(void){
+void DrawUI(void)
+{
   WID->check();
 }
 
-void Draw_String(char *s){
+void Draw_String(char *s)
+{
 
-  if(CTX.print.gl_fonts){
+  if(CTX.print.gl_fonts) {
     gl_font(FL_HELVETICA, CTX.gl_fontsize);
     gl_draw(s);
   }
-  else{ // ps, pstex or jpegtex output
-    if(CTX.print.format == FORMAT_JPEGTEX) return;
-    gl2psText(s,CTX.print.eps_font,CTX.print.eps_font_size);
+  else {        // ps, pstex or jpegtex output
+    if(CTX.print.format == FORMAT_JPEGTEX)
+      return;
+    gl2psText(s, CTX.print.eps_font, CTX.print.eps_font_size);
   }
 }
 
 // Euler angles set_XXX
 
-void set_r(int i, double val){
-  if(!CTX.useTrackball){
-    if(!CTX.rlock[i]){
+void set_r(int i, double val)
+{
+  if(!CTX.useTrackball) {
+    if(!CTX.rlock[i]) {
       CTX.r[i] = val;
     }
   }
 }
 
-void set_t(int i, double val){
-  if(!CTX.tlock[i]){
+void set_t(int i, double val)
+{
+  if(!CTX.tlock[i]) {
     CTX.t[i] = val;
   }
 }
 
-void set_s(int i, double val){
-  if(!CTX.slock[i]){
+void set_s(int i, double val)
+{
+  if(!CTX.slock[i]) {
     CTX.s[i] = val;
   }
 }
 
 // Select entity routines
 
-int check_type(int type, Vertex *v, Curve *c, Surface *s){
-  return ( (type==ENT_POINT   && v) ||
-           (type==ENT_LINE    && c) ||
-           (type==ENT_SURFACE && s) ) ;
+int check_type(int type, Vertex * v, Curve * c, Surface * s)
+{
+  return ((type == ENT_POINT && v) ||
+          (type == ENT_LINE && c) || (type == ENT_SURFACE && s));
 }
 
-int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
-  int     hits;
-  GLuint  ii[SELECTION_BUFFER_SIZE],jj[SELECTION_BUFFER_SIZE];
+int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
+{
+  int hits;
+  GLuint ii[SELECTION_BUFFER_SIZE], jj[SELECTION_BUFFER_SIZE];
 
-  *v = NULL; *c = NULL; *s = NULL;
+  *v = NULL;
+  *c = NULL;
+  *s = NULL;
 
-  WID->selection = type;  
+  WID->selection = type;
   WID->try_selection = 0;
   WID->quit_selection = 0;
   WID->end_selection = 0;
 
-  while(1){
+  while(1) {
     WID->wait();
-    if(WID->quit_selection){
+    if(WID->quit_selection) {
       WID->quit_selection = 0;
       WID->selection = 0;
       return 0;
     }
-    if(WID->end_selection){
+    if(WID->end_selection) {
       WID->end_selection = 0;
       WID->selection = 0;
       return -1;
     }
-    if(WID->try_selection){
+    if(WID->try_selection) {
       WID->try_selection = 0;
       Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
-      Filter_SelectionBuffer(hits,ii,jj,v,c,s,&M);
-      if(check_type(type,*v,*c,*s)){
+      Filter_SelectionBuffer(hits, ii, jj, v, c, s, &M);
+      if(check_type(type, *v, *c, *s)) {
         BeginHighlight();
-        HighlightEntity(*v,*c,*s,1);
+        HighlightEntity(*v, *c, *s, 1);
         EndHighlight(1);
-	WID->selection = 0;
-        return(1);
+        WID->selection = 0;
+        return (1);
       }
     }
   }
 
 }
-
-

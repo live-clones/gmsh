@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.47 2003-02-12 20:27:12 geuzaine Exp $
+// $Id: Context.cpp,v 1.48 2003-03-01 22:36:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -51,10 +51,11 @@
 
 */
 
-void Context_T::buildRotmatrix(void){
+void Context_T::buildRotmatrix(void)
+{
   double x, y, z;
 
-  if(useTrackball){
+  if(useTrackball) {
     build_rotmatrix(rot, quaternion);
 
 #if defined(HAVE_FLTK)
@@ -65,74 +66,76 @@ void Context_T::buildRotmatrix(void){
     set_r(1, 0.);
     set_r(2, 0.);
     /*
-      double x=0., y=0., z=0.
+       double x=0., y=0., z=0.
 
-      y = asin(rot[2][0]) ; y = Pi - asin(rot[2][0]) ; // choix ???
-  
-      if(fabs(y) != Pi/2.){
-        if(rot[2][2]*cos(y) > 0.) x = atan2(-rot[2][1],rot[2][2]);
-	else                      x = atan2(-rot[2][1],rot[2][2]) + Pi;
-	if(rot[0][0]*cos(y) > 0.) z = atan2(-rot[1][0],rot[0][0]);
-	else                      z = atan2(-rot[1][0],rot[0][0]) + Pi;
-      }
-      set_r(0, x * 180./Pi);
-      set_r(1, y * 180./Pi);
-      set_r(2, z * 180./Pi);
-    */
+       y = asin(rot[2][0]) ; y = Pi - asin(rot[2][0]) ; // choix ???
+
+       if(fabs(y) != Pi/2.){
+       if(rot[2][2]*cos(y) > 0.) x = atan2(-rot[2][1],rot[2][2]);
+       else                      x = atan2(-rot[2][1],rot[2][2]) + Pi;
+       if(rot[0][0]*cos(y) > 0.) z = atan2(-rot[1][0],rot[0][0]);
+       else                      z = atan2(-rot[1][0],rot[0][0]) + Pi;
+       }
+       set_r(0, x * 180./Pi);
+       set_r(1, y * 180./Pi);
+       set_r(2, z * 180./Pi);
+     */
     /*
-    double r0, r1, r2;
+       double r0, r1, r2;
 
-    r1 = atan2(-rot[0][2],sqrt(rot[1][2]*rot[1][2] + rot[2][2]*rot[2][2]));
-    
-    double c = cos(r1);  
-    if(c != 0.0){
-      r0 = atan2(rot[1][2]/c,rot[2][2]/c) ;
-      r2 = atan2(-rot[1][0]/c,rot[0][0]/c) ;
-      r0 *= 180./(Pi);
-      r2 *= 180./(Pi);
-    }
-    set_r(0, r0);
-    set_r(1, r1 * 180./(Pi));  // lazyyyyyy
-    set_r(2, r2);
-    */
+       r1 = atan2(-rot[0][2],sqrt(rot[1][2]*rot[1][2] + rot[2][2]*rot[2][2]));
+
+       double c = cos(r1);  
+       if(c != 0.0){
+       r0 = atan2(rot[1][2]/c,rot[2][2]/c) ;
+       r2 = atan2(-rot[1][0]/c,rot[0][0]/c) ;
+       r0 *= 180./(Pi);
+       r2 *= 180./(Pi);
+       }
+       set_r(0, r0);
+       set_r(1, r1 * 180./(Pi));  // lazyyyyyy
+       set_r(2, r2);
+     */
 #endif
 
   }
-  else{
+  else {
     x = r[0] * Pi / 180.;
     y = r[1] * Pi / 180.;
     z = r[2] * Pi / 180.;
 
-    rot[0][0] = cos(y)*cos(z) ; 
-    rot[0][1] = sin(x)*sin(y)*cos(z)+cos(x)*sin(z);
-    rot[0][2] = -cos(x)*sin(y)*cos(z)+sin(x)*sin(z);
+    rot[0][0] = cos(y) * cos(z);
+    rot[0][1] = sin(x) * sin(y) * cos(z) + cos(x) * sin(z);
+    rot[0][2] = -cos(x) * sin(y) * cos(z) + sin(x) * sin(z);
     rot[0][3] = 0.0;
 
-    rot[1][0] = -cos(y)*sin(z);
-    rot[1][1] = -sin(x)*sin(y)*sin(z)+cos(x)*cos(z);
-    rot[1][2] = cos(x)*sin(y)*sin(z)+sin(x)*cos(z);
+    rot[1][0] = -cos(y) * sin(z);
+    rot[1][1] = -sin(x) * sin(y) * sin(z) + cos(x) * cos(z);
+    rot[1][2] = cos(x) * sin(y) * sin(z) + sin(x) * cos(z);
     rot[1][3] = 0.0;
-    
+
     rot[2][0] = sin(y);
-    rot[2][1] = -sin(x)*cos(y);
-    rot[2][2] = cos(x)*cos(y);
+    rot[2][1] = -sin(x) * cos(y);
+    rot[2][2] = cos(x) * cos(y);
     rot[2][3] = 0.0;
 
-    rot[3][0] = 0.0 ;
-    rot[3][1] = 0.0 ;
-    rot[3][2] = 0.0 ;
-    rot[3][3] = 1.0 ;
+    rot[3][0] = 0.0;
+    rot[3][1] = 0.0;
+    rot[3][2] = 0.0;
+    rot[3][3] = 1.0;
   }
 
 }
 
-void Context_T::addQuaternion (float p1x, float p1y, float p2x, float p2y){
+void Context_T::addQuaternion(float p1x, float p1y, float p2x, float p2y)
+{
   float quat[4];
-  trackball(quat,p1x,p1y,p2x,p2y);
-  add_quats(quat, quaternion, quaternion);  
+  trackball(quat, p1x, p1y, p2x, p2y);
+  add_quats(quat, quaternion, quaternion);
 }
 
-void Context_T::setQuaternion (float q0, float q1, float q2, float q3){
+void Context_T::setQuaternion(float q0, float q1, float q2, float q3)
+{
   quaternion[0] = q0;
   quaternion[1] = q1;
   quaternion[2] = q2;

@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.2 2003-02-12 20:27:12 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.3 2003-03-01 22:36:40 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -23,104 +23,89 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Views.h"
-
+  
 #include <FL/Fl_PNM_Image.H>
-
+  
 // from an image, we create a post pro object
-Post_View * Img2Pos ( Fl_RGB_Image & img_init)
-{  
-
+Post_View * Img2Pos(Fl_RGB_Image & img_init) 
+{
   img_init.desaturate();
-  Fl_RGB_Image *img = ( Fl_RGB_Image * ) img_init.copy(128,128);
 
-  const uchar * data = img->array;
+  Fl_RGB_Image * img = (Fl_RGB_Image *) img_init.copy(128, 128);
+
+  const uchar *data = img->array;
   int height = img->h();
-  int width  = img->w();
+  int width = img->w();
   int dim = img->d();
 
-  Post_View *v = BeginView (1);
-  
-  for (int i=0;i<width-1;i++)
-    {
-      const uchar *a  = data + i*width*dim; 
-      const uchar *a1 = data + (i+1)*width*dim; 
-      double y  = 1.-(double) i/((double) width - 1.);
-      double y1 = 1.-(double) (i+1)/((double) width - 1.);
-      for (int j=0;j<height-1;j++)
-	{
-	  double x  = (double) j/((double) height - 1.);
-	  double x1 = (double) (j+1)/((double) height - 1.);
-	  double z = 0.0;
-	  if (dim == 1) // grayscale
-	    {
-	      uchar G1 = a[j];
-	      uchar G2 = a1[j];
-	      uchar G3 = a1[j+1];
-	      uchar G4 = a[j+1];
-	      const double eps = 0.005;
-	      const double Eps = .25;
-	      
-	      double val1 = Eps * (G1) / 255. + eps;
-	      double val2 = Eps * (G2) / 255. + eps;
-	      double val3 = Eps * (G3) / 255. + eps;
-	      double val4 = Eps * (G4) / 255. + eps;
+  Post_View * v = BeginView(1);
 
-	      /*
-	      val1*=val1;
-	      val2*=val2;
-	      val3*=val3;
-	      val4*=val4;
-	      */
-	      List_Add (v->ST,&x);
-	      List_Add (v->ST,&x);
-	      List_Add (v->ST,&x1);
-
-	      List_Add (v->ST,&y);
-	      List_Add (v->ST,&y1);
-	      List_Add (v->ST,&y1);
-
-	      List_Add (v->ST,&z);
-	      List_Add (v->ST,&z);
-	      List_Add (v->ST,&z);
-
-	      List_Add (v->ST,&val1);	
-	      List_Add (v->ST,&val2);	
-	      List_Add (v->ST,&val3);	
-	      v->NbST++;
-
-
-	      List_Add (v->ST,&x);
-	      List_Add (v->ST,&x1);
-	      List_Add (v->ST,&x1);
-
-	      List_Add (v->ST,&y);
-	      List_Add (v->ST,&y1);
-	      List_Add (v->ST,&y);
-
-	      List_Add (v->ST,&z);
-	      List_Add (v->ST,&z);
-	      List_Add (v->ST,&z);
-
-	      List_Add (v->ST,&val1);	
-	      List_Add (v->ST,&val3);	
-	      List_Add (v->ST,&val4);	
-	      v->NbST++;
-	    }
-	}
+  for(int i = 0; i < width - 1; i++) {
+    const uchar *a = data + i * width * dim;
+    const uchar *a1 = data + (i + 1) * width * dim;
+    double y = 1. - (double)i / ((double)width - 1.);
+    double y1 = 1. - (double)(i + 1) / ((double)width - 1.);
+    for(int j = 0; j < height - 1; j++) {
+      double x = (double)j / ((double)height - 1.);
+      double x1 = (double)(j + 1) / ((double)height - 1.);
+      double z = 0.0;
+      if(dim == 1) {     // grayscale
+        uchar G1 = a[j];
+        uchar G2 = a1[j];
+        uchar G3 = a1[j + 1];
+        uchar G4 = a[j + 1];
+        const double eps = 0.005;
+        const double Eps = .25;
+        double val1 = Eps * (G1) / 255. + eps;
+        double val2 = Eps * (G2) / 255. + eps;
+        double val3 = Eps * (G3) / 255. + eps;
+        double val4 = Eps * (G4) / 255. + eps;
+	/*
+	  val1*=val1;
+	  val2*=val2;
+	  val3*=val3;
+	  val4*=val4;
+	*/ 
+	List_Add(v->ST, &x);
+        List_Add(v->ST, &x);
+        List_Add(v->ST, &x1);
+        List_Add(v->ST, &y);
+        List_Add(v->ST, &y1);
+        List_Add(v->ST, &y1);
+        List_Add(v->ST, &z);
+        List_Add(v->ST, &z);
+        List_Add(v->ST, &z);
+        List_Add(v->ST, &val1);
+        List_Add(v->ST, &val2);
+        List_Add(v->ST, &val3);
+        v->NbST++;
+        List_Add(v->ST, &x);
+        List_Add(v->ST, &x1);
+        List_Add(v->ST, &x1);
+        List_Add(v->ST, &y);
+        List_Add(v->ST, &y1);
+        List_Add(v->ST, &y);
+        List_Add(v->ST, &z);
+        List_Add(v->ST, &z);
+        List_Add(v->ST, &z);
+        List_Add(v->ST, &val1);
+        List_Add(v->ST, &val3);
+        List_Add(v->ST, &val4);
+        v->NbST++;
+      }
     }
+  }
   delete img;
   return v;
 }
 
-
-void read_pnm (char *name)
+void read_pnm(char *name) 
 {
-  Fl_PNM_Image theVeryNicePicture ( name );
-  Post_View * v = Img2Pos  (theVeryNicePicture);
+  Fl_PNM_Image theVeryNicePicture(name);
+  Post_View * v = Img2Pos(theVeryNicePicture);
   char name2[256];
-  strcpy(name2,name);
-  strcat(name2,".pos");
-  EndView (v,1,name2,name);
+  strcpy(name2, name);
+  strcat(name2, ".pos");
+  EndView(v, 1, name2, name);
 }
-
 
