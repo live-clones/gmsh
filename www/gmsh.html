@@ -50,7 +50,7 @@ ENDSCRIPT--->
 This page is a mirror of <a href="/gmsh/">/gmsh/</a><p>
 ENDMIRROR--->
 
-<!---BEGINDATE$Date: 2001-03-10 20:01:41 $ENDDATE--->
+<!---BEGINDATE$Date: 2001-03-11 07:58:39 $ENDDATE--->
 
 Copyright &copy; 1998-2001<br>
 Jean-François Remacle and
@@ -286,12 +286,14 @@ files.
 </select>
 &nbsp;
 <input type="hidden" name="config" value="htdig">
-<input type="hidden" name="restrict" value="http://www.geuz.org/gmsh/">
 <input type="hidden" name="exclude" value="">
 Match <select name="method">
-<option value="and" selected>All
-<option value="or">Any
-<option value="boolean">Boolean
+<option value="and" selected>all words
+<option value="or">any words
+</select>
+Search <select name="restrict">
+<option value="http://www.geuz.org/gmsh/">whole web site
+<option value="http://www.geuz.org/pipermail/gmsh/">mailing list only
 </select>
 </form>
 
@@ -322,7 +324,7 @@ name="opengl-footmark"><sup>1</sup></a>. The only thing required if
 you use Gmsh is to mention it in your work.The tutorial and demo files
 are included in the archives.
 <ul>
-<li><A href="/gmsh/bin/gmsh-1.16-Windows.zip">Windows zip archive (95/98/NT)</A>
+<li><A href="/gmsh/bin/gmsh-1.161-Windows.zip">Windows zip archive (95/98/NT) - patched March 11th (fixed CR/LF parsing)</A>
 <li><A href="/gmsh/bin/gmsh-1.16-1.i386.rpm">Linux RPM (Red Hat 6.2 and compatible, i386, glibc 2.1)</A> 
 <li><A href="/gmsh/bin/gmsh-1.16-Linux.tgz">Linux tarball (i386, glibc 2.1)</A> 
 <li><A href="/gmsh/bin/gmsh-1.16-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</A> 
