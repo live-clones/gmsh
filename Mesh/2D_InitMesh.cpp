@@ -1,4 +1,4 @@
-// $Id: 2D_InitMesh.cpp,v 1.10 2001-09-05 09:06:36 geuzaine Exp $
+// $Id: 2D_InitMesh.cpp,v 1.11 2001-09-05 19:14:05 geuzaine Exp $
 
 /*
  
@@ -76,7 +76,7 @@ typedef struct {
 
 void makepermut (int numpoints){  
   int i, ip ;  
-  permut = (int *) Malloc (numpoints * sizeof (int));
+  permut = (int *) Malloc (numpoints * sizeof (int)); //Memory leak! this is never freed...
   for ( i=0 ; i<numpoints ; i++ ){    
     ip = gPointArray[i].permu;
     permut[ip] = i;    
@@ -189,7 +189,7 @@ void SwapED ( void *data , void *dummy){
   else if(Stagnant)Counter++;
 
   if(!e->Liste[0] || !e->Liste[1]){
-    Msg(GERROR, "Initial mesh is wrong. Try new isotropic algorithm.");
+    Msg(GERROR, "Initial mesh is wrong. Try the new isotropic algorithm.");
     return;
   }
 

@@ -393,6 +393,8 @@ StringXNumber MeshOptions_Number[] = {
     "Fourth clip plane equation coefficient ('D' in equation 'AX+BY+CZ+D=0')" },
   { F, "AllowDegeneratedExtrude" , opt_mesh_allow_degenerated_extrude , 0. , 
     "Allow the generation of degenerated hexahedra or prisms during extrusion" },
+  { F, "SaveAll" , opt_mesh_save_all , 0. , 
+    "Ignore Physical definitions and save all elements" },
   { 0, NULL , NULL , 0. , NULL }
 } ;
 

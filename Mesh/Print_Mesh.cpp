@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.27 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.28 2001-09-05 19:14:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -31,9 +31,8 @@ extern Context_T CTX ;
 #define POINT          15
 
 static FILE *mshfile;
-static int MSH_NODE_NUM;
 static int MSH_VOL_NUM, MSH_SUR_NUM, MSH_LIN_NUM;
-static int MSH_ELEMENT_NUM, MSH_ADD;
+static int MSH_NODE_NUM, MSH_ELEMENT_NUM, MSH_3D, MSH_ADD;
 static int MSH_PHYSICAL_NUM, MSH_PHYSICAL_ORI;
 
 void print_msh_node (void *a, void *b){
@@ -117,7 +116,7 @@ void add_msh_simplex (void *a, void *b){
   }
   else{
     nbn = 4;
-    if (!MSH_VOL_NUM){
+    if (!MSH_3D){
       if ((*S)->VSUP){
         type = QUADRANGLE_2;
         nbs = 5;
@@ -143,7 +142,9 @@ void add_msh_simplex (void *a, void *b){
   }
 
   fprintf (mshfile, "%d %d %d %d %d",
-           MSH_ELEMENT_NUM++, type,MSH_PHYSICAL_NUM,(*S)->iEnt, nbn + nbs);
+           MSH_ELEMENT_NUM++, type, 
+	   MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*S)->iEnt, (*S)->iEnt,
+	   nbn + nbs);
 
   if (MSH_PHYSICAL_ORI > 0){
     for (i = 0; i < nbn; i++)
@@ -184,7 +185,9 @@ void add_msh_hexahedron (void *a, void *b){
     type = HEXAHEDRON;
 
   fprintf (mshfile, "%d %d %d %d %d",
-           MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM, (*H)->iEnt, nbn + nbs);
+           MSH_ELEMENT_NUM++, type,
+	   MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*H)->iEnt, (*H)->iEnt,
+	   nbn + nbs);
 
   for (i = 0; i < nbn; i++)
     fprintf (mshfile, " %d", (*H)->V[i]->Num);
@@ -218,7 +221,9 @@ void add_msh_prism (void *a, void *b){
   }
 
   fprintf (mshfile, "%d %d %d %d %d",
-           MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM, (*P)->iEnt, nbn + nbs);
+           MSH_ELEMENT_NUM++, type, 
+	   MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
+	   nbn + nbs);
 
   for (i = 0; i < nbn; i++)
     fprintf (mshfile, " %d", (*P)->V[i]->Num);
@@ -252,7 +257,9 @@ void add_msh_pyramid (void *a, void *b){
   }
 
   fprintf (mshfile, "%d %d %d %d %d",
-           MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM, (*P)->iEnt, nbn + nbs);
+           MSH_ELEMENT_NUM++, type,
+	   MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt, 
+	   nbn + nbs);
 
   for (i = 0; i < nbn; i++)
     fprintf (mshfile, " %d", (*P)->V[i]->Num);
@@ -270,7 +277,8 @@ void add_msh_point (Vertex * V){
   }
 
   fprintf (mshfile, "%d %d %d %d 1 %d\n",
-           MSH_ELEMENT_NUM++, POINT, MSH_PHYSICAL_NUM, V->Num, V->Num);
+           MSH_ELEMENT_NUM++, POINT, 
+	   MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num, V->Num);
 }
 
 void add_msh_elements (Mesh * M){
@@ -287,6 +295,7 @@ void add_msh_elements (Mesh * M){
   for (i = 0; i < List_Nbr (M->PhysicalGroups); i++){
     List_Read (M->PhysicalGroups, i, &p);
     MSH_PHYSICAL_NUM = p->Num;
+    MSH_3D = 0;
     MSH_VOL_NUM = MSH_SUR_NUM = MSH_LIN_NUM = 0;
 
     switch (p->Typ){
@@ -355,6 +364,7 @@ void add_msh_elements (Mesh * M){
         List_Read (ListVolumes, k, &pV);
         for (j = 0; j < List_Nbr (p->Entities); j++){
           List_Read (p->Entities, j, &Num);
+	  MSH_3D = 1;
           MSH_VOL_NUM = abs (Num);
           MSH_PHYSICAL_ORI = sign (Num);
           Tree_Action (pV->Simplexes, add_msh_simplex);
@@ -374,19 +384,73 @@ void add_msh_elements (Mesh * M){
 
 }
 
+void add_all_msh_curves (void *a, void *b){
+  Curve *c = *(Curve**)a;
+  MSH_PHYSICAL_ORI = sign(c->Num);
+  Tree_Action (c->Simplexes, add_msh_simplex);
+}
+
+void add_all_msh_surfaces (void *a, void *b){
+  Surface *s = *(Surface**)a;
+  MSH_PHYSICAL_ORI = sign(s->Num);
+  Tree_Action (s->Simplexes, add_msh_simplex);
+}
+
+void add_all_msh_simpsurf (void *a, void *b){
+  Volume *v = *(Volume**)a;
+  MSH_PHYSICAL_ORI = sign(v->Num);
+  Tree_Action (v->Simp_Surf, add_msh_simplex);
+}
+
+void add_all_msh_volumes (void *a, void *b){
+  Volume *v = *(Volume**)a;
+  MSH_PHYSICAL_ORI = sign(v->Num);
+  Tree_Action (v->Simplexes, add_msh_simplex);
+  Tree_Action (v->Hexahedra, add_msh_hexahedron);
+  Tree_Action (v->Prisms, add_msh_prism);
+  Tree_Action (v->Pyramids, add_msh_pyramid);
+}
+
+void add_all_msh_elements (Mesh * M){
+  MSH_PHYSICAL_NUM = 0;
+  MSH_LIN_NUM = MSH_SUR_NUM = MSH_VOL_NUM = 0;
+  MSH_3D = 0;
+
+  if(CTX.mesh.oldxtrude){
+    Tree_Action(M->Volumes, add_all_msh_simpsurf);
+  }
+  else{
+    Tree_Action(M->Curves, add_all_msh_curves);
+    Tree_Action(M->Surfaces, add_all_msh_surfaces);
+  }
+
+  MSH_3D = 1;
+  Tree_Action(M->Volumes, add_all_msh_volumes);
+}
+
 void process_msh_elements (Mesh * M){
   MSH_ADD = 0;
   MSH_ELEMENT_NUM = 1;
-  add_msh_elements (M);
+
+  if(!List_Nbr(M->PhysicalGroups) || CTX.mesh.save_all){
+    Msg (INFO, "Saving all elements (discarding physical groups)");
+    add_all_msh_elements (M);
+  }
+  else
+    add_msh_elements (M);
+
   fprintf (mshfile, "$ELM\n");
   fprintf (mshfile, "%d\n", MSH_ELEMENT_NUM - 1);
 
   if (MSH_ELEMENT_NUM == 1)
-    Msg (WARNING, "No elements (did you forget to define physical entities?)");
+    Msg (WARNING, "No elements to save");
 
   MSH_ADD = 1;
   MSH_ELEMENT_NUM = 1;
-  add_msh_elements (M);
+  if(!List_Nbr(M->PhysicalGroups) || CTX.mesh.save_all)
+    add_all_msh_elements (M);
+  else
+    add_msh_elements (M);
   fprintf (mshfile, "$ENDELM\n");
 }
 

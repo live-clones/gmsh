@@ -97,10 +97,8 @@ Physical Surface(100) = {6} ;
 // lines 1, 2 and 4 will be saved in the output file with the region
 // number 10; and all the triangular elements resulting from the
 // discretization of surface 6 will be given the region number 100.
-
-// It is important to notice that only those elements which belong to
-// physical groups will be saved in the output file if the file format
-// is the msh format (the native mesh file format for Gmsh). For a
-// description of the mesh and post-processing formats, see the
-// FORMATS file.
-
+//
+// If no physical groups are defined, all the elements in the mesh are
+// directly saved with their default orientation and with a region
+// number equal to their elementary region number. For a description
+// of the mesh and post-processing formats, see the FORMATS file.

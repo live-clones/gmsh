@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.39 2001-09-01 15:19:05 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.40 2001-09-05 19:14:05 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -35,6 +35,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -0                    parse input files, output flattened geometry, and exit");
   Msg(DIRECT, "Mesh options:");
   Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
+  Msg(DIRECT, "  -saveall              save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               specify mesh output file name");
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
   Msg(DIRECT, "  -algo iso|tri|aniso   select 2D mesh algorithm (default: iso)");
@@ -141,6 +142,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "3")){ 
         CTX.batch = 3; i++;
+      }
+      else if(!strcmp(argv[i]+1, "saveall")){ 
+        CTX.mesh.save_all = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "extrude")){ //old extrusion mesh generator
         CTX.mesh.oldxtrude = 1; i++;
