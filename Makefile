@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.72 2001-03-04 23:05:21 remacle Exp $
+# $Id: Makefile,v 1.73 2001-03-05 23:04:49 bechet Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -18,6 +18,7 @@
            FLTK_INC   = -I$(HOME)/SOURCES/fltk
       FLTK_INC_SCOREC   = -I/users/develop/develop/visual/fltk/1.0/include
       FLTK_INC_LAPTOPJF = -I../../fltk-1.0.9
+	FLTK_INC_GERTHA_BURO = -I../../fltk
 
            OPENGL_LIB = -lGLU -lGL
      OPENGL_MOTIF_LIB = -lGLw
@@ -468,6 +469,19 @@ fltk_cygwin: tag
         ); done
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
+	strip $(GMSH_BIN_DIR)/gmsh.exe
+
+fltk_cygwin_gertha_buro: tag
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=g++" \
+           "C_FLAGS=-O2 -DWIN32" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC_GERTHA_BURO)" \
+        ); done
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
+                 ../fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 	strip $(GMSH_BIN_DIR)/gmsh.exe
 
 fltk_cygwin_laptopjf: 
