@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.64 2001-02-21 07:30:09 geuzaine Exp $
+# $Id: Makefile,v 1.65 2001-02-21 10:47:41 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -185,11 +185,15 @@ src:
 	gzip $(GMSH_SRCRPM).tar
 
 compress_bin:
-	cp $(GMSH_BIN_DIR)/gmsh .
-	tar cvf gmsh-$(GMSH_UNAME).tar gmsh tutorial demos 
-	gzip gmsh-$(GMSH_UNAME).tar
-	mv gmsh-$(GMSH_UNAME).tar.gz gmsh-$(GMSH_UNAME).tgz
-	rm -f gmsh
+	mkdir gmsh-$(GMSH_RELEASE)
+	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)
+	cp -R tutorial gmsh-$(GMSH_RELEASE)
+	cp -R demos gmsh-$(GMSH_RELEASE)
+	rm -rf gmsh-$(GMSH_RELEASE)/*/CVS
+	tar cvf gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar gmsh-$(GMSH_RELEASE)
+	gzip gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar
+	mv gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar.gz gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz
+	rm -rf gmsh-$(GMSH_RELEASE)
 
 strip_bin:
 	strip $(GMSH_BIN_DIR)/gmsh
@@ -436,9 +440,8 @@ fltk_rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
 	rpm -bb utils/gmsh_fltk.spec
 	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
-	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/bin/gmsh .
-	gtar zcvf gmsh-$(GMSH_UNAME).tgz gmsh tutorial demos
-	rm -f gmsh
+	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/bin/gmsh $(GMSH_BIN_DIR)
+	make compress_bin
 
 fltk_mingw: tag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
