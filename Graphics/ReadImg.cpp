@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.4 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.5 2003-04-02 06:32:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,14 @@
 #include "GmshUI.h"
 #include "Views.h"
   
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
+
+void read_pnm(char *name) 
+{
+}
+
+#else
+
 #include <FL/Fl_PNM_Image.H>
   
 // from an image, we create a post pro object
@@ -109,3 +117,4 @@ void read_pnm(char *name)
   EndView(v, 1, name2, name);
 }
 
+#endif
