@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.3 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: Options.cpp,v 1.4 2001-02-22 08:16:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -536,7 +536,7 @@ double opt_general_session_save(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.session_save = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[7]->value(CTX.session_save);
+    WID->gen_butt[8]->value(CTX.session_save);
 #endif
   return CTX.session_save;
 }
@@ -544,7 +544,7 @@ double opt_general_options_save(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.options_save = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[8]->value(CTX.options_save);
+    WID->gen_butt[9]->value(CTX.options_save);
 #endif
   return CTX.options_save;
 }
@@ -623,7 +623,7 @@ double opt_general_terminal(OPT_ARGS_NUM){
     CTX.terminal = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[6]->value(CTX.terminal);
+    WID->gen_butt[7]->value(CTX.terminal);
 #endif
   return CTX.terminal;
 }
@@ -632,8 +632,8 @@ double opt_general_orthographic(OPT_ARGS_NUM){
     CTX.ortho = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI)){
-    WID->gen_butt[9]->value(CTX.ortho);
-    WID->gen_butt[10]->value(!CTX.ortho);
+    WID->gen_butt[10]->value(CTX.ortho);
+    WID->gen_butt[11]->value(!CTX.ortho);
   }
 #endif
   return CTX.ortho;
@@ -670,16 +670,38 @@ double opt_general_display_lists(OPT_ARGS_NUM){
     CTX.display_lists = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[3]->value(CTX.display_lists);
+    WID->gen_butt[4]->value(CTX.display_lists);
 #endif
   return CTX.display_lists;
+}
+double opt_general_double_buffer(OPT_ARGS_NUM){
+  if(action & GMSH_SET){
+    CTX.db = (int)val;
+#ifdef _FLTK
+    if(WID){
+      if(CTX.db){
+	Msg(INFO, "Setting Opengl visual to double buffered");
+	WID->g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_DOUBLE);
+      }
+      else{
+	Msg(INFO, "Setting Opengl visual to single buffered");
+	WID->g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
+      }
+    }
+#endif
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[3]->value(CTX.db);
+#endif
+  return CTX.db;
 }
 double opt_general_alpha_blending(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.alpha = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[4]->value(CTX.alpha);
+    WID->gen_butt[5]->value(CTX.alpha);
 #endif
   return CTX.alpha;
 }
@@ -701,7 +723,7 @@ double opt_general_trackball(OPT_ARGS_NUM){
     CTX.useTrackball = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[5]->value(CTX.useTrackball);
+    WID->gen_butt[6]->value(CTX.useTrackball);
 #endif
   return CTX.useTrackball;
 }
@@ -833,7 +855,7 @@ double opt_general_moving_light(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.moving_light = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[11]->value(CTX.moving_light);
+    WID->gen_butt[12]->value(CTX.moving_light);
 #endif
   return CTX.moving_light;
 }

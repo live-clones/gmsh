@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.35 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.36 2001-02-22 08:16:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -295,14 +295,16 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_axes(0, GMSH_SET, WID->gen_butt[0]->value());
   opt_general_small_axes(0, GMSH_SET, WID->gen_butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
-  opt_general_display_lists(0, GMSH_SET, WID->gen_butt[3]->value());
-  opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[4]->value());
-  opt_general_trackball(0, GMSH_SET, WID->gen_butt[5]->value());
-  opt_general_terminal(0, GMSH_SET, WID->gen_butt[6]->value());
-  opt_general_session_save(0, GMSH_SET, WID->gen_butt[7]->value());
-  opt_general_options_save(0, GMSH_SET, WID->gen_butt[8]->value());
-  opt_general_orthographic(0, GMSH_SET, WID->gen_butt[9]->value());
-  opt_general_moving_light(0, GMSH_SET, WID->gen_butt[11]->value());
+  if(opt_general_double_buffer(0, GMSH_GET, 0) != WID->gen_butt[3]->value())
+    opt_general_double_buffer(0, GMSH_SET, WID->gen_butt[3]->value());
+  opt_general_display_lists(0, GMSH_SET, WID->gen_butt[4]->value());
+  opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[5]->value());
+  opt_general_trackball(0, GMSH_SET, WID->gen_butt[6]->value());
+  opt_general_terminal(0, GMSH_SET, WID->gen_butt[7]->value());
+  opt_general_session_save(0, GMSH_SET, WID->gen_butt[8]->value());
+  opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
+  opt_general_orthographic(0, GMSH_SET, WID->gen_butt[10]->value());
+  opt_general_moving_light(0, GMSH_SET, WID->gen_butt[12]->value());
 
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());

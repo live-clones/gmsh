@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.50 2001-02-20 08:23:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.51 2001-02-22 08:16:30 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -713,11 +713,14 @@ void GUI::create_graphic_window(int argc, char **argv){
     int glheight = CTX.viewport[3]-CTX.viewport[1];
     int height = glheight + sh;
 
-
     g_window = new Fl_Window(width, height);
     g_window->callback(file_quit_cb);
 
     g_opengl_window = new Opengl_Window(0,0,width,glheight);
+    if(!opt_general_double_buffer(0,GMSH_GET,0)){
+      Msg(INFO, "Setting Opengl visual to single buffered");
+      g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
+    }
     g_opengl_window->end();
 
     {
@@ -856,10 +859,11 @@ void GUI::create_general_options_window(){
         gen_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Show moving axes");
         gen_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Show small axes");
         gen_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Enable fast redraw");
-        gen_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Use display lists");
-        gen_butt[4] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Enable alpha blending");
-        gen_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Use trackball rotation mode");
-	for(i=0 ; i<6 ; i++){
+        gen_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Enable double buffering");
+        gen_butt[4] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Use display lists");
+        gen_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Enable alpha blending");
+        gen_butt[6] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Use trackball rotation mode");
+	for(i=0 ; i<7 ; i++){
 	  gen_butt[i]->type(FL_TOGGLE_BUTTON);
 	  gen_butt[i]->down_box(FL_DOWN_BOX);
 	  gen_butt[i]->labelsize(CTX.fontsize);
@@ -870,10 +874,10 @@ void GUI::create_general_options_window(){
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Output");
 	o->labelsize(CTX.fontsize);
-        gen_butt[6] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Print messages on terminal");
-        gen_butt[7] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Save session information on exit");
-        gen_butt[8] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Save options on exit");
-	for(i=6 ; i<9 ; i++){
+        gen_butt[7] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Print messages on terminal");
+        gen_butt[8] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Save session information on exit");
+        gen_butt[9] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Save options on exit");
+	for(i=7 ; i<10 ; i++){
 	  gen_butt[i]->type(FL_TOGGLE_BUTTON);
 	  gen_butt[i]->down_box(FL_DOWN_BOX);
 	  gen_butt[i]->labelsize(CTX.fontsize);
@@ -902,9 +906,9 @@ void GUI::create_general_options_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Projection");
 	o->labelsize(CTX.fontsize);
         o->hide();
-        gen_butt[9] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Orthographic");
-        gen_butt[10] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Perspective");
-	for(i=9 ; i<11 ; i++){
+        gen_butt[10] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Orthographic");
+        gen_butt[11] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Perspective");
+	for(i=10 ; i<12 ; i++){
 	  gen_butt[i]->type(FL_RADIO_BUTTON);
 	  gen_butt[i]->labelsize(CTX.fontsize);
 	  gen_butt[i]->selection_color(FL_YELLOW);
@@ -944,11 +948,11 @@ void GUI::create_general_options_window(){
 	gen_value[1]->minimum(0); 
 	gen_value[1]->maximum(10);
 	gen_value[1]->step(0.1);
-        gen_butt[11] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Moving light");
-	gen_butt[11]->type(FL_TOGGLE_BUTTON);
-	gen_butt[11]->down_box(FL_DOWN_BOX);
-	gen_butt[11]->labelsize(CTX.fontsize);
-	gen_butt[11]->selection_color(FL_YELLOW);
+        gen_butt[12] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Moving light");
+	gen_butt[12]->type(FL_TOGGLE_BUTTON);
+	gen_butt[12]->down_box(FL_DOWN_BOX);
+	gen_butt[12]->labelsize(CTX.fontsize);
+	gen_butt[12]->selection_color(FL_YELLOW);
         gen_value[2] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Light position X");
 	gen_value[2]->minimum(-1); 
 	gen_value[2]->maximum(1);

@@ -67,6 +67,7 @@ double opt_general_fast_redraw(OPT_ARGS_NUM);
 double opt_general_axes(OPT_ARGS_NUM);
 double opt_general_small_axes(OPT_ARGS_NUM);
 double opt_general_display_lists(OPT_ARGS_NUM);
+double opt_general_double_buffer(OPT_ARGS_NUM);
 double opt_general_alpha_blending(OPT_ARGS_NUM);
 double opt_general_trackball(OPT_ARGS_NUM);
 double opt_general_zoom_factor(OPT_ARGS_NUM);

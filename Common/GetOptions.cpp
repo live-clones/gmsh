@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.12 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.13 2001-02-22 08:16:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -51,8 +51,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -link                 link all views on startup");
   Msg(DIRECT, "  -convert file file    convert an ascii view into a binary one");
   Msg(DIRECT, "Display options:");    
-#ifdef _MOTIF
   Msg(DIRECT, "  -nodb                 disable double buffering");
+#ifdef _XMOTIF
   Msg(DIRECT, "  -noov                 disable overlay visual");
   Msg(DIRECT, "  -flash                allow colormap flashing");
   Msg(DIRECT, "  -samevisual           force same visual for graphics and UI");
@@ -66,7 +66,7 @@ void Print_Usage(char *name){
 #endif
   Msg(DIRECT, "Other options:");      
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
-#ifdef _MOTIF
+#ifdef _XMOTIF
   Msg(DIRECT, "  -nothreads            disable threads");
 #endif
   Msg(DIRECT, "  -version              show version number");

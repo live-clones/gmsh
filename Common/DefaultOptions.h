@@ -93,6 +93,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "FastRedraw" , opt_general_fast_redraw , 1. },
   { F|O, "Axes" , opt_general_axes , 1. },
   { F|O, "SmallAxes" , opt_general_small_axes , 1. },
+  { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. },
   { F|O, "DisplayLists" , opt_general_display_lists , 0. },
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 0. },
   { F|O, "Trackball" , opt_general_trackball , 1. },
