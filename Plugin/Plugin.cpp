@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.38 2003-03-02 01:18:33 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.39 2003-03-05 23:15:04 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -197,14 +197,14 @@ void GMSH_PluginManager::AddPlugin(char *dirName, char *pluginName)
   sprintf(dynamic_lib, "%s/%s", dirName, pluginName);
   Msg(INFO, "Opening Plugin '%s'", dynamic_lib);
   void *hlib = dlopen(dynamic_lib, RTLD_NOW);
-  char *err = dlerror();
+  char *err = (char*)dlerror();
   if(hlib == NULL) {
     Msg(WARNING, "Error in opening %s (dlerror = %s)", dynamic_lib, err);
     return;
   }
   RegisterPlugin =
     (class GMSH_Plugin * (*)(void))dlsym(hlib, GMSH_PluginEntry);
-  err = dlerror();
+  err = (char*)dlerror();
   if(err != NULL) {
     Msg(WARNING, "Symbol '%s' missing in plugin '%s' (dlerror = %s)",
         GMSH_PluginEntry, pluginName, err);

@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.10 2003-03-01 22:36:38 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.11 2003-03-05 23:15:04 geuzaine Exp $ */
 /*
   Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 
@@ -27,7 +27,7 @@ void SystemCall(char *str);
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _AIX
+#if defied(_AIX)
 #include <strings.h>
 #endif
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static int Socket_ReceiveData(int socket, void *buffer, int bytes)
 
 static int Socket_UnlinkName(char *name)
 {
-#ifdef _AIX
+#if defined(_AIX)
   char name2[1000];
   strcpy(name2, name);
   name2[strlen(name2) - 1] = '\0';
@@ -75,7 +75,7 @@ static int Socket_UnlinkName(char *name)
 int Gmsh_StartClient(char *command, char *sockname)
 {
   int s, sock;
-#if defined(linux) || defined(_AIX)
+#if defined(linux) || defined(_AIX) || defined(__FreeBSD__)
   socklen_t len;
 #else
   int len;
