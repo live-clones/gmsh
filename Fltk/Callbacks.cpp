@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.243 2004-05-29 20:25:28 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.244 2004-05-30 06:24:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -990,6 +990,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_use_cut_plane(0, GMSH_SET, WID->mesh_butt[16]->value());
   opt_mesh_cut_plane_as_surface(0, GMSH_SET, WID->mesh_butt[22]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
+  opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[23]->value());
   opt_mesh_color_carousel(0, GMSH_SET,
 			  WID->mesh_butt[18]->value()? 0 :
 			  WID->mesh_butt[19]->value()? 1 : 
@@ -3438,6 +3439,9 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
       if(force || WID->view_butt[11]->changed())
         opt_view_light(i, GMSH_SET, WID->view_butt[11]->value());
+
+      if(force || WID->view_butt[9]->changed())
+        opt_view_light_two_side(i, GMSH_SET, WID->view_butt[9]->value());
 
       if(force || WID->view_butt[12]->changed())
         opt_view_smooth_normals(i, GMSH_SET, WID->view_butt[12]->value());

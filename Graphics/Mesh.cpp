@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.92 2004-05-29 23:22:19 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.93 2004-05-30 06:24:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -116,8 +116,10 @@ void Draw_Mesh(Mesh * M)
 
   // draw the geometry
 
-  if(M->status >= 0)
+  if(M->status >= 0){
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     Draw_Geom(M);
+  }
 
   // if we're in selection mode, we're done
 
@@ -173,6 +175,11 @@ void Draw_Mesh(Mesh * M)
     gl2psPointSize(CTX.mesh.point_size * CTX.print.eps_point_size_factor);
     glLineWidth(CTX.mesh.line_width);
     gl2psLineWidth(CTX.mesh.line_width * CTX.print.eps_line_width_factor);
+
+    if(CTX.mesh.light_two_side)
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    else
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
    
     if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
 			  CTX.mesh.volumes_num || 

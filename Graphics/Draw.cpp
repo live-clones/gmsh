@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.54 2004-05-28 21:06:11 geuzaine Exp $
+// $Id: Draw.cpp,v 1.55 2004-05-30 06:24:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -162,10 +162,12 @@ void InitRenderModel(void)
       glLightfv((GLenum) (GL_LIGHT0 + i), GL_POSITION, tmp);
       glEnable((GLenum) (GL_LIGHT0 + i));
     }
+    else{
+      glDisable((GLenum) (GL_LIGHT0 + i));
+    }
   }
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   glShadeModel(GL_SMOOTH);
   float specular[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);

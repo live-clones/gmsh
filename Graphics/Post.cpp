@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.65 2004-05-29 23:22:19 geuzaine Exp $
+// $Id: Post.cpp,v 1.66 2004-05-30 06:24:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -371,6 +371,11 @@ void Draw_Post(void)
       
       glLineWidth(v->LineWidth);
       gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
+
+      if(v->LightTwoSide)
+	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      else
+	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
       
       switch (v->RangeType) {
       case DRAW_POST_RANGE_DEFAULT:

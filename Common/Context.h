@@ -165,7 +165,7 @@ public :
     double gamma_inf, gamma_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
-    int light;
+    int light, light_two_side;
     int format, nb_smoothing, algo, order;
     int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
     int histogram, initial_only;

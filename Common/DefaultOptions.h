@@ -746,6 +746,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Light" , opt_mesh_light , 0. , 
     "Enable lighting for the mesh" },
+  { F|O, "LightTwoSide" , opt_mesh_light_two_side , 1. , 
+    "Light both sides of mesh elements (leads to slower rendering)" },
   { F|O, "Lines" , opt_mesh_lines , 0. , 
     "Display mesh lines (1D elements)?" },
   { F|O, "LineNumbers" , opt_mesh_lines_num , 0. , 
@@ -962,6 +964,8 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Light" , opt_view_light , 1. ,
     "Enable lighting for the view" },
+  { F|O, "LightTwoSide" , opt_view_light_two_side , 1. , 
+    "Light both sides of view elements (leads to slower rendering)" },
   { F|O, "LineType" , opt_view_line_type , 0. , 
     "Display lines as solid color segments (0) or 3D cylinders (1)" },
   { F|O, "LineWidth" , opt_view_line_width , 1.0 , 

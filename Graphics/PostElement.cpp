@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.33 2004-05-29 23:22:19 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.34 2004-05-30 06:24:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -608,15 +608,14 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
     View->Boundary--;
     int ts = View->TimeStep;
     View->TimeStep = 0;
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, &X[0], &Y[0], &Z[0], &vv[0]); // 012
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, &X[1], &Y[1], &Z[1], &vv[1]); // 123
+    REORDER3(0, 2, 1);
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 021
     REORDER3(0, 1, 3);
     Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 013
-    Xp[1] = X[2];
-    Yp[1] = Y[2];
-    Zp[1] = Z[2];
-    Val[1] = vv[2];
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 023
+    REORDER3(0, 3, 2);
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 032
+    REORDER3(3, 1, 2);
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Xp, Yp, Zp, Val); // 312
     View->TimeStep = ts;
     View->Boundary++;
     return;

@@ -69,7 +69,8 @@ class Post_View{
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
-  int Visible, IntervalsType, NbIso, NbAbscissa, Light, SmoothNormals ;
+  int Visible, IntervalsType, NbIso, NbAbscissa;
+  int Light, LightTwoSide, SmoothNormals;
   double AngleSmoothNormals, AlphaChannel;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;

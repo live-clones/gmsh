@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.308 2004-05-29 10:11:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.309 2004-05-30 06:24:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1383,7 +1383,7 @@ void GUI::check_rotation_center_button()
 void GUI::create_option_window()
 {
   int i;
-  int width = 40 * fontsize;
+  int width = 41 * fontsize;
   int height = 12 * BH + 5 * WB;
   int BROWSERW = 105 + WB;
 
@@ -1836,15 +1836,20 @@ void GUI::create_option_window()
       mesh_butt[17]->down_box(TOGGLE_BOX);
       mesh_butt[17]->selection_color(TOGGLE_COLOR);
 
-      mesh_value[9] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Explode elements");
+      mesh_butt[23] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Use two-side lighting");
+      mesh_butt[23]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[23]->down_box(TOGGLE_BOX);
+      mesh_butt[23]->selection_color(TOGGLE_COLOR);
+
+      mesh_value[9] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Explode elements");
       mesh_value[9]->minimum(0);
       mesh_value[9]->maximum(1);
       mesh_value[9]->step(0.01);
-      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Point size");
+      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Point size");
       mesh_value[10]->minimum(0.1);
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(0.1);
-      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Line width");
+      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);
@@ -1852,11 +1857,11 @@ void GUI::create_option_window()
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 3 * BH, IW, BH, "Point display");
+      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Point display");
       mesh_choice[0]->menu(menu_point_display);
       mesh_choice[0]->align(FL_ALIGN_RIGHT);
 
-      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, IW, BH, "Line display");
+      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Line display");
       mesh_choice[1]->menu(menu_line_display);
       mesh_choice[1]->align(FL_ALIGN_RIGHT);
       mesh_choice[1]->deactivate(); // don't give false hopes, as it's not used anywhere right now
@@ -2063,24 +2068,25 @@ void GUI::create_option_window()
       view_3d = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "3D");
       view_3d->hide();
 
-      view_butt[10] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH,"Show elements");
+      view_butt[10] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Show elements");
       view_butt[11] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Enable lighting");
-      view_butt[12] = new Fl_Check_Button(width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Smooth normals");
-      for(i = 10; i <= 12; i++) {
+      view_butt[9]  = new Fl_Check_Button(width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Use two-side lighting");
+      view_butt[12] = new Fl_Check_Button(width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Smooth normals");
+      for(i = 9; i <= 12; i++) {
         view_butt[i]->type(FL_TOGGLE_BUTTON);
         view_butt[i]->down_box(TOGGLE_BOX);
         view_butt[i]->selection_color(TOGGLE_COLOR);
         view_butt[i]->callback(set_changed_cb, 0);
       }
-      view_value[10] = new Fl_Value_Input(width / 2, 2 * WB + 4 * BH, IW, BH, "Angle");
+      view_value[10] = new Fl_Value_Input(width / 2, 2 * WB + 5 * BH, IW, BH, "Angle");
       view_value[10]->minimum(0.);
       view_value[10]->step(1.);
       view_value[10]->maximum(180.);
-      view_value[11] = new Fl_Value_Input(width / 2, 2 * WB + 5 * BH, IW, BH, "Boundary");
+      view_value[11] = new Fl_Value_Input(width / 2, 2 * WB + 6 * BH, IW, BH, "Boundary");
       view_value[11]->minimum(0);
       view_value[11]->step(1);
       view_value[11]->maximum(3);
-      view_value[12] = new Fl_Value_Input(width / 2, 2 * WB + 6 * BH, IW, BH, "Explode");
+      view_value[12] = new Fl_Value_Input(width / 2, 2 * WB + 7 * BH, IW, BH, "Explode");
       view_value[12]->minimum(0.);
       view_value[12]->step(0.01);
       view_value[12]->maximum(1.);
@@ -2097,9 +2103,9 @@ void GUI::create_option_window()
       view_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Show hexahedra");
       view_butt[19] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, BW / 2 - WB, BH, "Show prisms");
       view_butt[20] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Show pyramids");
-      view_butt[21] = new Fl_Check_Button(width / 2, 2 * WB + 7 * BH, BW / 2 - WB, BH, "Show scalar values");
-      view_butt[22] = new Fl_Check_Button(width / 2, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Show vector values");
-      view_butt[23] = new Fl_Check_Button(width / 2, 2 * WB + 9 * BH, BW / 2 - WB, BH, "Show tensor values");
+      view_butt[21] = new Fl_Check_Button(width / 2, 2 * WB + 8 * BH, BW / 2 - WB, BH, "Show scalar values");
+      view_butt[22] = new Fl_Check_Button(width / 2, 2 * WB + 9 * BH, BW / 2 - WB, BH, "Show vector values");
+      view_butt[23] = new Fl_Check_Button(width / 2, 2 * WB + 10 * BH, BW / 2 - WB, BH, "Show tensor values");
       for(i = 13; i <= 23; i++) {
         view_butt[i]->type(FL_TOGGLE_BUTTON);
         view_butt[i]->down_box(TOGGLE_BOX);
@@ -2359,6 +2365,7 @@ void GUI::update_view_window(int num)
   }
   opt_view_show_element(num, GMSH_GUI, 0);
   opt_view_light(num, GMSH_GUI, 0);
+  opt_view_light_two_side(num, GMSH_GUI, 0);
   opt_view_smooth_normals(num, GMSH_GUI, 0);
   opt_view_angle_smooth_normals(num, GMSH_GUI, 0);
   opt_view_boundary(num, GMSH_GUI, 0);
