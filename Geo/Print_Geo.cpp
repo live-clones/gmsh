@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.21 2001-08-27 11:19:18 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.22 2001-11-05 08:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -12,7 +12,7 @@ FILE *FOUT;
 void Print_Point(void *a, void *b){
   Vertex *v;
   v = *(Vertex**)a;
-  fprintf(FOUT, "Point(%d) = {%g, %g, %g, %g};\n",
+  fprintf(FOUT, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
           v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
 }
 
@@ -32,8 +32,8 @@ void Print_Nurbs (Curve *c, FILE *f){
   fprintf(f,"}\n");
   fprintf(f,"  Knots {");
   for(j=0;j<List_Nbr(c->Control_Points)+c->degre+1;j++){
-    if(!j)fprintf(f,"%g",c->k[j]);
-    else fprintf(f,", %g",c->k[j]);
+    if(!j)fprintf(f,"%.16g",c->k[j]);
+    else fprintf(f,", %.16g",c->k[j]);
     if(j%5 == 4 && j!=List_Nbr(c->Control_Points)+c->degre)fprintf(FOUT,"\n        ");
   }
   fprintf(f,"}\n");
@@ -91,7 +91,7 @@ void Print_Curve(void *a, void *b){
   case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
-    fprintf(FOUT,"} Plane{%g, %g, %g};\n",
+    fprintf(FOUT,"} Plane{%.16g, %.16g, %.16g};\n",
             c->Circle.n[0],c->Circle.n[1],c->Circle.n[2]);
     break;
   default :
@@ -154,14 +154,14 @@ void Print_Surface(void *a, void *b){
     }
     fprintf(FOUT,"  Knots\n  {");
     for(j=0;j<s->Nu+s->OrderU+1;j++){
-      if(!j)fprintf(FOUT,"%g",s->ku[j]);
-      else fprintf(FOUT,", %g",s->ku[j]);
+      if(!j)fprintf(FOUT,"%.16g",s->ku[j]);
+      else fprintf(FOUT,", %.16g",s->ku[j]);
       if(j%5 == 4 && j!=s->Nu + s->OrderU)fprintf(FOUT,"\n  ");
     }
     fprintf(FOUT,"}\n  {");
     for(j=0;j<s->Nv+s->OrderV+1;j++){
-      if(!j)fprintf(FOUT,"%g",s->kv[j]);
-      else fprintf(FOUT,", %g",s->kv[j]);
+      if(!j)fprintf(FOUT,"%.16g",s->kv[j]);
+      else fprintf(FOUT,", %.16g",s->kv[j]);
       if(j%5 == 4 && j!=s->Nv + s->OrderV)fprintf(FOUT,"\n  ");
     }
     fprintf(FOUT,"}\n  Order %d %d;\n",s->OrderU,s->OrderV);

@@ -1,8 +1,6 @@
 #ifndef _EXTRUDE_PARAMS_H_
 #define _EXTRUDE_PARAMS_H_
 
-#define NB_LAYER_MAX 500
-
 #define EXTRUDED_ENTITY 1
 #define COPIED_ENTITY 2
 
@@ -20,9 +18,9 @@ public :
     bool    ExtrudeMesh;
     bool    Recombine;
     int     NbLayer;
-    int     NbElmLayer [NB_LAYER_MAX];
-    int     ZonLayer   [NB_LAYER_MAX];
-    double  hLayer     [NB_LAYER_MAX];
+    int     *NbElmLayer;
+    int     *ZonLayer;
+    double  *hLayer;
   }mesh;
   struct{
     int Mode;

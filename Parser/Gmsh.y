@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.105 2001-10-30 14:27:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.106 2001-11-05 08:36:49 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1861,20 +1861,17 @@ ExtrudeParameter :
     tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
     {
       double d;
-      int j;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
-      if(extr.mesh.NbLayer > NB_LAYER_MAX){
-	vyyerror("Too many layers in extrusion");
-      }
-      else if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
+      if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
+	extr.mesh.NbElmLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
+	extr.mesh.ZonLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
+	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
 	for(int i=0;i<List_Nbr($3);i++){
 	  List_Read($3,i,&d);
-	  j = (int)d;
-	  extr.mesh.NbElmLayer[i] = j;
+	  extr.mesh.NbElmLayer[i] = (int)d;
 	  List_Read($5,i,&d);
-	  j = (int)d;
-	  extr.mesh.ZonLayer[i] = j;
+	  extr.mesh.ZonLayer[i] = (int)d;
 	  List_Read($7,i,&d);
 	  extr.mesh.hLayer[i] = d;
 	}
@@ -1890,17 +1887,15 @@ ExtrudeParameter :
   | tLayers '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
       double d;
-      int j;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
-      if(extr.mesh.NbLayer > NB_LAYER_MAX){
-	vyyerror("Too many layers in extrusion");
-      }
-      else if(List_Nbr($3) == List_Nbr($5)){
+      if(List_Nbr($3) == List_Nbr($5)){
+	extr.mesh.NbElmLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
+	extr.mesh.ZonLayer = (int*)Malloc(extr.mesh.NbLayer*sizeof(int));
+	extr.mesh.hLayer = (double*)Malloc(extr.mesh.NbLayer*sizeof(double));
 	for(int i=0;i<List_Nbr($3);i++){
 	  List_Read($3,i,&d);
-	  j = (int)d;
-	  extr.mesh.NbElmLayer[i] = j;
+	  extr.mesh.NbElmLayer[i] = (int)d;
 	  extr.mesh.ZonLayer[i] = 0;
 	  List_Read($5,i,&d);
 	  extr.mesh.hLayer[i] = d;

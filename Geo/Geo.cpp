@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.23 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Geo.cpp,v 1.24 2001-11-05 08:36:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -39,7 +39,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
 
   /* On pose la variable = la fonction et on evalue la fonction */
 
-  fprintf(yyin,"%s = %g ;\n",var,val);
+  fprintf(yyin,"%s = %.16g ;\n",var,val);
   fprintf(yyin,"ValeurTemporaire__ = %s ;\n",funct);
   fclose(yyin);
   yyin = fopen(CTX.tmp_filename,"r");
