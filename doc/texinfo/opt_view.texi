@@ -10,7 +10,7 @@ Default value: @code{"%.3e"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.FileName
-Default file name to assign to the post-processing view@*
+Default post-processing view file name@*
 Default value: @code{""}@*
 Saved in: @code{-}
 
@@ -20,12 +20,12 @@ Default value: @code{"%.3e"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Name
-Default name to assign to the post-processing view@*
+Default post-processing view name@*
 Default value: @code{""}@*
 Saved in: @code{-}
 
 @item View.AngleSmoothNormals
-Threshold angle below which we do not smooth the normals@*
+Threshold angle below which normals are not smoothed@*
 Default value: @code{15}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -35,7 +35,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ArrowScale
-Size of the vector (e.g. arrow size in pixels)@*
+Size of vectors (arrow size in pixels or displacement factor)@*
 Default value: @code{50}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -50,17 +50,17 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Boundary
-Draw the N-b dimensional boundary of the simplex (N=dimension, b=option value)@*
+Draw the `N minus b'-dimensional boundary of the simplex (N=simplex dimension, b=option value)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.CustomMax
-User defined maximum value to be displayed@*
+User-defined maximum value to be displayed@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.CustomMin
-User defined minimum value to be displayed@*
+User-defined minimum value to be displayed@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -150,7 +150,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.LineType
-Display lines as solid color segments or 3D cylinders@*
+Display lines as solid color segments (0) or 3D cylinders (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -160,12 +160,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Max
-Maximum value in the view (do _not_ change this!)@*
+Maximum value in the view (do not change this!)@*
 Default value: @code{-1e+200}@*
 Saved in: @code{-}
 
 @item View.Min
-Minimum value in the view (do _not_ change this!)@*
+Minimum value in the view (do not change this!)@*
 Default value: @code{1e+200}@*
 Saved in: @code{-}
 
@@ -180,7 +180,7 @@ Default value: @code{15}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.NbTimeStep
-Number of time steps in the view (do _not_ change this!)@*
+Number of time steps in the view (do not change this!)@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
@@ -205,7 +205,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.PointType
-Display points as solid color dots or 3D spheres@*
+Display points as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

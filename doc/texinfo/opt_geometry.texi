@@ -45,7 +45,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineType
-Display lines as solid color segments or 3D cylinders@*
+Display lines as solid color segments (0) or 3D cylinders (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -90,7 +90,7 @@ Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointType
-Display points as solid color dots or 3D spheres@*
+Display points as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.33 2003-04-19 17:24:28 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.34 2003-04-19 22:11:42 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -375,7 +375,7 @@ hexahedra and pyramids), arranged in such a way that if two of them
 intersect, they do so along a face, an edge or a node, and never
 otherwise. All the finite element meshes produced by Gmsh are considered as
 ``unstructured'', even if they were generated in a ``structured'' way
-(e.g. by extrusion). This implies that the elementary geometrical elements
+(e.g.@: by extrusion). This implies that the elementary geometrical elements
 are defined only by an ordered list of their vertices but that no predefined
 order relation is assumed between any two elements.
 
@@ -441,7 +441,7 @@ section computation, offset, elevation, boundary extraction, color map and
 range modification, animation, vector graphic output, etc. All
 post-processing options can be accessed either interactively or through the
 input ASCII text files. Scripting permits to automate all post-processing
-operations, e.g. for the creation of animations. User-defined operations can
+operations, e.g.@: for the creation of animations. User-defined operations can
 also be performed on post-processing views through dynamically loadable
 plugins.
 
@@ -468,7 +468,7 @@ parameterize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
 @ref{Expressions}, and @ref{Geometry commands});
 @item
-generate 1D, 2D and 3D simplicial (i.e. using line segments, triangles and
+generate 1D, 2D and 3D simplicial (i.e.@: using line segments, triangles and
 tetrahedra) finite element meshes. The performance of the 1D and 2D
 algorithms is pretty good; the 3D algorithm is still somewhat experimental
 and slow (see @ref{Mesh module}, and @ref{Tutorial});
@@ -579,7 +579,8 @@ Optional rules are enclosed in @code{<} @code{>} pairs.
 @item 
 Multiple choices are separated by @code{|}.
 @item 
-Three dots (@dots{}) indicate a possible repetition of the preceding rule.
+Three dots (@dots{}) indicate a possible (multiple) repetition of the
+preceding rule.
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -732,9 +733,9 @@ those corresponding to the indices provided by the
 @var{expression-list}). To see the practical use of such expressions, have a
 look at the first couple of examples in @ref{Tutorial}.
 
-In order to lighten the syntax, you can always ommit the braces @code{@{@}}
-enclosing an @var{expression-list} if this @var{expression-list} contains a
-single item.
+Note that, in order to lighten the syntax, you can always ommit the braces
+@code{@{@}} enclosing an @var{expression-list} if this @var{expression-list}
+only contains a single item.
 
 @c .........................................................................
 @c Character expressions
@@ -758,7 +759,7 @@ Character expressions are defined as:
 @end example
 
 @noindent The second case in this definition permits to take the
-prefix of a string (e.g. for removing the extension from a file name). The
+prefix of a string (e.g.@: for removing the extension from a file name). The
 third case permits to concatenate two character expressions, and the fourth
 is an equivalent of the @code{sprintf} C function (where
 @var{char-expression} is a format string that can contain floating point
@@ -795,15 +796,15 @@ Colors expressions are hybrids between fixed-length braced
 
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3},@w{ }@dots{}
-(see @file{Common/Colors.h} in Gmsh's source tree). The second case permits
-to define colors by using three expressions to specify their red, green and
-blue components (with values comprised between 0 and 255). The third case
-permits to define colors by using the red, green and blue color components
-as well as the alpha channel. The last case permits to use the value of a
-@var{color-option} as a @var{color-expression}. The various
-@w{@var{color-option}s} are listed in @ref{General options}, @ref{Geometry
-options}, @ref{Mesh options}, @ref{Solver options}, and @ref{Post-processing
-options}.
+(see @file{Common/Colors.h} in Gmsh's source tree for a complete list). The
+second case permits to define colors by using three expressions to specify
+their red, green and blue components (with values comprised between 0 and
+255). The third case permits to define colors by using their red, green and
+blue color components as well as their alpha channel. The last case permits
+to use the value of a @var{color-option} as a @var{color-expression}. The
+various @w{@var{color-option}s} are listed in @ref{General options},
+@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
+@ref{Post-processing options}.
 
 See @ref{t3.geo}, for an example of the use of color expressions.
 
@@ -1113,7 +1114,7 @@ The following commands can be used anywhere in a Gmsh ASCII text input file:
 @item @var{string} = @var{expression};
 Defines a new expression identifier @var{string}, or affects
 @var{expression} to an existing expression identifier. Eight expression
-identifiers are predefined (hard coded in Gmsh's parser):
+identifiers are predefined (hardcoded in Gmsh's parser):
 
 @ftable @code
 @item Pi
@@ -1131,8 +1132,9 @@ Returns the next available point number. As we will see in @ref{Geometry
 module}, a unique number is associated with every geometrical point:
 @code{newp} permits to know the highest number already attributed. This is
 mostly useful when writing user-defined functions (@pxref{User-defined
-functions}) or general geometric primitives, when one does not know a priori
-which numbers are already attributed, and which ones are still available.
+functions}) or general geometric primitives, when one does not know @emph{a
+priori} which numbers are already attributed, and which ones are still
+available.
 
 @item newl
 Returns the next available line number.
@@ -1222,9 +1224,7 @@ that only valid floating point formatting characters make sense in
 
 @item Merge @var{char-expression};
 Merges a file named @var{char-expression}. This command is equivalent to the
-`File->Merge' menu in the graphical user interface. If the path in
-@var{char-expression} is not absolute, @var{char-expression} is appended to
-the directory where the current opened project resides.
+`File->Merge' menu in the graphical user interface.
 
 @item MergeWithBoundingBox @var{char-expression};
 Merges a file and forces the recalculation of the scene's bounding box.
@@ -1243,9 +1243,10 @@ Suspends the execution of Gmsh during @var{expression} seconds.
 Executes a system call.
 
 @item Include @var{char-expression};
-@item #include @var{char-expression};
 Includes the file named @var{char-expression} at the current position in the
-input file. Both include commands should be given on a line of their own.
+input file. The include command should be given on a line of its own.  If
+the path in @var{char-expression} is not absolute, @var{char-expression} is
+appended to the path of the including file.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1265,11 +1266,12 @@ resize the graphical window in a script, or to interact with animations in
 the script and in the GUI at the same time.
 
 Gmsh's default behavior is to save some of these options in a per-user
-``session resource'' file (@code{General.SessionFileName}) each time Gmsh is
-shut down. This permits for example to automatically remember the size and
-location of the windows or which fonts to use. Other options can be saved in
-a per-user ``option'' file (@code{General.OptionsFileName}), automatically
-loaded by Gmsh during startup, by using the `Tools->Options->Save' menu. 
+``session resource'' file (@code{General.SessionFileName}) every time Gmsh
+is shut down. This permits for example to automatically remember the size
+and location of the windows or which fonts to use. Other options can be
+saved in a per-user ``option'' file (@code{General.OptionsFileName}),
+automatically loaded by Gmsh every time it starts up, by using the
+`Tools->Options->Save' menu.
 
 @c All the opt_XXX.texi files are generated automatically with `gmsh -doc'
 
@@ -1303,9 +1305,9 @@ are assigned identification numbers when they are created:
 @item each elementary surface must possess a unique identification number;
 @item each elementary volume must possess a unique identification number.
 @end enumerate
-Elementary geometrical entities can be manipulated in various ways, using
-the @code{Translate}, @code{Rotate}, @code{Scale} or @code{Symmetry}
-commands.
+Elementary geometrical entities can then be manipulated in various ways, for
+example using the @code{Translate}, @code{Rotate}, @code{Scale} or
+@code{Symmetry} commands.
 
 Compound groups of elementary geometrical entities can also be defined and
 are called ``physical'' entities. These physical entities cannot be modified
@@ -1313,7 +1315,7 @@ by geometry commands: their only purpose is to assemble elementary entities
 into larger groups, possibly modifying their orientation, so that they can
 be referred to by the mesh module as single entities. Each physical entity
 is assigned a unique identification number when it is created. That is, no
-two physical entities (even of different type, like a physical line and a
+two physical entities (even of different types, like a physical line and a
 physical surface) can share identical identification numbers. See @ref{Mesh
 module}, for more information about how physical entities affect the way
 meshes are saved.
@@ -1335,10 +1337,10 @@ meshes are saved.
 
 The next subsections describe all the available geometry commands. These
 commands can be used anywhere in a Gmsh ASCII text input file. Note that the
-following general syntax rule is applied for the definition of geometrical
-entities: ``If a number defines a new entity, it is enclosed between
-parentheses. If a number refers to a previously defined entity, it is
-enclosed between braces.''
+following general syntax rule is followed for the definition of geometrical
+entities: ``If an @var{expression} defines a new entity, it is enclosed
+between parentheses. If an @var{expression} refers to a previously defined
+entity, it is enclosed between braces.''
 
 @menu
 * Points::                      
@@ -1365,18 +1367,18 @@ enclosed between braces.''
 @ftable @code
 @item Point ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
 Creates an elementary point. The @var{expression} inside the parentheses is
-the point number; the three first @w{@var{expression}s} inside the braces on
-the right hand side give the three X, Y and Z coordinates of the point in
-the three-dimensional Euclidean space; the last @var{expression} sets the
-characteristic mesh length at that point. See @ref{Characteristic lengths}, for
-more information about how this characteristic length information is used in
-the meshing process.
+the point's identification number; the three first @w{@var{expression}s}
+inside the braces on the right hand side give the three X, Y and Z
+coordinates of the point in the three-dimensional Euclidean space; the last
+@var{expression} sets the characteristic mesh length at that point. See
+@ref{Characteristic lengths}, for more information about how this
+characteristic length information is used in the meshing process.
 
 @item Physical Point ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a physical point. The @var{expression} inside the parentheses is the
-physical point number; the @var{expression-list} on the right hand side
-should contain the numbers of all the elementary points that you want to
-group into the physical point.
+physical point's identification number; the @var{expression-list} on the
+right hand side should contain the identification numbers of all the
+elementary points that need to be grouped inside the physical point.
 @end ftable
 
 @c .........................................................................
@@ -1393,23 +1395,25 @@ group into the physical point.
 
 @ftable @code
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a Bezier curve. The @var{expression} inside the parentheses is
-the Bezier curve number; the @var{expression-list} on the right hand side
-should contain the numbers of all the curve's control points.
+Creates a Bezier curve. The @var{expression} inside the parentheses is the
+Bezier curve's identification number; the @var{expression-list} on the right
+hand side should contain the identification numbers of all the curve's
+control points.
 
 @item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a B-spline curve. The @var{expression} inside the parentheses is the
-B-spline curve number; the @var{expression-list} on the right hand side
-should contain the numbers of all the B-spline's control points. Repeated
-control points have the expected effect.
+B-spline curve's identification number; the @var{expression-list} on the
+right hand side should contain the identification numbers of all the
+B-spline's control points. Repeating control points has the expected effect.
 
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
 Creates a circle arc (strictly) smaller than Pi. The @var{expression} inside
-the parentheses is the circle arc number; the first @var{expression} inside
-the braces on the right hand side gives the number of the start point of the
-arc; the second @var{expression} gives the point number of the center of the
-circle; the last @var{expression} gives the number of the end point of the
-arc.
+the parentheses is the circle arc's identification number; the first
+@var{expression} inside the braces on the right hand side gives the
+identification number of the start point of the arc; the second
+@var{expression} gives the identification number of the center of the
+circle; the last @var{expression} gives the identification number of the end
+point of the arc.
 
 @c todo:
 @c @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @} Plane @{ @var{expression}, @var{expression}, @var{expression} @};
@@ -1419,31 +1423,20 @@ arc.
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
 Creates an ellipse arc. The @var{expression} inside the parentheses is the
-ellipse arc number; the first @var{expression} inside the braces on the
-right hand side gives the number of the start point of the arc; the second
-@var{expression} gives the point number of the center of the ellipse; the
-third @var{expression} gives the number of any point located on the major
-axis of the ellipse; the last @var{expression} gives the number of the end
-point of the arc.  (A deprecated synonym for @code{Ellipse} is
-@code{Ellipsis}.)
+ellipse arc's identification number; the first @var{expression} inside the
+braces on the right hand side gives the identification number of the start
+point of the arc; the second @var{expression} gives the identification
+number of the center of the ellipse; the third @var{expression} gives the
+identification number of any point located on the major axis of the ellipse;
+the last @var{expression} gives the identification number of the end point
+of the arc.  (A deprecated synonym for @code{Ellipse} is @code{Ellipsis}.)
 
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
 Creates a straight line segment. The @var{expression} inside the parentheses
-is the line segment number; the two @w{@var{expression}s} inside the braces
-on the right hand side give the start and end point numbers of the segment.
+is the line segment's identification number; the two @w{@var{expression}s}
+inside the braces on the right hand side give identification numbers of the
+start and end points of the segment.
 @c todo: multi-lines not authorized yet
-
-@item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
-Creates an oriented line loop. The @var{expression} inside the parentheses
-is the line loop number; the @var{expression-list} on the right hand side
-should contain the numbers of all the elementary lines that constitute the
-line loop. A line loop must be a closed loop, and the elementary lines
-should be ordered and oriented (using a negative line number to specify
-reverse orientation). If the orientation is correct, but the ordering is
-wrong, Gmsh will actually reorder the list internally to create a consistent
-loop. Although Gmsh supports it, it is not recommended to specify multiple
-line loops (or subloops) in a single @code{Line Loop} command. (Line loops
-are used to create surfaces: see @ref{Surfaces}.)
 
 @c todo:
 @c @item Nurbs ( @var{expression} ) = @{ @var{expression-list} @};
@@ -1451,18 +1444,33 @@ are used to create surfaces: see @ref{Surfaces}.)
 @c todo:
 @c @item Parametric ( @var{expression} ) = @{ @var{expression}, @var{expression}, "@var{string}", "@var{string}", "@var{string}" @};
 
-@item Physical Line ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a physical line. The @var{expression} inside the parentheses is the
-physical line number; the @var{expression-list} on the right hand side
-should contain the numbers of all the elementary lines that you want to
-group into the physical line. Specifying negative numbers in the
-@var{expression-list} will reverse the orientation of the mesh elements in
-the saved mesh output file.
-
 @item Spline ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a spline curve. The @var{expression} inside the parentheses is the
-spline number; the @var{expression-list} on the right hand side should
-contain the numbers of all the spline's control points.
+spline's identification number; the @var{expression-list} on the right hand
+side should contain the identification numbers of all the spline's control
+points.
+
+@item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
+Creates an oriented line loop. The @var{expression} inside the parentheses
+is the line loop's identification number; the @var{expression-list} on the
+right hand side should contain the identification numbers of all the
+elementary lines that constitute the line loop. A line loop must be a closed
+loop, and the elementary lines should be ordered and oriented (using
+negative identification numbers to specify reverse orientation). If the
+orientation is correct, but the ordering is wrong, Gmsh will actually
+reorder the list internally to create a consistent loop. Although Gmsh
+supports it, it is not recommended to specify multiple line loops (or
+subloops) in a single @code{Line Loop} command. (Line loops are used to
+create surfaces: see @ref{Surfaces}.)
+
+@item Physical Line ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a physical line. The @var{expression} inside the parentheses is the
+physical line's identification number; the @var{expression-list} on the
+right hand side should contain the identification numbers of all the
+elementary lines that need to be grouped inside the physical
+line. Specifying negative identification numbers in the
+@var{expression-list} will reverse the orientation of the mesh elements
+belonging to the corresponding elementary lines in the saved mesh.
 @end ftable
 
 @c .........................................................................
@@ -1486,31 +1494,42 @@ contain the numbers of all the spline's control points.
 
 @item Plane Surface ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a plane surface. The @var{expression} inside the parentheses is the
-plane surface number; the @var{expression-list} on the right hand side
-should contain the numbers of all the line loops defining the surface. The
-first line loop defines the exterior boundary of the surface; all other line
-loops define holes in the surface.
+plane surface's identification number; the @var{expression-list} on the
+right hand side should contain the identification numbers of all the line
+loops defining the surface. The first line loop defines the exterior
+boundary of the surface; all other line loops define holes in the surface.
 
-@item Ruled Surface ( @var{expression} ) = @{ @var{expression} @};
-Creates a ruled surface, i.e. a surface that can be interpolated using
+@item Ruled Surface ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a ruled surface, i.e.@: a surface that can be interpolated using
 transfinite interpolation. The @var{expression} inside the parentheses is
-the ruled surface number; the @var{expression} on the right hand side should
-a single line loop, composed of either three or four elementary lines.
-
-@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a surface loop (a shell). The @var{expression} inside the
-parentheses is the surface loop number; the @var{expression-list} on the
-right hand side should contain the numbers of all the elementary surfaces
-that constitute the surface loop. A surface loop must always represent a
-closed shell, and the elementary surfaces should be oriented consistently
-(using a negative surface number to specify reverse orientation). (Surface
-loops are used to create volumes: see @ref{Volumes}.)
+the ruled surface's identification number; the @var{expression-list} on the
+right hand side should the identification number of a single line loop,
+composed of either three or four elementary lines.
 
 @c todo:
 @c @item Triangulation Surface ( @var{expression} ) = ( @var{expression}, @var{expression} ) @{ @var{expression-list} @} @{ @var{expression-list} @};
 
 @c todo:
 @c @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
+
+@item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a surface loop (a shell). The @var{expression} inside the
+parentheses is the surface loop's identification number; the
+@var{expression-list} on the right hand side should contain the
+identification numbers of all the elementary surfaces that constitute the
+surface loop. A surface loop must always represent a closed shell, and the
+elementary surfaces should be oriented consistently (using negative
+identification numbers to specify reverse orientation). (Surface loops are
+used to create volumes: see @ref{Volumes}.)
+
+@item Physical Surface ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a physical surface. The @var{expression} inside the parentheses is
+the physical surface's identification number; the @var{expression-list} on
+the right hand side should contain the identification numbers of all the
+elementary surfaces that need to be grouped inside the physical
+surface. Specifying negative identification numbers in the
+@var{expression-list} will reverse the orientation of the mesh elements
+belonging to the corresponding elementary surfaces in the saved mesh.
 @end ftable
 
 @c .........................................................................
@@ -1527,12 +1546,19 @@ loops are used to create volumes: see @ref{Volumes}.)
 
 @ftable @code
 @item Volume ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a volume. The @var{expression} inside the parentheses is the volume
-number; the @var{expression-list} on the right hand side should contain the
-numbers of all the surface loops defining the volume. The first surface loop
-defines the exterior boundary of the volume; all other surface loops define
-holes in the volume. (A deprecated synonym for @code{Volume} is
-@code{Complex Volume}.)
+Creates a volume. The @var{expression} inside the parentheses is the
+volume's identification number; the @var{expression-list} on the right hand
+side should contain the identification numbers of all the surface loops
+defining the volume. The first surface loop defines the exterior boundary of
+the volume; all other surface loops define holes in the volume. (A
+deprecated synonym for @code{Volume} is @code{Complex Volume}.)
+
+@item Physical Volume ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a physical volume. The @var{expression} inside the parentheses is
+the physical volume's identification number; the @var{expression-list} on
+the right hand side should contain the identification numbers of all the
+elementary volumes that need to be grouped inside the physical
+volume.
 @end ftable
 
 @c .........................................................................
@@ -1552,14 +1578,14 @@ can be extended in order to also extrude the mesh):
 
 @ftable @code
 @item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @} ;
-Extrudes the @var{expression}-th point, line or surface using a translation
-transformation. The @var{expression-list} should contain three
+Extrudes the @var{expression}-th point, line or surface using a
+translation. The @var{expression-list} should contain three
 @w{@var{expression}s} giving the X, Y and Z components of the translation
 vector.
 
 @item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @};
-Extrudes the @var{expression}-th point, line or surface using a rotation
-transformation. The first @var{expression-list} should contain three
+Extrudes the @var{expression}-th point, line or surface using a
+rotation. The first @var{expression-list} should contain three
 @w{@var{expression}s} giving the X, Y and Z direction of the rotation axis;
 the second @var{expression-list} should contain three @w{@var{expression}s}
 giving the X, Y and Z components of any point on this axis; the last
@@ -1611,8 +1637,8 @@ should contain three @w{@var{expression}s} giving the X, Y and Z components
 of any point on this axis.
 
 @item Symmetry @{ @var{expression-list} @} @{ @var{transform-list} @}
-Transforms all elementary entities (points, lines or surfaces) by symmetry
-in respect to a plane. The @var{expression-list} should contain four
+Transforms all elementary entities (points, lines or surfaces) symmetrically
+to a plane. The @var{expression-list} should contain four
 @w{@var{expression}s} giving the coefficients of the plane's equation.
 
 @item Translate @{ @var{expression-list} @} @{ @var{transform-list} @}
@@ -1642,14 +1668,14 @@ Here is a list of all other geometry commands currently available:
 
 @ftable @code
 @item Coherence;
-Removes all duplicate elementary geometrical entities (e.g. points having
+Removes all duplicate elementary geometrical entities (e.g.@: points having
 identical coordinates). Note that Gmsh executes the @code{Coherence} command
 automatically after each geometrical transformation, unless the
 @code{Geometry.AutoCoherence} is set to zero (@pxref{Geometry options}).
 
 @item Delete @{ Point | Line | Surface @{ @var{expression-list} @}; @dots{} @};
-Deletes all elementary entities (points, lines or surfaces) whose numbers
-are given in @var{expression-list}.
+Deletes all elementary entities (points, lines or surfaces) whose
+identification numbers are given in @var{expression-list}.
 
 @c todo:
 @c @item Intersect;
@@ -1705,9 +1731,9 @@ geometry module (@pxref{Geometry module}).
 If only elementary geometrical entities are defined (or if the option
 @code{Mesh.SaveAll} is set; see @ref{Mesh options}), the grid produced by
 the mesh module will be saved ``as is''. That is, all the elements in the
-grid will be saved to disk using the number of the elementary region they
-discretize as their region number (@pxref{Gmsh mesh file format}). However,
-this can sometimes be impractical or even insufficient:
+grid will be saved to disk using the identification number of the elementary
+region they discretize as their region number (@pxref{Gmsh mesh file
+format}). However, this can sometimes be impractical or even insufficient:
 
 @itemize @bullet
 @item
@@ -1718,7 +1744,7 @@ determined entirely by the orientation of their ``parent'' elementary
 entity, and cannot be modified;
 @item
 it is impossible to group multiple elementary entities into larger groups
-carrying some common characteristic (e.g. `Left wing', `Metal', `Dirichlet
+carrying some common characteristic (e.g.@: `Left wing', `Metal', `Dirichlet
 boundary condition', @dots{}).
 @end itemize
 
@@ -1729,7 +1755,7 @@ overlapping groups, and to control the orientation of the elements in these
 groups. If physical entities are defined, the output mesh only contains
 those elements that belong to physical entities. The introduction of such
 physical entities in large models usually greatly facilitates the
-manipulation of the model (e.g. using `Tools->Visibility' in the GUI) and
+manipulation of the model (e.g.@: using `Tools->Visibility' in the GUI) and
 the interfacing with external solvers.
 
 @c -------------------------------------------------------------------------
@@ -1784,7 +1810,7 @@ element sizes.
 
 This method works with all the algorithms implemented in the mesh module,
 but is constrained by the structured algorithms for which the element size
-is explicitly specified (e.g. transfinite and extrusion grids: see
+is explicitly specified (e.g.@: transfinite and extrusion grids: see
 @ref{Structured grids}).
 @item
 You can use geometrical ``attractors'', an elaborated version of the
@@ -1954,20 +1980,20 @@ Five external solvers can be interfaced simultaneously with Gmsh.
 
 If you just want to start a solver from the solver module, with no further
 interactions between the solver and Gmsh, just edit the options relative to
-one of the five available solvers (e.g. @code{Solver.Name0},
+one of the five available solvers (e.g.@: @code{Solver.Name0},
 @code{Solver.Executable0}, @dots{}; see @ref{Solver options}), and set the
 corresponding ``client-server'' option to zero
-(e.g. @code{Solver.ClientServer0 = 0}). This doesn't require any
+(e.g.@: @code{Solver.ClientServer0 = 0}). This doesn't require any
 modification to be made to the solver.
 
 If you want the solver to interact with Gmsh (for error messages, option
 definitions, post-processing, etc.), you need to link your solver with the
 @file{GmshClient.c} file and add the appropriate function calls inside your
 program. You can then proceed as in the previous case, but this time you
-should set the client-server option to 1 (e.g. @code{Solver.ClientServer0 =
+should set the client-server option to 1 (e.g.@: @code{Solver.ClientServer0 =
 1}), so that Gmsh and the solver can communicate through a Unix socket. See
 @ref{Solver example} for an example of how to interface a C solver. Bindings
-for solvers written in other languages (e.g. Perl) are available on
+for solvers written in other languages (e.g.@: Perl) are available on
 @value{GMSH-WEB}.
 
 @menu
@@ -2041,7 +2067,7 @@ the @code{PostProcessing.LinkView} option below).
 Though most of any visualization process is inherently interactive, Gmsh
 exposes all post-processing commands and options to the user to permit a
 complete scripting of the full post-processing process (see
-e.g. @ref{t8.geo}, and @ref{t9.geo}).
+e.g.@: @ref{t8.geo}, and @ref{t9.geo}).
 
 The two following sections summarize all available post-processing commands
 and options.
@@ -2071,7 +2097,7 @@ Duplicates the @var{expression}-th post-processing view.
 
 @item Plugin (@var{string}) . @var{string};
 Executes a plugin function. The plugin name is given between the parentheses.
-Several plugins are loaded by default: see e.g. @ref{t9.geo}.
+Several plugins are loaded by default: see e.g.@: @ref{t9.geo}.
 
 @item Plugin (@var{string}) . @var{string} = @var{expression} | @var{char-expression};
 Sets a floating point (@var{expression}) or a character
@@ -2082,7 +2108,7 @@ example.
 Creates a new post-processing view, named @code{"@var{string}"}. This is the
 easiest way to create a post-processing view, but also the least efficient
 (the view is read through Gmsh's script parser, which can become quite slow
-if the view is large---e.g. with more than 100000 elements).  Though, this
+if the view is large---e.g.@: with more than 100000 elements).  Though, this
 ``parsed'' post-processing format (explained in detail in @ref{Gmsh parsed
 post-processing file format}) is very powerful for testing proposes, since
 all the values are @var{expressions}. Two other formats, better adapted for
@@ -2302,7 +2328,7 @@ example with:
 
 Note that, even if it is often handy to define the variables and the points
 directly in the input files (you may use any text editor for this purpose,
-e.g. Wordpad on Windows, or Emacs on Unix), it is almost always more simple
+e.g.@: Wordpad on Windows, or Emacs on Unix), it is almost always more simple
 to define the lines, the surfaces and the volumes interactively. To do so,
 just follow the context dependent buttons in the Geometry module. For
 example, to create a spline, select `Geometry' in the module menu, and then
@@ -2315,7 +2341,7 @@ opened project file.
 The second operating mode for Gmsh is the non-interactive mode. In this
 mode, there is no graphical user interface, and all operations are performed
 without any user interaction@footnote{If you compile Gmsh without the
-graphical user interface, i.e. with @code{./configure --disable-gui}, this
+graphical user interface, i.e.@: with @code{./configure --disable-gui}, this
 is the only mode you;ll have access to.}. To mesh the first tutorial in
 non-interactive mode, just type:
 
@@ -2786,7 +2812,7 @@ the same for all other kinds of values.
 For relatively small data sets Gmsh provides an additional post-processing
 format, which is parsed by the same grammar analyzer as the Gmsh script
 language. You can thus, for example, embed small post-processing views
-directly into your geometrical descriptions (see e.g. @ref{t4.geo}). This
+directly into your geometrical descriptions (see e.g.@: @ref{t4.geo}). This
 format is also useful for testing purposes: its syntax is very permissive,
 and you can easily generate it by hand or on the fly. The format of the
 parsed post-processing file is the following:
@@ -3021,14 +3047,14 @@ to make the code easy to read/debug/maintain:
 
 @enumerate
 @item
-please enable full warnings for your compiler (e.g. add @code{-Wall} to
+please enable full warnings for your compiler (e.g.@: add @code{-Wall} to
 @code{FLAGS} in the @file{variable} file);
 @item
 always use the @code{Msg()} function to print information, errors, @dots{};
 @item 
 indent your files using @file{utils/indent.sh};
 @item
-if working on Windows, don't leave tabs in your files (e.g. untabify them
+if working on Windows, don't leave tabs in your files (e.g.@: untabify them
 with @file{utils/untabify}).
 @end enumerate
 

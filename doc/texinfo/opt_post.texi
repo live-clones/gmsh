@@ -1,11 +1,11 @@
 @ftable @code
 @item PostProcessing.AnimationDelay
-Delay (in seconds) between to animation frames@*
+Delay (in seconds) between frames in automatic animation mode@*
 Default value: @code{0.25}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.AnimationCycle
-Cycle through views instead of time steps for the animation@*
+Cycle through views instead of time steps in automatic animation mode@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -20,7 +20,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
-Use a `color by region number' scheme@*
+Use a `color by region number' coloring scheme@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -100,7 +100,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Interactive
-Show the construction of the 2D mesh in real time (only with the anisotropic algorithm)@*
+Show the construction of the 2D mesh in real time (only with the 2D anisotropic algorithm)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -115,7 +115,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LineType
-Display lines as solid color segments or 3D cylinders@*
+Display lines as solid color segments (0) or 3D cylinders (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -175,12 +175,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointInsertion
-Point insertion method for isotropic 2D algorithm (1=center of circ. circle, 2=voronoi, 3=cog)@*
+Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=voronoi, 3=cog)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointsNumbers
-Display mesh vertices numbers?@*
+Display mesh vertex numbers?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -190,7 +190,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointType
-Display points as solid color dots or 3D spheres@*
+Display points as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -275,32 +275,32 @@ Default value: @code{@{0,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Triangles
-Mesh triangle color (if ColorCarousel=0)@*
+Mesh triangle color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{160,150,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Quadrangles
-Mesh quadrangle color (if ColorCarousel=0)@*
+Mesh quadrangle color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{130,120,225@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Tetrahedra
-Mesh tetrahedron color (if ColorCarousel=0)@*
+Mesh tetrahedron color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{160,150,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Hexahedra
-Mesh hexahedron color (if ColorCarousel=0)@*
+Mesh hexahedron color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{130,120,225@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Prisms
-Mesh prism color (if ColorCarousel=0)@*
+Mesh prism color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{232,210,23@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Pyramids
-Mesh pyramid color (if ColorCarousel=0)@*
+Mesh pyramid color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{217,113,38@}}@*
 Saved in: @code{General.OptionsFileName}
 

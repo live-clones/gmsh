@@ -15,27 +15,27 @@ Default value: @code{".gmsh-errors"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.OptionsFileName
-File created in your home directory with `Tools->Options->Save', and which is read on startup@*
+Option file created with `Tools->Options->Save'; automatically read on startup@*
 Default value: @code{".gmsh-options"}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.SessionFileName
-File into which session specific information is saved, and which is read on startup@*
+Option file into which session specific information is saved; automatically read on startup@*
 Default value: @code{".gmshrc"}@*
 Saved in: @code{-}
 
 @item General.TextEditor
-System command to launch a text editor@*
+System command to launch a text editor (OS-dependent)@*
 Default value: @code{"emacs %s &"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Theme
-Graphical user interface theme (try e.g. plastic)@*
+FLTK graphical user interface theme (try e.g. plastic)@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
-Temporary file (created in your home directory)@*
+Temporary file used by the geometry module@*
 Default value: @code{".gmsh-tmp"}@*
 Saved in: @code{General.SessionFileName}
 
@@ -225,7 +225,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.FastRedraw
-Fast redraw (no mesh or view display) when moving the model@*
+Fast redraw (no mesh or view display) when interacting with the model@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -485,12 +485,12 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.SaveOptions
-Automatically save all current options each time you quit Gmsh?@*
+Automatically save current options in General.OptionsFileName each time you quit Gmsh?@*
 Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.SaveSession
-Automatically save session specific information each time you quit Gmsh?@*
+Automatically save session specific information in General.SessionFileName each time you quit Gmsh?@*
 Default value: @code{1}@*
 Saved in: @code{General.SessionFileName}
 
@@ -520,12 +520,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionX
-X position of small axes (negative values for right alignment)@*
+X position of small axes (use negative values for right alignment)@*
 Default value: @code{-45}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionY
-Y position of small axes (negative values for bottom alignment)@*
+Y position of small axes (use negative values for bottom alignment)@*
 Default value: @code{-35}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -555,22 +555,22 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TrackballQuaternion0
-First trackball quaternion component (used if Trackball=1)@*
+First trackball quaternion component (used if General.Trackball=1)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.TrackballQuaternion1
-Second trackball quaternion component (used if Trackball=1)@*
+Second trackball quaternion component (used if General.Trackball=1)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.TrackballQuaternion2
-Third trackball quaternion component (used if Trackball=1)@*
+Third trackball quaternion component (used if General.Trackball=1)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.TrackballQuaternion3
-Fourth trackball quaternion component (used if Trackball=1)@*
+Fourth trackball quaternion component (used if General.Trackball=1)@*
 Default value: @code{1}@*
 Saved in: @code{-}
 

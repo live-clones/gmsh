@@ -61,8 +61,8 @@ convert an ascii view into a binary one
 disable double buffering
 @item -fontsize int
 specify the font size for the GUI (default: 12)
-@item -theme string
-specify GUI theme
+@item -scheme string
+specify FLTK scheme
 @item -alpha
 enable alpha blending
 @item -notrack
