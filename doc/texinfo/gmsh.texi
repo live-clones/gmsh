@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.124 2004-07-02 15:59:06 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.125 2004-07-02 16:08:18 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2782,7 +2782,7 @@ second order elements, the first order nodes are given first, followed by
 the nodes associated with the edges, followed by the nodes associated with
 the quadrangular faces (if any), followed by the nodes associated with the
 volume (if any). The ordering of these additional nodes follows the ordering
-of the edges and faces given in @ref{Gmsh node ordering}.
+of the edges and quadrangular faces given in @ref{Gmsh node ordering}.
 @end table
 
 @c .........................................................................
@@ -2910,7 +2910,7 @@ the first order nodes are given first, followed by the nodes associated with
 the edges, followed by the nodes associated with the quadrangular faces (if
 any), followed by the nodes associated with the volume (if any). The
 ordering of these additional nodes follows the ordering of the edges and
-faces given in @ref{Gmsh node ordering}.
+quadrangular faces given in @ref{Gmsh node ordering}.
 @end table
 
 @c -------------------------------------------------------------------------
