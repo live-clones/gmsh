@@ -1,4 +1,4 @@
-/* $Id: Mesh.h,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: Mesh.h,v 1.7 2000-11-28 06:55:11 geuzaine Exp $ */
 #ifndef _MESH_H_
 #define _MESH_H_
 
@@ -14,7 +14,7 @@
 #define FORMAT_EPS  5
 #define FORMAT_BMP  6
 #define FORMAT_GIF  7
-#define FORMAT_GEO  7
+#define FORMAT_GEO  8
 
 #define CONV_VALUE    0.8
 

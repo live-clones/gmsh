@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.11 2000-11-26 15:43:48 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.12 2000-11-28 06:55:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -702,7 +702,7 @@ void CreateWidgets_FD(Widgets_T *w){
   XtManageChild(w->FD.printButt[3]);
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("GEO")); i++;
-  w->FD.printButt[4] = XmCreatePushButton(w->FD.printPane[0], "MprintButt3", arg, i);
+  w->FD.printButt[4] = XmCreatePushButton(w->FD.printPane[0], "MprintButt4", arg, i);
   XtManageChild(w->FD.printButt[4]);
 
   i=0;
