@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.10 2000-12-04 09:29:38 colignon Exp $ */
+%{ /* $Id: Gmsh.y,v 1.11 2000-12-04 09:51:51 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1311,7 +1311,7 @@ Coherence :
 
 Options :
     tColor '{' ColorSections '}'
-  | tClip tPlane '(' FExpr ')' tAFFECT '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+  | tClip tPlane '(' FExpr ')' tAFFECT '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
     {
       i = (int)$4 ;
       if(i < 0 || i > 5)
@@ -1319,9 +1319,9 @@ Options :
       else{
 	CTX.clip[i] = 1;
 	CTX.clip_plane[i][0] = $8;
-	CTX.clip_plane[i][0] = $10;
-	CTX.clip_plane[i][0] = $12;
-	CTX.clip_plane[i][0] = $14;
+	CTX.clip_plane[i][1] = $10;
+	CTX.clip_plane[i][2] = $12;
+	CTX.clip_plane[i][3] = $14;
       }
     }
 ;
