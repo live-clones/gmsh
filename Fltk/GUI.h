@@ -45,8 +45,10 @@ public:
 
 class GUI{
 
-  int BH; // button height
-  int WB; // window border
+  int BH; // generic button height
+  int WB; // generic window border
+  int MH; // height of the unchangeable part of the menu window
+  // All other diemnsions are automatic, or governed by CTX
   
   // Windows
   Fl_Window  *m_window, *g_window, *gen_window, *geo_window ;
@@ -89,6 +91,7 @@ public:
   void draw_gl();
   void draw_gl_overlay();
   void set_size(int w, int h);
+  void set_menu_size(int nb_butt);
 
   void opt_general();
   void opt_geometry();

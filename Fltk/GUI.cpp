@@ -70,7 +70,7 @@ GUI::GUI() {
 
   {
     int width = 152 ;
-    MH = 2*BH+6 ; // this is the initial width: no dynamic button is shown!
+    MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
 
     m_window = new Fl_Window(width,MH);
     m_window->box(FL_THIN_UP_BOX);
@@ -225,7 +225,6 @@ void GUI::set_size(int w, int h){
 
 void GUI::set_menu_size(int nb_butt){
   m_window->size(m_window->w(), MH + nb_butt*BH);
-  m_window->redraw();
 }
 
 // The window for general options
