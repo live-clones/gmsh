@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.48 2004-04-18 03:36:07 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.49 2004-04-30 15:13:41 stainier Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -164,6 +164,20 @@ void print_msh_simplex(void *a, void *b)
       temp = (*S)->V[0];
       (*S)->V[0] = (*S)->V[1];
       (*S)->V[1] = temp;
+    }
+  }
+  else if(type == TETRAHEDRON_2) {
+    if((*S)->Volume_Simplexe() < 0) {
+      Vertex *temp;
+      temp = (*S)->V[0];
+      (*S)->V[0] = (*S)->V[1];
+      (*S)->V[1] = temp;
+      temp = (*S)->VSUP[1];
+      (*S)->VSUP[1] = (*S)->VSUP[2];
+      (*S)->VSUP[2] = temp;
+      temp = (*S)->VSUP[5];
+      (*S)->VSUP[5] = (*S)->VSUP[3];
+      (*S)->VSUP[3] = temp;
     }
   }
 
