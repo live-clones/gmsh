@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.29 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: List.cpp,v 1.30 2004-05-18 20:51:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -155,7 +155,8 @@ void List_Put(List_T * liste, int index, void *data)
 
 void List_Pop(List_T * liste)
 {
-  liste->n--;
+  if(liste->n > 0)
+    liste->n--;
 }
 
 void *List_Pointer(List_T * liste, int index)
