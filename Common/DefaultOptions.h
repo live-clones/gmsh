@@ -751,7 +751,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
     "Show the construction of the 2D mesh in real time (only with the 2D anisotropic algorithm)" },
 
-  { F|O, "Light" , opt_mesh_light , 1. , 
+  { F|O, "Light" , opt_mesh_light , 0. , 
     "Enable lighting for the mesh" },
   { F|O, "Lines" , opt_mesh_lines , 0. , 
     "Display mesh lines (1D elements)?" },
@@ -790,7 +790,7 @@ StringXNumber MeshOptions_Number[] = {
     "Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=cog)" },
   { F|O, "PointNumbers" , opt_mesh_points_num , 0. , 
     "Display mesh node numbers?" },
-  { F|O, "PointSize" , opt_mesh_point_size , 3. , 
+  { F|O, "PointSize" , opt_mesh_point_size , 4. , 
     "Display size of mesh vertices (in pixels)" },
   { F|O, "PointType" , opt_mesh_point_type , 0. , 
     "Display mesh vertices as solid color dots (0) or 3D spheres (1)" },
