@@ -446,16 +446,29 @@ Structural_Material StructuralSolver :: GetMaterial (const std::string & name) c
 }
 
 
-#define BEAM_SECTION_ 3
-#define BEAM_MATERIAL_ 4
-#define BEAM_MODEL_ 5
-#define POINT_ALONG_ 0
-#define POINT_ACROSS_ 1
-#define POINT_AROUND_ 2
-#define ANGLE_ 3
-#define ALONG_ 0
-#define ACROSS_ 1
-#define AROUND_ 2
+#define BEAM_SECTION_ 6
+#define BEAM_MATERIAL_ 7
+#define BEAM_MODEL_ 8
+
+#define DIR1X_ 20
+#define DIR1Y_ 21
+#define DIR1Z_ 22
+#define DIR2X_ 23
+#define DIR2Y_ 24
+#define DIR2Z_ 25
+#define DIR1F_ 26
+#define DIR2F_ 27
+#define DIR3F_ 28
+#define DIR1M_ 29
+#define DIR2M_ 30
+#define DIR3M_ 31
+
+#define DIR1F__ 0
+#define DIR2F__ 1
+#define DIR3F__ 2
+#define DIR1M__ 3
+#define DIR2M__ 4
+#define DIR3M__ 5
 
 #ifdef HAVE_FLTK 
 void close_cb(Fl_Widget* w, void* data)
@@ -486,7 +499,7 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
   }
   
   int width = 31 * fontsize;
-  int height = 5 * WB + 9 * BH;
+  int height = 5 * WB + 11 * BH;
 
   _window = new Dialog_Window(width, height, "Structural Solver");
   _window->box(WINDOW_BOX);
@@ -496,40 +509,80 @@ void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
     {
       g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Nodal Constraint");
       
-      static Fl_Menu_Item _type[] = {
+      static Fl_Menu_Item _typeF[] = {
 	{"Displacement fixed (mm)", 0, 0, 0},
 	{"Load fixed (kN)", 0, 0, 0},
 	{0}
       };
+      static Fl_Menu_Item _typeM[] = {
+	{"Rotation fixed (rad)", 0, 0, 0},
+	{"Moment fixed (kNmm)", 0, 0, 0},
+	{0}
+      };
 
-      _value[ANGLE_] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Angle of Rotation");
-      _value[ANGLE_]->value(90);
-      _value[ANGLE_]->align(FL_ALIGN_RIGHT);
 
-      _choice[POINT_ALONG_] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Along the Local Axis");
-      _choice[POINT_ALONG_]->menu(_type);
-      _choice[POINT_ALONG_]->align(FL_ALIGN_RIGHT);
-      
-      _value[ALONG_] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH,"Value");
-      _value[ALONG_]->value(0.0);
-      _value[ALONG_]->align(FL_ALIGN_RIGHT);
-      
-      _choice[POINT_ACROSS_] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Across the Local Axis");
-      _choice[POINT_ACROSS_]->menu(_type);
-      _choice[POINT_ACROSS_]->align(FL_ALIGN_RIGHT);
-      
-      _value[ACROSS_] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH,"Value");
-      _value[ACROSS_]->value(0.0);
-      _value[ACROSS_]->align(FL_ALIGN_RIGHT);
-      
-      
-      _choice[POINT_AROUND_] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Around Z axis");
-      _choice[POINT_AROUND_]->menu(_type);
-      _choice[POINT_AROUND_]->align(FL_ALIGN_RIGHT);
-      
-      _value[AROUND_] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH,       "");
-      _value[AROUND_]->value(0.0);
-      _value[AROUND_]->align(FL_ALIGN_RIGHT);
+      _value[DIR1X_] = new Fl_Value_Input(2 * WB, 2 * WB + 1 * BH, IW/3, BH,       "");
+      _value[DIR1X_]->value(1.0);
+      _value[DIR1X_]->align(FL_ALIGN_RIGHT);
+      _value[DIR1Y_] = new Fl_Value_Input(2 * WB+IW/3, 2 * WB + 1* BH, IW/3, BH,       "");
+      _value[DIR1Y_]->value(0.0);
+      _value[DIR1Y_]->align(FL_ALIGN_RIGHT);
+      _value[DIR1Z_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 1 * BH, IW/3, BH, "Local x axe");
+      _value[DIR1Z_]->value(0.0);
+      _value[DIR1Z_]->align(FL_ALIGN_RIGHT);
+
+      _value[DIR2X_] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW/3, BH,       "");
+      _value[DIR2X_]->value(0.0);
+      _value[DIR2X_]->align(FL_ALIGN_RIGHT);
+      _value[DIR2Y_] = new Fl_Value_Input(2 * WB+IW/3, 2 * WB + 2* BH, IW/3, BH,       "");
+      _value[DIR2Y_]->value(1.0);
+      _value[DIR2Y_]->align(FL_ALIGN_RIGHT);
+      _value[DIR2Z_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 2 * BH, IW/3, BH, "Local y axe");
+      _value[DIR2Z_]->value(0.0);
+      _value[DIR2Z_]->align(FL_ALIGN_RIGHT);
+
+      _choice[DIR1F__] = new Fl_Choice(2 * WB, 2 * WB + 3 * BH, 2*IW/3, BH, "");
+      _choice[DIR1F__]->menu(_typeF);
+      _choice[DIR1F__]->align(FL_ALIGN_RIGHT);
+      _value[DIR1F_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 3 * BH, IW/3, BH,"Value along x");
+      _value[DIR1F_]->value(0.0);
+      _value[DIR1F_]->align(FL_ALIGN_RIGHT);
+
+      _choice[DIR1M__] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, 2*IW/3, BH, "");
+      _choice[DIR1M__]->menu(_typeM);
+      _choice[DIR1M__]->align(FL_ALIGN_RIGHT);
+      _value[DIR1M_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 4 * BH, IW/3, BH,"Value around x");
+      _value[DIR1M_]->value(0.0);
+      _value[DIR1M_]->align(FL_ALIGN_RIGHT);
+
+
+      _choice[DIR2F__] = new Fl_Choice(2 * WB, 2 * WB + 5 * BH, 2*IW/3, BH, "");
+      _choice[DIR2F__]->menu(_typeF);
+      _choice[DIR2F__]->align(FL_ALIGN_RIGHT);
+      _value[DIR2F_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 5 * BH, IW/3, BH,"Value along y");
+      _value[DIR2F_]->value(0.0);
+      _value[DIR2F_]->align(FL_ALIGN_RIGHT);
+
+      _choice[DIR2M__] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, 2*IW/3, BH, "");
+      _choice[DIR2M__]->menu(_typeM);
+      _choice[DIR2M__]->align(FL_ALIGN_RIGHT);
+      _value[DIR2M_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 6 * BH, IW/3, BH,"Value around y");
+      _value[DIR2M_]->value(0.0);
+      _value[DIR2M_]->align(FL_ALIGN_RIGHT);
+
+      _choice[DIR3F__] = new Fl_Choice(2 * WB, 2 * WB + 7 * BH, 2*IW/3, BH, "");
+      _choice[DIR3F__]->menu(_typeF);
+      _choice[DIR3F__]->align(FL_ALIGN_RIGHT);
+      _value[DIR3F_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 7 * BH, IW/3, BH,"Value along z");
+      _value[DIR3F_]->value(0.0);
+      _value[DIR3F_]->align(FL_ALIGN_RIGHT);
+
+      _choice[DIR3M__] = new Fl_Choice(2 * WB, 2 * WB + 8 * BH, 2*IW/3, BH, "");
+      _choice[DIR3M__]->menu(_typeM);
+      _choice[DIR3M__]->align(FL_ALIGN_RIGHT);
+      _value[DIR3M_] = new Fl_Value_Input(2 * WB+2*IW/3, 2 * WB + 8 * BH, IW/3, BH,"Value around z");
+      _value[DIR3M_]->value(0.0);
+      _value[DIR3M_]->align(FL_ALIGN_RIGHT);
       g[0]->end();
     }
     // 2: Physical Line
@@ -647,21 +700,38 @@ void StructuralSolver :: addPhysicalPoint (int id)
 #ifdef HAVE_FLTK 
   PhysicalPointInfo info;
 
-  info.angle = _value[ANGLE_]->value();
+  info.essential_W [0] = _choice[DIR1F__] ->value();
+  info.essential_W [1] = _choice[DIR2F__] ->value();
+  info.essential_W [2] = _choice[DIR3F__] ->value();
+  info.essential_Theta [0] = _choice[DIR1M__] ->value();
+  info.essential_Theta [1] = _choice[DIR2M__] ->value();
+  info.essential_Theta [2] = _choice[DIR3M__] ->value();
 
-  info.disp[0] = _choice[POINT_ALONG_] ->value();
-  info.disp[1] = _choice[POINT_ACROSS_] ->value();
-  info.disp[2] = _choice[POINT_AROUND_] ->value();
-  info.val[0] = _value[ALONG_]->value();
-  info.val[1] = _value[ACROSS_]->value();
-  info.val[2] = _value[AROUND_]->value();
+  info.dirx[0] = _value[DIR1X_] -> value ();
+  info.dirx[1] = _value[DIR1Y_] -> value ();
+  info.dirx[2] = _value[DIR1Z_] -> value ();
 
-  if (info.disp[0] == 0)
-    MAX_FORCE = (MAX_FORCE>info.val[0])?MAX_FORCE:info.val[0];
-  if (info.disp[1] == 0)
-    MAX_FORCE = (MAX_FORCE>info.val[1])?MAX_FORCE:info.val[1];
-  if (info.disp[2] == 0)
-    MAX_FORCE = (MAX_FORCE>info.val[2])?MAX_FORCE:info.val[2];
+  info.diry[0] = _value[DIR2X_] -> value ();
+  info.diry[1] = _value[DIR2Y_] -> value ();
+  info.diry[2] = _value[DIR2Z_] -> value ();
+
+  prodve (info.dirx,info.diry,info.dirz);
+
+
+  info.values_W[0] = _value[DIR1F_] -> value ();
+  info.values_W[1] = _value[DIR2F_] -> value ();
+  info.values_W[2] = _value[DIR3F_] -> value ();
+
+  info.values_Theta[0] = _value[DIR1M_] -> value ();
+  info.values_Theta[1] = _value[DIR2M_] -> value ();
+  info.values_Theta[2] = _value[DIR3M_] -> value ();
+
+  if (info.essential_W[0] == 1)
+    MAX_FORCE = (MAX_FORCE>fabs(info.values_W[0]))?MAX_FORCE:fabs(info.values_W[0]);
+  if (info.essential_W[1] == 1)
+    MAX_FORCE = (MAX_FORCE>fabs(info.values_W[1]))?MAX_FORCE:fabs(info.values_W[1]);
+  if (info.essential_W[2] == 1)
+    MAX_FORCE = (MAX_FORCE>fabs(info.values_W[2]))?MAX_FORCE:fabs(info.values_W[2]);
 
   points[id] = info;
 #endif
@@ -708,8 +778,16 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 	const PhysicalPointInfo &i = (*it).second;
 	int id = (*it).first;
 	if (getPhysical ( id , 0 ))
-	  {
-	    fprintf(f,"NODE %d %g %d %g %d %g %d %g \n",id,i.angle,i.disp[0],i.val[0],i.disp[1],i.val[1],i.disp[2],i.val[2]);
+	{
+	    fprintf(f,"NODE %d %g %g %g %g %g %g %g %g %g %d %d %d %d %d %d %g %g %g %g %g %g\n",
+		    id,
+		    i.dirx[0],i.dirx[1],i.dirx[2],
+		    i.diry[0],i.diry[1],i.diry[2],
+		    i.dirz[0],i.dirz[1],i.dirz[2],
+		    i.essential_W[0],i.essential_W[1],i.essential_W[2],
+		    i.essential_Theta[0],i.essential_Theta[1],i.essential_Theta[2],
+		    i.values_W[0],i.values_W[1],i.values_W[2],
+		    i.values_Theta[0],i.values_Theta[1],i.values_Theta[2]);
 	  }
       }
   }
@@ -747,7 +825,15 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 	int id = (*it).first;
 	if (getPhysical ( id , 0 ))
 	  {
-	    fprintf(f,"222 %d %g %d %g %d %g %d %g \n",id,i.angle,i.disp[0],i.val[0],i.disp[1],i.val[1],i.disp[2],i.val[2]);
+	    fprintf(f,"222 %d %g %g %g %g %g %g %g %g %g %d %d %d %d %d %d %g %g %g %g %g %g\n",
+		    id,
+		    i.dirx[0],i.dirx[1],i.dirx[2],
+		    i.diry[0],i.diry[1],i.diry[2],
+		    i.dirz[0],i.dirz[1],i.dirz[2],
+		    i.essential_W[0],i.essential_W[1],i.essential_W[2],
+		    i.essential_Theta[0],i.essential_Theta[1],i.essential_Theta[2],
+		    i.values_W[0],i.values_W[1],i.values_W[2],
+		    i.values_Theta[0],i.values_Theta[1],i.values_Theta[2]);
 	  }
       }
   }
@@ -786,49 +872,55 @@ void StructuralSolver :: readSolverFile ( const char *geom_file )
       if (!strcmp(name,"NODE"))
 	{
 	  int id;
-	  PhysicalPointInfo info;
-	  sscanf(line,"%s %d %lf %d %lf %d %lf %d %lf \n",a1,&id,
-		 &info.angle,
-		 &info.disp[0],&info.val[0],
-		 &info.disp[1],&info.val[1],
-		 &info.disp[2],&info.val[2]);
-	  points[id] = info;
-	  if (info.disp[0] == 1)
-	    MAX_FORCE = (MAX_FORCE>fabs(info.val[0]))?MAX_FORCE:fabs(info.val[0]);
-	  if (info.disp[1] == 1)
-	    MAX_FORCE = (MAX_FORCE>fabs(info.val[1]))?MAX_FORCE:fabs(info.val[1]);
+	  PhysicalPointInfo i;
+	  sscanf(line,"%s %d %lf %lf %lf %lf %lf %lf %lf %lf %lf %d %d %d %d %d %d %lf %lf %lf %lf %lf %lf\n",
+		 a1, 
+		 &id,
+		 &i.dirx[0],&i.dirx[1],&i.dirx[2],
+		 &i.diry[0],&i.diry[1],&i.diry[2],
+		 &i.dirz[0],&i.dirz[1],&i.dirz[2],
+		 &i.essential_W[0],&i.essential_W[1],&i.essential_W[2],
+		 &i.essential_Theta[0],&i.essential_Theta[1],&i.essential_Theta[2],
+		 &i.values_W[0],&i.values_W[1],&i.values_W[2],
+		 &i.values_Theta[0],&i.values_Theta[1],&i.values_Theta[2]);
+	  points[id] = i;
+	  if (i.essential_W[0] == 1)
+	      MAX_FORCE = (MAX_FORCE>fabs(i.values_W[0]))?MAX_FORCE:fabs(i.values_W[0]);
+	  if (i.essential_W[1] == 1)
+	      MAX_FORCE = (MAX_FORCE>fabs(i.values_W[1]))?MAX_FORCE:fabs(i.values_W[1]);
+	  if (i.essential_W[2] == 1)
+	      MAX_FORCE = (MAX_FORCE>fabs(i.values_W[2]))?MAX_FORCE:fabs(i.values_W[2]);
+
+	  printf("typ %d val = %g\n",i.essential_W[0],i.values_W[0]);
 	}
       if (feof(f) )break;
     }
-  //  printf("max force = %g\n",MAX_FORCE);
+  printf("max force = %g\n",MAX_FORCE);
   fclose(f);
 }
 
 
-void Draw_Kinematic_Constraint ( const int type [3], 
+void Draw_Kinematic_Constraint ( const int type_W     [3], 
+				 const int type_Theta [3], 
 				 const double size, 
 				 const double pos[3], 
-				 double dir[3])
+				 double dir[3],
+				 double dir2[3])
 {
 #ifdef HAVE_FLTK
 
-  // presently, it's only 2D , 1st and second component are for dir and dir2 
-  // and third one is for rotation around z
-
-  double dir2[3];
-  double ez[3]={0,0,1};
-  prodve(dir,ez,dir2);
+// 3D VERSION 
 
   double size_feature = size*0.5;
   double width_ground = size*0.25;
 
-  if(!type[0] && !type[1] && !type[2]) // clamped
+  if(!type_W[0] && !type_W[1] && !type_W[2] && !type_Theta[0] && !type_Theta[1] && !type_Theta[2] ) // clamped
     {
       size_feature = 0.0;
       width_ground = 0.5*size;
     }
 
-  if(type[0] && type[1] && type[2]) // free
+  if(type_W[0] && type_W[1] && type_W[2] && type_Theta[0] && type_Theta[1] && type_Theta[2]) // free
     {
       return;
     }
@@ -836,7 +928,7 @@ void Draw_Kinematic_Constraint ( const int type [3],
   if(CTX.geom.light) glEnable(GL_LIGHTING);
   if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
 
-  glColor3f    (0.8,0.8,0.8);
+  glColor3f    (0.9,0.9,0.9);
   
   glBegin(GL_QUADS);
   glVertex3d ( pos[0] - size_feature * dir [0] - size * 0.5 * dir2 [0],
@@ -858,7 +950,7 @@ void Draw_Kinematic_Constraint ( const int type [3],
 
   glLineWidth(2);
 
-  if (!type[0])
+  if (!type_W[0])
     {
       glBegin(GL_LINES);
       glVertex3d ( pos[0] - size_feature * dir [0] - size * 0.5 * dir2 [0],
@@ -870,15 +962,17 @@ void Draw_Kinematic_Constraint ( const int type [3],
       glEnd();
     }
   
-  if(type[0] || type[1] || type[2]) // everything except clamped
+  if(type_Theta[0] || type_Theta[1] || type_Theta[2]) // everything except clamped
     {
       double radius_circle = size_feature * 0.5;
       double radius_circle2 = size_feature * 0.5;
 
-      if (!type[1]) radius_circle = 0;
-      if (!type[2]) radius_circle2 = 0;
+      // NO FREE SLIP ON THE WALL
+      if (!type_W[1] && !type_W[2]) radius_circle = 0;
+      // NO FREE ROTATION ON THE WALL
+      if (!type_Theta[0] && !type_Theta[1] && !type_Theta[2]) radius_circle2 = 0;
 
-      if (!type[0])
+      if (!type_W[0])
 	{
 	  glBegin(GL_LINES);
 	  
@@ -896,14 +990,14 @@ void Draw_Kinematic_Constraint ( const int type [3],
 	  glEnd();
 	}
 
-      if (!type[0]){
+      if (!type_W[0]){
 	glColor4f(1,1,1,1);
 	Draw_Disk (radius_circle2*.5*.8, 0.00, pos[0], pos[1], pos[2]+0.01*radius_circle2,CTX.geom.light); 
 	glColor4f(0,0,0,1);
 	Draw_Disk (radius_circle2*.5, 0.8, pos[0], pos[1], pos[2],CTX.geom.light); 
       }
 
-      if (!type[1] || !type[0]){
+      if (!type_W[1] || !type_W[0]){
 	glBegin(GL_LINES);
 	glVertex3d ( pos[0] - (size_feature-radius_circle) * dir [0] - size * 0.5 * dir2 [0],
 		     pos[1] - (size_feature-radius_circle) * dir [1] - size * 0.5 * dir2 [1],
@@ -972,33 +1066,40 @@ bool StructuralSolver :: GL_enhancePoint ( Vertex *v)
 	  if (it !=points.end())
 	    {	
     
-	      double angle = 3.1415926*it->second.angle/180;
-	      
-	      double size = 0.05*(CTX.max[0]-CTX.min[0]);
-	      double dir[3] = {cos(angle),sin(angle),0};
-	      double dir2[3];
-	      double Z[3]={0,0,1};
-	      prodve(dir,Z,dir2);
+	      double size = 0.1*(CTX.max[0]-CTX.min[0]);
+	      double dir[3] = {it->second.dirx[0],it->second.dirx[1],it->second.dirx[2]};
+	      double dir2[3] = {it->second.diry[0],it->second.diry[1],it->second.diry[2]};
 	      norme(dir);
+	      norme(dir2);
+	      double dir3[3];
+	      prodve(dir,dir2,dir3);
 	      double pos[3] = {v->Pos.X,v->Pos.Y,v->Pos.Z};
-	      Draw_Kinematic_Constraint (it->second.disp,size,pos,dir);
+	      Draw_Kinematic_Constraint (it->second.essential_W,it->second.essential_Theta,size,pos,dir,dir2);
 
 	      double dv[3] = {0,0,0};		  
 	      
-	      if (it->second.disp[0] == 1)
+	      if (it->second.essential_W[0] == 1)
 		{
-		  dv[0] += dir[0] * it->second.val[0];
-		  dv[1] += dir[1] * it->second.val[0];
+		  dv[0] += dir[0] * it->second.values_W[0];
+		  dv[1] += dir[1] * it->second.values_W[0];
+		  dv[2] += dir[2] * it->second.values_W[0];
 		}
-	      if (it->second.disp[1] == 1)
+	      if (it->second.essential_W[1] == 1)
 		{
-		  dv[0] += dir2[0] * it->second.val[1];
-		  dv[1] += dir2[1] * it->second.val[1];
+		  dv[0] += dir2[0] * it->second.values_W[1];
+		  dv[1] += dir2[1] * it->second.values_W[1];
+		  dv[2] += dir2[2] * it->second.values_W[1];
+		}
+	      if (it->second.essential_W[2] == 1)
+		{
+		  dv[0] += dir3[0] * it->second.values_W[2];
+		  dv[1] += dir3[1] * it->second.values_W[2];
+		  dv[2] += dir3[2] * it->second.values_W[2];
 		}
 
 	      const double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
 	      const double l = sqrt (dv[0]*dv[0]+dv[1]*dv[1]);
-	      const double kk = (CTX.max[0]-CTX.min[0])*.1 / (MAX_FORCE);
+	      const double kk = (CTX.max[0]-CTX.min[0])*.2 / (MAX_FORCE);
 	      if (l != 0.0)
 		{
 		  glColor4ubv((GLubyte *) & CTX.color.text);

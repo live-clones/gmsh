@@ -73,9 +73,11 @@ struct Structural_Material
 
 struct PhysicalPointInfo 
 {
-  double angle;
-  int disp[3];
-  double val[3];
+    int essential_W     [3];
+    int essential_Theta [3];
+    double dirx[3] , diry[3] , dirz[3];
+    double values_W [3];
+    double values_Theta [3];
 };
 
 struct PhysicalLineInfo 
@@ -100,8 +102,8 @@ class StructuralSolver : public GMSH_Solve_Plugin
   void addPhysicalLine          (int id);
 #ifdef HAVE_FLTK 
   Fl_Window        *_window ;
-  Fl_Value_Input   *_value[20] ;
-  Fl_Choice        *_choice[20] ;
+  Fl_Value_Input   *_value[100] ;
+  Fl_Choice        *_choice[100] ;
 #endif
   double MAX_FORCE;
   double MAX_DISPLACEMENT;
