@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.7 2001-01-29 22:33:41 remacle Exp $
+// $Id: Iso.cpp,v 1.8 2001-02-04 10:23:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -61,6 +61,9 @@ void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
   }
 
 }
+
+// Il faut refaire cette routine pour que l'orientation des elements
+// soit respectee.
 
 void CutTriangle2D(double *X, double *Y, double *Z, double *Val, 
                    double V1, double V2, double Vmin, double Vmax,

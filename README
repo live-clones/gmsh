@@ -2,8 +2,8 @@
 Some easy rules to make the code easy to read/debug/maintain:
 
 - *please* enable full warnings for your compiler (e.g. gcc -Wall)
-- *always* use Msg() to print information/erros/etc.
-- indent your files and suppress the tabs (untabify)
+- *always* use Msg() to print information/errors/etc.
+- indent your files and, if working on Windows, suppress the tabs (untabify)
 
 
 To download the latset full source by CVS, type

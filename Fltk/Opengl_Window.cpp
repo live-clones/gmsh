@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.9 2001-02-03 13:10:26 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.10 2001-02-04 10:23:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -22,6 +22,9 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 
+static int    ZOOM = 0 ;
+static double ZOOM_X0, ZOOM_Y0, ZOOM_X1, ZOOM_Y1, ZOOM_X2, ZOOM_Y2;
+
 void Opengl_Window::draw() {
   if(!valid()){
     valid(1);
@@ -37,42 +40,56 @@ void Opengl_Window::draw() {
     glViewport(CTX.viewport[0], CTX.viewport[1],
 	       CTX.viewport[2], CTX.viewport[3]);
   }
-  Orthogonalize(0,0);
-  glClearColor(UNPACK_RED(CTX.color.bg)/255.,
-               UNPACK_GREEN(CTX.color.bg)/255.,
-               UNPACK_BLUE(CTX.color.bg)/255.,
-               0.);
-  glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-  Draw3d();
-  Draw2d();
+  if(!ZOOM){
+    Orthogonalize(0,0);
+    glClearColor(UNPACK_RED(CTX.color.bg)/255.,
+		 UNPACK_GREEN(CTX.color.bg)/255.,
+		 UNPACK_BLUE(CTX.color.bg)/255.,
+		 0.);
+    glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+    Draw3d();
+    Draw2d();
+  }
+  else{
+    glPopMatrix();
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
+    glColor3f(1.,1.,1.);
+    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+    glEnable(GL_BLEND);
+    glBegin(GL_LINE_STRIP);
+    glVertex2d(ZOOM_X0, ZOOM_Y0);
+    glVertex2d(ZOOM_X1, ZOOM_Y0);
+    glVertex2d(ZOOM_X1, ZOOM_Y1);
+    glVertex2d(ZOOM_X0, ZOOM_Y1);
+    glVertex2d(ZOOM_X0, ZOOM_Y0);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    glVertex2d(ZOOM_X0, ZOOM_Y0);
+    glVertex2d(ZOOM_X2, ZOOM_Y0);
+    glVertex2d(ZOOM_X2, ZOOM_Y2);
+    glVertex2d(ZOOM_X0, ZOOM_Y2);
+    glVertex2d(ZOOM_X0, ZOOM_Y0);
+    glEnd();
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    ZOOM = 0;
+  }
 }
 
-static double O1,O2,O3,O4;
-
 void Opengl_Window::draw_overlay() {
-  /*
-  if(!valid()){
-    valid(1);
-    CTX.viewport[0] = 0 ; CTX.viewport[1] = 0 ;
-    CTX.viewport[2] = w() ; CTX.viewport[3] = h() ;
-    glViewport(CTX.viewport[0], CTX.viewport[1],
-	       CTX.viewport[2], CTX.viewport[3]);
-  }
-  Orthogonalize(0,0);
-  glClearIndex(0);
-  glClear(GL_COLOR_BUFFER_BIT);  
-  glLineWidth(1.);
-  glClearIndex(0);
-  glClear(GL_COLOR_BUFFER_BIT);  
-  glIndexi((CTX.color.bg<CTX.color.fg)?FL_WHITE:FL_BLACK);
-  glBegin(GL_LINE_STRIP);
-  glVertex2d(O1, O2);
-  glVertex2d(O1+O3, O2);
-  glVertex2d(O1+O3, O2+O4);
-  glVertex2d(O1, O2+O4);
-  glVertex2d(O1, O2);
-  glEnd();
-  */
 }
 
 void Opengl_Window::clear_overlay() {
@@ -89,8 +106,7 @@ int Opengl_Window::handle(int event) {
   static int      xpos, ypos, xmov, ymov, ibut, hits;
   static int      ZoomClick=0, FirstClick=0;
   static GLdouble xc1, yc1, xc2, yc2, xt1, yt1, xscale1, yscale1;
-  static GLdouble xb, yb, xc, yc, xe, ye, xz, yz;
-  static GLdouble movzx, movzy;
+  static GLdouble xb, yb, xc, yc, xe, ye;
   static Vertex   *v=NULL, *ov;
   static Curve    *c=NULL, *oc;
   static Surface  *s=NULL, *os;
@@ -171,15 +187,14 @@ int Opengl_Window::handle(int event) {
     ymov = Fl::event_y() - ypos;
 
     if(ZoomClick) {
-      printf("should draw the zoom... %d %d %d %d\n", xpos, ypos, xmov, ymov);
-      xz = CTX.vxmin + ((double)Fl::event_x()/(double)w()) * (CTX.vxmax - CTX.vxmin);
-      yz = CTX.vymax - ((double)Fl::event_y()/(double)h()) * (CTX.vymax - CTX.vymin);
-      movzx = xz - xb; movzy = yz - yb;
-      O1 = xb;
-      O2 = yb;
-      O3 = movzx;
-      O4 = movzx;
-      redraw_overlay();
+      ZOOM_X0 = xb;
+      ZOOM_Y0 = yb;
+      ZOOM_X1 = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
+      ZOOM_Y1 = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
+      ZOOM_X2 = CTX.vxmin + ((double)Fl::event_x()/(double)w()) * (CTX.vxmax - CTX.vxmin);
+      ZOOM_Y2 = CTX.vymax - ((double)Fl::event_y()/(double)h()) * (CTX.vymax - CTX.vymin);
+      ZOOM = 1;
+      redraw();
     }
     else {
       clear_overlay();
@@ -247,33 +262,30 @@ int Opengl_Window::handle(int event) {
   case FL_MOVE:
     xmov = Fl::event_x()-xpos;
     ymov = Fl::event_y()-ypos;
-    WID->make_opengl_current();
-    Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
-    ov = v; oc = c; os = s; v = NULL; c = NULL; s = NULL;
-    Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
 
-    if(ov != v || oc != c || os != s) { 
-      BeginHighlight();
-      HighlightEntity(v,c,s,0);
-      EndHighlight(0);
+    if(ZoomClick) {
+      ZOOM_X0 = xb;
+      ZOOM_Y0 = yb;
+      ZOOM_X1 = CTX.vxmin + ((double)xpos/(double)w()) * (CTX.vxmax - CTX.vxmin);
+      ZOOM_Y1 = CTX.vymax - ((double)ypos/(double)h()) * (CTX.vymax - CTX.vymin);
+      ZOOM_X2 = CTX.vxmin + ((double)Fl::event_x()/(double)w()) * (CTX.vxmax - CTX.vxmin);
+      ZOOM_Y2 = CTX.vymax - ((double)Fl::event_y()/(double)h()) * (CTX.vymax - CTX.vymin);
+      ZOOM = 1;
+      redraw();
     }
-
-#if 0
-    // l'overlay ne marche pas, meme dans les demos de fltk!
-    // soumettre un bug ?
-    if(ov != v || oc != c || os != s) { 
-      WID->make_overlay_current();
+    else {
+      WID->make_opengl_current();
+      Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
+      ov = v; oc = c; os = s; v = NULL; c = NULL; s = NULL;
+      Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
+      
       if(ov != v || oc != c || os != s) { 
-	glClearIndex(0);
-	glClear(GL_COLOR_BUFFER_BIT);  
-	glIndexi((CTX.color.bg<CTX.color.fg)?FL_WHITE:FL_BLACK);
 	BeginHighlight();
 	HighlightEntity(v,c,s,0);
 	EndHighlight(0);
       }
-      WID->make_opengl_current();
     }
-#endif
+
     xpos += xmov; 
     ypos += ymov; 
     return 1;

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.12 2001-01-29 22:33:41 remacle Exp $
+// $Id: Post.cpp,v 1.13 2001-02-04 10:23:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -114,9 +114,14 @@ void Draw_Post (void) {
 	  glEnable(GL_POLYGON_OFFSET_FILL) ;
 
         // force this
-        if(v->IntervalsType == DRAW_POST_CONTINUOUS)
+        if(v->IntervalsType == DRAW_POST_CONTINUOUS){
           glShadeModel(GL_SMOOTH); 
-        
+	  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+        }
+	else{// there is a bug in CutTriangle2D!! See Iso.cpp
+	  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+	}
+
         switch(v->RangeType){
         case DRAW_POST_DEFAULT : ValMin = v->Min ; ValMax = v->Max ; break;
         case DRAW_POST_CUSTOM  : ValMin = v->CustomMin ; ValMax = v->CustomMax ; break;

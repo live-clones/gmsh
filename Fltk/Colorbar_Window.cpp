@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.5 2001-02-03 15:55:18 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.6 2001-02-04 10:23:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -240,12 +240,12 @@ void Colorbar_Window::redraw_range(int a, int b){
    fl_font(FL_HELVETICA, font_height);
    fl_color(FL_WHITE);
    if (help_flag){
-     int i=0, xx=11*font_height;
+     int i=0, xx=13*font_height;
      fl_draw("1, 2, ..., 6", 10,10+(i+1)*font_height); 
      fl_draw(    "select predefined colormap", xx,10+(i+1)*font_height); i++;
      fl_draw("mouse1", 10,10+(i+1)*font_height); 
      fl_draw(    "draw red or hue channel", xx,10+(i+1)*font_height); i++;
-     fl_draw("mouse2", 10,10+(i+1)*font_height); 
+     fl_draw("mouse2 or Shift+mouse1", 10,10+(i+1)*font_height); 
      fl_draw(    "draw green or saturation channel", xx,10+(i+1)*font_height); i++;
      fl_draw("mouse3", 10,10+(i+1)*font_height); 
      fl_draw(    "draw blue or value channel", xx,10+(i+1)*font_height); i++;
@@ -482,16 +482,15 @@ int Colorbar_Window::handle(int event){
       move_marker = 1;
 
     // determine which curve to modify
-    if (Fl::event_state(FL_CTRL)) {
+    if (Fl::event_state(FL_CTRL))
       p4 = 1;
-    }
-    else {
-      switch(ibut){
-      case 1 : p1 = 1 ; break ;
-      case 2 : p2 = 1 ; break ;
-      case 3 : p3 = 1 ; break ;
-      }
-    }
+    else if(ibut == 1 && !Fl::event_state(FL_SHIFT))
+      p1 = 1 ;
+    else if(ibut == 2 ||
+	    ibut == 1 && Fl::event_state(FL_SHIFT))
+      p2 = 1 ;
+    else
+      p3 = 1 ;
     pentry = x_to_index(xpos);
     modify = 1;
     break;
@@ -500,11 +499,9 @@ int Colorbar_Window::handle(int event){
     ibut = Fl::event_button();
     xpos = Fl::event_x();
     ypos = Fl::event_y();
-    switch(ibut){
-    case 1 : p1 = 0 ; break ;
-    case 2 : p2 = 0 ; break ;
-    case 3 : p3 = 0 ; break ;
-    }
+    p1 = 0 ;
+    p2 = 0 ;
+    p3 = 0 ;
     p4 = 0;
     break;
 

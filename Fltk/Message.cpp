@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.10 2001-01-13 15:48:31 geuzaine Exp $
+// $Id: Message.cpp,v 1.11 2001-02-04 10:23:56 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -109,7 +109,7 @@ void Msg(int level, char *fmt, ...){
     }
     else{
       strcpy(buff1, "@C1");
-      if(str && window<0) strcat(buff1, str);
+      if(str) strcat(buff1, str);
       vsprintf(buff2, fmt, args); 
       strcat(buff1,buff2);
       fprintf(stderr, "%s\n", &buff1[3]);
