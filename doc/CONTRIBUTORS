@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.18 2003-02-10 20:07:16 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.19 2003-02-12 02:46:21 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2003 by
 
@@ -12,6 +12,10 @@ Portions of Gmsh are copyright (c)
   1990-1995 Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
   1994, Thomas G. Lane.
   1989, 1991 Jef Poskanzer.
+
+This version of Gmsh may also contain code copyright (c) 1993, 1995,
+1997, 1998, 2002 Jonathan Richard Shewchuk: check the configuration
+options.
 
 Special thanks to
 
