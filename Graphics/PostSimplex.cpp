@@ -1,4 +1,4 @@
-/* $Id: PostSimplex.cpp,v 1.8 2000-12-18 15:05:21 geuzaine Exp $ */
+/* $Id: PostSimplex.cpp,v 1.9 2000-12-18 16:56:13 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -251,7 +251,7 @@ void Draw_ScalarTriangle(Post_View *View,
   }
   else{
 
-    if(View->ShowElement ||
+    if(View->ShowElement || View->Light ||
        View->IntervalsType == DRAW_POST_CONTINUOUS)
       for(i = 0 ; i<3 ; i++) RaiseFill(i, V[3*View->TimeStep+i], ValMin, Raise);
     
