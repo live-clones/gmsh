@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.15 2001-06-11 12:05:02 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.16 2001-06-11 15:05:46 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -1023,8 +1023,16 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
       case GL2PS_END_POLYGON_BOUNDARY : boundary=0; break;
       case GL2PS_BEGIN_LINE_STIPPLE : dash=4; break;
       case GL2PS_END_LINE_STIPPLE : dash=0; break;
-      case GL2PS_SET_POINT_SIZE : current++; used--; psize=(GLint)*current; break;
-      case GL2PS_SET_LINE_WIDTH : current++; used--; lwidth=(GLint)*current; break;
+      case GL2PS_SET_POINT_SIZE : 
+	current+=2; 
+	used-=2; 
+	psize=(GLint)current[1]; 
+	break;
+      case GL2PS_SET_LINE_WIDTH : 
+	current+=2; 
+	used-=2; 
+	lwidth=(GLint)current[1]; 
+	break;
       }
       current += 2; 
       used -= 2; 
