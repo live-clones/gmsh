@@ -6,7 +6,7 @@ startup; Made some changes to the scripting syntax
 (PostProcessing.View[n] becomes View[n]; Offset0 becomes OffsetX,
 etc.); Corrected the handling of simple triangular surfaces with large
 characteristic lengths in the 2D isotropic algorithm; Added an ascii
-to binary view converter (gmsh -convert file file);
+to binary post-processing view converter;
 
 New in 1.13: Added jpeg output on Windows;
 
