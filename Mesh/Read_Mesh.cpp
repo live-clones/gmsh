@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.50 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.51 2003-03-10 04:26:32 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -316,7 +316,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
             M->Statistics[12]++;
           break;
         case PNT:
-          Tree_Replace(M->Points, &vertsp[0]);
+	  // we need to make a new one: vertices in M->Vertices and
+	  // M->Points should never point to the same memory location
+	  vert = Create_Vertex(vertsp[0]->Num, vertsp[0]->Pos.X, vertsp[0]->Pos.Y, 
+			       vertsp[0]->Pos.Z, vertsp[0]->lc, vertsp[0]->w);
+          Tree_Replace(M->Points, &vert);
           break;
         default:
           Msg(WARNING, "Unknown type of element in Read_Mesh");

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.39 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: Generator.cpp,v 1.40 2003-03-10 04:26:32 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -185,49 +185,38 @@ void Init_Mesh(Mesh * M, int all)
 
   ExitExtrude();
 
-  if(M->Vertices) {
-    Tree_Action(M->Vertices, Free_Vertex);
-    Tree_Delete(M->Vertices);
-  }
-  if(M->VertexEdges) {
-    Tree_Action(M->VertexEdges, Free_Vertex);
-    Tree_Delete(M->VertexEdges);
-  }
-  if(M->Simplexes) {
-    // Tree_Action (M->Simplexes, Free_Simplex); //produit des crashes innatendus...
-    // normal, cette memoire est dupliquee 
-    // dans les volumes. Je crois qu'on a besoin
-    // des 2, ce truc ne provoque pas de leaks.
-    Tree_Delete(M->Simplexes);
-  }
-  if(M->Points) {
-    Tree_Action(M->Points, Free_Vertex);
-    Tree_Delete(M->Points);
-  }
-  if(M->Curves) {
-    Tree_Action(M->Curves, Free_Curve);
-    Tree_Delete(M->Curves);
-  }
-  if(M->SurfaceLoops) {
-    //Tree_Action (M->SurfaceLoops, Free_SurfaceLoop);
-    Tree_Delete(M->SurfaceLoops);
-  }
-  if(M->EdgeLoops) {
-    //Tree_Action (M->EdgeLoops, Free_EdgeLoop);
-    Tree_Delete(M->EdgeLoops);
-  }
-  if(M->Surfaces) {
-    Tree_Action(M->Surfaces, Free_Surface);
-    Tree_Delete(M->Surfaces);
-  }
-  if(M->Volumes) {
-    Tree_Action(M->Volumes, Free_Volume);       //produit des crashes innatendus...
-    Tree_Delete(M->Volumes);
-  }
-  if(M->PhysicalGroups) {
-    //Tree_Action (M->PhysicalGroups, Free_PhysicalGroup);
-    List_Delete(M->PhysicalGroups);
-  }
+  Tree_Action(M->Vertices, Free_Vertex);  
+  Tree_Delete(M->Vertices);
+
+  Tree_Action(M->VertexEdges, Free_Vertex);
+  Tree_Delete(M->VertexEdges);
+
+  Tree_Action(M->Points, Free_Vertex);  
+  Tree_Delete(M->Points);
+
+  // Note: don't free the simplices here (with 
+  // Tree_Action (M->Simplexes, Free_Simplex)): we free them 
+  // in each curve, surface, volume
+  Tree_Delete(M->Simplexes);
+
+  Tree_Action(M->Curves, Free_Curve);
+  Tree_Delete(M->Curves);
+
+  //Tree_Action (M->SurfaceLoops, Free_SurfaceLoop); // todo
+  Tree_Delete(M->SurfaceLoops);
+
+  //Tree_Action (M->EdgeLoops, Free_EdgeLoop); // todo
+  Tree_Delete(M->EdgeLoops);
+
+  Tree_Action(M->Surfaces, Free_Surface);
+  Tree_Delete(M->Surfaces);
+
+  Tree_Action(M->Volumes, Free_Volume);
+  Tree_Delete(M->Volumes);
+
+  //Tree_Action (M->PhysicalGroups, Free_PhysicalGroup); // todo
+  List_Delete(M->PhysicalGroups);
+
   if(M->Metric) {
     delete M->Metric;
   }

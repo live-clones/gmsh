@@ -1,7 +1,8 @@
-$Id: VERSIONS,v 1.133 2003-03-07 18:35:56 geuzaine Exp $
+$Id: VERSIONS,v 1.134 2003-03-10 04:26:32 geuzaine Exp $
 
 New in 1.42: suppressed the automatic addition of a ".geo" extension
-if the file given on the command line is not recognized;
+if the file given on the command line is not recognized; fixed various
+small bugs;
 
 New in 1.41: Gmsh is now licensed under the GNU General Public
 License; general code cleanup (indent);
