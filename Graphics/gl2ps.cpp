@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.73 2003-10-25 03:26:41 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.74 2003-10-25 15:47:27 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -98,100 +98,94 @@ void gl2psFree(void *ptr){
   free(ptr);
 }
 
-void gl2psWriteByte(FILE *stream, unsigned char byte){
-  unsigned char h = byte / 16;
-  unsigned char l = byte % 16;
-  fprintf(stream, "%x%x", h, l);
-}
-
-
-/* zlib helper */
+/* zlib compression helper routines */
 
 #ifdef GL2PS_HAVE_ZLIB
 
-void gl2psSetupZstream(){
-  gl2ps->zstream = (GL2PSzstream*)gl2psMalloc(sizeof(GL2PSzstream));
-  gl2ps->zstream->dest = NULL;
-  gl2ps->zstream->src = NULL;
-  gl2ps->zstream->start = NULL;
-  gl2ps->zstream->destLen = 0;
-  gl2ps->zstream->srcLen = 0;
+void gl2psSetupCompress(){
+  gl2ps->compress = (GL2PScompress*)gl2psMalloc(sizeof(GL2PScompress));
+  gl2ps->compress->src = NULL;
+  gl2ps->compress->start = NULL;
+  gl2ps->compress->dest = NULL;
+  gl2ps->compress->srcLen = 0;
+  gl2ps->compress->destLen = 0;
 }
 
-void gl2psFreeZstream(){
-  if (!gl2ps->zstream)
+void gl2psFreeCompress(){
+  if(!gl2ps->compress)
     return;
-  gl2psFree(gl2ps->zstream->start);
-  gl2psFree(gl2ps->zstream->dest);
-  gl2ps->zstream->src = NULL;
-  gl2ps->zstream->start = NULL;
-  gl2ps->zstream->dest = NULL;
-  gl2ps->zstream->srcLen = 0;
-  gl2ps->zstream->destLen = 0;
+  gl2psFree(gl2ps->compress->start);
+  gl2psFree(gl2ps->compress->dest);
+  gl2ps->compress->src = NULL;
+  gl2ps->compress->start = NULL;
+  gl2ps->compress->dest = NULL;
+  gl2ps->compress->srcLen = 0;
+  gl2ps->compress->destLen = 0;
 }
 
-int gl2psAllocZstream(unsigned int srcsize){
-  gl2psFreeZstream();
+int gl2psAllocCompress(unsigned int srcsize){
+  gl2psFreeCompress();
   
-  if (!gl2ps->zstream || srcsize == 0)
+  if(!gl2ps->compress || !srcsize)
     return GL2PS_ERROR;
   
-  gl2ps->zstream->srcLen = srcsize;
-  gl2ps->zstream->destLen = (int)ceil(1.001 * gl2ps->zstream->srcLen + 12);
-  gl2ps->zstream->src = gl2psMalloc(gl2ps->zstream->srcLen);
-  gl2ps->zstream->start = gl2ps->zstream->src;
-  gl2ps->zstream->dest = gl2psMalloc(gl2ps->zstream->destLen);
+  gl2ps->compress->srcLen = srcsize;
+  gl2ps->compress->destLen = (int)ceil(1.001 * gl2ps->compress->srcLen + 12);
+  gl2ps->compress->src = (Bytef*)gl2psMalloc(gl2ps->compress->srcLen);
+  gl2ps->compress->start = gl2ps->compress->src;
+  gl2ps->compress->dest = (Bytef*)gl2psMalloc(gl2ps->compress->destLen);
   
   return GL2PS_SUCCESS;
 }
 
-void* gl2psReallocZstream(unsigned int srcsize){
-  if (!gl2ps->zstream || srcsize == 0)
+void* gl2psReallocCompress(unsigned int srcsize){
+  if(!gl2ps->compress || !srcsize)
     return NULL;
   
-  if (srcsize < gl2ps->zstream->srcLen)
-    return gl2ps->zstream->start;
+  if(srcsize < gl2ps->compress->srcLen)
+    return gl2ps->compress->start;
   
-  gl2ps->zstream->srcLen = srcsize;
-  gl2ps->zstream->destLen = (int)ceil(1.001 * gl2ps->zstream->srcLen + 12);
-  gl2ps->zstream->src = gl2psRealloc(gl2ps->zstream->src, gl2ps->zstream->srcLen);
-  gl2ps->zstream->start = gl2ps->zstream->src;
-  gl2ps->zstream->dest = gl2psRealloc(gl2ps->zstream->dest, gl2ps->zstream->destLen);
+  gl2ps->compress->srcLen = srcsize;
+  gl2ps->compress->destLen = (int)ceil(1.001 * gl2ps->compress->srcLen + 12);
+  gl2ps->compress->src = (Bytef*)gl2psRealloc(gl2ps->compress->src, gl2ps->compress->srcLen);
+  gl2ps->compress->start = gl2ps->compress->src;
+  gl2ps->compress->dest = (Bytef*)gl2psRealloc(gl2ps->compress->dest, gl2ps->compress->destLen);
   
-  return gl2ps->zstream->start;
+  return gl2ps->compress->start;
 }
 
-size_t gl2psWriteBigEndianZ(unsigned long data, size_t bytes){
+size_t gl2psWriteBigEndianCompress(unsigned long data, size_t bytes){
   size_t i;
   size_t size = sizeof(unsigned long);
   for(i = 1; i <= bytes; ++i){
-    *gl2ps->zstream->src = 0xff & (data >> (size-i) * 8);
-    ++gl2ps->zstream->src;
+    *gl2ps->compress->src = 0xff & (data >> (size-i) * 8);
+    ++gl2ps->compress->src;
   }
   return bytes;
 }
 
 int gl2psDeflate(){
-  return compress2(gl2ps->zstream->dest, &gl2ps->zstream->destLen, 
-		   gl2ps->zstream->start, gl2ps->zstream->srcLen, Z_BEST_COMPRESSION);
+  return compress2(gl2ps->compress->dest, &gl2ps->compress->destLen, 
+		   gl2ps->compress->start, gl2ps->compress->srcLen, Z_BEST_COMPRESSION);
 }
 
 #endif
 
-int zprintf(const char* fmt, ...){
+int gl2psPrintf(const char* fmt, ...){
   int ret = 0;
   va_list args;
 
 #ifdef GL2PS_HAVE_ZLIB
   unsigned int bufsize = 0;
   unsigned int oldsize = 0;
+  static char buf[1000];
   if(gl2ps->options & GL2PS_COMPRESS){
     va_start(args, fmt);
-    bufsize = vsprintf(gl2ps->zbuf, fmt, args);
+    bufsize = vsprintf(buf, fmt, args);
     va_end(args);
-    oldsize = gl2ps->zstream->srcLen;
-    gl2ps->zstream->start = gl2psReallocZstream(oldsize + bufsize);
-    memcpy(gl2ps->zstream->start+oldsize, gl2ps->zbuf, bufsize);
+    oldsize = gl2ps->compress->srcLen;
+    gl2ps->compress->start = (Bytef*)gl2psReallocCompress(oldsize + bufsize);
+    memcpy(gl2ps->compress->start+oldsize, buf, bufsize);
   }
   else{
 #endif
@@ -1540,9 +1534,14 @@ void gl2psGetRGB(GLfloat *pixels, GLsizei width, GLsizei height, GLuint x, GLuin
   *blue  = *pimag; pimag++;
 }
 
+void gl2psWriteByte(unsigned char byte){
+  unsigned char h = byte / 16;
+  unsigned char l = byte % 16;
+  gl2psPrintf("%x%x", h, l);
+}
+
 void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei height,
-				GLenum format, GLenum type, GLfloat *pixels,
-				FILE *stream){
+				GLenum format, GLenum type, GLfloat *pixels){
   int nbhex, nbyte2, nbyte4, nbyte8;
   GLsizei row, col, col_max;
   float dr, dg, db, fgrey;
@@ -1554,39 +1553,39 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
 
   if((width <= 0) || (height <= 0)) return;
 
-  fprintf(stream, "gsave\n");
-  fprintf(stream, "%.2f %.2f translate\n", x, y); 
-  fprintf(stream, "%d %d scale\n", (int)width, (int)height); 
+  gl2psPrintf("gsave\n");
+  gl2psPrintf("%.2f %.2f translate\n", x, y); 
+  gl2psPrintf("%d %d scale\n", (int)width, (int)height); 
 
   if(greyscale){ /* greyscale, 8 bits per pixel */
-    fprintf(stream, "/picstr %d string def\n", (int)width); 
-    fprintf(stream, "%d %d %d\n", (int)width, (int)height, 8); 
-    fprintf(stream, "[ %d 0 0 -%d 0 %d ]\n", (int)width, (int)height, (int)height); 
-    fprintf(stream, "{ currentfile picstr readhexstring pop }\n");
-    fprintf(stream, "image\n");
+    gl2psPrintf("/picstr %d string def\n", (int)width); 
+    gl2psPrintf("%d %d %d\n", (int)width, (int)height, 8); 
+    gl2psPrintf("[ %d 0 0 -%d 0 %d ]\n", (int)width, (int)height, (int)height); 
+    gl2psPrintf("{ currentfile picstr readhexstring pop }\n");
+    gl2psPrintf("image\n");
     for(row = 0; row < height; row++){
       for(col = 0; col < width; col++){ 
 	gl2psGetRGB(pixels, width, height, col, row, &dr, &dg, &db);
 	fgrey = (0.30 * dr + 0.59 * dg + 0.11 * db);
 	grey = (unsigned char)(255. * fgrey);
-	gl2psWriteByte(stream, grey);
+	gl2psWriteByte(grey);
       }
-      fprintf(stream, "\n");
+      gl2psPrintf("\n");
     }
     nbhex = width * height * 2; 
-    fprintf(stream, "%%%% nbhex digit          :%d\n", nbhex); 
+    gl2psPrintf("%%%% nbhex digit          :%d\n", nbhex); 
   }
   else if(nbits == 2){ /* color, 2 bits for r and g and b; rgbs following each other */
     nbyte2 = (width * 3)/4;
     nbyte2 /=3;
     nbyte2 *=3;
     col_max = (nbyte2 * 4)/3;
-    fprintf(stream, "/rgbstr %d string def\n", nbyte2); 
-    fprintf(stream, "%d %d %d\n", (int)col_max, (int)height, 2); 
-    fprintf(stream, "[ %d 0 0 -%d 0 %d ]\n", (int)col_max, (int)height, (int)height); 
-    fprintf(stream, "{ currentfile rgbstr readhexstring pop }\n" );
-    fprintf(stream, "false 3\n" );
-    fprintf(stream, "colorimage\n" );
+    gl2psPrintf("/rgbstr %d string def\n", nbyte2); 
+    gl2psPrintf("%d %d %d\n", (int)col_max, (int)height, 2); 
+    gl2psPrintf("[ %d 0 0 -%d 0 %d ]\n", (int)col_max, (int)height, (int)height); 
+    gl2psPrintf("{ currentfile rgbstr readhexstring pop }\n" );
+    gl2psPrintf("false 3\n" );
+    gl2psPrintf("colorimage\n" );
     for(row = 0; row < height; row++){
       for(col = 0; col < col_max; col+=4){
 	gl2psGetRGB(pixels, width, height, col, row, &dr, &dg, &db);
@@ -1601,7 +1600,7 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
 	green = (unsigned char)(3. * dg);
 	blue = (unsigned char)(3. * db);
 	b = (b<<2)+red;
-	gl2psWriteByte(stream, b);
+	gl2psWriteByte(b);
 	b = green;
 	b = (b<<2)+blue;
 	gl2psGetRGB(pixels, width, height, col+2, row, &dr, &dg, &db);
@@ -1610,7 +1609,7 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
 	blue = (unsigned char)(3. * db);
 	b = (b<<2)+red;
 	b = (b<<2)+green;
-	gl2psWriteByte(stream, b);
+	gl2psWriteByte(b);
 	b = blue;
 	gl2psGetRGB(pixels, width, height, col+3, row, &dr, &dg, &db);
 	red = (unsigned char)(3. * dr);
@@ -1619,9 +1618,9 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
 	b = (b<<2)+red;
 	b = (b<<2)+green;
 	b = (b<<2)+blue;
-	gl2psWriteByte(stream, b);
+	gl2psWriteByte(b);
       }
-      fprintf(stream, "\n");
+      gl2psPrintf("\n");
     }
   }
   else if(nbits == 4){ /* color, 4 bits for r and g and b; rgbs following each other */
@@ -1629,52 +1628,52 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
     nbyte4 /=3;
     nbyte4 *=3;
     col_max = (nbyte4 * 2)/3;
-    fprintf(stream, "/rgbstr %d string def\n", nbyte4);
-    fprintf(stream, "%d %d %d\n", (int)col_max, (int)height, 4);
-    fprintf(stream, "[ %d 0 0 -%d 0 %d ]\n", (int)col_max, (int)height, (int)height);
-    fprintf(stream, "{ currentfile rgbstr readhexstring pop }\n");
-    fprintf(stream, "false 3\n");
-    fprintf(stream, "colorimage\n");
+    gl2psPrintf("/rgbstr %d string def\n", nbyte4);
+    gl2psPrintf("%d %d %d\n", (int)col_max, (int)height, 4);
+    gl2psPrintf("[ %d 0 0 -%d 0 %d ]\n", (int)col_max, (int)height, (int)height);
+    gl2psPrintf("{ currentfile rgbstr readhexstring pop }\n");
+    gl2psPrintf("false 3\n");
+    gl2psPrintf("colorimage\n");
     for(row = 0; row < height; row++){
       for(col = 0; col < col_max; col+=2){
 	gl2psGetRGB(pixels, width, height, col, row, &dr, &dg, &db);
 	red = (unsigned char)(15. * dr);
 	green = (unsigned char)(15. * dg);
-	fprintf(stream, "%x%x", red, green);
+	gl2psPrintf("%x%x", red, green);
 	blue = (unsigned char)(15. * db);
 	gl2psGetRGB(pixels, width, height, col+1, row, &dr, &dg, &db);
 	red = (unsigned char)(15. * dr);
-	fprintf(stream,"%x%x",blue,red);
+	gl2psPrintf("%x%x",blue,red);
 	green = (unsigned char)(15. * dg);
 	blue = (unsigned char)(15. * db);
-	fprintf(stream, "%x%x", green, blue);
+	gl2psPrintf("%x%x", green, blue);
       }
-      fprintf(stream, "\n");
+      gl2psPrintf("\n");
     }
   }
   else{ /* color, 8 bits for r and g and b; rgbs following each other */
     nbyte8 = width * 3;
-    fprintf(stream, "/rgbstr %d string def\n", nbyte8);
-    fprintf(stream, "%d %d %d\n", (int)width, (int)height, 8);
-    fprintf(stream, "[ %d 0 0 -%d 0 %d ]\n", (int)width, (int)height, (int)height); 
-    fprintf(stream, "{ currentfile rgbstr readhexstring pop }\n");
-    fprintf(stream, "false 3\n");
-    fprintf(stream, "colorimage\n");
+    gl2psPrintf("/rgbstr %d string def\n", nbyte8);
+    gl2psPrintf("%d %d %d\n", (int)width, (int)height, 8);
+    gl2psPrintf("[ %d 0 0 -%d 0 %d ]\n", (int)width, (int)height, (int)height); 
+    gl2psPrintf("{ currentfile rgbstr readhexstring pop }\n");
+    gl2psPrintf("false 3\n");
+    gl2psPrintf("colorimage\n");
     for(row = 0; row < height; row++){
       for(col = 0; col < width; col++){
 	gl2psGetRGB(pixels, width, height, col, row, &dr, &dg, &db);
 	red = (unsigned char)(255. * dr);
-	gl2psWriteByte(stream, red);
+	gl2psWriteByte(red);
 	green = (unsigned char)(255. * dg);
-	gl2psWriteByte(stream, green);
+	gl2psWriteByte(green);
 	blue = (unsigned char)(255. * db);
-	gl2psWriteByte(stream, blue);
+	gl2psWriteByte(blue);
       }
-      fprintf(stream, "\n");
+      gl2psPrintf("\n");
     }
   }
 
-  fprintf(stream, "grestore\n");
+  gl2psPrintf("grestore\n");
 }
 
 void gl2psPrintPostScriptHeader(void){
@@ -1682,48 +1681,58 @@ void gl2psPrintPostScriptHeader(void){
   GLfloat rgba[4];
   time_t now;
 
+#ifdef GL2PS_HAVE_ZLIB
+  char tmp[10] = {0x1f,0x8b /*magic numbers*/, Z_DEFLATED, /*compression method*/
+		  0 /*flags*/, 0,0,0,0 /*time*/, 2 /*xflags: max compression*/,
+		  0x03 /*FIXME: OS*/};
+
+  if(gl2ps->options & GL2PS_COMPRESS){
+    gl2psSetupCompress();
+
+    /* add the gzip file header */
+    fwrite(tmp, 10, 1, gl2ps->stream);
+  }
+#endif  
+
   time(&now);
 
   if(gl2ps->format == GL2PS_PS){
-    fprintf(gl2ps->stream, "%%!PS-Adobe-3.0\n");
+    gl2psPrintf("%%!PS-Adobe-3.0\n");
   }
   else{
-    fprintf(gl2ps->stream, "%%!PS-Adobe-3.0 EPSF-3.0\n");
+    gl2psPrintf("%%!PS-Adobe-3.0 EPSF-3.0\n");
   }
 
-  fprintf(gl2ps->stream, 
-	  "%%%%Title: %s\n"
-	  "%%%%Creator: GL2PS %d.%d.%d, (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>\n"
-	  "%%%%For: %s\n"
-	  "%%%%CreationDate: %s"
-	  "%%%%LanguageLevel: 3\n"
-	  "%%%%DocumentData: Clean7Bit\n"
-	  "%%%%Pages: 1\n",
-	  gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION,
-	  gl2ps->producer, ctime(&now));
+  gl2psPrintf("%%%%Title: %s\n"
+	      "%%%%Creator: GL2PS %d.%d.%d, (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>\n"
+	      "%%%%For: %s\n"
+	      "%%%%CreationDate: %s"
+	      "%%%%LanguageLevel: 3\n"
+	      "%%%%DocumentData: Clean7Bit\n"
+	      "%%%%Pages: 1\n",
+	      gl2ps->title, GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION,
+	      gl2ps->producer, ctime(&now));
 
   if(gl2ps->format == GL2PS_PS){
-    fprintf(gl2ps->stream, 
-	    "%%%%Orientation: %s\n"
-	    "%%%%DocumentMedia: Default %d %d 0 () ()\n",
-	    (gl2ps->options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
-	    (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[3] :
-	    (int)gl2ps->viewport[2], 
-	    (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[2] : 
-	    (int)gl2ps->viewport[3]);
+    gl2psPrintf("%%%%Orientation: %s\n"
+		"%%%%DocumentMedia: Default %d %d 0 () ()\n",
+		(gl2ps->options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
+		(gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[3] :
+		(int)gl2ps->viewport[2], 
+		(gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[2] : 
+		(int)gl2ps->viewport[3]);
   }
 
-  fprintf(gl2ps->stream,
-	  "%%%%BoundingBox: %d %d %d %d\n"
-	  "%%%%EndComments\n",
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[1] : 
-	  (int)gl2ps->viewport[0],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[0] :
-	  (int)gl2ps->viewport[1],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[3] : 
-	  (int)gl2ps->viewport[2],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[2] :
-	  (int)gl2ps->viewport[3]);
+  gl2psPrintf("%%%%BoundingBox: %d %d %d %d\n"
+	      "%%%%EndComments\n",
+	      (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[1] : 
+	      (int)gl2ps->viewport[0],
+	      (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[0] :
+	      (int)gl2ps->viewport[1],
+	      (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[3] : 
+	      (int)gl2ps->viewport[2],
+	      (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[2] :
+	      (int)gl2ps->viewport[3]);
 
   /* RGB color: r g b C (replace C by G in output to change from rgb to gray)
      Grayscale: r g b G
@@ -1736,147 +1745,138 @@ void gl2psPrintPostScriptHeader(void){
      Flat-shaded triangle: x3 y3 x2 y2 x1 y1 T
      Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST */
 
-  fprintf(gl2ps->stream,
-	  "%%%%BeginProlog\n"
-	  "/gl2psdict 64 dict def gl2psdict begin\n"
-	  "0 setlinecap 0 setlinejoin\n"
-	  "/tryPS3shading %s def %% set to false to force subdivision\n"
-	  "/rThreshold %g def %% red component subdivision threshold\n"
-	  "/gThreshold %g def %% green component subdivision threshold\n"
-	  "/bThreshold %g def %% blue component subdivision threshold\n"
-	  "/BD { bind def } bind def\n"
-	  "/C  { setrgbcolor } BD\n"
-	  "/G  { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add setgray } BD\n"
-	  "/W  { setlinewidth } BD\n"
-	  "/FC { findfont exch scalefont setfont } BD\n"
-	  "/S  { FC moveto show } BD\n"
-	  "/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
-	  "/L  { newpath moveto lineto stroke } BD\n"
-	  "/SL { C moveto C lineto stroke } BD\n"
-	  "/T  { newpath moveto lineto lineto closepath fill } BD\n",
-	  (gl2ps->options & GL2PS_NO_PS3_SHADING) ? "false" : "true",
-          gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2]);
-
+  gl2psPrintf("%%%%BeginProlog\n"
+	      "/gl2psdict 64 dict def gl2psdict begin\n"
+	      "0 setlinecap 0 setlinejoin\n"
+	      "/tryPS3shading %s def %% set to false to force subdivision\n"
+	      "/rThreshold %g def %% red component subdivision threshold\n"
+	      "/gThreshold %g def %% green component subdivision threshold\n"
+	      "/bThreshold %g def %% blue component subdivision threshold\n"
+	      "/BD { bind def } bind def\n"
+	      "/C  { setrgbcolor } BD\n"
+	      "/G  { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add setgray } BD\n"
+	      "/W  { setlinewidth } BD\n"
+	      "/FC { findfont exch scalefont setfont } BD\n"
+	      "/S  { FC moveto show } BD\n"
+	      "/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
+	      "/L  { newpath moveto lineto stroke } BD\n"
+	      "/SL { C moveto C lineto stroke } BD\n"
+	      "/T  { newpath moveto lineto lineto closepath fill } BD\n",
+	      (gl2ps->options & GL2PS_NO_PS3_SHADING) ? "false" : "true",
+	      gl2ps->threshold[0], gl2ps->threshold[1], gl2ps->threshold[2]);
+  
   /* Smooth-shaded triangle with PostScript level 3 shfill operator:
         x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STshfill */
 
-  fprintf(gl2ps->stream,
-	  "/STshfill {\n"
-	  "      /b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
-	  "      /b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
-	  "      /b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
-	  "      gsave << /ShadingType 4 /ColorSpace [/DeviceRGB]\n"
-	  "      /DataSource [ 0 x1 y1 r1 g1 b1 0 x2 y2 r2 g2 b2 0 x3 y3 r3 g3 b3 ] >>\n"
-	  "      shfill grestore } BD\n");
+  gl2psPrintf("/STshfill {\n"
+	      "      /b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
+	      "      /b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
+	      "      /b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
+	      "      gsave << /ShadingType 4 /ColorSpace [/DeviceRGB]\n"
+	      "      /DataSource [ 0 x1 y1 r1 g1 b1 0 x2 y2 r2 g2 b2 0 x3 y3 r3 g3 b3 ] >>\n"
+	      "      shfill grestore } BD\n");
 
   /* Flat-shaded triangle with middle color:
         x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 Tm */
 
-  fprintf(gl2ps->stream,
-          /* stack : x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 */
-          "/Tm { 3 -1 roll 8 -1 roll 13 -1 roll add add 3 div\n" /* r = (r1+r2+r3)/3 */
-          /* stack : x3 y3 g3 b3 x2 y2 g2 b2 x1 y1 g1 b1 r */
-          "      3 -1 roll 7 -1 roll 11 -1 roll add add 3 div\n" /* g = (g1+g2+g3)/3 */
-          /* stack : x3 y3 b3 x2 y2 b2 x1 y1 b1 r g b */
-          "      3 -1 roll 6 -1 roll 9 -1 roll add add 3 div" /* b = (b1+b2+b3)/3 */
-          /* stack : x3 y3 x2 y2 x1 y1 r g b */
-          " C T } BD\n");
+  gl2psPrintf(/* stack : x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 */
+	      "/Tm { 3 -1 roll 8 -1 roll 13 -1 roll add add 3 div\n" /* r = (r1+r2+r3)/3 */
+	      /* stack : x3 y3 g3 b3 x2 y2 g2 b2 x1 y1 g1 b1 r */
+	      "      3 -1 roll 7 -1 roll 11 -1 roll add add 3 div\n" /* g = (g1+g2+g3)/3 */
+	      /* stack : x3 y3 b3 x2 y2 b2 x1 y1 b1 r g b */
+	      "      3 -1 roll 6 -1 roll 9 -1 roll add add 3 div" /* b = (b1+b2+b3)/3 */
+	      /* stack : x3 y3 x2 y2 x1 y1 r g b */
+	      " C T } BD\n");
 
   /* Split triangle in four sub-triangles (at sides middle points) and call the
      STnoshfill procedure on each, interpolating the colors in RGB space:
         x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STsplit
      (in procedure comments key: (Vi) = xi yi ri gi bi) */
 
-  fprintf(gl2ps->stream,
-          "/STsplit {\n"
-          "      4 index 15 index add 0.5 mul\n" /* x13 = (x1+x3)/2 */
-          "      4 index 15 index add 0.5 mul\n" /* y13 = (y1+y3)/2 */
-          "      4 index 15 index add 0.5 mul\n" /* r13 = (r1+r3)/2 */
-          "      4 index 15 index add 0.5 mul\n" /* g13 = (g1+g3)/2 */
-          "      4 index 15 index add 0.5 mul\n" /* b13 = (b1+b3)/2 */
-          "      5 copy 5 copy 25 15 roll\n"
-          /* stack : (V3) (V13) (V13) (V13) (V2) (V1) */
-          "      9 index 30 index add 0.5 mul\n" /* x23 = (x2+x3)/2 */
-          "      9 index 30 index add 0.5 mul\n" /* y23 = (y2+y3)/2 */
-          "      9 index 30 index add 0.5 mul\n" /* r23 = (r2+r3)/2 */
-          "      9 index 30 index add 0.5 mul\n" /* g23 = (g2+g3)/2 */
-          "      9 index 30 index add 0.5 mul\n" /* b23 = (b2+b3)/2 */
-          "      5 copy 5 copy 35 5 roll 25 5 roll 15 5 roll\n"
-          /* stack : (V3) (V13) (V23) (V13) (V23) (V13) (V23) (V2) (V1) */
-          "      4 index 10 index add 0.5 mul\n" /* x12 = (x1+x2)/2 */
-          "      4 index 10 index add 0.5 mul\n" /* y12 = (y1+y2)/2 */
-          "      4 index 10 index add 0.5 mul\n" /* r12 = (r1+r2)/2 */
-          "      4 index 10 index add 0.5 mul\n" /* g12 = (g1+g2)/2 */
-          "      4 index 10 index add 0.5 mul\n" /* b12 = (b1+b2)/2 */
-          "      5 copy 5 copy 40 5 roll 25 5 roll 15 5 roll 25 5 roll\n"
-          /* stack : (V3) (V13) (V23) (V13) (V12) (V23) (V13) (V1) (V12) (V23) (V12) (V2) */
-          "      STnoshfill STnoshfill STnoshfill STnoshfill } BD\n");
-
+  gl2psPrintf("/STsplit {\n"
+	      "      4 index 15 index add 0.5 mul\n" /* x13 = (x1+x3)/2 */
+	      "      4 index 15 index add 0.5 mul\n" /* y13 = (y1+y3)/2 */
+	      "      4 index 15 index add 0.5 mul\n" /* r13 = (r1+r3)/2 */
+	      "      4 index 15 index add 0.5 mul\n" /* g13 = (g1+g3)/2 */
+	      "      4 index 15 index add 0.5 mul\n" /* b13 = (b1+b3)/2 */
+	      "      5 copy 5 copy 25 15 roll\n"
+	      /* stack : (V3) (V13) (V13) (V13) (V2) (V1) */
+	      "      9 index 30 index add 0.5 mul\n" /* x23 = (x2+x3)/2 */
+	      "      9 index 30 index add 0.5 mul\n" /* y23 = (y2+y3)/2 */
+	      "      9 index 30 index add 0.5 mul\n" /* r23 = (r2+r3)/2 */
+	      "      9 index 30 index add 0.5 mul\n" /* g23 = (g2+g3)/2 */
+	      "      9 index 30 index add 0.5 mul\n" /* b23 = (b2+b3)/2 */
+	      "      5 copy 5 copy 35 5 roll 25 5 roll 15 5 roll\n"
+	      /* stack : (V3) (V13) (V23) (V13) (V23) (V13) (V23) (V2) (V1) */
+	      "      4 index 10 index add 0.5 mul\n" /* x12 = (x1+x2)/2 */
+	      "      4 index 10 index add 0.5 mul\n" /* y12 = (y1+y2)/2 */
+	      "      4 index 10 index add 0.5 mul\n" /* r12 = (r1+r2)/2 */
+	      "      4 index 10 index add 0.5 mul\n" /* g12 = (g1+g2)/2 */
+	      "      4 index 10 index add 0.5 mul\n" /* b12 = (b1+b2)/2 */
+	      "      5 copy 5 copy 40 5 roll 25 5 roll 15 5 roll 25 5 roll\n"
+	      /* stack : (V3) (V13) (V23) (V13) (V12) (V23) (V13) (V1) (V12) (V23) (V12) (V2) */
+	      "      STnoshfill STnoshfill STnoshfill STnoshfill } BD\n");
+  
   /* Gouraud shaded triangle using recursive subdivision until the difference
      between corner colors does not exceed the thresholds:
         x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 STnoshfill  */
 
-  fprintf(gl2ps->stream,
-          "/STnoshfill {\n"
-	  "      2 index 8 index sub abs rThreshold gt\n" /* |r1-r2|>rth */
-	  "      { STsplit }\n"
-          "      { 1 index 7 index sub abs gThreshold gt\n" /* |g1-g2|>gth */
-	  "        { STsplit }\n"
-          "        { dup 6 index sub abs bThreshold gt\n" /* |b1-b2|>bth */
-	  "          { STsplit }\n"
-          "          { 2 index 13 index sub abs rThreshold gt\n" /* |r1-r3|>rht */
-	  "            { STsplit }\n"
-          "            { 1 index 12 index sub abs gThreshold gt\n" /* |g1-g3|>gth */
-	  "              { STsplit }\n"
-          "              { dup 11 index sub abs bThreshold gt\n" /* |b1-b3|>bth */
-	  "                { STsplit }\n"
-          "                { 7 index 13 index sub abs rThreshold gt\n" /* |r2-r3|>rht */
-	  "                  { STsplit }\n"
-          "                  { 6 index 12 index sub abs gThreshold gt\n" /* |g2-g3|>gth */
-	  "                    { STsplit }\n"
-          "                    { 5 index 11 index sub abs bThreshold gt\n" /* |b2-b3|>bth */
-	  "                      { STsplit }\n"
-          "                      { Tm }\n" /* all colors sufficiently similar */
-          "                      ifelse }\n"
-          "                    ifelse }\n"
-          "                  ifelse }\n"
-          "                ifelse }\n"
-          "              ifelse }\n"
-          "            ifelse }\n"
-          "          ifelse }\n"
-          "        ifelse }\n"
-          "      ifelse } BD\n");
+  gl2psPrintf("/STnoshfill {\n"
+	      "      2 index 8 index sub abs rThreshold gt\n" /* |r1-r2|>rth */
+	      "      { STsplit }\n"
+	      "      { 1 index 7 index sub abs gThreshold gt\n" /* |g1-g2|>gth */
+	      "        { STsplit }\n"
+	      "        { dup 6 index sub abs bThreshold gt\n" /* |b1-b2|>bth */
+	      "          { STsplit }\n"
+	      "          { 2 index 13 index sub abs rThreshold gt\n" /* |r1-r3|>rht */
+	      "            { STsplit }\n"
+	      "            { 1 index 12 index sub abs gThreshold gt\n" /* |g1-g3|>gth */
+	      "              { STsplit }\n"
+	      "              { dup 11 index sub abs bThreshold gt\n" /* |b1-b3|>bth */
+	      "                { STsplit }\n"
+	      "                { 7 index 13 index sub abs rThreshold gt\n" /* |r2-r3|>rht */
+	      "                  { STsplit }\n"
+	      "                  { 6 index 12 index sub abs gThreshold gt\n" /* |g2-g3|>gth */
+	      "                    { STsplit }\n"
+	      "                    { 5 index 11 index sub abs bThreshold gt\n" /* |b2-b3|>bth */
+	      "                      { STsplit }\n"
+	      "                      { Tm }\n" /* all colors sufficiently similar */
+	      "                      ifelse }\n"
+	      "                    ifelse }\n"
+	      "                  ifelse }\n"
+	      "                ifelse }\n"
+	      "              ifelse }\n"
+	      "            ifelse }\n"
+	      "          ifelse }\n"
+	      "        ifelse }\n"
+	      "      ifelse } BD\n");
+  
+  gl2psPrintf("tryPS3shading\n"
+	      "{ /shfill where\n"
+	      "  { /ST { STshfill } BD }\n"
+	      "  { /ST { STnoshfill } BD }\n"
+	      "  ifelse }\n"
+	      "{ /ST { STnoshfill } BD }\n"
+	      "ifelse\n");
 
-  fprintf(gl2ps->stream,
-	  "tryPS3shading\n"
-	  "{ /shfill where\n"
-	  "  { /ST { STshfill } BD }\n"
-	  "  { /ST { STnoshfill } BD }\n"
-	  "  ifelse }\n"
-	  "{ /ST { STnoshfill } BD }\n"
-	  "ifelse\n");
-
-  fprintf(gl2ps->stream,
-	  "end\n"
-	  "%%%%EndProlog\n"
-	  "%%%%BeginSetup\n"
-	  "/DeviceRGB setcolorspace\n"
-	  "gl2psdict begin\n"
-	  "%%%%EndSetup\n"
-	  "%%%%Page: 1 1\n"
-	  "%%%%BeginPageSetup\n");
-
+  gl2psPrintf("end\n"
+	      "%%%%EndProlog\n"
+	      "%%%%BeginSetup\n"
+	      "/DeviceRGB setcolorspace\n"
+	      "gl2psdict begin\n"
+	      "%%%%EndSetup\n"
+	      "%%%%Page: 1 1\n"
+	      "%%%%BeginPageSetup\n");
+  
   if(gl2ps->options & GL2PS_LANDSCAPE){
-    fprintf(gl2ps->stream,
-	    "%d 0 translate 90 rotate\n",
-	    (int)gl2ps->viewport[3]);
+    gl2psPrintf("%d 0 translate 90 rotate\n",
+		(int)gl2ps->viewport[3]);
   }
 
-  fprintf(gl2ps->stream, 
-	  "%%%%EndPageSetup\n"
-	  "mark\n"
-	  "gsave\n"
-	  "1.0 1.0 scale\n");
+  gl2psPrintf("%%%%EndPageSetup\n"
+	      "mark\n"
+	      "gsave\n"
+	      "1.0 1.0 scale\n");
 	  
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
@@ -1889,21 +1889,20 @@ void gl2psPrintPostScriptHeader(void){
       rgba[2] = gl2ps->colormap[index][2];
       rgba[3] = 0.;
     }
-    fprintf(gl2ps->stream,
-	    "%g %g %g C\n"
-	    "newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
-	    "closepath fill\n",
-	    rgba[0], rgba[1], rgba[2], 
-	    (int)gl2ps->viewport[0], (int)gl2ps->viewport[1], (int)gl2ps->viewport[2], 
-	    (int)gl2ps->viewport[1], (int)gl2ps->viewport[2], (int)gl2ps->viewport[3], 
-	    (int)gl2ps->viewport[0], (int)gl2ps->viewport[3]);
+    gl2psPrintf("%g %g %g C\n"
+		"newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
+		"closepath fill\n",
+		rgba[0], rgba[1], rgba[2], 
+		(int)gl2ps->viewport[0], (int)gl2ps->viewport[1], (int)gl2ps->viewport[2], 
+		(int)gl2ps->viewport[1], (int)gl2ps->viewport[2], (int)gl2ps->viewport[3], 
+		(int)gl2ps->viewport[0], (int)gl2ps->viewport[3]);
   }
 }
 
 void gl2psPrintPostScriptColor(GL2PSrgba rgba){
   if(!gl2psSameColor(gl2ps->lastrgba, rgba)){
     gl2psSetLastColor(rgba);
-    fprintf(gl2ps->stream, "%g %g %g C\n", rgba[0], rgba[1], rgba[2]);
+    gl2psPrintf("%g %g %g C\n", rgba[0], rgba[1], rgba[2]);
   }
 }
 
@@ -1923,65 +1922,65 @@ void gl2psPrintPostScriptPrimitive(void *a, void *b){
     gl2psPrintPostScriptPixmap(prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 			       prim->image->width, prim->image->height,
 			       prim->image->format, prim->image->type,
-			       prim->image->pixels, gl2ps->stream);
+			       prim->image->pixels);
     break;
   case GL2PS_TEXT :
     gl2psPrintPostScriptColor(prim->verts[0].rgba);
-    fprintf(gl2ps->stream, "(%s) %g %g %d /%s S\n",
-	    prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	    prim->text->fontsize, prim->text->fontname);
+    gl2psPrintf("(%s) %g %g %d /%s S\n",
+		prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+		prim->text->fontsize, prim->text->fontname);
     break;
   case GL2PS_POINT :
     gl2psPrintPostScriptColor(prim->verts[0].rgba);
-    fprintf(gl2ps->stream, "%g %g %g P\n", 
-	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width);
+    gl2psPrintf("%g %g %g P\n", 
+		prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width);
     break;
   case GL2PS_LINE :
     if(gl2ps->lastlinewidth != prim->width){
       gl2ps->lastlinewidth = prim->width;
-      fprintf(gl2ps->stream, "%g W\n", gl2ps->lastlinewidth);
+      gl2psPrintf("%g W\n", gl2ps->lastlinewidth);
     }
     if(prim->dash){
-      fprintf(gl2ps->stream, "[%d] 0 setdash\n", prim->dash);
+      gl2psPrintf("[%d] 0 setdash\n", prim->dash);
     }
     if(!gl2psVertsSameColor(prim)){
       gl2psResetPostScriptColor();
-      fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
-	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
-	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
-	      prim->verts[0].xyz[1], prim->verts[0].rgba[0],
-	      prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
+      gl2psPrintf("%g %g %g %g %g %g %g %g %g %g SL\n",
+		  prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+		  prim->verts[1].rgba[0], prim->verts[1].rgba[1],
+		  prim->verts[1].rgba[2], prim->verts[0].xyz[0],
+		  prim->verts[0].xyz[1], prim->verts[0].rgba[0],
+		  prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
     }
     else{
       gl2psPrintPostScriptColor(prim->verts[0].rgba);
-      fprintf(gl2ps->stream, "%g %g %g %g L\n",
-	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+      gl2psPrintf("%g %g %g %g L\n",
+		  prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+		  prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
     }
     if(prim->dash){
-      fprintf(gl2ps->stream, "[] 0 setdash\n");
+      gl2psPrintf("[] 0 setdash\n");
     }
     break;
   case GL2PS_TRIANGLE :
     if(!gl2psVertsSameColor(prim)){
       gl2psResetPostScriptColor();
-      fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
-	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
-	      prim->verts[2].rgba[0], prim->verts[2].rgba[1],
-	      prim->verts[2].rgba[2], prim->verts[1].xyz[0],
-	      prim->verts[1].xyz[1], prim->verts[1].rgba[0],
-	      prim->verts[1].rgba[1], prim->verts[1].rgba[2],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-	      prim->verts[0].rgba[2]);
+      gl2psPrintf("%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
+		  prim->verts[2].xyz[0], prim->verts[2].xyz[1],
+		  prim->verts[2].rgba[0], prim->verts[2].rgba[1],
+		  prim->verts[2].rgba[2], prim->verts[1].xyz[0],
+		  prim->verts[1].xyz[1], prim->verts[1].rgba[0],
+		  prim->verts[1].rgba[1], prim->verts[1].rgba[2],
+		  prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+		  prim->verts[0].rgba[0], prim->verts[0].rgba[1],
+		  prim->verts[0].rgba[2]);
     }
     else{
       gl2psPrintPostScriptColor(prim->verts[0].rgba);
-      fprintf(gl2ps->stream, "%g %g %g %g %g %g T\n",
-	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
-	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+      gl2psPrintf("%g %g %g %g %g %g T\n",
+		  prim->verts[2].xyz[0], prim->verts[2].xyz[1],
+		  prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+		  prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
     }
     break;
   case GL2PS_QUADRANGLE :
@@ -1994,14 +1993,46 @@ void gl2psPrintPostScriptPrimitive(void *a, void *b){
 }
 
 void gl2psPrintPostScriptFooter(void){
-  fprintf(gl2ps->stream,
-	  "grestore\n"
-	  "showpage\n"
-	  "cleartomark\n"
-	  "%%%%PageTrailer\n"
-	  "%%%%Trailer\n"
-	  "end\n"
-	  "%%%%EOF\n");
+#ifdef GL2PS_HAVE_ZLIB
+  int n;
+  uLong crc, len;
+  char tmp[8];
+#endif
+  
+  gl2psPrintf("grestore\n"
+	      "showpage\n"
+	      "cleartomark\n"
+	      "%%%%PageTrailer\n"
+	      "%%%%Trailer\n"
+	      "end\n"
+	      "%%%%EOF\n");
+  
+#ifdef GL2PS_HAVE_ZLIB
+  if(gl2ps->options & GL2PS_COMPRESS){
+    if (Z_OK != gl2psDeflate()){
+      gl2psMsg(GL2PS_ERROR, "Zlib deflate error");
+    }
+    else{
+      /* remove the 2 header and 4 footer bytes from the zlib stream */
+      fwrite(gl2ps->compress->dest+2, gl2ps->compress->destLen-6, 1, gl2ps->stream);
+      /* add the gzip file footer */
+      crc = crc32(0L, gl2ps->compress->start, gl2ps->compress->srcLen);
+      for(n = 0; n < 4; ++n) {
+	tmp[n] = crc & 0xff;
+	crc >>= 8;
+      }
+      len = gl2ps->compress->srcLen;
+      for(n = 4; n < 8; ++n) {
+	tmp[n] = len & 0xff;
+	len >>= 8;
+      }
+      fwrite(tmp, 8, 1, gl2ps->stream);
+    }
+    gl2psFreeCompress();
+    gl2psFree(gl2ps->compress);
+    gl2ps->compress = NULL;
+  }
+#endif 
 }
 
 void gl2psPrintPostScriptBeginViewport(GLint viewport[4]){
@@ -2011,9 +2042,8 @@ void gl2psPrintPostScriptBeginViewport(GLint viewport[4]){
 
   glRenderMode(GL_FEEDBACK);
 
-  fprintf(gl2ps->stream, 
-	  "gsave\n"
-	  "1.0 1.0 scale\n");
+  gl2psPrintf("gsave\n"
+	      "1.0 1.0 scale\n");
 	  
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
@@ -2026,16 +2056,14 @@ void gl2psPrintPostScriptBeginViewport(GLint viewport[4]){
       rgba[2] = gl2ps->colormap[index][2];
       rgba[3] = 0.;
     }
-    fprintf(gl2ps->stream,
-	    "%g %g %g C\n"
-	    "newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
-	    "closepath fill\n",
-	    rgba[0], rgba[1], rgba[2], 
-	    x, y, x+w, y, x+w, y+h, x, y+h);
-    fprintf(gl2ps->stream,
-	    "newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
-	    "closepath clip\n",
-	    x, y, x+w, y, x+w, y+h, x, y+h);
+    gl2psPrintf("%g %g %g C\n"
+		"newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
+		"closepath fill\n",
+		rgba[0], rgba[1], rgba[2], 
+		x, y, x+w, y, x+w, y+h, x, y+h);
+    gl2psPrintf("newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
+		"closepath clip\n",
+		x, y, x+w, y, x+w, y+h, x, y+h);
   }
 
 }
@@ -2045,7 +2073,7 @@ GLint gl2psPrintPostScriptEndViewport(void){
   GLint gl2psPrintPrimitives(void);
 
   res = gl2psPrintPrimitives();
-  fprintf(gl2ps->stream, "grestore\n");
+  gl2psPrintf("grestore\n");
   return res;
 }
 
@@ -2169,13 +2197,13 @@ int gl2psPrintPDFStrokeColor(GL2PSrgba rgba){
   gl2psSetLastColor(rgba);
   for(i = 0; i < 3; ++i){
     if(GL2PS_ZERO(rgba[i]))
-      offs += zprintf("%.0f ", 0.);
+      offs += gl2psPrintf("%.0f ", 0.);
     else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting */
-      offs += zprintf("%f ", rgba[i]);
+      offs += gl2psPrintf("%f ", rgba[i]);
     else
-      offs += zprintf("%g ", rgba[i]);
+      offs += gl2psPrintf("%g ", rgba[i]);
   }
-  offs += zprintf("RG\n");
+  offs += gl2psPrintf("RG\n");
   return offs;
 }
 
@@ -2185,23 +2213,23 @@ int gl2psPrintPDFFillColor(GL2PSrgba rgba){
   
   for(i = 0; i < 3; ++i){
     if(GL2PS_ZERO(rgba[i]))
-      offs += zprintf("%.0f ", 0.);
+      offs += gl2psPrintf("%.0f ", 0.);
     else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting */
-      offs += zprintf("%f ", rgba[i]);
+      offs += gl2psPrintf("%f ", rgba[i]);
     else
-      offs += zprintf("%g ", rgba[i]);
+      offs += gl2psPrintf("%g ", rgba[i]);
   }
-  offs += zprintf("rg\n");
+  offs += gl2psPrintf("rg\n");
   return offs;
 }
 
 int gl2psPrintPDFLineWidth(float lw){
   if(GL2PS_ZERO(lw))
-    return zprintf("%.0f w\n", 0.);
+    return gl2psPrintf("%.0f w\n", 0.);
   else if(lw < 1e-4 || lw > 1e6) /* avoid %e formatting */
-    return zprintf("%f w\n", lw);
+    return gl2psPrintf("%f w\n", lw);
   else
-    return zprintf("%g w\n", lw);
+    return gl2psPrintf("%g w\n", lw);
 }
 
 /* Print 1st PDF object - file info */
@@ -2289,7 +2317,7 @@ int gl2psOpenPDFDataStreamWritePreface(){
   GLint index;
   GLfloat rgba[4];
 
-  offs = zprintf("/GS1 gs\n");
+  offs = gl2psPrintf("/GS1 gs\n");
   
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
@@ -2303,10 +2331,10 @@ int gl2psOpenPDFDataStreamWritePreface(){
       rgba[3] = 0.;
     }
     offs += gl2psPrintPDFFillColor(rgba);
-    offs += zprintf("%d %d %d %d re\n",
+    offs += gl2psPrintf("%d %d %d %d re\n",
 		    (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
 		    (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
-    offs += zprintf("f\n");  
+    offs += gl2psPrintf("f\n");  
   }
   return offs;
 }
@@ -2318,7 +2346,7 @@ void gl2psPrintPDFHeader(){
 
 #ifdef GL2PS_HAVE_ZLIB
   if(gl2ps->options & GL2PS_COMPRESS){
-    gl2psSetupZstream();
+    gl2psSetupCompress();
   }
 #endif  
 
@@ -2355,7 +2383,7 @@ int gl2psFlushPDFTriangles(){
 
   if(gl2ps->lasttype == GL2PS_TRIANGLE && !gl2ps->last_triangle_finished){
     gl2psListAdd(gl2ps->tidxlist, &gl2ps->consec_inner_cnt);
-    offs = zprintf("/Sh%d sh\n", gl2ps->consec_cnt++);
+    offs = gl2psPrintf("/Sh%d sh\n", gl2ps->consec_cnt++);
     gl2ps->consec_inner_cnt = 0;
     gl2ps->streamlength += offs;
     gl2ps->last_triangle_finished = 1;
@@ -2367,7 +2395,7 @@ int gl2psFlushPDFLines(){
   int offs = 0;
 
   if(gl2ps->lasttype == GL2PS_LINE && !gl2ps->last_line_finished){
-    offs = zprintf("S\n");
+    offs = gl2psPrintf("S\n");
     gl2ps->streamlength += offs;
     gl2ps->last_line_finished = 1;
   }
@@ -2395,38 +2423,38 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
   case GL2PS_PIXMAP :
     image = gl2psCopyPixmap(prim->image);
     gl2psListAdd(gl2ps->ilist, &image);
-    gl2ps->streamlength += zprintf("q\n"
-				   "%d 0 0 %d %f %f cm\n"
-				   "/Im%d Do\n"
-				   "Q\n",
-				   (int)prim->image->width, (int)prim->image->height,
-				   prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-				   gl2psListNbr(gl2ps->ilist)-1);
+    gl2ps->streamlength += gl2psPrintf("q\n"
+				       "%d 0 0 %d %f %f cm\n"
+				       "/Im%d Do\n"
+				       "Q\n",
+				       (int)prim->image->width, (int)prim->image->height,
+				       prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+				       gl2psListNbr(gl2ps->ilist)-1);
     break;
   case GL2PS_TEXT :
     str = gl2psCopyText(prim->text);
     gl2psListAdd(gl2ps->slist, &str);
     gl2ps->streamlength += gl2psPrintPDFFillColor(prim->verts[0].rgba);
-    gl2ps->streamlength += zprintf("BT\n"
-				   "/F%d %d Tf\n"
-				   "%f %f Td\n"
-				   "(%s) Tj\n"
-				   "ET\n",
-				   gl2psListNbr(gl2ps->slist)-1,
-				   prim->text->fontsize, prim->verts[0].xyz[0], 
-				   prim->verts[0].xyz[1], prim->text->str);
+    gl2ps->streamlength += gl2psPrintf("BT\n"
+				       "/F%d %d Tf\n"
+				       "%f %f Td\n"
+				       "(%s) Tj\n"
+				       "ET\n",
+				       gl2psListNbr(gl2ps->slist)-1,
+				       prim->text->fontsize, prim->verts[0].xyz[0], 
+				       prim->verts[0].xyz[1], prim->text->str);
     break;
   case GL2PS_POINT :
     if(gl2ps->lastlinewidth != prim->width){
       gl2ps->lastlinewidth = prim->width;
       gl2ps->streamlength += gl2psPrintPDFLineWidth(gl2ps->lastlinewidth);
     }
-    gl2ps->streamlength += zprintf("1 J\n");
+    gl2ps->streamlength += gl2psPrintf("1 J\n");
     gl2ps->streamlength += gl2psPrintPDFStrokeColor(prim->verts[0].rgba);
-    gl2ps->streamlength += zprintf("%f %f m %f %f l S\n",
+    gl2ps->streamlength += gl2psPrintf("%f %f m %f %f l S\n",
 				   prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 				   prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
-    gl2ps->streamlength += zprintf("0 J\n");
+    gl2ps->streamlength += gl2psPrintf("0 J\n");
     break;
   case GL2PS_LINE :
     gl2ps->line_width_diff = gl2ps->lastlinewidth != prim->width;
@@ -2443,15 +2471,15 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
       gl2ps->streamlength += gl2psPrintPDFStrokeColor(prim->verts[0].rgba);
     }
     if(prim->dash){
-      gl2ps->streamlength += zprintf("[%d] 0 d\n", prim->dash);
+      gl2ps->streamlength += gl2psPrintf("[%d] 0 d\n", prim->dash);
     }
-    gl2ps->streamlength += zprintf("%f %f m %f %f l \n",
-				   prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-				   prim->verts[1].xyz[0], prim->verts[1].xyz[1]);
+    gl2ps->streamlength += gl2psPrintf("%f %f m %f %f l \n",
+				       prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+				       prim->verts[1].xyz[0], prim->verts[1].xyz[1]);
     gl2ps->last_line_finished = 0;
     
     if(prim->dash){
-      gl2ps->streamlength += zprintf("S\n[] 0 d\n"); 
+      gl2ps->streamlength += gl2psPrintf("S\n[] 0 d\n"); 
       gl2ps->last_line_finished = 1;
     }
     break;
@@ -2485,13 +2513,13 @@ int gl2psClosePDFDataStream(){
 #ifdef GL2PS_HAVE_ZLIB
   if(gl2ps->options & GL2PS_COMPRESS){
     if (Z_OK != gl2psDeflate())
-      gl2psMsg(GL2PS_ERROR, "gl2ps: zlib deflate error!");
+      gl2psMsg(GL2PS_ERROR, "Zlib deflate error");
     else
-      fwrite(gl2ps->zstream->dest, gl2ps->zstream->destLen, 1, gl2ps->stream);
-    gl2ps->streamlength += gl2ps->zstream->destLen;
+      fwrite(gl2ps->compress->dest, gl2ps->compress->destLen, 1, gl2ps->stream);
+    gl2ps->streamlength += gl2ps->compress->destLen;
     
     offs += gl2ps->streamlength;
-    gl2psFreeZstream();
+    gl2psFreeCompress();
   }
 #endif 
   
@@ -2698,29 +2726,29 @@ int gl2psPrintPDFShader(int obj, GL2PSlist* triangles, int idx, int cnt ){
   
 #ifdef GL2PS_HAVE_ZLIB
   if(gl2ps->options & GL2PS_COMPRESS){
-    gl2psAllocZstream(vertexbytes * cnt * 3);
+    gl2psAllocCompress(vertexbytes * cnt * 3);
 
     for(i = 0; i < cnt; ++i)
       gl2psPrintPDFShaderStreamData((GL2PSvertex*)gl2psListPointer(triangles, idx+i),
-				    gl2psWriteBigEndianZ);
+				    gl2psWriteBigEndianCompress);
 
-    if(Z_OK == gl2psDeflate() && 23 + gl2ps->zstream->destLen < gl2ps->zstream->srcLen){
+    if(Z_OK == gl2psDeflate() && 23 + gl2ps->compress->destLen < gl2ps->compress->srcLen){
       offs += gl2psPrintPDFCompressorType();
       offs += fprintf(gl2ps->stream,
 		      "/Length %d "
 		      ">>\n"
 		      "stream\n",
-		      (int)gl2ps->zstream->destLen);
-      offs += gl2ps->zstream->destLen * fwrite(gl2ps->zstream->dest, gl2ps->zstream->destLen, 
-					       1, gl2ps->stream);
+		      (int)gl2ps->compress->destLen);
+      offs += gl2ps->compress->destLen * fwrite(gl2ps->compress->dest, gl2ps->compress->destLen, 
+						1, gl2ps->stream);
       done = 1;
     }
-    gl2psFreeZstream();
+    gl2psFreeCompress();
   }
 #endif
 
   if(!done){
-    /* no compression, or too long after compression, or compress2 error
+    /* no compression, or too long after compression, or compress error
        -> write non-compressed entry */
     offs += fprintf(gl2ps->stream,
 		    "/Length %d "
@@ -2796,27 +2824,27 @@ int gl2psPrintPDFPixmap(int obj, GL2PSimage* im){
 	
 #ifdef GL2PS_HAVE_ZLIB
   if(gl2ps->options & GL2PS_COMPRESS){
-    gl2psAllocZstream((int)(im->width * im->height * 3));
+    gl2psAllocCompress((int)(im->width * im->height * 3));
     
-    gl2psPrintPDFPixmapStreamData(im, gl2psWriteBigEndianZ);
+    gl2psPrintPDFPixmapStreamData(im, gl2psWriteBigEndianCompress);
     
-    if(Z_OK == gl2psDeflate() && 23 + gl2ps->zstream->destLen < gl2ps->zstream->srcLen){
+    if(Z_OK == gl2psDeflate() && 23 + gl2ps->compress->destLen < gl2ps->compress->srcLen){
       offs += gl2psPrintPDFCompressorType();
       offs += fprintf(gl2ps->stream,
 		      "/Length %d "
 		      ">>\n"
 		      "stream\n",
-		      (int)gl2ps->zstream->destLen);
-      offs += gl2ps->zstream->destLen * fwrite(gl2ps->zstream->dest, gl2ps->zstream->destLen,
-					       1, gl2ps->stream);
+		      (int)gl2ps->compress->destLen);
+      offs += gl2ps->compress->destLen * fwrite(gl2ps->compress->dest, gl2ps->compress->destLen,
+						1, gl2ps->stream);
       done = 1;
     }
-    gl2psFreeZstream();
+    gl2psFreeCompress();
   }
 #endif
   
   if(!done){
-    /* no compression, or too long after compression, or compress2 error
+    /* no compression, or too long after compression, or compress error
        -> write non-compressed entry */
     offs += fprintf(gl2ps->stream,
 		    "/Length %d "
@@ -2968,9 +2996,9 @@ void gl2psPrintPDFFooter(){
 
 #ifdef GL2PS_HAVE_ZLIB
   if(gl2ps->options & GL2PS_COMPRESS){
-    gl2psFreeZstream();
-    gl2psFree(gl2ps->zstream);
-    gl2ps->zstream = NULL;
+    gl2psFreeCompress();
+    gl2psFree(gl2ps->compress);
+    gl2ps->compress = NULL;
   }
 #endif
 }
@@ -2987,7 +3015,7 @@ void gl2psPrintPDFBeginViewport(GLint viewport[4]){
   
   glRenderMode(GL_FEEDBACK);
   
-  offs += zprintf("q\n");
+  offs += gl2psPrintf("q\n");
   
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
@@ -3000,17 +3028,17 @@ void gl2psPrintPDFBeginViewport(GLint viewport[4]){
       rgba[2] = gl2ps->colormap[index][2];
       rgba[3] = 0.;
     }
-    offs += zprintf("%f %f %f rg\n"
-		    "%d %d %d %d re\n"
-		    "W\n"
-		    "f\n",
-		    rgba[0], rgba[1], rgba[2], x, y, w, h);
+    offs += gl2psPrintf("%f %f %f rg\n"
+			"%d %d %d %d re\n"
+			"W\n"
+			"f\n",
+			rgba[0], rgba[1], rgba[2], x, y, w, h);
   }
   else{
-    offs += zprintf("%d %d %d %d re\n"
-		    "W\n"   
-		    "n\n",
-		    x, y, w, h);		
+    offs += gl2psPrintf("%d %d %d %d re\n"
+			"W\n"   
+			"n\n",
+			x, y, w, h);		
   }
 
   gl2ps->streamlength += offs;
@@ -3024,7 +3052,7 @@ GLint gl2psPrintPDFEndViewport(){
   res += gl2psFlushPDFTriangles();
   res += gl2psFlushPDFLines();
 
-  gl2ps->streamlength += zprintf("Q\n");
+  gl2ps->streamlength += gl2psPrintf("Q\n");
   
   return res;
 }
@@ -3141,6 +3169,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   gl2ps->filename = filename;
   gl2ps->sort = sort;
   gl2ps->options = options;
+  gl2ps->compress = NULL;
 
   if(gl2ps->options & GL2PS_USE_CURRENT_VIEWPORT){
     glGetIntegerv(GL_VIEWPORT, gl2ps->viewport);
@@ -3207,9 +3236,6 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   gl2ps->line_rgb_diff = 1;
   gl2ps->last_line_finished = 0;
   gl2ps->last_triangle_finished = 0;
-#ifdef GL2PS_HAVE_ZLIB
-  gl2ps->zstream = NULL;
-#endif
 
   switch(gl2ps->format){
   case GL2PS_TEX :

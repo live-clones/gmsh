@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.45 2003-10-25 03:26:41 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.46 2003-10-25 15:47:27 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -220,12 +220,14 @@ typedef struct {
   GL2PSimage *image;
 } GL2PSprimitive;
 
-#ifdef GL2PS_HAVE_ZLIB
 typedef struct {
+#ifdef GL2PS_HAVE_ZLIB
   Bytef* dest, *src, *start;
   uLongf destLen, srcLen;
-} GL2PSzstream;
+#else
+  int dummy;
 #endif
+} GL2PScompress;
 
 typedef struct {
   /* general */
@@ -238,6 +240,7 @@ typedef struct {
   float lastlinewidth;
   GL2PSlist *primitives;
   FILE *stream;
+  GL2PScompress *compress;
 
   /* BSP-specific */
   GLint maxbestroot;
@@ -253,13 +256,6 @@ typedef struct {
   GL2PSlist *tlist, *tidxlist, *ilist, *slist; 
   int lasttype, consec_cnt, consec_inner_cnt;
   int line_width_diff, line_rgb_diff, last_line_finished, last_triangle_finished;
-
-  /* zlib compression structure */
-#ifdef GL2PS_HAVE_ZLIB
-  GL2PSzstream *zstream;
-  char zbuf[1000];
-#endif
-  
 } GL2PScontext;
 
 /* public functions */
