@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.42 2003-02-18 05:50:04 geuzaine Exp $
+// $Id: Main.cpp,v 1.43 2003-02-20 16:44:38 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -112,6 +112,7 @@ int main(int argc, char *argv[]){
   // Non-interactive Gmsh
 
   if(CTX.batch){
+    check_gsl();
     Msg(DIRECT, "Command line : %s", cmdline);
     OpenProblem(CTX.filename);
     if(yyerrorstate)
