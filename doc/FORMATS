@@ -1,0 +1,85 @@
+
+Gmsh Mesh File Format
+=====================
+
+   The 'msh' file format is the native output file format for
+   Gmsh. The file is divided in two sections (enclosed in $KEY and
+   $ENDKEY pairs): $NOD/$ENDNOD defines the nodes and $ELM/$ENDELM
+   defines the elements.
+
+   $NOD
+   number-of-nodes
+   node-number x-coord y-coord z-coord 
+   ...
+   $ENDNOD
+   $ELM
+   number-of-elements
+   elm-number elm-type elm-region unused number-of-nodes node-numbers
+   ...
+   $ENDELM
+
+   All the syntactic variables stand for integers except x-coord,
+   y-coord and z-coord which stand for floating point values.  The
+   elm-type value defines the geometrical type for the element:
+   
+   1  Line (2 nodes, 1 edge). 
+   2  Triangle (3 nodes, 3 edges). 
+   3  Quadrangle (4 nodes, 4 edges). 
+   4  Tetrahedron (4 nodes, 6 edges, 4 facets). 
+   5  Hexahedron (8 nodes, 12 edges, 6 facets). 
+   6  Prism (6 nodes, 9 edges, 5 facets). 
+   7  Pyramid (5 nodes, 8 edges, 5 facets). 
+   15 Point (1 node). 
+
+   The elm-region value is the number of the physical entity to which
+   the element belongs. 
+
+
+Parsed View Format
+==================
+
+   View "name" {
+     type of element (list of coordinates) {list of values} ;
+     ...
+   }	
+
+   12 base objects can be displayed:
+
+                       type of element   list of coordinates    list of values
+   --------------------------------------------------------------------------------
+   scalar point        SP                3                      1  * nb time steps
+   vector point        VP                3                      3  * nb time steps
+   tensor point        TP                3                      9  * nb time steps
+   scalar line         SL                6                      2  * nb time steps
+   vector line         VL                6                      6  * nb time steps
+   tensor line         TL                6                      18 * nb time steps
+   scalar triangle     ST                9                      3  * nb time steps
+   vector triangle     VT                9                      9  * nb time steps
+   tensor triangle     TT                9                      27 * nb time steps
+   scalar tetrahedron  SS                12                     4  * nb time steps
+   vector tetrahedron  VS                12                     12 * nb time steps
+   tensor tetrahedron  TS                12                     36 * nb time steps
+
+
+   The coordinates are given "by node", that is (x,y,z) for a point, (x1,y1,z1,x2,y2,z2)
+   for a line, (x1,y1,z1,x2,y2,z2,x3,y3,z3) for a triangle, ...
+ 
+   The values are given by timestep, by node and by component. That is, for a vector line,
+   {valxnode1time1,valynode1time1,valznode1time1, valxnode2time1,valynode2time1,valznode2time1,
+    valxnode1time2,valynode1time2,valznode1time2, valxnode2time2,valynode2time2,valznode2time2, ...}
+
+
+Ascii View Format
+=================
+
+
+Binary View Format
+==================
+
+    int one=1;	
+
+    fprintf(file, "$View /* %s */\n", name);
+    fprintf(file, "%s %g\n", name, version);
+    fprintf(file, "$EndView\n");
+    
+    fwrite(&One, sizeof(int), 1, PostStream);
