@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.199 2002-10-11 07:12:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.200 2002-10-12 18:20:25 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,16 @@
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
 // - examine what's already done before adding something new...
+
+// Which buttons+labels should you put on a dialog window?
+// - "OK" is to agree with what in the dialog *AND* close the dialog
+// - "Apply" is to apply the current values selected in the dialog, but
+//    leave the dialog open
+// - "Cancel" is to close (hide) the dialog and *NOT* apply the
+//    changes that might have been made in the dialog
+//
+// The "Cancel" button, if present, should always be the last (-> at
+// right)
 
 #include "PluginManager.h"
 #include "Plugin.h"
@@ -58,7 +68,7 @@
 #endif
 
 #define IW  (10*CTX.fontsize) // input field width
-#define BB  (5*CTX.fontsize-2) // width of a button with internal label
+#define BB  (6*CTX.fontsize+4) // width of a button with internal label
 #define BH  (2*CTX.fontsize+1) // button height
 #define WB  (5) // window border
 
@@ -1231,7 +1241,7 @@ void GUI::create_general_options_window(){
   }
   
   { 
-    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Apply");
     o->callback(opt_general_ok_cb);
   }
   { 
@@ -1343,7 +1353,7 @@ void GUI::create_geometry_options_window(){
   }
   
   { 
-    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Apply");
     o->callback(opt_geometry_ok_cb);
   }
   { 
@@ -1533,7 +1543,7 @@ void GUI::create_mesh_options_window(){
   }
   
   { 
-    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Apply");
     o->callback(opt_mesh_ok_cb);
   }
   { 
@@ -1585,7 +1595,7 @@ void GUI::create_solver_options_window(){
   }
   
   { 
-    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Apply");
     o->callback(opt_solver_ok_cb);
   }
   { 
@@ -1672,7 +1682,7 @@ void GUI::create_post_options_window(){
   }
   
   { 
-    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Apply");
     o->callback(opt_post_ok_cb);
   }
   { 
@@ -1698,7 +1708,7 @@ void GUI::create_statistics_window(){
     return;
   }
 
-  int width = 25*CTX.fontsize;
+  int width = 26*CTX.fontsize;
   int height = 5*WB+17*BH ;
   
   stat_window = new Fl_Window(width,height);
@@ -1768,7 +1778,7 @@ void GUI::create_statistics_window(){
   }
   
   { 
-    Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Update");
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Update");
     o->callback(opt_statistics_update_cb);
   }
   { 
@@ -1959,10 +1969,10 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
     o->end();
   }
 
-  Fl_Button* cancel = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Close");
-  cancel->callback(cancel_cb, (void*)pdb->main_window);
-
   pdb->run_button = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Run");
+
+  Fl_Button* cancel = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
+  cancel->callback(cancel_cb, (void*)pdb->main_window);
 
   pdb->main_window->resizable(new Fl_Box(2*WB,2*WB+BH,10,10));
 
@@ -2142,7 +2152,7 @@ void GUI::create_visibility_window(){
   vis_input_mode->menu(input_mode_table);
   
   { 
-    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Apply");
     o->callback(opt_visibility_ok_cb);
   }
   { 
@@ -2545,7 +2555,7 @@ void GUI::create_view_options_window(int num){
   }
   
   { 
-    view_ok = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "OK");
+    view_ok = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Apply");
   }
   { 
     Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
@@ -2917,6 +2927,7 @@ void GUI::create_solver_window(int num){
   static Fl_Group *g[10];
 
   int LL = (int)(1.75*IW);
+  int BBS = (5*CTX.fontsize+1); // smaller width of a button with internal label
 
   if(solver[num].window){
     solver[num].window->show();
@@ -2930,7 +2941,7 @@ void GUI::create_solver_window(int num){
     if(strlen(SINFO[num].button_name[i])) nbbutts++ ;
   if(nbbutts > 3) newrow = 1;
 
-  int width = 5*BB+6*WB;
+  int width = 5*BBS+6*WB;
   int height = (8+SINFO[num].nboptions+newrow)*WB+ (6+SINFO[num].nboptions+newrow)*BH  ;
   if(height < 7*WB+7*BH) height = 7*WB+7*BH; //minimum height required by Options tab
   
@@ -2984,7 +2995,7 @@ void GUI::create_solver_window(int num){
       }
       
       Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 
-						 height-(3+newrow)*WB-(2+newrow)*BH, BB, BH, "OK");
+						 height-(3+newrow)*WB-(2+newrow)*BH, BB, BH, "Apply");
       o->callback(solver_ok_cb, (void*)num);
       
       g[1]->end();
@@ -3010,9 +3021,9 @@ void GUI::create_solver_window(int num){
     if(strlen(SINFO[num].button_name[i])){
       arg[num][i][0]=num;
       arg[num][i][1]=i;
-      solver[num].command[nb] = new Fl_Button(width-(1+nb+2*!newrow)*BB-(1+nb+2*!newrow)*WB, 
+      solver[num].command[nb] = new Fl_Button(width-(1+nb+2*!newrow)*BBS-(1+nb+2*!newrow)*WB, 
 					      height-(1+newrow)*BH-(1+newrow)*WB, 
-					      BB, BH,
+					      BBS, BH,
 					      SINFO[num].button_name[i]);
       solver[num].command[nb]->callback(solver_command_cb,(void*)arg[num][i]);
       nb++;
@@ -3020,11 +3031,11 @@ void GUI::create_solver_window(int num){
   }
   
   { 
-    Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Kill");
+    Fl_Button* o = new Fl_Button(width-2*BBS-2*WB, height-BH-WB, BBS, BH, "Kill");
     o->callback(solver_kill_cb, (void*)num);
   }
   { 
-    Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");
+    Fl_Button* o = new Fl_Button(width-BBS-WB, height-BH-WB, BBS, BH, "Cancel");
     o->callback(cancel_cb, (void*)solver[num].window);
   }
   
