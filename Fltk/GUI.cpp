@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.148 2002-02-08 17:33:52 geuzaine Exp $
+// $Id: GUI.cpp,v 1.149 2002-02-08 17:46:47 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2262,7 +2262,7 @@ void GUI::create_view_options_window(int num){
       view_value[50]->maximum(0); 
       view_value[50]->step(1);
       //no set_changed since has its own callback
-      Fl_Box *a = new Fl_Box(2*WB+IW, 2*WB+6*BH, IW/2, BH, "Time Step");
+      Fl_Box *a = new Fl_Box(2*WB+IW, 2*WB+6*BH, IW/2, BH, "Time step");
       a->box(FL_NO_BOX);
       a->labelsize(CTX.fontsize);
       a->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
