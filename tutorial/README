@@ -1,4 +1,4 @@
-$Id: README,v 1.4 2001-02-18 18:38:54 geuzaine Exp $
+$Id: README,v 1.5 2001-02-19 14:58:41 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -44,15 +44,17 @@ for example with:
 (The '.geo' extension can also be omitted.)
 
 Note: to define new geometries, if it is often handy to define the
-variables and the points directly in the input files, it is almost
-always simpler to define the curves, the surfaces and the volumes
-interactively. To do so, just follow the context dependent buttons in
-the Geometry module. For example, to create a line, select 'Geometry'
-in the module menu, and then select 'Elementary, Add, Create,
-Line'. You will then be asked (in the status bar of the graphic
-window) to select a list of points, and to click 'e' when you're
-done. Once the interactive command is completed, a string is
-automatically added at the end of the currently opened project file.
+variables and the points directly in the input files (you may use any
+text editor for this purpose, e.g. Wordpad on Windows, or Emacs on
+Unix), it is almost always simpler to define the curves, the surfaces
+and the volumes interactively. To do so, just follow the context
+dependent buttons in the Geometry module. For example, to create a
+line, select 'Geometry' in the module menu, and then select
+'Elementary, Add, Create, Line'. You will then be asked (in the status
+bar of the graphic window) to select a list of points, and to click
+'e' when you're done. Once the interactive command is completed, a
+string is automatically added at the end of the currently opened
+project file.
 
 
 The second operating mode for Gmsh is the non-interactive mode. In
