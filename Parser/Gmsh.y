@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.85 2001-07-31 19:25:04 geuzaine Exp $
+// $Id: Gmsh.y,v 1.86 2001-08-01 13:34:16 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1758,6 +1758,10 @@ Extrude :
 ;
 
 ExtrudeParameters :
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
     ExtrudeParameter
     {
     }
@@ -1771,8 +1775,8 @@ ExtrudeParameter :
     {
       double d;
       int j;
-      extr.mesh.NbLayer = List_Nbr($3);
       extr.mesh.ExtrudeMesh = true;
+      extr.mesh.NbLayer = List_Nbr($3);
       for(int i=0;i<List_Nbr($3);i++){
 	List_Read($3,i,&d);
 	j = (int)d;
