@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.15 2000-12-29 14:04:26 geuzaine Exp $ */
+/* $Id: Options.h,v 1.16 2001-01-01 14:57:35 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -199,7 +199,7 @@ StringXNumber PostProcessingOptions_Number[] = {
 StringXNumber PrintOptions_Number[] = {
   { "Format"         , GMSH_INT,    (void*)&CTX.print.format         , FORMAT_AUTO }, 
   { "EpsQuality"     , GMSH_INT,    (void*)&CTX.print.eps_quality    , 1 }, 
-  { "JpegQuality"    , GMSH_INT,    (void*)&CTX.print.jpeg_quality   , 100 }, 
+  { "JpegQuality"    , GMSH_INT,    (void*)&CTX.print.jpeg_quality   , 85 }, 
   { "GifDither"      , GMSH_INT,    (void*)&CTX.print.gif_dither     , 0 }, 
   { "GifSort"        , GMSH_INT,    (void*)&CTX.print.gif_sort       , 1 }, 
   { "GifInterlace"   , GMSH_INT,    (void*)&CTX.print.gif_interlace  , 0 }, 

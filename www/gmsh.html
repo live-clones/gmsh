@@ -7,9 +7,9 @@ echo
 cat << EOM 
 ENDSCRIPT--->
 
-<!--- PLEASE DO NOT EDIT the BEGINSCRIPT and ENDSCRIPT comments --->
-
 <HTML>
+
+<!--- PLEASE DO NOT EDIT the BEGINSCRIPT and ENDSCRIPT comments --->
 
 <HEAD>
 
@@ -19,12 +19,12 @@ ENDSCRIPT--->
 three-dimensional finite element mesh generator with pre- and
 post-processing facilities.">
 
-<meta name="keywords" content="gmsh, free, mesh, software, mesh
-generation, mesh refinement, free, delaunay, triangulation, delaunay
-triangulation, automatic, maillage, maillages automatiques, mailleur,
-finite element, modelisation, 3D, 3-D, opengl, maillages 3D, 3D
-meshes, 3-D meshes, maillages 3-D, voronoi, adaptation de maillages,
-mesh adaptation, modeling, gmsh">
+<meta name="keywords" content="gmsh, mesh generator, finite element,
+free, software, mesh, generation, mesh refinement, free, delaunay,
+triangulation, delaunay triangulation, automatic, maillage, maillages
+automatiques, mailleur, finite element, modelisation, 3D, 3-D, opengl, 
+maillages 3D, 3D meshes, 3-D meshes, maillages 3-D, voronoi, adaptation
+de maillages, mesh adaptation, modeling">
 
 <META name="Autor-Handle" content="Christophe.Geuzaine@advalvas.be">
 
@@ -44,12 +44,11 @@ mesh adaptation, modeling, gmsh">
 EOM
 ${BASEDIR}/n2l ${BASEDIR}/counter.gmsh
 cat << EOM
-
-    page requests since May 24, 1998<br><br>
+page requests since May 24, 1998<p>
 ENDSCRIPT--->
 
-    Last updated <b>January 1, 2001</b><br><br>
-    &copy; 1998-2001 C. Geuzaine, J.-F. Remacle<br>
+    Last updated <b>January 1, 2001</b><p>
+    &copy; 1998-2001 C. Geuzaine, J.-F. Remacle
 
   </font></td>
 
@@ -194,7 +193,7 @@ circumscribed circle/sphere.
 <tr valign=top>
 
   <td width="130" align="right">
-    <font color="#ffffff" face="Helvetica, Arial"><p><b>Scalar, Vector and Tensor Field Visualization</b></font></td>
+    <font color="#ffffff" face="Helvetica, Arial"><p><b>Scalar and Vector Field Visualization</b></font></td>
 
   <td width="70">
   </td>
@@ -227,8 +226,9 @@ files.
 
   <td><font face="Helvetica, Arial" size=-1>
 
-    Online <A target = "_top" href="/gmsh/doc/tutorial.html">tutorial</A> and
-    file <A target="_top" href="/gmsh/doc/FORMATS">formats</A> description.
+Online <A target = "_top" href="/gmsh/doc/tutorial.html">tutorial</A>
+and file <A target="_top" href="/gmsh/doc/FORMATS">formats</A>
+description.
 
   </td>
 
@@ -244,48 +244,71 @@ files.
   <td width="70">
   </td>
 
-  <td bgcolor="#f0f0f0"><font face="Helvetica, Arial" size=-1>
+  <td bgcolor="#f0f0f0">
 
-    GMSH is available on most classical UNIX platforms. Due to its erratic
-    behavior, we don't distribute the Windows version for the moment (you
-    may consider switching to Linux instead...). No source distribution is
-    available for the moment.
-    <p>
-    All executables are dynamically linked with OpenGL and Motif. You
-    should have these libraries installed on your system, and in the path
-    of the library loader. Free replacements for OpenGL
-    and Motif can be found at 
-    <A target="_top" href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>
-    and <A target="_top" href="http://www.lesstif.org">http://www.lesstif.org</A>. 
-    (Linux RPMs are directly available here: 
-    <A href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">Mesa-3.2-2.i386.rpm</A>,
-    <A href="/gmsh/thirdparty/lesstif-0.91.4-1.i386.rpm">lesstif-0.91.4-1.i386.rpm</A>.)
-    <p>
-    Remember that you may have to reconfigure the loader (ldconfig
-    under Linux) or modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP)
-    in order for Gmsh to find these libraries.
-    <p>
-    Version 1.00 (1 January 2001):
-    <ul>
-    <li>Red Hat package with man page and examples
-      <ul>
-        <li><A href="/gmsh/latest/gmsh-1.00-1.i386.rpm">Linux RPM for Red Hat 6.2 and compatible (i386, glibc 2.1)</A> 
-      </ul>
-    <li>Tarballs
-      <ul>
-        <li><A href="/gmsh/latest/gmsh-Linux.tgz" >Gmsh for Linux (i386, glibc 2.1)</A>
-        <li><A href="/gmsh/latest/gmsh-OSF1.tgz"  >Gmsh for Digital OSF 4.0/Compaq Tru64</A>
-        <li><A href="/gmsh/latest/gmsh-SunOS.tgz" >Gmsh for Sun OS 5.5.1</A>
-        <li><A href="/gmsh/latest/gmsh-AIX.tgz"   >Gmsh for IBM AIX</A>
-        <li><A href="/gmsh/latest/gmsh-HP-UX.tgz" >Gmsh for HP-UX 10.20</A>
-        <li><A href="/gmsh/latest/gmsh-IRIX.tgz"  >Gmsh for SGI IRIX 6.5</A>
-      </ul>
-    <li>Tutorial and demos
-      <ul>
-        <li><A href="/gmsh/latest/gmsh-tutorial.tgz">Gmsh tutorial</A>
-        <li><A href="/gmsh/latest/gmsh-demos.tgz">Gmsh demo files</A>
-      </ul>
-    </ul>
+    <table border=0 cellspacing=0 cellpadding=0>
+
+    <tr valign=top>
+
+    <td width="45%"> <font face="Helvetica, Arial" size=-1>
+
+<b>Stable Release: Version 1.00 (1 January 2001)</b>
+<p>
+The stable release of GMSH is available for most classical UNIX
+platforms. All executables (no source distribution is available
+for the moment) are dynamically linked with OpenGL and Motif. You
+should have these libraries installed on your system, and in the
+path of the library loader. Free replacements for OpenGL and Motif
+can be found at <A target="_top"
+href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>
+and <A target="_top"
+href="http://www.lesstif.org">http://www.lesstif.org</A>.  (Linux
+RPMs are directly available here: <A
+href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">Mesa-3.2-2.i386.rpm</A>,
+<A
+href="/gmsh/thirdparty/lesstif-0.91.4-1.i386.rpm">lesstif-0.91.4-1.i386.rpm</A>.)
+<p>
+Remember that you may have to reconfigure the loader (ldconfig
+under Linux) or modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP)
+in order for Gmsh to find these libraries.
+<ul>
+<li>Red Hat package with man page and examples
+  <ul>
+    <li><A href="/gmsh/latest/gmsh-1.00-1.i386.rpm">Linux RPM for Red Hat
+           6.2 and compatible (i386, glibc 2.1)</A> 
+  </ul>
+<li>Tarballs
+  <ul>
+    <li><A href="/gmsh/latest/gmsh-Linux.tgz" >Gmsh for Linux (i386, glibc 2.1)</A>
+    <li><A href="/gmsh/latest/gmsh-OSF1.tgz"  >Gmsh for Digital OSF 4.0/Compaq Tru64</A>
+    <li><A href="/gmsh/latest/gmsh-SunOS.tgz" >Gmsh for Sun OS 5.5.1</A>
+    <li><A href="/gmsh/latest/gmsh-AIX.tgz"   >Gmsh for IBM AIX</A>
+    <li><A href="/gmsh/latest/gmsh-HP-UX.tgz" >Gmsh for HP-UX 10.20</A>
+    <li><A href="/gmsh/latest/gmsh-IRIX.tgz"  >Gmsh for SGI IRIX 6.5</A>
+  </ul>
+<li>Tutorial and demos
+  <ul>
+    <li><A href="/gmsh/latest/gmsh-tutorial.tgz">Gmsh tutorial</A>
+    <li><A href="/gmsh/latest/gmsh-demos.tgz">Gmsh demo files</A>
+  </ul>
+</ul>
+
+    </td>
+
+    <td width="10%">
+    </td>
+
+    <td width="45%"> <font face="Helvetica, Arial" size=-1>
+
+<b>Development Release: --</b>
+<p>
+
+    </td>
+
+    </tr>
+
+    </table>
+
   </td>
 
 </tr>
@@ -409,27 +432,27 @@ order mesh on non plane surfaces; added example 13.
 
   <td><font face="Helvetica, Arial" size=-1>
 
-    <ul>
-      <li> If something goes wrong, it is likely because some libraries are
-      not properly installed on your system. Try 'ldd gmsh-name' to check
-      all shared libraries dependencies. Warning: HP version is reported not
-      to work with native OpenGL -> install Mesa instead.
+<ul>
+<li> If something goes wrong, it is likely because some libraries are
+not properly installed on your system. Try 'ldd gmsh-name' to check
+all shared libraries dependencies. Warning: HP version is reported not
+to work with native OpenGL -> install Mesa instead.
 
-      <li> If, when moving the mouse over the graphic window, everything
-      that is drawn on it disappears, and each item is visible only when the
-      cursor is directly over it, you should start Gmsh with the '-noov'
-      command line option. (This will be fixed.)
+<li> If, when moving the mouse over the graphic window, everything
+that is drawn on it disappears, and each item is visible only when the
+cursor is directly over it, you should start Gmsh with the '-noov'
+command line option. (This will be fixed.)
 
-      <li> Turn double buffering off (with the -nodb command line option)
-      when working on a remote host with Mesa.
+<li> Turn double buffering off (with the -nodb command line option)
+when working on a remote host with Mesa.
 
-      <li> Try display lists (-dl option) when working with big
-      post-processing data sets.
+<li> Try display lists (-dl option) when working with big
+post-processing data sets.
 
-      <li> Disable opaque move in your window manager to prevent multiple
-      expose events when an option window partially hides the graphical
-      window.
-    </ul>
+<li> Disable opaque move in your window manager to prevent multiple
+expose events when an option window partially hides the graphical
+window.
+</ul>
 
   </td>
 
@@ -448,11 +471,11 @@ order mesh on non plane surfaces; added example 13.
 
   <td><font face="Helvetica, Arial" size=-1> 
 
-    Gmsh is developed by 
-    <A HREF="mailto:Remacle@scorec.rpi.edu">Jean-François Remacle</A> and
-    <A HREF="mailto:Christophe.Geuzaine@ulg.ac.be">Christophe Geuzaine</A>.
-    Feel free to contact us to send bugs, remarks or nice pictures you achieved
-    with Gmsh (we'll put them on the web site).
+Gmsh is developed by 
+<A HREF="mailto:Remacle@scorec.rpi.edu">Jean-François Remacle</A> and
+<A HREF="mailto:Christophe.Geuzaine@ulg.ac.be">Christophe Geuzaine</A>.
+Feel free to contact us to send bugs, remarks or nice pictures you achieved
+with Gmsh (we'll put them on the web site).
 
   </td>
 
@@ -470,37 +493,37 @@ order mesh on non plane surfaces; added example 13.
 
   <td><font face="Helvetica, Arial" size=-1>
 
-    Some pictures made with Gmsh:
-    <ul>
-      <li> Meshes of 
-           <A href="/gmsh/gallery/Mesh1D.gif">lines</A>, 
-           <A href="/gmsh/gallery/Mesh2DCiss.gif">surfaces</A> and 
-           <A href="/gmsh/gallery/Mesh3D.gif">volumes</A> 
-           respecting a given characteristic length field (d(r) = a (sin(X) * sin (Y)) + b).
-      <li> 3D mesh of an 
-           <A href="/gmsh/gallery/bigelec4.gif">electrical component</A>
-           (courtesy S.K. Choi).
-      <li> First example in the <A href="/gmsh/latest/gmsh-tutorial.tgz">tutorial</A>:
-           <A href="/gmsh/gallery/ex01-2.gif">pict1</A>, 
-           <A href="/gmsh/gallery/ex01-3.gif">pict2</A>, 
-           <A href="/gmsh/gallery/ex01-4.gif">pict3</A>.
-      <li> A mechanical part in the <A href="/gmsh/latest/gmsh-demos.tgz">demo files</A>: 
-           <A href="/gmsh/gallery/ex09-0.gif">pict1</A>, 
-           <A href="/gmsh/gallery/ex09-1.gif">pict2</A>, 
-           <A href="/gmsh/gallery/ex09-2.gif">pict3</A>.
-      <li> Mach number on a F16 
-           <A href="/gmsh/gallery/f16-1.gif">pict1</A>,
-           <A href="/gmsh/gallery/f16-2.gif">pict2</A>,
-           <A href="/gmsh/gallery/f16-3.gif">pict3</A>,
-           <A href="/gmsh/gallery/f16-5.gif">pict4</A> (courtesy P. Geuzaine).
-      <li> Example of on-screen information display: 
-           <A href="/gmsh/gallery/infodisplay1.gif">1</A>, 
-           <A href="/gmsh/gallery/infodisplay2.gif">2</A>.
-      <li> A 3D <A href="/gmsh/gallery/adap.gif">adapted mesh</A>.
-      <li> Smooth 2D <A href="/gmsh/gallery/blob.gif">colormap</A>.
-      <li> Some didactic animations about computational electromagnetics at 
-           <A target="_top" href="http://www.montefiore.ulg.ac.be/services/elap/elm/demos_en.html">ELAP</A>.
-    </ul>
+Some pictures made with Gmsh:
+<ul>
+<li> Meshes of 
+     <A href="/gmsh/gallery/Mesh1D.gif">lines</A>, 
+     <A href="/gmsh/gallery/Mesh2DCiss.gif">surfaces</A> and 
+     <A href="/gmsh/gallery/Mesh3D.gif">volumes</A> 
+     respecting a given characteristic length field (d(r) = a (sin(X) * sin (Y)) + b).
+<li> 3D mesh of an 
+     <A href="/gmsh/gallery/bigelec4.gif">electrical component</A>
+     (courtesy S.K. Choi).
+<li> First example in the <A href="/gmsh/latest/gmsh-tutorial.tgz">tutorial</A>:
+     <A href="/gmsh/gallery/ex01-2.gif">pict1</A>, 
+     <A href="/gmsh/gallery/ex01-3.gif">pict2</A>, 
+     <A href="/gmsh/gallery/ex01-4.gif">pict3</A>.
+<li> A mechanical part in the <A href="/gmsh/latest/gmsh-demos.tgz">demo files</A>: 
+     <A href="/gmsh/gallery/ex09-0.gif">pict1</A>, 
+     <A href="/gmsh/gallery/ex09-1.gif">pict2</A>, 
+     <A href="/gmsh/gallery/ex09-2.gif">pict3</A>.
+<li> Mach number on a F16 
+     <A href="/gmsh/gallery/f16-1.gif">pict1</A>,
+     <A href="/gmsh/gallery/f16-2.gif">pict2</A>,
+     <A href="/gmsh/gallery/f16-3.gif">pict3</A>,
+     <A href="/gmsh/gallery/f16-5.gif">pict4</A> (courtesy P. Geuzaine).
+<li> Example of on-screen information display: 
+     <A href="/gmsh/gallery/infodisplay1.gif">1</A>, 
+     <A href="/gmsh/gallery/infodisplay2.gif">2</A>.
+<li> A 3D <A href="/gmsh/gallery/adap.gif">adapted mesh</A>.
+<li> Smooth 2D <A href="/gmsh/gallery/blob.gif">colormap</A>.
+<li> Some didactic animations about computational electromagnetics at 
+     <A target="_top" href="http://www.montefiore.ulg.ac.be/services/elap/elm/demos_en.html">ELAP</A>.
+</ul>
 
   </td>
 
@@ -518,10 +541,10 @@ order mesh on non plane surfaces; added example 13.
 
   <td><font face="Helvetica, Arial" size=-1>
 
-    Check out <A TARGET="_top" HREF="/getdp/">GetDP</A>, 
-    a scientific computation software for the numerical solution
-    of integro-differential equations, using finite element and integral
-    type methods. 
+Check out <A TARGET="_top" HREF="/getdp/">GetDP</A>, a scientific
+computation software for the numerical solution of
+integro-differential equations, using finite element and integral type
+methods.
 
   </font></td>
 
