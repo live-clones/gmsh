@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.41 2003-11-23 06:58:01 geuzaine Exp $
+// $Id: Message.cpp,v 1.42 2003-11-23 07:14:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -38,18 +38,6 @@
 
 extern GUI *WID;
 extern Context_T CTX;
-
-// Some old systems don't have vsnprintf... Just call vsprintf instead.
-
-#if defined(HAVE_NO_VSNPRINTF)
-int vsnprintf(char *str, size_t size, const char* fmt, ...){
-  va_list args;
-  va_start(args, fmt);
-  int ret = vsprintf(str, fmt, args);
-  va_end(args);
-  return ret;
-}
-#endif
 
 // Handle signals. It is a crime to call stdio functions in a signal
 // handler. But who cares? ;-)
@@ -162,7 +150,11 @@ void Msg(int level, char *fmt, ...)
     va_start(args, fmt);
 
     if(window >= 0) {
+#if defined(HAVE_NO_VSNPRINTF)
+      vsprintf(buff[window], fmt, args);
+#else
       vsnprintf(buff[window], BUFFSIZE, fmt, args);
+#endif
       if(window <= 2)
         WID->set_status(buff[window], window);
       if(log && strlen(buff[window]))
@@ -172,7 +164,12 @@ void Msg(int level, char *fmt, ...)
       strcpy(buff1, "@C1");
       if(str)
         strncat(buff1, str, BUFFSIZE-4);
+
+#if defined(HAVE_NO_VSNPRINTF)
+      vsprintf(buff2, fmt, args);
+#else
       vsnprintf(buff2, BUFFSIZE, fmt, args);
+#endif
       strncat(buff1, buff2, BUFFSIZE-strlen(buff1));
       if(CTX.terminal)
         fprintf(stderr, "%s\n", &buff1[3]);
