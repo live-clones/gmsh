@@ -1,17 +1,13 @@
+// $Id: CutSphere.cpp,v 1.5 2001-07-30 13:22:21 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
 
-double opt_cut_sphere_Xc(OPT_ARGS_NUM)
-{
-  return 0;
-}
-
 StringXNumber CutSphereOptions_Number[] = {
-  { GMSH_FULLRC, "Xc" , opt_cut_sphere_Xc , 1. },
-  { GMSH_FULLRC, "Yc" , opt_cut_sphere_Xc , 1. },
-  { GMSH_FULLRC, "Zc" , opt_cut_sphere_Xc , 1. },
-  { GMSH_FULLRC, "R" , opt_cut_sphere_Xc , 1. }
+  { GMSH_FULLRC, "Xc" , NULL , 1. },
+  { GMSH_FULLRC, "Yc" , NULL , 1. },
+  { GMSH_FULLRC, "Zc" , NULL , 1. },
+  { GMSH_FULLRC, "R" , NULL , 1. }
 };
 
 extern "C"

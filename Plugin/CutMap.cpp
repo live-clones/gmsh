@@ -1,13 +1,11 @@
+// $Id: CutMap.cpp,v 1.6 2001-07-30 13:22:21 geuzaine Exp $
+
 #include "CutMap.h"
-  #include "List.h"
-double opt_cut_map_A(OPT_ARGS_NUM)
-{
-  return 0;
-}
+#include "List.h"
 
 StringXNumber CutMapOptions_Number[] = {
-  { GMSH_FULLRC, "A" , opt_cut_map_A , 1. },
-  { GMSH_FULLRC, "iView" , opt_cut_map_A , 1. }
+  { GMSH_FULLRC, "A" , NULL , 1. },
+  { GMSH_FULLRC, "iView" , NULL , 1. }
 };
 
 extern "C"

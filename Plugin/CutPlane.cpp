@@ -1,23 +1,14 @@
+// $Id: CutPlane.cpp,v 1.5 2001-07-30 13:22:21 geuzaine Exp $
+
 #include "CutPlane.h"
- #include "List.h"
-
-/*
-  Plugin Entry : GMSH_RegisterPlugin
- */
-
-// that's the bad part of the story ...
-
-double opt_cut_plane_A(OPT_ARGS_NUM)
-{
-  return 0;
-}
+#include "List.h"
 
 StringXNumber CutPlaneOptions_Number[] = {
-  { GMSH_FULLRC, "A" , opt_cut_plane_A , 1. },
-  { GMSH_FULLRC, "B" , opt_cut_plane_A , 1. },
-  { GMSH_FULLRC, "C" , opt_cut_plane_A , 1. },
-  { GMSH_FULLRC, "D" , opt_cut_plane_A , 1. },
-  { GMSH_FULLRC, "iView" , opt_cut_plane_A , 1. }
+  { GMSH_FULLRC, "A" , NULL , 1. },
+  { GMSH_FULLRC, "B" , NULL , 1. },
+  { GMSH_FULLRC, "C" , NULL , 1. },
+  { GMSH_FULLRC, "D" , NULL , 1. },
+  { GMSH_FULLRC, "iView" , NULL , 1. }
 };
 
 extern "C"
