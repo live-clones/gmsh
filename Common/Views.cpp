@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.98 2003-06-23 16:52:17 geuzaine Exp $
+// $Id: Views.cpp,v 1.99 2003-11-08 05:59:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -886,7 +886,7 @@ void WriteView(int Flag_BIN, Post_View * v, char *filename)
   int i, f, One = 1;
 
   if(filename) {
-    file = fopen(filename, "w");
+    file = fopen(filename, Flag_BIN ? "wb" : "w");
     if(!file) {
       Msg(GERROR, "Unable to open file '%s'", filename);
       return;
