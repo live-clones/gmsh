@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.83 2005-02-16 05:17:54 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.84 2005-02-16 05:48:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -207,6 +207,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
       if(CTX.mesh.check_duplicates)
         Duplicates = Tree_Create(sizeof(Vertex *), comparePosition);
+
+      int NN = (Nbr_Nodes > 100000) ? Nbr_Nodes/50 : Nbr_Nodes/10;
+
       for(i_Node = 0; i_Node < Nbr_Nodes; i_Node++) {
         fscanf(fp, "%d %lf %lf %lf", &Num, &x, &y, &z);
         vert = Create_Vertex(Num, x, y, z, 1.0, 0.0);
@@ -221,10 +224,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           else
             Tree_Add(Duplicates, &vert);
         }
-	if(i_Node % (Nbr_Nodes/50) == (Nbr_Nodes/50) - 1)
+	if(i_Node % NN == NN - 1)
 	  Msg(PROGRESS, "Read %d nodes", i_Node + 1);
       }
       Msg(PROGRESS, "");
+
       if(CTX.mesh.check_duplicates)
         Tree_Delete(Duplicates);
     }
@@ -239,6 +243,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
       if(CTX.mesh.check_duplicates)
         Duplicates = Tree_Create(sizeof(Vertex *), comparePosition);
+
+      int NN = (Nbr_Elements > 100000) ? Nbr_Elements/50 : Nbr_Elements/10;
 
       for(i_Element = 0; i_Element < Nbr_Elements; i_Element++) {
 	
@@ -462,7 +468,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         }
 
-	if(i_Element % (Nbr_Elements/50) == (Nbr_Elements/50) - 1)
+	if(i_Element % NN == NN - 1)
 	  Msg(PROGRESS, "Read %d elements", i_Element + 1);
       }
       Msg(PROGRESS, "");
