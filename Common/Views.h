@@ -13,6 +13,8 @@ class Post_View{
 
   // the data
   int datasize; // size(double) or sizeof(float)
+  int NbTimeStep, ScalarOnly;
+  double Min, Max, BBox[6];
   List_T *Time;
   int NbSP, NbVP, NbTP;
   List_T *SP, *VP, *TP; // points
@@ -22,8 +24,8 @@ class Post_View{
   List_T *ST, *VT, *TT; // triangles
   int NbSS, NbVS, NbTS;
   List_T *SS, *VS, *TS; // tetrahedra
-  int NbTimeStep, ScalarOnly;
-  double Min, Max, BBox[6];
+  int NbT2, NbT3;
+  List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
   // options
   char   Format[256];
@@ -36,6 +38,7 @@ class Post_View{
   int TransparentScale, ScaleType, RangeType;
   int ArrowType, ArrowLocation;
   int TimeStep;
+  int DrawStrings;
   int DrawPoints, DrawLines, DrawTriangles, DrawTetrahedra;
   int DrawScalars, DrawVectors, DrawTensors;
   int Boundary, PointSize, LineWidth;

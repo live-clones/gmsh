@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.6 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.7 2001-10-30 14:27:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,6 +10,10 @@
 #include "gl2ps.h"
 
 extern Context_T   CTX;
+
+/* ------------------------------------------------------------------------
+    2D graphics (gnuplot style)
+   ------------------------------------------------------------------------ */
 
 #define TIC 5
 
@@ -219,6 +223,79 @@ void Draw_Graph2D(void){
   for(i=0;i<List_Nbr(CTX.post.list);i++){
     v = (Post_View*)List_Pointer(CTX.post.list,i);
     if(v->Visible && v->NbSP && v->GraphType!=DRAW_POST_3D) Draw_Graph2D(v);
+  }
+
+}
+
+
+/* ------------------------------------------------------------------------
+    2D text strings
+   ------------------------------------------------------------------------ */
+
+// T2(x,y,style){"str","str",...};
+// T2D : x,y,style,index,x,y,style,index,...
+// T2C : string\0,string\0,string\0,string\0,...
+
+// T3(x,y,z,style){"str","str",...};
+// T3D : x,y,z,style,index,x,y,z,style,index,...
+// T3C : string\0,string\0,string\0,string\0,...
+
+void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc){
+  int j,k,l,nbd,index,stop;
+  char *c;
+  double *d1, *d2, style, x, y, z;
+
+  if(dim==2) nbd=4;
+  else if(dim==3) nbd=5;
+  else return;
+
+  for(j=0; j<nb; j++){
+    d1 = (double*)List_Pointer(td, j*nbd);
+    d2 = (double*)List_Pointer_Test(td, (j+1)*nbd);
+    if(dim==2){
+      x = d1[0];
+      y = CTX.viewport[3]-d1[1];
+      z = 0.;
+      style = d1[2];
+      index = (int)d1[3];
+      if(d2) stop=(int)d2[3];
+      else stop=List_Nbr(tc)-index;
+    }
+    else{
+      x = d1[0];
+      y = d1[1];
+      z = d1[2];
+      style = d1[3];
+      index = (int)d1[4];
+      if(d2) stop=(int)d2[4];
+      else stop=List_Nbr(tc)-index;
+    }
+    glRasterPos3d(x,y,z);
+    c = (char*)List_Pointer(tc, index);
+    k=l=0;
+    while(k<stop && l!=timestep){
+      if(c[k++]=='\0') l++;
+    }
+    if(k<stop && l==timestep)
+      Draw_String(&c[k]);
+    else
+      Draw_String(c);
+  }
+}
+
+
+void Draw_Text2D(void){
+  int i;
+  Post_View *v;
+
+  if(!CTX.post.list) return;
+
+  glColor4ubv((GLubyte*)&CTX.color.fg);
+
+  for(i=0;i<List_Nbr(CTX.post.list);i++){
+    v = (Post_View*)List_Pointer(CTX.post.list,i);
+    if(v->Visible && v->DrawStrings) 
+      Draw_Text2D3D(2, v->TimeStep, v->NbT2, v->T2D, v->T2C);
   }
 
 }

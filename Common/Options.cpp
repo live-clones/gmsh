@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.52 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: Options.cpp,v 1.53 2001-10-30 14:27:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -2023,6 +2023,18 @@ double opt_view_show_scale(OPT_ARGS_NUM){
 #endif
   return v->ShowScale;
 }
+double opt_view_draw_strings(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawStrings = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[5]->value(v->DrawStrings);
+#endif
+  return v->DrawStrings;
+}
 double opt_view_draw_points(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
@@ -2114,7 +2126,7 @@ double opt_view_transparent_scale(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_butt[5]->value(v->TransparentScale);
+    WID->view_butt[6]->value(v->TransparentScale);
 #endif
   return v->TransparentScale;
 }

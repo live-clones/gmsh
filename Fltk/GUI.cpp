@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.121 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.122 2001-10-30 14:27:47 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -450,6 +450,13 @@ int GUI::global_shortcuts(int event){
 				DRAW_POST_ISO);
       }
     }
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'n')){
+    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+      if(opt_view_visible(i,GMSH_GET,0))
+	opt_view_draw_strings(i, GMSH_SET|GMSH_GUI,!opt_view_draw_strings(0,GMSH_GET,0));
     redraw_opengl();
     return 1;
   }
@@ -2059,8 +2066,9 @@ void GUI::create_view_options_window(int num){
 	  view_input[i]->callback(set_changed_cb, 0);
 	}
         view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show labels");	
-        view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Transparent labels");
-	for(i=4 ; i<=5 ; i++){
+        view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Show annotations");
+        view_butt[6] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Transparent labels");
+	for(i=4 ; i<=6 ; i++){
 	  view_butt[i]->type(FL_TOGGLE_BUTTON);
 	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
@@ -2128,7 +2136,7 @@ void GUI::create_view_options_window(int num){
 	view_2d = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
 	view_2d->labelsize(CTX.fontsize);
         view_2d->hide();
-	
+
 	view_value[20] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "X position");
 	view_value[21] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Y position");
 	view_value[22] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Width");
@@ -2366,6 +2374,7 @@ void GUI::update_view_window(int num){
   opt_view_format(num, GMSH_GUI, NULL);
   opt_view_graph_type(num, GMSH_GUI, 0);
   opt_view_show_scale(num, GMSH_GUI, 0);
+  opt_view_draw_strings(num, GMSH_GUI, 0);
   opt_view_transparent_scale(num, GMSH_GUI, 0);
 
   //3D

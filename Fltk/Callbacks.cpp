@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.88 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.89 2001-10-30 14:27:47 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1840,7 +1840,10 @@ void view_options_ok_cb(CALLBACK_ARGS){
 	opt_view_show_time(i, GMSH_SET, WID->view_butt[50]->value());
 
       if(force || WID->view_butt[5]->changed())
-	opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[5]->value());
+	opt_view_draw_strings(i, GMSH_SET, WID->view_butt[5]->value());
+
+      if(force || WID->view_butt[6]->changed())
+	opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[6]->value());
 
       if(force || WID->view_butt[11]->changed())
 	opt_view_light(i,GMSH_SET,WID->view_butt[11]->value());

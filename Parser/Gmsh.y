@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.104 2001-10-04 14:32:11 geuzaine Exp $
+// $Id: Gmsh.y,v 1.105 2001-10-30 14:27:48 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -96,6 +96,7 @@ void  skip_until (char *skip, char *until);
 %token tScalarTriangle tVectorTriangle tTensorTriangle
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
+%token tText2D tText3D
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tMesh
@@ -461,6 +462,8 @@ Views :
   | Views ScalarTetrahedron
   | Views VectorTetrahedron
   | Views TensorTetrahedron
+  | Views Text2D
+  | Views Text3D
 ;
 
 ScalarPointValues :
@@ -736,6 +739,59 @@ TensorTetrahedron :
     }
 ;
 
+Text2DValues :
+    StringExpr
+    { 
+      for(i=0; i<(int)strlen($1)+1; i++) List_Add(View->T2C, &$1[i]) ; 
+      Free($1);
+    }
+  | Text2DValues ',' StringExpr
+    { 
+      for(i=0; i<(int)strlen($3)+1; i++) List_Add(View->T2C, &$3[i]) ; 
+      Free($3);
+    }
+  ;
+
+Text2D : 
+    tText2D '(' FExpr ',' FExpr ',' FExpr ')'
+    { 
+      List_Add(View->T2D, &$3); List_Add(View->T2D, &$5);
+      List_Add(View->T2D, &$7); 
+      d = List_Nbr(View->T2C);
+      List_Add(View->T2D, &d); 
+    }
+    '{' Text2DValues '}' tEND
+    {
+      View->NbT2++ ;
+    }
+;
+
+Text3DValues :
+    StringExpr
+    { 
+      for(i=0; i<(int)strlen($1)+1; i++) List_Add(View->T3C, &$1[i]) ; 
+      Free($1);
+    }
+  | Text3DValues ',' StringExpr
+    { 
+      for(i=0; i<(int)strlen($3)+1; i++) List_Add(View->T3C, &$3[i]) ; 
+      Free($3);
+    }
+  ;
+
+Text3D : 
+    tText3D '(' FExpr ',' FExpr ',' FExpr ',' FExpr ')'
+    { 
+      List_Add(View->T3D, &$3); List_Add(View->T3D, &$5);
+      List_Add(View->T3D, &$7); List_Add(View->T3D, &$9); 
+      d = List_Nbr(View->T3C);
+      List_Add(View->T3D, &d); 
+    }
+    '{' Text3DValues '}' tEND
+    {
+      View->NbT3++ ;
+    }
+;
 
 
 /* -----------------------

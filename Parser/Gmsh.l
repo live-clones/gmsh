@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.37 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: Gmsh.l,v 1.38 2001-10-30 14:27:48 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -212,6 +212,8 @@ TL                      return tTensorLine;
 SP                      return tScalarPoint;
 VP                      return tVectorPoint;
 TP                      return tTensorPoint;
+T2                      return tText2D;
+T3                      return tText3D;
 
 
 CARTESIAN_POINT         	   return tCARTESIAN_POINT;

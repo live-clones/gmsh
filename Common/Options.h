@@ -234,6 +234,7 @@ double opt_view_angle_smooth_normals(OPT_ARGS_NUM);
 double opt_view_show_element(OPT_ARGS_NUM);
 double opt_view_show_time(OPT_ARGS_NUM);
 double opt_view_show_scale(OPT_ARGS_NUM);
+double opt_view_draw_strings(OPT_ARGS_NUM);
 double opt_view_draw_points(OPT_ARGS_NUM);
 double opt_view_draw_lines(OPT_ARGS_NUM);
 double opt_view_draw_triangles(OPT_ARGS_NUM);

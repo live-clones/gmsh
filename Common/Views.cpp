@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.55 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Views.cpp,v 1.56 2001-10-30 14:27:47 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -53,6 +53,7 @@ Post_View * BeginView(int allocate){
   v->NbSL = v->NbVL = v->NbTL = 0;
   v->NbST = v->NbVT = v->NbTT = 0;
   v->NbSS = v->NbVS = v->NbTS = 0;
+  v->NbT2 = v->NbT3 = 0;
 
   if(allocate){
     v->datasize = sizeof(double);
@@ -74,6 +75,11 @@ Post_View * BeginView(int allocate){
     v->SS = List_Create(100,1000,sizeof(double));
     v->VS = List_Create(100,1000,sizeof(double));
     v->TS = List_Create(100,1000,sizeof(double));
+
+    v->T2D = List_Create(10,100,sizeof(double));
+    v->T2C = List_Create(100,1000,sizeof(char));
+    v->T3D = List_Create(10,100,sizeof(double));
+    v->T3C = List_Create(100,1000,sizeof(char));
   }
   else{
     v->Time = NULL;
@@ -81,6 +87,8 @@ Post_View * BeginView(int allocate){
     v->SL = NULL; v->VL = NULL; v->TL = NULL;
     v->ST = NULL; v->VT = NULL; v->TT = NULL;
     v->SS = NULL; v->VS = NULL; v->TS = NULL;
+    v->T2D = NULL; v->T2C = NULL;
+    v->T3D = NULL; v->T3C = NULL;
   }
 
   // Copy all options from the reference view initialized in InitOptions()
@@ -374,6 +382,8 @@ void FreeView(Post_View *v){
     List_Delete(v->SL); List_Delete(v->VL); List_Delete(v->TL);
     List_Delete(v->ST); List_Delete(v->VT); List_Delete(v->TT);
     List_Delete(v->SS); List_Delete(v->VS); List_Delete(v->TS);
+    List_Delete(v->T2D); List_Delete(v->T2C);
+    List_Delete(v->T3D); List_Delete(v->T3C);
     v->reset_normals();
   }
 

@@ -505,6 +505,8 @@ StringXNumber ViewOptions_Number[] = {
     "Show time value (or time step) if NbTimeStep > 1?" },
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
+  { F|O, "DrawStrings" , opt_view_draw_strings , 1. ,
+    "Display post-processing annotation strings?" },
   { F|O, "DrawPoints" , opt_view_draw_points , 1. ,
     "Display post-processing points?" },
   { F|O, "DrawLines" , opt_view_draw_lines , 1. , 
