@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.16 2001-12-05 14:33:58 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.17 2001-12-05 16:02:38 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -20,10 +20,6 @@
 //     perp. lines: 4 * K1 + layer * K2 + point->Num
 //    New XY lines: 5 * K1 + layer * K2 + curve->Num
 //
-// WARNING:
-//
-// There is no way to save XY generated lines or other entities for the
-// moment
 
 #define MAXLAYERS 100
 #define K1 100.e6
