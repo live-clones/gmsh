@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.20 2001-07-31 07:18:48 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.21 2001-08-03 09:34:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -92,8 +92,8 @@ void Draw_ScalarLine(Post_View *View,
 
     if(View->IntervalsType==DRAW_POST_CONTINUOUS){
 
-      if(Val[0]>=ValMin && Val[0]<=ValMax &&
-         Val[1]>=ValMin && Val[1]<=ValMax){
+      if(Val[0] >= ValMin && Val[0] <= ValMax &&
+         Val[1] >= ValMin && Val[1] <= ValMax){
 	glBegin(GL_LINES);
 	Palette2(View,ValMin,ValMax,Val[0]);
 	glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
@@ -239,9 +239,9 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
   else{
     
     if(View->IntervalsType == DRAW_POST_CONTINUOUS){
-      if(Val[0]  >=ValMin && Val[0]  <=ValMax &&
-         Val[1]>=ValMin && Val[1]<=ValMax &&
-         Val[2]>=ValMin && Val[2]<=ValMax){
+      if(Val[0] >= ValMin && Val[0] <= ValMax &&
+         Val[1] >= ValMin && Val[1] <= ValMax &&
+         Val[2] >= ValMin && Val[2] <= ValMax){
         glBegin(GL_TRIANGLES);
 	Palette2(View,ValMin,ValMax,Val[0]);
 	glNormal3dv(&norms[0]);
