@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.19 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Draw.cpp,v 1.20 2001-01-29 22:33:41 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -32,12 +32,10 @@ void Draw3d(void){
   for(i = 0 ; i < 6 ; i++)
     if(CTX.clip[i]) glEnable((GLenum)(GL_CLIP_PLANE0 + i));
 
-  /* This is sufficient, since we NEVER give different normals to nodes of one polygon */
-  glShadeModel(GL_FLAT);   //glShadeModel(GL_SMOOTH);
+  glShadeModel(GL_SMOOTH);
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
-
-  /* glEnable(GL_CULL_FACE); */
+  glDisable(GL_CULL_FACE); 
 
   glPushMatrix();
   Draw_Mesh(&M);
@@ -131,37 +129,41 @@ void Orthogonalize(int x, int y){
 /*  i n i t                                                                 */
 /* ------------------------------------------------------------------------ */
 
-void InitShading(void){
+
+void InitRenderModel(void)
+{
   int i;
-  float ambient[] = {0.1745, 0.01175, 0.01175};
-  float diffuse[] = {0.61424, 0.04136, 0.04136};
+  float ambient[] = {0.5, 0.5, 0.5};
+  float diffuse[] = {0.4, 0.4, 0.4};
   float specular[4];
 
-  glMaterialfv(GL_FRONT, GL_AMBIENT, ambient);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
-  glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
 
-  glEnable(GL_LIGHTING);
-  glEnable(GL_NORMALIZE);
   for(i = 0 ; i < 6 ; i++){
     if(CTX.light[i]){
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, CTX.light_position[i]);
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
       glEnable((GLenum)(GL_LIGHT0 + i));
     }
   }
-
-  /* simple color commands will automatically create appropriate materials */
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  glEnable(GL_COLOR_MATERIAL);
-
-  /* let's add some shininess to all these automatically created materials */
-  glMaterialf(GL_FRONT, GL_SHININESS, 40.);
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  /* let's add some shininess to all these automatically created materials */
   specular[0] = CTX.shine;
   specular[1] = CTX.shine;
   specular[2] = CTX.shine;
   specular[3] = 1.0;
-  glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+}
+
+void InitShading()
+{
+  glEnable(GL_LIGHTING);
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_COLOR_MATERIAL);
 }
 
 

@@ -4,7 +4,10 @@
 #include "Const.h"
 #include "ColorTable.h"
 
-typedef struct{
+class smooth_container;
+
+class Post_View{
+  public :
   // intrinsic to a view
   int Num, Changed, DuplicateOf, Links;
   char FileName[NAME_STR_L], Name[NAME_STR_L];
@@ -39,7 +42,14 @@ typedef struct{
   int (*GIFV) (double min, double max, int nb, double value);
   // smooth the view
   void smooth();
-}Post_View;
+  // smooth the normals
+  smooth_container *normals;
+  void reset_normals();
+  void add_normal(double x, double y, double z, 
+		  double nx, double ny, double nz);
+  bool get_normal(double x, double y, double z, 
+		  double &nx, double &ny, double &nz);
+};
 
 // The static list with pointers to all views
 

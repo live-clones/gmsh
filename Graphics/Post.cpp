@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.11 2001-01-12 13:28:58 geuzaine Exp $
+// $Id: Post.cpp,v 1.12 2001-01-29 22:33:41 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -232,11 +232,26 @@ void Draw_Post (void) {
 	}
 	
 	// Tetrahedra
+
+	/*
+	  Modif Jf :
+	  
+	     IsoSurfaces are really better rendered with smooth shading.
+	     My idea is first to transform the scalar simplex map on a
+	     scalar triangle map. This map has to be changed each time 
+	     the number of iso-surfaces is changed.
+	 */
 	
 	if(v->NbSS){
 	  nb = List_Nbr(v->SS) / v->NbSS ;
 	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	    Draw_ScalarTetrahedron(v, ValMin, ValMax, Raise,
+	    Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
+				   (double*)List_Pointer_Fast(v->SS,i),
+				   (double*)List_Pointer_Fast(v->SS,i+4),
+				   (double*)List_Pointer_Fast(v->SS,i+8),
+				   (double*)List_Pointer_Fast(v->SS,i+12));
+	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
+	    Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
 				   (double*)List_Pointer_Fast(v->SS,i),
 				   (double*)List_Pointer_Fast(v->SS,i+4),
 				   (double*)List_Pointer_Fast(v->SS,i+8),

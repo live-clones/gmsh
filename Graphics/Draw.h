@@ -13,6 +13,7 @@
 void InitOpengl(void);
 void InitOverlay(void);
 void InitShading(void);
+void InitRenderModel(void);
 void InitNoShading(void);
 void InitPosition(void);
 void Orthogonalize(int x, int y);
@@ -51,9 +52,9 @@ void Draw_Point(double *x, double *y, double *z,
                 double *Offset, double Raise[3][5]);
 void Draw_Line (double *x, double *y, double *z,
                 double *Offset, double Raise[3][5]);
-void Draw_Triangle (double *x, double *y, double *z,
+void Draw_Triangle (double *x, double *y, double *z,double *n,
                     double *Offset, double Raise[3][5], int shade);
-void Draw_Quadrangle (double *x, double *y, double *z,
+void Draw_Quadrangle (double *x, double *y, double *z, double *n,
                       double *Offset, double Raise[3][5], int shade);
 void Draw_Polygon (int n, double *x, double *y, double *z,
                    double *Offset, double Raise[3][5]);
@@ -100,6 +101,7 @@ void Draw_TensorTriangle(Post_View *View,
 			 double ValMin, double ValMax, double Raise[3][5],
 			 double *X, double *Y, double *Z, double *V);
 void Draw_ScalarTetrahedron(Post_View *View, 
+			    int preproNormals,
 			    double ValMin, double ValMax, double Raise[3][5],
 			    double *X, double *Y, double *Z, double *V);
 void Draw_VectorTetrahedron(Post_View *View, 

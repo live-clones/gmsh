@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.10 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.11 2001-01-29 22:33:41 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Iso.h"
+#include "IsoSimplex.h"
 #include "Context.h"
 
 extern Context_T   CTX;
@@ -433,15 +434,22 @@ void Draw_TensorTriangle(Post_View *View,
 /*  T e t r a h e d r a                                                     */
 /* ------------------------------------------------------------------------ */
 
-void Draw_ScalarTetrahedron(Post_View *View, 
-			    double ValMin, double ValMax, double Raise[3][5],
-			    double *X, double *Y, double *Z, double *V){
+void Draw_ScalarTetrahedron(Post_View *View,
+			    int preproNormals,
+			    double ValMin, 
+			    double ValMax, 
+			    double Raise[3][5],
+			    double *X, 
+			    double *Y, 
+			    double *Z, 
+			    double *V){
 
   int     k;
 
   for(k=0 ; k<View->NbIso ; k++){
-    Palette(View,View->NbIso,k);
-    IsoSimplex(X, Y, Z, &V[4*View->TimeStep],
+    if(!preproNormals)Palette(View,View->NbIso,k);
+    IsoSimplex(View,preproNormals,
+	       X, Y, Z, &V[4*View->TimeStep],
 	       View->GVFI(ValMin,ValMax,View->NbIso,k), 
 	       ValMin, ValMax, View->Offset, Raise, View->Light);
   }

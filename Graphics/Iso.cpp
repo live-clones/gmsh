@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.6 2001-01-25 21:36:59 remacle Exp $
+// $Id: Iso.cpp,v 1.7 2001-01-29 22:33:41 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -11,7 +11,7 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]);
 /*  I n t e r p o l a t e                                                   */
 /* ------------------------------------------------------------------------ */
 
-void Interpolate(double *X, double *Y, double *Z, 
+void InterpolateIso(double *X, double *Y, double *Z, 
                  double *Val, double V, int I1, int I2, 
                  double *XI, double *YI ,double *ZI){
   
@@ -28,139 +28,6 @@ void Interpolate(double *X, double *Y, double *Z,
 }
 
 /* ------------------------------------------------------------------------ */
-/*  S i m p l e x                                                           */
-/* ------------------------------------------------------------------------ */
-
-void IsoSimplex(double *X, double *Y, double *Z, double *Val, 
-                double V, double Vmin, double Vmax, 
-                double *Offset, double Raise[3][5], int shade){
-  int    nb,i;
-  int    ed[6] = {0,0,0,0,0,0};
-  double Xp[6],Yp[6],Zp[6];
-  double Xpi[6],Ypi[6],Zpi[6];
-
-  if(V != Vmax){
-    nb = 0;
-    if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[0]++;
-    }
-    if((Val[0] > V && Val[2] <= V) || (Val[2] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[1]++;
-    }
-    if((Val[0] > V && Val[3] <= V) || (Val[3] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[2]++;
-    }
-    if((Val[1] > V && Val[2] <= V) || (Val[2] > V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[3]++;
-    }
-    if((Val[1] > V && Val[3] <= V) || (Val[3] > V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[4]++;
-    }
-    if((Val[2] > V && Val[3] <= V) || (Val[3] > V && Val[2] <= V)){
-      Interpolate(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[5]++;
-    }
-  }
-  else{
-    nb=0;
-    if((Val[0] < V && Val[1] <= V) || (Val[1] < V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[0]++;
-    }
-    if((Val[0] < V && Val[2] <= V) || (Val[2] < V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[1]++;
-    }
-    if((Val[0] < V && Val[3] <= V) || (Val[3] < V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[2]++;
-    }
-    if((Val[1] < V && Val[2] <= V) || (Val[2] < V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,2,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[3]++;
-    }
-    if((Val[1] < V && Val[3] <= V) || (Val[3] < V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[4]++;
-    }
-    if((Val[2] < V && Val[3] <= V) || (Val[3] < V && Val[2] <= V)){
-      Interpolate(X,Y,Z,Val,V,2,3,&Xp[nb],&Yp[nb],&Zp[nb]); nb++;ed[5]++;
-    }
-  }
-
-  /*
-    3 possibilities for quads
-      -) 0,2,5,3
-      -) 0,1,5,4
-      -) 1,2,4,3
-      in all cases, simply invert the 2 last ones
-      for having the quads ordered      
-   */
-
-  if(nb == 4)
-    {
-      double xx =  Xp[3];
-      double yy =  Yp[3];
-      double zz =  Zp[3];
-      Xp[3] = Xp[2]; 
-      Yp[3] = Yp[2]; 
-      Zp[3] = Zp[2];
-      Xp[2] = xx;
-      Yp[2] = yy;
-      Zp[2] = zz;
-    }
-
-  /*
-    for having a nice isosurface, we should have n . grad v > 0
-    n = normal to the polygon
-    v = unknown field we wanna draw
-   */
-
-  if(nb > 2)
-    {
-      double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
-      double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
-      double n[3];
-      prodve(v1,v2,n);
-      //test 
-
-      // now get the gradient (simplified version of course)
-      
-      double xx = 0.0;
-      if(Val[2] != Val[1])
-	{
-	  double gr[3] = {X[2]-X[1],Y[2]-Y[1],Z[2]-Z[1]};
-	  double xx = gr[0] * n[0] + gr[1] * n[1] + gr[2] + n[2];
-	  if(Val[2] > Val[1]) xx = -xx;
-	}
-      if(Val[2] != Val[0])
-	{
-	  double gr[3] = {X[2]-X[0],Y[2]-Y[0],Z[2]-Z[0]};
-	  double xx = gr[0] * n[0] + gr[1] * n[1] + gr[2] + n[2];
-	  if(Val[2] > Val[0]) xx = -xx;
-	}      
-
-      // test
-
-      if(xx > 0)
-	{
-	  for(i=0;i<nb;i++)
-	    {
-	      Xpi[i] = Xp[i];
-	      Ypi[i] = Yp[i];
-	      Zpi[i] = Zp[i];
-	    }
-	  for(i=0;i<nb;i++)
-	    {
-	      Xp[i] = Xpi[nb-i-1];
-	      Yp[i] = Ypi[nb-i-1];
-	      Zp[i] = Zpi[nb-i-1];	      
-	    }
-	}
-    }
-
-  if(nb == 3) 
-    Draw_Triangle(Xp,Yp,Zp,Offset,Raise,shade);
-  else if(nb == 4)
-    Draw_Quadrangle(Xp,Yp,Zp,Offset,Raise,shade);
-
-}
-
-/* ------------------------------------------------------------------------ */
 /*  T r i a n g l e                                                         */
 /* ------------------------------------------------------------------------ */
 
@@ -171,25 +38,25 @@ void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
   if(V != Vmax){
     *nb = 0;
     if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
+      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
     }
     if((Val[0] > V && Val[2] <= V) || (Val[2] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
+      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
     }
     if((Val[1] > V && Val[2] <= V) || (Val[2] > V && Val[1] <= V)){
-      Interpolate(X,Y,Z,Val,V,1,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
+      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
     }
   }
   else{
     *nb = 0;
     if((Val[0] < V && Val[1] >= V) || (Val[1] < V && Val[0] >= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
+      InterpolateIso(X,Y,Z,Val,V,0,1,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
     }
     if((Val[0] < V && Val[2] >= V) || (Val[2] < V && Val[0] >= V)){
-      Interpolate(X,Y,Z,Val,V,0,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
+      InterpolateIso(X,Y,Z,Val,V,0,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
     }       
     if((Val[1] < V && Val[2] >= V) || (Val[2] < V && Val[1] >= V)){
-      Interpolate(X,Y,Z,Val,V,1,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
+      InterpolateIso(X,Y,Z,Val,V,1,2,&Xp[*nb],&Yp[*nb],&Zp[*nb]); (*nb)++;
     }
   }
 
@@ -240,15 +107,15 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   }
   else if(Val[io[0]] < V1 && V1 <= Val[io[1]]){
     Vp[Np] = V1;
-    Interpolate(X,Y,Z,Val,V1,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++; 
+    InterpolateIso(X,Y,Z,Val,V1,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++; 
     Vp[Np] = V1;
-    Interpolate(X,Y,Z,Val,V1,io[0],io[1],&Xp[Np],&Yp[Np],&Zp[Np]); Np++; Fl = 1;
+    InterpolateIso(X,Y,Z,Val,V1,io[0],io[1],&Xp[Np],&Yp[Np],&Zp[Np]); Np++; Fl = 1;
   }
   else {
     Vp[Np] = V1;
-    Interpolate(X,Y,Z,Val,V1,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
+    InterpolateIso(X,Y,Z,Val,V1,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
     Vp[Np] = V1;
-    Interpolate(X,Y,Z,Val,V1,io[1],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++; Fl = 0;
+    InterpolateIso(X,Y,Z,Val,V1,io[1],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++; Fl = 0;
   }    
 
   if(V2 == Val[io[0]]){
@@ -256,9 +123,9 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   }
   else if((Val[io[0]]<V2) && ( V2 < Val[io[1]])){
     Vp[Np] = V2;
-    Interpolate(X,Y,Z,Val,V2,io[0],io[1],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
+    InterpolateIso(X,Y,Z,Val,V2,io[0],io[1],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
     Vp[Np] = V2;
-    Interpolate(X,Y,Z,Val,V2,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
+    InterpolateIso(X,Y,Z,Val,V2,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
   }
   else if(V2 < Val[io[2]]){
     if(Fl){
@@ -269,9 +136,9 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
       Np++;
     }
     Vp[Np] = V2;
-    Interpolate(X,Y,Z,Val,V2,io[1],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
+    InterpolateIso(X,Y,Z,Val,V2,io[1],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
     Vp[Np] = V2;
-    Interpolate(X,Y,Z,Val,V2,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
+    InterpolateIso(X,Y,Z,Val,V2,io[0],io[2],&Xp[Np],&Yp[Np],&Zp[Np]); Np++;
   }
   else{
     if(Fl){
@@ -322,12 +189,12 @@ void CutLine0D(double *X, double *Y, double *Z, double *Val,
 
   if(V != Vmax){
     if((Val[0] > V && Val[1] <= V) || (Val[1] > V && Val[0] <= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,Xp,Yp,Zp); *nb = 1;
+      InterpolateIso(X,Y,Z,Val,V,0,1,Xp,Yp,Zp); *nb = 1;
     }
   }
   else{
     if((Val[0] < V && Val[1] >= V) || (Val[1] < V && Val[0] >= V)){
-      Interpolate(X,Y,Z,Val,V,0,1,Xp,Yp,Zp); *nb = 1;
+      InterpolateIso(X,Y,Z,Val,V,0,1,Xp,Yp,Zp); *nb = 1;
     }
   }
 }
@@ -372,7 +239,7 @@ void CutLine1D(double *X, double *Y, double *Z, double *Val,
   }
   else{
     Vp2[0] = V1;
-    Interpolate(X,Y,Z,Val,V1,io[0],io[1],&Xp2[0],&Yp2[0],&Zp2[0]);
+    InterpolateIso(X,Y,Z,Val,V1,io[0],io[1],&Xp2[0],&Yp2[0],&Zp2[0]);
   }
 
   if(V2>=Val[io[1]]){
@@ -383,7 +250,7 @@ void CutLine1D(double *X, double *Y, double *Z, double *Val,
   }
   else{
     Vp2[1] = V2;
-    Interpolate(X,Y,Z,Val,V2,io[0],io[1],&Xp2[1],&Yp2[1],&Zp2[1]);
+    InterpolateIso(X,Y,Z,Val,V2,io[0],io[1],&Xp2[1],&Yp2[1],&Zp2[1]);
   }
 
 }

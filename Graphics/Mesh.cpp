@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.18 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.19 2001-01-29 22:33:41 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -52,6 +52,8 @@ static int DrawVertexSupp ;
 
 void Draw_Mesh (Mesh *M) {
   int i;
+
+  InitRenderModel();
 
   if(CTX.mesh.shade)
     InitShading();

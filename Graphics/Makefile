@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2001-01-13 17:08:41 geuzaine Exp $
+# $Id: Makefile,v 1.15 2001-01-29 22:33:41 remacle Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -30,6 +30,7 @@ SRC = Draw.cpp \
       Post.cpp \
       PostSimplex.cpp \
       Iso.cpp \
+      IsoSimplex.cpp \
       Entity.cpp \
       Scale.cpp \
       Axes.cpp \

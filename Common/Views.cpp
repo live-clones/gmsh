@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.25 2001-01-25 21:36:58 remacle Exp $
+// $Id: Views.cpp,v 1.26 2001-01-29 22:33:41 remacle Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -91,6 +91,7 @@ void BeginView(int allocate){
   ActualView->NbTimeStep = 0;
   ActualView->CT.size = 255;
   ActualView->CT.ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
+  ActualView->normals = 0;
   ColorTable_InitParam(1, &ActualView->CT, 1, 1);
   ColorTable_Recompute(&ActualView->CT, 1, 1);
 }
@@ -325,7 +326,7 @@ void FreeView(Post_View *v){
     List_Delete(v->ST); List_Delete(v->VT); List_Delete(v->TT);
     List_Delete(v->SS); List_Delete(v->VS); List_Delete(v->TS);
   }
-
+  v->reset_normals();
 }
 
 void CopyViewOptions(Post_View *src, Post_View *dest){
@@ -682,6 +683,9 @@ void xyzv::update (int n, double *v)
     {
       throw n;
     }
+
+  //  if(n==3)printf("val(%d,%f,%f,%f) = %f %f %f\n",nboccurences,x,y,z,v[0],v[1],v[2]);
+
   double x1 = (double)(nboccurences)/ (double)(nboccurences + 1);
   double x2 = 1./(double)(nboccurences + 1);
   for(i=0;i<nbvals;i++)vals[i] = (x1 * vals[i] + x2 * v[i]);
@@ -702,80 +706,133 @@ struct lessthanxyzv
   }
 };
 
+typedef set<xyzv,lessthanxyzv> mycont;
+typedef mycont::const_iterator iter;
+
+class smooth_container 
+{
+public :
+  mycont c;
+};
+
+void smooth_list (List_T *SS ,
+		  int NbTimeStep,
+		  int nbvert,
+		  int nb, 
+		  mycont & connectivities)
+{
+  double *x,*y,*z,*v;
+  int i,j,k;
+  double *vals = new double[NbTimeStep];
+  for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
+    {
+      x = (double*)List_Pointer_Fast(SS,i);
+      y = (double*)List_Pointer_Fast(SS,i+nbvert);
+      z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
+      v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
+      
+      for(j=0;j<nbvert;j++)
+	{
+	  for(k=0;k<NbTimeStep;k++)vals[k] = v[j+k*8];
+	  xyzv x(x[j],y[j],z[j]);
+	  iter it = connectivities.find(x);
+	  if(it == connectivities.end())
+	    {
+	      x.update(NbTimeStep,vals);
+	      connectivities.insert(x);
+	    }
+	  else
+	    {
+	      xyzv *xx = (xyzv*) &(*it); // a little weird ... becaus we know that 
+	      // this will not destroy the set ordering
+	      xx->update(NbTimeStep,vals);
+	    }
+	}
+    }   
+  
+  for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
+    {
+      x = (double*)List_Pointer_Fast(SS,i);
+      y = (double*)List_Pointer_Fast(SS,i+nbvert);
+      z = (double*)List_Pointer_Fast(SS,i+2*nbvert);
+      v = (double*)List_Pointer_Fast(SS,i+3*nbvert);
+      for(j=0;j<nbvert;j++)
+	{
+	  xyzv xyz(x[j],y[j],z[j]);
+	  //double l = sqrt((x[j])*(x[j]) + y[j]*y[j] + z[j] * z[j]);
+	  iter it = connectivities.find(xyz);
+	  for(k=0;k<NbTimeStep;k++)v[j+k*8] = (*it).vals[k];
+	  //for(k=0;k<NbTimeStep;k++)v[j+k*8] = l;
+
+
+	}
+    } 
+  delete [] vals;
+}
 
 void Post_View :: smooth ()
 {
-  int i,nb,j;
   xyzv::eps = CTX.lc * 1.e-6;
+  int nb;
 
-  typedef set<xyzv,lessthanxyzv> mycont;
-  typedef mycont::const_iterator iter;
-
-  mycont connectivities;
-
-  double *x,*y,*z,*v;
   if(NbSS){
-    Msg(INFO,"Smoothing the view (%d) ...",NbTimeStep);
+    mycont conSS;
+    Msg(INFO,"Smoothing SS vector in a view ...");
     nb = List_Nbr(SS) / NbSS ;
-
-    double *vals = new double[NbTimeStep];
-
-    for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
-      {
-	x = (double*)List_Pointer_Fast(SS,i);
-	y = (double*)List_Pointer_Fast(SS,i+4);
-	z = (double*)List_Pointer_Fast(SS,i+8);
-	v = (double*)List_Pointer_Fast(SS,i+12);
-	
-	for(j=0;j<4;j++)
-	  {
-	    for(int k=0;k<NbTimeStep;k++)vals[k] = v[j+k*8];
-	    xyzv x(x[j],y[j],z[j]);
-	    iter it = connectivities.find(x);
-	    if(it == connectivities.end())
-	      {
-		x.update(NbTimeStep,vals);
-		connectivities.insert(x);
-	      }
-	    else
-	      {
-		xyzv *xx = (xyzv*) &(*it); // a little weird ... becaus we know that 
-		                           // this will not destroy the set ordering
-		xx->update(NbTimeStep,vals);
-	      }
-	  }
-      } 
-
-    int n1 = 0;
-    int n2 = 0;
-    int n3 = 0;
-    for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
-      {
-	x = (double*)List_Pointer_Fast(SS,i);
-	y = (double*)List_Pointer_Fast(SS,i+4);
-	z = (double*)List_Pointer_Fast(SS,i+8);
-	v = (double*)List_Pointer_Fast(SS,i+12);
-	for(j=0;j<4;j++)
-	  {
-	    xyzv xyz(x[j],y[j],z[j]);
-	    iter it = connectivities.find(xyz);
-	    if(it == connectivities.end())
-	      {
-		n3++;
-	      }
-	    else
-	      {
-		n1++;
-		n2 += (*it).nboccurences;
-		// test
-		// double val = sqrt ((x[j]-1) * (x[j]-1) + y[j] * y[j] + z[j] * z[j]);
-		//for(int k=0;k<NbTimeStep;k++)v[j+k*8] = val;
-		for(int k=0;k<NbTimeStep;k++)v[j+k*8] = (*it).vals[k];
-	      }
-	  }
-      } 
-
-    Msg(INFO,"nbpoints = %d  mean = %d size = %d miss %d\n",n1,n2/n1,connectivities.size(),n3);
-    delete [] vals;
+    smooth_list (SS , NbTimeStep, 4, nb, conSS);
+    Msg(INFO,"...done");
   }
+  if(NbST){
+    mycont conST;
+    Msg(INFO,"Smoothing ST vector in a view ...");
+    nb = List_Nbr(ST) / NbST ;
+    smooth_list (ST , NbTimeStep, 3, nb, conST);
+    Msg(INFO,"...done");
+  }
+  
 }
+
+/*
+  Another util to smooth normals
+*/
+
+void Post_View :: reset_normals()
+{
+  if(normals)delete normals;
+  normals  = 0;
+}
+
+void Post_View :: add_normal(double x, double y, double z, 
+			     double nx, double ny, double nz)
+{
+  if(!normals)normals = new smooth_container;
+  xyzv xyz(x,y,z);
+  double n[3] = {nx,ny,nz};
+  iter it = normals->c.find(xyz);
+  if(it == normals->c.end())
+    {
+      xyz.update(3,n);
+      normals->c.insert(xyz);
+    }
+  else
+    {
+      xyzv *xx = (xyzv*) &(*it); 
+      xx->update(3,n);
+    }
+}
+
+bool Post_View :: get_normal(double x, double y, double z, 
+			     double &nx, double &ny, double &nz)
+{
+  if(!normals)
+    return false;
+  xyzv xyz(x,y,z);
+  iter it = normals->c.find(xyz);
+  if(it == normals->c.end())return false;
+  nx = (*it).vals[0];
+  ny = (*it).vals[1];
+  nz = (*it).vals[2];
+  return true;
+}
+
+
