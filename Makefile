@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.359 2004-07-02 20:11:32 geuzaine Exp $
+# $Id: Makefile,v 1.360 2004-07-02 20:52:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -32,11 +32,6 @@ GMSH_SHORT_LICENSE = "GNU General Public License"
 
 GMSH_VERSION_FILE = Common/GmshVersion.h
 GMSH_DATE = `date "+%Y%m%d"`
-GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
-                       -a ! -name "*.o"    -a ! -name "lib*.a"   \
-                       -a ! -name "*.msh"  -a ! -name "*.bak" \
-                       -a ! -name "gmsh"   -a ! -name "gmsh-*"\
-                       -a ! -type d \)`
 
 all: variables initialtag compile link
 
@@ -260,7 +255,7 @@ package-mac:
 	tar zcvf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
 
 package-rpm:
-	tar zcvf /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz ${GMSH_SOURCES}
+	tar zcvf /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz .
 	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' gmsh.spec
 	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .
