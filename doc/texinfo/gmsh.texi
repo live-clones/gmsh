@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.31 2003-04-19 04:14:53 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.32 2003-04-19 16:34:44 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -684,8 +684,8 @@ parsing of the data file:
 @example
 @var{expression}:
   @var{real} |
-  @var{expression-id} |
-  @var{expression-id} [ @var{expression} ] |
+  @var{string} |
+  @var{string} [ @var{expression} ] |
   @var{operator-unary} @var{expression} |
   @var{expression} @var{operator-binary} @var{expression} |
   @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
@@ -693,11 +693,13 @@ parsing of the data file:
   @var{real-option}
 @end example
 
-Such @w{@var{expression}s} are used in most of Gmsh's commands. The
+Such @w{@var{expression}s} are used in most of Gmsh's commands.  The
 operators @var{operator-unary}, @var{operator-binary} and
 @var{operator-ternary-left}/@var{operator-ternary-right} are defined in
 @ref{Operators}. For the definition of @w{@var{built-in-function}s}, see
-@ref{Built-in functions}.
+@ref{Built-in functions}. The various @w{@var{real-option}s} are listed in
+@ref{General options}, @ref{Geometry options}, @ref{Mesh options},
+@ref{Solver options}, and @ref{Post-processing options}.
 
 @cindex Expressions, lists
 
@@ -715,8 +717,8 @@ List of expressions are also widely used, and are defined as:
   @var{expression} |
   @var{expression} : @var{expression} |
   @var{expression} : @var{expression} : @var{expression} |
-  @var{expression-id} [ ] |
-  @var{expression-id} [ @{ @var{expression-list} @} ]
+  @var{string} [ ] |
+  @var{string} [ @{ @var{expression-list} @} ]
 @end example
 
 The second case in this last definition permits to create a list containing
@@ -733,98 +735,6 @@ look at the first couple of examples in @ref{Tutorial}.
 In order to lighten the syntax, you can always ommit the braces @code{@{@}}
 enclosing an @var{expression-list} if this @var{expression-list} contains a
 single item.
-
-@cindex Expressions, affectation
-@cindex Expressions, identifiers
-
-@findex =
-@findex +=
-@findex -=
-@findex *=
-@findex /=
-
-The syntax for the definition of a new expression identifier is twofold,
-depending on the nature of the right hand side (being a single
-@var{expression} or a list):
-
-@example
-@var{expression-id} = @var{expression};
-@var{expression-id} [ ] = @{ @var{expression-list} @};
-@end example
-
-@noindent with
-
-@example
-@var{expression-id}:
-  @var{string} |
-  @var{real-option}
-@end example
-
-The various @w{@var{real-option}s} are listed in @ref{General options},
-@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
-@ref{Post-processing options}. In addition to the @w{@var{real-option}s},
-eight @w{@var{expression-id}s} are predefined (hard coded in Gmsh's parser):
-@ftable @code
-@item Pi
-Returns 3.1415926535897932.
-
-@item MPI_Size
-Returns the number of processors on which Gmsh is running (always 1, except
-if you compiled Gmsh's parallel extensions).
-
-@item MPI_Rank
-Returns the rank of the current processor.
-
-@item newp
-Returns the next available point number. As we will see in @ref{Geometry
-module}, a unique number is associated with every geometrical point:
-@code{newp} permits to know the highest number already attributed. This is
-mostly useful when writing user-defined functions (@pxref{User-defined
-functions}) or general geometric primitives, when one does not know a priori
-which numbers are already attributed, and which ones are still available.
-
-@item newl
-Returns the next available line number.
-
-@item news
-Returns the next available surface number.
-
-@item newv
-Returns the next available volume number.
-
-@item newreg
-Returns the next available region number. That is, @code{newreg} returns the
-maximum of @code{newp}, @code{newc}, @code{news}, @code{newv} and all
-physical entity numbers@footnote{For compatibility purposes, the behavior
-of @code{newc}, @code{news}, @code{newv} and @code{newreg} can be modified
-with the @code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
-@end ftable
-
-One can also perform additions, subtractions, multiplications and divisions
-while affecting a value to an existing @var{expression-id}, using:
-
-@example
-@var{expression-id} += @var{expression};
-@var{expression-id} -= @var{expression};
-@var{expression-id} *= @var{expression};
-@var{expression-id} /= @var{expression};
-@end example
-
-@noindent for single expressions, and 
-
-@example
-@var{expression-id} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
-@var{expression-id} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
-@var{expression-id} [ @{ @var{expression-list} @} ] -= @{ @var{expression-list} @};
-@var{expression-id} [ @{ @var{expression-list} @} ] *= @{ @var{expression-list} @};
-@var{expression-id} [ @{ @var{expression-list} @} ] /= @{ @var{expression-list} @};
-@end example
-
-@noindent for lists of expressions@footnote{Remember the remark made when
-defining @w{@var{expression-list}s}: the braces enclosing the
-@var{expression-list} are optional if the @var{expression-list} only
-contains a single item.}, in which case the affectations are done ``list
-item per list item''.
 
 @c .........................................................................
 @c Character expressions
@@ -844,7 +754,7 @@ Character expressions are defined as:
   StrPrefix ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
-  @var{string-option}
+  @var{char-option}
 @end example
 
 @noindent The second case in this definition permits to take the
@@ -852,21 +762,15 @@ prefix of a string (e.g. for removing the extension from a file name). The
 third case permits to concatenate two character expressions, and the fourth
 is an equivalent of the @code{sprintf} C function (where
 @var{char-expression} is a format string that can contain floating point
-formatting characters: @code{%e}, @code{%g}, etc.).
+formatting characters: @code{%e}, @code{%g}, etc.). The last case permits to
+use the value of a @var{char-option} as a @var{char-expression}.  The
+various @w{@var{char-option}s} are listed in @ref{General options},
+@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
+@ref{Post-processing options}.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
-@w{@var{char-expression}s} in an animation script. Although there exists no
-character expression identifier, @w{@var{char-expression}s} can be affected
-to @w{@var{string-option}s}:
-
-@example
-@var{string-option} = @var{char-expression};
-@end example
-
-The various @w{@var{string-option}s} are listed in @ref{General options},
-@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
-@ref{Post-processing options}.
+@w{@var{char-expression}s} in an animation script. 
 
 @c .........................................................................
 @c Color expressions
@@ -895,19 +799,13 @@ e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3},@w{ }@dots{}
 to define colors by using three expressions to specify their red, green and
 blue components (with values comprised between 0 and 255). The third case
 permits to define colors by using the red, green and blue color components
-as well as the alpha channel. See @ref{t3.geo}, for an example of the use of
-color expressions.
+as well as the alpha channel. The last case permits to use the value of a
+@var{color-option} as a @var{color-expression}. The various
+@w{@var{color-option}s} are listed in @ref{General options}, @ref{Geometry
+options}, @ref{Mesh options}, @ref{Solver options}, and @ref{Post-processing
+options}.
 
-Although there exists no color expression identifier,
-@w{@var{color-expression}s} can be affected to @w{@var{color-option}s}:
-
-@example
-@var{color-option} = @var{color-expression};
-@end example
-
-The various @w{@var{color-option}s} are listed in @ref{General options},
-@ref{Geometry options}, @ref{Mesh options}, @ref{Solver options}, and
-@ref{Post-processing options}.
+See @ref{t3.geo}, for an example of the use of color expressions.
 
 @c -------------------------------------------------------------------------
 @c Operators
@@ -994,9 +892,10 @@ argument.
 
 @findex ()
 
-The evaluation priorities are summarized below (from stronger to weaker,
-i.e.@: @code{*} has a highest evaluation priority than
-@code{+}). Parentheses @code{()} may be used anywhere to change the order of
+The evaluation priorities are summarized below@footnote{The affectation
+operators are introduced in @ref{General commands}.} (from stronger to
+weaker, i.e.@: @code{*} has a highest evaluation priority than @code{+}).
+Parentheses @code{()} may be used anywhere to change the order of
 evaluation:
 
 @enumerate
@@ -1198,10 +1097,115 @@ writing (Gmsh 1.44).
 
 @cindex General commands
 @cindex Commands, general
+@cindex Expressions, affectation
+@cindex Expressions, identifiers
+
+@findex =
+@findex +=
+@findex -=
+@findex *=
+@findex /=
 
 The following commands can be used anywhere in a Gmsh ASCII text input file:
 
 @ftable @code
+
+@item @var{string} = @var{expression};
+Defines a new expression identifier @var{string}, or affects
+@var{expression} to an existing expression identifier. Note that eight
+expression identifiers are predefined (hard coded in Gmsh's parser):
+@ftable @code
+@item Pi
+Returns 3.1415926535897932.
+
+@item MPI_Size
+Returns the number of processors on which Gmsh is running (always 1, except
+if you compiled Gmsh's parallel extensions).
+
+@item MPI_Rank
+Returns the rank of the current processor.
+
+@item newp
+Returns the next available point number. As we will see in @ref{Geometry
+module}, a unique number is associated with every geometrical point:
+@code{newp} permits to know the highest number already attributed. This is
+mostly useful when writing user-defined functions (@pxref{User-defined
+functions}) or general geometric primitives, when one does not know a priori
+which numbers are already attributed, and which ones are still available.
+
+@item newl
+Returns the next available line number.
+
+@item news
+Returns the next available surface number.
+
+@item newv
+Returns the next available volume number.
+
+@item newreg
+Returns the next available region number. That is, @code{newreg} returns the
+maximum of @code{newp}, @code{newc}, @code{news}, @code{newv} and all
+physical entity numbers@footnote{For compatibility purposes, the behavior
+of @code{newc}, @code{news}, @code{newv} and @code{newreg} can be modified
+with the @code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
+@end ftable
+
+@item @var{string} [ ] = @{ @var{expression-list} @};
+Defines a new expression list identifier @code{@var{string}[]}, or affects
+@var{expression-list} to an existing expression list identifier.
+
+@item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
+Affects, item per item, @var{expression-list} to an existing expression list
+identifier. Remember the remark made when defining
+@w{@var{expression-list}s}: the braces enclosing the
+@w{@var{expression-list}s} are optional if the @var{expression-list} only
+contains a single item.
+
+@item @var{real-option} = @var{expression};
+Affects @var{expression} to a real option.
+
+@item @var{char-option} = @var{char-expression};
+Affects @var{char-expression} to a character option.
+
+@item @var{color-option} = @var{color-expression};
+Affects @var{color-expression} to a color option.
+
+@item @var{string} | @var{real-option} += @var{expression};
+Adds and affects @var{expression} to an existing expression identifier or to
+a real option.
+
+@item @var{string} | @var{real-option} -= @var{expression};
+Subtracts and affects @var{expression} to an existing expression identifier
+or to a real option.
+
+@item @var{string} | @var{real-option} *-= @var{expression};
+Multiplies and affects @var{expression} to an existing expression identifier
+or to a real option.
+
+@item @var{string} | @var{real-option} /= @var{expression};
+Divides and affects @var{expression} to an existing expression identifier
+or to a real option.
+
+@item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
+Affects, item per item, @var{expression-list} to an existing expression list
+identifier.
+
+@item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
+Adds and affects, item per item, @var{expression-list} to an existing
+expression list identifier.
+
+@item @var{string} [ @{ @var{expression-list} @} ] -= @{ @var{expression-list} @};
+Subtracts and affects, item per item, @var{expression-list} to an existing
+expression list identifier.
+
+@item @var{string} [ @{ @var{expression-list} @} ] *= @{ @var{expression-list} @};
+Multiplies and affects, item per item, @var{expression-list} to an existing
+expression list identifier.
+
+@item @var{string} [ @{ @var{expression-list} @} ] /= @{ @var{expression-list} @};
+Divides and affects, item per item, @var{expression-list} to an existing
+expression list identifier.
+
 @item Exit;
 Aborts the current script.
 
@@ -1250,14 +1254,14 @@ input file. Both include commands should be given on a line of their own.
 @node General options,  , General commands, General tools
 @section General options
 
-Here is the list of the general @w{@var{string-option}s},
+Here is the list of the general @w{@var{char-option}s},
 @w{@var{real-option}s} and @w{@var{color-option}s} (in that order---check
-the default values to see the types). Most of these options are accessible
-in the graphical user interface, but not all of them. When running Gmsh
-interactively, changing an option in the ASCII text input file will modify
-the option in the GUI in real time. This permits for example to resize the
-graphical window in a script, or to interact with animations in the script
-and in the GUI at the same time.
+the default values to see the actual types). Most of these options are
+accessible in the graphical user interface, but not all of them. When
+running Gmsh interactively, changing an option in the ASCII text input file
+will modify the option in the GUI in real time. This permits for example to
+resize the graphical window in a script, or to interact with animations in
+the script and in the GUI at the same time.
 
 Gmsh's default behavior is to save some of these options in a per-user
 ``session resource'' file (@code{General.SessionFileName}) each time Gmsh is
