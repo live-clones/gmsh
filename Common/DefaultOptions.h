@@ -548,7 +548,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
     "Draw bounding boxes" },
 
-  { F|O, "FastRedraw" , opt_general_fast_redraw, 1. ,
+  { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
     "Draw simplified model while rotating, panning and zooming" },
   { F|S, "FileChooserPositionX" , opt_general_file_chooser_position0 , 200. , 
     "Horizontal position (in pixels) of the upper left corner of the file chooser windows" }, 
