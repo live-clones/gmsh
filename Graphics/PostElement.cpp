@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.2 2002-11-07 08:06:31 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.3 2002-11-08 03:40:08 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -20,10 +20,11 @@
 // Please report all bugs and problems to "gmsh@geuz.org".
 
 
-// OK, I understood why the Cut2D stuff does not work correctly with
-// TWO_FACE and light. The normal has tpo be coherent with the vertex
-// ordering. doing i=nb-1; i>=0; i-- works when the classic order does
-// not. So we really have to check the ordering of the output of cut2d
+// OK, I understand why the Cut2D stuff does not work correctly with a
+// TWO_FACE light: the normal has too be coherent with the vertex
+// ordering of the polygon. Doing i=nb-1; i>=0; i-- works when the
+// classic order does not. So we really have to check the ordering of
+// the output of cut2d...
 
 #include "Gmsh.h"
 #include "GmshUI.h"
