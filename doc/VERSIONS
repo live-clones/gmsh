@@ -1,8 +1,7 @@
-$Id: VERSIONS,v 1.178 2003-12-16 17:36:56 geuzaine Exp $
+$Id: VERSIONS,v 1.179 2004-01-08 20:32:41 geuzaine Exp $
 
-New in 1.51: initial support for visualizing mesh partitions;
-integrated version 2.0 of the MSH mesh file format; better edge
-swapping for non-recombined extruded meshes;
+New since 1.50: initial support for visualizing mesh partitions;
+integrated version 2.0 of the MSH mesh file format;
 
 New in 1.50: small changes to the visibility browser + made visibility
 scriptable (new Show/Hide commands); fixed (rare) crash when deleting
