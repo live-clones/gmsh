@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.33 2001-12-03 10:38:31 gyselinc Exp $
+// $Id: Read_Mesh.cpp,v 1.34 2001-12-03 10:55:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -42,7 +42,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
   char String[256];
   int  Nbr_Nodes, Nbr_Elements, i_Node, i_Element;
-  int  Num, Type, Physical, Elementary, i, j;
+  int  Num, Type, Physical, Elementary, i, j, replace;
   double x , y , z, lc1, lc2 ;
   Vertex *vert , verts[NB_NOD_MAX_ELM] ,*vertsp[NB_NOD_MAX_ELM] , **vertspp;
   Simplex *simp ;
@@ -204,49 +204,51 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    simp->Num = Num ;
 	    simp->iEnt = Elementary ;
 	    Tree_Replace(s->Simplexes, &simp) ;
-	    Tree_Replace(M->Simplexes, &simp) ;
-	    M->Statistics[7]++;
+	    replace = Tree_Replace(M->Simplexes, &simp) ;
+	    if(!replace) M->Statistics[7]++;
 	    break;
 	  case QUA1:
 	    simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
 	    simp->Num = Num ;
 	    simp->iEnt = Elementary ;
 	    Tree_Replace(s->Simplexes, &simp) ;
-	    Tree_Replace(M->Simplexes, &simp) ;
-	    M->Statistics[7]++;//since s->Simplexes holds quads, too :-(
-	    M->Statistics[8]++;
+	    replace = Tree_Replace(M->Simplexes, &simp) ;
+	    if(!replace) {
+	      M->Statistics[7]++;//since s->Simplexes holds quads, too :-(
+	      M->Statistics[8]++;
+	    }
 	    break;
 	  case TET1:
 	    simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
 	    simp->Num = Num ;
 	    simp->iEnt = Elementary ;
 	    Tree_Replace(v->Simplexes, &simp) ;
-	    Tree_Replace(M->Simplexes, &simp) ;
-	    M->Statistics[9]++;
+	    replace = Tree_Replace(M->Simplexes, &simp) ;
+	    if(!replace) M->Statistics[9]++;
 	    break;
 	  case HEX1:
 	    hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
 				    vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
 	    hex->Num = Num ;
 	    hex->iEnt = Elementary ;
-	    Tree_Replace(v->Hexahedra, &hex) ;
-	    M->Statistics[10]++;
+	    replace = Tree_Replace(v->Hexahedra, &hex) ;
+	    if(!replace) M->Statistics[10]++;
 	    break;
 	  case PRI1:
 	    pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2], 
 			       vertsp[3], vertsp[4], vertsp[5]);
 	    pri->Num = Num ;
 	    pri->iEnt = Elementary ;
-	    Tree_Replace(v->Prisms, &pri) ;
-	    M->Statistics[11]++;
+	    replace = Tree_Replace(v->Prisms, &pri) ;
+	    if(!replace) M->Statistics[11]++;
 	    break;
 	  case PYR1:
 	    pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2], 
 				 vertsp[3], vertsp[4]);
 	    pyr->Num = Num ;
 	    pyr->iEnt = Elementary ;
-	    Tree_Replace(v->Pyramids, &pyr) ;
-	    M->Statistics[12]++;
+	    replace = Tree_Replace(v->Pyramids, &pyr) ;
+	    if(!replace) M->Statistics[12]++;
 	    break;
 	  case PNT:
 	    break;
