@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.18 2004-02-07 01:40:30 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.19 2004-03-13 19:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -227,16 +227,11 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
       List_Add(View->Time, List_Pointer(vv->Time, i));
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "triangulate-%s", vv->Name);
-    sprintf(filename, "triangulate-%s", vv->FileName);
+    sprintf(name, "%s_Triangulate", vv->Name);
+    sprintf(filename, "%s_Triangulate.pos", vv->Name);
     EndView(View, 1, filename, name);
-    Msg(INFO, "Created view '%s'", name);
-    return View;
-  }
-  else {
-    Msg(WARNING, "No scalar points to triangulate in View[%d]", vv->Index);
-    return 0;
   }
 
+  return 0;
 }
 

@@ -1,4 +1,4 @@
-// $Id: Harmonic2Time.cpp,v 1.11 2004-02-07 01:40:30 geuzaine Exp $
+// $Id: Harmonic2Time.cpp,v 1.12 2004-03-13 19:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -137,11 +137,9 @@ Post_View *GMSH_Harmonic2TimePlugin::execute(Post_View * v)
     // FIXME: todo
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "h2t-%s", vv->Name);
-    sprintf(filename, "h2t-%s", vv->FileName);
+    sprintf(name, "%s_Harmonic2Time", vv->Name);
+    sprintf(filename, "%s_Harmonic2Time.pos", vv->Name);
     EndView(View, 1, filename, name);
-    Msg(INFO, "Created view '%s'", name);
-    return View;
   }
 
   return 0;

@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.3 2004-03-08 23:15:25 geuzaine Exp $
+// $Id: Extract.cpp,v 1.4 2004-03-13 19:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -173,8 +173,8 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
       List_Add(view->Time, List_Pointer(vv->Time, i));
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "extract-%s", vv->Name);
-    sprintf(filename, "extract-%s", vv->FileName);
+    sprintf(name, "%s_Extract_%d", vv->Name, iComp);
+    sprintf(filename, "%s_Extract_%d.pos", vv->Name, iComp);
     EndView(view, 1, filename, name);
   }
 

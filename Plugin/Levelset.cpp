@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.12 2004-02-07 01:40:30 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.13 2004-03-13 19:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -526,8 +526,8 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
     // FIXME: todo
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "cut-%s-%d", v->Name, i);
-    sprintf(filename, "cut-%s-%d", v->FileName, i);
+    sprintf(name, "%s_Levelset_%d", v->Name, i);
+    sprintf(filename, "%s_Levelset_%d.pos", v->Name, i);
     EndView(out[i], 1, filename, name);
   }
 

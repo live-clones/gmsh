@@ -1,4 +1,8 @@
-$Id: TODO,v 1.36 2004-03-10 15:31:46 geuzaine Exp $
+$Id: TODO,v 1.37 2004-03-13 19:24:12 geuzaine Exp $
+
+add some code to make the node/element list ordered+dense (with no
+gaps)? this seems to be one common problem users have with our mesh
+format...
 
 ********************************************************************
 

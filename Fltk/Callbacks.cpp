@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.209 2004-03-05 23:47:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.210 2004-03-13 19:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -61,9 +61,9 @@ extern Context_T CTX;
 static char *fn = NULL;
 
 int file_chooser(int multi, int create, const char *message, 
-		 const char *pat, int patindex)
+		 const char *pat, int patindex, char *fname=NULL)
 {
-  fn = fl_file_chooser(message, pat, NULL);
+  fn = fl_file_chooser(message, pat, fname);
   if(fn)
     return 1;
   else
@@ -88,7 +88,7 @@ int file_chooser_get_filter()
 static Fl_File_Chooser *fc = NULL;
 
 int file_chooser(int multi, int create, const char *message,
-		 const char *pat, int patindex)
+		 const char *pat, int patindex, char *fname=NULL)
 {
   static char oldfilter[1024];
 
@@ -101,6 +101,9 @@ int file_chooser(int multi, int create, const char *message,
   }
 
   fc->label(message);
+
+  if(fname)
+    fc->value(fname);
 
   if(strncmp(oldfilter, pat, 1024)) {
     strncpy(oldfilter, pat, 1024);
@@ -2911,8 +2914,11 @@ void view_remove_cb(CALLBACK_ARGS)
 
 void view_save_ascii_cb(CALLBACK_ARGS)
 {
+  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
+  if(!v) return;
+  
 test:
-  if(file_chooser(0, 1, "Save view in ASCII format", "*", 0)) {
+  if(file_chooser(0, 1, "Save view in ASCII format", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -2923,15 +2929,17 @@ test:
           goto test;
     }
   save:
-    WriteView((Post_View *) List_Pointer(CTX.post.list, (long int)data),
-              name, 0, 0);
+    WriteView(v, name, 0, 0);
   }
 }
 
 void view_save_binary_cb(CALLBACK_ARGS)
 {
+  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
+  if(!v) return;
+
 test:
-  if(file_chooser(0, 1, "Save view in binary format", "*", 0)) {
+  if(file_chooser(0, 1, "Save view in binary format", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -2942,8 +2950,7 @@ test:
           goto test;
     }
   save:
-    WriteView((Post_View *) List_Pointer(CTX.post.list, (long int)data),
-              name, 1, 0);
+    WriteView(v, name, 1, 0);
   }
 }
 

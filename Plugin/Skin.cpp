@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.24 2004-02-07 01:40:30 geuzaine Exp $
+// $Id: Skin.cpp,v 1.25 2004-03-13 19:24:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -288,8 +288,8 @@ Post_View *GMSH_SkinPlugin::execute(Post_View * v)
       List_Add(view->Time, List_Pointer(vv->Time, i));
     // finalize
     char name[1024], filename[1024];
-    sprintf(name, "skin-%s", vv->Name);
-    sprintf(filename, "skin-%s", vv->FileName);
+    sprintf(name, "%s_Skin", vv->Name);
+    sprintf(filename, "%s_Skin.pos", vv->Name);
     EndView(view, 1, filename, name);
   }
 
