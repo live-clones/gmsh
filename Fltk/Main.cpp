@@ -1,6 +1,7 @@
-// $Id: Main.cpp,v 1.27 2001-05-23 07:29:42 geuzaine Exp $
+// $Id: Main.cpp,v 1.28 2001-05-30 13:53:50 geuzaine Exp $
 
 #include <signal.h>
+#include <time.h>
 
 #include "PluginManager.h"
 #include "Gmsh.h"
@@ -24,7 +25,13 @@ GUI *WID = NULL;
 
 int main(int argc, char *argv[]){
   int     i, nbf;
+  char    tmp[1000]="";
+  time_t  now;
  
+  // log the starting time
+  
+  time(&now);
+
   // Gmsh default options
   
   Init_Options(0);
@@ -44,7 +51,8 @@ int main(int argc, char *argv[]){
     CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
-    fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
+    fprintf(stderr, "%s, version %.2f, started %s", 
+	    gmsh_progname, GMSH_VERSION, ctime(&now));
 
   // Register Default Plugins (in test ...)
   if(CTX.default_plugins)
@@ -73,6 +81,10 @@ int main(int argc, char *argv[]){
   // Non-interactive Gmsh
 
   if(CTX.batch){
+    for(i=0;i<argc;i++){ 
+      strcat(tmp, argv[i]); strcat(tmp, " "); 
+    }
+    Msg(DIRECT, "Command line : %s", tmp);
     OpenProblem(CTX.filename);
     if(yyerrorstate)
       exit(1);
