@@ -17,7 +17,7 @@ Save all elements (discard physical group definitions)
 @item -o file
 Specify mesh output file name
 @item -format string
-Set output mesh format (msh, unv, gref)
+Set output mesh format (msh, unv, gref, p3d)
 @item -algo string
 Select 2D mesh algorithm (iso, tri, aniso, netgen)
 @item -smooth int
@@ -92,9 +92,9 @@ Set verbosity level
 @item -nopopup
 Don't popup dialog windows in scripts
 @item -string "string"
-Parse string before project file
+Parse option string at startup
 @item -option file
-Parse option file before GUI creation
+Parse option file at startup
 @item -convert file file
 Perform batch conversion of views and meshes into latest file formats
 @item -version

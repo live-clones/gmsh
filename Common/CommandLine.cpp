@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.55 2005-02-28 23:57:59 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.56 2005-03-01 17:47:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ extern Context_T CTX;
 extern Mesh *THEM;
 
 char *TheFileNameTab[MAX_OPEN_FILES];
-char *TheBgmFileName = NULL, *TheOptString = NULL;
+char *TheBgmFileName = NULL;
 
 char gmsh_progname[]  = "Gmsh, a 3D mesh generator with pre- and post-processing facilities" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2005 Christophe Geuzaine and Jean-Francois Remacle";
@@ -105,8 +105,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -pid                  Print process id on stdout");
   Msg(DIRECT, "  -v int                Set verbosity level");
   Msg(DIRECT, "  -nopopup              Don't popup dialog windows in scripts");
-  Msg(DIRECT, "  -string \"string\"      Parse string before project file");
-  Msg(DIRECT, "  -option file          Parse option file before GUI creation");
+  Msg(DIRECT, "  -string \"string\"      Parse option string at startup");
+  Msg(DIRECT, "  -option file          Parse option file at startup");
   Msg(DIRECT, "  -convert file file    Perform batch conversion of views and meshes into latest file formats");
   Msg(DIRECT, "  -version              Show version number");
   Msg(DIRECT, "  -info                 Show detailed version information");
@@ -173,15 +173,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
 	fflush(stdout);
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "string")) {
-        i++;
-        if(argv[i] != NULL)
-          TheOptString = argv[i++];
-        else {
-          fprintf(stderr, ERROR_STR "Missing string\n");
-          exit(1);
-        }
-      }
       else if(!strcmp(argv[i] + 1, "a")) {
         CTX.initial_context = 0;
         i++;
@@ -245,6 +236,15 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX.nopopup = 1;
         i++;
+      }
+      else if(!strcmp(argv[i] + 1, "string")) {
+        i++;
+        if(argv[i] != NULL)
+	  ParseString(argv[i++]);
+        else {
+          fprintf(stderr, ERROR_STR "Missing string\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "option")) {
         i++;

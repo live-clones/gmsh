@@ -1,4 +1,4 @@
-.\" $Id: gmsh.1,v 1.62 2005-02-11 02:27:13 geuzaine Exp $
+.\" $Id: gmsh.1,v 1.63 2005-03-01 17:47:54 geuzaine Exp $
 .TH Gmsh 1 "10 February 2005" "Gmsh 1.59" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
@@ -47,7 +47,7 @@ save all elements (and discard all physical group definitions).
 specify mesh output file name.
 .TP 4
 .B \-format string
-set output mesh format (msh, unv, gref).
+set output mesh format (msh, unv, gref, p3d).
 .TP 4
 .B \-algo string
 select mesh algorithm (iso, tri, aniso, netgen).
@@ -135,10 +135,10 @@ set verbosity level.
 don't popup dialog windows in scripts.
 .TP 4
 .B \-string "string"
-parse string before project file.
+parse option string at startup.
 .TP 4
 .B \-option file
-parse option file before GUI creation.
+parse option file at startup.
 .TP 4
 .B \-convert file file
 perform batch conversion of views and meshes into latest file formats.

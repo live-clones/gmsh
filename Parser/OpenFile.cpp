@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.71 2005-02-20 06:36:58 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.72 2005-03-01 17:47:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -348,8 +348,6 @@ void OpenProblem(char *name)
 
   // Initialize pseudo random mesh generator to the same seed
   srand(1);
-
-  ParseString(TheOptString);
 
   strncpy(CTX.filename, name, 255);
   strncpy(CTX.base_filename, name, 255);
