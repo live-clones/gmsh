@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2001-12-16 05:16:37 remacle Exp $
+# $Id: Makefile,v 1.8 2002-04-13 04:01:09 geuzaine Exp $
 #
 # Makefile for "libParallel.a"
 #
@@ -15,6 +15,7 @@ OS_FLAGS      =
 VERSION_FLAGS = 
 
 RMFLAGS  = -f
+CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
 SRC = ParUtil.cpp
 
