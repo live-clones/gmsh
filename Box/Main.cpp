@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.22 2002-09-24 02:04:33 geuzaine Exp $
+// $Id: Main.cpp,v 1.23 2002-09-25 23:46:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -201,20 +201,6 @@ void Msg(int level, char *fmt, ...){
       vfprintf(stderr, fmt,args); fprintf(stderr, "\n");
     }
     break;
-
-  case PARSER_ERROR :
-    if(ParUtil::Instance()->master()){
-      fprintf(stderr, PARSER_ERROR_STR); 
-      vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
-    }
-    break ;
-
-  case PARSER_INFO :
-    if(CTX.verbosity >= 2 && ParUtil::Instance()->master()){
-      fprintf(stderr, PARSER_INFO_STR);
-      vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
-    }
-    break ;
 
   case DEBUG    :		     	  
   case DEBUG1   : 
