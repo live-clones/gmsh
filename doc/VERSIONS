@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.149 2003-06-14 06:23:04 geuzaine Exp $
+$Id: VERSIONS,v 1.150 2003-06-17 19:27:30 geuzaine Exp $
+
+New in 1.46: small bug fixes (crash for very long command lines);
 
 New in 1.45: small bug fixes (min/max computation for tensor views,
 missing physical points in read mesh, "jumping" geometry during
