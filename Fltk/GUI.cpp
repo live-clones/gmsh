@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.399 2004-12-30 23:10:40 geuzaine Exp $
+// $Id: GUI.cpp,v 1.400 2004-12-30 23:39:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -97,9 +97,9 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
-    {"&Options...",      FL_CTRL+FL_ALT+'o', (Fl_Callback *)options_cb, 0},
-    {"&Visibility",      FL_CTRL+FL_ALT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&Clipping planes", FL_CTRL+FL_ALT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
+    {"&Options...",      FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"&Clipping planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"M&essage console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
@@ -130,9 +130,9 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Save Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {0},
   {"Tools",0,0,0,FL_SUBMENU},
-    {"Options...",      FL_CTRL+FL_ALT+'o', (Fl_Callback *)options_cb, 0},
-    {"Visibility",      FL_CTRL+FL_ALT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Clipping Planes", FL_CTRL+FL_ALT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
+    {"Options...",      FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
     {"Statistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"Message Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},

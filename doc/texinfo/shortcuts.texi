@@ -74,16 +74,13 @@ save file as
 
 @sp 1 @c ----------------------------------------------
 
+@item Ctrl+Shift+c
+show clipping plane window
+@item Ctrl+Shift+o
+show option window 
 @item Ctrl+Shift+s
 save mesh in default format
-
-@sp 1 @c ----------------------------------------------
-
-@item Ctrl+Alt+c
-show clipping plane window
-@item Ctrl+Alt+o
-show option window 
-@item Ctrl+Alt+v
+@item Ctrl+Shift+v
 show visibility window
 
 @sp 1 @c ----------------------------------------------

@@ -35,7 +35,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.EpsQuality
-PostScript/PDF quality (1=simple sort, 2=BSP tree sort)@*
+PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector (accurate sort)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -67,6 +67,11 @@ Saved in: @code{General.OptionsFileName}
 @item Print.JpegQuality
 JPEG quality (between 1 and 100)@*
 Default value: @code{100}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.JpegSmoothing
+JPEG smoothing (between 0 and 100)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable
