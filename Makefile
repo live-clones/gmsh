@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.55 2001-02-09 14:51:31 geuzaine Exp $
+# $Id: Makefile,v 1.56 2001-02-09 14:55:19 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -29,7 +29,7 @@ MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
            XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
                         -L/usr/X11R6/lib -lXt -lX11 -lXext 
              FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
-                        -L/usr/X11R6/lib -lXext -lX11
+                        -L/usr/X11R6/lib -lX11
 FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
                         -L/usr/X11R6/lib -lXext -lX11
 FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
