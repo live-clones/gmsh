@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.86 2004-11-22 07:34:35 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.87 2004-11-22 07:36:25 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>
@@ -1327,7 +1327,7 @@ static void gl2psSetPrecisionAndApplyOffsets()
     units = gl2ps->offset[1];
     for(i = 0; i < gl2psListNbr(gl2ps->primitives); i++){
       prim = *(GL2PSprimitive**)gl2psListPointer(gl2ps->primitives, i);
-      if(prim->type == GL2PS_TRIANGLE){ /* FIXME: needs more work! */
+      if(prim->offset && prim->type == GL2PS_TRIANGLE){
     	area = 
 	  (prim->verts[1].xyz[0] - prim->verts[0].xyz[0]) * 
 	  (prim->verts[2].xyz[1] - prim->verts[1].xyz[1]) - 
