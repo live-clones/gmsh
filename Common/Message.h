@@ -1,4 +1,4 @@
-/* $Id: Message.h,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
+/* $Id: Message.h,v 1.4 2000-11-24 00:11:25 geuzaine Exp $ */
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
@@ -26,7 +26,7 @@
 #define PARSER_INFO_STR    "Parse Info  : "
 #define DEBUG_STR          "Debug       : "
 
-#define WHITE_STR          "              "
+#define WHITE_STR          "            : "
 
 void   Signal (int signum);
 void   Msg (int level, char *fmt, ...);

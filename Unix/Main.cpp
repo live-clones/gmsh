@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.6 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.7 2000-11-24 00:11:25 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -454,6 +454,8 @@ int main(int argc, char *argv[]){
   XColor  ov_color_def, ov_color_exact;
   extern char  *TextBuffer, TextAbout[1024];
  
+  fprintf(stderr, "%s, Version %g\n", gmsh_progname, GMSH_VERSION);
+
   /* Gmsh default context options */
   
   InitContext(&CTX);
@@ -461,8 +463,6 @@ int main(int argc, char *argv[]){
   /* Command line options */
 
   Get_Options(argc, argv, &nbf);
-
-  Msg(INFOS, "%s %g", gmsh_progname, GMSH_VERSION);
 
   /* Initialize the static Mesh */
 
