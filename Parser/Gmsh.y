@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.153 2003-12-11 17:15:39 geuzaine Exp $
+// $Id: Gmsh.y,v 1.154 2003-12-11 18:37:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -115,7 +115,7 @@ void FixRelativePath(char *in, char *out);
 %token tText2D tText3D tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tReturn tCall tFunction tMesh tTrimmed tShow tHide
+%token tReturn tCall tFunction tTrimmed tShow tHide
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
