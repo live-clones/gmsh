@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.19 2001-08-01 16:42:10 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.20 2001-08-02 07:26:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -74,17 +74,27 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     /*  N O E  */
 
     if (!strncmp(&String[1], "NO", 2)) { /* $NOE or $NOD */
-
+      
       fscanf(File_GEO, "%d", &Nbr_Nodes) ;
       Msg(INFO, "%d Nodes", Nbr_Nodes);
-
+      
+//#define SEARCH_DUPLICATES
+#ifdef SEARCH_DUPLICATES
+    Tree_T *Duplis = Tree_Create (sizeof (Vertex *), comparePosition);
+#endif
       for (i_Node = 0 ; i_Node < Nbr_Nodes ; i_Node++) {
         fscanf(File_GEO, "%d %lf %lf %lf", &Num, &x, &y, &z) ;
         vert = Create_Vertex (Num, x, y, z, 1.0 ,0.0);
-        Tree_Replace(M->Vertices, &vert) ;
+        Tree_Replace(M->Vertices, &vert);
+#ifdef SEARCH_DUPLICATES
+        if(Tree_Replace(Duplis, &vert)) Msg(WARNING, "Node %g %g %g already exsists");
+#endif
       }
+#ifdef SEARCH_DUPLICATES
+    Tree_Delete(Duplis);
+#endif
     }
-
+    
     /* ELEMENTS */
 
     else if (!strncmp(&String[1], "ELM", 3)) {
