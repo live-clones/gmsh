@@ -23,8 +23,8 @@ Circle(8) = {13,11,15};
 Line Loop(9) = {1,2,3,4};        
 Line Loop(10) = {7,8,5,6};        
 Plane Surface(11) = {9,10};        
-Extrude Surface (11, {.0,0.0,.1})    
+Extrude Surface {11, {.0,0.0,.1}}
 {    
- Layers {2,3,2}{44,55,44}{.1,.9,1.};                 
+ Layers { {2,3,2} , {44,55,44} , {.1,.9,1.} };                 
 };        
 Coherence;        
