@@ -1,8 +1,8 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2002  Christophe Geuzaine
+ * Copyright (C) 1999-2003  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.33 2003-01-22 02:35:47 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.34 2003-01-23 20:23:46 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -34,25 +34,25 @@
    time */
 
 #ifdef WIN32
-#include <windows.h>
-#ifdef GL2PSDLL
-#ifdef GL2PSDLL_EXPORTS
-#define GL2PSDLL_API __declspec(dllexport)
+#  include <windows.h>
+#  ifdef GL2PSDLL
+#    ifdef GL2PSDLL_EXPORTS
+#      define GL2PSDLL_API __declspec(dllexport)
+#    else
+#      define GL2PSDLL_API __declspec(dllimport)
+#    endif
+#  else
+#    define GL2PSDLL_API
+#  endif
 #else
-#define GL2PSDLL_API __declspec(dllimport)
-#endif /* GL2PSDLL_EXPORTS */
-#else
-#define GL2PSDLL_API
-#endif /* GL2PSDLL */
-#else
-#define GL2PSDLL_API
-#endif /* WIN32 */
+#  define GL2PSDLL_API
+#endif
 
 #ifdef __APPLE__
-#include <OpenGL/gl.h>
+#  include <OpenGL/gl.h>
 #else
-#include <GL/gl.h>
-#endif /* __APPLE__ */
+#  include <GL/gl.h>
+#endif
 
 
 #define GL2PS_VERSION                    0.72
