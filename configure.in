@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.10 2003-02-12 16:23:12 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.11 2003-02-12 16:37:29 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -90,14 +90,18 @@ if test "x$enable_gui" != "xno"; then
 
   if test "x${FLTK_PREFIX}" != "x" ; then
     AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${FLTK_PREFIX})
+    dnl This is a hack, so that it still works for people who compiled fltk,
+    dnl but didn't install it properly...
+    GUI_LIBS="-L${FLTK_PREFIX}/lib"
+    GUI_INCLUDE="-I${FLTK_PREFIX}"
   else
     AC_PATH_PROG(FLTKCONFIG,fltk-config)
   fi
   if test "x$FLTKCONFIG" = "x"; then
     AC_MSG_ERROR(Could not find fltk-config. Try --with-fltk-prefix?)
   fi
-  GUI_LIBS="`$FLTKCONFIG --use-gl --use-images --ldstaticflags`"
-  GUI_INCLUDE="`$FLTKCONFIG --use-gl --use-images --cxxflags`"
+  GUI_LIBS="${GUI_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
+  GUI_INCLUDE="${GUI_INCLUDE} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
   dnl Check if libjpeg is available (in case fltk didn't find it) to enable/disable gl2jpg
   AC_CHECK_HEADER(jpeglib.h,

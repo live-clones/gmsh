@@ -2715,6 +2715,8 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+            GUI_LIBS="-L${FLTK_PREFIX}/lib"
+    GUI_INCLUDE="-I${FLTK_PREFIX}"
   else
     # Extract the first word of "fltk-config", so it can be a program name with args.
 set dummy fltk-config; ac_word=$2
@@ -2761,8 +2763,8 @@ fi
 echo "$as_me: error: Could not find fltk-config. Try --with-fltk-prefix?" >&2;}
    { (exit 1); exit 1; }; }
   fi
-  GUI_LIBS="`$FLTKCONFIG --use-gl --use-images --ldstaticflags`"
-  GUI_INCLUDE="`$FLTKCONFIG --use-gl --use-images --cxxflags`"
+  GUI_LIBS="${GUI_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
+  GUI_INCLUDE="${GUI_INCLUDE} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
 
     ac_ext=cc
 ac_cpp='$CXXCPP $CPPFLAGS'
