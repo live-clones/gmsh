@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Window.H>
 
 // The FLTK team doesn't want to add a position() method to the file
 // chooser, so we have to derive our own. To make things worse, the 
@@ -31,11 +32,11 @@
 
 class File_Picker : public Fl_File_Chooser {
 private:
-  Fl_Double_Window *_win;
+  Fl_Window *_win;
 public:
   File_Picker(const char *d, const char *p, int t, const char *title)
     : Fl_File_Chooser(d, p, t, title) { 
-    _win = (Fl_Double_Window*)newButton->parent()->parent(); 
+    _win = (Fl_Window*)newButton->parent()->parent(); 
   }
   void show(){ _win->show(); }
   void position(int x, int y){ _win->position(x,y);}
