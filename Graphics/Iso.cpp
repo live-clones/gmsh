@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.27 2004-07-02 21:43:30 geuzaine Exp $
+// $Id: Iso.cpp,v 1.28 2004-07-02 23:15:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -52,9 +52,9 @@ void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
 
 // Contour computation for triangles
 
-int CutTriangle2D(double *X, double *Y, double *Z, double *Val,
-		  double V1, double V2, double *Xp2, double *Yp2,
-		  double *Zp2, int *Np2, double *Vp2)
+void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
+		   double V1, double V2, double *Xp2, double *Yp2,
+		   double *Zp2, int *Np2, double *Vp2)
 {
   int i, io[3], j, iot, Np, Fl;
   double Xp[10], Yp[10], Zp[10], Vp[10];
@@ -77,9 +77,9 @@ int CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   // io[] contains an indexing of nodes such that Val[io[i]] > Val[io[j]] if i > j
 
   if(Val[io[0]] > V2)
-    return 0;
+    return;
   if(Val[io[2]] < V1)
-    return 0;
+    return;
 
   if(V1 <= Val[io[0]] && Val[io[2]] <= V2) {
     for(i = 0; i < 3; i++) {
@@ -89,7 +89,7 @@ int CutTriangle2D(double *X, double *Y, double *Z, double *Val,
       Zp2[i] = Z[i];
     }
     *Np2 = 3;
-    return 0;
+    return;
   }
 
   Np = 0;
@@ -121,7 +121,7 @@ int CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   }
 
   if(V2 == Val[io[0]]) {
-    return 1;
+    return;
   }
   else if((Val[io[0]] < V2) && (V2 < Val[io[1]])) {
     Vp[Np] = V2;
@@ -208,7 +208,6 @@ int CutTriangle2D(double *X, double *Y, double *Z, double *Val,
       Zp2[i] = Zp[i];
     }
   }
-  return 1;
 }
 
 // Iso for lines
