@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.35 2001-12-04 10:47:39 geuzaine Exp $
+# $Id: Makefile,v 1.36 2002-02-22 16:43:41 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -13,7 +13,7 @@ YACC     = bison
 LEX      = flex
 
 LIB      = ../lib/libParser.a
-INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
+INCLUDE  = -I../Common -I../DataStr -I../Geo -I../Graphics\
            -I../Mesh -I../Fltk -I../Plugin -I../Parallel
 
 OPT_FLAGS     = -g -Wall

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.30 2001-10-30 09:52:32 geuzaine Exp $
+# $Id: Makefile,v 1.31 2002-02-22 16:43:41 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -11,7 +11,7 @@ RANLIB  = ranlib
 RM      = rm
 
 LIB     = ../lib/libCommon.a
-INCLUDE = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
+INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Parser -I../Fltk
 
 OPT_FLAGS     = -g -Wall
