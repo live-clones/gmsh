@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.11 2001-01-10 20:14:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.12 2001-01-10 21:28:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1026,6 +1026,8 @@ void view_options_timestep_cb(CALLBACK_ARGS){
   STARTVIEWMOD
     v->TimeStep = (int)((Fl_Value_Input*)w)->value() ;
   ENDVIEWMOD
+  Init();
+  Draw();
 }
 void view_options_vector_line_cb(CALLBACK_ARGS){
   STARTVIEWMOD

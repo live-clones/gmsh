@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.4 2001-01-10 20:23:36 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.5 2001-01-10 21:28:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -317,6 +317,13 @@ int Opengl_Window::handle(int event) {
     Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
     ov = v; oc = c; os = s; v = NULL; c = NULL; s = NULL;
     Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
+
+
+            BeginHighlight();
+            HighlightEntity(v,c,s,0);
+            EndHighlight(0);
+
+
 #if 0
     // l'overlay ne marche pas, meme dans les demos de fltk!
     // soumettre un bug ?
