@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.70 2002-01-27 20:47:33 geuzaine Exp $
+// $Id: Options.cpp,v 1.71 2002-02-08 17:33:52 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -2091,8 +2091,10 @@ double opt_view_timestep(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
     v->TimeStep = (int)val;
-    if(v->TimeStep > v->NbTimeStep-1 || v->TimeStep < 0)
+    if(v->TimeStep > v->NbTimeStep-1)
       v->TimeStep = 0 ;
+    else if(v->TimeStep < 0)
+      v->TimeStep = v->NbTimeStep-1;
     v->Changed = 1;
   }
 #ifdef _FLTK
@@ -2476,7 +2478,7 @@ double opt_view_show_time(OPT_ARGS_NUM){
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_butt[50]->value(v->ShowTime);
+    WID->view_butt[8]->value(v->ShowTime);
 #endif
   return v->ShowTime;
 }

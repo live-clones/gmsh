@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.147 2002-01-27 21:24:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.148 2002-02-08 17:33:52 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -2226,9 +2226,9 @@ void GUI::create_view_options_window(int num){
       Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
       o->labelsize(CTX.fontsize);
       
-      view_butt[1] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW/2-WB, BH, "3D view");
-      view_butt[2] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "2D space table");
-      view_butt[3] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW/2-WB, BH, "2D time table");
+      view_butt[1] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "3D view");
+      view_butt[2] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "2D space table");
+      view_butt[3] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "2D time table");
       for(i=1 ; i<=3 ; i++){
 	view_butt[i]->type(FL_RADIO_BUTTON);
 	view_butt[i]->down_box(RADIO_BOX);
@@ -2237,30 +2237,41 @@ void GUI::create_view_options_window(int num){
 	view_butt[i]->callback(set_changed_cb, 0);
       }
       
-      view_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, IW, BH, "Name");
-      view_input[1] = new Fl_Input(2*WB, 2*WB+2*BH, IW, BH, "Format");
+      view_input[0] = new Fl_Input(2*WB, 2*WB+4*BH, IW, BH, "Name");
+      view_input[1] = new Fl_Input(2*WB, 2*WB+5*BH, IW, BH, "Format");
       for(i=0 ; i<=1 ; i++){
 	view_input[i]->labelsize(CTX.fontsize);
 	view_input[i]->textsize(CTX.fontsize);
 	view_input[i]->align(FL_ALIGN_RIGHT);
 	view_input[i]->callback(set_changed_cb, 0);
       }
-      view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Show scale");
-      view_butt[5] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW/2-WB, BH, "Show annotations");
-      view_butt[6] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW/2-WB, BH, "Transparent scale");
-      view_butt[7] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW/2-WB, BH, "Auto position");
-      for(i=4 ; i<=7 ; i++){
-	view_butt[i]->type(FL_TOGGLE_BUTTON);
-	view_butt[i]->down_box(TOGGLE_BOX);
-	view_butt[i]->labelsize(CTX.fontsize);
-	view_butt[i]->selection_color(TOGGLE_COLOR);
-	view_butt[i]->callback(set_changed_cb, 0);
-      }
-      
-      view_value[20] = new Fl_Value_Input(2*WB, 2*WB+ 6*BH, IW, BH, "X position");
-      view_value[21] = new Fl_Value_Input(2*WB, 2*WB+ 7*BH, IW, BH, "Y position");
-      view_value[22] = new Fl_Value_Input(2*WB, 2*WB+ 8*BH, IW, BH, "Width");
-      view_value[23] = new Fl_Value_Input(2*WB, 2*WB+ 9*BH, IW, BH, "Height");
+
+      int sw=(int)(1.5*CTX.fontsize);
+      view_butt_rep[0] = new Fl_Repeat_Button(2*WB, 2*WB+6*BH, sw, BH, "-");
+      view_butt_rep[0]->labelsize(CTX.fontsize);
+      //no set_changed since has its own callback
+      view_butt_rep[1] = new Fl_Repeat_Button(2*WB+IW-sw, 2*WB+6*BH, sw, BH, "+");
+      view_butt_rep[1]->labelsize(CTX.fontsize);
+      //no set_changed since has its own callback
+      view_value[50] = new Fl_Value_Input(2*WB+sw, 2*WB+6*BH, IW-2*sw, BH);
+      view_value[50]->labelsize(CTX.fontsize);
+      view_value[50]->textsize(CTX.fontsize);
+      view_value[50]->type(FL_HORIZONTAL);
+      view_value[50]->align(FL_ALIGN_RIGHT);
+      view_value[50]->minimum(0); 
+      view_value[50]->maximum(0); 
+      view_value[50]->step(1);
+      //no set_changed since has its own callback
+      Fl_Box *a = new Fl_Box(2*WB+IW, 2*WB+6*BH, IW/2, BH, "Time Step");
+      a->box(FL_NO_BOX);
+      a->labelsize(CTX.fontsize);
+      a->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+
+
+      view_value[20] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW/2, BH);
+      view_value[21] = new Fl_Value_Input(2*WB+IW/2, 2*WB+7*BH, IW/2, BH, "Position");
+      view_value[22] = new Fl_Value_Input(2*WB, 2*WB+8*BH, IW/2, BH);
+      view_value[23] = new Fl_Value_Input(2*WB+IW/2, 2*WB+8*BH, IW/2, BH, "Size");
       for(i=20 ; i<=23 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);
@@ -2268,6 +2279,21 @@ void GUI::create_view_options_window(int num){
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->callback(set_changed_cb, 0);
       }
+
+
+      view_butt[8] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW/2-WB, BH, "Show time");
+      view_butt[5] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "Show annotations");
+      view_butt[4] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW/2-WB, BH, "Show scale");
+      view_butt[6] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW/2-WB, BH, "Transparent scale");
+      view_butt[7] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW/2-WB, BH, "Auto position");
+      for(i=4 ; i<=8 ; i++){
+	view_butt[i]->type(FL_TOGGLE_BUTTON);
+	view_butt[i]->down_box(TOGGLE_BOX);
+	view_butt[i]->labelsize(CTX.fontsize);
+	view_butt[i]->selection_color(TOGGLE_COLOR);
+	view_butt[i]->callback(set_changed_cb, 0);
+      }
+      
       
       o->end();
     }
@@ -2446,31 +2472,6 @@ void GUI::create_view_options_window(int num){
 	view_value[i]->callback(set_changed_cb, 0);
       }	
       o->end();
-    }
-    // Time step
-    { 
-      view_timestep = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Time step");
-      view_timestep->labelsize(CTX.fontsize);
-      view_timestep->hide();
-      
-      view_value[50] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Time step number");
-      view_value[50]->labelsize(CTX.fontsize);
-      view_value[50]->textsize(CTX.fontsize);
-      view_value[50]->type(FL_HORIZONTAL);
-      view_value[50]->align(FL_ALIGN_RIGHT);
-      view_value[50]->minimum(0); 
-      view_value[50]->maximum(0); 
-      view_value[50]->step(1);
-      //no set_changed since timestep has its own callback
-      
-      view_butt[50] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Display time");
-      view_butt[50]->type(FL_TOGGLE_BUTTON);
-      view_butt[50]->down_box(TOGGLE_BOX);
-      view_butt[50]->labelsize(CTX.fontsize);
-      view_butt[50]->selection_color(TOGGLE_COLOR);
-      view_butt[50]->callback(set_changed_cb, 0);
-      
-      view_timestep->end();
     }
     // Aspect
     { 
@@ -2654,10 +2655,22 @@ void GUI::update_view_window(int num){
   }
 
   // timestep
-  if(v->NbTimeStep==1) view_timestep->deactivate();
-  else view_timestep->activate();
+  if(v->NbTimeStep==1){
+    view_value[50]->deactivate();
+    view_butt_rep[0]->deactivate();
+    view_butt_rep[1]->deactivate();
+    view_butt[8]->deactivate();
+  }
+  else{
+    view_value[50]->activate();
+    view_butt_rep[0]->activate();
+    view_butt_rep[1]->activate();
+    view_butt[8]->activate();
+  }
   view_value[50]->callback(view_options_timestep_cb, (void*)num);
   view_value[50]->maximum(v->NbTimeStep-1); 
+  view_butt_rep[0]->callback(view_options_timestep_decr_cb, (void*)num);
+  view_butt_rep[1]->callback(view_options_timestep_incr_cb, (void*)num);
   opt_view_timestep(num, GMSH_GUI, 0);
   opt_view_show_time(num, GMSH_GUI, 0);
 

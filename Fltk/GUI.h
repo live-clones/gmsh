@@ -12,6 +12,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Return_Button.H>
+#include <FL/Fl_Repeat_Button.H>
 #include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Check_Button.H>
@@ -168,11 +169,13 @@ public:
   // view options window
   int view_number ;
   Fl_Window        *view_window ;
-  Fl_Group         *view_3d, *view_2d, *view_range, *view_timestep, *view_vector ;
+  Fl_Group         *view_3d, *view_2d, *view_range, *view_vector ;
 #define VIEW_OPT_BUTT 100
   Fl_Check_Button  *view_butt[VIEW_OPT_BUTT] ;
   Fl_Value_Input   *view_value[VIEW_OPT_BUTT] ;
   Fl_Input         *view_input[VIEW_OPT_BUTT] ;
+  Fl_Repeat_Button *view_butt_rep[VIEW_OPT_BUTT] ;
+
   Colorbar_Window  *view_colorbar_window ;
   Fl_Return_Button *view_ok ;
   

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.104 2002-01-27 20:47:33 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.105 2002-02-08 17:33:52 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1971,6 +1971,17 @@ void view_options_timestep_cb(CALLBACK_ARGS){
   Draw();
 }
 
+void view_options_timestep_decr_cb(CALLBACK_ARGS){
+  int i=(long int)data;
+  opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i,GMSH_GET,0)-1);
+  Draw();
+}
+void view_options_timestep_incr_cb(CALLBACK_ARGS){
+  int i=(long int)data;
+  opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i,GMSH_GET,0)+1);
+  Draw();
+}
+
 void view_options_ok_cb(CALLBACK_ARGS){
   int i, links, force=0;
 
@@ -2046,8 +2057,8 @@ void view_options_ok_cb(CALLBACK_ARGS){
 	opt_view_auto_position(i, GMSH_SET, 
 			       WID->view_butt[7]->value());
 
-      if(force || WID->view_butt[50]->changed())
-	opt_view_show_time(i, GMSH_SET, WID->view_butt[50]->value());
+      if(force || WID->view_butt[8]->changed())
+	opt_view_show_time(i, GMSH_SET, WID->view_butt[8]->value());
 
       if(force || WID->view_butt[5]->changed())
 	opt_view_draw_strings(i, GMSH_SET, WID->view_butt[5]->value());
