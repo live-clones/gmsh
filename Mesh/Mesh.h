@@ -223,6 +223,24 @@ class DrawingColor{
   unsigned int geom, mesh;
 };
 
+class triangleVertexArray{
+ public:
+  int num_triangles;
+  float *vertices, *normals;
+  unsigned char *colors;
+  triangleVertexArray(int nb){
+    num_triangles = 0;
+    vertices = new float[nb * 3 * 3];
+    normals = new float[nb * 3 * 3];
+    colors = new unsigned char[nb * 3 * 4];
+  }
+  ~triangleVertexArray(){
+    delete [] vertices;
+    delete [] normals;
+    delete [] colors;
+  }
+};
+
 struct _Surf{
   int Num;
   int Typ;
@@ -255,7 +273,7 @@ struct _Surf{
   POLY_rep *thePolyRep;
   int Dirty; // flag to prevent any meshing
   DrawingColor Color;
-  void * aSolidModelEntity; // pointer to a solid model entity
+  triangleVertexArray * vertexArray;
 };
 
 typedef struct _Surf Surface;

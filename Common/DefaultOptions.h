@@ -725,8 +725,6 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "CutPlaneD" , opt_mesh_cut_planed , 0. , 
     "Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')" },
 
-  { F|O, "DisplayLists" , opt_mesh_display_lists , 0. ,
-    "Use OpenGL display lists for drawing meshes" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 
@@ -818,6 +816,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Tangents" , opt_mesh_tangents , 0.0 , 
     "Display size of tangent vectors (in pixels)" }, 
 
+  { F|O, "VertexArrays" , opt_mesh_vertex_arrays , 0. , 
+    "Use OpenGL vertex arrays to draw meshes?" },
   { F|O, "VolumeEdges" , opt_mesh_volumes_edges , 1. , 
     "Display edges of volume mesh?" },
   { F|O, "VolumeFaces" , opt_mesh_volumes_faces , 0. , 

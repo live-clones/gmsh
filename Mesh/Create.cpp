@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.56 2004-05-25 23:16:26 geuzaine Exp $
+// $Id: Create.cpp,v 1.57 2004-05-28 19:22:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -669,6 +669,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Edges = NULL;
   pS->Extrude = NULL;
   pS->STL = NULL;
+  pS->vertexArray = NULL;
   return (pS);
 }
 
@@ -691,6 +692,8 @@ void Free_Surface(void *a, void *b)
       Tree_Action(pS->Edges, Free_Edge);
       Tree_Delete(pS->Edges);
     }
+    if(pS->vertexArray)
+      delete pS->vertexArray;
     Free(pS);
     pS = NULL;
   }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.240 2004-05-22 01:24:16 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.241 2004-05-28 19:22:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1219,12 +1219,14 @@ void visibility_ok_cb(CALLBACK_ARGS)
   switch (WID->vis_browser_mode->value()) {
   case 0:
     mode = VIS_GEOM | VIS_MESH;
+    CTX.mesh.changed = 1;
     break;
   case 1:
     mode = VIS_GEOM;
     break;
   default:
     mode = VIS_MESH;
+    CTX.mesh.changed = 1;
     break;
   }
 
@@ -1297,17 +1299,20 @@ void visibility_number_cb(CALLBACK_ARGS)
     switch (WID->vis_browser_mode->value()) {
     case 0:
       mode = VIS_GEOM | VIS_MESH;
+      CTX.mesh.changed = 1;
       break;
     case 1:
       mode = VIS_GEOM;
       break;
     default:
       mode = VIS_MESH;
+      CTX.mesh.changed = 1;
       break;
     }
   }
   else{ // hide
     mode = 0;
+    CTX.mesh.changed = 1;
   }
 
   SetVisibilityByNumber(str, type, mode);
