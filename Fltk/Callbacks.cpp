@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.236 2004-05-18 18:52:00 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.237 2004-05-18 20:51:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2086,6 +2086,8 @@ static void _new_surface_volume(int mode)
 	    if(ib == 'e') {
 	      ZeroHighlight(THEM);
 	      Draw();
+	      List_Reset(List1);
+	      List_Reset(ListUnsorted);
 	      break;
 	    }
 	    if(ib == 'u') {
