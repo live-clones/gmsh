@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.27 2004-08-12 16:57:32 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.28 2004-10-28 18:50:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -86,11 +86,17 @@ Vertex *onCurve(Vertex * v1, Vertex * v2)
     ok2 = 0;
   }
 
+  // Ugly fix for closed curves
+  if((THEC->beg->Num == THEC->end->Num) &&
+     (u1 == THEC->ubeg || u1 == THEC->uend ||
+      u2 == THEC->ubeg || u2 == THEC->uend)){
+    ok1 = ok2 = 0;
+  }
+
   if(ok1 && ok2){
     v = InterpolateCurve(THEC, 0.5 * (u1 + u2), 0);
   }
   else{
-    // too bad (should normally not happen)
     v.Pos.X = (v1->Pos.X + v2->Pos.X) * 0.5;
     v.Pos.Y = (v1->Pos.Y + v2->Pos.Y) * 0.5;
     v.Pos.Z = (v1->Pos.Z + v2->Pos.Z) * 0.5;
