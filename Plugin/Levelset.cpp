@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.3 2003-11-22 02:19:35 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.4 2003-11-22 05:12:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -105,11 +105,11 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
 
   double xpi[12], ypi[12], zpi[12], valpi[12][9];
 
-  // Remove identical nodes (can happen only if an edge actually
+  // Remove identical nodes (this can happen if an edge actually
   // belongs to the zero levelset, i.e., if levels[] * levels[] ==
-  // 0). Actuallym, we should be doing this even for np < 4, but it
-  // takes some time... And we don't really care if some nodes in
-  // a postprocessing element are identical.
+  // 0). We should be doing this even for np < 4, but it would slow us
+  // down even more... (And we don't really care if some nodes in a
+  // postprocessing element are identical.)
   if(np > 4){
     int npi;
     affect(xpi, ypi, zpi, valpi, 0, xp, yp, zp, valp, 0, dNbComp);
@@ -249,7 +249,6 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
     return;
   }
 
-  // for all elements
   int iNb = List_Nbr(iList) / iNbElm;
   int dNb = List_Nbr(dList) / dNbElm;
   for(int i = 0, j = 0; i < List_Nbr(iList); i += iNb, j += dNb) {
@@ -285,8 +284,8 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
       if(_valueIndependent) {
 	// since the intersection is value-independent, we can loop on
 	// the time steps so that only one element gets created per
-	// time step. This allows us to still generate a *single*
-	// multi-timestep view.
+	// time step. This allows us to still easily generate a
+	// *single* multi-timestep view.
 	if(zeroLevelset(0, nbVert, nbEdg, exn, x, y, z, NULL, 0, 
 			NULL, 0, out)) {
 	  for(int k = 0; k < iDec.numSimplices(); k++) {
