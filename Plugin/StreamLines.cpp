@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.4 2004-04-24 04:46:20 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.5 2004-04-24 05:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -116,7 +116,7 @@ int GMSH_StreamLinesPlugin::getNbV()const
   return   (int)StreamLinesOptions_Number[10].def;
 }
 
-void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X )const 
+void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X) const 
 {
   double u = (double)iU / (double)(getNbU ());
   double v = (double)iV / (double)(getNbV ());
@@ -163,10 +163,10 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
       
       while (ITER++ < (int) StreamLinesOptions_Number[11].def){
 	// dX/dt = V
-	// X1 = X + a1 * DT * V ( X  )
-	// X2 = X + a2 * DT * V ( X1 )
-	// X3 = X + a3 * DT * V ( X2 )
-	// X4 = X + a4 * DT * V ( X3 )
+	// X1 = X + a1 * DT * V(X)
+	// X2 = X + a2 * DT * V(X1)
+	// X3 = X + a3 * DT * V(X2)
+	// X4 = X + a4 * DT * V(X3)
 	// X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
 	double sizeElem = 0.033;
 	o.searchVector(X[0], X[1], X[2], VALUES, &sizeElem, 0);

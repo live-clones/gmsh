@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.4 2004-04-24 05:22:50 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.5 2004-04-24 05:27:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -212,13 +212,14 @@ OctreePost::OctreePost(Post_View *v)
 		     PostTriangleBB,
 		     PostTriangleCentroid,
 		     PostTriangleInEle);
+  addListOfStuff(ST, v->ST, 9 + 3 * v->NbTimeStep);
 
-  addListOfStuff(ST, v->ST, 9 + 3* v->NbTimeStep);
   VT = Octree_Create(1000, min, size, 
 		     PostTriangleBB,
 		     PostTriangleCentroid,
 		     PostTriangleInEle);
   addListOfStuff(VT, v->VT, 9 + 9 * v->NbTimeStep);
+
   TT = Octree_Create(2, min, size, 
 		     PostTriangleBB,
 		     PostTriangleCentroid,
@@ -230,6 +231,7 @@ OctreePost::OctreePost(Post_View *v)
 		     PostSimplexCentroid,
 		     PostSimplexInEle);
   addListOfStuff(SS, v->SS, 12 + 4 * v->NbTimeStep);
+
   VS = Octree_Create(1000, min, size, 
 		     PostSimplexBB,
 		     PostSimplexCentroid,
