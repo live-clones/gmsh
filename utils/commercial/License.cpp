@@ -1,4 +1,4 @@
-// $Id: License.cpp,v 1.2 2003-10-29 20:26:15 geuzaine Exp $
+// $Id: License.cpp,v 1.3 2003-10-29 20:31:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -8,7 +8,6 @@
 
 void print_license(void)
 {
-  Msg(DIRECT, "The precise conditions of the license for this version of");
-  Msg(DIRECT, "Gmsh can be found in the 'doc/COPYING' file that accompanies");
-  Msg(DIRECT, "the source code.");
+  Msg(DIRECT, "The precise licensing conditions for this version of Gmsh can be");
+  Msg(DIRECT, "found in the 'doc/COPYING' file that accompanies the source code.");
 }
