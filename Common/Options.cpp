@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.105 2003-04-14 21:34:52 geuzaine Exp $
+// $Id: Options.cpp,v 1.106 2003-04-15 18:32:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -666,7 +666,7 @@ void Print_ColorOptionsDoc(StringXColor s[], char *prefix, FILE * file)
 	    UNPACK_RED(s[i].function(0, GMSH_GET, 0)),
 	    UNPACK_GREEN(s[i].function(0, GMSH_GET, 0)),
 	    UNPACK_BLUE(s[i].function(0, GMSH_GET, 0)));
-    fprintf(file, "Saved in: @code{%s})\n\n", Get_OptionSaveLevel(s[i].level));
+    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
     i++;
   }
 }

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.19 2003-04-15 15:49:03 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.20 2003-04-15 18:32:01 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -579,8 +579,8 @@ ASCII files, parser, blabla
 @cindex Comments
 @cindex File, comment
 
-@tindex /*, */
-@tindex //
+@findex /*, */
+@findex //
 
 Both C and C++ style comments are supported and can be used in the input
 data file to comment selected text regions:
@@ -615,15 +615,7 @@ inside all Gmsh expressions.
 @cindex Numbers, integer
 @cindex String
 
-@tindex Pi
-@tindex MPI_Rank
-@tindex MPI_Size
-@tindex newp
-@tindex newc
-@tindex news
-@tindex newv
-@tindex newreg
-@tindex =
+@findex =
 
 The two constant types used in Gmsh are @var{real} and @var{string} (there
 is no integer type).  These types have the same meaning and syntax as in the
@@ -682,23 +674,41 @@ expressions. The syntax for the definition of expression identifiers is:
 
 @example
 @var{expression-id}:
-  @var{string} |
-  Pi |
-  MPI_Rank | MPI_Size |
-  newp | newl | news | newv | newreg
+  @var{string}
 
 @var{expression-def}:
   @var{expression-list-item} |
   @{ @var{expression-list} @}
 @end example
 
-The only expressions predefined in Gmsh are @code{Pi} (=
-3.1415926535897932), @code{MPI_Size} (which returns the number of processors
-on which Gmsh is running), @code{MPI_Rank} (which returns the rank of the
-current processor), @code{newp} (returns the next available point number),
-@code{newc} (returns the next available curve number), @code{news} (returns
-the next available surface number), @code{newv} (returns the next available
-volume number) and @code{newreg} (returns the next available region number).
+Several @var{expression-id} are predefined:
+@ftable @code
+@item Pi
+returns 3.1415926535897932.
+
+@item MPI_Size
+returns the number of processors on which Gmsh is running.
+
+@item MPI_Rank
+returns the rank of the current processor.
+
+@item newp
+returns the next available point number.
+
+@item newl
+returns the next available curvet number.
+
+@item news
+returns the next available surface number.
+
+@item newv
+returns the next available volume number.
+
+@item newreg
+returns the next available region number (that is, the max of @code{newp},
+@code{newc}, @code{news}, @code{newv} and all physical entity numbers).
+
+@end ftable
 
 Character expressions can also be defined (but there exists no character
 expression identifier at the moment):
@@ -706,9 +716,9 @@ expression identifier at the moment):
 @example
 @var{expression-char}:
   "@var{string}" |
-  StrPrefix[ @var{expression-char} ] |
-  StrCat[ @var{expression-char} , @var{expression-char} ] |
-  Sprintf[ @var{expression-char} , @var{expression-list} ]
+  StrPrefix ( @var{expression-char} ) |
+  StrCat ( @var{expression-char} , @var{expression-char} ) |
+  Sprintf ( @var{expression-char} , @var{expression-list} )
 @end example
 
 @noindent The third casein this definition permits to take the
@@ -755,8 +765,6 @@ Exponentiation. The evaluation of the both arguments must result in a scalar
 value.
 @item *
 Multiplication or scalar product, depending on the type of the arguments. 
-@item /\
-Cross product. The evaluation of both arguments must result in vectors.
 @item /
 Division.
 @item %
@@ -821,22 +829,25 @@ argument (located after @code{:}) is evaluated and returned.
 @cindex Operation, priorities
 @cindex Priorities, operations
 
-@tindex ()
+@findex ()
 
 The evaluation priorities are summarized below (from stronger to weaker,
-i.e.@: @code{^} has the highest evaluation priority). Parentheses
-@code{()} may be used anywhere to change the order of evaluation.
+i.e.@: @code{*} has a highest evaluation priority than
+@code{+}). Parentheses @code{()} may be used anywhere to change the order of
+evaluation:
 
 @table @code
+@item ()
 @item ^
-@item - (unary), ! 
-@item /\
-@item *, /, %
-@item +, - 
-@item <, >, <=, >=
-@item !=, ==
-@item &&, ||
+@item !  ++  --  -unary
+@item *  /  %
+@item +  - 
+@item <  <=  >  >=
+@item ==  !=
+@item &&
+@item ||
 @item ?:
+@item =  +=  -=  *=  /=
 @end table
 
 
@@ -861,69 +872,69 @@ implemented:
 
 @ftable @code
 
-@item Acos[ @var{expression} ]
+@item Acos ( @var{expression} )
 Arc cosine (inverse cosine) of @var{expression} in [0,Pi], @var{expression} in [-1,1].
 
-@item Asin[ @var{expression} ]
+@item Asin ( @var{expression} )
 Arc sine (inverse sine) of @var{expression} in [-Pi/2,Pi/2], @var{expression} in [-1,1].
 
-@item Atan[ @var{expression} ]
+@item Atan ( @var{expression} )
 Arc tangent (inverse tangent) of @var{expression} in [-Pi/2,Pi/2].
 
-@item Atan2[ @var{expression}, @var{expression} ]
+@item Atan2 ( @var{expression}, @var{expression} )
 Arc tangent (inverse tangent) of the first @var{expression} divided by the
 second, in [-Pi,Pi].
 
-@item Ceil[ @var{expression} ]
+@item Ceil ( @var{expression} )
 XXX
 
-@item Cos[ @var{expression} ]
+@item Cos ( @var{expression} )
 Cosine of @var{expression}.
 
-@item Cosh[ @var{expression} ]
+@item Cosh ( @var{expression} )
 Hyperbolic cosine of @var{expression}.
 
-@item Exp[ @var{expression} ]
+@item Exp ( @var{expression} )
 Exponential function: e^@var{expression}.
 
-@item Fabs[ @var{expression} ]
+@item Fabs ( @var{expression} )
 Absolute value of @var{expression}.
 
-@item Fmod[ @var{expression}, @var{expression} ]
+@item Fmod ( @var{expression}, @var{expression} )
 Remainder of the division of the first @var{expression} by the second, with
 the sign of the first.
 
-@item Floor[ @var{expression} ]
+@item Floor ( @var{expression} )
 XXX
 
-@item Hypot[ @var{expression}, @var{expression} ]
+@item Hypot ( @var{expression}, @var{expression} )
 XXX
 
-@item Log[ @var{expression} ]
+@item Log ( @var{expression} )
 Natural logarithm: ln(@var{expression}), @var{expression}>0.
 
-@item Log10[ @var{expression} ]
+@item Log10 ( @var{expression} )
 Base 10 logarithm: log10(@var{expression}), @var{expression}>0.
 
-@item Modulo[ @var{expression} ]
+@item Modulo ( @var{expression} )
 XXX
 
 @item Rand
 XXX
 
-@item Sqrt[ @var{expression} ]
+@item Sqrt ( @var{expression} )
 Square root, @var{expression}>=0.
 
-@item Sin[ @var{expression} ]
+@item Sin ( @var{expression} )
 Sine of @var{expression}.
 
-@item Sinh[ @var{expression} ]
+@item Sinh ( @var{expression} )
 Hyperbolic sine of @var{expression}.
 
-@item Tan[ @var{expression} ]
+@item Tan ( @var{expression} )
 Tangent of @var{expression}.
 
-@item Tanh[ @var{expression} ]
+@item Tanh ( @var{expression} )
 Hyperbolic tangent of @var{expression}.
 
 @end ftable
@@ -999,7 +1010,7 @@ The body enclised between @code{If} and @code{Endif} is evaluated if
 @item Exit;
 Aborts the current script.
 
-@item Printf[ @var{expression-char} , @var{expression-list} ]
+@item Printf ( @var{expression-char} , @var{expression-list} );
 Equivalent of the @code{printf} C function (@var{expression-char} is a
 format string that can contain floating point formatting characters:
 @code{%f}, @code{%e}, etc.).
@@ -1007,7 +1018,7 @@ format string that can contain floating point formatting characters:
 @item Merge @var{expression-char};
 To merge a file.
 
-@item MergeWithBoundingBox string;
+@item MergeWithBoundingBox @var{expression-char};
 To merge a file and force the recalculation of the scene's bounding box.
 
 @item Draw;
@@ -1096,7 +1107,7 @@ To include the file @var{expression-char}.
 @item Duplicata       
 
 @item Ellipsis
-(synonym: Ellipse)
+(synonym: @code{Ellipse})
 
 @item Intersect       
 
@@ -1135,7 +1146,7 @@ To include the file @var{expression-char}.
 @item Trimmed		
 
 @item Volume
-(synonym: Complex Volume)
+(synonym: @code{Complex Volume})
 
 @end ftable
 

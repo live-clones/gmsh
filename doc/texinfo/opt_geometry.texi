@@ -127,71 +127,71 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.Color.Points
 Normal geometry point color@*
 Default value: @code{@{178,182,129@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Lines
 Normal geometry curve color@*
 Default value: @code{@{0,0,255@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Surfaces
 Normal geometry surface color@*
 Default value: @code{@{128,128,128@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Volumes
 Normal geometry volume color@*
 Default value: @code{@{128,128,128@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.PointsSelect
 Selected geometry point color@*
 Default value: @code{@{255,0,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.LinesSelect
 Selected geometry curve color@*
 Default value: @code{@{255,0,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.SurfacesSelect
 Selected geometry surface color@*
 Default value: @code{@{255,0,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.VolumesSelect
 Selected geometry volume color@*
 Default value: @code{@{255,0,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.PointsHighlight
 Highlighted geometry point color@*
 Default value: @code{@{0,255,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.LinesHighlight
 Highlighted geometry curve color@*
 Default value: @code{@{0,0,255@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.SurfacesHighlight
 Highlighted geometry surface color@*
 Default value: @code{@{128,128,128@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.VolumesHighlight
 Highlighted geometry volume color@*
 Default value: @code{@{128,128,128@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Tangents
 Tangent geometry vectors color@*
 Default value: @code{@{255,255,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Normals
 Normal geometry vectors color@*
 Default value: @code{@{255,0,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @end ftable

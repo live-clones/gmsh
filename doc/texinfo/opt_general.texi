@@ -612,26 +612,26 @@ Saved in: @code{General.OptionsFileName}
 @item General.Color.Background
 Background color@*
 Default value: @code{@{0,0,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Foreground
 Foreground color@*
 Default value: @code{@{255,255,255@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Text
 Text color@*
 Default value: @code{@{255,255,255@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Axes
 Axes color@*
 Default value: @code{@{255,255,0@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @item General.Color.SmallAxes
 Small axes color@*
 Default value: @code{@{255,255,255@}}@*
-Saved in: @code{General.OptionsFileName})
+Saved in: @code{General.OptionsFileName}
 
 @end ftable

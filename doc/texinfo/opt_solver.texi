@@ -6,9 +6,9 @@ Saved in: @code{General.OptionsFileName}
 
 @item Solver.Help0
 Help string for solver 0@*
-Default value: @code{"A General environment for the treatment of Discrete
-Problems. Copyright (c) 1997-2003 Patrick Dular and Christophe
-Geuzaine. Visit http://www.geuz.org/getdp/ for more info"}@*
+Default value: @code{"A General environment for the treatment of
+Discrete Problems. Copyright (c) 1997-2003 Patrick Dular and Christophe Geuzaine.
+Visit http://www.geuz.org/getdp/ for more info"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Executable0
