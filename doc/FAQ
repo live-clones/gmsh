@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-05-19 19:56:19 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-09-09 17:22:29 $)
 
 1. GENERAL
 ==========
@@ -16,8 +16,7 @@ for the generation of adapted meshes on lines, surfaces and volumes.
 
 Nothing ;-)
 
-But now that it is distributed under the GNU GPL, you can at least
-pronounce it "Gnu-mesh". Yeah.
+(People tend to pronounce 'Gmsh' as 'Gee-mesh'.)
 
 1.3) Where can I find more information?
 
