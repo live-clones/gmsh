@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.297 2004-05-15 08:07:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.298 2004-05-17 17:40:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1319,6 +1319,7 @@ void GUI::make_overlay_current()
 void GUI::redraw_opengl()
 {
   g_opengl_window->redraw();
+  //glFlush();
 }
 
 // Draw the opengl overlay window

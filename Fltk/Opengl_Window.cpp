@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.33 2004-02-20 17:57:59 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.34 2004-05-17 17:40:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -365,9 +365,7 @@ int Opengl_Window::handle(int event)
           WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
         else
           WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-        BeginHighlight();
         HighlightEntity(v, c, s, 0);
-        EndHighlight(0);
       }
     }
 

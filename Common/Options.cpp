@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.153 2004-05-15 09:19:53 geuzaine Exp $
+// $Id: Options.cpp,v 1.154 2004-05-17 17:40:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3022,13 +3022,6 @@ double opt_geometry_light(OPT_ARGS_NUM)
   return CTX.geom.light;
 }
 
-double opt_geometry_highlight(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.geom.highlight = (int)val;
-  return CTX.geom.highlight;
-}
-
 double opt_geometry_old_circle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -5094,48 +5087,12 @@ unsigned int opt_geometry_color_volumes_select(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.volume_sel;
 }
-unsigned int opt_geometry_color_points_highlight(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET)
-    CTX.color.geom.point_hlt = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.point_hlt, WID->geo_col[8]);
-#endif
-  return CTX.color.geom.point_hlt;
-}
-unsigned int opt_geometry_color_lines_highlight(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET)
-    CTX.color.geom.line_hlt = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.line_hlt, WID->geo_col[9]);
-#endif
-  return CTX.color.geom.line_hlt;
-}
-unsigned int opt_geometry_color_surfaces_highlight(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET)
-    CTX.color.geom.surface_hlt = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.surface_hlt, WID->geo_col[10]);
-#endif
-  return CTX.color.geom.surface_hlt;
-}
-unsigned int opt_geometry_color_volumes_highlight(OPT_ARGS_COL)
-{
-  if(action & GMSH_SET)
-    CTX.color.geom.volume_hlt = val;
-#if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.volume_hlt, WID->geo_col[11]);
-#endif
-  return CTX.color.geom.volume_hlt;
-}
 unsigned int opt_geometry_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
     CTX.color.geom.tangents = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.tangents, WID->geo_col[12]);
+  CCC(CTX.color.geom.tangents, WID->geo_col[8]);
 #endif
   return CTX.color.geom.tangents;
 }
@@ -5144,7 +5101,7 @@ unsigned int opt_geometry_color_normals(OPT_ARGS_COL)
   if(action & GMSH_SET)
     CTX.color.geom.normals = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.normals, WID->geo_col[13]);
+  CCC(CTX.color.geom.normals, WID->geo_col[9]);
 #endif
   return CTX.color.geom.normals;
 }

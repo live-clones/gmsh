@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.35 2004-04-24 02:13:07 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.36 2004-05-17 17:40:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,11 @@ void InitOpengl(void)
 {
   WID->make_opengl_current();
   Orthogonalize(0, 0);
+}
+
+void SetOpenglContext(void)
+{
+  WID->make_opengl_current();
 }
 
 void InitOverlay(void)
@@ -151,9 +156,7 @@ int SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
       Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
       Filter_SelectionBuffer(hits, ii, jj, v, c, s, &M);
       if(check_type(type, *v, *c, *s)) {
-        BeginHighlight();
         HighlightEntity(*v, *c, *s, 1);
-        EndHighlight(1);
         WID->selection = 0;
         return (1);
       }

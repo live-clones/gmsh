@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.67 2004-05-15 08:18:24 geuzaine Exp $
+// $Id: Main.cpp,v 1.68 2004-05-17 17:40:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -106,7 +106,6 @@ int main(int argc, char *argv[])
   // This does not work with FLTK right now...
 
   CTX.overlay = 0;
-  CTX.geom.highlight = 0;
 
   // Always print info on terminal for non-interactive execution
 

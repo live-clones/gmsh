@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.54 2004-04-20 18:55:36 geuzaine Exp $
+// $Id: Geom.cpp,v 1.55 2004-05-17 17:40:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "GmshUI.h"
 #include "Numeric.h"
 #include "Geo.h"
+#include "CAD.h"
 #include "Mesh.h"
 #include "Utils.h"
 #include "Draw.h"
@@ -35,8 +36,6 @@ extern Context_T CTX;
 extern Mesh *THEM;
 
 // Points
-
-static int Highlighted = 0;
 
 void Draw_GeoPoint(void *a, void *b)
 {
@@ -58,11 +57,6 @@ void Draw_GeoPoint(void *a, void *b)
     gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
   }
-  else if(Highlighted) {
-    glPointSize(CTX.geom.point_sel_size);
-    gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.point_hlt);
-  }
   else {
     glPointSize(CTX.geom.point_size);
     gl2psPointSize(CTX.geom.point_size * CTX.print.eps_point_size_factor);
@@ -71,7 +65,7 @@ void Draw_GeoPoint(void *a, void *b)
 
   if(CTX.geom.points) {
     if(CTX.geom.point_type) {
-      if(v->Frozen || Highlighted)
+      if(v->Frozen)
         Draw_Sphere(CTX.geom.point_sel_size, v->Pos.X, v->Pos.Y, v->Pos.Z, 
 		    CTX.geom.light);
       else
@@ -123,11 +117,6 @@ void Draw_Curve(void *a, void *b)
     glLineWidth(CTX.geom.line_sel_width);
     gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
-  }
-  else if(Highlighted) {
-    glLineWidth(CTX.geom.line_sel_width);
-    gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.line_hlt);
   }
   else {
     glLineWidth(CTX.geom.line_width);
@@ -575,12 +564,6 @@ void Draw_Surface(void *a, void *b)
 		   CTX.print.eps_line_width_factor);
     glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
   }
-  else if(Highlighted) {
-    glLineWidth(CTX.geom.line_sel_width);
-    gl2psLineWidth(CTX.geom.line_sel_width *
-		   CTX.print.eps_line_width_factor);
-    glColor4ubv((GLubyte *) & CTX.color.geom.surface_hlt);
-  }
   else {
     glLineWidth(CTX.geom.line_width);
     gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
@@ -675,11 +658,87 @@ void Draw_Geom(Mesh * m)
     DrawVolumes(m);
 }
 
-void ZeroCurve(void *a, void *b)
+// Highlight routines
+
+void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
 {
-  Curve *c;
-  c = *(Curve **) a;
-  c->ipar[3] = 0;
+  Curve *cc;
+  char Message[256], temp[256];
+  int i, nbg;
+
+  if(permanent){
+    // we want to draw incrementally (in between to "Draw()" calls):
+    // we need to make sure that the opengl context is set correctly
+    SetOpenglContext();
+  }
+
+  if(v) {
+    if(permanent){
+      v->Frozen = 1;
+      Draw_GeoPoint(&v,NULL);
+    }
+    else{
+      Msg(STATUS1N, "Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num, v->Pos.X,
+	  v->Pos.Y, v->Pos.Z, v->lc);
+    }
+  }
+  else if(c) {
+    if(permanent){
+      c->ipar[3] = 1;
+      Draw_Curve(&c,NULL);
+    }
+    else{
+      Msg(STATUS1N, "Curve %d  {%d->%d}", c->Num, c->beg->Num, c->end->Num);
+    }
+  }
+  else if(s) {
+    if(permanent){
+      s->ipar[4] = 1;
+      Draw_Surface(&s,NULL);
+    }
+    else{
+      sprintf(Message, "Surface %d {", s->Num);
+      nbg = List_Nbr(s->Generatrices);
+      if(nbg < 10) {
+	for(i = 0; i < nbg; i++) {
+	  List_Read(s->Generatrices, i, &cc);
+	  if(!i)
+	    sprintf(temp, "%d", cc->Num);
+	  else
+	    sprintf(temp, ",%d", cc->Num);
+	  strcat(Message, temp);
+	}
+      }
+      else {
+	strcat(Message, "...");
+      }
+      strcat(Message, "}");
+      Msg(STATUS1N, Message);
+    }
+  }
+  else{
+    if(!permanent)
+      Msg(STATUS1N, " ");
+  }
+}
+
+void HighlightEntityNum(int v, int c, int s, int permanent)
+{
+  if(v) {
+    Vertex *pv = FindPoint(v, THEM);
+    if(pv)
+      HighlightEntity(pv, NULL, NULL, permanent);
+  }
+  if(c) {
+    Curve *pc = FindCurve(c, THEM);
+    if(pc)
+      HighlightEntity(NULL, pc, NULL, permanent);
+  }
+  if(s) {
+    Surface *ps = FindSurface(s, THEM);
+    if(ps)
+      HighlightEntity(NULL, NULL, ps, permanent);
+  }
 }
 
 void ZeroPoint(void *a, void *b)
@@ -687,6 +746,13 @@ void ZeroPoint(void *a, void *b)
   Vertex *v;
   v = *(Vertex **) a;
   v->Frozen = 0;
+}
+
+void ZeroCurve(void *a, void *b)
+{
+  Curve *c;
+  c = *(Curve **) a;
+  c->ipar[3] = 0;
 }
 
 void ZeroSurface(void *a, void *b)
@@ -701,115 +767,4 @@ void ZeroHighlight(Mesh * m)
   Tree_Action(m->Points, ZeroPoint);
   Tree_Action(m->Curves, ZeroCurve);
   Tree_Action(m->Surfaces, ZeroSurface);
-}
-
-// Highlight routines
-
-void BeginHighlight(void)
-{
-  if(CTX.geom.highlight) {
-    if(CTX.overlay)
-      InitOverlay();
-    else
-      InitOpengl();
-    Highlighted = 1;
-    glPushMatrix();
-    InitPosition();
-  }
-}
-
-
-void EndHighlight(int permanent)
-{
-  Highlighted = 0;
-  if(permanent)
-    Draw();
-  else {
-    if(CTX.geom.highlight) {
-      glPopMatrix();
-    }
-  }
-}
-
-void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
-{
-  Curve *cc;
-  char Message[256], temp[256];
-  int i, nbg;
-
-  if(v) {
-    if(permanent)
-      v->Frozen = 1;
-    if(CTX.geom.highlight)
-      Draw_GeoPoint(&v, NULL);
-    Msg(STATUS1N, "Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num, v->Pos.X,
-        v->Pos.Y, v->Pos.Z, v->lc);
-  }
-  else if(c) {
-    if(permanent)
-      c->ipar[3] = 1;
-    if(CTX.geom.highlight)
-      Draw_Curve(&c, NULL);
-    Msg(STATUS1N, "Curve %d  {%d->%d}", c->Num, c->beg->Num, c->end->Num);
-  }
-  else if(s) {
-    if(permanent && s->ipar[4] == 1)
-      return;
-    if(permanent)
-      s->ipar[4] = 1;
-    if(CTX.geom.highlight)
-      Draw_Surface(&s, NULL);
-    sprintf(Message, "Surface %d {", s->Num);
-
-    nbg = List_Nbr(s->Generatrices);
-
-    if(nbg < 10) {
-      for(i = 0; i < nbg; i++) {
-        List_Read(s->Generatrices, i, &cc);
-        if(!i)
-          sprintf(temp, "%d", cc->Num);
-        else
-          sprintf(temp, ",%d", cc->Num);
-        strcat(Message, temp);
-      }
-    }
-    else {
-      strcat(Message, "...");
-    }
-    strcat(Message, "}");
-    Msg(STATUS1N, Message);
-  }
-  else {
-    Msg(STATUS1N, " ");
-  }
-  glFlush();
-}
-
-
-void HighlightEntityNum(int v, int c, int s, int permanant)
-{
-  Vertex *pv, V;
-  Curve *pc, C;
-  Surface *ps, S;
-  if(v) {
-    pv = &V;
-    pv->Num = v;
-    if(Tree_Query(THEM->Vertices, &pv)) {
-      HighlightEntity(pv, NULL, NULL, permanant);
-    }
-  }
-  if(c) {
-    pc = &C;
-    pc->Num = c;
-    if(Tree_Query(THEM->Curves, &pc)) {
-      HighlightEntity(NULL, pc, NULL, permanant);
-    }
-  }
-  if(s) {
-    ps = &S;
-    ps->Num = s;
-    if(Tree_Query(THEM->Surfaces, &ps)) {
-      HighlightEntity(NULL, NULL, ps, permanant);
-    }
-  }
 }

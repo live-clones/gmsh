@@ -144,7 +144,6 @@ public :
     double point_size, line_width, point_sel_size, line_sel_width;
     int point_type, line_type; // flat or 3D
     int light;
-    int highlight;
     int level, old_circle, circle_points, circle_warning;
     int extrude_spline_points, old_newreg;
     double normals, tangents;

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.37 2004-05-15 08:24:07 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.38 2004-05-17 17:40:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -522,16 +522,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         CTX.overlay = 1;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "nooverlay") ||
-              !strcmp(argv[i] + 1, "noov")) {
-        CTX.overlay = CTX.geom.highlight = 0;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "hh")) {
-        CTX.overlay = 0;
-        CTX.geom.highlight = 1;
-        i++;
-      }
       else if(!strcmp(argv[i] + 1, "perspective") ||
               !strcmp(argv[i] + 1, "p")) {
         CTX.ortho = 0;
@@ -555,7 +545,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       }
       else if(!strcmp(argv[i] + 1, "nodb")) {
         CTX.db = 0;
-        CTX.geom.highlight = 0;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "dl")) {

@@ -37,6 +37,7 @@ void InitPosition(void);
 
 void Orthogonalize(int x, int y);
 void ClearOpengl(void);
+void SetOpenglContext(void);
 
 void set_r(int i, double val);
 void set_t(int i, double val);
@@ -49,8 +50,6 @@ void ColorSwitch(int i);
 
 int  SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
 void ZeroHighlight(Mesh *m);
-void BeginHighlight(void);
-void EndHighlight(int permanent);
 void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
 void HighlightEntityNum(int v, int c, int s, int permanant);
 

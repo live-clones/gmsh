@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.230 2004-05-15 08:35:32 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.231 2004-05-17 17:40:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -225,9 +225,6 @@ int SetGlobalShortcut(int event)
 int SelectContour(int type, int num, List_T * Liste1)
 {
   int k = 0, ip, i;
-  List_T *Liste2;
-
-  Liste2 = List_Create(1, 1, sizeof(int));
 
   if(!List_Nbr(Liste1)) {
     switch (type) {
@@ -240,7 +237,7 @@ int SelectContour(int type, int num, List_T * Liste1)
     }
   }
   else {
-    List_Reset(Liste2);
+    List_T *Liste2 = List_Create(1, 1, sizeof(int));
     for(i = 0; i < List_Nbr(Liste1); i++)
       List_Add(Liste2, List_Pointer(Liste1, i));
     List_Reset(Liste1);
@@ -252,6 +249,7 @@ int SelectContour(int type, int num, List_T * Liste1)
       k = allfaceslinked(num, Liste1, Liste2);
       break;
     }
+    List_Delete(Liste2);
   }
 
   for(i = 0; i < List_Nbr(Liste1); i++) {
@@ -266,8 +264,6 @@ int SelectContour(int type, int num, List_T * Liste1)
     }
   }
 
-  Draw();       //added July 18 2001 to overcome missing refreshes... Is this OK ?
-  List_Delete(Liste2);
   return k;
 }
 

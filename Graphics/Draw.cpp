@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.51 2004-05-14 16:47:30 geuzaine Exp $
+// $Id: Draw.cpp,v 1.52 2004-05-17 17:40:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
+#include "CAD.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
@@ -202,7 +203,6 @@ void InitPosition(void)
 void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj)
 {
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
-  GLint i, j, hits, names, *ptr;
 
   glSelectBuffer(SELECTION_BUFFER_SIZE, selectBuf);
 
@@ -217,20 +217,20 @@ void Process_SelectionBuffer(int x, int y, int *n, GLuint * ii, GLuint * jj)
   Draw_Mesh(&M);
   glPopMatrix();
 
-  hits = glRenderMode(GL_RENDER);
+  GLint hits = glRenderMode(GL_RENDER);
   CTX.render_mode = GMSH_RENDER;
 
   if(hits < 0)
     return;     // Selection Buffer Overflow
 
-  ptr = (GLint *) selectBuf;
+  GLint *ptr = (GLint *) selectBuf;
 
-  for(i = 0; i < hits; i++) {
-    names = *ptr;
+  for(int i = 0; i < hits; i++) {
+    GLint names = *ptr;
     ptr++;
     ptr++;
     ptr++;
-    for(j = 0; j < names; j++) {
+    for(int j = 0; j < names; j++) {
       if(j == 0)
         ii[i] = *ptr;
       else if(j == 1)
@@ -245,40 +245,24 @@ void Filter_SelectionBuffer(int n, GLuint * typ, GLuint * ient,
                             Vertex ** thev, Curve ** thec, Surface ** thes,
                             Mesh * m)
 {
+  GLuint typmin = 4;
 
-  Vertex *v = NULL, V;
-  Curve *c = NULL, C;
-  Surface *s = NULL, S;
-
-  int i;
-  GLuint typmin;
-
-  typmin = 4;
-  for(i = 0; i < n; i++) {
+  for(int i = 0; i < n; i++) {
     if(typ[i] < typmin)
       typmin = typ[i];
   }
 
-  for(i = 0; i < n; i++) {
+  for(int i = 0; i < n; i++) {
     if(typ[i] == typmin) {
       switch (typ[i]) {
       case 0:
-        v = &V;
-        v->Num = ient[i];
-        if(Tree_Query(m->Points, &v))
-          *thev = v;
+	*thev = FindPoint(ient[i], m);
         break;
       case 1:
-        c = &C;
-        c->Num = ient[i];
-        if(Tree_Query(m->Curves, &c))
-          *thec = c;
+	*thec = FindCurve(ient[i], m);
         break;
       case 2:
-        s = &S;
-        s->Num = ient[i];
-        if(Tree_Query(m->Surfaces, &s))
-          *thes = s;
+	*thes = FindSurface(ient[i], m);
         break;
       }
     }
