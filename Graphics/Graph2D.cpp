@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.4 2001-10-29 17:03:23 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.5 2001-10-29 17:12:59 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -137,7 +137,7 @@ void Draw_Graph2D(Post_View *v){
       if(v->GraphType==DRAW_POST_2D_SPACE){
 	for(k=0;k<3;k++){
 	  List_Read(v->SP,j+k,&p2[k]);
-	  p1[k] = p2[k]-p1[k];
+	  if(i) p1[k] = p2[k]-p1[k];
 	}
 	dist += sqrt (p1[0] * p1[0] + p1[1] * p1[1] + p1[2] * p1[2]);
 	sprintf(label, v->Format, dist);
