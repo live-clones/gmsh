@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.67 2001-02-23 00:07:51 remacle Exp $
+// $Id: Gmsh.y,v 1.68 2001-03-22 16:09:32 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -50,7 +50,6 @@ static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
 static int            Last_NumberOfPoints = 0;
 static double         d, *pd;
 static ExtrudeParams  extr;
-static List_T         *ListOfDouble_L,*ListOfDouble2_L;
 static List_T         *ListOfListOfDouble_L, *ListOfColor_L=NULL;
 static char           *str;
 static StringXString  *pStrCat;
@@ -117,8 +116,10 @@ void  skip_until (char *skip, char *until);
 %type <i> BoolExpr, NumericAffectation, NumericIncrement
 %type <u> ColorExpr
 %type <c> StringExpr
+%type <l> FExpr_Range
+%type <l> ListOfDouble RecursiveListOfDouble
 %type <l> ListOfShapes Duplicata Transform MultipleShape
-%type <l> ListOfStrings ListOfDouble ListOfListOfDouble ListOfColor
+%type <l> ListOfStrings ListOfListOfDouble ListOfColor
 %type <s> Shape
 
 /* ------------------------------------------------------------------ */
@@ -396,7 +397,7 @@ Printf :
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
-      for(i = 0 ; i<List_Nbr(ListOfDouble_L) ; i++){
+      for(i = 0 ; i<List_Nbr($5) ; i++){
 	if(!i){
 	  str = strtok($3, "%");
 	  strcpy(tmpstring, str); 
@@ -405,12 +406,12 @@ Printf :
 	if(str){
 	  strcpy(tmpstring2, "%");
 	  strcat(tmpstring2, str);
-	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer(ListOfDouble_L,i)); 
+	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer($5,i)); 
 	  strcat(tmpstring, tmpstring3);
 	}
 	else{
 	  vyyerror("Missing %d Parameter(s) in Printf Format",
-		   List_Nbr(ListOfDouble_L)-i);
+		   List_Nbr($5)-i);
 	  break ;
 	}
       }
@@ -2055,20 +2056,20 @@ FExpr_Single :
 FExpr_Range :
     FExpr tDOTS FExpr
     { 
-      ListOfDouble2_L = List_Create(2,1,sizeof(double)) ; 
+      $$ = List_Create(2,1,sizeof(double)) ; 
       for(d=$1 ; ($1<$3)?(d<=$3):(d>=$3) ; ($1<$3)?(d+=1.):(d-=1.)) 
-	List_Add(ListOfDouble2_L, &d) ;
+	List_Add($$, &d) ;
     }
   | FExpr tDOTS FExpr tDOTS FExpr
    {
-      ListOfDouble2_L = List_Create(2,1,sizeof(double)) ; 
+      $$ = List_Create(2,1,sizeof(double)) ; 
       if(!$5 || ($1<$3 && $5<0) || ($1>$3 && $5>0)){
         vyyerror("Wrong Increment in '%g:%g:%g'", $1, $3, $5) ;
-	List_Add(ListOfDouble2_L, &($1)) ;
+	List_Add($$, &($1)) ;
       }
-      else 
+      else
 	for(d=$1 ; ($5>0)?(d<=$3):(d>=$3) ; d+=$5)
-	  List_Add(ListOfDouble2_L, &d) ;
+	  List_Add($$, &d) ;
    }
   ;
 
@@ -2163,28 +2164,45 @@ ListOfDouble :
     }
   | FExpr
     {
-      ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
-      List_Add(ListOfDouble_L, &($1)) ;
-      $$=ListOfDouble_L;
+      $$ = List_Create(2,1,sizeof(double)) ;
+      List_Add($$, &($1)) ;
     }
   | tSTRING '[' ']'
     {
-      ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = $1 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
 	vyyerror("Unknown Variable '%s'", $1) ;
 	d = 0.0 ;
-	List_Add(ListOfDouble_L, &d);
+	List_Add($$, &d);
       }
       else{
 	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
-	  List_Add(ListOfDouble_L, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
       }
-      $$=ListOfDouble_L;
+    }
+  | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
+    {
+      $$ = List_Create(2,1,sizeof(double)) ;
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	d = 0.0 ;
+	List_Add($$, &d);
+      }
+      else{
+	for(i = 0 ; i < List_Nbr($4) ; i++){
+	  j = (int)(*(double*)List_Pointer_Fast($4, i));
+	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
+	    List_Add($$, pd) ;
+	  else
+	    vyyerror("Uninitialized Variable '%s[%d]'", $1, j) ;	  
+	}
+      }
     }
   | '{' RecursiveListOfDouble '}'
     {
-      $$=ListOfDouble_L;
+      $$=$2;
     }
 ;
 
@@ -2192,41 +2210,52 @@ ListOfDouble :
 RecursiveListOfDouble :
     FExpr
     {
-      ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
-      List_Add(ListOfDouble_L, &($1)) ;
+      $$ = List_Create(2,1,sizeof(double)) ;
+      List_Add($$, &($1)) ;
     }
   | FExpr_Range
     { 
-      ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
-      for(i=0 ; i<List_Nbr(ListOfDouble2_L) ; i++){
-	List_Read(ListOfDouble2_L, i, &d) ;
-	List_Add(ListOfDouble_L, &d) ;
-      }
-      List_Delete(ListOfDouble2_L);
+      $$ = $1;
     }
   | tSTRING '[' ']'
     { 
-      ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
+      $$ = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = $1 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
 	vyyerror("Unknown Variable '%s'", $1) ;
       }
       else{
 	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
-	  List_Add(ListOfDouble_L, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+      }
+    }
+  | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
+    {
+      $$ = List_Create(2,1,sizeof(double)) ;
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+      }
+      else{
+	for(i = 0 ; i < List_Nbr($4) ; i++){
+	  j = (int)(*(double*)List_Pointer_Fast($4, i));
+	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
+	    List_Add($$, pd) ;
+	  else
+	    vyyerror("Uninitialized Variable '%s[%d]'", $1, j) ;	  
+	}
       }
     }
   | RecursiveListOfDouble ',' FExpr
     {
-      List_Add(ListOfDouble_L, &($3)) ;
+      List_Add($$, &($3)) ;
     }
   | RecursiveListOfDouble ',' FExpr_Range
     {
-      for(i=0 ; i<List_Nbr(ListOfDouble2_L) ; i++){
-	List_Read(ListOfDouble2_L, i, &d) ;
-	List_Add(ListOfDouble_L, &d) ;
+      for(i=0 ; i<List_Nbr($3) ; i++){
+	List_Read($3, i, &d) ;
+	List_Add($$, &d) ;
       }
-      List_Delete(ListOfDouble2_L);
     }
   | RecursiveListOfDouble ',' tSTRING '[' ']'
     {
@@ -2236,7 +2265,23 @@ RecursiveListOfDouble :
       }
       else{
 	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
-	  List_Add(ListOfDouble_L, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+	  List_Add($$, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+      }
+    }
+  | RecursiveListOfDouble ',' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
+    {
+      TheSymbol.Name = $3 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $3) ;
+      }
+      else{
+	for(i = 0 ; i < List_Nbr($6) ; i++){
+	  j = (int)(*(double*)List_Pointer_Fast($6, i));
+	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
+	    List_Add($$, pd) ;
+	  else
+	    vyyerror("Uninitialized Variable '%s[%d]'", $3, j) ;	  
+	}
       }
     }
 ;
@@ -2326,7 +2371,7 @@ StringExpr :
     }
   | tSprintf '(' tBIGSTR ',' RecursiveListOfDouble ')'
     {
-      for(i = 0 ; i<List_Nbr(ListOfDouble_L) ; i++){
+      for(i = 0 ; i<List_Nbr($5) ; i++){
 	if(!i){
 	  str = strtok($3, "%");
 	  strcpy(tmpstring, str);
@@ -2335,12 +2380,12 @@ StringExpr :
 	if(str){
 	  strcpy(tmpstring2, "%");
 	  strcat(tmpstring2, str);
-	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer(ListOfDouble_L,i)); 
+	  sprintf(tmpstring3, tmpstring2, *(double*)List_Pointer($5,i)); 
 	  strcat(tmpstring, tmpstring3);
 	}
 	else{
 	  vyyerror("Missing %d Parameter(s) in Sprintf Format",
-		   List_Nbr(ListOfDouble_L)-i);
+		   List_Nbr($5)-i);
 	  break ;
 	}
       }
