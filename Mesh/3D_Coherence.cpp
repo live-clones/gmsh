@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.20 2001-08-29 07:27:51 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.21 2001-09-04 13:27:00 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -527,7 +527,7 @@ Vertex *Edge_Face (Edge * e, Face * f){
   b[1] = e->V[0]->Pos.Y - f->V[0]->Pos.Y;
   b[2] = e->V[0]->Pos.Z - f->V[0]->Pos.Z;
 
-  if (!sys3x3 (mat, b, res, &det))
+  if (!sys3x3_with_tol (mat, b, res, &det))//???TOLERANCE?????????????
     return NULL;
 
   /* res donne les coordonnees u,v de l'intersection dans la
@@ -823,7 +823,7 @@ void Intersect_Edge_Simplexe (Edge * e, Simplex * s, Intersection * I){
     NbVer = 3;
     NbEdg = 3;
     NbFac = 1;
-    NbInt = 33;
+    NbInt = 2;
   }
   
   XminE = DMIN (e->V[0]->Pos.X, e->V[1]->Pos.X);
@@ -867,16 +867,17 @@ void Intersect_Edge_Simplexe (Edge * e, Simplex * s, Intersection * I){
       (I->NbIntersect)++;
       if (j == 2){
         List_Replace (NewPoints, &s->V[i], compareVertex);
-        /*      printf("l'arete intersecte un noeud\n"); */
+	//printf("l'arete intersecte un noeud\n");
         pvertex (s->V[i], s->V[i]);
         pedge (e, e);
       }
     }
   }
-  
-  if (I->NbIntersect == NbInt)
+
+  if (I->NbIntersect == NbInt){
+    Msg(WARNING, "If the mesh is still correct after this, contact us :-)");
     return;
-  
+  }
   /* On regarde si l'arete coupe une autre arete */
   for (i = 0; i < NbEdg; i++){
     x.ef = 1;
@@ -1266,7 +1267,7 @@ int Coherence (Volume * v, Mesh * m){
       else
 	Msg(INFO, "Recoverable face (%d <--> %d=2*(%d-1)-%d)",
 	    List_Nbr(ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
-      
+
       for (j = 0; j < List_Nbr (v->Surfaces); j++){
         List_Read (v->Surfaces, j, &s);
         if (Tree_Search (s->Simplexes, &simp)){
@@ -1283,7 +1284,6 @@ int Coherence (Volume * v, Mesh * m){
           }
           Tree_Suppress (s->Simplexes, &simp);
         }
-
       }
     }
     else{

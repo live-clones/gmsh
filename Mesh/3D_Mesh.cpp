@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.29 2001-08-28 22:15:15 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.30 2001-09-04 13:27:00 geuzaine Exp $
 
 /*
  
@@ -730,7 +730,8 @@ void Maillage_Volume (void *data, void *dum){
     
     Convex_Hull_Mesh (POINTS, LOCAL);
     
-    while (!Coherence (v, LOCAL));
+    if(!Coherence (v, LOCAL)) 
+      Msg(GERROR, "Surface recovery failed (send a bug report with the geo file to <gmsh@geuz.org>!)");
 
     Link_Simplexes (NULL, LOCAL->Simplexes);
     
