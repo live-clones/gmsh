@@ -37,3 +37,5 @@ Line Loop(27) = {-6,2,10};
 Ruled Surface(28) = {27};
 Surface Loop(29) = {26,24,22,28,14,16,18,20};
 Volume(30) = {29};
+Characteristic Length {2} = 0.02;
+Characteristic Length {4} = 0.01;
