@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.239 2002-11-10 18:11:46 geuzaine Exp $
+# $Id: Makefile,v 1.240 2002-11-10 18:16:11 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -677,7 +677,7 @@ distrib-mac:
 	rm -rf Gmsh.app/Contents/Resources/*/CVS\
                Gmsh.app/Contents/Resources/*/*~\
                Gmsh.app/Contents/Resources/*/*.msh
-	tar zcvf gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz Gmsh.app
+	tar zcvf gmsh-$(GMSH_RELEASE)-MacOSX.tgz Gmsh.app
 
 dem:
 	gtar zcvf gmsh-demos.tgz $(GMSH_DEMO_DIR)
