@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.127 2004-07-14 22:42:27 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.128 2004-07-15 02:38:53 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -1891,8 +1891,8 @@ mesh, use the @code{-bgm} command-line option (@pxref{Command-line options})
 or select `Apply as background mesh' in the post-processing view option
 menu.
 
-Background meshes are not supported by the 2D anisotropic algorithm and the
-3D Netgen algorithm.
+Background meshes are supported by all algorithms except the 2D anisotropic
+algorithm and the algorithms based on Netgen.
 @end enumerate
 
 Here are the mesh commands that are related to the specification of
@@ -1933,9 +1933,6 @@ numbers are listed in @var{expression-list}. The new value is given by
 @cindex Mesh, elliptic
 
 @ftable @code
-@c todo:
-@c @item Elliptic Surface @{ @var{expression} @} = @{ @var{expression-list} @};
-
 @item Extrude Point | Line | Surface @{ @var{expression}, @{ @var{expression-list} @} @} @{ @var{layers}; @dots{} @} ;
 Extrudes both the geometry and the mesh using a translation
 (@pxref{Extrusions}). The @var{layers} option determines how the mesh is
