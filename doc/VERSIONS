@@ -1,7 +1,8 @@
-$Id: VERSIONS,v 1.58 2001-08-20 07:38:30 geuzaine Exp $
+$Id: VERSIONS,v 1.59 2001-08-20 07:47:01 geuzaine Exp $
 
 New in 1.24: Fixed characteristic length interpolation for Splines;
-Added BSplines; Integrated Triangle as alternative 2D mesh generator;
+Added BSplines; Integrated Jonathan Shewchuk's Triangle as an
+alternative isotropic 2D mesh generator;
 
 New in 1.23: Fixed duplicate elements generation + non-matching
 tetrahedra faces in 3D extruded meshes; Better display of displacement
