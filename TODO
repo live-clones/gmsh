@@ -1,4 +1,4 @@
-$Id: TODO,v 1.22 2003-06-15 16:43:32 geuzaine Exp $
+$Id: TODO,v 1.23 2003-06-23 21:34:39 geuzaine Exp $
 
 ********************************************************************
 
@@ -56,8 +56,10 @@ the same).
 
 All surface meshes are made in a mean plane. If your surface cannot be
 projected into a plane with a 1-to-1 correspondance between the nodes,
-then gmsh will fail. We should mesh in the parametric space in these
-cases.
+then gmsh will fail. 
+
+We should definitely use a better projection algorithm. See the work
+by Desbrun et al. in CS for this.
 
 ********************************************************************
 
