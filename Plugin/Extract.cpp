@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.6 2004-03-15 20:11:41 geuzaine Exp $
+// $Id: Extract.cpp,v 1.7 2004-05-12 06:03:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Extract) extracts the iComponent-th\n"
+         "Plugin(Extract) extracts the `iComponent'-th\n"
 	 "component of the view `iView'. If `iView' < 0, the\n"
 	 "plugin is run on the current view.\n"
 	 "\n"

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.2 2004-05-12 03:29:29 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.3 2004-05-12 06:03:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ StringXNumber EvaluateOptions_Number[] = {
 };
 
 StringXString EvaluateOptions_String[] = {
-  {GMSH_FULLRC, "Expression", NULL, "Sin(v) * Sqrt(x^2+y^2)"}
+  {GMSH_FULLRC, "Expression", NULL, "0.01*(Fabs(Sin(30*y)*Fabs(Cos(30*x)))+0.3)"}
 };
 
 extern "C"
@@ -72,7 +72,8 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "the usual mathematical functions, `Expression'\n"
 	 "can contain the symbols x, y, z and v, which\n"
 	 "represent the three spatial coordinates and the\n"
-	 "value of the field, respectively.\n"
+	 "value of the field, respectively. If `iView' < 0, the\n"
+	 "plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(Evaluate) is executed in-place.\n");
 }
