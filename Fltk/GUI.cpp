@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.206 2002-11-03 16:49:55 geuzaine Exp $
+// $Id: GUI.cpp,v 1.207 2002-11-03 18:32:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -767,7 +767,8 @@ void GUI::create_menu_window(int argc, char **argv){
     m_toggle_butt[i]->hide();
 
     m_toggle2_butt[i]= new Fl_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH,"@>");
-    m_toggle2_butt[i]->labeltype(FL_SYMBOL_LABEL);
+    m_toggle2_butt[i]->labelsize(11);
+    m_toggle2_butt[i]->align(FL_ALIGN_CENTER);
 #if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
     m_toggle2_butt[i]->tooltip("Show view option menu");
 #endif
