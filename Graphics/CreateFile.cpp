@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.62 2004-12-30 22:43:22 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.63 2004-12-31 17:50:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -79,7 +79,7 @@ void CreateOutputFile(char *name, int format)
     else if(!strcmp(ext, ".msh"))  CreateOutputFile(name, FORMAT_MSH);
     else if(!strcmp(ext, ".unv"))  CreateOutputFile(name, FORMAT_UNV);
     else if(!strcmp(ext, ".dmg"))  CreateOutputFile(name, FORMAT_DMG);
-    else if(!strcmp(ext, ".pos"))  CreateOutputFile(name, FORMAT_LC_SUR);
+    else if(!strcmp(ext, ".pos"))  CreateOutputFile(name, FORMAT_LC);
     else if(!strcmp(ext, ".gif"))  CreateOutputFile(name, FORMAT_GIF);
     else if(!strcmp(ext, ".jpg"))  CreateOutputFile(name, FORMAT_JPEG);
     else if(!strcmp(ext, ".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
@@ -116,13 +116,8 @@ void CreateOutputFile(char *name, int format)
     Print_Mesh(&M, name, format);
     break;
 
-  case FORMAT_LC_SUR:
-    ExportLcFieldOnSurfaces(&M, name);
-    Msg(STATUS2N, "Wrote '%s'", name);
-    break;
-
-  case FORMAT_LC_VOL:
-    ExportLcFieldOnVolume(&M, name);
+  case FORMAT_LC:
+    ExportLcField(&M, name);
     Msg(STATUS2N, "Wrote '%s'", name);
     break;
 

@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.3 2004-11-19 18:26:47 geuzaine Exp $
+// $Id: Element.cpp,v 1.4 2004-12-31 17:50:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -76,6 +76,15 @@ Quadrangle *Create_Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4)
   return new Quadrangle(v1, v2, v3, v4);
 }
 
+void Quadrangle::ExportLcField(FILE * f)
+{
+  fprintf(f, "SQ(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	  "%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g};\n",
+	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
+	  V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
+}
+
 void Free_Quadrangle(void *a, void *b)
 {
   Quadrangle *q = *(Quadrangle **) a;
@@ -136,6 +145,20 @@ Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
                               Vertex * v7, Vertex * v8)
 {
   return new Hexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
+}
+
+void Hexahedron::ExportLcField(FILE * f)
+{
+  fprintf(f,"SH(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
+	  "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
+	  V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
+	  V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[6]->Pos.X, V[6]->Pos.Y, 
+	  V[6]->Pos.Z, V[7]->Pos.X, V[7]->Pos.Y, V[7]->Pos.Z, V[0]->lc, 
+	  V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc, V[5]->lc, V[6]->lc, V[7]->lc);
 }
 
 void Free_Hexahedron(void *a, void *b)
@@ -199,6 +222,18 @@ Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
   return new Prism(v1, v2, v3, v4, v5, v6);
 }
 
+void Prism::ExportLcField(FILE * f)
+{
+  fprintf(f,"SI(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
+	  "{%.16g,%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
+	  V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
+	  V[5]->Pos.X, V[5]->Pos.Y, V[5]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc,
+	  V[3]->lc, V[4]->lc, V[5]->lc);
+}
+
 void Free_Prism(void *a, void *b)
 {
   Prism *p = *(Prism **) a;
@@ -256,6 +291,16 @@ Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
                         Vertex * v4, Vertex * v5)
 {
   return new Pyramid(v1, v2, v3, v4, v5);
+}
+
+void Pyramid::ExportLcField(FILE * f)
+{
+  fprintf(f,"SY(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	  "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g,%.16g};\n",
+	  V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	  V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X, 
+	  V[3]->Pos.Y, V[3]->Pos.Z, V[4]->Pos.X, V[4]->Pos.Y, V[4]->Pos.Z,
+	  V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc, V[4]->lc);
 }
 
 void Free_Pyramid(void *a, void *b)

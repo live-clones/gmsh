@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.36 2004-11-19 18:26:47 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.37 2004-12-31 17:50:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -221,16 +221,18 @@ double SimplexBase::GammaShapeMeasure()
 void SimplexBase::ExportLcField(FILE * f)
 {
   if(!V[2])
-    fprintf(f, "SL(%f,%f,%f,%f,%f,%f){%12.5E,%12.5E};\n",
+    fprintf(f, "SL(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g){%.16g,%.16g};\n",
             V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
             V[1]->Pos.Z, V[0]->lc, V[1]->lc);
   else if(!V[3])
-    fprintf(f, "ST(%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E};\n",
+    fprintf(f, "ST(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g)"
+	    "{%.16g,%.16g,%.16g};\n",
             V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
             V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
             V[1]->lc, V[2]->lc);
   else
-    fprintf(f, "SS(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
+    fprintf(f, "SS(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,"
+	    "%.16g,%.16g,%.16g){%.16g,%.16g,%.16g,%.16g};\n",
 	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
 	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
 	    V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);

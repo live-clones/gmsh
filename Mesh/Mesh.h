@@ -56,8 +56,7 @@
 #define FORMAT_PNGTEX        23
 #define FORMAT_PDF           24
 #define FORMAT_PDFTEX        25
-#define FORMAT_LC_SUR        31
-#define FORMAT_LC_VOL        32
+#define FORMAT_LC            26
 
 #define CONV_VALUE    0.8
 
@@ -487,8 +486,7 @@ void ActionLissSurf(void *data, void *dummy);
 int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
 		double a);
 void ApplyLcFactor(Mesh *M);
-void ExportLcFieldOnVolume(Mesh *M, char *filename);
-void ExportLcFieldOnSurfaces(Mesh *M, char *filename);
+void ExportLcField(Mesh *M, char *filename, int volume=1, int surface=1);
 
 void Degre1();
 void Degre2(int dim);

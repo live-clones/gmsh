@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.321 2004-12-31 16:19:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.322 2004-12-31 17:50:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -334,15 +334,9 @@ int _save_msh(char *name)
   return msh_dialog(name);
 }
 
-int _save_lc_sur(char *name)
+int _save_lc(char *name)
 {
-  CreateOutputFile(name, FORMAT_LC_SUR);
-  return 1;
-}
-
-int _save_lc_vol(char *name)
-{
-  CreateOutputFile(name, FORMAT_LC_VOL);
+  CreateOutputFile(name, FORMAT_LC);
   return 1;
 }
 
@@ -449,10 +443,9 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
     {"Gmsh mesh (*.msh)", _save_msh},
-    {"Gmsh surface LC field (*.pos)", _save_lc_sur},
-    {"Gmsh volume LC field (*.pos)", _save_lc_vol},
+    {"Gmsh characteristic length field (*.pos)", _save_lc},
     {"GREF mesh (*.gref)", _save_gref},
-    {"I-DEAS universal mesh format (*.unv)", _save_unv},
+    {"I-DEAS universal mesh (*.unv)", _save_unv},
     {"VRML surface mesh (*.wrl)", _save_vrml},
     {"GIF (*.gif)", _save_gif},
 #if defined(HAVE_LIBJPEG)

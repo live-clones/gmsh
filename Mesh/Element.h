@@ -33,6 +33,8 @@ class Element {
   Element();
   virtual ~Element();
   double lij(Vertex *Vi, Vertex *Vj);
+  virtual double maxEdge() = 0;
+  virtual void ExportLcField(FILE *f) = 0;
 };
 
 class Quadrangle : public Element{
@@ -42,6 +44,7 @@ class Quadrangle : public Element{
   Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
   ~Quadrangle() {}
   double maxEdge();
+  void ExportLcField(FILE *f);
 };
 
 class Hexahedron : public Element{
@@ -53,6 +56,7 @@ class Hexahedron : public Element{
   ~Hexahedron() {}
   double Orientation();
   double maxEdge();
+  void ExportLcField(FILE *f);
 };
 
 class Prism : public Element{
@@ -64,6 +68,7 @@ class Prism : public Element{
   ~Prism() {}
   double Orientation();
   double maxEdge();
+  void ExportLcField(FILE *f);
 };
 
 class Pyramid : public Element{
@@ -74,6 +79,7 @@ class Pyramid : public Element{
   ~Pyramid() {}
   double Orientation();
   double maxEdge();
+  void ExportLcField(FILE *f);
 };
 
 // C interface

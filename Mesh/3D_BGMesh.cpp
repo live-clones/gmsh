@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.32 2004-11-22 22:06:34 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.33 2004-12-31 17:50:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,10 +30,8 @@
 extern Mesh *THEM;
 extern Context_T CTX;
 
-void ExportLcFieldOnVolume(Mesh * M, char *filename)
+void ExportLcField(Mesh * M, char *filename, int volume, int surface)
 {
-  Volume *vol;
-  SimplexBase *simp;
   FILE *f = fopen(filename, "w");
 
   if(!f) {
@@ -41,52 +39,62 @@ void ExportLcFieldOnVolume(Mesh * M, char *filename)
     return;
   }
 
-  List_T *l = Tree2List(M->Volumes);
-  fprintf(f, "View \"LC_FIELD\" {\n");
-  for(int i = 0; i < List_Nbr(l); i++) {
-    List_Read(l, i, &vol);
-    List_T *ll;
-    for(int simtype = 0; simtype < 2; simtype++){
-      ll = (!simtype) ? Tree2List(vol->Simplexes) : Tree2List(vol->SimplexesBase);
-      for(int j = 0; j < List_Nbr(ll); j++) {
-	List_Read(ll, j, &simp);
-	simp->ExportLcField(f);
-      }
+  if(volume){
+    List_T *l = Tree2List(M->Volumes);
+    fprintf(f, "View \"Volume LC Field\" {\n");
+    for(int i = 0; i < List_Nbr(l); i++) {
+      Volume *vol;
+      List_Read(l, i, &vol);
+      List_T *ll;
+      ll = Tree2List(vol->Simplexes);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(Simplex**)List_Pointer(ll, j))->ExportLcField(f);
+      List_Delete(ll);
+      ll = Tree2List(vol->SimplexesBase);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(SimplexBase**)List_Pointer(ll, j))->ExportLcField(f);
+      List_Delete(ll);
+      ll = Tree2List(vol->Hexahedra);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(Hexahedron**)List_Pointer(ll, j))->ExportLcField(f);
+      List_Delete(ll);
+      ll = Tree2List(vol->Prisms);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(Prism**)List_Pointer(ll, j))->ExportLcField(f);
+      List_Delete(ll);
+      ll = Tree2List(vol->Pyramids);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(Pyramid**)List_Pointer(ll, j))->ExportLcField(f);
       List_Delete(ll);
     }
+    List_Delete(l);
+    fprintf(f, "};\n");
   }
-  List_Delete(l);
-  fprintf(f, "};\n");
-  fclose(f);
-}
-
-void ExportLcFieldOnSurfaces(Mesh * M, char *filename)
-{
-  Surface *surf;
-  SimplexBase *simp;
-  FILE *f = fopen(filename, "w");
-
-  if(!f) {
-    Msg(GERROR, "Unable to open file '%s'", filename);
-    return;
-  }
-
-  List_T *l = Tree2List(M->Surfaces);
-  fprintf(f, "View \"LC_FIELD\" {\n");
-  for(int i = 0; i < List_Nbr(l); i++) {
-    List_Read(l, i, &surf);
-    List_T *ll;
-    for(int simtype = 0; simtype < 2; simtype++){
-      ll = (!simtype) ? Tree2List(surf->Simplexes) : Tree2List(surf->SimplexesBase);
-      for(int j = 0; j < List_Nbr(ll); j++) {
-	List_Read(ll, j, &simp);
-	simp->ExportLcField(f);
-      }
+  
+  if(surface){
+    List_T *l = Tree2List(M->Surfaces);
+    fprintf(f, "View \"Surface LC Field\" {\n");
+    for(int i = 0; i < List_Nbr(l); i++) {
+      Surface *surf;
+      List_Read(l, i, &surf);
+      List_T *ll;
+      ll = Tree2List(surf->Simplexes);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(Simplex**)List_Pointer(ll, j))->ExportLcField(f);
+      List_Delete(ll);
+      ll = Tree2List(surf->SimplexesBase);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(SimplexBase**)List_Pointer(ll, j))->ExportLcField(f);
+      List_Delete(ll);
+      ll = Tree2List(surf->Quadrangles);
+      for(int j = 0; j < List_Nbr(ll); j++)
+	(*(Quadrangle**)List_Pointer(ll, j))->ExportLcField(f);
       List_Delete(ll);
     }
+    List_Delete(l);
+    fprintf(f, "};\n");
   }
-  List_Delete(l);
-  fprintf(f, "};\n");
+
   fclose(f);
 }
 
