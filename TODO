@@ -1,21 +1,8 @@
-$Id: TODO,v 1.13 2003-03-11 03:47:06 geuzaine Exp $
+$Id: TODO,v 1.14 2003-03-11 07:16:10 geuzaine Exp $
 
 ********************************************************************
 
-Combine view + save view with != nb of time steps
-
-gmsh tutorial/view*.pos
-View->Combine->All
-save merged view as ascii view
-
-The resulting view is corrupted. This is due to the fact that
-ascii/binary views do not support different number of time steps per
-element type (here, we have e.g. 5 time steps for ST and only 1 for
-SS), and the merge routine just adds everything instead of just the
-values up to MIN(NbTimeStep for all merged views).
-
--> need to make merge() more intelligent. First pass on NbTimeStep,
-then List_Add() only up to common TimeStep value.
+Memory leaks, memory leaks (start with mesh_domain() and the parser)
 
 ********************************************************************
 
@@ -25,10 +12,6 @@ the same).
 ********************************************************************
 
 Rewrite the View interface in C++
-
-********************************************************************
-
-Memory leaks, memory leaks (start with mesh_domain() and the parser)
 
 ********************************************************************
 
@@ -115,23 +98,26 @@ mesh: il faut vraiment que je regarde la relation entre l'orientation
 des surfaces geometriques et les l'orientation des elements du
 maillage...
 
-Subject: Re: [Gmsh] surface normals: some point inwards, but most point in the negative direction
+Subject: Re: [Gmsh] surface normals: some point inwards, but most
+point in the negative direction
         Date: Thu, 21 Nov 2002 05:59:56 -0500
         From: "Matthias G. Imhof" <mgi@vt.edu>
- Organization: Virginia Tech: Seismic Reservoir Characterization Laboratory
+ Organization: Virginia Tech: Seismic Reservoir Characterization
+Laboratory
           To: Christophe Geuzaine <geuzaine@acm.caltech.edu>
   References: 1 , 2
 
 Christophe,
 
-Thanks for a nice tool! I finally extended my boundary-element method to 3D and 
-find your mesh generator perfect to make sure the boundary points are placed 
-uniformly on a sphere instead of clustering up at the poles.
+Thanks for a nice tool! I finally extended my boundary-element method
+to 3D and find your mesh generator perfect to make sure the boundary
+points are placed uniformly on a sphere instead of clustering up at
+the poles.
 
-My only gripe is with the visualization of surface normals in gmsh. While 
-Physical Surface allows change of the normal directions in the mesh file, the 
-normals are not changed in the visualization which makes identification of wrong 
-polarity surfaces difficult.
+My only gripe is with the visualization of surface normals in
+gmsh. While Physical Surface allows change of the normal directions in
+the mesh file, the normals are not changed in the visualization which
+makes identification of wrong polarity surfaces difficult.
 
 Matthias
 

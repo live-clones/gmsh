@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.90 2003-03-01 23:18:11 geuzaine Exp $
+// $Id: Views.cpp,v 1.91 2003-03-11 07:16:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1362,6 +1362,24 @@ static void merge(List_T * a, List_T * b)
 
 void MergeViews(int all)
 {
+  // sanity check
+  int first = 1, nbt;
+  for(int i = 1; i < List_Nbr(CTX.post.list) - 1; i++) {
+    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    if(all || v->Visible) {
+      if(first){
+	nbt = v->NbTimeStep;
+	first = 0;
+      }
+      else{
+	if(v->NbTimeStep != nbt){
+	  Msg(GERROR, "Cannot merge views having different number of time steps");
+	  return;
+	}
+      }
+    }
+  }
+
   Post_View *vm = BeginView(1);
   for(int i = 0; i < List_Nbr(CTX.post.list) - 1; i++) {
     Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
