@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.44 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.45 2001-04-29 14:36:44 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -303,7 +303,10 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_alpha_blending(0, GMSH_SET, WID->gen_butt[5]->value());
   opt_general_trackball(0, GMSH_SET, WID->gen_butt[6]->value());
   opt_general_terminal(0, GMSH_SET, WID->gen_butt[7]->value());
+  double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, WID->gen_butt[8]->value());
+  if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
+    Print_Options(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
   opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
   opt_general_orthographic(0, GMSH_SET, WID->gen_butt[10]->value());
   opt_general_moving_light(0, GMSH_SET, WID->gen_butt[12]->value());
@@ -318,6 +321,7 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_tmp_filename(0, GMSH_SET, (char*)WID->gen_input[1]->value());
   opt_general_error_filename(0, GMSH_SET, (char*)WID->gen_input[2]->value());
   opt_general_options_filename(0, GMSH_SET, (char*)WID->gen_input[3]->value());
+
   Draw();
 }
 
