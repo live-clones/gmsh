@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.77 2004-04-21 06:31:23 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.78 2004-04-21 07:15:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -265,8 +265,10 @@ double intersectCutPlane(int num, Vertex **v, int *edges, int *faces)
     if(val * CTX.mesh.evalCutPlane(v[i]->Pos.X, v[i]->Pos.Y, v[i]->Pos.Z) <= 0){
       // the element intersects the cut plane
       if(CTX.mesh.cut_plane_as_surface){
-	*edges = CTX.mesh.surfaces_edges;
-	*faces = CTX.mesh.surfaces_faces;
+	if(!*edges)
+	  *edges = CTX.mesh.surfaces_edges;
+	if(!*faces)
+	  *faces = CTX.mesh.surfaces_faces;
       }
       return 1.;
     }
