@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.46 2003-04-10 13:12:36 remacle Exp $
+// $Id: Geom.cpp,v 1.47 2003-04-10 13:23:29 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -311,7 +311,6 @@ void Draw_Triangulated_Surface(Surface * s)
 	  }
       }
     glEnd();
-    printf("coucou %d %d\n",List_Nbr(s->thePolyRep->polygons),k);
   }  
   glDisable(GL_POLYGON_OFFSET_FILL); 
 }
