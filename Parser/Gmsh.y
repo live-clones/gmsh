@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.22 2000-12-07 01:03:38 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.23 2000-12-07 01:14:30 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -109,6 +109,8 @@ void  vyyerror (char *fmt, ...);
 %type <i> BoolExpr
 %type <u> Color
 
+/* A VERFIFIER ! Je n'ai pas le bouquin sous les yeux */
+
 /* ------------------------------------------------------------------ */
 /* Operators (with ascending priority) : cf. C language               */
 /*                                                                    */
@@ -116,10 +118,11 @@ void  vyyerror (char *fmt, ...);
 /*        - UNARYPREC is a dummy terminal to resolve ambiguous cases  */ 
 /*          for + and - (which exist in both unary and binary form)   */
 /* ------------------------------------------------------------------ */
-%left    tAFFECT tAFFECTPLUS tAFFECTMINUS tAFFECTTIMES tAFFECTDIVIDE
+%left    tAFFECT
 %right   '?' tDOTS
 %left    tAND tOR
 %left    tNOTEQUAL tEQUAL tAPPROXEQUAL
+%left    tAFFECTPLUS tAFFECTMINUS tAFFECTTIMES tAFFECTDIVIDE
 %left    '<' '>' tLESSOREQUAL tGREATEROREQUAL
 %left    '+' '-'
 %left    '*' '/' '%'
@@ -708,6 +711,22 @@ Affectation :
       TheSymbol.val  = $3;
       List_Replace(Symbol_L,&TheSymbol,CompareSymbols);
     }
+  | tSTRING tPLUSPLUS tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val += 1. ;
+    }
+  | tSTRING tMINUSMINUS tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val -= 1. ;
+    }
   | tSTRING tAFFECTPLUS FExpr tEND
     {
       TheSymbol.Name = $1 ;
@@ -715,22 +734,6 @@ Affectation :
 	vyyerror("Unknown Variable '%s'", $1) ;
       else
 	pSymbol->val += $3 ;
-    }
-  | tSTRING tAFFECTMINUS FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else
-	pSymbol->val -= $3 ;
-    }
-  | tSTRING tPLUSPLUS FExpr tEND
-    {
-      TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	vyyerror("Unknown Variable '%s'", $1) ;
-      else
-	pSymbol->val += 1. ;
     }
   | tSTRING tAFFECTMINUS FExpr tEND
     {
