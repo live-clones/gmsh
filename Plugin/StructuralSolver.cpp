@@ -4,7 +4,10 @@
 #include "Draw.h"
 #include "Utils.h"
 #include "Numeric.h"
+
+#ifdef HAVE_FLTK 
 #include "Shortcut_Window.h"
+#endif
 
 extern Mesh *THEM;
 extern Context_T CTX;
