@@ -1,4 +1,4 @@
-// $Id: Harmonic2Time.cpp,v 1.7 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: Harmonic2Time.cpp,v 1.8 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -67,7 +67,9 @@ void GMSH_Harmonic2TimePlugin::getInfos(char *author, char *copyright,
          "'iView'['imaginaryPart'] * sin(p)), with\n"
          "p = 2*Pi*k/'nbSteps', k = 0, ..., 'nbSteps'-1.\n"
 	 "If 'iView' < 0, the plugin is run on the\n"
-	 "current view.\n");
+	 "current view.\n"
+	 "\n"
+	 "Plugin(Harmonic2Time) creates one new view.\n");
 }
 
 int GMSH_Harmonic2TimePlugin::getNbOptions() const

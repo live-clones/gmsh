@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.13 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.14 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,9 @@ void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
 	 "in the scalar view 'iView', assuming that all\n"
          "the points belong to a surface than can be\n"
 	 "univoquely projected into a plane. If 'iView'\n"
-	 "< 0, the plugin is run on the current view.\n");
+	 "< 0, the plugin is run on the current view.\n"
+	 "\n"
+	 "Plugin(Triangulate) creates one new view.\n");
 }
 
 int GMSH_TriangulatePlugin::getNbOptions() const
@@ -226,7 +228,7 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
     return View;
   }
   else {
-    Msg(WARNING, "No scalar points to triangulate in view '%s'", vv->Name);
+    Msg(WARNING, "No scalar points to triangulate in View[%d]", vv->Index);
     return 0;
   }
 

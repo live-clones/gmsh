@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.29 2003-11-22 18:45:40 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.30 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -61,7 +61,9 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
          "Plugin(CutPlane) cuts the view 'iView' with\n"
 	 "the plane 'A'*X + 'B'*Y + 'C'*Z + 'D' = 0. If\n"
 	 "'iView' < 0, the plugin is run on the current\n"
-	 "view.\n");
+	 "view.\n"
+	 "\n"
+	 "Plugin(CutPlane) creates one new view.\n");
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const

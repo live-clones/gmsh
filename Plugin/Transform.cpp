@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.19 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: Transform.cpp,v 1.20 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,9 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
 	 "['A21' 'A22' 'A23']\n"
 	 "['A31' 'A32' 'A33'].\n"
 	 "If 'iView' < 0, the plugin is run on the current\n"
-	 "view.\n");
+	 "view.\n"
+	 "\n"
+	 "Plugin(Transform) is executed in-place.\n");
 }
 
 int GMSH_TransformPlugin::getNbOptions() const

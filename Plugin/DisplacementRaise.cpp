@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.9 2003-11-22 18:45:40 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.10 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -68,7 +68,9 @@ void GMSH_DisplacementRaisePlugin::getInfos(char *author, char *copyright,
 	 "run on the current view. If 'dView' < 0, the\n"
 	 "plugin looks for the displacements in the\n"
 	 "view located just after 'iView' in the view\n"
-	 "list.\n");
+	 "list.\n"
+	 "\n"
+	 "Plugin(DisplacementRaise) is executed in-place.\n");
 }
 
 int GMSH_DisplacementRaisePlugin::getNbOptions() const
@@ -88,7 +90,7 @@ void GMSH_DisplacementRaisePlugin::catchErrorMessage(char *errorMessage) const
 
 static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm, 
 				  Post_View * dView, List_T * dList, int dNbElm,
-				  int nbVert, double factor, int dTimeStep)
+				  int nbNod, double factor, int dTimeStep)
 {
   if(!iNbElm || !dNbElm)
     return;
@@ -117,13 +119,13 @@ static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm,
   int dNb = List_Nbr(dList) / dNbElm;
   for(int i = 0, j = 0; i < List_Nbr(iList); i += iNb, j += dNb) {
     double *x = (double *)List_Pointer_Fast(iList, i);
-    double *y = (double *)List_Pointer_Fast(iList, i + nbVert);
-    double *z = (double *)List_Pointer_Fast(iList, i + 2 * nbVert);
-    double *val = (double *)List_Pointer_Fast(dList, j + 3 * nbVert);
-    for(int k = 0; k < nbVert; k++) {
-      x[k] += factor * val[3 * nbVert * dTimeStep + 3 * k];
-      y[k] += factor * val[3 * nbVert * dTimeStep + 3 * k + 1];
-      z[k] += factor * val[3 * nbVert * dTimeStep + 3 * k + 2];
+    double *y = (double *)List_Pointer_Fast(iList, i + nbNod);
+    double *z = (double *)List_Pointer_Fast(iList, i + 2 * nbNod);
+    double *val = (double *)List_Pointer_Fast(dList, j + 3 * nbNod);
+    for(int k = 0; k < nbNod; k++) {
+      x[k] += factor * val[3 * nbNod * dTimeStep + 3 * k];
+      y[k] += factor * val[3 * nbNod * dTimeStep + 3 * k + 1];
+      z[k] += factor * val[3 * nbNod * dTimeStep + 3 * k + 2];
     }
   }
 

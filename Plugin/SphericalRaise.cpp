@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.9 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.10 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,9 @@ void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
 	 "and View['iView'].RaiseZ, the raise is applied\n"
 	 " along the radius of a sphere centered at ('Xc',\n"
 	 "'Yc', 'Zc'). If 'iView' < 0, the plugin is run\n"
-	 "on the current view.\n");
+	 "on the current view.\n"
+	 "\n"
+	 "Plugin(SphericalRaise) is executed in-place.\n");
 }
 
 int GMSH_SphericalRaisePlugin::getNbOptions() const
@@ -89,14 +91,14 @@ void GMSH_SphericalRaisePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "SphericalRaise failed...");
 }
 
-static void sphericalRaiseList(Post_View * v, List_T * list, int nbelm,
-                               int nbvert, int timeStep, double center[3], 
+static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
+                               int nbNod, int timeStep, double center[3], 
 			       double raise)
 {
   double *x, *y, *z, *val, d[3], coef;
   int nb, i, j;
 
-  if(nbelm)
+  if(nbElm)
     v->Changed = 1;
   else
     return;
@@ -114,18 +116,18 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbelm,
   //      get nodal value val at xyz
   //      compute (x,y,z)_new = (x,y,z)_old + raise*val*(dx,dy,dz)
 
-  nb = List_Nbr(list) / nbelm;
+  nb = List_Nbr(list) / nbElm;
   for(i = 0; i < List_Nbr(list); i += nb) {
     x = (double *)List_Pointer_Fast(list, i);
-    y = (double *)List_Pointer_Fast(list, i + nbvert);
-    z = (double *)List_Pointer_Fast(list, i + 2 * nbvert);
-    val = (double *)List_Pointer_Fast(list, i + 3 * nbvert);
-    for(j = 0; j < nbvert; j++) {
+    y = (double *)List_Pointer_Fast(list, i + nbNod);
+    z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
+    val = (double *)List_Pointer_Fast(list, i + 3 * nbNod);
+    for(j = 0; j < nbNod; j++) {
       d[0] = x[j] - center[0];
       d[1] = y[j] - center[1];
       d[2] = z[j] - center[2];
       norme(d);
-      coef = raise * val[nbvert * timeStep + j];
+      coef = raise * val[nbNod * timeStep + j];
       x[j] += coef * d[0];
       y[j] += coef * d[1];
       z[j] += coef * d[2];

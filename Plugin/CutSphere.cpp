@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.28 2003-11-22 18:45:40 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.29 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -62,7 +62,9 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
          "Plugin(CutSphere) cuts the view 'iView' with the\n"
 	 "sphere (X-'Xc')^2 + (Y-'Yc')^2 + (Z-'Zc')^2 = 'R'^2.\n"
 	 "If 'iView' < 0, the plugin is run on the current\n"
-	 "view.\n");
+	 "view.\n"
+	 "\n"
+	 "Plugin(CutSphere) creates one new view.\n");
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const

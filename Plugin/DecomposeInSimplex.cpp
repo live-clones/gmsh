@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.4 2003-11-22 01:45:48 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.5 2003-11-23 02:56:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -60,7 +60,9 @@ void GMSH_DecomposeInSimplexPlugin::getInfos(char *author, char *copyright,
          "Plugin(DecomposeInSimplex) decomposes any non-\n"
 	 "simplectic element in the view 'iView' into\n"
 	 "simplices. If 'iView' < 0, the plugin is run on\n"
-	 "the current view.\n");
+	 "the current view.\n"
+	 "\n"
+	 "Plugin(DecomposeInSimplex) is executed in-place.\n");
 }
 
 int GMSH_DecomposeInSimplexPlugin::getNbOptions() const
