@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.170 2003-03-26 21:43:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.171 2003-04-01 17:05:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -800,6 +800,30 @@ void general_options_color_scheme_cb(CALLBACK_ARGS)
 void general_options_rotation_center_cb(CALLBACK_ARGS)
 {
   WID->check_rotation_center_button();
+}
+
+void general_options_rotation_center_select_cb(CALLBACK_ARGS)
+{
+  Vertex *v;
+  Curve *c;
+  Surface *s;
+  int ib;
+
+  if(!opt_geometry_points(0, GMSH_GET, 0)) {
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+    Draw();
+  }
+
+  Msg(STATUS3N, "Select Point ('q'=quit)");
+  ib = SelectEntity(ENT_POINT, &v, &c, &s);
+  if(ib == 1) {
+    opt_general_rotation_center0(0, GMSH_SET|GMSH_GUI, v->Pos.X);
+    opt_general_rotation_center1(0, GMSH_SET|GMSH_GUI, v->Pos.Y);
+    opt_general_rotation_center2(0, GMSH_SET|GMSH_GUI, v->Pos.Z);
+  }
+  ZeroHighlight(THEM);
+  Draw();
+  Msg(STATUS3N, "Ready");
 }
 
 void general_options_ok_cb(CALLBACK_ARGS)

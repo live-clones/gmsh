@@ -160,6 +160,7 @@ public:
   // general options
   Fl_Window        *gen_window ;
   Fl_Check_Button  *gen_butt[20] ;
+  Fl_Button        *gen_push_butt[20] ;
   Fl_Value_Input   *gen_value[20] ;
   Fl_Button        *gen_col[50] ;
   Fl_Input         *gen_input[20] ;
