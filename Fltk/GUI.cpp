@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.243 2003-06-23 16:52:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.244 2003-06-23 17:26:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2127,19 +2127,19 @@ void GUI::create_option_window()
         view_value[60]->align(FL_ALIGN_RIGHT);
         view_value[60]->callback(set_changed_cb, 0);
 
+        view_value[63] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Displacement factor");
+        view_value[63]->align(FL_ALIGN_RIGHT);
+        view_value[63]->callback(set_changed_cb, 0);
+
         static Fl_Menu_Item menu_vecloc[] = {
           {"Cell centered", 0, 0, 0},
           {"Vertex centered", 0, 0, 0},
           {0}
         };
-        view_choice[3] = new Fl_Choice(2 * WB, 2 * WB + 7 * BH, IW, BH, "Arrow location");
+        view_choice[3] = new Fl_Choice(2 * WB, 2 * WB + 8 * BH, IW, BH, "Arrow location");
         view_choice[3]->menu(menu_vecloc);
         view_choice[3]->align(FL_ALIGN_RIGHT);
         view_choice[3]->callback(set_changed_cb, 0);
-
-        view_value[63] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
-        view_value[63]->align(FL_ALIGN_RIGHT);
-        view_value[63]->callback(set_changed_cb, 0);
 
         static Fl_Menu_Item menu_tensor[] = {
           {"Von-Mises", 0, 0, 0},

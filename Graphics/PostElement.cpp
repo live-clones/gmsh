@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.17 2003-06-23 16:52:17 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.18 2003-06-23 17:26:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -766,8 +766,8 @@ void Draw_VectorElement(int type, Post_View * View,
                         double *X, double *Y, double *Z, double *V)
 {
   int j, k, nbnod = 0;
-  double fact, xx[8], yy[8], zz[8], xc = 0., yc = 0., zc =
-    0., Val[8][3], d[8];
+  double fact, xx[8], yy[8], zz[8], xc = 0., yc = 0., zc = 0.;
+  double Val[8][3], d[8];
   double dx = 0., dy = 0., dz = 0., dd;
   char Num[100];
 
