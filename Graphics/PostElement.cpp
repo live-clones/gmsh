@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.45 2004-10-21 17:02:26 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.46 2004-10-21 21:47:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -861,6 +861,37 @@ void Draw_ScalarPyramid(Post_View * View, int preproNormals,
   View->ShowElement = show;
 }
 
+void Draw_ScalarElement(int type, Post_View * View, int preproNormals,
+                        double ValMin, double ValMax, 
+                        double *X, double *Y, double *Z, double *V)
+{
+  switch(type){
+  case POINT:
+    Draw_ScalarPoint(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  case LINE:
+    Draw_ScalarLine(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  case TRIANGLE:
+    Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  case QUADRANGLE:
+    Draw_ScalarQuadrangle(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  case TETRAHEDRON:
+    Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  case HEXAHEDRON:
+    Draw_ScalarHexahedron(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  case PRISM:
+    Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  case PYRAMID:
+    Draw_ScalarPyramid(View, preproNormals, ValMin, ValMax, X, Y, Z, V);
+    break;
+  }
+}
 
 int GetDataFromOtherView(int type, int nbnod, Post_View *v, int *nbcomp,
 			 double *norm, double **vals, int *vectype)
@@ -1010,7 +1041,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     norm[k] = sqrt(Val[k][0] * Val[k][0] + Val[k][1] * Val[k][1] + Val[k][2] * Val[k][2]);
   }
 
-  double *ext_vals;
+  double *ext_vals = NULL;
   int nbcomp = 1, ext_vectype = 0;
   if(View->VectorType == DRAW_POST_DISPLACEMENT_EXTERNAL){
     GetDataFromOtherView(type, nbnod, View, &nbcomp, norm, &ext_vals, &ext_vectype);
@@ -1038,115 +1069,57 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     int vt = View->VectorType;
     View->VectorType = ext_vectype;
     
-    switch (type) {
-    case POINT:
-      if(nbcomp == 1){
-	Draw_ScalarPoint(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-	if(ts) {  //draw trajectory
-	  if(View->LineType) {
-	    double dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
-	    // warning, warning...
-	    Raise[0][1] = Raise[0][0];
-	    Raise[1][1] = Raise[1][0];
-	    Raise[2][1] = Raise[2][0];
-	    for(int j = 0; j < ts; j++) {
-	      dx = V[3 * (ts - j)];
-	      dy = V[3 * (ts - j) + 1];
-	      dz = V[3 * (ts - j) + 2];
-	      dx2 = V[3 * (ts - j - 1)];
-	      dy2 = V[3 * (ts - j - 1) + 1];
-	      dz2 = V[3 * (ts - j - 1) + 2];
-	      dd = sqrt(dx * dx + dy * dy + dz * dz);
-	      // not perfect...
-	      PaletteContinuous(View, ValMin, ValMax, dd);
-	      XX[0] = X[0] + fact * dx;
-	      XX[1] = X[0] + fact * dx2;
-	      YY[0] = Y[0] + fact * dy;
-	      YY[1] = Y[0] + fact * dy2;
-	      ZZ[0] = Z[0] + fact * dz;
-	      ZZ[1] = Z[0] + fact * dz2;
-	      Draw_Line(View->LineType, View->LineWidth, XX, YY, ZZ, Raise, View->Light);
-	    }
-	  }
-	  else {
-	    glBegin(GL_LINE_STRIP);
-	    for(int j = 0; j < ts + 1; j++) {
-	      dx = V[3 * (ts - j)];
-	      dy = V[3 * (ts - j) + 1];
-	      dz = V[3 * (ts - j) + 2];
-	      dd = sqrt(dx * dx + dy * dy + dz * dz);
-	      PaletteContinuous(View, ValMin, ValMax, dd);
-	      glVertex3d(X[0] + fact * dx + Raise[0][0],
-			 Y[0] + fact * dy + Raise[1][0],
-			 Z[0] + fact * dz + Raise[2][0]);
-	    }
-	    glEnd();
+    if(nbcomp == 1){
+      Draw_ScalarElement(type, View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
+      if(type == POINT && ts > 0) {  // draw point "trajectory"
+	if(View->LineType) {
+	  double dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
+	  // warning, warning...
+	  Raise[0][1] = Raise[0][0];
+	  Raise[1][1] = Raise[1][0];
+	  Raise[2][1] = Raise[2][0];
+	  for(int j = 0; j < ts; j++) {
+	    dx = V[3 * (ts - j)];
+	    dy = V[3 * (ts - j) + 1];
+	    dz = V[3 * (ts - j) + 2];
+	    dx2 = V[3 * (ts - j - 1)];
+	    dy2 = V[3 * (ts - j - 1) + 1];
+	    dz2 = V[3 * (ts - j - 1) + 2];
+	    dd = sqrt(dx * dx + dy * dy + dz * dz);
+	    // not perfect...
+	    PaletteContinuous(View, ValMin, ValMax, dd);
+	    XX[0] = X[0] + fact * dx;
+	    XX[1] = X[0] + fact * dx2;
+	    YY[0] = Y[0] + fact * dy;
+	    YY[1] = Y[0] + fact * dy2;
+	    ZZ[0] = Z[0] + fact * dz;
+	    ZZ[1] = Z[0] + fact * dz2;
+	    Draw_Line(View->LineType, View->LineWidth, XX, YY, ZZ, Raise, View->Light);
 	  }
 	}
+	else {
+	  glBegin(GL_LINE_STRIP);
+	  for(int j = 0; j < ts + 1; j++) {
+	    dx = V[3 * (ts - j)];
+	    dy = V[3 * (ts - j) + 1];
+	    dz = V[3 * (ts - j) + 2];
+	    dd = sqrt(dx * dx + dy * dy + dz * dz);
+	    PaletteContinuous(View, ValMin, ValMax, dd);
+	    glVertex3d(X[0] + fact * dx + Raise[0][0],
+		       Y[0] + fact * dy + Raise[1][0],
+		       Z[0] + fact * dz + Raise[2][0]);
+	  }
+	  glEnd();
+	}
       }
-      else if(nbcomp == 3)
-	Draw_VectorPoint(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorPoint(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
-    case LINE:
-      if(nbcomp == 1)
-	Draw_ScalarLine(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-      else if(nbcomp == 3)
-	Draw_VectorLine(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorLine(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
-    case TRIANGLE:
-      if(nbcomp == 1)
-	Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-      else if(nbcomp == 3)
-	Draw_VectorTriangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorTriangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
-    case TETRAHEDRON:
-      if(nbcomp == 1)
-	Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-      else if(nbcomp == 3)
-	Draw_VectorTetrahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorTetrahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
-    case QUADRANGLE:
-      if(nbcomp == 1)
-	Draw_ScalarQuadrangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-      else if(nbcomp == 3)
-	Draw_VectorQuadrangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorQuadrangle(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
-    case HEXAHEDRON:
-      if(nbcomp == 1)
-	Draw_ScalarHexahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-      else if(nbcomp == 3)
-	Draw_VectorHexahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorHexahedron(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
-    case PRISM:
-      if(nbcomp == 1)
-	Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-      else if(nbcomp == 3)
-	Draw_VectorPrism(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorPrism(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
-    case PYRAMID:
-      if(nbcomp == 1)
-	Draw_ScalarPyramid(View, preproNormals, ValMin, ValMax, xx, yy, zz, norm);
-      else if(nbcomp == 3)
-	Draw_VectorPyramid(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      else if(nbcomp == 9)
-	Draw_TensorPyramid(View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
-      break;
     }
-    
+    else if(nbcomp == 3){
+      Draw_VectorElement(type, View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
+    }
+    else if(nbcomp == 9){
+      Draw_TensorElement(type, View, preproNormals, ValMin, ValMax, xx, yy, zz, ext_vals);
+    }
+
     View->TimeStep = ts;
     View->VectorType = vt;
     return;
