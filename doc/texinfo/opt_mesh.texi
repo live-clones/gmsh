@@ -95,7 +95,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=MSH, 2=UNV, 3=GREF, 19=VRML)@*
+Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -150,7 +150,7 @@ Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
-MSH mesh file version to generate@*
+Version of the `msh' file format to use@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -210,7 +210,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointInsertion
-Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=cog)@*
+Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=center of gravity)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
