@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.37 2001-12-12 14:04:11 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.38 2002-02-01 14:34:05 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -121,14 +121,14 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
         for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;
-        
-	if(Elementary >= 0){
+        // why ????
+	if(1 || Elementary >= 0){
 
 	  switch(Type){
 	  case LGN1: case LGN2:
-	    c = &C; c->Num = Elementary;
+	    c = &C; c->Num = abs(Elementary);
 	    if(!(cc = (Curve**)Tree_PQuery(M->Curves, &c))){
-	      c = Create_Curve(Elementary, MSH_SEGM_LINE, 0, NULL,
+	      c = Create_Curve(abs(Elementary), MSH_SEGM_LINE, 0, NULL,
 			       NULL, -1, -1, 0., 1.);
 	      c->Dirty=1;
 	      Tree_Add(M->Curves, &c);

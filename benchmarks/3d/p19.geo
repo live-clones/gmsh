@@ -1,4 +1,7 @@
-fact     = 0.1 ;
+// This factor has to be modified in
+// order to control mesh size
+fact     = .1 ;
+
 rondelle = fact * 0.01;
 iris     = fact * 0.004;
 size     = fact * 0.01;

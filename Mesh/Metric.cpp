@@ -1,4 +1,4 @@
-// $Id: Metric.cpp,v 1.8 2001-12-16 05:16:37 remacle Exp $
+// $Id: Metric.cpp,v 1.9 2002-02-01 14:34:05 remacle Exp $
 #include <time.h>
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -354,7 +354,14 @@ setSimplexQuality (Simplex * s, Surface * surf)
       s->Quality = DMAX (DMAX (q1, q2), q3) / (RacineDeTrois);
     }
   else
-    {      
+    { 
+      /*
+      Matrix3x3 myOldMetric (0.,m);
+      Identity();
+      Local_Metric_Of_Attractors (s->V[0]->Pos.X,s->V[0]->Pos.Y,s->V[0]->Pos.Z,0);
+      Local_Metric_Of_Attractors (s->V[1]->Pos.X,s->V[1]->Pos.Y,s->V[1]->Pos.Z,0);
+      Local_Metric_Of_Attractors (s->V[2]->Pos.X,s->V[2]->Pos.Y,s->V[2]->Pos.Z,0);
+      */
       s->Center_Ellipsum_2D (m);
       s->Quality = 3. * s->Radius / (s->V[0]->lc + s->V[1]->lc + s->V[2]->lc);
     }

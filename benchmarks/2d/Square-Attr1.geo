@@ -12,9 +12,12 @@ Line(3) = {1,4};
 Line(4) = {4,3};                    
 Line Loop(5) = {1,2,3,4};                    
 Plane Surface(6) = {5};      
-Point(11) = {0.5,0.5,0,lc};                    
-Point(22) = {0.5,0.5,1,lc};                    
+Point(11) = {0 ,0.,0,lc};                    
+Point(22) = {0.,0.,1,lc};                    
 Line(5) = {11,22};                    
-//Attractor Point{1,2,3,4,11} = {.01,.01,7};                             
-Attractor Line{1,2,3,4} = {1,.1,7};                             
+//Attractor Point{1,2,3,4,11} = {.0001,.0001,17};                             
+Attractor Line{5} = {.01,1,18};                             
 Mesh.Algorithm = 2;
+Translate {0,0,1} {
+  Duplicata { Surface{6}; }
+}

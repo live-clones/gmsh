@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.45 2001-12-03 08:41:43 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.46 2002-02-01 14:34:05 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -518,11 +518,6 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
   if(CTX.mesh.surfaces){
 
-    if (CTX.mesh.hidden) { 
-      glBegin(GL_POLYGON);
-      for(i=0 ; i<K*(1+L) ; i++) glVertex3d(pX[i], pY[i], pZ[i]);
-      glEnd();
-    }
     
     if(CTX.mesh.lines){
       if(CTX.mesh.color_carousel && ! (CTX.mesh.hidden || CTX.mesh.shade))
@@ -535,6 +530,21 @@ void Draw_Simplex_Surfaces (void *a, void *b){
       }
       glEnd();    
     }
+
+    if(CTX.mesh.color_carousel)
+      ColorSwitch(iColor);
+    else{
+      if(K==3)
+	glColor4ubv((GLubyte*)&CTX.color.mesh.triangle);
+      else
+	glColor4ubv((GLubyte*)&CTX.color.mesh.quadrangle);
+    }
+    if (CTX.mesh.hidden) { 
+      glBegin(GL_POLYGON);
+      for(i=0 ; i<K*(1+L) ; i++) glVertex3d(pX[i], pY[i], pZ[i]);
+      glEnd();
+    }
+
 
   }
   
