@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.166 2005-01-13 05:45:46 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.167 2005-01-14 17:54:01 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2210,24 +2210,24 @@ available on @value{GMSH-WEB}.
 @cindex Solver example
 @cindex Example, solver
 
-Here is a small example of how to interface a C solver with Gmsh. The
-following listing reproduces the @file{utils/solvers/mysolver.c} file from
-the Gmsh source distribution.
+Here is a small example of how to interface a C++ solver with Gmsh. The
+following listing reproduces the @file{utils/solvers/c++/solver.cpp} file
+from the Gmsh source distribution (C and Perl examples are also available).
 
 @sp 1
 
-@verbatiminclude ../../utils/solvers/mysolver.c
+@verbatiminclude ../../utils/solvers/c++/solver.cpp
 
 @sp 1
 
-To define the above solver as the second external solver in Gmsh, you should
-define the following solver options (either merge them in your Gmsh option
+To define the above solver as the second external solver in Gmsh, you then
+need to define the following options (either merge them in your Gmsh option
 file, or use the @code{-option} command-line option---see @ref{Command-line
 options}):
 
 @sp 1
 
-@verbatiminclude ../../utils/solvers/mysolver.opt
+@verbatiminclude ../../utils/solvers/c++/solver.opt
 
 @c =========================================================================
 @c Post-processing module
@@ -2321,6 +2321,10 @@ multiple simultaneous renderings of the same large dataset (usually with
 different display options), but you cannot afford to store all copies in
 memory. If what you really want is multiple physical copies of the data,
 just merge the file containing the post-processing view multiple times.
+
+@item AliasWithOptions View[@var{expression}];
+Creates an alias of the @var{expression}-th post-processing view and copies
+all the options of the @var{expression}-th view to the new aliased view.
 
 @item Combine TimeSteps;
 Combines the data from all the post-processing views having the same name

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2005-01-14 02:27:01 geuzaine Exp $
+# $Id: Makefile,v 1.3 2005-01-14 17:54:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -21,8 +21,8 @@
 
 include ../../../variables
 
-andre: andre.cpp
-	${CXX} ${FLAGS} ${OPTIM} -o andre.exe andre.cpp
+solver: solver.cpp
+	${CXX} ${FLAGS} ${OPTIM} -o solver.exe solver.cpp
 
 clean:
 	rm -f *.o *.exe *.pos
