@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.16 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.17 2001-08-13 07:22:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -168,6 +168,8 @@ void Print_Volume(void *a, void *b){
   vol = *(Volume**)a;
 
   int NUMLOOP = vol->Num + 1000000;
+
+  if(!List_Nbr(vol->Surfaces)) return;
 
   fprintf(FOUT,"Surface Loop (%d) = ",NUMLOOP);
     
