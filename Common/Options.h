@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.13 2000-12-27 17:25:52 geuzaine Exp $ */
+/* $Id: Options.h,v 1.14 2000-12-28 18:58:37 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -197,11 +197,15 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber PrintOptions_Number[] = {
-  { "Format"      , GMSH_INT,    (void*)&CTX.print.format       , FORMAT_AUTO }, 
-  { "EpsQuality"  , GMSH_INT,    (void*)&CTX.print.eps_quality  , 1 }, 
-  { "JpegQuality" , GMSH_INT,    (void*)&CTX.print.jpeg_quality , 100 }, 
-  { "FontSize"    , GMSH_INT,    (void*)&CTX.print.font_size    , 12. }, 
-  { NULL          , GMSH_DOUBLE, NULL , 0. }
+  { "Format"         , GMSH_INT,    (void*)&CTX.print.format         , FORMAT_AUTO }, 
+  { "EpsQuality"     , GMSH_INT,    (void*)&CTX.print.eps_quality    , 1 }, 
+  { "JpegQuality"    , GMSH_INT,    (void*)&CTX.print.jpeg_quality   , 100 }, 
+  { "GifDither"      , GMSH_INT,    (void*)&CTX.print.gif_dither     , 1 }, 
+  { "GifSort"        , GMSH_INT,    (void*)&CTX.print.gif_sort       , 1 }, 
+  { "GifInterlace"   , GMSH_INT,    (void*)&CTX.print.gif_interlace  , 0 }, 
+  { "GifTransparent" , GMSH_INT,    (void*)&CTX.print.gif_transparent, 0 }, 
+  { "FontSize"       , GMSH_INT,    (void*)&CTX.print.font_size      , 12. }, 
+  { NULL             , GMSH_DOUBLE, NULL , 0. }
 } ;
 
 // COLORS

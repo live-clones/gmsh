@@ -1,4 +1,4 @@
-/* $Id: Malloc.cpp,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
+/* $Id: Malloc.cpp,v 1.5 2000-12-28 18:58:37 geuzaine Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -41,4 +41,5 @@ void Free(void *ptr)
 {
   if (ptr == NULL) return;
   free(ptr);
+  ptr = NULL;
 }

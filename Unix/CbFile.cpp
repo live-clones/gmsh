@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.18 2000-12-27 10:07:23 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.19 2000-12-28 18:58:37 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -124,7 +124,8 @@ void CreateFile (char *name, int format) {
     }
     Replot();
     create_jpeg(fp, CTX.viewport[2]-CTX.viewport[0],
-		CTX.viewport[3]-CTX.viewport[1]);
+		CTX.viewport[3]-CTX.viewport[1],
+		CTX.print.jpeg_quality);
     Msg(INFOS, "JPEG Creation Complete '%s'", name);
     Msg (INFO, "Wrote File '%s'", name);
     fclose(fp);
@@ -137,7 +138,14 @@ void CreateFile (char *name, int format) {
     }
     Replot();
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
-               CTX.viewport[3]-CTX.viewport[1]);
+               CTX.viewport[3]-CTX.viewport[1], 
+	       CTX.print.gif_dither,
+	       CTX.print.gif_sort, 
+	       CTX.print.gif_interlace,
+	       CTX.print.gif_transparent,
+	       UNPACK_RED(CTX.color.bg),
+	       UNPACK_GREEN(CTX.color.bg),
+	       UNPACK_BLUE(CTX.color.bg));
     Msg(INFOS, "GIF Creation Complete '%s'", name);
     Msg (INFO, "Wrote File '%s'", name);
     fclose(fp);

@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.24 2000-12-27 17:25:52 geuzaine Exp $ */
+/* $Id: Context.h,v 1.25 2000-12-28 18:58:37 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -143,7 +143,9 @@ class Context_T {
   /* print options */
   struct{
     int format;
-    int eps_quality, jpeg_quality;
+    int eps_quality;
+    int jpeg_quality;
+    int gif_dither, gif_sort, gif_interlace, gif_transparent;
     char *font;
     int  font_size, gl_fonts;
   } print;
