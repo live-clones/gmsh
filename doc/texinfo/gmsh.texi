@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.101 2004-03-30 18:17:11 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.102 2004-04-01 22:21:26 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -1330,12 +1330,11 @@ Compound groups of elementary geometrical entities can also be defined and
 are called ``physical'' entities. These physical entities cannot be modified
 by geometry commands: their only purpose is to assemble elementary entities
 into larger groups, possibly modifying their orientation, so that they can
-be referred to by the mesh module as single entities. Each physical entity
-is assigned a unique identification number when it is created. That is, no
-two physical entities (even of different types, like a physical line and a
-physical surface) can share identical identification numbers. See @ref{Mesh
-module}, for more information about how physical entities affect the way
-meshes are saved.
+be referred to by the mesh module as single entities. As is the case with
+elementary entities, each physical point, physical line, physical surface or
+physical volume must be assigned a unique identification number. See
+@ref{Mesh module}, for more information about how physical entities affect
+the way meshes are saved.
 
 @menu
 * Geometry commands::           
