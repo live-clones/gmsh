@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.139 2002-09-06 19:19:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.140 2002-09-20 04:06:43 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -464,8 +464,8 @@ void file_save_as_cb(CALLBACK_ARGS) {
     { "Encapsulated PostScript accurate (*.eps)", _save_eps_accurate },
     { "PPM (*.ppm)", _save_ppm },
     { "LaTeX JPEG part (*.jpg)", _save_jpegtex },
-    { "LaTeX EPS part fast (*.ps)", _save_epstex_simple },
-    { "LaTeX EPS part accurate (*.ps)", _save_epstex_accurate },
+    { "LaTeX EPS part fast (*.eps)", _save_epstex_simple },
+    { "LaTeX EPS part accurate (*.eps)", _save_epstex_accurate },
     { "LaTeX TeX part (*.tex)", _save_tex },
     { "UCB YUV (*.yuv)", _save_yuv }
   };
