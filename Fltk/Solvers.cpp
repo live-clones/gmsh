@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.15 2003-01-24 23:13:35 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.16 2003-01-25 00:05:49 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,7 @@ int Solver(int num, char *args){
   }
 
   sprintf(socket_name, "%s.gmshsock-%d", CTX.home_dir, num);
-  sprintf(command, "%s %s -socket %s", SINFO[num].executable_name, 
+  sprintf(command, "%s %s -socket \"%s\"", SINFO[num].executable_name, 
 	  args, socket_name);
 #if !defined(WIN32)
   strcat(command, " &");

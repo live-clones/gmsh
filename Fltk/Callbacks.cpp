@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.161 2003-01-24 23:13:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.162 2003-01-25 00:05:49 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1973,7 +1973,7 @@ void solver_cb(CALLBACK_ARGS){
     WID->solver[num].input[0]->value(file);
   }
   if(SINFO[num].nboptions){
-    sprintf(tmp, "%s %s", SINFO[num].option_command,
+    sprintf(tmp, "%s \"%s\"", SINFO[num].option_command,
 	    (char*)WID->solver[num].input[0]->value());
     Solver(num, tmp);
   }
@@ -1986,7 +1986,7 @@ void solver_file_open_cb(CALLBACK_ARGS){
   if (file_chooser(0,"Open problem definition file", tmp, 0)){
     WID->solver[num].input[0]->value(file_chooser_get_name(1));
     if(SINFO[num].nboptions){
-      sprintf(tmp, "%s %s", SINFO[num].option_command, file_chooser_get_name(1));
+      sprintf(tmp, "%s \"%s\"", SINFO[num].option_command, file_chooser_get_name(1));
       Solver(num, tmp);
     }
   }
@@ -2013,17 +2013,20 @@ int nbs(char *str){
   return nb;
 }
 void solver_command_cb(CALLBACK_ARGS){
-  char arg[512], mesh[256], command[256];
+  char tmp[256], arg[512], mesh[256], command[256];
   int num = ((int*)data)[0];
   int idx = ((int*)data)[1];
   int i, usedopts = 0;
 
   if(SINFO[num].popup_messages) WID->create_message_window();
 
-  if(strlen(WID->solver[num].input[1]->value()))
-    sprintf(mesh, SINFO[num].mesh_command, WID->solver[num].input[1]->value());
-  else 
+  if(strlen(WID->solver[num].input[1]->value())){
+    sprintf(tmp, "\"%s\"", WID->solver[num].input[1]->value());
+    sprintf(mesh, SINFO[num].mesh_command, tmp);
+  }
+  else{
     strcpy(mesh, "");
+  }
 
   //printf("num%d idx%d %s -> %d\n", 
   //	 num, idx, SINFO[num].button_command[idx], nbs(SINFO[num].button_command[idx]));
@@ -2041,7 +2044,7 @@ void solver_command_cb(CALLBACK_ARGS){
     strcpy(command, SINFO[num].button_command[idx]);
   }
 
-  sprintf(arg, "%s %s %s", WID->solver[num].input[0]->value(), mesh, command);
+  sprintf(arg, "\"%s\" %s %s", WID->solver[num].input[0]->value(), mesh, command);
 
   Solver(num, arg);
 }
