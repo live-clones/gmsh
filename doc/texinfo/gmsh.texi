@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.24 2003-04-16 08:11:17 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.25 2003-04-16 08:23:28 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -803,7 +803,7 @@ while affecting a value to an existing @var{expression-id}, using:
 @cindex Expression, character
 @cindex Strings
 
-Character expressions are defined as follows:
+Character expressions are defined as:
 
 @example
 @var{expression-char}:
@@ -823,8 +823,8 @@ formatting characters: @code{%e}, @code{%g}, etc.).
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an intersting usage of
 @w{@var{expression-char}s} in an animation script. Altough there exists no
-character expression identifier at the moment, @w{@var{expression-char}s}
-can be affected to @w{@var{string-option}s}:
+character expression identifier, @w{@var{expression-char}s} can be affected
+to @w{@var{string-option}s}:
 
 @example
 @var{string-option} = @var{expression-char};
@@ -844,9 +844,8 @@ The various @w{@var{string-option}s} are listed in @ref{General options},
 @cindex Expression, color
 @cindex Colors
 
-The last type of expressions encountered in Gmsh is color expression, which
-is an hybrid between a bracketted @var{expression-list} with three or four
-elements, and a @var{string}:
+Colors expressions are hybrids between fixed-length bracketted
+@w{@var{expression-list}s} and a @w{@var{string}s}:
 
 @example
 @var{expression-color}:
@@ -855,15 +854,16 @@ elements, and a @var{string}:
   @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @}
 @end example
 
-@noindent The first case in this definition permits to use usual color
-names as defined by the X Window system, e.g. @code{Red},
-@code{SpringGreen}, @code{LavenderBlush3},@w{ }@dots{} (see
-@file{Common/Colors.h}). The second case permits to define colors by using
-three expressions to specify their red, green and blue components (with
-values comprised between 0 and 255). The last case permits to define colors
-by using the red, green, blue color components as well as the alpha channel.
+@noindent The first case permits to use the X Windows names to refer to colors,
+e.g. @code{Red}, @code{SpringGreen}, @code{LavenderBlush3},@w{ }@dots{} (see
+@file{Common/Colors.h} in the sources). The second case permits to define
+colors by using three expressions to specify their red, green and blue
+components (with values comprised between 0 and 255). The last case permits
+to define colors by using the red, green, blue color components as well as
+the alpha channel. See @ref{t3.geo}, for an example of the use of color
+expressions.
 
-Altough there exists no color expression identifier at the moment,
+Altough there exists no color expression identifier,
 @w{@var{expression-color}s} can be affected to @w{@var{color-option}s}:
 
 @example
