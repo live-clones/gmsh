@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.109 2004-01-25 10:13:11 geuzaine Exp $
+// $Id: Views.cpp,v 1.110 2004-02-03 22:34:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1471,7 +1471,7 @@ void CombineViews(int all, int remove)
 // Combine views (merge time steps)
 
 struct nameidx{
-  char *name;
+  char name[256];
   List_T *indices;
 };
 
@@ -1562,9 +1562,9 @@ void CombineViews_Time(int how, int remove)
     if(how || v->Visible) {
       nameidx id;
       if(how == 2)
-	id.name = v->Name;
+	strcpy(id.name, v->Name);
       else
-	id.name = "all";
+	strcpy(id.name, "all");
       if((pid = (struct nameidx*)List_PQuery(ids, &id, fcmp_name))){
 	List_Add(pid->indices, &i);
       }
