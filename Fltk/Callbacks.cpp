@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.153 2002-11-16 23:23:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.154 2002-11-16 23:46:05 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -58,7 +58,7 @@ extern Context_T  CTX;
 static char *fn = NULL;
 
 int file_chooser(int multi, const char* message, const char* pat, int patindex){
-  char *fn = fl_file_chooser(message,pat,NULL);
+  fn = fl_file_chooser(message,pat,NULL);
   if(fn) return 1;
   else return 0;
 }

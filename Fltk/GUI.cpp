@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.215 2002-11-16 23:23:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.216 2002-11-16 23:46:05 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -752,14 +752,14 @@ void GUI::create_menu_window(int argc, char **argv){
   y = BH + 3;
 #endif
 
-  m_navig_butt[0] = new Fl_Button(1,y,18,BH/2,"@<");
+  m_navig_butt[0] = new Fl_Button(1,y,18,BH/2,"@#<");
   m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
   m_navig_butt[0]->labelsize(11);
   m_navig_butt[0]->box(FL_FLAT_BOX);
   m_navig_butt[0]->selection_color(FL_WHITE);
   m_navig_butt[0]->callback(mod_back_cb);
   
-  m_navig_butt[1] = new Fl_Button(1,y+BH/2,18,BH/2,"@>");
+  m_navig_butt[1] = new Fl_Button(1,y+BH/2,18,BH/2,"@#>");
   m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
   m_navig_butt[1]->labelsize(11);
   m_navig_butt[1]->box(FL_FLAT_BOX);
@@ -786,7 +786,8 @@ void GUI::create_menu_window(int argc, char **argv){
     m_toggle_butt[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
     m_toggle_butt[i]->hide();
 
-    m_toggle2_butt[i]= new Fl_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH,"@>");
+    m_toggle2_butt[i]= new Fl_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH,"@#>");
+    m_toggle2_butt[i]->labeltype(FL_SYMBOL_LABEL);
     m_toggle2_butt[i]->labelsize(11);
     m_toggle2_butt[i]->align(FL_ALIGN_CENTER);
     m_toggle2_butt[i]->hide();
