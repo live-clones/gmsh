@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.73 2005-01-12 19:10:41 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.74 2005-03-17 22:40:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -165,8 +165,6 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 
 void GMSH_PluginManager::registerDefaultPlugins()
 {
-  char *homeplugins = getenv("GMSHPLUGINSHOME");
-
   // SOLVE PLUGINS
   if(CTX.solver.plugins){
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
@@ -234,16 +232,17 @@ void GMSH_PluginManager::registerDefaultPlugins()
   }
 
 #if defined(HAVE_FLTK)
-  struct dirent **list;
-  char ext[6];
+  char *homeplugins = getenv("GMSHPLUGINSHOME");
   if(!homeplugins)
     return;
+  struct dirent **list;
   int nbFiles = fl_filename_list(homeplugins, &list);
   if(nbFiles <= 0)
     return;
   for(int i = 0; i < nbFiles; i++) {
     char *name = list[i]->d_name;
     if(strlen(name) > 3) {
+      char ext[6];
       strcpy(ext, name + (strlen(name) - 3));
       if(!strcmp(ext, ".so") || !strcmp(ext, "dll")) {
         addPlugin(homeplugins, name);
