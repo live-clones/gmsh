@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.36 2003-04-21 03:00:08 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.37 2003-04-21 05:42:25 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -46,7 +46,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.0
+@set EDITION        1.1
 @set GMSH-VERSION   1.44
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -376,7 +376,7 @@ intersect, they do so along a face, an edge or a node, and never
 otherwise. All the finite element meshes produced by Gmsh are considered as
 ``unstructured'', even if they were generated in a ``structured'' way
 (e.g.@: by extrusion). This implies that the elementary geometrical elements
-are defined only by an ordered list of their vertices but that no predefined
+are defined only by an ordered list of their nodes but that no predefined
 order relation is assumed between any two elements.
 
 The mesh generation is performed in the same bottom-up flow as the geometry
@@ -1742,7 +1742,7 @@ the orientation of the mesh elements (the ordering of their nodes) is
 determined entirely by the orientation of their ``parent'' elementary
 entities, and cannot be modified;
 @item
-elements belonging to differents elementary entities cannot be linked as
+elements belonging to different elementary entities cannot be linked as
 being part of a larger group having a physical or mathematical meaning (like
 `Left wing', `Metallic part', `Dirichlet boundary condition', @dots{}).
 @end itemize
