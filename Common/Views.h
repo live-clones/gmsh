@@ -42,7 +42,8 @@ class Post_View{
   int DrawStrings;
   int DrawPoints, DrawLines, DrawTriangles, DrawTetrahedra;
   int DrawScalars, DrawVectors, DrawTensors;
-  int Boundary, PointSize, LineWidth, Grid;
+  int Boundary, Grid;
+  double PointSize, LineWidth;
   ColorTable CT;
 
   // dynamic

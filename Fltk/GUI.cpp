@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.131 2001-11-19 13:53:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.132 2001-11-19 14:24:02 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -1017,9 +1017,9 @@ void GUI::create_general_options_window(){
       gen_value[6]->maximum(50);
       gen_value[6]->step(1);
       gen_value[7] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Line width");
-      gen_value[7]->minimum(1);
-      gen_value[7]->maximum(50);
-      gen_value[7]->step(1);
+      gen_value[7]->minimum(0.2);
+      gen_value[7]->maximum(20);
+      gen_value[7]->step(0.1);
       for(i=6 ; i<= 7 ; i++){
 	gen_value[i]->labelsize(CTX.fontsize);
 	gen_value[i]->textsize(CTX.fontsize);
@@ -1187,9 +1187,9 @@ void GUI::create_geometry_options_window(){
       geo_value[3]->maximum(50);
       geo_value[3]->step(1);
       geo_value[4] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Line width");
-      geo_value[4]->minimum(1);
-      geo_value[4]->maximum(50);
-      geo_value[4]->step(1);
+      geo_value[4]->minimum(0.2);
+      geo_value[4]->maximum(20);
+      geo_value[4]->step(0.1);
       for(i=3 ; i<= 4 ; i++){
 	geo_value[i]->labelsize(CTX.fontsize);
 	geo_value[i]->textsize(CTX.fontsize);
@@ -1383,9 +1383,9 @@ void GUI::create_mesh_options_window(){
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(1);
       mesh_value[11] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Line width");
-      mesh_value[11]->minimum(1);
-      mesh_value[11]->maximum(50);
-      mesh_value[11]->step(1);
+      mesh_value[11]->minimum(0.2);
+      mesh_value[11]->maximum(20);
+      mesh_value[11]->step(0.1);
       for(i=9 ; i<= 11 ; i++){
 	mesh_value[i]->labelsize(CTX.fontsize);
 	mesh_value[i]->textsize(CTX.fontsize);
@@ -2321,9 +2321,9 @@ void GUI::create_view_options_window(int num){
       view_value[61]->maximum(50);
       view_value[61]->step(1);
       view_value[62] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Line width");
-      view_value[62]->minimum(1); 
-      view_value[62]->maximum(50);
-      view_value[62]->step(1);
+      view_value[62]->minimum(0.2); 
+      view_value[62]->maximum(20);
+      view_value[62]->step(0.1);
       for(i=60 ; i<=62 ; i++){
 	view_value[i]->labelsize(CTX.fontsize);
 	view_value[i]->textsize(CTX.fontsize);

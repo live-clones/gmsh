@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.64 2001-11-19 13:48:19 geuzaine Exp $
+// $Id: Options.cpp,v 1.65 2001-11-19 14:24:01 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -705,7 +705,7 @@ double opt_general_scale2(OPT_ARGS_NUM){
 }
 double opt_general_point_size(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.point_size = (int)val;
+    CTX.point_size = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->gen_value[6]->value(CTX.point_size);
@@ -714,7 +714,7 @@ double opt_general_point_size(OPT_ARGS_NUM){
 }
 double opt_general_line_width(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.line_width = (int)val;
+    CTX.line_width = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->gen_value[7]->value(CTX.line_width);
@@ -1211,7 +1211,7 @@ double opt_geometry_volumes_num(OPT_ARGS_NUM){
 }
 double opt_geometry_point_size(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.geom.point_size = (int)val;
+    CTX.geom.point_size = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->geo_value[3]->value(CTX.geom.point_size);
@@ -1220,12 +1220,12 @@ double opt_geometry_point_size(OPT_ARGS_NUM){
 }
 double opt_geometry_point_sel_size(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.geom.point_sel_size = (int)val;
+    CTX.geom.point_sel_size = val;
   return CTX.geom.point_sel_size;
 }
 double opt_geometry_line_width(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.geom.line_width = (int)val;
+    CTX.geom.line_width = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->geo_value[4]->value(CTX.geom.line_width);
@@ -1234,7 +1234,7 @@ double opt_geometry_line_width(OPT_ARGS_NUM){
 }
 double opt_geometry_line_sel_width(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.geom.line_sel_width = (int)val;
+    CTX.geom.line_sel_width = val;
   return CTX.geom.line_sel_width;
 }
 double opt_geometry_aspect(OPT_ARGS_NUM){
@@ -1459,7 +1459,7 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM){
 }
 double opt_mesh_point_size(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.mesh.point_size = (int)val;
+    CTX.mesh.point_size = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[10]->value(CTX.mesh.point_size);
@@ -1468,7 +1468,7 @@ double opt_mesh_point_size(OPT_ARGS_NUM){
 }
 double opt_mesh_line_width(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.mesh.line_width = (int)val;
+    CTX.mesh.line_width = val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[11]->value(CTX.mesh.line_width);
@@ -2317,7 +2317,7 @@ double opt_view_arrow_location(OPT_ARGS_NUM){
 double opt_view_point_size(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    v->PointSize = (int)val;
+    v->PointSize = val;
     v->Changed = 1;
   }
 #ifdef _FLTK
@@ -2329,7 +2329,7 @@ double opt_view_point_size(OPT_ARGS_NUM){
 double opt_view_line_width(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    v->LineWidth = (int)val;
+    v->LineWidth = val;
     v->Changed = 1;
   }
 #ifdef _FLTK
@@ -2362,12 +2362,12 @@ double opt_print_eps_font_size(OPT_ARGS_NUM){
 }
 double opt_print_eps_line_width_factor(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.print.eps_line_width_factor = (int)val;
+    CTX.print.eps_line_width_factor = val;
   return CTX.print.eps_line_width_factor;
 }
 double opt_print_eps_point_size_factor(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.print.eps_point_size_factor = (int)val;
+    CTX.print.eps_point_size_factor = val;
   return CTX.print.eps_point_size_factor;
 }
 double opt_print_jpeg_quality(OPT_ARGS_NUM){

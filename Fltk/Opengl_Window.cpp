@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.18 2001-10-06 09:21:47 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.19 2001-11-19 14:24:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -62,7 +62,7 @@ void Opengl_Window::draw() {
     glColor3f(1.,1.,1.);
     glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     glEnable(GL_BLEND);
-    glLineWidth(1);
+    glLineWidth(0.2);
     glBegin(GL_LINE_STRIP);
     glVertex2d(ZOOM_X0, ZOOM_Y0);
     glVertex2d(ZOOM_X1, ZOOM_Y0);

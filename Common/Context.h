@@ -84,7 +84,7 @@ public :
 
   int fontsize;               // font size for fltk UI
   int gl_fontsize;            // font size for opengl graphics
-  int point_size, line_width; // point/line widths
+  double point_size, line_width; // point/line widths
 
   int viewport[4];            // current viewport 
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
@@ -104,8 +104,7 @@ public :
     int vis_type;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
-    int point_size, line_width;
-    int point_sel_size, line_sel_width;
+    double point_size, line_width, point_sel_size, line_sel_width;
     int hidden, shade;
     int highlight;
     int level, old_circle, circle_points, extrude_spline_points, old_newreg;
@@ -121,7 +120,7 @@ public :
     int draw;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
-    int point_size, line_width;
+    double point_size, line_width;
     double quality;
     double gamma_inf, gamma_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
@@ -159,7 +158,7 @@ public :
     int format;
     int eps_quality, eps_background, eps_font_size;
     char *eps_font;
-    int eps_line_width_factor, eps_point_size_factor;
+    double eps_line_width_factor, eps_point_size_factor;
     int jpeg_quality;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
     int gl_fonts;

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.12 2001-11-19 13:43:33 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.13 2001-11-19 14:24:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -145,7 +145,7 @@ static void Draw_Graph2D(Post_View *v,
 	glEnable(GL_LINE_STIPPLE);
 	glLineStipple(1,0x1111);
 	gl2psEnable(GL2PS_LINE_STIPPLE);
-	glLineWidth(1); 
+	glLineWidth(0.2); 
 	gl2psLineWidth(1 * CTX.print.eps_line_width_factor);
 	glBegin(GL_LINES);
 	glVertex2d(xtop,ytop-i*dy);
@@ -227,7 +227,7 @@ static void Draw_Graph2D(Post_View *v,
 	glEnable(GL_LINE_STIPPLE);
 	glLineStipple(1,0x1111);
 	gl2psEnable(GL2PS_LINE_STIPPLE);
-	glLineWidth(1); 
+	glLineWidth(0.2); 
 	gl2psLineWidth(1 * CTX.print.eps_line_width_factor);
 	glBegin(GL_LINES);
 	glVertex2d(xtop+i*dx,ytop);

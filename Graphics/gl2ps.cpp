@@ -4,7 +4,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.32 2001-11-19 11:16:44 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.33 2001-11-19 14:24:02 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -1215,7 +1215,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
   case GL2PS_LINE :
     if(linewidth != prim->width){
       linewidth = prim->width;
-      fprintf(gl2ps.stream, "%g W\n", 0.2*linewidth*linewidth);
+      fprintf(gl2ps.stream, "%g W\n", linewidth);
     }
     if(prim->dash)
       fprintf(gl2ps.stream, "[%d] 0 setdash\n", prim->dash);
