@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.153 2004-12-26 19:50:16 geuzaine Exp $
+// $Id: Views.cpp,v 1.154 2004-12-27 21:05:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1210,34 +1210,34 @@ void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVe
   delete[]vals;
 }
 
-void smooth_list(List_T * list, int nbList, double *min, double *max,
+void smooth_list(List_T * list, int nbList,
+		 double *min, double *max, double *tsmin, double *tsmax, 
                  int nbTimeStep, int nbVert, xyzcont & connectivities)
 {
-  double *x, *y, *z, *v;
-  int i, j, k;
-
   if(!nbList)
     return;
 
-  *min = VAL_INF;
-  *max = -VAL_INF;
-
   int nb = List_Nbr(list)/nbList;
-  for(i = 0; i < List_Nbr(list); i += nb) {
-    x = (double *)List_Pointer_Fast(list, i);
-    y = (double *)List_Pointer_Fast(list, i + nbVert);
-    z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
-    v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
-    for(j = 0; j < nbVert; j++) {
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
+    for(int j = 0; j < nbVert; j++) {
       xyzv xyz(x[j], y[j], z[j]);
       xyziter it = connectivities.find(xyz);
       if(it != connectivities.end()) {
-        for(k = 0; k < nbTimeStep; k++) {
-          v[j + k * nbVert] = (*it).vals[k];
-          if(v[j + k * nbVert] < *min)
-            *min = v[j + k * nbVert];
-          if(v[j + k * nbVert] > *max)
-            *max = v[j + k * nbVert];
+        for(int k = 0; k < nbTimeStep; k++) {
+	  double dd = (*it).vals[k];
+          v[j + k * nbVert] = dd;
+          if(dd < *min)
+            *min = dd;
+          if(dd > *max)
+            *max = dd;
+	  if(dd < tsmin[k])
+	    tsmin[k] = dd;
+	  if(dd > tsmax[k])
+	    tsmax[k] = dd;
         }
       }
     }
@@ -1252,6 +1252,12 @@ void Post_View::smooth()
   if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
     xyzcont con;
     Msg(INFO, "Smoothing scalar primitives in View[%d]", Index);
+    Min = VAL_INF;
+    Max = -VAL_INF;
+    for(int k = 0; k < NbTimeStep; k++) {
+      TimeStepMin[k] = VAL_INF;
+      TimeStepMax[k] = -VAL_INF;
+    }
     generate_connectivities(SL, NbSL, NbTimeStep, 2, con);
     generate_connectivities(ST, NbST, NbTimeStep, 3, con);
     generate_connectivities(SQ, NbSQ, NbTimeStep, 4, con);
@@ -1259,13 +1265,13 @@ void Post_View::smooth()
     generate_connectivities(SH, NbSH, NbTimeStep, 8, con);
     generate_connectivities(SI, NbSI, NbTimeStep, 6, con);
     generate_connectivities(SY, NbSY, NbTimeStep, 5, con);
-    smooth_list(SL, NbSL, &Min, &Max, NbTimeStep, 2, con);
-    smooth_list(ST, NbST, &Min, &Max, NbTimeStep, 3, con);
-    smooth_list(SQ, NbSQ, &Min, &Max, NbTimeStep, 4, con);
-    smooth_list(SS, NbSS, &Min, &Max, NbTimeStep, 4, con);
-    smooth_list(SH, NbSH, &Min, &Max, NbTimeStep, 8, con);
-    smooth_list(SI, NbSI, &Min, &Max, NbTimeStep, 6, con);
-    smooth_list(SY, NbSY, &Min, &Max, NbTimeStep, 5, con);
+    smooth_list(SL, NbSL, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 2, con);
+    smooth_list(ST, NbST, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 3, con);
+    smooth_list(SQ, NbSQ, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, con);
+    smooth_list(SS, NbSS, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, con);
+    smooth_list(SH, NbSH, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 8, con);
+    smooth_list(SI, NbSI, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 6, con);
+    smooth_list(SY, NbSY, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 5, con);
     Changed = 1;
   }
 
