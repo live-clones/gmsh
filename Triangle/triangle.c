@@ -11,10 +11,10 @@
 /*  A Two-Dimensional Quality Mesh Generator and Delaunay Triangulator.      */
 /*  (triangle.c)                                                             */
 /*                                                                           */
-/*  Version 1.4                                                              */
-/*  November 1, 2002                                                         */
+/*  Version 1.5                                                              */
+/*  April 27, 2004                                                           */
 /*                                                                           */
-/*  Copyright 1993, 1995, 1997, 1998, 2002                                   */
+/*  Copyright 1993, 1995, 1997, 1998, 2002, 2004                             */
 /*  Jonathan Richard Shewchuk                                                */
 /*  2360 Woolsey #H                                                          */
 /*  Berkeley, California  94705-1927                                         */
@@ -148,6 +148,12 @@
 /*    Fortune, "Numerical Stability of Algorithms for 2D Delaunay Triangu-   */
 /*    lations," International Journal of Computational Geometry & Applica-   */
 /*    tions 5(1-2):193-213, March-June 1995.                                 */
+/*                                                                           */
+/*  The method of inserting new vertices off-center (not precisely at the    */
+/*    circumcenter of every poor-quality triangle) is from Alper Ungor,      */
+/*    "Off-centers:  A New Type of Steiner Points for Computing Size-Optimal */
+/*    quality-guaranteed Delaunay triangulations," Proceedings of LATIN      */
+/*    2004 (Buenos Aires, Argentina), April 2004.                            */
 /*                                                                           */
 /*  For definitions of and results involving Delaunay triangulations,        */
 /*    constrained and conforming versions thereof, and other aspects of      */
@@ -623,10 +629,11 @@ struct splaynode {
 /*   determines how new records should be aligned in memory.  itembytes and  */
 /*   itemwords are the length of a record in bytes (after rounding up) and   */
 /*   words.  itemsperblock is the number of items allocated at once in a     */
-/*   single block.  items is the number of currently allocated items.        */
-/*   maxitems is the maximum number of items that have been allocated at     */
-/*   once; it is the current number of items plus the number of records kept */
-/*   on deaditemstack.                                                       */
+/*   single block.  itemsfirstblock is the number of items in the first      */
+/*   block, which can vary from the others.  items is the number of          */
+/*   currently allocated items.  maxitems is the maximum number of items     */
+/*   that have been allocated at once; it is the current number of items     */
+/*   plus the number of records kept on deaditemstack.                       */
 
 struct memorypool {
   VOID **firstblock, **nowblock;
@@ -638,6 +645,7 @@ struct memorypool {
   int alignbytes;
   int itembytes, itemwords;
   int itemsperblock;
+  int itemsfirstblock;
   long items, maxitems;
   int unallocateditems;
   int pathitemsleft;
@@ -755,6 +763,7 @@ struct behavior {
 /*   quality: -q switch.                                                     */
 /*     minangle: minimum angle bound, specified after -q switch.             */
 /*     goodangle: cosine squared of minangle.                                */
+/*     offconstant: constant used to place off-center Steiner points.        */
 /*   vararea: -a switch without number.                                      */
 /*   fixedarea: -a switch with number.                                       */
 /*     maxarea: maximum area bound, specified after -a switch.               */
@@ -796,7 +805,7 @@ struct behavior {
   int order;
   int nobisect;
   int steiner;
-  REAL minangle, goodangle;
+  REAL minangle, goodangle, offconstant;
   REAL maxarea;
 
 /* Variables for file names.                                                 */
@@ -1348,25 +1357,15 @@ int minus1mod3[3] = {2, 0, 1};
 
 #ifdef EXTERNAL_TEST
 
-#ifdef ANSI_DECLARATORS
-extern int triunsuitable(vertex triorg, vertex tridest, vertex triapex,
-                         REAL area);
-#else /* not ANSI_DECLARATORS */
-extern int triunsuitable();
-#endif /* not ANSI_DECLARATORS */
+int triunsuitable();
 
 #else /* not EXTERNAL_TEST */
 
-#ifdef ANSI_DECLARATORS
-int triunsuitable(vertex triorg, vertex tridest, vertex triapex, REAL area)
-#else /* not ANSI_DECLARATORS */
 int triunsuitable(triorg, tridest, triapex, area)
 vertex triorg;                              /* The triangle's origin vertex. */
 vertex tridest;                        /* The triangle's destination vertex. */
 vertex triapex;                               /* The triangle's apex vertex. */
 REAL area;                                      /* The area of the triangle. */
-#endif /* not ANSI_DECLARATORS */
-
 {
   REAL dxoa, dxda, dxod;
   REAL dyoa, dyda, dyod;
@@ -1414,7 +1413,7 @@ int size;
 {
   VOID *memptr;
 
-  memptr = malloc(size);
+  memptr = malloc((unsigned int) size);
   if (memptr == (VOID *) NULL) {
     printf("Error:  Out of memory.\n");
     exit(1);
@@ -1531,8 +1530,9 @@ void info()
   printf("Triangle\n");
   printf(
 "A Two-Dimensional Quality Mesh Generator and Delaunay Triangulator.\n");
-  printf("Version 1.4\n\n");
-  printf("Copyright 1993, 1995, 1997, 1998, 2002 Jonathan Richard Shewchuk\n");
+  printf("Version 1.5\n\n");
+  printf(
+"Copyright 1993, 1995, 1997, 1998, 2002, 2004 Jonathan Richard Shewchuk\n");
   printf("2360 Woolsey #H / Berkeley, California 94705-1927\n");
   printf("Bugs/comments to jrs@cs.berkeley.edu\n");
   printf(
@@ -3111,15 +3111,17 @@ void info()
   printf(
 "  Marshall Bern, L. Paul Chew, Boris Delaunay, Rex A. Dwyer, David\n");
   printf(
-"  Eppstein, Steven Fortune, Leonidas J. Guibas, Donald E. Knuth, C. L.\n");
+"  Eppstein, Steven Fortune, Leonidas J. Guibas, Donald E. Knuth, Charles L.\n"
+);
   printf(
 "  Lawson, Der-Tsai Lee, Ernst P. Mucke, Douglas M. Priest, Jim Ruppert,\n");
   printf(
 "  Isaac Saias, Bruce J. Schachter, Micha Sharir, Daniel D. Sleator, Jorge\n");
   printf(
-"  Stolfi, Robert E. Tarjan, Christopher J. Van Wyk, and Binhai Zhu.  See\n");
-  printf(
-"  the comments at the beginning of the source code for references.\n");
+"  Stolfi, Robert E. Tarjan, Alper Ungor, Christopher J. Van Wyk, and Binhai\n"
+);
+  printf("  Zhu.  See the comments at the beginning of the source code for\n");
+  printf("  references.\n\n");
   exit(0);
 }
 
@@ -3386,6 +3388,11 @@ struct behavior *b;
 #endif /* not TRILIBRARY */
   b->usesegments = b->poly || b->refine || b->quality || b->convex;
   b->goodangle = cos(b->minangle * PI / 180.0);
+  if (b->goodangle == 1.0) {
+    b->offconstant = 0.0;
+  } else {
+    b->offconstant = 0.475 * sqrt((1.0 + b->goodangle) / (1.0 - b->goodangle));
+  }
   b->goodangle *= b->goodangle;
   if (b->refine && b->noiterationnum) {
     printf(
@@ -3718,7 +3725,7 @@ struct memorypool *pool;
     (alignptr + (unsigned long) pool->alignbytes -
      (alignptr % (unsigned long) pool->alignbytes));
   /* There are lots of unallocated items left in this block. */
-  pool->unallocateditems = pool->itemsperblock;
+  pool->unallocateditems = pool->itemsfirstblock;
   /* The stack of deallocated items is empty. */
   pool->deaditemstack = (VOID *) NULL;
 }
@@ -3744,12 +3751,13 @@ struct memorypool *pool;
 
 #ifdef ANSI_DECLARATORS
 void poolinit(struct memorypool *pool, int bytecount, int itemcount,
-              enum wordtype wtype, int alignment)
+              int firstitemcount, enum wordtype wtype, int alignment)
 #else /* not ANSI_DECLARATORS */
-void poolinit(pool, bytecount, itemcount, wtype, alignment)
+void poolinit(pool, bytecount, itemcount, firstitemcount, wtype, alignment)
 struct memorypool *pool;
 int bytecount;
 int itemcount;
+int firstitemcount;
 enum wordtype wtype;
 int alignment;
 #endif /* not ANSI_DECLARATORS */
@@ -3777,12 +3785,18 @@ int alignment;
                   * (pool->alignbytes / wordsize);
   pool->itembytes = pool->itemwords * wordsize;
   pool->itemsperblock = itemcount;
+  if (firstitemcount == 0) {
+    pool->itemsfirstblock = itemcount;
+  } else {
+    pool->itemsfirstblock = firstitemcount;
+  }
 
-  /* Allocate a block of items.  Space for `itemsperblock' items and one    */
+  /* Allocate a block of items.  Space for `itemsfirstblock' items and one  */
   /*   pointer (to point to the next block) are allocated, as well as space */
   /*   to ensure alignment of the items.                                    */
-  pool->firstblock = (VOID **) trimalloc(pool->itemsperblock * pool->itembytes
-                                         + sizeof(VOID *) + pool->alignbytes);
+  pool->firstblock = (VOID **)
+    trimalloc(pool->itemsfirstblock * pool->itembytes + (int) sizeof(VOID *) +
+              pool->alignbytes);
   /* Set the next block pointer to NULL. */
   *(pool->firstblock) = (VOID *) NULL;
   poolrestart(pool);
@@ -3839,11 +3853,13 @@ struct memorypool *pool;
       if (*(pool->nowblock) == (VOID *) NULL) {
         /* Allocate a new block of items, pointed to by the previous block. */
         newblock = (VOID **) trimalloc(pool->itemsperblock * pool->itembytes +
-                                       sizeof(VOID *) + pool->alignbytes);
+                                       (int) sizeof(VOID *) +
+                                       pool->alignbytes);
         *(pool->nowblock) = (VOID *) newblock;
         /* The next block pointer is NULL. */
         *newblock = (VOID *) NULL;
       }
+
       /* Move to the new block. */
       pool->nowblock = (VOID **) *(pool->nowblock);
       /* Find the first item in the block.    */
@@ -3856,6 +3872,7 @@ struct memorypool *pool;
       /* There are lots of unallocated items left in this block. */
       pool->unallocateditems = pool->itemsperblock;
     }
+
     /* Allocate a new item. */
     newitem = pool->nextitem;
     /* Advance `nextitem' pointer to next free item in block. */
@@ -3921,7 +3938,7 @@ struct memorypool *pool;
     (alignptr + (unsigned long) pool->alignbytes -
      (alignptr % (unsigned long) pool->alignbytes));
   /* Set the number of items left in the current block. */
-  pool->pathitemsleft = pool->itemsperblock;
+  pool->pathitemsleft = pool->itemsfirstblock;
 }
 
 /*****************************************************************************/
@@ -3953,6 +3970,7 @@ struct memorypool *pool;
   if (pool->pathitem == pool->nextitem) {
     return (VOID *) NULL;
   }
+
   /* Check whether any untraversed items remain in the current block. */
   if (pool->pathitemsleft == 0) {
     /* Find the next block. */
@@ -3966,6 +3984,7 @@ struct memorypool *pool;
     /* Set the number of items left in the current block. */
     pool->pathitemsleft = pool->itemsperblock;
   }
+
   newitem = pool->pathitem;
   /* Find the next item in the block. */
   if (pool->itemwordtype == POINTER) {
@@ -4020,8 +4039,9 @@ int subsegwords;
   unsigned long alignptr;
 
   /* Set up `dummytri', the `triangle' that occupies "outer space." */
-  m->dummytribase = (triangle *) trimalloc(trianglewords * sizeof(triangle) +
-                                           m->triangles.alignbytes);
+  m->dummytribase = (triangle *)
+                    trimalloc(trianglewords * (int) sizeof(triangle) +
+                              m->triangles.alignbytes);
   /* Align `dummytri' on a `triangles.alignbytes'-byte boundary. */
   alignptr = (unsigned long) m->dummytribase;
   m->dummytri = (triangle *)
@@ -4043,7 +4063,7 @@ int subsegwords;
     /* Set up `dummysub', the omnipresent subsegment pointed to by any */
     /*   triangle side or subsegment end that isn't attached to a real */
     /*   subsegment.                                                   */
-    m->dummysubbase = (subseg *) trimalloc(subsegwords * sizeof(subseg) +
+    m->dummysubbase = (subseg *) trimalloc(subsegwords * (int) sizeof(subseg) +
                                            m->subsegs.alignbytes);
     /* Align `dummysub' on a `subsegs.alignbytes'-byte boundary. */
     alignptr = (unsigned long) m->dummysubbase;
@@ -4108,8 +4128,10 @@ struct behavior *b;
                          sizeof(triangle);
     vertexsize = (m->vertex2triindex + 1) * sizeof(triangle);
   }
+
   /* Initialize the pool of vertices. */
   poolinit(&m->vertices, vertexsize, VERTEXPERBLOCK,
+           m->invertices > VERTEXPERBLOCK ? m->invertices : VERTEXPERBLOCK,
            (sizeof(REAL) >= sizeof(triangle)) ? FLOATINGPOINT : POINTER, 0);
 }
 
@@ -4165,14 +4187,17 @@ struct behavior *b;
       (trisize < 6 * sizeof(triangle) + sizeof(int))) {
     trisize = 6 * sizeof(triangle) + sizeof(int);
   }
+
   /* Having determined the memory size of a triangle, initialize the pool. */
-  poolinit(&m->triangles, trisize, TRIPERBLOCK, POINTER, 4);
+  poolinit(&m->triangles, trisize, TRIPERBLOCK,
+           (2 * m->invertices - 2) > TRIPERBLOCK ? (2 * m->invertices - 2) :
+           TRIPERBLOCK, POINTER, 4);
 
   if (b->usesegments) {
     /* Initialize the pool of subsegments.  Take into account all six */
     /*   pointers and one boundary marker.                            */
     poolinit(&m->subsegs, 6 * sizeof(triangle) + sizeof(int), SUBSEGPERBLOCK,
-             POINTER, 4);
+             SUBSEGPERBLOCK, POINTER, 4);
 
     /* Initialize the "outer space" triangle and omnipresent subsegment. */
     dummyinit(m, b, m->triangles.itemwords, m->subsegs.itemwords);
@@ -4404,11 +4429,17 @@ int number;
 
   getblock = m->vertices.firstblock;
   current = b->firstnumber;
+
   /* Find the right block. */
-  while (current + m->vertices.itemsperblock <= number) {
+  if (current + m->vertices.itemsfirstblock <= number) {
     getblock = (VOID **) *getblock;
-    current += m->vertices.itemsperblock;
+    current += m->vertices.itemsfirstblock;
+    while (current + m->vertices.itemsperblock <= number) {
+      getblock = (VOID **) *getblock;
+      current += m->vertices.itemsperblock;
+    }
   }
+
   /* Now find the right vertex. */
   alignptr = (unsigned long) (getblock + 1);
   foundvertex = (vertex) (alignptr + (unsigned long) m->vertices.alignbytes -
@@ -6325,9 +6356,11 @@ vertex pd;
 #ifdef ANSI_DECLARATORS
 void findcircumcenter(struct mesh *m, struct behavior *b,
                       vertex torg, vertex tdest, vertex tapex,
-                      vertex circumcenter, REAL *xi, REAL *eta, REAL *minedge)
+                      vertex circumcenter, REAL *xi, REAL *eta, REAL *minedge,
+                      int offcenter)
 #else /* not ANSI_DECLARATORS */
-void findcircumcenter(m, b, torg, tdest, tapex, circumcenter, xi, eta, minedge)
+void findcircumcenter(m, b, torg, tdest, tapex, circumcenter, xi, eta, minedge,
+                      offcenter)
 struct mesh *m;
 struct behavior *b;
 vertex torg;
@@ -6337,13 +6370,14 @@ vertex circumcenter;
 REAL *xi;
 REAL *eta;
 REAL *minedge;
+int offcenter;
 #endif /* not ANSI_DECLARATORS */
 
 {
   REAL xdo, ydo, xao, yao;
   REAL dodist, aodist, dadist;
   REAL denominator;
-  REAL dx, dy;
+  REAL dx, dy, dxoff, dyoff;
 
   m->circumcentercount++;
 
@@ -6366,26 +6400,66 @@ REAL *minedge;
     /* Don't count the above as an orientation test. */
     m->counterclockcount--;
   }
-  circumcenter[0] = torg[0] - (ydo * aodist - yao * dodist) * denominator;  
-  circumcenter[1] = torg[1] + (xdo * aodist - xao * dodist) * denominator;  
+  dx = (yao * dodist - ydo * aodist) * denominator;
+  dy = (xdo * aodist - xao * dodist) * denominator;
+
+  /* Find the (squared) length of the triangle's shortest edge.  This   */
+  /*   serves as a conservative estimate of the insertion radius of the */
+  /*   circumcenter's parent.  The estimate is used to ensure that      */
+  /*   the algorithm terminates even if very small angles appear in     */
+  /*   the input PSLG.                                                  */
+  if ((dodist < aodist) && (dodist < dadist)) {
+    *minedge = dodist;
+    if (offcenter && (b->offconstant > 0.0)) {
+      /* Find the position of the off-center, as described by Alper Ungor. */
+      dxoff = 0.5 * xdo - b->offconstant * ydo;
+      dyoff = 0.5 * ydo + b->offconstant * xdo;
+      /* If the off-center is closer to the origin than the */
+      /*   circumcenter, use the off-center instead.        */
+      if (dxoff * dxoff + dyoff * dyoff < dx * dx + dy * dy) {
+        dx = dxoff;
+        dy = dyoff;
+      }
+    }
+  } else if (aodist < dadist) {
+    *minedge = aodist;
+    if (offcenter && (b->offconstant > 0.0)) {
+      dxoff = 0.5 * xao + b->offconstant * yao;
+      dyoff = 0.5 * yao - b->offconstant * xao;
+      /* If the off-center is closer to the origin than the */
+      /*   circumcenter, use the off-center instead.        */
+      if (dxoff * dxoff + dyoff * dyoff < dx * dx + dy * dy) {
+        dx = dxoff;
+        dy = dyoff;
+      }
+    }
+  } else {
+    *minedge = dadist;
+    if (offcenter && (b->offconstant > 0.0)) {
+      dxoff = 0.5 * (tapex[0] - tdest[0]) -
+              b->offconstant * (tapex[1] - tdest[1]);
+      dyoff = 0.5 * (tapex[1] - tdest[1]) +
+              b->offconstant * (tapex[0] - tdest[0]);
+      /* If the off-center is closer to the destination than the */
+      /*   circumcenter, use the off-center instead.             */
+      if (dxoff * dxoff + dyoff * dyoff <
+          (dx - xdo) * (dx - xdo) + (dy - ydo) * (dy - ydo)) {
+        dx = xdo + dxoff;
+        dy = ydo + dyoff;
+      }
+    }
+  }
+
+  circumcenter[0] = torg[0] + dx;
+  circumcenter[1] = torg[1] + dy;
 
   /* To interpolate vertex attributes for the new vertex inserted at */
   /*   the circumcenter, define a coordinate system with a xi-axis,  */
   /*   directed from the triangle's origin to its destination, and   */
   /*   an eta-axis, directed from its origin to its apex.            */
   /*   Calculate the xi and eta coordinates of the circumcenter.     */
-  dx = circumcenter[0] - torg[0];
-  dy = circumcenter[1] - torg[1];
-  *xi = (dx * yao - xao * dy) * (2.0 * denominator);
-  *eta = (xdo * dy - dx * ydo) * (2.0 * denominator);
-
-  /* Find the length of the triangle's shortest edge.  This serves as */
-  /*   a conservative estimate of the insertion radius of the         */
-  /*   circumcenter's parent.  The estimate is used to ensure that    */
-  /*   the algorithm terminates even if very small angles appear in   */
-  /*   the input PSLG.                                                */
-  *minedge = ((dodist < aodist) && (dodist < dadist)) ? dodist :
-             (aodist < dadist) ? aodist : dadist;
+  *xi = (yao * dx - xao * dy) * (2.0 * denominator);
+  *eta = (xdo * dy - ydo * dx) * (2.0 * denominator);
 }
 
 /**                                                                         **/
@@ -7692,7 +7766,7 @@ struct otri *searchtri;
                       - (alignptr % (unsigned long) m->triangles.alignbytes));
     for (j = 0; j < samplesperblock; j++) {
       if (i == triblocks - 1) {
-        samplenum = randomnation((int)
+        samplenum = randomnation((unsigned int)
                                  (m->triangles.maxitems - (i * TRIPERBLOCK)));
       } else {
         samplenum = randomnation(TRIPERBLOCK);
@@ -9184,7 +9258,7 @@ int arraysize;
     return;
   }
   /* Choose a random pivot to split the array. */
-  pivot = (int) randomnation(arraysize);
+  pivot = (int) randomnation((unsigned int) arraysize);
   pivotx = sortarray[pivot][0];
   pivoty = sortarray[pivot][1];
   /* Split the array. */
@@ -9260,7 +9334,7 @@ int axis;
     return;
   }
   /* Choose a random pivot to split the array. */
-  pivot = (int) randomnation(arraysize);
+  pivot = (int) randomnation((unsigned int) arraysize);
   pivot1 = sortarray[pivot][axis];
   pivot2 = sortarray[pivot][1 - axis];
   /* Split the array. */
@@ -9947,7 +10021,7 @@ struct behavior *b;
   }
 
   /* Allocate an array of pointers to vertices for sorting. */
-  sortarray = (vertex *) trimalloc(m->invertices * sizeof(vertex));
+  sortarray = (vertex *) trimalloc(m->invertices * (int) sizeof(vertex));
   traversalinit(&m->vertices);
   for (i = 0; i < m->invertices; i++) {
     sortarray[i] = vertextraverse(m);
@@ -10386,8 +10460,9 @@ struct event **freeevents;
   int i;
 
   maxevents = (3 * m->invertices) / 2;
-  *eventheap = (struct event **) trimalloc(maxevents * sizeof(struct event *));
-  *events = (struct event *) trimalloc(maxevents * sizeof(struct event));
+  *eventheap = (struct event **)
+               trimalloc(maxevents * (int) sizeof(struct event *));
+  *events = (struct event *) trimalloc(maxevents * (int) sizeof(struct event));
   traversalinit(&m->vertices);
   for (i = 0; i < m->invertices; i++) {
     thisvertex = vertextraverse(m);
@@ -10773,7 +10848,7 @@ struct behavior *b;
   triangle ptr;   /* Temporary variable used by sym(), onext(), and oprev(). */
 
   poolinit(&m->splaynodes, sizeof(struct splaynode), SPLAYNODEPERBLOCK,
-           POINTER, 0);
+           SPLAYNODEPERBLOCK, POINTER, 0);
   splayroot = (struct splaynode *) NULL;
 
   if (b->verbose) {
@@ -11230,7 +11305,8 @@ FILE *polyfile;
   /* Allocate a temporary array that maps each vertex to some adjacent */
   /*   triangle.  I took care to allocate all the permanent memory for */
   /*   triangles and subsegments first.                                */
-  vertexarray = (triangle *) trimalloc(m->vertices.items * sizeof(triangle));
+  vertexarray = (triangle *)
+                trimalloc(m->vertices.items * (int) sizeof(triangle));
   /* Each vertex is initially unrepresented. */
   for (i = 0; i < m->vertices.items; i++) {
     vertexarray[i] = (triangle) m->dummytri;
@@ -12944,13 +13020,15 @@ int regions;
 
   if (regions > 0) {
     /* Allocate storage for the triangles in which region points fall. */
-    regiontris = (struct otri *) trimalloc(regions * sizeof(struct otri));
+    regiontris = (struct otri *)
+                 trimalloc(regions * (int) sizeof(struct otri));
   }
 
   if (((holes > 0) && !b->noholes) || !b->convex || (regions > 0)) {
     /* Initialize a pool of viri to be used for holes, concavities, */
     /*   regional attributes, and/or regional area constraints.     */
-    poolinit(&m->viri, sizeof(triangle *), VIRUSPERBLOCK, POINTER, 0);
+    poolinit(&m->viri, sizeof(triangle *), VIRUSPERBLOCK, VIRUSPERBLOCK,
+             POINTER, 0);
   }
 
   if (!b->convex) {
@@ -13449,7 +13527,8 @@ struct badtriang *badtri;
     errorflag = 0;
     /* Create a new vertex at the triangle's circumcenter. */
     newvertex = (vertex) poolalloc(&m->vertices);
-    findcircumcenter(m, b, borg, bdest, bapex, newvertex, &xi, &eta, &minedge);
+    findcircumcenter(m, b, borg, bdest, bapex, newvertex, &xi, &eta, &minedge,
+                     1);
 
     /* Check whether the new vertex lies on a triangle vertex. */
     if (((newvertex[0] == borg[0]) && (newvertex[1] == borg[1])) ||
@@ -13558,7 +13637,7 @@ struct behavior *b;
   }
   /* Initialize the pool of encroached subsegments. */
   poolinit(&m->badsubsegs, sizeof(struct badsubseg), BADSUBSEGPERBLOCK,
-           POINTER, 0);
+           BADSUBSEGPERBLOCK, POINTER, 0);
   if (b->verbose) {
     printf("  Looking for encroached subsegments.\n");
   }
@@ -13576,7 +13655,7 @@ struct behavior *b;
   if ((b->minangle > 0.0) || b->vararea || b->fixedarea || b->usertest) {
     /* Initialize the pool of bad triangles. */
     poolinit(&m->badtriangles, sizeof(struct badtriang), BADTRIPERBLOCK,
-             POINTER, 0);
+             BADTRIPERBLOCK, POINTER, 0);
     /* Initialize the queues of bad triangles. */
     for (i = 0; i < 64; i++) {
       m->queuefront[i] = (struct badtriang *) NULL;
@@ -13586,7 +13665,7 @@ struct behavior *b;
     tallyfaces(m, b);
     /* Initialize the pool of recently flipped triangles. */
     poolinit(&m->flipstackers, sizeof(struct flipstacker), FLIPSTACKERPERBLOCK,
-             POINTER, 0);
+             FLIPSTACKERPERBLOCK, POINTER, 0);
     m->checkquality = 1;
     if (b->verbose) {
       printf("  Splitting bad triangles.\n");
@@ -14124,7 +14203,7 @@ int *regions;
   stringptr = readline(inputline, polyfile, polyfilename);
   *holes = (int) strtol(stringptr, &stringptr, 0);
   if (*holes > 0) {
-    holelist = (REAL *) trimalloc(2 * *holes * sizeof(REAL));
+    holelist = (REAL *) trimalloc(2 * *holes * (int) sizeof(REAL));
     *hlist = holelist;
     for (i = 0; i < 2 * *holes; i += 2) {
       stringptr = readline(inputline, polyfile, polyfilename);
@@ -14155,7 +14234,7 @@ int *regions;
     stringptr = readline(inputline, polyfile, polyfilename);
     *regions = (int) strtol(stringptr, &stringptr, 0);
     if (*regions > 0) {
-      regionlist = (REAL *) trimalloc(4 * *regions * sizeof(REAL));
+      regionlist = (REAL *) trimalloc(4 * *regions * (int) sizeof(REAL));
       *rlist = regionlist;
       index = 0;
       for (i = 0; i < *regions; i++) {
@@ -14954,7 +15033,8 @@ char **argv;
     org(triangleloop, torg);
     dest(triangleloop, tdest);
     apex(triangleloop, tapex);
-    findcircumcenter(m, b, torg, tdest, tapex, circumcenter, &xi, &eta, &dum);
+    findcircumcenter(m, b, torg, tdest, tapex, circumcenter, &xi, &eta, &dum,
+                     0);
 #ifdef TRILIBRARY
     /* X and y coordinates. */
     plist[coordindex++] = circumcenter[0];

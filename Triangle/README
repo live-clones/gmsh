@@ -13,9 +13,9 @@ Gmsh if no compensation is received.
 
 Triangle
 A Two-Dimensional Quality Mesh Generator and Delaunay Triangulator.
-Version 1.4
+Version 1.5
 
-Copyright 1993, 1995, 1997, 1998, 2002 Jonathan Richard Shewchuk
+Copyright 1993, 1995, 1997, 1998, 2002, 2004 Jonathan Richard Shewchuk
 2360 Woolsey #H
 Berkeley, California  94705-1927
 Please send bugs and comments to jrs@cs.berkeley.edu
@@ -24,10 +24,13 @@ Created as part of the Archimedes project (tools for parallel FEM).
 Supported in part by NSF Grant CMS-9318163 and an NSERC 1967 Scholarship.
 There is no warranty whatsoever.  Use at your own risk.
 
-Triangle generates exact Delaunay triangulations, exact constrained
-Delaunay triangulations, Voronoi diagrams, and quality conforming Delaunay
-triangulations.  The latter can be generated with no small angles or large,
-and are thus suitable for finite element analysis.
+
+Triangle generates exact Delaunay triangulations, constrained Delaunay
+triangulations, Voronoi diagrams, and quality conforming Delaunay
+triangulations.  The latter can be generated with no small angles, and are
+thus suitable for finite element analysis.  Show Me graphically displays
+the contents of the geometric files used by Triangle.  Show Me can also
+write images in PostScript form.
 
 Information on the algorithms used by Triangle, including complete
 references, can be found in the comments at the beginning of the triangle.c
@@ -68,4 +71,4 @@ publication, please include an acknowledgment as well.
 
 
 Jonathan Richard Shewchuk
-November 2, 2002
+April 27, 2004
