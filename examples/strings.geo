@@ -10,7 +10,7 @@ For num In {1:2}
 
   General.RotationX += 10 ;
 
-  Print Strcat( Strprefix(Strdup(View[0].Name)) , Sprintf("-%g.jpg", num) ) ;
+  Print StrCat( StrPrefix(Sprintf(View[0].Name)) , Sprintf("-%g.jpg", num) ) ;
 
   Draw ;
 

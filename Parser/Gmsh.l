@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.31 2001-07-24 11:33:47 geuzaine Exp $
+// $Id: Gmsh.l,v 1.32 2001-07-25 13:11:07 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -178,9 +178,8 @@ Spline                  return tSpline;
 Surface                 return tSurface;
 Symmetry                return tSymmetry;
 Sprintf                 return tSprintf ;
-Strcat                  return tStrcat ;
-Strdup                  return tStrdup ;
-Strprefix               return tStrprefix ;
+StrCat                  return tStrCat ;
+StrPrefix               return tStrPrefix ;
 
 Transfinite             return tTransfinite;
 Translate               return tTranslate;

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.19 2001-06-06 08:47:48 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.20 2001-07-25 13:11:07 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -35,8 +35,8 @@ void FillBuffer(void){
 void CreateOutputFile (char *name, int format) {
   FILE    *fp;
   GLint    size3d;
-  char     ext[10];
-  int      res;
+  char     ext[256];
+  int      res, i;
 
 #ifdef _XMOTIF
   FILE    *tmp;
@@ -50,33 +50,28 @@ void CreateOutputFile (char *name, int format) {
   switch(format){
 
   case FORMAT_AUTO :
-    if(strlen(name) < 4)
-      Msg(GERROR, "Unknown extension for automatic format detection");
-    else{
-      strcpy(ext,name+(strlen(name)-4));
-      if(!strcmp(ext,".geo")) CreateOutputFile(name, FORMAT_GEO);
-      else if(!strcmp(ext,".msh")) CreateOutputFile(name, FORMAT_MSH);
-      else if(!strcmp(ext,".unv")) CreateOutputFile(name, FORMAT_UNV);
-      else if(!strcmp(ext,".gif")) CreateOutputFile(name, FORMAT_GIF);
-      else if(!strcmp(ext,".jpg")) CreateOutputFile(name, FORMAT_JPEG);
-      else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_EPS);
-      else if(!strcmp(ext,".xpm")) CreateOutputFile(name, FORMAT_XPM);
-      else if(!strcmp(ext,".ppm")) CreateOutputFile(name, FORMAT_PPM);
-      else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
-      else {
-	if(strlen(name) < 5)
-	  Msg(GERROR, "Unknown extension in \"%s\" for automatic format detection",
-	      name);
-	else{
-	  strcpy(ext,name+(strlen(name)-5));
-	  if(!strcmp(ext,".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
-	  else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
-	  else if(!strcmp(ext,".Gref")) CreateOutputFile(name, FORMAT_GREF);
-	  else Msg(GERROR, "Unknown extension in \"%s\" for automatic format detection",
-		   name);
-	}
+    for(i=strlen(name)-1; i>=0; i--){
+      if(name[i] == '.'){
+	strcpy(ext,&name[i]);
+	break;
       }
     }
+    if(i<=0) strcpy(ext,"");
+
+    if     (!strcmp(ext,".geo")) CreateOutputFile(name, FORMAT_GEO);
+    else if(!strcmp(ext,".msh")) CreateOutputFile(name, FORMAT_MSH);
+    else if(!strcmp(ext,".unv")) CreateOutputFile(name, FORMAT_UNV);
+    else if(!strcmp(ext,".gif")) CreateOutputFile(name, FORMAT_GIF);
+    else if(!strcmp(ext,".jpg")) CreateOutputFile(name, FORMAT_JPEG);
+    else if(!strcmp(ext,".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
+    else if(!strcmp(ext,".ps")) CreateOutputFile(name, FORMAT_EPS);
+    else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_EPS);
+    else if(!strcmp(ext,".xpm")) CreateOutputFile(name, FORMAT_XPM);
+    else if(!strcmp(ext,".ppm")) CreateOutputFile(name, FORMAT_PPM);
+    else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
+    else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
+    else if(!strcmp(ext,".Gref")) CreateOutputFile(name, FORMAT_GREF);
+    else Msg(GERROR, "Unknown extension '%s' for automatic format detection", ext);
     break;
 
   case FORMAT_GEO :

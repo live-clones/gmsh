@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.80 2001-07-24 11:33:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.81 2001-07-25 13:11:07 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -84,7 +84,7 @@ void  skip_until (char *skip, char *until);
 %token tEND tAFFECT tDOTS tPi
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token tFmod tModulo tHypot tPrintf tSprintf tStrcat tStrdup tStrprefix tDraw
+%token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix tDraw
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
@@ -2425,7 +2425,7 @@ StringExpr :
     {
       $$ = $1;
     }
-  | tStrcat '(' StringExpr ',' StringExpr ')'
+  | tStrCat '(' StringExpr ',' StringExpr ')'
     {
       $$ = (char *)Malloc((strlen($3)+strlen($5)+1)*sizeof(char)) ;
       strcpy($$, $3) ;  
@@ -2433,7 +2433,7 @@ StringExpr :
       Free($3);
       Free($5);
     }
-  | tStrprefix '(' StringExpr ')'
+  | tStrPrefix '(' StringExpr ')'
     {
       $$ = (char *)Malloc((strlen($3)+1)*sizeof(char)) ;
       for(i=strlen($3)-1; i>=0; i--){
@@ -2475,11 +2475,7 @@ StringExpr :
       List_Delete($5);
       Free($3);
     }
-  | tStrdup '(' StringExpr ')'
-    {
-      $$ = $3;
-    }
-  | tStrdup '(' tSTRING '.' tSTRING ')'
+  | tSprintf '(' tSTRING '.' tSTRING ')'
     { 
       if(!(pStrCat = Get_StringOptionCategory($3)))
 	vyyerror("Unknown string option class '%s'", $3);
@@ -2493,7 +2489,7 @@ StringExpr :
 	}
       }
     }
-  | tStrdup '('  tSTRING '[' FExpr ']' '.' tSTRING   ')'
+  | tSprintf '('  tSTRING '[' FExpr ']' '.' tSTRING   ')'
     { 
       if(!(pStrCat = Get_StringOptionCategory($3)))
 	vyyerror("Unknown string option class '%s'", $3);
