@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.295 2004-10-30 03:07:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.296 2004-11-09 16:27:49 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3496,7 +3496,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
   double type = opt_view_type(current, GMSH_GET, 0);
   double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
-  double global_zoom = opt_view_global_zoom(current, GMSH_GET, 0);
+  double max_recursion_level = opt_view_max_recursion_level(current, GMSH_GET, 0);
+  double target_error = opt_view_target_error(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
   double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
   double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
@@ -3772,8 +3773,12 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_custom_max(i, GMSH_SET, val);
 
       val = WID->view_value[33]->value();
-      if(force || (val != global_zoom))
-        opt_view_global_zoom(i, GMSH_SET, val);
+      if(force || (val != max_recursion_level))
+        opt_view_max_recursion_level(i, GMSH_SET, val);
+
+      val = WID->view_value[34]->value();
+      if(force || (val != target_error))
+        opt_view_target_error(i, GMSH_SET, val);
 
       val = WID->view_value[30]->value();
       if(force || (val != nb_iso))

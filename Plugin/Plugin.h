@@ -95,6 +95,7 @@ public:
   // If returned pointer is the same as the argument, then view is
   // simply modified, else, a new view is added in the view list
   virtual Post_View *execute(Post_View *) = 0;
+  virtual void assign_specific_visibility () const {}
 };
 
 /*

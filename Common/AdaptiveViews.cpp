@@ -23,89 +23,265 @@
 				       
 #include <stdio.h>
 #include <math.h>
+#include <list>
+#include <set>
 #include "Views.h"
+#include "Plugin.h"
 
-void PascalgetIndices(int iFct, int &n, int &i)
+// A recursive effective implementation
+
+void computeShapeFunctions ( Double_Matrix *coeffs, Double_Matrix *eexps , double u, double v, double *sf);
+
+std::set<_point> _point::all_points;
+std::list<_triangle*> _triangle::all_triangles;
+
+_point * _point::New ( double x, double y, double z, Double_Matrix *coeffs, Double_Matrix *eexps) 
 {
-  int k = 0;
-  int l = 0;
-  while(k<=iFct)
+  _point p;
+  p.x=x; p.y=y; p.z=z;
+  std::set<_point> :: iterator it = all_points.find ( p );
+  if ( it == all_points.end() )
     {
-      l++;
-      k +=l;
-    };
-  n = l - 1;
-  i = l - k + iFct;
+      all_points.insert (p);
+      it = all_points.find ( p );
+      double *kkk = (double*)(it->shape_functions);
+      computeShapeFunctions (coeffs, eexps , x,y,kkk);
+      return (_point*) & (*it);
+    }
+  else
+    return (_point*) & (*it);
+}
+void _triangle::clean ()
+{    
+  std::list<_triangle*>::iterator it =  all_triangles.begin();
+  std::list<_triangle*>::iterator ite =  all_triangles.end();
+  for (;it!=ite;++it)
+    {
+      delete *it;
+    }
+  all_triangles.clear();
+  _point::all_points.clear();
+}
+void _triangle::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) 
+{
+  int level = 0;
+  clean();
+  _point *p1 = _point::New ( 0,0,0, coeffs, eexps);
+  _point *p2 = _point::New ( 0,1,0, coeffs, eexps);
+  _point *p3 = _point::New ( 1,0,0, coeffs, eexps);
+  _triangle *t = new _triangle(p1,p2,p3);
+  Recur_Create (t, maxlevel,level,coeffs,eexps) ;
+}
+void _triangle::Recur_Create (_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps) 
+{
+  all_triangles.push_back(t);
+  if (level++ >= maxlevel)
+    return;
+  
+  _point *p1  = t->p[0]; 
+  _point *p2  = t->p[1]; 
+  _point *p3  = t->p[2]; 
+  _point *p12 = _point::New ( (p1->x+p2->x)*0.5,(p1->y+p2->y)*0.5,0, coeffs, eexps);
+  _point *p13 = _point::New ( (p1->x+p3->x)*0.5,(p1->y+p3->y)*0.5,0, coeffs, eexps);
+  _point *p23 = _point::New ( (p3->x+p2->x)*0.5,(p3->y+p2->y)*0.5,0, coeffs, eexps);
+  _triangle *t1 = new _triangle (p1,p12,p13);
+  Recur_Create (t1, maxlevel,level,coeffs,eexps);
+  _triangle *t2 = new _triangle (p12,p23,p2);
+  Recur_Create (t2, maxlevel,level,coeffs,eexps); 
+  _triangle *t3 = new _triangle (p23,p13,p3);
+  Recur_Create (t3, maxlevel,level,coeffs,eexps); 
+  _triangle *t4 = new _triangle (p12,p23,p13);
+  Recur_Create (t4, maxlevel,level,coeffs,eexps);
+  t->t[0]=t1;t->t[1]=t2;t->t[2]=t3;t->t[3]=t4;      
 }
 
-
-void Post_Zoom::interpolate (  Double_Matrix *coeffs, double u, double v, double *sf)
+void _triangle::Error ( double AVG , double tol )
 {
-  // 2 s = (p+1) (p+2)
-  // p^2 + 3p + 2 = 2s 
-  // p = -3 + sqrt ( 1 + 8 s ) / 2 
-  //int p = (int) ( (-3. + sqrt ( 1 + 8 * coeffs->size2())) / 2);
-  int nn,ii;
+  _triangle *t = *all_triangles.begin();
+  Recur_Error (t,AVG,tol);
+}
+
+void _triangle::Recur_Error ( _triangle *t, double AVG, double tol )
+{
+  if(!t->t[0])t->visible = true; 
+  else
+    {
+      double vr;
+      if (!t->t[0]->t[0])
+	{
+	  double v1 = t->t[0]->V();
+	  double v2 = t->t[1]->V();
+	  double v3 = t->t[2]->V();
+	  double v4 = t->t[3]->V();
+	  vr = (2*v1 + 2*v2 + 2*v3 + v4)/7.;
+	  double v =  t->V();
+	  if ( fabs(v - vr) > AVG * tol ) 
+	    //if ( fabs(v - vr) > ((fabs(v) + fabs(vr) + AVG * tol) * tol ) ) 
+	    {
+	      t->visible = false;
+	      Recur_Error (t->t[0],AVG,tol);
+	      Recur_Error (t->t[1],AVG,tol);
+	      Recur_Error (t->t[2],AVG,tol);
+	      Recur_Error (t->t[3],AVG,tol);
+	    } 
+	  else
+	    t->visible = true;
+	}
+      else
+	{
+	  double v11 = t->t[0]->t[0]->V();
+	  double v12 = t->t[0]->t[1]->V();
+	  double v13 = t->t[0]->t[2]->V();
+	  double v14 = t->t[0]->t[3]->V();
+	  double v21 = t->t[1]->t[0]->V();
+	  double v22 = t->t[1]->t[1]->V();
+	  double v23 = t->t[1]->t[2]->V();
+	  double v24 = t->t[1]->t[3]->V();
+	  double v31 = t->t[2]->t[0]->V();
+	  double v32 = t->t[2]->t[1]->V();
+	  double v33 = t->t[2]->t[2]->V();
+	  double v34 = t->t[2]->t[3]->V();
+	  double v41 = t->t[3]->t[0]->V();
+	  double v42 = t->t[3]->t[1]->V();
+	  double v43 = t->t[3]->t[2]->V();
+	  double v44 = t->t[3]->t[3]->V();
+	  double vr1 = (2*v11 + 2*v12 + 2*v13 + v14)/7.;
+	  double vr2 = (2*v21 + 2*v22 + 2*v23 + v24)/7.;
+	  double vr3 = (2*v31 + 2*v32 + 2*v33 + v34)/7.;
+	  double vr4 = (2*v41 + 2*v42 + 2*v43 + v44)/7.;
+	  vr = (2*vr1+2*vr2+2*vr3+vr4)/7.;
+	  if ( fabs(t->t[0]->V() - vr1) > AVG * tol  || 
+	       fabs(t->t[1]->V() - vr2) > AVG * tol  || 
+	       fabs(t->t[2]->V() - vr3) > AVG * tol  || 
+	       fabs(t->t[3]->V() - vr4) > AVG * tol  || 
+	       fabs(t->V() - vr) > AVG * tol ) 
+	    //if ( fabs(t->t[0]->V() - vr1) > (fabs(t->t[0]->V())+fabs(vr1)+AVG * tol)*tol  || 
+	    //		 fabs(t->t[1]->V() - vr2) > (fabs(t->t[1]->V())+fabs(vr2)+AVG * tol)*tol  || 
+	    //		 fabs(t->t[2]->V() - vr3) > (fabs(t->t[2]->V())+fabs(vr3)+AVG * tol)*tol  || 
+	    //		 fabs(t->t[3]->V() - vr4) > (fabs(t->t[3]->V())+fabs(vr4)+AVG * tol)*tol  || 
+	    //		 fabs(t->V() - vr) > (fabs(t->V())+fabs(vr)+AVG * tol ) *tol)
+	    {
+	      t->visible = false;
+	      Recur_Error (t->t[0],AVG,tol);
+	      Recur_Error (t->t[1],AVG,tol);
+	      Recur_Error (t->t[2],AVG,tol);
+	      Recur_Error (t->t[3],AVG,tol);
+	    }
+	  else
+	    t->visible = true;	      
+	}
+    }
+}
+
+void Adaptive_Post_View:: zoomElement (Post_View * view ,
+				       int ielem , int level, GMSH_Post_Plugin *plug)
+{
+  std::set<_point>::iterator it  = _point::all_points.begin();
+  std::set<_point>::iterator ite = _point::all_points.end();
+  
+  int ip=0;
+
+  for ( ; it !=ite ; ++it)
+    {
+      _point *p = (_point*) &(*it);
+      p->val = 0;
+      for ( int k=0;k<_coefs->size1();++k)
+	{
+	  p->val += it->shape_functions[k] * (*_STval )( ielem , k );
+	}	        
+      p->X = (*_STposX) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposX) ( ielem , 1 ) * p->x + (*_STposX) ( ielem , 2 ) * p->y;
+      p->Y = (*_STposY) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposY) ( ielem , 1 ) * p->x + (*_STposY) ( ielem , 2 ) * p->y;
+      p->Z = (*_STposZ) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposZ) ( ielem , 1 ) * p->x + (*_STposZ) ( ielem , 2 ) * p->y;
+
+      if (level == 0)
+	{
+	  if (min > p->val) min = p->val;
+	  if (max < p->val) max = p->val;
+	}
+    }
+
+  std::list<_triangle*>::iterator itt  = _triangle::all_triangles.begin();
+  std::list<_triangle*>::iterator itte = _triangle::all_triangles.end();
+
+  for ( ;itt != itte ; itt++)
+    {
+      (*itt)->visible = false;
+    }
+
+
+  if (plug)
+    plug->assign_specific_visibility ();
+  else
+  _triangle::Error ( max-min, tol );
+
+  itt  = _triangle::all_triangles.begin();
+  for ( ;itt != itte ; itt++)
+    {
+      if ((*itt)->visible)
+	{
+	  _point *p1 = (*itt)->p[0];
+	  _point *p2 = (*itt)->p[1];
+	  _point *p3 = (*itt)->p[2];
+	  List_Add ( view->ST , &p1->X );
+	  List_Add ( view->ST , &p2->X );
+	  List_Add ( view->ST , &p3->X );
+	  List_Add ( view->ST , &p1->Y );
+	  List_Add ( view->ST , &p2->Y );
+	  List_Add ( view->ST , &p3->Y );
+	  List_Add ( view->ST , &p1->Z );
+	  List_Add ( view->ST , &p2->Z );
+	  List_Add ( view->ST , &p3->Z );
+	  List_Add ( view->ST , &p1->val );
+	  List_Add ( view->ST , &p2->val );
+	  List_Add ( view->ST , &p3->val );
+	  view->NbST++;
+	}
+    }
+}
+
+void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int level, GMSH_Post_Plugin *plug)
+{
+  if (!view->ST)return;
+
+  if (presentTol==tol && presentZoomLevel == level && !plug)return;
+
+  _triangle::Create ( level, _coefs, _eexps );
+
+  List_Delete(view->ST); view->ST = 0;  
+  view->NbST = 0;
+  /// for now, that's all we do, 1 TS
+  view->NbTimeStep=1;
+  int nbelm = _STposX->size1();
+  view->ST = List_Create ( nbelm * (int) pow(4.,level), nbelm *12, sizeof(double));
+
+  for ( int i=0;i<nbelm;++i)
+    {
+      zoomElement ( view , i , level, plug);
+    }  
+  view->Changed = 1;
+  presentZoomLevel = level;
+  presentTol = tol;
+}
+		      
+void computeShapeFunctions ( Double_Matrix *coeffs, Double_Matrix *eexps , double u, double v, double *sf)
+{
+
+  static double powsuv[256];
+  for (int j=0;j<coeffs->size2();++j)
+    {
+      double powu = (*eexps) ( j, 0);
+      double powv = (*eexps) ( j, 1);
+      powsuv[j] = pow(u,powu) *pow(v,powv);
+    }
+
   for (int i=0;i<coeffs->size1();++i)
     {
       sf[i] = 0.0;
       for (int j=0;j<coeffs->size2();++j)
 	{
-	  PascalgetIndices(j,nn,ii);
-	  sf[i] += (*coeffs)(i,j) * pow(u,nn-ii) * pow(v,ii);
+	  sf[i] += (*coeffs)(i,j) * powsuv[j];
 	}
     }
-}
-
-Post_Zoom::Post_Zoom ( int level , Double_Matrix *coeffs)
-{
-  Points = new Double_Matrix ( (level+1)*(level+2)/2 , 2);
-  M      = new Double_Matrix ( (level+1)*(level+2)/2 , coeffs->size2());
-  MGeom  = new Double_Matrix ( (level+1)*(level+2)/2 , 3);
-  int k=0;
-  double sf[256];  
-
-  for(int i=0;i<=level;i++)
-    {
-      for(int j=0;j<=level-i;j++)
-	{
-	  (*Points) ( k , 0 ) = (double)i / (level);
-	  (*Points) ( k , 1 ) = (double)j / (level);	  
-
-	  //	  printf ("%d %g %g\n",k,(*Points) ( k , 0 ),(*Points) ( k , 1 ));
-
-	  interpolate ( coeffs, (*Points)(k,0),(*Points)(k,1),sf );
-	  for (int m=0;m<coeffs->size2();++m)(*M)(k,m)=sf[m];
-	  (*MGeom)(k,0) = 1- (*Points)(k,0)- (*Points)(k,1);
-	  (*MGeom)(k,1) = (*Points)(k,0);
-	  (*MGeom)(k,2) = (*Points)(k,1);
-	  k++;
-	}
-    }
-  Simplices = new Int_Matrix ( level*level , 3 );
-  k=0;
-  int s=0;
-  for(int i=0;i<=level;i++)
-    {
-      for(int j=0;j<=level-i;j++)
-	{
-	  if (j!=level-i)
-	    {
-	      (*Simplices) ( s , 0 )   = k;
-	      (*Simplices) ( s , 1 )   = k+1;
-	      (*Simplices) ( s++ , 2 ) = k+level+1-i;
-	      //	      printf ("A %d %d -  %d ==> %d %d %d\n",i,j,s,k,k+1,k+level+1-i);
-	    }
-	  if (j+1<level-i)
-	    {
-	      (*Simplices) ( s , 0 )   = k+1;
-	      (*Simplices) ( s , 2 )   = k+level+1-i;
-	      (*Simplices) ( s++ , 1 ) = k+level-i+2;
-	      //	      printf ("B %d %d - %d ==> %d %d %d\n",i,j,s,k+1,k+level+1-i,k+level-i+2);
-	    }
-	  k++;
-	}
-    }  
 }
 
 void Adaptive_Post_View:: initWithLowResolution (Post_View *view)
@@ -115,9 +291,10 @@ void Adaptive_Post_View:: initWithLowResolution (Post_View *view)
   int nbelm = view->NbST;
   int nbnod = 3;
 
+  min = VAL_INF;
+  max = -VAL_INF;
+
   int nb = List_Nbr(myList) / (nbelm);
-  //  printf("nb = %d nbelem = %d size = %d\n ",
-  //	 nb,nbelm,List_Nbr(myList)); 
 
   _STposX = new Double_Matrix ( nbelm , nbnod        );
   _STposY = new Double_Matrix ( nbelm , nbnod        );
@@ -128,125 +305,61 @@ void Adaptive_Post_View:: initWithLowResolution (Post_View *view)
   int k=0;
   for (int i=0;i<List_Nbr(myList);i+=nb)
     {    
-      double *x = (double*)List_Pointer_Fast (view->ST,i); 
+      double *x = (double*)List_Pointer_Fast (view->ST,i);
       double *y = (double*)List_Pointer_Fast (view->ST,i+nbnod); 
       double *z = (double*)List_Pointer_Fast (view->ST,i+2*nbnod); 
       (*_STposX) ( k , 0) = x[0]; (*_STposX) ( k , 1) = x[1]; (*_STposX) ( k , 2) = x[2]; 
       (*_STposY) ( k , 0) = y[0]; (*_STposY) ( k , 1) = y[1]; (*_STposY) ( k , 2) = y[2]; 
       (*_STposZ) ( k , 0) = z[0]; (*_STposZ) ( k , 1) = z[1]; (*_STposZ) ( k , 2) = z[2]; 
-      double *val = (double*)List_Pointer_Fast (view->ST,i+3*nbnod); 
-      for (int j=0;j<nb-3*nbnod;j++)(*_STval)(k,j)=val[j];      
+      double *val = (double*)List_Pointer_Fast (view->ST,i+3*nbnod);
+      for (int j=0;j<nb-3*nbnod;j++){
+	(*_STval)(k,j)=val[j];      
+      }      
       k++;
     }
-  
-  setGlobalResolutionLevel(view,1);
+  setAdaptiveResolutionLevel(view,0);
 }
 
-void Adaptive_Post_View:: zoomElement (Post_View * view ,
-				       int ielem ,
-				       Post_Zoom *zoom)
-{
-  static double valelem[1024];
-  static double x[1024];
-  static double y[1024];
-  static double z[1024];
-
-  Double_Matrix *M         = zoom->M;
-  Double_Matrix *MGeom     = zoom->MGeom;
-  Int_Matrix    *Simplices = zoom->Simplices;
-  for ( int j=0;j<M->size1();++j)
-    {
-      valelem[j] = 0.0;
-      x[j] = 0.0;
-      y[j] = 0.0;
-      z[j] = 0.0;
-      for ( int k=0;k<M->size2();++k)
-	{
-	  valelem[j] += (*M)(j,k) * (*_STval )( ielem , k );
-	  if (view->Min > valelem[j]) view->Min = valelem[j];
-	  if (view->Max < valelem[j]) view->Max = valelem[j];
-	}	  
-      for ( int k=0;k<3;++k)
-	{
-	  x[j] += (*MGeom)(j,k) * (*_STposX) ( ielem , k );
-	  y[j] += (*MGeom)(j,k) * (*_STposY) ( ielem , k );
-	  z[j] += (*MGeom)(j,k) * (*_STposZ) ( ielem , k );
-	}	  
-    }
-  
-  for (int i=0;i<Simplices->size1();++i)
-    {
-      int p1 = (*Simplices) (i,0);
-      int p2 = (*Simplices) (i,1);
-      int p3 = (*Simplices) (i,2);
-      List_Add ( view->ST , &x[p1] );
-      List_Add ( view->ST , &x[p2] );
-      List_Add ( view->ST , &x[p3] );
-      List_Add ( view->ST , &y[p1] );
-      List_Add ( view->ST , &y[p2] );
-      List_Add ( view->ST , &y[p3] );
-      List_Add ( view->ST , &z[p1] );
-      List_Add ( view->ST , &z[p2] );
-      List_Add ( view->ST , &z[p3] );
-      List_Add ( view->ST , &valelem[p1] );
-      List_Add ( view->ST , &valelem[p2] );
-      List_Add ( view->ST , &valelem[p3] );
-      view->NbST++;
-    }
-}
-
-void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int level)
-{
-}
-
-void Adaptive_Post_View:: setGlobalResolutionLevel (Post_View * view , int level)
+Adaptive_Post_View:: Adaptive_Post_View (Post_View *view, List_T *_c , List_T *_pol)  
+  : tol(1.e-3)
 {
 
-  printf ("asking for resolution %d\n",level);
-  
-  if (!view->ST)return;
-  if (presentZoomLevel==level)return;
-  if (!ZOOMS[level]) 
-    ZOOMS[level] = new Post_Zoom ( level , _coefs);
-
-  
-  List_Delete(view->ST); view->ST = 0;
-  view->NbST = 0;
-
-  int nbelm = _STposX->size1();
-
-  view->ST = List_Create ( nbelm * 12 * ZOOMS[level]->Simplices->size1(), 100, sizeof(double));
-
-  for ( int i=0;i<nbelm;++i)
-    {
-      zoomElement ( view , i , ZOOMS[level] );
-    }  
-  view->Changed = 1;
-  presentZoomLevel=level;
-}
-
-Adaptive_Post_View:: Adaptive_Post_View (Post_View *view, List_T *_c)  
-{
-  //  printf ("the view is adaptive, yeah!\n");
-
-  for (int i=0;i<MAX_LEVEL_OF_ZOOM+1;i++) ZOOMS[i] = 0;
   _coefs = new Double_Matrix ( List_Nbr (_c) , List_Nbr (_c)  );
-
-  //  printf ("we have a %d x %d interpolation matrix\n", List_Nbr (_c), List_Nbr (_c));
+  _eexps  = new Double_Matrix ( List_Nbr (_c) , 3  );
 
   for (int i=0; i< List_Nbr ( _c ); ++i)
     {
       List_T **line = (List_T **) List_Pointer_Fast ( _c,i); 
+      List_T **eexp = (List_T **) List_Pointer_Fast ( _pol,i); 
+
+      double dpowu,dpowv,dpoww;
+
+      List_Read (*eexp, 0, &dpowu);
+      List_Read (*eexp, 1, &dpowv);
+      List_Read (*eexp, 2, &dpoww);
+
+      (*_eexps) ( i , 0 ) = dpowu;
+      (*_eexps) ( i , 1 ) = dpowv;
+      (*_eexps) ( i , 2 ) = dpoww;
+
       for (int j=0;j < List_Nbr ( *line ); ++j)
 	{
 	  double val;
 	  List_Read ( *line, j, &val);
 	  (*_coefs) ( i , j ) = val;
-	  //	  printf("%g ",val); 
 	}
-      //	  printf("\n "); 
     }
-  //  printf("\n "); 
+
   initWithLowResolution (view);  
 }
 
+Adaptive_Post_View::~Adaptive_Post_View()
+{
+  delete _coefs;
+  delete _eexps;
+  delete _STposX;
+  delete _STposY;
+  delete _STposZ;
+  delete _STval;
+  _triangle::clean();
+}

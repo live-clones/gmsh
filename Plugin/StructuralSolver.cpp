@@ -978,6 +978,9 @@ bool StructuralSolver :: GL_enhanceLine ( int CurveId, Vertex *v1, Vertex *v2)
 	      double pinit [3] = {v1->Pos.X,v1->Pos.Y,v1->Pos.Z};
 	      double dir [3] = {v2->Pos.X-v1->Pos.X,v2->Pos.Y-v1->Pos.Y,v2->Pos.Z-v1->Pos.Z};
 	      Structural_BeamSection *section =  GetBeamSection (it->second.section);
+
+	      //	      printf ("%g,%g,%g\n",it->second.dirz[0],it->second.dirz[1],it->second.dirz[2]);
+
 	      if (section)
 		{
 		  section -> GL_DrawBeam (pinit,dir,it->second.dirz,textures[it->second.material]);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.202 2004-11-09 02:14:19 geuzaine Exp $
+// $Id: Options.cpp,v 1.203 2004-11-09 16:27:49 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4658,11 +4658,11 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
 }
 
 
-double opt_view_global_zoom(OPT_ARGS_NUM)
+double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
-   GET_VIEW(0.);
+  GET_VIEW(0.);
   if(action & GMSH_SET) {
-     if (v->adaptive)
+    if (v->adaptive)
       v->adaptive->setGlobalResolutionLevel(v,(int)val);
   }
 #if defined(HAVE_FLTK)
@@ -4674,7 +4674,29 @@ double opt_view_global_zoom(OPT_ARGS_NUM)
 #endif
   if (v->adaptive)
     return v->adaptive->getGlobalResolutionLevel();
-  return 1;
+  return 0;
+}
+
+double opt_view_target_error(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    if (v->adaptive)
+      {
+	v->adaptive->setTolerance(val);
+	v->adaptive->setGlobalResolutionLevel(v,v->adaptive->getGlobalResolutionLevel());
+      }
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    if (v->adaptive){
+      WID->view_value[34]->value(v->adaptive->getTolerance());
+    }
+  }
+#endif
+  if (v->adaptive)
+    return v->adaptive->getTolerance();
+  return 1.e-2;
 }
 
 

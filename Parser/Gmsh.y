@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.181 2004-10-20 15:33:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.182 2004-11-09 16:27:53 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -109,7 +109,7 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %token tScalarHexahedron tVectorHexahedron tTensorHexahedron
 %token tScalarPrism tVectorPrism tTensorPrism
 %token tScalarPyramid tVectorPyramid tTensorPyramid
-%token tText2D tText3D tInterpolationMatrix tCombine
+%token tText2D tText3D tInterpolationScheme tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tTrimmed tShow tHide
@@ -642,9 +642,9 @@ ScalarTriangle :
     }
     '{' ScalarTriangleValues '}' tEND
     {
-      if((List_Nbr(View->ST) - ntmp) % 3)
-	yymsg(GERROR, "Wrong number of values for scalar triangle "
-	      "(%d is not a multiple of 3)", List_Nbr(View->ST) - ntmp);
+//     if((List_Nbr(View->ST) - ntmp) % 3)
+//	yymsg(GERROR, "Wrong number of values for scalar triangle "
+//	      "(%d is not a multiple of 3)", List_Nbr(View->ST) - ntmp);
       View->NbST++;
     }
 ;
@@ -1269,9 +1269,9 @@ Text3D :
 ;
 
 InterpolationMatrix :
-    tInterpolationMatrix ListOfListOfDouble tEND
+    tInterpolationScheme ListOfListOfDouble  ListOfListOfDouble  tEND
     {
-      View->adaptive = new Adaptive_Post_View (View, $2);
+      View -> adaptive = new Adaptive_Post_View ( View , $2 , $3);
     }
 ;
 

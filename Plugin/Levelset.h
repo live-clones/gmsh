@@ -29,13 +29,13 @@ class GMSH_LevelsetPlugin : public GMSH_Post_Plugin
 {
 public:
   typedef enum {NONE, PLANE, SPHERE, MAP} ORIENTATION ;
+  virtual double levelset(double x, double y, double z, double val) const = 0;
 protected:
   double _ref[3];
-  int _valueTimeStep, _valueView, _valueIndependent;
+  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel;
   ORIENTATION _orientation;
 private:
   double _invert;
-  virtual double levelset(double x, double y, double z, double val) const = 0;
   int zeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
 		   double *x, double *y, double *z, 
 		   double *iVal, int iNbComp, double *dVal, int dNbComp,
@@ -46,6 +46,7 @@ private:
 		   int dNbElm, int dNbComp,
 		   int nbVert, int nbEdg, int exn[12][2], 
 		   vector<Post_View *> out);
+  virtual void assign_specific_visibility () const;
 public:
   GMSH_LevelsetPlugin();
   virtual Post_View *execute(Post_View *);

@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.62 2004-10-30 15:23:45 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.63 2004-11-09 16:27:53 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -156,6 +156,7 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 void GMSH_PluginManager::registerDefaultPlugins()
 {
   // SOLVE PLUGINS
+  char *homeplugins = getenv("GMSHPLUGINSHOME");
   if(CTX.solver.plugins){
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("StructuralSolver", GMSH_RegisterStructuralSolverPlugin()));
@@ -204,7 +205,6 @@ void GMSH_PluginManager::registerDefaultPlugins()
 #if defined(HAVE_FLTK)
   struct dirent **list;
   char ext[6];
-  char *homeplugins = getenv("GMSHPLUGINSHOME");
   if(!homeplugins)
     return;
   int nbFiles = fl_filename_list(homeplugins, &list);

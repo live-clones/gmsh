@@ -25,71 +25,103 @@
 #include "VertexArray.h"
 #include "SmoothNormals.h"
 #include "GmshMatrix.h"
-
+#include<list>
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
 #define VIEW_MAX_ELEMENT_NODES  8
 #define VAL_INF 1.e200
 
 class Post_View;
+class GMSH_Post_Plugin;
 
-#define MAX_LEVEL_OF_ZOOM 40
+#define MAX_LEVEL_OF_ZOOM 8
 
 // On a triangle, we suppose that there exists an
 // interpolation scheme such that u = \sum_i u_i \phi_i
 // phi_i being polynomials of order p, i goes from 1...(p+1)(p+2)/2
 // and phi_i = \sum_j coeffs_{ij} monomials_j and
 // monomials are 1,x,y,x^2,xy,y^2,x^3,x^2y,xy^2,y^3...
+class _point
+{
+public :
+  double x,y,z;
+  double X,Y,Z,val;
+  double shape_functions[128];
+  static _point * New ( double x, double y, double z, Double_Matrix *coeffs, Double_Matrix *eexps); 
+  void print ()const
+  {
+    printf ("p %g %g\n" ,x,y);
+  }
+  bool operator < ( const _point & other ) const
+  {
+    if ( other.x < x) return true;
+    if ( other.x > x) return false;
+    if ( other.y < y) return true;
+    if ( other.y > y) return false;
+    if ( other.z < z) return true;
+    return false;
+  }
+  static std::set<_point> all_points;
+};
 
-/// A zoom is a triangulation in reference coordinates
-class Post_Zoom
+class _triangle
 {
 public:
-  Post_Zoom( int level , Double_Matrix *coeffs);
-  ~Post_Zoom()
+  _triangle (_point *p1,_point *p2,_point *p3)    
+    : visible (false)
   {
-    delete M;
-    delete MGeom;
-    delete Points;
-    delete Simplices;
+    p[0] = p1;
+    p[1] = p2;
+    p[2] = p3;
+    t[0]=t[1]=t[2]=t[3]=0;
   }
-  Double_Matrix *M;
-  Double_Matrix *MGeom;
-  Double_Matrix *Points;
-  Int_Matrix *Simplices;
-  void interpolate ( Double_Matrix *coefs , double u, double v, double *sf);
+
+  inline double V () const
+  {
+    static const double THIRD = 1./3.;
+    return (p[0]->val + p[1]->val + p[2]->val)*THIRD;    
+  }
+  void print ()
+  {
+    printf ("p1 %g %g p2 %g %g p3 %g %g \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y,p[2]->x,p[2]->y);
+  }
+  static void clean ();
+  static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
+  static void Recur_Create (_triangle *t, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Error ( double AVG , double tol );
+  static void Recur_Error ( _triangle *t, double AVG, double tol );
+  bool visible;
+  _point     *p[3];
+  _triangle  *t[4];
+  static std::list<_triangle*> all_triangles;
 };
+
 
 class Adaptive_Post_View 
 {
-  Post_Zoom* ZOOMS [MAX_LEVEL_OF_ZOOM+1];
   double tol;
+  double min,max;
   int presentZoomLevel;
+  double presentTol;
+  Double_Matrix * _eexps;
   Double_Matrix * _coefs;
-  Double_Matrix * _coefs_L2;
   Double_Matrix * _STposX;
   Double_Matrix * _STposY;
   Double_Matrix * _STposZ;
   Double_Matrix * _STval;
 public:
-  Adaptive_Post_View (Post_View *view, List_T *_coeffs);
-  ~Adaptive_Post_View()
-  {
-    delete _coefs;
-    delete _STposX;
-    delete _STposY;
-    delete _STposZ;
-    delete _STval;
-    for (int i=0;i<MAX_LEVEL_OF_ZOOM+1;i++)
-      if (ZOOMS[i]) delete ZOOMS[i];
-  }
+  Adaptive_Post_View (Post_View *view, List_T *_coeffs, List_T *_eexps);
+  ~Adaptive_Post_View();
   int getGlobalResolutionLevel ( ) const {return presentZoomLevel;}
-  void setGlobalResolutionLevel ( Post_View * view , int level );
-  void setAdaptiveResolutionLevel ( Post_View * view , int levelmax = MAX_LEVEL_OF_ZOOM );
+  void setGlobalResolutionLevel ( Post_View * view , int level )
+    {
+      setAdaptiveResolutionLevel ( view , level );
+    }
+  void setAdaptiveResolutionLevel ( Post_View * view , int levelmax, GMSH_Post_Plugin *plug = 0);
   void initWithLowResolution (Post_View *view);
   void setTolerance (const double eps) {tol=eps;}
+  double getTolerance () const {return tol;}
   void zoomElement (Post_View * view ,
-		    int ielem ,
-		    Post_Zoom *zoom);
+		    int ielem, int level, GMSH_Post_Plugin *plug);
 
 };
 
@@ -107,10 +139,10 @@ class Post_View{
     if ( adaptive )
       adaptive->setGlobalResolutionLevel(this, level);
   }
-  void setAdaptiveResolutionLevel (int level)
+  void setAdaptiveResolutionLevel (int level, GMSH_Post_Plugin *plug = 0)
   {
     if ( adaptive )
-      adaptive->setAdaptiveResolutionLevel(this, level);
+      adaptive->setAdaptiveResolutionLevel(this, level, plug);
   }
 
   // intrinsic to a view

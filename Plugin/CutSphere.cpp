@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.34 2004-10-30 04:23:18 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.35 2004-11-09 16:27:53 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,8 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0.},
   {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0.},
   {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "iView", NULL, -1.},
+  {GMSH_FULLRC, "recurLevel", NULL, 4}
 };
 
 extern "C"
@@ -193,6 +194,8 @@ Post_View *GMSH_CutSpherePlugin::execute(Post_View * v)
   _ref[0] = CutSphereOptions_Number[0].def;
   _ref[1] = CutSphereOptions_Number[1].def;
   _ref[2] = CutSphereOptions_Number[2].def;
+  _recurLevel = (int)CutSphereOptions_Number[5].def;
+
   _valueIndependent = 1;
   _valueView = -1;
   _valueTimeStep = -1;

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.40 2004-10-30 15:23:23 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.41 2004-11-09 16:27:53 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,8 @@ StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 1.},
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "iView", NULL, -1.},
+  {GMSH_FULLRC, "recurLevel", NULL, 4}
 };
 
 extern "C"
@@ -119,17 +120,20 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
   _valueIndependent = 0;
   _valueView = (int)CutMapOptions_Number[2].def;
   _valueTimeStep = (int)CutMapOptions_Number[1].def;
+  _recurLevel = (int)CutMapOptions_Number[4].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
-
+  
   if(iView < 0)
     iView = v ? v->Index : 0;
-
+  
   if(!List_Pointer_Test(CTX.post.list, iView)) {
     Msg(GERROR, "View[%d] does not exist", iView);
     return v;
   }
-
+  
   Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
-
+  
   return GMSH_LevelsetPlugin::execute(v1);
 }
+
+

@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.15 2004-09-16 19:15:27 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.16 2004-11-09 16:27:53 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,7 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
   _valueIndependent = 0; // "moving" levelset
   _valueView = -1; // use same view for levelset and field data
   _valueTimeStep = -1; // use same time step in levelset and field data views
+  _recurLevel = 4;
   _orientation = GMSH_LevelsetPlugin::NONE;
 }
 
@@ -338,6 +339,10 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   Post_View *w;
   vector<Post_View *> out;
 
+  if (v->adaptive && v->NbST)
+    v->setAdaptiveResolutionLevel ( _recurLevel , this );
+
+
   if(_valueView < 0) {
     w = v;
   }
@@ -530,4 +535,49 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   }
 
   return 0;
+}
+
+/*
+  On high order maps, we draw only the elements that have a 
+  cut with the levelset, this is as accurate as it should be
+*/
+
+
+static bool recur_sign_change (_triangle *t, double val, const GMSH_LevelsetPlugin *plug)
+{
+
+  if (!t->t[0])
+    {
+      double v1 = plug->levelset (t->p[0]->X,t->p[0]->Y,t->p[0]->Z,t->p[0]->val);
+      double v2 = plug->levelset (t->p[1]->X,t->p[1]->Y,t->p[1]->Z,t->p[1]->val);
+      double v3 = plug->levelset (t->p[2]->X,t->p[2]->Y,t->p[2]->Z,t->p[2]->val);
+      if ( v1 * v2 > 0 && v1 * v3 > 0)
+	t->visible = false;
+      else
+	t->visible = true;
+      return t->visible;
+    }
+  else
+    {
+      bool sc1= recur_sign_change(t->t[0],val,plug);
+      bool sc2= recur_sign_change(t->t[1],val,plug);
+      bool sc3= recur_sign_change(t->t[2],val,plug);
+      bool sc4= recur_sign_change(t->t[3],val,plug);
+      if (sc1 || sc2 || sc3 || sc4)
+	{
+	  if (!sc1) t->t[0]->visible = true;
+	  if (!sc2) t->t[1]->visible = true;
+	  if (!sc3) t->t[2]->visible = true;
+	  if (!sc4) t->t[3]->visible = true;
+	  return true;
+	}
+      t->visible = false;
+      return false;
+    }      
+}
+
+void GMSH_LevelsetPlugin::assign_specific_visibility () const
+{
+  _triangle *t  = *_triangle::all_triangles.begin();
+  t->visible = !recur_sign_change (t, _valueView, this);
 }

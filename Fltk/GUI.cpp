@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.376 2004-11-09 02:14:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.377 2004-11-09 16:27:49 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2558,12 +2558,19 @@ void GUI::create_option_window()
       view_butt[38]->down_box(TOGGLE_BOX);
       view_butt[38]->selection_color(TOGGLE_COLOR);
 
-      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Global resolution level");
+      /// Adaptive views ...
+      view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Maximal Recursion Level");
       view_value[33]->align(FL_ALIGN_RIGHT);
-      view_value[33]->minimum(1);
+      view_value[33]->minimum(0);
       view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
       view_value[33]->step(1);
-      view_value[33]->value(1);
+      view_value[33]->value(0);
+      view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Target Error");
+      view_value[34]->align(FL_ALIGN_RIGHT);
+      view_value[34]->minimum(0);
+      view_value[34]->maximum(1);
+      view_value[34]->value(1.e-2);
+      ///------------------
 
       view_range->end();
     }
@@ -2745,11 +2752,18 @@ void GUI::update_view_window(int num)
   opt_view_draw_strings(num, GMSH_GUI, 0);
   opt_view_auto_position(num, GMSH_GUI, 0);
 
-  opt_view_global_zoom(num, GMSH_GUI, 0);
+  opt_view_max_recursion_level (num, GMSH_GUI, 0);
+  opt_view_target_error (num, GMSH_GUI, 0);
   if(v->adaptive)
-    view_value[33]->activate();
+    {
+      view_value[33]->activate();
+      view_value[34]->activate();
+    }
   else
-    view_value[33]->deactivate();
+    {
+      view_value[33]->deactivate();
+      view_value[34]->deactivate();
+    }
 
   if(v->NbSP) {
     view_butt[2]->activate();

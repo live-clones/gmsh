@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.36 2004-10-30 15:23:23 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.37 2004-11-09 16:27:53 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,8 @@ StringXNumber CutPlaneOptions_Number[] = {
   {GMSH_FULLRC, "B", GMSH_CutPlanePlugin::callbackB, 0.},
   {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0.},
   {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01},
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "iView", NULL, -1.},
+  {GMSH_FULLRC, "recurLevel", NULL, 4}
 };
 
 extern "C"
@@ -195,6 +196,7 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   _valueView = -1;
   _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::PLANE;
+  _recurLevel = (int)CutPlaneOptions_Number[5].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
