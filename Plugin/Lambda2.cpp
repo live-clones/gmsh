@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.4 2004-12-27 19:18:12 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.5 2004-12-27 20:39:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -104,6 +104,10 @@ static void eigen(List_T *inList, int inNb,
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
 
+    // FIXME: there was this test in the old Plugin(Gradient)...
+    // double *yy = (double *)List_Pointer_Fast(inList, i + nbNod);
+    // if(yy[0] > 0){
+
     // copy node coordinates
     for(int j = 0; j < 3 * nbNod; j++)
       List_Add(outList, List_Pointer_Fast(inList, i + j));
@@ -133,8 +137,7 @@ static void eigen(List_T *inList, int inNb,
 	// val contains the velocities: compute the gradient tensor
 	// from them
 	const int MAX_NOD = 4; 
-	const int MAX_COMP= 3;
-	double val[MAX_COMP][MAX_NOD];
+	double val[3][MAX_NOD];
 	for(int k = 0; k < nbNod; k++){
 	  double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
 						  nbNod * nbComp * j + nbComp * k);
@@ -143,8 +146,8 @@ static void eigen(List_T *inList, int inNb,
 	  }
 	}
 	// compute gradient of shape functions
-	double GradPhi_x[4][3];
-	double GradPhi_ksi[4][3];
+	double GradPhi_x[MAX_NOD][3];
+	double GradPhi_ksi[MAX_NOD][3];
 	double dx_dksi[3][3];
 	double dksi_dx[3][3];
 	double det;
@@ -220,6 +223,10 @@ static void eigen(List_T *inList, int inNb,
     }
 
     (*outNb)++;
+
+    // FIXME: end of the yy[0]>0 test in the old Plugin(Gradient)...
+    // }
+    
   }
 }
 
