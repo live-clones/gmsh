@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.59 2004-12-27 00:46:59 geuzaine Exp $
+// $Id: Message.cpp,v 1.60 2004-12-30 22:43:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -35,6 +35,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "GUI.h"
+#include "GUI_Extras.h"
 
 extern GUI *WID;
 extern Context_T CTX;
@@ -244,10 +245,8 @@ void Exit(int level)
       CTX.ctx_position[1] = WID->context_geometry_window->y();
       CTX.solver_position[0] = WID->solver[0].window->x();
       CTX.solver_position[1] = WID->solver[0].window->y();
-      if(WID->fc){
-	CTX.file_chooser_position[0] = WID->fc->x();
-	CTX.file_chooser_position[1] = WID->fc->y();
-      }
+      file_chooser_get_position(&CTX.file_chooser_position[0],
+				&CTX.file_chooser_position[1]);
       Print_Options(0, GMSH_SESSIONRC, false, CTX.session_filename_fullpath);
     }
     if(CTX.options_save)

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.65 2004-12-30 04:08:46 geuzaine Exp $
+# $Id: Makefile,v 1.66 2004-12-30 22:43:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -97,5 +97,5 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Geo/MinMax.h ../Common/Visibility.h ../Graphics/ReadImg.h \
   ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Fltk/File_Picker.h
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h

@@ -2,175 +2,142 @@ Keyboard shortcuts:
 
 @table @kbd
 @item Left arrow
-go to previous time step
-
+go to previous time step 
 @item Right arrow
-go to next time step
-
+go to next time step 
 @item Up arrow
-make previous view visible
-
+make previous view visible 
 @item Down arrow
-make next view visible
+make next view visible 
+
+@sp 1 @c ----------------------------------------------
 
 @item <
 go back to previous context
-
 @item >
 go forward to next context
-
-@item 0
-@item Esc
-reload geometry input file
-
-@item 1
-@item F1
-mesh curves
-
-@item 2
-@item F2
+@item 0 or Esc
+reload project file
+@item 1 or F1
+mesh lines
+@item 2 or F2
 mesh surfaces
-
-@item 3
-@item F3
+@item 3 or F3
 mesh volumes
 
-@item Alt+a
-hide/show small axes
-
-@item Alt+Shift+a
-hide/show big moving axes
-
-@item Ctrl+a
-raise (show) all open windows
-
-@item Alt+b
-hide/show all bounding boxes
-
-@item Alt+c
-loop through predefined color schemes
-
-@item Ctrl+Shift+c
-show clipping plane window
-
-@item Alt+d
-change mesh display mode (solid/wireframe)
-
-@item Shift+d
-decrease animation delay
-
-@item Ctrl+Shift+d
-increase animation delay
-
-@item Alt+f
-change redraw mode (fast/full)
+@sp 1 @c ----------------------------------------------
 
 @item g
 go to geometry module
+@item m
+go to mesh module
+@item p
+go to post-processing module
+@item s
+go to solver module
+
+@sp 1 @c ----------------------------------------------
 
 @item Shift+g
 show geometry options
-
-@item Alt+h
-hide/show all post-processing views
-
-@item Alt+i
-hide/show all post-processing scales
-
-@item Ctrl+i
-show statistics window
-
-@item Alt+l
-hide/show geometry lines
-
-@item Alt+Shift+l
-hide/show surface mesh edges
-
-@item Ctrl+l
-show message console
-
-@item m
-go to mesh module
-
-@item Alt+m
-change visibility of all mesh entities
-
 @item Shift+m
 show mesh options
-
-@item Ctrl+m
-merge file
-
-@item Shift+n
-show general options
-
-@item Ctrl+n
-new file
-
-@item Alt+o
-change projection mode (ortho/perspective)
-
-@item Ctrl+o
-open file
-
-@item Ctrl+Shift+o
-show option window
-
-@item p
-go to post-processor module
-
-@item Alt+p
-hide/show geometry points
-
+@item Shift+o
+show general options 
 @item Shift+p
-show general post-processing options
+show post-processing options
+@item Shift+s
+show solver options 
+@item Shift+w
+show post-processing view options
 
-@item Alt+Shift+p
-hide/show mesh points
+@sp 1 @c ----------------------------------------------
 
+@item Ctrl+a
+bring all windows to front
+@item Ctrl+i
+show statistics window 
+@item Ctrl+l
+show message console
+@item Ctrl+m
+merge file(s)
+@item Ctrl+n
+new project file 
+@item Ctrl+o
+open project file
 @item Ctrl+q
 quit
-
 @item Ctrl+r
-rename current project file
-
-@item Alt+s
-hide/show geometry surfaces
-
-@item Alt+Shift+s
-hide/show mesh surfaces
-
+rename project file
 @item Ctrl+s
 save file as
+
+@sp 1 @c ----------------------------------------------
 
 @item Ctrl+Shift+s
 save mesh in default format
 
-@item Alt+t
-loop through interval modes for all post-processing views
+@sp 1 @c ----------------------------------------------
 
-@item Alt+v
-hide/show geometry volumes
-
-@item Alt+Shift+v
-hide/show mesh volumes
-
-@item Ctrl+Shift+v
+@item Ctrl+Alt+c
+show clipping plane window
+@item Ctrl+Alt+o
+show option window 
+@item Ctrl+Alt+v
 show visibility window
 
+@sp 1 @c ----------------------------------------------
+
+@item Alt+a
+hide/show small axes 
+@item Alt+b
+hide/show bounding boxes
+@item Alt+c
+loop through predefined color schemes
+@item Alt+d
+change surface mesh display mode (solid/wireframe)
+@item Alt+f
+change redraw mode (fast/full) 
+@item Alt+h
+hide/show all post-processing views 
+@item Alt+i
+hide/show all post-processing view scales
+@item Alt+l
+hide/show geometry lines
+@item Alt+m
+toggle visibility of all mesh entities
+@item Alt+n
+hide/show all post-processing view annotations
+@item Alt+o
+change projection mode (orthographic/perspective)
+@item Alt+p
+hide/show geometry points
+@item Alt+s
+hide/show geometry surfaces
+@item Alt+t
+loop through interval modes for all post-processing views 
+@item Alt+v
+hide/show geometry volumes
 @item Alt+w
 enable/disable all lighting
-
-@item Shift+w
-show current post-processing view options
-
 @item Alt+x
-set X view
-
+set X view 
 @item Alt+y
-set Y view
-
+set Y view 
 @item Alt+z
-set Z view
+set Z view 
+
+@sp 1 @c ----------------------------------------------
+
+@item Alt+Shift+a
+hide/show moving axes 
+@item Alt+Shift+l
+hide/show surface mesh edges
+@item Alt+Shift+p
+hide/show mesh points
+@item Alt+Shift+s
+hide/show mesh surfaces
+@item Alt+Shift+v
+hide/show mesh volumes
 
 @end table

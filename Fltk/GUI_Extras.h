@@ -1,5 +1,5 @@
-#ifndef _GMSH_UI_H_
-#define _GMSH_UI_H_
+#ifndef _GUI_EXTRAS_H_
+#define _GUI_EXTRAS_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,29 +20,19 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#if defined(HAVE_FLTK)
-#  include <FL/Fl.H>
-#  if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
-#    if (FL_PATCH_VERSION >= 6)
-#      define HAVE_FLTK_1_1_6_OR_ABOVE
-#    endif
-#    if (FL_PATCH_VERSION >= 5)
-#      define HAVE_FLTK_1_1_5_OR_ABOVE
-#    endif
-#  else
-#    error "Gmsh requires FLTK 1.1.x"
-#  endif
-#  include <FL/gl.h>
-#  if defined(__APPLE__)
-#    include <OpenGL/glu.h>
-#  else
-#    include <GL/glu.h>
-#  endif
-# define GMSH_WINDOW_BOX   FL_FLAT_BOX
-# define GMSH_TOGGLE_BOX   FL_DOWN_BOX
-# define GMSH_TOGGLE_COLOR FL_BLACK
-# define GMSH_RADIO_BOX    FL_ROUND_DOWN_BOX
-# define GMSH_RADIO_COLOR  FL_BLACK
-#endif
+int file_chooser(int multi, int create, const char *message,
+		 const char *pat, int patindex, char *fname=NULL);
+char *file_chooser_get_name(int num);
+int file_chooser_get_filter();
+void file_chooser_get_position(int *x, int *y);
+
+int arrow_editor(char *title, double &a, double &b, double &c);
+
+int jpeg_dialog(char *filename, int TeX);
+int gif_dialog(char *filename);
+int gl2ps_dialog(char *filename, char *title, int format, int TeX);
+int options_dialog(char *filename);
+int msh_dialog(char *filename);
 
 #endif
+

@@ -34,6 +34,6 @@
 #include <stdio.h>
 
 void create_jpeg(FILE *outfile, int width, int height,
-		 int quality);
+		 int quality, int smoothing);
 
 #endif

@@ -215,7 +215,7 @@ public :
     int eps_quality, eps_background, eps_compress, eps_ps3shading;
     int eps_occlusion_culling, eps_best_root;
     double eps_line_width_factor, eps_point_size_factor;
-    int jpeg_quality;
+    int jpeg_quality, jpeg_smoothing;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
     int gl_fonts;
   } print;

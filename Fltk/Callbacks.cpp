@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.314 2004-12-29 01:25:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.315 2004-12-30 22:43:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -40,6 +40,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "GUI.h"
+#include "GUI_Extras.h"
 #include "Callbacks.h"
 #include "Plugin.h"
 #include "PluginManager.h"
@@ -49,130 +50,11 @@
 
 using namespace std;
 
-#include <errno.h>
-
 extern GUI *WID;
 extern Mesh *THEM;
 extern Context_T CTX;
 
-// File chooser (re)definitions
-
-int file_chooser(int multi, int create, const char *message,
-		 const char *pat, int patindex, char *fname=NULL)
-{
-  static char oldfilter[1024];
-
-  Fl_File_Chooser::show_label = "Format:";
-  Fl_File_Chooser::all_files_label = "All files (*)";
-
-  if(!WID->fc) {
-    WID->fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, pat, 
-			      Fl_File_Chooser::SINGLE, message);
-    WID->fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
-    strncpy(oldfilter, pat, 1024);
-  }
-
-  WID->fc->label(message);
-
-  if(fname)
-    WID->fc->value(fname);
-
-  if(strncmp(oldfilter, pat, 1024)) {
-    strncpy(oldfilter, pat, 1024);
-    WID->fc->filter(pat);
-    WID->fc->filter_value(patindex);
-  }
-
-  if(multi)
-    WID->fc->type(Fl_File_Chooser::MULTI);
-  else if(create)
-    WID->fc->type(Fl_File_Chooser::CREATE);
-  else
-    WID->fc->type(Fl_File_Chooser::SINGLE);
-
-  WID->fc->show();
-
-  while(WID->fc->shown())
-    Fl::wait();
-
-  if(WID->fc->value())
-    return WID->fc->count();
-  else
-    return 0;
-}
-
-char *file_chooser_get_name(int num)
-{
-  if(!WID->fc)
-    return "";
-  return (char *)WID->fc->value(num);
-}
-
-int file_chooser_get_filter()
-{
-  if(!WID->fc)
-    return 0;
-  return WID->fc->filter_value();
-}
-
-// arrow editor
-
-#include <FL/Fl_Value_Slider.H>
-
-int arrow_editor(char *title, double &a, double &b, double &c)
-{
-  struct _editor{
-    Fl_Window *window;
-    Fl_Value_Slider *sa, *sb, *sc;
-    Fl_Button *apply, *cancel;
-  };
-  static _editor *editor = NULL;
-
-  if(!editor){
-    editor = new _editor;
-    editor->window = new Fl_Window(200, 140);
-    editor->sa = new Fl_Value_Slider(10, 10, 100, 25, "Head radius");
-    editor->sa->type(FL_HOR_SLIDER);
-    editor->sa->align(FL_ALIGN_RIGHT);
-    editor->sb = new Fl_Value_Slider(10, 40, 100, 25, "Stem length");
-    editor->sb->type(FL_HOR_SLIDER);
-    editor->sb->align(FL_ALIGN_RIGHT);
-    editor->sc = new Fl_Value_Slider(10, 70, 100, 25, "Stem radius");
-    editor->sc->type(FL_HOR_SLIDER);
-    editor->sc->align(FL_ALIGN_RIGHT);
-    editor->apply = new Fl_Return_Button(10, 105, 85, 25, "Apply");
-    editor->cancel = new Fl_Button(105, 105, 85, 25, "Cancel");
-    editor->window->end();
-    editor->window->hotspot(editor->window);
-  }
-  
-  editor->window->label(title);
-  editor->sa->value(a);
-  editor->sb->value(b);
-  editor->sc->value(c);
-  editor->window->show();
-
-  while(editor->window->shown()){
-    Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == editor->apply) {
-	a = editor->sa->value();
-	b = editor->sb->value();
-	c = editor->sc->value();
-	return 1;
-      }
-      if (o == editor->window || o == editor->cancel){
-	editor->window->hide();
-	return 0;
-      }
-    }
-  }
-  return 0;
-}
-
-// Compatibility/local routines
+// Helper routines
 
 void UpdateViewsInGUI()
 {
@@ -383,7 +265,7 @@ void status_cancel_cb(CALLBACK_ARGS)
 void file_new_cb(CALLBACK_ARGS)
 {
  test:
-  if(file_chooser(0, 1, "New file", "*", 0)) {
+  if(file_chooser(0, 1, "New project file", "*", 0)) {
     char *name = file_chooser_get_name(1);
     struct stat buf;
     if(!stat(name, &buf)){
@@ -409,7 +291,7 @@ void file_new_cb(CALLBACK_ARGS)
 void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0, 0, "Open file", "*", 0)) {
+  if(file_chooser(0, 0, "Open project file", "*", 0)) {
     OpenProblem(file_chooser_get_name(1));
     Draw();
   }
@@ -430,265 +312,131 @@ void file_merge_cb(CALLBACK_ARGS)
     WID->set_context(menu_post, 0);
 }
 
-void _save_auto(char *name)
+int _save_auto(char *name)
 {
   CreateOutputFile(name, FORMAT_AUTO);
+  return 1;
 }
 
-void _save_geo_options(char *name)
+int _save_options(char *name)
 {
-  CreateOutputFile(name, FORMAT_OPT);
+  return options_dialog(name);
 }
 
-void _save_geo_options_diff(char *name)
-{
-  Print_Options(0, GMSH_FULLRC, true, name);
-}
-
-void _save_geo(char *name)
+int _save_geo(char *name)
 {
   CreateOutputFile(name, FORMAT_GEO);
+  return 1;
 }
 
-void _save_msh(char *name)
+int _save_msh(char *name)
 {
-  double ver = CTX.mesh.msh_file_version;
-  CTX.mesh.msh_file_version = 1.0;
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
-  CTX.mesh.msh_file_version = ver;
+  return msh_dialog(name);
 }
 
-void _save_msh_all(char *name)
-{
-  int all = CTX.mesh.save_all;
-  double ver = CTX.mesh.msh_file_version;
-  CTX.mesh.msh_file_version = 1.0;
-  CTX.mesh.save_all = 1;
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
-  CTX.mesh.save_all = all;
-  CTX.mesh.msh_file_version = ver;
-}
-
-void _save_msh_v2(char *name)
-{
-  double ver = CTX.mesh.msh_file_version;
-  CTX.mesh.msh_file_version = 2.0;
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
-  CTX.mesh.msh_file_version = ver;
-}
-
-void _save_msh_all_v2(char *name)
-{
-  int all = CTX.mesh.save_all;
-  double ver = CTX.mesh.msh_file_version;
-  CTX.mesh.msh_file_version = 2.0;
-  CTX.mesh.save_all = 1;
-  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
-  CTX.mesh.save_all = all;
-  CTX.mesh.msh_file_version = ver;
-}
-
-void _save_lc_sur(char *name)
+int _save_lc_sur(char *name)
 {
   CreateOutputFile(name, FORMAT_LC_SUR);
+  return 1;
 }
 
-void _save_lc_vol(char *name)
+int _save_lc_vol(char *name)
 {
   CreateOutputFile(name, FORMAT_LC_VOL);
+  return 1;
 }
 
-void _save_gref(char *name)
+int _save_gref(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_GREF);
+  return 1;
 }
 
-void _save_unv(char *name)
+int _save_unv(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_UNV);
+  return 1;
 }
 
-void _save_vrml(char *name)
+int _save_vrml(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_VRML);
+  return 1;
 }
 
-void _save_ps_raster(char *name)
+int _save_ps(char *name)
 {
-  CreateOutputFile(name, FORMAT_PS_RASTER);
+  return gl2ps_dialog(name, "PS options", 0, 0);
 }
 
-void _save_ps_simple(char *name)
+int _save_eps(char *name)
 {
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 1;
-  CreateOutputFile(name, FORMAT_PS);
-  CTX.print.eps_quality = old;
+  return gl2ps_dialog(name, "EPS options", 1, 0);
 }
 
-void _save_ps_accurate(char *name)
+int _save_epstex(char *name)
 {
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 2;
-  CreateOutputFile(name, FORMAT_PS);
-  CTX.print.eps_quality = old;
+  return gl2ps_dialog(name, "EPS options", 1, 1);
 }
 
-void _save_eps_raster(char *name)
+int _save_pdf(char *name)
 {
-  CreateOutputFile(name, FORMAT_EPS_RASTER);
+  return gl2ps_dialog(name, "PDF options", 2, 0);
 }
 
-void _save_eps_simple(char *name)
+int _save_pdftex(char *name)
 {
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 1;
-  CreateOutputFile(name, FORMAT_EPS);
-  CTX.print.eps_quality = old;
+  return gl2ps_dialog(name, "PDF options", 2, 1);
 }
 
-void _save_eps_accurate(char *name)
+int _save_jpegtex(char *name)
 {
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 2;
-  CreateOutputFile(name, FORMAT_EPS);
-  CTX.print.eps_quality = old;
+  return jpeg_dialog(name, 1);
 }
 
-void _save_epstex_raster(char *name)
-{
-  CreateOutputFile(name, FORMAT_EPSTEX_RASTER);
-}
-
-void _save_epstex_simple(char *name)
-{
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 1;
-  CreateOutputFile(name, FORMAT_EPSTEX);
-  CTX.print.eps_quality = old;
-}
-
-void _save_epstex_accurate(char *name)
-{
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 2;
-  CreateOutputFile(name, FORMAT_EPSTEX);
-  CTX.print.eps_quality = old;
-}
-
-void _save_pdf_raster(char *name)
-{
-  CreateOutputFile(name, FORMAT_PDF_RASTER);
-}
-
-void _save_pdf_simple(char *name)
-{
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 1;
-  CreateOutputFile(name, FORMAT_PDF);
-  CTX.print.eps_quality = old;
-}
-
-void _save_pdf_accurate(char *name)
-{
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 2;
-  CreateOutputFile(name, FORMAT_PDF);
-  CTX.print.eps_quality = old;
-}
-
-void _save_pdftex_raster(char *name)
-{
-  CreateOutputFile(name, FORMAT_PDFTEX_RASTER);
-}
-
-void _save_pdftex_simple(char *name)
-{
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 1;
-  CreateOutputFile(name, FORMAT_PDFTEX);
-  CTX.print.eps_quality = old;
-}
-
-void _save_pdftex_accurate(char *name)
-{
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 2;
-  CreateOutputFile(name, FORMAT_PDFTEX);
-  CTX.print.eps_quality = old;
-}
-
-void _save_jpegtex(char *name)
-{
-  CreateOutputFile(name, FORMAT_JPEGTEX);
-}
-
-void _save_pngtex(char *name)
+int _save_pngtex(char *name)
 {
   CreateOutputFile(name, FORMAT_PNGTEX);
+  return 1;
 }
 
-void _save_tex(char *name)
+int _save_tex(char *name)
 {
   CreateOutputFile(name, FORMAT_TEX);
+  return 1;
 }
 
-void _save_jpeg(char *name)
+int _save_jpeg(char *name)
 {
-  CreateOutputFile(name, FORMAT_JPEG);
+  return jpeg_dialog(name, 0);
 }
 
-void _save_png(char *name)
+int _save_png(char *name)
 {
   CreateOutputFile(name, FORMAT_PNG);
+  return 1;
 }
 
-void _save_gif(char *name)
+int _save_gif(char *name)
 {
-  int dither = CTX.print.gif_dither;
-  int transp = CTX.print.gif_transparent;
-  CTX.print.gif_dither = 0;
-  CTX.print.gif_transparent = 0;
-  CreateOutputFile(name, FORMAT_GIF);
-  CTX.print.gif_dither = dither;
-  CTX.print.gif_transparent = transp;
+  return gif_dialog(name);
 }
 
-void _save_gif_dithered(char *name)
-{
-  int dither = CTX.print.gif_dither;
-  int transp = CTX.print.gif_transparent;
-  CTX.print.gif_dither = 1;
-  CTX.print.gif_transparent = 0;
-  CreateOutputFile(name, FORMAT_GIF);
-  CTX.print.gif_dither = dither;
-  CTX.print.gif_transparent = transp;
-}
-
-void _save_gif_transparent(char *name)
-{
-  int dither = CTX.print.gif_dither;
-  int transp = CTX.print.gif_transparent;
-  CTX.print.gif_dither = 0;
-  CTX.print.gif_transparent = 1;
-  CreateOutputFile(name, FORMAT_GIF);
-  CTX.print.gif_dither = dither;
-  CTX.print.gif_transparent = transp;
-}
-
-void _save_ppm(char *name)
+int _save_ppm(char *name)
 {
   CreateOutputFile(name, FORMAT_PPM);
+  return 1;
 }
 
-void _save_yuv(char *name)
+int _save_yuv(char *name)
 {
   CreateOutputFile(name, FORMAT_YUV);
+  return 1;
 }
 
 typedef struct{
   char *pat;
-  void (*func) (char *name);
+  int (*func) (char *name);
 } patXfunc;
 
 void file_save_as_cb(CALLBACK_ARGS)
@@ -698,36 +446,24 @@ void file_save_as_cb(CALLBACK_ARGS)
   static char *pat = NULL;
   static patXfunc formats[] = {
     {"By extension (*)", _save_auto},
-    {"Gmsh options (*.opt)", _save_geo_options},
-    {"Gmsh modified options (*.opt)", _save_geo_options_diff},
+    {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
-    {"Gmsh mesh v1.0 (*.msh)", _save_msh},
-    {"Gmsh mesh v1.0 without physicals (*.msh)", _save_msh_all},
-    {"Gmsh mesh v2.0 (*.msh)", _save_msh_v2},
-    {"Gmsh mesh v2.0 without physicals (*.msh)", _save_msh_all_v2},
+    {"Gmsh mesh (*.msh)", _save_msh},
     {"Gmsh surface LC field (*.pos)", _save_lc_sur},
     {"Gmsh volume LC field (*.pos)", _save_lc_vol},
     {"GREF mesh (*.gref)", _save_gref},
     {"I-DEAS universal mesh format (*.unv)", _save_unv},
     {"VRML surface mesh (*.wrl)", _save_vrml},
     {"GIF (*.gif)", _save_gif},
-    {"GIF dithered (*.gif)", _save_gif_dithered},
-    {"GIF transparent (*.gif)", _save_gif_transparent},
 #if defined(HAVE_LIBJPEG)
     {"JPEG (*.jpg)", _save_jpeg},
 #endif
 #if defined(HAVE_LIBPNG)
     {"PNG (*.png)", _save_png},
 #endif
-    {"Raster PS (*.ps)", _save_ps_raster},
-    {"Raster EPS (*.eps)", _save_eps_raster},
-    {"Raster PDF (*.pdf)", _save_pdf_raster},
-    {"Vector PS fast (*.ps)", _save_ps_simple},
-    {"Vector PS accurate (*.ps)", _save_ps_accurate},
-    {"Vector EPS fast (*.eps)", _save_eps_simple},
-    {"Vector EPS accurate (*.eps)", _save_eps_accurate},
-    {"Vector PDF fast (*.pdf)", _save_pdf_simple},
-    {"Vector PDF accurate (*.pdf)", _save_pdf_accurate},
+    {"PS (*.ps)", _save_ps},
+    {"EPS (*.eps)", _save_eps},
+    {"PDF (*.pdf)", _save_pdf},
     {"PPM (*.ppm)", _save_ppm},
 #if defined(HAVE_LIBJPEG)
     {"LaTeX JPEG part (*.jpg)", _save_jpegtex},
@@ -735,14 +471,10 @@ void file_save_as_cb(CALLBACK_ARGS)
 #if defined(HAVE_LIBPNG)
     {"LaTeX PNG part (*.png)", _save_pngtex},
 #endif
-    {"LaTeX Raster EPS part (*.eps)", _save_epstex_raster},
-    {"LaTeX Raster PDF part (*.pdf)", _save_pdftex_raster},
-    {"LaTeX Vector EPS part fast (*.eps)", _save_epstex_simple},
-    {"LaTeX Vector EPS part accurate (*.eps)", _save_epstex_accurate},
-    {"LaTeX Vector PDF part fast (*.pdf)", _save_pdftex_simple},
-    {"LaTeX Vector PDF part accurate (*.pdf)", _save_pdftex_accurate},
+    {"LaTeX EPS part (*.eps)", _save_epstex},
+    {"LaTeX PDF part (*.pdf)", _save_pdftex},
     {"LaTeX TeX part (*.tex)", _save_tex},
-    {"UCB YUV (*.yuv)", _save_yuv}
+    {"YUV (*.yuv)", _save_yuv}
   };
 
   nbformats = sizeof(formats) / sizeof(formats[0]);
@@ -756,28 +488,22 @@ void file_save_as_cb(CALLBACK_ARGS)
     }
   }
 
-test:
-
+ test:
   if(file_chooser(0, 1, "Save file as", pat, patindex)) {
-
     char *name = file_chooser_get_name(1);
-
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
-          goto save;
-        else
+        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
           goto test;
     }
-
-  save:
     i = file_chooser_get_filter();
-    if(i >= 0 && i < nbformats)
-      formats[i].func(name);
+    if(i >= 0 && i < nbformats){
+      if(!formats[i].func(name))
+	goto test;
+    }
     else        // handle any additional automatic fltk filter
       _save_auto(name);
-
   }
 
   patindex = file_chooser_get_filter();
@@ -785,18 +511,15 @@ test:
 
 void file_rename_cb(CALLBACK_ARGS)
 {
-test:
-  if(file_chooser(0, 1, "Rename current project file", "*", 0, CTX.filename)) {
+ test:
+  if(file_chooser(0, 1, "Rename project file", "*", 0, CTX.filename)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
-          goto save;
-        else
+        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
           goto test;
     }
-  save:
     rename(CTX.filename, name);
     OpenProblem(name);
     Draw();
@@ -1211,18 +934,15 @@ void message_clear_cb(CALLBACK_ARGS)
 
 void message_save_cb(CALLBACK_ARGS)
 {
-test:
+ test:
   if(file_chooser(0, 1, "Save messages", "*", 0)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
-          goto save;
-        else
+        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
           goto test;
     }
-  save:
     WID->save_message(name);
   }
 }
@@ -1467,78 +1187,67 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Right arrow   go to next time step"); 
   Msg(DIRECT, "  Up arrow      make previous view visible"); 
   Msg(DIRECT, "  Down arrow    make next view visible"); 
+  Msg(DIRECT, " ");
   Msg(DIRECT, "  <             go back to previous context");
   Msg(DIRECT, "  >             go forward to next context");
-  Msg(DIRECT, "  0 or Esc      reload geometry input file");
+  Msg(DIRECT, "  0 or Esc      reload project file");
   Msg(DIRECT, "  1 or F1       mesh lines");
   Msg(DIRECT, "  2 or F2       mesh surfaces");
   Msg(DIRECT, "  3 or F3       mesh volumes");
-
-  Msg(DIRECT, "  Alt+a         hide/show small axes"); 
-  Msg(DIRECT, "  Alt+Shift+a   hide/show big moving axes"); 
-  Msg(DIRECT, "  Ctrl+a        raise (show) all open windows");
-
-  Msg(DIRECT, "  Alt+b         hide/show all bounding boxes");
-
-  Msg(DIRECT, "  Alt+c         loop through predefined color schemes");
-  Msg(DIRECT, "  Ctrl+Shift+c  show clipping plane window");
-
-  Msg(DIRECT, "  Alt+d         change mesh display mode (solid/wireframe)");
-  Msg(DIRECT, "  Shift+d       decrease animation delay");
-  Msg(DIRECT, "  Ctrl+Shift+d  increase animation delay");
-
-  Msg(DIRECT, "  Alt+f         change redraw mode (fast/full)"); 
-
+  Msg(DIRECT, " ");
   Msg(DIRECT, "  g             go to geometry module");
-  Msg(DIRECT, "  Shift+g       show geometry options");
-
-  Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
-
-  Msg(DIRECT, "  Alt+i         hide/show all post-processing scales");
-  Msg(DIRECT, "  Ctrl+i        show statistics window"); 
-
-  Msg(DIRECT, "  Alt+l         hide/show geometry lines");
-  Msg(DIRECT, "  Alt+Shift+l   hide/show surface mesh edges");
-  Msg(DIRECT, "  Ctrl+l        show message console");
-
   Msg(DIRECT, "  m             go to mesh module");
-  Msg(DIRECT, "  Alt+m         change visibility of all mesh entities");
+  Msg(DIRECT, "  p             go to post-processing module");
+  Msg(DIRECT, "  s             go to solver module");
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  Shift+g       show geometry options");
   Msg(DIRECT, "  Shift+m       show mesh options");
+  Msg(DIRECT, "  Shift+o       show general options"); 
+  Msg(DIRECT, "  Shift+p       show post-processing options");
+  Msg(DIRECT, "  Shift+s       show solver options"); 
+  Msg(DIRECT, "  Shift+w       show post-processing view options");
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  Ctrl+a        bring all windows to front");
+  Msg(DIRECT, "  Ctrl+i        show statistics window"); 
+  Msg(DIRECT, "  Ctrl+l        show message console");
   Msg(DIRECT, "  Ctrl+m        merge file"); 
-
-  Msg(DIRECT, "  Shift+n       show general options"); 
-  Msg(DIRECT, "  Ctrl+n        new file"); 
-
-  Msg(DIRECT, "  Alt+o         change projection mode (ortho/perspective)");
-  Msg(DIRECT, "  Ctrl+o        open file"); 
-  Msg(DIRECT, "  Ctrl+Shift+o  show option window"); 
-
-  Msg(DIRECT, "  p             go to post-processor module");
-  Msg(DIRECT, "  Alt+p         hide/show geometry points");
-  Msg(DIRECT, "  Shift+p       show general post-processing options");
-  Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
-
+  Msg(DIRECT, "  Ctrl+n        new project file"); 
+  Msg(DIRECT, "  Ctrl+o        open project file"); 
   Msg(DIRECT, "  Ctrl+q        quit");
-
-  Msg(DIRECT, "  Ctrl+r        rename current project file");
-
-  Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
-  Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
+  Msg(DIRECT, "  Ctrl+r        rename project file");
   Msg(DIRECT, "  Ctrl+s        save file as");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "  Ctrl+Shift+s  save mesh in default format");
-
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  Ctrl+Alt+c    show clipping plane window");
+  Msg(DIRECT, "  Ctrl+Alt+o    show option window"); 
+  Msg(DIRECT, "  Ctrl+Alt+v    show visibility window");
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  Alt+a         hide/show small axes"); 
+  Msg(DIRECT, "  Alt+b         hide/show bounding boxes");
+  Msg(DIRECT, "  Alt+c         loop through predefined color schemes");
+  Msg(DIRECT, "  Alt+d         change surface mesh display mode (solid/wireframe)");
+  Msg(DIRECT, "  Alt+f         change redraw mode (fast/full)"); 
+  Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
+  Msg(DIRECT, "  Alt+i         hide/show all post-processing view scales");
+  Msg(DIRECT, "  Alt+l         hide/show geometry lines");
+  Msg(DIRECT, "  Alt+m         toggle visibility of all mesh entities");
+  Msg(DIRECT, "  Alt+n         hide/show all post-processing view annotations");
+  Msg(DIRECT, "  Alt+o         change projection mode (orthographic/perspective)");
+  Msg(DIRECT, "  Alt+p         hide/show geometry points");
+  Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+t         loop through interval modes for all post-processing views"); 
-
   Msg(DIRECT, "  Alt+v         hide/show geometry volumes");
-  Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
-  Msg(DIRECT, "  Ctrl+Shift+v  show visibility window");
-
   Msg(DIRECT, "  Alt+w         enable/disable all lighting");
-  Msg(DIRECT, "  Shift+w       show current post-processing view options");
-
   Msg(DIRECT, "  Alt+x         set X view"); 
   Msg(DIRECT, "  Alt+y         set Y view"); 
   Msg(DIRECT, "  Alt+z         set Z view"); 
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  Alt+Shift+a   hide/show moving axes"); 
+  Msg(DIRECT, "  Alt+Shift+l   hide/show surface mesh edges");
+  Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
+  Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
+  Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
   Msg(DIRECT, " ");
   WID->create_message_window();
 }
@@ -3195,18 +2904,15 @@ void view_save_ascii_cb(CALLBACK_ARGS)
 {
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
   
-test:
+ test:
   if(file_chooser(0, 1, "Save view in ASCII format", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
-          goto save;
-        else
+        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
           goto test;
     }
-  save:
     WriteView(v, name, 0, 0);
   }
 }
@@ -3215,18 +2921,15 @@ void view_save_binary_cb(CALLBACK_ARGS)
 {
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
 
-test:
+ test:
   if(file_chooser(0, 1, "Save view in binary format", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
-          goto save;
-        else
+        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
           goto test;
     }
-  save:
     WriteView(v, name, 1, 0);
   }
 }
@@ -3235,18 +2938,15 @@ void view_save_parsed_cb(CALLBACK_ARGS)
 {
   Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
 
-test:
+ test:
   if(file_chooser(0, 1, "Save view in parsed format", "*", 0, v->FileName)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
-          goto save;
-        else
+        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
           goto test;
     }
-  save:
     WriteView(v, name, 2, 0);
   }
 }

@@ -54,7 +54,6 @@
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
-#include "File_Picker.h"
 
 // The dynamic contexts
 
@@ -131,9 +130,6 @@ class GUI{
 public:
 
   Fl_Bitmap  *ortho_bmp, *persp_bmp;
-
-  // file chooser
-  File_Picker *fc;
 
   // menu window
   Fl_Window        *m_window ;

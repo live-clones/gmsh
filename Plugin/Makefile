@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.72 2004-12-28 20:46:30 geuzaine Exp $
+# $Id: Makefile,v 1.73 2004-12-30 22:43:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -229,8 +229,7 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Mesh/Mesh.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
   ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Fltk/Colorbar_Window.h \
-  ../Fltk/File_Picker.h
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Fltk/Colorbar_Window.h
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \

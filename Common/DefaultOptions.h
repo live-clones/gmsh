@@ -1188,7 +1188,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "EpsPS3Shading" , opt_print_eps_ps3shading , 0. ,
     "Enable PostScript Level 3 shading" },
   { F|O, "EpsQuality" , opt_print_eps_quality , 1. ,
-    "PostScript/PDF quality (1=simple sort, 2=BSP tree sort)" },
+    "PostScript/PDF quality (0=bitmap, 1=vector (simple sort), 2=vector (accurate sort)" },
 
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 
@@ -1204,6 +1204,8 @@ StringXNumber PrintOptions_Number[] = {
 
   { F|O, "JpegQuality" , opt_print_jpeg_quality , 100. ,
     "JPEG quality (between 1 and 100)" },
+  { F|O, "JpegSmoothing" , opt_print_jpeg_smoothing , 0. ,
+    "JPEG smoothing (between 0 and 100)" },
 
   { 0, NULL , NULL , 0. }
 } ;

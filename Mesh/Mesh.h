@@ -56,11 +56,6 @@
 #define FORMAT_PNGTEX        23
 #define FORMAT_PDF           24
 #define FORMAT_PDFTEX        25
-#define FORMAT_PS_RASTER     26
-#define FORMAT_EPS_RASTER    27
-#define FORMAT_PDF_RASTER    28
-#define FORMAT_EPSTEX_RASTER 29
-#define FORMAT_PDFTEX_RASTER 30
 #define FORMAT_LC_SUR        31
 #define FORMAT_LC_VOL        32
 
