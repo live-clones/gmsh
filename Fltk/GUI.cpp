@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.404 2004-12-31 07:55:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.405 2004-12-31 16:19:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -19,28 +19,48 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-// To make the interface as visually consistent as possible, please:
+// Some GUI guidelines:
+//
+// 1) To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
 // - examine what's already done before adding something new...
-
-// Which buttons+labels should you put on a dialog window?
+//
+// 2) Use the following rule for buttons on dialog windows:
 // - "OK" is to agree with what is in the dialog *AND* close the dialog
 // - "Apply" is to apply the current values selected in the dialog, but
-//    leave the dialog open
+//   leave the dialog open
 // - "Cancel" is to close (hide) the dialog and *NOT* apply the
-//    changes that might have been made in the dialog
-//
+//   changes that might have been made in the dialog
 // The "Cancel" button, if present, should always be the last (-> at
 // right)
-
-// Only 'title-capitalize' titles and menus (Rules: 1. Always
+//
+// 3) Only 'title-capitalize' titles and menus (Rules: 1. Always
 // capitalize the first and the last word. 2. Capitalize all nouns,
 // pronouns, adjectives, verbs, adverbs, and subordinate
 // conjunctions. 3. Lowercase all articles, coordinate conjunctions,
 // and prepositions, when they are other than the first or last
-// word. 4. Lowercase the "to" in an infinitive.)
+// word. 4. Lowercase the "to" in an infinitive.) Capitalize everything
+// else like normal english sentences
 //
-// Capitalize everything else as english sentences
+// 4) Use an ellipsis character in a menu item for
+// - an action that requires further user input to complete or
+//   presents an alert allowing the user to cancel the action
+//   Examples: Find, Go To, Open, Page Setup, and Print.
+// - an action that opens a settings window. Examples: Set Title,
+//   Preferences, and Options.
+// Don't use en allipsis for:
+// - an action that requires no further user input to complete and
+//   does not present an alert.
+// - an action that opens an informational, accessory, or tool window.
+//   These windows can be implemented as either utility windows (as 
+//   in the case of a color palette) or modeless windows. These windows
+//   provide tools that help create or manage the content in the main
+//   window and are frequently left open to assist in accomplishing the
+//   task of the main window. Examples: Info and Show Tools.
+//
+// 5) The title of a window opened from a meny should be exactly the
+// same as the label of the menu item (without the ellipsis character if
+// there is one)
 
 // Don't indent this file
 // *INDENT-OFF*
@@ -75,29 +95,8 @@
 
 extern Context_T CTX;
 
-// Definition of the static menus
-
-// We shouldn't use the 'g', 'm' 's' and 'p' mnemonics since they are
-// already defined as global shortcuts (for geometry, mesh, solver, post).
-
-// From Apple's HIG: use an ellipsis character in a menu item for
-// - an action that requires further user input to complete or
-//   presents an alert allowing the user to cancel the action
-//   Examples: Find, Go To, Open, Page Setup, and Print.
-// - an action that opens a settings window. Examples: Set Title,
-//   Preferences, and Options.
-// Don't use en allipsis for:
-// - an action that requires no further user input to complete and
-//   does not present an alert.
-// - an action that opens an informational, accessory, or tool window.
-//   These windows can be implemented as either utility windows (as 
-//   in the case of a color palette) or modeless windows. These windows
-//   provide tools that help create or manage the content in the main
-//   window and are frequently left open to assist in accomplishing the
-//   task of the main window. Examples: Info and Show Tools.
-//
-// The window title should be exactly the same as the menu item (without
-// the ellipsis character if there is one)
+// Definition of the static menus (we cannot use the 'g', 'm' 's' and
+// 'p' mnemonics since they are already defined as global shortcuts)
 
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
@@ -128,9 +127,8 @@ Fl_Menu_Item m_menubar_table[] = {
 };
 
 // Alternative items for the MacOS system menu bar (removed '&'
-// shortcuts: they would cause spurious menu itmes to appear on the
-// menu window; removed File->Quit; changed capitalization to match
-// Apple's guidelines)
+// shortcuts: they would cause spurious menu items to appear on the
+// menu window; removed File->Quit)
 
 #if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
 Fl_Menu_Item m_sys_menubar_table[] = {
@@ -339,7 +337,7 @@ Context_Item menu_mesh[] = {
 	  { NULL } 
 	};  
 
-// should create MAXSOLVERS items...
+// FIXME: should create MAXSOLVERS items...
 Context_Item menu_solver[] = {
   { "2Solver", NULL } ,
   { "Solver 0", (Fl_Callback *)solver_cb , (void*)0} ,
@@ -1056,7 +1054,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   Msg(STATUS2N, menu[0].label + 1);
 
   // Remove all the children (m_push*, m_toggle*, m_pop*). FLTK <=
-  // 1.1.4 should be OK wih this. FLTK 1.1.5 may crash as it may
+  // 1.1.4 should be OK with this. FLTK 1.1.5 may crash as it may
   // access a widget's data after its callback is executed (we call
   // set_context in the button callbacks!). FLTK 1.1.6 introduced a
   // fix (Fl::delete_widget) to delay the deletion until the next
@@ -3400,8 +3398,8 @@ void GUI::save_message(char *filename)
 
 void GUI::fatal_error(char *filename)
 {
-  fl_alert("A fatal error has occurred, which will force Gmsh to exit "
-           "(all messages have been saved in the error log file '%s')",
+  fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
+           "The error messages have been saved in the following file:\n\n%s",
            filename);
 }
 

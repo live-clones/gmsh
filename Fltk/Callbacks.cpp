@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.320 2004-12-31 07:55:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.321 2004-12-31 16:19:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -269,7 +269,7 @@ void file_new_cb(CALLBACK_ARGS)
     char *name = file_chooser_get_name(1);
     struct stat buf;
     if(!stat(name, &buf)){
-      if(fl_ask("%s already exists.\nDo you want to erase it?", name))
+      if(fl_ask("%s already exists.\n\nDo you want to erase it?", name))
 	unlink(name);
       else
 	goto test;
@@ -494,7 +494,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
+        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     i = file_chooser_get_filter();
@@ -517,7 +517,7 @@ void file_rename_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
+        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     rename(CTX.filename, name);
@@ -940,7 +940,7 @@ void message_save_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
+        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     WID->save_message(name);
@@ -2913,7 +2913,7 @@ void view_save_ascii_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
+        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     WriteView(v, name, 0, 0);
@@ -2930,7 +2930,7 @@ void view_save_binary_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
+        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     WriteView(v, name, 1, 0);
@@ -2947,7 +2947,7 @@ void view_save_parsed_cb(CALLBACK_ARGS)
     if(CTX.confirm_overwrite) {
       struct stat buf;
       if(!stat(name, &buf))
-        if(!fl_ask("%s already exists.\nDo you want to replace it?", name))
+        if(!fl_ask("%s already exists.\n\nDo you want to replace it?", name))
           goto test;
     }
     WriteView(v, name, 2, 0);
