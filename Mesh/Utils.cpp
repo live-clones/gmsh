@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.6 2001-11-19 13:43:17 geuzaine Exp $
+// $Id: Utils.cpp,v 1.7 2001-11-30 14:11:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -107,7 +107,7 @@ void MeanPlane(List_T *points, Surface *s){
     angplan = angle_02pi(angplan)*180./Pi;
     if((angplan>70 && angplan<110) ||
        (angplan>260 && angplan<280)){
-      Msg(WARNING, "SVD failed (angle=%g): using rough algo...", angplan);
+      Msg(INFO, "SVD failed (angle=%g): using rough algo...", angplan);
       res[0]=res2[0];
       res[1]=res2[1];
       res[2]=res2[2];
