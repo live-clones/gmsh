@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.374 2004-11-02 17:55:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.375 2004-11-08 23:28:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1455,10 +1455,9 @@ void GUI::reset_external_view_list()
     sprintf(str, "View [%d]", i);
     view_choice[10]->add(str, 0, NULL);
   }
-  if(select <= view_choice[10]->size())
+  // warning: Fl_Choice::size() returns number of items+1
+  if(select < view_choice[10]->size() - 1)
     view_choice[10]->value(select);
-  else
-    view_choice[10]->value(0);
 }
 
 void GUI::check_rotation_center_button()

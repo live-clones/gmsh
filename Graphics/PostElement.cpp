@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.51 2004-10-27 17:27:40 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.52 2004-11-08 23:28:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -896,17 +896,11 @@ void Draw_ScalarElement(int type, Post_View * View, int preproNormals,
 int GetDataFromOtherView(int type, Post_View *v, int *nbcomp,
 			 double *norm, double **vals, int *vectype)
 {
-  static int lastnum = -1;
-  static int lastnum2 = -1;
-
   Post_View *v2 = (Post_View*)List_Pointer_Test(CTX.post.list, v->ExternalViewIndex);
 
   if(!v2){
-    if(lastnum != v->Num || lastnum2 != v->ExternalViewIndex){
-      Msg(GERROR, "Nonexistent external view");
-    }
-    lastnum = v->Num;
-    lastnum2 = v->ExternalViewIndex;
+    if(!v->ExternalElementIndex)
+      Msg(GERROR, "Nonexistent external view: drawing self instead");
     return 0;
   }
 
@@ -965,11 +959,8 @@ int GetDataFromOtherView(int type, Post_View *v, int *nbcomp,
 
   if(!nbelm || v2->NbTimeStep != v->NbTimeStep ||
      v->ExternalElementIndex < 0 || v->ExternalElementIndex >= nbelm){
-    if(lastnum != v->Num || lastnum2 != v->ExternalViewIndex){
-      Msg(GERROR, "Incompatible external view");
-    }
-    lastnum = v->Num;
-    lastnum2 = v->ExternalViewIndex;
+    if(!v->ExternalElementIndex)
+      Msg(GERROR, "Incompatible external view: drawing self instead");
     return 0;
   }
 
@@ -1016,8 +1007,6 @@ int GetDataFromOtherView(int type, Post_View *v, int *nbcomp,
     *vectype = v2->VectorType;
   *nbcomp = comp;
 
-  lastnum = v->Num;
-  lastnum2 = v->ExternalViewIndex;
   return 1;
 }
 
@@ -1052,7 +1041,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
   double ext_min = ValMin, ext_max = ValMax, ext_norm[8];
   for(int k = 0; k < nbnod; k++)
     ext_norm[k] = norm[k];
-  
+
   if(View->ExternalViewIndex >= 0){
     GetDataFromOtherView(type, View, &ext_nbcomp, ext_norm, &ext_vals, &ext_vectype);
     ext_min = View->ExternalMin;
