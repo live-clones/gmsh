@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.43 2004-10-26 08:11:12 geuzaine Exp $
+$Id: FAQ,v 1.44 2004-10-27 18:56:24 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -195,8 +195,9 @@ mesh, and to read it again.
 
 Yes, Gmsh can generate both 1st order and 2nd order elements. To
 generate second order elements, click on 'Second order elements' in
-the mesh menu after the mesh is completed, or select the 'Generate
-second order elements' in the mesh options.
+the mesh menu after the mesh is completed. To always generate 2nd
+order elements, select 'Generate second order elements' in the mesh
+option panel. From the command line, you can also use '-order 2'.
 
 ********************************************************************
 
