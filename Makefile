@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.76 2001-03-06 16:40:18 geuzaine Exp $
+# $Id: Makefile,v 1.77 2001-03-06 16:42:12 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -434,6 +434,9 @@ fltk_link_sgi:
 fltk_link_sun:
         $(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lXext -lsocket -lnsl -lm
+fltk_link_hp:
+	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                      $(MESA_LIB) $(FLTK_LIB) -lm
 fltk_link_mesa_2952:
 	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm -ldl
