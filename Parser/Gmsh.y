@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.94 2001-08-13 18:38:56 geuzaine Exp $
+// $Id: Gmsh.y,v 1.95 2001-08-17 08:31:32 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -99,7 +99,7 @@ void  skip_until (char *skip, char *until);
 %token tScalarTriangle tVectorTriangle tTensorTriangle
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
-%token tBSpline tNurbs tOrder tWith tBounds tKnots
+%token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tMesh
 
@@ -1239,6 +1239,17 @@ Shape :
       }
       else
 	vyyerror("Too few control points for BSpline %d (%d < 4)", (int)$3, 
+		 List_Nbr($6));
+    }
+  | tBezier '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      if(List_Nbr($6) > 3){
+	Cdbseg101((int)$3,MSH_SEGM_BEZIER,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+	$$.Type = MSH_SEGM_BSPLN;
+	$$.Num  = (int)$3;
+      }
+      else
+	vyyerror("Too few control points for Bezier %d (%d < 4)", (int)$3, 
 		 List_Nbr($6));
     }
   | tNurbs  '(' FExpr ')' tAFFECT ListOfDouble tKnots ListOfDouble tOrder FExpr tEND

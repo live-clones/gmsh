@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.35 2001-08-11 23:28:33 geuzaine Exp $
+// $Id: Gmsh.l,v 1.36 2001-08-17 08:31:31 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,6 +98,7 @@ Atan2                   return tAtan2 ;
 ArcTan2                 return tAtan2 ;
 Attractor		return tAttractor;
 
+Bezier			return tBezier;
 Bump                    return tBump;
 BSpline			return tBSpline;
 Bounds			return tBounds;
