@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.30 2001-08-13 20:18:43 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.31 2001-08-14 15:39:56 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -714,12 +714,14 @@ int Extrude_Mesh (Volume * v){
       List_Delete (list);
     }
 
+    /* Hey, qu'est-ce que ca fout encore la, ca ?
     list = Tree2List (s->Vertices);
     for (i = 0; i < List_Nbr (list); i++){
       List_Read (list, i, &v1);
       Extrude_Vertex (&v1, NULL);
     }
     List_Delete (list);
+    */
 
     Extrude_Surface1 (s);
     
