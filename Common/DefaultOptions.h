@@ -658,7 +658,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display width of selected lines (in pixels)" },
   { F|O, "LineType" , opt_geometry_line_type , 0. , 
     "Display lines as solid color segments (0) or 3D cylinders (1)" },
-  { F|O, "LineWidth" , opt_geometry_line_width , 1.5 , 
+  { F|O, "LineWidth" , opt_geometry_line_width , 2. , 
     "Display width of lines (in pixels)" },
 
   { F|O, "Normals" , opt_geometry_normals , 0. , 
