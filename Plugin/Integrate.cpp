@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.9 2004-11-26 16:16:39 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.10 2004-11-26 16:46:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -64,8 +64,7 @@ void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
 	 "line/surface elements. If `iView' < 0, the\n"
 	 "plugin is run on the current view. If\n"
 	 "`computeLevelsetPositive' is set, the plugin\n"
-	 "computes the positive area (volume) of the map\n"
-	 "(for triangle/tetrahedron maps only).\n"
+	 "computes the positive area (volume) of the map.\n"
 	 "\n"
 	 "Plugin(Integrate) creates one new view.\n");
 }
