@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 4
  * 
- *  Built-in functions, Holes
+ *  Built-in functions, Holes, Strings, Mesh color
  *
  *********************************************************************/
 
@@ -142,3 +142,27 @@ Plane Surface(24) = {23,21};
 
 Physical Surface(1) = {22};
 Physical Surface(2) = {24};
+
+// You can add some comments by simply embedding a post-processing
+// view with some strings...
+
+View "comments" {
+  T2(10,15,0){"File created on Fri Oct 18 23:50:20 2002"};
+  T2(10,-10,0){"Copyright (C) DGR"};
+  T3(0,0.11,0,0){"Hole"};
+};
+
+// This will put the strings
+// - "File ..." 10 pixels from the left and 15 pixels from the top of
+//   the graphic window;
+// - "Copyright ..." 10 pixels from the left and 10 pixels from the
+//   bottom of the graphic window; and
+// - "Hole" in your model, at (x,y,z)=(0.0,0.11,0.0).
+
+// You can also change the color of the mesh entities for each
+// curve/surface:
+
+Color White{ Surface{ 22 } ; }
+Color Purple{ Surface{ 24 } ; }
+Color Red{ Line{ 1:14 } ; }
+Color Yellow{ Line{ 15:20 } ; }

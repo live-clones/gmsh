@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.37 2003-02-24 20:28:36 geuzaine Exp $
+$Id: tutorial.html,v 1.38 2003-02-27 18:29:26 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -425,7 +425,7 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
  *
  *  Gmsh tutorial 4
  * 
- *  Built-in functions, Holes
+ *  Built-in functions, Holes, Strings, Mesh color
  *
  *********************************************************************/</FONT></I>
 
@@ -565,6 +565,30 @@ Plane Surface(24) = {23,21};
 
 Physical Surface(1) = {22};
 Physical Surface(2) = {24};
+
+<I><FONT COLOR="#B22222">// You can add some comments by simply embedding a post-processing
+</FONT></I><I><FONT COLOR="#B22222">// view with some strings...
+</FONT></I>
+View &quot;comments&quot; {
+  T2(10,15,0){&quot;File created on Fri Oct 18 23:50:20 2002&quot;};
+  T2(10,-10,0){&quot;Copyright (C) DGR&quot;};
+  T3(0,0.11,0,0){&quot;Hole&quot;};
+};
+
+<I><FONT COLOR="#B22222">// This will put the strings
+</FONT></I><I><FONT COLOR="#B22222">// - &quot;File ...&quot; 10 pixels from the left and 15 pixels from the top of
+</FONT></I><I><FONT COLOR="#B22222">//   the graphic window;
+</FONT></I><I><FONT COLOR="#B22222">// - &quot;Copyright ...&quot; 10 pixels from the left and 10 pixels from the
+</FONT></I><I><FONT COLOR="#B22222">//   bottom of the graphic window; and
+</FONT></I><I><FONT COLOR="#B22222">// - &quot;Hole&quot; in your model, at (x,y,z)=(0.0,0.11,0.0).
+</FONT></I>
+<I><FONT COLOR="#B22222">// You can also change the color of the mesh entities for each
+</FONT></I><I><FONT COLOR="#B22222">// curve/surface:
+</FONT></I>
+Color White{ Surface{ 22 } ; }
+Color Purple{ Surface{ 24 } ; }
+Color Red{ Line{ 1:14 } ; }
+Color Yellow{ Line{ 15:20 } ; }
 </PRE>
 <HR>
 <A NAME="file6">
