@@ -51,7 +51,7 @@ ENDSCRIPT--->
 This page is a mirror of <a href="/gmsh/">/gmsh/</a><p>
 ENDMIRROR--->
 
-<!---BEGINDATE$Date: 2001-02-07 15:25:35 $ENDDATE--->
+<!---BEGINDATE$Date: 2001-02-08 07:58:59 $ENDDATE--->
 
 Copyright &copy; 1998-2001<br>
 J.-F. Remacle<br>
@@ -331,18 +331,19 @@ Tutorial and demos
   <td><font face="Helvetica, Arial" size=-1>
 
 <ul>
-<li> If something goes wrong, it is likely because some libraries are
-not properly installed on your system. Try 'ldd gmsh-name' to check
-all shared libraries dependencies. Warning: HP version is reported not
-to work with native OpenGL -> install Mesa instead.
+<li> If something goes wrong during the installation, it is likely
+because some libraries are not properly installed on your system. Try
+'ldd gmsh-name' to check all shared libraries dependencies. Warning:
+HP version is reported not to work with native OpenGL -> install Mesa
+instead.
 
-<li> If, when moving the mouse over the graphic window, everything
-that is drawn on it disappears, and each item is visible only when the
-cursor is directly over it, you should start Gmsh with the '-noov'
-command line option. (This will be fixed.)
+<li> (Motif versions only) If, when moving the mouse over the graphic
+window, everything that is drawn on it disappears, and each item is
+visible only when the cursor is directly over it, you should start
+Gmsh with the '-noov' command line option. (This will be fixed.)
 
-<li> Turn double buffering off (with the -nodb command line option)
-when working on a remote host with Mesa.
+<li> (Motif versions only) Turn double buffering off (with the -nodb
+command line option) when working on a remote host with Mesa.
 
 <li> Try display lists (-dl option) when working with big
 post-processing data sets.
