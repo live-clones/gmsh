@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.68 2003-06-23 21:25:56 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.69 2003-06-23 21:33:22 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2157,9 +2157,9 @@ style, labels, etc.). Note that 2D plots can be positioned explicitly
 inside the graphical window, or be automatically positioned in order to
 avoid overlaps.
 
-Sample post-processing files (in human-readable ``parsed'' format--see
-@ref{Gmsh parsed post-processing file format}) are available in the tutorial
-directory of Gmsh's distribution.
+Sample post-processing files in human-readable ``parsed'' format
+(@pxref{Gmsh parsed post-processing file format}) are available in the
+@file{tutorial} directory of Gmsh's distribution (@file{.pos} files).
 
 @menu
 * Post-processing commands::    
