@@ -37,21 +37,19 @@ rm -rf CVS */CVS */*/CVS
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/bin
-mkdir -p $RPM_BUILD_ROOT/usr/man/man1
+mkdir -p $RPM_BUILD_ROOT/usr/share/man/man1
 
 install -m 755 bin/gmsh $RPM_BUILD_ROOT/usr/bin/gmsh
-install -m 755 bin/gmsh-batch $RPM_BUILD_ROOT/usr/bin/gmsh-batch
 install -m 755 bin/dxf2geo $RPM_BUILD_ROOT/usr/bin/dxf2geo
-install -m 644 doc/gmsh.1 $RPM_BUILD_ROOT/usr/man/man1/gmsh.1
+install -m 644 doc/gmsh.1 $RPM_BUILD_ROOT/usr/share/man/man1/gmsh.1
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS demos tutorial
+%doc doc/COPYING doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS demos tutorial
 /usr/bin/gmsh
-/usr/bin/gmsh-batch
 /usr/bin/dxf2geo
-/usr/man/man1/gmsh*
+/usr/share/man/man1/gmsh*
 
