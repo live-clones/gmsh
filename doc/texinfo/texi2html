@@ -38,7 +38,7 @@ require 5.0;
 #--##############################################################################
 
 # CVS version:
-# $Id: texi2html,v 1.6 2004-03-17 22:34:36 geuzaine Exp $
+# $Id: texi2html,v 1.7 2004-03-27 19:18:14 geuzaine Exp $
 
 # Homepage:
 $T2H_HOMEPAGE = <<EOT;
@@ -94,7 +94,7 @@ eval { ($T2H_USER = (getpwuid ($<))[6]) =~ s/,.*//;}; # Who am i
 # Copy this file and make changes to it, if you like.
 # Afterwards, either, load it with command-line option -init_file <your_init_file>
 #
-# $Id: texi2html,v 1.6 2004-03-17 22:34:36 geuzaine Exp $
+# $Id: texi2html,v 1.7 2004-03-27 19:18:14 geuzaine Exp $
 
 ######################################################################
 # stuff which can also be set by command-line options
@@ -914,7 +914,7 @@ $T2H_BODYTEXT = '';
 # text inserted after <BODY ...>
 $T2H_AFTER_BODY_OPEN = '';
 #text inserted before </BODY>
-$T2H_PRE_BODY_CLOSE = 'Back to <a href="/">geuz.org</a>/<a href="/gmsh/">gmsh</a>';
+$T2H_PRE_BODY_CLOSE = 'Back to <a href="http://www.geuz.org">geuz.org</a>/<a href="http://www.geuz.org/gmsh/">gmsh</a>';
 # this is used in footer
 $T2H_ADDRESS = "by <I>$T2H_USER</I> " if $T2H_USER;
 $T2H_ADDRESS .= "on <I>$T2H_TODAY</I>";
@@ -1520,7 +1520,7 @@ package Getopt::MySimple;
 
 # --------------------------------------------------------------------------
 # Locally modified by obachman (Display type instead of env, order by cmp)
-# $Id: texi2html,v 1.6 2004-03-17 22:34:36 geuzaine Exp $
+# $Id: texi2html,v 1.7 2004-03-27 19:18:14 geuzaine Exp $
 
 # use strict;
 # no strict 'refs';
