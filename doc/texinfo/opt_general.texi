@@ -2,7 +2,7 @@
 @item General.DefaultFileName
 Default project file name@*
 Default value: @code{"untitled.geo"}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.Display
 X server to use (only for Unix versions)@*
@@ -12,12 +12,12 @@ Saved in: @code{-}
 @item General.ErrorFileName
 File into which the log is saved if a fatal error occurs@*
 Default value: @code{".gmsh-errors"}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFont
 Font used in the graphic window@*
 Default value: @code{"Helvetica"}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.OptionsFileName
 Option file created with `Tools->Options->Save'; automatically read on startup@*
@@ -32,7 +32,7 @@ Saved in: @code{-}
 @item General.Scheme
 FLTK user interface scheme (try e.g. plastic)@*
 Default value: @code{""}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.TextEditor
 System command to launch a text editor@*
@@ -242,7 +242,7 @@ Saved in: @code{General.OptionsFileName}
 @item General.ConfirmOverwrite
 Ask confirmation before overwriting files?@*
 Default value: @code{1}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.ContextPositionX
 Horizontal position (in pixels) of the upper left corner of the contextual windows@*
@@ -287,31 +287,31 @@ Saved in: @code{General.SessionFileName}
 @item General.FontSize
 Size of the font in the user interface@*
 Default value: @code{12}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSize
 Size of the font in the graphic window@*
 Default value: @code{14}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsHeight
 Height (in pixels) of the graphic window@*
-Default value: @code{500}@*
+Default value: @code{600}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.GraphicsPositionX
 Horizontal position (in pixels) of the upper left corner of the graphic window@*
-Default value: @code{20}@*
+Default value: @code{50}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.GraphicsPositionY
 Vertical position (in pixels) of the upper left corner of the graphic window@*
-Default value: @code{30}@*
+Default value: @code{50}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.GraphicsWidth
 Width (in pixels) of the graphic window@*
-Default value: @code{700}@*
+Default value: @code{600}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.InitialModule
@@ -702,7 +702,7 @@ Saved in: @code{General.OptionsFileName}
 @item General.VisibilityMode
 Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)@*
 Default value: @code{0}@*
-Saved in: @code{General.SessionFileName}
+Saved in: @code{General.OptionsFileName}
 
 @item General.VisibilityPositionX
 Horizontal position (in pixels) of the upper left corner of the visibility window@*

@@ -60,6 +60,8 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item iView
 Default value: @code{-1}
+@item recurLevel
+Default value: @code{4}
 @end table
 
 @item Plugin(CutParametric)
@@ -112,6 +114,8 @@ Default value: @code{0}
 Default value: @code{-0.01}
 @item iView
 Default value: @code{-1}
+@item recurLevel
+Default value: @code{4}
 @end table
 
 @item Plugin(CutSphere)
@@ -134,6 +138,8 @@ Default value: @code{0}
 Default value: @code{0.25}
 @item iView
 Default value: @code{-1}
+@item recurLevel
+Default value: @code{4}
 @end table
 
 @item Plugin(DecomposeInSimplex)
