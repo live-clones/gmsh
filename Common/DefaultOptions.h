@@ -36,7 +36,7 @@ StringXString MeshOptions_String[] = {
 } ;
 
 StringXString SolverOptions_String[] = {
-  { F|O, "GetDPCommand" , opt_solver_getdp_command , "getdp %s" },
+  { F|O, "GetDPCommand" , opt_solver_getdp_command , "getdp" },
   { 0, NULL , NULL , NULL }
 } ;
 
