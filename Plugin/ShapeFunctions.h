@@ -30,6 +30,7 @@ public:
   virtual ~element(){}
   virtual int getDimension() = 0;
   virtual int getNumNodes() = 0;
+  virtual void getNode(int num, double &u, double &v, double &w) = 0;
   virtual int getNumGaussPoints() = 0;
   virtual void getGaussPoint(int num, double &u, double &v, double &w, double &weight) = 0; 
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) = 0;
@@ -71,24 +72,52 @@ public:
       return 1.;
     }
   }
-  double interpolate(double val[], double u, double v, double w)
+  double getInverseJacobian(double jac[3][3], double invjac[3][3])
+  {
+    // maybe we should use the classic approach to define always
+    // non-singular jacobians, so that we can simply invert them with
+    // inv3x3
+    Msg(GERROR, "getInverseJacibian not done yet");
+  }
+  double interpolate(double val[], double u, double v, double w, int stride=1)
   {
     double sum = 0;
+    int j = 0;
     for(int i = 0; i < getNumNodes(); i++){
       double s;
       getShapeFunction(i, u, v, w, s);
       sum += val[i] * s;
+      j += stride;
     }
     return sum;
   }
-  double integrate(double val[])
+  void interpolateGrad(double val[], double u, double v, double w, double f[3], int stride=1)
+  {
+    double fu[3] = {0., 0., 0.};
+    int j = 0;
+    for(int i = 0; i < getNumNodes(); i++){
+      double s[3];
+      getGradShapeFunction(i, u, v, w, s);
+      fu[0] += val[j] * s[0];
+      fu[1] += val[j] * s[1];
+      fu[2] += val[j] * s[2];
+      j += stride;
+    }
+    double jac[3][3], invjac[3][3];
+    getJacobian(u, v, w, jac);
+    getInverseJacobian(jac, invjac);
+    f[0] = fu[0] * invjac[0][0] + fu[1] * invjac[0][1] + fu[2] * invjac[0][2];
+    f[1] = fu[0] * invjac[1][0] + fu[1] * invjac[1][1] + fu[2] * invjac[1][2];
+    f[2] = fu[0] * invjac[2][0] + fu[1] * invjac[2][1] + fu[2] * invjac[2][2];
+  }
+  double integrate(double val[], int stride=1)
   {
     double sum = 0;
     for(int i = 0; i < getNumGaussPoints(); i++){
       double u, v, w, weight, jac[3][3];
       getGaussPoint(i, u, v, w, weight);
       double det = getJacobian(u, v, w, jac);
-      double d = interpolate(val, u, v, w);
+      double d = interpolate(val, u, v, w, stride);
       sum += d * weight * det;
     }
     return sum;
@@ -107,6 +136,16 @@ public:
       res = area * (1 - sum/sumabs) * 0.5 ;
     return res;
   }
+  virtual double integrateCirculation(double val[])
+  {
+    Msg(GERROR, "integrateCirculation not available for this element");
+    return 0.;
+  }
+  virtual double integrateFlux(double val[])
+  {
+    Msg(GERROR, "integrateFlux not available for this element");
+    return 0.;
+  }
 };
 
 class point : public element{
@@ -114,6 +153,10 @@ public:
   point(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 0; }
   inline int getNumNodes(){ return 1; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    u = v = w = 0.;
+  }
   inline int getNumGaussPoints(){ return 1; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -138,6 +181,15 @@ public:
   line(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 1; }
   inline int getNumNodes(){ return 2; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    v = w = 0.;
+    switch(num) {
+    case 0 : u = -1.; break;
+    case 1 : u =  1.; break;
+    default: u =  0.; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 1; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -183,6 +235,16 @@ public:
   triangle(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 2; }
   inline int getNumNodes(){ return 3; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    w = 0.;
+    switch(num) {
+    case 0 : u = 0.; v = 0.; break;
+    case 1 : u = 1.; v = 0.; break;
+    case 2 : u = 0.; v = 1.; break;
+    default: u = 0.; v = 0.; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 3; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -239,6 +301,17 @@ public:
   quadrangle(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 2; }
   inline int getNumNodes(){ return 4; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    w = 0.;
+    switch(num) {
+    case 0 : u = -1.; v = -1.; break;
+    case 1 : u =  1.; v = -1.; break;
+    case 2 : u =  1.; v =  1.; break;
+    case 3 : u = -1.; v =  1.; break;
+    default: u =  0.; v =  0.; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 4; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -298,6 +371,16 @@ public:
   tetrahedron(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 4; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    switch(num) {
+    case 0 : u = 0.; v = 0.; w = 0.; break;
+    case 1 : u = 1.; v = 0.; w = 0.; break;
+    case 2 : u = 0.; v = 1.; w = 0.; break;
+    case 3 : u = 0.; v = 0.; w = 1.; break;
+    default: u = 0.; v = 0.; w = 0.; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 4; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -338,6 +421,20 @@ public:
   hexahedron(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 8; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    switch(num) {
+    case 0 : u = -1.; v = -1.; w = -1.; break;
+    case 1 : u =  1.; v = -1.; w = -1.; break;
+    case 2 : u =  1.; v =  1.; w = -1.; break;
+    case 3 : u = -1.; v =  1.; w = -1.; break;
+    case 4 : u = -1.; v = -1.; w =  1.; break;
+    case 5 : u =  1.; v = -1.; w =  1.; break;
+    case 6 : u =  1.; v =  1.; w =  1.; break;
+    case 7 : u = -1.; v =  1.; w =  1.; break;
+    default: u =  0.; v =  0.; w =  0.; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 6; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -406,6 +503,18 @@ public:
   prism(double *x, double *y, double *z) : element(x, y, z) {};
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 6; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    switch(num) {
+    case 0 : u = 0.; v = 0.; w = -1.; break;
+    case 1 : u = 1.; v = 0.; w = -1.; break;
+    case 2 : u = 0.; v = 1.; w = -1.; break;
+    case 3 : u = 0.; v = 0.; w =  1.; break;
+    case 4 : u = 1.; v = 0.; w =  1.; break;
+    case 5 : u = 0.; v = 1.; w =  1.; break;
+    default: u = 0.; v = 0.; w =  0.; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 6; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -466,6 +575,17 @@ public:
   pyramid(double *x, double *y, double *z) : element(x, y, z) {}
   inline int getDimension(){ return 3; }
   inline int getNumNodes(){ return 5; }
+  void getNode(int num, double &u, double &v, double &w)
+  {
+    switch(num) {
+    case 0 : u = -1.; v = -1.; w = 0.; break;
+    case 1 : u =  1.; v = -1.; w = 0.; break;
+    case 2 : u =  1.; v =  1.; w = 0.; break;
+    case 3 : u = -1.; v =  1.; w = 0.; break;
+    case 4 : u =  0.; v =  0.; w = 1.; break;
+    default: u =  0.; v =  0.; w = 0.; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 8; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -531,6 +651,25 @@ public:
                 s[2] = 1. ; break ;
       default : s[0] = s[1] = s[2] = 0.; break;
       }
+    }
+  }
+};
+
+class elementFactory{
+ public:
+  element* create(int numNodes, int dimension, double *x, double *y, double *z){
+    switch(dimension){
+    case 0: return new point(x, y, z);
+    case 1: return new line(x, y, z);
+    case 2: 
+      if(numNodes == 4) return new quadrangle(x, y, z);
+      else return new triangle(x, y, z);
+    case 3:
+      if(numNodes == 8) return new hexahedron(x, y, z);
+      else if(numNodes == 6) return new prism(x, y, z);
+      else if(numNodes == 5) return new pyramid(x, y, z);
+      else return new tetrahedron(x, y, z);
+    default: return NULL;
     }
   }
 };

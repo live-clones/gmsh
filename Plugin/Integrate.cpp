@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.10 2004-11-26 16:46:52 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.11 2004-12-13 04:00:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -99,75 +99,26 @@ static double integrate(int nbList, List_T *list, int dim,
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbNod +
 					    nbNod * nbComp * step);
-    if(dim == 0){
-      if(nbNod == 1){ 
-	point p(x, y, z); 
-	if(nbComp == 1){
-	  if(!levelsetPositive) res += p.integrate(v);
-	  else res += p.integrateLevelsetPositive(v);
-	}
-      }
+    elementFactory factory;
+    element *element = factory.create(nbNod, dim, x, y, z);
+    if(!element){
+      Msg(GERROR, "Unknown type of element (dim=%d, nbNod=%d)", dim, nbNod);
+      return 0.;
     }
-    else if(dim == 1){
-      if(nbNod == 2){ 
-	line l(x, y, z);
-	if(nbComp == 1){
-	  if(!levelsetPositive) res += l.integrate(v);
-	  else res += l.integrateLevelsetPositive(v);
-	}
-	else if(nbComp == 3) res += l.integrateCirculation(v);
-      }
+    if(nbComp == 1){
+      if(!levelsetPositive) 
+	res += element->integrate(v);
+      else 
+	res += element->integrateLevelsetPositive(v);
     }
-    else if(dim == 2){
-      if(nbNod == 3){
-	triangle t(x, y, z);
-	if(nbComp == 1){
-	  if(!levelsetPositive) res += t.integrate(v); 
-	  else res += t.integrateLevelsetPositive(v); 
-	}
-	else if(nbComp == 3) res += t.integrateFlux(v); 
-      }
-      else if(nbNod == 4){ 
-	quadrangle q(x, y, z); 	
-	if(nbComp == 1) {
-	  if(!levelsetPositive) res += q.integrate(v);
-	  else res += q.integrateLevelsetPositive(v);
-	}
-	else if(nbComp == 3) res += q.integrateFlux(v);
-      }
+    else if(nbComp == 3){
+      if(dim == 1)
+	res += element->integrateCirculation(v);
+      else if(dim == 2)
+	res += element->integrateFlux(v);
     }
-    else if(dim == 3){
-      if(nbNod == 4){ 
-	tetrahedron t(x, y, z); 
-	if(nbComp == 1){
-	  if(!levelsetPositive) res += t.integrate(v); 
-	  else res += t.integrateLevelsetPositive(v); 
-	}
-      }
-      else if(nbNod == 8){
-	hexahedron h(x, y, z); 
-	if(nbComp == 1){
-	  if(!levelsetPositive) res += h.integrate(v); 
-	  else res += h.integrateLevelsetPositive(v); 
-	}
-      }
-      else if(nbNod == 6){ 
-	prism p(x, y, z);
-	if(nbComp == 1){
-	  if(!levelsetPositive) res += p.integrate(v);
-	  else res += p.integrateLevelsetPositive(v);
-	}
-      }
-      else if(nbNod == 5){ 
-	pyramid p(x, y, z);
-	if(nbComp == 1){
-	  if(!levelsetPositive) res += p.integrate(v);
-	  else res += p.integrateLevelsetPositive(v);
-	}
-      }
-    }
+    delete element;
   }
-  // printf("integration res = %22.15E\n",res);
   return res;
 }
 
