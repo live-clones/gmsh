@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.43 2004-09-17 02:11:03 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.44 2004-10-11 19:18:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -913,8 +913,14 @@ int GetScalarDataFromOtherView(int type, int nbnod, Post_View *v, double *d)
     v->MaxForDisplacement = v->CustomMax;
     break;
   case DRAW_POST_RANGE_PER_STEP:
-    v->MinForDisplacement = v2->TimeStepMin[v->TimeStep];
-    v->MaxForDisplacement = v2->TimeStepMax[v->TimeStep];
+    if(v->TimeStepMin && v->TimeStepMax){
+      v->MinForDisplacement = v2->TimeStepMin[v->TimeStep];
+      v->MaxForDisplacement = v2->TimeStepMax[v->TimeStep];
+    }
+    else{
+      v->MinForDisplacement = v2->Min;
+      v->MaxForDisplacement = v2->Max;
+    }
     break;
   }
 

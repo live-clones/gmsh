@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.78 2004-09-12 04:13:59 geuzaine Exp $
+// $Id: Post.cpp,v 1.79 2004-10-11 19:18:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -368,8 +368,14 @@ void Draw_Post(void)
 	ValMax = v->CustomMax;
 	break;
       case DRAW_POST_RANGE_PER_STEP:
-	ValMin = v->TimeStepMin[v->TimeStep];
-	ValMax = v->TimeStepMax[v->TimeStep];
+	if(v->TimeStepMin && v->TimeStepMax){
+	  ValMin = v->TimeStepMin[v->TimeStep];
+	  ValMax = v->TimeStepMax[v->TimeStep];
+	}
+	else{ // possible if the view is empty
+	  ValMin = v->Min;
+	  ValMax = v->Max;
+	}
 	break;
       }
       v->MinForDisplacement = ValMin;

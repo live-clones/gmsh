@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.46 2004-10-11 19:02:46 geuzaine Exp $
+// $Id: Scale.cpp,v 1.47 2004-10-11 19:18:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,8 +67,14 @@ void draw_scale(Post_View * v,
       ValMax = v->CustomMax;
       break;
     case DRAW_POST_RANGE_PER_STEP:
-      ValMin = v->TimeStepMin[v->TimeStep];
-      ValMax = v->TimeStepMax[v->TimeStep];
+      if(v->TimeStepMin && v->TimeStepMax){
+	ValMin = v->TimeStepMin[v->TimeStep];
+	ValMax = v->TimeStepMax[v->TimeStep];
+      }
+      else{ // possible of the view is empty
+	ValMin = v->Min;
+	ValMax = v->Max;
+      }
       break;
     case DRAW_POST_RANGE_DEFAULT:
     default:
