@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.104 2004-04-18 03:36:07 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.105 2004-04-18 17:03:35 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -3143,9 +3143,7 @@ post-processing file formats.
 @cindex Faces, ordering
 
 For all mesh and post-processing file formats, the reference elements are
-defined as follows@footnote{Beware that the ordering of the edges and the
-faces, that determine the ordering of the nodes for the second order
-elements, is different from the ordering in GetDP.}.
+defined as follows:
 
 @example
 @group
