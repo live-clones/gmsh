@@ -16,7 +16,7 @@ this is done, you can use 'logout' to exit.
 
 To update your local version, type
 
-cvs update
+cvs update -d
 
 To submit your changes, type
 
