@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.33 2003-12-02 01:28:08 geuzaine Exp $
+// $Id: Main.cpp,v 1.34 2003-12-02 01:31:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -139,8 +139,10 @@ int main(int argc, char *argv[])
     }
     else
       Print_Geo(THEM, CTX.output_filename);
-    if(CTX.mesh.histogram)
+    if(CTX.mesh.histogram){
+      Mesh_Quality(THEM);
       Print_Histogram(THEM->Histogram[0]);
+    }
     ParUtil::Instance()->Barrier(__LINE__, __FILE__);
     ParUtil::Instance()->Exit();
     return 1;
