@@ -2,3 +2,5 @@
 Should we apply this?
 
 indent -br -cdb -sc */*.cpp */*.h
+
+indent -br -cdw -npsl
