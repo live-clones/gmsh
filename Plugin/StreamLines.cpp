@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.19 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.20 2005-01-09 02:19:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -96,55 +96,55 @@ double GMSH_StreamLinesPlugin::callback(int num, int action, double value, doubl
 double GMSH_StreamLinesPlugin::callbackX0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[0].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[1].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[2].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[3].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[4].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[5].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[6].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[7].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[8].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackU(int num, int action, double value)

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.119 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.120 2005-01-09 02:18:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -184,6 +184,7 @@ void Draw_Mesh(Mesh * M)
     sprintf(label, "(%g,%g,%g)", CTX.max[0], CTX.max[1], CTX.max[2]);
     Draw_String(label);
 
+    glColor3d(1.,0.,0.);
     for(int i = 0; i < 6; i++)
       if(CTX.clip[i] & 1 || CTX.clip[i] & 2)
 	Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],

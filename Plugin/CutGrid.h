@@ -41,7 +41,7 @@ public:
   int getNbOptions() const;
   StringXNumber *getOption (int iopt);  
   Post_View *execute (Post_View *);
-  virtual Post_View * GenerateView (Post_View * v) const ;
+  virtual Post_View * GenerateView (Post_View * v, int connectPoints) const ;
 
   static int getNbU ();
   static int getNbV ();
@@ -58,6 +58,7 @@ public:
   static double callbackZ2(int, int, double);
   static double callbackU(int, int, double);
   static double callbackV(int, int, double);
+  static double callbackConnect(int, int, double);
   static void draw();
 };
 

@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.43 2005-01-08 20:15:19 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.44 2005-01-09 02:18:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -97,25 +97,25 @@ double GMSH_CutSpherePlugin::callback(int num, int action, double value, double 
 double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[0].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackY(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[1].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackZ(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[2].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[3].def,
-		  CTX.lc/200., 0., 2 * CTX.lc);
+		  CTX.lc/100., 0., 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackVol(int num, int action, double value)

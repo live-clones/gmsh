@@ -1,5 +1,5 @@
-#ifndef _EIGENVECTORS_H_
-#define _EIGENVECTORS_H_
+#ifndef _EIGENVALUES_H_
+#define _EIGENVALUES_H_
 
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -25,13 +25,13 @@
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin();
+  GMSH_Plugin *GMSH_RegisterEigenvaluesPlugin();
 }
 
-class GMSH_EigenvectorsPlugin : public GMSH_Post_Plugin
+class GMSH_EigenvaluesPlugin : public GMSH_Post_Plugin
 {
  public:
-  GMSH_EigenvectorsPlugin();
+  GMSH_EigenvaluesPlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;

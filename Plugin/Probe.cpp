@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.6 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Probe.cpp,v 1.7 2005-01-09 02:19:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -93,9 +93,9 @@ double GMSH_ProbePlugin::callback(int num, int action, double value, double *opt
 {
   if(action > 0) iview = num;
   switch(action){ // configure the input field
-  case 1: return CTX.lc/200.;
-  case 2: return -CTX.lc;
-  case 3: return CTX.lc;
+  case 1: return CTX.lc/100.;
+  case 2: return -2*CTX.lc;
+  case 3: return 2*CTX.lc;
   default: break;
   }
   *opt = value;

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.91 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Post.cpp,v 1.92 2005-01-09 02:18:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -441,6 +441,7 @@ void Draw_Post(void)
 	sprintf(label, "(%g,%g,%g)", v->BBox[1], v->BBox[3], v->BBox[5]);
 	Draw_String(label);
 
+	glColor3d(1.,0.,0.);
 	for(int i = 0; i < 6; i++)
 	  if(CTX.clip[i] & (1<<(2+iView)))
 	    Draw_PlaneInBoundingBox(v->BBox[0], v->BBox[2], v->BBox[4],

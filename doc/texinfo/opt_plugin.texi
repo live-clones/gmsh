@@ -37,12 +37,17 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutGrid)
-Plugin(CutGrid) cuts a tetrahedron view with a
-rectangular grid defined by the 3 points (`X0',`Y0',`Z0')
-(origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')
-(axis of V). The number of points along U and V is set
-with the options `nPointsU' and `nPointsV'. If
-`iView' < 0, the plugin is run on the current view.
+Plugin(CutGrid) cuts a triangle/tetrahedron view
+with a rectangular grid defined by the 3 points
+(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U)
+and (`X2',`Y2',`Z2') (axis of V). The number of points
+along U and V is set with the options `nPointsU'
+and `nPointsV'. If `ConnectPoints' is zero, the
+plugin creates scalar or vector points; otherwise,
+the plugin generates scalar or vector quadrangles,
+lines or points depending on the values of `nPointsU'
+and `nPointsV'. If `iView' < 0, the plugin is run on
+the current view.
 
 Plugin(CutGrid) creates one new view.
 
@@ -70,6 +75,8 @@ Default value: @code{0}
 Default value: @code{20}
 @item nPointsV
 Default value: @code{20}
+@item ConnectPoints
+Default value: @code{1}
 @item iView
 Default value: @code{-1}
 @end table
@@ -110,8 +117,8 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutParametric)
-Plugin(CutParametric) cuts a triangle/tetrahedron
-scalar view `iView' with the parametric function
+Plugin(CutParametric) cuts a scalar triangle/
+tetrahedron view `iView' with the parametric function
 (`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of
 the parameter u in [`MinU', `MaxU']. If
 `ConnectPoints' is set, the plugin creates scalar
@@ -238,6 +245,19 @@ Default value: @code{1}
 Default value: @code{0}
 @item dView
 Default value: @code{-1}
+@item iView
+Default value: @code{-1}
+@end table
+
+@item Plugin(Eigenvalues)
+Plugin(Eigenvalues) computes the three real
+eigenvalues of each tensor in the view `iView'.
+If `iView' < 0, the plugin is run on the current view.
+
+Plugin(Eigenvalues) creates three new scalar views.
+
+Numeric options:
+@table @code
 @item iView
 Default value: @code{-1}
 @end table

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.49 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Entity.cpp,v 1.50 2005-01-09 02:18:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -110,7 +110,6 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 	p[nb++] = edge[face[i][j]];
     }
     if(nb > 1){
-      glColor3d(1.,0.,0.);
       glBegin(GL_LINE_STRIP);
       for(int j = 0; j < nb; j++)
 	glVertex3d(p[j].x, p[j].y, p[j].z);	

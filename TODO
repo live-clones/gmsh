@@ -1,4 +1,4 @@
-$Id: TODO,v 1.74 2005-01-08 20:15:10 geuzaine Exp $
+$Id: TODO,v 1.75 2005-01-09 02:18:59 geuzaine Exp $
 
 create Gradient, Curl and Divergence plugins (based on
 Plugins/ShapeFunctions.h)
@@ -9,11 +9,6 @@ Add dynamic variables in labels? E.g., if a string contains
 %string.string, replace it dynamically in Draw_Text2D/3D by calling
 Get_OptionsCategory/Get_OptionValue. (provide a global option to
 disable all replacements)
-
-********************************************************************
-
-generalize CutGrid to generate Lines (and provide an option
-"connectPoints" to generate points) if nbV==1 or nbU==1
 
 ********************************************************************
 
