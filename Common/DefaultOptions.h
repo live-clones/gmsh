@@ -519,7 +519,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Second Euler angle (used if Trackball == 0)" }, 
   { F,   "RotationZ" , opt_general_rotation2 , 0.0 , 
     "Third Euler angle (used if Trackball == 0)" }, 
-  { F|O, "RotationCenterOfGravity" , opt_general_rotation_center_cg , 1. ,
+  { F|O, "RotationCenterGravity" , opt_general_rotation_center_cg , 1. ,
     "Rotate around the center of gravity instead of (RotationCenterX, RotationCenterY, RotationCenterZ)" },
   { F,   "RotationCenterX" , opt_general_rotation_center0 , 0.0 , 
     "X coordinate of the center of rotation" }, 
