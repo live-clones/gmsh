@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.27 2004-10-17 01:53:49 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.28 2004-10-25 00:45:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,7 @@ int Solver(int num, char *args)
 {
   int sock, type, stop = 0, i, j, n;
   char command[1024], socket_name[1024], str[1024], prog[1024];
+  char buffer[1024];
 
   FixWindowsPath(SINFO[num].executable_name, prog);
 
@@ -60,7 +61,11 @@ int Solver(int num, char *args)
 
   sprintf(str, "%s.gmshsock-%d", CTX.home_dir, num);
   FixWindowsPath(str, socket_name);
-  sprintf(command, "%s %s -socket \"%s\"", prog, args, socket_name);
+  
+  sprintf(str, "\"%s\"", socket_name);
+  sprintf(buffer, SINFO[num].socket_command, str);
+  
+  sprintf(command, "%s %s %s", prog, args, buffer);
 #if !defined(WIN32)
   strcat(command, " &");
 #endif

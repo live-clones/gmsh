@@ -33,6 +33,16 @@ Command used to specify the mesh file for solver 0@*
 Default value: @code{"-msh %s"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.SocketCommand0
+Command to specify the socket to solver 0@*
+Default value: @code{"-socket %s"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.NameCommand0
+Command to specify the problem name to solver 0@*
+Default value: @code{"%s"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.OptionCommand0
 Command to get options from solver 0@*
 Default value: @code{""}@*
@@ -141,6 +151,16 @@ Saved in: @code{General.OptionsFileName}
 @item Solver.MeshCommand1
 Command used to specify the mesh file for solver 1@*
 Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.SocketCommand1
+Command to specify the socket to solver 1@*
+Default value: @code{"-socket %s"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.NameCommand1
+Command to specify the problem name to solver 1@*
+Default value: @code{"%s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.OptionCommand1
@@ -253,6 +273,16 @@ Command used to specify the mesh file for solver 2@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.SocketCommand2
+Command to specify the socket to solver 2@*
+Default value: @code{"-socket %s"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.NameCommand2
+Command to specify the problem name to solver 2@*
+Default value: @code{"%s"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.OptionCommand2
 Command to get options from solver 2@*
 Default value: @code{""}@*
@@ -363,6 +393,16 @@ Command used to specify the mesh file for solver 3@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.SocketCommand3
+Command to specify the socket to solver 3@*
+Default value: @code{"-socket %s"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.NameCommand3
+Command to specify the problem name to solver 3@*
+Default value: @code{"%s"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.OptionCommand3
 Command to get options from solver 3@*
 Default value: @code{""}@*
@@ -471,6 +511,16 @@ Saved in: @code{General.OptionsFileName}
 @item Solver.MeshCommand4
 Command used to specify the mesh file for solver 4@*
 Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.SocketCommand4
+Command to specify the socket to solver 4@*
+Default value: @code{"-socket %s"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.NameCommand4
+Command to specify the problem name to solver 4@*
+Default value: @code{"%s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.OptionCommand4

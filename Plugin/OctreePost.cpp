@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.9 2004-07-07 20:36:32 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.10 2004-10-25 00:45:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -209,7 +209,7 @@ OctreePost::OctreePost(Post_View *v)
 		    v->BBox[3]-v->BBox[2],
 		    v->BBox[5]-v->BBox[4]};		    
   
-  const int maxElePerBucket = 100; // trade-off memory vs. speed
+  const int maxElePerBucket = 100; // memory vs. speed trade-off
 
   ST = Octree_Create(maxElePerBucket, min, size, 
 		     PostTriangleBB,

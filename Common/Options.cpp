@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.192 2004-10-21 17:02:25 geuzaine Exp $
+// $Id: Options.cpp,v 1.193 2004-10-25 00:45:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1141,6 +1141,78 @@ char *opt_solver_mesh_command3(OPT_ARGS_STR)
 char *opt_solver_mesh_command4(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(4, action, val);
+}
+
+char *opt_solver_socket_command(OPT_ARGS_STR)
+{
+#if defined(HAVE_FLTK)
+  if(action & GMSH_SET)
+    strcpy(SINFO[num].socket_command, val);
+  return SINFO[num].socket_command;
+#else
+  return "undefined";
+#endif
+}
+
+char *opt_solver_socket_command0(OPT_ARGS_STR)
+{
+  return opt_solver_socket_command(0, action, val);
+}
+
+char *opt_solver_socket_command1(OPT_ARGS_STR)
+{
+  return opt_solver_socket_command(1, action, val);
+}
+
+char *opt_solver_socket_command2(OPT_ARGS_STR)
+{
+  return opt_solver_socket_command(2, action, val);
+}
+
+char *opt_solver_socket_command3(OPT_ARGS_STR)
+{
+  return opt_solver_socket_command(3, action, val);
+}
+
+char *opt_solver_socket_command4(OPT_ARGS_STR)
+{
+  return opt_solver_socket_command(4, action, val);
+}
+
+char *opt_solver_name_command(OPT_ARGS_STR)
+{
+#if defined(HAVE_FLTK)
+  if(action & GMSH_SET)
+    strcpy(SINFO[num].name_command, val);
+  return SINFO[num].name_command;
+#else
+  return "undefined";
+#endif
+}
+
+char *opt_solver_name_command0(OPT_ARGS_STR)
+{
+  return opt_solver_name_command(0, action, val);
+}
+
+char *opt_solver_name_command1(OPT_ARGS_STR)
+{
+  return opt_solver_name_command(1, action, val);
+}
+
+char *opt_solver_name_command2(OPT_ARGS_STR)
+{
+  return opt_solver_name_command(2, action, val);
+}
+
+char *opt_solver_name_command3(OPT_ARGS_STR)
+{
+  return opt_solver_name_command(3, action, val);
+}
+
+char *opt_solver_name_command4(OPT_ARGS_STR)
+{
+  return opt_solver_name_command(4, action, val);
 }
 
 char *opt_solver_option_command(OPT_ARGS_STR)
@@ -5335,6 +5407,7 @@ unsigned int opt_general_color_background(OPT_ARGS_COL)
 #endif
   return CTX.color.bg;
 }
+
 unsigned int opt_general_color_foreground(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5344,6 +5417,7 @@ unsigned int opt_general_color_foreground(OPT_ARGS_COL)
 #endif
   return CTX.color.fg;
 }
+
 unsigned int opt_general_color_text(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5353,6 +5427,7 @@ unsigned int opt_general_color_text(OPT_ARGS_COL)
 #endif
   return CTX.color.text;
 }
+
 unsigned int opt_general_color_axes(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5362,6 +5437,7 @@ unsigned int opt_general_color_axes(OPT_ARGS_COL)
 #endif
   return CTX.color.axes;
 }
+
 unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5371,6 +5447,7 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
 #endif
   return CTX.color.small_axes;
 }
+
 unsigned int opt_general_color_ambient_light(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5381,6 +5458,7 @@ unsigned int opt_general_color_ambient_light(OPT_ARGS_COL)
 #endif
   return CTX.color.ambient_light[0];
 }
+
 unsigned int opt_general_color_diffuse_light(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5391,6 +5469,7 @@ unsigned int opt_general_color_diffuse_light(OPT_ARGS_COL)
 #endif
   return CTX.color.diffuse_light[0];
 }
+
 unsigned int opt_general_color_specular_light(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5401,6 +5480,7 @@ unsigned int opt_general_color_specular_light(OPT_ARGS_COL)
 #endif
   return CTX.color.specular_light[0];
 }
+
 unsigned int opt_geometry_color_points(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5410,6 +5490,7 @@ unsigned int opt_geometry_color_points(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.point;
 }
+
 unsigned int opt_geometry_color_lines(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5419,6 +5500,7 @@ unsigned int opt_geometry_color_lines(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.line;
 }
+
 unsigned int opt_geometry_color_surfaces(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5428,6 +5510,7 @@ unsigned int opt_geometry_color_surfaces(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.surface;
 }
+
 unsigned int opt_geometry_color_volumes(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5437,6 +5520,7 @@ unsigned int opt_geometry_color_volumes(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.volume;
 }
+
 unsigned int opt_geometry_color_points_select(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5446,6 +5530,7 @@ unsigned int opt_geometry_color_points_select(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.point_sel;
 }
+
 unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5455,6 +5540,7 @@ unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.line_sel;
 }
+
 unsigned int opt_geometry_color_surfaces_select(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5464,6 +5550,7 @@ unsigned int opt_geometry_color_surfaces_select(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.surface_sel;
 }
+
 unsigned int opt_geometry_color_volumes_select(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5473,6 +5560,7 @@ unsigned int opt_geometry_color_volumes_select(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.volume_sel;
 }
+
 unsigned int opt_geometry_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5482,6 +5570,7 @@ unsigned int opt_geometry_color_tangents(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.tangents;
 }
+
 unsigned int opt_geometry_color_normals(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
@@ -5491,6 +5580,7 @@ unsigned int opt_geometry_color_normals(OPT_ARGS_COL)
 #endif
   return CTX.color.geom.normals;
 }
+
 unsigned int opt_mesh_color_points(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5501,6 +5591,7 @@ unsigned int opt_mesh_color_points(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.vertex;
 }
+
 unsigned int opt_mesh_color_points_deg2(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5511,6 +5602,7 @@ unsigned int opt_mesh_color_points_deg2(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.vertex_deg2;
 }
+
 unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5521,6 +5613,7 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.line;
 }
+
 unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5532,6 +5625,7 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.triangle;
 }
+
 unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5543,6 +5637,7 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.quadrangle;
 }
+
 unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5554,6 +5649,7 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.tetrahedron;
 }
+
 unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5565,6 +5661,7 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.hexahedron;
 }
+
 unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5576,6 +5673,7 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.prism;
 }
+
 unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5587,6 +5685,7 @@ unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.pyramid;
 }
+
 unsigned int opt_mesh_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5597,6 +5696,7 @@ unsigned int opt_mesh_color_tangents(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.tangents;
 }
+
 unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5607,6 +5707,7 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.normals;
 }
+
 unsigned int opt_mesh_color_1(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5618,6 +5719,7 @@ unsigned int opt_mesh_color_1(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[0];
 }
+
 unsigned int opt_mesh_color_2(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5629,6 +5731,7 @@ unsigned int opt_mesh_color_2(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[1];
 }
+
 unsigned int opt_mesh_color_3(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5640,6 +5743,7 @@ unsigned int opt_mesh_color_3(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[2];
 }
+
 unsigned int opt_mesh_color_4(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5651,6 +5755,7 @@ unsigned int opt_mesh_color_4(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[3];
 }
+
 unsigned int opt_mesh_color_5(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5662,6 +5767,7 @@ unsigned int opt_mesh_color_5(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[4];
 }
+
 unsigned int opt_mesh_color_6(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5673,6 +5779,7 @@ unsigned int opt_mesh_color_6(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[5];
 }
+
 unsigned int opt_mesh_color_7(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5684,6 +5791,7 @@ unsigned int opt_mesh_color_7(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[6];
 }
+
 unsigned int opt_mesh_color_8(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5695,6 +5803,7 @@ unsigned int opt_mesh_color_8(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[7];
 }
+
 unsigned int opt_mesh_color_9(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
@@ -5706,6 +5815,7 @@ unsigned int opt_mesh_color_9(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[8];
 }
+
 unsigned int opt_mesh_color_10(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {

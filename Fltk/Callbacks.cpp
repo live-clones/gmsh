@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.287 2004-10-21 17:02:25 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.288 2004-10-25 00:45:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -420,18 +420,22 @@ void _save_auto(char *name)
 {
   CreateOutputFile(name, FORMAT_AUTO);
 }
+
 void _save_geo_options(char *name)
 {
   CreateOutputFile(name, FORMAT_OPT);
 }
+
 void _save_geo_options_diff(char *name)
 {
   Print_Options(0, GMSH_FULLRC, true, name);
 }
+
 void _save_geo(char *name)
 {
   CreateOutputFile(name, FORMAT_GEO);
 }
+
 void _save_msh(char *name)
 {
   double ver = CTX.mesh.msh_file_version;
@@ -439,6 +443,7 @@ void _save_msh(char *name)
   CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
   CTX.mesh.msh_file_version = ver;
 }
+
 void _save_msh_all(char *name)
 {
   int all = CTX.mesh.save_all;
@@ -449,6 +454,7 @@ void _save_msh_all(char *name)
   CTX.mesh.save_all = all;
   CTX.mesh.msh_file_version = ver;
 }
+
 void _save_msh_v2(char *name)
 {
   double ver = CTX.mesh.msh_file_version;
@@ -456,6 +462,7 @@ void _save_msh_v2(char *name)
   CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH);
   CTX.mesh.msh_file_version = ver;
 }
+
 void _save_msh_all_v2(char *name)
 {
   int all = CTX.mesh.save_all;
@@ -466,30 +473,37 @@ void _save_msh_all_v2(char *name)
   CTX.mesh.save_all = all;
   CTX.mesh.msh_file_version = ver;
 }
+
 void _save_lc_sur(char *name)
 {
   CreateOutputFile(name, FORMAT_LC_SUR);
 }
+
 void _save_lc_vol(char *name)
 {
   CreateOutputFile(name, FORMAT_LC_VOL);
 }
+
 void _save_gref(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_GREF);
 }
+
 void _save_unv(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_UNV);
 }
+
 void _save_vrml(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_VRML);
 }
+
 void _save_ps_raster(char *name)
 {
   CreateOutputFile(name, FORMAT_PS_RASTER);
 }
+
 void _save_ps_simple(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -497,6 +511,7 @@ void _save_ps_simple(char *name)
   CreateOutputFile(name, FORMAT_PS);
   CTX.print.eps_quality = old;
 }
+
 void _save_ps_accurate(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -504,10 +519,12 @@ void _save_ps_accurate(char *name)
   CreateOutputFile(name, FORMAT_PS);
   CTX.print.eps_quality = old;
 }
+
 void _save_eps_raster(char *name)
 {
   CreateOutputFile(name, FORMAT_EPS_RASTER);
 }
+
 void _save_eps_simple(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -515,6 +532,7 @@ void _save_eps_simple(char *name)
   CreateOutputFile(name, FORMAT_EPS);
   CTX.print.eps_quality = old;
 }
+
 void _save_eps_accurate(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -522,10 +540,12 @@ void _save_eps_accurate(char *name)
   CreateOutputFile(name, FORMAT_EPS);
   CTX.print.eps_quality = old;
 }
+
 void _save_epstex_raster(char *name)
 {
   CreateOutputFile(name, FORMAT_EPSTEX_RASTER);
 }
+
 void _save_epstex_simple(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -533,6 +553,7 @@ void _save_epstex_simple(char *name)
   CreateOutputFile(name, FORMAT_EPSTEX);
   CTX.print.eps_quality = old;
 }
+
 void _save_epstex_accurate(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -540,10 +561,12 @@ void _save_epstex_accurate(char *name)
   CreateOutputFile(name, FORMAT_EPSTEX);
   CTX.print.eps_quality = old;
 }
+
 void _save_pdf_raster(char *name)
 {
   CreateOutputFile(name, FORMAT_PDF_RASTER);
 }
+
 void _save_pdf_simple(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -551,6 +574,7 @@ void _save_pdf_simple(char *name)
   CreateOutputFile(name, FORMAT_PDF);
   CTX.print.eps_quality = old;
 }
+
 void _save_pdf_accurate(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -558,10 +582,12 @@ void _save_pdf_accurate(char *name)
   CreateOutputFile(name, FORMAT_PDF);
   CTX.print.eps_quality = old;
 }
+
 void _save_pdftex_raster(char *name)
 {
   CreateOutputFile(name, FORMAT_PDFTEX_RASTER);
 }
+
 void _save_pdftex_simple(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -569,6 +595,7 @@ void _save_pdftex_simple(char *name)
   CreateOutputFile(name, FORMAT_PDFTEX);
   CTX.print.eps_quality = old;
 }
+
 void _save_pdftex_accurate(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -576,26 +603,32 @@ void _save_pdftex_accurate(char *name)
   CreateOutputFile(name, FORMAT_PDFTEX);
   CTX.print.eps_quality = old;
 }
+
 void _save_jpegtex(char *name)
 {
   CreateOutputFile(name, FORMAT_JPEGTEX);
 }
+
 void _save_pngtex(char *name)
 {
   CreateOutputFile(name, FORMAT_PNGTEX);
 }
+
 void _save_tex(char *name)
 {
   CreateOutputFile(name, FORMAT_TEX);
 }
+
 void _save_jpeg(char *name)
 {
   CreateOutputFile(name, FORMAT_JPEG);
 }
+
 void _save_png(char *name)
 {
   CreateOutputFile(name, FORMAT_PNG);
 }
+
 void _save_gif(char *name)
 {
   int dither = CTX.print.gif_dither;
@@ -606,6 +639,7 @@ void _save_gif(char *name)
   CTX.print.gif_dither = dither;
   CTX.print.gif_transparent = transp;
 }
+
 void _save_gif_dithered(char *name)
 {
   int dither = CTX.print.gif_dither;
@@ -616,6 +650,7 @@ void _save_gif_dithered(char *name)
   CTX.print.gif_dither = dither;
   CTX.print.gif_transparent = transp;
 }
+
 void _save_gif_transparent(char *name)
 {
   int dither = CTX.print.gif_dither;
@@ -626,10 +661,12 @@ void _save_gif_transparent(char *name)
   CTX.print.gif_dither = dither;
   CTX.print.gif_transparent = transp;
 }
+
 void _save_ppm(char *name)
 {
   CreateOutputFile(name, FORMAT_PPM);
 }
+
 void _save_yuv(char *name)
 {
   CreateOutputFile(name, FORMAT_YUV);
@@ -2881,8 +2918,10 @@ void solver_cb(CALLBACK_ARGS)
   }
   if(SINFO[num].nboptions) {
     char file[1024];
-    FixWindowsPath((char *)WID->solver[num].input[0]->value(), file);
-    sprintf(tmp, "%s \"%s\"", SINFO[num].option_command, file);           
+    FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
+    sprintf(tmp, "\"%s\"", file);
+    sprintf(file, SINFO[num].name_command, tmp);
+    sprintf(tmp, "%s %s", SINFO[num].option_command, file);           
     Solver(num, tmp);
   }
   WID->create_solver_window(num);
@@ -2901,11 +2940,14 @@ void solver_file_open_cb(CALLBACK_ARGS)
     if(SINFO[num].nboptions) {
       char file[1024];
       FixWindowsPath(file_chooser_get_name(1), file);
-      sprintf(tmp, "%s \"%s\"", SINFO[num].option_command, file);
+      sprintf(tmp, "\"%s\"", file);
+      sprintf(file, SINFO[num].name_command, tmp);
+      sprintf(tmp, "%s %s", SINFO[num].option_command, file);
       Solver(num, tmp);
     }
   }
 }
+
 void solver_file_edit_cb(CALLBACK_ARGS)
 {
   char prog[1024], file[1024], cmd[1024];
@@ -2922,6 +2964,7 @@ void solver_choose_mesh_cb(CALLBACK_ARGS)
   if(file_chooser(0, 0, "Open mesh file", "*.msh", 0))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
+
 int nbs(char *str)
 {
   int i, nb = 0;
@@ -2953,9 +2996,6 @@ void solver_command_cb(CALLBACK_ARGS)
     strcpy(mesh, "");
   }
 
-  //printf("num%d idx%d %s -> %d\n", 
-  //     num, idx, SINFO[num].button_command[idx], nbs(SINFO[num].button_command[idx]));
-
   if(nbs(SINFO[num].button_command[idx])) {
     for(i = 0; i < idx; i++)
       usedopts += nbs(SINFO[num].button_command[i]);
@@ -2971,7 +3011,9 @@ void solver_command_cb(CALLBACK_ARGS)
   }
 
   FixWindowsPath((char*)WID->solver[num].input[0]->value(), tmp);
-  sprintf(arg, "\"%s\" %s %s", tmp, mesh, command);
+  sprintf(arg, "\"%s\"", tmp);
+  sprintf(tmp, SINFO[num].name_command, arg);
+  sprintf(arg, "%s %s %s", tmp, mesh, command);
   Solver(num, arg);
 }
 
@@ -3812,4 +3854,3 @@ void con_geometry_define_point_cb(CALLBACK_ARGS)
   CalculateMinMax(THEM->Points, NULL);
   Draw();
 }
-
