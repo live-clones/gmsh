@@ -1,10 +1,11 @@
-$Id: VERSIONS,v 1.172 2003-12-03 04:31:31 geuzaine Exp $
+$Id: VERSIONS,v 1.173 2003-12-04 00:14:32 geuzaine Exp $
 
 New since 1.49: small changes to the visibility browser + made
 visibility scriptable (new Show/Hide commands); fixed (rare) crash
 when deleting views; split File->Open into File->Open and File->New to
 behave like most other programs; Mac versions now use the system menu
-bar by default (if possible);
+bar by default (if possible); fixed bug leading to degenerate
+tetrahedra in extruded meshes;
 
 New in 1.49: made Merge, Save and Print behave like Include (i.e.,
 open files in the same directory as the main project file if the path
