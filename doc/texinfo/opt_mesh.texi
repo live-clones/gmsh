@@ -19,6 +19,11 @@ Allow the generation of degenerated hexahedra or prisms during extrusion@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.AngleSmoothNormals
+Threshold angle below which normals are not smoothed@*
+Default value: @code{180}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CharacteristicLengthFactor
 Factor applied to all characteristic lengths (and background meshes)@*
 Default value: @code{1}@*
@@ -247,6 +252,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SmoothNormals
+Smooth the mesh normals?@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SpeedMax
