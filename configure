@@ -849,6 +849,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
+  --enable-macmenu        enable Apple-style menu bar on Mac OS X (default=no)
   --enable-parallel       enable parallel version (default=no)
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-jpeg           enable JPEG support (default=yes)
@@ -1335,6 +1336,11 @@ fi;
 # Check whether --enable-gui or --disable-gui was given.
 if test "${enable_gui+set}" = set; then
   enableval="$enable_gui"
+
+fi;
+# Check whether --enable-macmenu or --disable-macmenu was given.
+if test "${enable_macmenu+set}" = set; then
+  enableval="$enable_macmenu"
 
 fi;
 # Check whether --enable-parallel or --disable-parallel was given.
@@ -3536,6 +3542,10 @@ fi
 
 if test "x$enable_parallel" = "xyes"; then
   FLAGS="-DPARALLEL ${FLAGS}"
+fi
+
+if test "x$enable_macmenu" = "xyes"; then
+  FLAGS="-DHAVE_FL_SYS_MENU_BAR ${FLAGS}"
 fi
 
 LINKER="${CXX}"

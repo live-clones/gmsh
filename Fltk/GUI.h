@@ -55,10 +55,7 @@
 #define NB_BUTT_MAX    100
 #define NB_HISTORY_MAX 1000
 
-// define this to get a true Mac menu (not inside gmsh as in Window/Unix)
-#undef APPLE_USE_SYS_MENU
-
-#ifdef APPLE_USE_SYS_MENU
+#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 
@@ -134,11 +131,10 @@ public:
 
   // menu window
   Fl_Window        *m_window ;
-#if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
-  Fl_Sys_Menu_Bar  *m_menu_bar ;
-#else
-  Fl_Menu_Bar      *m_menu_bar ;
+#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+  Fl_Sys_Menu_Bar  *m_sys_menu_bar ;
 #endif
+  Fl_Menu_Bar      *m_menu_bar ;
   Fl_Choice        *m_module_butt ;
   Fl_Button        *m_navig_butt  [2] ;
   Fl_Button        *m_push_butt   [NB_BUTT_MAX] ;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.250 2003-11-14 21:43:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.251 2003-11-18 05:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -260,8 +260,8 @@ Context_Item menu_geometry[] = {
 	};  
         Context_Item menu_geometry_elementary_extrude[] = {
 	  { "0Geometry Elementary Extrude", NULL } ,
-	  { "Translate",   (Fl_Callback *)geometry_elementary_extrude_translate_cb } ,
-	  { "Rotate",   (Fl_Callback *)geometry_elementary_extrude_rotate_cb } ,
+	  { "Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb } ,
+	  { "Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb } ,
 	  { NULL } 
  	};  
             Context_Item menu_geometry_elementary_extrude_translate[] = {
@@ -787,31 +787,41 @@ void GUI::create_menu_window(int argc, char **argv)
   int width = 13 * fontsize - fontsize / 2 - 2;
 
   // this is the initial height: no dynamic button is shown!
-#if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
-  MH = BH + 6;  // the menu bar is not in the application!
-#else
-  MH = BH + BH + 6;
+#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+  if(CTX.apple_menu_bar){
+    MH = BH + 6;  // the menu bar is not in the application!
+  }
+  else{
+#endif
+    MH = BH + BH + 6;
+#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+  }
 #endif
 
   m_window = new Fl_Window(width, MH, "Gmsh");
   m_window->box(WINDOW_BOX);
   m_window->callback(file_quit_cb);
 
-#if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
-  m_menu_bar = new Fl_Sys_Menu_Bar(0, 0, width, BH);
-  m_menu_bar->menu(m_menubar_table);
-  m_menu_bar->global ();
-  Fl_Box *o = new Fl_Box(0, 0, width, BH + 6);
-  o->box(FL_UP_BOX);
-  y = 3;
-#else
-  m_menu_bar = new Fl_Menu_Bar(0, 0, width, BH);
-  m_menu_bar->menu(m_menubar_table);
-  m_menu_bar->box(FL_UP_BOX);
-  m_menu_bar->global ();
-  Fl_Box *o = new Fl_Box(0, BH, width, BH + 6);
-  o->box(FL_UP_BOX);
-  y = BH + 3;
+#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+  if(CTX.apple_menu_bar){
+    m_sys_menu_bar = new Fl_Sys_Menu_Bar(0, 0, width, BH);
+    m_sys_menu_bar->menu(m_menubar_table);
+    m_sys_menu_bar->global();
+    Fl_Box *o = new Fl_Box(0, 0, width, BH + 6);
+    o->box(FL_UP_BOX);
+    y = 3;
+  }
+  else{
+#endif
+    m_menu_bar = new Fl_Menu_Bar(0, 0, width, BH);
+    m_menu_bar->menu(m_menubar_table);
+    m_menu_bar->box(FL_UP_BOX);
+    m_menu_bar->global();
+    Fl_Box *o = new Fl_Box(0, BH, width, BH + 6);
+    o->box(FL_UP_BOX);
+    y = BH + 3;
+#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
+  }
 #endif
 
   m_navig_butt[0] = new Fl_Button(1, y, 18, BH / 2, "@#<");
