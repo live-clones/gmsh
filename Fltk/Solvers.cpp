@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.28 2004-10-25 00:45:47 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.29 2004-10-25 18:48:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -144,6 +144,7 @@ int Solver(int num, char *args)
       Msg(SOLVER, "%-8.8s: %s", SINFO[num].name, str);
       break;
     }
+    WID->check(); // update the GUI
     if(stop)
       break;
   }
