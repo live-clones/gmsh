@@ -1,13 +1,16 @@
-$Id: VERSIONS,v 1.228 2004-06-24 07:13:18 geuzaine Exp $
+$Id: VERSIONS,v 1.229 2004-06-30 18:18:23 geuzaine Exp $
 
-New since 1.53: fixed UNV output; make Layers' region numbering
-consistent between lines/surfaces/volumes; fixed home directory
-problem on Win98; new Plugin(CutParametric); the default project file
-is now created in the home directory if no current directory is
-defined (e.g. when double-clicking on the icon on Windows/MacOS);
-fixed the discrepancy between the orientation of geometrical surfaces
-and the associated surface meshes; generalized Plugin(Triangulate) to
-handle vector and tensor views; small bug fixes and cleanups.
+New in 1.54: integrated Netgen (3D mesh quality optimization +
+alternative 3D algorithm); fixed UNV output; make Layers' region
+numbering consistent between lines/surfaces/volumes; fixed home
+directory problem on Win98; new Plugin(CutParametric); the default
+project file is now created in the home directory if no current
+directory is defined (e.g. when double-clicking on the icon on
+Windows/MacOS); fixed the discrepancy between the orientation of
+geometrical surfaces and the associated surface meshes; added
+automatic orientation of surfaces in surface loops; generalized
+Plugin(Triangulate) to handle vector and tensor views; small bug fixes
+and cleanups.
 
 New in 1.53: completed support for second order elements in the mesh
 module (lines, triangles, quadrangles, tetrahedra, hexahedra, prisms

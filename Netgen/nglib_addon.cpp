@@ -1,4 +1,4 @@
-// small addition(s) to the netgen interface library
+// small addition(s) to the netgen interface library for Gmsh
 
 #include "meshing.hpp"
 #include "mystdlib.h"
