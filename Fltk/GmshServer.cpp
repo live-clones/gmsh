@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.20 2004-12-06 07:13:47 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.21 2004-12-06 07:30:28 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -109,14 +109,12 @@ int Gmsh_StartClient(char *command, char *sockname)
     return 1;
   }
 
-  if((port = strstr(sockname, ":"))){ /* INET socket */
-    portno = atoi(port+1);
-  }
-  else{
-    portno = -1;
-  }
+  if(!(port = strstr(sockname, ":")))
+    portno = -1; /* UNIX socket */
+  else
+    portno = atoi(port+1); /* INET socket */
 
-  if(portno < 0){ /* UNIX socket */
+  if(portno < 0){
     /* delete the file if it already exists */
     Socket_UnlinkName(sockname);
 
@@ -135,7 +133,7 @@ int Gmsh_StartClient(char *command, char *sockname)
     /* change permissions on the socket name in case it has to be rm'd later */
     chmod(sockname, 0666);
   }
-  else{ /* INET socket */
+  else{
     if(init != portno){ /* FIXME: need a better solution to deal with
 			   addresses that have already been bound! */
       init = portno;
