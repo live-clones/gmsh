@@ -728,11 +728,11 @@ void StructuralSolver :: writeSolverFile ( const char *geom_file ) const
 	    Structural_BeamSection* bs = GetBeamSection (i.section);
 	    Structural_Material    mt = GetMaterial    (i.material);
 	    int model = GetModel (i.model);
-	    fprintf(f,"111 %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    fprintf(f,"111 %d %d %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 		    id,                             // physical id
-		    model,                             // model 
+		    model,                             // model (1=beam, 2=bar)
 		    bs->area, bs->Iy, bs->Iz, bs->J,// section info
-		    mt.par[0],mt.par[1],mt.par[2],// material info
+		    mt.par[0],mt.par[1],mt.par[2],mt.par[3],// material info E, sigma_e, rho, nu
 		    i.fx1,i.fy1,i.fx2,i.fy2,i.fz1,i.fz2,// lineic loads
 		    i.dirz[0],i.dirz[1],i.dirz[2]); // direction
 	  }
