@@ -1,9 +1,5 @@
-# $Id: Makefile,v 1.3 2000-11-25 15:26:12 geuzaine Exp $
-
-RM        = rm
-RMFLAGS   = -f
-
+# $Id: Makefile,v 1.4 2003-03-03 23:03:14 geuzaine Exp $
 
 clean:
-	$(RM) $(RMFLAGS) *.a
+	rm -f *.a
 

@@ -1,5 +1,4 @@
-# $Id: Makefile,v 1.1 2001-01-24 08:27:30 geuzaine Exp $
+# $Id: Makefile,v 1.2 2003-03-03 23:03:14 geuzaine Exp $
 
-RM        = rm
-RMFLAGS   = -f
-
+default:
+	true
