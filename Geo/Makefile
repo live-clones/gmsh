@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2000-11-27 17:13:45 geuzaine Exp $
+# $Id: Makefile,v 1.6 2000-12-07 08:46:16 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
@@ -95,4 +95,4 @@ Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Geo.h ../Mesh/Mesh.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
- ../Geo/ExtrudeParams.h ../Mesh/Metric.h CAD.h
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h CAD.h ../Common/Context.h
