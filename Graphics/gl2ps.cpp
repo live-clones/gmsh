@@ -5,7 +5,7 @@
  * GL2PS, an OpenGL to Postscript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.27 2001-09-25 08:20:20 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.28 2001-10-08 21:48:19 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -1065,14 +1065,15 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
   glGetIntegerv(GL_VIEWPORT, viewport);
 
   /* 
-     Greyscale: r g b G (replace C by G in output to change from rgb to gray)
-     RGB color: r g b C
+     RGB color: r g b C (replace C by G in output to change from rgb to gray)
+     Greyscale: r g b G
      Font choose: size fontname FC
-     String primitive: (string) x y r g b size fontname S
-     Point primitive: x y size r g b P
-     Flat-shaded line: x2 y2 x1 y1 r g b width L
-     Flat-shaded triangle: x3 y3 x2 y2 x1 y1 r g b T
-     Smooth-shaded line: x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 width SL
+     String primitive: (string) x y size fontname S
+     Point primitive: x y size P
+     Line width: width W
+     Flat-shaded line: x2 y2 x1 y1 L
+     Smooth-shaded line: x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 SL
+     Flat-shaded triangle: x3 y3 x2 y2 x1 y1 T
      Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST
   */
 
@@ -1083,9 +1084,7 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "%%%%For: %s\n"
 	  "%%%%CreationDate: %s"
 	  "%%%%LanguageLevel: 2\n"
-	  "%%%%Pages: 1\n"
 	  "%%%%DocumentData: Clean7Bit\n"
-	  "%%%%PageOrder: Ascend\n"
 	  "%%%%Orientation: Portrait\n"
 	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
 	  "%%%%BoundingBox: %d %d %d %d\n"
@@ -1093,45 +1092,47 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "%%%%EndComments\n"
 	  "%%%%BeginProlog\n"
 	  "/gl2psdict 64 dict def gl2psdict begin\n"
-	  "1 setlinecap 1 setlinejoin /bd {bind def} bind def\n"
-	  "/G { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add\n"
-	  "setgray } bd /C { setrgbcolor } bd /FC { findfont exch scalefont\n"
-	  "setfont } bd /S { FC C moveto show } bd /P { C newpath 0.0 360.0\n"
-	  "arc closepath fill } bd /L { setlinewidth C newpath moveto lineto\n"
-	  "stroke } bd /T { C newpath moveto lineto lineto closepath fill } bd\n"
-	  "/SL { /lw exch def /b1 exch def /g1 exch def /r1 exch def /y1 exch def\n"
-	  "/x1 exch def /b2 exch def /g2 exch def /r2 exch def /y2 exch def\n"
-	  "/x2 exch def b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub\n"
-	  "abs 0.008 gt or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
-	  "/rm r1 r2 add 0.5 mul def /ym y1 y2 add 0.5 mul def /xm x1 x2 add\n"
-	  "0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm lw SL xm ym rm gm bm x2 y2 r2\n"
-	  "g2 b2 lw SL } { x1 y1 x2 y2 r1 g1 b1 lw L } ifelse } bd /ST {/b1 exch\n"
-	  "def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
-	  "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
-	  "/b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
-	  "b2 b1 sub abs 0.05 gt g2 g1 sub abs 0.017 gt r2 r1 sub abs 0.032 gt\n"
-	  "b3 b1 sub abs 0.05 gt g3 g1 sub abs 0.017 gt r3 r1 sub abs 0.032 gt\n"
-	  "b2 b3 sub abs 0.05 gt g2 g3 sub abs 0.017 gt r2 r3 sub abs 0.032 gt\n"
-	  "or or or or or or or or { /b12 b1 b2 add 0.5 mul def /g12 g1 g2 add\n"
-	  "0.5 mul def /r12 r1 r2 add 0.5 mul def /y12 y1 y2 add 0.5 mul def\n"
-	  "/x12 x1 x2 add 0.5 mul def /b13 b1 b3 add 0.5 mul def /g13 g1 g3\n"
-	  "add 0.5 mul def /r13 r1 r3 add 0.5 mul def /y13 y1 y3 add 0.5 mul\n"
-	  "def /x13 x1 x3 add 0.5 mul def /b32 b3 b2 add 0.5 mul def\n"
-	  "/g32 g3 g2 add 0.5 mul def /r32 r3 r2 add 0.5 mul def /y32 y3 y2\n"
-	  "add 0.5 mul def /x32 x3 x2 add 0.5 mul def x1 y1 r1 g1 b1 x12 y12\n"
-	  "r12 g12 b12 x13 y13 r13 g13 b13 x2 y2 r2 g2 b2 x12 y12 r12 g12 b12\n"
-	  "x32 y32 r32 g32 b32 x3 y3 r3 g3 b3 x32 y32 r32 g32 b32 x13 y13 r13\n"
-	  "g13 b13 x32 y32 r32 g32 b32 x12 y12 r12 g12 b12 x13 y13 r13 g13 b13\n"
-	  "ST ST ST ST } { x1 y1 x2 y2 x3 y3 r1 g1 b1 T } ifelse } bd\n"
+	  "1 setlinecap 1 setlinejoin\n"
+	  "/BD { bind def } bind def\n"
+	  "/C  { setrgbcolor } BD\n"
+	  "/G  { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add\n"
+	  "      setgray } BD\n"
+	  "/W  { setlinewidth } BD\n"
+	  "/FC { findfont exch scalefont setfont } BD\n"
+	  "/S  { FC moveto show } BD\n"
+	  "/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
+	  "/L  { newpath moveto lineto stroke } BD\n"
+	  "/SL { /b1 exch def /g1 exch def /r1 exch def /y1 exch def\n"
+	  "      /x1 exch def /b2 exch def /g2 exch def /r2 exch def /y2 exch def\n"
+	  "      /x2 exch def b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub\n"
+	  "      abs 0.008 gt or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
+	  "      /rm r1 r2 add 0.5 mul def /ym y1 y2 add 0.5 mul def /xm x1 x2 add\n"
+	  "      0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm SL xm ym rm gm bm x2 y2 r2\n"
+	  "      g2 b2 SL } { x1 y1 x2 y2 r1 g1 b1 C L } ifelse } BD\n"
+	  "/T  { newpath moveto lineto lineto closepath fill } BD\n"
+	  "/ST { /b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
+	  "      /b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
+	  "      /b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
+	  "      b2 b1 sub abs 0.05 gt g2 g1 sub abs 0.017 gt r2 r1 sub abs 0.032 gt\n"
+	  "      b3 b1 sub abs 0.05 gt g3 g1 sub abs 0.017 gt r3 r1 sub abs 0.032 gt\n"
+	  "      b2 b3 sub abs 0.05 gt g2 g3 sub abs 0.017 gt r2 r3 sub abs 0.032 gt\n"
+	  "      or or or or or or or or { /b12 b1 b2 add 0.5 mul def /g12 g1 g2 add\n"
+	  "      0.5 mul def /r12 r1 r2 add 0.5 mul def /y12 y1 y2 add 0.5 mul def\n"
+	  "      /x12 x1 x2 add 0.5 mul def /b13 b1 b3 add 0.5 mul def /g13 g1 g3\n"
+	  "      add 0.5 mul def /r13 r1 r3 add 0.5 mul def /y13 y1 y3 add 0.5 mul\n"
+	  "      def /x13 x1 x3 add 0.5 mul def /b32 b3 b2 add 0.5 mul def\n"
+	  "      /g32 g3 g2 add 0.5 mul def /r32 r3 r2 add 0.5 mul def /y32 y3 y2\n"
+	  "      add 0.5 mul def /x32 x3 x2 add 0.5 mul def x1 y1 r1 g1 b1 x12 y12\n"
+	  "      r12 g12 b12 x13 y13 r13 g13 b13 x2 y2 r2 g2 b2 x12 y12 r12 g12 b12\n"
+	  "      x32 y32 r32 g32 b32 x3 y3 r3 g3 b3 x32 y32 r32 g32 b32 x13 y13 r13\n"
+	  "      g13 b13 x32 y32 r32 g32 b32 x12 y12 r12 g12 b12 x13 y13 r13 g13 b13\n"
+	  "      ST ST ST ST } { x1 y1 x2 y2 x3 y3 r1 g1 b1 C T } ifelse } BD\n"
 	  "end\n"
 	  "%%%%EndProlog\n"
 	  "%%%%BeginSetup\n"
 	  "/DeviceRGB setcolorspace\n"
 	  "gl2psdict begin\n"
 	  "%%%%EndSetup\n"
-	  "%%%%Page: 1 1\n"
-	  "%%%%BeginPageSetup\n"
-	  "%%%%EndPageSetup\n"
 	  "mark\n"
 	  "gsave\n"
 	  "1.0 1.0 scale\n",
@@ -1158,7 +1159,20 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
   }
 }
 
+#define PRINTCOLOR	 					        \
+  if(rgba[0] != prim->verts[0].rgba[0] ||				\
+     rgba[1] != prim->verts[0].rgba[1] ||				\
+     rgba[2] != prim->verts[0].rgba[2]){				\
+    rgba[0] = prim->verts[0].rgba[0];					\
+    rgba[1] = prim->verts[0].rgba[1];					\
+    rgba[2] = prim->verts[0].rgba[2];      				\
+    fprintf(gl2ps.stream, "%g %g %g C\n", rgba[0], rgba[1], rgba[2]);	\
+  }
+
 GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
+  static GL2PSrgba rgba={-1.,-1.,-1.,-1.};
+  static int linewidth=-1;
+
   GL2PSprimitive *prim;
 
   prim = *(GL2PSprimitive**) a;
@@ -1167,35 +1181,36 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
 
   switch(prim->type){
   case GL2PS_TEXT :
-    fprintf(gl2ps.stream, "(%s) %g %g %g %g %g %d /%s S\n",
+    PRINTCOLOR;
+    fprintf(gl2ps.stream, "(%s) %g %g %d /%s S\n",
 	    prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	    prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
-	    prim->verts[0].rgba[2], prim->text->fontsize, 
-	    prim->text->fontname);
+	    prim->text->fontsize, prim->text->fontname);
     break;
   case GL2PS_POINT :
-    fprintf(gl2ps.stream, "%g %g %g %g %g %g P\n", 
-	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width, 
-	    prim->verts[0].rgba[0], prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
+    PRINTCOLOR;
+    fprintf(gl2ps.stream, "%g %g %g P\n", 
+	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width);
     break;
   case GL2PS_LINE :
+    if(linewidth != prim->width){
+      linewidth = prim->width;
+      fprintf(gl2ps.stream, "%g W\n", 0.2*linewidth*linewidth);
+    }
     if(prim->dash)
       fprintf(gl2ps.stream, "[%d] 0 setdash\n", prim->dash);
     if(gl2ps.shade){
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g %g SL\n",
+      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
 	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
 	      prim->verts[0].xyz[1], prim->verts[0].rgba[0],
-	      prim->verts[0].rgba[1], prim->verts[0].rgba[2],
-	      0.2*prim->width*prim->width);
+	      prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
     }
     else{
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g L\n",
+      PRINTCOLOR;
+      fprintf(gl2ps.stream, "%g %g %g %g L\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	      prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
-	      prim->verts[0].rgba[2], 0.2*prim->width*prim->width);
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
     }
     if(prim->dash)
       fprintf(gl2ps.stream, "[] 0 setdash\n");
@@ -1213,12 +1228,11 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
 	      prim->verts[0].rgba[2]);
     }
     else{
-      fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g T\n",
+      PRINTCOLOR;
+      fprintf(gl2ps.stream, "%g %g %g %g %g %g T\n",
 	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-	      prim->verts[0].rgba[2]);
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
     }
     break;
   case GL2PS_QUADRANGLE :
