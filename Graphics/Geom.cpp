@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.59 2004-05-18 18:52:01 geuzaine Exp $
+// $Id: Geom.cpp,v 1.60 2004-05-18 19:22:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -408,7 +408,7 @@ void Draw_Plane_Surface(Surface * s)
     if(k)
       List_Add(s->Orientations, &vv);
 
-    Msg(STATUS2N, "Plane Surface %d (%d points)", s->Num, List_Nbr(s->Orientations));
+    Msg(STATUS2, "Plane Surface %d (%d points)", s->Num, List_Nbr(s->Orientations));
 
     if(!List_Nbr(s->Orientations)) // add dummy
       List_Add(s->Orientations, &vv);
