@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.242 2002-11-13 19:26:41 geuzaine Exp $
+# $Id: Makefile,v 1.243 2002-11-21 01:07:21 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 36
@@ -491,8 +491,11 @@ compile-macosx: initialtag
 link-macosx:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) -L$(FLTK_DIR)/lib -lfltk_gl -lfltk \
                -framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices
-# We don't use resources anymore...
-#	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh $(FLTK_DIR)/FL/mac.r
+	/Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh $(FLTK_DIR)/FL/mac.r
+# We don't use resources anymore in the distributed version, but we
+# can leave the Rez step so that we can still launch a working version
+# of the code from the command line without having to do the
+# "distrib-mac" step.
 macosx: compile-macosx link-macosx
 distrib-macosx:
 	make tag
