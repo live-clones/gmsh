@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.92 2002-11-08 20:17:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.93 2002-11-16 08:29:14 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1166,10 +1166,10 @@ double opt_general_small_axes_position1(OPT_ARGS_NUM){
     CTX.small_axes_pos[1] = (int)val;
   return CTX.small_axes_pos[1];
 }
-double opt_general_sphere_subdivisions(OPT_ARGS_NUM){
+double opt_general_quadric_subdivisions(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
-    CTX.sphere_subdivisions = (int)val;
-  return CTX.sphere_subdivisions;
+    CTX.quadric_subdivisions = (int)val;
+  return CTX.quadric_subdivisions;
 }
 double opt_general_double_buffer(OPT_ARGS_NUM){
   if(action & GMSH_SET){
@@ -1613,6 +1613,17 @@ double opt_geometry_line_sel_width(OPT_ARGS_NUM){
     CTX.geom.line_sel_width = val;
   return CTX.geom.line_sel_width;
 }
+double opt_geometry_line_type(OPT_ARGS_NUM){
+  if(action & GMSH_SET){
+    CTX.geom.line_type = (int)val;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI)){
+    WID->geo_choice[1]->value(CTX.geom.line_type);
+  }
+#endif
+  return CTX.geom.line_type;
+}
 double opt_geometry_aspect(OPT_ARGS_NUM){
   if(action & GMSH_SET){ 
     switch((int)val){
@@ -1900,6 +1911,18 @@ double opt_mesh_line_width(OPT_ARGS_NUM){
     WID->mesh_value[11]->value(CTX.mesh.line_width);
 #endif
   return CTX.mesh.line_width;
+}
+double opt_mesh_line_type(OPT_ARGS_NUM){
+  if(action & GMSH_SET){
+    CTX.mesh.line_type = (int)val;
+    CTX.mesh.changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI)){
+    WID->mesh_choice[1]->value(CTX.mesh.line_type);
+  }
+#endif
+  return CTX.mesh.line_type;
 }
 double opt_mesh_aspect(OPT_ARGS_NUM){
   if(action & GMSH_SET){ 
@@ -2918,6 +2941,19 @@ double opt_view_point_type(OPT_ARGS_NUM){
   }
 #endif
   return v->PointType;
+}
+double opt_view_line_type(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->LineType = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_choice[6]->value(v->LineType?1:0);
+  }
+#endif
+  return v->LineType;
 }
 
 

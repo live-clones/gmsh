@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.23 2002-11-08 07:27:57 geuzaine Exp $
+// $Id: Entity.cpp,v 1.24 2002-11-16 08:29:15 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ void Draw_Sphere (double size, double x, double y, double z){
     qua = gluNewQuadric();
     listnum = glGenLists(1);
     glNewList(listnum, GL_COMPILE);
-    gluSphere(qua, 1, CTX.sphere_subdivisions, CTX.sphere_subdivisions);
+    gluSphere(qua, 1, CTX.quadric_subdivisions, CTX.quadric_subdivisions);
     glEndList();
   }
   glPushMatrix(); 
@@ -58,11 +58,74 @@ void Draw_Sphere (double size, double x, double y, double z){
   glPopMatrix();
 }
 
-void Draw_Line (double *x, double *y, double *z, double Raise[3][8]){
-  glBegin(GL_LINES);
-  glVertex3d(x[0]+Raise[0][0], y[0]+Raise[1][0], z[0]+Raise[2][0]);
-  glVertex3d(x[1]+Raise[0][1], y[1]+Raise[1][1], z[1]+Raise[2][1]);
-  glEnd();
+void Draw_Cylinder (double width, double *x, double *y, double *z){
+  double mat[4][4], r[3];
+  static GLUquadricObj *qua;
+  static int first = 1;
+  //static listnum;
+
+  float s = width*CTX.pixel_equiv_x/CTX.s[0]; // width is in pixels
+  if(first){
+    first = 0;
+    qua = gluNewQuadric();
+    //listnum = glGenLists(1);
+    //glNewList(listnum, GL_COMPILE);
+    //gluCylinder(qua, 1, 1, 1, CTX.quadric_subdivisions, 1);
+    //glEndList();
+  }
+
+  r[0] = x[1]-x[0];  r[1] = y[1]-y[0];  r[2] = z[1]-z[0];
+  double rn = sqrt(SQR(r[0])+SQR(r[1])+SQR(r[2]));
+  double theta = atan2( sqrt(SQR(r[0])+SQR(r[1])) ,  r[2] ) ;
+  double phi = atan2( r[1] , r[0] ) ;
+
+  mat[0][0] = sin(theta) * cos(phi) ;
+  mat[0][1] = sin(theta) * sin(phi) ;
+  mat[0][2] = cos(theta) ;
+  mat[0][3] = 0. ;
+  mat[1][0] = cos(theta) * cos(phi) ; 
+  mat[1][1] = cos(theta) * sin(phi) ; 
+  mat[1][2] = - sin(theta) ; 
+  mat[1][3] = 0. ;
+  mat[2][0] = - sin(phi) ; 
+  mat[2][1] = cos(phi) ; 
+  mat[2][2] = 0. ;
+  mat[2][3] = 0. ;
+  mat[3][0] = 0. ;
+  mat[3][1] = 0. ;
+  mat[3][2] = 0. ;
+  mat[3][3] = 1.0 ;
+
+  glPushMatrix(); 
+  glTranslated(x[0],y[0],z[0]);
+  glMultMatrixd(&(mat[0][0]));
+  glRotated(90., 0, 1, 0);
+  glScaled(s,s,rn);
+  //glCallList(listnum);
+  gluCylinder(qua, 1, 1, 1, CTX.quadric_subdivisions, 1);
+  glPopMatrix();
+}
+
+void Draw_Line (int type, double width, double *x, double *y, double *z, 
+		double Raise[3][8]){
+  double X[2], Y[2], Z[2];
+  
+  X[0] = x[0]+Raise[0][0];
+  Y[0] = y[0]+Raise[1][0];
+  Z[0] = z[0]+Raise[2][0];
+
+  X[1] = x[1]+Raise[0][1];
+  Y[1] = y[1]+Raise[1][1];
+  Z[1] = z[1]+Raise[2][1];
+
+  if(type)
+    Draw_Cylinder(width, X, Y, Z);
+  else{
+    glBegin(GL_LINES);
+    glVertex3d(X[0], Y[0], Z[0]);
+    glVertex3d(X[1], Y[1], Z[1]);
+    glEnd();
+  }
 }
 
 void Draw_Triangle (double *x, double *y, double *z, double *n,

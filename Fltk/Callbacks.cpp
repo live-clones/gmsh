@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.150 2002-11-08 18:56:21 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.151 2002-11-16 08:29:15 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -669,6 +669,7 @@ void opt_geometry_ok_cb(CALLBACK_ARGS) {
   opt_geometry_point_sel_size(0, GMSH_SET, WID->geo_value[5]->value());
 
   opt_geometry_point_type(0, GMSH_SET, WID->geo_choice[0]->value());
+  opt_geometry_line_type(0, GMSH_SET, WID->geo_choice[1]->value());
   Draw();
 }
 
@@ -718,6 +719,7 @@ void opt_mesh_ok_cb(CALLBACK_ARGS) {
   opt_mesh_line_width(0, GMSH_SET, WID->mesh_value[11]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
+  opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());
 
   Draw();
 }
@@ -2321,6 +2323,15 @@ void view_options_ok_cb(CALLBACK_ARGS){
 	default : val = 1; break;
 	}
 	opt_view_point_type(i, GMSH_SET, val);
+      }
+
+      if(force || WID->view_choice[6]->changed()){
+	int val;
+	switch(WID->view_choice[6]->value()){
+	case 0 : val = 0; break;
+	default : val = 1; break;
+	}
+	opt_view_line_type(i, GMSH_SET, val);
       }
 
       if(force || WID->view_choice[2]->changed()){

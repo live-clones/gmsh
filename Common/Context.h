@@ -119,7 +119,7 @@ public :
   double pixel_equiv_x, pixel_equiv_y ; 
                               // approximative equivalent model length of a pixel 
   int color_scheme ;          // general color scheme
-  int sphere_subdivisions;    // nb subd to draw spheres, when drawing pts as 3D spheres
+  int quadric_subdivisions;   // nb of subdivisions for gluQuadrics (spheres/cylinders)
 
   // geometry options 
   struct{
@@ -127,7 +127,7 @@ public :
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
     double point_size, line_width, point_sel_size, line_sel_width;
-    int point_type; // flat or 3D sphere
+    int point_type, line_type; // flat or 3D
     int hidden, shade;
     int highlight;
     int level, old_circle, circle_points, extrude_spline_points, old_newreg;
@@ -143,7 +143,7 @@ public :
     int draw;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
-    int point_type; // flat or 3D sphere
+    int point_type, line_type; // flat or 3D
     double point_size, line_width;
     double quality;
     double gamma_inf, gamma_sup, radius_inf, radius_sup;

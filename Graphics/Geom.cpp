@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.40 2002-11-08 02:06:59 geuzaine Exp $
+// $Id: Geom.cpp,v 1.41 2002-11-16 08:29:15 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ void Draw_GeoPoint (void *a, void *b){
 
 void Draw_Curve (void *a, void *b){
   int     i,N;
-  double  mod,dd;
+  double  mod,dd,x[2],y[2],z[2];
   char    Num[100];
   Curve  *c;
   Vertex  v,dv;
@@ -161,12 +161,23 @@ void Draw_Curve (void *a, void *b){
       List_Delete(temp);
     }
     else{
-      glBegin(GL_LINE_STRIP);
-      for(i=0;i<N;i++){
-	v = InterpolateCurve(c,(double)i/(double)(N-1),0);
-	glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
+      if(CTX.geom.line_type){
+	for(i=0;i<N-1;i++){
+	  v = InterpolateCurve(c,(double)i/(double)(N-1),0);
+	  dv = InterpolateCurve(c,(double)(i+1)/(double)(N-1),0);
+	  x[0] = v.Pos.X;  y[0] = v.Pos.Y;  z[0] = v.Pos.Z;
+	  x[1] = dv.Pos.X; y[1] = dv.Pos.Y; z[1] = dv.Pos.Z;
+	  Draw_Cylinder(CTX.geom.line_width,x,y,z);
+	}
       }
-      glEnd();
+      else{
+	glBegin(GL_LINE_STRIP);
+	for(i=0;i<N;i++){
+	  v = InterpolateCurve(c,(double)i/(double)(N-1),0);
+	  glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
+	}
+	glEnd();
+      }
     }
   }
 
@@ -630,8 +641,11 @@ void Draw_Geom (Mesh *m) {
     Tree_Action(m->Points, Draw_GeoPoint);
     if(CTX.geom.point_type && !CTX.geom.shade) InitNoShading();
   }
-  if(CTX.geom.lines || CTX.geom.lines_num)
+  if(CTX.geom.lines || CTX.geom.lines_num){
+    if(CTX.geom.line_type) InitShading();
     Tree_Action(m->Curves,  Draw_Curve  );
+    if(CTX.geom.line_type && !CTX.geom.shade) InitNoShading();
+  }
   if(CTX.geom.surfaces || CTX.geom.surfaces_num)
     Tree_Action(m->Surfaces,Draw_Surface);
   if(CTX.geom.volumes || CTX.geom.volumes_num)

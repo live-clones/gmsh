@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.3 2002-11-08 03:40:08 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.4 2002-11-16 08:29:15 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -57,7 +57,7 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     Draw_Point(View->PointType,View->PointSize,X,Y,Z,Raise);
     break;
   case LINE :
-    Draw_Line(X,Y,Z,Raise);
+    Draw_Line(0,View->LineWidth,X,Y,Z,Raise);
     break;
   case TRIANGLE :
     glBegin(GL_LINE_LOOP);
@@ -274,12 +274,19 @@ void Draw_ScalarLine(Post_View *View, int preproNormals,
 
       if(Val[0] >= ValMin && Val[0] <= ValMax &&
          Val[1] >= ValMin && Val[1] <= ValMax){
-	glBegin(GL_LINES);
-	Palette2(View,ValMin,ValMax,Val[0]);
-	glVertex3d(X[0]+Raise[0][0], Y[0]+Raise[1][0], Z[0]+Raise[2][0]);
-	Palette2(View,ValMin,ValMax,Val[1]);
-	glVertex3d(X[1]+Raise[0][1], Y[1]+Raise[1][1], Z[1]+Raise[2][1]);
-	glEnd();
+	if(View->LineType){
+	  // not perfect...
+	  Palette2(View,ValMin,ValMax,Val[0]);
+	  Draw_Line(View->LineType,View->LineWidth,X,Y,Z,Raise);  
+	}
+	else{
+	  glBegin(GL_LINES);
+	  Palette2(View,ValMin,ValMax,Val[0]);
+	  glVertex3d(X[0]+Raise[0][0], Y[0]+Raise[1][0], Z[0]+Raise[2][0]);
+	  Palette2(View,ValMin,ValMax,Val[1]);
+	  glVertex3d(X[1]+Raise[0][1], Y[1]+Raise[1][1], Z[1]+Raise[2][1]);
+	  glEnd();
+	}
       }
       else{
 	//todo
@@ -296,7 +303,7 @@ void Draw_ScalarLine(Post_View *View, int preproNormals,
 		    ValMin,ValMax,Xp,Yp,Zp,&nb,value);    
 	  if(nb == 2){
 	    for(i=0;i<2;i++) RaiseFill(i,value[i],ValMin,Raise);    
-	    Draw_Line(Xp,Yp,Zp,Raise);  
+	    Draw_Line(View->LineType,View->LineWidth,Xp,Yp,Zp,Raise);  
 	  }
 	}
 	else{
@@ -465,7 +472,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
                         thev, ValMin,ValMax,Xp,Yp,Zp,&nb);        
           if(nb == 2){
             for(i=0 ; i<2 ; i++) RaiseFill(i,thev,ValMin,Raise);
-            Draw_Line(Xp,Yp,Zp,Raise);    
+            Draw_Line(View->LineType,View->LineWidth,Xp,Yp,Zp,Raise);    
           }
         }
       }
@@ -713,16 +720,32 @@ void Draw_VectorElement(int type, Post_View *View,
     case POINT:
       Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d);
       if(ts){//draw trajectory
-	glBegin(GL_LINE_STRIP);
-	for(j=0 ; j<ts+1 ; j++){
-	  dx = V[3*(ts-j)]; dy = V[3*(ts-j)+1]; dz = V[3*(ts-j)+2];
-	  dd = sqrt(dx*dx+dy*dy+dz*dz);
-	  Palette2(View,ValMin,ValMax,dd);
-	  glVertex3d(X[0] + fact*dx + Raise[0][0],
-		     Y[0] + fact*dy + Raise[1][0],
-		     Z[0] + fact*dz + Raise[2][0]);
+	if(View->LineType){
+	  double dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
+	  for(j=0 ; j<ts ; j++){
+	    dx = V[3*(ts-j)]; dy = V[3*(ts-j)+1]; dz = V[3*(ts-j)+2];
+	    dx2 = V[3*(ts-j-1)]; dy2 = V[3*(ts-j-1)+1]; dz2 = V[3*(ts-j-1)+2];
+	    dd = sqrt(dx*dx+dy*dy+dz*dz);
+	    // not perfect...
+	    Palette2(View,ValMin,ValMax,dd);
+	    XX[0] = X[0] + fact*dx; XX[1] = X[1] + fact*dx2;
+	    YY[0] = Y[0] + fact*dy; YY[1] = Y[1] + fact*dy2;
+	    ZZ[0] = Z[0] + fact*dz; ZZ[1] = Z[1] + fact*dz2;
+	    Draw_Line(View->LineType,View->LineWidth,XX,YY,ZZ,Raise);  
+	  }
 	}
-	glEnd();
+	else{
+	  glBegin(GL_LINE_STRIP);
+	  for(j=0 ; j<ts+1 ; j++){
+	    dx = V[3*(ts-j)]; dy = V[3*(ts-j)+1]; dz = V[3*(ts-j)+2];
+	    dd = sqrt(dx*dx+dy*dy+dz*dz);
+	    Palette2(View,ValMin,ValMax,dd);
+	    glVertex3d(X[0] + fact*dx + Raise[0][0],
+		       Y[0] + fact*dy + Raise[1][0],
+		       Z[0] + fact*dz + Raise[2][0]);
+	  }
+	  glEnd();
+	}
       }
       break;
     case LINE: Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d); break;

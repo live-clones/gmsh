@@ -506,6 +506,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "PointSize" , opt_general_point_size , 3. , 
     "Display size of points (in pixels)" },
 
+  { F|O, "QuadricSubdivisions" , opt_general_quadric_subdivisions, 10. ,
+    "Number of subdivisions used to draw points or lines as spheres or cylinders" },
+
   { F,   "RotationX" , opt_general_rotation0 , 0.0 , 
     "First Euler angle (used if Trackball == 0)" }, 
   { F,   "RotationY" , opt_general_rotation1 , 0.0 , 
@@ -531,8 +534,6 @@ StringXNumber GeneralOptions_Number[] = {
     "X position of small axes (negative values for right alignment)" },
   { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -35. ,
     "Y position of small axes (negative values for bottom alignment)" },
-  { F|O, "SphereSubdivisions" , opt_general_sphere_subdivisions, 10. ,
-    "Number of subdivisions used to draw spheres (when drawing points as spheres)" },
 
 #ifdef _FLTK
   { F|O, "Terminal" , opt_general_terminal , 0. ,
@@ -592,6 +593,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Display curve numbers?" },
   { F|O, "LineSelectWidth" , opt_geometry_line_sel_width , 2. , 
     "Display width of selected lines (in pixels)" },
+  { F|O, "LineType" , opt_geometry_line_type , 0. , 
+    "Display lines as solid color segments or 3D cylinders" },
   { F|O, "LineWidth" , opt_geometry_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
@@ -686,6 +689,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh vertices on curves?" },
   { F|O, "LinesNumbers" , opt_mesh_lines_num , 0. , 
     "Display mesh line numbers?" },
+  { F|O, "LineType" , opt_mesh_line_type , 0. , 
+    "Display lines as solid color segments or 3D cylinders" },
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
@@ -875,6 +880,8 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Light" , opt_view_light , 0. ,
     "Enable light sources?" },
+  { F|O, "LineType" , opt_view_line_type , 0. , 
+    "Display lines as solid color segments or 3D cylinders" },
   { F|O, "LineWidth" , opt_view_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 

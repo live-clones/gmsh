@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.212 2002-11-13 06:16:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.213 2002-11-16 08:29:15 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -332,6 +332,12 @@ Context_Item menu_post[] =
 static Fl_Menu_Item menu_point_display[] = {
   {"Color dot",   0, 0, 0},
   {"3D sphere",   0, 0, 0},
+  {0}
+};
+
+static Fl_Menu_Item menu_line_display[] = {
+  {"Color segment",   0, 0, 0},
+  {"3D cylinder",   0, 0, 0},
   {0}
 };
 
@@ -1368,6 +1374,10 @@ void GUI::create_geometry_options_window(){
       geo_value[4]->maximum(50);
       geo_value[4]->step(0.1);
 
+      geo_choice[1] = new Fl_Choice(2*WB, 2*WB+5*BH, IW, BH, "Line display");
+      geo_choice[1]->menu(menu_line_display);
+      geo_choice[1]->align(FL_ALIGN_RIGHT);
+
       for(i=3 ; i<= 5 ; i++){
 	geo_value[i]->align(FL_ALIGN_RIGHT);
       }
@@ -1560,6 +1570,10 @@ void GUI::create_mesh_options_window(){
       mesh_choice[0] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Point display");
       mesh_choice[0]->menu(menu_point_display);
       mesh_choice[0]->align(FL_ALIGN_RIGHT);
+
+      mesh_choice[1] = new Fl_Choice(2*WB, 2*WB+8*BH, IW, BH, "Line display");
+      mesh_choice[1]->menu(menu_line_display);
+      mesh_choice[1]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -2537,10 +2551,15 @@ void GUI::create_view_options_window(int num){
       view_value[62]->align(FL_ALIGN_RIGHT);
       view_value[62]->callback(set_changed_cb, 0);
 
+      view_choice[6] = new Fl_Choice(2*WB, 2*WB+ 4*BH, IW, BH, "Line display");
+      view_choice[6]->menu(menu_line_display);
+      view_choice[6]->align(FL_ALIGN_RIGHT);
+      view_choice[6]->callback(set_changed_cb, 0);
+
       {
 	view_vector = new Fl_Group(2*WB, 2*WB+ 4*BH, width/2, 5*BH, 0);
 
-	view_value[60] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Vector size");
+	view_value[60] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Vector size");
 	view_value[60]->minimum(0); 
 	view_value[60]->align(FL_ALIGN_RIGHT);
 	view_value[60]->callback(set_changed_cb, 0);
@@ -2553,7 +2572,7 @@ void GUI::create_view_options_window(int num){
 	  {"Displacement", 0, 0, 0},
 	  {0}
 	};
-	view_choice[2] = new Fl_Choice(2*WB, 2*WB+5*BH, IW, BH, "Vector display");
+	view_choice[2] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Vector display");
 	view_choice[2]->menu(menu_vectype);
 	view_choice[2]->align(FL_ALIGN_RIGHT);
 	view_choice[2]->callback(set_changed_cb, 0);
@@ -2563,7 +2582,7 @@ void GUI::create_view_options_window(int num){
 	  {"Vertex centered", 0, 0, 0},
 	  {0}
 	};
-	view_choice[3] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Vector location");
+	view_choice[3] = new Fl_Choice(2*WB, 2*WB+7*BH, IW, BH, "Vector location");
 	view_choice[3]->menu(menu_vecloc);
 	view_choice[3]->align(FL_ALIGN_RIGHT);
 	view_choice[3]->callback(set_changed_cb, 0);
@@ -2573,7 +2592,7 @@ void GUI::create_view_options_window(int num){
 	  {"Eigenvectors", 0, 0, 0},
 	  {0}
 	};
-	view_choice[4] = new Fl_Choice(2*WB, 2*WB+7*BH, IW, BH, "Tensor display");
+	view_choice[4] = new Fl_Choice(2*WB, 2*WB+8*BH, IW, BH, "Tensor display");
 	view_choice[4]->menu(menu_tensor);
 	view_choice[4]->align(FL_ALIGN_RIGHT);
 	view_choice[4]->callback(set_changed_cb, 0);
@@ -2739,6 +2758,7 @@ void GUI::update_view_window(int num){
   opt_view_point_size(num, GMSH_GUI, 0);
   opt_view_point_type(num, GMSH_GUI, 0);
   opt_view_line_width(num, GMSH_GUI, 0);
+  opt_view_line_type(num, GMSH_GUI, 0);
   opt_view_arrow_type(num, GMSH_GUI, 0);
   opt_view_arrow_scale(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);

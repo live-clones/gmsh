@@ -72,8 +72,9 @@ void Draw_Scales(void);
 void Draw_Axes (double s);
 void Draw_SmallAxes(void);
 void Draw_Sphere(double size, double x, double y, double z);
+void Draw_Cylinder (double width, double *x, double *y, double *z);
 void Draw_Point(int type, double size, double *x, double *y, double *z, double Raise[3][8]);
-void Draw_Line (double *x, double *y, double *z, double Raise[3][8]);
+void Draw_Line (int type, double width, double *x, double *y, double *z, double Raise[3][8]);
 void Draw_Triangle (double *x, double *y, double *z,double *n,
                     double Raise[3][8], int shade);
 void Draw_Quadrangle (double *x, double *y, double *z, double *n,
