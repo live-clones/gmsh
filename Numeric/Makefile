@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2004-12-08 05:38:56 geuzaine Exp $
+# $Id: Makefile,v 1.17 2004-12-14 20:05:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -56,9 +56,7 @@ depend:
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
-EigSolve.o: EigSolve.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
+EigSolve.o: EigSolve.cpp
 gsl_newt.o: gsl_newt.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Numeric.h

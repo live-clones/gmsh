@@ -1,4 +1,4 @@
-// $Id: Eigenvectors.cpp,v 1.2 2004-12-10 03:42:29 geuzaine Exp $
+// $Id: Eigenvectors.cpp,v 1.3 2004-12-14 20:05:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Context.h"
 #include "Malloc.h"
 #include "Numeric.h"
+#include "EigSolve.h"
 
 extern Context_T CTX;
 
@@ -89,7 +90,7 @@ void GMSH_EigenvectorsPlugin::catchErrorMessage(char *errorMessage) const
 static int nonzero(double v[3])
 {
   for(int i = 0; i < 3; i++)
-    if(fabs(v[i]) > 1.e-15) return 1;
+    if(fabs(v[i]) > 1.e-16) return 1;
   return 0;
 }
 
@@ -101,14 +102,7 @@ static void eigenvectors(List_T *inList, int inNb,
 {
   if(!inNb) return;
 
-  int itmp[3], nbcomplex = 0;
-  double wr[3], wi[3], dtmp[3];
-  double **A = new double*[3];
-  double **B = new double*[3];
-  for(int i = 0; i < 3; i++){
-    A[i] = new double[3];
-    B[i] = new double[3];
-  }
+  int nbcomplex = 0;
 
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
@@ -121,11 +115,9 @@ static void eigenvectors(List_T *inList, int inNb,
       for(int k = 0; k < nbNod; k++){
 	double *val = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
 						  nbNod * 9 * j + 9 * k);
-	A[0][0] = val[0]; A[0][1] = val[1]; A[0][2] = val[2];
-	A[1][0] = val[3]; A[1][1] = val[4]; A[1][2] = val[5];
-	A[2][0] = val[6]; A[2][1] = val[7]; A[2][2] = val[8];
-	EigSolve(3, A, wr, wi, B, itmp, dtmp);
-	EigSort(3, wr, wi, B);
+	double wr[3], wi[3], B[9];
+	if(!EigSolve3x3(val, wr, wi, B))
+	  Msg(GERROR, "Eigensolver failed to converge");
 	nbcomplex += nonzero(wi); 
 	if(!scale)
 	  wr[0] = wr[1] = wr[2] = 1.;
@@ -133,9 +125,9 @@ static void eigenvectors(List_T *inList, int inNb,
 	  double res;
 	  // wrong if there are complex eigenvals (B contains both
 	  // real and imag parts: cf. explanation in EigSolve.cpp)
-	  res = wr[0] * B[l][0]; List_Add(minList, &res);
-	  res = wr[1] * B[l][1]; List_Add(midList, &res);
-	  res = wr[2] * B[l][2]; List_Add(maxList, &res);
+	  res = wr[0] * B[l]; List_Add(minList, &res);
+	  res = wr[1] * B[3+l]; List_Add(midList, &res);
+	  res = wr[2] * B[6+l]; List_Add(maxList, &res);
 	}
       }
     }
@@ -143,13 +135,6 @@ static void eigenvectors(List_T *inList, int inNb,
     (*midNb)++;
     (*maxNb)++;
   }
-
-  for(int i = 0; i < 3; i++){
-    delete [] A[i];
-    delete [] B[i];
-  }
-  delete [] A;
-  delete [] B;
 
   if(nbcomplex)
     Msg(GERROR, "%d tensors have complex eigenvalues/eigenvectors", nbcomplex);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.64 2004-12-10 03:35:29 geuzaine Exp $
+# $Id: Makefile,v 1.65 2004-12-14 20:05:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -133,7 +133,8 @@ Eigenvectors.o: Eigenvectors.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Eigenvectors.h \
-  ../Common/Context.h ../DataStr/Malloc.h ../Numeric/Numeric.h
+  ../Common/Context.h ../DataStr/Malloc.h ../Numeric/Numeric.h \
+  ../Numeric/EigSolve.h
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals.o: OctreeInternals.cpp ../Common/Message.h \
   OctreeInternals.h
