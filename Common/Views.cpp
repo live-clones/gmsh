@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.45 2001-07-31 08:02:26 geuzaine Exp $
+// $Id: Views.cpp,v 1.46 2001-08-03 21:27:20 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -404,6 +404,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->Raise[1] = src->Raise[1];
   dest->Raise[2] = src->Raise[2];
   dest->ArrowScale = src->ArrowScale;
+  dest->Explode = src->Explode;
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;

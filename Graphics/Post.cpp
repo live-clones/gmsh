@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.21 2001-07-31 06:11:24 geuzaine Exp $
+// $Id: Post.cpp,v 1.22 2001-08-03 21:27:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -102,9 +102,40 @@ void Free_DisplayLists(void){
   }
 }
 
+void Get_Coords(double Explode, double *Offset, int nbnod, 
+		double *x1, double *y1, double *z1, 
+		double *x2, double *y2, double *z2){
+  int i;
+  double xc=0., yc=0., zc=0.;
+
+  if(Explode==1){
+    for(i=0; i<nbnod; i++){
+      x2[i] = x1[i]+Offset[0];
+      y2[i] = y1[i]+Offset[1];
+      z2[i] = z1[i]+Offset[2];
+    }
+  }
+  else{
+    for(i=0; i<nbnod; i++){
+      xc += x1[i];
+      yc += y1[i];
+      zc += z1[i];
+    }
+    xc /= (double)nbnod;
+    yc /= (double)nbnod;
+    zc /= (double)nbnod;
+    for(i=0; i<nbnod; i++){
+      x2[i] = xc + Explode * (x1[i]-xc) + Offset[0];
+      y2[i] = yc + Explode * (y1[i]-yc) + Offset[1];
+      z2[i] = zc + Explode * (z1[i]-zc) + Offset[2];
+    }
+  }
+}
+
+
 void Draw_Post (void) {
   int            iView,i,j,k,nb;
-  double         ValMin,ValMax,AbsMax;
+  double         ValMin,ValMax,AbsMax,X[4],Y[4],Z[4];
   Post_View     *v;
 
   if(!Post_ViewList) return;
@@ -214,60 +245,78 @@ void Draw_Post (void) {
 
 	if(v->NbSP && v->DrawPoints && v->DrawScalars){
 	  nb = List_Nbr(v->SP) / v->NbSP ;
-	  for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb)
-	    Draw_ScalarPoint(v, ValMin, ValMax, Raise,
-			     (double*)List_Pointer_Fast(v->SP,i),
-			     (double*)List_Pointer_Fast(v->SP,i+1),
-			     (double*)List_Pointer_Fast(v->SP,i+2),
+	  for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb){
+	    Get_Coords(1., v->Offset, 1, 
+		       (double*)List_Pointer_Fast(v->SP,i), 
+		       (double*)List_Pointer_Fast(v->SP,i+1), 
+		       (double*)List_Pointer_Fast(v->SP,i+2), 
+		       X, Y, Z);
+	    Draw_ScalarPoint(v, ValMin, ValMax, Raise, X, Y, Z,
 			     (double*)List_Pointer_Fast(v->SP,i+3));
+	  }
 	}
 	if(v->NbVP && v->DrawPoints && v->DrawVectors){
 	  nb = List_Nbr(v->VP) / v->NbVP ;
-	  for(i = 0 ; i < List_Nbr(v->VP) ; i+=nb)
-	    Draw_VectorPoint(v, ValMin, ValMax, Raise,
-			     (double*)List_Pointer_Fast(v->VP,i),
-			     (double*)List_Pointer_Fast(v->VP,i+1),
-			     (double*)List_Pointer_Fast(v->VP,i+2),
+	  for(i = 0 ; i < List_Nbr(v->VP) ; i+=nb){
+	    Get_Coords(1., v->Offset, 1, 
+		       (double*)List_Pointer_Fast(v->VP,i), 
+		       (double*)List_Pointer_Fast(v->VP,i+1), 
+		       (double*)List_Pointer_Fast(v->VP,i+2), 
+		       X, Y, Z);
+	    Draw_VectorPoint(v, ValMin, ValMax, Raise, X, Y, Z,
 			     (double*)List_Pointer_Fast(v->VP,i+3));
+	  }
 	}
 	if(v->NbTP && v->DrawPoints && v->DrawTensors){
 	  nb = List_Nbr(v->TP) / v->NbTP ;
-	  for(i = 0 ; i < List_Nbr(v->TP) ; i+=nb)
-	    Draw_TensorPoint(v, ValMin, ValMax, Raise,
-			     (double*)List_Pointer_Fast(v->TP,i),
-			     (double*)List_Pointer_Fast(v->TP,i+1),
-			     (double*)List_Pointer_Fast(v->TP,i+2),
+	  for(i = 0 ; i < List_Nbr(v->TP) ; i+=nb){
+	    Get_Coords(1., v->Offset, 1, 
+		       (double*)List_Pointer_Fast(v->TP,i), 
+		       (double*)List_Pointer_Fast(v->TP,i+1), 
+		       (double*)List_Pointer_Fast(v->TP,i+2), 
+		       X, Y, Z);
+	    Draw_TensorPoint(v, ValMin, ValMax, Raise, X, Y, Z,
 			     (double*)List_Pointer_Fast(v->TP,i+3));
+	  }
 	}
 
 	// Lines
 	
 	if(v->NbSL && v->DrawLines && v->DrawScalars){
 	  nb = List_Nbr(v->SL) / v->NbSL ;
-	  for(i = 0 ; i < List_Nbr(v->SL) ; i+=nb)
-	    Draw_ScalarLine(v, ValMin, ValMax, Raise,
-			    (double*)List_Pointer_Fast(v->SL,i),
-			    (double*)List_Pointer_Fast(v->SL,i+2),
-			    (double*)List_Pointer_Fast(v->SL,i+4),
+	  for(i = 0 ; i < List_Nbr(v->SL) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 2, 
+		       (double*)List_Pointer_Fast(v->SL,i), 
+		       (double*)List_Pointer_Fast(v->SL,i+2), 
+		       (double*)List_Pointer_Fast(v->SL,i+4), 
+		       X, Y, Z);
+	    Draw_ScalarLine(v, ValMin, ValMax, Raise, X, Y, Z,
 			    (double*)List_Pointer_Fast(v->SL,i+6));
+	  }
 	}
 	if(v->NbVL && v->DrawLines && v->DrawVectors){
 	  nb = List_Nbr(v->VL) / v->NbVL ;
-	  for(i = 0 ; i < List_Nbr(v->VL) ; i+=nb)
-	    Draw_VectorLine(v, ValMin, ValMax, Raise,
-			    (double*)List_Pointer_Fast(v->VL,i),
-			    (double*)List_Pointer_Fast(v->VL,i+2),
-			    (double*)List_Pointer_Fast(v->VL,i+4),
+	  for(i = 0 ; i < List_Nbr(v->VL) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 2, 
+		       (double*)List_Pointer_Fast(v->VL,i),
+		       (double*)List_Pointer_Fast(v->VL,i+2),
+		       (double*)List_Pointer_Fast(v->VL,i+4),
+		       X, Y, Z);
+	    Draw_VectorLine(v, ValMin, ValMax, Raise, X, Y, Z,
 			    (double*)List_Pointer_Fast(v->VL,i+6));
+	  }
 	}
 	if(v->NbTL && v->DrawLines && v->DrawTensors){
 	  nb = List_Nbr(v->TL) / v->NbTL ;
-	  for(i = 0 ; i < List_Nbr(v->TL) ; i+=nb)
-	    Draw_VectorLine(v, ValMin, ValMax, Raise,
-			    (double*)List_Pointer_Fast(v->TL,i),
-			    (double*)List_Pointer_Fast(v->TL,i+2),
-			    (double*)List_Pointer_Fast(v->TL,i+4),
+	  for(i = 0 ; i < List_Nbr(v->TL) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 2, 
+		       (double*)List_Pointer_Fast(v->TL,i), 
+		       (double*)List_Pointer_Fast(v->TL,i+2), 
+		       (double*)List_Pointer_Fast(v->TL,i+4), 
+		       X, Y, Z);
+	    Draw_TensorLine(v, ValMin, ValMax, Raise, X, Y, Z,
 			    (double*)List_Pointer_Fast(v->TL,i+6));
+	  }
 	}
 	
 	// Triangles
@@ -276,37 +325,49 @@ void Draw_Post (void) {
 	  nb = List_Nbr(v->ST) / v->NbST ;
 	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
 	    Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
-	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
-	      Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise,
-				  (double*)List_Pointer_Fast(v->ST,i),
-				  (double*)List_Pointer_Fast(v->ST,i+3),
-				  (double*)List_Pointer_Fast(v->ST,i+6),
+	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
+	      Get_Coords(v->Explode, v->Offset, 3, 
+			 (double*)List_Pointer_Fast(v->ST,i), 
+			 (double*)List_Pointer_Fast(v->ST,i+3), 
+			 (double*)List_Pointer_Fast(v->ST,i+6), 
+			 X, Y, Z);
+	      Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise, X, Y, Z,
 				  (double*)List_Pointer_Fast(v->ST,i+9));
+	    }
 	  }
-	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
-	    Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise,
-				(double*)List_Pointer_Fast(v->ST,i),
-				(double*)List_Pointer_Fast(v->ST,i+3),
-				(double*)List_Pointer_Fast(v->ST,i+6),
+	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 3, 
+		       (double*)List_Pointer_Fast(v->ST,i), 
+		       (double*)List_Pointer_Fast(v->ST,i+3), 
+		       (double*)List_Pointer_Fast(v->ST,i+6), 
+		       X, Y, Z);
+	    Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise, X, Y, Z,
 				(double*)List_Pointer_Fast(v->ST,i+9));
+	  }
 	}
 	if(v->NbVT && v->DrawTriangles && v->DrawVectors){
 	  nb = List_Nbr(v->VT) / v->NbVT ;
-	  for(i = 0 ; i < List_Nbr(v->VT) ; i+=nb)
-	    Draw_VectorTriangle(v, ValMin, ValMax, Raise,
-				(double*)List_Pointer_Fast(v->VT,i),
-				(double*)List_Pointer_Fast(v->VT,i+3),
-				(double*)List_Pointer_Fast(v->VT,i+6),
+	  for(i = 0 ; i < List_Nbr(v->VT) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 3, 
+		       (double*)List_Pointer_Fast(v->VT,i),
+		       (double*)List_Pointer_Fast(v->VT,i+3),
+		       (double*)List_Pointer_Fast(v->VT,i+6),
+		       X, Y, Z);
+	    Draw_VectorTriangle(v, ValMin, ValMax, Raise, X, Y, Z,
 				(double*)List_Pointer_Fast(v->VT,i+9));
+	  }
 	}
 	if(v->NbTT && v->DrawTriangles && v->DrawTensors){
 	  nb = List_Nbr(v->TT) / v->NbTT ;
-	  for(i = 0 ; i < List_Nbr(v->TT) ; i+=nb)
-	    Draw_TensorTriangle(v, ValMin, ValMax, Raise,
-				(double*)List_Pointer_Fast(v->TT,i),
-				(double*)List_Pointer_Fast(v->TT,i+3),
-				(double*)List_Pointer_Fast(v->TT,i+6),
+	  for(i = 0 ; i < List_Nbr(v->TT) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 3, 
+		       (double*)List_Pointer_Fast(v->TT,i), 
+		       (double*)List_Pointer_Fast(v->TT,i+3), 
+		       (double*)List_Pointer_Fast(v->TT,i+6), 
+		       X, Y, Z);
+	    Draw_TensorTriangle(v, ValMin, ValMax, Raise, X, Y, Z,
 				(double*)List_Pointer_Fast(v->TT,i+9));
+	  }
 	}
 	
 	// Tetrahedra
@@ -315,37 +376,49 @@ void Draw_Post (void) {
 	  nb = List_Nbr(v->SS) / v->NbSS ;
 	  if(v->Light && v->SmoothNormals && v->Changed && v->IntervalsType != DRAW_POST_ISO){
 	    Msg(DEBUG, "Preprocessing of tets normals in view %d", v->Num);
-	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	      Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
-				     (double*)List_Pointer_Fast(v->SS,i),
-				     (double*)List_Pointer_Fast(v->SS,i+4),
-				     (double*)List_Pointer_Fast(v->SS,i+8),
+	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb){
+	      Get_Coords(v->Explode, v->Offset, 4, 
+			 (double*)List_Pointer_Fast(v->SS,i), 
+			 (double*)List_Pointer_Fast(v->SS,i+4), 
+			 (double*)List_Pointer_Fast(v->SS,i+8), 
+			 X, Y, Z);
+	      Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise, X, Y, Z,
 				     (double*)List_Pointer_Fast(v->SS,i+12));
+	    }
 	  }
-	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	    Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
-				   (double*)List_Pointer_Fast(v->SS,i),
-				   (double*)List_Pointer_Fast(v->SS,i+4),
-				   (double*)List_Pointer_Fast(v->SS,i+8),
+	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 4, 
+		       (double*)List_Pointer_Fast(v->SS,i), 
+		       (double*)List_Pointer_Fast(v->SS,i+4), 
+		       (double*)List_Pointer_Fast(v->SS,i+8), 
+		       X, Y, Z);
+	    Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise, X, Y, Z,
 				   (double*)List_Pointer_Fast(v->SS,i+12));
+	  }
 	}
 	if(v->NbVS && v->DrawTetrahedra && v->DrawVectors){
 	  nb = List_Nbr(v->VS) / v->NbVS ;
-	  for(i = 0 ; i < List_Nbr(v->VS) ; i+=nb)
-	    Draw_VectorTetrahedron(v, ValMin, ValMax, Raise,
-				   (double*)List_Pointer_Fast(v->VS,i),
-				   (double*)List_Pointer_Fast(v->VS,i+4),
-				   (double*)List_Pointer_Fast(v->VS,i+8),
+	  for(i = 0 ; i < List_Nbr(v->VS) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 4,
+		       (double*)List_Pointer_Fast(v->VS,i), 
+		       (double*)List_Pointer_Fast(v->VS,i+4), 
+		       (double*)List_Pointer_Fast(v->VS,i+8), 
+		       X, Y, Z);
+	    Draw_VectorTetrahedron(v, ValMin, ValMax, Raise, X, Y, Z,
 				   (double*)List_Pointer_Fast(v->VS,i+12));
+	  }
 	}
 	if(v->NbTS && v->DrawTetrahedra && v->DrawTensors){
 	  nb = List_Nbr(v->TS) / v->NbTS ;
-	  for(i = 0 ; i < List_Nbr(v->TS) ; i+=nb)
-	    Draw_TensorTetrahedron(v, ValMin, ValMax, Raise,
-				   (double*)List_Pointer_Fast(v->TS,i),
-				   (double*)List_Pointer_Fast(v->TS,i+4),
-				   (double*)List_Pointer_Fast(v->TS,i+8),
+	  for(i = 0 ; i < List_Nbr(v->TS) ; i+=nb){
+	    Get_Coords(v->Explode, v->Offset, 4,
+		       (double*)List_Pointer_Fast(v->TS,i), 
+		       (double*)List_Pointer_Fast(v->TS,i+4), 
+		       (double*)List_Pointer_Fast(v->TS,i+8), 
+		       X, Y, Z);
+	    Draw_TensorTetrahedron(v, ValMin, ValMax, Raise, X, Y, Z,
 				   (double*)List_Pointer_Fast(v->TS,i+12));
+	  }
 	}
 
 

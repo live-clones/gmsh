@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.71 2001-07-31 19:25:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.72 2001-08-03 21:27:20 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -519,7 +519,7 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
   Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
-  Msg(DIRECT, "  Alt+t         alternate intervals mode for all post-processing views"); 
+  Msg(DIRECT, "  Alt+t         alternate intervals mode for visible post-processing views"); 
   Msg(DIRECT, "  Alt+v         hide/show geometry volumes");
   Msg(DIRECT, "  Alt+Shift+v   hide/show mesh volumes");
   Msg(DIRECT, "  Alt+x         set X view"); 
@@ -1727,6 +1727,7 @@ void view_options_ok_cb(CALLBACK_ARGS){
       opt_view_timestep(i, GMSH_SET, WID->view_value[9]->value());
       opt_view_arrow_scale(i, GMSH_SET, WID->view_value[10]->value());
       opt_view_boundary(i, GMSH_SET, WID->view_value[11]->value());
+      opt_view_explode(i, GMSH_SET, WID->view_value[12]->value());
       
       opt_view_name(i, GMSH_SET, (char*)WID->view_input[0]->value());
       opt_view_format(i, GMSH_SET, (char*)WID->view_input[1]->value());

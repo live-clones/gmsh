@@ -50,20 +50,17 @@ void Draw_Post(void);
 void Draw_Scales(void);
 void Draw_Axes (double s);
 void Draw_SmallAxes(void);
-void Draw_Point(double *x, double *y, double *z,
-                double *Offset, double Raise[3][5]);
-void Draw_Line (double *x, double *y, double *z,
-                double *Offset, double Raise[3][5]);
+void Draw_Point(double *x, double *y, double *z, double Raise[3][5]);
+void Draw_Line (double *x, double *y, double *z, double Raise[3][5]);
 void Draw_Triangle (double *x, double *y, double *z,double *n,
-                    double *Offset, double Raise[3][5], int shade);
+                    double Raise[3][5], int shade);
 void Draw_Quadrangle (double *x, double *y, double *z, double *n,
-                      double *Offset, double Raise[3][5], int shade);
-void Draw_Polygon (int n, double *x, double *y, double *z,
-                   double *Offset, double Raise[3][5]);
+                      double Raise[3][5], int shade);
+void Draw_Polygon (int n, double *x, double *y, double *z, double Raise[3][5]);
 void Draw_Vector (int Type, int Fill,
                   double x, double y, double z,
                   double d, double dx, double dy, double dz,
-                  double *Offset, double Raise[3][5]);
+                  double Raise[3][5]);
 void Draw_Mesh_Volumes(void *a, void *b);
 void Draw_Mesh_Surfaces(void *a, void *b);
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b);

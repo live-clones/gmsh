@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.36 2001-08-03 10:02:32 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.37 2001-08-03 21:27:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -547,7 +547,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     m[1] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[1] ;
     m[2] *= CTX.mesh.normals * CTX.pixel_equiv_x/CTX.s[2] ;
     mm=sqrt(m[0]*m[0]+m[1]*m[1]+m[2]*m[2]);
-    Draw_Vector(DRAW_POST_ARROW, 0, Xc,Yc,Zc, mm, m[0],m[1],m[2],NULL,NULL);
+    Draw_Vector(DRAW_POST_ARROW, 0, Xc,Yc,Zc, mm, m[0],m[1],m[2],NULL);
   }
   
 

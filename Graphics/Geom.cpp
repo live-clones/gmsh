@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.24 2001-07-26 21:26:34 geuzaine Exp $
+// $Id: Geom.cpp,v 1.25 2001-08-03 21:27:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -150,7 +150,7 @@ void Draw_Curve (void *a, void *b){
     dd = sqrt(dv.Pos.X*dv.Pos.X+dv.Pos.Y*dv.Pos.Y+dv.Pos.Z*dv.Pos.Z);
     glColor4ubv((GLubyte*)&CTX.color.geom.tangents);
     Draw_Vector(DRAW_POST_ARROW, 0, v.Pos.X,v.Pos.Y,v.Pos.Z,
-                dd, dv.Pos.X,dv.Pos.Y,dv.Pos.Z, NULL,NULL);
+                dd, dv.Pos.X,dv.Pos.Y,dv.Pos.Z, NULL);
   }
 
   if(CTX.render_mode == GMSH_SELECT){
@@ -365,7 +365,7 @@ void Draw_Plane_Surface (Surface *s){
     nn = sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
     glColor4ubv((GLubyte*)&CTX.color.geom.normals);
     Draw_Vector(DRAW_POST_ARROW, 0, (vv2.Pos.X+vv1.Pos.X)/2., (vv2.Pos.Y+vv1.Pos.Y)/2., 
-                (vv2.Pos.Z+vv1.Pos.Z)/2., nn, n[0],n[1],n[2],NULL,NULL);
+                (vv2.Pos.Z+vv1.Pos.Z)/2., nn, n[0],n[1],n[2],NULL);
   }
 }
 
@@ -468,7 +468,7 @@ void Draw_NonPlane_Surface (Surface *s){
     nn = sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
     glColor4ubv((GLubyte*)&CTX.color.geom.normals);
     Draw_Vector(DRAW_POST_ARROW, 0, n1.Pos.X, n1.Pos.Y, n1.Pos.Z,
-                nn, n[0],n[1],n[2],NULL,NULL);
+                nn, n[0],n[1],n[2],NULL);
   }
 
 }

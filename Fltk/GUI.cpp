@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.100 2001-07-31 19:25:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.101 2001-08-03 21:27:20 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1240,10 +1240,10 @@ void GUI::create_mesh_options_window(){
 	mesh_butt[5] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Curves");
 	mesh_butt[6] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
 	mesh_butt[7] = new Fl_Check_Button(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
-	mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point Numbers");
-	mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve Numbers");
-	mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface Numbers");
-	mesh_butt[11] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume Numbers");
+	mesh_butt[8] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Point numbers");
+	mesh_butt[9] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Curve numbers");
+	mesh_butt[10] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Surface numbers");
+	mesh_butt[11] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Volume numbers");
 	for(i=4 ; i<12 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
@@ -1567,7 +1567,7 @@ void GUI::create_statistics_window(){
 	o->labelsize(CTX.fontsize);
 	o->hide();
 	stat_value[18] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Views");
-	stat_value[19] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Visible Points");
+	stat_value[19] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Visible points");
 	stat_value[20] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Visible lines");
 	stat_value[21] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Visible triangles");
 	stat_value[22] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Visible tetrahedra");
@@ -1946,39 +1946,57 @@ void GUI::create_view_options_window(int num){
 	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
 	o->labelsize(CTX.fontsize);
         o->hide();
-        view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Show elements");
-        view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Show color bar");
-        view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Display time");
-        view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Transparent color bar");
-	view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Enable Lighting");
 
-	view_butt[27] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Smooth normals");	
+	view_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, IW, BH, "Name");
+	view_input[1] = new Fl_Input(2*WB, 2*WB+2*BH, IW, BH, "Format");
+	for(i=0 ; i<2 ; i++){
+	  view_input[i]->labelsize(CTX.fontsize);
+	  view_input[i]->textsize(CTX.fontsize);
+	  view_input[i]->align(FL_ALIGN_RIGHT);
+	}
+
+        view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show elements");
+        view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Show color bar");
+        view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Display time");
+        view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Transparent color bar");
+	view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Enable Lighting");
+
+	view_butt[27] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW, BH, "Smooth normals");	
 	view_butt[27]->type(FL_TOGGLE_BUTTON);
 	view_butt[27]->down_box(FL_DOWN_BOX);
 	view_butt[27]->labelsize(CTX.fontsize);
 	view_butt[27]->selection_color(FL_YELLOW);
 
-        view_butt[18] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW, BH, "Draw points");
-        view_butt[19] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Draw lines");
-        view_butt[20] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Draw triangles");
-        view_butt[21] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Draw tetrahedra");
+	view_value[11] = new Fl_Value_Input(width/2, 2*WB+ 1*BH, IW, BH, "Boundary");
+	view_value[11]->labelsize(CTX.fontsize);
+	view_value[11]->textsize(CTX.fontsize);
+	view_value[11]->type(FL_HORIZONTAL);
+	view_value[11]->align(FL_ALIGN_RIGHT);
+	view_value[11]->minimum(0); 
+	view_value[11]->step(1); 
+	view_value[11]->maximum(3); 
 
-        view_butt[22] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW, BH, "Draw scalar values");
-        view_butt[23] = new Fl_Check_Button(width/2, 2*WB+6*BH, BW, BH, "Draw vector values");
-        view_butt[24] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW, BH, "Draw tensor values");
+	view_value[12] = new Fl_Value_Input(width/2, 2*WB+ 2*BH, IW, BH, "Explode");
+	view_value[12]->labelsize(CTX.fontsize);
+	view_value[12]->textsize(CTX.fontsize);
+	view_value[12]->type(FL_HORIZONTAL);
+	view_value[12]->align(FL_ALIGN_RIGHT);
+	view_value[12]->minimum(0.); 
+	view_value[12]->step(0.01); 
+	view_value[12]->maximum(1.); 
+
+        view_butt[18] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Draw points");
+        view_butt[19] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Draw lines");
+        view_butt[20] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW, BH, "Draw triangles");
+        view_butt[21] = new Fl_Check_Button(width/2, 2*WB+6*BH, BW, BH, "Draw tetrahedra");
+        view_butt[22] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW, BH, "Draw scalar values");
+        view_butt[23] = new Fl_Check_Button(width/2, 2*WB+8*BH, BW, BH, "Draw vector values");
+        view_butt[24] = new Fl_Check_Button(width/2, 2*WB+9*BH, BW, BH, "Draw tensor values");
 	for(i=13 ; i<25 ; i++){
 	  view_butt[i]->type(FL_TOGGLE_BUTTON);
 	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
-	}
-
-	view_input[0] = new Fl_Input(2*WB, 2*WB+7*BH, IW, BH, "Name");
-	view_input[1] = new Fl_Input(2*WB, 2*WB+8*BH, IW, BH, "Format");
-	for(i=0 ; i<2 ; i++){
-	  view_input[i]->labelsize(CTX.fontsize);
-	  view_input[i]->textsize(CTX.fontsize);
-	  view_input[i]->align(FL_ALIGN_RIGHT);
 	}
 
         o->end();
@@ -1988,7 +2006,7 @@ void GUI::create_view_options_window(int num){
 	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Range");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-        view_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Custom Range");
+        view_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Custom range");
 	view_butt[0]->type(FL_TOGGLE_BUTTON);
 	view_butt[0]->down_box(FL_DOWN_BOX);
 	view_butt[0]->labelsize(CTX.fontsize);
@@ -2010,14 +2028,12 @@ void GUI::create_view_options_window(int num){
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	}
-	/// ADD JF - DOUBLE LOG SCALE
-	/// ADD JF - POSSIBILITY OF SATURATING VALUES
-	view_butt[26] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Double Logarithmic");
+	view_butt[26] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Double logarithmic");
 	view_butt[26]->type(FL_RADIO_BUTTON);
 	view_butt[26]->labelsize(CTX.fontsize);
 	view_butt[26]->selection_color(FL_YELLOW);
 
-        view_butt[25] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Saturate Values");
+        view_butt[25] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Saturate values");
 	view_butt[25]->type(FL_TOGGLE_BUTTON);
 	view_butt[25]->down_box(FL_DOWN_BOX);
 	view_butt[25]->labelsize(CTX.fontsize);
@@ -2048,14 +2064,6 @@ void GUI::create_view_options_window(int num){
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	}
-	view_value[11] = new Fl_Value_Input(2*WB, 2*WB+ 6*BH, IW, BH, "Boundary operator");
-	view_value[11]->labelsize(CTX.fontsize);
-	view_value[11]->textsize(CTX.fontsize);
-	view_value[11]->type(FL_HORIZONTAL);
-	view_value[11]->align(FL_ALIGN_RIGHT);
-	view_value[11]->minimum(0); 
-	view_value[11]->step(1); 
-	view_value[11]->maximum(3); 
         o->end();
       }
       // Offset and Raise
@@ -2206,11 +2214,13 @@ void GUI::update_view_window(int num){
     view_value[i]->maximum(v->CustomMax); 
   }
   opt_view_scale_type(num, GMSH_GUI, 0);
+  opt_view_saturate_values(num, GMSH_GUI, 0);
 
   // intervals
   opt_view_nb_iso(num, GMSH_GUI, 0);
   opt_view_intervals_type(num, GMSH_GUI, 0);
   opt_view_boundary(num, GMSH_GUI, 0);
+  opt_view_explode(num, GMSH_GUI, 0);
 
   // offset/raise
   opt_view_offset0(num, GMSH_GUI, 0);

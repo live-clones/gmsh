@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.37 2001-08-02 19:11:40 geuzaine Exp $
+// $Id: Options.cpp,v 1.38 2001-08-03 21:27:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1702,6 +1702,18 @@ double opt_view_arrow_scale(OPT_ARGS_NUM){
     WID->view_value[10]->value(v->ArrowScale);
 #endif
   return v->ArrowScale;
+}
+double opt_view_explode(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->Explode = val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_value[12]->value(v->Explode);
+#endif
+  return v->Explode;
 }
 double opt_view_visible(OPT_ARGS_NUM){
   GET_VIEW(0.) ;

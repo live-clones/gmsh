@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.25 2001-08-03 19:40:01 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.26 2001-08-03 21:27:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,32 +11,30 @@
 
 extern Context_T   CTX;
 
-void Draw_Simplex(int dim, double *X, double *Y, double *Z,
-		  double *Offset, double Raise[3][5]){
+void Draw_Simplex(int nbnod, double *X, double *Y, double *Z,
+		  double Raise[3][5]){
   int k;
   double xx[4], yy[4], zz[4];
 
   glColor4ubv((GLubyte*)&CTX.color.fg);
-  switch(dim){
-  case 0 :
-    Draw_Point(X,Y,Z,Offset,Raise);
-    break;
+  switch(nbnod){
   case 1 :
-    Draw_Line(X,Y,Z,Offset,Raise);
+    Draw_Point(X,Y,Z,Raise);
     break;
   case 2 :
-    glBegin(GL_LINE_LOOP);
-    for(k=0 ; k<3 ; k++) 
-      glVertex3d(X[k]+Offset[0]+Raise[0][k],
-		 Y[k]+Offset[1]+Raise[1][k],
-		 Z[k]+Offset[2]+Raise[2][k]);
-    glEnd();
+    Draw_Line(X,Y,Z,Raise);
     break;
   case 3 :
+    glBegin(GL_LINE_LOOP);
+    for(k=0 ; k<3 ; k++) 
+      glVertex3d(X[k]+Raise[0][k], Y[k]+Raise[1][k], Z[k]+Raise[2][k]);
+    glEnd();
+    break;
+  case 4 :
     for(k=0 ; k<4 ; k++){
-      xx[k] = X[k]+Offset[0]+Raise[0][k] ;
-      yy[k] = Y[k]+Offset[1]+Raise[1][k] ;
-      zz[k] = Z[k]+Offset[2]+Raise[2][k] ;
+      xx[k] = X[k]+Raise[0][k] ;
+      yy[k] = Y[k]+Raise[1][k] ;
+      zz[k] = Z[k]+Raise[2][k] ;
     }
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
@@ -72,19 +70,17 @@ void Draw_ScalarPoint(Post_View *View,
 
   RaiseFill(0, d, ValMin, Raise);
 
-  if(View->ShowElement) Draw_Simplex(0,X,Y,Z,View->Offset,Raise);
+  if(View->ShowElement) Draw_Simplex(1,X,Y,Z,Raise);
 
   if(d>=ValMin && d<=ValMax){      
     Palette2(View,ValMin,ValMax,d);
     if(View->IntervalsType == DRAW_POST_NUMERIC){
-      glRasterPos3d(X[0]+Raise[0][0]+View->Offset[0],
-		    Y[0]+Raise[1][0]+View->Offset[1],
-		    Z[0]+Raise[2][0]+View->Offset[2]);
+      glRasterPos3d(X[0]+Raise[0][0], Y[0]+Raise[1][0], Z[0]+Raise[2][0]);
       sprintf(Num, View->Format, d);
       Draw_String(Num);
     }
     else
-      Draw_Point(X,Y,Z,View->Offset,Raise);
+      Draw_Point(X,Y,Z,Raise);
   }
 }
 
@@ -126,7 +122,7 @@ void Draw_ScalarLine(Post_View *View,
   for(k=0 ; k<2 ; k++)
     RaiseFill(k, Val[k], ValMin, Raise);
 
-  if(View->ShowElement) Draw_Simplex(1,X,Y,Z,View->Offset,Raise);
+  if(View->ShowElement) Draw_Simplex(2,X,Y,Z,Raise);
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -135,9 +131,9 @@ void Draw_ScalarLine(Post_View *View,
     if(d >= ValMin && d <= ValMax){
       Palette2(View,ValMin,ValMax,d);
       sprintf(Num, View->Format, d);
-      glRasterPos3d((X[0]+Raise[0][0] + X[1]+Raise[0][1])/2. + View->Offset[0],
-		    (Y[0]+Raise[1][0] + Y[1]+Raise[1][1])/2. + View->Offset[1],
-		    (Z[0]+Raise[2][0] + Z[1]+Raise[2][1])/2. + View->Offset[2]);
+      glRasterPos3d((X[0]+Raise[0][0] + X[1]+Raise[0][1])/2.,
+		    (Y[0]+Raise[1][0] + Y[1]+Raise[1][1])/2.,
+		    (Z[0]+Raise[2][0] + Z[1]+Raise[2][1])/2.);
       Draw_String(Num);
     }
 
@@ -150,13 +146,9 @@ void Draw_ScalarLine(Post_View *View,
          Val[1] >= ValMin && Val[1] <= ValMax){
 	glBegin(GL_LINES);
 	Palette2(View,ValMin,ValMax,Val[0]);
-	glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
-		   Y[0]+View->Offset[1]+Raise[1][0],
-		   Z[0]+View->Offset[2]+Raise[2][0]);
+	glVertex3d(X[0]+Raise[0][0], Y[0]+Raise[1][0], Z[0]+Raise[2][0]);
 	Palette2(View,ValMin,ValMax,Val[1]);
-	glVertex3d(X[1]+View->Offset[0]+Raise[0][1],
-		   Y[1]+View->Offset[1]+Raise[1][1],
-		   Z[1]+View->Offset[2]+Raise[2][1]);
+	glVertex3d(X[1]+Raise[0][1], Y[1]+Raise[1][1], Z[1]+Raise[2][1]);
 	glEnd();
       }
       else{
@@ -174,7 +166,7 @@ void Draw_ScalarLine(Post_View *View,
 		    ValMin,ValMax,Xp,Yp,Zp,&nb,value);    
 	  if(nb == 2){
 	    for(i=0;i<2;i++) RaiseFill(i,value[i],ValMin,Raise);    
-	    Draw_Line(Xp,Yp,Zp,View->Offset,Raise);  
+	    Draw_Line(Xp,Yp,Zp,Raise);  
 	  }
 	}
 	else{
@@ -183,7 +175,7 @@ void Draw_ScalarLine(Post_View *View,
 		    thev, ValMin,ValMax,Xp,Yp,Zp,&nb);    
 	  if(nb){
 	    RaiseFill(0,thev,ValMin,Raise);
-	    Draw_Point(Xp,Yp,Zp,View->Offset,Raise);    
+	    Draw_Point(Xp,Yp,Zp,Raise);    
 	  }
 	}
       }
@@ -279,7 +271,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
 
   if(preproNormals) return;
 
-  if(View->ShowElement) Draw_Simplex(2,X,Y,Z,View->Offset,Raise);
+  if(View->ShowElement) Draw_Simplex(3,X,Y,Z,Raise);
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -287,12 +279,9 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
     if(d >= ValMin && d <= ValMax){
       Palette2(View,ValMin,ValMax,d);
       sprintf(Num, View->Format, d);
-      glRasterPos3d( (X[0]+Raise[0][0] + X[1]+Raise[0][1] + X[2]+Raise[0][2])/3. + 
-		     View->Offset[0],
-		     (Y[0]+Raise[1][0] + Y[1]+Raise[1][1] + Y[2]+Raise[1][2])/3. +
-		     View->Offset[1],
-		     (Z[0]+Raise[2][0] + Z[1]+Raise[2][1] + Z[2]+Raise[2][2])/3. + 
-		     View->Offset[2] );
+      glRasterPos3d( (X[0]+Raise[0][0] + X[1]+Raise[0][1] + X[2]+Raise[0][2])/3.,
+		     (Y[0]+Raise[1][0] + Y[1]+Raise[1][1] + Y[2]+Raise[1][2])/3.,
+		     (Z[0]+Raise[2][0] + Z[1]+Raise[2][1] + Z[2]+Raise[2][2])/3.);
       Draw_String(Num);
     }
 
@@ -306,19 +295,13 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
         glBegin(GL_TRIANGLES);
 	Palette2(View,ValMin,ValMax,Val[0]);
 	glNormal3dv(&norms[0]);
-        glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
-                   Y[0]+View->Offset[1]+Raise[1][0],
-                   Z[0]+View->Offset[2]+Raise[2][0]);
+        glVertex3d(X[0]+Raise[0][0], Y[0]+Raise[1][0], Z[0]+Raise[2][0]);
 	Palette2(View,ValMin,ValMax,Val[1]);
 	glNormal3dv(&norms[3]);
-        glVertex3d(X[1]+View->Offset[0]+Raise[0][1],
-                   Y[1]+View->Offset[1]+Raise[1][1],
-                   Z[1]+View->Offset[2]+Raise[2][1]);
+        glVertex3d(X[1]+Raise[0][1], Y[1]+Raise[1][1], Z[1]+Raise[2][1]);
 	Palette2(View,ValMin,ValMax,Val[2]);
 	glNormal3dv(&norms[6]);
-        glVertex3d(X[2]+View->Offset[0]+Raise[0][2],
-                   Y[2]+View->Offset[1]+Raise[1][2],
-                   Z[2]+View->Offset[2]+Raise[2][2]);
+        glVertex3d(X[2]+Raise[0][2], Y[2]+Raise[1][2], Z[2]+Raise[2][2]);
         glEnd();
       }
       else{
@@ -330,9 +313,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
           for(i=0 ; i<nb ; i++){
 	    Palette2(View,ValMin,ValMax,value[i]);
             RaiseFill(i,value[i],ValMin,Raise);
-            glVertex3d(Xp[i]+View->Offset[0]+Raise[0][i],
-                       Yp[i]+View->Offset[1]+Raise[1][i],
-                       Zp[i]+View->Offset[2]+Raise[2][i]);
+            glVertex3d(Xp[i]+Raise[0][i], Yp[i]+Raise[1][i], Zp[i]+Raise[2][i]);
           }
           glEnd();
         }
@@ -349,7 +330,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
                         Xp,Yp,Zp,&nb,value);      
           if(nb >= 3){
             for(i=0 ; i<nb ; i++) RaiseFill(i,value[i],ValMin,Raise);    
-            Draw_Polygon(nb,Xp,Yp,Zp,View->Offset,Raise);  
+            Draw_Polygon(nb,Xp,Yp,Zp,Raise);  
           }
         }
         else{
@@ -359,7 +340,7 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
                         thev, ValMin,ValMax,Xp,Yp,Zp,&nb);        
           if(nb == 2){
             for(i=0 ; i<2 ; i++) RaiseFill(i,thev,ValMin,Raise);
-            Draw_Line(Xp,Yp,Zp,View->Offset,Raise);    
+            Draw_Line(Xp,Yp,Zp,Raise);    
           }
         }
       }
@@ -413,7 +394,7 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
   for(k=0 ; k<4 ; k++)
     RaiseFill(k, Val[k], ValMin, Raise);
 
-  if(!preproNormals && View->ShowElement) Draw_Simplex(3,X,Y,Z,View->Offset,Raise);
+  if(!preproNormals && View->ShowElement) Draw_Simplex(4,X,Y,Z,Raise);
 
   if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -422,11 +403,11 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
       Palette2(View,ValMin,ValMax,d);
       sprintf(Num, View->Format, d);
       glRasterPos3d(0.25 * (X[0]+Raise[0][0] + X[1]+Raise[0][1] + 
-			    X[2]+Raise[0][2] + X[3]+Raise[0][3]) + View->Offset[0],
+			    X[2]+Raise[0][2] + X[3]+Raise[0][3]),
 		    0.25 * (Y[0]+Raise[1][0] + Y[1]+Raise[1][1] + 
-			    Y[2]+Raise[1][2] + Y[3]+Raise[1][3]) + View->Offset[1],
+			    Y[2]+Raise[1][2] + Y[3]+Raise[1][3]),
 		    0.25 * (Z[0]+Raise[2][0] + Z[1]+Raise[2][1] + 
-			    Z[2]+Raise[2][2] + Z[3]+Raise[2][3]) + View->Offset[2]);
+			    Z[2]+Raise[2][2] + Z[3]+Raise[2][3]));
       Draw_String(Num);
     }
 
@@ -436,7 +417,7 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
       if(!preproNormals) Palette(View,View->NbIso,k);
       IsoSimplex(View, preproNormals, X, Y, Z, Val,
 		 View->GVFI(ValMin,ValMax,View->NbIso,k), 
-		 ValMin, ValMax, View->Offset, Raise);
+		 ValMin, ValMax, Raise);
     }
 
   }
@@ -467,9 +448,9 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 
     fact = View->ArrowScale/50. ;
     for(k=0 ; k<nbnod ; k++){
-      xx[k] = X[k] + fact * Val[k][0] + Raise[0][k] + View->Offset[0];
-      yy[k] = Y[k] + fact * Val[k][1] + Raise[1][k] + View->Offset[1];
-      zz[k] = Z[k] + fact * Val[k][2] + Raise[2][k] + View->Offset[2];
+      xx[k] = X[k] + fact * Val[k][0] + Raise[0][k];
+      yy[k] = Y[k] + fact * Val[k][1] + Raise[1][k];
+      zz[k] = Z[k] + fact * Val[k][2] + Raise[2][k];
     }
 
     switch(nbnod){
@@ -486,9 +467,9 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 	  dz = V[3*(View->TimeStep-j)+2];
 	  dd = sqrt(dx*dx+dy*dy+dz*dz);
 	  Palette2(View,ValMin,ValMax,dd);
-	  glVertex3d(X[0] + fact*dx + Raise[0][0] + View->Offset[0],
-		     Y[0] + fact*dy + Raise[1][0] + View->Offset[1],
-		     Z[0] + fact*dz + Raise[2][0] + View->Offset[2]);
+	  glVertex3d(X[0] + fact*dx + Raise[0][0],
+		     Y[0] + fact*dy + Raise[1][0],
+		     Z[0] + fact*dz + Raise[2][0]);
 	}
 	glEnd();
       }
@@ -500,7 +481,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
     return;
   }
 
-  if(View->ShowElement) Draw_Simplex(nbnod-1,X,Y,Z,View->Offset,Raise);
+  if(View->ShowElement) Draw_Simplex(nbnod,X,Y,Z,Raise);
 
   if(View->ArrowLocation == DRAW_POST_LOCATE_COG ||
      View->IntervalsType == DRAW_POST_NUMERIC){
@@ -516,9 +497,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
     if(dd!=0.0 && dd>=ValMin && dd<=ValMax){             
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,dd));            
       if(View->IntervalsType == DRAW_POST_NUMERIC){
-	glRasterPos3d(xc + View->Offset[0],
-		      yc + View->Offset[1],
-		      zc + View->Offset[2]);
+	glRasterPos3d(xc, yc, zc);
 	sprintf(Num, View->Format, dd);
 	Draw_String(Num);
       }
@@ -531,8 +510,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 	}
 	RaiseFill(0, dd, ValMin, Raise);         
 	Draw_Vector(View->ArrowType, View->IntervalsType!=DRAW_POST_ISO,
-		    xc, yc, zc, fact*dd, fact*dx, fact*dy, fact*dz,
-		    View->Offset, Raise);
+		    xc, yc, zc, fact*dd, fact*dx, fact*dy, fact*dz, Raise);
       }
     }
   }
@@ -549,8 +527,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 	RaiseFill(0, d[k], ValMin, Raise);         
 	Draw_Vector(View->ArrowType, View->IntervalsType!=DRAW_POST_ISO,
 		    X[k], Y[k], Z[k],
-		    fact*d[k], fact*Val[k][0], fact*Val[k][1], fact*Val[k][2],
-		    View->Offset, Raise);
+		    fact*d[k], fact*Val[k][0], fact*Val[k][1], fact*Val[k][2], Raise);
       }               
     }       
   }

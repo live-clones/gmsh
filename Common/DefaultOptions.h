@@ -443,6 +443,8 @@ StringXNumber ViewOptions_Number[] = {
     "Elevation of the view along Z-axis (in model coordinates)" },
   { F|O, "ArrowScale" , opt_view_arrow_scale , 50. ,
     "Size of the vector (e.g. arrow size in pixels)" },
+  { F, "Explode" , opt_view_explode , 1. , 
+    "Explode elements (0: reduced to a point; 1: not transformed)" },
   { F, "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
   { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_ISO ,

@@ -141,7 +141,7 @@ void IsoSimplex( Post_View *View,
 		 int preproNormals,
 		 double *X, double *Y, double *Z, double *Val, 
 		 double V, double Vmin, double Vmax, 
-		 double *Offset, double Raise[3][5]){
+		 double Raise[3][5]){
   int    nb;
   double Xp[6],Yp[6],Zp[6],PVals[6];
   double norms[12];
@@ -196,8 +196,8 @@ void IsoSimplex( Post_View *View,
   if(preproNormals)return;
 
   if(nb == 3) 
-    Draw_Triangle(Xp,Yp,Zp,norms,Offset,Raise,View->Light);
+    Draw_Triangle(Xp,Yp,Zp,norms,Raise,View->Light);
   else if(nb == 4)
-    Draw_Quadrangle(Xp,Yp,Zp,norms,Offset,Raise,View->Light);  
+    Draw_Quadrangle(Xp,Yp,Zp,norms,Raise,View->Light);  
 }
 
