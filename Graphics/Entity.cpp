@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.52 2005-01-21 05:31:15 geuzaine Exp $
+// $Id: Entity.cpp,v 1.53 2005-01-21 22:54:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -274,7 +274,7 @@ void Draw_SimpleVector(int arrow, int fill,
     if(fill) {
       glBegin(GL_LINES);
       glVertex3d(x, y, z);
-      glVertex3d(x + dx, y + dy, z + dz);
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glEnd();
       
       if(light && fill) glEnable(GL_LIGHTING);
