@@ -259,9 +259,11 @@ in the view `iView' to the expression
 mathematical functions (Exp, Log, Sqrt, Sin,
 Cos, Fabs, etc.) and operators (+, -, *, /, ^),
 `Expression' can contain the symbols x, y, z
-and v, which represent the three spatial
-coordinates and the value of the `TimeStep'-th
-component of the field, respectively. If
+(which represent the current position), v (which
+represents the `Component'-th component of
+the field at the `TimeStep'-th time step), and v0,
+v1, v2, ..., vn (which represent the n components
+of the field at the `TimeStep'-th time step). If
 `iView' < 0, the plugin is run on the current
 view.
 

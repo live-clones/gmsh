@@ -113,7 +113,7 @@ public :
   int draw_bbox;              // always draw the bounding boxes?
   int fast_redraw;            // only draw the bbox when rotating/panning the model?
   int axes, small_axes;       // draw axes? 
-  int small_axes_pos[2];      // small axes position 
+  int small_axes_pos[2], small_axes_size; // small axes position and size
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
   int alpha;                  // enable alpha blending 
   double zoom_factor;         // mouse2 zoom coefficient

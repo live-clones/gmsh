@@ -1,4 +1,4 @@
-// $Id: Axes.cpp,v 1.24 2005-01-01 19:35:29 geuzaine Exp $
+// $Id: Axes.cpp,v 1.25 2005-01-02 18:10:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -123,7 +123,7 @@ void Draw_SmallAxes(void)
 {
   double l, o, xx, xy, yx, yy, zx, zy, cx, cy;
 
-  l = 30;
+  l = CTX.small_axes_size;
   o = 2;
 
   if(CTX.small_axes_pos[0] > 0)

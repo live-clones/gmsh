@@ -271,6 +271,7 @@ double opt_general_axes(OPT_ARGS_NUM);
 double opt_general_small_axes(OPT_ARGS_NUM);
 double opt_general_small_axes_position0(OPT_ARGS_NUM);
 double opt_general_small_axes_position1(OPT_ARGS_NUM);
+double opt_general_small_axes_size(OPT_ARGS_NUM);
 double opt_general_quadric_subdivisions(OPT_ARGS_NUM);
 double opt_general_double_buffer(OPT_ARGS_NUM);
 double opt_general_alpha_blending(OPT_ARGS_NUM);

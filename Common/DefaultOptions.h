@@ -639,6 +639,8 @@ StringXNumber GeneralOptions_Number[] = {
     "X position of small axes (use negative values for right alignment)" },
   { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -40. ,
     "Y position of small axes (use negative values for bottom alignment)" },
+  { F|O, "SmallAxesSize" , opt_general_small_axes_size , 30. ,
+    "Size (in pixels) of small axes" },
   { F|S, "SolverPositionX" , opt_general_solver_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the solver windows" }, 
   { F|S, "SolverPositionY" , opt_general_solver_position1 , 150. ,

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.223 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: Options.cpp,v 1.224 2005-01-02 18:10:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2497,6 +2497,13 @@ double opt_general_small_axes_position1(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.small_axes_pos[1] = (int)val;
   return CTX.small_axes_pos[1];
+}
+
+double opt_general_small_axes_size(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.small_axes_size = (int)val;
+  return CTX.small_axes_size;
 }
 
 double opt_general_quadric_subdivisions(OPT_ARGS_NUM)
