@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.23 2001-06-25 13:30:57 remacle Exp $
+// $Id: Print_Mesh.cpp,v 1.24 2001-08-02 07:26:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -133,19 +133,14 @@ void add_msh_simplex (void *a, void *b){
       type = TETRAHEDRON;
   }
   
-#if 1 // JF, je comprends pas !?
-  if(type == TETRAHEDRON)
-    {
-      if ((*S)->Volume_Simplexe () < 0){
-        Vertex *temp;
-        temp = (*S)->V[0];
-        (*S)->V[0] = (*S)->V[1];
-        (*S)->V[1] = temp;
-	//        if ((*S)->Volume_Simplexe () < 0)
-	//          Msg(WARNING, "Negative volume for simplex %d", (*S)->Num);
-      }
+  if(type == TETRAHEDRON){
+    if ((*S)->Volume_Simplexe () < 0){
+      Vertex *temp;
+      temp = (*S)->V[0];
+      (*S)->V[0] = (*S)->V[1];
+      (*S)->V[1] = temp;
     }
-#endif
+  }
 
   fprintf (mshfile, "%d %d %d %d %d",
            MSH_ELEMENT_NUM++, type,MSH_PHYSICAL_NUM,(*S)->iEnt, nbn + nbs);
@@ -479,7 +474,9 @@ int process_2D_elements (FILE * funv, Mesh * m){
         }
         geo = s->Num;
         fprintf (funv, "%10d%10d%10d%10d%10d%10d\n", 
-                 /*ELEMENT_ID++ */ sx->Num, fetyp, geo, geo, 7, n + nsup);
+                 /*ELEMENT_ID++ */ abs(sx->Num), fetyp, geo, geo, 7, n + nsup);
+                                //'abs' since extrusion can tag triangles
+	                        // with a negative number
         ntot = 0;
         for (k = 0; k < n; k++){
           fprintf (funv, "%10d", sx->V[k]->Num);
