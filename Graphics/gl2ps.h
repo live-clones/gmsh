@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.53 2004-05-09 19:00:11 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.54 2004-11-22 07:34:35 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2004 Christophe Geuzaine <geuz@geuz.org>
@@ -80,7 +80,7 @@
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 2
-#define GL2PS_PATCH_VERSION 0
+#define GL2PS_PATCH_VERSION 3
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
                        0.01 * GL2PS_MINOR_VERSION + \
@@ -132,7 +132,11 @@
 #define GL2PS_LINE_STIPPLE        3
 #define GL2PS_BLEND               4
 
-/* Text alignment */
+/* Text alignment (o=raster position; default mode is BL):
+   +---+ +---+ +---+ +---+ +---+ +---+ +-o-+ o---+ +---o 
+   | o | o   | |   o |   | |   | |   | |   | |   | |   | 
+   +---+ +---+ +---+ +-o-+ o---+ +---o +---+ +---+ +---+ 
+    C     CL    CR    B     BL    BR    T     TL    TR */
 
 #define GL2PS_TEXT_C  1
 #define GL2PS_TEXT_CL 2
@@ -158,6 +162,7 @@
 #define GL2PS_END_BLEND                10
 #define GL2PS_SRC_BLEND                11
 #define GL2PS_DST_BLEND                12
+#define GL2PS_DRAW_IMAGEMAP_TOKEN      13
 
 typedef GLfloat GL2PSrgba[4];
 
@@ -176,6 +181,8 @@ GL2PSDLL_API GLint gl2psBeginViewport(GLint viewport[4]);
 GL2PSDLL_API GLint gl2psEndViewport(void);
 GL2PSDLL_API GLint gl2psText(const char *str, const char *fontname, 
                              GLshort fontsize);
+GL2PSDLL_API GLint gl2psTextOpt(const char *str, const char *fontname, 
+                                GLshort fontsize, GLint align, GLfloat angle);
 GL2PSDLL_API GLint gl2psDrawPixels(GLsizei width, GLsizei height,
                                    GLint xorig, GLint yorig,
                                    GLenum format, GLenum type, const void *pixels);
@@ -185,9 +192,10 @@ GL2PSDLL_API GLint gl2psPointSize(GLfloat value);
 GL2PSDLL_API GLint gl2psLineWidth(GLfloat value);
 GL2PSDLL_API GLint gl2psBlendFunc(GLenum sfactor, GLenum dfactor);
 
-/* Undocumented */
-GL2PSDLL_API GLint gl2psTextOpt(const char *str, const char *fontname, 
-                                GLshort fontsize, GLint align, GL2PSrgba color);
+/* undocumented */
+GL2PSDLL_API GLint gl2psDrawImageMap(GLsizei width, GLsizei height,
+                                     const GLfloat position[3],
+                                     const unsigned char *imagemap);
 
 #if defined(__cplusplus)
 };
