@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.37 2004-04-15 02:13:22 geuzaine Exp $
+// $Id: Main.cpp,v 1.38 2004-04-19 07:42:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -43,8 +43,8 @@
 #include "CommandLine.h"
 #include "MinMax.h"
 
-char yyname[256];
-int yyerrorstate;
+char yyname[256] = "";
+int yyerrorstate = 0;
 Context_T CTX;
 Mesh M, *THEM = NULL, *LOCAL = NULL;
 

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.162 2004-03-30 18:17:09 geuzaine Exp $
+// $Id: Gmsh.y,v 1.163 2004-04-19 07:42:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3875,7 +3875,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
 
 void yyerror(char *s){
   Msg(GERROR, "'%s', line %d : %s (%s)", yyname, yylineno-1, s, yytext);
-  yyerrorstate=1;
+  yyerrorstate++;
 }
 
 void yymsg(int type, char *fmt, ...){
@@ -3888,5 +3888,5 @@ void yymsg(int type, char *fmt, ...){
 
   Msg(type, "'%s', line %d : %s", yyname, yylineno-1, tmp);
 
-  if(type == GERROR) yyerrorstate=1;
+  if(type == GERROR) yyerrorstate++;
 }
