@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.3 2003-12-07 00:23:06 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.4 2003-12-07 02:55:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -502,13 +502,14 @@ List_T *GetVisibilityList(int type)
 
   Tree_Action(Symbol_T, addInNumxSymb);
 
-  List_Action(THEM->PhysicalGroups, AddPhysical);
-  List_Action(THEM->Partitions, AddPartition);
-
-  Tree_Action(THEM->Points, AddVertex);
-  Tree_Action(THEM->Curves, AddCurve);
-  Tree_Action(THEM->Surfaces, AddSurface);
-  Tree_Action(THEM->Volumes, AddVolume);
+  if(THEM){
+    List_Action(THEM->PhysicalGroups, AddPhysical);
+    List_Action(THEM->Partitions, AddPartition);
+    Tree_Action(THEM->Points, AddVertex);
+    Tree_Action(THEM->Curves, AddCurve);
+    Tree_Action(THEM->Surfaces, AddSurface);
+    Tree_Action(THEM->Volumes, AddVolume);
+  }
 
   List_Sort(ElementaryEntities, CompareEntity);
   List_Sort(PhysicalEntities, CompareEntity);
@@ -564,6 +565,9 @@ void SetVisibilityByNumber(int num, int type, int mode)
   Hexahedron HH, *H, **pH;
   Prism PP, *P, **pP;
   Pyramid QQ, *Q, **pQ;
+
+  if(!THEM)
+    return;
 
   switch (type) {
   case 0:    //node
@@ -709,6 +713,9 @@ void SetVisibilityByNumber(char *str, int type, int mode)
   Curve *c;
   Surface *s;
   Volume *V;
+
+  if(!THEM)
+    return;
 
   vmode = mode;
 
