@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.61 2004-08-06 14:48:33 remacle Exp $
+// $Id: OpenFile.cpp,v 1.62 2004-09-13 18:02:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -71,13 +71,13 @@ void SetBoundingBox(void)
   if(!THEM) 
     return;
 
-  if(Tree_Nbr(THEM->Points)) { 
-    // if we have a geometry, use it
-    CalculateMinMax(THEM->Points, NULL);
-  }
-  else if(Tree_Nbr(THEM->Vertices)) {
-    // else, if we have a mesh, use it
+  if(Tree_Nbr(THEM->Vertices)) {
+    // if we have mesh vertices, use them
     CalculateMinMax(THEM->Vertices, NULL);
+  }
+  else if(Tree_Nbr(THEM->Points)) { 
+    // else, if we have geometry points, use them
+    CalculateMinMax(THEM->Points, NULL);
   }
   else if(List_Nbr(CTX.post.list)) {
     // else, if we have views, use the last one
