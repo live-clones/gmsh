@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.45 2003-11-20 18:01:22 geuzaine Exp $
+dnl $Id: configure.in,v 1.46 2003-11-23 06:58:01 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -111,6 +111,10 @@ AR="${AR} ruvs"
 
 dnl Check for standard math library
 AC_CHECK_LIB(m,main)
+
+dnl Check for various functions
+AC_CHECK_FUNC(vsnprintf,,FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
+AC_CHECK_FUNC(snprintf,,FLAGS="-DHAVE_NO_SNPRINTF ${FLAGS}")
 
 dnl See if we need a .exe extension on executables
 AC_EXEEXT

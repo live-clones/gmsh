@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.34 2003-05-22 21:41:12 geuzaine Exp $
+// $Id: Geo.cpp,v 1.35 2003-11-23 06:58:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,18 @@
 extern Context_T CTX;
 
 #define BUFFSIZE 128000
+
+// Some old systems don't have snprintf... Just call sprintf instead.
+
+#if defined(HAVE_NO_SNPRINTF)
+int snprintf(char *str, size_t size, const char* fmt, ...){
+  va_list args;
+  va_start(args, fmt);
+  int ret = sprintf(str, fmt, args);
+  va_end(args);
+  return ret;
+}
+#endif
 
 // This is truly horrible :-)
 
