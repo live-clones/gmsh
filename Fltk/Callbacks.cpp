@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.158 2002-11-25 04:39:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.159 2003-01-15 02:28:56 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -113,6 +113,13 @@ int file_chooser(int multi, const char* message, const char* pat, int patindex){
 }
 
 char* file_chooser_get_name(int num){
+  //we could use this the ease the pain on windows
+  //(/c/cygdrive/... absolute paths are not recognized by windows)
+
+  //static char retname[1024];
+  //fl_filename_relative(retname, sizeof(retname), fc->value(num));
+  //return retname;
+
   return (char*)fc->value(num);
 }
 
