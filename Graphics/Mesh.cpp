@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.81 2004-04-24 16:24:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.82 2004-05-04 22:31:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -828,7 +828,7 @@ void Draw_Simplex_Volume(void *a, void *b)
 
     double n[3];
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
     if(!s->VSUP){
       glBegin(GL_TRIANGLES);
       if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[2], s->V[1], n);
@@ -1076,7 +1076,7 @@ void Draw_Hexahedron_Volume(void *a, void *b)
 
     double n[3];
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
     glBegin(GL_QUADS);
     if(CTX.mesh.light) glNormal3verts(h->V[0], h->V[2], h->V[1], n);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -1256,7 +1256,7 @@ void Draw_Prism_Volume(void *a, void *b)
 
     double n[3];
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
     glBegin(GL_TRIANGLES);
     if(CTX.mesh.light) glNormal3verts(p->V[0], p->V[2], p->V[1], n);
     glVertex3d(X[0], Y[0], Z[0]);
@@ -1392,7 +1392,7 @@ void Draw_Pyramid_Volume(void *a, void *b)
 
     double n[3];
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
     glBegin(GL_QUADS);
     if(CTX.mesh.light) glNormal3verts(p->V[0], p->V[3], p->V[2], n);
     glVertex3d(X[0], Y[0], Z[0]);
