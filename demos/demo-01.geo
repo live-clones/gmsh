@@ -61,7 +61,7 @@ Physical Surface(9999) = {6};
    Gmsh with several files as arguments on the command line. The first
    will be 'opened', the others will be 'merged'. 
 
-   For example, try 'gmsh ex01.geo view01.pos view02.pos'. Two view
+   For example, try 'gmsh demo-01.geo view-01.pos view-02.pos'. Two view
    buttons will appear in the post-processing menu, respectively
    labeled "a scalar map" and "a vector map". A left mouse click will
    toggle the visibility of the particular view. A right mouse click
@@ -87,7 +87,7 @@ Physical Surface(9999) = {6};
    other views, select the appropriate option in Options->Post-Processing
 
    All the options can also be specified in the input files. You can save the 
-   current options with File->Save Options as
+   current options with File->Save_Options_as
 */
 
 
