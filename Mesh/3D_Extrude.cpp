@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.46 2001-09-01 15:18:32 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.47 2001-09-25 08:19:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -16,9 +16,9 @@ static int DIM, NUM; // current dimension of parent entity
 
 static Tree_T *Tree_Ares = NULL, *Tree_Swaps = NULL;
 static int TEST_IS_ALL_OK;
-static Curve *THEC;
-static Surface *THES;
-static Volume *THEV;
+static Curve *THEC=NULL;
+static Surface *THES=NULL;
+static Volume *THEV=NULL;
 static ExtrudeParams *ep;
 static Tree_T *Vertex_Bound = NULL, *ToAdd = NULL;
 
@@ -72,6 +72,9 @@ List_T* getnxl(Vertex *v, int dim){
   Surface *s;
   List_T *list;
 
+  // the test on the source entity is in case we extrude a
+  // curve/surface resulting from the extrusion of a point/curve...
+
   if(dim==1){
     if((list = getnxl(v, THEC)))
       return list;
@@ -81,8 +84,7 @@ List_T* getnxl(Vertex *v, int dim){
       return list;
     else{
       for(i=0; i<List_Nbr(THES->Generatrices); i++){
-	List_Read(THES->Generatrices, i, &c);
-	if((list = getnxl(v, c))) 
+	if((abs(ep->geo.Source)!=c->Num) && (list = getnxl(v, c))) 
 	  return list;
       }
     }
@@ -93,15 +95,17 @@ List_T* getnxl(Vertex *v, int dim){
     else{
       for(i=0; i<List_Nbr(THEV->Surfaces); i++){
 	List_Read(THEV->Surfaces, i, &s);
-	if((list = getnxl(v, s))) 
+	if((ep->geo.Source!=s->Num) && (list = getnxl(v, s))) 
 	  return list;
       }
       for(i=0; i<List_Nbr(THEV->Surfaces); i++){
 	List_Read(THEV->Surfaces, i, &s);
-	for(j=0; j<List_Nbr(s->Generatrices); j++){
-	  List_Read(s->Generatrices, j, &c);
-	  if((list = getnxl(v, c))) 
-	    return list;
+	if(ep->geo.Source!=s->Num){
+	  for(j=0; j<List_Nbr(s->Generatrices); j++){
+	    List_Read(s->Generatrices, j, &c);
+	    if((list = getnxl(v, c))) 
+	      return list;
+	  }
 	}
       }
     }
@@ -330,6 +334,8 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
   L2 = getnxl(s->V[2],DIM);
   if(s->V[3]) L3 = getnxl(s->V[3],DIM);
 
+  //printf("orig: %d %d %d %d\n",s->V[0]->Num,s->V[1]->Num,s->V[2]->Num,s->V[3]->Num);
+
   k = 0;
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
@@ -339,10 +345,16 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
         List_Read(L1,k,&v[1]);
         List_Read(L2,k,&v[2]);
         List_Read(L3,k,&v[3]);
+
+	//printf("   1: %d %d %d %d\n",v[0]->Num,v[1]->Num,v[2]->Num,v[3]->Num);
+
         List_Read(L0,k+1,&v[4]);
         List_Read(L1,k+1,&v[5]);
         List_Read(L2,k+1,&v[6]);
         List_Read(L3,k+1,&v[7]);
+
+	//printf("   2: %d %d %d %d\n",v[4]->Num,v[5]->Num,v[6]->Num,v[7]->Num);
+
       }		    
       else{	    
         List_Read(L0, k, &v[0]);
