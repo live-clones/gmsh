@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.271 2004-09-18 01:12:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.272 2004-09-18 01:51:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3176,33 +3176,39 @@ void view_duplicate_with_options_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void view_combine_all_cb(CALLBACK_ARGS)
+void view_combine_space_all_cb(CALLBACK_ARGS)
 {
-  CombineViews(1, CTX.post.combine_remove_orig);
+  CombineViews(0, 1, CTX.post.combine_remove_orig);
   Draw();
 }
 
-void view_combine_visible_cb(CALLBACK_ARGS)
+void view_combine_space_visible_cb(CALLBACK_ARGS)
 {
-  CombineViews(0, CTX.post.combine_remove_orig);
+  CombineViews(0, 0, CTX.post.combine_remove_orig);
+  Draw();
+}
+
+void view_combine_space_by_name_cb(CALLBACK_ARGS)
+{
+  CombineViews(0, 2, CTX.post.combine_remove_orig);
   Draw();
 }
 
 void view_combine_time_all_cb(CALLBACK_ARGS)
 {
-  CombineViews_Time(1, CTX.post.combine_remove_orig);
+  CombineViews(1, 1, CTX.post.combine_remove_orig);
   Draw();
 }
 
 void view_combine_time_visible_cb(CALLBACK_ARGS)
 {
-  CombineViews_Time(0, CTX.post.combine_remove_orig);
+  CombineViews(1, 0, CTX.post.combine_remove_orig);
   Draw();
 }
 
 void view_combine_time_by_name_cb(CALLBACK_ARGS)
 {
-  CombineViews_Time(2, CTX.post.combine_remove_orig);
+  CombineViews(1, 2, CTX.post.combine_remove_orig);
   Draw();
 }
 

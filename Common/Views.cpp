@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.130 2004-09-17 22:06:45 geuzaine Exp $
+// $Id: Views.cpp,v 1.131 2004-09-18 01:51:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1213,7 +1213,18 @@ void Post_View::transform(double mat[3][3])
   Changed = 1;
 }
 
-// Combine views (spatially)
+// Combine views (merge elements or merge time steps)
+
+struct nameidx{
+  char name[256];
+  List_T *indices;
+};
+
+static int fcmp_name(const void *a, const void *b){
+  char *name1 = ((struct nameidx*)a)->name;
+  char *name2 = ((struct nameidx*)b)->name;
+  return strcmp(name1, name2);
+}
 
 static void combine(List_T * a, List_T * b)
 {
@@ -1224,96 +1235,71 @@ static void combine(List_T * a, List_T * b)
   }
 }
 
-void CombineViews(int all, int remove)
+static void combine_space(struct nameidx *id, List_T *to_remove)
 {
+  int index;
+
   // sanity check
-  int first = 1, nbt = 0;
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
-    if(all || v->Visible) {
-      if(first){
-	nbt = v->NbTimeStep;
-	first = 0;
-      }
-      else{
-	if(v->NbTimeStep != nbt){
-	  Msg(GERROR, "Cannot combine views having different number of time steps");
-	  return;
-	}
+  int nbt = 0;
+  for(int i = 0; i < List_Nbr(id->indices); i++) {
+    List_Read(id->indices, i, &index);
+    Post_View *v = (Post_View*)List_Pointer(CTX.post.list, index);
+    if(!i){
+      nbt = v->NbTimeStep;
+    }
+    else{
+      if(v->NbTimeStep != nbt){
+	Msg(GERROR, "Cannot combine views having different number of time steps");
+	return;
       }
     }
   }
-
-  List_T *to_remove = List_Create(10, 10, sizeof(int));
 
   Post_View *vm = BeginView(1);
-  for(int i = 0; i < List_Nbr(CTX.post.list) - 1; i++) {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
-    if(all || v->Visible) {
-      List_Insert(to_remove, &v->Num, fcmp_int);
-      combine(v->SP,vm->SP); vm->NbSP += v->NbSP;
-      combine(v->VP,vm->VP); vm->NbVP += v->NbVP; 
-      combine(v->TP,vm->TP); vm->NbTP += v->NbTP;
-      combine(v->SL,vm->SL); vm->NbSL += v->NbSL;
-      combine(v->VL,vm->VL); vm->NbVL += v->NbVL;
-      combine(v->TL,vm->TL); vm->NbTL += v->NbTL;
-      combine(v->ST,vm->ST); vm->NbST += v->NbST;
-      combine(v->VT,vm->VT); vm->NbVT += v->NbVT;
-      combine(v->TT,vm->TT); vm->NbTT += v->NbTT;
-      combine(v->SQ,vm->SQ); vm->NbSQ += v->NbSQ;
-      combine(v->VQ,vm->VQ); vm->NbVQ += v->NbVQ;
-      combine(v->TQ,vm->TQ); vm->NbTQ += v->NbTQ;
-      combine(v->SS,vm->SS); vm->NbSS += v->NbSS;
-      combine(v->VS,vm->VS); vm->NbVS += v->NbVS;
-      combine(v->TS,vm->TS); vm->NbTS += v->NbTS;
-      combine(v->SH,vm->SH); vm->NbSH += v->NbSH;
-      combine(v->VH,vm->VH); vm->NbVH += v->NbVH;
-      combine(v->TH,vm->TH); vm->NbTH += v->NbTH;
-      combine(v->SI,vm->SI); vm->NbSI += v->NbSI;
-      combine(v->VI,vm->VI); vm->NbVI += v->NbVI;
-      combine(v->TI,vm->TI); vm->NbTI += v->NbTI;
-      combine(v->SY,vm->SY); vm->NbSY += v->NbSY;
-      combine(v->VY,vm->VY); vm->NbVY += v->NbVY;
-      combine(v->TY,vm->TY); vm->NbTY += v->NbTY;
-      /* this more complicated: we have to recompute the indices
-         combine(v->T2D,vm->T2D);
-         combine(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
-         combine(v->T3D,vm->T3D);
-         combine(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
-       */
-    }
+  for(int i = 0; i < List_Nbr(id->indices); i++) {
+    List_Read(id->indices, i, &index);
+    Post_View *v = (Post_View*)List_Pointer(CTX.post.list, index);
+    List_Insert(to_remove, &v->Num, fcmp_int);
+    combine(v->SP,vm->SP); vm->NbSP += v->NbSP;
+    combine(v->VP,vm->VP); vm->NbVP += v->NbVP; 
+    combine(v->TP,vm->TP); vm->NbTP += v->NbTP;
+    combine(v->SL,vm->SL); vm->NbSL += v->NbSL;
+    combine(v->VL,vm->VL); vm->NbVL += v->NbVL;
+    combine(v->TL,vm->TL); vm->NbTL += v->NbTL;
+    combine(v->ST,vm->ST); vm->NbST += v->NbST;
+    combine(v->VT,vm->VT); vm->NbVT += v->NbVT;
+    combine(v->TT,vm->TT); vm->NbTT += v->NbTT;
+    combine(v->SQ,vm->SQ); vm->NbSQ += v->NbSQ;
+    combine(v->VQ,vm->VQ); vm->NbVQ += v->NbVQ;
+    combine(v->TQ,vm->TQ); vm->NbTQ += v->NbTQ;
+    combine(v->SS,vm->SS); vm->NbSS += v->NbSS;
+    combine(v->VS,vm->VS); vm->NbVS += v->NbVS;
+    combine(v->TS,vm->TS); vm->NbTS += v->NbTS;
+    combine(v->SH,vm->SH); vm->NbSH += v->NbSH;
+    combine(v->VH,vm->VH); vm->NbVH += v->NbVH;
+    combine(v->TH,vm->TH); vm->NbTH += v->NbTH;
+    combine(v->SI,vm->SI); vm->NbSI += v->NbSI;
+    combine(v->VI,vm->VI); vm->NbVI += v->NbVI;
+    combine(v->TI,vm->TI); vm->NbTI += v->NbTI;
+    combine(v->SY,vm->SY); vm->NbSY += v->NbSY;
+    combine(v->VY,vm->VY); vm->NbVY += v->NbVY;
+    combine(v->TY,vm->TY); vm->NbTY += v->NbTY;
+    /* this more complicated: we have to recompute the indices
+       combine(v->T2D,vm->T2D);
+       combine(v->T2C,vm->T2C); v->NbT2 += vm->NbT2;
+       combine(v->T3D,vm->T3D);
+       combine(v->T3C,vm->T3C); v->NbT2 += vm->NbT2;
+    */
   }
-  EndView(vm, 0, "Combine.pos", "Combine");
 
-  // remove original views?
-  if(remove){
-    for(int i = 0; i < List_Nbr(to_remove); i++) {
-      int num;
-      List_Read(to_remove, i, &num);
-      RemoveViewByNumber(num);
-    }
-  }
-  List_Delete(to_remove);
-
-#if defined(HAVE_FLTK)
-  UpdateViewsInGUI();
-#endif
+  // finalize
+  char name[256], filename[256];
+  sprintf(name, "%s_Combine", id->name);
+  sprintf(filename, "%s_Combine.pos", id->name);
+  EndView(vm, 0, filename, name);
 }
 
-// Combine views (merge time steps)
-
-struct nameidx{
-  char name[256];
-  List_T *indices;
-};
-
-int fcmp_name(const void *a, const void *b){
-  char *name1 = ((struct nameidx*)a)->name;
-  char *name2 = ((struct nameidx*)b)->name;
-  return strcmp(name1, name2);
-}
-
-void combine_time(struct nameidx *id, List_T *to_remove)
+static void combine_time(struct nameidx *id, List_T *to_remove)
 {
   int index, *nbe=0, *nbe2=0, nbn, nbn2, nbc, nbc2;
   List_T *list=0, *list2=0;
@@ -1393,8 +1379,11 @@ void combine_time(struct nameidx *id, List_T *to_remove)
   EndView(vm, 0, filename, name);
 }
 
-void CombineViews_Time(int how, int remove)
+void CombineViews(int time, int how, int remove)
 {
+  // time==0: combine the elements
+  // time==1: combine the timesteps
+
   // how==0: try to combine all visible views
   // how==1: try to combine all views
   // how==2: try to combine all views having identical names
@@ -1424,7 +1413,10 @@ void CombineViews_Time(int how, int remove)
 
   for(int i = 0; i < List_Nbr(ids); i++){
     pid = (struct nameidx*)List_Pointer(ids, i);
-    combine_time(pid, to_remove);
+    if(time)
+      combine_time(pid, to_remove);
+    else
+      combine_space(pid, to_remove);
     List_Delete(pid->indices);
   }
   List_Delete(ids);

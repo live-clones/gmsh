@@ -159,8 +159,7 @@ bool RemoveViewByNumber(int num);
 void ReadView(FILE *file, char *filename);
 void WriteView(Post_View *v, char *filename, int binary, int append);
 void CopyViewOptions(Post_View *src, Post_View *dest);
-void CombineViews(int all, int remove);
-void CombineViews_Time(int how, int remove);
+void CombineViews(int time, int how, int remove);
 
 int BGMWithView (Post_View *ErrView);
 double ErrorInView(Post_View * ErrView, int *n);

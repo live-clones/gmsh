@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.345 2004-09-18 01:12:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.346 2004-09-18 01:51:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1063,9 +1063,11 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 	p[j]->add("Duplicate/View with options", 0, 
 		  (Fl_Callback *) view_duplicate_with_options_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/From all views", 0, 
-		  (Fl_Callback *) view_combine_all_cb, (void *)nb, 0);
+		  (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/From visible views", 0, 
-		  (Fl_Callback *) view_combine_visible_cb, (void *)nb, 0);
+		  (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
+	p[j]->add("Combine/Elements/By view name", 0, 
+		  (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time steps/From all views", 0, 
 		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time steps/From visible views", 0, 
