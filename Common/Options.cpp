@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.34 2001-07-30 18:34:26 geuzaine Exp $
+// $Id: Options.cpp,v 1.35 2001-07-30 20:22:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -738,8 +738,13 @@ double opt_general_small_axes(OPT_ARGS_NUM){
   return CTX.small_axes;
 }
 double opt_general_display_lists(OPT_ARGS_NUM){
-  if(action & GMSH_SET) 
+  int i;
+  if(action & GMSH_SET){
     CTX.display_lists = (int)val;
+    if(CTX.display_lists)
+      for(i=0 ; i<List_Nbr(Post_ViewList) ; i++)
+	((Post_View*)List_Pointer_Test(Post_ViewList, i))->Changed = 1;
+  }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
     WID->gen_butt[4]->value(CTX.display_lists);

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.18 2001-07-30 18:34:26 geuzaine Exp $
+// $Id: Post.cpp,v 1.19 2001-07-30 20:22:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -275,12 +275,15 @@ void Draw_Post (void) {
 	if(v->NbST && v->DrawTriangles && v->DrawScalars){
 	  nb = List_Nbr(v->ST) / v->NbST ;
 	  if(v->Light && v->SmoothNormals){ //two passes 
-	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
-	      Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise,
-				  (double*)List_Pointer_Fast(v->ST,i),
-				  (double*)List_Pointer_Fast(v->ST,i+3),
-				  (double*)List_Pointer_Fast(v->ST,i+6),
-				  (double*)List_Pointer_Fast(v->ST,i+9));
+	    if(v->Changed){
+	      Msg(DEBUG, "Preprocessing of triangle normals in view %d", v->Num);
+	      for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
+		Draw_ScalarTriangle(v, 1, ValMin, ValMax, Raise,
+				    (double*)List_Pointer_Fast(v->ST,i),
+				    (double*)List_Pointer_Fast(v->ST,i+3),
+				    (double*)List_Pointer_Fast(v->ST,i+6),
+				    (double*)List_Pointer_Fast(v->ST,i+9));
+	    }
 	    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
 	      Draw_ScalarTriangle(v, 0, ValMin, ValMax, Raise,
 				  (double*)List_Pointer_Fast(v->ST,i),
@@ -317,25 +320,19 @@ void Draw_Post (void) {
 	}
 	
 	// Tetrahedra
-
-	/*
-	  Modif Jf :
-	  
-	     IsoSurfaces are really better rendered with smooth shading.
-	     My idea is first to transform the scalar simplex map on a
-	     scalar triangle map. This map has to be changed each time 
-	     the number of iso-surfaces is changed.
-	 */
 	
 	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
 	  nb = List_Nbr(v->SS) / v->NbSS ;
 	  if(v->Light && v->SmoothNormals){ //two passes 
-	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
-	      Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
-				     (double*)List_Pointer_Fast(v->SS,i),
-				     (double*)List_Pointer_Fast(v->SS,i+4),
-				     (double*)List_Pointer_Fast(v->SS,i+8),
-				     (double*)List_Pointer_Fast(v->SS,i+12));
+	    if(v->Changed){
+	      Msg(DEBUG, "Preprocessing of tets normals in view %d", v->Num);
+	      for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
+		Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
+				       (double*)List_Pointer_Fast(v->SS,i),
+				       (double*)List_Pointer_Fast(v->SS,i+4),
+				       (double*)List_Pointer_Fast(v->SS,i+8),
+				       (double*)List_Pointer_Fast(v->SS,i+12));
+	    }
 	    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
 	      Draw_ScalarTetrahedron(v, 0, ValMin, ValMax, Raise,
 				     (double*)List_Pointer_Fast(v->SS,i),
@@ -372,10 +369,9 @@ void Draw_Post (void) {
 	}
 
 
-        if(CTX.display_lists){
-          glEndList();
-          v->Changed=0;
-        }
+        if(CTX.display_lists) glEndList();
+
+	v->Changed=0;
 
 	if(v->ShowElement || v->ArrowType == DRAW_POST_DISPLACEMENT)
 	  glDisable(GL_POLYGON_OFFSET_FILL) ;
@@ -386,7 +382,7 @@ void Draw_Post (void) {
 
   }
 
-  /* revenir au shading par defaut, pour l'echelle */
+  // go back to default shading for the scale
   InitNoShading();
 
 }
