@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.305 2003-11-13 19:16:24 geuzaine Exp $
+# $Id: Makefile,v 1.306 2003-11-16 16:49:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -230,8 +230,8 @@ package-mac:
         "    <key>CFBundleShortVersionString</key><string>${GMSH_RELEASE}</string>\n"\
         "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
         "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
-        "    <key>CFBundleGetInfoString</key><string>Gmsh ${GMSH_RELEASE},"\
-              "(c) C. Geuzaine and J.-F. Remacle, 1997-2003</string>\n"\
+        "    <key>CFBundleGetInfoString</key><string>Gmsh version ${GMSH_RELEASE}, "\
+              "Copyright (C) 1997-2003 C. Geuzaine and J.-F. Remacle</string>\n"\
         "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
         "  </dict>\n"\
         "</plist>" > gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Info.plist
