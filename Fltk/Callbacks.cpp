@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.106 2002-02-16 00:19:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.107 2002-02-20 16:41:20 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -146,10 +146,38 @@ void status_xyz1p_cb(CALLBACK_ARGS){
   }
 }
 
-static int stop_anim, view_in_cycle=0 ;
+static int stop_anim, view_in_cycle=-1 ;
+void ManualPlay(int time, int step){
+  int i;
+  if(time){
+    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+	opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i, GMSH_GET, 0)+step);
+  }
+  else{//hide all views except view_in_cycle
+    if(step>0){
+      if((view_in_cycle+=step)>=List_Nbr(CTX.post.list)) view_in_cycle=0;
+      for(i=0 ; i<List_Nbr(CTX.post.list) ; i+=step){
+	if(i == view_in_cycle)
+	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
+	else
+	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
+      }
+    }
+    else{
+      if((view_in_cycle+=step)<0) view_in_cycle=List_Nbr(CTX.post.list)-1;
+      for(i=List_Nbr(CTX.post.list)-1 ; i>=0 ; i+=step){
+	if(i == view_in_cycle)
+	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
+	else
+	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
+      }
+    }
+  }
+  Draw();
+}
 void status_play_cb(CALLBACK_ARGS){
   static long anim_time ;
-  int i;
   WID->set_anim_buttons(0);
   stop_anim = 0 ;
   anim_time = GetTime();
@@ -157,20 +185,7 @@ void status_play_cb(CALLBACK_ARGS){
     if(stop_anim) break ;
     if(GetTime() - anim_time > 1.e6*CTX.post.anim_delay){
       anim_time = GetTime();
-      if(!CTX.post.anim_cycle){
-	for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
-	  opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i, GMSH_GET, 0)+1);
-      }
-      else{//hide all views except view_in_cycle
-	for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
-	  if(i == view_in_cycle)
-	    opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
-	  else
-	    opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
-	}
-	if(++view_in_cycle>=List_Nbr(CTX.post.list)) view_in_cycle=0;
-      }
-      Draw();
+      ManualPlay(!CTX.post.anim_cycle,1);
     }
     WID->check();
   }
@@ -768,6 +783,10 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  Alt+x         set X view"); 
   Msg(DIRECT, "  Alt+y         set Y view"); 
   Msg(DIRECT, "  Alt+z         set Z view"); 
+  Msg(DIRECT, "  Left arrow    previous time step"); 
+  Msg(DIRECT, "  Right arrow   next time step"); 
+  Msg(DIRECT, "  Up arrow      previous view"); 
+  Msg(DIRECT, "  Down arrow    next view"); 
   Msg(DIRECT, "");
   WID->create_message_window();
 }
