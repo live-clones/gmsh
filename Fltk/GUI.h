@@ -173,8 +173,9 @@ public:
   int init_getdp_window;
   Fl_Window        *getdp_window ;
   Fl_Output        *getdp_value[50] ;
+  Fl_Input         *getdp_input[50] ;
   Fl_Choice        *getdp_choice[10] ;
-  Fl_Button        *getdp_butt[10] ;
+  Fl_Check_Button  *getdp_butt[10] ;
 
   // the constructor
   GUI(int argc, char **argv);

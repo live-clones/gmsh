@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.48 2001-05-03 08:41:55 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.49 2001-05-04 13:39:34 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -1338,6 +1338,7 @@ void getdp_choose_mesh_cb(CALLBACK_ARGS){
 }
 void getdp_pre_cb(CALLBACK_ARGS){
   char arg[256];
+  if(GetDP_Info.popupmessages) WID->create_message_window();
   if(strlen(GetDP_Info.mesh))
     sprintf(arg, "%s -msh %s -pre %s", 
 	    GetDP_Info.file, GetDP_Info.mesh,
@@ -1351,6 +1352,7 @@ void getdp_pre_cb(CALLBACK_ARGS){
 }
 void getdp_cal_cb(CALLBACK_ARGS){
   char arg[256];
+  if(GetDP_Info.popupmessages) WID->create_message_window();
   if(strlen(GetDP_Info.mesh))
     sprintf(arg, "%s -msh %s -cal", GetDP_Info.file, GetDP_Info.mesh);
   else
@@ -1359,6 +1361,7 @@ void getdp_cal_cb(CALLBACK_ARGS){
 }
 void getdp_post_cb(CALLBACK_ARGS){
   char arg[256];
+  if(GetDP_Info.popupmessages) WID->create_message_window();
   if(strlen(GetDP_Info.mesh))
     sprintf(arg, "%s -msh %s -bin -pos %s",
 	    GetDP_Info.file, GetDP_Info.mesh,
@@ -1368,6 +1371,12 @@ void getdp_post_cb(CALLBACK_ARGS){
 	    GetDP_Info.file,
 	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
   GetDP(arg);
+}
+void getdp_ok_cb(CALLBACK_ARGS){
+  opt_solver_getdp_popupmessages(0, GMSH_SET, WID->getdp_butt[0]->value());
+  opt_solver_getdp_mergeviews(0, GMSH_SET, WID->getdp_butt[1]->value());
+
+  opt_solver_getdp_command(0, GMSH_SET, (char*)WID->getdp_input[0]->value());
 }
 
 

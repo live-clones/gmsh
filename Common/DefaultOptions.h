@@ -20,9 +20,9 @@ StringXString GeneralOptions_String[] = {
   { F|S, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" },
   { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" },
 #ifdef WIN32
-  { F|O, "Editor" , opt_general_editor , "notepad %s" },
+  { F|O, "TextEditor" , opt_general_editor , "notepad %s" },
 #else
-  { F|O, "Editor" , opt_general_editor , "emacs %s &" },
+  { F|O, "TextEditor" , opt_general_editor , "emacs %s &" },
 #endif
   { 0, NULL , NULL , NULL }
 } ;
@@ -32,6 +32,11 @@ StringXString GeometryOptions_String[] = {
 } ;
 
 StringXString MeshOptions_String[] = {
+  { 0, NULL , NULL , NULL }
+} ;
+
+StringXString SolverOptions_String[] = {
+  { F|O, "GetDPCommand" , opt_solver_getdp_command , "getdp %s" },
   { 0, NULL , NULL , NULL }
 } ;
 
@@ -217,6 +222,12 @@ StringXNumber MeshOptions_Number[] = {
   { F, "cut_planeb" , opt_mesh_cut_planeb , 0. }, 
   { F, "cut_planec" , opt_mesh_cut_planec , 0. }, 
   { F, "cut_planed" , opt_mesh_cut_planed , 0. }, 
+  { 0, NULL , NULL , 0. }
+} ;
+
+StringXNumber SolverOptions_Number[] = {
+  { F|O, "GetDPPopupMessages" , opt_solver_getdp_popupmessages , 1.0 }, 
+  { F|O, "GetDPMergeViews" , opt_solver_getdp_mergeviews , 1.0 }, 
   { 0, NULL , NULL , 0. }
 } ;
 
@@ -449,6 +460,10 @@ StringXColor MeshOptions_Color[] = {
     PACK_COLOR(0  , 0  , 255, 255),
     PACK_COLOR(255, 255, 255, 255) },
   { 0, NULL , NULL , 0, 0, 0  }
+} ;
+
+StringXColor SolverOptions_Color[] = {
+  { 0, NULL , NULL , 0, 0, 0 }
 } ;
 
 StringXColor PostProcessingOptions_Color[] = {

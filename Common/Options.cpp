@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.13 2001-05-03 08:41:55 geuzaine Exp $
+// $Id: Options.cpp,v 1.14 2001-05-04 13:39:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"
+#include "Solvers.h"
 
 extern Context_T   CTX ;
 
@@ -30,6 +31,7 @@ void Init_Options(int num){
   Set_DefaultStringOptions(num, GeneralOptions_String);
   Set_DefaultStringOptions(num, GeometryOptions_String);
   Set_DefaultStringOptions(num, MeshOptions_String);
+  Set_DefaultStringOptions(num, SolverOptions_String);
   Set_DefaultStringOptions(num, PostProcessingOptions_String);
   Set_DefaultStringOptions(num, ViewOptions_String);
   Set_DefaultStringOptions(num, PrintOptions_String);
@@ -38,6 +40,7 @@ void Init_Options(int num){
   Set_DefaultNumberOptions(num, GeneralOptions_Number);
   Set_DefaultNumberOptions(num, GeometryOptions_Number);
   Set_DefaultNumberOptions(num, MeshOptions_Number);
+  Set_DefaultNumberOptions(num, SolverOptions_Number);
   Set_DefaultNumberOptions(num, PostProcessingOptions_Number);
   Set_DefaultNumberOptions(num, ViewOptions_Number);
   Set_DefaultNumberOptions(num, PrintOptions_Number);
@@ -46,6 +49,7 @@ void Init_Options(int num){
   Set_DefaultColorOptions(num, GeneralOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, GeometryOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, MeshOptions_Color, CTX.color_scheme);
+  Set_DefaultColorOptions(num, SolverOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, PostProcessingOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, ViewOptions_Color, CTX.color_scheme);
   Set_DefaultColorOptions(num, PrintOptions_Color, CTX.color_scheme);
@@ -83,18 +87,21 @@ void Init_Options_GUI(int num){
   Set_StringOptions_GUI(num, GeneralOptions_String);
   Set_StringOptions_GUI(num, GeometryOptions_String);
   Set_StringOptions_GUI(num, MeshOptions_String);
+  Set_StringOptions_GUI(num, SolverOptions_String);
   Set_StringOptions_GUI(num, PostProcessingOptions_String);
   Set_StringOptions_GUI(num, PrintOptions_String);
       
   Set_NumberOptions_GUI(num, GeneralOptions_Number);
   Set_NumberOptions_GUI(num, GeometryOptions_Number);
   Set_NumberOptions_GUI(num, MeshOptions_Number);
+  Set_NumberOptions_GUI(num, SolverOptions_Number);
   Set_NumberOptions_GUI(num, PostProcessingOptions_Number);
   Set_NumberOptions_GUI(num, PrintOptions_Number);
 
   Set_ColorOptions_GUI(num, GeneralOptions_Color);
   Set_ColorOptions_GUI(num, GeometryOptions_Color);
   Set_ColorOptions_GUI(num, MeshOptions_Color);
+  Set_ColorOptions_GUI(num, SolverOptions_Color);
   Set_ColorOptions_GUI(num, PostProcessingOptions_Color);
   Set_ColorOptions_GUI(num, PrintOptions_Color);
 }
@@ -144,6 +151,9 @@ void Print_Options(int num, int level, char *filename){
   Print_StringOptions(num, level, MeshOptions_String, "Mesh.", file);
   Print_NumberOptions(num, level, MeshOptions_Number, "Mesh.", file);
   Print_ColorOptions(num, level, MeshOptions_Color, "Mesh.", file);
+  Print_StringOptions(num, level, SolverOptions_String, "Solver.", file);
+  Print_NumberOptions(num, level, SolverOptions_Number, "Solver.", file);
+  Print_ColorOptions(num, level, SolverOptions_Color, "Solver.", file);
   Print_StringOptions(num, level, PostProcessingOptions_String, "PostProcessing.", file);
   Print_NumberOptions(num, level, PostProcessingOptions_Number, "PostProcessing.", file);
   Print_ColorOptions(num, level, PostProcessingOptions_Color, "PostProcessing.", file);
@@ -182,6 +192,7 @@ StringXString * Get_StringOptionCategory(char * cat){
   if     (!strcmp(cat,"General"))        return GeneralOptions_String ;
   else if(!strcmp(cat,"Geometry"))       return GeometryOptions_String ;
   else if(!strcmp(cat,"Mesh"))           return MeshOptions_String ;
+  else if(!strcmp(cat,"Solver"))         return SolverOptions_String ;
   else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_String ;
   else if(!strcmp(cat,"View"))           return ViewOptions_String ;
   else if(!strcmp(cat,"Print"))          return PrintOptions_String ;
@@ -231,6 +242,7 @@ StringXNumber * Get_NumberOptionCategory(char * cat){
   if     (!strcmp(cat,"General"))        return GeneralOptions_Number ;
   else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Number ;
   else if(!strcmp(cat,"Mesh"))           return MeshOptions_Number ;
+  else if(!strcmp(cat,"Solver"))         return SolverOptions_Number ;
   else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Number ;
   else if(!strcmp(cat,"View"))           return ViewOptions_Number ;
   else if(!strcmp(cat,"Print"))          return PrintOptions_Number ;
@@ -282,6 +294,7 @@ StringXColor * Get_ColorOptionCategory(char * cat){
   if     (!strcmp(cat,"General"))        return GeneralOptions_Color ;
   else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Color ;
   else if(!strcmp(cat,"Mesh"))           return MeshOptions_Color ;
+  else if(!strcmp(cat,"Solver"))         return SolverOptions_Color ;
   else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Color ;
   else if(!strcmp(cat,"View"))           return ViewOptions_Color ;
   else if(!strcmp(cat,"Print"))          return PrintOptions_Color ;
@@ -440,6 +453,14 @@ char * opt_general_editor(OPT_ARGS_STR){
   return CTX.editor;
 }
 
+char * opt_solver_getdp_command(OPT_ARGS_STR){
+  if(action & GMSH_SET) GetDP_Info.command = val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->getdp_input[0]->value(GetDP_Info.command);
+#endif
+  return GetDP_Info.command;
+}
 
 char * opt_view_name(OPT_ARGS_STR){
   GET_VIEW(NULL) ;
@@ -1391,6 +1412,25 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM){
   return CTX.mesh.color_carousel;
 }
 
+
+double opt_solver_getdp_popupmessages(OPT_ARGS_NUM){
+  if(action & GMSH_SET)
+    GetDP_Info.popupmessages = (int)val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->getdp_butt[0]->value(GetDP_Info.popupmessages);
+#endif
+  return GetDP_Info.popupmessages;
+}
+double opt_solver_getdp_mergeviews(OPT_ARGS_NUM){
+  if(action & GMSH_SET)
+    GetDP_Info.mergeviews = (int)val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->getdp_butt[1]->value(GetDP_Info.mergeviews);
+#endif
+  return GetDP_Info.mergeviews;
+}
 
 
 double opt_post_scales(OPT_ARGS_NUM){

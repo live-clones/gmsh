@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.2 2001-05-04 11:53:01 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.3 2001-05-04 13:39:34 geuzaine Exp $
 
 #include "Gmsh.h"
 
@@ -49,7 +49,7 @@ int GetDP(char *args){
   GET_PATH(sockname);
   strcat(sockname, ".gmshsock");
 
-  sprintf(progname, "getdp %s", args);
+  sprintf(progname, GetDP_Info.command, args);
   sock = Socket_StartProgram(progname, sockname);
   if(sock<0){
     Msg(GERROR, "Could not execute '%s'", progname);
@@ -79,11 +79,13 @@ int GetDP(char *args){
       strcpy(GetDP_Info.postop[GetDP_Info.nbpostop++],str);
       break ;
     case GETDP_LOAD_VIEW :
-      n = List_Nbr(Post_ViewList);
-      MergeProblem(str);
-      Draw(); 
-      if(n != List_Nbr(Post_ViewList))
-	WID->set_context(menu_post, 0);
+      if(GetDP_Info.mergeviews){
+	n = List_Nbr(Post_ViewList);
+	MergeProblem(str);
+	Draw(); 
+	if(n != List_Nbr(Post_ViewList))
+	  WID->set_context(menu_post, 0);
+      }
       break ;
     case GETDP_INFO :
       Msg(DIRECT, "GetDP > %s", str);
