@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.9 2005-03-11 05:47:56 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.10 2005-03-11 17:25:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -147,20 +147,32 @@ char *GMSH_AnnotatePlugin::callbackStr(int num, int action, char *value, char **
 
 double GMSH_AnnotatePlugin::callbackX(int num, int action, double value)
 {
+  // not perfect: the change will only take place if we reopen the dialog...
+  int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[0].def,
-		  0.5, -100., 100000.);
+		  dim3 ? CTX.lc/200. : 0.5, 
+		  dim3 ? -CTX.lc : -100., 
+		  dim3 ? CTX.lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
 {
+  // not perfect: the change will only take place if we reopen the dialog...
+  int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[1].def,
-		  0.5, -100., 100000.);
+		  dim3 ? CTX.lc/200. : 0.5, 
+		  dim3 ? -CTX.lc : -100., 
+		  dim3 ? CTX.lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
 {
+  // not perfect: the change will only take place if we reopen the dialog...
+  int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[2].def,
-		  0.5, -100., 100000.);
+		  dim3 ? CTX.lc/200. : 0.5, 
+		  dim3 ? -CTX.lc : -100., 
+		  dim3 ? CTX.lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callback3D(int num, int action, double value)
