@@ -1,0 +1,10 @@
+General.Clip0 = 2^0; // clip geometry only
+General.Clip0 = 2^0+2^1; // clip geometry + mesh
+General.Clip0 = 2^(2+0); // clip view0 
+General.Clip0 = 2^(2+0) + 2^(2+3); // clip view 0 and view 3
+
+General.Clip0A = 1;
+General.Clip0B = 0;
+General.Clip0C = 0;
+General.Clip0D = -0.03;
+
