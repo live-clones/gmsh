@@ -1,4 +1,4 @@
-// $Id: Malloc.cpp,v 1.15 2003-03-21 00:52:35 geuzaine Exp $
+// $Id: Malloc.cpp,v 1.16 2003-05-12 15:43:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -21,9 +21,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef __APPLE__
-#include <malloc.h>
-#endif
 
 #include "Malloc.h"
 #include "Message.h"
