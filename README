@@ -2,6 +2,24 @@ This is Gmsh, an automatic three-dimensional finite element mesh
 generator, primarily Delaunay, with built-in pre- and post-processing
 facilities.
 
+
+./configure --with-fltk-prefix=/path/to/fltk
+make
+make install
+
+This requires FLTK 1.1, GSL and OPENGL to be installed... If not in
+default locations, use the --with-...-prefix. You can also ...
+Also possible to define FLTK_DIR, GSL_DIR, GL_DIR
+
+To build a non-graphical version...
+
+./configure --disable-gui
+
+
+
+
+
+
 Gmsh is free software. See the file doc/COPYING for copying
 permission. Parts of Gmsh are distributed with additional license
 requirements. Check individual files for more information. Most

@@ -1,23 +1,11 @@
-# $Id: Makefile,v 1.32 2002-05-18 16:31:16 geuzaine Exp $
-#
-# Makefile for "libGmshGeo.a"
-#
+# $Id: Makefile,v 1.33 2003-02-11 08:54:55 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
+include ../variables
 
 LIB     = ../lib/libGmshGeo.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
           -I../Parser -I../Fltk
-
-OPT_FLAGS     =
-OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = 
-
-RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE}
 
 SRC = CAD.cpp \
       DataBase.cpp \
@@ -28,27 +16,27 @@ SRC = CAD.cpp \
       Verif.cpp \
       Print_Geo.cpp
 
-OBJ = $(SRC:.cpp=.o)
+OBJ = ${SRC:.cpp=.o}
 
 .SUFFIXES: .o .cpp
 
-$(LIB): $(OBJ) 
-	$(AR) $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ} 
+	${AR} ${LIB} ${OBJ}
+	${RANLIB} ${LIB}
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 clean:
-	$(RM) $(RMFLAGS) *.o
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) $(RMFLAGS) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \

@@ -1,23 +1,11 @@
-# $Id: Makefile,v 1.45 2003-02-11 03:13:31 geuzaine Exp $
-#
-# Makefile for "libGmshMesh.a"
-#
+# $Id: Makefile,v 1.46 2003-02-11 08:54:56 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
+include ../variables
 
 LIB     = ../lib/libGmshMesh.a
 INCLUDE = -I../Numeric -I../Common -I../DataStr -I../Geo -I../Mesh\
           -I../Graphics -I../Parser -I../Fltk -I../Triangle
-
-OPT_FLAGS     =
-OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = 
-
-RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) -DHAVE_TRIANGLE
+CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE}
 
 SRC = 1D_Mesh.cpp \
       2D_Mesh.cpp \
@@ -63,27 +51,27 @@ SRC = 1D_Mesh.cpp \
       Edge.cpp \
       Simplex.cpp 
 
-OBJ = $(SRC:.cpp=.o)
+OBJ = ${SRC:.cpp=.o}
 
 .SUFFIXES: .o .cpp
 
-$(LIB): $(OBJ) 
-	$(AR) $(LIB) $(OBJ) 
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ} 
+	${AR} ${LIB} ${OBJ} 
+	${RANLIB} ${LIB}
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 clean:
-	$(RM) $(RMFLAGS) *.o
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) $(RMFLAGS) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 1D_Mesh.o: 1D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \

@@ -1,22 +1,10 @@
-# $Id: Makefile,v 1.17 2003-02-10 18:57:02 geuzaine Exp $
-#
-# Makefile for "libGmshDataStr.a"
-#
+# $Id: Makefile,v 1.18 2003-02-11 08:54:55 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
+include ../variables
 
 LIB     = ../lib/libGmshDataStr.a
 INCLUDE = -I../Common
-
-OPT_FLAGS     =
-OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = 
-
-RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE}
 
 SRC = List.cpp \
       Malloc.cpp \
@@ -25,27 +13,27 @@ SRC = List.cpp \
       avl.cpp \
       Tools.cpp
 
-OBJ = $(SRC:.cpp=.o)
+OBJ = ${SRC:.cpp=.o}
 
 .SUFFIXES: .o .cpp
 
-$(LIB): $(OBJ)
-	$(AR) $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ}
+	${AR} ${LIB} ${OBJ}
+	${RANLIB} ${LIB}
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 clean:
-	$(RM) $(RMFLAGS) *.o
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 List.o: List.cpp Malloc.h List.h SafeIO.h ../Common/Message.h

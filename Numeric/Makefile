@@ -1,22 +1,10 @@
-# $Id: Makefile,v 1.5 2002-07-18 18:28:52 geuzaine Exp $
-#
-# Makefile for "libGmshNumeric.a"
-#
+# $Id: Makefile,v 1.6 2003-02-11 08:54:56 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
+include ../variables
 
 LIB     = ../lib/libGmshNumeric.a
 INCLUDE = -I../Common -I../DataStr
-
-OPT_FLAGS     =
-OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = 
-
-RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
+CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} 
 
 SRC = Numeric.cpp\
       Newton.cpp \
@@ -24,27 +12,27 @@ SRC = Numeric.cpp\
       SVD.cpp \
       NRUtil.cpp
 
-OBJ = $(SRC:.cpp=.o)
+OBJ = ${SRC:.cpp=.o}
 
 .SUFFIXES: .o .cpp
 
-$(LIB): $(OBJ)
-	$(AR) $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ}
+	${AR} ${LIB} ${OBJ}
+	${RANLIB} ${LIB}
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 clean:
-	$(RM) $(RMFLAGS) *.o 
+	rm -f *.o 
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) $(RMFLAGS) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \

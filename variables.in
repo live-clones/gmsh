@@ -23,3 +23,16 @@ GSL_LIBS=@GSL_LIBS@
 # How you create a static library on this machine
 AR=@AR@
 RANLIB=@RANLIB@
+
+# The extension to use for executables...
+EXEEXT=@EXEEXT@
+
+# Installation directories
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+datadir=@datadir@
+includedir=@includedir@
+libdir=@libdir@
+mandir=@mandir@
+infodir=@infodir@

@@ -1,49 +1,37 @@
-# $Id: Makefile,v 1.24 2002-05-18 16:31:17 geuzaine Exp $
-#
-# Makefile for "libGmshJpeg.a"
-#
+# $Id: Makefile,v 1.25 2003-02-11 08:54:58 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
+include ../variables
 
 LIB     = ../lib/libGmshJpeg.a
 INCLUDE = -I.
-
-OPT_FLAGS     =
-OS_FLAGS      = 
-VERSION_FLAGS = 
-
-RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)
+CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE}
 
 SRC = jcomapi.c jutils.c jerror.c jmemmgr.c jmemnobs.c \
       jcapi.c jcparam.c jdatadst.c jcmaster.c jcmarker.c jcmainct.c \
       jcprepct.c jccoefct.c jccolor.c jcsample.c jchuff.c jcdctmgr.c \
       jfdctfst.c jfdctflt.c jfdctint.c
 
-OBJ = $(SRC:.c=.o)
+OBJ = ${SRC:.c=.o}
 
 .SUFFIXES: .o .c
 
-$(LIB): $(OBJ) 
-	$(AR) $(LIB) $(OBJ) 
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ} 
+	${AR} ${LIB} ${OBJ} 
+	${RANLIB} ${LIB}
 
 .c.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 clean:
-	$(RM) $(RMFLAGS) *.o
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) $(RMFLAGS) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 jcomapi.o: jcomapi.c jinclude.h jconfig.h jpeglib.h jmorecfg.h \

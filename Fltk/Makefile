@@ -1,24 +1,11 @@
-# $Id: Makefile,v 1.39 2003-02-11 03:13:31 geuzaine Exp $
-#
-# Makefile for "libGmshFltk.a"
-#
+# $Id: Makefile,v 1.40 2003-02-11 08:54:55 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
+include ../variables
 
 LIB     = ../lib/libGmshFltk.a
 INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo\
           -I../Mesh -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils
-
-OPT_FLAGS     =
-OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = -D_FLTK
-
-RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-          $(GUI_INCLUDE) $(GL_INCLUDE) -DHAVE_TRIANGLE
+CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} ${GUI_INCLUDE}
 
 SRC = Main.cpp \
       Message.cpp \
@@ -31,30 +18,30 @@ SRC = Main.cpp \
       Solvers.cpp
 
 
-OBJ = $(SRC:.cpp=.o)
+OBJ = ${SRC:.cpp=.o}
 
 .SUFFIXES: .o .cpp
 
-$(LIB): $(OBJ) 
-	$(AR) $(LIB) $(OBJ) 
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ} 
+	${AR} ${LIB} ${OBJ} 
+	${RANLIB} ${LIB}
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 res:
 	windres Win32Icon.rc -O coff Win32Icon.res
 
 clean:
-	$(RM) $(RMFLAGS) *.o
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM -MG $(CFLAGS) ${SRC} \
+	${CXX} -MM -MG ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) $(RMFLAGS) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 Main.o: Main.cpp ../Plugin/PluginManager.h ../Common/Gmsh.h \

@@ -1,57 +1,45 @@
-# $Id: Makefile,v 1.42 2002-09-24 02:04:34 geuzaine Exp $
-#
-# Makefile for "libGmshParser.a"
-#
+# $Id: Makefile,v 1.43 2003-02-11 08:54:57 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
-YACC   = bison
-LEX    = flex
+include ../variables
+
+YACC = bison
+LEX = flex
 
 LIB     = ../lib/libGmshParser.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Numeric -I../Fltk -I../Plugin -I../Parallel
-
-OPT_FLAGS     =
-OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = 
-
-RMFLAGS = -f
-CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-          $(GL_INCLUDE) $(GUI_INCLUDE)
+CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} ${GUI_INCLUDE}
 
 SRC = Gmsh.yy.cpp\
       Gmsh.tab.cpp\
       OpenFile.cpp\
       FunctionManager.cpp
 
-OBJ = $(SRC:.cpp=.o)
+OBJ = ${SRC:.cpp=.o}
 
 .SUFFIXES: .o .cpp
 
-$(LIB): $(OBJ) 
-	$(AR) $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ} 
+	${AR} ${LIB} ${OBJ}
+	${RANLIB} ${LIB}
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 parser:
-	$(YACC) --output Gmsh.tab.cpp -d Gmsh.y 
-	$(LEX)  -oGmsh.yy.cpp Gmsh.l
+	${YACC} --output Gmsh.tab.cpp -d Gmsh.y 
+	${LEX}  -oGmsh.yy.cpp Gmsh.l
 
 clean:
-	$(RM) $(RMFLAGS) *.o
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) $(RMFLAGS) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \

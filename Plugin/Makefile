@@ -1,24 +1,11 @@
-# $Id: Makefile,v 1.29 2002-11-13 02:36:51 geuzaine Exp $
-#
-# Makefile for "libGmshPlugin.a"
-#
+# $Id: Makefile,v 1.30 2003-02-11 08:54:57 geuzaine Exp $
 
-CXX    = c++
-AR     = ar ruvs
-RM     = rm
-RANLIB = ranlib
+include ../variables
 
 LIB     = ../lib/libGmshPlugin.a
 INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo\
             -I../Mesh -I../Numeric -I../Triangle
-
-OPT_FLAGS     =
-OS_FLAGS      = 
-VERSION_FLAGS = 
-
-RMFLAGS = -f
-CFLAGS  = -DMPICH_SKIP_MPICXX $(OPT_FLAGS) $(OS_FLAGS)\
-           $(VERSION_FLAGS) $(INCLUDE) $(GUI_INCLUDE) 
+CFLAGS  = -DMPICH_SKIP_MPICXX ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} ${GUI_INCLUDE} 
 
 SRC = Plugin.cpp\
         LevelsetPlugin.cpp\
@@ -30,27 +17,27 @@ SRC = Plugin.cpp\
         Skin.cpp\
         Harmonic2Time.cpp
 
-OBJ = $(SRC:.cpp=.o)
+OBJ = ${SRC:.cpp=.o}
 
 .SUFFIXES: .o .cpp
 
-$(LIB): $(OBJ)
-	$(AR) $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
+${LIB}: ${OBJ}
+	${AR} ${LIB} ${OBJ}
+	${RANLIB} ${LIB}
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	${CXX} ${CFLAGS} -c $<
 
 clean:
-	$(RM) $(RMFLAGS) *.o 
+	rm -f *.o 
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	$(CXX) -MM $(CFLAGS) ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
-	$(RM) $(RMFLAGS) Makefile.new
+	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
