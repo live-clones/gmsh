@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.17 2003-04-15 06:38:55 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.18 2003-04-15 07:41:24 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2201,8 +2201,11 @@ The user interface is based on the FLTK widget set.
 
 
 @uref{http://www.opengl.org}
+
 @uref{http://www.mesa3d.org}
+
 @uref{http://www.fltk.org}
+
 @uref{http://www.cygwin.com}
 
 
