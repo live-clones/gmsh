@@ -28,10 +28,10 @@
 // work with older FLTK versions due to a bug in Fl_Scroll.clear())
 #  if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
 #    if (FL_PATCH_VERSION < 5)
-#      error "Gmsh requires at least FLTK 1.1.5"
+#      error "Gmsh requires FLTK >= 1.1.5"
 #    endif
 #  else
-#    error "Gmsh requires FLTK branch 1.1"
+#    error "Gmsh requires FLTK 1.1.x"
 #  endif
 
 #  include <FL/gl.h>
