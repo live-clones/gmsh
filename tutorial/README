@@ -1,0 +1,114 @@
+$Id: README,v 1.1 2000-12-10 00:46:30 geuzaine Exp $
+
+Here are the examples in the Gmsh tutorial. Feel free to send comments
+about the tutorial to christophe.geuzaine@advalvas.be or
+remacle@scorec.rpi.edu.
+
+These examples are heavily commented (both C and C++-style comments
+can be used in Gmsh input files) and should introduce new features
+gradually, starting with t1.geo.
+
+(The tutorial does not explain the mesh and post-processing file
+formats. See the FORMATS file for this.)
+
+There are two ways to actually run these examples with Gmsh. (The
+operations to run Gmsh may vary depending on your operating system. In
+the following, we will assume that you're working with a UNIX-like
+shell.) The first working mode of Gmsh is the interactive graphical
+mode. To launch Gmsh in interactive mode, just type
+
+> gmsh
+
+at the prompt on the command line. This will open two windows: the
+graphic window (with a status bar at the bottom) and the menu window
+(with a menu bar and some context dependent buttons). To open the
+first tutorial file, you have to select the 'File->Open' menu, and
+choose 't1.geo' in the input field. To perform the mesh generation,
+you have to go to the mesh module (by selecting 'Module->Mesh' in the
+menu bar) and choose the required dimension in the context-dependent
+buttons ('1D' will mesh all the curves; '2D' will mesh all the
+surfaces ---as well as all the curves if '1D' was not called before;
+'3D' will mesh all the volumes ---and all the surfaces if '2D' was not
+called before). To save the resulting mesh, select 'File->Save_Mesh'
+in the menu bar. The default mesh file name is based on the name of
+the first input file on the command line (or 'unnamed' if there wasn't
+any input file given), with an appended extension depending on the
+mesh format.
+
+Note: nearly all the interactive commands have shortcuts. Select
+'?->Short_Help' in the menu bar to learn about these shortcuts.
+
+Instead of opening the tutorial with the 'File->Open' menu, it is
+often more convenient to put the file name on the command line, here
+for example with:
+
+> gmsh t1.geo
+
+(The '.geo' extension can also be omitted.)
+
+Note: to define new geometries, if it is often handy to define the
+variables and the points directly in the input files, it is almost
+always simpler to define the curves, the surfaces and the volumes
+interactively. To do so, just follow the context dependent buttons in
+the Geometry module. For example, to create a line, select
+'Module->Geometry' in the menu bar, and then select 'Elementary, Add,
+Create, Line'. You will then be asked (in the status bar of the
+graphic window) to select a list of points, and to click 'e' when
+you're done. Once the interactive command is completed, a string is
+automatically added at the end of the currently opened project file.
+
+
+The second operating mode for Gmsh is the non-interactive mode. In
+this mode, there is no graphical user interface, and all operations
+are performed without any user interaction. To mesh the first tutorial
+in non-interactive mode, just type:
+
+> gmsh t1.geo -2
+
+Several files can be loaded simultaneously in Gmsh. The first one
+defines the project, while the others are appended ("merged") to this
+project. You can merge such files with the 'File->Merge' menu, or by
+directly specifying the names of the files on the command line. This
+is most useful for post-processing purposes. For example, to merge the
+post-processing views contained in the files 'view1.pos' and
+'view2.pos' together with the first tutorial 't1.geo', you can type
+the following line on the command line:
+
+> gmsh t1.geo view1.pos view2.pos
+
+In the Post-Processing module (select 'Module->Post_Processing'), two
+view buttons will appear, respectively labeled "a scalar map" and "a
+vector map". A left mouse click will toggle the visibility of the
+selected view. A right mouse click provides access to the view's
+options:
+- Reload: reloads the file from which the view was loaded 
+- Remove: removes the view 
+- Duplicate: makes a copy of the view (without duplicating the data) 
+- Lighting: activates/deactivates lighting for the view 
+- Scale: gives access to the scale menu (range definition, iso-value
+  choice, ...)
+- Color: defines the color map for the view
+- Offset: permits to move the view around, and to make elevation 
+  maps
+- Vector display: changes vector attributes
+- Time step: selects the displayed time step
+- Export as background mesh: exports the map, considered as an
+  error map, as a background mesh, i.e. as a characteristic length map
+- Apply as current bg mesh: applies the view as the current background 
+  mesh.  
+If you want the modifications made to one view to affect also all other
+views, select the 'Link all views' option in the
+'Options->Post-Processing' menu.
+
+Note: all the options specified interactively can also be directly
+specified in the ascii input files. The current options can be saved
+into a file by selecting 'File->Save_Options_as'. For UNIX versions,
+all user interface options can be changed in a standard X resource file
+('.gmshrc' in your home directory or app-defaults directory, or
+'.Xdefaults'). Use 'editres' to get the full widget tree and
+associated resources.
+
+
+
+OK, that's all, folks. Enjoy the tutorial.
+
