@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.218 2002-05-18 23:34:49 geuzaine Exp $
+# $Id: Makefile,v 1.219 2002-05-19 07:49:06 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -43,7 +43,10 @@ GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
                        -a ! -type d \)`
 
 default:
-	@echo "Type one of the following:"
+	@echo "You need fltk (http://www.fltk.org) version 1.1.x installed"
+	@echo "in $(HOME)/SOURCES/fltk-1.1"
+	@echo ""
+	@echo "Then type one of the following:"
 	@echo "  make aix                  for IBM RS/6000 with AIX"
 	@echo "  make cygwin               for Win95/NT using Cygnus-Win32"
 	@echo "  make gcc                  for a generic system with GCC"
@@ -54,9 +57,8 @@ default:
 	@echo "  make osf1                 for DEC Alpha systems with OSF/1"
 	@echo "  make sunos                for Suns with SunOS"
 	@echo "  make clean                remove .o files and libraries"
-	@echo "You need fltk (http://www.fltk.org) version 1.1.x installed"
-	@echo "in $(HOME)/SOURCES/fltk-1.1/."
-	@echo "If your system is not listed above, edit the Makefile."
+	@echo ""
+	@echo "If your system is not listed above, edit the Makefile"
 
 # ----------------------------------------------------------------------
 # Rules for developers
