@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.41 2001-07-26 18:47:59 remacle Exp $
+// $Id: Views.cpp,v 1.42 2001-07-26 21:45:48 remacle Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -777,7 +777,7 @@ void smooth_list (List_T *SS ,
       
       for(j=0;j<nbvert;j++)
 	{
-	  for(k=0;k<NbTimeStep;k++)vals[k] = v[j+k*8];
+	  for(k=0;k<NbTimeStep;k++)vals[k] = v[j+k*nbvert];
 	  xyzv xyz(x[j],y[j],z[j]);
 	  iter it = connectivities.find(xyz);
 	  if(it == connectivities.end())
@@ -794,6 +794,8 @@ void smooth_list (List_T *SS ,
 	}
     }   
   
+  printf("phase 2\n");
+
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb)
     {
       x = (double*)List_Pointer_Fast(SS,i);
@@ -805,7 +807,8 @@ void smooth_list (List_T *SS ,
 	  xyzv xyz(x[j],y[j],z[j]);
 	  //double l = sqrt((x[j])*(x[j]) + y[j]*y[j] + z[j] * z[j]);
 	  iter it = connectivities.find(xyz);
-	  for(k=0;k<NbTimeStep;k++)v[j+k*8] = (*it).vals[k];
+	  if(it != connectivities.end())
+	    for(k=0;k<NbTimeStep;k++)v[j+k*nbvert] = (*it).vals[k];
 	  //for(k=0;k<NbTimeStep;k++)v[j+k*8] = l;
 	}
     } 
