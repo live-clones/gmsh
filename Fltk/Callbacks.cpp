@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.226 2004-05-12 03:22:13 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.227 2004-05-12 03:46:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3166,8 +3166,8 @@ void view_plugin_cb(CALLBACK_ARGS)
   if(p->dialogBox) {    //Get the values from the GUI
     int m = p->getNbOptionsStr();
     int n = p->getNbOptions();
-    if(m > NB_BUTT_MAX) m = NB_BUTT_MAX;
-    if(n > NB_BUTT_MAX) n = NB_BUTT_MAX;
+    if(m > 20) m = 20;
+    if(n > 20) n = 20;
     for(int i = 0; i < m; i++) {
       StringXString *sxs = p->getOptionStr(i);
       sxs->def = (char*)p->dialogBox->input[i]->value();
