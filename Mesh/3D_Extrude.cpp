@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.74 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.75 2004-04-18 03:14:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -759,9 +759,8 @@ void copy_mesh(Curve * from, Curve * to, int direction)
     newv = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
 			 v->Pos.Y, v->Pos.Z, v->lc,
 			 (direction > 0) ? v->u : (1. - v->u));
-    ep->Extrude(ep->mesh.NbLayer - 1,
-                ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], newv->Pos.X,
-                newv->Pos.Y, newv->Pos.Z);
+    ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+		newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
     if(!comparePosition(&newv, &v)) {
       Free_Vertex(&newv, 0);
       newv = v;
@@ -840,7 +839,7 @@ int Extrude_Mesh(Curve * c)
       List_Add(c->Vertices, vexist);
     }
     else {
-      newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
+      newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, c->ubeg);
       newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
       List_Add(newv->ListCurves, &c);
       Tree_Add(THEM->Vertices, &newv);
@@ -853,7 +852,9 @@ int Extrude_Mesh(Curve * c)
         v->ListCurves = List_Create(1, 1, sizeof(Curve *));
       List_Add(v->ListCurves, &c);
       Tree_Insert(THEM->Vertices, &v);
-      v->u = (double)i / (double)List_Nbr(L);
+      // This is not correct when we have multiple layers with
+      // different spacings. So we fill this in later.
+      //v->u = (double)i / (double)(List_Nbr(L)-1);
       List_Add(c->Vertices, &v);
     }
 
@@ -865,7 +866,7 @@ int Extrude_Mesh(Curve * c)
       List_Add(c->Vertices, vexist);
     }
     else {
-      newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, 0.0);
+      newv = Create_Vertex(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc, c->uend);
       newv->ListCurves = List_Create(1, 1, sizeof(Curve *));
       List_Add(newv->ListCurves, &c);
       Tree_Add(THEM->Vertices, &newv);
@@ -889,6 +890,9 @@ int Extrude_Mesh(Curve * c)
 	  s->iEnt = ep->mesh.ZonLayer[i];
 	Tree_Add(c->Simplexes, &s);
 	List_Add(c->TrsfSimplexes, &s);
+
+	// fill-in the data we didn't have above:
+	v1->u = ep->u(i, j);
 	k++;
       }
     }
@@ -925,9 +929,8 @@ void copy_mesh(Surface * from, Surface * to)
         v = s->V[j];
         newv[j] = Create_Vertex(++THEM->MaxPointNum, v->Pos.X,
 				v->Pos.Y, v->Pos.Z, v->lc, v->u);
-        ep->Extrude(ep->mesh.NbLayer - 1,
-                    ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], newv[j]->Pos.X,
-                    newv[j]->Pos.Y, newv[j]->Pos.Z);
+        ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], 
+		    newv[j]->Pos.X, newv[j]->Pos.Y, newv[j]->Pos.Z);
         if(Vertex_Bound && (vexist = (Vertex **) Tree_PQuery(Vertex_Bound, &newv[j]))) {
           Free_Vertex(&newv[j], 0);
           newv[j] = *vexist;
