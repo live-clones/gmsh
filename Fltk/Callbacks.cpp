@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.107 2002-02-20 16:41:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.108 2002-02-20 16:44:25 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -157,21 +157,13 @@ void ManualPlay(int time, int step){
   else{//hide all views except view_in_cycle
     if(step>0){
       if((view_in_cycle+=step)>=List_Nbr(CTX.post.list)) view_in_cycle=0;
-      for(i=0 ; i<List_Nbr(CTX.post.list) ; i+=step){
-	if(i == view_in_cycle)
-	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
-	else
-	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
-      }
+      for(i=0 ; i<List_Nbr(CTX.post.list) ; i+=step)
+	opt_view_visible(i, GMSH_SET|GMSH_GUI, (i==view_in_cycle));
     }
     else{
       if((view_in_cycle+=step)<0) view_in_cycle=List_Nbr(CTX.post.list)-1;
-      for(i=List_Nbr(CTX.post.list)-1 ; i>=0 ; i+=step){
-	if(i == view_in_cycle)
-	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
-	else
-	  opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
-      }
+      for(i=List_Nbr(CTX.post.list)-1 ; i>=0 ; i+=step)
+	opt_view_visible(i, GMSH_SET|GMSH_GUI, (i==view_in_cycle));
     }
   }
   Draw();

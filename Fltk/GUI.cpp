@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.153 2002-02-18 18:01:05 geuzaine Exp $
+// $Id: GUI.cpp,v 1.154 2002-02-20 16:41:20 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -504,6 +504,22 @@ int GUI::global_shortcuts(int event){
       opt_view_visible(i, GMSH_SET|GMSH_GUI, show);
     redraw_opengl();
     show = !show;
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_Left)){
+    ManualPlay(1,-1);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_Right)){
+    ManualPlay(1,1);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_Up)){
+    ManualPlay(0,-1);
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_Down)){
+    ManualPlay(0,1);
     return 1;
   }
   
