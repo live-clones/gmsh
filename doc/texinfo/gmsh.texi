@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.102 2004-04-01 22:21:26 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.103 2004-04-13 18:50:07 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -409,15 +409,14 @@ solver interfaced with Gmsh is GetDP
 Multiple post-processing scalar, vector or tensor maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
 mesh. Scalar fields are represented by iso-value lines/surfaces or color
-maps, while vector and tensor fields are represented by three-dimensional
-arrows or displacement maps. Post-processing functions include section
-computation of scalar views, offset, elevation, boundary extraction, color
-map and range modification, animation, vector graphic output, etc. All
-post-processing options can be accessed either interactively or through the
-input ASCII text files. Scripting permits to automate all post-processing
-operations, e.g.@: for the creation of animations. User-defined operations
-can also be performed on post-processing views through dynamically loadable
-plugins.
+maps, while vector fields are represented by three-dimensional arrows or
+displacement maps. Post-processing functions include section computation,
+offset, elevation, boundary and component extraction, color map and range
+modification, animation, vector graphic output, etc. All post-processing
+options can be accessed either interactively or through the input ASCII text
+files. Scripting permits to automate all post-processing operations, e.g.@:
+for the creation of animations. User-defined operations can also be
+performed on post-processing views through dynamically loadable plugins.
 
 @c -------------------------------------------------------------------------
 @c What Gmsh is pretty good at...
