@@ -1,5 +1,5 @@
 #ifndef _SKIN_H_
-#define _SKIN_H
+#define _SKIN_H_
 
 extern "C"
 {
