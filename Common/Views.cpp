@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.27 2001-02-02 15:05:03 geuzaine Exp $
+// $Id: Views.cpp,v 1.28 2001-02-09 14:51:31 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -734,12 +734,12 @@ void smooth_list (List_T *SS ,
       for(j=0;j<nbvert;j++)
 	{
 	  for(k=0;k<NbTimeStep;k++)vals[k] = v[j+k*8];
-	  xyzv x(x[j],y[j],z[j]);
-	  iter it = connectivities.find(x);
+	  xyzv xyz(x[j],y[j],z[j]);
+	  iter it = connectivities.find(xyz);
 	  if(it == connectivities.end())
 	    {
-	      x.update(NbTimeStep,vals);
-	      connectivities.insert(x);
+	      xyz.update(NbTimeStep,vals);
+	      connectivities.insert(xyz);
 	    }
 	  else
 	    {
@@ -763,8 +763,6 @@ void smooth_list (List_T *SS ,
 	  iter it = connectivities.find(xyz);
 	  for(k=0;k<NbTimeStep;k++)v[j+k*8] = (*it).vals[k];
 	  //for(k=0;k<NbTimeStep;k++)v[j+k*8] = l;
-
-
 	}
     } 
   delete [] vals;

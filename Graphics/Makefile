@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2001-02-03 13:10:26 geuzaine Exp $
+# $Id: Makefile,v 1.17 2001-02-09 14:51:31 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -6,6 +6,7 @@
 .IGNORE:
 
 CC       = c++
+AR       = ar ruvs
 RANLIB   = ranlib
 RM       = rm
 LIB      = ../lib/libGraphics.a
@@ -48,7 +49,7 @@ OBJ = $(SRC:.cpp=.o)
 .SUFFIXES: .o .cpp
 
 $(LIB): $(OBJ) 
-	ar ruvs $(LIB) $(OBJ) 
+	$(AR) $(LIB) $(OBJ) 
 	$(RANLIB) $(LIB)
 
 .cpp.o:

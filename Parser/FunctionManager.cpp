@@ -1,9 +1,11 @@
-// $Id: FunctionManager.cpp,v 1.7 2001-01-09 19:40:56 remacle Exp $
+// $Id: FunctionManager.cpp,v 1.8 2001-02-09 14:51:31 geuzaine Exp $
 
 #include <stdio.h>
 #include <stack>
 #include <map>
 #include "FunctionManager.h"
+
+using namespace std;
 
 struct ltstr
 {

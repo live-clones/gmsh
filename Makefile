@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.54 2001-02-09 07:59:50 geuzaine Exp $
+# $Id: Makefile,v 1.55 2001-02-09 14:51:31 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -342,6 +342,16 @@ fltk_compile_little_endian:
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+fltk_compile_little_endian_2952:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(HOME)/gcc-2.95.2/bin/g++" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
 fltk_compile_solaris_scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
@@ -361,6 +371,18 @@ fltk_compile_linux_scorec :
            "GUI_INCLUDE=$(FLTK_INC_SCOREC)" \
         ); done
 
+fltk_compile_sgi:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=CC" \
+           "C_FLAGS=-O2 -n32 -OPT:Olimit=0" \
+           "RANLIB=true"\
+           "AR=CC -n32 -ar -o"\
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
 fltk_link_solaris_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  $(FLTK_LIB_SOLARIS_SCOREC) -lm
@@ -371,15 +393,9 @@ fltk_link_mesa:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm
 
-fltk_compile_little_endian_2952:
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(HOME)/gcc-2.95.2/bin/g++" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
-        ); done
+fltk_link_sgi:
+	CC -O2 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                  $(FLTK_LIB) $(OPENGL_LIB) -lm
 
 fltk_link_mesa_2952:
 	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
@@ -391,7 +407,10 @@ fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin compress_bin
 fltk_linux_2952: tag fltk_compile_little_endian_2952 fltk_link_mesa_2952 strip_bin compress_bin
 
 fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
+
 fltk_linux_scorec : tag fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin 
+
+fltk_sgi: tag fltk_compile_sgi fltk_link_sgi strip_bin compress_bin
 
 fltk_rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
@@ -425,3 +444,4 @@ fltk_cygwin: tag
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB) \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 	strip $(GMSH_BIN_DIR)/gmsh.exe
+

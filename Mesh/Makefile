@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2001-01-17 21:49:25 remacle Exp $
+# $Id: Makefile,v 1.13 2001-02-09 14:51:31 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -6,6 +6,7 @@
 .IGNORE:
 
 CC      = c++
+AR      = ar ruvs
 RM      = rm
 RANLIB  = ranlib
 
@@ -66,7 +67,7 @@ OBJ = $(SRC:.cpp=.o)
 .SUFFIXES: .o .cpp
 
 $(LIB): $(OBJ) 
-	ar rvs $(LIB) $(OBJ) 
+	$(AR) $(LIB) $(OBJ) 
 	$(RANLIB) $(LIB)
 
 .cpp.o:

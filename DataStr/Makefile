@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2001-01-08 08:05:40 geuzaine Exp $
+# $Id: Makefile,v 1.5 2001-02-09 14:51:31 geuzaine Exp $
 #
 # Makefile for "libDataStr.a"
 #
@@ -6,6 +6,7 @@
 .IGNORE:
 
 CC       = c++
+AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 LIB      = ../lib/libDataStr.a
@@ -29,7 +30,7 @@ OBJ = $(SRC:.cpp=.o)
 .SUFFIXES: .o .cpp
 
 $(LIB): $(OBJ)
-	ar ruvs $(LIB) $(OBJ)
+	$(AR) $(LIB) $(OBJ)
 	$(RANLIB) $(LIB)
 
 .cpp.o:

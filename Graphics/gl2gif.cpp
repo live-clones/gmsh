@@ -1,4 +1,4 @@
-// $Id: gl2gif.cpp,v 1.9 2001-01-10 08:50:30 geuzaine Exp $
+// $Id: gl2gif.cpp,v 1.10 2001-02-09 14:51:31 geuzaine Exp $
 
 /* 
  * gl2gif: an OpenGL to GIF printing library
@@ -581,7 +581,6 @@ static code_int free_ent = 0;             /* first unused entry */
  */
 static int clear_flg = 0;
 
-static int offset;
 static long int in_count = 1;            /* length of input */
 static long int out_count = 0;           /* # of codes output (for debugging) */
 static int ClearCode;
@@ -858,7 +857,6 @@ static void compress( int init_bits, FILE* outfile, ifunptr ReadValue){
   /*
    * Set up the necessary values
    */
-  offset = 0;
   out_count = 0;
   clear_flg = 0;
   in_count = 1;

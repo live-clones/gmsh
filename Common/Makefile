@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2001-01-13 17:08:41 geuzaine Exp $
+# $Id: Makefile,v 1.11 2001-02-09 14:51:31 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -6,6 +6,7 @@
 .IGNORE:
 
 CC      = c++
+AR      = ar ruvs
 RANLIB  = ranlib
 RM      = rm
 
@@ -36,7 +37,7 @@ OBJ = $(SRC:.cpp=.o)
 .SUFFIXES: .o .cpp
 
 $(LIB): $(OBJ) 
-	ar ruvs $(LIB) $(OBJ)
+	$(AR) $(LIB) $(OBJ)
 	$(RANLIB) $(LIB)
 
 .cpp.o:

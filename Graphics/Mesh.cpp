@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.19 2001-01-29 22:33:41 remacle Exp $
+// $Id: Mesh.cpp,v 1.20 2001-02-09 14:51:31 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -560,10 +560,10 @@ void Draw_Hexahedron_Volume (void *a, void *b){
   //glColor4ubv((GLubyte*)&CTX.color.mesh.hexahedron);
   ColorSwitch((*h)->iEnt+1);
 
-  for (int i=0 ; i<8 ; i++) {
-     X[i] = Xc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.X - Xc);
-     Y[i] = Yc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Y - Yc);
-     Z[i] = Zc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Z - Zc);
+  for (i=0 ; i<8 ; i++) {
+    X[i] = Xc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * 0.99 * ((*h)->V[i]->Pos.Z - Zc);
   }
 
   glBegin(GL_LINE_LOOP);

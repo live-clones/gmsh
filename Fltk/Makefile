@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2001-02-03 13:10:26 geuzaine Exp $
+# $Id: Makefile,v 1.7 2001-02-09 14:51:31 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -6,6 +6,7 @@
 .IGNORE:
 
 CC       = c++
+AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 
@@ -39,7 +40,7 @@ OBJ = $(SRC:.cpp=.o)
 .SUFFIXES: .o .cpp
 
 $(LIB): $(OBJ) 
-	ar ruvs $(LIB) $(OBJ) 
+	$(AR) $(LIB) $(OBJ) 
 	$(RANLIB) $(LIB)
 
 .cpp.o:
