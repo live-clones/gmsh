@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.259 2004-07-23 04:47:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.260 2004-07-30 12:22:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3488,6 +3488,14 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_range_type(i, GMSH_SET, val);
       }
 
+      if(force || WID->view_choice[8]->changed()) {
+        opt_view_grid(i, GMSH_SET, WID->view_choice[8]->value());
+      }
+
+      if(force || WID->view_choice[9]->changed()) {
+        opt_view_boundary(i, GMSH_SET, WID->view_choice[9]->value());
+      }
+
       // view_butts
 
       if(force || WID->view_butt[1]->changed() ||
@@ -3514,9 +3522,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
       if(force || WID->view_butt[5]->changed())
         opt_view_draw_strings(i, GMSH_SET, WID->view_butt[5]->value());
-
-      if(force || WID->view_butt[6]->changed())
-        opt_view_transparent_scale(i, GMSH_SET, WID->view_butt[6]->value());
 
       if(force || WID->view_butt[11]->changed())
         opt_view_light(i, GMSH_SET, WID->view_butt[11]->value());
@@ -3604,9 +3609,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || WID->view_value[62]->changed())
         opt_view_line_width(i, GMSH_SET, WID->view_value[62]->value());
 
-      if(force || WID->view_value[11]->changed())
-        opt_view_boundary(i, GMSH_SET, WID->view_value[11]->value());
-
       if(force || WID->view_value[12]->changed())
         opt_view_explode(i, GMSH_SET, WID->view_value[12]->value());
 
@@ -3628,9 +3630,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
       if(force || WID->view_value[25]->changed())
         opt_view_nb_abscissa(i, GMSH_SET, WID->view_value[25]->value());
-
-      if(force || WID->view_value[26]->changed())
-        opt_view_grid(i, GMSH_SET, WID->view_value[26]->value());
 
       // view_inputs
 

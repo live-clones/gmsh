@@ -95,10 +95,10 @@ public :
   float quaternion[4];        // the actual quaternion used for "trackball" rotating 
   int useTrackball;           // do or do not use the trackball for rotations 
   double rotation_center[3];  // point around which to rotate the scene
-  int rotation_center_cg;     // rotate around the center of gravity instead of rotation_center[]
+  int rotation_center_cg;     // rotate around the center of mass instead of rotation_center[]
   double min[3];              // x, y and z min for the current geometry 
   double max[3];              // x, y and z max for the current geometry 
-  double cg[3];               // "center of gravity" of the current geometry
+  double cg[3];               // "center of mass" of the current geometry
   double range[3];            // maximum range in the three directions 
   double lc, lc_middle;       // characteristic lengths for the whole problem, 
   double lc_order;            // and never used in mesh generation (->only for geo/post) 

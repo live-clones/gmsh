@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.25 2004-05-22 01:24:17 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.26 2004-07-30 12:22:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -74,7 +74,7 @@ int Solver(int num, char *args)
       break;
     case -4:
       Msg(GERROR,
-          "Solver not responding (is '%s' correctly installed/in your path?)",
+          "Solver not responding (is '%s' correctly installed and in your path?)",
           SINFO[num].executable_name);
       break;
     case -5:

@@ -81,7 +81,7 @@ Saved in: @code{-}
 
 @item General.Clip0A
 First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip0B
@@ -106,7 +106,7 @@ Saved in: @code{-}
 
 @item General.Clip1A
 First coefficient in equation for clipping plane 1@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip1B
@@ -131,7 +131,7 @@ Saved in: @code{-}
 
 @item General.Clip2A
 First coefficient in equation for clipping plane 2@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip2B
@@ -156,7 +156,7 @@ Saved in: @code{-}
 
 @item General.Clip3A
 First coefficient in equation for clipping plane 3@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip3B
@@ -181,7 +181,7 @@ Saved in: @code{-}
 
 @item General.Clip4A
 First coefficient in equation for clipping plane 4@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip4B
@@ -206,7 +206,7 @@ Saved in: @code{-}
 
 @item General.Clip5A
 First coefficient in equation for clipping plane 5@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{-}
 
 @item General.Clip5B

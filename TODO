@@ -1,4 +1,4 @@
-$Id: TODO,v 1.58 2004-07-15 02:43:32 geuzaine Exp $
+$Id: TODO,v 1.59 2004-07-30 12:22:01 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -6,6 +6,11 @@ surface loops and lines in line loops
 (To make things simple, all line loops should be oriented "aire a
 gauche", and all surface loops whould be oriented with exterior
 normals...)
+
+********************************************************************
+
+fix the orientation of hexas, prisms and pyramids (reorder nodes
+according to Orientation())
 
 ********************************************************************
 
@@ -25,8 +30,8 @@ add ternary operator and <,>,<=,>=,== tests in MathEval
 
 ********************************************************************
 
-on Macs, datasets with a bounding box < 1.e06 don't display properly
-(probably because all OpenGL stuff is done inetrnally in single
+on Macs, datasets with a bounding box < 1.e-06 don't display properly
+(probably because all the OpenGL stuff is done ineternally in single
 precision...). Rescale?
 
 ********************************************************************
@@ -40,11 +45,6 @@ other using 2nd order elements (in the same geometry)?
 add some code to make the node/element list ordered+dense (with no
 gaps)? this seems to be one common problem users have with our mesh
 format...
-
-********************************************************************
-
-add an option to plot the bounding box of views, with or without
-labels (scales)
 
 ********************************************************************
 
@@ -110,8 +110,9 @@ All surface meshes are made in a mean plane. If your surface cannot be
 projected into a plane with a 1-to-1 correspondance between the nodes,
 then gmsh will fail. 
 
-We should definitely use a better projection algorithm. See the work
-by Desbrun et al. in CS for this.
+We should definitely use a better projection algorithm
+(e.g. intrinstic parameterization). See the work by Desbrun et al. in
+CS for this.
 
 ********************************************************************
 

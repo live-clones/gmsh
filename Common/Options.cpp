@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.175 2004-07-23 04:47:41 geuzaine Exp $
+// $Id: Options.cpp,v 1.176 2004-07-30 12:22:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4525,10 +4525,12 @@ double opt_view_grid(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Grid = (int)val;
+    if(v->Grid < 0 || v->Grid > 3)
+      v->Grid = 0;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[26]->value(v->Grid);
+    WID->view_choice[8]->value(v->Grid);
   }
 #endif
   return v->Grid;
@@ -4567,11 +4569,13 @@ double opt_view_boundary(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->Boundary = (int)val;
+    if(v->Boundary < 0 || v->Boundary > 3)
+      v->Boundary = 0;
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[11]->value(v->Boundary);
+    WID->view_choice[9]->value(v->Boundary);
   }
 #endif
   return v->Boundary;
@@ -4842,10 +4846,6 @@ double opt_view_transparent_scale(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     v->TransparentScale = (int)val;
   }
-#if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
-    WID->view_butt[6]->value(v->TransparentScale);
-#endif
   return v->TransparentScale;
 }
 

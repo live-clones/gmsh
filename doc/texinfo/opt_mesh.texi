@@ -54,6 +54,11 @@ Draw the intersection volume layer as a surface@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.CutPlaneOnlyVolume
+Cut only the volume elements@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.CutPlaneA
 First cut plane equation coefficient (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{1}@*
