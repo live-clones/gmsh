@@ -433,6 +433,7 @@ double opt_view_arrow_type(OPT_ARGS_NUM);
 double opt_view_arrow_location(OPT_ARGS_NUM);
 double opt_view_point_size(OPT_ARGS_NUM);
 double opt_view_line_width(OPT_ARGS_NUM);
+double opt_view_point_type(OPT_ARGS_NUM);
 double opt_print_format(OPT_ARGS_NUM);
 double opt_print_eps_quality(OPT_ARGS_NUM);
 double opt_print_eps_background(OPT_ARGS_NUM);

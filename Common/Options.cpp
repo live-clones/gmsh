@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.80 2002-05-20 18:28:24 geuzaine Exp $
+// $Id: Options.cpp,v 1.81 2002-06-15 17:41:35 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2745,6 +2745,14 @@ double opt_view_line_width(OPT_ARGS_NUM){
     WID->view_value[62]->value(v->LineWidth);
 #endif
   return v->LineWidth;
+}
+double opt_view_point_type(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->PointType = (int)val;
+    v->Changed = 1;
+  }
+  return v->PointType;
 }
 
 

@@ -61,7 +61,7 @@ class Post_View{
   int DrawStrings;
   int DrawPoints, DrawLines, DrawTriangles, DrawTetrahedra;
   int DrawScalars, DrawVectors, DrawTensors;
-  int Boundary, Grid;
+  int Boundary, Grid, PointType;
   double PointSize, LineWidth;
   GmshColorTable CT;
 

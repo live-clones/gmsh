@@ -71,7 +71,7 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
 void Draw_Scales(void);
 void Draw_Axes (double s);
 void Draw_SmallAxes(void);
-void Draw_Point(double *x, double *y, double *z, double Raise[3][5]);
+void Draw_Point(int size, int type, double *x, double *y, double *z, double Raise[3][5]);
 void Draw_Line (double *x, double *y, double *z, double Raise[3][5]);
 void Draw_Triangle (double *x, double *y, double *z,double *n,
                     double Raise[3][5], int shade);

@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.36 2002-05-20 18:28:26 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.37 2002-06-15 17:41:35 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ void Draw_Simplex(Post_View *View, int nbnod, double *X, double *Y, double *Z,
   glColor4ubv((GLubyte*)&CTX.color.fg);
   switch(nbnod){
   case 1 :
-    Draw_Point(X,Y,Z,Raise);
+    Draw_Point(View->PointSize,View->PointType,X,Y,Z,Raise);
     break;
   case 2 :
     Draw_Line(X,Y,Z,Raise);
@@ -99,7 +99,7 @@ void Draw_ScalarPoint(Post_View *View,
       Draw_String(Num);
     }
     else
-      Draw_Point(X,Y,Z,Raise);
+      Draw_Point(View->PointSize,View->PointType,X,Y,Z,Raise);
   }
 }
 
@@ -194,7 +194,7 @@ void Draw_ScalarLine(Post_View *View,
 		    thev, ValMin,ValMax,Xp,Yp,Zp,&nb);    
 	  if(nb){
 	    RaiseFill(0,thev,ValMin,Raise);
-	    Draw_Point(Xp,Yp,Zp,Raise);    
+	    Draw_Point(View->PointSize,View->PointType,Xp,Yp,Zp,Raise);    
 	  }
 	}
       }
