@@ -31,7 +31,7 @@ public:
   typedef enum {NONE, PLANE, SPHERE, MAP} ORIENTATION ;
 protected:
   double _ref[3];
-  int _timeStep, _targetView, _valueIndependent;
+  int _valueTimeStep, _valueView, _valueIndependent;
   ORIENTATION _orientation;
 private:
   double _invert;

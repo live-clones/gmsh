@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.28 2003-11-21 07:56:31 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.29 2003-11-22 18:45:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -95,9 +95,9 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   _ref[1] = CutPlaneOptions_Number[1].def;
   _ref[2] = CutPlaneOptions_Number[2].def;
   _valueIndependent = 1;
-  _targetView = -1;
+  _valueView = -1;
+  _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::PLANE;
-  _timeStep = -1;
 
   if(v && iView < 0)
     vv = v;

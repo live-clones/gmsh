@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.32 2003-11-21 07:56:31 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.33 2003-11-22 18:45:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@ extern Context_T CTX;
 
 StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "A", NULL, 1.},
-  {GMSH_FULLRC, "TimeStep", NULL, -1.},
+  {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -58,9 +58,9 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(CutMap) extracts the isovalue surface of\n"
          "value 'A' from the view 'iView' and draws the\n"
-	 "'TimeStep'-th value of the view 'dView' on this\n"
+	 "'dTimeStep'-th value of the view 'dView' on this\n"
 	 "isovalue surface. If 'iView' < 0, the plugin is\n"
-	 "run on the current view. If 'TimeStep' < 0, the\n"
+	 "run on the current view. If 'dTimeStep' < 0, the\n"
 	 "plugin uses, for each time step in 'iView', the\n"
 	 "corresponding time step in 'dView'. If 'dView'\n"
 	 "< 0, the plugin uses 'iView' as the field source.\n");
@@ -95,9 +95,10 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
 
   int iView = (int)CutMapOptions_Number[3].def;
   _valueIndependent = 0;
-  _targetView = (int)CutMapOptions_Number[2].def;
+  _valueView = (int)CutMapOptions_Number[2].def;
+  _valueTimeStep = (int)CutMapOptions_Number[1].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
-  _timeStep = (int)CutMapOptions_Number[1].def;
+
 
   if(v && iView < 0)
     vv = v;

@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.8 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.9 2003-11-22 18:45:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@ extern Context_T CTX;
 
 StringXNumber DisplacementRaiseOptions_Number[] = {
   {GMSH_FULLRC, "Factor", NULL, 1.},
-  {GMSH_FULLRC, "TimeStep", NULL, 0.},
+  {GMSH_FULLRC, "dTimeStep", NULL, 0.},
   {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -63,7 +63,7 @@ void GMSH_DisplacementRaisePlugin::getInfos(char *author, char *copyright,
          "Plugin(DisplacementRaise) transforms the\n"
          "coordinates of the elements in the view 'iView'\n"
          "using the vectorial values (the displacements)\n"
-         "stored in the 'TimeStep'-th time step of the\n"
+         "stored in the 'dTimeStep'-th time step of the\n"
 	 "view 'dView'. If 'iView' < 0, the plugin is\n"
 	 "run on the current view. If 'dView' < 0, the\n"
 	 "plugin looks for the displacements in the\n"
@@ -164,7 +164,7 @@ Post_View *GMSH_DisplacementRaisePlugin::execute(Post_View * v)
   Post_View *vv, *ww;
 
   double factor = DisplacementRaiseOptions_Number[0].def;
-  int timeStep = (int)DisplacementRaiseOptions_Number[1].def;
+  int dTimeStep = (int)DisplacementRaiseOptions_Number[1].def;
   int dView = (int)DisplacementRaiseOptions_Number[2].def;
   int iView = (int)DisplacementRaiseOptions_Number[3].def;
 
@@ -187,7 +187,7 @@ Post_View *GMSH_DisplacementRaisePlugin::execute(Post_View * v)
     return 0;
   }
 
-  displacementRaise(vv, ww, factor, timeStep);
+  displacementRaise(vv, ww, factor, dTimeStep);
   return vv;
 }
 

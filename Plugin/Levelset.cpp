@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.4 2003-11-22 05:12:36 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.5 2003-11-22 18:45:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -35,8 +35,8 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
   _invert = 0.;
   _ref[0] = _ref[1] = _ref[2] = 0.;
   _valueIndependent = 0; // "moving" levelset
-  _targetView = -1; // use same view for levelset and field data
-  _timeStep = -1; // use same time step in levelset and field data views
+  _valueView = -1; // use same view for levelset and field data
+  _valueTimeStep = -1; // use same time step in levelset and field data views
   _orientation = GMSH_LevelsetPlugin::NONE;
 }
 
@@ -259,13 +259,16 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
     if(nbVert == 2 || nbVert == 3 || (nbVert == 4 && nbEdg == 6)) {
       // easy for simplices: at most one element is created per time step 
       for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
-	int dTS = getTimeStep(_timeStep, iTS, dView);
-	double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbVert + 
-						   iNbComp * nbVert * iTS); 
-	double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbVert + 
-						   dNbComp * nbVert * dTS);
-	zeroLevelset(iTS, nbVert, nbEdg, exn, x, y, z, 
-		     iVal, iNbComp, dVal, dNbComp, out);
+	int dTS = getTimeStep(_valueTimeStep, iTS, dView);
+	// don't compute the zero levelset of the value view
+	if(_valueTimeStep < 0 || iView != dView || dTS != iTS){
+	  double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbVert + 
+						     iNbComp * nbVert * iTS); 
+	  double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbVert + 
+						     dNbComp * nbVert * dTS);
+	  zeroLevelset(iTS, nbVert, nbEdg, exn, x, y, z, 
+		       iVal, iNbComp, dVal, dNbComp, out);
+	}
       }
     }
     else{
@@ -290,15 +293,18 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 			NULL, 0, out)) {
 	  for(int k = 0; k < iDec.numSimplices(); k++) {
 	    for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
-	      int dTS = getTimeStep(_timeStep, iTS, dView);
-	      double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbVert + 
-							 iNbComp * nbVert * iTS); 
-	      double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbVert + 
-							 dNbComp * nbVert * dTS);
-	      iDec.decompose(k, x, y, z, iVal, xNew, yNew, zNew, iValNew);
-	      dDec.decompose(k, x, y, z, dVal, xNew, yNew, zNew, dValNew);
-	      zeroLevelset(iTS, nbVertNew, nbEdgNew, (nbVertNew == 4) ? exnTet : exnTri, 
-			   xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
+	      int dTS = getTimeStep(_valueTimeStep, iTS, dView);
+	      // don't compute the zero levelset of the value view
+	      if(_valueTimeStep < 0 || iView != dView || dTS != iTS){
+		double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbVert + 
+							   iNbComp * nbVert * iTS); 
+		double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbVert + 
+							   dNbComp * nbVert * dTS);
+		iDec.decompose(k, x, y, z, iVal, xNew, yNew, zNew, iValNew);
+		dDec.decompose(k, x, y, z, dVal, xNew, yNew, zNew, dValNew);
+		zeroLevelset(iTS, nbVertNew, nbEdgNew, (nbVertNew == 4) ? exnTet : exnTri, 
+			     xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
+	      }
 	    }
 	  }
 	}
@@ -307,18 +313,21 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 	// since we generate one view for each time step, we can
 	// generate multiple elements per time step without problem.
 	for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
-	  double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbVert +
-						     iNbComp * nbVert * iTS); 
-	  if(zeroLevelset(iTS, nbVert, nbEdg, exn, x, y, z, iVal, iNbComp, 
-			  NULL, 0, out)) {
-	    int dTS = getTimeStep(_timeStep, iTS, dView);
-	    double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbVert +
-						       dNbComp * nbVert * dTS);
-	    for(int k = 0; k < iDec.numSimplices(); k++) {
-	      iDec.decompose(k, x, y, z, iVal, xNew, yNew, zNew, iValNew);
-	      dDec.decompose(k, x, y, z, dVal, xNew, yNew, zNew, dValNew);
-	      zeroLevelset(iTS, nbVertNew, nbEdgNew, (nbVertNew == 4) ? exnTet : exnTri, 
-			   xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
+	  int dTS = getTimeStep(_valueTimeStep, iTS, dView);
+	  // don't compute the zero levelset of the value view
+	  if(_valueTimeStep < 0 || iView != dView || dTS != iTS){
+	    double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbVert +
+						       iNbComp * nbVert * iTS); 
+	    if(zeroLevelset(iTS, nbVert, nbEdg, exn, x, y, z, iVal, iNbComp, 
+			    NULL, 0, out)) {
+	      double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbVert +
+							 dNbComp * nbVert * dTS);
+	      for(int k = 0; k < iDec.numSimplices(); k++) {
+		iDec.decompose(k, x, y, z, iVal, xNew, yNew, zNew, iValNew);
+		dDec.decompose(k, x, y, z, dVal, xNew, yNew, zNew, dValNew);
+		zeroLevelset(iTS, nbVertNew, nbEdgNew, (nbVertNew == 4) ? exnTet : exnTri, 
+			     xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
+	      }
 	    }
 	  }
 	}
@@ -336,11 +345,11 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   Post_View *w;
   vector<Post_View *> out;
 
-  if(_targetView < 0) {
+  if(_valueView < 0) {
     w = v;
   }
-  else if(!(w = (Post_View *)List_Pointer_Test(CTX.post.list, _targetView))) {
-    Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", _targetView, 
+  else if(!(w = (Post_View *)List_Pointer_Test(CTX.post.list, _valueView))) {
+    Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", _valueView, 
 	v->Index);
     w = v;
   }

@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.27 2003-11-21 07:56:32 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.28 2003-11-22 18:45:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -99,9 +99,9 @@ Post_View *GMSH_CutSpherePlugin::execute(Post_View * v)
   _ref[1] = CutSphereOptions_Number[1].def;
   _ref[2] = CutSphereOptions_Number[2].def;
   _valueIndependent = 1;
-  _targetView = -1;
+  _valueView = -1;
+  _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::SPHERE;
-  _timeStep = -1;
 
   if(v && iView < 0)
     vv = v;
