@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.17 2001-02-03 13:10:26 geuzaine Exp $
+// $Id: Scale.cpp,v 1.18 2001-04-22 18:13:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,17 +67,16 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   cv_bh   = 0.0 ;                     /* valuescale box height: to be computed */
 
 
-  switch(v->IntervalsType){
-  case DRAW_POST_CONTINUOUS : 
-    glShadeModel(GL_SMOOTH); break;
-  case DRAW_POST_ISO : 
-  case DRAW_POST_DISCRETE : 
-    glShadeModel(GL_FLAT); break;
-  }
+  if(v->IntervalsType == DRAW_POST_CONTINUOUS)
+    glShadeModel(GL_SMOOTH);
+  else
+    glShadeModel(GL_FLAT);
   
-  switch(v->RangeType){
-  case DRAW_POST_DEFAULT : ValMin = v->Min ; ValMax = v->Max ; break;
-  case DRAW_POST_CUSTOM  : ValMin = v->CustomMin ; ValMax = v->CustomMax ; break;
+  if(v->RangeType == DRAW_POST_CUSTOM){
+    ValMin = v->CustomMin ; ValMax = v->CustomMax ;
+  }
+  else{
+    ValMin = v->Min ; ValMax = v->Max ;
   }
   
   switch(v->ScaleType){
@@ -148,7 +147,8 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
 
   /* only min and max if not enough room */
   if(nbv<0){
-    if(v->IntervalsType!=DRAW_POST_ISO){
+    if(v->IntervalsType == DRAW_POST_DISCRETE ||
+       v->IntervalsType == DRAW_POST_CONTINUOUS){
       sprintf(label, v->Format, ValMin);
       glRasterPos2d(cv_xmin,cv_ymin-font_a/3.);
       Draw_String(label); CHECK_W;
@@ -170,7 +170,8 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
 
   /* all the values if enough space */
   else {
-    if(v->IntervalsType!=DRAW_POST_ISO){
+    if(v->IntervalsType == DRAW_POST_DISCRETE ||
+       v->IntervalsType == DRAW_POST_CONTINUOUS){
       for(i=0 ; i<nbv+1 ; i++){
         Val = v->GVFI(ValMin,ValMax,nbv+1,i); 
         sprintf(label, v->Format, Val);

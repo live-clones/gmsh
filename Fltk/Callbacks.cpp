@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.43 2001-04-17 06:55:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.44 2001-04-22 18:13:02 geuzaine Exp $
 
 #include <map>
 #include "Gmsh.h"
@@ -163,7 +163,7 @@ void status_cancel_cb(CALLBACK_ARGS){
 void file_open_cb(CALLBACK_ARGS) {
   char *newfile;
   int n = List_Nbr(Post_ViewList);
-  newfile = fl_file_chooser("Open File", "*.[gG][eE][oO]", NULL);
+  newfile = fl_file_chooser("Open File", "*", NULL);
   if (newfile != NULL) {
     OpenProblem(newfile); 
     Draw(); 
@@ -1541,6 +1541,9 @@ void view_options_ok_cb(CALLBACK_ARGS){
       opt_view_draw_lines(i, GMSH_SET, WID->view_butt[19]->value());
       opt_view_draw_triangles(i, GMSH_SET, WID->view_butt[20]->value());
       opt_view_draw_tetrahedra(i, GMSH_SET, WID->view_butt[21]->value());
+      opt_view_draw_scalars(i, GMSH_SET, WID->view_butt[22]->value());
+      opt_view_draw_vectors(i, GMSH_SET, WID->view_butt[23]->value());
+      opt_view_draw_tensors(i, GMSH_SET, WID->view_butt[24]->value());
       
       opt_view_custom_min(i, GMSH_SET, WID->view_value[0]->value());
       opt_view_custom_max(i, GMSH_SET, WID->view_value[1]->value());

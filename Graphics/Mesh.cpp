@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.22 2001-04-17 06:55:47 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.23 2001-04-22 18:13:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -114,10 +114,8 @@ void Draw_Mesh (Mesh *M) {
   if(CTX.mesh.hidden) glDisable(GL_POLYGON_OFFSET_FILL);
 
   if(CTX.render_mode != GMSH_SELECT){
-    if(CTX.axes) 
-      Draw_Axes(CTX.lc_middle/4.);
-    if(CTX.post.draw) // les init de shading se font par view
-      Draw_Post();
+    if(CTX.axes) Draw_Axes(CTX.lc_middle/4.);
+    Draw_Post(); // les init de shading se font par view
   }
 }
 

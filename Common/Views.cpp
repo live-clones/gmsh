@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.35 2001-04-17 06:55:47 geuzaine Exp $
+// $Id: Views.cpp,v 1.36 2001-04-22 18:13:02 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -8,7 +8,7 @@
 #include "ColorTable.h"
 
 // this static stuff should be removed
-int         Post_ViewForceNumber = 0, Post_ViewComputeBBox = 0;
+int         Post_ViewForceNumber = 0;
 List_T     *Post_ViewList = NULL;
 Post_View  *Post_ViewReference = NULL, *ActualView;
 
@@ -121,15 +121,13 @@ void Stat_ScalarSimplex(int nbnod, int N, double *X, double *Y, double *Z, doubl
     if(V[i] > ActualView->Max) ActualView->Max = V[i] ;
   }
 
-  if(Post_ViewComputeBBox){
-    for(i=0 ; i<nbnod ; i++){
-      if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
-      if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
-      if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
-      if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
-      if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
-      if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
-    }
+  for(i=0 ; i<nbnod ; i++){
+    if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
+    if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
+    if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
+    if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
+    if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
+    if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
   }
 
   switch(nbnod){
@@ -159,15 +157,13 @@ void Stat_VectorSimplex(int nbnod, int N, double *X, double *Y, double *Z, doubl
     if(l0 > ActualView->Max) ActualView->Max = l0 ;
   }
 
-  if(Post_ViewComputeBBox){
-    for(i=0 ; i<nbnod ; i++){
-      if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
-      if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
-      if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
-      if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
-      if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
-      if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
-    }
+  for(i=0 ; i<nbnod ; i++){
+    if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
+    if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
+    if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
+    if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
+    if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
+    if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
   }
 
   ActualView->ScalarOnly = 0;
@@ -418,6 +414,9 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->DrawLines = src->DrawLines;
   dest->DrawTriangles = src->DrawTriangles;
   dest->DrawTetrahedra = src->DrawTetrahedra;
+  dest->DrawScalars = src->DrawScalars;
+  dest->DrawVectors = src->DrawVectors;
+  dest->DrawTensors = src->DrawTensors;
   dest->TransparentScale = src->TransparentScale;
   dest->ScaleType = src->ScaleType;
   dest->RangeType = src->RangeType;

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.11 2001-04-14 06:55:15 geuzaine Exp $
+// $Id: Options.cpp,v 1.12 2001-04-22 18:13:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1720,6 +1720,42 @@ double opt_view_draw_tetrahedra(OPT_ARGS_NUM){
     WID->view_butt[21]->value(v->DrawTetrahedra);
 #endif
   return v->DrawTetrahedra;
+}
+double opt_view_draw_scalars(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawScalars = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[22]->value(v->DrawScalars);
+#endif
+  return v->DrawScalars;
+}
+double opt_view_draw_vectors(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawVectors = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[23]->value(v->DrawVectors);
+#endif
+  return v->DrawVectors;
+}
+double opt_view_draw_tensors(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->DrawTensors = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_butt[24]->value(v->DrawTensors);
+#endif
+  return v->DrawTensors;
 }
 double opt_view_transparent_scale(OPT_ARGS_NUM){
   GET_VIEW(0.) ;

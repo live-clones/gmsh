@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.11 2001-04-17 06:55:48 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.12 2001-04-22 18:13:03 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -101,11 +101,9 @@ void OpenProblem(char *name){
   strncpy(CTX.basefilename,name,NAME_STR_L);
 
   strcpy(ext,name+(strlen(name)-4));
-  if(!strcmp(ext,".GEO") || 
-     !strcmp(ext,".geo") || 
-     !strcmp(ext,".msh") || 
-     !strcmp(ext,".pos")
-     ){
+  if(!strcmp(ext,".geo") || !strcmp(ext,".GEO") ||
+     !strcmp(ext,".msh") || !strcmp(ext,".MSH") ||
+     !strcmp(ext,".pos") || !strcmp(ext,".POS")){
     CTX.basefilename[strlen(name)-4] = '\0';
   }
   else{
@@ -125,12 +123,9 @@ void OpenProblem(char *name){
 #endif
   }
 
-  Post_ViewComputeBBox = 1;
   int nb = List_Nbr(Post_ViewList);
 
   status = ParseFile(CTX.filename);  
-
-  Post_ViewComputeBBox = 0;
 
   ApplyLcFactor(THEM);
 

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.14 2001-03-18 10:40:54 geuzaine Exp $
+// $Id: Post.cpp,v 1.15 2001-04-22 18:13:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -77,12 +77,52 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]){
     D r a w _ P o s t                                                       
    ------------------------------------------------------------------------ */
 
+void Free_DisplayLists(void){
+  Post_View     *v;
+  for(int iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
+    v = (Post_View*)List_Pointer(Post_ViewList,iView);
+    if(glIsList(v->Num)) glDeleteLists(v->Num,1);
+  }
+}
+
 void Draw_Post (void) {
   int            iView,i,j,k,nb;
   double         ValMin,ValMax,AbsMax;
   Post_View     *v;
 
   if(!Post_ViewList) return;
+
+  if(!CTX.post.draw){ // draw only the bbox of the visible views
+    for(iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
+      v = (Post_View*)List_Pointer(Post_ViewList,iView);
+      if(v->Visible){ 
+	glColor4ubv((GLubyte*)&CTX.color.fg);
+	glBegin(GL_LINE_LOOP);
+	glVertex3d(v->BBox[0], v->BBox[2], v->BBox[4]);
+	glVertex3d(v->BBox[1], v->BBox[2], v->BBox[4]);
+	glVertex3d(v->BBox[1], v->BBox[3], v->BBox[4]);
+	glVertex3d(v->BBox[0], v->BBox[3], v->BBox[4]);
+	glEnd();    
+	glBegin(GL_LINE_LOOP);
+	glVertex3d(v->BBox[0], v->BBox[2], v->BBox[5]);
+	glVertex3d(v->BBox[1], v->BBox[2], v->BBox[5]);
+	glVertex3d(v->BBox[1], v->BBox[3], v->BBox[5]);
+	glVertex3d(v->BBox[0], v->BBox[3], v->BBox[5]);
+	glEnd();    
+	glBegin(GL_LINES);
+	glVertex3d(v->BBox[0], v->BBox[2], v->BBox[4]);
+	glVertex3d(v->BBox[0], v->BBox[2], v->BBox[5]);
+	glVertex3d(v->BBox[1], v->BBox[2], v->BBox[4]);
+	glVertex3d(v->BBox[1], v->BBox[2], v->BBox[5]);
+	glVertex3d(v->BBox[1], v->BBox[3], v->BBox[4]);
+	glVertex3d(v->BBox[1], v->BBox[3], v->BBox[5]);
+	glVertex3d(v->BBox[0], v->BBox[3], v->BBox[4]);
+	glVertex3d(v->BBox[0], v->BBox[3], v->BBox[5]);
+	glEnd();    
+      }
+    }    
+    return;
+  }
   
   for(iView=0 ; iView<List_Nbr(Post_ViewList) ; iView++){
 
@@ -148,7 +188,7 @@ void Draw_Post (void) {
 
 	// Points
 
-	if(v->NbSP && v->DrawPoints){
+	if(v->NbSP && v->DrawPoints && v->DrawScalars){
 	  nb = List_Nbr(v->SP) / v->NbSP ;
 	  for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb)
 	    Draw_ScalarPoint(v, ValMin, ValMax, Raise,
@@ -157,7 +197,7 @@ void Draw_Post (void) {
 			     (double*)List_Pointer_Fast(v->SP,i+2),
 			     (double*)List_Pointer_Fast(v->SP,i+3));
 	}
-	if(v->NbVP && v->DrawPoints){
+	if(v->NbVP && v->DrawPoints && v->DrawVectors){
 	  nb = List_Nbr(v->VP) / v->NbVP ;
 	  for(i = 0 ; i < List_Nbr(v->VP) ; i+=nb)
 	    Draw_VectorPoint(v, ValMin, ValMax, Raise,
@@ -166,7 +206,7 @@ void Draw_Post (void) {
 			     (double*)List_Pointer_Fast(v->VP,i+2),
 			     (double*)List_Pointer_Fast(v->VP,i+3));
 	}
-	if(v->NbTP && v->DrawPoints){
+	if(v->NbTP && v->DrawPoints && v->DrawTensors){
 	  nb = List_Nbr(v->TP) / v->NbTP ;
 	  for(i = 0 ; i < List_Nbr(v->TP) ; i+=nb)
 	    Draw_TensorPoint(v, ValMin, ValMax, Raise,
@@ -178,7 +218,7 @@ void Draw_Post (void) {
 
 	// Lines
 	
-	if(v->NbSL && v->DrawLines){
+	if(v->NbSL && v->DrawLines && v->DrawScalars){
 	  nb = List_Nbr(v->SL) / v->NbSL ;
 	  for(i = 0 ; i < List_Nbr(v->SL) ; i+=nb)
 	    Draw_ScalarLine(v, ValMin, ValMax, Raise,
@@ -187,7 +227,7 @@ void Draw_Post (void) {
 			    (double*)List_Pointer_Fast(v->SL,i+4),
 			    (double*)List_Pointer_Fast(v->SL,i+6));
 	}
-	if(v->NbVL && v->DrawLines){
+	if(v->NbVL && v->DrawLines && v->DrawVectors){
 	  nb = List_Nbr(v->VL) / v->NbVL ;
 	  for(i = 0 ; i < List_Nbr(v->VL) ; i+=nb)
 	    Draw_VectorLine(v, ValMin, ValMax, Raise,
@@ -196,7 +236,7 @@ void Draw_Post (void) {
 			    (double*)List_Pointer_Fast(v->VL,i+4),
 			    (double*)List_Pointer_Fast(v->VL,i+6));
 	}
-	if(v->NbTL && v->DrawLines){
+	if(v->NbTL && v->DrawLines && v->DrawTensors){
 	  nb = List_Nbr(v->TL) / v->NbTL ;
 	  for(i = 0 ; i < List_Nbr(v->TL) ; i+=nb)
 	    Draw_VectorLine(v, ValMin, ValMax, Raise,
@@ -208,7 +248,7 @@ void Draw_Post (void) {
 	
 	// Triangles
 	
-	if(v->NbST && v->DrawTriangles){
+	if(v->NbST && v->DrawTriangles && v->DrawScalars){
 	  nb = List_Nbr(v->ST) / v->NbST ;
 	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
 	    Draw_ScalarTriangle(v, ValMin, ValMax, Raise,
@@ -217,7 +257,7 @@ void Draw_Post (void) {
 				(double*)List_Pointer_Fast(v->ST,i+6),
 				(double*)List_Pointer_Fast(v->ST,i+9));
 	}
-	if(v->NbVT && v->DrawTriangles){
+	if(v->NbVT && v->DrawTriangles && v->DrawVectors){
 	  nb = List_Nbr(v->VT) / v->NbVT ;
 	  for(i = 0 ; i < List_Nbr(v->VT) ; i+=nb)
 	    Draw_VectorTriangle(v, ValMin, ValMax, Raise,
@@ -226,7 +266,7 @@ void Draw_Post (void) {
 				(double*)List_Pointer_Fast(v->VT,i+6),
 				(double*)List_Pointer_Fast(v->VT,i+9));
 	}
-	if(v->NbTT && v->DrawTriangles){
+	if(v->NbTT && v->DrawTriangles && v->DrawTensors){
 	  nb = List_Nbr(v->TT) / v->NbTT ;
 	  for(i = 0 ; i < List_Nbr(v->TT) ; i+=nb)
 	    Draw_TensorTriangle(v, ValMin, ValMax, Raise,
@@ -247,7 +287,7 @@ void Draw_Post (void) {
 	     the number of iso-surfaces is changed.
 	 */
 	
-	if(v->NbSS && v->DrawTetrahedra){
+	if(v->NbSS && v->DrawTetrahedra && v->DrawScalars){
 	  nb = List_Nbr(v->SS) / v->NbSS ;
 	  for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
 	    Draw_ScalarTetrahedron(v, 1, ValMin, ValMax, Raise,
@@ -262,7 +302,7 @@ void Draw_Post (void) {
 				   (double*)List_Pointer_Fast(v->SS,i+8),
 				   (double*)List_Pointer_Fast(v->SS,i+12));
 	}
-	if(v->NbVS && v->DrawTetrahedra){
+	if(v->NbVS && v->DrawTetrahedra && v->DrawVectors){
 	  nb = List_Nbr(v->VS) / v->NbVS ;
 	  for(i = 0 ; i < List_Nbr(v->VS) ; i+=nb)
 	    Draw_VectorTetrahedron(v, ValMin, ValMax, Raise,
@@ -271,7 +311,7 @@ void Draw_Post (void) {
 				   (double*)List_Pointer_Fast(v->VS,i+8),
 				   (double*)List_Pointer_Fast(v->VS,i+12));
 	}
-	if(v->NbTS && v->DrawTetrahedra){
+	if(v->NbTS && v->DrawTetrahedra && v->DrawTensors){
 	  nb = List_Nbr(v->TS) / v->NbTS ;
 	  for(i = 0 ; i < List_Nbr(v->TS) ; i+=nb)
 	    Draw_TensorTetrahedron(v, ValMin, ValMax, Raise,

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.61 2001-04-17 11:22:00 geuzaine Exp $
+// $Id: GUI.cpp,v 1.62 2001-04-22 18:13:02 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1549,10 +1549,18 @@ void GUI::set_statistics(){
     p[3] += v->NbST + v->NbVT + v->NbTT;
     p[4] += v->NbSS + v->NbVS + v->NbTS;
     if(v->Visible){
-      if(v->DrawPoints) p[5] += v->NbSP + v->NbVP + v->NbTP;
-      if(v->DrawLines) p[6] += v->NbSL + v->NbVL + v->NbTL;
-      if(v->DrawTriangles) p[7] += v->NbST + v->NbVT + v->NbTT;
-      if(v->DrawTetrahedra) p[8] += v->NbSS + v->NbVS + v->NbTS;
+      if(v->DrawPoints)	p[5] += v->DrawScalars ? v->NbSP : 0 + 
+			        v->DrawVectors ? v->NbVP : 0 + 
+			        v->DrawTensors ? v->NbTP : 0 ;
+      if(v->DrawLines) p[6] += v->DrawScalars ? v->NbSL : 0 + 
+			       v->DrawVectors ? v->NbVL : 0 + 
+			       v->DrawTensors ? v->NbTL : 0 ;
+      if(v->DrawTriangles) p[7] += v->DrawScalars ? v->NbST : 0 + 
+			           v->DrawVectors ? v->NbVT : 0 + 
+			           v->DrawTensors ? v->NbTT : 0 ;
+      if(v->DrawTetrahedra) p[8] += v->DrawScalars ? v->NbSS : 0 + 
+			            v->DrawVectors ? v->NbVS : 0 + 
+   			            v->DrawTensors ? v->NbTS : 0 ;
     }
   }
   sprintf(label[19], "%g/%g", p[5],p[1]); stat_value[19]->value(label[19]);
@@ -1780,7 +1788,11 @@ void GUI::create_view_options_window(int num){
         view_butt[19] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW, BH, "Draw lines");
         view_butt[20] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW, BH, "Draw triangles");
         view_butt[21] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Draw tetrahedra");
-	for(i=13 ; i<22 ; i++){
+
+        view_butt[22] = new Fl_Check_Button(width/2, 2*WB+5*BH, BW, BH, "Draw scalar values");
+        view_butt[23] = new Fl_Check_Button(width/2, 2*WB+6*BH, BW, BH, "Draw vector values");
+        view_butt[24] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW, BH, "Draw tensor values");
+	for(i=13 ; i<25 ; i++){
 	  view_butt[i]->type(FL_TOGGLE_BUTTON);
 	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
@@ -1919,7 +1931,7 @@ void GUI::create_view_options_window(int num){
 	view_value[10]->align(FL_ALIGN_RIGHT);
 	view_value[10]->minimum(0); 
 	view_value[10]->maximum(1000); 
-	view_value[10]->step(1);
+	view_value[10]->step(0.1);
 	view_vector->end();
       }
       // Colors
@@ -1983,6 +1995,9 @@ void GUI::update_view_window(int num){
   opt_view_draw_lines(num, GMSH_GUI, 0);
   opt_view_draw_triangles(num, GMSH_GUI, 0);
   opt_view_draw_tetrahedra(num, GMSH_GUI, 0);
+  opt_view_draw_scalars(num, GMSH_GUI, 0);
+  opt_view_draw_vectors(num, GMSH_GUI, 0);
+  opt_view_draw_tensors(num, GMSH_GUI, 0);
 
   // range
   opt_view_range_type(num, GMSH_GUI, 0);
