@@ -36,7 +36,7 @@ Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
 };
 
 // A translation ({-2*h,0,0}) and a rotation ({1,0,0} , {0,0.15,0.25},
-// Pi/4) can be combined:
+// Pi/2) can be combined:
 
 Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
   Layers {10,9004,1}; Recombine; 
