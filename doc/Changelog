@@ -1,3 +1,5 @@
+New in 1.12: Corrected vector lines in post-processing parsed format; corrected animation on Windows;
+
 New in 1.11: Corrected included file loading problem.
 
 New in 1.10: Switched from Motif to FLTK for the GUI. Many small
