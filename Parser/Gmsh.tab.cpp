@@ -177,7 +177,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.129 2001-11-13 08:41:03 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.130 2001-11-14 15:31:00 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -5212,7 +5212,7 @@ case 250:
 	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = (int)yyvsp[-1].d;
+	  c->ipar[0] = (yyvsp[-1].d>2)?(int)yyvsp[-1].d:2;
 	  c->ipar[1] = sign(d);
 	  c->dpar[0] = 1.0;
 	}
@@ -5232,7 +5232,7 @@ case 251:
 	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = (int)yyvsp[-4].d;
+	  c->ipar[0] = (yyvsp[-4].d>2)?(int)yyvsp[-4].d:2;
 	  c->ipar[1] = sign(d); /* Progresion : code 1 ou -1 */
 	  c->dpar[0] = fabs(yyvsp[-1].d);
 	}
@@ -5252,7 +5252,7 @@ case 252:
 	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = (int)yyvsp[-4].d;
+	  c->ipar[0] = (yyvsp[-4].d>2)?(int)yyvsp[-4].d:2;
 	  c->ipar[1] = 2*sign(d); /* Bump : code 2 ou -2 */
 	  c->dpar[0] = fabs(yyvsp[-1].d);
 	}

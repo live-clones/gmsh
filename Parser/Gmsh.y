@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.113 2001-11-13 08:41:03 geuzaine Exp $
+// $Id: Gmsh.y,v 1.114 2001-11-14 15:31:00 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -1989,7 +1989,7 @@ Transfini :
 	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = (int)$5;
+	  c->ipar[0] = ($5>2)?(int)$5:2;
 	  c->ipar[1] = sign(d);
 	  c->dpar[0] = 1.0;
 	}
@@ -2007,7 +2007,7 @@ Transfini :
 	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = (int)$5;
+	  c->ipar[0] = ($5>2)?(int)$5:2;
 	  c->ipar[1] = sign(d); /* Progresion : code 1 ou -1 */
 	  c->dpar[0] = fabs($8);
 	}
@@ -2025,7 +2025,7 @@ Transfini :
 	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = (int)$5;
+	  c->ipar[0] = ($5>2)?(int)$5:2;
 	  c->ipar[1] = 2*sign(d); /* Bump : code 2 ou -2 */
 	  c->dpar[0] = fabs($8);
 	}
