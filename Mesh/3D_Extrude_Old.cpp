@@ -1,9 +1,9 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.2 2001-06-25 16:23:00 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.3 2001-06-26 07:06:11 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
-// command line options -extrude (w/o -recombine). This mesh generator
-// pre-supposes a definition of surfaces in the XY plane, and will
-// extrude everything along the Z axis, taking parameters
+// the command line option -extrude (w/o -recombine). This mesh
+// generator pre-supposes a definition of surfaces in the XY plane,
+// and will extrude everything along the Z axis, taking parameters
 // interactively from standard input, e.g.
 //
 // gmsh test -extrude -recombine < params.ext
@@ -17,7 +17,7 @@
 //
 // WARNING:
 //
-// The is no way to save XY generated lines or other entities for the
+// There is no way to save XY generated lines or other entities for the
 // moment
 
 #define NB_LAYER_MAX 100

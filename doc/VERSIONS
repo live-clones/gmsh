@@ -1,11 +1,10 @@
-$Id: VERSIONS,v 1.21 2001-06-25 13:21:15 geuzaine Exp $
+$Id: VERSIONS,v 1.22 2001-06-26 07:06:11 geuzaine Exp $
 
 New in 1.20: Many memory leak fixes; Various bug fixes (Functions in
 Includes, solver command, ColorTable option, ...) and small
 enhancements (menu reorganization, constrained background mesh, mesh
 visibility options, geometry edition, mesh quality histograms, ...);
-Re-integrated the old command-line extrusion mesh generator (the new
-one, e.g. used in tutorial 3) is buggy (it generates duplicate nodes);
+Re-integrated the old command-line extrusion mesh generator;
 
 New in 1.19: Fixed seg. fault for scalar simplex post-processing; new
 Solver menu; interface for GetDP solver through sockets; fixed
