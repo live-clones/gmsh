@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.15 2001-12-04 09:27:57 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.16 2001-12-05 14:33:58 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -18,6 +18,7 @@
 // New XY surfaces: 2 * K1 + layer * K2 + surf->num
 //  perp. surfaces: 1 * K1 + layer * K2 + curve->num
 //     perp. lines: 4 * K1 + layer * K2 + point->Num
+//    New XY lines: 5 * K1 + layer * K2 + curve->Num
 //
 // WARNING:
 //
@@ -48,7 +49,7 @@ Volume        *THEV;
 int            TEST_IS_ALL_OK, NbLayer;
 int            NbElmLayer [MAXLAYERS];
 int            ZonLayer   [MAXLAYERS];
-int            LineLayer  [MAXLAYERS];
+int            LineLayer  [MAXLAYERS+1];
 int            SurfLayer  [MAXLAYERS+1];
 double         hLayer     [MAXLAYERS];
 double         parLayer   [MAXLAYERS];
@@ -455,6 +456,20 @@ static void Extrude_Seg(Vertex *V1, Vertex *V2){
   //printf("-curve vertex %d %p   %d %p\n", V1->Num, V1, V2->Num, V2);
 
   k = 0;
+  for(i=0;i<=NbLayer;i++){
+    if(LineLayer[i]){
+      List_Read(V1->Extruded_Points,k,&v1);
+      List_Read(V2->Extruded_Points,k,&v2);
+      s = Create_Simplex(v1,v2,NULL,NULL);
+      s->iEnt = LineLayer[i];
+      Tree_Add(THEV->Simp_Surf,&s);
+    }
+    for(j=0;j<NbElmLayer[i];j++){
+      k++;
+    }
+  }
+
+  k = 0;
   for(i=0;i<NbLayer;i++){
     for(j=0;j<NbElmLayer[i];j++){
       List_Read(V1->Extruded_Points,k,&v1);
@@ -505,8 +520,11 @@ static void Extrude_Curve (void *data , void *dum){
 
   /* Numerotation automatique des entites physiques */
   Msg(INFO, "Extruding Curve %d", c->Num);
+
+  LineLayer[0] = c->Num ;
   for(i=0;i<NbLayer;i++){
     SurfLayer[i] = (int)(1 * K1) + (int)((i+1) * K2) + c->Num ;
+    LineLayer[i+1] = (int)(5 * K1) + (int)((i+1) * K2) + c->Num ;
   }
 
   for(i=0;i<List_Nbr(c->Vertices)-1;i++){
