@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2003-03-01 23:11:35 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2003-03-02 01:08:56 $)
 
 1. GENERAL
 ==========
@@ -97,7 +97,7 @@ problem:
 
 5.1) What should I do when the 2D unstructured algorithm fails?
 
-Try the other 2D algorithms, e.g.:
+Try one of the other 2D algorithms, e.g.:
 - on the command line: gmsh -algo tri
 - in the interface: Tools->Options->Mesh->2D->Isotropic algorithm (Triangle)
 - in input files: Mesh.Algorithm = 3
