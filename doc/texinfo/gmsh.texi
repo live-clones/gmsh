@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.63 2003-06-15 16:43:32 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.64 2003-06-17 00:34:46 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -46,7 +46,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.8
+@set EDITION        1.9
 @set GMSH-VERSION   1.45
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -1213,7 +1213,7 @@ a real option.
 Subtracts and affects @var{expression} to an existing expression identifier
 or to a real option.
 
-@item @var{string} | @var{real-option} *-= @var{expression};
+@item @var{string} | @var{real-option} *= @var{expression};
 Multiplies and affects @var{expression} to an existing expression identifier
 or to a real option.
 
