@@ -989,22 +989,22 @@ StringXNumber ViewOptions_Number[] = {
 } ;
 
 StringXNumber PrintOptions_Number[] = {
-  { F|O, "Compress" , opt_print_compress , 0 ,
-    "Compress PostScript/PDF output using zlib" },
   { F|O, "EpsBackground" , opt_print_eps_background , 1 ,
     "Save image background in PostScript/PDF output" },
+  { F|O, "EpsBestRoot" , opt_print_eps_best_root , 1 ,
+    "Try to minimize primitive splitting in BSP tree sorted PostScript/PDF output" },
+  { F|O, "EpsCompress" , opt_print_eps_compress , 0 ,
+    "Compress PostScript/PDF output using zlib" },
   { F|O, "EpsFontSize" , opt_print_eps_font_size , 12. ,
     "Font size used in PostScript/PDF output" },
   { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 0.2 ,
     "Width factor for lines in PostScript/PDF output" },
+  { F|O, "EpsOcclusionCulling" , opt_print_eps_occlusion_culling , 1 ,
+    "Cull occluded primitives (to reduce PostScript/PDF file size)" },
   { F|O, "EpsPointSizeFactor" , opt_print_eps_point_size_factor , 1. ,
     "Size factor for points in PostScript/PDF output" },
   { F|O, "EpsQuality" , opt_print_eps_quality , 1 ,
     "PostScript/PDF quality (1=simple sort, 2=BSP tree sort)" },
-  { F|O, "EpsOcclusionCulling" , opt_print_eps_occlusion_culling , 1 ,
-    "Cull occluded primitives (to reduce PostScript/PDF file size)" },
-  { F|O, "EpsBestRoot" , opt_print_eps_best_root , 1 ,
-    "Try to minimize primitive splitting in BSP tree sorted PostScript/PDF output" },
 
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 

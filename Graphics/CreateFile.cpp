@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.49 2003-11-05 17:11:36 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.50 2003-11-08 04:08:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -216,7 +216,7 @@ void CreateOutputFile(char *name, int format)
       (CTX.print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
       (CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
       (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
-      (CTX.print.compress ? GL2PS_COMPRESS : 0) |
+      (CTX.print.eps_compress ? GL2PS_COMPRESS : 0) |
       (format == FORMAT_PSTEX ? GL2PS_NO_TEXT : 0) |
       (format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0) |
       (format == FORMAT_PDFTEX ? GL2PS_NO_TEXT : 0);

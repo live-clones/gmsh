@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.116 2003-10-26 16:53:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.117 2003-11-08 04:08:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -4514,11 +4514,11 @@ double opt_print_format(OPT_ARGS_NUM)
   return CTX.print.format;
 }
 
-double opt_print_compress(OPT_ARGS_NUM)
+double opt_print_eps_compress(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.print.compress = (int)val;
-  return CTX.print.compress;
+    CTX.print.eps_compress = (int)val;
+  return CTX.print.eps_compress;
 }
 
 double opt_print_eps_quality(OPT_ARGS_NUM)

@@ -462,7 +462,7 @@ double opt_view_line_width(OPT_ARGS_NUM);
 double opt_view_point_type(OPT_ARGS_NUM);
 double opt_view_line_type(OPT_ARGS_NUM);
 double opt_print_format(OPT_ARGS_NUM);
-double opt_print_compress(OPT_ARGS_NUM);
+double opt_print_eps_compress(OPT_ARGS_NUM);
 double opt_print_eps_quality(OPT_ARGS_NUM);
 double opt_print_eps_occlusion_culling(OPT_ARGS_NUM);
 double opt_print_eps_best_root(OPT_ARGS_NUM);
