@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.26 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.27 2001-08-07 09:10:14 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -453,18 +453,15 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
       zz[k] = Z[k] + fact * Val[k][2] + Raise[2][k];
     }
 
+    int ts = View->TimeStep;
+    View->TimeStep = 0;
     switch(nbnod){
     case 1:
-      Palette2(View,ValMin,ValMax,d[0]);
-      glBegin(GL_POINTS);
-      glVertex3d(xx[0],yy[0],zz[0]);
-      glEnd();
-      if(View->TimeStep){//draw trajectory
+      Draw_ScalarPoint(View, ValMin, ValMax, Raise, xx, yy, zz, d);
+      if(ts){//draw trajectory
 	glBegin(GL_LINE_STRIP);
-	for(j=0 ; j<View->TimeStep+1 ; j++){
-	  dx = V[3*(View->TimeStep-j)]  ;
-	  dy = V[3*(View->TimeStep-j)+1];
-	  dz = V[3*(View->TimeStep-j)+2];
+	for(j=0 ; j<ts+1 ; j++){
+	  dx = V[3*(ts-j)]; dy = V[3*(ts-j)+1]; dz = V[3*(ts-j)+2];
 	  dd = sqrt(dx*dx+dy*dy+dz*dz);
 	  Palette2(View,ValMin,ValMax,dd);
 	  glVertex3d(X[0] + fact*dx + Raise[0][0],
@@ -478,6 +475,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
     case 3: Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d); break;
     case 4: Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, xx, yy, zz, d); break;
     }
+    View->TimeStep = ts;
     return;
   }
 
