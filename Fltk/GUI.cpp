@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.249 2003-11-14 21:20:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.250 2003-11-14 21:43:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2633,6 +2633,7 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
       o->add("");
       add_multiline_in_browser(o, "Author: ", author);
       add_multiline_in_browser(o, "Copyright (C) ", copyright);
+      o->add("");
 
       g->end();
     }
