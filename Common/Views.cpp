@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.82 2002-11-16 08:29:14 geuzaine Exp $
+// $Id: Views.cpp,v 1.83 2002-12-02 05:58:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -959,14 +959,11 @@ public :
   mycont c;
 };
 
-void smooth_list (List_T *SS , double *min, double *max,
-		  int NbTimeStep, int nbvert, int nb, 
-		  mycont & connectivities){
+void generate_connectivities (List_T *SS , int NbTimeStep, int nbvert, int nb, 
+			      mycont & connectivities){
   double *x,*y,*z,*v;
   int i,j,k;
-  double *vals = new double[NbTimeStep];
-  *min = VAL_INF;
-  *max = -VAL_INF;
+  double vals[NbTimeStep];
 
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
     x = (double*)List_Pointer_Fast(SS,i);
@@ -983,13 +980,23 @@ void smooth_list (List_T *SS , double *min, double *max,
 	connectivities.insert(xyz);
       }
       else{
-	xyzv *xx = (xyzv*) &(*it); // a little weird ... becaus we know that 
-	// this will not destroy the set ordering
+	// a little weird ... because we know that this will not
+	// destroy the set ordering
+	xyzv *xx = (xyzv*) &(*it); 
 	xx->update(NbTimeStep,vals);
       }
     }
   }   
-  
+}
+
+void smooth_list (List_T *SS , double *min, double *max,
+		  int NbTimeStep, int nbvert, int nb, 
+		  mycont & connectivities){
+  double *x,*y,*z,*v;
+  int i,j,k;
+  *min = VAL_INF;
+  *max = -VAL_INF;
+
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
     x = (double*)List_Pointer_Fast(SS,i);
     y = (double*)List_Pointer_Fast(SS,i+nbvert);
@@ -1007,28 +1014,54 @@ void smooth_list (List_T *SS , double *min, double *max,
       }
     }
   } 
-  delete [] vals;
+
 }
 
 void Post_View :: smooth (){
   xyzv::eps = CTX.lc * 1.e-8;
-  int nb;
-  
-  if(NbSS){
-    mycont conSS;
-    Msg(INFO,"Smoothing scalar tetrahedra in view...");
-    nb = List_Nbr(SS) / NbSS ;
-    smooth_list (SS , &Min, &Max, NbTimeStep, 4, nb, conSS);
+
+  if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY){
+    mycont con;
+    int nbl=0, nbt=0, nbq=0, nbs=0, nbh=0, nbi=0, nby=0;
+    Msg(INFO,"Smoothing scalar primitives in view...");
+    if(NbSL){
+      nbt = List_Nbr(SL) / NbSL ;
+      generate_connectivities(SL , NbTimeStep, 2, nbl, con);
+    }
+    if(NbST){
+      nbt = List_Nbr(ST) / NbST ;
+      generate_connectivities(ST , NbTimeStep, 3, nbt, con);
+    }
+    if(NbSQ){
+      nbq = List_Nbr(SQ) / NbSQ ;
+      generate_connectivities(SQ , NbTimeStep, 4, nbq, con);
+    }
+    if(NbSS){
+      nbs = List_Nbr(SS) / NbSS ;
+      generate_connectivities(SS , NbTimeStep, 4, nbs, con);
+    }
+    if(NbSH){
+      nbh = List_Nbr(SH) / NbSH ;
+      generate_connectivities(SH , NbTimeStep, 8, nbh, con);
+    }
+    if(NbSI){
+      nbi = List_Nbr(SI) / NbSI ;
+      generate_connectivities(SI , NbTimeStep, 6, nbi, con);
+    }
+    if(NbSY){
+      nby = List_Nbr(SY) / NbSY ;
+      generate_connectivities(SY , NbTimeStep, 5, nby, con);
+    }
+    if(nbl) smooth_list(SL , &Min, &Max, NbTimeStep, 2, nbl, con);
+    if(nbt) smooth_list(ST , &Min, &Max, NbTimeStep, 3, nbt, con);
+    if(nbq) smooth_list(SQ , &Min, &Max, NbTimeStep, 4, nbq, con);
+    if(nbs) smooth_list(SS , &Min, &Max, NbTimeStep, 4, nbs, con);
+    if(nbh) smooth_list(SH , &Min, &Max, NbTimeStep, 8, nbh, con);
+    if(nbi) smooth_list(SI , &Min, &Max, NbTimeStep, 6, nbi, con);
+    if(nby) smooth_list(SY , &Min, &Max, NbTimeStep, 5, nby, con);
     Msg(INFO,"...done");
   }
-  if(NbST){
-    mycont conST;
-    Msg(INFO,"Smoothing scalar triangles in view...");
-    nb = List_Nbr(ST) / NbST ;
-    smooth_list (ST , &Min, &Max, NbTimeStep, 3, nb, conST);
-    Msg(INFO,"...done");
-  }
-  
+
 }
   
 // Normal smoothing
