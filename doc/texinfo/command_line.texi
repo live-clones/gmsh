@@ -72,14 +72,8 @@ disable double buffering
 specify the font size for the GUI (default: 12)
 @item -scheme string
 specify FLTK scheme
-@item -alpha
-enable alpha blending
-@item -notrack
-don't use trackball mode for rotations
 @item -display string
 specify display
-@item -perspective
-set projection mode to perspective
 @end ftable
 
 @sp 1

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.40 2004-05-29 10:11:10 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.41 2004-05-31 18:36:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -97,10 +97,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -nodb                 disable double buffering");
   Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
   Msg(DIRECT, "  -scheme string        specify FLTK GUI scheme");
-  Msg(DIRECT, "  -alpha                enable alpha blending");
-  Msg(DIRECT, "  -notrack              don't use trackball mode for rotations");
   Msg(DIRECT, "  -display string       specify display");
-  Msg(DIRECT, "  -perspective          set projection mode to perspective");
 #endif
   Msg(DIRECT, "Other options:");      
 #if defined(HAVE_FLTK)
@@ -133,6 +130,12 @@ char *Get_BuildOptions(void)
 #endif
 #if defined(HAVE_LIBPNG)
     strcat(opt, "PNG ");
+#endif
+#if defined(HAVE_LIBZ)
+    strcat(opt, "ZLIB ");
+#endif
+#if defined(HAVE_MATH_EVAL)
+    strcat(opt, "MATHEVAL ");
 #endif
     first = 0;
   }
@@ -213,11 +216,11 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         CTX.mesh.save_all = 1;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "extrude")) {        //old extrusion mesh generator
+      else if(!strcmp(argv[i] + 1, "extrude")) { // old extrusion mesh generator
         CTX.mesh.oldxtrude = 1;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "recombine")) {      //old extrusion mesh generator
+      else if(!strcmp(argv[i] + 1, "recombine")) { // old extrusion mesh generator
         CTX.mesh.oldxtrude_recombine = 1;
         i++;
       }
@@ -450,20 +453,8 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         }
       }
 #if defined(HAVE_FLTK)
-      else if(!strcmp(argv[i] + 1, "noterm")) {
-        CTX.terminal = 0;
-        i++;
-      }
       else if(!strcmp(argv[i] + 1, "term")) {
         CTX.terminal = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "alpha")) {
-        CTX.alpha = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "notrack")) {
-        CTX.useTrackball = 0;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "dual")) {
@@ -507,24 +498,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
-      }
-      else if(!strcmp(argv[i] + 1, "command") || !strcmp(argv[i] + 1, "c")) {
-        CTX.command_win = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "nocommand") ||
-              !strcmp(argv[i] + 1, "noc")) {
-        CTX.command_win = 0;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "perspective") ||
-              !strcmp(argv[i] + 1, "p")) {
-        CTX.ortho = 0;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "ortho") || !strcmp(argv[i] + 1, "o")) {
-        CTX.ortho = 0;
-        i++;
       }
       else if(!strcmp(argv[i] + 1, "threads")) {
         CTX.threads = 1;

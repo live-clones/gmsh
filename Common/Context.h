@@ -104,7 +104,6 @@ public :
   int db;                     // double buffer? 
   int ortho;                  // orthogonal projection? 
   int fast;                   // inhibit mesh and postpro drawing when changing r,s,t 
-  int command_win;            // command window? 
   int axes, small_axes;       // draw axes? 
   int small_axes_pos[2];      // small axes position 
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 

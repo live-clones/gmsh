@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.94 2004-05-30 19:17:58 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.95 2004-05-31 18:36:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -220,7 +220,6 @@ void Draw_Mesh(Mesh * M)
   // draw the post-processing views
 
   Draw_Post();
-
 }
 
 void Draw_Mesh_Volume(void *a, void *b)
@@ -294,10 +293,10 @@ void Draw_Mesh_Curve(void *a, void *b)
   Curve *c = *(Curve **) a;
   if(c->Num < 0)
     return;
-  theColor = c->Color;
-  thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
   if(!(c->Visible & VIS_MESH))
     return;
+  theColor = c->Color;
+  thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
   Tree_Action(c->Simplexes, Draw_Mesh_Line);
 }
 
@@ -532,7 +531,7 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
   }
       
   if(edges){
-    if(faces || CTX.mesh.surfaces_faces){
+    if(faces){
       glDisableClientState(GL_COLOR_ARRAY);
       glColor4ubv((GLubyte *) & CTX.color.mesh.line);
     }

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.64 2004-05-30 19:17:58 geuzaine Exp $
+// $Id: Geom.cpp,v 1.65 2004-05-31 18:36:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,12 +37,11 @@ extern Mesh *THEM;
 
 // Points
 
-void Draw_GeoPoint(void *a, void *b)
+void Draw_Geo_Point(void *a, void *b)
 {
-  Vertex *v;
   char Num[100];
 
-  v = *(Vertex **) a;
+  Vertex *v = *(Vertex **) a;
 
   if(!(v->Visible & VIS_GEOM))
     return;
@@ -97,13 +96,12 @@ void Draw_GeoPoint(void *a, void *b)
 
 void Draw_Curve(void *a, void *b)
 {
-  int i, N;
+  int N;
   double mod, x[2], y[2], z[2];
   char Num[100];
-  Curve *c;
   Vertex v, dv;
 
-  c = *(Curve **) a;
+  Curve *c = *(Curve **) a;
 
   if(c->Num < 0 || !(c->Visible & VIS_GEOM) || c->Dirty)
     return;
@@ -143,7 +141,7 @@ void Draw_Curve(void *a, void *b)
     if(c->Typ == MSH_SEGM_DISCRETE) {
       Simplex *s;
       List_T *temp = Tree2List(c->Simplexes);
-      for(i = 0; i < List_Nbr(temp); i++) {
+      for(int i = 0; i < List_Nbr(temp); i++) {
         List_Read(temp, i, &s);
         glBegin(GL_LINE_STRIP);
         glVertex3d(s->V[0]->Pos.X, s->V[0]->Pos.Y, s->V[0]->Pos.Z);
@@ -154,7 +152,7 @@ void Draw_Curve(void *a, void *b)
     }
     else {
       if(CTX.geom.line_type) {
-        for(i = 0; i < N - 1; i++) {
+        for(int i = 0; i < N - 1; i++) {
           v = InterpolateCurve(c, (double)i / (double)(N - 1), 0);
           dv = InterpolateCurve(c, (double)(i + 1) / (double)(N - 1), 0);
           x[0] = v.Pos.X;
@@ -169,7 +167,7 @@ void Draw_Curve(void *a, void *b)
       }
       else {
         glBegin(GL_LINE_STRIP);
-        for(i = 0; i < N; i++) {
+        for(int i = 0; i < N; i++) {
           v = InterpolateCurve(c, (double)i / (double)(N - 1), 0);
           glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
         }
@@ -227,30 +225,24 @@ void put_Z(Vertex * v, Surface * s)
 int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z,
                            double n[3])
 {
-  Curve *C;
-  Vertex V, P1, P2;
-  int i, j, N;
-  double Angle, u1, u2;
-
-  Angle = 0.0;
+  double Angle = 0.0;
+  Vertex V;
   V.Pos.X = X;
   V.Pos.Y = Y;
   V.Pos.Z = Z;
 
-  for(i = 0; i < List_Nbr(S->Generatrices); i++) {
+  for(int i = 0; i < List_Nbr(S->Generatrices); i++) {
 
+    Curve *C;
     List_Read(S->Generatrices, i, &C);
 
-    if(C->Typ == MSH_SEGM_LINE)
-      N = 1;
-    else
-      N = 10;
+    int N = (C->Typ == MSH_SEGM_LINE) ? 1 : 10;
 
-    for(j = 0; j < N; j++) {
-      u1 = (double)j / (double)(N);
-      u2 = (double)(j + 1) / (double)(N);
-      P1 = InterpolateCurve(C, u1, 0);
-      P2 = InterpolateCurve(C, u2, 0);
+    for(int j = 0; j < N; j++) {
+      double u1 = (double)j / (double)(N);
+      double u2 = (double)(j + 1) / (double)(N);
+      Vertex P1 = InterpolateCurve(C, u1, 0);
+      Vertex P2 = InterpolateCurve(C, u2, 0);
       Angle += angle_plan(&V, &P1, &P2, n);
     }
 
@@ -549,9 +541,7 @@ void Draw_NonPlane_Surface(Surface * s)
 
 void Draw_Surface(void *a, void *b)
 {
-  Surface *s;
-
-  s = *(Surface **) a;
+  Surface *s = *(Surface **) a;
 
   if(!s || !s->Support || !(s->Visible & VIS_GEOM) || s->Dirty)
     return;
@@ -603,7 +593,7 @@ void Draw_Geom(Mesh * m)
     return;
 
   if(CTX.geom.points || CTX.geom.points_num)
-    Tree_Action(m->Points, Draw_GeoPoint);
+    Tree_Action(m->Points, Draw_Geo_Point);
   if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
     Tree_Action(m->Curves, Draw_Curve);
   if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
@@ -618,7 +608,6 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
 {
   Curve *cc;
   char Message[256], temp[256];
-  int i, nbg;
 
   if(permanent){
     // we want to draw incrementally (in-between to "Draw()" calls):
@@ -629,7 +618,7 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
   if(v) {
     if(permanent){
       v->Frozen = 1;
-      Draw_GeoPoint(&v,NULL);
+      Draw_Geo_Point(&v,NULL);
     }
     else{
       Msg(STATUS1N, "Point %d {%.5g,%.5g,%.5g} (%.5g)", v->Num, v->Pos.X,
@@ -652,9 +641,9 @@ void HighlightEntity(Vertex * v, Curve * c, Surface * s, int permanent)
     }
     else{
       sprintf(Message, "Surface %d {", s->Num);
-      nbg = List_Nbr(s->Generatrices);
+      int nbg = List_Nbr(s->Generatrices);
       if(nbg < 10) {
-	for(i = 0; i < nbg; i++) {
+	for(int i = 0; i < nbg; i++) {
 	  List_Read(s->Generatrices, i, &cc);
 	  if(!i)
 	    sprintf(temp, "%d", cc->Num);
