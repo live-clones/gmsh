@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.6 2003-08-22 05:34:55 geuzaine Exp $
+$Id: CREDITS,v 1.7 2003-10-23 19:27:17 geuzaine Exp $
 
              Gmsh is copyright (c) 1997-2003 
 
@@ -44,12 +44,18 @@ Silicon Graphics, Inc. not be used in advertising or publicity
 pertaining to distribution of the software without specific, written
 prior permission.
 
-The colorbar widget (Fltk/Colorbar_Window.cpp) is based on code
-copyright (c) 1990-1995, Bill Hibbard, Brian Paul, Dave Santek, and
-Andre Battaiola.
-
 The GIF and PPM routines (Graphics/gl2gif.cpp) are based on code
-copyright (c) 1989, 1991, Jef Poskanzer.
+copyright (c) 1989, 1991, Jef Poskanzer. Permission to use, copy,
+modify, and distribute this software and its documentation for any
+purpose and without fee is hereby granted, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+This software is provided "as is" without express or implied warranty.
+
+The colorbar widget (Fltk/Colorbar_Window.cpp) was inspired by code
+from the Vis5d program for visualizing five dimensional gridded data
+sets, copyright (c) 1990-1995, Bill Hibbard, Brian Paul, Dave Santek,
+and Andre Battaiola.
 
 This version of Gmsh may also contain code (in the Triangle
 subdirectory) copyright (c) 1993, 1995, 1997, 1998, 2002, Jonathan
