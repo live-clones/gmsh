@@ -41,7 +41,7 @@ generator with built-in pre- and post-processing facilities</h1>
 <h2><a name="Description"></a>Description</h2>
 
 Gmsh is an automatic 3D finite element grid generator (primarily
-Delaunay) with build-in CAD and post-processing facilities. Its design
+Delaunay) with a build-in CAD engine and post-processor. Its design
 goal is to provide a simple meshing tool for academic problems with
 parametric input and up to date visualization capabilities.
 <p>
@@ -120,25 +120,6 @@ are included in the archives.
 <p>
 Older versions are also still available: <a
 href="/gmsh/src/">sources</a>, <a href="/gmsh/bin/">binaries</a>.
-
-<p>
-<a name="opengl-footnote"></a><a
-href="#opengl-footmark"><sup>1</sup></a>You need the OpenGL libraries
-installed on your system (and in the path of the library loader). A
-free replacement for OpenGL can be found at <a
-href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</a>.
-Remember that you may have to reconfigure the loader (ldconfig under
-Linux) or modify the LD_LIBRARY_PATH/SHLIB_PATH/etc. environment
-variable in order for Gmsh to find the libraries.
-<p>
-<a name="build-footnote"></a><a
-href="#build-footmark"><sup>2</sup></a>You need the <a
-href="http://sources.redhat.com/gsl/">GSL (> 1.2)</a> and <a
-href="http://www.fltk.org/">FLTK (1.1.x)</a> libraries properly
-installed on your system in order to compile Gmsh. Non-graphical
-versions can be compiled without FLTK. Compiling the Windows version
-requires the <a href="http://www.cygwin.com">Cygwin</a> tools and
-compilers.
 
 <h2><a name="Authors"></a>Authors and credits</h2>
 
@@ -277,6 +258,25 @@ href="/gl2ps/">GL2PS</a>.
 <input type="image" src="/images/donation.gif" name="submit" 
        alt="Make a donation with PayPal">
 </form>
+
+<hr>
+<a name="opengl-footnote"></a><a
+href="#opengl-footmark"><sup>1</sup></a>You need the OpenGL libraries
+installed on your system (and in the path of the library loader). A
+free replacement for OpenGL can be found at <a
+href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</a>.
+Remember that you may have to reconfigure the loader (ldconfig under
+Linux) or modify the LD_LIBRARY_PATH/SHLIB_PATH/etc. environment
+variable in order for Gmsh to find the libraries.
+<p>
+<a name="build-footnote"></a><a
+href="#build-footmark"><sup>2</sup></a>You need the <a
+href="http://sources.redhat.com/gsl/">GSL (> 1.2)</a> and <a
+href="http://www.fltk.org/">FLTK (1.1.x)</a> libraries properly
+installed on your system in order to compile Gmsh. Non-graphical
+versions can be compiled without FLTK. Compiling the Windows version
+requires the <a href="http://www.cygwin.com">Cygwin</a> tools and
+compilers.
 
 <p>
 Back to <a href="/">geuz.org</a>
