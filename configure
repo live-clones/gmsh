@@ -847,15 +847,15 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
---enable-gui        build the graphical user interface (default=yes)
---enable-parallel   enable parallel version (default=no)
---enable-triangle compile Triangle if available (default=yes)
+  --enable-gui            build the graphical user interface (default=yes)
+  --enable-parallel       enable parallel version (default=no)
+  --enable-triangle       compile Triangle if available (default=yes)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
---with-gsl-prefix=PFX   prefix where GSL is installed
---with-fltk-prefix=PFX  prefix where FLTK is installed
+  --with-gsl-prefix=PFX   prefix where GSL is installed
+  --with-fltk-prefix=PFX  prefix where FLTK is installed
 
 Some influential environment variables:
   CC          C compiler command
