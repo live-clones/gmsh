@@ -240,7 +240,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.RangeType
-Value scale range type (1=default, 2=custom)@*
+Value scale range type (1=default, 2=custom, 3=per time step)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -265,7 +265,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Show time value (or time step number) in the scale? (1=only if NbTimeStep>1, 2=always)@*
+Show time value in the scale? (1=only if NbTimeStep>1, 2=always)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

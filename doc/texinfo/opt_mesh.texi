@@ -25,7 +25,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
-Use a `color by region number' coloring scheme@*
+Use a `color by region' coloring scheme (0=no, 1=by geometrical entity, 2=by partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -132,6 +132,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MinimumCirclePoints
 Minimum number of points used to mesh a circle@*
 Default value: @code{7}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MshFileVersion
+MSH mesh file version to generate@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -360,7 +365,7 @@ Default value: @code{@{32,145,223@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Ten
-tenth color in color carousel@*
+Tenth color in color carousel@*
 Default value: @code{@{25,193,230@}}@*
 Saved in: @code{General.OptionsFileName}
 
