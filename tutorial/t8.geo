@@ -68,10 +68,10 @@ View[v3].PositionY = View[v2].PositionY;
 View[v3].Width = View[v2].Width;
 View[v3].Height = View[v2].Height;
 
-// We then loop from 1 to 255 with a step of 1. (To use a step
-// different from 1, just add a third argument in the list. For
-// example, `For num In {0.5:1.5:0.1}' would increment num from 0.5 to
-// 1.5 with a step of 0.1.)
+// We then loop from 1 to 255 with a step of 1. (To use a different
+// step, just add a third argument in the list. For example, `For num
+// In {0.5:1.5:0.1}' would increment num from 0.5 to 1.5 with a step
+// of 0.1.)
 
 t = 0 ;
 
@@ -118,7 +118,7 @@ For num In {1:255}
 
   If(num == 3)
     // We could make a system call here to generate the mpeg animation
-    // (uncomment the following of mpeg_encode is installed on your
+    // (uncomment the following if mpeg_encode is installed on your
     // computer):
     // System "mpeg_encode t8.par" ;
   EndIf
