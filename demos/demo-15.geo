@@ -1300,6 +1300,8 @@ ST(0.095795895,0.073622969,0,0.095867013,0.068756454,0,0.1,0.071428571,0){473503
 
 General.Trackball = 0;
 General.Rotation0 = 0 ;
+General.Rotation1 = 0 ;
+General.Rotation2 = 0 ;
 General.Color.Background = White ;
 General.Color.Text = Black ;
 
@@ -1309,12 +1311,10 @@ PostProcessing.View[0].Raise = {0,0,0} ;
 
 t = 0 ;
 
-
-
 For(1:100)
 
   General.Rotation0 += 10 ;
-  General.Rotation1 =  General.Rotation0 / 3 ;
+  General.Rotation1 = General.Rotation0 / 3 ;
   General.Rotation2 += 0.1 ;
 
   PostProcessing.View[0].TimeStep = t ;
