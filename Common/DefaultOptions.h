@@ -236,7 +236,7 @@ StringXNumber ViewOptions_Number[] = {
   { F, "RaiseX" , opt_view_raise0 , 0. }, 
   { F, "RaiseY" , opt_view_raise1 , 0. }, 
   { F, "RaiseZ" , opt_view_raise2 , 0. }, 
-  { F|O, "ArrowScale" , opt_view_arrow_scale , 100. }, 
+  { F|O, "ArrowScale" , opt_view_arrow_scale , 50. }, 
   { F, "Visible" , opt_view_visible , 1. }, 
   { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_ISO }, 
   { F|O, "NbIso" , opt_view_nb_iso , 15. }, 

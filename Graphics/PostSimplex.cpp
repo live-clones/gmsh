@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.11 2001-01-29 22:33:41 remacle Exp $
+// $Id: PostSimplex.cpp,v 1.12 2001-03-03 08:44:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -41,8 +41,7 @@ void Draw_VectorPoint(Post_View *View,
   double   d,dx,dy,dz,fact;
           
   if(View->ArrowType == DRAW_POST_DISPLACEMENT){
-
-    fact = View->ArrowScale/100. ;
+    fact = View->ArrowScale/50. ;
     glColor4ubv((GLubyte*)&CTX.color.fg);
     glBegin(GL_POINTS);
     glVertex3d(fact*V[3*View->TimeStep],
@@ -68,7 +67,7 @@ void Draw_VectorPoint(Post_View *View,
     
     if(d!=0.0 && d>=ValMin && d<=ValMax){
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-      fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;
+      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
       if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
         dx /= d ; dy /= d ; dz /= d ;
         d = log10(d/ValMin) ; 
@@ -175,7 +174,7 @@ void Draw_VectorLine(Post_View *View,
     d = sqrt(dx*dx+dy*dy+dz*dz);          
     if(d!=0.0 && d>=ValMin && d<=ValMax){           
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));            
-      fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;            
+      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
       if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	dx /= d ; dy /= d ; dz /= d ;
 	d = log10(d/ValMin) ; 
@@ -198,7 +197,7 @@ void Draw_VectorLine(Post_View *View,
       d = sqrt(dx*dx+dy*dy+dz*dz);            
       if(d!=0.0 && d>=ValMin && d<=ValMax){           
 	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-	fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;          
+	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
 	if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	  dx /= d ; dy /= d ; dz /= d ;
 	  d = log10(d/ValMin) ; 
@@ -356,7 +355,7 @@ void Draw_VectorTriangle(Post_View *View,
 
   if(View->ArrowType == DRAW_POST_DISPLACEMENT){
 
-    fact = View->ArrowScale/100. ;
+    fact = View->ArrowScale/50. ;
     for(m=0 ; m<3 ; m++){
       xx[m] = X[m] + fact * V[9*View->TimeStep + 3 * m ];
       yy[m] = Y[m] + fact * V[9*View->TimeStep + 3 * m + 1];
@@ -380,7 +379,7 @@ void Draw_VectorTriangle(Post_View *View,
       d = sqrt(dx*dx+dy*dy+dz*dz);
       if(d!=0.0 && d>=ValMin && d<=ValMax){             
         Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));            
-        fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;            
+	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
           dx /= d ; dy /= d ; dz /= d ;
           d = log10(d/ValMin) ; 
@@ -404,7 +403,7 @@ void Draw_VectorTriangle(Post_View *View,
         
         if(d!=0.0 && d>=ValMin && d<=ValMax){           
           Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-          fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;          
+	  fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
           if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
             dx /= d ; dy /= d ; dz /= d ;
             d = log10(d/ValMin) ; 
@@ -464,11 +463,6 @@ void Draw_VectorTetrahedron(Post_View *View,
   int     k;
   double  d,dx,dy,dz,fact;
 
-  /* 
-     la plus grande fleche (d=ValMax) est de taille CTX.lc/50
-     (View->ArrowScale == 100 par defaut)
-  */
-    
   if(View->ArrowLocation == DRAW_POST_LOCATE_COG){
     dx = 0.25 * (V[12*View->TimeStep]  +V[12*View->TimeStep+3]+
 		 V[12*View->TimeStep+6]+V[12*View->TimeStep+9] );
@@ -480,7 +474,7 @@ void Draw_VectorTetrahedron(Post_View *View,
     
     if(d!=0.0 && d>=ValMin && d<=ValMax){             
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-      fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;            
+      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
       if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	dx /= d ; dy /= d ; dz /= d ;
 	d = log10(d/ValMin) ; 
@@ -504,7 +498,7 @@ void Draw_VectorTetrahedron(Post_View *View,
       
       if(d!=0.0 && d>=ValMin && d<=ValMax){     
 	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-	fact = 2.e-4 * CTX.lc * View->ArrowScale/View->Max ;          
+	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
 	if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	  dx /= d ; dy /= d ; dz /= d ;
 	  d = log10(d/ValMin) ; 
