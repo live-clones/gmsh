@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2001-01-11 16:00:28 colignon Exp $
+# $Id: Makefile,v 1.38 2001-01-11 16:34:38 colignon Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -139,7 +139,7 @@ gmshwin:
 	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTKWIN_LIB) \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 gmshcygwin:
-	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTKWIN_LIB) \
+	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTKWIN_LIB) \
                  $(HOME)/SOURCES/fltk/lib/libfltk.a -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 
 gmsh4:
