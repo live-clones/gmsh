@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.286 2003-05-14 14:53:02 geuzaine Exp $
+# $Id: Makefile,v 1.287 2003-05-16 02:54:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -156,7 +156,7 @@ distrib-msg:
 distrib-unix: clean all package-unix distrib-msg
 	ldd bin/gmsh
 
-distrib-windows: clean all package-windows distrib-msg
+distrib-win: clean all package-win distrib-msg
 	objdump -p bin/gmsh.exe | grep DLL
 
 distrib-mac: clean all package-mac distrib-msg
@@ -177,7 +177,7 @@ package-unix:
 	gzip gmsh-${GMSH_RELEASE}-${UNAME}.tar
 	mv gmsh-${GMSH_RELEASE}-${UNAME}.tar.gz gmsh-${GMSH_RELEASE}-${UNAME}.tgz
 
-package-windows:
+package-win:
 	rm -rf gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh.exe
