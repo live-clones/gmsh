@@ -1,6 +1,4 @@
-/* 
-   Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-*/
+// Original author: Benoit Meys
 
 ech = 0.001 ;
 a = 8.0 ;

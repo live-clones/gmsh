@@ -1,10 +1,4 @@
-/* 
-   Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-*/
-
-/*
-  The two longitudinal bars
-*/
+// The two longitudinal bars
 
 f4 = 0.6 ; 
 f5 = 1.33 ; 
@@ -44,9 +38,7 @@ Line(22) = {7,15}; Line(26) = {4,12};
 Line(23) = {6,14}; Line(27) = {3,11}; 
 Line(24) = {5,13}; Line(28) = {1,9};  
 
-/* 
-   The 22 resonators
-*/
+// The 22 resonators
 
 f1 = 2 ; f2 = 3.5 ; f3 = 5 ;
 
@@ -97,10 +89,7 @@ dx = d20; rx = r20; sx = s20; lx = l20; e =-e20; x =2000; Include "antenna.i1" ;
 dx = d21; rx = r21; sx = s21; lx = l21; e = e21; x =2100; Include "antenna.i1" ;
 dx = d22; rx = r22; sx = s22; lx = l22; e =-e22; x =2200; Include "antenna.i1" ;
 
-
-/* 
-   Surfaces for longitudinal bars  
-*/
+// Surfaces for longitudinal bars  
 
 Line Loop(3001) = {-13,-21,3,22};  Plane Surface(3101) = {3001}; // ymax 
 Line Loop(3002) = {23,-11,-24,1};  Plane Surface(3102) = {3002}; // ymax - eps 
@@ -123,9 +112,7 @@ Plane Surface(3114) = {3014,101,301,501,701,901,1101,1301,1501,1701,1901,2101};
 Plane Surface(3115) = {3015,103,303,503,703,903,1103,1303,1503,1703,1903,2103};
 Plane Surface(3116) = {3016,201,401,601,801,1001,1201,1401,1601,1801,2001,2201};
 
-/* 
-   The physical entities 
-*/
+// The physical entities 
 
 AIR       = 8001 ;
 XM        = 8002 ;
@@ -191,4 +178,3 @@ Physical Surface(CLBAR) =
   2222,2225,2226,2227,2228,
   2224,2229,2230,2231,2232 
  };
-

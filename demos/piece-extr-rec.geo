@@ -1,6 +1,3 @@
-/* 
-   Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-*/
 
 r1 = .1;
 l1 = 1.;

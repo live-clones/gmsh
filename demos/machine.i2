@@ -1,6 +1,3 @@
-/* 
-   Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-*/
 
 /* Variables that must be defined when including this file:
    th,D2,H,R1,E1 */

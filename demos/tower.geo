@@ -1,6 +1,4 @@
-/* 
-   Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
-*/
+// Original author: Patrick Dular
 
 Include "tower.i1" ;
 
