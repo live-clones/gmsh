@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.61 2004-11-25 16:22:48 remacle Exp $
+# $Id: Makefile,v 1.62 2004-12-06 04:59:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -70,89 +70,106 @@ depend:
 Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h PluginManager.h CutMap.h Levelset.h CutGrid.h \
-  StreamLines.h CutPlane.h CutParametric.h CutSphere.h Skin.h \
-  ../DataStr/Tree.h ../DataStr/avl.h Extract.h HarmonicToTime.h \
-  Integrate.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
-  SphericalRaise.h DisplacementRaise.h StructuralSolver.h ../Geo/Geo.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/GmshUI.h Evaluate.h \
-  ../Common/Context.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h PluginManager.h \
+  CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h CutParametric.h \
+  CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h Extract.h \
+  HarmonicToTime.h Integrate.h DecomposeInSimplex.h Smooth.h Transform.h \
+  Triangulate.h SphericalRaise.h DisplacementRaise.h StructuralSolver.h \
+  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/GmshUI.h \
+  Evaluate.h ../Common/Context.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h DecomposeInSimplex.h ../DataStr/Tools.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Graphics/Iso.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h DecomposeInSimplex.h \
+  ../DataStr/Tools.h ../DataStr/Tree.h ../DataStr/avl.h ../Graphics/Iso.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/Malloc.h
 CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h ../Common/Context.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/Context.h ../Common/GmshUI.h \
+  ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h
 CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h ../Common/Context.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/Context.h ../Common/GmshUI.h \
+  ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h
 CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/Context.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h
 Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h Smooth.h ../Common/Context.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Smooth.h \
+  ../Common/Context.h
 CutParametric.o: CutParametric.cpp OctreePost.h Octree.h \
   OctreeInternals.h CutParametric.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/Context.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h
+Gradient.o: Gradient.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Gradient.h \
+  ../Numeric/Numeric.h ../Common/Context.h
+Lambda2.o: Lambda2.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Lambda2.h \
+  ../Numeric/Numeric.h ../Common/Context.h
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals.o: OctreeInternals.cpp ../Common/Message.h \
   OctreeInternals.h
 OctreePost.o: OctreePost.cpp Octree.h OctreeInternals.h OctreePost.h \
   ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Numeric/Numeric.h ../Common/Message.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Numeric/Numeric.h \
+  ../Common/Message.h
 StreamLines.o: StreamLines.cpp OctreePost.h Octree.h OctreeInternals.h \
   StreamLines.h Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/Context.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h
 CutGrid.o: CutGrid.cpp OctreePost.h Octree.h OctreeInternals.h CutGrid.h \
   Plugin.h ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h ../Common/Context.h
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h ../Common/Context.h
 Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h Transform.h ../Common/Context.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Transform.h \
+  ../Common/Context.h
 Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Plugin.h ../Common/Options.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/GmshMatrix.h Triangulate.h \
-  ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Mesh/Utils.h ../Mesh/Create.h
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h \
+  ../Common/AdaptiveViews.h Triangulate.h ../Common/Context.h \
+  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h \
+  ../Mesh/Create.h
 SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h SphericalRaise.h ../Common/Context.h \
-  ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h SphericalRaise.h \
+  ../Common/Context.h ../Numeric/Numeric.h
 DisplacementRaise.o: DisplacementRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h DisplacementRaise.h ../Common/Context.h \
-  ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h DisplacementRaise.h \
+  ../Common/Context.h ../Numeric/Numeric.h
 StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
   ../DataStr/List.h ../Mesh/Mesh.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
@@ -160,35 +177,38 @@ StructuralSolver.o: StructuralSolver.cpp StructuralSolver.h ../Geo/Geo.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/GmshMatrix.h \
-  ../Common/GmshUI.h ../Common/Context.h ../DataStr/Tools.h \
-  ../Graphics/Draw.h ../Mesh/Utils.h ../Numeric/Numeric.h
+  ../Common/AdaptiveViews.h ../Common/GmshUI.h ../Common/Context.h \
+  ../DataStr/Tools.h ../Graphics/Draw.h ../Mesh/Utils.h \
+  ../Numeric/Numeric.h
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h \
-  ../Common/Context.h ../DataStr/Malloc.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Skin.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
+  ../DataStr/Malloc.h
 Extract.o: Extract.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h Extract.h ../Common/Context.h \
-  ../DataStr/Malloc.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Extract.h \
+  ../Common/Context.h ../DataStr/Malloc.h
 DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h DecomposeInSimplex.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Common/Context.h ../DataStr/Malloc.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h DecomposeInSimplex.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
+  ../DataStr/Malloc.h
 Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h Evaluate.h ../Common/Context.h \
-  ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Evaluate.h \
+  ../Common/Context.h ../Numeric/Numeric.h
 Integrate.o: Integrate.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h Integrate.h ../Common/Context.h \
-  ../Numeric/Numeric.h ShapeFunctions.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h Integrate.h \
+  ../Common/Context.h ../Numeric/Numeric.h ShapeFunctions.h
 HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h HarmonicToTime.h ../Common/Context.h \
-  ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h HarmonicToTime.h \
+  ../Common/Context.h ../Numeric/Numeric.h

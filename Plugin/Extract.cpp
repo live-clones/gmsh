@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.14 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: Extract.cpp,v 1.15 2004-12-06 04:59:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -139,6 +139,8 @@ static void extract(char *expr[3], List_T *inList, int inNb,
     f[i] = evaluator_create(expr[i]);
     if(!f[i]){
       Msg(GERROR, "Invalid expression '%s'", expr[i]);
+      for(int j = 0; j < i; j++)
+	evaluator_destroy(f[j]);
       return;
     }
   }

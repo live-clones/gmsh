@@ -1,4 +1,4 @@
-$Id: TODO,v 1.69 2004-11-25 02:10:30 geuzaine Exp $
+$Id: TODO,v 1.70 2004-12-06 04:59:08 geuzaine Exp $
 
 ********************************************************************
 
@@ -170,6 +170,23 @@ ainsi de suite. Ca fait donc un supeeer memory leak : tu recharges
 bien toutes les vues, mais tu ne sais acceder qu'a la derniere... Pour
 corriger ca, il faudrait que l'on garde comme info supplementaire dans
 chaque vue quelle etait sa position dans le fichier.
+
+********************************************************************
+
+osterwischc@asme.org
+
+Using Gmsh to post-process structural analysis results would be more
+convenient if there were a plugin to calculate maximum, mid, and
+minimum principal stress from a tensor view (as well as the von mises
+which currently exists).
+
+I'm not familiar enough with the code to do it myself but I would think
+it would work somewhat like the "extract" plugin and create 3 new
+vector views for the results labeled basename_maxprin,
+basename_midprin, and basename_minprin.
+
+Thank you for maintaining this excellent software.
+-Carl
 
 ********************************************************************
 

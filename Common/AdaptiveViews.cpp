@@ -25,7 +25,7 @@
 #include <math.h>
 #include <list>
 #include <set>
-#include "Views.h"
+#include "AdaptiveViews.h"
 #include "Plugin.h"
 
 // A recursive effective implementation

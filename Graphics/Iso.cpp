@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.30 2004-08-07 06:59:16 geuzaine Exp $
+// $Id: Iso.cpp,v 1.31 2004-12-06 04:59:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -482,6 +482,12 @@ void IsoSimplex(Post_View * View, int preproNormals,
   if(nb < 3 || nb > 4)
     return;
 
+  for(int i = 0; i < nb; i++){
+    Xp[i] += View->Raise[0] * V;
+    Yp[i] += View->Raise[1] * V;
+    Zp[i] += View->Raise[2] * V;
+  }
+
   EnhanceSimplexPolygon(View, nb, Xp, Yp, Zp, PVals, X, Y, Z, Val, norms,
                         preproNormals);
 
@@ -490,17 +496,11 @@ void IsoSimplex(Post_View * View, int preproNormals,
 
   if(View->TriVertexArray && View->TriVertexArray->fill){
     for(int i = 2; i < nb; i++){
-      View->TriVertexArray->add(Xp[0] + View->Raise[0] * V,
-				Yp[0] + View->Raise[1] * V,
-				Zp[0] + View->Raise[2] * V,
+      View->TriVertexArray->add(Xp[0], Yp[0], Zp[0],
 				norms[0], norms[1], norms[2], color);
-      View->TriVertexArray->add(Xp[i-1] + View->Raise[0] * V,
-				Yp[i-1] + View->Raise[1] * V,
-				Zp[i-1] + View->Raise[2] * V,
+      View->TriVertexArray->add(Xp[i-1], Yp[i-1], Zp[i-1],
 				norms[3*(i-1)], norms[3*(i-1)+1], norms[3*(i-1)+2], color);
-      View->TriVertexArray->add(Xp[i] + View->Raise[0] * V,
-				Yp[i] + View->Raise[1] * V,
-				Zp[i] + View->Raise[2] * V,
+      View->TriVertexArray->add(Xp[i], Yp[i], Zp[i],
 				norms[3*i], norms[3*i+1], norms[3*i+2], color);
       View->TriVertexArray->num++;
     }
@@ -511,17 +511,11 @@ void IsoSimplex(Post_View * View, int preproNormals,
     glBegin(GL_TRIANGLES);
     for(int i = 2; i < nb; i++){
       if(View->Light) glNormal3dv(&norms[0]);
-      glVertex3d(Xp[0] + View->Raise[0] * V, 
-		 Yp[0] + View->Raise[1] * V, 
-		 Zp[0] + View->Raise[2] * V);
+      glVertex3d(Xp[0], Yp[0], Zp[0]);
       if(View->Light) glNormal3dv(&norms[3*(i-1)]);
-      glVertex3d(Xp[i-1] + View->Raise[0] * V, 
-		 Yp[i-1] + View->Raise[1] * V, 
-		 Zp[i-1] + View->Raise[2] * V);
+      glVertex3d(Xp[i-1], Yp[i-1], Zp[i-1]);
       if(View->Light) glNormal3dv(&norms[3*i]);
-      glVertex3d(Xp[i] + View->Raise[0] * V, 
-		 Yp[i] + View->Raise[1] * V, 
-		 Zp[i] + View->Raise[2] * V);
+      glVertex3d(Xp[i], Yp[i], Zp[i]);
     }
     glEnd();
     glDisable(GL_LIGHTING);
