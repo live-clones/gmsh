@@ -1,3 +1,5 @@
+New in 1.15: Added automatic visibility for entity creation;
+
 New in 1.14: Corrected a few bugs in the GUI (most of them were
 introduced in 1.13); Added interactive color selection; Made the
 option database bidirectional (i.e. scripts now correctly update the

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.32 2001-02-18 19:24:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.33 2001-02-19 15:21:54 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -560,6 +560,11 @@ static void _new_line_spline(int dim){
   int      ib;
   static int n, p[100];
 
+  if(!opt_geometry_points(0,GMSH_GET,0)){
+    opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+    Draw();
+  }
+
   n = 0;
   while(1){
     Msg(STATUS3N,"Select Point ('e'=end, 'q'=quit)");
@@ -601,6 +606,11 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
   int      ib;
   static int n, p[100];
 
+  if(!opt_geometry_points(0,GMSH_GET,0)){
+    opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+    Draw();
+  }
+
   n=0;
   while(1){
     if(n == 0) Msg(STATUS3N,"Select Center ('q'=quit)");
@@ -631,6 +641,11 @@ void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
   Surface  *s;
   int      ib;
   static int n, p[100];
+
+  if(!opt_geometry_points(0,GMSH_GET,0)){
+    opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+    Draw();
+  }
 
   n=0;
   while(1){
@@ -668,10 +683,20 @@ static void _new_surface_volume(int mode){
   Liste1 = List_Create(10,10,sizeof(int));
   Liste2 = List_Create(10,10,sizeof(int));
   
-  if(mode == 2)
+  if(mode == 2){
     type = ENT_SURFACE;
-  else
+    if(!opt_geometry_surfaces(0,GMSH_GET,0)){
+      opt_geometry_surfaces(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
+  else{
     type = ENT_LINE;
+    if(!opt_geometry_lines(0,GMSH_GET,0)){
+      opt_geometry_lines(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
   
   while(1){      
     List_Reset(Liste1);
@@ -744,12 +769,27 @@ static void _transform_point_curve_surface(int transfo, int mode, char *what){
   Surface  *s;
   int type, num;
 
-  if(!strcmp(what,"Point")) 
+  if(!strcmp(what,"Point")) {
     type = ENT_POINT;
-  else if(!strcmp(what,"Line"))
+    if(!opt_geometry_points(0,GMSH_GET,0)){
+      opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
+  else if(!strcmp(what,"Line")){
     type = ENT_LINE; 
-  else
+    if(!opt_geometry_lines(0,GMSH_GET,0)){
+      opt_geometry_lines(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
+  else{
     type = ENT_SURFACE;
+    if(!opt_geometry_surfaces(0,GMSH_GET,0)){
+      opt_geometry_surfaces(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
 
   while(1){
     Msg(STATUS3N,"Select %s ('q'=quit)", what);
@@ -956,15 +996,34 @@ static void _add_physical(char *what){
   int      ib, type, zone;
   List_T  *Liste1;
 
-  if(!strcmp(what,"Point")) 
+  if(!strcmp(what,"Point")){
     type = ENT_POINT;
-  else if(!strcmp(what,"Line"))
+    if(!opt_geometry_points(0,GMSH_GET,0)){
+      opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
+  else if(!strcmp(what,"Line")){
     type = ENT_LINE; 
-  else if(!strcmp(what,"Surface"))
+    if(!opt_geometry_lines(0,GMSH_GET,0)){
+      opt_geometry_lines(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
+  else if(!strcmp(what,"Surface")){
     type = ENT_SURFACE;
+    if(!opt_geometry_surfaces(0,GMSH_GET,0)){
+      opt_geometry_surfaces(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+  }
   else{
     Msg(GERROR, "Interactive Volume Selection not done: "
 	"Please edit the input file manually");
+    if(!opt_geometry_volumes(0,GMSH_GET,0)){
+      opt_geometry_volumes(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
     return;
   }
 
@@ -1039,6 +1098,11 @@ void mesh_define_length_cb (CALLBACK_ARGS){
   int       ib;
   static int n=0, p[100];
 
+  if(!opt_geometry_points(0,GMSH_GET,0)){
+    opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+    Draw();
+  }
+
   WID->create_mesh_context_window(0);
 
   while(1){
@@ -1071,6 +1135,11 @@ void mesh_define_recombine_cb (CALLBACK_ARGS){
   Surface  *s;
   int      ib;
   static int n, p[100];
+
+  if(!opt_geometry_surfaces(0,GMSH_GET,0)){
+    opt_geometry_surfaces(0,GMSH_SET|GMSH_GUI,1);
+    Draw();
+  }
 
   n=0;
   while(1){
@@ -1107,6 +1176,32 @@ static void _add_transfinite(int dim){
   int      ib;
   static int n, p[100];
 
+  if(!opt_geometry_points(0,GMSH_GET,0)){
+    opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+    Draw();
+  }
+
+  switch (dim) {
+  case 1 :
+    if(!opt_geometry_lines(0,GMSH_GET,0)){
+      opt_geometry_lines(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+    break ;
+  case 2 :
+    if(!opt_geometry_surfaces(0,GMSH_GET,0)){
+      opt_geometry_surfaces(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+    break;
+  case 3 :
+    if(!opt_geometry_volumes(0,GMSH_GET,0)){
+      opt_geometry_volumes(0,GMSH_SET|GMSH_GUI,1);
+      Draw();
+    }
+    break;
+  }
+  
   n=0;
   while(1){
     switch (dim) {
