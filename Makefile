@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.48 2001-02-04 15:52:26 geuzaine Exp $
+# $Id: Makefile,v 1.49 2001-02-06 02:57:07 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -6,8 +6,8 @@
          GMSH_RELEASE = 1.10
 
                  MAKE = make
-                   CC = g++
-                FLAGS = -g -Wall
+                   CC = c++
+                FLAGS = -O
                    RM = rm
               RMFLAGS = -f 
 
@@ -15,7 +15,8 @@
                         -I$(HOME)/SOURCES/Mesa-3.1/include\
                         -I$(HOME)/SOURCES/Mesa-3.1/include/GL
             MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
-             FLTK_INC = -I$(HOME)/SOURCES/fltk
+            FLTK_INC   = -I$(HOME)/SOURCES/fltk
+	    FLTK_INC_SCOREC = -I/users/develop/develop/visual/fltk/1.0/include
 
            OPENGL_LIB = -lGLU -lGL
      OPENGL_MOTIF_LIB = -lGLw
@@ -24,10 +25,14 @@
       MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
                         $(HOME)/SOURCES/Mesa-static/lib/libGL.a
 MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
-#          XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
-           XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
+          XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
+#           XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
                         -L/usr/X11R6/lib -lXt -lX11 -lXext 
              FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
+                        -L/usr/X11R6/lib -lXext -lX11
+             FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
+                        -L/usr/X11R6/lib -lXext -lX11
+             FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
                         -L/usr/X11R6/lib -lXext -lX11
 
            THREAD_LIB = -L/usr/lib -lpthread
@@ -341,6 +346,31 @@ fltk_compile_little_endian:
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+fltk_compile_solaris_scorec :
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC_SCOREC)" \
+        ); done
+
+fltk_compile_linux_scorec :
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC_SCOREC)" \
+        ); done
+
+fltk_link_solaris_scorec:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 $(FLTK_LIB_SOLARIS_SCOREC) -lm
+fltk_link_linux_scorec:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 $(FLTK_LIB_LINUX_SCOREC) -lm
 fltk_link_mesa:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm
@@ -363,6 +393,9 @@ fltk_link_mesa_2952:
 fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin compress_bin
 
 fltk_linux_2952: tag fltk_compile_little_endian_2952 fltk_link_mesa_2952 strip_bin compress_bin
+
+fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
+fltk_linux_scorec : tag fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin 
 
 fltk_rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
