@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.17 2000-12-06 22:09:53 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.18 2000-12-06 22:25:24 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1100,7 +1100,7 @@ Macro :
    ----------------- */
 
 Command :
-   tPrint tBIGSTR tEND
+   tPrintf tBIGSTR tEND
    {
      char ext[6];
      strcpy(ext,$2+(strlen($2)-4));
