@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.232 2002-10-16 16:10:03 geuzaine Exp $
+# $Id: Makefile,v 1.233 2002-10-16 17:33:03 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -361,7 +361,7 @@ distrib-irix:
 	make distrib
 
 #
-# Cygwin (add '-lole32 -luuid' after -lgdi32 when DND is ready (gcc>3))
+# Cygwin
 #
 compile-cygwin: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
