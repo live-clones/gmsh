@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.68 2005-01-16 20:41:38 geuzaine Exp $
+// $Id: Gmsh.l,v 1.69 2005-02-02 18:47:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -162,6 +162,9 @@ For                     return tFor;
 Function                return tFunction;
 
 GetValue                return tGetValue;
+GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
+GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
+GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
 
 Hide                    return tHide;
 Hypot                   return tHypot;

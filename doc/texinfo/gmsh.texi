@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.170 2005-01-20 01:25:49 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.171 2005-02-02 18:48:00 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -1142,12 +1142,21 @@ The following commands can be used anywhere in a Gmsh ASCII text input file:
 
 @item @var{string} = @var{expression};
 Defines a new expression identifier @var{string}, or affects
-@var{expression} to an existing expression identifier. Eight expression
+@var{expression} to an existing expression identifier. Eleven expression
 identifiers are predefined (hardcoded in Gmsh's parser):
 
 @ftable @code
 @item Pi
 Returns 3.1415926535897932.
+
+@item GMSH_MAJOR_VERSION
+Returns Gmsh's major version number.
+
+@item GMSH_MINOR_VERSION
+Returns Gmsh's minor version number.
+
+@item GMSH_PATCH_VERSION
+Returns Gmsh's patch version number.
 
 @item MPI_Size
 Returns the number of processors on which Gmsh is running (always 1, except

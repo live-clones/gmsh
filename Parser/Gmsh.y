@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.201 2005-01-20 19:05:11 geuzaine Exp $
+// $Id: Gmsh.y,v 1.202 2005-02-02 18:47:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,7 @@
 #include "Timer.h"
 #include "CreateFile.h"
 #include "Visibility.h"
+#include "GmshVersion.h"
 
 Tree_T *Symbol_T = NULL;
 
@@ -108,6 +109,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tTrimmed tShow tHide tGetValue
+%token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -3542,6 +3544,9 @@ FExpr_Single :
   | tPi       { $$ = 3.141592653589793; }
   | tMPI_Rank { $$ = ParUtil::Instance()->rank(); }
   | tMPI_Size { $$ = ParUtil::Instance()->size(); }
+  | tGMSH_MAJOR_VERSION { $$ = GMSH_MAJOR_VERSION; }
+  | tGMSH_MINOR_VERSION { $$ = GMSH_MINOR_VERSION; }
+  | tGMSH_PATCH_VERSION { $$ = GMSH_PATCH_VERSION; }
 
   // Variables
 

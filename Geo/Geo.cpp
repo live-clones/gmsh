@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.42 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: Geo.cpp,v 1.43 2005-02-02 18:47:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -99,6 +99,11 @@ void add_infile(char *text, char *fich)
   fclose(file);
 }
 
+void coherence(char *fich)
+{
+  add_infile("Coherence;", fich);
+}
+
 void delet(int p1, char *fich, char *what)
 {
   char text[BUFFSIZE];
@@ -107,30 +112,13 @@ void delet(int p1, char *fich, char *what)
   add_infile(text, fich);
 }
 
-void add_trsfsurf(int N, int *l, char *fich)
+void add_trsfellisurf(int type, int N, int *l, char *fich)
 {
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
   int i;
-  snprintf(text, BUFFSIZE, "Transfinite Surface {%d} = {", l[0]);
-  for(i = 1; i < N; i++) {
-    if(i == 1)
-      snprintf(text2, BUFFSIZE, "%d", l[i]);
-    else
-      snprintf(text2, BUFFSIZE, ",%d", l[i]);
-    strncat(text, text2, BUFFSIZE-strlen(text));
-  }
-  snprintf(text2, BUFFSIZE, "};");
-  strncat(text, text2, BUFFSIZE-strlen(text));
-  add_infile(text, fich);
-}
-
-void add_ellipticsurf(int N, int *l, char *fich)
-{
-  char text[BUFFSIZE];
-  char text2[BUFFSIZE];
-  int i;
-  snprintf(text, BUFFSIZE, "Elliptic Surface {%d} = {", l[0]);
+  snprintf(text, BUFFSIZE, "%s Surface {%d} = {", 
+	   type ? "Elliptic" : "Transfinite", l[0]);
   for(i = 1; i < N; i++) {
     if(i == 1)
       snprintf(text2, BUFFSIZE, "%d", l[i]);

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.416 2005-01-18 19:03:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.417 2005-02-02 18:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -185,6 +185,7 @@ Context_Item menu_geometry[] = {
       { "Scale",     (Fl_Callback *)geometry_elementary_scale_cb } ,
       { "Symmetry",  (Fl_Callback *)geometry_elementary_symmetry_cb } ,
       { "Extrude",   (Fl_Callback *)geometry_elementary_extrude_cb } ,
+      { "Coherence", (Fl_Callback *)geometry_elementary_coherence_cb } ,
       { "Delete",    (Fl_Callback *)geometry_elementary_delete_cb } ,
       { NULL } 
     };  
@@ -327,6 +328,7 @@ Context_Item menu_mesh[] = {
       { "Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
       { "Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       { "Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
+      { "Elliptic", (Fl_Callback *)mesh_define_elliptic_surface_cb  } , 
       { NULL } 
     };  
         Context_Item menu_mesh_define_transfinite[] = {

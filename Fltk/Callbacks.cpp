@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.331 2005-01-18 04:29:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.332 2005-02-02 18:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2183,6 +2183,11 @@ void geometry_elementary_extrude_rotate_surface_cb(CALLBACK_ARGS)
   _transform_point_line_surface(5, 0, "Surface");
 }
 
+void geometry_elementary_coherence_cb(CALLBACK_ARGS)
+{
+  coherence(CTX.filename);
+}
+
 void geometry_elementary_delete_cb(CALLBACK_ARGS)
 {
   WID->set_context(menu_geometry_elementary_delete, 0);
@@ -2495,7 +2500,7 @@ void mesh_define_transfinite_cb(CALLBACK_ARGS)
   WID->set_context(menu_mesh_define_transfinite, 0);
 }
 
-static void _add_transfinite(int dim)
+static void _add_transfinite_elliptic(int type, int dim)
 {
   Vertex *v;
   Curve *c;
@@ -2513,7 +2518,7 @@ static void _add_transfinite(int dim)
 
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Setting transfinite contraints");
+    Msg(STATUS3N, "Setting structured mesh contraints");
     switch (dim) {
     case 1:
       if(n == 0)
@@ -2589,9 +2594,10 @@ static void _add_transfinite(int dim)
             switch (dim) {
             case 2:
               if(n == 3 + 1 || n == 4 + 1)
-                add_trsfsurf(n, p, CTX.filename);
+                add_trsfellisurf(type, n, p, CTX.filename);
               else
-                Msg(GERROR, "Wrong number of points for transfinite surface");
+                Msg(GERROR, "Wrong number of points for %s surface",
+		    type ? "elliptic" : "transfinite");
               break;
             case 3:
               if(n == 6 || n == 8)
@@ -2625,18 +2631,23 @@ stopall:
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS)
 {
   WID->create_mesh_context_window(1);
-  _add_transfinite(1);
+  _add_transfinite_elliptic(0, 1);
 }
 
 void mesh_define_transfinite_surface_cb(CALLBACK_ARGS)
 {
-  _add_transfinite(2);
+  _add_transfinite_elliptic(0, 2);
 }
 
 void mesh_define_transfinite_volume_cb(CALLBACK_ARGS)
 {
   WID->create_mesh_context_window(2);
-  _add_transfinite(3);
+  _add_transfinite_elliptic(0, 3);
+}
+
+void mesh_define_elliptic_surface_cb(CALLBACK_ARGS)
+{
+  _add_transfinite_elliptic(1, 2);
 }
 
 // Dynamic Solver Menus

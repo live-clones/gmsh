@@ -1,4 +1,4 @@
-$Id: TODO,v 1.81 2005-01-26 15:26:53 geuzaine Exp $
+$Id: TODO,v 1.82 2005-02-02 18:47:55 geuzaine Exp $
 
 ********************************************************************
 
@@ -6,12 +6,18 @@ add general extrusion along parametric curve
 
 ********************************************************************
 
+add option to draw "filled isos" using 1D textures?
+
+********************************************************************
+
+use marching cube algo for hexas to make iso-surfaces nicer?
+
+********************************************************************
+
 add GUI for 
 
 - translate+rotate extrusions
 - mesh extrusion (layer stuff)
-- elliptic surface
-- coherence
 
 ********************************************************************
 
@@ -185,6 +191,12 @@ post-processing file format:
 - add a structured format?
 
 ...or implement one of the "industry-standard" formats?
+
+********************************************************************
+
+Create "Volume visualization" range type? (interpolate on regular grid
++ create cut planes // to viewpoint with transparency; can be done in
+a straightforward way or using 3D textures)
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.28 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.29 2005-02-02 18:47:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -132,7 +132,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = (int)(bb*255.);
       }
       break;
-    case 3:  // lucie, samcef (?)
+    case 3: // lucie, samcef (?)
       if(s - bias <= 0.) {
 	r = 0;
 	g = 0;
@@ -159,7 +159,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = 0;
       }
       break;
-    case 4:  // rainbow
+    case 4: // rainbow
       if(s - bias <= 0.) {
 	r = 0;
 	g = 0;
@@ -237,12 +237,12 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = 255;
       }
       break;
-    case 6:  // darkblue->red->yellow->white
+    case 6: // darkblue->red->yellow->white
       r = (int)(255. * cubic(-0.0506169, 2.81633, -1.87033, 0.0524573, s-bias));
       g = (int)(255. * cubic(0.0485868, -1.26109, 6.3074, -4.12498, s-bias));
       b = (int)(255. * cubic(0.364662, 1.50814, -7.36756, 6.51847, s-bias));
       break;
-    case 7:  // matlab "hot"
+    case 7: // matlab "hot"
       r = (int)(255. * hot_r(s-bias));
       g = (int)(255. * hot_g(s-bias));
       b = (int)(255. * hot_b(s-bias));
@@ -252,7 +252,7 @@ void ColorTable_Recompute(GmshColorTable * ct)
       g = (int)(255. * sqrt((2.*gray(s-bias) + hot_g(s-bias))/3.));
       b = (int)(255. * sqrt((2.*gray(s-bias) + hot_b(s-bias))/3.));
       break;
-    case 9:  // grayscale
+    case 9: // grayscale
       if(s - bias <= 0.) {
 	r = g = b = 0;
       }
@@ -275,37 +275,46 @@ void ColorTable_Recompute(GmshColorTable * ct)
 	b = (int)(255 * B);
       }
       break;
-    case 12: // matlab "bone"
+    case 12: // spectrum (truncated hsv)
+      {
+	double H = 5. * s + 1.e-10, R, G, B;
+	HSV_to_RGB(H, 1., 1., &R, &G, &B);
+	r = (int)(255 * R);
+	g = (int)(255 * G);
+	b = (int)(255 * B);
+      }
+      break;
+    case 13: // matlab "bone"
       r = (int)(255. * (7.*gray(s-bias) + hot_b(s-bias))/8.);
       g = (int)(255. * (7.*gray(s-bias) + hot_g(s-bias))/8.);
       b = (int)(255. * (7.*gray(s-bias) + hot_r(s-bias))/8.);
       break;
-    case 13: // matlab "spring"
+    case 14: // matlab "spring"
       r = (int)(255. * 1.);
       g = (int)(255. * gray(s-bias));
       b = (int)(255. * (1. - gray(s-bias)));
       break;
-    case 14: // matlab "summer"
+    case 15: // matlab "summer"
       r = (int)(255. * gray(s-bias));
       g = (int)(255. * (0.5+gray(s-bias)/2.));
       b = (int)(255. * 0.4);
       break;
-    case 15: // matlab "autumn"
+    case 16: // matlab "autumn"
       r = (int)(255. * 1.);
       g = (int)(255. * gray(s-bias));
       b = (int)(255. * 0.);
       break;
-    case 16: // matlab "winter"
+    case 17: // matlab "winter"
       r = (int)(255. * 0.);
       g = (int)(255. * gray(s-bias));
       b = (int)(255. * (0.5+(1.-gray(s-bias))/2.));
       break;
-    case 17: // matlab "cool"
+    case 18: // matlab "cool"
       r = (int)(255. * gray(s-bias));
       g = (int)(255. * (1.-gray(s-bias)));
       b = (int)(255. * 1.);
       break;
-    case 18: // matlab "copper"
+    case 19: // matlab "copper"
       r = (int)(255. * DMIN(1., gray(s-bias) * 1.25));
       g = (int)(255. * DMIN(1., gray(s-bias) * 0.7812));
       b = (int)(255. * DMIN(1., gray(s-bias) * 0.4975));
