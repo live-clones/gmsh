@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.8 2001-01-10 08:50:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.9 2001-01-10 10:40:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -426,7 +426,7 @@ void opt_post_link_cb(CALLBACK_ARGS) {
   CTX.post.link = (int)data;
 }
 void opt_post_anim_delay_cb(CALLBACK_ARGS) {
-  CTX.post.anim_delay = (long)(1.e5*((Fl_Value_Input*)w)->value());
+  CTX.post.anim_delay = (long)(1.e6*((Fl_Value_Input*)w)->value());
 }
 
 // Option Statistics Menu
@@ -873,82 +873,201 @@ void view_options_cb(CALLBACK_ARGS){
   WID->create_view_window((int)data);
 }
 
-void view_options_show_scale_cb(CALLBACK_ARGS){
-  /*
-  if(CTX.post.link==2){
-    for(int i=0 ; i<List_Nbr(Post_ViewList) ; i++){
-      
-    }
+#define STARTVIEWMOD					\
+  Post_View *v;						\
+  int i;						\
+  for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){		\
+    v = (Post_View*)List_Pointer(Post_ViewList, i);	\
+    if(CTX.post.link == 2 ||				\
+       (CTX.post.link == 1 && v->Visible) ||		\
+       (CTX.post.link == 0 && i == (int)data)){
+
+#define ENDVIEWMOD				\
+    }						\
   }
-  */
+
+void view_options_show_scale_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->ShowScale = ((Fl_Check_Button*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_show_time_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->ShowTime = ((Fl_Check_Button*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_transparent_scale_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->TransparentScale = ((Fl_Check_Button*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_name_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    strcpy(v->Name, ((Fl_Input*)w)->value()) ;
+  ENDVIEWMOD
 }
 void view_options_format_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    strcpy(v->Format, ((Fl_Input*)w)->value()) ;
+  ENDVIEWMOD
 }
 void view_options_custom_range_cb(CALLBACK_ARGS){
-  /*
-  if((int)((Fl_Value_Input*)w)->value()){
-    WID->activate_custom(0);
-    v->ScaleType==DRAW_POST_DEFAULT;
-  }
-  else{
-    WID->activate_custom(1);
-    v->ScaleType==DRAW_POST_CUSTOM;
-  }
-  */
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      WID->activate_custom(1);
+      v->ScaleType = DRAW_POST_CUSTOM;
+    }
+    else{
+      WID->activate_custom(0);
+      v->ScaleType = DRAW_POST_DEFAULT;
+    }
+  ENDVIEWMOD
 }
 void view_options_custom_min_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->CustomMin = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_custom_max_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->CustomMax = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_linear_range_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->RangeType = DRAW_POST_LINEAR;
+    }
+    else{
+      v->RangeType = DRAW_POST_LOGARITHMIC;
+    }
+  ENDVIEWMOD
 }
 void view_options_logarithmic_range_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->RangeType = DRAW_POST_LOGARITHMIC;
+    }
+    else{
+      v->RangeType = DRAW_POST_LINEAR;
+    }
+  ENDVIEWMOD
 }
 void view_options_nbiso_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->NbIso = (int)((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_iso_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->IntervalsType = DRAW_POST_ISO;
+    }
+  ENDVIEWMOD
 }
 void view_options_fillediso_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->IntervalsType = DRAW_POST_DISCRETE;
+    }
+  ENDVIEWMOD
 }
 void view_options_continuousiso_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->IntervalsType = DRAW_POST_CONTINUOUS;
+    }
+  ENDVIEWMOD
 }
 void view_options_numericiso_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->IntervalsType = DRAW_POST_NUMERIC;
+    }
+  ENDVIEWMOD
 }
 void view_options_xoffset_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->Offset[0] = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_yoffset_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->Offset[1] = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_zoffset_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->Offset[2] = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_xraise_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->Raise[0] = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_yraise_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->Raise[1] = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_zraise_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->Raise[2] = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_timestep_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->TimeStep = (int)((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_vector_line_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->ArrowType = DRAW_POST_SEGMENT;
+    }
+  ENDVIEWMOD
 }
 void view_options_vector_arrow_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->ArrowType = DRAW_POST_ARROW;
+    }
+  ENDVIEWMOD
 }
 void view_options_vector_cone_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->ArrowType = DRAW_POST_CONE;
+    }
+  ENDVIEWMOD
 }
 void view_options_vector_displacement_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->ArrowType = DRAW_POST_DISPLACEMENT;
+    }
+  ENDVIEWMOD
 }
 void view_options_vector_scale_cb(CALLBACK_ARGS){
 }
 void view_options_vector_cog_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->ArrowType = DRAW_POST_LOCATE_COG;
+    }
+  ENDVIEWMOD
 }
 void view_options_vector_vertex_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    if(((Fl_Check_Button*)w)->value()){
+      v->ArrowType = DRAW_POST_LOCATE_VERTEX;
+    }
+  ENDVIEWMOD
 }
 
+#undef STARTVIEWMOD
+#undef ENDVIEWMOD
 
 // Context geometry
 

@@ -1554,9 +1554,9 @@ void GUI::create_view_window(int num){
   view_value[10]->callback(view_options_vector_scale_cb, (void*)num);
   view_value[10]->value(v->ArrowScale);
   view_butt[14]->callback(view_options_vector_cog_cb, (void*)num);
-  view_butt[14]->value(v->ArrowType==DRAW_POST_SEGMENT);
+  view_butt[14]->value(v->ArrowLocation==DRAW_POST_LOCATE_COG);
   view_butt[15]->callback(view_options_vector_vertex_cb, (void*)num);
-  view_butt[15]->value(v->ArrowType==DRAW_POST_ARROW);
+  view_butt[15]->value(v->ArrowLocation==DRAW_POST_LOCATE_VERTEX);
   
   if(view_window->shown())
     view_window->redraw();
