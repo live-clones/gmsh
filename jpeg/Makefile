@@ -53,7 +53,7 @@ MV= mv
 # library (.a) file creation command
 AR= ar rc
 # second step in .a creation (use "touch" if not needed)
-AR2= ranlib
+RANLIB= ranlib
 # installation program
 INSTALL= /bin/install -c
 INSTALL_PROGRAM= $(INSTALL)
@@ -124,7 +124,7 @@ ansi2knr: ansi2knr.c
 libjpeg.a:  $(LIBOBJECTS)
 	$(RM) libjpeg.a
 	$(AR) libjpeg.a  $(LIBOBJECTS)
-	$(AR2) libjpeg.a
+	$(RANLIB) libjpeg.a
 
 cjpeg: $(COBJECTS) libjpeg.a
 	$(LN) $(LDFLAGS) -o cjpeg $(COBJECTS) libjpeg.a $(LDLIBS)

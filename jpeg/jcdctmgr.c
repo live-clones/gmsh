@@ -242,12 +242,14 @@ forward_DCT (j_compress_ptr cinfo, jpeg_component_info * compptr,
 
       for (i = 0; i < DCTSIZE2; i++) {
 	qval = divisors[i];
-/* SRS Hack to get values */
 	temp = workspace[ZAG[i]];
+#if 0
+/* SRS Hack to get values */
  if (bi==0) {
    printf("%d ",temp);
    if ((i+1)%8==0) printf("\n");
  }
+#endif
 	/* Divide the coefficient value by qval, ensuring proper rounding.
 	 * Since C does not specify the direction of rounding for negative
 	 * quotients, we have to force the dividend positive for portability.
