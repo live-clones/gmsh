@@ -2,7 +2,7 @@ This is Gmsh, an automatic three-dimensional finite element mesh
 generator, primarily Delaunay, with built-in pre- and post-processing
 facilities.
 
-Gmsh is free software. See the file COPYING for copying
+Gmsh is free software. See the file doc/COPYING for copying
 permission. Parts of Gmsh are distributed with additional license
 requirements. Check individual files for more information. Most
 notably, if you incorporate the Triangle/ library, Gmsh can only be
