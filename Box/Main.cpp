@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.47 2005-02-16 05:17:54 geuzaine Exp $
+// $Id: Main.cpp,v 1.48 2005-04-04 18:19:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -84,8 +84,6 @@ void Info(int level, char *arg0)
 
 int main(int argc, char *argv[])
 {
-  int i, nbf;
-
   ParUtil::Instance()->init(argc, argv);
 
   Init_Options(0);
@@ -113,7 +111,7 @@ int main(int argc, char *argv[])
 
   GMSH_PluginManager::instance()->registerDefaultPlugins();
 
-  Get_Options(argc, argv, &nbf);
+  Get_Options(argc, argv);
 
   check_gsl();
 
@@ -121,10 +119,10 @@ int main(int argc, char *argv[])
   if(yyerrorstate)
     ParUtil::Instance()->Abort();
   else {
-    for(i = 1; i < nbf; i++)
-      MergeProblem(TheFileNameTab[i]);
-    if(TheBgmFileName) {
-      MergeProblem(TheBgmFileName);
+    for(int i = 1; i < List_Nbr(CTX.files); i++)
+      MergeProblem(*(char**)List_Pointer(CTX.files, i));
+    if(CTX.bgm_filename) {
+      MergeProblem(CTX.bgm_filename);
       if(List_Nbr(CTX.post.list))
         BGMWithView(*(Post_View **)
                     List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));

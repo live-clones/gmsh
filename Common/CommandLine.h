@@ -20,15 +20,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#define MAX_OPEN_FILES  256
-
 extern char gmsh_progname[], gmsh_copyright[], gmsh_version[], gmsh_os[];
 extern char gmsh_date[], gmsh_host[], gmsh_packager[], gmsh_url[];
 extern char gmsh_email[], gmsh_gui[], gmsh_options[], gmsh_license[];
 
-extern char *TheFileNameTab[MAX_OPEN_FILES], *TheBgmFileName;
-
-void Get_Options(int argc, char *argv[], int *nbfiles);
+void Get_Options(int argc, char *argv[]);
 void Print_Usage(char *name);
 char *Get_BuildOptions(void);
 

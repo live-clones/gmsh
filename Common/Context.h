@@ -49,6 +49,8 @@ public :
   // general options
   char filename[256];         // the name of the currently opened file
   char base_filename[256];    // the same without the extension
+  char *bgm_filename;         // background mesh
+  List_T *files;              // all the files on the command line
   char *output_filename;      // output file specified with command line option '-o'
   char *default_filename, default_filename_fullpath[256];
                               // the name of the default file

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.75 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: Main.cpp,v 1.76 2005-04-04 18:19:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -47,7 +47,6 @@ GUI *WID = NULL;
 
 int main(int argc, char *argv[])
 {
-  int i, nbf;
   char *cmdline, currtime[100];
   time_t now;
 
@@ -58,12 +57,12 @@ int main(int argc, char *argv[])
   currtime[strlen(currtime) - 1] = '\0';
 
   int cll = 0;
-  for(i = 0; i < argc; i++) {
+  for(int i = 0; i < argc; i++) {
     cll += strlen(argv[i]);
   }
   cmdline = (char*)Malloc((cll+argc+1)*sizeof(char));
   cmdline[0] = '\0';
-  for(i = 0; i < argc; i++) {
+  for(int i = 0; i < argc; i++) {
     strcat(cmdline, argv[i]);
     strcat(cmdline, " ");
   }
@@ -99,7 +98,7 @@ int main(int argc, char *argv[])
 
   // Read configuration files and command line options
 
-  Get_Options(argc, argv, &nbf);
+  Get_Options(argc, argv);
 
   // Always print info on terminal for non-interactive execution
 
@@ -125,12 +124,12 @@ int main(int argc, char *argv[])
     if(yyerrorstate)
       exit(1);
     else {
-      for(i = 1; i < nbf; i++)
-        MergeProblem(TheFileNameTab[i]);
+      for(int i = 1; i < List_Nbr(CTX.files); i++)
+        MergeProblem(*(char**)List_Pointer(CTX.files, i));
       if(CTX.post.combine_time)
 	CombineViews(1, 2, CTX.post.combine_remove_orig);
-      if(TheBgmFileName) {
-        MergeProblem(TheBgmFileName);
+      if(CTX.bgm_filename) {
+        MergeProblem(CTX.bgm_filename);
         if(List_Nbr(CTX.post.list))
           BGMWithView(*(Post_View **)
                       List_Pointer(CTX.post.list,
@@ -201,8 +200,8 @@ int main(int argc, char *argv[])
   // Open project file and merge all other input files
 
   OpenProblem(CTX.filename);
-  for(i = 1; i < nbf; i++)
-    MergeProblem(TheFileNameTab[i]);
+  for(int i = 1; i < List_Nbr(CTX.files); i++)
+    MergeProblem(*(char**)List_Pointer(CTX.files, i));
   if(CTX.post.combine_time)
     CombineViews(1, 2, CTX.post.combine_remove_orig);
   
@@ -231,8 +230,8 @@ int main(int argc, char *argv[])
 
   // Read background mesh on disk
 
-  if(TheBgmFileName) {
-    MergeProblem(TheBgmFileName);
+  if(CTX.bgm_filename) {
+    MergeProblem(CTX.bgm_filename);
     if(List_Nbr(CTX.post.list))
       BGMWithView(*(Post_View **)
                   List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));

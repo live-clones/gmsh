@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.57 2005-04-04 16:28:18 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.58 2005-04-04 18:19:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -43,9 +43,6 @@
 
 extern Context_T CTX;
 extern Mesh *THEM;
-
-char *TheFileNameTab[MAX_OPEN_FILES];
-char *TheBgmFileName = NULL;
 
 char gmsh_progname[]  = "Gmsh, a 3D mesh generator with pre- and post-processing facilities" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2005 Christophe Geuzaine and Jean-Francois Remacle";
@@ -145,25 +142,18 @@ char *Get_BuildOptions(void)
   return opt;
 }
 
-void Get_Options(int argc, char *argv[], int *nbfiles)
+void Get_Options(int argc, char *argv[])
 {
-  int i = 1;
-
   // This symbol context is local to option parsing (the symbols will
   // not interfere with subsequent OpenFiles)
-
   InitSymbols();
 
   // Parse session and option files
-
   ParseFile(CTX.session_filename_fullpath, 1, 1);
   ParseFile(CTX.options_filename_fullpath, 1, 1);
 
   // Get command line options
-
-  TheFileNameTab[0] = CTX.default_filename_fullpath;
-  *nbfiles = 0;
-
+  int i = 1;
   while(i < argc) {
 
     if(argv[i][0] == '-') {
@@ -267,7 +257,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       else if(!strcmp(argv[i] + 1, "bgm")) {
         i++;
         if(argv[i] != NULL)
-          TheBgmFileName = argv[i++];
+          CTX.bgm_filename = argv[i++];
         else {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
@@ -298,10 +288,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         else
           fprintf(stderr, "Usage: %s -convert file file\n", argv[0]);
         exit(1);
-      }
-      else if(!strcmp(argv[i] + 1, "old")) {
-        CTX.geom.old_circle = 1;
-        i++;
       }
       else if(!strcmp(argv[i] + 1, "initial")) {
         i++;
@@ -433,8 +419,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
           exit(1);
         }
       }
-      else if(!strcmp(argv[i] + 1, "version") ||
-              !strcmp(argv[i] + 1, "-version")) {
+      else if(!strcmp(argv[i] + 1, "version") || !strcmp(argv[i] + 1, "-version")) {
         fprintf(stderr, "%s\n", GMSH_VERSION);
         exit(1);
       }
@@ -498,37 +483,12 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
           exit(1);
         }
       }
-      else if(!strcmp(argv[i] + 1, "fill")) {
-        opt_view_intervals_type(0, GMSH_SET, DRAW_POST_CONTINUOUS);
-        i++;
-      }
       else if(!strcmp(argv[i] + 1, "smoothview")) {
         CTX.post.smooth = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "combine")) {
         CTX.post.combine_time = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "nbiso")) {
-        i++;
-        if(argv[i] != NULL)
-          opt_view_nb_iso(0, GMSH_SET, atoi(argv[i++]));
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "threads")) {
-        CTX.threads = 1;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "nothreads")) {
-        CTX.threads = 0;
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "db")) {
-        CTX.db = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "nodb")) {
@@ -583,18 +543,16 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         Print_Usage(argv[0]);
         exit(1);
       }
-    }
 
+    }
     else {
-      if(*nbfiles < MAX_OPEN_FILES)
-        TheFileNameTab[(*nbfiles)++] = argv[i++];
-      else {
-        fprintf(stderr, ERROR_STR "Too many input files\n");
-        exit(1);
-      }
+      List_Add(CTX.files, &argv[i++]);
     }
 
   }
 
-  strncpy(CTX.filename, TheFileNameTab[0], 255);
+  if(!List_Nbr(CTX.files))
+    strncpy(CTX.filename, CTX.default_filename_fullpath, 255);
+  else
+    strncpy(CTX.filename, *(char**)List_Pointer(CTX.files, 0), 255);
 }
