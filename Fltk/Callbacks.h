@@ -151,6 +151,12 @@ void visibility_sort_cb(CALLBACK_ARGS) ;
 void visibility_number_cb(CALLBACK_ARGS);
 void visibility_ok_cb(CALLBACK_ARGS) ;
 
+// Clipping planes Menu
+
+void clip_cb(CALLBACK_ARGS) ;
+void clip_num_cb(CALLBACK_ARGS) ;
+void clip_ok_cb(CALLBACK_ARGS) ;
+
 // Help Menu
 
 void help_short_cb(CALLBACK_ARGS) ;

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.56 2004-06-17 21:16:58 geuzaine Exp $
+// $Id: Message.cpp,v 1.57 2004-07-17 22:46:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -238,6 +238,8 @@ void Exit(int level)
       CTX.stat_position[1] = WID->stat_window->y();
       CTX.vis_position[0] = WID->vis_window->x();
       CTX.vis_position[1] = WID->vis_window->y();
+      CTX.clip_position[0] = WID->clip_window->x();
+      CTX.clip_position[1] = WID->clip_window->y();
       CTX.ctx_position[0] = WID->context_geometry_window->x();
       CTX.ctx_position[1] = WID->context_geometry_window->y();
       CTX.solver_position[0] = WID->solver[0].window->x();

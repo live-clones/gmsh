@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.171 2004-07-16 18:02:19 geuzaine Exp $
+// $Id: Options.cpp,v 1.172 2004-07-17 22:46:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1975,6 +1975,20 @@ double opt_general_visibility_position1(OPT_ARGS_NUM)
     CTX.vis_position[1] = (int)val;
   return CTX.vis_position[1];
 }
+ 
+double opt_general_clip_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.clip_position[0] = (int)val;
+  return CTX.clip_position[0];
+}
+
+double opt_general_clip_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.clip_position[1] = (int)val;
+  return CTX.clip_position[1];
+}
 
 double opt_general_visibility_mode(OPT_ARGS_NUM)
 {
@@ -2446,6 +2460,10 @@ double opt_general_clip0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip[0] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip[0];
 }
 
@@ -2453,6 +2471,10 @@ double opt_general_clip0a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[0][0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[0][0];
 }
 
@@ -2460,6 +2482,10 @@ double opt_general_clip0b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[0][1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[0][1];
 }
 
@@ -2467,6 +2493,10 @@ double opt_general_clip0c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[0][2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[0][2];
 }
 
@@ -2474,6 +2504,10 @@ double opt_general_clip0d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[0][3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[0][3];
 }
 
@@ -2481,6 +2515,10 @@ double opt_general_clip1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip[1] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip[1];
 }
 
@@ -2488,6 +2526,10 @@ double opt_general_clip1a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[1][0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[1][0];
 }
 
@@ -2495,6 +2537,10 @@ double opt_general_clip1b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[1][1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[1][1];
 }
 
@@ -2502,6 +2548,10 @@ double opt_general_clip1c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[1][2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[1][2];
 }
 
@@ -2509,6 +2559,10 @@ double opt_general_clip1d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[1][3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[1][3];
 }
 
@@ -2516,6 +2570,10 @@ double opt_general_clip2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip[2] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip[2];
 }
 
@@ -2523,6 +2581,10 @@ double opt_general_clip2a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[2][0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[2][0];
 }
 
@@ -2530,6 +2592,10 @@ double opt_general_clip2b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[2][1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[2][1];
 }
 
@@ -2537,6 +2603,10 @@ double opt_general_clip2c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[2][2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[2][2];
 }
 
@@ -2544,6 +2614,10 @@ double opt_general_clip2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[2][3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[2][3];
 }
 
@@ -2551,6 +2625,10 @@ double opt_general_clip3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip[3] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip[3];
 }
 
@@ -2558,6 +2636,10 @@ double opt_general_clip3a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[3][0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[3][0];
 }
 
@@ -2565,6 +2647,10 @@ double opt_general_clip3b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[3][1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[3][1];
 }
 
@@ -2572,6 +2658,10 @@ double opt_general_clip3c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[3][2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[3][2];
 }
 
@@ -2579,6 +2669,10 @@ double opt_general_clip3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[3][3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[3][3];
 }
 
@@ -2586,6 +2680,10 @@ double opt_general_clip4(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip[4] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip[4];
 }
 
@@ -2593,6 +2691,10 @@ double opt_general_clip4a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[4][0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[4][0];
 }
 
@@ -2600,6 +2702,10 @@ double opt_general_clip4b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[4][1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[4][1];
 }
 
@@ -2607,6 +2713,10 @@ double opt_general_clip4c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[4][2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[4][2];
 }
 
@@ -2614,6 +2724,10 @@ double opt_general_clip4d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[4][3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[4][3];
 }
 
@@ -2621,6 +2735,10 @@ double opt_general_clip5(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip[5] = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip[5];
 }
 
@@ -2628,6 +2746,10 @@ double opt_general_clip5a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[5][0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[5][0];
 }
 
@@ -2635,6 +2757,10 @@ double opt_general_clip5b(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[5][1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[5][1];
 }
 
@@ -2642,6 +2768,10 @@ double opt_general_clip5c(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[5][2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[5][2];
 }
 
@@ -2649,6 +2779,10 @@ double opt_general_clip5d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.clip_plane[5][3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
   return CTX.clip_plane[5][3];
 }
 

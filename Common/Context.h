@@ -77,6 +77,7 @@ public :
   int msg_size[2];            // size of the message window on the screen
   int opt_position[2];        // position of the option window on the screen
   int vis_position[2];        // position of the visibility window on the screen
+  int clip_position[2];       // position of the clipping planes window on the screen
   int stat_position[2];       // position of the statistics window on the screen
   int ctx_position[2];        // position of the geo/mesh context windows on the screen
   int solver_position[2];     // position of the solver windows on the screen
@@ -124,7 +125,7 @@ public :
   double light_position[6][3]; // light sources positions 
   double shine;                // specular value 
   int render_mode;            // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
-  int clip[6];                // status of clip planes 
+  int clip[6];                // status of clip planes (bit arrays)
   double clip_plane[6][4];    // clip planes 
   double pixel_equiv_x, pixel_equiv_y ; 
                               // approximative equivalent model length of a pixel 

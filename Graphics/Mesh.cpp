@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.101 2004-07-16 18:02:20 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.102 2004-07-17 22:46:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -105,26 +105,27 @@ double intersectCutPlane(int num, Vertex **v)
 
 void Draw_Mesh(Mesh * M)
 {
-  GLenum clip[6] = { GL_CLIP_PLANE0, GL_CLIP_PLANE1, GL_CLIP_PLANE2, 
-		     GL_CLIP_PLANE3, GL_CLIP_PLANE4, GL_CLIP_PLANE5 };
-
   InitPosition();
 
   for(int i = 0; i < 6; i++){
-    if(CTX.clip[i]){
-      glClipPlane(clip[i], CTX.clip_plane[i]);
-      glEnable(clip[i]);
-    }
-    else{
-      glDisable(clip[i]);
-    }
+    glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX.clip_plane[i]);
+    glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
 
   // draw the geometry
 
   if(M->status >= 0){
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    for(int i = 0; i < 6; i++){
+      if(CTX.clip[i] & 1) 
+	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+      else
+	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+    }
     Draw_Geom(M);
+    for(int i = 0; i < 6; i++){
+      glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+    }
   }
 
   // if we're in selection mode, we're done
@@ -186,6 +187,13 @@ void Draw_Mesh(Mesh * M)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
+    for(int i = 0; i < 6; i++){
+      if(CTX.clip[i] & 2) 
+	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+      else
+	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+    }
    
     if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
 			  CTX.mesh.volumes_num || 
@@ -210,6 +218,10 @@ void Draw_Mesh(Mesh * M)
       Tree_Action(M->Vertices, Draw_Mesh_Point);
     }
     CTX.mesh.changed = 0;
+
+    for(int i = 0; i < 6; i++){
+      glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+    }
   }
 
   // draw the big moving axes

@@ -40,6 +40,7 @@
 #include <FL/Fl_Multiline_Output.H>
 #include <FL/Fl_Bitmap.H>
 #include <FL/Fl_Browser.H>
+#include <FL/Fl_Multi_Browser.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/x.H>
 #include <FL/Fl_Color_Chooser.H>
@@ -217,6 +218,12 @@ public:
   Fl_Check_Button  *vis_butt[20] ;
   Fl_Input         *vis_input;
 
+  // clipping planes window
+  Fl_Window        *clip_window ;
+  Fl_Choice        *clip_choice ;
+  Fl_Multi_Browser *clip_browser ;
+  Fl_Value_Input   *clip_value[4];
+
   // about window
   Fl_Window        *about_window ;
 
@@ -251,6 +258,7 @@ public:
   PluginDialogBox *create_plugin_window(GMSH_Plugin *p);
   void create_view_options_window(int numview);
   void create_visibility_window();
+  void create_clip_window();
   void create_statistics_window();
   void create_message_window();
   void create_about_window();
@@ -283,6 +291,7 @@ public:
   int  arrow_shortcuts();
   void reset_visibility();
   void reset_option_browser();
+  void reset_clip_browser();
   int  selection, try_selection, quit_selection, end_selection, undo_selection;
 
 };

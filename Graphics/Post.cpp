@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.71 2004-07-09 18:26:56 geuzaine Exp $
+// $Id: Post.cpp,v 1.72 2004-07-17 22:46:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -308,7 +308,7 @@ void Draw_TensorList(Post_View * v, double ValMin, double ValMax,
 
 void Draw_Post(void)
 {
-  int iView, nb;
+  int nb;
   double ValMin = 0., ValMax = 0.;
   Post_View *v;
 
@@ -316,7 +316,7 @@ void Draw_Post(void)
     return;
 
   if(!CTX.post.draw) {  // draw only the bbox of the visible views
-    for(iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
+    for(int iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
       v = (Post_View *) List_Pointer(CTX.post.list, iView);
       if(v->Visible && v->Type == DRAW_POST_3D) {
         glColor4ubv((GLubyte *) & CTX.color.fg);
@@ -360,7 +360,7 @@ void Draw_Post(void)
     return;
   }
 
-  for(iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
+  for(int iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
 
     v = (Post_View *) List_Pointer(CTX.post.list, iView);
 
@@ -376,6 +376,13 @@ void Draw_Post(void)
 	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
       else
 	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
+      for(int i = 0; i < 6; i++){
+	if(CTX.clip[i] & (1<<(2+iView))) 
+	  glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+	else
+	  glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+      }
       
       switch (v->RangeType) {
       case DRAW_POST_RANGE_DEFAULT:
@@ -580,6 +587,9 @@ void Draw_Post(void)
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
       }
+
+      for(int i = 0; i < 6; i++)
+	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
       
       v->Changed = 0;
     }

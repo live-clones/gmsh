@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.323 2004-07-16 18:02:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.324 2004-07-17 22:46:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -84,6 +84,7 @@ Fl_Menu_Item m_menubar_table[] = {
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",         FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
     {"&Visibility...",      FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"&Clipping planes...", FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"S&tatistics...",      FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
     {"M&essage console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
@@ -115,6 +116,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
   {"Tools",0,0,0,FL_SUBMENU},
     {"Options...",         FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
     {"Visibility...",      FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"Clipping Planes...", FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
     {"Message Console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
@@ -689,6 +691,7 @@ GUI::GUI(int argc, char **argv)
   stat_window = NULL;
   msg_window = NULL;
   vis_window = NULL;
+  clip_window = NULL;
   about_window = NULL;
   context_geometry_window = NULL;
   context_mesh_window = NULL;
@@ -754,6 +757,7 @@ GUI::GUI(int argc, char **argv)
   create_message_window();
   create_statistics_window();
   create_visibility_window();
+  create_clip_window();
   create_about_window();
   create_geometry_context_window(0);
   create_mesh_context_window(0);
@@ -2949,6 +2953,83 @@ void GUI::create_visibility_window()
 
   vis_window->position(CTX.vis_position[0], CTX.vis_position[1]);
   vis_window->end();
+}
+
+// Create the clipping planes window
+
+void GUI::reset_clip_browser()
+{
+  int i;
+  char str[128];
+  clip_browser->clear();
+  clip_browser->add("Geometry");
+  clip_browser->add("Mesh");
+  for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+    if(i == NB_BUTT_MAX)
+      break;
+    sprintf(str, "View [%d]", i);
+    clip_browser->add(str);
+  }
+  int idx = clip_choice->value();
+  clip_browser->deselect();
+  for(i = 0; i < clip_browser->size(); i++)
+    if(CTX.clip[idx] & (1<<i))
+      clip_browser->select(i+1);
+  for(i = 0; i < 4; i++)
+    clip_value[i]->value(CTX.clip_plane[idx][i]);
+}
+
+void GUI::create_clip_window()
+{
+  if(clip_window) {
+    clip_window->show();
+    return;
+  }
+
+  static Fl_Menu_Item plane_number[] = {
+    {"Plane 0", 0, 0},
+    {"Plane 1", 0, 0},
+    {"Plane 2", 0, 0},
+    {"Plane 3", 0, 0},
+    {"Plane 4", 0, 0},
+    {"Plane 5", 0, 0},
+    {0}
+  };
+
+  int BW = 105;
+  int width = 2 * BW + 3 * WB;
+  int height = 6 * BH + 3 * WB;
+
+  clip_window = new Fl_Window(width, height, "Clipping Planes");
+  clip_window->box(WINDOW_BOX);
+
+  clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, BW, 5 * BH);
+
+  clip_choice = new Fl_Choice(2 * WB + BW, 1 * WB + 0 * BH, BW, BH);
+  clip_choice->menu(plane_number);
+  clip_choice->callback(clip_num_cb);
+
+  int BW2 = BW - 3 * fontsize / 2;
+  clip_value[0] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 1 * BH, BW2, BH, "A");
+  clip_value[1] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 2 * BH, BW2, BH, "B");
+  clip_value[2] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 3 * BH, BW2, BH, "C");
+  clip_value[3] = new Fl_Value_Input(2 * WB + BW, 1 * WB + 4 * BH, BW2, BH, "D");
+  for(int i = 0; i < 4; i++)
+    clip_value[i]->align(FL_ALIGN_RIGHT);
+
+  reset_clip_browser();
+
+  {
+    Fl_Return_Button *o = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Apply");
+    o->callback(clip_ok_cb);
+  }
+  {
+    Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+    o->callback(cancel_cb, (void *)clip_window);
+  }
+
+  clip_window->position(CTX.clip_position[0], CTX.clip_position[1]);
+  clip_window->end();
 }
 
 // Create the about window

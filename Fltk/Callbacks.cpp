@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.254 2004-07-16 18:02:19 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.255 2004-07-17 22:46:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -184,6 +184,7 @@ void UpdateViewsInGUI()
     if(WID->get_context() == 3)
       WID->set_context(menu_post, 0);
     WID->reset_option_browser();
+    WID->reset_clip_browser();
   }
 }
 
@@ -1317,6 +1318,30 @@ void visibility_number_cb(CALLBACK_ARGS)
   visibility_cb(NULL, NULL);
   WID->vis_browser->position(pos);
 
+  Draw();
+}
+
+// Clipping planes menu
+
+void clip_cb(CALLBACK_ARGS)
+{
+  WID->create_clip_window();
+}
+
+void clip_num_cb(CALLBACK_ARGS)
+{
+  WID->reset_clip_browser();
+}
+
+void clip_ok_cb(CALLBACK_ARGS)
+{
+  int idx = WID->clip_choice->value();
+  CTX.clip[idx] = 0;
+  for(int i = 0; i < WID->clip_browser->size(); i++)
+    if(WID->clip_browser->selected(i+1))
+      CTX.clip[idx] += (1<<i);
+  for(int i = 0; i < 4; i++)
+    CTX.clip_plane[idx][i] = WID->clip_value[i]->value();
   Draw();
 }
 
