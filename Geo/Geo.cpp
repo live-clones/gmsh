@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.8 2000-12-09 15:21:17 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.9 2000-12-09 22:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -29,7 +29,11 @@ int Mode_Transfinite = 0;
 double evaluate_scalarfunction (char *var, double val, char *funct){
   FILE *tempf;
   tempf = yyin;
-  yyin = fopen("gmsh.tmp","w");
+  
+  if(!(yyin = fopen("gmsh.tmp","w"))){
+    Msg(ERROR, "Unable to Open Temporary File");
+    return 0.;
+  }
 
   /* On pose la variable = la fonction et on evalue la fonction */
 
@@ -56,8 +60,14 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
 void add_infile(char *text, char *fich){
   FILE *file;
 
-  yyin = fopen("gmsh.tmp","w");
-  file = fopen(fich,"a");
+  if(!(yyin = fopen("gmsh.tmp","w"))){
+    Msg(ERROR, "Unable to Open Temporary File");
+    return;
+  }
+  if(!(file = fopen(fich,"a"))){
+    Msg(ERROR, "Unable to Open File '%s'", fich);
+    return;
+  }
   fprintf(yyin,"%s\n",text);
   Msg(SELECT,"%s",text);
   fclose(yyin);

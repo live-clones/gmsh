@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.19 2000-12-09 17:33:39 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.20 2000-12-09 22:26:12 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,7 +86,7 @@ stepid  {dieze}({digit})*
 "<="                    return tLESSOREQUAL ;
 ">="                    return tGREATEROREQUAL ;
 
-ACos                    return tAcos ;
+Acos                    return tAcos ;
 ArcCos                  return tAcos ;
 Asin                    return tAsin;
 ArcSin                  return tAsin;
@@ -109,6 +109,7 @@ Coherence               return tCoherence;
 Complex                 return tComplex;
 Color                   return tColor;
 CatmullRom		return tSpline;
+Call                    return tCall;
 
 Delete                  return tDelete;
 Dilate                  return tDilate;
@@ -120,14 +121,20 @@ Ellipsis                return tEllipsis;
 Extrude                 return tExtrude;
 Elliptic		return tElliptic;
 ELLIPSE                 return tELLIPSE;
+EndFor                  return tEndFor;
+EndIf                   return tEndIf;
+Exit                    return tExit;
 
 Fabs                    return tFabs ;
 Floor                   return tFloor ;
 Fmod                    return tFmod ;
+For                     return tFor;
+Function                return tFunction;
 
 Hypot                   return tHypot ;
 
 In                      return tIn;
+If                      return tIf;
 
 Knots			return tKnots;
 
@@ -157,6 +164,7 @@ Recombine               return tRecombine;
 Rotate                  return tRotate;
 Ruled                   return tRuled;
 Rand                    return tRand;
+Return                  return tReturn;
 
 Sqrt                    return tSqrt ;
 Sin                     return tSin ;
@@ -178,14 +186,6 @@ View                    return tView;
 Volume                  return tVolume;
 
 With			return tWith;
-
-For                     return tFor;
-EndFor                  return tEndFor;
-Exit                    return tExit;
-Merge                   return tMerge;
-Function                return tFunction;
-Return                  return tReturn;
-Call                    return tCall;
 
 SS                      return tScalarTetrahedron;
 VS                      return tVectorTetrahedron;

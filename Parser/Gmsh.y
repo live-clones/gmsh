@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.34 2000-12-09 17:33:39 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.35 2000-12-09 22:26:12 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -55,8 +55,9 @@ static StringXNumber  *pNumCat;
 static StringXArray   *pArrCat;
 static StringXColor   *pColCat;
 
-void  yyerror (char *s);
-void  vyyerror (char *fmt, ...);
+void yyerror (char *s);
+void vyyerror (char *fmt, ...);
+void skip_until (char *until);
 
 %}
 
@@ -89,7 +90,7 @@ void  vyyerror (char *fmt, ...);
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tFor tIn tEndFor tExit tMerge
+%token tColor tFor tIn tEndFor tIf tEndIf tExit tMerge
 %token tReturn tCall tFunction
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
@@ -388,7 +389,11 @@ GeomFormat :
 ;
 
 Printf :
-    tPrintf '(' tBIGSTR ',' FExpr ')' tEND
+    tPrintf '(' tBIGSTR ')' tEND
+    {
+      Msg(PARSER_INFO, $3); 
+    }
+  | tPrintf '(' tBIGSTR ',' FExpr ')' tEND
     {
       Msg(PARSER_INFO, $3, $5); 
     }
@@ -1676,6 +1681,9 @@ Command :
 	    CreateImage($2,fp);
 	    fclose(fp);
 	  }
+	  else{
+	    vyyerror("Unable to Open File '%s'", $2);
+	  }
 	}
 	
       }
@@ -1739,128 +1747,127 @@ Command :
 
 Loop :   
 
-  tFor '{' FExpr tDOTS FExpr '}'
-  {
-    FILE* ff;
-    if(RecursionLevel)
-      ff = yyinTab[RecursionLevel-1];
-    else
-      ff = yyin;
-    // here, we seek remember the position in yyin
-    LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
-    LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
-    LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
-    LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
-  }
-  | tFor '{' FExpr tDOTS FExpr tDOTS FExpr '}'
-  {
-    FILE* ff;
-    if(RecursionLevel)
-      ff = yyinTab[RecursionLevel-1];
-    else
-      ff = yyin;
-    // here, we seek remember the position in yyin
-    LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
-    LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
-    LoopControlVariablesTab[ImbricatedLoop][2] = $7 ;
-    LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
-    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
-  }
+    tFor '(' FExpr tDOTS FExpr ')'
+    {
+      FILE* ff;
+      if(RecursionLevel)
+	ff = yyinTab[RecursionLevel-1];
+      else
+	ff = yyin;
+      // here, we seek remember the position in yyin
+      LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
+      LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
+      LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
+      LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
+      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+    }
+  | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')'
+    {
+      FILE* ff;
+      if(RecursionLevel)
+	ff = yyinTab[RecursionLevel-1];
+      else
+	ff = yyin;
+      // here, we seek remember the position in yyin
+      LoopControlVariablesTab[ImbricatedLoop][0] = $3 ;
+      LoopControlVariablesTab[ImbricatedLoop][1] = $5 ;
+      LoopControlVariablesTab[ImbricatedLoop][2] = $7 ;
+      LoopControlVariablesNameTab[ImbricatedLoop] = "" ;
+      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+    }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
-  {
-    FILE* ff;
-    if(RecursionLevel)
-      ff = yyinTab[RecursionLevel-1];
-    else
-      ff = yyin;
-    // here, we seek remember the position in yyin
-    LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
-    LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
-    LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
-    LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
-
-    TheSymbol.Name = $2;
-    TheSymbol.val  = $5;
-    if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-      List_Add(Symbol_L,&TheSymbol);
-    else
-      pSymbol->val = $5;
-
-    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
-  }
+    {
+      FILE* ff;
+      if(RecursionLevel)
+	ff = yyinTab[RecursionLevel-1];
+      else
+	ff = yyin;
+      // here, we seek remember the position in yyin
+      LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
+      LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
+      LoopControlVariablesTab[ImbricatedLoop][2] = 1.0 ;
+      LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
+      
+      TheSymbol.Name = $2;
+      TheSymbol.val  = $5;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	List_Add(Symbol_L,&TheSymbol);
+      else
+	pSymbol->val = $5;
+      
+      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+    }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
-  {
-    FILE* ff;
-    if(RecursionLevel)
-      ff = yyinTab[RecursionLevel-1];
-    else
-      ff = yyin;
-    // here, we seek remember the position in yyin
-    LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
-    LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
-    LoopControlVariablesTab[ImbricatedLoop][2] = $9 ;
-    LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
-
-    TheSymbol.Name = $2;
-    TheSymbol.val  = $5;
-    if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-      List_Add(Symbol_L,&TheSymbol);
-    else
-      pSymbol->val = $5;
-
-    fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
-  }
+    {
+      FILE* ff;
+      if(RecursionLevel)
+	ff = yyinTab[RecursionLevel-1];
+      else
+	ff = yyin;
+      // here, we seek remember the position in yyin
+      LoopControlVariablesTab[ImbricatedLoop][0] = $5 ;
+      LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
+      LoopControlVariablesTab[ImbricatedLoop][2] = $9 ;
+      LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
+      
+      TheSymbol.Name = $2;
+      TheSymbol.val  = $5;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	List_Add(Symbol_L,&TheSymbol);
+      else
+	pSymbol->val = $5;
+      
+      fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
+    }
   | tEndFor 
-  {
-    if(LoopControlVariablesTab[ImbricatedLoop-1][1] >  
-       LoopControlVariablesTab[ImbricatedLoop-1][0]){
+    {
+      if(LoopControlVariablesTab[ImbricatedLoop-1][1] >  
+	 LoopControlVariablesTab[ImbricatedLoop-1][0]){
 	FILE* ff;
 	if(RecursionLevel)
 	  ff = yyinTab[RecursionLevel-1];
 	else
 	  ff = yyin;
-
-        LoopControlVariablesTab[ImbricatedLoop-1][0] +=
+	
+	LoopControlVariablesTab[ImbricatedLoop-1][0] +=
 	  LoopControlVariablesTab[ImbricatedLoop-1][2];
-
+	
 	if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
 	  TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
 	  pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols);
 	  pSymbol->val += LoopControlVariablesTab[ImbricatedLoop-1][2];
 	}
-
-        fsetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
+	
+	fsetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
       }
-    else
-      {
+      else{
 	ImbricatedLoop--;
       }
-  }
+    }
   | tReturn
-  {
-    if(!FunctionManager::Instance()->leaveFunction(&yyin,yylineno))
-      {
+    {
+      if(!FunctionManager::Instance()->leaveFunction(&yyin,yylineno))
 	vyyerror("Error while exiting function");
-      }
-  } 
+    } 
   | tCall tSTRING tEND
-  {
-    if(!FunctionManager::Instance()->enterFunction($2,&yyin,yylineno))
-      {
+    {
+      if(!FunctionManager::Instance()->enterFunction($2,&yyin,yylineno))
 	vyyerror("Unknown Function %s",$2);
-      }
-  } 
+    } 
   | tFunction tSTRING
-  {
-    // skip everything until return is found
-    if(!FunctionManager::Instance()->createFunction($2,yyin,yylineno))
-      {
+    {
+      // skip everything until return is found
+      if(!FunctionManager::Instance()->createFunction($2,yyin,yylineno))
 	vyyerror("Redefinition of function %s",$2);
-      }
-    void skip_until(char *until);
-    skip_until("Return");
-  }
+      skip_until("Return");
+    }
+  | tIf '(' FExpr ')'
+    {
+      if(!$3) skip_until("EndIf");
+    }
+  | tEndIf
+    {
+    }
 ;
 
 
@@ -2577,6 +2584,10 @@ StringExpr :
     tBIGSTR
     {
       $$ = $1;
+    }
+  | tSprintf '(' tBIGSTR ')'
+    {
+      $$ = $3;
     }
   | tSprintf '(' tBIGSTR ',' FExpr ')'
     {

@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.27 2000-12-09 17:33:40 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.28 2000-12-09 22:26:13 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -104,8 +104,6 @@ void ParseFile(char *f){
   fgets(String, sizeof(String), yyin) ; 
   fsetpos(yyin, &position);
 
-  //printf("String :: %s",String);
-  
   if(!strncmp(String, "$PTS", 4) || 
      !strncmp(String, "$NO", 3) || 
      !strncmp(String, "$ELM", 4)){

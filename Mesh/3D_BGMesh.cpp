@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.11 2000-11-27 17:34:00 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.12 2000-12-09 22:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -18,6 +18,12 @@ void ExportLcFieldOnVolume (Mesh * M){
   Volume *vol;
   Simplex *simp;
   FILE *f = fopen ("OutFile.pos", "w");
+
+  if(!f){
+    Msg(ERROR, "Unable to Open File");
+    return;
+  }
+
   fprintf (f, "View \"LC_FIELD\" Offset{0,0,0} {\n");
   for (int i = 0; i < List_Nbr (l); i++){
     List_Read (l, i, &vol);
@@ -38,6 +44,12 @@ void ExportLcFieldOnSurfaces (Mesh * M){
   Surface *surf;
   Simplex *simp;
   FILE *f = fopen ("OutFileS.pos", "w");
+
+  if(!f){
+    Msg(ERROR, "Unable to Open File");
+    return;
+  }
+
   fprintf (f, "View \"LC_FIELD\" Offset{0,0,0} {\n");
   for (int i = 0; i < List_Nbr (l); i++){
     List_Read (l, i, &surf);
@@ -328,6 +340,11 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   *ObjFunct = AdaptMesh (j, OptiMethod, dim, e, h, p, OptiValue);
 
   f = fopen (OutFile, "w");
+
+  if(!f){
+    Msg(ERROR, "Unable to Open File '%s'", OutFile);
+    return 0;
+  }
 
   fprintf (f, "View \"Auto_BGMesh\" Offset{0,0,0} {\n");
 

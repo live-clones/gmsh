@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.12 2000-12-08 10:56:30 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.13 2000-12-09 22:26:12 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -58,7 +58,12 @@ char gmsh_help[]      =
 void ZeroHighlight(Mesh *){}
 void AddViewInUI(int, char *, int){}
 void draw_polygon_2d (double, double, double, int, double *, double *, double *){}
-void set_r(int i, double val){}
+void set_r(int, double){}
+void Init(void){}
+void Draw(void){}
+void Replot(void){}
+void Get_AnimTime(void){}
+void CreateImage(char *, FILE*){}
 
 /* ------------------------------------------------------------------------ */
 /*  I n f o                                                                 */
@@ -93,16 +98,38 @@ void Info (int level, char *arg0){
 /* ------------------------------------------------------------------------ */
 
 void ParseFile(char *f){
+  char String[256];
+
   strncpy(yyname,f,NAME_STR_L);
   yyerrorstate=0;
   yylineno=1;
+
   if(!(yyin = fopen(yyname,"r"))){
-    Msg(INFOS, "File '%s' dos not exist", f);
+    Msg(INFO, "File '%s' Does not Exist", f);
     return;
   }
-  while(!feof(yyin)) yyparse();
+  
+  fpos_t position;
+  fgetpos(yyin, &position);
+  fgets(String, sizeof(String), yyin) ; 
+  fsetpos(yyin, &position);
+
+  if(!strncmp(String, "$PTS", 4) || 
+     !strncmp(String, "$NO", 3) || 
+     !strncmp(String, "$ELM", 4)){
+    if(THEM->status < 0) mai3d(THEM, 0);
+    Read_Mesh(THEM, yyin, FORMAT_MSH);
+  }
+  else if(!strncmp(String, "$PostFormat", 11) ||
+          !strncmp(String, "$View", 5)){
+    Read_View(yyin, yyname);
+  }
+  else{
+    while(!feof(yyin)) yyparse();
+  }
   fclose(yyin);
 }
+
 
 void MergeProblem(char *name){
   Msg(INFOS, "Merging %s",name); 
@@ -137,8 +164,8 @@ void OpenProblem(char *name){
 
   ParseFile(TheFileName);  
 
+  ApplyLcFactor(THEM);
   mai3d(THEM,0);  
-  
   Maillage_Dimension_0(&M);
   ZeroHighlight(&M); 
   CalculateMinMax(THEM->Points);  

@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.4 2000-12-09 17:33:39 geuzaine Exp $ */
+/* $Id: Options.h,v 1.5 2000-12-09 22:26:12 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -30,7 +30,7 @@ StringXString PostProcessingOptions_String[] = {
 } ;
 
 StringXString PrintOptions_String[] = {
-  { "PrintFont" ,  &CTX.print.font , "Courier" },
+  { "Font" ,  &CTX.print.font , "Courier" },
   { NULL , NULL , NULL }
 } ;
 

@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.19 2000-12-09 17:33:39 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.20 2000-12-09 22:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -409,9 +409,8 @@ void Context_T::buildRotmatrix(float m[4][4])
       r0 *= 180./(Pi);
       r2 *= 180./(Pi);
     }
-  // lazyyyyyy
   set_r(0, r0);
-  set_r(1, r1 * 180./(Pi));
+  set_r(1, r1 * 180./(Pi));  // lazyyyyyy
   set_r(2, r2);
 }
 

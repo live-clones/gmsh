@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.8 2000-11-26 15:43:45 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.9 2000-12-09 22:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -803,7 +803,7 @@ void printCurve(Curve *c){
   Msg(INFOS,"Curve %d %d cp (%d->%d)",c->Num,N,c->beg->Num,c->end->Num);
   for(int i=0;i<N;i++){
     List_Read(c->Control_Points,i,&v);
-    Msg(INFOS,"Vertex %d (%f %f %f %f)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
+    Msg(INFOS,"Vertex %d (%g,%g,%g,%g)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
   }
 }
 
