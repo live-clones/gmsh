@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.115 2004-05-27 20:49:03 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.116 2004-05-30 21:21:42 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -1228,7 +1228,12 @@ Merges a file named @var{char-expression}. This command is equivalent to the
 `File->Merge' menu in the graphical user interface.
 
 @item Draw;
-Redraws the scene. The bounding box of the scene is computed as follows:
+Redraws the scene.
+
+@item BoundingBox;
+Force the recomputation of the scene's bounding box (which is normally
+computed only after new geometrical entities are added or after new files
+are merged). The bounding box is computed as follows:
 @enumerate
 @item
 If there is a geometry (i.e., at least one geometrical point), the bounding
@@ -1242,6 +1247,11 @@ If there is no geometry and no mesh, but there are some post-processing
 views, the bounding box is taken as the box enclosing all the primitives of
 the last post-processing view.
 @end enumerate
+
+@item BoundingBox @{ @var{expression}, @var{expression}, @var{expression},
+@var{expression}, @var{expression}, @var{expression} @};
+Force the bounding box of the scene to the given @var{expression}s (X min, X
+max, Y min, Y max, Z min, Z max).
 
 @item Delete All;
 Deletes all geometrical entities and all currently loaded meshes.

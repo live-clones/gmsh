@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.216 2004-05-30 19:17:58 geuzaine Exp $
+$Id: VERSIONS,v 1.217 2004-05-30 21:21:42 geuzaine Exp $
 
 New in 1.53: completed support for second order elements (lines,
 triangles, quadrangles, tetrahedra, hexahedra, prisms and pyramids);
@@ -14,8 +14,9 @@ guessing routines so that entities can be selected in an arbitrary
 order; Mac users can now double click on geo/msh/pos files in the
 Finder to launch Gmsh; removed support for fltk 1.0; rewrote most of
 the code related to quadrangles; fixed 2d elliptic algorithm; removed
-all OpenGL display list code and options; fixed light positioning;
-many code cleanups;
+all OpenGL display list code and options; fixed light positioning; new
+BoundingBox command to set the bounding box explicitly; many code
+cleanups;
 
 New in 1.52: new raster ("bitmap") PostScript/EPS/PDF output formats;
 new Plugin(Extract) to extract a given component from a

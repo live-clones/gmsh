@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.55 2004-03-03 22:23:42 geuzaine Exp $
+// $Id: Gmsh.l,v 1.56 2004-05-30 21:21:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -123,6 +123,7 @@ Bezier			return tBezier;
 Bump                    return tBump;
 BSpline			return tBSpline;
 Bounds			return tBounds;
+BoundingBox             return tBoundingBox;
 
 Ceil                    return tCeil;
 Combine                 return tCombine;

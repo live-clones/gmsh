@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.169 2004-05-29 23:22:22 geuzaine Exp $
+// $Id: Gmsh.y,v 1.170 2004-05-30 21:21:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -88,7 +88,8 @@ int PrintListOfDouble (char *format, List_T *list, char *buffer);
 %token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix tDraw
+%token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix
+%token tBoundingBox tDraw
 %token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTriangulation tTransfinite tComplex tPhysical
@@ -2529,6 +2530,14 @@ Command :
    | tExit tEND
     {
       exit(0);
+    } 
+   | tBoundingBox tEND
+    {
+      SetBoundingBox();
+    } 
+   | tBoundingBox '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      SetBoundingBox($3, $5, $7, $9, $11, $13);
     } 
    | tDraw tEND
     {

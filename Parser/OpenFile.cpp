@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.57 2004-05-25 04:10:10 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.58 2004-05-30 21:21:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -55,6 +55,14 @@ void FixRelativePath(char *in, char *out){
     out[i+1] = '\0';
     strcat(out, in);
   }
+}
+
+void SetBoundingBox(double xmin, double xmax,
+		    double ymin, double ymax, 
+		    double zmin, double zmax)
+{
+  double bbox[6] = {xmin, xmax, ymin, ymax, zmin, zmax};
+  CalculateMinMax(NULL, bbox);
 }
 
 void SetBoundingBox(void)
