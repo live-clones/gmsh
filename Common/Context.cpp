@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.21 2000-12-10 00:06:50 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.22 2000-12-11 22:09:42 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -21,12 +21,6 @@ extern StringXNumber GeometryOptions_Number[] ;
 extern StringXNumber MeshOptions_Number[] ;
 extern StringXNumber PostProcessingOptions_Number[] ;
 extern StringXNumber PrintOptions_Number[] ;
-
-extern StringXArray GeneralOptions_Array[] ;
-extern StringXArray GeometryOptions_Array[] ;
-extern StringXArray MeshOptions_Array[] ;
-extern StringXArray PostProcessingOptions_Array[] ;
-extern StringXArray PrintOptions_Array[] ;
 
 extern StringXColor GeneralOptions_Color[] ;
 extern StringXColor GeometryOptions_Color[] ;
@@ -120,94 +114,6 @@ void Print_NumberOptions(StringXNumber s[], char *prefix, FILE *file){
     i++;
   }
 }
-
-
-// ARRAY OPTIONS
-
-StringXArray * Get_ArrayOptionCategory(char * cat){
-  if     (!strcmp(cat,"General"))        return GeneralOptions_Array ;
-  else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Array ;
-  else if(!strcmp(cat,"Mesh"))           return MeshOptions_Array ;
-  else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Array ;
-  else if(!strcmp(cat,"Print"))          return PrintOptions_Array ;
-  else                                   return NULL ;
-}
-
-void Set_DefaultArrayOptions(StringXArray s[]){
-  int i = 0;
-  
-  while(s[i].str){
-    switch(s[i].type){
-    case GMSH_INT:
-      ((int*)s[i].ptr)[0] = (int)s[i].def1;
-      ((int*)s[i].ptr)[1] = (int)s[i].def2;
-      ((int*)s[i].ptr)[2] = (int)s[i].def3;
-      ((int*)s[i].ptr)[3] = (int)s[i].def4;
-      break;
-    case GMSH_LONG:
-      ((long*)s[i].ptr)[0] = (long)s[i].def1;
-      ((long*)s[i].ptr)[1] = (long)s[i].def2;
-      ((long*)s[i].ptr)[2] = (long)s[i].def3;
-      ((long*)s[i].ptr)[3] = (long)s[i].def4;
-      break;
-    case GMSH_FLOAT:
-      ((float*)s[i].ptr)[0] = (float)s[i].def1;
-      ((float*)s[i].ptr)[1] = (float)s[i].def2;
-      ((float*)s[i].ptr)[2] = (float)s[i].def3;
-      ((float*)s[i].ptr)[3] = (float)s[i].def4;
-      break;
-    case GMSH_DOUBLE:
-      ((double*)s[i].ptr)[0] = (double)s[i].def1;
-      ((double*)s[i].ptr)[1] = (double)s[i].def2;
-      ((double*)s[i].ptr)[2] = (double)s[i].def3;
-      ((double*)s[i].ptr)[3] = (double)s[i].def4;
-      break;
-    }
-    i++;
-  }
-}
-
-void * Get_ArrayOption(char *str, StringXArray s[], int *type){
-  int i = 0;
-  while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
-  if(!s[i].str)
-    return NULL;
-  else{
-    *type = s[i].type ;
-    return s[i].ptr;
-  }
-}
-
-void Print_ArrayOptions(StringXArray s[], char *prefix, FILE *file){
-  int i = 0;
-  while(s[i].str){
-    fprintf(file, "%s%s = {", prefix, s[i].str);
-    switch(s[i].type){
-    case GMSH_INT : 
-      fprintf(file, "%d,%d,%d,%d};\n", 
-	      ((int*)s[i].ptr)[0], ((int*)s[i].ptr)[1], 
-	      ((int*)s[i].ptr)[2], ((int*)s[i].ptr)[3]); 
-      break;
-    case GMSH_LONG : 
-      fprintf(file, "%ld,%ld,%ld,%ld};\n", 
-	      ((long*)s[i].ptr)[0], ((long*)s[i].ptr)[1], 
-	      ((long*)s[i].ptr)[2], ((long*)s[i].ptr)[3]); 
-      break;
-    case GMSH_FLOAT : 
-      fprintf(file, "%g,%g,%g,%g};\n", 
-	      ((float*)s[i].ptr)[0], ((float*)s[i].ptr)[1], 
-	      ((float*)s[i].ptr)[2], ((float*)s[i].ptr)[3]); 
-      break;
-    case GMSH_DOUBLE : 
-      fprintf(file, "%g,%g,%g,%g};\n", 
-	      ((double*)s[i].ptr)[0], ((double*)s[i].ptr)[1], 
-	      ((double*)s[i].ptr)[2], ((double*)s[i].ptr)[3]); 
-      break;
-    }
-    i++;
-  }
-}
-
 
 // COLORS
 
@@ -327,13 +233,6 @@ void Init_Context(void){
   Set_DefaultNumberOptions(PostProcessingOptions_Number);
   Set_DefaultNumberOptions(PrintOptions_Number);
 
-  // Default array options
-  Set_DefaultArrayOptions(GeneralOptions_Array);
-  Set_DefaultArrayOptions(GeometryOptions_Array);
-  Set_DefaultArrayOptions(MeshOptions_Array);
-  Set_DefaultArrayOptions(PostProcessingOptions_Array);
-  Set_DefaultArrayOptions(PrintOptions_Array);
-
   // Default color options
   Init_Colors(0);
 
@@ -357,32 +256,26 @@ void Print_Context(char *filename){
 
   Print_StringOptions(GeneralOptions_String, "General.", file);
   Print_NumberOptions(GeneralOptions_Number, "General.", file);
-  Print_ArrayOptions(GeneralOptions_Array, "General.", file);
   Print_ColorOptions(GeneralOptions_Color, "General.", file);
   fprintf(file, "\n");
   Print_StringOptions(GeometryOptions_String, "Geometry.", file);
   Print_NumberOptions(GeometryOptions_Number, "Geometry.", file);
-  Print_ArrayOptions(GeometryOptions_Array, "Geometry.", file);
   Print_ColorOptions(GeometryOptions_Color, "Geometry.", file);
   fprintf(file, "\n");
   Print_StringOptions(MeshOptions_String, "Mesh.", file);
   Print_NumberOptions(MeshOptions_Number, "Mesh.", file);
-  Print_ArrayOptions(MeshOptions_Array, "Mesh.", file);
   Print_ColorOptions(MeshOptions_Color, "Mesh.", file);
   fprintf(file, "\n");
   Print_StringOptions(PostProcessingOptions_String, "PostProcessing.", file);
   Print_NumberOptions(PostProcessingOptions_Number, "PostProcessing.", file);
-  Print_ArrayOptions(PostProcessingOptions_Array, "PostProcessing.", file);
   Print_ColorOptions(PostProcessingOptions_Color, "PostProcessing.", file);
   for(i=0; i<List_Nbr(Post_ViewList) ; i++){
     Print_StringViewOptions(i, file);
     Print_NumberViewOptions(i, file);
-    Print_ArrayViewOptions(i, file);
   }
   fprintf(file, "\n");
   Print_StringOptions(PrintOptions_String, "Print.", file);
   Print_NumberOptions(PrintOptions_Number, "Print.", file);
-  Print_ArrayOptions(PrintOptions_Array, "Print.", file);
   Print_ColorOptions(PrintOptions_Color, "Print.", file);
 
   if(filename){
@@ -484,11 +377,6 @@ void Context_T::buildRotmatrix(void)
     rot[3][1] = 0.0 ;
     rot[3][2] = 0.0 ;
     rot[3][3] = 1.0 ;
-    /*
-    glRotated (CTX.r[0], 1., 0., 0.);
-    glRotated (CTX.r[1], 0., 1., 0.);
-    glRotated (CTX.r[2], 0., 0., 1.);
-    */
   }
 
 }

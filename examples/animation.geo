@@ -6,7 +6,7 @@ General.Color.Background = White ;
 General.Color.ForeGround = Red ;
 
 Post.View[0].IntervalsType = 2 ;
-Post.View[0].Raise = {0,0,0.1} ;
+Post.View[0].Raise2 = 0.1 ;
 
 For(1:300)
 
@@ -16,7 +16,7 @@ For(1:300)
   Post.View[0].TimeStep += 
     (Post.View[0].TimeStep < Post.View[0].NbTimeStep-1) ? 1 : 0 ;
 
-  Post.View[0].Raise -= {0,0,0.01} ;
+  Post.View[0].Raise2 -= .01 ;
 
   Sleep 0.1;
   Draw;

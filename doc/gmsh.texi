@@ -1,5 +1,5 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.2 2000-12-09 22:26:13 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.3 2000-12-11 22:09:43 geuzaine Exp $
 @c =========================================================================
 @c
 @c This is the Gmsh documentation texinfo source file
@@ -21,8 +21,8 @@
 @c %**start of header
 @setfilename   gmsh.info
 @set EDITION   1.
-@set VERSION   0.995
-@set DAY       09
+@set VERSION   0.996
+@set DAY       12
 @set MONTH     December 2000
 @set COPYRIGHT @copyright{} 1997-2000 Christophe Geuzaine, Jean-Francois Remacle
 @set WEB-GMSH  @uref{http://www.geuz.org/gmsh/}

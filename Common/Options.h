@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.5 2000-12-09 22:26:12 geuzaine Exp $ */
+/* $Id: Options.h,v 1.6 2000-12-11 22:09:42 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -40,6 +40,14 @@ StringXNumber GeneralOptions_Number[] = {
   { "Rotation0"    , GMSH_DOUBLE, (void*)&CTX.r[0]          , 0.0 }, 
   { "Rotation1"    , GMSH_DOUBLE, (void*)&CTX.r[1]          , 0.0 }, 
   { "Rotation2"    , GMSH_DOUBLE, (void*)&CTX.r[2]          , 0.0 }, 
+  { "TrackballQuaternion0" , 
+                     GMSH_FLOAT,  (void*)&CTX.quaternion[0] , 0.0 }, 
+  { "TrackballQuaternion1" , 
+                     GMSH_FLOAT,  (void*)&CTX.quaternion[1] , 0.0 }, 
+  { "TrackballQuaternion2" , 
+                     GMSH_FLOAT,  (void*)&CTX.quaternion[2] , 0.0 }, 
+  { "TrackballQuaternion3" , 
+                     GMSH_FLOAT,  (void*)&CTX.quaternion[3] , 1.0 }, 
   { "Translation0" , GMSH_DOUBLE, (void*)&CTX.t[0]          , 0.0 }, 
   { "Translation1" , GMSH_DOUBLE, (void*)&CTX.t[1]          , 0.0 }, 
   { "Translation2" , GMSH_DOUBLE, (void*)&CTX.t[2]          , 0.0 }, 
@@ -58,17 +66,65 @@ StringXNumber GeneralOptions_Number[] = {
   { "AlphaBlending", GMSH_INT,    (void*)&CTX.alpha         , 0. },
   { "Trackball"    , GMSH_INT,    (void*)&CTX.useTrackball  , 1. },
   { "Clip0"        , GMSH_INT,    (void*)&CTX.clip[0]       , 0. },
+  { "Clip00"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][0] , 0.0 }, 
+  { "Clip01"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][1] , 0.0 }, 
+  { "Clip02"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][2] , 0.0 }, 
+  { "Clip03"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[0][3] , 0.0 }, 
   { "Clip1"        , GMSH_INT,    (void*)&CTX.clip[1]       , 0. },
+  { "Clip10"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][0] , 0.0 }, 
+  { "Clip11"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][1] , 0.0 }, 
+  { "Clip12"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][2] , 0.0 }, 
+  { "Clip13"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[1][3] , 0.0 }, 
   { "Clip2"        , GMSH_INT,    (void*)&CTX.clip[2]       , 0. },
+  { "Clip20"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][0] , 0.0 }, 
+  { "Clip21"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][1] , 0.0 }, 
+  { "Clip22"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][2] , 0.0 }, 
+  { "Clip23"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[2][3] , 0.0 }, 
   { "Clip3"        , GMSH_INT,    (void*)&CTX.clip[3]       , 0. },
+  { "Clip30"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][0] , 0.0 }, 
+  { "Clip31"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][1] , 0.0 }, 
+  { "Clip32"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][2] , 0.0 }, 
+  { "Clip33"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[3][3] , 0.0 }, 
   { "Clip4"        , GMSH_INT,    (void*)&CTX.clip[4]       , 0. },
+  { "Clip40"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][0] , 0.0 }, 
+  { "Clip41"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][1] , 0.0 }, 
+  { "Clip42"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][2] , 0.0 }, 
+  { "Clip43"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[4][3] , 0.0 }, 
   { "Clip5"        , GMSH_INT,    (void*)&CTX.clip[5]       , 0. },
+  { "Clip50"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][0] , 0.0 }, 
+  { "Clip51"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][1] , 0.0 }, 
+  { "Clip52"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][2] , 0.0 }, 
+  { "Clip53"       , GMSH_DOUBLE, (void*)&CTX.clip_plane[5][3] , 0.0 }, 
   { "Light0"       , GMSH_INT,    (void*)&CTX.light[0]      , 1. },
+  { "Light00"      , GMSH_FLOAT,  (void*)&CTX.light_position[0][0] , 0.5 }, 
+  { "Light01"      , GMSH_FLOAT,  (void*)&CTX.light_position[0][1] , 0.3 }, 
+  { "Light02"      , GMSH_FLOAT,  (void*)&CTX.light_position[0][2] , 1.0 }, 
+  { "Light03"      , GMSH_FLOAT,  (void*)&CTX.light_position[0][3] , 0.0 }, 
   { "Light1"       , GMSH_INT,    (void*)&CTX.light[1]      , 0. },
+  { "Light10"      , GMSH_FLOAT,  (void*)&CTX.light_position[1][0] , 0.0 }, 
+  { "Light11"      , GMSH_FLOAT,  (void*)&CTX.light_position[1][1] , 0.0 }, 
+  { "Light12"      , GMSH_FLOAT,  (void*)&CTX.light_position[1][2] , 0.0 }, 
+  { "Light13"      , GMSH_FLOAT,  (void*)&CTX.light_position[1][3] , 0.0 }, 
   { "Light2"       , GMSH_INT,    (void*)&CTX.light[2]      , 0. },
+  { "Light20"      , GMSH_FLOAT,  (void*)&CTX.light_position[2][0] , 0.0 }, 
+  { "Light21"      , GMSH_FLOAT,  (void*)&CTX.light_position[2][1] , 0.0 }, 
+  { "Light22"      , GMSH_FLOAT,  (void*)&CTX.light_position[2][2] , 0.0 }, 
+  { "Light23"      , GMSH_FLOAT,  (void*)&CTX.light_position[2][3] , 0.0 }, 
   { "Light3"       , GMSH_INT,    (void*)&CTX.light[3]      , 0. },
+  { "Light30"      , GMSH_FLOAT,  (void*)&CTX.light_position[3][0] , 0.0 }, 
+  { "Light31"      , GMSH_FLOAT,  (void*)&CTX.light_position[3][1] , 0.0 }, 
+  { "Light32"      , GMSH_FLOAT,  (void*)&CTX.light_position[3][2] , 0.0 }, 
+  { "Light33"      , GMSH_FLOAT,  (void*)&CTX.light_position[3][3] , 0.0 }, 
   { "Light4"       , GMSH_INT,    (void*)&CTX.light[4]      , 0. },
+  { "Light40"      , GMSH_FLOAT,  (void*)&CTX.light_position[4][0] , 0.0 }, 
+  { "Light41"      , GMSH_FLOAT,  (void*)&CTX.light_position[4][1] , 0.0 }, 
+  { "Light42"      , GMSH_FLOAT,  (void*)&CTX.light_position[4][2] , 0.0 }, 
+  { "Light43"      , GMSH_FLOAT,  (void*)&CTX.light_position[4][3] , 0.0 }, 
   { "Light5"       , GMSH_INT,    (void*)&CTX.light[5]      , 0. },
+  { "Light50"      , GMSH_FLOAT,  (void*)&CTX.light_position[5][0] , 0.0 }, 
+  { "Light51"      , GMSH_FLOAT,  (void*)&CTX.light_position[5][1] , 0.0 }, 
+  { "Light52"      , GMSH_FLOAT,  (void*)&CTX.light_position[5][2] , 0.0 }, 
+  { "Light53"      , GMSH_FLOAT,  (void*)&CTX.light_position[5][3] , 0.0 }, 
   { NULL           , GMSH_DOUBLE, NULL , 0. }
 } ;
 
@@ -138,42 +194,6 @@ StringXNumber PrintOptions_Number[] = {
   { "Format"   , GMSH_INT,    (void*)&CTX.print.format    , FORMAT_EPS }, 
   { "FontSize" , GMSH_INT,    (void*)&CTX.print.font_size , 12. }, 
   { NULL       , GMSH_DOUBLE, NULL , 0. }
-} ;
-
-// ARRAYS
-
-StringXArray GeneralOptions_Array[] = {
-  { "TrackballQuaternion" , 
-                       GMSH_FLOAT,  CTX.quaternion    , 0., 0., 0., 1. }, 
-  { "ClipPlane0"     , GMSH_DOUBLE, CTX.clip_plane[0] , 0., 0., 0., 0. }, 
-  { "ClipPlane1"     , GMSH_DOUBLE, CTX.clip_plane[1] , 0., 0., 0., 0. }, 
-  { "ClipPlane2"     , GMSH_DOUBLE, CTX.clip_plane[2] , 0., 0., 0., 0. }, 
-  { "ClipPlane3"     , GMSH_DOUBLE, CTX.clip_plane[3] , 0., 0., 0., 0. }, 
-  { "ClipPlane4"     , GMSH_DOUBLE, CTX.clip_plane[4] , 0., 0., 0., 0. }, 
-  { "ClipPlane5"     , GMSH_DOUBLE, CTX.clip_plane[5] , 0., 0., 0., 0. }, 
-  { "LightPosition0" , GMSH_FLOAT,  CTX.light_position[0]  , 0.5, 0.3, 1.0, 0.0 }, 
-  { "LightPosition1" , GMSH_FLOAT,  CTX.light_position[1]  , 0.5, 0.3, 1.0, 0.0 }, 
-  { "LightPosition2" , GMSH_FLOAT,  CTX.light_position[2]  , 0.5, 0.3, 1.0, 0.0 }, 
-  { "LightPosition3" , GMSH_FLOAT,  CTX.light_position[3]  , 0.5, 0.3, 1.0, 0.0 }, 
-  { "LightPosition4" , GMSH_FLOAT,  CTX.light_position[4]  , 0.5, 0.3, 1.0, 0.0 }, 
-  { "LightPosition5" , GMSH_FLOAT,  CTX.light_position[5]  , 0.5, 0.3, 1.0, 0.0 }, 
-  { NULL ,             GMSH_DOUBLE, NULL, 0., 0., 0., 0. }
-} ;
-
-StringXArray GeometryOptions_Array[] = {
-  { NULL , GMSH_DOUBLE, NULL, 0., 0., 0., 0. }
-} ;
-
-StringXArray MeshOptions_Array[] = {
-  { NULL , GMSH_DOUBLE, NULL, 0., 0., 0., 0. }
-} ;
-
-StringXArray PostProcessingOptions_Array[] = {
-  { NULL , GMSH_DOUBLE, NULL, 0., 0., 0., 0. }
-} ;
-
-StringXArray PrintOptions_Array[] = {
-  { NULL , GMSH_DOUBLE, NULL, 0., 0., 0., 0. }
 } ;
 
 // COLORS

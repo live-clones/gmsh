@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.41 2000-12-11 19:39:15 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.42 2000-12-11 22:09:43 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -48,12 +48,11 @@ static ExtrudeParams  extr;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
 static List_T         *ListOfListOfDouble_L, *ListOfColor_L=NULL;
 static char           *str;
-static void           *pNumOpt, *pArrOpt;
+static void           *pNumOpt;
 static char          **pStrOpt, *pStrViewOpt;
 static unsigned int   *pColOpt;
 static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
-static StringXArray   *pArrCat;
 static StringXColor   *pColCat;
 
 void yyerror (char *s);
@@ -108,7 +107,7 @@ void skip_until (char *until);
 
 %token tSolid tEndSolid tVertex tFacet tNormal tOuter tLoopSTL tEndLoop tEndFacet
 
-%type <d> FExpr FExpr_Single
+%type <d> FExpr FExpr_Single SignedDouble
 %type <v> VExpr VExpr_Single
 %type <i> BoolExpr
 %type <u> ColorExpr
@@ -145,6 +144,7 @@ All :
     StepFormatItems
   | STLFormatItem
   | GeomFormatList
+  | error tEND { yyerrok ; return 1; }
 ;
 
 /*  ----------------------------------------------------------------------
@@ -160,11 +160,11 @@ STLFormatItem :
       return 1;
     }
   | tFacet
-    tNormal FExpr FExpr FExpr
+    tNormal SignedDouble SignedDouble SignedDouble
     tOuter tLoopSTL
-      tVertex FExpr FExpr FExpr
-      tVertex FExpr FExpr FExpr
-      tVertex FExpr FExpr FExpr
+      tVertex SignedDouble SignedDouble SignedDouble
+      tVertex SignedDouble SignedDouble SignedDouble
+      tVertex SignedDouble SignedDouble SignedDouble
     tEndLoop
     tEndFacet
     {
@@ -194,7 +194,6 @@ StepFormatItem :
     StepSpecial { return 1; }
   | StepDataItem { return 1; }
   | StepHeaderItem { return 1; }
-  | error tEND { yyerrok ; return 1; }
 ;
 
 StepSpecial :
@@ -383,7 +382,6 @@ GeomFormat :
   | Coherence   { return 1; }
   | Loop        { return 1; }
   | Command     { return 1; }
-  | error tEND  { yyerrok; return 1;}
 ;
 
 Printf :
@@ -1195,170 +1193,6 @@ Affectation :
       }
     }
 
-  /* -------- Option Arrays -------- */ 
-
-  | tSTRING '.' tSTRING tAFFECT VExpr tEND 
-    {
-      if(!(pArrCat = Get_ArrayOptionCategory($1)))
-	vyyerror("Unknown Array Option Class '%s'", $1);
-      else{
-	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
-	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<4; j++) ((double*)pArrOpt)[j] = $5[j] ;
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<4; j++) ((float*)pArrOpt)[j] = (float)$5[j] ;
-	    break ;
-	  case GMSH_LONG :
-	    for(j=0 ; j<4; j++) ((long*)pArrOpt)[j] = (long)$5[j] ;
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<4; j++) ((int*)pArrOpt)[j] = (int)$5[j] ;
-	    break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT VExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<3; j++) ((double*)pArrOpt)[j] = $10[j] ;
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<3; j++) ((float*)pArrOpt)[j] = (float)$10[j] ;
-	    break ;
-	  case GMSH_LONG :
-	    for(j=0 ; j<3; j++) ((long*)pArrOpt)[j] = (long)$10[j] ;
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<3; j++) ((int*)pArrOpt)[j] = (int)$10[j] ;
-	    break ;
-	  }
-	}
-      }
-    }
-
-  | tSTRING '.' tSTRING tAFFECTPLUS VExpr tEND 
-    {
-      if(!(pArrCat = Get_ArrayOptionCategory($1)))
-	vyyerror("Unknown Array Option Class '%s'", $1);
-      else{
-	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
-	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<4; j++) ((double*)pArrOpt)[j] += $5[j] ;
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<4; j++) ((float*)pArrOpt)[j] += (float)$5[j] ;
-	    break ;
-	  case GMSH_LONG :
-	    for(j=0 ; j<4; j++) ((long*)pArrOpt)[j] += (long)$5[j] ;
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<4; j++) ((int*)pArrOpt)[j] += (int)$5[j] ;
-	    break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTPLUS VExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<3; j++) ((double*)pArrOpt)[j] += $10[j] ;
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<3; j++) ((float*)pArrOpt)[j] += (float)$10[j] ;
-	    break ;
-	  case GMSH_LONG :
-	    for(j=0 ; j<3; j++) ((long*)pArrOpt)[j] += (long)$10[j] ;
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<3; j++) ((int*)pArrOpt)[j] += (int)$10[j] ;
-	    break ;
-	  }
-	}
-      }
-    }
-
-  | tSTRING '.' tSTRING tAFFECTMINUS VExpr tEND 
-    {
-      if(!(pArrCat = Get_ArrayOptionCategory($1)))
-	vyyerror("Unknown Array Option Class '%s'", $1);
-      else{
-	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
-	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<4; j++) ((double*)pArrOpt)[j] -= $5[j] ;
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<4; j++) ((float*)pArrOpt)[j] -= (float)$5[j] ;
-	    break ;
-	  case GMSH_LONG :
-	    for(j=0 ; j<4; j++) ((long*)pArrOpt)[j] -= (long)$5[j] ;
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<4; j++) ((int*)pArrOpt)[j] -= (int)$5[j] ;
-	    break ;
-	  }
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTMINUS VExpr tEND 
-    {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
-      else{
-	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<3; j++) ((double*)pArrOpt)[j] -= $10[j] ;
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<3; j++) ((float*)pArrOpt)[j] -= (float)$10[j] ;
-	    break ;
-	  case GMSH_LONG :
-	    for(j=0 ; j<3; j++) ((long*)pArrOpt)[j] -= (long)$10[j] ;
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<3; j++) ((int*)pArrOpt)[j] -= (int)$10[j] ;
-	    break ;
-	  }
-	}
-      }
-    }
-
   /* -------- Option Colors -------- */ 
 
   | tSTRING '.' tColor '.' tSTRING tAFFECT ColorExpr tEND 
@@ -1575,14 +1409,14 @@ Shape :
       $$.Type = MSH_SURF_PLAN;
       $$.Num  = (int)$4;
     }
-  | tTrimmed tSurface '(' FExpr ')' tAFFECT FExpr ListOfDouble tEND
+  | tTrimmed tSurface '(' FExpr ')' tAFFECT '{' FExpr ',' ListOfDouble '}' tEND
     {
       Surface *s,*support;
-      support = FindSurface((int)$7,THEM);
+      support = FindSurface((int)$8,THEM);
       if(!support)
-	vyyerror("Unkown Surface %d", (int)$7);
+	vyyerror("Unkown Surface %d", (int)$8);
       else{
-	Cdbz101((int)$4,MSH_SURF_PLAN,0,0,0,0,0,NULL,$8,NULL);
+	Cdbz101((int)$4,MSH_SURF_PLAN,0,0,0,0,0,NULL,$10,NULL);
 	s = FindSurface((int)$4,THEM);
 	if(!s)
 	  vyyerror("Unkown Surface %d", (int)$4);
@@ -2250,6 +2084,10 @@ Coherence :
     G E N E R A L
     --------------- */
 
+SignedDouble :
+    tDOUBLE     { $$ = $1; }
+  | '-' tDOUBLE { $$ = -$2; }
+;
 
 BoolExpr :
     tTRUE {$$ = 1;}
@@ -2608,73 +2446,6 @@ VExpr_Single :
   | '(' FExpr ',' FExpr ',' FExpr ')'
     {
       $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=0.0; $$[4]=1.0;
-    }
-  | tSTRING '.' tSTRING
-    {
-      if(!(pArrCat = Get_ArrayOptionCategory($1))){
-	vyyerror("Unknown Array Option Class '%s'", $1);
-	$$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
-	$$[4]= 1.0 ;
-      }
-      else{
-	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i))){
-	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
-	  $$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
-	  $$[4]= 1.0 ;
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<4 ; j++) $$[j] = ((double*)pArrOpt)[j] ; 
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<4 ; j++) $$[j] = (double)((float*)pArrOpt)[j] ;
-	    break ;
-	  case GMSH_LONG : 
-	    for(j=0 ; j<4 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<4 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
-	    break ;
-	  }
-	  $$[4] = 1. ;
-	}
-      }
-    }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
-    {
-      if(strcmp($1, "PostProcessing")){
-	vyyerror("Unknown View Option Class '%s'", $1);
-	$$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
-	$$[4]= 1.0 ;
-      }
-      else{
-	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	  $$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
-	  $$[4]= 1.0 ;
-	}
-	else{
-	  switch(i){
-	  case GMSH_DOUBLE :
-	    for(j=0 ; j<3 ; j++) $$[j] = ((double*)pArrOpt)[j] ; 
-	    break ;
-	  case GMSH_FLOAT :
-	    for(j=0 ; j<3 ; j++) $$[j] = (double)((float*)pArrOpt)[j] ;
-	    break ;
-	  case GMSH_LONG : 
-	    for(j=0 ; j<3 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
-	    break ;
-	  case GMSH_INT :
-	    for(j=0 ; j<3 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
-	    break ;
-	  }
-	  $$[3] = 0. ;
-	  $$[4] = 1. ;
-	}
-      }
     }
 ;
 

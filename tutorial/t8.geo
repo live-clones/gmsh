@@ -31,8 +31,8 @@ General.Axes = 0 ;
 
 PostProcessing.View[0].Name = "This is a very stupid demonstration..." ;
 PostProcessing.View[0].IntervalsType = 2 ;
-PostProcessing.View[0].Offset = {0,0,0.05} ;
-PostProcessing.View[0].Raise = {0,0,0} ;
+PostProcessing.View[0].Offset2 = 0.05 ;
+PostProcessing.View[0].Raise2 = 0 ;
 PostProcessing.View[0].Light = 1 ;
 
 PostProcessing.View[1].Name = "...of Gmsh's scripting capabilities" ;
@@ -54,7 +54,7 @@ For num In {1:255}
 
   t = (PostProcessing.View[0].TimeStep < PostProcessing.View[0].NbTimeStep-1) ? t+1 : 0 ;
   
-  PostProcessing.View[0].Raise += {0,0,0.001*t} ;
+  PostProcessing.View[0].Raise2 += 0.001*t ;
 
 // It is possible to nest loops:
 

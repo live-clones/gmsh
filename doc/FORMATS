@@ -1,7 +1,7 @@
-$Id: FORMATS,v 1.4 2000-12-09 22:26:13 geuzaine Exp $
+$Id: FORMATS,v 1.5 2000-12-11 22:09:43 geuzaine Exp $
 
 This document describes the mesh and post-processing file formats for
-Gmsh, version 0.995. 
+Gmsh, version >= 0.995. 
 
 (This document deals only with the import/export interfaces for
 Gmsh. The language driving Gmsh's behaviour for defining geometries,
