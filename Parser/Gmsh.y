@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.75 2001-04-20 08:52:24 geuzaine Exp $
+// $Id: Gmsh.y,v 1.76 2001-04-26 17:58:00 remacle Exp $
 
 #include <stdarg.h>
 
@@ -23,6 +23,7 @@
 #include "ColorTable.h"
 #include "Timer.h"
 #include "CreateFile.h"
+#include "STL.h"
 
 #ifdef __DECCXX // bug in bison
 #include <alloca.h>
@@ -1473,6 +1474,13 @@ Command :
 
 	FILE *ff = yyin;
 	MergeProblem($2);
+	yyin = ff;
+
+      }
+      else if(!strcmp($1, "Open")){
+
+	FILE *ff = yyin;
+	OpenProblem($2);
 	yyin = ff;
 
       }

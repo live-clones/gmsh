@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.14 2001-04-17 06:55:47 geuzaine Exp $
+// $Id: Generator.cpp,v 1.15 2001-04-26 17:58:00 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -120,7 +120,7 @@ void Maillage_Dimension_3 (Mesh * M){
 
 void Init_Mesh (Mesh * M, int all){
   THEM = M;
-
+  
   if (M->Vertices){
     Tree_Action (M->Vertices, Free_Vertex);
     Tree_Delete (M->Vertices);
@@ -133,6 +133,7 @@ void Init_Mesh (Mesh * M, int all){
     Tree_Action (M->Simplexes, Free_Simplex);
     Tree_Delete (M->Simplexes);
   }
+  
   if (M->Points){
     //Tree_Action (M->Points, Free_Vertex);
     Tree_Delete (M->Points);
@@ -164,7 +165,7 @@ void Init_Mesh (Mesh * M, int all){
   if (M->Metric){
     Free (M->Metric);
   }
-
+  
   M->Vertices = Tree_Create (sizeof (Vertex *), compareVertex);
   M->VertexEdges = Tree_Create (sizeof (Vertex *), compareVertex);
   M->Simplexes = Tree_Create (sizeof (Simplex *), compareSimplex);
@@ -177,7 +178,6 @@ void Init_Mesh (Mesh * M, int all){
   M->PhysicalGroups = List_Create (5, 5, sizeof (PhysicalGroup *));
   M->Metric = new GMSHMetric;
   M->BGM.bgm = NULL;
-
   CurrentNodeNumber = 1;
   CurrentSimplexNumber = 0;
   M->status = 0;
@@ -243,7 +243,5 @@ void mai3d (Mesh * M, int Asked){
     Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
     M->status = 3;
   }
-
   CTX.threads_lock = 0 ;
-
 }

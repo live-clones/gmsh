@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.18 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.19 2001-04-26 17:58:00 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -1085,7 +1085,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     ELEMENT_ID = 1;
     process_3D_elements (unvfile, M);
     process_2D_elements (unvfile, M);
-    process_1D_elements (unvfile, M);
+    //    process_1D_elements (unvfile, M);
     fprintf (unvfile, "%6d\n", -1);
     PrintGroups (M);
     fclose (unvfile);

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.17 2001-02-23 08:46:12 geuzaine Exp $
+// $Id: Geom.cpp,v 1.18 2001-04-26 17:58:00 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,6 +10,7 @@
 #include "Interpolation.h"
 #include "Numeric.h"
 #include "Visibility.h"
+#include "STL.h"
 
 extern Context_T  CTX;
 extern Mesh      *THEM;
@@ -678,6 +679,11 @@ void Draw_Surface (void *a, void *b){
   if(s->Typ == MSH_SURF_STL){
     glDisable(GL_LINE_STIPPLE);
     Tree_Action(s->STL->Simplexes,Draw_Simplex_Surfaces);
+  }
+  else if(s->Typ == MSH_SURF_DISCRETE)
+  {
+    glDisable(GL_LINE_STIPPLE);
+    Tree_Action(s->Simplexes,Draw_Simplex_Surfaces);
   }
   else if(s->Typ == MSH_SURF_PLAN)
     Draw_Plane_Surface(s);

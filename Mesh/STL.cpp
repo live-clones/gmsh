@@ -1,7 +1,8 @@
-// $Id: STL.cpp,v 1.4 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: STL.cpp,v 1.5 2001-04-26 17:58:00 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
+#include "STL.h"
 
 extern Mesh *THEM;
 

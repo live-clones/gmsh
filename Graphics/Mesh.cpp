@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.23 2001-04-22 18:13:02 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.24 2001-04-26 17:58:00 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -287,7 +287,7 @@ void Draw_Simplex_Volume (void *a, void *b){
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
 
-#if 0 /* never here for the moment */
+#if 1 /* never here for the moment */
 
   double n[4], x1x0, y1y0, z1z0, x2x0, y2y0, z2z0;
 
@@ -295,9 +295,9 @@ void Draw_Simplex_Volume (void *a, void *b){
 
   if (CTX.mesh.hidden) {
 
-    x1x0 = X[1]-X[0]; y1y0 = Y[1]-Y[0];
-    z1z0 = Z[1]-Z[0]; x2x0 = X[2]-X[0];
-    y2y0 = Y[2]-Y[0]; z2z0 = Z[2]-Z[0];
+    x1x0 = X[2]-X[0]; y1y0 = Y[2]-Y[0];
+    z1z0 = Z[2]-Z[0]; x2x0 = X[1]-X[0];
+    y2y0 = Y[1]-Y[0]; z2z0 = Z[1]-Z[0];
     n[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
     n[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
     n[2]  = x1x0 * y2y0 - y1y0 * x2x0;
@@ -305,8 +305,8 @@ void Draw_Simplex_Volume (void *a, void *b){
 
     glBegin(GL_TRIANGLES);
     glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[1], Y[1], Z[1]);
     glVertex3d(X[2], Y[2], Z[2]);
+    glVertex3d(X[1], Y[1], Z[1]);
     glEnd();
 
     x1x0 = X[1]-X[0]; y1y0 = Y[1]-Y[0];
@@ -334,8 +334,8 @@ void Draw_Simplex_Volume (void *a, void *b){
 
     glBegin(GL_TRIANGLES);
     glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[2], Y[2], Z[2]);
     glVertex3d(X[3], Y[3], Z[3]);
+    glVertex3d(X[2], Y[2], Z[2]);
     glEnd();
 
     x1x0 = X[3]-X[1]; y1y0 = Y[3]-Y[1];

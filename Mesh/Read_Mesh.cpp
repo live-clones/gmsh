@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.11 2001-04-17 06:55:47 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.12 2001-04-26 17:58:00 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -209,7 +209,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     M->status = 0 ;
   else
     M->status = -1 ;
-
 }
 
 /* ------------------------------------------------------------------------ */
@@ -219,10 +218,11 @@ void Read_Mesh_SMS (Mesh *m, FILE *File_GEO);
 
 void Read_Mesh (Mesh *M, FILE *File_GEO, int type){
 
+  double s[50];
   switch(type){
   case FORMAT_MSH : Read_Mesh_MSH(M,File_GEO); break;
   case FORMAT_SMS : Read_Mesh_SMS(M,File_GEO); break;
   default : Msg(WARNING, "Unkown mesh file format to read"); break;
   }
-
+  GetStatistics(s);
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.93 2001-04-23 10:38:04 geuzaine Exp $
+# $Id: Makefile,v 1.94 2001-04-26 17:58:00 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -184,7 +184,7 @@ tag:
 	echo "#define GMSH_VERSION  $(GMSH_RELEASE)" >  Common/GmshVersion.h
 	echo "#define GMSH_DATE     \"`date`\""      >> Common/GmshVersion.h
 	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/GmshVersion.h
-	echo "#define GMSH_PACKAGER \"`whoami`\""    >> Common/GmshVersion.h
+	echo "#define GMSH_PACKAGER \"`hostname`\""    >> Common/GmshVersion.h
 	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/GmshVersion.h
 
 initialtag:
@@ -408,6 +408,7 @@ fltk_compile_solaris_scorec :
            "CC=$(CC)" \
            "C_FLAGS=-O3" \
            "VERSION_FLAGS=-D_FLTK" \
+           "OS_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC_SCOREC)" \
         ); done

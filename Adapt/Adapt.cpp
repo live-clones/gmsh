@@ -1,4 +1,4 @@
-// $Id: Adapt.cpp,v 1.6 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Adapt.cpp,v 1.7 2001-04-26 17:58:00 remacle Exp $
 
 #include "Gmsh.h"
 #include "Adapt.h"
@@ -134,7 +134,7 @@ double AdaptMesh (int N,        /* Number of elements */
     }
     contr = fabs(minf);
 
-    Msg(INFO, "H-Refinement 1, Error %g=>%g, Objective %g, Reduction Factor %g->%g",
+    printf("H-Refinement 1, Error %g=>%g, Objective %g, Reduction Factor %g->%g",
         e0, sqrt(obj), -minf, minri, maxri);
     break;
 
@@ -153,7 +153,7 @@ double AdaptMesh (int N,        /* Number of elements */
     }
     contr = sqrt(fabs(minf));
 
-    Msg(INFO, "H-Refinement 2, Elements %g=>%g, Objective %g, Reduction Factor %g->%g",
+    printf( "H-Refinement 2, Elements %g=>%g, Objective %g, Reduction Factor %g->%g",
         e0, obj, 100. * sqrt(fabs(minf)), minri, maxri);
     break;
 
@@ -175,7 +175,7 @@ double AdaptMesh (int N,        /* Number of elements */
     }
     contr = fabs(minf);
 
-    Msg(INFO, "P-Refinement, Error %g=%g=>%g, Objective %g",
+    printf("P-Refinement, Error %g=%g=>%g, Objective %g",
         e0, sqrt(obj), sqrt(obj2), minf);
     break;
 
@@ -184,7 +184,7 @@ double AdaptMesh (int N,        /* Number of elements */
     break;
 
   default :
-    Msg(GERROR, "Unknown adaption method");
+    printf("Unknown Adaption Method");
   }
 
   return(contr) ;

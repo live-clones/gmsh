@@ -5,7 +5,7 @@
 #define SELECTION_BUFFER_SIZE  1024
 #define LABEL_STR_L            16
 #define NAME_STR_L             256
-#define MAX_OPEN_FILES         20
+#define MAX_OPEN_FILES         256
 
 #define RADTODEG      57.295779513082321
 #define RacineDeDeux  1.4142135623730950

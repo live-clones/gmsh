@@ -191,17 +191,17 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
 	     case ENTITY_EDGE :
 	      Simplex *s = Create_Simplex(v1,v2,NULL,NULL);
 	      Curve *c;
-	      if((c = FindCurve(GEntityId+1000,m)))
+	      if((c = FindCurve(GEntityId,m)))
 	      	{
 	      	}
 	      else
 	      	{
-		  c = Create_Curve(GEntityId+1000,MSH_SEGM_DISCRETE,1,NULL,NULL,-1,-1,0,1);
+		  c = Create_Curve(GEntityId,MSH_SEGM_DISCRETE,1,NULL,NULL,-1,-1,0,1);
 		  c->beg = v1;
 		  c->end = v2;
 		  Tree_Add(m->Curves,&c);
 	      }
-	      s->iEnt = GEntityId+1000;
+	      s->iEnt = GEntityId;
 	      //	      List_Add(v1->ListCurves,&c);
 	      // List_Add(v2->ListCurves,&c);
 	      Tree_Add(c->Simplexes,&s);
@@ -286,7 +286,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
 	  Simplex *s = Create_Simplex (v1,v2,v3,v4);
 	  //	  s->curvedBounds(Edge1,Edge2,Edge3,Edge4,Lists,m->VertexEdges);
 	  s->Num = i+1;
-	  s->iEnt = GEntityId + 10000;
+	  s->iEnt = GEntityId+10000;
 	  Surface *surf;
 	  List_Add(AllFaces,&s);
 	  
@@ -364,7 +364,7 @@ void Read_Mesh_SMS (Mesh *m, FILE *in)
 
   if(NbRegions)m->status = 3;
   else if(NbFaces)m->status = 2;
-  else if(NbEdges)m->status = 1;
+  else if(NbEdges)m->status = 1; 
   Msg(INFO,"Done.");
 }
 /*
