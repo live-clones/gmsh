@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.36 2004-04-23 17:44:24 geuzaine Exp $
+// $Id: Entity.cpp,v 1.37 2004-04-23 18:31:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -198,9 +198,11 @@ void Draw_SimpleVector(int arrow, int fill,
 		       double relHeadRadius, double relStemLength, double relStemRadius,
 		       double x, double y, double z,
 		       double dx, double dy, double dz, 
-		       double d)
+		       double d, int light)
 {
   double n[3], t[3], u[3];
+
+  if(light) glEnable(GL_LIGHTING);
 
   n[0] = dx / d;
   n[1] = dy / d;
@@ -245,6 +247,8 @@ void Draw_SimpleVector(int arrow, int fill,
       glEnd();
       
       glBegin(GL_TRIANGLES);
+      glNormal3dv(u);
+
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
 		 z + f2 * dz + b * (t[2]));
@@ -255,6 +259,7 @@ void Draw_SimpleVector(int arrow, int fill,
 		 z + f2 * dz + b * (-t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       
+      glNormal3dv(t);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
 		 z + f2 * dz + b * (-u[2]));
@@ -328,6 +333,8 @@ void Draw_SimpleVector(int arrow, int fill,
       glEnd();
     }
   }
+
+  glDisable(GL_LIGHTING);
 }
 
 void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadius,
@@ -411,11 +418,11 @@ void Draw_Vector(int Type, int Fill,
     break;
   case DRAW_POST_ARROW:
     Draw_SimpleVector(1, Fill, relHeadRadius, relStemLength, relStemRadius,
-		      x, y, z, dx, dy, dz, length);
+		      x, y, z, dx, dy, dz, length, light);
     break;
   case DRAW_POST_PYRAMID:
     Draw_SimpleVector(0, Fill, relHeadRadius, relStemLength, relStemRadius,
-		      x, y, z, dx, dy, dz, length);
+		      x, y, z, dx, dy, dz, length, light);
     break;
   case DRAW_POST_ARROW3D:
   default:

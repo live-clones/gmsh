@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.219 2004-04-23 17:44:24 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.220 2004-04-23 18:31:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1081,7 +1081,7 @@ void general_arrow_param_cb(CALLBACK_ARGS)
   double a = opt_general_arrow_head_radius(0, GMSH_GET, 0);
   double b = opt_general_arrow_stem_length(0, GMSH_GET, 0);
   double c = opt_general_arrow_stem_radius(0, GMSH_GET, 0);
-  while(arrow_editor("Edit General 3D Arrow", a, b, c)){
+  while(arrow_editor("Arrow editor", a, b, c)){
     opt_general_arrow_head_radius(0, GMSH_SET, a);
     opt_general_arrow_stem_length(0, GMSH_SET, b);
     opt_general_arrow_stem_radius(0, GMSH_SET, c);
@@ -3569,7 +3569,7 @@ void view_arrow_param_cb(CALLBACK_ARGS)
   double a = opt_view_arrow_head_radius((long int)data, GMSH_GET, 0);
   double b = opt_view_arrow_stem_length((long int)data, GMSH_GET, 0);
   double c = opt_view_arrow_stem_radius((long int)data, GMSH_GET, 0);
-  while(arrow_editor("Edit View 3D Arrow", a, b, c)){
+  while(arrow_editor("Arrow editor", a, b, c)){
     opt_view_arrow_head_radius((long int)data, GMSH_SET, a);
     opt_view_arrow_stem_length((long int)data, GMSH_SET, b);
     opt_view_arrow_stem_radius((long int)data, GMSH_SET, c);

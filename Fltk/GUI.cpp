@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.290 2004-04-23 17:44:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.291 2004-04-23 18:31:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1604,7 +1604,7 @@ void GUI::create_option_window()
       gen_choice[0]->align(FL_ALIGN_RIGHT);
       gen_choice[0]->callback(set_changed_cb, 0);
 
-      Fl_Button *b = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 5 * BH, (int)(1.5*BB), BH, "Edit 3D arrow");
+      Fl_Button *b = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 8 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
       b->callback(general_arrow_param_cb);
 
       o->end();
@@ -2282,7 +2282,7 @@ void GUI::create_option_window()
         view_choice[2]->align(FL_ALIGN_RIGHT);
         view_choice[2]->callback(set_changed_cb, 0);
 
-	view_push_butt[0] = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 5 * BH, (int)(1.5*BB), BH, "Edit 3D arrow");
+	view_push_butt[0] = new Fl_Button(2 * IW - 2 * WB, 2 * WB + 5 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
       
         view_value[60] = new Fl_Value_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Arrow size");
         view_value[60]->minimum(0);
