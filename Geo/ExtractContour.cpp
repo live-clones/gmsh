@@ -1,4 +1,4 @@
-// $Id: ExtractContour.cpp,v 1.2 2004-05-19 03:56:08 geuzaine Exp $
+// $Id: ExtractContour.cpp,v 1.3 2004-05-19 04:03:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -275,12 +275,10 @@ int allFacesLinked(int fac, List_T * faces)
       Curve *c;
       List_Read(s->Generatrices, k, &c);
       int ic = abs(c->Num);
-      if(!Tree_Search(edges, &ic)) {
+      if(!Tree_Search(edges, &ic))
 	Tree_Add(edges, &ic);
-      }
-      else {
+      else
 	Tree_Suppress(edges, &ic);
-      }
     }
   }
 
