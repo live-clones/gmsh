@@ -140,6 +140,7 @@ public:
   Fl_Button        *m_navig_butt  [2] ;
   Fl_Button        *m_push_butt   [NB_BUTT_MAX] ;
   Fl_Light_Button  *m_toggle_butt [NB_BUTT_MAX] ;
+  Fl_Button        *m_toggle2_butt[NB_BUTT_MAX] ;
   Fl_Menu_Button   *m_popup_butt  [NB_BUTT_MAX] ;
 
   // graphic window

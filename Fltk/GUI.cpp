@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.203 2002-11-01 22:27:33 geuzaine Exp $
+// $Id: GUI.cpp,v 1.204 2002-11-03 01:58:39 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -761,15 +761,19 @@ void GUI::create_menu_window(int argc, char **argv){
   for(i=0; i<NB_BUTT_MAX; i++){
     m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
     m_push_butt[i]->hide();
-    m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width,BH); 
+    m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width-(CTX.fontsize+4),BH); 
     m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
+    m_toggle_butt[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
     m_toggle_butt[i]->hide();
-#ifdef __APPLE__ // FIXME: is there a better way??
-    m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH,"&Options");
-#else
-    m_popup_butt[i] = new Fl_Menu_Button(0,y+i*BH,width,BH);
+
+    m_toggle2_butt[i]= new Fl_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH,"@>");
+    m_toggle2_butt[i]->labeltype(FL_SYMBOL_LABEL);
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+    m_toggle2_butt[i]->tooltip("Show view option menu");
 #endif
-    m_popup_butt[i]->type(Fl_Menu_Button::POPUP3);
+
+    m_popup_butt[i] = new Fl_Menu_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH);
+    m_popup_butt[i]->type(Fl_Menu_Button::POPUP123);
     m_popup_butt[i]->add("Reload/View", 0, 
 			 (Fl_Callback *)view_reload_cb, (void*)i, 0);
     m_popup_butt[i]->add("Reload/All views", 0, 
@@ -876,11 +880,13 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
       m_toggle_butt[i]->show();
       m_toggle_butt[i]->value(v->Visible);
       m_toggle_butt[i]->label(v->Name);
+      m_toggle2_butt[i]->show();
       m_popup_butt[i]->show();
     }
     for(i = List_Nbr(CTX.post.list) ; i < NB_BUTT_MAX ; i++) {
       m_push_butt[i]->hide();
       m_toggle_butt[i]->hide();
+      m_toggle2_butt[i]->hide();
       m_popup_butt[i]->hide();
     }
     break;
@@ -898,6 +904,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     }
     for(i=0 ; i < NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
+      m_toggle2_butt[i]->hide();
       m_popup_butt[i]->hide();
       if(menu[i+1].label){
 	m_push_butt[i]->label(menu[i+1].label);
@@ -911,6 +918,7 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     }
     for(i=nb ; i<NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
+      m_toggle2_butt[i]->hide();
       m_popup_butt[i]->hide();
       m_push_butt[i]->hide();
     }
@@ -1659,15 +1667,9 @@ void GUI::create_post_options_window(){
 	post_butt[i]->selection_color(RADIO_COLOR);
       }
       Fl_Box *text =  new Fl_Box(FL_NO_BOX, 2*WB, 3*WB+6*BH, width-4*WB, 2*BH,
-#ifdef __APPLE__
-				 "Individual view options are available by "
-				 "pressing 'o' when the mouse is over the view "
-				 "button in the post-processing menu");
-#else
 				 "Individual view options are available "
-				 "by right-clicking on each view button "
-				 "in the post-processing menu");
-#endif
+				 "by clicking on the arrow next to each "
+				 "view button in the post-processing menu");
       text->align(FL_ALIGN_LEFT|FL_ALIGN_TOP|FL_ALIGN_INSIDE|FL_ALIGN_WRAP);
       o->end();
     }
