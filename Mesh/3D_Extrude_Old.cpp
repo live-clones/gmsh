@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.3 2001-06-26 07:06:11 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.4 2001-06-26 09:35:22 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -403,7 +403,7 @@ static void Extrude_Surface3 (void *data , void *dum){
   s = THES = *pS;
 
   /* Numerotation automatique des entites physiques */
-  printf("Extruding Surface %d \n",s->Num);
+  Msg(INFO, "Extruding Surface %d", s->Num);
   for(i=0;i<NbLayer;i++){
     ZonLayer[i] = (int)(3 * K1) + (int) ((i+1) * K2) + s->Num ;
   }
@@ -472,7 +472,7 @@ static void Extrude_Curve (void *data , void *dum){
   if (c->Num < 0) return;
 
   /* Numerotation automatique des entites physiques */
-  printf("Extruding Curve %d \n",c->Num);
+  Msg(INFO, "Extruding Curve %d", c->Num);
   for(i=0;i<NbLayer;i++){
     SurfLayer[i] = (int)(1 * K1) + (int)((i+1) * K2) + c->Num ;
   }
@@ -514,7 +514,7 @@ static void Extrude_Point (void *data , void *dum){
   v = *pV;
   
   /* Numerotation automatique des entites physiques */
-  printf("Extruding Vertex %d \n",v->Num);
+  Msg(INFO, "Extruding Vertex %d", v->Num);
   for(i=0;i<NbLayer;i++){
     LineLayer[i] = (int)(4 * K1) + (int)((i+1) * K2) + v->Num ;
   }
@@ -546,7 +546,7 @@ void Extrude_Mesh_Old(Mesh *M){
     do{
       TEST_IS_ALL_OK=0;
       Tree_Action ( M->Surfaces , Extrude_Surface2 );
-      printf("%d swaps\n",TEST_IS_ALL_OK);
+      Msg(INFO, "%d swaps", TEST_IS_ALL_OK);
       if(TEST_IS_ALL_OK == j)break;
       j = TEST_IS_ALL_OK;
     }while(TEST_IS_ALL_OK);
