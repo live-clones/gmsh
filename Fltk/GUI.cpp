@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.113 2001-09-06 06:38:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.114 2001-09-06 06:42:45 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -43,7 +43,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
       {"By extension...",        FL_CTRL+'p', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
       {"MSH native mesh format...",       0, (Fl_Callback *)file_save_as_msh_cb, 0},
-      {"MSH without physicals...",        0, (Fl_Callback *)file_save_as_msh_all_cb, 0},
+      {"MSH all elements...",             0, (Fl_Callback *)file_save_as_msh_all_cb, 0},
       {"UNV universal mesh format...",    0, (Fl_Callback *)file_save_as_unv_cb, 0},
       {"GREF gref mesh format...",        0, (Fl_Callback *)file_save_as_gref_cb, 0},
       {"GEO flattened geometry...",       0, (Fl_Callback *)file_save_as_geo_cb, 0},

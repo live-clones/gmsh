@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.22 2001-09-01 09:19:43 geuzaine Exp $
+$Id: tutorial.html,v 1.23 2001-09-06 06:42:45 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -233,14 +233,12 @@ Physical Surface(100) = {6} ;
 </FONT></I><I><FONT COLOR="#B22222">// lines 1, 2 and 4 will be saved in the output file with the region
 </FONT></I><I><FONT COLOR="#B22222">// number 10; and all the triangular elements resulting from the
 </FONT></I><I><FONT COLOR="#B22222">// discretization of surface 6 will be given the region number 100.
-</FONT></I>
-<I><FONT COLOR="#B22222">// It is important to notice that only those elements which belong to
-</FONT></I><I><FONT COLOR="#B22222">// physical groups will be saved in the output file if the file format
-</FONT></I><I><FONT COLOR="#B22222">// is the msh format (the native mesh file format for Gmsh). For a
-</FONT></I><I><FONT COLOR="#B22222">// description of the mesh and post-processing formats, see the
-</FONT></I><I><FONT COLOR="#B22222">// FORMATS file.
-</FONT></I>
-</PRE>
+</FONT></I><I><FONT COLOR="#B22222">//
+</FONT></I><I><FONT COLOR="#B22222">// If no physical groups are defined, all the elements in the mesh are
+</FONT></I><I><FONT COLOR="#B22222">// directly saved with their default orientation and with a region
+</FONT></I><I><FONT COLOR="#B22222">// number equal to their elementary region number. For a description
+</FONT></I><I><FONT COLOR="#B22222">// of the mesh and post-processing formats, see the FORMATS file.
+</FONT></I></PRE>
 <HR>
 <A NAME="file3">
 <H1>t2.geo 3/10</H1>
@@ -1014,7 +1012,7 @@ Mesh.Smoothing = 4 ;
 lc = .1;
 
 Point(1) = {0.0,0.0,0,lc};
-Point(2) = {1,0.0,0,lc};
+Point(2) = {1.2,-0.2,0,lc};
 Point(3) = {1,1,0,lc};
 Point(4) = {0,1,0,lc};
 
@@ -1028,15 +1026,20 @@ Plane Surface(6) = {5};
 
 Point(5) = {0.1,0.2,0,lc};
 Point(11) = {0.5,0.5,-1,lc};
+Point(12) = {0.5,0.5,0,lc};
 Point(22) = {0.6,0.6,1,lc};
 
 Line(5) = {11,22};
+
+Spline(7) = {4,5,12,2};
 
 <I><FONT COLOR="#B22222">// Anisotropic attractors can be defined on points and lines:
 </FONT></I>
 Attractor Line{5} = {.1, 0.01, 17};
 
 Attractor Line{1,2} = {0.1, 0.005, 3};
+Attractor Line{7} = {0.1, 0.05, 3};
+
 </PRE>
 <HR>
 <A NAME="file9">

@@ -1,11 +1,10 @@
-$Id: VERSIONS,v 1.69 2001-09-05 19:14:05 geuzaine Exp $
+$Id: VERSIONS,v 1.70 2001-09-06 06:44:20 geuzaine Exp $
 
 New in 1.26: Enhanced 2D anisotropic mesh generator (metric
 intersections); fixed small bug in 3D initial mesh; added alternative
 syntax for built-in functions (for GetDP compatibility); added line
 element display; Gmsh now saves all the elements in the mesh if no
-physical groups are defined (or if the option Mesh.SaveAll, or the
-command line option -saveall, is selected);
+physical groups are defined (or if Mesh.SaveAll=1);
 
 New in 1.25: Fixed bug with mixed recombined/non-recombined extruded
 meshes; Linux versions are now build with no optimization, due to bugs
