@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.10 2003-03-21 00:52:42 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.11 2003-09-01 09:57:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -42,7 +42,7 @@
 int nrdim;
 double nru[MAX_DIM_NEWT], nrv[MAX_DIM_NEWT];
 static void (*nrfunc) (int n, double x[], double y[]);
-struct gsl_dummy{;};
+struct gsl_dummy{ int i; };
 
 void convert_vector_from_gsl(const gsl_vector * gv, double *v)
 {
@@ -80,7 +80,7 @@ void newt(double x[], int n, int *check,
   gsl_multiroot_fsolver *s;
   int status;
   size_t iter = 0;
-  struct gsl_dummy p = { };
+  struct gsl_dummy p = { 1 };
   gsl_multiroot_function f = { &gslfunc, n, &p };
   gsl_vector *xx = gsl_vector_alloc(n);
 
