@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.36 2001-08-15 11:49:29 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.37 2001-08-15 14:16:59 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -916,6 +916,9 @@ int Extrude_Mesh (Tree_T * Volumes){
     Msg(STATUS3, "Coherence Surface %d", s->Num);
     Extrude_Mesh(s);
   }
+
+  List_Delete(list);
+  List_Delete(vol);
 
   return true;
 
