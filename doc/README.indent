@@ -1,6 +1,4 @@
 
 Should we apply this?
 
-indent -br -cdb -sc */*.cpp */*.h
-
-indent -br -cdw -npsl
+indent --braces-on-if-line --cuddle-do-while --honour-newlines --no-space-after-casts --no-space-after-function-call-names --dont-break-procedure-type --no-space-after-for --no-space-after-if --no-space-after-while --no-tabs */*.cpp
