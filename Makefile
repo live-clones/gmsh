@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.208 2002-04-13 06:12:20 geuzaine Exp $
+# $Id: Makefile,v 1.209 2002-04-30 21:36:31 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -269,7 +269,7 @@ link-linux:
 linux: compile-linux link-linux
 
 #
-# Linux fltk 2.0
+# Linux fltk 2.0 (beta)
 #
 compile-fltk2: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -288,6 +288,25 @@ link-fltk2:
                  $(HOME)/SOURCES/fltk-2.0/lib/libfltk.so.2 \
                  -L/usr/X11R6/lib -lX11 -lm
 fltk2: compile-fltk2 link-fltk2
+
+#
+# Linux fltk 1.0 (obsolete)
+#
+compile-fltk1: initialtag
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CXX=$(CXX)" \
+           "CC=$(CC)" \
+           "OPT_FLAGS=-g -Wall" \
+           "OS_FLAGS=-D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+        ); done
+link-fltk1:
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                -L$(HOME)/SOURCES/fltk/lib -lfltk -lGLU -lGL \
+                -L/usr/X11R6/lib -lX11 -lm
+fltk1: compile-fltk1 link-fltk1
 
 #
 # Linux, gcc-2.95.x (optimized build is very buggy)
