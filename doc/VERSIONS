@@ -1,6 +1,7 @@
-$Date: 2003-02-11 18:38:20 $
+$Date: 2003-02-12 20:40:35 $
 
-New in 1.38: fixed custom range selection for 3D iso graphs;
+New in 1.38: fixed custom range selection for 3D iso graphs; New build
+system based on autoconf;
 
 New in 1.37: Generalized smoothing and cuts of post-processing views;
 better Windows integration (solvers, external editors, etc.); small
