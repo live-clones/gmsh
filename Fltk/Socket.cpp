@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.2 2001-05-03 00:27:03 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.3 2001-05-03 00:34:01 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,10 +81,10 @@ void Socket_SendString(int socket, char str[]){
 
 int Socket_StartProgram(char *progname, char *sockname){
   int s, sock;
-#ifdef WIN32
-  int len;
-#else
+#ifdef linux
   socklen_t len ;
+#else
+  int len;
 #endif
   struct sockaddr_un addr, from;
   char command[1000];
