@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.14 2000-12-22 20:08:20 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.15 2000-12-22 20:10:32 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -236,12 +236,12 @@ void KeyboardAccel(XEvent *event){
       break;
     case XK_y : case XK_Y : 
       if(CTX.useTrackball)
-	CTX.setQuaternion(1./sqrt(2.),0.,1./sqrt(2.),0.);
+	CTX.setQuaternion(1./sqrt(2.),0.,0.,1./sqrt(2.));
       set_r(0,-90.);set_r(1,0.); set_r(2,0.); Init(); Draw(); 
       break;
     case XK_z : case XK_Z : 
       if(CTX.useTrackball)
-	CTX.setQuaternion(0.,0.,0.,0.);
+	CTX.setQuaternion(0.,0.,0.,1.);
       set_r(0,0.);  set_r(1,0.); set_r(2,0.); Init(); Draw(); 
       break;
     case XK_a :
