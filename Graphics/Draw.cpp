@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.49 2004-04-27 00:11:55 geuzaine Exp $
+// $Id: Draw.cpp,v 1.50 2004-05-12 03:22:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -162,7 +162,10 @@ void InitRenderModel(void)
 
   for(i = 0; i < 6; i++) {
     if(CTX.light[i]) {
-      glLightfv((GLenum) (GL_LIGHT0 + i), GL_POSITION, CTX.light_position[i]);
+      GLfloat tmp[4];
+      for(int j = 0; j < 4; j++) 
+	tmp[j] = (GLfloat)CTX.light_position[i][j];
+      glLightfv((GLenum) (GL_LIGHT0 + i), GL_POSITION, tmp);
       glEnable((GLenum) (GL_LIGHT0 + i));
     }
   }

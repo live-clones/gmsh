@@ -644,7 +644,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },
 
-  { F|O, "Highlight" , opt_geometry_highlight , 1. , 
+  { F|O, "Highlight" , opt_geometry_highlight , 0. , 
     "Not used" },
 
   { F|O, "Light" , opt_geometry_light , 1. , 

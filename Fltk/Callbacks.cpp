@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.225 2004-05-12 02:02:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.226 2004-05-12 03:22:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -340,7 +340,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
     break;
   case 4:
-    Print_Options(0, GMSH_FULLRC, NULL);
+    Print_Options(0, GMSH_FULLRC, false, NULL);
     WID->create_message_window();
     break;
   }
@@ -476,6 +476,10 @@ void _save_auto(char *name)
 void _save_geo_options(char *name)
 {
   CreateOutputFile(name, FORMAT_OPT);
+}
+void _save_geo_options_diff(char *name)
+{
+  Print_Options(0, GMSH_FULLRC, true, name);
 }
 void _save_geo(char *name)
 {
@@ -697,6 +701,7 @@ void file_save_as_cb(CALLBACK_ARGS)
   static patXfunc formats[] = {
     {"By extension (*)", _save_auto},
     {"Gmsh options (*.opt)", _save_geo_options},
+    {"Gmsh modified options (*.opt)", _save_geo_options_diff},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
     {"Gmsh mesh v1.0 (*.msh)", _save_msh},
     {"Gmsh mesh v1.0 without physicals (*.msh)", _save_msh_all},
@@ -953,7 +958,7 @@ void options_browser_cb(CALLBACK_ARGS)
 
 void options_save_cb(CALLBACK_ARGS)
 {
-  Print_Options(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
+  Print_Options(0, GMSH_OPTIONSRC, true, CTX.optionsrc_filename);
 }
 
 void options_restore_defaults_cb(CALLBACK_ARGS)
@@ -1042,7 +1047,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, WID->gen_butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
-    Print_Options(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
+    Print_Options(0, GMSH_SESSIONRC, true, CTX.sessionrc_filename);
   opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
   opt_general_orthographic(0, GMSH_SET, WID->gen_butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
@@ -3165,7 +3170,7 @@ void view_plugin_cb(CALLBACK_ARGS)
     if(n > NB_BUTT_MAX) n = NB_BUTT_MAX;
     for(int i = 0; i < m; i++) {
       StringXString *sxs = p->getOptionStr(i);
-      sxs->def = p->dialogBox->input[i]->value();
+      sxs->def = (char*)p->dialogBox->input[i]->value();
     }
     for(int i = 0; i < n; i++) {
       StringXNumber *sxn = p->getOption(i);

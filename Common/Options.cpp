@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.149 2004-04-24 06:13:45 geuzaine Exp $
+// $Id: Options.cpp,v 1.150 2004-05-12 03:22:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -170,7 +170,7 @@ void Init_Options_GUI(int num)
 
 void Print_OptionCategory(int level, char *cat, FILE * file)
 {
-  if(level & GMSH_SESSIONRC)
+  if(!(level & GMSH_FULLRC))
     return;
   if(file) {
     fprintf(file, "//\n");
@@ -184,7 +184,7 @@ void Print_OptionCategory(int level, char *cat, FILE * file)
   }
 }
 
-void Print_Options(int num, int level, char *filename)
+void Print_Options(int num, int level, int diff, char *filename)
 {
   FILE *file;
   char tmp[256];
@@ -204,10 +204,10 @@ void Print_Options(int num, int level, char *filename)
   if((level & GMSH_SESSIONRC) && file) {
     fprintf(file, "// Gmsh Session File\n");
     fprintf(file, "//\n");
-    fprintf(file, "// This file takes session specific info (that is info\n");
+    fprintf(file, "// This file contains session specific info (that is info\n");
     fprintf(file, "// you want to keep between two Gmsh sessions). You are\n");
     fprintf(file, "// not supposed to edit it manually, but of course you\n");
-    fprintf(file, "// can do. This file will be entirely rewritten every time\n");
+    fprintf(file, "// can. This file will be entirely rewritten every time\n");
     fprintf(file, "// you quit Gmsh if the option 'General.SaveSession' is\n");
     fprintf(file, "// set. If this file isn't found, defaults are used.\n");
     fprintf(file, "//\n");
@@ -216,83 +216,81 @@ void Print_Options(int num, int level, char *filename)
   if((level & GMSH_OPTIONSRC) && file) {
     fprintf(file, "// Gmsh Option File\n");
     fprintf(file, "//\n");
-    fprintf(file, "// This file takes configuration options (preferences) that\n");
+    fprintf(file, "// This file contains configuration options (preferences) that\n");
     fprintf(file, "// should be loaded each time Gmsh is launched. You can create\n");
     fprintf(file, "// this file by hand, or let Gmsh generate it for you (with\n");
     fprintf(file, "// 'Tools->Options->Save'). This file can also be automatically\n");
-    fprintf(file, "// regenerated every time you quit Gmsh if the option\n");
-    fprintf(file, "// 'General.SaveOptions' is set. If this file isn't found,\n");
-    fprintf(file, "// defaults are used.\n");
+    fprintf(file, "// saved every time you quit Gmsh if the option 'General.SaveOptions'\n");
+    fprintf(file, "// is set. If this file isn't found, defaults are used.\n");
     fprintf(file, "//\n");
   }
 
   Print_OptionCategory(level, "General options (strings)", file);
-  Print_StringOptions(num, level, GeneralOptions_String, "General.", file);
+  Print_StringOptions(num, level, diff, GeneralOptions_String, "General.", file);
   Print_OptionCategory(level, "General options (numbers)", file);
-  Print_NumberOptions(num, level, GeneralOptions_Number, "General.", file);
+  Print_NumberOptions(num, level, diff, GeneralOptions_Number, "General.", file);
   Print_OptionCategory(level, "General options (colors)", file);
-  Print_ColorOptions(num, level, GeneralOptions_Color, "General.", file);
+  Print_ColorOptions(num, level, diff, GeneralOptions_Color, "General.", file);
 
   Print_OptionCategory(level, "Geometry options (strings)", file);
-  Print_StringOptions(num, level, GeometryOptions_String, "Geometry.", file);
+  Print_StringOptions(num, level, diff, GeometryOptions_String, "Geometry.", file);
   Print_OptionCategory(level, "Geometry options (numbers)", file);
-  Print_NumberOptions(num, level, GeometryOptions_Number, "Geometry.", file);
+  Print_NumberOptions(num, level, diff, GeometryOptions_Number, "Geometry.", file);
   Print_OptionCategory(level, "Geometry options (colors)", file);
-  Print_ColorOptions(num, level, GeometryOptions_Color, "Geometry.", file);
+  Print_ColorOptions(num, level, diff, GeometryOptions_Color, "Geometry.", file);
 
   Print_OptionCategory(level, "Mesh options (strings)", file);
-  Print_StringOptions(num, level, MeshOptions_String, "Mesh.", file);
+  Print_StringOptions(num, level, diff, MeshOptions_String, "Mesh.", file);
   Print_OptionCategory(level, "Mesh options (numbers)", file);
-  Print_NumberOptions(num, level, MeshOptions_Number, "Mesh.", file);
+  Print_NumberOptions(num, level, diff, MeshOptions_Number, "Mesh.", file);
   Print_OptionCategory(level, "Mesh options (colors)", file);
-  Print_ColorOptions(num, level, MeshOptions_Color, "Mesh.", file);
+  Print_ColorOptions(num, level, diff, MeshOptions_Color, "Mesh.", file);
 
   Print_OptionCategory(level, "Solver options (strings)", file);
-  Print_StringOptions(num, level, SolverOptions_String, "Solver.", file);
+  Print_StringOptions(num, level, diff, SolverOptions_String, "Solver.", file);
   Print_OptionCategory(level, "Solver options (numbers)", file);
-  Print_NumberOptions(num, level, SolverOptions_Number, "Solver.", file);
+  Print_NumberOptions(num, level, diff, SolverOptions_Number, "Solver.", file);
   Print_OptionCategory(level, "Solver options (colors)", file);
-  Print_ColorOptions(num, level, SolverOptions_Color, "Solver.", file);
+  Print_ColorOptions(num, level, diff, SolverOptions_Color, "Solver.", file);
 
   Print_OptionCategory(level, "Post-processing options (strings)", file);
-  Print_StringOptions(num, level, PostProcessingOptions_String,
+  Print_StringOptions(num, level, diff, PostProcessingOptions_String,
                       "PostProcessing.", file);
   Print_OptionCategory(level, "Post-processing options (numbers)", file);
-  Print_NumberOptions(num, level, PostProcessingOptions_Number,
+  Print_NumberOptions(num, level, diff, PostProcessingOptions_Number,
                       "PostProcessing.", file);
   Print_OptionCategory(level, "Post-processing options (colors)", file);
-  Print_ColorOptions(num, level, PostProcessingOptions_Color,
+  Print_ColorOptions(num, level, diff, PostProcessingOptions_Color,
                      "PostProcessing.", file);
 
   if(level & GMSH_FULLRC) {
     for(i = 0; i < List_Nbr(CTX.post.list); i++) {
       sprintf(tmp, "View[%d].", i);
       Print_OptionCategory(level, "View options (strings)", file);
-      Print_StringOptions(i, level, ViewOptions_String, tmp, file);
+      Print_StringOptions(i, level, diff, ViewOptions_String, tmp, file);
       Print_OptionCategory(level, "View options (numbers)", file);
-      Print_NumberOptions(i, level, ViewOptions_Number, tmp, file);
+      Print_NumberOptions(i, level, diff, ViewOptions_Number, tmp, file);
       Print_OptionCategory(level, "View options (colors)", file);
-      Print_ColorOptions(i, level, ViewOptions_Color, tmp, file);
+      Print_ColorOptions(i, level, diff, ViewOptions_Color, tmp, file);
       strcat(tmp, "ColorTable");
       Print_ColorTable(i, tmp, file);
     }
   }
   else if(level & GMSH_OPTIONSRC) {
     Print_OptionCategory(level, "View options (strings)", file);
-    Print_StringOptions(num, level, ViewOptions_String, "View.", file);
+    Print_StringOptions(num, level, diff, ViewOptions_String, "View.", file);
     Print_OptionCategory(level, "View options (numbers)", file);
-    Print_NumberOptions(num, level, ViewOptions_Number, "View.", file);
+    Print_NumberOptions(num, level, diff, ViewOptions_Number, "View.", file);
     Print_OptionCategory(level, "View options (colors)", file);
-    Print_ColorOptions(num, level, ViewOptions_Color, "View.", file);
-    Print_ColorTable(num, "View.ColorTable", file);
+    Print_ColorOptions(num, level, diff, ViewOptions_Color, "View.", file);
   }
 
   Print_OptionCategory(level, "Print options (strings)", file);
-  Print_StringOptions(num, level, PrintOptions_String, "Print.", file);
+  Print_StringOptions(num, level, diff, PrintOptions_String, "Print.", file);
   Print_OptionCategory(level, "Print options (numbers)", file);
-  Print_NumberOptions(num, level, PrintOptions_Number, "Print.", file);
+  Print_NumberOptions(num, level, diff, PrintOptions_Number, "Print.", file);
   Print_OptionCategory(level, "Print options (colors)", file);
-  Print_ColorOptions(num, level, PrintOptions_Color, "Print.", file);
+  Print_ColorOptions(num, level, diff, PrintOptions_Color, "Print.", file);
 
   if(filename) {
     Msg(INFO, "Wrote option file '%s'", filename);
@@ -420,16 +418,31 @@ void Print_OptionsDoc()
       p->getInfos(author, copyright, help);
       fprintf(file, "@item Plugin(%s)\n", (*it).first);
       fprintf(file, "%s\n", help);
-      fprintf(file, "Numeric options:\n");
-      fprintf(file, "@table @code\n");
-      int n = p->getNbOptions();
-      for(int i = 0; i < n; i++) {
-        StringXNumber *sxn;
-        sxn = p->getOption(i);
-        fprintf(file, "@item %s\n", sxn->str);
-	fprintf(file, "Default value: %g\n", sxn->def);
+
+      int m = p->getNbOptionsStr();
+      if(m){
+	fprintf(file, "String options:\n");
+	fprintf(file, "@table @code\n");
+	for(int i = 0; i < m; i++) {
+	  StringXString *sxs = p->getOptionStr(i);
+	  fprintf(file, "@item %s\n", sxs->str);
+	  fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def);
+	}
+	fprintf(file, "@end table\n");
       }
-      fprintf(file, "@end table\n");
+
+      int n = p->getNbOptions();
+      if(n){
+	fprintf(file, "Numeric options:\n");
+	fprintf(file, "@table @code\n");
+	for(int i = 0; i < n; i++) {
+	  StringXNumber *sxn = p->getOption(i);
+	  fprintf(file, "@item %s\n", sxn->str);
+	  fprintf(file, "Default value: @code{%g}\n", sxn->def);
+	}
+	fprintf(file, "@end table\n");
+      }
+
     }
     fprintf(file, "\n");
   }
@@ -488,19 +501,21 @@ void *Get_StringOption(char *str, StringXString s[])
     return (void *)s[i].function;
 }
 
-void Print_StringOptions(int num, int level, StringXString s[], char *prefix,
-                         FILE * file)
+void Print_StringOptions(int num, int level, int diff, StringXString s[], 
+			 char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
-      sprintf(tmp, "%s%s = \"%s\"; // %s", prefix,
-              s[i].str, s[i].function(num, GMSH_GET, NULL), s[i].help);
-      if(file)
-        fprintf(file, "%s\n", tmp);
-      else
-        Msg(DIRECT, "%s", tmp);
+      if(!diff || strcmp(s[i].function(num, GMSH_GET, NULL), s[i].def)){
+	sprintf(tmp, "%s%s = \"%s\"; // %s", prefix,
+		s[i].str, s[i].function(num, GMSH_GET, NULL), s[i].help);
+	if(file)
+	  fprintf(file, "%s\n", tmp);
+	else
+	  Msg(DIRECT, "%s", tmp);
+      }
     }
     i++;
   }
@@ -508,11 +523,27 @@ void Print_StringOptions(int num, int level, StringXString s[], char *prefix,
 
 void Print_StringOptionsDoc(StringXString s[], char *prefix, FILE * file)
 {
-  int i = 0;
+  int i = 0, j;
+  char tmp[1024];
+
   while(s[i].str) {
     fprintf(file, "@item %s%s\n", prefix, s[i].str);
     fprintf(file, "%s@*\n", s[i].help);
-    fprintf(file, "Default value: @code{\"%s\"}@*\n", s[i].function(0, GMSH_GET, NULL));
+
+    // sanitize the string for texinfo
+    char *ptr = s[i].function(0, GMSH_GET, NULL);
+    int len = strlen(ptr);
+    j = 0;
+    while(j < len){
+      tmp[j] = *(ptr++);
+      if(j && tmp[j] == '\n' && tmp[j-1] == '\n')
+	tmp[j-1] = '.';
+      j++;
+      if(j == 1023) break;
+    }
+    tmp[j] = '\0';
+
+    fprintf(file, "Default value: @code{\"%s\"}@*\n", tmp);
     fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
     i++;
   }
@@ -571,19 +602,21 @@ void *Get_NumberOption(char *str, StringXNumber s[])
   }
 }
 
-void Print_NumberOptions(int num, int level, StringXNumber s[], char *prefix,
-                         FILE * file)
+void Print_NumberOptions(int num, int level, int diff, StringXNumber s[], 
+			 char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
-      sprintf(tmp, "%s%s = %.16g; // %s", prefix,
-              s[i].str, s[i].function(num, GMSH_GET, 0), s[i].help);
-      if(file)
-        fprintf(file, "%s\n", tmp);
-      else
-        Msg(DIRECT, tmp);
+      if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def)){
+	sprintf(tmp, "%s%s = %.16g; // %s", prefix,
+		s[i].str, s[i].function(num, GMSH_GET, 0), s[i].help);
+	if(file)
+	  fprintf(file, "%s\n", tmp);
+	else
+	  Msg(DIRECT, tmp);
+      }
     }
     i++;
   }
@@ -668,22 +701,24 @@ void *Get_ColorOption(char *str, StringXColor s[])
     return (void *)s[i].function;
 }
 
-void Print_ColorOptions(int num, int level, StringXColor s[], char *prefix,
-                        FILE * file)
+void Print_ColorOptions(int num, int level, int diff, StringXColor s[], 
+			char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
-      sprintf(tmp, "%sColor.%s = {%d,%d,%d}; // %s",
-              prefix, s[i].str,
-              UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
-              UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
-              UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), s[i].help);
-      if(file)
-        fprintf(file, "%s\n", tmp);
-      else
-        Msg(DIRECT, tmp);
+      if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def1)){
+	sprintf(tmp, "%sColor.%s = {%d,%d,%d}; // %s",
+		prefix, s[i].str,
+		UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
+		UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
+		UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), s[i].help);
+	if(file)
+	  fprintf(file, "%s\n", tmp);
+	else
+	  Msg(DIRECT, tmp);
+      }
     }
     i++;
   }

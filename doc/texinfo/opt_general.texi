@@ -30,7 +30,7 @@ Default value: @code{".gmshrc"}@*
 Saved in: @code{-}
 
 @item General.Scheme
-FLTK graphical user interface scheme (try e.g. plastic)@*
+FLTK user interface scheme (try e.g. plastic)@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
@@ -260,7 +260,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.FontSize
-Size of the font in the graphical user interface@*
+Size of the font in the user interface@*
 Default value: @code{12}@*
 Saved in: @code{General.SessionFileName}
 
@@ -301,12 +301,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Light0X
 X position of light source 0@*
-Default value: @code{0.5}@*
+Default value: @code{0.65}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light0Y
 Y position of light source 0@*
-Default value: @code{0.3}@*
+Default value: @code{0.65}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Light0Z
@@ -449,11 +449,6 @@ Width (in pixels) of the message window@*
 Default value: @code{450}@*
 Saved in: @code{General.SessionFileName}
 
-@item General.MovingLight
-Use a moving (i.e. which follows the model) light source@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item General.OptionsPositionX
 Horizontal position (in pixels) of the upper left corner of the option window@*
 Default value: @code{650}@*
@@ -590,7 +585,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Tooltips
-Show tooltips in the graphical user interface@*
+Show tooltips in the user interface@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

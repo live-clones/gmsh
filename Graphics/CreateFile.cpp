@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.59 2004-05-09 19:00:11 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.60 2004-05-12 03:22:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -126,7 +126,7 @@ void CreateOutputFile(char *name, int format)
     break;
 
   case FORMAT_OPT:
-    Print_Options(0, GMSH_FULLRC, name);
+    Print_Options(0, GMSH_FULLRC, false, name);
     break;
 
   case FORMAT_MSH:

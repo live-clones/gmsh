@@ -201,7 +201,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointSize
 Display size of mesh vertices (in pixels)@*
-Default value: @code{3}@*
+Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointType

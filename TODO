@@ -1,4 +1,4 @@
-$Id: TODO,v 1.43 2004-05-01 06:45:10 geuzaine Exp $
+$Id: TODO,v 1.44 2004-05-12 03:22:13 geuzaine Exp $
 
 generalize Plugin(Triangulate) to vector and tensor points
 
@@ -18,11 +18,6 @@ format...
 
 add an option to plot the bounding box of views, with or without
 labels (scales)
-
-********************************************************************
-
-should save only those options that differ from the default values (or
-at least make this behaviour optional)
 
 ********************************************************************
 

@@ -12,29 +12,29 @@ Plugin(CutGrid) creates one new view.
 Numeric options:
 @table @code
 @item X0
-Default value: -1
+Default value: @code{-1}
 @item Y0
-Default value: -1
+Default value: @code{-1}
 @item Z0
-Default value: 0
+Default value: @code{0}
 @item X1
-Default value: -1
+Default value: @code{-1}
 @item Y1
-Default value: 0
+Default value: @code{0}
 @item Z1
-Default value: 0
+Default value: @code{0}
 @item X2
-Default value: 0
+Default value: @code{0}
 @item Y2
-Default value: -1
+Default value: @code{-1}
 @item Z2
-Default value: 0
+Default value: @code{0}
 @item nPointsU
-Default value: 20
+Default value: @code{20}
 @item nPointsV
-Default value: 20
+Default value: @code{20}
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(CutMap)
@@ -53,13 +53,13 @@ as there are time steps in `iView'.
 Numeric options:
 @table @code
 @item A
-Default value: 1
+Default value: @code{1}
 @item dTimeStep
-Default value: -1
+Default value: @code{-1}
 @item dView
-Default value: -1
+Default value: @code{-1}
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(CutPlane)
@@ -73,15 +73,15 @@ Plugin(CutPlane) creates one new view.
 Numeric options:
 @table @code
 @item A
-Default value: 1
+Default value: @code{1}
 @item B
-Default value: 0
+Default value: @code{0}
 @item C
-Default value: 0
+Default value: @code{0}
 @item D
-Default value: -0.01
+Default value: @code{-0.01}
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(CutSphere)
@@ -95,15 +95,15 @@ Plugin(CutSphere) creates one new view.
 Numeric options:
 @table @code
 @item Xc
-Default value: 0
+Default value: @code{0}
 @item Yc
-Default value: 0
+Default value: @code{0}
 @item Zc
-Default value: 0
+Default value: @code{0}
 @item R
-Default value: 0.25
+Default value: @code{0.25}
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(DecomposeInSimplex)
@@ -119,7 +119,7 @@ in-place.
 Numeric options:
 @table @code
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(DisplacementRaise)
@@ -138,13 +138,37 @@ Plugin(DisplacementRaise) is executed in-place.
 Numeric options:
 @table @code
 @item Factor
-Default value: 1
+Default value: @code{1}
 @item dTimeStep
-Default value: 0
+Default value: @code{0}
 @item dView
-Default value: -1
+Default value: @code{-1}
 @item iView
-Default value: -1
+Default value: @code{-1}
+@end table
+
+@item Plugin(Evaluate)
+Plugin(Evaluate) sets the values associated with
+the `TimeStep'-th time step in the view `iView'
+to the expression `Expression'. In addition to
+the usual mathematical functions, `Expression' can
+contain the symbols x, y, z and v, which represent
+the three spatial coordinates and the value of the
+field, respectively.
+
+Plugin(Evaluate) is executed in-place.
+
+String options:
+@table @code
+@item Expression
+Default value: @code{"v * (x+y+z)"}
+@end table
+Numeric options:
+@table @code
+@item TimeStep
+Default value: @code{0}
+@item iView
+Default value: @code{-1}
 @end table
 
 @item Plugin(Extract)
@@ -157,9 +181,9 @@ Plugin(Extract) creates one new view.
 Numeric options:
 @table @code
 @item iView
-Default value: -1
+Default value: @code{-1}
 @item iComponent
-Default value: 0
+Default value: @code{0}
 @end table
 
 @item Plugin(Skin)
@@ -172,7 +196,7 @@ Plugin(Skin) creates one new view.
 Numeric options:
 @table @code
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(Smooth)
@@ -185,7 +209,7 @@ Plugin(Smooth) is executed in-place.
 Numeric options:
 @table @code
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(SphericalRaise)
@@ -205,17 +229,17 @@ Plugin(SphericalRaise) is executed in-place.
 Numeric options:
 @table @code
 @item Xc
-Default value: 0
+Default value: @code{0}
 @item Yc
-Default value: 0
+Default value: @code{0}
 @item Zc
-Default value: 0
+Default value: @code{0}
 @item Raise
-Default value: 1
+Default value: @code{1}
 @item TimeStep
-Default value: 0
+Default value: @code{0}
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(StreamLines)
@@ -241,33 +265,33 @@ vectors and to animate the view ;-)
 Numeric options:
 @table @code
 @item X0
-Default value: 2.39
+Default value: @code{2.39}
 @item Y0
-Default value: 0.445
+Default value: @code{0.445}
 @item Z0
-Default value: 0
+Default value: @code{0}
 @item X1
-Default value: 2.39
+Default value: @code{2.39}
 @item Y1
-Default value: 0.94
+Default value: @code{0.94}
 @item Z1
-Default value: 0
+Default value: @code{0}
 @item X2
-Default value: 2.39
+Default value: @code{2.39}
 @item Y2
-Default value: 0.445
+Default value: @code{0.445}
 @item Z2
-Default value: 1
+Default value: @code{1}
 @item nPointsU
-Default value: 20
+Default value: @code{20}
 @item nPointsV
-Default value: 1
+Default value: @code{1}
 @item MaxIter
-Default value: 100
+Default value: @code{100}
 @item DT
-Default value: 0.1
+Default value: @code{0.1}
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(Transform)
@@ -284,25 +308,25 @@ Plugin(Transform) is executed in-place.
 Numeric options:
 @table @code
 @item A11
-Default value: 1
+Default value: @code{1}
 @item A12
-Default value: 0
+Default value: @code{0}
 @item A13
-Default value: 0
+Default value: @code{0}
 @item A21
-Default value: 0
+Default value: @code{0}
 @item A22
-Default value: 1
+Default value: @code{1}
 @item A23
-Default value: 0
+Default value: @code{0}
 @item A31
-Default value: 0
+Default value: @code{0}
 @item A32
-Default value: 0
+Default value: @code{0}
 @item A33
-Default value: 1
+Default value: @code{1}
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @item Plugin(Triangulate)
@@ -317,7 +341,7 @@ Plugin(Triangulate) creates one new view.
 Numeric options:
 @table @code
 @item iView
-Default value: -1
+Default value: @code{-1}
 @end table
 
 @end ftable
