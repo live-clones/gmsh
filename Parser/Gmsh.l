@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.34 2001-08-08 14:05:26 remacle Exp $
+// $Id: Gmsh.l,v 1.35 2001-08-11 23:28:33 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +8,7 @@
 #include <math.h>
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
 #include "Gmsh.tab.cpp.h"

@@ -14,6 +14,11 @@
 #undef false
 #define false 0
 
+#define TEXT_BUFFER_SIZE       1024
+#define SELECTION_BUFFER_SIZE  1024
+#define LABEL_STR_L            16
+#define MAX_OPEN_FILES         256
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

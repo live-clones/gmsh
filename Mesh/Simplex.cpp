@@ -1,11 +1,10 @@
-// $Id: Simplex.cpp,v 1.15 2001-07-26 18:47:59 remacle Exp $
+// $Id: Simplex.cpp,v 1.16 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Simplex.h"
-#include "Numeric.h"
 #include "Context.h"
 
 extern Context_T   CTX;

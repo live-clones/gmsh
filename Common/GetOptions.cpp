@@ -1,10 +1,10 @@
-// $Id: GetOptions.cpp,v 1.34 2001-08-04 03:35:32 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.35 2001-08-11 23:28:31 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Context.h"
 #include "Options.h"
 #include "Geo.h"
@@ -494,7 +494,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 
   }
 
-  strncpy(CTX.filename, TheFileNameTab[0], NAME_STR_L);
+  strncpy(CTX.filename, TheFileNameTab[0], 255);
 
 }
 

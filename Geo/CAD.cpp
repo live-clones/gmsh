@@ -1,12 +1,11 @@
-// $Id: CAD.cpp,v 1.25 2001-06-25 18:34:59 remacle Exp $
+// $Id: CAD.cpp,v 1.26 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "DataBase.h"
 #include "Interpolation.h"
-#include "Numeric.h"
-#include "Const.h"
 #include "Create.h"
 #include "CAD.h"
 #include "Edge.h"

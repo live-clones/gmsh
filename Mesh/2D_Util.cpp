@@ -1,7 +1,7 @@
-// $Id: 2D_Util.cpp,v 1.11 2001-06-25 18:34:59 remacle Exp $
+// $Id: 2D_Util.cpp,v 1.12 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "2D_Mesh.h"
 #include "Context.h"

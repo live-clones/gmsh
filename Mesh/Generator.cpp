@@ -1,7 +1,7 @@
-// $Id: Generator.cpp,v 1.23 2001-06-25 15:22:26 remacle Exp $
+// $Id: Generator.cpp,v 1.24 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "Create.h"
 #include "Context.h"

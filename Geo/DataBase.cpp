@@ -1,7 +1,7 @@
-// $Id: DataBase.cpp,v 1.15 2001-08-09 15:24:27 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.16 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "CAD.h"

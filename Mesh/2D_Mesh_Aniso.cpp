@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.17 2001-06-06 21:29:58 remacle Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.18 2001-08-11 23:28:32 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -8,14 +8,13 @@
 */
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
 #include "Mesh.h"
 #include "Interpolation.h"
 #include "Create.h"
 #include "Context.h"
-#include "Numeric.h"
 
 extern Context_T CTX ;
 extern double LC2D ;

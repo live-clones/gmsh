@@ -1,7 +1,7 @@
 #ifndef _NR_UTILS_H_
 #define _NR_UTILS_H_
 
-#include "Const.h"
+#include "Numeric.h"
 
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
 

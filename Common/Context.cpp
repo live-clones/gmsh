@@ -1,7 +1,7 @@
-// $Id: Context.cpp,v 1.39 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: Context.cpp,v 1.40 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Draw.h"

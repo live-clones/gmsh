@@ -1,7 +1,6 @@
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
-#include "Const.h"
 #include "ColorTable.h"
 
 class smooth_container;
@@ -9,8 +8,8 @@ class smooth_container;
 class Post_View{
   public :
   // intrinsic to a view
-  int Num, Changed, DuplicateOf, Links;
-  char FileName[NAME_STR_L], Name[NAME_STR_L];
+  int Num, Index, Changed, DuplicateOf, Links, Dirty;
+  char FileName[256], Name[256];
 
   // the data
   int datasize; // size(double) or sizeof(float)
@@ -27,7 +26,7 @@ class Post_View{
   double Min, Max, BBox[6];
 
   // options
-  char   Format[NAME_STR_L];
+  char   Format[256];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale, Explode;
   int Visible, IntervalsType, NbIso, Light, SmoothNormals ;
@@ -101,7 +100,7 @@ int fcmpPostViewNum(const void *v1, const void *v2);
 int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
 
 Post_View * BeginView (int alloc);
-void EndView (int AddInUI, char *FileName, char *Name);
+void EndView (Post_View *v, int AddInUI, char *FileName, char *Name);
 void FreeView(Post_View *v);
 bool FreeView(int);
 void Read_View(FILE *file, char *filename);

@@ -1,8 +1,8 @@
-// $Id: Edge.cpp,v 1.5 2001-06-06 21:29:58 remacle Exp $
+// $Id: Edge.cpp,v 1.6 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
+#include "Numeric.h"
 #include "Mesh.h"
-#include "Const.h"
 #include "Edge.h"
 #include "Tools.h"
 

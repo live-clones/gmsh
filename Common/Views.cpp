@@ -1,22 +1,21 @@
-// $Id: Views.cpp,v 1.49 2001-08-06 10:35:47 geuzaine Exp $
+// $Id: Views.cpp,v 1.50 2001-08-11 23:28:31 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
+#include "Numeric.h"
 #include "Views.h"
 #include "Context.h"
 #include "Options.h"
 #include "ColorTable.h"
 
-// this static stuff should be removed
-int         Post_ViewForceNumber = 0;
-List_T     *Post_ViewList = NULL;
-Post_View  *Post_ViewReference = NULL;
-
 extern Context_T   CTX ;
 
-static Post_View *ActualView;
-static int  ActualViewNum=0, ActualViewIndex=0;
-static int  NbPoints, NbLines, NbTriangles, NbTetrahedra;
+#define INFINITY 1.e200
+
+// this static stuff should be removed
+List_T     *Post_ViewList = NULL;
+Post_View  *Post_ViewReference = NULL;
+int         Post_ViewForceNumber = 0;
 
 /* ------------------------------------------------------------------------ */
 /*  V i e w s                                                               */
@@ -31,309 +30,300 @@ int fcmpPostViewDuplicateOf(const void *v1, const void *v2){
 }
 
 Post_View * BeginView(int allocate){
-  Post_View v;
+  Post_View vv, *v;
+  static int  UniqueNum=0;
   int i;
 
   if(!Post_ViewList) Post_ViewList = List_Create(100,1,sizeof(Post_View));
 
   if(!Post_ViewForceNumber){
-    // each view MUST have a unique, non-reattributable, number
-    v.Num = ++ActualViewNum;
-    List_Add(Post_ViewList, &v);
+    vv.Num = ++UniqueNum; // each view _must_ have a unique number
+    List_Add(Post_ViewList, &vv);
   }
   else{
-    v.Num = Post_ViewForceNumber;    
-    List_Replace(Post_ViewList,&v,fcmpPostViewNum);
+    vv.Num = Post_ViewForceNumber;    
+    List_Replace(Post_ViewList,&vv,fcmpPostViewNum);
   }
 
   CTX.post.nb_views = List_Nbr(Post_ViewList);
 
-  ActualViewIndex = List_ISearch(Post_ViewList, &v, fcmpPostViewNum);
-  ActualView = (Post_View*)List_Pointer(Post_ViewList, ActualViewIndex);
+  i = List_ISearch(Post_ViewList, &vv, fcmpPostViewNum);
+  v = (Post_View*)List_Pointer(Post_ViewList, i);
 
-  NbPoints = NbLines = NbTriangles = NbTetrahedra = 0;
-
-  ActualView->NbTimeStep = 0;
-  ActualView->NbSP = ActualView->NbVP = ActualView->NbTP = 0;
-  ActualView->NbSL = ActualView->NbVL = ActualView->NbTL = 0;
-  ActualView->NbST = ActualView->NbVT = ActualView->NbTT = 0;
-  ActualView->NbSS = ActualView->NbVS = ActualView->NbTS = 0;
+  v->Index = i;
+  v->Dirty = 1;
+  v->NbTimeStep = 0;
+  v->NbSP = v->NbVP = v->NbTP = 0;
+  v->NbSL = v->NbVL = v->NbTL = 0;
+  v->NbST = v->NbVT = v->NbTT = 0;
+  v->NbSS = v->NbVS = v->NbTS = 0;
 
   if(allocate){
-    ActualView->datasize = sizeof(double);
+    v->datasize = sizeof(double);
 
-    ActualView->Time = List_Create(100,1000,sizeof(double));
+    v->Time = List_Create(100,1000,sizeof(double));
 
-    ActualView->SP = List_Create(100,1000,sizeof(double));
-    ActualView->VP = List_Create(100,1000,sizeof(double));
-    ActualView->TP = List_Create(100,1000,sizeof(double));
+    v->SP = List_Create(100,1000,sizeof(double));
+    v->VP = List_Create(100,1000,sizeof(double));
+    v->TP = List_Create(100,1000,sizeof(double));
     
-    ActualView->SL = List_Create(100,1000,sizeof(double));
-    ActualView->VL = List_Create(100,1000,sizeof(double));
-    ActualView->TL = List_Create(100,1000,sizeof(double));
+    v->SL = List_Create(100,1000,sizeof(double));
+    v->VL = List_Create(100,1000,sizeof(double));
+    v->TL = List_Create(100,1000,sizeof(double));
     
-    ActualView->ST = List_Create(100,1000,sizeof(double));
-    ActualView->VT = List_Create(100,1000,sizeof(double));
-    ActualView->TT = List_Create(100,1000,sizeof(double));
+    v->ST = List_Create(100,1000,sizeof(double));
+    v->VT = List_Create(100,1000,sizeof(double));
+    v->TT = List_Create(100,1000,sizeof(double));
     
-    ActualView->SS = List_Create(100,1000,sizeof(double));
-    ActualView->VS = List_Create(100,1000,sizeof(double));
-    ActualView->TS = List_Create(100,1000,sizeof(double));
+    v->SS = List_Create(100,1000,sizeof(double));
+    v->VS = List_Create(100,1000,sizeof(double));
+    v->TS = List_Create(100,1000,sizeof(double));
   }
   else{
-    ActualView->Time = NULL;
-    ActualView->SP = NULL; ActualView->VP = NULL; ActualView->TP = NULL;
-    ActualView->SL = NULL; ActualView->VL = NULL; ActualView->TL = NULL;
-    ActualView->ST = NULL; ActualView->VT = NULL; ActualView->TT = NULL;
-    ActualView->SS = NULL; ActualView->VS = NULL; ActualView->TS = NULL;
+    v->Time = NULL;
+    v->SP = NULL; v->VP = NULL; v->TP = NULL;
+    v->SL = NULL; v->VL = NULL; v->TL = NULL;
+    v->ST = NULL; v->VT = NULL; v->TT = NULL;
+    v->SS = NULL; v->VS = NULL; v->TS = NULL;
   }
 
   // Copy all options from the reference view initialized in InitOptions()
-  CopyViewOptions(Post_ViewReference, ActualView);
+  CopyViewOptions(Post_ViewReference, v);
 
-  ActualView->Changed = 1;
-  ActualView->Links = 0;
-  ActualView->DuplicateOf = 0;
-  ActualView->ScalarOnly = 1;
-  ActualView->normals = NULL;
-  ActualView->Min = 1.e200;
-  ActualView->Max = -1.e200;
+  v->Changed = 1;
+  v->Links = 0;
+  v->DuplicateOf = 0;
+  v->ScalarOnly = 1;
+  v->normals = NULL;
+  v->Min = INFINITY;
+  v->Max = -INFINITY;
   for(i=0;i<3;i++){
-    ActualView->BBox[2*i] = 1.e200;
-    ActualView->BBox[2*i+1] = -1.e200;
+    v->BBox[2*i] = INFINITY;
+    v->BBox[2*i+1] = -INFINITY;
   }
 
-  return ActualView;
+  return v;
 }
 
-void Stat_ScalarSimplex(int nbnod, int N, double *X, double *Y, double *Z, double *V){
+void Stat_ScalarSimplex(Post_View *v, int nbnod, int N, 
+			double *X, double *Y, double *Z, double *V){
   int i;
 
-  if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
-    ActualView->Min = V[0];
-    ActualView->Max = V[0];
-    ActualView->NbTimeStep = N/nbnod;
+  if(v->Min == INFINITY || v->Max == -INFINITY){
+    v->Min = V[0];
+    v->Max = V[0];
+    v->NbTimeStep = N/nbnod;
   }
-  else if(N/nbnod < ActualView->NbTimeStep)
-    ActualView->NbTimeStep = N/nbnod ;
+  else if(N/nbnod < v->NbTimeStep)
+    v->NbTimeStep = N/nbnod ;
 
   for(i=0 ; i<N ; i++){
-    if(V[i] < ActualView->Min) ActualView->Min = V[i] ;
-    if(V[i] > ActualView->Max) ActualView->Max = V[i] ;
+    if(V[i] < v->Min) v->Min = V[i] ;
+    if(V[i] > v->Max) v->Max = V[i] ;
   }
 
   for(i=0 ; i<nbnod ; i++){
-    if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
-    if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
-    if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
-    if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
-    if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
-    if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
-  }
-
-  switch(nbnod){
-  case 1 : NbPoints++; break;
-  case 2 : NbLines++; break;
-  case 3 : NbTriangles++; break;
-  case 4 : NbTetrahedra++; break;
+    if(X[i] < v->BBox[0]) v->BBox[0] = X[i] ;
+    if(X[i] > v->BBox[1]) v->BBox[1] = X[i] ;
+    if(Y[i] < v->BBox[2]) v->BBox[2] = Y[i] ;
+    if(Y[i] > v->BBox[3]) v->BBox[3] = Y[i] ;
+    if(Z[i] < v->BBox[4]) v->BBox[4] = Z[i] ;
+    if(Z[i] > v->BBox[5]) v->BBox[5] = Z[i] ;
   }
 }
 
-void Stat_VectorSimplex(int nbnod, int N, double *X, double *Y, double *Z, double *V){
+void Stat_VectorSimplex(Post_View *v, int nbnod, int N, 
+			double *X, double *Y, double *Z, double *V){
   double l0;
   int i;
 
-  if(!NbPoints && !NbLines && !NbTriangles && !NbTetrahedra){
+  if(v->Min == INFINITY || v->Max == -INFINITY){
     l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
-    ActualView->Min = l0;
-    ActualView->Max = l0;
-    ActualView->NbTimeStep = N/(3*nbnod) ;
+    v->Min = l0;
+    v->Max = l0;
+    v->NbTimeStep = N/(3*nbnod) ;
   }
-  else if(N/(3*nbnod) < ActualView->NbTimeStep)
-    ActualView->NbTimeStep = N/(3*nbnod) ;
+  else if(N/(3*nbnod) < v->NbTimeStep)
+    v->NbTimeStep = N/(3*nbnod) ;
 
   for(i=0 ; i<N ; i+=3){
     l0 = sqrt(DSQR(V[i])+DSQR(V[i+1])+DSQR(V[i+2]));
-    if(l0 < ActualView->Min) ActualView->Min = l0 ;
-    if(l0 > ActualView->Max) ActualView->Max = l0 ;
+    if(l0 < v->Min) v->Min = l0 ;
+    if(l0 > v->Max) v->Max = l0 ;
   }
 
   for(i=0 ; i<nbnod ; i++){
-    if(X[i] < ActualView->BBox[0]) ActualView->BBox[0] = X[i] ;
-    if(X[i] > ActualView->BBox[1]) ActualView->BBox[1] = X[i] ;
-    if(Y[i] < ActualView->BBox[2]) ActualView->BBox[2] = Y[i] ;
-    if(Y[i] > ActualView->BBox[3]) ActualView->BBox[3] = Y[i] ;
-    if(Z[i] < ActualView->BBox[4]) ActualView->BBox[4] = Z[i] ;
-    if(Z[i] > ActualView->BBox[5]) ActualView->BBox[5] = Z[i] ;
+    if(X[i] < v->BBox[0]) v->BBox[0] = X[i] ;
+    if(X[i] > v->BBox[1]) v->BBox[1] = X[i] ;
+    if(Y[i] < v->BBox[2]) v->BBox[2] = Y[i] ;
+    if(Y[i] > v->BBox[3]) v->BBox[3] = Y[i] ;
+    if(Z[i] < v->BBox[4]) v->BBox[4] = Z[i] ;
+    if(Z[i] > v->BBox[5]) v->BBox[5] = Z[i] ;
   }
 
-  ActualView->ScalarOnly = 0;
-
-  switch(nbnod){
-  case 1 : NbPoints++; break;
-  case 2 : NbLines++; break;
-  case 3 : NbTriangles++; break;
-  case 4 : NbTetrahedra++; break;
-  }
+  v->ScalarOnly = 0;
 }
 
-void Stat_TensorSimplex(int nbnod, int N, double *X, double *Y, double *Z, double *v){
+void Stat_TensorSimplex(Post_View *v, int nbnod, int N, 
+			double *X, double *Y, double *Z, double *V){
   Msg(GERROR, "Tensor field views not implemented yet");
 }
 
 
-void EndView(int add_in_gui, char *file_name, char *name){
+void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
   int i, nb;
   double d;
   extern int AddViewInUI(int , char *, int);
 
   // Points
 
-  if(ActualView->NbSP){
-    nb = List_Nbr(ActualView->SP) / ActualView->NbSP ;
-    for(i = 0 ; i < List_Nbr(ActualView->SP) ; i+=nb)
-      Stat_ScalarSimplex(1, nb-3, 
-			 (double*)List_Pointer_Fast(ActualView->SP,i),
-			 (double*)List_Pointer_Fast(ActualView->SP,i+1),
-			 (double*)List_Pointer_Fast(ActualView->SP,i+2),
-			 (double*)List_Pointer_Fast(ActualView->SP,i+3));
+  if(v->NbSP){
+    nb = List_Nbr(v->SP) / v->NbSP ;
+    for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb)
+      Stat_ScalarSimplex(v, 1, nb-3, 
+			 (double*)List_Pointer_Fast(v->SP,i),
+			 (double*)List_Pointer_Fast(v->SP,i+1),
+			 (double*)List_Pointer_Fast(v->SP,i+2),
+			 (double*)List_Pointer_Fast(v->SP,i+3));
   }
-  if(ActualView->NbVP){
-    nb = List_Nbr(ActualView->VP) / ActualView->NbVP ;
-    for(i = 0 ; i < List_Nbr(ActualView->VP) ; i+=nb)
-      Stat_VectorSimplex(1, nb-3, 
-			 (double*)List_Pointer_Fast(ActualView->VP,i),
-			 (double*)List_Pointer_Fast(ActualView->VP,i+1),
-			 (double*)List_Pointer_Fast(ActualView->VP,i+2),
-			 (double*)List_Pointer_Fast(ActualView->VP,i+3));
+  if(v->NbVP){
+    nb = List_Nbr(v->VP) / v->NbVP ;
+    for(i = 0 ; i < List_Nbr(v->VP) ; i+=nb)
+      Stat_VectorSimplex(v, 1, nb-3, 
+			 (double*)List_Pointer_Fast(v->VP,i),
+			 (double*)List_Pointer_Fast(v->VP,i+1),
+			 (double*)List_Pointer_Fast(v->VP,i+2),
+			 (double*)List_Pointer_Fast(v->VP,i+3));
   }
-  if(ActualView->NbTP){
-    nb = List_Nbr(ActualView->TP) / ActualView->NbTP ;
-    for(i = 0 ; i < List_Nbr(ActualView->TP) ; i+=nb)
-      Stat_TensorSimplex(1, nb-3, 
-			 (double*)List_Pointer_Fast(ActualView->TP,i),
-			 (double*)List_Pointer_Fast(ActualView->TP,i+1),
-			 (double*)List_Pointer_Fast(ActualView->TP,i+2),
-			 (double*)List_Pointer_Fast(ActualView->TP,i+3));
+  if(v->NbTP){
+    nb = List_Nbr(v->TP) / v->NbTP ;
+    for(i = 0 ; i < List_Nbr(v->TP) ; i+=nb)
+      Stat_TensorSimplex(v, 1, nb-3, 
+			 (double*)List_Pointer_Fast(v->TP,i),
+			 (double*)List_Pointer_Fast(v->TP,i+1),
+			 (double*)List_Pointer_Fast(v->TP,i+2),
+			 (double*)List_Pointer_Fast(v->TP,i+3));
   }
 
   // Lines
 
-  if(ActualView->NbSL){
-    nb = List_Nbr(ActualView->SL) / ActualView->NbSL ;
-    for(i = 0 ; i < List_Nbr(ActualView->SL) ; i+=nb)
-      Stat_ScalarSimplex(2, nb-6,
-			 (double*)List_Pointer_Fast(ActualView->SL,i),
-			 (double*)List_Pointer_Fast(ActualView->SL,i+2),
-			 (double*)List_Pointer_Fast(ActualView->SL,i+4),
-			 (double*)List_Pointer_Fast(ActualView->SL,i+6));
+  if(v->NbSL){
+    nb = List_Nbr(v->SL) / v->NbSL ;
+    for(i = 0 ; i < List_Nbr(v->SL) ; i+=nb)
+      Stat_ScalarSimplex(v, 2, nb-6,
+			 (double*)List_Pointer_Fast(v->SL,i),
+			 (double*)List_Pointer_Fast(v->SL,i+2),
+			 (double*)List_Pointer_Fast(v->SL,i+4),
+			 (double*)List_Pointer_Fast(v->SL,i+6));
   }
-  if(ActualView->NbVL){
-    nb = List_Nbr(ActualView->VL) / ActualView->NbVL ;
-    for(i = 0 ; i < List_Nbr(ActualView->VL) ; i+=nb)
-      Stat_VectorSimplex(2, nb-6, 
-			 (double*)List_Pointer_Fast(ActualView->VL,i),
-			 (double*)List_Pointer_Fast(ActualView->VL,i+2),
-			 (double*)List_Pointer_Fast(ActualView->VL,i+4),
-			 (double*)List_Pointer_Fast(ActualView->VL,i+6));
+  if(v->NbVL){
+    nb = List_Nbr(v->VL) / v->NbVL ;
+    for(i = 0 ; i < List_Nbr(v->VL) ; i+=nb)
+      Stat_VectorSimplex(v, 2, nb-6, 
+			 (double*)List_Pointer_Fast(v->VL,i),
+			 (double*)List_Pointer_Fast(v->VL,i+2),
+			 (double*)List_Pointer_Fast(v->VL,i+4),
+			 (double*)List_Pointer_Fast(v->VL,i+6));
   }
-  if(ActualView->NbTL){
-    nb = List_Nbr(ActualView->TL) / ActualView->NbTL ;
-    for(i = 0 ; i < List_Nbr(ActualView->TL) ; i+=nb)
-      Stat_TensorSimplex(2, nb-6, 
-			 (double*)List_Pointer_Fast(ActualView->TL,i),
-			 (double*)List_Pointer_Fast(ActualView->TL,i+2),
-			 (double*)List_Pointer_Fast(ActualView->TL,i+4),
-			 (double*)List_Pointer_Fast(ActualView->TL,i+6));
+  if(v->NbTL){
+    nb = List_Nbr(v->TL) / v->NbTL ;
+    for(i = 0 ; i < List_Nbr(v->TL) ; i+=nb)
+      Stat_TensorSimplex(v, 2, nb-6, 
+			 (double*)List_Pointer_Fast(v->TL,i),
+			 (double*)List_Pointer_Fast(v->TL,i+2),
+			 (double*)List_Pointer_Fast(v->TL,i+4),
+			 (double*)List_Pointer_Fast(v->TL,i+6));
   }
 
   // Triangles
 
-  if(ActualView->NbST){
-    nb = List_Nbr(ActualView->ST) / ActualView->NbST ;
-    for(i = 0 ; i < List_Nbr(ActualView->ST) ; i+=nb)
-      Stat_ScalarSimplex(3, nb-9, 
-			 (double*)List_Pointer_Fast(ActualView->ST,i),
-			 (double*)List_Pointer_Fast(ActualView->ST,i+3),
-			 (double*)List_Pointer_Fast(ActualView->ST,i+6),
-			 (double*)List_Pointer_Fast(ActualView->ST,i+9));
+  if(v->NbST){
+    nb = List_Nbr(v->ST) / v->NbST ;
+    for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb)
+      Stat_ScalarSimplex(v, 3, nb-9, 
+			 (double*)List_Pointer_Fast(v->ST,i),
+			 (double*)List_Pointer_Fast(v->ST,i+3),
+			 (double*)List_Pointer_Fast(v->ST,i+6),
+			 (double*)List_Pointer_Fast(v->ST,i+9));
   }
-  if(ActualView->NbVT){
-    nb = List_Nbr(ActualView->VT) / ActualView->NbVT ;
-    for(i = 0 ; i < List_Nbr(ActualView->VT) ; i+=nb)
-      Stat_VectorSimplex(3, nb-9, 
-			 (double*)List_Pointer_Fast(ActualView->VT,i),
-			 (double*)List_Pointer_Fast(ActualView->VT,i+3),
-			 (double*)List_Pointer_Fast(ActualView->VT,i+6),
-			 (double*)List_Pointer_Fast(ActualView->VT,i+9));
+  if(v->NbVT){
+    nb = List_Nbr(v->VT) / v->NbVT ;
+    for(i = 0 ; i < List_Nbr(v->VT) ; i+=nb)
+      Stat_VectorSimplex(v, 3, nb-9, 
+			 (double*)List_Pointer_Fast(v->VT,i),
+			 (double*)List_Pointer_Fast(v->VT,i+3),
+			 (double*)List_Pointer_Fast(v->VT,i+6),
+			 (double*)List_Pointer_Fast(v->VT,i+9));
   }
-  if(ActualView->NbTT){
-    nb = List_Nbr(ActualView->TT) / ActualView->NbTT ;
-    for(i = 0 ; i < List_Nbr(ActualView->TT) ; i+=nb)
-      Stat_TensorSimplex(3, nb-9,
-			 (double*)List_Pointer_Fast(ActualView->TT,i),
-			 (double*)List_Pointer_Fast(ActualView->TT,i+3),
-			 (double*)List_Pointer_Fast(ActualView->TT,i+6),
-			 (double*)List_Pointer_Fast(ActualView->TT,i+9));
+  if(v->NbTT){
+    nb = List_Nbr(v->TT) / v->NbTT ;
+    for(i = 0 ; i < List_Nbr(v->TT) ; i+=nb)
+      Stat_TensorSimplex(v, 3, nb-9,
+			 (double*)List_Pointer_Fast(v->TT,i),
+			 (double*)List_Pointer_Fast(v->TT,i+3),
+			 (double*)List_Pointer_Fast(v->TT,i+6),
+			 (double*)List_Pointer_Fast(v->TT,i+9));
   }
 
   // Tetrahedra
 
-  if(ActualView->NbSS){
-    nb = List_Nbr(ActualView->SS) / ActualView->NbSS ;
-    for(i = 0 ; i < List_Nbr(ActualView->SS) ; i+=nb)
-      Stat_ScalarSimplex(4, nb-12, 
-			 (double*)List_Pointer_Fast(ActualView->SS,i),
-			 (double*)List_Pointer_Fast(ActualView->SS,i+4),
-			 (double*)List_Pointer_Fast(ActualView->SS,i+8),
-			 (double*)List_Pointer_Fast(ActualView->SS,i+12));
+  if(v->NbSS){
+    nb = List_Nbr(v->SS) / v->NbSS ;
+    for(i = 0 ; i < List_Nbr(v->SS) ; i+=nb)
+      Stat_ScalarSimplex(v, 4, nb-12, 
+			 (double*)List_Pointer_Fast(v->SS,i),
+			 (double*)List_Pointer_Fast(v->SS,i+4),
+			 (double*)List_Pointer_Fast(v->SS,i+8),
+			 (double*)List_Pointer_Fast(v->SS,i+12));
   }
-  if(ActualView->NbVS){
-    nb = List_Nbr(ActualView->VS) / ActualView->NbVS ;
-    for(i = 0 ; i < List_Nbr(ActualView->VS) ; i+=nb)
-      Stat_VectorSimplex(4, nb-12,
-			 (double*)List_Pointer_Fast(ActualView->VS,i),
-			 (double*)List_Pointer_Fast(ActualView->VS,i+4),
-			 (double*)List_Pointer_Fast(ActualView->VS,i+8),
-			 (double*)List_Pointer_Fast(ActualView->VS,i+12));
+  if(v->NbVS){
+    nb = List_Nbr(v->VS) / v->NbVS ;
+    for(i = 0 ; i < List_Nbr(v->VS) ; i+=nb)
+      Stat_VectorSimplex(v, 4, nb-12,
+			 (double*)List_Pointer_Fast(v->VS,i),
+			 (double*)List_Pointer_Fast(v->VS,i+4),
+			 (double*)List_Pointer_Fast(v->VS,i+8),
+			 (double*)List_Pointer_Fast(v->VS,i+12));
   }
-  if(ActualView->NbTS){
-    nb = List_Nbr(ActualView->TS) / ActualView->NbTS ;
-    for(i = 0 ; i < List_Nbr(ActualView->TS) ; i+=nb)
-      Stat_TensorSimplex(4, nb-12, 
-			 (double*)List_Pointer_Fast(ActualView->TS,i),
-			 (double*)List_Pointer_Fast(ActualView->TS,i+4),
-			 (double*)List_Pointer_Fast(ActualView->TS,i+8),
-			 (double*)List_Pointer_Fast(ActualView->TS,i+12));
+  if(v->NbTS){
+    nb = List_Nbr(v->TS) / v->NbTS ;
+    for(i = 0 ; i < List_Nbr(v->TS) ; i+=nb)
+      Stat_TensorSimplex(v, 4, nb-12, 
+			 (double*)List_Pointer_Fast(v->TS,i),
+			 (double*)List_Pointer_Fast(v->TS,i+4),
+			 (double*)List_Pointer_Fast(v->TS,i+8),
+			 (double*)List_Pointer_Fast(v->TS,i+12));
   }
 
   // Dummy time values if using old parsed format...
-  if(ActualView->Time && !List_Nbr(ActualView->Time)){
-    for(i=0 ; i<ActualView->NbTimeStep ; i++){
+  if(v->Time && !List_Nbr(v->Time)){
+    for(i=0 ; i<v->NbTimeStep ; i++){
       d = (double)i;
-      List_Add(ActualView->Time, &d);
+      List_Add(v->Time, &d);
     }
   }
 
-  opt_view_name(ActualViewIndex, GMSH_SET|GMSH_GUI, name);
-  opt_view_filename(ActualViewIndex, GMSH_SET|GMSH_GUI, file_name);
-  opt_view_nb_timestep(ActualViewIndex, GMSH_GUI, 0);
-  opt_view_timestep(ActualViewIndex, GMSH_SET|GMSH_GUI, ActualView->TimeStep);
-  if(ActualView->Min > ActualView->Max){
-    opt_view_min(ActualViewIndex, GMSH_SET|GMSH_GUI, 0.);
-    opt_view_max(ActualViewIndex, GMSH_SET|GMSH_GUI, 0.);
+  opt_view_name(v->Index, GMSH_SET|GMSH_GUI, name);
+  opt_view_filename(v->Index, GMSH_SET|GMSH_GUI, file_name);
+  opt_view_nb_timestep(v->Index, GMSH_GUI, 0);
+  opt_view_timestep(v->Index, GMSH_SET|GMSH_GUI, v->TimeStep);
+  if(v->Min > v->Max){
+    opt_view_min(v->Index, GMSH_SET|GMSH_GUI, 0.);
+    opt_view_max(v->Index, GMSH_SET|GMSH_GUI, 0.);
   }
   else{
-    opt_view_min(ActualViewIndex, GMSH_GUI, 0);
-    opt_view_max(ActualViewIndex, GMSH_GUI, 0);
+    opt_view_min(v->Index, GMSH_GUI, 0);
+    opt_view_max(v->Index, GMSH_GUI, 0);
   }
-  opt_view_custom_min(ActualViewIndex, GMSH_SET|GMSH_GUI, ActualView->Min);
-  opt_view_custom_max(ActualViewIndex, GMSH_SET|GMSH_GUI, ActualView->Max);
+  opt_view_custom_min(v->Index, GMSH_SET|GMSH_GUI, v->Min);
+  opt_view_custom_max(v->Index, GMSH_SET|GMSH_GUI, v->Max);
 
-  if(CTX.post.smooth) ActualView->smooth();
+  if(CTX.post.smooth) v->smooth();
 
   if(!Post_ViewForceNumber && add_in_gui)
-    AddViewInUI(List_Nbr(Post_ViewList), ActualView->Name, ActualView->Num);
+    AddViewInUI(List_Nbr(Post_ViewList), v->Name, v->Num);
+
+  v->Dirty = 0; //the view is complete, we may draw it
 }
 
 bool FreeView(int num){
@@ -467,14 +457,15 @@ void Print_ColorTable(int num, char *prefix, FILE *file){
 /* ------------------------------------------------------------------------ */
 
 void Read_View(FILE *file, char *filename){
-  char   str[NAME_STR_L], name[NAME_STR_L];
+  char   str[256], name[256];
   int    nb, format, size, testone, swap;
   double version;
+  Post_View *v;
 
   while (1) {
 
     do { 
-      fgets(str, NAME_STR_L, file) ; 
+      fgets(str, 256, file) ; 
       if (feof(file))  break ;
     } while (str[0] != '$') ;  
 
@@ -511,14 +502,14 @@ void Read_View(FILE *file, char *filename){
 
     if (!strncmp(&str[1], "View", 4)) {
 
-      BeginView(0);
+      v = BeginView(0);
 
       fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
-             name, &ActualView->NbTimeStep,
-             &ActualView->NbSP, &ActualView->NbVP, &ActualView->NbTP, 
-             &ActualView->NbSL, &ActualView->NbVL, &ActualView->NbTL, 
-             &ActualView->NbST, &ActualView->NbVT, &ActualView->NbTT, 
-             &ActualView->NbSS, &ActualView->NbVS, &ActualView->NbTS);
+             name, &v->NbTimeStep,
+             &v->NbSP, &v->NbVP, &v->NbTP, 
+             &v->NbSL, &v->NbVL, &v->NbTL, 
+             &v->NbST, &v->NbVT, &v->NbTT, 
+             &v->NbSS, &v->NbVS, &v->NbTS);
 
       swap = 0 ;
       if(format == LIST_FORMAT_BINARY){
@@ -529,69 +520,68 @@ void Read_View(FILE *file, char *filename){
 	}
       }
 
-      ActualView->datasize = size ;
+      v->datasize = size ;
 
       // Time values
-      ActualView->Time = List_CreateFromFile(ActualView->NbTimeStep, 
-					     size, file, format, swap);
+      v->Time = List_CreateFromFile(v->NbTimeStep, size, file, format, swap);
 
       // Points
-      nb = ActualView->NbSP ? ActualView->NbSP * (ActualView->NbTimeStep  +3) : 0 ;
-      ActualView->SP = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSP ? v->NbSP * (v->NbTimeStep  +3) : 0 ;
+      v->SP = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbVP ? ActualView->NbVP * (ActualView->NbTimeStep*3+3) : 0 ;
-      ActualView->VP = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbVP ? v->NbVP * (v->NbTimeStep*3+3) : 0 ;
+      v->VP = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbTP ? ActualView->NbTP * (ActualView->NbTimeStep*9+3) : 0 ;
-      ActualView->TP = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbTP ? v->NbTP * (v->NbTimeStep*9+3) : 0 ;
+      v->TP = List_CreateFromFile(nb, size, file, format, swap);
 
       // Lines
-      nb = ActualView->NbSL ? ActualView->NbSL * (ActualView->NbTimeStep*2  +6) : 0 ;
-      ActualView->SL = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSL ? v->NbSL * (v->NbTimeStep*2  +6) : 0 ;
+      v->SL = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbVL ? ActualView->NbVL * (ActualView->NbTimeStep*2*3+6) : 0 ;
-      ActualView->VL = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbVL ? v->NbVL * (v->NbTimeStep*2*3+6) : 0 ;
+      v->VL = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbTL ? ActualView->NbTL * (ActualView->NbTimeStep*2*9+6) : 0 ;
-      ActualView->TL = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbTL ? v->NbTL * (v->NbTimeStep*2*9+6) : 0 ;
+      v->TL = List_CreateFromFile(nb, size, file, format, swap);
 
       // Triangles
-      nb = ActualView->NbST ? ActualView->NbST * (ActualView->NbTimeStep*3  +9) : 0 ;
-      ActualView->ST = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbST ? v->NbST * (v->NbTimeStep*3  +9) : 0 ;
+      v->ST = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbVT ? ActualView->NbVT * (ActualView->NbTimeStep*3*3+9) : 0 ;
-      ActualView->VT = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbVT ? v->NbVT * (v->NbTimeStep*3*3+9) : 0 ;
+      v->VT = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbTT ? ActualView->NbTT * (ActualView->NbTimeStep*3*9+9) : 0 ;
-      ActualView->TT = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbTT ? v->NbTT * (v->NbTimeStep*3*9+9) : 0 ;
+      v->TT = List_CreateFromFile(nb, size, file, format, swap);
 
       // Tetrahedra
-      nb = ActualView->NbSS ? ActualView->NbSS * (ActualView->NbTimeStep*4  +12) : 0 ;
-      ActualView->SS = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbSS ? v->NbSS * (v->NbTimeStep*4  +12) : 0 ;
+      v->SS = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbVS ? ActualView->NbVS * (ActualView->NbTimeStep*4*3+12) : 0 ;
-      ActualView->VS = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbVS ? v->NbVS * (v->NbTimeStep*4*3+12) : 0 ;
+      v->VS = List_CreateFromFile(nb, size, file, format, swap);
 
-      nb = ActualView->NbTS ? ActualView->NbTS * (ActualView->NbTimeStep*4*9+12) : 0 ;
-      ActualView->TS = List_CreateFromFile(nb, size, file, format, swap);
+      nb = v->NbTS ? v->NbTS * (v->NbTimeStep*4*9+12) : 0 ;
+      v->TS = List_CreateFromFile(nb, size, file, format, swap);
 
       Msg(DEBUG, "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d %d",
-          name, ActualView->NbTimeStep,
-          ActualView->NbSP, ActualView->NbVP, ActualView->NbTP, 
-          ActualView->NbSL, ActualView->NbVL, ActualView->NbTL, 
-          ActualView->NbST, ActualView->NbVT, ActualView->NbTT, 
-          ActualView->NbSS, ActualView->NbVS, ActualView->NbTS);
+          name, v->NbTimeStep,
+          v->NbSP, v->NbVP, v->NbTP, 
+          v->NbSL, v->NbVL, v->NbTL, 
+          v->NbST, v->NbVT, v->NbTT, 
+          v->NbSS, v->NbVS, v->NbTS);
       Msg(DEBUG, "List_Nbrs: %d %d %d %d %d %d %d %d %d %d %d %d",
-          List_Nbr(ActualView->SP), List_Nbr(ActualView->VP), List_Nbr(ActualView->TP), 
-          List_Nbr(ActualView->SL), List_Nbr(ActualView->VL), List_Nbr(ActualView->TL), 
-          List_Nbr(ActualView->ST), List_Nbr(ActualView->VT), List_Nbr(ActualView->TT), 
-          List_Nbr(ActualView->SS), List_Nbr(ActualView->VS), List_Nbr(ActualView->TS));
+          List_Nbr(v->SP), List_Nbr(v->VP), List_Nbr(v->TP), 
+          List_Nbr(v->SL), List_Nbr(v->VL), List_Nbr(v->TL), 
+          List_Nbr(v->ST), List_Nbr(v->VT), List_Nbr(v->TT), 
+          List_Nbr(v->SS), List_Nbr(v->VS), List_Nbr(v->TS));
 
-      EndView(1, filename, name); 
+      EndView(v, 1, filename, name); 
     }
 
     do {
-      fgets(str, NAME_STR_L, file) ;
+      fgets(str, 256, file) ;
       if (feof(file)) Msg(GERROR,"Prematured end of file");
     } while (str[0] != '$') ;
 
@@ -617,12 +607,10 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   else
     file = stdout;
  
-  fprintf(file, "$PostFormat /* Gmsh 1.0, %s */\n",
-	  Flag_BIN ? "binary" : "ascii") ;
+  fprintf(file, "$PostFormat /* Gmsh 1.0, %s */\n", Flag_BIN ? "binary" : "ascii") ;
   fprintf(file, "1.0 %d %d\n", Flag_BIN, (int)sizeof(double)) ;
   fprintf(file, "$EndPostFormat\n") ;
-  for(i=0;i<(int)strlen(v->Name);i++)
-    if(v->Name[i]==' ') v->Name[i]='_'; 
+  for(i=0;i<(int)strlen(v->Name);i++) if(v->Name[i]==' ') v->Name[i]='_'; 
   // -> Il faudra changer le format de post pour autoriser les blancs.
   // On ajoutera aussi un entier par simplexe (num de region).
   // Devrait-on passer a un format liste de noeuds + liste de
@@ -768,8 +756,8 @@ void smooth_list (List_T *SS ,
   double *x,*y,*z,*v;
   int i,j,k;
   double *vals = new double[NbTimeStep];
-  *min = 1.e200;
-  *max = -1.e200;
+  *min = INFINITY;
+  *max = -INFINITY;
 
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
     x = (double*)List_Pointer_Fast(SS,i);
@@ -873,18 +861,18 @@ bool Post_View :: get_normal(double x, double y, double z,
 /*  T r a n s f o r m a t i o n                                             */
 /* ------------------------------------------------------------------------ */
 
-void transform(double mat[3][3], double v[3],
-	       double *x, double *y, double *z){
+static void transform(double mat[3][3], double v[3],
+		      double *x, double *y, double *z){
   *x = mat[0][0]*v[0] + mat[0][1]*v[1] + mat[0][2]*v[2];
   *y = mat[1][0]*v[0] + mat[1][1]*v[1] + mat[1][2]*v[2];
   *z = mat[2][0]*v[0] + mat[2][1]*v[1] + mat[2][2]*v[2];
 }
 
-void transform_list(List_T *V ,
-		    int NbTimeStep,
-		    int nbvert,
-		    int nb,
-		    double mat[3][3]){
+static void transform_list(List_T *V ,
+			   int NbTimeStep,
+			   int nbvert,
+			   int nb,
+			   double mat[3][3]){
   double *x,*y,*z, v[3];
   int i, j;
 

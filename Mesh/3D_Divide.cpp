@@ -1,4 +1,4 @@
-// $Id: 3D_Divide.cpp,v 1.11 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: 3D_Divide.cpp,v 1.12 2001-08-11 23:28:32 geuzaine Exp $
 
 /* Routine de division des elements tetraedriques
    ou triangulaires
@@ -10,7 +10,7 @@
 */
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 
 extern int    edges_tetra[6][2];

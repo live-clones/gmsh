@@ -65,7 +65,7 @@ void EnhanceSimplexPolygon (Post_View *View,
   double gr[3];
   double n[3],xx;
   prodve(v1,v2,n);
-  norme(n);
+  //norme(n);  not necessary since GL_NORMALIZE is enabled
   gradSimplex(X,Y,Z,Val,gr);      
   prosca(gr,n,&xx);
   

@@ -1,11 +1,11 @@
-// $Id: 2D_Recombine.cpp,v 1.8 2001-06-28 07:46:11 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.9 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
+#include "Utils.h"
 #include "2D_Mesh.h"
 #include "Create.h"
-#include "Numeric.h"
 #include "Context.h"
 
 extern Context_T CTX;

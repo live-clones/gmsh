@@ -1,8 +1,6 @@
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
-#include "Const.h"
-
 // How RGBA values are packed and unpacked into/from a 4-byte integer 
 
 #  ifdef _LITTLE_ENDIAN
@@ -26,14 +24,14 @@ class Context_T {
 public :
 
   // general options
-  char filename[NAME_STR_L];  // the name of the currently opened file
-  char base_filename[NAME_STR_L]; // the same without the extension
+  char filename[256];         // the name of the currently opened file
+  char base_filename[256];    // the same without the extension
   char *output_filename;      // output file specified with command line option '-o'
   char *default_filename;     // the name of the default file
   char *tmp_filename;         // the name of the temp file
-  char *session_filename, sessionrc_filename[NAME_STR_L];
+  char *session_filename, sessionrc_filename[256];
                               // the name of the sessionrc configuration file
-  char *options_filename, optionsrc_filename[NAME_STR_L]; 
+  char *options_filename, optionsrc_filename[256]; 
                               // the name of the optionrc configuration file
   char *error_filename;       // the name of the error file
 
@@ -41,7 +39,7 @@ public :
   char *display;              // forced display host:0.0 under X11 
   int  terminal;              // show we print to the terminal console?
   char *editor;               // text editor command (with included '%s')
-  char home_dir[NAME_STR_L];  // the home directory
+  char home_dir[256];         // the home directory
 
   int position[2];            // position of the menu window on the screen
   int gl_position[2];         // position of the graphic window on the screen

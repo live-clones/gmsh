@@ -1,12 +1,11 @@
-// $Id: 3D_Coherence.cpp,v 1.15 2001-06-07 14:20:08 remacle Exp $
+// $Id: 3D_Coherence.cpp,v 1.16 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "3D_Mesh.h"
 #include "Create.h"
-#include "Numeric.h"
 
 extern Mesh *THEM;
 extern int CurrentNodeNumber, FACE_DIMENSION;

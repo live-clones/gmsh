@@ -1,7 +1,7 @@
-// $Id: SwapEdge.cpp,v 1.6 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: SwapEdge.cpp,v 1.7 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "SwapPatterns.h"
 

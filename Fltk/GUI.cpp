@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.105 2001-08-10 07:25:02 geuzaine Exp $
+// $Id: GUI.cpp,v 1.106 2001-08-11 23:28:31 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -7,12 +7,13 @@
 
 #include "PluginManager.h"
 #include "Plugin.h"
+
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "Numeric.h"
 #include "GmshVersion.h"
 #include "Context.h"
 #include "Options.h"
-#include "Const.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Draw.h"

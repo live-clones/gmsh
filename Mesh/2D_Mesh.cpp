@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.31 2001-08-01 16:37:15 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.32 2001-08-11 23:28:32 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -16,13 +16,13 @@
 */
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
 #include "Mesh.h"
+#include "Utils.h"
 #include "Create.h"
 #include "2D_Mesh.h"
-#include "Numeric.h"
 #include "Context.h"
 
 extern Mesh       *THEM;

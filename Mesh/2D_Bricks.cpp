@@ -1,7 +1,7 @@
-// $Id: 2D_Bricks.cpp,v 1.4 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Bricks.cpp,v 1.5 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "2D_Mesh.h"
 

@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.11 2001-06-27 15:42:00 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.12 2001-08-11 23:28:32 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -29,7 +29,7 @@
 #define K2 1.e6 // to store MAXLAYERS
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
 #include "Mesh.h"

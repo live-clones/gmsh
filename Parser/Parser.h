@@ -17,7 +17,7 @@ int yylex ();
 
 extern FILE   *yyin;
 extern int     yylineno;
-extern char    yyname[NAME_STR_L];
+extern char    yyname[256];
 extern char   *yytext;
 extern int     yyerrorstate;
 

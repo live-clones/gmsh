@@ -1,7 +1,7 @@
-// $Id: 2D_Links.cpp,v 1.8 2001-06-25 13:30:57 remacle Exp $
+// $Id: 2D_Links.cpp,v 1.9 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "2D_Mesh.h"
 

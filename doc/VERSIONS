@@ -1,10 +1,11 @@
-$Id: VERSIONS,v 1.51 2001-08-06 12:26:26 geuzaine Exp $
+$Id: VERSIONS,v 1.52 2001-08-11 23:28:34 geuzaine Exp $
 
-New in 1.23: Better display of displacement maps; boundary operator
-generalization; new explode option for post-processing views; enhanced
-link view behaviour (to update only the changed items); new default
-plugins: Skin, Transform, Smooth; various other bug fixes, additions
-and clean-ups;
+New in 1.23: Fixed duplicate elements generation with Extrude; Better
+display of displacement maps; boundary operator generalization; new
+explode option for post-processing views; enhanced link view behaviour
+(to update only the changed items); new default plugins: Skin,
+Transform, Smooth; various other bug fixes and clean-ups (mostly in
+the post-processing module);
 
 New in 1.22: Fixed (yet another) bug for 2D mesh in the mean plane;
 fixed surface coherence bug in extruded meshes; new double logarithmic

@@ -1,4 +1,4 @@
-// $Id: CbContext.cpp,v 1.5 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: CbContext.cpp,v 1.6 2001-08-11 23:28:33 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -601,8 +601,8 @@ int AddViewInUI(int i, char *Name, int Num){
 
   if(i > NB_BUTT_MAX -1) return 1;
 
-  txt_post[i-1] = (char*)Malloc(NAME_STR_L*sizeof(char));
-  strncpy(txt_post[i-1],Name,NAME_STR_L);
+  txt_post[i-1] = (char*)Malloc(256*sizeof(char));
+  strncpy(txt_post[i-1],Name,255);
 
   if(actual_global_context == CONTEXT_POST)
     ActualizeContextCb(NULL,(XtPointer)actual_global_context,NULL);
@@ -621,7 +621,7 @@ void RemoveViewCb(Widget w, XtPointer client_data, XtPointer call_data){
   v = (Post_View*)List_Pointer(Post_ViewList,(long int)i-1);
 
   while(txt_post[i]){
-    strncpy(txt_post[i-1], txt_post[i], NAME_STR_L);
+    strncpy(txt_post[i-1], txt_post[i], 255);
     i++;
   }
   Free(txt_post[i-1]);

@@ -1,14 +1,15 @@
-// $Id: Geom.cpp,v 1.26 2001-08-10 10:06:38 geuzaine Exp $
+// $Id: Geom.cpp,v 1.27 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
+#include "Utils.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Verif.h"
 #include "Interpolation.h"
-#include "Numeric.h"
 #include "Visibility.h"
 #include "STL.h"
 #include "gl2ps.h"

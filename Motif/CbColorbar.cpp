@@ -1,8 +1,8 @@
-// $Id: CbColorbar.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbColorbar.cpp,v 1.2 2001-08-11 23:28:33 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "XColors.h"
 #include "Widgets.h"
 #include "Register.h"

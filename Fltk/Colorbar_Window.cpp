@@ -1,7 +1,8 @@
-// $Id: Colorbar_Window.cpp,v 1.11 2001-08-04 00:37:57 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.12 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "Numeric.h"
 #include "GUI.h"
 #include "ColorTable.h"
 #include "Colorbar_Window.h"

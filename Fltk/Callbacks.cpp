@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.75 2001-08-06 09:44:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.76 2001-08-11 23:28:31 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1469,7 +1469,7 @@ void view_reload_visible_cb(CALLBACK_ARGS) {
 
 void view_reload_cb(CALLBACK_ARGS){
   Post_View tmp ;
-  char filename[NAME_STR_L];
+  char filename[256];
 
   if(!Post_ViewList) return;
 
@@ -1552,10 +1552,8 @@ static void _duplicate_view(int num, int options){
 
   v1 = (Post_View*)List_Pointer(Post_ViewList,num);
 
-  BeginView(0);
-  EndView(0, v1->FileName, v1->Name);
-
-  v2 = (Post_View*)List_Pointer(Post_ViewList,List_Nbr(Post_ViewList)-1);
+  v2 = BeginView(0);
+  EndView(v2, 0, v1->FileName, v1->Name);
 
   if(!v1->DuplicateOf){
     v2->DuplicateOf = v1->Num ;

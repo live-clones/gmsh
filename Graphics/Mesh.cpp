@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.37 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.38 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -488,14 +488,6 @@ void Draw_Simplex_Surfaces (void *a, void *b){
     n[0] = m[0] = y1y0 * z2z0 - z1z0 * y2y0 ;
     n[1] = m[1] = z1z0 * x2x0 - x1x0 * z2z0 ;
     n[2] = m[2] = x1x0 * y2y0 - y1y0 * x2x0;
-    // norme(n); not necessary with glEnable(GL_NORMALIZE);
-    /* BOF BOF BOF
-    if(n[2] < -0.1){
-      n[0] = -n[0];
-      n[1] = -n[1];
-      n[2] = -n[2];
-    }
-    */
   }
 
   if (CTX.mesh.hidden && CTX.mesh.shade){
@@ -594,6 +586,7 @@ void Draw_Hexahedron_Volume (void *a, void *b){
   Hexahedron **h;
   int i ;
   double Xc = 0.0 , Yc = 0.0, Zc = 0.0 , X[8],Y[8],Z[8];
+  char Num[100];
 
   h = (Hexahedron**)a;
 
@@ -648,6 +641,12 @@ void Draw_Hexahedron_Volume (void *a, void *b){
   glVertex3d(X[7], Y[7], Z[7]);
   glEnd();    
 
+  if(CTX.mesh.volumes_num){
+    sprintf(Num,"%d",(*h)->Num);
+    glRasterPos3d(Xc,Yc,Zc);
+    Draw_String(Num);
+  }
+
   if (CTX.mesh.dual){
 
     glColor4ubv((GLubyte*)&CTX.color.fg);
@@ -699,48 +698,65 @@ void Draw_Hexahedron_Volume (void *a, void *b){
 void Draw_Prism_Volume (void *a, void *b){
   Prism **p;
   int i ;
-  double Xc = 0.0 , Yc = 0.0, Zc = 0.0 ;
+  double Xc = 0.0 , Yc = 0.0, Zc = 0.0, X[6],Y[6],Z[6] ;
+  char Num[100];
 
   p = (Prism**)a;
 
   if(!EntiteEstElleVisible((*p)->iEnt)) return;
-  
+
+  for(i=0 ; i<6 ; i++){
+    Xc += (*p)->V[i]->Pos.X;
+    Yc += (*p)->V[i]->Pos.Y;
+    Zc += (*p)->V[i]->Pos.Z;
+  }
+  Xc /= 6. ; 
+  Zc /= 6. ; 
+  Yc /= 6. ; 
+
+  if(CTX.mesh.use_cut_plane){
+    if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+  }
+
   if(CTX.mesh.color_carousel)
     ColorSwitch((*p)->iEnt);
   else
     glColor4ubv((GLubyte*)&CTX.color.mesh.prism);
 
+  for (i=0 ; i<6 ; i++) {
+    X[i] = Xc + CTX.mesh.explode * ((*p)->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * ((*p)->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * ((*p)->V[i]->Pos.Z - Zc);
+  }
+  
   glBegin(GL_LINE_LOOP);
-  glVertex3d((*p)->V[0]->Pos.X, (*p)->V[0]->Pos.Y, (*p)->V[0]->Pos.Z);
-  glVertex3d((*p)->V[1]->Pos.X, (*p)->V[1]->Pos.Y, (*p)->V[1]->Pos.Z);
-  glVertex3d((*p)->V[2]->Pos.X, (*p)->V[2]->Pos.Y, (*p)->V[2]->Pos.Z);
+  glVertex3d(X[0], Y[0], Z[0]);
+  glVertex3d(X[1], Y[1], Z[1]);
+  glVertex3d(X[2], Y[2], Z[2]);
   glEnd();    
 
   glBegin(GL_LINE_LOOP);
-  glVertex3d((*p)->V[3]->Pos.X, (*p)->V[3]->Pos.Y, (*p)->V[3]->Pos.Z);
-  glVertex3d((*p)->V[4]->Pos.X, (*p)->V[4]->Pos.Y, (*p)->V[4]->Pos.Z);
-  glVertex3d((*p)->V[5]->Pos.X, (*p)->V[5]->Pos.Y, (*p)->V[5]->Pos.Z);
+  glVertex3d(X[3], Y[3], Z[3]);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glVertex3d(X[5], Y[5], Z[5]);
   glEnd();    
 
   glBegin(GL_LINES);
-  glVertex3d((*p)->V[0]->Pos.X, (*p)->V[0]->Pos.Y, (*p)->V[0]->Pos.Z);
-  glVertex3d((*p)->V[3]->Pos.X, (*p)->V[3]->Pos.Y, (*p)->V[3]->Pos.Z);
-  glVertex3d((*p)->V[1]->Pos.X, (*p)->V[1]->Pos.Y, (*p)->V[1]->Pos.Z);
-  glVertex3d((*p)->V[4]->Pos.X, (*p)->V[4]->Pos.Y, (*p)->V[4]->Pos.Z);
-  glVertex3d((*p)->V[2]->Pos.X, (*p)->V[2]->Pos.Y, (*p)->V[2]->Pos.Z);
-  glVertex3d((*p)->V[5]->Pos.X, (*p)->V[5]->Pos.Y, (*p)->V[5]->Pos.Z);
+  glVertex3d(X[0], Y[0], Z[0]);
+  glVertex3d(X[3], Y[3], Z[3]);
+  glVertex3d(X[1], Y[1], Z[1]);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glVertex3d(X[2], Y[2], Z[2]);
+  glVertex3d(X[5], Y[5], Z[5]);
   glEnd();    
 
-  if (CTX.mesh.dual){
-    for(i=0 ; i<6 ; i++){
-      Xc += (*p)->V[i]->Pos.X;
-      Yc += (*p)->V[i]->Pos.Y;
-      Zc += (*p)->V[i]->Pos.Z;
-    }
-    Xc /= 6. ; 
-    Zc /= 6. ; 
-    Yc /= 6. ; 
+  if(CTX.mesh.volumes_num){
+    sprintf(Num,"%d",(*p)->Num);
+    glRasterPos3d(Xc,Yc,Zc);
+    Draw_String(Num);
+  }
 
+  if(CTX.mesh.dual){
     glColor4ubv((GLubyte*)&CTX.color.fg);
     glEnable(GL_LINE_STIPPLE);
     glLineStipple(1,0x0F0F);
@@ -749,33 +765,32 @@ void Draw_Prism_Volume (void *a, void *b){
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[0]->Pos.X+(*p)->V[2]->Pos.X+(*p)->V[1]->Pos.X)/3.,
-        ((*p)->V[0]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[1]->Pos.Y)/3.,
-        ((*p)->V[0]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[1]->Pos.Z)/3. );
+	((*p)->V[0]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[1]->Pos.Y)/3.,
+	((*p)->V[0]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[1]->Pos.Z)/3. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[3]->Pos.X+(*p)->V[4]->Pos.X+(*p)->V[5]->Pos.X)/3.,
-        ((*p)->V[3]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[5]->Pos.Y)/3.,
-        ((*p)->V[3]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[5]->Pos.Z)/3. );
+	((*p)->V[3]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[5]->Pos.Y)/3.,
+	((*p)->V[3]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[5]->Pos.Z)/3. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[0]->Pos.X+(*p)->V[1]->Pos.X+(*p)->V[4]->Pos.X+(*p)->V[3]->Pos.X)/4.,
-        ((*p)->V[0]->Pos.Y+(*p)->V[1]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[3]->Pos.Y)/4.,
-        ((*p)->V[0]->Pos.Z+(*p)->V[1]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[3]->Pos.Z)/4. );
+	((*p)->V[0]->Pos.Y+(*p)->V[1]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[3]->Pos.Y)/4.,
+	((*p)->V[0]->Pos.Z+(*p)->V[1]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[3]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[0]->Pos.X+(*p)->V[3]->Pos.X+(*p)->V[5]->Pos.X+(*p)->V[2]->Pos.X)/4.,
-        ((*p)->V[0]->Pos.Y+(*p)->V[3]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[2]->Pos.Y)/4.,
-        ((*p)->V[0]->Pos.Z+(*p)->V[3]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[2]->Pos.Z)/4. );
+	((*p)->V[0]->Pos.Y+(*p)->V[3]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[2]->Pos.Y)/4.,
+	((*p)->V[0]->Pos.Z+(*p)->V[3]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[2]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[1]->Pos.X+(*p)->V[2]->Pos.X+(*p)->V[5]->Pos.X+(*p)->V[4]->Pos.X)/4.,
-        ((*p)->V[1]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[4]->Pos.Y)/4.,
-        ((*p)->V[1]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[4]->Pos.Z)/4. );
+	((*p)->V[1]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[4]->Pos.Y)/4.,
+	((*p)->V[1]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[4]->Pos.Z)/4. );
     glEnd();
     glDisable(GL_LINE_STIPPLE);
     gl2psDisable(GL2PS_LINE_STIPPLE);
   }
-
 
 }
 

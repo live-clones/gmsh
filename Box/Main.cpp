@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.9 2001-08-09 18:28:23 remacle Exp $
+// $Id: Main.cpp,v 1.10 2001-08-11 23:28:31 geuzaine Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
@@ -11,7 +11,7 @@
 #include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshVersion.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Views.h"

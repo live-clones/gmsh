@@ -1,7 +1,8 @@
-// $Id: Entity.cpp,v 1.11 2001-08-06 16:47:57 geuzaine Exp $
+// $Id: Entity.cpp,v 1.12 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
@@ -50,6 +51,7 @@ void Draw_Triangle (double *x, double *y, double *z, double *n,
       nn[0]  = y1y0 * z2z0 - z1z0 * y2y0 ;
       nn[1]  = z1z0 * x2x0 - x1x0 * z2z0 ;
       nn[2]  = x1x0 * y2y0 - y1y0 * x2x0 ;
+      //norme(nn); not necessary if GL_NORMALIZE is enabled
       glNormal3dv(nn);
     }
     else

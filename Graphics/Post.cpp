@@ -1,7 +1,8 @@
-// $Id: Post.cpp,v 1.22 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: Post.cpp,v 1.23 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Draw.h"
@@ -179,7 +180,7 @@ void Draw_Post (void) {
 
     v = (Post_View*)List_Pointer(Post_ViewList,iView);
 
-    if(v->Visible){ 
+    if(v->Visible && !v->Dirty){ 
 
       if(CTX.display_lists && !v->Changed && glIsList(v->Num)){
 
@@ -194,14 +195,12 @@ void Draw_Post (void) {
           glNewList(v->Num, GL_COMPILE_AND_EXECUTE);
         }
 
-        if(v->Light && v->IntervalsType != DRAW_POST_ISO){
+        if(v->Light)
           InitShading();
-        }
-        else{
+        else
           InitNoShading();
-        }
 
-	if(v->ShowElement || v->ArrowType == DRAW_POST_DISPLACEMENT)
+	if(v->ShowElement)
 	  glEnable(GL_POLYGON_OFFSET_FILL) ;
 
         // force this

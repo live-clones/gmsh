@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.28 2001-08-09 18:28:23 remacle Exp $
+// $Id: PostSimplex.cpp,v 1.29 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,7 +12,7 @@
 
 extern Context_T   CTX;
 
-void Draw_Simplex(int nbnod, double *X, double *Y, double *Z,
+void Draw_Simplex(Post_View *View, int nbnod, double *X, double *Y, double *Z,
 		  double Raise[3][5]){
   int k;
   double xx[4], yy[4], zz[4];
@@ -37,6 +37,7 @@ void Draw_Simplex(int nbnod, double *X, double *Y, double *Z,
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
+    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
@@ -45,6 +46,7 @@ void Draw_Simplex(int nbnod, double *X, double *Y, double *Z,
     glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[3], yy[3], zz[3]);
     glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[3], yy[3], zz[3]);
     glEnd();
+    if(View->Light) glEnable(GL_LIGHTING);
     break;
   }
 }
@@ -71,7 +73,7 @@ void Draw_ScalarPoint(Post_View *View,
 
   RaiseFill(0, d, ValMin, Raise);
 
-  if(View->ShowElement) Draw_Simplex(1,X,Y,Z,Raise);
+  if(View->ShowElement) Draw_Simplex(View,1,X,Y,Z,Raise);
 
   if(d>=ValMin && d<=ValMax){      
     Palette2(View,ValMin,ValMax,d);
@@ -123,7 +125,7 @@ void Draw_ScalarLine(Post_View *View,
   for(k=0 ; k<2 ; k++)
     RaiseFill(k, Val[k], ValMin, Raise);
 
-  if(View->ShowElement) Draw_Simplex(2,X,Y,Z,Raise);
+  if(View->ShowElement) Draw_Simplex(View,2,X,Y,Z,Raise);
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -267,18 +269,15 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
 	norms[3*i+2] = nn[2];
       }
     }
-    
-    // hey geuz, t'avais mis   glNormal3dv(nn);    
+    //norme(norms); not necessary since GL_NORMALIZE is enabled
+    //norme(&norms[3]);
+    //norme(&norms[6]);
     glNormal3dv(norms);
   }
 
-  norme(norms);
-  norme(&norms[3]);
-  norme(&norms[6]);
-
   if(preproNormals) return;
 
-  if(View->ShowElement) Draw_Simplex(3,X,Y,Z,Raise);
+  if(View->ShowElement) Draw_Simplex(View,3,X,Y,Z,Raise);
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -401,7 +400,7 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
   for(k=0 ; k<4 ; k++)
     RaiseFill(k, Val[k], ValMin, Raise);
 
-  if(!preproNormals && View->ShowElement) Draw_Simplex(4,X,Y,Z,Raise);
+  if(!preproNormals && View->ShowElement) Draw_Simplex(View,4,X,Y,Z,Raise);
 
   if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC){
 
@@ -486,7 +485,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
     return;
   }
 
-  if(View->ShowElement) Draw_Simplex(nbnod,X,Y,Z,Raise);
+  if(View->ShowElement) Draw_Simplex(View,nbnod,X,Y,Z,Raise);
 
   if(View->ArrowLocation == DRAW_POST_LOCATE_COG ||
      View->IntervalsType == DRAW_POST_NUMERIC){

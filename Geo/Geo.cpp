@@ -1,7 +1,7 @@
-// $Id: Geo.cpp,v 1.20 2001-07-30 12:40:35 geuzaine Exp $
+// $Id: Geo.cpp,v 1.21 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
 #include "DataBase.h"

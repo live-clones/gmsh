@@ -4,7 +4,7 @@
 /* This file defines the static structures for Gmsh. It should be
    included only once, in your 'main' file */
 
-char        yyname[NAME_STR_L];
+char        yyname[256];
 int         yyerrorstate;
 
 int         CurrentNodeNumber, CurrentSimplexNumber;

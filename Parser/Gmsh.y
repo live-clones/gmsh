@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.90 2001-08-09 15:24:54 geuzaine Exp $
+// $Id: Gmsh.y,v 1.91 2001-08-11 23:28:33 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -12,7 +12,7 @@
 #endif
 #include "ParUtil.h"
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Context.h"
 #include "Geo.h"
 #include "CAD.h"
@@ -46,9 +46,9 @@ static int            yylinenoTab[MAX_OPEN_FILES];
 static fpos_t         yyposImbricatedLoopsTab[MAX_OPEN_FILES];
 static double         LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char*          LoopControlVariablesNameTab[MAX_OPEN_FILES];
-static char           yynameTab[MAX_OPEN_FILES][NAME_STR_L];
-static char           tmpstring[NAME_STR_L];
-static char           tmpstring2[NAME_STR_L], tmpstring3[NAME_STR_L];
+static char           yynameTab[MAX_OPEN_FILES][256];
+static char           tmpstring[256];
+static char           tmpstring2[256], tmpstring3[256];
 static Symbol         TheSymbol, *pSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
@@ -439,13 +439,11 @@ Printf :
 View :
     tSTRING tBIGSTR '{' Views '}' tEND
     { 
-      if(!strcmp($1, "View"))
-	EndView(1, yyname, $2); 
+      if(!strcmp($1, "View")) EndView(View, 1, yyname, $2); 
     }
   | tSTRING tBIGSTR tSTRING VExpr '{' Views '}' tEND
     {
-      if(!strcmp($1, "View"))
-	EndView(1, yyname, $2);
+      if(!strcmp($1, "View")) EndView(View, 1, yyname, $2);
     }  
 ;
 

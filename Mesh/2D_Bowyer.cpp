@@ -1,4 +1,4 @@
-// $Id: 2D_Bowyer.cpp,v 1.7 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: 2D_Bowyer.cpp,v 1.8 2001-08-11 23:28:32 geuzaine Exp $
 
 /*
 
@@ -22,7 +22,7 @@
 */
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "2D_Mesh.h"
 

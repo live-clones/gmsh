@@ -1,7 +1,7 @@
-// $Id: 2D_Parametric.cpp,v 1.5 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: 2D_Parametric.cpp,v 1.6 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
 #include "Interpolation.h"
@@ -9,7 +9,6 @@
 #include "2D_Mesh.h"
 #include "Create.h"
 #include "Context.h"
-#include "Numeric.h"
 
 extern Mesh      *THEM;
 extern Context_T  CTX;

@@ -1,7 +1,7 @@
-// $Id: StepGeomDatabase.cpp,v 1.5 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: StepGeomDatabase.cpp,v 1.6 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "StepGeomDatabase.h"
 #include "DataBase.h"

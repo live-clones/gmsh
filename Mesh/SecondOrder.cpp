@@ -1,8 +1,9 @@
-// $Id: SecondOrder.cpp,v 1.5 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.6 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
 #include "Mesh.h"
+#include "Utils.h"
 #include "Interpolation.h"
 #include "Numeric.h"
 

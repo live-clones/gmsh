@@ -1,6 +1,7 @@
-// $Id: OpenFile.cpp,v 1.18 2001-07-08 15:45:48 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.19 2001-08-11 23:28:34 geuzaine Exp $
+
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Context.h"
 #include "Parser.h"
 #include "OpenFile.h"
@@ -31,7 +32,7 @@ int ParseFile(char *f){
   char String[256];
   int status;
 
-  strncpy(yyname,f,NAME_STR_L);
+  strncpy(yyname,f,255);
   yyerrorstate=0;
   yylineno=1;
 
@@ -112,8 +113,8 @@ void OpenProblem(char *name){
 
   ParseString(TheOptString);
 
-  strncpy(CTX.filename,name,NAME_STR_L);
-  strncpy(CTX.base_filename,name,NAME_STR_L);
+  strncpy(CTX.filename,name,255);
+  strncpy(CTX.base_filename,name,255);
 
   strcpy(ext,name+(strlen(name)-4));
   if(!strcmp(ext,".geo") || !strcmp(ext,".GEO") ||
@@ -127,7 +128,7 @@ void OpenProblem(char *name){
     strcat(CTX.filename,".geo");
   }
 
-  strncpy(THEM->name, CTX.base_filename,NAME_STR_L);
+  strncpy(THEM->name, CTX.base_filename,255);
 
   if(!CTX.batch){
 #if _XMOTIF

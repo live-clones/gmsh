@@ -1,8 +1,8 @@
-// $Id: Axes.cpp,v 1.4 2001-06-12 08:29:52 geuzaine Exp $
+// $Id: Axes.cpp,v 1.5 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"

@@ -1,9 +1,9 @@
-// $Id: Opengl_Window.cpp,v 1.16 2001-08-03 14:34:45 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.17 2001-08-11 23:28:31 geuzaine Exp $
 
 #include "Gmsh.h"
+#include "Numeric.h"
 #include "GmshUI.h"
 #include "Context.h"
-#include "Const.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Draw.h"

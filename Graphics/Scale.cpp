@@ -1,8 +1,8 @@
-// $Id: Scale.cpp,v 1.20 2001-08-06 12:26:26 geuzaine Exp $
+// $Id: Scale.cpp,v 1.21 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"

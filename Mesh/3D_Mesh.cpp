@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.23 2001-08-01 16:37:15 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.24 2001-08-11 23:28:32 geuzaine Exp $
 
 /*
  
@@ -17,11 +17,10 @@
 */
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Mesh.h"
 #include "3D_Mesh.h"
 #include "Create.h"
-#include "Numeric.h"
 #include "Context.h"
 
 extern Mesh       *THEM, *LOCAL;

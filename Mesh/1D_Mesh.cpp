@@ -1,12 +1,12 @@
-// $Id: 1D_Mesh.cpp,v 1.17 2001-08-01 16:37:15 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.18 2001-08-11 23:28:32 geuzaine Exp $
 
 #include "Gmsh.h"
-#include "Const.h"
+#include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
+#include "Utils.h"
 #include "Context.h"
 #include "Interpolation.h"
-#include "Numeric.h"
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
@@ -161,7 +161,7 @@ void Maillage_Curve (void *data, void *dummy){
     }
     else{
       pV = Create_Vertex ((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y,
-                          (*v)->Pos.Z, (*v)->lc, 0.0);
+                          (*v)->Pos.Z, (*v)->lc, c->ubeg);
       pV->ListCurves = List_Create (1, 1, sizeof (Curve *));
       List_Add (pV->ListCurves, &c);
       Tree_Insert (THEM->Vertices, &pV);
@@ -205,7 +205,7 @@ void Maillage_Curve (void *data, void *dummy){
     }
     else{
       pV = Create_Vertex ((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y, 
-                          (*v)->Pos.Z, (*v)->lc, 0.0);
+                          (*v)->Pos.Z, (*v)->lc, c->uend);
       pV->ListCurves = List_Create (1, 1, sizeof (Curve *));
       List_Add (pV->ListCurves, &c);
       Tree_Insert (THEM->Vertices, &pV);
