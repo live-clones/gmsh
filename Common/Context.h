@@ -199,6 +199,7 @@ public :
     int smooth, anim_cycle, combine_time, combine_remove_orig ;
     int file_format, plugins;
     double anim_delay ;
+    void (*plugin_draw_function)(void) ;
   }post;
 
   // solver options 

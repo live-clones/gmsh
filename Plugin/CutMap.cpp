@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.38 2004-09-16 19:15:27 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.39 2004-10-30 03:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 extern Context_T CTX;
 
 StringXNumber CutMapOptions_Number[] = {
-  {GMSH_FULLRC, "A", NULL, 1.},
+  {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 1.},
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -43,6 +43,25 @@ extern "C"
 GMSH_CutMapPlugin::GMSH_CutMapPlugin()
 {
   ;
+}
+
+double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
+{
+  double min = 0., max = 1.;
+  if(action > 0){
+    Post_View *v = (Post_View*)List_Pointer_Test(CTX.post.list, num);
+    if(v){
+      min = v->Min;
+      max = v->Max;
+    }
+  }
+  switch(action){ // configure the input field
+  case 1: return (min-max)/200.;
+  case 2: return min;
+  case 3: return max;
+  default: break;
+  }
+  return 0.;
 }
 
 void GMSH_CutMapPlugin::getName(char *name) const

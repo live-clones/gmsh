@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.111 2004-10-15 18:36:04 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.112 2004-10-30 03:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -248,6 +248,11 @@ void Draw_Mesh(Mesh * M)
 
   if(CTX.axes)
     Draw_Axes(CTX.lc_middle / 4.);
+
+  // draw any plugin-specific stuff
+  
+  if(CTX.post.plugin_draw_function)
+    (*CTX.post.plugin_draw_function)();
 
   // draw the post-processing views
 

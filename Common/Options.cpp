@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.197 2004-10-28 08:13:09 geuzaine Exp $
+// $Id: Options.cpp,v 1.198 2004-10-30 03:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -137,6 +137,7 @@ void Init_Options(int num)
   CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0;        //old extrusion mesh generator
   CTX.mesh.check_duplicates = 0;        //check for duplicate nodes in Read_Mesh
   CTX.post.combine_time = 0; // try to combine_time views at startup
+  CTX.post.plugin_draw_function = NULL;
 #if defined(HAVE_FLTK)
   CTX.gl_font_enum = FL_HELVETICA;
 #else

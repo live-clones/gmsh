@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.294 2004-10-28 06:57:34 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.295 2004-10-30 03:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3379,6 +3379,13 @@ void view_plugin_run_cb(CALLBACK_ARGS)
   }
 }
 
+void view_plugin_input_cb(CALLBACK_ARGS)
+{
+  double (*f)(int, int, double) = (double (*)(int, int, double)) data;
+  Fl_Value_Input *input = (Fl_Value_Input*) w;
+  f(-1, 0, input->value());
+}
+
 void view_plugin_options_cb(CALLBACK_ARGS)
 {
   std::pair<int, GMSH_Plugin *> *pair = (std::pair<int, GMSH_Plugin *>*) data;
@@ -3390,6 +3397,22 @@ void view_plugin_options_cb(CALLBACK_ARGS)
 
   p->dialogBox->current_view_index = iView;
   p->dialogBox->run_button->callback(view_plugin_run_cb, (void *)p);
+
+  // configure the input fields (we get step, min and max by calling
+  // the option function with action==1, 2 and 3, respectively) and
+  // set the Fl_Value_Input callbacks
+  int n = p->getNbOptions();
+  if(n > 20) n = 20;
+  for(int i = 0; i < n; i++) {
+    StringXNumber *sxn = p->getOption(i);
+    if(sxn->function){
+      p->dialogBox->value[i]->callback(view_plugin_input_cb, (void*)sxn->function);
+      p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.));
+      p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
+      p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
+    }
+  }
+
   p->dialogBox->main_window->show();
 }
 

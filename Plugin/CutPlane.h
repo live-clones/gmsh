@@ -30,6 +30,8 @@ extern "C"
 class GMSH_CutPlanePlugin : public GMSH_LevelsetPlugin
 {
   double levelset(double x, double y, double z, double val) const;
+  static void callback();
+  static int iview;
 public:
   GMSH_CutPlanePlugin();
   void getName(char *name) const;
@@ -38,6 +40,12 @@ public:
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   Post_View *execute(Post_View *);
+
+  static double callbackA(int, int, double);
+  static double callbackB(int, int, double);
+  static double callbackC(int, int, double);
+  static double callbackD(int, int, double);
+  static void draw();
 };
 
 #endif

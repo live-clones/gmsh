@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.34 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.35 2004-10-30 03:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,13 +23,20 @@
 #include "List.h"
 #include "Context.h"
 
+#if defined(HAVE_FLTK)
+#include "GmshUI.h"
+#include "Draw.h"
+#endif
+
 extern Context_T CTX;
 
+int GMSH_CutPlanePlugin::iview = 0;
+
 StringXNumber CutPlaneOptions_Number[] = {
-  {GMSH_FULLRC, "A", NULL, 1.},
-  {GMSH_FULLRC, "B", NULL, 0.},
-  {GMSH_FULLRC, "C", NULL, 0.},
-  {GMSH_FULLRC, "D", NULL, -0.01},
+  {GMSH_FULLRC, "A", GMSH_CutPlanePlugin::callbackA, 1.},
+  {GMSH_FULLRC, "B", GMSH_CutPlanePlugin::callbackB, 0.},
+  {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0.},
+  {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -41,10 +48,98 @@ extern "C"
   }
 }
 
-
 GMSH_CutPlanePlugin::GMSH_CutPlanePlugin()
 {
   ;
+}
+
+void GMSH_CutPlanePlugin::draw()
+{
+#if defined(HAVE_FLTK)
+  Post_View *v = (Post_View*)List_Pointer_Test(CTX.post.list, iview);
+  if(!v) return;
+  Draw_PlaneInBoundingBox(v->BBox[0], v->BBox[2], v->BBox[4],
+			  v->BBox[1], v->BBox[3], v->BBox[5],
+			  CutPlaneOptions_Number[0].def,
+			  CutPlaneOptions_Number[1].def,
+			  CutPlaneOptions_Number[2].def,
+			  CutPlaneOptions_Number[3].def);
+#endif
+}
+
+void GMSH_CutPlanePlugin::callback()
+{
+#if defined(HAVE_FLTK)
+  CTX.post.plugin_draw_function = draw;
+  int old = CTX.draw_bbox;
+  CTX.draw_bbox = 1;
+  if(CTX.fast_redraw){
+    CTX.post.draw = 0;
+    CTX.mesh.draw = 0;
+  }
+  if(!CTX.batch) 
+    Draw();
+  CTX.post.plugin_draw_function = NULL;
+  CTX.draw_bbox = old;
+  CTX.post.draw = 1;
+  CTX.mesh.draw = 1;
+#endif
+}
+
+double GMSH_CutPlanePlugin::callbackA(int num, int action, double value)
+{
+  if(action > 0) iview = num;
+  switch(action){ // configure the input field
+  case 1: return 0.01;
+  case 2: return -1.;
+  case 3: return 1.;
+  default: break;
+  }
+  CutPlaneOptions_Number[0].def = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_CutPlanePlugin::callbackB(int num, int action, double value)
+{
+  if(action > 0) iview = num;
+  switch(action){
+  case 1: return 0.01;
+  case 2: return -1.;
+  case 3: return 1.;
+  default: break;
+  }
+  CutPlaneOptions_Number[1].def = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_CutPlanePlugin::callbackC(int num, int action, double value)
+{
+  if(action > 0) iview = num;
+  switch(action){
+  case 1: return 0.01;
+  case 2: return -1.;
+  case 3: return 1.;
+  default: break;
+  }
+  CutPlaneOptions_Number[2].def = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_CutPlanePlugin::callbackD(int num, int action, double value)
+{
+  if(action > 0) iview = num;
+  switch(action){
+  case 1: return CTX.lc/200.;
+  case 2: return -CTX.lc;
+  case 3: return CTX.lc;
+  default: break;
+  }
+  CutPlaneOptions_Number[3].def = value;
+  callback();
+  return 0.;
 }
 
 void GMSH_CutPlanePlugin::getName(char *name) const

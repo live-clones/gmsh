@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.32 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.33 2004-10-30 03:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,13 +24,18 @@
 #include "List.h"
 #include "Context.h"
 
+#if defined(HAVE_FLTK)
+#include "GmshUI.h"
+#include "Draw.h"
+#endif
+
 extern Context_T CTX;
 
 StringXNumber CutSphereOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", NULL, 0.},
-  {GMSH_FULLRC, "Yc", NULL, 0.},
-  {GMSH_FULLRC, "Zc", NULL, 0.},
-  {GMSH_FULLRC, "R", NULL, 0.25},
+  {GMSH_FULLRC, "Xc", GMSH_CutSpherePlugin::callbackX, 0.},
+  {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0.},
+  {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0.},
+  {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -42,10 +47,99 @@ extern "C"
   }
 }
 
-
 GMSH_CutSpherePlugin::GMSH_CutSpherePlugin()
 {
   ;
+}
+
+void GMSH_CutSpherePlugin::draw()
+{
+#if defined(HAVE_FLTK)
+  static GLUquadricObj *qua;
+  static int first = 1;
+  if(first) {
+    first = 0;
+    qua = gluNewQuadric();
+  }
+  GLint mode[2];
+  glGetIntegerv(GL_POLYGON_MODE, mode);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glPushMatrix();
+  glTranslated(CutSphereOptions_Number[0].def,
+	       CutSphereOptions_Number[1].def,
+	       CutSphereOptions_Number[2].def);
+  gluSphere(qua, CutSphereOptions_Number[3].def, 40, 40);
+  glPopMatrix();
+  glPolygonMode(GL_FRONT_AND_BACK, mode[1]);
+#endif
+}
+
+void GMSH_CutSpherePlugin::callback()
+{
+#if defined(HAVE_FLTK)
+  CTX.post.plugin_draw_function = draw;
+  if(CTX.fast_redraw){
+    CTX.post.draw = 0;
+    CTX.mesh.draw = 0;
+  }
+  if(!CTX.batch) 
+    Draw();
+  CTX.post.plugin_draw_function = NULL;
+  CTX.post.draw = 1;
+  CTX.mesh.draw = 1;
+#endif
+}
+
+double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return CTX.lc/200.;
+  case 2: return -CTX.lc;
+  case 3: return CTX.lc;
+  default: break;
+  }
+  CutSphereOptions_Number[0].def = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_CutSpherePlugin::callbackY(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return CTX.lc/200.;
+  case 2: return -CTX.lc;
+  case 3: return CTX.lc;
+  default: break;
+  }
+  CutSphereOptions_Number[1].def = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_CutSpherePlugin::callbackZ(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return CTX.lc/200.;
+  case 2: return -CTX.lc;
+  case 3: return CTX.lc;
+  default: break;
+  }
+  CutSphereOptions_Number[2].def = value;
+  callback();
+  return 0.;
+}
+
+double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
+{
+  switch(action){
+  case 1: return CTX.lc/200.;
+  case 2: return 0.;
+  case 3: return 2*CTX.lc;
+  default: break;
+  }
+  CutSphereOptions_Number[3].def = value;
+  callback();
+  return 0.;
 }
 
 void GMSH_CutSpherePlugin::getName(char *name) const

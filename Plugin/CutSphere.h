@@ -30,6 +30,7 @@ extern "C"
 class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin
 {
   double levelset(double x, double y, double z, double val) const;
+  static void callback();
 public:
   GMSH_CutSpherePlugin();
   void getName(char *name) const;
@@ -38,6 +39,12 @@ public:
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
   Post_View *execute(Post_View *);
+
+  static double callbackX(int, int, double);
+  static double callbackY(int, int, double);
+  static double callbackZ(int, int, double);
+  static double callbackR(int, int, double);
+  static void draw();
 };
 
 #endif
