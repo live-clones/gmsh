@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.48 2004-09-18 01:12:07 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.49 2004-09-18 02:44:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -102,7 +102,7 @@ void Print_Usage(char *name){
 #if defined(HAVE_FLTK)
   Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
-  Msg(DIRECT, "  -pid                  print pid on stdout");
+  Msg(DIRECT, "  -pid                  print process id on stdout");
   Msg(DIRECT, "  -v int                set verbosity level");
   Msg(DIRECT, "  -string \"string\"      parse string before project file");
   Msg(DIRECT, "  -option file          parse option file before GUI creation");
