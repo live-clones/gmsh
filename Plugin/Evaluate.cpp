@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.14 2005-01-08 20:15:19 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.15 2005-01-09 04:47:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -184,7 +184,7 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
 	if(nbComp == 1)
 	  _octree->searchScalar(x[j], y[j], z[j], val2, timeStep2);
 	else
-	  _octree->searchVector(x[j], y[j], z[j], &sizeElm, val2, timeStep2);
+	  _octree->searchVector(x[j], y[j], z[j], val2, &sizeElm, timeStep2);
       }
       else
 	val2 = (double *)List_Pointer_Fast(list2, 
