@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.246 2003-08-11 16:23:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.247 2003-10-02 19:19:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2824,6 +2824,9 @@ void GUI::create_visibility_window()
   vis_input = new Fl_Input(1 * WB, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
   vis_input->callback(visibility_number_cb);
   vis_input->when(FL_WHEN_ENTER_KEY | FL_WHEN_NOT_CHANGED);
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+  vis_input->tooltip("Enter a number (or *) and press <return> to toggle the vibility of an entity");
+#endif
 
   vis_input_mode = new Fl_Choice(2 * WB + (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
   vis_input_mode->menu(input_mode_table);
