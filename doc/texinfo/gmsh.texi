@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.79 2003-08-06 21:00:16 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.80 2003-08-22 05:52:43 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -46,8 +46,8 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.11
-@set GMSH-VERSION   1.45
+@set EDITION        1.12
+@set GMSH-VERSION   1.46
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
@@ -1123,7 +1123,7 @@ Ends a matching @code{If} command.
 
 See @ref{t5.geo}, for an example of @code{For} and @code{If} commands. Gmsh
 does not provide any @code{Else} (or similar) command at the time of this
-writing (Gmsh 1.45).
+writing (Gmsh 1.46).
 
 @c -------------------------------------------------------------------------
 @c General commands

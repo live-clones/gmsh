@@ -1,8 +1,8 @@
-$Id: VERSIONS,v 1.152 2003-06-24 23:34:45 geuzaine Exp $
+$Id: VERSIONS,v 1.153 2003-08-22 05:52:43 geuzaine Exp $
 
-New since 1.45.0: fix crash for very long command lines; new options
-for setting the displacement factor and Triangle's parameters +
-renamed a couple of options to more sensible names (View.VectorType,
+New in 1.46: fix crash for very long command lines; new options for
+setting the displacement factor and Triangle's parameters + renamed a
+couple of options to more sensible names (View.VectorType,
 View.ArrowSize); documentation update;
 
 New in 1.45: small bug fixes (min/max computation for tensor views,
