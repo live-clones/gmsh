@@ -20,6 +20,10 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+#include "Options.h"
+#include "Context.h"
+#include "Mesh.h"
+#include "Views.h"
 
 //          PLEASE RESPECT THE ALPHABETICAL ORDER WHEN 
 //                    INSERTING A NEW OPTION!

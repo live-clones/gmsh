@@ -1,0 +1,637 @@
+@ftable @code
+@item General.DefaultFileName
+Default project file name@*
+Default value: @code{"untitled.geo"}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.Display
+X server to use (only for Unix versions)@*
+Default value: @code{""}@*
+Saved in: @code{-}
+
+@item General.ErrorFileName
+File into which the log is saved if a fatal error occurs@*
+Default value: @code{".gmsh-errors"}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.OptionsFileName
+File created in your home directory with 'Tools->Options->Save', and which is read on startup@*
+Default value: @code{".gmsh-options"}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.SessionFileName
+File into which session specific information is saved, and which is read on startup@*
+Default value: @code{".gmshrc"}@*
+Saved in: @code{-}
+
+@item General.TextEditor
+System command to launch a text editor@*
+Default value: @code{"emacs %s &"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Theme
+Graphical user interface theme (try e.g. plastic)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.TmpFileName
+Temporary file (created in your home directory)@*
+Default value: @code{".gmsh-tmp"}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.AlphaBlending
+Enable alpha blending (transparency) in post-processing views@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Axes
+Display the axes linked to the model@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.CenterWindows
+Center new windows on the menu window@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Clip0
+Enable clip plane 0@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip0A
+First clip plane 0 equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip0B
+Second clip plane 0 equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip0C
+Third clip plane 0 equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip0D
+Fourth clip plane 0 equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip1
+Enable clip plane 1@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip1A
+First clip plane 1 equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip1B
+Second clip plane 1 equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip1C
+Third clip plane 1 equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip1D
+Fourth clip plane 1 equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip2
+Enable clip plane 2@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip2A
+First clip plane 2 equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip2B
+Second clip plane 2 equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip2C
+Third clip plane 2 equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip2D
+Fourth clip plane 2 equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip3
+Enable clip plane 3@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip3A
+First clip plane 3 equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip3B
+Second clip plane 3 equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip3C
+Third clip plane 3 equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip3D
+Fourth clip plane 3 equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip4
+Enable clip plane 4@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip4A
+First clip plane 4 equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip4B
+Second clip plane 4 equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip4C
+Third clip plane 4 equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip4D
+Fourth clip plane 4 equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip5
+Enable clip plane 5@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip5A
+First clip plane 5 equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip5B
+Second clip plane 5 equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip5C
+Third clip plane 5 equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Clip5D
+Fourth clip plane 5 equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.ColorScheme
+Default color scheme (0, 1 or 2)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ConfirmOverwrite
+Ask confirmation before overwriting files?@*
+Default value: @code{1}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.DefaultPlugins
+Load default plugins on startup@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.DoubleBuffer
+Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.FastRedraw
+Fast redraw (no mesh or view display) when moving the model@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.FontSize
+Size of the font in the graphical user interface@*
+Default value: @code{12}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.GraphicsFontSize
+Size of the font in the graphic window@*
+Default value: @code{11}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.GraphicsHeight
+Height (in pixels) of the graphic window@*
+Default value: @code{500}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.GraphicsPositionX
+Horizontal position (in pixels) of the upper left corner of the graphic window@*
+Default value: @code{20}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.GraphicsPositionY
+Vertical position (in pixels) of the upper left corner of the graphic window@*
+Default value: @code{30}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.GraphicsWidth
+Width (in pixels) of the graphic window@*
+Default value: @code{700}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.InitialModule
+Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, 4=post-processing) @*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light0
+Enable light source 0@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light0X
+X position of light source 0@*
+Default value: @code{0.5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light0Y
+Y position of light source 0@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light0Z
+Z position of light source 0@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light1
+Enable light source 1@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light1X
+X position of light source 1@*
+Default value: @code{0.5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light1Y
+Y position of light source 1@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light1Z
+Z position of light source 1@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light2
+Enable light source 2@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light2X
+X position of light source 2@*
+Default value: @code{0.5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light2Y
+Y position of light source 2@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light2Z
+Z position of light source 2@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light3
+Enable light source 3@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light3X
+X position of light source 3@*
+Default value: @code{0.5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light3Y
+Y position of light source 3@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light3Z
+Z position of light source 3@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light4
+Enable light source 4@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light4X
+X position of light source 4@*
+Default value: @code{0.5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light4Y
+Y position of light source 4@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light4Z
+Z position of light source 4@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light5
+Enable light source 5@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light5X
+X position of light source 5@*
+Default value: @code{0.5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light5Y
+Y position of light source 5@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Light5Z
+Z position of light source 5@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.LineWidth
+Display width of lines (in pixels)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.MenuPositionX
+Horizontal position (in pixels) of the upper left corner of the menu window@*
+Default value: @code{800}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.MenuPositionY
+Vertical position (in pixels) of the upper left corner of the menu window@*
+Default value: @code{50}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.MessagePositionX
+Horizontal position (in pixels) of the upper left corner of the message window@*
+Default value: @code{650}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.MessagePositionY
+Vertical position (in pixels) of the upper left corner of the message window@*
+Default value: @code{150}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.MessageHeight
+Height (in pixels) of the message window@*
+Default value: @code{350}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.MessageWidth
+Width (in pixels) of the message window@*
+Default value: @code{450}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.MovingLight
+Use a moving (i.e. which follows the model) light source@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.OptionsPositionX
+Horizontal position (in pixels) of the upper left corner of the option window@*
+Default value: @code{650}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.OptionsPositionY
+Vertical position (in pixels) of the upper left corner of the option window@*
+Default value: @code{150}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.Orthographic
+Orthographic projection mode (0=perspective projection)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.PointSize
+Display size of points (in pixels)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.QuadricSubdivisions
+Number of subdivisions used to draw points or lines as spheres or cylinders@*
+Default value: @code{10}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.RotationX
+First Euler angle (used if Trackball == 0)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.RotationY
+Second Euler angle (used if Trackball == 0)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.RotationZ
+Third Euler angle (used if Trackball == 0)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.RotationCenterGravity
+Rotate around the center of gravity instead of (RotationCenterX, RotationCenterY, RotationCenterZ)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.RotationCenterX
+X coordinate of the center of rotation@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.RotationCenterY
+Y coordinate of the center of rotation@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.RotationCenterZ
+Z coordinate of the center of rotation@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.SaveOptions
+Automatically save all current options each time you quit Gmsh?@*
+Default value: @code{0}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.SaveSession
+Automatically save session specific information each time you quit Gmsh?@*
+Default value: @code{1}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.ScaleX
+X-axis scale factor@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item General.ScaleY
+Y-axis scale factor@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item General.ScaleZ
+Z-axis scale factor@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item General.Shininess
+Material shininess (must be > 0)@*
+Default value: @code{0.4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.SmallAxes
+Display the small axes@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.SmallAxesPositionX
+X position of small axes (negative values for right alignment)@*
+Default value: @code{-45}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.SmallAxesPositionY
+Y position of small axes (negative values for bottom alignment)@*
+Default value: @code{-35}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.StatisticsPositionX
+Horizontal position (in pixels) of the upper left corner of the statistic window@*
+Default value: @code{650}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.StatisticsPositionY
+Vertical position (in pixels) of the upper left corner of the statistic window@*
+Default value: @code{150}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.Terminal
+Should information be printed on the terminal (if available)?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Tooltips
+Show tooltips in the graphical user interface@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Trackball
+Use trackball rotation mode@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.TrackballQuaternion0
+First trackball quaternion component (used if Trackball == 1)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.TrackballQuaternion1
+Second trackball quaternion component (used if Trackball == 1)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.TrackballQuaternion2
+Third trackball quaternion component (used if Trackball == 1)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.TrackballQuaternion3
+Fourth trackball quaternion component (used if Trackball == 1)@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item General.TranslationX
+X-axis translation (in model units)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.TranslationY
+Y-axis translation (in model units)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.TranslationZ
+Z-axis translation (in model units)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.Verbosity
+Level of information printed during processing (0=no information)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.VisibilityPositionX
+Horizontal position (in pixels) of the upper left corner of the visibility window@*
+Default value: @code{650}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.VisibilityPositionY
+Vertical position (in pixels) of the upper left corner of the visibility window@*
+Default value: @code{150}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.ZoomFactor
+'Speed' of the middle mouse button zoom@*
+Default value: @code{1.1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.Color.Background
+Background color@*
+Default value: @code{@{0,0,0@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item General.Color.Foreground
+Foreground color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item General.Color.Text
+Text color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item General.Color.Axes
+Axes color@*
+Default value: @code{@{255,255,0@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item General.Color.SmallAxes
+Small axes color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@end ftable

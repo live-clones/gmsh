@@ -1,0 +1,37 @@
+@ftable @code
+@item PostProcessing.AnimationDelay
+Delay (in seconds) between to animation frames@*
+Default value: @code{0.25}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.AnimationCycle
+Cycle through views instead of time steps for the animation@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.DisplayLists
+Use OpenGL display lists for drawing post-processing views@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.Link
+Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.NbViews
+Current number of views merged@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item PostProcessing.Scales
+Show value scales@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.Smoothing
+Apply (non-reversible) smoothing to post-processing view when merged@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@end ftable

@@ -550,6 +550,7 @@ void Init_Options (int num);
 void Init_Options_GUI (int num);
 void ReInit_Options (int num);
 void Print_Options(int num, int level, char *filename);
+void Print_OptionsDoc();
 
 StringXString * Get_StringOptionCategory(char * cat);
 StringXNumber * Get_NumberOptionCategory(char * cat);
@@ -570,6 +571,10 @@ void * Get_ColorOption(char *str, StringXColor s[]);
 void Print_StringOptions(int num, int level, StringXString s[], char *prefix, FILE *file);
 void Print_NumberOptions(int num, int level, StringXNumber s[], char *prefix, FILE *file);
 void Print_ColorOptions(int num, int level, StringXColor s[], char *prefix, FILE *file);
+
+void Print_StringOptionsDoc(StringXString s[], char *prefix, FILE * file);
+void Print_NumberOptionsDoc(StringXNumber s[], char *prefix, FILE * file);
+void Print_ColorOptionsDoc(StringXColor s[], char *prefix, FILE * file);
 
 extern StringXString GeneralOptions_String[] ;
 extern StringXString GeometryOptions_String[] ;

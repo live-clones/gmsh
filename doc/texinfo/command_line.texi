@@ -1,0 +1,93 @@
+@noindent Geometry options:
+
+@ftable @code
+@item -0
+parse input files, output unrolled geometry, and exit
+@end ftable
+
+@noindent Mesh options:
+@ftable @code
+@item -1, -2, -3
+perform batch 1D, 2D and 3D mesh generation
+@item -saveall
+save all elements (discard physical group definitions)
+@item -o file
+specify mesh output file name
+@item -format msh|unv|gref
+set output mesh format (default: msh)
+@item -algo iso|tri|aniso
+select 2D mesh algorithm (default: iso)
+@item -smooth int
+set mesh smoothing (default: 0)
+@item -scale float
+set global scaling factor (default: 1.0)
+@item -meshscale float
+set mesh scaling factor (default: 1.0)
+@item -clscale float
+set characteristic length scaling factor (default: 1.0)
+@item -rand float
+set random perturbation factor (default: 1.e-4)
+@item -bgm file
+load backround mesh from file
+@item -constrain
+constrain background mesh with characteristic lengths
+@item -histogram
+print mesh quality histogram
+@item -extrude
+use old extrusion mesh generator
+@item -recombine
+recombine meshes from old extrusion mesh generator
+@item -interactive
+display 2D mesh construction interactively
+@end ftable
+
+@noindent Post-processing options:
+@ftable @code
+@item -dl
+enable display lists
+@item -noview
+hide all views on startup
+@item -link int
+select link mode between views (default: 0)
+@item -smoothview
+smooth views
+@item -convert file file
+convert an ascii view into a binary one
+@end ftable
+
+@noindent Display options:
+@ftable @code
+@item -nodb
+disable double buffering
+@item -fontsize int
+specify the font size for the GUI (default: 12)
+@item -theme string
+specify GUI theme
+@item -alpha
+enable alpha blending
+@item -notrack
+don't use trackball mode for rotations
+@item -display string
+specify display
+@item -perspective
+set projection mode to perspective
+@end ftable
+
+@noindent Other options:
+@ftable @code
+@item -a, -g, -m, -s, -p
+start in automatic, geometry, mesh, solver or post-processing mode (default:
+automatic)
+@item -v int
+set verbosity level (default: 2)
+@item -string "string"
+parse string before project file
+@item -option file
+parse option file before GUI creation
+@item -version
+show version number
+@item -info
+show detailed version information
+@item -help
+show this message
+@end ftable

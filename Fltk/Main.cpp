@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.46 2003-03-21 00:52:37 geuzaine Exp $
+// $Id: Main.cpp,v 1.47 2003-04-14 21:34:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -67,6 +67,13 @@ int main(int argc, char *argv[])
   // Gmsh default options
 
   Init_Options(0);
+
+  // Generate automatic documentation
+  
+  if(argc == 2 && !strcmp(argv[1], "-doc")){
+    Print_OptionsDoc();
+    exit(1);
+  }
 
   // Configuration files and command line options
 

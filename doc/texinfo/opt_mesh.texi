@@ -1,0 +1,367 @@
+@ftable @code
+@item Mesh.Algorithm
+2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.AllowDegeneratedExtrude
+Allow the generation of degenerated hexahedra or prisms during extrusion@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.Aspect
+Mesh aspect (0=wireframe, 1=hidden lines, 2=solid)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CharacteristicLengthFactor
+Factor applied to all characteristic lengths (and background meshes)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ColorCarousel
+Use a 'color by region number' scheme@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ColorScheme
+Default mesh color scheme (0, 1 or 2)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ConstrainedBackgroundMesh
+Should the background mesh be constrained by the characteristic lengths associated with the geometry?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CpuTime
+CPU time for the generation of the current mesh (in seconds)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.CutPlane
+Enable mesh cut plane@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.CutPlaneA
+First cut plane equation coefficient ('A' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item Mesh.CutPlaneB
+Second cut plane equation coefficient ('B' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.CutPlaneC
+Third cut plane equation coefficient ('C' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.CutPlaneD
+Fourth cut plane equation coefficient ('D' in equation 'AX+BY+CZ+D=0')@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.Degree
+Element order@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.DisplayLists
+Use OpenGL display lists for drawing meshes@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Dual
+Display the dual mesh obtained by barycentric subdivision@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Explode
+Display mesh with non adjacent elements (factor between 0 and 1)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Format
+Mesh output format (1=MSH, 2=UNV)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.GammaInf
+Only display elements whose Gamma factor is greater than GammaInf@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.GammaSup
+Only display elements whose Gamma factor is smaller than GammaSup@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Interactive
+Show the construction of the 2D mesh in real time (only with the anisotropic algorithm)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Lines
+Display mesh vertices on curves?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.LinesNumbers
+Display mesh line numbers?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.LineType
+Display lines as solid color segments or 3D cylinders@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.LineWidth
+Display width of lines (in pixels)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumCirclePoints
+Minimum number of points used to mesh a circle@*
+Default value: @code{7}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NbHexahedra
+Number of hexahedra in the current mesh@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbNodes
+Number of nodes in the current mesh@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbPrisms
+Number of prisms in the current mesh@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbPyramids
+Number of pyramids in the current mesh@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbQuadrangles
+Number of quadrangles in the current mesh@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbTetrahedra
+Number of tetrahedra in the current mesh@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbTriangles
+Number of triangles in the current mesh@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.Normals
+Size of the normal vectors@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Points
+Display mesh vertices?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PointInsertion
+Point insertion method for isotropic 2D algorithm (1=center of circ. circle, 2=voronoi, 3=cog)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PointsNumbers
+Display mesh vertices numbers?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PointSize
+Display size of points (in pixels)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PointType
+Display points as solid color dots or 3D spheres@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Quality
+Target quality for tetrahedral elements (not fully functional)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RadiusInf
+Only display elements whose Radius is greater than RadiusInf@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RadiusSup
+Only display elements whose Radius is smaller than RadiusSup@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RandomFactor
+Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)@*
+Default value: @code{0.0001}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SaveAll
+Ignore Physical definitions and save all elements@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.ScalingFactor
+Global scaling factor applied to the saved mesh@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Smoothing
+Number of smoothing steps applied to the final mesh@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SpeedMax
+Disable dubious point insertion tests@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Surfaces
+Display surface mesh?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SurfacesNumbers
+Display mesh surface numbers?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Tangents
+Size of the tangent vectors@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Volumes
+Display volume mesh?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.VolumesNumbers
+Display mesh elements numbers?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Points
+Mesh vertex color@*
+Default value: @code{@{0,123,59@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.PointsSupp
+Mesh high order vertex color@*
+Default value: @code{@{255,0,255@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Lines
+Mesh line color@*
+Default value: @code{@{0,255,0@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Triangles
+Mesh triangle color (if ColorCarousel=0)@*
+Default value: @code{@{160,150,255@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Quadrangles
+Mesh quadrangle color (if ColorCarousel=0)@*
+Default value: @code{@{130,120,225@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Tetrahedra
+Mesh tetrahedron color (if ColorCarousel=0)@*
+Default value: @code{@{160,150,255@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Hexahedra
+Mesh hexahedron color (if ColorCarousel=0)@*
+Default value: @code{@{130,120,225@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Prisms
+Mesh prism color (if ColorCarousel=0)@*
+Default value: @code{@{232,210,23@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Pyramids
+Mesh pyramid color (if ColorCarousel=0)@*
+Default value: @code{@{217,113,38@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Tangents
+Tangent mesh vector color@*
+Default value: @code{@{128,128,128@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Normals
+Normal mesh vector color@*
+Default value: @code{@{128,128,128@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.One
+First color in color carousel@*
+Default value: @code{@{232,210,23@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Two
+Second color in color carousel@*
+Default value: @code{@{226,167,29@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Three
+Third color in color carousel@*
+Default value: @code{@{217,113,38@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Four
+Fourth color in color carousel@*
+Default value: @code{@{201,54,54@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Five
+Fifth color in color carousel@*
+Default value: @code{@{169,12,86@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Six
+Sixth color in color carousel@*
+Default value: @code{@{114,2,141@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Seven
+Seventh color in color carousel@*
+Default value: @code{@{67,30,188@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Eight
+Eighth color in color carousel@*
+Default value: @code{@{44,86,211@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Nine
+Ninth color in color carousel@*
+Default value: @code{@{32,145,223@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@item Mesh.Color.Ten
+tenth color in color carousel@*
+Default value: @code{@{25,193,230@}}@*
+Saved in: @code{General.OptionsFileName})
+
+@end ftable

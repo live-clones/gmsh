@@ -1,0 +1,306 @@
+@ftable @code
+@item View.AbscissaName
+Abscissa name for 2D graphs@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.AbscissaFormat
+Abscissa number format for 2D graphs (in standard C form)@*
+Default value: @code{"%.3e"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.FileName
+Default file name to assign to the post-processing view@*
+Default value: @code{""}@*
+Saved in: @code{-}
+
+@item View.Format
+Number format (in standard C form)@*
+Default value: @code{"%.3e"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Name
+Default name to assign to the post-processing view@*
+Default value: @code{""}@*
+Saved in: @code{-}
+
+@item View.AngleSmoothNormals
+Threshold angle below which we do not smooth the normals@*
+Default value: @code{15}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ArrowLocation
+Arrow location (1=cog, 2=vertex)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ArrowScale
+Size of the vector (e.g. arrow size in pixels)@*
+Default value: @code{50}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ArrowType
+Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.AutoPosition
+Position the scale or the 2D graph automatically to avoid overlaps@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Boundary
+Draw the N-b dimensional boundary of the simplex (N=dimension, b=option value)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.CustomMax
+User defined maximum value to be displayed@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.CustomMin
+User defined minimum value to be displayed@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.DrawHexahedra
+Display post-processing hexahedra?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawLines
+Display post-processing lines?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawPoints
+Display post-processing points?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawPrisms
+Display post-processing prisms?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawPyramids
+Display post-processing pyramids?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawQuadrangles
+Display post-processing quadrangles?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawScalars
+Display scalar values?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawStrings
+Display post-processing annotation strings?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawTensors
+Display tensor values?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawTetrahedra
+Display post-processing tetrahedra?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawTriangles
+Display post-processing triangles?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawVectors
+Display vector values?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Explode
+Explode elements (0: reduced to point; 1: not transformed)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Grid
+Grid mode for 2D graphs (0=none, 1=simple, 2=frame, 3=grid)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Height
+Height (in pixels) of the scale or 2D graph@*
+Default value: @code{200}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.IntervalsType
+Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Light
+Enable light sources?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.LineType
+Display lines as solid color segments or 3D cylinders@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.LineWidth
+Display width of lines (in pixels)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Max
+Maximum value in the view (do _not_ change this!)@*
+Default value: @code{-1e+200}@*
+Saved in: @code{-}
+
+@item View.Min
+Minimum value in the view (do _not_ change this!)@*
+Default value: @code{1e+200}@*
+Saved in: @code{-}
+
+@item View.NbAbscissa
+Number of abscissa intervals for 2D graphs@*
+Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.NbIso
+Number of intervals@*
+Default value: @code{15}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.NbTimeStep
+Number of time steps in the view (do _not_ change this!)@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item View.OffsetX
+Translation of the view along X-axis (in model coordinates)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.OffsetY
+Translation of the view along Y-axis (in model coordinates)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.OffsetZ
+Translation of the view along Z-axis (in model coordinates)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.PointSize
+Display size of points (in pixels)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.PointType
+Display points as solid color dots or 3D spheres@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.PositionX
+Horizontal position (in pixels) of the upper left corner of the scale or 2D graph@*
+Default value: @code{80}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.PositionY
+Vertical position (in pixels) of the upper left corner of the scale or 2D graph@*
+Default value: @code{50}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.RaiseX
+Elevation of the view along X-axis (in model coordinates)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.RaiseY
+Elevation of the view along Y-axis (in model coordinates)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.RaiseZ
+Elevation of the view along Z-axis (in model coordinates)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.RangeType
+Value scale range type (1=default, 2=custom)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.SaturateValues
+Saturate the view values to custom min and max (1=true, 0=false)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ScaleType
+Value scale type (1=linear, 2=logarithmic, 3=double logarithmic)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ShowElement
+Show element boundaries?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ShowScale
+Show value scale?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ShowTime
+Show time value (or time step) if NbTimeStep > 1?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.SmoothNormals
+Smooth the normals?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.TensorType
+Tensor Visualization Type@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.TimeStep
+Current time step displayed@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.TransparentScale
+Display a 'transparent' value scale?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Type
+Type of graph (1=3D, 2=2D-space, 3=2D-time)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Visible
+Is the view visible?@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item View.Width
+Width (in pixels) of the scale or 2D graph@*
+Default value: @code{300}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ColorTable
+Color table used to draw the view@*
+Saved in: @code{General.OptionsFileName})
+
+@end ftable
