@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.13 2001-02-05 07:56:57 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.14 2001-03-17 21:33:13 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,6 +21,7 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
                             Curve **thec, Surface **thes, Mesh *m);
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
             GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
+int check_type(int type, Vertex *v, Curve *c, Surface *s);
 
 static int    ZOOM = 0 ;
 static double ZOOM_X0, ZOOM_Y0, ZOOM_X1, ZOOM_Y1;
@@ -262,8 +263,11 @@ int Opengl_Window::handle(int event) {
       Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
       ov = v; oc = c; os = s; v = NULL; c = NULL; s = NULL;
       Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
-      
       if(ov != v || oc != c || os != s) { 
+	if(check_type(WID->selection, v, c, s))
+	  WID->g_window->cursor(FL_CURSOR_CROSS,FL_BLACK,FL_WHITE);
+	else
+	  WID->g_window->cursor(FL_CURSOR_DEFAULT,FL_BLACK,FL_WHITE);
 	BeginHighlight();
 	HighlightEntity(v,c,s,0);
 	EndHighlight(0);

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.15 2001-02-23 08:18:50 geuzaine Exp $
+// $Id: Message.cpp,v 1.16 2001-03-17 21:33:13 geuzaine Exp $
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -129,7 +129,10 @@ void Msg(int level, char *fmt, ...){
   }
 
   if(abort){
-    if(WID) WID->save_message(CTX.error_filename);
+    if(WID){
+      WID->save_message(CTX.error_filename);
+      WID->fatal_error(CTX.error_filename);
+    }
     Exit(1);
   }
 }

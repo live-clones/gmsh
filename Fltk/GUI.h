@@ -23,6 +23,7 @@
 #include <FL/Fl_Browser.H>
 #include <FL/x.H>
 #include <FL/Fl_Color_Chooser.H>
+#include <FL/fl_ask.H>
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
@@ -202,12 +203,13 @@ public:
   void set_status(char *msg, int num);
   void add_message(char *msg);
   void save_message(char *filename);
+  void fatal_error(char *filename);
   void set_statistics();
   void update_view_window(int numview);
   void set_title(char *str);
   void add_handler();
   int  global_shortcuts(int event);
-  int  try_selection, quit_selection, end_selection;
+  int  selection, try_selection, quit_selection, end_selection;
 
 };
 

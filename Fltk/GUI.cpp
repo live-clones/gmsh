@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.57 2001-03-10 19:55:06 remacle Exp $
+// $Id: GUI.cpp,v 1.58 2001-03-17 21:33:13 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1656,11 +1656,11 @@ void GUI::add_message(char *msg){
   msg_browser->bottomline(msg_browser->size());
 }
 
-void GUI::save_message(char *name){
+void GUI::save_message(char *filename){
   FILE *fp;
 
-  if(!(fp = fopen(name,"w"))) {
-    Msg(WARNING, "Unable to Open File '%s'", name); 
+  if(!(fp = fopen(filename,"w"))) {
+    Msg(WARNING, "Unable to Open File '%s'", filename); 
     return;
   }
   for(int i = 1 ; i<=msg_browser->size() ; i++){
@@ -1669,9 +1669,14 @@ void GUI::save_message(char *name){
     else fprintf(fp, "%s\n", c);
   }
 
-  Msg(INFO, "Log Creation Complete '%s'", name);
-  Msg(STATUS2, "Wrote '%s'", name);
+  Msg(INFO, "Log Creation Complete '%s'", filename);
+  Msg(STATUS2, "Wrote '%s'", filename);
   fclose(fp);
+}
+
+void GUI::fatal_error(char *filename){
+  fl_alert("A fatal error has occurred, which will force Gmsh to exit "
+	   "(all messages have been saved in the error log file '%s')", filename);
 }
 
 //******************************* Create the about window ******************************

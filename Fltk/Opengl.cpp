@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.18 2001-02-04 15:52:26 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.19 2001-03-17 21:33:13 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -106,19 +106,22 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
   GLuint  ii[SELECTION_BUFFER_SIZE],jj[SELECTION_BUFFER_SIZE];
 
   *v = NULL; *c = NULL; *s = NULL;
-  
+
+  WID->selection = type;  
   WID->try_selection = 0;
   WID->quit_selection = 0;
   WID->end_selection = 0;
-  
+
   while(1){
     WID->wait();
     if(WID->quit_selection){
       WID->quit_selection = 0;
+      WID->selection = 0;
       return 0;
     }
     if(WID->end_selection){
       WID->end_selection = 0;
+      WID->selection = 0;
       return -1;
     }
     if(WID->try_selection){
@@ -129,6 +132,7 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
         BeginHighlight();
         HighlightEntity(*v,*c,*s,1);
         EndHighlight(1);
+	WID->selection = 0;
         return(1);
       }
     }
