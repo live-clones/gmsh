@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.24 2002-05-18 23:07:42 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.25 2002-05-19 19:31:07 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -113,10 +113,10 @@ void Opengl_Window::clear_overlay() {
 
 
 // The event model in FLTK is pretty different from other toolkits:
-// the events are passed to the widget handle du widget that has the
-// focus. If this handle returns 1, then the event is considered as
-// treated, and is suppressed. If the handle returns 0, the event is
-// passed to the parent.
+// the events are passed to the widget handle of the widget that has
+// the focus. If this handle returns 1, then the event is considered
+// as treated, and is suppressed. If the handle returns 0, the event
+// is passed to the parent.
 
 int Opengl_Window::handle(int event) {
   static int      xpos, ypos, xmov, ymov, ibut, hits;
