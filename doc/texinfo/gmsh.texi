@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.6 2003-04-10 23:14:17 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.7 2003-04-11 01:26:17 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -26,23 +26,14 @@
 @c
 @c Things to do -> "Ctrl+s todo:" 
 @c
-@c Indexing: @cindex = concept index, e.g. "Numerical tools, overview"
-@c           @vindex = (metasyntactic) variable index, e.g.  "constraint-type"
-@c          /@tindex = type index (=frozen syntax ossature), e.g. "DefineGroup"
-@c          \@findex = function index (=all types in the objects), e.g. "Curl"
+@c Indexing: @cindex = concept index, e.g. "File formats"
+@c           @vindex = (metasyntactic) variable index, e.g.  "expression-id"
+@c           @tindex+@findex = type+function index (=reserved keywords),
+@c                             e.g. "Spline"
 @c
 @c Before release, run C-u C-c C-u C-a in GNU Emacs
 @c This updates all node pointers and menus
 @c 
-@c (to sort the contributors alphabetically: C-u 2 M-x sort-fields)
-@c
-@c info  : makeinfo gmsh.texi
-@c dvi   : texi2dvi gmsh.texi
-@c ps    : dvips gmsh.dvi -o
-@c pdf   : texi2pdf gmsh.texi
-@c html  : texi2html -init_file gmsh.t2h gmsh.texi
-@c nroff : texi2roff gmsh.texi
-@c
 @c =========================================================================
 @c
 @c For commercial releases, set the COMMERCIAL flag (uncomment the following
@@ -92,10 +83,6 @@ Copyright @value{COPYRIGHT}
 @iftex
 @global@let@sl=@it
 @global@setfont@indit@itshape{9}{1000}
-@c @global@let@bullet=-
-@c @global@let@linkcolor=@Orange
-@c @parskip=5pt
-@c @parindent=1cm
 @end iftex
 
 @c =========================================================================
@@ -159,16 +146,15 @@ post-processing facilities. This is edition @value{EDITION}/@today{} of the
 * Copying conditions::          Terms and conditions of use.
 * Introduction::                What is Gmsh?
 * Overview::                    Quick overview of the general philosophy of Gmsh.
-* Expressions::                 Definition of basic expressions in Gmsh.
-* General::                     
-* Geometry module::             The Geometry module.
-* Mesh module::                 The Mesh module.
-* Solver module::               The Solver module.
-* Post-processing module::      The Post-processing module.
-* Tutorial::                    
+* General tools::               Description of general commands and options.
+* Geometry module::             Description of all Geometry commands.
+* Mesh module::                 Description of all Mesh commands.
+* Solver module::               Description of all Solver commands.
+* Post-processing module::      Description of all Post-Processing commands.
+* Tutorial::                    A step-by-step tutorial.
 * Running Gmsh::                How to run Gmsh on your operating system.
 * File formats::                Input and output file formats.
-* Programming comments::        
+* Programming comments::        Some random notes for developpers.
 * Bugs and versions::           Contact information, version history and list of contributors.
 * Tips and tricks::             Some tips to make your life easier with Gmsh.
 * GNU General Public License::  Copy of the GNU GPL.
@@ -178,8 +164,36 @@ post-processing facilities. This is edition @value{EDITION}/@today{} of the
 @detailmenu
  --- The Detailed Node Listing ---
 
+Introduction
+
+* What Gmsh is good at...::     
+* ... and what Gmsh sucks at::  
+* How to Read this Manual::     
+* Syntactic rules::             
+
 Overview
 
+* Geometry: geometrical entity definition::  
+* Mesh: finite element mesh generatio::  
+* Solver: external solver interface::  
+* Post-processing: scalar and vector field visualization::  
+
+General tools
+
+* Comments::                    
+* Expressions::                 
+* Operators::                   
+* Functions::                   
+* General commands::            
+* Option database::             
+
+Bugs, versions and contributors
+
+* Bugs::                        
+* Version history::             
+* Contributors::                
+
+@end detailmenu
 @end menu
 
 @c =========================================================================
@@ -256,26 +270,65 @@ length field for the generation of adapted meshes on lines, surfaces and
 volumes. These adapted meshes can be mixed with simple structured
 (transfinite, elliptic, etc.)  meshes in order to augment the flexibility.
 
-What Gmsh should be pretty good at
-
-
-
-
-What Gmsh will suck at
-
-- complex unstructured mesh generator. only transfinite, extruded
-
-- a multibloc generator. all meshes are finite element-type, i.e. ...
-All the meshes produced by Gmsh are conforming in the sense of finite
-element meshes 
-
-- very large problems: (> million elements) both for geometry, mesh and
-post-processing. Gmsh is NOT optimized for speed.
-
 All geometrical, mesh, solver and post-processing instructions are
 prescribed in a language analyzed by Lex and Yacc. The code itself is
 written in C++, while the graphics are rendered with OpenGL and the user
-interface is based on the FLTK widget set.
+interface is based on the FLTK widget set. See XXX for some development
+comments.
+
+@c -------------------------------------------------------------------------
+@c What Gmsh is good at
+@c -------------------------------------------------------------------------
+
+@menu
+* What Gmsh is good at...::     
+* ... and what Gmsh sucks at::  
+* How to Read this Manual::     
+* Syntactic rules::             
+@end menu
+
+@node What Gmsh is good at..., ... and what Gmsh sucks at, Introduction, Introduction
+@section What Gmsh is good at...
+
+Gmsh should be pretty good at
+
+
+
+@c -------------------------------------------------------------------------
+@c ... and what Gmsh sucks at
+@c -------------------------------------------------------------------------
+
+@node ... and what Gmsh sucks at, How to Read this Manual, What Gmsh is good at..., Introduction
+@section ... and what Gmsh sucks at
+
+Gmsh is not an primarily a structured mesh generator. You can transfinite,
+extruded
+
+Related to the previous point: there is no automatic quadrilateral or
+hexahedral meshing algorithm implemented. If you want quads, you have to use
+transfinite or extruded meshes (see XXX) or recombine unstructured
+triangular meshes. For hexahedra, your only choice is transfinite or
+extruded meshes.
+
+Gmsh is not a multibloc generator: all meshes produced by Gmsh are
+conforming in the sense of finite element meshes 
+(see XXX)
+
+Gmsh was designed for solving academic/verification test-cases, not
+industrial-size problems. - very large problems: (> million elements) both
+for geometry, mesh and post-processing. Gmsh is NOT optimized for
+speed. Your mileage may vary, of course, depending of what you consider a
+``large'' problem...
+
+
+@c -------------------------------------------------------------------------
+@c How to Read this Manual
+@c -------------------------------------------------------------------------
+
+@node How to Read this Manual, Syntactic rules, ... and what Gmsh sucks at, Introduction
+@section How to read this manual
+
+@cindex Reading, guidelines
 
 How to Read this Manual...
 
@@ -295,11 +348,56 @@ about Gmsh's meshing and post-processing capabilities in @ref{Mesh} and
 
 Tutorial...
 
+@c -------------------------------------------------------------------------
+@c Syntactic Rules Used in this Document
+@c -------------------------------------------------------------------------
+
+@node Syntactic rules,  , How to Read this Manual, Introduction
+@section Syntactic rules used in this document
+
+@cindex Syntax, rules
+@cindex Rules, syntactic
+@cindex Document syntax
+
+@vindex @dots{}
+@vindex <, >
+@vindex |
+@vindex :
+@vindex @var{etc}
+
+Here are the rules we tried to follow when writing this user's guide. Note
+that metasyntactic variable definitions stay valid throughout all the manual
+(and not only in the sections where the definitions
+appear). @xref{Metasyntactic variable index}, for an index of all
+metasyntactic variables.
+
+@enumerate
+@item 
+Keywords and literal symbols are printed like @code{this}.
+@item 
+Metasyntactic variables (i.e.@: text bits that are not part of the syntax,
+but stand for other text bits) are printed like @var{this}.
+@item 
+A colon (@code{:}) after a metasyntactic variable separates the variable
+from its definition.
+@item 
+Optional rules are enclosed in @code{<} @code{>} pairs.
+@item 
+Multiple choices are separated by @code{|}.
+@item 
+Three dots (@dots{}) indicate a possible repetition of the preceding rule.
+@item 
+For conciseness, the notation @code{@var{rule} <, @var{rule} > @dots{}}
+is replaced by @code{@var{rule} <,@dots{}>}.
+@item 
+The @var{etc} symbol replaces nonlisted rules.
+@end enumerate
+
 @c =========================================================================
 @c Overview
 @c =========================================================================
 
-@node Overview, Expressions, Introduction, Top
+@node Overview, General tools, Introduction, Top
 @chapter Overview
 
 @cindex Overview
@@ -322,8 +420,19 @@ from inside Gmsh (e.g. GetDP or other solvers) or to apply complex
 user-defined treatments to geometry, mesh or post-processing data.  A brief
 description of the four modules is given hereafter.
 
+@c -------------------------------------------------------------------------
+@c Geometry: geometrical entity definition
+@c -------------------------------------------------------------------------
 
-Geometry: geometrical entity definition
+@menu
+* Geometry: geometrical entity definition::  
+* Mesh: finite element mesh generatio::  
+* Solver: external solver interface::  
+* Post-processing: scalar and vector field visualization::  
+@end menu
+
+@node Geometry: geometrical entity definition, Mesh: finite element mesh generatio, Overview, Overview
+@section Geometry: geometrical entity definition
 
 Geometries are created in a bottom-up flow by successively defining
 points, oriented curves (segments, circles, ellipses, splines, etc.),
@@ -335,7 +444,12 @@ the ASCII input files.  The scripting possibilities (with loops,
 tests, arrays of variables, etc.) allow fully parametrized definitions
 of all geometrical entities.
 
-Mesh: finite element mesh generation
+@c -------------------------------------------------------------------------
+@c Mesh: finite element mesh generation
+@c -------------------------------------------------------------------------
+
+@node Mesh: finite element mesh generatio, Solver: external solver interface, Geometry: geometrical entity definition, Overview
+@section Mesh: finite element mesh generation
 
 A finite element mesh is a tessellation of a given subset of
 R<sup>3</sup> by elementary geometrical elements of various shapes (in
@@ -383,8 +497,12 @@ characteristic size of each simplex is lower or equal to the
 characteristic length field evaluated at the center of its
 circumscribed circle/sphere.
 
+@c -------------------------------------------------------------------------
+@c Solver: external solver interface
+@c -------------------------------------------------------------------------
 
-Solver: external solver interface
+@node Solver: external solver interface, Post-processing: scalar and vector field visualization, Mesh: finite element mesh generatio, Overview
+@section Solver: external solver interface
 
 External solvers can be interfaced with Gmsh through a socket
 mechanism, which permits to easily launch computations either locally
@@ -395,7 +513,12 @@ examples</a> to see how to define your own solver (be sure to also
 read the answer to the question 6.1 in the <a
 HREF="/gmsh/doc/FAQ">FAQ</a>).
 
-Post-processing: scalar and vector field visualization
+@c -------------------------------------------------------------------------
+@c Post-processing: scalar and vector field visualization
+@c -------------------------------------------------------------------------
+
+@node Post-processing: scalar and vector field visualization,  , Solver: external solver interface, Overview
+@section Post-processing: scalar and vector field visualization
 
 Multiple post-processing scalar or vector maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
@@ -409,62 +532,29 @@ interactively or through the input ASCII text files. Scripting permits
 to automate all the post-processing operations (e.g. for the creation
 of complex animations).
 
+@c =========================================================================
+@c General tools
+@c =========================================================================
 
-@menu
-* Syntactic rules::             
-* Comments::                    
-@end menu
+@node General tools, Geometry module, Overview, Top
+@chapter General tools
 
-@c -------------------------------------------------------------------------
-@c Syntactic Rules Used in this Document
-@c -------------------------------------------------------------------------
-
-@node Syntactic rules, Comments, Overview, Overview
-@section Syntactic rules used in this document
-
-@cindex Syntax, rules
-@cindex Rules, syntactic
-@cindex Document syntax
-
-@vindex @dots{}
-@vindex <, >
-@vindex |
-@vindex :
-@vindex @var{etc}
-
-Here are the rules we tried to follow when writing this user's guide. Note
-that metasyntactic variable definitions stay valid throughout all the manual
-(and not only in the sections where the definitions
-appear). @xref{Metasyntactic variable index}, for an index of all
-metasyntactic variables.
-
-@enumerate
-@item 
-Keywords and literal symbols are printed like @code{this}.
-@item 
-Metasyntactic variables (i.e.@: text bits that are not part of the syntax,
-but stand for other text bits) are printed like @var{this}.
-@item 
-A colon (@code{:}) after a metasyntactic variable separates the variable
-from its definition.
-@item 
-Optional rules are enclosed in @code{<} @code{>} pairs.
-@item 
-Multiple choices are separated by @code{|}.
-@item 
-Three dots (@dots{}) indicate a possible repetition of the preceding rule.
-@item 
-For conciseness, the notation @code{@var{rule} <, @var{rule} > @dots{}}
-is replaced by @code{@var{rule} <,@dots{}>}.
-@item 
-The @var{etc} symbol replaces nonlisted rules.
-@end enumerate
+ASCII files, parser, blabla
 
 @c -------------------------------------------------------------------------
 @c Comments
 @c -------------------------------------------------------------------------
 
-@node Comments,  , Syntactic rules, Overview
+@menu
+* Comments::                    
+* Expressions::                 
+* Operators::                   
+* Functions::                   
+* General commands::            
+* Option database::             
+@end menu
+
+@node Comments, Expressions, General tools, General tools
 @section Comments
 
 @cindex Comments
@@ -489,119 +579,42 @@ inside Gmsh keywords.
 Note that `white space' (spaces, tabs, new line characters) is ignored
 inside all Gmsh expressions.
 
-@c =========================================================================
+@c -------------------------------------------------------------------------
 @c Expressions
-@c =========================================================================
-
-@node Expressions, General, Overview, Top
-@chapter Expressions 
-
-@c -------------------------------------------------------------------------
-@c Definition
 @c -------------------------------------------------------------------------
 
-@menu
-* Expression definition::       
-* Constants::                   
-* Operators::                   
-* Functions::                   
-@end menu
-
-@node Expression definition, Constants, Expressions, Expressions
-@section Definition
+@node Expressions, Operators, Comments, General tools
+@section Expressions 
 
 @cindex Expression, definition
-
-@vindex @var{expression}
-@vindex @var{expression-list}
-
-Expressions are denoted by the metasyntactic variable @var{expression}
-(remember the definition of the syntactic rules in @ref{Syntactic rules}):
-
-@example
-@var{expression}:
-  @var{integer} |
-  @var{real} |
-  @var{constant-id} |
-  @var{quantity} |
-  @var{argument} |
-  @var{current-value} |
-  @var{register-value-set} |
-  @var{register-value-get} |
-  @var{operator-unary} @var{expression} |
-  @var{expression} @var{operator-binary} @var{expression} |
-  @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
-  @var{built-in-function-id} [ < @var{expression-list} > ] < @{ @var{expression-cst-list} @} > |
-  @var{function-id} [ < @var{expression-list} > ]
-@end example
-
-@noindent The following sections introduce the quantities that can appear in
-expressions, i.e.@: constant terminals (@var{integer}, @var{real}) and
-constant expression identifiers (@var{constant-id},
-@var{expression-cst-list}), discretized fields (@var{quantity}), arguments
-(@var{argument}), current values (@var{current-value}), register values
-(@var{register-value-set}, @var{register-value-get}), operators
-(@var{operator-unary}, @var{operator-binary}, @var{operator-ternary-left},
-@var{operator-ternary-right}) and built-in or user-defined functions
-(@var{built-in-function-id}, @var{function-id}). List of expressions are
-defined as:
-
-@example
-@var{expression-list}: 
-  @var{expression} <,@dots{}>
-@end example
-
-@menu
-* Operators::                   
-* Constants::                   
-* Functions::                   
-* Current values::              
-* Fields::                      
-@end menu
-
-@c -------------------------------------------------------------------------
-@c Constants
-@c -------------------------------------------------------------------------
-
-@node Constants, Operators, Expression definition, Expressions
-@section Constants
-
 @cindex Constant, definition
 @cindex Constant, evaluation
 @cindex Evaluation mechanism
-@cindex Integer numbers
 @cindex Real numbers
 @cindex Floating point numbers
 @cindex Numbers, real
 @cindex Numbers, integer
 @cindex String
 
-@tindex DefineConstant
-@tindex List
-@tindex ListAlt
 @tindex Pi
-@tindex 0D
-@tindex 1D
-@tindex 2D
-@tindex 3D
 @tindex =
 
-@vindex @var{integer}
 @vindex @var{real}
 @vindex @var{string}
-@vindex @var{expression-cst}
-@vindex @var{expression-cst-list}
-@vindex @var{expression-cst-list-item}
-@vindex @var{constant-id}
-@vindex @var{constant-def}
 @vindex @var{string-id}
 @vindex @var{expression-char}
+@vindex @var{expression}
+@vindex @var{expression-id}
+@vindex @var{expression-list}
 
-The three constant types used in GetDP are @var{integer}, @var{real} and
-@var{string}.  These types have the same meaning and syntax as in the C or
-C++ programming languages. Besides general expressions (@var{expression}),
-purely constant expressions, denoted by the metasyntactic variable
-@var{expression-cst}, are also used:
+Expressions are denoted by the metasyntactic variable @var{expression}
+(remember the definition of the syntactic rules in @ref{Syntactic rules}):
+
+The two constant types used in Gmsh are @var{real} and
+@var{string}. There is no integer type.  These types have the same meaning
+and syntax as in the C or C++ programming languages. Besides general
+expressions (@var{expression}), purely constant expressions, denoted by the
+metasyntactic variable @var{expression-cst}, are also used:
 
 @example
 @var{expression}:
@@ -611,7 +624,7 @@ purely constant expressions, denoted by the metasyntactic variable
   @var{expression} @var{operator-binary} @var{expression} |
   @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} 
       @var{expression} |
-  @var{math-function-id} [ < @var{expression-list} > ]
+  @var{function-id} [ < @var{expression-list} > ]
 @end example
 
 List of constant expressions are defined as:
@@ -695,20 +708,8 @@ character expressions.
 @c Operators
 @c -------------------------------------------------------------------------
 
-@node Operators, Functions, Constants, Expressions
+@node Operators, Functions, Expressions, General tools
 @section Operators
-
-@menu
-* Operator types::              
-* Evaluation order::            
-@end menu
-
-@c .........................................................................
-@c Types
-@c .........................................................................
-
-@node Operator types, Evaluation order, Operators, Operators
-@subsection Operator types
 
 The operators in Gmsh are similar to the corresponding operators in the C
 or C++ programming languages.
@@ -830,13 +831,6 @@ argument (located after @code{:}) is evaluated and returned.
 @end table
 
 
-@c .........................................................................
-@c Evaluation
-@c .........................................................................
-
-@node Evaluation order,  , Operator types, Operators
-@subsection Evaluation order
-
 @cindex Evaluation, order
 @cindex Order of evaluation
 @cindex Operation, priorities
@@ -865,7 +859,7 @@ i.e.@: @code{^} has the highest evaluation priority). Parentheses
 @c Functions
 @c -------------------------------------------------------------------------
 
-@node Functions,  , Operators, Expressions
+@node Functions, General commands, Operators, General tools
 @section Functions
 
 @cindex Function, definition
@@ -993,46 +987,89 @@ Hyperbolic tangent of @var{expression}.
 
 @end ftable
 
+@c -------------------------------------------------------------------------
+@c General commands
+@c -------------------------------------------------------------------------
 
-@c =========================================================================
-@c General 
-@c =========================================================================
+@node General commands, Option database, Functions, General tools
+@section General commands
 
-@node General, Geometry module, Expressions, Top
-@chapter General stuff
+@ftable @code
 
-general commands:
+@item Call
+@code{"@var{expression-char}"}
 
-Call
-EndFor          
-EndIf           
-Exit            
-For             
-Function        
-If              
-MPI_Rank        
-MPI_Size        
-Printf          
-Return          
-Sprintf         
-StrCat          
-StrPrefix       
+@item EndFor
 
-Merge string;                (to merge a file)
-MergeWithBoundingBox string; (to merge a file and force the recalculation
-                               of the scene's bounding box)
-Draw;                        (to redraw the scene)
-Save string;                 (to save the mesh)
-Print string;                (to print the graphic window in the format
-                               defined in Print.Format)
-Sleep expr;                  (to sleep during expr seconds)
-Delete View[int];            (to free the view int)
-Delete Meshes;               (to free all meshes)
-Duplicata View[int];         (to duplicate the view int)
-System string;               (to execute a system call)
+@item EndIf
 
-Include  string
-#include string
+@item Exit
+
+@item For
+
+@item Function
+
+@item If
+
+@item MPI_Rank
+
+@item MPI_Size
+
+@item Printf
+
+@item Return
+
+@item Sprintf
+
+@item StrCat
+
+@item StrPrefix
+
+@item Merge string;
+
+to merge a file
+
+@item MergeWithBoundingBox string;
+
+to merge a file and force the recalculation of the scene's bounding box
+
+@item Draw;
+
+to redraw the scene
+
+@item Save string;
+
+to save the mesh
+
+@item Print string;
+
+to print the graphic window in the format defined in Print.Format
+
+@item Sleep expr;
+
+to sleep during expr seconds
+
+@item Delete View[int];
+
+to free the view int
+
+@item Delete Meshes;
+
+to free all meshes
+
+@item Duplicata View[int];
+
+to duplicate the view int
+
+@item System string;
+
+to execute a system call
+
+@item Include  string
+
+@item #include string
+
+@end ftable
 
 Files can be included by placing one of the following commands
 (@var{expression-char} represents a file name) on a separate line, and
@@ -1051,9 +1088,12 @@ Ellipse
 Extrude         
 ELLIPSE
 
-@c =========================================================================
+@c -------------------------------------------------------------------------
 @c Option database
-@c =========================================================================
+@c -------------------------------------------------------------------------
+
+@node Option database,  , General commands, General tools
+@section Option database
 
 XXX
 
@@ -1062,50 +1102,48 @@ XXX
 @c Geometry module
 @c =========================================================================
 
-@node Geometry module, Mesh module, General, Top
+@node Geometry module, Mesh module, General tools, Top
 @chapter Geometry module
 
 @cindex Geometry
 @cindex Module, Geometry
 
-newreg
-newp
-newc
-news
-newv
-Attractor
-Bezier		
-BSpline		
-Circle          
-Coherence       
-CatmullRom	
-Delete          
-Dilate          
-Duplicata       
-Ellipsis        
-Intersect       
-Knots		
-Line            
-Loop            
-Nurbs		
-Order
-Physical        
-Plane           
-Point           
-Rotate          
-Ruled           
-Spline          
-Surface         
-Symmetry        
-Triangulation   
-Translate       
-Trimmed		
-Volume          
+@ftable @code
 
-
-
-Describe option database in expressions above...
-
+@item newreg
+@item newp
+@item newc
+@item news
+@item newv
+@item Attractor
+@item Bezier		
+@item BSpline		
+@item Circle          
+@item Coherence       
+@item CatmullRom	
+@item Delete          
+@item Dilate          
+@item Duplicata       
+@item Ellipsis        
+@item Intersect       
+@item Knots		
+@item Line            
+@item Loop            
+@item Nurbs		
+@item Order
+@item Physical        
+@item Plane           
+@item Point           
+@item Rotate          
+@item Ruled           
+@item Spline          
+@item Surface         
+@item Symmetry        
+@item Triangulation   
+@item Translate       
+@item Trimmed		
+@item Volume          
+@end ftable
 
 @c =========================================================================
 @c Mesh module
@@ -1117,23 +1155,22 @@ Describe option database in expressions above...
 @cindex Mesh
 @cindex Module, Mesh
 
-
-Bump
-Characteristic
-Elliptic
-Length
-Layers          
-Meshes          
-Power           
-Progression     
-Parametric	
-Recombine
-Transfinite     
-With		
-Using           
-In              
-
-
+@ftable @code
+@item Bump
+@item Characteristic
+@item Elliptic
+@item Length
+@item Layers          
+@item Meshes          
+@item Power           
+@item Progression     
+@item Parametric	
+@item Recombine
+@item Transfinite     
+@item With		
+@item Using           
+@item In              
+@end ftable
 
 @c =========================================================================
 @c Solver module
@@ -1156,36 +1193,37 @@ In
 @cindex Post-processing
 @cindex Module, Post-processing
 
-Color
-ColorTable
-Plugin          
-SP
-VP
-TP
-SL
-VL
-TL
-ST
-VT
-TT
-SQ
-VQ
-TQ
-SS
-VS
-TS
-SH
-VH
-TH
-SI
-VI
-TI
-SY
-VY
-TY
-T2
-T3
-
+@ftable @code
+@item Color
+@item ColorTable
+@item Plugin          
+@item SP
+@item VP
+@item TP
+@item SL
+@item VL
+@item TL
+@item ST
+@item VT
+@item TT
+@item SQ
+@item VQ
+@item TQ
+@item SS
+@item VS
+@item TS
+@item SH
+@item VH
+@item TH
+@item SI
+@item VI
+@item TI
+@item SY
+@item VY
+@item TY
+@item T2
+@item T3
+@end ftable
 
 @c =========================================================================
 @c Tutorial
@@ -1242,8 +1280,7 @@ user.
 @cindex File, @file{.msh}
 @cindex @file{.msh} file
 
-The native mesh format read by GetDP is the mesh file format produced by
-Gmsh (@value{GMSH-WEB}). The file is divided into two sections, defining the
+The native Gmsh mesh format read is divided into two sections, defining the
 nodes and the elements in the mesh.
 
 @example
