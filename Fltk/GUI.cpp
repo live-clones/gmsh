@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.156 2002-02-22 17:40:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.157 2002-03-05 19:40:47 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -561,6 +561,11 @@ GUI::GUI(int argc, char **argv) {
   if(strlen(CTX.display)) Fl::display(CTX.display);
 
   Fl::add_handler(SetGlobalShortcut);
+
+  // Fl::visible_focus(0); 
+  // we could use that to prohibit all default fltk navigation. It is
+  // not necessary anymore, since I added the correct handlers for the
+  // graphic and the colorbar window...
 
   // All static windows are contructed (even if some are not
   // displayed) since the shortcuts should be valid even for hidden
