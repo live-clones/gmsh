@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.223 2002-12-04 17:19:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.224 2003-01-22 02:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -3017,10 +3017,16 @@ void GUI::create_solver_window(int num){
 	solver[num].butt[i]->selection_color(TOGGLE_COLOR);
       }
       
-      Fl_Return_Button* o = new Fl_Return_Button(width-BB-2*WB, 
-						 height-(3+newrow)*WB-(2+newrow)*BH, BB, BH, "Apply");
-      o->callback(solver_ok_cb, (void*)num);
-      
+      { 
+	Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-3*WB,
+						   height-(3+newrow)*WB-(2+newrow)*BH, BB, BH, "Apply");
+	o->callback(solver_ok_cb, (void*)num);
+      }
+      {
+	Fl_Button* o = new Fl_Button(width-BB-2*WB, 
+				     height-(3+newrow)*WB-(2+newrow)*BH, BB, BH, "Save");
+	o->callback(options_save_cb);
+      }
       g[1]->end();
     }
     { 
