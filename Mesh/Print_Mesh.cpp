@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.16 2001-02-26 10:26:37 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.17 2001-02-26 10:46:53 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -48,6 +48,25 @@ void print_msh_node (void *a, void *b){
 }
 
 void process_msh_nodes (Mesh * M){
+  int i, j, Num;
+  PhysicalGroup *p;
+  Vertex *pv, *ppv, v;
+
+  for (i = 0; i < List_Nbr (M->PhysicalGroups); i++){
+    List_Read (M->PhysicalGroups, i, &p);
+    if(p->Typ == MSH_PHYSICAL_POINT){
+      for (j = 0; j < List_Nbr (p->Entities); j++){
+        List_Read (p->Entities, j, &Num);
+        pv = &v;
+        pv->Num = abs(Num);
+	if(!Tree_Search(M->Vertices, &pv)){
+	  if((ppv = *(Vertex**)Tree_PQuery(M->Points, &pv)))
+	    Tree_Add(M->Vertices, &ppv);
+	}
+      }
+    }
+  }
+
   MSH_NODE_NUM = Tree_Nbr (M->Vertices) + Tree_Nbr (M->VertexEdges);
 
   fprintf (mshfile, "$NOD\n");
@@ -242,12 +261,8 @@ void add_msh_elements (Mesh * M){
         List_Read (p->Entities, j, &Num);
         pv->Num = abs (Num);
         MSH_PHYSICAL_ORI = sign (Num);
-        if (Tree_Query (M->Points, &pv))
-          add_msh_point (pv);
-	else{
-	  if (Tree_Query (M->Vertices, &pv))
-	    add_msh_point (pv);
-	}
+	if (Tree_Query (M->Vertices, &pv))
+	  add_msh_point (pv);
       }
       break;
 
