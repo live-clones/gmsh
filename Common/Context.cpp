@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.43 2002-05-18 07:56:47 geuzaine Exp $
+// $Id: Context.cpp,v 1.44 2002-05-18 09:16:52 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -50,12 +50,14 @@
 
 void Context_T::buildRotmatrix(void){
   double x, y, z;
-  extern void set_r(int i, double val);
 
   if(useTrackball){
     build_rotmatrix(rot, quaternion);
+
+#ifndef _BLACKBOX
     // We should reconstruct the Euler angles from the rotation
     // matrix. I'm too lazy to do it :-(
+    extern void set_r(int i, double val);
     set_r(0, 0.);
     set_r(1, 0.);
     set_r(2, 0.);
@@ -90,6 +92,8 @@ void Context_T::buildRotmatrix(void){
     set_r(1, r1 * 180./(Pi));  // lazyyyyyy
     set_r(2, r2);
     */
+#endif
+
   }
   else{
     x = r[0] * Pi / 180.;
