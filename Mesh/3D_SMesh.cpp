@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.9 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.10 2001-08-13 09:38:14 geuzaine Exp $
 
 /*  
   Maillage transfini volumique
@@ -136,6 +136,8 @@ int MeshTransfiniteVolume (Volume *vol) {
   if(nbs == 5) nbp = 6;
   else if(nbs == 6) nbp = 8;
   else return(0);
+
+  Msg(STATUS3, "Meshing Volume %d", vol->Num);
 
   for(i=0;i<6;i++) G[i] = NULL ;
   

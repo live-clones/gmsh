@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.25 2001-08-13 09:38:14 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.26 2001-08-13 09:42:02 geuzaine Exp $
 
 /*
  
@@ -319,7 +319,7 @@ void Box_6_Tetraedron (List_T * P, Mesh * m){
      |   /|           /|
      |  / |          / |
      | /  |         /  |
-     5|/___|________/6  |
+    5|/___|________/6  |
      |   4|________|___|3
      |   /         |   /
      |  / Y        |  /
@@ -733,8 +733,6 @@ void Maillage_Volume (void *data, void *dum){
   }
   else if (v->Typ == 99999){
 
-    Msg(STATUS2, "Mesh 3D... (initial)");
-
     LOCAL = &M;
     Create_BgMesh (THEM->BGM.Typ, .2, LOCAL);
     s = &S;
@@ -753,10 +751,12 @@ void Maillage_Volume (void *data, void *dum){
     
     N = List_Nbr (POINTS);
     n = N / 30 + 1;
+
+    if(!N) return;
     
     /* Creation d'un maillage initial respectant la frontiere */
     
-    if(!List_Nbr(POINTS))return;
+    Msg(STATUS2, "Mesh 3D... (initial)");
     
     Convex_Hull_Mesh (POINTS, LOCAL);
     
@@ -784,18 +784,17 @@ void Maillage_Volume (void *data, void *dum){
     
     List_Delete (Suppress);
     
-    if (Tree_Nbr (LOCAL->Simplexes) == 0)
-      return;
+    if (Tree_Nbr (LOCAL->Simplexes) == 0) return;
 
     /* Si il reste quelque chose a mailler en volume : */
+
+    Msg(STATUS2, "Mesh 3D... (final)");
     
     v->Simplexes = LOCAL->Simplexes;
     
     Bgm_With_Points (LOCAL);
     POINTS_TREE = THEM->Simplexes;
     
-    Msg(STATUS2, "Mesh 3D... (final)");
-
     Tree_Right (LOCAL->Simplexes, &simp);
     i = 0;
     Progress (102);
