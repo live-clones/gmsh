@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.338 2005-03-09 02:18:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.339 2005-03-09 09:21:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -888,6 +888,15 @@ void mesh_cut_plane_cb(CALLBACK_ARGS)
   CTX.mesh.draw = 1;
 }
 
+void mesh_cut_plane_invert_cb(CALLBACK_ARGS)
+{
+  WID->mesh_value[14]->value(-WID->mesh_value[14]->value());
+  WID->mesh_value[15]->value(-WID->mesh_value[15]->value());
+  WID->mesh_value[16]->value(-WID->mesh_value[16]->value());
+  WID->mesh_value[17]->value(-WID->mesh_value[17]->value());
+  mesh_cut_plane_cb(NULL, NULL);
+}
+
 // Solver options
 
 void solver_options_cb(CALLBACK_ARGS)
@@ -1218,6 +1227,13 @@ void clip_update_cb(CALLBACK_ARGS)
   CTX.draw_bbox = old;
   CTX.post.draw = 1;
   CTX.mesh.draw = 1;
+}
+
+void clip_invert_cb(CALLBACK_ARGS)
+{
+  for(int i = 0; i < 4; i++)
+    WID->clip_value[i]->value(-WID->clip_value[i]->value());
+  clip_update_cb(NULL, NULL);
 }
 
 void clip_reset_cb(CALLBACK_ARGS)

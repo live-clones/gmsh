@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.419 2005-02-20 06:36:53 geuzaine Exp $
+// $Id: GUI.cpp,v 1.420 2005-03-09 09:21:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2215,28 +2215,33 @@ void GUI::create_option_window()
       mesh_butt[16]->down_box(GMSH_TOGGLE_BOX);
       mesh_butt[16]->selection_color(GMSH_TOGGLE_COLOR);
 
-      mesh_value[14] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "A");
+      int ii = fontsize;
+      Fl_Button *invert = new Fl_Button(L + 2 * WB, 2 * WB + 2 * BH, ii, 4*BH, "-");
+      invert->callback(mesh_cut_plane_invert_cb);
+      invert->tooltip("Invert orientation");
+
+      mesh_value[14] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 2 * BH, IW - ii, BH, "A");
       mesh_value[14]->align(FL_ALIGN_RIGHT);
       mesh_value[14]->callback(mesh_cut_plane_cb);
       mesh_value[14]->step(0.01);
       mesh_value[14]->minimum(-1.0);
       mesh_value[14]->maximum(1.0);
 
-      mesh_value[15] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "B");
+      mesh_value[15] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 3 * BH, IW - ii, BH, "B");
       mesh_value[15]->align(FL_ALIGN_RIGHT);
       mesh_value[15]->callback(mesh_cut_plane_cb);
       mesh_value[15]->step(0.01);
       mesh_value[15]->minimum(-1.0);
       mesh_value[15]->maximum(1.0);
 
-      mesh_value[16] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "C");
+      mesh_value[16] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 4 * BH, IW - ii, BH, "C");
       mesh_value[16]->align(FL_ALIGN_RIGHT);
       mesh_value[16]->callback(mesh_cut_plane_cb);
       mesh_value[16]->step(0.01);
       mesh_value[16]->minimum(-1.0);
       mesh_value[16]->maximum(1.0);
 
-      mesh_value[17] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "D");
+      mesh_value[17] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 5 * BH, IW - ii, BH, "D");
       mesh_value[17]->align(FL_ALIGN_RIGHT);
       mesh_value[17]->callback(mesh_cut_plane_cb);
       mesh_value[17]->step(0.01);
@@ -3680,10 +3685,15 @@ void GUI::create_clip_window()
   clip_choice->menu(plane_number);
   clip_choice->callback(clip_num_cb);
 
-  clip_value[0] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 1 * BH, BW, BH, "A");
-  clip_value[1] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 2 * BH, BW, BH, "B");
-  clip_value[2] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 3 * BH, BW, BH, "C");
-  clip_value[3] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 4 * BH, BW, BH, "D");
+  int ii = fontsize;
+  Fl_Button *invert = new Fl_Button(2 * WB + brw, 1 * WB + 1 * BH, ii, 4*BH, "-");
+  invert->callback(clip_invert_cb);
+  invert->tooltip("Invert orientation");
+
+  clip_value[0] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 1 * BH, BW - ii, BH, "A");
+  clip_value[1] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 2 * BH, BW - ii, BH, "B");
+  clip_value[2] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 3 * BH, BW - ii, BH, "C");
+  clip_value[3] = new Fl_Value_Input(2 * WB + brw + ii, 1 * WB + 4 * BH, BW - ii, BH, "D");
   for(int i = 0; i < 4; i++){
     clip_value[i]->align(FL_ALIGN_RIGHT);
     clip_value[i]->callback(clip_update_cb);

@@ -95,6 +95,7 @@ void geometry_options_ok_cb(CALLBACK_ARGS);
 void mesh_options_cb(CALLBACK_ARGS);
 void mesh_options_ok_cb(CALLBACK_ARGS);
 void mesh_cut_plane_cb(CALLBACK_ARGS);
+void mesh_cut_plane_invert_cb(CALLBACK_ARGS);
 
 void solver_options_cb(CALLBACK_ARGS);
 void solver_options_ok_cb(CALLBACK_ARGS);
@@ -161,6 +162,7 @@ void visibility_ok_cb(CALLBACK_ARGS);
 
 void clip_cb(CALLBACK_ARGS);
 void clip_update_cb(CALLBACK_ARGS);
+void clip_invert_cb(CALLBACK_ARGS);
 void clip_num_cb(CALLBACK_ARGS);
 void clip_reset_cb(CALLBACK_ARGS);
 

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.55 2005-03-09 08:07:35 geuzaine Exp $
+// $Id: Entity.cpp,v 1.56 2005-03-09 09:21:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -26,107 +26,8 @@
 #include "Numeric.h"
 #include "Draw.h"
 #include "Context.h"
+
 extern Context_T CTX;
-
-class point{
-public:
-    double x, y, z;
-    bool valid;
-    point() : x(0.), y(0.), z(0.), valid(false) {;};
-    point(double xi, double yi, double zi) :
-	x(xi), y(yi), z(zi), valid(true) {;};
-};
-
-class plane{
-private:
-    double _a, _b, _c, _d;
-public:
-    plane(double a, double b, double c, double d) :
-	_a(a), _b(b), _c(c), _d(d) {;};
-    double val(point &p){
-	return _a*p.x + _b*p.y + _c*p.z + _d;
-    };
-    point intersect(point &p1, point &p2){
-	double v1 = val(p1), v2 = val(p2);
-	if(fabs(v1) < 1.e-12){
-	    if(fabs(v2) < 1.e-12)
-		return point();
-	    else
-		return point(p1.x, p1.y, p1.z);
-	}
-	else if(fabs(v2) < 1.e-12){
-	    return point(p2.x, p2.y, p2.z);
-	}
-	else if(v1 * v2 < 0.){
-	    double coef = - v1 / (v2 - v1);
-	    return point(coef * (p2.x - p1.x) + p1.x,
-			 coef * (p2.y - p1.y) + p1.y,
-			 coef * (p2.z - p1.z) + p1.z);
-	}
-	else
-	    return point();
-    };
-};
-
-void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
-			     double xmax, double ymax, double zmax,
-			     double a, double b, double c, double d)
-{
-
-  plane pl(a, b, c, d);
-  point p1(xmin, ymin, zmin), p2(xmax, ymin, zmin);
-  point p3(xmax, ymax, zmin), p4(xmin, ymax, zmin);
-  point p5(xmin, ymin, zmax), p6(xmax, ymin, zmax);
-  point p7(xmax, ymax, zmax), p8(xmin, ymax, zmax);
-
-  point edge[12];
-  edge[0] = pl.intersect(p1, p2);
-  edge[1] = pl.intersect(p1, p4);
-  edge[2] = pl.intersect(p1, p5);
-  edge[3] = pl.intersect(p2, p3);
-  edge[4] = pl.intersect(p2, p6);
-  edge[5] = pl.intersect(p3, p4);
-  edge[6] = pl.intersect(p3, p7);
-  edge[7] = pl.intersect(p4, p8);
-  edge[8] = pl.intersect(p5, p6);
-  edge[9] = pl.intersect(p5, p8);
-  edge[10] = pl.intersect(p6, p7);
-  edge[11] = pl.intersect(p7, p8);
-
-  int face[6][4] = {
-    {0, 2, 4, 8},
-    {0, 1, 3, 5},
-    {1, 2, 7, 9},
-    {3, 4, 6, 10},
-    {5, 6, 7, 11},
-    {8, 9, 10, 11}
-  };
-  
-  double n[3] = {a,b,c};
-  norme(n);
-  n[0] *= 50 * CTX.pixel_equiv_x / CTX.s[0];
-  n[1] *= 50 * CTX.pixel_equiv_x / CTX.s[1];
-  n[2] *= 50 * CTX.pixel_equiv_x / CTX.s[2];
-  
-  for(int i = 0; i < 6; i++){
-    int nb = 0;
-    point p[4];
-    for(int j = 0; j < 4; j++){
-      if(edge[face[i][j]].valid == true)
-	p[nb++] = edge[face[i][j]];
-    }
-    if(nb > 1){
-      glBegin(GL_LINE_STRIP);
-      for(int j = 0; j < nb; j++)
-	glVertex3d(p[j].x, p[j].y, p[j].z);
-      glEnd();
-      for(int j = 0; j < nb; j++)
-	Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-		    CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		    p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], 1);
-    }
-  }
-}
 
 void Draw_Point(int type, double size, double *x, double *y, double *z,
                 int light)
@@ -154,6 +55,7 @@ void Draw_Sphere(double size, double x, double y, double z, int light)
     gluSphere(qua, 1, CTX.quadric_subdivisions, CTX.quadric_subdivisions);
     glEndList();
   }
+
   glPushMatrix();
   glTranslated(x, y, z);
   glScaled(s, s, s);
@@ -177,6 +79,7 @@ void Draw_Disk(double size, double rint, double x, double y, double z, int light
     gluDisk(qua, rint, 1, 2*CTX.quadric_subdivisions, 2*CTX.quadric_subdivisions);
     glEndList();
   }
+
   glPushMatrix();
   glTranslated(x, y, z);
   glScaled(s, s, s);
@@ -197,8 +100,6 @@ void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
     qua = gluNewQuadric();
   }
 
-  glPushMatrix();
-
   double dx = x[1] - x[0];
   double dy = y[1] - y[0];
   double dz = z[1] - z[0];
@@ -216,6 +117,7 @@ void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
   }
   phi = 180. * myacos(cosphi) / M_PI;
 
+  glPushMatrix();
   glTranslated(x[0], y[0], z[0]);
   glRotated(phi, axis[0], axis[1], axis[2]);
   gluCylinder(qua, radius, radius, length, CTX.quadric_subdivisions, 1);
@@ -428,8 +330,6 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
     qua = gluNewQuadric();
   }
 
-  glPushMatrix();
-
   double zdir[3] = {0., 0., 1.};
   double vdir[3] = {dx/length, dy/length, dz/length};
   double axis[3], cosphi, phi;
@@ -442,9 +342,9 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
   }
   phi = 180. * myacos(cosphi) / M_PI; 
 
+  glPushMatrix();
   glTranslated(x, y, z);
   glRotated(phi, axis[0], axis[1], axis[2]);
-  
   glTranslated(0., 0., stem_l);
   if(head_l && head_r)
     gluCylinder(qua, head_r, 0., head_l, subdiv, 1);
@@ -453,12 +353,10 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
   else
     gluDisk(qua, head_r, stem_r, subdiv, 1);      
   glTranslated(0., 0., -stem_l);
-
   if(stem_l && stem_r){
     gluCylinder(qua, stem_r, stem_r, stem_l, subdiv, 1);
     gluDisk(qua, 0, stem_r, subdiv, 1);
   }
-
   glPopMatrix();
 
   glDisable(GL_LIGHTING);
@@ -498,7 +396,108 @@ void Draw_Vector(int Type, int Fill,
 
 }
 
+class point{
+public:
+    double x, y, z;
+    bool valid;
+    point() : x(0.), y(0.), z(0.), valid(false) {;};
+    point(double xi, double yi, double zi) :
+	x(xi), y(yi), z(zi), valid(true) {;};
+};
 
+class plane{
+private:
+    double _a, _b, _c, _d;
+public:
+    plane(double a, double b, double c, double d) :
+	_a(a), _b(b), _c(c), _d(d) {;};
+    double val(point &p){
+	return _a*p.x + _b*p.y + _c*p.z + _d;
+    };
+    point intersect(point &p1, point &p2){
+	double v1 = val(p1), v2 = val(p2);
+	if(fabs(v1) < 1.e-12){
+	    if(fabs(v2) < 1.e-12)
+		return point();
+	    else
+		return point(p1.x, p1.y, p1.z);
+	}
+	else if(fabs(v2) < 1.e-12){
+	    return point(p2.x, p2.y, p2.z);
+	}
+	else if(v1 * v2 < 0.){
+	    double coef = - v1 / (v2 - v1);
+	    return point(coef * (p2.x - p1.x) + p1.x,
+			 coef * (p2.y - p1.y) + p1.y,
+			 coef * (p2.z - p1.z) + p1.z);
+	}
+	else
+	    return point();
+    };
+};
 
+void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
+			     double xmax, double ymax, double zmax,
+			     double a, double b, double c, double d)
+{
 
+  plane pl(a, b, c, d);
+  point p1(xmin, ymin, zmin), p2(xmax, ymin, zmin);
+  point p3(xmax, ymax, zmin), p4(xmin, ymax, zmin);
+  point p5(xmin, ymin, zmax), p6(xmax, ymin, zmax);
+  point p7(xmax, ymax, zmax), p8(xmin, ymax, zmax);
 
+  point edge[12];
+  edge[0] = pl.intersect(p1, p2);
+  edge[1] = pl.intersect(p1, p4);
+  edge[2] = pl.intersect(p1, p5);
+  edge[3] = pl.intersect(p2, p3);
+  edge[4] = pl.intersect(p2, p6);
+  edge[5] = pl.intersect(p3, p4);
+  edge[6] = pl.intersect(p3, p7);
+  edge[7] = pl.intersect(p4, p8);
+  edge[8] = pl.intersect(p5, p6);
+  edge[9] = pl.intersect(p5, p8);
+  edge[10] = pl.intersect(p6, p7);
+  edge[11] = pl.intersect(p7, p8);
+
+  int face[6][4] = {
+    {0, 2, 4, 8},
+    {0, 1, 3, 5},
+    {1, 2, 7, 9},
+    {3, 4, 6, 10},
+    {5, 6, 7, 11},
+    {8, 9, 10, 11}
+  };
+  
+  double n[3] = {a,b,c}, ll = 50;
+  norme(n);
+  if(CTX.arrow_rel_stem_radius)
+    ll = CTX.line_width/CTX.arrow_rel_stem_radius;
+  n[0] *= ll * CTX.pixel_equiv_x / CTX.s[0];
+  n[1] *= ll * CTX.pixel_equiv_x / CTX.s[1];
+  n[2] *= ll * CTX.pixel_equiv_x / CTX.s[2];
+  double length = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+
+  for(int i = 0; i < 6; i++){
+    int nb = 0;
+    point p[4];
+    for(int j = 0; j < 4; j++){
+      if(edge[face[i][j]].valid == true)
+	p[nb++] = edge[face[i][j]];
+    }
+    if(nb > 1){
+      for(int j = 1; j < nb; j++){
+	double xx[2] = {p[j].x, p[j-1].x};
+	double yy[2] = {p[j].y, p[j-1].y};
+	double zz[2] = {p[j].z, p[j-1].z};
+	Draw_Cylinder(CTX.line_width, xx, yy, zz, 1);
+      }
+      for(int j = 0; j < nb; j++){
+	Draw_3DArrow(CTX.arrow_rel_head_radius, 
+		     CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		     p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);
+      }
+    }
+  }
+}
