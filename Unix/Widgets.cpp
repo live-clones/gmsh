@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.7 2000-11-24 12:50:06 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.8 2000-11-24 17:14:27 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -766,23 +766,6 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.geomVisibleRowCol);
 
   i=0;
-  XtSetArg(arg[i], XmNnumColumns, 1); i++;
-  w->OD.geomVisibleTypeCheck = XmCreateRadioBox(w->OD.geomVisibleRowCol, "ODgeomVisibleTypeCheck", arg, i);
-  XtManageChild(w->OD.geomVisibleTypeCheck);
-
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entities")); i++;
-  XtSetArg(arg[i], XmNset, True); i++;
-  w->OD.geomVisibleTypeButt[0] = XmCreateToggleButton(w->OD.geomVisibleTypeCheck, "ODgeomVisibleTypeButt0", arg, i);
-  XtManageChild(w->OD.geomVisibleTypeButt[0]);
-
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Labels")); i++;
-  XtSetArg(arg[i], XmNset, False); i++;
-  w->OD.geomVisibleTypeButt[1] = XmCreateToggleButton(w->OD.geomVisibleTypeCheck, "ODgeomVisibleTypeButt1", arg, i);
-  XtManageChild(w->OD.geomVisibleTypeButt[1]);
-
-  i=0;
   XtSetArg(arg[i], XmNnumColumns, 2); i++;
   w->OD.geomVisibleCheck = XmCreateSimpleCheckBox(w->OD.geomVisibleRowCol, "ODgeomVisibleCheck", arg, i);
   XtManageChild(w->OD.geomVisibleCheck);
@@ -810,6 +793,24 @@ void CreateWidgets_OD(Widgets_T *w){
   XtSetArg(arg[i], XmNset, CTX.geom.volumes?True:False); i++;
   w->OD.geomVisibleButt[3] = XmCreateToggleButton(w->OD.geomVisibleCheck, "ODgeomVisibleButt3", arg, i);
   XtManageChild(w->OD.geomVisibleButt[3]);
+
+  i=0;
+  XtSetArg(arg[i], XmNnumColumns, 2); i++;
+  w->OD.geomVisibleTypeCheck = XmCreateRadioBox(w->OD.geomVisibleRowCol, "ODgeomVisibleTypeCheck", arg, i);
+  XtManageChild(w->OD.geomVisibleTypeCheck);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entities")); i++;
+  XtSetArg(arg[i], XmNset, True); i++;
+  w->OD.geomVisibleTypeButt[0] = XmCreateToggleButton(w->OD.geomVisibleTypeCheck, "ODgeomVisibleTypeButt0", arg, i);
+  XtManageChild(w->OD.geomVisibleTypeButt[0]);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Labels")); i++;
+  XtSetArg(arg[i], XmNset, False); i++;
+  w->OD.geomVisibleTypeButt[1] = XmCreateToggleButton(w->OD.geomVisibleTypeCheck, "ODgeomVisibleTypeButt1", arg, i);
+  XtManageChild(w->OD.geomVisibleTypeButt[1]);
+
 
   /* Geometry - Visible by Number */
 
@@ -999,23 +1000,6 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.meshVisibleRowCol);
 
   i=0;
-  XtSetArg(arg[i], XmNnumColumns, 1); i++;
-  w->OD.meshVisibleTypeCheck = XmCreateRadioBox(w->OD.meshVisibleRowCol, "ODmeshVisibleTypeCheck", arg, i);
-  XtManageChild(w->OD.meshVisibleTypeCheck);
-
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entities")); i++;
-  XtSetArg(arg[i], XmNset, True); i++;
-  w->OD.meshVisibleTypeButt[0] = XmCreateToggleButton(w->OD.meshVisibleTypeCheck, "ODmeshVisibleTypeButt0", arg, i);
-  XtManageChild(w->OD.meshVisibleTypeButt[0]);
-
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Labels")); i++;
-  XtSetArg(arg[i], XmNset, False); i++;
-  w->OD.meshVisibleTypeButt[1] = XmCreateToggleButton(w->OD.meshVisibleTypeCheck, "ODmeshVisibleTypeButt1", arg, i);
-  XtManageChild(w->OD.meshVisibleTypeButt[1]);
-
-  i=0;
   XtSetArg(arg[i], XmNnumColumns, 2); i++;
   w->OD.meshVisibleCheck = XmCreateSimpleCheckBox(w->OD.meshVisibleRowCol, "ODmeshVisibleCheck", arg, i);
   XtManageChild(w->OD.meshVisibleCheck);
@@ -1043,6 +1027,24 @@ void CreateWidgets_OD(Widgets_T *w){
   XtSetArg(arg[i], XmNset, CTX.mesh.volumes?True:False); i++;
   w->OD.meshVisibleButt[3] = XmCreateToggleButton(w->OD.meshVisibleCheck, "ODmeshVisibleButt3", arg, i);
   XtManageChild(w->OD.meshVisibleButt[3]);
+
+  i=0;
+  XtSetArg(arg[i], XmNnumColumns, 2); i++;
+  w->OD.meshVisibleTypeCheck = XmCreateRadioBox(w->OD.meshVisibleRowCol, "ODmeshVisibleTypeCheck", arg, i);
+  XtManageChild(w->OD.meshVisibleTypeCheck);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Entities")); i++;
+  XtSetArg(arg[i], XmNset, True); i++;
+  w->OD.meshVisibleTypeButt[0] = XmCreateToggleButton(w->OD.meshVisibleTypeCheck, "ODmeshVisibleTypeButt0", arg, i);
+  XtManageChild(w->OD.meshVisibleTypeButt[0]);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Labels")); i++;
+  XtSetArg(arg[i], XmNset, False); i++;
+  w->OD.meshVisibleTypeButt[1] = XmCreateToggleButton(w->OD.meshVisibleTypeCheck, "ODmeshVisibleTypeButt1", arg, i);
+  XtManageChild(w->OD.meshVisibleTypeButt[1]);
+
 
   /* Mesh - Visible by Number */
 
