@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.59 2003-03-01 22:36:38 geuzaine Exp $
+// $Id: CAD.cpp,v 1.60 2003-03-04 02:35:30 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1815,7 +1815,8 @@ static Vertex *VERTEX;
 
 double min1d(double (*funct) (double), double *xmin)
 {
-  double ax = 1.e-15, bx = 1.e-12, cx = 1.e-11, fa, fb, fx, tol = 1.e-3;
+  // we should think about the tolerance more carefully...
+  double ax = 1.e-15, bx = 1.e-12, cx = 1.e-11, fa, fb, fx, tol = 1.e-4;
   mnbrak(&ax, &bx, &cx, &fa, &fx, &fb, funct);
   //Msg(INFO, "--MIN1D : ax %12.5E bx %12.5E cx %12.5E",ax,bx,cx);  
   return (brent(ax, bx, cx, funct, tol, xmin));

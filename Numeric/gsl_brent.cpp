@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.7 2003-03-03 23:47:32 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.8 2003-03-04 02:35:30 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,8 @@ double brent(double ax, double bx, double cx,
     // this is deprecated: we should use gsl_min_fminimizer_x_minimum(s) instead
     a = gsl_min_fminimizer_x_lower(s);
     c = gsl_min_fminimizer_x_upper(s);
-    status = gsl_min_test_interval(a, c, tol, 0.0);
+    // we should think about the tolerance more carefully...
+    status = gsl_min_test_interval(a, c, tol, tol);
   }
   while(status == GSL_CONTINUE && iter < MAXITER);
 
