@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.21 2004-12-06 07:30:28 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.22 2005-01-01 01:49:19 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -109,10 +109,17 @@ int Gmsh_StartClient(char *command, char *sockname)
     return 1;
   }
 
-  if(!(port = strstr(sockname, ":")))
-    portno = -1; /* UNIX socket */
-  else
-    portno = atoi(port+1); /* INET socket */
+  if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
+    /* UNIX socket (testing ":" is not enough with Windows paths) */
+    portno = -1;
+  }
+  else{
+    /* INET socket */
+    port = strstr(sockname, ":");
+    if(!port)
+      return -1;  /* Error: Couldn't create socket */
+    portno = atoi(port+1);
+  }
 
   if(portno < 0){
     /* delete the file if it already exists */
@@ -203,9 +210,11 @@ int Gmsh_ReceiveString(int socket, int *type, char str[])
 
 int Gmsh_StopClient(char *sockname, int sock)
 {
-  if(!strstr(sockname, ":"))
+  if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
+    /* UNIX socket */
     if(Socket_UnlinkName(sockname) == -1)
       return -1;  /* Impossible to unlink the socket */
+  }
 
   close(sock);
   return 0;
