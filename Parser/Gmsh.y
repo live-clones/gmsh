@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.142 2003-09-19 17:22:26 geuzaine Exp $
+// $Id: Gmsh.y,v 1.143 2003-09-19 17:24:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2282,7 +2282,7 @@ Extrude :
 					  &ps, 1, NULL);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2299,7 +2299,7 @@ Extrude :
 					  &ps, 1, NULL);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2316,7 +2316,7 @@ Extrude :
 					  &ps, 1, NULL);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2338,7 +2338,7 @@ Extrude :
 					  &ps, 1, &extr);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2360,7 +2360,7 @@ Extrude :
 					  &ps, 1, &extr);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2382,7 +2382,7 @@ Extrude :
 					  &ps, 1, &extr);
       Curve *c = FindCurve(TheShape.Num, THEM);
       if(!c){
-	yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Curve %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2401,7 +2401,7 @@ Extrude :
 					    0, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2417,7 +2417,7 @@ Extrude :
 					    0, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2433,7 +2433,7 @@ Extrude :
 					    0, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2455,7 +2455,7 @@ Extrude :
 					    vol, &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2478,7 +2478,7 @@ Extrude :
 					    vol, &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
@@ -2501,7 +2501,7 @@ Extrude :
 					    vol, &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
-	yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
+	//yymsg(WARNING, "Unknown Surface %d", TheShape.Num);
 	TheShape.Type = 0;
       }
       else{
