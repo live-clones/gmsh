@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.380 2004-11-13 22:52:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.381 2004-11-14 05:31:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3586,7 +3586,7 @@ void GUI::create_geometry_context_window(int num)
       context_geometry_input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
       context_geometry_input[4]->value("0.0");
       context_geometry_input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Characteristic length");
-      context_geometry_input[5]->value("1.0");
+      context_geometry_input[5]->value("0.1");
       for(i = 2; i < 6; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }
