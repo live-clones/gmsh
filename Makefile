@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.175 2001-12-05 09:43:57 geuzaine Exp $
+# $Id: Makefile,v 1.176 2001-12-05 09:54:25 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
@@ -503,7 +503,7 @@ sgi-distrib:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
-	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh-batch -lm
+	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make sgi
@@ -639,7 +639,7 @@ sun-distrib:
            "GL_INCLUDE=" \
            "GUI_INCLUDE=" \
         ); done
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch -lm
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-batch
 	make clean
 	make sun
