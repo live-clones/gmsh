@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.46 2004-10-21 21:47:27 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.47 2004-10-21 23:42:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1287,32 +1287,7 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
     V_VonMises[i] = ComputeVonMises(V + 9*(i + nbnod * ts));
   }
 
-  switch (type) {
-  case POINT:
-    Draw_ScalarPoint(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  case LINE:
-    Draw_ScalarLine(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  case TRIANGLE:
-    Draw_ScalarTriangle(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  case QUADRANGLE:
-    Draw_ScalarQuadrangle(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  case TETRAHEDRON:
-    Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  case HEXAHEDRON:
-    Draw_ScalarHexahedron(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  case PRISM:
-    Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  case PYRAMID:
-    Draw_ScalarPyramid(View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
-    break;
-  }
+  Draw_ScalarElement(type, View, preproNormals, ValMin, ValMax, X, Y, Z, V_VonMises);
 
   View->TimeStep = ts;
 }
