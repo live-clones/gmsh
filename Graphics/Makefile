@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.44 2003-02-12 16:12:27 geuzaine Exp $
+# $Id: Makefile,v 1.45 2003-02-18 05:50:04 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshGraphics.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Fltk -I../Mesh -I../Numeric -I../Parser
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} ${GUI_INCLUDE}
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Draw.cpp \
       Mesh.cpp \

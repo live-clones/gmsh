@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.46 2003-02-11 08:54:56 geuzaine Exp $
+# $Id: Makefile,v 1.47 2003-02-18 05:50:05 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshMesh.a
-INCLUDE = -I../Numeric -I../Common -I../DataStr -I../Geo -I../Mesh\
+INCLUDE = -I../Numeric -I../NR -I../Common -I../DataStr -I../Geo -I../Mesh\
           -I../Graphics -I../Parser -I../Fltk -I../Triangle
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE}
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = 1D_Mesh.cpp \
       2D_Mesh.cpp \
@@ -247,7 +247,7 @@ Utils.o: Utils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  Mesh.h Interpolation.h ../Numeric/NRUtil.h ../Common/Context.h
+  Mesh.h Interpolation.h ../Common/Context.h
 Metric.o: Metric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \

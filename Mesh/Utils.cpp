@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.14 2003-01-23 20:19:22 geuzaine Exp $
+// $Id: Utils.cpp,v 1.15 2003-02-18 05:50:05 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -25,12 +25,16 @@
 #include "CAD.h"
 #include "Mesh.h"
 #include "Interpolation.h"
-#include "NRUtil.h"
 #include "Context.h"
 
-extern Context_T CTX;
+#if defined(HAVE_GSL)
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_linalg.h>
+#else
+#include "NR.h"
+#endif
 
-void dsvdcmp(double **a, int m, int n, double w[], double **v);
+extern Context_T CTX;
 
 void direction (Vertex * v1, Vertex * v2, double d[3]){
   d[0] = v2->Pos.X - v1->Pos.X;
@@ -58,17 +62,12 @@ void Projette (Vertex * v, double mat[3][3]){
 
 void MeanPlane(List_T *points, Surface *s){
   int    i, j, min, ndata, na;
-  double **U, **V, *W, res[4], ex[3], t1[3], t2[3], svd[3];
+  double res[4], ex[3], t1[3], t2[3], svd[3];
   Vertex *v;
   double xm=0., ym=0., zm=0.;
 
   ndata = List_Nbr(points);
   na = 3;
-
-  U = dmatrix(1,ndata,1,na);
-  V = dmatrix(1,na,1,na);
-  W = dvector(1,na);
-
   for (i=0; i<ndata; i++){
     List_Read(points, i, &v);
     xm += v->Pos.X;
@@ -79,6 +78,36 @@ void MeanPlane(List_T *points, Surface *s){
   ym/=(double)ndata;
   zm/=(double)ndata;
 
+#if defined(HAVE_GSL)
+  gsl_matrix *U = gsl_matrix_alloc(ndata, na);
+  gsl_matrix *V = gsl_matrix_alloc(na, na);
+  gsl_vector *W = gsl_vector_alloc(na);
+  gsl_vector *TMPVEC = gsl_vector_alloc(na);
+  for (i=0; i<ndata; i++){
+    List_Read(points, i, &v);
+    gsl_matrix_set(U, i, 0, v->Pos.X-xm);
+    gsl_matrix_set(U, i, 1, v->Pos.Y-ym);
+    gsl_matrix_set(U, i, 2, v->Pos.Z-zm);
+  }
+  gsl_linalg_SV_decomp(U,V,W,TMPVEC);
+  svd[0] = gsl_vector_get(W, 0);
+  svd[1] = gsl_vector_get(W, 1);
+  svd[2] = gsl_vector_get(W, 2);
+  if(fabs(svd[0])<fabs(svd[1]) && fabs(svd[0])<fabs(svd[2])) min=0;
+  else if(fabs(svd[1])<fabs(svd[0]) && fabs(svd[1])<fabs(svd[2])) min=1;
+  else min=2;
+  res[0] = gsl_matrix_get(V, 0, min);
+  res[1] = gsl_matrix_get(V, 1, min);
+  res[2] = gsl_matrix_get(V, 2, min);
+  norme(res);
+  gsl_matrix_free(U);
+  gsl_matrix_free(V);
+  gsl_vector_free(W);
+  gsl_vector_free(TMPVEC);
+#else
+  double **U = dmatrix(1,ndata,1,na);
+  double **V = dmatrix(1,na,1,na);
+  double *W = dvector(1,na);
   for (i=0; i<ndata; i++){
     List_Read(points, i, &v);
     U[i+1][1] = v->Pos.X-xm;
@@ -96,10 +125,10 @@ void MeanPlane(List_T *points, Surface *s){
   res[1] = V[2][min];
   res[2] = V[3][min];
   norme(res);
-
   free_dmatrix(U,1,ndata,1,na);
   free_dmatrix(V,1,na,1,na);
   free_dvector(W,1,na);
+#endif
 
   // check coherence of results for non-plane surfaces
   if(s->Typ != MSH_SURF_PLAN){
@@ -233,44 +262,75 @@ void find_bestuv (Surface * s, double X, double Y,
   *V = minv;
 }
 
-// Numerical Recipes in C, p. 62
-void invert_singular_matrix(double **M, int n, double **I){
-  double  **V, **T, *W;
-  int     i, j, k; 
-
-  V = dmatrix(1,n,1,n);
-  T = dmatrix(1,n,1,n);
-  W = dvector(1,n);
-
-  dsvdcmp(M, n, n, W, V);
+void invert_singular_matrix3x3(double _M[3][3], double _I[3][3]){
+  int i, j, k, n = 3; 
+  double _T[3][3];
 
   for(i=1 ; i<=n ; i++){
     for(j=1 ; j<=n ; j++){
-      I[i][j] = 0.0 ;
-      T[i][j] = 0.0 ;
+      _I[i-1][j-1] = 0.0 ;
+      _T[i-1][j-1] = 0.0 ;
     }
   }
 
-#define PREC 1.e-16 //singular value precision
+#if defined(HAVE_GSL)
+  gsl_matrix *M = gsl_matrix_alloc(3, 3);
+  gsl_matrix *V = gsl_matrix_alloc(3, 3);
+  gsl_vector *W = gsl_vector_alloc(3);
+  gsl_vector *TMPVEC = gsl_vector_alloc(3);
   for(i=1 ; i<=n ; i++){
     for(j=1 ; j<=n ; j++){
-      if(fabs(W[i]) > PREC){
-        T[i][j] += M[j][i] / W[i] ;
+      gsl_matrix_set(M, i-1, j-1, _M[i-1][j-1]);
+    }
+  }
+  gsl_linalg_SV_decomp(M,V,W,TMPVEC);
+  for(i=1 ; i<=n ; i++){
+    for(j=1 ; j<=n ; j++){
+      double ww = gsl_vector_get(W, i-1);
+      if(fabs(ww) > 1.e-16){ //singular value precision
+        _T[i-1][j-1] += gsl_matrix_get(M, j-1, i-1) / ww ;
       }
     }
   }
-#undef PREC
   for(i=1 ; i<=n ; i++){
     for(j=1 ; j<=n ; j++){
       for(k=1 ; k<=n ; k++){
-        I[i][j] += V[i][k] * T[k][j] ;
+        _I[i-1][j-1] += gsl_matrix_get(V, i-1, k-1) * _T[k-1][j-1] ;
       }
     }
   }
-
+  gsl_matrix_free(M);
+  gsl_matrix_free(V);
+  gsl_vector_free(W);
+  gsl_vector_free(TMPVEC);
+#else
+  double **M = dmatrix(1,3,1,3);
+  double **V = dmatrix(1,3,1,3);
+  double  *W = dvector(1,3);
+  for(i=1 ; i<=n ; i++){
+    for(j=1 ; j<=n ; j++){
+      M[i][j] = _M[i-1][j-1];
+    }
+  }  
+  dsvdcmp(M, n, n, W, V);
+  for(i=1 ; i<=n ; i++){
+    for(j=1 ; j<=n ; j++){
+      if(fabs(W[i]) > 1.e-16){ //singular value precision
+        _T[i-1][j-1] += M[j][i] / W[i] ;
+      }
+    }
+  }
+  for(i=1 ; i<=n ; i++){
+    for(j=1 ; j<=n ; j++){
+      for(k=1 ; k<=n ; k++){
+        _I[i-1][j-1] += V[i][k] * _T[k-1][j-1] ;
+      }
+    }
+  }
+  free_dmatrix(M,1,n,1,n);
   free_dmatrix(V,1,n,1,n);
-  free_dmatrix(T,1,n,1,n);
   free_dvector(W,1,n);
+#endif
 }
 
 void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V,
@@ -278,7 +338,7 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V,
   double Unew,Vnew,err;
   int    iter;
   Vertex D_u,D_v,P;
-  double **mat, **jac ;
+  double mat[3][3], jac[3][3] ;
   double umin, umax, vmin, vmax;
 
   if (s->Typ == MSH_SURF_NURBS){
@@ -292,9 +352,6 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V,
     umax = vmax = 1.0;
   }
 
-  mat = dmatrix(1,3,1,3);
-  jac = dmatrix(1,3,1,3);
-
   *U = *V = 0.487;
   err = 1.0;
   iter = 1;    
@@ -304,21 +361,21 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V,
     D_u = InterpolateSurface(s, *U, *V, 1, 1);
     D_v = InterpolateSurface(s, *U, *V, 1, 2);
 
-    mat[1][1] = D_u.Pos.X; 
-    mat[1][2] = D_u.Pos.Y; 
-    mat[1][3] = D_u.Pos.Z; 
-    mat[2][1] = D_v.Pos.X; 
-    mat[2][2] = D_v.Pos.Y; 
-    mat[2][3] = D_v.Pos.Z; 
-    mat[3][1] = 0.; 
-    mat[3][2] = 0.; 
-    mat[3][3] = 0.; 
-    invert_singular_matrix(mat,3,jac);
+    mat[0][0] = D_u.Pos.X; 
+    mat[0][1] = D_u.Pos.Y; 
+    mat[0][2] = D_u.Pos.Z; 
+    mat[1][0] = D_v.Pos.X; 
+    mat[1][1] = D_v.Pos.Y; 
+    mat[1][2] = D_v.Pos.Z; 
+    mat[2][0] = 0.; 
+    mat[2][1] = 0.; 
+    mat[2][2] = 0.; 
+    invert_singular_matrix3x3(mat, jac);
 
-    Unew = *U + relax * (jac[1][1] * (X-P.Pos.X) + jac[2][1] * (Y-P.Pos.Y) + 
-			 jac[3][1] * (Z-P.Pos.Z)) ;
-    Vnew = *V + relax * (jac[1][2] * (X-P.Pos.X) + jac[2][2] * (Y-P.Pos.Y) +
-			 jac[3][2] * (Z-P.Pos.Z)) ;
+    Unew = *U + relax * 
+      (jac[0][0]*(X-P.Pos.X) + jac[1][0]*(Y-P.Pos.Y) + jac[2][0]*(Z-P.Pos.Z)) ;
+    Vnew = *V + relax * 
+      (jac[0][1]*(X-P.Pos.X) + jac[1][1]*(Y-P.Pos.Y) + jac[2][1]*(Z-P.Pos.Z)) ;
 
     err = DSQR(Unew - *U) + DSQR(Vnew - *V) ;
 
@@ -326,9 +383,6 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V,
     *U = Unew;
     *V = Vnew;
   }
-
-  free_dmatrix(mat,1,3,1,3);
-  free_dmatrix(jac,1,3,1,3);
 
   if(iter == MaxIter ||
      (Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin)){

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.259 2003-02-12 22:09:50 geuzaine Exp $
+# $Id: Makefile,v 1.260 2003-02-18 05:50:04 geuzaine Exp $
 
 include variables
 
@@ -47,7 +47,8 @@ source:
 	mkdir gmsh-${GMSH_RELEASE}
 	cd gmsh-${GMSH_RELEASE} && tar zxvf ../gmsh.tgz
 	rm -f gmsh.tgz
-	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}
+	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc\
+                                          NR ${GMSH_VERSION_FILE}
 	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
 
 parser:

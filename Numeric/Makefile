@@ -1,16 +1,14 @@
-# $Id: Makefile,v 1.6 2003-02-11 08:54:56 geuzaine Exp $
+# $Id: Makefile,v 1.7 2003-02-18 05:50:05 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshNumeric.a
 INCLUDE = -I../Common -I../DataStr
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} 
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = Numeric.cpp\
-      Newton.cpp \
-      Opti.cpp \
-      SVD.cpp \
-      NRUtil.cpp
+      gsl_newt.cpp\
+      gsl_brent.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -37,12 +35,5 @@ depend:
 # DO NOT DELETE THIS LINE
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h
-Newton.o: Newton.cpp NRUtil.h Numeric.h
-Opti.o: Opti.cpp NRUtil.h Numeric.h
-SVD.o: SVD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  NRUtil.h Numeric.h
-NRUtil.o: NRUtil.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h
+  ../DataStr/avl.h ../DataStr/Tools.h Numeric.h \
+  /usr/local/include/gsl/gsl_version.h /usr/local/include/gsl/gsl_types.h

@@ -31,6 +31,7 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)<(b))?(b):(a))
 #define SQR(a)   ((a)*(a))
+#define SIGN(a,b)((b) >= 0.0 ? fabs(a) : -fabs(a))
 
 #define IMIN MIN
 #define LMIN MIN
@@ -43,7 +44,7 @@
 #define DMAX MAX
 
 #define DSQR SQR
-#define FSQR SQU
+#define FSQR SQR
 
 #define THRESHOLD(a,b,c) (((a)>(c))?(c):((a)<(b)?(b):(a)))
 
@@ -52,6 +53,8 @@
 #define Pred(x)      ((x)->prev)
 #define Succ(x)      ((x)->next)
 #define square(x)    ((x)*(x))
+
+int check_gsl();
 
 double myatan2 (double a, double b);
 double myasin (double a);
@@ -69,5 +72,6 @@ double InterpolateIso(double *X, double *Y, double *Z,
 		      double *Val, double V, int I1, int I2, 
 		      double *XI, double *YI ,double *ZI);
 void gradSimplex (double *x, double *y, double *z, double *v, double *grad);
+
 
 #endif

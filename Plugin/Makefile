@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.30 2003-02-11 08:54:57 geuzaine Exp $
+# $Id: Makefile,v 1.31 2003-02-18 05:50:09 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshPlugin.a
 INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo\
             -I../Mesh -I../Numeric -I../Triangle
-CFLAGS  = -DMPICH_SKIP_MPICXX ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} ${GUI_INCLUDE} 
+CFLAGS  = -DMPICH_SKIP_MPICXX ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Plugin.cpp\
         LevelsetPlugin.cpp\

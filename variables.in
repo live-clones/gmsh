@@ -7,18 +7,12 @@ CXX=@CXX@
 LINKER=@LINKER@
 
 # Compiler flags
-OPT_FLAGS=@OPT_FLAGS@
-OS_FLAGS=@OS_FLAGS@
-VERSION_FLAGS=@VERSION_FLAGS@
-GUI_INCLUDE=@GUI_INCLUDE@
+FLAGS=@FLAGS@
+OPTIM=@OPTIM@
 
 # Gmsh subdirectories and libraries
 GMSH_DIRS=@GMSH_DIRS@
 GMSH_LIBS=@GMSH_LIBS@
-
-# GSL include and library path
-GSL_INCLUDE=@GSL_INCLUDE@
-GSL_LIBS=@GSL_LIBS@
 
 # How you create a static library on this machine
 AR=@AR@

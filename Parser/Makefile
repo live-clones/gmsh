@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.43 2003-02-11 08:54:57 geuzaine Exp $
+# $Id: Makefile,v 1.44 2003-02-18 05:50:09 geuzaine Exp $
 
 include ../variables
 
@@ -8,7 +8,7 @@ LEX = flex
 LIB     = ../lib/libGmshParser.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
           -I../Mesh -I../Numeric -I../Fltk -I../Plugin -I../Parallel
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} ${GUI_INCLUDE}
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Gmsh.yy.cpp\
       Gmsh.tab.cpp\

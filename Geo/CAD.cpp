@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.53 2003-01-23 20:19:20 geuzaine Exp $
+// $Id: CAD.cpp,v 1.54 2003-02-18 05:50:04 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,13 @@
 #include "CAD.h"
 #include "Edge.h"
 #include "Context.h"
+
+#if defined(HAVE_GSL)
+#include "gsl_newt.h"
+#include "gsl_brent.h"
+#else
+#include "NR.h"
+#endif
                                     
 extern Mesh      *THEM;
 extern Context_T  CTX;
@@ -1590,20 +1597,12 @@ void ReplaceAllDuplicates(Mesh *m){
 static Curve *CURVE, *CURVE_2;
 static Surface *SURFACE;
 static Vertex *VERTEX;
-extern void newt(double x[], int n, int *check,
-                 void (*vecfunc)(int, double [], double []));
 
 double min1d (double (*funct)(double), double *xmin){
   double xx, fx, fb, fa, bx, ax;
-  double brent(double ax, double bx, double cx,
-              double (*f)(double), double tol, double *xmin);
-  void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
-                double *fc, double (*func)(double));
-
- ax=1.e-15; xx=1.e-12;
- mnbrak(&ax,&xx,&bx,&fa,&fx,&fb,funct);
-#define TOL 1.e-08
- return( brent(ax,xx,bx,funct,TOL,xmin) );
+  ax=1.e-15; xx=1.e-12;
+  mnbrak(&ax,&xx,&bx,&fa,&fx,&fb,funct);
+  return(brent(ax,xx,bx,funct,1.e-8,xmin));
 }
 
 static void intersectCS (int N, double x[], double res[]){
@@ -1778,7 +1777,7 @@ bool ProjectPointOnSurface (Surface *s, Vertex &p){
   while(1){
     newt(x,2,&check,projectPS);
     vv = InterpolateSurface(s,x[1],x[2],0,0);
-    if(x[1] >= UMIN && x[1] <= UMAX && x[2] >=VMIN && x[2] <= VMAX)break;
+    if(x[1] >= UMIN && x[1] <= UMAX && x[2] >=VMIN && x[2] <= VMAX) break;
     x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
     x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
   }
@@ -1856,7 +1855,7 @@ bool ProjectPointOnSurface (Surface *s, Vertex *p,double *u, double *v){
     l =  sqrt(DSQR(vv.Pos.X - p->Pos.X) +
               DSQR(vv.Pos.Y - p->Pos.Y) +
               DSQR(vv.Pos.Z - p->Pos.Z));
-    if(l < 1.e-1)break;
+    if(l < 1.e-1) break;
     else {
       x[1] = UMIN + (UMAX-UMIN)*((rand() % 10000)/10000.);
       x[2] = VMIN + (VMAX-VMIN)*((rand() % 10000)/10000.);
@@ -1909,14 +1908,14 @@ bool IntersectCurves (Curve *c1, Curve *c2,
   CURVE = c1;
   x[1] = x[2] =  0.0;
   newt(x,2,&check,intersectCC);
-  if(check)return false;
+  if(check) return false;
   v1 = InterpolateCurve(c1,x[1],0);
   v2 = InterpolateCurve(c2,x[2],0);
-  if(x[1] <= c1->ubeg)return false;
-  if(x[1] >= c1->uend)return false;
-  if(x[2] <= c2->ubeg)return false;
-  if(x[2] >= c2->uend)return false;
-  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-08 * CTX.lc)return false;
+  if(x[1] <= c1->ubeg) return false;
+  if(x[1] >= c1->uend) return false;
+  if(x[2] <= c2->ubeg) return false;
+  if(x[2] >= c2->uend) return false;
+  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-08 * CTX.lc) return false;
   *v = Create_Vertex(NEWPOINT(), v1.Pos.X,v1.Pos.Y,v1.Pos.Z,v1.lc,x[1]);
   Tree_Insert(THEM->Points,v);
   DivideCurve(c1,x[1],*v,c11,c12);

@@ -1,10 +1,10 @@
-# $Id: Makefile,v 1.12 2003-02-11 08:54:57 geuzaine Exp $
+# $Id: Makefile,v 1.13 2003-02-18 05:50:07 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshParallel.a
 INCLUDE =
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} 
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = ParUtil.cpp
 

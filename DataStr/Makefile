@@ -1,10 +1,10 @@
-# $Id: Makefile,v 1.18 2003-02-11 08:54:55 geuzaine Exp $
+# $Id: Makefile,v 1.19 2003-02-18 05:50:04 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshDataStr.a
 INCLUDE = -I../Common
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE}
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = List.cpp \
       Malloc.cpp \

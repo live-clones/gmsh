@@ -1,13 +1,13 @@
-# $Id: Makefile,v 1.11 2003-02-11 22:50:41 geuzaine Exp $
+# $Id: Makefile,v 1.12 2003-02-18 05:50:10 geuzaine Exp $
 
 include ../variables
 
 dxf2geo: dxf2geo.c message.c 
-	${CXX} ${OPT_FLAGS} -o ../bin/dxf2geo -I../DataStr\
+	${CXX} ${OPTIM} -o ../bin/dxf2geo -I../DataStr\
               dxf2geo.c message.c ../lib/libGmshDataStr.a -lm
 
 mysolver: mysolver.c
-	${CXX} ${OPT_FLAGS} -o mysolver.exe mysolver.c GmshClient.c
+	${CXX} ${OPTIM} -o mysolver.exe mysolver.c GmshClient.c
 
 mysolvertgz:
 	gtar zcvf mysolver.tgz mysolver.c mysolver.opt GmshClient.c GmshClient.h

@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.4 2003-01-23 20:19:23 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.5 2003-02-18 05:50:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -19,11 +19,37 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
+// this file should contain only purely numerical routines (that do
+// not depend on any Gmsh structures)
+
 #include "Gmsh.h"
 #include "Numeric.h"
 
-// this file should contain only purely numerical routines (that do
-// not depend on any Gmsh structures)
+// Check GSL version. We need at least 1.2, since all versions >=
+// 1.1.1 have a buggy SVD routine (caused an infinite loop--fixed on
+// Sun Jun 16 11:45:29 2002 in GSL's cvs tree). We check this at run
+// time since Gmsh could be distributed with the gsl could be
+// dynamically linked.
+
+#if defined(HAVE_GSL)
+#include <gsl/gsl_version.h>
+int check_gsl(){
+  int major, minor;
+  sscanf(gsl_version, "%d.%d", &major, &minor);
+  if(major < 1 || (major == 1 && minor < 2)){
+    Msg(FATAL1, "Your GSL version (%d.%d.X) has a bug in the singular value", major, minor);
+    Msg(FATAL3, "decomposition code. Please upgrade to version 1.2 or above.");
+    return 0;
+  }
+  return 1;
+}
+#else
+int check_gsl(){
+  return 1;
+}
+#endif
+
+// How ? GSL_VERSION is a string "maj.min" or "maj.min.patch"
 
 double myatan2 (double a, double b){
   if (a == 0.0 && b == 0)

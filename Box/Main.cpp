@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.25 2003-01-24 23:13:34 geuzaine Exp $
+// $Id: Main.cpp,v 1.26 2003-02-18 05:50:04 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -112,6 +112,8 @@ int main(int argc, char *argv[]){
 
   if(CTX.default_plugins)
     GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
+
+  check_gsl();
 
   OpenProblem(CTX.filename);
   if(yyerrorstate)

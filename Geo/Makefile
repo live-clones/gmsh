@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.33 2003-02-11 08:54:55 geuzaine Exp $
+# $Id: Makefile,v 1.34 2003-02-18 05:50:04 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshGeo.a
-INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
+INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric -I../NR\
           -I../Parser -I../Fltk
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE}
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = CAD.cpp \
       DataBase.cpp \

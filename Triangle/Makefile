@@ -1,11 +1,12 @@
-# $Id: Makefile,v 1.12 2003-02-16 19:17:36 geuzaine Exp $
+# $Id: Makefile,v 1.13 2003-02-18 05:50:10 geuzaine Exp $
 
 include ../variables
 
 LIB = ../lib/libGmshTriangle.a
 
-# Do not optimize: it crashes badly on Linux
-CFLAGS  = -O0 ${OS_FLAGS} -DTRILIBRARY
+# Do not optimize triangle: it crashes badly on Linux
+OPTIM = -O0
+CFLAGS = ${OPTIM} ${FLAGS} -DTRILIBRARY
 
 SRC = triangle.c
 

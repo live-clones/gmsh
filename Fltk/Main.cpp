@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.41 2003-01-23 20:19:19 geuzaine Exp $
+// $Id: Main.cpp,v 1.42 2003-02-18 05:50:04 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,7 @@
 #include "GUI.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
+#include "Numeric.h"
 
 char        yyname[256];
 int         yyerrorstate;
@@ -172,6 +173,10 @@ int main(int argc, char *argv[]){
   Msg(LOG_INFO, "Launch date    : %s", currtime);
   Msg(LOG_INFO, "Command line   : %s", cmdline);
   Msg(LOG_INFO, "-------------------------------------------------------");
+
+  // Check for buggy obsolete GSL versions
+  
+  check_gsl();
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
 

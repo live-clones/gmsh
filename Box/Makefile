@@ -1,11 +1,11 @@
-# $Id: Makefile,v 1.20 2003-02-11 08:54:55 geuzaine Exp $
+# $Id: Makefile,v 1.21 2003-02-18 05:50:04 geuzaine Exp $
 
 include ../variables
 
 LIB     = ../lib/libGmshBox.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics -I../Mesh -I../Numeric\
           -I../Parser -I../Fltk -I../Plugin -I../Parallel
-CFLAGS  = ${OPT_FLAGS} ${OS_FLAGS} ${VERSION_FLAGS} ${INCLUDE} 
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = Main.cpp
 
