@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.101 2003-11-21 07:56:28 geuzaine Exp $
+// $Id: Views.cpp,v 1.102 2003-11-23 02:54:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -360,6 +360,8 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
 #endif
 
   v->Dirty = 0; //the view is complete, we may draw it
+
+  Msg(INFO, "Added View[%d]", v->Index);
 }
 
 void DuplicateView(int num, int withoptions)
@@ -467,7 +469,13 @@ bool RemoveViewByIndex(int index)
   RemoveViewInUI();
 #endif
 
-  Msg(INFO, "View %d removed (%d views left)", index, List_Nbr(CTX.post.list));
+  // recalculate the indices
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++){
+    v = (Post_View *) List_Pointer(CTX.post.list, index);
+    v->Index = i;
+  }
+
+  Msg(INFO, "Removed View[%d] (%d views left)", index, List_Nbr(CTX.post.list));
   return true;
 }
 
