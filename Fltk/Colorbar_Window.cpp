@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.40 2004-12-24 04:58:20 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.41 2004-12-24 05:32:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -467,6 +467,7 @@ int Colorbar_Window::handle(int event)
     else if(Fl::test_shortcut('p')) {
       ColorTable_Paste(ct);
       draw();
+      *viewchanged = 1;
     }
     else if(Fl::test_shortcut('h')) {
       help_flag = !help_flag;
