@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.220 2002-11-18 04:10:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.221 2002-11-18 05:28:29 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,7 @@
 // - examine what's already done before adding something new...
 
 // Which buttons+labels should you put on a dialog window?
-// - "OK" is to agree with what in the dialog *AND* close the dialog
+// - "OK" is to agree with what is in the dialog *AND* close the dialog
 // - "Apply" is to apply the current values selected in the dialog, but
 //    leave the dialog open
 // - "Cancel" is to close (hide) the dialog and *NOT* apply the
