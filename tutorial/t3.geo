@@ -58,7 +58,8 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
 // will set the color of the surfaces in the geometry to the same
 // color as the points.
 
-// For UNIX versions, a click on the '?'  button in status bar of the
-// graphic window will dump all current options to the terminal. To
-// save the options to a file, use the 'File->Save_Options_as' menu.
-
+// A click on the '?'  button in status bar of the graphic window will
+// dump all current options to the terminal. To save all available
+// options to a file, use the 'File->Save_as->GEO complete options'
+// menu. To save the current options as the default options for all
+// future Gmsh sessions, use the 'File->Save_Options' menu.

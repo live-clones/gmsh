@@ -1,4 +1,4 @@
-$Id: README,v 1.6 2001-02-19 15:58:30 geuzaine Exp $
+$Id: README,v 1.7 2001-02-19 21:55:43 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -84,9 +84,12 @@ affect also all other views, select the 'Link all views' option in the
 'Options->Post-Processing' menu.
 
 Note: all the options specified interactively can also be directly
-specified in the ascii input files. The current options can be saved
-into a file by selecting 'File->Save_as', or simply viewed by pressing
-the '?' button in the status bar.
+specified in the ascii input files. All available options, with their
+current values, can be saved into a file by selecting
+'File->Save_as->GEO complete options', or simply viewed by pressing
+the '?' button in the status bar. To save the current options as the
+default options for all future Gmsh sessions, use the
+'File->Save_Options' menu.
 
 
 OK, that's all, folks. Enjoy the tutorial.

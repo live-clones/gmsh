@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.64 2001-02-17 22:09:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.65 2001-02-19 21:55:42 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -1440,9 +1440,10 @@ Command :
       }
       else if(!strcmp($1, "Mesh")){
 
-	Maillage_Dimension_0(THEM);
-	mai3d(THEM,(int)$2);
-  
+	//Maillage_Dimension_0(THEM);
+	//mai3d(THEM,(int)$2);
+	vyyerror("Mesh directives are not (yet) allowed in scripts");
+
       }
       else
 	vyyerror("Unknown Command '%s'", $1);

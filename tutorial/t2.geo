@@ -8,7 +8,7 @@
  *********************************************************************/
 
 // The first tutorial file will serve as a basis to construct this
-// one: it can be included like this:
+// one. It can be included with:
 
 Include "t1.geo" ;
 

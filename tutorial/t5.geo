@@ -127,7 +127,7 @@ For t In {1:5}
   z += 0.166 ; 
 
 // This command calls the function CheeseHole. Note that, instead of
-// defining a function, we could have define a file containing the
+// defining a function, we could have defined a file containing the
 // same code, and used the Include command to include this file.
 
   Call CheeseHole ;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.48 2001-02-18 18:43:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.49 2001-02-19 21:55:42 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -24,7 +24,7 @@
 #define IW  (10*CTX.fontsize) // input field width
 #define BW  (3*IW/2) // width of a button with external label
 #define BB  (5*CTX.fontsize-2) // width of a button with internal label
-#define BH  (2*CTX.fontsize) // button height
+#define BH  (2*CTX.fontsize+1) // button height
 #define WB  (5) // window border
 
 extern Context_T  CTX;
@@ -280,6 +280,14 @@ int GUI::global_shortcuts(int event){
     mod_post_cb(0,0);
     return 1;
   }
+  else if(Fl::test_shortcut('b')){
+    set_context(NULL, -1);
+    return 1;
+  }
+  else if(Fl::test_shortcut('f')){
+    set_context(NULL, 1);
+    return 1;
+  }
   else if(Fl::test_shortcut('e')){
     end_selection = 1;
     return 1;
@@ -501,8 +509,8 @@ void GUI::create_menu_window(int argc, char **argv){
   if(!init_menu_window){
     init_menu_window = 1 ;
 
-    int width = 13*CTX.fontsize ;
-    MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
+    int width = 13*CTX.fontsize-CTX.fontsize/2-2 ;
+    MH = BH + BH+6 ; // this is the initial height: no dynamic button is shown!
 
     m_window = new Fl_Window(width,MH);
     m_window->box(WINDOW_BOX);
@@ -520,18 +528,18 @@ void GUI::create_menu_window(int argc, char **argv){
 
     y = BH + 3;
     
-    m_navig_butt[0] = new Fl_Button(2,y,20,BH/2,"@<");
+    m_navig_butt[0] = new Fl_Button(1,y,18,BH/2,"@<");
     m_navig_butt[0]->labeltype(FL_SYMBOL_LABEL);
     m_navig_butt[0]->box(FL_FLAT_BOX);
     m_navig_butt[0]->selection_color(FL_WHITE);
     m_navig_butt[0]->callback(mod_back_cb);
-    m_navig_butt[1] = new Fl_Button(2,y+BH/2,20,BH/2,"@>");
+    m_navig_butt[1] = new Fl_Button(1,y+BH/2,18,BH/2,"@>");
     m_navig_butt[1]->labeltype(FL_SYMBOL_LABEL);
     m_navig_butt[1]->box(FL_FLAT_BOX);
     m_navig_butt[1]->selection_color(FL_WHITE);
     m_navig_butt[1]->callback(mod_forward_cb);
     
-    m_module_butt = new Fl_Choice(22,y,width-28,BH);
+    m_module_butt = new Fl_Choice(19,y,width-24,BH);
     m_module_butt->menu(m_module_table);
     m_module_butt->textsize(CTX.fontsize);
     m_module_butt->box(FL_THIN_DOWN_BOX);
@@ -1428,7 +1436,7 @@ void GUI::create_statistics_window(){
     }
 
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-BB/3-2*WB, height-BH-WB, BB+BB/3, BH, "Update");
+      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-BB/4-2*WB, height-BH-WB, BB+BB/4, BH, "Update");
       o->labelsize(CTX.fontsize);
       o->callback(opt_statistics_update_cb);
     }

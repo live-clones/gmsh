@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.33 2001-02-19 15:21:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.34 2001-02-19 21:55:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -456,6 +456,8 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "");
   Msg(DIRECT, "Menu bar shortcuts:");
   Msg(DIRECT, "");
+  Msg(DIRECT, "  b             go back to previous context");
+  Msg(DIRECT, "  f             go forward to next context");
   Msg(DIRECT, "  g             go to geometry module");
   Msg(DIRECT, "  Shift+g       show geometry options");
   Msg(DIRECT, "  Shift+i       show statistics window"); 
