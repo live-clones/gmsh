@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 5
  * 
- *  Characteristic lengths, Functions, Loops
+ *  Characteristic lengths, Arrays of variables, Functions, Loops
  *
  *********************************************************************/
 
@@ -102,13 +102,21 @@ Function CheeseHole
   l7 = newreg; Line Loop(l7) = {c2,c7,c12};   Ruled Surface(newreg) = {l7};
   l8 = newreg; Line Loop(l8) = {-c6,-c9,c2};  Ruled Surface(newreg) = {l8};
 
-  l9 = newreg; Surface Loop(l9) = {l8+1, l5+1, l1+1, l2+1, -(l3+1), -(l7+1), l6+1, l4+1};
-  thehole = newreg; Volume(thehole) = {l9};
+// Arrays of variables can be manipulated in the same way as classical
+// variables. Warning: accessing an uninitialized element in an array
+// will produce an unpredictable result.
+
+  theloops[t] = newreg ; 
+
+  Surface Loop(theloops[t]) = {l8+1, l5+1, l1+1, l2+1, -(l3+1), -(l7+1), l6+1, l4+1};
+
+  thehole = newreg ; 
+  Volume(thehole) = theloops[t] ;
 
 Return
 
 
-x = 0; y = 0.75; z = 0; r = 0.09;
+x = 0 ; y = 0.75 ; z = 0 ; r = 0.09 ;
 
 // A For loop is used to generate five holes in the cube:
 
@@ -121,7 +129,7 @@ For t In {1:5}
 // defining a function, we could have define a file containing the
 // same code, and used the Include command to include this file.
 
-  Call CheeseHole;
+  Call CheeseHole ;
 
 // A physical volume is defined for each cheese hole
 
@@ -130,18 +138,22 @@ For t In {1:5}
 // The Printf function permits to print the value of variables on the
 // terminal:
 
-  Printf("The cheese hole has number %g!", thehole);
+  Printf("The cheese hole has number %g!", thehole) ;
 
 EndFor
 
 // This is the surface loop for the exterior surface of the cube:
 
-Surface Loop(185) = {35,31,29,37,33,23,39,25,27};
+theloops[0] = newreg ;
+
+Surface Loop(theloops[0]) = {35,31,29,37,33,23,39,25,27} ;
 
 // The volume of the cube, without the 5 cheese holes, is defined by 6
-// surface loops (the exterior surface and the five interior loops):
+// surface loops (the exterior surface and the five interior loops).
+// To reference an array of variables, its identifier is followed by
+// '[]':
 
-Volume(186) = {185,184,155,126,97,68};
+Volume(186) = {theloops[]} ;
 
 // This physical volume assigns the region number 10 to the tetrahedra
 // paving the cube (but not the holes, whose elements were tagged from

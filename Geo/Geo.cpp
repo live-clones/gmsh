@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.9 2000-12-09 22:26:12 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.10 2000-12-11 16:23:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -54,7 +54,7 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
     return 0.0;
   }
   free(TheSymbol.Name);
-  return TheSymbol.val;
+  return *(double*)List_Pointer_Fast(TheSymbol.val,0);
 }
 
 void add_infile(char *text, char *fich){

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.39 2000-12-11 00:14:04 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.40 2000-12-11 16:23:15 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -23,12 +23,12 @@
 #include <alloca.h>
 #endif
 
-int      Force_ViewNumber = 0 ;
-List_T  *Symbol_L;
+int     Force_ViewNumber = 0 ;
+List_T *Symbol_L;
 
-extern Mesh     *THEM;
+extern Mesh      *THEM;
 extern Post_View *ActualView;
-extern char      ThePathForIncludes[NAME_STR_L];
+extern char       ThePathForIncludes[NAME_STR_L];
 
 static FILE          *yyinTab[MAX_OPEN_FILES];
 static int            yylinenoTab[MAX_OPEN_FILES];
@@ -42,7 +42,7 @@ static Surface       *STL_Surf;
 static Shape          TheShape;
 static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
 static int            Last_NumberOfPoints = 0;
-static double         d;
+static double         d, *pd;
 static ExtrudeParams  extr;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
 static List_T         *ListOfListOfDouble_L, *ListOfColor_L=NULL;
@@ -116,27 +116,25 @@ void skip_until (char *until);
 %type <l> ListOfStrings ListOfDouble ListOfListOfDouble ListOfColor
 %type <s> Shape
 
-/* A VERFIFIER ! Je n'ai pas le bouquin sous les yeux */
-
 /* ------------------------------------------------------------------ */
-/* Operators (with ascending priority) : cf. C language               */
+/* Operators (with ascending priority): cf. C language                */
 /*                                                                    */
-/* Notes: - evaluation order (%left, %right)                          */
+/* Notes: - associativity (%left, %right)                             */
 /*        - UNARYPREC is a dummy terminal to resolve ambiguous cases  */ 
 /*          for + and - (which exist in both unary and binary form)   */
 /* ------------------------------------------------------------------ */
-%left    tAFFECT
+%right   tAFFECT tAFFECTPLUS tAFFECTMINUS tAFFECTTIMES tAFFECTDIVIDE
 %right   '?' tDOTS
-%left    tAND tOR
-%left    tNOTEQUAL tEQUAL tAPPROXEQUAL
-%left    tAFFECTPLUS tAFFECTMINUS tAFFECTTIMES tAFFECTDIVIDE
-%left    '<' '>' tLESSOREQUAL tGREATEROREQUAL
+%left    tOR
+%left    tAND
+%left    tEQUAL tNOTEQUAL tAPPROXEQUAL
+%left    '<' tLESSOREQUAL  '>' tGREATEROREQUAL
 %left    '+' '-'
-%left    '*' '/' '%'
-%left    tCROSSPRODUCT
-%left    UNARYPREC '!'
+%left    '*' '/' '%' tCROSSPRODUCT
+%right   '!' tPLUSPLUS tMINUSMINUS UNARYPREC
 %right   '^'
-%left    tPLUSPLUS tMINUSMINUS
+%left    '(' ')' '[' ']' '.'
+/* ------------------------------------------------------------------ */
 
 %start All
 
@@ -719,16 +717,47 @@ Affectation :
     tSTRING tAFFECT FExpr tEND
     {
       TheSymbol.Name = $1;
-      TheSymbol.val  = $3;
-      List_Replace(Symbol_L,&TheSymbol,CompareSymbols);
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	TheSymbol.val = List_Create(1,1,sizeof(double));
+	List_Put(TheSymbol.val, 0, &$3);
+	List_Add(Symbol_L, &TheSymbol);
+      }
+      else{
+	List_Write(pSymbol->val, 0, &$3);
+      }
+    }
+  | tSTRING '[' FExpr ']' tAFFECT FExpr tEND
+    {
+      TheSymbol.Name = $1;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	TheSymbol.val = List_Create(5,5,sizeof(double));
+	List_Put(TheSymbol.val, (int)$3, &$6);
+	List_Add(Symbol_L, &TheSymbol);
+      }
+      else{
+	List_Put(pSymbol->val, (int)$3, &$6);
+      }
     }
   | tSTRING tPLUSPLUS tEND
     {
       TheSymbol.Name = $1 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
 	vyyerror("Unknown Variable '%s'", $1) ;
-      else
-	pSymbol->val += 1. ;
+      else{
+	*(double*)List_Pointer_Fast(pSymbol->val, 0) += 1.0 ;
+      }
+    }
+  | tSTRING '[' FExpr ']' tPLUSPLUS tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  *pd += 1.0 ;
+	else
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+      }
     }
   | tSTRING tMINUSMINUS tEND
     {
@@ -736,7 +765,19 @@ Affectation :
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
 	vyyerror("Unknown Variable '%s'", $1) ;
       else
-	pSymbol->val -= 1. ;
+	*(double*)List_Pointer_Fast(pSymbol->val, 0) -= 1. ;
+    }
+  | tSTRING '[' FExpr ']' tMINUSMINUS tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  *pd -= 1.0 ;
+	else
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+      }
     }
   | tSTRING tAFFECTPLUS FExpr tEND
     {
@@ -744,7 +785,19 @@ Affectation :
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
 	vyyerror("Unknown Variable '%s'", $1) ;
       else
-	pSymbol->val += $3 ;
+	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $3 ;
+    }
+  | tSTRING '[' FExpr ']' tAFFECTPLUS FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  *pd += $6 ;
+	else
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+      }
     }
   | tSTRING tAFFECTMINUS FExpr tEND
     {
@@ -752,7 +805,19 @@ Affectation :
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
 	vyyerror("Unknown Variable '%s'", $1) ;
       else
-	pSymbol->val -= $3 ;
+	*(double*)List_Pointer_Fast(pSymbol->val, 0) -= $3 ;
+    }
+  | tSTRING '[' FExpr ']' tAFFECTMINUS FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  *pd -= $6 ;
+	else
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+      }
     }
   | tSTRING tAFFECTTIMES FExpr tEND
     {
@@ -760,15 +825,47 @@ Affectation :
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
 	vyyerror("Unknown Variable '%s'", $1) ;
       else
-	pSymbol->val *= $3 ;
+	*(double*)List_Pointer_Fast(pSymbol->val, 0) *= $3 ;
     }
-  | tSTRING tAFFECTDIVIDE FExpr tEND
+  | tSTRING '[' FExpr ']' tAFFECTTIMES FExpr tEND
     {
       TheSymbol.Name = $1 ;
       if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
 	vyyerror("Unknown Variable '%s'", $1) ;
-      else
-	pSymbol->val /= $3 ;
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  *pd *= $6 ;
+	else
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+      }
+    }
+  | tSTRING tAFFECTDIVIDE FExpr tEND
+    {
+      if(!$3)
+	vyyerror("Division by Zero in '%s /= %g'", $1, $3);
+      else{
+	TheSymbol.Name = $1 ;
+	if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	  vyyerror("Unknown Variable '%s'", $1) ;
+	else
+	  *(double*)List_Pointer_Fast(pSymbol->val, 0) /= $3 ;
+      }
+    }
+  | tSTRING '[' FExpr ']' tAFFECTDIVIDE FExpr tEND
+    {
+      if(!$6)
+	vyyerror("Division by Zero in '%s[%d] /= %g'", $1, (int)$3, $6);
+      else{
+	TheSymbol.Name = $1 ;
+	if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	  vyyerror("Unknown Variable '%s'", $1) ;
+	else{
+	  if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	    *pd /= $6 ;
+	  else
+	    vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+	}
+      }
     }
 
   /* -------- Option Strings -------- */ 
@@ -958,37 +1055,46 @@ Affectation :
 
   | tSTRING '.' tSTRING tAFFECTDIVIDE FExpr tEND 
     {
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
-	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      if(!$5)
+	vyyerror("Division by Zero in '%s.%s /= %g'", $1, $3, $5);
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
-	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	if(!(pNumCat = Get_NumberOptionCategory($1)))
+	  vyyerror("Unknown Numeric Option Class '%s'", $1);
 	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt /= $5 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt /= (float)$5 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt /= (long)$5 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt /= (int)$5 ; break ;
+	  if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	    vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	  else{
+	    switch(i){
+	    case GMSH_DOUBLE : *(double*)pNumOpt /= $5 ; break ;
+	    case GMSH_FLOAT : *(float*)pNumOpt /= (float)$5 ; break ;
+	    case GMSH_LONG : *(long*)pNumOpt /= (long)$5 ; break ;
+	    case GMSH_INT : *(int*)pNumOpt /= (int)$5 ; break ;
+	    }
 	  }
 	}
       }
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTDIVIDE FExpr tEND 
     {
-      if(strcmp($1, "PostProcessing"))
-	vyyerror("Unknown View Option Class '%s'", $1);
+      if(!$10)
+	vyyerror("Division by Zero in '%s.View[%d].%s /= %g'", 
+		 $1, (int)$5, $8, $10);
       else{
-	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
-	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
-	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
-			     $1, (int)$5, $8);
-	}
+	if(strcmp($1, "PostProcessing"))
+	  vyyerror("Unknown View Option Class '%s'", $1);
 	else{
-	  switch(i){
-	  case GMSH_DOUBLE : *(double*)pNumOpt /= $10 ; break ;
-	  case GMSH_FLOAT : *(float*)pNumOpt /= (float)$10 ; break ;
-	  case GMSH_LONG : *(long*)pNumOpt /= (long)$10 ; break ;
-	  case GMSH_INT : *(int*)pNumOpt /= (int)$10 ; break ;
+	  if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	    if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	    else      vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			       $1, (int)$5, $8);
+	  }
+	  else{
+	    switch(i){
+	    case GMSH_DOUBLE : *(double*)pNumOpt /= $10 ; break ;
+	    case GMSH_FLOAT : *(float*)pNumOpt /= (float)$10 ; break ;
+	    case GMSH_LONG : *(long*)pNumOpt /= (long)$10 ; break ;
+	    case GMSH_INT : *(int*)pNumOpt /= (int)$10 ; break ;
+	    }
 	  }
 	}
       }
@@ -1789,11 +1895,14 @@ Loop :
       LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
       
       TheSymbol.Name = $2;
-      TheSymbol.val  = $5;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	List_Add(Symbol_L,&TheSymbol);
-      else
-	pSymbol->val = $5;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	TheSymbol.val = List_Create(1,1,sizeof(double));
+	List_Put(TheSymbol.val, 0, &$5);
+	List_Add(Symbol_L, &TheSymbol);
+      }
+      else{
+	List_Write(pSymbol->val, 0, &$5);
+      }
       
       fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
     }
@@ -1809,13 +1918,16 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $7 ;
       LoopControlVariablesTab[ImbricatedLoop][2] = $9 ;
       LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
-      
+
       TheSymbol.Name = $2;
-      TheSymbol.val  = $5;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
-	List_Add(Symbol_L,&TheSymbol);
-      else
-	pSymbol->val = $5;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	TheSymbol.val = List_Create(1,1,sizeof(double));
+	List_Put(TheSymbol.val, 0, &$5);
+	List_Add(Symbol_L, &TheSymbol);
+      }
+      else{
+	List_Write(pSymbol->val, 0, &$5);
+      }
       
       fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
     }
@@ -1835,7 +1947,8 @@ Loop :
 	if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
 	  TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
 	  pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols);
-	  pSymbol->val += LoopControlVariablesTab[ImbricatedLoop-1][2];
+	  *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
+	    LoopControlVariablesTab[ImbricatedLoop-1][2] ;
 	}
 	
 	fsetpos( yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
@@ -2136,7 +2249,13 @@ FExpr :
   | FExpr '-' FExpr                  { $$ = $1 - $3 ;     }
   | FExpr '+' FExpr                  { $$ = $1 + $3 ;     }
   | FExpr '*' FExpr                  { $$ = $1 * $3 ;     }
-  | FExpr '/' FExpr                  { $$ = $1 / $3 ;     }
+  | FExpr '/' FExpr
+    { 
+      if(!$3)
+	vyyerror("Division by Zero in '%g / %g'", $1, $3);
+      else
+	$$ = $1 / $3 ;     
+    }
   | FExpr '%' FExpr                  { $$ = (int)$1 % (int)$3 ;  }
   | FExpr '^' FExpr                  { $$ = pow($1,$3) ;  }
   | FExpr '<' FExpr                  { $$ = $1 < $3 ;     }
@@ -2171,18 +2290,109 @@ FExpr :
   | tRand   '(' FExpr ')'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
 ;
 
+/* Pour etre vraiment complet, il faudrait encore ajouter +=, -=, *= et /= */
+
 FExpr_Single :
+
+  /* -------- Constants -------- */ 
+
     tDOUBLE   { $$ = $1; }
   | tPi       { $$ = 3.141592653589793; }
+
+  /* -------- Variables -------- */ 
+
   | tSTRING
     {
       TheSymbol.Name = $1 ;
-      if (!List_Query(Symbol_L, &TheSymbol, CompareSymbols)) {
-	vyyerror("Unknown Variable '%s'", $1) ;  $$ = 0. ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	$$ = 0. ;
       }
-      else  $$ = TheSymbol.val ;
+      else{
+	$$ = *(double*)List_Pointer_Fast(pSymbol->val, 0) ;
+      }
       Free($1);
     }
+  | tSTRING '[' FExpr ']'
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	$$ = 0. ;
+      }
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  $$ = *pd ;
+	else{
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+	  $$ = 0. ;
+	}
+      }
+      Free($1);
+    }
+
+  | tSTRING tPLUSPLUS
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	$$ = 0. ;
+      }
+      else{
+	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) += 1.0) ;
+      }
+      Free($1);
+    }
+  | tSTRING '[' FExpr ']' tPLUSPLUS
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	$$ = 0. ;
+      }
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  $$ = (*pd += 1.0) ;
+	else{
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+	  $$ = 0. ;
+	}
+      }
+      Free($1);
+    }
+
+  | tSTRING tMINUSMINUS
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	$$ = 0. ;
+      }
+      else{
+	$$ = (*(double*)List_Pointer_Fast(pSymbol->val, 0) -= 1.0) ;
+      }
+      Free($1);
+    }
+  | tSTRING '[' FExpr ']' tMINUSMINUS
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	$$ = 0. ;
+      }
+      else{
+	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
+	  $$ = (*pd -= 1.0) ;
+	else{
+	  vyyerror("Uninitialized Variable '%s[%d]'", $1, (int)$3) ;
+	  $$ = 0. ;
+	}
+      }
+      Free($1);
+    }
+
+  /* -------- Option Strings -------- */ 
+
   | tSTRING '.' tSTRING 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1))){
@@ -2503,6 +2713,21 @@ ListOfDouble :
       List_Add(ListOfDouble_L, &($1)) ;
       $$=ListOfDouble_L;
     }
+  | tSTRING '[' ']'
+    {
+      ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+	d = 0.0 ;
+	List_Add(ListOfDouble_L, &d);
+      }
+      else{
+	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
+	  List_Add(ListOfDouble_L, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+      }
+      $$=ListOfDouble_L;
+    }
   | '{' RecursiveListOfDouble '}'
     {
       $$=ListOfDouble_L;
@@ -2525,6 +2750,18 @@ RecursiveListOfDouble :
       }
       List_Delete(ListOfDouble2_L);
     }
+  | tSTRING '[' ']'
+    { 
+      ListOfDouble_L = List_Create(2,1,sizeof(double)) ;
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $1) ;
+      }
+      else{
+	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
+	  List_Add(ListOfDouble_L, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+      }
+    }
   | RecursiveListOfDouble ',' FExpr
     {
       List_Add(ListOfDouble_L, &($3)) ;
@@ -2536,6 +2773,17 @@ RecursiveListOfDouble :
 	List_Add(ListOfDouble_L, &d) ;
       }
       List_Delete(ListOfDouble2_L);
+    }
+  | RecursiveListOfDouble ',' tSTRING '[' ']'
+    {
+      TheSymbol.Name = $3 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+	vyyerror("Unknown Variable '%s'", $3) ;
+      }
+      else{
+	for(i = 0 ; i < List_Nbr(pSymbol->val) ; i++)
+	  List_Add(ListOfDouble_L, (double*)List_Pointer_Fast(pSymbol->val, i)) ;
+      }
     }
 ;
 
@@ -2642,6 +2890,9 @@ void InitSymbols(void){
 }
 
 void DeleteSymbols(void){
+  int i;
+  for(i = 0 ; i < List_Nbr(Symbol_L) ; i++)
+    List_Delete(((Symbol*)List_Pointer_Fast(Symbol_L,i))->val);
   List_Delete(Symbol_L);
 }
 

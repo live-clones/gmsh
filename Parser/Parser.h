@@ -1,10 +1,10 @@
-/* $Id: Parser.h,v 1.3 2000-11-23 14:11:38 geuzaine Exp $ */
+/* $Id: Parser.h,v 1.4 2000-12-11 16:23:15 geuzaine Exp $ */
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
 typedef struct {
   char *Name;
-  double val;
+  List_T *val;
 } Symbol;
 
 void InitSymbols (void);
