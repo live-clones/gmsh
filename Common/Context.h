@@ -63,6 +63,7 @@ public :
   char *display;              // forced display host:0.0 under X11 
   int  terminal;              // show we print to the terminal console?
   char *editor;               // text editor command (with included '%s')
+  char *web_browser;          // web browser command (with included '%s')
   char home_dir[256];         // the home directory
   char *scheme;               // FLTK GUI theme
   int  tooltips;              // show tootips in GUI?

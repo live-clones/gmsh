@@ -1,8 +1,9 @@
-$Id: VERSIONS,v 1.170 2003-12-01 23:15:33 geuzaine Exp $
+$Id: VERSIONS,v 1.171 2003-12-03 04:14:18 geuzaine Exp $
 
 New since 1.49: small changes to the visibility browser + made
 visibility scriptable (new Show/Hide commands); fixed (rare) crash
-when deleting views;
+when deleting views; split File->Open into File->Open/File->New to
+behave like most other programs;
 
 New in 1.49: made Merge, Save and Print behave like Include (i.e.,
 open files in the same directory as the main project file if the path

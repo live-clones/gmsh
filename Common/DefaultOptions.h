@@ -53,17 +53,30 @@ StringXString GeneralOptions_String[] = {
 
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "Option file into which session specific information is saved; automatically read on startup" },
+  { F|S, "Scheme" , opt_general_scheme , "" ,
+    "FLTK graphical user interface scheme (try e.g. plastic)" },
 
+  { F|O, "TextEditor" , opt_general_editor , 
 #if defined(WIN32)
-  { F|O, "TextEditor" , opt_general_editor , "notepad.exe %s" , 
+    "notepad.exe %s" , 
+#elif defined(__APPLE__)
+    "open -e %s" ,
 #else
-  { F|O, "TextEditor" , opt_general_editor , "emacs %s &" ,
+    "emacs %s &" ,
 #endif
     "System command to launch a text editor (OS-dependent)" },
-  { F|S,   "Scheme" , opt_general_scheme , "" ,
-    "FLTK graphical user interface scheme (try e.g. plastic)" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
     "Temporary file used by the geometry module" },
+
+  { F|O, "WebBrowser" , opt_general_web_browser , 
+#if defined(WIN32)
+    "explorer.exe %s" , 
+#elif defined(__APPLE__)
+    "open %s" ,
+#else
+    "mozilla %s &" ,
+#endif
+    "System command to launch a web browser (OS-dependent)" },
 
   { 0, NULL , NULL , NULL , NULL }
 } ;
@@ -559,10 +572,11 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
     "Use the system menu bar on Mac OS X?" }, 
 
+  { F|O, "Terminal" , opt_general_terminal , 
 #if defined(HAVE_FLTK)
-  { F|O, "Terminal" , opt_general_terminal , 0. ,
+    0. ,
 #else		      
-  { F|O, "Terminal" , opt_general_terminal , 1. ,
+    1. ,
 #endif
     "Should information be printed on the terminal (if available)?" },
   { F|O, "Tooltips" , opt_general_tooltips , 1. ,
@@ -796,10 +810,11 @@ StringXNumber SolverOptions_Number[] = {
     "Connect solver 0 to the Gmsh server" },
   { F|O, "MergeViews0" , opt_solver_merge_views0 , 1. , 
     "Automatically merge any post-processing view created by solver 0" },
+  { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 
 #if defined(WIN32)
-  { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 0. , // we already have the transient dos window
+    0. , // we already have the transient dos window
 #else
-  { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 1. ,
+    1. ,
 #endif
     "Automatically display messages produced by solver 0" },
 

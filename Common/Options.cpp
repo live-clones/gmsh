@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.124 2003-12-02 22:57:41 geuzaine Exp $
+// $Id: Options.cpp,v 1.125 2003-12-03 04:14:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -774,6 +774,13 @@ char *opt_general_editor(OPT_ARGS_STR)
     WID->gen_input[4]->value(CTX.editor);
 #endif
   return CTX.editor;
+}
+
+char *opt_general_web_browser(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX.web_browser = val;
+  return CTX.web_browser;
 }
 
 char *opt_general_scheme(OPT_ARGS_STR)

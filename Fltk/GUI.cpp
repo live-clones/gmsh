@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.260 2003-12-03 00:54:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.261 2003-12-03 04:14:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -82,13 +82,14 @@ extern Context_T CTX;
 // Don't define shortcuts for FL_CTRL+'n', FL_CTRL+'p', FL_CTRL+'f', FL_CTRL+'b'
 // these are used by fltk for widget navigation (in the same way as the 4 arrow keys)
 
-// We can not use the 'g', 'm' 's' and 'p' mnemonics since they are
+// We shouldn't use the 'g', 'm' 's' and 'p' mnemonics since they are
 // already defined as global shortcuts (geometry, mesh, solver, post).
 
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
+    {"&New...",           0, (Fl_Callback *)file_new_cb, 0},
     {"&Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"M&erge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
+    {"M&erge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"Sa&ve mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
     {"Save &as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
@@ -144,6 +145,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
     {"S&hortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"On&line Documentation",     0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"&About...",                 0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
@@ -156,6 +158,7 @@ Fl_Menu_Item m_menubar_table[] = {
 
 Fl_Menu_Item m_sys_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
+    {"New...",           0, (Fl_Callback *)file_new_cb, 0},
     {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
     {"Save Mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
@@ -171,6 +174,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Current Options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
     {"Shortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"Online Documentation",     0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"About Gmsh...",            0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.190 2003-12-01 21:51:19 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.191 2003-12-03 04:14:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to "gmsh@geuz.org".
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <map>
 #include "Gmsh.h"
@@ -57,8 +58,8 @@ extern Context_T CTX;
 
 static char *fn = NULL;
 
-int file_chooser(int multi, const char *message, const char *pat,
-                 int patindex)
+int file_chooser(int multi, int create, const char *message, 
+		 const char *pat, int patindex)
 {
   fn = fl_file_chooser(message, pat, NULL);
   if(fn)
@@ -84,8 +85,8 @@ int file_chooser_get_filter()
 
 static Fl_File_Chooser *fc = NULL;
 
-int file_chooser(int multi, const char *message, const char *pat,
-                 int patindex)
+int file_chooser(int multi, int create, const char *message,
+		 const char *pat, int patindex)
 {
   static char oldfilter[1024];
 
@@ -93,7 +94,7 @@ int file_chooser(int multi, const char *message, const char *pat,
   Fl_File_Chooser::all_files_label = "All files (*)";
 
   if(!fc) {
-    fc = new Fl_File_Chooser(".", pat, Fl_File_Chooser::CREATE, message);
+    fc = new Fl_File_Chooser(".", pat, Fl_File_Chooser::SINGLE, message);
     strncpy(oldfilter, pat, 1024);
   }
 
@@ -107,8 +108,10 @@ int file_chooser(int multi, const char *message, const char *pat,
 
   if(multi)
     fc->type(Fl_File_Chooser::MULTI);
-  else
+  else if(create)
     fc->type(Fl_File_Chooser::CREATE);
+  else
+    fc->type(Fl_File_Chooser::SINGLE);
 
   fc->show();
 
@@ -361,10 +364,37 @@ void status_cancel_cb(CALLBACK_ARGS)
 
 // File Menu
 
+void file_new_cb(CALLBACK_ARGS)
+{
+ test:
+  if(file_chooser(0, 1, "New file", "*", 0)) {
+    char *name = file_chooser_get_name(1);
+    struct stat buf;
+    if(!stat(name, &buf))
+      if(fl_ask("%s already exists.\nDo you want to erase it?", name))
+	goto save;
+      else
+	goto test;
+  save:
+    unlink(name);
+    // create a zero length file so that it actually exists (and stupid
+    // Mac/Windows editors accept to deal with it)
+    FILE *fp = fopen(name, "w");
+    if(!fp){
+      Msg(GERROR, "Unable to open file '%s'", name);
+      return;
+    }
+    fprintf(fp, "");
+    fclose(fp);
+    OpenProblem(name);
+    Draw();
+  }
+}
+
 void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0, "Open file", "*", 0)) {
+  if(file_chooser(0, 0, "Open file", "*", 0)) {
     OpenProblem(file_chooser_get_name(1));
     Draw();
   }
@@ -375,7 +405,7 @@ void file_open_cb(CALLBACK_ARGS)
 void file_merge_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  int f = file_chooser(1, "Merge file(s)", "*", 0);
+  int f = file_chooser(1, 0, "Merge file(s)", "*", 0);
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeProblem(file_chooser_get_name(i));
@@ -568,9 +598,6 @@ typedef struct{
   void (*func) (char *name);
 } patXfunc;
 
-#include <sys/types.h>
-#include <sys/stat.h>
-
 void file_save_as_cb(CALLBACK_ARGS)
 {
   int i, nbformats;
@@ -628,7 +655,7 @@ void file_save_as_cb(CALLBACK_ARGS)
 
 test:
 
-  if(file_chooser(0, "Save file as", pat, patindex)) {
+  if(file_chooser(0, 1, "Save file as", pat, patindex)) {
 
     char *name = file_chooser_get_name(1);
 
@@ -655,133 +682,133 @@ test:
 
 void file_save_as_auto_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save file by extension", "*", 0))
+  if(file_chooser(0, 1, "Save file by extension", "*", 0))
     _save_auto(file_chooser_get_name(1));
 }
 
 void file_save_as_geo_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save GEO file", "*", 0))
+  if(file_chooser(0, 1, "Save GEO file", "*", 0))
     _save_geo(file_chooser_get_name(1));
 }
 
 void file_save_as_geo_options_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save option file", "*", 0))
+  if(file_chooser(0, 1, "Save option file", "*", 0))
     _save_geo_options(file_chooser_get_name(1));
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save MSH file", "*", 0))
+  if(file_chooser(0, 1, "Save MSH file", "*", 0))
     _save_msh(file_chooser_get_name(1));
 }
 
 void file_save_as_msh_all_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save MSH file (no physicals)", "*", 0))
+  if(file_chooser(0, 1, "Save MSH file (no physicals)", "*", 0))
     _save_msh_all(file_chooser_get_name(1));
 }
 
 void file_save_as_unv_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save UNV file", "*", 0))
+  if(file_chooser(0, 1, "Save UNV file", "*", 0))
     _save_unv(file_chooser_get_name(1));
 }
 
 void file_save_as_gref_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save GREF file", "*", 0))
+  if(file_chooser(0, 1, "Save GREF file", "*", 0))
     _save_gref(file_chooser_get_name(1));
 }
 
 void file_save_as_vrml_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save VRML file", "*", 0))
+  if(file_chooser(0, 1, "Save VRML file", "*", 0))
     _save_vrml(file_chooser_get_name(1));
 }
 
 void file_save_as_ps_simple_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save PS file", "*", 0))
+  if(file_chooser(0, 1, "Save PS file", "*", 0))
     _save_ps_simple(file_chooser_get_name(1));
 }
 
 void file_save_as_ps_accurate_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save PS file", "*", 0))
+  if(file_chooser(0, 1, "Save PS file", "*", 0))
     _save_ps_accurate(file_chooser_get_name(1));
 }
 
 void file_save_as_pstex_simple_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save LaTeX file (PS part)", "*", 0))
+  if(file_chooser(0, 1, "Save LaTeX file (PS part)", "*", 0))
     _save_pstex_simple(file_chooser_get_name(1));
 }
 
 void file_save_as_pstex_accurate_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save LaTeX file (PS part)", "*", 0))
+  if(file_chooser(0, 1, "Save LaTeX file (PS part)", "*", 0))
     _save_ps_accurate(file_chooser_get_name(1));
 }
 
 void file_save_as_jpegtex_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save LaTeX file (JPEG part)", "*", 0))
+  if(file_chooser(0, 1, "Save LaTeX file (JPEG part)", "*", 0))
     _save_jpegtex(file_chooser_get_name(1));
 }
 
 void file_save_as_pngtex_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save LaTeX file (PNG part)", "*", 0))
+  if(file_chooser(0, 1, "Save LaTeX file (PNG part)", "*", 0))
     _save_pngtex(file_chooser_get_name(1));
 }
 
 void file_save_as_tex_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save LaTeX file (TeX part)", "*", 0))
+  if(file_chooser(0, 1, "Save LaTeX file (TeX part)", "*", 0))
     _save_tex(file_chooser_get_name(1));
 }
 
 void file_save_as_jpeg_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save JPEG file", "*", 0))
+  if(file_chooser(0, 1, "Save JPEG file", "*", 0))
     _save_jpeg(file_chooser_get_name(1));
 }
 
 void file_save_as_png_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save PNG file", "*", 0))
+  if(file_chooser(0, 1, "Save PNG file", "*", 0))
     _save_png(file_chooser_get_name(1));
 }
 
 void file_save_as_gif_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save GIF file", "*", 0))
+  if(file_chooser(0, 1, "Save GIF file", "*", 0))
     _save_gif(file_chooser_get_name(1));
 }
 
 void file_save_as_gif_dithered_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save GIF file", "*", 0))
+  if(file_chooser(0, 1, "Save GIF file", "*", 0))
     _save_gif_dithered(file_chooser_get_name(1));
 }
 
 void file_save_as_gif_transparent_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save GIF file", "*", 0))
+  if(file_chooser(0, 1, "Save GIF file", "*", 0))
     _save_gif_transparent(file_chooser_get_name(1));
 }
 
 void file_save_as_ppm_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save PPM file", "*", 0))
+  if(file_chooser(0, 1, "Save PPM file", "*", 0))
     _save_ppm(file_chooser_get_name(1));
 }
 
 void file_save_as_yuv_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save YUV file", "*", 0))
+  if(file_chooser(0, 1, "Save YUV file", "*", 0))
     _save_yuv(file_chooser_get_name(1));
 }
 
@@ -1140,7 +1167,7 @@ void message_clear_cb(CALLBACK_ARGS)
 void message_save_cb(CALLBACK_ARGS)
 {
 test:
-  if(file_chooser(0, "Save messages", "*", 0)) {
+  if(file_chooser(0, 1, "Save messages", "*", 0)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -1466,6 +1493,14 @@ void help_license_cb(CALLBACK_ARGS)
 void help_about_cb(CALLBACK_ARGS)
 {
   WID->create_about_window();
+}
+
+void help_online_cb(CALLBACK_ARGS)
+{
+  char cmd[1000];
+  sprintf(cmd, CTX.web_browser, "http://www.geuz.org/gmsh/doc/texinfo/");
+  Msg(INFO, "Starting web browser '%s'", cmd);
+  SystemCall(cmd);
 }
 
 // Module Menu
@@ -2557,7 +2592,10 @@ void solver_file_open_cb(CALLBACK_ARGS)
   char tmp[256];
   int num = (int)data;
   sprintf(tmp, "*%s", SINFO[num].extension);
-  if(file_chooser(0, "Open problem definition file", tmp, 0)) {
+
+  // We allow to create the .pro file... Or should we add a "New file"
+  // button?
+  if(file_chooser(0, 1, "Open problem definition file", tmp, 0)) {
     WID->solver[num].input[0]->value(file_chooser_get_name(1));
     if(SINFO[num].nboptions) {
       sprintf(tmp, "%s \"%s\"", SINFO[num].option_command,
@@ -2577,7 +2615,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
   int num = (int)data;
-  if(file_chooser(0, "Open mesh file", "*.msh", 0))
+  if(file_chooser(0, 0, "Open mesh file", "*.msh", 0))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
 int nbs(char *str)
@@ -2647,7 +2685,7 @@ void solver_kill_cb(CALLBACK_ARGS)
 void solver_choose_executable_cb(CALLBACK_ARGS)
 {
   int num = (int)data;
-  if(file_chooser(0, "Choose executable",
+  if(file_chooser(0, 0, "Choose executable",
 #if defined(WIN32)
                   "*.exe"
 #else
@@ -2718,14 +2756,11 @@ void view_reload_cb(CALLBACK_ARGS)
   Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
   strcpy(filename, v->FileName);
 
-  // Hum... We should use the appropriate function to test this, but I
-  // don't know it (stat?)
-  FILE *fp = fopen(filename, "r");
-  if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", filename);
+  struct stat buf;
+  if(stat(filename, &buf)){
+    Msg(GERROR, "File '%s' does not exist", filename);
     return;
   }
-  fclose(fp);
 
   CopyViewOptions(v, &tmp);
   FreeView(v);
@@ -2795,7 +2830,7 @@ void view_remove_cb(CALLBACK_ARGS)
 void view_save_ascii_cb(CALLBACK_ARGS)
 {
 test:
-  if(file_chooser(0, "Save view in ASCII format", "*", 0)) {
+  if(file_chooser(0, 1, "Save view in ASCII format", "*", 0)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;
@@ -2814,7 +2849,7 @@ test:
 void view_save_binary_cb(CALLBACK_ARGS)
 {
 test:
-  if(file_chooser(0, "Save view in binary format", "*", 0)) {
+  if(file_chooser(0, 1, "Save view in binary format", "*", 0)) {
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       struct stat buf;

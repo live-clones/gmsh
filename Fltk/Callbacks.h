@@ -43,6 +43,7 @@ void status_cancel_cb(CALLBACK_ARGS) ;
 
 // File Menu
 
+void file_new_cb(CALLBACK_ARGS) ;
 void file_open_cb(CALLBACK_ARGS) ;
 void file_merge_cb(CALLBACK_ARGS) ;
 void file_save_as_cb(CALLBACK_ARGS) ;
@@ -146,6 +147,7 @@ void visibility_ok_cb(CALLBACK_ARGS) ;
 
 void help_short_cb(CALLBACK_ARGS) ;
 void help_command_line_cb(CALLBACK_ARGS) ;
+void help_online_cb(CALLBACK_ARGS) ;
 void help_license_cb(CALLBACK_ARGS) ;
 void help_about_cb(CALLBACK_ARGS) ;
 
