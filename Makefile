@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.90 2001-04-17 11:49:00 geuzaine Exp $
+# $Id: Makefile,v 1.91 2001-04-17 11:54:57 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -458,6 +458,10 @@ fltk_link_hp:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                       $(MESA_LIB) $(FLTK_LIB) -lm
 
+fltk_link_ibm:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+                 $(FLTK_LIB) -lm
+
 
 fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin compress_bin
 
@@ -469,7 +473,7 @@ fltk_sun: tag fltk_compile_big_endian fltk_link_sun strip_bin compress_bin
 
 fltk_hp: tag fltk_compile_big_endian fltk_link_hp strip_bin compress_bin
 
-fltk_ibm: tag fltk_compile_big_endian fltk_link_mesa strip_bin compress_bin
+fltk_ibm: tag fltk_compile_big_endian fltk_link_ibm strip_bin compress_bin
 
 fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
 
