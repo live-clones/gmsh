@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.88 2003-11-29 01:38:55 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.89 2003-12-01 21:51:24 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1964,6 +1964,13 @@ Sets the mesh color of the entities listed in @var{expression-list} to @var{colo
 @item Delete Meshes;
 Deletes all currently loaded meshes.
 
+@item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+Hide the entities listed in @var{expression-list}.
+
+@item Hide @var{char-expression};
+Hide the entity @var{char-expression} (@var{char-expression} can for example
+be @code{"*"}).
+
 @item Recombine Surface @{ @var{expression-list} @} < = @var{expression} >;
 Recombines the triangular meshes of the surfaces listed in
 @var{expression-list} into mixed triangular/quadrangular meshes. The
@@ -1974,6 +1981,13 @@ triangle recombinations).
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
 @code{Mesh.Format} (@pxref{Mesh options}).
+
+@item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+Show the entities listed in @var{expression-list}.
+
+@item Show @var{char-expression};
+Show the entity @var{char-expression} (@var{char-expression} can for example
+be @code{"*"}).
 @end ftable
 
 @c -------------------------------------------------------------------------

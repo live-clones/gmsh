@@ -60,6 +60,7 @@ void SymmetryShapes(double A,double B,double C,
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color);
+void VisibilityShape(int Type, int Num, int Mode);
 
 
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);

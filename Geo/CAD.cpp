@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.68 2003-11-22 01:41:41 geuzaine Exp $
+// $Id: CAD.cpp,v 1.69 2003-12-01 21:51:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "Create.h"
 #include "CAD.h"
 #include "Edge.h"
+#include "Visibility.h"
 #include "Context.h"
 
 extern Mesh *THEM;
@@ -513,6 +514,15 @@ void ColorSurface(int is, unsigned int col)
   s->Color.mesh = s->Color.geom = col;
 }
 
+void ColorVolume(int iv, unsigned int col)
+{
+  Volume *v = FindVolume(iv, THEM);
+  if(!v)
+    return;
+  v->Color.type = 1;
+  v->Color.mesh = v->Color.geom = col;
+}
+
 void ColorShape(int Type, int Num, unsigned int Color)
 {
   switch (Type) {
@@ -532,6 +542,38 @@ void ColorShape(int Type, int Num, unsigned int Color)
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
     ColorSurface(Num, Color);
+    break;
+  case MSH_VOLUME:
+    ColorVolume(Num, Color);
+    break;
+  default:
+    break;
+  }
+}
+
+void VisibilityShape(int Type, int Num, int Mode)
+{
+  switch (Type) {
+  case MSH_POINT:
+    SetVisibilityByNumber(Num, 2, Mode);
+    break;
+  case MSH_SEGM_LINE:
+  case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_BEZIER:
+  case MSH_SEGM_CIRC:
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_NURBS:
+    SetVisibilityByNumber(Num, 3, Mode);
+    break;
+  case MSH_SURF_NURBS:
+  case MSH_SURF_TRIC:
+  case MSH_SURF_REGL:
+  case MSH_SURF_PLAN:
+    SetVisibilityByNumber(Num, 4, Mode);
+    break;
+  case MSH_VOLUME:
+    SetVisibilityByNumber(Num, 5, Mode);
     break;
   default:
     break;

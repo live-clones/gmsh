@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.122 2003-12-01 05:56:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.123 2003-12-01 21:51:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1814,6 +1814,19 @@ double opt_general_visibility_position1(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.vis_position[1] = (int)val;
   return CTX.vis_position[1];
+}
+
+double opt_general_visibility_mode(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.visibility_mode = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    if(CTX.visibility_mode > 0 && CTX.visibility_mode < 3)
+      WID->vis_browser_mode->value(CTX.visibility_mode);
+  }
+#endif
+  return CTX.visibility_mode;
 }
 
 double opt_general_center_windows(OPT_ARGS_NUM)

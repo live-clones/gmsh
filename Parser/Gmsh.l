@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.49 2003-11-29 01:38:51 geuzaine Exp $
+// $Id: Gmsh.l,v 1.50 2003-12-01 21:51:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -159,6 +159,7 @@ Fmod                    return tFmod;
 For                     return tFor;
 Function                return tFunction;
 
+Hide                    return tHide;
 Hypot                   return tHypot;
 
 In                      return tIn;
@@ -208,6 +209,7 @@ Symmetry                return tSymmetry;
 Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
 StrPrefix               return tStrPrefix;
+Show                    return tShow;
 
 Triangulation           return tTriangulation;
 Transfinite             return tTransfinite;

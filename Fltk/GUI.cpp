@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.256 2003-12-01 05:56:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.257 2003-12-01 21:51:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2837,15 +2837,22 @@ void GUI::create_visibility_window()
   vis_window->resizable(new Fl_Box(width - 3 * WB - 2 * BB - 10, 3 * WB + 2 * BH + 10, 10, 10));
   vis_window->size_range(width, 5 * BH + 5 * WB);
 
-  vis_input = new Fl_Input(1 * WB, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
-  vis_input->callback(visibility_number_cb);
-  vis_input->when(FL_WHEN_ENTER_KEY | FL_WHEN_NOT_CHANGED);
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
-  vis_input->tooltip("Enter a number (or *) and press <return> to toggle the vibility of an entity");
-#endif
+  {
+    int ww = (((brw - 2 * WB) / 3) - WB) / 2;
 
-  vis_input_mode = new Fl_Choice(2 * WB + (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
-  vis_input_mode->menu(input_mode_table);
+    Fl_Button *o1 = new Fl_Button(1 * WB, height - 2 * WB - 2 * BH, ww, BH, "Show");
+    o1->callback(visibility_number_cb, (void *)1);
+    Fl_Button *o2 = new Fl_Button(2 * WB + ww, height - 2 * WB - 2 * BH, ww, BH, "Hide");
+    o2->callback(visibility_number_cb, (void *)0);
+
+    vis_input_mode = new Fl_Choice(2 * WB + (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
+    vis_input_mode->menu(input_mode_table);
+    
+    vis_input = new Fl_Input(3 * WB + 2 * (brw - 2 * WB) / 3, height - 2 * WB - 2 * BH, (brw - 2 * WB) / 3, BH);
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+    vis_input->tooltip("Enter an entity number, or *");
+#endif
+  }
 
   {
     Fl_Return_Button *o = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Apply");

@@ -128,6 +128,7 @@ public :
                               // approximative equivalent model length of a pixel 
   int color_scheme ;          // general color scheme
   int quadric_subdivisions;   // nb of subdivisions for gluQuadrics (spheres/cylinders)
+  int visibility_mode ;       // VIS_GEOM, VIS_MESH, ...
 
   // geometry options 
   struct{

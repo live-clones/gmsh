@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.46 2003-11-29 01:38:49 geuzaine Exp $
+# $Id: Makefile,v 1.47 2003-12-01 21:51:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -32,6 +32,7 @@ SRC = Context.cpp\
       CommandLine.cpp\
       Timer.cpp\
       ColorTable.cpp\
+      Visibility.cpp\
       Trackball.cpp\
       License.cpp
 
@@ -85,6 +86,12 @@ Timer.o: Timer.cpp
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ColorTable.h Context.h
+Visibility.o: Visibility.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Geo/DataBase.h ../Parser/Parser.h \
+  Visibility.h
 Trackball.o: Trackball.cpp Trackball.h
 License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h

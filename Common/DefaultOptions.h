@@ -591,6 +591,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the visibility window" }, 
   { F|S, "VisibilityPositionY" , opt_general_visibility_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the visibility window" }, 
+  { F|S, "VisibilityMode" , opt_general_visibility_mode , 0. , 
+    "Default Visibility mode for visibility browser (Geometry+Mesh, Geometry or Mesh)" }, 
 
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 1.1 ,
     "`Speed' of the middle mouse button zoom" },
@@ -867,7 +869,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "AutoPosition" , opt_view_auto_position , 1. , 
     "Position the scale or the 2D graph automatically to avoid overlaps" }, 
 
-  { F|O, "Boundary" , opt_view_boundary , 0 ,
+  { F|O, "Boundary" , opt_view_boundary , 0. ,
     "Draw the `N minus b'-dimensional boundary of the simplex (N=simplex dimension, b=option value)" },
 
   { F,   "CustomMax" , opt_view_custom_max , 0. , 
@@ -958,7 +960,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "RangeType" , opt_view_range_type , DRAW_POST_DEFAULT ,
     "Value scale range type (1=default, 2=custom)" },
 
-  { F|O, "SaturateValues" , opt_view_saturate_values , 0 ,
+  { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1=true, 0=false)" },
   { F|O, "ScaleType" , opt_view_scale_type , DRAW_POST_LINEAR ,
     "Value scale type (1=linear, 2=logarithmic, 3=double logarithmic)" },
@@ -991,36 +993,36 @@ StringXNumber ViewOptions_Number[] = {
 } ;
 
 StringXNumber PrintOptions_Number[] = {
-  { F|O, "EpsBackground" , opt_print_eps_background , 1 ,
+  { F|O, "EpsBackground" , opt_print_eps_background , 1. ,
     "Save image background in PostScript/PDF output" },
-  { F|O, "EpsBestRoot" , opt_print_eps_best_root , 1 ,
+  { F|O, "EpsBestRoot" , opt_print_eps_best_root , 1. ,
     "Try to minimize primitive splitting in BSP tree sorted PostScript/PDF output" },
-  { F|O, "EpsCompress" , opt_print_eps_compress , 0 ,
+  { F|O, "EpsCompress" , opt_print_eps_compress , 0. ,
     "Compress PostScript/PDF output using zlib" },
   { F|O, "EpsFontSize" , opt_print_eps_font_size , 12. ,
     "Font size used in PostScript/PDF output" },
-  { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 0.2 ,
+  { F|O, "EpsLineWidthFactor" , opt_print_eps_line_width_factor , 1.0 ,
     "Width factor for lines in PostScript/PDF output" },
-  { F|O, "EpsOcclusionCulling" , opt_print_eps_occlusion_culling , 1 ,
+  { F|O, "EpsOcclusionCulling" , opt_print_eps_occlusion_culling , 1. ,
     "Cull occluded primitives (to reduce PostScript/PDF file size)" },
-  { F|O, "EpsPointSizeFactor" , opt_print_eps_point_size_factor , 1. ,
+  { F|O, "EpsPointSizeFactor" , opt_print_eps_point_size_factor , 1.0 ,
     "Size factor for points in PostScript/PDF output" },
-  { F|O, "EpsQuality" , opt_print_eps_quality , 1 ,
+  { F|O, "EpsQuality" , opt_print_eps_quality , 1. ,
     "PostScript/PDF quality (1=simple sort, 2=BSP tree sort)" },
 
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 
 
-  { F|O, "GifDither" , opt_print_gif_dither , 0 ,
+  { F|O, "GifDither" , opt_print_gif_dither , 0. ,
     "Apply dithering to GIF output" },
-  { F|O, "GifInterlace" , opt_print_gif_interlace , 0 ,
+  { F|O, "GifInterlace" , opt_print_gif_interlace , 0. ,
     "Interlace GIF output" },
-  { F|O, "GifSort" , opt_print_gif_sort , 1 ,
+  { F|O, "GifSort" , opt_print_gif_sort , 1. ,
     "Sort the colormap in GIF output" },
-  { F|O, "GifTransparent" , opt_print_gif_transparent , 0 ,
+  { F|O, "GifTransparent" , opt_print_gif_transparent , 0. ,
     "Output transparent GIF image" },
 
-  { F|O, "JpegQuality" , opt_print_jpeg_quality , 100 ,
+  { F|O, "JpegQuality" , opt_print_jpeg_quality , 100. ,
     "JPEG quality (between 1 and 100)" },
 
   { 0, NULL , NULL , 0. }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.47 2003-11-29 01:38:49 geuzaine Exp $
+# $Id: Makefile,v 1.48 2003-12-01 21:51:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -99,7 +99,7 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/ColorTable.h ../Common/Timer.h ../Graphics/CreateFile.h \
   ../Parser/OpenFile.h ../Common/CommandLine.h ../Common/Context.h \
   ../Common/Options.h GUI.h Opengl_Window.h Colorbar_Window.h Callbacks.h \
-  ../Plugin/Plugin.h ../Graphics/Visibility.h Solvers.h
+  ../Plugin/Plugin.h ../Common/Visibility.h Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.151 2003-11-29 19:29:27 geuzaine Exp $
+// $Id: Gmsh.y,v 1.152 2003-12-01 21:51:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -44,6 +44,7 @@
 #include "Timer.h"
 #include "CreateFile.h"
 #include "STL.h"
+#include "Visibility.h"
 
 Tree_T *Symbol_T = NULL;
 
@@ -114,7 +115,7 @@ void FixRelativePath(char *in, char *out);
 %token tText2D tText3D tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tReturn tCall tFunction tMesh tTrimmed
+%token tReturn tCall tFunction tMesh tTrimmed tShow tHide
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -401,6 +402,7 @@ GeomFormat :
   | Duplicata   { return 1; }
   | Delete      { return 1; }
   | Colorify    { return 1; }
+  | Visibility  { return 1; }
   | Extrude     { return 1; }
   | Transfini   { return 1; }
   | Coherence   { return 1; }
@@ -1885,6 +1887,20 @@ ListOfShapes :
 	}
       }
     }
+  | ListOfShapes tVolume '{' RecursiveListOfDouble '}' tEND
+    {
+      for(i = 0; i < List_Nbr($4); i++){
+	List_Read($4, i, &d);
+	TheShape.Num = (int)d;
+	Volume *v = FindVolume(TheShape.Num, THEM);
+	if(!v)
+	  yymsg(WARNING, "Unknown Volume %d", TheShape.Num);
+	else{
+	  TheShape.Type = v->Typ;
+	  List_Add($$, &TheShape);
+	}
+      }
+    }
 ;
 
 //  D U P L I C A T A
@@ -1936,6 +1952,39 @@ Colorify :
       for(i = 0; i < List_Nbr($4); i++){
 	List_Read ($4, i, &TheShape);
 	ColorShape(TheShape.Type, TheShape.Num, $2);
+      }
+    }
+;
+
+//  V I S I B I L I T Y
+
+Visibility :
+    tShow StringExpr tEND
+    {
+      int m = (CTX.visibility_mode == 2) ? VIS_MESH : 
+	((CTX.visibility_mode == 1) ? VIS_GEOM : VIS_GEOM|VIS_MESH);
+      for(i = 2; i < 6; i++)
+	SetVisibilityByNumber($2, i, m);
+    }
+  | tHide StringExpr tEND
+    {
+      for(i = 2; i < 6; i++)
+	SetVisibilityByNumber($2, i, 0);
+    }
+  | tShow '{' ListOfShapes '}'
+    {
+      int m = (CTX.visibility_mode == 2) ? VIS_MESH :
+	((CTX.visibility_mode == 1) ? VIS_GEOM : VIS_GEOM|VIS_MESH);
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read ($3, i, &TheShape);
+	VisibilityShape(TheShape.Type, TheShape.Num, m);
+      }
+    }
+  | tHide '{' ListOfShapes '}'
+    {
+      for(i = 0; i < List_Nbr($3); i++){
+	List_Read ($3, i, &TheShape);
+	VisibilityShape(TheShape.Type, TheShape.Num, 0);
       }
     }
 ;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.52 2003-04-02 06:04:23 geuzaine Exp $
+# $Id: Makefile,v 1.53 2003-12-01 21:51:20 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -34,7 +34,6 @@ SRC = Draw.cpp \
       Iso.cpp \
       Entity.cpp \
       ReadImg.cpp \
-      Visibility.cpp \
       Scale.cpp \
       Graph2D.cpp \
       Axes.cpp \
@@ -122,12 +121,6 @@ ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
   ../Common/Views.h ../Common/ColorTable.h
-Visibility.o: Visibility.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h ../Geo/CAD.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Geo/DataBase.h ../Parser/Parser.h Visibility.h
 Scale.o: Scale.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
