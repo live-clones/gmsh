@@ -1,0 +1,28 @@
+#
+# parameter file fpr mpeg_encode 
+#
+
+PATTERN          I
+# PATTERN          IBBBP
+# PATTERN          IBBPBBPBBPBBPBB
+BASE_FILE_FORMAT JPEG
+GOP_SIZE         30
+SLICES_PER_FRAME 1
+PIXEL            HALF
+RANGE            10
+PSEARCH_ALG      TWOLEVEL
+# PSEARCH_ALG      LOGARITHMIC
+BSEARCH_ALG      CROSS2
+IQSCALE          8
+PQSCALE          10
+BQSCALE          25
+REFERENCE_FRAME  ORIGINAL
+
+OUTPUT           t8.mpg
+
+INPUT_CONVERT   *
+INPUT_DIR       .
+INPUT
+t8-*.jpg [01-50]
+END_INPUT
+
