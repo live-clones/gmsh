@@ -41,13 +41,13 @@ typedef struct _Node {
     }               function;	/* Structure representing
 				 * function.  */
     struct {
-      char            operato;	/* Operator type ('-'
+      char            operatorr;/* Operator type ('-'
 				 * for unary minus).  */
       struct _Node   *child;	/* Operand node.  */
     }               un_op;	/* Structure representing unary
 				 * operator.  */
     struct {
-      char            operato;	/* Operator type ('+'
+      char            operatorr;/* Operator type ('+'
 				 * for adition, '-' for
 				 * subtraction, '*' for
 				 * multiplication, '/'
