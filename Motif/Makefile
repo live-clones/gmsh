@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2001-01-08 08:03:40 geuzaine Exp $
+# $Id: Makefile,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
 #
 # Makefile for "libMotif.a"
 #

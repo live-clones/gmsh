@@ -1,4 +1,4 @@
-// $Id: XColors.cpp,v 1.5 2001-01-08 08:03:41 geuzaine Exp $
+// $Id: XColors.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
 
 /*
   Attention. Toutes les couleurs sont crees a partir de la colormap de

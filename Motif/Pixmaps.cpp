@@ -1,4 +1,4 @@
-// $Id: Pixmaps.cpp,v 1.4 2001-01-08 08:03:40 geuzaine Exp $
+// $Id: Pixmaps.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"

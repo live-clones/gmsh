@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.7 2001-01-08 08:03:40 geuzaine Exp $
+// $Id: Message.cpp,v 1.1 2001-01-08 08:16:27 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -7,10 +7,8 @@
 #include "GmshUI.h"
 #include "Version.h"
 #include "Context.h"
-#include "Widgets.h"
 
 extern Context_T   CTX;
-extern Widgets_T   WID;
 
 /* ------------------------------------------------------------------------ */
 /*  S i g n a l                                                             */
@@ -43,22 +41,16 @@ void Signal (int sig_num){
 /*  M s g                                                                   */
 /* ------------------------------------------------------------------------ */
 
-char *TextBuffer;
+char *TextBuffer, TextAbout[1024];
 
-#define PUT_IN_COMMAND_WIN                                              \
-  vsprintf(TextBuffer, fmt, args);                                      \
-  XmListAddItem(WID.C.commandList,XmStringCreateSimple(TextBuffer),0);  \
-  XtSetArg(arg[0], XmNitemCount, &nb);                                  \
-  XtSetArg(arg[1], XmNvisibleItemCount, &nbvis);                        \
-  XtGetValues(WID.C.commandList, arg, 2);                               \
-  XmListSetPos(WID.C.commandList,(nb>nbvis)?nb-nbvis+1:0);              \
-  XmUpdateDisplay(WID.C.commandList);
+#define PUT_IN_COMMAND_WIN			\
+    vfprintf(stderr, fmt, args); 		\
+    fprintf(stderr, "\n");
+
 
 void Msg(int level, char *fmt, ...){
   va_list  args;
   int      abort=0;
-  Arg      arg[2];
-  int      nb, nbvis;
 
   if(level != FATAL && level != ERROR && level != PARSER_ERROR &&
      CTX.interactive && !CTX.verbosity) 
@@ -116,10 +108,13 @@ void Msg(int level, char *fmt, ...){
       }
     }
     else{
+      PUT_IN_COMMAND_WIN ;
+      /*
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.infoLabel, XmNlabelString,
                     XmStringCreateSimple(TextBuffer), NULL);
       XmUpdateDisplay(WID.G.infoLabel);
+      */
     }
     break;
   case SELECT :
@@ -131,10 +126,13 @@ void Msg(int level, char *fmt, ...){
       }
     }
     else{
+      PUT_IN_COMMAND_WIN ;
+      /*
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.selectLabel, XmNlabelString, 
                     XmStringCreateSimple(TextBuffer), NULL);
       XmUpdateDisplay(WID.G.selectLabel);
+      */
     }
     break;
   case STATUS :
@@ -146,10 +144,13 @@ void Msg(int level, char *fmt, ...){
       }
     }
     else{
+      PUT_IN_COMMAND_WIN ;
+      /*
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.statusLabel, XmNlabelString,
                     XmStringCreateSimple(TextBuffer), NULL);
       XmUpdateDisplay(WID.G.statusLabel);
+      */
     }
     break;
   case PARSER_ERROR :

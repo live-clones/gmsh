@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.35 2001-01-08 08:03:40 geuzaine Exp $
+// $Id: Main.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
 
 #include <signal.h>
 
