@@ -43,9 +43,9 @@ void set_t(int i, double val);
 void set_s(int i, double val);
 
 void RaiseFill(int i, double Val, double ValMin, double Raise[3][8]);
-void Palette(Post_View * View, double min, double max, double val);
-void Palette1(Post_View * View, int nbi, int i);
-void Palette2(Post_View * v, double min, double max, double val);
+void PaletteContinuous(Post_View * View, double min, double max, double val);
+void PaletteContinuousLinear(Post_View * v, double min, double max, double val);
+void PaletteDiscrete(Post_View * View, int nbi, int i);
 void ColorSwitch(int i);
 
 int  SelectEntity(int type, Vertex **v, Curve **c, Surface **s);

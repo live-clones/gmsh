@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.31 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.32 2004-04-20 19:15:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -80,7 +80,7 @@ static void addval(Post_View * v, double Abs, double Val,
     y = ybot + (Val - ValMin) / (ValMax - ValMin) * height;
 
   if(Val >= ValMin && Val <= ValMax) {
-    Palette2(v, ValMin, ValMax, Val);
+    PaletteContinuousLinear(v, ValMin, ValMax, Val);
     if(numeric) {
       glRasterPos2d(x + 3, y + 3);
       sprintf(label, v->Format, Val);

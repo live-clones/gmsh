@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.54 2004-04-20 18:14:31 geuzaine Exp $
+// $Id: Post.cpp,v 1.55 2004-04-20 19:15:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -85,8 +85,8 @@ int GiveIndexFromValue_Log(double ValMin, double ValMax, int NbIso,
     return NbIso / 2;
   if(ValMin <= 0.)
     return 0;
-  return (int)((log10(Val) - log10(ValMin)) * (NbIso - 1) / (log10(ValMax) -
-                                                             log10(ValMin)));
+  return (int)((log10(Val) - log10(ValMin)) * (NbIso - 1) / 
+	       (log10(ValMax) - log10(ValMin)));
 }
 
 int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso,
@@ -97,36 +97,31 @@ int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso,
     return NbIso / 2;
   if(ValMin <= 0.)
     return 0;
-  return (int)((log10(Val) - log10(ValMin)) * (NbIso - 1) / (log10(ValMax) -
-                                                             log10(ValMin)));
+  return (int)((log10(Val) - log10(ValMin)) * (NbIso - 1) / 
+	       (log10(ValMax) - log10(ValMin)));
 }
 
 
 // Color Palette
 
-void Palette(Post_View * v, double min, double max, double val)
+void PaletteContinuous(Post_View * v, double min, double max, double val)
 {       /* val in [min,max] */
   int index = v->GIFV(min, max, v->CT.size, val);
   glColor4ubv((GLubyte *) & v->CT.table[index]);
 }
 
-void Palette1(Post_View * v, int nbi, int i)
+void PaletteContinuousLinear(Post_View * v, double min, double max, double val)
+{       /* val in [min,max] */
+  int index = GiveIndexFromValue_Lin(min, max, v->CT.size, val);
+  glColor4ubv((GLubyte *) & v->CT.table[index]);
+}
+
+void PaletteDiscrete(Post_View * v, int nbi, int i)
 {       /* i in [0,nbi-1] */
   int index;
 
   index = (nbi == 1) ?
     v->CT.size / 2 : (int)(i / (double)(nbi - 1) * (v->CT.size - 1) + 0.5);
-
-  glColor4ubv((GLubyte *) & v->CT.table[index]);
-}
-
-void Palette2(Post_View * v, double min, double max, double val)
-{       /* val in [min,max] */
-  int index;
-
-  index = (min == max) ?
-    v->CT.size / 2 :
-    (int)((val - min) / (max - min) * (v->CT.size - 1) + 0.5);
 
   glColor4ubv((GLubyte *) & v->CT.table[index]);
 }

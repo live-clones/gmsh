@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.40 2004-04-20 18:14:31 geuzaine Exp $
+// $Id: Scale.cpp,v 1.41 2004-04-20 19:15:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -108,7 +108,7 @@ void draw_scale(Post_View * v,
 
   for(i = 0; i < v->NbIso; i++) {
     if(v->IntervalsType == DRAW_POST_DISCRETE) {
-      Palette1(v, v->NbIso, i);
+      PaletteDiscrete(v, v->NbIso, i);
       glBegin(GL_QUADS);
       glVertex2d(xmin, ymin + i * cs_bh);
       glVertex2d(xmin + width, ymin + i * cs_bh);
@@ -118,19 +118,20 @@ void draw_scale(Post_View * v,
     }
     else if(v->IntervalsType == DRAW_POST_CONTINUOUS) {
       glBegin(GL_QUADS);
-      Palette2(v, ValMin, ValMax,
-               ValMin + i * (ValMax - ValMin) / (v->NbIso ? v->NbIso : 1));
+      PaletteContinuousLinear(v, ValMin, ValMax,
+			      ValMin + i * (ValMax - ValMin) / 
+			      (v->NbIso ? v->NbIso : 1));
       glVertex2d(xmin, ymin + i * cs_bh);
       glVertex2d(xmin + width, ymin + i * cs_bh);
-      Palette2(v, ValMin, ValMax,
-               ValMin + (i + 1) * (ValMax -
-                                   ValMin) / (v->NbIso ? v->NbIso : 1));
+      PaletteContinuousLinear(v, ValMin, ValMax,
+			      ValMin + (i + 1) * (ValMax - ValMin) / 
+			      (v->NbIso ? v->NbIso : 1));
       glVertex2d(xmin + width, ymin + (i + 1) * cs_bh);
       glVertex2d(xmin, ymin + (i + 1) * cs_bh);
       glEnd();
     }
     else {
-      Palette1(v, v->NbIso, i);
+      PaletteDiscrete(v, v->NbIso, i);
       glBegin(GL_LINES);
       glVertex2d(xmin, ymin + i * cs_bh + 0.5 * cs_bh);
       glVertex2d(xmin + width, ymin + i * cs_bh + 0.5 * cs_bh);
