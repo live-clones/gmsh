@@ -192,7 +192,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.203 2004-09-18 01:51:56 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.204 2004-10-16 22:14:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -7116,7 +7116,7 @@ case 284:
 	if(v){
 	  char tmpstring[1024];
 	  FixRelativePath(yyvsp[-1].c, tmpstring);
-	  WriteView(v, tmpstring, 0, 0);
+	  WriteView(v, tmpstring, CTX.post.file_format, 0);
 	}
       }
       else{
