@@ -1,12 +1,13 @@
-$Id: VERSIONS,v 1.291 2004-12-30 05:45:24 geuzaine Exp $
+$Id: VERSIONS,v 1.292 2004-12-30 23:10:40 geuzaine Exp $
 
 New in 1.58: new File->Rename menu; new colormaps+improved colormap
 handling; new color+min/max options in views; new GetValue() function
 to ask for values interactively in scripts; generalized For/EndFor
 loops in parser; new plugins (Annotate, Remove, Probe); new text
 attributes in views; renamed some shortcuts; fixed TeX output for
-large scenes; fixed many small memory leaks in parser; various other
-small enhancements and bug fixes.
+large scenes; new option dialogs for various output formats; fixed
+many small memory leaks in parser; various other small enhancements
+and bug fixes.
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored

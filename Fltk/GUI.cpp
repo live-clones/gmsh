@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.398 2004-12-30 22:43:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.399 2004-12-30 23:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"M&erge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
-    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0, FL_MENU_DIVIDER},
+    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save &as...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Sa&ve mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0, FL_MENU_DIVIDER},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
@@ -125,7 +125,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
-    {"Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0, FL_MENU_DIVIDER},
+    {"Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
     {"Save As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {0},
@@ -448,6 +448,7 @@ int GUI::global_shortcuts(int event)
 
   if(Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
      Fl::test_shortcut(FL_CTRL + FL_Escape) ||
+     Fl::test_shortcut(FL_META + FL_Escape) ||
      Fl::test_shortcut(FL_ALT + FL_Escape)) {
     return 1;
   }
@@ -472,7 +473,7 @@ int GUI::global_shortcuts(int event)
     mod_mesh_cb(0, 0);
     return 1;
   }
-  else if(Fl::test_shortcut(FL_CTRL + 'q')){
+  else if(Fl::test_shortcut(FL_CTRL + 'q') || Fl::test_shortcut(FL_META + 'q')){
     // only necessary when using the system menu bar, but hey, it
     // cannot hurt...
     file_quit_cb(0, 0);
@@ -514,7 +515,7 @@ int GUI::global_shortcuts(int event)
     quit_selection = 1;
     return 0;   // trick: do as if we didn't use it
   }
-  else if(Fl::test_shortcut(FL_CTRL + 'a')) { 
+  else if(Fl::test_shortcut(FL_CTRL + 'a') || Fl::test_shortcut(FL_META + 'a')) { 
     // raise all open windows (graphics first, then options, then menu)
     if(g_window && g_window->shown()) g_window->show();
     if(opt_window && opt_window->shown()) opt_window->show();

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.315 2004-12-30 22:43:21 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.316 2004-12-30 23:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1181,7 +1181,11 @@ void clip_reset_cb(CALLBACK_ARGS)
 void help_short_cb(CALLBACK_ARGS)
 {
   Msg(DIRECT, " ");
+#if defined(__APPLE__)
+  Msg(DIRECT, "Keyboard shortcuts (Ctrl and Cmd can be used interchangeably):");
+#else
   Msg(DIRECT, "Keyboard shortcuts:");
+#endif
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Left arrow    go to previous time step"); 
   Msg(DIRECT, "  Right arrow   go to next time step"); 
