@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.28 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: Generator.cpp,v 1.29 2001-11-07 08:36:52 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -14,6 +14,7 @@ static List_T *Curves;
 
 void GetStatistics (double s[50]){
   int i;
+  if(!THEM) return;
   THEM->Statistics[0] = Tree_Nbr (THEM->Points);
   THEM->Statistics[1] = Tree_Nbr (THEM->Curves);
   THEM->Statistics[2] = Tree_Nbr (THEM->Surfaces);
