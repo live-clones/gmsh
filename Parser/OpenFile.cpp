@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.3 2001-01-09 14:24:13 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.4 2001-01-10 08:41:08 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -15,9 +15,12 @@
 #include "Draw.h"
 #endif
 
-#ifdef _XMOTIF
+#if _XMOTIF
 #include "Widgets.h"
 extern Widgets_T WID;
+#elif _FLTK
+#include "GUI.h"
+extern GUI *WID;
 #endif
 
 extern Mesh      *THEM, M;
@@ -92,14 +95,16 @@ void OpenProblem(char *name){
 
   strncpy(THEM->name, CTX.basefilename,NAME_STR_L);
 
-#ifdef _XMOTIF
   if(!CTX.interactive){
+#if _XMOTIF
     XtVaSetValues(WID.G.shell,
                   XmNtitle, CTX.filename,
                   XmNiconName, CTX.basefilename,
                   NULL);
-  }
+#elif _FLTK
+    WID->set_title(CTX.filename);
 #endif
+  }
 
   Msg(INFOS, "Opening '%s'", CTX.filename); 
 

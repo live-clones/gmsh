@@ -39,13 +39,15 @@ extern        Context_Item menu_geometry_elementary_add[];
 extern            Context_Item menu_geometry_elementary_add_new[]; 
 extern            Context_Item menu_geometry_elementary_add_translate[]; 
 extern            Context_Item menu_geometry_elementary_add_rotate[]; 
-extern            Context_Item menu_geometry_elementary_add_dilate[]; 
+extern            Context_Item menu_geometry_elementary_add_scale[]; 
 extern            Context_Item menu_geometry_elementary_add_symmetry[]; 
 extern        Context_Item menu_geometry_elementary_translate[]; 
 extern        Context_Item menu_geometry_elementary_rotate[]; 
-extern        Context_Item menu_geometry_elementary_dilate[]; 
+extern        Context_Item menu_geometry_elementary_scale[]; 
 extern        Context_Item menu_geometry_elementary_symmetry[]; 
 extern        Context_Item menu_geometry_elementary_extrude[]; 
+extern            Context_Item menu_geometry_elementary_extrude_translate[]; 
+extern            Context_Item menu_geometry_elementary_extrude_rotate[]; 
 extern        Context_Item menu_geometry_elementary_delete[]; 
 extern    Context_Item menu_geometry_physical[]; 
 extern        Context_Item menu_geometry_physical_add[]; 
@@ -73,21 +75,19 @@ public:
     : Fl_Gl_Window(x, y, w, h, l) {}
 };
 
-// The GUI class contains only the important widgets
+// The GUI class contains only the important widgets. All these
+// widgets should stay private, and be accessed only by the public
+// member functions.
 
 class GUI{
 
-  int BH; // generic button height
-  int WB; // generic window border
-  int IW; // generic input field width
+  int BH; // check_button height
+  int BW; // check_button width
+  int WB; // borders
+  int IW; // input field width
   int MH; // height of the unchangeable part of the menu window
+
   // All other diemnsions are automatic, or governed by CTX
-  
-  // Windows
-  Fl_Window  *m_window, *g_window, *gen_window, *geo_window ;
-  Fl_Window  *mesh_window, *post_window, *stat_window ;
-  Fl_Window  *help_window, *about_window, *view_window ;
-  Opengl_Window *g_opengl_window ;
   
   // Bitmaps
   Fl_Bitmap  *icon1_bmp, *icon2_bmp, *icon3_bmp;
@@ -96,6 +96,7 @@ class GUI{
   // We keep the following widgets for easy further reference
 
   // menu window
+  Fl_Window        *m_window ;
   Fl_Choice        *m_module_butt ;
   Fl_Button        *m_navig_butt  [2] ;
   Fl_Button        *m_push_butt   [NB_BUTT_MAX] ;
@@ -103,38 +104,65 @@ class GUI{
   Fl_Menu_Button   *m_popup_butt  [NB_BUTT_MAX] ;
 
   // graphic window
+  Fl_Window        *g_window ;
+  Opengl_Window    *g_opengl_window ;
   Fl_Button        *g_status_butt[7] ;
   Fl_Box           *g_status_label[3] ;
 
   // general options window
+  Fl_Window        *gen_window ;
   Fl_Check_Button  *gen_butt[10] ;
   Fl_Value_Input   *gen_value[10] ;
 
   // geometry options window
+  Fl_Window        *geo_window ;
   Fl_Check_Button  *geo_butt[10] ;
   Fl_Input         *geo_input ;
   Fl_Value_Input   *geo_value[10] ;
   
   // mesh options window
+  Fl_Window        *mesh_window ;
   Fl_Check_Button  *mesh_butt[20] ;
   Fl_Input         *mesh_input ;
   Fl_Value_Input   *mesh_value[20] ;
 
   // post-processing options window
+  Fl_Window        *post_window ;
   Fl_Check_Button  *post_butt[20] ;
   Fl_Value_Input   *post_value[20] ;
 
   // statistics window
+  Fl_Window        *stat_window ;
   Fl_Output        *stat_value[50] ;
 
+  // help window
+  Fl_Window        *help_window ;
+    
+  // about window
+  Fl_Window        *about_window ;
+
   // view options window
+  Fl_Window        *view_window ;
+  Fl_Group         *view_colorbar, *view_range, *view_intervals ;
+  Fl_Group         *view_offsetraise, *view_timestep, *view_vector ;
   Fl_Check_Button  *view_butt[20] ;
   Fl_Value_Input   *view_value[20] ;
   Fl_Input         *view_input[20] ;
+  
+  // geometry context window
+  Fl_Window        *context_geometry_window ;
+  Fl_Input         *context_geometry_input[30] ;
+
+  // mesh context window
+  Fl_Window        *context_mesh_window ;
+  Fl_Input         *context_mesh_input[20] ;
 
 public:
 
+  // the constructor
   GUI();
+
+  // general purpose interaction
   void run();
   void check();
   void make_gl_current();
@@ -147,6 +175,21 @@ public:
   void set_anim(int mode);
   void set_status(char *msg, int num);
   void set_statistics();
+  void set_title(char *str);
+  void activate_custom(int val);
+
+  // geometry contexts queries
+  char *get_geometry_parameter(int num);
+  char *get_geometry_point(int num);
+  char *get_geometry_translation(int num);
+  char *get_geometry_rotation(int num);
+  char *get_geometry_scale(int num);
+  char *get_geometry_symmetry(int num);
+
+  // mesh contexts queries
+  char *get_mesh_transfinite(int num);
+  char *get_mesh_length(int num);
+  char *get_mesh_attractor(int num);
 
   // create additional windows
   void create_general_options_window();
@@ -154,10 +197,11 @@ public:
   void create_mesh_options_window();
   void create_post_options_window();
   void create_statistics_window();
-  void create_view_window();
+  void create_view_window(int numview);
   void create_help_window();
   void create_about_window();
-
+  void create_geometry_context_window(int num);
+  void create_mesh_context_window(int num);
 };
 
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.6 2001-01-09 15:45:03 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.7 2001-01-10 08:41:04 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,7 +67,7 @@ void CancelMeshThread(void){
 // Common callbacks 
 
 void cancel_cb(CALLBACK_ARGS){
-  ((Fl_Window*)data)->hide();
+  if(data) ((Fl_Window*)data)->hide();
 }
 
 void ok_cb(CALLBACK_ARGS){
@@ -176,6 +176,12 @@ void file_save_as_geo_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save GEO File", "*", NULL)))
     CreateFile(newfile, CTX.print.format = FORMAT_GEO); 
+}
+
+void file_save_as_geo_options_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save Options File", "*", NULL)))
+    Print_Context(newfile); 
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS) {
@@ -468,49 +474,21 @@ void geometry_physical_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_physical, 0);
 }
 void geometry_reload_cb(CALLBACK_ARGS){
-  printf("reload geometry\n");
+  OpenProblem(CTX.filename);
+  Init();
+  Draw();
 } 
 void geometry_elementary_add_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_add, 0);
 }
-void geometry_elementary_translate_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_translate, 0);
-}
-void geometry_elementary_rotate_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_rotate, 0);
-}
-void geometry_elementary_dilate_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_dilate, 0);
-}
-void geometry_elementary_symmetry_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_symmetry, 0);
-}
-void geometry_elementary_extrude_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_extrude, 0);
-}
-void geometry_elementary_delete_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_delete, 0);
-}
 void geometry_elementary_add_new_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_elementary_add_new, 0);
 }
-void geometry_elementary_add_translate_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_add_translate, 0);
-}
-void geometry_elementary_add_rotate_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_add_rotate, 0);
-}
-void geometry_elementary_add_dilate_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_add_dilate, 0);
-}
-void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_elementary_add_symmetry, 0);
-}
 void geometry_elementary_add_new_parameter_cb(CALLBACK_ARGS){
-  printf("new param\n");
+  WID->create_geometry_context_window(0);
 }
 void geometry_elementary_add_new_point_cb(CALLBACK_ARGS){
-  printf("new point\n");
+  WID->create_geometry_context_window(1);
 }
 void geometry_elementary_add_new_line_cb(CALLBACK_ARGS){
   printf("new line\n");
@@ -533,86 +511,161 @@ void geometry_elementary_add_new_ruledsurface_cb(CALLBACK_ARGS){
 void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS){
   printf("new vol\n");
 }
+void geometry_elementary_add_translate_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_add_translate, 0);
+}
 void geometry_elementary_add_translate_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("translate point\n");
 }
 void geometry_elementary_add_translate_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("translate curve\n");
 }
 void geometry_elementary_add_translate_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("translate surface\n");
 }
+void geometry_elementary_add_rotate_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_add_rotate, 0);
+}
 void geometry_elementary_add_rotate_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
   printf("rotate point\n");
 }
 void geometry_elementary_add_rotate_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
   printf("rotate curve\n");
 }
 void geometry_elementary_add_rotate_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
   printf("rotate surf\n");
 }
-void geometry_elementary_add_dilate_point_cb(CALLBACK_ARGS){
-  printf("dilate point\n");
+void geometry_elementary_add_scale_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_add_scale, 0);
 }
-void geometry_elementary_add_dilate_curve_cb(CALLBACK_ARGS){
-  printf("dilate curve\n");
+void geometry_elementary_add_scale_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale point\n");
 }
-void geometry_elementary_add_dilate_surface_cb(CALLBACK_ARGS){
-  printf("dilate surface\n");
+void geometry_elementary_add_scale_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale curve\n");
+}
+void geometry_elementary_add_scale_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale surface\n");
+}
+void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_add_symmetry, 0);
 }
 void geometry_elementary_add_symmetry_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
   printf("symm point\n");
 }
 void geometry_elementary_add_symmetry_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
   printf("symm curve\n");
 }
 void geometry_elementary_add_symmetry_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
   printf("symm surf\n");
 }
+void geometry_elementary_translate_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_translate, 0);
+}
 void geometry_elementary_translate_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("translate point\n");
 }
 void geometry_elementary_translate_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("translate curve\n");
 }
 void geometry_elementary_translate_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("translate surf\n");
 }
+void geometry_elementary_rotate_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_rotate, 0);
+}
 void geometry_elementary_rotate_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
   printf("rot point\n");
 }
 void geometry_elementary_rotate_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
   printf("rot curve\n");
 }
 void geometry_elementary_rotate_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
   printf("rot surf\n");
 }
-void geometry_elementary_dilate_point_cb(CALLBACK_ARGS){
-  printf("dilate point\n");
+void geometry_elementary_scale_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_scale, 0);
 }
-void geometry_elementary_dilate_curve_cb(CALLBACK_ARGS){
-  printf("dilate curve\n");
+void geometry_elementary_scale_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale point\n");
 }
-void geometry_elementary_dilate_surface_cb(CALLBACK_ARGS){
-  printf("dilate surf\n");
+void geometry_elementary_scale_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale curve\n");
+}
+void geometry_elementary_scale_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(4);
+  printf("scale surf\n");
+}
+void geometry_elementary_symmetry_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_symmetry, 0);
 }
 void geometry_elementary_symmetry_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
   printf("symm point\n");
 }
 void geometry_elementary_symmetry_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
   printf("symm curve\n");
 }
 void geometry_elementary_symmetry_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(5);
   printf("symm surf\n");
 }
-void geometry_elementary_extrude_point_cb(CALLBACK_ARGS){
+void geometry_elementary_extrude_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_extrude, 0);
+}
+void geometry_elementary_extrude_translate_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_extrude_translate, 0);
+}
+void geometry_elementary_extrude_translate_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("extr point\n");
 }
-void geometry_elementary_extrude_curve_cb(CALLBACK_ARGS){
+void geometry_elementary_extrude_translate_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("extr curve\n");
 }
-void geometry_elementary_extrude_surface_cb(CALLBACK_ARGS){
+void geometry_elementary_extrude_translate_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(2);
   printf("extr surf\n");
+}
+void geometry_elementary_extrude_rotate_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_extrude_rotate, 0);
+}
+void geometry_elementary_extrude_rotate_point_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
+  printf("extr point\n");
+}
+void geometry_elementary_extrude_rotate_curve_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
+  printf("extr curve\n");
+}
+void geometry_elementary_extrude_rotate_surface_cb(CALLBACK_ARGS){
+  WID->create_geometry_context_window(3);
+  printf("extr surf\n");
+}
+void geometry_elementary_delete_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_elementary_delete, 0);
 }
 void geometry_elementary_delete_point_cb(CALLBACK_ARGS){
   printf("del point\n");
@@ -626,9 +679,6 @@ void geometry_elementary_delete_surface_cb(CALLBACK_ARGS){
 void geometry_physical_add_cb(CALLBACK_ARGS){
   WID->set_context(menu_geometry_physical_add, 0);
 }
-void geometry_physical_delete_cb(CALLBACK_ARGS){
-  WID->set_context(menu_geometry_physical_delete, 0);
-}
 void geometry_physical_add_point_cb (CALLBACK_ARGS){
   printf("phys add point\n");
 }
@@ -640,6 +690,9 @@ void geometry_physical_add_surface_cb (CALLBACK_ARGS){
 }
 void geometry_physical_add_volume_cb (CALLBACK_ARGS){
   printf("phys add vol\n");
+}
+void geometry_physical_delete_cb(CALLBACK_ARGS){
+  WID->set_context(menu_geometry_physical_delete, 0);
 }
 void geometry_physical_delete_point_cb(CALLBACK_ARGS){
   printf("phys delpoint\n");
@@ -817,5 +870,152 @@ void view_applybgmesh_cb(CALLBACK_ARGS){
   BGMWithView(v); 
 }
 void view_options_cb(CALLBACK_ARGS){
-  WID->create_view_window();
+  WID->create_view_window((int)data);
+}
+
+void view_options_show_scale_cb(CALLBACK_ARGS){
+  /*
+  if(CTX.post.link==2){
+    for(int i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+      
+    }
+  }
+  */
+}
+void view_options_show_time_cb(CALLBACK_ARGS){
+}
+void view_options_transparent_scale_cb(CALLBACK_ARGS){
+}
+void view_options_name_cb(CALLBACK_ARGS){
+}
+void view_options_format_cb(CALLBACK_ARGS){
+}
+void view_options_custom_range_cb(CALLBACK_ARGS){
+  /*
+  if((int)((Fl_Value_Input*)w)->value()){
+    WID->activate_custom(0);
+    v->ScaleType==DRAW_POST_DEFAULT;
+  }
+  else{
+    WID->activate_custom(1);
+    v->ScaleType==DRAW_POST_CUSTOM;
+  }
+  */
+}
+void view_options_custom_min_cb(CALLBACK_ARGS){
+}
+void view_options_custom_max_cb(CALLBACK_ARGS){
+}
+void view_options_linear_range_cb(CALLBACK_ARGS){
+}
+void view_options_logarithmic_range_cb(CALLBACK_ARGS){
+}
+void view_options_nbiso_cb(CALLBACK_ARGS){
+}
+void view_options_iso_cb(CALLBACK_ARGS){
+}
+void view_options_fillediso_cb(CALLBACK_ARGS){
+}
+void view_options_continuousiso_cb(CALLBACK_ARGS){
+}
+void view_options_numericiso_cb(CALLBACK_ARGS){
+}
+void view_options_xoffset_cb(CALLBACK_ARGS){
+}
+void view_options_yoffset_cb(CALLBACK_ARGS){
+}
+void view_options_zoffset_cb(CALLBACK_ARGS){
+}
+void view_options_xraise_cb(CALLBACK_ARGS){
+}
+void view_options_yraise_cb(CALLBACK_ARGS){
+}
+void view_options_zraise_cb(CALLBACK_ARGS){
+}
+void view_options_timestep_cb(CALLBACK_ARGS){
+}
+void view_options_vector_line_cb(CALLBACK_ARGS){
+}
+void view_options_vector_arrow_cb(CALLBACK_ARGS){
+}
+void view_options_vector_cone_cb(CALLBACK_ARGS){
+}
+void view_options_vector_displacement_cb(CALLBACK_ARGS){
+}
+void view_options_vector_scale_cb(CALLBACK_ARGS){
+}
+void view_options_vector_cog_cb(CALLBACK_ARGS){
+}
+void view_options_vector_vertex_cb(CALLBACK_ARGS){
+}
+
+
+// Context geometry
+
+void con_geometry_define_parameter_cb(CALLBACK_ARGS){
+  add_param(WID->get_geometry_parameter(0),
+	    WID->get_geometry_parameter(1),
+	    CTX.filename);
+}
+
+void con_geometry_define_point_cb(CALLBACK_ARGS){
+ strcpy(x_text, WID->get_geometry_point(0));
+ strcpy(y_text, WID->get_geometry_point(1));
+ strcpy(z_text, WID->get_geometry_point(2));
+ strcpy(l_text, WID->get_geometry_point(3));
+ add_point(CTX.filename);
+ ZeroHighlight(&M);
+ Replot();
+}
+
+void con_geometry_define_translation_cb(CALLBACK_ARGS){
+  strcpy(tx_text, WID->get_geometry_translation(0));
+  strcpy(ty_text, WID->get_geometry_translation(1));
+  strcpy(tz_text, WID->get_geometry_translation(2));
+}
+
+void con_geometry_define_rotation_cb(CALLBACK_ARGS){
+  strcpy(px_text, WID->get_geometry_rotation(0));
+  strcpy(py_text, WID->get_geometry_rotation(1));
+  strcpy(pz_text, WID->get_geometry_rotation(2));
+  strcpy(ax_text, WID->get_geometry_rotation(3));
+  strcpy(ay_text, WID->get_geometry_rotation(4));
+  strcpy(az_text, WID->get_geometry_rotation(5));
+  strcpy(angle_text, WID->get_geometry_rotation(6));
+}
+
+void con_geometry_define_scale_cb(CALLBACK_ARGS){
+  strcpy(dx_text, WID->get_geometry_scale(0));
+  strcpy(dy_text, WID->get_geometry_scale(1));
+  strcpy(dz_text, WID->get_geometry_scale(2));
+  strcpy(df_text, WID->get_geometry_scale(3));
+}
+
+void con_geometry_define_symmetry_cb(CALLBACK_ARGS){
+  strcpy(sa_text, WID->get_geometry_symmetry(0));
+  strcpy(sb_text, WID->get_geometry_symmetry(1));
+  strcpy(sc_text, WID->get_geometry_symmetry(2));
+  strcpy(sd_text, WID->get_geometry_symmetry(3));
+}
+
+
+// Context mesh
+
+void con_mesh_define_transfinite_line_cb(CALLBACK_ARGS){
+  strcpy(trsf_pts_text, WID->get_mesh_transfinite(0));
+  strcpy(trsf_type_text, WID->get_mesh_transfinite(1));
+}
+
+void con_mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
+  strcpy(trsf_vol_text, WID->get_mesh_transfinite(2));
+}
+
+void con_mesh_define_length_cb(CALLBACK_ARGS){
+  strcpy(char_length_text, WID->get_mesh_length(0));
+}
+
+void con_mesh_define_attractor_cb(CALLBACK_ARGS){
+  strcpy(attrx_text, WID->get_mesh_attractor(0));
+  strcpy(attry_text, WID->get_mesh_attractor(1));
+  strcpy(attrz_text, WID->get_mesh_attractor(2));
 }

@@ -68,6 +68,21 @@ typedef struct {
   } obj;
 } Shape;
 
+// static strings for parser interaction
+extern char x_text[100], y_text[100], z_text[100];
+extern char l_text[100];
+extern char tx_text[100], ty_text[100], tz_text[100];
+extern char attrx_text[100], attry_text[100], attrz_text[100];
+extern char attrdec_text[100];
+extern char px_text[100], py_text[100], pz_text[100];
+extern char angle_text[100] ;
+extern char ax_text[100], ay_text[100], az_text[100];
+extern char dx_text[100], dy_text[100], dz_text[100], df_text[100];
+extern char sa_text[100], sb_text[100], sc_text[100], sd_text[100];
+extern char nb_pts[100], mode_value[100];
+extern char trsf_pts_text[100], trsf_type_text[100];
+extern char trsf_vol_text[100];
+extern char char_length_text[100];
 
 double evaluate_scalarfunction (char *var, double val, char *funct);
 
@@ -92,8 +107,6 @@ void add_spline(int N, int *p, char *fich);
 void add_bezier(int N, int *p, char *fich);
 void add_bspline(int N, int *p, char *fich);
 void add_multline(int N, int *p, char *fich);
-
-int recognize_zone(int ityp,List_T *list);
 
 void add_loop(List_T *list, char *fich, int *numloop);
 void add_surf(List_T *list, char *fich, int support, int typ);

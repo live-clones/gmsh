@@ -1,4 +1,4 @@
-// $Id: CbGeom.cpp,v 1.1 2001-01-08 08:20:10 geuzaine Exp $
+// $Id: CbGeom.cpp,v 1.2 2001-01-10 08:41:07 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -14,15 +14,7 @@
 
 extern Context_T  CTX;
 extern Widgets_T  WID;
-
-extern Mesh  M;
-
-extern char  x_text[100], y_text[100], z_text[100], l_text[100];
-extern char  tx_text[100], ty_text[100], tz_text[100];
-extern char  px_text[100], py_text[100], pz_text[100], angle_text[100];
-extern char  ax_text[100], ay_text[100], az_text[100], angle_text[100];
-extern char  dx_text[100], dy_text[100], dz_text[100], df_text[100];
-extern char  sa_text[100], sb_text[100], sc_text[100], sd_text[100];
+extern Mesh       M;
 	     
 static char  name_text[100], value_text[100];
 

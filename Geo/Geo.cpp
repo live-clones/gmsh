@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.13 2001-01-09 19:40:56 remacle Exp $
+// $Id: Geo.cpp,v 1.14 2001-01-10 08:41:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -8,6 +8,9 @@
 #include "Parser.h"
 
 #define BUFFSIZE 32000
+
+// Ceci, c'est horrible. Des que Motif est completement zingle, je
+// vire et je refais une routine generique.
 
 char x_text[100]  = "0.0", y_text[100]  = "0.0", z_text[100]  = "0.0";
 char l_text[100] = "1.0" ;
@@ -322,11 +325,6 @@ void add_multline(int N, int *p, char *fich){
   add_infile(text,fich);
 }
 
-
-int recognize_zone(int ityp,List_T *list){
-  return 0 ;
-}
-
 void add_loop(List_T *list, char *fich, int *numloop){
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
@@ -352,10 +350,6 @@ void add_surf(List_T *list, char *fich, int support, int typ){
   char text[BUFFSIZE];
   char text2[BUFFSIZE];
   int i,seg;
-
-  if((i = recognize_zone(MSH_SURF_PLAN,list)) != 0)return;
-  if((i = recognize_zone(MSH_SURF_REGL,list)) != 0)return;
-  if((i = recognize_zone(MSH_SURF_TRIMMED,list)) != 0)return;
 
   if(typ ==1){
     sprintf(text,"Ruled Surface(%d) = {",NEWREG());
@@ -403,8 +397,6 @@ void add_multvol(List_T *list, char *fich){
   char text2[BUFFSIZE];
   int i,seg;
 
-  if((i= recognize_zone(MSH_VOLUME,list)))return;
-  
   sprintf(text,"Volume(%d) = {",NEWREG());
   for(i=0;i<List_Nbr(list);i++){
     List_Read(list,i,&seg);
@@ -436,10 +428,6 @@ void add_trsfvol(int N, int *l, char *fich){
 void add_physical_entity(List_T *list, char *fich, int type, int *num){
   char text[BUFFSIZE], text2[BUFFSIZE];
   int  i, elementary_entity;
-
-  if(((*num) = recognize_zone(MSH_PHYSICAL_LINE,list))) return;
-  if(((*num) = recognize_zone(MSH_PHYSICAL_SURFACE,list))) return;
-  if(((*num) = recognize_zone(MSH_PHYSICAL_VOLUME,list))) return;
 
   *num = NEWREG();
   switch(type){
