@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.85 2005-02-20 07:11:04 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.86 2005-03-15 15:36:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -224,7 +224,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           else
             Tree_Add(Duplicates, &vert);
         }
-	if(i_Node % NN == NN - 1)
+	if(NN && (i_Node % NN == NN - 1))
 	  Msg(PROGRESS, "Read %d nodes", i_Node + 1);
       }
       Msg(PROGRESS, "");
@@ -504,7 +504,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           break;
         }
 
-	if(i_Element % NN == NN - 1)
+	if(NN && (i_Element % NN == NN - 1))
 	  Msg(PROGRESS, "Read %d elements", i_Element + 1);
       }
       Msg(PROGRESS, "");
