@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.188 2004-10-14 22:56:39 geuzaine Exp $
+// $Id: Options.cpp,v 1.189 2004-10-15 02:30:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4224,6 +4224,13 @@ double opt_post_combine_remove_orig(OPT_ARGS_NUM)
 double opt_post_nb_views(OPT_ARGS_NUM)
 {
   return List_Nbr(CTX.post.list);
+}
+
+double opt_post_file_format(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.post.file_format = (int)val;
+  return CTX.post.file_format;
 }
 
 double opt_view_nb_timestep(OPT_ARGS_NUM)

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.135 2004-10-11 17:22:56 geuzaine Exp $
+// $Id: Views.cpp,v 1.136 2004-10-15 02:30:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -954,15 +954,40 @@ void ReadView(FILE *file, char *filename)
   Msg(STATUS2N, "Read '%s'", filename);
 }
 
-// FIXME: add an integer per simplex (region num)
-// FIXME: add a format similar to the msh format (node list + simplex list)
-// FIXME: add a structured format
+// FIXME: add an integer per simplex (region num)?
+// FIXME: add a format similar to the msh format (node list + simplex list)?
+// FIXME: add a structured format?
 
-void WriteView(Post_View *v, char *filename, int binary, int append)
+static void write_parsed_line(char *str, int nbnod, int nb, List_T *list, FILE *fp)
+{
+  if(nb) {
+    int n = List_Nbr(list) / nb;
+    for(int i = 0; i < List_Nbr(list); i += n) {
+      double *x = (double *)List_Pointer(list, i);
+      double *y = (double *)List_Pointer(list, i + nbnod);
+      double *z = (double *)List_Pointer(list, i + 2 * nbnod);
+      fprintf(fp, "%s(", str);
+      for(int j = 0; j < nbnod; j++) {
+	if(j) fprintf(fp, ",");
+	fprintf(fp, "%.16g,%.16g,%.16g", x[j], y[j], z[j]);
+      }
+      fprintf(fp, "){", str);
+      for(int j = 3 * nbnod; j < n; j++) {
+	if(j - 3 * nbnod) fprintf(fp, ",");
+	fprintf(fp, "%.16g", *(double *)List_Pointer(list, i + j));
+      }
+      fprintf(fp, "};\n", str);
+    }
+  }
+}
+
+void WriteView(Post_View *v, char *filename, int format, int append)
 {
   FILE *file;
   char name[256];
   int i, f, One = 1;
+  int binary = (format == 1) ? 1 : 0;
+  int parsed = (format == 2);
 
   if(filename) {
     file = fopen(filename, append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
@@ -976,7 +1001,7 @@ void WriteView(Post_View *v, char *filename, int binary, int append)
   else
     file = stdout;
 
-  if(!append){
+  if(!parsed && !append){
     fprintf(file, "$PostFormat /* Gmsh 1.2, %s */\n",
 	    binary ? "binary" : "ascii");
     fprintf(file, "1.2 %d %d\n", binary, (int)sizeof(double));
@@ -991,53 +1016,84 @@ void WriteView(Post_View *v, char *filename, int binary, int append)
   }
   name[i] = '\0';
 
-  fprintf(file, "$View /* %s */\n", v->Name);
-  fprintf(file, "%s ", name);
-  fprintf(file, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-          "%d %d %d %d %d %d %d %d %d %d %d %d\n",
-          List_Nbr(v->Time),
-          v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL,
-          v->NbST, v->NbVT, v->NbTT, v->NbSQ, v->NbVQ, v->NbTQ,
-          v->NbSS, v->NbVS, v->NbTS, v->NbSH, v->NbVH, v->NbTH,
-          v->NbSI, v->NbVI, v->NbTI, v->NbSY, v->NbVY, v->NbTY,
-          v->NbT2, List_Nbr(v->T2C), v->NbT3, List_Nbr(v->T3C));
-  if(binary) {
-    f = LIST_FORMAT_BINARY;
-    fwrite(&One, sizeof(int), 1, file);
+  if(!parsed){
+    fprintf(file, "$View /* %s */\n", v->Name);
+    fprintf(file, "%s ", name);
+    fprintf(file, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+	    "%d %d %d %d %d %d %d %d %d %d %d %d\n",
+	    List_Nbr(v->Time),
+	    v->NbSP, v->NbVP, v->NbTP, v->NbSL, v->NbVL, v->NbTL,
+	    v->NbST, v->NbVT, v->NbTT, v->NbSQ, v->NbVQ, v->NbTQ,
+	    v->NbSS, v->NbVS, v->NbTS, v->NbSH, v->NbVH, v->NbTH,
+	    v->NbSI, v->NbVI, v->NbTI, v->NbSY, v->NbVY, v->NbTY,
+	    v->NbT2, List_Nbr(v->T2C), v->NbT3, List_Nbr(v->T3C));
+    if(binary) {
+      f = LIST_FORMAT_BINARY;
+      fwrite(&One, sizeof(int), 1, file);
+    }
+    else
+      f = LIST_FORMAT_ASCII;
+    List_WriteToFile(v->Time, file, f);
+    List_WriteToFile(v->SP, file, f);
+    List_WriteToFile(v->VP, file, f);
+    List_WriteToFile(v->TP, file, f);
+    List_WriteToFile(v->SL, file, f);
+    List_WriteToFile(v->VL, file, f);
+    List_WriteToFile(v->TL, file, f);
+    List_WriteToFile(v->ST, file, f);
+    List_WriteToFile(v->VT, file, f);
+    List_WriteToFile(v->TT, file, f);
+    List_WriteToFile(v->SQ, file, f);
+    List_WriteToFile(v->VQ, file, f);
+    List_WriteToFile(v->TQ, file, f);
+    List_WriteToFile(v->SS, file, f);
+    List_WriteToFile(v->VS, file, f);
+    List_WriteToFile(v->TS, file, f);
+    List_WriteToFile(v->SH, file, f);
+    List_WriteToFile(v->VH, file, f);
+    List_WriteToFile(v->TH, file, f);
+    List_WriteToFile(v->SI, file, f);
+    List_WriteToFile(v->VI, file, f);
+    List_WriteToFile(v->TI, file, f);
+    List_WriteToFile(v->SY, file, f);
+    List_WriteToFile(v->VY, file, f);
+    List_WriteToFile(v->TY, file, f);
+    List_WriteToFile(v->T2D, file, f);
+    List_WriteToFile(v->T2C, file, f);
+    List_WriteToFile(v->T3D, file, f);
+    List_WriteToFile(v->T3C, file, f);
+    fprintf(file, "\n");
+    fprintf(file, "$EndView\n");
   }
-  else
-    f = LIST_FORMAT_ASCII;
-  List_WriteToFile(v->Time, file, f);
-  List_WriteToFile(v->SP, file, f);
-  List_WriteToFile(v->VP, file, f);
-  List_WriteToFile(v->TP, file, f);
-  List_WriteToFile(v->SL, file, f);
-  List_WriteToFile(v->VL, file, f);
-  List_WriteToFile(v->TL, file, f);
-  List_WriteToFile(v->ST, file, f);
-  List_WriteToFile(v->VT, file, f);
-  List_WriteToFile(v->TT, file, f);
-  List_WriteToFile(v->SQ, file, f);
-  List_WriteToFile(v->VQ, file, f);
-  List_WriteToFile(v->TQ, file, f);
-  List_WriteToFile(v->SS, file, f);
-  List_WriteToFile(v->VS, file, f);
-  List_WriteToFile(v->TS, file, f);
-  List_WriteToFile(v->SH, file, f);
-  List_WriteToFile(v->VH, file, f);
-  List_WriteToFile(v->TH, file, f);
-  List_WriteToFile(v->SI, file, f);
-  List_WriteToFile(v->VI, file, f);
-  List_WriteToFile(v->TI, file, f);
-  List_WriteToFile(v->SY, file, f);
-  List_WriteToFile(v->VY, file, f);
-  List_WriteToFile(v->TY, file, f);
-  List_WriteToFile(v->T2D, file, f);
-  List_WriteToFile(v->T2C, file, f);
-  List_WriteToFile(v->T3D, file, f);
-  List_WriteToFile(v->T3C, file, f);
-  fprintf(file, "\n");
-  fprintf(file, "$EndView\n");
+  else{
+    fprintf(file, "View \"%s\" {\n", v->Name);
+    write_parsed_line("SP", 1, v->NbSP, v->SP, file);
+    write_parsed_line("VP", 1, v->NbVP, v->VP, file);
+    write_parsed_line("TP", 1, v->NbTP, v->TP, file);
+    write_parsed_line("SL", 2, v->NbSL, v->SL, file);
+    write_parsed_line("VL", 2, v->NbVL, v->VL, file);
+    write_parsed_line("TL", 2, v->NbTL, v->TL, file);
+    write_parsed_line("ST", 3, v->NbST, v->ST, file);
+    write_parsed_line("VT", 3, v->NbVT, v->VT, file);
+    write_parsed_line("TT", 3, v->NbTT, v->TT, file);
+    write_parsed_line("SQ", 4, v->NbSQ, v->SQ, file);
+    write_parsed_line("VQ", 4, v->NbVQ, v->VQ, file);
+    write_parsed_line("TQ", 4, v->NbTQ, v->TQ, file);
+    write_parsed_line("SS", 4, v->NbSS, v->SS, file);
+    write_parsed_line("VS", 4, v->NbVS, v->VS, file);
+    write_parsed_line("TS", 4, v->NbTS, v->TS, file);
+    write_parsed_line("SH", 8, v->NbSH, v->SH, file);
+    write_parsed_line("VH", 8, v->NbVH, v->VH, file);
+    write_parsed_line("TH", 8, v->NbTH, v->TH, file);
+    write_parsed_line("SI", 6, v->NbSI, v->SI, file);
+    write_parsed_line("VI", 6, v->NbVI, v->VI, file);
+    write_parsed_line("TI", 6, v->NbTI, v->TI, file);
+    write_parsed_line("SY", 5, v->NbSY, v->SY, file);
+    write_parsed_line("VY", 5, v->NbVY, v->VY, file);
+    write_parsed_line("TY", 5, v->NbTY, v->TY, file);
+    // FIXME: do strings!
+    fprintf(file, "};\n");
+  }
 
   if(filename) {
     fclose(file);

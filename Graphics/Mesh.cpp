@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.109 2004-10-14 22:56:40 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.110 2004-10-15 02:30:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -382,8 +382,7 @@ void Draw_Mesh_Surface(void *a, void *b)
 
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b)
 {
-  Volume *v;
-  v = *(Volume **) a;
+  Volume *v = *(Volume **) a;
   if(!(v->Visible & VIS_MESH))
     return;
   Tree_Action(v->Simp_Surf, Draw_Mesh_Triangle);
@@ -447,11 +446,10 @@ void Draw_Mesh_Point(void *a, void *b)
 
 void Draw_Mesh_Line(void *a, void *b)
 {
-  Simplex *s;
   double Xc = 0.0, Yc = 0.0, Zc = 0.0, m[3];
   char Num[100];
 
-  s = *(Simplex **) a;
+  Simplex *s = *(Simplex **) a;
 
   if(!(s->Visible & VIS_MESH))
     return;
@@ -1026,11 +1024,10 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 
 void Draw_Mesh_Tetrahedron(void *a, void *b)
 {
-  Simplex *s;
   char Num[100];
   double tmp, X[4], Y[4], Z[4], X2[6], Y2[6], Z2[6];
 
-  s = *(Simplex **) a;
+  Simplex *s = *(Simplex **) a;
 
   if(!s->V[3] || !(s->Visible & VIS_MESH))
     return;

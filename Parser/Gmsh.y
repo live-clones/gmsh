@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.178 2004-09-18 01:51:56 geuzaine Exp $
+// $Id: Gmsh.y,v 1.179 2004-10-15 02:30:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2500,7 +2500,7 @@ Command :
 	if(v){
 	  char tmpstring[1024];
 	  FixRelativePath($6, tmpstring);
-	  WriteView(v, tmpstring, 0, 0);
+	  WriteView(v, tmpstring, CTX.post.file_format, 0);
 	}
       }
       else{

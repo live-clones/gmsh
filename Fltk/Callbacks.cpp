@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.281 2004-10-14 22:56:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.282 2004-10-15 02:30:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3163,6 +3163,27 @@ test:
     }
   save:
     WriteView(v, name, 1, 0);
+  }
+}
+
+void view_save_parsed_cb(CALLBACK_ARGS)
+{
+  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
+  if(!v) return;
+
+test:
+  if(file_chooser(0, 1, "Save view in parsed format", "*", 0, v->FileName)) {
+    char *name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite) {
+      struct stat buf;
+      if(!stat(name, &buf))
+        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
+          goto save;
+        else
+          goto test;
+    }
+  save:
+    WriteView(v, name, 2, 0);
   }
 }
 

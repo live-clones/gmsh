@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.360 2004-10-14 22:56:40 geuzaine Exp $
+// $Id: GUI.cpp,v 1.361 2004-10-15 02:30:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1103,6 +1103,8 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_all_visible_cb, (void *)1, 0);
 	p[j]->add("Set visibility/All off", 0, 
 		  (Fl_Callback *) view_all_visible_cb, (void *)0, 0);
+	p[j]->add("Save as/Parsed view...", 0, 
+		  (Fl_Callback *) view_save_parsed_cb, (void *)nb, 0);
 	p[j]->add("Save as/ASCII view...", 0, 
 		  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
 	p[j]->add("Save as/Binary view...", 0, 
