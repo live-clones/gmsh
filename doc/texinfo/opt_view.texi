@@ -124,11 +124,6 @@ Relative radius of arrow head@*
 Default value: @code{0.12}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.ArrowLocation
-Arrow location (1=center of gravity, 2=node)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item View.ArrowSize
 Display size of arrows (in pixels)@*
 Default value: @code{60}@*
@@ -357,6 +352,11 @@ Saved in: @code{General.OptionsFileName}
 @item View.GeneralizedRaiseView
 Index of the view used for generalized raise (-1=self)@*
 Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.GlyphLocation
+Glyph (arrow, number, etc.) location (1=center of gravity, 2=node)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Grid
