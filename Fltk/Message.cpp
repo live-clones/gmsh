@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.32 2002-09-19 21:44:12 geuzaine Exp $
+// $Id: Message.cpp,v 1.33 2002-11-16 23:23:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -181,6 +181,12 @@ void Exit(int level){
       CTX.msg_position[1] = WID->msg_window->y();
       CTX.msg_size[0] = WID->msg_window->w();
       CTX.msg_size[1] = WID->msg_window->h();
+      CTX.opt_position[0] = WID->opt_window->x();
+      CTX.opt_position[1] = WID->opt_window->y();
+      CTX.stat_position[0] = WID->stat_window->x();
+      CTX.stat_position[1] = WID->stat_window->y();
+      CTX.vis_position[0] = WID->vis_window->x();
+      CTX.vis_position[1] = WID->vis_window->y();
       Print_Options(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
     }
     if(CTX.options_save)

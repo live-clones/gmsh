@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.94 2002-11-16 21:53:23 geuzaine Exp $
+// $Id: Options.cpp,v 1.95 2002-11-16 23:23:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -994,6 +994,30 @@ double opt_general_message_size0(OPT_ARGS_NUM){
 double opt_general_message_size1(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.msg_size[1] = (int)val;
   return CTX.msg_size[1];
+}
+double opt_general_option_position0(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.opt_position[0] = (int)val;
+  return CTX.opt_position[0];
+}
+double opt_general_option_position1(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.opt_position[1] = (int)val;
+  return CTX.opt_position[1];
+}
+double opt_general_statistics_position0(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.stat_position[0] = (int)val;
+  return CTX.stat_position[0];
+}
+double opt_general_statistics_position1(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.stat_position[1] = (int)val;
+  return CTX.stat_position[1];
+}
+double opt_general_visibility_position0(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.vis_position[0] = (int)val;
+  return CTX.vis_position[0];
+}
+double opt_general_visibility_position1(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX.vis_position[1] = (int)val;
+  return CTX.vis_position[1];
 }
 double opt_general_center_windows(OPT_ARGS_NUM){
   if(action & GMSH_SET) CTX.center_windows = (int)val;

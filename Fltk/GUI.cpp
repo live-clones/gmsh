@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.214 2002-11-16 21:53:24 geuzaine Exp $
+// $Id: GUI.cpp,v 1.215 2002-11-16 23:23:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -664,9 +664,9 @@ GUI::GUI(int argc, char **argv) {
 
   create_option_window();
   create_message_window();
+  create_statistics_window();
   create_visibility_window();
   create_about_window();
-
   for(i=0; i<MAXSOLVERS; i++){
     solver[i].window = NULL;
     create_solver_window(i);
@@ -731,9 +731,8 @@ void GUI::create_menu_window(int argc, char **argv){
   MH = BH + BH+6 ;
 #endif
 
-  m_window = new Fl_Window(width,MH);
+  m_window = new Fl_Window(width,MH,"Gmsh");
   m_window->box(WINDOW_BOX);
-  m_window->label("Gmsh");
   m_window->callback(file_quit_cb);
   
 #if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
@@ -1223,9 +1222,8 @@ void GUI::create_option_window(){
     return;
   }
 
-  opt_window = new Fl_Window(width,height);
+  opt_window = new Fl_Window(width,height,"Options");
   opt_window->box(WINDOW_BOX);
-  opt_window->label("Options");
 
   // Buttons
   
@@ -2050,10 +2048,7 @@ void GUI::create_option_window(){
   
   view_window->end();
   
-
-  if(CTX.center_windows)
-    opt_window->position(m_window->x()+m_window->w()/2-(width+BROWSERW)/2,
-			 m_window->y()+9*BH-height/2);
+  opt_window->position(CTX.opt_position[0], CTX.opt_position[1]);
   opt_window->end();
 }
 
@@ -2205,9 +2200,8 @@ void GUI::create_statistics_window(){
   int width = 26*CTX.fontsize;
   int height = 5*WB+17*BH ;
   
-  stat_window = new Fl_Window(width,height);
+  stat_window = new Fl_Window(width,height,"Statistics");
   stat_window->box(WINDOW_BOX);
-  stat_window->label("Statistics");
   {
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     { 
@@ -2280,15 +2274,9 @@ void GUI::create_statistics_window(){
     o->callback(cancel_cb, (void*)stat_window);
   }
   
-  if(CTX.center_windows)
-    stat_window->position(m_window->x()+m_window->w()/2-width/2,
-			  m_window->y()+9*BH-height/2);
+
+  stat_window->position(CTX.stat_position[0], CTX.stat_position[1]);
   stat_window->end();
-
-  stat_window->show();
-  set_statistics();
-  stat_window->redraw();
-
 }
 
 void GUI::set_statistics(){
@@ -2494,9 +2482,8 @@ void GUI::create_message_window(){
   int width = CTX.msg_size[0];
   int height = CTX.msg_size[1];
   
-  msg_window = new Fl_Window(width,height);
+  msg_window = new Fl_Window(width,height,"Messages");
   msg_window->box(WINDOW_BOX);
-  msg_window->label("Messages");
   
   msg_browser = new Fl_Browser(WB, WB, width-2*WB, height-3*WB-BH);
   msg_browser->textfont(FL_COURIER);
@@ -2595,9 +2582,8 @@ void GUI::create_visibility_window(){
   int width = cols[0]+cols[1]+cols[2]+cols[3]+2*WB;
   int height = 15*BH ;
   
-  vis_window = new Fl_Window(width,height);
+  vis_window = new Fl_Window(width,height,"Visibility");
   vis_window->box(WINDOW_BOX);
-  vis_window->label("Visibility");
   
   int brw = width-2*WB;
 
@@ -2654,9 +2640,7 @@ void GUI::create_visibility_window(){
     o->callback(cancel_cb, (void*)vis_window);
   }
 
-  if(CTX.center_windows)
-    vis_window->position(m_window->x()+m_window->w()/2-width/2,
-			 m_window->y()+9*BH-height/2);
+  vis_window->position(CTX.vis_position[0], CTX.vis_position[1]);
   vis_window->end();
 }
 
@@ -2673,9 +2657,8 @@ void GUI::create_about_window(){
   int width = 40*CTX.fontsize;
   int height = 10*BH ;
   
-  about_window = new Fl_Window(width,height);
+  about_window = new Fl_Window(width,height,"About Gmsh");
   about_window->box(WINDOW_BOX);
-  about_window->label("About Gmsh");
   
   {
     Fl_Box *o = new Fl_Box(2*WB, WB, about_width, height-3*WB-BH);
@@ -2738,9 +2721,8 @@ void GUI::create_geometry_context_window(int num){
   int width = 31*CTX.fontsize;
   int height = 5*WB+9*BH ;
   
-  context_geometry_window = new Fl_Window(width,height);
+  context_geometry_window = new Fl_Window(width,height,"Contextual geometry definitions");
   context_geometry_window->box(WINDOW_BOX);
-  context_geometry_window->label("Contextual geometry definitions");
   { 
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     // 0: Parameter
@@ -2874,9 +2856,8 @@ void GUI::create_mesh_context_window(int num){
   int width = 31*CTX.fontsize;
   int height = 5*WB+5*BH ;
   
-  context_mesh_window = new Fl_Window(width,height);
+  context_mesh_window = new Fl_Window(width,height,"Contextual mesh definitions");
   context_mesh_window->box(WINDOW_BOX);
-  context_mesh_window->label("Contextual mesh definitions");
   { 
     Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
     // 0: Characteristic length
@@ -3059,7 +3040,6 @@ void GUI::create_solver_window(int num){
     Fl_Button* o = new Fl_Button(width-BBS-WB, height-BH-WB, BBS, BH, "Cancel");
     o->callback(cancel_cb, (void*)solver[num].window);
   }
-  
   
   if(CTX.center_windows)
     solver[num].window->position(m_window->x()+m_window->w()/2-width/2,

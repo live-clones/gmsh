@@ -69,6 +69,9 @@ public :
   int gl_position[2];         // position of the graphic window on the screen
   int msg_position[2];        // position of the message window on the screen
   int msg_size[2];            // size of the message window on the screen
+  int opt_position[2];        // position of the option window on the screen
+  int vis_position[2];        // position of the visibility window on the screen
+  int stat_position[2];       // position of the statistics window on the screen
   int center_windows;         // center popup windows on the menu window
 
   int default_plugins;        // do we load default plugins on startup?

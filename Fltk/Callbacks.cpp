@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.152 2002-11-16 21:53:24 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.153 2002-11-16 23:23:34 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -624,9 +624,11 @@ void options_save_cb(CALLBACK_ARGS) {
 
 #include <unistd.h>
 void options_restore_defaults_cb(CALLBACK_ARGS) {
-  unlink(CTX.optionsrc_filename);
+  unlink(CTX.optionsrc_filename); // not sure if we have to remove the file...
   ReInit_Options(0);
   Init_Options_GUI(0);
+  if(WID && WID->get_context() == 3) // hack to refresh the buttons
+    WID->set_context(menu_post,0);
   Draw();
 }
 
@@ -2157,6 +2159,8 @@ void view_remove_cb(CALLBACK_ARGS){
 
   if(WID->get_context() == 3)
     WID->set_context(menu_post, 0);  
+
+  WID->reset_option_browser();
 
   if(!REMOVE_ALL_VIEWS)
     Draw();

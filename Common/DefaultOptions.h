@@ -500,6 +500,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "MovingLight" , opt_general_moving_light , 0. ,
     "Use a moving (i.e. which follows the model) light source" },
 
+  { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. , 
+    "Horizontal position (in pixels) of the upper left corner of the option window" }, 
+  { F|S, "OptionsPositionY" , opt_general_option_position1 , 150. , 
+    "Vertical position (in pixels) of the upper left corner of the option window" }, 
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0=perspective projection)" },
 
@@ -534,6 +538,10 @@ StringXNumber GeneralOptions_Number[] = {
     "X position of small axes (negative values for right alignment)" },
   { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -35. ,
     "Y position of small axes (negative values for bottom alignment)" },
+  { F|S, "StatisticsPositionX" , opt_general_statistics_position0 , 650. , 
+    "Horizontal position (in pixels) of the upper left corner of the statistic window" }, 
+  { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. , 
+    "Vertical position (in pixels) of the upper left corner of the statistic window" }, 
 
 #ifdef _FLTK
   { F|O, "Terminal" , opt_general_terminal , 0. ,
@@ -563,6 +571,10 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "Verbosity" , opt_general_verbosity , 2. ,
     "Level of information printed during processing (0=no information)" },
+  { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. , 
+    "Horizontal position (in pixels) of the upper left corner of the visibility window" }, 
+  { F|S, "VisibilityPositionY" , opt_general_visibility_position1 , 150. , 
+    "Vertical position (in pixels) of the upper left corner of the visibility window" }, 
 
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 1.1 ,
     "'Speed' of the middle mouse button zoom" },

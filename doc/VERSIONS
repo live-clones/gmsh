@@ -1,10 +1,11 @@
-$Date: 2002-11-16 21:53:24 $
+$Date: 2002-11-16 23:23:35 $
 
 New in 1.36: Enhanced view duplication (one can now use "Duplicata
 View[num]" in the input file); Merged all option dialogs in a new
 general option window; enhanced discoverability of the view option
-menus; new 3D point display; small bug fixes ("Print" format in
-parser, post-processing statistics, smooth normals, etc.);
+menus; new 3D point and line display; many small bug fixes and
+enhancements ("Print" format in parser, post-processing statistics,
+smooth normals, save window positions, restore default options, etc.);
 
 New in 1.35: Graphical user interface upgraded to FLTK 1.1 (tooltips,
 new file chooser with multiple selection, full keyboard navigation,
