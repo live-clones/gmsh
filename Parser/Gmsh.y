@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.43 2000-12-13 22:27:45 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.44 2000-12-14 12:25:15 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -90,7 +90,7 @@ void skip_until (char *until);
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tFor tIn tEndFor tIf tEndIf tExit tMerge
+%token tColor tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
