@@ -1,3 +1,3 @@
 New in 1.36: Enhance view duplication (one can now use "Duplicata
 View[num]" in the input file); small bug fixes ("Print" format in
-parser, etc.);
+parser, post-processing statistics, etc.);
