@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.68 2001-07-31 10:19:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.69 2001-07-31 12:52:41 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -318,6 +318,7 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_tmp_filename(0, GMSH_SET, (char*)WID->gen_input[1]->value());
   opt_general_error_filename(0, GMSH_SET, (char*)WID->gen_input[2]->value());
   opt_general_options_filename(0, GMSH_SET, (char*)WID->gen_input[3]->value());
+  opt_general_editor(0, GMSH_SET, (char*)WID->gen_input[4]->value());
 
   Draw();
 }
