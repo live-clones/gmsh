@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.7 2001-07-31 09:51:36 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.8 2001-07-31 19:25:04 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -101,7 +101,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
       EndView(1, filename, name);
       
       Msg(INFO, "Levelset plugin OK: created view '%s' (%d triangles)",
-	  name, List_Nbr(ActualView->ST));
+	  name, ActualView->NbST);
       processed = ActualView;
       return ActualView;
     }

@@ -172,7 +172,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.97 2001-07-30 14:24:41 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.98 2001-07-31 19:25:04 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -3944,7 +3944,7 @@ case 155:
       }
     catch (...)
       {
-	Msg(WARNING,"Unknown Option %s or plugin %s\n",yyvsp[-3].c,yyvsp[-6].c);
+	Msg(WARNING,"Unknown option '%s' or plugin '%s'",yyvsp[-3].c,yyvsp[-6].c);
       }
 #endif
   ;
@@ -3959,7 +3959,7 @@ case 156:
       }
     catch (...)
       {
-	Msg(WARNING,"Unknown Option %s or plugin %s\n",yyvsp[-3].c,yyvsp[-6].c);
+	Msg(WARNING,"Unknown option '%s' or plugin '%s'",yyvsp[-3].c,yyvsp[-6].c);
       }
 #endif
   ;

@@ -32,7 +32,11 @@ public :
 /**
   Registering all default plugins that are in $(GMSHPLUGINSHOME)
   In fact, we will load all .so files in dir $(GMSHPLUGINSHOME)
-*/
+
+  In fact, loading a .so (or a .o) is not what is usually called a
+  'plugin'. This is a 'module'. A plugin is an _executable_, but
+  can only be executed from inside another program... CG
+  */
   void RegisterDefaultPlugins();
   static GMSH_PluginManager *Instance();
   /** Dynamically add a plugin pluginName.so in dirName*/

@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.10 2001-07-31 18:07:57 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.11 2001-07-31 19:25:04 geuzaine Exp $
 
 #include "CutPlane.h"
 #include "List.h"
@@ -8,7 +8,7 @@ StringXNumber CutPlaneOptions_Number[] = {
   { GMSH_FULLRC, "B" , NULL , 0. },
   { GMSH_FULLRC, "C" , NULL , 0. },
   { GMSH_FULLRC, "D" , NULL , 0.01 },
-  { GMSH_FULLRC, "ViewNumber" , NULL , 1. }
+  { GMSH_FULLRC, "iView" , NULL , 1. }
 };
 
 extern "C"
@@ -38,7 +38,7 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright, char *help_tex
   strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright,"DGR (www.multiphysics.com)");
   strcpy(help_text,
-	 "Cuts a 3D scalar view view with the plane\n"
+	 "Cuts a 3D scalar view with the plane\n"
 	 "A*X + B*Y + C*Z + D = 0.\n"
 	 "Script name: Plugin(CutPlane).");
 }

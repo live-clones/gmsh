@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.9 2001-07-31 18:07:57 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.10 2001-07-31 19:25:04 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -8,8 +8,8 @@ StringXNumber CutSphereOptions_Number[] = {
   { GMSH_FULLRC, "Xc" , NULL , 0. },
   { GMSH_FULLRC, "Yc" , NULL , 0. },
   { GMSH_FULLRC, "Zc" , NULL , 0. },
-  { GMSH_FULLRC, "R" , NULL , 0.25 },
-  { GMSH_FULLRC, "ViewNumber" , NULL , 1. }
+  { GMSH_FULLRC, "R"  , NULL , 0.25 },
+  { GMSH_FULLRC, "iView" , NULL , 1. }
 };
 
 extern "C"

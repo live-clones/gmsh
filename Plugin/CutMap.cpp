@@ -1,11 +1,11 @@
-// $Id: CutMap.cpp,v 1.12 2001-07-31 18:07:57 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.13 2001-07-31 19:25:04 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
 
 StringXNumber CutMapOptions_Number[] = {
-  { GMSH_FULLRC, "Value" , NULL , 1. },
-  { GMSH_FULLRC, "ViewNumber" , NULL , 1. }
+  { GMSH_FULLRC, "A" , NULL , 1. },
+  { GMSH_FULLRC, "iView" , NULL , 1. }
 };
 
 extern "C"
@@ -33,7 +33,7 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text)
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text, 
-	 "Extracts the isovalue surface of value 'Value' from a\n"
+	 "Extracts the isovalue surface of value A from a\n"
 	 "3D scalar map. Script name: Plugin(CutMap).");
 }
 

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.84 2001-07-30 14:24:26 geuzaine Exp $
+// $Id: Gmsh.y,v 1.85 2001-07-31 19:25:04 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1074,7 +1074,7 @@ Affectation :
       }
     catch (...)
       {
-	Msg(WARNING,"Unknown Option %s or plugin %s\n",$6,$3);
+	Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
       }
 #endif
   }
@@ -1087,7 +1087,7 @@ Affectation :
       }
     catch (...)
       {
-	Msg(WARNING,"Unknown Option %s or plugin %s\n",$6,$3);
+	Msg(WARNING,"Unknown option '%s' or plugin '%s'",$6,$3);
       }
 #endif
   }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.70 2001-07-31 14:06:16 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.71 2001-07-31 19:25:04 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1642,7 +1642,6 @@ void view_options_plugin_cb(CALLBACK_ARGS){
   if(!p->dialogBox)p->dialogBox = WID->create_plugin_window(p,iView);
 
   Fl_Window *pwindow = p->dialogBox->main_window;
-
 
   if(pwindow->shown())
     pwindow->redraw();

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.99 2001-07-31 18:07:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.100 2001-07-31 19:25:04 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -542,31 +542,20 @@ void GUI::wait(){
 //********************************* Create the menu window *****************************
 
 
-void GUI::add_post_plugins ( Fl_Menu_Button *button , int iView)
-{
+void GUI::add_post_plugins ( Fl_Menu_Button *button , int iView){
   char name[256],menuname[256];
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::Instance()->begin();
       it != GMSH_PluginManager::Instance()->end();
-      ++it)
-    {
-      GMSH_Plugin *p = (*it).second;
-      if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN)
-	{
-	  p->getName(name);
-	  std::pair<int,GMSH_Plugin*> *pair = 
-	    new  std::pair<int,GMSH_Plugin*>(iView,p);
-	  sprintf(menuname,"Plugins/%s/Run",name);
-	  button->add(menuname, 0,(Fl_Callback *)view_plugin_cb, 
-		      (void*)(pair), 0);
-	  if(p->getNbOptions())
-	    {
-	      sprintf(menuname,"Plugins/%s/Options...",name);
-	      button->add(menuname, 0,(Fl_Callback *)view_options_plugin_cb, 
-			  (void*)(pair), 0);
-	      p->dialogBox = 0;
-	    }
-	}
+      ++it){
+    GMSH_Plugin *p = (*it).second;
+    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN){
+      p->getName(name);
+      std::pair<int,GMSH_Plugin*> *pair = new std::pair<int,GMSH_Plugin*>(iView,p);
+      sprintf(menuname,"Plugins/%s...",name);
+      button->add(menuname, 0,(Fl_Callback *)view_options_plugin_cb, (void*)(pair), 0);
+      p->dialogBox = 0;
     }
+  }
 }
 
 void GUI::create_menu_window(int argc, char **argv){
@@ -2623,7 +2612,7 @@ void GUI::create_getdp_window(){
 	o->add("@c@.A General environment for the treatment");
 	o->add("@c@.of Discrete Problems");
 	o->add("");
-	o->add("@c@.Exerimental solver plug-in for Gmsh");
+	o->add("@c@.Experimental solver plugin for Gmsh");
 	o->add("");
 	o->add("@c@.Visit http://www.geuz.org/getdp/ for more info");
 	o->textsize(CTX.fontsize);
