@@ -1,4 +1,4 @@
-lc = .03;
+lc = .2;
 Point(1) = {0.0,0.0,0.0,lc};
 Point(2) = {1,0.0,0.0,lc};
 Point(3) = {0,1,0.0,lc};
@@ -35,8 +35,8 @@ Ruled Surface(26) = {25};
 Line Loop(27) = {4,-12,6};
 Ruled Surface(28) = {27};
 
-Surface Loop(29) = {28,26,16,14,20,24,22,18};
-Complex Volume(30) = {29};
+Surface Loop(29) = {-28,26,16,-14,20,24,-22,18};
+Volume(30) = {29};
 
 Physical Volume(1) = {0,30};
 Physical Surface(2) = {14:28:2};
