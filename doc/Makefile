@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2000-11-25 15:26:12 geuzaine Exp $
+# $Id: Makefile,v 1.3 2001-10-29 16:08:05 geuzaine Exp $
 
 RM      = rm
 RMFLAGS = -f
@@ -37,6 +37,6 @@ clean:
 	$(RM) $(RMFLAGS) *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv* \
                          *.log *.toc *.aux \
                          *.dvi *.ps gmsh.pdf \
-                         *.html *.info* gmsh-info.tgz*
+                         *.info* gmsh-info.tgz*
 
 
