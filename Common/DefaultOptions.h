@@ -516,7 +516,7 @@ StringXNumber ViewOptions_Number[] = {
 
 StringXNumber PrintOptions_Number[] = {
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
-    "Print format" }, 
+    "Print format (10=automatic)" }, 
   { F|O, "EpsQuality" , opt_print_eps_quality , 1 ,
     "Postscript quality (1=simple sort, 2=recursive sort)" },
   { F|O, "EpsBackground" , opt_print_eps_background , 1 ,
