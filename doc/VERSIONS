@@ -1,9 +1,10 @@
-$Id: VERSIONS,v 1.22 2001-06-26 07:06:11 geuzaine Exp $
+$Id: VERSIONS,v 1.23 2001-06-26 07:23:01 geuzaine Exp $
 
 New in 1.20: Many memory leak fixes; Various bug fixes (Functions in
-Includes, solver command, ColorTable option, ...) and small
-enhancements (menu reorganization, constrained background mesh, mesh
-visibility options, geometry edition, mesh quality histograms, ...);
+Includes, solver command, ColorTable option, duplicate nodes in
+extruded meshes, ...) and small enhancements (menu reorganization,
+constrained background mesh, mesh visibility options, geometry
+edition, mesh quality histograms, new default mesh colors, ...);
 Re-integrated the old command-line extrusion mesh generator;
 
 New in 1.19: Fixed seg. fault for scalar simplex post-processing; new
