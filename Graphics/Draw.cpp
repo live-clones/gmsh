@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.70 2004-12-31 21:12:40 geuzaine Exp $
+// $Id: Draw.cpp,v 1.71 2005-01-01 18:59:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -34,13 +34,43 @@ extern Mesh M;
 
 // Global Draw functions
 
+int NeedPolygonOffset()
+{
+  if(M.status == 2 &&
+     (CTX.mesh.surfaces_edges || CTX.geom.lines || CTX.geom.surfaces))
+    return 1;
+  if(M.status == 3 && 
+     (CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges))
+    return 1;
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++){
+    Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, i);
+    if(v->Visible){
+      if(v->ShowElement)
+	return 1;
+      if((v->NbST || v->NbSQ) && (v->IntervalsType == DRAW_POST_ISO))
+	return 1;
+    }
+  }
+  return 0;
+}
+
 void Draw3d(void)
 {
-  // offset = factor*DZ+r*units, where DZ is a measurement of the
-  // change in depth relative to the screen area of the polygon, and r
-  // is the smallest value that is guaranteed to produce a resolvable
-  // offset for a given implementation:
+  // We should only enable the polygon offset when there is a mix of
+  // lines and polygons to be drawn; enabling it all the time can lead
+  // to very small but annoying artifacts in the picture. Since there
+  // are so many ways in Gmsh to combine polygons and lines
+  // (geometries + meshes + views...), we do our best here to
+  // automatically detect if we should enable it. Note: the formula
+  // for the offset is "offset = factor*DZ+r*units", where DZ is a
+  // measurement of the change in depth relative to the screen area of
+  // the polygon, and r is the smallest value that is guaranteed to
+  // produce a resolvable offset for a given implementation.
   glPolygonOffset(CTX.polygon_offset_factor, CTX.polygon_offset_units);
+  if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+    CTX.polygon_offset = CTX.polygon_offset_always ? 1 : NeedPolygonOffset();
+  else
+    CTX.polygon_offset = 0;
 
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
@@ -63,7 +93,7 @@ void Draw2d(void)
   glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
           (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
   // hack to make the 2D primitives appear "in front" in GL2PS
-  glTranslated(0.0, 0.0, CTX.clip_factor ? 1./CTX.clip_factor : 0.);
+  glTranslated(0., 0., CTX.clip_factor > 1. ? 1./CTX.clip_factor : CTX.clip_factor);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glPushMatrix();

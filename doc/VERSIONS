@@ -1,14 +1,17 @@
-$Id: VERSIONS,v 1.294 2005-01-01 02:16:51 geuzaine Exp $
+$Id: VERSIONS,v 1.295 2005-01-01 18:59:07 geuzaine Exp $
 
 New in 1.58: fixed UNIX socket interface on Windows (broken by the TCP
-solver patch in 1.57); new File->Rename menu; new colormaps+improved
-colormap handling; new color+min/max options in views; new GetValue()
-function to ask for values interactively in scripts; generalized
-For/EndFor loops in parser; new plugins (Annotate, Remove, Probe); new
-text attributes in views; renamed some shortcuts; fixed TeX output for
-large scenes; new option dialogs for various output formats; fixed
-many small memory leaks in parser; many small enhancements to polish
-the graphics and the user interface.
+solver patch in 1.57); bumped version number of default
+post-processing file formats to 1.3 (the only small modification is
+the handling of the end-of-string character for text2d and text3d
+objects in the ASCII format); new File->Rename menu; new
+colormaps+improved colormap handling; new color+min/max options in
+views; new GetValue() function to ask for values interactively in
+scripts; generalized For/EndFor loops in parser; new plugins
+(Annotate, Remove, Probe); new text attributes in views; renamed some
+shortcuts; fixed TeX output for large scenes; new option dialogs for
+various output formats; fixed many small memory leaks in parser; many
+small enhancements to polish the graphics and the user interface.
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.221 2004-12-31 21:12:40 geuzaine Exp $
+// $Id: Options.cpp,v 1.222 2005-01-01 18:59:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -126,6 +126,7 @@ void Init_Options(int num)
   CTX.vxmin = CTX.vymin = CTX.vxmax = CTX.vymax = 0.;
   CTX.render_mode = GMSH_RENDER;
   CTX.pixel_equiv_x = CTX.pixel_equiv_y = 0.;
+  CTX.polygon_offset = 0;
   CTX.geom.vis_type = 0;
   CTX.geom.level = ELEMENTARY;
   CTX.mesh.vis_type = 0;
@@ -1952,6 +1953,17 @@ double opt_general_viewport3(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.viewport[3] = (int)val;
   return CTX.viewport[3];
+}
+
+double opt_general_polygon_offset_always(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.polygon_offset_always = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[4]->value(CTX.polygon_offset_always);
+#endif
+  return CTX.polygon_offset_always;
 }
 
 double opt_general_polygon_offset_factor(OPT_ARGS_NUM)

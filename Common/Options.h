@@ -216,6 +216,7 @@ double opt_general_file_chooser_position0(OPT_ARGS_NUM);
 double opt_general_file_chooser_position1(OPT_ARGS_NUM);
 double opt_general_viewport2(OPT_ARGS_NUM);
 double opt_general_viewport3(OPT_ARGS_NUM);
+double opt_general_polygon_offset_always(OPT_ARGS_NUM);
 double opt_general_polygon_offset_factor(OPT_ARGS_NUM);
 double opt_general_polygon_offset_units(OPT_ARGS_NUM);
 double opt_general_menu_position0(OPT_ARGS_NUM);

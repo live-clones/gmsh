@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.323 2004-12-31 21:12:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.324 2005-01-01 18:59:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -651,7 +651,8 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
   opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
   opt_general_draw_bounding_box(0, GMSH_SET, WID->gen_butt[6]->value());
-
+  opt_general_polygon_offset_always(0, GMSH_SET, WID->gen_butt[4]->value());
+  
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
   opt_general_shine_exponent(0, GMSH_SET, WID->gen_value[0]->value());
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());

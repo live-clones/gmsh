@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.58 2004-12-31 21:12:40 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.59 2005-01-01 18:59:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -440,10 +440,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	View->TriVertexArray->num++;
       }
       else{
-	if(View->Light) 
-	  glEnable(GL_LIGHTING);
-	if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
-	  glEnable(GL_POLYGON_OFFSET_FILL);
+	if(View->Light) glEnable(GL_LIGHTING);
+	if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
 	glBegin(GL_TRIANGLES);
 	for(int i = 0; i < 3; i++){
 	  PaletteContinuous(View, ValMin, ValMax, Val[i]);
@@ -489,10 +487,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	  }
 	}
 	else{
-	  if(View->Light) 
-	    glEnable(GL_LIGHTING);
-	  if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
-	    glEnable(GL_POLYGON_OFFSET_FILL);
+	  if(View->Light) glEnable(GL_LIGHTING);
+	  if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
 	  glBegin(GL_POLYGON);
 	  for(int i = 0; i < nb; i++) {
 	    PaletteContinuous(View, ValMin, ValMax, Vp[i]);
@@ -546,10 +542,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	    }
 	  }
 	  else{
-	    if(View->Light) 
-	      glEnable(GL_LIGHTING);
-	    if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
-	      glEnable(GL_POLYGON_OFFSET_FILL);
+	    if(View->Light) glEnable(GL_LIGHTING);
+	    if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
 	    glBegin(GL_POLYGON);
 	    for(int i = 0; i < nb; i++){
 	      if(View->Light) glNormal3dv(&norms[3*i]);

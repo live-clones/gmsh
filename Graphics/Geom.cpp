@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.77 2004-12-31 21:12:40 geuzaine Exp $
+// $Id: Geom.cpp,v 1.78 2005-01-01 18:59:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -324,10 +324,8 @@ void Draw_Triangulated_Surface(Surface * s)
   double *points, *p1, *p2, *p3;
 
   if(CTX.geom.surfaces) {
-    if(CTX.geom.light) 
-      glEnable(GL_LIGHTING);
-    if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
-      glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.geom.light) glEnable(GL_LIGHTING);
+    if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
     glBegin(GL_TRIANGLES);
     while (k < List_Nbr(s->thePolyRep->polygons)){
       points = (double*)List_Pointer(s->thePolyRep->polygons,k);
@@ -514,10 +512,8 @@ void Draw_NonPlane_Surface(Surface * s)
 {
   if(CTX.geom.surfaces) {
     if(s->Typ == MSH_SURF_NURBS) {
-      if(CTX.geom.light) 
-	glEnable(GL_LIGHTING);
-      if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
-	glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.geom.light) glEnable(GL_LIGHTING);
+      if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
       GLUnurbsObj *nurb;
       nurb = gluNewNurbsRenderer();
 #if defined(GLU_VERSION_1_3)

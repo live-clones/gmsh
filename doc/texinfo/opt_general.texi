@@ -529,6 +529,11 @@ Display size of points (in pixels)@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.PolygonOffsetAlwaysOn
+Always apply polygon offset, instead of trying to detect when it is required@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.PolygonOffsetFactor
 Polygon offset factor (offset = factor * DZ + r * units)@*
 Default value: @code{1}@*

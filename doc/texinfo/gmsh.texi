@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.158 2004-12-31 04:04:51 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.159 2005-01-01 18:59:07 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2701,9 +2701,9 @@ Pop up menu on post-processing view button
 
 @cindex File formats
 
-This chapter describes the file formats that cannot be modified by the
-user. (These formats have version numbers that are independent of the Gmsh
-version number.)
+This chapter describes Gmsh's native mesh and post-processing file
+formats. (These formats have version numbers that are independent of Gmsh's
+main version number.)
 
 All non-parsed file formats have sections enclosed between @code{$Key} and
 @code{$EndKey} tags.
@@ -3150,7 +3150,7 @@ one or more post-processing views, enclosed between
 
 @example
 $PostFormat
-1.2 @var{file-type} @var{data-size}
+1.3 @var{file-type} @var{data-size}
 $EndPostFormat
 $View
 @var{view-name} @var{nb-time-steps}
@@ -3271,7 +3271,7 @@ the GUI), and whose eight next bits define the text alignment (0=left,
 
 @item @var{text2d-chars}
 is a list of @var{nb-text2d-chars} characters. Substrings are separated with
-the `@code{^}' character (which is a forbidden character in regular strings).
+the null `@code{\0}' character.
 
 @item @var{text3d}
 is a list of 5 double precision numbers
@@ -3288,7 +3288,7 @@ eight lower bits give the font size and whose eight next bits select the font
 
 @item @var{text3d-chars}
 is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
-`@code{^}' character.
+null `@code{\0}' character.
 @end table
 
 @c .........................................................................
@@ -3323,7 +3323,7 @@ Here is a pseudo C code to write a post-processing file in binary format:
 int one = 1;
 
 fprintf(file, "$PostFormat\n");
-fprintf(file, "%g %d %d\n", 1.2, 1, sizeof(double));
+fprintf(file, "%g %d %d\n", 1.3, 1, sizeof(double));
 fprintf(file, "$EndPostFormat\n");
 fprintf(file, "$View\n");
 fprintf(file, "%s %d "
