@@ -1,8 +1,7 @@
-$Id: CREDITS,v 1.4 2003-07-26 18:18:47 geuzaine Exp $
+$Id: CREDITS,v 1.5 2003-08-08 16:05:42 geuzaine Exp $
 
-Gmsh is copyright (c) 1997-2003 Christophe Geuzaine
-<geuzaine@acm.caltech.edu> and Jean-Francois Remacle
-<remacle@gce.ucl.ac.be>.
+Gmsh is copyright (c) 1997-2003 Christophe Geuzaine <geuzaine at
+acm.caltech.edu> and Jean-Francois Remacle <remacle at gce.ucl.ac.be>.
 
 The AVL tree code (DataStr/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (c) 1988-1993, 1995 The Regents of
@@ -38,32 +37,32 @@ This version of Gmsh may also contain code (in the Triangle
 subdirectory) copyright (c) 1993, 1995, 1997, 1998, 2002, Jonathan
 Richard Shewchuk: check the configuration options.
 
-Special thanks to David Colignon <David.Colignon@univ.u-3mrs.fr> for
-new colormaps; Patrick Dular <patrick.dular@ulg.ac.be> for transfinite
-mesh bug fixes; Laurent Stainier <l.stainier@ulg.ac.be> for the Mac OS
-port and the tensor display code; Nicolas Tardieu
-<nicolas.tardieu@edf.fr> and Pierre Badel <badel@freesurf.fr> for help
-with the GSL integration and Marc Ume <Marc.Ume@digitalgraphics.be>
-for the original list code.
+Special thanks to David Colignon <David.Colignon at univ.u-3mrs.fr>
+for new colormaps; Patrick Dular <patrick.dular at ulg.ac.be> for
+transfinite mesh bug fixes; Laurent Stainier <l.stainier at ulg.ac.be>
+for the Mac OS port and the tensor display code; Nicolas Tardieu
+<nicolas.tardieu at edf.fr> and Pierre Badel <badel at freesurf.fr>
+for help with the GSL integration and Marc Ume <Marc.Ume at
+digitalgraphics.be> for the original list code.
 
-Special thanks also to Bill Spitzak <spitzak@users.sourceforge.net>,
-Michael Sweet <easysw@users.sourceforge.net>, Matthias Melcher
-<mm@matthiasm.com> and others for the Fast Light Tool Kit on which
-Gmsh's GUI is based. See http://www.fltk.org for more info on this
-excellent object-oriented, cross-platform toolkit.
+Special thanks also to Bill Spitzak <spitzak at
+users.sourceforge.net>, Michael Sweet <easysw at
+users.sourceforge.net>, Matthias Melcher <mm at matthiasm.com> and
+others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
+http://www.fltk.org for more info on this excellent object-oriented,
+cross-platform toolkit.
 
 Finally, thanks to the following folks who have contributed by
 providing fresh ideas on theoretical or programming topics, who have
 sent patches, requests for changes or improvements, or who gave us
-access to exotic machines for testing Gmsh: Juan Abanto
-<juanabanto@yahoo.com>, Olivier Adam <o.adam@ulg.ac.be>, Guillaume
-Alleon <guillaume.alleon@airbus.aeromatra.com>, Eric Bechet
-<eric.bechet@epost.de>, Laurent Champaney
-<laurent.champaney@meca.uvsq.fr>, Pascal Dupuis
-<Pascal.Dupuis@esat.kuleuven.ac.be>, Philippe Geuzaine
-<geuzaine@gnat.colorado.edu>, Johan Gyselinck
-<johan.gyselinck@ulg.ac.be>, Francois Henrotte
-<fhenrott@esat.kuleuven.ac.be>, Benoit Meys <bmeys@techspace-aero.be>,
-Nicolas Moes <moes@tam9.mech.nwu.edu>, Osamu Nakamura
-<naka@hasaki.sumitomometals.co.jp> and Chad Schmutzer
-<schmutze@acm.caltech.edu>.
+access to exotic machines for testing Gmsh: Juan Abanto <juanabanto at
+yahoo.com>, Olivier Adam <o.adam at ulg.ac.be>, Guillaume Alleon
+<guillaume.alleon at airbus.aeromatra.com>, Eric Bechet <eric.bechet
+at epost.de>, Laurent Champaney <laurent.champaney at meca.uvsq.fr>,
+Pascal Dupuis <Pascal.Dupuis at esat.kuleuven.ac.be>, Philippe
+Geuzaine <geuzaine at gnat.colorado.edu>, Johan Gyselinck
+<johan.gyselinck at ulg.ac.be>, Francois Henrotte <fhenrott at
+esat.kuleuven.ac.be>, Benoit Meys <bmeys at techspace-aero.be>,
+Nicolas Moes <moes at tam9.mech.nwu.edu>, Osamu Nakamura <naka at
+hasaki.sumitomometals.co.jp> and Chad Schmutzer <schmutze at
+acm.caltech.edu>.
