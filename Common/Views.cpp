@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.73 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: Views.cpp,v 1.74 2002-09-01 22:10:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -551,7 +551,27 @@ void Read_View(FILE *file, char *filename){
 
       v = BeginView(0);
 
-      if(version >= 1.2){
+      if(version <= 1.0){
+	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	       name, &v->NbTimeStep,
+	       &v->NbSP, &v->NbVP, &v->NbTP, 
+	       &v->NbSL, &v->NbVL, &v->NbTL, 
+	       &v->NbST, &v->NbVT, &v->NbTT, 
+	       &v->NbSS, &v->NbVS, &v->NbTS);
+	v->NbT2 = t2l = v->NbT3 = t3l = 0;
+	Msg(INFO, "Detected version <= 1.0");
+      }
+      else if(version == 1.1){
+	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	       name, &v->NbTimeStep,
+	       &v->NbSP, &v->NbVP, &v->NbTP, 
+	       &v->NbSL, &v->NbVL, &v->NbTL, 
+	       &v->NbST, &v->NbVT, &v->NbTT, 
+	       &v->NbSS, &v->NbVS, &v->NbTS,
+	       &v->NbT2, &t2l, &v->NbT3, &t3l);
+	Msg(INFO, "Detected version 1.1");
+      }
+      else if(version == 1.2){
 	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
 	       "%d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
 	       name, &v->NbTimeStep,
@@ -564,24 +584,11 @@ void Read_View(FILE *file, char *filename){
 	       &v->NbSI, &v->NbVI, &v->NbTI,
 	       &v->NbSY, &v->NbVY, &v->NbTY,
 	       &v->NbT2, &t2l, &v->NbT3, &t3l);
-      }
-      else if(version >= 1.1){
-	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
-	       name, &v->NbTimeStep,
-	       &v->NbSP, &v->NbVP, &v->NbTP, 
-	       &v->NbSL, &v->NbVL, &v->NbTL, 
-	       &v->NbST, &v->NbVT, &v->NbTT, 
-	       &v->NbSS, &v->NbVS, &v->NbTS,
-	       &v->NbT2, &t2l, &v->NbT3, &t3l);
+	Msg(INFO, "Detected version 1.2");
       }
       else{
-	fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
-	       name, &v->NbTimeStep,
-	       &v->NbSP, &v->NbVP, &v->NbTP, 
-	       &v->NbSL, &v->NbVL, &v->NbTL, 
-	       &v->NbST, &v->NbVT, &v->NbTT, 
-	       &v->NbSS, &v->NbVS, &v->NbTS);
-	v->NbT2 = t2l = v->NbT3 = t3l = 0;
+	Msg(GERROR, "Unknown post-processing file format (version %g)", version);
+	return;
       }
 
       for(i=0;i<(int)strlen(name);i++) if(name[i]=='^') name[i]=' '; 
