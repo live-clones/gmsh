@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.13 2001-02-22 08:16:30 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.14 2001-02-22 14:43:39 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -188,7 +188,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i]!=NULL){
           CTX.mesh.degree = atoi(argv[i++]);
-          if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
+          if(CTX.mesh.degree != 1 && CTX.mesh.degree != 2){
             fprintf(stderr, ERROR_STR "Wrong Degree\n");
             exit(1);
           }
