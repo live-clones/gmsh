@@ -1,5 +1,6 @@
-// $Id: Message.cpp,v 1.21 2001-05-25 14:27:20 geuzaine Exp $
+// $Id: Message.cpp,v 1.22 2001-07-08 15:45:47 geuzaine Exp $
 
+#include <unistd.h>
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
 #include <sys/resource.h>
@@ -158,6 +159,7 @@ void Exit(int level){
     if(CTX.options_save)
       Print_Options(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
   }
+  unlink(CTX.tmp_filename);//delete temp file
   exit(level);
 }
 

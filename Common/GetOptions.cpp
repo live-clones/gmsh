@@ -1,5 +1,6 @@
-// $Id: GetOptions.cpp,v 1.28 2001-06-29 07:27:16 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.29 2001-07-08 15:45:47 geuzaine Exp $
 
+#include <unistd.h>
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
@@ -10,11 +11,12 @@
 #include "Mesh.h"
 #include "Views.h"
 #include "OpenFile.h"
+#include "Parser.h"
 
 extern Context_T  CTX;
 
 char  *TheFileNameTab[MAX_OPEN_FILES];
-char  *TheBgmFileName=NULL;
+char  *TheBgmFileName=NULL, *TheOptString=NULL;
 
 char gmsh_progname[]  = "This is Gmsh" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2001 Jean-Francois Remacle and Christophe Geuzaine";
@@ -77,6 +79,7 @@ void Print_Usage(char *name){
 #ifdef _XMOTIF
   Msg(DIRECT, "  -nothreads            disable threads");
 #endif
+  Msg(DIRECT, "  -opt \"string\"         parse string before project file");
   Msg(DIRECT, "  -version              show version number");
   Msg(DIRECT, "  -info                 show detailed version information");
   Msg(DIRECT, "  -help                 show this message");
@@ -87,6 +90,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
   int i=1;
 
   // Parse session and option files
+
+  InitSymbols(); //this symbol context is local to option parsing (the
+                 //symbols will not interfere with subsequent OpenFiles)
 
   ParseFile(CTX.sessionrc_filename);
   ParseFile(CTX.optionsrc_filename);
@@ -100,7 +106,15 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
     
     if (argv[i][0] == '-') {
       
-      if(!strcmp(argv[i]+1, "a")){ 
+      if(!strcmp(argv[i]+1, "opt")){
+	i++;
+        if(argv[i]!=NULL) TheOptString = argv[i++];
+	else{
+          fprintf(stderr, ERROR_STR "Missing string\n");
+          exit(1);
+	}
+      }
+      else if(!strcmp(argv[i]+1, "a")){ 
         CTX.initial_context = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "g")){ 

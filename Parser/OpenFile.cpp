@@ -1,9 +1,10 @@
-// $Id: OpenFile.cpp,v 1.17 2001-05-29 13:49:32 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.18 2001-07-08 15:45:48 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
 #include "Parser.h"
 #include "OpenFile.h"
+#include "GetOptions.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Views.h"
@@ -72,6 +73,17 @@ int ParseFile(char *f){
   return status;
 }
 
+
+void ParseString(char *str){
+  FILE *f;
+  if(!str)return;
+  if((f = fopen(CTX.tmp_filename,"w"))){
+    fprintf(f,"%s\n", str);
+    fclose(f);
+    ParseFile(CTX.tmp_filename);
+  }
+}
+
 void MergeProblem(char *name){
 
   ParseFile(name);  
@@ -97,6 +109,8 @@ void OpenProblem(char *name){
 
   InitSymbols();
   Init_Mesh(&M, 1);
+
+  ParseString(TheOptString);
 
   strncpy(CTX.filename,name,NAME_STR_L);
   strncpy(CTX.base_filename,name,NAME_STR_L);

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.78 2001-06-03 11:21:36 geuzaine Exp $
+// $Id: Gmsh.y,v 1.79 2001-07-08 15:45:48 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -33,7 +33,7 @@
 #include <alloca.h>
 #endif
 
-List_T *Symbol_L;
+List_T *Symbol_L=NULL;
 
 extern Context_T  CTX;
 extern Mesh      *THEM;
@@ -2518,7 +2518,10 @@ StringExpr :
 %%
 
 void InitSymbols(void){
-  Symbol_L = List_Create(10,1,sizeof(Symbol));
+  if(!Symbol_L)
+    Symbol_L = List_Create(50,10,sizeof(Symbol));
+  else
+    List_Reset(Symbol_L);
 }
 
 void DeleteSymbols(void){
