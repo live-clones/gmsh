@@ -1,6 +1,7 @@
-$Date: 2003-03-01 22:36:44 $
+$Date: 2003-03-02 00:18:03 $
 
-New in 1.41: general code cleanup (indent);
+New in 1.41: Gmsh is now licensed under the GNU General Public
+License; general code cleanup (indent);
 
 New in 1.40: various small bug fixes (mainly GSL-related);
 
