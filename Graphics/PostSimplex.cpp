@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.13 2001-03-23 09:27:04 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.14 2001-04-06 10:26:36 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -27,6 +27,7 @@ void Draw_ScalarPoint(Post_View *View,
     Palette2(View,ValMin,ValMax,d);
     if(View->IntervalsType == DRAW_POST_NUMERIC){
       glRasterPos3d(X[0],Y[0],Z[0]);
+      sprintf(Num, "%g", d);
       Draw_String(Num);
     }
     else
