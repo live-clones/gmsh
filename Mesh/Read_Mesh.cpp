@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.54 2003-04-14 22:55:56 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.55 2003-05-12 15:44:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -178,6 +178,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
           fscanf(File_GEO, "%d", &verts[j].Num);
 
         switch (Type) {
+	case PNT:
+	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
+	  break;
         case LGN1:
         case LGN2:
           c = &C;
