@@ -47,3 +47,13 @@ s = newreg;
 Line Loop(s) = {-l,-(l+1)};
 Plane Surface(s+1) = s;
 
+
+// Duplicate the surfaces, and use uniform mesh
+p1=newp;
+Translate {0,-1.5,0} {
+  Duplicata { Surface{6,10,14}; }
+}
+p2=newp;
+Printf("p1 p2 = %g %g", p1, p2);
+
+Characteristic Length {p1:p2-1} = lc/5 ;
