@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.49 2004-02-07 01:40:27 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.50 2004-03-01 23:19:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -266,8 +266,8 @@ void OpenProblem(char *name)
   ZeroHighlight(&M);
 #endif
 
-  if(!Tree_Nbr(THEM->Points) && !Tree_Nbr(THEM->Points)
-     && List_Nbr(CTX.post.list)) {
+  if(!Tree_Nbr(THEM->Points) && !Tree_Nbr(THEM->Vertices) && 
+     List_Nbr(CTX.post.list)) {
     // if there are no points or vertices and there is a view, use it
     CalculateMinMax(NULL, ((Post_View *) List_Pointer
                            (CTX.post.list,
