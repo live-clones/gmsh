@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.338 2004-09-03 19:00:51 geuzaine Exp $
+// $Id: GUI.cpp,v 1.339 2004-09-04 01:38:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2581,6 +2581,9 @@ void GUI::create_option_window()
         view_value[60]->align(FL_ALIGN_RIGHT);
 
         view_value[63] = new Fl_Value_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
+        view_value[63]->minimum(0.);
+        view_value[63]->maximum(1.);
+        view_value[63]->step(0.01);
         view_value[63]->align(FL_ALIGN_RIGHT);
 
         view_value[64] = new Fl_Value_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Raised scalar view number");
@@ -2672,6 +2675,9 @@ void GUI::update_view_window(int num)
   view_number = num;
   Post_View *v = (Post_View *) List_Pointer(CTX.post.list, num);
 
+  double maxval = MAX(fabs(v->Min), fabs(v->Max));
+  if(!maxval) maxval = 1.;
+
   opt_view_name(num, GMSH_GUI, NULL);
   opt_view_format(num, GMSH_GUI, NULL);
   opt_view_type(num, GMSH_GUI, 0);
@@ -2755,8 +2761,6 @@ void GUI::update_view_window(int num)
   opt_view_raise0(num, GMSH_GUI, 0);
   opt_view_raise1(num, GMSH_GUI, 0);
   opt_view_raise2(num, GMSH_GUI, 0);
-  double maxval = MAX(fabs(v->Min), fabs(v->Max));
-  if(!maxval) maxval = 1.;
   double val2 = 2. * CTX.lc / maxval;
   for(int i = 43; i <= 45; i++) {
     view_value[i]->step(val2/100.);
@@ -2793,7 +2797,12 @@ void GUI::update_view_window(int num)
   opt_view_line_type(num, GMSH_GUI, 0);
   opt_view_vector_type(num, GMSH_GUI, 0);
   opt_view_arrow_size(num, GMSH_GUI, 0);
+
   opt_view_displacement_factor(num, GMSH_GUI, 0);
+  double val3 = 2. * CTX.lc / maxval;
+  view_value[63]->step(val3/100.);
+  view_value[63]->maximum(val3);
+
   opt_view_raised_scalar_view(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);
   //opt_view_tensor_type(num, GMSH_GUI, 0);
