@@ -69,11 +69,6 @@ Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.DisplayLists
-Use OpenGL display lists for drawing meshes@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Dual
 Display the dual mesh obtained by barycentric subdivision@*
 Default value: @code{0}@*
@@ -267,6 +262,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Tangents
 Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.VertexArrays
+Use OpenGL vertex arrays to draw triangular meshes?@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.VolumeEdges

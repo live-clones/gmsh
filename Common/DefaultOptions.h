@@ -817,7 +817,7 @@ StringXNumber MeshOptions_Number[] = {
     "Display size of tangent vectors (in pixels)" }, 
 
   { F|O, "VertexArrays" , opt_mesh_vertex_arrays , 1. , 
-    "Use OpenGL vertex arrays to draw meshes?" },
+    "Use OpenGL vertex arrays to draw triangular meshes?" },
   { F|O, "VolumeEdges" , opt_mesh_volumes_edges , 1. , 
     "Display edges of volume mesh?" },
   { F|O, "VolumeFaces" , opt_mesh_volumes_faces , 0. , 

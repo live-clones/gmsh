@@ -24,11 +24,6 @@ Number of control points for splines created during extrusion@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.Highlight
-Not used@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Geometry.Light
 Enable lighting for the geometry@*
 Default value: @code{1}@*
@@ -177,26 +172,6 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.Color.VolumesSelect
 Selected geometry volume color@*
 Default value: @code{@{255,0,0@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.Color.PointsHighlight
-Highlighted geometry point color@*
-Default value: @code{@{0,255,0@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.Color.LinesHighlight
-Highlighted geometry curve color@*
-Default value: @code{@{0,0,255@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.Color.SurfacesHighlight
-Highlighted geometry surface color@*
-Default value: @code{@{128,128,128@}}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.Color.VolumesHighlight
-Highlighted geometry volume color@*
-Default value: @code{@{128,128,128@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Tangents
