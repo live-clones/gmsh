@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.363 2004-10-16 22:15:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.364 2004-10-18 20:39:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3717,8 +3717,8 @@ void GUI::create_solver_window(int num)
 
   int width = 5 * BBS + 6 * WB;
   int height = (8 + SINFO[num].nboptions + newrow) * WB + (6 + SINFO[num].nboptions + newrow) * BH;
-  if(height < 7 * WB + 7 * BH)
-    height = 7 * WB + 7 * BH;   //minimum height required by Options tab
+  if(height < 8 * WB + 8 * BH)
+    height = 8 * WB + 8 * BH;   //minimum height required by Options tab
 
   solver[num].window = new Fl_Window(width, height);
   solver[num].window->box(WINDOW_BOX);
