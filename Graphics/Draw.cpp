@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.64 2004-11-01 15:10:36 geuzaine Exp $
+// $Id: Draw.cpp,v 1.65 2004-11-16 21:04:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -193,12 +193,13 @@ void InitRenderModel(void)
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, CTX.shine_exponent);
 
   glShadeModel(GL_SMOOTH);
-#if defined(GL_VERSION_1_2)
-  // this is more efficient, since we already specify unit normals
-  glEnable(GL_RESCALE_NORMAL);
-#else
+  // Normalize the normals automatically. We could use the more
+  // efficient glEnable(GL_RESCALE_NORMAL) instead (since we initially
+  // specify unit normals), but GL_RESCALE_NORMAL does only work with
+  // isotropic scalings (and we allow anistotropic scalings in
+  // myZoom). Note that GL_RESCALE_NORMAL is only available in
+  // GL_VERSION_1_2.
   glEnable(GL_NORMALIZE);
-#endif
 
   // lighting is enabled/disabled for each particular primitive later
   glDisable(GL_LIGHTING);
@@ -311,8 +312,7 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
   GLdouble yscale1 = CTX.s[1];
   set_s(0, CTX.s[0] * (CTX.vxmax - CTX.vxmin) / (X2 - X1));
   set_s(1, CTX.s[1] * (CTX.vymax - CTX.vymin) / (Y1 - Y2));
-  //set_s(2, 0.5 * (CTX.s[0] + CTX.s[1])); // bof, bof. bof: can cause normal clamping
-  set_s(2, MIN(CTX.s[0], CTX.s[1])); // better, but not great...
+  set_s(2, MIN(CTX.s[0], CTX.s[1])); // bof...
   set_t(0, CTX.t[0] * (xscale1 / CTX.s[0]) - 
 	((Xc1 + Xc2) / 2.) * (1. - (xscale1 / CTX.s[0])));
   set_t(1, CTX.t[1] * (yscale1 / CTX.s[1]) - 
