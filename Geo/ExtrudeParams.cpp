@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.15 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.16 2004-04-18 03:09:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,55 +67,8 @@ void ExtrudeParams::fill(int type,
 void ExtrudeParams::Extrude(int iLayer, int iElemLayer,
                             double &x, double &y, double &z)
 {
-  double dx0, dy0, dz0, dx1, dy1, dz1;
-  double dx, dy, dz, angle;
-
-  if(!iLayer) {
-    dx0 = dy0 = dz0 = 0.0;
-    dx1 = mesh.hLayer[0];
-    dy1 = mesh.hLayer[0];
-    dz1 = mesh.hLayer[0];
-  }
-  else {
-    dx0 = mesh.hLayer[iLayer - 1];
-    dy0 = mesh.hLayer[iLayer - 1];
-    dz0 = mesh.hLayer[iLayer - 1];
-    dx1 = mesh.hLayer[iLayer];
-    dy1 = mesh.hLayer[iLayer];
-    dz1 = mesh.hLayer[iLayer];
-  }
-  double t = (double)iElemLayer / (double)mesh.NbElmLayer[iLayer];
-  switch (geo.Type) {
-  case TRANSLATE:
-    dx = geo.trans[0] * (dx0 + t * (dx1 - dx0));
-    dy = geo.trans[1] * (dy0 + t * (dy1 - dy0));
-    dz = geo.trans[2] * (dz0 + t * (dz1 - dz0));
-    x += dx;
-    y += dy;
-    z += dz;
-    break;
-  case ROTATE:
-    angle = geo.angle;
-    geo.angle = geo.angle * (dx0 + t * (dx1 - dx0));
-    ProtudeXYZ(x, y, z, this);
-    geo.angle = angle;
-    break;
-  case TRANSLATE_ROTATE:
-    angle = geo.angle;
-    geo.angle = geo.angle * (dx0 + t * (dx1 - dx0));
-    ProtudeXYZ(x, y, z, this);
-    geo.angle = angle;
-    dx = geo.trans[0] * (dx0 + t * (dx1 - dx0));
-    dy = geo.trans[1] * (dy0 + t * (dy1 - dy0));
-    dz = geo.trans[2] * (dz0 + t * (dz1 - dz0));
-    x += dx;
-    y += dy;
-    z += dz;
-    break;
-  default:
-    Msg(GERROR, "Unknown extrusion type");
-    break;
-  }
+  double t = u(iLayer, iElemLayer);
+  Extrude(t, x, y, z);
 }
 
 void ExtrudeParams::Rotate(double matr[3][3])
@@ -161,4 +114,20 @@ void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
     Msg(GERROR, "Unknown extrusion type");
     break;
   }
+}
+
+double ExtrudeParams::u(int iLayer, int iElemLayer)
+{
+  double t0, t1;
+
+  if(!iLayer) {
+    t0 = 0.0;
+    t1 = mesh.hLayer[0];
+  }
+  else {
+    t0 = mesh.hLayer[iLayer - 1];
+    t1 = mesh.hLayer[iLayer];
+  }
+  double t = (double)iElemLayer / (double)mesh.NbElmLayer[iLayer];
+  return t0 + t * (t1 - t0);
 }
