@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.17 2001-08-20 07:38:30 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.18 2001-10-03 06:59:37 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -302,11 +302,6 @@ void Simplex::Fourre_Simplexe (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v
   }
   if (!v4){
     N = 3;
-    if (Volume_Simplexe2D () < 0.0){
-      V[0] = v1;
-      V[1] = v3;
-      V[2] = v2;
-    }
     if (FACE_DIMENSION == 1){
       //qsort(F[0].V,3,sizeof(Vertex*),compareVertex);
       Center_Circum ();

@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.35 2001-09-05 09:06:36 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.36 2001-10-03 06:59:37 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -743,6 +743,10 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
         Msg(GERROR, "Unknown vertex %d", ver[j]->Num);
       }
     }
+
+    /*
+    Je n'ai pas l'impression que ceci fonctionne comme voulu (essaie
+    e.g. avec demos/machine.geo)...
     if (ori && !err)
       s = Create_Simplex (*pp[0], *pp[1], *pp[2], NULL);
     else if (!err)
@@ -750,7 +754,14 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
     if (!err){
       s->iEnt = pS->Num;
       Tree_Insert (pS->Simplexes, &s);
+    } 
+    */
+    if (!err){
+      s = Create_Simplex (*pp[0], *pp[2], *pp[1], NULL);
+      s->iEnt = pS->Num;
+      Tree_Insert (pS->Simplexes, &s);
     }
+
     // MEMORY LEAK (JF)
     //    Free(M.listdel[i]);
   }

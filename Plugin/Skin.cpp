@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.9 2001-08-28 15:09:31 geuzaine Exp $
+// $Id: Skin.cpp,v 1.10 2001-10-03 06:59:37 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -37,7 +37,7 @@ void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) c
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text, 
 	 "Gets the skin (i.e. the boundary) of a view,\n"
-	 "eliminating all interior drawing).\n"
+	 "eliminating all interior drawing.\n"
 	 "Script name: Plugin(Skin).\n");
 }
 
