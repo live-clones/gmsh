@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.262 2003-12-03 04:15:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.263 2003-12-03 22:32:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -87,12 +87,12 @@ extern Context_T CTX;
 
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
-    {"&New...",           0, (Fl_Callback *)file_new_cb, 0},
-    {"&Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"M&erge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
-    {"Sa&ve mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
+    {"&New...",    0, (Fl_Callback *)file_new_cb, 0},
+    {"&Open...",   FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
+    {"M&erge...",  FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"Sa&ve mesh", FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-    {"Save &as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
+    {"Save &as",   0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
       {"By &extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
       {"&Geometry",  0, 0, 0, FL_SUBMENU},
          {"Gmsh current options (*.opt)...",    0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
@@ -131,22 +131,22 @@ Fl_Menu_Item m_menubar_table[] = {
          {0},
       {0},
 #else
-    {"Save &as...",       FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
+    {"Save &as...", FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"&Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
+    {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools",0,0,0,FL_SUBMENU},
-    {"&Options...",       FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
-    {"&Visibility...",    FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"S&tatistics...",    FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
-    {"M&essage console...",       FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
+    {"&Options...",         FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"&Visibility...",      FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"S&tatistics...",      FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"M&essage console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"&Help",0,0,0,FL_SUBMENU},
-    {"&Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
-    {"S&hortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
-    {"C&ommand line options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
-    {"On&line documentation",     0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"&About...",                 0, (Fl_Callback *)help_about_cb, 0},
+    {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
+    {"S&hortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
+    {"C&ommand line options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"On&line documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
+    {"&About...",                0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -156,29 +156,31 @@ Fl_Menu_Item m_menubar_table[] = {
 // menu window; removed File->Quit; changed capitalization to match
 // Apple's guidelines)
 
+#if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
 Fl_Menu_Item m_sys_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
-    {"New...",           0, (Fl_Callback *)file_new_cb, 0},
-    {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
-    {"Save Mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
-    {"Save As...",       FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0},
+    {"New...",     0, (Fl_Callback *)file_new_cb, 0},
+    {"Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
+    {"Merge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"Save Mesh",  FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
+    {"Save As...", FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0},
     {0},
   {"Tools",0,0,0,FL_SUBMENU},
-    {"Options...",       FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
-    {"Visibility...",    FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Statistics...",    FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
-    {"Message Console...",       FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
+    {"Options...",         FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"Visibility...",      FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"Statistics...",      FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"Message Console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
-    {"Current Options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
-    {"Shortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
-    {"Command Line Options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
-    {"Online Documentation",     0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"About Gmsh...",            0, (Fl_Callback *)help_about_cb, 0},
+    {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
+    {"Shortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
+    {"Command Line Options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"Online Documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
+    {"About Gmsh...",           0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
+#endif
 
 Fl_Menu_Item m_module_table[] = {
   {"Geometry",        'g', (Fl_Callback *)mod_geometry_cb, 0},
