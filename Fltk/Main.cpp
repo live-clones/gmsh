@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.10 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Main.cpp,v 1.11 2001-01-13 15:48:31 geuzaine Exp $
 
 #include <signal.h>
 
@@ -18,7 +18,7 @@
 #include "OpenFile.h"
 #include "GetOptions.h"
 
-GUI *WID ;
+GUI *WID = NULL;
 
 int main(int argc, char *argv[]){
   int     i, nbf;

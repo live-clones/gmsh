@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.9 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Message.cpp,v 1.10 2001-01-13 15:48:31 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -94,7 +94,7 @@ void Msg(int level, char *fmt, ...){
 
   static char buff1[1024], buff2[1024], buff[4][1024];
 
-  if(CTX.interactive)
+  if(CTX.interactive || !WID)
     window = -1;
   else 
     WID->check();
@@ -113,7 +113,7 @@ void Msg(int level, char *fmt, ...){
       vsprintf(buff2, fmt, args); 
       strcat(buff1,buff2);
       fprintf(stderr, "%s\n", &buff1[3]);
-      if(!CTX.interactive){
+      if(WID && !CTX.interactive){
 	if(verb<2)
 	  WID->add_message(buff1);
 	else
@@ -124,7 +124,7 @@ void Msg(int level, char *fmt, ...){
     va_end (args);
   }
 
-  if(abort){
+  if(WID && abort){
     WID->save_message(".gmshlog");
     Exit(1);
   }
