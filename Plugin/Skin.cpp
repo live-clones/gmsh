@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.8 2001-08-11 23:25:50 geuzaine Exp $
+// $Id: Skin.cpp,v 1.9 2001-08-28 15:09:31 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -67,7 +67,7 @@ typedef struct{
 
 static int fcmpElm(const void *a, const void *b){
   Elm *e1=(Elm*)a, *e2=(Elm*)b;
-  double s1, s2, TOL=CTX.lc*1.e-6;
+  double s1, s2, TOL=CTX.lc*1.e-12;
   int i;
   
   s1 = s2 = 0.0 ;  
