@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.28 2004-09-16 19:15:27 geuzaine Exp $
+// $Id: Skin.cpp,v 1.29 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -181,8 +181,8 @@ Post_View *GMSH_SkinPlugin::execute(Post_View * v)
     return v;
   }
 
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   Post_View *v2 = BeginView(1);
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
   _nbTimeStep = v1->NbTimeStep;
 

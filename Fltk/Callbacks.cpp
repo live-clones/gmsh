@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.299 2004-11-18 23:44:53 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.300 2004-11-25 02:10:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3121,34 +3121,29 @@ void view_reload_visible_cb(CALLBACK_ARGS)
 
 void view_reload_cb(CALLBACK_ARGS)
 {
-  Post_View tmp;
-  char filename[256];
-
   if(!CTX.post.list)
     return;
 
-  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
-  strcpy(filename, v->FileName);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
 
   struct stat buf;
-  if(stat(filename, &buf)){
-    Msg(GERROR, "File '%s' does not exist", filename);
+  if(stat(v->FileName, &buf)){
+    Msg(GERROR, "File '%s' does not exist", v->FileName);
     return;
   }
 
-  CopyViewOptions(v, &tmp);
-  FreeView(v);
-
   CTX.post.force_num = v->Num;
-  MergeProblem(filename);
+  MergeProblem(v->FileName);
   CTX.post.force_num = 0;
 
-  v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
-  CopyViewOptions(&tmp, v);
+  Post_View *v2 = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
+  CopyViewOptions(v, v2);
 
   // In case the reloaded view has a different number of time steps
-  if(v->TimeStep > v->NbTimeStep - 1)
-    v->TimeStep = 0;
+  if(v2->TimeStep > v2->NbTimeStep - 1)
+    v2->TimeStep = 0;
+
+  FreeView(v);
 
   if(!RELOAD_ALL_VIEWS)
     Draw();
@@ -3187,7 +3182,7 @@ void view_remove_empty_cb(CALLBACK_ARGS)
 {
   if(!CTX.post.list) return;
   for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
-    Post_View *v = (Post_View*) List_Pointer(CTX.post.list, i);
+    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(v->empty())
       RemoveViewByIndex(i);
   }
@@ -3204,8 +3199,7 @@ void view_remove_cb(CALLBACK_ARGS)
 
 void view_save_ascii_cb(CALLBACK_ARGS)
 {
-  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
-  if(!v) return;
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
   
 test:
   if(file_chooser(0, 1, "Save view in ASCII format", "*", 0, v->FileName)) {
@@ -3225,8 +3219,7 @@ test:
 
 void view_save_binary_cb(CALLBACK_ARGS)
 {
-  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
-  if(!v) return;
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
 
 test:
   if(file_chooser(0, 1, "Save view in binary format", "*", 0, v->FileName)) {
@@ -3246,8 +3239,7 @@ test:
 
 void view_save_parsed_cb(CALLBACK_ARGS)
 {
-  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
-  if(!v) return;
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
 
 test:
   if(file_chooser(0, 1, "Save view in parsed format", "*", 0, v->FileName)) {
@@ -3322,7 +3314,7 @@ void view_all_visible_cb(CALLBACK_ARGS)
 
 void view_applybgmesh_cb(CALLBACK_ARGS)
 {
-  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, (long int)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long int)data);
   if(!v->ScalarOnly || v->TextOnly) {
     Msg(GERROR, "Background mesh generation impossible with non-scalar view");
     return;
@@ -3361,8 +3353,11 @@ void view_plugin_run_cb(CALLBACK_ARGS)
     iView = 0;
 
   try {
-    Post_View *v = (Post_View *) List_Pointer_Test(CTX.post.list, iView);
-    p->execute(v);
+    Post_View **vv = (Post_View **) List_Pointer_Test(CTX.post.list, iView);
+    if(!vv)
+      p->execute(0);
+    else
+      p->execute(*vv);
     Draw();
   }
   catch(GMSH_Plugin * err) {
@@ -3881,8 +3876,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
       // colorbar window
 
       if(force || (WID->view_colorbar_window->changed() && i != current)) {
-        ColorTable_Copy(&((Post_View *)List_Pointer(CTX.post.list, current))->CT);
-        ColorTable_Paste(&((Post_View *)List_Pointer(CTX.post.list, i))->CT);
+        ColorTable_Copy(&(*(Post_View **)List_Pointer(CTX.post.list, current))->CT);
+        ColorTable_Paste(&(*(Post_View **)List_Pointer(CTX.post.list, i))->CT);
       }
     }
   }

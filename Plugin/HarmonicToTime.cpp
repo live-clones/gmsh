@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.2 2004-10-31 01:50:27 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.3 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -136,7 +136,7 @@ Post_View *GMSH_HarmonicToTimePlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   if(rIndex < 0 || rIndex >= v1->NbTimeStep ||
      iIndex < 0 || iIndex >= v1->NbTimeStep){
     Msg(GERROR, "Wrong real or imaginary part index");
@@ -144,8 +144,6 @@ Post_View *GMSH_HarmonicToTimePlugin::execute(Post_View * v)
   }
 
   Post_View *v2 = BeginView(1);
-  // get v1 again, in case BeginView induced a realloc of the view list
-  v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
   h2t(v1->NbSP, v1->SP, &v2->NbSP, v2->SP, 1, 1, rIndex, iIndex, nSteps);
   h2t(v1->NbVP, v1->VP, &v2->NbVP, v2->VP, 1, 3, rIndex, iIndex, nSteps);

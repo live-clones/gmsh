@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.61 2004-11-19 18:26:47 geuzaine Exp $
+// $Id: Generator.cpp,v 1.62 2004-11-25 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -121,7 +121,7 @@ void GetStatistics(double stat[50])
 
   stat[26] = List_Nbr(CTX.post.list);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     stat[27] += v->NbSP + v->NbVP + v->NbTP;
     stat[28] += v->NbSL + v->NbVL + v->NbTL;
     stat[29] += v->NbST + v->NbVT + v->NbTT;

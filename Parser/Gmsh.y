@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.184 2004-11-19 22:54:40 geuzaine Exp $
+// $Id: Gmsh.y,v 1.185 2004-11-25 02:10:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2465,11 +2465,11 @@ Command :
   | tSTRING tSTRING '[' FExpr ']' StringExpr tEND
     {
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
-	Post_View *v = (Post_View *)List_Pointer_Test(CTX.post.list, (int)$4);
-	if(v){
+	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$4);
+	if(vv){
 	  char tmpstring[1024];
 	  FixRelativePath($6, tmpstring);
-	  WriteView(v, tmpstring, CTX.post.file_format, 0);
+	  WriteView(*vv, tmpstring, CTX.post.file_format, 0);
 	}
       }
       else{

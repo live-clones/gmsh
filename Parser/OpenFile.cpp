@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.65 2004-10-28 03:44:37 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.66 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -94,10 +94,10 @@ void SetBoundingBox(void)
   else if(List_Nbr(CTX.post.list)) {
     // else, if we have views, use the max bb of all the views
     double bbox[6];
-    Post_View *v = (Post_View *)List_Pointer(CTX.post.list, 0);
+    Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, 0);
     for(int i = 0; i < 6; i++) bbox[i] = v->BBox[i];
     for(int i = 1; i < List_Nbr(CTX.post.list); i++){
-      v = (Post_View *)List_Pointer(CTX.post.list, i);
+      v = *(Post_View **)List_Pointer(CTX.post.list, i);
       if(v->BBox[0] < bbox[0]) bbox[0] = v->BBox[0];
       if(v->BBox[1] > bbox[1]) bbox[1] = v->BBox[1];
       if(v->BBox[2] < bbox[2]) bbox[2] = v->BBox[2];

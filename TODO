@@ -1,11 +1,4 @@
-$Id: TODO,v 1.68 2004-11-24 22:46:53 geuzaine Exp $
-
-********************************************************************
-
-Convert the CTX.post.list to a list of pointers to views, so as to
-avoid problems when the list is reallocated (Plugins/Levelset is the
-last place where the problem is still present, but it would be simpler
-to just manipule a list of pointers anyway)
+$Id: TODO,v 1.69 2004-11-25 02:10:30 geuzaine Exp $
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.8 2004-06-24 16:02:21 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.9 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -222,7 +222,7 @@ Post_View *GMSH_CutGridPlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
   return GenerateView(v1);
 }

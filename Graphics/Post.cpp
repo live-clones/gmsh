@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.84 2004-11-13 22:52:46 geuzaine Exp $
+// $Id: Post.cpp,v 1.85 2004-11-25 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -280,7 +280,7 @@ void Draw_Post(void)
 
   if(CTX.draw_bbox || !CTX.post.draw) {  // draw only the bbox of the visible views
     for(int iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
-      v = (Post_View *) List_Pointer(CTX.post.list, iView);
+      v = *(Post_View **) List_Pointer(CTX.post.list, iView);
       if(v->Visible && v->Type == DRAW_POST_3D) {
         glColor4ubv((GLubyte *) & CTX.color.fg);
 	glLineWidth(CTX.line_width);
@@ -334,7 +334,7 @@ void Draw_Post(void)
 
   for(int iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
 
-    v = (Post_View *) List_Pointer(CTX.post.list, iView);
+    v = *(Post_View **) List_Pointer(CTX.post.list, iView);
 
     if(v->Visible && !v->Dirty) {
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.384 2004-11-24 16:33:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.385 2004-11-25 02:10:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1064,7 +1064,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   int nb = 0;
   if(m_module_butt->value() == 3){ // post-processing context
     for(nb = 0; nb < List_Nbr(CTX.post.list); nb++) {
-      Post_View *v = (Post_View *) List_Pointer(CTX.post.list, nb);
+      Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, nb);
       
       Fl_Light_Button *b1 = new Fl_Light_Button(0, MH + nb * BH, width - popw, BH);
       b1->callback(view_toggle_cb, (void *)nb);
@@ -1323,7 +1323,7 @@ void GUI::check_anim_buttons()
   }
   else {
     for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-      if(((Post_View *) List_Pointer(CTX.post.list, i))->NbTimeStep > 1) {
+      if((*(Post_View **) List_Pointer(CTX.post.list, i))->NbTimeStep > 1) {
         play = 1;
         break;
       }
@@ -2783,7 +2783,7 @@ void GUI::update_view_window(int num)
     return;
 
   view_number = num;
-  Post_View *v = (Post_View *) List_Pointer(CTX.post.list, num);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, num);
 
   double maxval = MAX(fabs(v->Min), fabs(v->Max));
   if(!maxval) maxval = 1.;

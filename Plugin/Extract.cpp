@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.13 2004-10-27 05:51:10 geuzaine Exp $
+// $Id: Extract.cpp,v 1.14 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -212,10 +212,8 @@ Post_View *GMSH_ExtractPlugin::execute(Post_View * v)
     return v;
   }
 
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   Post_View *v2 = BeginView(1);
-
-  // get v1 after BeginView: this is ok even if post.list got reallocated
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
   // points
   extract(expr, v1->SP, v1->NbSP, v2->SP, &v2->NbSP, v2->VP, &v2->NbVP, v1->NbTimeStep, 1, 1);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.206 2004-11-18 23:44:53 geuzaine Exp $
+// $Id: Options.cpp,v 1.207 2004-11-25 02:10:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -157,7 +157,7 @@ void ReInit_Options(int num)
   CTX.post.list = l;
 
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     CopyViewOptions(Post_ViewReference, v);
   }
 }
@@ -778,14 +778,15 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 // String option routines
 
 #define GET_VIEW(error_val)						\
-  Post_View *v;								\
-  if(!List_Nbr(CTX.post.list))							\
+  Post_View *v, **vv;							\
+  if(!List_Nbr(CTX.post.list))						\
     v = Post_ViewReference ;						\
   else{									\
-    if(!(v = (Post_View*)List_Pointer_Test(CTX.post.list, num))){	\
+    if(!(vv = (Post_View **)List_Pointer_Test(CTX.post.list, num))){	\
       Msg(WARNING, "View[%d] does not exist", num) ;			\
       return (error_val) ;						\
     }									\
+    v = *vv;                                                            \
   }
 
 char *opt_general_display(OPT_ARGS_STR)

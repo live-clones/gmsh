@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.26 2004-11-15 18:15:52 geuzaine Exp $
+// $Id: Transform.cpp,v 1.27 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -181,7 +181,7 @@ Post_View *GMSH_TransformPlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
   for(int i = 0; i < 3; i++) {
     v1->BBox[2 * i] = VAL_INF;

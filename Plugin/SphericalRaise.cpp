@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.19 2004-07-21 18:18:23 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.20 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -179,7 +179,7 @@ Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
   sphericalRaise(v1, timeStep, center, raise);
   return v1;

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.41 2004-11-09 16:27:53 remacle Exp $
+// $Id: CutMap.cpp,v 1.42 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -52,10 +52,10 @@ double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
   if(action > 0){
     int iview = (int)CutMapOptions_Number[3].def;
     if(iview < 0) iview = num;
-    Post_View *v = (Post_View*)List_Pointer_Test(CTX.post.list, iview);
-    if(v){
-      min = v->Min;
-      max = v->Max;
+    Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, iview);
+    if(vv){
+      min = (*vv)->Min;
+      max = (*vv)->Max;
     }
   }
   switch(action){ // configure the input field
@@ -131,7 +131,7 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
     return v;
   }
   
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   
   return GMSH_LevelsetPlugin::execute(v1);
 }

@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.53 2004-11-13 22:52:46 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.54 2004-11-25 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -927,13 +927,16 @@ void Draw_ScalarElement(int type, Post_View * View, int preproNormals,
 int GetDataFromOtherView(int type, Post_View *v, int *nbcomp,
 			 double *norm, double **vals, int *vectype)
 {
-  Post_View *v2 = (Post_View*)List_Pointer_Test(CTX.post.list, v->ExternalViewIndex);
+  Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, 
+						   v->ExternalViewIndex);
 
-  if(!v2){
+  if(!vv){
     if(!v->ExternalElementIndex)
       Msg(GERROR, "Nonexistent external view: drawing self instead");
     return 0;
   }
+
+  Post_View *v2 = *vv;
 
   int nbelm = 0, comp = 0, nbnod = 0;
   List_T *l;
@@ -996,20 +999,20 @@ int GetDataFromOtherView(int type, Post_View *v, int *nbcomp,
   }
 
   int nb = List_Nbr(l) / nbelm;
-  double *vv = (double *)List_Pointer(l, v->ExternalElementIndex * nb + 3 * nbnod + 
+  double *vp = (double *)List_Pointer(l, v->ExternalElementIndex * nb + 3 * nbnod + 
 				      comp * nbnod * v->TimeStep);
   for(int k = 0; k < nbnod; k++){
     if(comp == 1)
-      norm[k] = vv[k];
+      norm[k] = vp[k];
     else if(comp == 3)
-      norm[k] = sqrt(vv[3*k] * vv[3*k] + 
-		     vv[3*k+1] * vv[3*k+1] + 
-		     vv[3*k+2] * vv[3*k+2]);
+      norm[k] = sqrt(vp[3*k] * vp[3*k] + 
+		     vp[3*k+1] * vp[3*k+1] + 
+		     vp[3*k+2] * vp[3*k+2]);
     else if(comp == 9)
-      norm[k] = ComputeVonMises(vv + 9*k);
+      norm[k] = ComputeVonMises(vp + 9*k);
   }
 
-  *vals = vv;
+  *vals = vp;
   
   switch (v->RangeType) {
   case DRAW_POST_RANGE_DEFAULT:

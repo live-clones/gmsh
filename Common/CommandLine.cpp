@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.50 2004-10-03 23:32:02 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.51 2004-11-25 02:10:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -280,7 +280,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
           OpenProblem(argv[i]);
 	  // convert post-processing views to latest (binary) format
           for(int j = 0; j < List_Nbr(CTX.post.list); j++)
-            WriteView((Post_View *) List_Pointer(CTX.post.list, j),
+            WriteView(*(Post_View **) List_Pointer(CTX.post.list, j),
                       argv[i + 1], 1, j ? 1 : 0);
 	  // convert any mesh to the latest format
 	  if(THEM){

@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.5 2004-11-13 22:52:46 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.6 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -162,9 +162,10 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v2 = BeginView(1);
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   OctreePost o(v1);
+
+  Post_View *v2 = BeginView(1);
   double *res0 = new double[v1->NbTimeStep];
   double *res = new double[v1->NbTimeStep];
   double x, y, z, x0, y0, z0;

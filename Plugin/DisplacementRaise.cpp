@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.16 2004-07-05 15:20:06 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.17 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -194,8 +194,8 @@ Post_View *GMSH_DisplacementRaisePlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = (Post_View*)List_Pointer(CTX.post.list, dView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
+  Post_View *v2 = *(Post_View **)List_Pointer(CTX.post.list, dView);
 
   displacementRaise(v1, v2, factor, dTimeStep);
 

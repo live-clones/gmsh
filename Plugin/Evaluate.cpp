@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.7 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.8 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -200,7 +200,7 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
   evaluate(v1, v1->SP, v1->NbSP, 1, 1, comp, timeStep, expr);
   evaluate(v1, v1->VP, v1->NbVP, 1, 3, comp, timeStep, expr);

@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.35 2004-11-09 16:27:53 remacle Exp $
+// $Id: CutSphere.cpp,v 1.36 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -209,7 +209,7 @@ Post_View *GMSH_CutSpherePlugin::execute(Post_View * v)
     return v;
   }
 
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
   return GMSH_LevelsetPlugin::execute(v1);
 }

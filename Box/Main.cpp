@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.43 2004-05-22 01:24:16 geuzaine Exp $
+// $Id: Main.cpp,v 1.44 2004-11-25 02:10:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     if(TheBgmFileName) {
       MergeProblem(TheBgmFileName);
       if(List_Nbr(CTX.post.list))
-        BGMWithView((Post_View *)
+        BGMWithView(*(Post_View **)
                     List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
       else{
         fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");

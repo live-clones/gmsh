@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.37 2004-10-11 19:18:59 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.38 2004-11-25 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -378,7 +378,7 @@ void Draw_Graph2D(void)
     return;
 
   for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-    v = (Post_View *) List_Pointer(CTX.post.list, i);
+    v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(v->Visible && !v->Dirty && v->NbSP && v->Type != DRAW_POST_3D) {
       tic = 5;
       dx = dy = 0.;
@@ -508,7 +508,7 @@ void Draw_Text2D(void)
   glColor4ubv((GLubyte *) & CTX.color.text);
 
   for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-    v = (Post_View *) List_Pointer(CTX.post.list, i);
+    v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(v->Visible && !v->Dirty && v->DrawStrings)
       Draw_Text2D3D(2, v->TimeStep, v->NbT2, v->T2D, v->T2C);
   }

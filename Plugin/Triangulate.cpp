@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.24 2004-07-05 15:20:06 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.25 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -219,8 +219,8 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
     return v;
   }
 
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   Post_View *v2 = BeginView(1);
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
   Triangulate(v1->NbSP, v1->SP, &v2->NbST, v2->ST, v1->NbTimeStep, 1);
   Triangulate(v1->NbVP, v1->VP, &v2->NbVT, v2->VT, v1->NbTimeStep, 3);

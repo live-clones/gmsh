@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.3 2004-11-24 18:52:21 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.4 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -173,8 +173,8 @@ Post_View *GMSH_IntegratePlugin::execute(Post_View * v)
     return v;
   }
 
+  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   Post_View *v2 = BeginView(1);
-  Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
   double x = (v1->BBox[0]+v1->BBox[1])/2.;
   double y = (v1->BBox[2]+v1->BBox[3])/2.;

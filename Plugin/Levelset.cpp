@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.17 2004-11-23 09:00:50 remacle Exp $
+// $Id: Levelset.cpp,v 1.18 2004-11-25 02:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -348,14 +348,15 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   if(_valueView < 0) {
     w = v;
   }
-  else if(!(w = (Post_View *)List_Pointer_Test(CTX.post.list, _valueView))) {
+  else if(!List_Pointer_Test(CTX.post.list, _valueView)) {
     Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", _valueView, 
 	v->Index);
     w = v;
   }
+  else{
+    w = *(Post_View **)List_Pointer(CTX.post.list, _valueView);
+  }
 
-  // FIXME: this is not secure: if BeginView forces a post.list
-  // reallocation, w and v are wrong
   if(_valueIndependent) {
     out.push_back(BeginView(1));
   }

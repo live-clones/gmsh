@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.145 2004-11-13 22:52:44 geuzaine Exp $
+// $Id: Views.cpp,v 1.146 2004-11-25 02:10:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,48 +42,47 @@ Post_View *Post_ViewReference = NULL;
 
 int fcmpPostViewNum(const void *v1, const void *v2)
 {
-  return (((Post_View *) v1)->Num - ((Post_View *) v2)->Num);
+  return ((*(Post_View **) v1)->Num - (*(Post_View **) v2)->Num);
 }
 
 int fcmpPostViewDuplicateOf(const void *v1, const void *v2)
 {
-  return (((Post_View *) v1)->DuplicateOf - ((Post_View *) v2)->DuplicateOf);
+  return ((*(Post_View **) v1)->DuplicateOf - (*(Post_View **) v2)->DuplicateOf);
 }
 
 int fcmpPostViewName(const void *v1, const void *v2)
 {
-  return strcmp(((Post_View *) v1)->Name, ((Post_View *) v2)->Name);
+  return strcmp((*(Post_View **) v1)->Name, (*(Post_View **) v2)->Name);
 }
 
 int fcmpPostViewVisibility(const void *v1, const void *v2)
 {
-  return (((Post_View *) v2)->Visible - ((Post_View *) v1)->Visible);
+  return ((*(Post_View **) v2)->Visible - (*(Post_View **) v1)->Visible);
 }
 
 Post_View *BeginView(int allocate)
 {
-  Post_View vv, *v;
+  Post_View *v = (Post_View *)Malloc(sizeof(Post_View));
   static int UniqueNum = 0;
-  int i;
 
   if(!CTX.post.list)
-    CTX.post.list = List_Create(100, 100, sizeof(Post_View));
+    CTX.post.list = List_Create(100, 100, sizeof(Post_View *));
 
   // Important notes:
   // - each view *must* have a unique number
   // - the view list is assumned to be sorted with increasing nums
 
   if(!CTX.post.force_num) {
-    vv.Num = ++UniqueNum;
-    List_Add(CTX.post.list, &vv);
+    v->Num = ++UniqueNum;
+    List_Add(CTX.post.list, &v);
   }
   else {
-    vv.Num = CTX.post.force_num;
-    List_Replace(CTX.post.list, &vv, fcmpPostViewNum);
+    v->Num = CTX.post.force_num;
+    List_Replace(CTX.post.list, &v, fcmpPostViewNum);
   }
 
-  i = List_ISearch(CTX.post.list, &vv, fcmpPostViewNum);
-  v = (Post_View *) List_Pointer(CTX.post.list, i);
+  int i = List_ISearch(CTX.post.list, &v, fcmpPostViewNum);
+  List_Read(CTX.post.list, i, &v);
 
   v->Index = i;
   v->Dirty = 1;
@@ -195,7 +194,7 @@ double ComputeVonMises(double *V)
                      v31 * v31 + v32 * v32 + v33 * v33));
 }
   
-void Stat_Element(Post_View * v, int type, int nbnod, int N,
+void Stat_Element(Post_View *v, int type, int nbnod, int N,
                   double *X, double *Y, double *Z, double *V)
 {
   int i;
@@ -414,14 +413,11 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
 
 void DuplicateView(int num, int withoptions)
 {
-  Post_View v, *v2, *v3;
+  Post_View v, *pv, **ppv;
 
-  // Create the new view before getting a pointer to the old one: in
-  // case post.list got reallocated, the pointer to the old one could
-  // have changed!
-  v2 = BeginView(0);
+  Post_View *v1 = *(Post_View **) List_Pointer(CTX.post.list, num);
 
-  Post_View *v1 = (Post_View *) List_Pointer_Test(CTX.post.list, num);
+  Post_View *v2 = BeginView(0);
   EndView(v2, 0, v1->FileName, v1->Name);
 
   if(!v1->DuplicateOf) {
@@ -430,13 +426,14 @@ void DuplicateView(int num, int withoptions)
   }
   else {
     v.Num = v1->DuplicateOf;
-    if(!(v3 = (Post_View *) List_PQuery(CTX.post.list, &v, fcmpPostViewNum))) {
+    pv = &v;
+    if(!(ppv = (Post_View **) List_PQuery(CTX.post.list, &pv, fcmpPostViewNum))) {
       v2->DuplicateOf = v1->Num;
       v1->Links++;
     }
     else {
-      v2->DuplicateOf = v3->Num;
-      v3->Links++;
+      v2->DuplicateOf = (*ppv)->Num;
+      (*ppv)->Links++;
     }
   }
 
@@ -500,18 +497,17 @@ void DuplicateView(int num, int withoptions)
 
 bool RemoveViewByIndex(int index)
 {
-  Post_View *v;
-
   if(index < 0 || index >= List_Nbr(CTX.post.list)) {
     return false;
   }
-  v = (Post_View *) List_Pointer(CTX.post.list, index);
+
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, index);
   FreeView(v);
   List_PSuppress(CTX.post.list, index);
 
   // recalculate the indices
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
-    v = (Post_View *) List_Pointer(CTX.post.list, i);
+    v = *(Post_View **) List_Pointer(CTX.post.list, i);
     v->Index = i;
   }
 
@@ -521,29 +517,30 @@ bool RemoveViewByIndex(int index)
 
 bool RemoveViewByNumber(int num)
 {
-  Post_View vv;
+  Post_View v, *pv;
 
-  vv.Num = num;
-  int i = List_ISearch(CTX.post.list, &vv, fcmpPostViewNum);
+  v.Num = num;
+  pv = &v;
+  int i = List_ISearch(CTX.post.list, &pv, fcmpPostViewNum);
   
   return RemoveViewByIndex(i);
 }
 
 void FreeView(Post_View * v)
 {
-  Post_View vv, *v2;
+  Post_View vv, *pvv, **ppvv;
   int i, numdup, free = 1;
 
   if(v->DuplicateOf) {
     vv.Num = v->DuplicateOf;
+    pvv = &vv;
     Msg(DEBUG, "This view is a duplicata");
-    if(!(v2 = (Post_View *) List_PQuery(CTX.post.list, &vv, fcmpPostViewNum))) {
+    if(!(ppvv = (Post_View **) List_PQuery(CTX.post.list, &pvv, fcmpPostViewNum))) {
       Msg(DEBUG, "  -the original view is gone");
       numdup = 0;
       for(i = 0; i < List_Nbr(CTX.post.list); i++)
-        numdup +=
-          (((Post_View *) List_Pointer(CTX.post.list, i))->DuplicateOf ==
-           v->DuplicateOf);
+        numdup += ((*(Post_View **) List_Pointer(CTX.post.list, i))->DuplicateOf
+		   == v->DuplicateOf);
       if(numdup == 1) {
         Msg(DEBUG, "  -there are no other duplicata, so I can free");
         free = 1;
@@ -554,7 +551,7 @@ void FreeView(Post_View * v)
       }
     }
     else {
-      v2->Links--;
+      (*ppvv)->Links--;
       free = 0;
       Msg(DEBUG, "  -the original still exists, so I cannot free");
     }
@@ -575,28 +572,10 @@ void FreeView(Post_View * v)
     List_Delete(v->SY); List_Delete(v->VY); List_Delete(v->TY);
     List_Delete(v->T2D); List_Delete(v->T2C);
     List_Delete(v->T3D); List_Delete(v->T3C);
-    //set to NULL in case we don't free v (e.g. when doing a 'reload')
-    //+ the reload does not work (e.g. the file is gone). This way,
-    //the next Free stuff will still work gracefully.
-    v->Time = NULL;
-    v->TimeStepMin = NULL;
-    v->TimeStepMax = NULL;
-    v->SP = v->VP = v->TP = NULL;
-    v->SL = v->VL = v->TL = NULL;
-    v->ST = v->VT = v->TT = NULL;
-    v->SQ = v->VQ = v->TQ = NULL;
-    v->SS = v->VS = v->TS = NULL;
-    v->SH = v->VH = v->TH = NULL;
-    v->SI = v->VI = v->TI = NULL;
-    v->SY = v->VY = v->TY = NULL;
-    v->T2D = v->T2C = NULL;
-    v->T3D = v->T3C = NULL;
     if(v->normals) delete v->normals;
-    v->normals = NULL;
     if(v->TriVertexArray) delete v->TriVertexArray;
-    v->TriVertexArray = NULL;
     if(v->adaptive) delete v->adaptive;
-    v->adaptive = 0;
+    Free(v);
   }
 }
 
@@ -674,26 +653,32 @@ GmshColorTable *Get_ColorTable(int num)
 {
   Post_View *v;
 
-  if(!CTX.post.list)
+  if(!CTX.post.list){
     v = Post_ViewReference;
-  else
-    v = (Post_View *) List_Pointer_Test(CTX.post.list, num);
-  if(v)
-    return &v->CT;
-  else
-    return NULL;
+    if(!v) return NULL;
+  }
+  else{
+    Post_View **vv = (Post_View **) List_Pointer_Test(CTX.post.list, num);
+    if(!vv) return NULL;
+    v = *vv;
+  }
+  return &v->CT;
 }
 
 void Print_ColorTable(int num, int diff, char *prefix, FILE * file)
 {
   char tmp[1024];
   Post_View *v;
-  if(!CTX.post.list)
+
+  if(!CTX.post.list){
     v = Post_ViewReference;
-  else
-    v = (Post_View *) List_Pointer_Test(CTX.post.list, num);
-  if(!v)
-    return;
+    if(!v) return;
+  }
+  else{
+    Post_View **vv = (Post_View **) List_Pointer_Test(CTX.post.list, num);
+    if(!vv) return;
+    v = *vv;
+  }
 
   if(diff && !ColorTable_Diff(&Post_ViewReference->CT, &v->CT))
     return;
@@ -1273,7 +1258,7 @@ static void combine_space(struct nameidx *id, List_T *to_remove)
   int nbt = 0;
   for(int i = 0; i < List_Nbr(id->indices); i++) {
     List_Read(id->indices, i, &index);
-    Post_View *v = (Post_View*)List_Pointer(CTX.post.list, index);
+    Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, index);
     if(!i){
       nbt = v->NbTimeStep;
     }
@@ -1288,7 +1273,7 @@ static void combine_space(struct nameidx *id, List_T *to_remove)
   Post_View *vm = BeginView(1);
   for(int i = 0; i < List_Nbr(id->indices); i++) {
     List_Read(id->indices, i, &index);
-    Post_View *v = (Post_View*)List_Pointer(CTX.post.list, index);
+    Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, index);
     List_Insert(to_remove, &v->Num, fcmp_int);
     combine(v->SP,vm->SP); vm->NbSP += v->NbSP;
     combine(v->VP,vm->VP); vm->NbVP += v->NbVP; 
@@ -1348,7 +1333,7 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
 
   // use the first view as the reference
   List_Read(id->indices, 0, &index);
-  Post_View *v = (Post_View*)List_Pointer(CTX.post.list, index);
+  Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, index);
   for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++){
     vm->get_raw_data(i, &list, &nbe, &nbc, &nbn);
     v->get_raw_data(i, &list2, &nbe2, &nbc2, &nbn2);
@@ -1361,7 +1346,7 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
     for(int j = 0; j < *nbe; j++){
       for(int k = 0; k < List_Nbr(id->indices); k++){
 	List_Read(id->indices, k, &index);
-	v = (Post_View*)List_Pointer(CTX.post.list, index);
+	v = *(Post_View **)List_Pointer(CTX.post.list, index);
 	v->get_raw_data(i, &list2, &nbe2, &nbc2, &nbn2);
 	if(*nbe && *nbe == *nbe2){
 	  List_Insert(to_remove, &v->Num, fcmp_int);
@@ -1384,7 +1369,7 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
   // create the time data
   for(int i = 0; i < List_Nbr(id->indices); i++){
     List_Read(id->indices, i, &index);
-    v = (Post_View*)List_Pointer(CTX.post.list, index);
+    v = *(Post_View **)List_Pointer(CTX.post.list, index);
     for(int j = 0; j < List_Nbr(v->Time); j++){
       List_Add(vm->Time, List_Pointer(v->Time, j));
     }
@@ -1435,7 +1420,7 @@ void CombineViews(int time, int how, int remove)
   struct nameidx *pid;
 
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(how || v->Visible) {
       nameidx id;
       // this might potentially lead to unwanted results if there are

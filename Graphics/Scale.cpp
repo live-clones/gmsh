@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.52 2004-10-26 00:43:23 geuzaine Exp $
+// $Id: Scale.cpp,v 1.53 2004-11-25 02:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -278,7 +278,7 @@ void Draw_Scales(void)
     List_Reset(todraw);
 
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(v->Visible && !v->Dirty && v->ShowScale &&
        v->Type == DRAW_POST_3D && !v->TextOnly)
       List_Add(todraw, &v);
