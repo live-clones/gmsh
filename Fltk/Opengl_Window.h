@@ -28,14 +28,13 @@ class Opengl_Window : public Fl_Gl_Window {
  public:
   bool AddPointMode;
  private:
+  bool ZoomMode, ZoomClick, FirstClick;
   int xpos, ypos, xmov, ymov, ibut, hits;
-  int ZoomClick, FirstClick;
+  double xzoom0, yzoom0, xzoom1, yzoom1;
   GLdouble xc, yc, xc1, yc1, xc2, yc2, xt1, yt1, xscale1, yscale1;
   Vertex *v, *ov;
   Curve *c, *oc;
   Surface *s, *os;
-  int ZOOM;
-  double ZOOM_X0, ZOOM_Y0, ZOOM_X1, ZOOM_Y1;
 
   void draw();
   int handle(int);
@@ -43,14 +42,12 @@ class Opengl_Window : public Fl_Gl_Window {
  public:
   Opengl_Window(int x,int y,int w,int h,const char *l=0)
     : Fl_Gl_Window(x, y, w, h, l) {
-    AddPointMode = false;
     xpos = ypos = xmov = ymov = ibut = hits = 0;
-    ZoomClick = FirstClick = 0;
+    xzoom0 = yzoom0 = xzoom1 = yzoom1 = 0.;
+    AddPointMode = ZoomMode = ZoomClick = FirstClick = false;
     v = ov = NULL;
     c = oc = NULL;
     s = os = NULL;
-    ZOOM = 0;
-    ZOOM_X0 = ZOOM_Y0 = ZOOM_X1 = ZOOM_Y1 = 0.;
   }
 };
 

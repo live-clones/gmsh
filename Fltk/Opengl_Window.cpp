@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.41 2004-11-14 04:38:11 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.42 2004-11-15 20:15:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -70,7 +70,7 @@ void Opengl_Window::draw()
     }
   }
 
-  if(!ZOOM) {
+  if(!ZoomMode) {
     Orthogonalize(0, 0);
     ClearOpengl();
     Draw3d();
@@ -92,24 +92,22 @@ void Opengl_Window::draw()
     glEnable(GL_BLEND);
     glLineWidth(0.2);
     glBegin(GL_LINE_STRIP);
-    glVertex2d(ZOOM_X0, ZOOM_Y0);
-    glVertex2d(ZOOM_X1, ZOOM_Y0);
-    glVertex2d(ZOOM_X1, ZOOM_Y1);
-    glVertex2d(ZOOM_X0, ZOOM_Y1);
-    glVertex2d(ZOOM_X0, ZOOM_Y0);
+    glVertex2d(xzoom0, yzoom0);
+    glVertex2d(xzoom1, yzoom0);
+    glVertex2d(xzoom1, yzoom1);
+    glVertex2d(xzoom0, yzoom1);
+    glVertex2d(xzoom0, yzoom0);
     glEnd();
-    ZOOM_X1 =
-      CTX.vxmin + ((double)Fl::event_x() / (double)w()) * (CTX.vxmax -
-                                                           CTX.vxmin);
-    ZOOM_Y1 =
-      CTX.vymax - ((double)Fl::event_y() / (double)h()) * (CTX.vymax -
-                                                           CTX.vymin);
+    xzoom1 = CTX.vxmin + ((double)Fl::event_x() / (double)w()) * 
+      (CTX.vxmax - CTX.vxmin);
+    yzoom1 = CTX.vymax - ((double)Fl::event_y() / (double)h()) *
+      (CTX.vymax - CTX.vymin);
     glBegin(GL_LINE_STRIP);
-    glVertex2d(ZOOM_X0, ZOOM_Y0);
-    glVertex2d(ZOOM_X1, ZOOM_Y0);
-    glVertex2d(ZOOM_X1, ZOOM_Y1);
-    glVertex2d(ZOOM_X0, ZOOM_Y1);
-    glVertex2d(ZOOM_X0, ZOOM_Y0);
+    glVertex2d(xzoom0, yzoom0);
+    glVertex2d(xzoom1, yzoom0);
+    glVertex2d(xzoom1, yzoom1);
+    glVertex2d(xzoom0, yzoom1);
+    glVertex2d(xzoom0, yzoom0);
     glEnd();
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
@@ -117,7 +115,7 @@ void Opengl_Window::draw()
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
-    ZOOM = 0;
+    ZoomMode = false;
   }
   locked = 0;
 }
@@ -163,20 +161,20 @@ int Opengl_Window::handle(int event)
     
     if(ibut == 1 && !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
       if(!ZoomClick && Fl::event_state(FL_CTRL)) {
-        ZOOM_X0 = ZOOM_X1 =
-          CTX.vxmin + ((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin);
-        ZOOM_Y0 = ZOOM_Y1 =
-          CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin);
-        xc1 = ZOOM_X0 / CTX.s[0] - CTX.t[0];
-        yc1 = ZOOM_Y0 / CTX.s[1] - CTX.t[1];
-        ZoomClick = 1;
+        xzoom0 = xzoom1 = CTX.vxmin + ((double)xpos / (double)w()) *
+	  (CTX.vxmax - CTX.vxmin);
+        yzoom0 = yzoom1 = CTX.vymax - ((double)ypos / (double)h()) * 
+	  (CTX.vymax - CTX.vymin);
+        xc1 = xzoom0 / CTX.s[0] - CTX.t[0];
+        yc1 = yzoom0 / CTX.s[1] - CTX.t[1];
+        ZoomClick = true;
       }
       else if(ZoomClick) {
-        xc2 = ZOOM_X1 / CTX.s[0] - CTX.t[0];
-        yc2 = ZOOM_Y1 / CTX.s[1] - CTX.t[1];
-        ZoomClick = 0;
-        if(ZOOM_X0 != ZOOM_X1 && ZOOM_Y0 != ZOOM_Y1)
-          myZoom(ZOOM_X0, ZOOM_X1, ZOOM_Y0, ZOOM_Y1, xc1, xc2, yc1, yc2);
+        xc2 = xzoom1 / CTX.s[0] - CTX.t[0];
+        yc2 = yzoom1 / CTX.s[1] - CTX.t[1];
+        ZoomClick = false;
+        if(xzoom0 != xzoom1 && yzoom0 != yzoom1)
+          myZoom(xzoom0, xzoom1, yzoom0, yzoom1, xc1, xc2, yc1, yc2);
       }
       else {
         WID->try_selection = 1;
@@ -189,7 +187,7 @@ int Opengl_Window::handle(int event)
         redraw();
       }
       else {
-        ZoomClick = 0;
+        ZoomClick = false;
       }
     }
     else {
@@ -210,7 +208,7 @@ int Opengl_Window::handle(int event)
         redraw();
       }
       else {
-        ZoomClick = 0;
+        ZoomClick = false;
       }
     }
     return 1;
@@ -231,7 +229,7 @@ int Opengl_Window::handle(int event)
     ymov = Fl::event_y() - ypos;
 
     if(ZoomClick) {
-      ZOOM = 1;
+      ZoomMode = true;
       redraw();
     }
     else {
@@ -323,7 +321,7 @@ int Opengl_Window::handle(int event)
     }
 
     if(ZoomClick) {
-      ZOOM = 1;
+      ZoomMode = true;
       redraw();
     }
     else {
