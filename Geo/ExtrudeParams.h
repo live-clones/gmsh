@@ -18,7 +18,7 @@ public :
   void Rotate(double matr[3][3]);
   struct{
     bool    ExtrudeMesh;
-    bool    Simplexes, Recombine;
+    bool    Recombine;
     int     NbLayer;
     int     NbElmLayer [NB_LAYER_MAX];
     int     ZonLayer   [NB_LAYER_MAX];

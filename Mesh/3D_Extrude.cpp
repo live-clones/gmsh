@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.32 2001-08-14 16:10:47 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.33 2001-08-14 16:25:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -106,19 +106,13 @@ void Extrude_Simplex_Phase1 (void *data, void *dum){
       List_Read (s->V[0]->Extruded_Points, k + 1, &v4);
       List_Read (s->V[1]->Extruded_Points, k + 1, &v5);
       List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
-      if (ep->mesh.Simplexes){
-        k++;
-        if (!are_exist (v1, v5, Tree_Ares))
-          are_cree (v2, v4, Tree_Ares);
-        if (!are_exist (v5, v3, Tree_Ares))
-          are_cree (v2, v6, Tree_Ares);
-        if (!are_exist (v4, v3, Tree_Ares))
-          are_cree (v1, v6, Tree_Ares);
-      }
-      else if (!s->V[3]){
-      }
-      else{
-      }
+      k++;
+      if (!are_exist (v1, v5, Tree_Ares))
+	are_cree (v2, v4, Tree_Ares);
+      if (!are_exist (v5, v3, Tree_Ares))
+	are_cree (v2, v6, Tree_Ares);
+      if (!are_exist (v4, v3, Tree_Ares))
+	are_cree (v1, v6, Tree_Ares);
     }
   }
 }
