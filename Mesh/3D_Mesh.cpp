@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.10 2000-11-28 17:18:33 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.11 2000-11-28 19:36:41 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -243,7 +243,7 @@ void Link_Simplexes (List_T * Sim, Tree_T * Tim){
 
 void Box_6_Tetraedron (List_T * P, Mesh * m){
 #define FACT 1.1
-#define LOIN 2.2
+#define LOIN 0.2
 
   int i, j;
   static int pts[8][3] = { {0, 0, 0},
@@ -752,8 +752,9 @@ void Maillage_Volume (void *data, void *dum){
     
     Convex_Hull_Mesh (POINTS, LOCAL);
     
-    if (!Coherence (v, LOCAL))
-      return;
+    //if (!Coherence (v, LOCAL)) return;
+    while (!Coherence (v, LOCAL));
+
     Link_Simplexes (NULL, LOCAL->Simplexes);
     
     /* Suppression des noeuds de num < 0 */
