@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.29 2002-05-20 18:28:30 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.30 2002-08-14 17:47:48 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -40,6 +40,7 @@
 #include "Smooth.h"
 #include "Transform.h"
 #include "Triangulate.h"
+#include "SphericalRaise.h"
 
 using namespace std;
 
@@ -141,6 +142,8 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 						  GMSH_RegisterTransformPlugin()));
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Triangulate",
 						  GMSH_RegisterTriangulatePlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("SphericalRaise",
+						  GMSH_RegisterSphericalRaisePlugin()));
 
 #ifdef _FLTK
   char *homeplugins = getenv ("GMSHPLUGINSHOME");

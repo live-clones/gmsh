@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2002-05-18 16:31:17 geuzaine Exp $
+# $Id: Makefile,v 1.27 2002-08-14 17:47:48 geuzaine Exp $
 #
 # Makefile for "libGmshPlugin.a"
 #
@@ -26,6 +26,7 @@ SRC = Plugin.cpp\
         Smooth.cpp\
         Transform.cpp\
         Triangulate.cpp\
+        SphericalRaise.cpp\
         Skin.cpp
 
 OBJ = $(SRC:.cpp=.o)
