@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.167 2002-04-24 22:17:21 geuzaine Exp $
+// $Id: GUI.cpp,v 1.168 2002-04-25 01:03:46 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -63,7 +63,7 @@ Fl_Menu_Item m_menubar_table[] = {
          {"Gmsh (msh)...",                  0, (Fl_Callback *)file_save_as_msh_cb, 0},
          {"Gmsh all elements...",           0, (Fl_Callback *)file_save_as_msh_all_cb, 0},
          {"GREF (gref)...",                 0, (Fl_Callback *)file_save_as_gref_cb, 0},
-         {"I-DEAS universal (unv)...",      0, (Fl_Callback *)file_save_as_unv_cb, 0},
+         {"I-DEAS universal format (unv)...", 0, (Fl_Callback *)file_save_as_unv_cb, 0},
          {"VRML lines/surfaces (wrl)...",   0, (Fl_Callback *)file_save_as_vrml_cb, 0},
          {0},
       {"Image",  0, 0, 0, FL_SUBMENU},
