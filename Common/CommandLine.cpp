@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.34 2004-04-22 05:56:17 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.35 2004-04-22 05:59:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -105,8 +105,8 @@ void Print_Usage(char *name){
 #endif
   Msg(DIRECT, "Other options:");      
 #if defined(HAVE_FLTK)
-  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or");
-  Msg(DIRECT, "                        post-processing mode (default: automatic)");
+  Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or post-processing");
+  Msg(DIRECT, "                        mode (default: automatic)");
 #endif
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
   Msg(DIRECT, "  -string \"string\"      parse string before project file");
