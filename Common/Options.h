@@ -205,6 +205,7 @@ double opt_mesh_nb_tetrahedra(OPT_ARGS_NUM);
 double opt_mesh_nb_hexahedra(OPT_ARGS_NUM);
 double opt_mesh_nb_prisms(OPT_ARGS_NUM);
 double opt_mesh_nb_pyramids(OPT_ARGS_NUM);
+double opt_mesh_cpu_time(OPT_ARGS_NUM);
 double opt_solver_getdp_popupmessages(OPT_ARGS_NUM);
 double opt_solver_getdp_mergeviews(OPT_ARGS_NUM);
 double opt_post_scales(OPT_ARGS_NUM);

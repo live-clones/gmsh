@@ -437,6 +437,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of prisms in the current mesh" },
   { F, "NbPyramids" , opt_mesh_nb_pyramids , 0. , 
     "Number of pyramids in the current mesh" },
+  { F, "CpuTime" , opt_mesh_cpu_time , 0. , 
+    "CPU time for the generation of the current mesh (in seconds)" },
   { 0, NULL , NULL , 0. , NULL }
 } ;
 

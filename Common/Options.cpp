@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.56 2001-11-07 08:04:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.57 2001-11-09 11:20:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1630,6 +1630,11 @@ double opt_mesh_nb_pyramids(OPT_ARGS_NUM){
   double  s[50];
   GetStatistics(s);
   return s[12];
+}
+double opt_mesh_cpu_time(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[13]+s[14]+s[15];
 }
 
 
