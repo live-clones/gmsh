@@ -1,4 +1,4 @@
-/* $Id: CbGeneral.cpp,v 1.2 2000-11-23 14:11:40 geuzaine Exp $ */
+/* $Id: CbGeneral.cpp,v 1.3 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -109,7 +109,7 @@ void CurrentInfoCb (Widget w, XtPointer client_data, XtPointer call_data){
 	  s[16] += List_Nbr(v->Points);
 	  s[17] += List_Nbr(v->Lines);
 	  s[18] += List_Nbr(v->Triangles);
-	  s[19] += List_Nbr(v->Simplices);
+	  s[19] += List_Nbr(v->Tetrahedra);
 	}
       }
     }

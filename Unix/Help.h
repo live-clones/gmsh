@@ -1,4 +1,4 @@
-/* $Id: Help.h,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Help.h,v 1.3 2000-11-25 15:26:12 geuzaine Exp $ */
 #ifndef _HELP_H_
 #define _HELP_H_
 
@@ -55,7 +55,7 @@ static char txt_help[]=
 "Shift modifier: popup option menus\n"
 "\n"
 "  (S-g)       hide/show geometry options\n"
-"  (S-i)       hide/show info window\n" 
+"  (S-i)       hide/show statistics window\n" 
 "  (S-m)       hide/show mesh options\n"
 "  (S-o)       hide/show miscellaneous options\n" 
 "  (S-p)       hide/show post processor general options\n"

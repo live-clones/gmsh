@@ -31,16 +31,6 @@
    vector tetrahedron  VS                12                     12 * nb time steps
    tensor tetrahedron  TS                12                     36 * nb time steps
 
-
-   The coordinates are given "by node", that is (x,y,z) for a point, (x1,y1,z1,x2,y2,z2)
-   for a line, (x1,y1,z1,x2,y2,z2,x3,y3,z3) for a triangle, ...
- 
-   The values are given by timestep, by node and by component. That is, for a vector line,
-   {valxnode1time1,valynode1time1,valznode1time1, valxnode2time1,valynode2time1,valznode2time1,
-    valxnode1time2,valynode1time2,valznode1time2, valxnode2time2,valynode2time2,valznode2time2, ...}
-
-   A post-processing view is loaded in Gmsh with File->Merge. Up to 20 views can be loaded
-   simultaneously. All post-processing options are accessed by clicking on the right mouse
    button on the view button (in post-processing mode: Mod->Post-Processing).
 
 */

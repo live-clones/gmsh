@@ -1,4 +1,5 @@
-# $Id: Makefile,v 1.1.1.1 2000-11-23 09:22:48 geuzaine Exp $
+# $Id: Makefile,v 1.2 2000-11-25 15:26:12 geuzaine Exp $
+# $Id: Makefile,v 1.2 2000-11-25 15:26:12 geuzaine Exp $
 
 CC       = c++
 C_FLAGS  = -g

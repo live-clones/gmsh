@@ -1,4 +1,4 @@
-/* $Id: Print_Geo.cpp,v 1.4 2000-11-24 13:21:52 geuzaine Exp $ */
+/* $Id: Print_Geo.cpp,v 1.5 2000-11-25 15:26:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -23,20 +23,20 @@ void Print_Nurbs (Curve *c, FILE *f){
   for(i=0;i<List_Nbr(c->Control_Points);i++){
     List_Read(c->Control_Points,i,&v);
     if(!i)
-      fprintf(FOUT,"%3d",v->Num);
+      fprintf(FOUT,"%d",v->Num);
     else
-      fprintf(FOUT,",%3d",v->Num);
+      fprintf(FOUT,", %d",v->Num);
     if(i%8 == 7 && i!=List_Nbr(c->Control_Points)-1)fprintf(FOUT,"\n");
   }
   fprintf(f,"}\n");
   fprintf(f,"Knots {");
   for(j=0;j<List_Nbr(c->Control_Points)+c->degre+1;j++){
     if(!j)fprintf(f,"%g",c->k[j]);
-    else fprintf(f,",%g",c->k[j]);
+    else fprintf(f,", %g",c->k[j]);
     if(j%5 == 4 && j!=List_Nbr(c->Control_Points)+c->degre)fprintf(FOUT,"\n");
   }
   fprintf(f,"}");
-  fprintf(f,"Order %3d;\n\n",c->degre);
+  fprintf(f,"Order %d;\n\n",c->degre);
 }
 
 void Print_Curve(void *a, void *b){
@@ -73,7 +73,7 @@ void Print_Curve(void *a, void *b){
   for(i=0;i<List_Nbr(c->Control_Points);i++){
     List_Read(c->Control_Points,i,&v);
     if(i)
-      fprintf(FOUT,",%d",v->Num);
+      fprintf(FOUT,", %d",v->Num);
     else
       fprintf(FOUT,"{%d",v->Num);
     if(i%6 == 7)fprintf(FOUT,"\n");
@@ -84,7 +84,7 @@ void Print_Curve(void *a, void *b){
   case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
-    fprintf(FOUT,"} Plane{%g,%g,%g};\n",
+    fprintf(FOUT,"} Plane{%g, %g, %g};\n",
             c->Circle.n[0],c->Circle.n[1],c->Circle.n[2]);
     break;
   default :
@@ -109,9 +109,9 @@ void Print_Surface(void *a, void *b){
     for(i=0;i<List_Nbr(s->s.Generatrices);i++){
       List_Read(s->s.Generatrices,i,&c);
       if(i)
-        fprintf(FOUT,",%3d",c->Num);
+        fprintf(FOUT,", %d",c->Num);
       else
-        fprintf(FOUT,"{%3d",c->Num);
+        fprintf(FOUT,"{%d",c->Num);
     }
     fprintf(FOUT,"};\n");
   }
@@ -133,9 +133,9 @@ void Print_Surface(void *a, void *b){
       for(j=0;j<s->Nu;j++){
         List_Read(s->Control_Points,j+s->Nu *i,&v);
         if(!j)
-          fprintf(FOUT,"%3d",v->Num);
+          fprintf(FOUT,"%d",v->Num);
         else
-          fprintf(FOUT,",%3d",v->Num);
+          fprintf(FOUT,", %d",v->Num);
       }
       if(i!=s->Nv-1)
         fprintf(FOUT,"},\n");
@@ -145,16 +145,16 @@ void Print_Surface(void *a, void *b){
     fprintf(FOUT,"\t\tKnots\n\t\t{");
     for(j=0;j<s->Nu+s->OrderU+1;j++){
       if(!j)fprintf(FOUT,"%g",s->ku[j]);
-      else fprintf(FOUT,",%g",s->ku[j]);
+      else fprintf(FOUT,", %g",s->ku[j]);
       if(j%5 == 4 && j!=s->Nu + s->OrderU)fprintf(FOUT,"\n\t\t");
     }
     fprintf(FOUT,"}\n\t\t{");
     for(j=0;j<s->Nv+s->OrderV+1;j++){
       if(!j)fprintf(FOUT,"%g",s->kv[j]);
-      else fprintf(FOUT,",%g",s->kv[j]);
+      else fprintf(FOUT,", %g",s->kv[j]);
       if(j%5 == 4 && j!=s->Nv + s->OrderV)fprintf(FOUT,"\n\t\t");
     }
-    fprintf(FOUT,"}\n\t\tOrder %3d %3d;\n\n",s->OrderU,s->OrderV);
+    fprintf(FOUT,"}\n\t\tOrder %d %d;\n\n",s->OrderU,s->OrderV);
     break;
   }
 }

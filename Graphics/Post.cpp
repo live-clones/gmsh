@@ -1,4 +1,4 @@
-/* $Id: Post.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
+/* $Id: Post.cpp,v 1.4 2000-11-25 15:26:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -74,35 +74,6 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]){
 }
 
 
-int fcmp_Post_Triangle(const void *a, const void *b){
-  return 0;
-
-#if 0
-  Post_Triangle *PT;
-  double bary1[3], bary2[3]; 
-
-  /* sorting % eye with barycenters */
-
-  z1 = (PT->X[1]+View->Offset[0]+Raise[0][1]) + (PT->X[0]+View->Offset[0]+Raise[0][0]); 
-  y1y0 = (PT->Y[1]+View->Offset[1]+Raise[1][1]) - (PT->Y[0]+View->Offset[1]+Raise[1][0]);
-  z1z0 = (PT->Z[1]+View->Offset[2]+Raise[2][1]) - (PT->Z[0]+View->Offset[2]+Raise[2][0]); 
-
-  x2x0 = (PT->X[2]+View->Offset[0]+Raise[0][2]) - (PT->X[0]+View->Offset[0]+Raise[0][0]);
-  y2y0 = (PT->Y[2]+View->Offset[1]+Raise[1][2]) - (PT->Y[0]+View->Offset[1]+Raise[1][0]); 
-  z2z0 = (PT->Z[2]+View->Offset[2]+Raise[2][2]) - (PT->Z[0]+View->Offset[2]+Raise[2][0]);
-
-  q = *(GL2PSprimitive**)a;
-  w = *(GL2PSprimitive**)b;
-  diff = q->depth - w->depth;
-  if(diff > 0.) 
-    return 1;
-  else if(diff < 0.)
-    return -1;
-  else
-    return 0;
-#endif
-}
-
 /* ------------------------------------------------------------------------ 
     D r a w _ P o s t                                                       
    ------------------------------------------------------------------------ */
@@ -168,26 +139,26 @@ void Draw_Post (void) {
 	  for(k=0;k<5;k++) Raise[j][k] = 0. ;
 	}
 	
-	if((n = List_Nbr(v->Simplices)))
+	if((n = List_Nbr(v->Tetrahedra)))
 	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Simplex(v, (Post_Simplex*)List_Pointer(v->Simplices,j), 
-			      ValMin, ValMax, Raise);
+	    Draw_Post_Tetrahedron(v, (Post_Simplex*)List_Pointer(v->Tetrahedra,j), 
+				  ValMin, ValMax, Raise);
 	
-	if((n = List_Nbr(v->Triangles))){
-	  //if(there is alpha)List_Sort(v->Triangles, fcmp_Post_Triangle);
+	//if(there is alpha)List_Sort(v->Triangles, fcmpTriangle);
+
+	if((n = List_Nbr(v->Triangles)))
 	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Triangle(v, (Post_Triangle*)List_Pointer(v->Triangles,j), 
+	    Draw_Post_Triangle(v, (Post_Simplex*)List_Pointer(v->Triangles,j), 
 			       ValMin, ValMax, Raise);
-	}
-	
+
 	if((n = List_Nbr(v->Lines)))
 	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Line(v, (Post_Line*)List_Pointer(v->Lines,j), 
+	    Draw_Post_Line(v, (Post_Simplex*)List_Pointer(v->Lines,j), 
 			   ValMin, ValMax, Raise);
 	
 	if((n = List_Nbr(v->Points)))
 	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Point(v, (Post_Point*)List_Pointer(v->Points,j), 
+	    Draw_Post_Point(v, (Post_Simplex*)List_Pointer(v->Points,j), 
 			    ValMin, ValMax, Raise);
 	
 	if(CTX.display_lists){

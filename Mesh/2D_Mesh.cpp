@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.5 2000-11-24 08:04:14 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -27,7 +27,7 @@
 extern Mesh       *THEM;
 extern Context_T   CTX;
 extern int         CurrentNodeNumber;
-extern double      LC, FACTEUR_MULTIPLICATIF;
+extern double      LC;
 
 int LocalNewPoint;
 
@@ -849,8 +849,8 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       cp->oriented_points[j].where.h = v->Pos.X;
       cp->oriented_points[j].where.v = v->Pos.Y;
 
-      cp->perturbations[j].h = RAND_LONG;
-      cp->perturbations[j].v = RAND_LONG;
+      cp->perturbations[j].h = 10*RAND_LONG;
+      cp->perturbations[j].v = 10*RAND_LONG;
       cp->oriented_points[j].numcontour = i;
       cp->oriented_points[j].quality = v->lc;
       cp->oriented_points[j].permu = k++;
@@ -944,7 +944,7 @@ void filldel (Delaunay * deladd, int aa, int bb, int cc,
   pt2.v = deladd->t.yc;
   if (!is_3D){
     if (mesh){
-      newqual = FACTEUR_MULTIPLICATIF * find_quality (pt2, mesh);
+      newqual = find_quality (pt2, mesh);
     }
     else{
       newqual = (points[aa].quality + points[bb].quality + points[cc].quality) / 3.;

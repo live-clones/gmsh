@@ -1,4 +1,4 @@
-/* $Id: Simplex.h,v 1.3 2000-11-23 15:05:59 geuzaine Exp $ */
+/* $Id: Simplex.h,v 1.4 2000-11-25 15:26:11 geuzaine Exp $ */
 #ifndef _SIMPLEX_H_
 #define _SIMPLEX_H_
 
@@ -54,8 +54,11 @@ public:
 };
 
 int compareSimplex(const void *a, const void *b);
-Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
-Simplex *Create_Quadrangle (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
 int compareFace (const void *a, const void *b);
+
+Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
+void Free_Simplex (void *a, void *b);
+Simplex *Create_Quadrangle (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
+
 
 #endif

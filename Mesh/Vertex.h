@@ -1,4 +1,4 @@
-/* $Id: Vertex.h,v 1.3 2000-11-23 15:05:59 geuzaine Exp $ */
+/* $Id: Vertex.h,v 1.4 2000-11-25 15:26:11 geuzaine Exp $ */
 #ifndef _VERTEX_H_
 #define _VERTEX_H_
 
@@ -31,7 +31,9 @@ class Vertex {
 };
 
 int compareVertex (const void *a, const void *b);
-Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double u);
 int comparePosition (const void *a, const void *b);
+
+Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double u);
+void Free_Vertex (void *a, void *b);
 
 #endif

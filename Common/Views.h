@@ -1,38 +1,19 @@
-/* $Id: Views.h,v 1.3 2000-11-24 08:04:14 geuzaine Exp $ */
+/* $Id: Views.h,v 1.4 2000-11-25 15:26:10 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
 #include "Const.h"
 
 typedef struct{
-  int Type;
-  double X[4], Y[4], Z[4];
-  double *V;
+  int    Dimension, Type;
+  double *X, *Y, *Z, *V;
 }Post_Simplex;
-
-typedef struct{
-  int Type;
-  double X[3], Y[3], Z[3];
-  double *V;
-}Post_Triangle;
-
-typedef struct{
-  int Type;
-  double X[2], Y[2], Z[2];
-  double *V;
-}Post_Line;
-
-typedef struct{
-  int Type;
-  double X, Y, Z;
-  double *V;
-}Post_Point;
 
 #include "ColorTable.h"
 
 typedef struct{
-  int Num, Changed, Allocated;
-  char Name[NAME_STR_L], Format[NAME_STR_L];
+  int Num, Changed, DuplicateOf, Links;
+  char FileName[NAME_STR_L], Name[NAME_STR_L], Format[NAME_STR_L];
   double Min, Max, CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale;
   int Visible, ScalarOnly;
@@ -41,7 +22,15 @@ typedef struct{
   int ArrowType, ArrowLocation;
   int TimeStep, NbTimeStep;
   ColorTable CT;
-  List_T *Simplices, *Triangles, *Lines, *Points;
+
+  int NbSP, NbVP, NbTP;
+  List_T *SP, *VP, *TP, *Points; // points
+  int NbSL, NbVL, NbTL;
+  List_T *SL, *VL, *TL, *Lines; // lines
+  int NbST, NbVT, NbTT;
+  List_T *ST, *VT, *TT, *Triangles; // triangles
+  int NbSS, NbVS, NbTS;
+  List_T *SS, *VS, *TS, *Tetrahedra; // tetrahedra
   
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
@@ -80,62 +69,17 @@ typedef struct{
 
 /* Public functions */
 
+int fcmpPostViewNum(const void *v1, const void *v2);
+int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
+
 void BeginView (int alloc);
-void EndView (char *Name, double XOffset, double YOffset, double ZOffset);
+void EndView (int AddInUI, int Number, char *FileName, char *Name, 
+	      double XOffset, double YOffset, double ZOffset);
+void FreeView(Post_View *v);
 
-void AddView_ScalarSimplex (double x0, double y0, double z0,
-			    double x1, double y1, double z1,
-			    double x2, double y2, double z2,
-			    double x3, double y3, double z3,
-			    List_T * v);
-
-void AddView_VectorSimplex (double x0, double y0, double z0,
-			    double x1, double y1, double z1,
-			    double x2, double y2, double z2,
-			    double x3, double y3, double z3,
-			    List_T * v);
-
-void AddView_TensorSimplex (double x0, double y0, double z0,
-			    double x1, double y1, double z1,
-			    double x2, double y2, double z2,
-			    double x3, double y3, double z3,
-			    List_T * v);
-
-void AddView_ScalarTriangle (double x0, double y0, double z0,
-			     double x1, double y1, double z1,
-			     double x2, double y2, double z2,
-			     List_T * v);
-
-void AddView_VectorTriangle (double x0, double y0, double z0,
-			     double x1, double y1, double z1,
-			     double x2, double y2, double z2,
-			     List_T * v);
-
-void AddView_TensorTriangle (double x0, double y0, double z0,
-			     double x1, double y1, double z1,
-			     double x2, double y2, double z2,
-			     List_T * v);
-
-void AddView_ScalarLine (double x0, double y0, double z0,
-			 double x1, double y1, double z1,
-			 List_T * v);
-
-void AddView_VectorLine (double x0, double y0, double z0,
-			 double x1, double y1, double z1,
-			 List_T * v);
-
-void AddView_TensorLine (double x0, double y0, double z0,
-			 double x1, double y1, double z1,
-			 List_T * v);
-
-void AddView_ScalarPoint(double x0,double y0,double z0,
-			List_T *v);
-
-void AddView_VectorPoint(double x0,double y0,double z0,
-			 List_T *v);
-
-void AddView_TensorPoint(double x0,double y0,double z0,
-			 List_T *v);
+void AddView_ScalarSimplex(int dim, double *coord, int N, double *v);
+void AddView_VectorSimplex(int dim, double *coord, int N, double *v);
+void AddView_TensorSimplex(int dim, double *coord, int N, double *v);
 
 int BGMWithView (Post_View *ErrView);
 int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,

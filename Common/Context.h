@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.4 2000-11-23 16:51:28 geuzaine Exp $ */
+/* $Id: Context.h,v 1.5 2000-11-25 15:26:10 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -50,30 +50,31 @@ typedef struct{
 
 typedef struct {
 
-  int interactive;		/* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
-  int verbosity;                /* 0=silent -> 3=debug */
-  int expose;                   /* 1 if everything is ready to expose and draw */
+  int interactive;	      /* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
+  int verbosity;              /* 0=silent -> 3=debug */
+  int expose;                 /* 1 if everything is ready to expose and draw */
 
-  double r[3], t[3], s[3];	/* current rotation, translation and scale */
-  int rlock[3], tlock[3], slock[3];	/* locks for r, t and s */
+  double r[3], t[3], s[3];    /* current rotation, translation and scale */
+  int rlock[3], tlock[3], slock[3];
+                              /* locks for r, t and s */
   
-  double min[3];		/* x, y and z min for the current geometry */
-  double max[3];		/* x, y and z max for the current geometry */
-  double range[3];		/* maximum range in the three directions */
+  double min[3];	      /* x, y and z min for the current geometry */
+  double max[3];              /* x, y and z max for the current geometry */
+  double range[3];	      /* maximum range in the three directions */
   
-  int db;			/* double buffer? */
-  int overlay;	   	        /* overlay graphic window? */
-  int stream;			/* output stream: TO_SCREEN or TO_FILE */
-  int ortho;			/* orthogonal projection? */
-  int fast;			/* inhibit mesh and postpro drawing when changing r,s,t */
-  int command_win;		/* command window? */
-  int display_lists;		/* use display lists? */
-  int font_base;		/* display list indice for the font */
-  int axes, little_axes;	/* draw axes? */
-  int threads, threads_lock;	/* threads?, lock (should be a mutex...) */
-  int alpha;                    /* enable alpha blending */
-  int flash;                    /* authorize colormap flashing (beek) */
-  int same_visual;              /* force same visual for GUI and Graphics */
+  int db;		      /* double buffer? */
+  int overlay;	   	      /* overlay graphic window? */
+  int stream;		      /* output stream: TO_SCREEN or TO_FILE */
+  int ortho;		      /* orthogonal projection? */
+  int fast;		      /* inhibit mesh and postpro drawing when changing r,s,t */
+  int command_win;	      /* command window? */
+  int display_lists;	      /* use display lists? */
+  int font_base;	      /* display list indice for the font */
+  int axes, little_axes;      /* draw axes? */
+  int threads, threads_lock;  /* threads?, lock (should be a mutex...) */
+  int alpha;                  /* enable alpha blending */
+  int flash;                  /* authorize colormap flashing (beek) */
+  int same_visual;            /* force same visual for GUI and Graphics */
   
   char *font_string;          /* main font */
   char *colorbar_font_string; /* font for colorbar */
@@ -82,12 +83,12 @@ typedef struct {
   int viewport[4];
   float light0[4];            /* light source position */
   float shine;                /* specular value */
-  int render_mode;		/* RENDER, SELECT, FEEDBACK */
+  int render_mode;	      /* RENDER, SELECT, FEEDBACK */
 
-  double pixel_equiv_x, pixel_equiv_y ; /* approximative equivalent model lenght of a pixel */
+  double pixel_equiv_x, pixel_equiv_y ; 
+                              /* approximative equivalent model lenght of a pixel */
   
-  /* all colors except postpro colormaps */
-  rgbacolors color;
+  rgbacolors color;           /* all colors except postpro colormaps */
   
   /* geometry options */
   struct{
@@ -107,6 +108,7 @@ typedef struct {
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
     double limit_gamma, limit_eta, limit_rho;
+    double scaling_factor, lc_factor;
     int dual, interactive;
     int hidden, shade;
     int format, nb_smoothing, algo, degree;

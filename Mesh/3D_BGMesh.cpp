@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.7 2000-11-24 09:43:53 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.8 2000-11-25 15:26:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -8,10 +8,7 @@
 #include "Views.h"
 #include "Numeric.h"
 
-extern double FACTEUR_MULTIPLICATIF;
-
 static Mesh m;
-static Vertex vvv;
 static double XX, YY, ZZ, D, LL;
 
 void ExportLcFieldOnVolume (Mesh * M){
@@ -109,7 +106,7 @@ double Lc_XYZ (double X, double Y, double Z, Mesh * m){
     }
     break;
   }
-  return (FACTEUR_MULTIPLICATIF * l);
+  return l;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -129,8 +126,7 @@ int BGMWithView (Post_View * ErrView){
   extern int TYPBGMESH;
   extern Mesh *THEM;
   int i, j, k;
-  Post_Simplex s;
-  Post_Triangle t;
+  Post_Simplex s, t;
   Simplex *si;
 
   VertexUp = Create_Vertex (-1, 0., 0., 1., 1., -1.0);
@@ -155,8 +151,7 @@ int BGMWithView (Post_View * ErrView){
 	//ver[j] = v;
       }
       else{
-	v = Create_Vertex (k++, t.X[j], t.Y[j], t.Z[j]
-			   ,t.V[j], -1.0);
+	v = Create_Vertex (k++, t.X[j], t.Y[j], t.Z[j], t.V[j], -1.0);
 	ver[j] = v;
 	Tree_Add (m.Vertices, &v);
 	Tree_Add (Pts, &v);
@@ -166,8 +161,8 @@ int BGMWithView (Post_View * ErrView){
     Tree_Add (m.Simplexes, &si);
   }
   
-  for (i = 0; i < List_Nbr (ErrView->Simplices); i++){
-    List_Read (ErrView->Simplices, i, &s);
+  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
+    List_Read (ErrView->Tetrahedra, i, &s);
     for (j = 0; j < 4; j++){
       v = &V;
       v->Pos.X = s.X[j];
@@ -214,8 +209,7 @@ int BGMWithView (Post_View * ErrView){
 
 double ErrorInView (Post_View * ErrView, int *n){
 
-  Post_Triangle t;
-  Post_Simplex s;
+  Post_Simplex s, t;
   double e, tot=0.0;
   int i, j=0;
 
@@ -231,8 +225,8 @@ double ErrorInView (Post_View * ErrView, int *n){
     j++;
   }
 
-  for (i = 0; i < List_Nbr (ErrView->Simplices); i++){
-    List_Read (ErrView->Simplices, i, &s);
+  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
+    List_Read (ErrView->Tetrahedra, i, &s);
     e = (t.V[0] + t.V[1] + t.V[2] + t.V[3]) * 0.25;
     tot += e * e;
     j++;
@@ -250,19 +244,18 @@ double ErrorInView (Post_View * ErrView, int *n){
 int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
 	       double OptiValue, double *ObjFunct, char *OutFile){
 
-  Post_Triangle t;
-  Post_Simplex s;
+  Post_Simplex s, t;
   double *h, *p, *e, xc, yc, zc, c[3];
   int N, i, j, dim;
   Simplex smp;
   FILE *f;
 
-  if (List_Nbr (ErrView->Simplices))
+  if (List_Nbr (ErrView->Tetrahedra))
     dim = 3;
   else
     dim = 2;
 
-  N = List_Nbr (ErrView->Simplices) +
+  N = List_Nbr (ErrView->Tetrahedra) +
     List_Nbr (ErrView->Triangles) + 2;
 
   h = (double *) malloc (N * sizeof (double));
@@ -290,8 +283,8 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
     j++;
   }
 
-  for (i = 0; i < List_Nbr (ErrView->Simplices); i++){
-    List_Read (ErrView->Simplices, i, &s);
+  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
+    List_Read (ErrView->Tetrahedra, i, &s);
     
     smp.center_tet (t.X, t.Y, t.Z, c);
     
@@ -315,16 +308,16 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   j = 0;
   for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
     List_Read (ErrView->Triangles, i, &t);
-    fprintf (f, "ST(%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E};\n",
+    fprintf (f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	     t.X[0], t.Y[0], t.Z[0],
 	     t.X[1], t.Y[1], t.Z[1],
 	     t.X[2], t.Y[2], t.Z[2],
 	     h[j], h[j], h[j]);
     j++;
   }
-  for (i = 0; i < List_Nbr (ErrView->Simplices); i++){
-    List_Read (ErrView->Simplices, i, &s);
-    fprintf (f, "SS(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
+  for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
+    List_Read (ErrView->Tetrahedra, i, &s);
+    fprintf (f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
 	     s.X[0], s.Y[0], s.Z[0],
 	     s.X[1], s.Y[1], s.Z[1],
 	     s.X[2], s.Y[2], s.Z[2],

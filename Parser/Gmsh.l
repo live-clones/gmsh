@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.3 2000-11-24 10:58:06 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.4 2000-11-25 15:26:11 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,9 +169,9 @@ Volume                  return tVolume;
 With			return tWith;
 
 
-SS                      return tScalarSimplex;
-VS                      return tVectorSimplex;
-TS                      return tTensorSimplex;
+SS                      return tScalarTetrahedron;
+VS                      return tVectorTetrahedron;
+TS                      return tTensorTetrahedron;
 ST                      return tScalarTriangle;
 VT                      return tVectorTriangle;
 TT                      return tTensorTriangle;

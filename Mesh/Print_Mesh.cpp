@@ -1,4 +1,4 @@
-/* $Id: Print_Mesh.cpp,v 1.6 2000-11-24 16:18:16 geuzaine Exp $ */
+/* $Id: Print_Mesh.cpp,v 1.7 2000-11-25 15:26:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -6,7 +6,9 @@
 #include "CAD.h"
 #include "Mesh.h"
 #include "Create.h"
-#include "Tools.h"
+#include "Context.h"
+
+extern Context_T CTX ;
 
 /* ------------------------------------------------------------------------ */
 /*  M S H    F O R M A T                                                    */
@@ -37,8 +39,12 @@ void print_msh_node (void *a, void *b){
   Vertex **V;
 
   V = (Vertex **) a;
+
   fprintf (mshfile, "%d %.16g %.16g %.16g\n",
-	   (*V)->Num, (*V)->Pos.X, (*V)->Pos.Y, (*V)->Pos.Z);
+	   (*V)->Num, 
+	   (*V)->Pos.X * CTX.mesh.scaling_factor, 
+	   (*V)->Pos.Y * CTX.mesh.scaling_factor, 
+	   (*V)->Pos.Z * CTX.mesh.scaling_factor);
 }
 
 void process_msh_nodes (Mesh * M){
@@ -324,9 +330,9 @@ void process_nodes (FILE * funv, Mesh * M){
   for (i = 0; i < nbnod; i++){
     List_Read (Nodes, i, &v);
     idnod = v->Num;
-    x = v->Pos.X;
-    y = v->Pos.Y;
-    z = v->Pos.Z;
+    x = v->Pos.X * CTX.mesh.scaling_factor;
+    y = v->Pos.Y * CTX.mesh.scaling_factor;
+    z = v->Pos.Z * CTX.mesh.scaling_factor;
     fprintf (funv, "%10d%10d%10d%10d\n", idnod, 1, 1, 11);
     fprintf (funv, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", x, y, z);
   }
@@ -338,9 +344,9 @@ void process_nodes (FILE * funv, Mesh * M){
   for (i = 0; i < nbnod; i++){
     List_Read (Nodes, i, &v);
     idnod = v->Num;
-    x = v->Pos.X;
-    y = v->Pos.Y;
-    z = v->Pos.Z;
+    x = v->Pos.X * CTX.mesh.scaling_factor;
+    y = v->Pos.Y * CTX.mesh.scaling_factor;
+    z = v->Pos.Z * CTX.mesh.scaling_factor;
     fprintf (funv, "%10d%10d%10d%10d\n", idnod, 1, 1, 11);
     fprintf (funv, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", x, y, z);
   }
@@ -753,7 +759,7 @@ int process_Gref_nodes (FILE * fGref, Mesh * M,
   Nodes = Tree2List (ConsecutiveNTree);
   for (i = 0; i < List_Nbr (Nodes); i++){
     List_Read (Nodes, i, &v);
-    fprintf (fGref, "%21.16e ", v->Pos.X);
+    fprintf (fGref, "%21.16e ", v->Pos.X * CTX.mesh.scaling_factor);
     if (i % 3 == 2)
       fprintf (fGref, "\n");
   }
@@ -761,7 +767,7 @@ int process_Gref_nodes (FILE * fGref, Mesh * M,
     fprintf (fGref, "\n");
   for (i = 0; i < List_Nbr (Nodes); i++){
     List_Read (Nodes, i, &v);
-    fprintf (fGref, "%21.16e ", v->Pos.Y);
+    fprintf (fGref, "%21.16e ", v->Pos.Y * CTX.mesh.scaling_factor);
     if (i % 3 == 2)
       fprintf (fGref, "\n");
   }

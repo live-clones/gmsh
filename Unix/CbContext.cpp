@@ -1,4 +1,4 @@
-/* $Id: CbContext.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: CbContext.cpp,v 1.4 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -587,19 +587,16 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
 }
 
 
-/* ------------------------------------------------------------------------ */
-/*  PostProcessing specific context changes                                 */
-/* ------------------------------------------------------------------------ */
+int AddViewInUI(int i, char *Name, int Num){
+  //char tmp[20];
 
-static int fcmpPostView(const void *v1, const void *v2){
-  return (((Post_View *)v1)->Num - ((Post_View *)v2)->Num);
-}
-
-int AddView(int i, char *Name, int dummy){
   if(i > NB_BUTT_MAX -1) return 1;
 
   txt_post[i-1] = (char*)Malloc(NAME_STR_L*sizeof(char));
   strncpy(txt_post[i-1],Name,NAME_STR_L);
+
+  //sprintf(tmp, " (%d)", Num);
+  //strncat(txt_post[i-1],tmp,NAME_STR_L);
 
   if(actual_global_context == CONTEXT_POST)
     ActualizeContextCb(NULL,(XtPointer)actual_global_context,NULL);
@@ -610,38 +607,22 @@ int AddView(int i, char *Name, int dummy){
 void RemoveViewCb(Widget w, XtPointer client_data, XtPointer call_data){
   Post_View      *v;
   int            i;
-
+  
   i = (long int)client_data ;
+
+  v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
 
   while(txt_post[i]){
     strncpy(txt_post[i-1], txt_post[i], NAME_STR_L);
     i++;
   }
+  Free(txt_post[i-1]);
   txt_post[i-1] = NULL;
 
-  v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
+  FreeView(v);
 
-  if(v->Allocated){
-
-    for(i=0 ; i<List_Nbr(v->Simplices) ; i++)    
-      Free(((Post_Simplex*)List_Pointer(v->Simplices, i))->V);
-    List_Delete(v->Simplices);
-    
-    for(i=0 ; i<List_Nbr(v->Triangles) ; i++)    
-      Free(((Post_Triangle*)List_Pointer(v->Triangles, i))->V);
-    List_Delete(v->Triangles);
-    
-    for(i=0 ; i<List_Nbr(v->Lines) ; i++)    
-      Free(((Post_Line*)List_Pointer(v->Lines, i))->V);
-    List_Delete(v->Lines);
-    
-    for(i=0 ; i<List_Nbr(v->Points) ; i++)
-      Free(((Post_Point*)List_Pointer(v->Points, i))->V);
-    List_Delete(v->Points);
-    
-  }
-
-  List_Suppress(Post_ViewList, v, fcmpPostView);
+  if(!List_Suppress(Post_ViewList, v, fcmpPostViewNum))
+    Msg(ERROR, "Could Not Suppress View from List");
 
   if(actual_global_context == CONTEXT_POST)
     ActualizeContextCb(NULL,(XtPointer)actual_global_context,NULL);  

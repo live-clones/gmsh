@@ -1,4 +1,4 @@
-/* $Id: Generator.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Generator.cpp,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -20,13 +20,28 @@ void GetStatistics (double s[50]){
   THEM->Statistics[1] = Tree_Nbr (THEM->Curves);
   THEM->Statistics[2] = Tree_Nbr (THEM->Surfaces);
   THEM->Statistics[3] = Tree_Nbr (THEM->Volumes);
-  for (i = 0; i < 50; i++)
-    s[i] = THEM->Statistics[i];
+  for (i = 0; i < 50; i++) s[i] = THEM->Statistics[i];
+}
+
+void ApplyLcFactor_Point(void *a, void *b){
+  Vertex *v = *(Vertex**)a;
+  if(v->lc <= 0.0)
+    Msg(FATAL, "Wrong characteristic Length (%g <= 0) for Point %d",
+	v->lc, v->Num);
+  v->lc *= CTX.mesh.lc_factor;
+}
+void ApplyLcFactor_Attractor(void *a, void *b){
+  Attractor *v = *(Attractor**)a;
+  v->lc1 *= CTX.mesh.lc_factor;
+  v->lc2 *= CTX.mesh.lc_factor;
+}
+void ApplyLcFactor(Mesh *M){
+  Tree_Action(M->Points, ApplyLcFactor_Point);
+  List_Action(M->Metric->Attractors, ApplyLcFactor_Attractor);
 }
 
 void Maillage_Dimension_0 (Mesh * M){
-  for (int i = 0; i < 20; i++)
-    M->Statistics[i] = 0.0;
+  for (int i = 0; i < 20; i++) M->Statistics[i] = 0.0;
   Create_BgMesh (TYPBGMESH, .2, M);
 }
 
@@ -99,15 +114,15 @@ void Init_Mesh (Mesh * M, int all){
   THEM = M;
 
   if (M->Vertices){
-    //Tree_Action (M->Vertices, Free_Vertex);
+    Tree_Action (M->Vertices, Free_Vertex);
     Tree_Delete (M->Vertices);
   }
   if (M->VertexEdges){
-    //Tree_Action (M->VertexEdges, Free_Vertex);
+    Tree_Action (M->VertexEdges, Free_Vertex);
     Tree_Delete (M->VertexEdges);
   }
   if (M->Simplexes){
-    //Tree_Action (M->Simplexes, Free_Simplex);
+    Tree_Action (M->Simplexes, Free_Simplex);
     Tree_Delete (M->Simplexes);
   }
   if (M->Points){
@@ -174,6 +189,7 @@ void mai3d (Mesh * M, int Asked){
 
   if ((Asked > oldstatus && Asked >= 0 && oldstatus < 0) ||
       (Asked < oldstatus)){
+    printf("ON PASSE ICI\n");
     OpenProblem (TheFileName);
     M->status = 0;
   }

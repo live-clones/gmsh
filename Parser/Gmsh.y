@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.6 2000-11-24 10:21:24 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.7 2000-11-25 15:26:11 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -15,28 +15,31 @@
 #include "Colors.h"
 #include "Parser.h"
 
-#ifdef __DECCXX
+#ifdef __DECCXX // bug in bison
 #include <alloca.h>
 #endif
 
-extern Mesh    *THEM;
-extern char    ThePathForIncludes[NAME_STR_L];
-
-FILE           *yyinTab[MAX_OPEN_FILES];
-int             yylinenoTab[MAX_OPEN_FILES];
-char            yynameTab[MAX_OPEN_FILES][NAME_STR_L];
-char            tmpstring[NAME_STR_L];
-Symbol          TheSymbol;
-Surface        *STL_Surf;
-Shape           TheShape;
-unsigned int    *ptr ;
-int             i,j,k,flag,RecursionLevel=0,Loop[4];
-double          d;
-ExtrudeParams   extr;
+int            Force_ViewNumber = 0 ;
 List_T         *Symbol_L;
-List_T         *ListOfDouble_L,*ListOfDouble2_L;
-List_T         *ListOfListOfDouble_L;
-StringXPointer *ColorField ;
+
+extern Mesh     *THEM;
+extern Post_View *ActualView;
+extern char      ThePathForIncludes[NAME_STR_L];
+
+static FILE          *yyinTab[MAX_OPEN_FILES];
+static int            yylinenoTab[MAX_OPEN_FILES];
+static char           yynameTab[MAX_OPEN_FILES][NAME_STR_L];
+static char           tmpstring[NAME_STR_L];
+static Symbol         TheSymbol;
+static Surface       *STL_Surf;
+static Shape          TheShape;
+static unsigned int  *ptr ;
+static int            i,j,k,flag,RecursionLevel=0;
+static double         d;
+static ExtrudeParams  extr;
+static StringXPointer *ColorField ;
+static List_T         *ListOfDouble_L,*ListOfDouble2_L;
+static List_T         *ListOfListOfDouble_L;
 
 void  yyerror (char *s);
 void  vyyerror (char *fmt, ...);
@@ -61,8 +64,8 @@ void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
 
 %token tEND tAFFECT tDOTS tPi
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan
-%token    tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token    tFmod tModulo tHypot
+%token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
+%token tFmod tModulo tHypot
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
@@ -70,7 +73,7 @@ void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tInclude tRecombine tDelete tCoherence
 %token tView tOffset tAttractor tLayers
-%token tScalarSimplex tVectorSimplex tTensorSimplex
+%token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
 %token tScalarTriangle tVectorTriangle tTensorTriangle
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
@@ -91,10 +94,10 @@ void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
 
 %token tSolid tEndSolid tVertex tFacet tNormal tOuter tLoopSTL tEndLoop tEndFacet
 
-%type <d> FExpr  FExpr_Single 
+%type <d> FExpr  FExpr_Single
 %type <v> VExpr RGBAExpr
-%type <l> ListOfDouble ListOfShapes Duplicata Transform MultipleShape ListOfListOfDouble
-%type <l> ListOfStrings
+%type <l> ListOfShapes Duplicata Transform MultipleShape
+%type <l> ListOfStrings ListOfDouble ListOfListOfDouble
 %type <s> Shape
 %type <i> BoolExpr
 
@@ -104,12 +107,14 @@ void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
 %left UMINUS
 %right '^'
 
+%start All
+
 %%
 
 All : 
-    GeomFormatList
-  | StepFormatItems
+    StepFormatItems
   | STLFormatItem
+  | GeomFormatList
 ;
 
 /*  ----------------------------------------------------------------------
@@ -125,11 +130,11 @@ STLFormatItem :
       return 1;
     }
   | tFacet
-    tNormal tDOUBLE tDOUBLE tDOUBLE
+    tNormal FExpr FExpr FExpr
     tOuter tLoopSTL
-      tVertex tDOUBLE tDOUBLE tDOUBLE
-      tVertex tDOUBLE tDOUBLE tDOUBLE
-      tVertex tDOUBLE tDOUBLE tDOUBLE
+      tVertex FExpr FExpr FExpr
+      tVertex FExpr FExpr FExpr
+      tVertex FExpr FExpr FExpr
     tEndLoop
     tEndFacet
     {
@@ -355,11 +360,11 @@ GeomFormat :
 View :
     tView tBIGSTR '{' Views '}' tEND
     { 
-      EndView($2,0.,0.,0.); 
+      EndView(1, Force_ViewNumber,yyname,$2,0.,0.,0.); 
     }
   | tView tBIGSTR tOffset VExpr '{' Views '}' tEND
     {
-      EndView($2,$4[0],$4[1],$4[2]);
+      EndView(1, Force_ViewNumber,yyname,$2,$4[0],$4[1],$4[2]);
     }  
 ;
 
@@ -368,121 +373,294 @@ Views :
     {
       BeginView(1); 
     }
-  | Views ScalarSimplex
-  | Views VectorSimplex
-  | Views TensorSimplex
-  | Views ScalarTriangle
-  | Views VectorTriangle
-  | Views TensorTriangle
-  | Views ScalarLine
-  | Views VectorLine
-  | Views TensorLine
   | Views ScalarPoint
   | Views VectorPoint
   | Views TensorPoint
-;
-		
-ScalarSimplex : 
-    tScalarSimplex '(' FExpr ',' FExpr ',' FExpr ',' 
-		       FExpr ',' FExpr ',' FExpr ','
-		       FExpr ',' FExpr ',' FExpr ',' 
-		       FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_ScalarSimplex($3,$5,$7,$9,$11,$13,$15,$17,$19,$21,$23,$25,$27);
-    }
-;
-
-VectorSimplex : 
-    tVectorSimplex '(' FExpr ',' FExpr ',' FExpr ','
-		       FExpr ',' FExpr ',' FExpr ','
-		       FExpr ',' FExpr ',' FExpr ','
-		       FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_VectorSimplex($3,$5,$7,$9,$11,$13,$15,$17,$19,$21,$23,$25,$27);
-    }
+  | Views ScalarLine
+  | Views VectorLine
+  | Views TensorLine
+  | Views ScalarTriangle
+  | Views VectorTriangle
+  | Views TensorTriangle
+  | Views ScalarTetrahedron
+  | Views VectorTetrahedron
+  | Views TensorTetrahedron
 ;
 
-TensorSimplex :
-    tTensorSimplex '(' FExpr ',' FExpr ',' FExpr ',' 
-		       FExpr ',' FExpr ',' FExpr ','
-		       FExpr ',' FExpr ',' FExpr ','
-		       FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_TensorSimplex($3,$5,$7,$9,$11,$13,$15,$17,$19,$21,$23,$25,$27);
-    }  
-;
-
-ScalarTriangle :
-    tScalarTriangle '(' FExpr ',' FExpr ',' FExpr ','
-			FExpr ',' FExpr ',' FExpr ',' 
-			FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_ScalarTriangle($3,$5,$7,$9,$11,$13,$15,$17,$19,$21);
-    }
-;
-
-VectorTriangle :
-    tVectorTriangle '(' FExpr ',' FExpr ',' FExpr ','
-			FExpr ',' FExpr ',' FExpr ',' 
-			FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_VectorTriangle($3,$5,$7,$9,$11,$13,$15,$17,$19,$21);
-    }  
-;
-
-TensorTriangle :
-    tTensorTriangle '(' FExpr ',' FExpr ',' FExpr ','
-			FExpr ',' FExpr ',' FExpr ','
-			FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_TensorTriangle($3,$5,$7,$9,$11,$13,$15,$17,$19,$21);
-    }
-;
-
-ScalarLine :
-    tScalarLine '(' FExpr ',' FExpr ',' FExpr ','
-		    FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_ScalarLine($3,$5,$7,$9,$11,$13,$15);
-    }  
-;
-
-VectorLine :
-    tVectorLine '(' FExpr ',' FExpr ',' FExpr ','
-		    FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_VectorLine($3,$5,$7,$9,$11,$13,$15);
-    }
-;
-
-TensorLine : 
-    tTensorLine '(' FExpr ',' FExpr ',' FExpr ','
-		    FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
-    {
-      AddView_TensorLine($3,$5,$7,$9,$11,$13,$15);
-    }
-;
+ScalarPointValues :
+    FExpr
+    { List_Add(ActualView->SP, &$1) ; }
+  | ScalarPointValues ',' FExpr
+    { List_Add(ActualView->SP, &$3) ; }
+  ;
 
 ScalarPoint : 
-    tScalarPoint '(' FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
+    tScalarPoint '(' FExpr ',' FExpr ',' FExpr ')'
+    { 
+      List_Add(ActualView->SP, &$3); List_Add(ActualView->SP, &$5);
+      List_Add(ActualView->SP, &$7);
+    }
+    '{' ScalarPointValues '}' tEND
     {
-      AddView_ScalarPoint($3,$5,$7,$9);
-    }  
+      ActualView->NbSP++ ;
+    }
 ;
+
+VectorPointValues :
+    FExpr
+    { List_Add(ActualView->VP, &$1) ; }
+  | VectorPointValues ',' FExpr
+    { List_Add(ActualView->VP, &$3) ; }
+  ;
 
 VectorPoint : 
-    tVectorPoint '(' FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
+    tVectorPoint '(' FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->VP, &$3); List_Add(ActualView->VP, &$5);
+      List_Add(ActualView->VP, &$7); 
+    }
+    '{' VectorPointValues '}' tEND
     {
-      AddView_VectorPoint($3,$5,$7,$9);
-    }  
+      ActualView->NbVP++ ;
+    }
 ;
 
-TensorPoint : 
-    tTensorPoint '(' FExpr ',' FExpr ',' FExpr ')' ListOfDouble tEND
+TensorPointValues :
+    FExpr
+    { List_Add(ActualView->TP, &$1) ; }
+  | TensorPointValues ',' FExpr
+    { List_Add(ActualView->TP, &$3) ; }
+  ;
+
+TensorPoint :
+    tTensorPoint '(' FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->TP, &$3); List_Add(ActualView->TP, &$5);
+      List_Add(ActualView->TP, &$7);
+    }
+    '{' TensorPointValues '}' tEND
     {
-      AddView_TensorPoint($3,$5,$7,$9);
-    }  
+      ActualView->NbTP++ ;
+    }
 ;
+
+ScalarLineValues :
+    FExpr
+    { List_Add(ActualView->SL, &$1) ; }
+  | ScalarLineValues ',' FExpr
+    { List_Add(ActualView->SL, &$3) ; }
+  ;
+
+ScalarLine : 
+    tScalarLine '(' FExpr ',' FExpr ',' FExpr ',' 
+                    FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->SL, &$3); List_Add(ActualView->SL, &$9);
+      List_Add(ActualView->SL, &$5); List_Add(ActualView->SL, &$11);
+      List_Add(ActualView->SL, &$7); List_Add(ActualView->SL, &$13);
+    }
+    '{' ScalarLineValues '}' tEND
+    {
+      ActualView->NbSL++ ;
+    }
+;
+
+VectorLineValues :
+    FExpr
+    { List_Add(ActualView->VL, &$1) ; }
+  | VectorLineValues ',' FExpr
+    { List_Add(ActualView->VL, &$3) ; }
+  ;
+
+VectorLine : 
+    tVectorLine '(' FExpr ',' FExpr ',' FExpr ',' 
+                    FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->SL, &$3); List_Add(ActualView->SL, &$9);
+      List_Add(ActualView->SL, &$5); List_Add(ActualView->SL, &$11);
+      List_Add(ActualView->SL, &$7); List_Add(ActualView->SL, &$13);
+    }
+    '{' VectorLineValues '}' tEND
+    {
+      ActualView->NbVL++ ;
+    }
+;
+
+TensorLineValues :
+    FExpr
+    { List_Add(ActualView->TL, &$1) ; }
+  | TensorLineValues ',' FExpr
+    { List_Add(ActualView->TL, &$3) ; }
+  ;
+
+TensorLine :
+    tTensorLine '(' FExpr ',' FExpr ',' FExpr ',' 
+                    FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->SL, &$3); List_Add(ActualView->SL, &$9);
+      List_Add(ActualView->SL, &$5); List_Add(ActualView->SL, &$11);
+      List_Add(ActualView->SL, &$7); List_Add(ActualView->SL, &$13);
+    }
+    '{' TensorLineValues '}' tEND
+    {
+      ActualView->NbTL++ ;
+    }
+;
+
+ScalarTriangleValues :
+    FExpr
+    { List_Add(ActualView->ST, &$1) ; }
+  | ScalarTriangleValues ',' FExpr
+    { List_Add(ActualView->ST, &$3) ; }
+  ;
+
+ScalarTriangle : 
+    tScalarTriangle '(' FExpr ',' FExpr ',' FExpr ',' 
+                        FExpr ',' FExpr ',' FExpr ','
+                        FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->ST, &$3); List_Add(ActualView->ST, &$9);
+      List_Add(ActualView->ST, &$15);
+      List_Add(ActualView->ST, &$5); List_Add(ActualView->ST, &$11);
+      List_Add(ActualView->ST, &$17);
+      List_Add(ActualView->ST, &$7); List_Add(ActualView->ST, &$13);
+      List_Add(ActualView->ST, &$19);
+    }
+    '{' ScalarTriangleValues '}' tEND
+    {
+      ActualView->NbST++ ;
+    }
+;
+
+VectorTriangleValues :
+    FExpr
+    { List_Add(ActualView->VT, &$1) ; }
+  | VectorTriangleValues ',' FExpr
+    { List_Add(ActualView->VT, &$3) ; }
+  ;
+
+VectorTriangle : 
+    tVectorTriangle '(' FExpr ',' FExpr ',' FExpr ',' 
+                        FExpr ',' FExpr ',' FExpr ','
+                        FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->VT, &$3); List_Add(ActualView->VT, &$9);
+      List_Add(ActualView->VT, &$15);
+      List_Add(ActualView->VT, &$5); List_Add(ActualView->VT, &$11);
+      List_Add(ActualView->VT, &$17);
+      List_Add(ActualView->VT, &$7); List_Add(ActualView->VT, &$13);
+      List_Add(ActualView->VT, &$19);
+    }
+    '{' VectorTriangleValues '}' tEND
+    {
+      ActualView->NbVT++ ;
+    }
+;
+
+TensorTriangleValues :
+    FExpr
+    { List_Add(ActualView->TT, &$1) ; }
+  | TensorTriangleValues ',' FExpr
+    { List_Add(ActualView->TT, &$3) ; }
+  ;
+
+TensorTriangle :
+    tTensorTriangle '(' FExpr ',' FExpr ',' FExpr ',' 
+                        FExpr ',' FExpr ',' FExpr ','
+                        FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->TT, &$3); List_Add(ActualView->TT, &$9);
+      List_Add(ActualView->TT, &$15);
+      List_Add(ActualView->TT, &$5); List_Add(ActualView->TT, &$11);
+      List_Add(ActualView->TT, &$17);
+      List_Add(ActualView->TT, &$7); List_Add(ActualView->TT, &$13);
+      List_Add(ActualView->TT, &$19);
+    }
+    '{' TensorTriangleValues '}' tEND
+    {
+      ActualView->NbTT++ ;
+    }
+;
+
+ScalarTetrahedronValues :
+    FExpr
+    { List_Add(ActualView->SS, &$1) ; }
+  | ScalarTetrahedronValues ',' FExpr
+    { List_Add(ActualView->SS, &$3) ; }
+  ;
+
+ScalarTetrahedron : 
+    tScalarTetrahedron '(' FExpr ',' FExpr ',' FExpr ',' 
+                           FExpr ',' FExpr ',' FExpr ','
+                           FExpr ',' FExpr ',' FExpr ',' 
+                           FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->SS, &$3);  List_Add(ActualView->SS, &$9);
+      List_Add(ActualView->SS, &$15); List_Add(ActualView->SS, &$21);
+      List_Add(ActualView->SS, &$5);  List_Add(ActualView->SS, &$11);
+      List_Add(ActualView->SS, &$17); List_Add(ActualView->SS, &$23);
+      List_Add(ActualView->SS, &$7);  List_Add(ActualView->SS, &$13);
+      List_Add(ActualView->SS, &$19); List_Add(ActualView->SS, &$25);
+    }
+    '{' ScalarTetrahedronValues '}' tEND
+    {
+      ActualView->NbSS++ ;
+    }
+;
+
+VectorTetrahedronValues :
+    FExpr
+    { List_Add(ActualView->VS, &$1) ; }
+  | VectorTetrahedronValues ',' FExpr
+    { List_Add(ActualView->VS, &$3) ; }
+  ;
+
+VectorTetrahedron : 
+    tVectorTetrahedron '(' FExpr ',' FExpr ',' FExpr ',' 
+                           FExpr ',' FExpr ',' FExpr ','
+                           FExpr ',' FExpr ',' FExpr ',' 
+                           FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->VS, &$3);  List_Add(ActualView->VS, &$9);
+      List_Add(ActualView->VS, &$15); List_Add(ActualView->VS, &$21);
+      List_Add(ActualView->VS, &$5);  List_Add(ActualView->VS, &$11);
+      List_Add(ActualView->VS, &$17); List_Add(ActualView->VS, &$23);
+      List_Add(ActualView->VS, &$7);  List_Add(ActualView->VS, &$13);
+      List_Add(ActualView->VS, &$19); List_Add(ActualView->VS, &$25);
+    }
+    '{' VectorTetrahedronValues '}' tEND
+    {
+      ActualView->NbVS++ ;
+    }
+;
+
+TensorTetrahedronValues :
+    FExpr
+    { List_Add(ActualView->TS, &$1) ; }
+  | TensorTetrahedronValues ',' FExpr
+    { List_Add(ActualView->TS, &$3) ; }
+  ;
+
+TensorTetrahedron :
+    tTensorTetrahedron '(' FExpr ',' FExpr ',' FExpr ',' 
+                           FExpr ',' FExpr ',' FExpr ','
+                           FExpr ',' FExpr ',' FExpr ',' 
+                           FExpr ',' FExpr ',' FExpr ')' 
+    { 
+      List_Add(ActualView->TS, &$3);  List_Add(ActualView->TS, &$9);
+      List_Add(ActualView->TS, &$15); List_Add(ActualView->TS, &$21);
+      List_Add(ActualView->TS, &$5);  List_Add(ActualView->TS, &$11);
+      List_Add(ActualView->TS, &$17); List_Add(ActualView->TS, &$23);
+      List_Add(ActualView->TS, &$7);  List_Add(ActualView->TS, &$13);
+      List_Add(ActualView->TS, &$19); List_Add(ActualView->TS, &$25);
+    }
+    '{' TensorTetrahedronValues '}' tEND
+    {
+      ActualView->NbTS++ ;
+    }
+;
+
+
 
 /* -----------------------
     A F F E C T A T I O N
@@ -655,8 +833,10 @@ Shape :
       List_T *Temp;
       int i;
       double d;
-      if(List_Nbr($6) + (int)$10 + 1 != List_Nbr($8)){
-	yyerror("wrong nurbs curve definition (deg + 1 + nbpts != nbknots)");
+      if((int)$10 + 1 + List_Nbr($6) != List_Nbr($8)){
+	vyyerror("Wrong Definition of Nurbs Curve %d: "
+		"[Degree]%d + 1 + [NbPts]%d != [NbKnots]%d",
+		(int)$3, (int)$10, List_Nbr($6), List_Nbr($8));
       }
       Temp = List_Create(List_Nbr($6),1,sizeof(int));
       for(i=0;i<List_Nbr($6);i++) {
@@ -709,7 +889,9 @@ Shape :
 	else if(j==3)
 	  $$.Type  = MSH_SURF_TRIC;
 	else
-	  vyyerror("Ruled surface %d has not 3 or 4 borders", $4);
+	  vyyerror("Wrong Definition of Ruled Surface %d: "
+		   "%d Borders Instead of 3 or 4", 
+		   (int)$4, j);
 	Cdbz101((int)$4,$$.Type,0,0,0,0,0,NULL,$7,NULL);
 	$$.Num = (int)$4;
       }
@@ -745,7 +927,7 @@ Shape :
       $$.Num = (int)$3;
       Surface *s = FindSurface($$.Num,THEM);
       if(!s)
-	vyyerror("Unkown Surface %d", $$.Num);
+	vyyerror("Unknown Surface %d", $$.Num);
       else
 	$$.Type = s->Typ;
      }
@@ -873,7 +1055,7 @@ Macro :
 	yylineno = yylinenoTab[RecursionLevel];
       }
       else{
-	vyyerror("Unknown file: %s", $2) ;  
+	vyyerror("Unknown File '%s'", $2) ;  
 	yyin = yyinTab[--RecursionLevel];
       }
     }
@@ -1049,7 +1231,8 @@ Transfini :
 	s->Method = TRANSFINI;
 	k = List_Nbr($7);
 	if(k!=3 && k!=4){
-	  vyyerror("Bad Number of Points for Transfinite Surface %d", $4) ;
+	  vyyerror("Wrong Definition of Transfinite Surface %d: "
+		   "%d Points Instead of 3 or 4" , $4, k) ;
 	}
 	else{
 	  for(i=0;i<k;i++){
@@ -1069,7 +1252,8 @@ Transfini :
         s->Method = ELLIPTIC;
         k = List_Nbr($7);
         if(k != 4)
-          vyyerror("Bad Number of Points for Elliptic Surface %d", $4) ;
+	  vyyerror("Wrong Definition of Elliptic Surface %d: "
+		   "%d Points Instead of 4" , $4, k) ;
         else{
 	  for(i=0;i<k;i++){
 	    List_Read($7,i,&d);
@@ -1088,7 +1272,8 @@ Transfini :
 	v->Method = TRANSFINI;
 	k = List_Nbr($7);
 	if(k!=6 && k!=8)
-	  vyyerror("Bad Number of Points for Transfinite Volume %d", $4) ;
+	  vyyerror("Wrong Definition of Transfinite Volume %d: "
+		   "%d Points Instead of 6 or 8" , $4, k) ;
 	else{
 	  for(i=0;i<k;i++){
 	    List_Read($7,i,&d);
@@ -1127,10 +1312,6 @@ Transfini :
 	  s->RecombineAngle = 30.;
         }
       }
-    }  
-  | tPhysical tAssociation '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      Msg(PARSER_ERROR, "Physical Associations do not exist anymore!");
     }  
 ;
 
@@ -1180,20 +1361,20 @@ ColorAffect :
     tSTRING tAFFECT tSTRING tEND
     {
       i = Get_ColorForString(ColorString, -1, $3, &flag);
-      if(flag) vyyerror("Unknown Color: %s", $3);
+      if(flag) vyyerror("Unknown Color '%s'", $3);
       Get_ColorPointerForString(ColorField, $1, &flag, &ptr);
       if(flag)
-	vyyerror("Unknown Color Field: %s", $1);
+	vyyerror("Unknown Color Field '%s'", $1);
       else
 	*ptr = i ;
     }
   | tSTRING tAFFECT '{' tSTRING ',' FExpr '}' tEND
     {
       i = Get_ColorForString(ColorString, (int)$6, $4, &flag);
-      if(flag) vyyerror("Unknown Color: %s", $4);
+      if(flag) vyyerror("Unknown Color '%s'", $4);
       Get_ColorPointerForString(ColorField, $1, &flag, &ptr);
       if(flag)
-	vyyerror("Unknown Color Field: %s", $1);
+	vyyerror("Unknown Color Field '%s'", $1);
       else
 	*ptr = i ;
     }
@@ -1201,7 +1382,7 @@ ColorAffect :
     {
       Get_ColorPointerForString(ColorField, $1, &flag, &ptr);
       if(flag)
-	vyyerror("Unknown Color Field: %s", $3);
+	vyyerror("Unknown Color Field '%s'", $3);
       else
 	*ptr = PACK_COLOR((int)$3[0], (int)$3[1], (int)$3[2], (int)$3[3]);
     }
@@ -1338,7 +1519,7 @@ FExpr_Single :
     {
       TheSymbol.Name = $1 ;
       if (!List_Query(Symbol_L, &TheSymbol, CompareSymbols)) {
-	vyyerror("Unknown variable: %s", $1) ;  $$ = 0. ;
+	vyyerror("Unknown variable '%s'", $1) ;  $$ = 0. ;
       }
       else  $$ = TheSymbol.val ;
       Free($1);

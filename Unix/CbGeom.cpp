@@ -1,4 +1,4 @@
-/* $Id: CbGeom.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: CbGeom.cpp,v 1.4 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -52,8 +52,8 @@ int SelectContour (int type, int num, List_T *Liste1){
   for(i=0;i<List_Nbr(Liste1);i++){
     List_Read(Liste1,i,&ip);
     switch(type){
-    case ENT_LINE    : highlight_entity_num(0,abs(ip),0,1); break ;
-    case ENT_SURFACE : highlight_entity_num(0,0,abs(ip),1); break ;
+    case ENT_LINE    : HighlightEntityNum(0,abs(ip),0,1); break ;
+    case ENT_SURFACE : HighlightEntityNum(0,0,abs(ip),1); break ;
     }
   }
 

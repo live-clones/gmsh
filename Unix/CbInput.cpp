@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.4 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -341,11 +341,11 @@ void KeyboardAccel(XEvent *event){
 /*  I n p u t                                                               */
 /* ------------------------------------------------------------------------ */
 
-void myZoom(GLdouble x1, GLdouble x2, GLdouble y1, GLdouble y2,
-	    GLdouble xc1, GLdouble xc2, GLdouble yc1, GLdouble yc2);
-void process_selection(int x, int y, int *n, GLuint *ii, GLuint *jj);
-void filtre_selection(int n, GLuint *typ, GLuint *ient, Vertex **thev,
-		      Curve **thec, Surface **thes, Mesh *m);
+void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj);
+void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
+			    Curve **thec, Surface **thes, Mesh *m);
+void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
+	    GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 
 void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
   XEvent         *event;
@@ -661,10 +661,10 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
 	CTX.post.draw = previous_post_draw ;
       }
       else{
-	process_selection(event->xbutton.x, event->xbutton.y, &hits, ii, jj);
+	Process_SelectionBuffer(event->xbutton.x, event->xbutton.y, &hits, ii, jj);
 	ov = v; oc = c; os = s;	
 	v = NULL; c = NULL; s = NULL;
-	filtre_selection(hits,ii,jj,&v,&c,&s,&M);
+	Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
 
 	if(CTX.overlay){
 	  glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
@@ -672,9 +672,9 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
 	    glClearIndex(0);
 	    glClear(GL_COLOR_BUFFER_BIT);  
 	    glIndexi((CTX.color.bg<CTX.color.fg)?XCTX.xcolor.ovwhite:XCTX.xcolor.ovblack);
-	    begin_highlight();
-	    highlight_entity(v,c,s,0);
-	    end_highlight(0);
+	    BeginHighlight();
+	    HighlightEntity(v,c,s,0);
+	    EndHighlight(0);
 	  }
 	  glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
 	}
@@ -684,9 +684,9 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
 	      Init();
 	      Draw();
 	    }
-	    begin_highlight();
-	    highlight_entity(v,c,s,0);
-	    end_highlight(0);
+	    BeginHighlight();
+	    HighlightEntity(v,c,s,0);
+	    EndHighlight(0);
 	  }
 	}
       }

@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.6 2000-11-24 12:50:06 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.7 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -56,6 +56,7 @@ void RegisterCallbacks_M(Widgets_T *w){
     register_activate_cb (w->M.pushButt[n],   NextContextCb, n+1);
     register_valchg_cb   (w->M.toggleButt[n], SwapViewCb, n+1);
     register_popup_ev    (w->M.toggleButt[n], w->M.popMenu[n]);
+    register_activate_cb (w->M.reloadButt[n], ReloadViewCb, n+1);
     register_activate_cb (w->M.removeButt[n], RemoveViewCb, n+1);
     register_activate_cb (w->M.duplicateButt[n], DuplicateViewCb, n+1);
 

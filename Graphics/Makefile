@@ -1,3 +1,4 @@
+# $Id: Makefile,v 1.3 2000-11-25 15:26:10 geuzaine Exp $
 #
 # Makefile for "libGraphics.a"
 #
@@ -29,9 +30,6 @@ SRC = Draw.cpp \
       Geom.cpp \
       Post.cpp \
       PostSimplex.cpp \
-      PostTriangle.cpp \
-      PostLine.cpp \
-      PostPoint.cpp \
       Iso.cpp \
       Entity.cpp \
       Scale.cpp \

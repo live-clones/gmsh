@@ -1,4 +1,4 @@
-/* $Id: Register.h,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Register.h,v 1.3 2000-11-25 15:26:12 geuzaine Exp $ */
 #ifndef _REGISTER_H_
 #define _REGISTER_H_
 
@@ -31,6 +31,7 @@ void CurrentViewCb      (Widget w, XtPointer client_data, XtPointer call_data);
 void SwapViewCb         (Widget w, XtPointer client_data, XtPointer call_data);
 void RemoveViewCb       (Widget w, XtPointer client_data, XtPointer call_data);
 void DuplicateViewCb    (Widget w, XtPointer client_data, XtPointer call_data);
+void ReloadViewCb       (Widget w, XtPointer client_data, XtPointer call_data);
 
 void OptionsCb          (Widget w, XtPointer client_data, XtPointer call_data);
 void FileCb             (Widget w, XtPointer client_data, XtPointer call_data);

@@ -1,4 +1,4 @@
-/* $Id: Geom.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
+/* $Id: Geom.cpp,v 1.4 2000-11-25 15:26:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -840,7 +840,7 @@ void Draw_Axes (double s) {
 /*  H i g h l i g h t                                                       */
 /* ------------------------------------------------------------------------ */
 
-void begin_highlight(void){
+void BeginHighlight(void){
   if(CTX.geom.highlight){
     Highlighted = 1;
     if(CTX.overlay){ 
@@ -856,7 +856,7 @@ void begin_highlight(void){
 }
 
 
-void end_highlight(int permanent){
+void EndHighlight(int permanent){
   Highlighted = 0;
   if(permanent){
     Init();
@@ -870,7 +870,7 @@ void end_highlight(int permanent){
   }
 }
 
-void highlight_entity(Vertex *v,Curve *c, Surface *s, int permanent){
+void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
 
   Curve *cc;
   Vertex *v1,*v2;
@@ -922,7 +922,7 @@ void highlight_entity(Vertex *v,Curve *c, Surface *s, int permanent){
 }
 
 
-void highlight_entity_num(int v, int c, int s, int permanant){
+void HighlightEntityNum(int v, int c, int s, int permanant){
   Vertex *pv,V;
   Curve *pc,C;
   Surface *ps,S;
@@ -930,21 +930,21 @@ void highlight_entity_num(int v, int c, int s, int permanant){
     pv = &V;
     pv->Num = v;
     if(Tree_Query(THEM->Vertices,&pv)){
-      highlight_entity(pv,NULL,NULL,permanant);
+      HighlightEntity(pv,NULL,NULL,permanant);
     }
   }
   if(c){
     pc = &C;
     pc->Num = c;
     if(Tree_Query(THEM->Curves,&pc)){
-      highlight_entity(NULL,pc,NULL,permanant);
+      HighlightEntity(NULL,pc,NULL,permanant);
     }
   }
   if(s){
     ps = &S;
     ps->Num = s;
     if(Tree_Query(THEM->Surfaces,&ps)){
-      highlight_entity(NULL,NULL,ps,permanant);
+      HighlightEntity(NULL,NULL,ps,permanant);
     }
   }
   glFlush();

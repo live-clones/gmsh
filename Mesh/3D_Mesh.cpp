@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -791,8 +791,9 @@ void Maillage_Volume (void *data, void *dum){
     Progress (102);
     while (simp->Quality > CONV_VALUE){
       newv = NewVertex (simp);
-
-      // while(!Pt_In_Volume(newv->Pos.X,newv->Pos.Y,newv->Pos.Z,LOCAL,&l,0.0)){
+      //double l;
+      //while(!Pt_In_Volume(newv->Pos.X,newv->Pos.Y,newv->Pos.Z,LOCAL,&l,0.0)){
+      
       while (!simp->Pt_In_Simplexe (newv, uvw, 1.e-5) &&		 
 	     (simp->S[0] == &MyNewBoundary ||
 	      !simp->S[0]->Pt_In_Simplexe (newv, uvw, 1.e-5)) &&

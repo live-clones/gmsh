@@ -1,4 +1,4 @@
-/* $Id: Widgets.h,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Widgets.h,v 1.4 2000-11-25 15:26:12 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 
@@ -40,6 +40,7 @@ typedef struct {
     Widget     vectorButt   [NB_BUTT_MAX] ;
     Widget     exportBGMButt[NB_BUTT_MAX] ;
     Widget     applyBGMButt [NB_BUTT_MAX] ;
+    Widget     reloadButt   [NB_BUTT_MAX] ;
     Widget     removeButt   [NB_BUTT_MAX] ;
     Widget     duplicateButt[NB_BUTT_MAX] ;
   } M;

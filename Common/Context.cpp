@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.4 2000-11-23 16:51:28 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.5 2000-11-25 15:26:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -221,6 +221,8 @@ void InitContext(Context_T *ctx){
   ctx->mesh.point_insertion   = CENTER_CIRCCIRC;
   ctx->mesh.speed_max         = 0 ;
   ctx->mesh.degree            = 1 ;
+  ctx->mesh.scaling_factor    = 1.0 ;
+  ctx->mesh.lc_factor         = 1.0 ;
   ctx->mesh.limit_gamma       = 0.0 ;
   ctx->mesh.limit_eta         = 0.0 ;
   ctx->mesh.limit_rho         = 0.0 ;

@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.8 2000-11-24 17:14:27 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.9 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -196,7 +196,7 @@ void CreateWidgets_M(Widgets_T *w){
   XtManageChild(w->M.optionButt[4]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Current Info")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Statistics")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(S-i)")); i++;
   XtSetArg(arg[i], XmNaccelerator, "Shift<Key>i:"); i++;
   w->M.optionButt[5] = XmCreatePushButton(w->M.optionPane, "MoptionButt5", arg, i);
@@ -306,6 +306,11 @@ void CreateWidgets_M(Widgets_T *w){
     i=0;
     w->M.popMenu[n] = XmCreatePopupMenu(w->M.toggleButt[n], "MpopMenun", arg, i);
     XtUnmanageChild(w->M.popMenu[n]);
+
+    i=0;
+    XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Reload")); i++;
+    w->M.reloadButt[n] = XmCreatePushButton(w->M.popMenu[n], "MreloadButtn", arg, i);
+    XtManageChild(w->M.reloadButt[n]);
 
     i=0;
     XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Remove")); i++;
@@ -1610,7 +1615,7 @@ void CreateWidgets_OD(Widgets_T *w){
   /* Info */
 
   i=0;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Info")); i++;
+  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Statistics")); i++;
   XtSetArg(arg[i], XmNokLabelString, XmStringCreateSimple("Update")); i++;
   XtSetArg(arg[i], XmNcancelLabelString, XmStringCreateSimple("Cancel")); i++;
   XtSetArg(arg[i], XmNautoUnmanage, False); i++;

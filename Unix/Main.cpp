@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.11 2000-11-24 12:57:25 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.12 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -42,33 +42,35 @@ char gmsh_url[]       = "URL              : " GMSH_URL ;
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
   "Geometry options:\n"
-  "  -0                    output flattened parsed geometry\n"
+  "  -0                    output flattened parsed geometry and exit\n"
   "Mesh options:\n"
-  "  -1, -2, -3            batch 1-, 2- or 3-dimensional mesh\n"
-  "  -format msh|unv|gref  output format (default: msh)\n"
-  "  -algo iso|aniso       mesh algorithm (default: iso)\n"
-  "  -smooth int           mesh smoothing (default: 0)\n"
-  "  -degree int           mesh degree (default: 1)\n"
-  "  -scale float          scaling factor (default: 1.0)\n"
+  "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
+  "  -format msh|unv|gref  set output mesh format (default: msh)\n"
+  "  -algo iso|aniso       select mesh algorithm (default: iso)\n"
+  "  -smooth int           set mesh smoothing (default: 0)\n"
+  "  -degree int           set mesh degree (default: 1)\n"
+  "  -scale float          set global scaling factor (default: 1.0)\n"
+  "  -clscale float        set characteristic length scaling factor (default: 1.0)\n"
   "  -bgm file             load backround mesh from file\n"
-  "  -interactive          display the mesh construction\n"
+  "  -interactive          display 2D mesh construction interactively\n"
   "Post Processing options:\n"
   "  -dl                   enable display lists\n"
   "  -noview               hide all views at startup\n"
+  "  -link                 link all views at startup\n"
   "Display options:\n"	  
-  "  -nodb                 no double buffer\n"
-  "  -noov                 no overlay visual\n"
+  "  -nodb                 disable double buffering\n"
+  "  -noov                 disable overlay visual\n"
   "  -alpha                enable alpha blending\n"
   "  -geometry geom        specify main window geometry\n"
   "  -viewport 9*float     specify rotation, translation and scale\n"
   "  -display disp         specify display\n"
-  "  -perspective          perspective instead of orthographic projection\n"
+  "  -perspective          set projection mode to perspective\n"
   "  -flash                allow colormap flashing\n"
-  "  -samevisual           force same visual for OpenGL and GUI\n"
+  "  -samevisual           force same visual for graphics and UI\n"
   "Other options:\n"	  
   "  -v int                set verbosity level (default: 2)\n"
   "  -threads              enable threads\n"
-  "  -path string          path for included files\n"
+  "  -path string          set path for included files\n"
   "  -version              show version number\n"
   "  -info                 show detailed version information\n"
   "  -help                 show this message\n"
@@ -76,6 +78,8 @@ char gmsh_help[]      =
 
 char *TheFileNameTab[MAX_OPEN_FILES], *TheBgmFileName=NULL;
 char  ThePathForIncludes[NAME_STR_L];
+
+extern List_T *Post_ViewList;
 
 /* ------------------------------------------------------------------------ */
 /*  P a r s e                                                               */
@@ -164,9 +168,10 @@ void OpenProblem(char *name){
 
   ParseFile(TheFileName);  
 
+  ApplyLcFactor(THEM);
   mai3d(THEM,0);  
-  
   Maillage_Dimension_0(&M);
+
   ZeroHighlight(&M); 
   CalculateMinMax(THEM->Points);  
   if (!EntitesVisibles) {
@@ -228,17 +233,21 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       else if(!strcmp(argv[i]+1, "samevisual")){ 
 	CTX.same_visual = 1; i++;
       }
-      else if(!strcmp(argv[i]+1, "factor")){
-	i++;
-	FACTEUR_MULTIPLICATIF = atof(argv[i]); i++;
-      }
       else if(!strcmp(argv[i]+1, "interactive")){ 
 	CTX.mesh.interactive = 1; i++;
       }
-      else if(!strcmp(argv[i]+1, "scale") ||
-	      !strcmp(argv[i]+1, "scaling")){
+      else if(!strcmp(argv[i]+1, "scale")){
 	i++;
-	GLOBALSCALINGFACTOR = atof(argv[i]); i++;
+	CTX.mesh.scaling_factor = atof(argv[i]); i++;
+      }
+      else if(!strcmp(argv[i]+1, "clscale")){
+	i++;
+	CTX.mesh.lc_factor = atof(argv[i]); i++;
+	if(CTX.mesh.lc_factor <= 0.0){
+	  fprintf(stderr, ERROR_STR 
+		  "Characteristic Length Factor Must be > 0\n");
+	  exit(1);
+	}
       }
       else if(!strcmp(argv[i]+1, "raw")){ 
 	CTX.mesh.nb_smoothing = 0; i++;
@@ -311,6 +320,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "noview")){ 
 	CTX.post.initial_visibility = 0 ; i++;
+      }
+      else if(!strcmp(argv[i]+1, "link")){ 
+	CTX.post.link = 2 ; i++;
       }
       else if(!strcmp(argv[i]+1, "fill")){ 
 	CTX.post.initial_intervals = DRAW_POST_DISCRETE ; i++;

@@ -1,4 +1,4 @@
-/* $Id: Mesh.h,v 1.5 2000-11-24 12:50:03 geuzaine Exp $ */
+/* $Id: Mesh.h,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
 #ifndef _MESH_H_
 #define _MESH_H_
 
@@ -455,13 +455,12 @@ void Freeze_Vertex (void *a, void *b);
 void deFreeze_Vertex (void *a, void *b);
 void crEdges (Tree_T * TreeElem, Tree_T * treeedges);
 
-double Correction_LC_Attractors (double X, double Y, double Z,
-                                 double *u, Mesh * m, double metr[3][3]);
 double Lc_XYZ (double X, double Y, double Z, Mesh * m);
 void Degre2 (Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
              Curve * c, Surface * s);
 void ActionLiss (void *data, void *dummy);
 void ActionLissSurf (void *data, void *dummy);
 void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
+void ApplyLcFactor(Mesh *M);
 
 #endif

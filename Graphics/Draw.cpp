@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.3 2000-11-23 14:11:32 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.4 2000-11-25 15:26:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -235,7 +235,7 @@ void Replot(void){
 /*  e n t i t y   s e l e c t i o n                                         */
 /* ------------------------------------------------------------------------ */
 
-void process_selection(int x, int y, int *n, GLuint *ii, GLuint *jj){
+void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj){
   GLuint selectBuf[SELECTION_BUFFER_SIZE];
   GLint  i,j,hits,names,*ptr;
 
@@ -271,8 +271,8 @@ void process_selection(int x, int y, int *n, GLuint *ii, GLuint *jj){
   *n = hits;
 }
 
-void filtre_selection(int n, GLuint *typ, GLuint *ient, Vertex **thev,
-		      Curve **thec, Surface **thes, Mesh *m){
+void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
+			    Curve **thec, Surface **thes, Mesh *m){
 
   Vertex   *v=NULL, V;
   Curve    *c=NULL, C;
@@ -289,26 +289,20 @@ void filtre_selection(int n, GLuint *typ, GLuint *ient, Vertex **thev,
   for(i=0;i<n;i++){
     if(typ[i] == typmin){
       switch(typ[i]){
-      case 0:
-	v = &V;
+      case 0: 
+	v = &V; 
 	v->Num = ient[i];
-	if(Tree_Query(m->Points,&v)){
-	  *thev = v;
-	}
+	if(Tree_Query(m->Points,&v)) *thev = v;
 	break;
       case 1:
 	c = &C;
 	c->Num = ient[i];
-	if(Tree_Query(m->Curves,&c)){
-	  *thec = c;
-	}
+	if(Tree_Query(m->Curves,&c)) *thec = c;
 	break;
       case 2:
 	s = &S;
 	s->Num = ient[i];
-	if(Tree_Query(m->Surfaces,&s)){
-	  *thes = s;
-	}
+	if(Tree_Query(m->Surfaces,&s)) *thes = s;
 	break;
       }
     }
@@ -346,12 +340,12 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
       if(keysym == XK_e) return(-1);
       break;
     case ButtonPress :
-      process_selection(event.xbutton.x, event.xbutton.y, &hits, ii, jj);
-      filtre_selection(hits,ii,jj,v,c,s,&M);
+      Process_SelectionBuffer(event.xbutton.x, event.xbutton.y, &hits, ii, jj);
+      Filter_SelectionBuffer(hits,ii,jj,v,c,s,&M);
       if(check_type(type,*v,*c,*s)){
-	begin_highlight();
-	highlight_entity(*v,*c,*s,1);
-	end_highlight(1);
+	BeginHighlight();
+	HighlightEntity(*v,*c,*s,1);
+	EndHighlight(1);
 	return(event.xbutton.button);
       }
     }
@@ -364,14 +358,14 @@ int SelectEntity(int x, int y, Vertex **v, Curve **c, Surface **s){
   int             hits,i,j;
   GLuint          ii[SELECTION_BUFFER_SIZE],jj[SELECTION_BUFFER_SIZE];
 
-  process_selection(x, y, &hits, ii, jj);
+  Process_SelectionBuffer(x, y, &hits, ii, jj);
   *v = NULL;
   *s = NULL;
   *c = NULL;
-  filtre_selection(hits,ii,jj,v,c,s,&M);
-  begin_highlight();
-  highlight_entity(*v,*c,*s,1);
-  end_highlight(1);
+  Filter_SelectionBuffer(hits,ii,jj,v,c,s,&M);
+  BeginHighlight();
+  HighlightEntity(*v,*c,*s,1);
+  EndHighlight(1);
   return(1);
 }
 

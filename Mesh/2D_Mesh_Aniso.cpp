@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh_Aniso.cpp,v 1.6 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 2D_Mesh_Aniso.cpp,v 1.7 2000-11-25 15:26:11 geuzaine Exp $ */
 /*
    Jean-Francois Remacle
 
@@ -18,7 +18,8 @@
 
 extern Context_T CTX ;
 
-void draw_polygon_2d (double r, double g, double b, int n, double *x, double *y, double *z);
+void draw_polygon_2d (double r, double g, double b, int n, 
+		      double *x, double *y, double *z);
 
 MeshParameters:: MeshParameters ():
   NbSmoothing (3),
@@ -33,12 +34,12 @@ MeshParameters:: MeshParameters ():
 extern Simplex MyNewBoundary;
 extern Mesh *THEM;
 extern int CurrentNodeNumber;
-extern double MAXIMUM_LC_FOR_SURFACE, LC, FACTEUR_MULTIPLICATIF;
+extern double MAXIMUM_LC_FOR_SURFACE, LC;
 extern int Alerte_Point_Scabreux;
 extern PointRecord *gPointArray;
 extern Surface *PARAMETRIC;
 
-static Tree_T *Tsd, *Sim_Sur_Le_Bord /*,*POINTS_TREE */ ;
+static Tree_T *Tsd, *Sim_Sur_Le_Bord ;
 static List_T *Simplexes_Destroyed, *Simplexes_New, *Suppress;
 static Simplex *THES;
 static Vertex *THEV;
@@ -48,8 +49,6 @@ static int ZONEELIMINEE, Methode = 0;
 static double volume;
 static List_T *coquille;
 static Edge *THEEDGE;
-
-extern void Make_Mesh_With_Points (DocRecord * ptr, PointRecord * Liste, int Numpoints);
 
 double Interpole_lcTriangle (Simplex * s, Vertex * vv){
   double Xp, Yp, X[3], Y[3], det, u, v, q1, q2, q3;

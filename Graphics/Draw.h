@@ -1,4 +1,4 @@
-/* $Id: Draw.h,v 1.4 2000-11-24 12:50:01 geuzaine Exp $ */
+/* $Id: Draw.h,v 1.5 2000-11-25 15:26:10 geuzaine Exp $ */
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
@@ -32,10 +32,10 @@ void ColorSwitch(int i);
 
 int  SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
 void ZeroHighlight(Mesh *m);
-void begin_highlight(void);
-void end_highlight(int permanent);
-void highlight_entity(Vertex *v,Curve *c, Surface *s, int permanent);
-void highlight_entity_num(int v, int c, int s, int permanant);
+void BeginHighlight(void);
+void EndHighlight(int permanent);
+void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent);
+void HighlightEntityNum(int v, int c, int s, int permanant);
 
 void Draw3d(void);
 void Draw2d(void);
@@ -72,13 +72,14 @@ void Draw_Extruded_Surfaces(void *a, void *b);
 void Draw_Simplex_Volume (void *a, void *b);
 void Draw_Hexahedron_Volume (void *a, void *b);
 void Draw_Prism_Volume (void *a, void *b);
-void Draw_Post_Simplex (Post_View * View, Post_Simplex * s,
-			double ValMin, double ValMax, double Raise[3][5]);
-void Draw_Post_Triangle (Post_View * View, Post_Triangle * t,
+
+void Draw_Post_Tetrahedron (Post_View * View, Post_Simplex * s,
+			    double ValMin, double ValMax, double Raise[3][5]);
+void Draw_Post_Triangle (Post_View * View, Post_Simplex * t,
 			 double ValMin, double ValMax, double Raise[3][5]);
-void Draw_Post_Line (Post_View * View, Post_Line * l,
+void Draw_Post_Line (Post_View * View, Post_Simplex * l,
 		     double ValMin, double ValMax, double Raise[3][5]);
-void Draw_Post_Point (Post_View * View, Post_Point * p,
+void Draw_Post_Point (Post_View * View, Post_Simplex * p,
 		      double ValMin, double ValMax, double Raise[3][5]);
 
 #endif

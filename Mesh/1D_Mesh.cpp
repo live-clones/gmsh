@@ -1,4 +1,4 @@
-/* $Id: 1D_Mesh.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 1D_Mesh.cpp,v 1.5 2000-11-25 15:26:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -14,7 +14,7 @@ extern int        CurrentNodeNumber;
 
 Curve *THEC;
 
-double Fun (double t){
+double F_One (double t){
   Vertex der;
   double d;
   der = InterpolateCurve (THEC, t, 1);
@@ -24,51 +24,56 @@ double Fun (double t){
 
 double F_Transfini (double t){
   Vertex der;
-  double d, a, b, ZePauwer;
+  double d, a, b, val, ZePauwer;
 
   der = InterpolateCurve (THEC, t, 1);
   d = sqrt (der.Pos.X * der.Pos.X + der.Pos.Y * der.Pos.Y +
 	    der.Pos.Z * der.Pos.Z);
 
-  if (THEC->dpar[0] == 0.0 || THEC->dpar[0] == 1.0)
-    return (d * (double) THEC->ipar[0] / (THEC->l));
-
-  switch (abs (THEC->ipar[1])){
-
-  case 2:
-    if (sign (THEC->ipar[1]) == -1)
-      ZePauwer = 1. / THEC->dpar[0];
-    else
-      ZePauwer = THEC->dpar[0];
-    b = log (1. / ZePauwer) / THEC->l;
-    a = (1. - exp (-b * THEC->l)) / (b * (double) THEC->ipar[0]);
-    return (d / (a * exp (b * (t * THEC->l))));
-
-  case 1:
-    if (THEC->dpar[0] > 1.0){
-      a = -4. * sqrt (THEC->dpar[0] - 1.) * 
-	atan2 (1., sqrt (THEC->dpar[0] - 1.)) / 
-	((double) THEC->ipar[0] * THEC->l);
-    }
-    else{
-      a = 2. * sqrt (1. - THEC->dpar[0]) * 
-	log (fabs ((1. + 1. / sqrt (1. - THEC->dpar[0])) 
-		   / (1. - 1. / sqrt (1. - THEC->dpar[0]))))
-	/ ((double) THEC->ipar[0] * THEC->l);
-    }
-    b = -a * THEC->l * THEC->l / (4. * (THEC->dpar[0] - 1.));
-    return (d / (-a * DSQR (t * THEC->l - (THEC->l) * 0.5) + b));
-
-  default:
-    Msg(WARNING, "Unknown Case in Transfinite Mesh Line");
-    return 1. ;
+  if (THEC->dpar[0] == 0.0 || THEC->dpar[0] == 1.0){
+    val = d * (double) THEC->ipar[0] / THEC->l ;
   }
-  
+  else{
+    switch (abs (THEC->ipar[1])){
+
+    case 2:
+      if (sign (THEC->ipar[1]) == -1)
+	ZePauwer = 1. / THEC->dpar[0];
+      else
+	ZePauwer = THEC->dpar[0];
+      b = log (1. / ZePauwer) / THEC->l;
+      a = (1. - exp (-b * THEC->l)) / (b * (double) THEC->ipar[0]);
+      val =d / (a * exp (b * (t * THEC->l))) ;
+      break ;
+
+    case 1:
+      if (THEC->dpar[0] > 1.0){
+	a = -4. * sqrt (THEC->dpar[0] - 1.) * 
+	  atan2 (1., sqrt (THEC->dpar[0] - 1.)) / 
+	  ((double) THEC->ipar[0] * THEC->l);
+      }
+      else{
+	a = 2. * sqrt (1. - THEC->dpar[0]) * 
+	  log (fabs ((1. + 1. / sqrt (1. - THEC->dpar[0])) 
+		     / (1. - 1. / sqrt (1. - THEC->dpar[0]))))
+	  / ((double) THEC->ipar[0] * THEC->l);
+      }
+      b = -a * THEC->l * THEC->l / (4. * (THEC->dpar[0] - 1.)) ;
+      val = d / (-a * DSQR (t * THEC->l - (THEC->l) * 0.5) + b) ;
+      break ;
+
+    default:
+      Msg(WARNING, "Unknown Case in Transfinite Mesh Line");
+      val = 1. ;
+    }
+    
+  }
+
+  return val ;
 }
 
-double Flc (double t){
-  double k = THEM->Metric->getLc (t, THEC);
-  return (k);
+double F_Lc (double t){
+  return THEM->Metric->getLc(t, THEC);
 }
 
 double CIRC_GRAN = 10.;
@@ -93,12 +98,12 @@ void Maillage_Curve (void *data, void *dummy){
 
   if (c->Method != TRANSFINI && Extrude_Mesh (c)){
     Points = List_Create (10, 10, sizeof (IntPoint));
-    c->l = Integration (c->ubeg, c->uend, Fun, Points, 1.e-5);
+    c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-5);
     List_Delete (Points);
   }
   else{
     Points = List_Create (10, 10, sizeof (IntPoint));
-    c->l = Integration (c->ubeg, c->uend, Fun, Points, 1.e-5);
+    c->l = Integration (c->ubeg, c->uend, F_One, Points, 1.e-5);
     List_Delete (Points);
     
     if (c->Method == TRANSFINI){
@@ -108,7 +113,7 @@ void Maillage_Curve (void *data, void *dummy){
     }
     else{
       Points = List_Create (10, 10, sizeof (IntPoint));
-      a = Integration (c->ubeg, c->uend, Flc, Points, 1.e-5);
+      a = Integration (c->ubeg, c->uend, F_Lc, Points, 1.e-5);
       N = IMAX (2, (int) (a + 1.));
       if (c->Typ == MSH_SEGM_CIRC ||
 	  c->Typ == MSH_SEGM_CIRC_INV ||
@@ -174,7 +179,8 @@ void Maillage_Curve (void *data, void *dummy){
       List_Add (c->Vertices, vexist);
     }
     else{
-      pV = Create_Vertex ((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y, (*v)->Pos.Z, (*v)->lc, 0.0);
+      pV = Create_Vertex ((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y, 
+			  (*v)->Pos.Z, (*v)->lc, 0.0);
       pV->ListCurves = List_Create (1, 1, sizeof (Curve *));
       List_Add (pV->ListCurves, &c);
       Tree_Insert (THEM->Vertices, &pV);

@@ -1,8 +1,7 @@
-/* $Id: Vertex.cpp,v 1.2 2000-11-23 14:11:36 geuzaine Exp $ */
+/* $Id: Vertex.cpp,v 1.3 2000-11-25 15:26:11 geuzaine Exp $ */
+
+#include "Gmsh.h"
 #include "Vertex.h"
-#include <stddef.h>
-#include <stdlib.h>
-#include <math.h>
 
 Vertex::Vertex (){
   Frozen = 0;
@@ -70,6 +69,12 @@ Vertex *Create_Vertex (int Num, double X, double Y, double Z, double lc, double 
   pV->Num = Num;
   pV->u = u;
   return pV;
+}
+
+void Free_Vertex (void *a, void *b){
+  Vertex *pV = *(Vertex**)a;
+
+  if(pV)Free(pV);
 }
 
 int compareVertex (const void *a, const void *b){

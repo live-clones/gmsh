@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.7 2000-11-24 08:11:03 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.8 2000-11-25 15:26:10 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -31,14 +31,16 @@ char gmsh_email[]     = "E-Mail           : " GMSH_EMAIL ;
 char gmsh_url[]       = "URL              : " GMSH_URL ;
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
+  "Geometry options:\n"
+  "  -0                    output flattened parsed geometry and exit\n"
   "Mesh options:\n"
-  "  -0                    parse input and exit\n"
-  "  -1, -2, -3            batch 1-, 2- or 3-dimensional mesh\n"
-  "  -smooth int           mesh smoothing (default: 3)\n"
-  "  -degree int           mesh degree (default: 1)\n"
-  "  -format msh|unv|gref  mesh format (default: msh)\n"
-  "  -algo iso|aniso       mesh algorithm (default: iso)\n"
-  "  -scale float          scaling factor (default: 1.0)\n"
+  "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation\n"
+  "  -smooth int           set mesh smoothing (default: 3)\n"
+  "  -degree int           set mesh degree (default: 1)\n"
+  "  -format msh|unv|gref  set output mesh format (default: msh)\n"
+  "  -algo iso|aniso       select mesh algorithm (default: iso)\n"
+  "  -scale float          set global scaling factor (default: 1.0)\n"
+  "  -clscale float        set characteristic length scaling factor (default: 1.0)\n"
   "  -bgm file             load backround mesh from file\n"
   "Other options:\n"	  
   "  -v                    print debug information\n"
@@ -186,7 +188,16 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "scale")){
 	i++;
-	GLOBALSCALINGFACTOR = atof(argv[i]); i++;
+	CTX.mesh.scaling_factor = atof(argv[i]); i++;
+      }
+      else if(!strcmp(argv[i]+1, "clscale")){
+	i++;
+	CTX.mesh.lc_factor = atof(argv[i]); i++;
+	if(CTX.mesh.lc_factor <= 0.0){
+	  fprintf(stderr, ERROR_STR 
+		  "Characteristic Length Factor Must be > 0\n");
+	  exit(1);
+	}
       }
       else if(!strcmp(argv[i]+1, "degree")){  
 	i++;

@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.4 2000-11-25 15:26:12 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -17,7 +17,6 @@
 #include "CbMesh.h"
 #include "CbColorbar.h"
 
-
 extern Widgets_T  WID ;
 extern Context_T  CTX ;
 extern XContext_T XCTX ;
@@ -25,7 +24,7 @@ extern Mesh       *THEM;
 extern int         TYPBGMESH;
 extern int         LC_ORDER;
 extern List_T     *Post_ViewList;
-
+extern int         Force_ViewNumber;
 
 static double      ADAPTATION_ERROR=10. ;
 static int         ADAPTATION_METHOD=3 ;
@@ -33,10 +32,6 @@ static int         OFFSET_MODE = 0;
 static Post_View  *CurrentView = NULL;
 static long int    CurrentViewNumber = -1;
 static Post_View  *ViewForDialog[10];
-
-/* ------------------------------------------------------------------------ 
-   set view visible or not
-   ------------------------------------------------------------------------ */
 
 void MarkAllViewsChanged (int action){
   int i;
@@ -90,43 +85,82 @@ void SwapViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   if(!Post_ViewList) return;
 
   v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
+
+  Msg(DEBUG,    "View %d\n"
+      DEBUG_NIL "  -> Name '%s'\n"
+      DEBUG_NIL "  -> FileName '%s'\n"
+      DEBUG_NIL "  -> DuplicateOf %d\n"
+      DEBUG_NIL "  -> Links %d",
+      v->Num, v->Name, v->FileName, v->DuplicateOf, v->Links);
+
   v->Visible = !v->Visible;
 
   Init();
   Draw();
 }
 
+
+
 void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
-  Post_View  *v1, *v2 ;
+  Post_View  v, *v1, *v2, *v3 ;
+  extern void AddViewInUI(int , char *, int);
 
   if(!Post_ViewList) return;
 
   v1 = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
 
   BeginView(0);
-  EndView(v1->Name, 0., 0., 0.);
-
-  /* Trash: interdit de desallouer cette view-ci car il existe un duplicata qque part.
-     A changer : garder le num du duplicata et desallouer si ce duplicata n'existe plus, 
-     etc, etc...  */
-  v1->Allocated = 0 ;
+  EndView(0, 0, v1->FileName, v1->Name, 0., 0., 0.);
 
   v2 = (Post_View*)List_Pointer(Post_ViewList,List_Nbr(Post_ViewList)-1);
 
-  v2->Simplices  = v1->Simplices;
-  v2->Triangles  = v1->Triangles;
-  v2->Lines      = v1->Lines;
-  v2->Points     = v1->Points;
-  v2->ScalarOnly = v1->ScalarOnly;
-  v2->Min        = v1->Min;       
-  v2->Max        = v1->Max;      
-  v2->NbTimeStep = v1->NbTimeStep;
-  v2->CustomMin  = v1->CustomMin; 
-  v2->CustomMax  = v1->CustomMax; 
+  if(!v1->DuplicateOf){
+    v2->DuplicateOf = v1->Num ;
+    v1->Links++ ;
+  }
+  else{
+    v.Num = v1->DuplicateOf ;
+    if(!(v3 = (Post_View*)List_PQuery(Post_ViewList, &v, fcmpPostViewNum))){
+      v2->DuplicateOf = v1->Num ;
+      v1->Links++ ;
+    }
+    else{
+      v2->DuplicateOf = v3->Num;
+      v3->Links++ ;
+    }
+  }
 
+  v2->Points      = v1->Points;
+  v2->Lines       = v1->Lines;
+  v2->Triangles   = v1->Triangles;
+  v2->Tetrahedra  = v1->Tetrahedra;
+  v2->ScalarOnly  = v1->ScalarOnly;
+  v2->Min         = v1->Min;       
+  v2->Max         = v1->Max;      
+  v2->NbTimeStep  = v1->NbTimeStep;
+
+  AddViewInUI(List_Nbr(Post_ViewList), v2->Name, v2->Num);
   Init();
   Draw();
 }
+
+void ReloadViewCb (Widget w, XtPointer client_data, XtPointer call_data){
+  Post_View  *v ;
+  char filename[NAME_STR_L];
+
+  if(!Post_ViewList) return;
+
+  v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
+  strcpy(filename, v->FileName);
+  Force_ViewNumber = v->Num ;
+  FreeView(v);
+  MergeProblem(filename);
+  Force_ViewNumber = 0 ;
+  
+  Init();
+  Draw();
+}
+
 
 void SaveColorTable(FILE *fp){
   if(!CurrentView){
