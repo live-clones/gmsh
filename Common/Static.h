@@ -8,6 +8,6 @@ char        yyname[256];
 int         yyerrorstate;
 
 Context_T   CTX ;
-Mesh        M, *THEM, *LOCAL;
+Mesh        M, *THEM=NULL, *LOCAL=NULL;
 
 #endif
