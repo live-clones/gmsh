@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.432 2005-03-14 18:55:22 geuzaine Exp $
+// $Id: GUI.cpp,v 1.433 2005-03-15 17:53:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1574,11 +1574,11 @@ void GUI::reset_option_browser()
     opt_browser->add(str);
   }
   int item = (select <= opt_browser->size()) ? select : opt_browser->size();
+
   opt_browser->value(item);
   hide_all_option_groups();
   switch(item){
-  case 0: break;
-  case 1: gen_group->show(); break;
+  case 0: case 1: gen_group->show(); break;
   case 2: geo_group->show(); break;
   case 3: mesh_group->show(); break;
   case 4: solver_group->show(); break;
