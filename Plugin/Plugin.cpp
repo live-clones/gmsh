@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.16 2001-07-31 19:25:05 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.17 2001-08-01 09:31:57 geuzaine Exp $
 
 #ifndef _NODLL
 #include <dlfcn.h>
@@ -127,7 +127,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName){
 
 #if ( defined(WIN32) && !defined(__CYGWIN__) ) || defined(_NODLL)
-  Msg(WARNING,"Plugins not yet implemented on this platform");
+  Msg(WARNING,"No dynamic plugin loading on this platform");
   return;
 #else
   char dynamic_lib[1024];
