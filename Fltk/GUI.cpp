@@ -17,7 +17,8 @@
 
 //int strtok_r(char *, char const *, char **){return 0;}
 
-extern Context_T CTX;
+extern Context_T  CTX;
+extern List_T    *Post_ViewList;
 
 // Definition of the static menus
 
@@ -52,6 +53,167 @@ Fl_Menu_Item m_module_table[] = {
   {0}
 };
 
+// Definition of the dynamic contexts
+
+Context_Item menu_geom[] = 
+{ { "0", NULL } ,
+  { "Elementary", NULL } ,
+  { "Physical", NULL } ,
+  { "Reload", NULL } , 
+  { NULL }
+};  
+    Context_Item menu_geom_elementary[] = 
+    { { "0", NULL } ,
+      { "Add", NULL } ,
+      { "Translate", NULL } ,
+      { "Rotate", NULL } ,
+      { "Dilate", NULL } ,
+      { "Symmetry", NULL } ,
+      { "Extrude", NULL } ,
+      { "Delete", NULL } ,
+      { NULL } 
+    };  
+        Context_Item menu_geom_elementary_add[] = 
+	{ { "0", NULL } ,
+          { "New", NULL } ,
+	  { "Translate", NULL } ,
+	  { "Rotate", NULL } ,
+	  { "Dilate", NULL } ,
+	  { "Symmetry", NULL } ,
+	  { NULL } 
+	};  
+            Context_Item menu_geom_elementary_add_new[] = 
+	    { { "0", NULL } ,
+              { "Parameter", NULL } ,
+	      { "Point", NULL } ,
+	      { "Line", NULL } ,
+	      { "Spline", NULL } ,
+	      { "Circle", NULL } ,
+	      { "Ellipsis", NULL } ,
+	      { "Plane Surface", NULL } ,
+	      { "Ruled Surface", NULL } ,
+	      { "Volume", NULL } ,
+	      { NULL } 
+	    };  
+            Context_Item menu_geom_elementary_add_translate[] = 
+	    { { "0", NULL } ,
+              { "Point", NULL } ,
+	      { "Curve", NULL } ,
+	      { "Surface", NULL } ,
+	      { NULL } 
+	    };  
+            Context_Item menu_geom_elementary_add_rotate[] = 
+	    { { "0", NULL } ,
+              { "Point", NULL } ,
+	      { "Curve", NULL } ,
+	      { "Surface", NULL } ,
+	      { NULL } 
+	    };  
+            Context_Item menu_geom_elementary_add_dilate[] = 
+	    { { "0", NULL } ,
+	      { "Point", NULL } ,
+	      { "Curve", NULL } ,
+	      { "Surface", NULL } ,
+	      { NULL } 
+	    };  
+            Context_Item menu_geom_elementary_add_symmetry[] = 
+	    { { "0", NULL } ,
+	      { "Point", NULL } ,
+	      { "Curve", NULL } ,
+	      { "Surface", NULL } ,
+	      { NULL } 
+	    };  
+        Context_Item menu_geom_elementary_translate[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Curve", NULL } ,
+	  { "Surface", NULL } ,
+	  { NULL } 
+	};  
+        Context_Item menu_geom_elementary_rotate[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Curve", NULL } ,
+	  { "Surface", NULL } ,
+	  { NULL } 
+	};  
+        Context_Item menu_geom_elementary_dilate[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Curve", NULL } ,
+	  { "Surface", NULL } ,
+	  { NULL } 
+	};  
+        Context_Item menu_geom_elementary_symmetry[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Curve", NULL } ,
+	  { "Surface", NULL } ,
+	  { NULL } 
+	};  
+        Context_Item menu_geom_elementary_extrude[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Curve", NULL } ,
+	  { "Surface", NULL } ,
+	  { NULL } 
+	};  
+        Context_Item menu_geom_elementary_delete[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Curve", NULL } ,
+	  { "Surface", NULL } ,
+	  { NULL } 
+	};  
+    Context_Item menu_geom_physical[] = 
+    { { "0", NULL } ,
+      { "Add", NULL } ,
+      { "Delete", NULL } ,
+      { NULL } 
+    };  
+        Context_Item menu_geom_physical_add[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Line", NULL } ,
+	  { "Surface", NULL } ,
+	  { "Volume", NULL } ,
+	  { NULL } 
+	};  
+        Context_Item menu_geom_physical_delete[] = 
+	{ { "0", NULL } ,
+	  { "Point", NULL } ,
+	  { "Line", NULL } ,
+	  { "Surface", NULL } ,
+	  { "Volume", NULL } ,
+	  { NULL } 
+	};  
+
+Context_Item menu_mesh[] = 
+{ { "1", NULL } ,
+  { "Define", NULL } ,
+  { "1D", NULL } ,
+  { "2D", NULL } , 
+  { "3D", NULL } , 
+  { NULL } 
+};  
+    Context_Item menu_mesh_define[] = 
+    { { "1", NULL } ,
+      { "Length", NULL } ,
+      { "Recombine", NULL } ,
+      { "Transfinite", NULL } , 
+      { NULL } 
+    };  
+        Context_Item menu_mesh_define_transfinite[] = 
+	{ { "1", NULL } ,
+	  { "Line", NULL } ,
+	  { "Surface", NULL } ,
+	  { "Volume", NULL } , 
+	  { NULL } 
+	};  
+
+Context_Item menu_post[] = 
+{ { "2", NULL } ,
+  { NULL } };
 
 // The GUI constructor creates ONLY the widgets that always exist (we
 // want the lowest memory footprint for the interface and the fastest
@@ -190,29 +352,36 @@ GUI::GUI() {
 
 }
 
-// Definition of general purpose public GUI functions. This is mainly
-// for compatibility with the old Motif programming structure.
+// Draw the opengl window
 
 void GUI::draw_gl(){
   g_opengl_window->redraw();
 }
 
+// Draw the opengl overlay window
+
 void GUI::draw_gl_overlay(){
   g_opengl_window->redraw_overlay();
 }
+
+// Run the GUI until no window is left
 
 void GUI::run(){
   Fl::run();
 }
 
+// Check if any pending events and run them
+
 void GUI::check(){
   Fl::check();
 }
 
-static int initw, inith, init=1;
+// Set the size of the graphical window
+
 void GUI::set_size(int w, int h){
-  if(init){
-    init = 0;
+  static int initw, inith, init=0;
+  if(!init){
+    init = 1;
     initw = w;
     inith = h;
   }
@@ -223,16 +392,102 @@ void GUI::set_size(int w, int h){
   g_window->size(w,h+hh);
 }
 
+// Dymanically set the height of the menu window
+
 void GUI::set_menu_size(int nb_butt){
   m_window->size(m_window->w(), MH + nb_butt*BH);
 }
 
-// The window for general options
+// Dymanically set the context
 
-static int init_opt_general = 0;
+void GUI::set_context(Context_Item *menu_asked, int flag){
+  static int nb_back = 0, nb_forward = 0, init_context=0;
+  static Context_Item *menu_history[NB_HISTORY_MAX];
+  Context_Item *menu;
+  Post_View *v;
+  int i;
+
+  if(!init_context){
+    init_context = 1;
+    for(i=0 ; i<NB_HISTORY_MAX ; i++){
+      menu_history[i] = NULL ;
+    }
+  }
+
+  if(flag == -1){
+    if(nb_back > 1){
+      nb_back--;
+      nb_forward++;
+      menu = menu_history[nb_back-1];
+    }
+    else return;
+  }
+  else if(flag == 1){
+    if(nb_forward > 0){
+      nb_back++;
+      nb_forward--;
+      menu = menu_history[nb_back-1];
+    }
+    else return;
+  }
+  else{
+    menu = menu_asked;
+    if(!nb_back || menu_history[nb_back-1] != menu){
+      menu_history[nb_back++] = menu;
+    }
+    nb_forward = 0;
+  }
+
+  int nb = 0;
+
+  m_module_butt->value(atoi(menu[0].label));
+
+  if(m_module_butt->value() == 2){ // post-processing contexts
+    for(i = 0 ; i < List_Nbr(Post_ViewList) ; i++) {
+      if(i == NB_BUTT_MAX) break;
+      nb++ ;
+      v = (Post_View*)List_Pointer(Post_ViewList,i);
+      m_push_butt[i]->hide();
+      m_toggle_butt[i]->show();
+      m_toggle_butt[i]->value(v->Visible);
+      m_popup_butt[i]->show();
+      // v->NbTimeStep>1 : sensitive timestep
+      // v->ScalarOnly : sensitive vector, apply bgmesh
+    }
+    for(i = List_Nbr(Post_ViewList) ; i < NB_BUTT_MAX ; i++) {
+      m_push_butt[i]->hide();
+      m_toggle_butt[i]->hide();
+      m_popup_butt[i]->hide();
+    }
+  }
+  else{ // geometry and mesh contexts
+    for(i=0 ; i < NB_BUTT_MAX ; i++){
+      m_toggle_butt[i]->hide();
+      m_popup_butt[i]->hide();
+      if(menu[i+1].label){
+	m_push_butt[i]->label(menu[i+1].label);
+	//m_push_butt[i]->callback(menu[i+1].callback);
+	m_push_butt[i]->show();
+	nb++;
+      }
+      else
+	break;
+    }
+    for(i=nb ; i<NB_BUTT_MAX ; i++){
+      m_toggle_butt[i]->hide();
+      m_popup_butt[i]->hide();
+      m_push_butt[i]->hide();
+    }
+  }
+
+  set_menu_size(nb);
+
+}
+
+// Create the window for general options
 
 void GUI::opt_general(){
-  set_menu_size(5);
+  static int init_opt_general = 0;
 
   if(!init_opt_general){
     init_opt_general = 1 ;

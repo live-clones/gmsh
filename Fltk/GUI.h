@@ -10,7 +10,6 @@
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Tabs.H>
-
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Toggle_Button.H>
@@ -18,10 +17,39 @@
 #include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Check_Button.H>
-
 #include <FL/Fl_Value_Input.H>
 
-#define NB_BUTT_MAX  100
+#define NB_BUTT_MAX    100
+#define NB_HISTORY_MAX 1000
+
+// The dynamic menus
+
+typedef struct{
+  char *label;
+  void (*callback)(Fl_Widget* w, void* data);
+} Context_Item;
+
+extern Context_Item menu_geom[]; 
+extern    Context_Item menu_geom_elementary[]; 
+extern        Context_Item menu_geom_elementary_add[]; 
+extern            Context_Item menu_geom_elementary_add_new[]; 
+extern            Context_Item menu_geom_elementary_add_translate[]; 
+extern            Context_Item menu_geom_elementary_add_rotate[]; 
+extern            Context_Item menu_geom_elementary_add_dilate[]; 
+extern            Context_Item menu_geom_elementary_add_symmetry[]; 
+extern        Context_Item menu_geom_elementary_translate[]; 
+extern        Context_Item menu_geom_elementary_rotate[]; 
+extern        Context_Item menu_geom_elementary_dilate[]; 
+extern        Context_Item menu_geom_elementary_symmetry[]; 
+extern        Context_Item menu_geom_elementary_extrude[]; 
+extern        Context_Item menu_geom_elementary_delete[]; 
+extern    Context_Item menu_geom_physical[]; 
+extern        Context_Item menu_geom_physical_add[]; 
+extern        Context_Item menu_geom_physical_delete[]; 
+extern Context_Item menu_mesh[]; 
+extern    Context_Item menu_mesh_define[]; 
+extern        Context_Item menu_mesh_define_transfinite[]; 
+extern Context_Item menu_post[]; 
 
 // New composite widgets
 
@@ -92,6 +120,7 @@ public:
   void draw_gl_overlay();
   void set_size(int w, int h);
   void set_menu_size(int nb_butt);
+  void set_context(Context_Item menu[], int flag);
 
   void opt_general();
   void opt_geometry();

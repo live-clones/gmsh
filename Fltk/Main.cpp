@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.1 2001-01-08 08:16:27 geuzaine Exp $
+// $Id: Main.cpp,v 1.2 2001-01-08 14:51:30 geuzaine Exp $
 
 #include <signal.h>
 
@@ -125,10 +125,10 @@ int main(int argc, char *argv[]){
 
   if(nbf > 1){
     for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
-    //ActualizeContextCb (NULL,(XtPointer)CONTEXT_POST,NULL); 
+    WID->set_context(menu_post,0);
   }
   else {
-    //ActualizeContextCb(NULL,(XtPointer)CONTEXT_GEOM,NULL);
+    WID->set_context(menu_geom,0); 
   }
 
   // Read background mesh on disk
