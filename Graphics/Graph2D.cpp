@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.50 2005-03-13 09:10:35 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.51 2005-03-14 19:03:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -103,6 +103,8 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
   double Abs, Val, ValMin = 0., ValMax = 0., AbsMin, AbsMax;
   double p1[3], p2[3];
 
+  glColor4ubv((GLubyte *) & v->color.axes);
+
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   font_h = gl_height(); // total font height
   font_a = gl_height() - gl_descent();  // height above ref pt
@@ -137,7 +139,6 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
   // axes
 
   if(v->Axes) {
-    glColor4ubv((GLubyte *) & CTX.color.fg);
     glBegin(GL_LINE_STRIP);
     glVertex2d(xtop, ytop);
     glVertex2d(xtop, ytop - height);
@@ -159,7 +160,6 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
   dv = (ValMax - ValMin) / (double)nb;
   for(i = 0; i < nb + 1; i++) {
     if(v->Axes > 0) {
-      glColor4ubv((GLubyte *) & CTX.color.fg);
       glBegin(GL_LINES);
       glVertex2d(xtop, ytop - i * dy);
       glVertex2d(xtop + tic, ytop - i * dy);
@@ -172,7 +172,6 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
-        glLineWidth(1.);
         gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
         glBegin(GL_LINES);
         glVertex2d(xtop, ytop - i * dy);
@@ -180,12 +179,10 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
         glEnd();
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);
-        glLineWidth(CTX.line_width);
         gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
       }
     }
     if(v->ShowScale) {
-      glColor4ubv((GLubyte *) & CTX.color.text);
       sprintf(label, v->Format, (i == nb) ? ValMin : (ValMax - i * dv));
       glRasterPos2d(xtop - 2 * tic, ytop - i * dy - font_a / 3.);
       Draw_String_Right(label);
@@ -193,7 +190,6 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
   }
 
   if(v->ShowScale) {
-    glColor4ubv((GLubyte *) & CTX.color.text);
     if(v->Type == DRAW_POST_2D_SPACE &&
        ((v->ShowTime == 1 && List_Nbr(v->Time) > 1) ||
 	(v->ShowTime == 2 && List_Nbr(v->Time) > 0))){
@@ -241,7 +237,6 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
   
   for(i = 0; i < nb; i++) {
     if(v->Axes) {
-      glColor4ubv((GLubyte *) & CTX.color.fg);
       glBegin(GL_LINES);
       glVertex2d(xtop + i * dx, ybot);
       glVertex2d(xtop + i * dx, ybot + tic);
@@ -254,7 +249,6 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(1, 0x1111);
         gl2psEnable(GL2PS_LINE_STIPPLE);
-        glLineWidth(1.);
         gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
         glBegin(GL_LINES);
         glVertex2d(xtop + i * dx, ytop);
@@ -262,11 +256,9 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
         glEnd();
         glDisable(GL_LINE_STIPPLE);
         gl2psDisable(GL2PS_LINE_STIPPLE);
-        glLineWidth(CTX.line_width);
         gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
       }
 
-      glColor4ubv((GLubyte *) & CTX.color.text);
       if(nb == 1)
         sprintf(label, v->AxesFormat[0], AbsMin);
       else
@@ -278,7 +270,6 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
   }
 
   if(v->Axes) {
-    glColor4ubv((GLubyte *) & CTX.color.text);
     sprintf(label, "%s", v->AxesLabel[0]);
     glRasterPos2d(xtop + width / 2, ybot - 2 * font_h - 2 * tic);
     Draw_String_Center(label);
