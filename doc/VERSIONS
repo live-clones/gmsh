@@ -1,4 +1,7 @@
-$Id: VERSIONS,v 1.70 2001-09-06 06:44:20 geuzaine Exp $
+$Id: VERSIONS,v 1.71 2001-09-24 07:11:26 geuzaine Exp $
+
+New in 1.27: Added ability to extrude curves with Layers/Recombine
+attributes;
 
 New in 1.26: Enhanced 2D anisotropic mesh generator (metric
 intersections); fixed small bug in 3D initial mesh; added alternative
