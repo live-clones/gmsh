@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.42 2003-04-22 06:17:50 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.43 2003-04-23 16:09:20 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -2320,18 +2320,18 @@ or double-click on the Gmsh icon (Windows and Mac), or type
 @noindent at your shell prompt on the command line (Unix). This will open
 two windows: the graphic window (with a status bar at the bottom) and the
 menu window (with a menu bar and some context dependent buttons). To open
-the first tutorial file, select the `File->Open' menu, and choose
-@file{t1.geo} in the input field. To perform the mesh generation, go to the
-mesh module (by selecting `Mesh' in the module menu) and choose the required
-dimension in the context-dependent buttons (`1D' will mesh all the lines;
-`2D' will mesh all the surfaces---as well as all the lines if `1D' was not
-called before; `3D' will mesh all the volumes---and all the surfaces if `2D'
-was not called before). To save the resulting mesh in the current mesh
-format, choose `Save' in the context-dependent buttons, or select the
-appropriate format with the `File->Save as' menu. The default mesh file name
-is based on the name of the first input file on the command line (or
-@file{untitled} if there wasn't any input file given), with an appended
-extension depending on the mesh format.
+the first tutorial file (@pxref{Tutorial}), select the `File->Open' menu,
+and choose @file{t1.geo} in the input field. To perform the mesh generation,
+go to the mesh module (by selecting `Mesh' in the module menu) and choose
+the required dimension in the context-dependent buttons (`1D' will mesh all
+the lines; `2D' will mesh all the surfaces---as well as all the lines if
+`1D' was not called before; `3D' will mesh all the volumes---and all the
+surfaces if `2D' was not called before). To save the resulting mesh in the
+current mesh format, choose `Save' in the context-dependent buttons, or
+select the appropriate format with the `File->Save as' menu. The default
+mesh file name is based on the name of the first input file on the command
+line (or @file{untitled} if there wasn't any input file given), with an
+appended extension depending on the mesh format.
 
 Note that nearly all the interactive commands have shortcuts: see
 @ref{Keyboard shortcuts}, or select `Help->Shortcuts' in the menu bar to
