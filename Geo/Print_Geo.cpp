@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.17 2001-08-13 07:22:15 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.18 2001-08-13 15:24:54 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -46,7 +46,7 @@ void Print_Curve(void *a, void *b){
   int i;
   c = *(Curve**)a;
 
-  if(c->Num < 0)return;
+  if(c->Num < 0 || c->Dirty)return;
 
   switch(c->Typ){
   case MSH_SEGM_LINE:
@@ -101,6 +101,8 @@ void Print_Surface(void *a, void *b){
   Vertex *v;
   int i,j;
   s = *(Surface**)a;
+
+  if(s->Dirty) return;
 
   int NUMLOOP = s->Num + 1000000;
 
@@ -167,9 +169,9 @@ void Print_Volume(void *a, void *b){
   int i;
   vol = *(Volume**)a;
 
-  int NUMLOOP = vol->Num + 1000000;
+  if(vol->Dirty) return;
 
-  if(!List_Nbr(vol->Surfaces)) return;
+  int NUMLOOP = vol->Num + 1000000;
 
   fprintf(FOUT,"Surface Loop (%d) = ",NUMLOOP);
     
@@ -222,7 +224,6 @@ void Print_PhysicalGroups(void *a, void *b){
 }
 
 void Print_Geo(Mesh *M, char *filename){
-  Coherence_PS();
 
   if(filename){
     FOUT = fopen(filename,"w");
