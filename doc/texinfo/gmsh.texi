@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.41 2003-04-21 21:07:31 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.42 2003-04-22 06:17:50 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -482,11 +482,11 @@ create simple extruded geometries and meshes (see @ref{Geometry commands},
 and @ref{Mesh commands});
 @item
 interact with external solvers. Gmsh provides C/C++ and Perl interfaces, and
-others can be easily added (@pxref{Solver});
+others can be easily added (@pxref{Solver module});
 @item
 visualize computational results in a great variety of ways. Gmsh can display
 scalar, vector and tensor data sets, and can perform various operations on
-the resulting post-processing views (@pxref{Post-processing});
+the resulting post-processing views (@pxref{Post-processing module});
 @item
 export plots in many different formats: vector PostScript or encapsulated
 PostScript, LaTeX, PNG, JPEG,@w{ }@dots{} (@pxref{General options});
