@@ -196,11 +196,11 @@ of complex animations).
 <h2><a name="Download"></a>Download</h2>
 
 Gmsh is freely available under the terms of the <a
-href="/gmsh/doc/COPYING">GNU General Public License (GNU
-GPL)</a>. Pre-compiled binaries (dynamically linked with OpenGL<a
-href="#opengl-footnote" name="opengl-footmark"><sup>1</sup></a>) are
-available for Windows, Mac OS X and Linux. The tutorial and demo files
-are included in the archives.
+href="/gmsh/doc/COPYING">GNU General Public License</a>. Pre-compiled
+binaries (dynamically linked with OpenGL<a href="#opengl-footnote"
+name="opengl-footmark"><sup>1</sup></a>) are available for Windows,
+Mac OS X and Linux. The tutorial and demo files are included in the
+archives.
 
 <ul>
 <li><a href="/gmsh/bin/gmsh-1.41.0-Windows.zip">Windows zip archive (95/98/NT/XP)</a>
@@ -208,7 +208,7 @@ are included in the archives.
 <li><a href="/gmsh/bin/gmsh-1.41.0-Linux.tgz">Linux tarball (i386, glibc 2.1)</a> 
 <li><a href="/gmsh/bin/gmsh-1.41.0-MacOSX.tgz">Mac OS X tarball (Mac OS X 10.2)</a>
 <li><a href="/gmsh/bin/gmsh-1.41.0-source.tgz">Source tarball</a>
-    <a href="#fltk-footnote" name="fltk-footmark"><sup>2</sup></a>
+    <a href="#build-footnote" name="build-footmark"><sup>2</sup></a>
 <!--
 <li><a href="/gmsh/bin/gmsh-1.41.0-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</a>
 <li><a href="/gmsh/bin/gmsh-1.41.0-SunOS.tgz">Sun tarball (SunOS 5.8)</a>
@@ -221,22 +221,23 @@ are included in the archives.
 Older versions are still available <A href="/gmsh/bin/">here</a>.
 
 <p>
-<a name="opengl-footnote"></a><a href="#opengl-footmark"><sup>1</sup></a>You
-should have the OpenGL libraries installed on your system, and in the
-path of the library loader. A free replacement for OpenGL can be found
-at <A href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>.
+<a name="opengl-footnote"></a><a
+href="#opengl-footmark"><sup>1</sup></a>You need the OpenGL libraries
+installed on your system (and in the path of the library loader). A
+free replacement for OpenGL can be found at <A
+href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>.
 Remember that you may have to reconfigure the loader (ldconfig under
-Linux) or modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP) environment
+Linux) or modify the LD_LIBRARY_PATH/SHLIB_PATH/etc. environment
 variable in order for Gmsh to find the libraries.
 <p>
-<a name="fltk-footnote"></a><a
-href="#fltk-footmark"><sup>2</sup></a>You need the <a
+<a name="build-footnote"></a><a
+href="#build-footmark"><sup>2</sup></a>You need the <a
 href="http://sources.redhat.com/gsl/">GSL</a> and <a
 href="http://www.fltk.org/">FLTK (1.1.x)</a> libraries and header
 files properly installed on your system in order to compile
 Gmsh. Non-graphical versions can be compiled without FLTK. Compiling
-Windows versions requires the <a
-href="http://www.cygwin.com">Cygwin</a> tools.
+the Windows version requires <a
+href="http://www.cygwin.com">Cygwin</a>.
 
 <h2><a name="Credits"></a>Credits</h2>
 
