@@ -8,7 +8,6 @@
     just throw this, the plugin manager will be able to 
     catch the exception.
 */
-const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
 class PluginContainer;
 class Post_View;
@@ -51,16 +50,16 @@ public:
 
 class GMSH_PluginManager
 {
-/**
-  Registering all default plugins that are in $(GMSHPLUGINSHOME)
-  In fact, we will load all .so files in dir $(GMSHPLUGINSHOME)
-*/
-  void RegisterDefaultPlugins();
   GMSH_PluginManager();
   ~GMSH_PluginManager();
   static GMSH_PluginManager *instance;
   PluginContainer* allPlugins;
 public :
+/**
+  Registering all default plugins that are in $(GMSHPLUGINSHOME)
+  In fact, we will load all .so files in dir $(GMSHPLUGINSHOME)
+*/
+  void RegisterDefaultPlugins();
   static GMSH_PluginManager *Instance();
   /** Dynamically add a plugin pluginName.so in dirName*/
   void AddPlugin(char *dirName, char *pluginName);

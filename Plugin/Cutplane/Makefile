@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2001-03-04 20:57:49 remacle Exp $
+# $Id: Makefile,v 1.2 2001-03-04 22:57:36 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -6,7 +6,7 @@
 .IGNORE:
 
 CC        = c++
-AR        = c++ -shared -o
+AR        = c++ -Wl,--subsystem,windows -shared -o
 RM        = rm
 RANLIB    = ranlib
 

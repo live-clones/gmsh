@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2001-02-20 18:32:58 geuzaine Exp $
+# $Id: Makefile,v 1.13 2001-03-04 22:58:17 remacle Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -12,7 +12,7 @@ RANLIB   = ranlib
 
 LIB      = ../lib/libFltk.a
 INCLUDE  = -I../Common -I../DataStr -I../Graphics -I../Geo\
-           -I../Mesh -I../Parser -I../Fltk
+           -I../Mesh -I../Parser -I../Fltk -I../Plugin
 
 C_FLAGS       = -g -Wall
 OS_FLAGS      = -D_LITTLE_ENDIAN

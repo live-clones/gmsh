@@ -5,6 +5,8 @@
 #include "Message.h"
 using namespace std;
 
+const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
+
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define SLASH "\\"
 #else
@@ -49,7 +51,6 @@ GMSH_PluginManager* GMSH_PluginManager::Instance()
   if(!instance)
     {
       instance = new GMSH_PluginManager;
-      instance->RegisterDefaultPlugins();
     }
   return instance;
 }
@@ -57,7 +58,8 @@ GMSH_PluginManager* GMSH_PluginManager::Instance()
 void GMSH_PluginManager::RegisterDefaultPlugins()
 {
   // For testing
-  AddPlugin ("/cygdrive/c/develop/gmsh/Plugin/lib/","libCutPlane");
+
+  AddPlugin ("/cygdrive/c/develop/gmsh/Plugin/lib","libCutPlane");
   return;
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins)return;
@@ -72,10 +74,13 @@ void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
 #else
   char dynamic_lib[1024];
   char plugin_name[256];
+  char plugin_author[256];
+  char plugin_copyright[256];
+  char plugin_help[256];
   class GMSH_Plugin* (*RegisterPlugin)(void);
   sprintf(dynamic_lib,"%s%s%s.so",dirName,SLASH,pluginName);
   Msg(INFO,"Opening Plugin %s",dynamic_lib);
-  void *hlib = dlopen (dynamic_lib,RTLD_NOW);
+  void *hlib = dlopen (dynamic_lib,RTLD_LAZY);
   char *err = dlerror();
   if(hlib == NULL)
     {
@@ -93,12 +98,17 @@ void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
   GMSH_Plugin *p = RegisterPlugin();
   p->hlib = hlib;
   p->getName(plugin_name);
+  p->getInfos(plugin_author,plugin_copyright,plugin_help);
   if(allPlugins->find(plugin_name) != allPlugins->end())
     {
       Msg(WARNING,"Plugin %s Multiply defined",pluginName);
       return;
     }
   allPlugins->m[plugin_name] = p;
+  Msg(INFO,"Plugin name : %s",plugin_name);
+  Msg(INFO,"Plugin author : %s",plugin_author);
+  Msg(INFO,"Plugin copyright : %s",plugin_copyright);
+  Msg(INFO,"Plugin help : %s",plugin_help);
 #endif
 }
 

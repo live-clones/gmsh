@@ -3,10 +3,11 @@
 /*
   Plugin Entry : GMSH_RegisterPlugin
  */
-
+extern "C"{
 GMSH_Plugin *GMSH_RegisterPlugin ()
 {
   return new GMSH_CutPlanePlugin (1.0,0.0,0.0,0.0);
+}
 }
 
 GMSH_CutPlanePlugin::GMSH_CutPlanePlugin(double A, double B, double C, double D)
