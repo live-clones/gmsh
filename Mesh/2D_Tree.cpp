@@ -1,4 +1,4 @@
-// $Id: 2D_Tree.cpp,v 1.10 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: 2D_Tree.cpp,v 1.11 2003-05-22 21:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -57,7 +57,7 @@ int avltree_remove(avlstruct ** root)
 int avltree_insert(avlstruct ** root, void *item,
                    int (*fcmp) (void *a, void *b))
 {
-  int cmpresult;
+  int cmpresult = 0;
 
   if(*root != NULL)
     cmpresult = fcmp(item, (*root)->treedata);
@@ -83,7 +83,7 @@ int avltree_delete(avlstruct ** root, void *item,
                    int (*fcmp) (void *a, void *b))
 {
   avlstruct *t1, *t12;
-  int cmpresult;
+  int cmpresult = 0;
 
   if(*root != NULL)
     cmpresult = fcmp(item, (*root)->treedata);

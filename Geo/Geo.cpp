@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.33 2003-05-22 19:25:58 geuzaine Exp $
+// $Id: Geo.cpp,v 1.34 2003-05-22 21:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -58,7 +58,6 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
   }
 
   // pose "variable = function" and evaluate function
-
   fprintf(yyin, "%s = %.16g ;\n", var, val);
   fprintf(yyin, "ValeurTemporaire__ = %s ;\n", funct);
   fclose(yyin);
@@ -67,16 +66,18 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
     yyparse();
   }
   fclose(yyin);
-  Symbol TheSymbol;
-  TheSymbol.Name = (char *)malloc(100);
-  strcpy(TheSymbol.Name, "ValeurTemporaire__");
   yyin = tempf;
-  if(!List_Query(Symbol_L, &TheSymbol, CompareSymbols)) {
-    free(TheSymbol.Name);
+
+  // retreive value
+  Symbol TheSymbol, *TheSymbol_P;
+  TheSymbol.Name = (char *)Malloc(100*sizeof(char));
+  strcpy(TheSymbol.Name, "ValeurTemporaire__");
+  if(!(TheSymbol_P = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
+    Free(TheSymbol.Name);
     return 0.0;
   }
-  free(TheSymbol.Name);
-  return *(double *)List_Pointer_Fast(TheSymbol.val, 0);
+  Free(TheSymbol.Name);
+  return *(double *)List_Pointer(TheSymbol_P->val, 0);
 }
 
 void add_infile(char *text, char *fich)

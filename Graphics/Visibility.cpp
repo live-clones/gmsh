@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.8 2003-03-21 00:52:39 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.9 2003-05-22 21:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -443,12 +443,20 @@ static void AddVolume(void *a, void *b)
   List_Add(ElementaryEntities, &e);
 }
 
-List_T *GetVisibilityList(int type)
-{
-  int i, j;
+static void addInNumxSymb(void *a, void *b){
   Symbol *s;
   NxS nxs;
 
+  s = (Symbol *)a;
+  for(int j = 0; j < List_Nbr(s->val); j++) {
+    nxs.n = (int)(*(double *)List_Pointer(s->val, j));
+    nxs.s = s->Name;
+    List_Add(NumxSymb, &nxs);
+  }
+}
+
+List_T *GetVisibilityList(int type)
+{
   if(!ElementaryEntities)
     ElementaryEntities = List_Create(100, 100, sizeof(Entity));
   else
@@ -464,14 +472,7 @@ List_T *GetVisibilityList(int type)
   else
     List_Reset(NumxSymb);
 
-  for(i = 0; i < List_Nbr(Symbol_L); i++) {
-    s = (Symbol *) List_Pointer(Symbol_L, i);
-    for(j = 0; j < List_Nbr(s->val); j++) {
-      nxs.n = (int)(*(double *)List_Pointer(s->val, j));
-      nxs.s = s->Name;
-      List_Add(NumxSymb, &nxs);
-    }
-  }
+  Tree_Action(Symbol_T, addInNumxSymb);
 
   List_Action(THEM->PhysicalGroups, AddPhysical);
 

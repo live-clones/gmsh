@@ -189,7 +189,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.157 2003-04-19 22:10:28 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.158 2003-05-22 21:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -235,7 +235,7 @@
 #include "CreateFile.h"
 #include "STL.h"
 
-List_T *Symbol_L = NULL;
+Tree_T *Symbol_T = NULL;
 
 extern Context_T CTX;
 extern Mesh *THEM;
@@ -5790,11 +5790,11 @@ case 210:
 #line 1195 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-3].c;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1,1,sizeof(double));
 	if(!yyvsp[-2].i){
 	  List_Put(TheSymbol.val, 0, &yyvsp[-1].d);
-	  List_Add(Symbol_L, &TheSymbol);
+	  Tree_Add(Symbol_T, &TheSymbol);
 	}
 	else
 	  yymsg(GERROR, "Unknown variable '%s'", yyvsp[-3].c) ;
@@ -5818,11 +5818,11 @@ case 211:
 #line 1222 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-6].c;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(5,5,sizeof(double));
 	if(!yyvsp[-2].i){
 	  List_Put(TheSymbol.val, (int)yyvsp[-4].d, &yyvsp[-1].d);
-	  List_Add(Symbol_L, &TheSymbol);
+	  Tree_Add(Symbol_T, &TheSymbol);
 	}
 	else
 	  yymsg(GERROR, "Unknown variable '%s'", yyvsp[-6].c) ;
@@ -5856,14 +5856,14 @@ case 212:
 	yymsg(GERROR, "Incompatible array dimensions in affectation");
       else{
 	TheSymbol.Name = yyvsp[-8].c;
-	if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	  TheSymbol.val = List_Create(5,5,sizeof(double));
 	  if(!yyvsp[-2].i){
 	    for(i=0 ; i<List_Nbr(yyvsp[-5].l) ; i++){
 	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer(yyvsp[-5].l,i)),
 		       (double*)List_Pointer(yyvsp[-1].l,i));
 	    }
-	    List_Add(Symbol_L, &TheSymbol);
+	    Tree_Add(Symbol_T, &TheSymbol);
 	  }
 	  else
 	    yymsg(GERROR, "Unknown variable '%s'", yyvsp[-8].c) ;
@@ -5901,10 +5901,10 @@ case 213:
 #line 1303 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-5].c;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(5,5,sizeof(double));
 	List_Copy(yyvsp[-1].l,TheSymbol.val);
-	List_Add(Symbol_L, &TheSymbol);
+	Tree_Add(Symbol_T, &TheSymbol);
       }
       else{
 	List_Reset(pSymbol->val);
@@ -5917,7 +5917,7 @@ case 214:
 #line 1318 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-2].c;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-2].c) ; 
       else
 	*(double*)List_Pointer_Fast(pSymbol->val, 0) += yyvsp[-1].i; 
@@ -5927,7 +5927,7 @@ case 215:
 #line 1327 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-5].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-5].c) ; 
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)yyvsp[-3].d)))
@@ -6761,10 +6761,10 @@ case 280:
       LoopControlVariablesNameTab[ImbricatedLoop] = yyvsp[-6].c ;
       
       TheSymbol.Name = yyvsp[-6].c;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1,1,sizeof(double));
 	List_Put(TheSymbol.val, 0, &yyvsp[-3].d);
-	List_Add(Symbol_L, &TheSymbol);
+	Tree_Add(Symbol_T, &TheSymbol);
       }
       else{
 	List_Write(pSymbol->val, 0, &yyvsp[-3].d);
@@ -6784,10 +6784,10 @@ case 281:
       LoopControlVariablesNameTab[ImbricatedLoop] = yyvsp[-8].c ;
 
       TheSymbol.Name = yyvsp[-8].c;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1,1,sizeof(double));
 	List_Put(TheSymbol.val, 0, &yyvsp[-5].d);
-	List_Add(Symbol_L, &TheSymbol);
+	Tree_Add(Symbol_T, &TheSymbol);
       }
       else{
 	List_Write(pSymbol->val, 0, &yyvsp[-5].d);
@@ -6808,7 +6808,7 @@ case 282:
 	
 	if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
 	  TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
-	  pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols);
+	  pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol);
 	  *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
 	    LoopControlVariablesTab[ImbricatedLoop-1][2] ;
 	}
@@ -7595,7 +7595,7 @@ case 401:
 #line 2691 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[0].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[0].c) ;
 	yyval.d = 0. ;
       }
@@ -7607,7 +7607,7 @@ case 402:
 #line 2702 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-3].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-3].c) ;
 	yyval.d = 0. ;
       }
@@ -7625,7 +7625,7 @@ case 403:
 #line 2719 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-1].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-1].c) ;
 	yyval.d = 0. ;
       }
@@ -7637,7 +7637,7 @@ case 404:
 #line 2730 "Gmsh.y"
 {
       TheSymbol.Name = yyvsp[-4].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-4].c) ;
 	yyval.d = 0. ;
       }
@@ -7878,7 +7878,7 @@ case 433:
 {
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-2].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-2].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
@@ -7894,7 +7894,7 @@ case 434:
 {
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-2].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-2].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
@@ -7912,7 +7912,7 @@ case 435:
 {
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-5].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-5].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
@@ -7934,7 +7934,7 @@ case 436:
 {
       yyval.l = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = yyvsp[-5].c ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", yyvsp[-5].c) ;
 	d = 0.0 ;
 	List_Add(yyval.l, &d);
@@ -8376,22 +8376,22 @@ yyreturn:
 #line 3188 "Gmsh.y"
 
 
-void InitSymbols(void){
-  if(!Symbol_L)
-    Symbol_L = List_Create(50,10,sizeof(Symbol));
-  else
-    List_Reset(Symbol_L);
-}
-
-void DeleteSymbols(void){
-  int i;
-  for(i = 0 ; i < List_Nbr(Symbol_L) ; i++)
-    List_Delete(((Symbol*)List_Pointer_Fast(Symbol_L,i))->val);
-  List_Delete(Symbol_L);
+void DeleteSymbol(void *a, void *b){
+  Symbol *s = (Symbol*)a;
+  Free(s->Name);
+  List_Delete(s->val);
 }
 
 int CompareSymbols (const void *a, const void *b){
   return(strcmp(((Symbol*)a)->Name,((Symbol*)b)->Name));
+}
+
+void InitSymbols(void){
+  if(Symbol_T){
+    Tree_Action(Symbol_T, DeleteSymbol);
+    Tree_Delete(Symbol_T);
+  }
+  Symbol_T = Tree_Create(sizeof(Symbol), CompareSymbols);
 }
 
 int PrintListOfDouble(char *format, List_T *list, char *buffer){

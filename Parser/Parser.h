@@ -31,7 +31,7 @@ void InitSymbols (void);
 void DeleteSymbols(void);
 int CompareSymbols (const void *a, const void *b);
 
-extern List_T *Symbol_L;
+extern Tree_T *Symbol_T;
 
 int yyparse (void);
 int yylex ();

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.138 2003-04-19 22:10:29 geuzaine Exp $
+// $Id: Gmsh.y,v 1.139 2003-05-22 21:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@
 #include "CreateFile.h"
 #include "STL.h"
 
-List_T *Symbol_L = NULL;
+Tree_T *Symbol_T = NULL;
 
 extern Context_T CTX;
 extern Mesh *THEM;
@@ -1194,11 +1194,11 @@ Affectation :
     tSTRING NumericAffectation FExpr tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1,1,sizeof(double));
 	if(!$2){
 	  List_Put(TheSymbol.val, 0, &$3);
-	  List_Add(Symbol_L, &TheSymbol);
+	  Tree_Add(Symbol_T, &TheSymbol);
 	}
 	else
 	  yymsg(GERROR, "Unknown variable '%s'", $1) ;
@@ -1221,11 +1221,11 @@ Affectation :
   | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(5,5,sizeof(double));
 	if(!$5){
 	  List_Put(TheSymbol.val, (int)$3, &$6);
-	  List_Add(Symbol_L, &TheSymbol);
+	  Tree_Add(Symbol_T, &TheSymbol);
 	}
 	else
 	  yymsg(GERROR, "Unknown variable '%s'", $1) ;
@@ -1258,14 +1258,14 @@ Affectation :
 	yymsg(GERROR, "Incompatible array dimensions in affectation");
       else{
 	TheSymbol.Name = $1;
-	if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+	if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	  TheSymbol.val = List_Create(5,5,sizeof(double));
 	  if(!$7){
 	    for(i=0 ; i<List_Nbr($4) ; i++){
 	      List_Put(TheSymbol.val, (int)(*(double*)List_Pointer($4,i)),
 		       (double*)List_Pointer($8,i));
 	    }
-	    List_Add(Symbol_L, &TheSymbol);
+	    Tree_Add(Symbol_T, &TheSymbol);
 	  }
 	  else
 	    yymsg(GERROR, "Unknown variable '%s'", $1) ;
@@ -1302,10 +1302,10 @@ Affectation :
   | tSTRING '[' ']' tAFFECT ListOfDouble tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(5,5,sizeof(double));
 	List_Copy($5,TheSymbol.val);
-	List_Add(Symbol_L, &TheSymbol);
+	Tree_Add(Symbol_T, &TheSymbol);
       }
       else{
 	List_Reset(pSymbol->val);
@@ -1317,7 +1317,7 @@ Affectation :
   | tSTRING NumericIncrement tEND
     {
       TheSymbol.Name = $1;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(GERROR, "Unknown variable '%s'", $1) ; 
       else
 	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2; 
@@ -1326,7 +1326,7 @@ Affectation :
   | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(GERROR, "Unknown variable '%s'", $1) ; 
       else{
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
@@ -2113,10 +2113,10 @@ Loop :
       LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
       
       TheSymbol.Name = $2;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1,1,sizeof(double));
 	List_Put(TheSymbol.val, 0, &$5);
-	List_Add(Symbol_L, &TheSymbol);
+	Tree_Add(Symbol_T, &TheSymbol);
       }
       else{
 	List_Write(pSymbol->val, 0, &$5);
@@ -2134,10 +2134,10 @@ Loop :
       LoopControlVariablesNameTab[ImbricatedLoop] = $2 ;
 
       TheSymbol.Name = $2;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))){
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1,1,sizeof(double));
 	List_Put(TheSymbol.val, 0, &$5);
-	List_Add(Symbol_L, &TheSymbol);
+	Tree_Add(Symbol_T, &TheSymbol);
       }
       else{
 	List_Write(pSymbol->val, 0, &$5);
@@ -2156,7 +2156,7 @@ Loop :
 	
 	if(strlen(LoopControlVariablesNameTab[ImbricatedLoop-1])){
 	  TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
-	  pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols);
+	  pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol);
 	  *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
 	    LoopControlVariablesTab[ImbricatedLoop-1][2] ;
 	}
@@ -2690,7 +2690,7 @@ FExpr_Single :
   | tSTRING
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2701,7 +2701,7 @@ FExpr_Single :
   | tSTRING '[' FExpr ']'
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2718,7 +2718,7 @@ FExpr_Single :
   | tSTRING NumericIncrement
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2729,7 +2729,7 @@ FExpr_Single :
   | tSTRING '[' FExpr ']' NumericIncrement
     {
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	$$ = 0. ;
       }
@@ -2943,7 +2943,7 @@ FExpr_Multi :
     {
       $$ = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	d = 0.0 ;
 	List_Add($$, &d);
@@ -2957,7 +2957,7 @@ FExpr_Multi :
     {
       $$ = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = $2 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $2) ;
 	d = 0.0 ;
 	List_Add($$, &d);
@@ -2973,7 +2973,7 @@ FExpr_Multi :
     {
       $$ = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = $1 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $1) ;
 	d = 0.0 ;
 	List_Add($$, &d);
@@ -2993,7 +2993,7 @@ FExpr_Multi :
     {
       $$ = List_Create(2,1,sizeof(double)) ;
       TheSymbol.Name = $2 ;
-      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols))) {
+      if (!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(GERROR, "Unknown variable '%s'", $2) ;
 	d = 0.0 ;
 	List_Add($$, &d);
@@ -3187,22 +3187,22 @@ StringExpr :
 
 %%
 
-void InitSymbols(void){
-  if(!Symbol_L)
-    Symbol_L = List_Create(50,10,sizeof(Symbol));
-  else
-    List_Reset(Symbol_L);
-}
-
-void DeleteSymbols(void){
-  int i;
-  for(i = 0 ; i < List_Nbr(Symbol_L) ; i++)
-    List_Delete(((Symbol*)List_Pointer_Fast(Symbol_L,i))->val);
-  List_Delete(Symbol_L);
+void DeleteSymbol(void *a, void *b){
+  Symbol *s = (Symbol*)a;
+  Free(s->Name);
+  List_Delete(s->val);
 }
 
 int CompareSymbols (const void *a, const void *b){
   return(strcmp(((Symbol*)a)->Name,((Symbol*)b)->Name));
+}
+
+void InitSymbols(void){
+  if(Symbol_T){
+    Tree_Action(Symbol_T, DeleteSymbol);
+    Tree_Delete(Symbol_T);
+  }
+  Symbol_T = Tree_Create(sizeof(Symbol), CompareSymbols);
 }
 
 int PrintListOfDouble(char *format, List_T *list, char *buffer){
