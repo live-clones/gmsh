@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.148 2004-04-24 02:13:07 geuzaine Exp $
+// $Id: Options.cpp,v 1.149 2004-04-24 06:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2608,17 +2608,6 @@ double opt_general_clip5d(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.clip_plane[5][3] = val;
   return CTX.clip_plane[5][3];
-}
-
-double opt_general_moving_light(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.moving_light = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->gen_butt[12]->value(CTX.moving_light);
-#endif
-  return CTX.moving_light;
 }
 
 double opt_general_light0(OPT_ARGS_NUM)

@@ -124,7 +124,6 @@ public :
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
   int light[6];               // status of light 
   float light_position[6][4]; // light sources positions 
-  int moving_light;           // type of light (follows the model or not)
   float shine;                // specular value 
   int render_mode;            // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   int clip[6];                // status of clip planes 

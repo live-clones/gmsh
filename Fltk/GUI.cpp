@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.292 2004-04-24 02:13:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.293 2004-04-24 06:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1586,11 +1586,6 @@ void GUI::create_option_window()
       gen_value[4]->maximum(1);
       gen_value[4]->step(0.01);
       gen_value[4]->align(FL_ALIGN_RIGHT);
-
-      gen_butt[12] = new Fl_Check_Button(2 * IW - 2 * WB, 2 * WB + 3 * BH, (int)(1.5*BB), BH, "Moving light");
-      gen_butt[12]->type(FL_TOGGLE_BUTTON);
-      gen_butt[12]->down_box(TOGGLE_BOX);
-      gen_butt[12]->selection_color(TOGGLE_COLOR);
 
       gen_value[1] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Material shininess");
       gen_value[1]->minimum(0);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.221 2004-04-24 02:13:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.222 2004-04-24 06:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1035,7 +1035,6 @@ void general_options_ok_cb(CALLBACK_ARGS)
     Print_Options(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
   opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
   opt_general_orthographic(0, GMSH_SET, WID->gen_butt[10]->value());
-  opt_general_moving_light(0, GMSH_SET, WID->gen_butt[12]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
   opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
   opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());

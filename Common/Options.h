@@ -285,7 +285,6 @@ double opt_general_clip5a(OPT_ARGS_NUM);
 double opt_general_clip5b(OPT_ARGS_NUM);
 double opt_general_clip5c(OPT_ARGS_NUM);
 double opt_general_clip5d(OPT_ARGS_NUM);
-double opt_general_moving_light(OPT_ARGS_NUM);
 double opt_general_light0(OPT_ARGS_NUM);
 double opt_general_light00(OPT_ARGS_NUM);
 double opt_general_light01(OPT_ARGS_NUM);

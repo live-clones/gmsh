@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.78 2004-04-21 07:15:17 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.79 2004-04-24 06:13:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -79,13 +79,8 @@ void Draw_Mesh(Mesh * M)
 {
   int i;
 
-  if(!CTX.moving_light)
-    InitRenderModel();
-
+  InitRenderModel();
   InitPosition();
-
-  if(CTX.moving_light)
-    InitRenderModel();
 
   for(i = 0; i < 6; i++)
     if(CTX.clip[i])

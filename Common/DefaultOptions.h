@@ -529,8 +529,6 @@ StringXNumber GeneralOptions_Number[] = {
     "Height (in pixels) of the message window" }, 
   { F|S, "MessageWidth" , opt_general_message_size0 , 450. , 
     "Width (in pixels) of the message window" }, 
-  { F|O, "MovingLight" , opt_general_moving_light , 0. ,
-    "Use a moving (i.e. which follows the model) light source" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the option window" }, 
