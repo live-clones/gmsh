@@ -557,7 +557,7 @@ node_derivative(Node * node, char *name, SymbolTable * symbol_table)
 int
 node_calculate_length(Node * node)
 {
-    char           *string;	/* String representing constant node
+    char            string[1024];	/* String representing constant node
 				 * value. */
     int             length;	/* Length of above string. */
 
@@ -570,9 +570,8 @@ node_calculate_length(Node * node)
 	length = 0;
 	if (node->data.constant < 0)
 	    length += 1;
-	if (asprintf(&string, "%g", node->data.constant) != -1)
-	    length += strlen(string);
-	free(string);
+	sprintf(string, "%g", node->data.constant);
+	length += strlen(string);
 	if (node->data.constant < 0)
 	    length += 1;
 	return length;
