@@ -1,4 +1,8 @@
-$Id: TODO,v 1.26 2003-11-29 20:23:22 geuzaine Exp $
+$Id: TODO,v 1.27 2003-12-29 05:39:14 geuzaine Exp $
+
+add nicer 3d drawing code for arrows (cylinder+cone, with lights)
+
+********************************************************************
 
 Yves Krahenbuhl wrote:
 

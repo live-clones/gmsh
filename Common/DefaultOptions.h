@@ -1214,7 +1214,7 @@ StringXColor MeshOptions_Color[] = {
   { F|O, "Seven" , opt_mesh_color_7 , COL7, COL7, COLW, "Seventh color in color carousel" },
   { F|O, "Eight" , opt_mesh_color_8 , COL8, COL8, COLW, "Eighth color in color carousel" },
   { F|O, "Nine" , opt_mesh_color_9  , COL9, COL9, COLW, "Ninth color in color carousel" },
-  { F|O, "Ten" , opt_mesh_color_10  , COL10, COL10, COLW,  "tenth color in color carousel" },
+  { F|O, "Ten" , opt_mesh_color_10  , COL10, COL10, COLW,  "Tenth color in color carousel" },
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
 
