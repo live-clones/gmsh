@@ -423,6 +423,20 @@ StringXNumber MeshOptions_Number[] = {
     "Allow the generation of degenerated hexahedra or prisms during extrusion" },
   { F, "SaveAll" , opt_mesh_save_all , 0. , 
     "Ignore Physical definitions and save all elements" },
+  { F, "NbNodes" , opt_mesh_nb_nodes , 0. , 
+    "Number of nodes in the current mesh" },
+  { F, "NbTriangles" , opt_mesh_nb_triangles , 0. , 
+    "Number of triangles in the current mesh" },
+  { F, "NbQuadrangles" , opt_mesh_nb_quadrangles , 0. , 
+    "Number of quadrangles in the current mesh" },
+  { F, "NbTetrahedra" , opt_mesh_nb_tetrahedra , 0. , 
+    "Number of tetrahedra in the current mesh" },
+  { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
+    "Number of hexahedra in the current mesh" },
+  { F, "NbPrims" , opt_mesh_nb_prisms , 0. , 
+    "Number of prisms in the current mesh" },
+  { F, "NbPyramids" , opt_mesh_nb_pyramids , 0. , 
+    "Number of pyramids in the current mesh" },
   { 0, NULL , NULL , 0. , NULL }
 } ;
 

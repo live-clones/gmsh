@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.55 2001-11-05 08:37:43 geuzaine Exp $
+// $Id: Options.cpp,v 1.56 2001-11-07 08:04:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1596,6 +1596,42 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM){
 #endif
   return CTX.mesh.color_carousel;
 }
+double opt_mesh_nb_nodes(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[6]?s[6]:(s[5]?s[5]:s[4]);
+}
+double opt_mesh_nb_triangles(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[7]-s[8];
+}
+double opt_mesh_nb_quadrangles(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[8];
+}
+double opt_mesh_nb_tetrahedra(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[9];
+}
+double opt_mesh_nb_hexahedra(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[10];
+}
+double opt_mesh_nb_prisms(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[11];
+}
+double opt_mesh_nb_pyramids(OPT_ARGS_NUM){
+  double  s[50];
+  GetStatistics(s);
+  return s[12];
+}
+
 
 
 double opt_solver_getdp_popupmessages(OPT_ARGS_NUM){
