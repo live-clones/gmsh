@@ -1,4 +1,4 @@
-// $Id: PrincipalStresses.cpp,v 1.5 2004-12-08 16:56:47 geuzaine Exp $
+// $Id: PrincipalStresses.cpp,v 1.6 2004-12-08 18:41:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -57,12 +57,12 @@ void GMSH_PrincipalStressesPlugin::getInfos(char *author, char *copyright, char 
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(PrincipalStresses) computes the min,\n"
-	 "mid and max principal stresses from the tensor\n"
+	 "mid and max principal stresses of the tensor\n"
 	 "view `iView'. If `iView' < 0, the plugin is run on\n"
 	 "the current view.\n"
 	 "\n"
 	 "Plugin(PrincipalStresses) creates three new\n"
-	 "views.\n");
+	 "vector views.\n");
 }
 
 int GMSH_PrincipalStressesPlugin::getNbOptions() const
