@@ -19,8 +19,6 @@ Extrude Line {2,{0,1,0}, {0,0,0}, -Pi/2}
              {Layers{10,9,1}; Recombine; };
 
 
-Coherence;
-
 Extrude Surface {5,{0,LG,0}}
                 {Layers{50,2,1}; Recombine;  };
 
