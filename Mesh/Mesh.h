@@ -257,9 +257,9 @@ struct _Surf{
   POLY_rep *thePolyRep;
   int Dirty; // flag to prevent any meshing
   DrawingColor Color;
-  VertexArray * TriVertexArray;
-  VertexArray * QuadVertexArray;
-  smooth_normals * normals;
+  VertexArray *TriVertexArray;
+  VertexArray *QuadVertexArray;
+  smooth_normals *normals;
 };
 
 typedef struct _Surf Surface;
@@ -315,6 +315,8 @@ typedef struct {
   Tree_T *Pyramids;
   int Dirty; //flag to prevent any meshing
   DrawingColor Color;
+  VertexArray *TriVertexArray;
+  VertexArray *QuadVertexArray;
 }Volume;
 
 typedef struct {
@@ -437,13 +439,13 @@ struct Map{
 
 // public functions
 
-void mai3d(Mesh * M, int Asked);
+void mai3d(Mesh *M, int Asked);
 
-void Init_Mesh(Mesh * M);
-void Create_BgMesh(int i, double d, Mesh * m);
-void Print_Geo(Mesh * M, char *c);
-void Print_Mesh(Mesh * M, char *c, int Type);
-void Read_Mesh(Mesh * M, FILE *fp, char *filename, int Type);
+void Init_Mesh(Mesh *M);
+void Create_BgMesh(int i, double d, Mesh *m);
+void Print_Geo(Mesh *M, char *c);
+void Print_Mesh(Mesh *M, char *c, int Type);
+void Read_Mesh(Mesh *M, FILE *fp, char *filename, int Type);
 void GetStatistics(double s[50]);
 
 void Maillage_Dimension_1(Mesh *M);
@@ -454,28 +456,28 @@ void Maillage_Curve(void *data, void *dummy);
 void Maillage_Surface(void *data, void *dum);
 void Maillage_Volume(void *data, void *dum);
 
-int Extrude_Mesh(Curve * c);
-int Extrude_Mesh(Surface * s);
-int Extrude_Mesh(Volume * v);
-int Extrude_Mesh(Tree_T * Volumes);
+int Extrude_Mesh(Curve *c);
+int Extrude_Mesh(Surface *s);
+int Extrude_Mesh(Volume *v);
+int Extrude_Mesh(Tree_T *Volumes);
 void ExitExtrude();
 void Extrude_Mesh_Old(Mesh *M);
 
 int MeshTransfiniteSurface(Surface *sur);
 int MeshTransfiniteVolume(Volume *vol);
-int MeshCylindricalSurface(Surface * s);
-int MeshParametricSurface(Surface * s);
-int MeshEllipticSurface(Surface * sur);
+int MeshCylindricalSurface(Surface *s);
+int MeshParametricSurface(Surface *s);
+int MeshEllipticSurface(Surface *sur);
 
-int AlgorithmeMaillage2DAnisotropeModeJF(Surface * s);
-void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori);
+int AlgorithmeMaillage2DAnisotropeModeJF(Surface *s);
+void Maillage_Automatique_VieuxCode(Surface *pS, Mesh *m, int ori);
 int Mesh_Triangle(Surface *s);
-int Mesh_Netgen(Volume * v);
-void Optimize_Netgen(Volume * v);
-void Optimize_Netgen(Mesh * m);
+int Mesh_Netgen(Volume *v);
+void Optimize_Netgen(Volume *v);
+void Optimize_Netgen(Mesh *m);
 
-int Calcule_Contours(Surface * s);
-void Link_Simplexes(List_T * Sim, Tree_T * Tim);
+int Calcule_Contours(Surface *s);
+void Link_Simplexes(List_T *Sim, Tree_T *Tim);
 void Calcule_Z(void *data, void *dum);
 void Calcule_Z_Plan(void *data, void *dum);
 void Projette_Plan_Moyen(void *a, void *b);
@@ -484,23 +486,23 @@ void Freeze_Vertex(void *a, void *b);
 void deFreeze_Vertex(void *a, void *b);
 void ReOrientSurfaceMesh(Surface *s);
 
-double Lc_XYZ(double X, double Y, double Z, Mesh * m);
+double Lc_XYZ(double X, double Y, double Z, Mesh *m);
 void ActionLiss(void *data, void *dummy);
 void ActionLissSurf(void *data, void *dummy);
 int Recombine(Tree_T *TreeAllVert, Tree_T *TreeAllSimp, Tree_T *TreeAllQuad,
 		double a);
 void ApplyLcFactor(Mesh *M);
-void ExportLcFieldOnVolume(Mesh * M, char *filename);
-void ExportLcFieldOnSurfaces(Mesh * M, char *filename);
+void ExportLcFieldOnVolume(Mesh *M, char *filename);
+void ExportLcFieldOnSurfaces(Mesh *M, char *filename);
 
 void Degre1();
 void Degre2(int dim);
 void Degre2_Curve(void *a, void *b);
 void Degre2_Surface(void *a, void *b);
 
-void Gamma_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);
-void Eta_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);
-void R_Maillage(Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void Gamma_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
+void Eta_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
+void R_Maillage(Mesh *m, double *gamma, double *gammamax, double *gammamin);
 void Mesh_Quality(Mesh *m);
 void Print_Histogram(int *h);
 

@@ -1,4 +1,4 @@
-// $Id: Face.cpp,v 1.1 2004-05-25 23:16:26 geuzaine Exp $
+// $Id: Face.cpp,v 1.2 2004-08-12 16:57:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,25 @@
 #include "Mesh.h"
 
 // Simplex faces
+
+int trifaces_tetra[4][3] = {
+  {0, 2, 1},
+  {0, 1, 3},
+  {0, 3, 2},
+  {3, 1, 2}
+};
+
+int trifaces_prism[2][3] = {
+  {0, 2, 1},
+  {3, 4, 5}
+};
+
+int trifaces_pyramid[4][3] = {
+  {0, 1, 4},
+  {3, 0, 4},
+  {1, 2, 4},
+  {2, 3, 4}
+};
 
 extern int FACE_DIMENSION;
 
@@ -57,19 +76,45 @@ int compareFace(const void *a, const void *b)
 
 // Quad faces
 
+// define the faces to have exterior normals, so that we can use these
+// structures directly in the drawing routines
+
+// int quadfaces_hexa[6][4] = {
+//   {0, 1, 2, 3},
+//   {0, 1, 4, 5},
+//   {0, 3, 4, 7},
+//   {1, 2, 5, 6},
+//   {2, 3, 6, 7},
+//   {4, 5, 6, 7}
+// };
+
+// int quadfaces_prism[3][4] = {
+//   {0, 1, 3, 4},
+//   {0, 2, 3, 5},
+//   {1, 2, 4, 5}
+// };
+
+// int quadfaces_pyramid[1][4] = {
+//   {0, 1, 2, 3}
+// };
+
 int quadfaces_hexa[6][4] = {
-  {0, 1, 2, 3},
-  {0, 1, 4, 5},
-  {0, 3, 4, 7},
-  {1, 2, 5, 6},
-  {2, 3, 6, 7},
+  {0, 3, 2, 1},
+  {0, 1, 5, 4},
+  {0, 4, 7, 3},
+  {1, 2, 6, 5},
+  {2, 3, 7, 6},
   {4, 5, 6, 7}
 };
 
 int quadfaces_prism[3][4] = {
-  {0, 1, 3, 4},
-  {0, 2, 3, 5},
-  {1, 2, 4, 5}
+  {0, 1, 4, 3},
+  {0, 3, 5, 2},
+  {1, 2, 5, 4}
+};
+
+int quadfaces_pyramid[1][4] = {
+  {0, 3, 2, 1}
 };
 
 QuadFace::QuadFace()
@@ -211,10 +256,10 @@ void QuadFacesContainer::AddQuadFaces(Pyramid *p)
 {
   QuadFace F, *pF;
 
-  F.V[0] = p->V[0];
-  F.V[1] = p->V[1];
-  F.V[2] = p->V[2];
-  F.V[3] = p->V[3];
+  F.V[0] = p->V[quadfaces_pyramid[0][0]];
+  F.V[1] = p->V[quadfaces_pyramid[0][1]];
+  F.V[2] = p->V[quadfaces_pyramid[0][2]];
+  F.V[3] = p->V[quadfaces_pyramid[0][3]];
   qsort(F.V, 4, sizeof(Vertex *), compareVertex);
 
   if((pF = (QuadFace *) Tree_PQuery(AllFaces, &F))) {

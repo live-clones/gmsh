@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.106 2004-07-23 01:28:57 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.107 2004-08-12 16:57:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -38,9 +38,17 @@ extern int edges_hexa[12][2];
 extern int edges_prism[9][2];
 extern int edges_pyramid[8][2];
 
+extern int trifaces_tetra[4][3];
+extern int trifaces_prism[2][3];
+extern int trifaces_pyramid[4][3];
+extern int quadfaces_hexa[6][4];
+extern int quadfaces_prism[3][4];
+extern int quadfaces_pyramid[1][4];
+
 static DrawingColor theColor;
 static int thePhysical = 0;
 static Surface *theSurface = NULL;
+static Volume *theVolume = NULL;
 
 void draw_polygon_2d(double r, double g, double b, int n,
                      double *x, double *y, double *z)
@@ -249,12 +257,57 @@ void Draw_Mesh_Volume(void *a, void *b)
   Volume *v = *(Volume **) a;
   if(!(v->Visible & VIS_MESH))
     return;
+
+  theVolume = v;
   theColor = v->Color;
   thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, v->Num);
-  Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
-  Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
-  Tree_Action(v->Prisms, Draw_Mesh_Prism);
-  Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
+
+  // we don't use vertex arrays for every volume primitive: on;y for
+  // volume cuts drawn "as surfaces" (using vefrtex arrays for
+  // everything would require quite a bit of memory)
+  if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface && 
+     CTX.mesh.vertex_arrays){
+    if(CTX.mesh.changed){
+      Msg(DEBUG, "regenerate volume mesh vertex arrays");
+      // triangles
+      if(v->TriVertexArray) delete v->TriVertexArray;
+      v->TriVertexArray = new VertexArray(3, 1000);
+      v->TriVertexArray->fill = 1;
+      // quadrangles
+      if(v->QuadVertexArray) delete v->QuadVertexArray;
+      v->QuadVertexArray = new VertexArray(4, 1000);
+      v->QuadVertexArray->fill = 1;
+      Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
+      Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
+      Tree_Action(v->Prisms, Draw_Mesh_Prism);
+      Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
+      if(v->TriVertexArray){
+	Msg(DEBUG, "%d triangles in volume vertex array", v->TriVertexArray->num);
+	v->TriVertexArray->fill = 0;
+      }
+      if(v->QuadVertexArray){
+	Msg(DEBUG, "%d quads in volume vertex array", v->QuadVertexArray->num);
+	v->QuadVertexArray->fill = 0;
+      }
+    }
+    if(v->TriVertexArray)
+      Draw_Mesh_Array(v->TriVertexArray,
+		      CTX.mesh.surfaces_faces, CTX.mesh.surfaces_edges);
+    if(v->QuadVertexArray)
+      Draw_Mesh_Array(v->QuadVertexArray,
+		      CTX.mesh.surfaces_faces, CTX.mesh.surfaces_edges);
+  }
+
+  if(!CTX.mesh.use_cut_plane || !CTX.mesh.cut_plane_as_surface ||
+     !v->TriVertexArray || !v->QuadVertexArray ||
+     CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
+     CTX.mesh.dual || CTX.mesh.volumes_num || CTX.mesh.normals){
+    Msg(DEBUG, "classic volume data path");
+    Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
+    Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
+    Tree_Action(v->Prisms, Draw_Mesh_Prism);
+    Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
+  }
 }
 
 static int preproNormals = 0;
@@ -288,7 +341,7 @@ void Draw_Mesh_Surface(void *a, void *b)
       s->TriVertexArray->fill = 1;
       Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
       if(s->TriVertexArray){
-	Msg(DEBUG, "%d triangles in vertex array", s->TriVertexArray->num);
+	Msg(DEBUG, "%d triangles in surface vertex array", s->TriVertexArray->num);
 	s->TriVertexArray->fill = 0;
       }
       // quads
@@ -297,7 +350,7 @@ void Draw_Mesh_Surface(void *a, void *b)
       s->QuadVertexArray->fill = 1;
       Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
       if(s->QuadVertexArray){
-	Msg(DEBUG, "%d quads in vertex array", s->QuadVertexArray->num);
+	Msg(DEBUG, "%d quads in surface vertex array", s->QuadVertexArray->num);
 	s->QuadVertexArray->fill = 0;
       }
     }
@@ -1000,6 +1053,11 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
   if(s->VSUP){
+    if(theVolume && theVolume->TriVertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theVolume->TriVertexArray;
+      theVolume->TriVertexArray = NULL;
+    }
     for(int i = 0; i < 6; i++) {
       X2[i] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
@@ -1007,47 +1065,66 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
     }
   }
 
-  if(edges) {
-    if(CTX.mesh.surfaces_faces || faces)
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    else
-      glColor4ubv((GLubyte *) & col);
-    glBegin(GL_LINES);
-    for(int i = 0; i < 6; i++){
-      int j = edges_tetra[i][0];
-      int k = edges_tetra[i][1];
-      glVertex3d(X[j], Y[j], Z[j]);
-      if(s->VSUP){
-	glVertex3d(X2[i], Y2[i], Z2[i]);
-	glVertex3d(X2[i], Y2[i], Z2[i]);
+  if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface && 
+     (edges || faces) && !(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces) &&
+     theVolume && theVolume->TriVertexArray){
+    if(theVolume->TriVertexArray->fill){
+      for(int i = 0; i < 4; i++){
+	int a = trifaces_tetra[i][0];
+	int b = trifaces_tetra[i][1];
+	int c = trifaces_tetra[i][2];
+	double n[3];
+	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	theVolume->TriVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->num++;
       }
-      glVertex3d(X[k], Y[k], Z[k]);
     }
-    glEnd();
-  }
-
-  if(faces){
-    glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
-    if(!s->VSUP){
-      glBegin(GL_TRIANGLES);
-      _triFace(X[0], Y[0], Z[0], X[2], Y[2], Z[2], X[1], Y[1], Z[1]);
-      _triFace(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[3], Y[3], Z[3]);
-      _triFace(X[0], Y[0], Z[0], X[3], Y[3], Z[3], X[2], Y[2], Z[2]);
-      _triFace(X[3], Y[3], Z[3], X[1], Y[1], Z[1], X[2], Y[2], Z[2]);
+  }    
+  else{
+    if(edges) {
+      if(CTX.mesh.surfaces_faces || faces)
+	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+      else
+	glColor4ubv((GLubyte *) & col);
+      glBegin(GL_LINES);
+      for(int i = 0; i < 6; i++){
+	int j = edges_tetra[i][0];
+	int k = edges_tetra[i][1];
+	glVertex3d(X[j], Y[j], Z[j]);
+	if(s->VSUP){
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	}
+	glVertex3d(X[k], Y[k], Z[k]);
+      }
       glEnd();
     }
-    else{
-      glBegin(GL_TRIANGLES);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 0, 2, 1, 2, 1, 0);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 3, 0, 5, 3);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 2, 3, 4, 2);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 3, 1, 2, 5, 1, 4);
-      glEnd();
+    
+    if(faces){
+      glColor4ubv((GLubyte *) & col);
+      if(CTX.mesh.light) glEnable(GL_LIGHTING);
+      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(!s->VSUP){
+	glBegin(GL_TRIANGLES);
+	_triFace(X[0], Y[0], Z[0], X[2], Y[2], Z[2], X[1], Y[1], Z[1]);
+	_triFace(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[3], Y[3], Z[3]);
+	_triFace(X[0], Y[0], Z[0], X[3], Y[3], Z[3], X[2], Y[2], Z[2]);
+	_triFace(X[3], Y[3], Z[3], X[1], Y[1], Z[1], X[2], Y[2], Z[2]);
+	glEnd();
+      }
+      else{
+	glBegin(GL_TRIANGLES);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 0, 2, 1, 2, 1, 0);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 3, 0, 5, 3);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 2, 3, 4, 2);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 3, 1, 2, 5, 1, 4);
+	glEnd();
+      }
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glDisable(GL_LIGHTING);
     }
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
   }
 
   if(CTX.mesh.dual) {
@@ -1132,6 +1209,11 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (h->V[i]->Pos.Z - Zc);
   }
   if(h->VSUP){
+    if(theVolume && theVolume->QuadVertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theVolume->QuadVertexArray;
+      theVolume->QuadVertexArray = NULL;
+    }
     for(int i = 0; i < 18; i++) {
       X2[i] = Xc + CTX.mesh.explode * (h->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (h->VSUP[i]->Pos.Y - Yc);
@@ -1139,52 +1221,73 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
     }
   }
 
-  if(edges){
-    if(CTX.mesh.surfaces_faces || faces)
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    else
-      glColor4ubv((GLubyte *) & col);
-    glBegin(GL_LINES);
-    for(int i = 0; i < 12; i++){
-      int j = edges_hexa[i][0];
-      int k = edges_hexa[i][1];
-      glVertex3d(X[j], Y[j], Z[j]);
-      if(h->VSUP){
-	glVertex3d(X2[i], Y2[i], Z2[i]);
-	glVertex3d(X2[i], Y2[i], Z2[i]);
+  if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface && 
+     (edges || faces) && !(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces) &&
+     theVolume && theVolume->QuadVertexArray){
+    if(theVolume->QuadVertexArray->fill){
+      for(int i = 0; i < 6; i++){
+	int a = quadfaces_hexa[i][0];
+	int b = quadfaces_hexa[i][1];
+	int c = quadfaces_hexa[i][2];
+	int d = quadfaces_hexa[i][3];
+	double n[3];
+	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	theVolume->QuadVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->add(X[d], Y[d], Z[d], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->num++;
       }
-      glVertex3d(X[k], Y[k], Z[k]);
     }
-    glEnd();
-  }
-
-  if(faces){
-    glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
-    if(!h->VSUP){
-      glBegin(GL_QUADS);
-      _quadFace(X, Y, Z, 0, 3, 2, 1);
-      _quadFace(X, Y, Z, 4, 5, 6, 7);
-      _quadFace(X, Y, Z, 0, 1, 5, 4);
-      _quadFace(X, Y, Z, 1, 2, 6, 5);
-      _quadFace(X, Y, Z, 2, 3, 7, 6);
-      _quadFace(X, Y, Z, 0, 4, 7, 3);
+  }    
+  else{
+    if(edges){
+      if(CTX.mesh.surfaces_faces || faces)
+	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+      else
+	glColor4ubv((GLubyte *) & col);
+      glBegin(GL_LINES);
+      for(int i = 0; i < 12; i++){
+	int j = edges_hexa[i][0];
+	int k = edges_hexa[i][1];
+	glVertex3d(X[j], Y[j], Z[j]);
+	if(h->VSUP){
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	}
+	glVertex3d(X[k], Y[k], Z[k]);
+      }
       glEnd();
     }
-    else{
-      glBegin(GL_TRIANGLES);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 2, 1, 1, 5, 3, 0, 12);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 4, 5, 6, 7, 8, 10, 11, 9, 17);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 5, 4, 0, 4, 8, 2, 13);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 1, 2, 6, 5, 3, 6, 10, 4, 15);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 2, 3, 7, 6, 5, 7, 11, 6, 16);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 0, 4, 7, 3, 2, 9, 7, 1, 14);
-      glEnd();
+    
+    if(faces){
+      glColor4ubv((GLubyte *) & col);
+      if(CTX.mesh.light) glEnable(GL_LIGHTING);
+      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(!h->VSUP){
+	glBegin(GL_QUADS);
+	_quadFace(X, Y, Z, 0, 3, 2, 1);
+	_quadFace(X, Y, Z, 0, 1, 5, 4);
+	_quadFace(X, Y, Z, 0, 4, 7, 3);
+	_quadFace(X, Y, Z, 1, 2, 6, 5);
+	_quadFace(X, Y, Z, 2, 3, 7, 6);
+	_quadFace(X, Y, Z, 4, 5, 6, 7);
+	glEnd();
+      }
+      else{
+	glBegin(GL_TRIANGLES);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 2, 1, 1, 5, 3, 0, 12);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 5, 4, 0, 4, 8, 2, 13);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 0, 4, 7, 3, 2, 9, 7, 1, 14);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 1, 2, 6, 5, 3, 6, 10, 4, 15);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 2, 3, 7, 6, 5, 7, 11, 6, 16);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 4, 5, 6, 7, 8, 10, 11, 9, 17);
+	glEnd();
+      }
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glDisable(GL_LIGHTING);
     }
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
-  }
+  }    
 
   if(CTX.mesh.dual) {
     glColor4ubv((GLubyte *) & CTX.color.fg);
@@ -1274,6 +1377,16 @@ void Draw_Mesh_Prism(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
   if(p->VSUP){
+    if(theVolume && theVolume->TriVertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theVolume->TriVertexArray;
+      theVolume->TriVertexArray = NULL;
+    }
+    if(theVolume && theVolume->QuadVertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theVolume->QuadVertexArray;
+      theVolume->QuadVertexArray = NULL;
+    }
     for(int i = 0; i < 12; i++) {
       X2[i] = Xc + CTX.mesh.explode * (p->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (p->VSUP[i]->Pos.Y - Yc);
@@ -1281,51 +1394,85 @@ void Draw_Mesh_Prism(void *a, void *b)
     }
   }
 
-  if(edges){
-    if(CTX.mesh.surfaces_faces || faces)
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    else
-      glColor4ubv((GLubyte *) & col);
-    glBegin(GL_LINES);
-    for(int i = 0; i < 9; i++){
-      int j = edges_prism[i][0];
-      int k = edges_prism[i][1];
-      glVertex3d(X[j], Y[j], Z[j]);
-      if(p->VSUP){
-	glVertex3d(X2[i], Y2[i], Z2[i]);
-	glVertex3d(X2[i], Y2[i], Z2[i]);
+  if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface && 
+     (edges || faces) && !(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces) &&
+     theVolume && theVolume->TriVertexArray && theVolume->QuadVertexArray){
+    if(theVolume->TriVertexArray->fill){
+      for(int i = 0; i < 2; i++){
+	int a = trifaces_prism[i][0];
+	int b = trifaces_prism[i][1];
+	int c = trifaces_prism[i][2];
+	double n[3];
+	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	theVolume->TriVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->num++;
       }
-      glVertex3d(X[k], Y[k], Z[k]);
     }
-    glEnd();
-  }
-
-  if(faces){
-    glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
-    if(!p->VSUP){
-      glBegin(GL_TRIANGLES);
-      _triFace(X[0], Y[0], Z[0], X[2], Y[2], Z[2], X[1], Y[1], Z[1]);
-      _triFace(X[3], Y[3], Z[3], X[4], Y[4], Z[4], X[5], Y[5], Z[5]);
-      glEnd();
-      glBegin(GL_QUADS);
-      _quadFace(X, Y, Z, 0, 1, 4, 3);
-      _quadFace(X, Y, Z, 1, 2, 5, 4);
-      _quadFace(X, Y, Z, 0, 3, 5, 2);
+    if(theVolume->QuadVertexArray->fill){
+      for(int i = 0; i < 3; i++){
+	int a = quadfaces_prism[i][0];
+	int b = quadfaces_prism[i][1];
+	int c = quadfaces_prism[i][2];
+	int d = quadfaces_prism[i][3];
+	double n[3];
+	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	theVolume->QuadVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->add(X[d], Y[d], Z[d], n[0], n[1], n[2], col);
+	theVolume->QuadVertexArray->num++;
+      }
+    }
+  }    
+  else{
+    if(edges){
+      if(CTX.mesh.surfaces_faces || faces)
+	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+      else
+	glColor4ubv((GLubyte *) & col);
+      glBegin(GL_LINES);
+      for(int i = 0; i < 9; i++){
+	int j = edges_prism[i][0];
+	int k = edges_prism[i][1];
+	glVertex3d(X[j], Y[j], Z[j]);
+	if(p->VSUP){
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	}
+	glVertex3d(X[k], Y[k], Z[k]);
+      }
       glEnd();
     }
-    else{
-      glBegin(GL_TRIANGLES);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 0, 2, 1, 1, 3, 0);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 3, 4, 5, 6, 8, 7);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 4, 3, 0, 4, 6, 2, 9);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 1, 2, 5, 4, 3, 5, 8, 4, 11);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 5, 2, 2, 7, 5, 1, 10);
-      glEnd();
+    
+    if(faces){
+      glColor4ubv((GLubyte *) & col);
+      if(CTX.mesh.light) glEnable(GL_LIGHTING);
+      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(!p->VSUP){
+	glBegin(GL_TRIANGLES);
+	_triFace(X[0], Y[0], Z[0], X[2], Y[2], Z[2], X[1], Y[1], Z[1]);
+	_triFace(X[3], Y[3], Z[3], X[4], Y[4], Z[4], X[5], Y[5], Z[5]);
+	glEnd();
+	glBegin(GL_QUADS);
+	_quadFace(X, Y, Z, 0, 1, 4, 3);
+	_quadFace(X, Y, Z, 0, 3, 5, 2);
+	_quadFace(X, Y, Z, 1, 2, 5, 4);
+	glEnd();
+      }
+      else{
+	glBegin(GL_TRIANGLES);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 0, 2, 1, 1, 3, 0);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 3, 4, 5, 6, 8, 7);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 4, 3, 0, 4, 6, 2, 9);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 5, 2, 2, 7, 5, 1, 10);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 1, 2, 5, 4, 3, 5, 8, 4, 11);
+	glEnd();
+      }
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glDisable(GL_LIGHTING);
     }
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
   }
 
   if(CTX.mesh.dual) {
@@ -1413,6 +1560,16 @@ void Draw_Mesh_Pyramid(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
   }
   if(p->VSUP){
+    if(theVolume && theVolume->TriVertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theVolume->TriVertexArray;
+      theVolume->TriVertexArray = NULL;
+    }
+    if(theVolume && theVolume->QuadVertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theVolume->QuadVertexArray;
+      theVolume->QuadVertexArray = NULL;
+    }
     for(int i = 0; i < 9; i++) {
       X2[i] = Xc + CTX.mesh.explode * (p->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (p->VSUP[i]->Pos.Y - Yc);
@@ -1420,51 +1577,83 @@ void Draw_Mesh_Pyramid(void *a, void *b)
     }
   }
 
-  if(edges){
-    if(CTX.mesh.surfaces_faces || faces)
-      glColor4ubv((GLubyte *) & CTX.color.mesh.line);
-    else
-      glColor4ubv((GLubyte *) & col);
-    glBegin(GL_LINES);
-    for(int i = 0; i < 8; i++){
-      int j = edges_pyramid[i][0];
-      int k = edges_pyramid[i][1];
-      glVertex3d(X[j], Y[j], Z[j]);
-      if(p->VSUP){
-	glVertex3d(X2[i], Y2[i], Z2[i]);
-	glVertex3d(X2[i], Y2[i], Z2[i]);
+  if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface && 
+     (edges || faces) && !(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces) &&
+     theVolume && theVolume->TriVertexArray && theVolume->QuadVertexArray){
+    if(theVolume->TriVertexArray->fill){
+      for(int i = 0; i < 4; i++){
+	int a = trifaces_pyramid[i][0];
+	int b = trifaces_pyramid[i][1];
+	int c = trifaces_pyramid[i][2];
+	double n[3];
+	_normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+	theVolume->TriVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
+	theVolume->TriVertexArray->num++;
       }
-      glVertex3d(X[k], Y[k], Z[k]);
     }
-    glEnd();
-  }
+    if(theVolume->QuadVertexArray->fill){
+      int a = quadfaces_pyramid[0][0];
+      int b = quadfaces_pyramid[0][1];
+      int c = quadfaces_pyramid[0][2];
+      int d = quadfaces_pyramid[0][3];
+      double n[3];
+      _normal3points(X[a], Y[a], Z[a], X[b], Y[b], Z[b], X[c], Y[c], Z[c], n);
+      theVolume->QuadVertexArray->add(X[a], Y[a], Z[a], n[0], n[1], n[2], col);
+      theVolume->QuadVertexArray->add(X[b], Y[b], Z[b], n[0], n[1], n[2], col);
+      theVolume->QuadVertexArray->add(X[c], Y[c], Z[c], n[0], n[1], n[2], col);
+      theVolume->QuadVertexArray->add(X[d], Y[d], Z[d], n[0], n[1], n[2], col);
+      theVolume->QuadVertexArray->num++;
+    }
+  }    
+  else{
+    if(edges){
+      if(CTX.mesh.surfaces_faces || faces)
+	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
+      else
+	glColor4ubv((GLubyte *) & col);
+      glBegin(GL_LINES);
+      for(int i = 0; i < 8; i++){
+	int j = edges_pyramid[i][0];
+	int k = edges_pyramid[i][1];
+	glVertex3d(X[j], Y[j], Z[j]);
+	if(p->VSUP){
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	  glVertex3d(X2[i], Y2[i], Z2[i]);
+	}
+	glVertex3d(X[k], Y[k], Z[k]);
+      }
+      glEnd();
+    }
 
-  if(faces){
-    glColor4ubv((GLubyte *) & col);
-    if(CTX.mesh.light) glEnable(GL_LIGHTING);
-    if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
-    if(!p->VSUP){
-      glBegin(GL_QUADS);
-      _quadFace(X, Y, Z, 0, 3, 2, 1);
-      glEnd();
-      glBegin(GL_TRIANGLES);
-      _triFace(X[1], Y[1], Z[1], X[2], Y[2], Z[2], X[4], Y[4], Z[4]);
-      _triFace(X[2], Y[2], Z[2], X[3], Y[3], Z[3], X[4], Y[4], Z[4]);
-      _triFace(X[3], Y[3], Z[3], X[0], Y[0], Z[0], X[4], Y[4], Z[4]);
-      _triFace(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[4], Y[4], Z[4]);
-      glEnd();
+    if(faces){
+      glColor4ubv((GLubyte *) & col);
+      if(CTX.mesh.light) glEnable(GL_LIGHTING);
+      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(!p->VSUP){
+	glBegin(GL_QUADS);
+	_quadFace(X, Y, Z, 0, 3, 2, 1);
+	glEnd();
+	glBegin(GL_TRIANGLES);
+	_triFace(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[4], Y[4], Z[4]);
+	_triFace(X[3], Y[3], Z[3], X[0], Y[0], Z[0], X[4], Y[4], Z[4]);
+	_triFace(X[1], Y[1], Z[1], X[2], Y[2], Z[2], X[4], Y[4], Z[4]);
+	_triFace(X[2], Y[2], Z[2], X[3], Y[3], Z[3], X[4], Y[4], Z[4]);
+	glEnd();
+      }
+      else{
+	glBegin(GL_TRIANGLES);
+	_quadFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 2, 1, 1, 5, 3, 0, 8);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 4, 0, 4, 2);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 3, 0, 4, 1, 2, 7);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 1, 2, 4, 3, 6, 4);
+	_triFace2(X, Y, Z, X2, Y2, Z2, 2, 3, 4, 5, 7, 6);
+	glEnd();
+      }
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glDisable(GL_LIGHTING);
     }
-    else{
-      glBegin(GL_TRIANGLES);
-      _quadFace2(X, Y, Z, X2, Y2, Z2, 0, 3, 2, 1, 1, 5, 3, 0, 8);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 1, 2, 4, 3, 6, 4);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 2, 3, 4, 5, 7, 6);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 3, 0, 4, 1, 2, 7);
-      _triFace2(X, Y, Z, X2, Y2, Z2, 0, 1, 4, 0, 4, 2);
-      glEnd();
-    }
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
   }
 
   if(CTX.mesh.volumes_num) {

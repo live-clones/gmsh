@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.62 2004-07-16 18:02:20 geuzaine Exp $
+// $Id: Create.cpp,v 1.63 2004-08-12 16:57:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -734,6 +734,8 @@ Volume *Create_Volume(int Num, int Typ)
   // for old extrusion mesh generator
   pV->Simp_Surf = Tree_Create(sizeof(Simplex *), compareSimplex);
   pV->Quad_Surf = Tree_Create(sizeof(Simplex *), compareQuadrangle);
+  pV->TriVertexArray = NULL;
+  pV->QuadVertexArray = NULL;
   return pV;
 }
 
@@ -766,6 +768,10 @@ void Free_Volume_But_Not_Elements(void *a, void *b)
     Tree_Delete(pV->Pyramids);
     Tree_Delete(pV->Edges);
     Tree_Delete(pV->Faces);
+    if(pV->TriVertexArray)
+      delete pV->TriVertexArray;
+    if(pV->QuadVertexArray)
+      delete pV->QuadVertexArray;
     Free(pV);
     pV = NULL;
   }

@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.26 2004-05-27 06:23:48 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.27 2004-08-12 16:57:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,7 @@ extern int edges_pyramid[8][2];
 
 extern int quadfaces_hexa[6][4];
 extern int quadfaces_prism[3][4];
+extern int quadfaces_pyramid[1][4];
 
 static Surface *THES = NULL;
 static Curve *THEC = NULL;
@@ -325,10 +326,10 @@ void putMiddleFacePoint(void *a, void *b)
 
   for(int i = 0; i < 2; i++) {
     if(fac->pyramid[i] && fac->pyramid[i]->VSUP){
-      F.V[0] = fac->pyramid[i]->V[0];
-      F.V[1] = fac->pyramid[i]->V[1];
-      F.V[2] = fac->pyramid[i]->V[2];
-      F.V[3] = fac->pyramid[i]->V[3];
+      F.V[0] = fac->pyramid[i]->V[quadfaces_pyramid[0][0]];
+      F.V[1] = fac->pyramid[i]->V[quadfaces_pyramid[0][1]];
+      F.V[2] = fac->pyramid[i]->V[quadfaces_pyramid[0][2]];
+      F.V[3] = fac->pyramid[i]->V[quadfaces_pyramid[0][3]];
       qsort(F.V, 4, sizeof(Vertex *), compareVertex);
       if(!compareQuadFace(fac, &F))
 	fac->pyramid[i]->VSUP[8] = v;
