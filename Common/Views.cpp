@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.26 2001-01-29 22:33:41 remacle Exp $
+// $Id: Views.cpp,v 1.27 2001-02-02 15:05:03 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -269,7 +269,7 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
 
   // it's a test, smoothing views in the volume !!!
   // in the future, we'll have normals smoothed
-  ActualView->smooth();
+  if(CTX.post.smooth) ActualView->smooth();
   ActualView = NULL;
 }
 

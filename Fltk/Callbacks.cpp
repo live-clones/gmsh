@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.22 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.23 2001-02-02 15:05:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -500,6 +500,9 @@ void opt_post_cb(CALLBACK_ARGS) {
 }
 void opt_post_link_cb(CALLBACK_ARGS) {
   CTX.post.link = (int)data;
+}
+void opt_post_smooth_cb(CALLBACK_ARGS) {
+  CTX.post.smooth = !CTX.post.smooth;
 }
 void opt_post_anim_delay_cb(CALLBACK_ARGS) {
   CTX.post.anim_delay = (long)(1.e6*((Fl_Value_Input*)w)->value());

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.30 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.31 2001-02-02 15:05:03 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1120,6 +1120,18 @@ void GUI::create_post_options_window(){
 	  post_butt[i]->labelsize(CTX.fontsize);
 	  post_butt[i]->selection_color(FL_YELLOW);
 	}
+        o->end();
+      }
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Smoothing");
+	o->labelsize(CTX.fontsize);
+        post_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Smooth");
+	post_butt[3]->callback(opt_post_smooth_cb);
+	post_butt[3]->value(CTX.post.smooth);
+	post_butt[3]->type(FL_TOGGLE_BUTTON);
+	post_butt[3]->down_box(FL_DOWN_BOX);
+	post_butt[3]->labelsize(CTX.fontsize);
+	post_butt[3]->selection_color(FL_YELLOW);
         o->end();
       }
       { 

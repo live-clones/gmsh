@@ -197,6 +197,7 @@ StringXNumber MeshOptions_Number[] = {
 StringXNumber PostProcessingOptions_Number[] = {
   { "Scales"           , GMSH_INT,    (void*)&CTX.post.scales             , 1. }, 
   { "Link"             , GMSH_INT,    (void*)&CTX.post.link               , 0. }, 
+  { "Smoothing"        , GMSH_INT,    (void*)&CTX.post.smooth             , 0. }, 
   { "Visibility"       , GMSH_INT,    (void*)&CTX.post.initial_visibility , 1. }, 
   { "IntervalsMode"    , GMSH_INT,    (void*)&CTX.post.initial_intervals  , DRAW_POST_ISO }, 
   { "IntervalsNumber"  , GMSH_INT,    (void*)&CTX.post.initial_nbiso      , 15. }, 

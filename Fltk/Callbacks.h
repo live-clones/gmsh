@@ -82,6 +82,7 @@ void opt_mesh_aspect_cb(CALLBACK_ARGS) ;
 
 void opt_post_cb(CALLBACK_ARGS) ;
 void opt_post_link_cb(CALLBACK_ARGS) ;
+void opt_post_smooth_cb(CALLBACK_ARGS) ;
 void opt_post_anim_delay_cb(CALLBACK_ARGS) ;
 
 // Option Statistics Menu

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.20 2001-01-29 22:33:41 remacle Exp $
+// $Id: Draw.cpp,v 1.21 2001-02-02 15:05:03 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -137,14 +137,18 @@ void InitRenderModel(void)
   float diffuse[] = {0.4, 0.4, 0.4};
   float specular[4];
 
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+  if(CTX.post.smooth){//temporaire
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+  }
 
   for(i = 0 ; i < 6 ; i++){
     if(CTX.light[i]){
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, CTX.light_position[i]);
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
-      glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      if(CTX.post.smooth){//temporaire
+	glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+	glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      }
       glEnable((GLenum)(GL_LIGHT0 + i));
     }
   }
