@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.89 2003-03-01 22:36:36 geuzaine Exp $
+// $Id: Views.cpp,v 1.90 2003-03-01 23:18:11 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1413,5 +1413,5 @@ int Post_View::get_val(int list, int node, int timestep, double *value)
 
 void Post_View::add_val(int list, int node, int timestep, double value)
 {
-
+  ;
 }
