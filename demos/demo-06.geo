@@ -160,45 +160,32 @@ Physical Surface (711) = {66} ;
    widget). GUI colors and fonts can be changed in a standard X
    resource file (.gmshrc in your home directory). */
 
-Options{
-  General{
-    Color{
-      Background = {39, 64, 139} ;
-      Axes =  OrangeRed1; // Color names are the classical X11 names
-      SmallAxes = LightGray;
-      Text = Gray88 ;
-    }
-  }
-  Geometry{
-    Color{
-      Points = Yellow;
-      Lines = {255, 255, 255, 128} ; // semi-transparent white
-      Surfaces = {Orange, 60} ; // almost transparent orange
-      Volumes = Green ;
-      PointsSelect = White ;
-      LinesSelect = White ;
-      SurfacesSelect = White ;
-    }
-  }
-  Mesh{
-    Color{
-      Points = Black;
-      PointsSupp = Orchid;
-      Lines = Black;
-      // Color cycle for volume mesh
-      One = Gray10 ;
-      Two = Gray20 ;
-      Three = Gray30 ;
-      Four = Gray40 ;
-      Five = Gray50 ;
-      Six = Gray60 ;
-      Seven = Gray70 ;
-      Eight = Gray80 ;
-      Nine = Gray90 ;
-      Ten = Black ;
-    }
-  }
-}
+General.Color.Background = {39, 64, 139} ;
+General.Color.Axes =  OrangeRed1; // Color names are the classical X11 names
+General.Color.SmallAxes = LightGray;
+General.Color.Text = Gray88 ;
+
+Geometry.Color.Points = Yellow;
+Geometry.Color.Lines = {255, 255, 255, 128} ; // semi-transparent white
+Geometry.Color.Surfaces = {Orange, 60} ; // almost transparent orange
+Geometry.Color.Volumes = Green ;
+Geometry.Color.PointsSelect = White ;
+Geometry.Color.LinesSelect = White ;
+Geometry.Color.SurfacesSelect = White ;
+
+Mesh.Color.Points = Black;
+Mesh.Color.PointsSupp = Orchid;
+Mesh.Color.Lines = Black;
+Mesh.Color.One = Gray10 ;
+Mesh.Color.Two = Gray20 ;
+Mesh.Color.Three = Gray30 ;
+Mesh.Color.Four = Gray40 ;
+Mesh.Color.Five = Gray50 ;
+Mesh.Color.Six = Gray60 ;
+Mesh.Color.Seven = Gray70 ;
+Mesh.Color.Eight = Gray80 ;
+Mesh.Color.Nine = Gray90 ;
+Mesh.Color.Ten = Black ;
 
 /* README: X resources can be specified in a '.gmshrc' in your home
    directory or app-defaults directory, or in your .Xdefaults file.

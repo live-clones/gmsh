@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2000-12-05 15:23:57 geuzaine Exp $
+# $Id: Makefile,v 1.6 2000-12-07 08:46:27 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -68,4 +68,4 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
  ../Mesh/Create.h ../Common/Views.h ../Graphics/ColorTable.h \
  ../Geo/StepGeomDatabase.h ../Common/Options.h ../Graphics/Draw.h \
- ../Common/Colors.h Parser.h
+ ../Common/Colors.h Parser.h ../Unix/Main.h

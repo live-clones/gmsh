@@ -41,9 +41,7 @@ Physical Volume (1) = {41} ;
    main window, print the file in 'geo' format, or add '-0' on the command
    line to get the full list of available options. */
 
-Options{
-  General.Rotation0 = 10;
-  General.Color.Background = Red;
-  Geometry.Color.Points = Orange;
-}
+General.Rotation0 = 10;
+General.Color.Background = Red;
+Geometry.Color.Points = Orange;
 
