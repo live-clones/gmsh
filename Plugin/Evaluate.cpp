@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.9 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.10 2004-12-28 03:55:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -75,9 +75,10 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "Cos, Fabs, etc.) and operators (+, -, *, /, ^),\n"
 	 "`Expression' can contain the symbols x, y, z\n"
 	 "and v, which represent the three spatial\n"
-	 "coordinates and the value of the field,\n"
-	 "respectively. If `iView' < 0, the plugin is run\n"
-	 "on the current view.\n"
+	 "coordinates and the value of the `TimeStep'-th\n"
+	 "component of the field, respectively. If\n"
+	 "`iView' < 0, the plugin is run on the current\n"
+	 "view.\n"
 	 "\n"
 	 "Plugin(Evaluate) is executed in-place.\n");
 }

@@ -255,9 +255,10 @@ mathematical functions (Exp, Log, Sqrt, Sin,
 Cos, Fabs, etc.) and operators (+, -, *, /, ^),
 `Expression' can contain the symbols x, y, z
 and v, which represent the three spatial
-coordinates and the value of the field,
-respectively. If `iView' < 0, the plugin is run
-on the current view.
+coordinates and the value of the `TimeStep'-th
+component of the field, respectively. If
+`iView' < 0, the plugin is run on the current
+view.
 
 Plugin(Evaluate) is executed in-place.
 
