@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.35 2002-05-18 16:31:16 geuzaine Exp $
+# $Id: Makefile,v 1.36 2002-05-18 21:08:22 geuzaine Exp $
 #
 # Makefile for "libGmshFltk.a"
 #
@@ -12,7 +12,7 @@ LIB     = ../lib/libGmshFltk.a
 INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo\
           -I../Mesh -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils
 
-OPT_FLAGS     = -g -Wall
+OPT_FLAGS     =
 OS_FLAGS      = -D_LITTLE_ENDIAN
 VERSION_FLAGS = -D_FLTK
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.39 2002-05-18 16:31:16 geuzaine Exp $
+# $Id: Makefile,v 1.40 2002-05-18 21:08:22 geuzaine Exp $
 #
 # Makefile for "libGmshGraphics.a"
 #
@@ -14,7 +14,7 @@ INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
 
 OPT_FLAGS     =
 OS_FLAGS      = -D_LITTLE_ENDIAN
-VERSION_FLAGS = 
+VERSION_FLAGS = -D_FLTK
 
 RMFLAGS = -f
 CFLAGS  = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\

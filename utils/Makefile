@@ -1,10 +1,10 @@
-# $Id: Makefile,v 1.7 2002-01-25 17:09:21 geuzaine Exp $
+# $Id: Makefile,v 1.8 2002-05-18 21:08:22 geuzaine Exp $
 
-CXX        = c++
-OPT_FLAGS  = -g
+CXX       = c++
+OPT_FLAGS = -g
 
-RM       = rm
-RMFLAGS  = -f
+RM      = rm
+RMFLAGS = -f
 
 dxf2geo: dxf2geo.c message.c 
 	$(CXX) $(OPT_FLAGS) -o ../bin/dxf2geo -I../DataStr\
