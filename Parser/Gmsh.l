@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.63 2005-01-01 19:35:32 geuzaine Exp $
+// $Id: Gmsh.l,v 1.64 2005-01-02 17:46:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -217,6 +217,7 @@ Translate               return tTranslate;
 Tanh                    return tTanh;
 Tan                     return tTan;
 Trimmed			return tTrimmed;
+Today                   return tToday;
 
 Using                   return tUsing;
 

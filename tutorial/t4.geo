@@ -100,7 +100,7 @@ Plane Surface(24) = {23,21};
 View "comments" {
   // 10 pixels from the left and 15 pixels from the top of the graphic
   // window:
-  T2(10,15,0){"File created on Fri Oct 18 23:50:20 2002"};
+  T2(10,15,0){StrCat("File created on ", Today)};
 
   // 10 pixels from the left and 10 pixels from the bottom of the
   // graphic window:

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.195 2005-01-01 19:35:36 geuzaine Exp $
+// $Id: Gmsh.y,v 1.196 2005-01-02 17:46:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <stdarg.h>
+#include <time.h>
 #include "PluginManager.h"
 #include "ParUtil.h"
 #include "Gmsh.h"
@@ -89,7 +90,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix
-%token tBoundingBox tDraw
+%token tBoundingBox tDraw tToday
 %token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTriangulation tTransfinite tComplex tPhysical
@@ -4062,10 +4063,18 @@ StringExpr :
     {
       $$ = $1;
     }
+  | tToday
+    {
+      $$ = (char *)Malloc(32*sizeof(char));
+      time_t now;
+      time(&now);
+      strcpy($$, ctime(&now));
+      $$[strlen($$) - 1] = '\0';
+    }
   | tStrCat '(' StringExpr ',' StringExpr ')'
     {
       $$ = (char *)Malloc((strlen($3)+strlen($5)+1)*sizeof(char));
-      strcpy($$, $3);  
+      strcpy($$, $3);
       strcat($$, $5);
       Free($3);
       Free($5);

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.161 2005-01-02 17:38:26 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.162 2005-01-02 17:46:09 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -763,6 +763,7 @@ Character expressions are defined as:
 @example
 @var{char-expression}:
   "@var{string}" |
+  Today |
   StrPrefix ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
@@ -770,9 +771,9 @@ Character expressions are defined as:
   Sprintf ( @var{char-option} )
 @end example
 
-@noindent The second case in this definition permits to take the
+@noindent The third case in this definition permits to take the
 prefix of a string (e.g., for removing the extension from a file name). The
-third case permits to concatenate two character expressions, and the fourth
+fourth case permits to concatenate two character expressions, and the fifth
 is an equivalent of the @code{sprintf} C function (where
 @var{char-expression} is a format string that can contain floating point
 formatting characters: @code{%e}, @code{%g}, etc.). The last case permits to
