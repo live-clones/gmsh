@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.9 2000-12-04 09:29:38 colignon Exp $ */
+/* $Id: Context.h,v 1.10 2000-12-04 11:28:11 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -124,8 +124,6 @@ typedef struct {
   /* post processing options */
   struct{
     int draw, scales, link ;
-    char *font;
-    int  fontsize;
     int  initial_visibility, initial_nbiso, initial_intervals ;
     long anim_delay ;
   }post;
@@ -133,6 +131,8 @@ typedef struct {
   /* print options */
   struct{
     int format, type;
+    char *font;
+    int  fontsize;
   } print;
 
 } Context_T;
@@ -148,6 +148,7 @@ typedef struct {
 } StringXPointer ;
 
 void InitContext (Context_T * ctx);
+void PrintContext(Context_T *ctx, FILE *file);
 void InitColors (rgbacolors * col, int num);
 
 #endif

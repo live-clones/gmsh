@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.8 2000-12-04 09:29:38 colignon Exp $ */
+/* $Id: Context.cpp,v 1.9 2000-12-04 11:28:11 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -243,18 +243,158 @@ void InitContext(Context_T *ctx){
   ctx->post.draw                   = 1 ;
   ctx->post.scales                 = 1 ;
   ctx->post.link                   = 0 ;
-  ctx->post.font                   = "Courier" ;
-  ctx->post.fontsize               = 12 ;
   ctx->post.initial_visibility     = 1 ;
   ctx->post.initial_intervals      = DRAW_POST_ISO ;
   ctx->post.initial_nbiso          = 15 ;
   ctx->post.anim_delay             = 0 ;
 
-  ctx->print.type    = PRINT_GL2PS_SIMPLE ;
-  ctx->print.format  = FORMAT_EPS ;
+  ctx->print.type      = PRINT_GL2PS_SIMPLE ;
+  ctx->print.format    = FORMAT_EPS ;
+  ctx->print.font      = "Courier" ;
+  ctx->print.fontsize  = 12 ;
 
   ctx->color.id = -1;
   InitColors(&ctx->color, 0) ;
 
 }
 
+#define UNPACK_RGB(thecol) \
+   UNPACK_RED(thecol), UNPACK_GREEN(thecol), UNPACK_BLUE(thecol)
+
+void PrintContext(Context_T *ctx, FILE *file){
+  int i;
+
+  fprintf(file, "Options {\n");
+
+  fprintf(file, "  General {\n");
+  fprintf(file, "    Interactive = %d;\n", ctx->verbosity);
+  fprintf(file, "    Rotation = {%g, %g, %g};\n", ctx->r[0], ctx->r[1], ctx->r[2]);
+  fprintf(file, "    Translation = {%g, %g, %g};\n", ctx->t[0], ctx->t[1], ctx->t[2]);
+  fprintf(file, "    Scale = {%g, %g, %g};\n", ctx->s[0], ctx->s[1], ctx->s[2]);
+  for(i = 0 ; i < 6 ; i++)
+    if(ctx->clip[i])
+      fprintf(file, "    Clip Plane (%d) = {%g, %g, %g, %g};\n", 
+	      ctx->clip[i], ctx->s[0], ctx->s[1], ctx->s[2], ctx->s[3]);
+  fprintf(file, "    Proportional Font = \"%s\";\n", ctx->font_string);
+  fprintf(file, "    Fixed Font = \"%s\"\n", ctx->colorbar_font_string);
+  fprintf(file, "    Light (0) = {%g, %g, %g, %g};\n", 
+	  ctx->light0[0],ctx->light0[1],ctx->light0[2],ctx->light0[3]);
+  fprintf(file, "    Shine = %g;\n", ctx->shine);
+  fprintf(file, "    Alpha = %d;\n", ctx->alpha);
+  fprintf(file, "    Axes = %d;\n", ctx->axes);
+  fprintf(file, "    Little Axes = %d;\n", ctx->little_axes);
+  fprintf(file, "    Ortho = %d;\n", ctx->ortho);
+  fprintf(file, "    Fast = %d;\n", ctx->fast);
+  fprintf(file, "    Display Lists = %d;\n", ctx->display_lists);
+  fprintf(file, "    Colors {\n");
+  fprintf(file, "      Background = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.bg));
+  fprintf(file, "      Foreground = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.fg));
+  fprintf(file, "      Text = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.text));
+  fprintf(file, "      Axes = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.axes));
+  fprintf(file, "      Little Axes = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.little_axes));
+  fprintf(file, "    }\n");
+  fprintf(file, "  }\n");
+
+  fprintf(file, "  Geometry {\n");
+  fprintf(file, "    Points = %d;\n", ctx->geom.points);
+  fprintf(file, "    Lines = %d;\n", ctx->geom.lines);
+  fprintf(file, "    Surfaces = %d;\n", ctx->geom.surfaces);
+  fprintf(file, "    Volumes = %d;\n", ctx->geom.volumes);
+  fprintf(file, "    Points Numbers = %d;\n", ctx->geom.points_num);
+  fprintf(file, "    Lines Numbers = %d;\n", ctx->geom.lines_num);
+  fprintf(file, "    Surfaces Numbers = %d;\n", ctx->geom.surfaces_num);
+  fprintf(file, "    Volumes Numbers = %d;\n", ctx->geom.volumes_num);
+  fprintf(file, "    Normals = %g;\n", ctx->geom.normals);
+  fprintf(file, "    Tangents = %g;\n", ctx->geom.tangents);
+  fprintf(file, "    Highlight = %d;\n", ctx->geom.highlight);
+  fprintf(file, "    Hidden = %d;\n", ctx->geom.hidden);
+  fprintf(file, "    Shade = %d;\n", ctx->geom.shade);
+  fprintf(file, "    Colors {\n");
+  fprintf(file, "      Points = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.point));
+  fprintf(file, "      Lines = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.line));
+  fprintf(file, "      Surfaces = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.surface));
+  fprintf(file, "      Volumes = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.volume));
+  fprintf(file, "      PointsSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.point_sel));
+  fprintf(file, "      LinesSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.line_sel));
+  fprintf(file, "      SurfacesSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.surface_sel));
+  fprintf(file, "      VolumesSelect = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.volume_sel));
+  fprintf(file, "      PointsHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.point_hlt));
+  fprintf(file, "      LinesHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.line_hlt));
+  fprintf(file, "      SurfacesHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.surface_hlt));
+  fprintf(file, "      VolumesHighlight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.volume_hlt));
+  fprintf(file, "      Tangents = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.tangents));
+  fprintf(file, "      Normals = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.geom.normals));
+  fprintf(file, "    }\n");
+  fprintf(file, "  }\n");
+
+  fprintf(file, "  Mesh {\n");
+  fprintf(file, "    Points = %d;\n", ctx->mesh.points);
+  fprintf(file, "    Lines = %d;\n", ctx->mesh.lines);
+  fprintf(file, "    Surfaces = %d;\n", ctx->mesh.surfaces);
+  fprintf(file, "    Volumes = %d;\n", ctx->mesh.volumes);
+  fprintf(file, "    Points Numbers = %d;\n", ctx->mesh.points_num);
+  fprintf(file, "    Lines Numbers = %d;\n", ctx->mesh.lines_num);
+  fprintf(file, "    Surfaces Numbers = %d;\n", ctx->mesh.surfaces_num);
+  fprintf(file, "    Volumes Numbers = %d;\n", ctx->mesh.volumes_num);
+  fprintf(file, "    Normals = %g;\n", ctx->mesh.normals);
+  fprintf(file, "    Tangents = %g;\n", ctx->mesh.tangents);
+  fprintf(file, "    Explode = %g;\n", ctx->mesh.explode);
+  fprintf(file, "    Hidden = %d;\n", ctx->mesh.hidden);
+  fprintf(file, "    Shade = %d;\n", ctx->mesh.shade);
+  fprintf(file, "    Format = %d;\n", ctx->mesh.format);
+  fprintf(file, "    Smoothing = %d;\n", ctx->mesh.nb_smoothing);
+  fprintf(file, "    Algorithm = %d;\n", ctx->mesh.algo);
+  fprintf(file, "    Degree = %d;\n", ctx->mesh.degree);
+  fprintf(file, "    ScalingFactor = %g;\n", ctx->mesh.scaling_factor);
+  fprintf(file, "    Characteristic Length Factor = %g;\n", ctx->mesh.lc_factor);
+  fprintf(file, "    Random Factor = %g;\n", ctx->mesh.rand_factor);
+  fprintf(file, "    Gamma Limit = %g;\n", ctx->mesh.limit_gamma);
+  fprintf(file, "    Eta Limit = %g;\n", ctx->mesh.limit_eta);
+  fprintf(file, "    Rho Limit = %g;\n", ctx->mesh.limit_rho);
+  fprintf(file, "    Dual = %d;\n", ctx->mesh.dual);
+  fprintf(file, "    interactive = %d;\n", ctx->mesh.interactive);
+  fprintf(file, "    Colors {\n");
+  fprintf(file, "      Vertex = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.vertex));
+  fprintf(file, "      VertexSupp = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.vertex_supp));
+  fprintf(file, "      Line = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.line));
+  fprintf(file, "      Triangle = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.triangle));
+  fprintf(file, "      Quadrangle = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.quadrangle));
+  fprintf(file, "      Tetrahedron = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.tetrahedron));
+  fprintf(file, "      Hexahedron = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.hexahedron));
+  fprintf(file, "      Prism = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.prism));
+  fprintf(file, "      Pyramid = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.pyramid));
+  fprintf(file, "      One = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[0]));
+  fprintf(file, "      Two = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[1]));
+  fprintf(file, "      Three = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[2]));
+  fprintf(file, "      Four = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[3]));
+  fprintf(file, "      Five = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[4]));
+  fprintf(file, "      Six = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[5]));
+  fprintf(file, "      Seven = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[6]));
+  fprintf(file, "      Eight = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[7]));
+  fprintf(file, "      Nine = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[8]));
+  fprintf(file, "      Ten = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.carousel[9]));
+  fprintf(file, "      Tangents = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.tangents));
+  fprintf(file, "      Normals = {%d,%d,%d};\n", UNPACK_RGB(ctx->color.mesh.normals));
+  fprintf(file, "    }\n");
+  fprintf(file, "  }\n");
+
+  fprintf(file, "  Post {\n");
+  fprintf(file, "    Scales = %d;\n", ctx->post.scales);
+  fprintf(file, "    Link = %d;\n", ctx->post.link);
+  fprintf(file, "    Visibility = %d;\n", ctx->post.initial_visibility);
+  fprintf(file, "    Intervals = %d;\n", ctx->post.initial_intervals);
+  fprintf(file, "    NbIso = %d;\n", ctx->post.initial_nbiso);
+  fprintf(file, "    Animation Delay= %ld;\n", ctx->post.anim_delay);
+  fprintf(file, "  }\n");
+
+
+  fprintf(file, "  Print {\n");
+  fprintf(file, "    Font = \"%s\";\n", ctx->print.font);
+  fprintf(file, "    Font Size = \"%s\";\n", ctx->print.font);
+  fprintf(file, "    Type = %d;\n", ctx->print.type);
+  fprintf(file, "    Format = %d;\n", ctx->print.format);
+  fprintf(file, "  }\n");
+
+  fprintf(file, "}\n");
+
+}
