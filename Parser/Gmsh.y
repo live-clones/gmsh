@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.21 2000-12-07 00:55:17 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.22 2000-12-07 01:03:38 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1676,7 +1676,7 @@ Option :
 	}
       }
     }
-  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT FExpr tEND 
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTTIMES FExpr tEND 
     {
       if(strcmp($1, "Post"))
 	vyyerror("Unknown View Option Class '%s'", $1);
