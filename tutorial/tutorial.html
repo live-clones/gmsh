@@ -22,15 +22,15 @@
 <H1>README 1/9</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.8 2001-04-25 15:43:51 geuzaine Exp $
+$Id: tutorial.html,v 1.9 2001-04-25 15:55:51 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
 files) and should introduce new features gradually, starting with
 t1.geo.
 
-(The tutorial does not explain the mesh and post-processing file
-formats. See the FORMATS file for this.)
+[NOTE: This tutorial does not explain the mesh and post-processing
+file formats. See the FORMATS file for this.]
 
 There are two ways to actually run these examples with Gmsh. (The
 operations to run Gmsh may vary according to your operating system. In
@@ -55,8 +55,8 @@ mesh file name is based on the name of the first input file on the
 command line (or 'unnamed' if there wasn't any input file given), with
 an appended extension depending on the mesh format.
 
-Note: nearly all the interactive commands have shortcuts. Select
-'Help-&gt;Shortcuts' in the menu bar to learn about these shortcuts.
+[NOTE: Nearly all the interactive commands have shortcuts. Select
+'Help-&gt;Shortcuts' in the menu bar to learn about these shortcuts.]
 
 Instead of opening the tutorial with the 'File-&gt;Open' menu, it is
 often more convenient to put the file name on the command line, for
@@ -64,9 +64,9 @@ example with:
 
 &gt; gmsh t1.geo
 
-(The '.geo' extension can also be omitted.)
+[NOTE: The '.geo' extension can also be omitted.]
 
-Note: Even if it is often handy to define the variables and the points
+[NOTE: Even if it is often handy to define the variables and the points
 directly in the input files (you may use any text editor for this
 purpose, e.g. Wordpad on Windows, or Emacs on Unix), it is almost
 always more simple to define the curves, the surfaces and the volumes
@@ -77,8 +77,7 @@ Line'. You will then be asked (in the status bar of the graphic
 window) to select a list of points, and to click 'e' to finish the
 selection (or 'q' to abort it). Once the interactive command is
 completed, a string is automatically added at the end of the currently
-opened project file.
-
+opened project file.]
 
 The second operating mode for Gmsh is the non-interactive mode. In
 this mode, there is no graphical user interface, and all operations
@@ -92,6 +91,8 @@ file 'bgmesh.pos', just type:
 
 &gt; gmsh t1.geo -2 -bgm bgmesh.pos
 
+[NOTE: You should read the notes in the file 'bgmesh.pos' if you
+intend to use background meshes.]
 
 Several files can be loaded simultaneously in Gmsh. The first one
 defines the project, while the others are appended (&quot;merged&quot;) to this
@@ -112,13 +113,13 @@ options. If you want the modifications made to one view to affect also
 all the other views, select the 'Link all views' option in the
 'Options-&gt;Post-Processing' menu.
 
-Note: all the options specified interactively can also be directly
+[NOTE: All the options specified interactively can also be directly
 specified in the ascii input files. All available options, with their
 current values, can be saved into a file by selecting
 'File-&gt;Save_as-&gt;GEO complete options', or simply viewed by pressing
 the '?' button in the status bar. To save the current options as the
 default options for all future Gmsh sessions, use the
-'File-&gt;Save_Options' menu.
+'File-&gt;Save_Options' menu.]
 
 
 OK, that's all, folks. Enjoy the tutorial.
