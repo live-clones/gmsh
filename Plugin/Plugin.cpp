@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.27 2002-05-18 07:56:51 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.28 2002-05-18 08:44:49 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -16,7 +16,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 
-#include <map>
 #ifndef _NODLL
 #include <dlfcn.h>
 #endif
