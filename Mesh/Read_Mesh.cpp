@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.66 2003-12-08 16:08:42 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.67 2003-12-11 17:15:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -82,6 +82,10 @@ void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
   }
 }
 
+/* Note: the "Dirty" flag only has an influence if one doesn't load
+   the geometry along with the mesh (since we only add "dirty"
+   geometrical entities if they don't already exist). */
+
 Curve *addElementaryCurve(Mesh * M, int Num)
 {
   Curve C, *c, **cc;
@@ -126,10 +130,6 @@ Volume *addElementaryVolume(Mesh * M, int Num)
     v = *vv;
   return v;
 }
-
-/* Note: the 'Dirty' flag only has an influence if one doesn't load
-   the geometry along with the mesh (since we make Tree_Insert for the
-   geometrical entities). And that's what we want. */
 
 void Read_Mesh_MSH(Mesh * M, FILE * fp)
 {
@@ -196,7 +196,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                &lc2);
         vert = Create_Vertex(Num, x, y, z, lc1, lc2);
         if(!Tree_Insert(M->Points, &vert)){
-	  Msg(GERROR, "Point %d already exists\n", vert->Num);
+	  Msg(GERROR, "Point %d already exists", vert->Num);
 	  Free_Vertex(&vert, 0);
 	}
       }
@@ -217,7 +217,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         fscanf(fp, "%d %lf %lf %lf", &Num, &x, &y, &z);
         vert = Create_Vertex(Num, x, y, z, 1.0, 0.0);
         if(!Tree_Insert(M->Vertices, &vert)){
-	  Msg(GERROR, "Node %d already exists\n", vert->Num);
+	  Msg(GERROR, "Node %d already exists", vert->Num);
 	  Free_Vertex(&vert, 0);
 	}
 	else if(CTX.mesh.check_duplicates) {
@@ -324,7 +324,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    simp->VSUP[0] = vertsp[2];
 	  }
           if(!Tree_Insert(c->Simplexes, &simp)){
-	    Msg(GERROR, "Line element %d already exists\n", simp->Num);
+	    Msg(GERROR, "Line element %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
           //NO!!! Tree_Insert(M->Simplexes, &simp) ; 
@@ -347,7 +347,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             M->Statistics[7]++;
 	  }
           else{
-	    Msg(GERROR, "Triangle %d already exists\n", simp->Num);
+	    Msg(GERROR, "Triangle %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
           break;
@@ -370,7 +370,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             M->Statistics[8]++;
           }
 	  else{
-	    Msg(GERROR, "Quadrangle %d already exists\n", simp->Num);
+	    Msg(GERROR, "Quadrangle %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
           break;
@@ -392,7 +392,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             M->Statistics[9]++;
 	  }
 	  else{
-	    Msg(GERROR, "Tetrahedron %d already exists\n", simp->Num);
+	    Msg(GERROR, "Tetrahedron %d already exists", simp->Num);
 	    Free_Simplex(&simp, 0);
 	  }
           break;
@@ -415,7 +415,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             M->Statistics[10]++;
 	  }
 	  else{
-	    Msg(GERROR, "Hexahedron %d already exists\n", hex->Num);
+	    Msg(GERROR, "Hexahedron %d already exists", hex->Num);
 	    Free_Hexahedron(&hex, 0);
 	  }
           break;
@@ -438,7 +438,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             M->Statistics[11]++;
 	  }
 	  else{
-	    Msg(GERROR, "Prism %d already exists\n", pri->Num);
+	    Msg(GERROR, "Prism %d already exists", pri->Num);
 	    Free_Prism(&pri, 0);
 	  }
           break;
@@ -461,7 +461,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
             M->Statistics[12]++;
 	  }
 	  else{
-	    Msg(GERROR, "Pyramid %d already exists\n", pri->Num);
+	    Msg(GERROR, "Pyramid %d already exists", pri->Num);
 	    Free_Pyramid(&pyr, 0);
 	  }
           break;
@@ -472,7 +472,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  vert = Create_Vertex(vertsp[0]->Num, vertsp[0]->Pos.X, vertsp[0]->Pos.Y, 
 			       vertsp[0]->Pos.Z, vertsp[0]->lc, vertsp[0]->w);
           if(!Tree_Insert(M->Points, &vert)){
-	    Msg(GERROR, "Point %d already exists\n", vert->Num);
+	    Msg(WARNING, "Point %d already exists", vert->Num);
 	    Free_Vertex(&vert, 0);
 	  }
           break;

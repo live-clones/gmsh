@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.50 2003-12-01 21:51:20 geuzaine Exp $
+// $Id: Gmsh.l,v 1.51 2003-12-11 17:15:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -176,7 +176,6 @@ Log10                   return tLog10;
 Layers                  return tLayers;
 
 Modulo                  return tModulo;
-Meshes                  return tMesh;
 MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.94 2003-12-07 17:00:56 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.95 2003-12-11 17:15:39 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,7 +37,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.17
+@set EDITION        1.18
 @set GMSH-VERSION   1.50
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -1232,6 +1232,9 @@ Merges a file and forces the recalculation of the scene's bounding box.
 @item Draw;
 Redraws the scene.
 
+@item Delete All;
+Deletes all geometrical entities and all currently loaded meshes.
+
 @item Print @var{char-expression};
 Prints the graphic window in a file named @var{char-expression}, using the
 current @code{Print.Format} (@pxref{General options}).
@@ -1983,9 +1986,6 @@ Here is a list of all other mesh commands currently available:
 @ftable @code
 @item Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Sets the mesh color of the entities listed in @var{expression-list} to @var{color-expression}.
-
-@item Delete Meshes;
-Deletes all currently loaded meshes.
 
 @item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Hide the mesh of the entities listed in @var{expression-list}, if

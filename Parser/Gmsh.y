@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.152 2003-12-01 21:51:22 geuzaine Exp $
+// $Id: Gmsh.y,v 1.153 2003-12-11 17:15:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1938,9 +1938,10 @@ Delete :
     {
       if(!strcmp($2, "View")) RemoveViewByIndex((int)$4);
     }
-    | tDelete tMesh tEND
+    | tDelete tSTRING tEND
     {
-      Init_Mesh(THEM, 1);
+      if(!strcmp($2, "Meshes") || !strcmp($2, "All"))
+	Init_Mesh(THEM, 1);
     }
 ;
 
@@ -2019,10 +2020,6 @@ Command :
       else if(!strcmp($1, "MergeWithBoundingBox")){
 	FixRelativePath($2, tmpstring);
 	MergeProblemWithBoundingBox(tmpstring);
-      }
-      else if(!strcmp($1, "Open")){
-	FixRelativePath($2, tmpstring);
-	OpenProblem(tmpstring);
       }
       else if(!strcmp($1, "System")){
 	SystemCall($2);
