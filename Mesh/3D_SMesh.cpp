@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.16 2003-03-01 22:36:41 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.17 2003-03-02 16:10:28 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -179,12 +179,21 @@ int MeshTransfiniteVolume(Volume * vol)
   Simplex *simp;
   int NbFacesFound = 0;
 
-  static int tab1hex[] =
-    { 0, 1, 5, 4, 1, 2, 6, 5, 3, 2, 6, 7, 0, 3, 7, 4, 0, 1, 2, 3, 4, 5, 6,
-7 };
-  static int tab2[] = { 0, 1, 2, 3, 1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2,
-    3, 2, 1, 0, 2, 1, 0, 3, 1, 0, 3, 2, 0, 3, 2, 1
-  };
+  static int tab1hex[] = { 0, 1, 5, 4, 
+			   1, 2, 6, 5,
+			   3, 2, 6, 7, 
+			   0, 3, 7, 4, 
+			   0, 1, 2, 3, 
+			   4, 5, 6, 7 };
+
+  static int tab2[] = { 0, 1, 2, 3,
+			1, 2, 3, 0,
+			2, 3, 0, 1,
+			3, 0, 1, 2,
+			3, 2, 1, 0,
+			2, 1, 0, 3, 
+			1, 0, 3, 2,
+			0, 3, 2, 1 };
 
   if(vol->Method != TRANSFINI)
     return (0);
@@ -331,16 +340,12 @@ int MeshTransfiniteVolume(Volume * vol)
     for(j = 0; j < N2; j++) {
 
       List_Read(G[4]->TrsfVertices, index2d(F_flag[4], N1, N2, i, 0), &C[0]);
-      List_Read(G[4]->TrsfVertices, index2d(F_flag[4], N1, N2, N1 - 1, j),
-                &C[1]);
-      List_Read(G[4]->TrsfVertices, index2d(F_flag[4], N1, N2, i, N2 - 1),
-                &C[2]);
+      List_Read(G[4]->TrsfVertices, index2d(F_flag[4], N1, N2, N1 - 1, j), &C[1]);
+      List_Read(G[4]->TrsfVertices, index2d(F_flag[4], N1, N2, i, N2 - 1), &C[2]);
       List_Read(G[4]->TrsfVertices, index2d(F_flag[4], N1, N2, 0, j), &C[3]);
       List_Read(G[5]->TrsfVertices, index2d(F_flag[5], N1, N2, i, 0), &C[4]);
-      List_Read(G[5]->TrsfVertices, index2d(F_flag[5], N1, N2, N1 - 1, j),
-                &C[5]);
-      List_Read(G[5]->TrsfVertices, index2d(F_flag[5], N1, N2, i, N2 - 1),
-                &C[6]);
+      List_Read(G[5]->TrsfVertices, index2d(F_flag[5], N1, N2, N1 - 1, j), &C[5]);
+      List_Read(G[5]->TrsfVertices, index2d(F_flag[5], N1, N2, i, N2 - 1), &C[6]);
       List_Read(G[5]->TrsfVertices, index2d(F_flag[5], N1, N2, 0, j), &C[7]);
 
       List_Read(G[4]->TrsfVertices, index2d(F_flag[4], N1, N2, i, j), &F[4]);
@@ -350,24 +355,16 @@ int MeshTransfiniteVolume(Volume * vol)
 
       for(k = 0; k < N3; k++) {
 
-        List_Read(G[0]->TrsfVertices, index2d(F_flag[0], N1, N3, 0, k),
-                  &C[8]);
-        List_Read(G[0]->TrsfVertices, index2d(F_flag[0], N1, N3, N1 - 1, k),
-                  &C[9]);
-        List_Read(G[2]->TrsfVertices, index2d(F_flag[2], N1, N3, N1 - 1, k),
-                  &C[10]);
-        List_Read(G[2]->TrsfVertices, index2d(F_flag[2], N1, N3, 0, k),
-                  &C[11]);
+        List_Read(G[0]->TrsfVertices, index2d(F_flag[0], N1, N3, 0, k), &C[8]);
+        List_Read(G[0]->TrsfVertices, index2d(F_flag[0], N1, N3, N1 - 1, k), &C[9]);
+        List_Read(G[2]->TrsfVertices, index2d(F_flag[2], N1, N3, N1 - 1, k), &C[10]);
+        List_Read(G[2]->TrsfVertices, index2d(F_flag[2], N1, N3, 0, k), &C[11]);
 
-        List_Read(G[0]->TrsfVertices, index2d(F_flag[0], N1, N3, i, k),
-                  &F[0]);
-        List_Read(G[1]->TrsfVertices, index2d(F_flag[1], N2, N3, j, k),
-                  &F[1]);
-        List_Read(G[2]->TrsfVertices, index2d(F_flag[2], N1, N3, i, k),
-                  &F[2]);
+        List_Read(G[0]->TrsfVertices, index2d(F_flag[0], N1, N3, i, k), &F[0]);
+        List_Read(G[1]->TrsfVertices, index2d(F_flag[1], N2, N3, j, k), &F[1]);
+        List_Read(G[2]->TrsfVertices, index2d(F_flag[2], N1, N3, i, k), &F[2]);
         if(nbs == 6)
-          List_Read(G[3]->TrsfVertices, index2d(F_flag[3], N2, N3, j, k),
-                    &F[3]);
+          List_Read(G[3]->TrsfVertices, index2d(F_flag[3], N2, N3, j, k), &F[3]);
         else if(nbs == 5)
           F[3] = C[8];
 
@@ -439,19 +436,16 @@ int MeshTransfiniteVolume(Volume * vol)
                                  list[(i) + N1 * (j) + N1 * N2 * (k + 1)],
                                  list[(i) + N1 * (j + 1) + N1 * N2 * (k)],
                                  list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k)],
-                                 list[(i) + N1 * (j + 1) +
-                                      N1 * N2 * (k + 1)]);
+                                 list[(i) + N1 * (j + 1) + N1 * N2 * (k + 1)]);
             prism->iEnt = vol->Num;
             Tree_Replace(vol->Prisms, &prism);
 
             prism = Create_Prism(list[(i + 1) + N1 * (j) + N1 * N2 * (k + 1)],
                                  list[(i) + N1 * (j) + N1 * N2 * (k + 1)],
                                  list[(i + 1) + N1 * (j) + N1 * N2 * (k)],
-                                 list[(i + 1) + N1 * (j + 1) +
-                                      N1 * N2 * (k + 1)],
+                                 list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k + 1)],
                                  list[(i) + N1 * (j + 1) + N1 * N2 * (k + 1)],
-                                 list[(i + 1) + N1 * (j + 1) +
-                                      N1 * N2 * (k)]);
+                                 list[(i + 1) + N1 * (j + 1) + N1 * N2 * (k)]);
             prism->iEnt = vol->Num;
             Tree_Replace(vol->Prisms, &prism);
 

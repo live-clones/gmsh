@@ -1,4 +1,4 @@
-// $Id: SMS.cpp,v 1.12 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: SMS.cpp,v 1.13 2003-03-02 16:10:28 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,9 @@ extern Context_T CTX;
 #define ENTITY_FACE   2
 #define ENTITY_REGION 3
 #define ENTITY_NONE   4
+
 extern int FACE_DIMENSION;
+
 void TRIE_MON_GARS2(void *a, void *b)
 {
   Simplex *s = *(Simplex **) a;
@@ -233,7 +235,6 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
     if(GEntityId) {
       fscanf(in, "%d %d", &GEntityType, &NbEdgesOnFace);
 
-
       List_T *Lists[4] = { 0, 0, 0, 0 };
 
       if(NbEdgesOnFace == 3) {
@@ -381,167 +382,176 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
   Msg(INFO, "Done.");
 }
 
-/*
-void Write_SMS_FILE (Mesh *m, char *filename)
+#if 0
+
+void Write_SMS_FILE(Mesh * m, char *filename)
 {
-  FILE *f = fopen (filename,"w");
+  FILE *f = fopen(filename, "w");
   // write first the global infos 
-  int i,j;
-//  Edge e;
+  int i, j;
+  // Edge e;
 
   List_T *l;
-  List_T *AllFaces = List_Create(100,100,sizeof(Simplex*));
+  List_T *AllFaces = List_Create(100, 100, sizeof(Simplex *));
   Surface *surf;
   Simplex *s;
   Vertex *v;
   Curve *c;
 
-
   l = Tree2List(m->Surfaces);
   EdgesContainer AllEdges(l);
 
-
-  for(i=0;i<List_Nbr(l);i++)
-    {
-      List_Read(l,i,&surf);
-      List_T *all = Tree2List(surf->Simplexes);
-      for(j=0;j<List_Nbr(all);j++)List_Add(AllFaces,List_Pointer(all,j));
-      List_Delete(all);
-    }
+  for(i = 0; i < List_Nbr(l); i++) {
+    List_Read(l, i, &surf);
+    List_T *all = Tree2List(surf->Simplexes);
+    for(j = 0; j < List_Nbr(all); j++)
+      List_Add(AllFaces, List_Pointer(all, j));
+    List_Delete(all);
+  }
   List_Delete(l);
 
-  fprintf(f,"gmsh 2\n");
-  fprintf(f,"0 %d %d %d %d\n"
-	  ,List_Nbr(AllFaces) 
-	  ,Tree_Nbr(AllEdges.AllEdges)
-	  ,Tree_Nbr(m->Vertices)
-	  ,Tree_Nbr(m->Vertices));
+  fprintf(f, "gmsh 2\n");
+  fprintf(f, "0 %d %d %d %d\n", List_Nbr(AllFaces)
+          , Tree_Nbr(AllEdges.AllEdges)
+          , Tree_Nbr(m->Vertices)
+          , Tree_Nbr(m->Vertices));
 
 
 
   l = Tree2List(m->Vertices);
   int MaxFrozen;
-  for(i = 0;i<List_Nbr(l);i++)
-    {
-      List_Read(l,i,&v);
-      MaxFrozen = (MaxFrozen>=v->Frozen)?MaxFrozen:v->Frozen;
-    }
+  for(i = 0; i < List_Nbr(l); i++) {
+    List_Read(l, i, &v);
+    MaxFrozen = (MaxFrozen >= v->Frozen) ? MaxFrozen : v->Frozen;
+  }
 
-  for(i = 0;i<List_Nbr(l);i++)
-    {
-      List_Read(l,i,&v);
-      int mtype = ((v->ListCurves)?((List_Nbr(v->ListCurves)== 1)?ENTITY_EDGE:ENTITY_VERTEX):ENTITY_FACE);
-      int gent;
-      switch(mtype)
-	{
-	case ENTITY_VERTEX : gent = i+1;break;
-	case ENTITY_EDGE   : List_Read(v->ListCurves,0,&c);gent = c->ipar[3]+1;break;
-	case ENTITY_FACE   : List_Read(v->ListSurf,0,&surf);gent = surf->ipar[3]+1;break;
-	}
-      v->Frozen = i+1;
-      int nn = 7; // arbitrary 
-      fprintf(f,"%d %d %d\n",gent,mtype,nn);      
-      switch(mtype)
-	{
-	case ENTITY_VERTEX : fprintf(f,"%12.5E %12.5E %12.5E\n",v->Pos.X,v->Pos.Y,v->Pos.Z)      ;break;
-	case ENTITY_EDGE   : fprintf(f,"%12.5E %12.5E %12.5E 0 \n",v->Pos.X,v->Pos.Y,v->Pos.Z)      ;break;
-	case ENTITY_FACE   : fprintf(f,"%12.5E %12.5E %12.5E 0 0 1\n",v->Pos.X,v->Pos.Y,v->Pos.Z)      ;break;
-	}
+  for(i = 0; i < List_Nbr(l); i++) {
+    List_Read(l, i, &v);
+    int mtype =
+      ((v->
+        ListCurves) ? ((List_Nbr(v->ListCurves) ==
+                        1) ? ENTITY_EDGE : ENTITY_VERTEX) : ENTITY_FACE);
+    int gent;
+    switch (mtype) {
+    case ENTITY_VERTEX:
+      gent = i + 1;
+      break;
+    case ENTITY_EDGE:
+      List_Read(v->ListCurves, 0, &c);
+      gent = c->ipar[3] + 1;
+      break;
+    case ENTITY_FACE:
+      List_Read(v->ListSurf, 0, &surf);
+      gent = surf->ipar[3] + 1;
+      break;
     }
+    v->Frozen = i + 1;
+    int nn = 7;                 // arbitrary 
+    fprintf(f, "%d %d %d\n", gent, mtype, nn);
+    switch (mtype) {
+    case ENTITY_VERTEX:
+      fprintf(f, "%12.5E %12.5E %12.5E\n", v->Pos.X, v->Pos.Y, v->Pos.Z);
+      break;
+    case ENTITY_EDGE:
+      fprintf(f, "%12.5E %12.5E %12.5E 0 \n", v->Pos.X, v->Pos.Y, v->Pos.Z);
+      break;
+    case ENTITY_FACE:
+      fprintf(f, "%12.5E %12.5E %12.5E 0 0 1\n", v->Pos.X, v->Pos.Y,
+              v->Pos.Z);
+      break;
+    }
+  }
 
   //  extern int DEGRE2;
 
-  printf("%d edges\n",Tree_Nbr(AllEdges.AllEdges));
+  printf("%d edges\n", Tree_Nbr(AllEdges.AllEdges));
   l = Tree2List(m->Curves);
-  for(i=0;i<List_Nbr(l);i++)
-    {
-      List_Read(l,i,&c);
-      AllEdges.AddTree(c->Simplexes,false);
-      //      if(c->Num > 0 && c->Typ != MSH_SEGM_LINE)AllEdges.AddPoints(c,DEGRE2-1);
-    }
+  for(i = 0; i < List_Nbr(l); i++) {
+    List_Read(l, i, &c);
+    AllEdges.AddTree(c->Simplexes, false);
+    //      if(c->Num > 0 && c->Typ != MSH_SEGM_LINE)AllEdges.AddPoints(c,DEGRE2-1);
+  }
   List_Delete(l);
-  printf("%d edges\n",Tree_Nbr(AllEdges.AllEdges));
-  
+  printf("%d edges\n", Tree_Nbr(AllEdges.AllEdges));
+
 
   l = Tree2List(AllEdges.AllEdges);
-  int compareEdgeNum (const void *a, const void *b);
+  int compareEdgeNum(const void *a, const void *b);
 
-  List_Sort(l,compareEdgeNum);
-  
-  for(i = 0;i<List_Nbr(l);i++)
-    {
-      int mtype = ENTITY_FACE;
-      Edge *pe = (Edge*)List_Pointer(l,i);
-      int nn = 0,gent;
-      for(j=0;j<List_Nbr(pe->Simplexes);j++)
-	{
-	  List_Read(pe->Simplexes,j,&s);
-	  if(!s->V[2]){
-	    mtype = ENTITY_EDGE;
-	    gent = s->iEnt;
-	  }
-	  if(mtype == ENTITY_FACE)
-	    {
-	      nn ++;
-	      gent = s->iEnt;
-	    }
-	}  
-      if(!pe->Points)
-	fprintf(f,"%d %d %d %d %d 0\n",gent,mtype,pe->V[0]->Frozen,pe->V[1]->Frozen,nn);      
-      else
-	{
-	  fprintf(f,"%d %d %d %d %d %d\n",gent,mtype,pe->V[0]->Frozen,pe->V[1]->Frozen,nn,
-		  List_Nbr(pe->Points));      
-	  for(int k=0;k<List_Nbr(pe->Points);k++)
-	    {
-	      Coord cr;
-	      List_Read(pe->Points,k,&cr);
-	      fprintf(f,"%12.5E %12.5E %12.5E %12.5E ",cr.X,cr.Y,cr.Z,0.0);
-	    }
-	  fprintf(f,"\n");
-	}
+  List_Sort(l, compareEdgeNum);
+
+  for(i = 0; i < List_Nbr(l); i++) {
+    int mtype = ENTITY_FACE;
+    Edge *pe = (Edge *) List_Pointer(l, i);
+    int nn = 0, gent;
+    for(j = 0; j < List_Nbr(pe->Simplexes); j++) {
+      List_Read(pe->Simplexes, j, &s);
+      if(!s->V[2]) {
+        mtype = ENTITY_EDGE;
+        gent = s->iEnt;
+      }
+      if(mtype == ENTITY_FACE) {
+        nn++;
+        gent = s->iEnt;
+      }
     }
+    if(!pe->Points)
+      fprintf(f, "%d %d %d %d %d 0\n", gent, mtype, pe->V[0]->Frozen,
+              pe->V[1]->Frozen, nn);
+    else {
+      fprintf(f, "%d %d %d %d %d %d\n", gent, mtype, pe->V[0]->Frozen,
+              pe->V[1]->Frozen, nn, List_Nbr(pe->Points));
+      for(int k = 0; k < List_Nbr(pe->Points); k++) {
+        Coord cr;
+        List_Read(pe->Points, k, &cr);
+        fprintf(f, "%12.5E %12.5E %12.5E %12.5E ", cr.X, cr.Y, cr.Z, 0.0);
+      }
+      fprintf(f, "\n");
+    }
+  }
 
   Edge *ed[4];
   int ori[4];
-  int *edids = new int[List_Nbr(l)+1];
-  for(i=0;i<List_Nbr(l)+1;i++)edids[i] = 0;
+  int *edids = new int[List_Nbr(l) + 1];
+  for(i = 0; i < List_Nbr(l) + 1; i++)
+    edids[i] = 0;
   List_Delete(l);
-  for(i = 0;i<List_Nbr(AllFaces);i++)
-    {
-      List_Read(AllFaces,i,&s);
-      AllEdges.GetEdges(s,false,ed,ori);
-      if(!ed[3])
-	{
-	  for(int k=0;k<3;k++)
-	    {
-	      if(edids[ed[k]->Num] == ori[k])
-		{
-		  Simplex *s1,*s2;
-		  List_Read(ed[k]->Simplexes,0,&s1);
-		  List_Read(ed[k]->Simplexes,1,&s2);
-		  printf("Edge %d %d\n",ed[k]->V[0]->Num,ed[k]->V[1]->Num);
-		  printf("s1 = %d %d %d\n",s1->V[0]->Num,s1->V[1]->Num,s1->V[2]->Num);
-		  printf("s2 = %d %d %d\n",s2->V[0]->Num,s2->V[1]->Num,s2->V[2]->Num);
-		} 
-	      else
-		{
-		  edids[ed[k]->Num] = ori[k];
-		}
-	    }
+  for(i = 0; i < List_Nbr(AllFaces); i++) {
+    List_Read(AllFaces, i, &s);
+    AllEdges.GetEdges(s, false, ed, ori);
+    if(!ed[3]) {
+      for(int k = 0; k < 3; k++) {
+        if(edids[ed[k]->Num] == ori[k]) {
+          Simplex *s1, *s2;
+          List_Read(ed[k]->Simplexes, 0, &s1);
+          List_Read(ed[k]->Simplexes, 1, &s2);
+          printf("Edge %d %d\n", ed[k]->V[0]->Num, ed[k]->V[1]->Num);
+          printf("s1 = %d %d %d\n", s1->V[0]->Num, s1->V[1]->Num,
+                 s1->V[2]->Num);
+          printf("s2 = %d %d %d\n", s2->V[0]->Num, s2->V[1]->Num,
+                 s2->V[2]->Num);
+        }
+        else {
+          edids[ed[k]->Num] = ori[k];
+        }
+      }
 
-	  fprintf(f,"%d %d 3 %d %d %d 0\n",s->iEnt,ENTITY_FACE,ori[0] * ed[0]->Num,
-		  ori[1]*ed[1]->Num,ori[2]*ed[2]->Num);      
-	}
-      else fprintf(f,"%d %d 4 %d %d %d %d 0\n",s->iEnt,ENTITY_FACE,ori[0]*ed[0]->Num,
-		   ori[1]*ed[1]->Num,ori[2]*ed[2]->Num,ori[3]*ed[3]->Num);      
+      fprintf(f, "%d %d 3 %d %d %d 0\n", s->iEnt, ENTITY_FACE,
+              ori[0] * ed[0]->Num, ori[1] * ed[1]->Num, ori[2] * ed[2]->Num);
     }
+    else
+      fprintf(f, "%d %d 4 %d %d %d %d 0\n", s->iEnt, ENTITY_FACE,
+              ori[0] * ed[0]->Num, ori[1] * ed[1]->Num, ori[2] * ed[2]->Num,
+              ori[3] * ed[3]->Num);
+  }
   delete edids;
   List_Delete(AllFaces);
-  fclose (f);
-  
+  fclose(f);
+
 }
-*/
+
+#endif
+
 int isTopologic(Vertex * v, List_T * curves)
 {
   Curve *c;

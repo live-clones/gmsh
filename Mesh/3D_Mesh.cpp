@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.48 2003-03-01 22:36:41 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.49 2003-03-02 16:10:28 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -72,12 +72,11 @@ inline void cgsmpl(Simplex * s, double &x, double &y, double &z)
               s->V[1]->Pos.Z + s->V[2]->Pos.Z + s->V[3]->Pos.Z);
 }
 
-struct closestSimplex
-{
+struct closestSimplex {
   double X, Y, Z;
-    closestSimplex(double x, double y, double z)
-  : X(x), Y(y), Z(z)
+  closestSimplex(double x, double y, double z) : X(x), Y(y), Z(z)
   {
+    ;
   }
   bool operator () (Simplex * a, Simplex * b)
   {
@@ -91,8 +90,6 @@ struct closestSimplex
     return d1 < d2;
   }
 };
-
-
 
 void DebugSimplexe(Simplex * s)
 {
@@ -227,8 +224,7 @@ inline int Pt_In_Circum(Simplex * s, Vertex * v)
   return (0);
 }
 
-struct SimplexInteriorCheck
-{
+struct SimplexInteriorCheck {
   bool operator() (Simplex * s, double x[3], double u[3])
   {
     Vertex v(x[0], x[1], x[2]);
@@ -236,11 +232,11 @@ struct SimplexInteriorCheck
   }
 };
 
-struct SimplexInBox
-{
+struct SimplexInBox {
   double sizeBox;
-    SimplexInBox(double sb):sizeBox(sb)
+  SimplexInBox(double sb) : sizeBox(sb)
   {
+    ;
   }
   void operator() (Simplex * s, double min[3], double max[3])
   {
@@ -372,21 +368,23 @@ void Box_6_Tetraedron(List_T * P, Mesh * m)
 #define LOIN 0.2
 
   int i, j;
-  static int pts[8][3] = { {0, 0, 0},
-  {1, 0, 0},
-  {1, 1, 0},
-  {0, 1, 0},
-  {0, 0, 1},
-  {1, 0, 1},
-  {1, 1, 1},
-  {0, 1, 1}
+  static int pts[8][3] = { 
+    {0, 0, 0},
+    {1, 0, 0},
+    {1, 1, 0},
+    {0, 1, 0},
+    {0, 0, 1},
+    {1, 0, 1},
+    {1, 1, 1},
+    {0, 1, 1}
   };
-  static int tet[6][4] = { {1, 5, 2, 4},
-  {2, 5, 6, 4},
-  {4, 5, 6, 8},
-  {6, 4, 8, 7},
-  {6, 4, 7, 3},
-  {2, 3, 4, 6}
+  static int tet[6][4] = { 
+    {1, 5, 2, 4},
+    {2, 5, 6, 4},
+    {4, 5, 6, 8},
+    {6, 4, 8, 7},
+    {6, 4, 7, 3},
+    {2, 3, 4, 6}
   };
   double Xm = 0., Ym = 0., Zm = 0., XM = 0., YM = 0., ZM = 0., Xc, Yc, Zc;
   Simplex *S, *ps;
@@ -446,7 +444,7 @@ void Box_6_Tetraedron(List_T * P, Mesh * m)
      |   /|           /|
      |  / |          / |
      | /  |         /  |
-     5|/___|________/6  |
+    5|/___|________/6  |
      |   4|________|___|3
      |   /         |   /
      |  / Y        |  /
@@ -677,20 +675,21 @@ bool Bowyer_Watson(Mesh * m, Vertex * v, Simplex * S, int force)
     for(i = 0; i < List_Nbr(Simplexes_New); i++) {
       Simplex *theNewS;
       List_Read(Simplexes_New, i, &theNewS);
-      /*      if(force)
-         {
-         double xc = theNewS->Center.X;
-         double yc = theNewS->Center.Y;
-         double zc = theNewS->Center.Z;
-         double rd = theNewS->Radius;   
-         cgsmpl (theNewS,x,y,z);
-         THEM->Metric->setMetric (x, y, z);
-         THEM->Metric->setSimplexQuality (theNewS);
-         theNewS->Center.X = xc;
-         theNewS->Center.Y = yc;
-         theNewS->Center.Z = zc;
-         theNewS->Radius = rd;  
-         } */
+#if 0
+      if(force) {
+	double xc = theNewS->Center.X;
+	double yc = theNewS->Center.Y;
+	double zc = theNewS->Center.Z;
+	double rd = theNewS->Radius;   
+	cgsmpl (theNewS,x,y,z);
+	THEM->Metric->setMetric (x, y, z);
+	THEM->Metric->setSimplexQuality (theNewS);
+	theNewS->Center.X = xc;
+	theNewS->Center.Y = yc;
+	theNewS->Center.Z = zc;
+	theNewS->Radius = rd;  
+      }
+#endif
       Tree_Add(m->Simplexes, &theNewS);
     }
 
@@ -1035,18 +1034,18 @@ void Maillage_Volume(void *data, void *dum)
       SwapEdges3D(THEM, v, CTX.mesh.quality, true);
     }
 
+#if 0 // this is wrong
     if(CTX.mesh.nb_smoothing) {
-      /*
-         Msg(STATUS3, "Laplacian smoothing");
-         tnxe = Tree_Create (sizeof (NXE), compareNXE);
-         create_NXE (v->Vertices, v->Simplexes, tnxe);
-         for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
-         Tree_Action (tnxe, ActionLiss);
-         delete_NXE (tnxe);
-         Msg(STATUS3, "Swapping edges (last pass)");
-         SwapEdges3D (THEM, v, 0.5, true);
-       */
+      Msg(STATUS3, "Laplacian smoothing");
+      tnxe = Tree_Create (sizeof (NXE), compareNXE);
+      create_NXE (v->Vertices, v->Simplexes, tnxe);
+      for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
+	Tree_Action (tnxe, ActionLiss);
+      delete_NXE (tnxe);
+      Msg(STATUS3, "Swapping edges (last pass)");
+      SwapEdges3D (THEM, v, 0.5, true);
     }
+#endif
 
     if(CTX.mesh.degree == 2)
       Degre2(THEM->Vertices, THEM->VertexEdges, v->Simplexes, NULL, NULL);
