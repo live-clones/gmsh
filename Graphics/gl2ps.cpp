@@ -1,4 +1,4 @@
-// $Id: gl2ps.cpp,v 1.8 2001-02-16 20:16:40 remacle Exp $
+// $Id: gl2ps.cpp,v 1.9 2001-02-26 09:02:59 geuzaine Exp $
 
 /*
  * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
@@ -722,7 +722,7 @@ GLvoid gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
   c[1] /= prim->numverts;
 
   for(i=0 ; i<prim->numverts ; i++){
-    if(prim->boundary & (GLint)pow(2, i)){
+    if(prim->boundary & (GLint)pow(2., i)){
       b = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
       b->type = GL2PS_LINE;
       b->dash = prim->dash;
