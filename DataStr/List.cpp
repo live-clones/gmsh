@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.34 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: List.cpp,v 1.35 2005-04-05 05:56:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -428,7 +428,7 @@ List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
   List_T *liste;
 
   if(!n){
-    liste = List_Create(incr, incr, size);
+    liste = List_Create(1, incr, size);
     return liste;
   }
 
@@ -508,7 +508,7 @@ List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int forma
   List_T *liste;
 
   if(!n){
-    liste = List_Create(incr, incr, size);
+    liste = List_Create(1, incr, size);
     return liste;
   }
 

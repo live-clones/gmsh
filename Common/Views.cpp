@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.171 2005-03-26 04:09:15 geuzaine Exp $
+// $Id: Views.cpp,v 1.172 2005-04-05 05:56:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -110,7 +110,7 @@ Post_View *BeginView(int allocate)
   if(allocate) {
     v->DataSize = sizeof(double);
 
-#define LCD List_Create(100, 1000, sizeof(double))
+#define LCD List_Create(1, 1000, sizeof(double))
     v->Time = LCD;
     v->SP = LCD; v->VP = LCD; v->TP = LCD;
     v->SL = LCD; v->VL = LCD; v->TL = LCD; v->SL2 = LCD; v->VL2 = LCD; v->TL2 = LCD; 
@@ -122,10 +122,10 @@ Post_View *BeginView(int allocate)
     v->SY = LCD; v->VY = LCD; v->TY = LCD; v->SY2 = LCD; v->VY2 = LCD; v->TY2 = LCD; 
 #undef LCD
 
-    v->T2D = List_Create(10, 100, sizeof(double));
-    v->T2C = List_Create(100, 1000, sizeof(char));
-    v->T3D = List_Create(10, 100, sizeof(double));
-    v->T3C = List_Create(100, 1000, sizeof(char));
+    v->T2D = List_Create(1, 100, sizeof(double));
+    v->T2C = List_Create(1, 100, sizeof(char));
+    v->T3D = List_Create(1, 100, sizeof(double));
+    v->T3C = List_Create(1, 100, sizeof(char));
   }
   else {
     v->Time = NULL;
@@ -905,12 +905,12 @@ void ReadView(FILE *file, char *filename)
       v->DataSize = size;
 
       // Time values
-      v->Time = List_CreateFromFile(v->NbTimeStep, 10, size, file, format, swap);
+      v->Time = List_CreateFromFile(v->NbTimeStep, 100, size, file, format, swap);
 
       // Note: if nb==0, we still allocates the lists (so that they
       // are ready to be filled later, e.g. in plugins)
 
-#define LCD List_CreateFromFile(nb, 100, size, file, format, swap)
+#define LCD List_CreateFromFile(nb, 1000, size, file, format, swap)
 
       // Points
       nb = v->NbSP ? v->NbSP * (v->NbTimeStep * 1 + 3) : 0; v->SP = LCD;
@@ -991,19 +991,19 @@ void ReadView(FILE *file, char *filename)
 
       // 2D strings
       nb = v->NbT2 ? v->NbT2 * 4 : 0;
-      v->T2D = List_CreateFromFile(nb, 10, size, file, format, swap);
+      v->T2D = List_CreateFromFile(nb, 100, size, file, format, swap);
       if(version <= 1.2)
-	v->T2C = List_CreateFromFileOld(t2l, 10, sizeof(char), file, format, swap);
+	v->T2C = List_CreateFromFileOld(t2l, 100, sizeof(char), file, format, swap);
       else
-	v->T2C = List_CreateFromFile(t2l, 10, sizeof(char), file, format, swap);
+	v->T2C = List_CreateFromFile(t2l, 100, sizeof(char), file, format, swap);
 
       // 3D strings
       nb = v->NbT3 ? v->NbT3 * 5 : 0;
-      v->T3D = List_CreateFromFile(nb, 10, size, file, format, swap);
+      v->T3D = List_CreateFromFile(nb, 100, size, file, format, swap);
       if(version <= 1.2)
-	v->T3C = List_CreateFromFileOld(t3l, 10, sizeof(char), file, format, swap);
+	v->T3C = List_CreateFromFileOld(t3l, 100, sizeof(char), file, format, swap);
       else
-	v->T3C = List_CreateFromFile(t3l, 10, sizeof(char), file, format, swap);
+	v->T3C = List_CreateFromFile(t3l, 100, sizeof(char), file, format, swap);
 
       Msg(DEBUG,
           "Read View '%s' (%d TimeSteps): "
