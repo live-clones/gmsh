@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.129 2004-09-17 17:35:21 geuzaine Exp $
+// $Id: Views.cpp,v 1.130 2004-09-17 22:06:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1367,6 +1367,25 @@ void combine_time(struct nameidx *id, List_T *to_remove)
       List_Add(vm->Time, List_Pointer(v->Time, j));
     }
   }
+  // if all the time values are the same, it probably means that the
+  // original views didn't have any time data: let's put some indices,
+  // then
+  double time0 = *(double*)List_Pointer(vm->Time, 0);
+  int nbtime = List_Nbr(vm->Time), ok = 0;
+  for(int i = 1; i < nbtime; i++){
+    if(time0 != *(double*)List_Pointer(vm->Time, i)){
+      ok = 1;
+      break;
+    }
+  }
+  if(!ok){
+    List_Reset(vm->Time);
+    for(int i = 0; i < nbtime; i++){
+      double time = i;
+      List_Add(vm->Time, &time);
+    }
+  }
+
   // finalize
   char name[256], filename[256];
   sprintf(name, "%s_Combine", id->name);
