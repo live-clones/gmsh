@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.1 2004-05-12 03:23:31 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.2 2004-05-12 03:29:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -69,10 +69,10 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
          "Plugin(Evaluate) sets the values associated with\n"
          "the `TimeStep'-th time step in the view `iView'\n"
 	 "to the expression `Expression'. In addition to\n"
-	 "the usual mathematical functions, `Expression' can\n"
-	 "contain the symbols x, y, z and v, which represent\n"
-	 "the three spatial coordinates and the value of the\n"
-	 "field, respectively.\n"
+	 "the usual mathematical functions, `Expression'\n"
+	 "can contain the symbols x, y, z and v, which\n"
+	 "represent the three spatial coordinates and the\n"
+	 "value of the field, respectively.\n"
 	 "\n"
 	 "Plugin(Evaluate) is executed in-place.\n");
 }
