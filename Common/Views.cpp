@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.12 2000-11-27 18:59:28 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.13 2000-12-07 00:55:16 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -330,6 +330,142 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   ColorTable_Copy(&src->CT);
   ColorTable_Paste(&dest->CT);
 }
+
+char **Get_StringViewOption(int num, char *str, int *type){
+  Post_View *v;
+
+  if(num < 0 || num >= List_Nbr(Post_ViewList)){
+    *type = -1 ;
+    return NULL ;
+  }
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+
+  if(!strcmp(str, "Format")){
+    return (char**)&v->Format ;
+  }
+  else if(!strcmp(str, "FileName")){
+    return (char**)&v->FileName ;
+  }
+  else if(!strcmp(str, "Name")){
+    return (char**)&v->FileName ;
+  }
+  else{
+    return NULL ;
+  }
+}
+
+void *Get_NumberViewOption(int num, char *str, int *type){
+  Post_View *v;
+
+  if(num < 0 || num >= List_Nbr(Post_ViewList)){
+    *type = -1 ;
+    return NULL ;
+  }
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+
+  if(!strcmp(str, "NbTimeStep")){
+    *type = GMSH_INT ;
+    return (void*)&v->NbTimeStep ;
+  }
+  else if(!strcmp(str, "Min")){
+    *type = GMSH_DOUBLE ;
+    return (void*)&v->Min ;
+  }
+  else if(!strcmp(str, "Max")){
+    *type = GMSH_DOUBLE ;
+    return (void*)&v->Max ;
+  }
+  else if(!strcmp(str, "CustomMin")){
+    *type = GMSH_DOUBLE ;
+    return (void*)&v->CustomMin ;
+  }
+  else if(!strcmp(str, "CustomMin")){
+    *type = GMSH_DOUBLE ;
+    return (void*)&v->CustomMax ;
+  }
+  else if(!strcmp(str, "ArrowScale")){
+    *type = GMSH_DOUBLE ;
+    return (void*)&v->ArrowScale ;
+  }
+  else if(!strcmp(str, "Visible")){
+    *type = GMSH_INT ;
+    return (void*)&v->Visible ;
+  }
+  else if(!strcmp(str, "IntervalsType")){
+    *type = GMSH_INT ;
+    return (void*)&v->IntervalsType ;
+  }
+  else if(!strcmp(str, "NbIso")){
+    *type = GMSH_INT ;
+    return (void*)&v->NbIso ;
+  }
+  else if(!strcmp(str, "Light")){
+    *type = GMSH_INT ;
+    return (void*)&v->Light ;
+  }
+  else if(!strcmp(str, "ShowElement")){
+    *type = GMSH_INT ;
+    return (void*)&v->ShowElement ;
+  }
+  else if(!strcmp(str, "ShowTime")){
+    *type = GMSH_INT ;
+    return (void*)&v->ShowElement ;
+  }
+  else if(!strcmp(str, "ShowScale")){
+    *type = GMSH_INT ;
+    return (void*)&v->ShowElement ;
+  }
+  else if(!strcmp(str, "TransparentScale")){
+    *type = GMSH_INT ;
+    return (void*)&v->TransparentScale ;
+  }
+  else if(!strcmp(str, "ScaleType")){
+    *type = GMSH_INT ;
+    return (void*)&v->ScaleType ;
+  }
+  else if(!strcmp(str, "RangeType")){
+    *type = GMSH_INT ;
+    return (void*)&v->RangeType ;
+  }
+  else if(!strcmp(str, "ArrowType")){
+    *type = GMSH_INT ;
+    return (void*)&v->ArrowType ;
+  }
+  else if(!strcmp(str, "ArrowLocation")){
+    *type = GMSH_INT ;
+    return (void*)&v->ArrowLocation ;
+  }
+  else if(!strcmp(str, "TimeStep")){
+    *type = GMSH_INT ;
+    return (void*)&v->TimeStep ;
+  }
+  else{
+    return NULL ;
+  }
+}
+
+void *Get_ArrayViewOption(int num, char *str, int *type){
+  Post_View *v;
+
+  if(num < 0 || num >= List_Nbr(Post_ViewList)){
+    *type = -1 ;
+    return NULL ;
+  }
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+
+  if(!strcmp(str, "Offset")){
+    *type = GMSH_DOUBLE ;
+    return (void*)v->Offset ;
+  }
+  else if(!strcmp(str, "Raise")){
+    *type = GMSH_DOUBLE ;
+    return (void*)v->Raise ;
+  }
+  else{
+    return NULL ;
+  }
+}
+
 
 /* ------------------------------------------------------------------------ */
 /*  R e a d _ V i e w                                                       */

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.10 2000-12-06 22:36:44 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.11 2000-12-07 00:55:16 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,7 +141,6 @@ Modulo                  return tModulo ;
 
 Nurbs			return tNurbs;
 
-Offset                  return tOffset;
 Order			return tOrder;
 Options                 return tOptions;
 

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.20 2000-12-06 23:01:55 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.21 2000-12-07 00:55:17 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -79,7 +79,7 @@ void  vyyerror (char *fmt, ...);
 %token tUsing tBump tProgression
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tInclude tRecombine tDelete tCoherence
-%token tView tOffset tAttractor tLayers
+%token tView tAttractor tLayers
 %token tScalarTetrahedron tVectorTetrahedron tTensorTetrahedron
 %token tScalarTriangle tVectorTriangle tTensorTriangle
 %token tScalarLine tVectorLine tTensorLine
@@ -397,7 +397,7 @@ View :
     { 
       EndView(1, Force_ViewNumber,yyname,$2,0.,0.,0.); 
     }
-  | tView tBIGSTR tOffset VExpr '{' Views '}' tEND
+  | tView tBIGSTR tSTRING VExpr '{' Views '}' tEND
     {
       EndView(1, Force_ViewNumber,yyname,$2,$4[0],$4[1],$4[2]);
     }  
@@ -1511,6 +1511,9 @@ Option :
     Printf 
     {
     }
+
+  /* -------- Strings -------- */ 
+
   | tSTRING '.' tSTRING tAFFECT tBIGSTR tEND 
     { 
       if(!(pStrCat = Get_StringOptionCategory($1)))
@@ -1523,6 +1526,25 @@ Option :
 	}
       }
     }
+
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT tBIGSTR tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pStrOpt = Get_StringViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown String Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  *pStrOpt = $10 ;
+	}
+      }
+    }
+
+  /* -------- Numbers -------- */ 
+
   | tSTRING '.' tSTRING tAFFECT FExpr tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1540,6 +1562,27 @@ Option :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT FExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt = $10 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt = (float)$10 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt = (long)$10 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt = (int)$10 ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tAFFECTPLUS FExpr tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1557,6 +1600,27 @@ Option :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTPLUS FExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt += $10 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt += (float)$10 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt += (long)$10 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt += (int)$10 ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tAFFECTMINUS FExpr tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1574,6 +1638,27 @@ Option :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTMINUS FExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt -= $10 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt -= (float)$10 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt -= (long)$10 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt -= (int)$10 ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tAFFECTTIMES FExpr tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1591,6 +1676,27 @@ Option :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT FExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt *= $10 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt *= (float)$10 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt *= (long)$10 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt *= (int)$10 ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tAFFECTDIVIDE FExpr tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1608,6 +1714,27 @@ Option :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTDIVIDE FExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt /= $10 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt /= (float)$10 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt /= (long)$10 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt /= (int)$10 ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tPLUSPLUS tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1625,6 +1752,27 @@ Option :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tPLUSPLUS FExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt += 1. ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt += 1. ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt += 1 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt += 1 ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tMINUSMINUS tEND 
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1642,6 +1790,29 @@ Option :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tMINUSMINUS FExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt -= 1. ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt -= 1. ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt -= 1 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt -= 1 ; break ;
+	  }
+	}
+      }
+    }
+
+  /* -------- Arrays -------- */ 
+
   | tSTRING '.' tSTRING tAFFECT VExpr tEND 
     {
       if(!(pArrCat = Get_ArrayOptionCategory($1)))
@@ -1652,21 +1823,50 @@ Option :
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE :
-	    for(j=0 ; j<4; j++) ((double*)pNumOpt)[j] = $5[j] ;
+	    for(j=0 ; j<4; j++) ((double*)pArrOpt)[j] = $5[j] ;
 	    break ;
 	  case GMSH_FLOAT :
-	    for(j=0 ; j<4; j++) ((float*)pNumOpt)[j] = (float)$5[j] ;
+	    for(j=0 ; j<4; j++) ((float*)pArrOpt)[j] = (float)$5[j] ;
 	    break ;
 	  case GMSH_LONG :
-	    for(j=0 ; j<4; j++) ((long*)pNumOpt)[j] = (long)$5[j] ;
+	    for(j=0 ; j<4; j++) ((long*)pArrOpt)[j] = (long)$5[j] ;
 	    break ;
 	  case GMSH_INT :
-	    for(j=0 ; j<4; j++) ((int*)pNumOpt)[j] = (int)$5[j] ;
+	    for(j=0 ; j<4; j++) ((int*)pArrOpt)[j] = (int)$5[j] ;
 	    break ;
 	  }
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT VExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    for(j=0 ; j<3; j++) ((double*)pArrOpt)[j] = $10[j] ;
+	    break ;
+	  case GMSH_FLOAT :
+	    for(j=0 ; j<3; j++) ((float*)pArrOpt)[j] = (float)$10[j] ;
+	    break ;
+	  case GMSH_LONG :
+	    for(j=0 ; j<3; j++) ((long*)pArrOpt)[j] = (long)$10[j] ;
+	    break ;
+	  case GMSH_INT :
+	    for(j=0 ; j<3; j++) ((int*)pArrOpt)[j] = (int)$10[j] ;
+	    break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tAFFECTPLUS VExpr tEND 
     {
       if(!(pArrCat = Get_ArrayOptionCategory($1)))
@@ -1677,21 +1877,50 @@ Option :
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE :
-	    for(j=0 ; j<4; j++) ((double*)pNumOpt)[j] += $5[j] ;
+	    for(j=0 ; j<4; j++) ((double*)pArrOpt)[j] += $5[j] ;
 	    break ;
 	  case GMSH_FLOAT :
-	    for(j=0 ; j<4; j++) ((float*)pNumOpt)[j] += (float)$5[j] ;
+	    for(j=0 ; j<4; j++) ((float*)pArrOpt)[j] += (float)$5[j] ;
 	    break ;
 	  case GMSH_LONG :
-	    for(j=0 ; j<4; j++) ((long*)pNumOpt)[j] += (long)$5[j] ;
+	    for(j=0 ; j<4; j++) ((long*)pArrOpt)[j] += (long)$5[j] ;
 	    break ;
 	  case GMSH_INT :
-	    for(j=0 ; j<4; j++) ((int*)pNumOpt)[j] += (int)$5[j] ;
+	    for(j=0 ; j<4; j++) ((int*)pArrOpt)[j] += (int)$5[j] ;
 	    break ;
 	  }
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTPLUS VExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    for(j=0 ; j<3; j++) ((double*)pArrOpt)[j] += $10[j] ;
+	    break ;
+	  case GMSH_FLOAT :
+	    for(j=0 ; j<3; j++) ((float*)pArrOpt)[j] += (float)$10[j] ;
+	    break ;
+	  case GMSH_LONG :
+	    for(j=0 ; j<3; j++) ((long*)pArrOpt)[j] += (long)$10[j] ;
+	    break ;
+	  case GMSH_INT :
+	    for(j=0 ; j<3; j++) ((int*)pArrOpt)[j] += (int)$10[j] ;
+	    break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tAFFECTMINUS VExpr tEND 
     {
       if(!(pArrCat = Get_ArrayOptionCategory($1)))
@@ -1702,21 +1931,52 @@ Option :
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE :
-	    for(j=0 ; j<4; j++) ((double*)pNumOpt)[j] -= $5[j] ;
+	    for(j=0 ; j<4; j++) ((double*)pArrOpt)[j] -= $5[j] ;
 	    break ;
 	  case GMSH_FLOAT :
-	    for(j=0 ; j<4; j++) ((float*)pNumOpt)[j] -= (float)$5[j] ;
+	    for(j=0 ; j<4; j++) ((float*)pArrOpt)[j] -= (float)$5[j] ;
 	    break ;
 	  case GMSH_LONG :
-	    for(j=0 ; j<4; j++) ((long*)pNumOpt)[j] -= (long)$5[j] ;
+	    for(j=0 ; j<4; j++) ((long*)pArrOpt)[j] -= (long)$5[j] ;
 	    break ;
 	  case GMSH_INT :
-	    for(j=0 ; j<4; j++) ((int*)pNumOpt)[j] -= (int)$5[j] ;
+	    for(j=0 ; j<4; j++) ((int*)pArrOpt)[j] -= (int)$5[j] ;
 	    break ;
 	  }
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTMINUS VExpr tEND 
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    for(j=0 ; j<3; j++) ((double*)pArrOpt)[j] -= $10[j] ;
+	    break ;
+	  case GMSH_FLOAT :
+	    for(j=0 ; j<3; j++) ((float*)pArrOpt)[j] -= (float)$10[j] ;
+	    break ;
+	  case GMSH_LONG :
+	    for(j=0 ; j<3; j++) ((long*)pArrOpt)[j] -= (long)$10[j] ;
+	    break ;
+	  case GMSH_INT :
+	    for(j=0 ; j<3; j++) ((int*)pArrOpt)[j] -= (int)$10[j] ;
+	    break ;
+	  }
+	}
+      }
+    }
+
+  /* -------- Colors -------- */ 
+
   | tSTRING '.' tColor '.' tSTRING tAFFECT Color tEND 
     {
       if(!(pColCat = Get_ColorOptionCategory($1)))
@@ -1729,6 +1989,7 @@ Option :
 	}
       }
     }
+
 ;
 
 /* ---------------
@@ -1835,6 +2096,27 @@ FExpr_Single :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : $$ = *(double*)pNumOpt ; break ;
+	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt) ; break ;
+	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt) ; break ;
+	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt) ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tPLUSPLUS
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1852,6 +2134,27 @@ FExpr_Single :
 	}
       }
     }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tPLUSPLUS
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt += 1.) ; break ;
+	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt += 1.) ; break ;
+	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt += 1) ; break ;
+	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt += 1) ; break ;
+	  }
+	}
+      }
+    }
+
   | tSTRING '.' tSTRING tMINUSMINUS
     {
       if(!(pNumCat = Get_NumberOptionCategory($1)))
@@ -1859,6 +2162,26 @@ FExpr_Single :
       else{
 	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt -= 1.) ; break ;
+	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt -= 1.) ; break ;
+	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt -= 1) ; break ;
+	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt -= 1) ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tMINUSMINUS
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt -= 1.) ; break ;
@@ -1952,6 +2275,36 @@ VExpr_Single :
 	    for(j=0 ; j<4 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
 	    break ;
 	  }
+	  $$[4] = 1. ;
+	}
+      }
+    }
+  | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
+    {
+      if(strcmp($1, "Post"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
+	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
+			     $1, (int)$5, $8);
+	}
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    for(j=0 ; j<3 ; j++) $$[j] = ((double*)pArrOpt)[j] ; 
+	    break ;
+	  case GMSH_FLOAT :
+	    for(j=0 ; j<3 ; j++) $$[j] = (double)((float*)pArrOpt)[j] ;
+	    break ;
+	  case GMSH_LONG : 
+	    for(j=0 ; j<3 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
+	    break ;
+	  case GMSH_INT :
+	    for(j=0 ; j<3 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
+	    break ;
+	  }
+	  $$[3] = 0. ;
 	  $$[4] = 1. ;
 	}
       }

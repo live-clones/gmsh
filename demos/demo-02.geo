@@ -42,17 +42,8 @@ Physical Volume (1) = {41} ;
    line to get the full list of available options. */
 
 Options{
-  General{
-    Rotation0 = 10;
-    Color{
-      Background = Red;
-    }
-  }
-  Geometry{
-    Color{
-      Points = Orange;
-      Lines = Blue;
-    }
-  }
+  General.Rotation0 = 10;
+  General.Color.Background = Red;
+  Geometry.Color.Points = Orange;
 }
 
