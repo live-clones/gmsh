@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.410 2005-01-08 20:15:10 geuzaine Exp $
+// $Id: GUI.cpp,v 1.411 2005-01-13 05:45:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -1163,10 +1163,10 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
 	p[j]->add("Remove/All Views", 0, 
 		  (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
-	p[j]->add("Duplicate/View without Options", 0, 
-		  (Fl_Callback *) view_duplicate_cb, (void *)nb, 0);
-	p[j]->add("Duplicate/View with Options", 0, 
-		  (Fl_Callback *) view_duplicate_with_options_cb, (void *)nb, 0);
+	p[j]->add("Alias/View without Options", 0, 
+		  (Fl_Callback *) view_alias_cb, (void *)nb, 0);
+	p[j]->add("Alias/View with Options", 0, 
+		  (Fl_Callback *) view_alias_with_options_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/From Visible Views", 0, 
 		  (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
 	p[j]->add("Combine/Elements/From All Views", 0, 
@@ -2706,15 +2706,31 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Offset");
       o->hide();
-
-      view_value[40] = new Fl_Value_Input(L + width / 2, 2 * WB + 1 * BH, IW, BH, "X offset");
+      
+      int ss = 2*IW/3/3+2;
+      view_value[51] = new Fl_Value_Input(L + width/2       , 2 * WB + 1 * BH, ss, BH);
+      view_value[52] = new Fl_Value_Input(L + width/2 + ss  , 2 * WB + 1 * BH, ss, BH);
+      view_value[53] = new Fl_Value_Input(L + width/2 + 2*ss, 2 * WB + 1 * BH, ss, BH, "X");
+      view_value[40] = new Fl_Value_Input(L + width/2 + 4*ss, 2 * WB + 1 * BH, IW/2, BH);
       view_value[40]->align(FL_ALIGN_RIGHT);
 
-      view_value[41] = new Fl_Value_Input(L + width / 2, 2 * WB + 2 * BH, IW, BH, "Y offset");
+      view_value[54] = new Fl_Value_Input(L + width/2       , 2 * WB + 2 * BH, ss, BH);
+      view_value[55] = new Fl_Value_Input(L + width/2 + ss  , 2 * WB + 2 * BH, ss, BH);
+      view_value[56] = new Fl_Value_Input(L + width/2 + 2*ss, 2 * WB + 2 * BH, ss, BH, "Y +");
+      view_value[41] = new Fl_Value_Input(L + width/2 + 4*ss, 2 * WB + 2 * BH, IW/2, BH);
       view_value[41]->align(FL_ALIGN_RIGHT);
 
-      view_value[42] = new Fl_Value_Input(L + width / 2, 2 * WB + 3 * BH, IW, BH, "Z offset");
+      view_value[57] = new Fl_Value_Input(L + width/2       , 2 * WB + 3 * BH, ss, BH);
+      view_value[58] = new Fl_Value_Input(L + width/2 + ss  , 2 * WB + 3 * BH, ss, BH);
+      view_value[59] = new Fl_Value_Input(L + width/2 + 2*ss, 2 * WB + 3 * BH, ss, BH, "Z");
+      view_value[42] = new Fl_Value_Input(L + width/2 + 4*ss, 2 * WB + 3 * BH, IW/2, BH);
       view_value[42]->align(FL_ALIGN_RIGHT);
+      for(int i = 51; i <= 59; i++){
+	view_value[i]->minimum(-1.);
+	view_value[i]->maximum(1.);
+	view_value[i]->step(0.1);
+	view_value[i]->align(FL_ALIGN_RIGHT);
+      }
 
       view_value[43] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "X raise");
       view_value[43]->align(FL_ALIGN_RIGHT);
@@ -3013,6 +3029,15 @@ void GUI::update_view_window(int num)
     view_value[i]->minimum(-val1);
     view_value[i]->maximum(val1);
   }
+  opt_view_transform00(num, GMSH_GUI, 0);
+  opt_view_transform01(num, GMSH_GUI, 0);
+  opt_view_transform02(num, GMSH_GUI, 0);
+  opt_view_transform10(num, GMSH_GUI, 0);
+  opt_view_transform11(num, GMSH_GUI, 0);
+  opt_view_transform12(num, GMSH_GUI, 0);
+  opt_view_transform20(num, GMSH_GUI, 0);
+  opt_view_transform21(num, GMSH_GUI, 0);
+  opt_view_transform22(num, GMSH_GUI, 0);
   opt_view_raise0(num, GMSH_GUI, 0);
   opt_view_raise1(num, GMSH_GUI, 0);
   opt_view_raise2(num, GMSH_GUI, 0);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.226 2005-01-10 01:06:29 geuzaine Exp $
+// $Id: Options.cpp,v 1.227 2005-01-13 05:45:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4627,6 +4627,132 @@ double opt_view_raise2(OPT_ARGS_NUM)
   return v->Raise[2];
 }
 
+double opt_view_transform00(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[0][0] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[51]->value(v->Transform[0][0]);
+#endif
+  return v->Transform[0][0];
+}
+
+double opt_view_transform01(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[0][1] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[52]->value(v->Transform[0][1]);
+#endif
+  return v->Transform[0][1];
+}
+
+double opt_view_transform02(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[0][2] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[53]->value(v->Transform[0][2]);
+#endif
+  return v->Transform[0][2];
+}
+
+double opt_view_transform10(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[1][0] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[54]->value(v->Transform[1][0]);
+#endif
+  return v->Transform[1][0];
+}
+
+double opt_view_transform11(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[1][1] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[55]->value(v->Transform[1][1]);
+#endif
+  return v->Transform[1][1];
+}
+
+double opt_view_transform12(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[1][2] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[56]->value(v->Transform[1][2]);
+#endif
+  return v->Transform[1][2];
+}
+
+double opt_view_transform20(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[2][0] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[57]->value(v->Transform[2][0]);
+#endif
+  return v->Transform[2][0];
+}
+
+double opt_view_transform21(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[2][1] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[58]->value(v->Transform[2][1]);
+#endif
+  return v->Transform[2][1];
+}
+
+double opt_view_transform22(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Transform[2][2] = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[59]->value(v->Transform[2][2]);
+#endif
+  return v->Transform[2][2];
+}
+
 double opt_view_arrow_size(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
@@ -4767,7 +4893,7 @@ double opt_view_visible(OPT_ARGS_NUM)
   Msg(DEBUG1, "View %d", v->Num);
   Msg(DEBUG2, "  -> Name '%s'", v->Name);
   Msg(DEBUG2, "  -> FileName '%s'", v->FileName);
-  Msg(DEBUG2, "  -> DuplicateOf %d", v->DuplicateOf);
+  Msg(DEBUG2, "  -> AliasOf %d", v->AliasOf);
   Msg(DEBUG3, "  -> Links %d", v->Links);
   return v->Visible;
 }

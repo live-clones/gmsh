@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.4 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: Remove.cpp,v 1.5 2005-01-13 05:45:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -105,8 +105,8 @@ Post_View *GMSH_RemovePlugin::execute(Post_View * v)
 
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   
-  if(v1->DuplicateOf || v1->Links){
-    Msg(GERROR, "Cannot remove data from duplicate or linked view");
+  if(v1->AliasOf || v1->Links){
+    Msg(GERROR, "Cannot remove data from aliased view");
     return v1;
   }
 

@@ -43,7 +43,7 @@
 class Post_View{
  public :
   // intrinsic to a view
-  int Num, Index, Changed, DuplicateOf, Links, Dirty;
+  int Num, Index, Changed, AliasOf, Links, Dirty;
   char FileName[256], Name[256], AbscissaName[256];
 
   // the data
@@ -77,7 +77,7 @@ class Post_View{
   int Type, Position[2], AutoPosition, Size[2];
   char   Format[256], AbscissaFormat[256];
   double CustomMin, CustomMax;
-  double Offset[3], Raise[3], DisplacementFactor, Explode;
+  double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;
   int Visible, IntervalsType, NbIso, NbAbscissa, ArrowSizeProportional;
@@ -183,12 +183,11 @@ class Post_View{
 // Public functions
 
 int fcmpPostViewNum(const void *v1, const void *v2);
-int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
+int fcmpPostViewAliasOf(const void *v1, const void *v2);
 
 Post_View * BeginView (int alloc);
 void EndView (Post_View *v, int AddInUI, char *FileName, char *Name);
-void DuplicateView(Post_View *v1, int withoptions);
-void DuplicateView(int num, int withoptions);
+void AliasView(int num, int withoptions);
 void FreeView(Post_View *v);
 bool RemoveViewByIndex(int index);
 bool RemoveViewByNumber(int num);

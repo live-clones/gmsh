@@ -424,6 +424,51 @@ Current time step displayed@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item View.Transform11
+Element (1,1) of the 3x3 coordinate transformation matrix@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item View.Transform12
+Element (1,2) of the 3x3 coordinate transformation matrix@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.Transform13
+Element (1,3) of the 3x3 coordinate transformation matrix@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.Transform21
+Element (2,1) of the 3x3 coordinate transformation matrix@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.Transform22
+Element (2,2) of the 3x3 coordinate transformation matrix@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item View.Transform23
+Element (2,3) of the 3x3 coordinate transformation matrix@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.Transform31
+Element (3,1) of the 3x3 coordinate transformation matrix@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.Transform32
+Element (3,2) of the 3x3 coordinate transformation matrix@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.Transform33
+Element (3,3) of the 3x3 coordinate transformation matrix@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
 @item View.Type
 Type of graph (1=3D, 2=2D-space, 3=2D-time)@*
 Default value: @code{1}@*

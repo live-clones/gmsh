@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.161 2005-01-08 20:15:10 geuzaine Exp $
+// $Id: Views.cpp,v 1.162 2005-01-13 05:45:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -52,9 +52,9 @@ int fcmpPostViewNum(const void *v1, const void *v2)
   return ((*(Post_View **) v1)->Num - (*(Post_View **) v2)->Num);
 }
 
-int fcmpPostViewDuplicateOf(const void *v1, const void *v2)
+int fcmpPostViewAliasOf(const void *v1, const void *v2)
 {
-  return ((*(Post_View **) v1)->DuplicateOf - (*(Post_View **) v2)->DuplicateOf);
+  return ((*(Post_View **) v1)->AliasOf - (*(Post_View **) v2)->AliasOf);
 }
 
 int fcmpPostViewName(const void *v1, const void *v2)
@@ -168,7 +168,7 @@ Post_View *BeginView(int allocate)
   
   v->Changed = 1;
   v->Links = 0;
-  v->DuplicateOf = 0;
+  v->AliasOf = 0;
   v->ScalarOnly = 1;
   v->TextOnly = 1;
   v->normals = new smooth_normals;
@@ -435,28 +435,32 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
   Msg(DEBUG, "Added View[%d]", v->Index);
 }
 
-void DuplicateView(int num, int withoptions)
+void AliasView(int index, int withoptions)
 {
+  if(index < 0 || index >= List_Nbr(CTX.post.list)) {
+    return;
+  }
+
   Post_View v, *pv, **ppv;
 
-  Post_View *v1 = *(Post_View **) List_Pointer(CTX.post.list, num);
+  Post_View *v1 = *(Post_View **) List_Pointer(CTX.post.list, index);
 
   Post_View *v2 = BeginView(0);
   EndView(v2, 0, v1->FileName, v1->Name);
 
-  if(!v1->DuplicateOf) {
-    v2->DuplicateOf = v1->Num;
+  if(!v1->AliasOf) {
+    v2->AliasOf = v1->Num;
     v1->Links++;
   }
   else {
-    v.Num = v1->DuplicateOf;
+    v.Num = v1->AliasOf;
     pv = &v;
     if(!(ppv = (Post_View **) List_PQuery(CTX.post.list, &pv, fcmpPostViewNum))) {
-      v2->DuplicateOf = v1->Num;
+      v2->AliasOf = v1->Num;
       v1->Links++;
     }
     else {
-      v2->DuplicateOf = (*ppv)->Num;
+      v2->AliasOf = (*ppv)->Num;
       (*ppv)->Links++;
     }
   }
@@ -555,16 +559,16 @@ void FreeView(Post_View * v)
   Post_View vv, *pvv, **ppvv;
   int i, numdup, free = 1;
 
-  if(v->DuplicateOf) {
-    vv.Num = v->DuplicateOf;
+  if(v->AliasOf) {
+    vv.Num = v->AliasOf;
     pvv = &vv;
     Msg(DEBUG, "This view is a duplicata");
     if(!(ppvv = (Post_View **) List_PQuery(CTX.post.list, &pvv, fcmpPostViewNum))) {
       Msg(DEBUG, "  -the original view is gone");
       numdup = 0;
       for(i = 0; i < List_Nbr(CTX.post.list); i++)
-        numdup += ((*(Post_View **) List_Pointer(CTX.post.list, i))->DuplicateOf
-		   == v->DuplicateOf);
+        numdup += ((*(Post_View **) List_Pointer(CTX.post.list, i))->AliasOf
+		   == v->AliasOf);
       if(numdup == 1) {
         Msg(DEBUG, "  -there are no other duplicata, so I can free");
         free = 1;
@@ -620,6 +624,9 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->Offset[0] = src->Offset[0];
   dest->Offset[1] = src->Offset[1];
   dest->Offset[2] = src->Offset[2];
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++)
+      dest->Transform[i][j] = src->Transform[i][j];
   dest->Raise[0] = src->Raise[0];
   dest->Raise[1] = src->Raise[1];
   dest->Raise[2] = src->Raise[2];

@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.17 2005-01-03 04:09:27 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.18 2005-01-13 05:45:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -135,9 +135,9 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
 
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
-  // Bail out if the view is a duplicate or if other views duplicate it
-  if(v1->DuplicateOf || v1->Links) {
-    Msg(GERROR, "DecomposeInSimplex cannot be applied to a duplicated view");
+  // Bail out if the view is an alias or if other views duplicate it
+  if(v1->AliasOf || v1->Links) {
+    Msg(GERROR, "DecomposeInSimplex cannot be applied to an aliased view");
     return 0;
   }
 

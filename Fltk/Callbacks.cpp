@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.327 2005-01-08 20:15:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.328 2005-01-13 05:45:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2959,15 +2959,15 @@ void view_save_txt_cb(CALLBACK_ARGS)
   _view_save_as((long)data, "Save As Text", 4);
 }
 
-void view_duplicate_cb(CALLBACK_ARGS)
+void view_alias_cb(CALLBACK_ARGS)
 {
-  DuplicateView((long)data, 0);
+  AliasView((long)data, 0);
   Draw();
 }
 
-void view_duplicate_with_options_cb(CALLBACK_ARGS)
+void view_alias_with_options_cb(CALLBACK_ARGS)
 {
-  DuplicateView((long)data, 1);
+  AliasView((long)data, 1);
   Draw();
 }
 
@@ -3230,6 +3230,15 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double offset0 = opt_view_offset0(current, GMSH_GET, 0);
   double offset1 = opt_view_offset1(current, GMSH_GET, 0);
   double offset2 = opt_view_offset2(current, GMSH_GET, 0);
+  double transform00 = opt_view_transform00(current, GMSH_GET, 0);
+  double transform01 = opt_view_transform01(current, GMSH_GET, 0);
+  double transform02 = opt_view_transform02(current, GMSH_GET, 0);
+  double transform10 = opt_view_transform10(current, GMSH_GET, 0);
+  double transform11 = opt_view_transform11(current, GMSH_GET, 0);
+  double transform12 = opt_view_transform12(current, GMSH_GET, 0);
+  double transform20 = opt_view_transform20(current, GMSH_GET, 0);
+  double transform21 = opt_view_transform21(current, GMSH_GET, 0);
+  double transform22 = opt_view_transform22(current, GMSH_GET, 0);
   double raise0 = opt_view_raise0(current, GMSH_GET, 0);
   double raise1 = opt_view_raise1(current, GMSH_GET, 0);
   double raise2 = opt_view_raise2(current, GMSH_GET, 0);
@@ -3527,6 +3536,42 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_value[42]->value();
       if(force || (val != offset2))
         opt_view_offset2(i, GMSH_SET, val);
+
+      val = WID->view_value[51]->value();
+      if(force || (val != transform00))
+        opt_view_transform00(i, GMSH_SET, val);
+
+      val = WID->view_value[52]->value();
+      if(force || (val != transform01))
+        opt_view_transform01(i, GMSH_SET, val);
+
+      val = WID->view_value[53]->value();
+      if(force || (val != transform02))
+        opt_view_transform02(i, GMSH_SET, val);
+
+      val = WID->view_value[54]->value();
+      if(force || (val != transform10))
+        opt_view_transform10(i, GMSH_SET, val);
+
+      val = WID->view_value[55]->value();
+      if(force || (val != transform11))
+        opt_view_transform11(i, GMSH_SET, val);
+
+      val = WID->view_value[56]->value();
+      if(force || (val != transform12))
+        opt_view_transform12(i, GMSH_SET, val);
+
+      val = WID->view_value[57]->value();
+      if(force || (val != transform20))
+        opt_view_transform20(i, GMSH_SET, val);
+
+      val = WID->view_value[58]->value();
+      if(force || (val != transform21))
+        opt_view_transform21(i, GMSH_SET, val);
+
+      val = WID->view_value[59]->value();
+      if(force || (val != transform22))
+        opt_view_transform22(i, GMSH_SET, val);
 
       val = WID->view_value[43]->value();
       if(force || (val != raise0))

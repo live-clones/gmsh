@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.165 2005-01-09 21:36:31 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.166 2005-01-13 05:45:46 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2312,6 +2312,16 @@ Sample post-processing files in human-readable ``parsed'' format
 @cindex Commands, post-processing
 
 @ftable @code
+@item Alias View[@var{expression}];
+Creates an alias of the @var{expression}-th post-processing view. 
+
+Note that @code{Alias} creates a logical duplicate of the view without
+actually duplicating the data in memory. This is very useful when you want
+multiple simultaneous renderings of the same large dataset (usually with
+different display options), but you cannot afford to store all copies in
+memory. If what you really want is multiple physical copies of the data,
+just merge the file containing the post-processing view multiple times.
+
 @item Combine TimeSteps;
 Combines the data from all the post-processing views having the same name
 into new multi-time-step views.
@@ -2325,16 +2335,6 @@ post-processing view numbers start at 0.
 
 @item Delete Empty Views;
 Deletes (removes) all the empty post-processing views.
-
-@item Duplicata View[@var{expression}];
-Duplicates the @var{expression}-th post-processing view. 
-
-Note that @code{Duplicata} creates a logical duplicate of the view without
-actually duplicating the data in memory. This is very useful when you want
-multiple simultaneous renderings of the same large dataset (usually with
-different display options), but you cannot afford to store all copies in
-memory. If what you really want is multiple physical copies of the data,
-just merge the file containing the post-processing view multiple times.
 
 @item Plugin (@var{string}) . Run;
 Executes the plugin @var{string}. The list of default plugins is given in

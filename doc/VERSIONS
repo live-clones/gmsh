@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.300 2005-01-12 19:10:41 geuzaine Exp $
+$Id: VERSIONS,v 1.301 2005-01-13 05:45:45 geuzaine Exp $
 
 New since 1.58: added support for discrete (triangulated) surfaces,
 either in STL format or with the new "Discrete Surface" command; added
@@ -8,7 +8,8 @@ compute isovolumes; generalized Plugin(Evaluate) to handle external
 view data (based on the same or on a different mesh); generalized
 Plugin(CutGrid); new plugins (Eigenvalues, Gradient, Curl,
 Divergence); changed default colormap to match Matlab's "Jet"
-colormap; fixed small bugs.
+colormap; new transformation matrix option for views (for
+non-destructive rotations, symmetries, etc.); fixed small bugs.
 
 New in 1.58: fixed UNIX socket interface on Windows (broken by the TCP
 solver patch in 1.57); bumped version number of default

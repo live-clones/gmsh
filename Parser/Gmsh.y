@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.197 2005-01-08 20:15:17 geuzaine Exp $
+// $Id: Gmsh.y,v 1.198 2005-01-13 05:45:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -95,7 +95,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tUsing tBump tProgression tPlugin tDiscrete
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect
-%token tAttractor tLayers
+%token tAttractor tLayers tAlias
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarTriangle tVectorTriangle tTensorTriangle
@@ -2381,9 +2381,16 @@ Duplicata :
       }
       List_Delete($3);
     }
+  // for backward compatibility:
   | tDuplicata tSTRING '[' FExpr ']' tEND
     {
-      if(!strcmp($2, "View")) DuplicateView((int)$4, 0);
+      if(!strcmp($2, "View")) AliasView((int)$4, 0);
+      Free($2);
+      $$ = NULL;
+    }
+  | tAlias tSTRING '[' FExpr ']' tEND
+    {
+      if(!strcmp($2, "View")) AliasView((int)$4, 0);
       Free($2);
       $$ = NULL;
     }

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.92 2005-01-09 02:18:59 geuzaine Exp $
+// $Id: Post.cpp,v 1.93 2005-01-13 05:45:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -222,16 +222,17 @@ int GetValuesFromExternalView(Post_View *v, int type, int refcomp,
 
 void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
                 double *x1, double *y1, double *z1, double *vals,
-                double *x2, double *y2, double *z2)
+                double *x2, double *y2, double *z2,
+		int offset, int raise, int transform)
 {
   int i;
   double xc = 0., yc = 0., zc = 0.;
 
   if(v->Explode == 1.) {
     for(i = 0; i < nbnod; i++) {
-      x2[i] = x1[i] + v->Offset[0];
-      y2[i] = y1[i] + v->Offset[1];
-      z2[i] = z1[i] + v->Offset[2];
+      x2[i] = x1[i];
+      y2[i] = y1[i];
+      z2[i] = z1[i];
     }
   }
   else {
@@ -244,13 +245,30 @@ void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
     yc /= (double)nbnod;
     zc /= (double)nbnod;
     for(i = 0; i < nbnod; i++) {
-      x2[i] = xc + v->Explode * (x1[i] - xc) + v->Offset[0];
-      y2[i] = yc + v->Explode * (y1[i] - yc) + v->Offset[1];
-      z2[i] = zc + v->Explode * (z1[i] - zc) + v->Offset[2];
+      x2[i] = xc + v->Explode * (x1[i] - xc);
+      y2[i] = yc + v->Explode * (y1[i] - yc);
+      z2[i] = zc + v->Explode * (z1[i] - zc);
     }
   }
 
-  if(v->Raise[0] || v->Raise[1] || v->Raise[2]){
+  if(transform){
+    for(i = 0; i < nbnod; i++) {
+      double x = x2[i], y = y2[i], z = z2[i];
+      x2[i] = v->Transform[0][0] * x + v->Transform[0][1] * y + v->Transform[0][2] * z;
+      y2[i] = v->Transform[1][0] * x + v->Transform[1][1] * y + v->Transform[1][2] * z;
+      z2[i] = v->Transform[2][0] * x + v->Transform[2][1] * y + v->Transform[2][2] * z;
+    }
+  }
+  
+  if(offset){
+    for(i = 0; i < nbnod; i++) {
+      x2[i] += v->Offset[0];
+      y2[i] += v->Offset[1];
+      z2[i] += v->Offset[2];
+    }
+  }
+
+  if(raise){
     for(int k = 0; k < nbnod; k++){
       double norm = 0.;
       if(nbcomp == 1)
@@ -352,8 +370,22 @@ void Draw_List(Post_View * v, double ValMin, double ValMax, int type,
 	       void (*draw) (Post_View *, int, double, double, double *, 
 			     double *, double *, double *))
 {
-  int i, nb;
+  int i, nb, offset = 0, raise = 0, transform = 0;
   double X[8], Y[8], Z[8];
+
+  // do we need to apply an offset?
+  if(v->Offset[0] || v->Offset[1] || v->Offset[2])
+    offset = 1;
+
+  // do we need to apply a simple raise?
+  if(v->Raise[0] || v->Raise[1] || v->Raise[2])
+    raise = 1;
+
+  // do we need to apply a general transformation?
+  if(v->Transform[0][0] != 1. || v->Transform[0][1] != 0. || v->Transform[0][2] != 0. ||
+     v->Transform[1][0] != 0. || v->Transform[1][1] != 1. || v->Transform[1][2] != 0. ||
+     v->Transform[2][0] != 0. || v->Transform[2][1] != 0. || v->Transform[2][2] != 1.)
+    transform = 1;
 
   if(nbelm) {
     nb = List_Nbr(list) / nbelm;
@@ -368,7 +400,7 @@ void Draw_List(Post_View * v, double ValMin, double ValMax, int type,
                    (double *)List_Pointer_Fast(list, i + 2 * nbnod), 
 		   (double *)List_Pointer_Fast(list, i + 3 * nbnod +
 					       v->TimeStep * nbnod * nbcomp),
-		   X, Y, Z);
+		   X, Y, Z, offset, raise, transform);
         draw(v, 1, ValMin, ValMax, X, Y, Z,
              (double *)List_Pointer_Fast(list, i + 3 * nbnod));
 	v->ExternalElementIndex++;
@@ -383,7 +415,7 @@ void Draw_List(Post_View * v, double ValMin, double ValMax, int type,
                  (double *)List_Pointer_Fast(list, i + 2 * nbnod),
 		 (double *)List_Pointer_Fast(list, i + 3 * nbnod +
 					     v->TimeStep * nbnod * nbcomp),
-		 X, Y, Z);
+		 X, Y, Z, offset, raise, transform);
       draw(v, 0, ValMin, ValMax, X, Y, Z,
            (double *)List_Pointer_Fast(list, i + 3 * nbnod));
       v->ExternalElementIndex++;
