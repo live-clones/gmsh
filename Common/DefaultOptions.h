@@ -662,7 +662,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display width of lines (in pixels)" },
 
   { F|O, "Normals" , opt_geometry_normals , 0. , 
-    "Size of the vectors normal to the surfaces" }, 
+    "Display size of normal vectors (in pixels)" }, 
 
   { F|O, "OldCircle" , opt_geometry_old_circle , 0. , 
     "Use old circle description (compatibility option for old Gmsh geometries)" },
@@ -692,7 +692,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display surface numbers?" },
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
-    "Size of the vectors tangent to the curves" }, 
+    "Display size of tangent vectors (in pixels)" },
 
   { F|O, "Volumes" , opt_geometry_volumes , 0. , 
     "Display geometry volumes? (not implemented yet)" },
@@ -781,7 +781,7 @@ StringXNumber MeshOptions_Number[] = {
   { F, "NbTriangles" , opt_mesh_nb_triangles , 0. , 
     "Number of triangles in the current mesh" },
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
-    "Size of the normal vectors" }, 
+    "Display size of normal vectors (in pixels)" }, 
 
   { F|O, "Points" , opt_mesh_points , 1. , 
     "Display mesh vertices?" },
@@ -820,7 +820,7 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh surface numbers?" },
 
   { F|O, "Tangents" , opt_mesh_tangents , 0.0 , 
-    "Size of the tangent vectors" }, 
+    "Display size of tangent vectors (in pixels)" }, 
 
   { F|O, "Volumes" , opt_mesh_volumes , 1. , 
     "Display volume mesh?" },
@@ -907,7 +907,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 
     "Arrow location (1=cog, 2=vertex)" },
   { F|O, "ArrowSize" , opt_view_arrow_size , 50. ,
-    "Size of vectors arrows (in pixels)" },
+    "Display size of arrows (in pixels)" },
   { F|O, "ArrowStemLength" , opt_view_arrow_stem_length , 0.56 ,
     "Relative length of arrow stem" },
   { F|O, "ArrowStemRadius" , opt_view_arrow_stem_radius , 0.02 ,
