@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.33 2005-01-14 01:40:49 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.34 2005-01-14 04:50:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -70,7 +70,7 @@ int Solver(int num, char *args)
 #if !defined(WIN32)
     strcat(command, " &");
 #endif
-    Gmsh_StartClient(command, NULL);
+    Gmsh_StartClient(command, NULL, CTX.solver.max_delay);
     return 1;
   }
 
@@ -90,7 +90,7 @@ int Solver(int num, char *args)
   strcat(command, " &");
 #endif
 
-  sock = Gmsh_StartClient(command, socket_name);
+  sock = Gmsh_StartClient(command, socket_name, CTX.solver.max_delay);
   if(sock < 0) {
     switch (sock) {
     case -1:

@@ -29,7 +29,7 @@
  *  Please report all bugs and problems to <gmsh@geuz.org>.
  */
 
-int Gmsh_StartClient(char *command, char *sockname);
+int Gmsh_StartClient(char *command, char *sockname, int maxdelay);
 int Gmsh_ReceiveString(int socket, int *type, char str[]);
 int Gmsh_StopClient(char *sockname, int socket);
 

@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.25 2005-01-08 20:15:11 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.26 2005-01-14 04:50:48 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *
@@ -30,10 +30,6 @@
  *   Christopher Stott
  */
 
-// This is a hacked version using the Gmsh function SystemCall()
-// instead system() and using CTX.solver.max_delay in select()
-#include "Context.h"
-extern Context_T CTX;
 void SystemCall(char *str);
 
 #include <stdio.h>
@@ -85,7 +81,7 @@ static int Socket_UnlinkName(char *name)
 
 /* public interface */
 
-int Gmsh_StartClient(char *command, char *sockname)
+int Gmsh_StartClient(char *command, char *sockname, int maxdelay)
 {
   static int init = 0;
   static int s;
@@ -104,8 +100,7 @@ int Gmsh_StartClient(char *command, char *sockname)
 
   /* no socket? launch the command! */
   if(!sockname) {
-    //system(command);
-    SystemCall(command);
+    SystemCall(command); //system(command);
     return 1;
   }
 
@@ -160,16 +155,14 @@ int Gmsh_StartClient(char *command, char *sockname)
   }
 
   /* Start the external function via system() call */
-  //system(command);
-  SystemCall(command);
+  SystemCall(command); //system(command);
 
   /* wait for external function to connect */
   if(listen(s, 20))
     return -3;  /* Error: Socket listen failed */
 
   /* Watch s to see when it has input; wait up to N seconds */
-  //tv.tv_sec = 4;
-  tv.tv_sec = CTX.solver.max_delay;
+  tv.tv_sec = maxdelay;
   tv.tv_usec = 0;
   FD_ZERO(&rfds);
   FD_SET(s, &rfds);
