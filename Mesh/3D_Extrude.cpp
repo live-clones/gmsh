@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.57 2003-01-23 20:19:21 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.58 2003-02-05 22:48:46 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -647,9 +647,11 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
 	  s = Create_Simplex (v1, v4, v3, NULL);
 	else if(v1->Num == v3->Num || v3->Num == v4->Num) 
 	  s = Create_Simplex (v1, v2, v4, NULL);
-	else if(v1->Num == v4->Num || v2->Num == v3->Num)
+	else if(v1->Num == v4->Num || v2->Num == v3->Num){
 	  Msg(GERROR, "Uncoherent quadrangle  (nodes %d %d %d %d)",
 	      v1->Num,v2->Num,v3->Num,v4->Num);
+	  return;
+	}
 	else 
 	  s = Create_Quadrangle(v1,v2,v4,v3);
         s->iEnt = THES->Num; 
