@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.3 2002-03-10 23:23:33 remacle Exp $ */
+/* $Id: GmshServer.cpp,v 1.4 2002-04-13 05:44:37 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +47,7 @@ static int Socket_UnlinkName(char *name){
 
 int Gmsh_StartClient(char *command, char *sockname){
   int s, sock;
-#if defined(linux) || defined(_AIX) || defined (sun)
+#if defined(linux) || defined(_AIX)
   socklen_t len ;
 #else
   int len;
