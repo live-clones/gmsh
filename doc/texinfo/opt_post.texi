@@ -25,7 +25,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.Link
-Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)@*
+Link post-processing views (0=none, 1/2=changes in visible/all, 3/4=everything in visible/all)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

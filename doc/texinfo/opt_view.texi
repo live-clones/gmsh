@@ -49,6 +49,11 @@ Display size of arrows (in pixels)@*
 Default value: @code{60}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.ArrowSizeProportional
+Scale the arrows according to the norm of the vector@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ArrowStemLength
 Relative length of arrow stem@*
 Default value: @code{0.56}@*
@@ -145,8 +150,13 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Explode
-Explode elements (0: reduced to point; 1: not transformed)@*
+Explode elements (between 0=point and 1=non-transformed)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.ExternalView
+Index of the view used to color vector fields (-1=self)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Grid
@@ -244,11 +254,6 @@ Vertical position (in pixels) of the upper left corner of the scale or 2D graph@
 Default value: @code{50}@*
 Saved in: @code{General.OptionsFileName}
 
-@item View.RaisedView
-Index of the view raised by the displacement field@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item View.RaiseX
 Elevation of the view along X-axis (in model coordinates)@*
 Default value: @code{0}@*
@@ -315,7 +320,7 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item View.VectorType
-Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=raised view)@*
+Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 

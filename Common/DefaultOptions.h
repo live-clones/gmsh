@@ -612,7 +612,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Shininess" , opt_general_shine , 0.4 , 
     "Material shininess" },
   { F|O, "ShininessExponent" , opt_general_shine_exponent , 40. , 
-    "Material shininess exponent (0 to 128)" },
+    "Material shininess exponent (between 0 and 128)" },
   { F|O, "SmallAxes" , opt_general_small_axes , 1. ,
     "Display the small axes" },
   { F|O, "SmallAxesPositionX" , opt_general_small_axes_position0 , -60. ,
@@ -778,7 +778,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is already a lex token
     "Element order (1=linear elements, 2=quadratic elements)" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
-    "Display mesh with non adjacent elements (factor between 0 and 1)" },
+    "Explode elements (between 0=point and 1=non-transformed)" },
 
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
     "Mesh output format (1=MSH, 2=UNV, 3=GREF, 19=VRML)" },
@@ -947,7 +947,7 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Display value scales horizontally" },
 
   { F|O, "Link" , opt_post_link , 0. ,
-    "Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)" },
+    "Link post-processing views (0=none, 1/2=changes in visible/all, 3/4=everything in visible/all)" },
 
   { F,   "NbViews" , opt_post_nb_views , 0. ,//this default val is not used
     "Current number of views merged" },
@@ -1019,9 +1019,9 @@ StringXNumber ViewOptions_Number[] = {
     "Display vector values?" },
 
   { F|O, "Explode" , opt_view_explode , 1. , 
-    "Explode elements (0: reduced to point; 1: not transformed)" },
+    "Explode elements (between 0=point and 1=non-transformed)" },
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
-    "Index of the view raised by a vector field or used to color a vector field (-1=self)" },
+    "Index of the view used to color vector fields (-1=self)" },
 
   { F|O, "Grid" , opt_view_grid , 2 ,
     "Grid mode for 2D graphs (0=none, 1=simple, 2=frame, 3=grid)" },
@@ -1098,7 +1098,7 @@ StringXNumber ViewOptions_Number[] = {
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
 
   { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW3D ,
-    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=raised view)" },
+    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
 

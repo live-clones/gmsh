@@ -36,7 +36,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.TextEditor
 System command to launch a text editor@*
-Default value: @code{"open -e %s"}@*
+Default value: @code{"emacs %s &"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
@@ -46,7 +46,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.WebBrowser
 System command to launch a web browser@*
-Default value: @code{"open %s"}@*
+Default value: @code{"if [[ $(ps -e|grep mozilla|grep -v grep) ]]; then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AlphaBlending
@@ -595,7 +595,7 @@ Default value: @code{0.4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ShininessExponent
-Material shininess exponent (0 to 128)@*
+Material shininess exponent (between 0 and 128)@*
 Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
