@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.44 2001-07-31 06:02:56 geuzaine Exp $
+// $Id: Views.cpp,v 1.45 2001-07-31 08:02:26 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -825,7 +825,7 @@ void Post_View :: smooth (){
   
 }
   
-// a small utility ti smooth normals
+// a small utility to smooth normals
 
 void Post_View :: reset_normals(){
   if(normals) delete normals;
@@ -859,5 +859,4 @@ bool Post_View :: get_normal(double x, double y, double z,
   nz = (*it).vals[2];
   return true;
 }
-
 
