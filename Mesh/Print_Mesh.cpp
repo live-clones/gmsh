@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.58 2005-01-08 20:15:12 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.59 2005-02-04 16:06:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -628,25 +628,27 @@ static FILE *UNVFILE;
 
 static void _unv_process_nodes(Mesh *M)
 {
-  int nbnod;
-  double x, y, z;
-  int i, idnod;
   Vertex *v;
-
   List_T *Nodes = Tree2List(M->Vertices);
 
   fprintf(UNVFILE, "%6d\n", -1);
   fprintf(UNVFILE, "%6d\n", NODES);
-  nbnod = List_Nbr(Nodes);
+  int nbnod = List_Nbr(Nodes);
 
-  for(i = 0; i < nbnod; i++) {
+  for(int i = 0; i < nbnod; i++) {
     List_Read(Nodes, i, &v);
-    idnod = v->Num;
-    x = v->Pos.X * CTX.mesh.scaling_factor;
-    y = v->Pos.Y * CTX.mesh.scaling_factor;
-    z = v->Pos.Z * CTX.mesh.scaling_factor;
+    int idnod = v->Num;
+    double x = v->Pos.X * CTX.mesh.scaling_factor;
+    double y = v->Pos.Y * CTX.mesh.scaling_factor;
+    double z = v->Pos.Z * CTX.mesh.scaling_factor;
     fprintf(UNVFILE, "%10d%10d%10d%10d\n", idnod, 1, 1, 11);
-    fprintf(UNVFILE, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", x, y, z);
+    char tmp[128];
+    // ugly hack to print number with 'D+XX' exponents
+    sprintf(tmp, "%25.16E%25.16E%25.16E\n", x, y, z);
+    tmp[21] = 'D';
+    tmp[46] = 'D';
+    tmp[71] = 'D';
+    fprintf(UNVFILE, tmp);    
   }
 
   List_Delete(Nodes);
@@ -847,8 +849,8 @@ static void _unv_add_vertex(void *a, void *b)
     return;
   Tree_Add(tree, &v->Num);
   fprintf(UNVFILE, "%10d%10d%2d%2d%2d%2d%2d%2d\n", v->Num, 1, 0, 1, 0, 0, 0, 0);
-  fprintf(UNVFILE, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", 0., 1., 0.);
-  fprintf(UNVFILE, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", 0., 0., 0.);
+  fprintf(UNVFILE, "   0.0000000000000000D+00   1.0000000000000000D+00   0.0000000000000000D+00\n");
+  fprintf(UNVFILE, "   0.0000000000000000D+00   0.0000000000000000D+00   0.0000000000000000D+00\n");
   fprintf(UNVFILE, "%10d%10d%10d%10d%10d%10d\n", 0, 0, 0, 0, 0, 0);
 }
 

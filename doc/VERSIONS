@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.307 2005-02-02 18:48:00 geuzaine Exp $
+$Id: VERSIONS,v 1.308 2005-02-04 16:06:10 geuzaine Exp $
 
 New in 1.59: added support for discrete (triangulated) surfaces,
 either in STL format or with the new "Discrete Surface" command; added
@@ -11,10 +11,11 @@ Divergence); changed default colormap to match Matlab's "Jet"
 colormap; new transformation matrix option for views (for
 non-destructive rotations, symmetries, etc.); improved solver
 interface to keep the GUI responsive during solver calls; new C++ and
-Python solver examples; simplified Tools->Visibility GUI; handle
-negative numbers in transfinite lines with "Progression" gracefully;
-added ability to retrive Gmsh's version number in the parser (to help
-write backward compatible scripts); fixed various small bugs.
+Python solver examples; simplified Tools->Visibility GUI; transfinite
+lines with "Progression" now allow negative line numbers to reverse
+the progression; added ability to retrieve Gmsh's version number in
+the parser (to help write backward compatible scripts); fixed white
+space in unv mesh output; fixed various small bugs.
 
 New in 1.58: fixed UNIX socket interface on Windows (broken by the TCP
 solver patch in 1.57); bumped version number of default
