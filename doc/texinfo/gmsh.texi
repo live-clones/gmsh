@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.144 2004-10-25 17:02:19 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.145 2004-10-27 20:37:10 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -1259,8 +1259,8 @@ point), the bounding box is taken as the box enclosing all the geometrical
 points;
 @item
 If there is no mesh and no geometry, but there are some post-processing
-views, the bounding box is taken as the box enclosing all the primitives of
-the last post-processing view.
+views, the bounding box is taken as the box enclosing all the primitives in
+the views.
 @end enumerate
 
 @item BoundingBox @{ @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression} @};

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.63 2004-10-17 01:53:49 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.64 2004-10-27 20:37:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -92,10 +92,20 @@ void SetBoundingBox(void)
     CalculateMinMax(THEM->Points, NULL);
   }
   else if(List_Nbr(CTX.post.list)) {
-    // else, if we have views, use the last one
-    CalculateMinMax(NULL, ((Post_View *) List_Pointer
-                           (CTX.post.list,
-                            List_Nbr(CTX.post.list) - 1))->BBox);
+    // else, if we have views, use the max bb of all the views
+    double bbox[6];
+    Post_View *v = (Post_View *)List_Pointer(CTX.post.list, 0);
+    for(int i = 0; i < 6; i++) bbox[i] = v->BBox[i];
+    for(int i = 1; i < List_Nbr(CTX.post.list); i++){
+      v = (Post_View *)List_Pointer(CTX.post.list, i);
+      if(v->BBox[0] < bbox[0]) bbox[0] = v->BBox[0];
+      if(v->BBox[1] > bbox[1]) bbox[1] = v->BBox[1];
+      if(v->BBox[2] < bbox[2]) bbox[2] = v->BBox[2];
+      if(v->BBox[3] > bbox[3]) bbox[3] = v->BBox[3];
+      if(v->BBox[4] < bbox[4]) bbox[4] = v->BBox[4];
+      if(v->BBox[5] > bbox[5]) bbox[5] = v->BBox[5];
+    }
+    CalculateMinMax(NULL, bbox);
   }
   else {
     // else, use a default bbox
