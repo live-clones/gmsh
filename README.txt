@@ -1,23 +1,25 @@
-$Id: README.txt,v 1.3 2001-02-24 16:22:18 geuzaine Exp $
+$Id: README.txt,v 1.4 2001-02-26 08:08:17 geuzaine Exp $
 
 For Windows versions of Gmsh only:
 ==================================
 
-2) About opengl32.dll:
+1) About opengl32.dll:
 
 If a version of the OpenGL library opengl32.dll is already installed
 on your system, you should remove the version shipped with
-Gmsh. Failing to do so may result in incorrect behaviour of Gmsh (the
-graphic window may stay "transparent", or Gmsh may even crash).
+Gmsh. Failing to do so may result in an incorrect behaviour of Gmsh
+(the most common being the graphic window staying "transparent").
 
-1) About cygwin1.dll:
+2) About cygwin1.dll:
 
 If you plan to use other programs than Gmsh which depend on the
 cygwin1.dll library (e.g. GetDP, http://www.geuz.org/getdp/), you
-should keep only one version of the library. You should thus move the
-file cygwin1.dll from this directory to the Windows system directory
-(usually C:\Windows\System\). Failing to do so may result in incorrect
-behaviour of all applications sharing the library.
+should keep only one version of the library on your system. For this
+purpose, you should move the file cygwin1.dll from this directory to
+the Windows system directory (usually C:\Windows\System\) and suppress
+all other versions of cygwin1.dll. Failing to do so may result in
+incorrect behaviour of applications sharing the library and running
+simultaneously.
 
 3) About configuration files:
 
