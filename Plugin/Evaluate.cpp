@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.17 2005-03-02 07:49:41 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.18 2005-03-03 21:31:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -93,11 +93,10 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "\n"
 	 "- the symbol w, to retrieve the `Component'-th\n"
 	 "component of the field in `ExternalView' at the\n"
-	 "`ExternalTimeStep'-th time step. `ExternalView'\n"
-	 "and `iView' must be of the same type (scalar,\n"
-	 "vector or tensor); if `ExternalView' and `iView'\n"
-	 "are not based on the same spatial grid,\n"
-	 "`ExternalView' is interpolated onto `iView';\n"
+	 "`ExternalTimeStep'-th time step. if `ExternalView'\n"
+	 "and `iView' are based on different spatial grids,\n"
+	 "or if their data types are different, `ExternalView'\n"
+	 "is interpolated onto `iView';\n"
 	 "\n"
 	 "- the symbols w0, w1, w2, ..., w8, to retrieve each\n"
 	 "component of the field in `ExternalView' at the\n"
@@ -177,28 +176,35 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
     double *y = (double *)List_Pointer_Fast(list1, i + nbNod);
     double *z = (double *)List_Pointer_Fast(list1, i + 2 * nbNod);
     for(int j = 0; j < nbNod; j++) {
+      // store data from the main view into v
+      double v[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
       double *val1 = (double *)List_Pointer_Fast(list1, 
 						 i + 3 * nbNod + 
 						 nbNod * nbComp * timeStep1 + nbComp * j);
+      for(int k = 0; k < nbComp; k++) v[k] = val1[k];
+
+      // store data from the external view into w
       double *val2, tmp[9], sizeElm;
+      double w[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
       if(_octree){
 	val2 = tmp;
-	if(nbComp == 1)
-	  _octree->searchScalar(x[j], y[j], z[j], val2, timeStep2);
-	else if(nbComp == 3)
-	  _octree->searchVector(x[j], y[j], z[j], val2, &sizeElm, timeStep2);
-	else
-	  _octree->searchTensor(x[j], y[j], z[j], val2, timeStep2);
+	if(_octree->searchScalar(x[j], y[j], z[j], val2, timeStep2)){
+	  w[0] = val2[0];
+	}
+	else if(_octree->searchVector(x[j], y[j], z[j], val2, &sizeElm, timeStep2)){
+	  for(int k = 0; k < 3; k++) w[k] = val2[k];
+	}
+	else if(_octree->searchTensor(x[j], y[j], z[j], val2, timeStep2)){
+	  for(int k = 0; k < 9; k++) w[k] = val2[k];
+	}
       }
-      else
+      else{
 	val2 = (double *)List_Pointer_Fast(list2, 
 					   i + 3 * nbNod + 
 					   nbNod * nbComp * timeStep2 + nbComp * j);
-
-      double v[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-      for(int k = 0; k < nbComp; k++) v[k] = val1[k];
-      double w[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-      for(int k = 0; k < nbComp; k++) w[k] = val2[k];
+	for(int k = 0; k < nbComp; k++) w[k] = val2[k];
+      }
+      
       double time = *(double*)List_Pointer(v1->Time, timeStep1);
       double tstep = timeStep1; 
       char *names[] = { "x", "y", "z", "Time", "TimeStep",
