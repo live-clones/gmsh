@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.5 2004-05-13 15:54:56 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.6 2004-05-13 17:48:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,7 @@ extern Context_T CTX;
 
 StringXNumber EvaluateOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, 0.},
+  {GMSH_FULLRC, "Component", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -66,16 +67,17 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Evaluate) sets the values associated\n"
-         "with the `TimeStep'-th time step in the scalar\n"
-	 "view `iView' to the expression `Expression'. In\n"
-	 "addition to the usual mathematical functions\n"
-	 "(Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and\n"
-	 "operators (+, -, *, /, ^), `Expression' can\n"
-	 "contain the symbols x, y, z and v, which\n"
-	 "represent the three spatial coordinates and the\n"
-	 "value of the field, respectively. If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
+         "Plugin(Evaluate) sets the `Component'-th\n"
+	 "component of the `TimeStep'-th time step\n"
+	 "in the view `iView' to the expression\n"
+	 "`Expression'. In addition to the usual\n"
+	 "mathematical functions (Exp, Log, Sqrt, Sin,\n"
+	 "Cos, Fabs, etc.) and operators (+, -, *, /, ^),\n"
+	 "`Expression' can contain the symbols x, y, z\n"
+	 "and v, which represent the three spatial\n"
+	 "coordinates and the value of the field,\n"
+	 "respectively. If `iView' < 0, the plugin is run\n"
+	 "on the current view.\n"
 	 "\n"
 	 "Plugin(Evaluate) is executed in-place.\n");
 }
@@ -105,8 +107,9 @@ void GMSH_EvaluatePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Evaluate failed...");
 }
 
-static void evaluateList(Post_View * v, List_T * list, int nbElm,
-			 int nbNod, int timeStep, char *expression)
+static void evaluate(Post_View * v, List_T * list, int nbElm,
+		     int nbNod, int nbComp, int comp, int timeStep,
+		     char *expression)
 {
 #if !defined(HAVE_MATH_EVAL)
 
@@ -114,18 +117,17 @@ static void evaluateList(Post_View * v, List_T * list, int nbElm,
 
 #else
 
-  double *x, *y, *z, *val;
-  int nb, i, j;
-
   if(!nbElm)
     return;
 
-  v->Changed = 1;
-
   if(timeStep < 0 || timeStep > v->NbTimeStep - 1){
-    Msg(WARNING, "Invalid TimeStep (%d) in View[%d]: choosing TimeStep 0",
-	timeStep, v->Index);
-    timeStep = 0;
+    Msg(GERROR, "Invalid TimeStep (%d) in View[%d]", timeStep, v->Index);
+    return;
+  }
+  
+  if(comp < 0 || comp > nbComp - 1){
+    Msg(GERROR, "Invalid Component (%d) in View[%d]", comp, v->Index);
+    return;
   }
 
   void *f = evaluator_create(expression);
@@ -135,27 +137,35 @@ static void evaluateList(Post_View * v, List_T * list, int nbElm,
     return;
   }
 
+  v->Changed = 1;
+
   double min = VAL_INF;
   double max = -VAL_INF;
 
-  nb = List_Nbr(list) / nbElm;
-  for(i = 0; i < List_Nbr(list); i += nb) {
-    x = (double *)List_Pointer_Fast(list, i);
-    y = (double *)List_Pointer_Fast(list, i + nbNod);
-    z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
-    val = (double *)List_Pointer_Fast(list, i + 3 * nbNod);
-    for(j = 0; j < nbNod; j++) {
-
+  int nb = List_Nbr(list) / nbElm;
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbNod);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
+    for(int j = 0; j < nbNod; j++) {
+      double *val = (double *)List_Pointer_Fast(list, 
+						i + 3 * nbNod + 
+						nbNod * nbComp * timeStep + nbComp * j);
       double xx = x[j];
       double yy = y[j];
       double zz = z[j];
-      double vv = val[nbNod * timeStep + j];
+      double vv = val[comp];
 
       char *names[] = { "x", "y" , "z", "v" };
       double values[] = { xx , yy, zz, vv };
       double res = evaluator_evaluate(f, sizeof(names)/sizeof(names[0]), names, values);
 
-      val[nbNod * timeStep + j] = res;
+      val[comp] = res;
+
+      if(nbComp == 3)
+	res = sqrt(DSQR(val[0]) + DSQR(val[1]) + DSQR(val[2]));
+      else if(nbComp == 9)
+	res = ComputeVonMises(val);
       if(res < min) min = res;
       if(res > max) max = res;
     }
@@ -175,24 +185,13 @@ static void evaluateList(Post_View * v, List_T * list, int nbElm,
 #endif
 }
 
-static void evaluate(Post_View * v, int timeStep, char *expression)
-{
-  evaluateList(v, v->SP, v->NbSP, 1, timeStep, expression);
-  evaluateList(v, v->SL, v->NbSL, 2, timeStep, expression);
-  evaluateList(v, v->ST, v->NbST, 3, timeStep, expression);
-  evaluateList(v, v->SQ, v->NbSQ, 4, timeStep, expression);
-  evaluateList(v, v->SS, v->NbSS, 4, timeStep, expression);
-  evaluateList(v, v->SH, v->NbSH, 8, timeStep, expression);
-  evaluateList(v, v->SI, v->NbSI, 6, timeStep, expression);
-  evaluateList(v, v->SY, v->NbSY, 5, timeStep, expression);
-}
-
 Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
 {
   Post_View *vv;
 
   int timeStep = (int)EvaluateOptions_Number[0].def;
-  int iView = (int)EvaluateOptions_Number[1].def;
+  int comp = (int)EvaluateOptions_Number[1].def;
+  int iView = (int)EvaluateOptions_Number[2].def;
   char *expr = EvaluateOptions_String[0].def;
 
   if(v && iView < 0)
@@ -206,7 +205,38 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
     }
   }
 
-  evaluate(vv, timeStep, expr);
+  evaluate(vv, vv->SP, vv->NbSP, 1, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VP, vv->NbVP, 1, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TP, vv->NbTP, 1, 9, comp, timeStep, expr);
+
+  evaluate(vv, vv->SL, vv->NbSL, 2, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VL, vv->NbVL, 2, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TL, vv->NbTL, 2, 9, comp, timeStep, expr);
+
+  evaluate(vv, vv->ST, vv->NbST, 3, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VT, vv->NbVT, 3, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TT, vv->NbTT, 3, 9, comp, timeStep, expr);
+
+  evaluate(vv, vv->SQ, vv->NbSQ, 4, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VQ, vv->NbVQ, 4, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TQ, vv->NbTQ, 4, 9, comp, timeStep, expr);
+
+  evaluate(vv, vv->SS, vv->NbSS, 4, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VS, vv->NbVS, 4, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TS, vv->NbTS, 4, 9, comp, timeStep, expr);
+
+  evaluate(vv, vv->SH, vv->NbSH, 8, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VH, vv->NbVH, 8, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TH, vv->NbTH, 8, 9, comp, timeStep, expr);
+
+  evaluate(vv, vv->SI, vv->NbSI, 6, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VI, vv->NbVI, 6, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TI, vv->NbTI, 6, 9, comp, timeStep, expr);
+
+  evaluate(vv, vv->SY, vv->NbSY, 5, 1, comp, timeStep, expr);
+  evaluate(vv, vv->VY, vv->NbVY, 5, 3, comp, timeStep, expr);
+  evaluate(vv, vv->TY, vv->NbTY, 5, 9, comp, timeStep, expr);
+
   return vv;
 }
 

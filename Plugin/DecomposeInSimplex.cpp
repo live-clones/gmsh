@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.9 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.10 2004-05-13 17:48:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -140,7 +140,7 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
 
   // Bail out if the view is a duplicate or if other views duplicate it
   if(vv->DuplicateOf || vv->Links) {
-    Msg(WARNING, "DecomposeInSimplex cannot be applied to a duplicated view");
+    Msg(GERROR, "DecomposeInSimplex cannot be applied to a duplicated view");
     return 0;
   }
 

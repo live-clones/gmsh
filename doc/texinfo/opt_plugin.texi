@@ -148,16 +148,17 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Evaluate)
-Plugin(Evaluate) sets the values associated
-with the `TimeStep'-th time step in the scalar
-view `iView' to the expression `Expression'. In
-addition to the usual mathematical functions
-(Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and
-operators (+, -, *, /, ^), `Expression' can
-contain the symbols x, y, z and v, which
-represent the three spatial coordinates and the
-value of the field, respectively. If `iView' < 0,
-the plugin is run on the current view.
+Plugin(Evaluate) sets the `Component'-th
+component of the `TimeStep'-th time step
+in the view `iView' to the expression
+`Expression'. In addition to the usual
+mathematical functions (Exp, Log, Sqrt, Sin,
+Cos, Fabs, etc.) and operators (+, -, *, /, ^),
+`Expression' can contain the symbols x, y, z
+and v, which represent the three spatial
+coordinates and the value of the field,
+respectively. If `iView' < 0, the plugin is run
+on the current view.
 
 Plugin(Evaluate) is executed in-place.
 
@@ -169,6 +170,8 @@ Default value: @code{"0.01*(Fabs(Sin(30*y)*Fabs(Cos(30*x)))+0.3)"}
 Numeric options:
 @table @code
 @item TimeStep
+Default value: @code{0}
+@item Component
 Default value: @code{0}
 @item iView
 Default value: @code{-1}

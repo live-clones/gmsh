@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.13 2004-03-13 19:24:12 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.14 2004-05-13 17:48:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -231,16 +231,15 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
     return;
   
   if(iNbElm != dNbElm) {
-    Msg(WARNING, "View[%d] and View[%d] have a different number of elements (%d != %d)",
+    Msg(GERROR, "View[%d] and View[%d] have a different number of elements (%d != %d)",
 	iView->Index, dView->Index, iNbElm, dNbElm);
     return;
   }
 
   int dTimeStep = _valueTimeStep;
   if(dTimeStep >= dView->NbTimeStep) {
-    Msg(WARNING, "Wrong time step %d in View[%d]: reverting to time step 0",
-	dTimeStep, dView->Index);
-    dTimeStep = 0;
+    Msg(GERROR, "Wrong time step %d in View[%d]", dTimeStep, dView->Index);
+    return;
   }
 
   int iNb = List_Nbr(iList) / iNbElm;
