@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.27 2003-01-23 20:19:25 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.28 2003-01-25 01:22:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -59,9 +59,10 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
   double Xp[6], Yp[6], Zp[6], myVals[6];
   double Xpi[6], Ypi[6], Zpi[6], myValsi[6];
   double test;
-  Post_View *View[v->NbTimeStep];
 
   if(v->NbSS){
+
+    Post_View **View = new (Post_View*)[v->NbTimeStep];
 
     switch(_orientation){
     case ORIENT_PLANE:
@@ -219,7 +220,10 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 
     // a little bogus if multiple output views, but we don't use it anyway
     processed = View[0];
-    return View[0];
+
+    delete [] View;
+
+    return processed;
   }
   
   return 0;
