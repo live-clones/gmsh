@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.2 2000-11-23 14:11:38 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.3 2000-11-24 10:58:06 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -153,7 +153,7 @@ Sinh                    return tSinh ;
 Save                    return tPhysical;
 Spline                  return tSpline;
 Surface                 return tSurface;
-Symetry                 return tSymetry;
+Symmetry                return tSymmetry;
 
 Transfinite             return tTransfinite;
 Translate               return tTranslate;

@@ -146,7 +146,7 @@
 #define	UMINUS	396
 
 #line 1 "Gmsh.y"
- /* $Id: Gmsh.tab.cpp,v 1.6 2000-11-24 10:21:24 geuzaine Exp $ */
+ /* $Id: Gmsh.tab.cpp,v 1.7 2000-11-24 10:58:06 geuzaine Exp $ */
 
 #include <stdarg.h>
 
