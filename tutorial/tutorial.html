@@ -23,7 +23,7 @@
 <H1>README 1/10</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.19 2001-08-15 14:51:48 geuzaine Exp $
+$Id: tutorial.html,v 1.20 2001-08-18 12:43:41 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -69,14 +69,14 @@ example with:
 
 [NOTE: The '.geo' extension can also be omitted.]
 
-[NOTE: Even if it is often handy to define the variables and the points
-directly in the input files (you may use any text editor for this
-purpose, e.g. Wordpad on Windows, or Emacs on Unix), it is almost
+[NOTE: Even if it is often handy to define the variables and the
+points directly in the input files (you may use any text editor for
+this purpose, e.g. Wordpad on Windows, or Emacs on Unix), it is almost
 always more simple to define the curves, the surfaces and the volumes
 interactively. To do so, just follow the context dependent buttons in
-the Geometry module. For example, to create a line, select 'Geometry'
-in the module menu, and then select 'Elementary, Add, Create,
-Line'. You will then be asked (in the status bar of the graphic
+the Geometry module. For example, to create a spline, select
+'Geometry' in the module menu, and then select 'Elementary, Add, New,
+Spline'. You will then be asked (in the status bar of the graphic
 window) to select a list of points, and to click 'e' to finish the
 selection (or 'q' to abort it). Once the interactive command is
 completed, a string is automatically added at the end of the currently
@@ -104,7 +104,7 @@ directly specifying the names of the files on the command line. This
 is most useful for post-processing purposes. For example, to merge the
 post-processing views contained in the files 'view1.pos' and
 'view2.pos' together with the first tutorial 't1.geo', you can type
-the following line on the command line:
+the following command:
 
 &gt; gmsh t1.geo view1.pos view2.pos
 
