@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.333 2004-04-15 03:50:31 geuzaine Exp $
+# $Id: Makefile,v 1.334 2004-04-15 05:35:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -159,54 +159,6 @@ tgz:
 	gzip ${GMSH_ARCHIVE}.tar
 	chmod 640 ${GMSH_ARCHIVE}.tar.gz
 
-distrib-pre:
-	mv -f Makefile Makefile.distrib
-	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION =/g"\
-          Makefile.distrib > Makefile
-
-distrib-post:
-	mv -f Makefile.distrib Makefile
-	rm -f ${GMSH_VERSION_FILE}
-
-distrib-unix: clean
-	make distrib-pre
-	make all
-	make package-unix
-	make distrib-post
-	ldd bin/gmsh
-
-distrib-win: clean
-	make distrib-pre
-	make all
-	make package-win
-	make distrib-post
-	objdump -p bin/gmsh.exe | grep DLL
-
-distrib-mac: clean
-	make distrib-pre
-	make all
-	make package-mac
-	make distrib-post
-	${POSTBUILD}
-	otool -L bin/gmsh
-
-distrib-source:
-	make distrib-pre
-	make source
-	make distrib-post
-
-distrib-source-commercial:
-	make distrib-pre
-	make source-commercial
-	make distrib-post
-
-distrib-source-nightly:
-	mv -f Makefile Makefile.distrib
-	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
-          Makefile.distrib > Makefile
-	make source
-	make distrib-post
-
 package-unix:
 	rm -rf gmsh-${GMSH_VERSION}
 	mkdir gmsh-${GMSH_VERSION}
@@ -287,3 +239,53 @@ rpm:
 	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' gmsh.spec
 	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .
+
+# Rules to distribute official releases
+
+distrib-pre:
+	mv -f Makefile Makefile.distrib
+	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION =/g"\
+          Makefile.distrib > Makefile
+
+distrib-post:
+	mv -f Makefile.distrib Makefile
+	rm -f ${GMSH_VERSION_FILE}
+
+distrib-unix: clean
+	make distrib-pre
+	make all
+	make package-unix
+	make distrib-post
+	ldd bin/gmsh
+
+distrib-win: clean
+	make distrib-pre
+	make all
+	make package-win
+	make distrib-post
+	objdump -p bin/gmsh.exe | grep DLL
+
+distrib-mac: clean
+	make distrib-pre
+	make all
+	make package-mac
+	make distrib-post
+	${POSTBUILD}
+	otool -L bin/gmsh
+
+distrib-source:
+	make distrib-pre
+	make source
+	make distrib-post
+
+distrib-source-commercial:
+	make distrib-pre
+	make source-commercial
+	make distrib-post
+
+distrib-source-nightly:
+	mv -f Makefile Makefile.distrib
+	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
+          Makefile.distrib > Makefile
+	make source
+	make distrib-post
