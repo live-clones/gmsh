@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.58 2001-11-12 08:21:17 geuzaine Exp $
+// $Id: Options.cpp,v 1.59 2001-11-13 08:10:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -177,46 +177,69 @@ void Print_Options(int num, int level, char *filename){
     fprintf(file, "//\n");
   }
 
-  Print_OptionCategory(level, "General options", file);
+  Print_OptionCategory(level, "General options (strings)", file);
   Print_StringOptions(num, level, GeneralOptions_String, "General.", file);
+  Print_OptionCategory(level, "General options (numbers)", file);
   Print_NumberOptions(num, level, GeneralOptions_Number, "General.", file);
+  Print_OptionCategory(level, "General options (colors)", file);
   Print_ColorOptions(num, level, GeneralOptions_Color, "General.", file);
-  Print_OptionCategory(level, "Geometry options", file);
+
+  Print_OptionCategory(level, "Geometry options (strings)", file);
   Print_StringOptions(num, level, GeometryOptions_String, "Geometry.", file);
+  Print_OptionCategory(level, "Geometry options (numbers)", file);
   Print_NumberOptions(num, level, GeometryOptions_Number, "Geometry.", file);
+  Print_OptionCategory(level, "Geometry options (colors)", file);
   Print_ColorOptions(num, level, GeometryOptions_Color, "Geometry.", file);
-  Print_OptionCategory(level, "Mesh options", file);
+
+  Print_OptionCategory(level, "Mesh options (strings)", file);
   Print_StringOptions(num, level, MeshOptions_String, "Mesh.", file);
+  Print_OptionCategory(level, "Mesh options (numbers)", file);
   Print_NumberOptions(num, level, MeshOptions_Number, "Mesh.", file);
+  Print_OptionCategory(level, "Mesh options (colors)", file);
   Print_ColorOptions(num, level, MeshOptions_Color, "Mesh.", file);
-  Print_OptionCategory(level, "Solver options", file);
+
+  Print_OptionCategory(level, "Solver options (strings)", file);
   Print_StringOptions(num, level, SolverOptions_String, "Solver.", file);
+  Print_OptionCategory(level, "Solver options (numbers)", file);
   Print_NumberOptions(num, level, SolverOptions_Number, "Solver.", file);
+  Print_OptionCategory(level, "Solver options (colors)", file);
   Print_ColorOptions(num, level, SolverOptions_Color, "Solver.", file);
-  Print_OptionCategory(level, "Post-processing options", file);
+
+  Print_OptionCategory(level, "Post-processing options (strings)", file);
   Print_StringOptions(num, level, PostProcessingOptions_String, "PostProcessing.", file);
+  Print_OptionCategory(level, "Post-processing options (numbers)", file);
   Print_NumberOptions(num, level, PostProcessingOptions_Number, "PostProcessing.", file);
+  Print_OptionCategory(level, "Post-processing options (colors)", file);
   Print_ColorOptions(num, level, PostProcessingOptions_Color, "PostProcessing.", file);
-  Print_OptionCategory(level, "View options", file);
+
   if(level & GMSH_FULLRC){
     for(i=0; i<List_Nbr(CTX.post.list) ; i++){
       sprintf(tmp, "View[%d].", i);
+      Print_OptionCategory(level, "View options (strings)", file);
       Print_StringOptions(i, level, ViewOptions_String, tmp, file);
+      Print_OptionCategory(level, "View options (numbers)", file);
       Print_NumberOptions(i, level, ViewOptions_Number, tmp, file);
+      Print_OptionCategory(level, "View options (colors)", file);
       Print_ColorOptions(i, level, ViewOptions_Color, tmp, file);
       strcat(tmp, "ColorTable");
       Print_ColorTable(i, tmp, file);
     }
   }
   else if(level & GMSH_OPTIONSRC){
+    Print_OptionCategory(level, "View options (strings)", file);
     Print_StringOptions(num, level, ViewOptions_String, "View.", file);
+    Print_OptionCategory(level, "View options (numbers)", file);
     Print_NumberOptions(num, level, ViewOptions_Number, "View.", file);
+    Print_OptionCategory(level, "View options (colors)", file);
     Print_ColorOptions(num, level, ViewOptions_Color, "View.", file);
     Print_ColorTable(num, "View.ColorTable", file);
   }
-  Print_OptionCategory(level, "Print options", file);
+
+  Print_OptionCategory(level, "Print options (strings)", file);
   Print_StringOptions(num, level, PrintOptions_String, "Print.", file);
+  Print_OptionCategory(level, "Print options (numbers)", file);
   Print_NumberOptions(num, level, PrintOptions_Number, "Print.", file);
+  Print_OptionCategory(level, "Print options (colors)", file);
   Print_ColorOptions(num, level, PrintOptions_Color, "Print.", file);
 
   if(filename){
