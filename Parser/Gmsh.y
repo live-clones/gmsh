@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.14 2000-12-05 15:30:32 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.15 2000-12-05 19:19:54 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -693,7 +693,7 @@ Shape :
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num  = (int)$4;
     }
-  | tAttractor tPoint ListOfDouble tAFFECT '(' FExpr ',' FExpr ',' FExpr ')'  tEND
+  | tAttractor tPoint ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
     {
       Vertex *v;
       Attractor *a;
