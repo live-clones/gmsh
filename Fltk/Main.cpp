@@ -1,8 +1,11 @@
-// $Id: Main.cpp,v 1.22 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Main.cpp,v 1.23 2001-04-17 11:22:00 geuzaine Exp $
 
 #include <signal.h>
 
+#ifndef _NOPLUGIN
 #include "PluginManager.h"
+#endif
+
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshVersion.h"
@@ -46,9 +49,11 @@ int main(int argc, char *argv[]){
   if(CTX.verbosity && CTX.terminal)
     fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
 
+#ifndef _NOPLUGIN
   // Register Default Plugins (in test ...)
   if(CTX.default_plugins)
     GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
+#endif
 
   // Initialize the static Mesh
 

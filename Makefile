@@ -1,69 +1,83 @@
-# $Id: Makefile,v 1.88 2001-04-17 09:30:41 geuzaine Exp $
+# $Id: Makefile,v 1.89 2001-04-17 11:22:00 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
 
-         GMSH_RELEASE = 1.17
+           GMSH_RELEASE = 1.17
 
-                 MAKE = make
-                   CC = c++
-                FLAGS = -g -Wall
-                   RM = rm
-              RMFLAGS = -f 
+                   MAKE = make
+                     CC = c++
+                  FLAGS = -g -Wall
+                     RM = rm
+                RMFLAGS = -f 
 
-           OPENGL_INC = -I/usr/include/X11/GLw\
-                        -I$(HOME)/SOURCES/Mesa-3.1/include\
-                        -I$(HOME)/SOURCES/Mesa-3.1/include/GL
-            MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
-           FLTK_INC   = -I$(HOME)/SOURCES/fltk
+# ----------------------------------------------------------------------
+#  Includes
+# ----------------------------------------------------------------------
+
+             OPENGL_INC = -I/usr/include/X11/GLw\
+                          -I$(HOME)/SOURCES/Mesa-3.1/include\
+                          -I$(HOME)/SOURCES/Mesa-3.1/include/GL
+              MOTIF_INC = -I/usr/X11R6/LessTif/Motif1.2/include
+             FLTK_INC   = -I$(HOME)/SOURCES/fltk
       FLTK_INC_SCOREC   = -I/users/develop/develop/visual/fltk/1.0/include
       FLTK_INC_LAPTOPJF = -I../../fltk-1.0.9
    FLTK_INC_GERTHA_BURO = -I../../fltk
 
-           OPENGL_LIB = -lGLU -lGL
-     OPENGL_MOTIF_LIB = -lGLw
-             MESA_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL
-       MESA_MOTIF_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLw
-      MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
-                        $(HOME)/SOURCES/Mesa-static/lib/libGL.a
-MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
-#          XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
-           XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
-                        -L/usr/X11R6/lib -lXt -lX11 -lXext 
-             FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
-                        -L/usr/X11R6/lib -lX11
+# ----------------------------------------------------------------------
+#  3rd party libraries
+# ----------------------------------------------------------------------
+
+             OPENGL_LIB = -lGLU -lGL
+       OPENGL_MOTIF_LIB = -lGLw
+               MESA_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL
+         MESA_MOTIF_LIB = -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLw
+        MESA_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLU.a\
+                          $(HOME)/SOURCES/Mesa-static/lib/libGL.a
+  MESA_MOTIF_STATIC_LIB = $(HOME)/SOURCES/Mesa-static/lib/libGLw.a
+#            XMOTIF_LIB = /usr/local/lib/libXm.so.2 -L/usr/X11R6/lib -lXt -lX11 -lXext
+             XMOTIF_LIB = -L/usr/local/lib -L/usr/X11R6/LessTif/Motif1.2/lib -lXm\
+                          -L/usr/X11R6/lib -lXt -lX11 -lXext 
+               FLTK_LIB = -L$(HOME)/SOURCES/fltk/lib -lfltk\
+                          -L/usr/X11R6/lib -lX11
 FLTK_LIB_SOLARIS_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/sun4_5/libfltk-gcc.a\
-                        -L/usr/X11R6/lib -lX11
-FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
-                        -L/usr/X11R6/lib -lX11
+                          -L/usr/X11R6/lib -lX11
+  FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/libfltk.a\
+                          -L/usr/X11R6/lib -lX11
 
-           THREAD_LIB = -L/usr/lib -lpthread
+             THREAD_LIB = -L/usr/lib -lpthread
 
-             GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk Plugin\
-                        jpeg utils
-      GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
-        GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin
-         GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser
-         GMSH_BIN_DIR = bin
-         GMSH_LIB_DIR = lib
-        GMSH_DOC_DIR = doc
-        GMSH_DEMO_DIR = demos
-       GMSH_TUTOR_DIR = tutorial
-     GMSH_ARCHIVE_DIR = archives
-      GMSH_XMOTIF_LIB = -L$(GMSH_LIB_DIR) -lMotif -lGraphics -lParser -lMesh -lGeo\
-                                          -lAdapt -lCommon -lDataStr -lJpeg
-        GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
-                                          -lAdapt -lCommon -lDataStr -lJpeg -lPlugin 
-         GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
-                                          -lAdapt -lCommon -lDataStr
-         GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
-          GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
-         GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
-                                -a ! -name "*.o"    -a ! -name "lib*.a"   \
-                                -a ! -name "*.msh"  -a ! -name "*.bak" \
-                                -a ! -name "gmsh"   -a ! -name "gmsh-*"\
-                                -a ! -type d \)`
-           GMSH_UNAME = `uname`
+# ----------------------------------------------------------------------
+#  Gmsh definitions
+# ----------------------------------------------------------------------
+
+               GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser\
+                          Motif Fltk Plugin jpeg utils
+        GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
+          GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin
+           GMSH_BOX_DIR = Adapt Box Common DataStr Geo Mesh Parser
+           GMSH_BIN_DIR = bin
+           GMSH_LIB_DIR = lib
+           GMSH_DOC_DIR = doc
+          GMSH_DEMO_DIR = demos
+         GMSH_TUTOR_DIR = tutorial
+       GMSH_ARCHIVE_DIR = archives
+
+
+        GMSH_XMOTIF_LIB = -L$(GMSH_LIB_DIR) -lMotif -lGraphics -lParser -lMesh -lGeo\
+                                            -lAdapt -lCommon -lDataStr -lJpeg
+          GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh -lGeo\
+                                            -lAdapt -lCommon -lDataStr -lJpeg -lPlugin 
+           GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo\
+                                            -lAdapt -lCommon -lDataStr
+           GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
+            GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
+           GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
+                                  -a ! -name "*.o"    -a ! -name "lib*.a"   \
+                                  -a ! -name "*.msh"  -a ! -name "*.bak" \
+                                  -a ! -name "gmsh"   -a ! -name "gmsh-*"\
+                                  -a ! -type d \)`
+             GMSH_UNAME = `uname`
 
 # ----------------------------------------------------------------------
 # Rules for developpers
@@ -365,22 +379,22 @@ fltk_compile_little_endian:
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
-fltk_compile_big_endian:
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CC=$(CC)" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=$(OPENGL_INC)" \
-           "GUI_INCLUDE=$(FLTK_INC)" \
-        ); done
-
 fltk_compile_little_endian_2952:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(HOME)/gcc-2.95.2/bin/g++" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
+fltk_compile_big_endian:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=" \
+           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
@@ -419,27 +433,33 @@ fltk_compile_sgi:
 fltk_link_solaris_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl
+
 fltk_link_linux_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  $(FLTK_LIB_LINUX_SCOREC) -lm -ldl
 fltk_link_mesa:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm -ldl
+
+fltk_link_mesa_2952:
+	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+                 $(FLTK_LIB) -lm -ldl
+
 fltk_link_opengl:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  $(FLTK_LIB) -lm
 fltk_link_sgi:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                  $(FLTK_LIB) $(OPENGL_LIB) -lm -ldl
+                  $(FLTK_LIB) $(OPENGL_LIB) -lm
 fltk_link_sun:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lXext -lsocket -lnsl -ldl -lm
 fltk_link_hp:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                       $(MESA_LIB) $(FLTK_LIB) -lm
-fltk_link_mesa_2952:
-	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lm -ldl
+fltk_link_ibm:
+	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+
 
 
 fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin compress_bin
@@ -452,7 +472,7 @@ fltk_sun: tag fltk_compile_big_endian fltk_link_sun strip_bin compress_bin
 
 fltk_hp: tag fltk_compile_big_endian fltk_link_hp strip_bin compress_bin
 
-fltk_ibm: tag fltk_compile_big_endian fltk_link_mesa strip_bin compress_bin
+fltk_ibm: tag fltk_compile_big_endian fltk_link_ibm strip_bin compress_bin
 
 fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.60 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.61 2001-04-17 11:22:00 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1565,6 +1565,7 @@ void GUI::set_statistics(){
    A plugin has n options, we also show infos about
    the plugin on the top of the window
  */
+
 PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView)
 {
   char buffer[1024],namep[1024],copyright[256],author[256],help[1024];
