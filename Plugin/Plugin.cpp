@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.35 2003-02-12 20:27:14 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.36 2003-02-17 16:32:37 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-#if !defined(NODLL)
+#if !defined(_NO_DLL)
 #include <dlfcn.h>
 #endif
 
@@ -161,7 +161,7 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName){
 
-#if defined(NODLL) || !defined(HAVE_FLTK)
+#if defined(_NO_DLL) || !defined(HAVE_FLTK)
   Msg(WARNING,"No dynamic plugin loading on this platform");
   return;
 #else

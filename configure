@@ -3199,12 +3199,12 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    OS_FLAGS="${OS_FLAGS} -DNODLL"
+    OS_FLAGS="${OS_FLAGS} -D_NO_DLL"
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
   AIX*)
-    OS_FLAGS="${OS_FLAGS} -D_BSD -DNODLL"
+    OS_FLAGS="${OS_FLAGS} -D_BSD -D_NO_DLL"
     ;;
 
   IRIX*)
@@ -3217,12 +3217,12 @@ case "$UNAME" in
     ;;
 
   SunOS*)
-    OS_FLAGS="${OS_FLAGS} -DNODLL"
+    OS_FLAGS="${OS_FLAGS} -D_NO_DLL"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    OS_FLAGS="-DNODLL"
+    OS_FLAGS="-D_NO_DLL"
     ;;
 
 esac
@@ -3414,9 +3414,9 @@ echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
 echo "${ECHO_T}$ac_cv_c_bigendian" >&6
 case $ac_cv_c_bigendian in
   yes)
-    OS_FLAGS="${OS_FLAGS}" ;;
+    OS_FLAGS="${OS_FLAGS} -D_BIG_ENDIAN" ;;
   no)
-    OS_FLAGS="-DLITTLE_ENDIAN ${OS_FLAGS}" ;;
+     ;;
   *)
     { { echo "$as_me:$LINENO: error: unknown endianess
 presetting ac_cv_c_bigendian=no (or yes) will help" >&5

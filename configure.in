@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.22 2003-02-17 01:52:55 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.23 2003-02-17 16:32:37 geuzaine Exp $"
 dnl
 dnl Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -162,12 +162,12 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-    OS_FLAGS="${OS_FLAGS} -DNODLL"
+    OS_FLAGS="${OS_FLAGS} -D_NO_DLL"
     POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
   AIX*)
-    OS_FLAGS="${OS_FLAGS} -D_BSD -DNODLL"
+    OS_FLAGS="${OS_FLAGS} -D_BSD -D_NO_DLL"
     ;;
 
   IRIX*)
@@ -180,18 +180,18 @@ case "$UNAME" in
     ;;
 
   SunOS*)
-    OS_FLAGS="${OS_FLAGS} -DNODLL"
+    OS_FLAGS="${OS_FLAGS} -D_NO_DLL"
     GMSH_LIBS="${GMSH_LIBS} -lsocket -lnsl -ldl"
     ;;
 
   HP-UX*)
-    OS_FLAGS="-DNODLL"
+    OS_FLAGS="-D_NO_DLL"
     ;;
 
 esac
 
 dnl Is the machine big or littke endian?
-AC_C_BIGENDIAN(OS_FLAGS="${OS_FLAGS}",OS_FLAGS="-DLITTLE_ENDIAN ${OS_FLAGS}")
+AC_C_BIGENDIAN(OS_FLAGS="${OS_FLAGS} -D_BIG_ENDIAN")
 
 AC_SUBST(OPT_FLAGS)
 AC_SUBST(OS_FLAGS)
