@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.52 2002-09-20 19:53:08 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.53 2002-11-08 02:06:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -237,9 +237,14 @@ void Draw_Mesh_Points (void *a, void *b){
     glColor4ubv((GLubyte*)&CTX.color.mesh.vertex);
 
   if(CTX.mesh.points){
-    glBegin(GL_POINTS);
-    glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
-    glEnd();
+    if(CTX.mesh.point_type){
+      Draw_Sphere(CTX.mesh.point_size, v->Pos.X, v->Pos.Y, v->Pos.Z);
+    }
+    else{
+      glBegin(GL_POINTS);
+      glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
+      glEnd();
+    }
   }
   
   if(CTX.mesh.points_num){

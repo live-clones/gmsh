@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.148 2002-11-05 19:52:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.149 2002-11-08 02:06:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -716,6 +716,8 @@ void opt_mesh_ok_cb(CALLBACK_ARGS) {
   opt_mesh_tangents(0, GMSH_SET, WID->mesh_value[13]->value());
   opt_mesh_point_size(0, GMSH_SET, WID->mesh_value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, WID->mesh_value[11]->value());
+
+  opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
 
   Draw();
 }

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.88 2002-11-01 22:27:33 geuzaine Exp $
+// $Id: Options.cpp,v 1.89 2002-11-08 02:06:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1854,6 +1854,17 @@ double opt_mesh_point_size(OPT_ARGS_NUM){
     WID->mesh_value[10]->value(CTX.mesh.point_size);
 #endif
   return CTX.mesh.point_size;
+}
+double opt_mesh_point_type(OPT_ARGS_NUM){
+  if(action & GMSH_SET){
+    CTX.mesh.point_type = (int)val;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI)){
+    WID->mesh_choice[0]->value(CTX.mesh.point_type);
+  }
+#endif
+  return CTX.mesh.point_type;
 }
 double opt_mesh_line_width(OPT_ARGS_NUM){
   if(action & GMSH_SET) 

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.21 2002-11-07 08:06:31 geuzaine Exp $
+// $Id: Entity.cpp,v 1.22 2002-11-08 02:06:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -30,22 +30,32 @@ extern Context_T   CTX;
 
 void Draw_Point (int type, double size, double *x, double *y, double *z, double Raise[3][8]){
   if(type){
-    static GLUquadricObj *qua;
-    static int first=1;
-    if(first){
-      first=0;
-      qua = gluNewQuadric();
-    }
-    glPushMatrix(); 
-    glTranslatef(x[0]+Raise[0][0], y[0]+Raise[1][0], z[0]+Raise[2][0]); 
-    gluSphere(qua, size*CTX.pixel_equiv_x/CTX.s[0], 20,20);
-    glPopMatrix();
+    Draw_Sphere(size, x[0]+Raise[0][0], y[0]+Raise[1][0], z[0]+Raise[2][0]);
   }
   else{
     glBegin(GL_POINTS);
     glVertex3d(x[0]+Raise[0][0], y[0]+Raise[1][0], z[0]+Raise[2][0]);
     glEnd();
   }
+}
+
+void Draw_Sphere (double size, double x, double y, double z){
+  static GLUquadricObj *qua;
+  static int first = 1, listnum;
+  float s = size*CTX.pixel_equiv_x/CTX.s[0]; // size is in pixels
+  if(first){
+    first = 0;
+    qua = gluNewQuadric();
+    listnum = glGenLists(1);
+    glNewList(listnum, GL_COMPILE);
+    gluSphere(qua, 1, 20,20);
+    glEndList();
+  }
+  glPushMatrix(); 
+  glTranslatef(x,y,z);
+  glScalef(s,s,s);
+  glCallList(listnum);
+  glPopMatrix();
 }
 
 void Draw_Line (double *x, double *y, double *z, double Raise[3][8]){

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.210 2002-11-06 04:35:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.211 2002-11-08 02:06:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -326,6 +326,14 @@ Context_Item menu_solver[] =
 Context_Item menu_post[] = 
 { { "3Post-processing", NULL } ,
   { NULL } };
+
+// some other reusable menus
+
+static Fl_Menu_Item menu_point_display[] = {
+  {"Color dot",   0, 0, 0},
+  {"3D sphere",   0, 0, 0},
+  {0}
+};
 
 // Definition of global shortcuts
 
@@ -1351,13 +1359,8 @@ void GUI::create_geometry_options_window(){
       geo_value[5]->maximum(50);
       geo_value[5]->step(0.1);
 
-      static Fl_Menu_Item menu_geopointtype[] = {
-	{"Color dot",   0, 0, 0},
-	{"3D sphere",   0, 0, 0},
-	{0}
-      };
       geo_choice[0] = new Fl_Choice(2*WB, 2*WB+3*BH, IW, BH, "Point display");
-      geo_choice[0]->menu(menu_geopointtype);
+      geo_choice[0]->menu(menu_point_display);
       geo_choice[0]->align(FL_ALIGN_RIGHT);
 
       geo_value[4] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Line width");
@@ -1546,13 +1549,18 @@ void GUI::create_mesh_options_window(){
       mesh_value[10]->minimum(0.1);
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(0.1);
-      mesh_value[11] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Line width");
+      mesh_value[11] = new Fl_Value_Input(2*WB, 2*WB+7*BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);
       for(i=9 ; i<= 11 ; i++){
 	mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
+
+      mesh_choice[0] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Point display");
+      mesh_choice[0]->menu(menu_point_display);
+      mesh_choice[0]->align(FL_ALIGN_RIGHT);
+
       o->end();
     }
     { 
@@ -2517,13 +2525,8 @@ void GUI::create_view_options_window(int num){
       view_value[61]->align(FL_ALIGN_RIGHT);
       view_value[61]->callback(set_changed_cb, 0);
 
-      static Fl_Menu_Item menu_pointtype[] = {
-	{"Color dot",   0, 0, 0},
-	{"3D sphere",   0, 0, 0},
-	{0}
-      };
       view_choice[5] = new Fl_Choice(2*WB, 2*WB+ 2*BH, IW, BH, "Point display");
-      view_choice[5]->menu(menu_pointtype);
+      view_choice[5]->menu(menu_point_display);
       view_choice[5]->align(FL_ALIGN_RIGHT);
       view_choice[5]->callback(set_changed_cb, 0);
       

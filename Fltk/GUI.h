@@ -171,6 +171,7 @@ public:
   Fl_Input         *mesh_input ;
   Fl_Value_Input   *mesh_value[20] ;
   Fl_Button        *mesh_col[50] ;
+  Fl_Choice        *mesh_choice[5] ;
 
   // solver options window
   Fl_Window        *solver_window ;

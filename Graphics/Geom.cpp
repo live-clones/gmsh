@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.39 2002-11-01 22:27:33 geuzaine Exp $
+// $Id: Geom.cpp,v 1.40 2002-11-08 02:06:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -71,19 +71,10 @@ void Draw_GeoPoint (void *a, void *b){
   if(CTX.geom.points){
 
     if(CTX.geom.point_type){
-      static GLUquadricObj *qua;
-      static int first=1;
-      if(first){
-	first=0;
-	qua = gluNewQuadric();
-      }
-      glPushMatrix(); 
-      glTranslatef(v->Pos.X, v->Pos.Y, v->Pos.Z);
       if(v->Frozen || Highlighted)
-	gluSphere(qua, CTX.geom.point_sel_size*CTX.pixel_equiv_x/CTX.s[0], 20,20);
+	Draw_Sphere(CTX.geom.point_sel_size, v->Pos.X, v->Pos.Y, v->Pos.Z);
       else
-	gluSphere(qua, CTX.geom.point_size*CTX.pixel_equiv_x/CTX.s[0], 20,20);
-      glPopMatrix();
+	Draw_Sphere(CTX.geom.point_size, v->Pos.X, v->Pos.Y, v->Pos.Z);
     }
     else{
       glBegin(GL_POINTS);

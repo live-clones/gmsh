@@ -143,6 +143,7 @@ public :
     int draw;
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
+    int point_type; // flat or 3D sphere
     double point_size, line_width;
     double quality;
     double gamma_inf, gamma_sup, radius_inf, radius_sup;

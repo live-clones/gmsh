@@ -715,6 +715,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh vertices numbers?" },
   { F|O, "PointSize" , opt_mesh_point_size , 2. , 
     "Display size of points (in pixels)" },
+  { F|O, "PointType" , opt_mesh_point_type , 0. , 
+    "Display points as solid color dots or 3D spheres" },
 
   { F|O, "Quality" , opt_mesh_quality , 0.0 ,
     "Target quality for tetrahedral elements (not fully functional)" },

@@ -333,6 +333,7 @@ double opt_mesh_lines_num(OPT_ARGS_NUM);
 double opt_mesh_surfaces_num(OPT_ARGS_NUM);
 double opt_mesh_volumes_num(OPT_ARGS_NUM);
 double opt_mesh_point_size(OPT_ARGS_NUM);
+double opt_mesh_point_type(OPT_ARGS_NUM);
 double opt_mesh_line_width(OPT_ARGS_NUM);
 double opt_mesh_aspect(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);
