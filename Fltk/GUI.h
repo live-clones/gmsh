@@ -160,17 +160,17 @@ public:
   // general options
   Fl_Window        *gen_window ;
   Fl_Check_Button  *gen_butt[20] ;
-  Fl_Value_Input   *gen_value[10] ;
+  Fl_Value_Input   *gen_value[20] ;
   Fl_Button        *gen_col[50] ;
-  Fl_Input         *gen_input[10] ;
+  Fl_Input         *gen_input[20] ;
 
   // geometry options
   Fl_Window        *geo_window ;
-  Fl_Check_Button  *geo_butt[10] ;
+  Fl_Check_Button  *geo_butt[20] ;
   Fl_Input         *geo_input ;
-  Fl_Value_Input   *geo_value[10] ;
+  Fl_Value_Input   *geo_value[20] ;
   Fl_Button        *geo_col[50] ;
-  Fl_Choice        *geo_choice[5] ;
+  Fl_Choice        *geo_choice[20] ;
   
   // mesh options
   Fl_Window        *mesh_window ;
@@ -178,7 +178,7 @@ public:
   Fl_Input         *mesh_input ;
   Fl_Value_Input   *mesh_value[20] ;
   Fl_Button        *mesh_col[50] ;
-  Fl_Choice        *mesh_choice[5] ;
+  Fl_Choice        *mesh_choice[20] ;
 
   // solver options
   Fl_Window        *solver_window ;
@@ -229,7 +229,7 @@ public:
   // mesh context window
   Fl_Window        *context_mesh_window ;
   Fl_Input         *context_mesh_input[20] ;
-  Fl_Choice        *context_mesh_choice[5] ;
+  Fl_Choice        *context_mesh_choice[20] ;
 
   // solver windows
   SolverDialogBox  solver[5] ;
@@ -271,6 +271,7 @@ public:
   int  get_context();
   void set_anim_buttons(int mode);
   void check_anim_buttons();
+  void check_rotation_center_button();
   void set_status(char *msg, int num);
   void add_message(char *msg);
   void save_message(char *filename);

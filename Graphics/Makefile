@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2003-03-21 00:52:39 geuzaine Exp $
+# $Id: Makefile,v 1.50 2003-03-26 21:43:10 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -74,7 +74,8 @@ Draw.o: Draw.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Common/GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
   ../Mesh/Metric.h ../Mesh/Matrix.h Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/Context.h ../Geo/MinMax.h
+  ../Common/ColorTable.h ../Common/Context.h ../Geo/MinMax.h \
+  ../Numeric/Numeric.h
 Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \

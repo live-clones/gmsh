@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.169 2003-03-26 16:57:06 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.170 2003-03-26 21:43:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -795,6 +795,11 @@ void general_options_color_scheme_cb(CALLBACK_ARGS)
 {
   opt_general_color_scheme(0, GMSH_SET, WID->gen_value[0]->value());
   Draw();
+}
+
+void general_options_rotation_center_cb(CALLBACK_ARGS)
+{
+  WID->check_rotation_center_button();
 }
 
 void general_options_ok_cb(CALLBACK_ARGS)

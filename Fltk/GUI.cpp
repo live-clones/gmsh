@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.233 2003-03-26 16:57:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.234 2003-03-26 21:43:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1285,6 +1285,20 @@ void GUI::reset_option_browser()
     opt_browser->value(select);
 }
 
+void GUI::check_rotation_center_button()
+{
+  if(gen_butt[15]->value()) {
+    gen_value[8]->deactivate();
+    gen_value[9]->deactivate();
+    gen_value[10]->deactivate();
+  }
+  else {
+    gen_value[8]->activate();
+    gen_value[9]->activate();
+    gen_value[10]->activate();
+  }
+}
+
 void GUI::create_option_window()
 {
   int i;
@@ -1353,15 +1367,17 @@ void GUI::create_option_window()
         gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
 
-      gen_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 9 * BH, BW, BH, "Rotate around center of gravity");
+      gen_butt[15] = new Fl_Check_Button(2 * WB, 2 * WB + 9 * BH, BW, BH, "Rotate around pseudo center of gravity");
       gen_butt[15]->type(FL_TOGGLE_BUTTON);
       gen_butt[15]->down_box(TOGGLE_BOX);
       gen_butt[15]->selection_color(TOGGLE_COLOR);
+      gen_butt[15]->callback(general_options_rotation_center_cb);
 
       gen_value[8] = new Fl_Value_Input(2 * WB, 2 * WB + 10 * BH, IW / 3, BH);
       gen_value[9] = new Fl_Value_Input(2 * WB + IW / 3, 2 * WB + 10 * BH, IW / 3, BH);
       gen_value[10] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
+
       o->end();
     }
     {

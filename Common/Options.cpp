@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.103 2003-03-26 16:57:06 geuzaine Exp $
+// $Id: Options.cpp,v 1.104 2003-03-26 21:43:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1722,21 +1722,33 @@ double opt_general_rotation2(OPT_ARGS_NUM)
 double opt_general_rotation_center0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.rotation_center[0] = (int)val;
+    CTX.rotation_center[0] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[8]->value(CTX.rotation_center[0]);
+#endif
   return CTX.rotation_center[0];
 }
 
 double opt_general_rotation_center1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.rotation_center[1] = (int)val;
+    CTX.rotation_center[1] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[9]->value(CTX.rotation_center[1]);
+#endif
   return CTX.rotation_center[1];
 }
 
 double opt_general_rotation_center2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.rotation_center[2] = (int)val;
+    CTX.rotation_center[2] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[10]->value(CTX.rotation_center[2]);
+#endif
   return CTX.rotation_center[2];
 }
 
@@ -2019,8 +2031,10 @@ double opt_general_rotation_center_cg(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.rotation_center_cg = (int)val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_butt[15]->value(CTX.rotation_center_cg);
+    WID->check_rotation_center_button();
+  }
 #endif
   return CTX.rotation_center_cg;
 }
