@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.300 2004-05-18 04:54:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.301 2004-05-18 17:00:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -196,7 +196,7 @@ Context_Item menu_geometry[] = {
   { NULL }
 };  
     Context_Item menu_geometry_elementary[] = {
-      { "0Geometry Elementary", NULL } ,
+      { "0Geometry > Elementary", NULL } ,
       { "Add",       (Fl_Callback *)geometry_elementary_add_cb } ,
       { "Translate", (Fl_Callback *)geometry_elementary_translate_cb } ,
       { "Rotate",    (Fl_Callback *)geometry_elementary_rotate_cb } ,
@@ -207,7 +207,7 @@ Context_Item menu_geometry[] = {
       { NULL } 
     };  
         Context_Item menu_geometry_elementary_add[] = {
-	  { "0Geometry Elementary Add", NULL } ,
+	  { "0Geometry > Elementary > Add", NULL } ,
           { "New",       (Fl_Callback *)geometry_elementary_add_new_cb } ,
 	  { "Translate", (Fl_Callback *)geometry_elementary_add_translate_cb } ,
 	  { "Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb } ,
@@ -216,7 +216,7 @@ Context_Item menu_geometry[] = {
 	  { NULL } 
 	};  
             Context_Item menu_geometry_elementary_add_new[] = {
-	      { "0Geometry Elementary Add New", NULL } ,
+	      { "0Geometry > Elementary > Add > New", NULL } ,
               { "Parameter",     (Fl_Callback *)geometry_elementary_add_new_parameter_cb } ,
 	      { "Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb } ,
 	      { "Straight line", (Fl_Callback *)geometry_elementary_add_new_line_cb } ,
@@ -230,95 +230,95 @@ Context_Item menu_geometry[] = {
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_translate[] = {
-	      { "0Geometry Elementary Add Translate", NULL } ,
+	      { "0Geometry > Elementary > Add > Translate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_translate_point_cb } ,
 	      { "Line",    (Fl_Callback *)geometry_elementary_add_translate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_rotate[] = {
-	      { "0Geometry Elementary Add Rotate", NULL } ,
+	      { "0Geometry > Elementary > Add > Rotate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_rotate_point_cb } ,
 	      { "Line",    (Fl_Callback *)geometry_elementary_add_rotate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_scale[] = {
-	      { "0Geometry Elementary Add Scale", NULL } ,
+	      { "0Geometry > Elementary > Add > Scale", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_scale_point_cb } ,
 	      { "Line",    (Fl_Callback *)geometry_elementary_add_scale_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_scale_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_symmetry[] = {
-	      { "0Geometry Elementary Add Symmetry", NULL } ,
+	      { "0Geometry > Elementary > Add > Symmetry", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_symmetry_point_cb } ,
 	      { "Line",    (Fl_Callback *)geometry_elementary_add_symmetry_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_symmetry_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_translate[] = {
-	  { "0Geometry Elementary Translate", NULL } ,
+	  { "0Geometry > Elementary > Translate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_translate_point_cb } ,
 	  { "Line",    (Fl_Callback *)geometry_elementary_translate_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_translate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_rotate[] = {
-	  { "0Geometry Elementary Rotate", NULL } ,
+	  { "0Geometry > Elementary > Rotate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_rotate_point_cb } ,
 	  { "Line",    (Fl_Callback *)geometry_elementary_rotate_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_rotate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_scale[] = {
-	  { "0Geometry Elementary Scale", NULL } ,
+	  { "0Geometry > Elementary > Scale", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_scale_point_cb } ,
 	  { "Line",    (Fl_Callback *)geometry_elementary_scale_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_scale_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_symmetry[] = {
-	  { "0Geometry Elementary Symmetry", NULL } ,
+	  { "0Geometry > Elementary > Symmetry", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_symmetry_point_cb } ,
 	  { "Line",    (Fl_Callback *)geometry_elementary_symmetry_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_symmetry_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_extrude[] = {
-	  { "0Geometry Elementary Extrude", NULL } ,
+	  { "0Geometry > Elementary > Extrude", NULL } ,
 	  { "Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb } ,
 	  { "Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb } ,
 	  { NULL } 
  	};  
             Context_Item menu_geometry_elementary_extrude_translate[] = {
-	      { "0Geometry Elementary Extrude Translate", NULL } ,
+	      { "0Geometry > Elementary > Extrude > Translate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_translate_point_cb } ,
 	      { "Line",    (Fl_Callback *)geometry_elementary_extrude_translate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_extrude_rotate[] = {
-	      { "0Geometry Elementary Extrude Rotate", NULL } ,
+	      { "0Geometry > Elementary > Extrude > Rotate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_point_cb } ,
 	      { "Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_delete[] = {
-	  { "0Geometry Elementary Delete", NULL } ,
+	  { "0Geometry > Elementary > Delete", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_delete_point_cb } ,
 	  { "Line",    (Fl_Callback *)geometry_elementary_delete_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_delete_surface_cb } ,
 	  { NULL } 
 	};  
     Context_Item menu_geometry_physical[] = {
-      { "0Geometry Physical", NULL } ,
+      { "0Geometry > Physical", NULL } ,
       { "Add",    (Fl_Callback *)geometry_physical_add_cb } ,
       { NULL } 
     };  
         Context_Item menu_geometry_physical_add[] = {
-	  { "0Geometry Physical Add", NULL } ,
+	  { "0Geometry > Physical > Add", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_physical_add_point_cb  } ,
 	  { "Line",    (Fl_Callback *)geometry_physical_add_line_cb  } ,
 	  { "Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
@@ -338,14 +338,14 @@ Context_Item menu_mesh[] = {
   { NULL } 
 };  
     Context_Item menu_mesh_define[] = {
-      { "1Mesh Define", NULL } ,
+      { "1Mesh > Define", NULL } ,
       { "Length",      (Fl_Callback *)mesh_define_length_cb  } ,
       { "Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       { "Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
       { NULL } 
     };  
         Context_Item menu_mesh_define_transfinite[] = {
-	  { "1Mesh Define Transfinite", NULL } ,
+	  { "1Mesh > Define > Transfinite", NULL } ,
 	  { "Line",    (Fl_Callback *)mesh_define_transfinite_line_cb } ,
 	  { "Surface", (Fl_Callback *)mesh_define_transfinite_surface_cb } ,
 	  { "Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb } , 
@@ -749,6 +749,10 @@ GUI::GUI(int argc, char **argv)
   about_window = NULL;
   context_geometry_window = NULL;
   context_mesh_window = NULL;
+
+  // initialize on-screen message buffer
+  onscreen_buffer[0][0] = '\0';
+  onscreen_buffer[1][0] = '\0';
 
   // set X display
   if(strlen(CTX.display))
@@ -1302,8 +1306,17 @@ void GUI::check_anim_buttons()
 
 void GUI::set_status(char *msg, int num)
 {
-  g_status_label[num]->label(msg);
-  g_status_label[num]->redraw();
+  if(num >= 0 && num < 3){
+    g_status_label[num]->label(msg);
+    g_status_label[num]->redraw();
+  }
+  else{
+    if(num == 3)
+      strncpy(onscreen_buffer[0], msg, 255);
+    if(num == 4)
+      strncpy(onscreen_buffer[1], msg, 255);
+    redraw_opengl();
+  }
 }
 
 // set the current drawing context 

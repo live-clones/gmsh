@@ -232,6 +232,9 @@ public:
   // solver windows
   SolverDialogBox  solver[5] ;
 
+  // on-screen persistent messages
+  char onscreen_buffer[2][256];
+
   // the constructor
   GUI(int argc, char **argv);
 

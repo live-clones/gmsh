@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.107 2004-05-05 21:53:27 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.108 2004-05-18 17:00:37 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2468,11 +2468,10 @@ purpose, e.g.@: Wordpad on Windows, or Emacs on Unix), it is almost always
 simpler to define the lines, the surfaces and the volumes interactively. To
 do so, just follow the context dependent buttons in the Geometry module. For
 example, to create a spline, select `Geometry' in the module menu, and then
-select `Elementary, Add, New, Spline'. You will then be asked (in the status
-bar of the graphic window) to select a list of points, and to type @kbd{e}
-to finish the selection (or @kbd{q} to abort it). Once the interactive
-command is completed, a string is automatically added at the end of the
-currently opened project file.
+select `Elementary, Add, New, Spline'. You will then be asked to select a
+list of points, and to type @kbd{e} to finish the selection (or @kbd{q} to
+abort it). Once the interactive command is completed, a string is
+automatically added at the end of the currently opened project file.
 
 Gmsh's second operating mode is the non-interactive mode. In this mode,
 there is no graphical user interface, and all operations are performed

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.52 2004-05-17 17:40:03 geuzaine Exp $
+// $Id: Draw.cpp,v 1.53 2004-05-18 17:00:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -71,6 +71,7 @@ void Draw2d(void)
   glPushMatrix();
   Draw_Graph2D();
   Draw_Text2D();
+  Draw_OnScreenMessages();
   if(CTX.post.draw && CTX.post.scales)
     Draw_Scales();
   if(CTX.small_axes)

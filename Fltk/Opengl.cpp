@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.39 2004-05-18 04:54:50 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.40 2004-05-18 17:00:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -83,6 +83,25 @@ void Draw_String(char *s)
        CTX.print.format == FORMAT_PNGTEX)
       return;
     gl2psText(s, CTX.gl_font, CTX.gl_fontsize);
+  }
+}
+
+void Draw_OnScreenMessages()
+{
+
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+  gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  double h = gl_height();
+  
+  if(strlen(WID->onscreen_buffer[0])){
+    double w = gl_width(WID->onscreen_buffer[0]);
+    glRasterPos2d(CTX.viewport[2]/2.-w/2., CTX.viewport[3] - 1.2*h);
+    gl_draw(WID->onscreen_buffer[0]);
+  }
+  if(strlen(WID->onscreen_buffer[1])){
+    double w = gl_width(WID->onscreen_buffer[1]);
+    glRasterPos2d(CTX.viewport[2]/2.-w/2., CTX.viewport[3] - 2.4*h);
+    gl_draw(WID->onscreen_buffer[1]);
   }
 }
 

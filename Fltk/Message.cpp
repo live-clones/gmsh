@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.51 2004-05-15 15:32:32 geuzaine Exp $
+// $Id: Message.cpp,v 1.52 2004-05-18 17:00:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -90,6 +90,8 @@ void Msg(int level, char *fmt, ...)
   case STATUS2  : str = INFO_STR; verb = 1; window = 1; break ;
   case STATUS3N : log = 0; //fallthrough
   case STATUS3  : str = INFO_STR; verb = 1; window = 2; break ;
+  case ONSCREEN1: log = 0; verb = 1; window = 3; break ;
+  case ONSCREEN2: log = 0; verb = 1; window = 4; break ;
 
   case FATAL    : str = FATAL_STR; abort = 1; break ;
   case FATAL1   : str = FATAL_STR; break ;
@@ -125,7 +127,7 @@ void Msg(int level, char *fmt, ...)
 
 #define BUFFSIZE 1024
 
-  static char buff1[BUFFSIZE], buff2[BUFFSIZE], buff[4][BUFFSIZE];
+  static char buff1[BUFFSIZE], buff2[BUFFSIZE], buff[5][BUFFSIZE];
 
   if(CTX.verbosity >= verb) {
 

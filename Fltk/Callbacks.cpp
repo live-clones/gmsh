@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.232 2004-05-18 04:54:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.233 2004-05-18 17:00:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1009,7 +1009,9 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
     Draw();
   }
 
-  Msg(STATUS3N, "Select point ('q'=abort)");
+  Msg(STATUS3N, "Setting rotation center");
+  Msg(ONSCREEN1, "Select point");
+  Msg(ONSCREEN2, "[Press 'q' to abort]");
   char ib = SelectEntity(ENT_POINT, &v, &c, &s);
   if(ib == 'l') {
     // This would bypass the "Apply" button... Not necessarily bad,
@@ -1026,6 +1028,8 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   ZeroHighlight(THEM);
   Draw();
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void general_options_ok_cb(CALLBACK_ARGS)
@@ -1772,9 +1776,12 @@ static void _new_multiline(int type)
     Draw();
   }
 
+  Msg(ONSCREEN1, "Select control points");
+  Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Select points ('e'=end, 'u'=undo, 'q'=abort)");
+    Msg(STATUS3N, "Creating curve");
     char ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = v->Num;
@@ -1813,7 +1820,10 @@ static void _new_multiline(int type)
       break;
     }
   }
+
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
@@ -1833,12 +1843,15 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     Draw();
   }
 
+  Msg(ONSCREEN2, "[Press 'u' to undo last selection or 'q' to abort]");
+
   n = 0;
   while(1) {
+    Msg(STATUS3N, "Creating straight line");
     if(n == 0)
-      Msg(STATUS3N, "Select start point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select start point");
     if(n == 1)
-      Msg(STATUS3N, "Select end point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select end point");
     char ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = v->Num;
@@ -1862,7 +1875,10 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
       n = 0;
     }
   }
+
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void geometry_elementary_add_new_spline_cb(CALLBACK_ARGS)
@@ -1887,14 +1903,17 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     Draw();
   }
 
+  Msg(ONSCREEN2, "[Press 'u' to undo last selection or 'q' to abort]");
+
   n = 0;
   while(1) {
+    Msg(STATUS3N, "Creating circle");
     if(n == 0)
-      Msg(STATUS3N, "Select start point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select start point");
     if(n == 1)
-      Msg(STATUS3N, "Select center point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select center point");
     if(n == 2)
-      Msg(STATUS3N, "Select end point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select end point");
     char ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = v->Num;
@@ -1918,7 +1937,10 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
       n = 0;
     }
   }
+
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
@@ -1933,16 +1955,19 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     Draw();
   }
 
+  Msg(ONSCREEN2, "[Press 'u' to undo last selection or 'q' to abort]");
+
   n = 0;
   while(1) {
+    Msg(STATUS3N, "Creating ellipse");
     if(n == 0)
-      Msg(STATUS3N, "Select start point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select start point");
     if(n == 1)
-      Msg(STATUS3N, "Select center point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select center point");
     if(n == 2)
-      Msg(STATUS3N, "Select major axis point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select major axis point");
     if(n == 3)
-      Msg(STATUS3N, "Select end point ('u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select end point");
     char ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = v->Num;
@@ -1966,7 +1991,10 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
       n = 0;
     }
   }
+
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 static void _new_surface_volume(int mode)
@@ -2001,7 +2029,15 @@ static void _new_surface_volume(int mode)
     List_Reset(ListUnsorted);
 
     while(1) {
-      Msg(STATUS3N, "Select exterior boundary ('u'=undo, 'q'=abort)");
+      if(type == ENT_LINE){
+	Msg(STATUS3N, "Creating surface");
+	Msg(ONSCREEN1, "Select surface boundary");
+      }
+      else{
+	Msg(STATUS3N, "Creating volume");
+	Msg(ONSCREEN1, "Select volume boundary");
+      }
+      Msg(ONSCREEN2, "[Press 'u' to undo last selection or 'q' to abort]");
       char ib = SelectEntity(type, &v, &c, &s);
       if(ib == 'q') {
         ZeroHighlight(THEM);
@@ -2040,7 +2076,8 @@ static void _new_surface_volume(int mode)
 	  List_Reset(ListUnsorted);
 	  List_Add(List2, &num);
 	  while(1) {
-	    Msg(STATUS3N, "Select hole boundaries ('e'=end, 'u'=undo, 'q'=abort)");
+	    Msg(ONSCREEN1, "Select hole boundaries (if any)");
+	    Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
 	    ib = SelectEntity(type, &v, &c, &s);
 	    if(ib == 'q') {
 	      ZeroHighlight(THEM);
@@ -2106,6 +2143,8 @@ stopall:;
   List_Delete(List2);
   List_Delete(ListUnsorted);
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void geometry_elementary_add_new_planesurface_cb(CALLBACK_ARGS)
@@ -2156,8 +2195,11 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
     }
   }
 
+  Msg(ONSCREEN1, "Select %s", str);
+  Msg(ONSCREEN2, "[Press 'q' to abort]");
+
   while(1) {
-    Msg(STATUS3N, "Select %s ('q'=abort)", str);
+    Msg(STATUS3N, "Transforming %s", str);
     char ib = SelectEntity(type, &v, &c, &s);
     if(ib == 'q') {
       ZeroHighlight(THEM);
@@ -2232,7 +2274,10 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
       Draw();
     }
   }
+
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS)
@@ -2535,9 +2580,12 @@ static void _add_physical(char *what)
     return;
   }
 
+  Msg(ONSCREEN1, "Select %s", str);
+  Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+
   List1 = List_Create(5, 5, sizeof(int));
   while(1) {
-    Msg(STATUS3N, "Select %s ('e'=end, 'u'=undo, 'q'=abort)", str);
+    Msg(STATUS3N, "Creating physical %s", str);
     char ib = SelectEntity(type, &v, &c, &s);
     if(ib == 'l') {
       switch (type) {
@@ -2578,6 +2626,8 @@ static void _add_physical(char *what)
   }
   List_Delete(List1);
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void geometry_physical_add_cb(CALLBACK_ARGS)
@@ -2676,8 +2726,11 @@ void mesh_define_length_cb(CALLBACK_ARGS)
 
   WID->create_mesh_context_window(0);
 
+  Msg(ONSCREEN1, "Select points");
+  Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+
   while(1) {
-    Msg(STATUS3N, "Select points ('e'=end, 'u'=undo, 'q'=qbort)");
+    Msg(STATUS3N, "Setting characteristic length");
     char ib = SelectEntity(ENT_POINT, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = v->Num;
@@ -2703,6 +2756,8 @@ void mesh_define_length_cb(CALLBACK_ARGS)
     }
   }
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void mesh_define_recombine_cb(CALLBACK_ARGS)
@@ -2717,9 +2772,12 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
     Draw();
   }
 
+  Msg(ONSCREEN1, "Select surface");
+  Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
+
   n = 0;
   while(1) {
-    Msg(STATUS3N, "Select surface ('e'=end, 'u'=undo, 'q'=qbort)");
+    Msg(STATUS3N, "Selecting recombined surfaces");
     char ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
     if(ib == 'l') {
       p[n++] = s->Num;
@@ -2745,6 +2803,8 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
     }
   }
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void mesh_define_transfinite_cb(CALLBACK_ARGS)
@@ -2788,13 +2848,16 @@ static void _add_transfinite(int dim)
 
   n = 0;
   while(1) {
+    Msg(STATUS3N, "Setting transfinite contraints");
     switch (dim) {
     case 1:
-      Msg(STATUS3N, "Select lines ('e'=end, 'u'=undo, 'q'=abort)");
+      Msg(ONSCREEN1, "Select lines");
+      Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
       ib = SelectEntity(ENT_LINE, &v, &c, &s);
       break;
     case 2:
-      Msg(STATUS3N, "Select surface ('q'=abort)");
+      Msg(ONSCREEN1, "Select surface");
+      Msg(ONSCREEN2, "[Press 'q' to abort]");
       ib = SelectEntity(ENT_SURFACE, &v, &c, &s);
       break;
     default:
@@ -2837,7 +2900,8 @@ static void _add_transfinite(int dim)
         p[n++] = s->Num; // fall-through
       case 3:
         while(1) {
-          Msg(STATUS3N, "Select points ('e'=end, 'u'=undo, 'q'=quit)");
+	  Msg(ONSCREEN1, "Select boundary points (in order)");
+	  Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
           ib = SelectEntity(ENT_POINT, &v, &c, &s);
           if(ib == 'l') {
             p[n++] = v->Num;
@@ -2855,14 +2919,14 @@ static void _add_transfinite(int dim)
               if(n == 3 + 1 || n == 4 + 1)
                 add_trsfsurf(n, p, CTX.filename);
               else
-                Msg(STATUS2, "Wrong number of points for transfinite surface");
+                Msg(GERROR, "Wrong number of points for transfinite surface");
               break;
             case 3:
               if(n == 6 || n == 8)
                 add_trsfvol(n, p, CTX.filename, 
 			    (char*)WID->context_mesh_input[3]->value());
               else
-                Msg(STATUS2, "Wrong number of points for transfinite volume");
+                Msg(GERROR, "Wrong number of points for transfinite volume");
               break;
             }
             ZeroHighlight(THEM);
@@ -2883,6 +2947,8 @@ static void _add_transfinite(int dim)
 
 stopall:
   Msg(STATUS3N, "Ready");
+  Msg(ONSCREEN1, "");
+  Msg(ONSCREEN2, "");
 }
 
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS)
