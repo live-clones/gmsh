@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.429 2005-03-13 09:10:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.430 2005-03-14 01:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -855,8 +855,8 @@ GUI::GUI(int argc, char **argv)
   // displayed) since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time
 
-  create_menu_window(argc, argv);
-  create_graphic_window(argc, argv);
+  create_menu_window();
+  create_graphic_window();
 
 #if defined(WIN32)
   m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
@@ -875,10 +875,14 @@ GUI::GUI(int argc, char **argv)
   g_window->icon((char *)p2);
 #endif
 
-  // show menu window last, so it's always in front
-  g_window->show(1, argv);
+  // we must show() m_window first (at least on Win32, since the icon
+  // is associated with m_window); and besides, it's probably better
+  // to have the initial focus on g_window so that we can directly
+  // process graphical shortcuts (e.g. for time step selection)
   m_window->show(1, argv);
-
+  g_window->show(1, argv);
+  g_opengl_window->take_focus();
+  
   create_option_window();
   create_message_window();
   create_statistics_window();
@@ -937,12 +941,12 @@ void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
   }
 }
 
-void GUI::create_menu_window(int argc, char **argv)
+void GUI::create_menu_window()
 {
   int y;
 
   if(m_window) {
-    m_window->show(1, argv);
+    m_window->show();
     return;
   }
 
@@ -1280,12 +1284,12 @@ int GUI::get_context()
 
 // Create the graphic window
 
-void GUI::create_graphic_window(int argc, char **argv)
+void GUI::create_graphic_window()
 {
   int i, x;
 
   if(g_window) {
-    g_window->show(1, argv);
+    g_window->show();
     return;
   }
 

@@ -256,8 +256,8 @@ public:
   GUI(int argc, char **argv);
 
   // create the windows
-  void create_menu_window(int argc, char **argv);
-  void create_graphic_window(int argc, char **argv);
+  void create_menu_window();
+  void create_graphic_window();
   void create_option_window();
   void hide_all_option_groups();
   void create_general_options_window();
