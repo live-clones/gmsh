@@ -1,4 +1,4 @@
-/* $Id: Help.h,v 1.5 2000-12-26 08:13:19 geuzaine Exp $ */
+/* $Id: Help.h,v 1.6 2000-12-26 11:59:06 geuzaine Exp $ */
 #ifndef _HELP_H_
 #define _HELP_H_
 
@@ -70,7 +70,7 @@ static char txt_help[]=
 "  (M-h)        toggle highlight mode\n"
 "  (M-l)        hide/show geometry lines\n"
 "  (M-S-l)      hide/show mesh lines\n"
-"  (M-m)        toggle all mesh entities visibility\n"
+"  (M-m)        toggle visibility of all mesh entities\n"
 "  (M-o)        change projection mode\n"
 "  (M-p)        hide/show geometry points\n"
 "  (M-S-p)      hide/show mesh points\n"
