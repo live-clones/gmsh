@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.18 2003-04-15 07:41:24 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.19 2003-04-15 15:49:03 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -618,6 +618,11 @@ inside all Gmsh expressions.
 @tindex Pi
 @tindex MPI_Rank
 @tindex MPI_Size
+@tindex newp
+@tindex newc
+@tindex news
+@tindex newv
+@tindex newreg
 @tindex =
 
 The two constant types used in Gmsh are @var{real} and @var{string} (there
@@ -1262,7 +1267,8 @@ from solver example?
 @ftable @code
 @item ColorTable
 
-@item Plugin          
+@item Plugin
+@item View
 
 @item SP
 @item VP
