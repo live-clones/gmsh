@@ -1,7 +1,7 @@
-$Id: VERSIONS,v 1.280 2004-12-24 23:13:21 geuzaine Exp $
+$Id: VERSIONS,v 1.281 2004-12-26 19:53:55 geuzaine Exp $
 
 New since 1.57: new File->Rename menu; new colormaps+improved colormap
-handling; new color options in views;
+handling; new color+min/max options in views;
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored
