@@ -19,9 +19,9 @@ Specify mesh output file name
 @item -format string
 Set output mesh format (msh, unv, gref, p3d)
 @item -algo string
-Select 2D mesh algorithm (iso, tri, aniso, netgen)
+Select mesh algorithm (iso, tri, aniso, netgen)
 @item -smooth int
-Set mesh smoothing
+Set number of mesh smoothing steps
 @item -optimize
 Optimize quality of tetrahedral elements
 @item -order int
