@@ -1,4 +1,0 @@
-New in 1.36: Enhance view duplication (one can now use "Duplicata
-View[num]" in the input file); Enhance discoverability of the view
-option menu; small bug fixes ("Print" format in parser,
-post-processing statistics, etc.);
