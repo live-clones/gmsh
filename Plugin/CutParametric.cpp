@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.12 2005-03-02 08:14:29 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.13 2005-03-04 19:08:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -227,8 +227,7 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
 		v2->SP, &v2->NbSP, v2->SL, &v2->NbSL);
     }
     if(v->NbVT || v->NbVQ || v->NbVS || v->NbVH || v->NbVI || v->NbVY){
-      double size;
-      o.searchVector(x, y, z, res, &size);
+      o.searchVector(x, y, z, res);
       addInView(connect, i, 3, v1->NbTimeStep, x0, y0, z0, res0, x, y, z, res,
 		v2->VP, &v2->NbVP, v2->VL, &v2->NbVL);
     }

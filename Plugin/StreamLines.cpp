@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.21 2005-03-02 07:49:41 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.22 2005-03-04 19:08:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -238,7 +238,7 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
   const double a1=0.5, a2=0.5, a3=1.0, a4=1.0;
   const double DT = StreamLinesOptions_Number[12].def;
   double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
-  double sizeElem = 0.033, val[3], *val2 = NULL;
+  double val[3], *val2 = NULL;
 
   Post_View *View = BeginView(1);
 
@@ -293,21 +293,22 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 	// X4 = X + a4 * DT * V(X3)
 	// X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
 
-	o.searchVector(X[0], X[1], X[2], val, &sizeElem, 0);
-	// double normV = sqrt(val[0]*val[0]+
-	//	 	       val[1]*val[1]+
-	//		       val[2]*val[2]);	     
+	// o.searchVector(X[0], X[1], X[2], val, 0, &sizeElem);
+	// double normV = sqrt(val[0]*val[0]+val[1]*val[1]+val[2]*val[2]);	     
 	// if (normV==0.0) normV = 1.0;
-	// double DT = sizeElem / normV ; /// CFL = 1 ==> secure 
+	// double DT = sizeElem / normV ; // CFL = 1 ==> secure 
+	o.searchVector(X[0], X[1], X[2], val, 0);
 	for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
-	o.searchVector(X1[0], X1[1], X1[2], val, &sizeElem, 0);
+	o.searchVector(X1[0], X1[1], X1[2], val, 0);
 	for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
-	o.searchVector(X2[0], X2[1], X2[2], val, &sizeElem, 0);
+	o.searchVector(X2[0], X2[1], X2[2], val, 0);
 	for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
-	o.searchVector(X3[0], X3[1], X3[2], val, &sizeElem, 0);
+	o.searchVector(X3[0], X3[1], X3[2], val, 0);
 	for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
-	for(int k = 0; k < 3; k++) X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
-					    b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
+
+	for(int k = 0; k < 3; k++) 
+	  X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
+		   b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
 	for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
 
 	if(v2){

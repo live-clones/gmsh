@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.16 2005-03-02 07:49:41 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.17 2005-03-04 19:08:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -365,11 +365,9 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v, int connect)
   }
 
   if(nbv){
-    double sizeElem;
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
-	o.searchVector(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j], 
-		       &sizeElem);
+	o.searchVector(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
     addInView(v, connect, 3, pnts, vals,
 	      View->VP, &View->NbVP, View->VL, &View->NbVL, View->VQ, &View->NbVQ);
   }

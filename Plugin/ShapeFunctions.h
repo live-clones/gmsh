@@ -34,6 +34,8 @@ public:
   virtual int getDimension() = 0;
   virtual int getNumNodes() = 0;
   virtual void getNode(int num, double &u, double &v, double &w) = 0;
+  virtual int getNumEdges() = 0;
+  virtual void getEdge(int num, int &start, int &end) = 0;
   virtual int getNumGaussPoints() = 0;
   virtual void getGaussPoint(int num, double &u, double &v, double &w, double &weight) = 0; 
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) = 0;
@@ -69,9 +71,9 @@ public:
 	prodve(a, b, c);
 	jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
       }
-      return sqrt(DSQR(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
-		  DSQR(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
-		  DSQR(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+      return sqrt(SQR(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
+		  SQR(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
+		  SQR(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
     case 1:
       for(int i = 0; i < getNumNodes(); i++) {
 	getGradShapeFunction(i, u, v, w, s);
@@ -91,7 +93,7 @@ public:
 	jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
 	jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
       }
-      return sqrt(DSQR(jac[0][0])+DSQR(jac[0][1])+DSQR(jac[0][2]));
+      return sqrt(SQR(jac[0][0])+SQR(jac[0][1])+SQR(jac[0][2]));
     default:
       return 1.;
     }
@@ -230,6 +232,17 @@ public:
     //if(error > tol) Msg(WARNING, "Newton did not converge in xyz2uvw") ;
   }
   virtual int isInside(double u, double v, double w) = 0;
+  double maxEdgeLength()
+  {
+    double max = 0.;
+    for(int i = 0; i < getNumEdges(); i++){
+      int n1, n2;
+      getEdge(i, n1, n2);
+      double d = sqrt(SQR(_x[n1]-_x[n2]) + SQR(_y[n1]-_y[n2]) + SQR(_z[n1]-_z[n2]));
+      if(d > max) max = d;
+    }
+    return max;
+  }
 };
 
 class point : public element{
@@ -240,6 +253,11 @@ public:
   void getNode(int num, double &u, double &v, double &w)
   {
     u = v = w = 0.;
+  }
+  inline int getNumEdges(){ return 0; }
+  void getEdge(int num, int &start, int &end)
+  {
+    start = end = 0;
   }
   inline int getNumGaussPoints(){ return 1; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
@@ -281,6 +299,11 @@ public:
     case 1 : u =  1.; break;
     default: u =  0.; break;
     }
+  }
+  inline int getNumEdges(){ return 1; }
+  void getEdge(int num, int &start, int &end)
+  {
+    start = 0; end = 1;
   }
   inline int getNumGaussPoints(){ return 1; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
@@ -337,6 +360,16 @@ public:
     case 1 : u = 1.; v = 0.; break;
     case 2 : u = 0.; v = 1.; break;
     default: u = 0.; v = 0.; break;
+    }
+  }
+  inline int getNumEdges(){ return 3; }
+  void getEdge(int num, int &start, int &end)
+  {
+    switch(num) {
+    case 0 : start = 0; end = 1; break;
+    case 1 : start = 1; end = 2; break;
+    case 2 : start = 2; end = 0; break;
+    default: start = end = 0; break;
     }
   }
   inline int getNumGaussPoints(){ return 3; }
@@ -421,6 +454,17 @@ public:
     default: u =  0.; v =  0.; break;
     }
   }
+  inline int getNumEdges(){ return 4; }
+  void getEdge(int num, int &start, int &end)
+  {
+    switch(num) {
+    case 0 : start = 0; end = 1; break;
+    case 1 : start = 1; end = 2; break;
+    case 2 : start = 2; end = 3; break;
+    case 3 : start = 3; end = 0; break;
+    default: start = end = 0; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 4; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -488,6 +532,19 @@ public:
     case 2 : u = 0.; v = 1.; w = 0.; break;
     case 3 : u = 0.; v = 0.; w = 1.; break;
     default: u = 0.; v = 0.; w = 0.; break;
+    }
+  }
+  inline int getNumEdges(){ return 6; }
+  void getEdge(int num, int &start, int &end)
+  {
+    switch(num) {
+    case 0 : start = 0; end = 1; break;
+    case 1 : start = 1; end = 2; break;
+    case 2 : start = 2; end = 0; break;
+    case 3 : start = 3; end = 0; break;
+    case 4 : start = 3; end = 2; break;
+    case 5 : start = 3; end = 1; break;
+    default: start = end = 0; break;
     }
   }
   inline int getNumGaussPoints(){ return 4; }
@@ -566,6 +623,25 @@ public:
     case 6 : u =  1.; v =  1.; w =  1.; break;
     case 7 : u = -1.; v =  1.; w =  1.; break;
     default: u =  0.; v =  0.; w =  0.; break;
+    }
+  }
+  inline int getNumEdges(){ return 12; }
+  void getEdge(int num, int &start, int &end)
+  {
+    switch(num) {
+    case 0 : start = 0; end = 1; break;
+    case 1 : start = 0; end = 3; break;
+    case 2 : start = 0; end = 4; break;
+    case 3 : start = 1; end = 2; break;
+    case 4 : start = 1; end = 5; break;
+    case 5 : start = 2; end = 3; break;
+    case 6 : start = 2; end = 6; break;
+    case 7 : start = 3; end = 7; break;
+    case 8 : start = 4; end = 5; break;
+    case 9 : start = 4; end = 7; break;
+    case 10: start = 5; end = 6; break;
+    case 11: start = 6; end = 7; break;
+    default: start = end = 0; break;
     }
   }
   inline int getNumGaussPoints(){ return 6; }
@@ -654,6 +730,22 @@ public:
     default: u = 0.; v = 0.; w =  0.; break;
     }
   }
+  inline int getNumEdges(){ return 9; }
+  void getEdge(int num, int &start, int &end)
+  {
+    switch(num) {
+    case 0 : start = 0; end = 1; break;
+    case 1 : start = 0; end = 2; break;
+    case 2 : start = 0; end = 3; break;
+    case 3 : start = 1; end = 2; break;
+    case 4 : start = 1; end = 4; break;
+    case 5 : start = 2; end = 5; break;
+    case 6 : start = 3; end = 4; break;
+    case 7 : start = 3; end = 5; break;
+    case 8 : start = 4; end = 5; break;
+    default: start = end = 0; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 6; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -731,6 +823,21 @@ public:
     default: u =  0.; v =  0.; w = 0.; break;
     }
   }
+  inline int getNumEdges(){ return 8; }
+  void getEdge(int num, int &start, int &end)
+  {
+    switch(num) {
+    case 0 : start = 0; end = 1; break;
+    case 1 : start = 0; end = 3; break;
+    case 2 : start = 0; end = 4; break;
+    case 3 : start = 1; end = 2; break;
+    case 4 : start = 1; end = 4; break;
+    case 5 : start = 2; end = 3; break;
+    case 6 : start = 2; end = 4; break;
+    case 7 : start = 3; end = 4; break;
+    default: start = end = 0; break;
+    }
+  }
   inline int getNumGaussPoints(){ return 8; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
@@ -781,16 +888,16 @@ public:
       switch(num) {
       case 0  : s[0] = 0.25 * ( -(1.-v) + v*w/(1.-w) ) ;
 	        s[1] = 0.25 * ( -(1.-u) + u*w/(1.-w) ) ;
-      	        s[2] = 0.25 * ( -1.     + u*v/DSQR(1.-w) ) ; break ;
+      	        s[2] = 0.25 * ( -1.     + u*v/SQR(1.-w) ) ; break ;
       case 1  : s[0] = 0.25 * (  (1.-v) + v*w/(1.-w) ) ;
 	        s[1] = 0.25 * ( -(1.+u) + u*w/(1.-w) ) ;
-	        s[2] = 0.25 * ( -1.     + u*v/DSQR(1.-w) ) ; break ;
+	        s[2] = 0.25 * ( -1.     + u*v/SQR(1.-w) ) ; break ;
       case 2  : s[0] = 0.25 * (  (1.+v) + v*w/(1.-w) ) ;
                 s[1] = 0.25 * (  (1.+u) + u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     + u*v/DSQR(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     + u*v/SQR(1.-w) ) ; break ;
       case 3  : s[0] = 0.25 * ( -(1.+v) + v*w/(1.-w) ) ;
                 s[1] = 0.25 * (  (1.-u) + u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     + u*v/DSQR(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     + u*v/SQR(1.-w) ) ; break ;
       case 4  : s[0] = 0. ; 
                 s[1] = 0. ;
                 s[2] = 1. ; break ;

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.18 2005-03-03 21:31:59 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.19 2005-03-04 19:08:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -184,14 +184,14 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
       for(int k = 0; k < nbComp; k++) v[k] = val1[k];
 
       // store data from the external view into w
-      double *val2, tmp[9], sizeElm;
+      double *val2, tmp[9];
       double w[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
       if(_octree){
 	val2 = tmp;
 	if(_octree->searchScalar(x[j], y[j], z[j], val2, timeStep2)){
 	  w[0] = val2[0];
 	}
-	else if(_octree->searchVector(x[j], y[j], z[j], val2, &sizeElm, timeStep2)){
+	else if(_octree->searchVector(x[j], y[j], z[j], val2, timeStep2)){
 	  for(int k = 0; k < 3; k++) w[k] = val2[k];
 	}
 	else if(_octree->searchTensor(x[j], y[j], z[j], val2, timeStep2)){

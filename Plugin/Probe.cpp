@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.8 2005-03-02 07:49:41 geuzaine Exp $
+// $Id: Probe.cpp,v 1.9 2005-03-04 19:08:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -183,8 +183,7 @@ Post_View *GMSH_ProbePlugin::execute(Post_View * v)
     v2->NbSP++;
   }
 
-  double sizeElem;
-  if(o.searchVector(x, y, z, val, &sizeElem)){
+  if(o.searchVector(x, y, z, val)){
     List_Add(v2->VP, &x);
     List_Add(v2->VP, &y);
     List_Add(v2->VP, &z);

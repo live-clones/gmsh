@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.14 2005-03-02 07:49:41 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.15 2005-03-04 19:08:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -276,7 +276,7 @@ OctreePost::OctreePost(Post_View *v)
 }
 
 bool OctreePost::getValue(void *in, int dim, int nbNod, int nbComp, 
-			  double P[3], int timestep, double *values)
+			  double P[3], int timestep, double *values, double *size_elem)
 {
   if(!in) return false;
 
@@ -299,12 +299,15 @@ bool OctreePost::getValue(void *in, int dim, int nbNod, int nbComp,
 				 U[0], U[1], U[2], nbComp);
   }
 
+  if(size_elem)
+    *size_elem = e->maxEdgeLength();
+
   delete e;
   return true;
 } 
 
-bool OctreePost::searchScalar(double x, double y, double z,
-			      double * values, int timestep)
+bool OctreePost::searchScalar(double x, double y, double z, double *values, 
+			      int timestep, double *size_elem)
 {
   double P[3] = {x, y, z};
 
@@ -314,18 +317,18 @@ bool OctreePost::searchScalar(double x, double y, double z,
   else
     values[0] = 0.0;
 
-  if(getValue(Octree_Search(P, SS), 3, 4, 1, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, SH), 3, 8, 1, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, SI), 3, 6, 1, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, SY), 3, 5, 1, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, ST), 2, 3, 1, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, SQ), 2, 4, 1, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, SS), 3, 4, 1, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, SH), 3, 8, 1, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, SI), 3, 6, 1, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, SY), 3, 5, 1, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, ST), 2, 3, 1, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, SQ), 2, 4, 1, P, timestep, values, size_elem)) return true;
 
   return false;
 }
 
-bool OctreePost::searchVector(double x, double y, double z,
-			      double * values, double * size_elem, int timestep)
+bool OctreePost::searchVector(double x, double y, double z, double *values, 
+			      int timestep, double *size_elem)
 {
   double P[3] = {x, y, z};
 
@@ -336,21 +339,18 @@ bool OctreePost::searchVector(double x, double y, double z,
     for(int i = 0; i < 3; i++)
       values[i] = 0.0;
 
-  // FIXME: compute this!
-  *size_elem = 1.;
-
-  if(getValue(Octree_Search(P, VS), 3, 4, 3, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, VH), 3, 8, 3, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, VI), 3, 6, 3, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, VY), 3, 5, 3, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, VT), 2, 3, 3, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, VQ), 2, 4, 3, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, VS), 3, 4, 3, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, VH), 3, 8, 3, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, VI), 3, 6, 3, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, VY), 3, 5, 3, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, VT), 2, 3, 3, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, VQ), 2, 4, 3, P, timestep, values, size_elem)) return true;
 
   return false;
 }
 
-bool OctreePost::searchTensor(double x, double y, double z,
-			      double * values, int timestep)
+bool OctreePost::searchTensor(double x, double y, double z, double *values, 
+			      int timestep, double *size_elem)
 {
   double P[3] = {x, y, z};
 
@@ -361,12 +361,12 @@ bool OctreePost::searchTensor(double x, double y, double z,
     for(int i = 0; i < 9; i++)
       values[i] = 0.0;
 
-  if(getValue(Octree_Search(P, TS), 3, 4, 9, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, TH), 3, 8, 9, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, TI), 3, 6, 9, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, TY), 3, 5, 9, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, TT), 2, 3, 9, P, timestep, values)) return true;
-  if(getValue(Octree_Search(P, TQ), 2, 4, 9, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, TS), 3, 4, 9, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, TH), 3, 8, 9, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, TI), 3, 6, 9, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, TY), 3, 5, 9, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, TT), 2, 3, 9, P, timestep, values, size_elem)) return true;
+  if(getValue(Octree_Search(P, TQ), 2, 4, 9, P, timestep, values, size_elem)) return true;
 
   return false;
 }
