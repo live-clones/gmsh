@@ -1,6 +1,6 @@
-// $Id: Skin.cpp,v 1.16 2003-03-01 22:36:44 geuzaine Exp $
+// $Id: Skin.cpp,v 1.17 2003-03-21 00:52:46 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

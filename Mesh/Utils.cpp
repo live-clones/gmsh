@@ -1,6 +1,6 @@
-// $Id: Utils.cpp,v 1.19 2003-03-18 07:37:20 geuzaine Exp $
+// $Id: Utils.cpp,v 1.20 2003-03-21 00:52:42 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: OpenFile.cpp,v 1.43 2003-03-07 18:28:28 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.44 2003-03-21 00:52:45 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

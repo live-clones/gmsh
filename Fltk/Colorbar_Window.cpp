@@ -1,6 +1,6 @@
-// $Id: Colorbar_Window.cpp,v 1.33 2003-03-04 03:53:07 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.34 2003-03-21 00:52:36 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

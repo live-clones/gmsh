@@ -1,6 +1,6 @@
-// $Id: 2D_Bricks.cpp,v 1.10 2003-03-01 22:36:40 geuzaine Exp $
+// $Id: 2D_Bricks.cpp,v 1.11 2003-03-21 00:52:39 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: dxf2geo.c,v 1.6 2003-03-18 07:37:20 geuzaine Exp $
+// $Id: dxf2geo.c,v 1.7 2003-03-21 00:52:49 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: GPL.cpp,v 1.1 2003-03-02 00:16:13 geuzaine Exp $
+// $Id: GPL.cpp,v 1.2 2003-03-21 00:52:35 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

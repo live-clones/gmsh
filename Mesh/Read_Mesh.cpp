@@ -1,6 +1,6 @@
-// $Id: Read_Mesh.cpp,v 1.52 2003-03-16 21:23:18 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.53 2003-03-21 00:52:41 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

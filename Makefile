@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.276 2003-03-19 06:51:55 geuzaine Exp $
+# $Id: Makefile,v 1.277 2003-03-21 00:52:34 geuzaine Exp $
 #
-# Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+# Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ utilities:
 	cd utils && ${MAKE}
 
 purge:
-	for i in . lib archives demos tutorial doc ${GMSH_DIRS}; \
+	for i in . bin lib utils archives demos tutorial doc ${GMSH_DIRS}; \
         do (cd $$i && rm -f *~ *~~ .gmsh-tmp .gmsh-errors gmon.out); \
         done
 

@@ -1,6 +1,6 @@
-/* $Id: mysolver.c,v 1.7 2003-03-01 23:03:23 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.8 2003-03-21 00:52:49 geuzaine Exp $ */
 /*
-  Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+  Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: Views.cpp,v 1.92 2003-03-11 17:57:07 geuzaine Exp $
+// $Id: Views.cpp,v 1.93 2003-03-21 00:52:35 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
