@@ -13,18 +13,8 @@ General.GraphicsHeight = 240 ;
 For i In {1:View[0].NbTimeStep}
 
   Draw;
-  If (i < 10)
-    Print Sprintf("anim-00%g.jpg", i);
-    Print Sprintf("anim-00%g.gif", i);
-  EndIf
-  If (i >= 10 && i < 100)
-    Print Sprintf("anim-0%g.jpg", i);
-    Print Sprintf("anim-0%g.gif", i);
-  EndIf
-  If (i >= 100)
-    Print Sprintf("anim-%g.jpg", i);
-    Print Sprintf("anim-%g.gif", i);
-  EndIf
+  Print Sprintf("anim-%03g.jpg", i);
+  Print Sprintf("anim-%03g.gif", i);
 
   For j In {1:PostProcessing.NbViews}
     View[j-1].TimeStep++;
@@ -50,15 +40,7 @@ System 'echo "OUTPUT           anim.mpg"       >> anim.par' ;
 System 'echo "INPUT_CONVERT    *"              >> anim.par' ;
 System 'echo "INPUT_DIR        ."              >> anim.par' ;
 System 'echo "INPUT"                           >> anim.par' ;
-If (View[0].NbTimeStep < 10)
-  System Sprintf('echo "anim-*.jpg [001-00%g]" >> anim.par', View[0].NbTimeStep) ;
-EndIf
-If (View[0].NbTimeStep >= 10 && View[0].NbTimeStep < 100)
-  System Sprintf('echo "anim-*.jpg [001-0%g]"  >> anim.par', View[0].NbTimeStep) ;
-EndIf
-If (View[0].NbTimeStep >= 100)
-  System Sprintf('echo "anim-*.jpg [001-%g]"   >> anim.par', View[0].NbTimeStep) ;
-EndIf
+System Sprintf('echo "anim-*.jpg [001-%03g]"   >> anim.par', View[0].NbTimeStep) ;
 System 'echo "END_INPUT"                       >> anim.par' ;
 
 // Call mpeg_encode

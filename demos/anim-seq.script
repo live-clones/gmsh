@@ -32,18 +32,8 @@ For i In {1:PostProcessing.NbViews}
 
     index++;
     Draw;
-    If (index < 10)
-      Print Sprintf("anim-00%g.jpg", index);
-      Print Sprintf("anim-00%g.gif", index);
-    EndIf
-    If (index >= 10 && index < 100)
-      Print Sprintf("anim-0%g.jpg", index);
-      Print Sprintf("anim-0%g.gif", index);
-    EndIf
-    If (index >= 100)
-      Print Sprintf("anim-%g.jpg", index);
-      Print Sprintf("anim-%g.gif", index);
-    EndIf
+    Print Sprintf("anim-%03g.jpg", index);
+    Print Sprintf("anim-%03g.gif", index);
     View[i-1].TimeStep++;
 
   EndFor
@@ -70,15 +60,7 @@ System 'echo "OUTPUT           anim.mpg"       >> anim.par' ;
 System 'echo "INPUT_CONVERT    *"              >> anim.par' ;
 System 'echo "INPUT_DIR        ."              >> anim.par' ;
 System 'echo "INPUT"                           >> anim.par' ;
-If (index < 10)
-  System Sprintf('echo "anim-*.jpg [001-00%g]" >> anim.par', index) ;
-EndIf
-If (index >= 10 && index < 100)
-  System Sprintf('echo "anim-*.jpg [001-0%g]"  >> anim.par', index) ;
-EndIf
-If (index >= 100)
-  System Sprintf('echo "anim-*.jpg [001-%g]"   >> anim.par', index) ;
-EndIf
+System Sprintf('echo "anim-*.jpg [001-%03g]"   >> anim.par', index) ;
 System 'echo "END_INPUT"                       >> anim.par' ;
 
 // Call mpeg_encode
