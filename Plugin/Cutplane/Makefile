@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2001-03-04 20:57:03 remacle Exp $
+# $Id: Makefile,v 1.1 2001-03-04 20:57:49 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -6,21 +6,21 @@
 .IGNORE:
 
 CC        = c++
-AR        = ar ruvs
+AR        = c++ -shared -o
 RM        = rm
 RANLIB    = ranlib
 
-LIB       = ../lib/libPlugin.a
-INCLUDE   = -I../Common
+LIB       = ../lib/libCutPlane.so
+INCLUDE   = -I../../Common -I../
 
-C_FLAGS       = -g -Wall
+C_FLAGS       = -g -Wall 
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS   = -f
 CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE) 
 
-SRC = Plugin.cpp
+SRC = CutPlane.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -28,7 +28,6 @@ OBJ = $(SRC:.cpp=.o)
 
 $(LIB): $(OBJ)
 	$(AR) $(LIB) $(OBJ)
-	$(RANLIB) $(LIB)
 
 .cpp.o:
 	$(CC) $(CFLAGS) -c $<

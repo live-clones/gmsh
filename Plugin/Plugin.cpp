@@ -2,7 +2,14 @@
 #include <dlfcn.h>
 #include <map>
 #include "Plugin.h"
+#include "Message.h"
 using namespace std;
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+#define SLASH "\\"
+#else
+#define SLASH "/"
+#endif
 
 struct ltstr
 {
@@ -42,12 +49,16 @@ GMSH_PluginManager* GMSH_PluginManager::Instance()
   if(!instance)
     {
       instance = new GMSH_PluginManager;
+      instance->RegisterDefaultPlugins();
     }
   return instance;
 }
 
 void GMSH_PluginManager::RegisterDefaultPlugins()
 {
+  // For testing
+  AddPlugin ("/cygdrive/c/develop/gmsh/Plugin/lib/","libCutPlane");
+  return;
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins)return;
   
@@ -55,19 +66,27 @@ void GMSH_PluginManager::RegisterDefaultPlugins()
 
 void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
 {
+#if defined(WIN32) && !defined(__CYGWIN__)
+  Msg(WARNING,"Plugins not yet implemented for WIN32 native compiler");
+  return;
+#else
   char dynamic_lib[1024];
   char plugin_name[256];
   class GMSH_Plugin* (*RegisterPlugin)(void);
-  sprintf(dynamic_lib,"%s/%s.so",dirName,pluginName);
+  sprintf(dynamic_lib,"%s%s%s.so",dirName,SLASH,pluginName);
+  Msg(INFO,"Opening Plugin %s",dynamic_lib);
   void *hlib = dlopen (dynamic_lib,RTLD_NOW);
+  char *err = dlerror();
   if(hlib == NULL)
     {
-      throw dynamic_lib;
+      Msg(WARNING,"Error in opening %s (dlerror = %s)",dynamic_lib,err);
+      return;
     }
   RegisterPlugin = (class GMSH_Plugin* (*)(void)) dlsym(hlib,GMSH_PluginEntry);
-  char *err = dlerror();
+  err = dlerror();
   if(err != NULL)
     {
+      Msg(WARNING,"Symbol %s missing in Plugin %s (dlerror = %s)",GMSH_PluginEntry,pluginName,err);
       return;
     }
 
@@ -76,9 +95,11 @@ void GMSH_PluginManager::AddPlugin( char *dirName, char *pluginName)
   p->getName(plugin_name);
   if(allPlugins->find(plugin_name) != allPlugins->end())
     {
+      Msg(WARNING,"Plugin %s Multiply defined",pluginName);
       return;
     }
   allPlugins->m[plugin_name] = p;
+#endif
 }
 
 
