@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.83 2004-07-02 02:40:43 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.84 2004-07-02 04:56:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -378,6 +378,7 @@ void Create_HexPri(int iEnt, Vertex * v[8])
           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
       return;
     }
+    printf("aaa %d %d\n", iEnt, THEV->Num);
     newp->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Prisms, &newp);
   }
@@ -468,64 +469,59 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
   k = 0;
   for(i = 0; i < ep->mesh.NbLayer; i++) {
     for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
-
       List_Read(L0, k, &v[0]);
       List_Read(L1, k, &v[1]);
       List_Read(L2, k, &v[2]);
       List_Read(L0, k + 1, &v[3]);
       List_Read(L1, k + 1, &v[4]);
       List_Read(L2, k + 1, &v[5]);
-
       k++;
-      if(ep->mesh.ZonLayer[i]) {
-
-        if(ep->mesh.Recombine) {
-	  Create_PriPyrTet(ep->mesh.ZonLayer[i], v);
-        }
-        else {
-          if(are_exist(v[3], v[1], Tree_Ares) &&
-             are_exist(v[4], v[2], Tree_Ares) &&
-             are_exist(v[3], v[2], Tree_Ares)) {
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[3]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[4], v[2]);
-          }
-          else if(are_exist(v[3], v[1], Tree_Ares) &&
-		  are_exist(v[1], v[5], Tree_Ares) &&
-		  are_exist(v[3], v[2], Tree_Ares)) {
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[3]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[1], v[5], v[2]);
-          }
-          else if(are_exist(v[3], v[1], Tree_Ares) &&
-		  are_exist(v[1], v[5], Tree_Ares) &&
-		  are_exist(v[5], v[0], Tree_Ares)) {
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[5], v[0]);
-          }
-          else if(are_exist(v[4], v[0], Tree_Ares) &&
-		  are_exist(v[4], v[2], Tree_Ares) &&
-		  are_exist(v[3], v[2], Tree_Ares)) {
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[3], v[4], v[2]);
-          }
-          else if(are_exist(v[4], v[0], Tree_Ares) &&
-		  are_exist(v[4], v[2], Tree_Ares) &&
-		  are_exist(v[5], v[0], Tree_Ares)) {
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[2], v[4], v[5]);
-          }
-          else if(are_exist(v[4], v[0], Tree_Ares) &&
-		  are_exist(v[1], v[5], Tree_Ares) &&
-		  are_exist(v[5], v[0], Tree_Ares)) {
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
-            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[4], v[5]);
-          }
-        }
+      if(ep->mesh.Recombine) {
+	Create_PriPyrTet(ep->mesh.ZonLayer[i], v);
+      }
+      else {
+	if(are_exist(v[3], v[1], Tree_Ares) &&
+	   are_exist(v[4], v[2], Tree_Ares) &&
+	   are_exist(v[3], v[2], Tree_Ares)) {
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[3]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[4], v[2]);
+	}
+	else if(are_exist(v[3], v[1], Tree_Ares) &&
+		are_exist(v[1], v[5], Tree_Ares) &&
+		are_exist(v[3], v[2], Tree_Ares)) {
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[3]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[3], v[1], v[5], v[2]);
+	}
+	else if(are_exist(v[3], v[1], Tree_Ares) &&
+		are_exist(v[1], v[5], Tree_Ares) &&
+		are_exist(v[5], v[0], Tree_Ares)) {
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[5], v[0]);
+	}
+	else if(are_exist(v[4], v[0], Tree_Ares) &&
+		are_exist(v[4], v[2], Tree_Ares) &&
+		are_exist(v[3], v[2], Tree_Ares)) {
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[3], v[4], v[2]);
+	}
+	else if(are_exist(v[4], v[0], Tree_Ares) &&
+		are_exist(v[4], v[2], Tree_Ares) &&
+		are_exist(v[5], v[0], Tree_Ares)) {
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[2], v[4], v[5]);
+	}
+	else if(are_exist(v[4], v[0], Tree_Ares) &&
+		are_exist(v[1], v[5], Tree_Ares) &&
+		are_exist(v[5], v[0], Tree_Ares)) {
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
+	  Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[4], v[5]);
+	}
       }
     }
   }
@@ -557,15 +553,12 @@ void Extrude_Quadrangle_Phase3(void *data, void *dum)
       List_Read(L1, k, &v[1]);
       List_Read(L2, k, &v[2]);
       List_Read(L3, k, &v[3]);
-
       List_Read(L0, k + 1, &v[4]);
       List_Read(L1, k + 1, &v[5]);
       List_Read(L2, k + 1, &v[6]);
       List_Read(L3, k + 1, &v[7]);
-
       k++;
-      if(ep->mesh.ZonLayer[i])
-	Create_HexPri(ep->mesh.ZonLayer[i], v);
+      Create_HexPri(ep->mesh.ZonLayer[i], v);
     }
   }
 }

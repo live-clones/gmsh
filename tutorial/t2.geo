@@ -29,7 +29,7 @@ Translate {-0.05, 0, 0} { Point{3}; }
 
 tmp[] = Translate {0, 0.1, 0} { Duplicata{ Point{3}; } } ;
 
-// In this case, we assign the result of the Translate command to a
+// In this case, we assigned the result of the Translate command to a
 // list, so that we can retrieve the number of the newly created point
 // and use it to create new lines and a new surface:
 

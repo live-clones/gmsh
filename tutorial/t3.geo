@@ -36,14 +36,18 @@ Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
 // Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0},
 // {0,0.15,0.25}, Pi/2) can also be combined:
 
-Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
-  Layers {10,9004,1}; Recombine; 
-};
+aa[] = Extrude Surface {news-1, {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2}{ 
+  Layers {10,0,1}; Recombine; 
+}; ;
+
+// In this last extrusion command, we set the volume number to 0,
+// which means that the elements will simply belong the automatically
+// created volume (whose number we get from the aa[] list).
 
 // We finally define a new physical volume to save all the tetrahedra
 // with a common region number (101):
 
-Physical Volume(101) = {9000:9004};
+Physical Volume(101) = {9000:9004, aa[1]};
 
 // Let us now change some options... Since all interactive options are
 // accessible in Gmsh's scripting language, we can for example define
