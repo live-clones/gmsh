@@ -1,6 +1,7 @@
-$Id: VERSIONS,v 1.56 2001-08-17 07:45:53 geuzaine Exp $
+$Id: VERSIONS,v 1.57 2001-08-17 07:56:47 geuzaine Exp $
 
-New in 1.24: BSplines;
+New in 1.24: Fixed characteristic length interpolation for Splines;
+Added BSplines;
 
 New in 1.23: Fixed duplicate elements generation + non-matching
 tetrahedra faces in 3D extruded meshes; Better display of displacement
