@@ -435,10 +435,12 @@ Structural_Material StructuralSolver :: GetMaterial (const std::string & name) c
 #define ACROSS_ 1
 #define AROUND_ 2
 
+#ifdef HAVE_FLTK 
 void close_cb(Fl_Widget* w, void* data)
 {
   if(data) ((Fl_Window *) data)->hide();
 }
+#endif
 
 void StructuralSolver ::popupPropertiesForPhysicalEntity (int dim)
 { 
