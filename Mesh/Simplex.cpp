@@ -1,4 +1,4 @@
-/* $Id: Simplex.cpp,v 1.7 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: Simplex.cpp,v 1.8 2000-11-28 12:59:24 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -161,11 +161,11 @@ void Simplex::center_tet (double X[4], double Y[4], double Z[4], double res[3]){
   mat[2][1] = Y[3] - Y[2];
   mat[2][2] = Z[3] - Z[2];
 
-  if (!sys3x3 (mat, b, res, &dum))
-    {
-      res[0] = res[1] = res[2] = 10.0e10;
-    }
-
+  if (!sys3x3 (mat, b, res, &dum)){
+    Msg(WARNING, "Coplanar Points in CircumCircle"); 
+    res[0] = res[1] = res[2] = 10.0e10;
+  }
+  
 }
 
 double Simplex::matsimpl (double mat[3][3]){

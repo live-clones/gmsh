@@ -1,4 +1,4 @@
-/* $Id: 2D_DivAndConq.cpp,v 1.6 2000-11-28 11:28:31 geuzaine Exp $ */
+/* $Id: 2D_DivAndConq.cpp,v 1.7 2000-11-28 12:59:24 geuzaine Exp $ */
 /*
 
    A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   
@@ -341,7 +341,7 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
   
   d = 2. * (double)(y1*(x2-x3)+y2*(x3-x1)+y3*(x1-x2));
   if (d == 0.0){
-    Msg(WARNING, "Points Colinear in CircumCircle"); 
+    Msg(WARNING, "Colinear Points in CircumCircle"); 
     *xc = *yc = -99999.;      
     return(0);
   }

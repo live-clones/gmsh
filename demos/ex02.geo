@@ -6,6 +6,8 @@
    All important comments are marked with "README"
 */
 
+// -clscale 0.2 ==> 169932 Nodes, 1005779 Elements  in 1095.95 s
+
 lcar1 = .1;
 lcar2 = .0005;
 

@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.8 2000-11-27 17:13:49 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.9 2000-11-28 12:59:24 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -156,9 +156,9 @@ int Pt_In_Circum (Simplex * s, Vertex * v){
              DSQR (v->Pos.Z - s->Center.Z));
 
   eps = fabs (d1 - d2) / (d1 + d2);
-  
+
   if (eps < 1.e-12){
-    return (0); /* c'etait 1! GEUZ ????*/
+    return (1); 
   }
       
   if (d2 < d1)
@@ -456,6 +456,7 @@ int recur_bowyer (Simplex * s){
       }
       else{
         if (s->iEnt != s->S[i]->iEnt){
+	  //Msg(WARNING, "Point Scabreux %d", s->S[i]->Num);
           Alerte_Point_Scabreux = 1;
         }
         Tree_Insert (Sim_Sur_Le_Bord, &s->S[i]);
@@ -534,7 +535,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
       List_Reset (Simplexes_New);
       Tree_Delete (Sim_Sur_Le_Bord);
       Tree_Delete (Tsd);
-      //printf(" %22.15E %22.15E\n",volumeold,volumenew);
+      printf(" Aie Aie Aie volume changed %g -> %g\n",volumeold,volumenew);
       return false;
     }
   }
@@ -565,7 +566,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
 }
 
 double rand_sign(){
-  return (rand() % 2 == 0)?-1.0:1.0;
+  return (rand()/RAND_MAX < 0.5)?-1.0:1.0;
 }
 
 void Convex_Hull_Mesh (List_T * Points, Mesh * m){
@@ -613,6 +614,8 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
     bool  ca_marche = Bowyer_Watson (m, THEV, THES, 1);
     int count = 0;
     while(!ca_marche){
+      Msg(INFOS, "Unable to Add Point %d (%g,%g,%g)",
+	  THEV->Num, THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z );
       count ++;
       double dx = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
       double dy = rand_sign() * 10 * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
