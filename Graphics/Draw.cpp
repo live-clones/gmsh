@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.37 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: Draw.cpp,v 1.38 2003-03-24 18:14:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -136,11 +136,16 @@ void Orthogonalize(int x, int y)
   CTX.pixel_equiv_y =
     (CTX.vymax - CTX.vymin) / (CTX.viewport[3] - CTX.viewport[1]);
 
+  // We should have a look at how the scaling is done in "real" opengl
+  // applications (I guess they normalize the scene to fit in a 1x1x1
+  // box or something...). Nevertheless, this definition of the
+  // clipping planes should be OK in most cases (do we really zoom in
+  // more than 500 times the characteristic length of the structure?):
   if(CTX.ortho) {
-    glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, 0, 100 * CTX.lc);
+    glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, 0, 1000 * CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(0.0, 0.0, -50 * CTX.lc);
+    glTranslated(0.0, 0.0, -500 * CTX.lc);
   }
   else {
     glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, CTX.lc,
