@@ -166,10 +166,10 @@ class GmshServer {
       return -4;  // Error: Socket listening timeout
     
     // accept connection request
-#if defined(linux) || defined(_AIX) || defined(__FreeBSD__) || defined(__sun__)
-    socklen_t len;
-#else
+#if defined(HAVE_NO_SOCKLEN_T)
     int len;
+#else
+    socklen_t len;
 #endif
     if(_portno < 0){
       struct sockaddr_un from_un;

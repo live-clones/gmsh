@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.59 2005-01-01 19:35:27 geuzaine Exp $
+dnl $Id: configure.in,v 1.60 2005-01-21 17:29:27 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 dnl
@@ -114,6 +114,12 @@ AC_CHECK_LIB(m,main)
 dnl Check for various functions
 AC_CHECK_FUNC(vsnprintf,,FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
 AC_CHECK_FUNC(snprintf,,FLAGS="-DHAVE_NO_SNPRINTF ${FLAGS}")
+
+dnl Check if Unix98 socklen_t type is available
+AC_TRY_COMPILE(
+ [#include <sys/types.h>
+  #include <sys/socket.h>],
+ [socklen_t len = 42; return 0;],,FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}")
 
 dnl See if we need a .exe extension on executables
 AC_EXEEXT

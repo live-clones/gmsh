@@ -1,8 +1,13 @@
-$Id: TODO,v 1.79 2005-01-20 01:25:49 geuzaine Exp $
+$Id: TODO,v 1.80 2005-01-21 17:29:27 geuzaine Exp $
 
 ********************************************************************
 
-add GUI for the Layer stuff in Extrude commands
+add GUI for 
+
+- translate+rotate extrusions
+- mesh extrusion (layer stuff)
+- elliptic surface
+- coherence
 
 ********************************************************************
 
