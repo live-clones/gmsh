@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.26 2002-05-20 18:28:29 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.27 2002-09-02 06:22:44 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ GMSH_CutMapPlugin::GMSH_CutMapPlugin()
 
 void GMSH_CutMapPlugin::getName(char *name) const
 {
-  strcpy(name,"Cut Map");
+  strcpy(name,"Cut map");
 }
 
 void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text) const
