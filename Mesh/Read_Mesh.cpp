@@ -1,4 +1,4 @@
-/* $Id: Read_Mesh.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: Read_Mesh.cpp,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -152,9 +152,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
           Tree_Insert(M->Simplexes, &simp) ;
           break;
         case QUA1:
-          /* ! Fuck, fuck, fuck */
-          simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
-          simp->V[3] = vertsp[3];
+          simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num ;
           simp->iEnt = Elementary ;
           Tree_Insert(s->Simplexes, &simp) ;

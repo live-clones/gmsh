@@ -1,4 +1,4 @@
-/* $Id: XStatic.h,v 1.2 2000-11-23 14:11:42 geuzaine Exp $ */
+/* $Id: XStatic.h,v 1.3 2000-11-26 18:43:48 geuzaine Exp $ */
 #ifndef _XSTATIC_H_
 #define _XSTATIC_H_
 
@@ -30,9 +30,5 @@ int glo_attrib[] = { GLX_LEVEL, 1, None };
 XContext_T  XCTX ;
 Widgets_T   WID ;
 Pixmaps_T   PIX ;
-
-GLdouble    vxmin, vxmax, vymin, vymax;
-
-double      ClipPlane[4] = {0.0, 0.0, 0.0, 0.0};
 
 #endif

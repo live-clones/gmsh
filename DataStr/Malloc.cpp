@@ -1,5 +1,4 @@
-/* $Id: Malloc.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
-#define RCSID "$Id: Malloc.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $"
+/* $Id: Malloc.cpp,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>

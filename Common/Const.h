@@ -1,19 +1,6 @@
-/* $Id: Const.h,v 1.4 2000-11-26 15:43:44 geuzaine Exp $ */
+/* $Id: Const.h,v 1.5 2000-11-26 18:43:48 geuzaine Exp $ */
 #ifndef _CONSTS_H_
 #define _CONSTS_H_
-
-#include <stdlib.h>
-
-//#define RAND_LONG  LC * ((rand()%1000)/1.E08)
-
-//RAND_LC in [0, LC]
-#define RAND_LC      (LC*rand()/RAND_MAX)
-
-//RAND_LC_MIN in [0, LC_MIN]
-#define RAND_LC_MIN  (LC_MIN*rand()/RAND_MAX)
-
-//RAND_EPS in [0, LC/1.e12]
-#define EPSILON_LC   (LC/1.e12*rand()/RAND_MAX)
 
 #define TEXT_BUFFER_SIZE       1024
 #define SELECTION_BUFFER_SIZE  1024

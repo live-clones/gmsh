@@ -1,5 +1,4 @@
-/* $Id: Tree.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
-#define RCSID "$Id: Tree.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $"
+/* $Id: Tree.cpp,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
 
 #include <stdlib.h>
 #include <string.h>

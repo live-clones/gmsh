@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.6 2000-11-26 15:43:48 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.7 2000-11-26 18:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -19,7 +19,6 @@ extern Context_T   CTX ;
 extern XContext_T  XCTX ;
 extern Widgets_T   WID ;
 extern Mesh        M;
-extern GLdouble    vxmin, vxmax, vymin, vymax;
 
 static int        Modifier=0;
 
@@ -411,8 +410,8 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
     switch(ibut){
     case 1:
       if(!ZoomClick && Modifier){
-        xb = vxmin + ((GLdouble) x / width) * (vxmax - vxmin);
-        yb = vymax - ((GLdouble) y / height) * (vymax - vymin);
+        xb = CTX.vxmin + ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin);
+        yb = CTX.vymax - ((GLdouble) y / height) * (CTX.vymax - CTX.vymin);
         xc1 = xb/CTX.s[0] - CTX.t[0];
         yc1 = yb/CTX.s[1] - CTX.t[1];
         ZoomClick=1;
@@ -420,8 +419,8 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
         Modifier = 0;
       }
       else if(ZoomClick){
-        xe = vxmin + ((GLdouble) x / width) * (vxmax - vxmin);
-        ye = vymax - ((GLdouble) y / height) * (vymax - vymin);
+        xe = CTX.vxmin + ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin);
+        ye = CTX.vymax - ((GLdouble) y / height) * (CTX.vymax - CTX.vymin);
         xc2 = xe/CTX.s[0] - CTX.t[0];
         yc2 = ye/CTX.s[1] - CTX.t[1];     
         ZoomClick=0;
@@ -519,8 +518,10 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
 
     if(ZoomClick) {
 
-      xz = vxmin + ((GLdouble) event->xbutton.x / width) * (vxmax - vxmin);
-      yz = vymax - ((GLdouble) event->xbutton.y / height) * (vymax - vymin) ;
+      xz = CTX.vxmin + ((GLdouble) event->xbutton.x / width) *
+	(CTX.vxmax - CTX.vxmin);
+      yz = CTX.vymax - ((GLdouble) event->xbutton.y / height) * 
+	(CTX.vymax - CTX.vymin) ;
       if(CTX.overlay) {
         movzx = xz - xb; movzy = yz - yb;
         InitOv();
@@ -564,7 +565,7 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        gluOrtho2D(vxmin, vxmax, vymin, vymax);
+        gluOrtho2D(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax);
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
@@ -620,8 +621,10 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
         }
 
         if(FirstClick){
-          xc1 = ( ((GLdouble) x / width) * (vxmax - vxmin) + vxmin )/CTX.s[0] - CTX.t[0];
-          yc1 = ( vymax - ((GLdouble) y / height) * (vymax - vymin))/CTX.s[1] - CTX.t[1];
+          xc1 = ( ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin) 
+		  + CTX.vxmin )/CTX.s[0] - CTX.t[0];
+          yc1 = ( CTX.vymax - ((GLdouble) y / height) * 
+		  (CTX.vymax - CTX.vymin))/CTX.s[1] - CTX.t[1];
           xt1 = CTX.t[0];
           yt1 = CTX.t[1];
           xscale1 = CTX.s[0];
@@ -650,8 +653,10 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
           }
           break;
         case 3:
-          xc = ( ((GLdouble) x / width) * (vxmax - vxmin) + vxmin ) / CTX.s[0];
-          yc = ( vymax - ((GLdouble) y / height) * (vymax - vymin)) / CTX.s[1];
+          xc = ( ((GLdouble) x / width) * (CTX.vxmax - CTX.vxmin) + 
+		 CTX.vxmin ) / CTX.s[0];
+          yc = ( CTX.vymax - ((GLdouble) y / height) *
+		 (CTX.vymax - CTX.vymin)) / CTX.s[1];
           set_t(0, xc-xc1);
           set_t(1, yc-yc1);
           set_t(2, 0.);

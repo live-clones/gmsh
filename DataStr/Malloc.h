@@ -1,5 +1,4 @@
-/* $Id: Malloc.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
-/* $Id: Malloc.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
+/* $Id: Malloc.h,v 1.3 2000-11-26 18:43:48 geuzaine Exp $ */
 #ifndef _UALLOC_H_
 #define _UALLOC_H_
 

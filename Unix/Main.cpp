@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.14 2000-11-26 15:43:48 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.15 2000-11-26 18:43:48 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -443,7 +443,6 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         CTX.display_lists = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "geometry") ||
-              !strcmp(argv[i]+1, "iconic")   ||
               !strcmp(argv[i]+1, "display")  ||
               !strcmp(argv[i]+1, "fg")       ||
               !strcmp(argv[i]+1, "bg")){
@@ -454,6 +453,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           fprintf(stderr, ERROR_STR "Missing Argument\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i]+1, "iconic")){
+	i++;
       }
       else if(!strcmp(argv[i]+1, "v")){  
         i++;

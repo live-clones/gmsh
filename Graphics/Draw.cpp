@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.6 2000-11-26 18:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -18,7 +18,6 @@ extern Widgets_T    WID ;
 #endif
 
 extern Context_T    CTX ;
-extern GLdouble     vxmin, vxmax, vymin, vymax;
 extern Mesh         M;
 extern List_T      *Post_ViewList;
 
@@ -137,31 +136,31 @@ void Orthogonalize(int x, int y){
   Wa = (CTX.max[1]-CTX.min[1]) / (CTX.max[0]-CTX.min[0]);
   
   if(Va>Wa){
-    vxmin = CTX.min[0];
-    vxmax = CTX.max[0];
-    vymin = 0.5*(CTX.min[1]+CTX.max[1]-Va*(CTX.max[0]-CTX.min[0]));
-    vymax = 0.5*(CTX.min[1]+CTX.max[1]+Va*(CTX.max[0]-CTX.min[0]));
+    CTX.vxmin = CTX.min[0];
+    CTX.vxmax = CTX.max[0];
+    CTX.vymin = 0.5*(CTX.min[1]+CTX.max[1]-Va*(CTX.max[0]-CTX.min[0]));
+    CTX.vymax = 0.5*(CTX.min[1]+CTX.max[1]+Va*(CTX.max[0]-CTX.min[0]));
   }
   else{
-    vxmin = 0.5*(CTX.min[0]+CTX.max[0]-(CTX.max[1]-CTX.min[1])/Va);
-    vxmax = 0.5*(CTX.min[0]+CTX.max[0]+(CTX.max[1]-CTX.min[1])/Va);
-    vymin = CTX.min[1];
-    vymax = CTX.max[1];
+    CTX.vxmin = 0.5*(CTX.min[0]+CTX.max[0]-(CTX.max[1]-CTX.min[1])/Va);
+    CTX.vxmax = 0.5*(CTX.min[0]+CTX.max[0]+(CTX.max[1]-CTX.min[1])/Va);
+    CTX.vymin = CTX.min[1];
+    CTX.vymax = CTX.max[1];
   }
-  vxmin -= (vxmax-vxmin)/3.; vxmax += 0.25*(vxmax-vxmin);
-  vymin -= (vymax-vymin)/3.; vymax += 0.25*(vymax-vymin);
+  CTX.vxmin -= (CTX.vxmax-CTX.vxmin)/3.; CTX.vxmax += 0.25*(CTX.vxmax-CTX.vxmin);
+  CTX.vymin -= (CTX.vymax-CTX.vymin)/3.; CTX.vymax += 0.25*(CTX.vymax-CTX.vymin);
 
-  CTX.pixel_equiv_x = (vxmax-vxmin)/(CTX.viewport[2]-CTX.viewport[0]);
-  CTX.pixel_equiv_y = (vymax-vymin)/(CTX.viewport[3]-CTX.viewport[1]);
+  CTX.pixel_equiv_x = (CTX.vxmax-CTX.vxmin)/(CTX.viewport[2]-CTX.viewport[0]);
+  CTX.pixel_equiv_y = (CTX.vymax-CTX.vymin)/(CTX.viewport[3]-CTX.viewport[1]);
   
   if(CTX.ortho) {
-    glOrtho(vxmin,vxmax,vymin,vymax,0,100*CTX.lc);
+    glOrtho(CTX.vxmin,CTX.vxmax,CTX.vymin,CTX.vymax,0,100*CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();    
     glTranslated(0.0, 0.0, -50*CTX.lc);
   }
   else{
-    glFrustum(vxmin,vxmax,vymin,vymax,CTX.lc,100*CTX.lc);
+    glFrustum(CTX.vxmin,CTX.vxmax,CTX.vymin,CTX.vymax,CTX.lc,100*CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();    
     glTranslated(0.0, 0.0, -10*CTX.lc);
@@ -394,8 +393,8 @@ void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
 
   xscale1 = CTX.s[0];
   yscale1 = CTX.s[1];
-  set_s(0, CTX.s[0] * (vxmax-vxmin)/(X2-X1));
-  set_s(1, CTX.s[1] * (vymax-vymin)/(Y1-Y2));
+  set_s(0, CTX.s[0] * (CTX.vxmax-CTX.vxmin)/(X2-X1));
+  set_s(1, CTX.s[1] * (CTX.vymax-CTX.vymin)/(Y1-Y2));
   /* bif bif bif */
   set_s(2, 0.5*(CTX.s[0]+CTX.s[1]));
   set_t(0, CTX.t[0] * (xscale1/CTX.s[0]) - ((Xc1+Xc2)/2.)*(1.-(xscale1/CTX.s[0])));

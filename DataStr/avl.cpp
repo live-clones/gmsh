@@ -1,5 +1,4 @@
-/* $Id: avl.cpp,v 1.3 2000-11-26 15:43:45 geuzaine Exp $ */
-#define RCSID "$Id: avl.cpp,v 1.3 2000-11-26 15:43:45 geuzaine Exp $"
+/* $Id: avl.cpp,v 1.4 2000-11-26 18:43:48 geuzaine Exp $ */
 
 /*
  * This is a modified version for Gmsh (for c++, 64-bit architectures, etc.)

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2000-11-26 15:43:44 geuzaine Exp $
+# $Id: Makefile,v 1.7 2000-11-26 18:43:48 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -95,7 +95,7 @@ parser:
 
 purge:
 	for i in "." $(GMSH_DISTRIB_DIR) $(GMSH_LIB_DIR) $(GMSH_ARCHIVE_DIR)\
-                     $(GMSH_DEMO_DIR) $(GMSH_DOC_DIR); \
+                     $(GMSH_DEMO_DIR) $(GMSH_DOC_DIR) $(GMSH_BOX_DIR); \
         do (cd $$i && $(RM) $(RMFLAGS) *~ *~~); \
         done
 
@@ -268,8 +268,4 @@ hp: big_endian
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
                       $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
-
-comp:
-	tar cvf gmsh-$(GMSH_UNAME).tar $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
-	gzip gmsh-$(GMSH_UNAME).tar
 

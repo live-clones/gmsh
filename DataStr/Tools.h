@@ -1,5 +1,4 @@
-/* $Id: Tools.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
-/* $Id: Tools.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
+/* $Id: Tools.h,v 1.3 2000-11-26 18:43:48 geuzaine Exp $ */
 #ifndef _TOOLS_H_
 #define _TOOLS_H_
 

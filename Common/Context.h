@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.6 2000-11-26 15:43:44 geuzaine Exp $ */
+/* $Id: Context.h,v 1.7 2000-11-26 18:43:48 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -82,7 +82,9 @@ typedef struct {
   char *colorbar_font_string; /* font for colorbar */
 
   /* OpenGL stuff */
-  int viewport[4];
+  int viewport[4];            /* current viewport */
+  double vxmin, vxmax, vymin, vymax;
+                              /* current viewport in real coordinates */
   float light0[4];            /* light source position */
   float shine;                /* specular value */
   int render_mode;            /* RENDER, SELECT, FEEDBACK */

@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.7 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.8 2000-11-26 18:43:48 geuzaine Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -870,8 +870,6 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
 
       cp->perturbations[j].h = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
       cp->perturbations[j].v = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
-      //cp->perturbations[j].h = RAND_LONG;
-      //cp->perturbations[j].v = RAND_LONG;
 
       cp->oriented_points[j].numcontour = i;
       cp->oriented_points[j].quality = v->lc;

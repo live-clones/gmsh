@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.6 2000-11-26 15:43:44 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.7 2000-11-26 18:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -152,17 +152,21 @@ void InitContext(Context_T *ctx){
   ctx->range[1]   = 0.0 ;
   ctx->range[2]   = 0.0 ;
 
-  ctx->viewport[0]    = 0 ;
-  ctx->viewport[1]    = 0 ;
-  ctx->viewport[2]    = 1 ;
-  ctx->viewport[3]    = 1 ;
-  ctx->render_mode    = GMSH_RENDER ;
-  ctx->pixel_equiv_x  = 0. ;
-  ctx->pixel_equiv_y  = 0. ; 
-  ctx->clip_plane0[0]    = 0. ;
-  ctx->clip_plane0[1]    = 0. ;
-  ctx->clip_plane0[2]    = 0. ;
-  ctx->clip_plane0[3]    = 0. ;
+  ctx->viewport[0]     = 0 ;
+  ctx->viewport[1]     = 0 ;
+  ctx->viewport[2]     = 1 ;
+  ctx->viewport[3]     = 1 ;
+  ctx->vxmin           = 0. ;
+  ctx->vymin           = 0. ;
+  ctx->vxmax           = 0. ;
+  ctx->vymax           = 0. ;
+  ctx->render_mode     = GMSH_RENDER ;
+  ctx->pixel_equiv_x   = 0. ;
+  ctx->pixel_equiv_y   = 0. ; 
+  ctx->clip_plane0[0]  = 0. ;
+  ctx->clip_plane0[1]  = 0. ;
+  ctx->clip_plane0[2]  = 0. ;
+  ctx->clip_plane0[3]  = 0. ;
 
   ctx->font_string          = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*";
   ctx->colorbar_font_string = "fixed";
