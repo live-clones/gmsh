@@ -148,7 +148,7 @@ Physical Surface(2) = {24};
 
 View "comments" {
   T2(10,15,0){"File created on Fri Oct 18 23:50:20 2002"};
-  T2(10,-10,0){"Copyright (C) DGR"};
+  T2(10,-10,0){"Copyright (C) My Company"};
   T3(0,0.11,0,0){"Hole"};
 };
 

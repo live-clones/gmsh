@@ -32,40 +32,45 @@ General.SmallAxes = 0 ;
 
 // Some options are also specified for each post-processing view:
 
-View[0].IntervalsType = 2 ;
-View[0].OffsetZ = 0.05 ;
-View[0].RaiseZ = 0 ;
-View[0].Light = 1 ;
-View[0].ShowScale = 0;
-View[0].SmoothNormals = 1;
+v0 = PostProcessing.NbViews-4;
+v1 = v0+1;
+v2 = v0+2;
+v3 = v0+3;
 
-View[1].IntervalsType = 1 ;
-View[1].ColorTable = { Green, Blue } ;
-View[1].NbIso = 10 ;
-View[1].ShowScale = 0;
+View[v0].IntervalsType = 2 ;
+View[v0].OffsetZ = 0.05 ;
+View[v0].RaiseZ = 0 ;
+View[v0].Light = 1 ;
+View[v0].ShowScale = 0;
+View[v0].SmoothNormals = 1;
 
-View[2].Name = "Test..." ;
-View[2].IntervalsType = 2 ;
-View[2].Type = 2;
-View[2].IntervalsType = 2 ;
-View[2].AutoPosition = 0;
-View[2].PositionX = 85;
-View[2].PositionY = 50;
-View[2].Width = 200;
-View[2].Height = 130;
+View[v1].IntervalsType = 1 ;
+View[v1].ColorTable = { Green, Blue } ;
+View[v1].NbIso = 10 ;
+View[v1].ShowScale = 0;
 
-View[3].Type = 3;
-View[3].RangeType = 2;
-View[3].IntervalsType = 4 ;
-View[3].ShowScale = 0;
-View[3].Grid = 0;
-View[3].CustomMin = View[2].CustomMin;
-View[3].CustomMax = View[2].CustomMax;
-View[3].AutoPosition = 0;
-View[3].PositionX = View[2].PositionX;
-View[3].PositionY = View[2].PositionY;
-View[3].Width = View[2].Width;
-View[3].Height = View[2].Height;
+View[v2].Name = "Test..." ;
+View[v2].IntervalsType = 2 ;
+View[v2].Type = 2;
+View[v2].IntervalsType = 2 ;
+View[v2].AutoPosition = 0;
+View[v2].PositionX = 85;
+View[v2].PositionY = 50;
+View[v2].Width = 200;
+View[v2].Height = 130;
+
+View[v3].Type = 3;
+View[v3].RangeType = 2;
+View[v3].IntervalsType = 4 ;
+View[v3].ShowScale = 0;
+View[v3].Grid = 0;
+View[v3].CustomMin = View[v2].CustomMin;
+View[v3].CustomMax = View[v2].CustomMax;
+View[v3].AutoPosition = 0;
+View[v3].PositionX = View[v2].PositionX;
+View[v3].PositionY = View[v2].PositionY;
+View[v3].Width = View[v2].Width;
+View[v3].Height = View[v2].Height;
 
 // We loop from 1 to 255 with a step of 1 (to use a step different
 // from 1, just add a third argument in the list. For example, 'For
@@ -76,14 +81,14 @@ t = 0 ;
 
 For num In {1:255}
 
-  View[0].TimeStep = t ;
-  View[1].TimeStep = t ;
-  View[2].TimeStep = t ;
-  View[3].TimeStep = t ;
+  View[v0].TimeStep = t ;
+  View[v1].TimeStep = t ;
+  View[v2].TimeStep = t ;
+  View[v3].TimeStep = t ;
 
-  t = (View[0].TimeStep < View[0].NbTimeStep-1) ? t+1 : 0 ;
+  t = (View[v0].TimeStep < View[v0].NbTimeStep-1) ? t+1 : 0 ;
   
-  View[0].RaiseZ += 0.01*t ;
+  View[v0].RaiseZ += 0.01*t ;
 
   If (num == 3)
     // We want to create 320x240 frames when num==3:
