@@ -124,7 +124,7 @@ struct SolverDialogBox
 
 class GUI{
 
-  int MH ;
+  int MH, fontsize ;
 
   // Bitmaps
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *about_bmp ;

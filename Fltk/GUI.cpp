@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.217 2002-11-17 02:08:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.218 2002-11-17 03:56:03 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -67,9 +67,9 @@
 #define RADIO_COLOR FL_BLACK
 #endif
 
-#define IW  (10*CTX.fontsize) // input field width
-#define BB  (6*CTX.fontsize+4) // width of a button with internal label
-#define BH  (2*CTX.fontsize+1) // button height
+#define IW  (10*fontsize) // input field width
+#define BB  (6*fontsize+4) // width of a button with internal label
+#define BH  (2*fontsize+1) // button height
 #define WB  (5) // window border
 
 extern Context_T  CTX;
@@ -629,15 +629,20 @@ GUI::GUI(int argc, char **argv) {
   // add global shortcuts
   Fl::add_handler(SetGlobalShortcut);
 
+  // store fontsize now: we don't want any subsequent change
+  // (e.g. when doing a 'restore options') to be taken into account
+  // the dynamic GUI features (set_context, plugin, etc.)
+  fontsize = CTX.fontsize;
+
   // set default font size
 #if !((FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0))
-  FL_NORMAL_SIZE = CTX.fontsize;
+  FL_NORMAL_SIZE = fontsize;
 #endif
 
   // handle themes and tooltip font size
 #if !((FL_MAJOR_VERSION == 1 || FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0))
   if(strlen(CTX.theme)) Fl::scheme(CTX.theme);
-  Fl_Tooltip::size(CTX.fontsize);
+  Fl_Tooltip::size(fontsize);
 #endif
 
   // All static windows are contructed (even if some are not
@@ -725,7 +730,7 @@ void GUI::create_menu_window(int argc, char **argv){
     return;
   }
 
-  int width = 13*CTX.fontsize-CTX.fontsize/2-2 ;
+  int width = 13*fontsize-fontsize/2-2 ;
 
  // this is the initial height: no dynamic button is shown!
 #if defined(__APPLE__) && defined(APPLE_USE_SYS_MENU)
@@ -784,12 +789,12 @@ void GUI::create_menu_window(int argc, char **argv){
     m_push_butt[i] = new Fl_Button(0,y+i*BH,width,BH); 
     m_push_butt[i]->hide();
 
-    m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width-(CTX.fontsize+4),BH); 
+    m_toggle_butt[i] = new Fl_Light_Button(0,y+i*BH,width-(fontsize+4),BH); 
     m_toggle_butt[i]->callback(view_toggle_cb, (void*)i);
     m_toggle_butt[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
     m_toggle_butt[i]->hide();
 
-    m_toggle2_butt[i]= new Fl_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH,"@#>");
+    m_toggle2_butt[i]= new Fl_Button(width-(fontsize+4),y+i*BH,(fontsize+4),BH,"@#>");
     m_toggle2_butt[i]->labeltype(FL_SYMBOL_LABEL);
     m_toggle2_butt[i]->labelsize(11);
     m_toggle2_butt[i]->align(FL_ALIGN_CENTER);
@@ -798,10 +803,10 @@ void GUI::create_menu_window(int argc, char **argv){
     m_toggle2_butt[i]->tooltip("Show view option menu");
 #endif
 
-    m_popup_butt[i] = new Fl_Menu_Button(width-(CTX.fontsize+4),y+i*BH,(CTX.fontsize+4),BH);
+    m_popup_butt[i] = new Fl_Menu_Button(width-(fontsize+4),y+i*BH,(fontsize+4),BH);
     m_popup_butt[i]->type(Fl_Menu_Button::POPUP123);
 
-    m_popup2_butt[i] = new Fl_Menu_Button(0,y+i*BH,width-(CTX.fontsize+4),BH);
+    m_popup2_butt[i] = new Fl_Menu_Button(0,y+i*BH,width-(fontsize+4),BH);
     m_popup2_butt[i]->type(Fl_Menu_Button::POPUP3);
 
     for(int j=0; j<2; j++){
@@ -984,8 +989,8 @@ void GUI::create_graphic_window(int argc, char **argv){
     return;
   }
   
-  int sh = 2*CTX.fontsize-4; // status bar height
-  int sw = CTX.fontsize+4; //status button width
+  int sh = 2*fontsize-4; // status bar height
+  int sw = fontsize+4; //status button width
   int width = CTX.viewport[2]-CTX.viewport[0];
   int glheight = CTX.viewport[3]-CTX.viewport[1];
   int height = glheight + sh;
@@ -1006,7 +1011,7 @@ void GUI::create_graphic_window(int argc, char **argv){
   g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
   g_status_butt[2] = new Fl_Button(x,glheight+2,sw,sh-4,"Z"); x+=sw;
   g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
-  g_status_butt[3] = new Fl_Button(x,glheight+2,2*CTX.fontsize,sh-4,"1:1"); x+=2*CTX.fontsize;
+  g_status_butt[3] = new Fl_Button(x,glheight+2,2*fontsize,sh-4,"1:1"); x+=2*fontsize;
   g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
   g_status_butt[4] = new Fl_Button(x,glheight+2,sw,sh-4,"?"); x+=sw;
   g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
@@ -1217,7 +1222,7 @@ void GUI::reset_option_browser(){
 
 void GUI::create_option_window(){
   int i;
-  int width = 40*CTX.fontsize;
+  int width = 40*fontsize;
   int height = 13*BH ;
   int BROWSERW = 110;
 
@@ -1774,7 +1779,7 @@ void GUI::create_option_window(){
 	view_input[i]->callback(set_changed_cb, 0);
       }
 
-      int sw=(int)(1.5*CTX.fontsize);
+      int sw=(int)(1.5*fontsize);
       view_butt_rep[0] = new Fl_Repeat_Button(2*WB, 2*WB+6*BH, sw, BH, "-");
       //no set_changed since has its own callback
       view_butt_rep[1] = new Fl_Repeat_Button(2*WB+IW-sw, 2*WB+6*BH, sw, BH, "+");
@@ -2201,7 +2206,7 @@ void GUI::create_statistics_window(){
     return;
   }
 
-  int width = 26*CTX.fontsize;
+  int width = 26*fontsize;
   int height = 5*WB+17*BH ;
   
   stat_window = new Fl_Window(width,height,"Statistics");
@@ -2409,7 +2414,7 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
 
   // create window
 
-  int width = 20*CTX.fontsize;
+  int width = 20*fontsize;
   int height = ((n>5?n:5)+2)*BH + 5*WB;
 
   PluginDialogBox *pdb = new PluginDialogBox;
@@ -2658,7 +2663,7 @@ void GUI::create_about_window(){
     return;
   }
 
-  int width = 40*CTX.fontsize;
+  int width = 40*fontsize;
   int height = 10*BH ;
   
   about_window = new Fl_Window(width,height,"About Gmsh");
@@ -2722,7 +2727,7 @@ void GUI::create_geometry_context_window(int num){
     return;
   }
 
-  int width = 31*CTX.fontsize;
+  int width = 31*fontsize;
   int height = 5*WB+9*BH ;
   
   context_geometry_window = new Fl_Window(width,height,"Contextual geometry definitions");
@@ -2857,7 +2862,7 @@ void GUI::create_mesh_context_window(int num){
     return;
   }
 
-  int width = 31*CTX.fontsize;
+  int width = 31*fontsize;
   int height = 5*WB+5*BH ;
   
   context_mesh_window = new Fl_Window(width,height,"Contextual mesh definitions");
@@ -2933,7 +2938,7 @@ void GUI::create_solver_window(int num){
   static Fl_Group *g[10];
 
   int LL = (int)(1.75*IW);
-  int BBS = (5*CTX.fontsize+1); // smaller width of a button with internal label
+  int BBS = (5*fontsize+1); // smaller width of a button with internal label
 
   if(solver[num].window){
     solver[num].window->show();
