@@ -468,7 +468,7 @@ struct Map{
 
 void mai3d (Mesh * M, int Asked);
 
-void Init_Mesh (Mesh * M, int all);
+void Init_Mesh (Mesh * M);
 void Create_BgMesh (int i, double d, Mesh * m);
 void Print_Geo (Mesh * M, char *c);
 void Print_Mesh (Mesh * M, char *c, int Type);

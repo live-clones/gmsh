@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.46 2003-12-07 00:23:07 geuzaine Exp $
+// $Id: Generator.cpp,v 1.47 2003-12-12 16:54:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -170,7 +170,7 @@ void Maillage_Dimension_3(Mesh * M)
 }
 
 
-void Init_Mesh(Mesh * M, int all)
+void Init_Mesh(Mesh * M)
 {
   THEM = M;
 

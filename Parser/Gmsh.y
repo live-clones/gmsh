@@ -1,5 +1,5 @@
 %{ 
-// $Id: Gmsh.y,v 1.154 2003-12-11 18:37:53 geuzaine Exp $
+// $Id: Gmsh.y,v 1.155 2003-12-12 16:54:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1941,7 +1941,7 @@ Delete :
     | tDelete tSTRING tEND
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All"))
-	Init_Mesh(THEM, 1);
+	Init_Mesh(THEM);
     }
 ;
 
