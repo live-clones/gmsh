@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.300 2003-10-20 17:07:21 geuzaine Exp $
+# $Id: Makefile,v 1.301 2003-10-29 19:51:42 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -24,6 +24,8 @@ include variables
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 47
 GMSH_PATCH_VERSION = 0
+
+GMSH_SHORT_LICENSE = "GNU General Public License"
 
 GMSH_VERSION_FILE = Common/GmshVersion.h
 GMSH_RELEASE = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
@@ -69,11 +71,17 @@ source-common:
 
 source: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-           NR Triangle/triangle.*
+           NR Triangle/triangle.* utils/commercial
 	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
 
 source-nonfree: source-common
-	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}
+	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
+           Triangle/triangle.* TODO doc/gmsh.html doc/FAQ doc/COPYING doc/README.cvs\
+           utils/commercial
+	cp -f utils/commercial/License.cpp Common/License.cpp
+	cp -f utils/commercial/license.texi doc/texinfo/license.texi
+	cp -f utils/commercial/copying.texi doc/texinfo/copying.texi
+	utils/commercial/sanitize.sh gmsh-${GMSH_RELEASE}
 	tar zcvf gmsh-${GMSH_RELEASE}-source-nonfree.tgz gmsh-${GMSH_RELEASE}
 
 .PHONY: parser
@@ -95,9 +103,8 @@ doc-info:
 	cd doc/texinfo && ${MAKE} info
 
 purge:
-	for i in . bin lib utils archives demos tutorial doc doc/texinfo ${GMSH_DIRS}; \
-        do (cd $$i && rm -f *~ *~~ .gmsh-tmp .gmsh-errors gmon.out); \
-        done
+	rm -f `find . -name "*~" -o -name "*~~" -o -name ".gmsh-errors"\
+                   -o -name "gmon.out"`
 
 clean:
 	for i in doc lib ${GMSH_DIRS}; do (cd $$i && ${MAKE} clean); done
@@ -127,6 +134,7 @@ tag:
 	echo "#define GMSH_HOST     \"`hostname`\""  >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_PACKAGER \"`whoami`\""    >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_OS       \"`uname -sr`\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_SHORT_LICENSE \"${GMSH_SHORT_LICENSE}\"" >> ${GMSH_VERSION_FILE}
 
 initialtag:
 	@if [ ! -r ${GMSH_VERSION_FILE} ]; then ${MAKE} tag ; fi

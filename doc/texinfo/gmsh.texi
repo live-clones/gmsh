@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.82 2003-10-20 17:07:21 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.83 2003-10-29 19:51:43 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -34,14 +34,6 @@
 @c Before release, run C-u C-c C-u C-a in GNU Emacs. This updates all node
 @c pointers and menus.
 @c 
-@c =========================================================================
-@c
-@c For commercial releases, set the COMMERCIAL flag (uncomment the following 
-@c line). This will prevent all references to "free software" and the
-@c like...
-@c
-@c @set COMMERCIAL
-@c
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
@@ -145,7 +137,7 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 * Programming notes::           Random notes for developers.
 * Bugs and versions::           
 * Tips and tricks::             Some tips to make your life easier with Gmsh.
-* GNU General Public License::  Copy of the GNU GPL.
+* License::                     Complete copy of the license.
 * Concept index::               Index of concepts.
 * Syntax index::                Index of reserved keywords in the Gmsh language.
 
@@ -256,8 +248,6 @@ Bugs, versions and credits
 @c Copying Conditions
 @c =========================================================================
 
-@ifclear COMMERCIAL
-
 @node Copying conditions, Overview, Top, Top
 @unnumbered Copying conditions
 
@@ -268,45 +258,7 @@ Bugs, versions and credits
 @cindex Mailing list
 @cindex Download
 
-Gmsh is ``free software''; this means that everyone is free to use it and
-to redistribute it on a free basis. Gmsh is not in the public domain; it is
-copyrighted and there are restrictions on its distribution, but these
-restrictions are designed to permit everything that a good cooperating
-citizen would want to do.  What is not allowed is to try to prevent others
-from further sharing any version of Gmsh that they might get from you.
-
-Specifically, we want to make sure that you have the right to give away
-copies of Gmsh, that you receive source code or else can get it if you want
-it, that you can change Gmsh or use pieces of Gmsh in new free programs,
-and that you know you can do these things.
-
-To make sure that everyone has such rights, we have to forbid you to deprive
-anyone else of these rights.  For example, if you distribute copies of
-Gmsh, you must give the recipients all the rights that you have.  You must
-make sure that they, too, receive or can get the source code.  And you must
-tell them their rights.
-
-Also, for our own protection, we must make certain that everyone finds out
-that there is no warranty for Gmsh.  If Gmsh is modified by someone else
-and passed on, we want their recipients to know that what they have is not
-what we distributed, so that any problems introduced by others will not
-reflect on our reputation.
-
-The precise conditions of the license for Gmsh are found in the General
-Public License that accompanies the source code (@pxref{GNU General Public
-License}). Further information about this license is available from the GNU
-Project webpage @uref{http://www.gnu.org/copyleft/gpl-faq.html}.
-Detailed copyright information can be found in @ref{Credits}.
-
-The source code and various pre-compiled versions of Gmsh (for Unix, Windows
-and Mac OS) can be downloaded from the webpage @value{GMSH-WEB}.
-
-If you use Gmsh, we would appreciate that you mention it in your
-work. References, as well as the latest news about Gmsh development, are
-always available on @value{GMSH-WEB}. Please send all Gmsh-related questions
-to the public Gmsh mailing list at @email{gmsh@@geuz.org}.
-
-@end ifclear
+@include copying.texi
 
 @c =========================================================================
 @c Overview
@@ -3206,8 +3158,6 @@ with @file{utils/misc/untabify.sh}).
 @c Bugs, versions and credits
 @c =========================================================================
 
-@ifclear COMMERCIAL
-
 @node Bugs and versions, Tips and tricks, Programming notes, Top
 @chapter Bugs, versions and credits
 
@@ -3267,13 +3217,11 @@ problems we already know about.
 
 @verbatiminclude ../CREDITS
 
-@end ifclear
-
 @c =========================================================================
 @c Tips ans Tricks
 @c =========================================================================
 
-@node Tips and tricks, GNU General Public License, Bugs and versions, Top
+@node Tips and tricks, License, Bugs and versions, Top
 @appendix Tips and tricks
 
 @cindex Tips
@@ -3329,25 +3277,21 @@ Read the @file{FAQ}...
 @end itemize
 
 @c =========================================================================
-@c GNU GPL
+@c License
 @c =========================================================================
 
-@ifclear COMMERCIAL
-
-@node  GNU General Public License, Concept index, Tips and tricks, Top
-@appendix GNU General Public License
+@node  License, Concept index, Tips and tricks, Top
+@appendix License
 
 @cindex License
 
-@include gpl.texi
-
-@end ifclear
+@include license.texi
 
 @c =========================================================================
 @c Concept Index (cindex)
 @c =========================================================================
 
-@node Concept index, Syntax index, GNU General Public License, Top
+@node Concept index, Syntax index, License, Top
 @unnumbered Concept index
 
 @cindex Index, concepts

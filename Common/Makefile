@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.44 2003-03-28 02:43:19 geuzaine Exp $
+# $Id: Makefile,v 1.45 2003-10-29 19:51:42 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -33,7 +33,7 @@ SRC = Context.cpp\
       Timer.cpp\
       ColorTable.cpp\
       Trackball.cpp\
-      GPL.cpp
+      License.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -87,5 +87,5 @@ ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ColorTable.h Context.h
 Trackball.o: Trackball.cpp Trackball.h
-GPL.o: GPL.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h

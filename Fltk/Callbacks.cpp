@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.183 2003-09-16 23:50:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.184 2003-10-29 19:51:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1445,9 +1445,9 @@ void help_command_line_cb(CALLBACK_ARGS)
 
 void help_license_cb(CALLBACK_ARGS)
 {
-  extern void print_gpl();
+  extern void print_license();
   Msg(DIRECT, "");
-  print_gpl();
+  print_license();
   WID->create_message_window();
 }
 
