@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.40 2001-11-12 14:18:17 geuzaine Exp $
+// $Id: CAD.cpp,v 1.41 2001-11-12 15:29:39 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1305,8 +1305,8 @@ void ReplaceDuplicatePoints(Mesh *m){
   /* Create unique points */
 
   start = Tree_Nbr(m->Points);
-  All = Tree2List(m->Points);
 
+  All = Tree2List(m->Points);
   allNonDulpicatedPoints = Tree_Create(sizeof(Vertex*),comparePosition);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&v);
@@ -1316,14 +1316,21 @@ void ReplaceDuplicatePoints(Mesh *m){
     else{
       Tree_Suppress(m->Points,&v);
       Tree_Suppress(m->Vertices,&v);      
-      // List_Add(points2delete,&v);      
+      //List_Add(points2delete,&v);      
     }
   }
-
   List_Delete(All);
 
   end = Tree_Nbr(m->Points);
-  if(start-end) Msg(DEBUG, "Removed %d duplicate points", start-end);
+
+  if(start == end){
+    Tree_Delete(allNonDulpicatedPoints);
+    List_Delete(points2delete);
+    return;
+  }
+
+  Msg(DEBUG, "Removed %d duplicate points", start-end);
+
   if(CTX.geom.old_newreg){
     m->MaxPointNum=0;
     Tree_Action(m->Points,MaxNumPoint);
@@ -1333,7 +1340,6 @@ void ReplaceDuplicatePoints(Mesh *m){
   /* Replace old points in curves */
 
   All = Tree2List(m->Curves);
-
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
     Tree_Query(allNonDulpicatedPoints,&c->beg);
@@ -1357,13 +1363,15 @@ void ReplaceDuplicatePoints(Mesh *m){
 			     List_Pointer(s->Control_Points,j)));
     }
   }
-  
   List_Delete(All);
 
   for(int k = 0; k < List_Nbr(points2delete);k++){
     List_Read(points2delete,i,&v);      
     Free_Vertex(&v,0);
   }
+
+  Tree_Delete(allNonDulpicatedPoints);
+  List_Delete(points2delete);
 
 }
 
@@ -1377,8 +1385,8 @@ void ReplaceDuplicateCurves(Mesh *m){
   /* Create unique curves */
 
   start = Tree_Nbr(m->Curves);
-  All = Tree2List(m->Curves);
 
+  All = Tree2List(m->Curves);
   allNonDulpicatedCurves = Tree_Create(sizeof(Curve*),compareTwoCurves);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
@@ -1403,12 +1411,17 @@ void ReplaceDuplicateCurves(Mesh *m){
       }
     }
   }
-  
   List_Delete(All);
 
   end = Tree_Nbr(m->Curves);
 
-  if(start-end) Msg(DEBUG, "Removed %d duplicate curves", start-end);
+  if(start == end){
+    Tree_Delete(allNonDulpicatedCurves);
+    return;
+  } 
+
+  Msg(DEBUG, "Removed %d duplicate curves", start-end);
+
   if(CTX.geom.old_newreg){
     m->MaxLineNum=0;
     Tree_Action(m->Curves,MaxNumCurve);
@@ -1427,7 +1440,9 @@ void ReplaceDuplicateCurves(Mesh *m){
       End_Curve(*(Curve**)List_Pointer(s->Generatrices,j));
     }
   }
+  List_Delete(All);
   
+  Tree_Delete(allNonDulpicatedCurves);
 }
 
 void ReplaceDuplicateSurfaces(Mesh *m){
@@ -1440,8 +1455,8 @@ void ReplaceDuplicateSurfaces(Mesh *m){
   /* Create unique surfaces */
 
   start = Tree_Nbr(m->Surfaces);
+
   All = Tree2List(m->Surfaces);
-  
   allNonDulpicatedSurfaces = Tree_Create(sizeof(Curve*),compareTwoSurfaces);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
@@ -1454,12 +1469,17 @@ void ReplaceDuplicateSurfaces(Mesh *m){
       }
     }
   }
-
   List_Delete(All);
 
   end = Tree_Nbr(m->Surfaces);
 
-  if(start-end) Msg(DEBUG, "Removed %d duplicate surfaces", start-end);
+  if(start == end){
+    Tree_Delete(allNonDulpicatedSurfaces);
+    return;
+  }
+
+  Msg(DEBUG, "Removed %d duplicate surfaces", start-end);
+
   if(CTX.geom.old_newreg){
     m->MaxSurfaceNum=0;
     Tree_Action(m->Surfaces,MaxNumSurface);
@@ -1476,7 +1496,9 @@ void ReplaceDuplicateSurfaces(Mesh *m){
 			     List_Pointer(vol->Surfaces,j)));
     }
   }
+  List_Delete(All);
 
+  Tree_Delete(allNonDulpicatedSurfaces);
 }
 
 void ReplaceAllDuplicates(Mesh *m){
