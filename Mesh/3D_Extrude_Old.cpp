@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.1 2001-06-25 13:05:16 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.2 2001-06-25 16:23:00 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // command line options -extrude (w/o -recombine). This mesh generator
@@ -10,15 +10,19 @@
 //
 // All geometrical entities are automatically numbered:
 //
-//         volumes: 3 * 10^6 + layer * 10^3 + surf->num
-// New XY surfaces: 2 * 10^6 + layer * 10^3 + surf->num
-//  perp. surfaces: 1 * 10^6 + layer * 10^3 + curve->num
-//     perp. lines: 4 * 10^6 + layer * 10^3 + point->Num
+//         volumes: 3 * K1 + layer * K2 + surf->num
+// New XY surfaces: 2 * K1 + layer * K2 + surf->num
+//  perp. surfaces: 1 * K1 + layer * K2 + curve->num
+//     perp. lines: 4 * K1 + layer * K2 + point->Num
 //
 // WARNING:
 //
 // The is no way to save XY generated lines or other entities for the
 // moment
+
+#define NB_LAYER_MAX 100
+#define K1 100.e6
+#define K2 1.e6 // to store NB_LAYER_MAX
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -31,9 +35,6 @@
 extern Context_T CTX ;
 extern Mesh   *LOCAL, *THEM;
 extern int     CurrentNodeNumber; 
-
-
-#define NB_LAYER_MAX 100
 
 static Tree_T *Tree_Ares, *Tree_Swaps;
 
@@ -404,11 +405,11 @@ static void Extrude_Surface3 (void *data , void *dum){
   /* Numerotation automatique des entites physiques */
   printf("Extruding Surface %d \n",s->Num);
   for(i=0;i<NbLayer;i++){
-    ZonLayer[i] = (int)(3 * 1.e6) + (int) ((i+1) * 1.e3) + s->Num ;
+    ZonLayer[i] = (int)(3 * K1) + (int) ((i+1) * K2) + s->Num ;
   }
   SurfLayer[0] = s->Num ;
   for(i=0;i<NbLayer;i++){
-    SurfLayer[i+1] = (int)(2 * 1.e6) + (int)((i+1) * 1.e3) + s->Num ;
+    SurfLayer[i+1] = (int)(2 * K1) + (int)((i+1) * K2) + s->Num ;
   }
 
   Tree_Action(s->Simplexes,Extrude_Simplex_Phase3);
@@ -473,7 +474,7 @@ static void Extrude_Curve (void *data , void *dum){
   /* Numerotation automatique des entites physiques */
   printf("Extruding Curve %d \n",c->Num);
   for(i=0;i<NbLayer;i++){
-    SurfLayer[i] = (int)(1 * 1.e6) + (int)((i+1) * 1.e3) + c->Num ;
+    SurfLayer[i] = (int)(1 * K1) + (int)((i+1) * K2) + c->Num ;
   }
 
   for(i=0;i<List_Nbr(c->Vertices)-1;i++){
@@ -515,7 +516,7 @@ static void Extrude_Point (void *data , void *dum){
   /* Numerotation automatique des entites physiques */
   printf("Extruding Vertex %d \n",v->Num);
   for(i=0;i<NbLayer;i++){
-    LineLayer[i] = (int)(4 * 1.e6) + (int)((i+1) * 1.e3) + v->Num ;
+    LineLayer[i] = (int)(4 * K1) + (int)((i+1) * K2) + v->Num ;
   }
 
   if((pV2 = (Vertex**)Tree_PQuery(THEM->Vertices, pV))){
