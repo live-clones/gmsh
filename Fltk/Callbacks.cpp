@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.134 2002-07-31 03:59:08 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.135 2002-07-31 23:22:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -776,8 +776,20 @@ void opt_message_clear_cb(CALLBACK_ARGS) {
   WID->msg_browser->clear();
 }
 void opt_message_save_cb(CALLBACK_ARGS) {
-  if(file_chooser(0,"Save messages", "*", 0))
-    WID->save_message(file_chooser_get_name(1)); 
+ test:
+  if(file_chooser(0,"Save messages", "*", 0)){
+    char *name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite){
+      struct stat buf;
+      if(!stat(name, &buf))
+	if(fl_ask("%s already exists.\nDo you want to replace it?", name))
+	  goto save;
+	else
+	  goto test;
+    }
+  save:
+    WID->save_message(name); 
+  }
 }
 void opt_save_cb(CALLBACK_ARGS) {
   Print_Options(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
@@ -2078,15 +2090,37 @@ void view_remove_cb(CALLBACK_ARGS){
 }
 
 void view_save_ascii_cb(CALLBACK_ARGS){
-  if(file_chooser(0,"Save view in ASCII format", "*", 0))
-    Write_View(0, (Post_View*)List_Pointer(CTX.post.list,(long int)data), 
-	       file_chooser_get_name(1)); 
+ test:
+  if(file_chooser(0,"Save view in ASCII format", "*", 0)){
+    char *name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite){
+      struct stat buf;
+      if(!stat(name, &buf))
+	if(fl_ask("%s already exists.\nDo you want to replace it?", name))
+	  goto save;
+	else
+	  goto test;
+    }
+  save:
+    Write_View(0, (Post_View*)List_Pointer(CTX.post.list,(long int)data), name); 
+  }
 }
 
 void view_save_binary_cb(CALLBACK_ARGS){
-  if(file_chooser(0,"Save view in binary format", "*", 0))
-    Write_View(1, (Post_View*)List_Pointer(CTX.post.list,(long int)data),
-	       file_chooser_get_name(1)); 
+ test:
+  if(file_chooser(0,"Save view in binary format", "*", 0)){
+    char *name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite){
+      struct stat buf;
+      if(!stat(name, &buf))
+	if(fl_ask("%s already exists.\nDo you want to replace it?", name))
+	  goto save;
+	else
+	  goto test;
+    }
+  save:
+    Write_View(1, (Post_View*)List_Pointer(CTX.post.list,(long int)data), name); 
+  }
 }
 
 static void _duplicate_view(int num, int options){
