@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.74 2004-04-13 18:47:10 geuzaine Exp $
+// $Id: CAD.cpp,v 1.75 2004-05-12 22:51:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1628,10 +1628,11 @@ void MaxNumSurface(void *a, void *b)
 void ReplaceDuplicatePoints(Mesh * m)
 {
   List_T *All;
-  Tree_T *allNonDulpicatedPoints;
+  Tree_T *allNonDuplicatedPoints;
   Vertex *v, **pv, **pv2;
   Curve *c;
   Surface *s;
+  Volume *vol;
   int i, j, start, end;
 
   List_T *points2delete = List_Create(100, 100, sizeof(Vertex *));
@@ -1641,11 +1642,11 @@ void ReplaceDuplicatePoints(Mesh * m)
   start = Tree_Nbr(m->Points);
 
   All = Tree2List(m->Points);
-  allNonDulpicatedPoints = Tree_Create(sizeof(Vertex *), comparePosition);
+  allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), comparePosition);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &v);
-    if(!Tree_Search(allNonDulpicatedPoints, &v)) {
-      Tree_Insert(allNonDulpicatedPoints, &v);
+    if(!Tree_Search(allNonDuplicatedPoints, &v)) {
+      Tree_Insert(allNonDuplicatedPoints, &v);
     }
     else {
       Tree_Suppress(m->Points, &v);
@@ -1658,7 +1659,7 @@ void ReplaceDuplicatePoints(Mesh * m)
   end = Tree_Nbr(m->Points);
 
   if(start == end) {
-    Tree_Delete(allNonDulpicatedPoints);
+    Tree_Delete(allNonDuplicatedPoints);
     List_Delete(points2delete);
     return;
   }
@@ -1676,13 +1677,13 @@ void ReplaceDuplicatePoints(Mesh * m)
   All = Tree2List(m->Curves);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
-    if(!Tree_Query(allNonDulpicatedPoints, &c->beg))
+    if(!Tree_Query(allNonDuplicatedPoints, &c->beg))
       Msg(GERROR, "Weird point %d in Coherence", c->beg->Num);
-    if(!Tree_Query(allNonDulpicatedPoints, &c->end))
+    if(!Tree_Query(allNonDuplicatedPoints, &c->end))
       Msg(GERROR, "Weird point %d in Coherence", c->end->Num);
     for(j = 0; j < List_Nbr(c->Control_Points); j++) {
       pv = (Vertex **) List_Pointer(c->Control_Points, j);
-      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDulpicatedPoints, pv)))
+      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
         Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(c->Control_Points, j, pv2);
@@ -1697,10 +1698,32 @@ void ReplaceDuplicatePoints(Mesh * m)
     List_Read(All, i, &s);
     for(j = 0; j < List_Nbr(s->Control_Points); j++) {
       pv = (Vertex **) List_Pointer(s->Control_Points, j);
-      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDulpicatedPoints, pv)))
+      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
         Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(s->Control_Points, j, pv2);
+    }
+    for(j = 0; j < List_Nbr(s->TrsfPoints); j++){
+      pv = (Vertex **) List_Pointer(s->TrsfPoints, j);
+      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
+	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+      else
+	List_Write(s->TrsfPoints, j, pv2);
+    }
+  }
+  List_Delete(All);
+  
+  // Replace old points in volumes
+
+  All = Tree2List(m->Volumes);
+  for(i = 0; i < List_Nbr(All); i++) {
+    List_Read(All, i, &vol);
+    for(j = 0; j < List_Nbr(vol->TrsfPoints); j++){
+      pv = (Vertex **) List_Pointer(vol->TrsfPoints, j);
+      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
+	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+      else
+	List_Write(vol->TrsfPoints, j, pv2);
     }
   }
   List_Delete(All);
@@ -1710,7 +1733,7 @@ void ReplaceDuplicatePoints(Mesh * m)
     Free_Vertex(&v, 0);
   }
 
-  Tree_Delete(allNonDulpicatedPoints);
+  Tree_Delete(allNonDuplicatedPoints);
   List_Delete(points2delete);
 
 }
@@ -1718,7 +1741,7 @@ void ReplaceDuplicatePoints(Mesh * m)
 void ReplaceDuplicateCurves(Mesh * m)
 {
   List_T *All;
-  Tree_T *allNonDulpicatedCurves;
+  Tree_T *allNonDuplicatedCurves;
   Curve *c, *c2, **pc, **pc2;
   Surface *s;
   int i, j, start, end;
@@ -1728,18 +1751,18 @@ void ReplaceDuplicateCurves(Mesh * m)
   start = Tree_Nbr(m->Curves);
 
   All = Tree2List(m->Curves);
-  allNonDulpicatedCurves = Tree_Create(sizeof(Curve *), compareTwoCurves);
+  allNonDuplicatedCurves = Tree_Create(sizeof(Curve *), compareTwoCurves);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     if(c->Num > 0) {
-      if(!Tree_Search(allNonDulpicatedCurves, &c)) {
-        Tree_Insert(allNonDulpicatedCurves, &c);
+      if(!Tree_Search(allNonDuplicatedCurves, &c)) {
+        Tree_Insert(allNonDuplicatedCurves, &c);
         if(!(c2 = FindCurve(-c->Num, m))) {
           Msg(GERROR, "Unknown Curve %d", -c->Num);
           List_Delete(All);
           return;
         }
-        Tree_Insert(allNonDulpicatedCurves, &c2);
+        Tree_Insert(allNonDuplicatedCurves, &c2);
       }
       else {
         Tree_Suppress(m->Curves, &c);
@@ -1757,7 +1780,7 @@ void ReplaceDuplicateCurves(Mesh * m)
   end = Tree_Nbr(m->Curves);
 
   if(start == end) {
-    Tree_Delete(allNonDulpicatedCurves);
+    Tree_Delete(allNonDuplicatedCurves);
     return;
   }
 
@@ -1775,7 +1798,7 @@ void ReplaceDuplicateCurves(Mesh * m)
     List_Read(All, i, &s);
     for(j = 0; j < List_Nbr(s->Generatrices); j++) {
       pc = (Curve **) List_Pointer(s->Generatrices, j);
-      if(!(pc2 = (Curve **) Tree_PQuery(allNonDulpicatedCurves, pc)))
+      if(!(pc2 = (Curve **) Tree_PQuery(allNonDuplicatedCurves, pc)))
         Msg(GERROR, "Weird curve %d in Coherence", (*pc)->Num);
       else {
         List_Write(s->Generatrices, j, pc2);
@@ -1786,13 +1809,13 @@ void ReplaceDuplicateCurves(Mesh * m)
   }
   List_Delete(All);
 
-  Tree_Delete(allNonDulpicatedCurves);
+  Tree_Delete(allNonDuplicatedCurves);
 }
 
 void ReplaceDuplicateSurfaces(Mesh * m)
 {
   List_T *All;
-  Tree_T *allNonDulpicatedSurfaces;
+  Tree_T *allNonDuplicatedSurfaces;
   Surface *s, **ps, **ps2;
   Volume *vol;
   int i, j, start, end;
@@ -1802,12 +1825,12 @@ void ReplaceDuplicateSurfaces(Mesh * m)
   start = Tree_Nbr(m->Surfaces);
 
   All = Tree2List(m->Surfaces);
-  allNonDulpicatedSurfaces = Tree_Create(sizeof(Curve *), compareTwoSurfaces);
+  allNonDuplicatedSurfaces = Tree_Create(sizeof(Curve *), compareTwoSurfaces);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
     if(s->Num > 0) {
-      if(!Tree_Search(allNonDulpicatedSurfaces, &s)) {
-        Tree_Insert(allNonDulpicatedSurfaces, &s);
+      if(!Tree_Search(allNonDuplicatedSurfaces, &s)) {
+        Tree_Insert(allNonDuplicatedSurfaces, &s);
       }
       else {
         Tree_Suppress(m->Surfaces, &s);
@@ -1819,7 +1842,7 @@ void ReplaceDuplicateSurfaces(Mesh * m)
   end = Tree_Nbr(m->Surfaces);
 
   if(start == end) {
-    Tree_Delete(allNonDulpicatedSurfaces);
+    Tree_Delete(allNonDuplicatedSurfaces);
     return;
   }
 
@@ -1837,7 +1860,7 @@ void ReplaceDuplicateSurfaces(Mesh * m)
     List_Read(All, i, &vol);
     for(j = 0; j < List_Nbr(vol->Surfaces); j++) {
       ps = (Surface **) List_Pointer(vol->Surfaces, j);
-      if(!(ps2 = (Surface **) Tree_PQuery(allNonDulpicatedSurfaces, ps)))
+      if(!(ps2 = (Surface **) Tree_PQuery(allNonDuplicatedSurfaces, ps)))
         Msg(GERROR, "Weird surface %d in Coherence", (*ps)->Num);
       else
         List_Write(vol->Surfaces, j, ps2);
@@ -1845,7 +1868,7 @@ void ReplaceDuplicateSurfaces(Mesh * m)
   }
   List_Delete(All);
 
-  Tree_Delete(allNonDulpicatedSurfaces);
+  Tree_Delete(allNonDuplicatedSurfaces);
 }
 
 void ReplaceAllDuplicates(Mesh * m)

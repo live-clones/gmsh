@@ -1,4 +1,4 @@
-// $Id: 2D_SMesh.cpp,v 1.16 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 2D_SMesh.cpp,v 1.17 2004-05-12 22:51:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -64,7 +64,7 @@ int MeshTransfiniteSurface(Surface * sur)
   int i, j, k, flag, nb, N1, N2, issphere;
   int nbquad = 0, nbtri = 0;
   Curve *G[4], *GG[4];
-  Vertex V, **vexist, *pV, *c1, *c2, **list, *CP[2];
+  Vertex V, *c1, *c2, **list, *CP[2];
   Simplex *simp;
   double u, v;
   int C_flag[4];
@@ -86,26 +86,17 @@ int MeshTransfiniteSurface(Surface * sur)
 
     nb = List_Nbr(sur->Generatrices);
     if(nb != 3 && nb != 4)
-      return (0);
+      return 0;
+    if(nb != List_Nbr(sur->TrsfPoints))
+      return 0;
 
     for(i = 0; i < 4; i++)
       G[i] = NULL;
 
-    for(i = 0; i < nb; i++) {
-      V.Num = sur->ipar[i];
-      pV = &V;
-      if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, &pV)) == NULL) {
-        Msg(WARNING, "Unknown Control Point %d in Transfinite Surface %d",
-            V.Num, sur->Num);
-        return (0);
-      }
-      else {
-        S[i] = *vexist;
-      }
-    }
-
-    for(i = 0; i < nb; i++)
+    for(i = 0; i < nb; i++){
+      List_Read(sur->TrsfPoints, i, &S[i]);
       List_Read(sur->Generatrices, i, &GG[i]);
+    }
 
     for(i = 0; i < nb; i++) {
       List_Read(GG[i]->Control_Points, 0, &CP[0]);

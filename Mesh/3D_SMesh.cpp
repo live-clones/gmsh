@@ -1,4 +1,4 @@
-// $Id: 3D_SMesh.cpp,v 1.21 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 3D_SMesh.cpp,v 1.22 2004-05-12 22:51:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -173,7 +173,7 @@ int MeshTransfiniteVolume(Volume * vol)
   int i, j, k, flag, nbs, nbp, nbg;
   int nbtet = 0, nbpri = 0, nbhex = 0;
   Surface *G[6], *GG[6];
-  Vertex V, **vexist, *pV, *CP[4], **list;
+  Vertex V, *CP[4], **list;
   double u, v, w, dum;
   int F_flag[6];
   int N1, N2, N3;
@@ -209,25 +209,18 @@ int MeshTransfiniteVolume(Volume * vol)
   else if(nbs == 6)
     nbp = 8;
   else
-    return (0);
+    return 0;
+
+  if(List_Nbr(vol->TrsfPoints) != nbp)
+    return 0;
 
   Msg(STATUS3, "Meshing Volume %d", vol->Num);
 
   for(i = 0; i < 6; i++)
     G[i] = NULL;
 
-  for(i = 0; i < nbp; i++) {
-    V.Num = vol->ipar[i];
-    pV = &V;
-    if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, &pV)) == NULL) {
-      Msg(WARNING, "Unknown control point %d in Transfinite Volume %d",
-          V.Num, vol->Num);
-      return (0);
-    }
-    else {
-      Stmp[i] = *vexist;
-    }
-  }
+  for(i = 0; i < nbp; i++)
+    List_Read(vol->TrsfPoints, i, &Stmp[i]);
 
   if(nbp == 8) {
     for(i = 0; i < 8; i++)
@@ -252,18 +245,11 @@ int MeshTransfiniteVolume(Volume * vol)
   for(i = 0; i < nbs; i++) {
     nbg = List_Nbr(GG[i]->Generatrices);
 
-    for(j = 0; j < nbg; j++) {
-      V.Num = GG[i]->ipar[j];
-      pV = &V;
-      if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, &pV)) == NULL) {
-        Msg(WARNING, "Unknown control point %d in Transfinite Surface %d",
-            V.Num, GG[i]->Num);
-        return (0);
-      }
-      else {
-        CP[j] = *vexist;
-      }
-    }
+    if(List_Nbr(GG[i]->TrsfPoints) != nbg)
+      return 0;
+
+    for(j = 0; j < nbg; j++)
+      List_Read(GG[i]->TrsfPoints, j, &CP[j]);
 
     if(nbg == 3)
       CP[3] = CP[0];

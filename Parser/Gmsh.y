@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.163 2004-04-19 07:42:25 geuzaine Exp $
+// $Id: Gmsh.y,v 1.164 2004-05-12 22:51:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3033,7 +3033,11 @@ Transfinite :
 	    double d;
 	    List_Read($7, i, &d);
 	    int j = (int)fabs(d);
-	    s->ipar[i] = j;
+	    Vertex *v = FindPoint(j, THEM);
+	    if(!v)
+	      yymsg(WARNING, "Unknown Point %d", j);
+	    else
+	      List_Add(s->TrsfPoints, &v);
 	  }
 	}
       }
@@ -3055,7 +3059,11 @@ Transfinite :
 	    double d;
 	    List_Read($7, i, &d);
 	    int j = (int)fabs(d);
-	    s->ipar[i] = j;
+	    Vertex *v = FindPoint(j, THEM);
+	    if(!v)
+	      yymsg(WARNING, "Unknown Point %d", j);
+	    else
+	      List_Add(s->TrsfPoints, &v);
 	  }
 	}
       }
@@ -3077,7 +3085,11 @@ Transfinite :
 	    double d;
 	    List_Read($7, i, &d);
 	    int j = (int)fabs(d);
-	    v->ipar[i] = j;
+	    Vertex *vert = FindPoint(j, THEM);
+	    if(!vert)
+	      yymsg(WARNING, "Unknown Point %d", j);
+	    else
+	      List_Add(v->TrsfPoints, &vert);
 	  }
 	}
       }

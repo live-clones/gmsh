@@ -247,6 +247,7 @@ struct _Surf{
   int Nu, Nv;
   List_T *Generatrices;
   List_T *Control_Points;
+  List_T *TrsfPoints;
   double plan[3][3];
   double invplan[3][3];
   double a, b, c, d;
@@ -309,6 +310,7 @@ typedef struct {
   int Method;
   int ipar[8];
   ExtrudeParams *Extrude;
+  List_T *TrsfPoints;
   List_T *Surfaces;
   Tree_T *Vertices;
   Tree_T *Edges;

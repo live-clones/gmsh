@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.16 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 2D_Elliptic.cpp,v 1.17 2004-05-12 22:51:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -41,21 +41,18 @@ int MeshEllipticSurface(Surface * sur)
     return (0);
 
   nb = List_Nbr(sur->Generatrices);
+
   if(nb < 4)
-    return (0);
+    return 0;
+  
+  if(List_Nbr(sur->TrsfPoints) != 4)
+    return 0;
 
   for(i = 0; i < nb; i++) {
     List_Read(sur->Generatrices, i, &GG[i]);
+    List_Read(sur->TrsfPoints, i, &S[i]);
   }
 
-  if(!(S[0] = FindPoint(sur->ipar[0], THEM)))
-    return 0;
-  if(!(S[1] = FindPoint(sur->ipar[1], THEM)))
-    return 0;
-  if(!(S[2] = FindPoint(sur->ipar[2], THEM)))
-    return 0;
-  if(!(S[3] = FindPoint(sur->ipar[3], THEM)))
-    return 0;
   N1 = N2 = N3 = N4 = 0;
 
   // step 1

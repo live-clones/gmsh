@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.48 2004-02-28 00:48:49 geuzaine Exp $
+// $Id: Create.cpp,v 1.49 2004-05-12 22:51:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -681,6 +681,7 @@ Surface *Create_Surface(int Num, int Typ)
     pS->ipar[i] = 0;
   pS->Recombine = 0;
   pS->RecombineAngle = 30;
+  pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
   pS->TrsfSimplexes = List_Create(1, 10, sizeof(Simplex *));
   pS->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
@@ -700,6 +701,7 @@ void Free_Surface(void *a, void *b)
 {
   Surface *pS = *(Surface **) a;
   if(pS) {
+    List_Delete(pS->TrsfPoints);
     Tree_Action(pS->Simplexes, Free_Simplex);
     Tree_Delete(pS->Simplexes);
     List_Delete(pS->TrsfSimplexes);
@@ -732,6 +734,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Method = LIBRE;
   for(i = 0; i < 8; i++)
     pV->ipar[i] = 0;
+  pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
   pV->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
   pV->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
@@ -749,6 +752,7 @@ void Free_Volume(void *a, void *b)
 {
   Volume *pV = *(Volume **) a;
   if(pV) {
+    List_Delete(pV->TrsfPoints);
     List_Delete(pV->Surfaces);  //surfaces freed elsewhere
     Tree_Action(pV->Simplexes, Free_Simplex);
     Tree_Delete(pV->Simplexes);
