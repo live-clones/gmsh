@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2001-07-26 18:47:59 remacle Exp $
+# $Id: Makefile,v 1.19 2001-07-30 15:40:00 geuzaine Exp $
 #
 # Makefile for "libGeo.a"
 #
@@ -57,3 +57,52 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
+CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Geo.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h \
+ ../Mesh/Interpolation.h ../Mesh/Numeric.h ../Common/Const.h \
+ ../Mesh/Create.h CAD.h ../Common/Context.h
+DataBase.o: DataBase.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h Geo.h \
+ ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h CAD.h ../Mesh/Create.h \
+ Verif.h ../Common/Context.h
+MinMax.o: MinMax.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
+ ../Mesh/Vertex.h ../Common/Context.h
+ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h \
+ ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+ ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h \
+ ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h ExtrudeParams.h
+Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h Geo.h CAD.h \
+ ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h ../Parser/Parser.h \
+ ../Common/Context.h
+StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
+ ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+ ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+ ../Common/Const.h Geo.h StepGeomDatabase.h DataBase.h \
+ ../Common/Context.h
+Verif.o: Verif.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h
+Visibility.o: Visibility.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h DataBase.h
+Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Geo.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h CAD.h ../Common/Context.h \
+ ../Common/Const.h
