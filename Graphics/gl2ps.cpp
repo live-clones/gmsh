@@ -1,7 +1,5 @@
-// $Id: gl2ps.cpp,v 1.9 2001-02-26 09:02:59 geuzaine Exp $
-
 /*
- * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
+ * GL2PS, an OpenGL to Postscript Printing Library, version 0.32
  * Copyright (C) 1999-2000  Christophe Geuzaine 
  *
  * Last Mod by Christophe on Mon Aug 14 23:49:15 2000
@@ -28,7 +26,10 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 
+#include <string.h>
 #include <sys/types.h>
+#include <malloc.h>
+#include <math.h>
 #include <stdarg.h>
 #include <time.h>
 
@@ -36,7 +37,7 @@
 
 static GL2PScontext gl2ps;
 
-void gl2psMsg(GLint level, char *fmt, ...){
+GLvoid gl2psMsg(GLint level, char *fmt, ...){
   va_list args;
 
   if(!(gl2ps.options & GL2PS_SILENT)){
@@ -69,12 +70,12 @@ GLvoid *gl2psRealloc(GLvoid *ptr, size_t size){
   return(ptr);
 }
 
-void gl2psFree(GLvoid *ptr){
+GLvoid gl2psFree(GLvoid *ptr){
   if(!ptr) return;
   free(ptr);
 }
 
-void gl2psListRealloc(GL2PSlist *list, GLint n){
+GLvoid gl2psListRealloc(GL2PSlist *list, GLint n){
   if(n <= 0) return;
   if(!list->array){
     list->nmax = ((n - 1) / list->incr + 1) * list->incr;
@@ -84,7 +85,7 @@ void gl2psListRealloc(GL2PSlist *list, GLint n){
     if(n > list->nmax){
       list->nmax = ((n - 1) / list->incr + 1) * list->incr;
       list->array = (char *)gl2psRealloc(list->array,
-                                         list->nmax * list->size);
+					 list->nmax * list->size);
     }
 }
 
@@ -103,12 +104,12 @@ GL2PSlist *gl2psListCreate(GLint n, GLint incr, GLint size){
   return(list);
 }
 
-void gl2psListDelete(GL2PSlist *list){
+GLvoid gl2psListDelete(GL2PSlist *list){
   gl2psFree(list->array);
   gl2psFree(list);
 }
 
-void gl2psListAdd(GL2PSlist *list, GLvoid *data){
+GLvoid gl2psListAdd(GL2PSlist *list, GLvoid *data){
   list->n++;
   gl2psListRealloc(list, list->n);
   memcpy(&list->array[(list->n - 1) * list->size], data, list->size);
@@ -118,19 +119,19 @@ GLint gl2psListNbr(GL2PSlist *list){
   return(list->n);
 }
 
-void *gl2psListPointer(GL2PSlist *list, GLint index){
+GLvoid *gl2psListPointer(GL2PSlist *list, GLint index){
   if((index < 0) || (index >= list->n))
     gl2psMsg(GL2PS_ERROR, "Wrong List Index in gl2psListPointer");
   return(&list->array[index * list->size]);
 }
 
-void gl2psListSort(GL2PSlist *list,
-                     GLint (*fcmp)(const GLvoid *a, const GLvoid *b)){
+GLvoid gl2psListSort(GL2PSlist *list,
+		     GLint (*fcmp)(const GLvoid *a, const GLvoid *b)){
   qsort(list->array, list->n, list->size, fcmp);
 }
 
-void gl2psListAction(GL2PSlist *list, 
-                       GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
+GLvoid gl2psListAction(GL2PSlist *list, 
+		       GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
   GLint i, dummy;
 
   for(i=0 ; i<gl2psListNbr(list) ; i++)
@@ -138,7 +139,7 @@ void gl2psListAction(GL2PSlist *list,
 }
 
 GLvoid gl2psListActionInverse(GL2PSlist *list, 
-                              GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
+			      GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
   GLint i, dummy;
 
   for(i=gl2psListNbr(list) ; i>0 ; i--)
@@ -147,9 +148,9 @@ GLvoid gl2psListActionInverse(GL2PSlist *list,
 
 GLfloat gl2psComparePointPlane(GL2PSxyz point, GL2PSplane plane){
   return(plane[0] * point[0] + 
-         plane[1] * point[1] + 
-         plane[2] * point[2] + 
-         plane[3]);
+	 plane[1] * point[1] + 
+	 plane[2] * point[2] + 
+	 plane[3]);
 }
 
 GLfloat gl2psPsca(GLfloat *a, GLfloat *b){
@@ -198,9 +199,9 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
     else{
       gl2psGetNormal(v, w, plane);
       plane[3] = 
-        - plane[0] * prim->verts[0].xyz[0] 
-        - plane[1] * prim->verts[0].xyz[1] 
-        - plane[2] * prim->verts[0].xyz[2];
+	- plane[0] * prim->verts[0].xyz[0] 
+	- plane[1] * prim->verts[0].xyz[1] 
+	- plane[2] * prim->verts[0].xyz[2];
     }
     break;
   case GL2PS_LINE :
@@ -218,9 +219,9 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
       else           w[2] = 1.;
       gl2psGetNormal(v, w, plane);
       plane[3] = 
-        - plane[0] * prim->verts[0].xyz[0] 
-        - plane[1] * prim->verts[0].xyz[1] 
-        - plane[2] * prim->verts[0].xyz[2];
+	- plane[0] * prim->verts[0].xyz[0] 
+	- plane[1] * prim->verts[0].xyz[1] 
+	- plane[2] * prim->verts[0].xyz[2];
     }
     break;
   case GL2PS_POINT :
@@ -235,7 +236,7 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
 }
 
 GLvoid gl2psCutEdge(GL2PSvertex a, GL2PSvertex b, GL2PSplane plane, 
-                    GL2PSvertex *c){
+		    GL2PSvertex *c){
   GL2PSxyz v;
   GLfloat  sect;
 
@@ -267,8 +268,8 @@ GLvoid gl2psFreePrimitive(GLvoid *a, GLvoid *b){
 }
 
 GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
-                                    GL2PSprimitive **child, GLshort numverts,
-                                    GLshort *index0, GLshort *index1){
+				    GL2PSprimitive **child, GLshort numverts,
+				    GLshort *index0, GLshort *index1){
   GLshort i;
 
   if(numverts > 4){
@@ -292,12 +293,12 @@ GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
       (*child)->verts[i] = parent->verts[index0[i]];
     else
       gl2psCutEdge(parent->verts[index0[i]], parent->verts[index1[i]], 
-                   plane, &(*child)->verts[i]);
+		   plane, &(*child)->verts[i]);
   }
 }
 
 GLvoid gl2psAddIndex(GLshort *index0, GLshort *index1, GLshort *nb, 
-                     GLshort i, GLshort j){
+		     GLshort i, GLshort j){
   GLint k;
 
   for(k=0 ; k<*nb ; k++)
@@ -328,14 +329,14 @@ GLint gl2psTestSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane){
     for(i = 0 ; i < prim->numverts ; i++){
       j = gl2psGetIndex(i, prim->numverts);
       if(d[j] > GL2PS_EPSILON){
-        if(type == GL2PS_COINCIDENT)      type = GL2PS_IN_BACK_OF;
-        else if(type != GL2PS_IN_BACK_OF) return 1; 
-        if(d[i] < -GL2PS_EPSILON)         return 1;
+	if(type == GL2PS_COINCIDENT)      type = GL2PS_IN_BACK_OF;
+	else if(type != GL2PS_IN_BACK_OF) return 1; 
+	if(d[i] < -GL2PS_EPSILON)	  return 1;
       }
       else if(d[j] < -GL2PS_EPSILON){
-        if(type == GL2PS_COINCIDENT)       type = GL2PS_IN_FRONT_OF;   
-        else if(type != GL2PS_IN_FRONT_OF) return 1;
-        if(d[i] > GL2PS_EPSILON)           return 1;
+	if(type == GL2PS_COINCIDENT)       type = GL2PS_IN_FRONT_OF;   
+	else if(type != GL2PS_IN_FRONT_OF) return 1;
+	if(d[i] > GL2PS_EPSILON)           return 1;
       }
     }
   }
@@ -343,7 +344,7 @@ GLint gl2psTestSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane){
 }
 
 GLint gl2psSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane, 
-                          GL2PSprimitive **front, GL2PSprimitive **back){
+			  GL2PSprimitive **front, GL2PSprimitive **back){
   GLshort  i, j, in=0, out=0, in0[5], in1[5], out0[5], out1[5];
   GLint    type;
   GLfloat  d[5]; 
@@ -364,28 +365,28 @@ GLint gl2psSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane,
     for(i = 0 ; i < prim->numverts ; i++){
       j = gl2psGetIndex(i, prim->numverts);
       if(d[j] > GL2PS_EPSILON){
-        if(type == GL2PS_COINCIDENT)      type = GL2PS_IN_BACK_OF;
-        else if(type != GL2PS_IN_BACK_OF) type = GL2PS_SPANNING; 
-        if(d[i] < -GL2PS_EPSILON){
-          gl2psAddIndex(in0, in1, &in, i, j);
-          gl2psAddIndex(out0, out1, &out, i, j);
-          type = GL2PS_SPANNING;
-        }
-        gl2psAddIndex(out0, out1, &out, j, -1);
+	if(type == GL2PS_COINCIDENT)      type = GL2PS_IN_BACK_OF;
+	else if(type != GL2PS_IN_BACK_OF) type = GL2PS_SPANNING; 
+	if(d[i] < -GL2PS_EPSILON){
+	  gl2psAddIndex(in0, in1, &in, i, j);
+	  gl2psAddIndex(out0, out1, &out, i, j);
+	  type = GL2PS_SPANNING;
+	}
+	gl2psAddIndex(out0, out1, &out, j, -1);
       }
       else if(d[j] < -GL2PS_EPSILON){
-        if(type == GL2PS_COINCIDENT)       type = GL2PS_IN_FRONT_OF;   
-        else if(type != GL2PS_IN_FRONT_OF) type = GL2PS_SPANNING;
-        if(d[i] > GL2PS_EPSILON){
-          gl2psAddIndex(in0, in1, &in, i, j);
-          gl2psAddIndex(out0, out1, &out, i, j);
-          type = GL2PS_SPANNING;
-        }
-        gl2psAddIndex(in0, in1, &in, j, -1);
+	if(type == GL2PS_COINCIDENT)       type = GL2PS_IN_FRONT_OF;   
+	else if(type != GL2PS_IN_FRONT_OF) type = GL2PS_SPANNING;
+	if(d[i] > GL2PS_EPSILON){
+	  gl2psAddIndex(in0, in1, &in, i, j);
+	  gl2psAddIndex(out0, out1, &out, i, j);
+	  type = GL2PS_SPANNING;
+	}
+	gl2psAddIndex(in0, in1, &in, j, -1);
       }
       else{
-        gl2psAddIndex(in0, in1, &in, j, -1);
-        gl2psAddIndex(out0, out1, &out, j, -1);
+	gl2psAddIndex(in0, in1, &in, j, -1);
+	gl2psAddIndex(out0, out1, &out, j, -1);
       }
     }
     break;
@@ -402,7 +403,7 @@ GLint gl2psSplitPrimitive(GL2PSprimitive *prim, GL2PSplane plane,
 }
 
 GLvoid gl2psDivideQuad(GL2PSprimitive *quad, 
-                       GL2PSprimitive **t1, GL2PSprimitive **t2){
+		       GL2PSprimitive **t1, GL2PSprimitive **t2){
   *t1 = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
   *t2 = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
   (*t1)->type = (*t2)->type = GL2PS_TRIANGLE;
@@ -456,17 +457,17 @@ GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root){
       gl2psGetPlane(prim1, plane);
       count=0;
       for(j=0 ; j<gl2psListNbr(primitives) ; j++){
-        if(j != i){
-          prim2 = *(GL2PSprimitive**)gl2psListPointer(primitives, j);
-          count += gl2psTestSplitPrimitive(prim2, plane); 
-        }
-        if(count > best) break;
+	if(j != i){
+	  prim2 = *(GL2PSprimitive**)gl2psListPointer(primitives, j);
+	  count += gl2psTestSplitPrimitive(prim2, plane); 
+	}
+	if(count > best) break;
       }
       if(count < best){
-        best = count;
-        index = i;
-        *root = prim1;
-        if(!count) return index;
+	best = count;
+	index = i;
+	*root = prim1;
+	if(!count) return index;
       }
     }
     if(index) printf("GL2PS_BEST_ROOT was worth it: %d\n", index);
@@ -514,19 +515,19 @@ GLvoid gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
       prim = *(GL2PSprimitive**)gl2psListPointer(primitives,i);
       switch(gl2psSplitPrimitive(prim,tree->plane,&frontprim,&backprim)){
       case GL2PS_COINCIDENT:
-        gl2psAddPrimitiveInList(prim, tree->primitives);
-        break;
+	gl2psAddPrimitiveInList(prim, tree->primitives);
+	break;
       case GL2PS_IN_BACK_OF:
-        gl2psAddPrimitiveInList(prim, backlist);
-        break;
+	gl2psAddPrimitiveInList(prim, backlist);
+	break;
       case GL2PS_IN_FRONT_OF:
-        gl2psAddPrimitiveInList(prim, frontlist);
-        break;
+	gl2psAddPrimitiveInList(prim, frontlist);
+	break;
       case GL2PS_SPANNING:
-        gl2psAddPrimitiveInList(backprim, backlist);
-        gl2psAddPrimitiveInList(frontprim, frontlist);
-        gl2psFreePrimitive(&prim, NULL);
-        break;
+	gl2psAddPrimitiveInList(backprim, backlist);
+	gl2psAddPrimitiveInList(frontprim, frontlist);
+	gl2psFreePrimitive(&prim, NULL);
+	break;
       }
     }
   }
@@ -539,17 +540,23 @@ GLvoid gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
     tree->front = (GL2PSbsptree*)gl2psMalloc(sizeof(GL2PSbsptree));
     gl2psBuildBspTree(tree->front, frontlist);
   }
-  
+   else
+    gl2psListDelete(frontlist);
+
   if(gl2psListNbr(backlist)){
-    gl2psListSort(frontlist, gl2psTrianglesFirst);
+    gl2psListSort(backlist, gl2psTrianglesFirst);
     tree->back = (GL2PSbsptree*)gl2psMalloc(sizeof(GL2PSbsptree));
     gl2psBuildBspTree(tree->back, backlist);
   }
+  else
+    gl2psListDelete(backlist);
+  
+  gl2psListDelete(primitives);
 }
 
 GLvoid  gl2psTraverseBspTree(GL2PSbsptree *tree, GL2PSxyz eye, GLfloat epsilon,
-                             GLboolean (*compare)(GLfloat f1, GLfloat f2),
-                             GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
+			     GLboolean (*compare)(GLfloat f1, GLfloat f2),
+			     GLvoid (*action)(GLvoid *data, GLvoid *dummy)){
   GLfloat result;
 
   if(!tree) return;
@@ -641,7 +648,7 @@ GLvoid  gl2psReset(GL2PSbsptree2d *tree){
 static GL2PSbsptree2d *image=NULL;
 
 GLvoid gl2psAddInImageTree(GL2PSprimitive *prim, 
-                           GL2PSxyz a, GL2PSxyz b, GL2PSbsptree2d **tree){
+			   GL2PSxyz a, GL2PSxyz b, GL2PSbsptree2d **tree){
   GLint res;
 
   if(*tree == NULL){
@@ -695,7 +702,7 @@ GLvoid gl2psAddInImage(void *a, void *b){
     for(i=0 ; i<prim->numverts ; i++){
       count++;
       gl2psAddInImageTree(prim, prim->verts[i].xyz, 
-                          prim->verts[gl2psGetIndex(i,prim->numverts)].xyz, &image);
+			  prim->verts[gl2psGetIndex(i,prim->numverts)].xyz, &image);
     }
   }
 
@@ -795,33 +802,33 @@ GLvoid gl2psPrintPrimitive(GLvoid *a, GLvoid *b){
   switch(prim->type){
   case GL2PS_TEXT :
     fprintf(gl2ps.stream, "(%s) %g %g %g %g %g %d /%s S\n",
-            prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-            prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
-            prim->verts[0].rgba[2], prim->text->fontsize, 
-            prim->text->fontname);
+	    prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	    prim->verts[0].rgba[0], prim->verts[0].rgba[1], 
+	    prim->verts[0].rgba[2], prim->text->fontsize, 
+	    prim->text->fontname);
     break;
   case GL2PS_POINT :
     fprintf(gl2ps.stream, "%g %g %g %g %g P\n", prim->verts[0].xyz[0],
-            prim->verts[0].xyz[1], prim->verts[0].rgba[0],
-            prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
+	    prim->verts[0].xyz[1], prim->verts[0].rgba[0],
+	    prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
     break;
   case GL2PS_LINE :
     if(prim->dash)
       fprintf(gl2ps.stream, "[%d] 0 setdash\n", prim->dash);
     if(gl2ps.shade){
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
-              prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-              prim->verts[1].rgba[0], prim->verts[1].rgba[1],
-              prim->verts[1].rgba[2], prim->verts[0].xyz[0],
-              prim->verts[0].xyz[1], prim->verts[0].rgba[0],
-              prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
+	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
+	      prim->verts[1].rgba[2], prim->verts[0].xyz[0],
+	      prim->verts[0].xyz[1], prim->verts[0].rgba[0],
+	      prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
     }
     else{
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g L\n",
-              prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-              prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-              prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-              prim->verts[0].rgba[2]);
+	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
+	      prim->verts[0].rgba[2]);
     }
     if(prim->dash)
       fprintf(gl2ps.stream, "[] 0 setdash\n");
@@ -829,22 +836,22 @@ GLvoid gl2psPrintPrimitive(GLvoid *a, GLvoid *b){
   case GL2PS_TRIANGLE :
     if(gl2ps.shade){
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
-              prim->verts[2].xyz[0], prim->verts[2].xyz[1],
-              prim->verts[2].rgba[0], prim->verts[2].rgba[1],
-              prim->verts[2].rgba[2], prim->verts[1].xyz[0],
-              prim->verts[1].xyz[1], prim->verts[1].rgba[0],
-              prim->verts[1].rgba[1], prim->verts[1].rgba[2],
-              prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-              prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-              prim->verts[0].rgba[2]);
+	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
+	      prim->verts[2].rgba[0], prim->verts[2].rgba[1],
+	      prim->verts[2].rgba[2], prim->verts[1].xyz[0],
+	      prim->verts[1].xyz[1], prim->verts[1].rgba[0],
+	      prim->verts[1].rgba[1], prim->verts[1].rgba[2],
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
+	      prim->verts[0].rgba[2]);
     }
     else{
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g T\n",
-              prim->verts[2].xyz[0], prim->verts[2].xyz[1],
-              prim->verts[1].xyz[0], prim->verts[1].xyz[1],
-              prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-              prim->verts[0].rgba[0], prim->verts[0].rgba[1],
-              prim->verts[0].rgba[2]);
+	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
+	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
+	      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+	      prim->verts[0].rgba[0], prim->verts[0].rgba[1],
+	      prim->verts[0].rgba[2]);
     }
     break;
   case GL2PS_QUADRANGLE :
@@ -858,8 +865,8 @@ GLvoid gl2psPrintPrimitive(GLvoid *a, GLvoid *b){
 
 
 GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts, 
-                             GL2PSvertex *verts, GLint offset, GLint dash,
-                             GLshort boundary){
+			     GL2PSvertex *verts, GLint offset, GLint dash,
+			     GLshort boundary){
   GLshort         i;
   GLfloat         factor, units, area, dZ, dZdX, dZdY, maxdZ;
   GL2PSprimitive *prim;
@@ -874,12 +881,12 @@ GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
   if(gl2ps.options & GL2PS_SIMPLE_LINE_OFFSET){
     if(type == GL2PS_LINE){
       if(gl2ps.sort == GL2PS_SIMPLE_SORT){
-        prim->verts[0].xyz[2] -= 1.;
-        prim->verts[1].xyz[2] -= 1.;
+	prim->verts[0].xyz[2] -= 1.;
+	prim->verts[1].xyz[2] -= 1.;
       }
       else{
-        prim->verts[0].xyz[2] -= 0.1;
-        prim->verts[1].xyz[2] -= 0.1;
+	prim->verts[0].xyz[2] -= 0.1;
+	prim->verts[1].xyz[2] -= 0.1;
       }
     }
   }
@@ -957,7 +964,7 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
   }
 }
 
-GLint gl2psParseFeedbackBuffer(){
+GLint gl2psParseFeedbackBuffer(GLvoid){
   GLint        i, used, count, v, vtot, offset=0, dash=0;
   GLshort      boundary, flag;
   GLfloat     *current;
@@ -1009,26 +1016,26 @@ GLint gl2psParseFeedbackBuffer(){
       used -= 2;
       v = vtot = 0;
       while(count > 0 && used > 0){
-        i = gl2psGetVertex(&vertices[v], current);
-        current += i;
-        used    -= i;
-        count --;
-        vtot++;
-        if(v == 2){
-          if(boundary){
-            if(!count && vtot==2) flag = 1|2|4;
-            else if(!count) flag = 2|4;
-            else if(vtot==2) flag = 1|2;
-            else flag = 2;
-          }
-          else
-            flag = 0;
-          gl2psAddPolyPrimitive(GL2PS_TRIANGLE, 3, vertices, 
-                                offset, dash, flag);
-          vertices[1] = vertices[2];
-        }
-        else
-          v ++;
+	i = gl2psGetVertex(&vertices[v], current);
+	current += i;
+	used    -= i;
+	count --;
+	vtot++;
+	if(v == 2){
+	  if(boundary){
+	    if(!count && vtot==2) flag = 1|2|4;
+	    else if(!count) flag = 2|4;
+	    else if(vtot==2) flag = 1|2;
+	    else flag = 2;
+	  }
+	  else
+	    flag = 0;
+	  gl2psAddPolyPrimitive(GL2PS_TRIANGLE, 3, vertices, 
+				offset, dash, flag);
+	  vertices[1] = vertices[2];
+	}
+	else
+	  v ++;
       }
       break;      
     case GL_BITMAP_TOKEN :
@@ -1063,7 +1070,7 @@ GLint gl2psParseFeedbackBuffer(){
   return GL2PS_SUCCESS;
 }
 
-GLvoid gl2psPrintPostscriptHeader(){
+GLvoid gl2psPrintPostscriptHeader(GLvoid){
   GLint   viewport[4], index;
   GLfloat rgba[4];
   time_t  now;
@@ -1085,67 +1092,67 @@ GLvoid gl2psPrintPostscriptHeader(){
   */
 
   fprintf(gl2ps.stream, 
-          "%%!PS-Adobe-3.0\n"
-          "%%%%Title: %s\n"
-          "%%%%Creator: GL2PS, an OpenGL to Postscript Printing Library, V. 0.3\n"
-          "%%%%For: %s\n"
-          "%%%%CreationDate: %s"
-          "%%%%LanguageLevel: 2\n"
-          "%%%%Pages: 1\n"
-          "%%%%DocumentData: Clean7Bit\n"
-          "%%%%PageOrder: Ascend\n"
-          "%%%%Orientation: Portrait\n"
-          "%%%%DocumentMedia: Default %d %d 0 () ()\n"
-          "%%%%BoundingBox: %d %d %d %d\n"
-          "%%%%Copyright: GNU LGPL (C) 1999-2000 Christophe.Geuzaine@AdValvas.be\n"
-          "%%%%EndComments\n"
-          "%%%%BeginProlog\n"
-          "/gl2psdict 64 dict def gl2psdict begin\n"
-          "1 setlinecap 1 setlinejoin 0.2 setlinewidth /bd {bind def} bind def\n"
-          "/G { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add\n"
-          "setgray } bd /C { setrgbcolor } bd /FC { findfont exch scalefont\n"
-          "setfont } bd /S { FC C moveto show } bd /P { C newpath 0.5 0.0 360.0\n"
-          "arc closepath fill } bd /L { C newpath moveto lineto stroke } bd\n"
-          "/T { C newpath moveto lineto lineto closepath fill } bd /SL { /b1\n"
-          "exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
-          "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
-          "b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub abs 0.008 gt\n"
-          "or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
-          "/rm r1 r2 add 0.5 mul def /ym y1 y2 add 0.5 mul def /xm x1 x2 add\n"
-          "0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm SL xm ym rm gm bm x2 y2 r2\n"
-          "g2 b2 SL } { x1 y1 x2 y2 r1 g1 b1 L } ifelse } bd /ST {/b1 exch\n"
-          "def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
-          "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
-          "/b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
-          "b2 b1 sub abs 0.05 gt g2 g1 sub abs 0.017 gt r2 r1 sub abs 0.032 gt\n"
-          "b3 b1 sub abs 0.05 gt g3 g1 sub abs 0.017 gt r3 r1 sub abs 0.032 gt\n"
-          "b2 b3 sub abs 0.05 gt g2 g3 sub abs 0.017 gt r2 r3 sub abs 0.032 gt\n"
-          "or or or or or or or or { /b12 b1 b2 add 0.5 mul def /g12 g1 g2 add\n"
-          "0.5 mul def /r12 r1 r2 add 0.5 mul def /y12 y1 y2 add 0.5 mul def\n"
-          "/x12 x1 x2 add 0.5 mul def /b13 b1 b3 add 0.5 mul def /g13 g1 g3\n"
-          "add 0.5 mul def /r13 r1 r3 add 0.5 mul def /y13 y1 y3 add 0.5 mul\n"
-          "def /x13 x1 x3 add 0.5 mul def /b32 b3 b2 add 0.5 mul def\n"
-          "/g32 g3 g2 add 0.5 mul def /r32 r3 r2 add 0.5 mul def /y32 y3 y2\n"
-          "add 0.5 mul def /x32 x3 x2 add 0.5 mul def x1 y1 r1 g1 b1 x12 y12\n"
-          "r12 g12 b12 x13 y13 r13 g13 b13 x2 y2 r2 g2 b2 x12 y12 r12 g12 b12\n"
-          "x32 y32 r32 g32 b32 x3 y3 r3 g3 b3 x32 y32 r32 g32 b32 x13 y13 r13\n"
-          "g13 b13 x32 y32 r32 g32 b32 x12 y12 r12 g12 b12 x13 y13 r13 g13 b13\n"
-          "ST ST ST ST } { x1 y1 x2 y2 x3 y3 r1 g1 b1 T } ifelse } bd\n"
-          "end\n"
-          "%%%%EndProlog\n"
-          "%%%%BeginSetup\n"
-          "/DeviceRGB setcolorspace\n"
-          "gl2psdict begin\n"
-          "%%%%EndSetup\n"
-          "%%%%Page: 1 1\n"
-          "%%%%BeginPageSetup\n"
-          "%%%%EndPageSetup\n"
-          "mark\n"
-          "gsave\n"
-          "1.0 1.0 scale\n",
-          gl2ps.title, gl2ps.producer, ctime(&now), viewport[2], viewport[3], 
-          viewport[0], viewport[1], viewport[2], viewport[3]);
-          
+	  "%%!PS-Adobe-3.0\n"
+	  "%%%%Title: %s\n"
+	  "%%%%Creator: GL2PS, an OpenGL to Postscript Printing Library, V. 0.32\n"
+	  "%%%%For: %s\n"
+	  "%%%%CreationDate: %s"
+	  "%%%%LanguageLevel: 2\n"
+	  "%%%%Pages: 1\n"
+	  "%%%%DocumentData: Clean7Bit\n"
+	  "%%%%PageOrder: Ascend\n"
+	  "%%%%Orientation: Portrait\n"
+	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
+	  "%%%%BoundingBox: %d %d %d %d\n"
+	  "%%%%Copyright: GNU LGPL (C) 1999-2000 Christophe.Geuzaine@AdValvas.be\n"
+	  "%%%%EndComments\n"
+	  "%%%%BeginProlog\n"
+	  "/gl2psdict 64 dict def gl2psdict begin\n"
+	  "1 setlinecap 1 setlinejoin 0.2 setlinewidth /bd {bind def} bind def\n"
+	  "/G { 0.082 mul exch 0.6094 mul add exch 0.3086 mul add neg 1.0 add\n"
+	  "setgray } bd /C { setrgbcolor } bd /FC { findfont exch scalefont\n"
+	  "setfont } bd /S { FC C moveto show } bd /P { C newpath 0.5 0.0 360.0\n"
+	  "arc closepath fill } bd /L { C newpath moveto lineto stroke } bd\n"
+	  "/T { C newpath moveto lineto lineto closepath fill } bd /SL { /b1\n"
+	  "exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
+	  "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
+	  "b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub abs 0.008 gt\n"
+	  "or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
+	  "/rm r1 r2 add 0.5 mul def /ym y1 y2 add 0.5 mul def /xm x1 x2 add\n"
+	  "0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm SL xm ym rm gm bm x2 y2 r2\n"
+	  "g2 b2 SL } { x1 y1 x2 y2 r1 g1 b1 L } ifelse } bd /ST {/b1 exch\n"
+	  "def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
+	  "/b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
+	  "/b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
+	  "b2 b1 sub abs 0.05 gt g2 g1 sub abs 0.017 gt r2 r1 sub abs 0.032 gt\n"
+	  "b3 b1 sub abs 0.05 gt g3 g1 sub abs 0.017 gt r3 r1 sub abs 0.032 gt\n"
+	  "b2 b3 sub abs 0.05 gt g2 g3 sub abs 0.017 gt r2 r3 sub abs 0.032 gt\n"
+	  "or or or or or or or or { /b12 b1 b2 add 0.5 mul def /g12 g1 g2 add\n"
+	  "0.5 mul def /r12 r1 r2 add 0.5 mul def /y12 y1 y2 add 0.5 mul def\n"
+	  "/x12 x1 x2 add 0.5 mul def /b13 b1 b3 add 0.5 mul def /g13 g1 g3\n"
+	  "add 0.5 mul def /r13 r1 r3 add 0.5 mul def /y13 y1 y3 add 0.5 mul\n"
+	  "def /x13 x1 x3 add 0.5 mul def /b32 b3 b2 add 0.5 mul def\n"
+	  "/g32 g3 g2 add 0.5 mul def /r32 r3 r2 add 0.5 mul def /y32 y3 y2\n"
+	  "add 0.5 mul def /x32 x3 x2 add 0.5 mul def x1 y1 r1 g1 b1 x12 y12\n"
+	  "r12 g12 b12 x13 y13 r13 g13 b13 x2 y2 r2 g2 b2 x12 y12 r12 g12 b12\n"
+	  "x32 y32 r32 g32 b32 x3 y3 r3 g3 b3 x32 y32 r32 g32 b32 x13 y13 r13\n"
+	  "g13 b13 x32 y32 r32 g32 b32 x12 y12 r12 g12 b12 x13 y13 r13 g13 b13\n"
+	  "ST ST ST ST } { x1 y1 x2 y2 x3 y3 r1 g1 b1 T } ifelse } bd\n"
+	  "end\n"
+	  "%%%%EndProlog\n"
+	  "%%%%BeginSetup\n"
+	  "/DeviceRGB setcolorspace\n"
+	  "gl2psdict begin\n"
+	  "%%%%EndSetup\n"
+	  "%%%%Page: 1 1\n"
+	  "%%%%BeginPageSetup\n"
+	  "%%%%EndPageSetup\n"
+	  "mark\n"
+	  "gsave\n"
+	  "1.0 1.0 scale\n",
+	  gl2ps.title, gl2ps.producer, ctime(&now), viewport[2], viewport[3], 
+	  viewport[0], viewport[1], viewport[2], viewport[3]);
+	  
   if(gl2ps.options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps.colormode == GL_RGBA || gl2ps.colorsize == 0)
       glGetFloatv(GL_COLOR_CLEAR_VALUE, rgba);
@@ -1157,12 +1164,12 @@ GLvoid gl2psPrintPostscriptHeader(){
       rgba[3] = 0.;
     }
     fprintf(gl2ps.stream,
-            "%g %g %g C\n"
-            "newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
-            "closepath fill\n",
-            rgba[0], rgba[1], rgba[2], 
-            viewport[0], viewport[1], viewport[2], viewport[1], 
-            viewport[2], viewport[3], viewport[0], viewport[3]);
+	    "%g %g %g C\n"
+	    "newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
+	    "closepath fill\n",
+	    rgba[0], rgba[1], rgba[2], 
+	    viewport[0], viewport[1], viewport[2], viewport[1], 
+	    viewport[2], viewport[3], viewport[0], viewport[3]);
   }
 }
 
@@ -1192,8 +1199,8 @@ GLboolean gl2psLess(GLfloat f1, GLfloat f2){
 }
 
 GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
-                      GLint colormode, GLint colorsize, GL2PSrgba *colormap,
-                      GLint buffersize, FILE *stream){
+		      GLint colormode, GLint colorsize, GL2PSrgba *colormap,
+		      GLint buffersize, FILE *stream){
 
   gl2ps.title = title;
   gl2ps.producer = producer;
@@ -1229,7 +1236,7 @@ GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options,
   glRenderMode(GL_FEEDBACK);  
 }
 
-GLint gl2psEndPage(void){
+GLint gl2psEndPage(GLvoid){
   GL2PSbsptree   *root;
   GL2PSxyz        eye={0., 0., 100000.};
   GLint           shademodel, res;
@@ -1260,14 +1267,13 @@ GLint gl2psEndPage(void){
     case GL2PS_BSP_SORT :
       root = (GL2PSbsptree*)gl2psMalloc(sizeof(GL2PSbsptree));
       gl2psBuildBspTree(root, gl2ps.primitives);
-      gl2psListDelete(gl2ps.primitives);
       if(gl2ps.boundary) gl2psBuildPolygonBoundary(root);
       if(gl2ps.options & GL2PS_OCCLUSION_CULL){
-        gl2psTraverseBspTree(root, eye, -GL2PS_EPSILON, gl2psLess,
-                             gl2psAddInImage);
+	gl2psTraverseBspTree(root, eye, -GL2PS_EPSILON, gl2psLess,
+			     gl2psAddInImage);
       }
       gl2psTraverseBspTree(root, eye, GL2PS_EPSILON, gl2psGreater, 
-                           gl2psPrintPrimitive);
+			   gl2psPrintPrimitive);
       gl2psFreeBspTree(root);
       res = GL2PS_SUCCESS;
       break;
@@ -1275,13 +1281,13 @@ GLint gl2psEndPage(void){
       gl2psMsg(GL2PS_ERROR, "Unknown Sorting Algorithm");
     }
     fprintf(gl2ps.stream,
-            "grestore\n"
-            "showpage\n"
-            "cleartomark\n"
-            "%%%%PageTrailer\n"
-            "%%%%Trailer\n"
-            "end\n"
-            "%%%%EOF\n");
+	    "grestore\n"
+	    "showpage\n"
+	    "cleartomark\n"
+	    "%%%%PageTrailer\n"
+	    "%%%%Trailer\n"
+	    "end\n"
+	    "%%%%EOF\n");
     fflush(gl2ps.stream);
   }
 

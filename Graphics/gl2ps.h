@@ -1,8 +1,8 @@
 /*
- * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
+ * GL2PS, an OpenGL to Postscript Printing Library, version 0.32
  * Copyright (C) 1999-2000  Christophe Geuzaine
  *
- * Last Mod by Christophe on Mon Aug 14 23:49:47 2000
+ * Last Mod by Christophe on Sun Oct  1 20:31:44 2000
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -28,7 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <GL/gl.h>
+#include <GL/gl.h>
 
 #define GL2PS_NONE                       0
 
@@ -40,11 +40,11 @@
 
 /* Options for gl2psBeginPage */
 
-#define GL2PS_DRAW_BACKGROUND            1
-#define GL2PS_SIMPLE_LINE_OFFSET         2
-#define GL2PS_SILENT                     4
-#define GL2PS_BEST_ROOT                  8
-#define GL2PS_OCCLUSION_CULL             16
+#define GL2PS_DRAW_BACKGROUND            (1<<0)
+#define GL2PS_SIMPLE_LINE_OFFSET         (1<<1)
+#define GL2PS_SILENT                     (1<<2)
+#define GL2PS_BEST_ROOT                  (1<<3)
+#define GL2PS_OCCLUSION_CULL             (1<<4)
 
 /* Arguments for gl2psEnable/gl2psDisable */
 
@@ -149,12 +149,12 @@ typedef struct {
 
 /* public functions */
 
-void gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
-                      GLint colormode, GLint colorsize, GL2PSrgba *colormap, 
-                      GLint buffersize, FILE * stream);
-GLint  gl2psEndPage(void);
-void gl2psText(char *str, char *fontname, GLint size);
-void gl2psEnable(GLint mode);
-void gl2psDisable(GLint mode);
+GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
+		      GLint colormode, GLint colorsize, GL2PSrgba *colormap, 
+		      GLint buffersize, FILE * stream);
+GLint  gl2psEndPage(GLvoid);
+GLvoid gl2psText(char *str, char *fontname, GLint size);
+GLvoid gl2psEnable(GLint mode);
+GLvoid gl2psDisable(GLint mode);
 
 #endif
