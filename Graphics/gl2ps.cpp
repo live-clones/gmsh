@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.55 2002-12-11 23:55:29 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.56 2003-01-22 02:35:47 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -671,7 +671,7 @@ void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
   GL2PSbsptree2d *head = NULL, *cur = NULL;
 
   if((*tree == NULL) && (prim->numverts > 2)){
-    head=(GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
+    head = (GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
     for(i = 0; i < prim->numverts-1; i++){
       if(!gl2psGetPlaneFromPoints(prim->verts[i].xyz,
                                   prim->verts[i+1].xyz,
@@ -689,12 +689,12 @@ void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
     head->front = NULL;
     for(i = 2+offset; i < prim->numverts; i++){
       ret = gl2psCheckPoint(prim->verts[i].xyz, head->plane);
-      if(ret != 0) break;
+      if(ret != GL2PS_POINT_COINCIDENT) break;
     }
     switch(ret){
     case GL2PS_POINT_INFRONT :
       cur = head;
-      for(i = 1+offset; i < (prim->numverts-1); i++){
+      for(i = 1+offset; i < prim->numverts-1; i++){
         if(cur->front == NULL)
           cur->front = (GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
         if(gl2psGetPlaneFromPoints(prim->verts[i].xyz,
@@ -715,14 +715,14 @@ void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
       }
       else{
         gl2psFree(cur->front);
-	cur = NULL;
+	cur = head = NULL;
       }
       break;
     case GL2PS_POINT_BACK :
       for(i = 0; i < 4; i++)
         head->plane[i] = -head->plane[i];
       cur = head;
-      for(i = 1+offset; i < (prim->numverts-1); i++){
+      for(i = 1+offset; i < prim->numverts-1; i++){
         if(cur->front == NULL)
           cur->front = (GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
         if(gl2psGetPlaneFromPoints(prim->verts[i+1].xyz,
@@ -743,7 +743,7 @@ void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
       }
       else{
         gl2psFree(cur->front);
-	cur = NULL;
+	cur = head = NULL;
       }
       break;
     default:
@@ -795,17 +795,17 @@ void gl2psSplitPrimitive2D(GL2PSprimitive *prim,
 			   GL2PSprimitive **front, 
 			   GL2PSprimitive **back){
 
-  // cur will hold the position of current vertex
-  // prev will holds the position of previous vertex
-  // prev0 will holds the position of vertex number 0
-  // v1 and v2 represent the current and previous vertexs respectively
-  // flag will represents that should the current be checked against the plane
+  /* cur will hold the position of current vertex
+     prev will holds the position of previous vertex
+     prev0 will holds the position of vertex number 0
+     v1 and v2 represent the current and previous vertexs respectively
+     flag will represents that should the current be checked against the plane */
   GLint cur = -1, prev = -1, i, v1 = 0, v2 = 0, flag = 1, prev0 = -1;
   
-  // list of vertexs which will go in front and back Primitive
+  /* list of vertexs which will go in front and back Primitive */
   GL2PSvertex *front_list = NULL, *back_list = NULL;
   
-  // number of vertex in front and back list
+  /* number of vertex in front and back list */
   GLint front_count = 0, back_count = 0;
 
   for(i = 0; i <= prim->numverts; i++){
@@ -876,6 +876,7 @@ void gl2psSplitPrimitive2D(GL2PSprimitive *prim,
 GLint gl2psAddInImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree){
   GLint ret = 0;
   GL2PSprimitive *frontprim = NULL, *backprim = NULL;
+
   if(*tree == NULL){
     gl2psAddPlanesInBspTreeImage(prim, tree);
     return 1;
