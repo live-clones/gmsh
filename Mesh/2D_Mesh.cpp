@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.49 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.50 2003-06-14 05:21:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -799,7 +799,6 @@ void Maillage_Automatique_VieuxCode(Surface * pS, Mesh * m, int ori)
     // MEMORY LEAK (JF)
     //    Free(M.listdel[i]);
   }
-  // ANOTHER ONE (JF)
   Free(M.listdel);
   Free(gPointArray);
 }
@@ -987,7 +986,6 @@ void Maillage_Surface(void *data, void *dum)
     create_NXE(s->Vertices, s->Simplexes, tnxe);
     for(int i = 0; i < CTX.mesh.nb_smoothing; i++)
       Tree_Action(tnxe, ActionLiss);
-    // MEMORY LEAK (JF)
     delete_NXE(tnxe);
   }
 
