@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.38 2004-04-19 07:42:23 geuzaine Exp $
+// $Id: Main.cpp,v 1.39 2004-05-07 18:42:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -106,6 +106,8 @@ int main(int argc, char *argv[])
   M.PhysicalGroups = NULL;
   M.Partitions = NULL;
   M.Metric = NULL;
+  M.BGM.bgm = NULL;
+  M.Grid.init = 0;
 
   signal(SIGINT, Signal);
   signal(SIGSEGV, Signal);

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.51 2004-04-18 21:47:29 geuzaine Exp $
+// $Id: Generator.cpp,v 1.52 2004-05-07 18:42:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -218,9 +218,13 @@ void Init_Mesh(Mesh * M)
   List_Action(M->Partitions, Free_MeshPartition);
   List_Delete(M->Partitions);
 
-  if(M->Metric) {
+  if(M->Metric)
     delete M->Metric;
-  }
+
+  List_Delete(M->BGM.bgm);
+
+  if(M->Grid.init)
+    List_Delete(M->Grid.Bricks);
 
   M->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   M->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
@@ -234,6 +238,7 @@ void Init_Mesh(Mesh * M)
   M->Partitions = List_Create(5, 5, sizeof(MeshPartition *));
   M->Metric = new GMSHMetric;
   M->BGM.bgm = NULL;
+  M->Grid.init = 0;
 
   M->status = 0;
 

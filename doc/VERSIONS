@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.199 2004-04-26 20:12:30 geuzaine Exp $
+$Id: VERSIONS,v 1.200 2004-05-07 18:42:49 geuzaine Exp $
+
+New since 1.52: background mesh fixes; 
 
 New in 1.52: new raster ("bitmap") PostScript/EPS/PDF output formats;
 new Plugin(Extract) to extract a given component from a

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.63 2004-04-21 23:33:21 geuzaine Exp $
+// $Id: Main.cpp,v 1.64 2004-05-07 18:42:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -93,6 +93,8 @@ int main(int argc, char *argv[])
   M.PhysicalGroups = NULL;
   M.Partitions = NULL;
   M.Metric = NULL;
+  M.BGM.bgm = NULL;
+  M.Grid.init = 0;
 
   // Configuration files and command line options
 

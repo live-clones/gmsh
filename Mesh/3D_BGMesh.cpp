@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.25 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.26 2004-05-07 18:42:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,9 +29,6 @@
 
 extern Mesh *THEM;
 extern Context_T CTX;
-
-static Mesh m;
-static double XX, YY, ZZ, D, LL;
 
 void ExportLcFieldOnVolume(Mesh * M)
 {
@@ -87,6 +84,8 @@ void ExportLcFieldOnSurfaces(Mesh * M)
   fclose(f);
 }
 
+static double XX, YY, ZZ, D, LL;
+
 void findcloser(void *a, void *b)
 {
   Vertex *v;
@@ -99,22 +98,24 @@ void findcloser(void *a, void *b)
   }
 }
 
+static Mesh *TMPM = NULL;
+
 void LCBGM(double X, double Y, double Z, double *l)
 {
-  if(Pt_In_Volume(X, Y, Z, &m, l, .01));
-  else if(Pt_In_Volume(X, Y, Z, &m, l, .02));
-  else if(Pt_In_Volume(X, Y, Z, &m, l, .07));
-  else if(Pt_In_Volume(X, Y, Z, &m, l, .1));
-  else if(Pt_In_Volume(X, Y, Z, &m, l, .2));
-  else if(Pt_In_Volume(X, Y, Z, &m, l, .8));
-  else if(Pt_In_Volume(X, Y, Z, &m, l, 20.));
+  if(Pt_In_Volume(X, Y, Z, TMPM, l, .01));
+  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .02));
+  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .07));
+  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .1));
+  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .2));
+  else if(Pt_In_Volume(X, Y, Z, TMPM, l, .8));
+  else if(Pt_In_Volume(X, Y, Z, TMPM, l, 20.));
   else {
     XX = X;
     YY = Y;
     ZZ = Z;
     D = 1.e24;
     LL = 1;
-    Tree_Action(m.Vertices, findcloser);
+    Tree_Action(TMPM->Vertices, findcloser);
     *l = LL;
   }
 }
@@ -149,30 +150,36 @@ double Lc_XYZ(double X, double Y, double Z, Mesh * m)
   return CTX.mesh.lc_factor * l;
 }
 
-static Tree_T *Pts;
-
 static void AIG(void *a, void *b)
 {
   Simplex *s = *(Simplex **) a;
-  AddSimplexInGrid(&m, s, BOITE);
+  AddSimplexInGrid(TMPM, s, BOITE);
 }
 
 int BGMWithView(Post_View * ErrView)
 {
-  static Vertex *VertexUp, *v, V, *ver[4];
+  Vertex *VertexUp, *v, V, *ver[4];
+  Tree_T *Pts;
   int i, j, k, nb;
   double *X, *Y, *Z, *Val;
   Simplex *si;
 
-  VertexUp = Create_Vertex(-1, 0., 0., 1., 1., -1.0);
+  if(TMPM){
+    Tree_Action(TMPM->Vertices, Free_Vertex);    
+    Tree_Action(TMPM->Simplexes, Free_Simplex);    
+    Tree_Delete(TMPM->Vertices);
+    Tree_Delete(TMPM->Simplexes);
+    delete TMPM;
+  }
+
   Pts = Tree_Create(sizeof(Vertex *), comparePosition);
+  VertexUp = Create_Vertex(-1, 0., 0., 1., 1., -1.0);
 
-  m.BGM.Typ = ONFILE;
-
-  m.Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
-  m.Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
+  TMPM = new Mesh;
+  TMPM->BGM.Typ = ONFILE;
+  TMPM->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
+  TMPM->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
   Create_BgMesh(ONFILE, .2, THEM);
-
 
   k = 1;
   if(ErrView->NbST) {
@@ -194,12 +201,12 @@ int BGMWithView(Post_View * ErrView)
         else {
           v = Create_Vertex(k++, X[j], Y[j], Z[j], Val[j], -1.0);
           ver[j] = v;
-          Tree_Add(m.Vertices, &v);
+          Tree_Add(TMPM->Vertices, &v);
           Tree_Add(Pts, &v);
         }
       }
       si = Create_Simplex(ver[0], ver[1], ver[2], VertexUp);
-      Tree_Add(m.Simplexes, &si);
+      Tree_Add(TMPM->Simplexes, &si);
     }
   }
 
@@ -222,37 +229,39 @@ int BGMWithView(Post_View * ErrView)
         else {
           v = Create_Vertex(k++, X[j], Y[j], Z[j], Val[j], -1.0);
           ver[j] = v;
-          Tree_Add(m.Vertices, &v);
+          Tree_Add(TMPM->Vertices, &v);
           Tree_Add(Pts, &v);
         }
       }
       si = Create_Simplex(ver[0], ver[1], ver[2], ver[3]);
-      Tree_Add(m.Simplexes, &si);
+      Tree_Add(TMPM->Simplexes, &si);
     }
   }
 
-  m.Grid.init = 0;
-  m.Grid.Nx = 10;
-  m.Grid.Ny = 10;
-  m.Grid.Nz = 10;
-  Tree_Action(m.Vertices, findminmax);
-  getminmax(&m.Grid.min.X, &m.Grid.min.Y, &m.Grid.min.Z,
-            &m.Grid.max.X, &m.Grid.max.Y, &m.Grid.max.Z);
+  TMPM->Grid.init = 0;
+  TMPM->Grid.Nx = 10;
+  TMPM->Grid.Ny = 10;
+  TMPM->Grid.Nz = 10;
+  Tree_Action(TMPM->Vertices, findminmax);
+  getminmax(&TMPM->Grid.min.X, &TMPM->Grid.min.Y, &TMPM->Grid.min.Z,
+            &TMPM->Grid.max.X, &TMPM->Grid.max.Y, &TMPM->Grid.max.Z);
 
-  if(m.Grid.max.Z == m.Grid.min.Z) {
-    m.Grid.Nz = 1;
-    Tree_Add(m.Vertices, &VertexUp);
-    Tree_Action(m.Vertices, findminmax);
-    getminmax(&m.Grid.min.X, &m.Grid.min.Y, &m.Grid.min.Z,
-              &m.Grid.max.X, &m.Grid.max.Y, &m.Grid.max.Z);
+  if(TMPM->Grid.max.Z == TMPM->Grid.min.Z) {
+    TMPM->Grid.Nz = 1;
+    Tree_Add(TMPM->Vertices, &VertexUp);
+    Tree_Action(TMPM->Vertices, findminmax);
+    getminmax(&TMPM->Grid.min.X, &TMPM->Grid.min.Y, &TMPM->Grid.min.Z,
+              &TMPM->Grid.max.X, &TMPM->Grid.max.Y, &TMPM->Grid.max.Z);
   }
 
-  Tree_Action(m.Simplexes, AIG);
+  Tree_Action(TMPM->Simplexes, AIG);
+
+  Tree_Delete(Pts);
 
   Msg(INFO, "Background mesh loaded (%d nodes, %d elements)",
-      Tree_Nbr(m.Vertices), Tree_Nbr(m.Simplexes));
+      Tree_Nbr(TMPM->Vertices), Tree_Nbr(TMPM->Simplexes));
 
-  return (1);
+  return 1;
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: 2D_Bricks.cpp,v 1.12 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 2D_Bricks.cpp,v 1.13 2004-05-07 18:42:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,8 @@
 static double XmaxGrid, YmaxGrid, XminGrid, YminGrid, ZmaxGrid, ZminGrid;
 static double XminBox, XmaxBox, YminBox, YmaxBox, ZminBox, ZmaxBox;
 static int Nx = 0, Ny = 0, Nz = 0;
-static List_T *GridList;
-static DocRecord *MyMesh;
+static List_T *GridList = NULL;
+static DocRecord *MyMesh = NULL;
 
 extern PointRecord *gPointArray;
 
@@ -84,7 +84,6 @@ void Invert_MappingLists(List_T * List1, List_T * List2)
   }
 
   List_Delete(TmpList);
-
 }
 
 int InWhichBrick(double X, double Y, double Z)
@@ -147,12 +146,16 @@ void InitBricks(DocRecord * MESH)
 
   MyMesh = MESH;
 
+  if(!MyMesh) return;
+
   Nx = (int)sqrt((double)MESH->numTriangles) + 1;
   Ny = Nx;
   Nz = 1;
   ZminGrid = 0.;
   ZmaxGrid = 1.;
 
+  if(GridList)
+    List_Delete(GridList);
   GridList = List_Create(Nx * Ny * Nz, 1, sizeof(struct Map));
   InvList = List_Create(MESH->numTriangles, 1, sizeof(struct Map));
 

@@ -349,7 +349,6 @@ typedef struct _Mesh Mesh;
 typedef struct{
   int Typ;
   double lc;
-  struct _Mesh *m;
   List_T *bgm;
 }LcField;
 

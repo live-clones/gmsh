@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.54 2004-04-18 03:36:07 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.55 2004-05-07 18:42:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -34,9 +34,9 @@ extern Context_T CTX;
 
 PointRecord *gPointArray;
 DocRecord *BGMESH, *FGMESH;
-int is_3D = 0;
 double LC2D;
 
+static int is_3D = 0;
 static Surface *THESURFACE, *THESUPPORT;
 
 void ProjetteSurface(void *a, void *b)
@@ -302,12 +302,12 @@ int mesh_domain(ContourPeek * ListContours, int numcontours,
   Conversion(doc);
   remove_all_dlist(doc->numPoints, doc->points);
 
-  if(!is_3D || CTX.mesh.constrained_bgmesh) {
+  if(!is_3D || CTX.mesh.constrained_bgmesh)
     BGMESH = doc;
-    InitBricks(BGMESH);
-  }
   else
     BGMESH = NULL;
+
+  InitBricks(BGMESH);
 
   /* elimination des triangles exterieurs + verification de l'existence
      des edges (coherence) */
