@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.94 2001-07-31 07:51:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.95 2001-07-31 09:51:36 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1718,6 +1718,7 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView)
       pdb->view_value[i]->textsize(CTX.fontsize);
       pdb->view_value[i]->type(FL_HORIZONTAL);
       pdb->view_value[i]->align(FL_ALIGN_RIGHT);
+      pdb->view_value[i]->value(sxn->def);
     }
 
   Fl_Button* cancel     = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Close");

@@ -1,6 +1,8 @@
 #ifndef _CUTSPHERE_H_
 #define _CUTSPHERE_H
+
 #include "LevelsetPlugin.h"
+
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutSpherePlugin ();
@@ -20,5 +22,7 @@ public:
   virtual void CatchErrorMessage (char *errorMessage) const;
   virtual int getNbOptions() const;
   virtual StringXNumber* GetOption (int iopt);  
+  virtual Post_View *execute (Post_View *);
 };
+
 #endif

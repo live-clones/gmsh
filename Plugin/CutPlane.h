@@ -1,5 +1,6 @@
 #ifndef _CUTPLANE_H_
 #define _CUTPLANE_H
+
 #include "LevelsetPlugin.h"
 
 extern "C"
@@ -23,4 +24,5 @@ public:
   virtual StringXNumber *GetOption (int iopt);  
   virtual Post_View *execute (Post_View *);
 };
+
 #endif

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.66 2001-07-30 18:34:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.67 2001-07-31 09:51:36 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1585,25 +1585,31 @@ void view_options_cb(CALLBACK_ARGS){
 
 void view_plugin_cb(CALLBACK_ARGS){
   char name[256];
-  std::pair<int,GMSH_Plugin*> *pair =  (std::pair<int,GMSH_Plugin*>*)data;
+  std::pair<int,GMSH_Plugin*> *pair = (std::pair<int,GMSH_Plugin*>*)data;
   int iView = pair->first;
   GMSH_Post_Plugin *p = (GMSH_Post_Plugin*)pair->second;
   p->getName(name);
-  // here we should perhaps launch 
-  // a dialogbox for setting up Plugin 
-  // properties
-  try
-    {
-      Post_View *v = (Post_View*)List_Pointer(Post_ViewList,iView);
-      p->execute(v);
-      Msg(INFO,"Plugin %s was called win = %p",name,p->dialogBox);
+
+  if(p->dialogBox){//Get the values from the GUI
+    int n = p->getNbOptions();
+    if(n > 20)Msg(GERROR,"Plugin has too much parameters");
+    for(int i=0;i<n;i++){
+      StringXNumber *sxn;
+      sxn = p->GetOption(i);
+      sxn->def = p->dialogBox->view_value[i]->value();
     }
-  catch (GMSH_Plugin *err)
-    {
-      p->CatchErrorMessage(name);
-      Msg(WARNING,"%s",name);
-    }
-  //
+  }
+
+  try{
+    Post_View *v = (Post_View*)List_Pointer(Post_ViewList,iView);
+    p->execute(v);
+    Draw();
+    Msg(INFO,"Plugin %s was called win = %p",name,p->dialogBox);
+  }
+  catch (GMSH_Plugin *err){
+    p->CatchErrorMessage(name);
+    Msg(WARNING,"%s",name);
+  }
 }
 
 void view_options_plugin_cb(CALLBACK_ARGS){

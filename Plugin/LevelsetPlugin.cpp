@@ -1,3 +1,5 @@
+// $Id: LevelsetPlugin.cpp,v 1.7 2001-07-31 09:51:36 geuzaine Exp $
+
 #include "LevelsetPlugin.h"
 #include "List.h"
 #include "Views.h"
@@ -14,14 +16,17 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 
 void GMSH_LevelsetPlugin::Save ()
 {
-  printf("coucou saving ...\n");
-  if(processed)
+  if(processed){
+    Msg(INFO, "Writing file '%s'", OutputFileName);
     Write_View(0, processed, OutputFileName);
+    Msg(INFO, "Levelset ouput complete '%s'", OutputFileName);
+    Msg(STATUS2, "Wrote '%s'", OutputFileName);
+  }
 }
 
 void GMSH_LevelsetPlugin::Run () 
 { 
-  printf("coucou running ...\n");
+  Msg(INFO, "Running Levelset plugin");
   execute (0);
 }
 
@@ -32,6 +37,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
     a cut of the actual view with a levelset.
    */
   int k,i,nb,edtet[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
+
   //   for all scalar simplices 
 
   if(v->NbSS)
@@ -94,14 +100,13 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
       sprintf(filename,"cut-%s",v->FileName);
       EndView(1, filename, name);
       
-      printf("okay\n");
-
-      Msg(INFO, "new %s view with %d tris\n",name,List_Nbr(ActualView->ST));
+      Msg(INFO, "Levelset plugin OK: created view '%s' (%d triangles)",
+	  name, List_Nbr(ActualView->ST));
       processed = ActualView;
       return ActualView;
     }
 
-  Msg(INFO, "nothing ta da\n");
+  Msg(INFO, "Levelset plugin: nothing to do");
 
   return 0;
 }

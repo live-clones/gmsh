@@ -1,19 +1,24 @@
+// $Id: CutPlane.cpp,v 1.7 2001-07-31 09:51:36 geuzaine Exp $
+
 #include "CutPlane.h"
 #include "List.h"
 
 StringXNumber CutPlaneOptions_Number[] = {
   { GMSH_FULLRC, "A" , NULL , 1. },
-  { GMSH_FULLRC, "B" , NULL , 1. },
-  { GMSH_FULLRC, "C" , NULL , 1. },
-  { GMSH_FULLRC, "D" , NULL , 1. },
-  { GMSH_FULLRC, "iView" , NULL , 1. }
+  { GMSH_FULLRC, "B" , NULL , 0. },
+  { GMSH_FULLRC, "C" , NULL , 0. },
+  { GMSH_FULLRC, "D" , NULL , 0.01 },
+  { GMSH_FULLRC, "View number" , NULL , 1. }
 };
 
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutPlanePlugin ()
   {
-    return new GMSH_CutPlanePlugin (1.0,0.0,0.0,0.01);
+    return new GMSH_CutPlanePlugin (CutPlaneOptions_Number[0].def,
+				    CutPlaneOptions_Number[1].def,
+				    CutPlaneOptions_Number[2].def,
+				    CutPlaneOptions_Number[3].def);
   }
 }
 
@@ -37,7 +42,7 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright, char *help_tex
 
 int GMSH_CutPlanePlugin::getNbOptions() const
 {
-  return 5;
+  return sizeof(CutPlaneOptions_Number)/sizeof(StringXNumber);
 }
 
 StringXNumber* GMSH_CutPlanePlugin:: GetOption (int iopt)
@@ -56,6 +61,7 @@ double GMSH_CutPlanePlugin :: levelset (double x, double y, double z, double val
 }
 
 extern List_T *Post_ViewList;
+
 Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
 {
 
@@ -65,16 +71,15 @@ Post_View *GMSH_CutPlanePlugin::execute (Post_View *v)
   d = CutPlaneOptions_Number[3].def;
   int iView = (int)CutPlaneOptions_Number[4].def;
 
-  if(v)return GMSH_LevelsetPlugin::execute(v);
-  else
-    {
-      if(List_Nbr(Post_ViewList) < iView)
-	{
-	  Msg(WARNING,"Plugin CutPlane, view %d not loaded\n",iView);
-	  return 0;
-	}
-      return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
+  if(v)
+    return GMSH_LevelsetPlugin::execute(v);
+  else{
+    if(List_Nbr(Post_ViewList) < iView){
+      Msg(WARNING,"Plugin CutPlane, view %d not loaded\n",iView);
+      return 0;
     }
+    return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
+  }
 }
 
 

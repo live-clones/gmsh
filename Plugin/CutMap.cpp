@@ -1,18 +1,19 @@
-// $Id: CutMap.cpp,v 1.7 2001-07-30 13:47:18 remacle Exp $
+// $Id: CutMap.cpp,v 1.8 2001-07-31 09:51:36 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
 
 StringXNumber CutMapOptions_Number[] = {
-  { GMSH_FULLRC, "A" , NULL , 1. },
-  { GMSH_FULLRC, "iView" , NULL , 1. }
+  { GMSH_FULLRC, "Value" , NULL , 1. },
+  { GMSH_FULLRC, "View number" , NULL , 1. }
 };
 
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutMapPlugin ()
   {
-    return new GMSH_CutMapPlugin (1.5,1);
+    return new GMSH_CutMapPlugin (CutMapOptions_Number[0].def,
+				  (int)CutMapOptions_Number[1].def);
   }
 }
 
@@ -31,12 +32,13 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright, char *help_text)
 {
   strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright,"DGR (www.multiphysics.com)");
-  strcpy(help_text,"This Plugins cuts a view \n with a plane (x-xc)^2 + (y-yc)^2 + (z-zc)^2  = r^20\n");
+  strcpy(help_text,
+	 "This Plugins extracts the isovalue surface of value 'Value'\n");
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const
 {
-  return 5;
+  return sizeof(CutMapOptions_Number)/sizeof(StringXNumber);
 }
 
 StringXNumber *GMSH_CutMapPlugin:: GetOption (int iopt)
@@ -57,30 +59,25 @@ double GMSH_CutMapPlugin :: levelset (double x, double y, double z, double val) 
   return A - val;
 }
 
- extern List_T *Post_ViewList;
+extern List_T *Post_ViewList;
 
 Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 {
 
-  printf("coucou 2\n");
-
   A = CutMapOptions_Number[0].def;
   iView = (int)CutMapOptions_Number[1].def;
   
-  printf("View %d iso %12.5E\n",iView,A);
-  if(v)return GMSH_LevelsetPlugin::execute(v);
-  else
-    {
+  Msg(INFO, "View %d -> iso %g",iView, A);
 
-
-      if(List_Nbr(Post_ViewList) < iView)
-	{
-	  Msg(WARNING,"Plugin CutMap, view %d not loaded\n",iView);
-	  return 0;
-	}
-
-      return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
+  if(v)
+    return GMSH_LevelsetPlugin::execute(v);
+  else{
+    if(List_Nbr(Post_ViewList) < iView){
+      Msg(WARNING,"Plugin CutMap, view %d not loaded\n",iView);
+      return 0;
     }
+    return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
+  }
 }
 
 

@@ -1,20 +1,25 @@
-// $Id: CutSphere.cpp,v 1.5 2001-07-30 13:22:21 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.6 2001-07-31 09:51:36 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
+#include "List.h"
 
 StringXNumber CutSphereOptions_Number[] = {
-  { GMSH_FULLRC, "Xc" , NULL , 1. },
-  { GMSH_FULLRC, "Yc" , NULL , 1. },
-  { GMSH_FULLRC, "Zc" , NULL , 1. },
-  { GMSH_FULLRC, "R" , NULL , 1. }
+  { GMSH_FULLRC, "Xc" , NULL , 0. },
+  { GMSH_FULLRC, "Yc" , NULL , 0. },
+  { GMSH_FULLRC, "Zc" , NULL , 0. },
+  { GMSH_FULLRC, "R" , NULL , 0.25 },
+  { GMSH_FULLRC, "View number" , NULL , 1. }
 };
 
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutSpherePlugin ()
   {
-    return new GMSH_CutSpherePlugin (0.0,0.0,0.0,.25);
+    return new GMSH_CutSpherePlugin (CutSphereOptions_Number[0].def,
+				     CutSphereOptions_Number[1].def,
+				     CutSphereOptions_Number[2].def,
+				     CutSphereOptions_Number[3].def);
   }
 }
 
@@ -33,12 +38,14 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright, char *help_te
 {
   strcpy(author,"J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright,"DGR (www.multiphysics.com)");
-  strcpy(help_text,"This Plugins cuts a view \n with a plane (x-xc)^2 + (y-yc)^2 + (z-zc)^2  = r^20\n");
+  strcpy(help_text,
+	 "This Plugins cuts a view\n"
+	 "with the sphere (x-xc)^2 + (y-yc)^2 + (z-zc)^2  = r^20\n");
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const
 {
-  return 4;
+  return sizeof(CutSphereOptions_Number)/sizeof(StringXNumber);
 }
 
 StringXNumber* GMSH_CutSpherePlugin:: GetOption (int iopt)
@@ -56,9 +63,24 @@ double GMSH_CutSpherePlugin :: levelset (double x, double y, double z, double va
   return (x-a)*(x-a) + (y-b)*(y-b) + (z-c)*(z-c) - r*r;
 }
 
+extern List_T *Post_ViewList;
 
+Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
+{
 
+  a = CutSphereOptions_Number[0].def;
+  b = CutSphereOptions_Number[1].def;
+  c = CutSphereOptions_Number[2].def;
+  r = CutSphereOptions_Number[3].def;
+  int iView = (int)CutSphereOptions_Number[4].def;
 
-
-
-
+  if(v)
+    return GMSH_LevelsetPlugin::execute(v);
+  else{
+    if(List_Nbr(Post_ViewList) < iView){
+      Msg(WARNING,"Plugin CutSphere, view %d not loaded\n",iView);
+      return 0;
+    }
+    return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
+  }
+}
