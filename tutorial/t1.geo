@@ -13,9 +13,9 @@
 lc = 0.007;
 
 // This variable can then for example be used in the definition of
-// Gmsh's simplest elementary entity, a `Point'. A Point is defined by
-// a list of four numbers: its three coordinates (X, Y and Z), and a
-// characteristic length which sets the target element size at the
+// Gmsh's simplest `elementary entity', a `Point'. A Point is defined
+// by a list of four numbers: its three coordinates (X, Y and Z), and
+// a characteristic length which sets the target element size at the
 // point:
 
 Point(1) = {0, 0, 0, 9.e-1 * lc};
@@ -61,14 +61,13 @@ Line Loop(5) = {4,1,-2,3} ;
 Plane Surface(6) = {5} ;
 
 // At this level, Gmsh knows everything to display the rectangular
-// surface 6 and to mesh it. But a supplementary step is needed in
-// order to assign region numbers to the various elements in the mesh
-// (i.e. to the points, the line segments and the triangles
-// discretizing points 1 to 4, lines 1 to 4 and surface 6,
-// respectively). This is achieved by the definition of `physical
-// entities'. Physical entities will group elements belonging to
-// several elementary entities by giving them a common number (a
-// region number), and specifying their orientation.
+// surface 6 and to mesh it. An optional step is needed if we want to
+// associate specific region numbers to the various elements in the
+// mesh (e.g. to the line segments discretizing lines 1 to 4 or to the
+// triangles discretizing surface 6). This is achieved by the
+// definition of `physical entities'. Physical entities will group
+// elements belonging to several elementary entities by giving them a
+// common number (a region number), and specifying their orientation.
 
 // We can for example group the points 1 and 2 into the physical
 // entity 1:
