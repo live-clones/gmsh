@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.282 2004-04-18 14:53:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.283 2004-04-18 21:47:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -332,9 +332,9 @@ Context_Item menu_mesh[] = {
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
+  { "First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
+  { "Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
   { "Save",   (Fl_Callback *)mesh_save_cb } ,
-  // this one is confusing for beginners -> "Save (No Physical)" ??
-  //{ "Save All", (Fl_Callback *)mesh_save_all_cb } ,
   { NULL } 
 };  
     Context_Item menu_mesh_define[] = {
@@ -2463,7 +2463,7 @@ void GUI::create_statistics_window()
   }
 
   int width = 26 * fontsize;
-  int height = 5 * WB + 17 * BH;
+  int height = 5 * WB + 18 * BH;
 
   stat_window = new Fl_Window(width, height, "Statistics");
   stat_window->box(WINDOW_BOX);
@@ -2483,26 +2483,27 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Nodes on Lines");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Nodes on surfaces");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Nodes in volumes");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Triangles");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadrangles");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Tetrahedra");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Hexahedra");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Prisms");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Pyramids");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Second order nodes");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Triangles");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Quadrangles");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Tetrahedra");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Hexahedra");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Prisms");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Pyramids");
 
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Time for 1D mesh");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 2D mesh");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 3D mesh");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 1D mesh");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 2D mesh");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Time for 3D mesh");
 
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma factor");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Eta factor");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho factor");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Gamma factor");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Eta factor");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho factor");
 
-      Fl_Button *b0 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 13 * BH, BB, BH, "Graph");
+      Fl_Button *b0 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
       b0->callback(statistics_histogram_cb, (void *)0);
-      Fl_Button *b1 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 14 * BH, BB, BH, "Graph");
+      Fl_Button *b1 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
       b1->callback(statistics_histogram_cb, (void *)1);
-      Fl_Button *b2 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
+      Fl_Button *b2 = new Fl_Button(width - BB - 2 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
       b2->callback(statistics_histogram_cb, (void *)2);
 
       o->end();
@@ -2575,6 +2576,9 @@ void GUI::set_statistics()
   stat_value[num]->value(label[num]);
   num++;
   sprintf(label[num], "%g", s[6]);
+  stat_value[num]->value(label[num]);
+  num++;
+  sprintf(label[num], "%g", s[16]);
   stat_value[num]->value(label[num]);
   num++;
   sprintf(label[num], "%g", s[7] - s[8]);

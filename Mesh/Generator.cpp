@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.50 2004-04-18 03:36:07 geuzaine Exp $
+// $Id: Generator.cpp,v 1.51 2004-04-18 21:47:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -89,6 +89,7 @@ void Maillage_Dimension_0(Mesh * M)
 void Maillage_Dimension_1(Mesh * M)
 {
   double t1, t2;
+
   t1 = Cpu();
   Tree_Action(M->Curves, Maillage_Curve);
   t2 = Cpu();
@@ -184,7 +185,6 @@ void Init_Mesh(Mesh * M)
   M->MaxSimplexNum = 0;
 
   ExitExtrude();
-  Degre1();
 
   Tree_Action(M->Vertices, Free_Vertex);  
   Tree_Delete(M->Vertices);
@@ -266,6 +266,8 @@ void mai3d(Mesh * M, int Asked)
 
   CTX.threads_lock = 1;
 
+  Degre1();
+
   // 1D mesh
 
   if((Asked > oldstatus && Asked > 0 && oldstatus < 1) ||
@@ -315,13 +317,8 @@ void mai3d(Mesh * M, int Asked)
 
   // Second order elements
 
-  if(M->status && CTX.mesh.order == 2){
-    Msg(STATUS2, "Mesh second order...");
-    t1 = Cpu();
+  if(M->status && CTX.mesh.order == 2)
     Degre2(M->status);
-    t2 = Cpu();
-    Msg(STATUS2, "Mesh second order complete (%g s)", t2 - t1);
-  }
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = 1;

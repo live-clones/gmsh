@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.20 2004-04-18 17:45:39 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.21 2004-04-18 21:47:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -128,6 +128,7 @@ static int edges_tetra[6][2] = {
   {3, 2},
   {3, 1}
 };
+
 static int edges_quad[4][2] = {
   {0, 1},
   {1, 2},
@@ -268,6 +269,8 @@ void Degre1()
     Tree_Suppress(THEM->Vertices, v);
     Free_Vertex(v, NULL);
   }
+
+  THEM->Statistics[16] = 0;
 }
 
 void Degre2_Curve(void *a, void *b)
@@ -310,11 +313,22 @@ void Degre2_Volume(void *a, void *b)
 
 void Degre2(int dim)
 {
+  Msg(STATUS2, "Mesh second order...");
+  double t1 = Cpu();
+
   Degre1();
+  int nb1 = Tree_Nbr(THEM->Vertices);
+
   if(dim >= 1)
     Tree_Action(THEM->Curves, Degre2_Curve);
   if(dim >= 2)
     Tree_Action(THEM->Surfaces, Degre2_Surface);
   if(dim >= 3)
     Tree_Action(THEM->Volumes, Degre2_Volume);
+
+  int nb2 = Tree_Nbr(THEM->Vertices);
+  THEM->Statistics[16] = nb2 - nb1;
+
+  double t2 = Cpu();
+  Msg(STATUS2, "Mesh second order complete (%g s)", t2 - t1);
 }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.213 2004-04-08 22:14:28 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.214 2004-04-18 21:47:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2426,6 +2426,22 @@ void mesh_2d_cb(CALLBACK_ARGS)
 void mesh_3d_cb(CALLBACK_ARGS)
 {
   mai3d(THEM, 3);
+  Draw();
+  Msg(STATUS3N, "Ready");
+}
+
+void mesh_degree_cb(CALLBACK_ARGS)
+{
+  switch ((long int)data) {
+  case 2: 
+    Degre2(THEM->status);
+    break;
+  case 1:
+  default:
+    Degre1();
+    break;
+  }
+
   Draw();
   Msg(STATUS3N, "Ready");
 }
