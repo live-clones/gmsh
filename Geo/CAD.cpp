@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.80 2005-01-01 19:35:28 geuzaine Exp $
+// $Id: CAD.cpp,v 1.81 2005-02-11 02:27:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -109,9 +109,13 @@ int compare2Lists(List_T * List1, List_T * List2,
 {
   int i, found;
 
-  if(List_Nbr(List1) != List_Nbr(List2))
-    return List_Nbr(List1) - List_Nbr(List2);
+  if(!List_Nbr(List1) && !List_Nbr(List2))
+    return 0;
 
+  if(!List_Nbr(List1) || !List_Nbr(List2) || 
+     (List_Nbr(List1) != List_Nbr(List2)))
+    return List_Nbr(List1) - List_Nbr(List2);
+  
   List_T *List1Prime = List_Create(List_Nbr(List1), 1, List1->size);
   List_T *List2Prime = List_Create(List_Nbr(List2), 1, List2->size);
   List_Copy(List1, List1Prime);
