@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.21 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.22 2001-05-21 08:56:35 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -498,6 +498,8 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
     BGMESH = doc;
     InitBricks (BGMESH);
   }
+  else
+    BGMESH = NULL;
 
   /* elimination des triangles exterieurs + verification de l'existence
      des edges (coherence) */

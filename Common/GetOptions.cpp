@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.20 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.21 2001-05-21 08:56:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -130,7 +130,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         }
       }
       else if(!strcmp(argv[i]+1, "constrain")){ 
-	CTX.mesh.constrained_bgmesh = 1;
+	CTX.mesh.constrained_bgmesh = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "convert")){ 
 	i++;
