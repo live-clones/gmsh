@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.4 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.5 2004-11-25 16:22:48 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -93,6 +93,7 @@ static double integrate(int nbList, List_T *list, int dim,
   const int levelsetPositive = (int)IntegrateOptions_Number[1].def;
 
   double res = 0.;
+  double res2 = 0.;
   int nb = List_Nbr(list) / nbList;
   for(int i = 0; i < List_Nbr(list); i += nb) {
     double *x = (double *)List_Pointer_Fast(list, i);
@@ -138,22 +139,38 @@ static double integrate(int nbList, List_T *list, int dim,
 	else if(nbComp == 3) res += q.integrateFlux(v);
       }
     }
-    else if(dim == 3){
-      if(nbNod == 4){ 
-	tetrahedron t(x, y, z); 
-	if(nbComp == 1) res += t.integrate(v); 
-      }
-      else if(nbNod == 8){
-	hexahedron h(x, y, z); 
-	if(nbComp == 1) res += h.integrate(v); 
-      }
-      else if(nbNod == 6){ 
-	prism p(x, y, z);
-	if(nbComp == 1) res += p.integrate(v); 
-      }
-      else if(nbNod == 5){ 
-	pyramid p(x, y, z); 
-	if(nbComp == 1) res += p.integrate(v); 
+    else if(dim == 3)
+    {
+	if(nbNod == 4)
+	{ 
+	    tetrahedron t(x, y, z); 
+	    if(nbComp == 1) 
+	    {
+		if ( ! levelsetPositive )
+		    res += t.integrate(v); 
+		else
+		{
+		    double ONES[]       = { 1.0 , 1.0 , 1.0, 1.0 }; 
+		    const double area   = fabs(t.integrate (ONES));
+		    const double SUM    = v[0] + v[1] + v[2] + v[3];
+		    const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]) + fabs (v[3]);		
+		    const double XI     = SUM / SUMABS;
+		    res                += area  * (1 - XI) * 0.5 ;
+		    res2                += area  * (1 + XI) * 0.5 ;
+		}
+	    }
+	}
+	else if(nbNod == 8){
+	    hexahedron h(x, y, z); 
+	    if(nbComp == 1) res += h.integrate(v); 
+	}
+	else if(nbNod == 6){ 
+	    prism p(x, y, z);
+	    if(nbComp == 1) res += p.integrate(v); 
+	}
+	else if(nbNod == 5){ 
+	    pyramid p(x, y, z); 
+	    if(nbComp == 1) res += p.integrate(v); 
       }
     }
   }

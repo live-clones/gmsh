@@ -95,6 +95,38 @@ public:
   static std::list<_triangle*> all_triangles;
 };
 
+class _quad
+{
+public:
+  _quad (_point *p1,_point *p2,_point *p3,_point *p4)    
+    : visible (false)
+  {
+    p[0] = p1;
+    p[1] = p2;
+    p[2] = p3;
+    p[3] = p4;
+    q[0]=q[1]=q[2]=q[3]=0;
+  }
+
+  inline double V () const
+  {
+    return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val)/4.;    
+  }
+  void print ()
+  {
+    printf ("p1 %g %g p2 %g %g p3 %g %g \n",p[0]->x,p[0]->y,p[1]->x,p[1]->y,p[2]->x,p[2]->y);
+  }
+  static void clean ();
+  static void Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps) ;
+  static void Recur_Create (_quad *q, int maxlevel, int level , Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void Error ( double AVG , double tol );
+  static void Recur_Error ( _quad *q, double AVG, double tol );
+  bool visible;
+  _point     *p[4];
+  _quad  *q[4];
+  static std::list<_quad*> all_quads;
+};
+
 class _tet
 {
 public:
@@ -155,11 +187,15 @@ public:
   void initWithLowResolution (Post_View *view);
   void setTolerance (const double eps) {tol=eps;}
   double getTolerance () const {return tol;}
-  void zoomElement (Post_View * view ,
+  void zoomQuad (Post_View * view ,
+		 int ielem, int level, GMSH_Post_Plugin *plug);
+  void zoomTriangle (Post_View * view ,
 		    int ielem, int level, GMSH_Post_Plugin *plug);
   void zoomTet (Post_View * view ,
-		int ielem, int level, GMSH_Post_Plugin *plug);
-
+		int ielem, int level, GMSH_Post_Plugin *plug,
+		Double_Vector & val,
+		Double_Vector & res,
+		Double_Matrix & XYZ);
 };
 
 class Post_View{

@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 1.875c.  */
+/* A Bison parser, made by GNU Bison 1.875.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -434,7 +434,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.210 2004-11-25 02:10:32 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.211 2004-11-25 16:22:45 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -538,7 +538,7 @@ typedef union YYSTYPE {
   List_T *l;
 } YYSTYPE;
 /* Line 191 of yacc.c.  */
-#line 542 "Gmsh.tab.cpp"
+#line 541 "Gmsh.tab.cpp"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -550,29 +550,22 @@ typedef union YYSTYPE {
 
 
 /* Line 214 of yacc.c.  */
-#line 554 "Gmsh.tab.cpp"
+#line 553 "Gmsh.tab.cpp"
 
 #if ! defined (yyoverflow) || YYERROR_VERBOSE
 
-# ifndef YYFREE
-#  define YYFREE free
-# endif
-# ifndef YYMALLOC
-#  define YYMALLOC malloc
-# endif
-
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
-# ifdef YYSTACK_USE_ALLOCA
-#  if YYSTACK_USE_ALLOCA
-#   define YYSTACK_ALLOC alloca
-#  endif
+# if YYSTACK_USE_ALLOCA
+#  define YYSTACK_ALLOC alloca
 # else
-#  if defined (alloca) || defined (_ALLOCA_H)
-#   define YYSTACK_ALLOC alloca
-#  else
-#   ifdef __GNUC__
-#    define YYSTACK_ALLOC __builtin_alloca
+#  ifndef YYSTACK_USE_ALLOCA
+#   if defined (alloca) || defined (_ALLOCA_H)
+#    define YYSTACK_ALLOC alloca
+#   else
+#    ifdef __GNUC__
+#     define YYSTACK_ALLOC __builtin_alloca
+#    endif
 #   endif
 #  endif
 # endif
@@ -585,15 +578,15 @@ typedef union YYSTYPE {
 #   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
 #   define YYSIZE_T size_t
 #  endif
-#  define YYSTACK_ALLOC YYMALLOC
-#  define YYSTACK_FREE YYFREE
+#  define YYSTACK_ALLOC malloc
+#  define YYSTACK_FREE free
 # endif
 #endif /* ! defined (yyoverflow) || YYERROR_VERBOSE */
 
 
 #if (! defined (yyoverflow) \
      && (! defined (__cplusplus) \
-	 || (defined (YYSTYPE_IS_TRIVIAL) && YYSTYPE_IS_TRIVIAL)))
+	 || (YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
@@ -614,7 +607,7 @@ union yyalloc
 /* Copy COUNT objects from FROM to TO.  The source and destination do
    not overlap.  */
 # ifndef YYCOPY
-#  if defined (__GNUC__) && 1 < __GNUC__
+#  if 1 < __GNUC__
 #   define YYCOPY(To, From, Count) \
       __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
 #  else
@@ -1176,79 +1169,80 @@ static const unsigned short yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals. */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "tDOUBLE", "tSTRING", "tBIGSTR", "tEND",
-  "tAFFECT", "tDOTS", "tPi", "tMPI_Rank", "tMPI_Size", "tExp", "tLog",
-  "tLog10", "tSqrt", "tSin", "tAsin", "tCos", "tAcos", "tTan", "tRand",
-  "tAtan", "tAtan2", "tSinh", "tCosh", "tTanh", "tFabs", "tFloor", "tCeil",
-  "tFmod", "tModulo", "tHypot", "tPrintf", "tSprintf", "tStrCat",
-  "tStrPrefix", "tBoundingBox", "tDraw", "tPoint", "tCircle", "tEllipse",
-  "tLine", "tSurface", "tSpline", "tVolume", "tCharacteristic", "tLength",
-  "tParametric", "tElliptic", "tPlane", "tRuled", "tTriangulation",
-  "tTransfinite", "tComplex", "tPhysical", "tUsing", "tBump",
-  "tProgression", "tPlugin", "tRotate", "tTranslate", "tSymmetry",
-  "tDilate", "tExtrude", "tDuplicata", "tLoop", "tRecombine", "tDelete",
-  "tCoherence", "tIntersect", "tAttractor", "tLayers", "tScalarPoint",
-  "tVectorPoint", "tTensorPoint", "tScalarLine", "tVectorLine",
-  "tTensorLine", "tScalarTriangle", "tVectorTriangle", "tTensorTriangle",
-  "tScalarQuadrangle", "tVectorQuadrangle", "tTensorQuadrangle",
-  "tScalarTetrahedron", "tVectorTetrahedron", "tTensorTetrahedron",
-  "tScalarHexahedron", "tVectorHexahedron", "tTensorHexahedron",
-  "tScalarPrism", "tVectorPrism", "tTensorPrism", "tScalarPyramid",
-  "tVectorPyramid", "tTensorPyramid", "tText2D", "tText3D",
-  "tInterpolationScheme", "tCombine", "tBSpline", "tBezier", "tNurbs",
-  "tOrder", "tWith", "tBounds", "tKnots", "tColor", "tColorTable", "tFor",
-  "tIn", "tEndFor", "tIf", "tEndIf", "tExit", "tReturn", "tCall",
-  "tFunction", "tTrimmed", "tShow", "tHide",
-  "tB_SPLINE_SURFACE_WITH_KNOTS", "tB_SPLINE_CURVE_WITH_KNOTS",
-  "tCARTESIAN_POINT", "tTRUE", "tFALSE", "tUNSPECIFIED", "tU", "tV",
-  "tEDGE_CURVE", "tVERTEX_POINT", "tORIENTED_EDGE", "tPLANE",
-  "tFACE_OUTER_BOUND", "tEDGE_LOOP", "tADVANCED_FACE", "tVECTOR",
-  "tDIRECTION", "tAXIS2_PLACEMENT_3D", "tISO", "tENDISO", "tENDSEC",
-  "tDATA", "tHEADER", "tFILE_DESCRIPTION", "tFILE_SCHEMA", "tFILE_NAME",
-  "tMANIFOLD_SOLID_BREP", "tCLOSED_SHELL",
-  "tADVANCED_BREP_SHAPE_REPRESENTATION", "tFACE_BOUND",
-  "tCYLINDRICAL_SURFACE", "tCONICAL_SURFACE", "tCIRCLE", "tTRIMMED_CURVE",
-  "tGEOMETRIC_SET", "tCOMPOSITE_CURVE_SEGMENT", "tCONTINUOUS",
-  "tCOMPOSITE_CURVE", "tTOROIDAL_SURFACE", "tPRODUCT_DEFINITION",
-  "tPRODUCT_DEFINITION_SHAPE", "tSHAPE_DEFINITION_REPRESENTATION",
-  "tELLIPSE", "tSolid", "tEndSolid", "tVertex", "tFacet", "tNormal",
-  "tOuter", "tLoopSTL", "tEndLoop", "tEndFacet", "tAFFECTDIVIDE",
-  "tAFFECTTIMES", "tAFFECTMINUS", "tAFFECTPLUS", "'?'", "tOR", "tAND",
-  "tAPPROXEQUAL", "tNOTEQUAL", "tEQUAL", "'<'", "'>'", "tGREATEROREQUAL",
-  "tLESSOREQUAL", "'+'", "'-'", "'*'", "'/'", "'%'", "tCROSSPRODUCT",
-  "'!'", "UNARYPREC", "tMINUSMINUS", "tPLUSPLUS", "'^'", "'('", "')'",
-  "'['", "']'", "'.'", "'#'", "','", "'{'", "'}'", "$accept", "All",
-  "SignedDouble", "StlFormatItems", "StlFormatItem", "StepFormatItems",
-  "StepFormatItem", "StepSpecial", "StepHeaderItem", "StepDataItem",
-  "GeoFormatItems", "GeoFormatItem", "Printf", "View", "Views",
-  "ScalarPointValues", "ScalarPoint", "@1", "VectorPointValues",
-  "VectorPoint", "@2", "TensorPointValues", "TensorPoint", "@3",
-  "ScalarLineValues", "ScalarLine", "@4", "VectorLineValues", "VectorLine",
-  "@5", "TensorLineValues", "TensorLine", "@6", "ScalarTriangleValues",
-  "ScalarTriangle", "@7", "VectorTriangleValues", "VectorTriangle", "@8",
-  "TensorTriangleValues", "TensorTriangle", "@9", "ScalarQuadrangleValues",
-  "ScalarQuadrangle", "@10", "VectorQuadrangleValues", "VectorQuadrangle",
-  "@11", "TensorQuadrangleValues", "TensorQuadrangle", "@12",
-  "ScalarTetrahedronValues", "ScalarTetrahedron", "@13",
-  "VectorTetrahedronValues", "VectorTetrahedron", "@14",
-  "TensorTetrahedronValues", "TensorTetrahedron", "@15",
-  "ScalarHexahedronValues", "ScalarHexahedron", "@16",
-  "VectorHexahedronValues", "VectorHexahedron", "@17",
-  "TensorHexahedronValues", "TensorHexahedron", "@18", "ScalarPrismValues",
-  "ScalarPrism", "@19", "VectorPrismValues", "VectorPrism", "@20",
-  "TensorPrismValues", "TensorPrism", "@21", "ScalarPyramidValues",
-  "ScalarPyramid", "@22", "VectorPyramidValues", "VectorPyramid", "@23",
-  "TensorPyramidValues", "TensorPyramid", "@24", "Text2DValues", "Text2D",
-  "@25", "Text3DValues", "Text3D", "@26", "InterpolationMatrix",
-  "NumericAffectation", "NumericIncrement", "Affectation", "Shape",
-  "Transform", "MultipleShape", "ListOfShapes", "Duplicata", "Delete",
-  "Colorify", "Visibility", "Command", "Loop", "Extrude", "@27", "@28",
-  "@29", "@30", "@31", "@32", "@33", "@34", "@35", "ExtrudeParameters",
-  "ExtrudeParameter", "Transfinite", "Coherence", "BoolExpr", "FExpr",
-  "FExpr_Single", "VExpr", "VExpr_Single", "ListOfStrings",
-  "RecursiveListOfStrings", "ListOfListOfDouble",
-  "RecursiveListOfListOfDouble", "ListOfDouble", "FExpr_Multi",
-  "RecursiveListOfDouble", "ColorExpr", "ListOfColor",
+  "$end", "error", "$undefined", "tDOUBLE", "tSTRING", "tBIGSTR", "tEND", 
+  "tAFFECT", "tDOTS", "tPi", "tMPI_Rank", "tMPI_Size", "tExp", "tLog", 
+  "tLog10", "tSqrt", "tSin", "tAsin", "tCos", "tAcos", "tTan", "tRand", 
+  "tAtan", "tAtan2", "tSinh", "tCosh", "tTanh", "tFabs", "tFloor", 
+  "tCeil", "tFmod", "tModulo", "tHypot", "tPrintf", "tSprintf", "tStrCat", 
+  "tStrPrefix", "tBoundingBox", "tDraw", "tPoint", "tCircle", "tEllipse", 
+  "tLine", "tSurface", "tSpline", "tVolume", "tCharacteristic", "tLength", 
+  "tParametric", "tElliptic", "tPlane", "tRuled", "tTriangulation", 
+  "tTransfinite", "tComplex", "tPhysical", "tUsing", "tBump", 
+  "tProgression", "tPlugin", "tRotate", "tTranslate", "tSymmetry", 
+  "tDilate", "tExtrude", "tDuplicata", "tLoop", "tRecombine", "tDelete", 
+  "tCoherence", "tIntersect", "tAttractor", "tLayers", "tScalarPoint", 
+  "tVectorPoint", "tTensorPoint", "tScalarLine", "tVectorLine", 
+  "tTensorLine", "tScalarTriangle", "tVectorTriangle", "tTensorTriangle", 
+  "tScalarQuadrangle", "tVectorQuadrangle", "tTensorQuadrangle", 
+  "tScalarTetrahedron", "tVectorTetrahedron", "tTensorTetrahedron", 
+  "tScalarHexahedron", "tVectorHexahedron", "tTensorHexahedron", 
+  "tScalarPrism", "tVectorPrism", "tTensorPrism", "tScalarPyramid", 
+  "tVectorPyramid", "tTensorPyramid", "tText2D", "tText3D", 
+  "tInterpolationScheme", "tCombine", "tBSpline", "tBezier", "tNurbs", 
+  "tOrder", "tWith", "tBounds", "tKnots", "tColor", "tColorTable", "tFor", 
+  "tIn", "tEndFor", "tIf", "tEndIf", "tExit", "tReturn", "tCall", 
+  "tFunction", "tTrimmed", "tShow", "tHide", 
+  "tB_SPLINE_SURFACE_WITH_KNOTS", "tB_SPLINE_CURVE_WITH_KNOTS", 
+  "tCARTESIAN_POINT", "tTRUE", "tFALSE", "tUNSPECIFIED", "tU", "tV", 
+  "tEDGE_CURVE", "tVERTEX_POINT", "tORIENTED_EDGE", "tPLANE", 
+  "tFACE_OUTER_BOUND", "tEDGE_LOOP", "tADVANCED_FACE", "tVECTOR", 
+  "tDIRECTION", "tAXIS2_PLACEMENT_3D", "tISO", "tENDISO", "tENDSEC", 
+  "tDATA", "tHEADER", "tFILE_DESCRIPTION", "tFILE_SCHEMA", "tFILE_NAME", 
+  "tMANIFOLD_SOLID_BREP", "tCLOSED_SHELL", 
+  "tADVANCED_BREP_SHAPE_REPRESENTATION", "tFACE_BOUND", 
+  "tCYLINDRICAL_SURFACE", "tCONICAL_SURFACE", "tCIRCLE", "tTRIMMED_CURVE", 
+  "tGEOMETRIC_SET", "tCOMPOSITE_CURVE_SEGMENT", "tCONTINUOUS", 
+  "tCOMPOSITE_CURVE", "tTOROIDAL_SURFACE", "tPRODUCT_DEFINITION", 
+  "tPRODUCT_DEFINITION_SHAPE", "tSHAPE_DEFINITION_REPRESENTATION", 
+  "tELLIPSE", "tSolid", "tEndSolid", "tVertex", "tFacet", "tNormal", 
+  "tOuter", "tLoopSTL", "tEndLoop", "tEndFacet", "tAFFECTDIVIDE", 
+  "tAFFECTTIMES", "tAFFECTMINUS", "tAFFECTPLUS", "'?'", "tOR", "tAND", 
+  "tAPPROXEQUAL", "tNOTEQUAL", "tEQUAL", "'<'", "'>'", "tGREATEROREQUAL", 
+  "tLESSOREQUAL", "'+'", "'-'", "'*'", "'/'", "'%'", "tCROSSPRODUCT", 
+  "'!'", "UNARYPREC", "tMINUSMINUS", "tPLUSPLUS", "'^'", "'('", "')'", 
+  "'['", "']'", "'.'", "'#'", "','", "'{'", "'}'", "$accept", "All", 
+  "SignedDouble", "StlFormatItems", "StlFormatItem", "StepFormatItems", 
+  "StepFormatItem", "StepSpecial", "StepHeaderItem", "StepDataItem", 
+  "GeoFormatItems", "GeoFormatItem", "Printf", "View", "Views", 
+  "ScalarPointValues", "ScalarPoint", "@1", "VectorPointValues", 
+  "VectorPoint", "@2", "TensorPointValues", "TensorPoint", "@3", 
+  "ScalarLineValues", "ScalarLine", "@4", "VectorLineValues", 
+  "VectorLine", "@5", "TensorLineValues", "TensorLine", "@6", 
+  "ScalarTriangleValues", "ScalarTriangle", "@7", "VectorTriangleValues", 
+  "VectorTriangle", "@8", "TensorTriangleValues", "TensorTriangle", "@9", 
+  "ScalarQuadrangleValues", "ScalarQuadrangle", "@10", 
+  "VectorQuadrangleValues", "VectorQuadrangle", "@11", 
+  "TensorQuadrangleValues", "TensorQuadrangle", "@12", 
+  "ScalarTetrahedronValues", "ScalarTetrahedron", "@13", 
+  "VectorTetrahedronValues", "VectorTetrahedron", "@14", 
+  "TensorTetrahedronValues", "TensorTetrahedron", "@15", 
+  "ScalarHexahedronValues", "ScalarHexahedron", "@16", 
+  "VectorHexahedronValues", "VectorHexahedron", "@17", 
+  "TensorHexahedronValues", "TensorHexahedron", "@18", 
+  "ScalarPrismValues", "ScalarPrism", "@19", "VectorPrismValues", 
+  "VectorPrism", "@20", "TensorPrismValues", "TensorPrism", "@21", 
+  "ScalarPyramidValues", "ScalarPyramid", "@22", "VectorPyramidValues", 
+  "VectorPyramid", "@23", "TensorPyramidValues", "TensorPyramid", "@24", 
+  "Text2DValues", "Text2D", "@25", "Text3DValues", "Text3D", "@26", 
+  "InterpolationMatrix", "NumericAffectation", "NumericIncrement", 
+  "Affectation", "Shape", "Transform", "MultipleShape", "ListOfShapes", 
+  "Duplicata", "Delete", "Colorify", "Visibility", "Command", "Loop", 
+  "Extrude", "@27", "@28", "@29", "@30", "@31", "@32", "@33", "@34", 
+  "@35", "ExtrudeParameters", "ExtrudeParameter", "Transfinite", 
+  "Coherence", "BoolExpr", "FExpr", "FExpr_Single", "VExpr", 
+  "VExpr_Single", "ListOfStrings", "RecursiveListOfStrings", 
+  "ListOfListOfDouble", "RecursiveListOfListOfDouble", "ListOfDouble", 
+  "FExpr_Multi", "RecursiveListOfDouble", "ColorExpr", "ListOfColor", 
   "RecursiveListOfColor", "StringExpr", 0
 };
 #endif
@@ -4983,8 +4977,7 @@ static const unsigned short yystos[] =
 
 #define YYACCEPT	goto yyacceptlab
 #define YYABORT		goto yyabortlab
-#define YYERROR		goto yyerrorlab
-
+#define YYERROR		goto yyerrlab1
 
 /* Like YYERROR except do call yyerror.  This remains here temporarily
    to ease the transition to the new meaning of YYERROR, for GCC.
@@ -5018,11 +5011,11 @@ while (0)
    are run).  */
 
 #ifndef YYLLOC_DEFAULT
-# define YYLLOC_DEFAULT(Current, Rhs, N)		\
-   ((Current).first_line   = (Rhs)[1].first_line,	\
-    (Current).first_column = (Rhs)[1].first_column,	\
-    (Current).last_line    = (Rhs)[N].last_line,	\
-    (Current).last_column  = (Rhs)[N].last_column)
+# define YYLLOC_DEFAULT(Current, Rhs, N)         \
+  Current.first_line   = Rhs[1].first_line;      \
+  Current.first_column = Rhs[1].first_column;    \
+  Current.last_line    = Rhs[N].last_line;       \
+  Current.last_column  = Rhs[N].last_column;
 #endif
 
 /* YYLEX -- calling `yylex' with the right arguments.  */
@@ -5066,7 +5059,7 @@ do {								\
 
 /*------------------------------------------------------------------.
 | yy_stack_print -- Print the state stack from its BOTTOM up to its |
-| TOP (included).                                                   |
+| TOP (cinluded).                                                   |
 `------------------------------------------------------------------*/
 
 #if defined (__STDC__) || defined (__cplusplus)
@@ -5106,9 +5099,9 @@ yy_reduce_print (yyrule)
 #endif
 {
   int yyi;
-  unsigned int yylno = yyrline[yyrule];
+  unsigned int yylineno = yyrline[yyrule];
   YYFPRINTF (stderr, "Reducing stack by rule %d (line %u), ",
-             yyrule - 1, yylno);
+             yyrule - 1, yylineno);
   /* Print the symbols being reduced, and their result.  */
   for (yyi = yyprhs[yyrule]; 0 <= yyrhs[yyi]; yyi++)
     YYFPRINTF (stderr, "%s ", yytname [yyrhs[yyi]]);
@@ -5145,7 +5138,7 @@ int yydebug;
    SIZE_MAX < YYSTACK_BYTES (YYMAXDEPTH)
    evaluated with infinite-precision integer arithmetic.  */
 
-#if defined (YYMAXDEPTH) && YYMAXDEPTH == 0
+#if YYMAXDEPTH == 0
 # undef YYMAXDEPTH
 #endif
 
@@ -10303,8 +10296,8 @@ yyreduce:
 
     }
 
-/* Line 1000 of yacc.c.  */
-#line 10308 "Gmsh.tab.cpp"
+/* Line 991 of yacc.c.  */
+#line 10300 "Gmsh.tab.cpp"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -10345,33 +10338,18 @@ yyerrlab:
 	{
 	  YYSIZE_T yysize = 0;
 	  int yytype = YYTRANSLATE (yychar);
-	  const char* yyprefix;
 	  char *yymsg;
-	  int yyx;
+	  int yyx, yycount;
 
+	  yycount = 0;
 	  /* Start YYX at -YYN if negative to avoid negative indexes in
 	     YYCHECK.  */
-	  int yyxbegin = yyn < 0 ? -yyn : 0;
-
-	  /* Stay within bounds of both yycheck and yytname.  */
-	  int yychecklim = YYLAST - yyn;
-	  int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-	  int yycount = 0;
-
-	  yyprefix = ", expecting ";
-	  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+	  for (yyx = yyn < 0 ? -yyn : 0;
+	       yyx < (int) (sizeof (yytname) / sizeof (char *)); yyx++)
 	    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-	      {
-		yysize += yystrlen (yyprefix) + yystrlen (yytname [yyx]);
-		yycount += 1;
-		if (yycount == 5)
-		  {
-		    yysize = 0;
-		    break;
-		  }
-	      }
-	  yysize += (sizeof ("syntax error, unexpected ")
-		     + yystrlen (yytname[yytype]));
+	      yysize += yystrlen (yytname[yyx]) + 15, yycount++;
+	  yysize += yystrlen ("syntax error, unexpected ") + 1;
+	  yysize += yystrlen (yytname[yytype]);
 	  yymsg = (char *) YYSTACK_ALLOC (yysize);
 	  if (yymsg != 0)
 	    {
@@ -10380,13 +10358,16 @@ yyerrlab:
 
 	      if (yycount < 5)
 		{
-		  yyprefix = ", expecting ";
-		  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+		  yycount = 0;
+		  for (yyx = yyn < 0 ? -yyn : 0;
+		       yyx < (int) (sizeof (yytname) / sizeof (char *));
+		       yyx++)
 		    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
 		      {
-			yyp = yystpcpy (yyp, yyprefix);
+			const char *yyq = ! yycount ? ", expecting " : " or ";
+			yyp = yystpcpy (yyp, yyq);
 			yyp = yystpcpy (yyp, yytname[yyx]);
-			yyprefix = " or ";
+			yycount++;
 		      }
 		}
 	      yyerror (yymsg);
@@ -10407,56 +10388,52 @@ yyerrlab:
       /* If just tried and failed to reuse lookahead token after an
 	 error, discard it.  */
 
-      if (yychar <= YYEOF)
+      /* Return failure if at end of input.  */
+      if (yychar == YYEOF)
         {
-          /* If at end of input, pop the error token,
-	     then the rest of the stack, then return failure.  */
-	  if (yychar == YYEOF)
-	     for (;;)
-	       {
-		 YYPOPSTACK;
-		 if (yyssp == yyss)
-		   YYABORT;
-		 YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
-		 yydestruct (yystos[*yyssp], yyvsp);
-	       }
+	  /* Pop the error token.  */
+          YYPOPSTACK;
+	  /* Pop the rest of the stack.  */
+	  while (yyss < yyssp)
+	    {
+	      YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
+	      yydestruct (yystos[*yyssp], yyvsp);
+	      YYPOPSTACK;
+	    }
+	  YYABORT;
         }
-      else
-	{
-	  YYDSYMPRINTF ("Error: discarding", yytoken, &yylval, &yylloc);
-	  yydestruct (yytoken, &yylval);
-	  yychar = YYEMPTY;
 
-	}
+      YYDSYMPRINTF ("Error: discarding", yytoken, &yylval, &yylloc);
+      yydestruct (yytoken, &yylval);
+      yychar = YYEMPTY;
+
     }
 
   /* Else will try to reuse lookahead token after shifting the error
      token.  */
-  goto yyerrlab1;
+  goto yyerrlab2;
 
 
-/*---------------------------------------------------.
-| yyerrorlab -- error raised explicitly by YYERROR.  |
-`---------------------------------------------------*/
-yyerrorlab:
+/*----------------------------------------------------.
+| yyerrlab1 -- error raised explicitly by an action.  |
+`----------------------------------------------------*/
+yyerrlab1:
 
-#ifdef __GNUC__
-  /* Pacify GCC when the user code never invokes YYERROR and the label
-     yyerrorlab therefore never appears in user code.  */
-  if (0)
-     goto yyerrorlab;
+  /* Suppress GCC warning that yyerrlab1 is unused when no action
+     invokes YYERROR.  */
+#if defined (__GNUC_MINOR__) && 2093 <= (__GNUC__ * 1000 + __GNUC_MINOR__) \
+    && !defined __cplusplus
+  __attribute__ ((__unused__))
 #endif
 
-  yyvsp -= yylen;
-  yyssp -= yylen;
-  yystate = *yyssp;
-  goto yyerrlab1;
+
+  goto yyerrlab2;
 
 
-/*-------------------------------------------------------------.
-| yyerrlab1 -- common code for both syntax error and YYERROR.  |
-`-------------------------------------------------------------*/
-yyerrlab1:
+/*---------------------------------------------------------------.
+| yyerrlab2 -- pop states until the error token can be shifted.  |
+`---------------------------------------------------------------*/
+yyerrlab2:
   yyerrstatus = 3;	/* Each real token shifted decrements this.  */
 
   for (;;)
@@ -10479,8 +10456,9 @@ yyerrlab1:
 
       YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
       yydestruct (yystos[yystate], yyvsp);
-      YYPOPSTACK;
-      yystate = *yyssp;
+      yyvsp--;
+      yystate = *--yyssp;
+
       YY_STACK_PRINT (yyss, yyssp);
     }
 

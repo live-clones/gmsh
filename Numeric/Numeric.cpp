@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.17 2004-07-21 22:19:56 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.18 2004-11-25 16:22:45 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -280,4 +280,124 @@ void gradSimplex(double *x, double *y, double *z, double *v, double *grad)
   b[1] = v[2] - v[0];
   b[2] = v[3] - v[0];
   sys3x3(mat, b, grad, &det);
+}
+
+void eigenvalue(double mat[3][3], double v[3])
+  {            
+    /// characteristic polynomial of T : find v root of
+    /// v^3 - I1 v^2 + I2 T + I3 = 0
+    /// I1 : first invariant , trace(T)
+    /// I2 : second invariant , 1/2 (I1^2 -trace(T^2))
+    /// I3 : third invariant , det T
+
+    double In[4];
+    In[3] = 1.0;
+    In[2] = - trace(mat);
+    In[1] = 0.5 * (In[2]*In[2] - trace2(mat));
+    In[0] = - det(mat);
+
+    //    printf (" %lf x^3 +  %lf x^2 + %lf x + %lf = 0\n",
+    //    	  I[3],I[2],I[1],I[0]);
+
+    FindCubicRoots(In,v);
+
+    eigsort(v);
+ 
+  }
+
+void  FindCubicRoots(const double coeff[4], double x[3])
+  {
+    double a1 = coeff[2] / coeff[3];
+    double a2 = coeff[1] / coeff[3];
+    double a3 = coeff[0] / coeff[3];
+    
+    double Q = (a1 * a1 - 3 * a2) / 9.;
+    double R = (2. * a1 * a1 * a1 - 9. * a1 * a2 + 27. * a3) / 54.;
+    double Qcubed = Q * Q * Q;
+    double d = Qcubed - R * R;
+
+    //    printf ("d = %22.15e Q = %12.5E R = %12.5E Qcubed %12.5E\n",d,Q,R,Qcubed);
+
+    /// three roots, 2 equal 
+    if(Qcubed == 0.0 || fabs ( Qcubed - R * R ) < 1.e-8 * (fabs ( Qcubed) + fabs( R * R)) )
+      {
+	double theta;
+	if (Qcubed <= 0.0)theta = acos(1.0);
+	else if (R / sqrt(Qcubed) > 1.0)theta = acos(1.0); 
+	else if (R / sqrt(Qcubed) < -1.0)theta = acos(-1.0); 
+	else theta = acos(R / sqrt(Qcubed));
+	double sqrtQ = sqrt(Q);
+	//	printf("sqrtQ = %12.5E teta=%12.5E a1=%12.5E\n",sqrt(Q),theta,a1);
+	x[0] = -2 * sqrtQ * cos( theta           / 3) - a1 / 3;
+	x[1] = -2 * sqrtQ * cos((theta + 2 * M_PI) / 3) - a1 / 3;
+	x[2] = -2 * sqrtQ * cos((theta + 4 * M_PI) / 3) - a1 / 3;
+	// return (3);
+      }
+
+    /* Three real roots */
+    if (d >= 0.0) {
+      double theta = acos(R / sqrt(Qcubed));
+      double sqrtQ = sqrt(Q);
+      x[0] = -2 * sqrtQ * cos( theta           / 3) - a1 / 3;
+      x[1] = -2 * sqrtQ * cos((theta + 2 * M_PI) / 3) - a1 / 3;
+      x[2] = -2 * sqrtQ * cos((theta + 4 * M_PI) / 3) - a1 / 3;
+      //  return (3);
+    }
+    
+    /* One real root */
+    else {
+      printf("IMPOSSIBLE !!!\n");
+
+      double e = pow(sqrt(-d) + fabs(R), 1. / 3.);
+      if (R > 0)
+	e = -e;
+      x[0] = (e + Q / e) - a1 / 3.;
+      // return (1);
+    }
+
+  }
+
+double trace(double mat[3][3])
+  {
+    return mat[0][0] + mat[1][1] + mat[2][2];
+  }
+
+
+double det(double mat[3][3])
+  {
+    return mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
+      mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
+      mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
+  }
+
+double trace2 (double mat[3][3])
+  {
+    double a00 =  mat[0][0] * mat[0][0] + 
+      mat[1][0] * mat[0][1] + 
+      mat[2][0] * mat[0][2]; 
+    double a11 =  mat[1][0] * mat[0][1] + 
+      mat[1][1] * mat[1][1] + 
+      mat[1][2] * mat[2][1]; 
+    double a22 =  mat[2][0] * mat[0][2] + 
+      mat[2][1] * mat[1][2] + 
+      mat[2][2] * mat[2][2];
+
+    return a00 + a11 + a22;
+  }
+
+void  eigsort(double d[3])
+
+{
+  int k,j,i;
+  double p;
+  
+  for (i=0; i<3; i++) {
+    p=d[k=i];
+    for (j=i+1;j<3;j++)
+      if (d[j] >= p) p=d[k=j];
+    if (k != i) {
+      d[k]=d[i];
+      d[i]=p;
+    }
+  }
 }

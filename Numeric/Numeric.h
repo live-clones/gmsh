@@ -84,5 +84,11 @@ void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
 	    double *fc, double (*func)(double));
 void newt(double x[], int n, int *check,
 	  void (*vecfunc)(int, double [], double []));
+void eigenvalue(double mat[3][3], double v[3]);
+void FindCubicRoots(const double coeff[4], double x[3]);
+double trace(double mat[3][3]);
+double det(double mat[3][3]);
+double trace2 (double mat[3][3]);
+void eigsort(double d[3]);
 
 #endif

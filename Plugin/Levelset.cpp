@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.18 2004-11-25 02:10:40 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.19 2004-11-25 16:22:48 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -343,6 +343,8 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
     v->setAdaptiveResolutionLevel ( _recurLevel , this );
   if (v->adaptive && v->NbSS)
     v->setAdaptiveResolutionLevel ( _recurLevel , this );
+  if (v->adaptive && v->NbSQ)
+    v->setAdaptiveResolutionLevel ( _recurLevel , this );
 
 
   if(_valueView < 0) {
@@ -621,6 +623,40 @@ static bool recur_sign_change (_tet *t, double val, const GMSH_LevelsetPlugin *p
     }      
 }
 
+static bool recur_sign_change (_quad *q, double val, const GMSH_LevelsetPlugin *plug)
+{
+
+  if (!q->q[0])
+    {
+      double v1 = plug->levelset (q->p[0]->X,q->p[0]->Y,q->p[0]->Z,q->p[0]->val);
+      double v2 = plug->levelset (q->p[1]->X,q->p[1]->Y,q->p[1]->Z,q->p[1]->val);
+      double v3 = plug->levelset (q->p[2]->X,q->p[2]->Y,q->p[2]->Z,q->p[2]->val);
+      double v4 = plug->levelset (q->p[3]->X,q->p[3]->Y,q->p[3]->Z,q->p[3]->val);
+      if ( v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0)
+	q->visible = false;
+      else
+	q->visible = true;
+      return q->visible;
+    }
+  else
+    {
+      bool sc1 = recur_sign_change(q->q[0],val,plug);
+      bool sc2 = recur_sign_change(q->q[1],val,plug);
+      bool sc3 = recur_sign_change(q->q[2],val,plug);
+      bool sc4 = recur_sign_change(q->q[3],val,plug);
+      if (sc1 || sc2 || sc3 || sc4 )
+	{
+	  if (!sc1) q->q[0]->visible = true;
+	  if (!sc2) q->q[1]->visible = true;
+	  if (!sc3) q->q[2]->visible = true;
+	  if (!sc4) q->q[3]->visible = true;
+	  return true;
+	}
+      q->visible = false;
+      return false;
+    }      
+}
+
 void GMSH_LevelsetPlugin::assign_specific_visibility () const
 {
   if (_triangle::all_triangles.size())
@@ -632,5 +668,10 @@ void GMSH_LevelsetPlugin::assign_specific_visibility () const
     {
       _tet *te  = *_tet::all_tets.begin();
       te->visible = !recur_sign_change (te, _valueView, this);
+    }
+  if (_quad::all_quads.size())
+    {
+      _quad *qe  = *_quad::all_quads.begin();
+      qe->visible = !recur_sign_change (qe, _valueView, this);
     }
 }

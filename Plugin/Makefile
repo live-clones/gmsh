@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.60 2004-11-13 22:52:46 geuzaine Exp $
+# $Id: Makefile,v 1.61 2004-11-25 16:22:48 remacle Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -29,7 +29,7 @@ CFLAGS  = -DMPICH_SKIP_MPICXX ${OPTIM} ${FLAGS} ${INCLUDE}
 SRC = Plugin.cpp\
         Levelset.cpp\
           CutPlane.cpp CutSphere.cpp CutMap.cpp \
-        Smooth.cpp CutParametric.cpp\
+        Smooth.cpp CutParametric.cpp Gradient.cpp Lambda2.cpp\
 	Octree.cpp OctreeInternals.cpp OctreePost.cpp\
           StreamLines.cpp CutGrid.cpp\
         Transform.cpp\
