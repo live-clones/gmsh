@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.301 2003-10-29 19:51:42 geuzaine Exp $
+# $Id: Makefile,v 1.302 2003-10-29 20:15:10 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -76,11 +76,13 @@ source: source-common
 
 source-nonfree: source-common
 	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-           Triangle/triangle.* TODO doc/gmsh.html doc/FAQ doc/COPYING doc/README.cvs\
+           Triangle/triangle.* TODO doc/gmsh.html doc/FAQ doc/README.cvs\
            utils/commercial
-	cp -f utils/commercial/License.cpp Common/License.cpp
-	cp -f utils/commercial/license.texi doc/texinfo/license.texi
-	cp -f utils/commercial/copying.texi doc/texinfo/copying.texi
+	cp -f utils/commercial/README gmsh-${GMSH_RELEASE}/README
+	cp -f utils/commercial/COPYING gmsh-${GMSH_RELEASE}/doc/COPYING
+	cp -f utils/commercial/License.cpp gmsh-${GMSH_RELEASE}/Common/License.cpp
+	cp -f utils/commercial/license.texi gmsh-${GMSH_RELEASE}/doc/texinfo/license.texi
+	cp -f utils/commercial/copying.texi gmsh-${GMSH_RELEASE}/doc/texinfo/copying.texi
 	utils/commercial/sanitize.sh gmsh-${GMSH_RELEASE}
 	tar zcvf gmsh-${GMSH_RELEASE}-source-nonfree.tgz gmsh-${GMSH_RELEASE}
 

@@ -28,8 +28,8 @@ For a description of all other configuration options, type
 
 ./configure --help
 
-See doc/COPYING and doc/CREDITS for licensing and copyright
-information.
+Gmsh is distributed under the terms of the GNU General Public
+License. See doc/COPYING and doc/CREDITS for more information.
 
 See the doc/ and tutorial/ directories for documentation. The
 reference manual is located in doc/texinfo/.

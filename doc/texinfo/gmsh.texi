@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.83 2003-10-29 19:51:43 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.84 2003-10-29 20:15:10 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -253,10 +253,6 @@ Bugs, versions and credits
 
 @cindex Copyright
 @cindex License
-@cindex Web site
-@cindex Internet address
-@cindex Mailing list
-@cindex Download
 
 @include copying.texi
 
