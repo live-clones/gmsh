@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.63 2004-08-12 16:57:32 geuzaine Exp $
+// $Id: Create.cpp,v 1.64 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -534,6 +534,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->Num = Num;
   THEM->MaxLineNum = IMAX(THEM->MaxLineNum, Num);
   pC->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
+  pC->SimplexesBase = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
   pC->Method = LIBRE;
   pC->degre = Order;
   pC->Circle.n[0] = 0.0;
@@ -630,6 +631,8 @@ void Free_Curve(void *a, void *b)
     List_Delete(pC->Vertices);
     Tree_Action(pC->Simplexes, Free_Simplex);
     Tree_Delete(pC->Simplexes);
+    Tree_Action(pC->SimplexesBase, Free_SimplexBase);
+    Tree_Delete(pC->SimplexesBase);
     Free(pC->k);
     List_Delete(pC->Control_Points);
     Free(pC->cp);
@@ -658,6 +661,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->RecombineAngle = 75;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
+  pS->SimplexesBase = Tree_Create(sizeof(SimplexBase *), compareSimplexBase);
   pS->Quadrangles = Tree_Create(sizeof(Quadrangle *), compareQuadrangle);
   pS->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   pS->TrsfVertices = List_Create(1, 10, sizeof(Vertex *));
@@ -682,6 +686,8 @@ void Free_Surface(void *a, void *b)
     List_Delete(pS->TrsfPoints);
     Tree_Action(pS->Simplexes, Free_Simplex);
     Tree_Delete(pS->Simplexes);
+    Tree_Action(pS->SimplexesBase, Free_SimplexBase);
+    Tree_Delete(pS->SimplexesBase);
     Tree_Action(pS->Quadrangles, Free_Quadrangle);
     Tree_Delete(pS->Quadrangles);
     Tree_Delete(pS->Vertices);
@@ -724,6 +730,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
   pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));
   pV->Simplexes = Tree_Create(sizeof(Simplex *), compareQuality);
+  pV->SimplexesBase = Tree_Create(sizeof(Simplex *), compareSimplexBase);
   pV->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
   pV->Hexahedra = Tree_Create(sizeof(Hexahedron *), compareHexahedron);
   pV->Prisms = Tree_Create(sizeof(Prism *), comparePrism);
@@ -744,6 +751,7 @@ void Free_Volume(void *a, void *b)
   Volume *pV = *(Volume **) a;
   if(pV) {
     Tree_Action(pV->Simplexes, Free_Simplex);
+    Tree_Action(pV->SimplexesBase, Free_SimplexBase);
     Tree_Action(pV->Hexahedra, Free_Hexahedron);
     Tree_Action(pV->Prisms, Free_Prism);
     Tree_Action(pV->Pyramids, Free_Pyramid);
@@ -760,6 +768,7 @@ void Free_Volume_But_Not_Elements(void *a, void *b)
     List_Delete(pV->Surfaces);  // surfaces freed elsewhere
     List_Delete(pV->SurfacesOrientations);
     Tree_Delete(pV->Simplexes);
+    Tree_Delete(pV->SimplexesBase);
     Tree_Delete(pV->Simp_Surf); // for old extrusion mesh generator
     Tree_Delete(pV->Quad_Surf); // for old extrusion mesh generator
     Tree_Delete(pV->Vertices);  // vertices freed elsewhere

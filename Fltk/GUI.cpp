@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.382 2004-11-18 23:44:53 geuzaine Exp $
+// $Id: GUI.cpp,v 1.383 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2087,7 +2087,7 @@ void GUI::create_option_window()
       mesh_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
       mesh_value[6]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH, "Tetrahedra size range");
+      mesh_value[7] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH, "Element size range");
       mesh_value[7]->align(FL_ALIGN_RIGHT);
 
       mesh_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Normals");

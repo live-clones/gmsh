@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.60 2004-08-13 20:59:44 geuzaine Exp $
+// $Id: Generator.cpp,v 1.61 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ void GetStatistics(double stat[50])
       Surface *s;
       List_Read(surfaces, i, &s);
       stat[5] += Tree_Nbr(s->Vertices);
-      stat[7] += Tree_Nbr(s->Simplexes);
+      stat[7] += Tree_Nbr(s->Simplexes) + Tree_Nbr(s->SimplexesBase);
       stat[8] += Tree_Nbr(s->Quadrangles);
     }
     List_Delete(surfaces);
@@ -82,7 +82,7 @@ void GetStatistics(double stat[50])
       Volume *v;
       List_Read(volumes, i, &v);
       stat[6] += Tree_Nbr(v->Vertices);
-      stat[9] += Tree_Nbr(v->Simplexes);
+      stat[9] += Tree_Nbr(v->Simplexes) + Tree_Nbr(v->SimplexesBase);
       stat[10] += Tree_Nbr(v->Hexahedra);
       stat[11] += Tree_Nbr(v->Prisms);
       stat[12] += Tree_Nbr(v->Pyramids);

@@ -230,12 +230,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RadiusInf
-Only display elements whose Radius is greater than RadiusInf@*
+Only display elements whose longest edge is greater than RadiusInf@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RadiusSup
-Only display elements whose Radius is smaller than RadiusSup@*
+Only display elements whose longest edge is smaller than RadiusSup@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

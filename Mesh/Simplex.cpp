@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.35 2004-11-18 23:42:19 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.36 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,40 +30,251 @@ extern Context_T CTX;
 extern Mesh *THEM, *LOCAL;
 
 extern Simplex MyNewBoundary;
+extern int edges_tetra[6][2];
 
 int FACE_DIMENSION = 2;
 
-Simplex::Simplex()
+// Basic simplex (contains only pointers to the nodes)
+
+SimplexBase::SimplexBase()
+  : Element()
 {
-  VSUP = NULL;
   V[0] = V[1] = V[2] = V[3] = NULL;
+}
+
+SimplexBase::SimplexBase(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
+  : Element()
+{
+  V[0] = v1; V[1] = v2; V[2] = v3; V[3] = v4;
+}
+
+double SimplexBase::Volume_Simplexe()
+{
+  double mat[3][3];
+
+  if(V[3])
+    return (matsimpl(mat) / 6.);
+  else
+    return (surfsimpl());
+}
+
+double SimplexBase::Volume_Simplexe2D()
+{
+  return ((V[1]->Pos.X - V[0]->Pos.X) *
+          (V[2]->Pos.Y - V[1]->Pos.Y) -
+          (V[2]->Pos.X - V[1]->Pos.X) * 
+	  (V[1]->Pos.Y - V[0]->Pos.Y));
+}
+
+void SimplexBase::center_tet(double X[4], double Y[4], double Z[4], double res[3])
+{
+  double mat[3][3], b[3], dum;
+  int i;
+  b[0] = X[1] * X[1] - X[0] * X[0] +
+    Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
+  b[1] = X[2] * X[2] - X[1] * X[1] +
+    Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
+  b[2] = X[3] * X[3] - X[2] * X[2] +
+    Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
+
+  for(i = 0; i < 3; i++)
+    b[i] *= 0.5;
+
+  mat[0][0] = X[1] - X[0];
+  mat[0][1] = Y[1] - Y[0];
+  mat[0][2] = Z[1] - Z[0];
+  mat[1][0] = X[2] - X[1];
+  mat[1][1] = Y[2] - Y[1];
+  mat[1][2] = Z[2] - Z[1];
+  mat[2][0] = X[3] - X[2];
+  mat[2][1] = Y[3] - Y[2];
+  mat[2][2] = Z[3] - Z[2];
+
+  if(!sys3x3(mat, b, res, &dum)) {
+    Msg(WARNING, "Coplanar points in circum sphere computation");
+    Msg(WARNING, "(%g,%g,%g) (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)",
+        X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], X[3], Y[3],
+        Z[3]);
+    res[0] = res[1] = res[2] = 10.0e10;
+  }
+
+}
+
+double SimplexBase::matsimpl(double mat[3][3])
+{
+  mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
+  mat[0][1] = V[2]->Pos.X - V[0]->Pos.X;
+  mat[0][2] = V[3]->Pos.X - V[0]->Pos.X;
+  mat[1][0] = V[1]->Pos.Y - V[0]->Pos.Y;
+  mat[1][1] = V[2]->Pos.Y - V[0]->Pos.Y;
+  mat[1][2] = V[3]->Pos.Y - V[0]->Pos.Y;
+  mat[2][0] = V[1]->Pos.Z - V[0]->Pos.Z;
+  mat[2][1] = V[2]->Pos.Z - V[0]->Pos.Z;
+  mat[2][2] = V[3]->Pos.Z - V[0]->Pos.Z;
+  return det3x3(mat);
+}
+
+double SimplexBase::AireFace(Vertex * V[3])
+{
+  double a[3], b[3], c[3];
+
+  a[0] = V[2]->Pos.X - V[1]->Pos.X;
+  a[1] = V[2]->Pos.Y - V[1]->Pos.Y;
+  a[2] = V[2]->Pos.Z - V[1]->Pos.Z;
+
+  b[0] = V[0]->Pos.X - V[1]->Pos.X;
+  b[1] = V[0]->Pos.Y - V[1]->Pos.Y;
+  b[2] = V[0]->Pos.Z - V[1]->Pos.Z;
+
+  prodve(a, b, c);
+  return (0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]));
+}
+
+double SimplexBase::surfsimpl()
+{
+  return AireFace(V);
+}
+
+double SimplexBase::rhoin()
+{
+  double s1, s2, s3, s4;
+
+  if(V[3]) {
+    Vertex *F[3];
+    F[0] = V[0]; F[1] = V[1]; F[2] = V[2]; s1 = fabs(AireFace(F));
+    F[0] = V[0]; F[1] = V[2]; F[2] = V[3]; s2 = fabs(AireFace(F));
+    if(FACE_DIMENSION == 1) {
+      V[0] = V[1]; V[1] = V[2]; V[2] = V[3]; s3 = fabs(AireFace(F));
+      V[0] = V[0]; V[1] = V[1]; V[2] = V[3]; s4 = fabs(AireFace(F));
+    }
+    else {
+      F[0] = V[0]; F[1] = V[1]; F[2] = V[3]; s3 = fabs(AireFace(F));
+      F[0] = V[1]; F[1] = V[2]; F[2] = V[3]; s4 = fabs(AireFace(F));
+    }
+    return 3. * fabs(Volume_Simplexe()) / (s1 + s2 + s3 + s4);
+  }
+  else {
+    return 1.0;
+  }
+}
+
+double SimplexBase::maxEdge()
+{
+  double maxlij = 0.;
+  int N = V[3] ? 6 : 3;
+
+  if(V[3] || V[2])
+    for(int i = 0; i < N; i++)
+      maxlij = DMAX(maxlij, lij(V[edges_tetra[i][0]], V[edges_tetra[i][1]]));
+  else if(V[1])
+    maxlij = lij(V[0], V[1]);
+
+  return maxlij;
+}
+
+double SimplexBase::EtaShapeMeasure()
+{
+  int i, j;
+  double lij2 = 0.0;
+  for(i = 0; i <= 3; i++) {
+    for(j = i + 1; j <= 3; j++) {
+      lij2 += DSQR(lij(V[i], V[j]));
+    }
+  }
+  return 12. * pow(9. / 10. * DSQR(fabs(Volume_Simplexe())), 1./3.) / (lij2);
+}
+
+double SimplexBase::RhoShapeMeasure()
+{
+  int i, j;
+  double minlij = 1.e25, maxlij = 0.0;
+  for(i = 0; i <= 3; i++) {
+    for(j = i + 1; j <= 3; j++) {
+      if(i != j) {
+        minlij = DMIN(minlij, fabs(lij(V[i], V[j])));
+        maxlij = DMAX(maxlij, fabs(lij(V[i], V[j])));
+      }
+    }
+  }
+  return minlij / maxlij;
+}
+
+double SimplexBase::GammaShapeMeasure()
+{
+  int i, j, N;
+  double maxlij = 0.0;
+
+  if(V[3])
+    N = 4;
+  else
+    N = 3;
+
+  for(i = 0; i <= N - 1; i++) {
+    for(j = i + 1; j <= N - 1; j++) {
+      if(i != j)
+        maxlij = DMAX(maxlij, lij(V[i], V[j]));
+    }
+  }
+  return 12. * rhoin() / (sqrt(6.) * maxlij);
+}
+
+void SimplexBase::ExportLcField(FILE * f)
+{
+  if(!V[2])
+    fprintf(f, "SL(%f,%f,%f,%f,%f,%f){%12.5E,%12.5E};\n",
+            V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+            V[1]->Pos.Z, V[0]->lc, V[1]->lc);
+  else if(!V[3])
+    fprintf(f, "ST(%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E};\n",
+            V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+            V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
+            V[1]->lc, V[2]->lc);
+  else
+    fprintf(f, "SS(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
+	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
+	    V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
+}
+
+SimplexBase *Create_SimplexBase(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
+{
+  return new SimplexBase(v1, v2, v3, v4);
+}
+
+void Free_SimplexBase(void *a, void *b)
+{
+  SimplexBase *s = *(SimplexBase **) a;
+  if(s) {
+    delete s;
+    s = NULL;
+  }
+}
+
+int compareSimplexBase(const void *a, const void *b)
+{
+  SimplexBase *q = *(SimplexBase **) a;
+  SimplexBase *w = *(SimplexBase **) b;
+  return (q->Num - w->Num);
+}
+
+// Mesh simplex (contains all the data necessary for mesh generation)
+
+Simplex::Simplex()
+  : SimplexBase()
+{
   S[0] = S[1] = S[2] = S[3] = NULL;
-  iEnt = -1;
-  iPart = -1;
   Quality = 0.;
-  Num = ++TotalNumber;
-  Visible = VIS_MESH;
 }
 
 Simplex::Simplex(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
+  : SimplexBase(v1, v2, v3, v4)
 {
-  VSUP = NULL;
   S[0] = S[1] = S[2] = S[3] = NULL;
   Quality = 0.;
   Fourre_Simplexe(v1, v2, v3, v4);
-  Num = ++TotalNumber;
-  iEnt = -1;
-  iPart = -1;
-  Visible = VIS_MESH;
 }
 
-Simplex::~Simplex()
-{
-  if(VSUP) Free(VSUP);
-}
-
-int Simplex::CircumCircle(double x1, double y1,
-                          double x2, double y2,
+int Simplex::CircumCircle(double x1, double y1, double x2, double y2,
                           double x3, double y3, double *xc, double *yc)
 {
   double d, a1, a2, a3;
@@ -150,141 +361,6 @@ int Simplex::Pt_In_Ellipse(Vertex * v, double Metric[3][3])
 
 }
 
-double Simplex::Volume_Simplexe2D()
-{
-  return ((V[1]->Pos.X - V[0]->Pos.X) *
-          (V[2]->Pos.Y - V[1]->Pos.Y) -
-          (V[2]->Pos.X - V[1]->Pos.X) * 
-	  (V[1]->Pos.Y - V[0]->Pos.Y));
-}
-
-void Simplex::center_tet(double X[4], double Y[4], double Z[4], double res[3])
-{
-  double mat[3][3], b[3], dum;
-  int i;
-  b[0] = X[1] * X[1] - X[0] * X[0] +
-    Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
-  b[1] = X[2] * X[2] - X[1] * X[1] +
-    Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
-  b[2] = X[3] * X[3] - X[2] * X[2] +
-    Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
-
-  for(i = 0; i < 3; i++)
-    b[i] *= 0.5;
-
-  mat[0][0] = X[1] - X[0];
-  mat[0][1] = Y[1] - Y[0];
-  mat[0][2] = Z[1] - Z[0];
-  mat[1][0] = X[2] - X[1];
-  mat[1][1] = Y[2] - Y[1];
-  mat[1][2] = Z[2] - Z[1];
-  mat[2][0] = X[3] - X[2];
-  mat[2][1] = Y[3] - Y[2];
-  mat[2][2] = Z[3] - Z[2];
-
-  if(!sys3x3(mat, b, res, &dum)) {
-    Msg(WARNING, "Coplanar points in circum sphere computation");
-    Msg(WARNING, "(%g,%g,%g) (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)",
-        X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2], X[3], Y[3],
-        Z[3]);
-    res[0] = res[1] = res[2] = 10.0e10;
-  }
-
-}
-
-double Simplex::matsimpl(double mat[3][3])
-{
-  mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
-  mat[0][1] = V[2]->Pos.X - V[0]->Pos.X;
-  mat[0][2] = V[3]->Pos.X - V[0]->Pos.X;
-  mat[1][0] = V[1]->Pos.Y - V[0]->Pos.Y;
-  mat[1][1] = V[2]->Pos.Y - V[0]->Pos.Y;
-  mat[1][2] = V[3]->Pos.Y - V[0]->Pos.Y;
-  mat[2][0] = V[1]->Pos.Z - V[0]->Pos.Z;
-  mat[2][1] = V[2]->Pos.Z - V[0]->Pos.Z;
-  mat[2][2] = V[3]->Pos.Z - V[0]->Pos.Z;
-  return det3x3(mat);
-}
-
-double Simplex::rhoin()
-{
-  double s1, s2, s3, s4;
-  if(V[3]) {
-    s1 = fabs(AireFace(F[0].V));
-    s2 = fabs(AireFace(F[1].V));
-    s3 = fabs(AireFace(F[2].V));
-    s4 = fabs(AireFace(F[3].V));
-    return 3. * fabs(Volume_Simplexe()) / (s1 + s2 + s3 + s4);
-  }
-  else {
-    return 1.0;
-  }
-}
-
-double Simplex::lij(int i, int j)
-{
-  return sqrt(DSQR(V[i]->Pos.X - V[j]->Pos.X) +
-              DSQR(V[i]->Pos.Y - V[j]->Pos.Y) +
-              DSQR(V[i]->Pos.Z - V[j]->Pos.Z));
-}
-
-double Simplex::Volume_Simplexe()
-{
-  double mat[3][3];
-
-  if(V[3])
-    return (matsimpl(mat) / 6.);
-  else
-    return (surfsimpl());
-}
-
-double Simplex::EtaShapeMeasure()
-{
-  int i, j;
-  double lij2 = 0.0;
-  for(i = 0; i <= 3; i++) {
-    for(j = i + 1; j <= 3; j++) {
-      lij2 += DSQR(lij(i, j));
-    }
-  }
-  return 12. * pow(9. / 10. * DSQR(fabs(Volume_Simplexe())), 1./3.) / (lij2);
-}
-
-double Simplex::RhoShapeMeasure()
-{
-  int i, j;
-  double minlij = 1.e25, maxlij = 0.0;
-  for(i = 0; i <= 3; i++) {
-    for(j = i + 1; j <= 3; j++) {
-      if(i != j) {
-        minlij = DMIN(minlij, fabs(lij(i, j)));
-        maxlij = DMAX(maxlij, fabs(lij(i, j)));
-      }
-    }
-  }
-  return minlij / maxlij;
-}
-
-double Simplex::GammaShapeMeasure()
-{
-  int i, j, N;
-  double maxlij = 0.0;
-
-  if(V[3])
-    N = 4;
-  else
-    N = 3;
-
-  for(i = 0; i <= N - 1; i++) {
-    for(j = i + 1; j <= N - 1; j++) {
-      if(i != j)
-        maxlij = DMAX(maxlij, lij(i, j));
-    }
-  }
-  return 12. * rhoin() / (sqrt(6.) * maxlij);
-}
-
-
 void Simplex::Fourre_Simplexe(Vertex * v1, Vertex * v2, Vertex * v3,
                               Vertex * v4)
 {
@@ -358,18 +434,6 @@ void Simplex::Fourre_Simplexe(Vertex * v1, Vertex * v2, Vertex * v3,
 Simplex *Create_Simplex(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
 {
   return new Simplex(v1, v2, v3, v4);
-}
-
-Simplex *Create_Simplex_Fast(Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
-{
-  // bypasses Fourre_Simplex (use for visualization only!)
-  Simplex *s = new Simplex();
-  s->V[0] = v1;
-  s->V[1] = v2;
-  s->V[2] = v3;
-  s->V[3] = v4;
-  s->VSUP = NULL;
-  return s;
 }
 
 void Free_Simplex(void *a, void *b)
@@ -525,10 +589,8 @@ void Simplex::Center_Ellipsum_3D(double m[3][3])
                 + (x[2] - z1) * (x[2] - z1) * m[2][2]
                 + 2. * (x[0] - x1) * (x[1] - y1) * m[0][1]
                 + 2. * (x[0] - x1) * (x[2] - z1) * m[0][2]
-                + 2. * (x[1] - y1) * (x[2] - z1) * m[1][2]
-    );
+                + 2. * (x[1] - y1) * (x[2] - z1) * m[1][2]);
 }
-
 
 int Simplex::Pt_In_Simplex_2D(Vertex * v)
 {
@@ -568,45 +630,6 @@ int Simplex::Pt_In_Simplex_2D(Vertex * v)
       return 0;
   }
   return 1;
-}
-
-void Simplex::ExportLcField(FILE * f)
-{
-  if(!V[2])
-    fprintf(f, "SL(%f,%f,%f,%f,%f,%f){%12.5E,%12.5E};\n",
-            V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-            V[1]->Pos.Z, V[0]->lc, V[1]->lc);
-  else if(!V[3])
-    fprintf(f, "ST(%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E};\n",
-            V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-            V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
-            V[1]->lc, V[2]->lc);
-  else
-    fprintf(f, "SS(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
-	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
-	    V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
-}
-
-double Simplex::AireFace(Vertex * V[3])
-{
-  double a[3], b[3], c[3];
-
-  a[0] = V[2]->Pos.X - V[1]->Pos.X;
-  a[1] = V[2]->Pos.Y - V[1]->Pos.Y;
-  a[2] = V[2]->Pos.Z - V[1]->Pos.Z;
-
-  b[0] = V[0]->Pos.X - V[1]->Pos.X;
-  b[1] = V[0]->Pos.Y - V[1]->Pos.Y;
-  b[2] = V[0]->Pos.Z - V[1]->Pos.Z;
-
-  prodve(a, b, c);
-  return (0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]));
-}
-
-double Simplex::surfsimpl()
-{
-  return AireFace(V);
 }
 
 bool Simplex::VertexIn(Vertex * v)
@@ -745,7 +768,6 @@ bool Simplex::SwapEdge(int iFac)
         s11->S[i] = s2;
   return true;
 }
-
 
 bool Simplex::SwapFace(int iFac, List_T * newsimp, List_T * delsimp)
 {

@@ -1,4 +1,4 @@
-// $Id: Element.cpp,v 1.2 2004-07-21 22:19:56 geuzaine Exp $
+// $Id: Element.cpp,v 1.3 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -24,48 +24,56 @@
 #include "Numeric.h"
 #include "Element.h"
 
+extern int edges_quad[4][2];
+extern int edges_hexa[12][2];
+extern int edges_prism[9][2];
+extern int edges_pyramid[8][2];
+
 int Element::TotalNumber = 0;
 
 Element::Element()
-  : Num(0), iEnt(-1), iPart(-1), Visible(VIS_MESH), VSUP(NULL)
+  : iEnt(-1), iPart(-1), Visible(VIS_MESH), VSUP(NULL)
 {
+  Num = ++TotalNumber; 
 }
 
 Element::~Element()
 {
+  if(VSUP) Free(VSUP);
+}
+
+double Element::lij(Vertex *Vi, Vertex *Vj)
+{
+  return sqrt(DSQR(Vi->Pos.X - Vj->Pos.X) +
+              DSQR(Vi->Pos.Y - Vj->Pos.Y) +
+              DSQR(Vi->Pos.Z - Vj->Pos.Z));
 }
 
 // Quads
 
 Quadrangle::Quadrangle()
+  : Element()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = ++TotalNumber;
-  Visible = VIS_MESH;
   for(int i = 0; i < 4; i++) V[i] = NULL;
-  VSUP = NULL;
 }
 
 Quadrangle::Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4)
+  : Element()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = ++TotalNumber;
-  Visible = VIS_MESH;
   V[0] = v1; V[1] = v2; V[2] = v3; V[3] = v4;
-  VSUP = NULL;
 }
 
-Quadrangle::~Quadrangle()
+double Quadrangle::maxEdge()
 {
-  if(VSUP) Free(VSUP);
+  double maxlij = 0.;
+  for(int i = 0; i < 4; i++)
+      maxlij = DMAX(maxlij, lij(V[edges_quad[i][0]], V[edges_quad[i][1]]));
+  return maxlij;
 }
 
 Quadrangle *Create_Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4)
 {
-  Quadrangle *q = new Quadrangle(v1, v2, v3, v4);
-  return q;
+  return new Quadrangle(v1, v2, v3, v4);
 }
 
 void Free_Quadrangle(void *a, void *b)
@@ -87,28 +95,21 @@ int compareQuadrangle(const void *a, const void *b)
 // Hexas
 
 Hexahedron::Hexahedron()
+  : Element()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = ++TotalNumber;
-  Visible = VIS_MESH;
   for(int i = 0; i < 8; i++) V[i] = NULL;
-  VSUP = NULL;
 }
 
 Hexahedron::Hexahedron(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4,
 		       Vertex *v5, Vertex *v6, Vertex *v7, Vertex *v8)
+  : Element()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = ++TotalNumber;
-  Visible = VIS_MESH;
   V[0] = v1; V[1] = v2; V[2] = v3; V[3] = v4;
   V[4] = v5; V[5] = v6; V[6] = v7; V[7] = v8;
-  VSUP = NULL;
 }
 
-double Hexahedron::Orientation(){
+double Hexahedron::Orientation()
+{
   double mat[3][3];
   mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
   mat[0][1] = V[3]->Pos.X - V[0]->Pos.X;
@@ -122,17 +123,19 @@ double Hexahedron::Orientation(){
   return det3x3(mat);
 }
 
-Hexahedron::~Hexahedron()
+double Hexahedron::maxEdge()
 {
-  if(VSUP) Free(VSUP);
+  double maxlij = 0.;
+  for(int i = 0; i < 12; i++)
+      maxlij = DMAX(maxlij, lij(V[edges_hexa[i][0]], V[edges_hexa[i][1]]));
+  return maxlij;
 }
 
 Hexahedron *Create_Hexahedron(Vertex * v1, Vertex * v2, Vertex * v3,
                               Vertex * v4, Vertex * v5, Vertex * v6,
                               Vertex * v7, Vertex * v8)
 {
-  Hexahedron *h = new Hexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
-  return h;
+  return new Hexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
 }
 
 void Free_Hexahedron(void *a, void *b)
@@ -154,28 +157,21 @@ int compareHexahedron(const void *a, const void *b)
 // Prisms
 
 Prism::Prism()
+  : Element()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = 0;
-  Visible = VIS_MESH;
   for(int i = 0; i < 6; i++) V[i] = NULL;
-  VSUP = NULL;
 }
 
 Prism::Prism(Vertex *v1, Vertex *v2, Vertex *v3, 
 	     Vertex *v4, Vertex *v5, Vertex *v6)
+  : Element()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = ++TotalNumber;
-  Visible = VIS_MESH;
   V[0] = v1; V[1] = v2; V[2] = v3; 
   V[3] = v4; V[4] = v5; V[5] = v6;
-  VSUP = NULL;
 }
 
-double Prism::Orientation(){
+double Prism::Orientation()
+{
   double mat[3][3];
   mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
   mat[0][1] = V[2]->Pos.X - V[0]->Pos.X;
@@ -189,16 +185,18 @@ double Prism::Orientation(){
   return det3x3(mat);
 }
 
-Prism::~Prism()
+double Prism::maxEdge()
 {
-  if(VSUP) Free(VSUP);
+  double maxlij = 0.;
+  for(int i = 0; i < 9; i++)
+      maxlij = DMAX(maxlij, lij(V[edges_prism[i][0]], V[edges_prism[i][1]]));
+  return maxlij;
 }
 
 Prism *Create_Prism(Vertex * v1, Vertex * v2, Vertex * v3,
                     Vertex * v4, Vertex * v5, Vertex * v6)
 {
-  Prism *p = new Prism(v1, v2, v3, v4, v5, v6);
-  return p;
+  return new Prism(v1, v2, v3, v4, v5, v6);
 }
 
 void Free_Prism(void *a, void *b)
@@ -220,16 +218,19 @@ int comparePrism(const void *a, const void *b)
 // Pyramids
 
 Pyramid::Pyramid()
+  : Element()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = 0;
-  Visible = VIS_MESH;
   for(int i = 0; i < 5; i++) V[i] = NULL;
-  VSUP = NULL;
 }
 
-double Pyramid::Orientation(){
+Pyramid::Pyramid(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4, Vertex *v5)
+  : Element()
+{
+  V[0] = v1; V[1] = v2; V[2] = v3; V[3] = v4; V[4] = v5; 
+}
+
+double Pyramid::Orientation()
+{
   double mat[3][3];
   mat[0][0] = V[1]->Pos.X - V[0]->Pos.X;
   mat[0][1] = V[3]->Pos.X - V[0]->Pos.X;
@@ -243,26 +244,18 @@ double Pyramid::Orientation(){
   return det3x3(mat);
 }
 
-Pyramid::Pyramid(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4, Vertex *v5)
+double Pyramid::maxEdge()
 {
-  iEnt = -1;
-  iPart = -1;
-  Num = ++TotalNumber;
-  Visible = VIS_MESH;
-  V[0] = v1; V[1] = v2; V[2] = v3; V[3] = v4; V[4] = v5; 
-  VSUP = NULL;
-}
-
-Pyramid::~Pyramid()
-{
-  if(VSUP) Free(VSUP);
+  double maxlij = 0.;
+  for(int i = 0; i < 8; i++)
+      maxlij = DMAX(maxlij, lij(V[edges_pyramid[i][0]], V[edges_pyramid[i][1]]));
+  return maxlij;
 }
 
 Pyramid *Create_Pyramid(Vertex * v1, Vertex * v2, Vertex * v3,
                         Vertex * v4, Vertex * v5)
 {
-  Pyramid *p = new Pyramid(v1, v2, v3, v4, v5);
-  return p;
+  return new Pyramid(v1, v2, v3, v4, v5);
 }
 
 void Free_Pyramid(void *a, void *b)

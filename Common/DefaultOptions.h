@@ -848,9 +848,9 @@ StringXNumber MeshOptions_Number[] = {
   //  "Target quality for tetrahedral elements (not fully functional)" },
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 , 
-    "Only display elements whose Radius is greater than RadiusInf" },
+    "Only display elements whose longest edge is greater than RadiusInf" },
   { F|O, "RadiusSup" , opt_mesh_radius_sup , 0.0 , 
-    "Only display elements whose Radius is smaller than RadiusSup" },
+    "Only display elements whose longest edge is smaller than RadiusSup" },
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-4 ,
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
 

@@ -32,6 +32,7 @@ class Element {
   static  int TotalNumber;
   Element();
   virtual ~Element();
+  double lij(Vertex *Vi, Vertex *Vj);
 };
 
 class Quadrangle : public Element{
@@ -39,7 +40,8 @@ class Quadrangle : public Element{
   Vertex *V[4];
   Quadrangle();
   Quadrangle(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
-  ~Quadrangle();
+  ~Quadrangle() {}
+  double maxEdge();
 };
 
 class Hexahedron : public Element{
@@ -48,8 +50,9 @@ class Hexahedron : public Element{
   Hexahedron();
   Hexahedron(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4,
 	     Vertex *v5, Vertex *v6, Vertex *v7, Vertex *v8);
-  ~Hexahedron();
+  ~Hexahedron() {}
   double Orientation();
+  double maxEdge();
 };
 
 class Prism : public Element{
@@ -58,8 +61,9 @@ class Prism : public Element{
   Prism();
   Prism(Vertex *v1, Vertex *v2, Vertex *v3, 
 	Vertex *v4, Vertex *v5, Vertex *v6);
-  ~Prism();
+  ~Prism() {}
   double Orientation();
+  double maxEdge();
 };
 
 class Pyramid : public Element{
@@ -67,8 +71,9 @@ class Pyramid : public Element{
   Vertex *V[5];
   Pyramid();
   Pyramid(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4, Vertex *v5);
-  ~Pyramid();
+  ~Pyramid() {}
   double Orientation();
+  double maxEdge();
 };
 
 // C interface

@@ -242,7 +242,7 @@ struct _Surf{
   double a, b, c, d;
   List_T *Orientations;
   List_T *Contours;
-  Tree_T *Simplexes;
+  Tree_T *Simplexes, *SimplexesBase;
   Tree_T *Quadrangles;
   Tree_T *Vertices;
   List_T *TrsfVertices;
@@ -307,7 +307,7 @@ typedef struct {
   Tree_T *Vertices;
   Tree_T *Edges;
   Tree_T *Faces;
-  Tree_T *Simplexes;
+  Tree_T *Simplexes, *SimplexesBase;
   Tree_T *Simp_Surf; // for old extrusion mesh generator
   Tree_T *Quad_Surf; // for old extrusion mesh generator
   Tree_T *Hexahedra;
@@ -371,7 +371,7 @@ typedef struct{
   double ubeg, uend;
   List_T *Control_Points;
   List_T *Vertices;
-  Tree_T *Simplexes;
+  Tree_T *Simplexes, *SimplexesBase;
   ExtrudeParams *Extrude;
   float *k, *cp;
   int degre;

@@ -1,4 +1,4 @@
-// $Id: MeshQuality.cpp,v 1.14 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: MeshQuality.cpp,v 1.15 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ static int NbCalcGamma, *Histogram;
 
 void CalculateGamma(void *a, void *b)
 {
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
   double gamma = s->GammaShapeMeasure();
   NbCalcGamma++;
   GAMMAMAX = DMAX(GAMMAMAX, gamma);
@@ -51,7 +51,7 @@ void CalculateGamma(void *a, void *b)
 
 void CalculateEta(void *a, void *b)
 {
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
   double gamma = s->EtaShapeMeasure();
   NbCalcGamma++;
   GAMMAMAX = DMAX(GAMMAMAX, gamma);
@@ -65,7 +65,7 @@ void CalculateEta(void *a, void *b)
 
 void CalculateR(void *a, void *b)
 {
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
   double gamma = s->RhoShapeMeasure();
   NbCalcGamma++;
   GAMMAMAX = DMAX(GAMMAMAX, gamma);
@@ -77,12 +77,11 @@ void CalculateR(void *a, void *b)
       Histogram[i]++;
 }
 
-
-
 static void g(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
   Tree_Action(v->Simplexes, CalculateGamma);
+  Tree_Action(v->SimplexesBase, CalculateGamma);
   Msg(DEBUG, "Gamma computed in volume %d (%d values)", v->Num, NbCalcGamma);
 }
 
@@ -108,6 +107,7 @@ static void e(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
   Tree_Action(v->Simplexes, CalculateEta);
+  Tree_Action(v->SimplexesBase, CalculateEta);
   Msg(DEBUG, "Eta computed in volume %d (%d values)", v->Num, NbCalcGamma);
 }
 
@@ -132,6 +132,7 @@ static void r(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
   Tree_Action(v->Simplexes, CalculateR);
+  Tree_Action(v->SimplexesBase, CalculateR);
   Msg(DEBUG, "Rho computed in volume %d (%d values)", v->Num, NbCalcGamma);
 }
 

@@ -25,51 +25,60 @@
 #include "Element.h"
 #include "Face.h"
 
-class Simplex : public Element {
+class SimplexBase : public Element {
+ public:
+  Vertex  *V[4];         // 4 nodes
+  SimplexBase();
+  ~SimplexBase() {}
+  SimplexBase(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
+  double Volume_Simplexe();
+  double Volume_Simplexe2D();
+  double matsimpl(double mat[3][3]);
+  void center_tet(double X[4],double Y[4], double Z[4], double res[3]);
+  double AireFace(Vertex *V[3]);
+  double surfsimpl();
+  double GammaShapeMeasure();
+  double RhoShapeMeasure();
+  double EtaShapeMeasure();
+  double rhoin();
+  double maxEdge();
+  void ExportLcField(FILE *f);
+};
+
+SimplexBase *Create_SimplexBase(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
+void Free_SimplexBase(void *a, void *b);
+int compareSimplexBase(const void *a, const void *b);
+
+class Simplex : public SimplexBase {
  public:
   Face    F[4];          // 4 faces
-  Vertex  *V[4];         // 4 nodes
   double  Quality;       // simplex quality
   Coord   Center;        // CC center
   double  Radius;        // CC radius
   Simplex *S[4];         // 4 neighbours
   Simplex();
-  ~Simplex();
+  ~Simplex() {}
   Simplex(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
   void Fourre_Simplexe(Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
-  int Pt_In_Simplexe (Vertex *v, double uvw[3], double tol);
+  int Pt_In_Simplexe(Vertex *v, double uvw[3], double tol);
   int Pt_In_Simplex_2D(Vertex *v);
   void Center_Circum();
-  double Volume_Simplexe ();
-  double matsimpl(double mat[3][3]);
-  void center_tet(double X[4],double Y[4], double Z[4], double res[3]);
-  double AireFace (Vertex *V[3]);
-  double surfsimpl();
   int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
                    double *xc,double *yc);
-  double Volume_Simplexe2D();
-  void Center_Ellipsum_2D (double m[3][3]);
-  int Pt_In_Ellipse (Vertex *v,double m[3][3]);
+  void Center_Ellipsum_2D(double m[3][3]);
+  int Pt_In_Ellipse(Vertex *v,double m[3][3]);
   bool VertexIn(Vertex *v);
   bool EdgeIn(Vertex *v1, Vertex *v2, Vertex *v[2]);
-  bool SwapEdge (int iFac);
-  bool SwapFace (int iFac, List_T *newsimp, List_T *delsimp);
-  bool ExtractOppositeEdges ( int iFac, Vertex *p[2], Vertex *q[2]);
-  void ExportLcField (FILE *f);
-  void Center_Ellipsum_3D (double m[3][3]);
-  double GammaShapeMeasure ();
-  double RhoShapeMeasure ();
-  double EtaShapeMeasure ();
-  double lij (int i, int j);
-  double rhoin ();
+  bool SwapEdge(int iFac);
+  bool SwapFace(int iFac, List_T *newsimp, List_T *delsimp);
+  bool ExtractOppositeEdges( int iFac, Vertex *p[2], Vertex *q[2]);
+  void Center_Ellipsum_3D(double m[3][3]);
 };
 
 int compareSimplex(const void *a, const void *b);
-int compareFace (const void *a, const void *b);
+int compareFace(const void *a, const void *b);
 
 Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
-Simplex *Create_Simplex_Fast (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
-void Free_Simplex (void *a, void *b);
-
+void Free_Simplex(void *a, void *b);
 
 #endif

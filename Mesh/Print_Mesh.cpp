@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.55 2004-06-08 02:10:32 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.56 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -102,7 +102,7 @@ static void _msh_print_simplex(void *a, void *b)
 {
   int i, type, nbn, nbs = 0;
 
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
 
   if(MSH_VOL_NUM && (MSH_VOL_NUM != s->iEnt))
     return;
@@ -428,6 +428,7 @@ static void _msh_print_elements(Mesh *M)
 	    MSH_LIN_NUM = abs(Num);
 	    MSH_PHYSICAL_ORI = sign(Num);
 	    Tree_Action(pc->Simplexes, _msh_print_simplex);
+	    Tree_Action(pc->SimplexesBase, _msh_print_simplex);
 	  }
 	}
       }
@@ -454,6 +455,7 @@ static void _msh_print_elements(Mesh *M)
 	    MSH_SUR_NUM = abs(Num);
 	    MSH_PHYSICAL_ORI = sign(Num);
 	    Tree_Action(ps->Simplexes, _msh_print_simplex);
+	    Tree_Action(ps->SimplexesBase, _msh_print_simplex);
 	    Tree_Action(ps->Quadrangles, _msh_print_quadrangle);
 	  }
 	}
@@ -468,6 +470,7 @@ static void _msh_print_elements(Mesh *M)
           MSH_VOL_NUM = abs(Num);
           MSH_PHYSICAL_ORI = sign(Num);
           Tree_Action(pV->Simplexes, _msh_print_simplex);
+          Tree_Action(pV->SimplexesBase, _msh_print_simplex);
           Tree_Action(pV->Hexahedra, _msh_print_hexahedron);
           Tree_Action(pV->Prisms, _msh_print_prism);
           Tree_Action(pV->Pyramids, _msh_print_pyramid);
@@ -491,12 +494,14 @@ static void _msh_print_all_curves(void *a, void *b)
 {
   Curve *c = *(Curve **) a;
   Tree_Action(c->Simplexes, _msh_print_simplex);
+  Tree_Action(c->SimplexesBase, _msh_print_simplex);
 }
 
 static void _msh_print_all_surfaces(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
   Tree_Action(s->Simplexes, _msh_print_simplex);
+  Tree_Action(s->SimplexesBase, _msh_print_simplex);
   Tree_Action(s->Quadrangles, _msh_print_quadrangle);
 }
 
@@ -511,6 +516,7 @@ static void _msh_print_all_volumes(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
   Tree_Action(v->Simplexes, _msh_print_simplex);
+  Tree_Action(v->SimplexesBase, _msh_print_simplex);
   Tree_Action(v->Hexahedra, _msh_print_hexahedron);
   Tree_Action(v->Prisms, _msh_print_prism);
   Tree_Action(v->Pyramids, _msh_print_pyramid);
@@ -685,10 +691,10 @@ static void _unv_process_1D_elements(Mesh *m)
     List_Read(ListSurfaces, i, &surf);
     for(int j = 0; j < List_Nbr(surf->Generatrices); j++) {
       List_Read(surf->Generatrices, j, &c);
-      if(Tree_Nbr(c->Simplexes))
+      if(Tree_Nbr(c->Simplexes) || Tree_Nbr(c->SimplexesBase))
         List_Add(AllCurves, &c);
       c = FindCurve(-c->Num, m);
-      if(Tree_Nbr(c->Simplexes))
+      if(Tree_Nbr(c->Simplexes) || Tree_Nbr(c->SimplexesBase))
         List_Add(AllCurves, &c);
     }
   }
@@ -696,15 +702,17 @@ static void _unv_process_1D_elements(Mesh *m)
   for(int i = 0; i < List_Nbr(ListCurves); i++) {
     List_Read(ListCurves, i, &c);
     if(!List_Search(AllCurves, &c, compareCurve)) {
-      Elements = Tree2List(c->Simplexes);
-      for(int j = 0; j < List_Nbr(Elements); j++) {
-        List_Read(Elements, j, &sx);
-        if(sx->VSUP)
-	  _unv_print_record(sx->Num, BEAM2, c->Num, 2, 2, &sx->V[0], sx->VSUP);
-	else 
-	  _unv_print_record(sx->Num, BEAM, c->Num, 2, 0, &sx->V[0], NULL);
+      for(int simtype = 0; simtype < 2; simtype ++){
+	Elements = (!simtype) ? Tree2List(c->Simplexes) : Tree2List(c->SimplexesBase);
+	for(int j = 0; j < List_Nbr(Elements); j++) {
+	  List_Read(Elements, j, &sx);
+	  if(sx->VSUP)
+	    _unv_print_record(sx->Num, BEAM2, c->Num, 2, 2, &sx->V[0], sx->VSUP);
+	  else 
+	    _unv_print_record(sx->Num, BEAM, c->Num, 2, 0, &sx->V[0], NULL);
+	}
+	List_Delete(Elements);
       }
-      List_Delete(Elements);
     }
   }
 
@@ -728,7 +736,8 @@ static void _unv_process_2D_elements(Mesh *m)
     List_Read(ListVolumes, i, &vol);
     for(int j = 0; j < List_Nbr(vol->Surfaces); j++) {
       List_Read(vol->Surfaces, j, &s);
-      if(Tree_Nbr(s->Simplexes) || Tree_Nbr(s->Quadrangles))
+      if(Tree_Nbr(s->Simplexes) || Tree_Nbr(s->SimplexesBase) ||
+	 Tree_Nbr(s->Quadrangles))
         List_Add(AllSurfaces, &s);
     }
   }
@@ -738,16 +747,18 @@ static void _unv_process_2D_elements(Mesh *m)
     if(!List_Search(AllSurfaces, &s, compareSurface)) {
       
       // triangles
-      Elements = Tree2List(s->Simplexes);
-      for(int j = 0; j < List_Nbr(Elements); j++) {
-        List_Read(Elements, j, &sx);
-	if(sx->VSUP)
-	  _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 3, &sx->V[0], sx->VSUP);
-	else
-	  _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 0, &sx->V[0], NULL);
+      for(int simtype = 0; simtype < 2; simtype++){
+	Elements = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
+	for(int j = 0; j < List_Nbr(Elements); j++) {
+	  List_Read(Elements, j, &sx);
+	  if(sx->VSUP)
+	    _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 3, &sx->V[0], sx->VSUP);
+	  else
+	    _unv_print_record(abs(sx->Num), THINSHLL, s->Num, 3, 0, &sx->V[0], NULL);
+	}
+	List_Delete(Elements);
       }
-      List_Delete(Elements);
-      
+
       // quadrangles
       Elements = Tree2List(s->Quadrangles);
       for(int j = 0; j < List_Nbr(Elements); j++) {
@@ -778,29 +789,31 @@ static void _unv_process_3D_elements(Mesh *m)
     List_Read(ListVolumes, i, &v);
 
     // Tets
-    Elements = Tree2List(v->Simplexes);
-    for(int j = 0; j < List_Nbr(Elements); j++) {
-      List_Read(Elements, j, &sx);
-      if(sx->Volume_Simplexe() < 0) {
-        Vertex *temp;
-        temp = sx->V[0];
-        sx->V[0] = sx->V[1];
-        sx->V[1] = temp;
-	if(sx->VSUP){
-	  temp = sx->VSUP[1];
-	  sx->VSUP[1] = sx->VSUP[2];
-	  sx->VSUP[2] = temp;
-	  temp = sx->VSUP[5];
-	  sx->VSUP[5] = sx->VSUP[3];
-	  sx->VSUP[3] = temp;
+    for(int simtype = 0; simtype < 2; simtype++){
+      Elements = (!simtype) ? Tree2List(v->Simplexes) : Tree2List(v->SimplexesBase);
+      for(int j = 0; j < List_Nbr(Elements); j++) {
+	List_Read(Elements, j, &sx);
+	if(sx->Volume_Simplexe() < 0) {
+	  Vertex *temp;
+	  temp = sx->V[0];
+	  sx->V[0] = sx->V[1];
+	  sx->V[1] = temp;
+	  if(sx->VSUP){
+	    temp = sx->VSUP[1];
+	    sx->VSUP[1] = sx->VSUP[2];
+	    sx->VSUP[2] = temp;
+	    temp = sx->VSUP[5];
+	    sx->VSUP[5] = sx->VSUP[3];
+	    sx->VSUP[3] = temp;
+	  }
 	}
+	if(sx->VSUP)
+	  _unv_print_record(ELEMENT_ID++, SOLIDFEM, v->Num, 4, 6, &sx->V[0], sx->VSUP);
+	else
+	  _unv_print_record(ELEMENT_ID++, SOLIDFEM, v->Num, 4, 0, &sx->V[0], NULL);
       }
-      if(sx->VSUP)
-	_unv_print_record(ELEMENT_ID++, SOLIDFEM, v->Num, 4, 6, &sx->V[0], sx->VSUP);
-      else
-	_unv_print_record(ELEMENT_ID++, SOLIDFEM, v->Num, 4, 0, &sx->V[0], NULL);
+      List_Delete(Elements);
     }
-    List_Delete(Elements);
 
     // Prisms
     Elements = Tree2List(v->Prisms);
@@ -903,6 +916,7 @@ static void _unv_process_groups(Mesh *m)
         for(int j = 0; j < List_Nbr(p->Entities); j++) {
           List_Read(p->Entities, j, &UNV_VOL_NUM);
           Tree_Action(pV->Simplexes, _unv_add_simplex_vertices);
+          Tree_Action(pV->SimplexesBase, _unv_add_simplex_vertices);
           Tree_Action(pV->Hexahedra, _unv_add_hexahedron_vertices);
           Tree_Action(pV->Prisms, _unv_add_prism_vertices);
           Tree_Action(pV->Pyramids, _unv_add_pyramid_vertices);
@@ -974,17 +988,21 @@ static void _gref_consecutive_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
   List_T *ListSurfaces = Tree2List(M->Surfaces);
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    List_T *Triangles = Tree2List(s->Simplexes);
-    for(int j = 0; j < List_Nbr(Triangles); j++) {
-      List_Read(Triangles, j, &sx);
-      for(int k = 0; k < 3; k++) {
-        if(sx->V[k]->Frozen >= 0) {
-          sx->V[k]->Frozen = --newnum;
-          Tree_Insert(ConsecutiveNTree, &(sx->V[k]));
-        }
+    // triangles
+    for(int simtype = 0; simtype < 2; simtype++){
+      List_T *Triangles = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
+      for(int j = 0; j < List_Nbr(Triangles); j++) {
+	List_Read(Triangles, j, &sx);
+	for(int k = 0; k < 3; k++) {
+	  if(sx->V[k]->Frozen >= 0) {
+	    sx->V[k]->Frozen = --newnum;
+	    Tree_Insert(ConsecutiveNTree, &(sx->V[k]));
+	  }
+	}
       }
+      List_Delete(Triangles);
     }
-    List_Delete(Triangles);
+    // quads
     List_T *Quadrangles = Tree2List(s->Quadrangles);
     for(int j = 0; j < List_Nbr(Quadrangles); j++) {
       List_Read(Quadrangles, j, &qx);
@@ -1002,17 +1020,21 @@ static void _gref_consecutive_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
 
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    List_T *Triangles = Tree2List(s->Simplexes);
-    for(int j = 0; j < List_Nbr(Triangles); j++) {
-      List_Read(Triangles, j, &sx);
-      for(int k = 0; k < 3; k++) {
-	if(sx->VSUP[k]->Frozen >= 0) {
-	  sx->VSUP[k]->Frozen = --newnum;
-	  Tree_Insert(ConsecutiveETree, &(sx->VSUP[k]));
+    // triangles
+    for(int simtype = 0; simtype < 2; simtype++){
+      List_T *Triangles = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
+      for(int j = 0; j < List_Nbr(Triangles); j++) {
+	List_Read(Triangles, j, &sx);
+	for(int k = 0; k < 3; k++) {
+	  if(sx->VSUP[k]->Frozen >= 0) {
+	    sx->VSUP[k]->Frozen = --newnum;
+	    Tree_Insert(ConsecutiveETree, &(sx->VSUP[k]));
+	  }
 	}
       }
+      List_Delete(Triangles);
     }
-    List_Delete(Triangles);
+    // quads
     List_T *Quadrangles = Tree2List(s->Quadrangles);
     for(int j = 0; j < List_Nbr(Quadrangles); j++) {
       List_Read(Quadrangles, j, &qx);
@@ -1042,15 +1064,19 @@ static void _gref_end_consecutive_nodes(Mesh *M)
   List_T *ListSurfaces = Tree2List(M->Surfaces);
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    List_T *Triangles = Tree2List(s->Simplexes);
-    for(int j = 0; j < List_Nbr(Triangles); j++) {
-      List_Read(Triangles, j, &sx);
-      for(int k = 0; k < 3; k++)
-        sx->V[k]->Frozen = 0;
-      for(int k = 0; k < 3; k++)
-	sx->VSUP[k]->Frozen = 0;
+    // triangles
+    for(int simtype = 0; simtype < 2; simtype++){
+      List_T *Triangles = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
+      for(int j = 0; j < List_Nbr(Triangles); j++) {
+	List_Read(Triangles, j, &sx);
+	for(int k = 0; k < 3; k++)
+	  sx->V[k]->Frozen = 0;
+	for(int k = 0; k < 3; k++)
+	  sx->VSUP[k]->Frozen = 0;
+      }
+      List_Delete(Triangles);
     }
-    List_Delete(Triangles);
+    // quads
     List_T *Quadrangles = Tree2List(s->Quadrangles);
     for(int j = 0; j < List_Nbr(Quadrangles); j++) {
       List_Read(Quadrangles, j, &qx);
@@ -1087,7 +1113,7 @@ static int _gref_process_nodes(Mesh *M, Tree_T *ConsecutiveNTree,
   nbtriqua = 0;
   for(i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    nbtriqua += Tree_Nbr(s->Simplexes);
+    nbtriqua += Tree_Nbr(s->Simplexes) + Tree_Nbr(s->SimplexesBase);
     nbtriqua += Tree_Nbr(s->Quadrangles);
   }
   List_Delete(ListSurfaces);
@@ -1189,13 +1215,17 @@ static void _gref_process_elements(Mesh *M, int nn)
 
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    List_T *Triangles = Tree2List(s->Simplexes);
-    for(int j = 0; j < List_Nbr(Triangles); j++) {
-      List_Read(Triangles, j, &sx);
-      fprintf(GREFFILE, "%d %d %d\n", -sx->V[0]->Frozen,
-	      -sx->V[1]->Frozen, -sx->V[2]->Frozen);
+    // triangles
+    for(int simtype = 0; simtype < 2; simtype++){
+      List_T *Triangles = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
+      for(int j = 0; j < List_Nbr(Triangles); j++) {
+	List_Read(Triangles, j, &sx);
+	fprintf(GREFFILE, "%d %d %d\n", -sx->V[0]->Frozen,
+		-sx->V[1]->Frozen, -sx->V[2]->Frozen);
+      }
+      List_Delete(Triangles);
     }
-    List_Delete(Triangles);
+    // quads
     List_T *Quadrangles = Tree2List(s->Quadrangles);
     for(int j = 0; j < List_Nbr(Quadrangles); j++) {
       List_Read(Quadrangles, j, &qx);
@@ -1208,23 +1238,27 @@ static void _gref_process_elements(Mesh *M, int nn)
   // Degres de Liberte
   for(int i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    List_T *Triangles = Tree2List(s->Simplexes);
-    for(int j = 0; j < List_Nbr(Triangles); j++) {
-      List_Read(Triangles, j, &sx);
-      fprintf(GREFFILE, "%d %d %d %d %d %d %d %d %d %d %d %d\n",
-	      -2 * sx->V[0]->Frozen - 1,
-	      -2 * sx->V[0]->Frozen,
-	      -2 * sx->VSUP[0]->Frozen - 1,
-	      -2 * sx->VSUP[0]->Frozen,
-	      -2 * sx->V[1]->Frozen - 1,
-	      -2 * sx->V[1]->Frozen,
-	      -2 * sx->VSUP[1]->Frozen - 1,
-	      -2 * sx->VSUP[1]->Frozen,
-	      -2 * sx->V[2]->Frozen - 1,
-	      -2 * sx->V[2]->Frozen,
-	      -2 * sx->VSUP[2]->Frozen - 1, -2 * sx->VSUP[2]->Frozen);
+    // triangles
+    for(int simtype = 0; simtype < 2; simtype++){
+      List_T *Triangles = (!simtype) ? Tree2List(s->Simplexes) : Tree2List(s->SimplexesBase);
+      for(int j = 0; j < List_Nbr(Triangles); j++) {
+	List_Read(Triangles, j, &sx);
+	fprintf(GREFFILE, "%d %d %d %d %d %d %d %d %d %d %d %d\n",
+		-2 * sx->V[0]->Frozen - 1,
+		-2 * sx->V[0]->Frozen,
+		-2 * sx->VSUP[0]->Frozen - 1,
+		-2 * sx->VSUP[0]->Frozen,
+		-2 * sx->V[1]->Frozen - 1,
+		-2 * sx->V[1]->Frozen,
+		-2 * sx->VSUP[1]->Frozen - 1,
+		-2 * sx->VSUP[1]->Frozen,
+		-2 * sx->V[2]->Frozen - 1,
+		-2 * sx->V[2]->Frozen,
+		-2 * sx->VSUP[2]->Frozen - 1, -2 * sx->VSUP[2]->Frozen);
+      }
+      List_Delete(Triangles);
     }
-    List_Delete(Triangles);
+    // quads
     List_T *Quadrangles = Tree2List(s->Quadrangles);
     for(int j = 0; j < List_Nbr(Quadrangles); j++) {
       List_Read(Quadrangles, j, &qx);
@@ -1346,6 +1380,7 @@ static void _wrl_print_all_curves(void *a, void *b)
   fprintf(WRLFILE, "DEF Curve%d IndexedLineSet {\n", c->Num);
   fprintf(WRLFILE, "  coordIndex [\n");
   Tree_Action(c->Simplexes, _wrl_print_line);
+  Tree_Action(c->SimplexesBase, _wrl_print_line);
   fprintf(WRLFILE, "  ]\n");
   fprintf(WRLFILE, "}\n");
 }
@@ -1356,6 +1391,7 @@ static void _wrl_print_all_surfaces(void *a, void *b)
   fprintf(WRLFILE, "DEF Surface%d IndexedFaceSet {\n", s->Num);
   fprintf(WRLFILE, "  coordIndex [\n");
   Tree_Action(s->Simplexes, _wrl_print_triangle);
+  Tree_Action(s->SimplexesBase, _wrl_print_triangle);
   Tree_Action(s->Quadrangles, _wrl_print_quadrangle);
   fprintf(WRLFILE, "  ]\n");
   fprintf(WRLFILE, "}\n");

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.79 2004-11-18 23:42:19 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.80 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -134,7 +134,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   int NbTags, Tag;
   double x, y, z, lc1, lc2;
   Vertex *vert, verts[NB_NOD_MAX_ELM], *vertsp[NB_NOD_MAX_ELM], **vertspp;
-  Simplex *simp;
+  SimplexBase *simp;
   Quadrangle *quad;
   Hexahedron *hex;
   Prism *pri;
@@ -306,7 +306,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         case LGN2:
 	  c = addElementaryCurve(M, abs(Elementary));
 	  addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
-          simp = Create_Simplex_Fast(vertsp[0], vertsp[1], NULL, NULL);
+          simp = Create_SimplexBase(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = Add_MeshPartition(Partition, M);
@@ -315,16 +315,16 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    simp->VSUP[0] = vertsp[2];
 	    simp->VSUP[0]->Degree = 2;
 	  }
-          if(!Tree_Insert(c->Simplexes, &simp)){
+          if(!Tree_Insert(c->SimplexesBase, &simp)){
 	    Msg(GERROR, "Line element %d already exists", simp->Num);
-	    Free_Simplex(&simp, 0);
+	    Free_SimplexBase(&simp, 0);
 	  }
           break;
         case TRI1:
         case TRI2:
 	  s = addElementarySurface(M, Elementary);
 	  addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
-          simp = Create_Simplex_Fast(vertsp[0], vertsp[1], vertsp[2], NULL);
+          simp = Create_SimplexBase(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = Add_MeshPartition(Partition, M);
@@ -335,9 +335,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      simp->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(!Tree_Insert(s->Simplexes, &simp)){
+          if(!Tree_Insert(s->SimplexesBase, &simp)){
 	    Msg(GERROR, "Triangle %d already exists", simp->Num);
-	    Free_Simplex(&simp, 0);
+	    Free_SimplexBase(&simp, 0);
 	  }
           break;
         case QUA1:
@@ -357,14 +357,14 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  }
           if(!Tree_Insert(s->Quadrangles, &quad)){
 	    Msg(GERROR, "Quadrangle %d already exists", simp->Num);
-	    Free_Simplex(&simp, 0);
+	    Free_SimplexBase(&simp, 0);
 	  }
           break;
         case TET1:
         case TET2:
 	  v = addElementaryVolume(M, Elementary);
 	  addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
-          simp = Create_Simplex_Fast(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
+          simp = Create_SimplexBase(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
           simp->iPart = Add_MeshPartition(Partition, M);
@@ -375,9 +375,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	      simp->VSUP[i]->Degree = 2;
 	    }
 	  }
-          if(!Tree_Insert(v->Simplexes, &simp)){
+          if(!Tree_Insert(v->SimplexesBase, &simp)){
 	    Msg(GERROR, "Tetrahedron %d already exists", simp->Num);
-	    Free_Simplex(&simp, 0);
+	    Free_SimplexBase(&simp, 0);
 	  }
           break;
         case HEX1:

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.112 2004-10-30 03:07:29 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.113 2004-11-19 18:26:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -285,6 +285,7 @@ void Draw_Mesh_Volume(void *a, void *b)
       v->QuadVertexArray = new VertexArray(4, 1000);
       v->QuadVertexArray->fill = 1;
       Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
+      Tree_Action(v->SimplexesBase, Draw_Mesh_Tetrahedron);
       Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
       Tree_Action(v->Prisms, Draw_Mesh_Prism);
       Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
@@ -312,6 +313,7 @@ void Draw_Mesh_Volume(void *a, void *b)
      CTX.mesh.normals){
     Msg(DEBUG, "classic volume data path");
     Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
+    Tree_Action(v->SimplexesBase, Draw_Mesh_Tetrahedron);
     Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
     Tree_Action(v->Prisms, Draw_Mesh_Prism);
     Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
@@ -336,6 +338,7 @@ void Draw_Mesh_Surface(void *a, void *b)
     s->normals = new smooth_normals;
     preproNormals = 1;
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
+    Tree_Action(s->SimplexesBase, Draw_Mesh_Triangle);
     Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
     preproNormals = 0;
   }
@@ -345,9 +348,11 @@ void Draw_Mesh_Surface(void *a, void *b)
       Msg(DEBUG, "regenerate surface mesh vertex arrays");
       // triangles
       if(s->TriVertexArray) delete s->TriVertexArray;
-      s->TriVertexArray = new VertexArray(3, Tree_Nbr(s->Simplexes));
+      s->TriVertexArray = new VertexArray(3, Tree_Nbr(s->Simplexes) + 
+					  Tree_Nbr(s->SimplexesBase));
       s->TriVertexArray->fill = 1;
       Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
+      Tree_Action(s->SimplexesBase, Draw_Mesh_Triangle);
       if(s->TriVertexArray){
 	Msg(DEBUG, "%d triangles in surface vertex array", s->TriVertexArray->num);
 	s->TriVertexArray->fill = 0;
@@ -374,6 +379,7 @@ void Draw_Mesh_Surface(void *a, void *b)
      CTX.mesh.points_per_element || CTX.mesh.normals){
     Msg(DEBUG, "classic triangle data path");
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
+    Tree_Action(s->SimplexesBase, Draw_Mesh_Triangle);
   }
 
   if(!s->QuadVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num ||
@@ -405,6 +411,7 @@ void Draw_Mesh_Curve(void *a, void *b)
   thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
 
   Tree_Action(c->Simplexes, Draw_Mesh_Line);
+  Tree_Action(c->SimplexesBase, Draw_Mesh_Line);
 }
 
 void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visible)
@@ -454,7 +461,7 @@ void Draw_Mesh_Line(void *a, void *b)
   double Xc = 0.0, Yc = 0.0, Zc = 0.0, m[3];
   char Num[100];
 
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
 
   if(!(s->Visible & VIS_MESH))
     return;
@@ -462,6 +469,12 @@ void Draw_Mesh_Line(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.radius_sup) {
+    double r = s->maxEdge();
+    if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
+      return;
+  }
 
   if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(2, s->V) < 0)
     return;
@@ -721,7 +734,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
   double n[3];
   char Num[256];
 
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
 
   if(!s->V[2]) // the old extrusion algo puts lines in the simp_surf tree...
     return;
@@ -732,6 +745,12 @@ void Draw_Mesh_Triangle(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, s->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.radius_sup) {
+    double r = s->maxEdge();
+    if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
+      return;
+  }
 
   if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(3, s->V) < 0)
     return;
@@ -886,6 +905,12 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
+  if(CTX.mesh.radius_sup) {
+    double r = q->maxEdge();
+    if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
+      return;
+  }
+
   if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(4, q->V) < 0)
     return;
 
@@ -1032,7 +1057,7 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   char Num[100];
   double tmp, X[4], Y[4], Z[4], X2[6], Y2[6], Z2[6];
 
-  Simplex *s = *(Simplex **) a;
+  SimplexBase *s = *(SimplexBase **) a;
 
   if(!s->V[3] || !(s->Visible & VIS_MESH))
     return;
@@ -1048,10 +1073,11 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   }
 
   if(CTX.mesh.radius_sup) {
-    if(s->Radius < CTX.mesh.radius_inf || s->Radius > CTX.mesh.radius_sup)
+    double r = s->maxEdge();
+    if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
       return;
   }
-
+  
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;
 
@@ -1212,6 +1238,12 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, h->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.radius_sup) {
+    double r = h->maxEdge();
+    if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
+      return;
+  }
 
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;
@@ -1387,6 +1419,12 @@ void Draw_Mesh_Prism(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.radius_sup) {
+    double r = p->maxEdge();
+    if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
+      return;
+  }
 
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;
@@ -1577,6 +1615,12 @@ void Draw_Mesh_Pyramid(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
   if(part && !(*part)->Visible)
     return;
+
+  if(CTX.mesh.radius_sup) {
+    double r = p->maxEdge();
+    if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup)
+      return;
+  }
 
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;
