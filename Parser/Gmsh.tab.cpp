@@ -168,7 +168,7 @@
 #define	UNARYPREC	418
 
 #line 1 "Gmsh.y"
- /* $Id: Gmsh.tab.cpp,v 1.50 2000-12-18 08:32:08 geuzaine Exp $ */
+ /* $Id: Gmsh.tab.cpp,v 1.51 2000-12-19 09:01:13 geuzaine Exp $ */
 
 #include <stdarg.h>
 
