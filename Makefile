@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2000-12-20 15:46:08 geuzaine Exp $
+# $Id: Makefile,v 1.29 2000-12-20 16:03:37 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -206,6 +206,7 @@ rpm: src
 	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
 	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/bin/gmsh .
 	gtar zcvf gmsh-$(GMSH_UNAME).tgz gmsh
+	rm -f gmsh
 
 compress_bin:
 	cd $(GMSH_BIN_DIR) && tar cvf gmsh-$(GMSH_UNAME).tar gmsh
