@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2001-02-09 14:51:31 geuzaine Exp $
+# $Id: Makefile,v 1.11 2001-02-12 17:42:15 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -59,8 +59,9 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Adapt.o: Adapt.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Adapt.h nrutil.h ../Common/Const.h
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Adapt.h nrutil.h \
+ ../Common/Const.h
 mnbrak.o: mnbrak.cpp nrutil.h ../Common/Const.h
 brent.o: brent.cpp nrutil.h ../Common/Const.h
 nrutil.o: nrutil.cpp

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2001-02-12 17:38:03 geuzaine Exp $
+# $Id: Makefile,v 1.16 2001-02-12 17:42:28 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -64,26 +64,26 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Gmsh.tab.cpp.h
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \
+ ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+ ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h Gmsh.tab.cpp.h
 Gmsh.tab.o: Gmsh.tab.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
-  ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
-  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Mesh/Create.h ../Geo/StepGeomDatabase.h ../Common/Options.h \
-  ../Common/Colors.h Parser.h OpenFile.h FunctionManager.h \
-  ../Common/Timer.h ../Graphics/CreateFile.h
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
+ ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
+ ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
+ ../Mesh/Create.h ../Geo/StepGeomDatabase.h ../Common/Options.h \
+ ../Common/Colors.h Parser.h OpenFile.h FunctionManager.h \
+ ../Common/Timer.h ../Graphics/CreateFile.h
 OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
-  ../Common/Context.h Parser.h OpenFile.h ../Geo/Geo.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Geo/MinMax.h ../Geo/Visibility.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Motif/Widgets.h
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
+ ../Common/Context.h Parser.h OpenFile.h ../Geo/Geo.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Common/Views.h \
+ ../Common/ColorTable.h ../Geo/MinMax.h ../Geo/Visibility.h \
+ ../Common/GmshUI.h ../Graphics/Draw.h ../Motif/Widgets.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h
