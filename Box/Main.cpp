@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.27 2003-03-01 22:36:36 geuzaine Exp $
+// $Id: Main.cpp,v 1.28 2003-03-05 01:20:39 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -190,14 +190,13 @@ void Msg(int level, char *fmt, ...)
     break;
 
   case FATAL:
+  case FATAL3: abort = 1;
   case FATAL1:
   case FATAL2:
-  case FATAL3:
     fprintf(stderr, "On processor %d : ", ParUtil::Instance()->rank());
     fprintf(stderr, FATAL_STR);
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
-    abort = 1;
     break;
 
   case GERROR:
