@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.132 2004-09-18 05:10:13 geuzaine Exp $
+// $Id: Views.cpp,v 1.133 2004-09-18 15:39:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -48,6 +48,16 @@ int fcmpPostViewNum(const void *v1, const void *v2)
 int fcmpPostViewDuplicateOf(const void *v1, const void *v2)
 {
   return (((Post_View *) v1)->DuplicateOf - ((Post_View *) v2)->DuplicateOf);
+}
+
+int fcmpPostViewName(const void *v1, const void *v2)
+{
+  return strcmp(((Post_View *) v1)->Name, ((Post_View *) v2)->Name);
+}
+
+int fcmpPostViewVisibility(const void *v1, const void *v2)
+{
+  return (((Post_View *) v2)->Visible - ((Post_View *) v1)->Visible);
 }
 
 Post_View *BeginView(int allocate)
@@ -582,6 +592,30 @@ void FreeView(Post_View * v)
     v->TriVertexArray = NULL;
   }
 
+}
+
+void SortViews(int how)
+{
+  // how==0: by name
+  // how==1: by visibility
+
+  if(!List_Nbr(CTX.post.list)) 
+    return;
+
+  if(how == 0)
+    List_Sort(CTX.post.list, fcmpPostViewName);
+  else
+    List_Sort(CTX.post.list, fcmpPostViewVisibility);
+
+  // recalculate the indices
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++){
+    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, i);
+    v->Index = i;
+  }
+
+#if defined(HAVE_FLTK)
+  UpdateViewsInGUI();
+#endif
 }
 
 void CopyViewOptions(Post_View * src, Post_View * dest)

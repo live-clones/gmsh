@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.346 2004-09-18 01:51:56 geuzaine Exp $
+// $Id: GUI.cpp,v 1.347 2004-09-18 15:39:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1074,6 +1074,10 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
 	p[j]->add("Combine/Time steps/By view name", 0, 
 		 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
+	p[j]->add("Sort/By name", 0, 
+		 (Fl_Callback *) view_sort_by_name_cb, (void *)nb, 0);
+	p[j]->add("Sort/By visibility", 0, 
+		 (Fl_Callback *) view_sort_by_visibility_cb, (void *)nb, 0);
 	p[j]->add("Save as/ASCII view...", 0, 
 		  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
 	p[j]->add("Save as/Binary view...", 0, 

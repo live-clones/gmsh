@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.272 2004-09-18 01:51:56 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.273 2004-09-18 15:39:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3210,6 +3210,16 @@ void view_combine_time_by_name_cb(CALLBACK_ARGS)
 {
   CombineViews(1, 2, CTX.post.combine_remove_orig);
   Draw();
+}
+
+void view_sort_by_name_cb(CALLBACK_ARGS)
+{
+  SortViews(0);
+}
+
+void view_sort_by_visibility_cb(CALLBACK_ARGS)
+{
+  SortViews(1);
 }
 
 void view_applybgmesh_cb(CALLBACK_ARGS)

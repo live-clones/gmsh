@@ -118,6 +118,8 @@ void view_combine_space_by_name_cb(CALLBACK_ARGS) ;
 void view_combine_time_all_cb(CALLBACK_ARGS) ;
 void view_combine_time_visible_cb(CALLBACK_ARGS) ;
 void view_combine_time_by_name_cb(CALLBACK_ARGS) ;
+void view_sort_by_name_cb(CALLBACK_ARGS) ;
+void view_sort_by_visibility_cb(CALLBACK_ARGS) ;
 void view_applybgmesh_cb(CALLBACK_ARGS) ;
 void view_options_cb(CALLBACK_ARGS) ;
 void view_plugin_cb(CALLBACK_ARGS) ;
