@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.1 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.2 2001-10-29 09:44:29 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -88,7 +88,7 @@ void Draw_Graph2D(Post_View *v){
       }
     }
     else{
-      dx = v->GraphSize[0]/(double)v->NbTimeStep;
+      dx = v->GraphSize[0]/(double)(v->NbTimeStep-1);
       for(i=0; i<v->NbTimeStep; i++){
 	glBegin(GL_LINES);
 	glVertex2d(xtop+i*dx,ybot);
