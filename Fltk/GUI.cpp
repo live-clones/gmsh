@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.267 2004-01-25 09:32:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.268 2004-01-25 09:35:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1899,7 +1899,7 @@ void GUI::create_option_window()
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Link");
+      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Links");
       post_butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Independent views");
       post_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Apply next changes to all visible views");
       post_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Apply next changes to all views");
