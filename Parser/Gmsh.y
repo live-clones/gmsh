@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.9 2000-11-28 14:42:44 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.10 2000-12-04 09:29:38 colignon Exp $ */
 
 #include <stdarg.h>
 
@@ -78,7 +78,7 @@ void  Get_ColorPointerForString(StringXPointer SXP[], char * string,
 %token tScalarLine tVectorLine tTensorLine
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
-%token tColor tGeneral tGeometry tMesh
+%token tColor tGeneral tGeometry tMesh tClip
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -349,7 +349,7 @@ GeomFormat :
   | Transfini   { return 1; }
   | Coherence   { return 1; }
   | Macro       { return 1; }
-  | Colors      { return 1; }
+  | Options     { return 1; }
   | error tEND  { yyerrok; return 1;}
 ;
 
@@ -1309,8 +1309,21 @@ Coherence :
     C O L O R S 
    ------------- */
 
-Colors :
+Options :
     tColor '{' ColorSections '}'
+  | tClip tPlane '(' FExpr ')' tAFFECT '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+    {
+      i = (int)$4 ;
+      if(i < 0 || i > 5)
+	vyyerror("Wrong Clip Plane Number %d", i);
+      else{
+	CTX.clip[i] = 1;
+	CTX.clip_plane[i][0] = $8;
+	CTX.clip_plane[i][0] = $10;
+	CTX.clip_plane[i][0] = $12;
+	CTX.clip_plane[i][0] = $14;
+      }
+    }
 ;
 
 ColorSections :

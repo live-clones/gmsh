@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.8 2000-11-27 08:24:55 geuzaine Exp $ */
+/* $Id: Context.h,v 1.9 2000-12-04 09:29:38 colignon Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -89,12 +89,7 @@ typedef struct {
   float shine;                /* specular value */
   int render_mode;            /* GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK */
   int clip[6];                /* status of clip planes */
-  double clip_plane0[4];      /* clip plane 0 */
-  double clip_plane1[4];      /* clip plane 1 */
-  double clip_plane2[4];      /* clip plane 2 */
-  double clip_plane3[4];      /* clip plane 3 */
-  double clip_plane4[4];      /* clip plane 4 */
-  double clip_plane5[4];      /* clip plane 5 */
+  double clip_plane[6][4];    /* clip planes */
   double pixel_equiv_x, pixel_equiv_y ; 
                               /* approximative equivalent model length of a pixel */
   

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.5 2000-11-28 11:28:35 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.6 2000-12-04 09:29:38 colignon Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,6 +96,7 @@ Coherence               return tCoherence;
 Complex                 return tComplex;
 Color                   return tColor;
 CatmullRom		return tSpline;
+Clip                    return tClip;
 
 Delete                  return tDelete;
 Dilate                  return tDilate;

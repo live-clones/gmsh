@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.8 2000-12-01 13:56:10 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.9 2000-12-04 09:29:38 colignon Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -50,6 +50,7 @@ void ColorSwitch(int i){
 static int DrawVertexSupp ;
 
 void Draw_Mesh (Mesh *M) {
+  int i;
 
   if(CTX.mesh.shade)
     InitShading();
@@ -58,13 +59,9 @@ void Draw_Mesh (Mesh *M) {
 
   InitPosition();
 
-  if(CTX.clip[0]) glClipPlane(GL_CLIP_PLANE0, CTX.clip_plane0);
-  if(CTX.clip[1]) glClipPlane(GL_CLIP_PLANE1, CTX.clip_plane1);
-  if(CTX.clip[2]) glClipPlane(GL_CLIP_PLANE2, CTX.clip_plane2);
-  if(CTX.clip[3]) glClipPlane(GL_CLIP_PLANE3, CTX.clip_plane3);
-  if(CTX.clip[4]) glClipPlane(GL_CLIP_PLANE4, CTX.clip_plane4);
-  if(CTX.clip[5]) glClipPlane(GL_CLIP_PLANE5, CTX.clip_plane5);
-
+  for(i = 0 ; i < 6 ; i++)
+    if(CTX.clip[i]) glClipPlane(GL_CLIP_PLANE0 + i, CTX.clip_plane[i]);
+  
   glPointSize(2);
   glLineWidth(1);
 
