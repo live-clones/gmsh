@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.20 2001-12-03 08:41:44 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.21 2002-02-27 17:15:22 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -756,6 +756,10 @@ int compareFace (const void *a, const void *b){
 
   q = (Face *) a;
   w = (Face *) b;
+
+  if (!q->V[0] || !w->V[0])
+    Msg(FATAL, "Bad face (are you trying to generate hexahedra with a Delaunay?!)");
+
   if (q->V[0]->Num > w->V[0]->Num)
     return (1);
   if (q->V[0]->Num < w->V[0]->Num)
