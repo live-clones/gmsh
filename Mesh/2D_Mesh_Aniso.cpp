@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.41 2004-05-26 01:29:29 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.42 2004-06-20 23:25:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,15 +37,6 @@ inline void cgsmpl(Simplex * s, double &x, double &y)
 {
   x = (1. / 3.) * (s->V[0]->Pos.X + s->V[1]->Pos.X + s->V[2]->Pos.X);
   y = (1. / 3.) * (s->V[0]->Pos.Y + s->V[1]->Pos.Y + s->V[2]->Pos.Y);
-}
-
-MeshParameters::MeshParameters()
-  : NbSmoothing(3),
-    DelaunayAlgorithm(DELAUNAY_ANISO),
-    DelaunayInsertionMethod(INSERTION_CENTROID),
-    DelaunayQuality(QUALITY_EDGES_BASED), InteractiveDelaunay(false)
-{
-  ;
 }
 
 extern Simplex MyNewBoundary;
@@ -542,7 +533,7 @@ bool draw_simplex2d(Surface * sur, Simplex * s, bool nouv)
   double x[3], y[3], z[3];
   Vertex v1, v2, v3;
 
-  if(!THEM->MeshParams.InteractiveDelaunay)
+  if(!CTX.mesh.interactive)
     return false;
 
   if(s == &MyNewBoundary || !s || !s->iEnt)
@@ -939,11 +930,10 @@ Vertex *NewVertex_2D(Simplex * s)
      0.0, lc, 0.0);
    */
 
-  if(THEM->MeshParams.DelaunayInsertionMethod == INSERTION_CENTROID)
-    v =
-      Create_Vertex(++THEM->MaxPointNum, s->Center.X, s->Center.Y, 0.0, lc,
-                    0.0);
-  else if(THEM->MeshParams.DelaunayInsertionMethod == INSERTION_EDGE) {
+  if(1){ // INSERTION_CENTROID
+    v = Create_Vertex(++THEM->MaxPointNum, s->Center.X, s->Center.Y, 0.0, lc, 0.0);
+  }
+  else{ // INSERTION_EDGE
     Vertex *vv[2];
     double l = THEM->Metric->getWorstEdge(s, PARAMETRIC, vv);
     double f = 0.5;

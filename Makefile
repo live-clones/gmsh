@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.351 2004-06-13 20:46:20 geuzaine Exp $
+# $Id: Makefile,v 1.352 2004-06-20 23:25:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -56,6 +56,7 @@ install: variables
 
 install-mac: variables package-mac
 	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
+	rm -rf gmsh-${GMSH_VERSION} gmsh-${GMSH_VERSION}-MacOSX.tgz
 
 variables: configure
 	@echo "********************************************************************"

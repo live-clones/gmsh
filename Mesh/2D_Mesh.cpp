@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.58 2004-05-26 00:33:37 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.59 2004-06-20 23:25:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -828,9 +828,9 @@ void Maillage_Surface(void *data, void *dum)
 
     ori = Calcule_Contours(s);
     
-    if(CTX.mesh.algo == DELAUNAY_ISO)
+    if(CTX.mesh.algo2d == DELAUNAY_ISO)
       Maillage_Automatique_VieuxCode(s, THEM, ori);
-    else if(CTX.mesh.algo == DELAUNAY_ANISO)
+    else if(CTX.mesh.algo2d == DELAUNAY_ANISO)
       AlgorithmeMaillage2DAnisotropeModeJF(s);
     else
       Mesh_Shewchuk(s);

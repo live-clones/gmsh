@@ -1,4 +1,4 @@
-// $Id: 2D_Cylindrical.cpp,v 1.16 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 2D_Cylindrical.cpp,v 1.17 2004-06-20 23:25:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -290,9 +290,9 @@ int MeshCylindricalSurface(Surface * s)
   ori = Calcule_Contours(s);
   MAXIMUM_LC_FOR_SURFACE = SURF->Cyl.radius1 / 3.;
 
-  if(CTX.mesh.algo == DELAUNAY_ISO)
+  if(CTX.mesh.algo2d == DELAUNAY_ISO)
     Maillage_Automatique_VieuxCode(s, THEM, ori);
-  else if(CTX.mesh.algo == DELAUNAY_ANISO)
+  else if(CTX.mesh.algo2d == DELAUNAY_ANISO)
     AlgorithmeMaillage2DAnisotropeModeJF(s);
   else
     Mesh_Shewchuk(s);

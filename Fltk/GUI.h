@@ -185,6 +185,7 @@ public:
   Fl_Window        *post_window ;
   Fl_Check_Button  *post_butt[20] ;
   Fl_Value_Input   *post_value[20] ;
+  Fl_Choice        *post_choice[20] ;
 
   // view options
   int view_number ;

@@ -167,7 +167,7 @@ public :
     double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
     int light, light_two_side;
-    int format, nb_smoothing, algo, order;
+    int format, nb_smoothing, algo2d, algo3d, order;
     int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
     int histogram, initial_only;
     double normals, tangents, explode;

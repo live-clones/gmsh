@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.42 2004-06-17 21:16:57 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.43 2004-06-20 23:25:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -397,11 +397,11 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
         i++;
         if(argv[i] != NULL) {
           if(!strncmp(argv[i], "iso", 3))
-            CTX.mesh.algo = DELAUNAY_ISO;
+            CTX.mesh.algo2d = DELAUNAY_ISO;
           else if(!strncmp(argv[i], "tri", 3))
-            CTX.mesh.algo = DELAUNAY_SHEWCHUK;
+            CTX.mesh.algo2d = DELAUNAY_TRIANGLE;
           else if(!strncmp(argv[i], "aniso", 5))
-            CTX.mesh.algo = DELAUNAY_ANISO;
+            CTX.mesh.algo2d = DELAUNAY_ANISO;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);

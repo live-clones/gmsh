@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.248 2004-06-17 21:16:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.249 2004-06-20 23:25:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -866,7 +866,6 @@ void general_options_ok_cb(CALLBACK_ARGS)
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
     Print_Options(0, GMSH_SESSIONRC, true, CTX.session_filename_fullpath);
   opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
-  opt_general_orthographic(0, GMSH_SET | GMSH_GUI, WID->gen_butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
   opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
   opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
@@ -905,6 +904,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   }
   opt_general_vector_type(0, GMSH_SET, val);
   opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
+  opt_general_orthographic(0, GMSH_SET | GMSH_GUI, !WID->gen_choice[2]->value());
 }
 
 void general_arrow_param_cb(CALLBACK_ARGS)
@@ -972,10 +972,6 @@ void mesh_options_color_scheme_cb(CALLBACK_ARGS)
 
 void mesh_options_ok_cb(CALLBACK_ARGS)
 {
-  opt_mesh_algo(0, GMSH_SET,
-                WID->mesh_butt[0]->value()? DELAUNAY_ISO :
-                WID->mesh_butt[1]->value()? DELAUNAY_SHEWCHUK :
-                DELAUNAY_ANISO);
   opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
   opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[4]->value());
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
@@ -993,11 +989,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_cut_plane_as_surface(0, GMSH_SET, WID->mesh_butt[22]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[23]->value());
-  opt_mesh_color_carousel(0, GMSH_SET,
-			  WID->mesh_butt[18]->value()? 0 :
-			  WID->mesh_butt[19]->value()? 1 : 
-			  WID->mesh_butt[20]->value()? 2 : 
-			  3);
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
@@ -1019,8 +1010,14 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());
-
-  opt_mesh_triangle_options(0, GMSH_SET, (char *)WID->mesh_input[0]->value());
+  opt_mesh_algo2d(0, GMSH_SET,
+		  (WID->mesh_choice[2]->value() == 0) ? DELAUNAY_ISO :
+		  (WID->mesh_choice[2]->value() == 1) ? DELAUNAY_TRIANGLE :
+		  DELAUNAY_ANISO);
+  opt_mesh_algo3d(0, GMSH_SET,
+		  (WID->mesh_choice[3]->value() == 0) ? DELAUNAY_ISO :
+		  FRONTAL_NETGEN);
+  opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_choice[4]->value());
 }
 
 // Solver options
@@ -1043,16 +1040,11 @@ void post_options_cb(CALLBACK_ARGS)
 
 void post_options_ok_cb(CALLBACK_ARGS)
 {
-  opt_post_link(0, GMSH_SET,
-                WID->post_butt[0]->value()? 0 :
-                WID->post_butt[1]->value()? 1 :
-                WID->post_butt[2]->value()? 2 :
-                WID->post_butt[3]->value()? 3 : 4);
-
-  opt_post_smooth(0, GMSH_SET, WID->post_butt[5]->value());
-  opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[6]->value());
+  opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[0]->value());
 
   opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
+
+  opt_post_link(0, GMSH_SET, WID->post_choice[0]->value());
 }
 
 // Statistics Menu

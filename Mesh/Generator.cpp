@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.53 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: Generator.cpp,v 1.54 2004-06-20 23:25:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -374,10 +374,6 @@ void mai3d(Mesh * M, int Asked)
     Msg(INFO, "I'm busy! Ask me that later...");
     return;
   }
-
-  M->MeshParams.DelaunayAlgorithm = CTX.mesh.algo;
-  M->MeshParams.NbSmoothing = CTX.mesh.nb_smoothing;
-  M->MeshParams.InteractiveDelaunay = CTX.mesh.interactive;
 
   oldstatus = M->status;
 

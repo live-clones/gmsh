@@ -390,21 +390,10 @@ typedef struct{
 
 #define QUALITY_EDGES_BASED 1
 #define QUALITY_SIMPLEX_BASED 2
-#define INSERTION_CENTROID 1
-#define INSERTION_EDGE 2
 #define DELAUNAY_ISO 1
 #define DELAUNAY_ANISO 2
-#define DELAUNAY_SHEWCHUK 3
-
-class MeshParameters{
- public:
-  int NbSmoothing;
-  int DelaunayAlgorithm;
-  int DelaunayInsertionMethod;
-  int DelaunayQuality;
-  bool InteractiveDelaunay;
-  MeshParameters();
-};
+#define DELAUNAY_TRIANGLE 3
+#define FRONTAL_NETGEN 4
 
 struct _Mesh{
   char name[256];
@@ -427,7 +416,6 @@ struct _Mesh{
   double quality_rho[3]; // mesh quality statistics
   int Histogram[3][NB_HISTOGRAM]; // quality histograms
   GMSHMetric *Metric;
-  MeshParameters MeshParams;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
 };

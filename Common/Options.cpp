@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.167 2004-06-17 21:16:57 geuzaine Exp $
+// $Id: Options.cpp,v 1.168 2004-06-20 23:25:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -918,10 +918,6 @@ char *opt_general_graphics_font(OPT_ARGS_STR)
 char *opt_mesh_triangle_options(OPT_ARGS_STR){
   if(action & GMSH_SET)
     CTX.mesh.triangle_options = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_input[0]->value(CTX.mesh.triangle_options);
-#endif
   return CTX.mesh.triangle_options;
 }
 
@@ -2230,13 +2226,11 @@ double opt_general_orthographic(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.ortho){
-      WID->gen_butt[10]->value(1);
-      WID->gen_butt[11]->value(0);
+      WID->gen_choice[2]->value(0);
       //WID->persp_bmp->label(WID->g_status_butt[4]);
     }
     else{
-      WID->gen_butt[10]->value(0);
-      WID->gen_butt[11]->value(1);
+      WID->gen_choice[2]->value(1);
       //WID->ortho_bmp->label(WID->g_status_butt[4]);
     }
     //WID->g_status_butt[4]->redraw();
@@ -3469,27 +3463,63 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
   return CTX.mesh.nb_smoothing;
 }
 
-double opt_mesh_algo(OPT_ARGS_NUM)
+double opt_mesh_algo2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     int algo = (int)val;
     if(algo != DELAUNAY_ISO &&
-       algo != DELAUNAY_SHEWCHUK &&
+       algo != DELAUNAY_TRIANGLE &&
        algo != DELAUNAY_ANISO){
       Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
     }
     else{
-      CTX.mesh.algo = algo;
+      CTX.mesh.algo2d = algo;
     }
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->mesh_butt[0]->value(CTX.mesh.algo == DELAUNAY_ISO);
-    WID->mesh_butt[1]->value(CTX.mesh.algo == DELAUNAY_SHEWCHUK);
-    WID->mesh_butt[2]->value(CTX.mesh.algo == DELAUNAY_ANISO);
+    switch (CTX.mesh.algo2d) {
+    case DELAUNAY_ISO:
+      WID->mesh_choice[2]->value(0);
+      break;
+    case DELAUNAY_TRIANGLE:
+      WID->mesh_choice[2]->value(1);
+      break;
+    case DELAUNAY_ANISO:
+    default:
+      WID->mesh_choice[2]->value(2);
+      break;
+    }
   }
 #endif
-  return CTX.mesh.algo;
+  return CTX.mesh.algo2d;
+}
+
+double opt_mesh_algo3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    int algo = (int)val;
+    if(algo != DELAUNAY_ISO && algo != FRONTAL_NETGEN){
+      Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
+    }
+    else{
+      CTX.mesh.algo3d = algo;
+    }
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    switch (CTX.mesh.algo3d) {
+    case DELAUNAY_ISO:
+      WID->mesh_choice[3]->value(0);
+      break;
+    case FRONTAL_NETGEN:
+    default:
+      WID->mesh_choice[3]->value(1);
+      break;
+    }
+  }
+#endif
+  return CTX.mesh.algo3d;
 }
 
 double opt_mesh_point_insertion(OPT_ARGS_NUM)
@@ -3668,13 +3698,12 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     if(CTX.mesh.color_carousel != (int)val) CTX.mesh.changed = 1;
     CTX.mesh.color_carousel = (int)val;
+    if(CTX.mesh.color_carousel < 0 || CTX.mesh.color_carousel > 2)
+      CTX.mesh.color_carousel = 0;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)){
-    WID->mesh_butt[18]->value(CTX.mesh.color_carousel==0);
-    WID->mesh_butt[19]->value(CTX.mesh.color_carousel==1);
-    WID->mesh_butt[20]->value(CTX.mesh.color_carousel==2);
-    WID->mesh_butt[21]->value(CTX.mesh.color_carousel==3);
+    WID->mesh_choice[4]->value(CTX.mesh.color_carousel);
   }
 #endif
   return CTX.mesh.color_carousel;
@@ -3867,15 +3896,14 @@ double opt_post_scales(OPT_ARGS_NUM)
 
 double opt_post_link(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.post.link = (int)val;
+    if(CTX.post.link < 0 || CTX.post.link > 4)
+      CTX.post.link = 0;
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->post_butt[0]->value(CTX.post.link == 0);
-    WID->post_butt[1]->value(CTX.post.link == 1);
-    WID->post_butt[2]->value(CTX.post.link == 2);
-    WID->post_butt[3]->value(CTX.post.link == 3);
-    WID->post_butt[4]->value(CTX.post.link == 4);
+    WID->post_choice[0]->value(CTX.post.link);
   }
 #endif
   return CTX.post.link;
@@ -3885,10 +3913,6 @@ double opt_post_smooth(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.post.smooth = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->post_butt[5]->value(CTX.post.smooth);
-#endif
   return CTX.post.smooth;
 }
 
@@ -3909,7 +3933,7 @@ double opt_post_anim_cycle(OPT_ARGS_NUM)
     CTX.post.anim_cycle = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->post_butt[6]->value(CTX.post.anim_cycle);
+    WID->post_butt[0]->value(CTX.post.anim_cycle);
   if(WID)
     WID->check_anim_buttons();
 #endif

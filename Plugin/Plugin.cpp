@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.54 2004-06-15 18:20:53 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.55 2004-06-20 23:25:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -147,33 +147,30 @@ void GMSH_PluginManager::registerDefaultPlugins()
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("CutPlane", GMSH_RegisterCutPlanePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("CutParametric", GMSH_RegisterCutParametricPlugin()));
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("CutSphere", GMSH_RegisterCutSpherePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Skin", GMSH_RegisterSkinPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Extract", GMSH_RegisterExtractPlugin()));
-  // not ready yet
-  // allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-  //                  ("Harmonic2Time", GMSH_RegisterHarmonic2TimePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("DecomposeInSimplex", GMSH_RegisterDecomposeInSimplexPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Smooth", GMSH_RegisterSmoothPlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Transform", GMSH_RegisterTransformPlugin()));
-#if defined(HAVE_TRIANGLE)
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		    ("Triangulate", GMSH_RegisterTriangulatePlugin()));
-#endif
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
+#if defined(HAVE_TRIANGLE)
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Triangulate", GMSH_RegisterTriangulatePlugin()));
+#endif
 #if defined(HAVE_MATH_EVAL)
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("Evaluate", GMSH_RegisterEvaluatePlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("CutParametric", GMSH_RegisterCutParametricPlugin()));
 #endif
 
 #if defined(HAVE_FLTK)
@@ -204,7 +201,6 @@ void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
 {
 #if defined(HAVE_NO_DLL) || !defined(HAVE_FLTK)
   Msg(WARNING, "No dynamic plugin loading on this platform");
-  return;
 #else
   char dynamic_lib[1024];
   char plugin_name[256];
@@ -220,8 +216,7 @@ void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
     Msg(WARNING, "Error in opening %s (dlerror = %s)", dynamic_lib, err);
     return;
   }
-  registerPlugin =
-    (class GMSH_Plugin * (*)(void))dlsym(hlib, GMSH_PluginEntry);
+  registerPlugin = (class GMSH_Plugin * (*)(void))dlsym(hlib, GMSH_PluginEntry);
   err = (char*)dlerror();
   if(err != NULL) {
     Msg(WARNING, "Symbol '%s' missing in plugin '%s' (dlerror = %s)",

@@ -699,15 +699,17 @@ StringXNumber GeometryOptions_Number[] = {
 } ;
 
 StringXNumber MeshOptions_Number[] = {
-  { F|O, "Algorithm" , opt_mesh_algo , DELAUNAY_ISO ,
+  { F|O, "Algorithm" , opt_mesh_algo2d , DELAUNAY_ISO ,
     "2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)" }, 
+  { F|O, "Algorithm3D" , opt_mesh_algo3d , DELAUNAY_ISO ,
+    "3D mesh algorithm (1=isotropic, 4=netgen)" }, 
   { F,   "AllowDegeneratedExtrude" , opt_mesh_allow_degenerated_extrude , 0. , 
     "Allow the generation of degenerated hexahedra or prisms during extrusion" },
 
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths (and background meshes)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
-    "Color mesh by region? (0=no, 1=by elementary entity, 2=by physical entity, 3=by partition)" },
+    "Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)" },
   { F|O, "ColorScheme" , opt_mesh_color_scheme , 0. , 
     "Default mesh color scheme (0, 1 or 2)" },
   { F|O, "ConstrainedBackgroundMesh" , opt_mesh_constrained_bgmesh, 0. ,
