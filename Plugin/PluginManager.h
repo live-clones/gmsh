@@ -10,6 +10,7 @@
 */
 
 #include <map>
+#include <iosfwd>
 
 class GMSH_Plugin;
 struct ltstrpg
@@ -24,10 +25,10 @@ class GMSH_PluginManager
 {
   GMSH_PluginManager();
   static GMSH_PluginManager *instance;
-  std::map<char*,GMSH_Plugin*,ltstrpg> allPlugins;
+  std::map<const char*,GMSH_Plugin*,ltstrpg> allPlugins;
 public :
   virtual ~GMSH_PluginManager();
-  typedef std::map<char*,GMSH_Plugin*,ltstrpg>::iterator iter;
+  typedef std::map<const char*,GMSH_Plugin*,ltstrpg>::iterator iter;
 /**
   Registering all default plugins that are in $(GMSHPLUGINSHOME)
   In fact, we will load all .so files in dir $(GMSHPLUGINSHOME)

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.40 2001-06-27 13:35:33 geuzaine Exp $
+// $Id: Views.cpp,v 1.41 2001-07-26 18:47:59 remacle Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -405,6 +405,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->ArrowScale = src->ArrowScale;
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
+  dest->SaturateValues = src->SaturateValues;
   dest->Boundary = src->Boundary ;
   dest->NbIso = src->NbIso;
   dest->Light = src->Light ;

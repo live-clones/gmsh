@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.16 2001-06-28 17:42:08 geuzaine Exp $
+// $Id: Post.cpp,v 1.17 2001-07-26 18:47:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -29,6 +29,16 @@ double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso, int Iso){
   return pow(10.,log10(ValMin)+Iso*(log10(ValMax)-log10(ValMin))/(NbIso-1.)) ;
 }
 
+double GiveValueFromIndex_DoubleLog(double ValMin, double ValMax, int NbIso, int Iso){
+  if(NbIso==1) return (ValMax+ValMin)/2.;
+  if(ValMin <= 0.) return 0. ;
+
+  double Iso2 = Iso/2;
+  double NbIso2 = NbIso/2;
+
+  return pow(10.,log10(ValMin)+Iso2*(log10(ValMax)-log10(ValMin))/(NbIso2-1.)) ;
+
+}
 
 /* ------------------------------------------------------------------------
     Give Index From Value
@@ -40,6 +50,12 @@ int GiveIndexFromValue_Lin(double ValMin, double ValMax, int NbIso, double Val){
 }
 
 int GiveIndexFromValue_Log(double ValMin, double ValMax, int NbIso, double Val){
+  if(ValMin==ValMax) return NbIso/2 ;  
+  if(ValMin <= 0.) return 0 ;
+  return (int)((log10(Val)-log10(ValMin))*(NbIso-1)/(log10(ValMax)-log10(ValMin))) ;
+}
+
+int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso, double Val){
   if(ValMin==ValMax) return NbIso/2 ;  
   if(ValMin <= 0.) return 0 ;
   return (int)((log10(Val)-log10(ValMin))*(NbIso-1)/(log10(ValMax)-log10(ValMin))) ;
@@ -179,6 +195,10 @@ void Draw_Post (void) {
         case DRAW_POST_LOGARITHMIC : 
           v->GIFV = GiveIndexFromValue_Log ;
           v->GVFI = GiveValueFromIndex_Log ;
+	  break;
+        case DRAW_POST_DOUBLELOGARITHMIC : 
+          v->GIFV = GiveIndexFromValue_DoubleLog ;
+          v->GVFI = GiveValueFromIndex_DoubleLog ;
           break;
         }
         

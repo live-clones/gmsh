@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.32 2001-07-17 07:00:37 geuzaine Exp $
+// $Id: Options.cpp,v 1.33 2001-07-26 18:47:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1729,6 +1729,21 @@ double opt_view_intervals_type(OPT_ARGS_NUM){
 #endif
   return v->IntervalsType;
 }
+
+double opt_view_saturate_values(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->SaturateValues = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_butt[25]->value(v->SaturateValues);
+  }
+#endif
+  return v->SaturateValues;
+}
+
 double opt_view_nb_iso(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
@@ -1905,6 +1920,7 @@ double opt_view_scale_type(OPT_ARGS_NUM){
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
     WID->view_butt[1]->value(v->ScaleType==DRAW_POST_LINEAR);
     WID->view_butt[2]->value(v->ScaleType==DRAW_POST_LOGARITHMIC);
+    WID->view_butt[26]->value(v->ScaleType==DRAW_POST_DOUBLELOGARITHMIC);
   }
 #endif
   return v->ScaleType;

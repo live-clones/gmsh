@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2001-04-23 10:38:17 geuzaine Exp $
+# $Id: Makefile,v 1.9 2001-07-26 18:48:00 remacle Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -48,15 +48,3 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
-Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
- PluginManager.h CutPlane.h LevelsetPlugin.h CutSphere.h CutMap.h
-CutPlane.o: CutPlane.cpp CutPlane.h LevelsetPlugin.h Plugin.h \
- ../Common/Options.h ../Common/Message.h
-CutSphere.o: CutSphere.cpp CutSphere.h LevelsetPlugin.h Plugin.h \
- ../Common/Options.h ../Common/Message.h
-LevelsetPlugin.o: LevelsetPlugin.cpp LevelsetPlugin.h Plugin.h \
- ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
- ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h \
- ../Graphics/Iso.h
-CutMap.o: CutMap.cpp CutMap.h LevelsetPlugin.h Plugin.h \
- ../Common/Options.h ../Common/Message.h

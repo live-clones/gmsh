@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.90 2001-07-26 10:01:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.91 2001-07-26 18:47:59 remacle Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -540,6 +540,7 @@ void GUI::wait(){
 }
 
 //********************************* Create the menu window *****************************
+
 
 void GUI::add_post_plugins ( Fl_Menu_Button *button , int iView)
 {
@@ -1685,7 +1686,7 @@ void GUI::set_statistics(){
 /*
    A plugin has n options, we also show infos about
    the plugin on the top of the window
- */
+*/
 
 PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView)
 {
@@ -1944,11 +1945,25 @@ void GUI::create_view_options_window(int num){
 	}
 	view_butt[1] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Linear");
 	view_butt[2] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Logarithmic");
+
 	for(i=1 ; i<3 ; i++){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	}
+	/// ADD JF - DOUBLE LOG SCALE
+	/// ADD JF - POSSIBILITY OF SATURATING VALUES
+	view_butt[26] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW, BH, "Double Logarithmic");
+	view_butt[26]->type(FL_RADIO_BUTTON);
+	view_butt[26]->labelsize(CTX.fontsize);
+	view_butt[26]->selection_color(FL_YELLOW);
+
+        view_butt[25] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW, BH, "Saturate Values");
+	view_butt[25]->type(FL_TOGGLE_BUTTON);
+	view_butt[25]->down_box(FL_DOWN_BOX);
+	view_butt[25]->labelsize(CTX.fontsize);
+	view_butt[25]->selection_color(FL_YELLOW);
+
 	o->end();
       }
       // Intervals

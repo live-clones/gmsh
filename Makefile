@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.105 2001-07-25 17:53:54 geuzaine Exp $
+# $Id: Makefile,v 1.106 2001-07-26 18:47:59 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -431,7 +431,7 @@ fltk_compile_solaris_scorec :
 fltk_compile_linux_scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
-           "C_FLAGS=-O3" \
+           "C_FLAGS=-O2" \
            "VERSION_FLAGS=-D_FLTK" \
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "GL_INCLUDE=$(OPENGL_INC)" \

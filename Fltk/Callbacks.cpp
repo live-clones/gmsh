@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.64 2001-07-18 07:36:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.65 2001-07-26 18:47:59 remacle Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -20,6 +20,8 @@
 #include "GUI.h"
 #include "Callbacks.h"
 #include "Plugin.h"
+
+using namespace std;
 
 #include <FL/fl_file_chooser.H>
 #include <errno.h>
@@ -1654,7 +1656,11 @@ void view_options_ok_cb(CALLBACK_ARGS){
 			  DRAW_POST_DEFAULT);
       opt_view_scale_type(i, GMSH_SET, 
 			  WID->view_butt[1]->value()?DRAW_POST_LINEAR:
-			  DRAW_POST_LOGARITHMIC);
+			  WID->view_butt[2]->value()?DRAW_POST_LOGARITHMIC:
+			  DRAW_POST_DOUBLELOGARITHMIC);
+      opt_view_saturate_values(i, GMSH_SET, 
+			       WID->view_butt[25]->value());
+      
       opt_view_intervals_type(i, GMSH_SET, 
 			      WID->view_butt[3]->value()?DRAW_POST_ISO:
 			      WID->view_butt[4]->value()?DRAW_POST_DISCRETE:

@@ -31,6 +31,7 @@ class Post_View{
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale;
   int Visible, IntervalsType, NbIso, Light ;
+  int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
   int TransparentScale, ScaleType, RangeType;
   int ArrowType, ArrowLocation;
@@ -88,8 +89,9 @@ extern int        Post_ViewForceNumber, Post_ViewComputeBBox;
 #define DRAW_POST_CUSTOM  2
 
 // ScaleType
-#define DRAW_POST_LINEAR       1
-#define DRAW_POST_LOGARITHMIC  2
+#define DRAW_POST_LINEAR             1
+#define DRAW_POST_LOGARITHMIC        2
+#define DRAW_POST_DOUBLELOGARITHMIC  3 // for vorticity e.g.
 
 // Public functions
 

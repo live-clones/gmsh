@@ -1,8 +1,8 @@
-// $Id: FunctionManager.cpp,v 1.10 2001-02-17 22:09:00 geuzaine Exp $
+// $Id: FunctionManager.cpp,v 1.11 2001-07-26 18:47:59 remacle Exp $
 
+#include <map>
 #include <stdio.h>
 #include <stack>
-#include <map>
 #include "FunctionManager.h"
 
 using namespace std;

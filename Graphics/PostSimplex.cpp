@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.17 2001-06-26 16:47:23 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.18 2001-07-26 18:47:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -132,11 +132,36 @@ void Draw_ScalarTriangle(Post_View *View,
   int     i, k, nb=0;
   double  d;
   double  x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
-  double  Xp[5],Yp[5],Zp[5],value[5],thev;
+  double  Xp[5],Yp[5],Zp[5],Val[3],value[5],thev;
   char    Num[100] ;
 
+  /** JF 
+     Saturation of values 
+  */
+  {
+    double *vv = &V[3*View->TimeStep];
+    if(View->SaturateValues)
+      {
+	for(i=0;i<3;i++)
+	  {
+	    
+	    if(vv[i] > ValMax) Val[i] = ValMax;
+	    else if(vv[i] < ValMin) Val[i] = ValMin;
+	    else Val[i] = vv[i];
+	  }
+      }
+    else
+      {
+	for(i=0;i<3;i++)
+	  {	      
+	    Val[i] = vv[i];
+	  }
+      }
+  }
+  /** - END JF - **/
+
   for(k=0 ; k<3 ; k++)
-    RaiseFill(k, V[3*View->TimeStep+k], ValMin, Raise);
+    RaiseFill(k, Val[k], ValMin, Raise);
 
   if(View->Light){
     x1x0 = (X[1]+Raise[0][1]) - (X[0]+Raise[0][0]); 
@@ -163,7 +188,7 @@ void Draw_ScalarTriangle(Post_View *View,
 
   if(View->IntervalsType == DRAW_POST_NUMERIC){
 
-    d = (V[3*View->TimeStep]+V[3*View->TimeStep+1]+V[3*View->TimeStep+2]) / 3.;
+    d = (Val[0]+Val[1]+Val[2]) / 3.;
     if(d >= ValMin && d <= ValMax){
       Palette2(View,ValMin,ValMax,d);
       sprintf(Num, View->Format, d);
@@ -180,26 +205,26 @@ void Draw_ScalarTriangle(Post_View *View,
   else{
     
     if(View->IntervalsType == DRAW_POST_CONTINUOUS){
-      if(V[3*View->TimeStep]  >=ValMin && V[3*View->TimeStep]  <=ValMax &&
-         V[3*View->TimeStep+1]>=ValMin && V[3*View->TimeStep+1]<=ValMax &&
-         V[3*View->TimeStep+2]>=ValMin && V[3*View->TimeStep+2]<=ValMax){
+      if(Val[0]  >=ValMin && Val[0]  <=ValMax &&
+         Val[1]>=ValMin && Val[1]<=ValMax &&
+         Val[2]>=ValMin && Val[2]<=ValMax){
         glBegin(GL_TRIANGLES);
-	Palette2(View,ValMin,ValMax,V[3*View->TimeStep]);
+	Palette2(View,ValMin,ValMax,Val[0]);
         glVertex3d(X[0]+View->Offset[0]+Raise[0][0],
                    Y[0]+View->Offset[1]+Raise[1][0],
                    Z[0]+View->Offset[2]+Raise[2][0]);
-	Palette2(View,ValMin,ValMax,V[3*View->TimeStep+1]);
+	Palette2(View,ValMin,ValMax,Val[1]);
         glVertex3d(X[1]+View->Offset[0]+Raise[0][1],
                    Y[1]+View->Offset[1]+Raise[1][1],
                    Z[1]+View->Offset[2]+Raise[2][1]);
-	Palette2(View,ValMin,ValMax,V[3*View->TimeStep+2]);
+	Palette2(View,ValMin,ValMax,Val[2]);
         glVertex3d(X[2]+View->Offset[0]+Raise[0][2],
                    Y[2]+View->Offset[1]+Raise[1][2],
                    Z[2]+View->Offset[2]+Raise[2][2]);
         glEnd();
       }
       else{
-        CutTriangle2D(X,Y,Z,&V[3*View->TimeStep],
+        CutTriangle2D(X,Y,Z,Val,
                       ValMin,ValMax,ValMin,ValMax,
                       Xp,Yp,Zp,&nb,value);
         if(nb >= 3){      
@@ -219,7 +244,7 @@ void Draw_ScalarTriangle(Post_View *View,
       for(k=0 ; k<View->NbIso ; k++){
         if(View->IntervalsType == DRAW_POST_DISCRETE){
           Palette(View,View->NbIso,k);
-          CutTriangle2D(X,Y,Z,&V[3*View->TimeStep],
+          CutTriangle2D(X,Y,Z,Val,
                         View->GVFI(ValMin,ValMax,View->NbIso+1,k),
                         View->GVFI(ValMin,ValMax,View->NbIso+1,k+1),
                         ValMin,ValMax,
@@ -232,7 +257,7 @@ void Draw_ScalarTriangle(Post_View *View,
         else{
           Palette(View,View->NbIso,k);
           thev = View->GVFI(ValMin,ValMax,View->NbIso,k);
-          CutTriangle1D(X,Y,Z,&V[3*View->TimeStep],
+          CutTriangle1D(X,Y,Z,Val,
                         thev, ValMin,ValMax,Xp,Yp,Zp,&nb);        
           if(nb == 2){
             for(i=0 ; i<2 ; i++) RaiseFill(i,thev,ValMin,Raise);
@@ -256,9 +281,10 @@ void Draw_ScalarTetrahedron(Post_View *View,
 			    double *Z, 
 			    double *V){
 
-  int     k;
+  int     k,i;
   double  d, xx[4], yy[4], zz[4], vv[4];
   char Num[100];
+  double Val[4];
 
   if(View->Boundary == 2){
     // boundary == 0 should draw the tet
@@ -278,6 +304,32 @@ void Draw_ScalarTetrahedron(Post_View *View,
     Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv);//13
     return;
   }
+
+  /** JF 
+     Saturation of values 
+  */
+  {
+    double *vv = &V[4*View->TimeStep];
+    if(View->SaturateValues)
+      {
+	for(i=0;i<4;i++)
+	  {
+	    
+	    if(vv[i] > ValMax) Val[i] = ValMax;
+	    else if(vv[i] < ValMin) Val[i] = ValMin;
+	    else Val[i] = vv[i];
+	  }
+      }
+    else
+      {
+	for(i=0;i<4;i++)
+	  {	      
+	    Val[i] = vv[i];
+	  }
+      }
+  }
+  /** - END JF - **/
+
 
   for(k=0 ; k<4 ; k++)
     RaiseFill(k, V[4*View->TimeStep+k], ValMin, Raise);
@@ -301,8 +353,7 @@ void Draw_ScalarTetrahedron(Post_View *View,
 
   if(View->IntervalsType == DRAW_POST_NUMERIC && !preproNormals){
 
-    d = 0.25 * (V[4*View->TimeStep]  +V[4*View->TimeStep+1]+
-		V[4*View->TimeStep+2]+V[4*View->TimeStep+3]);
+    d = 0.25 * (Val[0]  +Val[1]+Val[2] + Val[3]);
     if(d >= ValMin && d <= ValMax){
       Palette2(View,ValMin,ValMax,d);
       sprintf(Num, View->Format, d);
@@ -320,7 +371,7 @@ void Draw_ScalarTetrahedron(Post_View *View,
     for(k=0 ; k<View->NbIso ; k++){
       if(!preproNormals)Palette(View,View->NbIso,k);
       IsoSimplex(View,preproNormals,
-		 X, Y, Z, &V[4*View->TimeStep],
+		 X, Y, Z, Val,
 		 View->GVFI(ValMin,ValMax,View->NbIso,k), 
 		 ValMin, ValMax, View->Offset, Raise, View->Light);
     }

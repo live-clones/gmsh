@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.11 2001-06-25 18:34:59 remacle Exp $
+// $Id: 3D_Extrude.cpp,v 1.12 2001-07-26 18:47:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -413,6 +413,8 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
           Tree_Add (THES->Simplexes, &s);
         }
         else{
+	  /// BUG FOUND FOR NON MATCHING SURFACES
+          are_cree (v1, v4, Tree_Ares);
           s = Create_Simplex (v3, v4, v1, NULL);
           s->iEnt = THES->Num;
           Tree_Add (THES->Simplexes, &s);
@@ -667,6 +669,7 @@ int Extrude_Mesh (Volume * v){
       do{
         TEST_IS_ALL_OK = 0;
         Extrude_Surface2 (s);
+	printf("swapping %d\n",TEST_IS_ALL_OK);
         if (TEST_IS_ALL_OK == j)
           break;
         j = TEST_IS_ALL_OK;
@@ -675,6 +678,21 @@ int Extrude_Mesh (Volume * v){
     }
 
     Extrude_Surface3 (s);
+
+    // Well well ... I think I fixed the bug in extrude meshes.
+    // Volume mesh cannot always comply with surface mesh, so I delete the
+    // surface mesh and create a new one. Edges were stored in Tree_Ares
+    // so that now, the surface mesh is ok (edge swapping is easy in 2d).
+    // cretainly not the most efficient way to do it but it seems to work
+    for (i = 0; i < List_Nbr (v->Surfaces); i++)
+      {
+	List_Read (v->Surfaces, i, &ss);
+	Tree_Action(ss->Simplexes, Free_Simplex);
+	Tree_Delete(ss->Simplexes);
+	ss->Simplexes = Tree_Create (sizeof (Simplex *), compareQuality);
+	Extrude_Mesh(ss);
+      }
+
     return true;
   }
   else{

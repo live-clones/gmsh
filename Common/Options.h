@@ -205,6 +205,7 @@ double opt_view_raise2(OPT_ARGS_NUM);
 double opt_view_arrow_scale(OPT_ARGS_NUM);
 double opt_view_visible(OPT_ARGS_NUM);
 double opt_view_intervals_type(OPT_ARGS_NUM);
+double opt_view_saturate_values(OPT_ARGS_NUM);
 double opt_view_nb_iso(OPT_ARGS_NUM);
 double opt_view_boundary(OPT_ARGS_NUM);
 double opt_view_light(OPT_ARGS_NUM);
