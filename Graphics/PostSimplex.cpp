@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.21 2001-08-03 09:34:56 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.22 2001-08-03 17:46:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -23,6 +23,8 @@ void Draw_ScalarPoint(Post_View *View,
 
   d = V[View->TimeStep];  
   RaiseFill(0, d, ValMin, Raise);
+
+  if(View->Boundary > 0) return;
 
   if(View->ShowElement){
     glColor4ubv((GLubyte*)&CTX.color.fg);
@@ -51,6 +53,14 @@ void Draw_ScalarLine(Post_View *View,
   double  d;
   double  Xp[5],Yp[5],Zp[5],Val[5],value[5],thev;
   char    Num[100] ;
+
+  if(View->Boundary > 0){
+    View->Boundary--;
+    Draw_ScalarPoint(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//0
+    Draw_ScalarPoint(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//1
+    View->Boundary++;
+    return;
+  }
 
   double *vv = &V[2*View->TimeStep];
   if(View->SaturateValues){
@@ -148,6 +158,17 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
   double  x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3], norms[9];
   double  Xp[5],Yp[5],Zp[5],Val[3],value[5],thev;
   char    Num[100] ;
+
+  if(!preproNormals && View->Boundary > 0){
+    View->Boundary--;
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//01
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//12
+    Xp[0] = X[0]; Yp[0] = Y[0]; Zp[0] = Z[0]; Val[0] = V[0];
+    Xp[1] = X[2]; Yp[1] = Y[2]; Zp[1] = Z[2]; Val[1] = V[2];
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);//02
+    View->Boundary++;
+    return;
+  }
 
   double *vv = &V[3*View->TimeStep];
   if(View->SaturateValues){
@@ -317,22 +338,17 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
   char Num[100];
   double Val[4];
 
-  if(!preproNormals && View->Boundary == 2){
-    // boundary == 0 should draw the tet
-    // boundary == 1 should draw the faces
-    // boundary == 2 should draw the edges
-    // boundary == 3 should draw the vertices
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//01
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//12
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[2], &Y[2], &Z[2], &V[2]);//23
-    // beeek...
+  if(!preproNormals && View->Boundary > 0){
+    View->Boundary--;
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//012
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//123
     xx[0] = X[0]; yy[0] = Y[0]; zz[0] = Z[0]; Val[0] = V[0];
+    xx[1] = X[1]; yy[1] = Y[1]; zz[1] = Z[1]; Val[1] = V[1];
+    xx[2] = X[3]; yy[2] = Y[3]; zz[2] = Z[3]; Val[2] = V[3];
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, Val);//013
     xx[1] = X[2]; yy[1] = Y[2]; zz[1] = Z[2]; Val[1] = V[2];
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, Val);//02
-    xx[1] = X[3]; yy[1] = Y[3]; zz[1] = Z[3]; Val[1] = V[3];
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, Val);//03
-    xx[0] = X[1]; yy[0] = Y[1]; zz[0] = Z[1]; Val[0] = V[1];
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, Val);//13
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, Val);//023
+    View->Boundary++;
     return;
   }
 
@@ -408,7 +424,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 			double ValMin, double ValMax, double Raise[3][5],
 			double *X, double *Y, double *Z, double *V){
   int    j, k ;
-  double d, dx, dy, dz, fact, xx[4], yy[4], zz[4], xc=0., yc=0., zc=0. ;
+  double d, dx, dy, dz, fact, xx[4], yy[4], zz[4], vv[4], xc=0., yc=0., zc=0. ;
   char   Num[100];
 
   for(k=0 ; k<nbnod ; k++){
@@ -431,8 +447,7 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 	Raise[2][k] + View->Offset[2];
     }
 
-    switch(nbnod){
-    case 1 :
+    if(nbnod==1){ //draw trajectories
       glColor4ubv((GLubyte*)&CTX.color.fg);
       glBegin(GL_POINTS);
       glVertex3d(xx[0],yy[0],zz[0]);
@@ -445,41 +460,21 @@ void Draw_VectorSimplex(int nbnod, Post_View *View,
 		     Z[0] + fact*V[3*(View->TimeStep-j)+2]+ Raise[2][0] + View->Offset[2]);
 	glEnd();
       }
-      break;
-    case 2 :
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      glBegin(GL_LINES);
-      glVertex3d(xx[0], yy[0], zz[0]);
-      glVertex3d(xx[1], yy[1], zz[1]);
-      glEnd();
-      break;
-    case 3 :
-      if(View->IntervalsType!=DRAW_POST_ISO){
-	glColor4ubv((GLubyte*)&CTX.color.bg);
-	glBegin(GL_TRIANGLES);
-	glVertex3d(xx[0],yy[0],zz[0]);
-	glVertex3d(xx[1],yy[1],zz[1]);
-	glVertex3d(xx[2],yy[2],zz[2]);
-	glEnd();
-      }
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      glBegin(GL_LINE_LOOP);
-      for(k=0 ; k<3 ; k++) glVertex3d(xx[k], yy[k], zz[k]);
-      glEnd();
-      break;
-    case 4 :
-      glColor4ubv((GLubyte*)&CTX.color.fg);
-      glBegin(GL_LINES);
-      glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
-      glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
-      glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[3], yy[3], zz[3]);
-      glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[2], yy[2], zz[2]);
-      glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[3], yy[3], zz[3]);
-      glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[3], yy[3], zz[3]);
-      glEnd();
-      break;
     }
-
+    else{
+      for(k=0 ; k<nbnod ; k++){
+	dx = V[3*nbnod*View->TimeStep  +3*k] ;
+	dy = V[3*nbnod*View->TimeStep+1+3*k] ;
+	dz = V[3*nbnod*View->TimeStep+2+3*k] ;
+	vv[k] = sqrt(dx*dx+dy*dy+dz*dz);
+      }
+      switch(nbnod){
+      case 2: Draw_ScalarLine(View, ValMin, ValMax, Raise, xx, yy, zz, vv); break;
+      case 3: Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, vv); break;
+      case 4: Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, xx, yy, zz, vv); break;
+      }
+    }
+  
     return;
   }
 
