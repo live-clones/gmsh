@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.92 2001-04-22 19:44:00 geuzaine Exp $
+# $Id: Makefile,v 1.93 2001-04-23 10:38:04 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -117,6 +117,10 @@ motif: initialtag
 
 gmsh:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
+                 $(FLTK_LIB) -lm
+
+gmshm:
+	$(CC) -o $(GMSH_BIN_DIR)/gmshm $(GMSH_FLTK_LIB) $(MESA_STATIC_LIB) \
                  $(FLTK_LIB) -lm
 
 gmsh2:
