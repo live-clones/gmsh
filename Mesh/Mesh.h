@@ -10,7 +10,7 @@
 #define FORMAT_UNV     2
 #define FORMAT_GREF    3
 #define FORMAT_XPM     4
-#define FORMAT_EPS     5
+#define FORMAT_PS      5
 #define FORMAT_BMP     6
 #define FORMAT_GIF     7
 #define FORMAT_GEO     8
@@ -20,6 +20,8 @@
 #define FORMAT_YUV     12
 #define FORMAT_SMS     14
 #define FORMAT_OPT     15
+#define FORMAT_PSTEX   16
+#define FORMAT_TEX     17
 
 #define CONV_VALUE    0.8
 

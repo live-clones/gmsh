@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.93 2001-11-14 14:39:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.94 2001-11-19 09:29:18 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -240,30 +240,52 @@ void file_save_as_gref_cb(CALLBACK_ARGS) {
   if((newfile = fl_file_chooser("Save GREF file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_GREF); 
 }
-void file_save_as_eps_simple_cb(CALLBACK_ARGS) {
+void file_save_as_ps_simple_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save EPS file", "*", NULL))){
+  if((newfile = fl_file_chooser("Save PS file", "*", NULL))){
     int old = CTX.print.eps_quality;
     CTX.print.eps_quality = 1; 
-    CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_PS); 
     CTX.print.eps_quality = old; 
   }
 }
-void file_save_as_eps_accurate_cb(CALLBACK_ARGS) {
+void file_save_as_ps_accurate_cb(CALLBACK_ARGS) {
   char *newfile;
-  if((newfile = fl_file_chooser("Save EPS file", "*", NULL))){
+  if((newfile = fl_file_chooser("Save PS file", "*", NULL))){
     int old = CTX.print.eps_quality;
     CTX.print.eps_quality = 2; 
-    CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_PS); 
     CTX.print.eps_quality = old; 
   }
+}
+void file_save_as_pstex_simple_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save LaTeX file (PS part)", "*", NULL))){
+    int old = CTX.print.eps_quality;
+    CTX.print.eps_quality = 1; 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_PSTEX); 
+    CTX.print.eps_quality = old; 
+  }
+}
+void file_save_as_pstex_accurate_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save LaTeX file (PS part)", "*", NULL))){
+    int old = CTX.print.eps_quality;
+    CTX.print.eps_quality = 2; 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_PSTEX); 
+    CTX.print.eps_quality = old; 
+  }
+}
+void file_save_as_tex_cb(CALLBACK_ARGS) {
+  char *newfile;
+  if((newfile = fl_file_chooser("Save LaTeX file (TeX part)", "*", NULL)))
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_TEX); 
 }
 void file_save_as_jpeg_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save JPEG file", "*", NULL)))
     CreateOutputFile(newfile, CTX.print.format = FORMAT_JPEG); 
 }
-
 void file_save_as_gif_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save GIF file", "*", NULL))){

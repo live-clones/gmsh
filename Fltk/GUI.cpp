@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.128 2001-11-14 14:39:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.129 2001-11-19 09:29:18 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -64,14 +64,17 @@ Fl_Menu_Item m_menubar_table[] = {
          {"Gref mesh format (gref)...",        0, (Fl_Callback *)file_save_as_gref_cb, 0},
          {0},
       {"Image",  0, 0, 0, FL_SUBMENU},
-         {"PostScript fast (ps)...",  0, (Fl_Callback *)file_save_as_eps_simple_cb, 0},
-         {"PostScript accurate...",   0, (Fl_Callback *)file_save_as_eps_accurate_cb, 0},
-         {"Jpeg (jpg)...",            0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
-         {"GIF (gif)...",             0, (Fl_Callback *)file_save_as_gif_cb, 0},
-         {"GIF dithered...",          0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
-         {"GIF transparent...",       0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
-         {"PPM (ppm)...",             0, (Fl_Callback *)file_save_as_ppm_cb, 0},
-         {"UCB YUV (yuv)...",         0, (Fl_Callback *)file_save_as_yuv_cb, 0},
+         {"PostScript, fast (ps)...",  0, (Fl_Callback *)file_save_as_ps_simple_cb, 0},
+         {"PostScript, accurate...",   0, (Fl_Callback *)file_save_as_ps_accurate_cb, 0},
+         {"LaTeX, PS part, fast...",      0, (Fl_Callback *)file_save_as_pstex_simple_cb, 0},
+         {"LaTeX, PS part, accurate...",  0, (Fl_Callback *)file_save_as_pstex_accurate_cb, 0},
+         {"LaTeX, TeX part (tex)...",  0, (Fl_Callback *)file_save_as_tex_cb, 0},
+         {"Jpeg (jpg)...",             0, (Fl_Callback *)file_save_as_jpeg_cb, 0},
+         {"GIF (gif)...",              0, (Fl_Callback *)file_save_as_gif_cb, 0},
+         {"GIF, dithered...",          0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
+         {"GIF, transparent...",       0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
+         {"PPM (ppm)...",              0, (Fl_Callback *)file_save_as_ppm_cb, 0},
+         {"UCB YUV (yuv)...",          0, (Fl_Callback *)file_save_as_yuv_cb, 0},
          {0},
       {0},
     {"Messages...",      FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
@@ -816,55 +819,59 @@ void GUI::create_graphic_window(int argc, char **argv){
     g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
   }
   g_opengl_window->end();
+
+  Fl_Box *bottom = new Fl_Box(0,glheight,width,sh);
+  bottom->box(FL_THIN_UP_BOX);
+
+  x = 2;
   
-  {
-    Fl_Group *o = new Fl_Group(0,glheight,width,sh);
-    o->box(FL_THIN_UP_BOX);
-    
-    x = 2;
-    
-    g_status_butt[0] = new Fl_Button(x,glheight+2,sw,sh-4,"X"); x+=sw;
-    g_status_butt[0]->callback(status_xyz1p_cb, (void*)0);
-    //g_status_butt[0]->tooltip("Set X view");
-    g_status_butt[1] = new Fl_Button(x,glheight+2,sw,sh-4,"Y"); x+=sw;
-    g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
-    g_status_butt[2] = new Fl_Button(x,glheight+2,sw,sh-4,"Z"); x+=sw;
-    g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
-    g_status_butt[3] = new Fl_Button(x,glheight+2,2*CTX.fontsize,sh-4,"1:1"); x+=2*CTX.fontsize;
-    g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
-    g_status_butt[4] = new Fl_Button(x,glheight+2,sw,sh-4,"?"); x+=sw;
-    g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
-    g_status_butt[5] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
-    g_status_butt[5]->callback(status_play_cb);
-    start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
-    start_bmp->label(g_status_butt[5]);
-    stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
-    g_status_butt[5]->deactivate();
-    g_status_butt[6] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
-    g_status_butt[6]->callback(status_cancel_cb);
-    abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
-    abort_bmp->label(g_status_butt[6]);
-    g_status_butt[6]->deactivate();
-    for(i = 0 ; i<7 ; i++){
-      g_status_butt[i]->box(FL_FLAT_BOX);
-      g_status_butt[i]->selection_color(FL_WHITE);
-      g_status_butt[i]->labelsize(CTX.fontsize);
-      g_status_butt[i]->align(FL_ALIGN_CENTER|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
-    }
-    
-    g_status_label[0] = new Fl_Box(x,glheight+2,(width-x)/3,sh-4);
-    g_status_label[1] = new Fl_Box(x+(width-x)/3,glheight+2,(width-x)/3,sh-4);
-    g_status_label[2] = new Fl_Box(x+2*(width-x)/3,glheight+2,(width-x)/3-2,sh-4);
-    for(i = 0 ; i<3 ; i++){
-      g_status_label[i]->box(FL_FLAT_BOX);
-      g_status_label[i]->labelsize(CTX.fontsize);
-      g_status_label[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
-    }
-    
-    o->end();
+  g_status_butt[0] = new Fl_Button(x,glheight+2,sw,sh-4,"X"); x+=sw;
+  g_status_butt[0]->callback(status_xyz1p_cb, (void*)0);
+  //g_status_butt[0]->tooltip("Set X view");
+  g_status_butt[1] = new Fl_Button(x,glheight+2,sw,sh-4,"Y"); x+=sw;
+  g_status_butt[1]->callback(status_xyz1p_cb, (void*)1);
+  //g_status_butt[1]->tooltip("Set Y view");
+  g_status_butt[2] = new Fl_Button(x,glheight+2,sw,sh-4,"Z"); x+=sw;
+  g_status_butt[2]->callback(status_xyz1p_cb, (void*)2);
+  //g_status_butt[2]->tooltip("Set Z view");
+  g_status_butt[3] = new Fl_Button(x,glheight+2,2*CTX.fontsize,sh-4,"1:1"); x+=2*CTX.fontsize;
+  g_status_butt[3]->callback(status_xyz1p_cb, (void*)3);
+  //g_status_butt[3]->tooltip("Set unit scale");
+  g_status_butt[4] = new Fl_Button(x,glheight+2,sw,sh-4,"?"); x+=sw;
+  g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
+  //g_status_butt[4]->tooltip("Show current options");
+  g_status_butt[5] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
+  g_status_butt[5]->callback(status_play_cb);
+  start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
+  start_bmp->label(g_status_butt[5]);
+  stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
+  g_status_butt[5]->deactivate();
+  //g_status_butt[5]->tooltip("Play/pause animation");
+  /*
+  g_status_butt[6] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
+  g_status_butt[6]->callback(status_cancel_cb);
+  abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
+  abort_bmp->label(g_status_butt[6]);
+  g_status_butt[6]->deactivate();
+  */
+  for(i = 0 ; i<6/*7*/ ; i++){
+    g_status_butt[i]->box(FL_FLAT_BOX);
+    g_status_butt[i]->selection_color(FL_WHITE);
+    g_status_butt[i]->labelsize(CTX.fontsize);
+    g_status_butt[i]->align(FL_ALIGN_CENTER|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
   }
   
-  g_window->resizable(g_opengl_window);
+  g_status_label[0] = new Fl_Box(x,glheight+2,(width-x)/3,sh-4);
+  g_status_label[1] = new Fl_Box(x+(width-x)/3,glheight+2,(width-x)/3,sh-4);
+  g_status_label[2] = new Fl_Box(x+2*(width-x)/3,glheight+2,(width-x)/3-2,sh-4);
+  for(i = 0 ; i<3 ; i++){
+    g_status_label[i]->box(FL_FLAT_BOX);
+    g_status_label[i]->labelsize(CTX.fontsize);
+    g_status_label[i]->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE|FL_ALIGN_CLIP);
+  }
+  
+  g_window->resizable(new Fl_Box(x,0,width-x,glheight));
+  
   g_window->position(CTX.gl_position[0],CTX.gl_position[1]);
   g_window->end();   
 }
@@ -1829,8 +1836,6 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
       add_multiline_in_browser(o, "Copyright: ", copyright);
       o->textsize(CTX.fontsize);
       
-      pdb->main_window->resizable(o);
-
       g->end();
     }
     o->end();
@@ -1842,6 +1847,8 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
 
   pdb->run_button = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Run");
   pdb->run_button->labelsize(CTX.fontsize);
+
+  pdb->main_window->resizable(new Fl_Box(2*WB,2*WB+BH,10,10));
 
   if(CTX.center_windows)
     pdb->main_window->position(m_window->x()+m_window->w()/2-width/2,
@@ -1891,7 +1898,8 @@ void GUI::create_message_window(){
     o->callback(cancel_cb, (void*)msg_window);
   }
   
-  msg_window->resizable(msg_browser);
+  msg_window->resizable(new Fl_Box(WB,WB, 100,10));
+  msg_window->size_range(WB+100 + 3*BB+4*WB,100);
   
   msg_window->position(CTX.msg_position[0], CTX.msg_position[1]);
   msg_window->end();
@@ -1907,7 +1915,7 @@ void GUI::save_message(char *filename){
   FILE *fp;
 
   if(!(fp = fopen(filename,"w"))) {
-    Msg(WARNING, "Unable to open file '%s'", filename); 
+    Msg(GERROR, "Unable to open file '%s'", filename); 
     return;
   }
   for(int i = 1 ; i<=msg_browser->size() ; i++){
@@ -1966,7 +1974,8 @@ void GUI::create_about_window(){
     o->add("@c@b@.gmsh@geuz.org");
 #endif
     o->add("");
-    sprintf(buffer, "@c@.Version: %.2f", GMSH_VERSION); o->add(buffer);
+    sprintf(buffer, "@c@.Version: %d.%d.%d", GMSH_MAJOR_VERSION, 
+	    GMSH_MINOR_VERSION, GMSH_PATCH_VERSION); o->add(buffer);
     sprintf(buffer, "@c@.Build date: %s", GMSH_DATE); o->add(buffer);
     sprintf(buffer, "@c@.Build OS: %s", GMSH_OS); o->add(buffer);
     sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d",
@@ -2352,7 +2361,6 @@ void GUI::create_view_options_window(int num){
     view_window->position(m_window->x()+m_window->w()/2-width/2,
 			  m_window->y()+9*BH-height/2);
   
-  //view_window->resizable(view_colorbar_window);
   view_window->end();
   
 }

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.11 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Main.cpp,v 1.12 2001-11-19 09:29:18 geuzaine Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
@@ -49,12 +49,14 @@ void Info (int level, char *arg0){
     ParUtil::Instance()->Exit();
   case 1:
     if(ParUtil::Instance()->master())
-      fprintf(stderr, "%.2f\n", GMSH_VERSION);
+      fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
+	      GMSH_PATCH_VERSION);
     ParUtil::Instance()->Exit();
   case 2:
     if(ParUtil::Instance()->master())
       {
-	fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
+	fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION, 
+		GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
 	fprintf(stderr, "%s\n", gmsh_os);
 	fprintf(stderr, "%s\n", gmsh_date);
 	fprintf(stderr, "%s\n", gmsh_host);

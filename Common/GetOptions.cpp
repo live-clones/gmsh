@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.41 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.42 2001-11-19 09:29:18 geuzaine Exp $
 
 #include <unistd.h>
 #include "Gmsh.h"
@@ -12,6 +12,13 @@
 #include "Views.h"
 #include "OpenFile.h"
 #include "Parser.h"
+
+#ifndef GMSH_MAJOR_VERSION
+#error 
+#error Common/GmshVersion.h is not up-to-date. 
+#error Please run 'make tag'.
+#error
+#endif
 
 extern Context_T  CTX;
 
@@ -309,12 +316,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "version") || 
               !strcmp(argv[i]+1, "-version")){
-        fprintf(stderr, "%.2f\n", GMSH_VERSION);
+        fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
+		GMSH_PATCH_VERSION);
         exit(1);
       }
       else if(!strcmp(argv[i]+1, "info") || 
               !strcmp(argv[i]+1, "-info")){
-        fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
+        fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION, 
+	      GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
         fprintf(stderr, "%s\n", gmsh_os);
 #if _FLTK
         fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION, 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.61 2001-11-14 14:39:39 geuzaine Exp $
+// $Id: Options.cpp,v 1.62 2001-11-19 09:29:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -145,7 +145,7 @@ void Print_Options(int num, int level, char *filename){
   if(filename){
     file = fopen(filename,"w");
     if(!file){
-      Msg(WARNING, "Unable to open file '%s'", filename);
+      Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
   }

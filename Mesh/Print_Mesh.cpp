@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.31 2001-10-06 09:21:04 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.32 2001-11-19 09:29:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1188,7 +1188,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     c ? strcpy (name, c) : strcat (name, ".msh");
     mshfile = fopen (name, "w");
     if (!mshfile){
-      Msg(WARNING, "Unable to open file '%s'", name);
+      Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
     Msg(INFO, "Writing file '%s'", name);
@@ -1203,7 +1203,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     c ? strcpy (name, c) : strcat (name, ".unv");
     unvfile = fopen (name, "w");
     if (!unvfile){
-      Msg(WARNING, "Unable to open file '%s'", name);
+      Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
     Msg(INFO, "Writing file '%s'", name);
@@ -1226,7 +1226,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     Tree_T *TRE = Tree_Create (sizeof (Vertex *), compareFrozen);
     Greffile = fopen (name, "w");
     if (!Greffile){
-      Msg(WARNING, "Unable to open file '%s'", name);
+      Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
     Msg(INFO, "Writing file '%s'", name);

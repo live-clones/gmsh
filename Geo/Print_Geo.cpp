@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.22 2001-11-05 08:36:49 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.23 2001-11-19 09:29:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -234,7 +234,7 @@ void Print_Geo(Mesh *M, char *filename){
   if(filename){
     FOUT = fopen(filename,"w");
     if(!FOUT){
-      Msg(WARNING, "Unable to open file '%s'", filename);
+      Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
   }

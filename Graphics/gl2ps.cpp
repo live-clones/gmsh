@@ -1,10 +1,10 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 /*
- * GL2PS, an OpenGL to Postscript Printing Library
+ * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.29 2001-10-08 22:27:19 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.30 2001-11-19 09:29:18 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -31,7 +31,6 @@
 #include <math.h>
 #include <stdarg.h>
 #include <time.h>
-
 #include "gl2ps.h"
 
 /* The static gl2ps context. gl2ps is not thread safe (we should
@@ -834,7 +833,7 @@ GLvoid  gl2psBuildPolygonBoundary(GL2PSbsptree *tree){
 
 GLvoid gl2psAddPolyPrimitive(GLshort type, GLshort numverts, 
 			     GL2PSvertex *verts, GLint offset, 
-			     GLshort dash, GLshort width,
+			     GLshort dash, GLfloat width,
 			     GLshort boundary){
   GLshort         i;
   GLfloat         factor, units, area, dZ, dZdX, dZdY, maxdZ;
@@ -936,7 +935,8 @@ GLint gl2psGetVertex(GL2PSvertex *v, GLfloat *p){
 
 GLint gl2psParseFeedbackBuffer(GLvoid){
   GLint        i, used, count, v, vtot, offset=0;
-  GLshort      boundary, flag, dash=0, psize=1, lwidth=1;
+  GLshort      boundary, flag, dash=0;
+  GLfloat      lwidth=1., psize=1.;
   GLfloat     *current;
   GL2PSvertex  vertices[3];
 
@@ -1028,12 +1028,12 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
       case GL2PS_SET_POINT_SIZE : 
 	current+=2; 
 	used-=2; 
-	psize=(GLint)current[1];
+	psize=current[1];
 	break;
       case GL2PS_SET_LINE_WIDTH : 
 	current+=2; 
 	used-=2; 
-	lwidth=(GLint)current[1];
+	lwidth=current[1];
 	break;
       }
       current += 2; 
@@ -1050,11 +1050,23 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
   return GL2PS_SUCCESS;
 }
 
+GLboolean gl2psVertsSameColor(const GL2PSprimitive *prim){
+  int i;
+  for(i=1; i<prim->numverts; i++){
+    if(prim->verts[0].rgba[0] != prim->verts[i].rgba[0] || 
+       prim->verts[0].rgba[1] != prim->verts[i].rgba[1] || 
+       prim->verts[0].rgba[2] != prim->verts[i].rgba[2]) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 /* The postscript routines. Other (vector) image formats should be
    easy to generate by creating the three corresponding routines for
    the new format. */
 
-GLvoid gl2psPrintPostscriptHeader(GLvoid){
+GLvoid gl2psPrintPostScriptHeader(GLvoid){
   GLint   viewport[4], index;
   GLfloat rgba[4];
   time_t  now;
@@ -1079,10 +1091,10 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
   fprintf(gl2ps.stream, 
 	  "%%!PS-Adobe-3.0\n"
 	  "%%%%Title: %s\n"
-	  "%%%%Creator: GL2PS, an OpenGL to Postscript Printing Library, v. %g\n"
+	  "%%%%Creator: GL2PS, an OpenGL to PostScript Printing Library, v. %g\n"
 	  "%%%%For: %s\n"
 	  "%%%%CreationDate: %s"
-	  "%%%%LanguageLevel: 2\n"
+	  "%%%%LanguageLevel: 3\n"
 	  "%%%%DocumentData: Clean7Bit\n"
 	  "%%%%Pages: 1\n"
 	  "%%%%PageOrder: Ascend\n"
@@ -1103,17 +1115,17 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "/S  { FC moveto show } BD\n"
 	  "/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
 	  "/L  { newpath moveto lineto stroke } BD\n"
-	  "/SL { /b1 exch def /g1 exch def /r1 exch def /y1 exch def\n"
-	  "      /x1 exch def /b2 exch def /g2 exch def /r2 exch def /y2 exch def\n"
-	  "      /x2 exch def b2 b1 sub abs 0.01 gt g2 g1 sub abs 0.005 gt r2 r1 sub\n"
-	  "      abs 0.008 gt or or { /bm b1 b2 add 0.5 mul def /gm g1 g2 add 0.5 mul def\n"
-	  "      /rm r1 r2 add 0.5 mul def /ym y1 y2 add 0.5 mul def /xm x1 x2 add\n"
-	  "      0.5 mul def x1 y1 r1 g1 b1 xm ym rm gm bm SL xm ym rm gm bm x2 y2 r2\n"
-	  "      g2 b2 SL } { x1 y1 x2 y2 r1 g1 b1 C L } ifelse } BD\n"
+	  "/SL { C moveto C lineto stroke } BD\n"
 	  "/T  { newpath moveto lineto lineto closepath fill } BD\n"
-	  "/ST { /b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
+	  "/STshfill { /b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
 	  "      /b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
 	  "      /b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"
+	  "      gsave << /ShadingType 4 /ColorSpace [/DeviceRGB]\n"
+	  "      /DataSource [ 0 x1 y1 r1 g1 b1 0 x2 y2 r2 g2 b2 0 x3 y3 r3 g3 b3 ] >>\n"
+	  "      shfill grestore } BD\n"
+	  "/STnoshfill {/b1 exch def /g1 exch def /r1 exch def /y1 exch def /x1 exch def\n"
+	  "      /b2 exch def /g2 exch def /r2 exch def /y2 exch def /x2 exch def\n"
+	  "      /b3 exch def /g3 exch def /r3 exch def /y3 exch def /x3 exch def\n"    
 	  "      b2 b1 sub abs 0.05 gt g2 g1 sub abs 0.017 gt r2 r1 sub abs 0.032 gt\n"
 	  "      b3 b1 sub abs 0.05 gt g3 g1 sub abs 0.017 gt r3 r1 sub abs 0.032 gt\n"
 	  "      b2 b3 sub abs 0.05 gt g2 g3 sub abs 0.017 gt r2 r3 sub abs 0.032 gt\n"
@@ -1127,7 +1139,9 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "      r12 g12 b12 x13 y13 r13 g13 b13 x2 y2 r2 g2 b2 x12 y12 r12 g12 b12\n"
 	  "      x32 y32 r32 g32 b32 x3 y3 r3 g3 b3 x32 y32 r32 g32 b32 x13 y13 r13\n"
 	  "      g13 b13 x32 y32 r32 g32 b32 x12 y12 r12 g12 b12 x13 y13 r13 g13 b13\n"
-	  "      ST ST ST ST } { x1 y1 x2 y2 x3 y3 r1 g1 b1 C T } ifelse } BD\n"
+	  "      STnoshfill STnoshfill STnoshfill STnoshfill }\n" 
+	  "      { r1 g1 b1 C x1 y1 x2 y2 x3 y3 T } ifelse } def\n"
+	  "/shfill where { pop /ST { STshfill } BD } { /ST { STnoshfill } BD } ifelse\n"
 	  "end\n"
 	  "%%%%EndProlog\n"
 	  "%%%%BeginSetup\n"
@@ -1173,9 +1187,12 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
     fprintf(gl2ps.stream, "%g %g %g C\n", rgba[0], rgba[1], rgba[2]);	\
   }
 
-GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
+#define CLEARCOLOR rgba[0] = rgba[1] = rgba[2] = -1.
+
+
+GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
   static GL2PSrgba rgba={-1.,-1.,-1.,-1.};
-  static int linewidth=-1;
+  static float linewidth=-1.;
 
   GL2PSprimitive *prim;
 
@@ -1202,7 +1219,8 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
     }
     if(prim->dash)
       fprintf(gl2ps.stream, "[%d] 0 setdash\n", prim->dash);
-    if(gl2ps.shade){
+    if(gl2ps.shade && !gl2psVertsSameColor(prim)){
+      CLEARCOLOR;
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
@@ -1220,7 +1238,8 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
       fprintf(gl2ps.stream, "[] 0 setdash\n");
     break;
   case GL2PS_TRIANGLE :
-    if(gl2ps.shade){
+    if(gl2ps.shade && !gl2psVertsSameColor(prim)){
+      CLEARCOLOR;
       fprintf(gl2ps.stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
 	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
 	      prim->verts[2].rgba[0], prim->verts[2].rgba[1],
@@ -1248,7 +1267,7 @@ GLvoid gl2psPrintPostscriptPrimitive(GLvoid *a, GLvoid *b){
   }
 }
 
-void gl2psPrintPostscriptFooter(GLvoid){
+void gl2psPrintPostScriptFooter(GLvoid){
   fprintf(gl2ps.stream,
 	  "grestore\n"
 	  "showpage\n"
@@ -1259,14 +1278,50 @@ void gl2psPrintPostscriptFooter(GLvoid){
 	  "%%%%EOF\n");
 }
 
+/* The LaTeX routines. */
+
+GLvoid gl2psPrintTeXHeader(GLvoid){
+  GLint   viewport[4];
+
+  glGetIntegerv(GL_VIEWPORT, viewport);
+
+  fprintf(gl2ps.stream, 
+	  "\\begin{picture}(0,0)\n"
+	  "\\includegraphics{}\n"
+	  "\\end{picture}\n"
+	  "\\setlength{\\unitlength}{1pt}\n"
+	  "\\begin{picture}(%d,%d)(%d,%d)\n",
+	  10,10,10,10);
+}
+
+GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
+  GL2PSprimitive *prim;
+
+  prim = *(GL2PSprimitive**) a;
+
+  switch(prim->type){
+  case GL2PS_TEXT :
+    fprintf(gl2ps.stream, "\\put(%g,%g){\\makebox(0,0)[lb]{%s}}\n",
+	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], prim->text->str);
+    break;
+  default :
+    break;
+  }
+}
+
+void gl2psPrintTeXFooter(GLvoid){
+  fprintf(gl2ps.stream, "\\end{picture}\n");
+}
+
 
 /* The public routines */
 
-GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
+GLvoid gl2psBeginPage(char *title, char *producer, 
+		      GLint format, GLint sort, GLint options, 
 		      GLint colormode, GLint colorsize, GL2PSrgba *colormap,
 		      GLint buffersize, FILE *stream){
 
-  gl2ps.format = GL2PS_EPS; /* a new arg should be introduced to select the format */
+  gl2ps.format = format;
   gl2ps.title = title;
   gl2ps.producer = producer;
   gl2ps.sort = sort;
@@ -1312,19 +1367,28 @@ GLint gl2psEndPage(GLvoid){
   glGetIntegerv(GL_SHADE_MODEL, &shademodel);
   gl2ps.shade = (shademodel == GL_SMOOTH);
 
-  res = gl2psParseFeedbackBuffer();
+  if(gl2ps.format & GL2PS_TEX)
+    res = GL2PS_SUCCESS;
+  else
+    res = gl2psParseFeedbackBuffer();
 
   if(gl2ps.feedback) gl2psFree(gl2ps.feedback);
 
   if(res == GL2PS_SUCCESS){
 
     switch(gl2ps.format){
-      /* other vector formats should go here */
-    case GL2PS_EPS :
+    case GL2PS_TEX :
+      phead = gl2psPrintTeXHeader;
+      pprim = gl2psPrintTeXPrimitive;
+      pfoot = gl2psPrintTeXFooter;
+      break;
+    case GL2PS_PS :
+      phead = gl2psPrintPostScriptHeader;
+      pprim = gl2psPrintPostScriptPrimitive;
+      pfoot = gl2psPrintPostScriptFooter;
+      break;
     default :
-      phead = gl2psPrintPostscriptHeader;
-      pprim = gl2psPrintPostscriptPrimitive;
-      pfoot = gl2psPrintPostscriptFooter;
+      gl2psMsg(GL2PS_ERROR, "Unknown format");
       break;
     }
 
@@ -1348,10 +1412,10 @@ GLint gl2psEndPage(GLvoid){
       gl2psBuildBspTree(root, gl2ps.primitives);
       if(gl2ps.boundary) gl2psBuildPolygonBoundary(root);
       if(gl2ps.options & GL2PS_OCCLUSION_CULL){
-	gl2psTraverseBspTree(root, eye, -GL2PS_EPSILON, gl2psLess,
+	gl2psTraverseBspTree(root, eye, -(float)GL2PS_EPSILON, gl2psLess,
 			     gl2psAddInImage);
       }
-      gl2psTraverseBspTree(root, eye, GL2PS_EPSILON, gl2psGreater, 
+      gl2psTraverseBspTree(root, eye, (float)GL2PS_EPSILON, gl2psGreater, 
 			   pprim);
       gl2psFreeBspTree(root);
       res = GL2PS_SUCCESS;
@@ -1373,6 +1437,8 @@ GLvoid gl2psText(char *str, char *fontname, GLint fontsize){
   GLfloat         pos[4];
   GL2PSprimitive  *prim;
   GLint           len;
+
+  if(gl2ps.options & GL2PS_NO_TEXT) return;
 
   prim = (GL2PSprimitive *)gl2psMalloc(sizeof(GL2PSprimitive));
   prim->type = GL2PS_TEXT;

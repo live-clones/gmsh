@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.22 2001-11-13 08:11:21 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.23 2001-11-19 09:29:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -52,8 +52,10 @@ void CreateOutputFile (char *name, int format) {
     else if(!strcmp(ext,".gif")) CreateOutputFile(name, FORMAT_GIF);
     else if(!strcmp(ext,".jpg")) CreateOutputFile(name, FORMAT_JPEG);
     else if(!strcmp(ext,".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
-    else if(!strcmp(ext,".ps")) CreateOutputFile(name, FORMAT_EPS);
-    else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_EPS);
+    else if(!strcmp(ext,".ps")) CreateOutputFile(name, FORMAT_PS);
+    else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_PS);
+    else if(!strcmp(ext,".tex")) CreateOutputFile(name, FORMAT_TEX);
+    else if(!strcmp(ext,".pstex")) CreateOutputFile(name, FORMAT_PSTEX);
     else if(!strcmp(ext,".ppm")) CreateOutputFile(name, FORMAT_PPM);
     else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
     else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
@@ -83,7 +85,7 @@ void CreateOutputFile (char *name, int format) {
 
   case FORMAT_JPEG :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to open file '%s'", name); 
+      Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
@@ -97,7 +99,7 @@ void CreateOutputFile (char *name, int format) {
 
   case FORMAT_GIF :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to open file '%s'", name); 
+      Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
@@ -117,7 +119,7 @@ void CreateOutputFile (char *name, int format) {
 
   case FORMAT_PPM :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to open file '%s'", name); 
+      Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
@@ -130,7 +132,7 @@ void CreateOutputFile (char *name, int format) {
 
   case FORMAT_YUV :
     if(!(fp = fopen(name,"wb"))) {
-      Msg(WARNING, "Unable to open file '%s'", name); 
+      Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
     FillBuffer();
@@ -141,9 +143,10 @@ void CreateOutputFile (char *name, int format) {
     fclose(fp);
     break;
 
-  case FORMAT_EPS :
+  case FORMAT_PS :
+  case FORMAT_PSTEX :
     if(!(fp = fopen(name,"w"))) {
-      Msg(WARNING, "Unable to open file '%s'", name); 
+      Msg(GERROR, "Unable to open file '%s'", name); 
       return;
     }
     CTX.print.gl_fonts = 0;
@@ -152,9 +155,11 @@ void CreateOutputFile (char *name, int format) {
     while(res == GL2PS_OVERFLOW){
       size3d += 2048*2048 ;
       gl2psBeginPage(CTX.base_filename, "Gmsh", 
+		     GL2PS_PS,
 		     (CTX.print.eps_quality == 1 ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
 		     GL2PS_SIMPLE_LINE_OFFSET | 
-		     (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0),
+		     (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
+		     (format==FORMAT_PSTEX ? GL2PS_NO_TEXT : 0),
 		     GL_RGBA, 0, NULL, size3d, fp);
       CTX.stream = TO_FILE ;
       FillBuffer();
@@ -166,7 +171,26 @@ void CreateOutputFile (char *name, int format) {
     fclose(fp);
     CTX.print.gl_fonts = 1;
     break ;
-    
+
+  case FORMAT_TEX :
+    if(!(fp = fopen(name,"w"))) {
+      Msg(GERROR, "Unable to open file '%s'", name); 
+      return;
+    }
+    gl2psBeginPage(CTX.base_filename, "Gmsh", 
+		   GL2PS_TEX, GL2PS_NO_SORT, 0, 
+		   GL_RGBA, 0, NULL, 1, fp);
+    CTX.stream = TO_FILE ;
+    CTX.print.gl_fonts = 0;
+    FillBuffer();
+    CTX.stream = TO_SCREEN ;
+    CTX.print.gl_fonts = 1;
+    res = gl2psEndPage();
+    Msg(INFO, "TEX creation complete '%s'", name);
+    Msg(STATUS2, "Wrote '%s'", name);
+    fclose(fp);
+    break;
+
   default :
     Msg(WARNING, "Unknown print format");
     break;

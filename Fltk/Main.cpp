@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.34 2001-10-30 08:18:50 geuzaine Exp $
+// $Id: Main.cpp,v 1.35 2001-11-19 09:29:18 geuzaine Exp $
 
 #include <signal.h>
 #include <time.h>
@@ -58,8 +58,9 @@ int main(int argc, char *argv[]){
     CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
-    fprintf(stderr, "%s, version %.2f, started %s\n", 
-	    gmsh_progname, GMSH_VERSION, currtime);
+    fprintf(stderr, "%s, version %d.%d.%d, started %s\n", 
+	    gmsh_progname, GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
+	    GMSH_PATCH_VERSION, currtime);
 
   // Register Default Plugins (in test ...)
   if(CTX.default_plugins)
@@ -133,7 +134,8 @@ int main(int argc, char *argv[]){
   // Say welcome!
 
   Msg(STATUS3N, "Ready");
-  Msg(STATUS1, "Gmsh %.2f", GMSH_VERSION);
+  Msg(STATUS1, "Gmsh %d.%d.%d", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, 
+      GMSH_PATCH_VERSION);
 
   // Log the following for bug reports
   

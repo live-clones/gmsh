@@ -1,8 +1,9 @@
 Summary: A 3D mesh generator with pre- and post-processing facilities
 Name: gmsh
-Version: 1.30
-Source: gmsh-1.30.tar.gz
-Release: 2
+# Version: 1.0
+Version: %{gmshversion}
+Source: gmsh-%{version}.tar.gz
+Release: 1
 Copyright: distributable
 Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
@@ -29,7 +30,7 @@ and/or post-processor.
 
 %build
 make linux_gcc-2.95
-#make linux
+# make linux
 make distrib
 make utilities
 rm -rf CVS */CVS */*/CVS

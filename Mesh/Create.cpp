@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.27 2001-11-16 19:35:26 remacle Exp $
+// $Id: Create.cpp,v 1.28 2001-11-19 09:29:18 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -183,7 +183,7 @@ void Add_EdgeLoop (int Num, List_T * intlist, Mesh * M){
 }
 
 void End_Curve (Curve * c){
-  double det, R2, mat[3][3], R, A3, A1, A4;
+  double R2, mat[3][3], R, A3, A1, A4;
   Vertex *v[5], v1, v3, v4;
   double dd[3], qq[3], AX, f1, f2, DP, dir32[3], dir12[3], n[3], m[3], dir42[3];
   double rhs[2], sys[2][2], sol[2];

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.59 2001-11-05 08:37:43 geuzaine Exp $
+// $Id: Views.cpp,v 1.60 2001-11-19 09:29:18 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -678,7 +678,7 @@ void Write_View(int Flag_BIN, Post_View *v, char *filename){
   if(filename){
     file = fopen(filename,"w");
     if(!file){
-      Msg(WARNING, "Unable to open file '%s'", filename);
+      Msg(GERROR, "Unable to open file '%s'", filename);
       return;
     }
   }

@@ -1,8 +1,8 @@
 /*
- * GL2PS, an OpenGL to Postscript Printing Library
+ * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.13 2001-10-08 21:48:19 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.14 2001-11-19 09:29:18 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -28,14 +28,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <GL/gl.h>
 
-#define GL2PS_VERSION                    0.42
+#define GL2PS_VERSION                    0.5
 #define GL2PS_NONE                       0
 
 /* Output file format */
 
-#define GL2PS_EPS                        1
+#define GL2PS_PS                         1
+#define GL2PS_TEX                        2
 
 /* Sorting algorithms */
 
@@ -50,6 +55,7 @@
 #define GL2PS_SILENT                     (1<<2)
 #define GL2PS_BEST_ROOT                  (1<<3)
 #define GL2PS_OCCLUSION_CULL             (1<<4)
+#define GL2PS_NO_TEXT                    (1<<5)
 
 /* Arguments for gl2psEnable/gl2psDisable */
 
@@ -136,8 +142,8 @@ typedef struct {
 } GL2PSstring;
 
 typedef struct {
-  GLshort type, numverts, boundary, dash, width;
-  GLfloat depth;
+  GLshort type, numverts, boundary, dash;
+  GLfloat width, depth;
   GL2PSvertex *verts;
   GL2PSstring *text;
 } GL2PSprimitive;
@@ -155,7 +161,8 @@ typedef struct {
 
 /* public functions */
 
-GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
+GLvoid gl2psBeginPage(char *title, char *producer, 
+		      GLint format, GLint sort, GLint options, 
 		      GLint colormode, GLint colorsize, GL2PSrgba *colormap, 
 		      GLint buffersize, FILE * stream);
 GLint  gl2psEndPage(GLvoid);

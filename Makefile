@@ -1,6 +1,8 @@
-# $Id: Makefile,v 1.162 2001-11-14 19:00:05 geuzaine Exp $
+# $Id: Makefile,v 1.163 2001-11-19 09:29:18 geuzaine Exp $
 
-GMSH_RELEASE = 1.30
+GMSH_MAJOR_VERSION = 1
+GMSH_MINOR_VERSION = 30
+GMSH_PATCH_VERSION = 3
 
 MAKE = make
 CXX = c++
@@ -32,6 +34,7 @@ GMSH_BOX_LIB = -L$(GMSH_LIB_DIR) -lBox -lParser -lMesh -lGeo -lAdapt\
 GMSH_FLTK_LIB = -L$(GMSH_LIB_DIR) -lFltk -lParser -lGraphics -lMesh\
                 -lGeo -lAdapt -lCommon -lDataStr -lJpeg -lPlugin -lParallel -lTriangle
 
+GMSH_RELEASE = $(GMSH_MAJOR_VERSION).$(GMSH_MINOR_VERSION).$(GMSH_PATCH_VERSION)
 GMSH_ARCHIVE = $(GMSH_ARCHIVE_DIR)/gmsh-`date "+%Y.%m.%d"`
 GMSH_SRCRPM = gmsh-$(GMSH_RELEASE)
 GMSH_UNAME = `uname`
@@ -125,7 +128,12 @@ nodepend:
 
 tag:
 	$(RM) $(RMFLAGS) Common/GmshVersion.h
-	echo "#define GMSH_VERSION  $(GMSH_RELEASE)" >  Common/GmshVersion.h
+	echo "#define GMSH_MAJOR_VERSION $(GMSH_MAJOR_VERSION)" >  Common/GmshVersion.h
+	echo "#define GMSH_MINOR_VERSION $(GMSH_MINOR_VERSION)" >> Common/GmshVersion.h
+	echo "#define GMSH_PATCH_VERSION $(GMSH_PATCH_VERSION)" >> Common/GmshVersion.h
+	echo "#define GMSH_VERSION  ((double)GMSH_MAJOR_VERSION + \\" >> Common/GmshVersion.h
+	echo "                0.01 * (double)GMSH_MINOR_VERSION + \\" >> Common/GmshVersion.h
+	echo "              0.0001 * (double)GMSH_PATCH_VERSION)"     >> Common/GmshVersion.h
 	echo "#define GMSH_DATE     \"`date`\""      >> Common/GmshVersion.h
 	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/GmshVersion.h
 	echo "#define GMSH_PACKAGER \"`whoami`\""    >> Common/GmshVersion.h
@@ -133,7 +141,7 @@ tag:
 
 initialtag:
 	@if [ ! -r Common/GmshVersion.h ]; then \
-        $(MAKE) tag ; \
+          $(MAKE) tag ; \
         fi
 
 tags:
@@ -141,8 +149,8 @@ tags:
 	htags
 
 tgz:
-	if (test -f $(GMSH_ARCHIVE).tar.gz); \
-	then mv -f $(GMSH_ARCHIVE).tar.gz $(GMSH_ARCHIVE).tar.gz~; \
+	if (test -f $(GMSH_ARCHIVE).tar.gz); then \
+	  mv -f $(GMSH_ARCHIVE).tar.gz $(GMSH_ARCHIVE).tar.gz~; \
 	fi
 	tar cvf $(GMSH_ARCHIVE).tar $(GMSH_SOURCES)
 	gzip $(GMSH_ARCHIVE).tar
@@ -267,13 +275,13 @@ compile_fltk1:
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1.0b5" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 link_fltk1:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 $(HOME)/SOURCES/fltk-1.1.0b5/lib/libfltk_gl.a\
+                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
                  $(OPENGL_LIB) \
-                 $(HOME)/SOURCES/fltk-1.1.0b5/lib/libfltk.a \
+                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a \
                  -L/usr/X11R6/lib $(X11_LIB) -lm
 fltk1: compile_fltk1 link_fltk1
 
@@ -318,7 +326,7 @@ link_linux_gcc-2.95:
 linux_gcc-2.95: tag compile_linux_gcc-2.95 link_linux_gcc-2.95 strip_bin
 rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
-	rpm -bb utils/gmsh.spec
+	rpm -bb --define 'gmshversion $(GMSH_RELEASE)' utils/gmsh.spec
 	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-?.i386.rpm .
 	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
 
