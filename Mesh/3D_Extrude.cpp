@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.67 2003-12-04 00:13:28 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.68 2003-12-04 19:44:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -444,7 +444,6 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
             Create_PriPyrTet(ep->mesh.ZonLayer[i], v);
         }
         else {
-
           if(are_exist(v[3], v[1], Tree_Ares) &&
              are_exist(v[4], v[2], Tree_Ares) &&
              are_exist(v[3], v[2], Tree_Ares)) {
@@ -452,37 +451,37 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
             Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
             Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[4], v[2]);
           }
-          if(are_exist(v[3], v[1], Tree_Ares) &&
-             are_exist(v[1], v[5], Tree_Ares) &&
-             are_exist(v[3], v[2], Tree_Ares)) {
+          else if(are_exist(v[3], v[1], Tree_Ares) &&
+		  are_exist(v[1], v[5], Tree_Ares) &&
+		  are_exist(v[3], v[2], Tree_Ares)) {
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[3]);
             Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
             Create_Sim(ep->mesh.ZonLayer[i], v[3], v[1], v[5], v[2]);
           }
-          if(are_exist(v[3], v[1], Tree_Ares) &&
-             are_exist(v[1], v[5], Tree_Ares) &&
-             are_exist(v[5], v[0], Tree_Ares)) {
+          else if(are_exist(v[3], v[1], Tree_Ares) &&
+		  are_exist(v[1], v[5], Tree_Ares) &&
+		  are_exist(v[5], v[0], Tree_Ares)) {
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
             Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
             Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[5], v[0]);
           }
-          if(are_exist(v[4], v[0], Tree_Ares) &&
-             are_exist(v[4], v[2], Tree_Ares) &&
-             are_exist(v[3], v[2], Tree_Ares)) {
+          else if(are_exist(v[4], v[0], Tree_Ares) &&
+		  are_exist(v[4], v[2], Tree_Ares) &&
+		  are_exist(v[3], v[2], Tree_Ares)) {
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
             Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[3], v[4], v[2]);
           }
-          if(are_exist(v[4], v[0], Tree_Ares) &&
-             are_exist(v[4], v[2], Tree_Ares) &&
-             are_exist(v[5], v[0], Tree_Ares)) {
+          else if(are_exist(v[4], v[0], Tree_Ares) &&
+		  are_exist(v[4], v[2], Tree_Ares) &&
+		  are_exist(v[5], v[0], Tree_Ares)) {
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
             Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[2], v[4], v[5]);
           }
-          if(are_exist(v[4], v[0], Tree_Ares) &&
-             are_exist(v[1], v[5], Tree_Ares) &&
-             are_exist(v[5], v[0], Tree_Ares)) {
+          else if(are_exist(v[4], v[0], Tree_Ares) &&
+		  are_exist(v[1], v[5], Tree_Ares) &&
+		  are_exist(v[5], v[0], Tree_Ares)) {
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
             Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
             Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[4], v[5]);
@@ -519,7 +518,8 @@ void Extrude_Simplex_Phase2(void *data, void *dum)
       k++;
       //if((double)rand()/(double)RAND_MAX < 0.1) break;
       if(are_exist(v4, v2, Tree_Ares) &&
-         are_exist(v5, v3, Tree_Ares) && are_exist(v1, v6, Tree_Ares)) {
+         are_exist(v5, v3, Tree_Ares) && 
+	 are_exist(v1, v6, Tree_Ares)) {
         TEST_IS_ALL_OK++;
         if(!are_exist(v4, v2, Tree_Swaps)) {
           are_del(v4, v2, Tree_Ares);
@@ -541,7 +541,8 @@ void Extrude_Simplex_Phase2(void *data, void *dum)
         }
       }
       else if(are_exist(v1, v5, Tree_Ares) &&
-              are_exist(v2, v6, Tree_Ares) && are_exist(v4, v3, Tree_Ares)) {
+              are_exist(v2, v6, Tree_Ares) &&
+	      are_exist(v4, v3, Tree_Ares)) {
         TEST_IS_ALL_OK++;
         if(!are_exist(v1, v5, Tree_Swaps)) {
           are_del(v1, v5, Tree_Ares);
