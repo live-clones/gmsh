@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.39 2004-04-19 22:54:42 geuzaine Exp $
+// $Id: Scale.cpp,v 1.40 2004-04-20 18:14:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,15 +32,6 @@ extern Context_T CTX;
 
 // Even if all computations in these routines are made in window
 // coordinates, double precision is used to work at subpixel accuracy
-
-extern double GiveValueFromIndex_Lin(double ValMin, double ValMax, int NbIso,
-                                     int Iso);
-extern double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso,
-                                     int Iso);
-extern int GiveIndexFromValue_Lin(double ValMin, double ValMax, int NbIso,
-                                  double Val);
-extern int GiveIndexFromValue_Log(double ValMin, double ValMax, int NbIso,
-                                  double Val);
 
 void draw_scale(Post_View * v,
                 double xmin, double ymin, double width, double height,
@@ -106,6 +97,10 @@ void draw_scale(Post_View * v,
   case DRAW_POST_LOGARITHMIC:
     v->GIFV = GiveIndexFromValue_Log;
     v->GVFI = GiveValueFromIndex_Log;
+    break;
+  case DRAW_POST_DOUBLELOGARITHMIC:
+    v->GIFV = GiveIndexFromValue_DoubleLog;
+    v->GVFI = GiveValueFromIndex_DoubleLog;
     break;
   }
 

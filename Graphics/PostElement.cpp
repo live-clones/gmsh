@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.24 2004-04-20 01:26:14 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.25 2004-04-20 18:14:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -255,7 +255,7 @@ void Draw_ScalarPoint(Post_View * View, int preproNormals,
     Draw_ElementBoundary(POINT, View, X, Y, Z, Raise);
 
   if(d >= ValMin && d <= ValMax) {
-    Palette2(View, ValMin, ValMax, d);
+    Palette(View, ValMin, ValMax, d);
     if(View->IntervalsType == DRAW_POST_NUMERIC) {
       glRasterPos3d(X[0] + Raise[0][0], Y[0] + Raise[1][0],
                     Z[0] + Raise[2][0]);
@@ -302,7 +302,7 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
     d = (Val[0] + Val[1]) / 2.;
 
     if(d >= ValMin && d <= ValMax) {
-      Palette2(View, ValMin, ValMax, d);
+      Palette(View, ValMin, ValMax, d);
       sprintf(Num, View->Format, d);
       glRasterPos3d((X[0] + Raise[0][0] + X[1] + Raise[0][1]) / 2.,
                     (Y[0] + Raise[1][0] + Y[1] + Raise[1][1]) / 2.,
@@ -319,15 +319,15 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
          Val[1] >= ValMin && Val[1] <= ValMax) {
         if(View->LineType) {
           // not perfect...
-          Palette2(View, ValMin, ValMax, Val[0]);
+          Palette(View, ValMin, ValMax, Val[0]);
           Draw_Line(View->LineType, View->LineWidth, X, Y, Z, Raise, View->Light);
         }
         else {
           glBegin(GL_LINES);
-          Palette2(View, ValMin, ValMax, Val[0]);
+          Palette(View, ValMin, ValMax, Val[0]);
           glVertex3d(X[0] + Raise[0][0], Y[0] + Raise[1][0],
                      Z[0] + Raise[2][0]);
-          Palette2(View, ValMin, ValMax, Val[1]);
+          Palette(View, ValMin, ValMax, Val[1]);
           glVertex3d(X[1] + Raise[0][1], Y[1] + Raise[1][1],
                      Z[1] + Raise[2][1]);
           glEnd();
@@ -454,7 +454,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 
     d = (Val[0] + Val[1] + Val[2]) / 3.;
     if(d >= ValMin && d <= ValMax) {
-      Palette2(View, ValMin, ValMax, d);
+      Palette(View, ValMin, ValMax, d);
       sprintf(Num, View->Format, d);
       glRasterPos3d((X[0] + Raise[0][0] + X[1] + Raise[0][1] + X[2] +
                      Raise[0][2]) / 3.,
@@ -476,15 +476,15 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
          Val[1] >= ValMin && Val[1] <= ValMax &&
          Val[2] >= ValMin && Val[2] <= ValMax) {
         glBegin(GL_TRIANGLES);
-        Palette2(View, ValMin, ValMax, Val[0]);
+        Palette(View, ValMin, ValMax, Val[0]);
         glNormal3dv(&norms[0]);
         glVertex3d(X[0] + Raise[0][0], Y[0] + Raise[1][0],
                    Z[0] + Raise[2][0]);
-        Palette2(View, ValMin, ValMax, Val[1]);
+        Palette(View, ValMin, ValMax, Val[1]);
         glNormal3dv(&norms[3]);
         glVertex3d(X[1] + Raise[0][1], Y[1] + Raise[1][1],
                    Z[1] + Raise[2][1]);
-        Palette2(View, ValMin, ValMax, Val[2]);
+        Palette(View, ValMin, ValMax, Val[2]);
         glNormal3dv(&norms[6]);
         glVertex3d(X[2] + Raise[0][2], Y[2] + Raise[1][2],
                    Z[2] + Raise[2][2]);
@@ -495,8 +495,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
         if(nb >= 3) {
           glBegin(GL_POLYGON);
           for(i = 0; i < nb; i++) {
-            Palette2(View, ValMin, ValMax, value[i]);
-            RaiseFill(i, value[i], ValMin, Raise);
+            Palette(View, ValMin, ValMax, value[i]);
+	    RaiseFill(i, value[i], ValMin, Raise);
             glVertex3d(Xp[i] + Raise[0][i], Yp[i] + Raise[1][i],
                        Zp[i] + Raise[2][i]);
           }
@@ -506,8 +506,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     }
     else {
       for(k = 0; k < View->NbIso; k++) {
+	Palette1(View, View->NbIso, k);
         if(View->IntervalsType == DRAW_POST_DISCRETE) {
-          Palette1(View, View->NbIso, k);
           CutTriangle2D(X, Y, Z, Val,
                         View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
                         View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
@@ -523,7 +523,6 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
           }
         }
         else {
-          Palette1(View, View->NbIso, k);
           thev = View->GVFI(ValMin, ValMax, View->NbIso, k);
           CutTriangle1D(X, Y, Z, Val, thev, Xp, Yp, Zp, &nb);
           if(nb == 2) {
@@ -581,7 +580,7 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
 
     d = 0.25 * (Val[0] + Val[1] + Val[2] + Val[3]);
     if(d >= ValMin && d <= ValMax) {
-      Palette2(View, ValMin, ValMax, d);
+      Palette(View, ValMin, ValMax, d);
       sprintf(Num, View->Format, d);
       glRasterPos3d(0.25 * (X[0] + Raise[0][0] + X[1] + Raise[0][1] +
                             X[2] + Raise[0][2] + X[3] + Raise[0][3]),
@@ -833,7 +832,7 @@ void Draw_VectorElement(int type, Post_View * View,
             dz2 = V[3 * (ts - j - 1) + 2];
             dd = sqrt(dx * dx + dy * dy + dz * dz);
             // not perfect...
-            Palette2(View, ValMin, ValMax, dd);
+            Palette(View, ValMin, ValMax, dd);
             XX[0] = X[0] + fact * dx;
             XX[1] = X[0] + fact * dx2;
             YY[0] = Y[0] + fact * dy;
@@ -850,7 +849,7 @@ void Draw_VectorElement(int type, Post_View * View,
             dy = V[3 * (ts - j) + 1];
             dz = V[3 * (ts - j) + 2];
             dd = sqrt(dx * dx + dy * dy + dz * dz);
-            Palette2(View, ValMin, ValMax, dd);
+            Palette(View, ValMin, ValMax, dd);
             glVertex3d(X[0] + fact * dx + Raise[0][0],
                        Y[0] + fact * dy + Raise[1][0],
                        Z[0] + fact * dz + Raise[2][0]);
@@ -907,10 +906,12 @@ void Draw_VectorElement(int type, Post_View * View,
     dd = sqrt(dx * dx + dy * dy + dz * dz);
 
     // allow for some roundoff error due to the computation at the barycenter
-    if(dd != 0.0 && dd >= ValMin * (1. - 1.e-15)
-       && dd <= ValMax * (1. + 1.e-15)) {
-      Palette1(View, View->NbIso,
-               View->GIFV(ValMin, ValMax, View->NbIso, dd));
+    if(dd != 0.0 && dd >= ValMin * (1. - 1.e-15) && dd <= ValMax * (1. + 1.e-15)) {
+      if(View->IntervalsType == DRAW_POST_CONTINUOUS)
+	Palette(View, ValMin, ValMax, dd);
+      else
+	Palette1(View, View->NbIso,
+		 View->GIFV(ValMin, ValMax, View->NbIso, dd));
       if(View->IntervalsType == DRAW_POST_NUMERIC) {
         glRasterPos3d(xc, yc, zc);
         sprintf(Num, View->Format, dd);
@@ -938,8 +939,11 @@ void Draw_VectorElement(int type, Post_View * View,
   else {
     for(k = 0; k < nbnod; k++) {
       if(d[k] != 0.0 && d[k] >= ValMin && d[k] <= ValMax) {
-        Palette1(View, View->NbIso,
-                 View->GIFV(ValMin, ValMax, View->NbIso, d[k]));
+	if(View->IntervalsType == DRAW_POST_CONTINUOUS)
+	  Palette(View, ValMin, ValMax, d[k]);
+	else
+	  Palette1(View, View->NbIso,
+		   View->GIFV(ValMin, ValMax, View->NbIso, d[k]));
         fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / ValMax;
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
           Val[k][0] /= d[k];

@@ -42,9 +42,10 @@ void set_r(int i, double val);
 void set_t(int i, double val);
 void set_s(int i, double val);
 
-void RaiseFill (int i, double Val, double ValMin, double Raise[3][8]);
-void Palette1 (Post_View * View, int nbi, int i);
-void Palette2 (Post_View * View, double min, double max, double val);
+void RaiseFill(int i, double Val, double ValMin, double Raise[3][8]);
+void Palette(Post_View * View, double min, double max, double val);
+void Palette1(Post_View * View, int nbi, int i);
+void Palette2(Post_View * v, double min, double max, double val);
 void ColorSwitch(int i);
 
 int  SelectEntity(int type, Vertex **v, Curve **c, Surface **s);
@@ -60,27 +61,27 @@ void DrawUI(void);
 void Draw(void);
 
 void Draw_String(char *s);
-void Draw_Geom (Mesh *m);
+void Draw_Geom(Mesh *m);
 void Draw_Mesh(Mesh *M);
 void Draw_Post(void);
 void Draw_Graph2D(void);
 void Draw_Text2D(void);
 void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
 void Draw_Scales(void);
-void Draw_Axes (double s);
+void Draw_Axes(double s);
 void Draw_SmallAxes(void);
 void Draw_Sphere(double size, double x, double y, double z, int light);
-void Draw_Cylinder (double width, double *x, double *y, double *z, int light);
+void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
 void Draw_Point(int type, double size, double *x, double *y, double *z, double Raise[3][8], int light);
-void Draw_Line (int type, double width, double *x, double *y, double *z, double Raise[3][8], int light);
-void Draw_Triangle (double *x, double *y, double *z,double *n,
-                    double Raise[3][8], int light);
-void Draw_Quadrangle (double *x, double *y, double *z, double *n,
-                      double Raise[3][8], int light);
-void Draw_Vector (int Type, int Fill,
-		  double relHeadRadius, double relStemLength, double relStemRadius,
-                  double x, double y, double z, double dx, double dy, double dz,
-                  double Raise[3][8], int light);
+void Draw_Line(int type, double width, double *x, double *y, double *z, double Raise[3][8], int light);
+void Draw_Triangle(double *x, double *y, double *z,double *n,
+		   double Raise[3][8], int light);
+void Draw_Quadrangle(double *x, double *y, double *z, double *n,
+		     double Raise[3][8], int light);
+void Draw_Vector(int Type, int Fill,
+		 double relHeadRadius, double relStemLength, double relStemRadius,
+		 double x, double y, double z, double dx, double dy, double dz,
+		 double Raise[3][8], int light);
 
 void Draw_Mesh_Volumes(void *a, void *b);
 void Draw_Mesh_Surfaces(void *a, void *b);
@@ -88,14 +89,14 @@ void Draw_Mesh_Extruded_Surfaces(void *a, void *b);
 void Draw_Mesh_Curves(void *a, void *b);
 void Draw_Mesh_Points(void *a, void *b);
 
-void Draw_Simplex_Volume (void *a, void *b);
-void Draw_Simplex_Surface (void *a, void *b);
-void Draw_Simplex_Surface_Simple (void *a, void *b);
+void Draw_Simplex_Volume(void *a, void *b);
+void Draw_Simplex_Surface(void *a, void *b);
+void Draw_Simplex_Surface_Simple(void *a, void *b);
 void Draw_Simplex_Curves(void *a,void *b);
 
-void Draw_Hexahedron_Volume (void *a, void *b);
-void Draw_Prism_Volume (void *a, void *b);
-void Draw_Pyramid_Volume (void *a, void *b);
+void Draw_Hexahedron_Volume(void *a, void *b);
+void Draw_Prism_Volume(void *a, void *b);
+void Draw_Pyramid_Volume(void *a, void *b);
 
 void Draw_ScalarPoint(Post_View *View, int preproNormals,
 		      double ValMin, double ValMax, double Raise[3][8],
@@ -169,5 +170,12 @@ void Draw_VectorPyramid(Post_View *View,
 void Draw_TensorPyramid(Post_View *View, 
 			double ValMin, double ValMax, double Raise[3][8],
 			double *X, double *Y, double *Z, double *V);
+
+double GiveValueFromIndex_Lin(double ValMin, double ValMax, int NbIso, int Iso);
+double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso, int Iso);
+double GiveValueFromIndex_DoubleLog(double ValMin, double ValMax, int NbIso, int Iso);
+int GiveIndexFromValue_Lin(double ValMin, double ValMax, int NbIso, double Val);
+int GiveIndexFromValue_Log(double ValMin, double ValMax, int NbIso, double Val);
+int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso, double Val);
 
 #endif

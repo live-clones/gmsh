@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.53 2004-04-20 01:26:13 geuzaine Exp $
+// $Id: Post.cpp,v 1.54 2004-04-20 18:14:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,24 +36,21 @@ static double RaiseFactor[3];
 
 // Give Value from Index
 
-double GiveValueFromIndex_Lin(double ValMin, double ValMax, int NbIso,
-                              int Iso)
+double GiveValueFromIndex_Lin(double ValMin, double ValMax, int NbIso, int Iso)
 {
   if(NbIso == 1)
     return (ValMax + ValMin) / 2.;
   return ValMin + Iso * (ValMax - ValMin) / (NbIso - 1.);
 }
 
-double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso,
-                              int Iso)
+double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso, int Iso)
 {
   if(NbIso == 1)
     return (ValMax + ValMin) / 2.;
   if(ValMin <= 0.)
     return 0.;
-  return pow(10.,
-             log10(ValMin) + Iso * (log10(ValMax) - log10(ValMin)) / (NbIso -
-                                                                      1.));
+  return pow(10., log10(ValMin)
+	     + Iso * (log10(ValMax) - log10(ValMin)) / (NbIso - 1.));
 }
 
 double GiveValueFromIndex_DoubleLog(double ValMin, double ValMax, int NbIso,
@@ -67,9 +64,8 @@ double GiveValueFromIndex_DoubleLog(double ValMin, double ValMax, int NbIso,
   double Iso2 = Iso / 2.;
   double NbIso2 = NbIso / 2.;
 
-  return pow(10.,
-             log10(ValMin) + Iso2 * (log10(ValMax) -
-                                     log10(ValMin)) / (NbIso2 - 1.));
+  return pow(10., log10(ValMin) 
+	     + Iso2 * (log10(ValMax) - log10(ValMin)) / (NbIso2 - 1.));
 }
 
 // Give Index From Value
@@ -96,6 +92,7 @@ int GiveIndexFromValue_Log(double ValMin, double ValMax, int NbIso,
 int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso,
                                  double Val)
 {
+  // JF: this is obviously wrong...
   if(ValMin == ValMax)
     return NbIso / 2;
   if(ValMin <= 0.)
@@ -106,6 +103,12 @@ int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso,
 
 
 // Color Palette
+
+void Palette(Post_View * v, double min, double max, double val)
+{       /* val in [min,max] */
+  int index = v->GIFV(min, max, v->CT.size, val);
+  glColor4ubv((GLubyte *) & v->CT.table[index]);
+}
 
 void Palette1(Post_View * v, int nbi, int i)
 {       /* i in [0,nbi-1] */
