@@ -1,4 +1,7 @@
-$Id: VERSIONS,v 1.157 2003-10-26 16:53:12 geuzaine Exp $
+$Id: VERSIONS,v 1.158 2003-11-14 22:57:35 geuzaine Exp $
+
+New since 1.47: new DisplacementRaise plugin to plot arbitrary fields
+on a deformed mesh;
 
 New in 1.47: fixed extrusion of surfaces defined by only two curves;
 new syntax to retrieve point coordinates and indices of entities
