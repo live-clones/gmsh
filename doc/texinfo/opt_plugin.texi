@@ -240,6 +240,30 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
+@item Plugin(HarmonicToTime)
+Plugin(HarmonicToTime) takes the values in the
+time steps `realPart' and `imaginaryPart' of
+the view `iView', and creates a new view
+containing (`iView'[`realPart'] * cos(p) -
+`iView'[`imaginaryPart'] * sin(p)), with
+p = 2*Pi*k/`nSteps', k = 0, ..., `nSteps'-1.
+If `iView' < 0, the plugin is run on the
+current view.
+
+Plugin(HarmonicToTime) creates one new view.
+
+Numeric options:
+@table @code
+@item realPart
+Default value: @code{0}
+@item imaginaryPart
+Default value: @code{1}
+@item nSteps
+Default value: @code{20}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(Skin)
 Plugin(Skin) extracts the skin (the boundary) of
 the view `iView'. If `iView' < 0, the plugin is run
