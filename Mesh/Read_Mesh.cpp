@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.56 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.57 2003-09-05 14:22:34 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -171,8 +171,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
       for(i_Element = 0; i_Element < Nbr_Elements; i_Element++) {
 
         fscanf(File_GEO, "%d %d %d %d %d",
-               &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
-        //jf:  &Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
+	       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
+	//&Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
 
         for(j = 0; j < Nbr_Nodes; j++)
           fscanf(File_GEO, "%d", &verts[j].Num);
@@ -230,6 +230,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
             v = *vv;
           break;
         default:
+	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
           break;
         }
 

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.139 2003-05-22 21:41:13 geuzaine Exp $
+// $Id: Gmsh.y,v 1.140 2003-09-05 14:22:35 remacle Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2919,6 +2919,16 @@ ListOfDouble :
 	(*pd) = - (*pd);
       }
     }
+  | MultipleShape
+  {
+    $$ = List_Create(List_Nbr($1),1,sizeof(double)) ;
+    for (int i=0;i<List_Nbr($1);i++)
+      {
+	Shape *s = (Shape*) List_Pointer($1,i);
+	double d = s->Num;
+	List_Add($$,&d);
+      }
+  }
 ;
 
 FExpr_Multi :
@@ -2939,6 +2949,28 @@ FExpr_Multi :
 	for(d=$1 ; ($5>0)?(d<=$3):(d>=$3) ; d+=$5)
 	  List_Add($$, &d) ;
    }
+  | tPoint '(' FExpr ')'
+    {
+      /// JF Remacle, sept. 2003
+      /// returns the coordinates of a point 
+      /// and fills a list with it
+      /// This allows to ensure e.g. that relative
+      /// point positions are always conserved 
+      Vertex *v = FindPoint((int)$3,THEM);
+      $$ = List_Create(3,1,sizeof(double)) ;      
+      if (!v) {
+	yymsg(GERROR, "Unknown point '%d'", (int) $3) ;
+	double d = 0.0 ;
+	List_Add($$, &d);
+	List_Add($$, &d);
+	List_Add($$, &d);
+      }
+      else{
+	List_Add($$, &v->Pos.X) ;
+	List_Add($$, &v->Pos.Y) ;
+	List_Add($$, &v->Pos.Z) ;
+      }
+    }
   | tSTRING '[' ']'
     {
       $$ = List_Create(2,1,sizeof(double)) ;
