@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.4 2003-02-20 16:34:30 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.5 2003-02-20 16:49:21 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ void newt(double x[], int n, int *check, void (*func)(int, double [],double []))
   gsl_multiroot_function f = {&gslfunc, n, &p};
   gsl_vector *xx = gsl_vector_alloc (n);
 
-  if(n > MAX_DIM_NEWT) Msg(FATAL, "Maximum Newton dimension exceeded\n");
+  if(n > MAX_DIM_NEWT-1) Msg(FATAL, "Maximum Newton dimension exceeded\n");
   gsl_dim = n;
 
   nrfunc = func;
