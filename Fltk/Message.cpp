@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.49 2004-05-15 08:07:20 geuzaine Exp $
+// $Id: Message.cpp,v 1.50 2004-05-15 08:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ void Msg(int level, char *fmt, ...)
   // *INDENT-OFF*
   switch(level){
   case DIRECT   : color = 5; verb = 2; break ;
-  case SOLVER   : color = 4; verb = 2; break ;
+  case SOLVER   : color = 4; verb = 3; break ;
 
   case STATUS1N : log = 0; //fallthrough
   case STATUS1  : str = INFO_STR; verb = 1; window = 0; break ;
@@ -106,14 +106,14 @@ void Msg(int level, char *fmt, ...)
   case WARNING3 : str = WHITE_STR; verb = 1; break ;
 				     	  
   case INFO     :		     	  
-  case INFO1    : str = INFO_STR; verb = 2; break ;
+  case INFO1    : str = INFO_STR; verb = 3; break ;
   case INFO2    :		     	  
-  case INFO3    : str = WHITE_STR; verb = 2; break ;
+  case INFO3    : str = WHITE_STR; verb = 3; break ;
 				     	  
   case DEBUG    :		     	  
-  case DEBUG1   : str = DEBUG_STR; verb = 3; break ;
+  case DEBUG1   : str = DEBUG_STR; verb = 4; break ;
   case DEBUG2   :		     	  
-  case DEBUG3   : str = WHITE_STR; verb = 3; break ;
+  case DEBUG3   : str = WHITE_STR; verb = 4; break ;
 
   default : return;
   }

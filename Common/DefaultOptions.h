@@ -613,7 +613,7 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "VectorType" , opt_general_vector_type , DRAW_POST_ARROW3D ,
     "Default vector display type (for normals, etc.)" },
-  { F|O, "Verbosity" , opt_general_verbosity , 2. ,
+  { F|O, "Verbosity" , opt_general_verbosity , 3. ,
     "Level of information printed during processing (0=no information)" },
   { F|S, "VisibilityMode" , opt_general_visibility_mode , 0. , 
     "Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)" }, 

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.36 2004-05-12 20:16:49 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.37 2004-05-15 08:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -108,7 +108,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -a, -g, -m, -s, -p    start in automatic, geometry, mesh, solver or post-processing");
   Msg(DIRECT, "                        mode (default: automatic)");
 #endif
-  Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
+  Msg(DIRECT, "  -v int                set verbosity level (default: 3)");
   Msg(DIRECT, "  -string \"string\"      parse string before project file");
   Msg(DIRECT, "  -option file          parse option file before GUI creation");
   Msg(DIRECT, "  -convert file file    perform batch conversion of view(s)/mesh into latest file formats");
