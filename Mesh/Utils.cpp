@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.2 2001-08-12 20:45:58 geuzaine Exp $
+// $Id: Utils.cpp,v 1.3 2001-11-01 09:36:59 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -10,6 +10,9 @@
 #include "Context.h"
 
 extern Context_T CTX;
+
+void dsvdcmp(double **a, int m, int n, double w[], double **v);
+void dsvbksb(double **u, double w[], double **v, int m, int n, double b[], double x[]);
 
 void direction (Vertex * v1, Vertex * v2, double d[3]){
   d[0] = v2->Pos.X - v1->Pos.X;
@@ -28,240 +31,147 @@ void Projette (Vertex * v, double mat[3][3]){
   v->Pos.Z = Z;
 }
 
+/*
+  Le concept d'un plan moyen calcule au sens des moidres carres n'est
+  pas le bon. Imagine un quart de cercle extrude d'une faible
+  hauteur. Le plan moyen sera dans le plan du cercle! En attendant
+  mieux, il y a un test de coherence pour les surfaces non-planes. */
+
 void MeanPlane(List_T *points, Surface *s){
-  int       i, j, ix, iy, iz, N;
-  double    det,sys[3][3],b[3],res[3],mod,t1[3],t2[3],ex[3],s2s[2][2],r2[2],X,Y,Z;
-  Vertex   *v;
+  int    i, j, min, ndata, na;
+  double **U, **V, *W, res[4], ex[3], t1[3], t2[3];
+  Vertex *v;
+  double xm=0., ym=0., zm=0.;
 
-  N = List_Nbr (points);
+  ndata = List_Nbr(points);
+  na = 3;
 
-  for (i = 0; i < 3; i++){
-    b[i] = 0.0;
-    for (j = 0; j < 3; j++){
-      sys[i][j] = 0.0;
+  U = dmatrix(1,ndata,1,na);
+  V = dmatrix(1,ndata,1,ndata);
+  W = dvector(1,na);
+
+  for (i=0; i<ndata; i++){
+    List_Read(points, i, &v);
+    xm += v->Pos.X;
+    ym += v->Pos.Y;
+    zm += v->Pos.Z;
+  }
+  xm/=(double)ndata;
+  ym/=(double)ndata;
+  zm/=(double)ndata;
+
+  for (i=0; i<ndata; i++){
+    List_Read(points, i, &v);
+    U[i+1][1] = v->Pos.X-xm;
+    U[i+1][2] = v->Pos.Y-ym;
+    U[i+1][3] = v->Pos.Z-zm;
+  }
+  dsvdcmp(U,ndata,na,W,V);
+  if(W[1]<W[2] && W[1]<W[3]) min=1;
+  else if(W[2]<W[1] && W[2]<W[3]) min=2;
+  else min=3;
+  res[0] = V[1][min];
+  res[1] = V[2][min];
+  res[2] = V[3][min];
+  norme(res);
+
+  free_dmatrix(U,1,ndata,1,na);
+  free_dmatrix(V,1,ndata,1,ndata);
+  free_dvector(W,1,na);
+
+  // check coherence of results for non-plane surfaces
+  if(s->Typ != MSH_SURF_PLAN){
+    double res2[3], c[3], cosc, sinc, angplan;
+    double eps=1.e-3;
+    Vertex v1, v2, v3;
+    v1 = InterpolateSurface(s,0.5,0.5,0,0);
+    v2 = InterpolateSurface(s,0.5+eps,0.5,0,0);
+    v3 = InterpolateSurface(s,0.5,0.5+eps,0,0);
+    t1[0] = v2.Pos.X-v1.Pos.X;
+    t1[1] = v2.Pos.Y-v1.Pos.Y;
+    t1[2] = v2.Pos.Z-v1.Pos.Z;
+    t2[0] = v3.Pos.X-v1.Pos.X;
+    t2[1] = v3.Pos.Y-v1.Pos.Y;
+    t2[2] = v3.Pos.Z-v1.Pos.Z;
+    norme(t1);
+    norme(t2);
+    prodve(t1, t2, res2);
+    norme(res2);
+    prodve (res, res2, c);
+    prosca (res, res2, &cosc);
+    sinc = sqrt (c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+    angplan = myatan2 (sinc, cosc);
+    angplan = angle_02pi(angplan)*180./Pi;
+    if((angplan>70 && angplan<110) ||
+       (angplan>260 && angplan<280)){
+      Msg(WARNING, "SVD failed (angle=%g): using rough algo...", angplan);
+      res[0]=res2[0];
+      res[1]=res2[1];
+      res[2]=res2[2];
+      goto end;
     }
   }
-
-  /* ax + by + cz = 1 */
-
-  ix = iy = iz = 0;
-
-  // TOLERANCE ! WARNING WARNING
-  double eps = 1.e-6 * CTX.lc;
-
-  for (i = 0; i < N; i++){
-    List_Read (points, i, &v);
-
-    if (!i){
-      X = v->Pos.X;
-      Y = v->Pos.Y;
-      Z = v->Pos.Z;
-    }
-    else{
-      if(fabs(X-v->Pos.X) > eps) ix = 1;
-      if(fabs(Y-v->Pos.Y) > eps) iy = 1;
-      if(fabs(Z-v->Pos.Z) > eps) iz = 1;
-    }
     
-    sys[0][0] += v->Pos.X * v->Pos.X;
-    sys[1][1] += v->Pos.Y * v->Pos.Y;
-    sys[2][2] += v->Pos.Z * v->Pos.Z;
-    sys[0][1] += v->Pos.X * v->Pos.Y;
-    sys[0][2] += v->Pos.X * v->Pos.Z;
-    sys[1][2] += v->Pos.Y * v->Pos.Z;
-    sys[2][1] = sys[1][2];
-    sys[1][0] = sys[0][1];
-    sys[2][0] = sys[0][2];
-    b[0] += v->Pos.X;
-    b[1] += v->Pos.Y;
-    b[2] += v->Pos.Z;
-  }
-
-  s->d = 1.0;
-
-  /* x = X */
-
-  if (!ix){
-    s->d = X;
-    res[0] = 1.;
-    res[1] = res[2] = 0.0;
-    Msg(DEBUG, "Mean plane of type 'x = c'");
-  }
-
-  /* y = Y */
-
-  else if (!iy){
-    s->d = Y;
-    res[1] = 1.;
-    res[0] = res[2] = 0.0;
-    Msg(DEBUG, "Mean plane of type 'y = c'");
-  }
-
-  /* z = Z */
-
-  else if (!iz){
-    s->d = Z;
-    res[2] = 1.;
-    res[1] = res[0] = 0.0;
-    Msg(DEBUG, "Mean plane of type 'z = c'");
-  }
-
-  /* by + cz = -x */
-
-  else if (!sys3x3_with_tol (sys, b, res, &det)){
-    s->d = 0.0;
-    s2s[0][0] = sys[1][1];
-    s2s[0][1] = sys[1][2];
-    s2s[1][0] = sys[1][2];
-    s2s[1][1] = sys[2][2];
-    b[0] = -sys[0][1];
-    b[1] = -sys[0][2];
-    if (sys2x2 (s2s, b, r2)){
-      res[0] = 1.;
-      res[1] = r2[0];
-      res[2] = r2[1];
-      Msg(DEBUG, "Mean plane of type 'by + cz = -x'");
-    }
-
-    /* ax + cz = -y */
-    
-    else{
-      s->d = 0.0;
-      s2s[0][0] = sys[0][0];
-      s2s[0][1] = sys[0][2];
-      s2s[1][0] = sys[0][2];
-      s2s[1][1] = sys[2][2];
-      b[0] = -sys[0][1];
-      b[1] = -sys[1][2];
-      if (sys2x2 (s2s, b, r2)){
-        res[0] = r2[0];
-        res[1] = 1.;
-        res[2] = r2[1];
-        Msg(DEBUG, "Mean plane of type 'ax + cz = -y'");
-      }
-      
-      /* ax + by = -z */
-      
-      else{
-        s->d = 1.0;
-        s2s[0][0] = sys[0][0];
-        s2s[0][1] = sys[0][1];
-        s2s[1][0] = sys[0][1];
-        s2s[1][1] = sys[1][1];
-        b[0] = -sys[0][2];
-        b[1] = -sys[1][2];
-        if (sys2x2 (s2s, b, r2)){
-          res[0] = r2[0];
-          res[1] = r2[1];
-          res[2] = 1.;
-          Msg(DEBUG, "Mean plane of type 'ax + by = -z'");
-        }
-        else{
-          Msg(GERROR, "Problem in mean plane computation");
-        }
-      }
-    }
-  }
-
-  s->a = res[0];
-  s->b = res[1];
-  s->c = res[2];
-  mod = sqrt (res[0] * res[0] + res[1] * res[1] + res[2] * res[2]);
-  for (i = 0; i < 3; i++)
-    res[i] /= mod;
-
-  /* L'axe n'est pas l'axe des x */
-
   ex[0] = ex[1] = ex[2] = 0.0;
-  if(res[0] == 0.0)
+  if(res[0]==0.) 
     ex[0] = 1.0;
-  else if(res[1] == 0.0)
+  else if(res[1]==0.)
     ex[1] = 1.0;
   else
     ex[2] = 1.0;
 
-  prodve (res, ex, t1);
-
-  mod = sqrt (t1[0] * t1[0] + t1[1] * t1[1] + t1[2] * t1[2]);
-  for (i = 0; i < 3; i++)
-    t1[i] /= mod;
-
+  prodve(res, ex, t1);
+  norme(t1);
   prodve (t1, res, t2);
+  norme(t2);
 
-  mod = sqrt (t2[0] * t2[0] + t2[1] * t2[1] + t2[2] * t2[2]);
-  for (i = 0; i < 3; i++)
-    t2[i] /= mod;
+end:
+  res[3] = (xm*res[0]+ym*res[1]+zm*res[2]);
 
-  for (i = 0; i < 3; i++)
-    s->plan[0][i] = t1[i];
-  for (i = 0; i < 3; i++)
-    s->plan[1][i] = t2[i];
-  for (i = 0; i < 3; i++)
-    s->plan[2][i] = res[i];
+  s->a = res[0];
+  s->b = res[1];
+  s->c = res[2];
+  s->d = res[3];
+  for(i=0; i<3; i++) s->plan[0][i] = t1[i];
+  for(i=0; i<3; i++) s->plan[1][i] = t2[i];
+  for(i=0; i<3; i++) s->plan[2][i] = res[i];
 
-  Msg(DEBUG1, "Plane  : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
-  Msg(DEBUG2, "Normal : (%g , %g , %g )", res[0], res[1], res[2]);
+  Msg(DEBUG1, "Surface: %d", s->Num);
+  Msg(DEBUG2, "SVD    : %g,%g,%g (min=%d)", W[1],W[2],W[3],min);
+  Msg(DEBUG2, "Plane  : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
+  Msg(DEBUG2, "Normal : (%g , %g , %g )", s->a, s->b, s->c);
   Msg(DEBUG2, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
   Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
-
-  /* Matrice orthogonale */
-
-  if (!iz){
-    for (i = 0; i < 3; i++){
-      for (j = 0; j < 3; j++){
-        s->invplan[i][j] = (i == j) ? 1. : 0.;
-        s->plan[i][j] = (i == j) ? 1. : 0.;
-      }
-    }
-  }
-  else{
-    for (i = 0; i < 3; i++){
-      for (j = 0; j < 3; j++){
-        s->invplan[i][j] = s->plan[j][i];
-      }
-    }
-  }
-
-
-// this is the end of the algo as it was used for surface drawing:
-
-#if 0
-  /* L'axe n'est pas l'axe des x */
-  if(res[0] > res[1]){
-    ex[0] = 0.;
-    ex[1] = 1.;
-    ex[2] = 0.;
-  }
-  else{
-    ex[0] = 1.;
-    ex[1] = 0.;
-    ex[2] = 0.;
-  }
-  
-  prodve(res,ex,t1);
-  
-  mod = sqrt (t1[0] * t1[0] + t1[1] * t1[1] + t1[2] * t1[2] ) ;
-  for(i=0;i<3;i++) t1[i]/=mod;
-
-  prodve(t1,res,t2);
-
-  mod = sqrt (t2[0] * t2[0] + t2[1] * t2[1] + t2[2] * t2[2] ) ;
-  for(i=0;i<3;i++) t2[i]/=mod;
-
-  for(i=0;i<3;i++)s->plan[0][i] = t1[i];
-  for(i=0;i<3;i++)s->plan[1][i] = t2[i];
-  for(i=0;i<3;i++)s->plan[2][i] = res[i];
-
-  /* Matrice orthogonale */
 
   for(i=0;i<3;i++){
     for(j=0;j<3;j++){
       s->invplan[i][j] = s->plan[j][i];
     }
   }
-#endif
-}
 
+  //check coherence for plane surfaces
+  if(s->Typ==MSH_SURF_PLAN){
+    Curve *c;
+    for(i=0;i<List_Nbr(s->Generatrices);i++) {
+      List_Read(s->Generatrices,i,&c);
+      if(c->Num>0){
+	List_Read(s->Generatrices,i,&c);
+	for(j=0;j<List_Nbr(c->Control_Points);j++){
+	  List_Read(c->Control_Points,j,&v);
+	  double d = s->a*v->Pos.X+s->b*v->Pos.Y+s->c*v->Pos.Z-s->d;
+	  if(fabs(d)>CTX.lc*1.e-3){
+	    Msg(GERROR1, "Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
+		s->Num, s->a, s->b, s->c, s->d);
+	    Msg(GERROR3, "Control point %d = (%g,%g,%g), val=%g",
+		v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, d);
+	    return;
+	  }
+	}
+      }
+    }
+  }
+
+}
 
 
 #define  Precision 1.e-10
@@ -300,7 +210,45 @@ void find_bestuv (Surface * s, double X, double Y,
   *V = minv;
 }
 
-void invert_singular_matrix(double **M, int n, double **I);
+// Numerical Recipes in C, p. 62
+void invert_singular_matrix(double **M, int n, double **I){
+  double  **V, **T, *W;
+  int     i, j, k; 
+
+  V = dmatrix(1,n,1,n);
+  T = dmatrix(1,n,1,n);
+  W = dvector(1,n);
+
+  dsvdcmp(M, n, n, W, V);
+
+  for(i=1 ; i<=n ; i++){
+    for(j=1 ; j<=n ; j++){
+      I[i][j] = 0.0 ;
+      T[i][j] = 0.0 ;
+    }
+  }
+
+#define PREC 1.e-16 //singular value precision
+  for(i=1 ; i<=n ; i++){
+    for(j=1 ; j<=n ; j++){
+      if(fabs(W[i]) > PREC){
+        T[i][j] += M[j][i] / W[i] ;
+      }
+    }
+  }
+#undef PREC
+  for(i=1 ; i<=n ; i++){
+    for(j=1 ; j<=n ; j++){
+      for(k=1 ; k<=n ; k++){
+        I[i][j] += V[i][k] * T[k][j] ;
+      }
+    }
+  }
+
+  free_dmatrix(V,1,n,1,n);
+  free_dmatrix(T,1,n,1,n);
+  free_dvector(W,1,n);
+}
 
 void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
   double Unew,Vnew,err;
@@ -529,7 +477,6 @@ double angle_plan (Vertex * V, Vertex * P1, Vertex * P2, double n[3]){
 
   prosca (PA, PB, &cosc);
   prosca (c, n, &sinc);
-
   angplan = myatan2 (sinc, cosc);
 
   return angplan;

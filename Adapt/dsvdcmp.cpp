@@ -1,6 +1,6 @@
-// $Id: dsvdcmp.cpp,v 1.4 2001-01-08 08:05:39 geuzaine Exp $
-#include <math.h>
+// $Id: dsvdcmp.cpp,v 1.5 2001-11-01 09:36:59 geuzaine Exp $
 
+#include "Gmsh.h"
 #include "nrutil.h"
 
 double dpythag(double a, double b)
@@ -136,7 +136,9 @@ void dsvdcmp(double **a, int m, int n, double w[], double **v)
         }
         break;
       }
-      if (its == 30) nrerror("no convergence in 30 dsvdcmp iterations");
+      if (its == 1000){
+	Msg(GERROR, "SVD decomposition: no convergence in 1000 iterations");
+      }
       x=w[l];
       nm=k-1;
       y=w[nm];
@@ -190,51 +192,24 @@ void dsvdcmp(double **a, int m, int n, double w[], double **v)
   free_dvector(rv1,1,n);
 }
 
+void dsvbksb(double **u, double w[], double **v, int m, int n, double b[], double x[])
+{
+	int jj,j,i;
+	double s,*tmp;
 
-/* cf. Numerical Recipes in C, p. 62 */
-
-#define PREC   1.e-16
-
-void invert_singular_matrix(double **M, int n, double **I){
-  double  **V, **T, *W;
-  int     i, j, k; 
-
-  V = dmatrix(1,n,1,n);
-  T = dmatrix(1,n,1,n);
-  W = dvector(1,n);
-
-  dsvdcmp(M, n, n, W, V);
-
-  for(i=1 ; i<=n ; i++){
-    for(j=1 ; j<=n ; j++){
-      I[i][j] = 0.0 ;
-      T[i][j] = 0.0 ;
-    }
-  }
-
-  for(i=1 ; i<=n ; i++){
-    for(j=1 ; j<=n ; j++){
-      if(fabs(W[i]) > PREC){
-        T[i][j] += M[j][i] / W[i] ;
-      }
-      /*
-      else{
-        T[i][j] += 0.0 ;
-      }
-      */
-    }
-  }
-  for(i=1 ; i<=n ; i++){
-    for(j=1 ; j<=n ; j++){
-      for(k=1 ; k<=n ; k++){
-        I[i][j] += V[i][k] * T[k][j] ;
-      }
-    }
-  }
-
-  free_dmatrix(V,1,n,1,n);
-  free_dmatrix(T,1,n,1,n);
-  free_dvector(W,1,n);
+	tmp=dvector(1,n);
+	for (j=1;j<=n;j++) {
+		s=0.0;
+		if (w[j]) {
+			for (i=1;i<=m;i++) s += u[i][j]*b[i];
+			s /= w[j];
+		}
+		tmp[j]=s;
+	}
+	for (j=1;j<=n;j++) {
+		s=0.0;
+		for (jj=1;jj<=n;jj++) s += v[j][jj]*tmp[jj];
+		x[j]=s;
+	}
+	free_dvector(tmp,1,n);
 }
-
-#undef PREC 
