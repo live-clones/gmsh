@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.121 2003-11-29 01:38:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.122 2003-12-01 05:56:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1599,6 +1599,10 @@ char *opt_view_name(OPT_ARGS_STR)
     strcpy(v->Name, val);
 #if defined(HAVE_FLTK)
     if(WID && num < NB_BUTT_MAX) {
+      // this is OK even if v->Name is not static or allocated, since
+      // we reset it correctly in the main GUI routines when the view
+      // associated with the button changes (i.e., when views are
+      // removed)
       WID->m_toggle_butt[num]->label(v->Name);
       WID->m_toggle_butt[num]->redraw();
     }
@@ -1630,13 +1634,6 @@ char *opt_view_filename(OPT_ARGS_STR)
   GET_VIEW(NULL);
   if(action & GMSH_SET) {
     strcpy(v->FileName, val);
-#if defined(HAVE_FLTK)
-#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
-    if(WID && num < NB_BUTT_MAX) {
-      WID->m_toggle_butt[num]->tooltip(v->FileName);
-    }
-#endif
-#endif
   }
   return v->FileName;
 }

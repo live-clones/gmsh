@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.255 2003-11-29 01:38:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.256 2003-12-01 05:56:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -980,6 +980,9 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       m_toggle_butt[i]->show();
       m_toggle_butt[i]->value(v->Visible);
       m_toggle_butt[i]->label(v->Name);
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0))
+      m_toggle_butt[i]->tooltip(v->FileName);
+#endif
       m_toggle2_butt[i]->show();
       m_popup_butt[i]->show();
       m_popup2_butt[i]->show();
