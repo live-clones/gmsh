@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.156 2004-12-28 20:37:18 geuzaine Exp $
+// $Id: Views.cpp,v 1.157 2004-12-29 04:14:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -335,10 +335,36 @@ void Stat_List(Post_View * v, List_T * listelm, int type, int nbelm,
   }
 }
 
+void Stat_Text(Post_View * v, List_T *D, List_T *C, int nb)
+{
+  for(int i = 0; i < List_Nbr(D); i += nb){
+    double beg, end;
+    List_Read(D, i+nb-1, &beg);
+    if(i > List_Nbr(D) - 2*nb)
+      end = (double)List_Nbr(C);
+    else
+      List_Read(D, i+nb+nb-1, &end);
+    char *c = (char*)List_Pointer(C, (int)beg);
+    int nbtime = 0;
+    for(int j = 0; j < (int)(end-beg); j++)
+      if(c[j] == '\0') nbtime++;
+    if(nbtime > v->NbTimeStep) 
+      v->NbTimeStep = nbtime;
+  }
+}
+
 void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
 {
   int i;
   double d;
+
+  // Stat text strings first, to get the max value of NbTimeStep for
+  // srings-only (strings are designed to degrade gracefully when some
+  // have fewer time steps than others). If there are any elements in
+  // the view, this value will be replaced by the minimum number of
+  // time steps common to all elements.
+  Stat_Text(v, v->T2D, v->T2C, 4);
+  Stat_Text(v, v->T3D, v->T3C, 5);
 
   // Points
   Stat_List(v, v->SP, 0, v->NbSP, 1);
@@ -388,10 +414,6 @@ void EndView(Post_View * v, int add_in_gui, char *file_name, char *name)
       List_Add(v->Time, &d);
     }
   }
-
-  //for(i = 0; i < v->NbTimeStep; i++) {
-  //  printf("step %d, min %g, max %g\n", i, v->TimeStepMin[i], v->TimeStepMax[i]);
-  //}
 
   opt_view_name(v->Index, GMSH_SET | GMSH_GUI, name);
   opt_view_filename(v->Index, GMSH_SET | GMSH_GUI, file_name);
@@ -1304,20 +1326,19 @@ static void combine(List_T * a, List_T * b)
 
 static void combine_strings(Post_View *a, Post_View *b)
 {
-  double d, beg, end;
-  char *c;
   for(int i = 0; i < List_Nbr(a->T2D); i+=4){
     List_Add(b->T2D, List_Pointer(a->T2D, i));
     List_Add(b->T2D, List_Pointer(a->T2D, i+1));
     List_Add(b->T2D, List_Pointer(a->T2D, i+2)); 
-    d = List_Nbr(b->T2C);
+    double d = List_Nbr(b->T2C);
     List_Add(b->T2D, &d);
+    double beg, end;
     List_Read(a->T2D, i+3, &beg); 
-    c = (char*)List_Pointer(a->T2C, (int)beg);
     if(i > List_Nbr(a->T2D) - 8)
       end = (double)List_Nbr(a->T2C);
     else
       List_Read(a->T2D, i+3+4, &end); 
+    char *c = (char*)List_Pointer(a->T2C, (int)beg);
     for(int j = 0; j < (int)(end-beg); j++)
       List_Add(b->T2C, &c[j]); 
     b->NbT2++;
@@ -1327,14 +1348,15 @@ static void combine_strings(Post_View *a, Post_View *b)
     List_Add(b->T3D, List_Pointer(a->T3D, i+1));
     List_Add(b->T3D, List_Pointer(a->T3D, i+2)); 
     List_Add(b->T3D, List_Pointer(a->T3D, i+3)); 
-    d = List_Nbr(b->T3C);
+    double d = List_Nbr(b->T3C);
     List_Add(b->T3D, &d);
+    double beg, end;
     List_Read(a->T3D, i+4, &beg); 
-    c = (char*)List_Pointer(a->T3C, (int)beg);
     if(i > List_Nbr(a->T3D) - 10)
       end = (double)List_Nbr(a->T3C);
     else
       List_Read(a->T3D, i+4+5, &end); 
+    char *c = (char*)List_Pointer(a->T3C, (int)beg);
     for(int j = 0; j < (int)(end-beg); j++)
       List_Add(b->T3C, &c[j]); 
     b->NbT3++;
@@ -1435,8 +1457,10 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
     v->get_raw_data(i, &list2, &nbe2, &nbc2, &nbn2);
     *nbe = *nbe2;
   }
+  vm->NbT2 = v->NbT2;
+  vm->NbT3 = v->NbT3;
 
-  // merge values
+  // merge values for all element types
   for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++){
     vm->get_raw_data(i, &list, &nbe, &nbc, &nbn);
     for(int j = 0; j < *nbe; j++){
@@ -1447,8 +1471,9 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
 	if(*nbe && *nbe == *nbe2){
 	  List_Insert(to_remove, &v->Num, fcmp_int);
 	  int nb2 = List_Nbr(list2) / *nbe2;
-	  if(!k){
-	    // copy coordinates of elm j
+	  if(!k){ 
+	    // copy coordinates of elm j (we are always here as
+	    // expected, since the ref view is the first one!)
 	    for(int l = 0; l < 3*nbn2; l++){
 	      List_Add(list, List_Pointer(list2, j*nb2+l));
 	    }
@@ -1462,7 +1487,68 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
     }
   }
 
-  // FIXME: still need to do the work for strings (T2 and T3)
+  // and a bit of spaghetti code for you now:
+
+  // merge 2d strings
+  for(int j = 0; j < vm->NbT2; j++){
+    for(int k = 0; k < List_Nbr(id->indices); k++){
+      List_Read(id->indices, k, &index);
+      v = *(Post_View **)List_Pointer(CTX.post.list, index);
+      if(vm->NbT2 == v->NbT2){
+	List_Insert(to_remove, &v->Num, fcmp_int);
+	if(!k){
+	  // copy coordinates 
+	  List_Add(vm->T2D, List_Pointer(v->T2D, j*4));
+	  List_Add(vm->T2D, List_Pointer(v->T2D, j*4+1));
+	  List_Add(vm->T2D, List_Pointer(v->T2D, j*4+2));
+	  // index
+	  double d = List_Nbr(vm->T2C);
+	  List_Add(vm->T2D, &d);
+	}
+	// copy char values
+	double beg, end;
+	List_Read(v->T2D, j*4+3, &beg);
+	if(j == vm->NbT2 - 1)
+	  end = (double)List_Nbr(v->T2C);
+	else
+	  List_Read(v->T2D, j*4+4+3, &end);
+	char *c = (char*)List_Pointer(v->T2C, (int)beg);
+	for(int l = 0; l < (int)(end-beg); l++)
+	  List_Add(vm->T2C, &c[l]);
+      }
+    }
+  }
+
+  // merge 3d strings
+  for(int j = 0; j < vm->NbT3; j++){
+    for(int k = 0; k < List_Nbr(id->indices); k++){
+      List_Read(id->indices, k, &index);
+      v = *(Post_View **)List_Pointer(CTX.post.list, index);
+      if(vm->NbT3 == v->NbT3){
+	List_Insert(to_remove, &v->Num, fcmp_int);
+	if(!k){
+	  // copy coordinates 
+	  List_Add(vm->T3D, List_Pointer(v->T3D, j*5));
+	  List_Add(vm->T3D, List_Pointer(v->T3D, j*5+1));
+	  List_Add(vm->T3D, List_Pointer(v->T3D, j*5+2));
+	  List_Add(vm->T3D, List_Pointer(v->T3D, j*5+3));
+	  // index
+	  double d = List_Nbr(vm->T3C);
+	  List_Add(vm->T3D, &d);
+	}
+	// copy char values
+	double beg, end;
+	List_Read(v->T3D, j*5+4, &beg);
+	if(j == vm->NbT3 - 1)
+	  end = (double)List_Nbr(v->T3C);
+	else
+	  List_Read(v->T3D, j*5+5+4, &end);
+	char *c = (char*)List_Pointer(v->T3C, (int)beg);
+	for(int l = 0; l < (int)(end-beg); l++)
+	  List_Add(vm->T3C, &c[l]);
+      }
+    }
+  }
 
   // create the time data
   for(int i = 0; i < List_Nbr(id->indices); i++){
@@ -1472,10 +1558,12 @@ static void combine_time(struct nameidx *id, List_T *to_remove)
       List_Add(vm->Time, List_Pointer(v->Time, j));
     }
   }
+
   // if all the time values are the same, it probably means that the
   // original views didn't have any time data: let's put some indices,
   // then
-  double time0 = *(double*)List_Pointer(vm->Time, 0);
+  double time0 = 0.0;
+  if(List_Nbr(vm->Time)) List_Read(vm->Time, 0, &time0);
   int nbtime = List_Nbr(vm->Time), ok = 0;
   for(int i = 1; i < nbtime; i++){
     if(time0 != *(double*)List_Pointer(vm->Time, i)){
