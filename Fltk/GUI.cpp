@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.317 2004-06-20 23:25:31 geuzaine Exp $
+// $Id: GUI.cpp,v 1.318 2004-06-22 17:39:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -89,8 +89,8 @@ Fl_Menu_Item m_menubar_table[] = {
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
     {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
-    {"M&ouse...",                0, (Fl_Callback *)help_mouse_cb, 0},
-    {"S&hortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
+    {"M&ouse actions...",        0, (Fl_Callback *)help_mouse_cb, 0},
+    {"&Keyboard shortcuts...",   0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"On&line documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"&About...",                0, (Fl_Callback *)help_about_cb, 0},
@@ -120,8 +120,8 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {0},
   {"Help",0,0,0,FL_SUBMENU},
     {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
-    {"Mouse...",                0, (Fl_Callback *)help_mouse_cb, 0},
-    {"Shortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
+    {"Mouse Actions...",        0, (Fl_Callback *)help_mouse_cb, 0},
+    {"Keyboard Shortcuts...",   0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"Online Documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"About Gmsh...",           0, (Fl_Callback *)help_about_cb, 0},

@@ -1,70 +1,24 @@
-Menu bar shortcuts:
+Keyboard shortcuts:
 
 @table @kbd
+@item Left arrow
+go to previous time step
+
+@item Right arrow
+go to next time step
+
+@item Up arrow
+make previous view visible
+
+@item Down arrow
+make next view visible
+
 @item <
 go back to previous context
 
 @item >
 go forward to next context
 
-@item Shift+a
-raise (show) all open windows
-
-@item g
-go to geometry module
-
-@item Shift+g
-show geometry options
-
-@item Shift+i
-show statistics window
-
-@item m
-go to mesh module
-
-@item Shift+m
-show mesh options
-
-@item Ctrl+m
-merge file
-
-@item Shift+n
-show general options
-
-@item Ctrl+n
-new file
-
-@item Shift+o
-show option window
-
-@item Ctrl+o
-open file
-
-@item p
-go to post-processor module
-
-@item Shift+p
-show general post-processing options
-
-@item Ctrl+q
-quit
-
-@item Ctrl+s
-save mesh in default format
-
-@item Ctrl+Shift+s
-save file as
-
-@item Shift+w
-show current post-processing view options
-
-@end table
-
-@sp 1
-
-Other shortcuts:
-
-@table @kbd
 @item 0
 @item Esc
 reload geometry input file
@@ -83,6 +37,9 @@ mesh volumes
 
 @item Alt+a
 hide/show small axes
+
+@item Shift+a
+raise (show) all open windows
 
 @item Alt+Shift+a
 hide/show big moving axes
@@ -105,8 +62,17 @@ increase animation delay
 @item Alt+f
 change redraw mode (fast/full)
 
+@item g
+go to geometry module
+
+@item Shift+g
+show geometry options
+
 @item Alt+h
 hide/show all post-processing views
+
+@item Shift+i
+show statistics window
 
 @item Alt+l
 hide/show geometry lines
@@ -114,23 +80,59 @@ hide/show geometry lines
 @item Alt+Shift+l
 hide/show surface mesh edges
 
+@item m
+go to mesh module
+
 @item Alt+m
 change visibility of all mesh entities
+
+@item Shift+m
+show mesh options
+
+@item Ctrl+m
+merge file
+
+@item Shift+n
+show general options
+
+@item Ctrl+n
+new file
 
 @item Alt+o
 change projection mode (ortho/perspective)
 
+@item Shift+o
+show option window
+
+@item Ctrl+o
+open file
+
+@item p
+go to post-processor module
+
 @item Alt+p
 hide/show geometry points
 
+@item Shift+p
+show general post-processing options
+
 @item Alt+Shift+p
 hide/show mesh points
+
+@item Ctrl+q
+quit
 
 @item Alt+s
 hide/show geometry surfaces
 
 @item Alt+Shift+s
 hide/show mesh surfaces
+
+@item Ctrl+s
+save mesh in default format
+
+@item Ctrl+Shift+s
+save file as
 
 @item Alt+t
 loop through interval modes for all post-processing views
@@ -144,6 +146,9 @@ hide/show mesh volumes
 @item Alt+w
 enable/disable all lighting
 
+@item Shift+w
+show current post-processing view options
+
 @item Alt+x
 set X view
 
@@ -152,17 +157,5 @@ set Y view
 
 @item Alt+z
 set Z view
-
-@item Left arrow
-go to previous time step
-
-@item Right arrow
-go to next time step
-
-@item Up arrow
-make previous view visible
-
-@item Down arrow
-make next view visible
 
 @end table
