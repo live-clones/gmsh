@@ -1,3 +1,4 @@
+// $Id: Plugin.cpp,v 1.15 2001-07-31 10:04:57 geuzaine Exp $
 
 #ifndef _NODLL
 #include <dlfcn.h>
