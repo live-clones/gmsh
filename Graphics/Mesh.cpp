@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.124 2005-03-15 15:42:26 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.125 2005-03-15 15:43:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -145,7 +145,7 @@ void Draw_Mesh(Mesh * M)
   // geometry but there is a mesh
   
   int somegeo = 
-    Tree_Nbr(M->Points) || Tree_Nbr(M->Curves) || Tree_Nbr(M->Saurfaces);
+    Tree_Nbr(M->Points) || Tree_Nbr(M->Curves) || Tree_Nbr(M->Surfaces);
 
   if((CTX.draw_bbox && (somegeo || Tree_Nbr(M->Vertices))) ||
      (!CTX.mesh.draw && !Tree_Nbr(M->Points) && Tree_Nbr(M->Vertices))) {
