@@ -2,9 +2,7 @@
 // Post-processing primitives in parsed format
 
 General.FastRedraw = 0 ;
-General.Color.Background = White ;
-General.Color.Foreground = Black ;
-General.Color.Text = Black ;
+General.ColorScheme = 1 ;
 
 x = 0;
 y = 15;
@@ -62,7 +60,7 @@ View "Primitives"{
      3,0,0,0,0,0,0,0,0, 2,0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,0,0};
 };
 
-Duplicata View[0];
+Alias View[0];
 View[1].Name = "Primitives (dupl. 1)" ;
 View[1].OffsetX = 3 ;
 View[1].IntervalsType = 2 ;
@@ -70,7 +68,7 @@ View[1].ShowElement = 1 ;
 View[1].ArrowLocation = 2 ;
 View[1].ColorTable = {Red,Green,Magenta,Cyan,Brown,Pink} ;
 
-Duplicata View[0];
+Alias View[0];
 View[2].Name = "Primitives (dupl. 2)" ;
 View[2].OffsetX = 6 ;
 View[2].IntervalsType = 4 ;
