@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.35 2000-12-09 22:26:12 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.36 2000-12-10 13:21:31 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -2321,7 +2321,9 @@ FExpr_Range :
 VExpr :
     VExpr_Single
     {
-      for(i=0 ; i<6 ; i++) $$[i] = $1[i];
+      $$ = $1 ;
+      //??? Avec ce qui siut (qui est correct), bison se plante sur DEC
+      //for(i=0 ; i<6 ; i++) $$[i] = $1[i];
     }
   | '-' VExpr %prec UNARYPREC
     {
