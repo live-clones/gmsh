@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.25 2004-04-18 03:23:02 geuzaine Exp $
+// $Id: Utils.cpp,v 1.26 2004-07-16 18:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -281,15 +281,15 @@ void find_bestuv(Surface * s, double X, double Y,
   *V = minv;
 }
 
-void invert_singular_matrix3x3(double _M[3][3], double _I[3][3])
+void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
 {
   int i, j, k, n = 3;
-  double _T[3][3];
+  double TT[3][3];
 
   for(i = 1; i <= n; i++) {
     for(j = 1; j <= n; j++) {
-      _I[i - 1][j - 1] = 0.0;
-      _T[i - 1][j - 1] = 0.0;
+      II[i - 1][j - 1] = 0.0;
+      TT[i - 1][j - 1] = 0.0;
     }
   }
 
@@ -300,7 +300,7 @@ void invert_singular_matrix3x3(double _M[3][3], double _I[3][3])
   gsl_vector *TMPVEC = gsl_vector_alloc(3);
   for(i = 1; i <= n; i++) {
     for(j = 1; j <= n; j++) {
-      gsl_matrix_set(M, i - 1, j - 1, _M[i - 1][j - 1]);
+      gsl_matrix_set(M, i - 1, j - 1, MM[i - 1][j - 1]);
     }
   }
   gsl_linalg_SV_decomp(M, V, W, TMPVEC);
@@ -308,15 +308,15 @@ void invert_singular_matrix3x3(double _M[3][3], double _I[3][3])
     for(j = 1; j <= n; j++) {
       double ww = gsl_vector_get(W, i - 1);
       if(fabs(ww) > 1.e-16) {   //singular value precision
-        _T[i - 1][j - 1] += gsl_matrix_get(M, j - 1, i - 1) / ww;
+        TT[i - 1][j - 1] += gsl_matrix_get(M, j - 1, i - 1) / ww;
       }
     }
   }
   for(i = 1; i <= n; i++) {
     for(j = 1; j <= n; j++) {
       for(k = 1; k <= n; k++) {
-        _I[i - 1][j - 1] +=
-          gsl_matrix_get(V, i - 1, k - 1) * _T[k - 1][j - 1];
+        II[i - 1][j - 1] +=
+          gsl_matrix_get(V, i - 1, k - 1) * TT[k - 1][j - 1];
       }
     }
   }
@@ -330,21 +330,21 @@ void invert_singular_matrix3x3(double _M[3][3], double _I[3][3])
   double *W = dvector(1, 3);
   for(i = 1; i <= n; i++) {
     for(j = 1; j <= n; j++) {
-      M[i][j] = _M[i - 1][j - 1];
+      M[i][j] = MM[i - 1][j - 1];
     }
   }
   dsvdcmp(M, n, n, W, V);
   for(i = 1; i <= n; i++) {
     for(j = 1; j <= n; j++) {
       if(fabs(W[i]) > 1.e-16) { //singular value precision
-        _T[i - 1][j - 1] += M[j][i] / W[i];
+        TT[i - 1][j - 1] += M[j][i] / W[i];
       }
     }
   }
   for(i = 1; i <= n; i++) {
     for(j = 1; j <= n; j++) {
       for(k = 1; k <= n; k++) {
-        _I[i - 1][j - 1] += V[i][k] * _T[k - 1][j - 1];
+        II[i - 1][j - 1] += V[i][k] * TT[k - 1][j - 1];
       }
     }
   }

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.170 2004-07-02 20:03:22 geuzaine Exp $
+// $Id: Options.cpp,v 1.171 2004-07-16 18:02:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3427,6 +3427,32 @@ double opt_mesh_vertex_arrays(OPT_ARGS_NUM)
   return CTX.mesh.vertex_arrays;
 }
 
+double opt_mesh_smooth_normals(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.smooth_normals != val) CTX.mesh.changed = 1;
+    CTX.mesh.smooth_normals = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[19]->value(CTX.mesh.smooth_normals);
+#endif
+  return CTX.mesh.smooth_normals;
+}
+
+double opt_mesh_angle_smooth_normals(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX.mesh.angle_smooth_normals != val) CTX.mesh.changed = 1;
+    CTX.mesh.angle_smooth_normals = val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[18]->value(CTX.mesh.angle_smooth_normals);
+#endif
+  return CTX.mesh.angle_smooth_normals;
+}
+
 double opt_mesh_light(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3444,7 +3470,7 @@ double opt_mesh_light_two_side(OPT_ARGS_NUM)
     CTX.mesh.light_two_side = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[23]->value(CTX.mesh.light_two_side);
+    WID->mesh_butt[18]->value(CTX.mesh.light_two_side);
 #endif
   return CTX.mesh.light_two_side;
 }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.253 2004-07-08 17:21:27 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.254 2004-07-16 18:02:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -989,7 +989,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_use_cut_plane(0, GMSH_SET, WID->mesh_butt[16]->value());
   opt_mesh_cut_plane_as_surface(0, GMSH_SET, WID->mesh_butt[22]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
-  opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[23]->value());
+  opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
+  opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());
@@ -1008,6 +1009,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_cut_planeb(0, GMSH_SET, WID->mesh_value[15]->value());
   opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());
   opt_mesh_cut_planed(0, GMSH_SET, WID->mesh_value[17]->value());
+  opt_mesh_angle_smooth_normals(0, GMSH_SET, WID->mesh_value[18]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_line_type(0, GMSH_SET, WID->mesh_choice[1]->value());

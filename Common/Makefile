@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.58 2004-06-15 18:20:53 geuzaine Exp $
+# $Id: Makefile,v 1.59 2004-07-16 18:02:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -35,6 +35,7 @@ SRC = Context.cpp\
       Visibility.cpp\
       Trackball.cpp\
       VertexArray.cpp\
+      SmoothNormals.cpp\
       License.cpp
 
 OBJ = ${SRC:.cpp=.o}

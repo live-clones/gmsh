@@ -705,6 +705,8 @@ StringXNumber MeshOptions_Number[] = {
     "3D mesh algorithm (1=isotropic, 4=netgen)" }, 
   { F,   "AllowDegeneratedExtrude" , opt_mesh_allow_degenerated_extrude , 0. , 
     "Allow the generation of degenerated hexahedra or prisms during extrusion" },
+  { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 180.0 ,
+    "Threshold angle below which normals are not smoothed" }, 
 
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths (and background meshes)" },
@@ -813,6 +815,8 @@ StringXNumber MeshOptions_Number[] = {
     "Global scaling factor applied to the saved mesh" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
+  { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
+    "Smooth the mesh normals?" },
   { F|O, "SpeedMax" , opt_mesh_speed_max , 0. ,
     "Disable dubious point insertion tests" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 

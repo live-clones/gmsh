@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.38 2004-07-09 18:26:56 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.39 2004-07-16 18:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -437,7 +437,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
       if(preproNormals){
 	for(int i = 0; i < 3; i++)
-	  View->add_normal(xx[i], yy[i], zz[i], nn[0], nn[1], nn[2]);
+	  View->normals->add(xx[i], yy[i], zz[i], nn[0], nn[1], nn[2]);
 	return;
       }
       for(int i = 0; i < 3; i++) {
@@ -447,7 +447,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
       if(View->SmoothNormals)
 	for(int i = 0; i < 3; i++)
-	  View->get_normal(xx[i], yy[i], zz[i], norms[3*i], norms[3*i+1], norms[3*i+2]);
+	  View->normals->get(xx[i], yy[i], zz[i], norms[3*i], norms[3*i+1], norms[3*i+2],
+			     View->AngleSmoothNormals);
      
       if(View->TriVertexArray && View->TriVertexArray->fill){
 	unsigned int col;
@@ -482,7 +483,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	}
 	if(preproNormals){
 	  for(int i = 0; i < nb; i++)
-	    View->add_normal(xx[i], yy[i], zz[i], nn[0], nn[1], nn[2]);
+	    View->normals->add(xx[i], yy[i], zz[i], nn[0], nn[1], nn[2]);
 	  return;
 	}
 	for(int i = 0; i < nb; i++) {
@@ -492,7 +493,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	}
 	if(View->SmoothNormals)
 	  for(int i = 0; i < nb; i++)
-	    View->get_normal(xx[i], yy[i], zz[i], norms[3*i], norms[3*i+1], norms[3*i+2]);
+	    View->normals->get(xx[i], yy[i], zz[i], norms[3*i], norms[3*i+1], norms[3*i+2],
+			       View->AngleSmoothNormals);
 	
 	if(View->TriVertexArray && View->TriVertexArray->fill){
 	  for(int i = 2; i < nb; i++) {
@@ -543,7 +545,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	}
 	if(preproNormals){
 	  for(int i = 0; i < nb; i++)
-	    View->add_normal(xx[i], yy[i], zz[i], nn[0], nn[1], nn[2]);
+	    View->normals->add(xx[i], yy[i], zz[i], nn[0], nn[1], nn[2]);
 	}
 	else{
 	  for(int i = 0; i < nb; i++) {
@@ -553,7 +555,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	  }
 	  if(View->SmoothNormals)
 	    for(int i = 0; i < nb; i++)
-	      View->get_normal(xx[i], yy[i], zz[i], norms[3*i], norms[3*i+1], norms[3*i+2]);
+	      View->normals->get(xx[i], yy[i], zz[i], norms[3*i], norms[3*i+1], norms[3*i+2],
+				 View->AngleSmoothNormals);
 
 	  if(View->TriVertexArray && View->TriVertexArray->fill){
 	    for(int i = 2; i < nb; i++) {

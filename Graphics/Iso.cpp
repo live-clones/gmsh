@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.28 2004-07-02 23:15:04 geuzaine Exp $
+// $Id: Iso.cpp,v 1.29 2004-07-16 18:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -356,7 +356,7 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
   if(View->SmoothNormals) {
     if(preproNormals) {
       for(i = 0; i < nb; i++) {
-        View->add_normal(Xp[i], Yp[i], Zp[i], n[0], n[1], n[2]);
+        View->normals->add(Xp[i], Yp[i], Zp[i], n[0], n[1], n[2]);
       }
       return;
     }
@@ -365,8 +365,9 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
         norms[3 * i] = n[0];
         norms[3 * i + 1] = n[1];
         norms[3 * i + 2] = n[2];
-        View->get_normal
-	  (Xp[i], Yp[i], Zp[i], norms[3 * i], norms[3 * i + 1], norms[3 * i + 2]);
+        View->normals->get(Xp[i], Yp[i], Zp[i], 
+			   norms[3 * i], norms[3 * i + 1], norms[3 * i + 2],
+			   View->AngleSmoothNormals);
       }
     }
   }

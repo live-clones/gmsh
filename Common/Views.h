@@ -23,12 +23,11 @@
 #include "ColorTable.h"
 #include "List.h"
 #include "VertexArray.h"
+#include "SmoothNormals.h"
 
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
 #define VIEW_MAX_ELEMENT_NODES  8
 #define VAL_INF 1.e200
-
-class smooth_container;
 
 class Post_View{
   public :
@@ -90,13 +89,9 @@ class Post_View{
   int (*GIFV) (double min, double max, int nb, double value);
   // smooth the view
   void smooth();
-  // smooth the normals
-  smooth_container *normals;
+  // smooth normals
+  smooth_normals *normals;
   void reset_normals();
-  void add_normal(double x, double y, double z, 
-		  double nx, double ny, double nz);
-  bool get_normal(double x, double y, double z, 
-		  double &nx, double &ny, double &nz);
   // transform the view
   void transform(double mat[3][3]);
 

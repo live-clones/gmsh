@@ -29,6 +29,7 @@
 #include "ExtrudeParams.h"
 #include "STL.h"
 #include "VertexArray.h"
+#include "SmoothNormals.h"
 
 #define FORMAT_MSH           1
 #define FORMAT_UNV           2
@@ -258,6 +259,7 @@ struct _Surf{
   DrawingColor Color;
   VertexArray * TriVertexArray;
   VertexArray * QuadVertexArray;
+  smooth_normals * normals;
 };
 
 typedef struct _Surf Surface;

@@ -363,6 +363,8 @@ double opt_mesh_point_type(OPT_ARGS_NUM);
 double opt_mesh_line_width(OPT_ARGS_NUM);
 double opt_mesh_line_type(OPT_ARGS_NUM);
 double opt_mesh_vertex_arrays(OPT_ARGS_NUM);
+double opt_mesh_smooth_normals(OPT_ARGS_NUM);
+double opt_mesh_angle_smooth_normals(OPT_ARGS_NUM);
 double opt_mesh_light(OPT_ARGS_NUM);
 double opt_mesh_light_two_side(OPT_ARGS_NUM);
 double opt_mesh_format(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.125 2004-07-05 15:20:06 geuzaine Exp $
+// $Id: Views.cpp,v 1.126 2004-07-16 18:02:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "ColorTable.h"
+#include "SmoothNormals.h"
 
 extern Context_T CTX;
 
@@ -150,7 +151,7 @@ Post_View *BeginView(int allocate)
   v->DuplicateOf = 0;
   v->ScalarOnly = 1;
   v->TextOnly = 1;
-  v->normals = NULL;
+  v->normals = new smooth_normals;
   v->Min = VAL_INF;
   v->Max = -VAL_INF;
   for(i = 0; i < 3; i++) {
@@ -578,9 +579,9 @@ void FreeView(Post_View * v)
     v->SY = v->VY = v->TY = NULL;
     v->T2D = v->T2C = NULL;
     v->T3D = v->T3C = NULL;
-    v->reset_normals();
-    if(v->TriVertexArray) 
-      delete v->TriVertexArray;
+    if(v->normals) delete v->normals;
+    v->normals = NULL;
+    if(v->TriVertexArray) delete v->TriVertexArray;
     v->TriVertexArray = NULL;
   }
 
@@ -1037,118 +1038,15 @@ void WriteView(Post_View *v, char *filename, int binary, int append)
 
 // Smoothing
 
-using namespace std;
-
-struct xyzv
+void Post_View::reset_normals()
 {
-private:
-public:
-  double x, y, z, *vals;
-  int nbvals;
-  int nboccurences;
-  static double eps;
-  void update(int nbVals, double *);
-    xyzv(double x, double y, double z);
-   ~xyzv();
-    xyzv & operator =(const xyzv &);
-    xyzv(const xyzv &);
-};
-
-double xyzv::eps = 0.0;
-
-xyzv::xyzv(double xx, double yy, double zz)
-:x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0)
-{
+  if(normals)
+    delete normals;
+  normals = new smooth_normals;
 }
-
-xyzv::~xyzv()
-{
-  if(vals)
-    delete[]vals;
-}
-
-xyzv::xyzv(const xyzv & other)
-{
-  x = other.x;
-  y = other.y;
-  z = other.z;
-  nbvals = other.nbvals;
-  nboccurences = other.nboccurences;
-  if(other.vals && other.nbvals) {
-    vals = new double[other.nbvals];
-    for(int i = 0; i < nbvals; i++)
-      vals[i] = other.vals[i];
-  }
-}
-
-xyzv & xyzv::operator =(const xyzv & other)
-{
-  if(this != &other) {
-    x = other.x;
-    y = other.y;
-    z = other.z;
-    nbvals = other.nbvals;
-    nboccurences = other.nboccurences;
-    if(other.vals && other.nbvals) {
-      vals = new double[other.nbvals];
-      for(int i = 0; i < nbvals; i++)
-        vals[i] = other.vals[i];
-    }
-  }
-  return *this;
-}
-
-void xyzv::update(int n, double *v)
-{
-  int i;
-  if(!vals) {
-    vals = new double[n];
-    for(i = 0; i < n; i++)
-      vals[i] = 0.0;
-    nbvals = n;
-    nboccurences = 0;
-  }
-  else if(nbvals != n) {
-    throw n;
-  }
-
-  double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
-  double x2 = 1. / (double)(nboccurences + 1);
-  for(i = 0; i < nbvals; i++)
-    vals[i] = (x1 * vals[i] + x2 * v[i]);
-  nboccurences++;
-
-  //printf("val(%d,%f,%f,%f) = %f\n",nboccurences,x,y,z,vals[0]);
-}
-
-struct lessthanxyzv
-{
-  bool operator () (const xyzv & p2, const xyzv & p1)const
-  {
-    if(p1.x - p2.x > xyzv::eps)
-      return true;
-    if(p1.x - p2.x < -xyzv::eps)
-      return false;
-    if(p1.y - p2.y > xyzv::eps)
-      return true;
-    if(p1.y - p2.y < -xyzv::eps)
-      return false;
-    if(p1.z - p2.z > xyzv::eps)
-      return true;
-    return false;
-  }
-};
-
-typedef set < xyzv, lessthanxyzv > mycont;
-typedef mycont::const_iterator iter;
-
-class smooth_container
-{
-  public: mycont c;
-};
 
 void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVert,
-                             mycont & connectivities)
+                             xyzcont & connectivities)
 {
   double *x, *y, *z, *v;
   int i, j, k;
@@ -1167,7 +1065,7 @@ void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVe
       for(k = 0; k < nbTimeStep; k++)
         vals[k] = v[j + k * nbVert];
       xyzv xyz(x[j], y[j], z[j]);
-      iter it = connectivities.find(xyz);
+      xyziter it = connectivities.find(xyz);
       if(it == connectivities.end()) {
         xyz.update(nbTimeStep, vals);
         connectivities.insert(xyz);
@@ -1184,7 +1082,7 @@ void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVe
 }
 
 void smooth_list(List_T * list, int nbList, double *min, double *max,
-                 int nbTimeStep, int nbVert, mycont & connectivities)
+                 int nbTimeStep, int nbVert, xyzcont & connectivities)
 {
   double *x, *y, *z, *v;
   int i, j, k;
@@ -1203,7 +1101,7 @@ void smooth_list(List_T * list, int nbList, double *min, double *max,
     v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
     for(j = 0; j < nbVert; j++) {
       xyzv xyz(x[j], y[j], z[j]);
-      iter it = connectivities.find(xyz);
+      xyziter it = connectivities.find(xyz);
       if(it != connectivities.end()) {
         for(k = 0; k < nbTimeStep; k++) {
           v[j + k * nbVert] = (*it).vals[k];
@@ -1222,7 +1120,7 @@ void Post_View::smooth()
   xyzv::eps = CTX.lc * 1.e-8;
 
   if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
-    mycont con;
+    xyzcont con;
     Msg(INFO, "Smoothing scalar primitives in View[%d]", Index);
     generate_connectivities(SL, NbSL, NbTimeStep, 2, con);
     generate_connectivities(ST, NbST, NbTimeStep, 3, con);
@@ -1240,81 +1138,6 @@ void Post_View::smooth()
     smooth_list(SY, NbSY, &Min, &Max, NbTimeStep, 5, con);
     Changed = 1;
   }
-}
-
-// Normal smoothing
-
-void Post_View::reset_normals()
-{
-  if(normals)
-    delete normals;
-  normals = 0;
-}
-
-void Post_View::add_normal(double x, double y, double z,
-                           double nx, double ny, double nz)
-{
-  if(!normals)
-    normals = new smooth_container;
-
-  double n[3] = { nx, ny, nz };
-  xyzv xyz(x, y, z);
-
-  iter it = normals->c.find(xyz);
-
-  if(it == normals->c.end()) {
-    xyz.update(3, n);
-    normals->c.insert(xyz);
-  }
-  else {
-    xyzv *xx = (xyzv *) & (*it);
-    xx->update(3, n);
-  }
-}
-
-double get_angle(double *aa, double *bb)
-{
-  double angplan, cosc, sinc, a[3], b[3], c[3];
-  if(!aa || !bb)
-    return 0.;
-  a[0] = aa[0];
-  a[1] = aa[1];
-  a[2] = aa[2];
-  b[0] = bb[0];
-  b[1] = bb[1];
-  b[2] = bb[2];
-  norme(a);
-  norme(b);
-  prodve(a, b, c);
-  prosca(a, b, &cosc);
-  sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-  angplan = myatan2(sinc, cosc);
-  return angplan * 180. / Pi;
-}
-
-bool Post_View::get_normal(double x, double y, double z,
-                           double &nx, double &ny, double &nz)
-{
-  if(!normals)
-    return false;
-
-  double n[3] = { nx, ny, nz };
-  xyzv xyz(x, y, z);
-
-  iter it = normals->c.find(xyz);
-
-  if(it == normals->c.end())
-    return false;
-
-  double angle = get_angle((*it).vals, n);
-
-  if(fabs(angle) < AngleSmoothNormals) {
-    nx = (*it).vals[0];
-    ny = (*it).vals[1];
-    nz = (*it).vals[2];
-  }
-
-  return true;
 }
 
 // Transformation

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.100 2004-07-09 18:26:56 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.101 2004-07-16 18:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -235,6 +235,8 @@ void Draw_Mesh_Volume(void *a, void *b)
   Tree_Action(v->Pyramids, Draw_Mesh_Pyramid);
 }
 
+static int preproNormals = 0;
+
 void Draw_Mesh_Surface(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
@@ -244,6 +246,16 @@ void Draw_Mesh_Surface(void *a, void *b)
   theSurface = s;
   theColor = s->Color;
   thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
+
+  if(CTX.mesh.changed && CTX.mesh.smooth_normals){
+    Msg(DEBUG, "pre-processing smooth normals");
+    if(s->normals) delete s->normals;
+    s->normals = new smooth_normals;
+    preproNormals = 1;
+    Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
+    Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
+    preproNormals = 0;
+  }
 
   if(CTX.mesh.vertex_arrays){
     if(CTX.mesh.changed){
@@ -454,13 +466,41 @@ void _triFace(double x0, double y0, double z0,
 	      double x1, double y1, double z1,
 	      double x2, double y2, double z2)
 {
-  double n[3];
-  if(CTX.mesh.light){
+  double n[3], ns[3];
+
+  if(CTX.mesh.light || (theSurface && preproNormals)){
     _normal3points(x0, y0, z0, x1, y1, z1, x2, y2, z2, n);
+    if(theSurface && preproNormals){
+      theSurface->normals->add(x0, y0, z0, n[0], n[1], n[2]);
+      theSurface->normals->add(x1, y1, z1, n[0], n[1], n[2]);
+      theSurface->normals->add(x2, y2, z2, n[0], n[1], n[2]);
+      return;
+    }
     glNormal3dv(n);
   }
+
+  if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
+    ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
+    theSurface->normals->get(x0, y0, z0, ns[0], ns[1], ns[2], 
+			     CTX.mesh.angle_smooth_normals);
+    glNormal3dv(ns);    
+  }
   glVertex3d(x0, y0, z0);
+
+  if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
+    ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
+    theSurface->normals->get(x1, y1, z1, ns[0], ns[1], ns[2], 
+			     CTX.mesh.angle_smooth_normals);
+    glNormal3dv(ns);    
+  }
   glVertex3d(x1, y1, z1);
+
+  if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
+    ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
+    theSurface->normals->get(x2, y2, z2, ns[0], ns[1], ns[2], 
+			     CTX.mesh.angle_smooth_normals);
+    glNormal3dv(ns);    
+  }
   glVertex3d(x2, y2, z2);
 }
 
@@ -478,16 +518,52 @@ void _triFace2(double *x, double *y, double *z,
 void _quadFace(double *x, double *y, double *z,
 	       int i0, int i1, int i2, int i3)
 {
-  double n[3];
-  if(CTX.mesh.light){
+  double n[3], ns[3];
+
+  if(CTX.mesh.light || (theSurface && preproNormals)){
     _normal3points(x[i0], y[i0], z[i0],
 		   x[i1], y[i1], z[i1],
 		   x[i2], y[i2], z[i2], n);
+    if(theSurface && preproNormals){
+      theSurface->normals->add(x[i0], y[i0], z[i0], n[0], n[1], n[2]);
+      theSurface->normals->add(x[i1], y[i1], z[i1], n[0], n[1], n[2]);
+      theSurface->normals->add(x[i2], y[i2], z[i2], n[0], n[1], n[2]);
+      theSurface->normals->add(x[i3], y[i3], z[i3], n[0], n[1], n[2]);
+      return;
+    }
     glNormal3dv(n);
   }
+
+  if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
+    ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
+    theSurface->normals->get(x[i0], y[i0], z[i0], ns[0], ns[1], ns[2], 
+			     CTX.mesh.angle_smooth_normals);
+    glNormal3dv(ns);    
+  }
   glVertex3d(x[i0], y[i0], z[i0]);
+
+  if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
+    ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
+    theSurface->normals->get(x[i1], y[i1], z[i1], ns[0], ns[1], ns[2], 
+			     CTX.mesh.angle_smooth_normals);
+    glNormal3dv(ns);    
+  }
   glVertex3d(x[i1], y[i1], z[i1]);
+
+  if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
+    ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
+    theSurface->normals->get(x[i2], y[i2], z[i2], ns[0], ns[1], ns[2], 
+			     CTX.mesh.angle_smooth_normals);
+    glNormal3dv(ns);    
+  }
   glVertex3d(x[i2], y[i2], z[i2]);
+
+  if(CTX.mesh.light && theSurface && CTX.mesh.smooth_normals){
+    ns[0] = n[0]; ns[1] = n[1]; ns[2] = n[2];
+    theSurface->normals->get(x[i3], y[i3], z[i3], ns[0], ns[1], ns[2], 
+			     CTX.mesh.angle_smooth_normals);
+    glNormal3dv(ns);    
+  }
   glVertex3d(x[i3], y[i3], z[i3]);
 }
 
@@ -602,18 +678,24 @@ void Draw_Mesh_Triangle(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.normals || CTX.mesh.light ||
-     (theSurface && theSurface->TriVertexArray && theSurface->TriVertexArray->fill)){
-    _normal3points(X[0], Y[0], Z[0], 
-		   X[1], Y[1], Z[1],
-		   X[2], Y[2], Z[2], n);
-    glNormal3dv(n);
-  }
-
   if(theSurface && theSurface->TriVertexArray){
-    if(theSurface->TriVertexArray->fill){
+    if(preproNormals || theSurface->TriVertexArray->fill)
+      _normal3points(X[0], Y[0], Z[0], 
+		     X[1], Y[1], Z[1],
+		     X[2], Y[2], Z[2], n);
+    if(preproNormals){
       for(int i = 0; i < 3; i++)
-	theSurface->TriVertexArray->add(X[i], Y[i], Z[i], n[0], n[1], n[2], col);
+	theSurface->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
+      return;
+    }
+    if(theSurface->TriVertexArray->fill){
+      for(int i = 0; i < 3; i++){
+	double ns[3] = {n[0], n[1], n[2]};
+	if(CTX.mesh.smooth_normals)
+	  theSurface->normals->get(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], 
+				   CTX.mesh.angle_smooth_normals);
+	theSurface->TriVertexArray->add(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], col);
+      }
       theSurface->TriVertexArray->num++;
     }
   }    
@@ -637,9 +719,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
       if(CTX.mesh.surfaces_edges) glEnable(GL_POLYGON_OFFSET_FILL);
       if(!s->VSUP) {
 	glBegin(GL_TRIANGLES);
-	glVertex3d(X[0], Y[0], Z[0]);
-	glVertex3d(X[1], Y[1], Z[1]);
-	glVertex3d(X[2], Y[2], Z[2]);
+	_triFace(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2]);
 	glEnd();
       }
       else {
@@ -679,6 +759,9 @@ void Draw_Mesh_Triangle(void *a, void *b)
   }
 
   if(CTX.mesh.normals) {
+    _normal3points(X[0], Y[0], Z[0], 
+		   X[1], Y[1], Z[1],
+		   X[2], Y[2], Z[2], n);
     glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
     n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[1];
@@ -744,18 +827,24 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.normals || CTX.mesh.light ||
-     (theSurface && theSurface->QuadVertexArray && theSurface->QuadVertexArray->fill)){
-    _normal3points(X[0], Y[0], Z[0], 
-		   X[1], Y[1], Z[1],
-		   X[2], Y[2], Z[2], n);
-    glNormal3dv(n);
-  }
-
   if(theSurface && theSurface->QuadVertexArray){
-    if(theSurface->QuadVertexArray->fill){
+    if(preproNormals || theSurface->QuadVertexArray->fill)
+      _normal3points(X[0], Y[0], Z[0], 
+		     X[1], Y[1], Z[1],
+		     X[2], Y[2], Z[2], n);
+    if(preproNormals){
       for(int i = 0; i < 4; i++)
-	theSurface->QuadVertexArray->add(X[i], Y[i], Z[i], n[0], n[1], n[2], col);
+	theSurface->normals->add(X[i], Y[i], Z[i], n[0], n[1], n[2]);
+      return;
+    }
+    if(theSurface->QuadVertexArray->fill){
+      for(int i = 0; i < 4; i++){
+	double ns[3] = {n[0], n[1], n[2]};
+	if(CTX.mesh.smooth_normals)
+	  theSurface->normals->get(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], 
+				   CTX.mesh.angle_smooth_normals);
+	theSurface->QuadVertexArray->add(X[i], Y[i], Z[i], ns[0], ns[1], ns[2], col);
+      }
       theSurface->QuadVertexArray->num++;
     }
   }    
@@ -779,10 +868,7 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
       if(CTX.mesh.surfaces_edges) glEnable(GL_POLYGON_OFFSET_FILL);
       if(!q->VSUP) {
 	glBegin(GL_QUADS);
-	glVertex3d(X[0], Y[0], Z[0]);
-	glVertex3d(X[1], Y[1], Z[1]);
-	glVertex3d(X[2], Y[2], Z[2]);
-	glVertex3d(X[3], Y[3], Z[3]);
+	_quadFace(X, Y, Z, 0, 1, 2, 3);
 	glEnd();
       }
       else {
@@ -823,6 +909,9 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 
   if(CTX.mesh.normals) {
     glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
+    _normal3points(X[0], Y[0], Z[0], 
+		   X[1], Y[1], Z[1],
+		   X[2], Y[2], Z[2], n);
     n[0] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[1];
     n[2] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[2];

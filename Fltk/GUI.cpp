@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.322 2004-07-01 19:13:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.323 2004-07-16 18:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1878,24 +1878,29 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
       mesh_butt[17] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting");
-      mesh_butt[17]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[17]->down_box(TOGGLE_BOX);
-      mesh_butt[17]->selection_color(TOGGLE_COLOR);
+      mesh_butt[18] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Use two-side lighting");
+      mesh_butt[19] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW, BH, "Smooth normals");
+      for(i = 17; i <= 19; i++) {
+	mesh_butt[i]->type(FL_TOGGLE_BUTTON);
+	mesh_butt[i]->down_box(TOGGLE_BOX);
+	mesh_butt[i]->selection_color(TOGGLE_COLOR);
+      }
 
-      mesh_butt[23] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW, BH, "Use two-side lighting");
-      mesh_butt[23]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[23]->down_box(TOGGLE_BOX);
-      mesh_butt[23]->selection_color(TOGGLE_COLOR);
+      mesh_value[18] = new Fl_Value_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Angle");
+      mesh_value[18]->minimum(0.);
+      mesh_value[18]->maximum(180.);
+      mesh_value[18]->step(1.);
+      mesh_value[18]->align(FL_ALIGN_RIGHT);
 
-      mesh_value[9] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Explode elements");
+      mesh_value[9] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Explode elements");
       mesh_value[9]->minimum(0);
       mesh_value[9]->maximum(1);
       mesh_value[9]->step(0.01);
-      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Point size");
+      mesh_value[10] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Point size");
       mesh_value[10]->minimum(0.1);
       mesh_value[10]->maximum(50);
       mesh_value[10]->step(0.1);
-      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Line width");
+      mesh_value[11] = new Fl_Value_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Line width");
       mesh_value[11]->minimum(0.1);
       mesh_value[11]->maximum(50);
       mesh_value[11]->step(0.1);
@@ -1903,11 +1908,11 @@ void GUI::create_option_window()
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Point display");
+      mesh_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Point display");
       mesh_choice[0]->menu(menu_point_display);
       mesh_choice[0]->align(FL_ALIGN_RIGHT);
 
-      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 6 * BH, IW, BH, "Line display");
+      mesh_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 8 * BH, IW, BH, "Line display");
       mesh_choice[1]->menu(menu_line_display);
       mesh_choice[1]->align(FL_ALIGN_RIGHT);
       mesh_choice[1]->deactivate(); // don't give false hopes, as it's not used anywhere right now

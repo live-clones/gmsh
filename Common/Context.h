@@ -182,6 +182,8 @@ public :
     int oldxtrude, oldxtrude_recombine, check_duplicates;
     int allow_degenerated_extrude, save_all;
     char *triangle_options;
+    int smooth_normals;
+    double angle_smooth_normals;
   } mesh;
 
   // post processing options 
