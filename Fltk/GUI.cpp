@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.198 2002-10-04 22:18:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.199 2002-10-11 07:12:47 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -766,7 +766,7 @@ void GUI::create_menu_window(int argc, char **argv){
 			 (Fl_Callback *)view_reload_all_cb, (void*)i, 0);
     m_popup_butt[i]->add("Reload/All visible views", 0, 
 			 (Fl_Callback *)view_reload_visible_cb, (void*)i, 0);
-    m_popup_butt[i]->add("Remove/View", 0, 
+    m_popup_butt[i]->add("Remove/View", FL_Delete, 
 			 (Fl_Callback *)view_remove_cb, (void*)i, 0);
     m_popup_butt[i]->add("Remove/All views", 0, 
 			 (Fl_Callback *)view_remove_all_cb, (void*)i, 0);
