@@ -176,6 +176,13 @@ typedef struct{
 }Prism;
 
 typedef struct{
+  int Num;              /* Numero                                       */
+  int iEnt;             /* Entite geometrique                           */
+  Vertex *V[5];         /* 5 noeuds                                     */
+  Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
+}Pyramid;
+
+typedef struct{
   int N;
   List_T *pT;
 }Brick;
@@ -266,6 +273,7 @@ typedef struct {
   Tree_T *Simp_Surf;//for old extrusion mesh generator
   Tree_T *Hexahedra;
   Tree_T *Prisms;
+  Tree_T *Pyramids;
   int Dirty; //flag to prevent any meshing
 }Volume;
 

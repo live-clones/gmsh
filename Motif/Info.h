@@ -18,6 +18,7 @@ static char *txt_info [] =
     "Tetrahedra",
     "Hexahedra",
     "Prisms", 
+    "Pyramids", 
     "Time for 1D Mesh",
     "Time for 2D Mesh",
     "Time for 3D Mesh",

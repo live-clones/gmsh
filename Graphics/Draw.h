@@ -76,6 +76,7 @@ void Draw_Simplex_Curves(void *a,void *b);
 
 void Draw_Hexahedron_Volume (void *a, void *b);
 void Draw_Prism_Volume (void *a, void *b);
+void Draw_Pyramid_Volume (void *a, void *b);
 
 void Draw_ScalarPoint(Post_View *View, 
 		      double ValMin, double ValMax, double Raise[3][5],

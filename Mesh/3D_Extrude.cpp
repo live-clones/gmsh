@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.42 2001-08-28 15:37:15 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.43 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -8,6 +8,7 @@
 #include "Context.h"
 #include "Create.h"
 
+extern Context_T  CTX ;
 extern Mesh      *THEM;
 extern int        CurrentNodeNumber;
 
@@ -219,13 +220,101 @@ void Extrude_Simplex_Phase1 (void *data, void *dum){
   }
 }
 
+void Create_HexPri(int iEnt, Vertex *v[8]){
+  int i, j=0, dup[4];
+  Hexahedron *newh;
+  Prism *newp;
+
+  if(CTX.mesh.allow_degenerated_extrude){
+    newh = Create_Hexahedron(v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7]);
+    newh->iEnt = iEnt;
+    Tree_Add(THEV->Hexahedra,&newh);
+    return;
+  }
+
+  for(i=0; i<4; i++)
+    if(v[i]->Num == v[i+4]->Num) dup[j++] = i;
+  
+  if(j==2){
+    if(dup[0]==0 && dup[1]==1)
+      newp = Create_Prism(v[0],v[3],v[7],v[1],v[6],v[2]);
+    else if(dup[0]==1 && dup[1]==2)
+      newp = Create_Prism(v[0],v[1],v[4],v[3],v[2],v[7]);
+    else if(dup[0]==2 && dup[1]==3)
+      newp = Create_Prism(v[0],v[3],v[4],v[1],v[5],v[7]);
+    else if(dup[0]==0 && dup[1]==3)
+      newp = Create_Prism(v[0],v[1],v[5],v[3],v[2],v[6]);
+    else{
+      Msg(GERROR, "Uncoherent hexahedron  (nodes %d %d %d %d %d %d %d %d)",
+	  v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7]);
+      return;
+    }
+    newp->iEnt = iEnt;
+    Tree_Add(THEV->Prisms,&newp);
+  }
+  else{
+    newh = Create_Hexahedron(v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7]);
+    newh->iEnt = iEnt;
+    Tree_Add(THEV->Hexahedra,&newh);
+    if(j)
+      Msg(GERROR, "Degenerated hexahedron %d (nodes %d %d %d %d %d %d %d %d)", 
+	  newh->Num,v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7]);
+  }
+}
+
+void Create_PriPyrTet(int iEnt, Vertex *v[6]){
+  int i, j=0, dup[3];
+  Prism *newp;
+  Pyramid *newpyr;
+  Simplex *news;
+
+  if(CTX.mesh.allow_degenerated_extrude){
+    newp = Create_Prism(v[0],v[1],v[2],v[3],v[4],v[5]);
+    newp->iEnt = iEnt;
+    Tree_Add(THEV->Prisms,&newp);
+    return;
+  }
+
+  for(i=0; i<3; i++)
+    if(v[i]->Num == v[i+3]->Num) dup[j++] = i;
+
+  if(j==2){
+    if(dup[0]==0 && dup[1]==1)
+      news = Create_Simplex(v[0],v[1],v[2],v[5]);
+    else if(dup[0]==1 && dup[1]==2)
+      news = Create_Simplex(v[0],v[1],v[2],v[3]);
+    else
+      news = Create_Simplex(v[0],v[1],v[2],v[4]);
+    news->iEnt = iEnt;
+    Tree_Add(THEV->Simplexes,&news);
+  }
+  else if(j==1){
+    if(dup[0]==0)
+      newpyr = Create_Pyramid(v[1],v[4],v[5],v[2],v[0]);
+    else if(dup[0]==1)
+      newpyr = Create_Pyramid(v[0],v[2],v[5],v[3],v[1]);
+    else
+      newpyr = Create_Pyramid(v[0],v[1],v[4],v[3],v[2]);
+    newpyr->iEnt = iEnt;
+    Tree_Add(THEV->Pyramids,&newpyr);
+  }
+  else{
+    newp = Create_Prism(v[0],v[1],v[2],v[3],v[4],v[5]);
+    newp->iEnt = iEnt;
+    Tree_Add(THEV->Prisms,&newp);
+    if(j)
+      Msg(GERROR, "Degenerated prism %d (nodes %d %d %d %d %d %d %d %d)", 
+	  newp->Num,v[0],v[1],v[2],v[3],v[4],v[5]);
+  }
+
+}
+
+
 void Extrude_Simplex_Phase3 (void *data, void *dum){
 
   Simplex **pS, *s, *news;
-  Hexahedron *newh;
-  Prism *newp;
   int i, j, k;
-  Vertex *v1, *v2, *v3, *v4, *v5, *v6, *v7, *v8;
+  Vertex *v[8];
   List_T *L0, *L1, *L2, *L3;
 
   pS = (Simplex **) data;
@@ -246,127 +335,110 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
 
       if(s->V[3]){
-        List_Read(L0,k,&v1);
-        List_Read(L1,k,&v2);
-        List_Read(L2,k,&v3);
-        List_Read(L3,k,&v4);
-        List_Read(L0,k+1,&v5);
-        List_Read(L1,k+1,&v6);
-        List_Read(L2,k+1,&v7);
-        List_Read(L3,k+1,&v8);
+        List_Read(L0,k,&v[0]);
+        List_Read(L1,k,&v[1]);
+        List_Read(L2,k,&v[2]);
+        List_Read(L3,k,&v[3]);
+        List_Read(L0,k+1,&v[4]);
+        List_Read(L1,k+1,&v[5]);
+        List_Read(L2,k+1,&v[6]);
+        List_Read(L3,k+1,&v[7]);
       }		    
       else{	    
-        List_Read(L0, k, &v1);
-        List_Read(L1, k, &v2);
-        List_Read(L2, k, &v3);
-        List_Read(L0, k + 1, &v4);
-        List_Read(L1, k + 1, &v5);
-        List_Read(L2, k + 1, &v6);
+        List_Read(L0, k, &v[0]);
+        List_Read(L1, k, &v[1]);
+        List_Read(L2, k, &v[2]);
+        List_Read(L0, k + 1, &v[3]);
+        List_Read(L1, k + 1, &v[4]);
+        List_Read(L2, k + 1, &v[5]);
       }
 
       k++;
       if (ep->mesh.ZonLayer[i]){
 
         if(ep->mesh.Recombine){
-          if(s->V[3]){
-            newh = Create_Hexahedron(v1,v2,v3,v4,v5,v6,v7,v8);
-            newh->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Hexahedra,&newh);
-	    if(v1->Num == v5->Num || v2->Num == v6->Num ||
-	       v3->Num == v7->Num || v3->Num == v8->Num)
-	      Msg(WARNING, "Fixme! Hexahedron %d (nodes %d %d %d %d %d %d %d %d) is degenerated", 
-		  newh->Num, 
-		  v1->Num, v2->Num, v3->Num, v4->Num, 
-		  v5->Num, v6->Num, v7->Num, v8->Num);
-          }
-          else{
-            newp = Create_Prism(v1,v2,v3,v4,v5,v6);
-            newp->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Prisms,&newp);
-	    if(v1->Num == v4->Num || v2->Num == v5->Num || v3->Num == v6->Num)
-	      Msg(WARNING, "Fixme! Prism %d (nodes %d %d %d %d %d %d) is degenerated", 
-		  newp->Num, 
-		  v1->Num, v2->Num, v3->Num,
-		  v4->Num, v5->Num, v6->Num);
-          }
+          if(s->V[3])
+	    Create_HexPri(ep->mesh.ZonLayer[i],v);
+          else
+	    Create_PriPyrTet(ep->mesh.ZonLayer[i],v);
         }
         else{
           
-          if (are_exist (v4, v2, Tree_Ares) &&
-              are_exist (v5, v3, Tree_Ares) &&
-              are_exist (v4, v3, Tree_Ares)){
-            news = Create_Simplex (v1, v2, v3, v4);
+          if (are_exist (v[3], v[1], Tree_Ares) &&
+              are_exist (v[4], v[2], Tree_Ares) &&
+              are_exist (v[3], v[2], Tree_Ares)){
+            news = Create_Simplex (v[0], v[1], v[2], v[3]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v4, v5, v6, v3);
+            news = Create_Simplex (v[3], v[4], v[5], v[2]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v2, v4, v5, v3);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add (THEV->Simplexes, &news);
-          }
-          if (are_exist (v4, v2, Tree_Ares) &&
-              are_exist (v2, v6, Tree_Ares) &&
-              are_exist (v4, v3, Tree_Ares)){
-            news = Create_Simplex (v1, v2, v3, v4);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v4, v5, v6, v2);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v4, v2, v6, v3);
+            news = Create_Simplex (v[1], v[3], v[4], v[2]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
           }
-          if (are_exist (v4, v2, Tree_Ares) &&
-              are_exist (v2, v6, Tree_Ares) &&
-              are_exist (v6, v1, Tree_Ares)){
-            news = Create_Simplex (v1, v2, v3, v6);
+          if (are_exist (v[3], v[1], Tree_Ares) &&
+              are_exist (v[1], v[5], Tree_Ares) &&
+              are_exist (v[3], v[2], Tree_Ares)){
+            news = Create_Simplex (v[0], v[1], v[2], v[3]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v4, v5, v6, v2);
+            news = Create_Simplex (v[3], v[4], v[5], v[1]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v2, v4, v6, v1);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add (THEV->Simplexes, &news);
-          }
-          if (are_exist (v5, v1, Tree_Ares) &&
-              are_exist (v5, v3, Tree_Ares) &&
-              are_exist (v4, v3, Tree_Ares)){
-            news = Create_Simplex (v1, v2, v3, v5);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v4, v5, v6, v3);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v1, v4, v5, v3);
+            news = Create_Simplex (v[3], v[1], v[5], v[2]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
           }
-          if (are_exist (v5, v1, Tree_Ares) &&
-              are_exist (v5, v3, Tree_Ares) &&
-              are_exist (v6, v1, Tree_Ares)){
-            news = Create_Simplex (v1, v2, v3, v5);
+          if (are_exist (v[3], v[1], Tree_Ares) &&
+              are_exist (v[1], v[5], Tree_Ares) &&
+              are_exist (v[5], v[0], Tree_Ares)){
+            news = Create_Simplex (v[0], v[1], v[2], v[5]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v4, v5, v6, v1);
+            news = Create_Simplex (v[3], v[4], v[5], v[1]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v1, v3, v5, v6);
+            news = Create_Simplex (v[1], v[3], v[5], v[0]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
           }
-          if (are_exist (v5, v1, Tree_Ares) &&
-              are_exist (v2, v6, Tree_Ares) &&
-              are_exist (v6, v1, Tree_Ares)){
-            news = Create_Simplex (v1, v2, v3, v6);
+          if (are_exist (v[4], v[0], Tree_Ares) &&
+              are_exist (v[4], v[2], Tree_Ares) &&
+              are_exist (v[3], v[2], Tree_Ares)){
+            news = Create_Simplex (v[0], v[1], v[2], v[4]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v4, v5, v6, v1);
+            news = Create_Simplex (v[3], v[4], v[5], v[2]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
-            news = Create_Simplex (v1, v2, v5, v6);
+            news = Create_Simplex (v[0], v[3], v[4], v[2]);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+          if (are_exist (v[4], v[0], Tree_Ares) &&
+              are_exist (v[4], v[2], Tree_Ares) &&
+              are_exist (v[5], v[0], Tree_Ares)){
+            news = Create_Simplex (v[0], v[1], v[2], v[4]);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v[3], v[4], v[5], v[0]);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v[0], v[2], v[4], v[5]);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+          if (are_exist (v[4], v[0], Tree_Ares) &&
+              are_exist (v[1], v[5], Tree_Ares) &&
+              are_exist (v[5], v[0], Tree_Ares)){
+            news = Create_Simplex (v[0], v[1], v[2], v[5]);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v[3], v[4], v[5], v[0]);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v[0], v[1], v[4], v[5]);
             news->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add (THEV->Simplexes, &news);
           }

@@ -5,9 +5,9 @@
 
 /* check Info.h */
 #define NB_INFO_GEOM   4
-#define NB_INFO_MESH   14
+#define NB_INFO_MESH   15
 #define NB_INFO_POST   5
-#define NB_INFO_MAX    23
+#define NB_INFO_MAX    24
 
 /* Holder for all Widgets */
 

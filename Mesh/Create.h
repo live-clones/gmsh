@@ -3,10 +3,11 @@
 
 int compareNXE (const void *a, const void *b);
 int compareFxE (const void *a, const void *b);
-int compareHexahedron (const void *a, const void *b);
 int compareSurfaceLoop (const void *a, const void *b);
 int compareEdgeLoop (const void *a, const void *b);
+int compareHexahedron (const void *a, const void *b);
 int comparePrism (const void *a, const void *b);
+int comparePyramid (const void *a, const void *b);
 int compareQuality (const void *a, const void *b);
 int compareCurve (const void *a, const void *b);
 int compareAttractor (const void *a, const void *b);
@@ -40,5 +41,9 @@ void Free_Hexahedron(void *a, void *b);
 Prism * Create_Prism (Vertex * v1, Vertex * v2, Vertex * v3,
                       Vertex * v4, Vertex * v5, Vertex * v6);
 void Free_Prism(void *a, void *b);
+
+Pyramid * Create_Pyramid (Vertex * v1, Vertex * v2, Vertex * v3,
+			  Vertex * v4, Vertex * v5);
+void Free_Pyramid(void *a, void *b);
 
 #endif

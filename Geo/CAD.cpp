@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.30 2001-08-17 08:31:31 geuzaine Exp $
+// $Id: CAD.cpp,v 1.31 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -998,7 +998,11 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   
   if(!CurveBeg && !CurveEnd) return NULL;
 
-  s = Create_Surface(MAXREG++,MSH_SURF_REGL,0);
+  if(!CurveBeg || !CurveEnd)
+    s = Create_Surface(MAXREG++,MSH_SURF_TRIC,0);
+  else
+    s = Create_Surface(MAXREG++,MSH_SURF_REGL,0);
+
   s->Generatrices = List_Create(4,1,sizeof(Curve*));
   
   // je me souviens

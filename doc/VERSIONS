@@ -1,9 +1,13 @@
-$Id: VERSIONS,v 1.62 2001-08-28 15:12:01 geuzaine Exp $
+$Id: VERSIONS,v 1.63 2001-08-28 20:40:21 geuzaine Exp $
 
 New in 1.24: Fixed characteristic length interpolation for Splines;
-fixed edge swapping bug in 3D initial mesh generation; added BSplines;
-integrated Jonathan Shewchuk's Triangle as an alternative isotropic 2D
-mesh generator; added AngleSmoothNormals option;
+fixed edge swapping bug in 3D initial mesh; fixed degenerated case in
+geometrical extrusion (ruled surface with 3 borders); fixed generation
+of degenerated hexahedra and prisms for recombined+extruded meshes;
+added BSplines creation in the GUI; integrated Jonathan Shewchuk's
+Triangle as an alternative isotropic 2D mesh generator; added
+AngleSmoothNormals to control sharp edge display with smoothed
+normals; fixed random crash for lighted 3D iso surfaces;
 
 New in 1.23: Fixed duplicate elements generation + non-matching
 tetrahedra faces in 3D extruded meshes; Better display of displacement

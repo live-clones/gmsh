@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.111 2001-08-26 12:12:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.112 2001-08-28 20:40:21 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1525,13 +1525,13 @@ void GUI::create_post_options_window(){
 //*********************** Create the window for the statistics *************************
 
 void GUI::create_statistics_window(){
-  int i;
+  int i, num=0;
 
   if(!init_statistics_window){
     init_statistics_window = 1 ;
 
     int width = 24*CTX.fontsize;
-    int height = 5*WB+16*BH ;
+    int height = 5*WB+17*BH ;
 
     stat_window = new Fl_Window(width,height);
     stat_window->box(WINDOW_BOX);
@@ -1542,37 +1542,40 @@ void GUI::create_statistics_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Geometry");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	stat_value[0] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Points");
-	stat_value[1] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Curves");
-	stat_value[2] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
-	stat_value[3] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Points");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Curves");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Surfaces");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Volumes");
 	o->end();
       }
       { 
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Mesh");
 	o->labelsize(CTX.fontsize);
-	stat_value[4] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Nodes on curves");
-	stat_value[5] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Nodes on surfaces");
-	stat_value[6] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Nodes in volumes");
-	stat_value[7] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Triangles");
-	stat_value[8] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Quadrangles");
-	stat_value[9] = new Fl_Output(2*WB, 2*WB+6*BH, IW, BH, "Tetrahedra");
-	stat_value[10] = new Fl_Output(2*WB, 2*WB+7*BH, IW, BH, "Hexahedra");
-	stat_value[11] = new Fl_Output(2*WB, 2*WB+8*BH, IW, BH, "Prisms");
-	stat_value[12] = new Fl_Output(2*WB, 2*WB+9*BH, IW, BH, "Time for 1D mesh");
-	stat_value[13] = new Fl_Output(2*WB, 2*WB+10*BH, IW, BH, "Time for 2D mesh");
-	stat_value[14] = new Fl_Output(2*WB, 2*WB+11*BH, IW, BH, "Time for 3D mesh");
-	stat_value[15] = new Fl_Output(2*WB, 2*WB+12*BH, IW, BH, "Gamma factor");
-	stat_value[16] = new Fl_Output(2*WB, 2*WB+13*BH, IW, BH, "Eta factor");
-	stat_value[17] = new Fl_Output(2*WB, 2*WB+14*BH, IW, BH, "Rho factor");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Nodes on curves");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Nodes on surfaces");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Nodes in volumes");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Triangles");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Quadrangles");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+6*BH, IW, BH, "Tetrahedra");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+7*BH, IW, BH, "Hexahedra");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+8*BH, IW, BH, "Prisms");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+9*BH, IW, BH, "Pyramids");
 
-	Fl_Button* b0 = new Fl_Button(width-BB-2*WB, 2*WB+12*BH, BB, BH, "List");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+10*BH, IW, BH, "Time for 1D mesh");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+11*BH, IW, BH, "Time for 2D mesh");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+12*BH, IW, BH, "Time for 3D mesh");
+
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+13*BH, IW, BH, "Gamma factor");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+14*BH, IW, BH, "Eta factor");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+15*BH, IW, BH, "Rho factor");
+
+	Fl_Button* b0 = new Fl_Button(width-BB-2*WB, 2*WB+13*BH, BB, BH, "List");
 	b0->labelsize(CTX.fontsize);
 	b0->callback(opt_statistics_histogram_cb, (void*)0);
-	Fl_Button* b1 = new Fl_Button(width-BB-2*WB, 2*WB+13*BH, BB, BH, "List");
+	Fl_Button* b1 = new Fl_Button(width-BB-2*WB, 2*WB+14*BH, BB, BH, "List");
 	b1->labelsize(CTX.fontsize);
 	b1->callback(opt_statistics_histogram_cb, (void*)1);
-	Fl_Button* b2 = new Fl_Button(width-BB-2*WB, 2*WB+14*BH, BB, BH, "List");
+	Fl_Button* b2 = new Fl_Button(width-BB-2*WB, 2*WB+15*BH, BB, BH, "List");
 	b2->labelsize(CTX.fontsize);
 	b2->callback(opt_statistics_histogram_cb, (void*)2);
 
@@ -1582,17 +1585,17 @@ void GUI::create_statistics_window(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Post-processing");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	stat_value[18] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Views");
-	stat_value[19] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Visible points");
-	stat_value[20] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Visible lines");
-	stat_value[21] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Visible triangles");
-	stat_value[22] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Visible tetrahedra");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+1*BH, IW, BH, "Views");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+2*BH, IW, BH, "Visible points");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Visible lines");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Visible triangles");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Visible tetrahedra");
 	o->end();
       }
       o->end();
     }
 
-    for(i=0 ; i<23 ; i++){
+    for(i=0 ; i<num ; i++){
       stat_value[i]->labelsize(CTX.fontsize);
       stat_value[i]->textsize(CTX.fontsize);
       stat_value[i]->type(FL_HORIZONTAL);
@@ -1631,40 +1634,44 @@ void GUI::create_statistics_window(){
 
 void GUI::set_statistics(){
 
-  int i;	
+  int i,num=0;
   static double  s[50], p[20];
   static char    label[50][256];
 
   GetStatistics(s);
 
   // geom
-  sprintf(label[0], "%g", s[0]); stat_value[0]->value(label[0]);
-  sprintf(label[1], "%g", s[1]); stat_value[1]->value(label[1]);
-  sprintf(label[2], "%g", s[2]); stat_value[2]->value(label[2]);
-  sprintf(label[3], "%g", s[3]); stat_value[3]->value(label[3]);
+  sprintf(label[num], "%g", s[0]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[1]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[2]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[3]); stat_value[num]->value(label[num]); num++;
 
   // mesh
-  sprintf(label[4], "%g", s[4]); stat_value[4]->value(label[4]);
-  sprintf(label[5], "%g", s[5]); stat_value[5]->value(label[5]);
-  sprintf(label[6], "%g", s[6]); stat_value[6]->value(label[6]);
-  sprintf(label[7], "%g", s[7]-s[8]); stat_value[7]->value(label[7]);
-  sprintf(label[8], "%g", s[8]); stat_value[8]->value(label[8]);
-  sprintf(label[9], "%g", s[9]); stat_value[9]->value(label[9]);
-  sprintf(label[10], "%g", s[10]); stat_value[10]->value(label[10]);
-  sprintf(label[11], "%g", s[11]); stat_value[11]->value(label[11]);
-  sprintf(label[12], "%g", s[12]); stat_value[12]->value(label[12]);
-  sprintf(label[13], "%g", s[13]); stat_value[13]->value(label[13]);
-  sprintf(label[14], "%g", s[14]); stat_value[14]->value(label[14]);
-  sprintf(label[15], "%.4g (%.4g->%.4g)", s[17], s[19], s[18]); 
-  stat_value[15]->value(label[15]);
-  sprintf(label[16], "%.4g (%.4g->%.4g)", s[20], s[22], s[21]); 
-  stat_value[16]->value(label[16]);
-  sprintf(label[17], "%.4g (%.4g->%.4g)", s[23], s[25], s[24]);
-  stat_value[17]->value(label[17]);
+  sprintf(label[num], "%g", s[4]);  stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[5]);  stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[6]);  stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[7]-s[8]); 
+                                    stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[8]);  stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[9]);  stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[10]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[11]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[12]); stat_value[num]->value(label[num]); num++;
+
+  sprintf(label[num], "%g", s[13]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[14]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[15]); stat_value[num]->value(label[num]); num++;
+
+  sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[19], s[18]); 
+                                    stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%.4g (%.4g->%.4g)", s[20], s[22], s[21]); 
+                                    stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[25], s[24]);
+                                    stat_value[num]->value(label[num]); num++;
 
   // post
   p[0] = List_Nbr(Post_ViewList) ;
-  sprintf(label[18], "%g", p[0]); stat_value[18]->value(label[18]);
+  sprintf(label[num], "%g", p[0]); stat_value[num]->value(label[num]); num++;
   p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = p[8] = 0 ;
   for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
     Post_View *v = (Post_View*)List_Pointer(Post_ViewList, i);
@@ -1687,10 +1694,10 @@ void GUI::set_statistics(){
    			            (v->DrawTensors ? v->NbTS : 0) ;
     }
   }
-  sprintf(label[19], "%g/%g", p[5],p[1]); stat_value[19]->value(label[19]);
-  sprintf(label[20], "%g/%g", p[6],p[2]); stat_value[20]->value(label[20]);
-  sprintf(label[21], "%g/%g", p[7],p[3]); stat_value[21]->value(label[21]);
-  sprintf(label[22], "%g/%g", p[8],p[4]); stat_value[22]->value(label[22]);
+  sprintf(label[num], "%g/%g", p[5],p[1]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[6],p[2]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[7],p[3]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[8],p[4]); stat_value[num]->value(label[num]); num++;
 }
 
 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.43 2001-08-24 06:58:19 geuzaine Exp $
+// $Id: Options.cpp,v 1.44 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1464,6 +1464,11 @@ double opt_mesh_cut_planed(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.mesh.cut_planed = val;
   return CTX.mesh.cut_planed;
+}
+double opt_mesh_allow_degenerated_extrude(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.mesh.allow_degenerated_extrude = (int)val;
+  return CTX.mesh.allow_degenerated_extrude;
 }
 double opt_mesh_color_scheme(OPT_ARGS_NUM){
   if(action & GMSH_SET){

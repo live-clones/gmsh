@@ -145,6 +145,7 @@ public :
       return val;
     }
     int oldxtrude, oldxtrude_recombine, check_duplicates;
+    int allow_degenerated_extrude;
   } mesh;
 
   // post processing options 

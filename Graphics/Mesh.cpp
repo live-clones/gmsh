@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.40 2001-08-13 12:10:30 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.41 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -155,6 +155,7 @@ void Draw_Mesh_Volumes(void *a, void *b){
   Tree_Action((*v)->Simplexes, Draw_Simplex_Volume);
   Tree_Action((*v)->Hexahedra, Draw_Hexahedron_Volume);
   Tree_Action((*v)->Prisms, Draw_Prism_Volume);
+  Tree_Action((*v)->Pyramids, Draw_Pyramid_Volume);
 }
 
 void Draw_Mesh_Surfaces (void *a,void *b){
@@ -813,4 +814,69 @@ void Draw_Prism_Volume (void *a, void *b){
   }
 
 }
+
+/* ------------------------------------------------------------------------ */
+/*  D r a w _ P y r a m i d                                                 */
+/* ------------------------------------------------------------------------ */
+
+void Draw_Pyramid_Volume (void *a, void *b){
+  Pyramid **p;
+  int i ;
+  double Xc = 0.0 , Yc = 0.0, Zc = 0.0, X[5],Y[5],Z[5] ;
+  char Num[100];
+
+  p = (Pyramid**)a;
+
+  if(!EntiteEstElleVisible((*p)->iEnt)) return;
+
+  for(i=0 ; i<5 ; i++){
+    Xc += (*p)->V[i]->Pos.X;
+    Yc += (*p)->V[i]->Pos.Y;
+    Zc += (*p)->V[i]->Pos.Z;
+  }
+  Xc /= 5. ; 
+  Zc /= 5. ; 
+  Yc /= 5. ; 
+
+  if(CTX.mesh.use_cut_plane){
+    if(CTX.mesh.evalCutPlane(Xc,Yc,Zc) < 0)return;
+  }
+
+  if(CTX.mesh.color_carousel)
+    ColorSwitch((*p)->iEnt);
+  else
+    glColor4ubv((GLubyte*)&CTX.color.mesh.pyramid);
+
+  for (i=0 ; i<5 ; i++) {
+    X[i] = Xc + CTX.mesh.explode * ((*p)->V[i]->Pos.X - Xc);
+    Y[i] = Yc + CTX.mesh.explode * ((*p)->V[i]->Pos.Y - Yc);
+    Z[i] = Zc + CTX.mesh.explode * ((*p)->V[i]->Pos.Z - Zc);
+  }
+  
+  glBegin(GL_LINE_LOOP);
+  glVertex3d(X[0], Y[0], Z[0]);
+  glVertex3d(X[1], Y[1], Z[1]);
+  glVertex3d(X[2], Y[2], Z[2]);
+  glVertex3d(X[3], Y[3], Z[3]);
+  glEnd();    
+
+  glBegin(GL_LINES);
+  glVertex3d(X[0], Y[0], Z[0]);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glVertex3d(X[1], Y[1], Z[1]);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glVertex3d(X[2], Y[2], Z[2]);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glVertex3d(X[3], Y[3], Z[3]);
+  glVertex3d(X[4], Y[4], Z[4]);
+  glEnd();    
+
+  if(CTX.mesh.volumes_num){
+    sprintf(Num,"%d",(*p)->Num);
+    glRasterPos3d(Xc,Yc,Zc);
+    Draw_String(Num);
+  }
+
+}
+
 

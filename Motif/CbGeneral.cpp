@@ -1,4 +1,4 @@
-// $Id: CbGeneral.cpp,v 1.2 2001-01-09 14:24:11 geuzaine Exp $
+// $Id: CbGeneral.cpp,v 1.3 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -58,7 +58,7 @@ void PopupHandler (Widget w, Widget pw, XEvent *event, Boolean *ctd ){
    ------------------------------------------------------------------------ */
 
 void CurrentInfoCb (Widget w, XtPointer client_data, XtPointer call_data){
-  double  s[50];
+  double  s[50], p[20];
   int     i;
   Post_View  *v ;
 
@@ -87,34 +87,35 @@ void CurrentInfoCb (Widget w, XtPointer client_data, XtPointer call_data){
     sprintf(label, "%g", s[9]);   XtVaSetValues(VLAB(9));
     sprintf(label, "%g", s[10]);  XtVaSetValues(VLAB(10));
     sprintf(label, "%g", s[11]);  XtVaSetValues(VLAB(11));
-
     sprintf(label, "%g", s[12]);  XtVaSetValues(VLAB(12));
+
     sprintf(label, "%g", s[13]);  XtVaSetValues(VLAB(13));
     sprintf(label, "%g", s[14]);  XtVaSetValues(VLAB(14));
+    sprintf(label, "%g", s[15]);  XtVaSetValues(VLAB(15));
 
-    sprintf(label, "%.4g (%.4g->%.4g)", s[17], s[19], s[18]); XtVaSetValues(VLAB(15));
-    sprintf(label, "%.4g (%.4g->%.4g)", s[20], s[22], s[21]); XtVaSetValues(VLAB(16));
-    sprintf(label, "%.4g (%.4g->%.4g)", s[23], s[25], s[24]); XtVaSetValues(VLAB(17));
+    sprintf(label, "%.4g (%.4g->%.4g)", s[17], s[19], s[18]); XtVaSetValues(VLAB(16));
+    sprintf(label, "%.4g (%.4g->%.4g)", s[20], s[22], s[21]); XtVaSetValues(VLAB(17));
+    sprintf(label, "%.4g (%.4g->%.4g)", s[23], s[25], s[24]); XtVaSetValues(VLAB(18));
 
     /* info post */
 
-    s[15] = List_Nbr(Post_ViewList) ;
-    sprintf(label, "%g", s[15]);  XtVaSetValues(VLAB(18));
+    p[0] = List_Nbr(Post_ViewList) ;
+    sprintf(label, "%g", p[0]);  XtVaSetValues(VLAB(19));
 
-    s[16] = s[17] = s[18] = s[19] = 0 ;
+    s[1] = s[2] = s[3] = s[4] = 0 ;
     for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
       v = (Post_View*)List_Pointer(Post_ViewList, i);
       if(v->Visible){
-	s[16] += v->NbSP + v->NbVP + v->NbTP;
-	s[17] += v->NbSL + v->NbVL + v->NbTL;
-	s[18] += v->NbST + v->NbVT + v->NbTT;
-	s[19] += v->NbSS + v->NbVS + v->NbTS;
+	s[1] += v->NbSP + v->NbVP + v->NbTP;
+	s[2] += v->NbSL + v->NbVL + v->NbTL;
+	s[3] += v->NbST + v->NbVT + v->NbTT;
+	s[4] += v->NbSS + v->NbVS + v->NbTS;
       }
     }
-    sprintf(label, "%g", s[16]); XtVaSetValues(VLAB(19));
-    sprintf(label, "%g", s[17]); XtVaSetValues(VLAB(20));
-    sprintf(label, "%g", s[18]); XtVaSetValues(VLAB(21));
-    sprintf(label, "%g", s[19]); XtVaSetValues(VLAB(22));
+    sprintf(label, "%g", s[1]); XtVaSetValues(VLAB(20));
+    sprintf(label, "%g", s[2]); XtVaSetValues(VLAB(21));
+    sprintf(label, "%g", s[3]); XtVaSetValues(VLAB(22));
+    sprintf(label, "%g", s[4]); XtVaSetValues(VLAB(23));
 
 #undef VLAB
 

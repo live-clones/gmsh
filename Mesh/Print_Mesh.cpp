@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.26 2001-08-13 20:05:42 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.27 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -228,6 +228,40 @@ void add_msh_prism (void *a, void *b){
   fprintf (mshfile, "\n");
 }
 
+void add_msh_pyramid (void *a, void *b){
+  Pyramid **P;
+  int i, type, nbn, nbs = 0;
+
+  P = (Pyramid **) a;
+
+  if (MSH_VOL_NUM && (MSH_VOL_NUM != (*P)->iEnt))
+    return;
+
+  if (!MSH_ADD){
+    MSH_ELEMENT_NUM++;
+    return;
+  }
+
+  nbn = 5;
+  if ((*P)->VSUP){
+    type = PYRAMID_2;
+    nbs = 10;
+  }
+  else{
+    type = PYRAMID;
+  }
+
+  fprintf (mshfile, "%d %d %d %d %d",
+           MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM, (*P)->iEnt, nbn + nbs);
+
+  for (i = 0; i < nbn; i++)
+    fprintf (mshfile, " %d", (*P)->V[i]->Num);
+  for (i = 0; i < nbs; i++)
+    fprintf (mshfile, " %d", (*P)->VSUP[i]->Num);
+
+  fprintf (mshfile, "\n");
+}
+
 void add_msh_point (Vertex * V){
 
   if (!MSH_ADD){
@@ -326,6 +360,7 @@ void add_msh_elements (Mesh * M){
           Tree_Action (pV->Simplexes, add_msh_simplex);
           Tree_Action (pV->Hexahedra, add_msh_hexahedron);
           Tree_Action (pV->Prisms, add_msh_prism);
+          Tree_Action (pV->Pyramids, add_msh_pyramid);
         }
       }
       break;
@@ -662,7 +697,7 @@ int process_3D_elements (FILE * funv, Mesh * m){
     List_Delete (Elements);
     nb += Tree_Nbr (v->Prisms);
     
-    // HEXAHEDRONS
+    // HEXAHEDRA
     Elements = Tree2List (v->Hexahedra);
     for (j = 0; j < List_Nbr (Elements); j++){
       List_Read (Elements, j, &hx);

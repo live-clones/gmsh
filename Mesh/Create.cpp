@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.24 2001-08-13 18:38:55 geuzaine Exp $
+// $Id: Create.cpp,v 1.25 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -31,14 +31,6 @@ int compareFxE (const void *a, const void *b){
   return (compareFace (&q->Sorted, &w->Sorted));
 }
 
-int compareHexahedron (const void *a, const void *b){
-  Hexahedron **q, **w;
-
-  q = (Hexahedron **) a;
-  w = (Hexahedron **) b;
-  return ((*q)->Num - (*w)->Num);
-}
-
 int compareSurfaceLoop (const void *a, const void *b){
   SurfaceLoop **q, **w;
 
@@ -55,11 +47,27 @@ int compareEdgeLoop (const void *a, const void *b){
   return ((*q)->Num - (*w)->Num);
 }
 
+int compareHexahedron (const void *a, const void *b){
+  Hexahedron **q, **w;
+
+  q = (Hexahedron **) a;
+  w = (Hexahedron **) b;
+  return ((*q)->Num - (*w)->Num);
+}
+
 int comparePrism (const void *a, const void *b){
   Prism **q, **w;
 
   q = (Prism **) a;
   w = (Prism **) b;
+  return ((*q)->Num - (*w)->Num);
+}
+
+int comparePyramid (const void *a, const void *b){
+  Pyramid **q, **w;
+
+  q = (Pyramid **) a;
+  w = (Pyramid **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
@@ -592,6 +600,7 @@ Volume * Create_Volume (int Num, int Typ, int Mat){
   pV->Vertices = Tree_Create (sizeof (Vertex *), compareVertex);
   pV->Hexahedra = Tree_Create (sizeof (Hexahedron *), compareHexahedron);
   pV->Prisms = Tree_Create (sizeof (Prism *), comparePrism);
+  pV->Pyramids = Tree_Create (sizeof (Pyramid *), comparePyramid);
   pV->Simp_Surf = Tree_Create(sizeof(Simplex*),compareSimplex);// for old extrusion mesh generator
   pV->Extrude = NULL;
   pV->Edges = NULL;
@@ -612,16 +621,11 @@ void Free_Volume(void *a, void *b){
     Tree_Delete(pV->Hexahedra);
     Tree_Action(pV->Prisms, Free_Prism);
     Tree_Delete(pV->Prisms);
-    // MEMORY LEAK (JF)
-    if(pV->Edges)
-      {
-	Tree_Action(pV->Edges,Free_Edge);
-	Tree_Delete(pV->Edges);
-      }
-    if(pV->Faces)
-      {
-	Tree_Delete(pV->Faces);
-      }
+    Tree_Action(pV->Pyramids, Free_Pyramid);
+    Tree_Delete(pV->Pyramids);
+    Tree_Action(pV->Edges,Free_Edge);
+    Tree_Delete(pV->Edges);
+    Tree_Delete(pV->Faces);
     Free(pV);
     pV = NULL;
   }  
@@ -678,5 +682,30 @@ void Free_Prism(void *a, void *b){
   if(pP){
     Free(pP);
     pP = NULL;
+  }
+}
+
+Pyramid * Create_Pyramid (Vertex * v1, Vertex * v2, Vertex * v3, 
+			  Vertex * v4, Vertex * v5){
+  Pyramid *p;
+
+  p = (Pyramid *) Malloc (sizeof (Pyramid));
+  p->iEnt = -1;
+  p->Num = ++CurrentSimplexNumber;
+  p->V[0] = v1;
+  p->V[1] = v2;
+  p->V[2] = v3;
+  p->V[3] = v4;
+  p->V[4] = v5;
+  p->VSUP = NULL;
+
+  return (p);
+}
+
+void Free_Pyramid(void *a, void *b){
+  Pyramid *p = *(Pyramid**)a;
+  if(p){
+    Free(p);
+    p = NULL;
   }
 }

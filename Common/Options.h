@@ -180,6 +180,7 @@ double opt_mesh_cut_planea(OPT_ARGS_NUM);
 double opt_mesh_cut_planeb(OPT_ARGS_NUM);
 double opt_mesh_cut_planec(OPT_ARGS_NUM);
 double opt_mesh_cut_planed(OPT_ARGS_NUM);
+double opt_mesh_allow_degenerated_extrude(OPT_ARGS_NUM);
 double opt_mesh_color_scheme(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);
 double opt_solver_getdp_popupmessages(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.27 2001-08-14 10:50:03 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.28 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -51,6 +51,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
   Simplex *simp ;
   Hexahedron *hex ;
   Prism *pri ;
+  Pyramid *pyr ;
   Curve   C , *c , **cc;
   Surface S , *s , **ss;
   Volume  V , *v , **vv;
@@ -152,7 +153,8 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    else
 	      s = *ss;
 	    break;
-	  case TET1: case HEX1: case PRI1: case TET2: case HEX2: case PRI2: 
+	  case TET1: case HEX1: case PRI1: case PYR1:
+	  case TET2: case HEX2: case PRI2: case PYR2:
 	    v = &V; v->Num = Elementary;
 	    if(!(vv = (Volume**)Tree_PQuery(M->Volumes, &v))){
 	      v = Create_Volume(Elementary, MSH_VOLUME, Elementary);
@@ -256,6 +258,14 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    pri->iEnt = Elementary ;
 	    Tree_Insert(v->Prisms, &pri) ;
 	    M->Statistics[11]++;
+	    break;
+	  case PYR1:
+	    pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2], 
+				 vertsp[3], vertsp[4]);
+	    pyr->Num = Num ;
+	    pyr->iEnt = Elementary ;
+	    Tree_Insert(v->Pyramids, &pyr) ;
+	    M->Statistics[12]++;
 	    break;
 	  case PNT:
 	    break;

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.26 2001-08-15 08:16:30 geuzaine Exp $
+// $Id: Generator.cpp,v 1.27 2001-08-28 20:40:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -58,7 +58,7 @@ void Maillage_Dimension_1 (Mesh * M){
   t1 = Cpu();
   Tree_Action (M->Curves, Maillage_Curve);
   t2 = Cpu();
-  M->Statistics[12] = t2 - t1;
+  M->Statistics[13] = t2 - t1;
 }
 
 void Maillage_Dimension_2 (Mesh * M){
@@ -90,7 +90,7 @@ void Maillage_Dimension_2 (Mesh * M){
 
   t2 = Cpu();  
 
-  M->Statistics[13] = t2 - t1;
+  M->Statistics[14] = t2 - t1;
 }
 
 void Maillage_Dimension_3 (Mesh * M){
@@ -125,7 +125,7 @@ void Maillage_Dimension_3 (Mesh * M){
 
   t2 = Cpu();
 
-  M->Statistics[14] = t2 - t1;
+  M->Statistics[15] = t2 - t1;
 }
 
 
