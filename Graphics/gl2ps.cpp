@@ -4,7 +4,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.30 2001-11-19 09:29:18 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.31 2001-11-19 10:43:16 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -1282,16 +1282,31 @@ void gl2psPrintPostScriptFooter(GLvoid){
 
 GLvoid gl2psPrintTeXHeader(GLvoid){
   GLint   viewport[4];
+  char    name[256];
+  int     i;
 
   glGetIntegerv(GL_VIEWPORT, viewport);
 
+  if(gl2ps.filename && strlen(gl2ps.filename)<256){
+    for(i=strlen(gl2ps.filename)-1 ; i>=0 ; i--){
+      if(gl2ps.filename[i] == '.'){
+	strncpy(name, gl2ps.filename, i);
+	name[i]='\0';
+	break;
+      }
+    }
+    if(i<=0) strcpy(name, gl2ps.filename);
+  }
+  else
+    strcpy(name, "unnamed");
+
   fprintf(gl2ps.stream, 
-	  "\\begin{picture}(0,0)\n"
-	  "\\includegraphics{}\n"
-	  "\\end{picture}\n"
 	  "\\setlength{\\unitlength}{1pt}\n"
-	  "\\begin{picture}(%d,%d)(%d,%d)\n",
-	  10,10,10,10);
+	  "\\begin{picture}(0,0)\n"
+	  "\\includegraphics{%s}\n"
+	  "\\end{picture}%%\n"
+	  "\\begin{picture}(%d,%d)(0,0)\n",
+	  name, viewport[2],viewport[3]);
 }
 
 GLvoid gl2psPrintTeXPrimitive(GLvoid *a, GLvoid *b){
@@ -1319,11 +1334,12 @@ void gl2psPrintTeXFooter(GLvoid){
 GLvoid gl2psBeginPage(char *title, char *producer, 
 		      GLint format, GLint sort, GLint options, 
 		      GLint colormode, GLint colorsize, GL2PSrgba *colormap,
-		      GLint buffersize, FILE *stream){
+		      GLint buffersize, FILE *stream, char *filename){
 
   gl2ps.format = format;
   gl2ps.title = title;
   gl2ps.producer = producer;
+  gl2ps.filename = filename;
   gl2ps.sort = sort;
   gl2ps.options = options;
   gl2ps.colormode = colormode;
