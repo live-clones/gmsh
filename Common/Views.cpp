@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.139 2004-10-20 14:38:57 remacle Exp $
+// $Id: Views.cpp,v 1.140 2004-10-20 15:32:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -595,10 +595,9 @@ void FreeView(Post_View * v)
     v->normals = NULL;
     if(v->TriVertexArray) delete v->TriVertexArray;
     v->TriVertexArray = NULL;
+    if(v->adaptive) delete v->adaptive;
+    v->adaptive = 0;
   }
-
-  if (v->adaptive) delete v->adaptive;
-
 }
 
 void CopyViewOptions(Post_View * src, Post_View * dest)

@@ -274,6 +274,8 @@ void StructuralSolver :: RegisterBeamSections ()
   char ext[6];
 
   char *homeplugins = getenv("GMSHPLUGINSHOME");
+  if(!homeplugins) 
+    return;
 
   int nbFiles = fl_filename_list(homeplugins, &list);
   if(nbFiles <= 0)
@@ -312,6 +314,9 @@ void StructuralSolver :: RegisterMaterials ()
 {
 #if defined(HAVE_FLTK)
   char *homeplugins = getenv("GMSHPLUGINSHOME");
+  if(!homeplugins) 
+    return;
+
   char temp[256];
   int nbpar;
   sprintf(temp, "%s/%s", homeplugins,"Materials");

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.180 2004-10-20 14:38:59 remacle Exp $
+// $Id: Gmsh.y,v 1.181 2004-10-20 15:33:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1271,7 +1271,7 @@ Text3D :
 InterpolationMatrix :
     tInterpolationMatrix ListOfListOfDouble tEND
     {
-      View -> adaptive = new Adaptive_Post_View ( View , $2 );
+      View->adaptive = new Adaptive_Post_View (View, $2);
     }
 ;
 

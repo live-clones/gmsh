@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.285 2004-10-20 14:38:57 remacle Exp $
+// $Id: Callbacks.cpp,v 1.286 2004-10-20 15:32:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3577,10 +3577,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != saturate_values))
         opt_view_saturate_values(i, GMSH_SET, val);
 
-      val = WID->view_value[33]->value();
-      if(force || (val != global_zoom))
-        opt_view_global_zoom(i, GMSH_SET, val);
-
       val = WID->view_butt[10]->value();
       if(force || (val != show_element))
         opt_view_show_element(i, GMSH_SET, val);
@@ -3666,6 +3662,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_value[32]->value();
       if(force || (val != custom_max))
         opt_view_custom_max(i, GMSH_SET, val);
+
+      val = WID->view_value[33]->value();
+      if(force || (val != global_zoom))
+        opt_view_global_zoom(i, GMSH_SET, val);
 
       val = WID->view_value[30]->value();
       if(force || (val != nb_iso))

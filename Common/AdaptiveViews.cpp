@@ -44,7 +44,7 @@ void Post_Zoom::interpolate (  Double_Matrix *coeffs, double u, double v, double
   // 2 s = (p+1) (p+2)
   // p^2 + 3p + 2 = 2s 
   // p = -3 + sqrt ( 1 + 8 s ) / 2 
-  int p = (int) ( (-3. + sqrt ( 1 + 8 * coeffs->size2())) / 2);
+  //int p = (int) ( (-3. + sqrt ( 1 + 8 * coeffs->size2())) / 2);
   int nn,ii;
   for (int i=0;i<coeffs->size1();++i)
     {
