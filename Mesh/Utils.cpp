@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.1 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Utils.cpp,v 1.2 2001-08-12 20:45:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -341,9 +341,10 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
     *V = Vnew;
   }
 
-  if(iter == MaxIter) Msg(WARNING, "Could not converge in XYZtoUV");
-
-  if(iter > 10) Msg(WARNING, "Many (%d) iterations in XYZtoUV", iter);
+  if(iter > 10){
+    if(iter == MaxIter) Msg(WARNING, "Could not converge in XYZtoUV");
+    else Msg(WARNING, "Many (%d) iterations in XYZtoUV", iter);
+  }
 
   free_dmatrix(mat,1,3,1,3);
   free_dmatrix(jac,1,3,1,3);
@@ -356,8 +357,6 @@ void XYtoUV (Surface * s, double *X, double *Y,
   double det, Unew, Vnew, err, mat[2][2], jac[2][2];
   int iter;
   Vertex D_u, D_v, P;
-
-  /*
   double umin, umax, vmin, vmax;
 
   if (s->Typ == MSH_SURF_NURBS){
@@ -370,7 +369,6 @@ void XYtoUV (Surface * s, double *X, double *Y,
     umin = vmin = 0.0;
     umax = vmax = 1.0;
   }
-  */
 
   *U = *V = 0.487;
   err = 1.0;
@@ -404,16 +402,30 @@ void XYtoUV (Surface * s, double *X, double *Y,
     iter++;
     *U = Unew;
     *V = Vnew;
-    if (iter == MaxIter)
-      break;
-    
   }
   
   *Z = P.Pos.Z;
 
-  /*
-  if (iter == MaxIter || (fabs (Unew) >= umax || fabs (Vnew) >= vmax) ||
-      Vnew < vmin || Unew < umin){
+  if(iter > 10){
+    if(iter == MaxIter) Msg(WARNING, "Could not converge in XYtoUV");
+    else Msg(WARNING, "Many (%d) iterations in XYtoUV...", iter);
+  }
+
+  if (Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin){
+    Msg(WARNING, "(U,V) thresholded in XYtoUV (surface mesh may be wrong)");
+    if(Unew > umax) *U = umax;
+    if(Vnew > vmax) *V = vmax;
+    if(Unew < umin) *U = umin;
+    if(Vnew < vmin) *V = vmin;
+  }
+
+#if 0
+  if (iter == MaxIter || Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin){
+    static int first_try=1;
+    if(first_try){
+      Msg(WARNING, "Entering rescue mode in XYtoUV...");
+      first_try=0;
+    }
     find_bestuv (s, *X, *Y, U, V, Z, 30);
     P = InterpolateSurface (s, *U, *V, 0, 0);
     
@@ -421,7 +433,7 @@ void XYtoUV (Surface * s, double *X, double *Y,
     *Y = P.Pos.Y;
     *Z = P.Pos.Z;
   }
-  */
+#endif
 }
 
 int Oriente (List_T * cu, double n[3]){
