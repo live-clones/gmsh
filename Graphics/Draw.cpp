@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.22 2001-02-03 13:10:26 geuzaine Exp $
+// $Id: Draw.cpp,v 1.23 2001-02-23 19:51:11 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -25,7 +25,11 @@ void Draw3d(void){
   }
   else{
     glDisable(GL_BLEND);
+#ifndef WIN32
+    // Merde de bug dans les nouvelles dll opengl Windows (ATI Rage
+    // Mobility, NVIDIA, etc.)
     glDisable(GL_ALPHA);
+#endif
   }
   glPolygonOffset(1.0, 1);
 
