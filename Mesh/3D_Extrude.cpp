@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.85 2005-01-01 19:35:30 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.86 2005-01-26 15:26:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -378,7 +378,6 @@ void Create_HexPri(int iEnt, Vertex * v[8])
           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
       return;
     }
-    printf("aaa %d %d\n", iEnt, THEV->Num);
     newp->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Prisms, &newp);
   }
