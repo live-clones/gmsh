@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.14 2001-08-06 08:09:51 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.15 2001-08-06 09:44:22 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -74,7 +74,7 @@ Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
     return GMSH_LevelsetPlugin::execute(v);
   else{
     if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin CutMap, view %d not loaded\n",iView);
+      Msg(WARNING,"Plugin CutMap, view %d not loaded",iView);
       return 0;
     }
     return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));

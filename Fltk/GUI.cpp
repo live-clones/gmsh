@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.103 2001-08-04 01:16:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.104 2001-08-06 09:44:22 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -542,7 +542,7 @@ void GUI::wait(){
 //********************************* Create the menu window *****************************
 
 
-void GUI::add_post_plugins ( Fl_Menu_Button *button , int iView){
+void GUI::add_post_plugins (Fl_Menu_Button *button , int iView){
   char name[256],menuname[256];
   for(GMSH_PluginManager::iter it = GMSH_PluginManager::Instance()->begin();
       it != GMSH_PluginManager::Instance()->end();
@@ -1702,7 +1702,7 @@ void GUI::add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str){
   }
 }
 
-PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
+PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p){
   char buffer[1024],namep[1024],copyright[256],author[256],help[1024];
 
   // get plugin info
@@ -1710,7 +1710,6 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
   int n = p->getNbOptions();
   p->getName(namep);
   p->getInfos(author,copyright,help);
-  std::pair<int,GMSH_Plugin*> *pair = new std::pair<int,GMSH_Plugin*>(iView,p);
 
   // create window
 
@@ -1772,9 +1771,8 @@ PluginDialogBox * GUI::create_plugin_window(GMSH_Plugin *p, int iView){
   cancel->labelsize(CTX.fontsize);
   cancel->callback(cancel_cb, (void*)pdb->main_window);
 
-  Fl_Button* ok = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Run");
-  ok->labelsize(CTX.fontsize);
-  ok->callback(view_plugin_cb, (void*)pair);
+  pdb->run_button = new Fl_Return_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Run");
+  pdb->run_button->labelsize(CTX.fontsize);
 
   if(CTX.center_windows)
     pdb->main_window->position(m_window->x()+m_window->w()/2-width/2,

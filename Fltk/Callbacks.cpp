@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.74 2001-08-04 01:16:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.75 2001-08-06 09:44:22 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1635,7 +1635,6 @@ void view_plugin_cb(CALLBACK_ARGS){
     Post_View *v = (Post_View*)List_Pointer(Post_ViewList,iView);
     p->execute(v);
     Draw();
-    Msg(DEBUG, "Plugin %s was called win = %p",name,p->dialogBox);
   }
   catch (GMSH_Plugin *err){
     p->CatchErrorMessage(name);
@@ -1645,17 +1644,16 @@ void view_plugin_cb(CALLBACK_ARGS){
 
 void view_options_plugin_cb(CALLBACK_ARGS){
   std::pair<int,GMSH_Plugin*> *pair =  (std::pair<int,GMSH_Plugin*>*)data;
-  int iView = pair->first;
   GMSH_Plugin *p = pair->second;
 
-  if(!p->dialogBox)p->dialogBox = WID->create_plugin_window(p,iView);
+  if(!p->dialogBox)p->dialogBox = WID->create_plugin_window(p);
 
-  Fl_Window *pwindow = p->dialogBox->main_window;
+  p->dialogBox->run_button->callback(view_plugin_cb, (void*)pair);
 
-  if(pwindow->shown())
-    pwindow->redraw();
+  if(p->dialogBox->main_window->shown())
+    p->dialogBox->main_window->redraw();
   else
-    pwindow->show();    
+    p->dialogBox->main_window->show();    
 }
 
 void view_options_custom_cb(CALLBACK_ARGS){

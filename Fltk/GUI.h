@@ -71,6 +71,7 @@ class GMSH_Plugin;
 struct PluginDialogBox
 {
   Fl_Window *main_window;
+  Fl_Return_Button *run_button;
   int nb_viewvalue;
   Fl_Value_Input *view_value[20];
 };
@@ -194,7 +195,7 @@ public:
   void create_mesh_options_window();
   void create_solver_options_window();
   void create_post_options_window();
-  PluginDialogBox *create_plugin_window(GMSH_Plugin *, int);
+  PluginDialogBox *create_plugin_window(GMSH_Plugin *p);
   void create_view_options_window(int numview);
   void create_statistics_window();
   void create_message_window();

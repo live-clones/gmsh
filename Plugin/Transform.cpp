@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.1 2001-08-06 08:12:00 geuzaine Exp $
+// $Id: Transform.cpp,v 1.2 2001-08-06 09:44:22 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Transform.h"
@@ -97,7 +97,7 @@ Post_View *GMSH_TransformPlugin::execute (Post_View *v)
     vv = v;
   else{
     if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin CutTransform, view %d not loaded\n",iView);
+      Msg(WARNING,"Plugin CutTransform, view %d not loaded",iView);
       return 0;
     }
     vv = (Post_View*)List_Pointer_Test(Post_ViewList,iView-1);

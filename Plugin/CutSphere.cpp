@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.11 2001-08-06 08:09:51 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.12 2001-08-06 09:44:22 geuzaine Exp $
 
 #include <string.h>
 #include "CutSphere.h"
@@ -79,7 +79,7 @@ Post_View *GMSH_CutSpherePlugin::execute (Post_View *v)
     return GMSH_LevelsetPlugin::execute(v);
   else{
     if(List_Nbr(Post_ViewList) < iView){
-      Msg(WARNING,"Plugin CutSphere, view %d not loaded\n",iView);
+      Msg(WARNING,"Plugin CutSphere, view %d not loaded",iView);
       return 0;
     }
     return GMSH_LevelsetPlugin::execute((Post_View*)List_Pointer_Test(Post_ViewList,iView-1));
