@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.4 2001-01-13 15:41:35 geuzaine Exp $
+// $Id: Message.cpp,v 1.5 2001-01-24 11:24:06 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -108,6 +108,7 @@ void Msg(int level, char *fmt, ...){
     }
     break;
   case STATUS2 :
+  case STATUS2N :
     if(CTX.interactive){
       if(CTX.verbosity > 1){
         fprintf(stderr, STATUS_STR);
@@ -122,7 +123,8 @@ void Msg(int level, char *fmt, ...){
       XmUpdateDisplay(WID.G.infoLabel);
     }
     break;
-  case STATUS1:
+  case STATUS1 :
+  case STATUS1N :
     if(CTX.interactive){
       if(CTX.verbosity > 1){
         fprintf(stderr, STATUS_STR);
@@ -137,7 +139,8 @@ void Msg(int level, char *fmt, ...){
       XmUpdateDisplay(WID.G.selectLabel);
     }
     break;
-  case STATUS3:
+  case STATUS3 :
+  case STATUS3N :
     if(CTX.interactive){
       if(CTX.verbosity > 1){
         fprintf(stderr, STATUS_STR);
