@@ -1,4 +1,4 @@
-$Id: README.devel,v 1.5 2003-03-06 23:01:17 geuzaine Exp $
+$Id: README.devel,v 1.6 2003-03-30 22:27:07 geuzaine Exp $
 
 Some easy rules to make the code easy to read/debug/maintain:
 
@@ -39,7 +39,7 @@ Tools to check memory leaks
   export LD_PRELOAD=libnjamd.so
   kill -USR1
 
-* valgrind
+* valgrind --leak-check=yes --show-reachable=yes gmsh file.geo -3
 
 * purify
 
