@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.13 2003-04-14 22:37:07 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.14 2003-04-15 01:03:26 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -24,22 +24,22 @@
 @c
 @c This is the Gmsh documentation texinfo source file
 @c
-@c Things to do -> "Ctrl+s todo:" 
+@c Indexing:
 @c
-@c Indexing: @cindex = concept index, e.g. "File formats"
-@c           @vindex = (metasyntactic) variable index, e.g.  "expression-id"
-@c           @tindex+@findex = type+function index (=reserved keywords),
-@c                             e.g. "Spline"
+@c * @cindex = concept index, e.g. "File formats"
+@c * @tindex + @findex = type + function index (= reserved keywords),
+@c   e.g. "Spline"
 @c
-@c Before release, run C-u C-c C-u C-a in GNU Emacs
-@c This updates all node pointers and menus
+@c Before release, run C-u C-c C-u C-a in GNU Emacs. This updates all node
+@c pointers and menus.
 @c 
 @c =========================================================================
 @c
-@c For commercial releases, set the COMMERCIAL flag (uncomment the following
-@c line). This will prevent all references to "free software" and the like...
+@c For commercial releases, set the COMMERCIAL flag (uncomment the following 
+@c line). This will prevent all references to "free software" and the
+@c like...
 @c
-@c      @set COMMERCIAL
+@c @set COMMERCIAL
 @c
 @c =========================================================================
 @c %**start of header
@@ -481,8 +481,8 @@ Configure your preferred options for all subsequent operations: Gmsh has a
 large number of configurations options that can be set interactively,
 scattered inside command files (and changed on the fly in scripts), set in
 per-user configuration files, or specified on the command-line
-(@pxref{General options}, @pxref{Geometry options}, @pxref{Mesh options},
-@pxref{Post-processing options}, @pxref{Running Gmsh}).
+(@pxref{General options}, @ref{Geometry options}, @ref{Mesh options},
+@ref{Post-processing options} and @ref{Running Gmsh}).
 @end itemize
 
 @c -------------------------------------------------------------------------
@@ -528,12 +528,6 @@ elements).
 @cindex Syntax, rules
 @cindex Rules, syntactic
 @cindex Document syntax
-
-@vindex @dots{}
-@vindex <, >
-@vindex |
-@c forbidden @vindex :
-@vindex @var{etc}
 
 Here are the rules we tried to follow when writing this user's guide. Note
 that metasyntactic variable definitions stay valid throughout all the manual
@@ -625,24 +619,16 @@ inside all Gmsh expressions.
 @cindex String
 
 @tindex Pi
+@tindex MPI_Rank
+@tindex MPI_Size
 @tindex =
 
-@vindex @var{real}
-@vindex @var{string}
-@vindex @var{string-id}
-@vindex @var{expression-char}
-@vindex @var{expression}
-@vindex @var{expression-id}
-@vindex @var{expression-list}
-
-Expressions are denoted by the metasyntactic variable @var{expression}
-(remember the definition of the syntactic rules in @ref{Syntactic rules}):
-
-The two constant types used in Gmsh are @var{real} and
-@var{string}. There is no integer type.  These types have the same meaning
-and syntax as in the C or C++ programming languages. Besides general
-expressions (@var{expression}), purely constant expressions, denoted by the
-metasyntactic variable @var{expression-cst}, are also used:
+The two constant types used in Gmsh are @var{real} and @var{string} (there
+is no integer type).  These types have the same meaning and syntax as in the
+C or C++ programming languages.  Expressions are denoted by the
+metasyntactic variable @var{expression} (remember the definition of the
+syntactic rules in @ref{Syntactic rules}), and are evaluated during the
+parsing of the data file:
 
 @example
 @var{expression}:
@@ -650,16 +636,21 @@ metasyntactic variable @var{expression-cst}, are also used:
   @var{expression-id} |
   @var{operator-unary} @var{expression} |
   @var{expression} @var{operator-binary} @var{expression} |
-  @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} 
-      @var{expression} |
-  @var{function-id} [ < @var{expression-list} > ]
+  @var{expression} @var{operator-ternary-left} @var{expression}
+      @var{operator-ternary-right} @var{expression} |
+  @var{built-in-function}
 @end example
 
-List of constant expressions are defined as:
+The operators @var{operator-unary}, @var{operator-binary} and
+@var{operator-ternary-left}/@var{operator-ternary-right} are defined in
+@ref{Operators}. The @var{built-in-function}s are defined in @ref{Built-in
+functions}.
+
+List of expressions are defined as:
 
 @example
 @var{expression-list}:
-  @var{expression-list-item} <,@dots{}>
+  @var{expression-list-item} <, @var{expression-list-item}> @dots{}
 @end example
 
 @noindent with
@@ -674,18 +665,12 @@ List of constant expressions are defined as:
 @end example
 
 The second case in this last definition permits to create a list containing
-the range of numbers comprised between the two @var{expression}, with a
-unit incrementation step. The third case also permits to create a list
-containing the range of numbers comprised between the two
-@var{expression}, but with a positive or negative incrementation step
-equal to the third @var{expression}. The fourth and fifth cases permit
-to reference constant identifiers (@var{expression-id}s) of lists of constants
-and constant identifiers of sublists of constants (see below for the
-definition of constant identifiers) .
-
-All @var{expression-cst} are evaluated during the parsing of the data file
-syntactic analysis of the problem. The syntax for the definition of
-expression identifiers is:
+the range of numbers comprised between two @var{expression}s, with a unit
+incrementation step. The third case also permits to create a list containing
+the range of numbers comprised between two @var{expression}s, but with a
+positive or negative incrementation step equal to the third
+@var{expression}. The fourth and fifth cases permit to lists or sublists of
+expressions. The syntax for the definition of expression identifiers is:
 
 @example
 @var{expression-id} = @var{expression-def};
@@ -695,42 +680,41 @@ expression identifiers is:
 
 @example
 @var{expression-id}:
-  @var{string}
+  @var{string} |
+  Pi |
+  MPI_Rank | MPI_Size |
+  newp | newl | news | newv | newreg
 
 @var{expression-def}:
   @var{expression-list-item} |
   @{ @var{expression-list} @}
 @end example
 
-Note: Only one constant is predefined in Gmsh: @code{Pi} =
-3.1415926535897932.
+The only expressions predefined in Gmsh are @code{Pi} (=
+3.1415926535897932), @code{MPI_Size} (which returns the number of processors
+on which Gmsh is running), @code{MPI_Rank} (which returns the rank of the
+current processor), @code{newp} (returns the next available point number),
+@code{newc} (returns the next available curve number), @code{news} (returns
+the next available surface number), @code{newv} (returns the next available
+volume number) and @code{newreg} (returns the next available region number).
 
-Constant character strings can also be defined. The syntax for their
-definition is the following: XXX do we have this at the moment?
-
-@example
-@var{string-id} = "@var{string}";
-@end example
-
-@noindent with
-
-@example
-@var{string-id}:
-  @var{string}
-@end example
-
-Character expressions can be defined, using these constant strings:
+Character expressions can also be defined (but there exists no character
+expression identifier at the moment):
 
 @example
 @var{expression-char}:
   "@var{string}" |
-  @var{string-id} |
-  StrCat[ @var{expression-char} , @var{expression-char} ]
-XXX Sprintf, etc.
+  StrPrefix[ @var{expression-char} ] |
+  StrCat[ @var{expression-char} , @var{expression-char} ] |
+  Sprintf[ @var{expression-char} , @var{expression-list} ]
 @end example
 
-@noindent The third case in this definition permits to concatenate two
-character expressions.
+@noindent The third casein this definition permits to take the
+prefix of a string (e.g. for removing the extension from a file name). The
+fourth case permits to concatenate two character expressions. The fifth is
+an equivalent of the @code{sprintf} C function (@var{expression-char} is a
+format string that can contain floating point formatting characters:
+@code{%e}, @code{%g}, etc.).
 
 @c -------------------------------------------------------------------------
 @c Operators
@@ -739,60 +723,31 @@ character expressions.
 @node Operators, Built-in functions, Expressions, General tools
 @section Operators
 
-The operators in Gmsh are similar to the corresponding operators in the C
-or C++ programming languages.
-
 @cindex Operators, definition
 @cindex Unary operators
 @cindex Binary operators
 @cindex Ternary operators
 
-@vindex @var{operator-unary}
-@vindex @var{operator-binary}
-@vindex @var{operator-ternary-left}
-@vindex @var{operator-ternary-right}
-
-@tindex -
-@tindex !
-@tindex +
-@tindex ++
-@tindex --
-@tindex -
-@tindex *
-@tindex /\
-@tindex /
-@tindex ^
-@tindex %
-@tindex >
-@tindex <
-@tindex >=
-@tindex <=
-@tindex ==
-@tindex +=
-@tindex -=
-@tindex *=
-@tindex /=
-@tindex !=
-@tindex ||
-@tindex &&
-@c forbidden @tindex ?:
+The operators in Gmsh are similar to the corresponding operators in the C or
+C++ programming languages. Here is a list of the unary, binary and ternary
+operators currently implemented in Gmsh.
 
 @noindent
 @var{operator-unary}:
-@table @code
+@ftable @code
 @item -
 Unary minus.
 @item !
 Logical not.
 @item ++
-XXX.
+Post incrementation.
 @item --
-XXX.
-@end table
+Post decrementation.
+@end ftable
 
 @noindent
 @var{operator-binary}:
-@table @code
+@ftable @code
 @item ^
 Exponentiation. The evaluation of the both arguments must result in a scalar
 value.
@@ -839,24 +794,24 @@ Logical or. The evaluation of both arguments must result in floating point
 values. Warning: the logical or always (unlike in C or C++) implies the
 evaluation of both arguments.  That is, the second operand of @code{||} is
 evaluated even if the first one is true.
-@end table
+@end ftable
 
 @noindent
 @var{operator-ternary-left}:
-@table @code
+@ftable @code
 @item ?
-@end table
+@end ftable
 @var{operator-ternary-right}:
-@table @code
+@ftable @code
 @item :
 The only ternary operator, constituted of @var{operator-ternary-left} and
 @var{operator-ternary-right} is defined as in the C or C++ programming
 languages. The ternary operator first evaluates its first argument (the
-@var{expression-cst} located before the @code{?}), which must result in a
-scalar value. If it is true (non-zero) the second argument (located between
+@var{expression} located before the @code{?}), which must result in a scalar
+value. If it is true (non-zero) the second argument (located between
 @code{?} and @code{:}) is evaluated and returned; otherwise the third
 argument (located after @code{:}) is evaluated and returned.
-@end table
+@end ftable
 
 
 @cindex Evaluation, order
@@ -892,124 +847,81 @@ i.e.@: @code{^} has the highest evaluation priority). Parentheses
 
 @cindex Functions, built-in
 
-@vindex @var{function-id}
+A built-in function is composed from an identifier followed by a pair of
+parentheses @code{()} containing an @var{expression-list} (the list of its
+arguments)@footnote{For compatibility with GetDP
+(@uref{http://www.geuz.org/getdp/}), parentheses can be replaced by brackets
+@code{[]}.}. Here is the list of the built-in functions currently
+implemented:
 
-Built-in functions (@var{function-id}): XXX.
-
-are always followed by a pair of parentheses @code{()} containing a
-@var{expression-list}, the list of their arguments. XXX for compatibility
-with getdp, parentheses can be replaced by brackets @code{[]}.
-
-@example
-@var{function-id} [ @var{expression-list} ]
-@end example
+@noindent
+@var{build-in-function}:
 
 @ftable @code
 
-@item Acos 
-@code{[@var{expression}]}
-
+@item Acos[ @var{expression} ]
 Arc cosine (inverse cosine) of @var{expression} in [0,Pi], @var{expression} in [-1,1].
 
-@item Asin 
-@code{[@var{expression}]}
-
+@item Asin[ @var{expression} ]
 Arc sine (inverse sine) of @var{expression} in [-Pi/2,Pi/2], @var{expression} in [-1,1].
 
-@item Atan 
-@code{[@var{expression}]}
-
+@item Atan[ @var{expression} ]
 Arc tangent (inverse tangent) of @var{expression} in [-Pi/2,Pi/2].
 
-@item Atan2
-@code{[@var{expression},@var{expression}]}
-
+@item Atan2[ @var{expression}, @var{expression} ]
 Arc tangent (inverse tangent) of the first @var{expression} divided by the
 second, in [-Pi,Pi].
 
-@item Ceil
-@code{[@var{expression}]}
-
+@item Ceil[ @var{expression} ]
 XXX
 
-@item Cos  
-@code{[@var{expression}]}
-
+@item Cos[ @var{expression} ]
 Cosine of @var{expression}.
 
-@item Cosh 
-@code{[@var{expression}]}
-
+@item Cosh[ @var{expression} ]
 Hyperbolic cosine of @var{expression}.
 
-@item Exp 
-@code{[@var{expression}]}
-
+@item Exp[ @var{expression} ]
 Exponential function: e^@var{expression}.
 
-@item Fabs 
-@code{[@var{expression}]}
-
+@item Fabs[ @var{expression} ]
 Absolute value of @var{expression}.
 
-@item Fmod
-@code{[@var{expression},@var{expression}]}
-
+@item Fmod[ @var{expression}, @var{expression} ]
 Remainder of the division of the first @var{expression} by the second, with
 the sign of the first.
 
-@item Floor
-@code{[@var{expression}]}
-
+@item Floor[ @var{expression} ]
 XXX
 
-@item Hypot
-@code{[@var{expression},@var{expression}]}
-
+@item Hypot[ @var{expression}, @var{expression} ]
 XXX
 
-@item Log
-@code{[@var{expression}]}
-
+@item Log[ @var{expression} ]
 Natural logarithm: ln(@var{expression}), @var{expression}>0.
 
-@item Log10
-@code{[@var{expression}]}
-
+@item Log10[ @var{expression} ]
 Base 10 logarithm: log10(@var{expression}), @var{expression}>0.
 
-@item Modulo
-@code{[@var{expression}]}
-
+@item Modulo[ @var{expression} ]
 XXX
 
-@item Rand            
-
+@item Rand
 XXX
 
-@item Sqrt
-@code{[@var{expression}]}
-
+@item Sqrt[ @var{expression} ]
 Square root, @var{expression}>=0.
 
-@item Sin
-@code{[@var{expression}]}
-
+@item Sin[ @var{expression} ]
 Sine of @var{expression}.
 
-@item Sinh 
-@code{[@var{expression}]}
-
+@item Sinh[ @var{expression} ]
 Hyperbolic sine of @var{expression}.
 
-@item Tan  
-@code{[@var{expression}]}
-
+@item Tan[ @var{expression} ]
 Tangent of @var{expression}.
 
-@item Tanh 
-@code{[@var{expression}]}
-
+@item Tanh[ @var{expression} ]
 Hyperbolic tangent of @var{expression}.
 
 @end ftable
@@ -1023,14 +935,19 @@ Hyperbolic tangent of @var{expression}.
 
 @cindex Function, user-defined
 
+User-defined functions can be defined, but are rudimentary: they take no
+arguments, and are evaluated as if a file containg the function body was
+included at the location of the @code{Call} statement.
+be included
+
 @ftable @code
 
-@item Call
-@code{"@var{expression-char}"}
-
-@item Function
-
+@item Function @var{string}
 @item Return
+Eclose the definition of a user-defined function.
+
+@item Call @var{string};
+Executes the body of the function @var{string}.
 
 @end ftable
 
@@ -1041,15 +958,30 @@ Hyperbolic tangent of @var{expression}.
 @node Loops and tests, General commands, User-defined functions, General tools
 @section Loops and tests
 
+
+
 @ftable @code
 
-@item For
-
+@item For ( @var{expression} : @var{expression} )
 @item EndFor
+Loop
 
+@item For ( @var{expression} : @var{expression} : @var{expression} )
+@item EndFor
+Loop
+
+@item For @var{string} In ( @var{expression} : @var{expression} )
+@item EndFor
+Loop
+
+@item For @var{string} In ( @var{expression} : @var{expression} : @var{expression} )
+@item EndFor
+Loop
+
+@item If ( @var{expression} )
 @item EndIf
-
-@item If
+The body enclised between @code{If} and @code{Endif} is evaluated if
+@var{expression} is non-zero.
 
 @end ftable
 
@@ -1062,75 +994,51 @@ Hyperbolic tangent of @var{expression}.
 
 @ftable @code
 
-@item Exit
+@item Exit;
+Aborts the current script.
 
-@item MPI_Rank
+@item Printf[ @var{expression-char} , @var{expression-list} ]
+Equivalent of the @code{printf} C function (@var{expression-char} is a
+format string that can contain floating point formatting characters:
+@code{%f}, @code{%e}, etc.).
 
-@item MPI_Size
-
-@item Printf
-
-@item Sprintf
-
-@item StrCat
-
-@item StrPrefix
-
-@item Merge string;
-
-to merge a file
+@item Merge @var{expression-char};
+To merge a file.
 
 @item MergeWithBoundingBox string;
-
-to merge a file and force the recalculation of the scene's bounding box
+To merge a file and force the recalculation of the scene's bounding box.
 
 @item Draw;
+To redraw the scene.
 
-to redraw the scene
+@item Save @var{expression-char};
+To save the mesh to a given file name, using the current @code{Mesh.Format}
+(@pxref{Mesh options}).
 
-@item Save string;
+@item Print @var{expression-char};
+To print the graphic window to a given file name, using the current
+@code{Print.Format} (@pxref{General options}).
 
-to save the mesh
+@item Sleep @var{expression};
+To sleep during @var{expression} seconds.
 
-@item Print string;
-
-to print the graphic window in the format defined in Print.Format
-
-@item Sleep expr;
-
-to sleep during expr seconds
-
-@item Delete View[int];
-
-to free the view int
+@item Delete View[@var{expression}];
+To free the post-processing view @var{expression}.
 
 @item Delete Meshes;
+To free all meshes.
 
-to free all meshes
+@item Duplicata View[@var{expression}];
+To duplicate the post-processing @var{expression}.
 
-@item Duplicata View[int];
+@item System @var{expression-char};
+To execute a system call.
 
-to duplicate the view int
-
-@item System string;
-
-to execute a system call
-
-@item Include  string
-
-@item #include string
+@item Include @var{expression-char};
+@item #include @var{expression-char};
+To include the file @var{expression-char}.
 
 @end ftable
-
-Files can be included by placing one of the following commands
-(@var{expression-char} represents a file name) on a separate line, and
-outside any Gmsh command.  Any text placed after an include command on the
-same line is ignored. XXX verify this
-
-@example
-@code{Include @var{expression-char}} 
-@code{#include @var{expression-char}} 
-@end example
 
 @c -------------------------------------------------------------------------
 @c General options
@@ -1169,41 +1077,64 @@ same line is ignored. XXX verify this
 
 @ftable @code
 
-@item newreg
-@item newp
-@item newc
-@item news
-@item newv
 @item Bezier		
+
 @item BSpline		
+
 @item Circle          
+
 @item Coherence       
+
 @item CatmullRom	
+
 @item Delete          
+
 @item Dilate          
+
 @item Duplicata       
+
 @item Ellipsis
 (synonym: Ellipse)
+
 @item Intersect       
+
 @item Knots		
+
 @item Line            
+
 @item Loop            
+
 @item Nurbs Surface
+
 @item Nurbs Surface With Bounds
+
 @item Order
+
 @item Physical        
+
 @item Plane           
+
 @item Point           
+
 @item Rotate          
+
 @item Ruled           
+
 @item Spline          
+
 @item Surface         
+
 @item Symmetry        
+
 @item Triangulation   
+
 @item Translate       
+
 @item Trimmed		
+
 @item Volume
 (synonym: Complex Volume)
+
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1239,21 +1170,39 @@ same line is ignored. XXX verify this
 
 @ftable @code
 @item Attractor
+
 @item Bump
+
 @item Characteristic
+
+@item Color
+
 @item Elliptic
+
 @item Extrude
+
 @item Length
+
 @item Layers          
+
 @item Meshes          
+
 @item Power           
+
 @item Progression     
+
 @item Parametric	
+
 @item Recombine
+
 @item Transfinite     
+
 @item With		
+
 @item Using           
+
 @item In              
+
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1314,35 +1263,46 @@ from solver example?
 @section Post-processing commands
 
 @ftable @code
-@item Color
 @item ColorTable
+
 @item Plugin          
+
 @item SP
 @item VP
 @item TP
+
 @item SL
 @item VL
 @item TL
+
 @item ST
 @item VT
 @item TT
+
 @item SQ
 @item VQ
 @item TQ
+
 @item SS
 @item VS
 @item TS
+
 @item SH
 @item VH
 @item TH
+
 @item SI
 @item VI
 @item TI
+
 @item SY
 @item VY
 @item TY
+
 @item T2
+
 @item T3
+
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1371,12 +1331,12 @@ set an option specifically for the n-th view, use @code{View[n].Option}.
 @cindex Tutorial
 
 Here are the examples in the Gmsh tutorial. These examples are commented
-(both C and C++-style comments can be used in Gmsh input files:
-@pxref{Comments}) and should introduce new features gradually, starting with
+(both C and C++-style comments can be used in Gmsh input files: see
+@ref{Comments}) and should introduce new features gradually, starting with
 @file{t1.geo}.
 
 This tutorial does not explain the mesh and post-processing file
-formats. See the @pxref{File formats} for this.
+formats. See @ref{File formats} for this.
 
 @menu
 * t1.geo::                      
@@ -1525,8 +1485,8 @@ is based on the name of the first input file on the command line (or
 'untitled' if there wasn't any input file given), with an appended extension
 depending on the mesh format.
 
-Note that nearly all the interactive commands have shortcuts:
-@pxref{Keyboard shortcuts} or select 'Help->Shortcuts' in the menu bar to
+Note that nearly all the interactive commands have shortcuts: see
+@ref{Keyboard shortcuts} or select 'Help->Shortcuts' in the menu bar to
 learn about these.
 
 Instead of opening the tutorial with the 'File->Open' menu, it is
