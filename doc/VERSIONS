@@ -1,18 +1,18 @@
-$Id: VERSIONS,v 1.231 2004-07-02 02:44:18 geuzaine Exp $
+$Id: VERSIONS,v 1.232 2004-07-02 05:14:03 geuzaine Exp $
 
 New in 1.54: integrated Netgen (3D mesh quality optimization +
 alternative 3D algorithm); Extrude Surface now always automatically
 creates a new volume (in the same way Extrude Point or Extrude Line
-create new lines and surfaces, respectively); fixed UNV output; make
-Layers' region numbering consistent between lines/surfaces/volumes;
-fixed home directory problem on Win98; new Plugin(CutParametric); the
-default project file is now created in the home directory if no
-current directory is defined (e.g. when double-clicking on the icon on
-Windows/MacOS); fixed the discrepancy between the orientation of
-geometrical surfaces and the associated surface meshes; added
-automatic orientation of surfaces in surface loops; generalized
-Plugin(Triangulate) to handle vector and tensor views; small bug fixes
-and cleanups.
+create new lines and surfaces, respectively); fixed UNV output; made
+the "Layers" region numbering consistent between lines, surfaces and
+volumes; fixed home directory problem on Win98; new
+Plugin(CutParametric); the default project file is now created in the
+home directory if no current directory is defined (e.g., when
+double-clicking on the icon on Windows/MacOS); fixed the discrepancy
+between the orientation of geometrical surfaces and the associated
+surface meshes; added automatic orientation of surfaces in surface
+loops; generalized Plugin(Triangulate) to handle vector and tensor
+views; small bug fixes and cleanups.
 
 New in 1.53: completed support for second order elements in the mesh
 module (lines, triangles, quadrangles, tetrahedra, hexahedra, prisms

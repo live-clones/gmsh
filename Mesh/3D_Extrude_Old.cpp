@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.27 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.28 2004-07-02 05:14:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -667,7 +667,8 @@ void Extrude_Mesh_Old(Mesh * M)
 
   Create_BgMesh(WITHPOINTS, .2, LOCAL);
 
-  Tree_Left(M->Volumes, &THEV);
+  THEV = Create_Volume(1, MSH_VOLUME);
+  Tree_Add(M->Volumes, &THEV);
   Tree_Action(M->Surfaces, Extrude_Surface1);
 
   if(!CTX.mesh.oldxtrude_recombine) {
