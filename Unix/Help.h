@@ -1,4 +1,4 @@
-/* $Id: Help.h,v 1.3 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: Help.h,v 1.4 2000-12-05 18:59:17 geuzaine Exp $ */
 #ifndef _HELP_H_
 #define _HELP_H_
 
@@ -14,11 +14,9 @@ static char txt_help[]=
 "                display its properties on the bottom line\n"
 "              size a rubber zoom started with (C-left)\n"
 "\n"
-"  (left)      apply Y rotation (horizontal move)\n"
-"              apply X rotation (vertical move)\n"
+"  (left)      apply rotation\n"
 "              accept a rubber zoom started by (C-left)\n" 
-"  (middle)    apply Z rotation (horizontal move)\n"
-"              zoom (vertical move)\n"
+"  (middle)    zoom\n"
 "              cancel a rubber zoom\n"
 "  (right)     pan X (horizontal move)\n"
 "              pan Y (vertical move)\n"
