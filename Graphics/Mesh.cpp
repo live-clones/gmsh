@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.79 2004-04-24 06:13:45 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.80 2004-04-24 15:05:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -119,6 +119,18 @@ void Draw_Mesh(Mesh * M)
     glVertex3d(CTX.min[0], CTX.max[1], CTX.min[2]);
     glVertex3d(CTX.min[0], CTX.max[1], CTX.max[2]);
     glEnd();
+    char label[256];
+    double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+    glRasterPos3d(CTX.min[0] + offset / CTX.s[0], 
+		  CTX.min[1] + offset / CTX.s[0], 
+		  CTX.min[2] + offset / CTX.s[0]);
+    sprintf(label, "(%.1g,%.1g,%.1g)", CTX.min[0], CTX.min[1], CTX.min[2]);
+    Draw_String(label);
+    glRasterPos3d(CTX.max[0] + offset / CTX.s[0], 
+		  CTX.max[1] + offset / CTX.s[0], 
+		  CTX.max[2] + offset / CTX.s[0]);
+    sprintf(label, "(%.1g,%.1g,%.1g)", CTX.max[0], CTX.max[1], CTX.max[2]);
+    Draw_String(label);
   }
 
   // draw the mesh

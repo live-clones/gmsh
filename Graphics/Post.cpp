@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.55 2004-04-20 19:15:14 geuzaine Exp $
+// $Id: Post.cpp,v 1.56 2004-04-24 15:05:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -359,6 +359,18 @@ void Draw_Post(void)
         glVertex3d(v->BBox[0], v->BBox[3], v->BBox[4]);
         glVertex3d(v->BBox[0], v->BBox[3], v->BBox[5]);
         glEnd();
+	char label[256];
+	double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
+	glRasterPos3d(v->BBox[0] + offset / CTX.s[0], 
+		      v->BBox[2] + offset / CTX.s[0], 
+		      v->BBox[4] + offset / CTX.s[0]);
+	sprintf(label, "(%.1g,%.1g,%.1g)", v->BBox[0], v->BBox[2], v->BBox[4]);
+	Draw_String(label);
+	glRasterPos3d(v->BBox[1] + offset / CTX.s[0], 
+		      v->BBox[3] + offset / CTX.s[0], 
+		      v->BBox[5] + offset / CTX.s[0]);
+	sprintf(label, "(%.1g,%.1g,%.1g)", v->BBox[1], v->BBox[3], v->BBox[5]);
+	Draw_String(label);
       }
     }
     return;
