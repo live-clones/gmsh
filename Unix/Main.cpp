@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.16 2000-12-05 15:23:58 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.17 2000-12-05 15:47:07 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -581,10 +581,8 @@ int main(int argc, char *argv[]){
         mai3d(THEM, CTX.interactive);
         Print_Mesh(THEM,NULL,CTX.mesh.format);
       }
-      else{
-        Print_Context(stdout);
+      else
         Print_Geo(THEM, NULL);
-      }
       exit(1);
     }    
   }
