@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.214 2002-05-18 16:40:46 geuzaine Exp $
+# $Id: Makefile,v 1.215 2002-05-18 18:45:51 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -42,11 +42,27 @@ GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
                        -a ! -name "gmsh"   -a ! -name "gmsh-*"\
                        -a ! -type d \)`
 
+default:
+	@echo "Type one of the following:"
+	@echo "  make aix                  for IBM RS/6000 with AIX"
+	@echo "  make cygwin               for Win95/NT using Cygnus-Win32"
+	@echo "  make gcc                  for a generic system with GCC"
+	@echo "  make hpux                 for HP systems with HPUX 9.x/10.x using GCC"
+	@echo "  make irix                 for SGI systems with IRIX"
+	@echo "  make linux                for Linux systems"
+	@echo "  make macosx               for Macintosh with Mac OS X and GCC"
+	@echo "  make osf1                 for DEC Alpha systems with OSF/1"
+	@echo "  make sunos                for Suns with SunOS"
+	@echo "  make clean                remove .o files and libraries"
+	@echo "You need fltk (http://www.fltk.org) version 1.1.x installed"
+	@echo "in $(HOME)/SOURCES/fltk-1.1/."
+	@echo "If you system is not listed above, edit the Makefile."
+
 # ----------------------------------------------------------------------
 # Rules for developers
 # ----------------------------------------------------------------------
 
-default: initialtag
+compile: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -57,10 +73,14 @@ default: initialtag
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 
+link: gmsh
+
 gmsh:
 	$(CXX) $(FLAGS) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
                -L/usr/X11R6/lib -lX11 -lm
+
+gcc: compile link
 
 static:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -383,9 +403,9 @@ link-linux-scorec:
 linux-scorec: compile-linux-scorec link-linux-scorec
 
 #
-# Digital (Compaq) Tru64
+# Digital (Compaq) OSF1/Digital Unix/Tru64
 #
-compile-dec: initialtag
+compile-osf1: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -395,12 +415,12 @@ compile-dec: initialtag
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link-dec:
+link-osf1:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
                  -lX11 -lm
-dec: compile-dec link-dec
-distrib-dec:
+osf1: compile-osf1 link-osf1
+distrib-osf1:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -414,12 +434,12 @@ distrib-dec:
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	make clean
-	make dec
+	make osf1
 	make distrib
 #
 # HP-UX
 #
-compile-hp: initialtag
+compile-hpux: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -429,13 +449,13 @@ compile-hp: initialtag
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link-hp:
+link-hpux:
 	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                       -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
                       -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL -lfltk\
                       -lX11 -lm
-hp: compile-hp link-hp
-distrib-hp:
+hpux: compile-hpux link-hpux
+distrib-hpux:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -449,12 +469,12 @@ distrib-hp:
         ); done
 	g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	make clean
-	make hp
+	make hpux
 	make distrib
 #
 # IBM AIX
 #
-compile-ibm: initialtag
+compile-aix: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(CXX)" \
            "CC=$(CC)" \
@@ -464,12 +484,12 @@ compile-ibm: initialtag
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link-ibm:
+link-aix:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lGLU -lGL -lfltk\
                   -lX11 -lm
-ibm: compile-ibm link-ibm
-distrib-ibm:
+aix: compile-aix link-aix
+distrib-aix:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -483,12 +503,12 @@ distrib-ibm:
         ); done
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	make clean
-	make ibm
+	make aix
 	make distrib
 #
 # SGI Irix
 #
-compile-sgi: initialtag
+compile-irix: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=CC" \
            "CC=cc" \
@@ -500,11 +520,11 @@ compile-sgi: initialtag
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link-sgi:
+link-irix:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl -lfltk -lX11 -lGLU -lGL -lm
-sgi: compile-sgi link-sgi
-distrib-sgi:
+irix: compile-irix link-irix
+distrib-irix:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -520,7 +540,7 @@ distrib-sgi:
         ); done
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	make clean
-	make sgi
+	make irix
 	make distrib
 
 #
@@ -586,7 +606,7 @@ cygwin-laptopjf_tag: tag cygwin-laptopjf
 #
 # Sun SunOS
 #
-compile-sun: initialtag
+compile-sunos: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -596,13 +616,13 @@ compile-sun: initialtag
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link-sun:
+link-sunos:
 	g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                  -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
                  -L$(HOME)/SOURCES/Mesa-3.1/lib -lGLU -lGL -lfltk\
                  -lX11 -lXext -lsocket -lnsl -ldl -lm
-sun: compile-sun link-sun
-distrib-sun:
+sunos: compile-sunos link-sunos
+distrib-sunos:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -616,7 +636,7 @@ distrib-sun:
         ); done
 	g++ -o $(GMSH_BIN_DIR)/gmsh-batch $(GMSH_BOX_LIB) -lm
 	make clean
-	make sun
+	make sunos
 	make distrib
 #
 # Solaris SCOREC
