@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.34 2001-12-03 10:55:48 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.35 2001-12-03 15:34:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -92,7 +92,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
         Tree_Replace(M->Vertices, &vert);
 	if(CTX.mesh.check_duplicates){
 	  if((vertspp = (Vertex**)Tree_PQuery(Duplicates, &vert)))
-	    Msg(WARNING, "Nodes %d and %d have identical coordinates (%g, %g, %g)", 
+	    Msg(GERROR, "Nodes %d and %d have identical coordinates (%g, %g, %g)", 
 		Num, (*vertspp)->Num, x, y, z);
 	  else
 	    Tree_Add(Duplicates, &vert);
@@ -185,7 +185,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    vert->Pos.Y /= (double) Nbr_Nodes;
 	    vert->Pos.Z /= (double) Nbr_Nodes;
 	    if((vertspp = (Vertex**)Tree_PQuery(Duplicates, &vert)))
-	      Msg(WARNING, "Elements %d and %d have identical barycenters", 
+	      Msg(GERROR, "Elements %d and %d have identical barycenters", 
 		  Num, (*vertspp)->Num);
 	    else
 	      Tree_Add(Duplicates, &vert);
