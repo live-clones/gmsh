@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.200 2002-04-13 04:17:21 geuzaine Exp $
+# $Id: Makefile,v 1.201 2002-04-13 04:31:35 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -251,7 +251,7 @@ bb-mingw: initialtag
 # ----------------------------------------------------------------------
 
 #
-# Linux standard
+# Linux
 #
 compile-linux: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -261,36 +261,16 @@ compile-linux: initialtag
            "OS_FLAGS=-D_LITTLE_ENDIAN" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 link-linux:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl $(OPENGL_LIB) -lfltk\
+                 -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
 linux: compile-linux link-linux
 
 #
-# Test for fltk 1.1
-#
-compile-fltk1: initialtag
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CXX=$(CXX)" \
-           "CC=$(CC)" \
-           "OPT_FLAGS=-g -Wall" \
-           "OS_FLAGS=-D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
-        ); done
-link-fltk1:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
-                 $(OPENGL_LIB) \
-                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a \
-                 -L/usr/X11R6/lib $(X11_LIB) -lm
-fltk1: compile-fltk1 link-fltk1
-
-#
-# Test for fltk 2.0
+# Linux fltk 2.0
 #
 compile-fltk2: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
@@ -448,11 +428,12 @@ compile-ibm: initialtag
            "OS_FLAGS=-D_BSD" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 link-ibm:
-	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
+	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl $(OPENGL_LIB) -lfltk\
+                  $(X11_LIB) -lm
 ibm: compile-ibm link-ibm
 distrib-ibm:
 	make tag
@@ -507,52 +488,11 @@ distrib-sgi:
 	make clean
 	make sgi
 	make distrib
-#
-# Mingw
-#
-compile-mingw: initialtag
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CXX=g++" \
-           "CC=gcc" \
-           "OPT_FLAGS=-O2" \
-           "OS_FLAGS=-DWIN32 -D_LITTLE_ENDIAN -mno-cygwin -I/mingw/include" \
-           "VERSION_FLAGS=-D_FLTK" \
-           "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
-        ); done
-link-mingw:
-	g++ -mno-cygwin -L/mingw/lib -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
-                 Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
-                 -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-mingw: compile-mingw link-mingw
 
 #
-# Cygwin
+# Cygwin (add '-lole32 -luuid' after -lgdi32 when DND is ready (gcc>3))
 #
 compile-cygwin: initialtag
-	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
-           "CXX=g++" \
-           "CC=gcc" \
-           "OPT_FLAGS=-O2" \
-           "OS_FLAGS=-DWIN32 -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
-           "GL_INCLUDE=" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
-        ); done
-link-cygwin:
-	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
-                 Common/Icon.res $(HOME)/SOURCES/fltk/lib/libfltk.a\
-                 -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
-cygwin: compile-cygwin link-cygwin
-distrib-cygwin:
-	make tag
-	make clean
-	make cygwin
-	make distrib-win
-#
-# Cygwin with fltk 1.1 (add '-lole32 -luuid' after -lgdi32 when DND is ready (gcc>3))
-#
-compile-cygwin1: initialtag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=g++" \
            "CC=gcc" \
@@ -562,13 +502,16 @@ compile-cygwin1: initialtag
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
-link-cygwin1:
+link-cygwin:
 	g++ -Wl,--subsystem,windows -o $(GMSH_BIN_DIR)/gmsh.exe $(GMSH_FLTK_LIB)\
-                 Common/Icon.res $(HOME)/SOURCES/fltk-1.1/lib/libfltk_gl.a\
-                 -lglu32 -lopengl32\
-                 $(HOME)/SOURCES/fltk-1.1/lib/libfltk.a\
-                 -lgdi32 -lwsock32 -lm
-cygwin1: compile-cygwin1 link-cygwin1
+                 Common/Icon.res -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
+                 -lglu32 -lopengl32 -lfltk -lgdi32 -lwsock32 -lm
+cygwin: compile-cygwin link-cygwin
+distrib-cygwin:
+	make tag
+	make clean
+	make cygwin
+	make distrib-win
 
 #
 # Cygwin gertha-buro
@@ -616,12 +559,12 @@ compile-sun: initialtag
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK -D_NODLL" \
            "GL_INCLUDE=-I$(HOME)/SOURCES/Mesa-3.1/include" \
-           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
+           "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk-1.1" \
         ); done
 link-sun:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) \
-                 -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB)\
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl
+                 -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) -lfltk\
                  $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
 sun: compile-sun link-sun
 distrib-sun:
