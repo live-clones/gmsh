@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.356 2004-09-28 22:48:46 geuzaine Exp $
+// $Id: GUI.cpp,v 1.357 2004-09-28 23:07:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1001,23 +1001,23 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   m_scroll->clear();
 #else
   // Fl_Scroll.clear() is broken in old versions of FLTK...
-  for(int i = 0; i < m_push_butt.size(); i++){
+  for(unsigned int i = 0; i < m_push_butt.size(); i++){
     m_scroll->remove(m_push_butt[i]);
     delete m_push_butt[i];
   }
-  for(int i = 0; i < m_toggle_butt.size(); i++){
+  for(unsigned int i = 0; i < m_toggle_butt.size(); i++){
     m_scroll->remove(m_toggle_butt[i]);
     delete m_toggle_butt[i];
   }
-  for(int i = 0; i < m_toggle2_butt.size(); i++){
+  for(unsigned int i = 0; i < m_toggle2_butt.size(); i++){
     m_scroll->remove(m_toggle2_butt[i]);
     delete m_toggle2_butt[i];
   }
-  for(int i = 0; i < m_popup_butt.size(); i++){
+  for(unsigned int i = 0; i < m_popup_butt.size(); i++){
     m_scroll->remove(m_popup_butt[i]);
     delete m_popup_butt[i];
   }
-  for(int i = 0; i < m_popup2_butt.size(); i++){
+  for(unsigned int i = 0; i < m_popup2_butt.size(); i++){
     m_scroll->remove(m_popup2_butt[i]);
     delete m_popup2_butt[i];
   }
@@ -1034,7 +1034,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   m_pop_label.clear();
   for(unsigned int i = 0; i < m_pop_plugin.size(); i++) 	 
     delete m_pop_plugin[i]; 	 
-   m_pop_plugin.clear();
+  m_pop_plugin.clear();
 
   int width = m_window->w();
   int popw = 4 * fontsize + 3;
