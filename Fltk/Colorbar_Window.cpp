@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.25 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.26 2002-08-28 17:55:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -482,9 +482,9 @@ int Colorbar_Window::handle(int event){
       compute = 1; 
     }
     else if(Fl::test_shortcut(FL_CTRL + FL_Up)){
-      ct->fpar[COLORTABLE_ALPHAPOW] -= 0.05;
-      if (ct->fpar[COLORTABLE_ALPHAPOW] < 0.0)
-	ct->fpar[COLORTABLE_ALPHAPOW] = 0.0;
+      ct->fpar[COLORTABLE_ALPHAPOW] += 0.05;
+      if (ct->fpar[COLORTABLE_ALPHAPOW] > 1.0)
+	ct->fpar[COLORTABLE_ALPHAPOW] = 1.0;
       compute = 1; 
     }
     else if(Fl::test_shortcut(FL_Down)){
@@ -492,7 +492,9 @@ int Colorbar_Window::handle(int event){
       compute = 1; 
     }
     else if(Fl::test_shortcut(FL_CTRL + FL_Down)){
-      ct->fpar[COLORTABLE_ALPHAPOW] += 0.05;
+      ct->fpar[COLORTABLE_ALPHAPOW] -= 0.05;
+      if (ct->fpar[COLORTABLE_ALPHAPOW] < 0.0)
+	ct->fpar[COLORTABLE_ALPHAPOW] = 0.0;
       compute = 1; 
     }
     else{

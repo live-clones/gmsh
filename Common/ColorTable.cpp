@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.12 2002-08-27 02:03:34 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.13 2002-08-28 17:55:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ void ColorTable_InitParam(int number, GmshColorTable *ct,
     ct->fpar[COLORTABLE_BETA]     = 0.0;
   }
   if(alpha_flag) {
-    ct->fpar[COLORTABLE_ALPHAPOW] = 2.;
+    ct->fpar[COLORTABLE_ALPHAPOW] = 1.;
     ct->fpar[COLORTABLE_ALPHAVAL] = 255.;
   }
 
@@ -209,12 +209,8 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
     }
     
     if (alpha_flag) {
-      if (ct->fpar[COLORTABLE_ALPHAVAL]<0) {
-        a = (int)( 255.0 * pow( s, ct->fpar[COLORTABLE_ALPHAPOW] ) );
-      }
-      else {
-        a = (int)( ct->fpar[COLORTABLE_ALPHAVAL] );
-      }
+      a = (int)( ct->fpar[COLORTABLE_ALPHAVAL] *
+		 ct->fpar[COLORTABLE_ALPHAPOW] );
     }
     else {
       a = UNPACK_ALPHA( ct->table[i] );
