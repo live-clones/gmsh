@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.59 2004-03-30 18:17:06 geuzaine Exp $
+// $Id: Main.cpp,v 1.60 2004-04-15 02:13:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -95,9 +95,8 @@ int main(int argc, char *argv[])
     CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
-    fprintf(stderr, "%s, version %d.%d.%d, started %s\n",
-            gmsh_progname, GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
-            GMSH_PATCH_VERSION, currtime);
+    fprintf(stderr, "%s, version %s, started %s\n",
+            gmsh_progname, GMSH_VERSION, currtime);
 
   // Register Default Plugins
   if(CTX.default_plugins)
@@ -179,8 +178,7 @@ int main(int argc, char *argv[])
   // Say welcome!
 
   Msg(STATUS3N, "Ready");
-  Msg(STATUS1, "Gmsh %d.%d.%d", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
-      GMSH_PATCH_VERSION);
+  Msg(STATUS1, "Gmsh %s", GMSH_VERSION);
 
   // Log the following for bug reports
 

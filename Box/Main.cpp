@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.36 2004-02-07 01:40:16 geuzaine Exp $
+// $Id: Main.cpp,v 1.37 2004-04-15 02:13:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -62,13 +62,11 @@ void Info(int level, char *arg0)
     ParUtil::Instance()->Exit();
   case 1:
     if(ParUtil::Instance()->master())
-      fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
-              GMSH_PATCH_VERSION);
+      fprintf(stderr, "%s\n", GMSH_VERSION);
     ParUtil::Instance()->Exit();
   case 2:
     if(ParUtil::Instance()->master()) {
-      fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION,
-              GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
+      fprintf(stderr, "%s%s\n", gmsh_version, GMSH_VERSION);
       fprintf(stderr, "%s\n", gmsh_os);
       fprintf(stderr, "%s\n", gmsh_date);
       fprintf(stderr, "%s\n", gmsh_host);

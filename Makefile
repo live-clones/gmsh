@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.330 2004-04-08 22:16:54 geuzaine Exp $
+# $Id: Makefile,v 1.331 2004-04-15 02:13:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -24,12 +24,15 @@ include variables
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 51
 GMSH_PATCH_VERSION = 5
+GMSH_EXTRA_VERSION = 
+
+GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
 
 GMSH_SHORT_LICENSE = "GNU General Public License"
 
 GMSH_VERSION_FILE = Common/GmshVersion.h
-GMSH_RELEASE = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
-GMSH_ARCHIVE = archives/gmsh-`date "+%Y.%m.%d"`
+GMSH_DATE = `date "+%Y%m%d"`
+GMSH_ARCHIVE = archives/gmsh-${GMSH_DATE}
 GMSH_SOURCES = `find . \( ! -name "*.tar*" -a ! -name "*.tgz" \
                        -a ! -name "*.o"    -a ! -name "lib*.a"   \
                        -a ! -name "*.msh"  -a ! -name "*.bak" \
@@ -60,35 +63,38 @@ variables: configure
 	@exit 1
 
 source-common:
-	rm -rf gmsh-${GMSH_RELEASE}
+	rm -rf gmsh-${GMSH_VERSION}
 	tar zcvf gmsh.tgz `ls TODO README* */README* configure *.in *.spec Makefile\
                            */Makefile */*.[chylr] */*.[ch]pp */*.rc */*.res */*.ico\
                            */*.icns`\
                            doc demos tutorial utils
-	mkdir gmsh-${GMSH_RELEASE}
-	cd gmsh-${GMSH_RELEASE} && tar zxvf ../gmsh.tgz
+	mkdir gmsh-${GMSH_VERSION}
+	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
 	rm -f gmsh.tgz
 
 source: source-common
-	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
            NR Triangle/triangle.* utils/commercial
-	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
+	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
-source-nightly: source
-	rm -rf gmsh-${GMSH_RELEASE}
-	mv gmsh-${GMSH_RELEASE}-source.tgz gmsh-nightly-source.tgz
+source-nightly:
+	mv -f Makefile Makefile.nightly
+	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
+          Makefile.nightly > Makefile
+	make source
+	mv -f Makefile.nightly Makefile
 
 source-commercial: source-common
-	cd gmsh-${GMSH_RELEASE} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
+	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
            Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
            utils/commercial
-	cp -f utils/commercial/README gmsh-${GMSH_RELEASE}/README
-	cp -f utils/commercial/LICENSE gmsh-${GMSH_RELEASE}/doc/LICENSE
-	cp -f utils/commercial/License.cpp gmsh-${GMSH_RELEASE}/Common/License.cpp
-	cp -f utils/commercial/license.texi gmsh-${GMSH_RELEASE}/doc/texinfo/license.texi
-	cp -f utils/commercial/copying.texi gmsh-${GMSH_RELEASE}/doc/texinfo/copying.texi
-	utils/commercial/sanitize.sh gmsh-${GMSH_RELEASE}
-	tar zcvf gmsh-${GMSH_RELEASE}-source-commercial.tgz gmsh-${GMSH_RELEASE}
+	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
+	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
+	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp
+	cp -f utils/commercial/license.texi gmsh-${GMSH_VERSION}/doc/texinfo/license.texi
+	cp -f utils/commercial/copying.texi gmsh-${GMSH_VERSION}/doc/texinfo/copying.texi
+	utils/commercial/sanitize.sh gmsh-${GMSH_VERSION}
+	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
 
 .PHONY: parser
 parser:
@@ -100,7 +106,7 @@ converters:
 .PHONY: doc
 doc:
 	cd doc/texinfo && ${MAKE} all
-	cd doc && tar zcvf ../gmsh-${GMSH_RELEASE}-doc.tgz\
+	cd doc && tar zcvf ../gmsh-${GMSH_VERSION}-doc.tgz\
           FAQ CREDITS VERSIONS README.win32 gmsh.1\
           texinfo/gmsh.ps texinfo/gmsh.pdf texinfo/gmsh.txt\
           texinfo/*.html texinfo/gmsh-info.tgz
@@ -133,9 +139,8 @@ tag:
 	echo "#define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION}" >  ${GMSH_VERSION_FILE}
 	echo "#define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION}" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_VERSION  ((double)GMSH_MAJOR_VERSION + \\" >> ${GMSH_VERSION_FILE}
-	echo "                0.01 * (double)GMSH_MINOR_VERSION + \\" >> ${GMSH_VERSION_FILE}
-	echo "              0.0001 * (double)GMSH_PATCH_VERSION)"     >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_EXTRA_VERSION \"${GMSH_EXTRA_VERSION}\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_VERSION  \"${GMSH_VERSION}\"" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_DATE     \"`date`\""      >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_HOST     \"`hostname`\""  >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_PACKAGER \"`whoami`\""    >> ${GMSH_VERSION_FILE}
@@ -183,50 +188,50 @@ distrib-mac: clean all package-mac distrib-msg
 	otool -L bin/gmsh
 
 package-unix:
-	rm -rf gmsh-${GMSH_RELEASE}
-	mkdir gmsh-${GMSH_RELEASE}
+	rm -rf gmsh-${GMSH_VERSION}
+	mkdir gmsh-${GMSH_VERSION}
 	strip bin/gmsh
-	cp bin/gmsh gmsh-${GMSH_RELEASE}
-	cp doc/gmsh.1 doc/LICENSE doc/VERSIONS doc/FAQ doc/CREDITS gmsh-${GMSH_RELEASE}
-	cp -R tutorial gmsh-${GMSH_RELEASE}
-	cp -R demos gmsh-${GMSH_RELEASE}
-	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
-	rm -f gmsh-${GMSH_RELEASE}/*/*.msh
-	rm -f gmsh-${GMSH_RELEASE}/*/*~
-	tar cvf gmsh-${GMSH_RELEASE}-${UNAME}.tar gmsh-${GMSH_RELEASE}
-	gzip gmsh-${GMSH_RELEASE}-${UNAME}.tar
-	mv gmsh-${GMSH_RELEASE}-${UNAME}.tar.gz gmsh-${GMSH_RELEASE}-${UNAME}.tgz
+	cp bin/gmsh gmsh-${GMSH_VERSION}
+	cp doc/gmsh.1 doc/LICENSE doc/VERSIONS doc/FAQ doc/CREDITS gmsh-${GMSH_VERSION}
+	cp -R tutorial gmsh-${GMSH_VERSION}
+	cp -R demos gmsh-${GMSH_VERSION}
+	rm -rf gmsh-${GMSH_VERSION}/*/CVS
+	rm -f gmsh-${GMSH_VERSION}/*/*.msh
+	rm -f gmsh-${GMSH_VERSION}/*/*~
+	tar cvf gmsh-${GMSH_VERSION}-${UNAME}.tar gmsh-${GMSH_VERSION}
+	gzip gmsh-${GMSH_VERSION}-${UNAME}.tar
+	mv gmsh-${GMSH_VERSION}-${UNAME}.tar.gz gmsh-${GMSH_VERSION}-${UNAME}.tgz
 
 package-win:
-	rm -rf gmsh-${GMSH_RELEASE}
-	mkdir gmsh-${GMSH_RELEASE}
+	rm -rf gmsh-${GMSH_VERSION}
+	mkdir gmsh-${GMSH_VERSION}
 	strip bin/gmsh.exe
-	cp /usr/bin/cygwin1.dll gmsh-${GMSH_RELEASE}
-	cp bin/gmsh.exe gmsh-${GMSH_RELEASE}
-	cp doc/README.win32 gmsh-${GMSH_RELEASE}/README.txt
-	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
-	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
-	cp doc/CREDITS gmsh-${GMSH_RELEASE}/CREDITS.txt
-	cp doc/LICENSE gmsh-${GMSH_RELEASE}/LICENSE.txt
-	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_RELEASE}/*.txt
-	cp -R tutorial gmsh-${GMSH_RELEASE}
-	cp -R demos gmsh-${GMSH_RELEASE}
-	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
-	rm -f gmsh-${GMSH_RELEASE}/*/*.msh
-	rm -f gmsh-${GMSH_RELEASE}/*/*~
-	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_RELEASE}/tutorial/*\
-                                       ../../gmsh-${GMSH_RELEASE}/demos/*
-	cd gmsh-${GMSH_RELEASE} && zip -r gmsh-${GMSH_RELEASE}-Windows.zip *
-	mv gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-Windows.zip .
+	cp /usr/bin/cygwin1.dll gmsh-${GMSH_VERSION}
+	cp bin/gmsh.exe gmsh-${GMSH_VERSION}
+	cp doc/README.win32 gmsh-${GMSH_VERSION}/README.txt
+	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
+	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt
+	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt
+	cp doc/LICENSE gmsh-${GMSH_VERSION}/LICENSE.txt
+	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_VERSION}/*.txt
+	cp -R tutorial gmsh-${GMSH_VERSION}
+	cp -R demos gmsh-${GMSH_VERSION}
+	rm -rf gmsh-${GMSH_VERSION}/*/CVS
+	rm -f gmsh-${GMSH_VERSION}/*/*.msh
+	rm -f gmsh-${GMSH_VERSION}/*/*~
+	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_VERSION}/tutorial/*\
+                                       ../../gmsh-${GMSH_VERSION}/demos/*
+	cd gmsh-${GMSH_VERSION} && zip -r gmsh-${GMSH_VERSION}-Windows.zip *
+	mv gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-Windows.zip .
 
 package-mac:
-	rm -rf gmsh-${GMSH_RELEASE}
-	mkdir gmsh-${GMSH_RELEASE}
-	mkdir gmsh-${GMSH_RELEASE}/Gmsh.app
-	mkdir gmsh-${GMSH_RELEASE}/Gmsh.app/Contents
-	mkdir gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Resources
-	mkdir gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/MacOS
-	echo "APPLGMSH" > gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/PkgInfo 
+	rm -rf gmsh-${GMSH_VERSION}
+	mkdir gmsh-${GMSH_VERSION}
+	mkdir gmsh-${GMSH_VERSION}/Gmsh.app
+	mkdir gmsh-${GMSH_VERSION}/Gmsh.app/Contents
+	mkdir gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources
+	mkdir gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS
+	echo "APPLGMSH" > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/PkgInfo 
 	echo -e "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
         "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\""\
                               " \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"\
@@ -235,31 +240,30 @@ package-mac:
         "    <key>CFBundleName</key><string>Gmsh</string>\n"\
         "    <key>CFBundleExecutable</key><string>Gmsh</string>\n"\
         "    <key>CFBundlePackageType</key><string>APPL</string>\n"\
-        "    <key>CFBundleVersion</key><string>${GMSH_RELEASE}</string>\n"\
-        "    <key>CFBundleShortVersionString</key><string>${GMSH_RELEASE}</string>\n"\
+        "    <key>CFBundleVersion</key><string>${GMSH_VERSION}</string>\n"\
+        "    <key>CFBundleShortVersionString</key><string>${GMSH_VERSION}</string>\n"\
         "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
         "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
-        "    <key>CFBundleGetInfoString</key><string>Gmsh version ${GMSH_RELEASE}, "\
+        "    <key>CFBundleGetInfoString</key><string>Gmsh version ${GMSH_VERSION}, "\
               "Copyright (C) 1997-2004 C. Geuzaine and J.-F. Remacle</string>\n"\
         "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
         "  </dict>\n"\
-        "</plist>" > gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Info.plist
+        "</plist>" > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Info.plist
 	strip bin/gmsh
-	cp bin/gmsh gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/MacOS/Gmsh
-	cp Fltk/MacIcons.icns gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Resources/gmsh.icns
-	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_RELEASE}
-	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
-	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
-	cp doc/CREDITS gmsh-${GMSH_RELEASE}/CREDITS.txt
-	cp doc/LICENSE gmsh-${GMSH_RELEASE}/LICENSE.txt
-	rm -rf gmsh-${GMSH_RELEASE}/*/CVS\
-               gmsh-${GMSH_RELEASE}/*/*~\
-               gmsh-${GMSH_RELEASE}/*/*.msh
-	tar zcvf gmsh-${GMSH_RELEASE}-MacOSX.tgz gmsh-${GMSH_RELEASE}
+	cp bin/gmsh gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS/Gmsh
+	cp Fltk/MacIcons.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/gmsh.icns
+	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_VERSION}
+	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
+	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt
+	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt
+	cp doc/LICENSE gmsh-${GMSH_VERSION}/LICENSE.txt
+	rm -rf gmsh-${GMSH_VERSION}/*/CVS\
+               gmsh-${GMSH_VERSION}/*/*~\
+               gmsh-${GMSH_VERSION}/*/*.msh
+	tar zcvf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
 
 rpm:
-	tar zcvf gmsh-${GMSH_RELEASE}.tar.gz ${GMSH_SOURCES}
-	mv gmsh-${GMSH_RELEASE}.tar.gz /usr/src/redhat/SOURCES
-	rpmbuild -bb --define 'gmshversion ${GMSH_RELEASE}' gmsh.spec
-	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_RELEASE}-?.i386.rpm .
-	cp /usr/src/redhat/BUILD/gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-${UNAME}.tgz .
+	tar zcvf /usr/src/redhat/SOURCES/gmsh-${GMSH_VERSION}.tar.gz ${GMSH_SOURCES}
+	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' gmsh.spec
+	cp /usr/src/redhat/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
+	cp /usr/src/redhat/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .

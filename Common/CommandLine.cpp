@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.29 2004-02-20 17:57:59 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.30 2004-04-15 02:13:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@
 #include "OpenFile.h"
 #include "Parser.h"
 
-#if !defined(GMSH_MAJOR_VERSION)
+#if !defined(GMSH_EXTRA_VERSION)
 #error
 #error Common/GmshVersion.h is not up-to-date.
 #error Please run 'make tag'.
@@ -403,15 +403,13 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       }
       else if(!strcmp(argv[i] + 1, "version") ||
               !strcmp(argv[i] + 1, "-version")) {
-        fprintf(stderr, "%d.%d.%d\n", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION,
-                GMSH_PATCH_VERSION);
+        fprintf(stderr, "%s\n", GMSH_VERSION);
         exit(1);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
         fprintf(stderr, "%s\n", gmsh_progname);
         fprintf(stderr, "%s\n", gmsh_copyright);
-        fprintf(stderr, "%s%d.%d.%d\n", gmsh_version, GMSH_MAJOR_VERSION,
-                GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
+        fprintf(stderr, "%s%s\n", gmsh_version, GMSH_VERSION);
 #if defined(HAVE_FLTK)
         fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION,
                 FL_MINOR_VERSION, FL_PATCH_VERSION);

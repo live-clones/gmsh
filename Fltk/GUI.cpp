@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.279 2004-03-13 21:00:19 geuzaine Exp $
+// $Id: GUI.cpp,v 1.280 2004-04-15 02:13:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3023,11 +3023,12 @@ void GUI::create_about_window()
     o->add("@c@.Please send all questions and bug reports to");
     o->add("@c@b@.gmsh@geuz.org");
     o->add("");
-    sprintf(buffer, "@c@.Version: %d.%d.%d", GMSH_MAJOR_VERSION, GMSH_MINOR_VERSION, GMSH_PATCH_VERSION);
+    sprintf(buffer, "@c@.Version: %s", GMSH_VERSION);
     o->add(buffer);
     sprintf(buffer, "@c@.License: %s", GMSH_SHORT_LICENSE);
     o->add(buffer);
-    sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
+    sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d", 
+	    FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
     o->add(buffer);
     sprintf(buffer, "@c@.Build OS: %s", GMSH_OS);
     o->add(buffer);
