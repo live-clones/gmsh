@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.8 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.9 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -7,6 +7,8 @@
 #include "Adapt.h"
 #include "Views.h"
 #include "Numeric.h"
+
+extern Mesh *THEM;
 
 static Mesh m;
 static double XX, YY, ZZ, D, LL;
@@ -123,8 +125,6 @@ static void AIG (void *a, void *b){
 int BGMWithView (Post_View * ErrView){
 
   static Vertex *VertexUp, *v, V, *ver[4];
-  extern int TYPBGMESH;
-  extern Mesh *THEM;
   int i, j, k;
   Post_Simplex s, t;
   Simplex *si;
@@ -132,11 +132,11 @@ int BGMWithView (Post_View * ErrView){
   VertexUp = Create_Vertex (-1, 0., 0., 1., 1., -1.0);
   Pts = Tree_Create (sizeof (Vertex *), comparePosition);
 
-  m.BGM.Typ = TYPBGMESH = ONFILE;
+  m.BGM.Typ = ONFILE;
 
   m.Vertices = Tree_Create (sizeof (Vertex *), compareVertex);
   m.Simplexes = Tree_Create (sizeof (Simplex *), compareSimplex);
-  Create_BgMesh (TYPBGMESH, .2, THEM);
+  Create_BgMesh (ONFILE, .2, THEM);
 
   k = 1;
   for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
@@ -147,14 +147,14 @@ int BGMWithView (Post_View * ErrView){
       v->Pos.Y = t.Y[j];
       v->Pos.Z = t.Z[j];
       if (0 /*Tree_Query(Pts,&v) */ ){
-	/* Corriger la Lc pour lissage */
-	//ver[j] = v;
+        /* Corriger la Lc pour lissage */
+        //ver[j] = v;
       }
       else{
-	v = Create_Vertex (k++, t.X[j], t.Y[j], t.Z[j], t.V[j], -1.0);
-	ver[j] = v;
-	Tree_Add (m.Vertices, &v);
-	Tree_Add (Pts, &v);
+        v = Create_Vertex (k++, t.X[j], t.Y[j], t.Z[j], t.V[j], -1.0);
+        ver[j] = v;
+        Tree_Add (m.Vertices, &v);
+        Tree_Add (Pts, &v);
       }
     }
     si = Create_Simplex (ver[0], ver[1], ver[2], VertexUp);
@@ -169,13 +169,13 @@ int BGMWithView (Post_View * ErrView){
       v->Pos.Y = s.Y[j];
       v->Pos.Z = s.Z[j];
       if (Tree_Query (Pts, &v)){
-	ver[j] = v;
+        ver[j] = v;
       }
       else{
-	v = Create_Vertex (k++, s.X[k], s.Y[j], s.Z[j], s.V[0], -1.0);
-	ver[j] = v;
-	Tree_Add (m.Vertices, &v);
-	Tree_Add (Pts, &v);
+        v = Create_Vertex (k++, s.X[k], s.Y[j], s.Z[j], s.V[0], -1.0);
+        ver[j] = v;
+        Tree_Add (m.Vertices, &v);
+        Tree_Add (Pts, &v);
       }
     }
     si = Create_Simplex (ver[0], ver[1], ver[2], ver[3]);
@@ -188,14 +188,14 @@ int BGMWithView (Post_View * ErrView){
   m.Grid.Nz = 10;
   Tree_Action (m.Vertices, findminmax);
   getminmax (&m.Grid.min.X, &m.Grid.min.Y, &m.Grid.min.Z,
-	     &m.Grid.max.X, &m.Grid.max.Y, &m.Grid.max.Z);
+             &m.Grid.max.X, &m.Grid.max.Y, &m.Grid.max.Z);
 
   if (m.Grid.max.Z == m.Grid.min.Z){
     m.Grid.Nz = 1;
     Tree_Add (m.Vertices, &VertexUp);
     Tree_Action (m.Vertices, findminmax);
     getminmax (&m.Grid.min.X, &m.Grid.min.Y, &m.Grid.min.Z,
-	       &m.Grid.max.X, &m.Grid.max.Y, &m.Grid.max.Z);
+               &m.Grid.max.X, &m.Grid.max.Y, &m.Grid.max.Z);
   }
 
   Tree_Action (m.Simplexes, AIG);
@@ -242,7 +242,7 @@ double ErrorInView (Post_View * ErrView, int *n){
 /* ------------------------------------------------------------------------ */
 
 int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
-	       double OptiValue, double *ObjFunct, char *OutFile){
+               double OptiValue, double *ObjFunct, char *OutFile){
 
   Post_Simplex s, t;
   double *h, *p, *e, xc, yc, zc, c[3];
@@ -273,11 +273,11 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
       3d ou utiliser une autre mesure de taille.
     */
     CircumCircle (t.X[0], t.Y[0],
-		  t.X[1], t.Y[1],
-		  t.X[2], t.Y[2],
-		  &xc, &yc);
+                  t.X[1], t.Y[1],
+                  t.X[2], t.Y[2],
+                  &xc, &yc);
     h[j + 1] = sqrt ((xc - t.X[0]) * (xc - t.X[0]) +
-		     (yc - t.Y[0]) * (yc - t.Y[0]));
+                     (yc - t.Y[0]) * (yc - t.Y[0]));
     p[j + 1] = Degree;
     e[j + 1] = (t.V[0] + t.V[1] + t.V[2]) / 3. ;
     j++;
@@ -293,8 +293,8 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
     zc = c[2];
     
     h[j + 1] = sqrt ((xc - t.X[0]) * (xc - t.X[0]) +
-		     (yc - t.X[0]) * (yc - t.X[0]) +
-		     (zc - t.Y[0]) * (zc - t.Y[0]));
+                     (yc - t.X[0]) * (yc - t.X[0]) +
+                     (zc - t.Y[0]) * (zc - t.Y[0]));
     p[j + 1] = Degree;
     e[j + 1] = (t.V[0] + t.V[1] + t.V[2] + t.V[3]) * 0.25;
     j++;
@@ -309,20 +309,20 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   for (i = 0; i < List_Nbr (ErrView->Triangles); i++){
     List_Read (ErrView->Triangles, i, &t);
     fprintf (f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-	     t.X[0], t.Y[0], t.Z[0],
-	     t.X[1], t.Y[1], t.Z[1],
-	     t.X[2], t.Y[2], t.Z[2],
-	     h[j], h[j], h[j]);
+             t.X[0], t.Y[0], t.Z[0],
+             t.X[1], t.Y[1], t.Z[1],
+             t.X[2], t.Y[2], t.Z[2],
+             h[j], h[j], h[j]);
     j++;
   }
   for (i = 0; i < List_Nbr (ErrView->Tetrahedra); i++){
     List_Read (ErrView->Tetrahedra, i, &s);
     fprintf (f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-	     s.X[0], s.Y[0], s.Z[0],
-	     s.X[1], s.Y[1], s.Z[1],
-	     s.X[2], s.Y[2], s.Z[2],
-	     s.X[3], s.Y[3], s.Z[3],
-	     h[j], h[j], h[j], h[j]);
+             s.X[0], s.Y[0], s.Z[0],
+             s.X[1], s.Y[1], s.Z[1],
+             s.X[2], s.Y[2], s.Z[2],
+             s.X[3], s.Y[3], s.Z[3],
+             h[j], h[j], h[j], h[j]);
     j++;
   }
   fprintf (f, "};\n");

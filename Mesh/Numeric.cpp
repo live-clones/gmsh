@@ -1,4 +1,4 @@
-/* $Id: Numeric.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Numeric.cpp,v 1.6 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -151,7 +151,7 @@ int inv3x3 (double mat[3][3], double inv[3][3], double *det){
 #define  MaxIter 20
 
 void find_bestuv (Surface * s, double X, double Y,
-		  double *U, double *V, double *Z, int N){
+                  double *U, double *V, double *Z, int N){
   double d, mina, min, minu, minv, Unew, Vnew;
   static int i, j;
   Vertex P;
@@ -164,18 +164,18 @@ void find_bestuv (Surface * s, double X, double Y,
       Vnew = ((double) j) * d;
       P = InterpolateSurface (s, Unew, Vnew, 0, 0);
       if (!i && !j){
-	min = myhypot (X - P.Pos.X, Y - P.Pos.Y);
-	minu = Unew;
-	minv = Vnew;
-	*Z = P.Pos.Z;
+        min = myhypot (X - P.Pos.X, Y - P.Pos.Y);
+        minu = Unew;
+        minv = Vnew;
+        *Z = P.Pos.Z;
       }
       else{
-	if ((mina = myhypot (X - P.Pos.X, Y - P.Pos.Y)) < min){
-	  min = mina;
-	  minu = Unew;
-	  minv = Vnew;
-	  *Z = P.Pos.Z;
-	}
+        if ((mina = myhypot (X - P.Pos.X, Y - P.Pos.Y)) < min){
+          min = mina;
+          minu = Unew;
+          minv = Vnew;
+          *Z = P.Pos.Z;
+        }
       }
     }
   }
@@ -234,7 +234,7 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
 }
 
 void XYtoUV (Surface * s, double *X, double *Y,
-	     double *U, double *V, double *Z){
+             double *U, double *V, double *Z){
 
   double det, Unew, Vnew, err, mat[2][2], jac[2][2];
   int iter;
@@ -424,7 +424,7 @@ double angle_3pts (Vertex * a, Vertex * b, Vertex * c){
     myhypot ((b->Pos.X - c->Pos.X), (b->Pos.Y - c->Pos.Y));
 
   prosca = ((a->Pos.X - b->Pos.X) * (c->Pos.X - b->Pos.X) +
-	    (a->Pos.Y - b->Pos.Y) * (c->Pos.Y - b->Pos.Y)) / L;
+            (a->Pos.Y - b->Pos.Y) * (c->Pos.Y - b->Pos.Y)) / L;
 
   angle = acos (prosca) * 180. / Pi ;
   return (angle);
@@ -436,7 +436,7 @@ double trapeze (IntPoint * P1, IntPoint * P2){
 
 
 void RecursiveIntegration (IntPoint * from, IntPoint * to, double (*f) (double X),
-			   List_T * pPoints, double Prec, int *depth){
+                           List_T * pPoints, double Prec, int *depth){
   IntPoint P, p1;
   double err, val1, val2, val3;
 
@@ -468,7 +468,7 @@ void RecursiveIntegration (IntPoint * from, IntPoint * to, double (*f) (double X
 }
 
 double Integration (double t1, double t2, double (*f) (double X),
-		    List_T * pPoints, double Prec){
+                    List_T * pPoints, double Prec){
   int depth, i;
   IntPoint from, to;
 

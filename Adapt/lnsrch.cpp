@@ -1,4 +1,4 @@
-/* $Id: lnsrch.cpp,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
+/* $Id: lnsrch.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
 #include <math.h>
 #define NRANSI
 #include "nrutil.h"
@@ -7,7 +7,7 @@
 
 void 
 lnsrch (int n, float xold[], float fold, float g[], float p[], float x[],
-	float *f, float stpmax, int *check, float (*func) (float[]))
+        float *f, float stpmax, int *check, float (*func) (float[]))
 {
   int i;
   float a, alam, alam2, alamin, b, disc, f2, fold2, rhs1, rhs2, slope,
@@ -27,48 +27,48 @@ lnsrch (int n, float xold[], float fold, float g[], float p[], float x[],
     {
       temp = fabs (p[i]) / FMAX (fabs (xold[i]), 1.0);
       if (temp > test)
-	test = temp;
+        test = temp;
     }
   alamin = TOLX / test;
   alam = 1.0;
   for (;;)
     {
       for (i = 1; i <= n; i++)
-	x[i] = xold[i] + alam * p[i];
+        x[i] = xold[i] + alam * p[i];
       *f = (*func) (x);
       if (alam < alamin)
-	{
-	  for (i = 1; i <= n; i++)
-	    x[i] = xold[i];
-	  *check = 1;
-	  return;
-	}
+        {
+          for (i = 1; i <= n; i++)
+            x[i] = xold[i];
+          *check = 1;
+          return;
+        }
       else if (*f <= fold + ALF * alam * slope)
-	return;
+        return;
       else
-	{
-	  if (alam == 1.0)
-	    tmplam = -slope / (2.0 * (*f - fold - slope));
-	  else
-	    {
-	      rhs1 = *f - fold - alam * slope;
-	      rhs2 = f2 - fold2 - alam2 * slope;
-	      a = (rhs1 / (alam * alam) - rhs2 / (alam2 * alam2)) / (alam - alam2);
-	      b = (-alam2 * rhs1 / (alam * alam) + alam * rhs2 / (alam2 * alam2)) / (alam - alam2);
-	      if (a == 0.0)
-		tmplam = -slope / (2.0 * b);
-	      else
-		{
-		  disc = b * b - 3.0 * a * slope;
-		  if (disc < 0.0)
-		    nrerror ("Roundoff problem in lnsrch.");
-		  else
-		    tmplam = (-b + sqrt (disc)) / (3.0 * a);
-		}
-	      if (tmplam > 0.5 * alam)
-		tmplam = 0.5 * alam;
-	    }
-	}
+        {
+          if (alam == 1.0)
+            tmplam = -slope / (2.0 * (*f - fold - slope));
+          else
+            {
+              rhs1 = *f - fold - alam * slope;
+              rhs2 = f2 - fold2 - alam2 * slope;
+              a = (rhs1 / (alam * alam) - rhs2 / (alam2 * alam2)) / (alam - alam2);
+              b = (-alam2 * rhs1 / (alam * alam) + alam * rhs2 / (alam2 * alam2)) / (alam - alam2);
+              if (a == 0.0)
+                tmplam = -slope / (2.0 * b);
+              else
+                {
+                  disc = b * b - 3.0 * a * slope;
+                  if (disc < 0.0)
+                    nrerror ("Roundoff problem in lnsrch.");
+                  else
+                    tmplam = (-b + sqrt (disc)) / (3.0 * a);
+                }
+              if (tmplam > 0.5 * alam)
+                tmplam = 0.5 * alam;
+            }
+        }
       alam2 = alam;
       f2 = *f;
       fold2 = fold;

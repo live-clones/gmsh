@@ -1,16 +1,18 @@
-/* $Id: Const.h,v 1.3 2000-11-23 16:07:07 geuzaine Exp $ */
+/* $Id: Const.h,v 1.4 2000-11-26 15:43:44 geuzaine Exp $ */
 #ifndef _CONSTS_H_
 #define _CONSTS_H_
 
 #include <stdlib.h>
 
-//#define RAND_LONG    LC * ((rand()%1000)/1.E08)
-//#define RAND_LONG    LC * ((rand()%1000)/1.E08)/10.
+//#define RAND_LONG  LC * ((rand()%1000)/1.E08)
 
-//RAND_LONG in [0, LC/1.e6]
-#define RAND_LONG    (LC/1.e6*rand()/RAND_MAX)
+//RAND_LC in [0, LC]
+#define RAND_LC      (LC*rand()/RAND_MAX)
 
-//EPSILON_LONG in [0, LC/1.e12]
+//RAND_LC_MIN in [0, LC_MIN]
+#define RAND_LC_MIN  (LC_MIN*rand()/RAND_MAX)
+
+//RAND_EPS in [0, LC/1.e12]
 #define EPSILON_LC   (LC/1.e12*rand()/RAND_MAX)
 
 #define TEXT_BUFFER_SIZE       1024
@@ -27,7 +29,7 @@
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)<(b))?(b):(a))
-#define SQR(a)   (((a)==0.0)?0.0:((a)*(a)))
+#define SQR(a)   ((a)*(a))
 
 #define IMIN MIN
 #define LMIN MIN

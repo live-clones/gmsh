@@ -1,10 +1,10 @@
-/* $Id: Nurbs.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: Nurbs.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
 
 Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
-			       int derivee, double t1, double t2){
+                               int derivee, double t1, double t2){
   Vertex V;
   int i, j;
   double vec[4], T[4];
@@ -32,7 +32,7 @@ Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
   /* X */
   for (i = 0; i < 4; i++){
       for (j = 0; j < 4; j++){
-	vec[i] += mat[i][j] * v[j]->Pos.X;
+        vec[i] += mat[i][j] * v[j]->Pos.X;
       }
   }
 

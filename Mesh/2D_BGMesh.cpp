@@ -1,4 +1,4 @@
-/* $Id: 2D_BGMesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 2D_BGMesh.cpp,v 1.4 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -52,7 +52,7 @@ double find_quality (MPoint center, DocRecord * BGMESH){
     v = ((X[2] - X[0]) * (Yp - Y[0]) - (Y[2] - Y[0]) * (Xp - X[0])) / det;
   }
   else{
-    Msg(WARNING, "Degenerated Triangle (det=%g)\n", det);
+    Msg(WARNING, "Degenerated Triangle (det=%g)", det);
     u = v = 0.0;
   }
   
@@ -65,10 +65,10 @@ double find_quality (MPoint center, DocRecord * BGMESH){
     deno = nume = 0.0;
     for (i = 0; i < BGMESH->numPoints; i++){
       r = sqrt (DSQR (center.h - pPointArray[i].where.h) +
-		DSQR (center.v - pPointArray[i].where.v));
+                DSQR (center.v - pPointArray[i].where.v));
       r = pow (r, Exp);
       if (r < 1.e-10)
-	return (pPointArray[i].quality);
+        return (pPointArray[i].quality);
       nume += pPointArray[i].quality / r;
       deno += 1. / r;
     }

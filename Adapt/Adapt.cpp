@@ -1,4 +1,4 @@
-/* $Id: Adapt.cpp,v 1.1 2000-11-23 23:21:35 geuzaine Exp $ */
+/* $Id: Adapt.cpp,v 1.2 2000-11-26 15:43:44 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Adapt.h"
@@ -70,9 +70,9 @@ double fP1 (double l){
 double min1d (int method, double (*funct)(double), double *xmin){
   double xx, fx, fb, fa, bx, ax;
   double brent(double ax, double bx, double cx,
-	      double (*f)(double), double tol, double *xmin);
+              double (*f)(double), double tol, double *xmin);
   void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
-		double *fc, double (*func)(double));
+                double *fc, double (*func)(double));
 
   switch(method){
   case ADAPT_H1: 
@@ -87,12 +87,12 @@ double min1d (int method, double (*funct)(double), double *xmin){
 /* Adapt return the constraint (N0 ou e0) for the optimzed problem */
 
 double AdaptMesh (int N,        /* Number of elements */
-		  int method,   /* ADAPT_H1, ADAPT_H2, ADAPT_P1 or ADAPT_P2 */
-		  int dim,      /* 2 or 3 */
-		  double *err,  /* elementary errors */
-		  double *h,    /* elementary mesh sizes */
-		  double *p,    /* elementary exponents */
-		  double e0     /* prescribed error or number of elements */){
+                  int method,   /* ADAPT_H1, ADAPT_H2, ADAPT_P1 or ADAPT_P2 */
+                  int dim,      /* 2 or 3 */
+                  double *err,  /* elementary errors */
+                  double *h,    /* elementary mesh sizes */
+                  double *p,    /* elementary exponents */
+                  double e0     /* prescribed error or number of elements */){
   int i;
   double contr=0.0, pivrai, lambda, minf, qi, ri, pi, obj, obj2, minri, maxri;
   double errmin, errmax;
@@ -135,7 +135,7 @@ double AdaptMesh (int N,        /* Number of elements */
     contr = fabs(minf);
 
     Msg(INFOS, "H-Refinement 1, Error %g=>%g, Objective %g, Reduction Factor %g->%g",
-	e0, sqrt(obj), -minf, minri, maxri);
+        e0, sqrt(obj), -minf, minri, maxri);
     break;
 
   case ADAPT_H2 :
@@ -154,7 +154,7 @@ double AdaptMesh (int N,        /* Number of elements */
     contr = sqrt(fabs(minf));
 
     Msg(INFOS, "H-Refinement 2, Elements %g=>%g, Objective %g, Reduction Factor %g->%g",
-	e0, obj, 100. * sqrt(fabs(minf)), minri, maxri);
+        e0, obj, 100. * sqrt(fabs(minf)), minri, maxri);
     break;
 
   case ADAPT_P1 :
@@ -176,7 +176,7 @@ double AdaptMesh (int N,        /* Number of elements */
     contr = fabs(minf);
 
     Msg(INFOS, "P-Refinement, Error %g=%g=>%g, Objective %g",
-	e0, sqrt(obj), sqrt(obj2), minf);
+        e0, sqrt(obj), sqrt(obj2), minf);
     break;
 
   case ADAPT_P2 :

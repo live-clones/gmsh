@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.6 2000-11-24 12:50:06 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.7 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -27,7 +27,6 @@ extern Widgets_T  WID;
 extern Pixmaps_T  PIX;
 extern Mesh       M;
 extern Tree_T    *EntitesVisibles;
-extern double   LC;
 
 int SHOW_ALL_ENTITIES, SELECT_BY_NUMBER=OPTIONS_MESH_SELECT_ENTITY ;
 
@@ -104,10 +103,10 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_PVIEW :
     XGetWindowAttributes(XtDisplay(WID.G.shell),XtWindow(WID.G.shell),&xattrib);
     fprintf(stderr, "-geometry %dx%d -viewport %g %g %g %g %g %g %g %g %g\n",
-	    xattrib.width, xattrib.height,
-	    CTX.r[0],CTX.r[1],CTX.r[2],
-	    CTX.t[0],CTX.t[1],CTX.t[2],
-	    CTX.s[0],CTX.s[1],CTX.s[2]);
+            xattrib.width, xattrib.height,
+            CTX.r[0],CTX.r[1],CTX.r[2],
+            CTX.t[0],CTX.t[1],CTX.t[2],
+            CTX.s[0],CTX.s[1],CTX.s[2]);
     break ;
 
     /* print */
@@ -164,7 +163,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_GEOM_NORMALS_TEXT : 
     CTX.geom.normals = atof(XmTextGetString(w));
     XtVaSetValues(WID.OD.geomNormalsScale, XmNvalue, 
-		  THRESHOLD((int)CTX.geom.normals,0,100), NULL);
+                  THRESHOLD((int)CTX.geom.normals,0,100), NULL);
     XmUpdateDisplay(WID.OD.geomNormalsScale); break;
   case OPTIONS_GEOM_TANGENTS_SCALE : 
     XmScaleGetValue(WID.OD.geomTangentsScale, &e); CTX.geom.tangents = e ;  
@@ -174,7 +173,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_GEOM_TANGENTS_TEXT : 
     CTX.geom.tangents = atof(XmTextGetString(w));
     XtVaSetValues(WID.OD.geomTangentsScale, XmNvalue,
-		  THRESHOLD((int)CTX.geom.tangents,0,100), NULL);
+                  THRESHOLD((int)CTX.geom.tangents,0,100), NULL);
     XmUpdateDisplay(WID.OD.geomTangentsScale); break;
     
 
@@ -219,7 +218,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_ANISOTROPIC  : 
     (CTX.mesh.algo==DELAUNAY_OLDALGO) ?
       CTX.mesh.algo=DELAUNAY_NEWALGO :
-	CTX.mesh.algo=DELAUNAY_OLDALGO; break ;
+        CTX.mesh.algo=DELAUNAY_OLDALGO; break ;
   case OPTIONS_MESH_INTERACTIVE : 
     CTX.mesh.interactive = !CTX.mesh.interactive; break ;
   case OPTIONS_MESH_SMOOTHING_SCALE : 
@@ -230,7 +229,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_SMOOTHING_TEXT : 
     CTX.mesh.nb_smoothing = atoi(XmTextGetString(w));
     XtVaSetValues(WID.OD.meshSmoothingScale, XmNvalue, 
-		  THRESHOLD(CTX.mesh.nb_smoothing,0,100), NULL);
+                  THRESHOLD(CTX.mesh.nb_smoothing,0,100), NULL);
     XmUpdateDisplay(WID.OD.meshSmoothingScale); break;
   case OPTIONS_MESH_EXPLODE_SCALE : 
     XmScaleGetValue(WID.OD.meshExplodeScale, &e); CTX.mesh.explode = 0.01*e ;  
@@ -240,7 +239,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_EXPLODE_TEXT : 
     CTX.mesh.explode = atof(XmTextGetString(w));
     XtVaSetValues(WID.OD.meshExplodeScale, XmNvalue,
-		  THRESHOLD((int)(100*CTX.mesh.explode),0,100), NULL);
+                  THRESHOLD((int)(100*CTX.mesh.explode),0,100), NULL);
     XmUpdateDisplay(WID.OD.meshExplodeScale); break;
   case OPTIONS_MESH_NORMALS_SCALE : 
     XmScaleGetValue(WID.OD.meshNormalsScale, &e); CTX.mesh.normals = e ;  
@@ -250,7 +249,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_NORMALS_TEXT : 
     CTX.mesh.normals = atof(XmTextGetString(w));
     XtVaSetValues(WID.OD.meshNormalsScale, XmNvalue,
-		  THRESHOLD((int)CTX.mesh.normals,0,100), NULL);
+                  THRESHOLD((int)CTX.mesh.normals,0,100), NULL);
     XmUpdateDisplay(WID.OD.meshNormalsScale); break;
   case OPTIONS_MESH_ABORT : 
     CancelMeshThread();
@@ -270,16 +269,16 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     anim_time = Get_AnimTime();
     while(1){
       if(XtAppPending(XCTX.AppContext)){
-	XtAppNextEvent(XCTX.AppContext,&event);
-	XtDispatchEvent(&event);
-	if(stop_anim) break ;
+        XtAppNextEvent(XCTX.AppContext,&event);
+        XtDispatchEvent(&event);
+        if(stop_anim) break ;
       }
       else{
-	if(Get_AnimTime() - anim_time > CTX.post.anim_delay){
-	  anim_time = Get_AnimTime();
-	  MarkAllViewsChanged(2);
-	  Init(); Draw();
-	}
+        if(Get_AnimTime() - anim_time > CTX.post.anim_delay){
+          anim_time = Get_AnimTime();
+          MarkAllViewsChanged(2);
+          Init(); Draw();
+        }
       }
     }
     break ;
@@ -301,20 +300,20 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     c = XmTextGetString(w); 
     if(SELECT_BY_NUMBER == OPTIONS_MESH_SELECT_ENTITY){
       if (!strcmp(c,"all") || !strcmp(c,"*")){
-	if(SHOW_ALL_ENTITIES){ RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; }
-	else { RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; }
+        if(SHOW_ALL_ENTITIES){ RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; }
+        else { RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; }
       }
       else{ 
-	i = atoi(c);
-	if(EntiteEstElleVisible(i)) ToutesLesEntitesRelatives(i,EntitesVisibles,0);
-	else ToutesLesEntitesRelatives(i,EntitesVisibles,1);
+        i = atoi(c);
+        if(EntiteEstElleVisible(i)) ToutesLesEntitesRelatives(i,EntitesVisibles,0);
+        else ToutesLesEntitesRelatives(i,EntitesVisibles,1);
       }
     }
     else{
       if (!strcmp(c,"all") || !strcmp(c,"*"))
-	CTX.mesh.limit_gamma = 0.0 ;
+        CTX.mesh.limit_gamma = 0.0 ;
       else
-	CTX.mesh.limit_gamma = atof(c);
+        CTX.mesh.limit_gamma = atof(c);
     }
     break;
 

@@ -1,4 +1,4 @@
-/* $Id: Simplex.h,v 1.4 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: Simplex.h,v 1.5 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _SIMPLEX_H_
 #define _SIMPLEX_H_
 
@@ -19,7 +19,7 @@ public:
   double  Quality;       /* Qualite du simplexe                          */
   Coord   Center;        /* centre du CC                                 */
   double  Radius;        /* Rayon du CC                                  */
-  Simplex *S[4];    	 /* 4 Voisins                                    */
+  Simplex *S[4];         /* 4 Voisins                                    */
   static  int TotalNumber;
   static  int TotalAllocated;
   Simplex();
@@ -35,7 +35,7 @@ public:
   double AireFace (Vertex *V[3]);
   double surfsimpl();
   int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
-		   double *xc,double *yc);
+                   double *xc,double *yc);
   double Volume_Simplexe2D();
   void Center_Ellipsum_2D (double m[3][3]);
   int Pt_In_Ellipsis (Vertex *v,double m[3][3]);

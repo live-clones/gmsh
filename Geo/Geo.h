@@ -1,4 +1,4 @@
-/* $Id: Geo.h,v 1.3 2000-11-24 12:49:59 geuzaine Exp $ */
+/* $Id: Geo.h,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
 #ifndef _GEO_H_
 #define _GEO_H_
 
@@ -47,7 +47,7 @@
 #define MSH_SURF_TRIMMED     1599
 #define MSH_SURF_STL         1599
 
-#define MSH_VOLUME		     14
+#define MSH_VOLUME                   14
 #define MSH_SEGM_BSPLN       15
 #define MSH_SEGM_URBS        16
 #define MSH_SEGM_NURBS       17

@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.5 2000-11-23 16:51:29 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.6 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,12 +11,8 @@
 #include "Verif.h"
 #include "Numeric.h"
 
-extern Mesh *THEM;
+extern Mesh      *THEM;
 extern Context_T  CTX;
-
-extern double     MiddleLC;
-extern double     ClipPlane[4];
-extern double     LC;
 
 static int        iVolume;
 
@@ -26,7 +22,7 @@ static int        iVolume;
 
 
 void draw_polygon_2d (double r, double g, double b, int n, 
-		      double *x, double *y, double *z){
+                      double *x, double *y, double *z){
   int i ;
 
   CalculateMinMax(THEM->Points);
@@ -63,7 +59,14 @@ void Draw_Mesh (Mesh *M) {
   else{ 
     InitNoShading();
   }
-  glClipPlane(GL_CLIP_PLANE0, ClipPlane);
+
+  if(CTX.clip[0]) glClipPlane(GL_CLIP_PLANE0, CTX.clip_plane0);
+  if(CTX.clip[1]) glClipPlane(GL_CLIP_PLANE1, CTX.clip_plane1);
+  if(CTX.clip[2]) glClipPlane(GL_CLIP_PLANE2, CTX.clip_plane2);
+  if(CTX.clip[3]) glClipPlane(GL_CLIP_PLANE3, CTX.clip_plane3);
+  if(CTX.clip[4]) glClipPlane(GL_CLIP_PLANE4, CTX.clip_plane4);
+  if(CTX.clip[5]) glClipPlane(GL_CLIP_PLANE5, CTX.clip_plane5);
+
   glPointSize(2);
   glLineWidth(1);
 
@@ -107,7 +110,7 @@ void Draw_Mesh (Mesh *M) {
 
   if(CTX.render_mode != GMSH_SELECT){
     if(CTX.axes) 
-      Draw_Axes(MiddleLC/4.);
+      Draw_Axes(CTX.lc_middle/4.);
     if(CTX.post.draw) /* les init de shading se font par view */
       Draw_Post();
   }
@@ -166,8 +169,8 @@ void Draw_Mesh_Points (void *a, void *b){
   if(CTX.mesh.points_num){
     sprintf(Num,"%d",(*v)->Num);
     glRasterPos3d((*v)->Pos.X+3*CTX.pixel_equiv_x/CTX.s[0],
-		  (*v)->Pos.Y+3*CTX.pixel_equiv_x/CTX.s[1], 
-		  (*v)->Pos.Z+3*CTX.pixel_equiv_x/CTX.s[2]);
+                  (*v)->Pos.Y+3*CTX.pixel_equiv_x/CTX.s[1], 
+                  (*v)->Pos.Z+3*CTX.pixel_equiv_x/CTX.s[2]);
     Draw_String(Num);
   }
   
@@ -203,9 +206,12 @@ void Draw_Simplex_Volume (void *a, void *b){
 
   ColorSwitch((*s)->iEnt+1);
 
-  double Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
-  double Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
-  double Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
+  double Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
+                     (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
+  double Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + 
+                     (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
+  double Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + 
+                     (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
 
   for (int i=0 ; i<4 ; i++) {
      X[i] = Xc + CTX.mesh.explode * ((*s)->V[i]->Pos.X - Xc);
@@ -356,9 +362,12 @@ void Draw_Simplex_Surfaces (void *a, void *b){
 
   if ((*s)->V[3]) {
     K = 4;
-    Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
-    Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
-    Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
+    Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
+                (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);
+    Yc = .25 * ((*s)->V[0]->Pos.Y + (*s)->V[1]->Pos.Y + 
+                (*s)->V[2]->Pos.Y + (*s)->V[3]->Pos.Y);
+    Zc = .25 * ((*s)->V[0]->Pos.Z + (*s)->V[1]->Pos.Z + 
+                (*s)->V[2]->Pos.Z + (*s)->V[3]->Pos.Z);
   }
   else {
     K = 3;
@@ -450,7 +459,7 @@ void Draw_Simplex_Surfaces (void *a, void *b){
       glColor4ubv((GLubyte*)&CTX.color.mesh.line);
       glBegin(GL_LINE_LOOP);
       for(i=0 ; i<K*(1+L) ; i++){
-	glVertex3d(pX[i],pY[i],pZ[i]);
+        glVertex3d(pX[i],pY[i],pZ[i]);
       }
       glEnd();    
     }
@@ -494,8 +503,8 @@ void Draw_Simplex_Points(void *a,void *b){
     glColor4ubv((GLubyte*)&CTX.color.mesh.line);
     sprintf(Num,"%d",s->Num);
     glRasterPos3d(0.5*(s->V[0]->Pos.X+s->V[1]->Pos.X) + 3*CTX.pixel_equiv_x/CTX.s[0],
-		  0.5*(s->V[0]->Pos.Y+s->V[1]->Pos.Y) + 3*CTX.pixel_equiv_x/CTX.s[1], 
-		  0.5*(s->V[0]->Pos.Z+s->V[1]->Pos.Z) + 3*CTX.pixel_equiv_x/CTX.s[2]);
+                  0.5*(s->V[0]->Pos.Y+s->V[1]->Pos.Y) + 3*CTX.pixel_equiv_x/CTX.s[1], 
+                  0.5*(s->V[0]->Pos.Z+s->V[1]->Pos.Z) + 3*CTX.pixel_equiv_x/CTX.s[2]);
     Draw_String(Num);
   }
 
@@ -562,33 +571,33 @@ void Draw_Hexahedron_Volume (void *a, void *b){
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*h)->V[0]->Pos.X+(*h)->V[1]->Pos.X+(*h)->V[5]->Pos.X+(*h)->V[4]->Pos.X)/4.,
-	((*h)->V[0]->Pos.Y+(*h)->V[1]->Pos.Y+(*h)->V[5]->Pos.Y+(*h)->V[4]->Pos.Y)/4.,
-	((*h)->V[0]->Pos.Z+(*h)->V[1]->Pos.Z+(*h)->V[5]->Pos.Z+(*h)->V[4]->Pos.Z)/4. );
+        ((*h)->V[0]->Pos.Y+(*h)->V[1]->Pos.Y+(*h)->V[5]->Pos.Y+(*h)->V[4]->Pos.Y)/4.,
+        ((*h)->V[0]->Pos.Z+(*h)->V[1]->Pos.Z+(*h)->V[5]->Pos.Z+(*h)->V[4]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*h)->V[0]->Pos.X+(*h)->V[3]->Pos.X+(*h)->V[2]->Pos.X+(*h)->V[1]->Pos.X)/4.,
-	((*h)->V[0]->Pos.Y+(*h)->V[3]->Pos.Y+(*h)->V[2]->Pos.Y+(*h)->V[1]->Pos.Y)/4.,
-	((*h)->V[0]->Pos.Z+(*h)->V[3]->Pos.Z+(*h)->V[2]->Pos.Z+(*h)->V[1]->Pos.Z)/4. );
+        ((*h)->V[0]->Pos.Y+(*h)->V[3]->Pos.Y+(*h)->V[2]->Pos.Y+(*h)->V[1]->Pos.Y)/4.,
+        ((*h)->V[0]->Pos.Z+(*h)->V[3]->Pos.Z+(*h)->V[2]->Pos.Z+(*h)->V[1]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*h)->V[0]->Pos.X+(*h)->V[4]->Pos.X+(*h)->V[7]->Pos.X+(*h)->V[3]->Pos.X)/4.,
-	((*h)->V[0]->Pos.Y+(*h)->V[4]->Pos.Y+(*h)->V[7]->Pos.Y+(*h)->V[3]->Pos.Y)/4.,
-	((*h)->V[0]->Pos.Z+(*h)->V[4]->Pos.Z+(*h)->V[7]->Pos.Z+(*h)->V[3]->Pos.Z)/4. );
+        ((*h)->V[0]->Pos.Y+(*h)->V[4]->Pos.Y+(*h)->V[7]->Pos.Y+(*h)->V[3]->Pos.Y)/4.,
+        ((*h)->V[0]->Pos.Z+(*h)->V[4]->Pos.Z+(*h)->V[7]->Pos.Z+(*h)->V[3]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*h)->V[1]->Pos.X+(*h)->V[2]->Pos.X+(*h)->V[6]->Pos.X+(*h)->V[5]->Pos.X)/4.,
-	((*h)->V[1]->Pos.Y+(*h)->V[2]->Pos.Y+(*h)->V[6]->Pos.Y+(*h)->V[5]->Pos.Y)/4.,
-	((*h)->V[1]->Pos.Z+(*h)->V[2]->Pos.Z+(*h)->V[6]->Pos.Z+(*h)->V[5]->Pos.Z)/4. );
+        ((*h)->V[1]->Pos.Y+(*h)->V[2]->Pos.Y+(*h)->V[6]->Pos.Y+(*h)->V[5]->Pos.Y)/4.,
+        ((*h)->V[1]->Pos.Z+(*h)->V[2]->Pos.Z+(*h)->V[6]->Pos.Z+(*h)->V[5]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*h)->V[2]->Pos.X+(*h)->V[3]->Pos.X+(*h)->V[7]->Pos.X+(*h)->V[6]->Pos.X)/4.,
-	((*h)->V[2]->Pos.Y+(*h)->V[3]->Pos.Y+(*h)->V[7]->Pos.Y+(*h)->V[6]->Pos.Y)/4.,
-	((*h)->V[2]->Pos.Z+(*h)->V[3]->Pos.Z+(*h)->V[7]->Pos.Z+(*h)->V[6]->Pos.Z)/4. );
+        ((*h)->V[2]->Pos.Y+(*h)->V[3]->Pos.Y+(*h)->V[7]->Pos.Y+(*h)->V[6]->Pos.Y)/4.,
+        ((*h)->V[2]->Pos.Z+(*h)->V[3]->Pos.Z+(*h)->V[7]->Pos.Z+(*h)->V[6]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*h)->V[4]->Pos.X+(*h)->V[5]->Pos.X+(*h)->V[6]->Pos.X+(*h)->V[7]->Pos.X)/4.,
-	((*h)->V[4]->Pos.Y+(*h)->V[5]->Pos.Y+(*h)->V[6]->Pos.Y+(*h)->V[7]->Pos.Y)/4.,
-	((*h)->V[4]->Pos.Z+(*h)->V[5]->Pos.Z+(*h)->V[6]->Pos.Z+(*h)->V[7]->Pos.Z)/4. );
+        ((*h)->V[4]->Pos.Y+(*h)->V[5]->Pos.Y+(*h)->V[6]->Pos.Y+(*h)->V[7]->Pos.Y)/4.,
+        ((*h)->V[4]->Pos.Z+(*h)->V[5]->Pos.Z+(*h)->V[6]->Pos.Z+(*h)->V[7]->Pos.Z)/4. );
     glEnd();
     glDisable(GL_LINE_STIPPLE);
     gl2psDisable(GL2PS_LINE_STIPPLE);
@@ -651,28 +660,28 @@ void Draw_Prism_Volume (void *a, void *b){
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[0]->Pos.X+(*p)->V[2]->Pos.X+(*p)->V[1]->Pos.X)/3.,
-	((*p)->V[0]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[1]->Pos.Y)/3.,
-	((*p)->V[0]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[1]->Pos.Z)/3. );
+        ((*p)->V[0]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[1]->Pos.Y)/3.,
+        ((*p)->V[0]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[1]->Pos.Z)/3. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[3]->Pos.X+(*p)->V[4]->Pos.X+(*p)->V[5]->Pos.X)/3.,
-	((*p)->V[3]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[5]->Pos.Y)/3.,
-	((*p)->V[3]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[5]->Pos.Z)/3. );
+        ((*p)->V[3]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[5]->Pos.Y)/3.,
+        ((*p)->V[3]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[5]->Pos.Z)/3. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[0]->Pos.X+(*p)->V[1]->Pos.X+(*p)->V[4]->Pos.X+(*p)->V[3]->Pos.X)/4.,
-	((*p)->V[0]->Pos.Y+(*p)->V[1]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[3]->Pos.Y)/4.,
-	((*p)->V[0]->Pos.Z+(*p)->V[1]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[3]->Pos.Z)/4. );
+        ((*p)->V[0]->Pos.Y+(*p)->V[1]->Pos.Y+(*p)->V[4]->Pos.Y+(*p)->V[3]->Pos.Y)/4.,
+        ((*p)->V[0]->Pos.Z+(*p)->V[1]->Pos.Z+(*p)->V[4]->Pos.Z+(*p)->V[3]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[0]->Pos.X+(*p)->V[3]->Pos.X+(*p)->V[5]->Pos.X+(*p)->V[2]->Pos.X)/4.,
-	((*p)->V[0]->Pos.Y+(*p)->V[3]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[2]->Pos.Y)/4.,
-	((*p)->V[0]->Pos.Z+(*p)->V[3]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[2]->Pos.Z)/4. );
+        ((*p)->V[0]->Pos.Y+(*p)->V[3]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[2]->Pos.Y)/4.,
+        ((*p)->V[0]->Pos.Z+(*p)->V[3]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[2]->Pos.Z)/4. );
     glVertex3d(Xc,   Yc,    Zc);  
     glVertex3d
       ( ((*p)->V[1]->Pos.X+(*p)->V[2]->Pos.X+(*p)->V[5]->Pos.X+(*p)->V[4]->Pos.X)/4.,
-	((*p)->V[1]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[4]->Pos.Y)/4.,
-	((*p)->V[1]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[4]->Pos.Z)/4. );
+        ((*p)->V[1]->Pos.Y+(*p)->V[2]->Pos.Y+(*p)->V[5]->Pos.Y+(*p)->V[4]->Pos.Y)/4.,
+        ((*p)->V[1]->Pos.Z+(*p)->V[2]->Pos.Z+(*p)->V[5]->Pos.Z+(*p)->V[4]->Pos.Z)/4. );
     glEnd();
     glDisable(GL_LINE_STIPPLE);
     gl2psDisable(GL2PS_LINE_STIPPLE);

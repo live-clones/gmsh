@@ -1,4 +1,4 @@
-/* $Id: CrossData.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: CrossData.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 
 
 #include "Gmsh.h"
@@ -17,19 +17,19 @@ void AddTable (void *data, void *dummy){
     if (s->V[i]){
       nxe.v = s->V[i];
       if ((pnxe = (NXE *) Tree_PQuery (TreeTemp, &nxe))){
-	List_Add (pnxe->Liste, &s);
+        List_Add (pnxe->Liste, &s);
       }
       else{
-	nxe.Liste = List_Create (1, 1, sizeof (Simplex *));
-	List_Add (nxe.Liste, &s);
-	Tree_Add (TreeTemp, &nxe);
+        nxe.Liste = List_Create (1, 1, sizeof (Simplex *));
+        List_Add (nxe.Liste, &s);
+        Tree_Add (TreeTemp, &nxe);
       }
     }
   }
 }
 
 void create_NXE (Tree_T * TreeAllNod, Tree_T * TreeAllElg,
-		 Tree_T * TreeAllNXE){
+                 Tree_T * TreeAllNXE){
   TreeTemp = TreeAllNXE;
   Tree_Action (TreeAllElg, AddTable);
 }

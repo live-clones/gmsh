@@ -1,4 +1,4 @@
-/* $Id: 3D_Divide.cpp,v 1.4 2000-11-24 08:04:14 geuzaine Exp $ */
+/* $Id: 3D_Divide.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
 /* Routine de division des elements tetraedriques
    ou triangulaires
 
@@ -65,8 +65,8 @@ void Impression_Resultats (void){
 int PARLE = 0;
 
 void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
-		Vertex * v4, Vertex * v5, Vertex * v6,
-		Tree_T * newpoints, Tree_T * AddedTet){
+                Vertex * v4, Vertex * v5, Vertex * v6,
+                Tree_T * newpoints, Tree_T * AddedTet){
 
   Simplex *news;
   Vertex *e1;
@@ -111,7 +111,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
      }
      }
    */
-  if (!are_exists (v1, v5) &&	//OK
+  if (!are_exists (v1, v5) &&   //OK
       !are_exists (v6, v2) &&
       !are_exists (v6, v1)){
     news = Create_Simplex (v1, v2, v3, v4);
@@ -127,9 +127,9 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     are_add (v5, v3);
     are_add (v4, v3);
   }
-  else if (!are_exists (v1, v5) &&	//OK
-	   !are_exists (v3, v5) &&
-	   !are_exists (v1, v6)){
+  else if (!are_exists (v1, v5) &&      //OK
+           !are_exists (v3, v5) &&
+           !are_exists (v1, v6)){
     news = Create_Simplex (v1, v2, v3, v4);
     news->iEnt = IENT;
     Tree_Add (AddedTet, &news);
@@ -143,9 +143,9 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     are_add (v2, v6);
     are_add (v4, v3);
   }
-  else if (!are_exists (v1, v5) &&	//OK
-	   !are_exists (v3, v5) &&
-	   !are_exists (v4, v3)){
+  else if (!are_exists (v1, v5) &&      //OK
+           !are_exists (v3, v5) &&
+           !are_exists (v4, v3)){
     news = Create_Simplex (v1, v2, v3, v6);
     news->iEnt = IENT;
     Tree_Add (AddedTet, &news);
@@ -159,9 +159,9 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     are_add (v2, v6);
     are_add (v6, v1);
   }
-  else if (!are_exists (v4, v2) &&	//OK
-	   !are_exists (v6, v2) &&
-	   !are_exists (v6, v1)){
+  else if (!are_exists (v4, v2) &&      //OK
+           !are_exists (v6, v2) &&
+           !are_exists (v6, v1)){
     news = Create_Simplex (v1, v2, v3, v5);
     news->iEnt = IENT;
     Tree_Add (AddedTet, &news);
@@ -175,9 +175,9 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     are_add (v5, v3);
     are_add (v4, v3);
   }
-  else if (!are_exists (v4, v2) &&	//OK
-	   !are_exists (v6, v2) &&
-	   !are_exists (v4, v3)){
+  else if (!are_exists (v4, v2) &&      //OK
+           !are_exists (v6, v2) &&
+           !are_exists (v4, v3)){
     news = Create_Simplex (v1, v2, v3, v5);
     news->iEnt = IENT;
     Tree_Add (AddedTet, &news);
@@ -191,9 +191,9 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     are_add (v5, v3);
     are_add (v6, v1);
   }
-  else if (!are_exists (v4, v2) &&	//OK
-	   !are_exists (v3, v5) &&
-	   !are_exists (v4, v3)){
+  else if (!are_exists (v4, v2) &&      //OK
+           !are_exists (v3, v5) &&
+           !are_exists (v4, v3)){
     news = Create_Simplex (v1, v2, v3, v6);
     news->iEnt = IENT;
     Tree_Add (AddedTet, &news);
@@ -209,8 +209,8 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   }
 
   else if (are_exists (v6, v1) &&
-	   are_exists (v5, v3) &&
-	   are_exists (v4, v2)) {
+           are_exists (v5, v3) &&
+           are_exists (v4, v2)) {
     Msg(INFOS, "Found Steiner Prism 1!");
     
     e1 = Create_Vertex 
@@ -242,8 +242,8 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   }
 
   else if (are_exists (v4, v3) &&
-	   are_exists (v6, v2) &&
-	   are_exists (v5, v1)){
+           are_exists (v6, v2) &&
+           are_exists (v5, v1)){
     Msg(INFOS, "Found Steiner Prism 2!");
 
     e1 = Create_Vertex 
@@ -281,7 +281,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
 
 
 void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
-		    Tree_T * newpoints){
+                    Tree_T * newpoints){
   int i;
   nxn nx;
   Simplex *s;
@@ -309,10 +309,10 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s = Create_Simplex (pI->s->V[1], pI->s->V[3], pI->s->V[2], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
     }
@@ -320,12 +320,12 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       /* Verifie */
       s = Create_Simplex (pI->s->V[0], pI->s->V[3], pI->s->V[2], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
       s = Create_Simplex (pI->s->V[3], pI->s->V[1], pI->s->V[0], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
     }
@@ -333,12 +333,12 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       /* Verifie */
       s = Create_Simplex (pI->s->V[0], pI->s->V[1], pI->s->V[3], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
       s = Create_Simplex (pI->s->V[1], pI->s->V[3], pI->s->V[2], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
     }
@@ -346,12 +346,12 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       /* Verifie */
       s = Create_Simplex (pI->s->V[0], pI->s->V[1], pI->s->V[2], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
       s = Create_Simplex (pI->s->V[1], pI->s->V[2], pI->s->V[3], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
     }
@@ -359,12 +359,12 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       /* Verifie */
       s = Create_Simplex (pI->s->V[2], pI->s->V[0], pI->s->V[1], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
       s = Create_Simplex (pI->s->V[1], pI->s->V[3], pI->s->V[0], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
     }
@@ -372,12 +372,12 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       /* Verifie */
       s = Create_Simplex (pI->s->V[0], pI->s->V[3], pI->s->V[2], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
       s = Create_Simplex (pI->s->V[0], pI->s->V[1], pI->s->V[2], pI->VE[0]);
       if (PARLE)
-	printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+        printf ("ajout %d %d %d %d\n", s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
       s->iEnt = IENT;
       Tree_Add (AddedTet, &s);
     }
@@ -462,17 +462,17 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
     }
     for (i = 0; i < 4; i++){
       if (compareVertex (&pI->F[0]->V[0], &pI->s->V[i]) &&
-	  compareVertex (&pI->F[0]->V[1], &pI->s->V[i]) &&
-	  compareVertex (&pI->F[0]->V[2], &pI->s->V[i]))
-	point1 = pI->s->V[i];
+          compareVertex (&pI->F[0]->V[1], &pI->s->V[i]) &&
+          compareVertex (&pI->F[0]->V[2], &pI->s->V[i]))
+        point1 = pI->s->V[i];
       else if (compareVertex (&pI->F[1]->V[0], &pI->s->V[i]) &&
-	       compareVertex (&pI->F[1]->V[1], &pI->s->V[i]) &&
-	       compareVertex (&pI->F[1]->V[2], &pI->s->V[i]))
-	point2 = pI->s->V[i];
+               compareVertex (&pI->F[1]->V[1], &pI->s->V[i]) &&
+               compareVertex (&pI->F[1]->V[2], &pI->s->V[i]))
+        point2 = pI->s->V[i];
       else if (point3)
-	point4 = pI->s->V[i];
+        point4 = pI->s->V[i];
       else
-	point3 = pI->s->V[i];
+        point3 = pI->s->V[i];
     }
     s = Create_Simplex (point3, point4, pI->VF[0], pI->VF[1]);
     s->iEnt = IENT;
@@ -577,9 +577,9 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
     
     for (i = 0; i < 4; i++){
       if (compareVertex (&pI->s->V[i], &common) &&
-	  compareVertex (&pI->s->V[i], &other1) &&
-	  compareVertex (&pI->s->V[i], &other2))
-	lonely = pI->s->V[i];
+          compareVertex (&pI->s->V[i], &other1) &&
+          compareVertex (&pI->s->V[i], &other2))
+        lonely = pI->s->V[i];
     }
     
     nx.i = IMAX (e1->Num, other2->Num);
@@ -617,24 +617,24 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
     Tree_Add (TetDel, &pI->s);
     for (i = 0; i < 4; i++)
       if (compareVertex (&pI->s->V[i], &pI->F[0]->V[0]) &&
-	  compareVertex (&pI->s->V[i], &pI->F[0]->V[1]) &&
-	  compareVertex (&pI->s->V[i], &pI->F[0]->V[2]))
-	v1 = pI->s->V[i];
+          compareVertex (&pI->s->V[i], &pI->F[0]->V[1]) &&
+          compareVertex (&pI->s->V[i], &pI->F[0]->V[2]))
+        v1 = pI->s->V[i];
     v2 = NULL;
     v3 = NULL;
     
     for (i = 0; i < 4; i++){
       if (compareVertex (&pI->s->V[i], &v1)){
-	if (compareVertex (&pI->s->V[i], &pI->s->V[edges_tetra[pI->E[0]][0]]) &&
-	    compareVertex (&pI->s->V[i], &pI->s->V[edges_tetra[pI->E[0]][1]])){
-	  if (v2)
-	    v3 = pI->s->V[i];
-	  else
-	    v2 = pI->s->V[i];
-	}
-	else{
-	  v4 = pI->s->V[i];
-	}
+        if (compareVertex (&pI->s->V[i], &pI->s->V[edges_tetra[pI->E[0]][0]]) &&
+            compareVertex (&pI->s->V[i], &pI->s->V[edges_tetra[pI->E[0]][1]])){
+          if (v2)
+            v3 = pI->s->V[i];
+          else
+            v2 = pI->s->V[i];
+        }
+        else{
+          v4 = pI->s->V[i];
+        }
       }
     }
     

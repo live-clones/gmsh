@@ -1,4 +1,4 @@
-/* $Id: 2D_Tree.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Tree.cpp,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -16,19 +16,19 @@ int avltree_remove (avlstruct **root){
   else
     {
       if ((*root)->left == NULL)
-	if (avltree_remove(&(*root)->left))
-	  {
-	    Free((*root)->left);
-	    (*root)->left = NULL;			
-	  }	
+        if (avltree_remove(&(*root)->left))
+          {
+            Free((*root)->left);
+            (*root)->left = NULL;                       
+          }     
       if ((*root)->right == NULL)
-	if (avltree_remove(&(*root)->right))
-	  {
-	    Free((*root)->right);
-	    (*root)->right = NULL;
-	  }
+        if (avltree_remove(&(*root)->right))
+          {
+            Free((*root)->right);
+            (*root)->right = NULL;
+          }
       if (((*root)->left == NULL) && ((*root)->right == NULL))
-	delete_this_node = 1;
+        delete_this_node = 1;
     }
   return delete_this_node;
 }
@@ -37,7 +37,7 @@ int avltree_remove (avlstruct **root){
 /* INSERE UN NOEUD */
 
 int avltree_insert (avlstruct **root, void *item, 
-		    int (*fcmp)(void *a, void *b)){
+                    int (*fcmp)(void *a, void *b)){
   int cmpresult;
 
   if(*root != NULL)
@@ -53,7 +53,7 @@ int avltree_insert (avlstruct **root, void *item,
       avltree_insert(&(*root)->left,item,fcmp);
   else
       avltree_insert(&(*root)->right,item,fcmp);
-  return(1);	
+  return(1);    
 }
 
 
@@ -61,10 +61,10 @@ int avltree_insert (avlstruct **root, void *item,
 /* EFFACE UN NOEUD */
 
 int avltree_delete (avlstruct **root, void *item, 
-		    int (*fcmp)(void *a, void *b)){
+                    int (*fcmp)(void *a, void *b)){
 
-  avlstruct	*t1,*t12;
-  int		cmpresult;
+  avlstruct     *t1,*t12;
+  int           cmpresult;
 
   if(*root != NULL)    
     cmpresult = fcmp(item , (*root)->treedata);
@@ -98,7 +98,7 @@ int avltree_delete (avlstruct **root, void *item,
     else{
       t1 = t12 = (*root)->right;
       while(t12->left != NULL)
-	t12 = t12->left;
+        t12 = t12->left;
       t12->left = (*root)->left;
       Free(*root);
       *root = t1;

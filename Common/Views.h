@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.5 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: Views.h,v 1.6 2000-11-26 15:43:45 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -12,19 +12,12 @@ typedef struct{
 #include "ColorTable.h"
 
 typedef struct{
+  /* intrinsic to a view */
   int Num, Changed, DuplicateOf, Links;
-  char FileName[NAME_STR_L], Name[NAME_STR_L], Format[NAME_STR_L];
-  double Min, Max, CustomMin, CustomMax;
-  double Offset[3], Raise[3], ArrowScale;
-  int Visible, ScalarOnly;
-  int IntervalsType, NbIso, Light, ShowElement, ShowTime;
-  int ShowScale, TransparentScale, ScaleType, RangeType;
-  int ArrowType, ArrowLocation;
-  int TimeStep, NbTimeStep;
-  ColorTable CT;
+  char FileName[NAME_STR_L], Name[NAME_STR_L];
 
+  /* the data */
   List_T *Time;
-
   int NbSP, NbVP, NbTP;
   List_T *SP, *VP, *TP, *Points; // points
   int NbSL, NbVL, NbTL;
@@ -33,7 +26,21 @@ typedef struct{
   List_T *ST, *VT, *TT, *Triangles; // triangles
   int NbSS, NbVS, NbTS;
   List_T *SS, *VS, *TS, *Tetrahedra; // tetrahedra
-  
+  int NbTimeStep, ScalarOnly;
+  double Min, Max;
+
+  /* options */
+  char   Format[NAME_STR_L];
+  double CustomMin, CustomMax;
+  double Offset[3], Raise[3], ArrowScale;
+  int Visible, IntervalsType, NbIso, Light ;
+  int ShowElement, ShowTime, ShowScale;
+  int TransparentScale, ScaleType, RangeType;
+  int ArrowType, ArrowLocation;
+  int TimeStep;
+  ColorTable CT;
+
+  /* dynamic */
   double (*GVFI) (double min, double max, int nb, int index);
   int (*GIFV) (double min, double max, int nb, double value);
 }Post_View;
@@ -76,10 +83,11 @@ int fcmpPostViewDuplicateOf(const void *v1, const void *v2);
 
 void BeginView (int alloc);
 void EndView (int AddInUI, int Number, char *FileName, char *Name, 
-	      double XOffset, double YOffset, double ZOffset);
+              double XOffset, double YOffset, double ZOffset);
 void FreeView(Post_View *v);
 
 void Read_View(FILE *file, char *filename);
+void CopyViewOptions(Post_View *src, Post_View *dest);
 
 void AddView_ScalarSimplex(int dim, double *coord, int N, double *v);
 void AddView_VectorSimplex(int dim, double *coord, int N, double *v);
@@ -87,7 +95,7 @@ void AddView_TensorSimplex(int dim, double *coord, int N, double *v);
 
 int BGMWithView (Post_View *ErrView);
 int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
-	      double OptiValue, double *ObjFunct, char *OutFile);
+              double OptiValue, double *ObjFunct, char *OutFile);
 double ErrorInView(Post_View * ErrView, int *n);
 
 #endif

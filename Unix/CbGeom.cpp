@@ -1,4 +1,4 @@
-/* $Id: CbGeom.cpp,v 1.4 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: CbGeom.cpp,v 1.5 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -100,26 +100,26 @@ void geom_event_handler (int event) {
       Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
-	p[n++] = v->Num; 
+        p[n++] = v->Num; 
       }
       if (ib == -1){ /* 'e' */
-	if(n >= 2) {
-	  switch(event){
-	  case GEOM_ELEM_ADD_NEW_LINE   : add_multline(n,p,TheFileName); break;
-	  case GEOM_ELEM_ADD_NEW_SPLINE : add_spline  (n,p,TheFileName); break;
-	  case GEOM_ELEM_ADD_NEW_BEZIER : add_bezier  (n,p,TheFileName); break;
-	  case GEOM_ELEM_ADD_NEW_BSPLINE: add_bspline (n,p,TheFileName); break;
-	  }
-	}
-	n=0;
-	ZeroHighlight(&M);
-	Replot();
+        if(n >= 2) {
+          switch(event){
+          case GEOM_ELEM_ADD_NEW_LINE   : add_multline(n,p,TheFileName); break;
+          case GEOM_ELEM_ADD_NEW_SPLINE : add_spline  (n,p,TheFileName); break;
+          case GEOM_ELEM_ADD_NEW_BEZIER : add_bezier  (n,p,TheFileName); break;
+          case GEOM_ELEM_ADD_NEW_BSPLINE: add_bspline (n,p,TheFileName); break;
+          }
+        }
+        n=0;
+        ZeroHighlight(&M);
+        Replot();
       }
       if(ib == 0){ /* 'q' */
-	n=0 ;
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        n=0 ;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
     }
     break;
@@ -132,19 +132,19 @@ void geom_event_handler (int event) {
       if(n == 2) Msg(STATUS,"Select Ending Point ('q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1) { /* left mouse butt */
-	p[n++] = v->Num; 
+        p[n++] = v->Num; 
       }
       if(ib == 0) { /* 'q' */
-	n=0 ;
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        n=0 ;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       if(n == 3){
-	add_circ(p[1],p[0],p[2],TheFileName); /* begin, center, end */
-	ZeroHighlight(&M);
-	Replot();
-	n=0;
+        add_circ(p[1],p[0],p[2],TheFileName); /* begin, center, end */
+        ZeroHighlight(&M);
+        Replot();
+        n=0;
       }
     }
     break;
@@ -158,19 +158,19 @@ void geom_event_handler (int event) {
       if(n == 3) Msg(STATUS,"Select Ending Point ('q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1) { /* left mouse butt */
-	p[n++] = v->Num; 
+        p[n++] = v->Num; 
       }
       if(ib == 0){ /* 'q' */
-	n=0 ;
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        n=0 ;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       if(n == 4){
-	add_ell(p[3],p[2],p[0],p[1],TheFileName);
-	ZeroHighlight(&M);
-	Replot();
-	n=0;
+        add_ell(p[3],p[2],p[0],p[1],TheFileName);
+        ZeroHighlight(&M);
+        Replot();
+        n=0;
       }
     }
     break;
@@ -190,50 +190,50 @@ void geom_event_handler (int event) {
       List_Reset(Liste1);
       List_Reset(Liste2);
       
-      while(1) {	
-	Msg(STATUS,"Select Boundary ('q'=quit)");
-	ib = SelectEntity(type, &v,&c,&s);
-	if(ib <= 0){
-	  ZeroHighlight(&M);
-	  Replot();
-	  goto stopall;
-	}  	
-	if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
-	  if(type==ENT_LINE) 
-	    add_loop(Liste1,TheFileName,&zone);
-	  else
-	    add_vol(Liste1,TheFileName,&zone);
-	  List_Reset(Liste1);
-	  List_Add(Liste2,&zone);
-	  while(1){
-	    Msg(STATUS,"Select Holes ('q'=quit)");
-	    ib = SelectEntity(type, &v,&c,&s); 
-	    if(ib <= 0){
-	      ZeroHighlight(&M);
-	      Replot();
-	      break;
-	    }
-	    List_Reset(Liste1);
-	    if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
-	      if(type==ENT_LINE) 
-		add_loop(Liste1,TheFileName,&zone);
-	      else
-		add_vol(Liste1,TheFileName,&zone);
-	      List_Reset(Liste1);
-	      List_Add(Liste2,&zone);
-	    }
-	  }
-	  if(List_Nbr(Liste2)){
-	    switch(event){
-	    case GEOM_ELEM_ADD_NEW_RULED_SURF : add_surf(Liste2,TheFileName,0,1); break;
-	    case GEOM_ELEM_ADD_NEW_PLANE_SURF : add_surf(Liste2,TheFileName,0,2); break;
-	    case GEOM_ELEM_ADD_NEW_VOLUME :  add_multvol(Liste2,TheFileName); break;
-	    }
-	    ZeroHighlight(&M);
-	    Replot();
-	    break;
-	  }
-	}
+      while(1) {        
+        Msg(STATUS,"Select Boundary ('q'=quit)");
+        ib = SelectEntity(type, &v,&c,&s);
+        if(ib <= 0){
+          ZeroHighlight(&M);
+          Replot();
+          goto stopall;
+        }       
+        if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
+          if(type==ENT_LINE) 
+            add_loop(Liste1,TheFileName,&zone);
+          else
+            add_vol(Liste1,TheFileName,&zone);
+          List_Reset(Liste1);
+          List_Add(Liste2,&zone);
+          while(1){
+            Msg(STATUS,"Select Holes ('q'=quit)");
+            ib = SelectEntity(type, &v,&c,&s); 
+            if(ib <= 0){
+              ZeroHighlight(&M);
+              Replot();
+              break;
+            }
+            List_Reset(Liste1);
+            if(SelectContour (type, (type==ENT_LINE)?c->Num:s->Num, Liste1)){
+              if(type==ENT_LINE) 
+                add_loop(Liste1,TheFileName,&zone);
+              else
+                add_vol(Liste1,TheFileName,&zone);
+              List_Reset(Liste1);
+              List_Add(Liste2,&zone);
+            }
+          }
+          if(List_Nbr(Liste2)){
+            switch(event){
+            case GEOM_ELEM_ADD_NEW_RULED_SURF : add_surf(Liste2,TheFileName,0,1); break;
+            case GEOM_ELEM_ADD_NEW_PLANE_SURF : add_surf(Liste2,TheFileName,0,2); break;
+            case GEOM_ELEM_ADD_NEW_VOLUME :  add_multvol(Liste2,TheFileName); break;
+            }
+            ZeroHighlight(&M);
+            Replot();
+            break;
+          }
+        }
       }
     }
     stopall : ;
@@ -247,9 +247,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       translate_pt(event==GEOM_ELEM_ADD_TRANSLATE_POINT?1:0,v->Num,TheFileName);
       ZeroHighlight(&M);
@@ -261,9 +261,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       translate_seg(event==GEOM_ELEM_ADD_TRANSLATE_LINE?1:0,c->Num,TheFileName);
       ZeroHighlight(&M);
@@ -275,9 +275,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       translate_surf(event==GEOM_ELEM_ADD_TRANSLATE_SURF?1:0,s->Num,TheFileName);
       ZeroHighlight(&M);
@@ -291,9 +291,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       rotate(event==GEOM_ELEM_ADD_ROTATE_POINT?1:0,v->Num,TheFileName,"Point");
       ZeroHighlight(&M);
@@ -305,9 +305,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       rotate(event==GEOM_ELEM_ADD_ROTATE_LINE?1:0,c->Num,TheFileName,"Line");
       ZeroHighlight(&M);
@@ -319,9 +319,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       rotate(event==GEOM_ELEM_ADD_ROTATE_SURF?1:0,s->Num,TheFileName,"Surface");
       ZeroHighlight(&M);
@@ -336,13 +336,13 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot(); 
-	break;
+        ZeroHighlight(&M);
+        Replot(); 
+        break;
       }
       event==GEOM_ELEM_EXTRUDE_TRANSLATE_POINT ? 
-	extrude(v->Num,TheFileName, "Point") :
-	protude(v->Num,TheFileName, "Point") ;
+        extrude(v->Num,TheFileName, "Point") :
+        protude(v->Num,TheFileName, "Point") ;
       ZeroHighlight(&M);
       Replot();
     }
@@ -352,13 +352,13 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       event==GEOM_ELEM_EXTRUDE_TRANSLATE_LINE ? 
-	extrude(c->Num,TheFileName, "Line") :
-	protude(c->Num,TheFileName, "Line") ;
+        extrude(c->Num,TheFileName, "Line") :
+        protude(c->Num,TheFileName, "Line") ;
       ZeroHighlight(&M);
       Replot();
     }
@@ -368,13 +368,13 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       event==GEOM_ELEM_EXTRUDE_TRANSLATE_SURF ? 
-	extrude(s->Num,TheFileName, "Surface") :
-	protude(s->Num,TheFileName, "Surface") ;
+        extrude(s->Num,TheFileName, "Surface") :
+        protude(s->Num,TheFileName, "Surface") ;
       ZeroHighlight(&M);
       Replot();
     }
@@ -386,9 +386,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       dilate(event==GEOM_ELEM_ADD_DILATE_POINT?1:0,v->Num,TheFileName,"Point");
       ZeroHighlight(&M);
@@ -400,9 +400,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       dilate(event==GEOM_ELEM_ADD_DILATE_LINE?1:0,c->Num,TheFileName,"Line");
       ZeroHighlight(&M);
@@ -414,9 +414,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Surface ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       dilate(event==GEOM_ELEM_ADD_DILATE_SURF?1:0,s->Num,TheFileName,"Surface");
       ZeroHighlight(&M);
@@ -431,9 +431,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_POINT, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       del_pnt(v->Num,TheFileName);
       ZeroHighlight(&M);
@@ -444,9 +444,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Line ('q'=quit)");
       if(!SelectEntity(ENT_LINE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       del_seg(c->Num,TheFileName);
       ZeroHighlight(&M);
@@ -457,9 +457,9 @@ void geom_event_handler (int event) {
     while(1){
       Msg(STATUS,"Select Point ('q'=quit)");
       if(!SelectEntity(ENT_SURFACE, &v,&c,&s)){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
       del_srf(s->Num,TheFileName);
       ZeroHighlight(&M);
@@ -481,39 +481,39 @@ void geom_event_handler (int event) {
     Liste1 = List_Create(5,5,sizeof(int));
     while(1){
       switch(event){
-	case GEOM_PHYS_ADD_POINT:
-	  Msg(STATUS,"Select Point ('e'=end, 'q'=quit)"); 
-	  type = 0;
-	  break;
-	case GEOM_PHYS_ADD_LINE:
-	  Msg(STATUS,"Select Line ('e'=end, 'q'=quit)"); 
-	  type = 1;
-	  break;
-	case GEOM_PHYS_ADD_SURF:
-	  Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)"); 
-	  type = 2;
-	  break;
+        case GEOM_PHYS_ADD_POINT:
+          Msg(STATUS,"Select Point ('e'=end, 'q'=quit)"); 
+          type = 0;
+          break;
+        case GEOM_PHYS_ADD_LINE:
+          Msg(STATUS,"Select Line ('e'=end, 'q'=quit)"); 
+          type = 1;
+          break;
+        case GEOM_PHYS_ADD_SURF:
+          Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)"); 
+          type = 2;
+          break;
       }
       ib = SelectEntity(type, &v,&c,&s);
       if(ib == 1){ /* left mouse */
-	switch(event){
-	case GEOM_PHYS_ADD_POINT: List_Add(Liste1, &v->Num); break;
-	case GEOM_PHYS_ADD_LINE:  List_Add(Liste1, &c->Num); break;
-	case GEOM_PHYS_ADD_SURF:  List_Add(Liste1, &s->Num); break;
-	}
+        switch(event){
+        case GEOM_PHYS_ADD_POINT: List_Add(Liste1, &v->Num); break;
+        case GEOM_PHYS_ADD_LINE:  List_Add(Liste1, &c->Num); break;
+        case GEOM_PHYS_ADD_SURF:  List_Add(Liste1, &s->Num); break;
+        }
       }
       if(ib == -1){ /* end */
-	if(List_Nbr(Liste1)){
-	  add_physical_entity(Liste1,TheFileName,type,&zone);
-	  List_Reset(Liste1);
-	  ZeroHighlight(&M);
-	  Replot();
-	}
+        if(List_Nbr(Liste1)){
+          add_physical_entity(Liste1,TheFileName,type,&zone);
+          List_Reset(Liste1);
+          ZeroHighlight(&M);
+          Replot();
+        }
       }
       if(ib == 0){
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
     }
     break;

@@ -1,4 +1,4 @@
-/* $Id: Register.h,v 1.4 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: Register.h,v 1.5 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _REGISTER_H_
 #define _REGISTER_H_
 
@@ -47,97 +47,97 @@ void PopupHandler       (Widget w, Widget pw, XEvent *event, Boolean *ctd);
 
 /* special GL callback registering */
 
-#define register_GLexpose_cb(w, func, arg)			\
-        XtAddCallback((w), GLwNexposeCallback,			\
-                (XtCallbackProc) (func),			\
+#define register_GLexpose_cb(w, func, arg)                      \
+        XtAddCallback((w), GLwNexposeCallback,                  \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
                                                         
-#define register_GLresize_cb(w, func, arg)			\
-        XtAddCallback((w), GLwNresizeCallback,			\
-                (XtCallbackProc) (func),			\
+#define register_GLresize_cb(w, func, arg)                      \
+        XtAddCallback((w), GLwNresizeCallback,                  \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
 
-#define register_GLinput_cb(w, func, arg)			\
-        XtAddCallback((w), GLwNinputCallback,			\
-                (XtCallbackProc) (func),			\
+#define register_GLinput_cb(w, func, arg)                       \
+        XtAddCallback((w), GLwNinputCallback,                   \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
                                                         
-#define register_GLinit_cb(w, func, arg)			\
-        XtAddCallback((w), GLwNginitCallback,			\
-                (XtCallbackProc) (func),			\
+#define register_GLinit_cb(w, func, arg)                        \
+        XtAddCallback((w), GLwNginitCallback,                   \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
                                                         
 /* classic motif callback registering */
                                                         
-#define register_help_cb(w, func, arg)	            		\
-        XtAddCallback((w), XmNhelpCallback,			\
-                (XtCallbackProc) (func),			\
+#define register_help_cb(w, func, arg)                          \
+        XtAddCallback((w), XmNhelpCallback,                     \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
 
-#define register_expose_cb(w, func, arg)			\
-        XtAddCallback((w), XmNexposeCallback,			\
-                (XtCallbackProc) (func),			\
-                (XtPointer) (arg))                      
-                                                        
-#define register_resize_cb(w, func, arg)			\
-        XtAddCallback((w), XmNresizeCallback,			\
-                (XtCallbackProc) (func),			\
-                (XtPointer) (arg))                      
-
-#define register_input_cb(w, func, arg)				\
-        XtAddCallback((w), XmNinputCallback,			\
-                (XtCallbackProc) (func),			\
+#define register_expose_cb(w, func, arg)                        \
+        XtAddCallback((w), XmNexposeCallback,                   \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
                                                         
-#define register_activate_cb(w, func, arg)			\
-        XtAddCallback((w), XmNactivateCallback,			\
-                (XtCallbackProc) (func),			\
+#define register_resize_cb(w, func, arg)                        \
+        XtAddCallback((w), XmNresizeCallback,                   \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
 
-#define register_remove_cb(w, func, arg)			\
-        XtRemoveCallback((w), XmNactivateCallback,	        \
-                (XtCallbackProc) (func),			\
+#define register_input_cb(w, func, arg)                         \
+        XtAddCallback((w), XmNinputCallback,                    \
+                (XtCallbackProc) (func),                        \
+                (XtPointer) (arg))                      
+                                                        
+#define register_activate_cb(w, func, arg)                      \
+        XtAddCallback((w), XmNactivateCallback,                 \
+                (XtCallbackProc) (func),                        \
                 (XtPointer) (arg))                      
 
-#define register_activate_cb_list(w, list)		\
-        XtAddCallbacks((w), XmNactivateCallback,	\
+#define register_remove_cb(w, func, arg)                        \
+        XtRemoveCallback((w), XmNactivateCallback,              \
+                (XtCallbackProc) (func),                        \
+                (XtPointer) (arg))                      
+
+#define register_activate_cb_list(w, list)              \
+        XtAddCallbacks((w), XmNactivateCallback,        \
                 (XtCallbackList)(list))
 
-#define register_valchg_cb(w, func, arg)		\
-        XtAddCallback((w), XmNvalueChangedCallback,	\
-                (XtCallbackProc) (func),		\
+#define register_valchg_cb(w, func, arg)                \
+        XtAddCallback((w), XmNvalueChangedCallback,     \
+                (XtCallbackProc) (func),                \
                 (XtPointer) (arg))
 
-#define register_valchg_cb_list(w, list)		\
-        XtAddCallbacks((w), XmNvalueChangedCallback,	\
+#define register_valchg_cb_list(w, list)                \
+        XtAddCallbacks((w), XmNvalueChangedCallback,    \
                 (XtCallbackList)(list))
 
-#define register_ok_cb(w, func, arg)		\
-        XtAddCallback((w), XmNokCallback,	\
-                (XtCallbackProc) (func),	\
+#define register_ok_cb(w, func, arg)            \
+        XtAddCallback((w), XmNokCallback,       \
+                (XtCallbackProc) (func),        \
                 (XtPointer) (arg))
 
-#define register_cancel_cb(w, func, arg)	\
-        XtAddCallback((w), XmNcancelCallback,	\
-                (XtCallbackProc) (func),	\
+#define register_cancel_cb(w, func, arg)        \
+        XtAddCallback((w), XmNcancelCallback,   \
+                (XtCallbackProc) (func),        \
                 (XtPointer) (arg))
 
-#define register_apply_cb(w, func, arg)	\
-        XtAddCallback((w), XmNapplyCallback,	\
-                (XtCallbackProc) (func),	\
+#define register_apply_cb(w, func, arg) \
+        XtAddCallback((w), XmNapplyCallback,    \
+                (XtCallbackProc) (func),        \
                 (XtPointer) (arg))
 
-#define register_drag_cb(w, func, arg)		\
-        XtAddCallback((w), XmNdragCallback,	\
-                (XtCallbackProc) (func),	\
+#define register_drag_cb(w, func, arg)          \
+        XtAddCallback((w), XmNdragCallback,     \
+                (XtCallbackProc) (func),        \
                 (XtPointer) (arg))
 
 /* event loop  */
 
-#define register_popup_ev(parent, w)				\
-        XtAddEventHandler((parent), ButtonPressMask,		\
-                          False,				\
-                          (XtEventHandler)PopupHandler,	\
+#define register_popup_ev(parent, w)                            \
+        XtAddEventHandler((parent), ButtonPressMask,            \
+                          False,                                \
+                          (XtEventHandler)PopupHandler, \
                           (XtPointer)(w))
 
 #endif

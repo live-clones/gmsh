@@ -1,4 +1,4 @@
-/* $Id: CbPost.h,v 1.3 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: CbPost.h,v 1.4 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _CB_POST_H_
 #define _CB_POST_H_
 
@@ -53,7 +53,7 @@
 #define  POST_VECTOR_SCALE_SCALE                   456
 #define  POST_VECTOR_LOCATION_COG                  457
 #define  POST_VECTOR_LOCATION_VERTEX               458
-						    
+                                                    
 #define  POST_EXPORT_BGM_METHOD_H_ERROR            461
 #define  POST_EXPORT_BGM_METHOD_H_ELEMENTS         462
 #define  POST_EXPORT_BGM_METHOD_P_ERROR            463

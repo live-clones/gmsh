@@ -1,4 +1,4 @@
-/* $Id: CbColorbar.cpp,v 1.2 2000-11-23 14:11:40 geuzaine Exp $ */
+/* $Id: CbColorbar.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -25,9 +25,9 @@ extern Widgets_T   WID;
 
 /* rgb on [0, 1], sv returned on [0, 1] and h on [0, 6]. 
    Exception: h is returned UNDEFINED if S==0. */
-									     
+                                                                             
 void RGB_to_HSV(double  R, double  G, double  B,
-		double *H, double *S, double *V) { 
+                double *H, double *S, double *V) { 
   double v, x, f;   
   int i; 
    
@@ -43,7 +43,7 @@ void RGB_to_HSV(double  R, double  G, double  B,
    rgb each returned on [0, 1]. */
 
 void HSV_to_RGB(double  H, double  S, double  V,
-		double *R, double *G, double *B) {     
+                double *R, double *G, double *B) {     
   double m, n, f;   
   int i; 
       
@@ -59,7 +59,7 @@ void HSV_to_RGB(double  H, double  S, double  V,
   case 0: RETURN_RGB(V, n, m);        
   case 1: RETURN_RGB(n, V, m);         
   case 2: RETURN_RGB(m, V, n);        
-  case 3: RETURN_RGB(m, n, V); 	      	      
+  case 3: RETURN_RGB(m, n, V);                
   case 4: RETURN_RGB(n, m, V);         
   case 5: RETURN_RGB(V, m, n);     
   } 
@@ -162,14 +162,14 @@ static void redraw_range(ColorBar *cb, int a, int b){
       x = index_to_x( cb, i );
 
       if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_RGB){
-	intensity = UNPACK_RED(cb->ct->table[i]);
+        intensity = UNPACK_RED(cb->ct->table[i]);
       }
       else if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_HSV){
-	RGB_to_HSV(UNPACK_RED  (cb->ct->table[i])/255., 
-		   UNPACK_GREEN(cb->ct->table[i])/255.,
-		   UNPACK_BLUE (cb->ct->table[i])/255.,
-		   &H,&S,&V);
-	intensity = (int) (H/6.*255.+EPS);
+        RGB_to_HSV(UNPACK_RED  (cb->ct->table[i])/255., 
+                   UNPACK_GREEN(cb->ct->table[i])/255.,
+                   UNPACK_BLUE (cb->ct->table[i])/255.,
+                   &H,&S,&V);
+        intensity = (int) (H/6.*255.+EPS);
       }
 
       y = intensity_to_y( cb, intensity );
@@ -183,14 +183,14 @@ static void redraw_range(ColorBar *cb, int a, int b){
       x = index_to_x( cb, i );
 
       if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_RGB){
-	intensity = UNPACK_GREEN(cb->ct->table[i]);
+        intensity = UNPACK_GREEN(cb->ct->table[i]);
       }
       else if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_HSV){
-	RGB_to_HSV(UNPACK_RED  (cb->ct->table[i])/255., 
-		   UNPACK_GREEN(cb->ct->table[i])/255.,
-		   UNPACK_BLUE (cb->ct->table[i])/255.,
-		   &H,&S,&V);
-	intensity = (int) (S*255.);
+        RGB_to_HSV(UNPACK_RED  (cb->ct->table[i])/255., 
+                   UNPACK_GREEN(cb->ct->table[i])/255.,
+                   UNPACK_BLUE (cb->ct->table[i])/255.,
+                   &H,&S,&V);
+        intensity = (int) (S*255.);
       }
 
       y = intensity_to_y( cb, intensity);
@@ -204,14 +204,14 @@ static void redraw_range(ColorBar *cb, int a, int b){
       x = index_to_x( cb, i );
 
       if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_RGB){
-	intensity = UNPACK_BLUE(cb->ct->table[i]);
+        intensity = UNPACK_BLUE(cb->ct->table[i]);
       }
       else if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_HSV){
-	RGB_to_HSV(UNPACK_RED  (cb->ct->table[i])/255., 
-		   UNPACK_GREEN(cb->ct->table[i])/255.,
-		   UNPACK_BLUE (cb->ct->table[i])/255.,
-		   &H,&S,&V);
-	intensity = (int) (V*255.);
+        RGB_to_HSV(UNPACK_RED  (cb->ct->table[i])/255., 
+                   UNPACK_GREEN(cb->ct->table[i])/255.,
+                   UNPACK_BLUE (cb->ct->table[i])/255.,
+                   &H,&S,&V);
+        intensity = (int) (V*255.);
       }
 
       y = intensity_to_y( cb, intensity );
@@ -248,19 +248,19 @@ static void redraw_range(ColorBar *cb, int a, int b){
    if (cb->helpflag) {
      for (i=0;i<HELP_LINES;i++) {
        XDrawString( XCTX.display, win, XCTX.xgc.white,
-		    10,10+(i+1)*XCTX.xfont.fixed_h,
-		    help_str[i], strlen(help_str[i]) );
+                    10,10+(i+1)*XCTX.xfont.fixed_h,
+                    help_str[i], strlen(help_str[i]) );
      }
    }
    else{
      if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_RGB)
        XDrawString( XCTX.display, win, XCTX.xgc.white,
-		    10, 10+XCTX.xfont.fixed_h, 
-		    rgb_str, strlen(rgb_str) );
+                    10, 10+XCTX.xfont.fixed_h, 
+                    rgb_str, strlen(rgb_str) );
      else if(cb->ct->ipar[COLORTABLE_MODE]==COLORTABLE_HSV)
        XDrawString( XCTX.display, win, XCTX.xgc.white,
-		    10, 10+XCTX.xfont.fixed_h, 
-		    hsv_str, strlen(hsv_str) );
+                    10, 10+XCTX.xfont.fixed_h, 
+                    hsv_str, strlen(hsv_str) );
    }
 }
 
@@ -330,19 +330,6 @@ static void set_size(ColorBar *cb, int width, int height){
 /* creation, manipulation and callbacks functions */
 
 static ColorBar *TheCB=NULL ;
-static ColorTable clip;
-
-void ColorBarCopy(ColorTable *ct){
-  memcpy(clip.table, ct->table, ct->size * sizeof(unsigned int));
-  memcpy(clip.ipar,  ct->ipar,  COLORTABLE_NBMAX_PARAM * sizeof(int));
-  memcpy(clip.fpar,  ct->fpar,  COLORTABLE_NBMAX_PARAM * sizeof(float));
-}
-
-void ColorBarPaste(ColorTable *ct){
-  memcpy(ct->table, clip.table, ct->size * sizeof(unsigned int));
-  memcpy(ct->ipar,  clip.ipar,  COLORTABLE_NBMAX_PARAM * sizeof(int));
-  memcpy(ct->fpar,  clip.fpar,  COLORTABLE_NBMAX_PARAM * sizeof(float));
-}
 
 void ColorBarCreate(Window win, int width, int height){
   static int first=1 ;
@@ -380,28 +367,31 @@ void ColorBarChange(char *label, float min, float max, ColorTable *ct, int rgb){
   redraw_marker(TheCB);
 }
 
-void ColorBarResizeCb(Widget w, XtPointer client_data, XmDrawingAreaCallbackStruct *call_data){
+void ColorBarResizeCb(Widget w, XtPointer client_data, 
+                      XmDrawingAreaCallbackStruct *call_data){
   Dimension w1,h1;
 
   if(!TheCB) return;
   
   XtVaGetValues(WID.PD.colorDrawingArea, 
-		XmNwidth, &w1, 
-		XmNheight, &h1, 
-		NULL);    
+                XmNwidth, &w1, 
+                XmNheight, &h1, 
+                NULL);    
 
   set_size(TheCB, (int)w1, (int)h1);
   XResizeWindow(XCTX.display, TheCB->window, (int)w1, (int)h1);
   ColorBarRedraw();
 }
 
-void ColorBarExposeCb(Widget w,XtPointer client_data, XmDrawingAreaCallbackStruct *call_data){
+void ColorBarExposeCb(Widget w,XtPointer client_data, 
+                      XmDrawingAreaCallbackStruct *call_data){
   ColorBarRedraw();
 }
 
 #define ANY_MODIFIER (ShiftMask|ControlMask|Mod1Mask)
 
-void ColorBarInputCb (Widget w, XtPointer client_data, XmDrawingAreaCallbackStruct *call_data){
+void ColorBarInputCb (Widget w, XtPointer client_data, 
+                      XmDrawingAreaCallbackStruct *call_data){
 
   XEvent         *event;
   static int      p1=0, p2=0, p3=0, p4=0; /* red, green, blue, alpha */
@@ -421,106 +411,109 @@ void ColorBarInputCb (Widget w, XtPointer client_data, XmDrawingAreaCallbackStru
     XLookupString(&event->xkey, keybuf, 50, &key, &compose);
 
     switch(key){
-    case XK_1 : color_table_init_param(1, TheCB->ct, 1, 1); compute=1; break;
-    case XK_2 : color_table_init_param(2, TheCB->ct, 1, 1); compute=1; break;
-    case XK_3 : color_table_init_param(3, TheCB->ct, 1, 1); compute=1; break;
-    case XK_4 : color_table_init_param(4, TheCB->ct, 1, 1); compute=1; break;
-    case XK_5 : color_table_init_param(5, TheCB->ct, 1, 1); compute=1; break;
-    case XK_6 : color_table_init_param(6, TheCB->ct, 1, 1); compute=1; break;
-    case XK_7 : color_table_init_param(7, TheCB->ct, 1, 1); compute=1; break;
-    case XK_8 : color_table_init_param(8, TheCB->ct, 1, 1); compute=1; break;
-    case XK_9 : color_table_init_param(9, TheCB->ct, 1, 1); compute=1; break;
-    case XK_0 : color_table_init_param(0, TheCB->ct, 1, 1); compute=1; break;
+    case XK_1 : ColorTable_InitParam(1, TheCB->ct, 1, 1); compute=1; break;
+    case XK_2 : ColorTable_InitParam(2, TheCB->ct, 1, 1); compute=1; break;
+    case XK_3 : ColorTable_InitParam(3, TheCB->ct, 1, 1); compute=1; break;
+    case XK_4 : ColorTable_InitParam(4, TheCB->ct, 1, 1); compute=1; break;
+    case XK_5 : ColorTable_InitParam(5, TheCB->ct, 1, 1); compute=1; break;
+    case XK_6 : ColorTable_InitParam(6, TheCB->ct, 1, 1); compute=1; break;
+    case XK_7 : ColorTable_InitParam(7, TheCB->ct, 1, 1); compute=1; break;
+    case XK_8 : ColorTable_InitParam(8, TheCB->ct, 1, 1); compute=1; break;
+    case XK_9 : ColorTable_InitParam(9, TheCB->ct, 1, 1); compute=1; break;
+    case XK_0 : ColorTable_InitParam(0, TheCB->ct, 1, 1); compute=1; break;
 
-    case XK_c : case XK_C : ColorBarCopy(TheCB->ct); break;
-    case XK_p : case XK_P : ColorBarPaste(TheCB->ct); ColorBarRedraw(); break;
+    case XK_c : case XK_C : ColorTable_Copy(TheCB->ct); break;
+    case XK_p : case XK_P : ColorTable_Paste(TheCB->ct); ColorBarRedraw(); break;
     case XK_s : case XK_S : ManageCb(NULL, (XtPointer)WID.FD.saveDialog, NULL); break;
     case XK_l : case XK_L : ManageCb(NULL, (XtPointer)WID.FD.mergeDialog, NULL); return ;
     case XK_h : case XK_H : TheCB->helpflag = !TheCB->helpflag; ColorBarRedraw(); break;
 
     case XK_r : 
     case XK_R : 
-      color_table_init_param(TheCB->ct->ipar[COLORTABLE_NUMBER], 
-			     TheCB->ct, 1, 1); 
-      compute=1; break;
+      ColorTable_InitParam(TheCB->ct->ipar[COLORTABLE_NUMBER], 
+                           TheCB->ct, 1, 1); 
+      compute=1; 
+      break;
 
     case XK_m : 
     case XK_M : 
       if(TheCB->ct->ipar[COLORTABLE_MODE]==COLORTABLE_RGB)
-	TheCB->ct->ipar[COLORTABLE_MODE] = COLORTABLE_HSV;
+        TheCB->ct->ipar[COLORTABLE_MODE] = COLORTABLE_HSV;
       else
-	TheCB->ct->ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
+        TheCB->ct->ipar[COLORTABLE_MODE] = COLORTABLE_RGB;
       ColorBarRedraw(); 
       break;
 
     case XK_i : 
     case XK_I : 
-      if (event->xkey.state&ANY_MODIFIER) {
-	TheCB->ct->ipar[COLORTABLE_INVERT] = !TheCB->ct->ipar[COLORTABLE_INVERT]; 
-      }
-      else{
-	TheCB->ct->ipar[COLORTABLE_SWAP] = !TheCB->ct->ipar[COLORTABLE_SWAP]; 	
-      }
-      compute=1; break;
+      if (event->xkey.state&ANY_MODIFIER)
+        TheCB->ct->ipar[COLORTABLE_INVERT] = !TheCB->ct->ipar[COLORTABLE_INVERT]; 
+      else
+        TheCB->ct->ipar[COLORTABLE_SWAP] = !TheCB->ct->ipar[COLORTABLE_SWAP];   
+      compute=1;
+      break;
 
     case XK_b :
     case XK_B :
       if (event->xkey.state&ANY_MODIFIER) {
-	TheCB->ct->fpar[COLORTABLE_BETA] -= 0.05;
-	if(TheCB->ct->fpar[COLORTABLE_BETA]<-1.0) 
-	  TheCB->ct->fpar[COLORTABLE_BETA] = -1.0;
+        TheCB->ct->fpar[COLORTABLE_BETA] -= 0.05;
+        if(TheCB->ct->fpar[COLORTABLE_BETA]<-1.0) 
+          TheCB->ct->fpar[COLORTABLE_BETA] = -1.0;
       }
       else{
-	TheCB->ct->fpar[COLORTABLE_BETA] += 0.05;
-	if(TheCB->ct->fpar[COLORTABLE_BETA]>1.0) 
-	  TheCB->ct->fpar[COLORTABLE_BETA] = 1.0;
+        TheCB->ct->fpar[COLORTABLE_BETA] += 0.05;
+        if(TheCB->ct->fpar[COLORTABLE_BETA]>1.0) 
+          TheCB->ct->fpar[COLORTABLE_BETA] = 1.0;
       }
-      compute = 1; break;
+      compute = 1;
+      break;
 
     case XK_Left  : 
       if (event->xkey.state&ANY_MODIFIER) {
-	TheCB->ct->ipar[COLORTABLE_ROTATE] += 5;
-	if(TheCB->ct->ipar[COLORTABLE_ROTATE] > TheCB->ct->size-1) 
-	  TheCB->ct->ipar[COLORTABLE_ROTATE] -= TheCB->ct->size-1;
+        TheCB->ct->ipar[COLORTABLE_ROTATE] += 5;
+        if(TheCB->ct->ipar[COLORTABLE_ROTATE] > TheCB->ct->size-1) 
+          TheCB->ct->ipar[COLORTABLE_ROTATE] -= TheCB->ct->size-1;
       }
-      else {
-	TheCB->ct->fpar[COLORTABLE_BIAS] -= 0.05; 
-      }
-      compute = 1; break;
+      else
+        TheCB->ct->fpar[COLORTABLE_BIAS] -= 0.05; 
+      compute = 1; 
+      break;
 
     case XK_Right : 
       if (event->xkey.state&ANY_MODIFIER) {
-	TheCB->ct->ipar[COLORTABLE_ROTATE] -= 5;
-	if(TheCB->ct->ipar[COLORTABLE_ROTATE]<-(TheCB->ct->size-1)) 
-	  TheCB->ct->ipar[COLORTABLE_ROTATE] += TheCB->ct->size-1;
+        TheCB->ct->ipar[COLORTABLE_ROTATE] -= 5;
+        if(TheCB->ct->ipar[COLORTABLE_ROTATE]<-(TheCB->ct->size-1)) 
+          TheCB->ct->ipar[COLORTABLE_ROTATE] += TheCB->ct->size-1;
       }
       else{
-	TheCB->ct->fpar[COLORTABLE_BIAS] += 0.05; 
+        TheCB->ct->fpar[COLORTABLE_BIAS] += 0.05; 
       }
-      compute = 1; break;
+      compute = 1;
+      break;
 
     case XK_Up :
       if (event->xkey.state&ANY_MODIFIER) {
-	TheCB->ct->fpar[COLORTABLE_ALPHAPOW] -= 0.05;
-	if (TheCB->ct->fpar[COLORTABLE_ALPHAPOW]<0.0)
-	  TheCB->ct->fpar[COLORTABLE_ALPHAPOW] = 0.0;
+        TheCB->ct->fpar[COLORTABLE_ALPHAPOW] -= 0.05;
+        if (TheCB->ct->fpar[COLORTABLE_ALPHAPOW]<0.0)
+          TheCB->ct->fpar[COLORTABLE_ALPHAPOW] = 0.0;
       }
-      else {
-	TheCB->ct->fpar[COLORTABLE_CURVE] -= 0.05;
-      }
-      compute = 1; break;
+      else
+        TheCB->ct->fpar[COLORTABLE_CURVE] -= 0.05;
+      compute = 1; 
+      break;
 
     case XK_Down :
       if (event->xkey.state&ANY_MODIFIER)
-	TheCB->ct->fpar[COLORTABLE_ALPHAPOW] += 0.05;
+        TheCB->ct->fpar[COLORTABLE_ALPHAPOW] += 0.05;
       else
-	TheCB->ct->fpar[COLORTABLE_CURVE] += 0.05;
-      compute = 1; break;      
+        TheCB->ct->fpar[COLORTABLE_CURVE] += 0.05;
+      compute = 1; 
+      break;
 
     }
 
     if(compute){
-      color_table_recompute(TheCB->ct, 1, 1);
+      ColorTable_Recompute(TheCB->ct, 1, 1);
       ColorBarRedraw();
     }
 
@@ -573,7 +566,7 @@ void ColorBarInputCb (Widget w, XtPointer client_data, XmDrawingAreaCallbackStru
       XEvent next;
       XPeekEvent(XCTX.display, &next);
       if (next.type!=MotionNotify)
-	break;
+        break;
       XNextEvent(XCTX.display, event);
     }
     modify = 1;
@@ -582,72 +575,71 @@ void ColorBarInputCb (Widget w, XtPointer client_data, XmDrawingAreaCallbackStru
   /* Modify one or more of the color curves */
   
    if (modify && (p1 || p2 || p3 || p4)) {
-      /* calculate which entry in color table to change */
-      entry = x_to_index(TheCB, event->xbutton.x);
-      /* update */
-      if (move_marker) {
-         /* changing marker position */
-         TheCB->markerpos = entry;
-         redraw_marker(TheCB);
-      }
-      else {
-         /* changing color graph */
-         int a, b, value;
+     /* calculate which entry in color table to change */
+     entry = x_to_index(TheCB, event->xbutton.x);
+     /* update */
+     if (move_marker) {
+       /* changing marker position */
+       TheCB->markerpos = entry;
+       redraw_marker(TheCB);
+     }
+     else {
+       /* changing color graph */
+       int a, b, value;
+       
+       value = y_to_intensity(TheCB, event->xbutton.y);
 
-         value = y_to_intensity(TheCB, event->xbutton.y);
-
-         if (pentry<=entry) {
-            a = pentry;
-            b = entry;
+       if (pentry<=entry) {
+         a = pentry;
+         b = entry;
+       }
+       else {
+         a = entry;
+         b = pentry;
+       }
+       
+       /* update entries from 'pentry' to 'entry' */
+       for (i=a; i<=b; i++) {
+         int red, green, blue, alpha;
+         double R,G,B,H,S,V;
+         
+         red   = UNPACK_RED  (TheCB->ct->table[i]);
+         green = UNPACK_GREEN(TheCB->ct->table[i]);
+         blue  = UNPACK_BLUE (TheCB->ct->table[i]);
+         alpha = UNPACK_ALPHA(TheCB->ct->table[i]);
+         
+         if(TheCB->ct->ipar[COLORTABLE_MODE]==COLORTABLE_RGB){
+           if (p1) { red = value; }
+           if (p2) { green = value; }
+           if (p3) { blue = value; }
+           if (p4) { alpha = value; }
+         }         
+         else if(TheCB->ct->ipar[COLORTABLE_MODE]==COLORTABLE_HSV){
+           RGB_to_HSV((double)red/255.,(double)green/255.,(double)blue/255.,
+                      &H,&S,&V);
+           if (p1) { H = 6.*(double)value/255.+EPS ; }
+           if (p2) { S = (double)value/255.; }
+           if (p3) { V = (double)value/255.; }
+           if (p4) { alpha = value; }         
+           HSV_to_RGB(H, S, V, &R,&G,&B);
+           red   = (int)(255 * R);
+           green = (int)(255 * G);
+           blue  = (int)(255 * B);
          }
-         else {
-            a = entry;
-            b = pentry;
-         }
-
-         /* update entries from 'pentry' to 'entry' */
-         for (i=a; i<=b; i++) {
-            int red, green, blue, alpha;
-	    double R,G,B,H,S,V;
-
-	    red   = UNPACK_RED  (TheCB->ct->table[i]);
-	    green = UNPACK_GREEN(TheCB->ct->table[i]);
-	    blue  = UNPACK_BLUE (TheCB->ct->table[i]);
-	    alpha = UNPACK_ALPHA(TheCB->ct->table[i]);
-	    
-	    if(TheCB->ct->ipar[COLORTABLE_MODE]==COLORTABLE_RGB){
-	      if (p1) { red = value; }
-	      if (p2) { green = value; }
-	      if (p3) { blue = value; }
-	      if (p4) { alpha = value; }
-	    }	   
-	    else if(TheCB->ct->ipar[COLORTABLE_MODE]==COLORTABLE_HSV){
-	      RGB_to_HSV((double)red/255.,(double)green/255.,(double)blue/255.,
-			 &H,&S,&V);
-	      if (p1) { H = 6.*(double)value/255.+EPS ; }
-	      if (p2) { S = (double)value/255.; }
-	      if (p3) { V = (double)value/255.; }
-	      if (p4) { alpha = value; }	      
-	      HSV_to_RGB(H, S, V, &R,&G,&B);
-	      red   = (int)(255 * R);
-	      green = (int)(255 * G);
-	      blue  = (int)(255 * B);
-	    }
-
-            TheCB->ct->table[i] = PACK_COLOR(red,green,blue,alpha);
-         } 
-
-         /* redraw the color curves */
-         if (pentry<entry)
-           redraw_range(TheCB, pentry-1, entry+1);
-         else
-           redraw_range(TheCB, entry-1, pentry+1);
-
-         pentry = entry;
-	 
-      }
+         
+         TheCB->ct->table[i] = PACK_COLOR(red,green,blue,alpha);
+       } 
+       
+       /* redraw the color curves */
+       if (pentry<entry)
+         redraw_range(TheCB, pentry-1, entry+1);
+       else
+         redraw_range(TheCB, entry-1, pentry+1);
+       
+       pentry = entry;
+       
+     }
    }
-   
    
 }
 

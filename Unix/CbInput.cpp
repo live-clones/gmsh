@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.5 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.6 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -18,11 +18,8 @@
 extern Context_T   CTX ;
 extern XContext_T  XCTX ;
 extern Widgets_T   WID ;
-
-extern GLdouble   vxmin, vxmax, vymin, vymax;
-extern Mesh       M;
-extern double     LC, MiddleLC;
-extern double     ClipPlane[4];
+extern Mesh        M;
+extern GLdouble    vxmin, vxmax, vymin, vymax;
 
 static int        Modifier=0;
 
@@ -56,13 +53,13 @@ void KeyboardAccel(XEvent *event){
 
       /*
     case XK_Up :
-      ClipPlane[2] = 1. ;
-      if(fabs(ClipPlane[3]-LC/20 <1.)) ClipPlane[3] -= LC/20. ;
+      CTX.clip_plane0[2] = 1. ;
+      if(fabs(CTX.clip_plane0[3]-CTX.lc/20. <1.)) CTX.clip_plane0[3] -= CTX.lc/20. ;
       Init(); Draw();
       break;
     case XK_Down :
-      ClipPlane[2] = 1. ;
-      if(fabs(ClipPlane[3]+LC/20 <1.)) ClipPlane[3] += LC/20. ;
+      CTX.clip_plane0[2] = 1. ;
+      if(fabs(CTX.clip_plane0[3]+CTX.lc/20 <1.)) CTX.clip_plane0[3] += CTX.lc/20. ;
       Init(); Draw();
       break;
       */
@@ -212,7 +209,7 @@ void KeyboardAccel(XEvent *event){
     case XK_h : case XK_H :
       CTX.geom.highlight = !CTX.geom.highlight;
       CTX.geom.highlight ? Msg(INFOS, "Highlight Enabled") : 
-	Msg(INFOS, "Highlight Disabled");
+        Msg(INFOS, "Highlight Disabled");
       break;
     case XK_c : case XK_C :
       if(CTX.color.id==0) InitColors(&CTX.color,1);
@@ -224,11 +221,11 @@ void KeyboardAccel(XEvent *event){
       break;
     case XK_d : case XK_D :
       if(!CTX.mesh.hidden && !CTX.mesh.shade)
-	CTX.mesh.hidden = 1;
+        CTX.mesh.hidden = 1;
       else if(CTX.mesh.hidden && !CTX.mesh.shade)  
-	CTX.mesh.shade = 1;
+        CTX.mesh.shade = 1;
       else{
-	CTX.mesh.hidden = 0; CTX.mesh.shade = 0; 
+        CTX.mesh.hidden = 0; CTX.mesh.shade = 0; 
       }
       XtVaSetValues(WID.OD.meshAspectButt[2],XmNset,CTX.mesh.hidden&&CTX.mesh.shade, NULL);
       XtVaSetValues(WID.OD.meshAspectButt[1],XmNset,CTX.mesh.hidden&&!CTX.mesh.shade, NULL);
@@ -260,64 +257,64 @@ void KeyboardAccel(XEvent *event){
     case XK_p :
       CTX.geom.points = !CTX.geom.points;
       if(!CTX.geom.vis_type){
-	XtVaSetValues(WID.OD.geomVisibleButt[0], XmNset, CTX.geom.points, NULL);
-	XmUpdateDisplay(WID.OD.geomVisibleButt[0]); 
+        XtVaSetValues(WID.OD.geomVisibleButt[0], XmNset, CTX.geom.points, NULL);
+        XmUpdateDisplay(WID.OD.geomVisibleButt[0]); 
       }
       Init(); Draw();
       break;
     case XK_P :
       CTX.mesh.points = !CTX.mesh.points;
       if(!CTX.mesh.vis_type){
-	XtVaSetValues(WID.OD.meshVisibleButt[0], XmNset, CTX.mesh.points, NULL);
-	XmUpdateDisplay(WID.OD.meshVisibleButt[0]); 
+        XtVaSetValues(WID.OD.meshVisibleButt[0], XmNset, CTX.mesh.points, NULL);
+        XmUpdateDisplay(WID.OD.meshVisibleButt[0]); 
       }
       Init(); Draw();
       break;
     case XK_l :
       CTX.geom.lines = !CTX.geom.lines;
       if(!CTX.geom.vis_type){
-	XtVaSetValues(WID.OD.geomVisibleButt[1], XmNset, CTX.geom.lines, NULL);
-	XmUpdateDisplay(WID.OD.geomVisibleButt[1]); 
+        XtVaSetValues(WID.OD.geomVisibleButt[1], XmNset, CTX.geom.lines, NULL);
+        XmUpdateDisplay(WID.OD.geomVisibleButt[1]); 
       }
       Init(); Draw();
       break;
     case XK_L :
       CTX.mesh.lines = !CTX.mesh.lines;
       if(!CTX.mesh.vis_type){
-	XtVaSetValues(WID.OD.meshVisibleButt[1], XmNset, CTX.mesh.lines, NULL);
-	XmUpdateDisplay(WID.OD.meshVisibleButt[1]); 
+        XtVaSetValues(WID.OD.meshVisibleButt[1], XmNset, CTX.mesh.lines, NULL);
+        XmUpdateDisplay(WID.OD.meshVisibleButt[1]); 
       }
       Init(); Draw();
       break;
     case XK_s :
       CTX.geom.surfaces = !CTX.geom.surfaces;
       if(!CTX.geom.vis_type){
-	XtVaSetValues(WID.OD.geomVisibleButt[2], XmNset, CTX.geom.surfaces, NULL);
-	XmUpdateDisplay(WID.OD.geomVisibleButt[2]); 
+        XtVaSetValues(WID.OD.geomVisibleButt[2], XmNset, CTX.geom.surfaces, NULL);
+        XmUpdateDisplay(WID.OD.geomVisibleButt[2]); 
       }
       Init(); Draw();
       break;
     case XK_S :
       CTX.mesh.surfaces = !CTX.mesh.surfaces;
       if(!CTX.mesh.vis_type){
-	XtVaSetValues(WID.OD.meshVisibleButt[2], XmNset, CTX.mesh.surfaces, NULL);
-	XmUpdateDisplay(WID.OD.meshVisibleButt[2]); 
+        XtVaSetValues(WID.OD.meshVisibleButt[2], XmNset, CTX.mesh.surfaces, NULL);
+        XmUpdateDisplay(WID.OD.meshVisibleButt[2]); 
       }
       Init(); Draw();
       break;
     case XK_v :
       CTX.geom.volumes = !CTX.geom.volumes;
       if(!CTX.geom.vis_type){
-	XtVaSetValues(WID.OD.geomVisibleButt[3], XmNset, CTX.geom.volumes, NULL);
-	XmUpdateDisplay(WID.OD.geomVisibleButt[3]); 
+        XtVaSetValues(WID.OD.geomVisibleButt[3], XmNset, CTX.geom.volumes, NULL);
+        XmUpdateDisplay(WID.OD.geomVisibleButt[3]); 
       }
       Init(); Draw();
       break;
     case XK_V :
       CTX.mesh.volumes = !CTX.mesh.volumes;
       if(!CTX.mesh.vis_type){
-	XtVaSetValues(WID.OD.meshVisibleButt[3], XmNset, CTX.mesh.volumes, NULL);
-	XmUpdateDisplay(WID.OD.meshVisibleButt[3]); 
+        XtVaSetValues(WID.OD.meshVisibleButt[3], XmNset, CTX.mesh.volumes, NULL);
+        XmUpdateDisplay(WID.OD.meshVisibleButt[3]); 
       }
       Init(); Draw();
       break;
@@ -351,9 +348,9 @@ void KeyboardAccel(XEvent *event){
 
 void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj);
 void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
-			    Curve **thec, Surface **thes, Mesh *m);
+                            Curve **thec, Surface **thes, Mesh *m);
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
-	    GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
+            GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2);
 
 void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
   XEvent         *event;
@@ -414,65 +411,65 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
     switch(ibut){
     case 1:
       if(!ZoomClick && Modifier){
-	xb = vxmin + ((GLdouble) x / width) * (vxmax - vxmin);
-	yb = vymax - ((GLdouble) y / height) * (vymax - vymin);
-	xc1 = xb/CTX.s[0] - CTX.t[0];
-	yc1 = yb/CTX.s[1] - CTX.t[1];
-	ZoomClick=1;
-	movzx = movzy = 0;
-	Modifier = 0;
+        xb = vxmin + ((GLdouble) x / width) * (vxmax - vxmin);
+        yb = vymax - ((GLdouble) y / height) * (vymax - vymin);
+        xc1 = xb/CTX.s[0] - CTX.t[0];
+        yc1 = yb/CTX.s[1] - CTX.t[1];
+        ZoomClick=1;
+        movzx = movzy = 0;
+        Modifier = 0;
       }
       else if(ZoomClick){
-	xe = vxmin + ((GLdouble) x / width) * (vxmax - vxmin);
-	ye = vymax - ((GLdouble) y / height) * (vymax - vymin);
-	xc2 = xe/CTX.s[0] - CTX.t[0];
-	yc2 = ye/CTX.s[1] - CTX.t[1];	  
-	ZoomClick=0;
-	if(CTX.overlay){
-	  glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
-	  glClearIndex(0);
-	  glClear(GL_COLOR_BUFFER_BIT);  
-	  glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
-	}
-	if(xb!=xe && yb!=ye)
-	  myZoom(xb,xe,yb,ye,xc1,xc2,yc1,yc2);
+        xe = vxmin + ((GLdouble) x / width) * (vxmax - vxmin);
+        ye = vymax - ((GLdouble) y / height) * (vymax - vymin);
+        xc2 = xe/CTX.s[0] - CTX.t[0];
+        yc2 = ye/CTX.s[1] - CTX.t[1];     
+        ZoomClick=0;
+        if(CTX.overlay){
+          glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
+          glClearIndex(0);
+          glClear(GL_COLOR_BUFFER_BIT);  
+          glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
+        }
+        if(xb!=xe && yb!=ye)
+          myZoom(xb,xe,yb,ye,xc1,xc2,yc1,yc2);
       } 
       break;
     case 2:
       if(Modifier && !ZoomClick){
-	Modifier = 0;
-	set_s(1, CTX.s[0]);
-	set_s(2, CTX.s[0]);
-	Init();
-	Draw();
+        Modifier = 0;
+        set_s(1, CTX.s[0]);
+        set_s(2, CTX.s[0]);
+        Init();
+        Draw();
       }
       else{
-	ZoomClick=0;
-	if(CTX.overlay){
-	  glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
-	  glClearIndex(0);
-	  glClear(GL_COLOR_BUFFER_BIT);  
-	  glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
-	}
+        ZoomClick=0;
+        if(CTX.overlay){
+          glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
+          glClearIndex(0);
+          glClear(GL_COLOR_BUFFER_BIT);  
+          glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
+        }
       }
       break;      
     case 3:
       if(Modifier && !ZoomClick){
-	Modifier = 0;
-	set_r(0,0.); set_r(1,0.); set_r(2,0.); 
-	set_t(0,0.); set_t(1,0.); set_t(2,0.);
-	set_s(0,1.); set_s(1,1.); set_s(2,1.);
-	Init();
-	Draw();
+        Modifier = 0;
+        set_r(0,0.); set_r(1,0.); set_r(2,0.); 
+        set_t(0,0.); set_t(1,0.); set_t(2,0.);
+        set_s(0,1.); set_s(1,1.); set_s(2,1.);
+        Init();
+        Draw();
       }
       else{
-	ZoomClick=0;
-	if(CTX.overlay){
-	  glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
-	  glClearIndex(0);
-	  glClear(GL_COLOR_BUFFER_BIT);  
-	  glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
-	}
+        ZoomClick=0;
+        if(CTX.overlay){
+          glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
+          glClearIndex(0);
+          glClear(GL_COLOR_BUFFER_BIT);  
+          glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
+        }
       }
       break;
     }
@@ -494,7 +491,7 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
       previous_mesh_draw = CTX.mesh.draw ;
       previous_post_draw = CTX.post.draw ;
       if(ButtonPressed>0){
-	if(CTX.fast) CTX.mesh.draw = CTX.post.draw = 0;
+        if(CTX.fast) CTX.mesh.draw = CTX.post.draw = 0;
       }
       Draw();
       CTX.mesh.draw = previous_mesh_draw ;
@@ -525,178 +522,178 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
       xz = vxmin + ((GLdouble) event->xbutton.x / width) * (vxmax - vxmin);
       yz = vymax - ((GLdouble) event->xbutton.y / height) * (vymax - vymin) ;
       if(CTX.overlay) {
-	movzx = xz - xb; movzy = yz - yb;
-	InitOv();
-	glLineWidth(1.);
-	glClearIndex(0);
-	glClear(GL_COLOR_BUFFER_BIT);  
-	glIndexi((CTX.color.bg<CTX.color.fg)?XCTX.xcolor.ovwhite:XCTX.xcolor.ovblack);
-	glBegin(GL_LINE_STRIP);
-	glVertex2d(xb,yb);
-	glVertex2d(xb+movzx,yb);
-	glVertex2d(xb+movzx,yb+movzy);
-	glVertex2d(xb,yb+movzy);
-	glVertex2d(xb,yb);
-	glEnd();
+        movzx = xz - xb; movzy = yz - yb;
+        InitOv();
+        glLineWidth(1.);
+        glClearIndex(0);
+        glClear(GL_COLOR_BUFFER_BIT);  
+        glIndexi((CTX.color.bg<CTX.color.fg)?XCTX.xcolor.ovwhite:XCTX.xcolor.ovblack);
+        glBegin(GL_LINE_STRIP);
+        glVertex2d(xb,yb);
+        glVertex2d(xb+movzx,yb);
+        glVertex2d(xb+movzx,yb+movzy);
+        glVertex2d(xb,yb+movzy);
+        glVertex2d(xb,yb);
+        glEnd();
 
-	/* Dessine le plus gd rectangle possible si ortho */
+        /* Dessine le plus gd rectangle possible si ortho */
 
-	/*
-	if(fabs((double)movzx/(double)movzy) > ((double)width/(double)height)){
-	  constry = movzy;
-	  constrx = sign(movzx)*fabs(movzy)*((double)width/(double)height);
-	}
-	else{
-	  constrx = movzx;
-	  constry = sign(movzy)*fabs(movzx)*((double)height/(double)width);
-	}
-	glIndexi(theRed);
-	glBegin(GL_LINE_STRIP);
-	glVertex2d(xb+constrx,yb);
-	glVertex2d(xb+constrx,yb+constry);
-	glVertex2d(xb,yb+constry);
-	glEnd();
-	*/
+        /*
+        if(fabs((double)movzx/(double)movzy) > ((double)width/(double)height)){
+          constry = movzy;
+          constrx = sign(movzx)*fabs(movzy)*((double)width/(double)height);
+        }
+        else{
+          constrx = movzx;
+          constry = sign(movzy)*fabs(movzx)*((double)height/(double)width);
+        }
+        glIndexi(theRed);
+        glBegin(GL_LINE_STRIP);
+        glVertex2d(xb+constrx,yb);
+        glVertex2d(xb+constrx,yb+constry);
+        glVertex2d(xb,yb+constry);
+        glEnd();
+        */
 
-	glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
+        glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
       }
       else {
-	glPopMatrix();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(vxmin, vxmax, vymin, vymax);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-	
-	if(CTX.db) glDrawBuffer(GL_BACK);
-	
-	glDisable(GL_DEPTH_TEST);
-	/* c'est une maniere de contourner l'absence de XOR, mais ca ne marche 
-	   evidemment qu'avec un background tout noir ou tout blanc !*/
-	glColor3f(1.,1.,1.);
-	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-	glEnable(GL_BLEND);
+        glPopMatrix();
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        gluOrtho2D(vxmin, vxmax, vymin, vymax);
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        
+        if(CTX.db) glDrawBuffer(GL_BACK);
+        
+        glDisable(GL_DEPTH_TEST);
+        /* c'est une maniere de contourner l'absence de XOR, mais ca ne marche 
+           evidemment qu'avec un background tout noir ou tout blanc !*/
+        glColor3f(1.,1.,1.);
+        glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+        glEnable(GL_BLEND);
 
-	glBegin(GL_LINE_STRIP);
-	glVertex2d(xb,yb);
-	glVertex2d(xb+movzx,yb);
-	glVertex2d(xb+movzx,yb+movzy);
-	glVertex2d(xb,yb+movzy);
-	glVertex2d(xb,yb);
-	glEnd();
-	movzx = xz - xb; movzy = yz - yb;
-	
-	glBegin(GL_LINE_STRIP);
-	glVertex2d(xb,yb);
-	glVertex2d(xb+movzx,yb);
-	glVertex2d(xb+movzx,yb+movzy);
-	glVertex2d(xb,yb+movzy);
-	glVertex2d(xb,yb);
-	glEnd();
+        glBegin(GL_LINE_STRIP);
+        glVertex2d(xb,yb);
+        glVertex2d(xb+movzx,yb);
+        glVertex2d(xb+movzx,yb+movzy);
+        glVertex2d(xb,yb+movzy);
+        glVertex2d(xb,yb);
+        glEnd();
+        movzx = xz - xb; movzy = yz - yb;
+        
+        glBegin(GL_LINE_STRIP);
+        glVertex2d(xb,yb);
+        glVertex2d(xb+movzx,yb);
+        glVertex2d(xb+movzx,yb+movzy);
+        glVertex2d(xb,yb+movzy);
+        glVertex2d(xb,yb);
+        glEnd();
 
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	
-	if(CTX.db)
-	  glXSwapBuffers(XCTX.display,XtWindow(WID.G.glw));
-	else
-	  glFlush();
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        
+        if(CTX.db)
+          glXSwapBuffers(XCTX.display,XtWindow(WID.G.glw));
+        else
+          glFlush();
 
       }
     }
     else {
       if(ButtonPressed){
 
-	if(CTX.overlay){
-	  glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
-	  glClearIndex(0);
-	  glClear(GL_COLOR_BUFFER_BIT);  
-	  glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
-	}
+        if(CTX.overlay){
+          glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
+          glClearIndex(0);
+          glClear(GL_COLOR_BUFFER_BIT);  
+          glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
+        }
 
-	if(FirstClick){
-	  xc1 = ( ((GLdouble) x / width) * (vxmax - vxmin) + vxmin )/CTX.s[0] - CTX.t[0];
-	  yc1 = ( vymax - ((GLdouble) y / height) * (vymax - vymin))/CTX.s[1] - CTX.t[1];
-	  xt1 = CTX.t[0];
-	  yt1 = CTX.t[1];
-	  xscale1 = CTX.s[0];
-	  yscale1 = CTX.s[1];
-	  FirstClick=0;
-	}
+        if(FirstClick){
+          xc1 = ( ((GLdouble) x / width) * (vxmax - vxmin) + vxmin )/CTX.s[0] - CTX.t[0];
+          yc1 = ( vymax - ((GLdouble) y / height) * (vymax - vymin))/CTX.s[1] - CTX.t[1];
+          xt1 = CTX.t[0];
+          yt1 = CTX.t[1];
+          xscale1 = CTX.s[0];
+          yscale1 = CTX.s[1];
+          FirstClick=0;
+        }
 
-	switch(ibut){
-	case 1:
-	  set_r(1, CTX.r[1] + ((abs(movx) > abs(movy))?180*(float)movx/(float)width:0));
-	  set_r(0, CTX.r[0] + ((abs(movx) > abs(movy))?0:180*(float)movy/(float)height));
-	  break;
-	case 2:
-	  set_r(2, CTX.r[2] + ((abs(movy) > abs(movx))?0:-180*(float)movx/(float)width));	  
+        switch(ibut){
+        case 1:
+          set_r(1, CTX.r[1] + ((abs(movx) > abs(movy))?180*(float)movx/(float)width:0));
+          set_r(0, CTX.r[0] + ((abs(movx) > abs(movy))?0:180*(float)movy/(float)height));
+          break;
+        case 2:
+          set_r(2, CTX.r[2] + ((abs(movy) > abs(movx))?0:-180*(float)movx/(float)width));         
 
-	  set_s(0, CTX.s[0] * ( (abs(movy) > abs(movx)) ?
-				( (movy>0) ? (float)(1.04*(abs(movy)+height))/(float)height
-				  : (float)(height)/(float)(1.04*(abs(movy)+height)) )
-				: 1.) );		    
-	  set_s(1, CTX.s[0]);
-	  set_s(2, CTX.s[0]);
+          set_s(0, CTX.s[0] * ( (abs(movy) > abs(movx)) ?
+                                ( (movy>0) ? (float)(1.04*(abs(movy)+height))/(float)height
+                                  : (float)(height)/(float)(1.04*(abs(movy)+height)) )
+                                : 1.) );                    
+          set_s(1, CTX.s[0]);
+          set_s(2, CTX.s[0]);
 
-	  if(abs(movy) > abs(movx)){
-	    set_t(0, xt1*(xscale1/CTX.s[0])-xc1*(1.-(xscale1/CTX.s[0])));
-	    set_t(1, yt1*(yscale1/CTX.s[1])-yc1*(1.-(yscale1/CTX.s[1])));
-	  }
-	  break;
-	case 3:
-	  xc = ( ((GLdouble) x / width) * (vxmax - vxmin) + vxmin ) / CTX.s[0];
-	  yc = ( vymax - ((GLdouble) y / height) * (vymax - vymin)) / CTX.s[1];
-	  set_t(0, xc-xc1);
-	  set_t(1, yc-yc1);
-	  set_t(2, 0.);
-	  break;
-	}
-	Init();
-	previous_mesh_draw = CTX.mesh.draw ;
-	previous_post_draw = CTX.post.draw ;
-	if(CTX.fast) CTX.mesh.draw = CTX.post.draw = 0;
-	Draw();
-	CTX.mesh.draw = previous_mesh_draw ;
-	CTX.post.draw = previous_post_draw ;
+          if(abs(movy) > abs(movx)){
+            set_t(0, xt1*(xscale1/CTX.s[0])-xc1*(1.-(xscale1/CTX.s[0])));
+            set_t(1, yt1*(yscale1/CTX.s[1])-yc1*(1.-(yscale1/CTX.s[1])));
+          }
+          break;
+        case 3:
+          xc = ( ((GLdouble) x / width) * (vxmax - vxmin) + vxmin ) / CTX.s[0];
+          yc = ( vymax - ((GLdouble) y / height) * (vymax - vymin)) / CTX.s[1];
+          set_t(0, xc-xc1);
+          set_t(1, yc-yc1);
+          set_t(2, 0.);
+          break;
+        }
+        Init();
+        previous_mesh_draw = CTX.mesh.draw ;
+        previous_post_draw = CTX.post.draw ;
+        if(CTX.fast) CTX.mesh.draw = CTX.post.draw = 0;
+        Draw();
+        CTX.mesh.draw = previous_mesh_draw ;
+        CTX.post.draw = previous_post_draw ;
       }
       else{
-	Process_SelectionBuffer(event->xbutton.x, event->xbutton.y, &hits, ii, jj);
-	ov = v; oc = c; os = s;	
-	v = NULL; c = NULL; s = NULL;
-	Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
+        Process_SelectionBuffer(event->xbutton.x, event->xbutton.y, &hits, ii, jj);
+        ov = v; oc = c; os = s; 
+        v = NULL; c = NULL; s = NULL;
+        Filter_SelectionBuffer(hits,ii,jj,&v,&c,&s,&M);
 
-	if(CTX.overlay){
-	  glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
-	  if(ov != v || oc != c || os != s) { 
-	    glClearIndex(0);
-	    glClear(GL_COLOR_BUFFER_BIT);  
-	    glIndexi((CTX.color.bg<CTX.color.fg)?XCTX.xcolor.ovwhite:XCTX.xcolor.ovblack);
-	    BeginHighlight();
-	    HighlightEntity(v,c,s,0);
-	    EndHighlight(0);
-	  }
-	  glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
-	}
-	else{
-	  if(ov != v || oc != c || os != s) { 
-	    if(CTX.geom.highlight){
-	      Init();
-	      Draw();
-	    }
-	    BeginHighlight();
-	    HighlightEntity(v,c,s,0);
-	    EndHighlight(0);
-	  }
-	}
+        if(CTX.overlay){
+          glXMakeCurrent(XtDisplay(WID.G.glo), XtWindow(WID.G.glo), XCTX.glo.context);
+          if(ov != v || oc != c || os != s) { 
+            glClearIndex(0);
+            glClear(GL_COLOR_BUFFER_BIT);  
+            glIndexi((CTX.color.bg<CTX.color.fg)?XCTX.xcolor.ovwhite:XCTX.xcolor.ovblack);
+            BeginHighlight();
+            HighlightEntity(v,c,s,0);
+            EndHighlight(0);
+          }
+          glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
+        }
+        else{
+          if(ov != v || oc != c || os != s) { 
+            if(CTX.geom.highlight){
+              Init();
+              Draw();
+            }
+            BeginHighlight();
+            HighlightEntity(v,c,s,0);
+            EndHighlight(0);
+          }
+        }
       }
       x += movx; 
       y += movy; 

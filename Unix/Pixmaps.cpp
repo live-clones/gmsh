@@ -1,4 +1,4 @@
-/* $Id: Pixmaps.cpp,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Pixmaps.cpp,v 1.3 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -83,45 +83,45 @@ void CreatePixmaps(Widgets_T *w, Pixmaps_T *p, int depth){
   /* Icons for 3 main windows */
 
   XtVaSetValues(w->M.shell, 
-		XmNiconPixmap, 
-		XCreateBitmapFromData(XtDisplay(w->M.shell),XtScreen(w->M.shell)->root,
-				      (char*)g1_bits, g1_width, g1_height), 
-		NULL);
+                XmNiconPixmap, 
+                XCreateBitmapFromData(XtDisplay(w->M.shell),XtScreen(w->M.shell)->root,
+                                      (char*)g1_bits, g1_width, g1_height), 
+                NULL);
 
 
   XtVaSetValues(w->G.shell, 
-		XmNiconPixmap, 
-		XCreateBitmapFromData(XtDisplay(w->G.shell), XtScreen(w->G.shell)->root,
-				      (char*)g2_bits, g2_width, g2_height),
-		NULL);
+                XmNiconPixmap, 
+                XCreateBitmapFromData(XtDisplay(w->G.shell), XtScreen(w->G.shell)->root,
+                                      (char*)g2_bits, g2_width, g2_height),
+                NULL);
 
   if(CTX.command_win)
     XtVaSetValues(w->C.shell, 
-		  XmNiconPixmap, 
-		  XCreateBitmapFromData(XtDisplay(w->C.shell), XtScreen(w->C.shell)->root,
-					(char*)g3_bits, g3_width, g3_height),
-		  NULL);
+                  XmNiconPixmap, 
+                  XCreateBitmapFromData(XtDisplay(w->C.shell), XtScreen(w->C.shell)->root,
+                                        (char*)g3_bits, g3_width, g3_height),
+                  NULL);
 
   /* Graphic window */
 
   p->G.abort = bm_to_px(w->G.Butt[6], abort_bits, 
-			abort_width, abort_height, depth, BM_PX_RED);
+                        abort_width, abort_height, depth, BM_PX_RED);
   XtVaSetValues(w->G.Butt[6], XmNlabelPixmap, p->G.abort, NULL);
 
   p->G.abort_insens = bm_to_px(w->G.Butt[6], abort_bits, 
-			       abort_width, abort_height, depth, BM_PX_NORMAL);
+                               abort_width, abort_height, depth, BM_PX_NORMAL);
   XtVaSetValues(w->G.Butt[6], XmNlabelInsensitivePixmap, p->G.abort_insens, NULL);
 
   p->G.start = bm_to_px(w->G.Butt[5], start_bits, 
-			start_width, start_height, depth, BM_PX_NORMAL);
+                        start_width, start_height, depth, BM_PX_NORMAL);
   p->G.stop = bm_to_px(w->G.Butt[5], stop_bits, 
-		       stop_width, stop_height, depth, BM_PX_NORMAL);
+                       stop_width, stop_height, depth, BM_PX_NORMAL);
   Set_AnimPixmap(w, p, 1);
 
   /* About window  */
 
   p->HD.about = bm_to_px(w->HD.aboutDialog, about_bits, 
-			 about_width, about_height, depth, BM_PX_NORMAL);
+                         about_width, about_height, depth, BM_PX_NORMAL);
   XtVaSetValues(w->HD.aboutDialog, XmNsymbolPixmap, p->HD.about, NULL);
 
 

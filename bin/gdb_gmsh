@@ -1,8 +1,0 @@
-gdb  /usr/users53/geuzaine/SOURCES/gmsh-nl/bin/gmsh \
-  -d /usr/users53/geuzaine/SOURCES/gmsh-nl/GmshUnix \
-  -d /usr/users53/geuzaine/SOURCES/gmsh-nl/GmshMesh \
-  -d /usr/users53/geuzaine/SOURCES/gmsh-nl/GmshGeo \
-  -d /usr/users53/geuzaine/SOURCES/gmsh-nl/GmshDataStr \
-  -d /usr/users53/geuzaine/SOURCES/gmsh-nl/GmshAdapt \
-  -d /usr/users53/geuzaine/SOURCES/gmsh-nl/GmshParser \
-  -d /usr/users53/geuzaine/SOURCES/gmsh-nl/GmshGL

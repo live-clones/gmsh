@@ -1,19 +1,19 @@
-/* $Id: Interpolation.h,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Interpolation.h,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _INTERPOLATION_H_
 #define _INTERPOLATION_H_
 
 Vertex InterpolateCurve (Curve * Curve, double u, int derivee);
 
 Vertex InterpolateSurface (Surface * s, double u, double v, 
-			   int derivee, int u_v);
+                           int derivee, int u_v);
 
 Vertex TransfiniteQua (Vertex c1, Vertex c2, Vertex c3, Vertex c4,
-		       Vertex s1, Vertex s2, Vertex s3, Vertex s4,
-		       double u, double v);
+                       Vertex s1, Vertex s2, Vertex s3, Vertex s4,
+                       double u, double v);
 
 Vertex TransfiniteTri (Vertex c1, Vertex c2, Vertex c3,
-		       Vertex s1, Vertex s2, Vertex s3,
-		       double u, double v);
+                       Vertex s1, Vertex s2, Vertex s3,
+                       double u, double v);
 
 Vertex TransfiniteHex 
   (Vertex f1, Vertex f2, Vertex f3, Vertex f4, Vertex f5, Vertex f6,
@@ -28,7 +28,7 @@ void TransfiniteSph (Vertex S, Vertex center, Vertex * T);
 void Normal2Surface (Surface * s, double u, double v, double n[3]);
 
 Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
-			       int derivee, double t1, double t2);
+                               int derivee, double t1, double t2);
 Vertex InterpolateUBS (Curve * Curve, double u, int derivee);
   
 Vertex InterpolateNurbs (Curve * Curve, double u, int derivee);

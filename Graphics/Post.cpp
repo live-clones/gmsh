@@ -1,4 +1,4 @@
-/* $Id: Post.cpp,v 1.4 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Post.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -93,79 +93,79 @@ void Draw_Post (void) {
 
       if(CTX.display_lists && !v->Changed && glIsList(v->Num)){
 
-	glCallList(v->Num);
+        glCallList(v->Num);
 
       }
       else{
 
-	if(CTX.display_lists){
-	  if(glIsList(v->Num)) glDeleteLists(v->Num,1);
-	  //Msg(INFO, "New Display List");
-	  glNewList(v->Num, GL_COMPILE_AND_EXECUTE);
-	}
+        if(CTX.display_lists){
+          if(glIsList(v->Num)) glDeleteLists(v->Num,1);
+          //Msg(INFO, "New Display List");
+          glNewList(v->Num, GL_COMPILE_AND_EXECUTE);
+        }
 
-	if(v->Light && v->IntervalsType != DRAW_POST_ISO){
-	  InitShading();
-	}
-	else{
-	  InitNoShading();
-	}
-	
-	/* force this */
-	if(v->IntervalsType == DRAW_POST_CONTINUOUS)
-	  glShadeModel(GL_SMOOTH); 
-	
-	switch(v->RangeType){
-	case DRAW_POST_DEFAULT : ValMin = v->Min ; ValMax = v->Max ; break;
-	case DRAW_POST_CUSTOM  : ValMin = v->CustomMin ; ValMax = v->CustomMax ; break;
-	}
-	
-	switch(v->ScaleType){
-	case DRAW_POST_LINEAR : 
-	  v->GIFV = GiveIndexFromValue_Lin ;
-	  v->GVFI = GiveValueFromIndex_Lin ;
-	  break;
-	case DRAW_POST_LOGARITHMIC : 
-	  v->GIFV = GiveIndexFromValue_Log ;
-	  v->GVFI = GiveValueFromIndex_Log ;
-	  break;
-	}
-	
-	AbsMax = DMAX(fabs(ValMin),fabs(ValMax));
-	AbsMax = (AbsMax==0.) ? 1. : AbsMax;
-	
-	for(j=0;j<3;j++){
-	  RaiseFactor[j] = v->Raise[j] / AbsMax ;
-	  for(k=0;k<5;k++) Raise[j][k] = 0. ;
-	}
-	
-	if((n = List_Nbr(v->Tetrahedra)))
-	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Tetrahedron(v, (Post_Simplex*)List_Pointer(v->Tetrahedra,j), 
-				  ValMin, ValMax, Raise);
-	
-	//if(there is alpha)List_Sort(v->Triangles, fcmpTriangle);
+        if(v->Light && v->IntervalsType != DRAW_POST_ISO){
+          InitShading();
+        }
+        else{
+          InitNoShading();
+        }
+        
+        /* force this */
+        if(v->IntervalsType == DRAW_POST_CONTINUOUS)
+          glShadeModel(GL_SMOOTH); 
+        
+        switch(v->RangeType){
+        case DRAW_POST_DEFAULT : ValMin = v->Min ; ValMax = v->Max ; break;
+        case DRAW_POST_CUSTOM  : ValMin = v->CustomMin ; ValMax = v->CustomMax ; break;
+        }
+        
+        switch(v->ScaleType){
+        case DRAW_POST_LINEAR : 
+          v->GIFV = GiveIndexFromValue_Lin ;
+          v->GVFI = GiveValueFromIndex_Lin ;
+          break;
+        case DRAW_POST_LOGARITHMIC : 
+          v->GIFV = GiveIndexFromValue_Log ;
+          v->GVFI = GiveValueFromIndex_Log ;
+          break;
+        }
+        
+        AbsMax = DMAX(fabs(ValMin),fabs(ValMax));
+        AbsMax = (AbsMax==0.) ? 1. : AbsMax;
+        
+        for(j=0;j<3;j++){
+          RaiseFactor[j] = v->Raise[j] / AbsMax ;
+          for(k=0;k<5;k++) Raise[j][k] = 0. ;
+        }
+        
+        if((n = List_Nbr(v->Tetrahedra)))
+          for(j=0 ; j<n ; j++)
+            Draw_Post_Tetrahedron(v, (Post_Simplex*)List_Pointer(v->Tetrahedra,j), 
+                                  ValMin, ValMax, Raise);
+        
+        //if(there is alpha)List_Sort(v->Triangles, fcmpTriangle);
 
-	if((n = List_Nbr(v->Triangles)))
-	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Triangle(v, (Post_Simplex*)List_Pointer(v->Triangles,j), 
-			       ValMin, ValMax, Raise);
+        if((n = List_Nbr(v->Triangles)))
+          for(j=0 ; j<n ; j++)
+            Draw_Post_Triangle(v, (Post_Simplex*)List_Pointer(v->Triangles,j), 
+                               ValMin, ValMax, Raise);
 
-	if((n = List_Nbr(v->Lines)))
-	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Line(v, (Post_Simplex*)List_Pointer(v->Lines,j), 
-			   ValMin, ValMax, Raise);
-	
-	if((n = List_Nbr(v->Points)))
-	  for(j=0 ; j<n ; j++)
-	    Draw_Post_Point(v, (Post_Simplex*)List_Pointer(v->Points,j), 
-			    ValMin, ValMax, Raise);
-	
-	if(CTX.display_lists){
-	  glEndList();
-	  v->Changed=0;
-	}
-	
+        if((n = List_Nbr(v->Lines)))
+          for(j=0 ; j<n ; j++)
+            Draw_Post_Line(v, (Post_Simplex*)List_Pointer(v->Lines,j), 
+                           ValMin, ValMax, Raise);
+        
+        if((n = List_Nbr(v->Points)))
+          for(j=0 ; j<n ; j++)
+            Draw_Post_Point(v, (Post_Simplex*)List_Pointer(v->Points,j), 
+                            ValMin, ValMax, Raise);
+        
+        if(CTX.display_lists){
+          glEndList();
+          v->Changed=0;
+        }
+        
       }
       
     }

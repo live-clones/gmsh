@@ -1,7 +1,10 @@
-/* $Id: Vertex.cpp,v 1.3 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: Vertex.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Vertex.h"
+#include "Context.h"
+
+extern Context_T CTX ;
 
 Vertex::Vertex (){
   Frozen = 0;
@@ -36,12 +39,12 @@ void Vertex::norme (){
 
 Vertex Vertex::operator + (const Vertex & other){
   return Vertex (Pos.X + other.Pos.X, Pos.Y + 
-		 other.Pos.Y, Pos.Z + other.Pos.Z, lc, w);
+                 other.Pos.Y, Pos.Z + other.Pos.Z, lc, w);
 }
 
 Vertex Vertex::operator - (const Vertex & other){
   return Vertex (Pos.X - other.Pos.X, Pos.Y - 
-		 other.Pos.Y, Pos.Z - other.Pos.Z, lc, w);
+                 other.Pos.Y, Pos.Z - other.Pos.Z, lc, w);
 }
 
 Vertex Vertex::operator / (double d){
@@ -53,8 +56,8 @@ Vertex Vertex::operator * (double d){
 
 Vertex Vertex::operator % (Vertex & autre){ // cross product
   return Vertex (Pos.Y * autre.Pos.Z - Pos.Z * autre.Pos.Y,
-		 -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
-		 Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
+                 -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
+                 Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
 }
 
 double Vertex::operator * (const Vertex & other){
@@ -92,8 +95,7 @@ int compareVertex (const void *a, const void *b){
 int comparePosition (const void *a, const void *b){
   int i, j;
   Vertex **q, **w;
-  extern double LC;
-  double eps = 1.e-6 * LC;
+  double eps = 1.e-6 * CTX.lc;
 
   q = (Vertex **) a;
   w = (Vertex **) b;

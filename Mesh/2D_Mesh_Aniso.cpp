@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh_Aniso.cpp,v 1.7 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: 2D_Mesh_Aniso.cpp,v 1.8 2000-11-26 15:43:46 geuzaine Exp $ */
 /*
    Jean-Francois Remacle
 
@@ -17,9 +17,10 @@
 #include "Numeric.h"
 
 extern Context_T CTX ;
+extern double LC2D ;
 
 void draw_polygon_2d (double r, double g, double b, int n, 
-		      double *x, double *y, double *z);
+                      double *x, double *y, double *z);
 
 MeshParameters:: MeshParameters ():
   NbSmoothing (3),
@@ -34,7 +35,7 @@ MeshParameters:: MeshParameters ():
 extern Simplex MyNewBoundary;
 extern Mesh *THEM;
 extern int CurrentNodeNumber;
-extern double MAXIMUM_LC_FOR_SURFACE, LC;
+extern double MAXIMUM_LC_FOR_SURFACE;
 extern int Alerte_Point_Scabreux;
 extern PointRecord *gPointArray;
 extern Surface *PARAMETRIC;
@@ -95,7 +96,7 @@ void matXmat (int n, double mat1[3][3], double mat2[3][3], double Res[3][3]){
     for (int j = 0; j < n; j++){
       Res[i][j] = 0.0;
       for (int k = 0; k < n; k++)
-	Res[i][j] += mat1[i][k] * mat2[k][j];
+        Res[i][j] += mat1[i][k] * mat2[k][j];
     }
   }
 }
@@ -105,7 +106,7 @@ void TmatXmat (int n, double mat1[3][3], double mat2[3][3], double Res[3][3]){
     for (int j = 0; j < n; j++){
       Res[i][j] = 0.0;
       for (int k = 0; k < n; k++)
-	Res[i][j] += mat1[k][i] * mat2[k][j];
+        Res[i][j] += mat1[k][i] * mat2[k][j];
     }
   }
 }
@@ -127,9 +128,9 @@ Simplex * Create_Simplex_For2dmesh (Vertex * v1, Vertex * v2, Vertex * v3, Verte
       prosca (v2->us, v3->us, &p23);
       p23 = fabs (p23);
       if (s->Quality < CONV_VALUE && 
-	  (p12 < THEM->Metric->min_cos || p13 < THEM->Metric->min_cos ||
-	   p23 < THEM->Metric->min_cos))
-	s->Quality = 1.0;
+          (p12 < THEM->Metric->min_cos || p13 < THEM->Metric->min_cos ||
+           p23 < THEM->Metric->min_cos))
+        s->Quality = 1.0;
     }
   }
   return s;
@@ -151,11 +152,11 @@ void Box_2_Triangles (List_T * P, Surface * s){
 
   int i, j;
   static int pts[4][2] = { {0, 0},
-			   {1, 0},
-			   {1, 1},
-			   {0, 1} };
+                           {1, 0},
+                           {1, 1},
+                           {0, 1} };
   static int tri[2][3] =  { {1, 4, 2},
-			    {2, 4, 3} };
+                            {2, 4, 3} };
   double Xm, Ym, XM, YM, Xc, Yc;
   Simplex *S, *ps;
   Vertex *V, *v, *pv;
@@ -198,7 +199,7 @@ void Box_2_Triangles (List_T * P, Surface * s){
 
   /* Longueur Caracteristique */
 
-  LC = sqrt (Xc * Xc + Yc * Yc);
+  LC2D = sqrt (Xc * Xc + Yc * Yc);
 
   for (i = 0; i < 4; i++){
     if (pts[i][0])
@@ -224,7 +225,7 @@ void Box_2_Triangles (List_T * P, Surface * s){
 
   for (i = 0; i < 2; i++){
     S = Create_Simplex_For2dmesh (&V[tri[i][0] - 1], &V[tri[i][1] - 1], 
-				  &V[tri[i][2] - 1], NULL);
+                                  &V[tri[i][2] - 1], NULL);
     List_Add (smp, &S);
     S->iEnt = s->Num;
   }
@@ -234,7 +235,7 @@ void Box_2_Triangles (List_T * P, Surface * s){
     List_Read (smp, i, &ps);
     for (j = 0; j < 3; j++)
       if (ps->S[j] == NULL)
-	ps->S[j] = &MyNewBoundary;
+        ps->S[j] = &MyNewBoundary;
     Tree_Replace (s->Simplexes, &ps);
   }
 }
@@ -374,8 +375,8 @@ void missing_edges_2d (Surface * s){
       e.V[0] = v1;
       e.V[1] = v2;
       if (!EdgesOnSurface.Search (v1, v2)) {
-	Msg(INFOS, "Missing Edge %d->%d", v1->Num, v2->Num);
-	Recover_Edge (s, &e, EdgesOnSurface);
+        Msg(INFOS, "Missing Edge %d->%d", v1->Num, v2->Num);
+        Recover_Edge (s, &e, EdgesOnSurface);
       }
     }
   }
@@ -475,19 +476,19 @@ void NewSimplexes_2D (Surface * s, List_T * Sim, List_T * news){
       ZONEELIMINEE = S->iEnt;
     else{
       if (S->iEnt != ZONEELIMINEE){
-	Msg(WARNING, "Huh! The Elimination Failed %d %d",
-	    S->iEnt, ZONEELIMINEE);
+        Msg(WARNING, "Huh! The Elimination Failed %d %d",
+            S->iEnt, ZONEELIMINEE);
       }
     }
     for (j = 0; j < 3; j++){
       SXF.F = S->F[j];
       
       if ((pSXF = (SxF *) Tree_PQuery (SimXFac, &SXF))) {
-	(pSXF->NumFaceSimpl)++;
+        (pSXF->NumFaceSimpl)++;
       }
       else {
-	SXF.NumFaceSimpl = 1;
-	Tree_Add (SimXFac, &SXF);
+        SXF.NumFaceSimpl = 1;
+        Tree_Add (SimXFac, &SXF);
       }
     }
   }
@@ -506,13 +507,13 @@ int recur_bowyer_2D (Simplex * s){
   for (i = 0; i < 3; i++){
     if (s->S[i] && s->S[i] != &MyNewBoundary && !Tree_Query (Tsd, &s->S[i])){
       if (s->S[i]->Pt_In_Ellipsis (THEV, THEM->Metric->m) && (s->iEnt == s->S[i]->iEnt)){
-	recur_bowyer_2D (s->S[i]);
+        recur_bowyer_2D (s->S[i]);
       }
       else{
-	if (s->iEnt != s->S[i]->iEnt){
-	  Alerte_Point_Scabreux = 1;
-	}
-	Tree_Insert (Sim_Sur_Le_Bord, &s->S[i]);
+        if (s->iEnt != s->S[i]->iEnt){
+          Alerte_Point_Scabreux = 1;
+        }
+        Tree_Insert (Sim_Sur_Le_Bord, &s->S[i]);
       }
     }
   }
@@ -632,7 +633,7 @@ bool Bowyer_Watson_2D (Surface * sur, Vertex * v, Simplex * S, int force){
       List_Read (Simplexes_Destroyed, i, &s);
       draw_simplex2d (sur, s, 0);
       if (!Tree_Suppress (sur->Simplexes, &s)){
-	Msg(WARNING, "Failed to Suppress Simplex %d", s->Num);
+        Msg(WARNING, "Failed to Suppress Simplex %d", s->Num);
       }
       Free (s);
     }
@@ -660,7 +661,7 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
 
   N = List_Nbr (Points);
 
-  Msg(STATUS, "Meshing 2D... (Initial)");
+  Msg(INFO, "Mesh 2D... (Initial)");
 
   Box_2_Triangles (Points, s);
   for (i = 0; i < N; i++){
@@ -676,16 +677,16 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
     */
     if (!THES){
       Msg(ERROR, "Vertex (%g,%g,%g) in no Simplex",
-	  THEV->Pos.X, THEV->Pos.Y, THEV->Pos.Z);
-      THEV->Pos.X += 10 * RAND_LONG;
-      THEV->Pos.Y += 10 * RAND_LONG;
-      THEV->Pos.Z += 10 * RAND_LONG;
+          THEV->Pos.X, THEV->Pos.Y, THEV->Pos.Z);
+      THEV->Pos.X += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
+      THEV->Pos.Y += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
+      THEV->Pos.Z += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
       Tree_Action (s->Simplexes, Action_First_Simplexes_2D);
     }
     bool  ca_marche = Bowyer_Watson_2D (s, THEV, THES, 1);
     while(!ca_marche){
-      double dx = RAND_LONG;
-      double dy = RAND_LONG;
+      double dx = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
+      double dy = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
       THEV->Pos.X += dx;
       THEV->Pos.Y += dy;
       ca_marche = Bowyer_Watson_2D (s, THEV, THES, 1);
@@ -847,8 +848,8 @@ void Restore_Surface (Surface * s){
     
     N = Tree_Nbr (keep);
     Msg (INFOS, "Initial Mesh of Surface %d: %d Simplices, %d/%d Curves, %d Faces",
-	 iSurface, N, List_Nbr (ListCurves), List_Nbr (ListAllCurves),
-	 Tree_Nbr (FacesTree));
+         iSurface, N, List_Nbr (ListCurves), List_Nbr (ListAllCurves),
+         Tree_Nbr (FacesTree));
 
     Tree_Action (keep, attribueSurface);
     Tree_Delete (keep);
@@ -894,8 +895,8 @@ Vertex * NewVertex_2D (Simplex * s){
       v = Create_Vertex (++CurrentNodeNumber, s->Center.X, s->Center.Y, 0.0, lc, 0.0);
     else
       v = Create_Vertex (++CurrentNodeNumber,
-			 f * vv[0]->Pos.X + (1. - f) * vv[1]->Pos.X,
-			 f * vv[0]->Pos.Y + (1. - f) * vv[1]->Pos.Y, 0.0, lc, 0.0);
+                         f * vv[0]->Pos.X + (1. - f) * vv[1]->Pos.X,
+                         f * vv[0]->Pos.Y + (1. - f) * vv[1]->Pos.Y, 0.0, lc, 0.0);
   }
 
   v->lc = Interpole_lcTriangle (s, v);
@@ -949,15 +950,15 @@ void IntelligentSwapEdges (Surface * s, GMSHMetric * m){
     j = rand () % 3;
     if (t->ExtractOppositeEdges (j, p, q)){
       double qp = 2. * m->EdgeLengthOnSurface (s, p, 1) 
-	/ (RacineDeTrois * (p[0]->lc + p[1]->lc));
+        / (RacineDeTrois * (p[0]->lc + p[1]->lc));
       double qq = 2. * m->EdgeLengthOnSurface (s, q, 1)
-	/ (RacineDeTrois * (q[0]->lc + q[1]->lc));
+        / (RacineDeTrois * (q[0]->lc + q[1]->lc));
       if (fabs (qp) > fabs (qq)){
-	if (draw_simplex2d (s, t, false))
-	  draw_simplex2d (s, t->S[j], false);
-	t->SwapEdge (j);
-	if (draw_simplex2d (s, t, true))
-	  draw_simplex2d (s, t->S[j], true);
+        if (draw_simplex2d (s, t, false))
+          draw_simplex2d (s, t->S[j], false);
+        t->SwapEdge (j);
+        if (draw_simplex2d (s, t, true))
+          draw_simplex2d (s, t->S[j], true);
       }
     }
   }
@@ -1047,32 +1048,32 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
     while ( simp->Quality > CONV_VALUE){
       newv = NewVertex_2D (simp);
       while (!simp->Pt_In_Simplex_2D (newv) &&
-	     (simp->S[0] == &MyNewBoundary || !simp->S[0]->Pt_In_Simplex_2D (newv)) &&
-	     (simp->S[1] == &MyNewBoundary || !simp->S[1]->Pt_In_Simplex_2D (newv)) &&
-	     (simp->S[2] == &MyNewBoundary || !simp->S[2]->Pt_In_Simplex_2D (newv))){
-	/*
-	  Msg(INFO,"pt : %12.5E %12.5E",newv->Pos.X,newv->Pos.Y);
-	  Msg(INFO,"not in : (%12.5E %12.5E) (%12.5E %12.5E) (%12.5E %12.5E)",
-	  simp->V[0]->Pos.X,simp->V[0]->Pos.Y,simp->V[1]->Pos.X,
-	  simp->V[1]->Pos.Y,simp->V[2]->Pos.X,simp->V[2]->Pos.Y);
-	*/
-	Tree_Suppress (s->Simplexes, &simp);
-	simp->Quality /= 2.;
-	Tree_Insert (s->Simplexes, &simp);
-	Tree_Right (s->Simplexes, &simp);
-	if (simp->Quality < CONV_VALUE)
-	  break;
-	newv = NewVertex_2D (simp);
+             (simp->S[0] == &MyNewBoundary || !simp->S[0]->Pt_In_Simplex_2D (newv)) &&
+             (simp->S[1] == &MyNewBoundary || !simp->S[1]->Pt_In_Simplex_2D (newv)) &&
+             (simp->S[2] == &MyNewBoundary || !simp->S[2]->Pt_In_Simplex_2D (newv))){
+        /*
+          Msg(INFO,"pt : %12.5E %12.5E",newv->Pos.X,newv->Pos.Y);
+          Msg(INFO,"not in : (%12.5E %12.5E) (%12.5E %12.5E) (%12.5E %12.5E)",
+          simp->V[0]->Pos.X,simp->V[0]->Pos.Y,simp->V[1]->Pos.X,
+          simp->V[1]->Pos.Y,simp->V[2]->Pos.X,simp->V[2]->Pos.Y);
+        */
+        Tree_Suppress (s->Simplexes, &simp);
+        simp->Quality /= 2.;
+        Tree_Insert (s->Simplexes, &simp);
+        Tree_Right (s->Simplexes, &simp);
+        if (simp->Quality < CONV_VALUE)
+          break;
+        newv = NewVertex_2D (simp);
       }
       if (simp->Quality < CONV_VALUE)
-	break;
+        break;
       i++;
       if (i % n == n - 1){
-	volume = 0.0;
-	Tree_Action (s->Simplexes, VSIM_2D);
-	Msg(STATUS, "Nod=%d Elm=%d",
-	    Tree_Nbr (s->Vertices), Tree_Nbr (s->Simplexes));
-	Msg(SELECT, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
+        volume = 0.0;
+        Tree_Action (s->Simplexes, VSIM_2D);
+        Msg(STATUS, "Nod=%d Elm=%d",
+            Tree_Nbr (s->Vertices), Tree_Nbr (s->Simplexes));
+        Msg(SELECT, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
       }
       Bowyer_Watson_2D (s, newv, simp, 0);
       Tree_Right (s->Simplexes, &simp);

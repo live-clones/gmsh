@@ -1,4 +1,4 @@
-/* $Id: StepGeomDatabase.h,v 1.2 2000-11-23 14:11:31 geuzaine Exp $ */
+/* $Id: StepGeomDatabase.h,v 1.3 2000-11-26 15:43:45 geuzaine Exp $ */
 #ifndef _STEP_GEOM_DATABASE_H_
 #define _STEP_GEOM_DATABASE_H_
 
@@ -189,15 +189,15 @@ void Add_Face_Outer_Bound (int Num, char *name, int el, bool dir, bool outer);
 void Add_Advanced_Face (int Num, char *name, List_T * lfob, int surf, bool dir);
 void Add_Closed_Shell (int Num, char *name, List_T * laf);
 void Add_BSpline_Curve_With_Knots (int Num, char *name, int Order, List_T * lcp,
-				   List_T * lm, List_T * lk, double udeb, double uend);
+                                   List_T * lm, List_T * lk, double udeb, double uend);
 void Add_Plane (int Num, char *name, int axis);
 void Add_Axis2_Placement3D (int Num, int cp, int dir1, int dir2);
 void Add_Closed_Shell (int Num, char *name, List_T * list);
 void Resolve_BREP (void);
 void Add_BSpline_Surface_With_Knots (int Num,char *name,int OrderU,int OrderV,
-				     List_T * lcp, List_T * lmu, List_T * lmv,
-				     List_T * lku,List_T * lkv,
-				     double udeb,double uend,
-				     double vdeb,double vend);
+                                     List_T * lcp, List_T * lmu, List_T * lmv,
+                                     List_T * lku,List_T * lkv,
+                                     double udeb,double uend,
+                                     double vdeb,double vend);
 
 #endif

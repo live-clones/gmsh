@@ -1,4 +1,4 @@
-/* $Id: Matrix.h,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Matrix.h,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
 
@@ -14,20 +14,20 @@ public:
     zero = init;
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	mat[i][j] = zero;
+        mat[i][j] = zero;
   }
 
   Matrix2x2 (const T& init, T z[3][3]){
     zero = init;
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	mat[i][j] = z[i][j];
+        mat[i][j] = z[i][j];
   }
 
   Matrix2x2<T>& operator = (const Matrix2x2<T> &autre){
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	mat[i][j] = autre.mat[i][j];
+        mat[i][j] = autre.mat[i][j];
     return *this;
   }
 
@@ -35,7 +35,7 @@ public:
     Matrix2x2<T> m(0.);
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	m.mat[i][j] = mat[i][j] + autre.mat[i][j];
+        m.mat[i][j] = mat[i][j] + autre.mat[i][j];
     return m;
   }
 
@@ -43,7 +43,7 @@ public:
     Matrix2x2<T> m(0.);
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	m.mat[i][j] = mat[i][j] - autre.mat[i][j];
+        m.mat[i][j] = mat[i][j] - autre.mat[i][j];
     return m;
   }
 
@@ -59,16 +59,16 @@ public:
   Matrix2x2 copy(T m[3][3]){
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	m[i][j] = mat[i][j];
+        m[i][j] = mat[i][j];
   }
   
   Matrix2x2 operator * (const Matrix2x2<T> &autre){
     Matrix2x2 m(0.);
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++){
-	m.mat[i][j] = zero;
-	for(int k=0;k<_TAILLE_;k++)
-	  m.mat[i][j] += mat[i][k] * autre.mat[k][j];
+        m.mat[i][j] = zero;
+        for(int k=0;k<_TAILLE_;k++)
+          m.mat[i][j] += mat[i][k] * autre.mat[k][j];
       }
     return m;
   }
@@ -86,11 +86,11 @@ public:
     T temp;
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++){
-	if(i!=j){
-	  temp = mat[i][j];
-	  mat[i][j] = mat[j][i];
-	  mat[j][i] = temp;
-	}
+        if(i!=j){
+          temp = mat[i][j];
+          mat[i][j] = mat[j][i];
+          mat[j][i] = temp;
+        }
       }
   }
 };
@@ -108,20 +108,20 @@ public:
     zero = init;
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	mat[i][j] = zero;
+        mat[i][j] = zero;
   }
 
   Matrix3x3 (const T& init, T z[3][3]){
     zero = init;
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	mat[i][j] = z[i][j];
+        mat[i][j] = z[i][j];
   }
 
   Matrix3x3<T>& operator = (const Matrix3x3<T> &autre){
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	mat[i][j] = autre.mat[i][j];
+        mat[i][j] = autre.mat[i][j];
     return *this;
   }
 
@@ -129,7 +129,7 @@ public:
     Matrix3x3<T> m(0.);
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	m.mat[i][j] = mat[i][j] + autre.mat[i][j];
+        m.mat[i][j] = mat[i][j] + autre.mat[i][j];
     return m;
   }
 
@@ -137,7 +137,7 @@ public:
     Matrix2x2<T> m(0.);
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	m.mat[i][j] = mat[i][j] - autre.mat[i][j];
+        m.mat[i][j] = mat[i][j] - autre.mat[i][j];
     return m;
   }
 
@@ -153,16 +153,16 @@ public:
   void copy(T m[3][3]){
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++)
-	m[i][j] = mat[i][j];
+        m[i][j] = mat[i][j];
   }
   
   Matrix3x3 operator * (const Matrix3x3<T> &autre){
     Matrix3x3 m(0.);
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<_TAILLE_;j++){
-	m.mat[i][j] = zero;
-	for(int k=0;k<_TAILLE_;k++)
-	  m.mat[i][j] += mat[i][k] * autre.mat[k][j];
+        m.mat[i][j] = zero;
+        for(int k=0;k<_TAILLE_;k++)
+          m.mat[i][j] += mat[i][k] * autre.mat[k][j];
       }
     return m;
   }
@@ -182,11 +182,11 @@ public:
     T temp;
     for(int i=0;i<_TAILLE_;i++)
       for(int j=0;j<i;j++){
-	if(i!=j){
-	  temp = mat[i][j];
-	  mat[i][j] = mat[j][i];
-	  mat[j][i] = temp;
-	}
+        if(i!=j){
+          temp = mat[i][j];
+          mat[i][j] = mat[j][i];
+          mat[j][i] = temp;
+        }
       }
   }
 };

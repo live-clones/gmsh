@@ -1,4 +1,4 @@
-/* $Id: CbMesh.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: CbMesh.cpp,v 1.5 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -22,7 +22,8 @@ extern char   attrx_text[100], attry_text[100], attrz_text[100], attrdec_text[10
 /*  m e s h _ e v e n t _ h a n d l e r                                     */
 /* ------------------------------------------------------------------------ */
 
-#ifndef _NOTHREADS
+#ifdef _USETHREADS
+
 #include <pthread.h>
 
 int               MeshDim ;
@@ -38,7 +39,7 @@ void* StartMeshThread(void * data){
   Msg(STATUS,"Ready");
   CTX.mesh.draw = 1;
   CTX.threads_lock = 0;
-  XtSetSensitive(WID.G.Butt[5], 0);
+  XtSetSensitive(WID.G.Butt[6], 0);
   Init();
   Draw();
   pthread_exit(NULL);
@@ -54,7 +55,7 @@ void CancelMeshThread(void){
     pthread_cancel(MeshThread);
     CTX.mesh.draw = 1;
     CTX.threads_lock = 0;
-    XtSetSensitive(WID.G.Butt[5], 0);    
+    XtSetSensitive(WID.G.Butt[6], 0);    
     Msg(INFO,"Mesh Aborted");
     mesh_event_handler(MESH_DELETE);
     Msg(STATUS,"Ready");
@@ -89,9 +90,9 @@ void mesh_event_handler (int event) {
     break;
     
   case MESH_1D : 
-#ifndef _NOTHREADS
+#ifdef _USETHREADS
     if(CTX.threads){
-      XtSetSensitive(WID.G.Butt[5], 1);
+      XtSetSensitive(WID.G.Butt[6], 1);
       CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 1 ; 
       //      pthread_mutex_init(&MeshMutex,NULL);
       //      pthread_mutex_lock(&MeshMutex);
@@ -103,9 +104,9 @@ void mesh_event_handler (int event) {
     break;
     
   case MESH_2D : 
-#ifndef _NOTHREADS
+#ifdef _USETHREADS
     if(CTX.threads){
-      XtSetSensitive(WID.G.Butt[5], 1);
+      XtSetSensitive(WID.G.Butt[6], 1);
       CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 2 ; 
       //      pthread_mutex_init(&MeshMutex,NULL);
       //      pthread_mutex_lock(&MeshMutex);
@@ -117,9 +118,9 @@ void mesh_event_handler (int event) {
     break;    
 
   case MESH_3D : 
-#ifndef _NOTHREADS
+#ifdef _USETHREADS
     if(CTX.threads){
-      XtSetSensitive(WID.G.Butt[5], 1);
+      XtSetSensitive(WID.G.Butt[6], 1);
       CTX.mesh.draw = 0; CTX.threads_lock = 1 ; MeshDim = 3 ; 
       //      pthread_mutex_init(&MeshMutex,NULL);
       //      pthread_mutex_lock(&MeshMutex);
@@ -137,21 +138,21 @@ void mesh_event_handler (int event) {
       Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
-	p[n++] = v->Num; 
+        p[n++] = v->Num; 
       }
       if (ib == -1){ /* 'e' */
-	if(n >= 1) {
-	  add_charlength(n,p,TheFileName); break;
-	}
-	n=0;
-	ZeroHighlight(&M);
-	Replot();
+        if(n >= 1) {
+          add_charlength(n,p,TheFileName); break;
+        }
+        n=0;
+        ZeroHighlight(&M);
+        Replot();
       }
       if(ib == 0){ /* 'q' */
-	n=0 ;
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        n=0 ;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
     }
     break ;
@@ -162,21 +163,21 @@ void mesh_event_handler (int event) {
       Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
-	p[n++] = s->Num; 
+        p[n++] = s->Num; 
       }
       if (ib == -1){ /* 'e' */
-	if(n >= 1) {
-	  add_recosurf(n,p,TheFileName); break;
-	}
-	n=0;
-	ZeroHighlight(&M);
-	Replot();
+        if(n >= 1) {
+          add_recosurf(n,p,TheFileName); break;
+        }
+        n=0;
+        ZeroHighlight(&M);
+        Replot();
       }
       if(ib == 0){ /* 'q' */
-	n=0 ;
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        n=0 ;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
     }
     break ;
@@ -188,71 +189,71 @@ void mesh_event_handler (int event) {
     while(1){
       switch (event) {    
       case MESH_DEFINE_TRSF_LINE :
-	Msg(STATUS,"Select Line ('e'=end, 'q'=quit)");
-	ib = SelectEntity(ENT_LINE, &v,&c,&s);
-	break ;
+        Msg(STATUS,"Select Line ('e'=end, 'q'=quit)");
+        ib = SelectEntity(ENT_LINE, &v,&c,&s);
+        break ;
       case MESH_DEFINE_TRSF_SURFACE :
-	Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
-	ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
-	break;
+        Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
+        ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
+        break;
       case MESH_DEFINE_TRSF_VOLUME :
-	ib = 1;
-	break;
+        ib = 1;
+        break;
       }
       if(ib == 1){ /* left mouse butt */
-	switch (event) {    
-	case MESH_DEFINE_TRSF_LINE : p[n++] = c->Num ; break ;
-	case MESH_DEFINE_TRSF_SURFACE : p[n++] = s->Num;
-	case MESH_DEFINE_TRSF_VOLUME :
-	  while(1){
-	    Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
-	    ib = SelectEntity(ENT_POINT, &v,&c,&s);
-	    if(ib == 1){ /* left mouse butt */
-	      p[n++] = v->Num ;
-	    }
-	    if (ib == -1){ /* 'e' */
-	      switch (event) {    
-	      case MESH_DEFINE_TRSF_SURFACE :
-		if(n == 3+1 || n == 4+1)
-		  add_trsfsurf(n,p,TheFileName); 
-		else
-		  Msg(INFO, "Wrong Number of Points for Transfinite Surface");
-		break;
-	      case MESH_DEFINE_TRSF_VOLUME :
-		if(n == 6 || n == 8)
-		  add_trsfvol(n,p,TheFileName);
-		else
-		  Msg(INFO, "Wrong Number of Points for Transfinite Volume");
-		break;
-	      }
-	      n=0;
-	      ZeroHighlight(&M);
-	      Replot();
-	      break;
-	    }
-	    if(ib == 0){ /* 'q' */
-	      n=0 ;
-	      ZeroHighlight(&M);
-	      Replot();
-	      break;
-	    }
-	  }
-	  break ;
-	}
+        switch (event) {    
+        case MESH_DEFINE_TRSF_LINE : p[n++] = c->Num ; break ;
+        case MESH_DEFINE_TRSF_SURFACE : p[n++] = s->Num;
+        case MESH_DEFINE_TRSF_VOLUME :
+          while(1){
+            Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
+            ib = SelectEntity(ENT_POINT, &v,&c,&s);
+            if(ib == 1){ /* left mouse butt */
+              p[n++] = v->Num ;
+            }
+            if (ib == -1){ /* 'e' */
+              switch (event) {    
+              case MESH_DEFINE_TRSF_SURFACE :
+                if(n == 3+1 || n == 4+1)
+                  add_trsfsurf(n,p,TheFileName); 
+                else
+                  Msg(INFO, "Wrong Number of Points for Transfinite Surface");
+                break;
+              case MESH_DEFINE_TRSF_VOLUME :
+                if(n == 6 || n == 8)
+                  add_trsfvol(n,p,TheFileName);
+                else
+                  Msg(INFO, "Wrong Number of Points for Transfinite Volume");
+                break;
+              }
+              n=0;
+              ZeroHighlight(&M);
+              Replot();
+              break;
+            }
+            if(ib == 0){ /* 'q' */
+              n=0 ;
+              ZeroHighlight(&M);
+              Replot();
+              break;
+            }
+          }
+          break ;
+        }
       }
       if (ib == -1){ /* 'e' */
-	if (event == MESH_DEFINE_TRSF_LINE){ 
-	  if(n >= 1) add_trsfline(n,p,TheFileName);
-	}
-	n=0;
-	ZeroHighlight(&M);
-	Replot();
+        if (event == MESH_DEFINE_TRSF_LINE){ 
+          if(n >= 1) add_trsfline(n,p,TheFileName);
+        }
+        n=0;
+        ZeroHighlight(&M);
+        Replot();
       }
       if(ib == 0){ /* 'q' */
-	n=0 ;
-	ZeroHighlight(&M);
-	Replot();
-	break;
+        n=0 ;
+        ZeroHighlight(&M);
+        Replot();
+        break;
       }
     }
     break ;

@@ -1,4 +1,4 @@
-/* $Id: Generator.cpp,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: Generator.cpp,v 1.7 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -9,8 +9,7 @@
 
 extern Mesh     *THEM;
 extern Context_T CTX;
-extern int TYPBGMESH;
-extern int CurrentNodeNumber, CurrentSimplexNumber;
+extern int       CurrentNodeNumber, CurrentSimplexNumber;
 
 static List_T *Curves;
 
@@ -27,7 +26,7 @@ void ApplyLcFactor_Point(void *a, void *b){
   Vertex *v = *(Vertex**)a;
   if(v->lc <= 0.0)
     Msg(FATAL, "Wrong characteristic Length (%g <= 0) for Point %d",
-	v->lc, v->Num);
+        v->lc, v->Num);
   v->lc *= CTX.mesh.lc_factor;
 }
 void ApplyLcFactor_Attractor(void *a, void *b){
@@ -42,9 +41,13 @@ void ApplyLcFactor(Mesh *M){
 
 void Maillage_Dimension_0 (Mesh * M){
   for (int i = 0; i < 20; i++) M->Statistics[i] = 0.0;
-  Create_BgMesh (TYPBGMESH, .2, M);
+  // This is the default type of BGM (lc associated with 
+  // points of the geometry). It can be changed to
+  // - ONFILE by loading a view containing a bgmesh
+  // - CONSTANT
+  // - FUNCTION
+  Create_BgMesh (WITHPOINTS, .2, M);
 }
-
 void Maillage_Dimension_1 (Mesh * M){
   double t1, t2;
   t1 = Cpu();
@@ -56,7 +59,7 @@ void Maillage_Dimension_1 (Mesh * M){
 void Maillage_Dimension_2 (Mesh * M){
   int i;
   Curve *c, *neew, C;
-  double t1, t2;
+  double t1, t2, shortest=1.e300;
 
   t1 = Cpu();
 
@@ -66,6 +69,7 @@ void Maillage_Dimension_2 (Mesh * M){
   for (i = 0; i < List_Nbr (Curves); i++){
     List_Read (Curves, i, &c);
     if (c->Num > 0){
+      if(c->l < shortest) shortest = c->l ;
       neew = &C;
       neew->Num = -c->Num;
       Tree_Query (M->Curves, &neew);
@@ -74,6 +78,8 @@ void Maillage_Dimension_2 (Mesh * M){
     }
   }
   List_Delete (Curves);
+
+  Msg(DEBUG, "Shortest Curve has Length %g", shortest);
 
   Tree_Action (M->Surfaces, Maillage_Surface);
 
@@ -95,9 +101,9 @@ void Maillage_Dimension_3 (Mesh * M){
   for (int i = 0; i < List_Nbr (list); i++){
     List_Read (list, i, &vol);
     if ((!vol->Extrude || !vol->Extrude->mesh.ExtrudeMesh) &&
-	(vol->Method != TRANSFINI)){
+        (vol->Method != TRANSFINI)){
       for (int j = 0; j < List_Nbr (vol->Surfaces); j++){
-	List_Replace (v->Surfaces, List_Pointer (vol->Surfaces, j), compareSurface);
+        List_Replace (v->Surfaces, List_Pointer (vol->Surfaces, j), compareSurface);
       }
     }
   }
@@ -189,7 +195,6 @@ void mai3d (Mesh * M, int Asked){
 
   if ((Asked > oldstatus && Asked >= 0 && oldstatus < 0) ||
       (Asked < oldstatus)){
-    printf("ON PASSE ICI\n");
     OpenProblem (TheFileName);
     M->status = 0;
   }

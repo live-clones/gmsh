@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.6 2000-11-24 12:50:06 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.7 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -32,7 +32,7 @@ static char KeepFileName[256];
 /* ------------------------------------------------------------------------ */
 
 void SaveToDisk (char *FileName, Widget warning, 
-		 void (*function)(FILE *file)){
+                 void (*function)(FILE *file)){
   FILE    *fp ;
 
   if(!WARNING_OVERRIDE){
@@ -87,12 +87,14 @@ void CreateImage (FILE *fp) {
       break;
     }
     Msg(INFOS, "X Image Dump Complete '%s'", KeepFileName);
+    Msg (INFO, "Wrote File '%s'", KeepFileName);
     break ;
 
   case PRINT_GL2GIF :
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
-	       CTX.viewport[3]-CTX.viewport[1]);
+               CTX.viewport[3]-CTX.viewport[1]);
     Msg(INFOS, "GIF Dump Complete '%s'", KeepFileName);
+    Msg (INFO, "Wrote File '%s'", KeepFileName);
     break;
 
   case PRINT_GL2PS_SIMPLE :
@@ -102,9 +104,10 @@ void CreateImage (FILE *fp) {
     while(res == GL2PS_OVERFLOW){
       size3d += 1024*1024 ;
       gl2psBeginPage(TheBaseFileName, "Gmsh", 
-		     (CTX.print.type == PRINT_GL2PS_SIMPLE ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
-		     GL2PS_SIMPLE_LINE_OFFSET | GL2PS_DRAW_BACKGROUND,
-		     GL_RGBA, 0, NULL, size3d, fp);
+                     (CTX.print.type == PRINT_GL2PS_SIMPLE ? 
+                      GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
+                     GL2PS_SIMPLE_LINE_OFFSET | GL2PS_DRAW_BACKGROUND,
+                     GL_RGBA, 0, NULL, size3d, fp);
       CTX.stream = TO_FILE ;
       Init();
       Draw();
@@ -112,6 +115,7 @@ void CreateImage (FILE *fp) {
       res = gl2psEndPage();
     }
     Msg(INFOS, "GL2PS Output Complete '%s'", KeepFileName);
+    Msg (INFO, "Wrote File '%s'", KeepFileName);
     break;
 
   default :

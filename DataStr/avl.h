@@ -1,5 +1,5 @@
-/* $Id: avl.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
-/* $Id: avl.h,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
+/* $Id: avl.h,v 1.3 2000-11-26 15:43:45 geuzaine Exp $ */
+/* $Id: avl.h,v 1.3 2000-11-26 15:43:45 geuzaine Exp $ */
 #ifndef _AVL_H_
 #define _AVL_H_
 
@@ -54,17 +54,17 @@ struct avl_generator_struct {
 };
 
 
-#define AVL_FORWARD 	0
-#define AVL_BACKWARD 	1
+#define AVL_FORWARD     0
+#define AVL_BACKWARD    1
 
 #define AVL_MOST_LEFT   0
 #define AVL_MOST_RIGHT  1
 
 #define avl_is_member(tree, key)   avl_lookup(tree, key, (void **) 0)
 
-#define avl_foreach_item(table, gen, dir, key_p, value_p)		\
-    for(gen = avl_init_gen(table, dir);					\
-	    avl_gen(gen, key_p, value_p) || (avl_free_gen(gen),0);)
+#define avl_foreach_item(table, gen, dir, key_p, value_p)               \
+    for(gen = avl_init_gen(table, dir);                                 \
+            avl_gen(gen, key_p, value_p) || (avl_free_gen(gen),0);)
 
 
 avl_tree *avl_init_table(int (*compar)(const void *key1, const void *key2));

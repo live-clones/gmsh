@@ -1,5 +1,5 @@
-/* $Id: avl.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
-#define RCSID "$Id: avl.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $"
+/* $Id: avl.cpp,v 1.3 2000-11-26 15:43:45 geuzaine Exp $ */
+#define RCSID "$Id: avl.cpp,v 1.3 2000-11-26 15:43:45 geuzaine Exp $"
 
 /*
  * This is a modified version for Gmsh (for c++, 64-bit architectures, etc.)
@@ -42,15 +42,15 @@
 #define HEIGHT(node)         (node == NIL(avl_node) ? -1 : (node)->height)
 #define BALANCE(node)        (HEIGHT((node)->right) - HEIGHT((node)->left))
 
-#define compute_height(node) {				\
-    int x=HEIGHT(node->left), y=HEIGHT(node->right);	\
-    (node)->height = XRNMAX(x,y) + 1;			\
+#define compute_height(node) {                          \
+    int x=HEIGHT(node->left), y=HEIGHT(node->right);    \
+    (node)->height = XRNMAX(x,y) + 1;                   \
 }
 
-#define COMPARE(key, nodekey, compare)	 		\
-    ((compare == avl_numcmp) ? 				\
-	(long int) key - (long int) nodekey : 			\
-	(*compare)(key, nodekey))
+#define COMPARE(key, nodekey, compare)                  \
+    ((compare == avl_numcmp) ?                          \
+        (long int) key - (long int) nodekey :                   \
+        (*compare)(key, nodekey))
 
 static void avl_record_gen_forward(avl_node *node, avl_generator *gen);
 static void avl_record_gen_backward(avl_node *node, avl_generator *gen);
@@ -61,10 +61,10 @@ static void rotate_right(avl_node **node_p);
 static void avl_walk_forward(avl_node *node, void (*func)(void *key, void *value));
 static void avl_walk_backward(avl_node *node, void (*func)(void *key, void *value));
 static void free_entry(avl_node *node, void (*key_free)(void *key), 
-		       void (*value_free)(void *value));
+                       void (*value_free)(void *value));
 static avl_node *new_node(void *key, void *value);
 static int do_check_tree(avl_node *node, int (*compar)(const void *key1, const void *key2),
-			 int *error);
+                         int *error);
 
 
 avl_tree *avl_init_table(int (*compar)(const void *key1, const void *key2))
@@ -85,13 +85,13 @@ int avl_lookup(avl_tree *tree, void *key, void **value_p)
 
     node = tree->root;
     while (node != NIL(avl_node)) {
-	diff = COMPARE(key, node->key, compare);
-	if (diff == 0) {
-	    /* got a match, give the user a 'value' only if non-null */
-	    if (value_p != NIL(void *)) *value_p = node->value;
-	    return 1;
-	}
-	node = (diff < 0) ? node->left : node->right;
+        diff = COMPARE(key, node->key, compare);
+        if (diff == 0) {
+            /* got a match, give the user a 'value' only if non-null */
+            if (value_p != NIL(void *)) *value_p = node->value;
+            return 1;
+        }
+        node = (diff < 0) ? node->left : node->right;
     }
     return 0;
 }
@@ -109,10 +109,10 @@ int avl_insert(avl_tree *tree, void *key, void *value)
     /* walk down the tree (saving the path); stop at insertion point */
     status = 0;
     while ((node = *node_p) != NIL(avl_node)) {
-	stack_nodep[stack_n++] = node_p;
-	diff = COMPARE(key, node->key, compare);
-	if (diff == 0) status = 1;
-	node_p = (diff < 0) ? &node->left : &node->right;
+        stack_nodep[stack_n++] = node_p;
+        diff = COMPARE(key, node->key, compare);
+        if (diff == 0) status = 1;
+        node_p = (diff < 0) ? &node->left : &node->right;
     }
 
     /* insert the item and re-balance the tree */
@@ -135,26 +135,26 @@ int avl_delete(avl_tree *tree, void **key_p, void **value_p)
 
     /* Walk down the tree saving the path; return if not found */
     while ((node = *node_p) != NIL(avl_node)) {
-	diff = COMPARE(key, node->key, compare);
-	if (diff == 0) goto delete_item;
-	stack_nodep[stack_n++] = node_p;
-	node_p = (diff < 0) ? &node->left : &node->right;
+        diff = COMPARE(key, node->key, compare);
+        if (diff == 0) goto delete_item;
+        stack_nodep[stack_n++] = node_p;
+        node_p = (diff < 0) ? &node->left : &node->right;
     }
-    return 0;		/* not found */
+    return 0;           /* not found */
 
     /* prepare to delete node and replace it with rightmost of left tree */
   delete_item:
     *key_p = node->key;
     if (value_p != 0) *value_p = node->value;
     if (node->left == NIL(avl_node)) {
-	*node_p = node->right;
+        *node_p = node->right;
     } else {
-	rightmost = find_rightmost(&node->left);
-	rightmost->left = node->left;
-	rightmost->right = node->right;
-	rightmost->height = -2; 	/* mark bogus height for do_rebal */
-	*node_p = rightmost;
-	stack_nodep[stack_n++] = node_p;
+        rightmost = find_rightmost(&node->left);
+        rightmost->left = node->left;
+        rightmost->right = node->right;
+        rightmost->height = -2;         /* mark bogus height for do_rebal */
+        *node_p = rightmost;
+        stack_nodep[stack_n++] = node_p;
     }
     FREE(node);
 
@@ -168,18 +168,18 @@ int avl_delete(avl_tree *tree, void **key_p, void **value_p)
 static void avl_record_gen_forward(avl_node *node, avl_generator *gen)
 {
     if (node != NIL(avl_node)) {
-	avl_record_gen_forward(node->left, gen);
-	gen->nodelist[gen->count++] = node;
-	avl_record_gen_forward(node->right, gen);
+        avl_record_gen_forward(node->left, gen);
+        gen->nodelist[gen->count++] = node;
+        avl_record_gen_forward(node->right, gen);
     }
 }
 
 static void avl_record_gen_backward(avl_node *node, avl_generator *gen)
 {
     if (node != NIL(avl_node)) {
-	avl_record_gen_backward(node->right, gen);
-	gen->nodelist[gen->count++] = node;
-	avl_record_gen_backward(node->left, gen);
+        avl_record_gen_backward(node->right, gen);
+        gen->nodelist[gen->count++] = node;
+        avl_record_gen_backward(node->left, gen);
     }
 }
 
@@ -193,9 +193,9 @@ avl_generator *avl_init_gen(avl_tree *tree, int dir)
     gen->nodelist = ALLOC(avl_node *, avl_count(tree));
     gen->count = 0;
     if (dir == AVL_FORWARD) {
-	avl_record_gen_forward(tree->root, gen);
+        avl_record_gen_forward(tree->root, gen);
     } else {
-	avl_record_gen_backward(tree->root, gen);
+        avl_record_gen_backward(tree->root, gen);
     }
     gen->count = 0;
 
@@ -209,12 +209,12 @@ int avl_gen(avl_generator *gen, void **key_p, void **value_p)
     avl_node *node;
 
     if (gen->count == gen->tree->num_entries) {
-	return 0;
+        return 0;
     } else {
-	node = gen->nodelist[gen->count++];
-	if (key_p != NIL(void *)) *key_p = node->key;
-	if (value_p != NIL(void *)) *value_p = node->value;
-	return 1;
+        node = gen->nodelist[gen->count++];
+        if (key_p != NIL(void *)) *key_p = node->key;
+        if (value_p != NIL(void *)) *value_p = node->value;
+        return 1;
     }
 }
 
@@ -232,9 +232,9 @@ static avl_node *find_rightmost(avl_node **node_p)
 
     node = *node_p;
     while (node->right != NIL(avl_node)) {
-	stack_nodep[stack_n++] = node_p;
-	node_p = &node->right;
-	node = *node_p;
+        stack_nodep[stack_n++] = node_p;
+        node_p = &node->right;
+        node = *node_p;
     }
     *node_p = node->left;
 
@@ -250,19 +250,19 @@ static void do_rebalance(avl_node ***stack_nodep, int stack_n)
 
     /* work our way back up, re-balancing the tree */
     while (--stack_n >= 0) {
-	node_p = stack_nodep[stack_n];
-	node = *node_p;
-	hl = HEIGHT(node->left);		/* watch for NIL */
-	hr = HEIGHT(node->right);		/* watch for NIL */
-	if ((hr - hl) < -1) {
-	    rotate_right(node_p);
-	} else if ((hr - hl) > 1) {
-	    rotate_left(node_p);
-	} else {
-	    height = XRNMAX(hl, hr) + 1;
-	    if (height == node->height) break;
-	    node->height = height;
-	}
+        node_p = stack_nodep[stack_n];
+        node = *node_p;
+        hl = HEIGHT(node->left);                /* watch for NIL */
+        hr = HEIGHT(node->right);               /* watch for NIL */
+        if ((hr - hl) < -1) {
+            rotate_right(node_p);
+        } else if ((hr - hl) > 1) {
+            rotate_left(node_p);
+        } else {
+            height = XRNMAX(hl, hr) + 1;
+            if (height == node->height) break;
+            node->height = height;
+        }
     }
 }
 
@@ -271,17 +271,17 @@ static void rotate_left(avl_node **node_p)
     register avl_node *old_root = *node_p, *new_root, *new_right;
 
     if (BALANCE(old_root->right) >= 0) {
-	*node_p = new_root = old_root->right;
-	old_root->right = new_root->left;
-	new_root->left = old_root;
+        *node_p = new_root = old_root->right;
+        old_root->right = new_root->left;
+        new_root->left = old_root;
     } else {
-	new_right = old_root->right;
-	*node_p = new_root = new_right->left;
-	old_root->right = new_root->left;
-	new_right->left = new_root->right;
-	new_root->right = new_right;
-	new_root->left = old_root;
-	compute_height(new_right);
+        new_right = old_root->right;
+        *node_p = new_root = new_right->left;
+        old_root->right = new_root->left;
+        new_right->left = new_root->right;
+        new_root->right = new_right;
+        new_root->left = old_root;
+        compute_height(new_right);
     }
     compute_height(old_root);
     compute_height(new_root);
@@ -292,17 +292,17 @@ static void rotate_right(avl_node **node_p)
     register avl_node *old_root = *node_p, *new_root, *new_left;
 
     if (BALANCE(old_root->left) <= 0) {
-	*node_p = new_root = old_root->left;
-	old_root->left = new_root->right;
-	new_root->right = old_root;
+        *node_p = new_root = old_root->left;
+        old_root->left = new_root->right;
+        new_root->right = old_root;
     } else {
-	new_left = old_root->left;
-	*node_p = new_root = new_left->right;
-	old_root->left = new_root->right;
-	new_left->right = new_root->left;
-	new_root->left = new_left;
-	new_root->right = old_root;
-	compute_height(new_left);
+        new_left = old_root->left;
+        *node_p = new_root = new_left->right;
+        old_root->left = new_root->right;
+        new_left->right = new_root->left;
+        new_root->left = new_left;
+        new_root->right = old_root;
+        compute_height(new_left);
     }
     compute_height(old_root);
     compute_height(new_root);
@@ -311,27 +311,27 @@ static void rotate_right(avl_node **node_p)
 static void avl_walk_forward(avl_node *node, void (*func)(void *key, void *value))
 {
     if (node != NIL(avl_node)) {
-	avl_walk_forward(node->left, func);
-	(*func)(node->key, node->value);
-	avl_walk_forward(node->right, func);
+        avl_walk_forward(node->left, func);
+        (*func)(node->key, node->value);
+        avl_walk_forward(node->right, func);
     }
 }
 
 static void avl_walk_backward(avl_node *node, void (*func)(void *key, void *value))
 {
     if (node != NIL(avl_node)) {
-	avl_walk_backward(node->right, func);
-	(*func)(node->key, node->value);
-	avl_walk_backward(node->left, func);
+        avl_walk_backward(node->right, func);
+        (*func)(node->key, node->value);
+        avl_walk_backward(node->left, func);
     }
 }
 
 void avl_foreach(avl_tree *tree, void (*func)(void *key, void *value), int direction)
 {
     if (direction == AVL_FORWARD) {
-	avl_walk_forward(tree->root, func);
+        avl_walk_forward(tree->root, func);
     } else {
-	avl_walk_backward(tree->root, func);
+        avl_walk_backward(tree->root, func);
     }
 }
 
@@ -357,11 +357,11 @@ int avl_extremum(avl_tree *tree, int side, void **value_p)
 static void free_entry(avl_node *node, void (*key_free)(void *key), void (*value_free)(void *value))
 {
     if (node != NIL(avl_node)) {
-	free_entry(node->left, key_free, value_free);
-	free_entry(node->right, key_free, value_free);
-	if (key_free != 0) (*key_free)(node->key);
-	if (value_free != 0) (*value_free)(node->value);
-	FREE(node);
+        free_entry(node->left, key_free, value_free);
+        free_entry(node->right, key_free, value_free);
+        if (key_free != 0) (*key_free)(node->key);
+        if (value_free != 0) (*value_free)(node->value);
+        FREE(node);
     }
 }
     
@@ -400,12 +400,12 @@ int avl_check_tree(avl_tree *tree)
 }
 
 static int do_check_tree(avl_node *node, 
-			 int (*compar)(const void *key1, const void *key2), int *error)
+                         int (*compar)(const void *key1, const void *key2), int *error)
 {
     int l_height, r_height, comp_height, bal;
     
     if (node == NIL(avl_node)) {
-	return -1;
+        return -1;
     }
 
     r_height = do_check_tree(node->right, compar, error);
@@ -415,29 +415,29 @@ static int do_check_tree(avl_node *node,
     bal = r_height - l_height;
     
     if (comp_height != node->height) {
-	(void) printf("Bad height for %p: computed=%d stored=%d\n",
-	    node, comp_height, node->height);
-	++*error;
+        (void) printf("Bad height for %p: computed=%d stored=%d\n",
+            node, comp_height, node->height);
+        ++*error;
     }
 
     if (bal > 1 || bal < -1) {
-	(void) printf("Out of balance at node %p, balance = %d\n", 
-	    node, bal);
-	++*error;
+        (void) printf("Out of balance at node %p, balance = %d\n", 
+            node, bal);
+        ++*error;
     }
 
     if (node->left != NIL(avl_node) && 
-		    (*compar)(node->left->key, node->key) > 0) {
-	(void) printf("Bad ordering between %p and %p", 
-	    node, node->left);
-	++*error;
+                    (*compar)(node->left->key, node->key) > 0) {
+        (void) printf("Bad ordering between %p and %p", 
+            node, node->left);
+        ++*error;
     }
     
     if (node->right != NIL(avl_node) && 
-		    (*compar)(node->key, node->right->key) > 0) {
-	(void) printf("Bad ordering between %p and %p", 
-	    node, node->right);
-	++*error;
+                    (*compar)(node->key, node->right->key) > 0) {
+        (void) printf("Bad ordering between %p and %p", 
+            node, node->right);
+        ++*error;
     }
 
     return comp_height;

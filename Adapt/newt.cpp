@@ -1,4 +1,4 @@
-/* $Id: newt.cpp,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
+/* $Id: newt.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
 #include <math.h>
 #define NRANSI
 #include "nrutil.h"
@@ -12,18 +12,18 @@ int nn;
 float *fvec;
 void (*nrfuncv) (int n, float v[], float f[]);
 #define FREERETURN {free_vector(fvec,1,n);free_vector(xold,1,n);\
-	free_vector(p,1,n);free_vector(g,1,n);free_matrix(fjac,1,n,1,n);\
-	free_ivector(indx,1,n);return;}
+        free_vector(p,1,n);free_vector(g,1,n);free_matrix(fjac,1,n,1,n);\
+        free_ivector(indx,1,n);return;}
 
 void 
 newt (float x[], int n, int *check,
       void (*vecfunc) (int, float[], float[]))
 {
   void fdjac (int n, float x[], float fvec[], float **df,
-	      void (*vecfunc) (int, float[], float[]));
+              void (*vecfunc) (int, float[], float[]));
   float fmin (float x[]);
   void lnsrch (int n, float xold[], float fold, float g[], float p[], float x[],
-	       float *f, float stpmax, int *check, float (*func) (float[]));
+               float *f, float stpmax, int *check, float (*func) (float[]));
   void lubksb (float **a, int n, int *indx, float b[]);
   void ludcmp (float **a, int n, int *indx, float *d);
   int i, its, j, *indx;
@@ -51,52 +51,52 @@ newt (float x[], int n, int *check,
     {
       fdjac (n, x, fvec, fjac, vecfunc);
       for (i = 1; i <= n; i++)
-	{
-	  for (sum = 0.0, j = 1; j <= n; j++)
-	    sum += fjac[j][i] * fvec[j];
-	  g[i] = sum;
-	}
+        {
+          for (sum = 0.0, j = 1; j <= n; j++)
+            sum += fjac[j][i] * fvec[j];
+          g[i] = sum;
+        }
       for (i = 1; i <= n; i++)
-	xold[i] = x[i];
+        xold[i] = x[i];
       fold = f;
       for (i = 1; i <= n; i++)
-	p[i] = -fvec[i];
+        p[i] = -fvec[i];
       ludcmp (fjac, n, indx, &d);
       lubksb (fjac, n, indx, p);
       lnsrch (n, xold, fold, g, p, x, &f, stpmax, check, fmin);
       test = 0.0;
       for (i = 1; i <= n; i++)
-	if (fabs (fvec[i]) > test)
-	  test = fabs (fvec[i]);
+        if (fabs (fvec[i]) > test)
+          test = fabs (fvec[i]);
       if (test < TOLF)
-	{
-	  *check = 0;
-	  FREERETURN
-	}
+        {
+          *check = 0;
+          FREERETURN
+        }
       if (*check)
-	{
-	  test = 0.0;
-	  den = FMAX (f, 0.5 * n);
-	  for (i = 1; i <= n; i++)
-	    {
-	      temp = fabs (g[i]) * FMAX (fabs (x[i]), 1.0) / den;
-	      if (temp > test)
-		test = temp;
-	    }
-	  *check = (test < TOLMIN ? 1 : 0);
-	  FREERETURN
-	}
+        {
+          test = 0.0;
+          den = FMAX (f, 0.5 * n);
+          for (i = 1; i <= n; i++)
+            {
+              temp = fabs (g[i]) * FMAX (fabs (x[i]), 1.0) / den;
+              if (temp > test)
+                test = temp;
+            }
+          *check = (test < TOLMIN ? 1 : 0);
+          FREERETURN
+        }
       test = 0.0;
       for (i = 1; i <= n; i++)
-	{
-	  temp = (fabs (x[i] - xold[i])) / FMAX (fabs (x[i]), 1.0);
-	  if (temp > test)
-	    test = temp;
-	}
+        {
+          temp = (fabs (x[i] - xold[i])) / FMAX (fabs (x[i]), 1.0);
+          if (temp > test)
+            test = temp;
+        }
       if (test < TOLX)
-	FREERETURN
-	}
-	nrerror ("MAXITS exceeded in newt");
+        FREERETURN
+        }
+        nrerror ("MAXITS exceeded in newt");
     }
 #undef MAXITS
 #undef TOLF

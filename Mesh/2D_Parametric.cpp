@@ -1,4 +1,4 @@
-/* $Id: 2D_Parametric.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Parametric.cpp,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -53,20 +53,20 @@ void printMetric (Mesh * m, Surface * s, char *name){
       * (double) i / (double) (N - 1);
     for (j = 0; j < M; j++){
       v = (s->kv[0]) + (s->kv[s->Nv + s->OrderV] - s->kv[0]) 
-	* (double) j / (double) (M - 1);
+        * (double) j / (double) (M - 1);
       m->Metric->setMetric (u, v, s);
       fprintf (f, "VT (%f,%f,0,%f,%f,0,%f,%f,0)"
-	       "{%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
-	       u, v, u, v, u, v, 
-	       m->Metric->m[0][0], m->Metric->m[0][1], 0.0,
-	       m->Metric->m[0][0], m->Metric->m[0][1], 0.0, 
-	       m->Metric->m[0][0], m->Metric->m[0][1], 0.0);
-	  fprintf (f, "VT (%f,%f,0,%f,%f,0,%f,%f,0)"
-		   "{%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
-		   u, v, u, v, u, v, 
-		   m->Metric->m[1][0], m->Metric->m[1][1], 0.0,
-		   m->Metric->m[1][0], m->Metric->m[1][1], 0.0,
-		   m->Metric->m[1][0], m->Metric->m[1][1], 0.0);
+               "{%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+               u, v, u, v, u, v, 
+               m->Metric->m[0][0], m->Metric->m[0][1], 0.0,
+               m->Metric->m[0][0], m->Metric->m[0][1], 0.0, 
+               m->Metric->m[0][0], m->Metric->m[0][1], 0.0);
+          fprintf (f, "VT (%f,%f,0,%f,%f,0,%f,%f,0)"
+                   "{%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",
+                   u, v, u, v, u, v, 
+                   m->Metric->m[1][0], m->Metric->m[1][1], 0.0,
+                   m->Metric->m[1][0], m->Metric->m[1][1], 0.0,
+                   m->Metric->m[1][0], m->Metric->m[1][1], 0.0);
     }
   }
   fprintf (f, "};\n");

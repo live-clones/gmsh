@@ -1,4 +1,4 @@
-/* $Id: XColors.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: XColors.cpp,v 1.4 2000-11-26 15:43:48 geuzaine Exp $ */
 /*
   Attention. Toutes les couleurs sont crees a partir de la colormap de
   l'interface : XCTX.gui.colormap
@@ -115,7 +115,7 @@ unsigned long AllocateColorInt( int r, int g, int b )
 unsigned long AllocateColor( float red, float green, float blue )
 {
    return AllocateColorInt( (int) (red*255.0), (int) (green*255.0),
-			    (int) (blue*255.0) );
+                            (int) (blue*255.0) );
 }
 
 
@@ -173,15 +173,15 @@ void XColorInitialize(void) {
     int r, g, b;
     for (r=0;r<5;r++) {
       for (g=0;g<9;g++) {
-	for (b=0;b<5;b++) {
-	  XColor xcol;
-	  xcol.red   = r * 65535 / 4;
-	  xcol.green = g * 65535 / 8;
-	  xcol.blue  = b * 65535 / 4;
-	  New_XAllocColor( XCTX.display, XCTX.gui.colormap,
-			   XCTX.gui.visual->map_entries, &xcol );
-	  ctable8[r][g][b] = xcol.pixel;
-	}
+        for (b=0;b<5;b++) {
+          XColor xcol;
+          xcol.red   = r * 65535 / 4;
+          xcol.green = g * 65535 / 8;
+          xcol.blue  = b * 65535 / 4;
+          New_XAllocColor( XCTX.display, XCTX.gui.colormap,
+                           XCTX.gui.visual->map_entries, &xcol );
+          ctable8[r][g][b] = xcol.pixel;
+        }
       }
     }
     pixelformat = PF_8BIT;
@@ -202,10 +202,10 @@ void XColorInitialize(void) {
   attr.background_pixel = 255;
   attr.colormap = XCTX.gui.colormap;
   DummyWindow = XCreateWindow( XCTX.display, DefaultRootWindow(XCTX.display),
-			       0, 0, 10, 10, 1,
-			       XCTX.depth, InputOutput, XCTX.gui.visual,
-			       CWBorderPixel | CWBackPixel | CWColormap,
-			       &attr );
+                               0, 0, 10, 10, 1,
+                               XCTX.depth, InputOutput, XCTX.gui.visual,
+                               CWBorderPixel | CWBackPixel | CWColormap,
+                               &attr );
   
   /*** The basic GC ***/
   gc_mask        = GCForeground | GCBackground | GCFont | GCArcMode;

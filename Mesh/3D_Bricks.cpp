@@ -1,4 +1,4 @@
-/* $Id: 3D_Bricks.cpp,v 1.4 2000-11-24 09:43:53 geuzaine Exp $ */
+/* $Id: 3D_Bricks.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -39,7 +39,7 @@ int DEBUT = 0;
 Coord MINIM, MAXIM;
 
 void getminmax (double *xmin, double *ymin, double *zmin,
-		double *xmax, double *ymax, double *zmax){
+                double *xmax, double *ymax, double *zmax){
 
   double dx, dy, dz, f;
 
@@ -122,17 +122,17 @@ void AddSimplexInGrid (Mesh * m, Simplex * s, int boule_boite){
   
 
   Ix1 = (int) ((double) m->Grid.Nx * (XminBox - m->Grid.min.X) /
-	       (m->Grid.max.X - m->Grid.min.X));
+               (m->Grid.max.X - m->Grid.min.X));
   Ix2 = (int) ((double) m->Grid.Nx * (XmaxBox - m->Grid.min.X) /
-	       (m->Grid.max.X - m->Grid.min.X));
+               (m->Grid.max.X - m->Grid.min.X));
   Iy1 = (int) ((double) m->Grid.Ny * (YminBox - m->Grid.min.Y) /
-	       (m->Grid.max.Y - m->Grid.min.Y));
+               (m->Grid.max.Y - m->Grid.min.Y));
   Iy2 = (int) ((double) m->Grid.Ny * (YmaxBox - m->Grid.min.Y) /
-	       (m->Grid.max.Y - m->Grid.min.Y));
+               (m->Grid.max.Y - m->Grid.min.Y));
   Iz1 = (int) ((double) m->Grid.Nz * (ZminBox - m->Grid.min.Z) /
-	       (m->Grid.max.Z - m->Grid.min.Z));
+               (m->Grid.max.Z - m->Grid.min.Z));
   Iz2 = (int) ((double) m->Grid.Nz * (ZmaxBox - m->Grid.min.Z) /
-	       (m->Grid.max.Z - m->Grid.min.Z));
+               (m->Grid.max.Z - m->Grid.min.Z));
 
   Ix1 = IMAX (Ix1, 0);
   Ix2 = IMIN (Ix2, m->Grid.Nx - 1);
@@ -144,9 +144,9 @@ void AddSimplexInGrid (Mesh * m, Simplex * s, int boule_boite){
   for (i = Ix1; i <= Ix2; i++){
     for (j = Iy1; j <= Iy2; j++){
       for (k = Iz1; k <= Iz2; k++){
-	index = i + j * m->Grid.Nx + k * m->Grid.Nx * m->Grid.Ny;
-	pBrick = (Brick *) List_Pointer (m->Grid.Bricks, index);
-	List_Add (pBrick->pT, &s);
+        index = i + j * m->Grid.Nx + k * m->Grid.Nx * m->Grid.Ny;
+        pBrick = (Brick *) List_Pointer (m->Grid.Bricks, index);
+        List_Add (pBrick->pT, &s);
       }
     }
   }

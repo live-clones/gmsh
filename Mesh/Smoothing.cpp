@@ -1,4 +1,4 @@
-/* $Id: Smoothing.cpp,v 1.2 2000-11-23 14:11:36 geuzaine Exp $ */
+/* $Id: Smoothing.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -19,27 +19,27 @@ void AmelioreSurface_EliminationTripet (Surface * surf, Mesh * m, Tree_T * tnxe)
     if (List_Nbr (nxe.Liste) == 3){
       ok = true;
       if (nxe.v->ListCurves)
-	ok = false;
+        ok = false;
       else{
-	for (j = 0; j < 3; j++){
-	  List_Read (nxe.Liste, j, &s[j]);
-	  if (!Tree_Search (surf->Simplexes, &s[j]))
-	    ok = false;
-	  for (k = 0; k < 3; k++)
-	    if (compareVertex (&nxe.v, &s[j]->V[k]))
-	      List_Insert (ListNoeuds, &s[j]->V[k], compareVertex);
-	}
+        for (j = 0; j < 3; j++){
+          List_Read (nxe.Liste, j, &s[j]);
+          if (!Tree_Search (surf->Simplexes, &s[j]))
+            ok = false;
+          for (k = 0; k < 3; k++)
+            if (compareVertex (&nxe.v, &s[j]->V[k]))
+              List_Insert (ListNoeuds, &s[j]->V[k], compareVertex);
+        }
       }
       if (ok){
-	List_Read (ListNoeuds, 0, &v1);
-	List_Read (ListNoeuds, 1, &v2);
-	List_Read (ListNoeuds, 2, &v3);
-	news = Create_Simplex (v1, v2, v3, 0);
-	Tree_Suppress (surf->Simplexes, &s[0]);
-	Tree_Suppress (surf->Simplexes, &s[1]);
-	Tree_Suppress (surf->Simplexes, &s[2]);
-	Tree_Suppress (m->Vertices, &nxe.v);
-	Tree_Add (surf->Simplexes, &news);
+        List_Read (ListNoeuds, 0, &v1);
+        List_Read (ListNoeuds, 1, &v2);
+        List_Read (ListNoeuds, 2, &v3);
+        news = Create_Simplex (v1, v2, v3, 0);
+        Tree_Suppress (surf->Simplexes, &s[0]);
+        Tree_Suppress (surf->Simplexes, &s[1]);
+        Tree_Suppress (surf->Simplexes, &s[2]);
+        Tree_Suppress (m->Vertices, &nxe.v);
+        Tree_Add (surf->Simplexes, &news);
       }
       List_Reset (ListNoeuds);
     }
@@ -81,10 +81,10 @@ void ActionLiss (void *data, void *dummy){
       return;
     for (j = 0; j < 4; j++){
       if (s->V[j] && compareVertex (&pnxe->v, &s->V[j])){
-	Sum += 0.5;
-	X += s->V[j]->Pos.X * 0.5;
-	Y += s->V[j]->Pos.Y * 0.5;
-	Z += s->V[j]->Pos.Z * 0.5;
+        Sum += 0.5;
+        X += s->V[j]->Pos.X * 0.5;
+        Y += s->V[j]->Pos.Y * 0.5;
+        Z += s->V[j]->Pos.Z * 0.5;
       }
     }
   }
@@ -144,10 +144,10 @@ void ActionLissSurf (void *data, void *dummy){
     */
     for (j = 0; j < 4; j++){
       if (s->V[j] && compareVertex (&pnxe->v, &s->V[j])){
-	Sum += 0.5;
-	X += s->V[j]->Pos.X * 0.5;
-	Y += s->V[j]->Pos.Y * 0.5;
-	Z += s->V[j]->Pos.Z * 0.5;
+        Sum += 0.5;
+        X += s->V[j]->Pos.X * 0.5;
+        Y += s->V[j]->Pos.Y * 0.5;
+        Z += s->V[j]->Pos.Z * 0.5;
       }
     }
   }

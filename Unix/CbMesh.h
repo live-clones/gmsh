@@ -1,9 +1,9 @@
-/* $Id: CbMesh.h,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: CbMesh.h,v 1.3 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _CB_MESH_H_
 #define _CB_MESH_H_
 
 /* mesh event handler */
-					     
+                                             
 #define  MESH_DELETE                         1
 #define  MESH_1D                             2
 #define  MESH_2D                             3 
@@ -29,5 +29,5 @@
 
 void CancelMeshThread(void);
 void mesh_event_handler (int event);
-					     
+                                             
 #endif

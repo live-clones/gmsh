@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.7 2000-11-24 10:58:02 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.8 2000-11-26 15:43:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -9,10 +9,11 @@
 #include "Const.h"
 #include "Create.h"
 #include "CAD.h"
+#include "Context.h"
                                     
-extern Mesh    *THEM;
-extern int      CurrentNodeNumber;
-extern double   LC ;
+extern Mesh      *THEM;
+extern Context_T  CTX;
+extern int        CurrentNodeNumber;
 
 static int      MAXREG,MAXPOINT;
 static List_T  *ListOfTransformedPoints;
@@ -1029,7 +1030,7 @@ void Extrude_ProtudeSurface(int ep, int is,
     List_Read(chapeau->s.Generatrices,i,&c);
     if(c->Num<0)
       if(!(c = FindCurve(-c->Num,THEM)))
-	 Msg(FATAL, "Unknown Curve %d", -c->Num);
+         Msg(FATAL, "Unknown Curve %d", -c->Num);
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
     c->Extrude->geo.Source = abs(c2->Num);
@@ -1114,7 +1115,7 @@ bool IntersectCurves (Curve *c1, Curve *c2,
   if(x[1] >= c1->uend)return false;
   if(x[2] <= c2->ubeg)return false;
   if(x[2] >= c2->uend)return false;
-  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-06 * LC )return false;
+  if(fabs(v1.Pos.Z - v2.Pos.Z) > 1.e-06 * CTX.lc)return false;
   pv = &V;
   pv->Num = MAXPOINT++;
   Cdbpts101(pv->Num,v1.Pos.X,v1.Pos.Y,v1.Pos.Z,v1.lc,x[1]);
@@ -1281,13 +1282,13 @@ void ReplaceAllDuplicates ( Mesh *m ){
       if(!Tree_Search(allNonDulpicatedCurves,&c)){
         Tree_Insert(allNonDulpicatedCurves,&c);
         if(!(c2 = FindCurve(-c->Num,m)))
-	  Msg(FATAL, "Unknown Curve %d", -c->Num);
+          Msg(FATAL, "Unknown Curve %d", -c->Num);
         Tree_Insert(allNonDulpicatedCurves,&c2);
       }
       else{
         Tree_Suppress(m->Curves,&c);
         if(!(c2 = FindCurve(-c->Num,m)))
-	  Msg(FATAL, "Unknown Curve %d", -c->Num);
+          Msg(FATAL, "Unknown Curve %d", -c->Num);
         Tree_Suppress(m->Curves,&c2);
       }
     }
@@ -1394,7 +1395,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
       break;
     default:
       Msg(ERROR, "Impossible to Translate Entity %d (of Type %d)", 
-	  O.Num, O.Type);
+          O.Num, O.Type);
       break;
     }
   }
@@ -1435,7 +1436,7 @@ void RotateShapes (double Ax,double Ay,double Az,
 }
 
 void SymmetryShapes (double A,double B,double C,
-		     double D, List_T *ListShapes, int x){
+                     double D, List_T *ListShapes, int x){
   double matrix[4][4];
   SetSymmetryMatrix(matrix,A,B,C,D);
   ApplicationOnShapes(matrix,ListShapes);

@@ -1,4 +1,4 @@
-/* $Id: Edge.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Edge.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -7,15 +7,15 @@
 #include "Tools.h"
 
 static int edges_quad[4][2] = { {0, 1},
-				{1, 2},
-				{2, 3},
-				{3, 0} };
+                                {1, 2},
+                                {2, 3},
+                                {3, 0} };
 static int edges_tetra[6][2] = { {0, 1},
-				 {1, 2},
-				 {2, 0},
-				 {3, 0},
-				 {3, 2},
-				 {3, 1} };
+                                 {1, 2},
+                                 {2, 0},
+                                 {3, 0},
+                                 {3, 2},
+                                 {3, 1} };
 static int edges_non[3] = {2, 0, 1};
 
 int compareedge (const void *a, const void *b){
@@ -59,25 +59,25 @@ void EdgesContainer::AddEdges (Simplex * s, bool EdgesInVolume){
     N = 6;
     for (i = 0; i < N; i++)
       for (j = 0; j < 2; j++)
-	edges[i][j] = edges_tetra[i][j];
+        edges[i][j] = edges_tetra[i][j];
   }
   else if (s->V[3]){
     N = 4;
     for (i = 0; i < N; i++)
       for (j = 0; j < 2; j++)
-	edges[i][j] = edges_quad[i][j];
+        edges[i][j] = edges_quad[i][j];
   }
   else if (s->V[2]){
     N = 3;
     for (i = 0; i < N; i++)
       for (j = 0; j < 2; j++)
-	edges[i][j] = edges_tetra[i][j];
+        edges[i][j] = edges_tetra[i][j];
   }
   else{
     N = 1;
     for (i = 0; i < N; i++)
       for (j = 0; j < 2; j++)
-	edges[i][j] = edges_tetra[i][j];
+        edges[i][j] = edges_tetra[i][j];
   }
 
   for (i = 0; i < N; i++){
@@ -86,14 +86,14 @@ void EdgesContainer::AddEdges (Simplex * s, bool EdgesInVolume){
     if ((pE = (Edge *) Tree_PQuery (AllEdges, &E))){
       List_Add (pE->Simplexes, &s);
       if (N == 3)
-	pE->O[1] = s->V[edges_non[i]];
+        pE->O[1] = s->V[edges_non[i]];
     }
     else{
       E.Simplexes = List_Create (2, 1, sizeof (Simplex *));
       if (N == 3)
-	E.O[0] = s->V[edges_non[i]];
+        E.O[0] = s->V[edges_non[i]];
       if (N == 3)
-	E.O[1] = NULL;
+        E.O[1] = NULL;
       List_Add (E.Simplexes, &s);
       E.newv = NULL;
       Tree_Replace (AllEdges, &E);
@@ -157,7 +157,7 @@ void EdgesContainer::SwapEdge (Vertex * V[2]){
     if (s1->S[i] == s2){
       s1->ExtractOppositeEdges (i, p, q);
       if (!s1->SwapEdge (i))
-	return;
+        return;
       Tree_Suppress (AllEdges, &E);
       E.V[0] = q[0];
       E.V[1] = q[1];
@@ -167,18 +167,18 @@ void EdgesContainer::SwapEdge (Vertex * V[2]){
       E.V[1] = p[0];
       e = (Edge *) Tree_PQuery (AllEdges, &E);
       for (j = 0; j < 2; j++){
-	List_Read (e->Simplexes, j, &s);
-	if (s == s2)
-	  List_Write (e->Simplexes, j, &s1);
+        List_Read (e->Simplexes, j, &s);
+        if (s == s2)
+          List_Write (e->Simplexes, j, &s1);
       }
       
       E.V[0] = q[1];
       E.V[1] = p[1];
       e = (Edge *) Tree_PQuery (AllEdges, &E);
       for (j = 0; j < 2; j++){
-	List_Read (e->Simplexes, j, &s);
-	if (s == s1)
-	  List_Write (e->Simplexes, j, &s2);
+        List_Read (e->Simplexes, j, &s);
+        if (s == s1)
+          List_Write (e->Simplexes, j, &s2);
       }
       V[0] = q[0];
       V[1] = q[1];

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2000-11-25 15:26:10 geuzaine Exp $
+# $Id: Makefile,v 1.6 2000-11-26 15:43:44 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -49,9 +49,19 @@ GMSH_ARCHIVE_DIR = archives
 default: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
+           "C_FLAGS=-D_REENTRANT $(FLAGS)" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_USETHREADS" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "MOTIF_INCLUDE=$(MOTIF_INC)" \
+        ); done
+
+nothreads: initialtag
+	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
            "C_FLAGS=$(FLAGS)" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE" \
-           "VERSION_FLAGS=-D_NOTHREADS" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -60,8 +70,8 @@ profile: initialtag
 	@for i in $(GMSH_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
            "C_FLAGS=-O3 -pg" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE" \
-           "VERSION_FLAGS=-D_NOTHREADS" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -182,7 +192,7 @@ sgi: tag
            "C_FLAGS=-O2 -o32" \
            "RANLIB=true"\
            "OS_FLAGS=-D_UNIX" \
-           "VERSION_FLAGS=-D_NOTHREADS" \
+           "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -191,7 +201,7 @@ sgi: tag
            "C_FLAGS=-O1 -o32" \
            "RANLIB=true"\
            "OS_FLAGS=-D_UNIX" \
-           "VERSION_FLAGS=-D_NOTHREADS" \
+           "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -203,18 +213,18 @@ little_endian: tag
 	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
            "CC=g++" \
            "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE" \
-           "VERSION_FLAGS=-D_NOTHREADS" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
 
-little_endian_compat: tag
+little_endian_threads: tag
 	@for i in $(GMSH_DISTRIB_DIR); do (cd $$i && $(MAKE) \
-           "CC=i386-glibc21-linux-g++" \
-           "C_FLAGS=-O3" \
-           "OS_FLAGS=-D_UNIX -D_LITTLE" \
-           "VERSION_FLAGS=-D_NOTHREADS" \
+           "CC=g++" \
+           "C_FLAGS=-D_REENTRANT -O3" \
+           "OS_FLAGS=-D_UNIX -D_LITTLE_ENDIAN" \
+           "VERSION_FLAGS=-D_USETHREADS" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
@@ -224,29 +234,30 @@ big_endian: tag
            "CC=g++" \
            "C_FLAGS=-O3" \
            "OS_FLAGS=-D_UNIX" \
-           "VERSION_FLAGS=-D_NOTHREADS" \
+           "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "MOTIF_INCLUDE=$(MOTIF_INC)" \
         ); done
 
 
 ogl:
-	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB) $(OPENGL_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+               $(OPENGL_LIB) $(MOTIF_LIB) $(X_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
 mesa:
-	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB) $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+               $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
-mesa_compat:
-	i386-glibc21-linux-g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB) $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+mesa_threads:
+	g++ -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+               $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) $(THREAD_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
 dec: little_endian ogl
 
-linux: little_endian mesa
-
-linux-compat: little_endian_compat mesa_compat
+linux: little_endian_threads mesa_threads
 
 ibm: big_endian mesa
 
@@ -254,7 +265,8 @@ sun: big_endian mesa
 
 # HP : special linker option is necessary (+s) + set the SHLIB_PATH variable.
 hp: big_endian
-	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB) $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
+	g++ -Wl,+s -o $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME) $(GMSH_LIB)\
+                      $(MESA_LIB) $(MOTIF_LIB) $(X_LIB) -lm
 	strip $(GMSH_BIN_DIR)/gmsh-$(GMSH_UNAME)
 
 comp:

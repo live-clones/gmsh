@@ -1,4 +1,4 @@
-/* $Id: Message.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Message.cpp,v 1.6 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -21,10 +21,10 @@ void Signal (int sig_num){
   switch (sig_num){
   case SIGSEGV : 
     Msg(FATAL, "Segmentation Violation (Invalid Memory Reference)\n"
-	"------------------------------------------------------\n"
-	"You have discovered a bug in Gmsh. You may e-mail the\n"
-	"context in which it occurred to one of the authors:\n"
-	"type 'gmsh -info' to get feedback information"); 
+        "------------------------------------------------------\n"
+        "You have discovered a bug in Gmsh. You may e-mail the\n"
+        "context in which it occurred to one of the authors:\n"
+        "type 'gmsh -info' to get feedback information"); 
     break;
   case SIGFPE : 
     Msg(FATAL, "Floating Point Exception (Division by Zero?)"); 
@@ -45,13 +45,13 @@ void Signal (int sig_num){
 
 char *TextBuffer;
 
-#define PUT_IN_COMMAND_WIN						\
-  vsprintf(TextBuffer, fmt, args);					\
-  XmListAddItem(WID.C.commandList,XmStringCreateSimple(TextBuffer),0);	\
-  XtSetArg(arg[0], XmNitemCount, &nb);					\
-  XtSetArg(arg[1], XmNvisibleItemCount, &nbvis);			\
-  XtGetValues(WID.C.commandList, arg, 2);				\
-  XmListSetPos(WID.C.commandList,(nb>nbvis)?nb-nbvis+1:0);		\
+#define PUT_IN_COMMAND_WIN                                              \
+  vsprintf(TextBuffer, fmt, args);                                      \
+  XmListAddItem(WID.C.commandList,XmStringCreateSimple(TextBuffer),0);  \
+  XtSetArg(arg[0], XmNitemCount, &nb);                                  \
+  XtSetArg(arg[1], XmNvisibleItemCount, &nbvis);                        \
+  XtGetValues(WID.C.commandList, arg, 2);                               \
+  XmListSetPos(WID.C.commandList,(nb>nbvis)?nb-nbvis+1:0);              \
   XmUpdateDisplay(WID.C.commandList);
 
 void Msg(int level, char *fmt, ...){
@@ -86,9 +86,9 @@ void Msg(int level, char *fmt, ...){
   case WARNING :
     if(CTX.interactive || !CTX.command_win){
       if(CTX.verbosity > 0){
-	fprintf(stderr, WARNING_STR);
-	vfprintf(stderr, fmt, args); 
-	fprintf(stderr, "\n");
+        fprintf(stderr, WARNING_STR);
+        vfprintf(stderr, fmt, args); 
+        fprintf(stderr, "\n");
       }
     }
     else{
@@ -98,9 +98,9 @@ void Msg(int level, char *fmt, ...){
   case INFOS :
     if(CTX.interactive || !CTX.command_win){
       if(CTX.verbosity > 1){
-	fprintf(stderr, INFOS_STR);
-	vfprintf(stderr, fmt, args); 
-	fprintf(stderr, "\n");
+        fprintf(stderr, INFOS_STR);
+        vfprintf(stderr, fmt, args); 
+        fprintf(stderr, "\n");
       }
     }
     else{
@@ -110,54 +110,54 @@ void Msg(int level, char *fmt, ...){
   case INFO :
     if(CTX.interactive){
       if(CTX.verbosity > 1){
-	fprintf(stderr, INFO_STR);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
+        fprintf(stderr, INFO_STR);
+        vfprintf(stderr, fmt, args);
+        fprintf(stderr, "\n");
       }
     }
     else{
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.infoLabel, XmNlabelString,
-		    XmStringCreateSimple(TextBuffer), NULL);
+                    XmStringCreateSimple(TextBuffer), NULL);
       XmUpdateDisplay(WID.G.infoLabel);
     }
     break;
   case SELECT :
     if(CTX.interactive){
       if(CTX.verbosity > 1){
-	fprintf(stderr, SELECT_STR);
-	vfprintf(stderr, fmt, args); 
-	fprintf(stderr, "\n");
+        fprintf(stderr, SELECT_STR);
+        vfprintf(stderr, fmt, args); 
+        fprintf(stderr, "\n");
       }
     }
     else{
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.selectLabel, XmNlabelString, 
-		    XmStringCreateSimple(TextBuffer), NULL);
+                    XmStringCreateSimple(TextBuffer), NULL);
       XmUpdateDisplay(WID.G.selectLabel);
     }
     break;
   case STATUS :
     if(CTX.interactive){
       if(CTX.verbosity > 1){
-	fprintf(stderr, STATUS_STR);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
+        fprintf(stderr, STATUS_STR);
+        vfprintf(stderr, fmt, args);
+        fprintf(stderr, "\n");
       }
     }
     else{
       vsprintf(TextBuffer, fmt, args);
       XtVaSetValues(WID.G.statusLabel, XmNlabelString,
-		    XmStringCreateSimple(TextBuffer), NULL);
+                    XmStringCreateSimple(TextBuffer), NULL);
       XmUpdateDisplay(WID.G.statusLabel);
     }
     break;
   case PARSER_ERROR :
     if(CTX.interactive || !CTX.command_win){
       if(CTX.verbosity > 0){
-	fprintf(stderr, PARSER_ERROR_STR);
-	vfprintf(stderr, fmt, args); 
-	fprintf(stderr, "\n");
+        fprintf(stderr, PARSER_ERROR_STR);
+        vfprintf(stderr, fmt, args); 
+        fprintf(stderr, "\n");
       }
     }
     else{
@@ -167,9 +167,9 @@ void Msg(int level, char *fmt, ...){
   case PARSER_INFO :
     if(CTX.interactive || !CTX.command_win){
       if(CTX.verbosity > 1){
-	fprintf(stderr, PARSER_INFO_STR);
-	vfprintf(stderr, fmt, args); 
-	fprintf(stderr, "\n");
+        fprintf(stderr, PARSER_INFO_STR);
+        vfprintf(stderr, fmt, args); 
+        fprintf(stderr, "\n");
       }
     }
     else{
@@ -179,9 +179,9 @@ void Msg(int level, char *fmt, ...){
   case DEBUG :
     if(CTX.interactive || !CTX.command_win){
       if(CTX.verbosity > 2){
-	fprintf(stderr, DEBUG_STR);
-	vfprintf(stderr, fmt, args); 
-	fprintf(stderr, "\n");
+        fprintf(stderr, DEBUG_STR);
+        vfprintf(stderr, fmt, args); 
+        fprintf(stderr, "\n");
       }
     }
     else{

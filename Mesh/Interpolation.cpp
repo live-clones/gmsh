@@ -1,4 +1,4 @@
-/* $Id: Interpolation.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Interpolation.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -71,7 +71,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
   case MSH_SEGM_ELLI_INV:
     
     if (Curve->Typ == MSH_SEGM_CIRC_INV ||
-	Curve->Typ == MSH_SEGM_ELLI_INV){
+        Curve->Typ == MSH_SEGM_ELLI_INV){
       V.u = 1. - u;
       u = V.u;
     }
@@ -179,8 +179,8 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     /* X */
     for (i = 0; i < 4; i++){
       for (j = 0; j < 4; j++){
-	  vec[i] += Curve->mat[i][j] * v[j]->Pos.X;
-	}
+          vec[i] += Curve->mat[i][j] * v[j]->Pos.X;
+        }
     }
 
     for (j = 0; j < 4; j++){
@@ -191,7 +191,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     /* Y */
     for (i = 0; i < 4; i++){
       for (j = 0; j < 4; j++){
-	vec[i] += Curve->mat[i][j] * v[j]->Pos.Y;
+        vec[i] += Curve->mat[i][j] * v[j]->Pos.Y;
       }
     }
 
@@ -203,7 +203,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     /* Z */
     for (i = 0; i < 4; i++){
       for (j = 0; j < 4; j++){
-	vec[i] += Curve->mat[i][j] * v[j]->Pos.Z;
+        vec[i] += Curve->mat[i][j] * v[j]->Pos.Z;
       }
     }
     for (j = 0; j < 4; j++){
@@ -214,7 +214,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     /* W */
     for (i = 0; i < 4; i++){
       for (j = 0; j < 4; j++){
-	vec[i] += Curve->mat[i][j] * v[j]->lc;
+        vec[i] += Curve->mat[i][j] * v[j]->lc;
       }
     }
     for (j = 0; j < 4; j++){
@@ -252,20 +252,20 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
 
 Vertex TransfiniteQua (Vertex c1, Vertex c2, Vertex c3, Vertex c4,
-		       Vertex s1, Vertex s2, Vertex s3, Vertex s4,
-		       double u, double v){
+                       Vertex s1, Vertex s2, Vertex s3, Vertex s4,
+                       double u, double v){
   Vertex V;
 
   V.lc = TRAN_QUA (c1.lc, c2.lc, c3.lc, c4.lc, 
-		   s1.lc, s2.lc, s3.lc, s4.lc, u, v);
+                   s1.lc, s2.lc, s3.lc, s4.lc, u, v);
   V.w = TRAN_QUA (c1.w, c2.w, c3.w, c4.w, 
-		  s1.w, s2.w, s3.w, s4.w, u, v);
+                  s1.w, s2.w, s3.w, s4.w, u, v);
   V.Pos.X = TRAN_QUA (c1.Pos.X, c2.Pos.X, c3.Pos.X, c4.Pos.X, 
-		      s1.Pos.X, s2.Pos.X, s3.Pos.X, s4.Pos.X, u, v);
+                      s1.Pos.X, s2.Pos.X, s3.Pos.X, s4.Pos.X, u, v);
   V.Pos.Y = TRAN_QUA (c1.Pos.Y, c2.Pos.Y, c3.Pos.Y, c4.Pos.Y, 
-		      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, u, v);
+                      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, u, v);
   V.Pos.Z = TRAN_QUA (c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z, 
-		      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, u, v);
+                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, u, v);
   return (V);
 }
 
@@ -275,18 +275,18 @@ Vertex TransfiniteQua (Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
 
 Vertex TransfiniteTri (Vertex c1, Vertex c2, Vertex c3,
-		       Vertex s1, Vertex s2, Vertex s3,
-		       double u, double v){
+                       Vertex s1, Vertex s2, Vertex s3,
+                       double u, double v){
   Vertex V;
 
   V.lc = TRAN_TRI (c1.lc, c2.lc, c3.lc, s1.lc, s2.lc, s3.lc, u, v);
   V.w = TRAN_TRI (c1.w, c2.w, c3.w, s1.w, s2.w, s3.w, u, v);
   V.Pos.X = TRAN_TRI (c1.Pos.X, c2.Pos.X, c3.Pos.X, 
-		      s1.Pos.X, s2.Pos.X, s3.Pos.X, u, v);
+                      s1.Pos.X, s2.Pos.X, s3.Pos.X, u, v);
   V.Pos.Y = TRAN_TRI (c1.Pos.Y, c2.Pos.Y, c3.Pos.Y, 
-		      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, u, v);
+                      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, u, v);
   V.Pos.Z = TRAN_TRI (c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, 
-		      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
+                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
   return (V);
 }
 
@@ -294,10 +294,10 @@ void TransfiniteSph (Vertex S, Vertex center, Vertex * T){
   double r, s, dirx, diry, dirz;
 
   r = sqrt (DSQR (S.Pos.X - center.Pos.X) + DSQR (S.Pos.Y - center.Pos.Y)
-	    + DSQR (S.Pos.Z - center.Pos.Z));
+            + DSQR (S.Pos.Z - center.Pos.Z));
 
   s = sqrt (DSQR (T->Pos.X - center.Pos.X) + DSQR (T->Pos.Y - center.Pos.Y)
-	    + DSQR (T->Pos.Z - center.Pos.Z));
+            + DSQR (T->Pos.Z - center.Pos.Z));
 
   dirx = (T->Pos.X - center.Pos.X) / s;
   diry = (T->Pos.Y - center.Pos.Y) / s;
@@ -309,7 +309,7 @@ void TransfiniteSph (Vertex S, Vertex center, Vertex * T){
 }
 
 Vertex InterpolateSurface (Surface * s, double u, double v, 
-			   int derivee, int u_v){
+                           int derivee, int u_v){
   Vertex *c1, *c2, T, D[4], V[4], *S[4];
   Curve *C[4];
   int i, issphere;
@@ -318,22 +318,22 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
   if (derivee){
     if (u_v == 1){
       if (u - eps < 0.0){
-	D[0] = InterpolateSurface (s, u, v, 0, 0);
-	D[1] = InterpolateSurface (s, u + eps, v, 0, 0);
+        D[0] = InterpolateSurface (s, u, v, 0, 0);
+        D[1] = InterpolateSurface (s, u + eps, v, 0, 0);
       }
       else{
-	D[0] = InterpolateSurface (s, u - eps, v, 0, 0);
-	D[1] = InterpolateSurface (s, u, v, 0, 0);
+        D[0] = InterpolateSurface (s, u - eps, v, 0, 0);
+        D[1] = InterpolateSurface (s, u, v, 0, 0);
       }
     }
     else if (u_v == 2){
       if (v - eps < 0.0){
-	D[0] = InterpolateSurface (s, u, v, 0, 0);
-	D[1] = InterpolateSurface (s, u, v + eps, 0, 0);
+        D[0] = InterpolateSurface (s, u, v, 0, 0);
+        D[1] = InterpolateSurface (s, u, v + eps, 0, 0);
       }
       else{
-	D[0] = InterpolateSurface (s, u, v - eps, 0, 0);
-	D[1] = InterpolateSurface (s, u, v, 0, 0);
+        D[0] = InterpolateSurface (s, u, v - eps, 0, 0);
+        D[1] = InterpolateSurface (s, u, v, 0, 0);
       }
     }
     else{
@@ -342,20 +342,20 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
       double epsc = eps * cos (t);
       double epss = eps * sin (t);
       if (v - epss < 0.0 && u - epsc < 0.0){
-	D[0] = InterpolateSurface (s, u, v, 0, 0);
-	D[1] = InterpolateSurface (s, u + epsc, v + epss, 0, 0);
+        D[0] = InterpolateSurface (s, u, v, 0, 0);
+        D[1] = InterpolateSurface (s, u + epsc, v + epss, 0, 0);
       }
       else if (v - epss < 0.0){
-	D[0] = InterpolateSurface (s, u - epsc, v, 0, 0);
-	D[1] = InterpolateSurface (s, u, v + epss, 0, 0);
+        D[0] = InterpolateSurface (s, u - epsc, v, 0, 0);
+        D[1] = InterpolateSurface (s, u, v + epss, 0, 0);
       }
       else if (u - epsc < 0.0){
-	D[0] = InterpolateSurface (s, u, v - epss, 0, 0);
-	D[1] = InterpolateSurface (s, u + epsc, v, 0, 0);
+        D[0] = InterpolateSurface (s, u, v - epss, 0, 0);
+        D[1] = InterpolateSurface (s, u + epsc, v, 0, 0);
       }
       else{
-	D[0] = InterpolateSurface (s, u - epsc, v - epss, 0, 0);
-	D[1] = InterpolateSurface (s, u, v, 0, 0);
+        D[0] = InterpolateSurface (s, u - epsc, v - epss, 0, 0);
+        D[1] = InterpolateSurface (s, u, v, 0, 0);
       }
       */
     }
@@ -389,17 +389,17 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
     for (i = 0; i < 4; i++){
       List_Read (s->s.Generatrices, i, &C[i]);
       if (C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
-	issphere = 0;
+        issphere = 0;
       }
       else if (issphere){
-	if (!i){
-	  List_Read (C[i]->Control_Points, 1, &c1);
-	}
-	else{
-	  List_Read (C[i]->Control_Points, 1, &c2);
-	  if (compareVertex (&c1, &c2))
-	    issphere = 0;
-	}
+        if (!i){
+          List_Read (C[i]->Control_Points, 1, &c1);
+        }
+        else{
+          List_Read (C[i]->Control_Points, 1, &c2);
+          if (compareVertex (&c1, &c2))
+            issphere = 0;
+        }
       }
     }
     
@@ -433,17 +433,17 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
     for (i = 0; i < 3; i++){
       List_Read (s->s.Generatrices, i, &C[i]);
       if (C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
-	issphere = 0;
+        issphere = 0;
       }
       else if (issphere){
-	if (!i){
-	  List_Read (C[i]->Control_Points, 1, &c1);
-	}
-	else{
-	  List_Read (C[i]->Control_Points, 1, &c2);
-	  if (compareVertex (&c1, &c2))
-	    issphere = 0;
-	}
+        if (!i){
+          List_Read (C[i]->Control_Points, 1, &c1);
+        }
+        else{
+          List_Read (C[i]->Control_Points, 1, &c2);
+          if (compareVertex (&c1, &c2))
+            issphere = 0;
+        }
       }
     }
     
@@ -488,37 +488,37 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
 
 Vertex 
 TransfiniteHex (Vertex f1, Vertex f2, Vertex f3, Vertex f4, Vertex f5, Vertex f6,
-		Vertex c1, Vertex c2, Vertex c3, Vertex c4, Vertex c5, Vertex c6,
-		Vertex c7, Vertex c8, Vertex c9, Vertex c10, Vertex c11, Vertex c12,
-		Vertex s1, Vertex s2, Vertex s3, Vertex s4,
-		Vertex s5, Vertex s6, Vertex s7, Vertex s8,
-		double u, double v, double w)
+                Vertex c1, Vertex c2, Vertex c3, Vertex c4, Vertex c5, Vertex c6,
+                Vertex c7, Vertex c8, Vertex c9, Vertex c10, Vertex c11, Vertex c12,
+                Vertex s1, Vertex s2, Vertex s3, Vertex s4,
+                Vertex s5, Vertex s6, Vertex s7, Vertex s8,
+                double u, double v, double w)
 {
   Vertex V;
 
   V.lc = TRAN_HEX (f1.lc, f2.lc, f3.lc, f4.lc, f5.lc, f6.lc,
-		   c1.lc, c2.lc, c3.lc, c4.lc, c5.lc, c6.lc,
-		   c7.lc, c8.lc, c9.lc, c10.lc, c11.lc, c12.lc,
-		   s1.lc, s2.lc, s3.lc, s4.lc, s5.lc, s6.lc, s7.lc, s8.lc,
-		   u, v, w);
+                   c1.lc, c2.lc, c3.lc, c4.lc, c5.lc, c6.lc,
+                   c7.lc, c8.lc, c9.lc, c10.lc, c11.lc, c12.lc,
+                   s1.lc, s2.lc, s3.lc, s4.lc, s5.lc, s6.lc, s7.lc, s8.lc,
+                   u, v, w);
 
   V.Pos.X = TRAN_HEX (f1.Pos.X, f2.Pos.X, f3.Pos.X, f4.Pos.X, f5.Pos.X, f6.Pos.X,
-		 c1.Pos.X, c2.Pos.X, c3.Pos.X, c4.Pos.X, c5.Pos.X, c6.Pos.X,
-	      c7.Pos.X, c8.Pos.X, c9.Pos.X, c10.Pos.X, c11.Pos.X, c12.Pos.X,
-		      s1.Pos.X, s2.Pos.X, s3.Pos.X, s4.Pos.X, s5.Pos.X, s6.Pos.X, s7.Pos.X, s8.Pos.X,
-		      u, v, w);
+                 c1.Pos.X, c2.Pos.X, c3.Pos.X, c4.Pos.X, c5.Pos.X, c6.Pos.X,
+              c7.Pos.X, c8.Pos.X, c9.Pos.X, c10.Pos.X, c11.Pos.X, c12.Pos.X,
+                      s1.Pos.X, s2.Pos.X, s3.Pos.X, s4.Pos.X, s5.Pos.X, s6.Pos.X, s7.Pos.X, s8.Pos.X,
+                      u, v, w);
 
   V.Pos.Y = TRAN_HEX (f1.Pos.Y, f2.Pos.Y, f3.Pos.Y, f4.Pos.Y, f5.Pos.Y, f6.Pos.Y,
-		 c1.Pos.Y, c2.Pos.Y, c3.Pos.Y, c4.Pos.Y, c5.Pos.Y, c6.Pos.Y,
-	      c7.Pos.Y, c8.Pos.Y, c9.Pos.Y, c10.Pos.Y, c11.Pos.Y, c12.Pos.Y,
-		      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, s5.Pos.Y, s6.Pos.Y, s7.Pos.Y, s8.Pos.Y,
-		      u, v, w);
+                 c1.Pos.Y, c2.Pos.Y, c3.Pos.Y, c4.Pos.Y, c5.Pos.Y, c6.Pos.Y,
+              c7.Pos.Y, c8.Pos.Y, c9.Pos.Y, c10.Pos.Y, c11.Pos.Y, c12.Pos.Y,
+                      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, s5.Pos.Y, s6.Pos.Y, s7.Pos.Y, s8.Pos.Y,
+                      u, v, w);
 
   V.Pos.Z = TRAN_HEX (f1.Pos.Z, f2.Pos.Z, f3.Pos.Z, f4.Pos.Z, f5.Pos.Z, f6.Pos.Z,
-		 c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z, c5.Pos.Z, c6.Pos.Z,
-	      c7.Pos.Z, c8.Pos.Z, c9.Pos.Z, c10.Pos.Z, c11.Pos.Z, c12.Pos.Z,
-		      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, s5.Pos.Z, s6.Pos.Z, s7.Pos.Z, s8.Pos.Z,
-		      u, v, w);
+                 c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z, c5.Pos.Z, c6.Pos.Z,
+              c7.Pos.Z, c8.Pos.Z, c9.Pos.Z, c10.Pos.Z, c11.Pos.Z, c12.Pos.Z,
+                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, s5.Pos.Z, s6.Pos.Z, s7.Pos.Z, s8.Pos.Z,
+                      u, v, w);
 
   return (V);
 }

@@ -1,9 +1,9 @@
-/* $Id: CbOptions.h,v 1.6 2000-11-24 12:50:06 geuzaine Exp $ */
+/* $Id: CbOptions.h,v 1.7 2000-11-26 15:43:48 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 
 /* options globales */
-					     
+                                             
 #define  OPTIONS_REPLOT                         1
 #define  OPTIONS_AXES                           2
 #define  OPTIONS_LITTLE_AXES                    3
@@ -103,5 +103,5 @@
 #define  OPTIONS_PRINT_GL2PS_IMAGE              403
 #define  OPTIONS_PRINT_GL2GIF                   404
 #define  OPTIONS_PRINT_GEO                      405
-					     
+                                             
 #endif

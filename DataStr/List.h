@@ -1,4 +1,4 @@
-/* $Id: List.h,v 1.3 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: List.h,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
 #ifndef _LIST_H_
 #define _LIST_H_
 
@@ -34,7 +34,7 @@ int     List_Search(List_T *liste, void *data, int (*fcmp)(const void *a, const 
 int     List_ISearch(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));
 int     List_ISearchSeq(List_T *liste, void * data, int (*fcmp)(const void *a, const void *b));
 int     List_ISearchSeqPartial(List_T *liste, void * data, int i_Start,
-			       int (*fcmp)(const void *a, const void *b)) ;
+                               int (*fcmp)(const void *a, const void *b)) ;
 int     List_Query(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));
 int     List_LQuery(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b), int first);
 void   *List_PQuery(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));

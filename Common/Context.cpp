@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.5 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.6 2000-11-26 15:43:44 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -26,8 +26,8 @@ void InitColors(rgbacolors * col, int num){
       col->text             = PACK_COLOR(255, 255, 255, 255) ;
       col->axes             = PACK_COLOR(255, 255, 0,   255) ;
       col->little_axes      = PACK_COLOR(255, 255, 255, 255) ;
-      break;		  
-    case 1 :		  
+      break;              
+    case 1 :              
       col->bg               = PACK_COLOR(255, 255, 255, 255) ;
       col->fg               = PACK_COLOR(0,   0,   0,   255) ;
       col->text             = PACK_COLOR(0,   0,   0,   255) ;
@@ -159,6 +159,10 @@ void InitContext(Context_T *ctx){
   ctx->render_mode    = GMSH_RENDER ;
   ctx->pixel_equiv_x  = 0. ;
   ctx->pixel_equiv_y  = 0. ; 
+  ctx->clip_plane0[0]    = 0. ;
+  ctx->clip_plane0[1]    = 0. ;
+  ctx->clip_plane0[2]    = 0. ;
+  ctx->clip_plane0[3]    = 0. ;
 
   ctx->font_string          = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*";
   ctx->colorbar_font_string = "fixed";
@@ -181,7 +185,7 @@ void InitContext(Context_T *ctx){
   ctx->fast              = 1 ;
   ctx->display_lists     = 0 ; 
   ctx->command_win       = 0 ;
-  ctx->threads           = 0 ; // bugge avec Open3D sur DEC ...
+  ctx->threads           = 1 ; // effective on Unix only with -D_USETHREADS
   ctx->threads_lock      = 0 ;
 
   ctx->geom.vis_type     = 0 ;
@@ -223,6 +227,7 @@ void InitContext(Context_T *ctx){
   ctx->mesh.degree            = 1 ;
   ctx->mesh.scaling_factor    = 1.0 ;
   ctx->mesh.lc_factor         = 1.0 ;
+  ctx->mesh.rand_factor       = 1.e-5 ;
   ctx->mesh.limit_gamma       = 0.0 ;
   ctx->mesh.limit_eta         = 0.0 ;
   ctx->mesh.limit_rho         = 0.0 ;

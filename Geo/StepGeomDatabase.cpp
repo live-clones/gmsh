@@ -1,17 +1,16 @@
-/* $Id: StepGeomDatabase.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: StepGeomDatabase.cpp,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
+#include "Const.h"
 #include "Geo.h"
 #include "StepGeomDatabase.h"
 #include "DataBase.h"
+#include "Context.h"
 
-#define MAX(A,B) ((A)<(B))?(B):(A);
-#define MIN(A,B) ((A)<(B))?(A):(B);
-#define SQR(A) (A)*(A)
-
-extern double LC ;
+extern Context_T CTX;
 
 static Step_Solid_BRep_t *BREP=NULL;
+
 
 Step_Solid_BRep_t *Create_Step_Solid_BRep(void){
   Step_Solid_BRep_t *NEWBREP;
@@ -501,8 +500,7 @@ void Resolve_BREP (void){
     YMIN = MIN(cp.Pos.Y,YMIN);
     ZMIN = MIN(cp.Pos.Z,ZMIN);
   }
-  L = sqrt(SQR(XMIN-XMAX) + SQR(YMIN-YMAX) + SQR(ZMIN-ZMAX));
-  LC = L;
+  CTX.lc = L = sqrt(SQR(XMIN-XMAX) + SQR(YMIN-YMAX) + SQR(ZMIN-ZMAX));
 
   /* resolving cartesian_points */
   for(i=0;i<List_Nbr(BREP->AllCartesian_Points);i++){

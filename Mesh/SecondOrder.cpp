@@ -1,4 +1,4 @@
-/* $Id: SecondOrder.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: SecondOrder.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -74,61 +74,61 @@ void PutMiddlePoint (void *a, void *b){
   else if ((v = middleface (ed->V[0], ed->V[1])));
   else
     v = Create_Vertex (++CurrentNodeNumber,
-		       0.5 * (ed->V[0]->Pos.X + ed->V[1]->Pos.X),
-		       0.5 * (ed->V[0]->Pos.Y + ed->V[1]->Pos.Y),
-		       0.5 * (ed->V[0]->Pos.Z + ed->V[1]->Pos.Z),
-		       0.5 * (ed->V[0]->lc + ed->V[1]->lc),
-		       0.5 * (ed->V[0]->u + ed->V[1]->u));
+                       0.5 * (ed->V[0]->Pos.X + ed->V[1]->Pos.X),
+                       0.5 * (ed->V[0]->Pos.Y + ed->V[1]->Pos.Y),
+                       0.5 * (ed->V[0]->Pos.Z + ed->V[1]->Pos.Z),
+                       0.5 * (ed->V[0]->lc + ed->V[1]->lc),
+                       0.5 * (ed->V[0]->u + ed->V[1]->u));
   ed->newv = v;
   Tree_Insert (THET, &v);
   for (i = 0; i < List_Nbr (ed->Simplexes); i++){
     List_Read (ed->Simplexes, i, &s);
     if (s->V[3] && EdgesInVolume){
       if (!s->VSUP)
-	s->VSUP = (Vertex **) Malloc (6 * sizeof (Vertex *));
+        s->VSUP = (Vertex **) Malloc (6 * sizeof (Vertex *));
       N = 6;
       for (k = 0; k < N; k++)
-	for (j = 0; j < 2; j++)
-	  edges[k][j] = edges_tetra[k][j];
+        for (j = 0; j < 2; j++)
+          edges[k][j] = edges_tetra[k][j];
     }
     else if (s->V[3]){
       if (!s->VSUP)
-	s->VSUP = (Vertex **) Malloc (4 * sizeof (Vertex *));
+        s->VSUP = (Vertex **) Malloc (4 * sizeof (Vertex *));
       N = 4;
       for (k = 0; k < N; k++)
-	for (j = 0; j < 2; j++)
-	  edges[k][j] = edges_quad[k][j];
+        for (j = 0; j < 2; j++)
+          edges[k][j] = edges_quad[k][j];
     }
     else if (s->V[2]){
       if (!s->VSUP)
-	s->VSUP = (Vertex **) Malloc (3 * sizeof (Vertex *));
+        s->VSUP = (Vertex **) Malloc (3 * sizeof (Vertex *));
       N = 3;
       for (k = 0; k < N; k++)
-	for (j = 0; j < 2; j++)
-	  edges[k][j] = edges_tetra[k][j];
+        for (j = 0; j < 2; j++)
+          edges[k][j] = edges_tetra[k][j];
     }
     else{
       if (!s->VSUP)
-	s->VSUP = (Vertex **) Malloc (sizeof (Vertex *));
+        s->VSUP = (Vertex **) Malloc (sizeof (Vertex *));
       N = 1;
       for (k = 0; k < N; k++)
-	for (j = 0; j < 2; j++)
-	  edges[k][j] = edges_tetra[k][j];
+        for (j = 0; j < 2; j++)
+          edges[k][j] = edges_tetra[k][j];
     }
 
     for (j = 0; j < N; j++){
       if ((!compareVertex (&s->V[edges[j][0]], &ed->V[0]) &&
-	   !compareVertex (&s->V[edges[j][1]], &ed->V[1])) ||
-	  (!compareVertex (&s->V[edges[j][0]], &ed->V[1]) &&
-	   !compareVertex (&s->V[edges[j][1]], &ed->V[0]))){
-	s->VSUP[j] = v;
+           !compareVertex (&s->V[edges[j][1]], &ed->V[1])) ||
+          (!compareVertex (&s->V[edges[j][0]], &ed->V[1]) &&
+           !compareVertex (&s->V[edges[j][1]], &ed->V[0]))){
+        s->VSUP[j] = v;
       }
     }
   }
 }
 
 void Degre2 (Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
-	     Curve * c, Surface * s){
+             Curve * c, Surface * s){
   static Tree_T *TreeEdges = NULL;
 
   THES = s;

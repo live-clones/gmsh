@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.h,v 1.3 2000-11-23 15:05:59 geuzaine Exp $ */
+/* $Id: 2D_Mesh.h,v 1.4 2000-11-26 15:43:46 geuzaine Exp $ */
 #ifndef _2D_MESH_H_
 #define _2D_MESH_H_
 
@@ -13,18 +13,18 @@ typedef avlstruct *avlptr;
 
 int  remove_tree (avlstruct ** root);
 int  insert_avltree (avlstruct ** root, void *item, 
-		     int (*fcmp)(void *a, void *b));
+                     int (*fcmp)(void *a, void *b));
 int  delete_avltree (avlstruct ** root, void *item, 
-		     int (*fcmp)(void *a, void *b));
+                     int (*fcmp)(void *a, void *b));
 int  avltree_remove (avlstruct **root);
 void avltree_count (avlptr root, int *numtri);
 void avltree_print (avlptr root, Delaunay **listdel, int *numtri);
 int  avltree_insert (avlstruct **root, void *item, 
-		     int (*fcmp)(void *a, void *b));
+                     int (*fcmp)(void *a, void *b));
 int  avltree_delete (avlstruct **root, void *item, 
-		     int (*fcmp)(void *a, void *b));
+                     int (*fcmp)(void *a, void *b));
 void findtree(avlptr root, double *qualm, 
-	      Delaunay **delf, DocRecord *MESH);
+              Delaunay **delf, DocRecord *MESH);
 Delaunay *findrightest(avlptr root, DocRecord *MESH);
 
 
@@ -34,7 +34,7 @@ Delaunay * Find_Triangle (MPoint pt, DocRecord *MESH, int typ);
 int Insert_Triangle (avlstruct **root, Delaunay * del);
 int Delete_Triangle ( avlstruct **root, Delaunay * del );
 int Insert_Point (MPoint pt, int *numpoints, int *numalloc, 
-		  DocRecord *doc, DocRecord *BGM, int is3d);
+                  DocRecord *doc, DocRecord *BGM, int is3d);
 MPoint Localize (Delaunay * del , DocRecord *MESH);
 void alloue_Mai_Pts(maillage *mai , int Nballoc , int incrAlloc);
 void alloue_Mai_Del(maillage *mai , int Nballoc , int incrAlloc);
@@ -45,28 +45,28 @@ int DelaunayAndVoronoi(DocPeek doc);
 
 int Conversion(DocPeek doc );
 int CreateLinks(List_T * ListDelaunay , int NumDelaunay, 
-		ContourRecord **ListContours , int Nc);
+                ContourRecord **ListContours , int Nc);
 
 void makepermut (int numpoints);
 void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour, 
-		   int NumContours , int NumDelaunay);
+                   int NumContours , int NumDelaunay);
 void verify_inside (Delaunay * ListDelaunay ,  int NumDelaunay );
 
 void PushgPointArray(PointRecord *ptr);
 void remove_all_dlist(int n, PointRecord *pPointArray);
 
 int PE_Del_Triangle (Delaunay *del , MPoint pt, DListPeek *ListEdges ,
-		     List_T *listkill, List_T *listDelforlink,
-		     int *numlink, int *numdel);
+                     List_T *listkill, List_T *listDelforlink,
+                     int *numlink, int *numdel);
 
 void filldel (Delaunay * deladd, int aa, int bb, int cc,
-	      PointRecord * points, DocRecord * mesh);
+              PointRecord * points, DocRecord * mesh);
 
 int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
-		 double *xc,double *yc);
+                 double *xc,double *yc);
 double find_quality (MPoint center, DocRecord * BGMESH);
 void create_NXE (Tree_T * TreeAllNod, Tree_T * TreeAllElg,
-		 Tree_T * TreeAllNXE);
+                 Tree_T * TreeAllNXE);
 
 int Is_left_of(PointNumero x,PointNumero y,PointNumero check);
 int Is_right_of(PointNumero x,PointNumero y,PointNumero check);

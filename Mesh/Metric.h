@@ -1,4 +1,4 @@
-/* $Id: Metric.h,v 1.3 2000-11-23 15:05:59 geuzaine Exp $ */
+/* $Id: Metric.h,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _METRIC_H_
 #define _METRIC_H_
 
@@ -27,7 +27,7 @@ public:
   double operator () (int i,int j);
   double * operator [] (int i);
   double Local_Metric_Of_Attractors (double X, double Y, double Z,
-				     double metric[3][3]);
+                                     double metric[3][3]);
   double getWorstEdge (Simplex *s, Surface *surf, Vertex *v[2]);
 
 } ;

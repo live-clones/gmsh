@@ -1,4 +1,4 @@
-/* $Id: Draw.h,v 1.5 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Draw.h,v 1.6 2000-11-26 15:43:46 geuzaine Exp $ */
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
@@ -49,19 +49,19 @@ void Draw_Scales(void);
 void Draw_Axes (double s);
 void Draw_SmallAxes(void);
 void Draw_Point(double *x, double *y, double *z,
-		double *Offset, double Raise[3][5]);
+                double *Offset, double Raise[3][5]);
 void Draw_Line (double *x, double *y, double *z,
-		double *Offset, double Raise[3][5]);
+                double *Offset, double Raise[3][5]);
 void Draw_Triangle (double *x, double *y, double *z,
-		    double *Offset, double Raise[3][5], int shade);
+                    double *Offset, double Raise[3][5], int shade);
 void Draw_Quadrangle (double *x, double *y, double *z,
-		      double *Offset, double Raise[3][5], int shade);
+                      double *Offset, double Raise[3][5], int shade);
 void Draw_Polygon (int n, double *x, double *y, double *z,
-		   double *Offset, double Raise[3][5]);
+                   double *Offset, double Raise[3][5]);
 void Draw_Vector (int Type, int Fill,
-		  double x, double y, double z,
-		  double d, double dx, double dy, double dz,
-		  double *Offset, double Raise[3][5]);
+                  double x, double y, double z,
+                  double d, double dx, double dy, double dz,
+                  double *Offset, double Raise[3][5]);
 void Draw_Mesh_Volumes(void *a, void *b);
 void Draw_Mesh_Surfaces(void *a, void *b);
 void Draw_Mesh_Curves(void *a, void *b);
@@ -74,12 +74,12 @@ void Draw_Hexahedron_Volume (void *a, void *b);
 void Draw_Prism_Volume (void *a, void *b);
 
 void Draw_Post_Tetrahedron (Post_View * View, Post_Simplex * s,
-			    double ValMin, double ValMax, double Raise[3][5]);
+                            double ValMin, double ValMax, double Raise[3][5]);
 void Draw_Post_Triangle (Post_View * View, Post_Simplex * t,
-			 double ValMin, double ValMax, double Raise[3][5]);
+                         double ValMin, double ValMax, double Raise[3][5]);
 void Draw_Post_Line (Post_View * View, Post_Simplex * l,
-		     double ValMin, double ValMax, double Raise[3][5]);
+                     double ValMin, double ValMax, double Raise[3][5]);
 void Draw_Post_Point (Post_View * View, Post_Simplex * p,
-		      double ValMin, double ValMax, double Raise[3][5]);
+                      double ValMin, double ValMax, double Raise[3][5]);
 
 #endif

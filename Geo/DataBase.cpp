@@ -1,4 +1,4 @@
-/* $Id: DataBase.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
+/* $Id: DataBase.cpp,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -117,11 +117,11 @@ void AddQuadricSurfaceInDataBase (int Typ, int NumQuadric, double zaxis[3],
       Msg(FATAL, "Unknown Loop %d", iLoop);
     else{
       for(j=0;j<List_Nbr(el->Curves);j++){
-	List_Read(el->Curves,j,&ic);
-	if(!(c = FindCurve(ic,THEM)))
-	  Msg(FATAL, "Unknown Curve %d", ic);
-	else
-	  List_Add (s->s.Generatrices, &c);
+        List_Read(el->Curves,j,&ic);
+        if(!(c = FindCurve(ic,THEM)))
+          Msg(FATAL, "Unknown Curve %d", ic);
+        else
+          List_Add (s->s.Generatrices, &c);
       }
     }
   }
@@ -151,11 +151,11 @@ void CreateSurfaceFromOldCrappyDatabase (int izon, int typzon, int o1, int o2,
       Msg(FATAL, "Unknown Line Loop %d", iLoop);
     else{
       for(j=0;j<List_Nbr(el->Curves);j++){
-	List_Read(el->Curves,j,&ic);
-	if(!(c = FindCurve(ic,THEM)))
-	  Msg(FATAL, "Unknown Curve %d", ic);
-	else
-	  List_Add (s->s.Generatrices, &c);
+        List_Read(el->Curves,j,&ic);
+        if(!(c = FindCurve(ic,THEM)))
+          Msg(FATAL, "Unknown Curve %d", ic);
+        else
+          List_Add (s->s.Generatrices, &c);
       }
     }
   }
@@ -199,11 +199,11 @@ void CreateVolumeFromOldCrappyDatabase (int izon, List_T *loops, Mesh *M){
       Msg(FATAL, "Unknown Surface Loop %d", iLoop);
     else{
       for(j=0;j<List_Nbr(sl->Surfaces);j++){
-	List_Read(sl->Surfaces,j,&is);
-	if(!(s = FindSurface(abs(is),THEM)))
-	  Msg(FATAL, "Unknown Surface %d", is);
-	else
-	  List_Add (v->Surfaces, &s);
+        List_Read(sl->Surfaces,j,&is);
+        if(!(s = FindSurface(abs(is),THEM)))
+          Msg(FATAL, "Unknown Surface %d", is);
+        else
+          List_Add (v->Surfaces, &s);
       }
     }
   }
@@ -352,8 +352,8 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
     else{
       cc->k = (float*)malloc(4*List_Nbr(ku)*sizeof(float));
       for(i=0;i<List_Nbr(ku);i++){
-	List_Read(ku,i,&d);
-	cc->k[i] = (float)d/*((d-kumin)/(kumax-kumin))*/;
+        List_Read(ku,i,&d);
+        cc->k[i] = (float)d/*((d-kumin)/(kumax-kumin))*/;
       }
     }
   }
@@ -375,8 +375,8 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
     else{
       cc->k = (float*)malloc(4*List_Nbr(ku)*sizeof(float));
       for(i=0;i<List_Nbr(ku);i++){
-	List_Read(ku,i,&d);
-	cc->k[i] = (float)d/*((d-kumin)/(kumax-kumin))*/;
+        List_Read(ku,i,&d);
+        cc->k[i] = (float)d/*((d-kumin)/(kumax-kumin))*/;
       }
     }
   }
@@ -406,8 +406,8 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
     else{
       cc->k = (float*)malloc(4*List_Nbr(kv) * sizeof(float));
       for(i=0;i<List_Nbr(kv);i++){
-	List_Read(kv,i,&d);
-	cc->k[i] = (float)d/*((d-kvmin)/(kvmax-kvmin))*/;
+        List_Read(kv,i,&d);
+        cc->k[i] = (float)d/*((d-kvmin)/(kvmax-kvmin))*/;
       }
     }
   }
@@ -428,8 +428,8 @@ void CreateNurbsSurface (int Num , int Order1 , int Order2 , List_T *List,
     else{
       cc->k = (float*)malloc(4*List_Nbr(kv)*sizeof(float));
       for(i=0;i<List_Nbr(kv);i++){
-	List_Read(kv,i,&d);
-	cc->k[i] = (float)d/*((d-kvmin)/(kvmax-kvmin))*/;
+        List_Read(kv,i,&d);
+        cc->k[i] = (float)d/*((d-kvmin)/(kvmax-kvmin))*/;
       }
     }
   }

@@ -1,4 +1,4 @@
-scale = 100 ;
+scale = 1 ;
 
 lc1 = 5.e-3 *scale ;
 lc2 = 1.e-2 *scale ;

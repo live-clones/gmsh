@@ -1,4 +1,4 @@
-/* $Id: Iso.cpp,v 1.2 2000-11-23 14:11:32 geuzaine Exp $ */
+/* $Id: Iso.cpp,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -11,8 +11,8 @@ void RaiseFill(int i, double Val, double ValMin, double Raise[3][5]);
 /* ------------------------------------------------------------------------ */
 
 void Interpolate(double *X, double *Y, double *Z, 
-		 double *Val, double V, int I1, int I2, 
-		 double *XI, double *YI ,double *ZI){
+                 double *Val, double V, int I1, int I2, 
+                 double *XI, double *YI ,double *ZI){
   
   if(Val[I1] == Val[I2]){
     *XI = X[I1]; 
@@ -31,8 +31,8 @@ void Interpolate(double *X, double *Y, double *Z,
 /* ------------------------------------------------------------------------ */
 
 void IsoSimplex(double *X, double *Y, double *Z, double *Val, 
-		double V, double Vmin, double Vmax, 
-		double *Offset, double Raise[3][5], int shade){
+                double V, double Vmin, double Vmax, 
+                double *Offset, double Raise[3][5], int shade){
   int    nb;
   double Xp[6],Yp[6],Zp[6];
 
@@ -91,8 +91,8 @@ void IsoSimplex(double *X, double *Y, double *Z, double *Val,
 /* ------------------------------------------------------------------------ */
 
 void CutTriangle1D(double *X, double *Y, double *Z, double *Val, 
-		   double V, double Vmin, double Vmax,
-		   double *Xp, double *Yp, double *Zp, int *nb){
+                   double V, double Vmin, double Vmax,
+                   double *Xp, double *Yp, double *Zp, int *nb){
   
   if(V != Vmax){
     *nb = 0;
@@ -122,8 +122,8 @@ void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
 }
 
 void CutTriangle2D(double *X, double *Y, double *Z, double *Val, 
-		   double V1, double V2, double Vmin, double Vmax,
-		   double *Xp2, double *Yp2, double *Zp2, int *Np2, double *Vp2){
+                   double V1, double V2, double Vmin, double Vmax,
+                   double *Xp2, double *Yp2, double *Zp2, int *Np2, double *Vp2){
 
   int     i, io[3],j,iot,Np,Fl;
   double  Xp[5],Yp[5],Zp[5],Vp[5];
@@ -135,9 +135,9 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   for(i=0;i<2;i++){
     for(j=i+1;j<3;j++){
       if(Val[io[i]]>Val[io[j]]){
-	iot = io[i];
-	io[i] = io[j];
-	io[j] = iot;
+        iot = io[i];
+        io[i] = io[j];
+        io[j] = iot;
       }
     }
   }
@@ -241,8 +241,8 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
 /* ------------------------------------------------------------------------ */
 
 void CutLine0D(double *X, double *Y, double *Z, double *Val, 
-	       double V, double Vmin, double Vmax,
-	       double *Xp, double *Yp, double *Zp, int *nb){
+               double V, double Vmin, double Vmax,
+               double *Xp, double *Yp, double *Zp, int *nb){
   
   *nb = 0;
 
@@ -259,8 +259,8 @@ void CutLine0D(double *X, double *Y, double *Z, double *Val,
 }
 
 void CutLine1D(double *X, double *Y, double *Z, double *Val, 
-	       double V1, double V2, double Vmin, double Vmax,
-	       double *Xp2, double *Yp2, double *Zp2, int *Np2, double *Vp2){
+               double V1, double V2, double Vmin, double Vmax,
+               double *Xp2, double *Yp2, double *Zp2, int *Np2, double *Vp2){
 
   int io[2];
 

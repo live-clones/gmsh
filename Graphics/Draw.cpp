@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.4 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -20,7 +20,6 @@ extern Widgets_T    WID ;
 extern Context_T    CTX ;
 extern GLdouble     vxmin, vxmax, vymin, vymax;
 extern Mesh         M;
-extern double       LC;
 extern List_T      *Post_ViewList;
 
 /* ------------------------------------------------------------------------ */
@@ -38,7 +37,13 @@ void Draw3d(void){
     glDisable(GL_ALPHA);
   }
   glPolygonOffset(1.0, 1);
-  glEnable(GL_CLIP_PLANE0);
+
+  if(CTX.clip[0]) glEnable(GL_CLIP_PLANE0);
+  if(CTX.clip[1]) glEnable(GL_CLIP_PLANE1);
+  if(CTX.clip[2]) glEnable(GL_CLIP_PLANE2);
+  if(CTX.clip[3]) glEnable(GL_CLIP_PLANE3);
+  if(CTX.clip[4]) glEnable(GL_CLIP_PLANE4);
+  if(CTX.clip[5]) glEnable(GL_CLIP_PLANE5);
 
   /* This is sufficient, since we NEVER give different normals to nodes of one polygon */
   glShadeModel(GL_FLAT);   //glShadeModel(GL_SMOOTH);
@@ -53,7 +58,13 @@ void Draw3d(void){
 }
 
 void Draw2d(void){
-  glDisable(GL_CLIP_PLANE0);
+  glEnable(GL_CLIP_PLANE0);
+  glEnable(GL_CLIP_PLANE1);
+  glEnable(GL_CLIP_PLANE2);
+  glEnable(GL_CLIP_PLANE3);
+  glEnable(GL_CLIP_PLANE4);
+  glEnable(GL_CLIP_PLANE5);
+
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_LIGHTING);
   glShadeModel(GL_FLAT);
@@ -62,9 +73,9 @@ void Draw2d(void){
   glLoadIdentity();
   /* to draw directly in screen coords */
   glOrtho((double)CTX.viewport[0],
-	  (double)CTX.viewport[2],
-	  (double)CTX.viewport[1],
-	  (double)CTX.viewport[3],-1.,1.);
+          (double)CTX.viewport[2],
+          (double)CTX.viewport[1],
+          (double)CTX.viewport[3],-1.,1.);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -77,9 +88,9 @@ void Draw2d(void){
 #ifdef _UNIX
 void Draw(void){
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
-	       UNPACK_GREEN(CTX.color.bg)/255.,
-	       UNPACK_BLUE(CTX.color.bg)/255.,
-	       0.);
+               UNPACK_GREEN(CTX.color.bg)/255.,
+               UNPACK_BLUE(CTX.color.bg)/255.,
+               0.);
   glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
   if(CTX.db) glDrawBuffer(GL_BACK);    
   Draw3d();
@@ -91,9 +102,9 @@ void Draw(void){
 void Draw(void){
   if(CTX.db) glDrawBuffer(GL_BACK);
   glClearColor(UNPACK_RED(CTX.color.bg)/255.,
-	       UNPACK_GREEN(CTX.color.bg)/255.,
-	       UNPACK_BLUE(CTX.color.bg)/255.,
-	       0.);
+               UNPACK_GREEN(CTX.color.bg)/255.,
+               UNPACK_BLUE(CTX.color.bg)/255.,
+               0.);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
   Draw3d();
   Draw2d();
@@ -115,10 +126,10 @@ void Orthogonalize(int x, int y){
 
   if(CTX.render_mode == GMSH_SELECT)
     gluPickMatrix ((GLdouble)x, 
-		   (GLdouble)(CTX.viewport[3]-y),
-		   5.0,
-		   5.0,
-		   CTX.viewport);
+                   (GLdouble)(CTX.viewport[3]-y),
+                   5.0,
+                   5.0,
+                   CTX.viewport);
 
   Va = (GLdouble)(CTX.viewport[3]-CTX.viewport[1]) / 
        (GLdouble)(CTX.viewport[2]-CTX.viewport[0]) ;
@@ -144,16 +155,16 @@ void Orthogonalize(int x, int y){
   CTX.pixel_equiv_y = (vymax-vymin)/(CTX.viewport[3]-CTX.viewport[1]);
   
   if(CTX.ortho) {
-    glOrtho(vxmin,vxmax,vymin,vymax,0,100*LC);
+    glOrtho(vxmin,vxmax,vymin,vymax,0,100*CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();    
-    glTranslated(0.0, 0.0, -50*LC);
+    glTranslated(0.0, 0.0, -50*CTX.lc);
   }
   else{
-    glFrustum(vxmin,vxmax,vymin,vymax,LC,100*LC);
+    glFrustum(vxmin,vxmax,vymin,vymax,CTX.lc,100*CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();    
-    glTranslated(0.0, 0.0, -10*LC);
+    glTranslated(0.0, 0.0, -10*CTX.lc);
     glScaled(10.,10.,10.);
   }
 
@@ -263,7 +274,7 @@ void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj){
     names = *ptr;
     ptr++; ptr++; ptr++;
     for(j=0; j<names; j++){
-      if (j==0)	ii[i] = *ptr;
+      if (j==0) ii[i] = *ptr;
       else if (j==1) jj[i] = *ptr;
       ptr++;
     }
@@ -272,7 +283,7 @@ void Process_SelectionBuffer(int x, int y, int *n, GLuint *ii, GLuint *jj){
 }
 
 void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
-			    Curve **thec, Surface **thes, Mesh *m){
+                            Curve **thec, Surface **thes, Mesh *m){
 
   Vertex   *v=NULL, V;
   Curve    *c=NULL, C;
@@ -290,20 +301,20 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
     if(typ[i] == typmin){
       switch(typ[i]){
       case 0: 
-	v = &V; 
-	v->Num = ient[i];
-	if(Tree_Query(m->Points,&v)) *thev = v;
-	break;
+        v = &V; 
+        v->Num = ient[i];
+        if(Tree_Query(m->Points,&v)) *thev = v;
+        break;
       case 1:
-	c = &C;
-	c->Num = ient[i];
-	if(Tree_Query(m->Curves,&c)) *thec = c;
-	break;
+        c = &C;
+        c->Num = ient[i];
+        if(Tree_Query(m->Curves,&c)) *thec = c;
+        break;
       case 2:
-	s = &S;
-	s->Num = ient[i];
-	if(Tree_Query(m->Surfaces,&s)) *thes = s;
-	break;
+        s = &S;
+        s->Num = ient[i];
+        if(Tree_Query(m->Surfaces,&s)) *thes = s;
+        break;
       }
     }
   }
@@ -314,8 +325,8 @@ void Filter_SelectionBuffer(int n, GLuint *typ, GLuint *ient, Vertex **thev,
 
 int check_type(int type, Vertex *v, Curve *c, Surface *s){
   return ( (type==ENT_POINT   && v) ||
-	   (type==ENT_LINE    && c) ||
-	   (type==ENT_SURFACE && s) ) ;
+           (type==ENT_LINE    && c) ||
+           (type==ENT_SURFACE && s) ) ;
 }
 
 int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
@@ -343,10 +354,10 @@ int SelectEntity(int type, Vertex **v, Curve **c, Surface **s){
       Process_SelectionBuffer(event.xbutton.x, event.xbutton.y, &hits, ii, jj);
       Filter_SelectionBuffer(hits,ii,jj,v,c,s,&M);
       if(check_type(type,*v,*c,*s)){
-	BeginHighlight();
-	HighlightEntity(*v,*c,*s,1);
-	EndHighlight(1);
-	return(event.xbutton.button);
+        BeginHighlight();
+        HighlightEntity(*v,*c,*s,1);
+        EndHighlight(1);
+        return(event.xbutton.button);
       }
     }
   }
@@ -378,7 +389,7 @@ int SelectEntity(int x, int y, Vertex **v, Curve **c, Surface **s){
 
 
 void myZoom(GLdouble X1, GLdouble X2, GLdouble Y1, GLdouble Y2,
-	    GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2){
+            GLdouble Xc1, GLdouble Xc2, GLdouble Yc1, GLdouble Yc2){
   GLdouble  xscale1, yscale1;
 
   xscale1 = CTX.s[0];
@@ -406,9 +417,9 @@ void InitCb(Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
   CTX.viewport[2] = cb->width ;
   CTX.viewport[3] = cb->height ;
   glViewport(CTX.viewport[0],
-	     CTX.viewport[1],
-	     CTX.viewport[2],
-	     CTX.viewport[3]);
+             CTX.viewport[1],
+             CTX.viewport[2],
+             CTX.viewport[3]);
 }
 
 void ResizeCb(Widget w,XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
@@ -417,9 +428,9 @@ void ResizeCb(Widget w,XtPointer client_data, GLwDrawingAreaCallbackStruct *cb){
   CTX.viewport[2] = cb->width ;
   CTX.viewport[3] = cb->height ;
   glViewport(CTX.viewport[0],
-	     CTX.viewport[1],
-	     CTX.viewport[2],
-	     CTX.viewport[3]);
+             CTX.viewport[1],
+             CTX.viewport[2],
+             CTX.viewport[3]);
   Init();
   Draw();
   if(CTX.overlay) InitOv();

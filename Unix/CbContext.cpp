@@ -1,4 +1,4 @@
-/* $Id: CbContext.cpp,v 1.5 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: CbContext.cpp,v 1.6 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -78,9 +78,9 @@ void UpdatePostButtons(void){
 
       /* toggleButt[i] */
       XtVaSetValues(WID.M.toggleButt[i],
-		    XmNlabelString, XmStringCreateSimple(txt_post[i]),
-		    XmNset, v->Visible?True:False,
-		    NULL);      
+                    XmNlabelString, XmStringCreateSimple(txt_post[i]),
+                    XmNset, v->Visible?True:False,
+                    NULL);      
       XtManageChild(WID.M.toggleButt[i]);
 
       /* timeStepButt[i] */
@@ -284,7 +284,8 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   case CONTEXT_MESH :
     actual_global_context = CONTEXT_MESH;
-    XtVaSetValues(WID.M.modButt, XmNlabelString, XmStringCreateSimple("Mesh"), NULL); 
+    XtVaSetValues(WID.M.modButt, XmNlabelString, 
+                  XmStringCreateSimple("Mesh"), NULL); 
     Msg(INFO,"");
     ButtonText = txt_mesh;
     break;
@@ -297,7 +298,8 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   case CONTEXT_POST :
     actual_global_context = CONTEXT_POST;
-    XtVaSetValues(WID.M.modButt, XmNlabelString, XmStringCreateSimple("Post Processing"), NULL);
+    XtVaSetValues(WID.M.modButt, XmNlabelString, 
+                  XmStringCreateSimple("Post Processing"), NULL);
     Msg(INFO,"");
     UpdatePostButtons();
     return;    
@@ -317,8 +319,8 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     if(!last && ButtonText[i] != NULL){
       if(XtIsManaged(WID.M.toggleButt[i])) XtUnmanageChild(WID.M.toggleButt[i]);
       XtVaSetValues(WID.M.pushButt[i], 
-		    XmNlabelString,XmStringCreateSimple(ButtonText[i]),
-		    NULL);
+                    XmNlabelString,XmStringCreateSimple(ButtonText[i]),
+                    NULL);
       XtManageChild(WID.M.pushButt[i]);
     }
     else {
@@ -588,15 +590,11 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
 
 
 int AddViewInUI(int i, char *Name, int Num){
-  //char tmp[20];
 
   if(i > NB_BUTT_MAX -1) return 1;
 
   txt_post[i-1] = (char*)Malloc(NAME_STR_L*sizeof(char));
   strncpy(txt_post[i-1],Name,NAME_STR_L);
-
-  //sprintf(tmp, " (%d)", Num);
-  //strncat(txt_post[i-1],tmp,NAME_STR_L);
 
   if(actual_global_context == CONTEXT_POST)
     ActualizeContextCb(NULL,(XtPointer)actual_global_context,NULL);

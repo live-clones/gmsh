@@ -1,4 +1,4 @@
-/* $Id: 3D_Coherence.cpp,v 1.6 2000-11-24 08:04:14 geuzaine Exp $ */
+/* $Id: 3D_Coherence.cpp,v 1.7 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -21,21 +21,21 @@ List_T *Missing, *MissingF, *MissingS;
 Tree_T *EdgesTree, *FacesTree, *swaps;
 
 int edges_quad[4][2] = { {0, 1},
-			 {1, 2},
-			 {2, 3},
-			 {3, 0} };
+                         {1, 2},
+                         {2, 3},
+                         {3, 0} };
 int edges_tetra[6][2] = { {0, 1},
-			  {1, 2},
-			  {2, 0},
-			  {3, 0},
-			  {3, 2},
-			  {3, 1} };
+                          {1, 2},
+                          {2, 0},
+                          {3, 0},
+                          {3, 2},
+                          {3, 1} };
 int edges_non[3] = {2, 0, 1};
 int NbQ;
 int EdgesInVolume = 1;
 
 int memesens (Vertex * v1, Vertex * v2, Vertex * v3,
-	      Vertex * c1, Vertex * c2, Vertex * c3){
+              Vertex * c1, Vertex * c2, Vertex * c3){
   double v12[3], v13[3], n1[3], n2[3], p;
 
   v12[0] = c1->Pos.X - c2->Pos.X;
@@ -76,8 +76,8 @@ static void pedge (void *a, void *b){
   Edge *e;
   e = (Edge *) a;
   printf ("arete %d (%12.5E,%12.5E,%12.5E) -> %d (%12.5E,%12.5E,%12.5E)\n",
-	  e->V[0]->Num, e->V[0]->Pos.X, e->V[0]->Pos.Y, e->V[0]->Pos.Z,
-	  e->V[1]->Num, e->V[1]->Pos.X, e->V[1]->Pos.Y, e->V[1]->Pos.Z);
+          e->V[0]->Num, e->V[0]->Pos.X, e->V[0]->Pos.Y, e->V[0]->Pos.Z,
+          e->V[1]->Num, e->V[1]->Pos.X, e->V[1]->Pos.Y, e->V[1]->Pos.Z);
   */
 }
 
@@ -249,26 +249,26 @@ void create_Edge (void *a, void *b){
   if (s->V[3] && EdgesInVolume){
     N = 6;
     for (i = 0; i < N; i++)
-	for (j = 0; j < 2; j++)
-	  edges[i][j] = edges_tetra[i][j];
+        for (j = 0; j < 2; j++)
+          edges[i][j] = edges_tetra[i][j];
   }
   else if (s->V[3]){
     N = 4;
     for (i = 0; i < N; i++)
       for (j = 0; j < 2; j++)
-	edges[i][j] = edges_quad[i][j];
+        edges[i][j] = edges_quad[i][j];
   }
   else if (s->V[2]){
     N = 3;
     for (i = 0; i < N; i++)
       for (j = 0; j < 2; j++)
-	edges[i][j] = edges_tetra[i][j];
+        edges[i][j] = edges_tetra[i][j];
   }
   else{
     N = 1;
     for (i = 0; i < N; i++)
       for (j = 0; j < 2; j++)
-	edges[i][j] = edges_tetra[i][j];
+        edges[i][j] = edges_tetra[i][j];
   }
 
   for (i = 0; i < N; i++){
@@ -277,14 +277,14 @@ void create_Edge (void *a, void *b){
     if ((pE = (Edge *) Tree_PQuery (EdgesTree, &E))){
       List_Add (pE->Simplexes, ps);
       if (N == 3)
-	pE->O[1] = s->V[edges_non[i]];
+        pE->O[1] = s->V[edges_non[i]];
     }
     else{
       E.Simplexes = List_Create (2, 1, sizeof (Simplex *));
       if (N == 3)
-	E.O[0] = s->V[edges_non[i]];
+        E.O[0] = s->V[edges_non[i]];
       if (N == 3)
-	E.O[1] = NULL;
+        E.O[1] = NULL;
       List_Add (E.Simplexes, &s);
       E.newv = NULL;
       Tree_Replace (EdgesTree, &E);
@@ -473,7 +473,7 @@ int Edge_Node (Edge * e, Vertex * v){
     return 1;
 
   lc = myhypot (myhypot (e->V[0]->Pos.X - e->V[1]->Pos.X, e->V[0]->Pos.Y - e->V[1]->Pos.Y),
-		e->V[0]->Pos.Z - e->V[1]->Pos.Z);
+                e->V[0]->Pos.Z - e->V[1]->Pos.Z);
   
   if (e->V[0]->Pos.X != e->V[1]->Pos.X){
     u = (v->Pos.X - e->V[0]->Pos.X) / (e->V[1]->Pos.X - e->V[0]->Pos.X);
@@ -573,23 +573,23 @@ Vertex *Edge_Face (Edge * e, Face * f){
   if (res[0] == 1.0 || res[2] == 0.0 || res[0] == 0.0 ||
       res[1] == 1. - res[0] || res[1] == 0.0 || res[0] == 1.0)
     Msg(DEBUG, "Face p1  %g %g %g\n"
-	DEBUG_NIL "facette p2  %g %g %g\n"
-	DEBUG_NIL "facette p3  %g %g %g\n"
-	DEBUG_NIL "edge    e2  %g %g %g\n"
-	DEBUG_NIL "edge    e3  %g %g %g\n"
-	DEBUG_NIL "%g %g %g",
-	f->V[0]->Pos.X, f->V[0]->Pos.Y, f->V[0]->Pos.Z,
-	f->V[1]->Pos.X, f->V[1]->Pos.Y, f->V[1]->Pos.Z,
-	f->V[2]->Pos.X, f->V[2]->Pos.Y, f->V[2]->Pos.Z,
-	e->V[0]->Pos.X, e->V[0]->Pos.Y, e->V[0]->Pos.Z,
-	e->V[1]->Pos.X, e->V[1]->Pos.Y, e->V[1]->Pos.Z,
-	res[0], res[1], res[2]);
+        DEBUG_NIL "facette p2  %g %g %g\n"
+        DEBUG_NIL "facette p3  %g %g %g\n"
+        DEBUG_NIL "edge    e2  %g %g %g\n"
+        DEBUG_NIL "edge    e3  %g %g %g\n"
+        DEBUG_NIL "%g %g %g",
+        f->V[0]->Pos.X, f->V[0]->Pos.Y, f->V[0]->Pos.Z,
+        f->V[1]->Pos.X, f->V[1]->Pos.Y, f->V[1]->Pos.Z,
+        f->V[2]->Pos.X, f->V[2]->Pos.Y, f->V[2]->Pos.Z,
+        e->V[0]->Pos.X, e->V[0]->Pos.Y, e->V[0]->Pos.Z,
+        e->V[1]->Pos.X, e->V[1]->Pos.Y, e->V[1]->Pos.Z,
+        res[0], res[1], res[2]);
 
   v = Create_Vertex (++CurrentNodeNumber,
-		     (1. - res[2]) * e->V[0]->Pos.X + res[2] * e->V[1]->Pos.X,
-		     (1. - res[2]) * e->V[0]->Pos.Y + res[2] * e->V[1]->Pos.Y,
-		     (1. - res[2]) * e->V[0]->Pos.Z + res[2] * e->V[1]->Pos.Z,
-		     (1. - res[2]) * e->V[0]->lc + res[2] * e->V[1]->lc, 0.0);
+                     (1. - res[2]) * e->V[0]->Pos.X + res[2] * e->V[1]->Pos.X,
+                     (1. - res[2]) * e->V[0]->Pos.Y + res[2] * e->V[1]->Pos.Y,
+                     (1. - res[2]) * e->V[0]->Pos.Z + res[2] * e->V[1]->Pos.Z,
+                     (1. - res[2]) * e->V[0]->lc + res[2] * e->V[1]->lc, 0.0);
   v->ListSurf = List_Create (1, 1, sizeof (Surface *));
 
   return v;
@@ -723,22 +723,22 @@ Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
       mat[0][1] = v1->Pos.Y - v2->Pos.Y;
       b[0] = -e->V[0]->Pos.Y + v1->Pos.Y;
       if (!sys2x2 (mat, b, res)){
-	/* SEGMENTS PARALLELES */
-	/* printf("systeme singulier\n");
-	   printf("arete %d -> %d\n",v1->Num,v2->Num);
-	   printf("arete %g %g %g --> %g %g %g\n",
-	          v1->Pos.X,v1->Pos.Y,v1->Pos.Z,v2->Pos.X,v2->Pos.Y,v2->Pos.Z);
-	   printf("arete %g %g %g --> %g %g %g\n",
-	          e->V[0]->Pos.X,e->V[0]->Pos.Y,e->V[0]->Pos.Z,
-		  e->V[1]->Pos.X,e->V[1]->Pos.Y,e->V[1]->Pos.Z);
-	   printf("%g %g\n",mat[0][0],mat[0][1]);
-	   printf("%g %g\n",mat[1][0],mat[1][1]);
-	   getchar();
-	*/
-	return NULL;
+        /* SEGMENTS PARALLELES */
+        /* printf("systeme singulier\n");
+           printf("arete %d -> %d\n",v1->Num,v2->Num);
+           printf("arete %g %g %g --> %g %g %g\n",
+                  v1->Pos.X,v1->Pos.Y,v1->Pos.Z,v2->Pos.X,v2->Pos.Y,v2->Pos.Z);
+           printf("arete %g %g %g --> %g %g %g\n",
+                  e->V[0]->Pos.X,e->V[0]->Pos.Y,e->V[0]->Pos.Z,
+                  e->V[1]->Pos.X,e->V[1]->Pos.Y,e->V[1]->Pos.Z);
+           printf("%g %g\n",mat[0][0],mat[0][1]);
+           printf("%g %g\n",mat[1][0],mat[1][1]);
+           getchar();
+        */
+        return NULL;
       }
       else{
-	dir = 1;
+        dir = 1;
       }
     }
     else{
@@ -771,10 +771,10 @@ Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
   if (fabs (val / lc) > 1.e-08 /*08 */ )
     return NULL;
   v = Create_Vertex (++CurrentNodeNumber,
-		     (1. - res[0]) * e->V[0]->Pos.X + res[0] * e->V[1]->Pos.X,
-		     (1. - res[0]) * e->V[0]->Pos.Y + res[0] * e->V[1]->Pos.Y,
-		     (1. - res[0]) * e->V[0]->Pos.Z + res[0] * e->V[1]->Pos.Z,
-		     (1. - res[0]) * e->V[0]->lc + res[0] * e->V[1]->lc, 0.0);
+                     (1. - res[0]) * e->V[0]->Pos.X + res[0] * e->V[1]->Pos.X,
+                     (1. - res[0]) * e->V[0]->Pos.Y + res[0] * e->V[1]->Pos.Y,
+                     (1. - res[0]) * e->V[0]->Pos.Z + res[0] * e->V[1]->Pos.Z,
+                     (1. - res[0]) * e->V[0]->lc + res[0] * e->V[1]->lc, 0.0);
   
   v->ListSurf = List_Create (1, 1, sizeof (Surface *));
   return v;
@@ -782,11 +782,11 @@ Vertex *Edge_Edge (Edge * e, Vertex * v1, Vertex * v2){
 }
 
 int intersection_2_aretes (double Xa, double Ya, double Za,
-			   double Xb, double Yb, double Zb,
-			   double Xc, double Yc, double Zc,
-			   double Xd, double Yd, double Zd,
-			   int p1, int p2, int p3, int p4,
-			   double *X, double *Y, double *Z){
+                           double Xb, double Yb, double Zb,
+                           double Xc, double Yc, double Zc,
+                           double Xd, double Yd, double Zd,
+                           int p1, int p2, int p3, int p4,
+                           double *X, double *Y, double *Z){
   Vertex *v1, *v2, *v3, *v4, *v;
   Edge e;
   v1 = Create_Vertex (p1, Xa, Ya, Za, 0.0, 0.0);
@@ -896,10 +896,10 @@ void Intersect_Edge_Simplexe (Edge * e, Simplex * s, Intersection * I){
       I->iV[I->NbVertex++] = i;
       (I->NbIntersect)++;
       if (j == 2){
-	List_Replace (NewPoints, &s->V[i], compareVertex);
-	/*      printf("l'arete intersecte un noeud\n"); */
-	pvertex (s->V[i], s->V[i]);
-	pedge (e, e);
+        List_Replace (NewPoints, &s->V[i], compareVertex);
+        /*      printf("l'arete intersecte un noeud\n"); */
+        pvertex (s->V[i], s->V[i]);
+        pedge (e, e);
       }
     }
   }
@@ -919,7 +919,7 @@ void Intersect_Edge_Simplexe (Edge * e, Simplex * s, Intersection * I){
       (I->NbIntersect)++;
     }
     else if ((v = Edge_Edge (e, s->V[edges_tetra[i][0]],
-			     s->V[edges_tetra[i][1]]))) {
+                             s->V[edges_tetra[i][1]]))) {
       List_Add (NewPoints, &v);
       I->E[I->NbEdge] = i;
       I->VE[(I->NbEdge)++] = v;
@@ -1110,9 +1110,9 @@ void findFaces (void *a, void *b){
     */
     for (i = 0; i < 4; i++){
       if (List_Search (NewPoints, &s->F[i].V[0], compareVertex) &&
-	  List_Search (NewPoints, &s->F[i].V[1], compareVertex) &&
-	  List_Search (NewPoints, &s->F[i].V[2], compareVertex))
-	List_Replace (ListFaces, &s->F[i], compareFace);
+          List_Search (NewPoints, &s->F[i].V[1], compareVertex) &&
+          List_Search (NewPoints, &s->F[i].V[2], compareVertex))
+        List_Replace (ListFaces, &s->F[i], compareFace);
     }
 }
 
@@ -1206,12 +1206,12 @@ int Coherence (Volume * v, Mesh * m){
       }
     */
     Msg(INFOS, "Edge %d->%d => %d Division(s)", 
-	pE1->V[0]->Num, pE1->V[1]->Num, List_Nbr(NewPoints));
+        pE1->V[0]->Num, pE1->V[1]->Num, List_Nbr(NewPoints));
 
     if (!List_Nbr (NewPoints))
       Msg(ERROR, "Missing Edge Without Any Intersection (%g,%g,%g) (%g,%g,%g)",
-	  pE1->V[0]->Pos.X, pE1->V[0]->Pos.Y, pE1->V[0]->Pos.Z,
-	  pE1->V[1]->Pos.X, pE1->V[1]->Pos.Y, pE1->V[1]->Pos.Z);
+          pE1->V[0]->Pos.X, pE1->V[0]->Pos.Y, pE1->V[0]->Pos.Z,
+          pE1->V[1]->Pos.X, pE1->V[1]->Pos.Y, pE1->V[1]->Pos.Z);
     
   }
 
@@ -1231,7 +1231,7 @@ int Coherence (Volume * v, Mesh * m){
     List_Read (MissingS, i, &simp);
     TheFace = &simp->F[0];
     Msg(INFOS, "Face %d %d %d", simp->F[0].V[0]->Num, 
-	simp->F[0].V[1]->Num, simp->F[0].V[2]->Num);
+        simp->F[0].V[1]->Num, simp->F[0].V[2]->Num);
     E.V[0] = simp->F[0].V[0];
     E.V[1] = simp->F[0].V[1];
     pE1 = (Edge *) List_PQuery (Missing, &E, compareedge);
@@ -1248,15 +1248,15 @@ int Coherence (Volume * v, Mesh * m){
     List_Add (NewPoints, &simp->F[0].V[0]);
     if (pE1)
       for (j = 0; j < List_Nbr (pE1->Liste); j++)
-	List_Add (NewPoints, List_Pointer (pE1->Liste, j));
+        List_Add (NewPoints, List_Pointer (pE1->Liste, j));
     List_Add (NewPoints, &simp->F[0].V[1]);
     if (pE2)
       for (j = 0; j < List_Nbr (pE2->Liste); j++)
-	List_Add (NewPoints, List_Pointer (pE2->Liste, j));
+        List_Add (NewPoints, List_Pointer (pE2->Liste, j));
     List_Add (NewPoints, &simp->F[0].V[2]);
     if (pE3)
       for (j = 0; j < List_Nbr (pE3->Liste); j++)
-	List_Add (NewPoints, List_Pointer (pE3->Liste, j));
+        List_Add (NewPoints, List_Pointer (pE3->Liste, j));
     ListFaces = List_Create (2, 2, sizeof (Face));
     Tree_Action (v->Simplexes, findFaces);
     
@@ -1266,17 +1266,17 @@ int Coherence (Volume * v, Mesh * m){
     
     if (List_Nbr (ListFaces) != Nh - 2){
       /*
-	printf("Recherche des intersections\n");
-	printf("La face initiale comprend %d faces existantes\n",List_Nbr(ListFaces));
-	printf("La face est divisee en %d points\n",List_Nbr(NewPoints));
+        printf("Recherche des intersections\n");
+        printf("La face initiale comprend %d faces existantes\n",List_Nbr(ListFaces));
+        printf("La face est divisee en %d points\n",List_Nbr(NewPoints));
       */
       TreexNewv = Tree_Create (sizeof (xNewv), compxNewv);
       TetAdd = Tree_Create (sizeof (Simplex *), compareSimplex);
       TetDel = Tree_Create (sizeof (Simplex *), compareSimplex);
       Tree_Action (v->Simplexes, Recover_Face);
       /*
-	printf("La face est divisee en %d points %d %d \n",
-	       List_Nbr(NewPoints),Tree_Nbr(TetAdd),Tree_Nbr(TetDel));
+        printf("La face est divisee en %d points %d %d \n",
+               List_Nbr(NewPoints),Tree_Nbr(TetAdd),Tree_Nbr(TetDel));
       */
       Actual_Tree = v->Simplexes;
       Tree_Action (TetAdd, _Add);
@@ -1290,32 +1290,32 @@ int Coherence (Volume * v, Mesh * m){
     if (1 || List_Nbr (ListFaces) == 2 * (Np - 1) - Nh){
       
       Msg(INFOS, "Recoverable Face (%d <--> %d=2*(%d-1)-%d)",
-	  List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
+          List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
       
       for (j = 0; j < List_Nbr (v->Surfaces); j++){
-	List_Read (v->Surfaces, j, &s);
-	if (Tree_Search (s->Simplexes, &simp)){
-	  for (k = 0; k < List_Nbr (ListFaces); k++){
-	    List_Read (ListFaces, k, &Face);
-	    simp1 = Create_Simplex_MemeSens (simp, Face.V[0], Face.V[1], Face.V[2]);
-	    Tree_Add (s->Simplexes, &simp1);
-	    Tree_Replace (s->Vertices, &Face.V[0]);
-	    Tree_Replace (s->Vertices, &Face.V[1]);
-	    Tree_Replace (s->Vertices, &Face.V[2]);
-	    Tree_Replace (v->Vertices, &Face.V[0]);
-	    Tree_Replace (v->Vertices, &Face.V[1]);
-	    Tree_Replace (v->Vertices, &Face.V[2]);
-	  }
-	  Tree_Suppress (s->Simplexes, &simp);
-	}
+        List_Read (v->Surfaces, j, &s);
+        if (Tree_Search (s->Simplexes, &simp)){
+          for (k = 0; k < List_Nbr (ListFaces); k++){
+            List_Read (ListFaces, k, &Face);
+            simp1 = Create_Simplex_MemeSens (simp, Face.V[0], Face.V[1], Face.V[2]);
+            Tree_Add (s->Simplexes, &simp1);
+            Tree_Replace (s->Vertices, &Face.V[0]);
+            Tree_Replace (s->Vertices, &Face.V[1]);
+            Tree_Replace (s->Vertices, &Face.V[2]);
+            Tree_Replace (v->Vertices, &Face.V[0]);
+            Tree_Replace (v->Vertices, &Face.V[1]);
+            Tree_Replace (v->Vertices, &Face.V[2]);
+          }
+          Tree_Suppress (s->Simplexes, &simp);
+        }
       }
     }
     else{
       Msg(ERROR, "*Unrecoverable* Face (%d <--> %d=2*(%d-1)-%d)",
-	  List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
+          List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
       for (k = 0; k < List_Nbr (ListFaces); k++){
-	List_Read (ListFaces, k, &Face);
-	Msg(INFO, "Face %d %d %d", Face.V[0]->Num, Face.V[1]->Num, Face.V[2]->Num);
+        List_Read (ListFaces, k, &Face);
+        Msg(INFO, "Face %d %d %d", Face.V[0]->Num, Face.V[1]->Num, Face.V[2]->Num);
       }
       Tree_Action (v->Simplexes, findEdges);
     }
@@ -1406,16 +1406,16 @@ int isListaVolume (List_T * ListSurf, Mesh * M){
     NN = 0;
     if (v->Typ == MSH_VOLUME){
       for (j = 0; j < List_Nbr (v->Surfaces); j++){
-	List_Read (v->Surfaces, j, &Surf);
-	srf = abs (Surf->Num);
-	if (!List_Search (ListSurf, &srf, fcmp_int)){
-	  found = false;
-	}
-	else
-	  NN++;
+        List_Read (v->Surfaces, j, &Surf);
+        srf = abs (Surf->Num);
+        if (!List_Search (ListSurf, &srf, fcmp_int)){
+          found = false;
+        }
+        else
+          NN++;
       }
       if (found && NN == List_Nbr (ListSurf))
-	return v->Num;
+        return v->Num;
     }
   }
   return 0;

@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.13 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.14 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -57,7 +57,7 @@ char gmsh_help[]      =
   "  -dl                   enable display lists\n"
   "  -noview               hide all views at startup\n"
   "  -link                 link all views at startup\n"
-  "Display options:\n"	  
+  "Display options:\n"    
   "  -nodb                 disable double buffering\n"
   "  -noov                 disable overlay visual\n"
   "  -alpha                enable alpha blending\n"
@@ -67,9 +67,9 @@ char gmsh_help[]      =
   "  -perspective          set projection mode to perspective\n"
   "  -flash                allow colormap flashing\n"
   "  -samevisual           force same visual for graphics and UI\n"
-  "Other options:\n"	  
+  "Other options:\n"      
   "  -v int                set verbosity level (default: 2)\n"
-  "  -threads              enable threads\n"
+  "  -nothreads            disable threads\n"
   "  -path string          set path for included files\n"
   "  -version              show version number\n"
   "  -info                 show detailed version information\n"
@@ -110,14 +110,14 @@ void ParseFile(char *f){
   else if(!strncmp(String, "$COL", 4)){
     if(List_Nbr(Post_ViewList)){
       v = (Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1);
-      load_color_table(yyin, &v->CT);
+      ColorTable_Load(yyin, &v->CT);
     }
     else{
       Msg(WARNING, "No Post-Processing View Available to set Colors From");
     }
   }
   else if(!strncmp(String, "$PostFormat", 11) ||
-	  !strncmp(String, "$View", 5)){
+          !strncmp(String, "$View", 5)){
     Read_View(yyin, yyname);
   }
   else{
@@ -164,9 +164,9 @@ void OpenProblem(char *name){
 
   if(!CTX.interactive)
     XtVaSetValues(WID.G.shell,
-		  XmNtitle, TheFileName,
-		  XmNiconName, TheBaseFileName,
-		  NULL);
+                  XmNtitle, TheFileName,
+                  XmNiconName, TheBaseFileName,
+                  NULL);
 
   Msg(INFOS, "Opening '%s'", TheFileName); 
 
@@ -201,247 +201,304 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
     if (argv[i][0] == '-') {
       
       if(!strcmp(argv[i]+1, "0")){ 
-	CTX.interactive = -1; i++;
+        CTX.interactive = -1; i++;
       }
       else if(!strcmp(argv[i]+1, "1")){ 
-	CTX.interactive = 1; i++;
+        CTX.interactive = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "2")){ 
-	CTX.interactive = 2; i++;
+        CTX.interactive = 2; i++;
       }
       else if(!strcmp(argv[i]+1, "3")){ 
-	CTX.interactive = 3; i++;
+        CTX.interactive = 3; i++;
       }
       else if(!strcmp(argv[i]+1, "path")){ 
-	i++;
-	/* we need to make a copy because of bison */
-	if(argv[i] != NULL) 
-	  strncpy(ThePathForIncludes, argv[i++], NAME_STR_L) ;
+        i++;
+        /* we need to make a copy because of bison */
+        if(argv[i] != NULL) 
+          strncpy(ThePathForIncludes, argv[i++], NAME_STR_L) ;
+        else {    
+          fprintf(stderr, ERROR_STR "Missing String\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
-	i++;
-	if(argv[i] != NULL) TheBgmFileName = argv[i++];
+        i++;
+        if(argv[i] != NULL) TheBgmFileName = argv[i++];
+        else {    
+          fprintf(stderr, ERROR_STR "Missing File Name\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "alpha")){ 
-	CTX.alpha = 1; i++;
+        CTX.alpha = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "flash")){ 
-	CTX.flash = 1; i++;
+        CTX.flash = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "old")){ 
-	FLAG_OLD_CIRCLE = 1; i++;
+        FLAG_OLD_CIRCLE = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "dual")){ 
-	CTX.mesh.dual = 1; i++;
+        CTX.mesh.dual = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "samevisual")){ 
-	CTX.same_visual = 1; i++;
+        CTX.same_visual = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "interactive")){ 
-	CTX.mesh.interactive = 1; i++;
+        CTX.mesh.interactive = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "scale")){
-	i++;
-	CTX.mesh.scaling_factor = atof(argv[i]); i++;
+        i++;
+        if(argv[i]!=NULL) CTX.mesh.scaling_factor = atof(argv[i++]);
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i]+1, "rand")){
+        i++;
+        if(argv[i]!=NULL) CTX.mesh.rand_factor = atof(argv[i++]);
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "clscale")){
-	i++;
-	CTX.mesh.lc_factor = atof(argv[i]); i++;
-	if(CTX.mesh.lc_factor <= 0.0){
-	  fprintf(stderr, ERROR_STR 
-		  "Characteristic Length Factor Must be > 0\n");
-	  exit(1);
-	}
-      }
-      else if(!strcmp(argv[i]+1, "raw")){ 
-	CTX.mesh.nb_smoothing = 0; i++;
+        i++;
+        if(argv[i]!=NULL){
+          CTX.mesh.lc_factor = atof(argv[i++]);
+          if(CTX.mesh.lc_factor <= 0.0){
+            fprintf(stderr, ERROR_STR 
+                    "Characteristic Length Factor Must be > 0\n");
+            exit(1);
+          }
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "smooth")){ 
-	i++;
-	CTX.mesh.nb_smoothing = atoi(argv[i]); i++;
+        i++;
+        if(argv[i]!=NULL) CTX.mesh.nb_smoothing = atoi(argv[i++]);
+        else{
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "degree")){  
-	i++;
-	if(argv[i]!=NULL){
-	  CTX.mesh.degree = atoi(argv[i]); i++;
-	  if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
-	    fprintf(stderr, ERROR_STR "Wrong Degree\n");
-	    exit(1);
-	  }
-	}
-	else {	  
-	  fprintf(stderr, ERROR_STR "Missing Number\n");
-	  exit(1);
-	}
+        i++;
+        if(argv[i]!=NULL){
+          CTX.mesh.degree = atoi(argv[i++]);
+          if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
+            fprintf(stderr, ERROR_STR "Wrong Degree\n");
+            exit(1);
+          }
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "format") ||  
-	      !strcmp(argv[i]+1, "f")){  
-	i++;
-	if(argv[i]!=NULL){
-	  if(!strcmp(argv[i],"msh") || 
-	     !strcmp(argv[i],"MSH") || 
-	     !strcmp(argv[i],"gmsh")){
-	    CTX.mesh.format = FORMAT_MSH ;
-	  }
-	  else if(!strcmp(argv[i],"unv") ||
-		  !strcmp(argv[i],"UNV") || 
-		  !strcmp(argv[i],"ideas")){
-	    CTX.mesh.format = FORMAT_UNV ;
-	  }
-	  else if(!strcmp(argv[i],"gref") ||
-		  !strcmp(argv[i],"GREF") || 
-		  !strcmp(argv[i],"Gref")){
-	    CTX.mesh.format = FORMAT_GREF ;
-	  }
-	  else{
-	    fprintf(stderr, ERROR_STR "Unknown Mesh Format\n");
-	    exit(1);
-	  }
-	  i++;
-	}
-	else {	  
-	  fprintf(stderr, ERROR_STR "Missing Format\n");
-	  exit(1);
-	}
+              !strcmp(argv[i]+1, "f")){  
+        i++;
+        if(argv[i]!=NULL){
+          if(!strcmp(argv[i],"msh") || 
+             !strcmp(argv[i],"MSH") || 
+             !strcmp(argv[i],"gmsh")){
+            CTX.mesh.format = FORMAT_MSH ;
+          }
+          else if(!strcmp(argv[i],"unv") ||
+                  !strcmp(argv[i],"UNV") || 
+                  !strcmp(argv[i],"ideas")){
+            CTX.mesh.format = FORMAT_UNV ;
+          }
+          else if(!strcmp(argv[i],"gref") ||
+                  !strcmp(argv[i],"GREF") || 
+                  !strcmp(argv[i],"Gref")){
+            CTX.mesh.format = FORMAT_GREF ;
+          }
+          else{
+            fprintf(stderr, ERROR_STR "Unknown Mesh Format\n");
+            exit(1);
+          }
+          i++;
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Format\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "algo")){  
-	i++;
-	if(argv[i]!=NULL){
-	  if(!strcmp(argv[i],"iso"))
-	    CTX.mesh.algo = DELAUNAY_OLDALGO ;
-	  else if(!strcmp(argv[i],"aniso"))
-	    CTX.mesh.algo = DELAUNAY_NEWALGO ;
-	  else{
-	    fprintf(stderr, ERROR_STR "Unknown Mesh Algorithm\n");
-	    exit(1);
-	  }
-	  i++;
-	}
-	else {	  
-	  fprintf(stderr, ERROR_STR "Missing Algorithm\n");
-	  exit(1);
-	}
+        i++;
+        if(argv[i]!=NULL){
+          if(!strcmp(argv[i],"iso"))
+            CTX.mesh.algo = DELAUNAY_OLDALGO ;
+          else if(!strcmp(argv[i],"aniso"))
+            CTX.mesh.algo = DELAUNAY_NEWALGO ;
+          else{
+            fprintf(stderr, ERROR_STR "Unknown Mesh Algorithm\n");
+            exit(1);
+          }
+          i++;
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Algorithm\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "noview")){ 
-	CTX.post.initial_visibility = 0 ; i++;
+        CTX.post.initial_visibility = 0 ; i++;
       }
       else if(!strcmp(argv[i]+1, "link")){ 
-	CTX.post.link = 2 ; i++;
+        CTX.post.link = 2 ; i++;
       }
       else if(!strcmp(argv[i]+1, "fill")){ 
-	CTX.post.initial_intervals = DRAW_POST_DISCRETE ; i++;
+        CTX.post.initial_intervals = DRAW_POST_DISCRETE ; i++;
       }
       else if(!strcmp(argv[i]+1, "nbiso")){ 
-	i++ ;
-	CTX.post.initial_nbiso = atoi(argv[i]) ; i++ ;
+        i++ ;
+        if(argv[i]!=NULL) CTX.post.initial_nbiso = atoi(argv[i++]);
+        else{
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "command") || 
-	      !strcmp(argv[i]+1, "c")){ 
-	CTX.command_win = 1; i++;
+              !strcmp(argv[i]+1, "c")){ 
+        CTX.command_win = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "nocommand") ||
-	      !strcmp(argv[i]+1, "noc")){ 
-	CTX.command_win = 0; i++;
+              !strcmp(argv[i]+1, "noc")){ 
+        CTX.command_win = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "overlay") ||
-	      !strcmp(argv[i]+1, "ov")){ 
-	CTX.overlay = 1; i++;
+              !strcmp(argv[i]+1, "ov")){ 
+        CTX.overlay = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "nooverlay") ||
-	      !strcmp(argv[i]+1, "noov")){ 
-	CTX.overlay = CTX.geom.highlight = 0; i++;
+              !strcmp(argv[i]+1, "noov")){ 
+        CTX.overlay = CTX.geom.highlight = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "perspective") ||
-	      !strcmp(argv[i]+1, "p")){ 
-	CTX.ortho = 0; i++;
+              !strcmp(argv[i]+1, "p")){ 
+        CTX.ortho = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "ortho") ||
-	      !strcmp(argv[i]+1, "o")){ 
-	CTX.ortho = 0; i++;
+              !strcmp(argv[i]+1, "o")){ 
+        CTX.ortho = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "threads")){
-	CTX.threads = 1; i++;
+        CTX.threads = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "nothreads")){
-	CTX.threads = 0; i++;
+        CTX.threads = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "viewport")){ 
-	i++ ;
-	CTX.r[0] = atof(argv[i]) ; i++ ;
-	CTX.r[1] = atof(argv[i]) ; i++ ;
-	CTX.r[2] = atof(argv[i]) ; i++ ;
-	CTX.t[0] = atof(argv[i]) ; i++ ;
-	CTX.t[1] = atof(argv[i]) ; i++ ;
-	CTX.t[2] = atof(argv[i]) ; i++ ;
-	CTX.s[0] = atof(argv[i]) ; i++ ;
-	CTX.s[1] = atof(argv[i]) ; i++ ;
-	CTX.s[2] = atof(argv[i]) ; i++ ;
+        i++ ;
+        if(argv[i]!=NULL){
+          CTX.r[0] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.r[1] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.r[2] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.t[0] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.t[1] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.t[2] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.s[0] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.s[1] = atof(argv[i]) ; i++ ;
+        }
+        if(argv[i]!=NULL){
+          CTX.s[2] = atof(argv[i]) ; i++ ;
+        }
+        else{
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "db")){ 
-	CTX.db = 1; i++;
+        CTX.db = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "nodb")){ 
-	CTX.db = 0; CTX.geom.highlight = 0; i++;
+        CTX.db = 0; CTX.geom.highlight = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "dl")){ 
-	CTX.display_lists = 1; i++;
+        CTX.display_lists = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "nodl")){ 
-	CTX.display_lists = 0; i++;
+        CTX.display_lists = 0; i++;
       }
       else if(!strcmp(argv[i]+1, "geometry") ||
-	      !strcmp(argv[i]+1, "iconic")   ||
-	      !strcmp(argv[i]+1, "display")  ||
-	      !strcmp(argv[i]+1, "fg")       ||
-	      !strcmp(argv[i]+1, "bg")){
-	i+=2;
+              !strcmp(argv[i]+1, "iconic")   ||
+              !strcmp(argv[i]+1, "display")  ||
+              !strcmp(argv[i]+1, "fg")       ||
+              !strcmp(argv[i]+1, "bg")){
+        i++;
+        if(argv[i]!=NULL)
+          i++;
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Argument\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "v")){  
-	i++;
-	if(argv[i]!=NULL){
-	  CTX.verbosity = atoi(argv[i]); i++;
-	}
-	else {	  
-	  fprintf(stderr, ERROR_STR "Missing Number\n");
-	  exit(1);
-	}
+        i++;
+        if(argv[i]!=NULL) CTX.verbosity = atoi(argv[i++]);
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "version") || 
-	      !strcmp(argv[i]+1, "-version")){
-	fprintf(stderr, "%g\n", GMSH_VERSION);
-	exit(1);
+              !strcmp(argv[i]+1, "-version")){
+        fprintf(stderr, "%g\n", GMSH_VERSION);
+        exit(1);
       }
       else if(!strcmp(argv[i]+1, "info") || 
-	      !strcmp(argv[i]+1, "-info")){
-	fprintf(stderr, "%s%g\n", gmsh_version, GMSH_VERSION);
-	fprintf(stderr, "%s\n", gmsh_os);
-	fprintf(stderr, "%s\n", gmsh_date);
-	fprintf(stderr, "%s\n", gmsh_host);
-	fprintf(stderr, "%s\n", gmsh_packager);
-	fprintf(stderr, "%s\n", gmsh_email);
-	fprintf(stderr, "%s\n", gmsh_url);
-	exit(1) ; 
+              !strcmp(argv[i]+1, "-info")){
+        fprintf(stderr, "%s%g\n", gmsh_version, GMSH_VERSION);
+        fprintf(stderr, "%s\n", gmsh_os);
+        fprintf(stderr, "%s\n", gmsh_date);
+        fprintf(stderr, "%s\n", gmsh_host);
+        fprintf(stderr, "%s\n", gmsh_packager);
+        fprintf(stderr, "%s\n", gmsh_email);
+        fprintf(stderr, "%s\n", gmsh_url);
+        exit(1) ; 
       }
       else if(!strcmp(argv[i]+1, "help") || 
-	      !strcmp(argv[i]+1, "-help")){
-	fprintf(stderr, "%s\n", gmsh_progname);
-	fprintf(stderr, "%s\n", gmsh_copyright);
-	fprintf(stderr, gmsh_help, argv[0]);
-	exit(1);
+              !strcmp(argv[i]+1, "-help")){
+        fprintf(stderr, "%s\n", gmsh_progname);
+        fprintf(stderr, "%s\n", gmsh_copyright);
+        fprintf(stderr, gmsh_help, argv[0]);
+        exit(1);
       }
       else{
-	fprintf(stderr, "Unknown Option '%s'\n", argv[i]);
-	fprintf(stderr, gmsh_help, argv[0]);
-	exit(1);
+        fprintf(stderr, "Unknown Option '%s'\n", argv[i]);
+        fprintf(stderr, gmsh_help, argv[0]);
+        exit(1);
       }
     }
 
     else {
       if(*nbfiles < MAX_OPEN_FILES)
-	TheFileNameTab[(*nbfiles)++] = argv[i++]; 
+        TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       else{
-	fprintf(stderr, ERROR_STR "Too Many Input Files\n");
-	exit(1);
+        fprintf(stderr, ERROR_STR "Too Many Input Files\n");
+        exit(1);
       }
     }
 
@@ -509,25 +566,21 @@ int main(int argc, char *argv[]){
       exit(1);
     else{
       if(nbf > 1){
-	for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
+        for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
       }
       if(TheBgmFileName){
-	MergeProblem(TheBgmFileName);
-	if(List_Nbr(Post_ViewList)){
-	  BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
-	  TYPBGMESH = ONFILE; 
-	  Create_BgMesh(TYPBGMESH,.2,THEM);
-	}
-	else{
-	  Msg(ERROR, "Invalid Background Mesh (no View)");
-	}
+        MergeProblem(TheBgmFileName);
+        if(List_Nbr(Post_ViewList))
+          BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
+        else
+          Msg(ERROR, "Invalid Background Mesh (no View)");
       }
       if(CTX.interactive > 0){
-	mai3d(THEM, CTX.interactive);
-	Print_Mesh(THEM,NULL,CTX.mesh.format);
+        mai3d(THEM, CTX.interactive);
+        Print_Mesh(THEM,NULL,CTX.mesh.format);
       }
       else{
-	Print_Geo(THEM, NULL);
+        Print_Geo(THEM, NULL);
       }
       exit(1);
     }    
@@ -541,14 +594,14 @@ int main(int argc, char *argv[]){
   /* Text for about window */
 
   sprintf(TextAbout, "%s\n \n%s%g\n%s\n%s\n%s\n%s\n%s\n%s\n \n%s\n \n"
-	  "Type 'gmsh -help' for command line options",
-	  gmsh_progname, gmsh_version, GMSH_VERSION, 
-	  gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
-	  gmsh_email, gmsh_url, gmsh_copyright);
+          "Type 'gmsh -help' for command line options",
+          gmsh_progname, gmsh_version, GMSH_VERSION, 
+          gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
+          gmsh_email, gmsh_url, gmsh_copyright);
   
   /* Xlib Threads init */
   
-#ifndef _NOTHREADS  
+#ifdef _USETHREADS  
   if(CTX.threads){
     if(!XInitThreads()){
       Msg(WARNING, "Xlib is not Thread Safe (Reverting to '-nothreads')");
@@ -563,7 +616,7 @@ int main(int argc, char *argv[]){
   
   XtToolkitInitialize();
   
-#ifndef _NOTHREADS  
+#ifdef _USETHREADS  
   if(CTX.threads){
     if(!XtToolkitThreadInitialize()){
       Msg(WARNING, "Xtoolkit is not Thread Safe (Reverting to '-nothreads')");
@@ -581,18 +634,18 @@ int main(int argc, char *argv[]){
   /* Open display */
 
   XCTX.display = XtOpenDisplay(XCTX.AppContext, NULL, "gmshGW", ".gmshrc", 
-			       NULL, 0, &argc, argv);
+                               NULL, 0, &argc, argv);
 
   if(!XCTX.display)
     Msg(FATAL, "Unable to open the specified display. Set the `DISPLAY'\n"
-   	FATAL_NIL "environment variable properly or use the `xhost' command\n"
-	FATAL_NIL "to authorize access to the display");
+        FATAL_NIL "environment variable properly or use the `xhost' command\n"
+        FATAL_NIL "to authorize access to the display");
 
   /* Check for GLX extension; for Mesa, this is always OK */
   
   if(!glXQueryExtension(XCTX.display,NULL,NULL))
     Msg(FATAL, "The specified display does not support the OpenGL extension (GLX).\n"
-	FATAL_NIL "You may consider using Mesa instead");
+        FATAL_NIL "You may consider using Mesa instead");
   
   /* Init with default screen num and default depth */
   
@@ -607,7 +660,7 @@ int main(int argc, char *argv[]){
   
   if(CTX.db){
     if(!(XCTX.glw.visinfo = 
-	 glXChooseVisual(XCTX.display,XCTX.scrnum, glw_attrib_db))){
+         glXChooseVisual(XCTX.display,XCTX.scrnum, glw_attrib_db))){
       Msg(WARNING,"GBA Double Buffured Visual not Available");
       CTX.db = 0;
     }
@@ -615,7 +668,7 @@ int main(int argc, char *argv[]){
   
   if(!CTX.db){
     if(!(XCTX.glw.visinfo = 
-	 glXChooseVisual(XCTX.display,XCTX.scrnum, glw_attrib_sb)))
+         glXChooseVisual(XCTX.display,XCTX.scrnum, glw_attrib_sb)))
       Msg(FATAL, "RGBA Single Buffured Visual not Available");
   }
   
@@ -646,14 +699,14 @@ int main(int argc, char *argv[]){
 
   if(CTX.overlay){
     Msg(DEBUG,"Overlay Visual id=%lx depth=%d screen=%d bits/rgb=%d class=%s",
-	XCTX.glo.visinfo->visualid, XCTX.glo.visinfo->depth, 
-	XCTX.glo.visinfo->screen, XCTX.glo.visinfo->bits_per_rgb, 
+        XCTX.glo.visinfo->visualid, XCTX.glo.visinfo->depth, 
+        XCTX.glo.visinfo->screen, XCTX.glo.visinfo->bits_per_rgb, 
 #if defined(__cplusplus) || defined(c_plusplus)
-	ShowVisualClass(XCTX.glo.visinfo->c_class)
+        ShowVisualClass(XCTX.glo.visinfo->c_class)
 #else
-	ShowVisualClass(XCTX.glo.visinfo->class)
+        ShowVisualClass(XCTX.glo.visinfo->class)
 #endif
-	);
+        );
   }
 
 
@@ -674,7 +727,7 @@ int main(int argc, char *argv[]){
   if(!CTX.flash && (XCTX.glw.visinfo->visual != XCTX.gui.visual)){
     Msg(DEBUG, "Making Another Colormap for Graphic Window");
     XCTX.glw.colormap = XCreateColormap(XCTX.display, RootWindow(XCTX.display,XCTX.scrnum),
-					XCTX.glw.visinfo->visual, AllocNone);
+                                        XCTX.glw.visinfo->visual, AllocNone);
     if(!XCTX.glw.colormap)
       Msg(FATAL, "Unable to Create Colormap for Graphic Window (Try Option '-flash')");
   }
@@ -683,10 +736,10 @@ int main(int argc, char *argv[]){
     if(!CTX.flash && (XCTX.glo.visinfo->visual != XCTX.gui.visual)){
       Msg(DEBUG, "Making Another Colormap for Overlay Window");
       XCTX.glo.colormap = XCreateColormap(XCTX.display, RootWindow(XCTX.display,XCTX.scrnum),
-					  XCTX.glo.visinfo->visual, AllocNone);
+                                          XCTX.glo.visinfo->visual, AllocNone);
       if(!XCTX.glo.colormap)
-	Msg(FATAL, "Unable to Create Private Colormap for Overlay Window\n"
-	    FATAL_NIL "(Try '-noov' and/or '-flash' Options)");
+        Msg(FATAL, "Unable to Create Private Colormap for Overlay Window\n"
+            FATAL_NIL "(Try '-noov' and/or '-flash' Options)");
     }
   }
   
@@ -710,10 +763,10 @@ int main(int argc, char *argv[]){
 
   if(CTX.overlay){
     XCTX.glo.context = glXCreateContext(XtDisplay(WID.G.glo),
-					XCTX.glo.visinfo,NULL,GL_TRUE);  
+                                        XCTX.glo.visinfo,NULL,GL_TRUE);  
 
     if (!XAllocNamedColor(XCTX.display, XCTX.glo.colormap, 
-			  "white", &ov_color_def, &ov_color_exact)) {
+                          "white", &ov_color_def, &ov_color_exact)) {
       Msg(WARNING, "Couldn't Allocate White for Overlay window (Reverting to '-noov')");
       CTX.overlay = 0;
     }
@@ -723,7 +776,7 @@ int main(int argc, char *argv[]){
 
   if(CTX.overlay){
     if (!XAllocNamedColor(XCTX.display, XCTX.glo.colormap, 
-			  "black", &ov_color_def, &ov_color_exact)) {
+                          "black", &ov_color_def, &ov_color_exact)) {
       Msg(WARNING, "Couldn't Allocate Black for Overlay Window (Reverting to '-noov')");
       CTX.overlay = 0;
     }
@@ -790,9 +843,9 @@ int main(int argc, char *argv[]){
     Msg(FATAL, "Font out of OpenGL Display Lists");
 
   glXUseXFont(XCTX.xfont.helve->fid, 
-	      XCTX.xfont.helve->min_char_or_byte2, 
-	      XCTX.xfont.helve->max_char_or_byte2-XCTX.xfont.helve->min_char_or_byte2+1, 
-	      CTX.font_base+XCTX.xfont.helve->min_char_or_byte2);
+              XCTX.xfont.helve->min_char_or_byte2, 
+              XCTX.xfont.helve->max_char_or_byte2-XCTX.xfont.helve->min_char_or_byte2+1, 
+              CTX.font_base+XCTX.xfont.helve->min_char_or_byte2);
 
   /* The GUI is ready */
   CTX.interactive = 0 ; 
@@ -821,11 +874,8 @@ int main(int argc, char *argv[]){
 
   if(TheBgmFileName){
     MergeProblem(TheBgmFileName);
-    if(List_Nbr(Post_ViewList)){
+    if(List_Nbr(Post_ViewList))
       BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
-      TYPBGMESH = ONFILE; 
-      Create_BgMesh(TYPBGMESH,.2,THEM);
-    }
     else
       Msg(ERROR, "Invalid Background Mesh (no View)");
   }

@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.2 2000-11-23 14:11:33 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
  * Copyright (C) 1999-2000  Christophe Geuzaine
@@ -151,8 +151,8 @@ typedef struct {
 /* public functions */
 
 GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options, 
-		      GLint colormode, GLint colorsize, GL2PSrgba *colormap, 
-		      GLint buffersize, FILE * stream);
+                      GLint colormode, GLint colorsize, GL2PSrgba *colormap, 
+                      GLint buffersize, FILE * stream);
 GLint  gl2psEndPage(GLvoid);
 GLvoid gl2psText(char *str, char *fontname, GLint size);
 GLvoid gl2psEnable(GLint mode);

@@ -1,4 +1,4 @@
-/* $Id: 2D_DivAndConq.cpp,v 1.4 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: 2D_DivAndConq.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
 /*
 
    A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   
@@ -24,9 +24,7 @@
 #include "Mesh.h"
 #include "2D_Mesh.h"
 
-#define EPSILON 1.e-15
-
-extern double LC;
+extern double LC2D;
 
 PointRecord *pPointArray;
 DocPeek      gDocTemp;
@@ -167,12 +165,12 @@ int Qtest(PointNumero h,PointNumero i,PointNumero j,PointNumero k){
     return(0);  /* returning 1 will cause looping for ever */
   }
   if (CircumCircle( (double) pPointArray[h].where.h,
-		    (double) pPointArray[h].where.v,
-		    (double) pPointArray[i].where.h,
-		    (double) pPointArray[i].where.v,
-		    (double) pPointArray[j].where.h,
-		    (double) pPointArray[j].where.v,
-		    &xc, &yc )){
+                    (double) pPointArray[h].where.v,
+                    (double) pPointArray[i].where.h,
+                    (double) pPointArray[i].where.v,
+                    (double) pPointArray[j].where.h,
+                    (double) pPointArray[j].where.v,
+                    &xc, &yc )){
     rcarre = square(xc - (double) pPointArray[i].where.h) +
       square(yc - (double) pPointArray[i].where.v);
     
@@ -206,17 +204,17 @@ int merge(DT vl,DT vr){
     else{
       out = 0;
       while (!out){
-	r2 = Predecessor(r,r1);
-	if (r2 == -1) return(0);
-	if (r2 < vr.begin)
-	  out = 1;
-	else if (Qtest(l,r,r1,r2))
-	  out = 1;
-	else{
-	  if (!Delete(r,r1)) return(0);
-	  r1 = r2;
-	  if (Is_right_of(l,r,r1)) out = a = 1;
-	}
+        r2 = Predecessor(r,r1);
+        if (r2 == -1) return(0);
+        if (r2 < vr.begin)
+          out = 1;
+        else if (Qtest(l,r,r1,r2))
+          out = 1;
+        else{
+          if (!Delete(r,r1)) return(0);
+          r1 = r2;
+          if (Is_right_of(l,r,r1)) out = a = 1;
+        }
       }
     }
       
@@ -227,17 +225,17 @@ int merge(DT vl,DT vr){
     else{
       out = 0;
       while (!out){
-	l2 = Successor(l,l1);
-	if (l2 == -1) return(0);
-	if (l2 > vl.end)
-	  out = 1;
-	else if (Qtest(r,l,l1,l2))
-	  out = 1;
-	else{
-	  if (!Delete(l,l1)) return(0);
-	  l1 = l2;
-	  if (Is_left_of(r,l,l1)) out = b = 1;
-	}     
+        l2 = Successor(l,l1);
+        if (l2 == -1) return(0);
+        if (l2 > vl.end)
+          out = 1;
+        else if (Qtest(r,l,l1,l2))
+          out = 1;
+        else{
+          if (!Delete(l,l1)) return(0);
+          l1 = l2;
+          if (Is_left_of(r,l,l1)) out = b = 1;
+        }     
       }
     }
     
@@ -247,9 +245,9 @@ int merge(DT vl,DT vr){
       r = r1;
     else{
       if (Qtest(l,r,r1,l1))
-	r = r1;
+        r = r1;
       else
-	l = l1;
+        l = l1;
     }
   }
   if (!Insert(l,r)) return(0);
@@ -337,7 +335,7 @@ int DelaunayAndVoronoi(DocPeek doc){
    of the circumcircle of triangle (x1,y1),(x2,y2),(x3,y3)  */
   
 int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
-		     double *xc,double *yc){
+                     double *xc,double *yc){
   double d,a1,a2,a3;
   
   
@@ -354,7 +352,7 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
   *xc = (double) ((a1*(y3-y2) + a2*(y1-y3) + a3*(y2-y1)) / d);
   *yc = (double) ((a1*(x2-x3) + a2*(x3-x1) + a3*(x1-x2)) / d);
   
-  if(fabs(d) < EPSILON_LC)
+  if(fabs(d) < 1.e-12 * LC2D)
     Msg(WARNING, "Points Almost Colinear in CircumCircle (d = %g)", d); 
 
   return(1);
@@ -425,7 +423,7 @@ int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint){
     yy = (double) (pPointArray[Succ(p)->point_num].where.v - center.v);
     xx = (double) (pPointArray[Succ(p)->point_num].where.h - center.h);
     alpha = atan2(yy,xx) - alpha1;
-    if (alpha <= EPSILON) alpha += Deux_Pi;
+    if (alpha <= 1.e-15) alpha += Deux_Pi;
     if (alpha >= beta){
       Succ(newp) = Succ(p);
       Succ(p) = newp;
@@ -474,7 +472,7 @@ int DListDelete(DListPeek *dlist,PointNumero oldPoint){
       Succ(Pred(p)) = Succ(p);
       Pred(Succ(p)) = Pred(p);
       if (p == *dlist){
-	*dlist = Succ(p);
+        *dlist = Succ(p);
       }
       Free(p);
       return(1);
@@ -508,9 +506,9 @@ void remove_all_dlist(int n, PointRecord *pPointArray){
     if (pPointArray[i].adjacent != NULL){
       p = pPointArray[i].adjacent;
       do{
-	temp = p;
-	p = Pred(p);
-	Free(temp);          
+        temp = p;
+        p = Pred(p);
+        Free(temp);          
       } while (p != pPointArray[i].adjacent);
       pPointArray[i].adjacent = NULL;     
     }

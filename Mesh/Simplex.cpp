@@ -1,4 +1,4 @@
-/* $Id: Simplex.cpp,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: Simplex.cpp,v 1.7 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -41,9 +41,9 @@ Simplex::~Simplex (){
 }
 
 int Simplex:: CircumCircle (double x1, double y1, 
-			    double x2, double y2, 
-			    double x3, double y3,
-			    double *xc, double *yc){
+                            double x2, double y2, 
+                            double x3, double y3,
+                            double *xc, double *yc){
   double d, a1, a2, a3;
 
   d = 2. * (double) (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
@@ -81,16 +81,16 @@ void Simplex::Center_Circum (){
 
   if (N == 3){
     CircumCircle (V[0]->Pos.X, V[0]->Pos.Y,
-		  V[1]->Pos.X, V[1]->Pos.Y,
-		  V[2]->Pos.X, V[2]->Pos.Y,
-		  &Center.X, &Center.Y);
+                  V[1]->Pos.X, V[1]->Pos.Y,
+                  V[2]->Pos.X, V[2]->Pos.Y,
+                  &Center.X, &Center.Y);
     Center.Z = 0.0;
     if (fabs (Center.X) > 1.e10)
       Center.X = 1.e10;
     if (fabs (Center.Y) > 1.e10)
       Center.Y = 1.e10;
     Radius = sqrt ((X[0] - Center.X) * (X[0] - Center.X) +
-		   (Y[0] - Center.Y) * (Y[0] - Center.Y));
+                   (Y[0] - Center.Y) * (Y[0] - Center.Y));
   }
   else{
     center_tet (X, Y, Z, res);
@@ -99,8 +99,8 @@ void Simplex::Center_Circum (){
     Center.Y = res[1];
     Center.Z = res[2];
     Radius = sqrt ((X[0] - Center.X) * (X[0] - Center.X) +
-		   (Y[0] - Center.Y) * (Y[0] - Center.Y) +
-		   (Z[0] - Center.Z) * (Z[0] - Center.Z));
+                   (Y[0] - Center.Y) * (Y[0] - Center.Y) +
+                   (Z[0] - Center.Z) * (Z[0] - Center.Z));
   }
 }
 
@@ -114,8 +114,8 @@ int Simplex::Pt_In_Ellipsis (Vertex * v, double Metric[3][3]){
 
   d1 = Radius;
   d2 = sqrt (x[0] * x[0] * Metric[0][0]
-	     + x[1] * x[1] * Metric[1][1]
-	     + 2. * x[0] * x[1] * Metric[0][1]);
+             + x[1] * x[1] * Metric[1][1]
+             + 2. * x[0] * x[1] * Metric[0][1]);
 
   eps = fabs (d1 - d2) / (d1 + d2);
   if (eps < 1.e-12)
@@ -130,9 +130,9 @@ int Simplex::Pt_In_Ellipsis (Vertex * v, double Metric[3][3]){
 
 double Simplex::Volume_Simplexe2D (){
   return ((V[1]->Pos.X - V[0]->Pos.X) *
-	  (V[2]->Pos.Y - V[1]->Pos.Y) -
-	  (V[2]->Pos.X - V[1]->Pos.X) *
-	  (V[1]->Pos.Y - V[0]->Pos.Y));
+          (V[2]->Pos.Y - V[1]->Pos.Y) -
+          (V[2]->Pos.X - V[1]->Pos.X) *
+          (V[1]->Pos.Y - V[0]->Pos.Y));
 }
 
 void Simplex::center_tet (double X[4], double Y[4], double Z[4], double res[3]){
@@ -179,8 +179,8 @@ double Simplex::matsimpl (double mat[3][3]){
   mat[2][1] = V[2]->Pos.Z - V[0]->Pos.Z;
   mat[2][2] = V[3]->Pos.Z - V[0]->Pos.Z;
   return (mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
-	  mat[1][0] * (mat[0][1] * mat[2][2] - mat[2][1] * mat[0][2]) +
-	  mat[2][0] * (mat[0][1] * mat[1][2] - mat[1][1] * mat[0][2]));
+          mat[1][0] * (mat[0][1] * mat[2][2] - mat[2][1] * mat[0][2]) +
+          mat[2][0] * (mat[0][1] * mat[1][2] - mat[1][1] * mat[0][2]));
 }
 
 double Simplex::rhoin (){
@@ -199,8 +199,8 @@ double Simplex::rhoin (){
 
 double Simplex::lij (int i, int j){
   return sqrt (DSQR (V[i]->Pos.X - V[j]->Pos.X) +
-	       DSQR (V[i]->Pos.Y - V[j]->Pos.Y) +
-	       DSQR (V[i]->Pos.Z - V[j]->Pos.Z));
+               DSQR (V[i]->Pos.Y - V[j]->Pos.Y) +
+               DSQR (V[i]->Pos.Z - V[j]->Pos.Z));
 }
 
 double Simplex::Volume_Simplexe (){
@@ -229,8 +229,8 @@ double Simplex::RhoShapeMeasure (){
   for (i = 0; i <= 3; i++){
     for (j = i + 1; j <= 3; j++){
       if (i != j){
-	minlij = DMIN (minlij, fabs (lij (i, j)));
-	maxlij = DMAX (maxlij, fabs (lij (i, j)));
+        minlij = DMIN (minlij, fabs (lij (i, j)));
+        maxlij = DMAX (maxlij, fabs (lij (i, j)));
       }
     }
   }
@@ -249,7 +249,7 @@ double Simplex::GammaShapeMeasure (){
   for (i = 0; i <= N - 1; i++){
     for (j = i + 1; j <= N - 1; j++){
       if (i != j)
-	maxlij = DMAX (maxlij, lij (i, j));
+        maxlij = DMAX (maxlij, lij (i, j));
     }
   }
   return 12. * rhoin () / (sqrt (6.) * maxlij);
@@ -307,7 +307,7 @@ void Simplex::Fourre_Simplexe (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v
       //qsort(F[0].V,3,sizeof(Vertex*),compareVertex);
       Center_Circum ();
       Quality = (double) N *Radius / (V[0]->lc + V[1]->lc + V[2]->lc
-				      + ((V[3]) ? V[3]->lc : 0.0));
+                                      + ((V[3]) ? V[3]->lc : 0.0));
     }
     else{
       qsort (F[0].V, 3, sizeof (Vertex *), compareVertex);
@@ -321,7 +321,7 @@ void Simplex::Fourre_Simplexe (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v
   Center_Circum ();
 
   Quality = (double) N *Radius / (V[0]->lc + V[1]->lc + V[2]->lc
-				  + ((V[3]) ? V[3]->lc : 0.0));
+                                  + ((V[3]) ? V[3]->lc : 0.0));
 
   /*
      if(LOCAL != NULL){
@@ -422,8 +422,8 @@ void Simplex::Center_Ellipsum_2D (double m[3][3]){
   Center.Y = x[1];
 
   Radius = sqrt ((x[0] - x1) * (x[0] - x1) * a
-		 + (x[1] - y1) * (x[1] - y1) * d
-		 + 2. * (x[0] - x1) * (x[1] - y1) * b);
+                 + (x[1] - y1) * (x[1] - y1) * d
+                 + 2. * (x[0] - x1) * (x[1] - y1) * b);
 }
 
 void Simplex::Center_Ellipsum_3D (double m[3][3]){
@@ -482,12 +482,12 @@ void Simplex::Center_Ellipsum_3D (double m[3][3]){
   Center.Z = x[2];
 
   Radius = sqrt ((x[0] - x1) * (x[0] - x1) * m[0][0]
-		 + (x[1] - y1) * (x[1] - y1) * m[1][1]
-		 + (x[2] - z1) * (x[2] - z1) * m[2][2]
-		 + 2. * (x[0] - x1) * (x[1] - y1) * m[0][1]
-		 + 2. * (x[0] - x1) * (x[2] - z1) * m[0][2]
-		 + 2. * (x[1] - y1) * (x[2] - z1) * m[1][2]
-		 );
+                 + (x[1] - y1) * (x[1] - y1) * m[1][1]
+                 + (x[2] - z1) * (x[2] - z1) * m[2][2]
+                 + 2. * (x[0] - x1) * (x[1] - y1) * m[0][1]
+                 + 2. * (x[0] - x1) * (x[2] - z1) * m[0][2]
+                 + 2. * (x[1] - y1) * (x[2] - z1) * m[1][2]
+                 );
 }
 
 
@@ -533,18 +533,18 @@ int Simplex::Pt_In_Simplex_2D (Vertex * v){
 void Simplex::ExportLcField (FILE * f){
   if (!V[3]){
     fprintf (f, "ST(%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E};\n"
-	     ,V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z
-	     ,V[1]->Pos.X, V[1]->Pos.Y, V[1]->Pos.Z
-	     ,V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z
-	     ,V[0]->lc, V[1]->lc, V[2]->lc);
+             ,V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z
+             ,V[1]->Pos.X, V[1]->Pos.Y, V[1]->Pos.Z
+             ,V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z
+             ,V[0]->lc, V[1]->lc, V[2]->lc);
   }
   else{
     fprintf (f, "SS(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n"
-	     ,V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z
-	     ,V[1]->Pos.X, V[1]->Pos.Y, V[1]->Pos.Z
-	     ,V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z
-	     ,V[3]->Pos.X, V[3]->Pos.Y, V[3]->Pos.Z
-	     ,V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
+             ,V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z
+             ,V[1]->Pos.X, V[1]->Pos.Y, V[1]->Pos.Z
+             ,V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z
+             ,V[3]->Pos.X, V[3]->Pos.Y, V[3]->Pos.Z
+             ,V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
   }
   
 }
@@ -591,7 +591,7 @@ bool Simplex::EdgeIn (Vertex * v1, Vertex * v2, Vertex * v[2]){
     if (compareVertex (&V[i], &v1) && compareVertex (&V[i], &v2)){
       v[n++] = V[i];
       if (n > 2)
-	return false;
+        return false;
     }
   }
   return true;
@@ -693,11 +693,11 @@ bool Simplex::SwapEdge (int iFac){
   if (s21 != &MyNewBoundary && s21 && s21->iEnt)
     for (i = 0; i < 3; i++)
       if (s21->S[i] == s2)
-	s21->S[i] = s1;
+        s21->S[i] = s1;
   if (s11 != &MyNewBoundary && s11 && s11->iEnt)
     for (i = 0; i < 3; i++)
       if (s11->S[i] == s1)
-	s11->S[i] = s2;
+        s11->S[i] = s2;
   return true;
 }
 

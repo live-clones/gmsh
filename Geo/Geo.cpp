@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -192,15 +192,15 @@ void add_attractor(char *fich, int ip, int typ){
   char text[BUFFSIZE];
   if(typ == 0) {
     sprintf(text,"Attractor Point (%s,%s,%s) = {%d};",
-	    attrx_text,attry_text,attrdec_text,ip);
+            attrx_text,attry_text,attrdec_text,ip);
   }
   else if(typ == 1){
     sprintf(text,"Attractor Line (%s,%s,%s) = {%d};",
-	    attrx_text,attry_text,attrdec_text,ip);
+            attrx_text,attry_text,attrdec_text,ip);
   }
   else if(typ == 2) {
     sprintf(text,"Attractor Surface (%s,%s,%s) = {%d};",
-	    attrx_text,attry_text,attrdec_text,ip);
+            attrx_text,attry_text,attrdec_text,ip);
   }
   add_infile(text,fich);
 }
@@ -463,10 +463,10 @@ void translate_seg(int add, int s, char *fich){
 
   if(add)
     sprintf(text,"Translate({%s,%s,%s}) {\n  Duplicata { Line(%d); }\n}",
-	    tx_text,ty_text,tz_text,s);
+            tx_text,ty_text,tz_text,s);
   else
     sprintf(text,"Translate({%s,%s,%s}) {\n  Line(%d);\n}",
-	    tx_text,ty_text,tz_text,s);
+            tx_text,ty_text,tz_text,s);
   add_infile(text,fich);
   add_infile("Coherence;",fich);
 }
@@ -477,10 +477,10 @@ void translate_surf(int add, int s, char *fich){
 
   if(add)
     sprintf(text,"Translate({%s,%s,%s}) {\n  Duplicata { Surface(%d); }\n}",
-	    tx_text,ty_text,tz_text,s);
+            tx_text,ty_text,tz_text,s);
   else
     sprintf(text,"Translate({%s,%s,%s}) {\n  Surface(%d);\n}",
-	    tx_text,ty_text,tz_text,s);
+            tx_text,ty_text,tz_text,s);
   add_infile(text,fich);
   add_infile("Coherence;",fich);
 }
@@ -490,10 +490,10 @@ void translate_pt(int add, int s, char *fich){
 
   if(add)
     sprintf(text,"Translate({%s,%s,%s}) {\n  Duplicata { Point(%d); }\n}",
-	    tx_text,ty_text,tz_text,s);
+            tx_text,ty_text,tz_text,s);
   else
     sprintf(text,"Translate({%s,%s,%s}) {\n  Point(%d);\n}",
-	    tx_text,ty_text,tz_text,s);
+            tx_text,ty_text,tz_text,s);
   add_infile(text,fich);
   add_infile("Coherence;",fich);
 }
@@ -503,10 +503,10 @@ void rotate(int add, int s, char *fich, char *quoi){
 
   if(add)
     sprintf(text,"Rotate({%s,%s,%s},{%s,%s,%s},%s) {\n  Duplicata { %s(%d); }\n}",
-	    ax_text,ay_text,az_text,px_text,py_text,pz_text,angle_text, quoi,s);
+            ax_text,ay_text,az_text,px_text,py_text,pz_text,angle_text, quoi,s);
   else
     sprintf(text,"Rotate({%s,%s,%s},{%s,%s,%s},%s) {\n   %s(%d);\n  }",
-	    ax_text,ay_text,az_text,px_text,py_text,pz_text,angle_text, quoi,s);
+            ax_text,ay_text,az_text,px_text,py_text,pz_text,angle_text, quoi,s);
   add_infile(text,fich);
   add_infile("Coherence;",fich);
 }
@@ -516,10 +516,10 @@ void dilate(int add, int s, char *fich, char *quoi){
 
   if(add)
     sprintf(text,"Dilate({%s,%s,%s},%s) {\n  Duplicata { %s(%d); }\n}",
-	    dx_text,dy_text,dz_text,df_text, quoi,s);
+            dx_text,dy_text,dz_text,df_text, quoi,s);
   else
     sprintf(text,"Dilate({%s,%s,%s},%s) {\n   %s(%d);\n  }",
-	    dx_text,dy_text,dz_text,df_text, quoi,s);
+            dx_text,dy_text,dz_text,df_text, quoi,s);
   add_infile(text,fich);
   add_infile("Coherence;",fich);
 }
@@ -529,7 +529,7 @@ void protude(int s, char *fich, char *what){
   char text[BUFFSIZE];
 
   sprintf(text,"Extrude %s(%d, {%s,%s,%s}, {%s,%s,%s}, %s);",what,s,ax_text,ay_text,
-	  az_text,px_text,py_text,pz_text,angle_text);
+          az_text,px_text,py_text,pz_text,angle_text);
   add_infile(text,fich);
   add_infile("Coherence;",fich);
 }

@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.5 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Context.h,v 1.6 2000-11-26 15:43:44 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -8,7 +8,7 @@
 
 /* How RGBA values are packed and unpacked into/from a 4-byte integer */
 
-#  ifdef _LITTLE
+#  ifdef _LITTLE_ENDIAN
 #    define PACK_COLOR(R,G,B,A)   ( (A)<<24 | (B)<<16 | (G)<<8 | (R) )
 #    define UNPACK_RED(X)         ( (X) & 0xff )
 #    define UNPACK_GREEN(X)       ( ( (X) >> 8 ) & 0xff )
@@ -23,7 +23,7 @@
 #  endif
 
 typedef struct{
-  int id;			/* the current rgbacolors id */
+  int id;                       /* the current rgbacolors id */
   
   /* general colors */
   unsigned int bg, fg, text, axes, little_axes;
@@ -50,7 +50,7 @@ typedef struct{
 
 typedef struct {
 
-  int interactive;	      /* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
+  int interactive;            /* 0=full gfx; -1=just parse; 1,2,3=batch mesh */
   int verbosity;              /* 0=silent -> 3=debug */
   int expose;                 /* 1 if everything is ready to expose and draw */
 
@@ -58,18 +58,20 @@ typedef struct {
   int rlock[3], tlock[3], slock[3];
                               /* locks for r, t and s */
   
-  double min[3];	      /* x, y and z min for the current geometry */
+  double min[3];              /* x, y and z min for the current geometry */
   double max[3];              /* x, y and z max for the current geometry */
-  double range[3];	      /* maximum range in the three directions */
+  double range[3];            /* maximum range in the three directions */
+  double lc, lc_middle;       /* characteristic lengths for the whole problem, */
+  double lc_order;            /* and never used in mesh generation (->only for geo/post) */
   
-  int db;		      /* double buffer? */
-  int overlay;	   	      /* overlay graphic window? */
-  int stream;		      /* output stream: TO_SCREEN or TO_FILE */
-  int ortho;		      /* orthogonal projection? */
-  int fast;		      /* inhibit mesh and postpro drawing when changing r,s,t */
-  int command_win;	      /* command window? */
-  int display_lists;	      /* use display lists? */
-  int font_base;	      /* display list indice for the font */
+  int db;                     /* double buffer? */
+  int overlay;                /* overlay graphic window? */
+  int stream;                 /* output stream: TO_SCREEN or TO_FILE */
+  int ortho;                  /* orthogonal projection? */
+  int fast;                   /* inhibit mesh and postpro drawing when changing r,s,t */
+  int command_win;            /* command window? */
+  int display_lists;          /* use display lists? */
+  int font_base;              /* display list indice for the font */
   int axes, little_axes;      /* draw axes? */
   int threads, threads_lock;  /* threads?, lock (should be a mutex...) */
   int alpha;                  /* enable alpha blending */
@@ -83,8 +85,14 @@ typedef struct {
   int viewport[4];
   float light0[4];            /* light source position */
   float shine;                /* specular value */
-  int render_mode;	      /* RENDER, SELECT, FEEDBACK */
-
+  int render_mode;            /* RENDER, SELECT, FEEDBACK */
+  int clip[6];                /* status of clip planes */
+  double clip_plane0[4];      /* clip plane 0 */
+  double clip_plane1[4];      /* clip plane 1 */
+  double clip_plane2[4];      /* clip plane 2 */
+  double clip_plane3[4];      /* clip plane 3 */
+  double clip_plane4[4];      /* clip plane 4 */
+  double clip_plane5[4];      /* clip plane 5 */
   double pixel_equiv_x, pixel_equiv_y ; 
                               /* approximative equivalent model lenght of a pixel */
   
@@ -108,7 +116,7 @@ typedef struct {
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
     double limit_gamma, limit_eta, limit_rho;
-    double scaling_factor, lc_factor;
+    double scaling_factor, lc_factor, rand_factor;
     int dual, interactive;
     int hidden, shade;
     int format, nb_smoothing, algo, degree;

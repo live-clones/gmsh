@@ -1,4 +1,4 @@
-/* $Id: 3D_Extrude.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: 3D_Extrude.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -83,13 +83,13 @@ void Extrude_Simplex_Phase1 (void *data, void *dum){
       List_Read (s->V[1]->Extruded_Points, k + 1, &v5);
       List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
       if (ep->mesh.Simplexes){
-	k++;
-	if (!are_exist (v1, v5, Tree_Ares))
-	  are_cree (v2, v4, Tree_Ares);
-	if (!are_exist (v5, v3, Tree_Ares))
-	  are_cree (v2, v6, Tree_Ares);
-	if (!are_exist (v4, v3, Tree_Ares))
-	  are_cree (v1, v6, Tree_Ares);
+        k++;
+        if (!are_exist (v1, v5, Tree_Ares))
+          are_cree (v2, v4, Tree_Ares);
+        if (!are_exist (v5, v3, Tree_Ares))
+          are_cree (v2, v6, Tree_Ares);
+        if (!are_exist (v4, v3, Tree_Ares))
+          are_cree (v1, v6, Tree_Ares);
       }
       else if (!s->V[3]){
       }
@@ -119,120 +119,120 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
 
       if(s->V[3]){
-	List_Read(s->V[0]->Extruded_Points,k,&v1);
-	List_Read(s->V[1]->Extruded_Points,k,&v2);
-	List_Read(s->V[2]->Extruded_Points,k,&v3);
-	List_Read(s->V[3]->Extruded_Points,k,&v4);
-	List_Read(s->V[0]->Extruded_Points,k+1,&v5);
-	List_Read(s->V[1]->Extruded_Points,k+1,&v6);
-	List_Read(s->V[2]->Extruded_Points,k+1,&v7);
-	List_Read(s->V[3]->Extruded_Points,k+1,&v8);
+        List_Read(s->V[0]->Extruded_Points,k,&v1);
+        List_Read(s->V[1]->Extruded_Points,k,&v2);
+        List_Read(s->V[2]->Extruded_Points,k,&v3);
+        List_Read(s->V[3]->Extruded_Points,k,&v4);
+        List_Read(s->V[0]->Extruded_Points,k+1,&v5);
+        List_Read(s->V[1]->Extruded_Points,k+1,&v6);
+        List_Read(s->V[2]->Extruded_Points,k+1,&v7);
+        List_Read(s->V[3]->Extruded_Points,k+1,&v8);
       }
       else{
-	List_Read (s->V[0]->Extruded_Points, k, &v1);
-	List_Read (s->V[1]->Extruded_Points, k, &v2);
-	List_Read (s->V[2]->Extruded_Points, k, &v3);
-	List_Read (s->V[0]->Extruded_Points, k + 1, &v4);
-	List_Read (s->V[1]->Extruded_Points, k + 1, &v5);
-	List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
+        List_Read (s->V[0]->Extruded_Points, k, &v1);
+        List_Read (s->V[1]->Extruded_Points, k, &v2);
+        List_Read (s->V[2]->Extruded_Points, k, &v3);
+        List_Read (s->V[0]->Extruded_Points, k + 1, &v4);
+        List_Read (s->V[1]->Extruded_Points, k + 1, &v5);
+        List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
       }
 
       k++;
       if (ep->mesh.ZonLayer[i]){
 
-	if(ep->mesh.Recombine){
-	  if(s->V[3]){
-	    newh = Create_Hexahedron(v1,v2,v3,v4,v5,v6,v7,v8);
-	    newh->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add(THEV->Hexahedra,&newh);
-	  }
-	  else{
-	    newp = Create_Prism(v1,v2,v3,v4,v5,v6);
-	    newp->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add(THEV->Prisms,&newp);
-	  }
-	}
-	else{
-	  
-	  if (are_exist (v4, v2, Tree_Ares) &&
-	      are_exist (v5, v3, Tree_Ares) &&
-	      are_exist (v4, v3, Tree_Ares)){
-	    news = Create_Simplex (v1, v2, v3, v4);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v4, v5, v6, v3);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v2, v4, v5, v3);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	  }
-	  if (are_exist (v4, v2, Tree_Ares) &&
-	      are_exist (v2, v6, Tree_Ares) &&
-	      are_exist (v4, v3, Tree_Ares)){
-	    news = Create_Simplex (v1, v2, v3, v4);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v4, v5, v6, v2);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v4, v2, v6, v3);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	  }
-	  if (are_exist (v4, v2, Tree_Ares) &&
-	      are_exist (v2, v6, Tree_Ares) &&
-	      are_exist (v6, v1, Tree_Ares)){
-	    news = Create_Simplex (v1, v2, v3, v6);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v4, v5, v6, v2);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v2, v4, v6, v1);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	  }
-	  if (are_exist (v5, v1, Tree_Ares) &&
-	      are_exist (v5, v3, Tree_Ares) &&
-	      are_exist (v4, v3, Tree_Ares)){
-	    news = Create_Simplex (v1, v2, v3, v5);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v4, v5, v6, v3);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v1, v4, v5, v3);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	  }
-	  if (are_exist (v5, v1, Tree_Ares) &&
-	      are_exist (v5, v3, Tree_Ares) &&
-	      are_exist (v6, v1, Tree_Ares)){
-	    news = Create_Simplex (v1, v2, v3, v5);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v4, v5, v6, v1);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v1, v3, v5, v6);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	  }
-	  if (are_exist (v5, v1, Tree_Ares) &&
-	      are_exist (v2, v6, Tree_Ares) &&
-	      are_exist (v6, v1, Tree_Ares)){
-	    news = Create_Simplex (v1, v2, v3, v6);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v4, v5, v6, v1);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	    news = Create_Simplex (v1, v2, v5, v6);
-	    news->iEnt = ep->mesh.ZonLayer[i];
-	    Tree_Add (THEV->Simplexes, &news);
-	  }
-	}
+        if(ep->mesh.Recombine){
+          if(s->V[3]){
+            newh = Create_Hexahedron(v1,v2,v3,v4,v5,v6,v7,v8);
+            newh->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add(THEV->Hexahedra,&newh);
+          }
+          else{
+            newp = Create_Prism(v1,v2,v3,v4,v5,v6);
+            newp->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add(THEV->Prisms,&newp);
+          }
+        }
+        else{
+          
+          if (are_exist (v4, v2, Tree_Ares) &&
+              are_exist (v5, v3, Tree_Ares) &&
+              are_exist (v4, v3, Tree_Ares)){
+            news = Create_Simplex (v1, v2, v3, v4);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v4, v5, v6, v3);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v2, v4, v5, v3);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+          if (are_exist (v4, v2, Tree_Ares) &&
+              are_exist (v2, v6, Tree_Ares) &&
+              are_exist (v4, v3, Tree_Ares)){
+            news = Create_Simplex (v1, v2, v3, v4);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v4, v5, v6, v2);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v4, v2, v6, v3);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+          if (are_exist (v4, v2, Tree_Ares) &&
+              are_exist (v2, v6, Tree_Ares) &&
+              are_exist (v6, v1, Tree_Ares)){
+            news = Create_Simplex (v1, v2, v3, v6);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v4, v5, v6, v2);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v2, v4, v6, v1);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+          if (are_exist (v5, v1, Tree_Ares) &&
+              are_exist (v5, v3, Tree_Ares) &&
+              are_exist (v4, v3, Tree_Ares)){
+            news = Create_Simplex (v1, v2, v3, v5);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v4, v5, v6, v3);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v1, v4, v5, v3);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+          if (are_exist (v5, v1, Tree_Ares) &&
+              are_exist (v5, v3, Tree_Ares) &&
+              are_exist (v6, v1, Tree_Ares)){
+            news = Create_Simplex (v1, v2, v3, v5);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v4, v5, v6, v1);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v1, v3, v5, v6);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+          if (are_exist (v5, v1, Tree_Ares) &&
+              are_exist (v2, v6, Tree_Ares) &&
+              are_exist (v6, v1, Tree_Ares)){
+            news = Create_Simplex (v1, v2, v3, v6);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v4, v5, v6, v1);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+            news = Create_Simplex (v1, v2, v5, v6);
+            news->iEnt = ep->mesh.ZonLayer[i];
+            Tree_Add (THEV->Simplexes, &news);
+          }
+        }
       }
     }
   }
@@ -258,50 +258,50 @@ void Extrude_Simplex_Phase2 (void *data, void *dum){
       List_Read (s->V[2]->Extruded_Points, k + 1, &v6);
       k++;
       if (are_exist (v4, v2, Tree_Ares) &&
-	  are_exist (v5, v3, Tree_Ares) &&
-	  are_exist (v1, v6, Tree_Ares)){
-	TEST_IS_ALL_OK++;
-	if (!are_exist (v4, v2, Tree_Swaps)){
-	  are_del (v4, v2, Tree_Ares);
-	  are_cree (v1, v5, Tree_Ares);
-	  are_cree (v1, v5, Tree_Swaps);
-	  are_cree (v4, v2, Tree_Swaps);
-	}
-	else if (!are_exist (v5, v3, Tree_Swaps)){
-	  are_del (v5, v3, Tree_Ares);
-	  are_cree (v2, v6, Tree_Ares);
-	  are_cree (v5, v3, Tree_Swaps);
-	  are_cree (v2, v6, Tree_Swaps);
-	}
-	else if (!are_exist (v1, v6, Tree_Swaps)){
-	  are_del (v1, v6, Tree_Ares);
-	  are_cree (v4, v3, Tree_Ares);
-	  are_cree (v1, v6, Tree_Swaps);
-	  are_cree (v4, v3, Tree_Swaps);
-	}
+          are_exist (v5, v3, Tree_Ares) &&
+          are_exist (v1, v6, Tree_Ares)){
+        TEST_IS_ALL_OK++;
+        if (!are_exist (v4, v2, Tree_Swaps)){
+          are_del (v4, v2, Tree_Ares);
+          are_cree (v1, v5, Tree_Ares);
+          are_cree (v1, v5, Tree_Swaps);
+          are_cree (v4, v2, Tree_Swaps);
+        }
+        else if (!are_exist (v5, v3, Tree_Swaps)){
+          are_del (v5, v3, Tree_Ares);
+          are_cree (v2, v6, Tree_Ares);
+          are_cree (v5, v3, Tree_Swaps);
+          are_cree (v2, v6, Tree_Swaps);
+        }
+        else if (!are_exist (v1, v6, Tree_Swaps)){
+          are_del (v1, v6, Tree_Ares);
+          are_cree (v4, v3, Tree_Ares);
+          are_cree (v1, v6, Tree_Swaps);
+          are_cree (v4, v3, Tree_Swaps);
+        }
       }
       else if (are_exist (v1, v5, Tree_Ares) && 
-	       are_exist (v2, v6, Tree_Ares) && 
-	       are_exist (v4, v3, Tree_Ares)){
-	TEST_IS_ALL_OK++;
-	if (!are_exist (v1, v5, Tree_Swaps)){
-	  are_del (v1, v5, Tree_Ares);
-	  are_cree (v4, v2, Tree_Ares);
-	  are_cree (v1, v5, Tree_Swaps);
-	  are_cree (v4, v2, Tree_Swaps);
-	}
-	else if (!are_exist (v2, v6, Tree_Swaps)){
-	  are_del (v2, v6, Tree_Ares);
-	  are_cree (v5, v3, Tree_Ares);
-	  are_cree (v5, v3, Tree_Swaps);
-	  are_cree (v2, v6, Tree_Swaps);
-	}
-	else if (!are_exist (v4, v3, Tree_Swaps)){
-	  are_del (v4, v3, Tree_Ares);
-	  are_cree (v1, v6, Tree_Ares);
-	  are_cree (v1, v6, Tree_Swaps);
-	  are_cree (v4, v3, Tree_Swaps);
-	}
+               are_exist (v2, v6, Tree_Ares) && 
+               are_exist (v4, v3, Tree_Ares)){
+        TEST_IS_ALL_OK++;
+        if (!are_exist (v1, v5, Tree_Swaps)){
+          are_del (v1, v5, Tree_Ares);
+          are_cree (v4, v2, Tree_Ares);
+          are_cree (v1, v5, Tree_Swaps);
+          are_cree (v4, v2, Tree_Swaps);
+        }
+        else if (!are_exist (v2, v6, Tree_Swaps)){
+          are_del (v2, v6, Tree_Ares);
+          are_cree (v5, v3, Tree_Ares);
+          are_cree (v5, v3, Tree_Swaps);
+          are_cree (v2, v6, Tree_Swaps);
+        }
+        else if (!are_exist (v4, v3, Tree_Swaps)){
+          are_del (v4, v3, Tree_Ares);
+          are_cree (v1, v6, Tree_Ares);
+          are_cree (v1, v6, Tree_Swaps);
+          are_cree (v4, v3, Tree_Swaps);
+        }
       }
     }
   }
@@ -324,19 +324,19 @@ void Extrude_Vertex (void *data, void *dum){
   for (i = 0; i < ep->mesh.NbLayer; i++){
     for (j = 0; j < ep->mesh.NbElmLayer[i]; j++){
       newv = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
-			    v->Pos.Y, v->Pos.Z, v->lc, v->u);
+                            v->Pos.Y, v->Pos.Z, v->lc, v->u);
       ep->Extrude (i, j + 1, newv->Pos.X, newv->Pos.Y, newv->Pos.Z);
 
       if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &newv))){
-	List_Add (v->Extruded_Points, pV);
-	if (ToAdd)
-	  Tree_Insert (ToAdd, pV);
+        List_Add (v->Extruded_Points, pV);
+        if (ToAdd)
+          Tree_Insert (ToAdd, pV);
       }
       else{
-	List_Add (v->Extruded_Points, &newv);
-	Tree_Insert (THEM->Vertices, &newv);
-	if (ToAdd)
-	  Tree_Insert (ToAdd, &newv);
+        List_Add (v->Extruded_Points, &newv);
+        Tree_Insert (THEM->Vertices, &newv);
+        if (ToAdd)
+          Tree_Insert (ToAdd, &newv);
       }
     }
   }
@@ -373,27 +373,27 @@ void Extrude_Seg (Vertex * V1, Vertex * V2){
       List_Read (V1->Extruded_Points, k + 1, &v3);
       List_Read (V2->Extruded_Points, k + 1, &v4);
       if(ep->mesh.Recombine){
-	s = Create_Quadrangle(v1,v2,v4,v3);
-	s->iEnt = THES->Num;
-	Tree_Add(THES->Simplexes,&s);
+        s = Create_Quadrangle(v1,v2,v4,v3);
+        s->iEnt = THES->Num;
+        Tree_Add(THES->Simplexes,&s);
       }
       else{
-	if (are_exist (v3, v2, Tree_Ares)){
-	  s = Create_Simplex (v3, v2, v1, NULL);
-	  s->iEnt = THES->Num;
-	  Tree_Add (THES->Simplexes, &s);
-	  s = Create_Simplex (v3, v4, v2, NULL);
-	  s->iEnt = THES->Num;
-	  Tree_Add (THES->Simplexes, &s);
-	}
-	else{
-	  s = Create_Simplex (v3, v4, v1, NULL);
-	  s->iEnt = THES->Num;
-	  Tree_Add (THES->Simplexes, &s);
-	  s = Create_Simplex (v1, v4, v2, NULL);
-	  s->iEnt = THES->Num;
-	  Tree_Add (THES->Simplexes, &s);
-	}
+        if (are_exist (v3, v2, Tree_Ares)){
+          s = Create_Simplex (v3, v2, v1, NULL);
+          s->iEnt = THES->Num;
+          Tree_Add (THES->Simplexes, &s);
+          s = Create_Simplex (v3, v4, v2, NULL);
+          s->iEnt = THES->Num;
+          Tree_Add (THES->Simplexes, &s);
+        }
+        else{
+          s = Create_Simplex (v3, v4, v1, NULL);
+          s->iEnt = THES->Num;
+          Tree_Add (THES->Simplexes, &s);
+          s = Create_Simplex (v1, v4, v2, NULL);
+          s->iEnt = THES->Num;
+          Tree_Add (THES->Simplexes, &s);
+        }
       }
       k++;
     }
@@ -434,13 +434,13 @@ int Extrude_Mesh (Curve * c){
   if (ep->geo.Mode == EXTRUDED_ENTITY){
     Extrude_Vertex (&c->beg, NULL);
     c->Vertices = List_Create (List_Nbr (c->beg->Extruded_Points),
-			       2, sizeof (Vertex *));
+                               2, sizeof (Vertex *));
     v = &c->beg;
     if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, v))){
       (*vexist)->u = c->ubeg;
       Tree_Insert (THEM->Vertices, vexist);
       if ((*vexist)->ListCurves)
-	List_Add ((*vexist)->ListCurves, &c);
+        List_Add ((*vexist)->ListCurves, &c);
       List_Add (c->Vertices, vexist);
     }
     else{
@@ -454,7 +454,7 @@ int Extrude_Mesh (Curve * c){
     for (i = 1; i < List_Nbr (c->beg->Extruded_Points) - 1; i++){
       List_Read (c->beg->Extruded_Points, i, &v1);
       if (!v1->ListCurves)
-	v1->ListCurves = List_Create (1, 1, sizeof (Curve *));
+        v1->ListCurves = List_Create (1, 1, sizeof (Curve *));
       List_Add (v1->ListCurves, &c);
       Tree_Insert (THEM->Vertices, &v1);
       v1->u = (double) i / (double) List_Nbr (c->beg->Extruded_Points);
@@ -465,7 +465,7 @@ int Extrude_Mesh (Curve * c){
       (*vexist)->u = c->ubeg;
       Tree_Insert (THEM->Vertices, vexist);
       if ((*vexist)->ListCurves)
-	List_Add ((*vexist)->ListCurves, &c);
+        List_Add ((*vexist)->ListCurves, &c);
       List_Add (c->Vertices, vexist);
     }
     else{
@@ -491,9 +491,9 @@ void copy_mesh (Surface * from, Surface * to){
     List_Read (list, i, &s);
     v = s->V[0];
     v1 = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
-			v->Pos.Y, v->Pos.Z, v->lc, v->u);
+                        v->Pos.Y, v->Pos.Z, v->lc, v->u);
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		 v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
+                 v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
     
     if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v1)))
       v1 = *pV;
@@ -506,9 +506,9 @@ void copy_mesh (Surface * from, Surface * to){
     
     v = s->V[1];
     v2 = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
-			v->Pos.Y, v->Pos.Z, v->lc, v->u);
+                        v->Pos.Y, v->Pos.Z, v->lc, v->u);
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		 v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
+                 v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
     
     if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v2)))
       v2 = *pV;
@@ -521,9 +521,9 @@ void copy_mesh (Surface * from, Surface * to){
     
     v = s->V[2];
     v3 = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
-			v->Pos.Y, v->Pos.Z, v->lc, v->u);
+                        v->Pos.Y, v->Pos.Z, v->lc, v->u);
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		 v3->Pos.X, v3->Pos.Y, v3->Pos.Z);
+                 v3->Pos.X, v3->Pos.Y, v3->Pos.Z);
     
     if (Vertex_Bound && (pV = (Vertex **) Tree_PQuery (Vertex_Bound, &v3)))
       v3 = *pV;
@@ -611,8 +611,8 @@ int Extrude_Mesh (Volume * v){
       List_Read (v->Surfaces, i, &ss);
       list = Tree2List (ss->Vertices);
       for (int j = 0; j < List_Nbr (list); j++){
-	List_Read (list, j, &v1);
-	Tree_Add (Vertex_Bound, &v1);
+        List_Read (list, j, &v1);
+        Tree_Add (Vertex_Bound, &v1);
       }
       List_Delete (list);
     }
@@ -627,11 +627,11 @@ int Extrude_Mesh (Volume * v){
     if(!ep->mesh.Recombine){
       j = TEST_IS_ALL_OK;
       do{
-	TEST_IS_ALL_OK = 0;
-	Extrude_Surface2 (s);
-	if (TEST_IS_ALL_OK == j)
-	  break;
-	j = TEST_IS_ALL_OK;
+        TEST_IS_ALL_OK = 0;
+        Extrude_Surface2 (s);
+        if (TEST_IS_ALL_OK == j)
+          break;
+        j = TEST_IS_ALL_OK;
       }
       while (TEST_IS_ALL_OK);
     }

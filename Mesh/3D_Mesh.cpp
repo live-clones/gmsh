@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.7 2000-11-26 15:43:46 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -25,8 +25,7 @@
 
 extern Mesh       *THEM, *LOCAL;
 extern Context_T   CTX;
-extern int         TYPBGMESH, CurrentNodeNumber, FACE_DIMENSION;
-extern double      LC;
+extern int         CurrentNodeNumber, FACE_DIMENSION;
 
 static Tree_T *Tsd, *Sim_Sur_Le_Bord, *POINTS_TREE;
 static List_T *Simplexes_Destroyed, *Simplexes_New, *Suppress;
@@ -34,7 +33,7 @@ static List_T *LLL, *POINTS;
 static Simplex *THES;
 static Vertex *THEV;
 static Tree_T *SimXFac;
-static double volume;
+static double volume, LC3D;
 static int ZONEELIMINEE, Methode = 0;
 
 Simplex  MyNewBoundary;
@@ -44,15 +43,15 @@ void DebugSimplexe (Simplex * s){
   int i;
 
   fprintf (stderr, "Simplexe %p = %d %d %d %d \n",
-	   s, s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
+           s, s->V[0]->Num, s->V[1]->Num, s->V[2]->Num, s->V[3]->Num);
 
   for (i = 0; i < 4; i++){
     if (s->S[i] != &MyNewBoundary)
       printf (" face : %d %d %d -> Simplexe %p\n",
-	      s->F[i].V[0]->Num, s->F[i].V[1]->Num, s->F[i].V[2]->Num, s->S[i]);
+              s->F[i].V[0]->Num, s->F[i].V[1]->Num, s->F[i].V[2]->Num, s->S[i]);
     else
       printf (" face : %d %d %d -> Simplexe Boundary\n",
-	      s->F[i].V[0]->Num, s->F[i].V[1]->Num, s->F[i].V[2]->Num);
+              s->F[i].V[0]->Num, s->F[i].V[1]->Num, s->F[i].V[2]->Num);
   }
 }
 
@@ -96,9 +95,9 @@ double Interpole_lcTetraedre (Simplex * s, Vertex * v){
   }
 
   return (s->V[0]->lc * (1. - sol[0] - sol[1] - sol[2]) +
-	  sol[0] * s->V[1]->lc +
-	  sol[1] * s->V[2]->lc +
-	  sol[2] * s->V[3]->lc);
+          sol[0] * s->V[1]->lc +
+          sol[1] * s->V[2]->lc +
+          sol[2] * s->V[3]->lc);
 }
 
 Vertex *NewVertex (Simplex * s){
@@ -111,7 +110,7 @@ Vertex *NewVertex (Simplex * s){
 }
 
 int Pt_In_Volume (double X, double Y, double Z, Mesh * m,
-		  double *l, double tol){
+                  double *l, double tol){
   int i;
   Vertex V;
   double uvw[3];
@@ -136,9 +135,9 @@ int Pt_In_Volume (double X, double Y, double Z, Mesh * m,
     List_Read (B.pT, i, &s);
     if (s->Pt_In_Simplexe (&V, uvw, tol)){
       *l = (1. - uvw[0] - uvw[1] - uvw[2]) * s->V[0]->lc
-	+ uvw[0] * s->V[1]->lc
-	+ uvw[1] * s->V[2]->lc
-	+ uvw[2] * s->V[3]->lc;
+        + uvw[0] * s->V[1]->lc
+        + uvw[1] * s->V[2]->lc
+        + uvw[2] * s->V[3]->lc;
       return (1);
     }
   }
@@ -153,8 +152,8 @@ int Pt_In_Circum (Simplex * s, Vertex * v){
 
   d1 = s->Radius;
   d2 = sqrt (DSQR (v->Pos.X - s->Center.X) +
-	     DSQR (v->Pos.Y - s->Center.Y) +
-	     DSQR (v->Pos.Z - s->Center.Z));
+             DSQR (v->Pos.Y - s->Center.Y) +
+             DSQR (v->Pos.Z - s->Center.Z));
 
   eps = fabs (d1 - d2) / (d1 + d2);
   
@@ -248,19 +247,19 @@ void Box_6_Tetraedron (List_T * P, Mesh * m){
 
   int i, j;
   static int pts[8][3] = { {0, 0, 0},
-			   {1, 0, 0},
-			   {1, 1, 0},
-			   {0, 1, 0},
-			   {0, 0, 1},
-			   {1, 0, 1},
-			   {1, 1, 1},
-			   {0, 1, 1}};
+                           {1, 0, 0},
+                           {1, 1, 0},
+                           {0, 1, 0},
+                           {0, 0, 1},
+                           {1, 0, 1},
+                           {1, 1, 1},
+                           {0, 1, 1}};
   static int tet[6][4] = { {1, 5, 2, 4},
-			   {2, 5, 6, 4},
-			   {4, 5, 6, 8},
-			   {6, 4, 8, 7},
-			   {6, 4, 7, 3},
-			   {2, 3, 4, 6}};
+                           {2, 5, 6, 4},
+                           {4, 5, 6, 8},
+                           {6, 4, 8, 7},
+                           {6, 4, 7, 3},
+                           {2, 3, 4, 6}};
   double Xm, Ym, Zm, XM, YM, ZM, Xc, Yc, Zc;
   Simplex *S, *ps;
   Vertex *V, *v, *pv;
@@ -311,9 +310,7 @@ void Box_6_Tetraedron (List_T * P, Mesh * m){
 
   /* Longueur Caracteristique */
 
-  /* GEUZ SUPPRIME
-  LC = sqrt (Xc * Xc + Yc * Yc + Zc * Zc);
-  */
+  LC3D = sqrt (Xc * Xc + Yc * Yc + Zc * Zc);
 
   /* Points de la boite de 1 a 8 
 
@@ -358,7 +355,7 @@ void Box_6_Tetraedron (List_T * P, Mesh * m){
 
   for (i = 0; i < 6; i++){
     S = Create_Simplex (&V[tet[i][0] - 1], &V[tet[i][1] - 1], 
-			&V[tet[i][2] - 1], &V[tet[i][3] - 1]);
+                        &V[tet[i][2] - 1], &V[tet[i][3] - 1]);
     List_Add (smp, &S);
   }
   
@@ -367,7 +364,7 @@ void Box_6_Tetraedron (List_T * P, Mesh * m){
     List_Read (smp, i, &ps);
     for (j = 0; j < 4; j++)
       if (ps->S[j] == NULL)
-	ps->S[j] = &MyNewBoundary;
+        ps->S[j] = &MyNewBoundary;
     Tree_Replace (m->Simplexes, &ps);
   }
   
@@ -419,18 +416,18 @@ void NewSimplexes (Mesh * m, List_T * Sim, List_T * news){
       ZONEELIMINEE = S->iEnt;
     else {
       if (S->iEnt != ZONEELIMINEE){
-	Msg(WARNING, "Huh! The Elimination Failed %d %d",
-	    S->iEnt, ZONEELIMINEE);
+        Msg(WARNING, "Huh! The Elimination Failed %d %d",
+            S->iEnt, ZONEELIMINEE);
       }
     }
     for (j = 0; j < 4; j++){
       SXF.F = S->F[j];
       if ((pSXF = (SxF *) Tree_PQuery (SimXFac, &SXF))){
-	(pSXF->NumFaceSimpl)++;
+        (pSXF->NumFaceSimpl)++;
       }
       else{
-	SXF.NumFaceSimpl = 1;
-	Tree_Add (SimXFac, &SXF);
+        SXF.NumFaceSimpl = 1;
+        Tree_Add (SimXFac, &SXF);
       }
     }
   }
@@ -455,13 +452,13 @@ int recur_bowyer (Simplex * s){
   for (i = 0; i < 4; i++){
     if (s->S[i] && s->S[i] != &MyNewBoundary && !Tree_Query (Tsd, &s->S[i])){
       if (Pt_In_Circum (s->S[i], THEV) && (s->iEnt == s->S[i]->iEnt)){
-	recur_bowyer (s->S[i]);
+        recur_bowyer (s->S[i]);
       }
       else{
-	if (s->iEnt != s->S[i]->iEnt){
-	  Alerte_Point_Scabreux = 1;
-	}
-	Tree_Insert (Sim_Sur_Le_Bord, &s->S[i]);
+        if (s->iEnt != s->S[i]->iEnt){
+          Alerte_Point_Scabreux = 1;
+        }
+        Tree_Insert (Sim_Sur_Le_Bord, &s->S[i]);
       }
     }
   }
@@ -552,7 +549,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
     for (i = 0; i < List_Nbr (Simplexes_Destroyed); i++){
       List_Read (Simplexes_Destroyed, i, &s);
       if (!Tree_Suppress (m->Simplexes, &s))
-	Msg(ERROR, "Impossible to Delete Simplex");
+        Msg(ERROR, "Impossible to Delete Simplex");
       Free (s);
     }
     
@@ -578,7 +575,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   N = List_Nbr (Points);
   n = IMAX (N / 20, 1);
 
-  Msg(INFO, "Meshing 3D... (Initial)");
+  Msg(INFO, "Mesh 3D... (Initial)");
 
   Box_6_Tetraedron (Points, m);
   // List_Sort (Points, comparePosition);
@@ -589,7 +586,7 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
 
     if (Simplexes_New)
       for (j = 0; j < List_Nbr (Simplexes_New); j++){
-	Action_First_Simplexes (List_Pointer (Simplexes_New, j), NULL);
+        Action_First_Simplexes (List_Pointer (Simplexes_New, j), NULL);
       }
     
     if (!THES){
@@ -602,24 +599,24 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
     if (i % n == n - 1){
       volume = 0.0;
       Tree_Action (m->Simplexes, VSIM);
-      Msg(INFO, "Nod=%d/%d Elm=%d", i+1,N,Tree_Nbr(m->Simplexes)); 
-      Msg(STATUS, "Vol=%g",volume); 
+      Msg(STATUS, "Nod=%d/%d Elm=%d", i+1,N,Tree_Nbr(m->Simplexes)); 
+      Msg(SELECT, "Vol=%g",volume); 
     }
     if (!THES){
       Msg(WARNING, "Vertex (%g,%g,%g) in no Simplex",
-	  THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
-      THEV->Pos.X += 10 * RAND_LONG;
-      THEV->Pos.Y += 10 * RAND_LONG;
-      THEV->Pos.Z += 10 * RAND_LONG;
+          THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
+      THEV->Pos.X += CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      THEV->Pos.Y += CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      THEV->Pos.Z += CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
       Tree_Action (m->Simplexes, Action_First_Simplexes);
     }
     bool  ca_marche = Bowyer_Watson (m, THEV, THES, 1);
     int count = 0;
     while(!ca_marche){
       count ++;
-      double dx = rand_sign() * 10.*RAND_LONG;
-      double dy = rand_sign() * 10.*RAND_LONG;
-      double dz = rand_sign() * 10.*RAND_LONG;
+      double dx = rand_sign() * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      double dy = rand_sign() * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
+      double dz = rand_sign() * CTX.mesh.rand_factor * LC3D * rand()/RAND_MAX;
       THEV->Pos.X += dx;
       THEV->Pos.Y += dy;
       THEV->Pos.Z += dz;
@@ -628,13 +625,13 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       ca_marche = Bowyer_Watson (m, THEV, THES, 1);
       THEV->Pos.X -= dx;
       THEV->Pos.Y -= dy;
-      THEV->Pos.Z -= dz;	  
+      THEV->Pos.Z -= dz;          
       if(count > 5){
-	N++;
-	List_Add(POINTS,&THEV);
-	Msg(WARNING, "Unable to Add Point %d (Will do it Later)",
-	    THEV->Num);
-	break;
+        N++;
+        List_Add(POINTS,&THEV);
+        Msg(WARNING, "Unable to Add Point %d (Will do it Later)",
+            THEV->Num);
+        break;
       }
     }
   }
@@ -711,8 +708,6 @@ void Maillage_Volume (void *data, void *dum){
 
   FACE_DIMENSION = 2;
 
-  Msg(INFO, "Nod=0 Elm=0"); 
-
   pv = (Volume **) data;
   v = *pv;
 
@@ -723,9 +718,11 @@ void Maillage_Volume (void *data, void *dum){
     MeshTransfiniteVolume (v);
   }
   else if (v->Typ == 99999){
+    Msg(STATUS, "Nod=0 Elm=0"); 
+
     LOCAL = &M;
+    Create_BgMesh (THEM->BGM.Typ, .2, LOCAL);
     s = &S;
-    Create_BgMesh (TYPBGMESH, .2, LOCAL);
     
     POINTS_TREE = Tree_Create (sizeof (Vertex *), comparePosition);
     POINTS = List_Create (100, 100, sizeof (Vertex *));
@@ -784,7 +781,7 @@ void Maillage_Volume (void *data, void *dum){
     Bgm_With_Points (THEM, LOCAL);
     POINTS_TREE = THEM->Simplexes;
     
-    Msg(INFO, "Meshing 3D... (Final)");
+    Msg(INFO, "Mesh 3D... (Final)");
 
     Tree_Right (LOCAL->Simplexes, &simp);
     i = 0;
@@ -794,34 +791,34 @@ void Maillage_Volume (void *data, void *dum){
       //double l;
       //while(!Pt_In_Volume(newv->Pos.X,newv->Pos.Y,newv->Pos.Z,LOCAL,&l,0.0)){
       
-      while (!simp->Pt_In_Simplexe (newv, uvw, 1.e-5) &&		 
-	     (simp->S[0] == &MyNewBoundary ||
-	      !simp->S[0]->Pt_In_Simplexe (newv, uvw, 1.e-5)) &&
-	     (simp->S[1] == &MyNewBoundary ||
-	      !simp->S[1]->Pt_In_Simplexe (newv, uvw, 1.e-5)) &&
-	     (simp->S[2] == &MyNewBoundary ||
-	      !simp->S[2]->Pt_In_Simplexe (newv, uvw, 1.e-5)) &&
-	     (simp->S[3] == &MyNewBoundary ||
-	      !simp->S[3]->Pt_In_Simplexe (newv, uvw, 1.e-5))) {
-	Tree_Suppress (LOCAL->Simplexes, &simp);
-	simp->Quality = 0.1;
-	Tree_Insert (LOCAL->Simplexes, &simp);
-	Tree_Right (LOCAL->Simplexes, &simp);
-	if (simp->Quality < CONV_VALUE)
-	  break;
-	newv = NewVertex (simp);
+      while (!simp->Pt_In_Simplexe (newv, uvw, 1.e-5) &&                 
+             (simp->S[0] == &MyNewBoundary ||
+              !simp->S[0]->Pt_In_Simplexe (newv, uvw, 1.e-5)) &&
+             (simp->S[1] == &MyNewBoundary ||
+              !simp->S[1]->Pt_In_Simplexe (newv, uvw, 1.e-5)) &&
+             (simp->S[2] == &MyNewBoundary ||
+              !simp->S[2]->Pt_In_Simplexe (newv, uvw, 1.e-5)) &&
+             (simp->S[3] == &MyNewBoundary ||
+              !simp->S[3]->Pt_In_Simplexe (newv, uvw, 1.e-5))) {
+        Tree_Suppress (LOCAL->Simplexes, &simp);
+        simp->Quality = 0.1;
+        Tree_Insert (LOCAL->Simplexes, &simp);
+        Tree_Right (LOCAL->Simplexes, &simp);
+        if (simp->Quality < CONV_VALUE)
+          break;
+        newv = NewVertex (simp);
       }
       if (simp->Quality < CONV_VALUE)
-	break;
+        break;
       i++;
       if (i % n == n - 1){
-	volume = 0.0;
-	Tree_Action (LOCAL->Simplexes, VSIM);
-	Msg(STATUS, "Nod=%d Elm=%d",
-	    Tree_Nbr (LOCAL->Vertices), Tree_Nbr (LOCAL->Simplexes));
-	Msg(SELECT, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
-	double adv = 100. * (CONV_VALUE / simp->Quality);
-	Progress ((int) adv);
+        volume = 0.0;
+        Tree_Action (LOCAL->Simplexes, VSIM);
+        Msg(STATUS, "Nod=%d Elm=%d",
+            Tree_Nbr (LOCAL->Vertices), Tree_Nbr (LOCAL->Simplexes));
+        Msg(SELECT, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
+        double adv = 100. * (CONV_VALUE / simp->Quality);
+        Progress ((int) adv);
       }
       Bowyer_Watson (LOCAL, newv, simp, 0);
       Tree_Right (LOCAL->Simplexes, &simp);
@@ -844,7 +841,7 @@ void Maillage_Volume (void *data, void *dum){
       tnxe = Tree_Create (sizeof (NXE), compareNXE);
       create_NXE (v->Vertices, v->Simplexes, tnxe);
       for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
-	Tree_Action (tnxe, ActionLiss);
+        Tree_Action (tnxe, ActionLiss);
       Tree_Delete (tnxe);
       Msg(STATUS, "Swapping Edges (last pass)");
       SwapEdges3D (THEM, v, 0.5, true);
@@ -855,8 +852,10 @@ void Maillage_Volume (void *data, void *dum){
       Degre2 (THEM->Vertices, THEM->VertexEdges, v->Simplexes, NULL, NULL);
   }
 
-  THEM->Statistics[6] += Tree_Nbr (v->Vertices);
-  THEM->Statistics[9] += Tree_Nbr (v->Simplexes);
+  THEM->Statistics[6] += Tree_Nbr(v->Vertices);
+  THEM->Statistics[9] += Tree_Nbr(v->Simplexes);
+  THEM->Statistics[10] += Tree_Nbr(v->Hexahedra);
+  THEM->Statistics[11] += Tree_Nbr(v->Prisms);
 
   Gamma_Maillage (v, &THEM->Statistics[17], &THEM->Statistics[18], &THEM->Statistics[19]);
   Eta_Maillage (v, &THEM->Statistics[20], &THEM->Statistics[21], &THEM->Statistics[22]);

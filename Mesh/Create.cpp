@@ -1,4 +1,4 @@
-/* $Id: Create.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: Create.cpp,v 1.6 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -116,7 +116,7 @@ int compareSxF (const void *a, const void *b){
 }
 
 Attractor * Create_Attractor (int Num, double lc1, double lc2, double Radius,
-			      Vertex * v, Curve * c, Surface * s){
+                              Vertex * v, Curve * c, Surface * s){
   Attractor *pA;
 
   pA = (Attractor *) Malloc (sizeof (Attractor));
@@ -190,21 +190,21 @@ void End_Curve (Curve * c){
       v[4] = NULL;
     
     if (Curve->Typ == MSH_SEGM_CIRC_INV ||
-	Curve->Typ == MSH_SEGM_ELLI_INV){
+        Curve->Typ == MSH_SEGM_ELLI_INV){
       List_Read (Curve->Control_Points, 0, &v[3]);
       List_Read (Curve->Control_Points, 1, &v[2]);
       if (!v[4])
-	List_Read (Curve->Control_Points, 2, &v[1]);
+        List_Read (Curve->Control_Points, 2, &v[1]);
       else
-	List_Read (Curve->Control_Points, 3, &v[1]);
+        List_Read (Curve->Control_Points, 3, &v[1]);
     }
     else{
       List_Read (Curve->Control_Points, 0, &v[1]);
       List_Read (Curve->Control_Points, 1, &v[2]);
       if (!v[4])
-	List_Read (Curve->Control_Points, 2, &v[3]);
+        List_Read (Curve->Control_Points, 2, &v[3]);
       else
-	List_Read (Curve->Control_Points, 3, &v[3]);
+        List_Read (Curve->Control_Points, 3, &v[3]);
     }
     
     direction (v[2], v[3], dir32);
@@ -264,15 +264,15 @@ void End_Curve (Curve * c){
     
     if(FLAG_OLD_CIRCLE){
       if(n[0] == 0.0 && n[1] == 0.0){
-	mat[2][0] = Curve->Circle.invmat[0][2] = 0;
-	mat[2][1] = Curve->Circle.invmat[1][2] = 0;
-	mat[2][2] = Curve->Circle.invmat[2][2] = 1;
-	mat[1][0] = Curve->Circle.invmat[0][1] = 0;
-	mat[1][1] = Curve->Circle.invmat[1][1] = 1;
-	mat[1][2] = Curve->Circle.invmat[2][1] = 0;
-	mat[0][0] = Curve->Circle.invmat[0][0] = 1;
-	mat[0][1] = Curve->Circle.invmat[1][0] = 0;
-	mat[0][2] = Curve->Circle.invmat[2][0] = 0;
+        mat[2][0] = Curve->Circle.invmat[0][2] = 0;
+        mat[2][1] = Curve->Circle.invmat[1][2] = 0;
+        mat[2][2] = Curve->Circle.invmat[2][2] = 1;
+        mat[1][0] = Curve->Circle.invmat[0][1] = 0;
+        mat[1][1] = Curve->Circle.invmat[1][1] = 1;
+        mat[1][2] = Curve->Circle.invmat[2][1] = 0;
+        mat[0][0] = Curve->Circle.invmat[0][0] = 1;
+        mat[0][1] = Curve->Circle.invmat[1][0] = 0;
+        mat[0][2] = Curve->Circle.invmat[2][0] = 0;
       }
     }
 
@@ -311,23 +311,23 @@ void End_Curve (Curve * c){
       rhs[1] = v1.Pos.Y;
       det = sys[0][0] * sys[1][1] - sys[1][0] * sys[0][1];
       if (det < 1.e-12){
-	AX = (A3 - A4);
-	sys[0][0] = cos (AX) * cos (A4);
-	sys[0][1] = -sin (AX) * sin (A4);
-	sys[1][0] = cos (AX) * sin (A4);
-	sys[1][1] = sin (AX) * cos (A4);
-	rhs[0] = v3.Pos.X;
-	rhs[1] = v3.Pos.Y;
-	det = sys[0][0] * sys[1][1] - sys[1][0] * sys[0][1];
+        AX = (A3 - A4);
+        sys[0][0] = cos (AX) * cos (A4);
+        sys[0][1] = -sin (AX) * sin (A4);
+        sys[1][0] = cos (AX) * sin (A4);
+        sys[1][1] = sin (AX) * cos (A4);
+        rhs[0] = v3.Pos.X;
+        rhs[1] = v3.Pos.Y;
+        det = sys[0][0] * sys[1][1] - sys[1][0] * sys[0][1];
       }
       if (det < 1.e-12){
-	f1 = DMAX (R, R2);
-	f2 = DMIN (R, R2);
+        f1 = DMAX (R, R2);
+        f2 = DMIN (R, R2);
       }
       else{
-	sys2x2 (sys, rhs, sol);
-	f1 = sol[0];
-	f2 = sol[1];
+        sys2x2 (sys, rhs, sol);
+        f1 = sol[0];
+        f2 = sol[1];
       }
     }
     else{
@@ -347,12 +347,12 @@ void End_Curve (Curve * c){
     if (!c->Circle.done){
       float proj[4][4];
       for (i = 0; i < 4; i++){
-	for (int j = 0; j < 4; j++){
-	  if (i != 3 && j != 3)
-	    proj[i][j] = Curve->Circle.f1 * Curve->Circle.invmat[i][j];
-	  else
-	    proj[i][j] = 0.0;
-	}
+        for (int j = 0; j < 4; j++){
+          if (i != 3 && j != 3)
+            proj[i][j] = Curve->Circle.f1 * Curve->Circle.invmat[i][j];
+          else
+            proj[i][j] = 0.0;
+        }
       }
       proj[0][3] = Curve->Circle.v[2]->Pos.X;
       proj[1][3] = Curve->Circle.v[2]->Pos.Y;
@@ -399,23 +399,23 @@ void End_Surface (Surface * s){
 
 
 Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
-		     List_T * Knots, int p1, int p2, double u1, double u2){
+                     List_T * Knots, int p1, int p2, double u1, double u2){
   Curve *pC;
   Vertex *v;
   int i, j, iPnt;
   double d;
   double matcr[4][4] = { {-0.5, 1.5, -1.5, 0.5},
-			 {1.0, -2.5, 2.0, -0.5},
-			 {-0.5, 0.0, 0.5, 0.0},
-			 {0.0, 1.0, 0.0, 0.0} };
+                         {1.0, -2.5, 2.0, -0.5},
+                         {-0.5, 0.0, 0.5, 0.0},
+                         {0.0, 1.0, 0.0, 0.0} };
   double matbs[4][4] = { {-1.0, 3, -3, 1},
-			 {3, -6, 3.0, 0},
-			 {-3, 0.0, 3, 0.0},
-			 {1, 4, 1, 0.0} };
+                         {3, -6, 3.0, 0},
+                         {-3, 0.0, 3, 0.0},
+                         {1, 4, 1, 0.0} };
   double matbez[4][4] = { {-1.0, 3, -3, 1},
-			  {3, -6, 3.0, 0},
-			  {-3, 3.0, 0, 0.0},
-			  {1, 0, 0, 0.0} };
+                          {3, -6, 3.0, 0},
+                          {-3, 3.0, 0, 0.0},
+                          {1, 0, 0, 0.0} };
 
   pC = (Curve *) Malloc (sizeof (Curve));
   pC->Vertices = NULL;
@@ -433,18 +433,18 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
   if (Typ == MSH_SEGM_SPLN){
     for (i = 0; i < 4; i++)
       for (j = 0; j < 4; j++)
-	pC->mat[i][j] = matcr[i][j];
+        pC->mat[i][j] = matcr[i][j];
     
   }
   else if (Typ == MSH_SEGM_BSPLN){
     for (i = 0; i < 4; i++)
       for (j = 0; j < 4; j++)
-	pC->mat[i][j] = matbs[i][j] / 6.0;
+        pC->mat[i][j] = matbs[i][j] / 6.0;
   }
   else if (Typ == MSH_SEGM_BEZIER){
     for (i = 0; i < 4; i++)
       for (j = 0; j < 4; j++)
-	pC->mat[i][j] = matbez[i][j];
+        pC->mat[i][j] = matbez[i][j];
   }
 
   pC->ubeg = u1;
@@ -470,9 +470,9 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
     for (j = 0; j < List_Nbr (Liste); j++){
       List_Read (Liste, j, &iPnt);
       if ((v = FindVertex (iPnt, THEM)))
-	List_Add (pC->Control_Points, &v);
+        List_Add (pC->Control_Points, &v);
       else
-	Msg(FATAL, "Unknown Control Point %d in Curve %d", iPnt, pC->Num);
+        Msg(FATAL, "Unknown Control Point %d in Curve %d", iPnt, pC->Num);
     }
   }
   else {
@@ -549,7 +549,7 @@ Volume * Create_Volume (int Num, int Typ, int Mat){
 
 
 Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4,
-				Vertex * v5, Vertex * v6, Vertex * v7, Vertex * v8){
+                                Vertex * v5, Vertex * v6, Vertex * v7, Vertex * v8){
   Hexahedron *h;
 
   h = (Hexahedron *) Malloc (sizeof (Hexahedron));
@@ -569,7 +569,7 @@ Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * 
 }
 
 Prism * Create_Prism (Vertex * v1, Vertex * v2, Vertex * v3,
-		      Vertex * v4, Vertex * v5, Vertex * v6){
+                      Vertex * v4, Vertex * v5, Vertex * v6){
   Prism *p;
 
   p = (Prism *) Malloc (sizeof (Prism));

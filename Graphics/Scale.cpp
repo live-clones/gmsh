@@ -1,4 +1,4 @@
-/* $Id: Scale.cpp,v 1.4 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: Scale.cpp,v 1.5 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -47,11 +47,11 @@ void Draw_String(char *s){
 #ifdef _UNIX
 static int          dir,ascent, descent;
 static XCharStruct  overall;
-#define CHECK_W										\
-  XTextExtents(XCTX.xfont.helve, label, strlen(label), &dir,&ascent,&descent,&overall);	\
+#define CHECK_W                                                                         \
+  XTextExtents(XCTX.xfont.helve, label, strlen(label), &dir,&ascent,&descent,&overall); \
   if(overall.width > cv_w) cv_w=overall.width
 #else
-#define CHECK_W	 cv_w=200
+#define CHECK_W  cv_w=200
 #endif
 
 
@@ -146,7 +146,7 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
       Palette2(v,ValMin,ValMax,ValMin+(i+1)*(ValMax-ValMin)/v->NbIso);
       glVertex2d(cs_xmin+cs_w, cs_ymin+(i+1)*cs_bh);
       glVertex2d(cs_xmin,      cs_ymin+(i+1)*cs_bh);
-      glEnd();	
+      glEnd();  
     }
     else{
       Palette(v,v->NbIso,i);
@@ -190,18 +190,18 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   else {
     if(v->IntervalsType!=DRAW_POST_ISO){
       for(i=0 ; i<nbv+1 ; i++){
-	Val = v->GVFI(ValMin,ValMax,nbv+1,i); 
-	sprintf(label, v->Format, Val);
-	glRasterPos2d(cv_xmin,cv_ymin+i*cv_bh-font_a/3.);
-	Draw_String(label); CHECK_W;
+        Val = v->GVFI(ValMin,ValMax,nbv+1,i); 
+        sprintf(label, v->Format, Val);
+        glRasterPos2d(cv_xmin,cv_ymin+i*cv_bh-font_a/3.);
+        Draw_String(label); CHECK_W;
       }
     }
     else {
       for(i=0 ; i<nbv ; i++){
-	Val = v->GVFI(ValMin,ValMax,nbv,i); 
-	sprintf(label, v->Format, Val);
-	glRasterPos2d(cv_xmin,cv_ymin+(2*i+1)*(cv_bh/2)-font_a/3.);
-	Draw_String(label); CHECK_W;
+        Val = v->GVFI(ValMin,ValMax,nbv,i); 
+        sprintf(label, v->Format, Val);
+        glRasterPos2d(cv_xmin,cv_ymin+(2*i+1)*(cv_bh/2)-font_a/3.);
+        Draw_String(label); CHECK_W;
       }
     }
   }
@@ -271,10 +271,10 @@ void Draw_Scales(void){
       v = *(Post_View**)List_Pointer(todraw,i);
       oldwidth = width;
       draw_scale(v,
-		 xmin+totalwidth+(i/2)*xsep,
-		 ymin+(1-i%2)*(height+ysep),
-		 &width,
-		 height);      
+                 xmin+totalwidth+(i/2)*xsep,
+                 ymin+(1-i%2)*(height+ysep),
+                 &width,
+                 height);      
       if(i%2) totalwidth += DMAX(width,oldwidth);
     }
   }

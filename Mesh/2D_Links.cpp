@@ -1,4 +1,4 @@
-/* $Id: 2D_Links.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 2D_Links.cpp,v 1.4 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -32,14 +32,14 @@ int CountPointsOnHull(int n, PointRecord *pPointArray){
 
 
 PointNumero *ConvertDlistToArray(DListPeek *dlist,int *n){
-  DListPeek		p,temp;
-  int		        i,max = 0;
-  PointNumero		*ptr;
-	
+  DListPeek             p,temp;
+  int                   i,max = 0;
+  PointNumero           *ptr;
+        
   p = *dlist;
   do{
     max++;
-    p = Pred(p);	
+    p = Pred(p);        
   } while (p != *dlist);
   ptr = (PointNumero *) Malloc((int) ((max+1) * sizeof(PointNumero)));
   if (ptr == NULL) return NULL;
@@ -61,7 +61,7 @@ PointNumero *ConvertDlistToArray(DListPeek *dlist,int *n){
 
 int Conversion(DocPeek doc ){
 
-  /* on suppose que n >= 3	gPointArray est suppose OK. */
+  /* on suppose que n >= 3      gPointArray est suppose OK. */
 
   Striangle *striangle;
   int n,i,j;
@@ -71,14 +71,14 @@ int Conversion(DocPeek doc ){
 
   ptemp = gPointArray;
   gPointArray = doc->points;  
-		
+                
   n = doc->numPoints;
   striangle = (Striangle *) Malloc((int) (n * sizeof(Striangle)));
   count2 = (int) CountPointsOnHull(n,doc->points);
 
   /* nombre de triangles que l'on doit obtenir */
-  count2 = 2 * (n - 1) - count2;	
-	
+  count2 = 2 * (n - 1) - count2;        
+        
   doc->delaunay = (Delaunay *) Malloc(2*count2 * sizeof(Delaunay));
 
   for (i=0;i<n;i++){
@@ -93,13 +93,13 @@ int Conversion(DocPeek doc ){
   for (i=0;i<n;i++){
     for (j=0;j<striangle[i].t_length;j++){
       if ( ( striangle[i].t[j] > i) && ( striangle[i].t[j+1] > i) && 
-	   (Is_right_of(i,striangle[i].t[j],striangle[i].t[j+1])) ) {
-	aa = i;
-	bb = striangle[i].t[j];
-	cc = striangle[i].t[j+1];
-	filldel(&doc->delaunay[count],aa,bb,cc,gPointArray,NULL);
-	count++;	      
-      }	  
+           (Is_right_of(i,striangle[i].t[j],striangle[i].t[j+1])) ) {
+        aa = i;
+        bb = striangle[i].t[j];
+        cc = striangle[i].t[j+1];
+        filldel(&doc->delaunay[count],aa,bb,cc,gPointArray,NULL);
+        count++;              
+      }   
     }
   }
   for (i=0;i<n;i++) Free(striangle[i].t);
@@ -121,7 +121,7 @@ int compareEdge(const void *e1, const void *e2){
    triangles c.a.d determine les voisins de chaque triangle                  */
 
 int CreateLinks(List_T * ListDelaunay , int NumDelaunay, 
-		ContourRecord **ListContours , int Nc){
+                ContourRecord **ListContours , int Nc){
   int i;
   edge *ListEdges;
   MPoint pt;
@@ -136,36 +136,36 @@ int CreateLinks(List_T * ListDelaunay , int NumDelaunay,
     del_Pi = *(Delaunay**)List_Pointer(ListDelaunay, i);
 
     /* arete a b */
-    if (del_Pi->t.a  > del_Pi->t.b ){	
+    if (del_Pi->t.a  > del_Pi->t.b ){   
       ListEdges[3*i].from = del_Pi->t.a;
       ListEdges[3*i].to   = del_Pi->t.b;
-      ListEdges[3*i].num  = i;	
+      ListEdges[3*i].num  = i;  
     }
-    else {	
+    else {      
       ListEdges[3*i].from = del_Pi->t.b;
       ListEdges[3*i].to   = del_Pi->t.a;
       ListEdges[3*i].num  = i;
     }
     
     /* arete  b c */      
-    if (del_Pi->t.b  > del_Pi->t.c ){	
+    if (del_Pi->t.b  > del_Pi->t.c ){   
       ListEdges[3*i+1].from = del_Pi->t.b;
       ListEdges[3*i+1].to   = del_Pi->t.c;
-      ListEdges[3*i+1].num  = i;	
+      ListEdges[3*i+1].num  = i;        
     }
-    else {	
+    else {      
       ListEdges[3*i+1].from = del_Pi->t.c;
       ListEdges[3*i+1].to   = del_Pi->t.b;
       ListEdges[3*i+1].num  = i;
     }
     
     /* arete   c a */
-    if (del_Pi->t.c  > del_Pi->t.a ){	
+    if (del_Pi->t.c  > del_Pi->t.a ){   
       ListEdges[3*i+2].from = del_Pi->t.c;
       ListEdges[3*i+2].to   = del_Pi->t.a;
-      ListEdges[3*i+2].num  = i;	
+      ListEdges[3*i+2].num  = i;        
     }
-    else {	
+    else {      
       ListEdges[3*i+2].from = del_Pi->t.a;
       ListEdges[3*i+2].to   = del_Pi->t.c;
       ListEdges[3*i+2].num  = i;
@@ -180,33 +180,33 @@ int CreateLinks(List_T * ListDelaunay , int NumDelaunay,
   do {
 
     if ( (ListEdges[i].from == ListEdges[i+1].from) &&
-	 (ListEdges[i].to   == ListEdges[i+1].to)){   /* create link */
+         (ListEdges[i].to   == ListEdges[i+1].to)){   /* create link */
 
       del_Pi = *(Delaunay**)List_Pointer(ListDelaunay, ListEdges[i].num);
       del_Pj = *(Delaunay**)List_Pointer(ListDelaunay, ListEdges[i+1].num);
 
       if ( ( del_Pi->t.position != EXTERN ) &&
-	   ( del_Pj->t.position != EXTERN ) &&
-	  ( (del_Pj->t.info == TOLINK ) ||
-	    (del_Pi->t.info == TOLINK ) ) ) {
+           ( del_Pj->t.position != EXTERN ) &&
+          ( (del_Pj->t.info == TOLINK ) ||
+            (del_Pi->t.info == TOLINK ) ) ) {
 
-	if (del_Pi->v.voisin1 == NULL)
-	  del_Pi->v.voisin1 = del_Pj;
-	else if (del_Pi->v.voisin2 == NULL)
-	  del_Pi->v.voisin2 = del_Pj;
-	else if (del_Pi->v.voisin3 == NULL)
-	  del_Pi->v.voisin3 = del_Pj;
-	else
-	  Msg(ERROR, "Bad Link in CreateLinks"); 
+        if (del_Pi->v.voisin1 == NULL)
+          del_Pi->v.voisin1 = del_Pj;
+        else if (del_Pi->v.voisin2 == NULL)
+          del_Pi->v.voisin2 = del_Pj;
+        else if (del_Pi->v.voisin3 == NULL)
+          del_Pi->v.voisin3 = del_Pj;
+        else
+          Msg(ERROR, "Bad Link in CreateLinks"); 
 
-	if (del_Pj->v.voisin1 == NULL)
-	  del_Pj->v.voisin1 = del_Pi;
-	else if (del_Pj->v.voisin2 == NULL)
-	  del_Pj->v.voisin2 = del_Pi;
-	else if (del_Pj->v.voisin3 == NULL)
-	  del_Pj->v.voisin3 = del_Pi;
-	else
-	  Msg(ERROR, "Bad Link in CreateLinks"); 
+        if (del_Pj->v.voisin1 == NULL)
+          del_Pj->v.voisin1 = del_Pi;
+        else if (del_Pj->v.voisin2 == NULL)
+          del_Pj->v.voisin2 = del_Pi;
+        else if (del_Pj->v.voisin3 == NULL)
+          del_Pj->v.voisin3 = del_Pi;
+        else
+          Msg(ERROR, "Bad Link in CreateLinks"); 
       }
       i+=2;
     }
@@ -224,13 +224,13 @@ int CreateLinks(List_T * ListDelaunay , int NumDelaunay,
       pt.v = del_Pi->t.yc;
 
       if(!PtInTriangle(pt, del_Pi->t.a, del_Pi->t.b,
-		       del_Pi->t.c)){
-	if(!Find_Triangle(pt,FGMESH,A_TOUT_PRIX)){
-	  if(LocalNewPoint == VORONOI_INSERT) {
-	    del_Pi->t.position = ACCEPTED;
-	  }
-	  del_Pi->t.quality_value /= 1000.;
-	}
+                       del_Pi->t.c)){
+        if(!Find_Triangle(pt,FGMESH,A_TOUT_PRIX)){
+          if(LocalNewPoint == VORONOI_INSERT) {
+            del_Pi->t.position = ACCEPTED;
+          }
+          del_Pi->t.quality_value /= 1000.;
+        }
       }
     }
   }
@@ -239,25 +239,25 @@ int CreateLinks(List_T * ListDelaunay , int NumDelaunay,
     for(i=0 ; i<NumDelaunay ;i++){
       del_Pi = *(Delaunay**)List_Pointer(ListDelaunay, i);
       if( ((del_Pi->t.position == NONACCEPTED ) || (del_Pi->t.position == INTERN ))  &&
-	 (del_Pi->t.info == TOLINK )){
+         (del_Pi->t.info == TOLINK )){
         if ((del_Pi->v.voisin1 == NULL) || 
-	    (del_Pi->v.voisin2 == NULL) || 
-	    (del_Pi->v.voisin3 == NULL)){
-	  del_Pi->t.position = ACTIF;
-	}
-	else if ((del_Pi->v.voisin1->t.position == ACCEPTED) && 
-		 (del_Pi->v.voisin2->t.position == ACCEPTED) && 
-		 (del_Pi->v.voisin3->t.position == ACCEPTED)){
-	  del_Pi->t.position = ACCEPTED;
-	}
-	else if ((del_Pi->v.voisin1->t.position == ACCEPTED) || 
-		 (del_Pi->v.voisin2->t.position == ACCEPTED) || 
-		 (del_Pi->v.voisin3->t.position == ACCEPTED)){
-	  del_Pi->t.position = ACTIF;
-	}
-	else {
-	  del_Pi->t.position = WAITING;
-	}
+            (del_Pi->v.voisin2 == NULL) || 
+            (del_Pi->v.voisin3 == NULL)){
+          del_Pi->t.position = ACTIF;
+        }
+        else if ((del_Pi->v.voisin1->t.position == ACCEPTED) && 
+                 (del_Pi->v.voisin2->t.position == ACCEPTED) && 
+                 (del_Pi->v.voisin3->t.position == ACCEPTED)){
+          del_Pi->t.position = ACCEPTED;
+        }
+        else if ((del_Pi->v.voisin1->t.position == ACCEPTED) || 
+                 (del_Pi->v.voisin2->t.position == ACCEPTED) || 
+                 (del_Pi->v.voisin3->t.position == ACCEPTED)){
+          del_Pi->t.position = ACTIF;
+        }
+        else {
+          del_Pi->t.position = WAITING;
+        }
       }
     }
   }

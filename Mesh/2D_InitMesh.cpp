@@ -1,4 +1,4 @@
-/* $Id: 2D_InitMesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 2D_InitMesh.cpp,v 1.4 2000-11-26 15:43:46 geuzaine Exp $ */
 /*
  
    Generation du maillage initial 2D
@@ -14,33 +14,33 @@
        On procede comme suit :
        trouve le triangle, on procede de la facon suivante :
           - on trie les aretes de tous les triangles ;
-	  - Pour chaque contour on prend chaque arete orientee ;
-	  - Si cette arete n'existe pas (bsearch return false) alors on cherche
-	  les 2 triangles reliant cette arete et on les modifie
-	  - Si cette arete possede 2 triangles adjacents, on declare externe 
-	  le triangle dont le troisieme noeud se trouve a gauche de l'arete.
+          - Pour chaque contour on prend chaque arete orientee ;
+          - Si cette arete n'existe pas (bsearch return false) alors on cherche
+          les 2 triangles reliant cette arete et on les modifie
+          - Si cette arete possede 2 triangles adjacents, on declare externe 
+          le triangle dont le troisieme noeud se trouve a gauche de l'arete.
 
-	  illustration
+          illustration
           ------------
 
-	  probleme 1) + = point du contour
-	  
+          probleme 1) + = point du contour
+          
 
                                         3
                         - -  + --------+     +
                    + - -     1 \      /                +
                                 \    /                       +
                                  \  /                                   +
-	     +                     +
+             +                     +
                                    2       3 a gauche de 1-2 -> tr externe
 
 
-	   probleme 2) arete inexistante 1-2
-	   
-	               +,*,@ contours
-	   
-	             +1       	             +            
-	            / \                     /|\
+           probleme 2) arete inexistante 1-2
+           
+                       +,*,@ contours
+           
+                     +1                      +            
+                    / \                     /|\
                    /   \                   / | \
                   /     \                 /  |  \
                  /       \               /   |   \
@@ -252,25 +252,25 @@ int verifie_cas_scabreux (int pa, int pb, ContourRecord **ListContours, int Nc){
     contour = ListContours[k];
     for ( i = -1 ; i < (contour->numpoints - 1) ; i++) {      
       if(i == -1){
-	a = permut [ contour->oriented_points[0].permu ];
-	b = permut [ contour->oriented_points[contour->numpoints - 1].permu ];
+        a = permut [ contour->oriented_points[0].permu ];
+        b = permut [ contour->oriented_points[contour->numpoints - 1].permu ];
       }
       else{
-	a = permut [ contour->oriented_points[i].permu ];
-	b = permut [ contour->oriented_points[i+1].permu ];
+        a = permut [ contour->oriented_points[i].permu ];
+        b = permut [ contour->oriented_points[i+1].permu ];
       }
       
       pointA = IMAX(a,b);
       pointB = IMIN(a,b);
       if(a != pa && b != pa && a != pb && b != pb)
-	if(crossED(&Edge)) return (1);
+        if(crossED(&Edge)) return (1);
     }
   }  
   return (0);
 }
 
 void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour, 
-		   int NumContours , int NumDelaunay){
+                   int NumContours , int NumDelaunay){
 
   ED   *pEdge;
   ED   Edge; 
@@ -294,33 +294,33 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
       Edge.NbOccur = 1;
 
       if((pEdge = (ED*)Tree_PQuery(ETree,&Edge))){ 
-	pEdge->Liste[1] = del_P;
+        pEdge->Liste[1] = del_P;
       }
       else {
-	Edge.Liste[0] = del_P;
-	Tree_Add (ETree,&Edge);
+        Edge.Liste[0] = del_P;
+        Tree_Add (ETree,&Edge);
       }
       
       Edge.from = IMAX ( del_P->t.a, del_P->t.c );
       Edge.to   = IMIN ( del_P->t.a, del_P->t.c );
       
       if((pEdge = (ED*)Tree_PQuery(ETree,&Edge))){ 
-	pEdge->Liste[1] = del_P;
+        pEdge->Liste[1] = del_P;
       }
       else {
-	Edge.Liste[0] = del_P;
-	Tree_Add (ETree,&Edge);
+        Edge.Liste[0] = del_P;
+        Tree_Add (ETree,&Edge);
       }
       
       Edge.from = IMAX ( del_P->t.c, del_P->t.b );
       Edge.to   = IMIN ( del_P->t.c, del_P->t.b );
       
       if((pEdge = (ED*)Tree_PQuery(ETree,&Edge))){ 
-	pEdge->Liste[1] = del_P;
+        pEdge->Liste[1] = del_P;
       }
       else {
-	Edge.Liste[0] = del_P;
-	Tree_Add (ETree,&Edge);
+        Edge.Liste[0] = del_P;
+        Tree_Add (ETree,&Edge);
       }
     }
     
@@ -328,20 +328,20 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
     for(k=0;k<NumContours;k++){
       contour = ListContour[k];
       for ( i = -1 ; i < contour->numpoints - 1 ; i++){      
-	
-	if(i == -1){
-	  a   = permut [ contour->oriented_points[0].permu ];
-	  b   = permut [ contour->oriented_points[contour->numpoints - 1].permu ];
-	}
-	else{
-	  a   = permut [ contour->oriented_points[i].permu ];
-	  b   = permut [ contour->oriented_points[i+1].permu ];
-	}
-	
-	Edge.from = IMAX(a,b);
-	Edge.to   = IMIN(a,b);
-	
-	if(!Tree_Search( ETree , &Edge ))ok++;; 
+        
+        if(i == -1){
+          a   = permut [ contour->oriented_points[0].permu ];
+          b   = permut [ contour->oriented_points[contour->numpoints - 1].permu ];
+        }
+        else{
+          a   = permut [ contour->oriented_points[i].permu ];
+          b   = permut [ contour->oriented_points[i+1].permu ];
+        }
+        
+        Edge.from = IMAX(a,b);
+        Edge.to   = IMIN(a,b);
+        
+        if(!Tree_Search( ETree , &Edge ))ok++;; 
       }
     }
 
@@ -356,21 +356,21 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
     for(k=0;k<NumContours;k++){
       contour = ListContour[k];
       for ( i = -1 ; i < contour->numpoints - 1 ; i++){      
-	
-	if(i == -1){
-	  a   = permut [ contour->oriented_points[0].permu ];
-	  b   = permut [ contour->oriented_points[contour->numpoints - 1].permu ];
-	}
-	else{
-	  a   = permut [ contour->oriented_points[i].permu ];
-	  b   = permut [ contour->oriented_points[i+1].permu ];
-	}
-	
-	pointA = IMAX(a,b);
-	pointB = IMIN(a,b);
-	
-	Tree_Action ( ETree , DoWeSwapED ); 
-	
+        
+        if(i == -1){
+          a   = permut [ contour->oriented_points[0].permu ];
+          b   = permut [ contour->oriented_points[contour->numpoints - 1].permu ];
+        }
+        else{
+          a   = permut [ contour->oriented_points[i].permu ];
+          b   = permut [ contour->oriented_points[i+1].permu ];
+        }
+        
+        pointA = IMAX(a,b);
+        pointB = IMIN(a,b);
+        
+        Tree_Action ( ETree , DoWeSwapED ); 
+        
       }
     }
     Msg(INFOS, "Elimination (%d Swaps)", Tree_Nbr(EDToSwap)); 

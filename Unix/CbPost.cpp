@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.5 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.6 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -21,8 +21,6 @@ extern Widgets_T  WID ;
 extern Context_T  CTX ;
 extern XContext_T XCTX ;
 extern Mesh       *THEM;
-extern int         TYPBGMESH;
-extern int         LC_ORDER;
 extern List_T     *Post_ViewList;
 extern int         Force_ViewNumber;
 
@@ -43,17 +41,17 @@ void MarkAllViewsChanged (int action){
     switch(action){
     case 1: // toggle drawing mode
       if(v->IntervalsType == DRAW_POST_ISO) 
-	v->IntervalsType = DRAW_POST_DISCRETE ;
+        v->IntervalsType = DRAW_POST_DISCRETE ;
       else if(v->IntervalsType == DRAW_POST_DISCRETE) 
-	v->IntervalsType = DRAW_POST_CONTINUOUS ;
+        v->IntervalsType = DRAW_POST_CONTINUOUS ;
       else 
-	v->IntervalsType = DRAW_POST_ISO ;
+        v->IntervalsType = DRAW_POST_ISO ;
       break;
     case 2: // time step++
       if(v->TimeStep < v->NbTimeStep-1)
-	v->TimeStep++ ;
+        v->TimeStep++ ;
       else
-	v->TimeStep = 0 ;
+        v->TimeStep = 0 ;
       sprintf(label, "%d", v->TimeStep);
       XtVaSetValues(WID.PD.timeStepScale, XmNvalue, v->TimeStep, NULL);
       XmUpdateDisplay(WID.PD.timeStepScale);
@@ -62,9 +60,9 @@ void MarkAllViewsChanged (int action){
       break;
     case 3: // time step--
       if(v->TimeStep > 0)
-	v->TimeStep-- ;
+        v->TimeStep-- ;
       else
-	v->TimeStep = v->NbTimeStep-1 ;
+        v->TimeStep = v->NbTimeStep-1 ;
       sprintf(label, "%d", v->TimeStep);
       XtVaSetValues(WID.PD.timeStepScale, XmNvalue, v->TimeStep, NULL);
       XmUpdateDisplay(WID.PD.timeStepScale);
@@ -140,6 +138,8 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
   v2->Max         = v1->Max;      
   v2->NbTimeStep  = v1->NbTimeStep;
 
+  CopyViewOptions(v1, v2);
+
   AddViewInUI(List_Nbr(Post_ViewList), v2->Name, v2->Num);
   Init();
   Draw();
@@ -148,17 +148,23 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
 static int All = 0;
 
 void ReloadViewCb (Widget w, XtPointer client_data, XtPointer call_data){
-  Post_View  *v ;
+  Post_View  *v, tmp ;
   char filename[NAME_STR_L];
 
   if(!Post_ViewList) return;
 
   v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
   strcpy(filename, v->FileName);
+  CopyViewOptions(v, &tmp);
+
   Force_ViewNumber = v->Num ;
   FreeView(v);
   MergeProblem(filename);
   Force_ViewNumber = 0 ;
+  
+  v = (Post_View*)List_Pointer(Post_ViewList,(long int)client_data-1);
+  CopyViewOptions(&tmp, v);
+
   if(!All){
     Init();
     Draw();
@@ -182,7 +188,7 @@ void SaveColorTable(FILE *fp){
     Msg(WARNING, "No View to get Color Information From"); 
   }
   else{
-    save_color_table(fp, &CurrentView->CT);
+    ColorTable_Save(fp, &CurrentView->CT);
   }
 }
 
@@ -203,8 +209,8 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
 
   v = CurrentView ;
 
-  /* le slider (gradue en interne de -100 a 100) va de -LC a +LC  */
-  sfact = pow(10.,2.-LC_ORDER); 
+  /* le slider (gradue en interne de -100 a 100) va de -CTX.lc a +CTX.lc  */
+  sfact = pow(10.,2.-CTX.lc_order); 
 
   sprintf(label, "\"%s\" (%ld)", v->Name, CurrentViewNumber);
 
@@ -277,13 +283,13 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
     XtVaSetValues(WID.PD.scaleTypeButt[1], XmNset,(v->ScaleType==DRAW_POST_LOGARITHMIC)?True:False, NULL);
 
     XtVaSetValues(WID.PD.scaleIntervalsButt[0], XmNset,
-		  (v->IntervalsType==DRAW_POST_ISO)?True:False, NULL);
+                  (v->IntervalsType==DRAW_POST_ISO)?True:False, NULL);
     XtVaSetValues(WID.PD.scaleIntervalsButt[1], XmNset,
-		  (v->IntervalsType==DRAW_POST_DISCRETE)?True:False, NULL);
+                  (v->IntervalsType==DRAW_POST_DISCRETE)?True:False, NULL);
     XtVaSetValues(WID.PD.scaleIntervalsButt[2], XmNset,
-		  (v->IntervalsType==DRAW_POST_CONTINUOUS)?True:False, NULL);
+                  (v->IntervalsType==DRAW_POST_CONTINUOUS)?True:False, NULL);
     XtVaSetValues(WID.PD.scaleIntervalsButt[3], XmNset,
-		  (v->IntervalsType==DRAW_POST_NUMERIC)?True:False, NULL);
+                  (v->IntervalsType==DRAW_POST_NUMERIC)?True:False, NULL);
     XtVaSetValues(WID.PD.scaleIntervalsScale, XmNvalue, THRESHOLD((int)v->NbIso,1,100), NULL);
 
     sprintf(label, "%d", v->NbIso);
@@ -301,9 +307,9 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
     XSelectInput(XCTX.display, XtWindow(WID.PD.colorDrawingArea), EV_MASK);
     ColorBarCreate(XtWindow(WID.PD.colorDrawingArea),255,200);
     ColorBarChange(v->Name, 
-		   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMin:v->Min, 
-		   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMax:v->Max, 
-		   &v->CT, 1);
+                   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMin:v->Min, 
+                   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMax:v->Max, 
+                   &v->CT, 1);
     ColorBarResizeCb((Widget)NULL, NULL, NULL); // Force resize
     ColorBarShow();
     break;
@@ -317,14 +323,14 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
     XtVaSetValues(WID.PD.vectorTypeButt[2], XmNset, (v->ArrowType == DRAW_POST_PYRAMID)?True:False, NULL);
     XtVaSetValues(WID.PD.vectorTypeButt[3], XmNset, (v->ArrowType == DRAW_POST_CONE)?True:False, NULL);  
     XtVaSetValues(WID.PD.vectorTypeButt[4], XmNset, 
-		  (v->ArrowType == DRAW_POST_DISPLACEMENT)?True:False, NULL);
+                  (v->ArrowType == DRAW_POST_DISPLACEMENT)?True:False, NULL);
     sprintf(label, "%g", v->ArrowScale);
     XtVaSetValues(WID.PD.vectorScaleText, XmNvalue, label, NULL);
     XtVaSetValues(WID.PD.vectorScaleScale, XmNvalue, THRESHOLD((int)v->ArrowScale,0,200), NULL);
     XtVaSetValues(WID.PD.vectorLocationButt[0], XmNset, 
-		  (v->ArrowLocation == DRAW_POST_LOCATE_COG)?True:False, NULL);
+                  (v->ArrowLocation == DRAW_POST_LOCATE_COG)?True:False, NULL);
     XtVaSetValues(WID.PD.vectorLocationButt[1], XmNset, 
-		  (v->ArrowLocation == DRAW_POST_LOCATE_VERTEX)?True:False, NULL);
+                  (v->ArrowLocation == DRAW_POST_LOCATE_VERTEX)?True:False, NULL);
     XtSetSensitive(WID.PD.vectorLocationCheck, v->ArrowType==DRAW_POST_DISPLACEMENT?False:True);
     XtManageChild(WID.PD.vectorDialog);
     break;
@@ -345,8 +351,6 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
   case POST_APPLY_BGM  : 
     ViewForDialog[POST_APPLY_BGM] = v;
     BGMWithView(v); 
-    TYPBGMESH = ONFILE; 
-    Create_BgMesh(TYPBGMESH,.2,THEM); 
     break;
 
   default:
@@ -393,21 +397,21 @@ void PostCb (Widget w, XtPointer client_data, XtPointer call_data){
   case POST_COLOR_REPLOT : 
     v = ViewForDialog[POST_COLOR];
     ColorBarChange(v->Name, 
-		   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMin:v->Min, 
-		   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMax:v->Max, 
-		   &v->CT, 0);
+                   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMin:v->Min, 
+                   (v->RangeType==DRAW_POST_CUSTOM)?v->CustomMax:v->Max, 
+                   &v->CT, 0);
     ColorBarShow();
     if(v->CT.ipar[COLORTABLE_CHANGED]){
       v->Changed = 1;
       if(CTX.post.link){
-	ColorBarCopy(&v->CT);
-	for(j=0 ; j< List_Nbr(Post_ViewList) ; j++){
-	  v = (Post_View*)List_Pointer(Post_ViewList, j);
-	  if(v->Visible || CTX.post.link>1){
-	    ColorBarPaste(&v->CT);
-	    v->Changed=1;
-	  }
-	}
+        ColorTable_Copy(&v->CT);
+        for(j=0 ; j< List_Nbr(Post_ViewList) ; j++){
+          v = (Post_View*)List_Pointer(Post_ViewList, j);
+          if(v->Visible || CTX.post.link>1){
+            ColorTable_Paste(&v->CT);
+            v->Changed=1;
+          }
+        }
       }
     }
     Init();
@@ -489,8 +493,8 @@ void ChangeViewParam (Post_View *v, XtPointer client_data, XtPointer call_data){
   char        *c, label[256];
   int          i;
 
-  /* le slider (gradue en interne de -100 a 100) va de -LC a +LC  */
-  sfact = pow(10.,2.-LC_ORDER); 
+  /* le slider (gradue en interne de -100 a 100) va de -CTX.lc a +CTX.lc  */
+  sfact = pow(10.,2.-CTX.lc_order); 
 
   switch((long int)client_data){
 
@@ -501,7 +505,7 @@ void ChangeViewParam (Post_View *v, XtPointer client_data, XtPointer call_data){
       sprintf(label, "%g", v->Offset[i]);
       XtVaSetValues(WID.PD.offsetText[i], XmNvalue, label, NULL);
       XtVaSetValues(WID.PD.offsetScale[i], XmNvalue, 
-		    THRESHOLD((int)(sfact*v->Offset[i]),-100,100), NULL);    
+                    THRESHOLD((int)(sfact*v->Offset[i]),-100,100), NULL);    
       XmUpdateDisplay(WID.PD.offsetText[i]);
       XmUpdateDisplay(WID.PD.offsetScale[i]);
     }
@@ -512,7 +516,7 @@ void ChangeViewParam (Post_View *v, XtPointer client_data, XtPointer call_data){
       sprintf(label, "%g", v->Raise[i]);
       XtVaSetValues(WID.PD.offsetText[i], XmNvalue, label, NULL);
       XtVaSetValues(WID.PD.offsetScale[i], XmNvalue, 
-		    THRESHOLD((int)(sfact*v->Raise[i]),-100,100), NULL);    
+                    THRESHOLD((int)(sfact*v->Raise[i]),-100,100), NULL);    
       XmUpdateDisplay(WID.PD.offsetText[i]);
       XmUpdateDisplay(WID.PD.offsetScale[i]);
     }

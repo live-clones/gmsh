@@ -1,4 +1,4 @@
-/* $Id: SwapEdge.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: SwapEdge.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -10,8 +10,8 @@ extern int edges_tetra[6][2];
 
 
 int TrouveCoquille (Simplex * s, Vertex * Ed[2],
-		    List_T * Coquille, Tree_T * TreeSimpl,
-		    Vertex * Contour[100]){
+                    List_T * Coquille, Tree_T * TreeSimpl,
+                    Vertex * Contour[100]){
   Simplex *stack[256], *actual;
   Vertex *other[2];
   int K, i, N = 0;
@@ -25,18 +25,18 @@ int TrouveCoquille (Simplex * s, Vertex * Ed[2],
     if (!Tree_Search (TreeSimpl, &actual)){
       Tree_Add (TreeSimpl, &actual);
       if (actual->EdgeIn (Ed[0], Ed[1], other)){
-	List_Add (Coquille, &actual);
-	if (actual != s)
-	  actual->Radius = -1.;
-	E.V[0] = other[0];
-	E.V[1] = other[1];
-	List_Add (Edges, &E);
-	for (i = 0; i < 4; i++){
-	  if (actual->S[i] && actual->S[i] != &MyNewBoundary)
-	    stack[N++] = actual->S[i];
-	  else
-	    return 0;
-	}
+        List_Add (Coquille, &actual);
+        if (actual != s)
+          actual->Radius = -1.;
+        E.V[0] = other[0];
+        E.V[1] = other[1];
+        List_Add (Edges, &E);
+        for (i = 0; i < 4; i++){
+          if (actual->S[i] && actual->S[i] != &MyNewBoundary)
+            stack[N++] = actual->S[i];
+          else
+            return 0;
+        }
       }
     }
   }
@@ -54,16 +54,16 @@ int TrouveCoquille (Simplex * s, Vertex * Ed[2],
     for (i = 0; i < List_Nbr (Edges); i++){
       List_Read (Edges, i, &E);
       if (!compareVertex (&Contour[N - 1], &E.V[0]) &&
-	  compareVertex (&Contour[N - 2], &E.V[1])){
-	Contour[N++] = E.V[1];
-	List_Suppress (Edges, &E, compareedge);
-	break;
+          compareVertex (&Contour[N - 2], &E.V[1])){
+        Contour[N++] = E.V[1];
+        List_Suppress (Edges, &E, compareedge);
+        break;
       }
       if (!compareVertex (&Contour[N - 1], &E.V[1]) &&
-	  compareVertex (&Contour[N - 2], &E.V[0])){
-	Contour[N++] = E.V[0];
-	List_Suppress (Edges, &E, compareedge);
-	break;
+          compareVertex (&Contour[N - 2], &E.V[0])){
+        Contour[N++] = E.V[0];
+        List_Suppress (Edges, &E, compareedge);
+        break;
       }
     }
     
@@ -74,7 +74,7 @@ int TrouveCoquille (Simplex * s, Vertex * Ed[2],
 }
 
 bool FindBestPattern (int N, Vertex * Contour[100], Vertex * Ed[2],
-		      List_T * Coquille, List_T * Pattern){
+                      List_T * Coquille, List_T * Pattern){
   int i, j, k, kk, tri[3];
   Simplex *s, *Pat[100];
   double old_volume, new_volume;
@@ -138,42 +138,42 @@ bool FindBestPattern (int N, Vertex * Contour[100], Vertex * Ed[2],
       worst_tet_new = 1.;
       kk = 0;
       for (k = 0; k < sp->GetNbTriangles (); k++){
-	sp->GetTriangle (i, k, tri);
-	s = Create_Simplex (Contour[tri[0]],
-			    Contour[tri[1]],
-			    Contour[tri[2]],
-			    Ed[0]);
-	s->iEnt = IENT;
-	Pat[kk++] = s;
-	new_volume += fabs (s->Volume_Simplexe ());
-	worst_tet_new = DMIN (worst_tet_new, s->GammaShapeMeasure ());
-	s = Create_Simplex (Contour[tri[0]],
-			    Contour[tri[1]],
-			    Contour[tri[2]],
-			    Ed[1]);
-	s->iEnt = IENT;
-	Pat[kk++] = s;
-	new_volume += fabs (s->Volume_Simplexe ());
-	worst_tet_new = DMIN (worst_tet_new, s->GammaShapeMeasure ());
+        sp->GetTriangle (i, k, tri);
+        s = Create_Simplex (Contour[tri[0]],
+                            Contour[tri[1]],
+                            Contour[tri[2]],
+                            Ed[0]);
+        s->iEnt = IENT;
+        Pat[kk++] = s;
+        new_volume += fabs (s->Volume_Simplexe ());
+        worst_tet_new = DMIN (worst_tet_new, s->GammaShapeMeasure ());
+        s = Create_Simplex (Contour[tri[0]],
+                            Contour[tri[1]],
+                            Contour[tri[2]],
+                            Ed[1]);
+        s->iEnt = IENT;
+        Pat[kk++] = s;
+        new_volume += fabs (s->Volume_Simplexe ());
+        worst_tet_new = DMIN (worst_tet_new, s->GammaShapeMeasure ());
       }
       if (fabs (new_volume - old_volume) > 1.e-5 * fabs (new_volume + old_volume))
-	Msg(WARNING, "Edge Swapping Failed");
+        Msg(WARNING, "Edge Swapping Failed");
       if (fabs (new_volume - old_volume) > 1.e-5 * fabs (new_volume + old_volume)
-	  || worst_tet_new < worst_tet_old){
-	for (k = 0; k < 2 * sp->GetNbTriangles (); k++){
-	  delete Pat[k];
-	}
+          || worst_tet_new < worst_tet_old){
+        for (k = 0; k < 2 * sp->GetNbTriangles (); k++){
+          delete Pat[k];
+        }
       }
       else{
-	for (k = 0; k < List_Nbr (Pattern); k++){
-	  List_Read (Pattern, k, &s);
-	  delete s;
-	}
-	List_Reset (Pattern);
-	for (k = 0; k < 2 * sp->GetNbTriangles (); k++){
-	  List_Add (Pattern, &Pat[k]);
-	}
-	worst_tet_old = worst_tet_new;
+        for (k = 0; k < List_Nbr (Pattern); k++){
+          List_Read (Pattern, k, &s);
+          delete s;
+        }
+        List_Reset (Pattern);
+        for (k = 0; k < 2 * sp->GetNbTriangles (); k++){
+          List_Add (Pattern, &Pat[k]);
+        }
+        worst_tet_old = worst_tet_new;
       }
     }
   }
@@ -295,7 +295,7 @@ void SwapEdges3D (Mesh * M, Volume * v, double GammaPrescribed, bool order){
     if (s->GammaShapeMeasure () < GammaPrescribed){
       int iEdge = GetWorstEdge (s, ec, order);
       if (iEdge >= 0)
-	SwapEdge (M, v, s, iEdge);
+        SwapEdge (M, v, s, iEdge);
     }
   }
   Progress (-1);

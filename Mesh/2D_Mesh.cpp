@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.6 2000-11-25 15:26:11 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.7 2000-11-26 15:43:46 geuzaine Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -27,7 +27,6 @@
 extern Mesh       *THEM;
 extern Context_T   CTX;
 extern int         CurrentNodeNumber;
-extern double      LC;
 
 int LocalNewPoint;
 
@@ -35,6 +34,7 @@ PointRecord   *gPointArray;
 DocRecord     *BGMESH, *FGMESH;
 double         qual, newqual, L;
 int            is_3D = 0, UseBGMesh;
+double         LC2D ;
 
 static Surface  *THESURFACE, *THESUPPORT;
 
@@ -83,9 +83,9 @@ void Plan_Moyen (void *data, void *dum){
     for (i = 0; i < List_Nbr (s->s.Generatrices); i++){
       List_Read (s->s.Generatrices, i, &pC);
       for (j = 0; j < List_Nbr (pC->Vertices); j++){
-	List_Read (pC->Vertices, j, &v);
-	List_Add (points, &v);
-	Tree_Insert (s->Vertices, List_Pointer (pC->Vertices, j));
+        List_Read (pC->Vertices, j, &v);
+        List_Add (points, &v);
+        Tree_Insert (s->Vertices, List_Pointer (pC->Vertices, j));
       }
     }
     break;
@@ -114,11 +114,11 @@ void Plan_Moyen (void *data, void *dum){
     }
     else{
       if (X != v->Pos.X)
-	ix = 1;
+        ix = 1;
       if (Y != v->Pos.Y)
-	iy = 1;
+        iy = 1;
       if (Z != v->Pos.Z)
-	iz = 1;
+        iz = 1;
     }
     
     sys[0][0] += v->Pos.X * v->Pos.X;
@@ -191,31 +191,31 @@ void Plan_Moyen (void *data, void *dum){
       b[0] = -sys[0][1];
       b[1] = -sys[1][2];
       if (sys2x2 (s2s, b, r2)){
-	res[0] = r2[0];
-	res[1] = 1.;
-	res[2] = r2[1];
-	Msg(DEBUG, "Plan Type ax + cz = -y");
+        res[0] = r2[0];
+        res[1] = 1.;
+        res[2] = r2[1];
+        Msg(DEBUG, "Plan Type ax + cz = -y");
       }
       
       /* ax + by = -z */
       
       else{
-	s->d = 1.0;
-	s2s[0][0] = sys[0][0];
-	s2s[0][1] = sys[0][1];
-	s2s[1][0] = sys[0][1];
-	s2s[1][1] = sys[1][1];
-	b[0] = -sys[0][2];
-	b[1] = -sys[1][2];
-	if (sys2x2 (s2s, b, r2)){
-	  res[0] = r2[0];
-	  res[1] = r2[1];
-	  res[2] = 1.;
-	  Msg(DEBUG, "Plan Type ax + by = -z");
-	}
-	else{
-	  Msg(ERROR, "Mean Plane");
-	}
+        s->d = 1.0;
+        s2s[0][0] = sys[0][0];
+        s2s[0][1] = sys[0][1];
+        s2s[1][0] = sys[0][1];
+        s2s[1][1] = sys[1][1];
+        b[0] = -sys[0][2];
+        b[1] = -sys[1][2];
+        if (sys2x2 (s2s, b, r2)){
+          res[0] = r2[0];
+          res[1] = r2[1];
+          res[2] = 1.;
+          Msg(DEBUG, "Plan Type ax + by = -z");
+        }
+        else{
+          Msg(ERROR, "Mean Plane");
+        }
       }
     }
   }
@@ -270,15 +270,15 @@ void Plan_Moyen (void *data, void *dum){
   if (!iz){
     for (i = 0; i < 3; i++){
       for (j = 0; j < 3; j++){
-	s->invplan[i][j] = (i == j) ? 1. : 0.;
-	s->plan[i][j] = (i == j) ? 1. : 0.;
+        s->invplan[i][j] = (i == j) ? 1. : 0.;
+        s->plan[i][j] = (i == j) ? 1. : 0.;
       }
     }
   }
   else{
     for (i = 0; i < 3; i++){
       for (j = 0; j < 3; j++){
-	s->invplan[i][j] = s->plan[j][i];
+        s->invplan[i][j] = s->plan[j][i];
       }
     }
   }
@@ -303,24 +303,24 @@ int Calcule_Contours (Surface * s){
       List_Read (c->Vertices, j, &v);
       List_Add (l, &v);
       if (j == List_Nbr (c->Vertices) - 1){
-	last = v;
+        last = v;
       }
     }
     if (!compareVertex (&last, &first)){
       ori = Oriente (l, n);
 
       /* Le premier contour est oriente aire a droite
-	 Les autes sont des trous orientes aire a gauche */
+         Les autes sont des trous orientes aire a gauche */
       
       if (!List_Nbr (s->Contours))
-	ORI = ori;
+        ORI = ori;
 
       if ((!List_Nbr (s->Contours) && !ori) ||
-	  (List_Nbr (s->Contours) && ori)){
-	linv = List_Create (10, 10, sizeof (Vertex *));
-	List_Invert (l, linv);
-	List_Delete (l);
-	l = linv;
+          (List_Nbr (s->Contours) && ori)){
+        linv = List_Create (10, 10, sizeof (Vertex *));
+        List_Invert (l, linv);
+        List_Delete (l);
+        l = linv;
       }
       List_Add (s->Contours, &l);
       l = List_Create (10, 10, sizeof (Vertex *));
@@ -419,11 +419,11 @@ Delaunay * testconv (avlptr * root, int *conv, DocRecord * ptr){
     case CENTER_CIRCCIRC:
     case BARYCENTER:
       if (qual < CONV_VALUE)
-	*conv = 1;
+        *conv = 1;
       break;
     case VORONOI_INSERT:
       if ((*root) == NULL)
-	*conv = 1;
+        *conv = 1;
       break;
     }
   }
@@ -432,8 +432,8 @@ Delaunay * testconv (avlptr * root, int *conv, DocRecord * ptr){
 
 
 int mesh_domain (ContourPeek * ListContours, int numcontours,
-		 maillage * mai, int *numpoints, DocRecord * BGMesh,
-		 int OnlyTheInitialMesh){
+                 maillage * mai, int *numpoints, DocRecord * BGMesh,
+                 int OnlyTheInitialMesh){
   List_T *kill_L, *del_L ;
   MPoint pt;
   DocRecord docm, *doc;
@@ -474,15 +474,15 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
   for (i = 0; i < numcontours; i++){
     for (j = 0; j < ListContours[i]->numpoints; j++){
       doc->points[numact + j].where.h =
-	ListContours[i]->oriented_points[j].where.h
-	+ ListContours[i]->perturbations[j].h;
+        ListContours[i]->oriented_points[j].where.h
+        + ListContours[i]->perturbations[j].h;
       doc->points[numact + j].where.v =
-	ListContours[i]->oriented_points[j].where.v
-	+ ListContours[i]->perturbations[j].v;
+        ListContours[i]->oriented_points[j].where.v
+        + ListContours[i]->perturbations[j].v;
       doc->points[numact + j].quality =
-	ListContours[i]->oriented_points[j].quality;
+        ListContours[i]->oriented_points[j].quality;
       doc->points[numact + j].initial =
-	ListContours[i]->oriented_points[j].initial;
+        ListContours[i]->oriented_points[j].initial;
       ListContours[i]->oriented_points[j].permu = numact + j;
       doc->points[numact + j].permu = numact + j;
       doc->points[numact + j].numcontour = ListContours[i]->numerocontour;
@@ -535,21 +535,21 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       switch (LocalNewPoint){
       case CENTER_CIRCCIRC:
       case BARYCENTER:
-	Insert_Triangle (root, del);
-	break;
+        Insert_Triangle (root, del);
+        break;
       case VORONOI_INSERT:
-	switch (del->t.position){
-	case ACTIF:
-	case INTERN:
-	  Insert_Triangle (root, del);
-	  break;
-	case WAITING:
-	  Insert_Triangle (root_w, del);
-	  break;
-	case ACCEPTED:
-	  Insert_Triangle (root_acc, del);
-	  break;
-	}
+        switch (del->t.position){
+        case ACTIF:
+        case INTERN:
+          Insert_Triangle (root, del);
+          break;
+        case WAITING:
+          Insert_Triangle (root_w, del);
+          break;
+        case ACCEPTED:
+          Insert_Triangle (root_acc, del);
+          break;
+        }
       }
     }
   }
@@ -588,23 +588,23 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       switch (LocalNewPoint){
       case CENTER_CIRCCIRC:
       case BARYCENTER:
-	Insert_Triangle (root, del);
-	break;
+        Insert_Triangle (root, del);
+        break;
       case VORONOI_INSERT:
-	del->t.position = ACCEPTED;
-	Insert_Triangle (root_acc, del);
-	break;
+        del->t.position = ACCEPTED;
+        Insert_Triangle (root_acc, del);
+        break;
       }
       
       numlink = numkil = 0;
       if (list != NULL){
-	p = list;
-	do{
-	  q = p;
-	  p = Pred (p);
-	  Free (q);
-	}
-	while (p != list);
+        p = list;
+        do{
+          q = p;
+          p = Pred (p);
+          Free (q);
+        }
+        while (p != list);
       }
       list = NULL;
       del = testconv (root, &conv, doc);
@@ -621,9 +621,9 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       bb = p->point_num;
       cc = q->point_num;
       volume_new += fabs ((doc->points[bb].where.h - pt.h) *
-			  (doc->points[cc].where.v - doc->points[bb].where.v) -
-			  (doc->points[cc].where.h - doc->points[bb].where.h) *
-			  (doc->points[bb].where.v - pt.v));
+                          (doc->points[cc].where.v - doc->points[bb].where.v) -
+                          (doc->points[cc].where.h - doc->points[bb].where.h) *
+                          (doc->points[bb].where.v - pt.v));
       p = q;
     } while (p != list);
 
@@ -634,9 +634,9 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       bb = del_P->t.b;
       cc = del_P->t.c;
       volume_old += fabs ((doc->points[bb].where.h - doc->points[aa].where.h) *
-			  (doc->points[cc].where.v - doc->points[bb].where.v) -
-			  (doc->points[cc].where.h - doc->points[bb].where.h) *
-			  (doc->points[bb].where.v - doc->points[aa].where.v));
+                          (doc->points[cc].where.v - doc->points[bb].where.v) -
+                          (doc->points[cc].where.h - doc->points[bb].where.h) *
+                          (doc->points[bb].where.v - doc->points[aa].where.v));
     }
     
     if ((volume_old - volume_new) / (volume_old + volume_new) > 1.e-6){
@@ -647,22 +647,22 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       switch (LocalNewPoint){
       case CENTER_CIRCCIRC:
       case BARYCENTER:
-	Insert_Triangle (root, del);
-	break;
+        Insert_Triangle (root, del);
+        break;
       case VORONOI_INSERT:
-	del->t.position = ACCEPTED;
-	Insert_Triangle (root_acc, del);
-	break;
+        del->t.position = ACCEPTED;
+        Insert_Triangle (root_acc, del);
+        break;
       }
 
       numlink = numkil = 0;
       if (list != NULL){
-	p = list;
-	do{
-	  q = p;
-	  p = Pred (p);
-	  Free (q);
-	} while (p != list);
+        p = list;
+        do{
+          q = p;
+          p = Pred (p);
+          Free (q);
+        } while (p != list);
       }
       list = NULL;
       del = testconv (root, &conv, doc);
@@ -677,21 +677,21 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       switch (LocalNewPoint){
       case CENTER_CIRCCIRC:
       case BARYCENTER:
-	Delete_Triangle (root, del_P);
-	break;
+        Delete_Triangle (root, del_P);
+        break;
       case VORONOI_INSERT:
-	switch (del_P->t.position){
-	case WAITING:
-	  Delete_Triangle (root_w, del_P);
-	  break;
-	case ACTIF:
-	case INTERN:
-	  Delete_Triangle (root, del_P);
-	  break;
-	case ACCEPTED:
-	  Delete_Triangle (root_acc, del_P);
-	  break;
-	}
+        switch (del_P->t.position){
+        case WAITING:
+          Delete_Triangle (root_w, del_P);
+          break;
+        case ACTIF:
+        case INTERN:
+          Delete_Triangle (root, del_P);
+          break;
+        case ACCEPTED:
+          Delete_Triangle (root_acc, del_P);
+          break;
+        }
       }
     }
 
@@ -735,21 +735,21 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
       switch (LocalNewPoint) {
       case CENTER_CIRCCIRC:
       case BARYCENTER:
-	Insert_Triangle (root, del_P);
-	break;
+        Insert_Triangle (root, del_P);
+        break;
       case VORONOI_INSERT:
-	switch (del_P->t.position){
-	case ACTIF:
-	case INTERN:
-	  Insert_Triangle (root, del_P);
-	  break;
-	case WAITING:
-	  Insert_Triangle (root_w, del_P);
-	  break;
-	case ACCEPTED:
-	  Insert_Triangle (root_acc, del_P);
-	  break;
-	}
+        switch (del_P->t.position){
+        case ACTIF:
+        case INTERN:
+          Insert_Triangle (root, del_P);
+          break;
+        case WAITING:
+          Insert_Triangle (root_w, del_P);
+          break;
+        case ACCEPTED:
+          Insert_Triangle (root_acc, del_P);
+          break;
+        }
       }
     }
     
@@ -808,9 +808,9 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
 
     mai->listdel[i]->v.voisin1 = NULL;
     if (((doc->points[b].where.h - doc->points[a].where.h) *
-	 (doc->points[c].where.v - doc->points[b].where.v) -
-	 (doc->points[c].where.h - doc->points[b].where.h) *
-	 (doc->points[b].where.v - doc->points[a].where.v)) > 0.0){
+         (doc->points[c].where.v - doc->points[b].where.v) -
+         (doc->points[c].where.h - doc->points[b].where.h) *
+         (doc->points[b].where.v - doc->points[a].where.v)) > 0.0){
       mai->listdel[i]->t.a = b;
       mai->listdel[i]->t.b = a;
     }
@@ -825,6 +825,8 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
   maillage M;
   int err, i, j, k, N, a, b, d;
   Simplex *s;
+  double Xmin, Xmax, Ymin, Ymax;
+
 
   if (m->BGM.Typ == WITHPOINTS){
     is_3D = 0;
@@ -844,13 +846,33 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
     cp->oriented_points = (PointRecord *) Malloc (List_Nbr (c) * sizeof (PointRecord));
     cp->perturbations = (MPoint *) Malloc (List_Nbr (c) * sizeof (MPoint));
     cp->numerocontour = i;
+
+    for (j = 0; j < List_Nbr (c); j++){
+      List_Read (c, j, &v);
+      if(!j){
+        Xmin = Xmax = v->Pos.X ;
+        Ymin = Ymax = v->Pos.Y ;
+      }
+      else{
+        Xmin = DMIN(Xmin, v->Pos.X) ;
+        Xmax = DMAX(Xmax, v->Pos.X) ;
+        Ymin = DMIN(Ymin, v->Pos.Y) ;
+        Ymax = DMAX(Ymax, v->Pos.Y) ;
+      }
+    }
+
+    LC2D = sqrt(DSQR(Xmax-Xmin)+DSQR(Ymax-Ymin));
+
     for (j = 0; j < List_Nbr (c); j++){
       List_Read (c, j, &v);
       cp->oriented_points[j].where.h = v->Pos.X;
       cp->oriented_points[j].where.v = v->Pos.Y;
 
-      cp->perturbations[j].h = 10*RAND_LONG;
-      cp->perturbations[j].v = 10*RAND_LONG;
+      cp->perturbations[j].h = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
+      cp->perturbations[j].v = CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
+      //cp->perturbations[j].h = RAND_LONG;
+      //cp->perturbations[j].v = RAND_LONG;
+
       cp->oriented_points[j].numcontour = i;
       cp->oriented_points[j].quality = v->lc;
       cp->oriented_points[j].permu = k++;
@@ -867,9 +889,9 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
     if (gPointArray[i].initial < 0){
       gPointArray[i].initial = ++CurrentNodeNumber;
       v = Create_Vertex (gPointArray[i].initial, gPointArray[i].where.h,
-			 gPointArray[i].where.v, 0.0, gPointArray[i].quality, 0.0);
+                         gPointArray[i].where.v, 0.0, gPointArray[i].quality, 0.0);
       if (!Tree_Search (pS->Vertices, &v))
-	Tree_Add (pS->Vertices, &v);
+        Tree_Add (pS->Vertices, &v);
     }
   }
   for (i = 0; i < 3; i++)
@@ -889,8 +911,8 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       if ((pp[j] = (Vertex **) Tree_PQuery (pS->Vertices, &ver[j]))){
       }
       else{
-	err = 1;
-	Msg(ERROR, "Unknown Vertex %d", ver[j]->Num);
+        err = 1;
+        Msg(ERROR, "Unknown Vertex %d", ver[j]->Num);
       }
     }
     if (ori && !err)
@@ -916,7 +938,7 @@ void Make_Mesh_With_Points (DocRecord * ptr, PointRecord * Liste, int Numpoints)
 }
 
 void filldel (Delaunay * deladd, int aa, int bb, int cc,
-	      PointRecord * points, DocRecord * mesh){
+              PointRecord * points, DocRecord * mesh){
 
   double newqual, L;
   MPoint pt2, pt4;
@@ -932,13 +954,13 @@ void filldel (Delaunay * deladd, int aa, int bb, int cc,
   deladd->v.voisin3 = NULL;
 
   CircumCircle (points[aa].where.h,
-		points[aa].where.v,
-		points[bb].where.h,
-		points[bb].where.v,
-		points[cc].where.h,
-		points[cc].where.v,
-		&deladd->t.xc,
-		&deladd->t.yc);
+                points[aa].where.v,
+                points[bb].where.h,
+                points[bb].where.v,
+                points[cc].where.h,
+                points[cc].where.v,
+                &deladd->t.xc,
+                &deladd->t.yc);
 
   pt2.h = deladd->t.xc;
   pt2.v = deladd->t.yc;
@@ -967,8 +989,8 @@ void filldel (Delaunay * deladd, int aa, int bb, int cc,
   case BARYCENTER:
     deladd->t.quality_value =
       sqrt ((deladd->t.xc - points[cc].where.h) * (deladd->t.xc - points[cc].where.h) +
-	    (deladd->t.yc - points[cc].where.v) * (deladd->t.yc - points[cc].where.v)
-	    ) / newqual;
+            (deladd->t.yc - points[cc].where.v) * (deladd->t.yc - points[cc].where.v)
+            ) / newqual;
     deladd->t.position = INTERN;
     break;
     
@@ -1030,8 +1052,8 @@ void Maillage_Surface (void *data, void *dum){
     Tree_Action (s->Vertices, Add_In_Mesh);
     if (CTX.mesh.degree == 2)
       Degre2 (THEM->Vertices, s->Vertices, s->Simplexes, NULL, s);
-    THEM->Statistics[5] += Tree_Nbr (THESURFACE->Vertices);
-    THEM->Statistics[7] += Tree_Nbr (THESURFACE->Simplexes);
+    THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
+    THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);
 
     /* void TRIE_MON_GARS(void *a, void *b);
        Tree_Action (THES->Simplexes, TRIE_MON_GARS);
@@ -1102,7 +1124,7 @@ void Maillage_Surface (void *data, void *dum){
   if (CTX.mesh.degree == 2)
     Degre2 (THEM->Vertices, THEM->VertexEdges, s->Simplexes, NULL, THESUPPORT);
 
-  THEM->Statistics[5] += Tree_Nbr (THESURFACE->Vertices);
-  THEM->Statistics[7] += Tree_Nbr (THESURFACE->Simplexes);
+  THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
+  THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);
 
 }

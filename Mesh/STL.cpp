@@ -1,4 +1,4 @@
-/* $Id: STL.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: STL.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -16,8 +16,8 @@ STL_Data::~STL_Data (){
 }
 
 void STL_Data::Add_Facet (double x1, double y1, double z1,
-			  double x2, double y2, double z2,
-			  double x3, double y3, double z3){
+                          double x2, double y2, double z2,
+                          double x3, double y3, double z3){
   Vertex **ppv;
   Vertex *v1 = Create_Vertex (Tree_Nbr (Vertices) + 1, x1, y1, z1, 1, 0);
 

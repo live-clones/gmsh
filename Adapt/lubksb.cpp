@@ -1,4 +1,4 @@
-/* $Id: lubksb.cpp,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
+/* $Id: lubksb.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
 void 
 lubksb (float **a, int n, int *indx, float b[])
 {
@@ -11,17 +11,17 @@ lubksb (float **a, int n, int *indx, float b[])
       sum = b[ip];
       b[ip] = b[i];
       if (ii)
-	for (j = ii; j <= i - 1; j++)
-	  sum -= a[i][j] * b[j];
+        for (j = ii; j <= i - 1; j++)
+          sum -= a[i][j] * b[j];
       else if (sum)
-	ii = i;
+        ii = i;
       b[i] = sum;
     }
   for (i = n; i >= 1; i--)
     {
       sum = b[i];
       for (j = i + 1; j <= n; j++)
-	sum -= a[i][j] * b[j];
+        sum -= a[i][j] * b[j];
       b[i] = sum / a[i][i];
     }
 }

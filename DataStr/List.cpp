@@ -1,5 +1,5 @@
-/* $Id: List.cpp,v 1.4 2000-11-25 23:10:37 geuzaine Exp $ */
-#define RCSID "$Id: List.cpp,v 1.4 2000-11-25 23:10:37 geuzaine Exp $"
+/* $Id: List.cpp,v 1.5 2000-11-26 15:43:45 geuzaine Exp $ */
+#define RCSID "$Id: List.cpp,v 1.5 2000-11-26 15:43:45 geuzaine Exp $"
 /* Original author: Marc UME */
 
 #include <stdlib.h>
@@ -53,7 +53,7 @@ void List_Realloc(List_T *liste,int n)
     if (n > liste->nmax) {
       liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
       liste->array = (char *)Realloc(liste->array,
-			 liste->nmax * liste->size);
+                         liste->nmax * liste->size);
     }
 }
 
@@ -72,14 +72,14 @@ int List_Nbr(List_T *liste)
 }
 
 void List_Insert(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b))
+                 int (*fcmp)(const void *a, const void *b))
 {
   if (List_Search(liste,data,fcmp) == 0)
     List_Add(liste,data);
 }
 
 int List_Replace(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b))
+                 int (*fcmp)(const void *a, const void *b))
 {
   void *ptr;
 
@@ -157,7 +157,7 @@ void List_Sort(List_T *liste, int (*fcmp)(const void *a, const void *b))
 }
 
 int List_Search(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b))
+                 int (*fcmp)(const void *a, const void *b))
 {
   void *ptr;
 
@@ -168,7 +168,7 @@ int List_Search(List_T *liste, void *data,
 }
 
 int List_ISearch(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b))
+                 int (*fcmp)(const void *a, const void *b))
 {
   void *ptr;
 
@@ -192,7 +192,7 @@ int  List_ISearchSeq(List_T *liste, void * data,
 }
 
 int  List_ISearchSeqPartial(List_T *liste, void * data, int i_Start,
-			    int (*fcmp)(const void *a, const void *b)) {
+                            int (*fcmp)(const void *a, const void *b)) {
   int i ;
 
   if (!liste)  return -1 ;
@@ -204,7 +204,7 @@ int  List_ISearchSeqPartial(List_T *liste, void * data, int i_Start,
 }
 
 int List_Query(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b))
+                 int (*fcmp)(const void *a, const void *b))
 {
   void *ptr;
 
@@ -218,7 +218,7 @@ int List_Query(List_T *liste, void *data,
 }
 
 void *lolofind(void *data, void *array, int n, int size,
-	       int (*fcmp)(const void *a, const void *b) )
+               int (*fcmp)(const void *a, const void *b) )
 {
   char *ptr;
   int i;
@@ -233,7 +233,7 @@ void *lolofind(void *data, void *array, int n, int size,
 }
 
 int List_LQuery(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b), int first)
+                 int (*fcmp)(const void *a, const void *b), int first)
 {
   char *ptr;
   
@@ -257,7 +257,7 @@ int List_LQuery(List_T *liste, void *data,
 }
 
 void *List_PQuery(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b))
+                 int (*fcmp)(const void *a, const void *b))
 {
   void *ptr;
 
@@ -268,7 +268,7 @@ void *List_PQuery(List_T *liste, void *data,
 }
 
 int List_Suppress(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b))
+                 int (*fcmp)(const void *a, const void *b))
 {
   char *ptr;
   int len;

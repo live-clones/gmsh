@@ -1,4 +1,4 @@
-/* $Id: mnbrak.cpp,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
+/* $Id: mnbrak.cpp,v 1.3 2000-11-26 15:43:44 geuzaine Exp $ */
 #include <math.h>
 #define NRANSI
 #include "nrutil.h"
@@ -9,7 +9,7 @@
 
 void 
 mnbrak (double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
-	double (*func) (double))
+        double (*func) (double))
 {
   double ulim, u, r, q, fu, dum;
 
@@ -18,7 +18,7 @@ mnbrak (double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
   if (*fb > *fa)
     {
       SHFT (dum, *ax, *bx, dum)
-	SHFT (dum, *fb, *fa, dum)
+        SHFT (dum, *fb, *fa, dum)
     }
   *cx = (*bx) + GOLD * (*bx - *ax);
   *fc = (*func) (*cx);
@@ -27,49 +27,49 @@ mnbrak (double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
       r = (*bx - *ax) * (*fb - *fc);
       q = (*bx - *cx) * (*fb - *fa);
       u = (*bx) - ((*bx - *cx) * q - (*bx - *ax) * r) /
-	(2.0 * SIGN (FMAX (fabs (q - r), TINY), q - r));
+        (2.0 * SIGN (FMAX (fabs (q - r), TINY), q - r));
       ulim = (*bx) + GLIMIT * (*cx - *bx);
       if ((*bx - u) * (u - *cx) > 0.0)
-	{
-	  fu = (*func) (u);
-	  if (fu < *fc)
-	    {
-	      *ax = (*bx);
-	      *bx = u;
-	      *fa = (*fb);
-	      *fb = fu;
-	      return;
-	    }
-	  else if (fu > *fb)
-	    {
-	      *cx = u;
-	      *fc = fu;
-	      return;
-	    }
-	  u = (*cx) + GOLD * (*cx - *bx);
-	  fu = (*func) (u);
-	}
+        {
+          fu = (*func) (u);
+          if (fu < *fc)
+            {
+              *ax = (*bx);
+              *bx = u;
+              *fa = (*fb);
+              *fb = fu;
+              return;
+            }
+          else if (fu > *fb)
+            {
+              *cx = u;
+              *fc = fu;
+              return;
+            }
+          u = (*cx) + GOLD * (*cx - *bx);
+          fu = (*func) (u);
+        }
       else if ((*cx - u) * (u - ulim) > 0.0)
-	{
-	  fu = (*func) (u);
-	  if (fu < *fc)
-	    {
-	      SHFT (*bx, *cx, u, *cx + GOLD * (*cx - *bx))
-		SHFT (*fb, *fc, fu, (*func) (u))
-	    }
-	}
+        {
+          fu = (*func) (u);
+          if (fu < *fc)
+            {
+              SHFT (*bx, *cx, u, *cx + GOLD * (*cx - *bx))
+                SHFT (*fb, *fc, fu, (*func) (u))
+            }
+        }
       else if ((u - ulim) * (ulim - *cx) >= 0.0)
-	{
-	  u = ulim;
-	  fu = (*func) (u);
-	}
+        {
+          u = ulim;
+          fu = (*func) (u);
+        }
       else
-	{
-	  u = (*cx) + GOLD * (*cx - *bx);
-	  fu = (*func) (u);
-	}
+        {
+          u = (*cx) + GOLD * (*cx - *bx);
+          fu = (*func) (u);
+        }
       SHFT (*ax, *bx, *cx, u)
-	SHFT (*fa, *fb, *fc, fu)
+        SHFT (*fa, *fb, *fc, fu)
     }
 }
 #undef GOLD

@@ -1,4 +1,4 @@
-/* $Id: 2D_Util.cpp,v 1.5 2000-11-24 09:43:53 geuzaine Exp $ */
+/* $Id: 2D_Util.cpp,v 1.6 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -54,12 +54,12 @@ int Delete_Triangle ( avlstruct **root, Delaunay * del ){
 }
 
 int Insert_Point (MPoint pt, int *numpoints, int *numalloc, 
-		  DocRecord *doc, DocRecord *BGM, int is3d){
+                  DocRecord *doc, DocRecord *BGM, int is3d){
   Vertex *v,*dum;
 
   if ( *numpoints >= *numalloc ) {
     gPointArray = (PointRecord *) Realloc(gPointArray, 
-					  (*numalloc + 1000) * sizeof(PointRecord));
+                                          (*numalloc + 1000) * sizeof(PointRecord));
     *numalloc += 1000;
     doc->points = gPointArray;
   }
@@ -175,9 +175,9 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
   case (BARYCENTER) :
 
     pt.h = ( gPointArray[del->t.a].where.h + gPointArray[del->t.b].where.h 
-	    + gPointArray[del->t.c].where.h ) /3.;
+            + gPointArray[del->t.c].where.h ) /3.;
     pt.v = ( gPointArray[del->t.a].where.v + gPointArray[del->t.b].where.v 
-	    + gPointArray[del->t.c].where.v ) /3.;
+            + gPointArray[del->t.c].where.v ) /3.;
 
     return(pt);
 
@@ -214,59 +214,59 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
     if (v1 == NULL){
       
       if((v2 != NULL) && (v3 != NULL) ) {
-	
-	if ( ((del->t.a == v2->t.a) || (del->t.a == v2->t.b) || (del->t.a == v2->t.c)) &&
-	     ((del->t.a == v3->t.a) || (del->t.a == v3->t.b) || (del->t.a == v3->t.c))){
-	  a = del->t.b;
-	  b = del->t.c;
-	}
-	else if ( ((del->t.b == v2->t.a) || (del->t.b == v2->t.b) || (del->t.b == v2->t.c)) &&
-		  ((del->t.b == v3->t.a) || (del->t.b == v3->t.b) || (del->t.b == v3->t.c))){  
-	  a = del->t.a;
-	  b = del->t.c;
-	}
-	else if ( ((del->t.c == v2->t.a) || (del->t.c == v2->t.b) || (del->t.c == v2->t.c)) &&
-		  ((del->t.c == v3->t.a) || (del->t.c == v3->t.b) || (del->t.c == v3->t.c))){  
-	  a = del->t.a;
-	  b = del->t.b;
-	}
-	else{
-	  Msg(ERROR, "Voronoi Insert 1"); 
-	}
+        
+        if ( ((del->t.a == v2->t.a) || (del->t.a == v2->t.b) || (del->t.a == v2->t.c)) &&
+             ((del->t.a == v3->t.a) || (del->t.a == v3->t.b) || (del->t.a == v3->t.c))){
+          a = del->t.b;
+          b = del->t.c;
+        }
+        else if ( ((del->t.b == v2->t.a) || (del->t.b == v2->t.b) || (del->t.b == v2->t.c)) &&
+                  ((del->t.b == v3->t.a) || (del->t.b == v3->t.b) || (del->t.b == v3->t.c))){  
+          a = del->t.a;
+          b = del->t.c;
+        }
+        else if ( ((del->t.c == v2->t.a) || (del->t.c == v2->t.b) || (del->t.c == v2->t.c)) &&
+                  ((del->t.c == v3->t.a) || (del->t.c == v3->t.b) || (del->t.c == v3->t.c))){  
+          a = del->t.a;
+          b = del->t.b;
+        }
+        else{
+          Msg(ERROR, "Voronoi Insert 1"); 
+        }
       }      
-      else if(v2 != NULL) {	
-	if((del->t.a != v2->t.c) && (del->t.a != v2->t.c) && (del->t.a != v2->t.c)){	  
-	  a = del->t.a;
-	  b = del->t.b;
-	}
-	else if((del->t.b != v2->t.c) && (del->t.b != v2->t.c) && (del->t.b != v2->t.c)){   
-	  a = del->t.b;
-	  b = del->t.c;
-	}
-	else if((del->t.c != v2->t.c) && (del->t.c != v2->t.c) && (del->t.c != v2->t.c)){   
-	  a = del->t.a;
-	  b = del->t.c;
-	}
-	else {
-	  Msg(ERROR,"Voronoi Insert 2"); 
-	}
+      else if(v2 != NULL) {     
+        if((del->t.a != v2->t.c) && (del->t.a != v2->t.c) && (del->t.a != v2->t.c)){      
+          a = del->t.a;
+          b = del->t.b;
+        }
+        else if((del->t.b != v2->t.c) && (del->t.b != v2->t.c) && (del->t.b != v2->t.c)){   
+          a = del->t.b;
+          b = del->t.c;
+        }
+        else if((del->t.c != v2->t.c) && (del->t.c != v2->t.c) && (del->t.c != v2->t.c)){   
+          a = del->t.a;
+          b = del->t.c;
+        }
+        else {
+          Msg(ERROR,"Voronoi Insert 2"); 
+        }
       }      
-      else if(v3 != NULL) {	
-	if((del->t.a != v3->t.c) && (del->t.a != v3->t.c) && (del->t.a != v3->t.c)){ 
-	  a = del->t.a;
-	  b = del->t.b;
-	}
-	else if((del->t.b != v3->t.c) && (del->t.b != v3->t.c) && (del->t.b != v3->t.c)){   
-	  a = del->t.b;
-	  b = del->t.c;
-	}
-	else if((del->t.c != v3->t.c) && (del->t.c != v3->t.c) && (del->t.c != v3->t.c)){  
-	  a = del->t.a;
-	  b = del->t.c;
-	}
-	else {
-	  Msg(ERROR, "Voronoi Insert 3"); 
-	}
+      else if(v3 != NULL) {     
+        if((del->t.a != v3->t.c) && (del->t.a != v3->t.c) && (del->t.a != v3->t.c)){ 
+          a = del->t.a;
+          b = del->t.b;
+        }
+        else if((del->t.b != v3->t.c) && (del->t.b != v3->t.c) && (del->t.b != v3->t.c)){   
+          a = del->t.b;
+          b = del->t.c;
+        }
+        else if((del->t.c != v3->t.c) && (del->t.c != v3->t.c) && (del->t.c != v3->t.c)){  
+          a = del->t.a;
+          b = del->t.c;
+        }
+        else {
+          Msg(ERROR, "Voronoi Insert 3"); 
+        }
       }
     }    
     else {
@@ -274,23 +274,23 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
       else if( v2->t.position == ACCEPTED )del2 = v2;
       else if( v3->t.position == ACCEPTED )del2 = v3;
       else {
-	Msg(ERROR,"Coherence in Localize"); 
+        Msg(ERROR,"Coherence in Localize"); 
       }
  
       if((del->t.a != del2->t.a) && (del->t.a != del2->t.b) && (del->t.a != del2->t.c)){
-	a = del->t.b;
-	b = del->t.c;
+        a = del->t.b;
+        b = del->t.c;
       }
       else if((del->t.b != del2->t.a) && (del->t.b != del2->t.b) && (del->t.b != del2->t.c)){
-	a = del->t.a;
-	b = del->t.c;
+        a = del->t.a;
+        b = del->t.c;
       }
       else if((del->t.c != del2->t.a) && (del->t.c != del2->t.b) && (del->t.c != del2->t.c)){
-	a = del->t.a;
-	b = del->t.b;
+        a = del->t.a;
+        b = del->t.b;
       }
       else{
-	Msg(ERROR,"Voronoi Insert"); 
+        Msg(ERROR,"Voronoi Insert"); 
       }
     }
 

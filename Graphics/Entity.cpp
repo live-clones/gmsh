@@ -1,4 +1,4 @@
-/* $Id: Entity.cpp,v 1.2 2000-11-23 14:11:32 geuzaine Exp $ */
+/* $Id: Entity.cpp,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -13,11 +13,11 @@ extern Context_T   CTX;
 /* ------------------------------------------------------------------------ */
 
 void Draw_Point (double *x, double *y, double *z,
-		 double *Offset, double Raise[3][5]){
+                 double *Offset, double Raise[3][5]){
   glBegin(GL_POINTS);
   glVertex3d(x[0]+Offset[0]+Raise[0][0],
-	     y[0]+Offset[1]+Raise[1][0],
-	     z[0]+Offset[2]+Raise[2][0]);
+             y[0]+Offset[1]+Raise[1][0],
+             z[0]+Offset[2]+Raise[2][0]);
   glEnd();
 }
 
@@ -26,14 +26,14 @@ void Draw_Point (double *x, double *y, double *z,
 /* ------------------------------------------------------------------------ */
 
 void Draw_Line (double *x, double *y, double *z,
-		double *Offset, double Raise[3][5]){
+                double *Offset, double Raise[3][5]){
   glBegin(GL_LINES);
   glVertex3d(x[0]+Offset[0]+Raise[0][0],
-	     y[0]+Offset[1]+Raise[1][0],
-	     z[0]+Offset[2]+Raise[2][0]);
+             y[0]+Offset[1]+Raise[1][0],
+             z[0]+Offset[2]+Raise[2][0]);
   glVertex3d(x[1]+Offset[0]+Raise[0][1],
-	     y[1]+Offset[1]+Raise[1][1],
-	     z[1]+Offset[2]+Raise[2][1]);
+             y[1]+Offset[1]+Raise[1][1],
+             z[1]+Offset[2]+Raise[2][1]);
   glEnd();
 }
 
@@ -42,7 +42,7 @@ void Draw_Line (double *x, double *y, double *z,
 /* ------------------------------------------------------------------------ */
 
 void Draw_Triangle (double *x, double *y, double *z,
-		    double *Offset, double Raise[3][5], int shade){
+                    double *Offset, double Raise[3][5], int shade){
 
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
 
@@ -68,14 +68,14 @@ void Draw_Triangle (double *x, double *y, double *z,
 
   glBegin(GL_TRIANGLES);
   glVertex3d(x[0]+Offset[0]+Raise[0][0],
-	     y[0]+Offset[1]+Raise[1][0],
-	     z[0]+Offset[2]+Raise[2][0]);
+             y[0]+Offset[1]+Raise[1][0],
+             z[0]+Offset[2]+Raise[2][0]);
   glVertex3d(x[1]+Offset[0]+Raise[0][1],
-	     y[1]+Offset[1]+Raise[1][1],
-	     z[1]+Offset[2]+Raise[2][1]);
+             y[1]+Offset[1]+Raise[1][1],
+             z[1]+Offset[2]+Raise[2][1]);
   glVertex3d(x[2]+Offset[0]+Raise[0][2],
-	     y[2]+Offset[1]+Raise[1][2],
-	     z[2]+Offset[2]+Raise[2][2]);
+             y[2]+Offset[1]+Raise[1][2],
+             z[2]+Offset[2]+Raise[2][2]);
   glEnd();
 
 }
@@ -85,7 +85,7 @@ void Draw_Triangle (double *x, double *y, double *z,
 /* ------------------------------------------------------------------------ */
 
 void Draw_Quadrangle (double *x, double *y, double *z,
-		      double *Offset, double Raise[3][5], int shade){
+                      double *Offset, double Raise[3][5], int shade){
 
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3];
 
@@ -112,20 +112,20 @@ void Draw_Quadrangle (double *x, double *y, double *z,
 
   glBegin(GL_TRIANGLE_FAN);
   glVertex3d(x[0]+Offset[0]+Raise[0][0],
-	     y[0]+Offset[1]+Raise[1][0],
-	     z[0]+Offset[2]+Raise[2][0]);
+             y[0]+Offset[1]+Raise[1][0],
+             z[0]+Offset[2]+Raise[2][0]);
   glVertex3d(x[1]+Offset[0]+Raise[0][1],
-	     y[1]+Offset[1]+Raise[1][1],
-	     z[1]+Offset[2]+Raise[2][1]);
+             y[1]+Offset[1]+Raise[1][1],
+             z[1]+Offset[2]+Raise[2][1]);
   glVertex3d(x[2]+Offset[0]+Raise[0][2],
-	     y[2]+Offset[1]+Raise[1][2],
-	     z[2]+Offset[2]+Raise[2][2]);
+             y[2]+Offset[1]+Raise[1][2],
+             z[2]+Offset[2]+Raise[2][2]);
   glVertex3d(x[3]+Offset[0]+Raise[0][3],
-	     y[3]+Offset[1]+Raise[1][3],
-	     z[3]+Offset[2]+Raise[2][3]);
+             y[3]+Offset[1]+Raise[1][3],
+             z[3]+Offset[2]+Raise[2][3]);
   glVertex3d(x[1]+Offset[0]+Raise[0][1],
-	     y[1]+Offset[1]+Raise[1][1],
-	     z[1]+Offset[2]+Raise[2][1]);
+             y[1]+Offset[1]+Raise[1][1],
+             z[1]+Offset[2]+Raise[2][1]);
   glEnd();  
 }
 
@@ -134,13 +134,13 @@ void Draw_Quadrangle (double *x, double *y, double *z,
 /* ------------------------------------------------------------------------ */
 
 void Draw_Polygon (int n, double *x, double *y, double *z,
-		   double *Offset, double Raise[3][5]){
+                   double *Offset, double Raise[3][5]){
   int i;
   
   glBegin(GL_POLYGON);
   for(i=0;i<n;i++) glVertex3d(x[i]+Offset[0]+Raise[0][i],
-			      y[i]+Offset[1]+Raise[1][i],
-			      z[i]+Offset[2]+Raise[2][i]);
+                              y[i]+Offset[1]+Raise[1][i],
+                              z[i]+Offset[2]+Raise[2][i]);
   glEnd();
 }
 
@@ -149,9 +149,9 @@ void Draw_Polygon (int n, double *x, double *y, double *z,
 /* ------------------------------------------------------------------------ */
 
 void Draw_Vector (int Type, int Fill, 
-		  double x, double y, double z, 
-		  double d, double dx, double dy, double dz,
-		  double *Offset, double Raise[3][5]){
+                  double x, double y, double z, 
+                  double d, double dx, double dy, double dz,
+                  double *Offset, double Raise[3][5]){
 
   double  n[3],t[3],u[3];
   double  l,b,c, f1, f2;
@@ -247,8 +247,7 @@ void Draw_Vector (int Type, int Fill,
     break ;
     
   case DRAW_POST_ARROW_HEAD :
-
-
+    Msg(ERROR, "Arrow Head not done");
     break ;
 
   case DRAW_POST_PYRAMID :
@@ -379,9 +378,8 @@ void Draw_Vector (int Type, int Fill,
     break ;
 
   default :
-    //gprintf("Unknown Type of Vector Field Type : %d", Type); 
-    exit(1);
-    
+    Msg(ERROR, "Unknown Type of Vector to Draw");
+    break;
   }
   
 }

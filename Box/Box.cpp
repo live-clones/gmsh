@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.8 2000-11-25 15:26:10 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.9 2000-11-26 15:43:44 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -15,6 +15,7 @@
 
 #include "Static.h"
 
+extern List_T *Post_ViewList;
 
 char *TheFileNameTab[MAX_OPEN_FILES];
 char *ThePathForIncludes=NULL, *TheBgmFileName=NULL;
@@ -42,7 +43,7 @@ char gmsh_help[]      =
   "  -scale float          set global scaling factor (default: 1.0)\n"
   "  -clscale float        set characteristic length scaling factor (default: 1.0)\n"
   "  -bgm file             load backround mesh from file\n"
-  "Other options:\n"	  
+  "Other options:\n"      
   "  -v                    print debug information\n"
   "  -path string          set path for included files\n"
   "  -version              show version number\n"
@@ -53,10 +54,10 @@ char gmsh_help[]      =
 
 /* dummy defs for link purposes */
 
-void color_table_init_param (int number, ColorTable * ct, int rgb_flag, int alpha_flag){;}
-void color_table_recompute (ColorTable * ct, int rgb_flag, int alpha_flag){;}
+void ColorTable_InitParam (int number, ColorTable * ct, int rgb_flag, int alpha_flag){;}
+void ColorTable_Recompute (ColorTable * ct, int rgb_flag, int alpha_flag){;}
 void ZeroHighlight(Mesh *){;}
-void AddView(int, char *, int){;}
+void AddViewInUI(int, char *, int){;}
 void draw_polygon_2d (double, double, double, int, double *, double *, double *){;}
 
 /* ------------------------------------------------------------------------ */
@@ -160,119 +161,141 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
     if (argv[i][0] == '-') {
       
       if(!strcmp(argv[i]+1, "0")){ 
-	CTX.interactive = -1; i++;
+        CTX.interactive = -1; i++;
       }
       else if(!strcmp(argv[i]+1, "1")){ 
-	CTX.interactive = 1; i++;
+        CTX.interactive = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "2")){ 
-	CTX.interactive = 2; i++;
+        CTX.interactive = 2; i++;
       }
       else if(!strcmp(argv[i]+1, "3")){ 
-	CTX.interactive = 3; i++;
+        CTX.interactive = 3; i++;
       }
       else if(!strcmp(argv[i]+1, "v")){ 
-	VERBOSE = 1; i++;
+        VERBOSE = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "path")){ 
-	i++;
-	if(argv[i] != NULL) ThePathForIncludes = argv[i++];
+        i++;
+        if(argv[i] != NULL) ThePathForIncludes = argv[i++];
+        else{
+          fprintf(stderr, ERROR_STR "Missing String\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
-	i++;
-	if(argv[i] != NULL) TheBgmFileName = argv[i++];
+        i++;
+        if(argv[i] != NULL) TheBgmFileName = argv[i++];
+        else{
+          fprintf(stderr, ERROR_STR "Missing File Name\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "smooth")){ 
-	i++;
-	CTX.mesh.nb_smoothing = atoi(argv[i]); i++;
+        i++;
+        if(argv[i] != NULL) CTX.mesh.nb_smoothing = atoi(argv[i++]);
+        else{
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "scale")){
-	i++;
-	CTX.mesh.scaling_factor = atof(argv[i]); i++;
+        i++;
+        if(argv[i] != NULL) CTX.mesh.scaling_factor = atof(argv[i++]);
+        else{
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "clscale")){
-	i++;
-	CTX.mesh.lc_factor = atof(argv[i]); i++;
-	if(CTX.mesh.lc_factor <= 0.0){
-	  fprintf(stderr, ERROR_STR 
-		  "Characteristic Length Factor Must be > 0\n");
-	  exit(1);
-	}
+        i++;
+        if(argv[i]!=NULL){
+          CTX.mesh.lc_factor = atof(argv[i++]);
+          if(CTX.mesh.lc_factor <= 0.0){
+            fprintf(stderr, ERROR_STR 
+                    "Characteristic Length Factor Must be > 0\n");
+            exit(1);
+          }
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "degree")){  
-	i++;
-	if(argv[i]!=NULL){
-	  CTX.mesh.degree = atoi(argv[i]); i++;
-	  if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
-	    fprintf(stderr, ERROR_STR "Wrong degree\n");
-	    exit(1);
-	  }
-	}
-	else {	  
-	  fprintf(stderr, ERROR_STR "Missing Number\n");
-	  exit(1);
-	}
+        i++;
+        if(argv[i]!=NULL){
+          CTX.mesh.degree = atoi(argv[i++]);
+          if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
+            fprintf(stderr, ERROR_STR "Wrong degree\n");
+            exit(1);
+          }
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "format")){  
-	i++;
-	if(argv[i]!=NULL){
-	  if(!strcmp(argv[i],"msh"))
-	    CTX.mesh.format = FORMAT_MSH ;
-	  else if(!strcmp(argv[i],"unv"))
-	    CTX.mesh.format = FORMAT_UNV ;
-	  else if(!strcmp(argv[i],"gref"))
-	    CTX.mesh.format = FORMAT_GREF ;
-	  else{
-	    fprintf(stderr, ERROR_STR "Unknown mesh format\n");
-	    exit(1);
-	  }
-	  i++;
-	}
-	else {	  
-	  fprintf(stderr, ERROR_STR "Missing format\n");
-	  exit(1);
-	}
+        i++;
+        if(argv[i]!=NULL){
+          if(!strcmp(argv[i],"msh"))
+            CTX.mesh.format = FORMAT_MSH ;
+          else if(!strcmp(argv[i],"unv"))
+            CTX.mesh.format = FORMAT_UNV ;
+          else if(!strcmp(argv[i],"gref"))
+            CTX.mesh.format = FORMAT_GREF ;
+          else{
+            fprintf(stderr, ERROR_STR "Unknown mesh format\n");
+            exit(1);
+          }
+          i++;
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing format\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "algo")){  
-	i++;
-	if(argv[i]!=NULL){
-	  if(!strcmp(argv[i],"iso"))
-	    CTX.mesh.algo = DELAUNAY_OLDALGO ;
-	  else if(!strcmp(argv[i],"aniso"))
-	    CTX.mesh.algo = DELAUNAY_NEWALGO ;
-	  else{
-	    fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
-	    exit(1);
-	  }
-	  i++;
-	}
-	else {	  
-	  fprintf(stderr, ERROR_STR "Missing algorithm\n");
-	  exit(1);
-	}
+        i++;
+        if(argv[i]!=NULL){
+          if(!strcmp(argv[i],"iso"))
+            CTX.mesh.algo = DELAUNAY_OLDALGO ;
+          else if(!strcmp(argv[i],"aniso"))
+            CTX.mesh.algo = DELAUNAY_NEWALGO ;
+          else{
+            fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
+            exit(1);
+          }
+          i++;
+        }
+        else {    
+          fprintf(stderr, ERROR_STR "Missing algorithm\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i]+1, "info")){
-	Info(2,argv[0]); 
+        Info(2,argv[0]); 
       }
       else if(!strcmp(argv[i]+1, "version")){
-	Info(1,argv[0]); 
+        Info(1,argv[0]); 
       }
       else if(!strcmp(argv[i]+1, "help")){
-	Info(0,argv[0]);
+        Info(0,argv[0]);
       }
       else{
-	fprintf(stderr, WARNING_STR "Unknown option '%s'\n", argv[i]);
-	Info(0,argv[0]);
+        fprintf(stderr, WARNING_STR "Unknown option '%s'\n", argv[i]);
+        Info(0,argv[0]);
       }
     }
 
     else {
       if(*nbfiles < MAX_OPEN_FILES){
-	TheFileNameTab[(*nbfiles)++] = argv[i++]; 
+        TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       }
       else{
-	fprintf(stderr, ERROR_STR "Too many input files\n");
-	exit(1);
+        fprintf(stderr, ERROR_STR "Too many input files\n");
+        exit(1);
       }
     }
 
@@ -305,14 +328,10 @@ int main(int argc, char *argv[]){
     }
     if(TheBgmFileName){
       MergeProblem(TheBgmFileName);
-      if(List_Nbr(Post_ViewList)){
-	BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
-	TYPBGMESH = ONFILE; 
-	Create_BgMesh(TYPBGMESH,.2,THEM);
-      }
-      else{
-	fprintf(stderr, ERROR_STR "Invalid BGM (no view)\n"); exit(1);
-      }
+      if(List_Nbr(Post_ViewList))
+        BGMWithView((Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1));
+      else
+        fprintf(stderr, ERROR_STR "Invalid BGM (no view)\n"); exit(1);
     }
     if(CTX.interactive > 0){
       mai3d(THEM, CTX.interactive);

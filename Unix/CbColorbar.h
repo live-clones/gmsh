@@ -1,4 +1,4 @@
-/* $Id: CbColorbar.h,v 1.2 2000-11-23 14:11:40 geuzaine Exp $ */
+/* $Id: CbColorbar.h,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 #ifndef _COLORBAR_H
 #define _COLORBAR_H
 
@@ -23,7 +23,8 @@ void ColorBarShow(void);
 void ColorBarChange(char *label, float min, float max, ColorTable *ct, int rgb);
 void ColorBarCopy(ColorTable *ct);
 void ColorBarPaste(ColorTable *ct);
-void ColorBarResizeCb(Widget w, XtPointer client_data, XmDrawingAreaCallbackStruct *call_data);
+void ColorBarResizeCb(Widget w, XtPointer client_data, 
+                      XmDrawingAreaCallbackStruct *call_data);
 void ColorBarRedraw(void);
 
 #endif

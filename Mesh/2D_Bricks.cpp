@@ -1,4 +1,4 @@
-/* $Id: 2D_Bricks.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Bricks.cpp,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -56,8 +56,8 @@ void Invert_MappingLists (List_T * List1, List_T * List2) {
     for(j=0 ; j<List_Nbr(TmpMap1.List) ; j++){
       List_Read(TmpMap1.List, j, &Entity);
       TmpMap2.Num = Entity;
-      if ((TmpMap = (struct Map*)List_PQuery(List2, &TmpMap2, fcmp_Map)) != NULL) {	
-	List_Add(TmpMap->List, &TmpMap1.Num);
+      if ((TmpMap = (struct Map*)List_PQuery(List2, &TmpMap2, fcmp_Map)) != NULL) {     
+        List_Add(TmpMap->List, &TmpMap1.Num);
       }
     }
   }
@@ -82,7 +82,7 @@ int InWhichBrick (double X, double Y, double Z) {
   Iz = (Iz< Nz)? Iz : Nz-1;
   return(1 + Ix + Iy*Nx + Iz*Nx*Ny);
 }
-								    
+                                                                    
 List_T *AllBricksForABox (void){  
 
   List_T *List;
@@ -107,8 +107,8 @@ List_T *AllBricksForABox (void){
   for(i=Ix1;i<=Ix2;i++){
     for(j=Iy1;j<=Iy2;j++){
       for(k=Iz1;k<=Iz2;k++){
-	Num = 1 + i + j*Nx + k*Nx*Ny ;
-	List_Add(List, &Num);
+        Num = 1 + i + j*Nx + k*Nx*Ny ;
+        List_Add(List, &Num);
       }
     }
   }
@@ -211,26 +211,26 @@ Delaunay * Find_Triangle (MPoint pt, DocRecord *MESH, int typ) {
     KeyBrick = InWhichBrick(pt.h,pt.v,0.0);
     if((pBrick = (struct Map *)List_PQuery(GridList, &KeyBrick, fcmp_Map)) == NULL){
       if(typ == A_TOUT_PRIX){
-	gPointArray = ptr;
-	return(NULL);
+        gPointArray = ptr;
+        return(NULL);
       }
     }
     else{
       for(i=0;i<List_Nbr(pBrick->List);i++){
-	j = *(int *)List_Pointer(pBrick->List,i);
-	a = MESH->delaunay[j].t.a;
-	b = MESH->delaunay[j].t.b;
-	c = MESH->delaunay[j].t.c;
-	if(MESH->delaunay[j].t.position != EXTERN  || typ == BOF){
-	  if(PtInTriangle(pt,a,b,c)){
-	    gPointArray = ptr;
-	    return(&MESH->delaunay[j]);
-	  }
-	}
+        j = *(int *)List_Pointer(pBrick->List,i);
+        a = MESH->delaunay[j].t.a;
+        b = MESH->delaunay[j].t.b;
+        c = MESH->delaunay[j].t.c;
+        if(MESH->delaunay[j].t.position != EXTERN  || typ == BOF){
+          if(PtInTriangle(pt,a,b,c)){
+            gPointArray = ptr;
+            return(&MESH->delaunay[j]);
+          }
+        }
       }
       if(typ == A_TOUT_PRIX) {
-	gPointArray = ptr;
-	return NULL;
+        gPointArray = ptr;
+        return NULL;
       }
     }
   }
@@ -239,10 +239,10 @@ Delaunay * Find_Triangle (MPoint pt, DocRecord *MESH, int typ) {
     found = 0;
     while (!found && i<MESH->numTriangles) {  
       if( (!PtInTriangle(pt,MESH->delaunay[i].t.a,MESH->delaunay[i].t.b,
-			 MESH->delaunay[i].t.c)) ||
-	 (MESH->delaunay[i].t.position == EXTERN  && typ != BOF ))i++; 
+                         MESH->delaunay[i].t.c)) ||
+         (MESH->delaunay[i].t.position == EXTERN  && typ != BOF ))i++; 
       else
-	found = 1;
+        found = 1;
     };
     
     if(found == 1){

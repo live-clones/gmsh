@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.10 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.11 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -43,9 +43,9 @@ void CreateWidgets_M(Widgets_T *w){
   /* menu shell */
   w->M.shell = 
     XtVaAppCreateShell("Gmsh", "gmshMW", applicationShellWidgetClass, XCTX.display, 
-		       XmNvisual, XCTX.gui.visual,
-		       XmNcolormap, XCTX.gui.colormap,
-		       NULL);
+                       XmNvisual, XCTX.gui.visual,
+                       XmNcolormap, XCTX.gui.colormap,
+                       NULL);
   
   /* menu main window */
   i=0;
@@ -60,7 +60,7 @@ void CreateWidgets_M(Widgets_T *w){
   /* file menu */
   i=0;
   w->M.filePane = XmCreatePulldownMenu(w->M.menuBar, "MfilePane", arg, i);
-					
+                                        
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Open")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(C-o)")); i++;
@@ -137,7 +137,7 @@ void CreateWidgets_M(Widgets_T *w){
   /* module menu */
   i=0;
   w->M.modulePane = XmCreatePulldownMenu(w->M.menuBar, "MmodulePane", arg, i);
-					
+                                        
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Geometry")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(g)")); i++;
@@ -168,7 +168,7 @@ void CreateWidgets_M(Widgets_T *w){
   /* option menu */
   i=0;
   w->M.optionPane = XmCreatePulldownMenu(w->M.menuBar, "MoptionPane", arg, i);
-					
+                                        
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Geometry Options")); i++;
   XtSetArg(arg[i], XmNacceleratorText, XmStringCreateSimple("(S-g)")); i++;
@@ -229,7 +229,7 @@ void CreateWidgets_M(Widgets_T *w){
   /* help menu */
   i=0;
   w->M.helpPane = XmCreatePulldownMenu(w->M.menuBar, "MhelpPane", arg, i);
-					
+                                        
   i=0;
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Short Help")); i++;
   w->M.helpButt[0] = XmCreatePushButton(w->M.helpPane, "MhelpButt0", arg, i);
@@ -412,9 +412,9 @@ void CreateWidgets_G(Widgets_T *w){
   /* graphic shell */
   w->G.shell = 
     XtVaAppCreateShell("Gmsh graphics", "gmshGW", applicationShellWidgetClass, XCTX.display, 
-		       XmNvisual,XCTX.gui.visual,
-		       XmNcolormap,XCTX.gui.colormap,
-		       NULL);
+                       XmNvisual,XCTX.gui.visual,
+                       XmNcolormap,XCTX.gui.colormap,
+                       NULL);
   
   /* container form */
   i=0;
@@ -533,9 +533,9 @@ void CreateWidgets_C(Widgets_T *w){
 
   w->C.shell =
     XtVaAppCreateShell("Gmsh commands", "gmshCW", applicationShellWidgetClass, XCTX.display,
-		       XmNvisual,XCTX.gui.visual,
-		       XmNcolormap,XCTX.gui.colormap,
-		       NULL);
+                       XmNvisual,XCTX.gui.visual,
+                       XmNcolormap,XCTX.gui.colormap,
+                       NULL);
 
   i=0;
   XtSetArg(arg[i], XmNpromptString, XmStringCreateSimple("")); i++;

@@ -1,4 +1,4 @@
-/* $Id: Metric.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Metric.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -20,7 +20,7 @@ GMSHMetric::GMSHMetric (){
 }
 
 double GMSHMetric:: Local_Metric_Of_Attractors (double X, double Y, double Z,
-						double metric[3][3]){
+                                                double metric[3][3]){
   int i;
   Attractor *a, *amin;
   double u, x1, x2, d, dmin;
@@ -33,14 +33,14 @@ double GMSHMetric:: Local_Metric_Of_Attractors (double X, double Y, double Z,
     List_Read (Attractors, i, &a);
     if (a->v){
       d = sqrt ((X - a->v->Pos.X) * (X - a->v->Pos.X) +
-		(Y - a->v->Pos.Y) * (Y - a->v->Pos.Y) +
-		(Z - a->v->Pos.Z) * (Z - a->v->Pos.Z));
+                (Y - a->v->Pos.Y) * (Y - a->v->Pos.Y) +
+                (Z - a->v->Pos.Z) * (Z - a->v->Pos.Z));
     }
     if (a->c){
       ProjectPointOnCurve (a->c, &v1, &v2, &der);
       d = sqrt ((X - v2.Pos.X) * (X - v2.Pos.X) +
-		(Y - v2.Pos.Y) * (Y - v2.Pos.Y) +
-		(Z - v2.Pos.Z) * (Z - v2.Pos.Z));
+                (Y - v2.Pos.Y) * (Y - v2.Pos.Y) +
+                (Z - v2.Pos.Z) * (Z - v2.Pos.Z));
       
     }
     /*
@@ -125,8 +125,8 @@ double GMSHMetric:: Local_Metric_Of_Attractors (double X, double Y, double Z,
 
 
 void GMSHMetric:: setMetric (double u,double v, Surface * s){
-  double a, b, c;		// ellipsis axx+byy+cxy=1
-  double l1, l2;		// 2 eigenvalues
+  double a, b, c;               // ellipsis axx+byy+cxy=1
+  double l1, l2;                // 2 eigenvalues
 
   Identity ();
   Vertex p = InterpolateSurface (s, u, v, 0, 0);
@@ -319,8 +319,8 @@ double GMSHMetric::getLc (double u, Curve * c){
 
 double GMSHMetric::LengthVector (Vertex * v){
   Vertex mult (v->Pos.X * m[0][0] + v->Pos.Y * m[0][1] + v->Pos.Z * m[0][2],
-	       v->Pos.X * m[1][0] + v->Pos.Y * m[1][1] + v->Pos.Z * m[1][2],
-	       v->Pos.X * m[2][0] + v->Pos.Y * m[2][1] + v->Pos.Z * m[2][2]);
+               v->Pos.X * m[1][0] + v->Pos.Y * m[1][1] + v->Pos.Z * m[1][2],
+               v->Pos.X * m[2][0] + v->Pos.Y * m[2][1] + v->Pos.Z * m[2][2]);
   return sqrt (mult * (*v));
 }
 

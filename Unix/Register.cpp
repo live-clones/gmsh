@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.8 2000-11-25 23:10:37 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.9 2000-11-26 15:43:48 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -47,7 +47,7 @@ void RegisterCallbacks_M(Widgets_T *w){
   register_activate_cb (w->M.geomButt,      ActualizeContextCb, CONTEXT_GEOM);
   register_activate_cb (w->M.meshButt,      ActualizeContextCb, CONTEXT_MESH);
   register_activate_cb (w->M.postButt,      ActualizeContextCb, CONTEXT_POST);
-								
+                                                                
   register_activate_cb (w->M.navigButt[0],  PreviousContextCb,  CONTEXT_BACKWARD);
   register_activate_cb (w->M.navigButt[1],  PreviousContextCb,  CONTEXT_FORWARD);
 

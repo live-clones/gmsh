@@ -1,4 +1,4 @@
-/* $Id: CbGeneral.cpp,v 1.3 2000-11-25 15:26:12 geuzaine Exp $ */
+/* $Id: CbGeneral.cpp,v 1.4 2000-11-26 15:43:47 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -45,7 +45,7 @@ void ManageCb (Widget w, XtPointer client_data, XtPointer call_data){
 void PopupHandler (Widget w, Widget pw, XEvent *event, Boolean *ctd ){
   if(((XButtonEvent *)event)->button != Button3) return;
 
-  /* force the pointer to be slightly over the remove button */
+  /* force the pointer to be slightly over the first button */
   ((XButtonEvent *)event)->x_root -= 7 ;
   ((XButtonEvent *)event)->y_root -= 7 ;
 
@@ -75,19 +75,21 @@ void CurrentInfoCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     /* info geom */
     sprintf(label, "%g", s[0]);   XtVaSetValues(VLAB(0));
-    sprintf(label, "%g", s[1]/2); XtVaSetValues(VLAB(1));
+    sprintf(label, "%g", s[1]);   XtVaSetValues(VLAB(1));
     sprintf(label, "%g", s[2]);   XtVaSetValues(VLAB(2));
     sprintf(label, "%g", s[3]);   XtVaSetValues(VLAB(3));
-						
-    /* info mesh */				
+                                                
+    /* info mesh */                             
     sprintf(label, "%g", s[4]);   XtVaSetValues(VLAB(4));
     sprintf(label, "%g", s[5]);   XtVaSetValues(VLAB(5));
     sprintf(label, "%g", s[6]);   XtVaSetValues(VLAB(6));
-    sprintf(label, "%g", s[7]);   XtVaSetValues(VLAB(7));
+
+    sprintf(label, "%g", s[7]-s[8]);   XtVaSetValues(VLAB(7));
     sprintf(label, "%g", s[8]);   XtVaSetValues(VLAB(8));
     sprintf(label, "%g", s[9]);   XtVaSetValues(VLAB(9));
     sprintf(label, "%g", s[10]);  XtVaSetValues(VLAB(10));
     sprintf(label, "%g", s[11]);  XtVaSetValues(VLAB(11));
+
     sprintf(label, "%g", s[12]);  XtVaSetValues(VLAB(12));
     sprintf(label, "%g", s[13]);  XtVaSetValues(VLAB(13));
     sprintf(label, "%g", s[14]);  XtVaSetValues(VLAB(14));
@@ -98,19 +100,17 @@ void CurrentInfoCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     /* info post */
 
-    s[15] = Post_ViewList ? List_Nbr(Post_ViewList) : 0 ;
-    sprintf(label, "%g", s[15]); XtVaSetValues(VLAB(18));
+    s[15] = List_Nbr(Post_ViewList) ;
+    sprintf(label, "%g", s[15]);  XtVaSetValues(VLAB(18));
 
     s[16] = s[17] = s[18] = s[19] = 0 ;
-    if(Post_ViewList){
-      for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
-	v = (Post_View*)List_Pointer(Post_ViewList, i);
-	if(v->Visible){
-	  s[16] += List_Nbr(v->Points);
-	  s[17] += List_Nbr(v->Lines);
-	  s[18] += List_Nbr(v->Triangles);
-	  s[19] += List_Nbr(v->Tetrahedra);
-	}
+    for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+      v = (Post_View*)List_Pointer(Post_ViewList, i);
+      if(v->Visible){
+	s[16] += List_Nbr(v->Points);
+	s[17] += List_Nbr(v->Lines);
+	s[18] += List_Nbr(v->Triangles);
+	s[19] += List_Nbr(v->Tetrahedra);
       }
     }
     sprintf(label, "%g", s[16]); XtVaSetValues(VLAB(19));

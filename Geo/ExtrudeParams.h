@@ -1,4 +1,4 @@
-/* $Id: ExtrudeParams.h,v 1.3 2000-11-23 14:11:30 geuzaine Exp $ */
+/* $Id: ExtrudeParams.h,v 1.4 2000-11-26 15:43:45 geuzaine Exp $ */
 #ifndef _EXTRUDE_PARAMS_H_
 #define _EXTRUDE_PARAMS_H_
 
@@ -12,9 +12,9 @@ class ExtrudeParams{
 public :
   ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill (int ep,double A, double B, double C,
-	     double X, double Y, double Z, double angle);
+             double X, double Y, double Z, double angle);
   void Extrude (  int iLayer, int iElemLayer,
-		  double &dx, double &dy, double &dz);
+                  double &dx, double &dy, double &dz);
   void Extrude (double t, double &x, double &y, double &z);
   void Rotate(double matr[3][3]);
   struct{
