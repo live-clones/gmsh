@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.6 2001-06-27 09:09:06 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.7 2001-06-27 09:24:33 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -7,6 +7,10 @@
 // interactively from standard input, e.g.
 //
 // gmsh test -extrude -recombine < params.ext
+//
+// The progression ratio defines a geometric progression for the
+// definition of the elements heights: a factor of 2 means that the
+// next element will be twice as high than the preceding one.
 //
 // All geometrical entities are automatically numbered:
 //
