@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Triangle.cpp,v 1.10 2004-07-14 22:42:26 geuzaine Exp $
+// $Id: 2D_Mesh_Triangle.cpp,v 1.11 2004-07-14 22:53:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -182,16 +182,16 @@ int Mesh_Triangle(Surface * s)
   mid.edgemarkerlist = NULL;
 
   // triangulate the points with minimum angle > 20 deg, with no
-  // boundary breaking, 
-
-  // TODO:
-  // and with an area constraint related to the
+  // boundary breaking, and with an area constraint related to the
   // maximum char. length allowed (this last constraint is to avoid an
   // extremely coarse initial grid, on which the interpolation of the
   // final char. lengths would be awful).
 
-  //sprintf(opts, "pqzYa%e", lc_max*lc_max/2.);
-  strcpy(opts, "pqzY");
+  double a = lc_max*lc_max / 1.2; // FIXME: bof
+  if(a > 1.e-6)
+    sprintf(opts, "pqzYa%f", a);
+  else
+    strcpy(opts, "pqzY");
   if(CTX.verbosity < 4)
     strcat(opts, "Q");
   triangulate(opts, &in, &mid, NULL);
@@ -226,7 +226,7 @@ int Mesh_Triangle(Surface * s)
       Calcule_Z_Plan(&v, &dum);
       Projette_Inverse(&v, &dum);
       val = Lc_XYZ(v->Pos.X, v->Pos.Y, v->Pos.Z, THEM);
-      val = val * val / 1.2;
+      val = val * val / 1.2;  // FIXME: bof
       Free_Vertex(&v, 0);
     }
     else {
@@ -236,7 +236,7 @@ int Mesh_Triangle(Surface * s)
 	val += mid.pointattributelist[k];
       }
       val /= mid.numberofcorners;
-      val = val * val / 1.5;
+      val = val * val / 1.5;  // FIXME: bof
     }
     mid.trianglearealist[i] = val;
   }
