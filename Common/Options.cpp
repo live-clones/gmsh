@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.157 2004-05-28 19:22:12 geuzaine Exp $
+// $Id: Options.cpp,v 1.158 2004-05-28 23:11:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3616,6 +3616,7 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
 double opt_mesh_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+    if(CTX.mesh.color_scheme != (int)val) CTX.mesh.changed = 1;
     CTX.mesh.color_scheme = (int)val;
     if(CTX.mesh.color_scheme > 2)
       CTX.mesh.color_scheme = 0;
@@ -3632,6 +3633,7 @@ double opt_mesh_color_scheme(OPT_ARGS_NUM)
 double opt_mesh_color_carousel(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+    if(CTX.mesh.color_carousel != (int)val) CTX.mesh.changed = 1;
     CTX.mesh.color_carousel = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5122,6 +5124,7 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
 unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.triangle != val) CTX.mesh.changed = 1;
     CTX.color.mesh.triangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -5132,6 +5135,7 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
 unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.quadrangle != val) CTX.mesh.changed = 1;
     CTX.color.mesh.quadrangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -5142,6 +5146,7 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
 unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.tetrahedron != val) CTX.mesh.changed = 1;
     CTX.color.mesh.tetrahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -5152,6 +5157,7 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
 unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.hexahedron != val) CTX.mesh.changed = 1;
     CTX.color.mesh.hexahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -5162,6 +5168,7 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
 unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.prism != val) CTX.mesh.changed = 1;
     CTX.color.mesh.prism = val;
   }
 #if defined(HAVE_FLTK)
@@ -5172,6 +5179,7 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
 unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.pyramid != val) CTX.mesh.changed = 1;
     CTX.color.mesh.pyramid = val;
   }
 #if defined(HAVE_FLTK)
@@ -5202,6 +5210,7 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
 unsigned int opt_mesh_color_1(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[0] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[0] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5212,6 +5221,7 @@ unsigned int opt_mesh_color_1(OPT_ARGS_COL)
 unsigned int opt_mesh_color_2(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[1] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[1] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5222,6 +5232,7 @@ unsigned int opt_mesh_color_2(OPT_ARGS_COL)
 unsigned int opt_mesh_color_3(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[2] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[2] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5232,6 +5243,7 @@ unsigned int opt_mesh_color_3(OPT_ARGS_COL)
 unsigned int opt_mesh_color_4(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[3] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[3] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5242,6 +5254,7 @@ unsigned int opt_mesh_color_4(OPT_ARGS_COL)
 unsigned int opt_mesh_color_5(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[4] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[4] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5252,6 +5265,7 @@ unsigned int opt_mesh_color_5(OPT_ARGS_COL)
 unsigned int opt_mesh_color_6(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[5] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[5] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5262,6 +5276,7 @@ unsigned int opt_mesh_color_6(OPT_ARGS_COL)
 unsigned int opt_mesh_color_7(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[6] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[6] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5272,6 +5287,7 @@ unsigned int opt_mesh_color_7(OPT_ARGS_COL)
 unsigned int opt_mesh_color_8(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[7] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[7] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5282,6 +5298,7 @@ unsigned int opt_mesh_color_8(OPT_ARGS_COL)
 unsigned int opt_mesh_color_9(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[8] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[8] = val;
   }
 #if defined(HAVE_FLTK)
@@ -5292,6 +5309,7 @@ unsigned int opt_mesh_color_9(OPT_ARGS_COL)
 unsigned int opt_mesh_color_10(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
+    if(CTX.color.mesh.carousel[9] != val) CTX.mesh.changed = 1;
     CTX.color.mesh.carousel[9] = val;
   }
 #if defined(HAVE_FLTK)
