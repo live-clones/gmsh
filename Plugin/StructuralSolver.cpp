@@ -1045,7 +1045,7 @@ bool StructuralSolver :: GL_enhanceLine ( int CurveId, Vertex *v1, Vertex *v2)
 	      const int nbArrow = 10;
 	      const double kk = (CTX.max[0]-CTX.min[0])*.1 / (MAX_FORCE);
 	      glColor4ubv((GLubyte *) & CTX.color.text);
-	      double X1,Y1,Z1,X2,Y2,Z2;
+	      double X1=0.,Y1=0.,Z1=0.,X2=0.,Y2=0.,Z2=0.;
 	      for (int iArrow = 0 ; iArrow < nbArrow ; iArrow++)
 		{
 		  
