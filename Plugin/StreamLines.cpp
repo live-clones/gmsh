@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.16 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.17 2004-12-28 17:24:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,7 @@ void GMSH_StreamLinesPlugin::draw()
   for(int i = 0; i < getNbU(); ++i){
     for(int j = 0; j < getNbV(); ++j){
       getPoint(i, j, p);
-      Draw_Point(1, 3., &p[0], &p[1], &p[2], 1);
+      Draw_Point(1, CTX.point_size, &p[0], &p[1], &p[2], 1);
     }
   }
 #endif

@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.40 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.41 2004-12-28 17:24:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -62,6 +62,8 @@ void GMSH_CutPlanePlugin::draw()
   if(num < 0) num = iview;
   Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, num);
   if(!vv) return;
+  glLineWidth(CTX.line_width);
+  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
   Draw_PlaneInBoundingBox((*vv)->BBox[0], (*vv)->BBox[2], (*vv)->BBox[4],
 			  (*vv)->BBox[1], (*vv)->BBox[3], (*vv)->BBox[5],
 			  CutPlaneOptions_Number[0].def,

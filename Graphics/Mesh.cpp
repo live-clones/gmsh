@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.114 2004-12-07 04:52:26 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.115 2004-12-28 17:24:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -147,6 +147,8 @@ void Draw_Mesh(Mesh * M)
      (!CTX.mesh.draw && Tree_Nbr(M->Vertices) && !Tree_Nbr(M->Points))) {
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
+    gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+
     glBegin(GL_LINE_LOOP);
     glVertex3d(CTX.min[0], CTX.min[1], CTX.min[2]);
     glVertex3d(CTX.max[0], CTX.min[1], CTX.min[2]);

@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.3 2004-12-27 16:13:45 geuzaine Exp $
+// $Id: Probe.cpp,v 1.4 2004-12-28 17:24:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,6 +67,7 @@ void GMSH_ProbePlugin::draw()
   double z = ProbeOptions_Number[2].def;
   glColor4ubv((GLubyte *) & CTX.color.fg);
   glLineWidth(CTX.line_width);
+  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
   if(x >= v->BBox[0] && x <= v->BBox[1] &&
      y >= v->BBox[2] && y <= v->BBox[3] &&
      z >= v->BBox[4] && z <= v->BBox[5]){
