@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.43 2003-04-23 16:09:20 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.44 2003-04-23 16:54:26 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -522,7 +522,7 @@ also some (a lot of?) weaknesses:
 
 @itemize @bullet
 @item
-the bottom-up approach for describing geometries can become impractical for
+the bottom-up approach for describing geometries can become inconvenient for
 complex models;
 @item
 there is no support for NURBS and only very limited support for trimmed
@@ -1734,7 +1734,7 @@ If only elementary geometrical entities are defined (or if the
 produced by the mesh module will be saved ``as is''. That is, all the
 elements in the grid will be saved to disk using the identification number
 of the elementary entities they discretize as their region number
-(@pxref{Gmsh mesh file format}). This can sometimes be impractical:
+(@pxref{Gmsh mesh file format}). This can sometimes be inconvenient:
 
 @itemize @bullet
 @item
