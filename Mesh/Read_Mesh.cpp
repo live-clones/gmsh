@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.82 2005-01-01 19:35:31 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.83 2005-02-16 05:17:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -221,7 +221,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           else
             Tree_Add(Duplicates, &vert);
         }
+	if(i_Node % (Nbr_Nodes/50) == (Nbr_Nodes/50) - 1)
+	  Msg(PROGRESS, "Read %d nodes", i_Node + 1);
       }
+      Msg(PROGRESS, "");
       if(CTX.mesh.check_duplicates)
         Tree_Delete(Duplicates);
     }
@@ -458,7 +461,11 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  Msg(GERROR, "Unknown type for element %d", Num); 
           break;
         }
+
+	if(i_Element % (Nbr_Elements/50) == (Nbr_Elements/50) - 1)
+	  Msg(PROGRESS, "Read %d elements", i_Element + 1);
       }
+      Msg(PROGRESS, "");
 
       if(CTX.mesh.check_duplicates) {
         Tree_Action(Duplicates, Free_Vertex);

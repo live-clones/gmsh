@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.46 2005-01-01 19:35:27 geuzaine Exp $
+// $Id: Main.cpp,v 1.47 2005-02-16 05:17:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -184,6 +184,7 @@ void Msg(int level, char *fmt, ...)
 
   switch (level) {
 
+  case PROGRESS:
   case STATUS1N:
   case STATUS2N:
   case STATUS3N:

@@ -61,6 +61,8 @@
 #define SOLVER        31  // Solver message
 #define SOLVERR       32  // Solver errors and warnings
 
+#define PROGRESS      40  // Progress indicator
+
 #define WHITE_STR          "        : "
 #define FATAL_STR          "Fatal   : "
 #define ERROR_STR          "Error   : "
