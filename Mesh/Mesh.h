@@ -430,7 +430,6 @@ struct _Mesh{
   Tree_T *SurfaceLoops;         /* Surface Loops                         */
   Tree_T *EdgeLoops;            /* Edge Loops                            */
   List_T *PhysicalGroups;       /* Physical Groups                       */
-  Tree_T *VertexEdges;          /* 2nd order Vertices on edges           */
   Grid_T Grid;                  /* Grille de recherches rapides          */
   LcField BGM;                  /* Background mesh                       */
   double Statistics[50];        /* Mesh statistics                       */
@@ -502,8 +501,7 @@ void deFreeze_Vertex (void *a, void *b);
 void crEdges (Tree_T * TreeElem, Tree_T * treeedges);
 
 double Lc_XYZ (double X, double Y, double Z, Mesh * m);
-void Degre2 (Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
-             Curve * c, Surface * s);
+void Degre2 (Tree_T * TreeElm, Curve * c, Surface * s);
 void Reset_Degre2 ();
 void ActionLiss (void *data, void *dummy);
 void ActionLissSurf (void *data, void *dummy);

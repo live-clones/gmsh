@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.41 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.42 2003-06-14 04:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -86,12 +86,11 @@ void process_msh_nodes(Mesh * M)
     }
   }
 
-  MSH_NODE_NUM = Tree_Nbr(M->Vertices) + Tree_Nbr(M->VertexEdges);
+  MSH_NODE_NUM = Tree_Nbr(M->Vertices);
 
   fprintf(mshfile, "$NOD\n");
   fprintf(mshfile, "%d\n", MSH_NODE_NUM);
   Tree_Action(M->Vertices, print_msh_node);
-  Tree_Action(M->VertexEdges, print_msh_node);
   fprintf(mshfile, "$ENDNOD\n");
 }
 
@@ -139,14 +138,14 @@ void print_msh_simplex(void *a, void *b)
     if(!MSH_3D) {
       if((*S)->VSUP) {
         type = QUADRANGLE_2;
-        nbs = 5;
+        nbs = 4;
       }
       else
         type = QUADRANGLE;
     }
     else if((*S)->VSUP) {
       type = TETRAHEDRON_2;
-      nbs = 1;
+      nbs = 6;
     }
     else
       type = TETRAHEDRON;
@@ -201,7 +200,7 @@ void print_msh_hexahedron(void *a, void *b)
   nbn = 8;
   if((*H)->VSUP) {
     type = HEXAHEDRON_2;
-    nbs = 19;
+    nbs = 12;
   }
   else
     type = HEXAHEDRON;
@@ -238,7 +237,7 @@ void print_msh_prism(void *a, void *b)
   nbn = 6;
   if((*P)->VSUP) {
     type = PRISM_2;
-    nbs = 12;
+    nbs = 9;
   }
   else {
     type = PRISM;
@@ -276,7 +275,7 @@ void print_msh_pyramid(void *a, void *b)
   nbn = 5;
   if((*P)->VSUP) {
     type = PYRAMID_2;
-    nbs = 10;
+    nbs = 8;
   }
   else {
     type = PYRAMID;
@@ -540,19 +539,6 @@ void process_unv_nodes(Mesh * M)
   }
 
   List_Delete(Nodes);
-  Nodes = Tree2List(M->VertexEdges);
-  nbnod = List_Nbr(Nodes);
-
-  for(i = 0; i < nbnod; i++) {
-    List_Read(Nodes, i, &v);
-    idnod = v->Num;
-    x = v->Pos.X * CTX.mesh.scaling_factor;
-    y = v->Pos.Y * CTX.mesh.scaling_factor;
-    z = v->Pos.Z * CTX.mesh.scaling_factor;
-    fprintf(unvfile, "%10d%10d%10d%10d\n", idnod, 1, 1, 11);
-    fprintf(unvfile, "%21.16fD+00 %21.16fD+00 %21.16fD+00\n", x, y, z);
-  }
-
   fprintf(unvfile, "%6d\n", -1);
 }
 
@@ -983,7 +969,7 @@ int process_Gref_nodes(FILE * fGref, Mesh * M,
   ListCurves = Tree2List(M->Curves);
   for(i = 0; i < List_Nbr(ListCurves); i++) {
     List_Read(ListCurves, i, &c);
-    Degre2(M->Vertices, M->VertexEdges, c->Simplexes, c, NULL);
+    Degre2(c->Simplexes, c, NULL);
   }
   List_Delete(ListCurves);
 
@@ -991,7 +977,7 @@ int process_Gref_nodes(FILE * fGref, Mesh * M,
   nbtri = 0;
   for(i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    Degre2(M->Vertices, M->VertexEdges, s->Simplexes, NULL, s);
+    Degre2(s->Simplexes, NULL, s);
     nbtri += Tree_Nbr(s->Simplexes);
   }
   List_Delete(ListSurfaces);

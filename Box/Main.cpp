@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.29 2003-03-21 00:52:34 geuzaine Exp $
+// $Id: Main.cpp,v 1.30 2003-06-14 04:37:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,6 @@ int main(int argc, char *argv[])
   Get_Options(argc, argv, &nbf);
 
   M.Vertices = NULL;
-  M.VertexEdges = NULL;
   M.Simplexes = NULL;
   M.Points = NULL;
   M.Curves = NULL;

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.61 2003-06-13 22:41:41 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.62 2003-06-14 04:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -66,8 +66,6 @@ void ColorSwitch(int i)
 {
   glColor4ubv((GLubyte *) & CTX.color.mesh.carousel[i % 10]);
 }
-
-static int DrawVertexSupp;
 
 void Draw_Mesh(Mesh * M)
 {
@@ -156,12 +154,9 @@ void Draw_Mesh(Mesh * M)
 
       if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num)) {
         Tree_Action(M->Curves, Draw_Mesh_Curves);
-        DrawVertexSupp = 1;
-        Tree_Action(M->VertexEdges, Draw_Mesh_Points);
       }
 
       if(M->status >= 0 && (CTX.mesh.points || CTX.mesh.points_num)) {
-        DrawVertexSupp = 0;
         Tree_Action(M->Vertices, Draw_Mesh_Points);
       }
 
@@ -282,10 +277,7 @@ void Draw_Mesh_Points(void *a, void *b)
     glPushName(v->Num);
   }
 
-  if(DrawVertexSupp)
-    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_supp);
-  else
-    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
+  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
 
   if(CTX.mesh.points) {
     if(CTX.mesh.point_type) {

@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.33 2003-06-13 22:41:41 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.34 2003-06-14 04:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -208,9 +208,7 @@ void Maillage_Curve(void *data, void *dummy)
         dp = P2.p - P1.p;
         t = P1.t + dt / dp * (d - P1.p);
         V = InterpolateCurve(c, t, 0);
-        pV =
-          Create_Vertex(++THEM->MaxPointNum, V.Pos.X, V.Pos.Y, V.Pos.Z, V.lc,
-                        t);
+        pV = Create_Vertex(++THEM->MaxPointNum, V.Pos.X, V.Pos.Y, V.Pos.Z, V.lc, t);
         pV->w = V.w;
         pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
         List_Add(pV->ListCurves, &c);
@@ -251,8 +249,9 @@ void Maillage_Curve(void *data, void *dummy)
     List_Add(c->TrsfSimplexes, &s);
   }
 
-  if(CTX.mesh.order == 2)
-    Degre2(THEM->Vertices, THEM->VertexEdges, c->Simplexes, c, NULL);
+  if(CTX.mesh.order == 2){
+    Degre2(c->Simplexes, c, NULL);
+  }
 
   THEM->Statistics[4] += List_Nbr(c->Vertices);
 

@@ -1,4 +1,4 @@
-// $Id: SMS.cpp,v 1.14 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: SMS.cpp,v 1.15 2003-06-14 04:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -301,7 +301,6 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
       }
 
       Simplex *s = Create_Simplex(v1, v2, v3, v4);
-      //      s->curvedBounds(Edge1,Edge2,Edge3,Edge4,Lists,m->VertexEdges);
       s->Num = i + 1;
       s->iEnt = GEntityId + 10000;
       Surface *surf;
@@ -462,14 +461,12 @@ void Write_SMS_FILE(Mesh * m, char *filename)
     }
   }
 
-  //  extern int DEGRE2;
-
   printf("%d edges\n", Tree_Nbr(AllEdges.AllEdges));
   l = Tree2List(m->Curves);
   for(i = 0; i < List_Nbr(l); i++) {
     List_Read(l, i, &c);
     AllEdges.AddTree(c->Simplexes, false);
-    //      if(c->Num > 0 && c->Typ != MSH_SEGM_LINE)AllEdges.AddPoints(c,DEGRE2-1);
+    // if(c->Num > 0 && c->Typ != MSH_SEGM_LINE) AllEdges.AddPoints(c,DEGRE2-1);
   }
   List_Delete(l);
   printf("%d edges\n", Tree_Nbr(AllEdges.AllEdges));

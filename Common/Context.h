@@ -206,7 +206,7 @@ public :
       unsigned int tangents, normals;
     } geom;
     struct{
-      unsigned int vertex, vertex_supp, line, triangle, quadrangle;
+      unsigned int vertex, line, triangle, quadrangle;
       unsigned int tetrahedron, hexahedron, prism, pyramid;
       unsigned int carousel[10];
       unsigned int tangents, normals;

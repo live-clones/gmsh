@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.44 2003-06-13 21:14:20 geuzaine Exp $
+// $Id: Generator.cpp,v 1.45 2003-06-14 04:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -189,9 +189,6 @@ void Init_Mesh(Mesh * M, int all)
   Tree_Action(M->Vertices, Free_Vertex);  
   Tree_Delete(M->Vertices);
 
-  Tree_Action(M->VertexEdges, Free_Vertex);
-  Tree_Delete(M->VertexEdges);
-
   Tree_Action(M->Points, Free_Vertex);  
   Tree_Delete(M->Points);
 
@@ -223,7 +220,6 @@ void Init_Mesh(Mesh * M, int all)
   }
 
   M->Vertices = Tree_Create(sizeof(Vertex *), compareVertex);
-  M->VertexEdges = Tree_Create(sizeof(Vertex *), compareVertex);
   M->Simplexes = Tree_Create(sizeof(Simplex *), compareSimplex);
   M->Points = Tree_Create(sizeof(Vertex *), compareVertex);
   M->Curves = Tree_Create(sizeof(Curve *), compareCurve);

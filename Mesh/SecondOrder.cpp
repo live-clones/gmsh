@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.15 2003-06-13 22:41:41 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.16 2003-06-14 04:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,7 @@ Vertex *middlecurve(Vertex * v1, Vertex * v2)
   return pv;
 }
 
-Vertex *middleface(Vertex * v1, Vertex * v2)
+Vertex *onsurface(Vertex * v1, Vertex * v2)
 {
   Vertex v, *pv;
   double U, V, U1, U2, V1, V2;
@@ -108,8 +108,12 @@ Vertex *middleface(Vertex * v1, Vertex * v2)
 
 extern int edges_tetra[6][2];
 extern int edges_quad[4][2];
-static Tree_T *THET;
 extern int EdgesInVolume;
+
+// The following only works for additional nodes are associated with
+// the edges of the mesh. If you need a complete second order
+// representation, this is thus only valid for simplices (lines,
+// triangles, tetrahedra)...
 
 void PutMiddlePoint(void *a, void *b)
 {
@@ -127,7 +131,7 @@ void PutMiddlePoint(void *a, void *b)
   else if((v = middlecurve(ed->V[0], ed->V[1]))){
     ;
   }
-  else if((v = middleface(ed->V[0], ed->V[1]))){
+  else if((v = onsurface(ed->V[0], ed->V[1]))){
     ;
   }
   else{
@@ -140,7 +144,7 @@ void PutMiddlePoint(void *a, void *b)
   }
 
   ed->newv = v;
-  Tree_Insert(THET, &v);
+  Tree_Insert(THEM->Vertices, &v);
 
   for(i = 0; i < List_Nbr(ed->Simplexes); i++) {
     List_Read(ed->Simplexes, i, &s);
@@ -197,19 +201,23 @@ void Reset_Degre2(){
   TreeEdges = Tree_Create(sizeof(Edge), compareedge);
 }
 
-void Degre2(Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
-            Curve * c, Surface * s)
+void Degre2(Tree_T * TreeElm, Curve * c, Surface * s)
 {
   THES = s;
   THEC = c;
-  THET = TreeNodes;
 
-  if(THES || THEC){
+  if(THES || THEC){ // 1D or 2D mesh
     EdgesInVolume = 0;
   }
 
+  // create middle edge vertices for lines, triangles, quadrangles and
+  // tetrahedra
   crEdges(TreeElm, TreeEdges);
   Tree_Action(TreeEdges, PutMiddlePoint);
 
   EdgesInVolume = 1;
+
+  // FIXME: do the rest: middle face/volume vertices + hexahedra,
+  // prisms, pyramids
+
 }

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.55 2003-05-12 15:44:12 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.56 2003-06-14 04:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -47,7 +47,7 @@ extern Context_T CTX;
 #define PYR2 14
 #define PNT  15
 
-#define NB_NOD_MAX_ELM 20
+#define NB_NOD_MAX_ELM 30
 
 int comparePhysicalGroup(const void *a, const void *b)
 {
@@ -260,9 +260,14 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 
         switch (Type) {
         case LGN1:
+        case LGN2:
           simp = Create_Simplex(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
+	  if(Type == LGN2){
+	    simp->VSUP = (Vertex **) Malloc(1 * sizeof(Vertex *));
+	    simp->VSUP[0] = vertsp[2];
+	  }
           if(!Tree_Insert(c->Simplexes, &simp)){
 	    Msg(GERROR, "Line element %d already exists\n", simp->Num);
 	    Free_Simplex(&simp, 0);
@@ -270,9 +275,16 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
           //NO!!! Tree_Insert(M->Simplexes, &simp) ; 
           break;
         case TRI1:
+        case TRI2:
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
+	  if(Type == TRI2){
+	    simp->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
+	    for(i = 0; i < 3; i++){
+	      simp->VSUP[i] = vertsp[i+3];
+	    }
+	  }
           if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
             M->Statistics[7]++;
 	  }
@@ -282,9 +294,16 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 	  }
           break;
         case QUA1:
+        case QUA2:
           simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
+	  if(Type == QUA2){
+	    simp->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
+	    for(i = 0; i < 4; i++){
+	      simp->VSUP[i] = vertsp[i+4];
+	    }
+	  }
           if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
             M->Statistics[7]++; //since s->Simplexes holds quads, too :-(
             M->Statistics[8]++;
@@ -295,9 +314,16 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 	  }
           break;
         case TET1:
+        case TET2:
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
+	  if(Type == TET2){
+	    simp->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
+	    for(i = 0; i < 6; i++){
+	      simp->VSUP[i] = vertsp[i+4];
+	    }
+	  }
           if(Tree_Insert(v->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
             M->Statistics[9]++;
 	  }
@@ -307,10 +333,17 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 	  }
           break;
         case HEX1:
+        case HEX2:
           hex = Create_Hexahedron(vertsp[0], vertsp[1], vertsp[2], vertsp[3],
                                   vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
           hex->Num = Num;
           hex->iEnt = Elementary;
+	  if(Type == HEX2){
+	    hex->VSUP = (Vertex **) Malloc(12 * sizeof(Vertex *));
+	    for(i = 0; i < 12; i++){
+	      hex->VSUP[i] = vertsp[i+8];
+	    }
+	  }
           if(Tree_Insert(v->Hexahedra, &hex)){
             M->Statistics[10]++;
 	  }
@@ -320,10 +353,17 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 	  }
           break;
         case PRI1:
+        case PRI2:
           pri = Create_Prism(vertsp[0], vertsp[1], vertsp[2],
                              vertsp[3], vertsp[4], vertsp[5]);
           pri->Num = Num;
           pri->iEnt = Elementary;
+	  if(Type == PRI2){
+	    pri->VSUP = (Vertex **) Malloc(9 * sizeof(Vertex *));
+	    for(i = 0; i < 9; i++){
+	      pri->VSUP[i] = vertsp[i+6];
+	    }
+	  }
           if(Tree_Insert(v->Prisms, &pri)){
             M->Statistics[11]++;
 	  }
@@ -333,10 +373,17 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
 	  }
           break;
         case PYR1:
+        case PYR2:
           pyr = Create_Pyramid(vertsp[0], vertsp[1], vertsp[2],
                                vertsp[3], vertsp[4]);
           pyr->Num = Num;
           pyr->iEnt = Elementary;
+	  if(Type == PYR2){
+	    pyr->VSUP = (Vertex **) Malloc(8 * sizeof(Vertex *));
+	    for(i = 0; i < 8; i++){
+	      pyr->VSUP[i] = vertsp[i+5];
+	    }
+	  }
           if(Tree_Insert(v->Pyramids, &pyr)){
             M->Statistics[12]++;
 	  }
