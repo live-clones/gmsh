@@ -146,10 +146,10 @@ void _hex::Create (int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps)
   Msg(INFO, "creating sub-elements");
   int level = 0;
   clean();
-  _point *p1 = _point::New ( -1,-1,0, coeffs, eexps);
-  _point *p2 = _point::New ( -1,1,0, coeffs, eexps);
-  _point *p3 = _point::New ( 1,1,0, coeffs, eexps);
-  _point *p4 = _point::New ( 1,-1,0, coeffs, eexps);
+  _point *p1 = _point::New ( -1,-1,-1, coeffs, eexps);
+  _point *p2 = _point::New ( -1,1,-1, coeffs, eexps);
+  _point *p3 = _point::New ( 1,1,-1, coeffs, eexps);
+  _point *p4 = _point::New ( 1,-1,-1, coeffs, eexps);
   _point *p11 = _point::New ( -1,-1,1, coeffs, eexps);
   _point *p21 = _point::New ( -1,1,1, coeffs, eexps);
   _point *p31 = _point::New ( 1,1,1, coeffs, eexps);
@@ -323,13 +323,13 @@ void _hex::Recur_Create (_hex *h, int maxlevel, int level , Double_Matrix *coeff
   _hex *h4 = new _hex (p0145,p45,p5,p15,pc,p4756,p56,p1256);//p5
   Recur_Create (h4, maxlevel,level,coeffs,eexps);
   _hex *h5 = new _hex (p0347,p47,p4756,pc,p37,p7,p67,p2367);//p7
-  Recur_Create (h4, maxlevel,level,coeffs,eexps);
+  Recur_Create (h5, maxlevel,level,coeffs,eexps);
   _hex *h6 = new _hex (pc,p4756,p56,p1256,p2367,p67,p6,p26);//p6
   Recur_Create (h6, maxlevel,level,coeffs,eexps);
   _hex *h7 = new _hex (p03,p0347,pc,p0312,p3,p37,p2367,p23);//p3
   Recur_Create (h7, maxlevel,level,coeffs,eexps);
   _hex *h8 = new _hex (p0312,pc,p1256,p12,p23,p2367,p26,p2);//p2
-  Recur_Create (h7, maxlevel,level,coeffs,eexps);
+  Recur_Create (h8, maxlevel,level,coeffs,eexps);
 
   h->h[0]=h1;h->h[1]=h2;h->h[2]=h3;h->h[3]=h4;      
   h->h[4]=h5;h->h[5]=h6;h->h[6]=h7;h->h[7]=h8;      
@@ -1134,11 +1134,11 @@ void Adaptive_Post_View:: setAdaptiveResolutionLevel (Post_View * view , int lev
 	}
 	
 	List_Delete(view->SH); view->SH = 0;  
-	view->NbSS = 0;
+	view->NbSH = 0;
 	/// for now, that's all we do, 1 TS
 	view->NbTimeStep=1;
 	int nbelm = _STposX->size1();
-	view->SS = List_Create ( nbelm * 4, nbelm , sizeof(double));
+	view->SH = List_Create ( nbelm * 4, nbelm , sizeof(double));
 		
 	t0=t1 = t2 = t3 = 0;
 	
