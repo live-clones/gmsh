@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.307 2003-11-23 03:24:43 geuzaine Exp $
+# $Id: Makefile,v 1.308 2003-11-23 04:40:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -22,8 +22,8 @@
 include variables
 
 GMSH_MAJOR_VERSION = 1
-GMSH_MINOR_VERSION = 47
-GMSH_PATCH_VERSION = 2
+GMSH_MINOR_VERSION = 48
+GMSH_PATCH_VERSION = 0
 
 GMSH_SHORT_LICENSE = "GNU General Public License"
 

@@ -1,11 +1,11 @@
-$Id: VERSIONS,v 1.162 2003-11-23 02:56:02 geuzaine Exp $
+$Id: VERSIONS,v 1.163 2003-11-23 04:40:23 geuzaine Exp $
 
 New in 1.48: new DisplacementRaise plugin to plot arbitrary fields on
 deformed meshes; generalized CutMap, CutPlane, CutSphere and Skin
 plugins to handle all kinds of elements and fields; new "Save View[n]"
-command to save views from a script; small bug fixes (configure tests
-for libpng, handling of erroneous options, multi time step scalar
-prism drawings, copy of surface mesh attributes);
+command to save views from a script; many small bug fixes (configure
+tests for libpng, handling of erroneous options, multi time step
+scalar prism drawings, copy of surface mesh attributes, etc.);
 
 New in 1.47: fixed extrusion of surfaces defined by only two curves;
 new syntax to retrieve point coordinates and indices of entities
