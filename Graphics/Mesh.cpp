@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.99 2004-07-01 19:07:43 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.100 2004-07-09 18:26:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -634,7 +634,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
     if(CTX.mesh.surfaces_faces) {
       glColor4ubv((GLubyte *) & col);      
       if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.surfaces_edges) glEnable(GL_POLYGON_OFFSET_FILL);
       if(!s->VSUP) {
 	glBegin(GL_TRIANGLES);
 	glVertex3d(X[0], Y[0], Z[0]);
@@ -776,7 +776,7 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     if(CTX.mesh.surfaces_faces) {
       glColor4ubv((GLubyte *) & col);
       if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.surfaces_edges) glEnable(GL_POLYGON_OFFSET_FILL);
       if(!q->VSUP) {
 	glBegin(GL_QUADS);
 	glVertex3d(X[0], Y[0], Z[0]);

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.70 2004-06-23 19:53:52 geuzaine Exp $
+// $Id: Post.cpp,v 1.71 2004-07-09 18:26:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -560,7 +560,7 @@ void Draw_Post(void)
 	  glEnable(GL_LIGHTING);
 	else
 	  glDisableClientState(GL_NORMAL_ARRAY);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	if(v->ShowElement) glEnable(GL_POLYGON_OFFSET_FILL);
 	glDrawArrays(GL_TRIANGLES, 0, 3 * v->TriVertexArray->num);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_LIGHTING);

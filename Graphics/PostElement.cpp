@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.37 2004-07-02 23:15:04 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.38 2004-07-09 18:26:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -460,7 +460,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
       else{
 	if(View->Light) glEnable(GL_LIGHTING);
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	if(View->ShowElement) glEnable(GL_POLYGON_OFFSET_FILL);
 	glBegin(GL_TRIANGLES);
 	for(int i = 0; i < 3; i++){
 	  PaletteContinuous(View, ValMin, ValMax, Val[i]);
@@ -511,7 +511,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	}
 	else{
 	  if(View->Light) glEnable(GL_LIGHTING);
-	  glEnable(GL_POLYGON_OFFSET_FILL);
+	  if(View->ShowElement) glEnable(GL_POLYGON_OFFSET_FILL);
 	  glBegin(GL_POLYGON);
 	  for(int i = 0; i < nb; i++) {
 	    PaletteContinuous(View, ValMin, ValMax, Vp[i]);
@@ -568,7 +568,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 	  }
 	  else{
 	    if(View->Light) glEnable(GL_LIGHTING);
-	    glEnable(GL_POLYGON_OFFSET_FILL);
+	    if(View->ShowElement) glEnable(GL_POLYGON_OFFSET_FILL);
 	    glBegin(GL_POLYGON);
 	    for(int i = 0; i < nb; i++){
 	      if(View->Light) glNormal3dv(&norms[3*i]);
