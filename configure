@@ -3850,7 +3850,7 @@ case "$UNAME" in
     CXX="CC"
     CC="cc"
     OPTIM="-O2"
-    FLAGS="-mips3 -n32 -LANG:std -OPT:Olimit=0 ${FLAGS}"
+        FLAGS="-mips3 -n32 -LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
     AR="CC -mips3 -n32 -ar -o"
     LINKER="CC -O2 -mips3 -n32"
     ;;

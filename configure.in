@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.54 2004-06-26 17:58:14 geuzaine Exp $
+dnl $Id: configure.in,v 1.55 2004-07-01 17:37:22 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 dnl
@@ -385,7 +385,8 @@ case "$UNAME" in
     CXX="CC"
     CC="cc"
     OPTIM="-O2"
-    FLAGS="-mips3 -n32 -LANG:std -OPT:Olimit=0 ${FLAGS}"
+    dnl -DOLDCINCLUDE is for Netgen
+    FLAGS="-mips3 -n32 -LANG:std -OPT:Olimit=0 -DOLDCINCLUDE ${FLAGS}"
     AR="CC -mips3 -n32 -ar -o"
     LINKER="CC -O2 -mips3 -n32"
     ;;
