@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.32 2003-11-22 01:59:02 geuzaine Exp $
+// $Id: Main.cpp,v 1.33 2003-12-02 01:28:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -181,6 +181,11 @@ void Msg(int level, char *fmt, ...)
   va_start(args, fmt);
 
   switch (level) {
+
+  case STATUS1N:
+  case STATUS2N:
+  case STATUS3N:
+    break;
 
   case DIRECT:
     if(CTX.verbosity >= 2 && ParUtil::Instance()->master()) {
