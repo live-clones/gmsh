@@ -1,4 +1,4 @@
-/* $Id: gl2jpeg.cpp,v 1.20 2003-11-04 17:10:29 geuzaine Exp $ */
+/* $Id: gl2jpeg.cpp,v 1.21 2004-12-29 06:47:40 geuzaine Exp $ */
 /*
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -84,6 +84,7 @@ void create_jpeg(FILE * outfile, int width, int height, int quality)
   cinfo.in_color_space = JCS_RGB;
   jpeg_set_defaults(&cinfo);
   jpeg_set_quality(&cinfo, quality, TRUE);
+  cinfo.optimize_coding = TRUE;
   jpeg_start_compress(&cinfo, TRUE);
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
