@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.138 2004-10-15 17:13:54 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.139 2004-10-15 17:17:10 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2683,8 +2683,8 @@ pop up menu on post-processing view button
 @cindex File formats
 
 This chapter describes the file formats that cannot be modified by the
-user. These formats have a version number (currently 1.2), independent of the
-Gmsh version number (currently @value{GMSH-VERSION}).
+user. (These formats have version numbers that are independent of the Gmsh
+version number.)
 
 All non-parsed file formats have sections enclosed between @code{$Key} and
 @code{$EndKey} tags.
