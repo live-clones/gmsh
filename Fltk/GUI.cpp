@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.310 2004-06-01 17:26:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.311 2004-06-01 22:16:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -88,7 +88,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"M&essage console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
-    {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
+    {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
     {"S&hortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
     {"C&ommand line options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"On&line documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
@@ -118,7 +118,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Message Console...", FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
-    {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
+    {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5},
     {"Shortcuts...",            0, (Fl_Callback *)help_short_cb, 0},
     {"Command Line Options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
     {"Online Documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
@@ -1119,38 +1119,52 @@ void GUI::create_graphic_window(int argc, char **argv)
   x += sw;
   g_status_butt[0]->callback(status_xyz1p_cb, (void *)0);
   g_status_butt[0]->tooltip("Set X view (Y=Z=0)");
+
   g_status_butt[1] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Y");
   x += sw;
   g_status_butt[1]->callback(status_xyz1p_cb, (void *)1);
   g_status_butt[1]->tooltip("Set Y view (X=Z=0)");
+
   g_status_butt[2] = new Fl_Button(x, glheight + 2, sw, sh - 4, "Z");
   x += sw;
   g_status_butt[2]->callback(status_xyz1p_cb, (void *)2);
   g_status_butt[2]->tooltip("Set Z view (X=Y=0)");
+
   g_status_butt[3] = new Fl_Button(x, glheight + 2, 2 * fontsize, sh - 4, "1:1");
   x += 2 * fontsize;
   g_status_butt[3]->callback(status_xyz1p_cb, (void *)3);
   g_status_butt[3]->tooltip("Set unit scale");
-  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
+
+  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   x += sw;
   g_status_butt[4]->callback(status_xyz1p_cb, (void *)4);
-  g_status_butt[4]->tooltip("Show current options");
-  g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  g_status_butt[4]->tooltip("Set orthographic/perspective projection");
+  ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
+  persp_bmp = new Fl_Bitmap(persp_bits, persp_width, persp_height);
+
+  g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sh - 4, "?");
   x += sw;
-  g_status_butt[5]->callback(status_rewind_cb);
-  rewind_bmp = new Fl_Bitmap(rewind_bits, rewind_width, rewind_height);
-  rewind_bmp->label(g_status_butt[5]);
-  g_status_butt[5]->deactivate();
-  g_status_butt[5]->tooltip("Rewind animation");
+  g_status_butt[5]->callback(status_xyz1p_cb, (void *)5);
+  g_status_butt[5]->tooltip("Show current options");
+
   g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sh - 4);
   x += sw;
-  g_status_butt[6]->callback(status_play_cb);
-  g_status_butt[6]->tooltip("Play/pause animation");
-  start_bmp = new Fl_Bitmap(start_bits, start_width, start_height);
-  start_bmp->label(g_status_butt[6]);
-  stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
+  g_status_butt[6]->callback(status_rewind_cb);
+  rewind_bmp = new Fl_Bitmap(rewind_bits, rewind_width, rewind_height);
+  rewind_bmp->label(g_status_butt[6]);
   g_status_butt[6]->deactivate();
-  for(i = 0; i < 7; i++) {
+  g_status_butt[6]->tooltip("Rewind animation");
+
+  g_status_butt[7] = new Fl_Button(x, glheight + 2, sw, sh - 4);
+  x += sw;
+  g_status_butt[7]->callback(status_play_cb);
+  g_status_butt[7]->tooltip("Play/pause animation");
+  start_bmp = new Fl_Bitmap(start_bits, start_width, start_height);
+  start_bmp->label(g_status_butt[7]);
+  stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
+  g_status_butt[7]->deactivate();
+
+  for(i = 0; i < 8; i++) {
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
     g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -1201,12 +1215,12 @@ void GUI::set_title(char *str)
 void GUI::set_anim_buttons(int mode)
 {
   if(mode) {
-    g_status_butt[6]->callback(status_play_cb);
-    start_bmp->label(g_status_butt[6]);
+    g_status_butt[7]->callback(status_play_cb);
+    start_bmp->label(g_status_butt[7]);
   }
   else {
-    g_status_butt[6]->callback(status_pause_cb);
-    stop_bmp->label(g_status_butt[6]);
+    g_status_butt[7]->callback(status_pause_cb);
+    stop_bmp->label(g_status_butt[7]);
   }
 }
 
@@ -1225,12 +1239,12 @@ void GUI::check_anim_buttons()
     }
   }
   if(!play) {
-    g_status_butt[5]->deactivate();
     g_status_butt[6]->deactivate();
+    g_status_butt[7]->deactivate();
   }
   else {
-    g_status_butt[5]->activate();
     g_status_butt[6]->activate();
+    g_status_butt[7]->activate();
   }
 }
 

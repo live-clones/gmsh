@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.244 2004-05-30 06:24:01 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.245 2004-06-01 22:16:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -285,6 +285,11 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     Draw();
     break;
   case 4:
+    opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
+			     !opt_general_orthographic(0, GMSH_GET, 0));
+    Draw();
+    break;
+  case 5:
     Print_Options(0, GMSH_FULLRC, false, NULL);
     WID->create_message_window();
     break;
@@ -861,7 +866,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
     Print_Options(0, GMSH_SESSIONRC, true, CTX.sessionrc_filename);
   opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
-  opt_general_orthographic(0, GMSH_SET, WID->gen_butt[10]->value());
+  opt_general_orthographic(0, GMSH_SET | GMSH_GUI, WID->gen_butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
   opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
   opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());

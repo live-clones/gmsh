@@ -126,6 +126,8 @@ class GUI{
 
 public:
 
+  Fl_Bitmap  *ortho_bmp, *persp_bmp;
+
   // menu window
   Fl_Window        *m_window ;
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
@@ -143,7 +145,7 @@ public:
   // graphic window
   Fl_Window        *g_window ;
   Opengl_Window    *g_opengl_window ;
-  Fl_Button        *g_status_butt[7] ;
+  Fl_Button        *g_status_butt[8] ;
   Fl_Box           *g_status_label[3] ;
 
   // Option window
