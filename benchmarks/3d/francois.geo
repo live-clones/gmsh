@@ -19,7 +19,7 @@ Line(8) = {9,8};
 Line Loop(9) = {6,7,8,5};   
 Line Loop(10) = {4,1,2,3};   
 Plane Surface(11) = {9,10};   
-Extrude Surface (11, {0,0.0,2.0})
+Extrude Surface {11, {0,0.0,2.0}}
 {
    Layers { {2,1,2} , {100,200,100} , {.05,.95,1.} } ;
 };
