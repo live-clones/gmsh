@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.18 2001-08-12 11:02:05 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.19 2001-08-13 06:59:52 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -96,11 +96,10 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	prosca(n,_ref,&test);
 	break;
       case ORIENT_SPHERE:
-	gr[0] = _ref[0]-Xp[0];
-	gr[1] = _ref[1]-Yp[0];
-	gr[2] = _ref[2]-Zp[0];
+	gr[0] = Xp[0]-_ref[0];
+	gr[1] = Yp[0]-_ref[1];
+	gr[2] = Zp[0]-_ref[2];
 	prosca(gr,n,&test);
-	test = -test;
 	break;
       default:
 	test = 0.;
