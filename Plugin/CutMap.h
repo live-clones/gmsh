@@ -8,12 +8,10 @@ extern "C"
 
 class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
 {
-  /*we cut the othe map by the iso A of the View iView */
   double A;
-  int iView;
   virtual double levelset (double x, double y, double z, double val) const;
 public:
-  GMSH_CutMapPlugin(double A, int IVIEW);
+  GMSH_CutMapPlugin(double A);
   virtual void getName  (char *name) const;
   virtual void getInfos (char *author, 
 			 char *copyright,

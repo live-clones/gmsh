@@ -8,9 +8,8 @@ extern "C"
 
 class GMSH_SmoothPlugin : public GMSH_Post_Plugin
 {
-  int iView;
 public:
-  GMSH_SmoothPlugin(int IVIEW);
+  GMSH_SmoothPlugin();
   virtual void Run();
   virtual void Save();
   virtual void getName  (char *name) const;

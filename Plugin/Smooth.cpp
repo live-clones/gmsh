@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.4 2001-08-06 10:52:52 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.5 2001-08-06 11:13:25 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Smooth.h"
@@ -13,13 +13,12 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterSmoothPlugin ()
   {
-    return new GMSH_SmoothPlugin ((int)SmoothOptions_Number[0].def);
+    return new GMSH_SmoothPlugin();
   }
 }
 
 
-GMSH_SmoothPlugin::GMSH_SmoothPlugin(int a)
-  :iView(a)
+GMSH_SmoothPlugin::GMSH_SmoothPlugin()
 {
 }
 

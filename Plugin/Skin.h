@@ -8,9 +8,8 @@ extern "C"
 
 class GMSH_SkinPlugin : public GMSH_Post_Plugin
 {
-  int iView;
 public:
-  GMSH_SkinPlugin(int IVIEW);
+  GMSH_SkinPlugin();
   virtual void Run();
   virtual void Save();
   virtual void getName  (char *name) const;

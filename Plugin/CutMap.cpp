@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.18 2001-08-06 11:00:26 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.19 2001-08-06 11:13:25 geuzaine Exp $
 
 #include "CutMap.h"
 #include "List.h"
@@ -12,14 +12,13 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCutMapPlugin ()
   {
-    return new GMSH_CutMapPlugin (CutMapOptions_Number[0].def,
-				  (int)CutMapOptions_Number[1].def);
+    return new GMSH_CutMapPlugin (CutMapOptions_Number[0].def);
   }
 }
 
 
-GMSH_CutMapPlugin::GMSH_CutMapPlugin(double a, int I)
-  :A(a),iView(I)
+GMSH_CutMapPlugin::GMSH_CutMapPlugin(double a)
+  :A(a)
 {
 }
 
@@ -66,7 +65,7 @@ Post_View *GMSH_CutMapPlugin::execute (Post_View *v)
 {
   Post_View *vv;
   A = CutMapOptions_Number[0].def;
-  iView = (int)CutMapOptions_Number[1].def;
+  int iView = (int)CutMapOptions_Number[1].def;
   
   if(v && iView < 0)
     vv = v;

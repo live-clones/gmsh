@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.5 2001-08-06 11:00:26 geuzaine Exp $
+// $Id: Transform.cpp,v 1.6 2001-08-06 11:13:25 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Transform.h"
@@ -30,21 +30,18 @@ extern "C"
 				     TransformOptions_Number[5].def,
 				     TransformOptions_Number[6].def,
 				     TransformOptions_Number[7].def,
-				     TransformOptions_Number[8].def,
-				     (int)TransformOptions_Number[9].def);
+				     TransformOptions_Number[8].def);
   }
 }
 
 
 GMSH_TransformPlugin::GMSH_TransformPlugin(double d11, double d12, double d13,
 					   double d21, double d22, double d23,
-					   double d31, double d32, double d33,
-					   int i)
+					   double d31, double d32, double d33)
 {
   mat[0][0] = d11; mat[0][1] = d12; mat[0][2] = d13;
   mat[1][0] = d21; mat[1][1] = d22; mat[1][2] = d23;
   mat[2][0] = d31; mat[2][1] = d32; mat[2][2] = d33;
-  iView = i;
 }
 
 void GMSH_TransformPlugin::getName(char *name) const
@@ -91,6 +88,7 @@ Post_View *GMSH_TransformPlugin::execute (Post_View *v)
   mat[2][0] = TransformOptions_Number[6].def;
   mat[2][1] = TransformOptions_Number[7].def;
   mat[2][2] = TransformOptions_Number[8].def;
+
   int iView = (int)TransformOptions_Number[9].def;
 
   if(v && iView < 0)

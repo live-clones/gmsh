@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.5 2001-08-06 11:00:26 geuzaine Exp $
+// $Id: Skin.cpp,v 1.6 2001-08-06 11:13:25 geuzaine Exp $
 
 #include "Plugin.h"
 #include "Skin.h"
@@ -17,13 +17,12 @@ extern "C"
 {
   GMSH_Plugin *GMSH_RegisterSkinPlugin ()
   {
-    return new GMSH_SkinPlugin ((int)SkinOptions_Number[0].def);
+    return new GMSH_SkinPlugin();
   }
 }
 
 
-GMSH_SkinPlugin::GMSH_SkinPlugin(int a)
-  :iView(a)
+GMSH_SkinPlugin::GMSH_SkinPlugin()
 {
 }
 
