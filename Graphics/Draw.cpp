@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.42 2003-03-26 16:57:07 geuzaine Exp $
+// $Id: Draw.cpp,v 1.43 2003-03-26 20:14:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Draw.h"
 #include "Context.h"
 #include "MinMax.h"
+#include "Numeric.h"
 
 extern Context_T CTX;
 extern Mesh M;
@@ -138,15 +139,16 @@ void Orthogonalize(int x, int y)
 
   // We should have a look at how the scaling is done in "real" opengl
   // applications (I guess they normalize the scene to fit in a 1x1x1
-  // box or something...):
+  // box or something...). Here, we set up a large box around the
+  // object, so that if we zoom a lot the resolution of the depth
+  // buffer might become insufficient...
   if(CTX.ortho) {
-    // Warning: for large s (i.e. big zooms) the PolygonOffset will
-    // degrade...
-    double clip = CTX.s[2] * 10;
-    glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, 0, clip * CTX.lc);
+    double maxz = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
+    if(maxz < CTX.lc) maxz = CTX.lc;
+    double clip = maxz * CTX.s[2] * 10;
+    glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, -clip, clip);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslated(0.0, 0.0, -clip/2 * CTX.lc);
   }
   else {
     glFrustum(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, CTX.lc,
