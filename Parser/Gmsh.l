@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.54 2004-02-28 00:48:50 geuzaine Exp $
+// $Id: Gmsh.l,v 1.55 2004-03-03 22:23:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@
 #include "CAD.h"
 #include "Gmsh.tab.hpp"
 
-char   TmpString[1024];
 int    yywhere = INFILE;
 int    yylineno = 1;
 
@@ -322,11 +321,11 @@ solid        {skipline();return tSolid;}
 
 int yywrap() {return 1;}
 
-void skipcomments(void) {
+void skipcomments(void){
   int c;
 
   while (1) {
-    while ((c=yyinput()) != '*'){
+    while ((c = yyinput()) != '*'){
       if(c == EOF){
         Msg(GERROR, "End of file in commented region");
         return;
@@ -340,15 +339,20 @@ void skipcomments(void) {
 
 void parsestring(char endchar){
   int c, i;
+  char tmp[1024];
 
-  c = yyinput();
   i = 0;
-  while (c != endchar) {
-    TmpString[i++] = c;
-    c = yyinput();
+  while ((c = yyinput()) != endchar) {
+    if(c == EOF){
+      Msg(GERROR, "End of file in string");
+      break;
+    }
+    else{
+      tmp[i++] = (char)c;
+    }
   }
-  TmpString[i++] = '\0';
-  yylval.c = strsave(TmpString);
+  tmp[i] = '\0';
+  yylval.c = strsave(tmp);
 }
 
 char *strsave(char *ptr){
@@ -356,7 +360,10 @@ char *strsave(char *ptr){
 }
 
 void skipline(void){
-   while (yyinput() != '\n');
+  int c;
+  while ((c = yyinput()) != '\n'){
+    if(c == EOF) return;
+  }
 }
 
 void skip_until(char *skip, char *until){
