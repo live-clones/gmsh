@@ -81,6 +81,7 @@ class GUI{
   // We keep the following widgets for easy further reference
 
   // menu window
+  int init_menu_window;
   Fl_Window        *m_window ;
   Fl_Menu_Bar      *m_menu_bar ;
   Fl_Choice        *m_module_butt ;
@@ -90,49 +91,58 @@ class GUI{
   Fl_Menu_Button   *m_popup_butt  [NB_BUTT_MAX] ;
 
   // graphic window
+  int init_graphic_window;
   Fl_Window        *g_window ;
   Opengl_Window    *g_opengl_window ;
   Fl_Button        *g_status_butt[7] ;
   Fl_Box           *g_status_label[3] ;
 
   // general options window
+  int init_general_options_window;
   Fl_Window        *gen_window ;
   Fl_Check_Button  *gen_butt[10] ;
   Fl_Value_Input   *gen_value[10] ;
 
   // geometry options window
+  int init_geometry_options_window;
   Fl_Window        *geo_window ;
   Fl_Check_Button  *geo_butt[10] ;
   Fl_Input         *geo_input ;
   Fl_Value_Input   *geo_value[10] ;
   
   // mesh options window
+  int init_mesh_options_window;
   Fl_Window        *mesh_window ;
   Fl_Check_Button  *mesh_butt[20] ;
   Fl_Input         *mesh_input ;
   Fl_Value_Input   *mesh_value[20] ;
 
   // post-processing options window
+  int init_post_options_window;
   Fl_Window        *post_window ;
   Fl_Check_Button  *post_butt[20] ;
   Fl_Value_Input   *post_value[20] ;
 
   // statistics window
+  int init_statistics_window;
   Fl_Window        *stat_window ;
   Fl_Output        *stat_value[50] ;
 
   // message window
+  int init_message_window;
   Fl_Window        *msg_window ;
   Fl_Browser       *msg_browser ;
 
   // help window
+  int init_help_window;
   Fl_Window        *help_window ;
     
   // about window
+  int init_about_window;
   Fl_Window        *about_window ;
 
   // view options window
-  int               view_number ;
+  int init_view_window, view_number ;
   Fl_Window        *view_window ;
   Fl_Group         *view_colors, *view_colorbar, *view_range, *view_intervals ;
   Fl_Group         *view_offsetraise, *view_timestep, *view_vector ;
@@ -142,10 +152,12 @@ class GUI{
   Colorbar_Window  *view_colorbar_window ;
   
   // geometry context window
+  int init_geometry_context_window;
   Fl_Window        *context_geometry_window ;
   Fl_Input         *context_geometry_input[30] ;
 
   // mesh context window
+  int init_mesh_context_window;
   Fl_Window        *context_mesh_window ;
   Fl_Input         *context_mesh_input[20] ;
 

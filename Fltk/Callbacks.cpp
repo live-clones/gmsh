@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.24 2001-02-03 13:10:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.25 2001-02-03 14:03:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -202,7 +202,7 @@ void status_play_cb(CALLBACK_ARGS){
   anim_time = GetTime();
   while(1){
     if(stop_anim) break ;
-    if(GetTime() - anim_time > CTX.post.anim_delay){
+    if(GetTime() - anim_time > 1.e6*CTX.post.anim_delay){
       anim_time = GetTime();
       MarkAllViewsChanged(2);
       Draw();
@@ -505,7 +505,7 @@ void opt_post_smooth_cb(CALLBACK_ARGS) {
   CTX.post.smooth = !CTX.post.smooth;
 }
 void opt_post_anim_delay_cb(CALLBACK_ARGS) {
-  CTX.post.anim_delay = (long)(1.e6*((Fl_Value_Input*)w)->value());
+  CTX.post.anim_delay = ((Fl_Value_Input*)w)->value();
 }
 
 // Option Statistics Menu

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.7 2001-01-29 08:43:45 geuzaine Exp $
+// $Id: Main.cpp,v 1.8 2001-02-03 14:03:46 geuzaine Exp $
 
 #include <signal.h>
 
@@ -109,10 +109,11 @@ int main(int argc, char *argv[]){
 
   /* Text for about window */
 
-  sprintf(TextAbout, "%s\n \n%s%.2f\n%s\n%s\n%s\n%s\n%s\n%s\n \n%s\n \n"
+  sprintf(TextAbout, "%s\n \n%s%.2f\n%s\n%s%s\n%s\n%s\n%s\n%s\n%s\n \n%s\n \n"
           "Type 'gmsh -help' for command line options",
           gmsh_progname, gmsh_version, GMSH_VERSION, 
-          gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
+          gmsh_os, gmsh_gui, XmVERSION_STRING, 
+	  gmsh_date, gmsh_host, gmsh_packager, 
           gmsh_url, gmsh_email, gmsh_copyright);
   
   /* Xlib Threads init */

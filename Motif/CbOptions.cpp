@@ -1,4 +1,4 @@
-// $Id: CbOptions.cpp,v 1.4 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: CbOptions.cpp,v 1.5 2001-02-03 14:03:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -323,7 +323,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
         if(stop_anim) break ;
       }
       else{
-        if(GetTime() - anim_time > CTX.post.anim_delay){
+        if(GetTime() - anim_time > 1.e6*CTX.post.anim_delay){
           anim_time = GetTime();
           MarkAllViewsChanged(2);
           Draw();
@@ -338,7 +338,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     break ;
   case OPTIONS_POST_ANIM_DELAY: 
     XmScaleGetValue(WID.OD.postAnimScale, &e);
-    CTX.post.anim_delay = (long)(1.e5*e) ; 
+    CTX.post.anim_delay = e ; 
     break ;
 
     /* mesh + geom : a changer...*/

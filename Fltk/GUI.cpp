@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.32 2001-02-03 13:10:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.33 2001-02-03 14:03:46 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -279,15 +279,15 @@ int GUI::global_shortcuts(int event){
     return 1;
   }
   else if(Fl::test_shortcut('s')){
-    CTX.post.anim_delay += 100000 ;
-    post_value[0]->value(1.e-6*CTX.post.anim_delay);
+    CTX.post.anim_delay += 0.01 ;
+    post_value[0]->value(CTX.post.anim_delay);
     post_value[0]->redraw();
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT+'s')){
-    CTX.post.anim_delay -= 100000 ;
-    if(CTX.post.anim_delay < 0) CTX.post.anim_delay = 0 ;
-    post_value[0]->value(1.e-6*CTX.post.anim_delay);
+    CTX.post.anim_delay -= 0.01 ;
+    if(CTX.post.anim_delay < 0.) CTX.post.anim_delay = 0. ;
+    post_value[0]->value(CTX.post.anim_delay);
     post_value[0]->redraw();
     return 1;
   }
@@ -442,12 +442,14 @@ int GUI::global_shortcuts(int event){
   else if(Fl::test_shortcut(FL_ALT+'t')){
     MarkAllViewsChanged(1);
     Post_View *v = (Post_View*)List_Pointer(Post_ViewList, view_number);
-    view_butt[6]->value(v->IntervalsType==DRAW_POST_ISO);
-    view_butt[6]->redraw();
-    view_butt[7]->value(v->IntervalsType==DRAW_POST_DISCRETE);
-    view_butt[7]->redraw();
-    view_butt[8]->value(v->IntervalsType==DRAW_POST_CONTINUOUS);
-    view_butt[8]->redraw();
+    if(init_view_window){
+      view_butt[6]->value(v->IntervalsType==DRAW_POST_ISO);
+      view_butt[6]->redraw();
+      view_butt[7]->value(v->IntervalsType==DRAW_POST_DISCRETE);
+      view_butt[7]->redraw();
+      view_butt[8]->value(v->IntervalsType==DRAW_POST_CONTINUOUS);
+      view_butt[8]->redraw();
+    }
     redraw_opengl();
     return 1;
   }
@@ -467,6 +469,19 @@ GUI::GUI(int argc, char **argv) {
   BH = 2*CTX.fontsize+2; // button height
   WB = CTX.fontsize-6; // window border
 
+  init_menu_window = 0;
+  init_graphic_window = 0;
+  init_general_options_window = 0;
+  init_geometry_options_window = 0;
+  init_mesh_options_window = 0;
+  init_post_options_window = 0;
+  init_statistics_window = 0;
+  init_message_window = 0;
+  init_help_window = 0;
+  init_about_window = 0;
+  init_view_window = 0;
+  init_geometry_context_window = 0;
+  init_mesh_context_window = 0;
 
   if(strlen(CTX.display)) Fl::display(CTX.display);
 
@@ -527,7 +542,6 @@ void GUI::check(){
 //********************************* Create the menu window *****************************
 
 void GUI::create_menu_window(int argc, char **argv){
-  static int init_menu_window = 0;
   int i, y;
 
   if(!init_menu_window){
@@ -719,7 +733,6 @@ int GUI::get_context(){
 //******************************** Create the graphic window ***************************
 
 void GUI::create_graphic_window(int argc, char **argv){
-  static int init_graphic_window = 0;
   int i, x;
 
   if(!init_graphic_window){
@@ -868,7 +881,6 @@ void GUI::redraw_overlay(){
 //************************ Create the window for general options ***********************
 
 void GUI::create_general_options_window(){
-  static int init_general_options_window = 0;
   int i;
 
   if(!init_general_options_window){
@@ -1002,7 +1014,6 @@ void GUI::create_general_options_window(){
 //************************ Create the window for geometry options **********************
 
 void GUI::create_geometry_options_window(){
-  static int init_geometry_options_window = 0;
   int i;
 
   if(!init_geometry_options_window){
@@ -1106,7 +1117,6 @@ void GUI::create_geometry_options_window(){
 //****************************** Create the window for mesh options ********************
 
 void GUI::create_mesh_options_window(){
-  static int init_mesh_options_window = 0;
   int i;
 
   if(!init_mesh_options_window){
@@ -1272,7 +1282,6 @@ void GUI::create_mesh_options_window(){
 //******************** Create the window for post-processing options *******************
 
 void GUI::create_post_options_window(){
-  static int init_post_options_window = 0;
   int i;
 
   if(!init_post_options_window){
@@ -1326,7 +1335,7 @@ void GUI::create_post_options_window(){
 	post_value[0]->maximum(10); 
 	post_value[0]->step(0.01);
 	post_value[0]->callback(opt_post_anim_delay_cb);
-	post_value[0]->value(1.e-6*CTX.post.anim_delay);
+	post_value[0]->value(CTX.post.anim_delay);
 	post_value[0]->labelsize(CTX.fontsize);
 	post_value[0]->type(FL_HORIZONTAL);
 	post_value[0]->align(FL_ALIGN_RIGHT);
@@ -1364,7 +1373,6 @@ void GUI::create_post_options_window(){
 //*********************** Create the window for the statistics *************************
 
 void GUI::create_statistics_window(){
-  static int init_statistics_window = 0;
   int i;
 
   if(!init_statistics_window){
@@ -1520,7 +1528,6 @@ void GUI::set_statistics(){
 //********************** Create the window for the messages ****************************
 
 void GUI::create_message_window(){
-  static int init_message_window = 0;
 
   if(!init_message_window){
     init_message_window = 1 ;
@@ -1587,7 +1594,6 @@ void GUI::save_message(char *name){
 #include "Help.h"
 
 void GUI::create_help_window(){
-  static int init_help_window = 0;
 
   if(!init_help_window){
     init_help_window = 1 ;
@@ -1634,7 +1640,6 @@ void GUI::create_help_window(){
 //******************************* Create the about window ******************************
 
 void GUI::create_about_window(){
-  static int init_about_window = 0;
 
   if(!init_about_window){
     init_about_window = 1 ;
@@ -1652,10 +1657,11 @@ void GUI::create_about_window(){
 
     Fl_Button *o2 = new Fl_Button(WB+80, WB, width-2*WB-80, height-2*WB);
     static char buffer[1024];
-    sprintf(buffer, "%s\n\n%s%.2f\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s"
+    sprintf(buffer, "%s\n\n%s%.2f\n%s\n%sFLTK %d.%d.%d\n%s\n%s\n%s\n%s\n%s\n\n%s"
 	    "\n\nType 'gmsh -help' for command line options",
-	    gmsh_progname, gmsh_version, GMSH_VERSION, 
-	    gmsh_os, gmsh_date, gmsh_host, gmsh_packager, 
+	    gmsh_progname, gmsh_version, GMSH_VERSION, gmsh_os, 
+	    gmsh_gui, FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION, 
+	    gmsh_date, gmsh_host, gmsh_packager, 
 	    gmsh_url, gmsh_email, gmsh_copyright);
     o2->label(buffer);
     o2->box(FL_FLAT_BOX);
@@ -1681,7 +1687,6 @@ void GUI::create_about_window(){
 //************************* Create the window for view options *************************
 
 void GUI::create_view_window(int num){
-  static int init_view_window = 0;
   int i;
 
   if(!init_view_window){
@@ -2002,7 +2007,6 @@ void GUI::activate_custom(int val){
 //*************** Create the window for geometry context dependant definitions *********
 
 void GUI::create_geometry_context_window(int num){
-  static int init_geometry_context_window = 0;
   static Fl_Group *g[10];
   int i;
 
@@ -2211,7 +2215,6 @@ char *GUI::get_geometry_symmetry(int num){//a, b, c, d
 //************** Create the window for mesh context dependant definitions **************
 
 void GUI::create_mesh_context_window(int num){
-  static int init_mesh_context_window = 0;
   static Fl_Group *g[10];
   int i;
 

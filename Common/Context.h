@@ -162,8 +162,8 @@ public :
   struct{
     int draw, scales, link ;
     int smooth ;
-    int  initial_visibility, initial_nbiso, initial_intervals ;
-    long anim_delay, nb_views ;
+    int  initial_visibility, initial_nbiso, initial_intervals, nb_views ;
+    double anim_delay ;
   }post;
 
   // print options 

@@ -1,4 +1,4 @@
-// $Id: CbInput.cpp,v 1.4 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: CbInput.cpp,v 1.5 2001-02-03 14:03:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -25,7 +25,6 @@ void KeyboardAccel(XEvent *event){
   XComposeStatus  stat;
   KeySym          keysym;
   char            buf[100];
-  double          delay ;
 
   XLookupString(&event->xkey, buf, sizeof(buf), &keysym, &stat);
 
@@ -85,16 +84,14 @@ void KeyboardAccel(XEvent *event){
 
       /* post shortcuts */
     case XK_s: 
-      CTX.post.anim_delay += 100000 ;
-      delay = CTX.post.anim_delay / 1.e6 ;
-      XtVaSetValues(WID.OD.postAnimScale, XmNvalue, (int)(10*delay), NULL);
+      CTX.post.anim_delay += 0.01 ;
+      XtVaSetValues(WID.OD.postAnimScale, XmNvalue, (int)(CTX.post.anim_delay), NULL);
       XmUpdateDisplay(WID.OD.postAnimScale);
       break ;
     case XK_S: 
-      CTX.post.anim_delay -= 100000 ;
-      if(CTX.post.anim_delay < 0) CTX.post.anim_delay = 0 ;
-      delay = CTX.post.anim_delay / 1.e6 ;
-      XtVaSetValues(WID.OD.postAnimScale, XmNvalue, (int)(10*delay), NULL);
+      CTX.post.anim_delay -= 0.01 ;
+      if(CTX.post.anim_delay < 0.) CTX.post.anim_delay = 0. ;
+      XtVaSetValues(WID.OD.postAnimScale, XmNvalue, (int)(CTX.post.anim_delay), NULL);
       XmUpdateDisplay(WID.OD.postAnimScale);
       break ;
 

@@ -1,4 +1,4 @@
-// $Id: Widgets.cpp,v 1.1 2001-01-08 08:20:11 geuzaine Exp $
+// $Id: Widgets.cpp,v 1.2 2001-02-03 14:03:46 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1238,10 +1238,10 @@ void CreateWidgets_OD(Widgets_T *w){
 
   i=0;
   XtSetArg(arg[i], XmNminimum, 0); i++;
-  XtSetArg(arg[i], XmNmaximum, 100); i++;
+  XtSetArg(arg[i], XmNmaximum, 10); i++;
   XtSetArg(arg[i], XmNdecimalPoints, 1); i++;
   XtSetArg(arg[i], XmNshowValue, True); i++;
-  XtSetArg(arg[i], XmNvalue, CTX.post.anim_delay/1.e5); i++;
+  XtSetArg(arg[i], XmNvalue, CTX.post.anim_delay); i++;
   XtSetArg(arg[i], XmNorientation, XmHORIZONTAL); i++;
   w->OD.postAnimScale = XmCreateScale(w->OD.postAnimFrameRowCol, "ODpostAnimScale", arg, i);
   XtManageChild(w->OD.postAnimScale);

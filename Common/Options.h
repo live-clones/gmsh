@@ -201,7 +201,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { "Visibility"       , GMSH_INT,    (void*)&CTX.post.initial_visibility , 1. }, 
   { "IntervalsMode"    , GMSH_INT,    (void*)&CTX.post.initial_intervals  , DRAW_POST_ISO }, 
   { "IntervalsNumber"  , GMSH_INT,    (void*)&CTX.post.initial_nbiso      , 15. }, 
-  { "AnimationDelay"   , GMSH_INT,    (void*)&CTX.post.anim_delay         , 0. }, 
+  { "AnimationDelay"   , GMSH_DOUBLE, (void*)&CTX.post.anim_delay         , 0.25 }, 
   { "NbViews"          , GMSH_INT,    (void*)&CTX.post.nb_views           , 0. }, 
   { NULL               , GMSH_DOUBLE, NULL , 0. }
 } ;

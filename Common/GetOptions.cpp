@@ -1,6 +1,7 @@
-// $Id: GetOptions.cpp,v 1.6 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.7 2001-02-03 14:03:46 geuzaine Exp $
 
 #include "Gmsh.h"
+#include "GmshUI.h"
 #include "GmshVersion.h"
 #include "Const.h"
 #include "Context.h"
@@ -19,12 +20,14 @@ char gmsh_progname[]  = "This is Gmsh" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2001 J.-F. Remacle, C. Geuzaine";
 char gmsh_version[]   = "Version          : " ;
 char gmsh_os[]        = "Operating System : " GMSH_OS ;
+char gmsh_gui[]       = "GUI toolkit      : " ;
 char gmsh_date[]      = "Build Date       : " GMSH_DATE ;
 char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
 char gmsh_url[]       = "URL              : http://www.geuz.org/gmsh/" ;
 char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
                         "                   Remacle@scorec.rpi.edu" ;
+
 char gmsh_options[]   =
   "Usage: %s [options] [files]\n"
   "Geometry options:\n"
@@ -255,6 +258,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
               !strcmp(argv[i]+1, "-info")){
         fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
         fprintf(stderr, "%s\n", gmsh_os);
+#if _XMOTIF
+        fprintf(stderr, "%s%s\n", gmsh_gui, XmVERSION_STRING);
+#elif _FLTK
+        fprintf(stderr, "%sFLTK %d.%d.%d\n", gmsh_gui, FL_MAJOR_VERSION, 
+		FL_MINOR_VERSION, FL_PATCH_VERSION);
+#else
+        fprintf(stderr, "%snone\n", gmsh_gui);
+#endif
         fprintf(stderr, "%s\n", gmsh_date);
         fprintf(stderr, "%s\n", gmsh_host);
         fprintf(stderr, "%s\n", gmsh_packager);
