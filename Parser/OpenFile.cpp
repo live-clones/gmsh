@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.59 2004-06-17 21:16:58 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.60 2004-07-02 20:48:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -124,6 +124,7 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
     yyparse();
     if(yyerrorstate > 20){
       Msg(GERROR, "Too many errors: aborting...");
+      force_yyflush();
       break;
     }
   }

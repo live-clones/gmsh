@@ -33,6 +33,7 @@ extern Tree_T *Symbol_T;
 
 int yyparse (void);
 int yylex ();
+void force_yyflush();
 
 extern FILE *yyin;
 extern int yylineno;

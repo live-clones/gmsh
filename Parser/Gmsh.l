@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.56 2004-05-30 21:21:41 geuzaine Exp $
+// $Id: Gmsh.l,v 1.57 2004-07-02 20:48:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -421,3 +421,4 @@ void skip_until(char *skip, char *until){
   }
 }
 
+void force_yyflush() { YY_FLUSH_BUFFER; }
