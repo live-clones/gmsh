@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.8 2003-03-02 05:26:29 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.9 2003-03-03 23:47:32 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -49,8 +49,8 @@ int check_gsl()
   if(major < 1 || (major == 1 && minor < 2)) {
     Msg(FATAL1, "Your GSL version (%d.%d.X) has a bug in the singular value",
         major, minor);
-    Msg(FATAL3,
-        "decomposition code. Please upgrade to version 1.2 or above.");
+    Msg(FATAL2, "decomposition code. Please upgrade to version 1.2 or above.");
+    Msg(FATAL3, "You can download the GSL from http://sources.redhat.com/gsl/");
     return 0;
   }
   // set new error handler
