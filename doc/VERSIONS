@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.277 2004-12-22 23:10:19 geuzaine Exp $
+$Id: VERSIONS,v 1.278 2004-12-23 03:19:58 geuzaine Exp $
+
+New since 1.57: new File->Rename menu;
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored

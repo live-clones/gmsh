@@ -46,6 +46,7 @@ void status_cancel_cb(CALLBACK_ARGS) ;
 void file_new_cb(CALLBACK_ARGS) ;
 void file_open_cb(CALLBACK_ARGS) ;
 void file_merge_cb(CALLBACK_ARGS) ;
+void file_rename_cb(CALLBACK_ARGS) ;
 void file_save_as_cb(CALLBACK_ARGS) ;
 void file_save_as_auto_cb(CALLBACK_ARGS) ;
 void file_save_as_geo_cb(CALLBACK_ARGS) ;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.387 2004-12-07 04:52:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.388 2004-12-23 03:19:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -81,6 +81,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"M&erge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0, FL_MENU_DIVIDER},
     {"Sa&ve mesh",  FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save &as...", FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
@@ -114,6 +115,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",   FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0, FL_MENU_DIVIDER},
+    {"Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0, FL_MENU_DIVIDER},
     {"Save Mesh",  FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save As...", FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0},
     {0},

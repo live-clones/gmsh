@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.305 2004-12-22 16:43:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.306 2004-12-23 03:19:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -771,6 +771,28 @@ test:
   patindex = file_chooser_get_filter();
 }
 
+void file_rename_cb(CALLBACK_ARGS)
+{
+test:
+  if(file_chooser(0, 1, "Rename current project file", "*", 0, CTX.filename)) {
+    char *name = file_chooser_get_name(1);
+    if(CTX.confirm_overwrite) {
+      struct stat buf;
+      if(!stat(name, &buf))
+        if(fl_ask("%s already exists.\nDo you want to replace it?", name))
+          goto save;
+        else
+          goto test;
+    }
+  save:
+    if(rename(CTX.filename, name) == -1)
+      Msg(GERROR, "Unable to rename file '%s'", CTX.filename);
+    else
+      OpenProblem(name);
+    Draw();
+  }
+}
+
 void file_quit_cb(CALLBACK_ARGS)
 {
   Exit(0);
@@ -1485,6 +1507,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+p       show general post-processing options");
   Msg(DIRECT, "  Alt+Shift+p   hide/show mesh points");
   Msg(DIRECT, "  "XX"+q        quit");
+  Msg(DIRECT, "  "XX"+r        rename current project file");
   Msg(DIRECT, "  Alt+s         hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+Shift+s   hide/show mesh surfaces");
   Msg(DIRECT, "  "XX"+s        save mesh in default format");
