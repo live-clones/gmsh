@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.46 2004-12-28 23:59:48 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.47 2004-12-29 17:48:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -66,18 +66,57 @@ void Draw(void)
   WID->redraw_opengl();
 }
 
-void Draw_String(char *s)
+void Draw_String(char *s, char *font_name, int font_enum, int font_size, int align)
 {
+  if(align > 0){
+    // change the raster position only if not creating TeX files
+    if(CTX.print.gl_fonts || (CTX.print.format != FORMAT_TEX)){
+      GLboolean valid;
+      glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+      if(valid == GL_TRUE){
+	GLfloat pos[4];
+	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+	gl_font(font_enum, font_size);
+	float width = gl_width(s);
+	if(align == 1) // center
+	  glRasterPos2d(pos[0]-width/2., pos[1]);
+	else if(align == 2) // right
+	  glRasterPos2d(pos[0]-width, pos[1]);
+      }
+    }
+  }
+  
   if(CTX.print.gl_fonts) {
-    gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+    gl_font(font_enum, font_size);
     gl_draw(s);
   }
-  else {        // ps or *tex output
+  else { // ps, pdf or *tex output
     if(CTX.print.format == FORMAT_JPEGTEX ||
        CTX.print.format == FORMAT_PNGTEX)
       return;
-    gl2psText(s, CTX.gl_font, CTX.gl_fontsize);
+    if(CTX.print.format == FORMAT_TEX)
+      gl2psTextOpt(s, font_name, font_size, 
+		   (align == 0) ? GL2PS_TEXT_BL :
+		   (align == 1) ? GL2PS_TEXT_B :
+		   GL2PS_TEXT_BR, 0.);
+    else
+      gl2psText(s, font_name, font_size);
   }
+}
+
+void Draw_String(char *s)
+{
+  Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 0);
+}
+
+void Draw_String_Center(char *s)
+{
+  Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 1);
+}
+
+void Draw_String_Right(char *s)
+{
+  Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 2);
 }
 
 void Draw_String(char *s, double style)
@@ -86,42 +125,16 @@ void Draw_String(char *s, double style)
 
   if(!bits){ // use defaults
     Draw_String(s);
-    return;
   }
-
-  int size = (bits & 0xff);
-  int font = (bits>>8 & 0xff);
-  int align = (bits>>16 & 0xff);
-  
-  int oldsize = CTX.gl_fontsize;
-  int oldfont_enum = CTX.gl_font_enum;
-  char * oldfont = CTX.gl_font;
-  
-  CTX.gl_font_enum = GetFontEnum(font);
-  CTX.gl_font = GetFontName(font);
-  if(size)
-    CTX.gl_fontsize = size;
-  if(align > 0){
-    GLboolean valid;
-    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-    if(valid == GL_TRUE){
-      GLfloat pos[4];
-      glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-      gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
-      float width = gl_width(s);
-      if(align == 1) // center
-	glRasterPos2d(pos[0]-width/2., pos[1]);
-      else if(align == 2) // right
-	glRasterPos2d(pos[0]-width, pos[1]);
-    }
+  else{
+    int size = (bits & 0xff);
+    int font = (bits>>8 & 0xff);
+    int align = (bits>>16 & 0xff);
+    int font_enum = GetFontEnum(font);
+    char *font_name = GetFontName(font);
+    if(!size) size = CTX.gl_fontsize;
+    Draw_String(s, font_name, font_enum, size, align);
   }
-
-  Draw_String(s);
-  
-  CTX.gl_font_enum = oldfont_enum;
-  CTX.gl_font = oldfont;
-  if(size)
-    CTX.gl_fontsize = oldsize;
 }
 
 void Draw_OnScreenMessages()

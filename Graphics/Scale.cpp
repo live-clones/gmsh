@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.53 2004-11-25 02:10:32 geuzaine Exp $
+// $Id: Scale.cpp,v 1.54 2004-12-29 17:48:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -182,42 +182,55 @@ void draw_scale(Post_View * v,
     if(v->IntervalsType == DRAW_POST_DISCRETE ||
        v->IntervalsType == DRAW_POST_CONTINUOUS) {
       sprintf(label, v->Format, ValMin);
-      if(horizontal)
-	glRasterPos2d(xmin - gl_width(label)/2., ymin + height + tic);
-      else
+      if(horizontal){
+	glRasterPos2d(xmin, ymin + height + tic);
+	Draw_String_Center(label);
+      }
+      else{
 	glRasterPos2d(xmin + width + tic, ymin - font_a / 3.);
-      Draw_String(label);
-
+	Draw_String(label);
+      }
       sprintf(label, v->Format, ValMax);
-      if(horizontal)
-	glRasterPos2d(xmin + width - gl_width(label)/2., ymin + height + tic);
-      else
+      if(horizontal){
+	glRasterPos2d(xmin + width, ymin + height + tic);
+	Draw_String_Center(label);
+      }
+      else{
 	glRasterPos2d(xmin + width + tic, ymin + height - font_a / 3.);
-      Draw_String(label);
+	Draw_String(label);
+      }
     }
     else {
       sprintf(label, v->Format, ValMin);
-      if(horizontal)
-	glRasterPos2d(xmin + (box / 2) - gl_width(label)/2., ymin + height + tic);
-      else
+      if(horizontal){
+	glRasterPos2d(xmin + (box / 2), ymin + height + tic);
+	Draw_String_Center(label);
+      }
+      else{
 	glRasterPos2d(xmin + width + tic, ymin + (box / 2) - font_a / 3.);
-      Draw_String(label);
-
+	Draw_String(label);
+      }
       sprintf(label, v->Format, ValMax);
-      if(horizontal)
-	glRasterPos2d(xmin + width - (box / 2) - gl_width(label)/2., ymin + height + tic);
-      else
+      if(horizontal){
+	glRasterPos2d(xmin + width - (box / 2), ymin + height + tic);
+	Draw_String_Center(label);
+      }
+      else{
 	glRasterPos2d(xmin + width + tic, ymin + height - (box / 2) - font_a / 3.);
-      Draw_String(label);
+	Draw_String(label);
+      }
     }
     if(nbv == -2){
       double Val = v->GVFI(ValMin, ValMax, v->NbIso, v->NbIso/2);
       sprintf(label, v->Format, Val);
-      if(horizontal)
-	glRasterPos2d(xmin + width/2. - gl_width(label)/2., ymin + height + tic);
-      else
+      if(horizontal){
+	glRasterPos2d(xmin + width/2., ymin + height + tic);
+	Draw_String_Center(label);
+      }
+      else{
 	glRasterPos2d(xmin + width + tic, ymin + height/2 - font_a / 3.);
-      Draw_String(label);
+	Draw_String(label);
+      }
     }
   }
   else {
@@ -226,23 +239,28 @@ void draw_scale(Post_View * v,
       for(int i = 0; i < nbv + 1; i++) {
         double Val = v->GVFI(ValMin, ValMax, nbv + 1, i);
         sprintf(label, v->Format, Val);
-	if(horizontal)
-	  glRasterPos2d(xmin + i * cv_box - gl_width(label) / 2., ymin + height + tic);
-	else
+	if(horizontal){
+	  glRasterPos2d(xmin + i * cv_box, ymin + height + tic);
+	  Draw_String_Center(label);
+	}
+	else{
 	  glRasterPos2d(xmin + width + tic, ymin + i * cv_box - font_a / 3.);
-        Draw_String(label);
+	  Draw_String(label);
+	}
       }
     }
     else {
       for(int i = 0; i < nbv; i++) {
         double Val = v->GVFI(ValMin, ValMax, nbv, i);
         sprintf(label, v->Format, Val);
-	if(horizontal)
-	  glRasterPos2d(xmin + (2 * i + 1) * (cv_box / 2) - gl_width(label) / 2., 
-			ymin + height + tic);
-	else
+	if(horizontal){
+	  glRasterPos2d(xmin + (2 * i + 1) * (cv_box / 2), ymin + height + tic);
+	  Draw_String_Center(label);
+	}
+	else{
 	  glRasterPos2d(xmin + width + tic, ymin + (2 * i + 1) * (cv_box / 2) - font_a / 3.);
-        Draw_String(label);
+	  Draw_String(label);
+	}
       }
     }
   }
@@ -255,12 +273,14 @@ void draw_scale(Post_View * v,
   else
     sprintf(label, "%s", v->Name);
 
-  if(horizontal)
-    glRasterPos2d(xmin + width / 2. - gl_width(label) / 2., ymin + height + tic + 1.4*font_h);
-  else
+  if(horizontal){
+    glRasterPos2d(xmin + width / 2., ymin + height + tic + 1.4*font_h);
+    Draw_String_Center(label);
+  }
+  else{
     glRasterPos2d(xmin, ymin - 2 * font_h);
-
-  Draw_String(label);
+    Draw_String(label);
+  }
 }
 
 void Draw_Scales(void)

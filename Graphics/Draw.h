@@ -61,6 +61,8 @@ void Draw(void);
 
 void Draw_String(char *s);
 void Draw_String(char *s, double style);
+void Draw_String_Center(char *s);
+void Draw_String_Right(char *s);
 void Draw_Geom(Mesh *m);
 void Draw_Post(void);
 void Draw_Graph2D(void);
