@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.28 2001-08-13 18:38:55 geuzaine Exp $
+// $Id: CAD.cpp,v 1.29 2001-08-14 15:09:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -504,7 +504,10 @@ Vertex *DuplicateVertex (Vertex *v){
 void CopyCurve (Curve *c, Curve *cc){
   int i,j;
   cc->Typ = c->Typ;
-  cc->Method = c->Method;
+  //We should not copy the meshing method : if the meshes are to
+  //be copied, the meshing algorithm will take care of it
+  //(e.g. ExtrudeMesh()).
+  //cc->Method = c->Method; 
   for(i=0;i<4;i++)cc->ipar[i] = c->ipar[i];
   for(i=0;i<4;i++)cc->dpar[i] = c->dpar[i];
   cc->l = c->l;
@@ -540,7 +543,10 @@ void CopySurface (Surface *s, Surface *ss){
   int i,j;
   ss->Typ = s->Typ;
   ss->Mat = s->Mat;
-  ss->Method = s->Method;
+  //We should not copy the meshing method: if the meshes are to
+  //be copied, the meshing algorithm will take care of it
+  //(e.g. ExtrudeMesh()).
+  //ss->Method = s->Method;
   ss->Recombine = s->Recombine;
   ss->RecombineAngle = s->RecombineAngle;
   for(i=0;i<4;i++)ss->ipar[i] = s->ipar[i];
