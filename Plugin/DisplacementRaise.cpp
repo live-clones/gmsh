@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.15 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.16 2004-07-05 15:20:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -125,6 +125,12 @@ static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm,
       x[k] += factor * val[3 * nbNod * dTimeStep + 3 * k];
       y[k] += factor * val[3 * nbNod * dTimeStep + 3 * k + 1];
       z[k] += factor * val[3 * nbNod * dTimeStep + 3 * k + 2];
+      if(x[k] < iView->BBox[0]) iView->BBox[0] = x[k];
+      if(x[k] > iView->BBox[1]) iView->BBox[1] = x[k];
+      if(y[k] < iView->BBox[2]) iView->BBox[2] = y[k];
+      if(y[k] > iView->BBox[3]) iView->BBox[3] = y[k];
+      if(z[k] < iView->BBox[4]) iView->BBox[4] = z[k];
+      if(z[k] > iView->BBox[5]) iView->BBox[5] = z[k];
     }
   }
 
@@ -132,6 +138,11 @@ static void displacementRaiseList(Post_View * iView, List_T * iList, int iNbElm,
 
 static void displacementRaise(Post_View * v, Post_View * w, double factor, int ts)
 {
+  for(int i = 0; i < 3; i++) {
+    v->BBox[2 * i] = VAL_INF;
+    v->BBox[2 * i + 1] = -VAL_INF;
+  }
+
   displacementRaiseList(v, v->SP, v->NbSP, w, w->VP, w->NbVP, 1, factor, ts);
   displacementRaiseList(v, v->SL, v->NbSL, w, w->VL, w->NbVL, 2, factor, ts);
   displacementRaiseList(v, v->ST, v->NbST, w, w->VT, w->NbVT, 3, factor, ts);

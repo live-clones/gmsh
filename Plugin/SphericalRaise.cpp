@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.17 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.18 2004-07-05 15:20:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -130,6 +130,12 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
       x[j] += coef * d[0];
       y[j] += coef * d[1];
       z[j] += coef * d[2];
+      if(x[j] < v->BBox[0]) v->BBox[0] = x[j];
+      if(x[j] > v->BBox[1]) v->BBox[1] = x[j];
+      if(y[j] < v->BBox[2]) v->BBox[2] = y[j];
+      if(y[j] > v->BBox[3]) v->BBox[3] = y[j];
+      if(z[j] < v->BBox[4]) v->BBox[4] = z[j];
+      if(z[j] > v->BBox[5]) v->BBox[5] = z[j];
     }
   }
 }
@@ -137,6 +143,10 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
 static void sphericalRaise(Post_View * v, int timeStep, double center[3], 
 			   double raise)
 {
+  for(int i = 0; i < 3; i++) {
+    v->BBox[2 * i] = VAL_INF;
+    v->BBox[2 * i + 1] = -VAL_INF;
+  }
   sphericalRaiseList(v, v->SP, v->NbSP, 1, timeStep, center, raise);
   sphericalRaiseList(v, v->SL, v->NbSL, 2, timeStep, center, raise);
   sphericalRaiseList(v, v->ST, v->NbST, 3, timeStep, center, raise);

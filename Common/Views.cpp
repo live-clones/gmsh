@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.124 2004-06-16 17:57:07 geuzaine Exp $
+// $Id: Views.cpp,v 1.125 2004-07-05 15:20:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -285,18 +285,12 @@ void Stat_Element(Post_View * v, int type, int nbnod, int N,
   }
 
   for(i = 0; i < nbnod; i++) {
-    if(X[i] < v->BBox[0])
-      v->BBox[0] = X[i];
-    if(X[i] > v->BBox[1])
-      v->BBox[1] = X[i];
-    if(Y[i] < v->BBox[2])
-      v->BBox[2] = Y[i];
-    if(Y[i] > v->BBox[3])
-      v->BBox[3] = Y[i];
-    if(Z[i] < v->BBox[4])
-      v->BBox[4] = Z[i];
-    if(Z[i] > v->BBox[5])
-      v->BBox[5] = Z[i];
+    if(X[i] < v->BBox[0]) v->BBox[0] = X[i];
+    if(X[i] > v->BBox[1]) v->BBox[1] = X[i];
+    if(Y[i] < v->BBox[2]) v->BBox[2] = Y[i];
+    if(Y[i] > v->BBox[3]) v->BBox[3] = Y[i];
+    if(Z[i] < v->BBox[4]) v->BBox[4] = Z[i];
+    if(Z[i] > v->BBox[5]) v->BBox[5] = Z[i];
   }
 
   v->TextOnly = 0;
@@ -1333,7 +1327,7 @@ static void transform(double mat[3][3], double v[3],
   *z = mat[2][0] * v[0] + mat[2][1] * v[1] + mat[2][2] * v[2];
 }
 
-static void transform_list(List_T *list, int nbList, 
+static void transform_list(Post_View *view, List_T *list, int nbList, 
 			   int nbVert, double mat[3][3])
 {
   double *x, *y, *z, v[3];
@@ -1351,38 +1345,49 @@ static void transform_list(List_T *list, int nbList,
       v[1] = y[j];
       v[2] = z[j];
       transform(mat, v, &x[j], &y[j], &z[j]);
+      if(x[j] < view->BBox[0]) view->BBox[0] = x[j];
+      if(x[j] > view->BBox[1]) view->BBox[1] = x[j];
+      if(y[j] < view->BBox[2]) view->BBox[2] = y[j];
+      if(y[j] > view->BBox[3]) view->BBox[3] = y[j];
+      if(z[j] < view->BBox[4]) view->BBox[4] = z[j];
+      if(z[j] > view->BBox[5]) view->BBox[5] = z[j];
     }
   }
 }
 
 void Post_View::transform(double mat[3][3])
 {
-  transform_list(SP, NbSP, 1, mat);
-  transform_list(SL, NbSL, 2, mat);
-  transform_list(ST, NbST, 3, mat);
-  transform_list(SQ, NbSQ, 4, mat);
-  transform_list(SS, NbSS, 4, mat);
-  transform_list(SH, NbSH, 8, mat);
-  transform_list(SI, NbSI, 6, mat);
-  transform_list(SY, NbSY, 5, mat);
+  for(int i = 0; i < 3; i++) {
+    BBox[2 * i] = VAL_INF;
+    BBox[2 * i + 1] = -VAL_INF;
+  }
 
-  transform_list(VP, NbVP, 1, mat);
-  transform_list(VL, NbVL, 2, mat);
-  transform_list(VT, NbVT, 3, mat);
-  transform_list(VQ, NbVQ, 4, mat);
-  transform_list(VS, NbVS, 4, mat);
-  transform_list(VH, NbVH, 8, mat);
-  transform_list(VI, NbVI, 6, mat);
-  transform_list(VY, NbVY, 5, mat);
+  transform_list(this, SP, NbSP, 1, mat);
+  transform_list(this, SL, NbSL, 2, mat);
+  transform_list(this, ST, NbST, 3, mat);
+  transform_list(this, SQ, NbSQ, 4, mat);
+  transform_list(this, SS, NbSS, 4, mat);
+  transform_list(this, SH, NbSH, 8, mat);
+  transform_list(this, SI, NbSI, 6, mat);
+  transform_list(this, SY, NbSY, 5, mat);
 
-  transform_list(TP, NbTP, 1, mat);
-  transform_list(TL, NbTL, 2, mat);
-  transform_list(TT, NbTT, 3, mat);
-  transform_list(TQ, NbTQ, 4, mat);
-  transform_list(TS, NbTS, 4, mat);
-  transform_list(TH, NbTH, 8, mat);
-  transform_list(TI, NbTI, 6, mat);
-  transform_list(TY, NbTY, 5, mat);
+  transform_list(this, VP, NbVP, 1, mat);
+  transform_list(this, VL, NbVL, 2, mat);
+  transform_list(this, VT, NbVT, 3, mat);
+  transform_list(this, VQ, NbVQ, 4, mat);
+  transform_list(this, VS, NbVS, 4, mat);
+  transform_list(this, VH, NbVH, 8, mat);
+  transform_list(this, VI, NbVI, 6, mat);
+  transform_list(this, VY, NbVY, 5, mat);
+
+  transform_list(this, TP, NbTP, 1, mat);
+  transform_list(this, TL, NbTL, 2, mat);
+  transform_list(this, TT, NbTT, 3, mat);
+  transform_list(this, TQ, NbTQ, 4, mat);
+  transform_list(this, TS, NbTS, 4, mat);
+  transform_list(this, TH, NbTH, 8, mat);
+  transform_list(this, TI, NbTI, 6, mat);
+  transform_list(this, TY, NbTY, 5, mat);
 
   Changed = 1;
 }

@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.35 2004-05-17 18:04:54 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.36 2004-07-05 15:20:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -246,11 +246,9 @@ int Opengl_Window::handle(int event)
     }
     else {
       if(FirstClick) {
-        xc1 =
-          (((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin)
+        xc1 = (((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin)
           / CTX.s[0] - CTX.t[0];
-        yc1 =
-          (CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin))
+        yc1 = (CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin))
           / CTX.s[1] - CTX.t[1];
         xt1 = CTX.t[0];
         yt1 = CTX.t[1];
@@ -266,49 +264,32 @@ int Opengl_Window::handle(int event)
                             (2.0 * Fl::event_x() - w()) / w(),
                             (h() - 2.0 * Fl::event_y()) / h());
         else {
-          set_r(1,
-                CTX.r[1] +
-                ((abs(xmov) >
-                  abs(ymov)) ? 180 * (float)xmov / (float)w() : 0));
-          set_r(0,
-                CTX.r[0] +
-                ((abs(xmov) >
-                  abs(ymov)) ? 0 : 180 * (float)ymov / (float)h()));
+          set_r(1, CTX.r[1] + ((abs(xmov) > abs(ymov)) ?
+			       180 * (double)xmov / (double)w() : 0));
+          set_r(0, CTX.r[0] + ((abs(xmov) > abs(ymov)) ? 
+			       0 : 180 * (double)ymov / (double)h()));
         }
       }
       else if(ibut == 2 || (ibut == 1 && Fl::event_state(FL_SHIFT))) {
         if(!CTX.useTrackball)
-          set_r(2,
-                CTX.r[2] +
-                ((abs(ymov) >
-                  abs(xmov)) ? 0 : -180 * (float)xmov / (float)w()));
-        set_s(0,
-              CTX.s[0] *
-              ((abs(ymov) >
-                abs(xmov)) ? ((ymov >
-                               0) ? (float)(CTX.zoom_factor * (abs(ymov) +
-                                                               h())) /
-                              (float)h()
-                              : (float)(h()) / (float)(CTX.zoom_factor *
-                                                       (abs(ymov) + h())))
-               : 1.));
+          set_r(2, CTX.r[2] + ((abs(ymov) > abs(xmov)) ? 
+			       0 : -180 * (double)xmov / (double)w()));
+        set_s(0, CTX.s[0] * ((abs(ymov) > abs(xmov)) ? 
+			     ((ymov > 0) ? (double)(CTX.zoom_factor * (abs(ymov) + h())) /
+                              (double)h() : 
+			      (double)(h()) / (double)(CTX.zoom_factor * 
+						       (abs(ymov) + h()))) : 1.));
         set_s(1, CTX.s[0]);
         set_s(2, CTX.s[0]);
         if(abs(ymov) > abs(xmov)) {
-          set_t(0,
-                xt1 * (xscale1 / CTX.s[0]) - xc1 * (1. -
-                                                    (xscale1 / CTX.s[0])));
-          set_t(1,
-                yt1 * (yscale1 / CTX.s[1]) - yc1 * (1. -
-                                                    (yscale1 / CTX.s[1])));
+          set_t(0, xt1 * (xscale1 / CTX.s[0]) - xc1 * (1. - (xscale1 / CTX.s[0])));
+          set_t(1, yt1 * (yscale1 / CTX.s[1]) - yc1 * (1. - (yscale1 / CTX.s[1])));
         }
       }
       else {
-        xc =
-          (((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin)
+        xc = (((double)xpos / (double)w()) * (CTX.vxmax - CTX.vxmin) + CTX.vxmin)
           / CTX.s[0];
-        yc =
-          (CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin))
+        yc = (CTX.vymax - ((double)ypos / (double)h()) * (CTX.vymax - CTX.vymin))
           / CTX.s[1];
         set_t(0, xc - xc1);
         set_t(1, yc - yc1);

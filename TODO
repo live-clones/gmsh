@@ -1,4 +1,4 @@
-$Id: TODO,v 1.56 2004-07-02 16:34:00 geuzaine Exp $
+$Id: TODO,v 1.57 2004-07-05 15:20:06 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -10,6 +10,12 @@ normals...)
 ********************************************************************
 
 add ternary operator and <,>,<=,>=,== tests in MathEval
+
+********************************************************************
+
+On Macs, datasets with a bounding box < 1.e06 don't display properly
+(probably because all OpenGL stuff is done inetrnally in single
+precision...)
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.23 2004-06-24 07:13:18 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.24 2004-07-05 15:20:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -107,7 +107,7 @@ extern "C"
 void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
 		 int nbTimeStep, int nbComp)
 {
-  if(!nbIn)
+  if(nbIn < 3)
     return;
 
   List_T *points = List_Create(nbIn, 1, sizeof(Vertex *));
@@ -218,9 +218,6 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
     Msg(GERROR, "View[%d] does not exist", iView);
     return v;
   }
-
-  if(v->NbSP < 2 && v->NbVP < 2 && v->NbTP < 2)
-    return v;
 
   Post_View *v2 = BeginView(1);
   Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
