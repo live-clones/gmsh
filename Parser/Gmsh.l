@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.12 2000-12-07 08:46:27 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.13 2000-12-07 09:21:33 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,6 +113,8 @@ CatmullRom		return tSpline;
 Delete                  return tDelete;
 Dilate                  return tDilate;
 Duplicata               return tDuplicata;
+Draw                    return tDraw;
+Sleep                   return tSleep;
 
 Exp                     return tExp ;
 Ellipsis                return tEllipsis;

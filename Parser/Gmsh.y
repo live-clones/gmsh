@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.24 2000-12-07 08:46:27 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.25 2000-12-07 09:21:34 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -72,7 +72,7 @@ void  vyyerror (char *fmt, ...);
 %token tEND tAFFECT tDOTS tPi
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token tFmod tModulo tHypot tPrintf
+%token tFmod tModulo tHypot tPrintf tDraw tSleep
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
@@ -1670,6 +1670,19 @@ Command :
      FILE *ff = yyin;
      MergeProblem($2);
      yyin = ff;
+   }
+   | tDraw tEND
+   {
+     Init();
+     Draw();
+   }
+   | tSleep FExpr tEND
+   {
+     extern long Get_AnimTime();
+     long sleep_time = Get_AnimTime();
+     while(1){
+       if(Get_AnimTime() - sleep_time > (long)($2*1.e6)) break;
+     }
    }
 ;
 
