@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.19 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: CAD.cpp,v 1.20 2001-05-17 07:11:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1277,7 +1277,7 @@ void ReplaceAllDuplicates ( Mesh *m ){
 
   end = Tree_Nbr(m->Points);
 
-  if(start-end) Msg(DEBUG, "Removed %d Duplicate Points", start-end);
+  if(start-end) Msg(DEBUG, "Removed %d duplicate points", start-end);
 
   /* Replace old points in curves */
 
@@ -1343,7 +1343,7 @@ void ReplaceAllDuplicates ( Mesh *m ){
 
   end = Tree_Nbr(m->Curves);
 
-  if(start-end) Msg(DEBUG, "Removed %d Duplicate Curves", start-end);
+  if(start-end) Msg(DEBUG, "Removed %d duplicate curves", start-end);
 
   /* Replace old curves in surfaces */
 
@@ -1382,7 +1382,7 @@ void ReplaceAllDuplicates ( Mesh *m ){
 
   end = Tree_Nbr(m->Surfaces);
 
-  if(start-end) Msg(DEBUG, "Removed %d Duplicate Surfaces", start-end);
+  if(start-end) Msg(DEBUG, "Removed %d duplicate surfaces", start-end);
 
   /* Replace old surfaces in volumes */
 
@@ -1443,7 +1443,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
       ApplicationOnSurface(O.Num,matrix);
       break;
     default:
-      Msg(GERROR, "Impossible to Translate Entity %d (of Type %d)", 
+      Msg(GERROR, "Impossible to apply transformation on entity %d (of type %d)", 
           O.Num, O.Type);
       break;
     }

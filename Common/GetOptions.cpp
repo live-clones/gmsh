@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.18 2001-05-07 06:25:25 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.19 2001-05-17 07:11:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -123,7 +123,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i] != NULL) TheBgmFileName = argv[i++];
         else {    
-          fprintf(stderr, ERROR_STR "Missing File Name\n");
+          fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
       }
@@ -148,7 +148,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i]!=NULL) CTX.mesh.quality = atof(argv[i++]);
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -156,7 +156,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i]!=NULL) CTX.geom.scaling_factor = atof(argv[i++]);
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -164,7 +164,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i]!=NULL) CTX.mesh.scaling_factor = atof(argv[i++]);
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -172,7 +172,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i]!=NULL) CTX.mesh.rand_factor = atof(argv[i++]);
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -182,12 +182,12 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           CTX.mesh.lc_factor = atof(argv[i++]);
           if(CTX.mesh.lc_factor <= 0.0){
             fprintf(stderr, ERROR_STR 
-                    "Characteristic Length Factor Must be > 0\n");
+                    "Characteristic length factor must be > 0\n");
             exit(1);
           }
         }
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -195,7 +195,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i]!=NULL) CTX.mesh.nb_smoothing = atoi(argv[i++]);
         else{
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -204,12 +204,12 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         if(argv[i]!=NULL){
           CTX.mesh.degree = atoi(argv[i++]);
           if(CTX.mesh.degree != 1 && CTX.mesh.degree != 2){
-            fprintf(stderr, ERROR_STR "Wrong Degree\n");
+            fprintf(stderr, ERROR_STR "Wrong degree\n");
             exit(1);
           }
         }
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -233,13 +233,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
             CTX.mesh.format = FORMAT_GREF ;
           }
           else{
-            fprintf(stderr, ERROR_STR "Unknown Mesh Format\n");
+            fprintf(stderr, ERROR_STR "Unknown mesh format\n");
             exit(1);
           }
           i++;
         }
         else {    
-          fprintf(stderr, ERROR_STR "Missing Format\n");
+          fprintf(stderr, ERROR_STR "Missing format\n");
           exit(1);
         }
       }
@@ -251,13 +251,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           else if(!strcmp(argv[i],"aniso"))
             CTX.mesh.algo = DELAUNAY_NEWALGO ;
           else{
-            fprintf(stderr, ERROR_STR "Unknown Mesh Algorithm\n");
+            fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);
           }
           i++;
         }
         else {    
-          fprintf(stderr, ERROR_STR "Missing Algorithm\n");
+          fprintf(stderr, ERROR_STR "Missing algorithm\n");
           exit(1);
         }
       }
@@ -297,7 +297,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         i++;
         if(argv[i]!=NULL) CTX.verbosity = atoi(argv[i++]);
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -340,7 +340,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         if(argv[i]!=NULL)
 	  opt_view_nb_iso(0, GMSH_SET, atoi(argv[i++]));
         else{
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -396,7 +396,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           i++;
 	}
         else {    
-          fprintf(stderr, ERROR_STR "Missing Number\n");
+          fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
       }
@@ -407,7 +407,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           i++;
 	}
         else {    
-          fprintf(stderr, ERROR_STR "Missing Argument\n");
+          fprintf(stderr, ERROR_STR "Missing argument\n");
           exit(1);
         }
       }
@@ -415,7 +415,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 
 
       else{
-        fprintf(stderr, "Unknown Option '%s'\n", argv[i]);
+        fprintf(stderr, "Unknown option '%s'\n", argv[i]);
 	CTX.terminal = 1 ;
         Print_Usage(argv[0]);
         exit(1);
@@ -426,7 +426,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       if(*nbfiles < MAX_OPEN_FILES)
         TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       else{
-        fprintf(stderr, ERROR_STR "Too Many Input Files\n");
+        fprintf(stderr, ERROR_STR "Too many input files\n");
         exit(1);
       }
     }

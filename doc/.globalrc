@@ -1,0 +1,165 @@
+#
+# Copyright (c) 1998, 1999
+#             Shigio Yamaguchi. All rights reserved.
+# Copyright (c) 1999, 2000
+#             Tama Communications Corporation. All rights reserved.
+#
+# This file is part of GNU GLOBAL.
+#
+# GNU GLOBAL is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# GNU GLOBAL is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# *
+# Configuration file for GNU GLOBAL source code tag system.
+#
+# GLOBAL doesn't need 'global.conf' because it has the default values in it.
+# But if you have this file as '/etc/global.conf' or "$HOME/.globalrc"
+# then GLOBAL system overwrite default values with the values from the file.
+#
+# 'global.conf' is termcap style file.
+# 'default' is default target.
+# You can specify target with GTAGSLABEL environment variable.
+#
+default:\
+	:tc=gctags:tc=htags:
+#---------------------------------------------------------------------
+#
+# Configuration for gtags(1)
+#
+# format:
+#	Select 'standard' or 'compact'. By default, it assumes 'standard'.
+# suffixes:
+#	Suffixes of target source file. By default, it assumes
+#	'c,h,y,c++,cc,cpp,cxx,hxx,C,H,s,S,java'
+# skip:
+#	Skip files among the target files. If the name ends with '/',
+#	gtags skips all files under the directory.
+#	By default, it assumes 'y.tab.c,y.tab.h,SCCS/,RCS/,CVS/'.
+# extractmethod:
+#	Please see source code of gtags(1).
+# GTAGS:
+#	Tag command for definitions. Non of default value.
+# GRTAGS:
+#	Tag command for references. Non of default value.
+# GSYMS:
+#	Tag command for other symbols. Non of default value.
+#
+# Htags(1) needs both of GTAGS and GRTAGS. Global(1)'s -s option needs GSYMS.
+#
+#---------------------------------------------------------------------
+common:\
+	:skip=GetDP.tab.h,GetDP.tab.c,GetDP.yy.c,pvpii.c,utils/,trash/,\
+              Gmsh.tab.cpp,Gmsh.tab.cpp.h,Gmsh.yy.cpp,\
+              CVS/,HTML/:\
+	:format=standard:
+#
+# [gctags]
+#
+# This command is distributed as part of GLOBAL.
+#
+gctags|tag command for GLOBAL:\
+	:tc=common:\
+	:suffixes=c,h,y,c++,cc,cpp,cxx,hxx,C,H,s,S,java:\
+	:sort_command=sort:\
+	:sed_command=sed:\
+	:GTAGS=gctags %s:\
+	:GRTAGS=gctags -r %s:\
+	:GSYMS=gctags -s %s:
+#
+# [Emacs's ctags]
+#
+# This ctags is distributed as a part of Emacs editor.
+#
+# supported suffixes by etags.
+#
+#      lisp: l,el,lsp,lisp,cl,clisp
+#    scheme: sm,scm,scheme,t,sch,ss,SM,SCM
+# assembler: s,a,sa,asm,src,def,ins,inc
+#       C++: C,H,cpp,cxx,hxx,cc
+#        C*: cs,hs
+#    c,yacc: c,h,y
+#  pl,p,pas: pascal
+#   fortran: f,for
+#
+# [Installation]
+# % cd <emacs source directory>/lib-src
+# % make ctags
+# # cp ctags /usr/local/bin/ctags-emacs
+#
+ctags-emacs|ctags based on etags|GNU Emacs ctags:\
+	:tc=common:\
+	:suffixes=el,s,a,sa,asm,C,H,cpp,cxx,hxx,cc,c,h,y:\
+	:extractmethod:\
+	:GTAGS=/usr/local/bin/ctags-emacs -x -d -T -w %s:
+#
+# [Exuberant Ctags]
+#
+# This ctags is distributed as a part of Vim editor.
+#
+# [Installation]
+# % cd <Vim source directory>/src/ctags
+# % make
+# # cp ctags /usr/local/bin/ctags-exuberant
+#
+ctags-exuberant|Exuberant Ctags|ctags by Darren Hiebert:\
+	:tc=common:\
+	:suffixes=s,a,sa,asm,C,H,cpp,cxx,hxx,cc,c,h,y:\
+	:extractmethod:\
+	:GTAGS=/usr/local/bin/ctags-exuberant -x %s | perl -ne '\
+		if (/^operator \\S+\\s+function\\s/) { s/^operator //; }\
+		($name, $type, $no, $path, $line) = split(/[ \\t]+/, $_, 5);\
+		printf(STDOUT "%-16s %4d %-16s %s", $name, $no, $path, $line);':
+#---------------------------------------------------------------------
+#
+# Configuration for htags(1)
+# Let's paint hypertext with your favorite colors!
+#
+# body_begin,body_end:
+#	body tag
+# title_begin,title_end:
+#	title tag
+# comment_begin,comment_end:
+#	comment tag. (/* ... */, // ...)
+# sharp_begin,sharp_end:
+#	macro tag. (#include, #define, ...)
+# brace_begin,brace_end:
+#	brace tag. ('{', '}')
+# reserved_begin,reserved_end:
+#	reserved word tag. (while, if, char, ...)
+# ncol:
+#	columns of line number. (default = 4)
+# tabs:
+#	tab stop. (default = 8)
+# full_path:
+#	list file names with full path in file index.
+#	By default, the last component of a path.
+# table_list:
+#	list tags using table tag (<table></table>).
+# normal_suffix:
+#	normal suffix for html file. By default, 'html'. 
+# gzipped_suffix:
+#	suffix for compressed html file. By default, 'ghtml'.
+# script_alias:
+#	specified -s option then use this value as script alias.
+#
+#---------------------------------------------------------------------
+htags:\
+	:body_begin=<BODY BGCOLOR="#ffffff">:body_end=</BODY>:\
+	:table_begin=<TABLE>:table_end=</TABLE>:\
+	:title_begin=<FONT COLOR=#cc0000>:title_end=</FONT>:\
+	:comment_begin=<I><FONT COLOR=darkred>:comment_end=</FONT></I>:\
+	:sharp_begin=<FONT COLOR=darkviolet>:sharp_end=</FONT>:\
+	:brace_begin=<FONT COLOR=blue>:brace_end=</FONT>:\
+	:reserved_begin=<FONT COLOR=green><B>:reserved_end=</B></FONT>:script_alias=/cgi-bin/:\
+	:ncol#4:tabs#8:normal_suffix=html:gzipped_suffix=ghtml:

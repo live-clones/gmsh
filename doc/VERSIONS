@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.15 2001-05-07 06:25:26 geuzaine Exp $
+$Id: VERSIONS,v 1.16 2001-05-17 07:11:50 geuzaine Exp $
+
+New in 1.20: Various bug fixes (Include+Function, ...)
 
 New in 1.19: Fixed seg. fault for scalar simplex post-processing; new
 Solver menu; interface for GetDP solver through sockets; fixed

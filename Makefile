@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.100 2001-05-09 15:03:39 geuzaine Exp $
+# $Id: Makefile,v 1.101 2001-05-17 07:11:49 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -191,6 +191,10 @@ initialtag:
 	@if [ ! -r Common/GmshVersion.h ]; then \
         $(MAKE) tag ; \
         fi
+
+tags:
+	gtags
+	htags
 
 tgz:
 	if (test -f $(GMSH_ARCHIVE).tar.gz); \
