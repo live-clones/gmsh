@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.26 2003-04-16 08:32:46 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.27 2003-04-16 17:12:06 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -282,7 +282,8 @@ the webpage @value{GMSH-WEB}.
 
 If you use Gmsh, we would appreciate that you mention it in your
 work. References, as well as the latest news about Gmsh development, are
-always available on @value{GMSH-WEB}.
+always available on @value{GMSH-WEB}. Please send all Gmsh-related questions
+to the public Gmsh mailing list at @email{gmsh@@geuz.org}.
 
 @end ifclear
 
@@ -495,8 +496,8 @@ but powerful graphical user interface.
 @node and what Gmsh is not so good at, Syntactic rules, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
-Due to its small size, its academic roots and limited developer manpower,
-Gmsh has also some (a lot of?) weaknesses:
+Due to its historical background and limited developer manpower, Gmsh has
+also some (a lot of?) weaknesses:
 
 @itemize @bullet
 @item
@@ -512,7 +513,7 @@ quadrangles, you have to use transfinite or extruded meshes or recombine
 unstructured triangular meshes. For hexahedra, your only choice is
 transfinite or extruded meshes;
 @item
-Gmsh is not a multibloc generator: all meshes produced by Gmsh are
+Gmsh is not a multi-bloc generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
 @item
 there is not support for curved mesh elements as of this writing (Gmsh
@@ -524,9 +525,9 @@ thousands of geometric primitives, or millions of mesh/post-processing
 elements).
 @end itemize
 
-If you have the skill and time, feel free to contribute to the project: we
-will gladly accept any code contributions (@pxref{Programming notes}) to
-remedy these (and all other) shortcommings!
+If you have the skills and some free time, feel free to join the project! We
+gladly accept any code contributions (@pxref{Programming notes}) to remedy
+the aforementioned (and all other) shortcommings...
 
 @c -------------------------------------------------------------------------
 @c Syntactic Rules Used in this Document
@@ -773,7 +774,7 @@ Returns the next available volume number.
 @item newreg
 Returns the next available region number. That is, @code{newreg} returns the
 maximum of @code{newp}, @code{newc}, @code{news}, @code{newv} and all
-physical entity numbers@footnote{For compatibility purposes, the behaviour
+physical entity numbers@footnote{For compatibility purposes, the behavior
 of @code{newc}, @code{news}, @code{newv} and @code{newreg} can be modified
 with the @code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
 @end ftable
@@ -821,8 +822,8 @@ is an equivalent of the @code{sprintf} C function (where
 formatting characters: @code{%e}, @code{%g}, etc.).
 
 Character expressions are mostly used to specify non-numeric options and
-input/output file names. See @ref{t8.geo}, for an intersting usage of
-@w{@var{expression-char}s} in an animation script. Altough there exists no
+input/output file names. See @ref{t8.geo}, for an interesting usage of
+@w{@var{expression-char}s} in an animation script. Although there exists no
 character expression identifier, @w{@var{expression-char}s} can be affected
 to @w{@var{string-option}s}:
 
@@ -844,7 +845,7 @@ The various @w{@var{string-option}s} are listed in @ref{General options},
 @cindex Expression, color
 @cindex Colors
 
-Colors expressions are hybrids between fixed-length bracketted
+Colors expressions are hybrids between fixed-length bracketed
 @w{@var{expression-list}s} and a @w{@var{string}s}:
 
 @example
@@ -863,7 +864,7 @@ to define colors by using the red, green, blue color components as well as
 the alpha channel. See @ref{t3.geo}, for an example of the use of color
 expressions.
 
-Altough there exists no color expression identifier,
+Although there exists no color expression identifier,
 @w{@var{expression-color}s} can be affected to @w{@var{color-option}s}:
 
 @example
@@ -1051,10 +1052,10 @@ Natural logarithm of @var{expression} (@var{expression} > 0).
 Base 10 logarithm of @var{expression} (@var{expression} > 0).
 
 @item Modulo ( @var{expression}, @var{expression} )
-Synomym of @code{Fmod( @var{expression}, @var{expression} )}.
+Synonym of @code{Fmod( @var{expression}, @var{expression} )}.
 
 @item Rand ( @var{expression} )
-Random numbver between zero and @var{expression}.
+Random number between zero and @var{expression}.
 
 @item Sqrt ( @var{expression} )
 Square root of @var{expression} (@var{expression} >= 0).
@@ -1082,7 +1083,7 @@ Hyperbolic tangent of @var{expression}.
 @cindex Function, user-defined
 
 User-defined functions take no arguments, and are evaluated as if a file
-containg the function body was included at the location of the @code{Call}
+containing the function body was included at the location of the @code{Call}
 statement.
 
 @ftable @code
@@ -1183,7 +1184,7 @@ that only valid floating point formatting characters make sens in
 Merges a file named @var{expression-char}. This command is equivalent to the
 `File->Merge' menu in the graphical user interface. If the path in
 @var{expression-char} is not absolute, @var{expression-char} is appended to
-the dierctory where the current opened project resides.
+the directory where the current opened project resides.
 
 @item MergeWithBoundingBox @var{expression-char};
 Merges a file and force the recalculation of the scene's bounding box.
@@ -1220,7 +1221,7 @@ Executes a system call.
 @item #include @var{expression-char};
 Includes the file named @var{expression-char} at the current position in
 the input file. The @code{Include} commands should given on a line of their
-onwn.
+own.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1239,7 +1240,7 @@ the option in the GUI in real time. This permits for example to resize the
 graphical window in a script, or to interact with animations in the script
 and in the GUI at the same time.
 
-Gmsh's default behaviour is to save some of these options in a per-user
+Gmsh's default behavior is to save some of these options in a per-user
 ``session resource'' file (@code{General.SessionFileName}) each time Gmsh is
 shut down. This permits for example to automatically remember the size and
 location of the windows or which fonts to use. Other options can be saved in
@@ -2069,7 +2070,7 @@ currently unused.
 
 @item @var{text2d-chars}
 is a list of @item @var{nb-text2d-chars} characters. Substrings are
-separated with the @code{^} characted (which is a forbidden character in
+separated with the @code{^} character (which is a forbidden character in
 regular strings).
 
 @item @var{text3d}
@@ -2213,7 +2214,7 @@ text 2d             T2    4            arbitrary
 text 3d             T3    5            arbitrary
 @end example
 
-But, for historical rerasons, contrary to the ASCII and binary
+But, for historical reasons, contrary to the ASCII and binary
 post-processing file formats, the coordinates are given by node, i.e.:
 
 @itemize @bullet
