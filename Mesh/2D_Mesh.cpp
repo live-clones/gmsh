@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.62 2004-06-22 18:04:10 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.63 2004-06-22 22:10:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -858,6 +858,40 @@ void Get_SurfaceNormal(Surface *s, double n[3])
   }
 }
 
+void ReOrientSurfaceMesh(Surface *s)
+{
+  // Horrible (tm) hack to orient the elements correctly. This is
+  // *definitely* not the best way to do it, but I don't have time
+  // to look into the issue right now.
+  Simplex *simp;
+  if(Tree_Right(s->Simplexes, &simp)){
+    double t1[3], t2[3], n1[3], n2[3], res;
+    Get_SurfaceNormal(s, n1);
+    t1[0] = simp->V[1]->Pos.X - simp->V[0]->Pos.X;
+    t1[1] = simp->V[1]->Pos.Y - simp->V[0]->Pos.Y;
+    t1[2] = simp->V[1]->Pos.Z - simp->V[0]->Pos.Z;
+    t2[0] = simp->V[2]->Pos.X - simp->V[0]->Pos.X;
+    t2[1] = simp->V[2]->Pos.Y - simp->V[0]->Pos.Y;
+    t2[2] = simp->V[2]->Pos.Z - simp->V[0]->Pos.Z;
+    prodve(t1, t2, n2);
+    norme(n2);
+    /*
+      printf("n1=%g %g %g\n", n1[0], n1[1], n1[2]);
+      printf("n2=%g %g %g (elt: (%g,%g,%g) (%g,%g,%g) (%g,%g,%g))\n", 
+	     n2[0], n2[1], n2[2],
+	     simp->V[0]->Pos.X, simp->V[0]->Pos.Y, simp->V[0]->Pos.Z,
+	     simp->V[1]->Pos.X, simp->V[1]->Pos.Y, simp->V[1]->Pos.Z,
+	     simp->V[2]->Pos.X, simp->V[2]->Pos.Y, simp->V[2]->Pos.Z);
+    */
+    prosca(n1, n2, &res);
+    if(res < 0.0){
+      Msg(DEBUG, "Inverting orientation of elements in %s surface %d (res = %g)",
+	  (s->Typ == MSH_SURF_PLAN) ? "Plane" : "NonPlane", s->Num, res);
+      Tree_Action(s->Simplexes, ActionInvertTriQua);
+    }
+  }
+}
+
 void Maillage_Surface(void *data, void *dum)
 {
   Surface **pS, *s;
@@ -895,11 +929,17 @@ void Maillage_Surface(void *data, void *dum)
   if(MeshTransfiniteSurface(s) ||
      MeshEllipticSurface(s) ||
      MeshCylindricalSurface(s) ||
-     MeshParametricSurface(s) || 
-     Extrude_Mesh(s)) {
+     MeshParametricSurface(s)) {
     Tree_Action(THEM->Points, PutVertex_OnSurf);
     Tree_Action(s->Vertices, PutVertex_OnSurf);
     Tree_Action(s->Vertices, Add_In_Mesh);
+  }
+  else if(Extrude_Mesh(s)) {
+    Tree_Action(THEM->Points, PutVertex_OnSurf);
+    Tree_Action(s->Vertices, PutVertex_OnSurf);
+    Tree_Action(s->Vertices, Add_In_Mesh);
+    // FIXME: big hack
+    //ReOrientSurfaceMesh(s);
   }
   else{
     int TypSurface = s->Typ;
@@ -960,37 +1000,9 @@ void Maillage_Surface(void *data, void *dum)
     Tree_Action(THEM->Curves, ActionEndTheCurve);
     End_Surface(s->Support, 0);
     End_Surface(s, 0);
-
-    // Horrible (tm) hack to orient the elements correctly. This is
-    // *definitely* not the best way to do it, but I don't have time
-    // to look into this issue right now.
-    Simplex *simp;
-    if(Tree_Right(s->Simplexes, &simp)){
-      double t1[3], t2[3], n1[3], n2[3], res;
-      Get_SurfaceNormal(s, n1);
-      t1[0] = simp->V[1]->Pos.X - simp->V[0]->Pos.X;
-      t1[1] = simp->V[1]->Pos.Y - simp->V[0]->Pos.Y;
-      t1[2] = simp->V[1]->Pos.Z - simp->V[0]->Pos.Z;
-      t2[0] = simp->V[2]->Pos.X - simp->V[0]->Pos.X;
-      t2[1] = simp->V[2]->Pos.Y - simp->V[0]->Pos.Y;
-      t2[2] = simp->V[2]->Pos.Z - simp->V[0]->Pos.Z;
-      prodve(t1, t2, n2);
-      norme(n2);
-      /*
-      printf("n1=%g %g %g\n", n1[0], n1[1], n1[2]);
-      printf("n2=%g %g %g (elt: (%g,%g,%g) (%g,%g,%g) (%g,%g,%g))\n", 
-	     n2[0], n2[1], n2[2],
-	     simp->V[0]->Pos.X, simp->V[0]->Pos.Y, simp->V[0]->Pos.Z,
-	     simp->V[1]->Pos.X, simp->V[1]->Pos.Y, simp->V[1]->Pos.Z,
-	     simp->V[2]->Pos.X, simp->V[2]->Pos.Y, simp->V[2]->Pos.Z);
-      */
-      prosca(n1, n2, &res);
-      if(res < 0.0){
-	Msg(DEBUG, "Inverting orientation of elements in %s surface %d (res = %g)",
-	    (s->Typ == MSH_SURF_PLAN) ? "Plane" : "NonPlane", s->Num, res);
-	Tree_Action(s->Simplexes, ActionInvertTriQua);
-      }
-    }
+    
+    // FIXME: big hack
+    ReOrientSurfaceMesh(s);
   }
 
 }
