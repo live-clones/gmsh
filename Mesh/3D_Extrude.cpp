@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.64 2003-03-21 00:52:41 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.65 2003-10-26 16:53:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -658,13 +658,16 @@ void Extrude_Surface3(Surface * s)
 }
 
 
-void Create_Tri(Vertex * v1, Vertex * v2, Vertex * v3)
+void Create_Tri(int iEnt, Vertex * v1, Vertex * v2, Vertex * v3)
 {
   Simplex *s;
   if(CTX.mesh.allow_degenerated_extrude ||
      (v1->Num != v2->Num && v1->Num != v3->Num && v2->Num != v3->Num)) {
     s = Create_Simplex(v1, v2, v3, NULL);
-    s->iEnt = THES->Num;
+    if(!ep->useZonLayer())
+      s->iEnt = THES->Num;
+    else
+      s->iEnt = iEnt;
     s->Num = -s->Num;   //Tag triangles to re-extrude
     Tree_Add(THES->Simplexes, &s);
   }
@@ -701,7 +704,10 @@ void Extrude_Seg(Vertex * V1, Vertex * V2)
         }
         else
           s = Create_Quadrangle(v1, v2, v4, v3);
-        s->iEnt = THES->Num;
+        if(!ep->useZonLayer())
+	  s->iEnt = THES->Num;
+	else
+	  s->iEnt = ep->mesh.ZonLayer[i];
         s->Num = -s->Num;       //Tag quadrangles to re-extrude
         Tree_Add(THES->Simplexes, &s);
 
@@ -710,12 +716,12 @@ void Extrude_Seg(Vertex * V1, Vertex * V2)
       }
       else {
         if(are_exist(v3, v2, Tree_Ares)) {
-          Create_Tri(v3, v2, v1);
-          Create_Tri(v3, v4, v2);
+          Create_Tri(ep->mesh.ZonLayer[i], v3, v2, v1);
+          Create_Tri(ep->mesh.ZonLayer[i], v3, v4, v2);
         }
         else {
-          Create_Tri(v3, v4, v1);
-          Create_Tri(v1, v4, v2);
+          Create_Tri(ep->mesh.ZonLayer[i], v3, v4, v1);
+          Create_Tri(ep->mesh.ZonLayer[i], v1, v4, v2);
         }
       }
       k++;
@@ -820,12 +826,22 @@ void copy_mesh(Curve * from, Curve * to, int direction)
     List_Add(to->Vertices, &newv);
   }
 
+  for(int i = 0; i < List_Nbr(to->Vertices) - 1; i++) {
+    Vertex *v1, *v2;
+    List_Read(to->Vertices, i, &v1);
+    List_Read(to->Vertices, i + 1, &v2);
+    Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
+    s->iEnt = to->Num;
+    Tree_Add(to->Simplexes, &s);
+    List_Add(to->TrsfSimplexes, &s);
+  }
+
 }
 
 int Extrude_Mesh(Curve * c)
 {
-  int i;
-  Vertex **vexist, *v, *newv;
+  int i, j;
+  Vertex **vexist, *v, *newv, *v1, *v2;
   List_T *L;
 
   if(!c->Extrude || !c->Extrude->mesh.ExtrudeMesh)
@@ -881,15 +897,37 @@ int Extrude_Mesh(Curve * c)
       Tree_Add(THEM->Vertices, &newv);
       List_Add(c->Vertices, &newv);
     }
-    return true;
+
+    int k = 0, iEnt;
+    for(i = 0; i < ep->mesh.NbLayer; i++) {
+      for(j = 0; j < ep->mesh.NbElmLayer[i]; j++) {
+	if(k >= List_Nbr(c->Vertices) - 1){
+	  Msg(GERROR, "Something wrong in number of elements in extruded curve %d",
+	      c->Num);
+	  return false;
+	}
+	List_Read(c->Vertices, k, &v1);
+	List_Read(c->Vertices, k + 1, &v2);
+	Simplex *s = Create_Simplex(v1, v2, NULL, NULL);
+	if(!ep->useZonLayer())
+	  s->iEnt = c->Num;
+	else
+	  s->iEnt = ep->mesh.ZonLayer[i];
+	Tree_Add(c->Simplexes, &s);
+	List_Add(c->TrsfSimplexes, &s);
+	k++;
+      }
+    }
+
   }
   else {
     Curve *cc = FindCurve(abs(ep->geo.Source), THEM);
     if(!cc)
       return false;
     copy_mesh(cc, c, sign(ep->geo.Source));
-    return true;
   }
+
+  return true;
 }
 
 void copy_mesh(Surface * from, Surface * to)

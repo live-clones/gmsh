@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.34 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.35 2003-10-26 16:53:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -157,89 +157,95 @@ void Maillage_Curve(void *data, void *dummy)
     return;
   }
 
-  if(c->Method == TRANSFINI || !Extrude_Mesh(c)) {
-    if(c->Method == TRANSFINI) {
-      Points = List_Create(10, 10, sizeof(IntPoint));
-      a = Integration(c->ubeg, c->uend, F_Transfini, Points, 1.e-7);
-      N = c->ipar[0];
+  if(Extrude_Mesh(c)){
+    if(CTX.mesh.order == 2){
+      Degre2(c->Simplexes, c, NULL);
     }
-    else {
-      Points = List_Create(10, 10, sizeof(IntPoint));
-      a = Integration(c->ubeg, c->uend, F_Lc, Points, 1.e-4);
-      N = IMAX(2, (int)(a + 1.));
-
-      if(c->Typ == MSH_SEGM_CIRC ||
-         c->Typ == MSH_SEGM_CIRC_INV ||
-         c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
-        N = IMAX(N, (int)(fabs(c->Circle.t1 - c->Circle.t2) *
-                          (double)CTX.mesh.min_circ_points / Pi));
-      }
-      else if(c->Typ == MSH_SEGM_NURBS) {
-        N = IMAX(N, 2);
-      }
-    }
-    b = a / (double)(N - 1);
-    c->Vertices = List_Create(N, 2, sizeof(Vertex *));
-
-    v = &c->beg;
-    if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, v))) {
-      (*vexist)->u = c->ubeg;
-      if((*vexist)->ListCurves)
-        List_Add((*vexist)->ListCurves, &c);
-      List_Add(c->Vertices, vexist);
-    }
-    else {
-      pV = Create_Vertex((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y,
-                         (*v)->Pos.Z, (*v)->lc, c->ubeg);
-      pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
-      List_Add(pV->ListCurves, &c);
-      Tree_Add(THEM->Vertices, &pV);
-      List_Add(c->Vertices, &pV);
-    }
-
-    count = NUMP = 1;
-    while(NUMP < N - 1) {
-      List_Read(Points, count - 1, &P1);
-      List_Read(Points, count, &P2);
-      d = (double)NUMP *b;
-
-      if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
-        dt = P2.t - P1.t;
-        dp = P2.p - P1.p;
-        t = P1.t + dt / dp * (d - P1.p);
-        V = InterpolateCurve(c, t, 0);
-        pV = Create_Vertex(++THEM->MaxPointNum, V.Pos.X, V.Pos.Y, V.Pos.Z, V.lc, t);
-        pV->w = V.w;
-        pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
-        List_Add(pV->ListCurves, &c);
-        Tree_Add(THEM->Vertices, &pV);
-        List_Add(c->Vertices, &pV);
-        NUMP++;
-      }
-      else {
-        count++;
-      }
-    }
-
-    List_Delete(Points);
-
-    v = &c->end;
-    if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, v))) {
-      (*vexist)->u = c->uend;
-      if((*vexist)->ListCurves)
-        List_Add((*vexist)->ListCurves, &c);
-      List_Add(c->Vertices, vexist);
-    }
-    else {
-      pV = Create_Vertex((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y,
-                         (*v)->Pos.Z, (*v)->lc, c->uend);
-      pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
-      List_Add(pV->ListCurves, &c);
-      Tree_Add(THEM->Vertices, &pV);
-      List_Add(c->Vertices, &pV);
-    }
+    THEM->Statistics[4] += List_Nbr(c->Vertices);
+    return;
   }
 
+  if(c->Method == TRANSFINI) {
+    Points = List_Create(10, 10, sizeof(IntPoint));
+    a = Integration(c->ubeg, c->uend, F_Transfini, Points, 1.e-7);
+    N = c->ipar[0];
+  }
+  else {
+    Points = List_Create(10, 10, sizeof(IntPoint));
+    a = Integration(c->ubeg, c->uend, F_Lc, Points, 1.e-4);
+    N = IMAX(2, (int)(a + 1.));
+    
+    if(c->Typ == MSH_SEGM_CIRC ||
+       c->Typ == MSH_SEGM_CIRC_INV ||
+       c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
+      N = IMAX(N, (int)(fabs(c->Circle.t1 - c->Circle.t2) *
+			(double)CTX.mesh.min_circ_points / Pi));
+    }
+    else if(c->Typ == MSH_SEGM_NURBS) {
+      N = IMAX(N, 2);
+    }
+  }
+  b = a / (double)(N - 1);
+  c->Vertices = List_Create(N, 2, sizeof(Vertex *));
+  
+  v = &c->beg;
+  if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, v))) {
+    (*vexist)->u = c->ubeg;
+    if((*vexist)->ListCurves)
+      List_Add((*vexist)->ListCurves, &c);
+    List_Add(c->Vertices, vexist);
+  }
+  else {
+    pV = Create_Vertex((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y,
+		       (*v)->Pos.Z, (*v)->lc, c->ubeg);
+    pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
+    List_Add(pV->ListCurves, &c);
+    Tree_Add(THEM->Vertices, &pV);
+    List_Add(c->Vertices, &pV);
+  }
+  
+  count = NUMP = 1;
+  while(NUMP < N - 1) {
+    List_Read(Points, count - 1, &P1);
+    List_Read(Points, count, &P2);
+    d = (double)NUMP *b;
+    
+    if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
+      dt = P2.t - P1.t;
+      dp = P2.p - P1.p;
+      t = P1.t + dt / dp * (d - P1.p);
+      V = InterpolateCurve(c, t, 0);
+      pV = Create_Vertex(++THEM->MaxPointNum, V.Pos.X, V.Pos.Y, V.Pos.Z, V.lc, t);
+      pV->w = V.w;
+      pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
+      List_Add(pV->ListCurves, &c);
+      Tree_Add(THEM->Vertices, &pV);
+      List_Add(c->Vertices, &pV);
+      NUMP++;
+    }
+    else {
+      count++;
+    }
+  }
+  
+  List_Delete(Points);
+  
+  v = &c->end;
+  if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, v))) {
+    (*vexist)->u = c->uend;
+    if((*vexist)->ListCurves)
+      List_Add((*vexist)->ListCurves, &c);
+    List_Add(c->Vertices, vexist);
+  }
+  else {
+    pV = Create_Vertex((*v)->Num, (*v)->Pos.X, (*v)->Pos.Y,
+		       (*v)->Pos.Z, (*v)->lc, c->uend);
+    pV->ListCurves = List_Create(1, 1, sizeof(Curve *));
+    List_Add(pV->ListCurves, &c);
+    Tree_Add(THEM->Vertices, &pV);
+    List_Add(c->Vertices, &pV);
+  }
+  
   for(i = 0; i < List_Nbr(c->Vertices) - 1; i++) {
     List_Read(c->Vertices, i, &v1);
     List_Read(c->Vertices, i + 1, &v2);
@@ -254,15 +260,4 @@ void Maillage_Curve(void *data, void *dummy)
   }
 
   THEM->Statistics[4] += List_Nbr(c->Vertices);
-
-#if 0
-  if(fabs(c->Num) != 41)
-    return;
-  printf("curve %d : ", c->Num);
-  for(i = 0; i < List_Nbr(c->Vertices); i++) {
-    List_Read(c->Vertices, i, &v1);
-    printf(" %d (%g %g %g)", v1->Num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
-  }
-  printf("\n");
-#endif
 }

@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.13 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.14 2003-10-26 16:53:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,7 @@ void Projette(double p[3], double mat[3][3])
 
 ExtrudeParams::ExtrudeParams(int ModeEx)
 {
+  _useZonLayer = true;
   geo.Mode = ModeEx;
   geo.Source = -1;
   mesh.ExtrudeMesh = false;

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.66 2003-09-22 07:26:38 geuzaine Exp $
+// $Id: CAD.cpp,v 1.67 2003-10-26 16:53:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1088,6 +1088,7 @@ int Extrude_ProtudePoint(int type, int ip,
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+    c->Extrude->useZonLayer(final);
     if(e)
       c->Extrude->mesh = e->mesh;
 
@@ -1325,6 +1326,7 @@ int Extrude_ProtudeCurve(int type, int ic,
   s->Generatrices = List_Create(4, 1, sizeof(Curve *));
   s->Extrude = new ExtrudeParams;
   s->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+  s->Extrude->useZonLayer(final);
   s->Extrude->geo.Source = pc->Num;
   if(e)
     s->Extrude->mesh = e->mesh;
