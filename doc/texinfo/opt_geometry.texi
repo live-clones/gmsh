@@ -9,11 +9,6 @@ Number of points used to draw a circle/ellipse@*
 Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.ColorScheme
-Default geometry color scheme (0, 1 or 2)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Geometry.CircleWarning
 Warn if circle arc is greater than Pi@*
 Default value: @code{1}@*

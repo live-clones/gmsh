@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.256 2004-07-18 16:42:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.257 2004-07-22 05:47:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -811,7 +811,7 @@ void general_options_cb(CALLBACK_ARGS)
 
 void general_options_color_scheme_cb(CALLBACK_ARGS)
 {
-  opt_general_color_scheme(0, GMSH_SET, WID->gen_value[0]->value());
+  opt_general_color_scheme(0, GMSH_SET, WID->gen_choice[3]->value());
   Draw();
 }
 
@@ -870,6 +870,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());
   opt_general_confirm_overwrite(0, GMSH_SET, WID->gen_butt[14]->value());
   opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
+  opt_general_draw_bounding_box(0, GMSH_SET, WID->gen_butt[6]->value());
 
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
@@ -928,12 +929,6 @@ void geometry_options_cb(CALLBACK_ARGS)
   WID->create_geometry_options_window();
 }
 
-void geometry_options_color_scheme_cb(CALLBACK_ARGS)
-{
-  opt_geometry_color_scheme(0, GMSH_SET, WID->geo_value[2]->value());
-  Draw();
-}
-
 void geometry_options_ok_cb(CALLBACK_ARGS)
 {
   opt_geometry_points(0, GMSH_SET, WID->geo_butt[0]->value());
@@ -963,12 +958,6 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
 void mesh_options_cb(CALLBACK_ARGS)
 {
   WID->create_mesh_options_window();
-}
-
-void mesh_options_color_scheme_cb(CALLBACK_ARGS)
-{
-  opt_mesh_color_scheme(0, GMSH_SET, WID->mesh_value[12]->value());
-  Draw();
 }
 
 void mesh_options_ok_cb(CALLBACK_ARGS)
@@ -1390,7 +1379,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+a         hide/show small axes"); 
   Msg(DIRECT, "  Shift+a       raise (show) all open windows");
   Msg(DIRECT, "  Alt+Shift+a   hide/show big moving axes"); 
-  Msg(DIRECT, "  Alt+b         hide/show all post-processing scales");
+  Msg(DIRECT, "  Alt+b         hide/show all bounding boxes");
   Msg(DIRECT, "  Alt+c         loop through predefined color schemes");
   Msg(DIRECT, "  Alt+d         change mesh display mode (solid/wireframe)");
   Msg(DIRECT, "  Shift+d       decrease animation delay");
@@ -1399,6 +1388,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  g             go to geometry module");
   Msg(DIRECT, "  Shift+g       show geometry options");
   Msg(DIRECT, "  Alt+h         hide/show all post-processing views"); 
+  Msg(DIRECT, "  Alt+i         hide/show all post-processing scales");
   Msg(DIRECT, "  Shift+i       show statistics window"); 
   Msg(DIRECT, "  Alt+l         hide/show geometry lines");
   Msg(DIRECT, "  Alt+Shift+l   hide/show surface mesh edges");

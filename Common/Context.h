@@ -105,7 +105,8 @@ public :
 
   int db;                     // double buffer? 
   int ortho;                  // orthogonal projection? 
-  int fast;                   // inhibit mesh and postpro drawing when changing r,s,t 
+  int draw_bbox;              // always draw the bounding boxes?
+  int fast_redraw;            // only draw the bbox when rotating/panning the model?
   int axes, small_axes;       // draw axes? 
   int small_axes_pos[2];      // small axes position 
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
@@ -149,7 +150,6 @@ public :
     int extrude_spline_points, old_newreg;
     double normals, tangents;
     double scaling_factor;
-    int color_scheme ;
     int auto_coherence;
     int stl_create_elementary, stl_create_physical;
   } geom;
@@ -173,7 +173,7 @@ public :
     int point_insertion, speed_max, min_circ_points, constrained_bgmesh;
     int histogram, initial_only;
     double normals, tangents, explode;
-    int color_scheme, color_carousel ;
+    int color_carousel ;
     int use_cut_plane, cut_plane_as_surface;
     double cut_planea,cut_planeb,cut_planec,cut_planed;
     double evalCutPlane (double x, double y, double z){

@@ -45,7 +45,7 @@ raise (show) all open windows
 hide/show big moving axes
 
 @item Alt+b
-hide/show all post-processing scales
+hide/show all bounding boxes
 
 @item Alt+c
 loop through predefined color schemes
@@ -70,6 +70,9 @@ show geometry options
 
 @item Alt+h
 hide/show all post-processing views
+
+@item Alt+i
+hide/show all post-processing scales
 
 @item Shift+i
 show statistics window

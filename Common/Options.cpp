@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.172 2004-07-17 22:46:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.173 2004-07-22 05:47:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2256,12 +2256,23 @@ double opt_general_orthographic(OPT_ARGS_NUM)
 double opt_general_fast_redraw(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.fast = (int)val;
+    CTX.fast_redraw = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_butt[2]->value(CTX.fast);
+    WID->gen_butt[2]->value(CTX.fast_redraw);
 #endif
-  return CTX.fast;
+  return CTX.fast_redraw;
+}
+
+double opt_general_draw_bounding_box(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.draw_bbox = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[6]->value(CTX.draw_bbox);
+#endif
+  return CTX.draw_bbox;
 }
 
 double opt_general_axes(OPT_ARGS_NUM)
@@ -2416,11 +2427,15 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     if(CTX.color_scheme > 2)
       CTX.color_scheme = 0;
     Set_DefaultColorOptions(0, GeneralOptions_Color, CTX.color_scheme);
+    Set_DefaultColorOptions(0, GeometryOptions_Color, CTX.color_scheme);
+    Set_DefaultColorOptions(0, MeshOptions_Color, CTX.color_scheme);
     Set_ColorOptions_GUI(0, GeneralOptions_Color);
+    Set_ColorOptions_GUI(0, GeometryOptions_Color);
+    Set_ColorOptions_GUI(0, MeshOptions_Color);
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_value[0]->value(CTX.color_scheme);
+    WID->gen_choice[3]->value(CTX.color_scheme);
 #endif
   return CTX.color_scheme;
 }
@@ -3211,22 +3226,6 @@ double opt_geometry_scaling_factor(OPT_ARGS_NUM)
   return CTX.geom.scaling_factor;
 }
 
-double opt_geometry_color_scheme(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX.geom.color_scheme = (int)val;
-    if(CTX.geom.color_scheme > 2)
-      CTX.geom.color_scheme = 0;
-    Set_DefaultColorOptions(0, GeometryOptions_Color, CTX.geom.color_scheme);
-    Set_ColorOptions_GUI(0, GeometryOptions_Color);
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->geo_value[2]->value(CTX.geom.color_scheme);
-#endif
-  return CTX.geom.color_scheme;
-}
-
 double opt_geometry_stl_create_elementary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3845,23 +3844,6 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.save_all = (int)val;
   return CTX.mesh.save_all;
-}
-
-double opt_mesh_color_scheme(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    if(CTX.mesh.color_scheme != (int)val) CTX.mesh.changed = 1;
-    CTX.mesh.color_scheme = (int)val;
-    if(CTX.mesh.color_scheme > 2)
-      CTX.mesh.color_scheme = 0;
-    Set_DefaultColorOptions(0, MeshOptions_Color, CTX.mesh.color_scheme);
-    Set_ColorOptions_GUI(0, MeshOptions_Color);
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[12]->value(CTX.mesh.color_scheme);
-#endif
-  return CTX.mesh.color_scheme;
 }
 
 double opt_mesh_color_carousel(OPT_ARGS_NUM)

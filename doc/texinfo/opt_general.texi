@@ -259,13 +259,18 @@ Use a double buffered graphic window (on Unix, should be set to 0 when working o
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.DrawBoundingBoxes
+Draw bounding boxes@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.FakeTransparency
 Use fake transparency (cheaper than the real thing, but incorrect)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.FastRedraw
-Fast redraw (no mesh or view display) when interacting with the model@*
+Draw simplified model while rotating, panning and zooming@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

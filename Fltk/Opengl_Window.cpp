@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.36 2004-07-05 15:20:06 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.37 2004-07-22 05:47:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -296,7 +296,7 @@ int Opengl_Window::handle(int event)
         set_t(2, 0.);
       }
 
-      if(CTX.fast) {
+      if(CTX.fast_redraw) {
         CTX.mesh.draw = 0;
         CTX.post.draw = 0;
       }

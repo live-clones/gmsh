@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.73 2004-07-18 16:42:23 geuzaine Exp $
+// $Id: Post.cpp,v 1.74 2004-07-22 05:47:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -315,7 +315,7 @@ void Draw_Post(void)
   if(!CTX.post.list)
     return;
 
-  if(!CTX.post.draw) {  // draw only the bbox of the visible views
+  if(CTX.draw_bbox || !CTX.post.draw) {  // draw only the bbox of the visible views
     for(int iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
       v = (Post_View *) List_Pointer(CTX.post.list, iView);
       if(v->Visible && v->Type == DRAW_POST_3D) {
@@ -357,8 +357,10 @@ void Draw_Post(void)
 	Draw_String(label);
       }
     }
-    return;
   }
+
+  if(!CTX.post.draw)
+    return;
 
   for(int iView = 0; iView < List_Nbr(CTX.post.list); iView++) {
 

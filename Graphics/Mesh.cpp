@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.103 2004-07-18 16:42:22 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.104 2004-07-22 05:47:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -135,7 +135,8 @@ void Draw_Mesh(Mesh * M)
   // draw the bounding box of the mesh if we are in fast redraw mode
   // and there is no geometry
  
-  if(!CTX.mesh.draw && Tree_Nbr(M->Vertices) && !Tree_Nbr(M->Points)) {
+  if((CTX.draw_bbox && (Tree_Nbr(M->Vertices) || Tree_Nbr(M->Points))) ||
+     (!CTX.mesh.draw && Tree_Nbr(M->Vertices) && !Tree_Nbr(M->Points))) {
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
     glBegin(GL_LINE_LOOP);

@@ -436,7 +436,6 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the clipping planes window" }, 
   { F|S, "ClipPositionY" , opt_general_clip_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the clipping planes window" }, 
-
   { F|O, "ColorScheme", opt_general_color_scheme , 0. ,
     "Default color scheme (0, 1 or 2)" },
   { F|S, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
@@ -448,11 +447,13 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)" },
+  { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
+    "Draw bounding boxes" },
 
   { F|O, "FakeTransparency" , opt_general_fake_transparency , 0. ,
     "Use fake transparency (cheaper than the real thing, but incorrect)" },
-  { F|O, "FastRedraw" , opt_general_fast_redraw , 1. ,
-    "Fast redraw (no mesh or view display) when interacting with the model" },
+  { F|O, "FastRedraw" , opt_general_fast_redraw, 1. ,
+    "Draw simplified model while rotating, panning and zooming" },
   { F|S, "FontSize" , opt_general_fontsize , 12. , 
     "Size of the font in the user interface" },
 
@@ -640,8 +641,6 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "CirclePoints" , opt_geometry_circle_points, 20. ,
     "Number of points used to draw a circle/ellipse" },
-  { F|O, "ColorScheme" , opt_geometry_color_scheme , 0. , 
-    "Default geometry color scheme (0, 1 or 2)" },
   { F|O, "CircleWarning" , opt_geometry_circle_warning, 1. ,
     "Warn if circle arc is greater than Pi" },
 
@@ -716,8 +715,6 @@ StringXNumber MeshOptions_Number[] = {
     "Factor applied to all characteristic lengths (and background meshes)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
     "Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)" },
-  { F|O, "ColorScheme" , opt_mesh_color_scheme , 0. , 
-    "Default mesh color scheme (0, 1 or 2)" },
   { F|O, "ConstrainedBackgroundMesh" , opt_mesh_constrained_bgmesh, 0. ,
     "Should the background mesh be constrained by the characteristic lengths associated with the geometry?" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. , 

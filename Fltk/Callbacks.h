@@ -86,11 +86,9 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS) ;
 void general_options_ok_cb(CALLBACK_ARGS) ;
 
 void geometry_options_cb(CALLBACK_ARGS) ;
-void geometry_options_color_scheme_cb(CALLBACK_ARGS) ;
 void geometry_options_ok_cb(CALLBACK_ARGS) ;
 
 void mesh_options_cb(CALLBACK_ARGS) ;
-void mesh_options_color_scheme_cb(CALLBACK_ARGS) ;
 void mesh_options_ok_cb(CALLBACK_ARGS) ;
 
 void solver_options_cb(CALLBACK_ARGS) ;
