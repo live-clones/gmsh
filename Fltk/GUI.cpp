@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.375 2004-11-08 23:28:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.376 2004-11-09 02:14:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1441,23 +1441,23 @@ void GUI::reset_option_browser()
     sprintf(str, "View [%d]", i);
     opt_browser->add(str);
   }
-  if(select <= opt_browser->size())
-    opt_browser->value(select);
+  int item = (select <= opt_browser->size()) ? select : opt_browser->size();
+  opt_browser->value(item);
+  if(opt_window->shown())
+    options_browser_cb(NULL, NULL);
 }
 
 void GUI::reset_external_view_list()
 {
   char str[32];
-  int select = view_choice[10]->value();
   view_choice[10]->clear();
   view_choice[10]->add("Self");
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     sprintf(str, "View [%d]", i);
     view_choice[10]->add(str, 0, NULL);
   }
-  // warning: Fl_Choice::size() returns number of items+1
-  if(select < view_choice[10]->size() - 1)
-    view_choice[10]->value(select);
+  if(view_number >= 0)
+    opt_view_external_view(view_number, GMSH_GUI, 0);
 }
 
 void GUI::check_rotation_center_button()
@@ -1509,7 +1509,11 @@ void GUI::create_option_window()
 
   opt_browser = new Fl_Hold_Browser(WB, WB, L - WB, height - 3 * WB - BH);
   opt_browser->has_scrollbar(Fl_Browser_::VERTICAL);
-  reset_option_browser();
+  opt_browser->add("General");
+  opt_browser->add("Geometry");
+  opt_browser->add("Mesh");
+  opt_browser->add("Solver");
+  opt_browser->add("Post-processing");
   opt_browser->callback(options_browser_cb);
   opt_browser->value(1);
   opt_window->label("Options - General");

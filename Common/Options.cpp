@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.201 2004-11-08 23:28:47 geuzaine Exp $
+// $Id: Options.cpp,v 1.202 2004-11-09 02:14:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -5306,6 +5306,8 @@ double opt_view_external_view(OPT_ARGS_NUM)
     int item = v->ExternalViewIndex + 1;
     if(item > -1 && item < WID->view_choice[10]->size()-1)
       WID->view_choice[10]->value(item);
+    else
+      WID->view_choice[10]->value(0);
   }
 #endif
   return v->ExternalViewIndex;
