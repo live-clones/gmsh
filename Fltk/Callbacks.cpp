@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.191 2003-12-03 04:14:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.192 2003-12-03 04:28:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <signal.h>
 #include <map>
+
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
@@ -370,13 +372,12 @@ void file_new_cb(CALLBACK_ARGS)
   if(file_chooser(0, 1, "New file", "*", 0)) {
     char *name = file_chooser_get_name(1);
     struct stat buf;
-    if(!stat(name, &buf))
+    if(!stat(name, &buf)){
       if(fl_ask("%s already exists.\nDo you want to erase it?", name))
-	goto save;
+	unlink(name);
       else
 	goto test;
-  save:
-    unlink(name);
+    }
     // create a zero length file so that it actually exists (and stupid
     // Mac/Windows editors accept to deal with it)
     FILE *fp = fopen(name, "w");
@@ -856,7 +857,6 @@ void options_save_cb(CALLBACK_ARGS)
   Print_Options(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
 }
 
-#include <unistd.h>
 void options_restore_defaults_cb(CALLBACK_ARGS)
 {
   // not sure if we have to remove the file...
