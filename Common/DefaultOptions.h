@@ -43,7 +43,11 @@ StringXString MeshOptions_String[] = {
 } ;
 
 StringXString SolverOptions_String[] = {
+#ifdef WIN32
+  { F|O, "GetDPCommand" , opt_solver_getdp_command , "./getdp.exe" , 
+#else
   { F|O, "GetDPCommand" , opt_solver_getdp_command , "getdp" , 
+#endif
     "System command to launch the GetDP solver (should _not_ contain the '&' character)" },
   { 0, NULL , NULL , NULL , NULL }
 } ;
