@@ -1,8 +1,8 @@
 /*
  * GL2PS, an OpenGL to Postscript Printing Library, version 0.32
- * Copyright (C) 1999-2000  Christophe Geuzaine 
+ * Copyright (C) 1999-2001  Christophe Geuzaine 
  *
- * Last Mod by Christophe on Mon Aug 14 23:49:15 2000
+ * $Id: gl2ps.cpp,v 1.13 2001-05-23 19:06:41 geuzaine Exp $
  *
  * E-mail: Christophe.Geuzaine@AdValvas.be
  * URL: http://www.geuz.org/gl2ps/
@@ -23,7 +23,6 @@
  *
  */
 
-#include "Gmsh.h"
 #include "GmshUI.h"
 
 #include <string.h>
@@ -59,14 +58,14 @@ GLvoid *gl2psMalloc(size_t size){
 
   if(!size) return(NULL);
   ptr = malloc(size);
-  if(!ptr) gl2psMsg(GL2PS_ERROR, "Couldn't Allocate Requested Memory");
+  if(!ptr) gl2psMsg(GL2PS_ERROR, "Couldn't allocate requested memory");
   return(ptr);
 }
 
 GLvoid *gl2psRealloc(GLvoid *ptr, size_t size){
   if(!size) return(NULL);
   ptr = realloc(ptr, size);
-  if(!ptr) gl2psMsg(GL2PS_ERROR, "Couldn't Reallocate Requested Memory");
+  if(!ptr) gl2psMsg(GL2PS_ERROR, "Couldn't reallocate requested memory");
   return(ptr);
 }
 
@@ -121,7 +120,7 @@ GLint gl2psListNbr(GL2PSlist *list){
 
 GLvoid *gl2psListPointer(GL2PSlist *list, GLint index){
   if((index < 0) || (index >= list->n))
-    gl2psMsg(GL2PS_ERROR, "Wrong List Index in gl2psListPointer");
+    gl2psMsg(GL2PS_ERROR, "Wrong list index in gl2psListPointer");
   return(&list->array[index * list->size]);
 }
 
@@ -176,7 +175,7 @@ GLvoid gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
     c[2] = c[2] / norm;
   }
   else
-    gl2psMsg(GL2PS_WARNING, "Bad Plane in BSP Tree");
+    gl2psMsg(GL2PS_WARNING, "Bad plane in BSP tree");
 }
 
 GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
@@ -231,7 +230,7 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
     plane[3] = -prim->verts[0].xyz[2];
     break;
   default :
-    gl2psMsg(GL2PS_ERROR, "Unknown Primitive Type in BSP Tree");
+    gl2psMsg(GL2PS_ERROR, "Unknown primitive type in BSP tree");
   }
 }
 
@@ -273,7 +272,7 @@ GLvoid gl2psCreateSplittedPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
   GLshort i;
 
   if(numverts > 4){
-    gl2psMsg(GL2PS_WARNING, "%d Vertices in Polygon", numverts);
+    gl2psMsg(GL2PS_WARNING, "%d vertices in polygon", numverts);
     numverts = 4;
   }
 
@@ -540,7 +539,7 @@ GLvoid gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
     tree->front = (GL2PSbsptree*)gl2psMalloc(sizeof(GL2PSbsptree));
     gl2psBuildBspTree(tree->front, frontlist);
   }
-   else
+  else
     gl2psListDelete(frontlist);
 
   if(gl2psListNbr(backlist)){
@@ -855,10 +854,10 @@ GLvoid gl2psPrintPrimitive(GLvoid *a, GLvoid *b){
     }
     break;
   case GL2PS_QUADRANGLE :
-    gl2psMsg(GL2PS_WARNING, "There Should not be any Quad left to Print");
+    gl2psMsg(GL2PS_WARNING, "There should not be any quad left to print");
     break;
   default :
-    gl2psMsg(GL2PS_ERROR, "Unknown Type of Primitive to Print");
+    gl2psMsg(GL2PS_ERROR, "Unknown type of primitive to print");
     break;
   }
 }
@@ -973,12 +972,12 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
   used = glRenderMode(GL_RENDER);
 
   if(used < 0){
-    gl2psMsg(GL2PS_INFO, "OpenGL Feedback Buffer Reallocation");
+    gl2psMsg(GL2PS_INFO, "OpenGL feedback buffer reallocation");
     return GL2PS_OVERFLOW;
   }
 
   if(used == 0){
-    gl2psMsg(GL2PS_WARNING, "Empty Feedback Buffer");
+    gl2psMsg(GL2PS_WARNING, "Empty feedback buffer");
     return GL2PS_NO_FEEDBACK;
   }
 
@@ -1060,7 +1059,7 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
       used -= 2;
       break;      
     default :
-      gl2psMsg(GL2PS_WARNING, "Unknown Token in Buffer");
+      gl2psMsg(GL2PS_WARNING, "Unknown token in buffer");
       current ++;
       used --;
       break;
@@ -1104,7 +1103,7 @@ GLvoid gl2psPrintPostscriptHeader(GLvoid){
 	  "%%%%Orientation: Portrait\n"
 	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
 	  "%%%%BoundingBox: %d %d %d %d\n"
-	  "%%%%Copyright: GNU LGPL (C) 1999-2000 Christophe.Geuzaine@AdValvas.be\n"
+	  "%%%%Copyright: GNU LGPL (C) 1999-2001 Christophe.Geuzaine@AdValvas.be\n"
 	  "%%%%EndComments\n"
 	  "%%%%BeginProlog\n"
 	  "/gl2psdict 64 dict def gl2psdict begin\n"
@@ -1225,12 +1224,12 @@ GLvoid gl2psBeginPage(char *title, char *producer, GLint sort, GLint options,
     memcpy(gl2ps.colormap, colormap, gl2ps.colorsize * sizeof(GL2PSrgba));
   }
   else
-    gl2psMsg(GL2PS_ERROR, "Unknown Color Mode in gl2psBeginPage");
+    gl2psMsg(GL2PS_ERROR, "Unknown color mode in gl2psBeginPage");
 
   if(stream)
     gl2ps.stream = stream;
   else
-    gl2psMsg(GL2PS_ERROR, "Bad File Pointer");
+    gl2psMsg(GL2PS_ERROR, "Bad file pointer");
 
   glFeedbackBuffer(gl2ps.buffersize, GL_3D_COLOR, gl2ps.feedback);
   glRenderMode(GL_FEEDBACK);  
@@ -1278,7 +1277,7 @@ GLint gl2psEndPage(GLvoid){
       res = GL2PS_SUCCESS;
       break;
     default :
-      gl2psMsg(GL2PS_ERROR, "Unknown Sorting Algorithm");
+      gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm");
     }
     fprintf(gl2ps.stream,
 	    "grestore\n"
@@ -1339,7 +1338,7 @@ GLvoid gl2psEnable(GLint mode){
     glPassThrough(GL2PS_BEGIN_LINE_STIPPLE);
     break;
   default :
-    gl2psMsg(GL2PS_WARNING, "Unknown Mode in gl2psEnable");
+    gl2psMsg(GL2PS_WARNING, "Unknown mode in gl2psEnable");
     break;
   }
 }
@@ -1356,7 +1355,7 @@ GLvoid gl2psDisable(GLint mode){
     glPassThrough(GL2PS_END_LINE_STIPPLE);
     break;
   default :
-    gl2psMsg(GL2PS_WARNING, "Unknown Mode in gl2psDisable");
+    gl2psMsg(GL2PS_WARNING, "Unknown mode in gl2psDisable");
     break;
   }
 }
