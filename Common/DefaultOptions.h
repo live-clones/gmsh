@@ -64,7 +64,7 @@ StringXString GeneralOptions_String[] = {
 #else
     "emacs %s &" ,
 #endif
-    "System command to launch a text editor (OS-dependent)" },
+    "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
     "Temporary file used by the geometry module" },
 
@@ -74,9 +74,9 @@ StringXString GeneralOptions_String[] = {
 #elif defined(__APPLE__)
     "open %s" ,
 #else
-    "mozilla %s &" ,
+    "if [[ $(ps -e|grep mozilla|grep -v grep) ]]; then mozilla -remote 'openurl(%s)' ; else mozilla %s ; fi &" ,
 #endif
-    "System command to launch a web browser (OS-dependent)" },
+    "System command to launch a web browser" },
 
   { 0, NULL , NULL , NULL , NULL }
 } ;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.192 2003-12-03 04:28:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.193 2003-12-03 22:17:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1495,11 +1495,36 @@ void help_about_cb(CALLBACK_ARGS)
   WID->create_about_window();
 }
 
+void _replace_multi_format(char *in, char *val, char *out){
+  int i = 0, j = 0;
+
+  out[0] = '\0';
+  while(i < strlen(in)){
+    if(in[i] == '%' && i != strlen(in)-1){
+      if(in[i+1] == 's'){
+	strcat(out, val);
+	i += 2;
+	j += strlen(val);
+      }
+      else{
+	Msg(WARNING, "Skipping unknown format '%%%c' in '%s'", in[i+1], in);
+	i += 2;
+      }
+    }
+    else{
+      out[j] = in[i];
+      out[j+1] = '\0';
+      i++;
+      j++;
+    }
+  }
+  out[j] = '\0';
+}
+
 void help_online_cb(CALLBACK_ARGS)
 {
   char cmd[1000];
-  sprintf(cmd, CTX.web_browser, "http://www.geuz.org/gmsh/doc/texinfo/");
-  Msg(INFO, "Starting web browser '%s'", cmd);
+  _replace_multi_format(CTX.web_browser, "http://www.geuz.org/gmsh/doc/texinfo/", cmd);
   SystemCall(cmd);
 }
 
@@ -1550,8 +1575,7 @@ void geometry_physical_cb(CALLBACK_ARGS)
 void geometry_edit_cb(CALLBACK_ARGS)
 {
   char cmd[1000];
-  sprintf(cmd, CTX.editor, CTX.filename);
-  Msg(INFO, "Starting text editor '%s'", cmd);
+  _replace_multi_format(CTX.editor, CTX.filename, cmd);
   SystemCall(cmd);
 }
 
