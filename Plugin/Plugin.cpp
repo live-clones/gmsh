@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.50 2004-04-22 09:35:01 remacle Exp $
+// $Id: Plugin.cpp,v 1.51 2004-05-12 02:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,7 @@
 #include "Triangulate.h"
 #include "SphericalRaise.h"
 #include "DisplacementRaise.h"
+#include "Evaluate.h"
 
 using namespace std;
 
@@ -79,8 +80,6 @@ void GMSH_PluginManager::action(char *pluginName, char *action, void *data)
 
   if(!strcmp(action, "Run"))
     plugin->run();
-  else if(!strcmp(action, "Save"))
-    plugin->save();
   else
     throw "Unknown plugin action";
 }
@@ -93,12 +92,18 @@ void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
   if(!plugin)
     throw "Unknown plugin name";
 
-  if(!strcmp(option, "OutputFileName"))
-    strcpy(plugin->outputFileName, value);
-  else if(!strcmp(option, "InputFileName"))
-    strcpy(plugin->inputFileName, value);
-  else
-    throw "Unknown plugin option name";
+  for(int i = 0; i < plugin->getNbOptionsStr(); i++) {
+    StringXString *sxs;
+    // get the ith option of the plugin
+    sxs = plugin->getOptionStr(i);
+    // look if it's the good option name
+    if(!strcmp(sxs->str, option)) {
+      sxs->def = value;
+      return;
+    }
+  }
+
+  throw "Unknown plugin option name";
 }
 
 void GMSH_PluginManager::setPluginOption(char *pluginName, char *option,
@@ -163,6 +168,10 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		    ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
   allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		    ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
+#if defined(HAVE_MATH_EVAL)
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Evaluate", GMSH_RegisterEvaluatePlugin()));
+#endif
 
 #if defined(HAVE_FLTK)
   struct dirent **list;

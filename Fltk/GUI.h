@@ -101,8 +101,8 @@ struct PluginDialogBox
 {
   Fl_Window *main_window;
   Fl_Return_Button *run_button;
-  int nb_viewvalue;
-  Fl_Value_Input *view_value[20];
+  Fl_Value_Input *value[NB_BUTT_MAX];
+  Fl_Input *input[NB_BUTT_MAX] ;
 };
 
 // The dialog for solvers

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.224 2004-05-08 00:44:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.225 2004-05-12 02:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3159,13 +3159,17 @@ void view_plugin_cb(CALLBACK_ARGS)
   p->getName(name);
 
   if(p->dialogBox) {    //Get the values from the GUI
+    int m = p->getNbOptionsStr();
     int n = p->getNbOptions();
-    if(n > 20)
-      Msg(GERROR, "Plugin has too many parameters");
+    if(m > NB_BUTT_MAX) m = NB_BUTT_MAX;
+    if(n > NB_BUTT_MAX) n = NB_BUTT_MAX;
+    for(int i = 0; i < m; i++) {
+      StringXString *sxs = p->getOptionStr(i);
+      sxs->def = p->dialogBox->input[i]->value();
+    }
     for(int i = 0; i < n; i++) {
-      StringXNumber *sxn;
-      sxn = p->getOption(i);
-      sxn->def = p->dialogBox->view_value[i]->value();
+      StringXNumber *sxn = p->getOption(i);
+      sxn->def = p->dialogBox->value[i]->value();
     }
   }
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.46 2004-04-24 03:52:00 geuzaine Exp $
+# $Id: Makefile,v 1.47 2004-05-12 02:02:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB     = ../lib/libGmshPlugin.a
 INCLUDE = -I../Common -I../Graphics -I../DataStr -I../Geo\
-            -I../Mesh -I../Numeric -I../Triangle
+            -I../Mesh -I../Numeric -I../Triangle -I../MathEval
 CFLAGS  = -DMPICH_SKIP_MPICXX ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Plugin.cpp\
@@ -39,6 +39,7 @@ SRC = Plugin.cpp\
         Skin.cpp\
         Extract.cpp\
         DecomposeInSimplex.cpp\
+        Evaluate.cpp\
         Harmonic2Time.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -69,7 +70,7 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   PluginManager.h CutMap.h Levelset.h CutGrid.h StreamLines.h CutPlane.h \
   CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h Extract.h \
   Harmonic2Time.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
-  SphericalRaise.h DisplacementRaise.h
+  SphericalRaise.h DisplacementRaise.h Evaluate.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h DecomposeInSimplex.h ../DataStr/Tools.h \
@@ -130,6 +131,9 @@ DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h DecomposeInSimplex.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Common/Context.h ../DataStr/Malloc.h
+Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h Evaluate.h \
+  ../Common/Context.h ../Numeric/Numeric.h
 Harmonic2Time.o: Harmonic2Time.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h Harmonic2Time.h ../Common/Context.h \

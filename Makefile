@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.341 2004-05-10 06:35:05 geuzaine Exp $
+# $Id: Makefile,v 1.342 2004-05-12 02:02:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -142,8 +142,8 @@ source: source-common
 
 source-commercial: source-common
 	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */*/*/CVS */.globalrc\
-          Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
-          utils/commercial ${GMSH_VERSION_FILE}
+          Triangle/triangle.* MathEval/*.{c,h} TODO *.spec doc/gmsh.html doc/FAQ\
+          doc/README.cvs utils/commercial ${GMSH_VERSION_FILE}
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
 	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp

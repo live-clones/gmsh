@@ -43,14 +43,9 @@ class PluginDialogBox;
 class GMSH_Plugin
 {
 public :
-  // output file name
-  char outputFileName[256];
-
-  //input file name
-  char inputFileName[256];
-
   // a dialog box for user interface
   PluginDialogBox *dialogBox;
+
   // this is there for internal use, this variable will be used by the
   // PluginManager, just forget it
   void *hlib;
@@ -71,10 +66,15 @@ public :
   // show the message and hopefully continue
   virtual void catchErrorMessage(char *errorMessage) const = 0;
 
-  // gmsh style option, ca be loaded, saved and set
+  // gmsh style numeric options
   virtual int getNbOptions() const = 0;
   virtual StringXNumber *getOption(int iopt) = 0;
-  virtual void save() = 0;
+
+  // gmsh style string options
+  virtual int getNbOptionsStr() const = 0;
+  virtual StringXString *getOptionStr(int iopt) = 0;
+
+  // run the plugin
   virtual void run() = 0;
 };
 
@@ -86,9 +86,8 @@ class GMSH_Post_Plugin : public GMSH_Plugin
 {
 public:
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
-  virtual void save(){
-    Msg(WARNING, "Plugin().Save is deprecated: use 'Save View[num]' instead");
-  }
+  virtual int getNbOptionsStr() const { return 0; };
+  virtual StringXString *getOptionStr(int iopt) { return NULL; };
   virtual void run(){ execute(0); }
   // If returned pointer is the same as the argument, then view is
   // simply modified, else, a new view is added in the view list

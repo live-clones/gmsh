@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.50 2004-03-05 01:21:06 geuzaine Exp $
+dnl $Id: configure.in,v 1.51 2004-05-12 02:02:20 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 dnl
@@ -66,6 +66,9 @@ AC_ARG_ENABLE(parallel,
 AC_ARG_ENABLE(triangle,
               AC_HELP_STRING([--enable-triangle],
                              [compile Triangle if available (default=yes)]))
+AC_ARG_ENABLE(matheval,
+              AC_HELP_STRING([--enable-matheval],
+                             [compile MathEval if available (default=yes)]))
 AC_ARG_ENABLE(jpeg,
               AC_HELP_STRING([--enable-jpeg],
                              [enable JPEG support (default=yes)]))
@@ -237,6 +240,16 @@ else
      echo "requirements stated in ./Triangle/README. (Most notably, you may"
      echo "then only redistribute Gmsh if no compensation is received.)"
      echo "********************************************************************"
+  fi
+fi
+
+dnl Check for MathEval
+AC_CHECK_FILE(./MathEval/matheval.c, MATHEVAL="yes", MATHEVAL="no")
+if test "x${MATHEVAL}" = "xyes"; then
+  if test "x$enable_matheval" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} MathEval"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
+     FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
   fi
 fi
 

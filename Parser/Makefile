@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.56 2004-04-18 03:36:07 geuzaine Exp $
+# $Id: Makefile,v 1.57 2004-05-12 02:02:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -20,9 +20,6 @@
 # Please report all bugs and problems to <gmsh@geuz.org>.
 
 include ../variables
-
-YACC = bison
-LEX = flex
 
 LIB     = ../lib/libGmshParser.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
@@ -46,8 +43,8 @@ ${LIB}: ${OBJ}
 	${CXX} ${CFLAGS} -c $<
 
 parser:
-	${YACC} --output Gmsh.tab.cpp -d Gmsh.y 
-	${LEX}  -oGmsh.yy.cpp Gmsh.l
+	bison --output Gmsh.tab.cpp -d Gmsh.y 
+	flex  -oGmsh.yy.cpp Gmsh.l
 	if [ -r Gmsh.tab.cpp.h ]; then mv Gmsh.tab.cpp.h Gmsh.tab.hpp ; fi
 
 clean:

@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.5 2004-04-24 05:22:50 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.6 2004-05-12 02:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -199,7 +199,7 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v) const
 
   char name[1024], filename[1024];
   sprintf(name, "%s_CutGrid", v->Name);
-  sprintf(filename, "%s_CutGrid", v->FileName);
+  sprintf(filename, "%s_CutGrid.pos", v->Name);
   EndView(View, v->NbTimeStep, filename, name);
 
   delete [] VALUES1;

@@ -25,6 +25,7 @@
 
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
 #define VIEW_MAX_ELEMENT_NODES  8
+#define VAL_INF 1.e200
 
 class smooth_container;
 

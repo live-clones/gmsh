@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.115 2004-02-20 17:57:59 geuzaine Exp $
+// $Id: Views.cpp,v 1.116 2004-05-12 02:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,8 +32,6 @@ extern Context_T CTX;
 #if defined(HAVE_FLTK)
 void UpdateViewsInGUI();
 #endif
-
-#define VAL_INF 1.e200
 
 // Static reference view
 

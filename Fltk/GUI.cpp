@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.294 2004-04-26 19:54:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.295 2004-05-12 02:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2788,6 +2788,7 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
 
   // get plugin info
 
+  int m = p->getNbOptionsStr();
   int n = p->getNbOptions();
   p->getName(namep);
   p->getInfos(author, copyright, help);
@@ -2795,7 +2796,7 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
   // create window
 
   int width = 26 * fontsize;
-  int height = ((n > 8 ? n : 8) + 2) * BH + 5 * WB;
+  int height = ((n+m > 8 ? n+m : 8) + 2) * BH + 5 * WB;
 
   PluginDialogBox *pdb = new PluginDialogBox;
   pdb->main_window = new Fl_Window(width, height);
@@ -2810,15 +2811,23 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
     {
       Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Options");
 
-      if(n > 20)
-        Msg(GERROR, "Plugin has too many parameters");
+      if(m > NB_BUTT_MAX) m = NB_BUTT_MAX;
+      if(n > NB_BUTT_MAX) n = NB_BUTT_MAX;
 
+      int k = 0;
+      for(int i = 0; i < m; i++) {
+        StringXString *sxs = p->getOptionStr(i);
+        pdb->input[i] = new Fl_Input(2 * WB, 2 * WB + (k + 1) * BH, IW, BH, sxs->str);
+        pdb->input[i]->align(FL_ALIGN_RIGHT);
+        pdb->input[i]->value(sxs->def);
+	k++;
+      }
       for(int i = 0; i < n; i++) {
-        StringXNumber *sxn;
-        sxn = p->getOption(i);
-        pdb->view_value[i] = new Fl_Value_Input(2 * WB, 2 * WB + (i + 1) * BH, IW, BH, sxn->str);
-        pdb->view_value[i]->align(FL_ALIGN_RIGHT);
-        pdb->view_value[i]->value(sxn->def);
+        StringXNumber *sxn = p->getOption(i);
+        pdb->value[i] = new Fl_Value_Input(2 * WB, 2 * WB + (k + 1) * BH, IW, BH, sxn->str);
+        pdb->value[i]->align(FL_ALIGN_RIGHT);
+        pdb->value[i]->value(sxn->def);
+	k++;
       }
 
       g->end();

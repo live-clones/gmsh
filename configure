@@ -852,6 +852,7 @@ Optional Features:
   --enable-system-menubar use the system menu bar on MacOS X (default=no)
   --enable-parallel       enable parallel version (default=no)
   --enable-triangle       compile Triangle if available (default=yes)
+  --enable-matheval       compile MathEval if available (default=yes)
   --enable-jpeg           enable JPEG support (default=yes)
   --enable-z              enable ZLIB support (default=yes)
   --enable-png            enable PNG support (default=yes)
@@ -1352,6 +1353,11 @@ fi;
 # Check whether --enable-triangle or --disable-triangle was given.
 if test "${enable_triangle+set}" = set; then
   enableval="$enable_triangle"
+
+fi;
+# Check whether --enable-matheval or --disable-matheval was given.
+if test "${enable_matheval+set}" = set; then
+  enableval="$enable_matheval"
 
 fi;
 # Check whether --enable-jpeg or --disable-jpeg was given.
@@ -3527,6 +3533,37 @@ else
      echo "requirements stated in ./Triangle/README. (Most notably, you may"
      echo "then only redistribute Gmsh if no compensation is received.)"
      echo "********************************************************************"
+  fi
+fi
+
+echo "$as_me:$LINENO: checking for ./MathEval/matheval.c" >&5
+echo $ECHO_N "checking for ./MathEval/matheval.c... $ECHO_C" >&6
+if test "${ac_cv_file___MathEval_matheval_c+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./MathEval/matheval.c"; then
+  ac_cv_file___MathEval_matheval_c=yes
+else
+  ac_cv_file___MathEval_matheval_c=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file___MathEval_matheval_c" >&5
+echo "${ECHO_T}$ac_cv_file___MathEval_matheval_c" >&6
+if test $ac_cv_file___MathEval_matheval_c = yes; then
+  MATHEVAL="yes"
+else
+  MATHEVAL="no"
+fi
+
+if test "x${MATHEVAL}" = "xyes"; then
+  if test "x$enable_matheval" != "xno"; then
+     GMSH_DIRS="${GMSH_DIRS} MathEval"
+     GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
+     FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
   fi
 fi
 

@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.5 2004-04-24 05:22:50 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.6 2004-05-12 02:02:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -195,7 +195,7 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
 
   char name[1024], filename[1024];
   sprintf(name, "%s_StreamLines", v->Name);
-  sprintf(filename, "%s_StreamLines", v->FileName);
+  sprintf(filename, "%s_StreamLines.pos", v->Name);
   EndView(View, 1, filename, name);
 
   return View;
