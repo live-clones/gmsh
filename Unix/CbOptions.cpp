@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.15 2000-12-21 08:02:06 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.16 2000-12-22 17:01:39 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -98,13 +98,13 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_SCALEZ_LOCKED : CTX.slock[2] = !CTX.slock[2];  break;
   case OPTIONS_XVIEW : 
     if(CTX.useTrackball)
-      CTX.setQuaternion(0.,0.,1.,0.);
+      CTX.setQuaternion(0.,-1./sqrt(2.),0.,1./sqrt(2.));
     set_r(0,0.);  set_r(1,90.);set_r(2,0.); 
     Init(); Draw(); 
     break;
   case OPTIONS_YVIEW : 
     if(CTX.useTrackball)
-      CTX.setQuaternion(0.,-1.,0.,0.);
+      CTX.setQuaternion(1./sqrt(2.),0.,1./sqrt(2.),0.);
     set_r(0,-90.);set_r(1,0.); set_r(2,0.); 
     Init(); Draw(); 
     break;

@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.23 2000-12-20 15:28:42 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.24 2000-12-22 17:01:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -374,6 +374,12 @@ void Context_T::buildRotmatrix(void)
     rot[3][1] = 0.0 ;
     rot[3][2] = 0.0 ;
     rot[3][3] = 1.0 ;
+    /*
+    printf("x=%g y=%g z=%g\n", r[0], r[1], r[2]);
+    printf("[%g %g %g]\n", rot[0][0], rot[0][1], rot[0][2]);
+    printf("[%g %g %g]\n", rot[1][0], rot[1][1], rot[1][2]);
+    printf("[%g %g %g]\n", rot[2][0], rot[2][1], rot[2][2]);
+    */
   }
 
 }
@@ -385,7 +391,10 @@ void Context_T::addQuaternion (float p1x, float p1y, float p2x, float p2y)
   add_quats(quat, quaternion, quaternion);  
 }
 
-void Context_T::setQuaternion (float p1x, float p1y, float p2x, float p2y)
+void Context_T::setQuaternion (float q0, float q1, float q2, float q3)
 {
-  trackball(quaternion,p1x,p1y,p2x,p2y);
+  quaternion[0] = q0;
+  quaternion[1] = q1;
+  quaternion[2] = q2;
+  quaternion[3] = q3;
 }
