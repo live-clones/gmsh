@@ -1,8 +1,9 @@
-$Id: VERSIONS,v 1.144 2003-05-22 21:41:14 geuzaine Exp $
+$Id: VERSIONS,v 1.145 2003-05-22 22:24:35 geuzaine Exp $
 
 New in 1.45: small bug fixes (min/max computation for tensor views,
-physical points in read mesh, etc.); variable definition speedup;
-documentation updates;
+missing physical points in read mesh, "jumping" geometry in the GUI
+during interactive manipulation of large geometries, etc.); variable
+definition speedup; documentation updates;
 
 New in 1.44: new reference manual; added support for PNG output; fixed
 small configure script bugs;
