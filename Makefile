@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.201 2002-04-13 04:31:35 geuzaine Exp $
+# $Id: Makefile,v 1.202 2002-04-13 04:32:30 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -563,7 +563,7 @@ compile-sun: initialtag
         ); done
 link-sun:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl
+                 -L$(HOME)/SOURCES/fltk-1.1/lib -lfltk_gl\
                  -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB) -lfltk\
                  $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
 sun: compile-sun link-sun
