@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.93 2001-07-30 18:34:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.94 2001-07-31 07:51:42 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1206,6 +1206,7 @@ void GUI::create_mesh_options_window(){
 	o->labelsize(CTX.fontsize);
 	o->hide();
 	mesh_butt[0] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Second order elements");
+	mesh_butt[0]->deactivate();//2nd order elements do not work. Disable the graphical option.
 	mesh_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Interactive");
 	mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Anisotropic");
 	mesh_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Constrained background mesh");
