@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.13 2001-05-29 13:31:25 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.14 2001-06-06 15:30:18 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -355,7 +355,7 @@ Simplex *Create_Simplex (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4){
 void Free_Simplex (void *a, void *b){
   Simplex *s = *(Simplex**)a;
   if(s){
-    Free(s);
+    delete s;
     s = NULL;
   }
 }

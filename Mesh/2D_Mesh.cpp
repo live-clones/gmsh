@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.25 2001-06-03 11:19:52 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.26 2001-06-06 15:30:18 remacle Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -980,7 +980,7 @@ void filldel (Delaunay * deladd, int aa, int bb, int cc,
     v = Create_Vertex (-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
     Calcule_Z_Plan (&v, &dum);
     Projette_Inverse (&v, &dum);
-    Free (v);
+    Free_Vertex (&v,0);
   }
   else{
     v = Create_Vertex (-1, pt2.h, pt2.v, 0.0, 0.0, 0.0);
@@ -997,7 +997,7 @@ void filldel (Delaunay * deladd, int aa, int bb, int cc,
     }
     else
       newqual = qual;
-    Free (v);
+    Free_Vertex (&v,0);
   }
 
   switch (LocalNewPoint){

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.102 2001-05-25 14:27:20 geuzaine Exp $
+# $Id: Makefile,v 1.103 2001-06-06 15:30:18 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -184,7 +184,7 @@ tag:
 	echo "#define GMSH_VERSION  $(GMSH_RELEASE)" >  Common/GmshVersion.h
 	echo "#define GMSH_DATE     \"`date`\""      >> Common/GmshVersion.h
 	echo "#define GMSH_HOST     \"`hostname`\""  >> Common/GmshVersion.h
-	echo "#define GMSH_PACKAGER \"`whoami`\""    >> Common/GmshVersion.h
+	echo "#define GMSH_PACKAGER \"remacle\""    >> Common/GmshVersion.h
 	echo "#define GMSH_OS       \"`uname -sr`\"" >> Common/GmshVersion.h
 
 initialtag:
@@ -471,11 +471,15 @@ fltk_compile_cygwin:
 
 fltk_link_solaris_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl
+                 $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl -lsocket
+
+fltk_purify:
+	purify -cache-dir=/space g++ -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
+                 $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl -lsocket
 
 fltk_link_linux_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB_LINUX_SCOREC) -lm -ldl
+                 $(FLTK_LIB_LINUX_SCOREC) -lm -ldl 
 fltk_link_mesa:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
                  $(FLTK_LIB) -lm -ldl
@@ -527,7 +531,7 @@ fltk_hp: tag fltk_compile_big_endian fltk_link_hp strip_bin
 
 fltk_ibm: tag fltk_compile_ibm fltk_link_ibm strip_bin
 
-fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
+fltk_solaris_scorec : fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
 
 fltk_linux_scorec : fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin 
 

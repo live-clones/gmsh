@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.15 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.16 2001-06-06 15:30:18 remacle Exp $
 
 /*
    Jean-Francois Remacle
@@ -409,7 +409,7 @@ int Maillage_Edge (Vertex * v1, Vertex * v2, List_T * Points){
   }
   List_Delete (c->Vertices);
   List_Delete (c->Control_Points);
-  Free (c);
+  Free_Curve (&c,0);
   return 1;
 }
 
@@ -626,7 +626,7 @@ bool Bowyer_Watson_2D (Surface * sur, Vertex * v, Simplex * S, int force){
       if (!Tree_Suppress (sur->Simplexes, &s)){
         Msg(WARNING, "Failed to suppress simplex %d", s->Num);
       }
-      Free (s);
+      Free_Simplex (&s,0);
     }
     for (i = 0; i < List_Nbr (Simplexes_New); i++){
       List_Read (Simplexes_New, i, &s);

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.17 2001-05-29 13:31:04 geuzaine Exp $
+// $Id: Generator.cpp,v 1.18 2001-06-06 15:30:18 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -134,7 +134,7 @@ void Init_Mesh (Mesh * M, int all){
     Tree_Delete (M->VertexEdges);
   }
   if (M->Simplexes){
-    //Tree_Action (M->Simplexes, Free_Simplex);//produit des crashes innatendus...
+    Tree_Action (M->Simplexes, Free_Simplex);//produit des crashes innatendus...
     Tree_Delete (M->Simplexes);
   }
   if (M->Points){
@@ -166,7 +166,7 @@ void Init_Mesh (Mesh * M, int all){
     List_Delete (M->PhysicalGroups);
   }
   if (M->Metric){
-    Free (M->Metric);
+    delete M->Metric;
   }
   
   M->Vertices = Tree_Create (sizeof (Vertex *), compareVertex);
