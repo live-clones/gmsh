@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.185 2002-07-31 03:59:08 geuzaine Exp $
+// $Id: GUI.cpp,v 1.186 2002-08-02 16:57:00 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1144,7 +1144,7 @@ void GUI::create_general_options_window(){
 	gen_butt[i]->selection_color(TOGGLE_COLOR);
       }
 
-      gen_butt[14] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Ask confirmation before overwriting a file");
+      gen_butt[14] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Ask confirmation before overwriting files");
       gen_butt[14]->type(FL_TOGGLE_BUTTON);
       gen_butt[14]->down_box(TOGGLE_BOX);
       gen_butt[14]->selection_color(TOGGLE_COLOR);
