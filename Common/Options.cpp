@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.25 2001-05-25 11:03:38 geuzaine Exp $
+// $Id: Options.cpp,v 1.26 2001-06-06 08:47:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1942,6 +1942,11 @@ double opt_print_eps_quality(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.print.eps_quality = (int)val;
   return CTX.print.eps_quality;
+}
+double opt_print_eps_background(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.print.eps_background = (int)val;
+  return CTX.print.eps_background;
 }
 double opt_print_jpeg_quality(OPT_ARGS_NUM){
   if(action & GMSH_SET) 

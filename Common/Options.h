@@ -227,6 +227,7 @@ double opt_view_arrow_type(OPT_ARGS_NUM);
 double opt_view_arrow_location(OPT_ARGS_NUM);
 double opt_print_format(OPT_ARGS_NUM);
 double opt_print_eps_quality(OPT_ARGS_NUM);
+double opt_print_eps_background(OPT_ARGS_NUM);
 double opt_print_jpeg_quality(OPT_ARGS_NUM);
 double opt_print_gif_dither(OPT_ARGS_NUM);
 double opt_print_gif_sort(OPT_ARGS_NUM);

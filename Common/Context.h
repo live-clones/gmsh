@@ -159,7 +159,7 @@ public :
   // print options 
   struct{
     int format;
-    int eps_quality;
+    int eps_quality, eps_background;
     int jpeg_quality;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
     char *font;

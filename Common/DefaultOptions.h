@@ -489,6 +489,8 @@ StringXNumber PrintOptions_Number[] = {
     "Print format" }, 
   { F|O, "EpsQuality" , opt_print_eps_quality , 1 ,
     "Postscript quality (1=simple sort, 2=recursive sort)" },
+  { F|O, "EpsBackground" , opt_print_eps_background , 1 ,
+    "Save image background in postscript output" },
   { F|O, "JpegQuality" , opt_print_jpeg_quality , 85 ,
     "JPEG quality (between 1 and 100)" },
   { F|O, "GifDither" , opt_print_gif_dither , 0 ,
