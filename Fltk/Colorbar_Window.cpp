@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.34 2003-03-21 00:52:36 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.35 2003-10-29 15:18:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -19,29 +19,11 @@
 // 
 // Please report all bugs and problems to "gmsh@geuz.org".
 
-// This code is the rewriting (in C++, for FLTK) of the colorbar
-// widget provided in Vis5d, version 4.2:
-
-/*
-   Vis5d program for visualizing five dimensional gridded data sets
-   Copyright (C) 1990 - 1995  Bill Hibbard, Brian Paul, Dave Santek,
-   and Andre Battaiola.
+// This class was inspired by the colorbar widget provided in Vis5d, a
+// program for visualizing five dimensional gridded data sets
+// Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave Santek,
+// and Andre Battaiola.
    
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 1, or (at your option)
-   any later version.
-   
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-   
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
-
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"
