@@ -160,39 +160,44 @@ Physical Surface (711) = {66} ;
    widget). GUI colors and fonts can be changed in a standard X
    resource file (.gmshrc in your home directory). */
 
-Color{
+Options{
   General{
-    Background = {39, 64, 139} ;
-    Axes =  OrangeRed1; // Color names are the classical X11 names
-    SmallAxes = LightGray;
-    Text = Gray88 ;
+    Color{
+      Background = {39, 64, 139} ;
+      Axes =  OrangeRed1; // Color names are the classical X11 names
+      SmallAxes = LightGray;
+      Text = Gray88 ;
+    }
   }
   Geometry{
-    Points = Yellow;
-    Lines = {255, 255, 255, 128} ; // semi-transparent white
-    Surfaces = {Orange, 60} ; // almost transparent orange
-    Volumes = Green ;
-    PointsSelect = White ;
-    LinesSelect = White ;
-    SurfacesSelect = White ;
+    Color{
+      Points = Yellow;
+      Lines = {255, 255, 255, 128} ; // semi-transparent white
+      Surfaces = {Orange, 60} ; // almost transparent orange
+      Volumes = Green ;
+      PointsSelect = White ;
+      LinesSelect = White ;
+      SurfacesSelect = White ;
+    }
   }
   Mesh{
-    Points = Black;
-    PointsSupp = Orchid;
-    Lines = Black;
-    // Color cycle for volume mesh
-    One = Gray10 ;
-    Two = Gray20 ;
-    Three = Gray30 ;
-    Four = Gray40 ;
-    Five = Gray50 ;
-    Six = Gray60 ;
-    Seven = Gray70 ;
-    Eight = Gray80 ;
-    Nine = Gray90 ;
-    Ten = Black ;
+    Color{
+      Points = Black;
+      PointsSupp = Orchid;
+      Lines = Black;
+      // Color cycle for volume mesh
+      One = Gray10 ;
+      Two = Gray20 ;
+      Three = Gray30 ;
+      Four = Gray40 ;
+      Five = Gray50 ;
+      Six = Gray60 ;
+      Seven = Gray70 ;
+      Eight = Gray80 ;
+      Nine = Gray90 ;
+      Ten = Black ;
+    }
   }
-
 }
 
 /* README: X resources can be specified in a '.gmshrc' in your home

@@ -36,3 +36,23 @@ Volume(10023) = {10022};
 
 Physical Volume (1) = {41} ;
 
+/* README: You can also specify options in the file. For example, this
+   redefines the color of geometry points. Click on the '?' button in the
+   main window, print the file in 'geo' format, or add '-0' on the command
+   line to get the full list of available options. */
+
+Options{
+  General{
+    Rotation0 = 10;
+    Color{
+      Background = Red;
+    }
+  }
+  Geometry{
+    Color{
+      Points = Orange;
+      Lines = Blue;
+    }
+  }
+}
+

@@ -54,25 +54,6 @@ Physical Line(2222) = {3};
 Physical Line(3333) = {2,4};
 Physical Surface(9999) = {6};
 
-/* README: You can also specify options in the file. For example, this
-   redefines the color of geometry points. See ex03.geo for a more
-   complete example. */
-
-Options{
-  General{
-    Rotation0 = 10;
-    Color{
-      Background = Red;
-    }
-  }
-  Geometry{
-    Color{
-      Points = Orange;
-      Lines = Blue;
-    }
-  }
-}
-
 /* README: You can merge files with File->Merge. This is most useful
    for post-processing purposes. Try for example to merge view1.pos
    together with this file.  Post-processing options are available by
