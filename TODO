@@ -1,4 +1,4 @@
-$Id: TODO,v 1.62 2004-09-11 06:38:22 geuzaine Exp $
+$Id: TODO,v 1.63 2004-10-08 02:44:25 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -54,12 +54,6 @@ precision...). Rescale?
 add the capability to mesh some entities using 1st order and some
 other using 2nd order elements (in the same geometry)?
 <gerard.fleury@inrs.fr>
-
-********************************************************************
-
-add some code to make the node/element list ordered+dense (with no
-gaps)? this seems to be one common problem users have with our mesh
-format...
 
 ********************************************************************
 
