@@ -214,6 +214,11 @@ Index of the view used to color vector fields (-1=self)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.FakeTransparency
+Use fake transparency (cheaper than the real thing, but incorrect)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.GeneralizedRaiseFactor
 Generalized raise amplification factor@*
 Default value: @code{1}@*
@@ -412,6 +417,56 @@ Saved in: @code{-}
 @item View.Width
 Width (in pixels) of the scale or 2D graph@*
 Default value: @code{300}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Points
+Point color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Lines
+Line color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Triangles
+Triangle color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Quadrangles
+Quadrangle color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Tetrahedra
+Tetrahedron color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Hexahedra
+Hexahedron color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Prisms
+Prism color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Pyramids
+Pyramid color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Tangents
+Tangent vector color@*
+Default value: @code{@{255,255,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Normals
+Normal vector color@*
+Default value: @code{@{255,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColorTable

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.215 2004-12-24 20:25:11 geuzaine Exp $
+// $Id: Options.cpp,v 1.216 2004-12-24 23:10:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2524,17 +2524,6 @@ double opt_general_alpha_blending(OPT_ARGS_NUM)
   return CTX.alpha;
 }
 
-double opt_general_fake_transparency(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.fake_transparency = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->gen_butt[4]->value(CTX.fake_transparency);
-#endif
-  return CTX.fake_transparency;
-}
-
 double opt_general_vector_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -2600,9 +2589,20 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     Set_DefaultColorOptions(0, GeneralOptions_Color);
     Set_DefaultColorOptions(0, GeometryOptions_Color);
     Set_DefaultColorOptions(0, MeshOptions_Color);
+    Set_DefaultColorOptions(0, SolverOptions_Color);
+    Set_DefaultColorOptions(0, PostProcessingOptions_Color);
+    for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+      Set_DefaultColorOptions(i, ViewOptions_Color);
+    Set_DefaultColorOptions(0, PrintOptions_Color);
+
     Set_ColorOptions_GUI(0, GeneralOptions_Color);
     Set_ColorOptions_GUI(0, GeometryOptions_Color);
     Set_ColorOptions_GUI(0, MeshOptions_Color);
+    Set_ColorOptions_GUI(0, SolverOptions_Color);
+    Set_ColorOptions_GUI(0, PostProcessingOptions_Color);
+    for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+      Set_ColorOptions_GUI(i, ViewOptions_Color);
+    Set_ColorOptions_GUI(0, PrintOptions_Color);
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
@@ -2639,10 +2639,6 @@ double opt_general_zoom_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.zoom_factor = val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->gen_value[15]->value(CTX.zoom_factor);
-#endif
   return CTX.zoom_factor;
 }
 
@@ -4672,6 +4668,20 @@ double opt_view_displacement_factor(OPT_ARGS_NUM)
   return v->DisplacementFactor;
 }
 
+double opt_view_fake_transparency(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->FakeTransparency = (int)val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_butt[24]->value(v->FakeTransparency);
+#endif
+  return v->FakeTransparency;
+}
+
 double opt_view_explode(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
@@ -6162,3 +6172,154 @@ unsigned int opt_mesh_color_10(OPT_ARGS_COL)
 #endif
   return CTX.color.mesh.carousel[9];
 }
+
+unsigned int opt_view_color_points(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.point = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.point, WID->view_col[0]);
+  }
+#endif
+  return v->color.point;
+}
+
+unsigned int opt_view_color_lines(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.line = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.line, WID->view_col[1]);
+  }
+#endif
+  return v->color.line;
+}
+
+unsigned int opt_view_color_triangles(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.triangle = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.triangle, WID->view_col[2]);
+  }
+#endif
+  return v->color.triangle;
+}
+
+unsigned int opt_view_color_quadrangles(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.quadrangle = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.quadrangle, WID->view_col[3]);
+  }
+#endif
+  return v->color.quadrangle;
+}
+
+unsigned int opt_view_color_tetrahedra(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.tetrahedron = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.tetrahedron, WID->view_col[4]);
+  }
+#endif
+  return v->color.tetrahedron;
+}
+
+unsigned int opt_view_color_hexahedra(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.hexahedron = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.hexahedron, WID->view_col[5]);
+  }
+#endif
+  return v->color.hexahedron;
+}
+
+unsigned int opt_view_color_prisms(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.prism = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.prism, WID->view_col[6]);
+  }
+#endif
+  return v->color.prism;
+}
+
+unsigned int opt_view_color_pyramids(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.pyramid = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.pyramid, WID->view_col[7]);
+  }
+#endif
+  return v->color.pyramid;
+}
+
+unsigned int opt_view_color_tangents(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.tangents = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.tangents, WID->view_col[8]);
+  }
+#endif
+  return v->color.tangents;
+}
+
+unsigned int opt_view_color_normals(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.normals = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.normals, WID->view_col[9]);
+  }
+#endif
+  return v->color.normals;
+}
+

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.381 2004-12-23 03:21:36 geuzaine Exp $
+# $Id: Makefile,v 1.382 2004-12-24 23:10:25 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -93,7 +93,7 @@ clean-most:
 	for i in doc lib ${GMSH_DIRS:Netgen=}; do (cd $$i && ${MAKE} clean); done
 	rm -f ${GMSH_VERSION_FILE}
 
-depend:
+depend: initialtag
 	for i in ${GMSH_DIRS};\
         do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK"); done
 

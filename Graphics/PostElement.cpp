@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.56 2004-12-08 18:03:44 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.57 2004-12-24 23:10:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,21 +37,24 @@ extern Context_T CTX;
 void Draw_ElementBoundary(int type, Post_View * View, 
 			  double *X, double *Y, double *Z)
 {
-  glColor4ubv((GLubyte *) & CTX.color.fg);
   switch (type) {
   case POST_POINT:
+    glColor4ubv((GLubyte *) & View->color.point);
     Draw_Point(View->PointType, View->PointSize, X, Y, Z, View->Light);
     break;
   case POST_LINE:
+    glColor4ubv((GLubyte *) & View->color.line);
     Draw_Line(0, View->LineWidth, X, Y, Z, View->Light);
     break;
   case POST_TRIANGLE:
+    glColor4ubv((GLubyte *) & View->color.triangle);
     glBegin(GL_LINE_LOOP);
     for(int k = 0; k < 3; k++)
       glVertex3d(X[k], Y[k], Z[k]);
     glEnd();
     break;
   case POST_TETRAHEDRON:
+    glColor4ubv((GLubyte *) & View->color.tetrahedron);
     glBegin(GL_LINES);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -68,12 +71,14 @@ void Draw_ElementBoundary(int type, Post_View * View,
     glEnd();
     break;
   case POST_QUADRANGLE:
+    glColor4ubv((GLubyte *) & View->color.quadrangle);
     glBegin(GL_LINE_LOOP);
     for(int k = 0; k < 4; k++)
       glVertex3d(X[k], Y[k], Z[k]);
     glEnd();
     break;
   case POST_HEXAHEDRON:
+    glColor4ubv((GLubyte *) & View->color.hexahedron);
     glBegin(GL_LINES);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -102,6 +107,7 @@ void Draw_ElementBoundary(int type, Post_View * View,
     glEnd();
     break;
   case POST_PRISM:
+    glColor4ubv((GLubyte *) & View->color.prism);
     glBegin(GL_LINES);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -124,6 +130,7 @@ void Draw_ElementBoundary(int type, Post_View * View,
     glEnd();
     break;
   case POST_PYRAMID:
+    glColor4ubv((GLubyte *) & View->color.pyramid);
     glBegin(GL_LINES);
     glVertex3d(X[0], Y[0], Z[0]);
     glVertex3d(X[1], Y[1], Z[1]);
@@ -261,7 +268,7 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
     t[0] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[0];
     t[1] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[1];
     t[2] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[2];
-    glColor4ubv((GLubyte *) & CTX.color.mesh.tangents);
+    glColor4ubv((GLubyte *) & View->color.tangents);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
 		(X[0] + X[1]) / 2., (Y[0] + Y[1]) / 2.,	(Z[0] + Z[1]) / 2.,
@@ -380,7 +387,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     t[0] *= View->Normals * CTX.pixel_equiv_x / CTX.s[0];
     t[1] *= View->Normals * CTX.pixel_equiv_x / CTX.s[1];
     t[2] *= View->Normals * CTX.pixel_equiv_x / CTX.s[2];
-    glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
+    glColor4ubv((GLubyte *) & View->color.normals);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
 		(X[0] + X[1] + X[2]) / 3.,
@@ -1007,7 +1014,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     nn[0] *= View->Normals * CTX.pixel_equiv_x / CTX.s[0];
     nn[1] *= View->Normals * CTX.pixel_equiv_x / CTX.s[1];
     nn[2] *= View->Normals * CTX.pixel_equiv_x / CTX.s[2];
-    glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
+    glColor4ubv((GLubyte *) & View->color.normals);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
 		xc, yc, zc, nn[0], nn[1], nn[2], View->Light);
@@ -1019,7 +1026,7 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
     t[0] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[0];
     t[1] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[1];
     t[2] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[2];
-    glColor4ubv((GLubyte *) & CTX.color.mesh.tangents);
+    glColor4ubv((GLubyte *) & View->color.tangents);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
 		xc, yc, zc, t[0], t[1], t[2], View->Light);

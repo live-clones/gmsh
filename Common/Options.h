@@ -270,7 +270,6 @@ double opt_general_small_axes_position1(OPT_ARGS_NUM);
 double opt_general_quadric_subdivisions(OPT_ARGS_NUM);
 double opt_general_double_buffer(OPT_ARGS_NUM);
 double opt_general_alpha_blending(OPT_ARGS_NUM);
-double opt_general_fake_transparency(OPT_ARGS_NUM);
 double opt_general_vector_type(OPT_ARGS_NUM);
 double opt_general_arrow_head_radius(OPT_ARGS_NUM);
 double opt_general_arrow_stem_length(OPT_ARGS_NUM);
@@ -477,6 +476,7 @@ double opt_view_arrow_stem_radius(OPT_ARGS_NUM);
 double opt_view_normals(OPT_ARGS_NUM);
 double opt_view_tangents(OPT_ARGS_NUM);
 double opt_view_displacement_factor(OPT_ARGS_NUM);
+double opt_view_fake_transparency(OPT_ARGS_NUM);
 double opt_view_explode(OPT_ARGS_NUM);
 double opt_view_visible(OPT_ARGS_NUM);
 double opt_view_intervals_type(OPT_ARGS_NUM);
@@ -590,7 +590,16 @@ unsigned int opt_mesh_color_7(OPT_ARGS_COL);
 unsigned int opt_mesh_color_8(OPT_ARGS_COL);
 unsigned int opt_mesh_color_9(OPT_ARGS_COL);
 unsigned int opt_mesh_color_10(OPT_ARGS_COL);
-
+unsigned int opt_view_color_points(OPT_ARGS_COL);
+unsigned int opt_view_color_lines(OPT_ARGS_COL);
+unsigned int opt_view_color_triangles(OPT_ARGS_COL);
+unsigned int opt_view_color_quadrangles(OPT_ARGS_COL);
+unsigned int opt_view_color_tetrahedra(OPT_ARGS_COL);
+unsigned int opt_view_color_hexahedra(OPT_ARGS_COL);
+unsigned int opt_view_color_prisms(OPT_ARGS_COL);
+unsigned int opt_view_color_pyramids(OPT_ARGS_COL);
+unsigned int opt_view_color_tangents(OPT_ARGS_COL);
+unsigned int opt_view_color_normals(OPT_ARGS_COL);
 
 // Data structures and global functions
 

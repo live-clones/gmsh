@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.86 2004-12-07 04:52:26 geuzaine Exp $
+// $Id: Post.cpp,v 1.87 2004-12-24 23:10:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -523,7 +523,7 @@ void Draw_Post(void)
 
       // initialize alpha blending for transparency
       if(CTX.alpha && ColorTable_IsAlpha(&v->CT)){
-	if(CTX.fake_transparency){
+	if(v->FakeTransparency){
 	  // simple additive blending "a la xpost":
 	  glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
 	  // maximum intensity projection "a la volsuite":
@@ -699,7 +699,7 @@ void Draw_Post(void)
 
       if(v->TriVertexArray && v->TriVertexArray->num){
 
-	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && !CTX.fake_transparency &&
+	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && !v->FakeTransparency &&
 	   (changedEye() || v->Changed)){
 	  Msg(DEBUG, "Sorting View[%d] for transparency (WITH vertex array)", v->Index);
 	  v->TriVertexArray->sort(storedEye);

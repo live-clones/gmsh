@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.151 2004-12-24 04:58:20 geuzaine Exp $
+// $Id: Views.cpp,v 1.152 2004-12-24 23:10:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -657,10 +657,21 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->ExternalViewIndex = src->ExternalViewIndex;
   dest->ViewIndexForGenRaise = src->ViewIndexForGenRaise;
   dest->UseGenRaise = src->UseGenRaise;
+  dest->FakeTransparency = src->FakeTransparency;
   dest->GenRaiseFactor = src->GenRaiseFactor;
   strcpy(dest->GenRaiseX, src->GenRaiseX);
   strcpy(dest->GenRaiseY, src->GenRaiseY);
   strcpy(dest->GenRaiseZ, src->GenRaiseZ);
+  dest->color.point = src->color.point;
+  dest->color.line = src->color.line;
+  dest->color.triangle = src->color.triangle;
+  dest->color.quadrangle = src->color.quadrangle;
+  dest->color.tetrahedron = src->color.tetrahedron;
+  dest->color.hexahedron = src->color.hexahedron;
+  dest->color.prism = src->color.prism;
+  dest->color.pyramid = src->color.pyramid;
+  dest->color.tangents = src->color.tangents;
+  dest->color.normals = src->color.normals;
   ColorTable_Copy(&src->CT);
   ColorTable_Paste(&dest->CT);
 }

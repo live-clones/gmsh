@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.43 2004-12-24 20:25:11 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.44 2004-12-24 23:10:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -223,13 +223,10 @@ void Colorbar_Window::redraw_range(int a, int b)
   // print colortable mode and help
   fl_font(FL_HELVETICA, font_height);
   fl_color(fl_contrast(FL_BLACK, color_bg));
-  int xx0 = 8, xx1 = 12 * font_height, yy0 = 8;
+  int xx0 = 10, xx1 = 13 * font_height, yy0 = 10;
   if(help_flag) {
     i = 0;
-    fl_draw("0, 1, 2, 3, ...", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("select predefined colormap", xx1, yy0 + (i + 1) * font_height);
-    i++;
-    fl_draw("Ctrl+0, Ctrl+1, ...", xx0, yy0 + (i + 1) * font_height);
+    fl_draw("1, 2, ..., Ctrl+1, Ctrl+2, ...", xx0, yy0 + (i + 1) * font_height);
     fl_draw("select predefined colormap", xx1, yy0 + (i + 1) * font_height);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * font_height);

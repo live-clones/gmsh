@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.389 2004-12-24 03:25:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.390 2004-12-24 23:10:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1514,7 +1514,7 @@ void GUI::check_rotation_center_button()
 
 void GUI::create_option_window()
 {
-  int width = 41 * fontsize;
+  int width = 42 * fontsize;
   int height = 12 * BH + 5 * WB;
   int L = 105 + WB;
 
@@ -1619,12 +1619,6 @@ void GUI::create_option_window()
       gen_value[10] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 9 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
 
-      gen_value[15] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Middle button zoom acceleration factor");
-      gen_value[15]->minimum(0.05);
-      gen_value[15]->maximum(20.);
-      gen_value[15]->step(0.05);
-      gen_value[15]->align(FL_ALIGN_RIGHT);
-
       o->end();
     }
     {
@@ -1699,11 +1693,6 @@ void GUI::create_option_window()
       gen_value[11]->maximum(30);
       gen_value[11]->step(1);
       gen_value[11]->align(FL_ALIGN_RIGHT);
-
-      gen_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Use fake transparency mode");
-      gen_butt[4]->type(FL_TOGGLE_BUTTON);
-      gen_butt[4]->down_box(TOGGLE_BOX);
-      gen_butt[4]->selection_color(TOGGLE_COLOR);
 
       gen_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Point size");
       gen_value[6]->minimum(0.1);
@@ -2801,6 +2790,26 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Color");
       o->hide();
 
+      view_butt[24] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Use fake transparency mode");
+      view_butt[24]->type(FL_TOGGLE_BUTTON);
+      view_butt[24]->down_box(TOGGLE_BOX);
+      view_butt[24]->selection_color(TOGGLE_COLOR);
+      
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 2 * BH, IW + 20, height - 5 * WB - 2 * BH);
+      int i = 0;
+      while(ViewOptions_Color[i].str) {
+        view_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (2 + i) * BH, IW, BH, ViewOptions_Color[i].str);
+        view_col[i]->callback(color_cb, (void *)ViewOptions_Color[i].function);
+        i++;
+      }
+      s->end();
+
+      o->end();
+    }
+    {
+      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Map");
+      o->hide();
+
       view_colorbar_window = new Colorbar_Window(L + 2 * WB, 2 * WB + BH, width - 4 * WB, height - 4 * WB - BH);
       view_colorbar_window->end();
 
@@ -2980,6 +2989,18 @@ void GUI::update_view_window(int num)
   opt_view_arrow_location(num, GMSH_GUI, 0);
   //opt_view_tensor_type(num, GMSH_GUI, 0);
   view_push_butt[0]->callback(view_arrow_param_cb, (void*)num);
+
+  opt_view_fake_transparency(num, GMSH_GUI, 0);
+  opt_view_color_points(num, GMSH_GUI, 0);
+  opt_view_color_lines(num, GMSH_GUI, 0);
+  opt_view_color_triangles(num, GMSH_GUI, 0);
+  opt_view_color_quadrangles(num, GMSH_GUI, 0);
+  opt_view_color_tetrahedra(num, GMSH_GUI, 0);
+  opt_view_color_hexahedra(num, GMSH_GUI, 0);
+  opt_view_color_prisms(num, GMSH_GUI, 0);
+  opt_view_color_pyramids(num, GMSH_GUI, 0);
+  opt_view_color_tangents(num, GMSH_GUI, 0);
+  opt_view_color_normals(num, GMSH_GUI, 0);
 
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
 }

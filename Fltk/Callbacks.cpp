@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.308 2004-12-24 03:25:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.309 2004-12-24 23:10:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -912,7 +912,6 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
   if(opt_general_double_buffer(0, GMSH_GET, 0) != WID->gen_butt[3]->value())
     opt_general_double_buffer(0, GMSH_SET, WID->gen_butt[3]->value());
-  opt_general_fake_transparency(0, GMSH_SET, WID->gen_butt[4]->value());
   opt_general_trackball(0, GMSH_SET, WID->gen_butt[5]->value());
   opt_general_terminal(0, GMSH_SET, WID->gen_butt[7]->value());
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
@@ -940,7 +939,6 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_quadric_subdivisions(0, GMSH_SET, WID->gen_value[11]->value());
   opt_general_graphics_fontsize(0, GMSH_SET, WID->gen_value[12]->value());
   opt_general_clip_factor(0, GMSH_SET, WID->gen_value[14]->value());
-  opt_general_zoom_factor(0, GMSH_SET, WID->gen_value[15]->value());
 
   opt_general_default_filename(0, GMSH_SET, (char *)WID->gen_input[0]->value());
   opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[1]->value());
@@ -3484,6 +3482,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
   double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
+  double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
 
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
@@ -3745,6 +3744,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != use_gen_raise))
         opt_view_use_gen_raise(i, GMSH_SET, val);
 
+      val = WID->view_butt[24]->value();
+      if(force || (val != fake_transparency))
+        opt_view_fake_transparency(i, GMSH_SET, val);
+
       // view_values
       
       val = WID->view_value[0]->value();
@@ -3882,6 +3885,21 @@ void view_options_ok_cb(CALLBACK_ARGS)
       str = (char *)WID->view_input[6]->value();
       if(force || strcmp(str, gen_raise2))
         opt_view_gen_raise2(i, GMSH_SET, str);
+
+      // colors (since the color buttons modify the values directly
+      // through callbacks, we can use the opt_XXX routines directly)
+      if(force || (i != current)){
+        opt_view_color_points(i, GMSH_SET, opt_view_color_points(current, GMSH_GET, 0));
+	opt_view_color_lines(i, GMSH_SET, opt_view_color_lines(current, GMSH_GET, 0));
+	opt_view_color_triangles(i, GMSH_SET, opt_view_color_triangles(current, GMSH_GET, 0));
+	opt_view_color_quadrangles(i, GMSH_SET, opt_view_color_quadrangles(current, GMSH_GET, 0));
+        opt_view_color_tetrahedra(i, GMSH_SET, opt_view_color_tetrahedra(current, GMSH_GET, 0));
+        opt_view_color_hexahedra(i, GMSH_SET, opt_view_color_hexahedra(current, GMSH_GET, 0));
+        opt_view_color_prisms(i, GMSH_SET, opt_view_color_prisms(current, GMSH_GET, 0));
+        opt_view_color_pyramids(i, GMSH_SET, opt_view_color_pyramids(current, GMSH_GET, 0));
+        opt_view_color_normals(i, GMSH_SET, opt_view_color_normals(current, GMSH_GET, 0));
+        opt_view_color_tangents(i, GMSH_SET, opt_view_color_tangents(current, GMSH_GET, 0));
+      }
 
       // colorbar window
 

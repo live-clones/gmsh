@@ -269,11 +269,6 @@ Draw bounding boxes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.FakeTransparency
-Use fake transparency (cheaper than the real thing, but incorrect)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item General.FastRedraw
 Draw simplified model while rotating, panning and zooming@*
 Default value: @code{1}@*

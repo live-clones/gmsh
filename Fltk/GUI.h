@@ -205,6 +205,7 @@ public:
   Fl_Repeat_Button *view_butt_rep[100] ;
   Fl_Button        *view_push_butt[100] ;
   Fl_Choice        *view_choice[100] ;
+  Fl_Button        *view_col[50] ;
   Colorbar_Window  *view_colorbar_window ;
   Fl_Return_Button *view_ok ;
 

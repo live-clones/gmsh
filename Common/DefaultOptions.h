@@ -483,8 +483,6 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
     "Draw bounding boxes" },
 
-  { F|O, "FakeTransparency" , opt_general_fake_transparency , 0. ,
-    "Use fake transparency (cheaper than the real thing, but incorrect)" },
   { F|O, "FastRedraw" , opt_general_fast_redraw, 1. ,
     "Draw simplified model while rotating, panning and zooming" },
   { F|S, "FileChooserPositionX" , opt_general_file_chooser_position0 , 200. , 
@@ -1059,6 +1057,9 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
     "Index of the view used to color vector fields (-1=self)" },
 
+  { F|O, "FakeTransparency" , opt_view_fake_transparency , 0. ,
+    "Use fake transparency (cheaper than the real thing, but incorrect)" },
+
   { F|O, "GeneralizedRaiseFactor" , opt_view_gen_raise_factor , 1. ,
     "Generalized raise amplification factor" },
   { F|O, "GeneralizedRaiseView" , opt_view_gen_raise_view , -1. ,
@@ -1381,9 +1382,31 @@ StringXColor PostProcessingOptions_Color[] = {
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
 
+#define ELECOL  PACK_COLOR(255,255,255,255), PACK_COLOR(0,0,0,255), PACK_COLOR(0,0,0,255)
+
 StringXColor ViewOptions_Color[] = {
+  { F|O, "Points" , opt_view_color_points , ELECOL, "Point color" },
+  { F|O, "Lines" , opt_view_color_lines , ELECOL, "Line color" },
+  { F|O, "Triangles" , opt_view_color_triangles , ELECOL, "Triangle color" },
+  { F|O, "Quadrangles" , opt_view_color_quadrangles , ELECOL, "Quadrangle color" },
+  { F|O, "Tetrahedra" , opt_view_color_tetrahedra , ELECOL, "Tetrahedron color" },
+  { F|O, "Hexahedra" , opt_view_color_hexahedra , ELECOL, "Hexahedron color" },
+  { F|O, "Prisms" , opt_view_color_prisms , ELECOL, "Prism color" },
+  { F|O, "Pyramids" , opt_view_color_pyramids , ELECOL, "Pyramid color" },
+  { F|O, "Tangents" , opt_view_color_tangents ,
+    PACK_COLOR(255, 255, 0, 255),
+    PACK_COLOR(255, 255, 0, 255),
+    PACK_COLOR(0,   0,   0, 255),
+    "Tangent vector color" },
+  { F|O, "Normals" , opt_view_color_normals ,
+    PACK_COLOR(255, 0, 0, 255),
+    PACK_COLOR(255, 0, 0, 255),
+    PACK_COLOR(0,   0, 0, 255),
+    "Normal vector color" },
   { 0, NULL , NULL , 0, 0, 0 , NULL }
 } ;
+
+#undef ELECOL
 
 StringXColor PrintOptions_Color[] = {
   { 0, NULL , NULL , 0, 0, 0 , NULL }

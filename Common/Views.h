@@ -83,7 +83,7 @@ class Post_View{
   int Visible, IntervalsType, NbIso, NbAbscissa, ArrowSizeProportional;
   int Light, LightTwoSide, SmoothNormals;
   double AngleSmoothNormals;
-  int SaturateValues;
+  int SaturateValues, FakeTransparency;
   int ShowElement, ShowTime, ShowScale;
   int ScaleType, RangeType;
   int VectorType, TensorType, ArrowLocation;
@@ -100,6 +100,13 @@ class Post_View{
   double GenRaiseFactor;
   char GenRaiseX[256], GenRaiseY[256], GenRaiseZ[256];
   void *GenRaise_f[3];
+  
+  // color options
+  struct{
+    unsigned int point, line, triangle, quadrangle;
+    unsigned int tetrahedron, hexahedron, prism, pyramid;
+    unsigned int tangents, normals;
+  } color;
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
