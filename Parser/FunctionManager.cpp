@@ -1,7 +1,8 @@
-#include "FunctionManager.h"
+
 #include <stdio.h>
 #include <stack>
 #include <map>
+#include "FunctionManager.h"
 
 struct ltstr
 {
@@ -22,12 +23,14 @@ class File_Position
 class mystack
 {
 public:
-  std::stack<File_Position> s;
+  //std::stack<File_Position> s;
+  stack<File_Position> s;
 };
 class mymap
 {
 public :
-  std::map<char*,File_Position,ltstr> m;
+  //std::map<char*,File_Position,ltstr> m;
+  map<char*,File_Position,ltstr> m;
 };
 
 FunctionManager *FunctionManager::instance = 0;
