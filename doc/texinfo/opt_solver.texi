@@ -553,6 +553,11 @@ Command associated with the fifth button for solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.MaximumDelay
+Maximum delay allowed for solver response (in seconds)@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.ClientServer0
 Connect solver 0 to the Gmsh server@*
 Default value: @code{1}@*

@@ -350,6 +350,7 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+
 @item Plugin(Transform)
 Plugin(Transform) transforms the coordinates of
 the nodes of the view `iView' by the matrix
