@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.396 2004-12-29 19:23:09 geuzaine Exp $
+// $Id: GUI.cpp,v 1.397 2004-12-29 20:01:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -76,6 +76,22 @@ extern Context_T CTX;
 // We shouldn't use the 'g', 'm' 's' and 'p' mnemonics since they are
 // already defined as global shortcuts (for geometry, mesh, solver, post).
 
+// From Apple's HIG: use an ellipsis character in a menu item for
+// - an action that requires further user input to complete or
+//   presents an alert allowing the user to cancel the action
+//   Examples: Find, Go To, Open, Page Setup, and Print.
+// - an action that opens a settings window. Examples: Set Title,
+//   Preferences, and Options.
+// Don't use en allipsis for:
+// - an action that requires no further user input to complete and
+//   does not present an alert.
+// - an action that opens an informational, accessory, or tool window.
+//   These windows can be implemented as either utility windows (as 
+//   in the case of a color palette) or modeless windows. These windows
+//   provide tools that help create or manage the content in the main
+//   window and are frequently left open to assist in accomplishing the
+//   task of the main window. Examples: Info and Show Tools.
+
 Fl_Menu_Item m_menubar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
@@ -87,19 +103,19 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
-    {"&Options...",         FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
-    {"&Visibility...",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&Clipping planes...", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"S&tatistics...",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
-    {"M&essage console...", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
+    {"&Options...",      FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"&Clipping planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
+    {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"M&essage console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
-    {"&Current options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
-    {"M&ouse actions...",        0, (Fl_Callback *)help_mouse_cb, 0},
-    {"&Keyboard shortcuts...",   0, (Fl_Callback *)help_short_cb, 0},
-    {"C&ommand line options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
-    {"On&line documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"&About...",                0, (Fl_Callback *)help_about_cb, 0},
+    {"&Current options",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
+    {"M&ouse actions",        0, (Fl_Callback *)help_mouse_cb, 0},
+    {"&Keyboard shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
+    {"C&ommand line options", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"On&line documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
+    {"&About...",             0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -120,19 +136,19 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Save Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {0},
   {"Tools",0,0,0,FL_SUBMENU},
-    {"Options...",         FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
-    {"Visibility...",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Clipping Planes...", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"Statistics...",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
-    {"Message Console...", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
+    {"Options...",      FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0, FL_MENU_DIVIDER},
+    {"Statistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"Message Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
     {0},
   {"Help",0,0,0,FL_SUBMENU},
-    {"Current Options...",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
-    {"Mouse Actions...",        0, (Fl_Callback *)help_mouse_cb, 0},
-    {"Keyboard Shortcuts...",   0, (Fl_Callback *)help_short_cb, 0},
-    {"Command Line Options...", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
-    {"Online Documentation",    0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"About Gmsh...",           0, (Fl_Callback *)help_about_cb, 0},
+    {"Current Options",      0, (Fl_Callback *)status_xyz1p_cb, (void*)5, FL_MENU_DIVIDER},
+    {"Mouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
+    {"Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
+    {"Command Line Options", 0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
+    {"About Gmsh...",        0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -3678,6 +3694,7 @@ void GUI::create_about_window()
   about_window->position(m_window->x() + m_window->w() / 2 - width / 2,
 			 m_window->y());
 
+  about_window->set_modal();
   about_window->end();
 }
 
