@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.278 2004-09-25 06:16:12 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.279 2004-09-25 17:25:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,6 +67,7 @@ int file_chooser(int multi, int create, const char *message,
   if(!WID->fc) {
     WID->fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, pat, 
 			      Fl_File_Chooser::SINGLE, message);
+    WID->fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
     strncpy(oldfilter, pat, 1024);
   }
 
@@ -88,7 +89,6 @@ int file_chooser(int multi, int create, const char *message,
   else
     WID->fc->type(Fl_File_Chooser::SINGLE);
 
-  WID->fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
   WID->fc->show();
 
   while(WID->fc->shown())
