@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.27 2004-04-26 19:54:16 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.28 2004-04-27 00:11:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -22,12 +22,6 @@
 // Contributor(s):
 //   Laurent Stainier
 //   Jean-Luc Flejou
-
-// OK, I understand why the Cut2D stuff does not work correctly with a
-// TWO_FACE light: the normal has too be coherent with the vertex
-// ordering of the polygon. Doing i=nb-1; i>=0; i-- works when the
-// classic order does not. So we really have to check the ordering of
-// the output of cut2d...
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -424,10 +418,9 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
           norms[3 * i] = nn[0];
           norms[3 * i + 1] = nn[1];
           norms[3 * i + 2] = nn[2];
-          if(!View->
-             get_normal(X[i] + Raise[0][i], Y[i] + Raise[1][i],
-                        Z[i] + Raise[2][i], norms[3 * i], norms[3 * i + 1],
-                        norms[3 * i + 2])) {
+          if(!View->get_normal(X[i] + Raise[0][i], Y[i] + Raise[1][i],
+			       Z[i] + Raise[2][i], norms[3 * i], norms[3 * i + 1],
+			       norms[3 * i + 2])) {
             //don't print this (unless we fix draw_vector_triangle with displacement)
             //Msg(WARNING, "Oups, did not find smoothed normal");
           }
@@ -468,13 +461,12 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   }
   else {
 
-    if(View->Light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-
     if(View->IntervalsType == DRAW_POST_CONTINUOUS) {
       if(Val[0] >= ValMin && Val[0] <= ValMax &&
          Val[1] >= ValMin && Val[1] <= ValMax &&
          Val[2] >= ValMin && Val[2] <= ValMax) {
+	if(View->Light) glEnable(GL_LIGHTING);
+	glEnable(GL_POLYGON_OFFSET_FILL);
         glBegin(GL_TRIANGLES);
         PaletteContinuous(View, ValMin, ValMax, Val[0]);
         glNormal3dv(&norms[0]);
@@ -486,10 +478,14 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
         glNormal3dv(&norms[6]);
         glVertex3d(X[2] + Raise[0][2], Y[2] + Raise[1][2], Z[2] + Raise[2][2]);
         glEnd();
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glDisable(GL_LIGHTING);
       }
       else {
         CutTriangle2D(X, Y, Z, Val, ValMin, ValMax, Xp, Yp, Zp, &nb, value);
         if(nb >= 3) {
+	  if(View->Light) glEnable(GL_LIGHTING);
+	  glEnable(GL_POLYGON_OFFSET_FILL);
           glBegin(GL_POLYGON);
           for(int i = 0; i < nb; i++) {
             PaletteContinuous(View, ValMin, ValMax, value[i]);
@@ -498,6 +494,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
 		       Zp[i] + View->Raise[2] * value[i]);
           }
           glEnd();
+	  glDisable(GL_POLYGON_OFFSET_FILL);
+	  glDisable(GL_LIGHTING);
         }
       }
     }
@@ -510,12 +508,16 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
                         View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
                         Xp, Yp, Zp, &nb, value);
           if(nb >= 3) {
+	    if(View->Light) glEnable(GL_LIGHTING);
+	    glEnable(GL_POLYGON_OFFSET_FILL);
             glBegin(GL_POLYGON);
             for(int i = 0; i < nb; i++)
               glVertex3d(Xp[i] + View->Raise[0] * value[i],
 			 Yp[i] + View->Raise[1] * value[i], 
 			 Zp[i] + View->Raise[2] * value[i]);
             glEnd();
+	    glDisable(GL_POLYGON_OFFSET_FILL);
+	    glDisable(GL_LIGHTING);
           }
         }
         else {
@@ -531,8 +533,6 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
     }
     
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
   }
 }
 

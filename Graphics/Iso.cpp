@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.21 2004-04-26 19:54:16 geuzaine Exp $
+// $Id: Iso.cpp,v 1.22 2004-04-27 00:11:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -51,15 +51,14 @@ void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
 
 }
 
-// Contour computation for triangles. FIXME: the orientation of the
-// newly created polygons is wrong.
+// Contour computation for triangles
 
 void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
                    double V1, double V2, double *Xp2, double *Yp2,
                    double *Zp2, int *Np2, double *Vp2)
 {
   int i, io[3], j, iot, Np, Fl;
-  double Xp[5], Yp[5], Zp[5], Vp[5];
+  double Xp[10], Yp[10], Zp[10], Vp[10];
 
   *Np2 = 0;
 
@@ -170,8 +169,8 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   *Np2 = 1;
 
   for(i = 1; i < Np; i++) {
-    if((Xp[i] != Xp2[(*Np2) - 1]) || (Yp[i] != Yp2[(*Np2) - 1])
-       || (Zp[i] != Zp2[(*Np2) - 1])) {
+    if((Xp[i] != Xp2[(*Np2) - 1]) || (Yp[i] != Yp2[(*Np2) - 1]) || 
+       (Zp[i] != Zp2[(*Np2) - 1])) {
       Vp2[*Np2] = Vp[i];
       Xp2[*Np2] = Xp[i];
       Yp2[*Np2] = Yp[i];
@@ -180,11 +179,36 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
     }
   }
 
-  if(Xp2[0] == Xp2[(*Np2) - 1] && Yp2[0] == Yp2[(*Np2) - 1]
-     && Zp2[0] == Zp2[(*Np2) - 1]) {
+  if(Xp2[0] == Xp2[(*Np2) - 1] && Yp2[0] == Yp2[(*Np2) - 1] && 
+     Zp2[0] == Zp2[(*Np2) - 1]) {
     (*Np2)--;
   }
 
+  // check and fix orientation
+  double in1[3] = { X[1]-X[0], Y[1]-Y[0], Z[1]-Z[0]};
+  double in2[3] = { X[2]-X[0], Y[2]-Y[0], Z[2]-Z[0]};
+  double inn[3];
+  prodve(in1, in2, inn);
+  double out1[3] = { Xp2[1]-Xp2[0], Yp2[1]-Yp2[0], Zp2[1]-Zp2[0]};
+  double out2[3] = { Xp2[2]-Xp2[0], Yp2[2]-Yp2[0], Zp2[2]-Zp2[0]};
+  double outn[3];
+  prodve(out1, out2, outn);
+  double res;
+  prosca(inn, outn, &res);
+  if(res < 0){
+    for(i = 0; i < *Np2; i++){
+      Vp[i] = Vp2[*Np2-i-1];
+      Xp[i] = Xp2[*Np2-i-1];
+      Yp[i] = Yp2[*Np2-i-1];
+      Zp[i] = Zp2[*Np2-i-1];
+    }
+    for(i = 0; i < *Np2; i++){
+      Vp2[i] = Vp[i];
+      Xp2[i] = Xp[i];
+      Yp2[i] = Yp[i];
+      Zp2[i] = Zp[i];
+    }
+  }
 }
 
 // Iso for lines
@@ -314,7 +338,7 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
   double gr[3];
   double n[3], xx;
   prodve(v1, v2, n);
-  //norme(n);  not necessary since GL_NORMALIZE is enabled
+  norme(n);
   gradSimplex(X, Y, Z, Val, gr);
   prosca(gr, n, &xx);
 

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.41 2004-04-20 19:15:14 geuzaine Exp $
+// $Id: Scale.cpp,v 1.42 2004-04-27 00:11:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,11 +67,6 @@ void draw_scale(Post_View * v,
     glVertex2d(xmin - space, ymin + height + dytop + space);
     glEnd();
   }
-
-  if(v->IntervalsType == DRAW_POST_CONTINUOUS)
-    glShadeModel(GL_SMOOTH);
-  else
-    glShadeModel(GL_FLAT);
 
   switch(v->RangeType){
   case DRAW_POST_RANGE_CUSTOM:

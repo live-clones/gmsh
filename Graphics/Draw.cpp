@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.48 2004-03-30 18:17:06 geuzaine Exp $
+// $Id: Draw.cpp,v 1.49 2004-04-27 00:11:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -45,15 +45,12 @@ void Draw3d(void)
 #endif
   }
   glPolygonOffset(1.0, 1.0);
-
-  for(int i = 0; i < 6; i++)
-    if(CTX.clip[i])
-      glEnable((GLenum) (GL_CLIP_PLANE0 + i));
-
-  glShadeModel(GL_SMOOTH);
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
+  for(int i = 0; i < 6; i++)
+    if(CTX.clip[i])
+      glEnable((GLenum) (GL_CLIP_PLANE0 + i));
 
   glPushMatrix();
   Draw_Mesh(&M);
@@ -63,9 +60,6 @@ void Draw3d(void)
 void Draw2d(void)
 {
   glDisable(GL_DEPTH_TEST);
-  glDisable(GL_LIGHTING);
-  glShadeModel(GL_FLAT);
-
   for(int i = 0; i < 6; i++)
     glDisable((GLenum) (GL_CLIP_PLANE0 + i));
 
@@ -175,6 +169,7 @@ void InitRenderModel(void)
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  glShadeModel(GL_SMOOTH);
   // let's add some shininess to all these automatically created materials
   specular[0] = CTX.shine;
   specular[1] = CTX.shine;

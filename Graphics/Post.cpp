@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.59 2004-04-26 19:56:45 geuzaine Exp $
+// $Id: Post.cpp,v 1.60 2004-04-27 00:11:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -455,15 +455,6 @@ void Draw_Post(void)
 
         glLineWidth(v->LineWidth);
         gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
-
-        // force this
-        if(v->IntervalsType == DRAW_POST_CONTINUOUS) {
-          glShadeModel(GL_SMOOTH);
-          glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-        }
-        else {  // there is a bug in CutTriangle2D!! See Iso.cpp
-          glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-        }
 
         switch (v->RangeType) {
         case DRAW_POST_RANGE_DEFAULT:
