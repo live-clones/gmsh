@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.12 2004-09-16 19:15:27 geuzaine Exp $
+// $Id: Extract.cpp,v 1.13 2004-10-27 05:51:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -75,8 +75,10 @@ void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text
 	 "Cos, Fabs, etc.) and operators (+, -, *, /, ^),\n"
 	 "the expressions can contain the symbols v0,\n"
 	 "v1, v2, ..., vn, which represent the n\n"
-	 "components of the field. If `iView' < 0, the\n"
-	 "plugin is run on the current view.\n"
+	 "components of the field, and the symbols x, y\n"
+	 "and z, which represent the three spatial\n"
+	 "coordinates. If `iView' < 0, the plugin is\n"
+	 "run on the current view.\n"
 	 "\n"
 	 "Plugin(Extract) creates one new view.\n");
 }
@@ -161,22 +163,26 @@ static void extract(char *expr[3], List_T *inList, int inNb,
 
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
+    double *x = (double *)List_Pointer_Fast(inList, i);
+    double *y = (double *)List_Pointer_Fast(inList, i + nbNod);
+    double *z = (double *)List_Pointer_Fast(inList, i + 2 * nbNod);
     for(int j = 0; j < 3 * nbNod; j++)
       List_Add(outList, List_Pointer_Fast(inList, i + j));
     for(int j = 0; j < nbTime; j++){
       for(int k = 0; k < nbNod; k++){
-	double res, d[9];
+	double xx = x[k];
+	double yy = y[k];
+	double zz = z[k];
+	double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
 	for(int l = 0; l < nbComp; l++)
 	  List_Read(inList, i + 3 * nbNod + nbNod * nbComp * j + nbComp * k + l, &d[l]);
-	for(int l = nbComp; l < 9; l++)
-	  d[l] = 0.;
 	for(int l = 0; l < outNbComp; l++){
 #if defined(HAVE_MATH_EVAL)
-	  char *names[] = { "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
-	  double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8] };
-	  res = evaluator_evaluate(f[l], sizeof(names)/sizeof(names[0]), names, values);
+	  char *names[] = { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
+	  double values[] = { xx, yy, zz, d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8] };
+	  double res = evaluator_evaluate(f[l], sizeof(names)/sizeof(names[0]), names, values);
 #else
-	  res = d[comp[l]];
+	  double res = d[comp[l]];
 #endif
 	  List_Add(outList, &res);
 	}
