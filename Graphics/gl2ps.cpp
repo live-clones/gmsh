@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.77 2003-10-31 17:56:02 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.78 2003-11-02 18:46:17 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -169,7 +169,7 @@ size_t gl2psWriteBigEndianCompress(unsigned long data, size_t bytes){
   size_t i;
   size_t size = sizeof(unsigned long);
   for(i = 1; i <= bytes; ++i){
-    *gl2ps->compress->src = 0xff & (data >> (size-i) * 8);
+    *gl2ps->compress->src = (Bytef)(0xff & (data >> (size-i) * 8));
     ++gl2ps->compress->src;
   }
   return bytes;
@@ -364,9 +364,9 @@ void gl2psFreeText(GL2PSstring* text){
 
 /* Helpers for rgba colors */
 
-float gl2psColorDiff(GL2PSrgba rgba1, GL2PSrgba rgba2){
+GLfloat gl2psColorDiff(GL2PSrgba rgba1, GL2PSrgba rgba2){
   int i;	
-  float res = 0;
+  GLfloat res = 0;
   for(i = 0; i < 3; ++i){
     res += (rgba1[i] - rgba2[i]) * (rgba1[i] - rgba2[i]);
   }
@@ -421,7 +421,7 @@ void gl2psPvec(GLfloat *a, GLfloat *b, GLfloat *c){
 }
 
 GLfloat gl2psNorm(GLfloat *a){
-  return sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
+  return (GLfloat)sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
 }
 
 void gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
@@ -437,13 +437,13 @@ void gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
     /* FIXME: the plane is still wrong, despite our tests in
        gl2psGetPlane... Let's return a dummy value for now (this is a
        hack: we should do more tests in GetPlane) */
-    c[0] = c[1] = 0.;
-    c[2] = 1.;
+    c[0] = c[1] = 0.0F;
+    c[2] = 1.0F;
   }
 }
 
 void gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
-  GL2PSxyz v = {0., 0., 0.}, w = {0., 0., 0.};
+  GL2PSxyz v = {0.0F, 0.0F, 0.0F}, w = {0.0F, 0.0F, 0.0F};
 
   switch(prim->type){
   case GL2PS_TRIANGLE :
@@ -456,8 +456,8 @@ void gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
     w[2] = prim->verts[2].xyz[2] - prim->verts[0].xyz[2]; 
     if((GL2PS_ZERO(v[0]) && GL2PS_ZERO(v[1]) && GL2PS_ZERO(v[2])) || 
        (GL2PS_ZERO(w[0]) && GL2PS_ZERO(w[1]) && GL2PS_ZERO(w[2]))){
-      plane[0] = plane[1] = 0.;
-      plane[2] = 1.;
+      plane[0] = plane[1] = 0.0F;
+      plane[2] = 1.0F;
       plane[3] = -prim->verts[0].xyz[2];
     }
     else{
@@ -473,14 +473,14 @@ void gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
     v[1] = prim->verts[1].xyz[1] - prim->verts[0].xyz[1]; 
     v[2] = prim->verts[1].xyz[2] - prim->verts[0].xyz[2]; 
     if(GL2PS_ZERO(v[0]) && GL2PS_ZERO(v[1]) && GL2PS_ZERO(v[2])){
-      plane[0] = plane[1] = 0.;
-      plane[2] = 1.;
+      plane[0] = plane[1] = 0.0F;
+      plane[2] = 1.0F;
       plane[3] = -prim->verts[0].xyz[2];
     }
     else{
-      if(GL2PS_ZERO(v[0]))      w[0] = 1.;
-      else if(GL2PS_ZERO(v[1])) w[1] = 1.;
-      else                      w[2] = 1.;
+      if(GL2PS_ZERO(v[0]))      w[0] = 1.0F;
+      else if(GL2PS_ZERO(v[1])) w[1] = 1.0F;
+      else                      w[2] = 1.0F;
       gl2psGetNormal(v, w, plane);
       plane[3] = 
 	- plane[0] * prim->verts[0].xyz[0] 
@@ -491,14 +491,14 @@ void gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
   case GL2PS_POINT :
   case GL2PS_PIXMAP :
   case GL2PS_TEXT :
-    plane[0] = plane[1] = 0.;
-    plane[2] = 1.;
+    plane[0] = plane[1] = 0.0F;
+    plane[2] = 1.0F;
     plane[3] = -prim->verts[0].xyz[2];
     break;
   default :
     gl2psMsg(GL2PS_ERROR, "Unknown primitive type in BSP tree");
-    plane[0] = plane[1] = plane[3] = 0.;
-    plane[2] = 1.;
+    plane[0] = plane[1] = plane[3] = 0.0F;
+    plane[2] = 1.0F;
     break;
   }
 }
@@ -517,10 +517,10 @@ void gl2psCutEdge(GL2PSvertex *a, GL2PSvertex *b, GL2PSplane plane,
   c->xyz[1] = a->xyz[1] + v[1] * sect;
   c->xyz[2] = a->xyz[2] + v[2] * sect;
   
-  c->rgba[0] = (1.-sect) * a->rgba[0] + sect * b->rgba[0];
-  c->rgba[1] = (1.-sect) * a->rgba[1] + sect * b->rgba[1];
-  c->rgba[2] = (1.-sect) * a->rgba[2] + sect * b->rgba[2];
-  c->rgba[3] = (1.-sect) * a->rgba[3] + sect * b->rgba[3];
+  c->rgba[0] = (1 - sect) * a->rgba[0] + sect * b->rgba[0];
+  c->rgba[1] = (1 - sect) * a->rgba[1] + sect * b->rgba[1];
+  c->rgba[2] = (1 - sect) * a->rgba[2] + sect * b->rgba[2];
+  c->rgba[3] = (1 - sect) * a->rgba[3] + sect * b->rgba[3];
 }
 
 void gl2psCreateSplitPrimitive(GL2PSprimitive *parent, GL2PSplane plane,
@@ -914,17 +914,17 @@ GLint gl2psGetPlaneFromPoints(GL2PSxyz a, GL2PSxyz b, GL2PSplane plane){
 
   plane[0] = b[1] - a[1];
   plane[1] = a[0] - b[0];
-  n = sqrt(plane[0]*plane[0] + plane[1]*plane[1]);
-  plane[2]=0.;
-  if(n != 0.){
+  n = (GLfloat)sqrt(plane[0]*plane[0] + plane[1]*plane[1]);
+  plane[2] = 0.0F;
+  if(n != 0.0){
     plane[0] /= n;
     plane[1] /= n;
     plane[3] = -plane[0]*a[0]-plane[1]*a[1]; 
     return 1;
   }
   else{
-    plane[0] = -1.0;
-    plane[1] = 0.;
+    plane[0] = -1.0F;
+    plane[1] = 0.0F;
     plane[3] = a[0];
     return 0;
   }
@@ -1102,7 +1102,7 @@ void gl2psSplitPrimitive2D(GL2PSprimitive *prim,
   GL2PSvertex *front_list = NULL, *back_list = NULL;
   
   /* number of vertices in front and back list */
-  GLint front_count = 0, back_count = 0;
+  GLshort front_count = 0, back_count = 0;
 
   for(i = 0; i <= prim->numverts; i++){
     v1 = i;
@@ -1241,7 +1241,7 @@ void gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
   GLshort i;
   GL2PSxyz c;
 
-  c[0] = c[1] = c[2] = 0.;
+  c[0] = c[1] = c[2] = 0.0F;
   for(i = 0; i < prim->numverts; i++){
     c[0] += prim->verts[i].xyz[0];
     c[1] += prim->verts[i].xyz[1];
@@ -1264,7 +1264,7 @@ void gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
 #if 0 /* FIXME: need to work on boundary offset... */
       v[0] = c[0] - prim->verts[i].xyz[0];
       v[1] = c[1] - prim->verts[i].xyz[1];
-      v[2] = 0.;
+      v[2] = 0.0F;
       norm = gl2psNorm(v);
       v[0] /= norm;
       v[1] /= norm;
@@ -1288,14 +1288,14 @@ void gl2psAddBoundaryInList(GL2PSprimitive *prim, GL2PSlist *list){
       b->verts[1].xyz[2] = prim->verts[gl2psGetIndex(i, prim->numverts)].xyz[2];
 #endif
 
-      b->verts[0].rgba[0] = 0.;
-      b->verts[0].rgba[1] = 0.;
-      b->verts[0].rgba[2] = 0.;
-      b->verts[0].rgba[3] = 0.;
-      b->verts[1].rgba[0] = 0.;
-      b->verts[1].rgba[1] = 0.;
-      b->verts[1].rgba[2] = 0.;
-      b->verts[1].rgba[3] = 0.;
+      b->verts[0].rgba[0] = 0.0F;
+      b->verts[0].rgba[1] = 0.0F;
+      b->verts[0].rgba[2] = 0.0F;
+      b->verts[0].rgba[3] = 0.0F;
+      b->verts[1].rgba[0] = 0.0F;
+      b->verts[1].rgba[1] = 0.0F;
+      b->verts[1].rgba[2] = 0.0F;
+      b->verts[1].rgba[3] = 0.0F;
       gl2psListAdd(list, &b);
     }
   }
@@ -1363,8 +1363,8 @@ void gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
       units = gl2ps->offset[1];
     }
     else{
-      factor = gl2ps->offset[0] / 800.;
-      units = gl2ps->offset[1] / 800.;
+      factor = gl2ps->offset[0] / 800.0F;
+      units = gl2ps->offset[1] / 800.0F;
     }
 
     area = 
@@ -1383,7 +1383,7 @@ void gl2psAddPolyPrimitive(GLshort type, GLshort numverts,
       (prim->verts[2].xyz[0] - prim->verts[1].xyz[0]) *
       (prim->verts[1].xyz[2] - prim->verts[0].xyz[2]) / area;
     
-    maxdZ = sqrt(dZdX*dZdX + dZdY*dZdY);
+    maxdZ = (GLfloat)sqrt(dZdX*dZdX + dZdY*dZdY);
 
     dZ = factor * maxdZ + units;
 
@@ -1431,7 +1431,7 @@ void gl2psParseFeedbackBuffer(GLint used){
   char flag, dash = 0;
   GLshort boundary;
   GLint i, count, v, vtot, offset = 0;
-  GLfloat lwidth = 1., psize = 1.;
+  GLfloat lwidth = 1.0F, psize = 1.0F;
   GLfloat *current;
   GL2PSvertex vertices[3];
 
@@ -1557,7 +1557,7 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
 				GLenum format, GLenum type, GLfloat *pixels){
   int nbhex, nbyte2, nbyte4, nbyte8;
   GLsizei row, col, col_max;
-  float dr, dg, db, fgrey;
+  GLfloat dr, dg, db;
   unsigned char red, green, blue, b, grey;
 
   /* FIXME: define an option for these? */
@@ -1579,8 +1579,7 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
     for(row = 0; row < height; row++){
       for(col = 0; col < width; col++){ 
 	gl2psGetRGB(pixels, width, height, col, row, &dr, &dg, &db);
-	fgrey = (0.30 * dr + 0.59 * dg + 0.11 * db);
-	grey = (unsigned char)(255. * fgrey);
+	grey = (unsigned char)(255.0 * (0.30 * dr + 0.59 * dg + 0.11 * db));
 	gl2psWriteByte(grey);
       }
       gl2psPrintf("\n");
@@ -1602,32 +1601,32 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
     for(row = 0; row < height; row++){
       for(col = 0; col < col_max; col+=4){
 	gl2psGetRGB(pixels, width, height, col, row, &dr, &dg, &db);
-	red = (unsigned char)(3. * dr);
-	green = (unsigned char)(3. * dg);
-	blue = (unsigned char)(3. * db);
+	red = (unsigned char)(3.0 * dr);
+	green = (unsigned char)(3.0 * dg);
+	blue = (unsigned char)(3.0 * db);
 	b = red;
 	b = (b<<2)+green;
 	b = (b<<2)+blue;
 	gl2psGetRGB(pixels, width, height, col+1, row, &dr, &dg, &db);
-	red = (unsigned char)(3. * dr);
-	green = (unsigned char)(3. * dg);
-	blue = (unsigned char)(3. * db);
+	red = (unsigned char)(3.0 * dr);
+	green = (unsigned char)(3.0 * dg);
+	blue = (unsigned char)(3.0 * db);
 	b = (b<<2)+red;
 	gl2psWriteByte(b);
 	b = green;
 	b = (b<<2)+blue;
 	gl2psGetRGB(pixels, width, height, col+2, row, &dr, &dg, &db);
-	red = (unsigned char)(3. * dr);
-	green = (unsigned char)(3. * dg);
-	blue = (unsigned char)(3. * db);
+	red = (unsigned char)(3.0 * dr);
+	green = (unsigned char)(3.0 * dg);
+	blue = (unsigned char)(3.0 * db);
 	b = (b<<2)+red;
 	b = (b<<2)+green;
 	gl2psWriteByte(b);
 	b = blue;
 	gl2psGetRGB(pixels, width, height, col+3, row, &dr, &dg, &db);
-	red = (unsigned char)(3. * dr);
-	green = (unsigned char)(3. * dg);
-	blue = (unsigned char)(3. * db);
+	red = (unsigned char)(3.0 * dr);
+	green = (unsigned char)(3.0 * dg);
+	blue = (unsigned char)(3.0 * db);
 	b = (b<<2)+red;
 	b = (b<<2)+green;
 	b = (b<<2)+blue;
@@ -1675,11 +1674,11 @@ void gl2psPrintPostScriptPixmap(GLfloat x, GLfloat y, GLsizei width, GLsizei hei
     for(row = 0; row < height; row++){
       for(col = 0; col < width; col++){
 	gl2psGetRGB(pixels, width, height, col, row, &dr, &dg, &db);
-	red = (unsigned char)(255. * dr);
+	red = (unsigned char)(255.0 * dr);
 	gl2psWriteByte(red);
-	green = (unsigned char)(255. * dg);
+	green = (unsigned char)(255.0 * dg);
 	gl2psWriteByte(green);
-	blue = (unsigned char)(255. * db);
+	blue = (unsigned char)(255.0 * db);
 	gl2psWriteByte(blue);
       }
       gl2psPrintf("\n");
@@ -1695,9 +1694,9 @@ void gl2psPrintPostScriptHeader(void){
   time_t now;
 
 #ifdef GL2PS_HAVE_ZLIB
-  char tmp[10] = {0x1f,0x8b /*magic numbers*/, Z_DEFLATED, /*compression method*/
-		  0 /*flags*/, 0,0,0,0 /*time*/, 2 /*xflags: max compression*/,
-		  0x03 /*FIXME: OS*/};
+  char tmp[10] = {0x1f,0x8b /* magic numbers */, 8 /* compression method */,
+		  0 /* flags */, 0,0,0,0 /* time */, 2 /* xflags: max compression */,
+		  0x03 /* FIXME: OS code */};
 
   if(gl2ps->options & GL2PS_COMPRESS){
     gl2psSetupCompress();
@@ -1900,7 +1899,7 @@ void gl2psPrintPostScriptHeader(void){
       rgba[0] = gl2ps->colormap[index][0];
       rgba[1] = gl2ps->colormap[index][1];
       rgba[2] = gl2ps->colormap[index][2];
-      rgba[3] = 0.;
+      rgba[3] = 0.0F;
     }
     gl2psPrintf("%g %g %g C\n"
 		"newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
@@ -2026,20 +2025,23 @@ void gl2psPrintPostScriptFooter(void){
       gl2psMsg(GL2PS_ERROR, "Zlib deflate error");
     }
     else{
-      /* write the data, without the 2 header bytes and the 4 footer
-	 bytes from the zlib stream */
-      /* FIXME: we should actually check the header to be sure that
-	 there is no extra data appended to it */
-      fwrite(gl2ps->compress->dest+2, gl2ps->compress->destLen-6, 1, gl2ps->stream);
+      /* determine the length of the header in the zlib stream */
+      n = 2; /* CMF+FLG */
+      if(gl2ps->compress->dest[1] & (1<<5)){
+	n += 4; /* DICTID */
+      }
+      /* write the data, without the zlib header and footer */
+      fwrite(gl2ps->compress->dest+n, gl2ps->compress->destLen-(n+4), 
+	     1, gl2ps->stream);
       /* add the gzip file footer */
       crc = crc32(0L, gl2ps->compress->start, gl2ps->compress->srcLen);
       for(n = 0; n < 4; ++n) {
-	tmp[n] = crc & 0xff;
+	tmp[n] = (char)(crc & 0xff);
 	crc >>= 8;
       }
       len = gl2ps->compress->srcLen;
       for(n = 4; n < 8; ++n) {
-	tmp[n] = len & 0xff;
+	tmp[n] = (char)(len & 0xff);
 	len >>= 8;
       }
       fwrite(tmp, 8, 1, gl2ps->stream);
@@ -2070,7 +2072,7 @@ void gl2psPrintPostScriptBeginViewport(GLint viewport[4]){
       rgba[0] = gl2ps->colormap[index][0];
       rgba[1] = gl2ps->colormap[index][1];
       rgba[2] = gl2ps->colormap[index][2];
-      rgba[3] = 0.;
+      rgba[3] = 0.0F;
     }
     gl2psPrintf("%g %g %g C\n"
 		"newpath %d %d moveto %d %d lineto %d %d lineto %d %d lineto\n"
@@ -2239,7 +2241,7 @@ int gl2psPrintPDFFillColor(GL2PSrgba rgba){
   return offs;
 }
 
-int gl2psPrintPDFLineWidth(float lw){
+int gl2psPrintPDFLineWidth(GLfloat lw){
   if(GL2PS_ZERO(lw))
     return gl2psPrintf("%.0f w\n", 0.);
   else if(lw < 1e-4 || lw > 1e6) /* avoid %e formatting */
@@ -2344,7 +2346,7 @@ int gl2psOpenPDFDataStreamWritePreface(){
       rgba[0] = gl2ps->colormap[index][0];
       rgba[1] = gl2ps->colormap[index][1];
       rgba[2] = gl2ps->colormap[index][2];
-      rgba[3] = 0.;
+      rgba[3] = 0.0F;
     }
     offs += gl2psPrintPDFFillColor(rgba);
     offs += gl2psPrintf("%d %d %d %d re\n",
@@ -2676,8 +2678,8 @@ int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle,
   char edgeflag = 0;
   double dmax = ~1UL;
   
-  dx = gl2ps->viewport[2]-gl2ps->viewport[0];
-  dy = gl2ps->viewport[3]-gl2ps->viewport[1];
+  dx = (GLfloat)(gl2ps->viewport[2] - gl2ps->viewport[0]);
+  dy = (GLfloat)(gl2ps->viewport[3] - gl2ps->viewport[1]);
   
   for(i = 0; i < 3; ++i){
     offs += (*action)(edgeflag, 1);
@@ -3081,7 +3083,7 @@ GLint gl2psPrintPDFEndViewport(){
 
 GLint gl2psPrintPrimitives(void){
   GL2PSbsptree *root;
-  GL2PSxyz eye = {0., 0., 100000.};
+  GL2PSxyz eye = {0.0F, 0.0F, 100000.0F};
   GLint used;
   void (*pprim)(void *a, void *b) = 0;
 
@@ -3195,15 +3197,15 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
       gl2ps->viewport[i] = viewport[i];
     }
   }
-  gl2ps->threshold[0] = nr ? 1./(GLfloat)nr : 0.032;
-  gl2ps->threshold[1] = ng ? 1./(GLfloat)ng : 0.017;
-  gl2ps->threshold[2] = nb ? 1./(GLfloat)nb : 0.05;
+  gl2ps->threshold[0] = nr ? 1.0F/(GLfloat)nr : 0.032F;
+  gl2ps->threshold[1] = ng ? 1.0F/(GLfloat)ng : 0.017F;
+  gl2ps->threshold[2] = nb ? 1.0F/(GLfloat)nb : 0.050F;
   gl2ps->colormode = colormode;
   gl2ps->buffersize = buffersize > 0 ? buffersize : 2048 * 2048;
   for(i = 0; i < 4; i++){
-    gl2ps->lastrgba[i] = -1.;
+    gl2ps->lastrgba[i] = -1.0F;
   }
-  gl2ps->lastlinewidth = -1.;
+  gl2ps->lastlinewidth = -1.0F;
   gl2ps->imagetree = NULL;
   gl2ps->primitivetoadd = NULL;
   gl2ps->zerosurfacearea = 0;  
