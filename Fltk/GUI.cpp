@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.413 2005-01-18 00:12:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.414 2005-01-18 00:23:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3566,7 +3566,7 @@ void GUI::create_visibility_window()
     Fl_Group::current()->resizable(o);
   }
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - BH, "Numeric Input");
+    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - BH, "Numeric input");
     o->resizable(NULL);
 
     for(int i = 0; i < 6; i++){
