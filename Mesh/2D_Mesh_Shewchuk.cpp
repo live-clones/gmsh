@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Shewchuk.cpp,v 1.3 2001-08-21 06:29:41 geuzaine Exp $
+// $Id: 2D_Mesh_Shewchuk.cpp,v 1.4 2001-08-21 10:43:25 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -7,8 +7,6 @@
 
 #define ANSI_DECLARATORS
 #define REAL double
-#define OPT "Q"
-//#define OPT ""
 
 extern "C" {
 #include "triangle.h"
@@ -76,6 +74,7 @@ void FindPointInHole(List_T* verts, REAL *x, REAL *y){
 }
 
 int Mesh_Shewchuk(Surface *s){
+  char opts[128];
   int i, j, k, l, NbPts=0, first;
   double val;
   List_T *list;
@@ -145,7 +144,9 @@ int Mesh_Shewchuk(Surface *s){
 
   // triangulate the points with minimum angle > 20 deg, with no boundary breaking
 
-  triangulate("pqzY" OPT, &in, &mid, NULL);
+  strcpy(opts, "pqzY");
+  if(CTX.verbosity < 3) strcat(opts, "Q");
+  triangulate(opts, &in, &mid, NULL);
 
   Free(in.pointlist);
   Free(in.pointattributelist);
@@ -182,7 +183,9 @@ int Mesh_Shewchuk(Surface *s){
 
   // refine the triangulation according to the triangle area constraints
 
-  triangulate("praqzBPY" OPT, &mid, &out, NULL);
+  strcpy(opts, "praqzBPY");
+  if(CTX.verbosity < 3) strcat(opts, "Q");
+  triangulate(opts, &mid, &out, NULL);
 
   // free all allocated arrays + those allocated by Triangle
 
