@@ -5,7 +5,7 @@ author's web site at http://www.cs.cmu.edu/~quake/triangle.html,
 unpack the archive and copy the two files 'triangle.c' and
 'triangle.h' in this directory. Then run configure and rebuild Gmsh.
 
-Please note that by doing so, you agree to Triangle's licencing
+Please note that by doing so, you agree to Triangle's licensing
 requirements (stated below). Most notably, you can only redistribute
 Gmsh if no compensation is received.
 
