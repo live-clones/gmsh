@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.18 2002-06-15 23:51:02 geuzaine Exp $
+// $Id: Entity.cpp,v 1.19 2002-06-16 03:53:33 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -356,7 +356,7 @@ void Draw_Vector (int Type, int Fill,
     break ;
 
   default :
-    Msg(GERROR, "Unknown type of vector to draw");
+    //Msg(GERROR, "Unknown type of vector to draw");
     break;
   }
   
