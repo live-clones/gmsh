@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.31 2004-06-16 17:57:07 geuzaine Exp $
+// $Id: List.cpp,v 1.32 2004-10-06 14:39:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -287,28 +287,29 @@ void *lolofind(void *data, void *array, int n, int size,
   return (NULL);
 }
 
-int List_LQuery(List_T * liste, void *data,
-                int (*fcmp) (const void *a, const void *b), int first)
+int List_LQuery(List_T *liste, void *data,
+		 int (*fcmp)(const void *a, const void *b), int first)
 {
   char *ptr;
-
-  if(first == 1) {
-    ptr = (char *)lolofind(data, liste->array, liste->n, liste->size, fcmp);
+  
+  if (first == 1) { 
+    ptr = (char *) lolofind(data,liste->array,liste->n,liste->size,fcmp);
   }
   else {
-    if(startptr != NULL)
-      ptr = (char *)lolofind(data, startptr, liste->n, liste->size, fcmp);
+    if (startptr != NULL)
+      ptr = (char *) lolofind(data,startptr,
+			      liste->n - (startptr-liste->array)/liste->size,
+			      liste->size,fcmp);
     else
-      return (0);
+      return(0);
   }
 
-  if(ptr == NULL)
-    return (0);
+  if (ptr == NULL) return(0);
 
-  startptr = ptr + liste->size;
-  if(startptr >= (liste->array + liste->n * liste->size))
+  startptr =  ptr + liste->size;
+  if ( startptr >= ( liste->array + liste->n * liste->size))
     startptr = NULL;
-  memcpy(data, ptr, liste->size);
+  memcpy(data,ptr,liste->size);
   return (1);
 }
 
