@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2001-08-20 08:25:23 geuzaine Exp $
+# $Id: Makefile,v 1.24 2001-12-04 10:47:39 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -64,8 +64,12 @@ Adapt.o: Adapt.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../Common/Numeric.h
 mnbrak.o: mnbrak.cpp nrutil.h ../Common/Numeric.h
 brent.o: brent.cpp nrutil.h ../Common/Numeric.h
-nrutil.o: nrutil.cpp
-dsvdcmp.o: dsvdcmp.cpp nrutil.h ../Common/Numeric.h
+nrutil.o: nrutil.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h
+dsvdcmp.o: dsvdcmp.cpp ../Common/Gmsh.h ../Common/Message.h \
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h nrutil.h ../Common/Numeric.h
 newt.o: newt.cpp nrutil.h ../Common/Numeric.h
 fmin.o: fmin.cpp nrutil.h ../Common/Numeric.h
 fdjac.o: fdjac.cpp nrutil.h ../Common/Numeric.h

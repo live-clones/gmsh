@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2001-11-29 08:19:06 geuzaine Exp $
+# $Id: Makefile,v 1.38 2001-12-04 10:47:39 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -182,11 +182,6 @@ depend:
  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h \
  Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
  ../Common/Numeric.h ../Common/Context.h ../Triangle/triangle.h
-3D_Mesh.o: 3D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
- ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
- ../DataStr/avl.h ../DataStr/Tools.h ../Common/Numeric.h Mesh.h \
- Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h Metric.h Matrix.h \
- 3D_Mesh.h Create.h ../Common/Context.h
 3D_Mesh_Old.o: 3D_Mesh_Old.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Numeric.h Mesh.h \
