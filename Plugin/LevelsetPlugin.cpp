@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.19 2001-08-13 06:59:52 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.20 2001-09-05 11:24:06 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -154,9 +154,13 @@ double  GMSH_LevelsetPlugin::what_to_draw (double x, double y, double z,
 					   int p1, int p2, 
 					   double coef, double *Vals) const
 {
+  // This very dangerous, since there is no test to check if enough
+  // values are avaiable in the view
   int offset =  _ith_field_to_draw_on_the_iso * 4;
+
   // TEST JF, this would draw y coord on the iso
   //  return y;
+
   p2 += offset;
   p1 += offset;
   return coef * (Vals[p2] - Vals[p1]) + Vals[p1]; 
