@@ -1,26 +1,26 @@
-$Id: CONTRIBUTORS,v 1.17 2003-02-10 19:53:56 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.18 2003-02-10 20:07:16 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2003 by
 
-    Jean-François Remacle <remacle@gce.ucl.ac.be> and
-    Christophe Geuzaine <geuzaine@acm.caltech.edu>
+  Jean-François Remacle <remacle@gce.ucl.ac.be> and
+  Christophe Geuzaine <geuzaine@acm.caltech.edu>
 
-Portions of this software are copyright (c) by
+Portions of Gmsh are copyright (c)
 
-    1988-1993, 1995 The Regents of the University of California.
-    1993, 1994, Silicon Graphics, Inc.
-    1990-1995 Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
-    1994, Thomas G. Lane.
-    1989, 1991 Jef Poskanzer.
+  1988-1993, 1995 The Regents of the University of California.
+  1993, 1994, Silicon Graphics, Inc.
+  1990-1995 Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
+  1994, Thomas G. Lane.
+  1989, 1991 Jef Poskanzer.
 
-Special thanks go to
+Special thanks to
 
-    David Colignon <David.Colignon@univ.u-3mrs.fr> for new colormaps
-    Patrick Dular <patrick.dular@ulg.ac.be> for transfinite mesh fixes
-    Marc Umé <Marc.Ume@digitalgraphics.be> for the original list code
-    Laurent Stainier <l.stainier@ulg.ac.be> for the Mac OS port
+  David Colignon <David.Colignon@univ.u-3mrs.fr> for new colormaps
+  Patrick Dular <patrick.dular@ulg.ac.be> for transfinite mesh fixes
+  Marc Umé <Marc.Ume@digitalgraphics.be> for the original list code
+  Laurent Stainier <l.stainier@ulg.ac.be> for the Mac OS port
 
-Special thanks also go to Bill Spitzak <spitzak@users.sourceforge.net>,
+Special thanks also to Bill Spitzak <spitzak@users.sourceforge.net>,
 Michael Sweet <easysw@users.sourceforge.net>, Matthias Melcher
 <mm@matthiasm.com> and others for the Fast Light Tool Kit on which
 Gmsh's GUI is based. See http://www.fltk.org for more info in this
@@ -29,20 +29,20 @@ excellent object-oriented, cross-platform toolkit.
 Finally, thanks to the following folks who have contributed by
 providing fresh ideas on theoretical or programming topics, who have
 sent patches, requests for changes or improvements, or who gave us
-access to exotic machines for testing the code:
+access to exotic machines for testing Gmsh:
 
-    Juan Abanto <juanabanto@yahoo.com>
-    Olivier Adam <o.adam@ulg.ac.be>
-    Guillaume Alleon <guillaume.alleon@airbus.aeromatra.com>
-    Pierre Badel <badel@freesurf.fr>
-    Éric Bechet <eric.bechet@epost.de>
-    Laurent Champaney <laurent.champaney@meca.uvsq.fr>
-    Pascal Dupuis <Pascal.Dupuis@esat.kuleuven.ac.be>
-    Philippe Geuzaine <geuzaine@gnat.colorado.edu>
-    Johan Gyselinck <johan.gyselinck@ulg.ac.be>
-    François Henrotte <fhenrott@esat.kuleuven.ac.be>
-    Benoît Meys <bmeys@techspace-aero.be>
-    Nicolas Moës <moes@tam9.mech.nwu.edu>
-    Chad Schmutzer <schmutze@acm.caltech.edu>
-    Nicolas Tardieu <nicolas.tardieu@edf.fr>
+  Juan Abanto <juanabanto@yahoo.com>
+  Olivier Adam <o.adam@ulg.ac.be>
+  Guillaume Alleon <guillaume.alleon@airbus.aeromatra.com>
+  Pierre Badel <badel@freesurf.fr>
+  Éric Bechet <eric.bechet@epost.de>
+  Laurent Champaney <laurent.champaney@meca.uvsq.fr>
+  Pascal Dupuis <Pascal.Dupuis@esat.kuleuven.ac.be>
+  Philippe Geuzaine <geuzaine@gnat.colorado.edu>
+  Johan Gyselinck <johan.gyselinck@ulg.ac.be>
+  François Henrotte <fhenrott@esat.kuleuven.ac.be>
+  Benoît Meys <bmeys@techspace-aero.be>
+  Nicolas Moës <moes@tam9.mech.nwu.edu>
+  Chad Schmutzer <schmutze@acm.caltech.edu>
+  Nicolas Tardieu <nicolas.tardieu@edf.fr>
 
