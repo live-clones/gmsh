@@ -517,7 +517,7 @@ sub lit_ELLIPSE {
 #
         $a0 = ($u2 - $u1);
         if ($a0 < 0.) {$a0 = $a0 + 360.};
-        if ($a0 >= 180.)
+        if ($a0 >= 120.)
         {
 #               Construction du point intermediaire
                 $a3 = ($u2 + $u1) / 2.;
@@ -566,7 +566,8 @@ sub lit_ELLIPSE {
 		$yp0 = ($r2 * sin ($a2));
 		$xp1 = $x1 + ( $xp0 * cos($thet1)) - ( $yp0 * sin($thet1));
 		$yp1 = $y1 + ( $xp0 * sin($thet1)) + ( $yp0 * cos($thet1));
-                my $p4 = new_point($x3, $y3);
+#                my $p4 = new_point($x3, $y3);
+                my $p4 = new_point($xp1, $yp1);
 #               Construction des lignes
         	$nb_ELLI++;
 		$ELLI[$nb_ELLI][1] = $p1;
