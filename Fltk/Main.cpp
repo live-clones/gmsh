@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.50 2003-11-21 07:56:29 geuzaine Exp $
+// $Id: Main.cpp,v 1.51 2003-11-22 01:59:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
   
   if(argc == 2 && !strcmp(argv[1], "-doc")){
     Print_OptionsDoc();
-    exit(1);
+    exit(0);
   }
 
   // Configuration files and command line options
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
         Mesh_Quality(THEM);
         Print_Histogram(THEM->Histogram[0]);
       }
-      exit(1);
+      exit(0);
     }
   }
 
@@ -250,5 +250,5 @@ int main(int argc, char *argv[])
   CTX.expose = 1;
 
   // loop
-  WID->run();
+  return WID->run();
 }

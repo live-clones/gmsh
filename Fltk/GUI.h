@@ -254,7 +254,7 @@ public:
   void create_solver_window(int num);
 
   // general purpose interaction
-  void run();
+  int run();
   void check();
   void wait();
   void make_opengl_current();

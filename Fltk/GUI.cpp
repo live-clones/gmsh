@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.252 2003-11-21 07:56:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.253 2003-11-22 01:59:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -737,9 +737,9 @@ GUI::GUI(int argc, char **argv)
 
 // Run the GUI until no window is left
 
-void GUI::run()
+int GUI::run()
 {
-  Fl::run();
+  return Fl::run();
 }
 
 // Check (now) if any pending events and run them

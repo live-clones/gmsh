@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.31 2003-11-21 07:56:28 geuzaine Exp $
+// $Id: Main.cpp,v 1.32 2003-11-22 01:59:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -128,9 +128,10 @@ int main(int argc, char *argv[])
       if(List_Nbr(CTX.post.list))
         BGMWithView((Post_View *)
                     List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
-      else
+      else{
         fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");
-      exit(1);
+	exit(1);
+      }
     }
     if(CTX.batch > 0) {
       mai3d(THEM, CTX.batch);
@@ -244,7 +245,6 @@ void Msg(int level, char *fmt, ...)
 
   if(abort)
     exit(1);
-
 }
 
 // CPU time computation

@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.7 2003-03-21 00:52:42 geuzaine Exp $
+// $Id: ParUtil.cpp,v 1.8 2003-11-22 01:59:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -105,7 +105,7 @@ void ParUtil::Exit()
 #ifdef PARALLEL
   MPI_Finalize();
 #else
-  exit(1);
+  exit(0);
 #endif
 }
 
