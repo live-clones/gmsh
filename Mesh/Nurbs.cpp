@@ -1,4 +1,4 @@
-// $Id: Nurbs.cpp,v 1.5 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: Nurbs.cpp,v 1.6 2001-08-17 07:41:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -10,7 +10,8 @@ Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
   double vec[4], T[4];
 
   V.Pos.X = V.Pos.Y = V.Pos.Z = 0.0;
-  V.lc = t * v[1]->lc + (1. - t) * v[2]->lc;
+  //V.lc = t * v[1]->lc + (1. - t) * v[2]->lc;
+  V.lc = (1-t) * v[1]->lc + t * v[2]->lc; // ???????
 
   if (derivee){
     T[3] = 0.;

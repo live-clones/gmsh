@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.11 2001-08-12 20:45:02 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.12 2001-08-17 07:41:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -50,7 +50,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     List_Read (Curve->Control_Points, i, &v[1]);
     List_Read (Curve->Control_Points, i + 1, &v[2]);
     
-    V.lc = t * v[2]->lc + (1. - t) * v[1]->lc;
+    V.lc = t * v[2]->lc + (1. - t) * v[1]->lc; // ?????
     V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
     V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
     V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
@@ -61,7 +61,8 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     V.Pos.X = evaluate_scalarfunction ("t", u, Curve->functu);
     V.Pos.Y = evaluate_scalarfunction ("t", u, Curve->functv);
     V.Pos.Z = evaluate_scalarfunction ("t", u, Curve->functw);
-    V.lc = (u * Curve->beg->lc + (1. - u) * Curve->end->lc);
+
+    V.lc = (u * Curve->end->lc + (1. - u) * Curve->beg->lc);// ?????
     V.w = (u * Curve->beg->w + (1. - u) * Curve->end->w);
     return V;
     
@@ -90,22 +91,17 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     V.Pos.Y += Curve->Circle.v[2]->Pos.Y;
     V.Pos.Z += Curve->Circle.v[2]->Pos.Z;
     V.w = (u * Curve->beg->w + (1. - u) * Curve->end->w);
-
-    // ?????
-    V.lc = (u * Curve->end->lc + (1. - u) * Curve->beg->lc);
+    V.lc = (u * Curve->end->lc + (1. - u) * Curve->beg->lc);// ?????
     return V;
     
   case MSH_SEGM_BSPLN:
   case MSH_SEGM_BEZIER:
-    V.lc = (u * Curve->beg->lc + (1. - u) * Curve->end->lc);
     return InterpolateUBS (Curve, u, derivee);
-
+    
   case MSH_SEGM_NURBS:
-    V.lc = (u * Curve->beg->lc + (1. - u) * Curve->end->lc);
     return InterpolateNurbs (Curve, u, derivee);
 
   case MSH_SEGM_SPLN:
-    V.lc = (u * Curve->beg->lc + (1. - u) * Curve->end->lc);
     N = List_Nbr (Curve->Control_Points);
 
     /* 
@@ -138,7 +134,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     List_Read (Curve->Control_Points, i, &v[1]);
     List_Read (Curve->Control_Points, i + 1, &v[2]);
     
-    V.lc = t * v[1]->lc + (1. - t) * v[2]->lc;
+    V.lc = t * v[2]->lc + (1. - t) * v[1]->lc; //?????
     
     if (!i){
       v[0] = &temp1;
