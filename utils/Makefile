@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2002-01-03 10:25:06 geuzaine Exp $
+# $Id: Makefile,v 1.7 2002-01-25 17:09:21 geuzaine Exp $
 
 CXX        = c++
 OPT_FLAGS  = -g
@@ -15,6 +15,9 @@ mysolver: mysolver.c
 
 mysolvertgz:
 	gtar zcvf mysolver.tgz mysolver.c mysolver.opt GmshClient.c GmshClient.h
+
+myperlsolvertgz:
+	gtar zcvf myperlsolver.tgz myperlsolver.pl myperlsolver.opt GMSH_CLIENT.pm
 
 clean:
 	$(RM) $(RMFLAGS) *.o
