@@ -199,7 +199,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.229 2005-01-16 20:41:38 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.230 2005-01-16 20:44:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.69 2005-01-16 20:41:41 geuzaine Exp $
+# $Id: Makefile,v 1.70 2005-01-16 20:44:35 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -47,14 +47,20 @@ ${LIB}: ${OBJ}
 Gmsh.tab.o:
 	${CXX} ${FLAGS} ${INCLUDE} -c $<
 
-Gmsh.tab.cpp: Gmsh.y
+# Don't do this: it would be triggered when we check out a new version via CVS
+# Gmsh.tab.cpp: Gmsh.y
+#	bison --output Gmsh.tab.cpp -d Gmsh.y 
+#	if [ -r Gmsh.tab.cpp.h ]; then mv Gmsh.tab.cpp.h Gmsh.tab.hpp ; fi
+#
+# Gmsh.yy.cpp: Gmsh.l
+#	flex -oGmsh.yy.cpp Gmsh.l
+#
+# parser: Gmsh.yy.cpp Gmsh.tab.cpp
+
+parser:
 	bison --output Gmsh.tab.cpp -d Gmsh.y 
 	if [ -r Gmsh.tab.cpp.h ]; then mv Gmsh.tab.cpp.h Gmsh.tab.hpp ; fi
-
-Gmsh.yy.cpp: Gmsh.l
 	flex -oGmsh.yy.cpp Gmsh.l
-
-parser: Gmsh.yy.cpp Gmsh.tab.cpp
 
 clean:
 	rm -f *.o
