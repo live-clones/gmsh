@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.39 2003-03-01 22:36:42 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.40 2003-03-11 05:55:47 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1336,6 +1336,13 @@ void process_wrl_elements(Mesh * M)
 void Print_Mesh(Mesh * M, char *c, int Type)
 {
   char name[256];
+
+  if(CTX.threads_lock) {
+    Msg(INFO, "I'm busy! Ask me that later...");
+    return;
+  }
+  CTX.threads_lock = 1;
+
   strcpy(name, M->name);
 
   if(Type == FORMAT_MSH) {
@@ -1343,6 +1350,7 @@ void Print_Mesh(Mesh * M, char *c, int Type)
     mshfile = fopen(name, "w");
     if(!mshfile) {
       Msg(GERROR, "Unable to open file '%s'", name);
+      CTX.threads_lock = 0;
       return;
     }
     Msg(INFO, "Writing file '%s'", name);
@@ -1358,6 +1366,7 @@ void Print_Mesh(Mesh * M, char *c, int Type)
     wrlfile = fopen(name, "w");
     if(!wrlfile) {
       Msg(GERROR, "Unable to open file '%s'", name);
+      CTX.threads_lock = 0;
       return;
     }
     Msg(INFO, "Writing file '%s'", name);
@@ -1372,6 +1381,7 @@ void Print_Mesh(Mesh * M, char *c, int Type)
     unvfile = fopen(name, "w");
     if(!unvfile) {
       Msg(GERROR, "Unable to open file '%s'", name);
+      CTX.threads_lock = 0;
       return;
     }
     Msg(INFO, "Writing file '%s'", name);
@@ -1395,6 +1405,7 @@ void Print_Mesh(Mesh * M, char *c, int Type)
     Greffile = fopen(name, "w");
     if(!Greffile) {
       Msg(GERROR, "Unable to open file '%s'", name);
+      CTX.threads_lock = 0;
       return;
     }
     Msg(INFO, "Writing file '%s'", name);
@@ -1408,4 +1419,6 @@ void Print_Mesh(Mesh * M, char *c, int Type)
     Msg(INFO, "Gref ouput complete '%s'", name);
     Msg(STATUS2, "Wrote '%s'", name);
   }
+
+  CTX.threads_lock = 0;
 }
