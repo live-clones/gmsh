@@ -177,7 +177,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.133 2001-12-03 10:39:39 gyselinc Exp $
+// $Id: Gmsh.tab.cpp,v 1.134 2001-12-16 05:16:37 remacle Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -2685,7 +2685,7 @@ static const short yycheck[] = {    23,
    175,    -1,    -1,    -1,    -1,    -1,   181,    -1,   183
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/lib/bison.simple"
+#line 3 "/usr/share/bison.simple"
 /* This file comes from bison-1.28.  */
 
 /* Skeleton output parser for bison,
@@ -2899,7 +2899,7 @@ __yy_memcpy (char *to, char *from, unsigned int count)
 #endif
 #endif
 
-#line 217 "/usr/lib/bison.simple"
+#line 217 "/usr/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -6214,7 +6214,7 @@ case 385:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 543 "/usr/lib/bison.simple"
+#line 543 "/usr/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;

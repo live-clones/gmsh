@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.7 2001-11-30 14:11:47 geuzaine Exp $
+// $Id: Utils.cpp,v 1.8 2001-12-16 05:16:37 remacle Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -515,8 +515,8 @@ void RecursiveIntegration (IntPoint * from, IntPoint * to, double (*f) (double X
   val3 = trapeze (&P, to);
 
   err = fabs (val1 - val2 - val3);
-
-  if ((err < Prec) && (*depth > 1)){
+  //  Msg(INFO,"Int %22.15 E %22.15 E %22.15 E\n", val1,val2,val3);
+  if (((err < Prec) && (*depth > 1)) || (*depth > 25)){
     List_Read (pPoints, List_Nbr (pPoints) - 1, &p1);
     P.p = p1.p + val2;
     List_Add (pPoints, &P);

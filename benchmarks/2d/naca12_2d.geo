@@ -228,6 +228,7 @@ Line(9) = {1001,1002};
 Line Loop(10) = {-6,-5,-9,-8,-7,3,4};
 Plane Surface(11) = {10};
 
-Attractor Point{101} = {0.01,0.01,2};
-Attractor Line{1,2,3,4} = {0.05,0.05,3};
+Attractor Point{101,200} = {0.04,0.04,2};
+Attractor Line{1,2,3,4} = {.1,.001,3};
+Mesh.Algorithm = 2;
 

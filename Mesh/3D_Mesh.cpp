@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.33 2001-11-16 19:35:26 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.34 2001-12-16 05:16:37 remacle Exp $
 
 /*
  
@@ -18,13 +18,13 @@
 
 #include <time.h>
 #include <vector>
+#include <algorithm>
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Mesh.h"
 #include "3D_Mesh.h"
 #include "Create.h"
 #include "Context.h"
-#include "mGeomSearch.h"
 
 extern Mesh       *THEM, *LOCAL;
 extern Context_T   CTX;
@@ -41,6 +41,39 @@ static int ZONEELIMINEE, Methode = 0;
 
 Simplex  MyNewBoundary;
 int      Alerte_Point_Scabreux;
+
+inline void cgsmpl (Simplex *s, double &x, double &y, double &z)
+{
+  x = 0.25 * ( s->V[0]->Pos.X +
+	       s->V[1]->Pos.X +
+	       s->V[2]->Pos.X +
+	       s->V[3]->Pos.X);  
+  y = 0.25 * ( s->V[0]->Pos.Y +
+	       s->V[1]->Pos.Y +
+	       s->V[2]->Pos.Y +
+	       s->V[3]->Pos.Y);  
+  z = 0.25 * ( s->V[0]->Pos.Z +
+	       s->V[1]->Pos.Z +
+	       s->V[2]->Pos.Z +
+	       s->V[3]->Pos.Z);    
+}
+
+struct closestSimplex 
+{
+  double X,Y,Z;
+  closestSimplex (double x, double y, double z)
+    : X(x),Y(y),Z(z){}
+  bool operator () (Simplex *a, Simplex *b)
+  {
+    double x1,y1,z1,x2,y2,z2;
+    cgsmpl (a,x1,y1,z1);
+    cgsmpl (b,x2,y2,z2);
+    double d1 = (x1-X)*(x1-X) + (y1-Y)*(y1-Y) + (z1-Z)*(z1-Z);
+    double d2 = (x2-X)*(x2-X) + (y2-Y)*(y2-Y) + (z2-Z)*(z2-Z);
+    return d1<d2;
+  }
+};
+
 
 
 void DebugSimplexe (Simplex * s){
@@ -199,7 +232,33 @@ struct SimplexInBox
   }
 };
 
-AOMD::mGeomSearch < Simplex, SimplexInBox, SimplexInteriorCheck > *fastSearch = 0;
+/*
+  Recursive search;
+ */
+
+Simplex *SearchPointByNeighbor (Vertex *v, Simplex *s, Tree_T *visited, int depth)
+{
+  if(depth > 150)return 0;
+  if(Tree_Search(visited,&s))return 0;
+  Tree_Add(visited,&s);
+  if(Pt_In_Circum (s,v)) return s;
+  Simplex *S[4];
+  int k=0;
+  for( int i = 0 ; i < 4 ; i++ )
+    {
+      if (s->S[i] != &MyNewBoundary)
+	{
+	  S[k++] = s->S[i];
+	}
+    }
+  std::sort(S,S+k,closestSimplex(v->Pos.X,v->Pos.Y,v->Pos.Z));
+  for( int i = 0 ; i < k ; i++ )
+    {
+      Simplex *q = SearchPointByNeighbor (v,S[i],visited, depth+1);
+      if (q) return q;
+    }
+  return 0;
+}
 
 void Action_First_Simplexes (void *a, void *b){
   Simplex **q;
@@ -574,7 +633,6 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
       Simplex *theNewS;
       List_Read (Simplexes_New, i, &theNewS);
       Tree_Add (m->Simplexes, &theNewS);
-      if(fastSearch)fastSearch->AddObject(theNewS);
     }
     
     /* Suppression des simplexes elimines */
@@ -583,7 +641,6 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
       List_Read (Simplexes_Destroyed, i, &s);
       if (!Tree_Suppress (m->Simplexes, &s))
         Msg(GERROR, "Impossible to delete simplex");
-      if(fastSearch)fastSearch->RemoveObject(s);
       Free_Simplex (&s,0);
     }
     
@@ -600,8 +657,6 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
 
 void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   int i, j, N, n;
-  int Nbr_OK = 0, Nbr_NOTOK = 0;
-  double xxx[3],uuu[3];
 
   N = List_Nbr (Points);
   n = IMAX (N / 20, 1);
@@ -609,54 +664,51 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   clock_t t1 = clock();
 
   Box_6_Tetraedron (Points, m);
-  //  List_Sort (Points, comparePosition);
+  List_Sort (Points, comparePosition);
 
-  SimplexInteriorCheck ick;
-  SimplexInBox         ibx (LC3D/30.);
-
-    fastSearch = new AOMD::mGeomSearch < Simplex, SimplexInBox, SimplexInteriorCheck >
-    (  m->Grid.min.X,m->Grid.max.X,
-       m->Grid.min.Y,m->Grid.max.Y,
-       m->Grid.min.Z,m->Grid.max.Z,
-       ibx,ick, 30,30,30);
-  
-  int nbEasy = 0, nbFast = 0;
+  int Nb1 = 0, Nb2 = 0, Nb3 = 0;
 
   for (i = 0; i < N; i++){
     THES = NULL;
     List_Read (Points, i, &THEV);
-    xxx[0]= THEV->Pos.X; 
-    xxx[1]= THEV->Pos.Y; 
-    xxx[2]= THEV->Pos.Z; 
-    if(fastSearch) THES = fastSearch->find(xxx,uuu); 
+    if (Simplexes_New)
+      for (j = 0; j < List_Nbr (Simplexes_New); j++)
+	{
+	  Simplex *simp;
+	  List_Read (Simplexes_New, j, &simp);
+	  if(Pt_In_Circum(simp,THEV))
+	    {
+	      THES = simp;
+		  break;
+	    }
+	}    
+    
+    if(THES) Nb1 ++;
+
     if(!THES)
-      {   
-	if (Simplexes_New)
-	  for (j = 0; j < List_Nbr (Simplexes_New); j++){
-	    Action_First_Simplexes (List_Pointer (Simplexes_New, j), NULL);	
-	    if(THES)
-	      {
-		nbEasy++;
-		break;
-	      }
-	  }
-      }    
-    else
       {
-	nbFast++;
+	if (Simplexes_New &&  List_Nbr (Simplexes_New))
+	  {
+	    Tree_T *visited = Tree_Create (sizeof (Simplex *), compareSimplex);
+	    Simplex *simp;
+	    List_Read (Simplexes_New, 0, &simp);
+	    THES = SearchPointByNeighbor (THEV, simp, visited,0);
+	    Tree_Delete(visited);
+	  }
+	if(THES) Nb2 ++;
       }
+
+
     if (!THES){
       Tree_Action (m->Simplexes, Action_First_Simplexes);
-      Nbr_OK++;
+      if(THES) Nb3 ++;
     }
-    else{
-      Nbr_NOTOK++;
-    }
+
     if (i % n == n - 1){
       volume = 0.0;
       Tree_Action (m->Simplexes, VSIM);
       Msg(STATUS3, "Nod=%d/%d Elm=%d", i+1,N,Tree_Nbr(m->Simplexes)); 
-      Msg(STATUS1, "Vol=%g (%d %d %d)",volume,nbFast,nbEasy,i-nbFast-nbEasy); 
+      Msg(STATUS1, "Vol=%g (%d %d %d)",volume,Nb1,Nb2,Nb3); 
     }
     if (!THES){
       Msg(WARNING, "Vertex (%g,%g,%g) in no simplex", THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
@@ -691,8 +743,8 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
   }
   clock_t t2 = clock();
 
-  if(fastSearch)delete fastSearch;
-  printf("nbEasy = %d nbFast = %d N = %d t = %lf\n",nbEasy,nbFast,N,(double)(t2-t1)/CLOCKS_PER_SEC);
+  Msg(STATUS3,"Nb1 = %d Nb2 = %d Nb3 = %d N = %d t = %lf\n",Nb1,Nb2,Nb3
+      ,N,(double)(t2-t1)/CLOCKS_PER_SEC);
 }
 
 void suppress_vertex (void *data, void *dum){

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2001-12-04 10:47:39 geuzaine Exp $
+# $Id: Makefile,v 1.39 2001-12-16 05:16:37 remacle Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -38,7 +38,7 @@ SRC = 1D_Mesh.cpp \
         2D_Parametric.cpp \
         2D_Mesh_Aniso.cpp \
         2D_Mesh_Shewchuk.cpp \
-      3D_Mesh_Old.cpp \
+        3D_Mesh.cpp \
         3D_SMesh.cpp \
         3D_BGMesh.cpp \
         3D_Extrude.cpp \

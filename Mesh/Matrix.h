@@ -90,10 +90,6 @@ class Matrix3x3
 	  cout << "| " << mat[2][0] << " " << mat[2][1] << " " << mat[2][2] << "|"<<endl;
 	  */
 	}
-      Matrix3x3 ()
-      {
-	zero = 0.0;
-      }
       Matrix3x3 (Vector3 &v1, Vector3 &v2, Vector3 &v3)
       {
 	setColumn(0,v1);
@@ -112,30 +108,17 @@ class Matrix3x3
 	  (eVec[i])[2] = v3;
 	  eVal[i] = l;
 	}
-      void setMetric ()
+      void setMetric ();
+
+      Matrix3x3 (double init = 0.0)
 	{
-	  Matrix3x3 rot (eVec[0],eVec[1],eVec[2]);
-	  Matrix3x3 rotT (eVec[0],eVec[1],eVec[2]);
-	  Matrix3x3 Id (0.0);
-	  rotT.transpose();
-	  Id.Identity(1.0);
-	  for(int i=0;i<3;i++)Id.mat[i][i] = eVal[i];
-	  Matrix3x3 m = rotT * (Id * rot);
+	  zero = init;
 	  for(int i=0;i<_TAILLE_;i++)
 	    for(int j=0;j<_TAILLE_;j++)
-	      mat[i][j] = m.mat[i][j];
+	      mat[i][j] = zero;
 	}
-
-      Matrix3x3 (const double& init)
-      {
-            zero = init;
-      		for(int i=0;i<_TAILLE_;i++)
-      			for(int j=0;j<_TAILLE_;j++)
-                	mat[i][j] = zero;
-      }
       Matrix3x3 (const double& init, double z[3][3])
-      {
-	
+      {	
 	Identity(init);
 	zero = init;
 	for(int i=0;i<_TAILLE_;i++)
@@ -144,41 +127,44 @@ class Matrix3x3
       }
       Matrix3x3 operator + (const Matrix3x3 &autre)
       {
-      		Matrix3x3 m(0.);
-      		for(int i=0;i<_TAILLE_;i++)
-      			for(int j=0;j<_TAILLE_;j++)
-                	m.mat[i][j] = mat[i][j] + autre.mat[i][j];
-      		return m;
+	Matrix3x3 m(0.);
+	for(int i=0;i<_TAILLE_;i++)
+	  for(int j=0;j<_TAILLE_;j++)
+	    m.mat[i][j] = mat[i][j] + autre.mat[i][j];
+	return m;
       }
       Matrix3x3 operator - (const Matrix3x3 &autre)
-      {
-            Matrix3x3 m(0.);
-      		for(int i=0;i<_TAILLE_;i++)
-      			for(int j=0;j<_TAILLE_;j++)
-                	m.mat[i][j] = mat[i][j] - autre.mat[i][j];
-      		return m;
-      }
+	{
+	  Matrix3x3 m(0.);
+	  for(int i=0;i<_TAILLE_;i++)
+	    for(int j=0;j<_TAILLE_;j++)
+	      m.mat[i][j] = mat[i][j] - autre.mat[i][j];
+	  return m;
+	}
       double* operator [] (int i)
-      {
-             return mat[i];
-      }
+	{
+	  return mat[i];
+	}
       void Identity(double id)
-      {
-	for(int i=0;i<_TAILLE_;i++)
-	  mat[i][i] = id;
-	setEigen(0,1,0,0,1);
-	setEigen(1,0,1,0,1);
-	setEigen(2,0,0,1,1);
-      }
-
+	{
+	  for(int i=0;i<_TAILLE_;i++)
+	    for(int j=0;j<_TAILLE_;j++)
+	      {
+		if(i == j)mat[i][j] = id;
+		else mat[i][j] = 0.0;
+	      }
+	  setEigen(0,1,0,0,1);
+	  setEigen(1,0,1,0,1);
+	  setEigen(2,0,0,1,1);
+	}
+      
       void copy(double m[3][3])
       {
-
-      		for(int i=0;i<_TAILLE_;i++)
-      			for(int j=0;j<_TAILLE_;j++)
-                    m[i][j] = mat[i][j];
+	for(int i=0;i<_TAILLE_;i++)
+	  for(int j=0;j<_TAILLE_;j++)
+	    m[i][j] = mat[i][j];
       }
-
+      
       Vector3 getColumn (int i)
 	{
 	  return Vector3 (0.0,mat[0][i],mat[1][i],mat[2][i]);
@@ -200,19 +186,7 @@ class Matrix3x3
 	  mat[i][j] = k;
 	}
 
-      Matrix3x3 operator * (const Matrix3x3 &autre)
-      {
-
-                Matrix3x3 m(0.);
-      		for(int i=0;i<_TAILLE_;i++)
-                for(int j=0;j<_TAILLE_;j++)
-                {
-                    m.mat[i][j] = zero;
-                    for(int k=0;k<_TAILLE_;k++)
-                    	m.mat[i][j] += mat[i][k] * autre.mat[k][j];
-                }
-      		return m;
-      }
+      Matrix3x3 operator * (const Matrix3x3 &autre);
       /*
       bool invert ()
       {
@@ -237,19 +211,18 @@ class Matrix3x3
 
       void transpose()
       {
-            double temp;
-            for(int i=0;i<_TAILLE_;i++)
-                for(int j=0;j<i;j++)
-                {
-                    if(i!=j)
-                    {
-                    	temp = mat[i][j];
-                        mat[i][j] = mat[j][i];
-                        mat[j][i] = temp;
-                    }
-                }
+	double temp;
+	for(int i=0;i<_TAILLE_;i++)
+	  for(int j=0;j<i;j++)
+	    {
+	      if(i!=j)
+		{
+		  temp = mat[i][j];
+		  mat[i][j] = mat[j][i];
+		  mat[j][i] = temp;
+		}
+	    }
       }
 };
 
-#undef _TAILLE_
 #endif

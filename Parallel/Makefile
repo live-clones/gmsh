@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2001-10-30 09:52:38 geuzaine Exp $
+# $Id: Makefile,v 1.7 2001-12-16 05:16:37 remacle Exp $
 #
 # Makefile for "libParallel.a"
 #
@@ -8,14 +8,13 @@ AR       = ar ruvs
 RM       = rm
 RANLIB   = ranlib
 LIB      = ../lib/libParallel.a
+CC       = gcc
 
 OPT_FLAGS     = -g
 OS_FLAGS      = 
 VERSION_FLAGS = 
 
 RMFLAGS  = -f
-CFLAGS   = $(OPT_FLAGS) $(OS_FLAGS) $(VERSION_FLAGS) $(INCLUDE)\
-          -I/usr/local/mpich/latest/include/
 
 SRC = ParUtil.cpp
 

@@ -1,5 +1,5 @@
-// $Id: Metric.cpp,v 1.7 2001-09-04 16:25:05 geuzaine Exp $
-
+// $Id: Metric.cpp,v 1.8 2001-12-16 05:16:37 remacle Exp $
+#include <time.h>
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
@@ -7,6 +7,61 @@
 #include "Mesh.h"
 #include "Matrix.h"
 #include "Interpolation.h"
+
+Matrix3x3 Matrix3x3::operator * (const Matrix3x3 &autre)
+{  
+  Matrix3x3 m(0.);
+  for(int i=0;i<3;i++)
+    {
+      for(int j=0;j<3;j++)
+	{
+	  for(int k=0;k<3;k++)
+	    m.mat[i][j] += mat[i][k] * autre.mat[k][j];
+	  if (fabs(m.mat[i][j]) < 1.e-15)m.mat[i][j] = 0.0;
+	}
+    }
+  return m;
+}
+
+void Matrix3x3::setMetric()
+{
+  Matrix3x3 rot (eVec[0],eVec[1],eVec[2]);
+  Matrix3x3 rotT (eVec[0],eVec[1],eVec[2]);
+  Matrix3x3 Id (0.0);
+  rotT.transpose();
+  Id.Identity(1.0);
+  for(int i=0;i<3;i++)Id.mat[i][i] = eVal[i];
+  Matrix3x3 kk = (Id * rot);
+  Matrix3x3 m = rotT * kk;
+  /*
+  Msg(INFO,"rot: %g %g %g %g %g %g %g %g %g \n  ", 
+      rot[0][0], rot[0][1], rot[0][2],
+      rot[1][0], rot[1][1], rot[1][2],
+      rot[2][0], rot[2][1], rot[2][2]);	      	      
+  Msg(INFO,"rotT: %g %g %g %g %g %g %g %g %g \n  ", 
+      rotT[0][0], rotT[0][1], rotT[0][2],
+      rotT[1][0], rotT[1][1], rotT[1][2],
+      rotT[2][0], rotT[2][1], rotT[2][2]);	      	      
+  Msg(INFO,"id: %g %g %g %g %g %g %g %g %g \n  ", 
+      Id[0][0], Id[0][1], Id[0][2],
+      Id[1][0], Id[1][1], Id[1][2],
+      Id[2][0], Id[2][1], Id[2][2]);	      	      
+
+  Msg(INFO,"kk: %g %g %g %g %g %g %g %g %g \n  ", 
+      kk[0][0], kk[0][1], kk[0][2],
+      kk[1][0], kk[1][1], kk[1][2],
+      kk[2][0], kk[2][1], kk[2][2]);	      	      
+
+  Msg(INFO,"m: %g %g %g %g %g %g %g %g %g \n  ", 
+      m[0][0], m[0][1], m[0][2],
+      m[1][0], m[1][1], m[1][2],
+      m[2][0], m[2][1], m[2][2]);	      	      
+  */
+  for(int i=0;i<3;i++)
+    for(int j=0;j<3;j++)
+      mat[i][j] = m.mat[i][j];
+}
+
 
 GMSHMetric::GMSHMetric ()
 {
@@ -99,6 +154,7 @@ Local_Metric_Of_Attractors ( double X, double Y, double Z,
 	  
 	}
       double d1 = d * a->Radius;
+      if(fabs(d1) < a->Radius * 1.e-6)d1 = 0.0;
       u = exp (-(d1 * d1));
       x1 = (1. - u) + u * a->lc1;
       x2 = (1. - u) + u * a->lc2;
@@ -137,6 +193,19 @@ Local_Metric_Of_Attractors ( double X, double Y, double Z,
 	      myMetric.setEigen (1,d2.Pos.X,d2.Pos.Y,d2.Pos.Z,1./(x2*x2));
 	      myMetric.setEigen (2,d3.Pos.X,d3.Pos.Y,d3.Pos.Z,1./(x1*x1));
 	      myMetric.setMetric();
+	      /*
+	      Msg(INFO,"%d %12.5E heigens : %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E \n  ", a->c->Num,d,
+		  metr.Pos.X, metr.Pos.Y, metr.Pos.Z,
+		  d2.Pos.X,d2.Pos.Y,d2.Pos.Z,
+		  d3.Pos.X,d3.Pos.Y,d3.Pos.Z);
+
+	      Msg(INFO,"heigenv : %12.5E %12.5E \n",x1,x2);
+
+	      Msg(INFO,"curve Metric: %g %g %g %g %g %g %g %g %g \n  ", 
+		  myMetric[0][0], myMetric[0][1], myMetric[0][2],
+		  myMetric[1][0], myMetric[1][1], myMetric[1][2],
+		  myMetric[2][0], myMetric[2][1], myMetric[2][2]);	      	      
+	      */
 	    }
 	  Matrix3x3 *M[2];
 	  M[0] = &myMetric;
@@ -145,7 +214,7 @@ Local_Metric_Of_Attractors ( double X, double Y, double Z,
 	  // myOldMetric = myMetric;
 	}
     }
-  myOldMetric.copy(m);
+  myOldMetric.copy(m);  
   return 1.0;
 }
 
@@ -285,7 +354,7 @@ setSimplexQuality (Simplex * s, Surface * surf)
       s->Quality = DMAX (DMAX (q1, q2), q3) / (RacineDeTrois);
     }
   else
-    {
+    {      
       s->Center_Ellipsum_2D (m);
       s->Quality = 3. * s->Radius / (s->V[0]->lc + s->V[1]->lc + s->V[2]->lc);
     }
@@ -381,12 +450,13 @@ getLc (double u, Curve * c)
   Vertex du = InterpolateCurve (c, u, 1);
   Local_Metric_Of_Attractors (v.Pos.X, v.Pos.Y, v.Pos.Z, NULL);
   l = LengthVector (&du);
-  /*
-  printf("GetLC : u = %g l=%g  lc=%g  return=%g\n", u, l, v.lc, l/v.lc);
-  printf("Metric: %g %g %g %g %g %g %g %g %g \n  ", 
-	 m[0][0], m[0][1], m[0][2],
-	 m[1][0], m[1][1], m[1][2],
-	 m[2][0], m[2][1], m[2][2]);
+  /*   
+    Msg(INFO,"GetLC : u = %g l=%g  lc=%g  return=%g\n", u, l, v.lc, l/v.lc);
+    Msg(INFO,"Metric: %g %g %g %g %g %g %g %g %g \n  ", 
+    m[0][0], m[0][1], m[0][2],
+    m[1][0], m[1][1], m[1][2],
+    m[2][0], m[2][1], m[2][2]);
+    Msg(INFO,"du = %g %g %g\n",du.Pos.X,du.Pos.Y,du.Pos.Z);
   */
   return l / v.lc;
 }
@@ -394,10 +464,11 @@ getLc (double u, Curve * c)
 double GMSHMetric::
 LengthVector (Vertex * v)
 {
-  Vertex mult (v->Pos.X * m[0][0] + v->Pos.Y * m[0][1] + v->Pos.Z * m[0][2],
-	       v->Pos.X * m[1][0] + v->Pos.Y * m[1][1] + v->Pos.Z * m[1][2],
-	       v->Pos.X * m[2][0] + v->Pos.Y * m[2][1] + v->Pos.Z * m[2][2]);
-  return sqrt (mult * (*v));
+  double qqq = v->Pos.X *  (v->Pos.X * m[0][0] + v->Pos.Y * m[0][1] + v->Pos.Z * m[0][2]) +
+    v->Pos.Y * (v->Pos.X * m[1][0] + v->Pos.Y * m[1][1] + v->Pos.Z * m[1][2]) +
+    v->Pos.Z * (v->Pos.X * m[2][0] + v->Pos.Y * m[2][1] + v->Pos.Z * m[2][2]);
+  //  Msg(INFO,"qqq = %g\n",qqq);
+  return sqrt (qqq);
 }
 
 double GMSHMetric::
