@@ -64,7 +64,7 @@ public :
   int  terminal;              // show we print to the terminal console?
   char *editor;               // text editor command (with included '%s')
   char home_dir[256];         // the home directory
-  char *theme;                // GUI theme
+  char *scheme;               // FLTK GUI theme
   int  tooltips;              // show tootips in GUI?
 
   int position[2];            // position of the menu window on the screen

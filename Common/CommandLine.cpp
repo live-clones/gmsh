@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.20 2003-06-13 22:41:41 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.21 2003-08-11 16:23:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -96,7 +96,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
   Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
-  Msg(DIRECT, "  -scheme string        specify FLTK scheme");
+  Msg(DIRECT, "  -scheme string        specify FLTK GUI scheme");
   Msg(DIRECT, "  -alpha                enable alpha blending");
   Msg(DIRECT, "  -notrack              don't use trackball mode for rotations");
   Msg(DIRECT, "  -display string       specify display");
@@ -580,7 +580,7 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       else if(!strcmp(argv[i] + 1, "scheme")) {
         i++;
         if(argv[i] != NULL) {
-          CTX.theme = argv[i];
+          CTX.scheme = argv[i];
           i++;
         }
         else {

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.245 2003-07-21 23:31:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.246 2003-08-11 16:23:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -688,8 +688,8 @@ GUI::GUI(int argc, char **argv)
 
   // handle themes and tooltip font size
 #if !((FL_MAJOR_VERSION == 1 || FL_MAJOR_VERSION == 2) && (FL_MINOR_VERSION == 0))
-  if(strlen(CTX.theme))
-    Fl::scheme(CTX.theme);
+  if(strlen(CTX.scheme))
+    Fl::scheme(CTX.scheme);
   Fl_Tooltip::size(fontsize);
 #endif
 

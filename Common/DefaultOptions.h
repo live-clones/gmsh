@@ -60,8 +60,8 @@ StringXString GeneralOptions_String[] = {
   { F|O, "TextEditor" , opt_general_editor , "emacs %s &" ,
 #endif
     "System command to launch a text editor (OS-dependent)" },
-  { F|O,   "Theme" , opt_general_theme , "" ,
-    "FLTK graphical user interface theme (try e.g. plastic)" },
+  { F|S,   "Scheme" , opt_general_scheme , "" ,
+    "FLTK graphical user interface scheme (try e.g. plastic)" },
   { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
     "Temporary file used by the geometry module" },
 

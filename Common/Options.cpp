@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.112 2003-06-23 16:52:17 geuzaine Exp $
+// $Id: Options.cpp,v 1.113 2003-08-11 16:23:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -776,11 +776,11 @@ char *opt_general_editor(OPT_ARGS_STR)
   return CTX.editor;
 }
 
-char *opt_general_theme(OPT_ARGS_STR)
+char *opt_general_scheme(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX.theme = val;
-  return CTX.theme;
+    CTX.scheme = val;
+  return CTX.scheme;
 }
 
 char *opt_mesh_triangle_options(OPT_ARGS_STR){
