@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.21 2003-11-24 21:38:40 geuzaine Exp $
+// $Id: Skin.cpp,v 1.22 2004-02-03 22:36:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -281,6 +281,10 @@ Post_View *GMSH_SkinPlugin::execute(Post_View * v)
     RemoveViewByNumber(view->Num);
   }
   else{
+    // copy time data
+    for(int i = 0; i < List_Nbr(vv->Time); i++)
+      List_Add(view->Time, List_Pointer(vv->Time, i));
+    // finalize
     char name[1024], filename[1024];
     sprintf(name, "skin-%s", vv->Name);
     sprintf(filename, "skin-%s", vv->FileName);

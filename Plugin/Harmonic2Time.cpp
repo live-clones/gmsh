@@ -1,4 +1,4 @@
-// $Id: Harmonic2Time.cpp,v 1.8 2003-11-23 02:56:02 geuzaine Exp $
+// $Id: Harmonic2Time.cpp,v 1.9 2004-02-03 22:36:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -131,6 +131,9 @@ Post_View *GMSH_Harmonic2TimePlugin::execute(Post_View * v)
   if(MIN(rIndex, iIndex) >= 0 && vv->NbTimeStep >= MAX(rIndex, iIndex)) {
     View = BeginView(1);
     harmonic2time(vv, View, rIndex, iIndex, nbSteps);
+    // create time data
+    // FIXME: todo
+    // finalize
     char name[1024], filename[1024];
     sprintf(name, "h2t-%s", vv->Name);
     sprintf(filename, "h2t-%s", vv->FileName);

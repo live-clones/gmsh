@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.9 2004-01-25 09:28:28 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.10 2004-02-03 22:36:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -520,6 +520,9 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   executeList(v, v->TY, v->NbTY, 9, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
 
   for(unsigned int i = 0; i < out.size(); i++) {
+    // create time data
+    // FIXME: todo
+    // finalize
     char name[1024], filename[1024];
     sprintf(name, "cut-%s-%d", v->Name, i);
     sprintf(filename, "cut-%s-%d", v->FileName, i);

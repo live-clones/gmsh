@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.15 2003-11-23 05:41:37 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.16 2004-02-03 22:36:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -220,6 +220,10 @@ Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
   if(vv->NbSP > 2) {
     View = BeginView(1);
     Triangulate(vv, View);
+    // copy time data
+    for(int i = 0; i < List_Nbr(vv->Time); i++)
+      List_Add(View->Time, List_Pointer(vv->Time, i));
+    // finalize
     char name[1024], filename[1024];
     sprintf(name, "triangulate-%s", vv->Name);
     sprintf(filename, "triangulate-%s", vv->FileName);
