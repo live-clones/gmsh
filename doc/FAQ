@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2001-11-05 08:37:43 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2001-11-05 16:41:14 $)
 
 1. GENERAL
 ==========
@@ -129,7 +129,7 @@ post-process the 3D Delaunay mesh, so that some (typically 0.1 to
 0.5%) badly shaped tetrahedra will likely subsist in any unstructured
 3D mesh. This may/should be fixed in the future.
 
-5.6) Non-recombined 3D extruded meshes sometimes fail.
+5.7) Non-recombined 3D extruded meshes sometimes fail.
 
 The swapping algorithm is not very clever at the moment. Try to change
 the surface mesh a bit, or recombine your mesh to generate prisms or
