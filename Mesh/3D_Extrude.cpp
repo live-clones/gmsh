@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.68 2003-12-04 19:44:36 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.69 2003-12-04 19:53:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1085,7 +1085,7 @@ int Extrude_Mesh(Tree_T * Volumes)
     Msg(STATUS3, "Swapping %d", TEST_IS_ALL_OK);
     if(TEST_IS_ALL_OK == j) {
       if(j)
-        Msg(GERROR, "Unable to swap all edges: try Recombine...");
+        Msg(GERROR, "Unable to swap all edges (output mesh will be incorrect): use 'Recombine'");
       break;
     }
     j = TEST_IS_ALL_OK;
