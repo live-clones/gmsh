@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.4 2004-06-28 00:56:07 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.5 2004-06-28 19:00:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -47,10 +47,8 @@ void Optimize_Netgen(Volume * v)
 
 #else
 
-extern "C"
-{
 #include "nglib.h"
-}
+#include "nglib_addon.h"
 
 class Netgen{
  private:
@@ -200,11 +198,14 @@ void Netgen::MeshVolume()
 
 void Netgen::OptimizeVolume()
 {
+  Ng_Meshing_Parameters mp;
+  mp.maxh = 1;
+  mp.fineness = 1;
+  mp.secondorder = 0;
   // remove the pure volume vertices from THEM->Vertices and v->Vertices
   // remove the tets from THEM->Simplexes
   // reset v->Simplexes
-  //RemoveIllegalElements(*_ngmesh);
-  //OptimizeVolume(mparam, *_ngmesh, NULL);
+  NgAddOn_OptimizeVolumeMesh(_ngmesh, &mp);
   // transfer vertices and tets back into v and THEM
 }
 

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.60 2004-06-26 05:07:47 geuzaine Exp $
+// $Id: Create.cpp,v 1.61 2004-06-28 19:00:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -738,21 +738,29 @@ void Free_Volume(void *a, void *b)
 {
   Volume *pV = *(Volume **) a;
   if(pV) {
+    Tree_Action(pV->Simplexes, Free_Simplex);
+    Tree_Action(pV->Hexahedra, Free_Hexahedron);
+    Tree_Action(pV->Prisms, Free_Prism);
+    Tree_Action(pV->Pyramids, Free_Pyramid);
+    Tree_Action(pV->Edges, Free_Edge);
+  }
+  Free_Volume_But_Not_Elements(a, b);
+}
+
+void Free_Volume_But_Not_Elements(void *a, void *b)
+{
+  Volume *pV = *(Volume **) a;
+  if(pV) {
     List_Delete(pV->TrsfPoints);
     List_Delete(pV->Surfaces);  // surfaces freed elsewhere
     List_Delete(pV->SurfacesOrientations);
-    Tree_Action(pV->Simplexes, Free_Simplex);
     Tree_Delete(pV->Simplexes);
     Tree_Delete(pV->Simp_Surf); // for old extrusion mesh generator
     Tree_Delete(pV->Quad_Surf); // for old extrusion mesh generator
     Tree_Delete(pV->Vertices);  // vertices freed elsewhere
-    Tree_Action(pV->Hexahedra, Free_Hexahedron);
     Tree_Delete(pV->Hexahedra);
-    Tree_Action(pV->Prisms, Free_Prism);
     Tree_Delete(pV->Prisms);
-    Tree_Action(pV->Pyramids, Free_Pyramid);
     Tree_Delete(pV->Pyramids);
-    Tree_Action(pV->Edges, Free_Edge);
     Tree_Delete(pV->Edges);
     Tree_Delete(pV->Faces);
     Free(pV);

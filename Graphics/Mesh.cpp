@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.97 2004-06-23 19:53:52 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.98 2004-06-28 19:00:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -225,6 +225,10 @@ void Draw_Mesh(Mesh * M)
 void Draw_Mesh_Volume(void *a, void *b)
 {
   Volume *v = *(Volume **) a;
+  if(!(v->Visible & VIS_MESH))
+    return;
+  theColor = v->Color;
+  thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, v->Num);
   Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
   Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
   Tree_Action(v->Prisms, Draw_Mesh_Prism);
@@ -852,17 +856,6 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
-  // structure exists for volumes
-  Volume *v = FindVolume(s->iEnt, THEM);
-  if(v){
-    if(!(v->Visible & VIS_MESH))
-      return;
-    theColor = v->Color;
-  }
-  if(CTX.mesh.color_carousel == 2)
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, s->iEnt);
-
   if(CTX.mesh.gamma_sup) {
     tmp = s->GammaShapeMeasure();
     if(tmp < CTX.mesh.gamma_inf || tmp > CTX.mesh.gamma_sup)
@@ -1003,17 +996,6 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, h->iPart);
   if(part && !(*part)->Visible)
     return;
-
-  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
-  // structure exists for volumes
-  Volume *v = FindVolume(h->iEnt, THEM);
-  if(v){
-    if(!(v->Visible & VIS_MESH))
-      return;
-    theColor = v->Color;
-  }
-  if(CTX.mesh.color_carousel == 2)
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, h->iEnt);
 
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;
@@ -1157,17 +1139,6 @@ void Draw_Mesh_Prism(void *a, void *b)
   if(part && !(*part)->Visible)
     return;
 
-  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
-  // structure exists for volumes
-  Volume *v = FindVolume(p->iEnt, THEM);
-  if(v){
-    if(!(v->Visible & VIS_MESH))
-      return;
-    theColor = v->Color;
-  }
-  if(CTX.mesh.color_carousel == 2)
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, p->iEnt);
-
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;
 
@@ -1306,17 +1277,6 @@ void Draw_Mesh_Pyramid(void *a, void *b)
   MeshPartition **part = (MeshPartition**)List_Pointer_Test(THEM->Partitions, p->iPart);
   if(part && !(*part)->Visible)
     return;
-
-  // FIXME: move this in Draw_Mesh_Volume as soon as a coherent
-  // structure exists for volumes
-  Volume *v = FindVolume(p->iEnt, THEM);
-  if(v){
-    if(!(v->Visible & VIS_MESH))
-      return;
-    theColor = v->Color;
-  }
-  if(CTX.mesh.color_carousel == 2)
-    thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, p->iEnt);
 
   int edges = CTX.mesh.volumes_edges;
   int faces = CTX.mesh.volumes_faces;

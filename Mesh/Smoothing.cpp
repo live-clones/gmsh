@@ -1,4 +1,4 @@
-// $Id: Smoothing.cpp,v 1.13 2004-05-25 04:10:05 geuzaine Exp $
+// $Id: Smoothing.cpp,v 1.14 2004-06-28 19:00:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -92,7 +92,7 @@ void ActionLiss(void *data, void *dummy)
   for(i = 0; i < List_Nbr(pnxe->Liste); i++) {
     List_Read(pnxe->Liste, i, &s);
     min_quality_old = DMIN(min_quality_old, s->GammaShapeMeasure());
-    volume_before += s->Volume_Simplexe();
+    volume_before += fabs(s->Volume_Simplexe());
     // On Ne Lisse Point Les Points sur les surfaces quand les volumes
     // sont mailles
     if(s->V[3] && pnxe->v->ListSurf)
@@ -127,7 +127,7 @@ void ActionLiss(void *data, void *dummy)
   double volume_after = 0.0;
   for(i = 0; i < List_Nbr(pnxe->Liste); i++) {
     List_Read(pnxe->Liste, i, &s);
-    volume_after += s->Volume_Simplexe();
+    volume_after += fabs(s->Volume_Simplexe());
   }
   if(fabs(volume_after - volume_before) > 1.e-8 * 
      fabs(volume_after + volume_before) || 

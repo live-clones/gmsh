@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.54 2004-06-20 23:25:32 geuzaine Exp $
+// $Id: Generator.cpp,v 1.55 2004-06-28 19:00:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -244,6 +244,24 @@ void Maillage_Dimension_2(Mesh * M)
   M->timing[1] = t2 - t1;
 }
 
+static Volume *IVOL;
+
+void TransferData(void *a, void *b)
+{
+  Simplex *s = *(Simplex**)a;
+  if(s->iEnt == IVOL->Num){
+    if(s->Volume_Simplexe() < 0) {
+      Vertex *temp;
+      temp = s->V[0];
+      s->V[0] = s->V[1];
+      s->V[1] = temp;
+    }
+    Tree_Add(IVOL->Simplexes, &s);
+    for(int i = 0; i < 4; i++)
+      Tree_Insert(IVOL->Vertices, &s->V[i]);
+  }
+}
+
 void Maillage_Dimension_3(Mesh * M)
 {
   Volume *v;
@@ -252,8 +270,8 @@ void Maillage_Dimension_3(Mesh * M)
 
   t1 = Cpu();
 
+  // merge all the delaunay parts in a single special volume
   v = Create_Volume(99999, 99999);
-
   List_T *list = Tree2List(M->Volumes);
   for(int i = 0; i < List_Nbr(list); i++) {
     List_Read(list, i, &vol);
@@ -265,16 +283,32 @@ void Maillage_Dimension_3(Mesh * M)
       }
     }
   }
-  List_Delete(list);
   Tree_Insert(M->Volumes, &v);
 
   if(CTX.mesh.oldxtrude) {
-    Extrude_Mesh_Old(M);        // old automatic extrusion algorithm
+    Extrude_Mesh_Old(M); // old extrusion
   }
   else {
-    Extrude_Mesh(M->Volumes);   // new extrusion
-    Tree_Action(M->Volumes, Maillage_Volume);   // delaunay of remaining parts
+    Extrude_Mesh(M->Volumes); // new extrusion
+    Tree_Action(M->Volumes, Maillage_Volume); // delaunay of remaining parts
   }
+
+  // transfer data back to individual volumes and remove special volume
+  for(int i = 0; i < List_Nbr(list); i++){
+    List_Read(list, i, &IVOL);
+    Tree_Action(v->Simplexes, TransferData);
+  }
+  Tree_Suppress(M->Volumes, &v);
+  Free_Volume_But_Not_Elements(&v, NULL);
+
+  // optimize quality
+  //if(CTX.mesh.quality) {
+  //for(int i = 0; i < List_Nbr(list); i++){
+  //  List_Read(list, i, &v);
+  //  Optimize_Netgen(v);
+  // }
+
+  List_Delete(list);
 
   t2 = Cpu();
 

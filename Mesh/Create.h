@@ -52,6 +52,7 @@ void Free_PhysicalGroup(void *a, void *b);
 void Free_MeshPartition(void *a, void *b);
 void Free_Surface(void *a, void *b);
 void Free_Volume(void *a, void *b);
+void Free_Volume_But_Not_Elements(void *a, void *b);
 void Free_Curve(void *a, void *b);
 void Free_EdgeLoop(void *a, void *b);
 void Free_SurfaceLoop(void *a, void *b);
