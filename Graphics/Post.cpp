@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.36 2002-06-15 21:29:59 geuzaine Exp $
+// $Id: Post.cpp,v 1.37 2002-08-28 01:45:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -138,6 +138,49 @@ void Get_Coords(double Explode, double *Offset, int nbnod,
   }
 }
 
+static double storedEye[3]={0,0,0};
+
+int changedEye(){
+  double zeye=100*CTX.lc, tmp[3];
+  tmp[0] = CTX.rot[0][2] * zeye;
+  tmp[1] = CTX.rot[1][2] * zeye;
+  tmp[2] = CTX.rot[2][2] * zeye;
+  if(fabs(tmp[0]-storedEye[0])>1.e-3 ||
+     fabs(tmp[1]-storedEye[1])>1.e-3 ||
+     fabs(tmp[2]-storedEye[2])>1.e-3){
+    storedEye[0] = tmp[0];
+    storedEye[1] = tmp[1];
+    storedEye[2] = tmp[2];
+    return 1;
+  }
+  return 0;
+}
+
+// to be rigorous, we should take Raise into account...
+
+int compareTriangleEye(const void *a, const void *b){
+  double d, dq, dw, *q=(double*)a, *w=(double*)b;
+  double cgq[3], cgw[3];
+
+  cgq[0] = q[0]+q[1]+q[2];
+  cgq[1] = q[3]+q[4]+q[5];
+  cgq[2] = q[6]+q[7]+q[8];
+
+  cgw[0] = w[0]+w[1]+w[2];
+  cgw[1] = w[3]+w[4]+w[5];
+  cgw[2] = w[6]+w[7]+w[8];
+
+  prosca(storedEye,cgq,&dq);
+  prosca(storedEye,cgw,&dw);
+
+  d = dq-dw;
+
+  if(d > 0)
+    return 1;
+  if(d < 0)
+    return -1;
+  return 0;
+}
 
 void Draw_Post (void) {
   int            iView,i,j,k,nb;
@@ -355,6 +398,17 @@ void Draw_Post (void) {
 				  (double*)List_Pointer_Fast(v->ST,i+9));
 	    }
 	  }
+
+	  if(CTX.alpha){ // sort the triangles % eye
+	    if(ColorTable_IsAlpha(&v->CT) && changedEye()){
+	      Msg(INFO, "Resorting triangles (eye=%g %g %g)", 
+		  storedEye[0],storedEye[1],storedEye[2]);
+	      v->Changed = 1;
+	      qsort(v->ST->array,v->NbST,nb*sizeof(double),compareTriangleEye);
+	      Msg(INFO, "End sorting triangles");
+	    }
+	  }
+
 	  for(i = 0 ; i < List_Nbr(v->ST) ; i+=nb){
 	    Get_Coords(v->Explode, v->Offset, 3, 
 		       (double*)List_Pointer_Fast(v->ST,i), 
