@@ -179,8 +179,6 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   std::set<_point>::iterator it  = _point::all_points.begin();
   std::set<_point>::iterator ite = _point::all_points.end();
   
-  int ip=0;
-
   for ( ; it !=ite ; ++it)
     {
       _point *p = (_point*) &(*it);
