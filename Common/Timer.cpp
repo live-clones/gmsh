@@ -1,6 +1,6 @@
-// $Id: Timer.cpp,v 1.7 2002-05-20 18:28:24 geuzaine Exp $
+// $Id: Timer.cpp,v 1.8 2003-01-23 20:19:17 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

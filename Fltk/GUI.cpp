@@ -1,6 +1,6 @@
-// $Id: GUI.cpp,v 1.224 2003-01-22 02:22:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.225 2003-01-23 20:19:19 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -2690,7 +2690,7 @@ void GUI::create_about_window(){
     o->add("@c@.A three-dimensional finite element mesh generator");
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add("");
-    o->add("@c@.Copyright (c) 1997-2002");
+    o->add("@c@.Copyright (c) 1997-2003");
 #if defined(__APPLE__)
     o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
 #else

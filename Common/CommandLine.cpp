@@ -1,6 +1,6 @@
-// $Id: CommandLine.cpp,v 1.5 2002-11-08 18:56:21 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.6 2003-01-23 20:19:17 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ char  *TheFileNameTab[MAX_OPEN_FILES];
 char  *TheBgmFileName=NULL, *TheOptString=NULL;
 
 char gmsh_progname[]  = "This is Gmsh" ;
-char gmsh_copyright[] = "Copyright (C) 1997-2002 Jean-Francois Remacle and Christophe Geuzaine";
+char gmsh_copyright[] = "Copyright (C) 1997-2003 Jean-Francois Remacle and Christophe Geuzaine";
 char gmsh_version[]   = "Version        : " ;
 char gmsh_os[]        = "Build OS       : " GMSH_OS ;
 char gmsh_gui[]       = "GUI toolkit    : " ;

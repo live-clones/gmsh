@@ -1,6 +1,6 @@
-// $Id: Generator.cpp,v 1.37 2002-11-08 18:56:22 geuzaine Exp $
+// $Id: Generator.cpp,v 1.38 2003-01-23 20:19:22 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: Options.cpp,v 1.97 2002-12-11 17:37:17 geuzaine Exp $
+// $Id: Options.cpp,v 1.98 2003-01-23 20:19:17 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

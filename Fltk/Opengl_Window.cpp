@@ -1,6 +1,6 @@
-// $Id: Opengl_Window.cpp,v 1.28 2002-08-28 07:14:55 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.29 2003-01-23 20:19:20 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: Scale.cpp,v 1.32 2002-11-17 06:25:59 geuzaine Exp $
+// $Id: Scale.cpp,v 1.33 2003-01-23 20:19:21 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: Geo.cpp,v 1.29 2002-11-01 19:00:29 geuzaine Exp $
+// $Id: Geo.cpp,v 1.30 2003-01-23 20:19:20 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
-// $Id: SMS.cpp,v 1.9 2002-10-03 07:47:10 geuzaine Exp $
+// $Id: SMS.cpp,v 1.10 2003-01-23 20:19:22 geuzaine Exp $
 //
-// Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
