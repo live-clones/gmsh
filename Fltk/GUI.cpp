@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.216 2002-11-16 23:46:05 geuzaine Exp $
+// $Id: GUI.cpp,v 1.217 2002-11-17 02:08:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -79,26 +79,29 @@ extern Context_T  CTX;
 // Don't define shortcuts for FL_CTRL+'n', FL_CTRL+'p', FL_CTRL+'f', FL_CTRL+'b'
 // these are used by fltk for widget navigation (in the same way as the 4 arrow keys)
 
+// We can not use the 'g', 'm' 's' and 'p' mnemonics since they are
+// already defined as global shortcuts (geometry, mesh, solver, post).
+
 Fl_Menu_Item m_menubar_table[] = {
-  {"File", 0, 0, 0, FL_SUBMENU},
-    {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
-    {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
-    {"Save mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
+  {"&File", 0, 0, 0, FL_SUBMENU},
+    {"&Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
+    {"M&erge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
+    {"Sa&ve mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
-    {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
-      {"By extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
-      {"Geometry",  0, 0, 0, FL_SUBMENU},
+    {"Save &as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
+      {"By &extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
+      {"&Geometry",  0, 0, 0, FL_SUBMENU},
          {"Gmsh current options (*.opt)...",    0, (Fl_Callback *)file_save_as_geo_options_cb, 0},
          {"Gmsh unrolled geometry (*.geo)...",  0, (Fl_Callback *)file_save_as_geo_cb, 0},
          {0},
-      {"Mesh",  0, 0, 0, FL_SUBMENU},
+      {"&Mesh",  0, 0, 0, FL_SUBMENU},
          {"Gmsh (*.msh)...",                    0, (Fl_Callback *)file_save_as_msh_cb, 0},
          {"Gmsh all elements...",               0, (Fl_Callback *)file_save_as_msh_all_cb, 0},
          {"GREF (*.gref)...",                   0, (Fl_Callback *)file_save_as_gref_cb, 0},
          {"I-DEAS universal format (*.unv)...", 0, (Fl_Callback *)file_save_as_unv_cb, 0},
          {"VRML lines/surfaces (*.wrl)...",     0, (Fl_Callback *)file_save_as_vrml_cb, 0},
          {0},
-      {"Image",  0, 0, 0, FL_SUBMENU},
+      {"&Image",  0, 0, 0, FL_SUBMENU},
          {"GIF (*.gif)...",               0, (Fl_Callback *)file_save_as_gif_cb, 0},
          {"GIF dithered...",              0, (Fl_Callback *)file_save_as_gif_dithered_cb, 0},
          {"GIF transparent...",           0, (Fl_Callback *)file_save_as_gif_transparent_cb, 0},
@@ -114,22 +117,22 @@ Fl_Menu_Item m_menubar_table[] = {
          {0},
       {0},
 #else
-    {"Save as...",       FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
+    {"Save &as...",       FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
+    {"&Quit",             FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
 
-  {"Tools",0,0,0,FL_SUBMENU},
-    {"Options...",       FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
-    {"Visibility...",    FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Statistics...",    FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
-    {"Message console...",       FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
+  {"&Tools",0,0,0,FL_SUBMENU},
+    {"&Options...",       FL_SHIFT+'o', (Fl_Callback *)options_cb, 0},
+    {"&Visibility...",    FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
+    {"S&tatistics...",    FL_SHIFT+'i', (Fl_Callback *)statistics_cb, 0, FL_MENU_DIVIDER},
+    {"M&essage console...",       FL_SHIFT+'l', (Fl_Callback *)message_cb, 0},
     {0},
-  {"Help",0,0,0,FL_SUBMENU},
-    {"Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
-    {"Shortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
-    {"Command line options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
-    {"About...",                 0, (Fl_Callback *)help_about_cb, 0},
+  {"&Help",0,0,0,FL_SUBMENU},
+    {"&Current options...",       0, (Fl_Callback *)status_xyz1p_cb, (void*)4},
+    {"S&hortcuts...",             0, (Fl_Callback *)help_short_cb, 0},
+    {"C&ommand line options...",  0, (Fl_Callback *)help_command_line_cb, 0, FL_MENU_DIVIDER},
+    {"&About...",                 0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
 };
@@ -399,21 +402,21 @@ int GUI::global_shortcuts(int event){
     mod_post_cb(0,0);
     return 1;
   }
-  else if(Fl::test_shortcut('b')){
+  else if(Fl::test_shortcut('<')){
     mod_back_cb(0,0);
     return 1;
   }
-  else if(Fl::test_shortcut('f')){
+  else if(Fl::test_shortcut('>')){
     mod_forward_cb(0,0);
     return 1;
   }
   else if(Fl::test_shortcut('e')){
     end_selection = 1;
-    return 1;
+    return 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('q')){
     quit_selection = 1;
-    return 1;
+    return 0; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut(FL_SHIFT+'n')){
     general_options_cb(0,0);

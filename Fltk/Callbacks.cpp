@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.155 2002-11-17 00:32:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.156 2002-11-17 02:08:06 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1040,15 +1040,15 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "");
   Msg(DIRECT, "Menu bar shortcuts:");
   Msg(DIRECT, "");
-  Msg(DIRECT, "  b             go back to previous context");
-  Msg(DIRECT, "  f             go forward to next context");
+  Msg(DIRECT, "  <             go back to previous context");
+  Msg(DIRECT, "  >             go forward to next context");
   Msg(DIRECT, "  g             go to geometry module");
   Msg(DIRECT, "  Shift+g       show geometry options");
   Msg(DIRECT, "  Shift+i       show statistics window"); 
   Msg(DIRECT, "  m             go to mesh module");
   Msg(DIRECT, "  Shift+m       show mesh options");
   Msg(DIRECT, "  "XX"+m        merge file"); 
-  Msg(DIRECT, "  Shift+o       show general options"); 
+  Msg(DIRECT, "  Shift+n       show general options"); 
   Msg(DIRECT, "  "XX"+o        open file"); 
   Msg(DIRECT, "  p             go to post-processor module");
   Msg(DIRECT, "  Shift+p       show post-processing general options");
