@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2003-03-21 00:52:47 geuzaine Exp $
+# $Id: Makefile,v 1.8 2003-04-14 22:46:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -24,5 +24,5 @@ all:
 	cd texinfo && ${MAKE} all
 
 clean:
-	rm -f *~ .*~
+	rm -f *~ .*~ gmsh.ps gmsh.pdf gmsh.info*
 	cd texinfo && ${MAKE} clean

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.279 2003-03-28 02:43:19 geuzaine Exp $
+# $Id: Makefile,v 1.280 2003-04-14 22:46:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -81,6 +81,18 @@ parser:
 
 utilities:
 	cd utils && ${MAKE}
+
+doc-info:
+	cd doc/texinfo && ${MAKE} info
+	cp doc/texinfo/gmsh.info* doc/
+
+doc-ps:
+	cd doc/texinfo && ${MAKE} ps
+	cp doc/texinfo/gmsh.ps doc/
+
+doc-pdf:
+	cd doc/texinfo && ${MAKE} pdf
+	cp doc/texinfo/gmsh.pdf doc/
 
 purge:
 	for i in . bin lib utils archives demos tutorial doc ${GMSH_DIRS}; \
@@ -211,13 +223,11 @@ package-mac:
         "    <key>CFBundleGetInfoString</key><string>Gmsh ${GMSH_RELEASE},"\
               "(c) C. Geuzaine and J.-F. Remacle, 1997-2003</string>\n"\
         "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
-        "    <key>NSHelpFile</key><string>tutorial.html</string>\n"\
         "  </dict>\n"\
         "</plist>" > gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Info.plist
 	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/MacOS/Gmsh
 	cp Fltk/MacIcons.icns gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Resources/gmsh.icns
-	cp tutorial/tutorial.html gmsh-${GMSH_RELEASE}/Gmsh.app/Contents/Resources
 	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_RELEASE}
 	cp doc/FORMATS gmsh-${GMSH_RELEASE}/FORMATS.txt
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
