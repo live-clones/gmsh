@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.75 2002-09-02 22:39:40 geuzaine Exp $
+// $Id: Views.cpp,v 1.76 2002-10-03 02:52:59 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 
 extern Context_T   CTX ;
 
-#define INFINITY 1.e200
+#define VAL_INF 1.e200
 
 // Static reference view
 
@@ -143,11 +143,11 @@ Post_View * BeginView(int allocate){
   v->ScalarOnly = 1;
   v->TextOnly = 1;
   v->normals = NULL;
-  v->Min = INFINITY;
-  v->Max = -INFINITY;
+  v->Min = VAL_INF;
+  v->Max = -VAL_INF;
   for(i=0;i<3;i++){
-    v->BBox[2*i] = INFINITY;
-    v->BBox[2*i+1] = -INFINITY;
+    v->BBox[2*i] = VAL_INF;
+    v->BBox[2*i+1] = -VAL_INF;
   }
 
   return v;
@@ -161,7 +161,7 @@ void Stat_Element(Post_View *v, int type, int nbnod, int N,
   switch(type){
 
   case 0 : // scalar
-    if(v->Min == INFINITY || v->Max == -INFINITY){
+    if(v->Min == VAL_INF || v->Max == -VAL_INF){
       v->Min = V[0];
       v->Max = V[0];
       v->NbTimeStep = N/nbnod;
@@ -176,7 +176,7 @@ void Stat_Element(Post_View *v, int type, int nbnod, int N,
     break;
 
   case 1 : // vector
-    if(v->Min == INFINITY || v->Max == -INFINITY){
+    if(v->Min == VAL_INF || v->Max == -VAL_INF){
       l0 = sqrt(DSQR(V[0])+DSQR(V[1])+DSQR(V[2]));
       v->Min = l0;
       v->Max = l0;
@@ -194,7 +194,7 @@ void Stat_Element(Post_View *v, int type, int nbnod, int N,
     break;
 
   case 2 : // tensor - TODO!
-    if(v->Min == INFINITY || v->Max == -INFINITY){
+    if(v->Min == VAL_INF || v->Max == -VAL_INF){
       l0 = sqrt(DSQR(V[0])+DSQR(V[4])+DSQR(V[8]));
       v->Min = l0;
       v->Max = l0;
@@ -879,8 +879,8 @@ void smooth_list (List_T *SS , double *min, double *max,
   double *x,*y,*z,*v;
   int i,j,k;
   double *vals = new double[NbTimeStep];
-  *min = INFINITY;
-  *max = -INFINITY;
+  *min = VAL_INF;
+  *max = -VAL_INF;
 
   for(i = 0 ; i < List_Nbr(SS) ; i+=nb){
     x = (double*)List_Pointer_Fast(SS,i);
