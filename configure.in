@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.41 2003-10-25 03:26:40 geuzaine Exp $
+dnl $Id: configure.in,v 1.42 2003-10-30 18:43:55 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -22,7 +22,7 @@ dnl Please report all bugs and problems to "gmsh@geuz.org".
 dnl Process this file with autoconf to produce the configure script.
 
 dnl Note: each CHECK_LIB adds the found library to LIBS, which serves
-dnl implicitely when checking for the next one. So one should check
+dnl implicitly when checking for the next one. So one should check
 dnl in reverse order! (start with -lm, ...)
 
 dnl Check that this is the gmsh source tree
