@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.343 2005-03-12 00:59:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.344 2005-03-12 01:41:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -186,43 +186,44 @@ void window_cb(CALLBACK_ARGS)
 void status_xyz1p_cb(CALLBACK_ARGS)
 {
   switch ((long)data) {
-  case 0:
-    if(CTX.useTrackball)
-      CTX.setQuaternion(0., -1. / sqrt(2.), 0., 1. / sqrt(2.));
-    CTX.r[0] = 0.;
-    CTX.r[1] = 90.;
-    CTX.r[2] = 0.;
-    Draw();
-    break;
-  case 1:
-    if(CTX.useTrackball)
-      CTX.setQuaternion(1. / sqrt(2.), 0., 0., 1. / sqrt(2.));
+  case 0: // X-axis pointing out of the screen
     CTX.r[0] = -90.;
     CTX.r[1] = 0.;
-    CTX.r[2] = 0.;
+    CTX.r[2] = -90.;
+    CTX.setQuaternionFromEulerAngles();
     Draw();
     break;
-  case 6:
+  case 1: // Y-axis pointing out of the screen
+    if(CTX.useTrackball)
+      CTX.setQuaternion(1. / sqrt(2.), 0., 0., 1. / sqrt(2.));
+    CTX.r[0] = 0.;
+    CTX.r[1] = 90.;
+    CTX.r[2] = 90.;
+    CTX.setQuaternionFromEulerAngles();
+    Draw();
+    break;
+  case 6: // reset everything
     CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
     CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
     // fall-through
-  case 2:
-    if(CTX.useTrackball)
-      CTX.setQuaternion(0., 0., 0., 1.);
-    CTX.r[0] = CTX.r[1] = CTX.r[2] = 0.;
+  case 2: // Z-axis pointing out of the screen
+    CTX.r[0] = 0.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 0.;
+    CTX.setQuaternionFromEulerAngles();
     Draw();
     break;
-  case 3:
+  case 3: // reset translation and scaling
     CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
     CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
     Draw();
     break;
-  case 4:
+  case 4: // switch projection mode
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
 			     !opt_general_orthographic(0, GMSH_GET, 0));
     Draw();
     break;
-  case 5:
+  case 5: // display options
     Print_Options(0, GMSH_FULLRC, false, NULL);
     WID->create_message_window();
     break;
