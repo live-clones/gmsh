@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.6 2003-11-23 02:56:02 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.7 2003-11-24 01:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -170,7 +170,6 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
       }
     }
     if(_invert > 0.) {
-      double xpi[12], ypi[12], zpi[12], valpi[12][9];
       for(int k = 0; k < np; k++)
 	affect(xpi, ypi, zpi, valpi, k, xp, yp, zp, valp, k, dNbComp);
       for(int k = 0; k < np; k++)
@@ -527,7 +526,7 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   }
 
   // remove empty views (this is a bit ugly because, due to the
-  // dynamic GUI events, this should actually be locked...
+  // dynamic GUI events, this should actually be locked...)
   for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; --i) {
     w = (Post_View*) List_Pointer_Test(CTX.post.list, i);
     if(w && w->empty())

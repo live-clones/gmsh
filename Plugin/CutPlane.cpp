@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.30 2003-11-23 02:56:02 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.31 2003-11-24 01:02:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@ StringXNumber CutPlaneOptions_Number[] = {
   {GMSH_FULLRC, "A", NULL, 1.},
   {GMSH_FULLRC, "B", NULL, 0.},
   {GMSH_FULLRC, "C", NULL, 0.},
-  {GMSH_FULLRC, "D", NULL, 0.01},
+  {GMSH_FULLRC, "D", NULL, -0.01},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
