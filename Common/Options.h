@@ -195,6 +195,7 @@ double opt_general_viewport2(OPT_ARGS_NUM);
 double opt_general_viewport3(OPT_ARGS_NUM);
 double opt_general_menu_position0(OPT_ARGS_NUM);
 double opt_general_menu_position1(OPT_ARGS_NUM);
+double opt_general_apple_menu_bar(OPT_ARGS_NUM);
 double opt_general_message_position0(OPT_ARGS_NUM);
 double opt_general_message_position1(OPT_ARGS_NUM);
 double opt_general_message_size0(OPT_ARGS_NUM);

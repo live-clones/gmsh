@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.42 2003-04-02 05:53:23 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.43 2003-09-01 23:50:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -48,9 +48,9 @@ void FillBuffer(void)
 void CreateOutputFile(char *name, int format)
 {
   FILE *fp;
-  GLint size3d;
+  GLint size3d, viewport[4];
   char ext[256];
-  int res, i, oldformat, psformat, pssort, psoptions;
+  int res, oldformat, psformat, pssort, psoptions;
 
   if(!name || !strlen(name))
     return;
@@ -58,10 +58,12 @@ void CreateOutputFile(char *name, int format)
   oldformat = CTX.print.format;
   CTX.print.format = format;
 
+  for(int i = 0; i < 4; i++) viewport[i] = CTX.viewport[i];
+
   switch (format) {
 
   case FORMAT_AUTO:
-    for(i = strlen(name) - 1; i >= 0; i--) {
+    for(int i = strlen(name) - 1; i >= 0; i--) {
       if(name[i] == '.') {
         strcpy(ext, &name[i]);
         break;
@@ -142,13 +144,11 @@ void CreateOutputFile(char *name, int format)
     FillBuffer();
     CTX.print.gl_fonts = 1;
     if(format == FORMAT_JPEG || format == FORMAT_JPEGTEX){
-      create_jpeg(fp, CTX.viewport[2] - CTX.viewport[0],
-		  CTX.viewport[3] - CTX.viewport[1], CTX.print.jpeg_quality);
+      create_jpeg(fp, viewport[2]-viewport[0], viewport[3]-viewport[1], CTX.print.jpeg_quality);
       Msg(INFO, "JPEG creation complete '%s'", name);
     }
     else{
-      create_png(fp, CTX.viewport[2] - CTX.viewport[0],
-		 CTX.viewport[3] - CTX.viewport[1], 100);
+      create_png(fp, viewport[2]-viewport[0], viewport[3]-viewport[1], 100);
       Msg(INFO, "PNG creation complete '%s'", name);
     }
     Msg(STATUS2, "Wrote '%s'", name);
@@ -164,18 +164,15 @@ void CreateOutputFile(char *name, int format)
     }
     FillBuffer();
     if(format == FORMAT_PPM){
-      create_ppm(fp, CTX.viewport[2] - CTX.viewport[0],
-		 CTX.viewport[3] - CTX.viewport[1]);
+      create_ppm(fp, viewport[2]-viewport[0], viewport[3]-viewport[1]);
       Msg(INFO, "PPM creation complete '%s'", name);
     }
     else if (format == FORMAT_YUV){
-      create_yuv(fp, CTX.viewport[2] - CTX.viewport[0],
-		 CTX.viewport[3] - CTX.viewport[1]);
+      create_yuv(fp, viewport[2]-viewport[0], viewport[3]-viewport[1]);
       Msg(INFO, "YUV creation complete '%s'", name);
     }
     else{
-      create_gif(fp, CTX.viewport[2] - CTX.viewport[0],
-		 CTX.viewport[3] - CTX.viewport[1],
+      create_gif(fp, viewport[2]-viewport[0], viewport[3]-viewport[1],
 		 CTX.print.gif_dither,
 		 CTX.print.gif_sort,
 		 CTX.print.gif_interlace,
@@ -210,7 +207,7 @@ void CreateOutputFile(char *name, int format)
     res = GL2PS_OVERFLOW;
     while(res == GL2PS_OVERFLOW) {
       size3d += 2048 * 2048;
-      gl2psBeginPage(CTX.base_filename, "Gmsh", CTX.viewport, 
+      gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
 		     psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
 		     0, 0, 0, size3d, fp, name);
       CTX.print.gl_fonts = 0;
@@ -228,7 +225,7 @@ void CreateOutputFile(char *name, int format)
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
-    gl2psBeginPage(CTX.base_filename, "Gmsh", CTX.viewport,
+    gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
                    GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
 		   0, 0, 0, 1, fp, name);
     CTX.print.gl_fonts = 0;

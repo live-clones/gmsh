@@ -75,6 +75,7 @@ public :
   int vis_position[2];        // position of the visibility window on the screen
   int stat_position[2];       // position of the statistics window on the screen
   int center_windows;         // center popup windows on the menu window
+  int apple_menu_bar;         // Apple-style menubar?
 
   int default_plugins;        // do we load default plugins on startup?
 
