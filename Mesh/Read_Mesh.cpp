@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.44 2002-05-20 18:28:28 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.45 2002-06-23 09:34:01 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -128,11 +128,9 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
       for (i_Element = 0 ; i_Element < Nbr_Elements ; i_Element++) {
         
-	// HACK FROM JF
-	//        fscanf(File_GEO, "%d %d %d %d %d", 
-        //       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes) ;
-        fscanf(File_GEO, "%d %d %d %d %d", 
-               &Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
+	fscanf(File_GEO, "%d %d %d %d %d", 
+	       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes) ;
+	//jf:  &Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
 
         for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;
