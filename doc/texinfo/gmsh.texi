@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.139 2004-10-15 17:17:10 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.140 2004-10-15 17:38:03 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -3258,8 +3258,7 @@ on which the binary file was written and the computer on which the file is
 read are of the same type (little or big endian).
 @end enumerate
 
-Here is a pseudo C code to write the beginning of a post-processing
-file in binary format:
+Here is a pseudo C code to write a post-processing file in binary format:
 
 @example
 int one = 1;
