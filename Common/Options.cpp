@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.199 2004-11-02 17:55:15 geuzaine Exp $
+// $Id: Options.cpp,v 1.200 2004-11-03 00:40:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -73,34 +73,37 @@ void Init_Options_Safe(int num)
   Set_DefaultColorOptions(num, PrintOptions_Color, CTX.color_scheme);
 }
 
+char *gmsh_getenv(char *var)
+{
+#if !defined(WIN32)
+  return getenv(var);
+#else
+  char *tmp = getenv(var);
+  // Don't accept top dir or anything partially expanded like
+  // c:\Documents and Settings\%USERPROFILE%, etc.
+  if(!tmp || !strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
+    return NULL;
+  else
+    return tmp;
+#endif
+}
+
 void Init_Options(int num)
 {
   char *tmp;
-  int ok = 1;
 
   // Home directory
-  if((tmp = getenv("GMSH_HOME")))
+  if((tmp = gmsh_getenv("GMSH_HOME")))
     strcpy(CTX.home_dir, tmp);
-  else if((tmp = getenv("HOME"))){
+  else if((tmp = gmsh_getenv("HOME")))
     strcpy(CTX.home_dir, tmp);
-#if defined(WIN32)
-    // old windows systems (e.g. win98) define incorrect HOME variables
-    if(!strcmp(CTX.home_dir, "/"))
-      ok = 0;
-#endif
-  }
-  else{
-    ok = 0;
-  }
-  if(!ok){
-    if((tmp = getenv("TMP")))
-      strcpy(CTX.home_dir, tmp);
-    else if((tmp = getenv("TEMP")))
-      strcpy(CTX.home_dir, tmp);
-    else
-      strcpy(CTX.home_dir, "");
-  }
-
+  else if((tmp = gmsh_getenv("TMP")))
+    strcpy(CTX.home_dir, tmp);
+  else if((tmp = gmsh_getenv("TEMP")))
+    strcpy(CTX.home_dir, tmp);
+  else
+    strcpy(CTX.home_dir, "");
+  
   int len = strlen(CTX.home_dir);
   if(len && CTX.home_dir[len-1] != '/')
     strcat(CTX.home_dir, "/");
@@ -131,11 +134,11 @@ void Init_Options(int num)
   CTX.post.list = NULL;
   CTX.post.force_num = 0;
   CTX.print.gl_fonts = 1;
-  CTX.threads_lock = 0; //very primitive locking during mesh generation
+  CTX.threads_lock = 0; // very primitive locking
   CTX.mesh.histogram = 0;
   CTX.mesh.changed = 1;
-  CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0;        //old extrusion mesh generator
-  CTX.mesh.check_duplicates = 0;        //check for duplicate nodes in Read_Mesh
+  CTX.mesh.oldxtrude = CTX.mesh.oldxtrude_recombine = 0; // old extrusion mesh generator
+  CTX.mesh.check_duplicates = 0; // check for duplicate nodes in Read_Mesh
   CTX.post.combine_time = 0; // try to combine_time views at startup
   CTX.post.plugin_draw_function = NULL;
 #if defined(HAVE_FLTK)

@@ -483,13 +483,13 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|S, "GraphicsFontSize" , opt_general_graphics_fontsize , 14. ,
     "Size of the font in the graphic window" }, 
-  { F|S, "GraphicsHeight" , opt_general_viewport3 , 500. , 
+  { F|S, "GraphicsHeight" , opt_general_viewport3 , 600. , 
     "Height (in pixels) of the graphic window" }, 
-  { F|S, "GraphicsPositionX" , opt_general_graphics_position0 , 20. , 
+  { F|S, "GraphicsPositionX" , opt_general_graphics_position0 , 50. , 
     "Horizontal position (in pixels) of the upper left corner of the graphic window" }, 
-  { F|S, "GraphicsPositionY" , opt_general_graphics_position1 , 30. ,
+  { F|S, "GraphicsPositionY" , opt_general_graphics_position1 , 50. ,
     "Vertical position (in pixels) of the upper left corner of the graphic window" }, 
-  { F|S, "GraphicsWidth" , opt_general_viewport2 , 700. , 
+  { F|S, "GraphicsWidth" , opt_general_viewport2 , 600. , 
     "Width (in pixels) of the graphic window" }, 
 
   { F|O, "InitialModule", opt_general_initial_context, 0. , 
