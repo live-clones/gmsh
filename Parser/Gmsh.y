@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.70 2001-03-23 12:00:44 geuzaine Exp $
+// $Id: Gmsh.y,v 1.71 2001-03-23 15:50:33 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -2310,6 +2310,18 @@ ListOfDouble :
     {
       $$=$2;
     }
+
+/* provisoire */
+  | '-' '{' RecursiveListOfDouble '}'
+    {
+      $$=$3;
+      for(i=0 ; i<List_Nbr($$) ; i++){
+	pd = (double*)List_Pointer($$, i);
+	(*pd) = - (*pd);
+      }
+    }
+/* end provisoire */
+
 ;
 
 
