@@ -1,4 +1,4 @@
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-01-03 10:25:06 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2002-01-21 19:43:38 $)
 
 1. GENERAL
 ==========
@@ -141,7 +141,7 @@ hexahedra.
 
 6.1) How do I integrate my own solver with Gmsh?
 
-If you want to simply launch a program from withing Gmsh, just edit
+If you want to simply launch a program from within Gmsh, just edit
 the options to define your solver commands (e.g. Solver.Name0,
 Solver.Executable0, etc.), and set the ClientServer option to zero
 (e.g. Solver.ClientServer0 = 0). 
