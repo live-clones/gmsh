@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.35 2005-02-20 06:36:54 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.36 2005-02-20 07:11:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -164,7 +164,7 @@ void Print_Discrete_Curve(void *a, void *b)
 
   // else, print the mesh:
 
-  if(c->Dirty || !List_Nbr(c->Vertices))
+  if(!List_Nbr(c->Vertices))
     return;
 
   if(!List_Nbr(c->Control_Points))
@@ -302,7 +302,7 @@ void Print_Discrete_Surface(void *a, void *b)
 
   // else, print the surface mesh:
 
-  if(s->Dirty || !Tree_Nbr(s->Vertices))
+  if(!Tree_Nbr(s->Vertices))
     return;
 
   List_T *verts = Tree2List(s->Vertices);  

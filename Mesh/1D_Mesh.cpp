@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.43 2005-02-20 06:36:54 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.44 2005-02-20 07:11:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -182,7 +182,6 @@ void Maillage_Curve(void *data, void *dummy)
     }
   }
   b = a / (double)(N - 1);
-  c->Vertices = List_Create(N, 2, sizeof(Vertex *));
   
   v = &c->beg;
   if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, v))) {

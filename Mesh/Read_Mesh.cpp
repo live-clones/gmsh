@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.84 2005-02-16 05:48:28 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.85 2005-02-20 07:11:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -328,6 +328,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Line element %d already exists", simp->Num);
 	    Free_SimplexBase(&simp, 0);
 	  }
+	  else{
+	    for(i = 0; i < Nbr_Nodes; i++)
+	      List_Insert(c->Vertices, &vertsp[i], fcmp_int);
+	  }
           break;
         case TRI1:
         case TRI2:
@@ -347,6 +351,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           if(!Tree_Insert(s->SimplexesBase, &simp)){
 	    Msg(GERROR, "Triangle %d already exists", simp->Num);
 	    Free_SimplexBase(&simp, 0);
+	  }
+	  else{
+	    for(i = 0; i < Nbr_Nodes; i++)
+	      Tree_Insert(s->Vertices, &vertsp[i]);
 	  }
           break;
         case QUA1:
@@ -368,6 +376,10 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Quadrangle %d already exists", quad->Num);
 	    Free_SimplexBase(&quad, 0);
 	  }
+	  else{
+	    for(i = 0; i < Nbr_Nodes; i++)
+	      Tree_Insert(s->Vertices, &vertsp[i]);
+	  }
           break;
         case TET1:
         case TET2:
@@ -388,6 +400,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Tetrahedron %d already exists", simp->Num);
 	    Free_SimplexBase(&simp, 0);
 	  }
+#if 0 // removed to speed things up (not used at the moment anyway)
+	  else{
+	    for(i = 0; i < Nbr_Nodes; i++)
+	      Tree_Insert(v->Vertices, &vertsp[i]);
+	  }
+#endif
           break;
         case HEX1:
         case HEX2:
@@ -409,6 +427,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Hexahedron %d already exists", hex->Num);
 	    Free_Hexahedron(&hex, 0);
 	  }
+#if 0 // removed to speed things up (not used at the moment anyway)
+	  else{
+	    for(i = 0; i < Nbr_Nodes; i++)
+	      Tree_Insert(v->Vertices, &vertsp[i]);
+	  }
+#endif
           break;
         case PRI1:
         case PRI2:
@@ -430,6 +454,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Prism %d already exists", pri->Num);
 	    Free_Prism(&pri, 0);
 	  }
+#if 0 // removed to speed things up (not used at the moment anyway)
+	  else{
+	    for(i = 0; i < Nbr_Nodes; i++)
+	      Tree_Insert(v->Vertices, &vertsp[i]);
+	  }
+#endif
           break;
         case PYR1:
         case PYR2:
@@ -451,6 +481,12 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    Msg(GERROR, "Pyramid %d already exists", pyr->Num);
 	    Free_Pyramid(&pyr, 0);
 	  }
+#if 0 // removed to speed things up (not used at the moment anyway)
+	  else{
+	    for(i = 0; i < Nbr_Nodes; i++)
+	      Tree_Insert(v->Vertices, &vertsp[i]);
+	  }
+#endif
           break;
         case PNT:
 	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);

@@ -1,4 +1,4 @@
-// $Id: DiscreteSurface.cpp,v 1.2 2005-02-20 06:36:54 geuzaine Exp $
+// $Id: DiscreteSurface.cpp,v 1.3 2005-02-20 07:11:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -510,8 +510,6 @@ void SEGM_rep_To_Mesh(SEGM_rep *srep, Curve *c)
   int N = List_Nbr(srep->points)/3;
 
   Vertex **verts = new Vertex*[N];
-
-  c->Vertices = List_Create(N, 2, sizeof(Vertex *));
 
   for(int i = 0; i < List_Nbr(srep->points); i+=3){
     double *point = (double*)List_Pointer(srep->points, i);

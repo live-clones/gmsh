@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.82 2005-02-20 06:36:54 geuzaine Exp $
+// $Id: CAD.cpp,v 1.83 2005-02-20 07:11:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -635,7 +635,6 @@ Curve *CreateReversedCurve(Mesh * M, Curve * c)
     newc->Typ = MSH_SEGM_ELLI_INV;
   if(c->Typ == MSH_SEGM_ELLI_INV)
     newc->Typ = MSH_SEGM_ELLI;
-  newc->Vertices = List_Create(10, 1, sizeof(Vertex *));
   newc->Method = c->Method;
   newc->degre = c->degre;
   newc->beg = c->end;

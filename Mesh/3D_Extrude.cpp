@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.86 2005-01-26 15:26:53 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.87 2005-02-20 07:11:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -734,8 +734,6 @@ void copy_mesh(Curve * from, Curve * to, int direction)
     return;
   }
 
-  to->Vertices = List_Create(List_Nbr(from->Vertices), 2, sizeof(Vertex *));
-
   v = to->beg;
   if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, &v))) {
     (*vexist)->u = to->ubeg;
@@ -829,7 +827,6 @@ int Extrude_Mesh(Curve * c)
     Extrude_Vertex(&c->beg, NULL);
     L = getnxl(c->beg, DIM);
     if(!L) return false;
-    c->Vertices = List_Create(List_Nbr(L), 2, sizeof(Vertex *));
 
     v = c->beg;
     if((vexist = (Vertex **) Tree_PQuery(THEM->Vertices, &v))) {
