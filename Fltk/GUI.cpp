@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.194 2002-09-01 21:54:10 geuzaine Exp $
+// $Id: GUI.cpp,v 1.195 2002-09-02 15:44:40 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2316,7 +2316,7 @@ void GUI::create_view_options_window(int num){
       view_3d->hide();
       
       view_butt[10] = new Fl_Check_Button(width/2, 2*WB+1*BH, BW/2-WB, BH, "Show elements");
-      view_butt[11] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "Enable Lighting");
+      view_butt[11] = new Fl_Check_Button(width/2, 2*WB+2*BH, BW/2-WB, BH, "Enable lighting");
       view_butt[12] = new Fl_Check_Button(width/2, 2*WB+3*BH, BW/2-WB, BH, "Smooth normals");	
       for(i=10 ; i<=12 ; i++){
 	view_butt[i]->type(FL_TOGGLE_BUTTON);
@@ -2341,14 +2341,14 @@ void GUI::create_view_options_window(int num){
 	view_value[i]->callback(set_changed_cb, 0);
       }
       
-      view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "Points");
-      view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Lines");
-      view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Triangles");
-      view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW/2-WB, BH, "Quadrangles");
-      view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW/2-WB, BH, "Tetrahedra");
-      view_butt[18] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW/2-WB, BH, "Hexahedra");
-      view_butt[19] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW/2-WB, BH, "Prisms");
-      view_butt[20] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW/2-WB, BH, "Pyramids");
+      view_butt[13] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW/2-WB, BH, "Show points");
+      view_butt[14] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW/2-WB, BH, "Show lines");
+      view_butt[15] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW/2-WB, BH, "Show triangles");
+      view_butt[16] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW/2-WB, BH, "Show quadrangles");
+      view_butt[17] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW/2-WB, BH, "Show tetrahedra");
+      view_butt[18] = new Fl_Check_Button(2*WB, 2*WB+6*BH, BW/2-WB, BH, "Show hexahedra");
+      view_butt[19] = new Fl_Check_Button(2*WB, 2*WB+7*BH, BW/2-WB, BH, "Show prisms");
+      view_butt[20] = new Fl_Check_Button(2*WB, 2*WB+8*BH, BW/2-WB, BH, "Show pyramids");
       view_butt[21] = new Fl_Check_Button(width/2, 2*WB+7*BH, BW/2-WB, BH, "Show scalar values");
       view_butt[22] = new Fl_Check_Button(width/2, 2*WB+8*BH, BW/2-WB, BH, "Show vector values");
       view_butt[23] = new Fl_Check_Button(width/2, 2*WB+9*BH, BW/2-WB, BH, "Show tensor values");
@@ -2474,7 +2474,7 @@ void GUI::create_view_options_window(int num){
 	{"3D sphere",   0, 0, 0},
 	{0}
       };
-      view_choice[5] = new Fl_Choice(2*WB, 2*WB+ 2*BH, IW, BH, "Point type");
+      view_choice[5] = new Fl_Choice(2*WB, 2*WB+ 2*BH, IW, BH, "Point display");
       view_choice[5]->menu(menu_pointtype);
       view_choice[5]->align(FL_ALIGN_RIGHT);
       view_choice[5]->callback(set_changed_cb, 0);
@@ -2502,7 +2502,7 @@ void GUI::create_view_options_window(int num){
 	  {"Displacement", 0, 0, 0},
 	  {0}
 	};
-	view_choice[2] = new Fl_Choice(2*WB, 2*WB+5*BH, IW, BH, "Arrow type");
+	view_choice[2] = new Fl_Choice(2*WB, 2*WB+5*BH, IW, BH, "Vector display");
 	view_choice[2]->menu(menu_vectype);
 	view_choice[2]->align(FL_ALIGN_RIGHT);
 	view_choice[2]->callback(set_changed_cb, 0);
@@ -2512,7 +2512,7 @@ void GUI::create_view_options_window(int num){
 	  {"Vertex centered", 0, 0, 0},
 	  {0}
 	};
-	view_choice[3] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Arrow location");
+	view_choice[3] = new Fl_Choice(2*WB, 2*WB+6*BH, IW, BH, "Vector location");
 	view_choice[3]->menu(menu_vecloc);
 	view_choice[3]->align(FL_ALIGN_RIGHT);
 	view_choice[3]->callback(set_changed_cb, 0);
@@ -2522,7 +2522,7 @@ void GUI::create_view_options_window(int num){
 	  {"Eigenvectors", 0, 0, 0},
 	  {0}
 	};
-	view_choice[4] = new Fl_Choice(2*WB, 2*WB+7*BH, IW, BH, "Tensor type");
+	view_choice[4] = new Fl_Choice(2*WB, 2*WB+7*BH, IW, BH, "Tensor display");
 	view_choice[4]->menu(menu_tensor);
 	view_choice[4]->align(FL_ALIGN_RIGHT);
 	view_choice[4]->callback(set_changed_cb, 0);
