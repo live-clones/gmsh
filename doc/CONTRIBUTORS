@@ -1,8 +1,8 @@
-$Id: CONTRIBUTORS,v 1.22 2003-02-20 17:46:11 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.23 2003-03-07 18:26:56 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2003 by
 
-  Jean-François Remacle <remacle@gce.ucl.ac.be> and
+  Jean-Francois Remacle <remacle@gce.ucl.ac.be> and
   Christophe Geuzaine <geuzaine@acm.caltech.edu>
 
 Portions of Gmsh are copyright (c)
@@ -24,7 +24,7 @@ Special thanks to
     the tensor display code
   Nicolas Tardieu <nicolas.tardieu@edf.fr> for help with the GSL
     integration
-  Marc Umé <Marc.Ume@digitalgraphics.be> for the original list code
+  Marc Ume <Marc.Ume@digitalgraphics.be> for the original list code
 
 Special thanks also to Bill Spitzak <spitzak@users.sourceforge.net>,
 Michael Sweet <easysw@users.sourceforge.net>, Matthias Melcher
@@ -41,13 +41,12 @@ access to exotic machines for testing Gmsh:
   Olivier Adam <o.adam@ulg.ac.be>
   Guillaume Alleon <guillaume.alleon@airbus.aeromatra.com>
   Pierre Badel <badel@freesurf.fr>
-  Éric Bechet <eric.bechet@epost.de>
+  Eric Bechet <eric.bechet@epost.de>
   Laurent Champaney <laurent.champaney@meca.uvsq.fr>
   Pascal Dupuis <Pascal.Dupuis@esat.kuleuven.ac.be>
   Philippe Geuzaine <geuzaine@gnat.colorado.edu>
   Johan Gyselinck <johan.gyselinck@ulg.ac.be>
-  François Henrotte <fhenrott@esat.kuleuven.ac.be>
-  Benoît Meys <bmeys@techspace-aero.be>
-  Nicolas Moës <moes@tam9.mech.nwu.edu>
+  Francois Henrotte <fhenrott@esat.kuleuven.ac.be>
+  Benoit Meys <bmeys@techspace-aero.be>
+  Nicolas Moes <moes@tam9.mech.nwu.edu>
   Chad Schmutzer <schmutze@acm.caltech.edu>
-

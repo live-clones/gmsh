@@ -1,4 +1,7 @@
-$Date: 2003-03-02 00:18:03 $
+$Id: VERSIONS,v 1.132 2003-03-07 18:26:56 geuzaine Exp $
+
+New in 1.42: suppressed the automatic addition of a ".geo" extension
+if the file given on the command line is not recognized;
 
 New in 1.41: Gmsh is now licensed under the GNU General Public
 License; general code cleanup (indent);
@@ -10,21 +13,21 @@ implemented Von-Mises tensor display for all element types; fixed
 small GUI bugs;
 
 New in 1.38: fixed custom range selection for 3D iso graphs; New build
-system based on autoconf; New image reading code to import bitmaps as
+system based on autoconf; new image reading code to import bitmaps as
 post-processing views;
 
-New in 1.37: Generalized smoothing and cuts of post-processing views;
+New in 1.37: generalized smoothing and cuts of post-processing views;
 better Windows integration (solvers, external editors, etc.); small
 bug fixes;
 
-New in 1.36: Enhanced view duplication (one can now use "Duplicata
-View[num]" in the input file); Merged all option dialogs in a new
+New in 1.36: enhanced view duplication (one can now use "Duplicata
+View[num]" in the input file); merged all option dialogs in a new
 general option window; enhanced discoverability of the view option
 menus; new 3D point and line display; many small bug fixes and
 enhancements ("Print" format in parser, post-processing statistics,
 smooth normals, save window positions, restore default options, etc.);
 
-New in 1.35: Graphical user interface upgraded to FLTK 1.1 (tooltips,
+New in 1.35: graphical user interface upgraded to FLTK 1.1 (tooltips,
 new file chooser with multiple selection, full keyboard navigation,
 cut/paste of messages, etc.); colors can be now be directly assigned
 to mesh entities; initial tensor visaulization; new keyboard animation
@@ -35,31 +38,31 @@ supporting quadrangles, hexahedra, prisms and pyramids; transparency
 is now enabled by default for post-processing plots; many small bug
 fixes (read mesh, ...);
 
-New in 1.34: Improved surface mesh of non-plane surfaces; fixed
+New in 1.34: improved surface mesh of non-plane surfaces; fixed
 orientation of elements in 2D anisotropic algorithm; minor user
 interface polish and additions (mostly in post-processing options);
 various small bug fixes;
 
-New in 1.33: New parameterizable solver interface (allowing up to 5
+New in 1.33: new parameterizable solver interface (allowing up to 5
 user-defined solvers); enhanced 2D aniso algorithm; 3D initial mesh
 speedup;
 
-New in 1.32: New visibility browser; better floating point exception
+New in 1.32: new visibility browser; better floating point exception
 checks; fixed infinite looping when merging meshes in project files;
 various small clean ups (degenerate 2D extrusion, view->reload, ...);
 
-New in 1.31: Corrected ellipses; PostScript output update (better
+New in 1.31: corrected ellipses; PostScript output update (better
 shading, new combined PS/LaTeX output format); more interface polish;
 fixed extra memory allocation in 2D meshes; Physical Volume handling
 in unv format; various small fixes;
 
-New in 1.30: Interface polish; fix crash when extruding quadrangles;
+New in 1.30: interface polish; fix crash when extruding quadrangles;
 
-New in 1.29: Translations and rotations can now be combined in
+New in 1.29: translations and rotations can now be combined in
 extrusions; fixed coherence bug in Extrude Line; various small
 bug fixes and additions;
 
-New in 1.28: Corrected the 'Using Progression' attribute for
+New in 1.28: corrected the 'Using Progression' attribute for
 tranfinite meshes to actually match a real geometric progression; new
 Triangulate plugin; new 2D graphs (space+time charts); better
 performance of geometrical transformations (warning: the numbering of
@@ -68,24 +71,24 @@ in post-processing views (file format updated to version 1.1); more
 robust mean plane computation and error checks; various other small
 additions and clean-ups;
 
-New in 1.27: Added ability to extrude curves with Layers/Recombine
-attributes; New PointSize/LineWidth options; Fixed For/EndFor loops in
+New in 1.27: added ability to extrude curves with Layers/Recombine
+attributes; new PointSize/LineWidth options; fixed For/EndFor loops in
 included files; fixed error messages (line numbers+file names) in
-loops and functions; Made the automatic removal of duplicate
+loops and functions; made the automatic removal of duplicate
 geometrical entities optional (Geometry.AutoCoherence=0); various
 other small bug fixes and clean-ups;
 
-New in 1.26: Enhanced 2D anisotropic mesh generator (metric
+New in 1.26: enhanced 2D anisotropic mesh generator (metric
 intersections); fixed small bug in 3D initial mesh; added alternative
 syntax for built-in functions (for GetDP compatibility); added line
 element display; Gmsh now saves all the elements in the mesh if no
 physical groups are defined (or if Mesh.SaveAll=1);
 
-New in 1.25: Fixed bug with mixed recombined/non-recombined extruded
+New in 1.25: fixed bug with mixed recombined/non-recombined extruded
 meshes; Linux versions are now build with no optimization, due to bugs
 in gcc 2.95.X;
 
-New in 1.24: Fixed characteristic length interpolation for Splines;
+New in 1.24: fixed characteristic length interpolation for Splines;
 fixed edge swapping bug in 3D initial mesh; fixed degenerated case in
 geometrical extrusion (ruled surface with 3 borders); fixed generation
 of degenerated hexahedra and prisms for recombined+extruded meshes;
@@ -94,15 +97,15 @@ Triangle as an alternative isotropic 2D mesh generator; added
 AngleSmoothNormals to control sharp edge display with smoothed
 normals; fixed random crash for lighted 3D iso surfaces;
 
-New in 1.23: Fixed duplicate elements generation + non-matching
-tetrahedra faces in 3D extruded meshes; Better display of displacement
+New in 1.23: fixed duplicate elements generation + non-matching
+tetrahedra faces in 3D extruded meshes; better display of displacement
 maps; fixed interactive ellipsis construction; generalized boundary
 operator; added new explode option for post-processing views; enhanced
 link view behaviour (to update only the changed items); added new
 default plugins: Skin, Transform, Smooth; fixed various other small
 bugs (mostly in the post-processing module and for extruded meshes);
 
-New in 1.22: Fixed (yet another) bug for 2D mesh in the mean plane;
+New in 1.22: fixed (yet another) bug for 2D mesh in the mean plane;
 fixed surface coherence bug in extruded meshes; new double logarithmic
 scale, saturate value and smoothed normals option for post-processing
 views; plugins are now enabled by default; three new experimental
@@ -111,13 +114,13 @@ statically linked plugins: CutMap (extracts a given iso surface from a
 CutSphere (cuts a 3D scalar map with a sphere); various other bug
 fixes, additions and clean-ups;
 
-New in 1.21: Fixed more memory leaks; added -opt command line option
+New in 1.21: fixed more memory leaks; added -opt command line option
 to parse definitions directly from the command line; fixed missing
-screen refreshes during contour/surface/volume selection; Enhanced
-string manipulation functions (Sprintf, StrCat, StrPrefix); Many other
+screen refreshes during contour/surface/volume selection; enhanced
+string manipulation functions (Sprintf, StrCat, StrPrefix); many other
 small fixes and clean-ups;
 
-New in 1.20: Fixed various bugs (memory leaks, functions in included
+New in 1.20: fixed various bugs (memory leaks, functions in included
 files, solver command selection, ColorTable option, duplicate nodes in
 extruded meshes (not finished yet), infinite loop on empty views,
 orientation of recombined quadrangles...); reorganized the interface
@@ -125,15 +128,15 @@ menus; added constrained background mesh and mesh visibility options;
 added mesh quality histograms; changed default mesh colors;
 reintegrated the old command-line extrusion mesh generator;
 
-New in 1.19: Fixed seg. fault for scalar simplex post-processing; new
+New in 1.19: fixed seg. fault for scalar simplex post-processing; new
 Solver menu; interface for GetDP solver through sockets; fixed
 multiple scale alignment; added some options + full option
 descriptions;
 
-New in 1.18: Fixed many small bugs and incoherences in
+New in 1.18: fixed many small bugs and incoherences in
 post-processing; fixed broken background mesh in 1D mesh generation.
 
-New in 1.17: Corrected physical points saving; fixed parsing of DOS
+New in 1.17: corrected physical points saving; fixed parsing of DOS
 files (carriage return problems); easier geometrical selections
 (cursor change); plugin manager; enhanced variable arrays (sublist
 selection and affectation); line loop check; New arrow display;
@@ -141,57 +144,57 @@ reduced number of 'fatal' errors + better handling in interactive
 mode; fixed bug when opening meshes; enhanced File->Open behaviour for
 meshes and post-processing views;
 
-New in 1.16: Added single/double buffer selection (only useful for
+New in 1.16: added single/double buffer selection (only useful for
 Unix versions of Gmsh run from remote hosts without GLX); fixed a bug
 for recent versions of the opengl32.dll on Windows, which caused OpenGL
 fonts not to show up;
 
-New in 1.15: Added automatic visibility setting during entity
-selection; Corrected geometrical extrusion bug;
+New in 1.15: added automatic visibility setting during entity
+selection; corrected geometrical extrusion bug;
 
-New in 1.14: Corrected a few bugs in the GUI (most of them were
-introduced in 1.13); Added interactive color selection; Made the
+New in 1.14: corrected a few bugs in the GUI (most of them were
+introduced in 1.13); added interactive color selection; made the
 option database bidirectional (i.e. scripts now correctly update the
-GUI); Default options can now be saved and automatically reloaded at
-startup; Made some changes to the scripting syntax
+GUI); default options can now be saved and automatically reloaded at
+startup; made some changes to the scripting syntax
 (PostProcessing.View[n] becomes View[n]; Offset0 becomes OffsetX,
-etc.); Corrected the handling of simple triangular surfaces with large
-characteristic lengths in the 2D isotropic algorithm; Added an ascii
+etc.); corrected the handling of simple triangular surfaces with large
+characteristic lengths in the 2D isotropic algorithm; added an ascii
 to binary post-processing view converter;
 
-New in 1.13: Added jpeg output on Windows;
+New in 1.13: added jpeg output on Windows;
 
-New in 1.12: Corrected vector lines in the post-processing parsed
+New in 1.12: corrected vector lines in the post-processing parsed
 format; corrected animation on Windows; corrected file creation in
 scripts on Windows; direct affectation of variable arrays;
 
-New in 1.11: Corrected included file loading problem.
+New in 1.11: corrected included file loading problem.
 
-New in 1.10: Switched from Motif to FLTK for the GUI. Many small
+New in 1.10: switched from Motif to FLTK for the GUI. Many small
 tweaks.
 
-New in 1.00: Added PPM and YUV output; Corrected nested If/Endif;
+New in 1.00: added PPM and YUV output; corrected nested If/Endif;
 Corrected several bugs for pixel output and enhanced GIF output
-(dithering, transparency); Slightly changed the post-processing file
+(dithering, transparency); slightly changed the post-processing file
 format to allow both single and double precision numbers.
 
-New in 0.999: Added JPEG output and easy MPEG generation (see t8.geo in the
-tutorial); Clean up of export functions; small fixes; Linux versions
+New in 0.999: added JPEG output and easy MPEG generation (see t8.geo in the
+tutorial); clean up of export functions; small fixes; Linux versions
 are now compiled with gcc 2.95.2, which should fix the problems
 encountered with Mandrake 7.2;
 
-New in 0.998: Corrected bug introduced in 0.997 in the generation of
+New in 0.998: corrected bug introduced in 0.997 in the generation of
 the initial 3D mesh;
 
-New in 0.997: Corrected bug in interactive surface/volume selection;
-Added interactive symmetry; Corrected geometrical extrusion with
-rotation in degenerated or partially degenerated cases; Corrected bug
-in 2D mesh when meshing in the mean plane; 
+New in 0.997: corrected bug in interactive surface/volume selection;
+Added interactive symmetry; corrected geometrical extrusion with
+rotation in degenerated or partially degenerated cases; corrected bug
+in 2D mesh when meshing in the mean plane;
 
-New in 0.996: Arrays of variables; Enhanced Printf and Sprintf;
+New in 0.996: arrays of variables; enhanced Printf and Sprintf;
 Simplified options (suppression of option arrays).
 
-New in 0.995: Totally rewritten geometrical database (performance has
+New in 0.995: totally rewritten geometrical database (performance has
 been drastically improved for all geometrical transformations, and
 most notably for extrusion). As a consequence, the internal numbering
 of geometrical entities has changed: this will cause incompatibilities
