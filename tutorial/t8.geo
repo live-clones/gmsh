@@ -121,6 +121,12 @@ For num In {1:255}
     // (uncomment the following if mpeg_encode is installed on your
     // computer):
     // System "mpeg_encode t8.par" ;
+
+    // We could also call whirlgif to create an animated gif file:
+    // System "whirlgif -minimize -loop -o t8.gif t8-*.gif" ;
+
+    // Or, we could call mencoder to create an mpeg4 movie:
+    // mencoder "mf://*.jpg" -mf fps=5 -o t8.avi -ovc lavc vcoldec=mpeg4:vhq
   EndIf
 
 EndFor
