@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.62 2004-05-29 10:39:32 geuzaine Exp $
+// $Id: Post.cpp,v 1.63 2004-05-29 11:08:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -241,12 +241,8 @@ void Draw_ScalarList(Post_View * v, double ValMin, double ValMax,
 
   if(nbelm && v->DrawScalars) {
     nb = List_Nbr(list) / nbelm;
-    if(smoothnormals && v->Light && v->SmoothNormals && v->Changed &&
-       v->IntervalsType != DRAW_POST_ISO) {
+    if(smoothnormals && v->Light && v->SmoothNormals && v->Changed) {
       v->reset_normals(); 
-      // we might save some normal stuff by checking if the change
-      // actually changed the "geometry"... Should put e.g. Change=2
-      // if timestep changed, etc.
       Msg(DEBUG, "Preprocessing of normals in View[%d]", v->Index);
       for(i = 0; i < List_Nbr(list); i += nb) {
         Get_Coords(v->Explode, v->Offset, nbnod,
@@ -413,15 +409,13 @@ void Draw_Post(void)
       if(!CTX.post.vertex_arrays && CTX.alpha && ColorTable_IsAlpha(&v->CT) && 
 	 v->DrawScalars && (changedEye() || v->Changed)) {
 	Msg(DEBUG, "Sorting for transparency (NO vertex array)");
-	if(v->IntervalsType != DRAW_POST_ISO) {
-	  if(v->NbST && v->DrawTriangles) {
-	    nb = List_Nbr(v->ST) / v->NbST;
-	    qsort(v->ST->array, v->NbST, nb * sizeof(double), compareEye3Nodes);
-	  }
-	  if(v->NbSQ && v->DrawQuadrangles) {
-	    nb = List_Nbr(v->SQ) / v->NbSQ;
-	    qsort(v->SQ->array, v->NbSQ, nb * sizeof(double), compareEye4Nodes);
-	  }
+	if(v->NbST && v->DrawTriangles) {
+	  nb = List_Nbr(v->ST) / v->NbST;
+	  qsort(v->ST->array, v->NbST, nb * sizeof(double), compareEye3Nodes);
+	}
+	if(v->NbSQ && v->DrawQuadrangles) {
+	  nb = List_Nbr(v->SQ) / v->NbSQ;
+	  qsort(v->SQ->array, v->NbSQ, nb * sizeof(double), compareEye4Nodes);
 	}
 	if(v->NbSS && v->DrawTetrahedra) {
 	  nb = List_Nbr(v->SS) / v->NbSS;
@@ -476,7 +470,7 @@ void Draw_Post(void)
 	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO)
 	      skip_2d = 1;
 	    if(v->Boundary < 2 && !v->ShowElement &&
-	       v->IntervalsType != DRAW_POST_NUMERIC)
+	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO)
 	      skip_3d = 1;
 	  }
 	}
