@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2003-03-21 00:52:48 geuzaine Exp $
+# $Id: Makefile,v 1.4 2003-04-15 21:49:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -46,11 +46,13 @@ install-info:
 infoz: info
 	gtar zcvf gmsh-info.tgz gmsh.info*
 
-all: ps pdf html infoz
+txt:
+	makeinfo --no-headers gmsh.texi > gmsh.txt
+
+all: ps pdf html infoz txt
 
 clean:
-	rm -f *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv* \
-                         *.log *.toc *.aux *.dvi *.html \
-                         gmsh.ps gmsh.pdf gmsh.info* \
-                         gmsh-info.tgz gmsh-doc.tgz
+	rm -f *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv*\
+          *.log *.toc *.aux *.dvi *.html *.txt\
+          gmsh.ps gmsh.pdf gmsh.info* gmsh-info.tgz gmsh-doc.tgz
 
