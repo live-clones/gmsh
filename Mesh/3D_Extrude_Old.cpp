@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.7 2001-06-27 09:24:33 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.8 2001-06-27 09:45:20 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -377,6 +377,9 @@ static void Extrude_Vertex (void *data , void *dum){
   h = 0.0;
  
   for(i=0;i<NbLayer;i++){
+
+    // Geometric progression ar^i, i=0...n, n=NbElmLayer[i]
+    // Sum of n terms = hLayer[i] = a (r^n-1)/(r-1)
 
     if(parLayer[i] == 1.)
       a = hLayer[i] ;
