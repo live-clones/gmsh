@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.25 2001-08-03 21:27:20 geuzaine Exp $
+// $Id: Geom.cpp,v 1.26 2001-08-10 10:06:38 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -80,7 +80,7 @@ void Draw_Curve (void *a, void *b){
 
   c = *(Curve**)a;
 
-  if(c->Num<0 || !EntiteEstElleVisible(c->Num)) return;
+  if(c->Dirty || c->Num<0 || !EntiteEstElleVisible(c->Num)) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(1);
@@ -478,7 +478,7 @@ void Draw_Surface (void *a, void *b){
 
   s = *(Surface**)a;
 
-  if(!s || !s->Support || !EntiteEstElleVisible(s->Num)) return;
+  if(s->Dirty || !s || !s->Support || !EntiteEstElleVisible(s->Num)) return;
 
   if(CTX.render_mode == GMSH_SELECT){
     glLoadName(2);
