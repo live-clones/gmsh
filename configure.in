@@ -1,4 +1,4 @@
-dnl "$Id: configure.in,v 1.15 2003-02-12 20:37:24 geuzaine Exp $"
+dnl "$Id: configure.in,v 1.16 2003-02-12 21:46:59 geuzaine Exp $"
 dnl
 dnl Machine independent configuration script for Gmsh.
 dnl
@@ -182,7 +182,7 @@ case "$UNAME" in
 esac
 
 dnl Is the machine big or littke endian?
-AC_C_BIGENDIAN("",OS_FLAGS="-DLITTLE_ENDIAN ${OS_FLAGS}")
+AC_C_BIGENDIAN(OS_FLAGS="${OS_FLAGS}",OS_FLAGS="-DLITTLE_ENDIAN ${OS_FLAGS}")
 
 AC_SUBST(OPT_FLAGS)
 AC_SUBST(OS_FLAGS)

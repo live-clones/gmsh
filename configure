@@ -3671,7 +3671,7 @@ echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
 echo "${ECHO_T}$ac_cv_c_bigendian" >&6
 case $ac_cv_c_bigendian in
   yes)
-    "" ;;
+    OS_FLAGS="${OS_FLAGS}" ;;
   no)
     OS_FLAGS="-DLITTLE_ENDIAN ${OS_FLAGS}" ;;
   *)
