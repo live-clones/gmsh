@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.15 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.16 2001-05-29 13:26:54 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -187,6 +187,8 @@ void Maillage_Curve (void *data, void *dummy){
         count++;
       }
     }
+
+    List_Delete(Points);
 
     v = &c->end;
     if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, v))){
