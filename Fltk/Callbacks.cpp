@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.157 2002-11-17 03:56:03 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.158 2002-11-25 04:39:42 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -787,6 +787,7 @@ void post_options_ok_cb(CALLBACK_ARGS) {
 		WID->post_butt[2]->value()?2:
 		WID->post_butt[3]->value()?3:
 		4);
+
   opt_post_smooth(0, GMSH_SET, WID->post_butt[5]->value());
   opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[6]->value());
 
@@ -2319,6 +2320,8 @@ void view_options_timestep_incr_cb(CALLBACK_ARGS){
 
 void view_options_ok_cb(CALLBACK_ARGS){
   int i, links, force=0;
+
+  if((long int)data<0) return;
 
   links = (int)opt_post_link(0, GMSH_GET, 0);
 
