@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE.
  * 
  * Please report all bugs and problems to "gmsh@geuz.org".
-*/
+ */
 
 #define GMSH_CLIENT_START       1
 #define GMSH_CLIENT_STOP        2
