@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.86 2002-09-02 22:38:57 geuzaine Exp $
+// $Id: Options.cpp,v 1.87 2002-10-12 19:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -902,6 +902,17 @@ char * opt_view_abscissa_name(OPT_ARGS_STR){
     WID->view_input[2]->value(v->AbscissaName);
 #endif
   return v->AbscissaName;
+}
+char * opt_view_abscissa_format(OPT_ARGS_STR){
+  GET_VIEW(NULL) ;
+  if(action & GMSH_SET){
+    strcpy(v->AbscissaFormat, val);
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_input[3]->value(v->AbscissaFormat);
+#endif
+  return v->AbscissaFormat;
 }
 
 

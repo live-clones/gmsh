@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.19 2002-05-20 18:28:26 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.20 2002-10-12 19:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -218,9 +218,9 @@ static void Draw_Graph2D(Post_View *v,
 
   nb = v->NbAbscissa;
   if(v->ShowScale){
-    sprintf(label, v->Format, AbsMin);
+    sprintf(label, v->AbscissaFormat, AbsMin);
     double ww = gl_width(label);
-    sprintf(label, v->Format, AbsMax);
+    sprintf(label, v->AbscissaFormat, AbsMax);
     if(gl_width(label) > ww) ww = gl_width(label);
     if((nb-1)*(ww+2) > width) nb = (int)floor(width/(ww+2))+1;
   }
@@ -259,9 +259,9 @@ static void Draw_Graph2D(Post_View *v,
     if(v->ShowScale){
       glColor4ubv((GLubyte*)&CTX.color.text);
       if(nb==1)
-	sprintf(label, v->Format, AbsMin);
+	sprintf(label, v->AbscissaFormat, AbsMin);
       else
-	sprintf(label, v->Format, AbsMin+i*(AbsMax-AbsMin)/(double)(nb-1));
+	sprintf(label, v->AbscissaFormat, AbsMin+i*(AbsMax-AbsMin)/(double)(nb-1));
       glRasterPos2d(xtop+i*dx-gl_width(label)/2.,ybot-1.5*font_h);
       Draw_String(label);
     }
@@ -359,9 +359,9 @@ void Draw_Graph2D(void){
       dx = dy = 0.;
       if(v->ShowScale){
 	gl_font(FL_HELVETICA,CTX.gl_fontsize);
-	sprintf(label,v->Format,v->CustomMin);
+	sprintf(label,v->AbscissaFormat,v->CustomMin);
 	if(gl_width(label)+tic > dx) dx = gl_width(label)+tic;
-	sprintf(label,v->Format,v->CustomMax);
+	sprintf(label,v->AbscissaFormat,v->CustomMax);
 	if(gl_width(label)+tic > dx) dx = gl_width(label)+tic;
 	dy = 1.5*gl_height(); //2 below and & above!
       }

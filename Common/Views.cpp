@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.78 2002-10-04 21:28:16 geuzaine Exp $
+// $Id: Views.cpp,v 1.79 2002-10-12 19:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -485,6 +485,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->Size[0] = src->Size[0];
   dest->Size[1] = src->Size[1];
   strcpy(dest->Format, src->Format);
+  strcpy(dest->AbscissaFormat, src->AbscissaFormat);
   strcpy(dest->AbscissaName, src->AbscissaName);
   dest->CustomMin = src->CustomMin;
   dest->CustomMax = src->CustomMax;

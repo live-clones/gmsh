@@ -56,7 +56,7 @@ class Post_View{
 
   // options
   int Type, Position[2], AutoPosition, Size[2],TensorType;
-  char   Format[256];
+  char   Format[256], AbscissaFormat[256];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale, Explode;
   int Visible, IntervalsType, NbIso, NbAbscissa, Light, SmoothNormals ;

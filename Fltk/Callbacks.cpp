@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.143 2002-10-04 21:14:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.144 2002-10-12 19:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2469,6 +2469,9 @@ void view_options_ok_cb(CALLBACK_ARGS){
 
       if(force || WID->view_input[2]->changed())
 	opt_view_abscissa_name(i, GMSH_SET, (char*)WID->view_input[2]->value());
+
+      if(force || WID->view_input[3]->changed())
+	opt_view_abscissa_format(i, GMSH_SET, (char*)WID->view_input[3]->value());
 
       // colorbar window
 

@@ -180,6 +180,7 @@ char * opt_view_name(OPT_ARGS_STR);
 char * opt_view_format(OPT_ARGS_STR);
 char * opt_view_filename(OPT_ARGS_STR);
 char * opt_view_abscissa_name(OPT_ARGS_STR);
+char * opt_view_abscissa_format(OPT_ARGS_STR);
 char * opt_print_eps_font(OPT_ARGS_STR);
 
 // NUMBERS

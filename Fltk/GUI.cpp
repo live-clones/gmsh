@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.200 2002-10-12 18:20:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.201 2002-10-12 19:41:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2378,12 +2378,16 @@ void GUI::create_view_options_window(int num){
       view_input[2] = new Fl_Input(2*WB, 2*WB+1*BH, IW, BH, "Abscissa name");
       view_input[2]->align(FL_ALIGN_RIGHT);
       view_input[2]->callback(set_changed_cb, 0);
+
+      view_input[3] = new Fl_Input(2*WB, 2*WB+2*BH, IW, BH, "Abscissa format");
+      view_input[3]->align(FL_ALIGN_RIGHT);
+      view_input[3]->callback(set_changed_cb, 0);
       
-      view_value[25] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Abscissa points");
+      view_value[25] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Abscissa points");
       view_value[25]->minimum(0.); 
       view_value[25]->step(1); 
       view_value[25]->maximum(256); 
-      view_value[26] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Grid mode");
+      view_value[26] = new Fl_Value_Input(2*WB, 2*WB+ 4*BH, IW, BH, "Grid mode");
       view_value[26]->minimum(0.); 
       view_value[26]->step(1); 
       view_value[26]->maximum(3); 
@@ -2637,6 +2641,7 @@ void GUI::update_view_window(int num){
   else
     view_2d->deactivate();
   opt_view_abscissa_name(num, GMSH_GUI, NULL);
+  opt_view_abscissa_format(num, GMSH_GUI, NULL);
   opt_view_nb_abscissa(num, GMSH_GUI, 0);
   opt_view_grid(num, GMSH_GUI, 0);
 
