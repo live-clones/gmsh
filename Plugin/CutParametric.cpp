@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.1 2004-06-15 18:20:53 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.2 2004-06-15 18:27:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -34,13 +34,13 @@ extern Context_T CTX;
 StringXNumber CutParametricOptions_Number[] = {
   {GMSH_FULLRC, "minU", NULL, 0.},
   {GMSH_FULLRC, "maxU", NULL, 2*M_PI},
-  {GMSH_FULLRC, "nbU", NULL, 360.},
+  {GMSH_FULLRC, "nPointsU", NULL, 360.},
   //{GMSH_FULLRC, "minV", NULL, 0.},
   //{GMSH_FULLRC, "maxV", NULL, 1.},
-  //{GMSH_FULLRC, "nbV", NULL, 0.},
+  //{GMSH_FULLRC, "nPointsV", NULL, 0.},
   //{GMSH_FULLRC, "minW", NULL, 0.},
   //{GMSH_FULLRC, "maxW", NULL, 1.},
-  //{GMSH_FULLRC, "nbW", NULL, 0.},
+  //{GMSH_FULLRC, "nPointsW", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -77,7 +77,7 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(CutParametric) cuts the view `iView' with\n"
 	 "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
-	 "using `nbU' values of the parameter u in [`minU',\n"
+	 "using `nPointsU' values of the parameter u in [`minU',\n"
 	 "`maxU']. If `iView' < 0, the plugin is run on the\n"
 	 "current view.\n"
 	 "\n"
