@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.71 2001-03-04 22:57:11 remacle Exp $
+# $Id: Makefile,v 1.72 2001-03-04 23:05:21 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -407,24 +407,24 @@ fltk_compile_sgi:
 
 fltk_link_solaris_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-sun $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB_SOLARIS_SCOREC) -lm
+                 $(FLTK_LIB_SOLARIS_SCOREC) -lm -ldl
 fltk_link_linux_scorec:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh-linux $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB_LINUX_SCOREC) -lm
+                 $(FLTK_LIB_LINUX_SCOREC) -lm -ldl
 fltk_link_mesa:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lm
+                 $(FLTK_LIB) -lm -ldl
 fltk_link_opengl:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
-                 $(FLTK_LIB) -lm
+                 $(FLTK_LIB) -lm -ldl
 
 fltk_link_sgi:
 	CC -O2 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
-                  $(FLTK_LIB) $(OPENGL_LIB) -lm
+                  $(FLTK_LIB) $(OPENGL_LIB) -lm -ldl
 
 fltk_link_mesa_2952:
 	$(HOME)/gcc-2.95.2/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
-                 $(FLTK_LIB) -lm
+                 $(FLTK_LIB) -lm -ldl
 
 
 fltk_linux: tag fltk_compile_little_endian fltk_link_mesa strip_bin compress_bin
