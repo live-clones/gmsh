@@ -1,4 +1,4 @@
-/* $Id: Info.h,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Info.h,v 1.3 2000-11-24 12:57:25 geuzaine Exp $ */
 #ifndef _INFO_H_
 #define _INFO_H_
 
@@ -25,7 +25,7 @@ static char *txt_info [] =
 
     "Gamma",
     "Eta",
-    "R",
+    "Rho",
   
     /* Post */
     "Views loaded",

@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.10 2000-11-24 12:50:06 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.11 2000-11-24 12:57:25 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -41,8 +41,9 @@ char gmsh_email[]     = "E-Mail           : " GMSH_EMAIL ;
 char gmsh_url[]       = "URL              : " GMSH_URL ;
 char gmsh_help[]      = 
   "Usage: %s [options] [files]\n"
+  "Geometry options:\n"
+  "  -0                    output flattened parsed geometry\n"
   "Mesh options:\n"
-  "  -0                    parse input and output analysed geometry\n"
   "  -1, -2, -3            batch 1-, 2- or 3-dimensional mesh\n"
   "  -format msh|unv|gref  output format (default: msh)\n"
   "  -algo iso|aniso       mesh algorithm (default: iso)\n"
