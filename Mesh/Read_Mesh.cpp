@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.39 2002-02-05 20:18:50 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.40 2002-04-26 00:15:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -267,9 +267,6 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
   if(Tree_Nbr(M->Volumes)){
     M->status = 3 ;
-    Gamma_Maillage(M, &M->Statistics[17], &M->Statistics[18], &M->Statistics[19]);
-    Eta_Maillage(M, &M->Statistics[20], &M->Statistics[21], &M->Statistics[22]);
-    R_Maillage(M, &M->Statistics[23], &M->Statistics[24], &M->Statistics[25]);
     M->Statistics[6]=Tree_Nbr(M->Vertices); //incorrect, mais...
   }
   else if(Tree_Nbr(M->Surfaces)){
@@ -299,5 +296,4 @@ void Read_Mesh (Mesh *M, FILE *File_GEO, int type){
   case FORMAT_SMS : Read_Mesh_SMS(M,File_GEO); break;
   default : Msg(WARNING, "Unkown mesh file format to read"); break;
   }
-  GetStatistics(s);
 }

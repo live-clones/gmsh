@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.31 2001-12-03 08:41:44 geuzaine Exp $
+// $Id: Generator.cpp,v 1.32 2002-04-26 00:15:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -22,6 +22,7 @@ void GetStatistics (double s[50]){
     THEM->Statistics[1] = Tree_Nbr (THEM->Curves);
     THEM->Statistics[2] = Tree_Nbr (THEM->Surfaces);
     THEM->Statistics[3] = Tree_Nbr (THEM->Volumes);
+    Mesh_Quality(THEM);
     for (i = 0; i < 50; i++) s[i] = THEM->Statistics[i];
   }
 }

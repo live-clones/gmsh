@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.170 2002-04-25 18:06:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.171 2002-04-26 00:15:30 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -1727,8 +1727,10 @@ void GUI::create_statistics_window(){
     stat_window->position(m_window->x()+m_window->w()/2-width/2,
 			  m_window->y()+9*BH-height/2);
   stat_window->end();
-  set_statistics();
+
   stat_window->show();
+  set_statistics();
+  stat_window->redraw();
 
 }
 

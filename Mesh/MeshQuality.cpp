@@ -1,4 +1,4 @@
-// $Id: MeshQuality.cpp,v 1.5 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: MeshQuality.cpp,v 1.6 2002-04-26 00:15:30 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -114,6 +114,11 @@ void R_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin){
   *gammamin = GAMMAMIN;
 }
 
+void Mesh_Quality(Mesh *m){
+  Gamma_Maillage (m, &m->Statistics[17], &m->Statistics[18], &m->Statistics[19]);
+  Eta_Maillage (m, &m->Statistics[20], &m->Statistics[21], &m->Statistics[22]);
+  R_Maillage (m, &m->Statistics[23], &m->Statistics[24], &m->Statistics[25]);
+}
 
 void Print_Histogram(int *h){
   for(int i=0;i<NB_HISTOGRAM;i++)

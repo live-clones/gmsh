@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.35 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: Main.cpp,v 1.36 2002-04-26 00:15:30 geuzaine Exp $
 
 #include <signal.h>
 #include <time.h>
@@ -108,8 +108,10 @@ int main(int argc, char *argv[]){
       }
       else
         Print_Geo(THEM, CTX.output_filename);
-      if(CTX.mesh.histogram)
+      if(CTX.mesh.histogram){
+	Mesh_Quality(THEM);
 	Print_Histogram(THEM->Histogram[0]);
+      }
       exit(1);
     }    
   }

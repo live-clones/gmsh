@@ -483,6 +483,7 @@ void ApplyLcFactor(Mesh *M);
 void Gamma_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
 void Eta_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
 void R_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void Mesh_Quality(Mesh *m);
 void Print_Histogram(int *h);
 
 #endif
