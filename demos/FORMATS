@@ -35,6 +35,67 @@ Gmsh Mesh File Format
    the element belongs. 
 
 
+Gmsh Ascii Post-Processing File Format
+======================================
+   
+    Any post-processing file is divided in several sections: one
+    format section (enclosed between $PostFormat/$EndPostFormat) and
+    (possibly multiple) post-processing views (enclosed between
+    $View/$EndView pairs). 
+
+    $PostFormat
+    version-number 0
+    $EndPostFormat
+    $View
+    name nb-time-steps
+    nb-SP nb-VP nb-TP
+    nb-SL nb-VL nb-TL
+    nb-ST nb-VT nb-TT
+    nb-SS nb-VS nb-TS
+    time-step-values
+    SP-values
+    VP-values
+    TP-values
+    SL-values
+    VL-values
+    TL-values
+    ST-values
+    VT-values
+    TT-values
+    SS-values
+    VS-values
+    TS-values
+    $endView
+    $View
+    ...
+    $EndView
+    $View
+    ...
+    $EndView
+
+    where
+    - 'version-number' is a double precision number giving the version
+      of Gmsh to which the file is destined (e.g. 0.995)
+    - 'name' is the name of the view
+    - 'nb-time-step' is an integer giving the number of time steps in the view
+    - 'nb-SP', 'nb-VP', 'nb-TP', 'nb-SL', 'nb-VL', 'nb-TL', 'nb-ST', 'nb-VT',
+      'nb-TT', 'nb-SS', 'nb-VS' and 'nb-TS' are integers giving the number of
+      scalar points, vector points, tensor points, scalar lines, vector lines,
+      tensor lines, scalar triangles, vector triangles, tensor triangles,
+      scalar tetrahedra, vector tetrahedra and tensor tetrahedra.
+
+Gmsh Binary Post-Processing File Format
+=======================================
+
+    int one=1;	
+
+    fprintf(file, "$View /* %s */\n", name);
+    fprintf(file, "%s %g\n", name, version);
+    fprintf(file, "$EndView\n");
+    
+    fwrite(&One, sizeof(int), 1, PostStream);
+
+
 Parsed View Format
 ==================
 
@@ -69,17 +130,3 @@ Parsed View Format
     valxnode1time2,valynode1time2,valznode1time2, valxnode2time2,valynode2time2,valznode2time2, ...}
 
 
-Ascii View Format
-=================
-
-
-Binary View Format
-==================
-
-    int one=1;	
-
-    fprintf(file, "$View /* %s */\n", name);
-    fprintf(file, "%s %g\n", name, version);
-    fprintf(file, "$EndView\n");
-    
-    fwrite(&One, sizeof(int), 1, PostStream);
