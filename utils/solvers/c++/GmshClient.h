@@ -47,7 +47,7 @@
 class GmshClient {
  private:
   int _sock;
-  void _SendData(int socket, void *buffer, int bytes)
+  void _SendData(void *buffer, int bytes)
   {
     int sofar, remaining, len;
     char *buf;
@@ -55,17 +55,17 @@ class GmshClient {
     sofar = 0;
     remaining = bytes;
     do {
-      len = write(socket, buf + sofar, remaining);
+      len = write(_sock, buf + sofar, remaining);
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
   }
-  void _SendString(int socket, int type, char str[])
+  void _SendString(int type, char str[])
   {
     int len = strlen(str);
-    _SendData(socket, &type, sizeof(int));
-    _SendData(socket, &len, sizeof(int));
-    _SendData(socket, str, len);
+    _SendData(&type, sizeof(int));
+    _SendData(&len, sizeof(int));
+    _SendData(str, len);
   }
   long _GetTime()
   {
@@ -156,37 +156,37 @@ class GmshClient {
   {
     char tmp[256];
     sprintf(tmp, "%d", getpid());
-    _SendString(_sock, 1, tmp);
+    _SendString(1, tmp);
   }
   void Stop()
   {
-    _SendString(_sock, 2, "Goodbye!");
+    _SendString(2, "Goodbye!");
   }
   void Info(char *str)
   {
-    _SendString(_sock, 10, str);
+    _SendString(10, str);
   }
   void Warning(char *str)
   {
-    _SendString(_sock, 11, str);
+    _SendString(11, str);
   }
   void Error(char *str)
   {
-    _SendString(_sock, 12, str);
+    _SendString(12, str);
   }
   void Progress(char *str)
   {
-    _SendString(_sock, 13, str);
+    _SendString(13, str);
   }
   void View(char *str)
   {
-    _SendString(_sock, 20, str);
+    _SendString(20, str);
   }
   void Option(int num, char *str)
   {
     if(num < 1) num = 1;
     if(num > 5) num = 5;
-    _SendString(_sock, 100 + num - 1, str);
+    _SendString(100 + num - 1, str);
   }
   void Disconnect()
   {
