@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.172 2001-12-05 09:23:42 geuzaine Exp $
+# $Id: Makefile,v 1.173 2001-12-05 09:24:39 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 32
@@ -310,7 +310,7 @@ fltk2: compile-fltk2 link-fltk2
 #
 # Linux, gcc-2.95.x (optimized build is very buggy)
 # 
-compile-linux_gcc-2.95:
+compile-linux-gcc-2.95:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
            "CC=$(HOME)/gcc-2.95.3/bin/gcc" \
@@ -320,13 +320,13 @@ compile-linux_gcc-2.95:
            "GL_INCLUDE=-I/usr/X11R6/include" \
            "GUI_INCLUDE=-I$(HOME)/SOURCES/fltk" \
         ); done
-link-linux_gcc-2.95:
+link-linux-gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
-linux_gcc-2.95: tag compile-linux_gcc-2.95 link-linux_gcc-2.95 strip-bin
-linux_gcc-2.95-distrib:
+linux-gcc-2.95: tag compile-linux-gcc-2.95 link-linux-gcc-2.95 strip-bin
+linux-gcc-2.95-distrib:
 	make clean
-	make linux_gcc-2.95
+	make linux-gcc-2.95
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=$(HOME)/gcc-2.95.3/bin/g++" \
