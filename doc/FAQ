@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.44 2004-10-27 18:56:24 geuzaine Exp $
+$Id: FAQ,v 1.45 2004-10-27 20:53:04 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -272,10 +272,10 @@ displacement field (a vector view that will be used to deform the
 mesh), and the second one containing the field you want to display
 (this view has to contain the same number of elements as the
 displacement view). You should then set 'Vector type' to
-'Displacement' in the first view, as well as set 'External data
-source' to point to the second view. (You might want to make the
-second view invisible, too. If you want to amplify or decrease the
-amount of deformation, just modify the 'Displacement factor' option.)
+'Displacement' in the first view, as well as set 'Data source' to
+point to the second view. (You might want to make the second view
+invisible, too. If you want to amplify or decrease the amount of
+deformation, just modify the 'Displacement factor' option.)
 
 Another solution is to use the DiplacementRaise plugin.
 
@@ -284,7 +284,7 @@ from a scalar field?
 
 Yes: load both the vector and the scalar fields (the two views must
 have the same number of elements) and, in the vector field options,
-select the scalar view in 'External data source'.
+select the scalar view in 'Data source'.
 
 * 7.6 Can I color iso-value surfaces with data from another scalar
 view?

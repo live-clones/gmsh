@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.370 2004-10-26 01:04:52 geuzaine Exp $
+// $Id: GUI.cpp,v 1.371 2004-10-27 20:53:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2652,7 +2652,7 @@ void GUI::create_option_window()
         view_value[63]->step(0.01);
         view_value[63]->align(FL_ALIGN_RIGHT);
 
-        view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "External data source");
+        view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
         view_choice[10]->align(FL_ALIGN_RIGHT);
 
         static Fl_Menu_Item menu_vecloc[] = {
