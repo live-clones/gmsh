@@ -41,7 +41,7 @@
 #define	tDraw	291
 #define	tPoint	292
 #define	tCircle	293
-#define	tEllipsis	294
+#define	tEllipse	294
 #define	tLine	295
 #define	tSurface	296
 #define	tSpline	297
@@ -177,7 +177,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.136 2002-03-12 19:07:32 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.137 2002-04-06 00:59:48 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -667,7 +667,7 @@ static const char * const yytname[] = {   "$","error","$undefined.","tDOUBLE",
 "tLog","tLog10","tSqrt","tSin","tAsin","tCos","tAcos","tTan","tRand","tAtan",
 "tAtan2","tSinh","tCosh","tTanh","tFabs","tFloor","tCeil","tFmod","tModulo",
 "tHypot","tPrintf","tSprintf","tStrCat","tStrPrefix","tDraw","tPoint","tCircle",
-"tEllipsis","tLine","tSurface","tSpline","tVolume","tCharacteristic","tLength",
+"tEllipse","tLine","tSurface","tSpline","tVolume","tCharacteristic","tLength",
 "tParametric","tElliptic","tPlane","tRuled","tTransfinite","tComplex","tPhysical",
 "tUsing","tBump","tProgression","tPlugin","tRotate","tTranslate","tSymmetry",
 "tDilate","tExtrude","tDuplicata","tLoop","tRecombine","tDelete","tCoherence",
@@ -3453,7 +3453,7 @@ case 44:
 case 45:
 #line 345 "Gmsh.y"
 {
-      Add_Ellipsis((int) yyvsp[-12].d, yyvsp[-8].c, (int) yyvsp[-6].d, yyvsp[-4].d, yyvsp[-2].d);
+      Add_Ellipse((int) yyvsp[-12].d, yyvsp[-8].c, (int) yyvsp[-6].d, yyvsp[-4].d, yyvsp[-2].d);
     ;
     break;}
 case 46:

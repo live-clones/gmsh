@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.117 2002-03-12 19:07:33 geuzaine Exp $
+// $Id: Gmsh.y,v 1.118 2002-04-06 00:59:48 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -85,7 +85,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tPrintf tSprintf tStrCat tStrPrefix tDraw
-%token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
+%token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin
@@ -343,7 +343,7 @@ StepDataItem  :
     }
   | tDOUBLE tAFFECT tELLIPSE '(' tBIGSTR ',' tDOUBLE ',' FExpr ',' FExpr ')' tEND
     {
-      Add_Ellipsis((int) $1, $5, (int) $7, $9, $11);
+      Add_Ellipse((int) $1, $5, (int) $7, $9, $11);
     }
   | tDOUBLE tAFFECT tTRIMMED_CURVE '(' tBIGSTR ',' tDOUBLE ','
             ListOfDouble ',' ListOfDouble ',' BoolExpr ',' BoolExpr ')' tEND
@@ -1233,7 +1233,7 @@ Shape :
       $$.Type = MSH_SEGM_CIRC ;
       $$.Num  = (int)$3;
     }
-  | tEllipsis '(' FExpr ')'  tAFFECT ListOfDouble tEND
+  | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble tEND
     {
       Cdbseg101((int)$3,MSH_SEGM_ELLI,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
       $$.Type = MSH_SEGM_ELLI ;

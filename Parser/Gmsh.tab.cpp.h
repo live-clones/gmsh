@@ -44,7 +44,7 @@ typedef union {
 #define	tDraw	291
 #define	tPoint	292
 #define	tCircle	293
-#define	tEllipsis	294
+#define	tEllipse	294
 #define	tLine	295
 #define	tSurface	296
 #define	tSpline	297

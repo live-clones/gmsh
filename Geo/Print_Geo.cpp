@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.23 2001-11-19 09:29:18 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.24 2002-04-06 00:59:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -58,7 +58,7 @@ void Print_Curve(void *a, void *b){
     break;
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
-    fprintf(FOUT,"Ellipsis (%d) = ",c->Num);
+    fprintf(FOUT,"Ellipse (%d) = ",c->Num);
     break;
   case MSH_SEGM_NURBS:
     Print_Nurbs(c,FOUT);

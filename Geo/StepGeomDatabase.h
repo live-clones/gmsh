@@ -176,7 +176,7 @@ void Add_Cartesian_Point (int Num, char *name, double x, double y, double z);
 void Add_Vertex_Point (int Num, char *name, int cp);
 void Add_Line (int Num, char *name, int begin, int dir);
 void Add_Circle (int Num, char *name, int axis, double Radius);
-void Add_Ellipsis (int Num, char *name, int axis, double Radius, double r2);
+void Add_Ellipse (int Num, char *name, int axis, double Radius, double r2);
 void Add_Cylinder (int Num, char *name, int axis, double Radius);
 void Add_Torus (int Num, char *name, int axis, double radius1, double radius2);
 void Add_Cone (int Num, char *name, int axis, double radius1, double radius2);

@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.35 2002-03-12 19:07:32 geuzaine Exp $
+// $Id: Create.cpp,v 1.36 2002-04-06 00:59:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -291,7 +291,7 @@ void End_Curve (Curve * c){
     R2 = sqrt(v2.Pos.X * v2.Pos.X + v2.Pos.Y * v2.Pos.Y);
 
     if(!R || !R2) // check radius
-      Msg(GERROR, "Zero radius in Circle/Ellipsis %d", c->Num);
+      Msg(GERROR, "Zero radius in Circle/Ellipse %d", c->Num);
     else if(!v[3] && fabs((R-R2)/(R+R2))>0.1) // check cocircular pts (allow 10% error)
       Msg(GERROR, "Control points of Circle %d are not cocircular %g %g", c->Num, R,R2);
 
@@ -314,7 +314,7 @@ void End_Curve (Curve * c){
       rhs[1] = 1;
       sys2x2 (sys, rhs, sol);
       if(sol[0] <= 0 || sol[1] <= 0){
-	Msg(GERROR, "Ellipsis %d is wrong", Curve->Num);	
+	Msg(GERROR, "Ellipse %d is wrong", Curve->Num);	
 	A1 = A3 = 0.;
 	f1 = f2 = R ;
       }

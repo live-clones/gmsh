@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.38 2001-10-30 14:27:48 geuzaine Exp $
+// $Id: Gmsh.l,v 1.39 2002-04-06 00:59:48 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,7 +124,8 @@ Duplicata               return tDuplicata;
 Draw                    return tDraw;
 
 Exp                     return tExp ;
-Ellipsis                return tEllipsis;
+Ellipsis                return tEllipse;
+Ellipse                 return tEllipse;
 Extrude                 return tExtrude;
 Elliptic		return tElliptic;
 ELLIPSE                 return tELLIPSE;

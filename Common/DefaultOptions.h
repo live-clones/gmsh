@@ -551,7 +551,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Should all duplicate entities be automatically removed?" }, 
 
   { F|O, "CirclePoints" , opt_geometry_circle_points, 20. ,
-    "Number of points used to draw a circle/ellipsis" },
+    "Number of points used to draw a circle/ellipse" },
   { F|O, "ColorScheme" , opt_geometry_color_scheme , 0. , 
     "Default geometry color scheme (0, 1 or 2)" },
 

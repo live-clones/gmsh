@@ -120,7 +120,7 @@ void       geometry_elementary_add_new_line_cb(CALLBACK_ARGS) ;
 void       geometry_elementary_add_new_spline_cb(CALLBACK_ARGS) ;
 void       geometry_elementary_add_new_bspline_cb(CALLBACK_ARGS) ;
 void       geometry_elementary_add_new_circle_cb(CALLBACK_ARGS) ;
-void       geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS) ;
+void       geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS) ;
 void       geometry_elementary_add_new_planesurface_cb(CALLBACK_ARGS) ;
 void       geometry_elementary_add_new_ruledsurface_cb(CALLBACK_ARGS) ;
 void       geometry_elementary_add_new_volume_cb(CALLBACK_ARGS) ;

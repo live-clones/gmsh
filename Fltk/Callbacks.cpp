@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.113 2002-03-31 00:50:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.114 2002-04-06 00:59:48 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1000,7 +1000,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
   }
   Msg(STATUS3N,"Ready");
 }
-void geometry_elementary_add_new_ellipsis_cb(CALLBACK_ARGS){
+void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS){
   Vertex   *v;
   Curve    *c;
   Surface  *s;

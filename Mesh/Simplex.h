@@ -38,7 +38,7 @@ public:
                    double *xc,double *yc);
   double Volume_Simplexe2D();
   void Center_Ellipsum_2D (double m[3][3]);
-  int Pt_In_Ellipsis (Vertex *v,double m[3][3]);
+  int Pt_In_Ellipse (Vertex *v,double m[3][3]);
   bool VertexIn(Vertex *v);
   bool EdgeIn(Vertex *v1, Vertex *v2, Vertex *v[2]);
   bool SwapEdge (int iFac);

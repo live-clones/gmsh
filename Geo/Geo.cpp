@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.24 2001-11-05 08:36:49 geuzaine Exp $
+// $Id: Geo.cpp,v 1.25 2002-04-06 00:59:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -229,7 +229,7 @@ void add_circ(int p1, int p2, int p3, char *fich){
 void add_ell(int p1, int p2, int p3, int p4, char *fich){
   char text[BUFFSIZE];
 
-  sprintf(text,"Ellipsis(%d) = {%d,%d,%d,%d};",NEWLINE(),p1,p2,p3,p4);
+  sprintf(text,"Ellipse(%d) = {%d,%d,%d,%d};",NEWLINE(),p1,p2,p3,p4);
   add_infile(text,fich);
 }
 

@@ -1,4 +1,4 @@
-// $Id: Metric.cpp,v 1.10 2002-02-16 14:14:47 remacle Exp $
+// $Id: Metric.cpp,v 1.11 2002-04-06 00:59:48 geuzaine Exp $
 #include <time.h>
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -224,7 +224,7 @@ setMetric (double u,
 	   double v,
 	   Surface * s)
 {
-  double a, b, c; // ellipsis axx+byy+cxy=1
+  double a, b, c; // ellipse axx+byy+cxy=1
   double l1, l2; // 2 eigenvalues
 
   Identity ();

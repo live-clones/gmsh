@@ -1,4 +1,4 @@
-// $Id: StepGeomDatabase.cpp,v 1.6 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: StepGeomDatabase.cpp,v 1.7 2002-04-06 00:59:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -175,7 +175,7 @@ void Add_Circle (int Num, char *name , int axis, double radius){
   List_Add(BREP->AllCurves,&Curve);
 }
 
-void Add_Ellipsis (int Num, char *name , int axis, double radius1, double radius2){
+void Add_Ellipse (int Num, char *name , int axis, double radius1, double radius2){
   Step_Curve_t Curve;
   if(!BREP)return;
   Curve.Num = Num;

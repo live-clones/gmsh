@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.21 2002-02-27 17:15:22 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.22 2002-04-06 00:59:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -110,7 +110,7 @@ void Simplex::Center_Circum (){
   }
 }
 
-int Simplex::Pt_In_Ellipsis (Vertex * v, double Metric[3][3]){
+int Simplex::Pt_In_Ellipse (Vertex * v, double Metric[3][3]){
   double eps, d1, d2, x[2];
 
   Center_Ellipsum_2D (Metric);

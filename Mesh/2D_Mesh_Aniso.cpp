@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.24 2002-02-16 14:14:47 remacle Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.25 2002-04-06 00:59:48 geuzaine Exp $
 
 /*
    Jean-Francois Remacle
@@ -434,7 +434,7 @@ void Action_First_Simplexes_2D (void *a, void *b){
 
   if (!THES){
     q = *(Simplex **) a;
-    if (q->Pt_In_Ellipsis (THEV, THEM->Metric->m)){
+    if (q->Pt_In_Ellipse (THEV, THEM->Metric->m)){
       THES = q;
     }
   }
@@ -443,7 +443,7 @@ void Action_First_Simplexes_2D (void *a, void *b){
 void Fill_Sim_Des_2D (void *a, void *b){
   Simplex *S;
   S = *(Simplex **) a;
-  if (S->Pt_In_Ellipsis (THEV, THEM->Metric->m))
+  if (S->Pt_In_Ellipse (THEV, THEM->Metric->m))
     List_Add (Simplexes_Destroyed, a);
 }
 
@@ -513,7 +513,7 @@ int recur_bowyer_2D (Simplex * s){
   Tree_Insert (Tsd, &s);
   for (i = 0; i < 3; i++){
     if (s->S[i] && s->S[i] != &MyNewBoundary && !Tree_Query (Tsd, &s->S[i])){
-      if (s->S[i]->Pt_In_Ellipsis (THEV, THEM->Metric->m) && (s->iEnt == s->S[i]->iEnt)){
+      if (s->S[i]->Pt_In_Ellipse (THEV, THEM->Metric->m) && (s->iEnt == s->S[i]->iEnt)){
         recur_bowyer_2D (s->S[i]);
       }
       else{
