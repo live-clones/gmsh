@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.11 2002-03-11 17:59:21 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.12 2002-11-13 19:33:10 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
@@ -27,6 +27,7 @@ will be added to the list!
     Juan Abanto <juanabanto@yahoo.com>
     Olivier Adam <o.adam@ulg.ac.be>
     Guillaume Alleon <guillaume.alleon@airbus.aeromatra.com>
+    Pierre Badel <badel@freesurf.fr>
     Éric Bechet <eric.bechet@epost.de>
     Laurent Champaney <laurent.champaney@meca.uvsq.fr>
     Philippe Geuzaine <geuzaine@gnat.colorado.edu>
