@@ -16,5 +16,6 @@ Extrude Surface {6, {0,0.0,1}}
   //Recombine;
 } ;
 
+Physical Volume(99) = {100,200,300};
 
      

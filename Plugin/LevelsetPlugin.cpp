@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.17 2001-08-12 10:21:19 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.18 2001-08-12 11:02:05 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -100,6 +100,7 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	gr[1] = _ref[1]-Yp[0];
 	gr[2] = _ref[2]-Zp[0];
 	prosca(gr,n,&test);
+	test = -test;
 	break;
       default:
 	test = 0.;
