@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.13 2000-12-22 17:01:39 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.14 2000-12-22 20:08:20 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -459,7 +459,7 @@ void InputCb (Widget w, XtPointer client_data, GLwDrawingAreaCallbackStruct *cb)
       if(Modifier && !ZoomClick){
         Modifier = 0;
 	if(CTX.useTrackball){
-	  CTX.setQuaternion(0.,0.,0.,0.);
+	  CTX.setQuaternion(0.,0.,0.,1.);
 	}
 	else{
 	  set_r(0,0.); set_r(1,0.); set_r(2,0.); 

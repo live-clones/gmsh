@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.16 2000-12-22 17:01:39 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.17 2000-12-22 20:08:20 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -104,13 +104,13 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
     break;
   case OPTIONS_YVIEW : 
     if(CTX.useTrackball)
-      CTX.setQuaternion(1./sqrt(2.),0.,1./sqrt(2.),0.);
+      CTX.setQuaternion(1./sqrt(2.),0.,0.,1./sqrt(2.));
     set_r(0,-90.);set_r(1,0.); set_r(2,0.); 
     Init(); Draw(); 
     break;
   case OPTIONS_ZVIEW :
     if(CTX.useTrackball)
-      CTX.setQuaternion(0.,0.,0.,0.);
+      CTX.setQuaternion(0.,0.,0.,1.);
     set_r(0,0.);  set_r(1,0.); set_r(2,0.); 
     Init(); Draw(); 
     break;
