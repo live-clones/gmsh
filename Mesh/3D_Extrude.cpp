@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.77 2004-05-25 04:10:04 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.78 2004-05-25 04:42:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -919,14 +919,21 @@ void copy_mesh(Surface * from, Surface * to)
   Vertex **vexist, *newv[4];
 
   int nbs = Tree_Nbr(to->Simplexes);
-  int nbq = Tree_Nbr(to->Quadrangles);
-  if((nbs && nbs != Tree_Nbr(from->Simplexes)) ||
-     (nbq && nbq != Tree_Nbr(from->Quadrangles))){
-    Msg(GERROR, "Incompatible extrusion of surface %d into surface %d",
-	from->Num, to->Num);
+  if(nbs){
+    if(nbs != Tree_Nbr(from->Simplexes))
+      Msg(GERROR, "Incompatible extrusion of surface %d into surface %d",
+	  from->Num, to->Num);
     return;
   }
 
+  int nbq = Tree_Nbr(to->Quadrangles);
+  if(nbq){
+    if(nbq != Tree_Nbr(from->Quadrangles))
+      Msg(GERROR, "Incompatible extrusion of surface %d into surface %d",
+	  from->Num, to->Num);
+    return;
+  }
+  
   // triangles
   list = Tree2List(from->Simplexes);
   for(int i = 0; i < List_Nbr(list); i++) {
