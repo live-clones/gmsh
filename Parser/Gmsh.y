@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.173 2004-07-01 19:41:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.174 2004-07-02 02:40:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2696,8 +2696,13 @@ Extrude :
 					  0., 0., 0., 0., 0., 0., 0.,
 					  &pc, &prc, 1, NULL);
       TheShape.Type = MSH_POINT;
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pc){
+	TheShape.Num = pc->Num;
+	TheShape.Type = pc->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'  tEND
     {
@@ -2707,8 +2712,13 @@ Extrude :
 					  $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
 					  &pc, &prc, 1, NULL);
       TheShape.Type = MSH_POINT;
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pc){
+	TheShape.Num = pc->Num;
+	TheShape.Type = pc->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'  tEND
     {
@@ -2718,8 +2728,13 @@ Extrude :
 					  $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
 					  &pc, &prc, 1, NULL);
       TheShape.Type = MSH_POINT;
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pc){
+	TheShape.Num = pc->Num;
+	TheShape.Type = pc->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tPoint '{' FExpr ',' VExpr '}'
     {
@@ -2734,8 +2749,13 @@ Extrude :
 					  0., 0., 0., 0., 0., 0., 0.,
 					  &pc, &prc, 1, &extr);
       TheShape.Type = MSH_POINT;
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pc){
+	TheShape.Num = pc->Num;
+	TheShape.Type = pc->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2750,8 +2770,13 @@ Extrude :
 					  $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
 					  &pc, &prc, 1, &extr);
       TheShape.Type = MSH_POINT;
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pc){
+	TheShape.Num = pc->Num;
+	TheShape.Type = pc->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'
     {
@@ -2766,8 +2791,13 @@ Extrude :
 					  $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
 					  &pc, &prc, 1, &extr);
       TheShape.Type = MSH_POINT;
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pc){
+	TheShape.Num = pc->Num;
+	TheShape.Type = pc->Typ;
+	List_Add($$, &TheShape);
+      }
     }
 
   // Lines
@@ -2786,8 +2816,13 @@ Extrude :
       else{
 	TheShape.Type = c->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(ps){
+	TheShape.Num = ps->Num;
+	TheShape.Type = ps->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
@@ -2804,8 +2839,13 @@ Extrude :
       else{
 	TheShape.Type = c->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(ps){
+	TheShape.Num = ps->Num;
+	TheShape.Type = ps->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
@@ -2822,8 +2862,13 @@ Extrude :
       else{
 	TheShape.Type = c->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(ps){
+	TheShape.Num = ps->Num;
+	TheShape.Type = ps->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tLine '{' FExpr ',' VExpr '}'
     {
@@ -2845,8 +2890,13 @@ Extrude :
       else{
 	TheShape.Type = c->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(ps){
+	TheShape.Num = ps->Num;
+	TheShape.Type = ps->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2868,8 +2918,13 @@ Extrude :
       else{
 	TheShape.Type = c->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(ps){
+	TheShape.Num = ps->Num;
+	TheShape.Type = ps->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -2891,18 +2946,24 @@ Extrude :
       else{
 	TheShape.Type = c->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(ps){
+	TheShape.Num = ps->Num;
+	TheShape.Type = ps->Typ;
+	List_Add($$, &TheShape);
+      }
     }
 
   // Surfaces
 
   | tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
     {
+      Volume *pv;
       Shape TheShape;
       TheShape.Num = Extrude_ProtudeSurface(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
 					    0., 0., 0., 0., 0., 0., 0., 
-					    0, NULL);
+					    &pv, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
 	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
@@ -2911,15 +2972,21 @@ Extrude :
       else{
 	TheShape.Type = s->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pv){
+	TheShape.Num = pv->Num;
+	TheShape.Type = pv->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
+      Volume *pv;
       Shape TheShape;
       TheShape.Num = Extrude_ProtudeSurface(ROTATE, (int)$4, 0., 0., 0.,
 					    $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
-					    0, NULL);
+					    &pv, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
 	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
@@ -2928,15 +2995,21 @@ Extrude :
       else{
 	TheShape.Type = s->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pv){
+	TheShape.Num = pv->Num;
+	TheShape.Type = pv->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
     {
+      Volume *pv;
       Shape TheShape;
       TheShape.Num = Extrude_ProtudeSurface(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
 					    $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-					    0, NULL);
+					    &pv, NULL);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
 	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
@@ -2945,8 +3018,13 @@ Extrude :
       else{
 	TheShape.Type = s->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pv){
+	TheShape.Num = pv->Num;
+	TheShape.Type = pv->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tSurface '{' FExpr ',' VExpr '}'
     {
@@ -2955,10 +3033,11 @@ Extrude :
     }
                       '{' ExtrudeParameters '}' tEND
     {
+      Volume *pv;
       Shape TheShape;
       TheShape.Num = Extrude_ProtudeSurface(TRANSLATE, (int)$4, $6[0], $6[1], $6[2],
 					    0., 0., 0., 0., 0., 0., 0., 
-					    NEWREG(), &extr);
+					    &pv, &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
 	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
@@ -2967,8 +3046,13 @@ Extrude :
       else{
 	TheShape.Type = s->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pv){
+	TheShape.Num = pv->Num;
+	TheShape.Type = pv->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' 
     {
@@ -2978,10 +3062,11 @@ Extrude :
   
                       '{' ExtrudeParameters '}' tEND
     {
+      Volume *pv;
       Shape TheShape;
       TheShape.Num = Extrude_ProtudeSurface(ROTATE, (int)$4, 0., 0., 0.,
 					    $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10, 
-					    NEWREG(), &extr);
+					    &pv, &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
 	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
@@ -2990,8 +3075,13 @@ Extrude :
       else{
 	TheShape.Type = s->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pv){
+	TheShape.Num = pv->Num;
+	TheShape.Type = pv->Typ;
+	List_Add($$, &TheShape);
+      }
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
@@ -3001,10 +3091,11 @@ Extrude :
   
                       '{' ExtrudeParameters '}' tEND
     {
+      Volume *pv;
       Shape TheShape;
       TheShape.Num = Extrude_ProtudeSurface(TRANSLATE_ROTATE, (int)$4, $6[0], $6[1], $6[2],
 					    $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-					    NEWREG(), &extr);
+					    &pv, &extr);
       Surface *s = FindSurface(TheShape.Num, THEM);
       if(!s){
 	//yymsg(WARNING, "Unknown surface %d", TheShape.Num);
@@ -3013,8 +3104,13 @@ Extrude :
       else{
 	TheShape.Type = s->Typ;
       }
-      $$ = List_Create(1, 1, sizeof(Shape));
+      $$ = List_Create(2, 1, sizeof(Shape));
       List_Add($$, &TheShape);
+      if(pv){
+	TheShape.Num = pv->Num;
+	TheShape.Type = pv->Typ;
+	List_Add($$, &TheShape);
+      }
     }
 ;
 

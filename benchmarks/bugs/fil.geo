@@ -78,7 +78,9 @@ Line(54) = {55,56};
 Line(55) = {56,2};
 Line Loop(56) = {-53,-52,-51,-50,-49,48,54,55};
 Plane Surface(57) = {56};
-Extrude Surface {57, {lsubstrat,0,0}};
+aa[] = Extrude Surface {57, {lsubstrat,0,0}};  ;
+Delete { Volume { aa[1] }; }
+
 Extrude Line {81, {0,0,hboite}};
 Extrude Line {69, {0,0,hboite}};
 Line(108) = {83,85};

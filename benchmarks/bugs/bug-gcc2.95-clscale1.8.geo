@@ -50,7 +50,9 @@ Plane Surface(46) = {45};
 
 Line Loop(47) = {3,4,1,2};
 Plane Surface(48) = {47,45};
-Extrude Surface {48, {0,0,0.4}};
+aa[] = Extrude Surface {48, {0,0,0.4}};  ;
+Delete {Volume{aa[1]};}
+
 Line Loop(91) = {57,54,55,56};
 Plane Surface(92) = {91};
 
@@ -97,7 +99,8 @@ Plane Surface(98) = {97,95};
 
 Line Loop(99) = {12,-8,-11,6};
 Plane Surface(100) = {99};
-Extrude Surface {96, {0,0,1}, {0,0,0}, 0.0349};
+aa[] = Extrude Surface {96, {0,0,1}, {0,0,0}, 0.0349};  ;
+Delete {Volume{aa[1]};}
 
 
 Line Loop(123) = {-9,-8,10,59};

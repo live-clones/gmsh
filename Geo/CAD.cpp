@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.76 2004-07-01 19:40:59 geuzaine Exp $
+// $Id: CAD.cpp,v 1.77 2004-07-02 02:40:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -420,6 +420,7 @@ void DeletePoint(int ip)
   if(v->Num == THEM->MaxPointNum)
     THEM->MaxPointNum--;
   Tree_Suppress(THEM->Points, &v);
+  Free_Vertex(&v, NULL);
 }
 
 void DeleteCurve(int ip)
@@ -440,12 +441,11 @@ void DeleteCurve(int ip)
   if(c->Num == THEM->MaxLineNum)
     THEM->MaxLineNum--;
   Tree_Suppress(THEM->Curves, &c);
+  Free_Curve(&c, NULL);
 }
 
 void DeleteSurface(int is)
 {
-  // Il faut absolument coder une
-  // structure coherente pour les volumes.
   Surface *s = FindSurface(is, THEM);
   if(!s)
     return;
@@ -454,7 +454,7 @@ void DeleteSurface(int is)
     Volume *v;
     List_Read(Vols, i, &v);
     for(int j = 0; j < List_Nbr(v->Surfaces); j++) {
-      if(!compareCurve(List_Pointer(v->Surfaces, j), &s))
+      if(!compareSurface(List_Pointer(v->Surfaces, j), &s))
         return;
     }
   }
@@ -462,6 +462,18 @@ void DeleteSurface(int is)
   if(s->Num == THEM->MaxSurfaceNum)
     THEM->MaxSurfaceNum--;
   Tree_Suppress(THEM->Surfaces, &s);
+  Free_Surface(&s, NULL);
+}
+
+void DeleteVolume(int iv)
+{
+  Volume *v = FindVolume(iv, THEM);
+  if(!v)
+    return;
+  if(v->Num == THEM->MaxVolumeNum)
+    THEM->MaxVolumeNum--;
+  Tree_Suppress(THEM->Volumes, &v);
+  Free_Volume(&v, NULL);
 }
 
 void DeleteShape(int Type, int Num)
@@ -485,6 +497,9 @@ void DeleteShape(int Type, int Num)
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
     DeleteSurface(Num);
+    break;
+  case MSH_VOLUME:
+    DeleteVolume(Num);
     break;
   default:
     Msg(GERROR, "Impossible to delete entity %d (of type %d)", Num, Type);
@@ -1413,13 +1428,14 @@ int Extrude_ProtudeSurface(int type, int is,
 			   double T0, double T1, double T2,
 			   double A0, double A1, double A2,
 			   double X0, double X1, double X2, double alpha,
-			   int NewVolume, ExtrudeParams * e)
+			   Volume **pv, ExtrudeParams * e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *c, *c2;
   int i;
   Surface *s, *ps, *chapeau;
-  Volume *pv = NULL;
+
+  *pv = NULL;
 
   if(!(ps = FindSurface(is, THEM)))
     return 0;
@@ -1450,25 +1466,41 @@ int Extrude_ProtudeSurface(int type, int is,
       c->Extrude->mesh = e->mesh;
   }
 
-  if(NewVolume) {
-    pv = Create_Volume(NewVolume, 0);
-    pv->Extrude = new ExtrudeParams;
-    pv->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-    pv->Extrude->geo.Source = is;
-    if(e)
-      pv->Extrude->mesh = e->mesh;
-    if(pv)
-      List_Add(pv->Surfaces, &ps);
-  }
-  if(pv)
-    List_Add(pv->Surfaces, &chapeau);
+  // FIXME: this is a really ugly hack for backward compatibility, so
+  // that we don't screw up the old .geo files too much. (Before
+  // version 1.54, we didn't always create new volumes during "Extrude
+  // Surface". Now we do, but with "CTX.geom.old_newreg==1", this
+  // bumps the NEWREG() counter, and thus changes the whole automatic
+  // numbering sequence.) So we locally force old_newreg to 0: in most
+  // cases, since we define points, curves, etc., before defining
+  // volumes, the NEWVOLUME() call below will return a fairly low
+  // number, that will not interfere with the other numbers...
+  int tmp = CTX.geom.old_newreg;
+  CTX.geom.old_newreg = 0;
+  Volume *v = Create_Volume(NEWVOLUME(), MSH_VOLUME);
+  CTX.geom.old_newreg = tmp;
+
+  v->Extrude = new ExtrudeParams;
+  v->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+  v->Extrude->geo.Source = is;
+  if(e)
+    v->Extrude->mesh = e->mesh;
+  int ori = 1;;
+  List_Add(v->Surfaces, &ps);
+  List_Add(v->SurfacesOrientations, &ori);
+  ori = -1;
+  List_Add(v->Surfaces, &chapeau);
+  List_Add(v->SurfacesOrientations, &ori);
 
   for(i = 0; i < List_Nbr(ps->Generatrices); i++) {
     List_Read(ps->Generatrices, i, &c);
     Extrude_ProtudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2,
 			 alpha, &s, 0, e);
-    if(pv && s)
-      List_Add(pv->Surfaces, &s);
+    if(s){
+      ori = -1;
+      List_Add(v->Surfaces, &s);
+      List_Add(v->SurfacesOrientations, &ori);
+    }
   }
 
   switch (type) {
@@ -1536,14 +1568,15 @@ int Extrude_ProtudeSurface(int type, int is,
     return ps->Num;
   }
 
-  // why do we do this? only for backward compatibility?
+  // FIXME: why do we do this? only for backward compatibility?
   Tree_Suppress(THEM->Surfaces, &chapeau);
   chapeau->Num = NEWSURFACE();
   THEM->MaxSurfaceNum = chapeau->Num;
   Tree_Add(THEM->Surfaces, &chapeau);
 
-  if(pv)
-    Tree_Add(THEM->Volumes, &pv);
+  Tree_Add(THEM->Volumes, &v);
+
+  *pv = v;
 
   if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates(THEM);

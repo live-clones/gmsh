@@ -81,7 +81,7 @@ int Extrude_ProtudeSurface(int type, int is,
 			   double T0, double T1, double T2,
 			   double A0, double A1, double A2,
 			   double X0, double X1, double X2, double alpha,
-			   int NewVolume, ExtrudeParams *e);
+			   Volume **pv, ExtrudeParams *e);
 
 
 void ReplaceAllDuplicates(Mesh *m);

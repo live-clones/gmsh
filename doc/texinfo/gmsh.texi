@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.122 2004-06-30 21:15:58 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.123 2004-07-02 02:40:47 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -717,6 +717,9 @@ are those corresponding to the indices provided by the
 of a given geometry point (@pxref{Points}). The last two cases permit to
 retreive the indices of entities created through geometrical transformations
 adn extrusions (see @ref{Transformations}, and @ref{Extrusions}).
+
+@c todo: explain in detail what numbers are returned once we decide what to
+@c do (chapeau et body pour extrude, etc.)...
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -1639,7 +1642,7 @@ giving the X, Y and Z components of any point on this axis; the last
 @findex @var{transform}
 
 Geometrical transformations can be applied to elementary entities, or to
-copies of geometrical entities (using the @code{Duplicata} command: see
+copies of elementary entities (using the @code{Duplicata} command: see
 below). The syntax of the transformation commands is:
 
 @var{transform}:
@@ -1949,13 +1952,11 @@ extruded and has the following syntax:
 The first @var{expression-list} defines how many elements should be created
 in each extruded layer. The second @var{expression-list} assigns a region
 number to each layer, which, if non-zero, overrides the elementary entity
-number of the extruded entity. This is for example useful when there is more
-than one layer (the elements in each layer can then be identitied in a
-unique way) or when one does not want to use the GUI to get the elementary
-entity numbers. The last @var{expression-list} gives the normalized height
-of each layer (the list should contain a sequence of @var{n} numbers 0 <
-@var{h1} < @var{h2} < @dots{} < @var{hn} <= 1). See @ref{t3.geo}, for an
-example.
+number of the extruded entity. This is useful when there is more than one
+layer, as the elements in each layer can then be identified in a unique
+way. The last @var{expression-list} gives the normalized height of each
+layer (the list should contain a sequence of @var{n} numbers 0 < @var{h1} <
+@var{h2} < @dots{} < @var{hn} <= 1). See @ref{t3.geo}, for an example.
 
 For line extrusions, the @code{Recombine} option will recombine triangles
 into quadrangles when possible.  For surface extrusions, the

@@ -57,34 +57,3 @@ Extrude Surface { 11, {0, 0, h} } ;
 // created points:
 
 Characteristic Length{6,22,2,3,16,12} = lc * 3 ;
-
-// If the transformation tools are handy to create complex geometries,
-// it is sometimes useful to generate the flat geometry, consisting
-// only of the explicit list elementary entities. This can be achieved
-// by selecting the 'File->Save as->GEO flattened geometry' menu or 
-// by typing
-//
-// > gmsh t2.geo -0
-//
-// on the command line.
-
-// Volumes are the fourth type of elementary entities in Gmsh. In the
-// same way one defines line loops to build surfaces, one has to
-// define surface loops to build volumes. The following volumes are
-// very simple, without holes (and thus consist of only one surface
-// loop):
-
-Surface Loop(145) = {121,11,131,135,139,144};
-Volume(146) = {145};
-
-Surface Loop(146) = {121,6,109,113,117,122};
-Volume(147) = {146};
-
-// To save all volumic (tetrahedral) elements of volume 146 and 147
-// with the associate region number 1, a Physical Volume must be
-// defined:
-
-Physical Volume (1) = {146,147} ;
-
-// Congratulations! You've created your first fully unstructured
-// tetrahedral 3D mesh!

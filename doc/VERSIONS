@@ -1,8 +1,10 @@
-$Id: VERSIONS,v 1.229 2004-06-30 18:18:23 geuzaine Exp $
+$Id: VERSIONS,v 1.230 2004-07-02 02:40:47 geuzaine Exp $
 
 New in 1.54: integrated Netgen (3D mesh quality optimization +
-alternative 3D algorithm); fixed UNV output; make Layers' region
-numbering consistent between lines/surfaces/volumes; fixed home
+alternative 3D algorithm); Extrude Surface now automatically creates a
+new volume (in the same way Extrude Point or Extrude Line create new
+lines and surfaces, respectively); fixed UNV output; make Layers'
+region numbering consistent between lines/surfaces/volumes; fixed home
 directory problem on Win98; new Plugin(CutParametric); the default
 project file is now created in the home directory if no current
 directory is defined (e.g. when double-clicking on the icon on

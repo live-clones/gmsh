@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.82 2004-06-23 18:52:45 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.83 2004-07-02 02:40:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -355,7 +355,7 @@ void Create_HexPri(int iEnt, Vertex * v[8])
 
   if(CTX.mesh.allow_degenerated_extrude) {
     newh = Create_Hexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
-    newh->iEnt = iEnt;
+    newh->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Hexahedra, &newh);
     return;
   }
@@ -378,12 +378,12 @@ void Create_HexPri(int iEnt, Vertex * v[8])
           v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
       return;
     }
-    newp->iEnt = iEnt;
+    newp->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Prisms, &newp);
   }
   else {
     newh = Create_Hexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
-    newh->iEnt = iEnt;
+    newh->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Hexahedra, &newh);
     if(j)
       Msg(GERROR, "Degenerated hexahedron %d (nodes %d %d %d %d %d %d %d %d)",
@@ -400,7 +400,7 @@ void Create_PriPyrTet(int iEnt, Vertex * v[6])
 
   if(CTX.mesh.allow_degenerated_extrude) {
     newp = Create_Prism(v[0], v[1], v[2], v[3], v[4], v[5]);
-    newp->iEnt = iEnt;
+    newp->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Prisms, &newp);
     return;
   }
@@ -416,7 +416,7 @@ void Create_PriPyrTet(int iEnt, Vertex * v[6])
       news = Create_Simplex(v[0], v[1], v[2], v[3]);
     else
       news = Create_Simplex(v[0], v[1], v[2], v[4]);
-    news->iEnt = iEnt;
+    news->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Simplexes, &news);
   }
   else if(j == 1) {
@@ -426,12 +426,12 @@ void Create_PriPyrTet(int iEnt, Vertex * v[6])
       newpyr = Create_Pyramid(v[0], v[2], v[5], v[3], v[1]);
     else
       newpyr = Create_Pyramid(v[0], v[1], v[4], v[3], v[2]);
-    newpyr->iEnt = iEnt;
+    newpyr->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Pyramids, &newpyr);
   }
   else {
     newp = Create_Prism(v[0], v[1], v[2], v[3], v[4], v[5]);
-    newp->iEnt = iEnt;
+    newp->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Prisms, &newp);
     if(j)
       Msg(GERROR, "Degenerated prism %d (nodes %d %d %d %d %d %d)",
@@ -447,7 +447,7 @@ void Create_Sim(int iEnt, Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
      (v1->Num != v2->Num && v1->Num != v3->Num && v1->Num != v4->Num &&
       v2->Num != v3->Num && v2->Num != v4->Num && v3->Num != v4->Num)) {
     news = Create_Simplex(v1, v2, v3, v4);
-    news->iEnt = iEnt;
+    news->iEnt = (iEnt && ep->useZonLayer()) ? iEnt : THEV->Num;
     Tree_Add(THEV->Simplexes, &news);
   }
 }

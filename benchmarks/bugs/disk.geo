@@ -43,6 +43,3 @@ l04  = newreg; Line (l04) = { p01, p04 };
 
 a1 = newreg; s1 = newreg; Line Loop ( a1 ) = { l01, l02, l03, -l04 } ;  Plane Surface ( s1 ) = { a1 };
 s11[] = Extrude Surface { s1, { 0, 1, 0 }, { 0.0, 0.0, 0.0 }, -angle  }; ;
-
-Surface Loop(28) = {18,5,14,27,22,26};
-Volume(29) = {28};

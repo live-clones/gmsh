@@ -1,4 +1,4 @@
-$Id: TODO,v 1.54 2004-06-30 01:49:41 geuzaine Exp $
+$Id: TODO,v 1.55 2004-07-02 02:40:43 geuzaine Exp $
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops
@@ -6,6 +6,38 @@ surface loops and lines in line loops
 (To make things simple, all line loops should be oriented "aire a
 gauche", and all surface loops whould be oriented with exterior
 normals...)
+
+********************************************************************
+
+We could modify "Extrude Surface" to *always* create a new
+volume. This would make it consistent with "Extrude Point" and
+"Extrude Line", which always create new curves and surfaces,
+respectively. (with multi-layered exruded meshes, we could do exactly
+s we do with Extrude Line: if number==0, use the volume number...)
+
+I'm not sure if we should do it or not... This would introduce
+some incompatibilities in old geo files:
+
+- users could do a "Delete Volume" after the extrusion to fix the
+  old files (aa[] = Extrude Surface{..};; Delete{Volume aa[1];}
+
+- ...if the new volume creation didn't bork the automatic 
+  numbering. For this, we could use the following hack:
+
+  // FIXME: this is a really ugly hack for backward compatibility, so
+  // that we don't screw up the old .geo files too much. (Before
+  // version 1.54, we didn't always create new volumes during "Extrude
+  // Surface". Now we do, but with "CTX.geom.old_newreg==1", this
+  // bumps the NEWREG() counter, and thus changes the whole automatic
+  // numbering sequence.) So we locally force old_newreg to 0: in most
+  // cases, since we define points, curves, etc., before defining
+  // volumes, the NEWVOLUME() call below will return a fairly low
+  // number, that will not interfere with the other numbers...
+  int tmp = CTX.geom.old_newreg;
+  CTX.geom.old_newreg = 0;
+  Volume *v = Create_Volume(NEWVOLUME(), 0);
+  CTX.geom.old_newreg = tmp;
+
 
 ********************************************************************
 

@@ -107,16 +107,3 @@ Extrude Surface {126, {0,0,hcav-hg} };
 Coherence;
 
 //Characteristic Length {58,71} = 0.01; 
-
-Point(85) = {0.0,0.0,0.0,1.0};
-Surface Loop(158) = {67,27,43,47,51,55,59,63,68};
-Volume(159) = {158};
-Surface Loop(159) = {112,29,84,67,125,92,96,100,104,108,116,120,124};
-Volume(160) = {159};
-
-GO      = 1 ;
-CAV     = 2 ;
-DIS     = 3 ; 
-CLDSRC  = 4 ;
-CLD     = 5 ;
-
