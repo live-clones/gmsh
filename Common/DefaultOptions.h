@@ -989,6 +989,8 @@ StringXNumber ViewOptions_Number[] = {
 } ;
 
 StringXNumber PrintOptions_Number[] = {
+  { F|O, "Compress" , opt_print_compress , 0 ,
+    "Compress output using zlib (only for PDF output at the moment)" },
   { F|O, "EpsBackground" , opt_print_eps_background , 1 ,
     "Save image background in postscript output" },
   { F|O, "EpsFontSize" , opt_print_eps_font_size , 12. ,

@@ -186,7 +186,7 @@ public :
 
   // print options 
   struct{
-    int format;
+    int format, compress;
     int eps_quality, eps_background, eps_font_size;
     int eps_occlusion_culling, eps_best_root;
     char *eps_font;

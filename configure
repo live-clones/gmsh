@@ -3219,6 +3219,7 @@ else
 fi
 
     if test "x${Z}" = "xyes"; then
+      FLAGS="-DHAVE_LIBZ ${FLAGS}"
             if test "x${PNG_PREFIX}" != "x"; then
         LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
       fi

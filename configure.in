@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.40 2003-09-17 18:00:53 geuzaine Exp $
+dnl $Id: configure.in,v 1.41 2003-10-25 03:26:40 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -158,6 +158,7 @@ if test "x$enable_gui" != "xno"; then
     fi
     AC_CHECK_LIB(z,main,Z="yes",Z="no")
     if test "x${Z}" = "xyes"; then
+      FLAGS="-DHAVE_LIBZ ${FLAGS}"
       dnl Check if libpng is available to enable/disable gl2png
       if test "x${PNG_PREFIX}" != "x"; then
         LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"

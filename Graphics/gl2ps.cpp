@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.72 2003-09-22 07:26:38 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.73 2003-10-25 03:26:41 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
@@ -104,11 +104,111 @@ void gl2psWriteByte(FILE *stream, unsigned char byte){
   fprintf(stream, "%x%x", h, l);
 }
 
-size_t gl2psWriteBigEndian(unsigned long data, size_t bytes, FILE* fp){
+
+/* zlib helper */
+
+#ifdef GL2PS_HAVE_ZLIB
+
+void gl2psSetupZstream(){
+  gl2ps->zstream = (GL2PSzstream*)gl2psMalloc(sizeof(GL2PSzstream));
+  gl2ps->zstream->dest = NULL;
+  gl2ps->zstream->src = NULL;
+  gl2ps->zstream->start = NULL;
+  gl2ps->zstream->destLen = 0;
+  gl2ps->zstream->srcLen = 0;
+}
+
+void gl2psFreeZstream(){
+  if (!gl2ps->zstream)
+    return;
+  gl2psFree(gl2ps->zstream->start);
+  gl2psFree(gl2ps->zstream->dest);
+  gl2ps->zstream->src = NULL;
+  gl2ps->zstream->start = NULL;
+  gl2ps->zstream->dest = NULL;
+  gl2ps->zstream->srcLen = 0;
+  gl2ps->zstream->destLen = 0;
+}
+
+int gl2psAllocZstream(unsigned int srcsize){
+  gl2psFreeZstream();
+  
+  if (!gl2ps->zstream || srcsize == 0)
+    return GL2PS_ERROR;
+  
+  gl2ps->zstream->srcLen = srcsize;
+  gl2ps->zstream->destLen = (int)ceil(1.001 * gl2ps->zstream->srcLen + 12);
+  gl2ps->zstream->src = gl2psMalloc(gl2ps->zstream->srcLen);
+  gl2ps->zstream->start = gl2ps->zstream->src;
+  gl2ps->zstream->dest = gl2psMalloc(gl2ps->zstream->destLen);
+  
+  return GL2PS_SUCCESS;
+}
+
+void* gl2psReallocZstream(unsigned int srcsize){
+  if (!gl2ps->zstream || srcsize == 0)
+    return NULL;
+  
+  if (srcsize < gl2ps->zstream->srcLen)
+    return gl2ps->zstream->start;
+  
+  gl2ps->zstream->srcLen = srcsize;
+  gl2ps->zstream->destLen = (int)ceil(1.001 * gl2ps->zstream->srcLen + 12);
+  gl2ps->zstream->src = gl2psRealloc(gl2ps->zstream->src, gl2ps->zstream->srcLen);
+  gl2ps->zstream->start = gl2ps->zstream->src;
+  gl2ps->zstream->dest = gl2psRealloc(gl2ps->zstream->dest, gl2ps->zstream->destLen);
+  
+  return gl2ps->zstream->start;
+}
+
+size_t gl2psWriteBigEndianZ(unsigned long data, size_t bytes){
   size_t i;
   size_t size = sizeof(unsigned long);
   for(i = 1; i <= bytes; ++i){
-    fputc(0xff & (data >> (size-i) * 8), fp);
+    *gl2ps->zstream->src = 0xff & (data >> (size-i) * 8);
+    ++gl2ps->zstream->src;
+  }
+  return bytes;
+}
+
+int gl2psDeflate(){
+  return compress2(gl2ps->zstream->dest, &gl2ps->zstream->destLen, 
+		   gl2ps->zstream->start, gl2ps->zstream->srcLen, Z_BEST_COMPRESSION);
+}
+
+#endif
+
+int zprintf(const char* fmt, ...){
+  int ret = 0;
+  va_list args;
+
+#ifdef GL2PS_HAVE_ZLIB
+  unsigned int bufsize = 0;
+  unsigned int oldsize = 0;
+  if(gl2ps->options & GL2PS_COMPRESS){
+    va_start(args, fmt);
+    bufsize = vsprintf(gl2ps->zbuf, fmt, args);
+    va_end(args);
+    oldsize = gl2ps->zstream->srcLen;
+    gl2ps->zstream->start = gl2psReallocZstream(oldsize + bufsize);
+    memcpy(gl2ps->zstream->start+oldsize, gl2ps->zbuf, bufsize);
+  }
+  else{
+#endif
+    va_start(args, fmt);
+    ret = vfprintf(gl2ps->stream, fmt, args);
+    va_end(args);
+#ifdef GL2PS_HAVE_ZLIB
+  }
+#endif
+  return ret;
+}
+
+size_t gl2psWriteBigEndian(unsigned long data, size_t bytes){
+  size_t i;
+  size_t size = sizeof(unsigned long);
+  for(i = 1; i <= bytes; ++i){
+    fputc(0xff & (data >> (size-i) * 8), gl2ps->stream);
   }
   return bytes;
 }
@@ -2054,9 +2154,11 @@ GLint gl2psPrintTeXEndViewport(void){
  *********************************************************************/
 
 int gl2psPrintPDFCompressorType(){
-  if(gl2ps->options & GL2PS_DEFLATE){
+#ifdef GL2PS_HAVE_ZLIB
+  if(gl2ps->options & GL2PS_COMPRESS){
     return fprintf(gl2ps->stream, "/Filter [/FlateDecode]\n");
   }
+#endif
   return 0;
 }
 
@@ -2067,13 +2169,13 @@ int gl2psPrintPDFStrokeColor(GL2PSrgba rgba){
   gl2psSetLastColor(rgba);
   for(i = 0; i < 3; ++i){
     if(GL2PS_ZERO(rgba[i]))
-      offs += fprintf(gl2ps->stream, "%.0f ", 0.);
+      offs += zprintf("%.0f ", 0.);
     else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting */
-      offs += fprintf(gl2ps->stream, "%f ", rgba[i]);
+      offs += zprintf("%f ", rgba[i]);
     else
-      offs += fprintf(gl2ps->stream, "%g ", rgba[i]);
+      offs += zprintf("%g ", rgba[i]);
   }
-  offs += fprintf(gl2ps->stream, "RG\n");
+  offs += zprintf("RG\n");
   return offs;
 }
 
@@ -2083,23 +2185,23 @@ int gl2psPrintPDFFillColor(GL2PSrgba rgba){
   
   for(i = 0; i < 3; ++i){
     if(GL2PS_ZERO(rgba[i]))
-      offs += fprintf(gl2ps->stream, "%.0f ", 0.);
+      offs += zprintf("%.0f ", 0.);
     else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting */
-      offs += fprintf(gl2ps->stream, "%f ", rgba[i]);
+      offs += zprintf("%f ", rgba[i]);
     else
-      offs += fprintf(gl2ps->stream, "%g ", rgba[i]);
+      offs += zprintf("%g ", rgba[i]);
   }
-  offs += fprintf(gl2ps->stream, "rg\n");
+  offs += zprintf("rg\n");
   return offs;
 }
 
 int gl2psPrintPDFLineWidth(float lw){
   if(GL2PS_ZERO(lw))
-    return fprintf(gl2ps->stream, "%.0f w\n", 0.);
+    return zprintf("%.0f w\n", 0.);
   else if(lw < 1e-4 || lw > 1e6) /* avoid %e formatting */
-    return fprintf(gl2ps->stream, "%f w\n", lw);
+    return zprintf("%f w\n", lw);
   else
-    return fprintf(gl2ps->stream, "%g w\n", lw);
+    return zprintf("%g w\n", lw);
 }
 
 /* Print 1st PDF object - file info */
@@ -2186,8 +2288,8 @@ int gl2psOpenPDFDataStreamWritePreface(){
   int offs;
   GLint index;
   GLfloat rgba[4];
-  
-  offs = fprintf(gl2ps->stream, "/GS1 gs\n");
+
+  offs = zprintf("/GS1 gs\n");
   
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
@@ -2201,10 +2303,10 @@ int gl2psOpenPDFDataStreamWritePreface(){
       rgba[3] = 0.;
     }
     offs += gl2psPrintPDFFillColor(rgba);
-    offs += fprintf(gl2ps->stream, "%d %d %d %d re\n",
+    offs += zprintf("%d %d %d %d re\n",
 		    (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
 		    (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
-    offs += fprintf(gl2ps->stream, "f\n");  
+    offs += zprintf("f\n");  
   }
   return offs;
 }
@@ -2213,7 +2315,13 @@ int gl2psOpenPDFDataStreamWritePreface(){
 
 void gl2psPrintPDFHeader(){
   int offs;
-  
+
+#ifdef GL2PS_HAVE_ZLIB
+  if(gl2ps->options & GL2PS_COMPRESS){
+    gl2psSetupZstream();
+  }
+#endif  
+
   /* tlist, tidxlist, ilist and slist contain triangles, indexes for
      consecutive triangles, images and strings */
   gl2ps->tlist = gl2psListCreate(100, 100, sizeof(GL2PStriangle));
@@ -2247,7 +2355,7 @@ int gl2psFlushPDFTriangles(){
 
   if(gl2ps->lasttype == GL2PS_TRIANGLE && !gl2ps->last_triangle_finished){
     gl2psListAdd(gl2ps->tidxlist, &gl2ps->consec_inner_cnt);
-    offs = fprintf(gl2ps->stream, "/Sh%d sh\n", gl2ps->consec_cnt++);
+    offs = zprintf("/Sh%d sh\n", gl2ps->consec_cnt++);
     gl2ps->consec_inner_cnt = 0;
     gl2ps->streamlength += offs;
     gl2ps->last_triangle_finished = 1;
@@ -2259,7 +2367,7 @@ int gl2psFlushPDFLines(){
   int offs = 0;
 
   if(gl2ps->lasttype == GL2PS_LINE && !gl2ps->last_line_finished){
-    offs = fprintf(gl2ps->stream, "S\n");
+    offs = zprintf("S\n");
     gl2ps->streamlength += offs;
     gl2ps->last_line_finished = 1;
   }
@@ -2287,8 +2395,7 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
   case GL2PS_PIXMAP :
     image = gl2psCopyPixmap(prim->image);
     gl2psListAdd(gl2ps->ilist, &image);
-    gl2ps->streamlength += fprintf(gl2ps->stream,
-				   "q\n"
+    gl2ps->streamlength += zprintf("q\n"
 				   "%d 0 0 %d %f %f cm\n"
 				   "/Im%d Do\n"
 				   "Q\n",
@@ -2300,8 +2407,7 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
     str = gl2psCopyText(prim->text);
     gl2psListAdd(gl2ps->slist, &str);
     gl2ps->streamlength += gl2psPrintPDFFillColor(prim->verts[0].rgba);
-    gl2ps->streamlength += fprintf(gl2ps->stream,
-				   "BT\n"
+    gl2ps->streamlength += zprintf("BT\n"
 				   "/F%d %d Tf\n"
 				   "%f %f Td\n"
 				   "(%s) Tj\n"
@@ -2315,12 +2421,12 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
       gl2ps->lastlinewidth = prim->width;
       gl2ps->streamlength += gl2psPrintPDFLineWidth(gl2ps->lastlinewidth);
     }
-    gl2ps->streamlength += fprintf(gl2ps->stream, "1 J\n");
+    gl2ps->streamlength += zprintf("1 J\n");
     gl2ps->streamlength += gl2psPrintPDFStrokeColor(prim->verts[0].rgba);
-    gl2ps->streamlength += fprintf(gl2ps->stream, "%f %f m %f %f l S\n",
+    gl2ps->streamlength += zprintf("%f %f m %f %f l S\n",
 				   prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 				   prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
-    gl2ps->streamlength += fprintf(gl2ps->stream, "0 J\n");
+    gl2ps->streamlength += zprintf("0 J\n");
     break;
   case GL2PS_LINE :
     gl2ps->line_width_diff = gl2ps->lastlinewidth != prim->width;
@@ -2337,15 +2443,15 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
       gl2ps->streamlength += gl2psPrintPDFStrokeColor(prim->verts[0].rgba);
     }
     if(prim->dash){
-      gl2ps->streamlength += fprintf(gl2ps->stream, "[%d] 0 d\n", prim->dash);
+      gl2ps->streamlength += zprintf("[%d] 0 d\n", prim->dash);
     }
-    gl2ps->streamlength += fprintf(gl2ps->stream, "%f %f m %f %f l \n",
+    gl2ps->streamlength += zprintf("%f %f m %f %f l \n",
 				   prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 				   prim->verts[1].xyz[0], prim->verts[1].xyz[1]);
     gl2ps->last_line_finished = 0;
     
     if(prim->dash){
-      gl2ps->streamlength += fprintf(gl2ps->stream, "S\n[] 0 d\n"); 
+      gl2ps->streamlength += zprintf("S\n[] 0 d\n"); 
       gl2ps->last_line_finished = 1;
     }
     break;
@@ -2372,9 +2478,23 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
 
 int gl2psClosePDFDataStream(){
   int offs = 0;
-  
+ 
   offs += gl2psFlushPDFTriangles();
   offs += gl2psFlushPDFLines();
+
+#ifdef GL2PS_HAVE_ZLIB
+  if(gl2ps->options & GL2PS_COMPRESS){
+    if (Z_OK != gl2psDeflate())
+      gl2psMsg(GL2PS_ERROR, "gl2ps: zlib deflate error!");
+    else
+      fwrite(gl2ps->zstream->dest, gl2ps->zstream->destLen, 1, gl2ps->stream);
+    gl2ps->streamlength += gl2ps->zstream->destLen;
+    
+    offs += gl2ps->streamlength;
+    gl2psFreeZstream();
+  }
+#endif 
+  
   offs += fprintf(gl2ps->stream, 
 		  "endstream\n"
 		  "endobj\n");
@@ -2501,9 +2621,10 @@ int gl2psPrintPDFExtGState(){
 		 "endobj\n");
 }
 
-/* Put a triangles uncompressed raw data in shader stream */
+/* Put a triangles raw data in shader stream */
 
-int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle){
+int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle, 
+				  size_t (*action)(unsigned long data, size_t size)){
   int offs = 0;
   int i;
   unsigned long imap;
@@ -2515,14 +2636,14 @@ int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle){
   dy = gl2ps->viewport[3]-gl2ps->viewport[1];
   
   for(i = 0; i < 3; ++i){
-    offs += fwrite (&edgeflag, sizeof(char), 1, gl2ps->stream);
+    offs += (*action)(edgeflag, 1);
 
-    /* In unfiltered mode the Shader stream in PDF requires to be in a
+    /* The Shader stream in PDF requires to be in a
        'big-endian' order */
     
     if(fabs(dx*dy) < FLT_MIN){
-      offs += gl2psWriteBigEndian(0, 4, gl2ps->stream);
-      offs += gl2psWriteBigEndian(0, 4, gl2ps->stream);
+      offs += (*action)(0, 4);
+      offs += (*action)(0, 4);
     }
     else{
       diff = (triangle[i].xyz[0] - gl2ps->viewport[0]) / dx;
@@ -2531,7 +2652,7 @@ int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle){
       else if(diff < 0)
 	diff = 0;
       imap = (unsigned long)(diff * dmax);
-      offs += gl2psWriteBigEndian(imap, 4, gl2ps->stream);
+      offs += (*action)(imap, 4);
       
       diff = (triangle[i].xyz[1] - gl2ps->viewport[1]) / dy;
       if(diff > 1)
@@ -2539,28 +2660,29 @@ int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle){
       else if(diff < 0)
 	diff = 0;
       imap = (unsigned long)(diff * dmax);
-      offs += gl2psWriteBigEndian(imap, 4, gl2ps->stream);
+      offs += (*action)(imap, 4);
     }
     
     imap = (unsigned long)(triangle[i].rgba[0] * dmax);
-    offs += gl2psWriteBigEndian(imap, 1, gl2ps->stream);
+    offs += (*action)(imap, 1);
     
     imap = (unsigned long)(triangle[i].rgba[1] * dmax);
-    offs += gl2psWriteBigEndian(imap, 1, gl2ps->stream);
+    offs += (*action)(imap, 1);
     
     imap = (unsigned long)(triangle[i].rgba[2] * dmax);
-    offs += gl2psWriteBigEndian(imap, 1, gl2ps->stream);
+    offs += (*action)(imap, 1);
   }
   return offs;
 }
+
 
 /* Writes shaded triangle */
 
 int gl2psPrintPDFShader(int obj, GL2PSlist* triangles, int idx, int cnt ){
   int offs = 0;
   int vertexbytes = 1+4+4+1+1+1;
-  int i;
-  
+  int i, done = 0;
+	
   offs += fprintf(gl2ps->stream,
 		  "%d 0 obj\n"
 		  "<< "
@@ -2574,19 +2696,46 @@ int gl2psPrintPDFShader(int obj, GL2PSlist* triangles, int idx, int cnt ){
 		  (int)gl2ps->viewport[0], (int)gl2ps->viewport[2],
 		  (int)gl2ps->viewport[1], (int)gl2ps->viewport[3]);
   
-  offs += gl2psPrintPDFCompressorType();
+#ifdef GL2PS_HAVE_ZLIB
+  if(gl2ps->options & GL2PS_COMPRESS){
+    gl2psAllocZstream(vertexbytes * cnt * 3);
 
-  offs += fprintf(gl2ps->stream,
-		  "/Length %d "
-		  ">>\n"
-		  "stream\n",
-		  vertexbytes * 3 * cnt);
-  for(i = 0; i < cnt; ++i)
-    offs += gl2psPrintPDFShaderStreamData((GL2PSvertex*)gl2psListPointer(triangles, idx+i));
+    for(i = 0; i < cnt; ++i)
+      gl2psPrintPDFShaderStreamData((GL2PSvertex*)gl2psListPointer(triangles, idx+i),
+				    gl2psWriteBigEndianZ);
+
+    if(Z_OK == gl2psDeflate() && 23 + gl2ps->zstream->destLen < gl2ps->zstream->srcLen){
+      offs += gl2psPrintPDFCompressorType();
+      offs += fprintf(gl2ps->stream,
+		      "/Length %d "
+		      ">>\n"
+		      "stream\n",
+		      (int)gl2ps->zstream->destLen);
+      offs += gl2ps->zstream->destLen * fwrite(gl2ps->zstream->dest, gl2ps->zstream->destLen, 
+					       1, gl2ps->stream);
+      done = 1;
+    }
+    gl2psFreeZstream();
+  }
+#endif
+
+  if(!done){
+    /* no compression, or too long after compression, or compress2 error
+       -> write non-compressed entry */
+    offs += fprintf(gl2ps->stream,
+		    "/Length %d "
+		    ">>\n"
+		    "stream\n",
+		    vertexbytes * 3 * cnt);
+    for(i = 0; i < cnt; ++i)
+      offs += gl2psPrintPDFShaderStreamData((GL2PSvertex*)gl2psListPointer(triangles, idx+i),
+					    gl2psWriteBigEndian);
+  }
   
   offs += fprintf(gl2ps->stream,
 		  "\nendstream\n"
 		  "endobj\n");
+
   return offs;
 }
 
@@ -2616,22 +2765,23 @@ int* gl2psPrintPDFShaderObjects(int firstObjnumber, int firstOffs){
 
 /* Similar groups of  functions for pixmaps and text */
 
-int gl2psPrintPDFPixmapStreamData(GL2PSimage* im){
+int gl2psPrintPDFPixmapStreamData(GL2PSimage* im,
+				  size_t  (*action)(unsigned long data, size_t size)){
   int x, y;
   GLfloat r, g, b;
   
   for(y = 0; y < im->height; ++y)
     for(x = 0; x < im->width; ++x){
       gl2psGetRGB(im->pixels, im->width, im->height, x, y, &r, &g, &b);
-      fputc((int)(r*255),gl2ps->stream);
-      fputc((int)(g*255),gl2ps->stream);
-      fputc((int)(b*255),gl2ps->stream);
+			(*action)((unsigned long)(r*255) << 24,1);
+			(*action)((unsigned long)(g*255) << 24,1);
+			(*action)((unsigned long)(b*255) << 24,1);
     }
   return 3 * im->width * im->height;
 }
 
 int gl2psPrintPDFPixmap(int obj, GL2PSimage* im){
-  int offs = 0;
+  int offs = 0, done = 0;
   
   offs += fprintf(gl2ps->stream,
 		  "%d 0 obj\n"
@@ -2641,18 +2791,45 @@ int gl2psPrintPDFPixmap(int obj, GL2PSimage* im){
 		  "/Width %d\n"
 		  "/Height %d\n"
 		  "/ColorSpace /DeviceRGB\n"
-		  "/BitsPerComponent 8\n"
-		  "/Length %d\n"
-		  ">>\n"
-		  "stream\n",
-		  obj, (int)im->width, (int)im->height, 
-		  (int)(im->width * im->height * 3));
+		  "/BitsPerComponent 8\n",
+		  obj, (int)im->width, (int)im->height);
+	
+#ifdef GL2PS_HAVE_ZLIB
+  if(gl2ps->options & GL2PS_COMPRESS){
+    gl2psAllocZstream((int)(im->width * im->height * 3));
+    
+    gl2psPrintPDFPixmapStreamData(im, gl2psWriteBigEndianZ);
+    
+    if(Z_OK == gl2psDeflate() && 23 + gl2ps->zstream->destLen < gl2ps->zstream->srcLen){
+      offs += gl2psPrintPDFCompressorType();
+      offs += fprintf(gl2ps->stream,
+		      "/Length %d "
+		      ">>\n"
+		      "stream\n",
+		      (int)gl2ps->zstream->destLen);
+      offs += gl2ps->zstream->destLen * fwrite(gl2ps->zstream->dest, gl2ps->zstream->destLen,
+					       1, gl2ps->stream);
+      done = 1;
+    }
+    gl2psFreeZstream();
+  }
+#endif
   
-  offs += gl2psPrintPDFPixmapStreamData(im);
+  if(!done){
+    /* no compression, or too long after compression, or compress2 error
+       -> write non-compressed entry */
+    offs += fprintf(gl2ps->stream,
+		    "/Length %d "
+		    ">>\n"
+		    "stream\n",
+		    (int)(im->width * im->height * 3));
+    offs += gl2psPrintPDFPixmapStreamData(im, gl2psWriteBigEndian);
+  }
   
   offs += fprintf(gl2ps->stream,
 		  "\nendstream\n"
 		  "endobj\n");
+
   return offs;
 }
 
@@ -2788,6 +2965,14 @@ void gl2psPrintPDFFooter(){
   for(i = 0; i < gl2psListNbr(gl2ps->slist); ++i)
     gl2psFreeText(*(GL2PSstring**)gl2psListPointer(gl2ps->slist, i));
   gl2psListDelete(gl2ps->slist);
+
+#ifdef GL2PS_HAVE_ZLIB
+  if(gl2ps->options & GL2PS_COMPRESS){
+    gl2psFreeZstream();
+    gl2psFree(gl2ps->zstream);
+    gl2ps->zstream = NULL;
+  }
+#endif
 }
 
 /* PDF begin viewport */
@@ -2802,7 +2987,7 @@ void gl2psPrintPDFBeginViewport(GLint viewport[4]){
   
   glRenderMode(GL_FEEDBACK);
   
-  offs += fprintf(gl2ps->stream, "q\n");
+  offs += zprintf("q\n");
   
   if(gl2ps->options & GL2PS_DRAW_BACKGROUND){
     if(gl2ps->colormode == GL_RGBA || gl2ps->colorsize == 0){
@@ -2815,16 +3000,14 @@ void gl2psPrintPDFBeginViewport(GLint viewport[4]){
       rgba[2] = gl2ps->colormap[index][2];
       rgba[3] = 0.;
     }
-    offs += fprintf(gl2ps->stream,
-		    "%f %f %f rg\n"
+    offs += zprintf("%f %f %f rg\n"
 		    "%d %d %d %d re\n"
 		    "W\n"
 		    "f\n",
 		    rgba[0], rgba[1], rgba[2], x, y, w, h);
   }
   else{
-    offs += fprintf(gl2ps->stream,
-		    "%d %d %d %d re\n"
+    offs += zprintf("%d %d %d %d re\n"
 		    "W\n"   
 		    "n\n",
 		    x, y, w, h);		
@@ -2841,7 +3024,7 @@ GLint gl2psPrintPDFEndViewport(){
   res += gl2psFlushPDFTriangles();
   res += gl2psFlushPDFLines();
 
-  gl2ps->streamlength += fprintf(gl2ps->stream, "Q\n");
+  gl2ps->streamlength += zprintf("Q\n");
   
   return res;
 }
@@ -3024,6 +3207,9 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   gl2ps->line_rgb_diff = 1;
   gl2ps->last_line_finished = 0;
   gl2ps->last_triangle_finished = 0;
+#ifdef GL2PS_HAVE_ZLIB
+  gl2ps->zstream = NULL;
+#endif
 
   switch(gl2ps->format){
   case GL2PS_TEX :
