@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.4 2000-11-23 15:06:02 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.5 2000-11-24 09:44:00 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -14,6 +14,10 @@
 #include "StepGeomDatabase.h"
 #include "Colors.h"
 #include "Parser.h"
+
+#ifdef __DECCXX
+#include <alloca.h>
+#endif
 
 extern Mesh    *THEM;
 extern char    ThePathForIncludes[NAME_STR_L];
