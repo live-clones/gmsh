@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.21 2004-05-12 04:31:21 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.22 2004-05-13 17:06:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -273,7 +273,7 @@ int ColorTable_Diff(GmshColorTable * ct1, GmshColorTable * ct2)
 {
   if(ct1->size != ct2->size) return 1;
   for(int i = 0; i < ct1->size; i++)
-    if(ct1->table != ct2->table) return 1;
+    if(ct1->table[i] != ct2->table[i]) return 1;
   return 0;
 }
 
