@@ -1,4 +1,4 @@
-/* $Id: Mesh.cpp,v 1.7 2000-11-28 08:35:03 geuzaine Exp $ */
+/* $Id: Mesh.cpp,v 1.8 2000-12-01 13:56:10 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -68,6 +68,8 @@ void Draw_Mesh (Mesh *M) {
   glPointSize(2);
   glLineWidth(1);
 
+  if(CTX.mesh.hidden) glEnable(GL_POLYGON_OFFSET_FILL);
+
   switch(M->status) {
   case 3 :
     if(CTX.mesh.draw && 
@@ -105,6 +107,8 @@ void Draw_Mesh (Mesh *M) {
   default :
     break;
   }
+
+  if(CTX.mesh.hidden) glDisable(GL_POLYGON_OFFSET_FILL);
 
   if(CTX.render_mode != GMSH_SELECT){
     if(CTX.axes) 
@@ -275,7 +279,6 @@ void Draw_Simplex_Volume (void *a, void *b){
   ColorSwitch((*s)->iEnt);
 
   if (CTX.mesh.hidden) {
-    glEnable(GL_POLYGON_OFFSET_FILL);
 
     x1x0 = X[1]-X[0]; y1y0 = Y[1]-Y[0];
     z1z0 = Z[1]-Z[0]; x2x0 = X[2]-X[0];
@@ -333,7 +336,7 @@ void Draw_Simplex_Volume (void *a, void *b){
     glVertex3d(X[1], Y[1], Z[1]);
     glVertex3d(X[2], Y[2], Z[2]);
     glEnd();
-    glDisable(GL_POLYGON_OFFSET_FILL);
+
   }
 
 #endif
@@ -446,11 +449,9 @@ void Draw_Simplex_Surfaces (void *a, void *b){
   if(CTX.mesh.surfaces){
 
     if (CTX.mesh.hidden) { 
-      glEnable(GL_POLYGON_OFFSET_FILL);
       glBegin(GL_POLYGON);
       for(i=0 ; i<K*(1+L) ; i++) glVertex3d(pX[i], pY[i], pZ[i]);
       glEnd();
-      glDisable(GL_POLYGON_OFFSET_FILL);
     }
     
     if(CTX.mesh.lines){
