@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.66 2003-06-12 17:39:33 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.67 2003-07-03 18:59:52 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -645,7 +645,7 @@ void gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives){
 
 void gl2psTraverseBspTree(GL2PSbsptree *tree, GL2PSxyz eye, GLfloat epsilon,
 			  GLboolean (*compare)(GLfloat f1, GLfloat f2),
-			  void (*action)(void *data, void *dummy)){
+			  void (*action)(void *data, void *dummy), int inverse){
   GLfloat result;
 
   if(!tree) return;
@@ -653,18 +653,28 @@ void gl2psTraverseBspTree(GL2PSbsptree *tree, GL2PSxyz eye, GLfloat epsilon,
   result = gl2psComparePointPlane(eye, tree->plane);
 
   if(compare(result, epsilon)){
-    gl2psTraverseBspTree(tree->back, eye, epsilon, compare, action);
-    gl2psListAction(tree->primitives, action);
-    gl2psTraverseBspTree(tree->front, eye, epsilon, compare, action);
+    gl2psTraverseBspTree(tree->back, eye, epsilon, compare, action, inverse);
+    if(inverse){
+      gl2psListActionInverse(tree->primitives, action);
+    }
+    else{
+      gl2psListAction(tree->primitives, action);
+    }
+    gl2psTraverseBspTree(tree->front, eye, epsilon, compare, action, inverse);
   }
   else if(compare(-epsilon, result)){ 
-    gl2psTraverseBspTree(tree->front, eye, epsilon, compare, action);
-    gl2psListAction(tree->primitives, action);
-    gl2psTraverseBspTree(tree->back, eye, epsilon, compare, action);
+    gl2psTraverseBspTree(tree->front, eye, epsilon, compare, action, inverse);
+    if(inverse){
+      gl2psListActionInverse(tree->primitives, action);
+    }
+    else{
+      gl2psListAction(tree->primitives, action);
+    }
+    gl2psTraverseBspTree(tree->back, eye, epsilon, compare, action, inverse);
   }
   else{
-    gl2psTraverseBspTree(tree->front, eye, epsilon, compare, action);
-    gl2psTraverseBspTree(tree->back, eye, epsilon, compare, action);
+    gl2psTraverseBspTree(tree->front, eye, epsilon, compare, action, inverse);
+    gl2psTraverseBspTree(tree->back, eye, epsilon, compare, action, inverse);
   }
 }
 
@@ -943,7 +953,9 @@ GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree){
   }
 
   if(*tree == NULL){
-    gl2psAddPlanesInBspTreeImage(prim, tree);
+    if(!gl2ps->zerosurfacearea){
+      gl2psAddPlanesInBspTreeImage(gl2ps->primitivetoadd, tree);
+    }
     return 1;
   }
   else{
@@ -966,8 +978,19 @@ GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree){
       gl2psFree(backprim);
       return ret;
     case GL2PS_COINCIDENT:
-      if(prim->numverts < 3) return 1;
-      else                   return 0;
+      if((*tree)->back != NULL){
+        gl2ps->zerosurfacearea = 1;
+        ret = gl2psAddInBspImageTree(prim, &(*tree)->back);
+        gl2ps->zerosurfacearea = 0;
+        if(ret) return ret;
+      }
+      if((*tree)->front != NULL){
+        gl2ps->zerosurfacearea = 1;
+        ret = gl2psAddInBspImageTree(prim, &(*tree)->front);
+        gl2ps->zerosurfacearea = 0;
+        if(ret) return ret;
+      }
+      return 0;
     }
   }
   return 0;
@@ -975,7 +998,7 @@ GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree){
 
 void gl2psAddInImageTree(void *a, void *b){
   GL2PSprimitive *prim = *(GL2PSprimitive **)a;
-
+  gl2ps->primitivetoadd = prim;
   if(!gl2psAddInBspImageTree(prim, &gl2ps->imagetree)){
     prim->culled = 1;
   }
@@ -1937,11 +1960,11 @@ GLint gl2psPrintPrimitives(void){
     if(gl2ps->boundary) gl2psBuildPolygonBoundary(root);
     if(gl2ps->options & GL2PS_OCCLUSION_CULL){
       gl2psTraverseBspTree(root, eye, -(float)GL2PS_EPSILON, gl2psLess,
-			   gl2psAddInImageTree);
+			   gl2psAddInImageTree, 1);
       gl2psFreeBspImageTree(&gl2ps->imagetree);
     }
     gl2psTraverseBspTree(root, eye, (float)GL2PS_EPSILON, gl2psGreater, 
-			 pprim);
+			 pprim, 0);
     gl2psFreeBspTree(&root);
     /* reallocate the primitive list (it's been deleted by
        gl2psBuildBspTree) in case there is another viewport */
@@ -1975,8 +1998,14 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   gl2ps->filename = filename;
   gl2ps->sort = sort;
   gl2ps->options = options;
-  for(i = 0; i < 4; i++){
-    gl2ps->viewport[i] = viewport[i];
+
+  if(gl2ps->options & GL2PS_USE_CURRENT_VIEWPORT){
+    glGetIntegerv(GL_VIEWPORT, viewport);
+  }
+  else{
+    for(i = 0; i < 4; i++){
+      gl2ps->viewport[i] = viewport[i];
+    }
   }
   gl2ps->threshold[0] = nr ? 1./(GLfloat)nr : 0.032;
   gl2ps->threshold[1] = ng ? 1./(GLfloat)ng : 0.017;
@@ -1988,6 +2017,8 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   }
   gl2ps->lastlinewidth = -1.;
   gl2ps->imagetree = NULL;
+  gl2ps->primitivetoadd = NULL;
+  gl2ps->zerosurfacearea = 0;  
 
   if(gl2ps->colormode == GL_RGBA){
     gl2ps->colorsize = 0;

@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2003 Christophe Geuzaine
  *
- * $Id: gl2ps.h,v 1.40 2003-06-12 17:39:33 geuzaine Exp $
+ * $Id: gl2ps.h,v 1.41 2003-07-03 18:59:52 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -57,7 +57,7 @@
 
 #define GL2PS_MAJOR_VERSION 0
 #define GL2PS_MINOR_VERSION 9
-#define GL2PS_PATCH_VERSION 1
+#define GL2PS_PATCH_VERSION 2
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
                        0.01 * GL2PS_MINOR_VERSION + \
@@ -77,16 +77,17 @@
 
 /* Options for gl2psBeginPage */
 
-#define GL2PS_NONE               0
-#define GL2PS_DRAW_BACKGROUND    (1<<0)
-#define GL2PS_SIMPLE_LINE_OFFSET (1<<1)
-#define GL2PS_SILENT             (1<<2)
-#define GL2PS_BEST_ROOT          (1<<3)
-#define GL2PS_OCCLUSION_CULL     (1<<4)
-#define GL2PS_NO_TEXT            (1<<5)
-#define GL2PS_LANDSCAPE          (1<<6)
-#define GL2PS_NO_PS3_SHADING     (1<<7)
-#define GL2PS_NO_PIXMAP          (1<<8)
+#define GL2PS_NONE                 0
+#define GL2PS_DRAW_BACKGROUND      (1<<0)
+#define GL2PS_SIMPLE_LINE_OFFSET   (1<<1)
+#define GL2PS_SILENT               (1<<2)
+#define GL2PS_BEST_ROOT            (1<<3)
+#define GL2PS_OCCLUSION_CULL       (1<<4)
+#define GL2PS_NO_TEXT              (1<<5)
+#define GL2PS_LANDSCAPE            (1<<6)
+#define GL2PS_NO_PS3_SHADING       (1<<7)
+#define GL2PS_NO_PIXMAP            (1<<8)
+#define GL2PS_USE_CURRENT_VIEWPORT (1<<9)
 
 /* Arguments for gl2psEnable/gl2psDisable */
 
@@ -197,7 +198,7 @@ typedef struct {
 typedef struct {
   GLint format, sort, options, colorsize, colormode, buffersize, maxbestroot;
   const char *title, *producer, *filename;
-  GLboolean boundary;
+  GLboolean boundary, zerosurfacearea;
   GLfloat *feedback, offset[2];
   GLint viewport[4];
   GL2PSrgba *colormap, lastrgba, threshold;
@@ -205,6 +206,7 @@ typedef struct {
   GL2PSlist *primitives;
   GL2PSbsptree2d *imagetree;
   FILE *stream;
+  GL2PSprimitive *primitivetoadd;
 } GL2PScontext;
 
 /* public functions */
