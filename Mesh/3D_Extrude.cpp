@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.15 2001-08-01 18:01:04 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.16 2001-08-02 07:26:13 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -653,11 +653,6 @@ void Free_NegativeSimplex (void *a, void *b){
   }
 }
 
-void Untag_NegativeSimplex (void *a, void *b){
-  Simplex *s = *(Simplex**)a;
-  if(s && s->Num<0) s->Num = -s->Num;
-}
-
 int Extrude_Mesh (Volume * v){
   int i, j;
   Surface *ss;
@@ -716,7 +711,8 @@ int Extrude_Mesh (Volume * v){
     // j'ai rajoute un truc assez horrible pour ne pas supprimer les
     // tri/qua qui ne doivent pas l'etre, i.e. tous ceux qui ne sont
     // pas crees par l'extrusion. Je les tagge avec un numero negatif
-    // (qu'ils garderont si on ne maille pas en 3d...).
+    // (qu'ils garderont toute leur vie, pour permettre a des volumes
+    // adjacents de respecter les frontieres communes).
 
     for (i = 0; i < List_Nbr (v->Surfaces); i++){
       List_Read (v->Surfaces, i, &ss);
@@ -725,11 +721,6 @@ int Extrude_Mesh (Volume * v){
       Tree_Delete(ss->Simplexes);
       ss->Simplexes = tmp;
       Extrude_Mesh(ss);
-    }
-
-    for (i = 0; i < List_Nbr (v->Surfaces); i++){
-      List_Read (v->Surfaces, i, &ss);
-      Tree_Action(ss->Simplexes, Untag_NegativeSimplex);
     }
 
     return true;
