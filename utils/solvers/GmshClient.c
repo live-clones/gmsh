@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.9 2005-01-01 02:14:31 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.10 2005-01-01 18:57:19 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -100,8 +100,6 @@ int Gmsh_Connect(char *sockname)
   else{
     /* INET socket */
     port = strstr(sockname, ":");
-    if(!port)
-      return -1; /* Error: Couldn't create socket */
     portno = atoi(port+1);
     remotelen = strlen(sockname) - strlen(port);
     if(remotelen > 0)

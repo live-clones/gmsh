@@ -1,4 +1,4 @@
-/* $Id: GmshServer.cpp,v 1.22 2005-01-01 01:49:19 geuzaine Exp $ */
+/* $Id: GmshServer.cpp,v 1.23 2005-01-01 18:57:19 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -116,8 +116,6 @@ int Gmsh_StartClient(char *command, char *sockname)
   else{
     /* INET socket */
     port = strstr(sockname, ":");
-    if(!port)
-      return -1;  /* Error: Couldn't create socket */
     portno = atoi(port+1);
   }
 
