@@ -1,4 +1,4 @@
-$Id: README,v 1.7 2001-02-19 21:55:43 geuzaine Exp $
+$Id: README,v 1.8 2001-03-01 08:04:15 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -9,58 +9,57 @@ t1.geo.
 formats. See the FORMATS file for this.)
 
 There are two ways to actually run these examples with Gmsh. (The
-operations to run Gmsh may vary depending on your operating system. In
-the following, we will assume that you're working with a UNIX-like
-shell.) The first working mode of Gmsh is the interactive graphical
-mode. To launch Gmsh in interactive mode, just type
+operations to run Gmsh may vary according to your operating system. In
+the folowing examples, we will assume that you're working with a
+UNIX-like shell.) The first working mode of Gmsh is the interactive
+graphical mode. To launch Gmsh in interactive mode, just type
 
 > gmsh
 
 at the prompt on the command line. This will open two windows: the
 graphic window (with a status bar at the bottom) and the menu window
 (with a menu bar and some context dependent buttons). To open the
-first tutorial file, you have to select the 'File->Open' menu, and
-choose 't1.geo' in the input field. To perform the mesh generation,
-you have to go to the mesh module (by selecting 'Mesh' in the module
-menu) and choose the required dimension in the context-dependent
-buttons ('1D' will mesh all the curves; '2D' will mesh all the
-surfaces ---as well as all the curves if '1D' was not called before;
-'3D' will mesh all the volumes ---and all the surfaces if '2D' was not
-called before). To save the resulting mesh, select 'File->Save_Mesh'
-in the menu bar. The default mesh file name is based on the name of
-the first input file on the command line (or 'unnamed' if there wasn't
-any input file given), with an appended extension depending on the
-mesh format.
+first tutorial file, select the 'File->Open' menu, and choose 't1.geo'
+in the input field. To perform the mesh generation, go to the mesh
+module (by selecting 'Mesh' in the module menu) and choose the
+required dimension in the context-dependent buttons ('1D' will mesh
+all the curves; '2D' will mesh all the surfaces ---as well as all the
+curves if '1D' was not called before; '3D' will mesh all the volumes
+---and all the surfaces if '2D' was not called before). To save the
+resulting mesh, select 'File->Save_Mesh' in the menu bar. The default
+mesh file name is based on the name of the first input file on the
+command line (or 'unnamed' if there wasn't any input file given), with
+an appended extension depending on the mesh format.
 
 Note: nearly all the interactive commands have shortcuts. Select
 'Help->Shortcuts' in the menu bar to learn about these shortcuts.
 
 Instead of opening the tutorial with the 'File->Open' menu, it is
-often more convenient to put the file name on the command line, here
-for example with:
+often more convenient to put the file name on the command line, for
+example with:
 
 > gmsh t1.geo
 
 (The '.geo' extension can also be omitted.)
 
-Note: to define new geometries, if it is often handy to define the
-variables and the points directly in the input files (you may use any
-text editor for this purpose, e.g. Wordpad on Windows, or Emacs on
-Unix), it is almost always simpler to define the curves, the surfaces
-and the volumes interactively. To do so, just follow the context
-dependent buttons in the Geometry module. For example, to create a
-line, select 'Geometry' in the module menu, and then select
-'Elementary, Add, Create, Line'. You will then be asked (in the status
-bar of the graphic window) to select a list of points, and to click
-'e' when you're done. Once the interactive command is completed, a
-string is automatically added at the end of the currently opened
-project file.
+Note: Even if it is often handy to define the variables and the points
+directly in the input files (you may use any text editor for this
+purpose, e.g. Wordpad on Windows, or Emacs on Unix), it is almost
+always more simple to define the curves, the surfaces and the volumes
+interactively. To do so, just follow the context dependent buttons in
+the Geometry module. For example, to create a line, select 'Geometry'
+in the module menu, and then select 'Elementary, Add, Create,
+Line'. You will then be asked (in the status bar of the graphic
+window) to select a list of points, and to click 'e' to finish the
+selection (or 'q' to abort it). Once the interactive command is
+completed, a string is automatically added at the end of the currently
+opened project file.
 
 
 The second operating mode for Gmsh is the non-interactive mode. In
 this mode, there is no graphical user interface, and all operations
-are performed without any user interaction. To mesh the first tutorial
-in non-interactive mode, just type:
+are performed without any interaction. To mesh the first tutorial in
+non-interactive mode, just type:
 
 > gmsh t1.geo -2
 
@@ -77,10 +76,10 @@ the following line on the command line:
 
 In the Post-Processing module (select 'Post_Processing' in the module
 menu), two view buttons will appear, respectively labeled "a scalar
-map" and "a vector map". A left mouse click will toggle the visibility
-of the selected view. A right mouse click provides access to the
-view's options. If you want the modifications made to one view to
-affect also all other views, select the 'Link all views' option in the
+map" and "a vector map". A left mouse click toggles the visibility of
+the selected view. A right mouse click provides access to the view's
+options. If you want the modifications made to one view to affect also
+all the other views, select the 'Link all views' option in the
 'Options->Post-Processing' menu.
 
 Note: all the options specified interactively can also be directly

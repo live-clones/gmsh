@@ -22,7 +22,7 @@
 <H1>README 1/9</H1>
 [<A HREF="#top">top</A>][prev][<A HREF="#file2">next</A>]
 <PRE>
-$Id: tutorial.html,v 1.6 2001-02-18 18:41:05 geuzaine Exp $
+$Id: tutorial.html,v 1.7 2001-03-01 08:04:15 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -33,56 +33,57 @@ t1.geo.
 formats. See the FORMATS file for this.)
 
 There are two ways to actually run these examples with Gmsh. (The
-operations to run Gmsh may vary depending on your operating system. In
-the following, we will assume that you're working with a UNIX-like
-shell.) The first working mode of Gmsh is the interactive graphical
-mode. To launch Gmsh in interactive mode, just type
+operations to run Gmsh may vary according to your operating system. In
+the folowing examples, we will assume that you're working with a
+UNIX-like shell.) The first working mode of Gmsh is the interactive
+graphical mode. To launch Gmsh in interactive mode, just type
 
 &gt; gmsh
 
 at the prompt on the command line. This will open two windows: the
 graphic window (with a status bar at the bottom) and the menu window
 (with a menu bar and some context dependent buttons). To open the
-first tutorial file, you have to select the 'File-&gt;Open' menu, and
-choose 't1.geo' in the input field. To perform the mesh generation,
-you have to go to the mesh module (by selecting 'Mesh' in the module
-menu) and choose the required dimension in the context-dependent
-buttons ('1D' will mesh all the curves; '2D' will mesh all the
-surfaces ---as well as all the curves if '1D' was not called before;
-'3D' will mesh all the volumes ---and all the surfaces if '2D' was not
-called before). To save the resulting mesh, select 'File-&gt;Save_Mesh'
-in the menu bar. The default mesh file name is based on the name of
-the first input file on the command line (or 'unnamed' if there wasn't
-any input file given), with an appended extension depending on the
-mesh format.
+first tutorial file, select the 'File-&gt;Open' menu, and choose 't1.geo'
+in the input field. To perform the mesh generation, go to the mesh
+module (by selecting 'Mesh' in the module menu) and choose the
+required dimension in the context-dependent buttons ('1D' will mesh
+all the curves; '2D' will mesh all the surfaces ---as well as all the
+curves if '1D' was not called before; '3D' will mesh all the volumes
+---and all the surfaces if '2D' was not called before). To save the
+resulting mesh, select 'File-&gt;Save_Mesh' in the menu bar. The default
+mesh file name is based on the name of the first input file on the
+command line (or 'unnamed' if there wasn't any input file given), with
+an appended extension depending on the mesh format.
 
 Note: nearly all the interactive commands have shortcuts. Select
-'Help-&gt;Short_Help' in the menu bar to learn about these shortcuts.
+'Help-&gt;Shortcuts' in the menu bar to learn about these shortcuts.
 
 Instead of opening the tutorial with the 'File-&gt;Open' menu, it is
-often more convenient to put the file name on the command line, here
-for example with:
+often more convenient to put the file name on the command line, for
+example with:
 
 &gt; gmsh t1.geo
 
 (The '.geo' extension can also be omitted.)
 
-Note: to define new geometries, if it is often handy to define the
-variables and the points directly in the input files, it is almost
-always simpler to define the curves, the surfaces and the volumes
+Note: Even if it is often handy to define the variables and the points
+directly in the input files (you may use any text editor for this
+purpose, e.g. Wordpad on Windows, or Emacs on Unix), it is almost
+always more simple to define the curves, the surfaces and the volumes
 interactively. To do so, just follow the context dependent buttons in
 the Geometry module. For example, to create a line, select 'Geometry'
 in the module menu, and then select 'Elementary, Add, Create,
 Line'. You will then be asked (in the status bar of the graphic
-window) to select a list of points, and to click 'e' when you're
-done. Once the interactive command is completed, a string is
-automatically added at the end of the currently opened project file.
+window) to select a list of points, and to click 'e' to finish the
+selection (or 'q' to abort it). Once the interactive command is
+completed, a string is automatically added at the end of the currently
+opened project file.
 
 
 The second operating mode for Gmsh is the non-interactive mode. In
 this mode, there is no graphical user interface, and all operations
-are performed without any user interaction. To mesh the first tutorial
-in non-interactive mode, just type:
+are performed without any interaction. To mesh the first tutorial in
+non-interactive mode, just type:
 
 &gt; gmsh t1.geo -2
 
@@ -99,16 +100,19 @@ the following line on the command line:
 
 In the Post-Processing module (select 'Post_Processing' in the module
 menu), two view buttons will appear, respectively labeled &quot;a scalar
-map&quot; and &quot;a vector map&quot;. A left mouse click will toggle the visibility
-of the selected view. A right mouse click provides access to the
-view's options. If you want the modifications made to one view to
-affect also all other views, select the 'Link all views' option in the
+map&quot; and &quot;a vector map&quot;. A left mouse click toggles the visibility of
+the selected view. A right mouse click provides access to the view's
+options. If you want the modifications made to one view to affect also
+all the other views, select the 'Link all views' option in the
 'Options-&gt;Post-Processing' menu.
 
 Note: all the options specified interactively can also be directly
-specified in the ascii input files. The current options can be saved
-into a file by selecting 'File-&gt;Save_as', or simply viewed by pressing
-the '?' button in the status bar.
+specified in the ascii input files. All available options, with their
+current values, can be saved into a file by selecting
+'File-&gt;Save_as-&gt;GEO complete options', or simply viewed by pressing
+the '?' button in the status bar. To save the current options as the
+default options for all future Gmsh sessions, use the
+'File-&gt;Save_Options' menu.
 
 
 OK, that's all, folks. Enjoy the tutorial.
@@ -140,14 +144,14 @@ lc = 0.007 ;
 <I><FONT COLOR="#B22222">// This newly created variable can be used to define the first Gmsh
 </FONT></I><I><FONT COLOR="#B22222">// elementary entity, a 'Point'. A Point is defined by a list of four
 </FONT></I><I><FONT COLOR="#B22222">// numbers: its three coordinates (x, y and z), and a characteristic
-</FONT></I><I><FONT COLOR="#B22222">// length, which sets the target mesh size at the point:
+</FONT></I><I><FONT COLOR="#B22222">// length which sets the target mesh size at the point:
 </FONT></I>
 Point(1) = {0,  0,  0, 9.e-1 * lc} ;
 
 <I><FONT COLOR="#B22222">// As can be seen in this definition, more complex expressions can be
-</FONT></I><I><FONT COLOR="#B22222">// constructed from variables on the fly. Here, the product of the
-</FONT></I><I><FONT COLOR="#B22222">// variable 'lc' by the constant 9.e-1 is given as the fourth argument
-</FONT></I><I><FONT COLOR="#B22222">// of the list defining the point.
+</FONT></I><I><FONT COLOR="#B22222">// constructed from variables. Here, the product of the variable 'lc'
+</FONT></I><I><FONT COLOR="#B22222">// by the constant 9.e-1 is given as the fourth argument of the list
+</FONT></I><I><FONT COLOR="#B22222">// defining the point.
 </FONT></I><I><FONT COLOR="#B22222">//
 </FONT></I><I><FONT COLOR="#B22222">// The following general syntax rule is applied for the definition of
 </FONT></I><I><FONT COLOR="#B22222">// all geometrical entities:
@@ -164,7 +168,7 @@ Point(4) = {0,  .3, 0, lc} ;
 
 <I><FONT COLOR="#B22222">// The second elementary geometrical entity in Gmsh is the
 </FONT></I><I><FONT COLOR="#B22222">// curve. Amongst curves, straight lines are the simplest. A straight
-</FONT></I><I><FONT COLOR="#B22222">// line is defined by a list of point numbers. For example, the line 1
+</FONT></I><I><FONT COLOR="#B22222">// line is defined by a list of point numbers. For example, line 1
 </FONT></I><I><FONT COLOR="#B22222">// starts at point 1 and ends at point 2:
 </FONT></I>
 Line(1) = {1,2} ;
@@ -175,8 +179,8 @@ Line(4) = {4,1} ;
 <I><FONT COLOR="#B22222">// The third elementary entity is the surface. In order to define a
 </FONT></I><I><FONT COLOR="#B22222">// simple rectangular surface from the four lines defined above, a
 </FONT></I><I><FONT COLOR="#B22222">// line loop has first to be defined. A line loop is a list of
-</FONT></I><I><FONT COLOR="#B22222">// connected lines, each line being associated a sign, depending of
-</FONT></I><I><FONT COLOR="#B22222">// its orientation.
+</FONT></I><I><FONT COLOR="#B22222">// connected lines, a sign being associated with each line (depending
+</FONT></I><I><FONT COLOR="#B22222">// on the orientation of the line).
 </FONT></I>
 Line Loop(5) = {4,1,-2,3} ;
 
@@ -187,12 +191,12 @@ Plane Surface(6) = {5} ;
 
 <I><FONT COLOR="#B22222">// At this level, Gmsh knows everything to display the rectangular
 </FONT></I><I><FONT COLOR="#B22222">// surface 6 and to mesh it. But a supplementary step is needed in
-</FONT></I><I><FONT COLOR="#B22222">// order for assign region numbers to the various elements in the mesh
-</FONT></I><I><FONT COLOR="#B22222">// (the points, the lines and the triangles discretizing the points 1
-</FONT></I><I><FONT COLOR="#B22222">// to 4, the lines 1 to 4 and the surface 6). This is achieved by the
-</FONT></I><I><FONT COLOR="#B22222">// definition of Physical entities. Physical entities will group
-</FONT></I><I><FONT COLOR="#B22222">// elements belonging to several elementary entities by giving them a
-</FONT></I><I><FONT COLOR="#B22222">// common number (a region number), and specifying their orientation.
+</FONT></I><I><FONT COLOR="#B22222">// order to assign region numbers to the various elements in the mesh
+</FONT></I><I><FONT COLOR="#B22222">// (the points, the lines and the triangles discretizing points 1 to
+</FONT></I><I><FONT COLOR="#B22222">// 4, lines 1 to 4 and surface 6). This is achieved by the definition
+</FONT></I><I><FONT COLOR="#B22222">// of Physical entities. Physical entities will group elements
+</FONT></I><I><FONT COLOR="#B22222">// belonging to several elementary entities by giving them a common
+</FONT></I><I><FONT COLOR="#B22222">// number (a region number), and specifying their orientation.
 </FONT></I><I><FONT COLOR="#B22222">//
 </FONT></I><I><FONT COLOR="#B22222">// For example, the two points 1 and 2 can be grouped into the
 </FONT></I><I><FONT COLOR="#B22222">// physical entity 1:
@@ -206,17 +210,16 @@ Physical Point(1) = {1,2} ;
 Physical Line(10) = {1,2,4} ;
 Physical Surface(100) = {6} ;
 
-<I><FONT COLOR="#B22222">// All the line elements which will be created during the mesh of the
-</FONT></I><I><FONT COLOR="#B22222">// lines 1, 2 and 4 will be saved in the output file with the
-</FONT></I><I><FONT COLOR="#B22222">// associated region number 10; and all the triangular elements
-</FONT></I><I><FONT COLOR="#B22222">// resulting from the discretization of the surface 6 will be
-</FONT></I><I><FONT COLOR="#B22222">// associated the region number 100. 
+<I><FONT COLOR="#B22222">// All the line elements which will be created during the mesh of
+</FONT></I><I><FONT COLOR="#B22222">// lines 1, 2 and 4 will be saved in the output file with the region
+</FONT></I><I><FONT COLOR="#B22222">// number 10; and all the triangular elements resulting from the
+</FONT></I><I><FONT COLOR="#B22222">// discretization of surface 6 will be given the region number 100.
 </FONT></I>
 <I><FONT COLOR="#B22222">// It is important to notice that only those elements which belong to
 </FONT></I><I><FONT COLOR="#B22222">// physical groups will be saved in the output file if the file format
 </FONT></I><I><FONT COLOR="#B22222">// is the msh format (the native mesh file format for Gmsh). For a
-</FONT></I><I><FONT COLOR="#B22222">// description of the mesh and post-processing formats, see the FORMATS
-</FONT></I><I><FONT COLOR="#B22222">// file.
+</FONT></I><I><FONT COLOR="#B22222">// description of the mesh and post-processing formats, see the
+</FONT></I><I><FONT COLOR="#B22222">// FORMATS file.
 </FONT></I></PRE>
 <HR>
 <A NAME="file3">
@@ -233,7 +236,7 @@ Physical Surface(100) = {6} ;
  *********************************************************************/</FONT></I>
 
 <I><FONT COLOR="#B22222">// The first tutorial file will serve as a basis to construct this
-</FONT></I><I><FONT COLOR="#B22222">// one: it can be included like this:
+</FONT></I><I><FONT COLOR="#B22222">// one. It can be included with:
 </FONT></I>
 Include &quot;t1.geo&quot; ;
 
@@ -258,10 +261,10 @@ Translate {-0.05,0,0} { Point{3} ; }
 </FONT></I>
 Translate {0,0.1,0} { Duplicata{ Point{3} ; } }
 
-<I><FONT COLOR="#B22222">// Translation, rotation and extrusion commands of course not only
+<I><FONT COLOR="#B22222">// Of course, translation, rotation and extrusion commands not only
 </FONT></I><I><FONT COLOR="#B22222">// apply to points, but also to lines and surfaces. The following
-</FONT></I><I><FONT COLOR="#B22222">// command extrudes the surface 6 defined in 't1.geo', as well as a
-</FONT></I><I><FONT COLOR="#B22222">// new surface 11, along the z axis by 'h':
+</FONT></I><I><FONT COLOR="#B22222">// command extrudes surface 6 defined in 't1.geo', as well as a new
+</FONT></I><I><FONT COLOR="#B22222">// surface 11, along the z axis by 'h':
 </FONT></I>
 h = 0.12 ;
 Extrude Surface { 6, {0, 0, h} } ;
@@ -272,7 +275,7 @@ Plane Surface(11) = {10};
 
 Extrude Surface { 11, {0, 0, h} } ;
 
-<I><FONT COLOR="#B22222">// All these geometrical transformations generate automatically new
+<I><FONT COLOR="#B22222">// All these geometrical transformations automatically generate new
 </FONT></I><I><FONT COLOR="#B22222">// elementary entities. The following commands permit to specify
 </FONT></I><I><FONT COLOR="#B22222">// manually a characteristic length for some of the automatically
 </FONT></I><I><FONT COLOR="#B22222">// created points:
@@ -280,7 +283,7 @@ Extrude Surface { 11, {0, 0, h} } ;
 Characteristic Length{6,22,2,3,16,12} = lc * 3 ;
 
 <I><FONT COLOR="#B22222">// If the transformation tools are handy to create complex geometries,
-</FONT></I><I><FONT COLOR="#B22222">// it is sometimes useful to be generate the flat geometry, consisting
+</FONT></I><I><FONT COLOR="#B22222">// it is sometimes useful to generate the flat geometry, consisting
 </FONT></I><I><FONT COLOR="#B22222">// only of the explicit list elementary entities. This can be achieved
 </FONT></I><I><FONT COLOR="#B22222">// by selecting the 'File-&gt;Print-&gt;Geo' menu or by typing
 </FONT></I><I><FONT COLOR="#B22222">//
@@ -331,11 +334,10 @@ Include &quot;t1.geo&quot; ;
 h = 0.1 ;
 
 <I><FONT COLOR="#B22222">// But contrary to 't2.geo', not only the geometry will be extruded,
-</FONT></I><I><FONT COLOR="#B22222">// but we also the 2D mesh. This is done with the same Extrude
-</FONT></I><I><FONT COLOR="#B22222">// command, but by specifying the number of layers (here, there will
-</FONT></I><I><FONT COLOR="#B22222">// be two layers, of respectively 2 and 4 elements in depth), with
-</FONT></I><I><FONT COLOR="#B22222">// volume numbers 9000 and 9001 and respective heights of 0.33*h and
-</FONT></I><I><FONT COLOR="#B22222">// 0.67*h:
+</FONT></I><I><FONT COLOR="#B22222">// but also the 2D mesh. This is done with the same Extrude command,
+</FONT></I><I><FONT COLOR="#B22222">// but by specifying the number of layers (here, there will be two
+</FONT></I><I><FONT COLOR="#B22222">// layers, of respectively 2 and 4 elements in depth), with volume
+</FONT></I><I><FONT COLOR="#B22222">// numbers 9000 and 9001 and respective heights of 0.33*h and 0.67*h:
 </FONT></I>
 Extrude Surface { 6, {0,0,h} } { Layers { {2,4}, {9000,9001}, {0.33,1} } ; } ;
 
@@ -350,9 +352,10 @@ Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
 
 <I><FONT COLOR="#B22222">// All interactive options can also be set directly in the input file.
 </FONT></I><I><FONT COLOR="#B22222">// For example, the following lines redefine the background color of
-</FONT></I><I><FONT COLOR="#B22222">// the graphic window, the color of the points of the geometry,
-</FONT></I><I><FONT COLOR="#B22222">// disable the display of the axes, and select an initial viewpoint in
-</FONT></I><I><FONT COLOR="#B22222">// xyz mode (disabling the interactive trackball-like rotation mode):
+</FONT></I><I><FONT COLOR="#B22222">// the graphic window, redefine the color of the points of the
+</FONT></I><I><FONT COLOR="#B22222">// geometry, disable the display of the axes, and select an initial
+</FONT></I><I><FONT COLOR="#B22222">// viewpoint in XYZ mode (disabling the interactive trackball-like
+</FONT></I><I><FONT COLOR="#B22222">// rotation mode):
 </FONT></I>
 General.Color.Background = Red;
 Geometry.Color.Points = Orange;
@@ -371,14 +374,15 @@ General.TranslationX = -0.1;
 </FONT></I>
 Geometry.Color.Surfaces = Geometry.Color.Points;
 
-<I><FONT COLOR="#B22222">// will set the color of the surfaces in the geometry to the same
+<I><FONT COLOR="#B22222">// will assign the color of the surfaces in the geometry to the same
 </FONT></I><I><FONT COLOR="#B22222">// color as the points.
 </FONT></I>
-<I><FONT COLOR="#B22222">// For UNIX versions, a click on the '?'  button in status bar of the
-</FONT></I><I><FONT COLOR="#B22222">// graphic window will dump all current options to the terminal. To
-</FONT></I><I><FONT COLOR="#B22222">// save the options to a file, use the 'File-&gt;Save_Options_as' menu.
-</FONT></I>
-</PRE>
+<I><FONT COLOR="#B22222">// A click on the '?'  button in the status bar of the graphic window
+</FONT></I><I><FONT COLOR="#B22222">// will dump all current options to the terminal. To save all
+</FONT></I><I><FONT COLOR="#B22222">// available options to a file, use the 'File-&gt;Save_as-&gt;GEO complete
+</FONT></I><I><FONT COLOR="#B22222">// options' menu. To save the current options as the default options
+</FONT></I><I><FONT COLOR="#B22222">// for all future Gmsh sessions, use the 'File-&gt;Save_Options' menu.
+</FONT></I></PRE>
 <HR>
 <A NAME="file5">
 <H1>t4.geo 5/9</H1>
@@ -453,8 +457,7 @@ Lc2 = 0.003 ;
 </FONT></I><I><FONT COLOR="#B22222">//   Fmod(x,y)
 </FONT></I><I><FONT COLOR="#B22222">//   Hypot(x,y)
 </FONT></I>
-<I><FONT COLOR="#B22222">// An additional function 'Rand(x)' generates an random number in
-</FONT></I><I><FONT COLOR="#B22222">// [0,x]
+<I><FONT COLOR="#B22222">// An additional function 'Rand(x)' generates a random number in [0,x]
 </FONT></I><I><FONT COLOR="#B22222">//
 </FONT></I><I><FONT COLOR="#B22222">//   Rand(x)
 </FONT></I><I><FONT COLOR="#B22222">//
@@ -642,7 +645,7 @@ Function CheeseHole
 <I><FONT COLOR="#B22222">// Arrays of variables can be manipulated in the same way as classical
 </FONT></I><I><FONT COLOR="#B22222">// variables. Warning: accessing an uninitialized element in an array
 </FONT></I><I><FONT COLOR="#B22222">// will produce an unpredictable result. Note that whole arrays can
-</FONT></I><I><FONT COLOR="#B22222">// also be initialized on the fly (e.g. l[]={1,2,7} is valid).
+</FONT></I><I><FONT COLOR="#B22222">// also be instantly initialized (e.g. l[]={1,2,7} is valid).
 </FONT></I>
   theloops[t] = newreg ; 
 
@@ -664,7 +667,7 @@ For t In {1:5}
   z += 0.166 ; 
 
 <I><FONT COLOR="#B22222">// This command calls the function CheeseHole. Note that, instead of
-</FONT></I><I><FONT COLOR="#B22222">// defining a function, we could have define a file containing the
+</FONT></I><I><FONT COLOR="#B22222">// defining a function, we could have defined a file containing the
 </FONT></I><I><FONT COLOR="#B22222">// same code, and used the Include command to include this file.
 </FONT></I>
   Call CheeseHole ;

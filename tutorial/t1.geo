@@ -19,14 +19,14 @@ lc = 0.007 ;
 // This newly created variable can be used to define the first Gmsh
 // elementary entity, a 'Point'. A Point is defined by a list of four
 // numbers: its three coordinates (x, y and z), and a characteristic
-// length, which sets the target mesh size at the point:
+// length which sets the target mesh size at the point:
 
 Point(1) = {0,  0,  0, 9.e-1 * lc} ;
 
 // As can be seen in this definition, more complex expressions can be
-// constructed from variables on the fly. Here, the product of the
-// variable 'lc' by the constant 9.e-1 is given as the fourth argument
-// of the list defining the point.
+// constructed from variables. Here, the product of the variable 'lc'
+// by the constant 9.e-1 is given as the fourth argument of the list
+// defining the point.
 //
 // The following general syntax rule is applied for the definition of
 // all geometrical entities:
@@ -43,7 +43,7 @@ Point(4) = {0,  .3, 0, lc} ;
 
 // The second elementary geometrical entity in Gmsh is the
 // curve. Amongst curves, straight lines are the simplest. A straight
-// line is defined by a list of point numbers. For example, the line 1
+// line is defined by a list of point numbers. For example, line 1
 // starts at point 1 and ends at point 2:
 
 Line(1) = {1,2} ;
@@ -54,8 +54,8 @@ Line(4) = {4,1} ;
 // The third elementary entity is the surface. In order to define a
 // simple rectangular surface from the four lines defined above, a
 // line loop has first to be defined. A line loop is a list of
-// connected lines, each line being associated a sign, depending of
-// its orientation.
+// connected lines, a sign being associated with each line (depending
+// on the orientation of the line).
 
 Line Loop(5) = {4,1,-2,3} ;
 
@@ -66,12 +66,12 @@ Plane Surface(6) = {5} ;
 
 // At this level, Gmsh knows everything to display the rectangular
 // surface 6 and to mesh it. But a supplementary step is needed in
-// order for assign region numbers to the various elements in the mesh
-// (the points, the lines and the triangles discretizing the points 1
-// to 4, the lines 1 to 4 and the surface 6). This is achieved by the
-// definition of Physical entities. Physical entities will group
-// elements belonging to several elementary entities by giving them a
-// common number (a region number), and specifying their orientation.
+// order to assign region numbers to the various elements in the mesh
+// (the points, the lines and the triangles discretizing points 1 to
+// 4, lines 1 to 4 and surface 6). This is achieved by the definition
+// of Physical entities. Physical entities will group elements
+// belonging to several elementary entities by giving them a common
+// number (a region number), and specifying their orientation.
 //
 // For example, the two points 1 and 2 can be grouped into the
 // physical entity 1:
@@ -85,14 +85,13 @@ Physical Point(1) = {1,2} ;
 Physical Line(10) = {1,2,4} ;
 Physical Surface(100) = {6} ;
 
-// All the line elements which will be created during the mesh of the
-// lines 1, 2 and 4 will be saved in the output file with the
-// associated region number 10; and all the triangular elements
-// resulting from the discretization of the surface 6 will be
-// associated the region number 100. 
+// All the line elements which will be created during the mesh of
+// lines 1, 2 and 4 will be saved in the output file with the region
+// number 10; and all the triangular elements resulting from the
+// discretization of surface 6 will be given the region number 100.
 
 // It is important to notice that only those elements which belong to
 // physical groups will be saved in the output file if the file format
 // is the msh format (the native mesh file format for Gmsh). For a
-// description of the mesh and post-processing formats, see the FORMATS
-// file.
+// description of the mesh and post-processing formats, see the
+// FORMATS file.

@@ -67,8 +67,7 @@ Lc2 = 0.003 ;
 //   Fmod(x,y)
 //   Hypot(x,y)
 
-// An additional function 'Rand(x)' generates an random number in
-// [0,x]
+// An additional function 'Rand(x)' generates a random number in [0,x]
 //
 //   Rand(x)
 //

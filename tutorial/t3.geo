@@ -15,11 +15,10 @@ Include "t1.geo" ;
 h = 0.1 ;
 
 // But contrary to 't2.geo', not only the geometry will be extruded,
-// but we also the 2D mesh. This is done with the same Extrude
-// command, but by specifying the number of layers (here, there will
-// be two layers, of respectively 2 and 4 elements in depth), with
-// volume numbers 9000 and 9001 and respective heights of 0.33*h and
-// 0.67*h:
+// but also the 2D mesh. This is done with the same Extrude command,
+// but by specifying the number of layers (here, there will be two
+// layers, of respectively 2 and 4 elements in depth), with volume
+// numbers 9000 and 9001 and respective heights of 0.33*h and 0.67*h:
 
 Extrude Surface { 6, {0,0,h} } { Layers { {2,4}, {9000,9001}, {0.33,1} } ; } ;
 
@@ -34,9 +33,10 @@ Extrude Surface { 122, {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
 
 // All interactive options can also be set directly in the input file.
 // For example, the following lines redefine the background color of
-// the graphic window, the color of the points of the geometry,
-// disable the display of the axes, and select an initial viewpoint in
-// xyz mode (disabling the interactive trackball-like rotation mode):
+// the graphic window, redefine the color of the points of the
+// geometry, disable the display of the axes, and select an initial
+// viewpoint in XYZ mode (disabling the interactive trackball-like
+// rotation mode):
 
 General.Color.Background = Red;
 Geometry.Color.Points = Orange;
@@ -55,11 +55,11 @@ General.TranslationX = -0.1;
 
 Geometry.Color.Surfaces = Geometry.Color.Points;
 
-// will set the color of the surfaces in the geometry to the same
+// will assign the color of the surfaces in the geometry to the same
 // color as the points.
 
-// A click on the '?'  button in status bar of the graphic window will
-// dump all current options to the terminal. To save all available
-// options to a file, use the 'File->Save_as->GEO complete options'
-// menu. To save the current options as the default options for all
-// future Gmsh sessions, use the 'File->Save_Options' menu.
+// A click on the '?'  button in the status bar of the graphic window
+// will dump all current options to the terminal. To save all
+// available options to a file, use the 'File->Save_as->GEO complete
+// options' menu. To save the current options as the default options
+// for all future Gmsh sessions, use the 'File->Save_Options' menu.

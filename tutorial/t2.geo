@@ -33,10 +33,10 @@ Translate {-0.05,0,0} { Point{3} ; }
 
 Translate {0,0.1,0} { Duplicata{ Point{3} ; } }
 
-// Translation, rotation and extrusion commands of course not only
+// Of course, translation, rotation and extrusion commands not only
 // apply to points, but also to lines and surfaces. The following
-// command extrudes the surface 6 defined in 't1.geo', as well as a
-// new surface 11, along the z axis by 'h':
+// command extrudes surface 6 defined in 't1.geo', as well as a new
+// surface 11, along the z axis by 'h':
 
 h = 0.12 ;
 Extrude Surface { 6, {0, 0, h} } ;
@@ -47,7 +47,7 @@ Plane Surface(11) = {10};
 
 Extrude Surface { 11, {0, 0, h} } ;
 
-// All these geometrical transformations generate automatically new
+// All these geometrical transformations automatically generate new
 // elementary entities. The following commands permit to specify
 // manually a characteristic length for some of the automatically
 // created points:
@@ -55,7 +55,7 @@ Extrude Surface { 11, {0, 0, h} } ;
 Characteristic Length{6,22,2,3,16,12} = lc * 3 ;
 
 // If the transformation tools are handy to create complex geometries,
-// it is sometimes useful to be generate the flat geometry, consisting
+// it is sometimes useful to generate the flat geometry, consisting
 // only of the explicit list elementary entities. This can be achieved
 // by selecting the 'File->Print->Geo' menu or by typing
 //

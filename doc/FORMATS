@@ -1,11 +1,12 @@
-$Id: FORMATS,v 1.7 2000-12-27 17:25:52 geuzaine Exp $
+$Id: FORMATS,v 1.8 2001-03-01 08:04:15 geuzaine Exp $
 
 This document describes the mesh and post-processing file formats for
 Gmsh, version >= 1.0. 
 
 (This document deals only with the import/export interfaces for
-Gmsh. The language driving Gmsh's behaviour for defining geometries,
-options, scripts, etc. is explained step by step in the tutorials.)
+Gmsh. The language driving the behaviour of Gmsh for defining
+geometries, options, scripts, etc. is explained step by step in the
+tutorials.)
 
 
 Gmsh Mesh File Format
@@ -79,9 +80,9 @@ pairs).
     $endView
 
 version-number is a floating point number giving the version of
-Gmsh to which the file is destined (e.g. 1.0).
+Gmsh for which the file is destined (e.g. 1.0).
 
-file-type is an integer equal to 0 in for the ascii file format.
+file-type is an integer equal to 0 in the ascii file format.
 
 data-size is an integer equal to the size of the floating point
 numbers used in the file (usually, data-size == sizeof(double)).
@@ -99,7 +100,7 @@ evolution was saved.
 
 scalar-point-value, vector-point-value, etc. are lists of double
 precision numbers giving the node coordinates and the values
-associated to the nodes of the nb-scalar-points, nb-vector-points,
+associated with the nodes of the nb-scalar-points, nb-vector-points,
 etc. for each time-step-value. For example, vector-triangle-value is
 defined as
 
@@ -126,11 +127,11 @@ except that:
 2) all lists of floating point numbers are written in binary format
 
 3) there is an additional integer, of value 1, written before
-   time-step-values. This integer serves to detect if the computer on
-   which the binary file was written and the computer on which the
-   file is read are of the same type (little or big endian).
+   time-step-values. This integer is used for detecting if the
+   computer on which the binary file was written and the computer on
+   which the file is read are of the same type (little or big endian).
 
-Here is an pseudo C code to write the beginning of a post-processing
+Here is a pseudo C code to write the beginning of a post-processing
 file in binary format:
 
 int one = 1;
@@ -154,7 +155,7 @@ fprintf(file, "$EndView\n");
 
 In this pseudo-code, all-scalar-point-values is the array of double
 precision numbers containing all the scalar-point-value lists, put one
-at the end of each other in order to form a long array of double. The
+after each other in order to form a long array of doubles. The
 principle is the same for all other kinds of values.
 
 
@@ -163,8 +164,8 @@ Gmsh Parsed Post-Processing Format
 
 For testing purposes (or with very small data sets, e.g. in the
 tutorials), there is an additional post-processing format which is
-parsed by the same grammar analyser as the geometry. You can thus for
-example embed small post-processing views into your geometrical
+parsed by the same grammar analyser as the geometry. You can thus, for
+example, embed small post-processing views into your geometrical
 descriptions. The format of the parsed post-processing files is the
 following:
 
