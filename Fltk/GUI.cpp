@@ -46,9 +46,9 @@ Fl_Menu_Item m_menubar_table[] = {
 };
 
 Fl_Menu_Item m_module_table[] = {
-  {" Geometry",        'g', (Fl_Callback *)mod_geometry_cb, 0},
-  {" Mesh",            'm', (Fl_Callback *)mod_mesh_cb, 0},
-  {" Post-Processing", 'p', (Fl_Callback *)mod_post_cb, 0},
+  {"Geometry",        'g', (Fl_Callback *)mod_geometry_cb, 0},
+  {"Mesh",            'm', (Fl_Callback *)mod_mesh_cb, 0},
+  {"Post-Processing", 'p', (Fl_Callback *)mod_post_cb, 0},
   {0}
 };
 
@@ -69,7 +69,7 @@ GUI::GUI() {
   // Menu Window
 
   {
-    int width = 152 ;
+    int width = 155 ;
     MH = 2*BH+6 ; // this is the initial height: no dynamic button is shown!
 
     m_window = new Fl_Window(width,MH);
@@ -96,7 +96,7 @@ GUI::GUI() {
     m_navig_butt[1]->box(FL_FLAT_BOX);
     m_navig_butt[1]->selection_color(FL_WHITE);
     
-    m_module_butt = new Fl_Choice(22,y,width-28,BH);
+    m_module_butt = new Fl_Choice(22,y,width-29,BH);
     m_module_butt->menu(m_module_table);
     m_module_butt->textsize(CTX.fontsize);
     m_module_butt->box(FL_THIN_DOWN_BOX);
