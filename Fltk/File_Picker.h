@@ -38,7 +38,7 @@ public:
     : Fl_File_Chooser(d, p, t, title) { 
     _win = (Fl_Window*)newButton->parent()->parent(); 
   }
-  void show(){ _win->show(); }
+  void show(){ _win->show(); _win->take_focus();}
   void position(int x, int y){ _win->position(x,y);}
   int x(){ return _win->x();}
   int y(){ return _win->y();}
