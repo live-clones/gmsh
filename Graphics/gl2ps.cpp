@@ -2,7 +2,7 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2ps.cpp,v 1.47 2002-06-10 16:41:53 geuzaine Exp $
+ * $Id: gl2ps.cpp,v 1.48 2002-06-21 17:15:17 geuzaine Exp $
  *
  * E-mail: geuz@geuz.org
  * URL: http://www.geuz.org/gl2ps/
@@ -26,7 +26,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <malloc.h>
-#include <math.h>
 #include <stdarg.h>
 #include <time.h>
 #include "gl2ps.h"
@@ -175,7 +174,7 @@ GLfloat gl2psNorm(GLfloat *a){
 GLvoid gl2psGetNormal(GLfloat *a, GLfloat *b, GLfloat *c){
   GLfloat norm;
   gl2psPvec(a, b, c);
-  if((norm = gl2psNorm(c))){
+  if(!GL2PS_ZERO(norm = gl2psNorm(c))){
     c[0] = c[0] / norm;
     c[1] = c[1] / norm;
     c[2] = c[2] / norm;
@@ -196,7 +195,8 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
     w[0] = prim->verts[2].xyz[0] - prim->verts[0].xyz[0]; 
     w[1] = prim->verts[2].xyz[1] - prim->verts[0].xyz[1]; 
     w[2] = prim->verts[2].xyz[2] - prim->verts[0].xyz[2]; 
-    if((!v[0] && !v[1] && !v[2]) || (!w[0] && !w[1] && !w[2])){
+    if((GL2PS_ZERO(v[0]) && GL2PS_ZERO(v[1]) && GL2PS_ZERO(v[2])) || 
+       (GL2PS_ZERO(w[0]) && GL2PS_ZERO(w[1]) && GL2PS_ZERO(w[2]))){
       plane[0] = plane[1] = 0.;
       plane[2] = 1.;
       plane[3] = -prim->verts[0].xyz[2];
@@ -213,15 +213,15 @@ GLvoid gl2psGetPlane(GL2PSprimitive *prim, GL2PSplane plane){
     v[0] = prim->verts[1].xyz[0] - prim->verts[0].xyz[0]; 
     v[1] = prim->verts[1].xyz[1] - prim->verts[0].xyz[1]; 
     v[2] = prim->verts[1].xyz[2] - prim->verts[0].xyz[2]; 
-    if(!v[0] && !v[1] && !v[2]){
+    if(GL2PS_ZERO(v[0]) && GL2PS_ZERO(v[1]) && GL2PS_ZERO(v[2])){
       plane[0] = plane[1] = 0.;
       plane[2] = 1.;
       plane[3] = -prim->verts[0].xyz[2];
     }
     else{
-      if(!v[0])      w[0] = 1.;
-      else if(!v[1]) w[1] = 1.;
-      else           w[2] = 1.;
+      if(GL2PS_ZERO(v[0]))      w[0] = 1.;
+      else if(GL2PS_ZERO(v[1])) w[1] = 1.;
+      else                      w[2] = 1.;
       gl2psGetNormal(v, w, plane);
       plane[3] = 
 	- plane[0] * prim->verts[0].xyz[0] 
@@ -917,21 +917,24 @@ GLint gl2psParseFeedbackBuffer(GLvoid){
   return GL2PS_SUCCESS;
 }
 
+GLboolean gl2psSameColor(GL2PSrgba rgba1, GL2PSrgba rgba2){
+  return !(rgba1[0] != rgba2[0] || 
+	   rgba1[1] != rgba2[1] ||
+	   rgba1[2] != rgba2[2]);
+}
+  
 GLboolean gl2psVertsSameColor(const GL2PSprimitive *prim){
   int i;
-  for(i=1; i<prim->numverts; i++){
-    if(prim->verts[0].rgba[0] != prim->verts[i].rgba[0] || 
-       prim->verts[0].rgba[1] != prim->verts[i].rgba[1] || 
-       prim->verts[0].rgba[2] != prim->verts[i].rgba[2]) {
+  for(i=1; i<prim->numverts; i++)
+    if(!gl2psSameColor(prim->verts[0].rgba, prim->verts[i].rgba))
       return 0;
-    }
-  }
   return 1;
 }
 
 /* The PostScript routines. Other (vector) image formats should be
-   easy to generate by creating the three corresponding routines for
-   the new format. */
+   easy to generate by creating the three corresponding routines
+   (gl2psPrintXXXHeader, gl2psPrintXXXPrimitive and
+   gl2psPrintXXXFooter) for the new format. */
 
 GLvoid gl2psPrintPostScriptHeader(GLvoid){
   GLint   viewport[4], index;
@@ -941,19 +944,6 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
   time(&now);
 
   glGetIntegerv(GL_VIEWPORT, viewport);
-
-  /* 
-     RGB color: r g b C (replace C by G in output to change from rgb to gray)
-     Greyscale: r g b G
-     Font choose: size fontname FC
-     String primitive: (string) x y size fontname S
-     Point primitive: x y size P
-     Line width: width W
-     Flat-shaded line: x2 y2 x1 y1 L
-     Smooth-shaded line: x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 SL
-     Flat-shaded triangle: x3 y3 x2 y2 x1 y1 T
-     Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST
-  */
 
   fprintf(gl2ps->stream, 
 	  "%%!PS-Adobe-3.0\n"
@@ -969,7 +959,30 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "%%%%DocumentMedia: Default %d %d 0 () ()\n"
 	  "%%%%BoundingBox: %d %d %d %d\n"
 	  "%%%%Copyright: GNU LGPL (C) 1999-2002 Christophe Geuzaine <geuz@geuz.org>\n"
-	  "%%%%EndComments\n"
+	  "%%%%EndComments\n",
+	  gl2ps->title, GL2PS_VERSION, gl2ps->producer, ctime(&now),
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[1] : viewport[0],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[0] : viewport[1],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
+	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
+
+  /* 
+     RGB color: r g b C (replace C by G in output to change from rgb to gray)
+     Greyscale: r g b G
+     Font choose: size fontname FC
+     String primitive: (string) x y size fontname S
+     Point primitive: x y size P
+     Line width: width W
+     Flat-shaded line: x2 y2 x1 y1 L
+     Smooth-shaded line: x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 SL
+     Flat-shaded triangle: x3 y3 x2 y2 x1 y1 T
+     Smooth-shaded triangle: x3 y3 r3 g3 b3 x2 y2 r2 g2 b2 x1 y1 r1 g1 b1 ST
+  */
+
+  fprintf(gl2ps->stream,
 	  "%%%%BeginProlog\n"
 	  "/gl2psdict 64 dict def gl2psdict begin\n"
 	  "1 setlinecap 1 setlinejoin\n"
@@ -1016,15 +1029,7 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
 	  "gl2psdict begin\n"
 	  "%%%%EndSetup\n"
 	  "%%%%Page: 1 1\n"
-	  "%%%%BeginPageSetup\n",
-	  gl2ps->title, GL2PS_VERSION, gl2ps->producer, ctime(&now),
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? "Landscape" : "Portrait",
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[1] : viewport[0],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[0] : viewport[1],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[3] : viewport[2],
-	  (gl2ps->options & GL2PS_LANDSCAPE) ? viewport[2] : viewport[3]);
+	  "%%%%BeginPageSetup\n");
 
   if (gl2ps->options & GL2PS_LANDSCAPE)
     fprintf(gl2ps->stream,
@@ -1057,18 +1062,18 @@ GLvoid gl2psPrintPostScriptHeader(GLvoid){
   }
 }
 
-#define PRINTCOLOR						\
-  if(gl2ps->lastrgba[0] != prim->verts[0].rgba[0] ||		\
-     gl2ps->lastrgba[1] != prim->verts[0].rgba[1] ||		\
-     gl2ps->lastrgba[2] != prim->verts[0].rgba[2]){		\
-    gl2ps->lastrgba[0] = prim->verts[0].rgba[0];		\
-    gl2ps->lastrgba[1] = prim->verts[0].rgba[1];		\
-    gl2ps->lastrgba[2] = prim->verts[0].rgba[2];		\
-    fprintf(gl2ps->stream, "%g %g %g C\n", gl2ps->lastrgba[0], 	\
-	    gl2ps->lastrgba[1], gl2ps->lastrgba[2]);            \
+GLvoid gl2psPrintPostScriptColor(GL2PSrgba rgba){
+  if(!gl2psSameColor(gl2ps->lastrgba, rgba)){
+    gl2ps->lastrgba[0] = rgba[0];
+    gl2ps->lastrgba[1] = rgba[1];
+    gl2ps->lastrgba[2] = rgba[2];
+    fprintf(gl2ps->stream, "%g %g %g C\n", rgba[0], rgba[1], rgba[2]);
   }
+}
 
-#define CLEARCOLOR gl2ps->lastrgba[0] = gl2ps->lastrgba[1] = gl2ps->lastrgba[2] = -1.
+GLvoid gl2psResetPostScriptColor(){
+  gl2ps->lastrgba[0] = gl2ps->lastrgba[1] = gl2ps->lastrgba[2] = -1.;
+}
 
 GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
   GL2PSprimitive *prim;
@@ -1079,13 +1084,13 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
 
   switch(prim->type){
   case GL2PS_TEXT :
-    PRINTCOLOR;
+    gl2psPrintPostScriptColor(prim->verts[0].rgba);
     fprintf(gl2ps->stream, "(%s) %g %g %d /%s S\n",
 	    prim->text->str, prim->verts[0].xyz[0], prim->verts[0].xyz[1],
 	    prim->text->fontsize, prim->text->fontname);
     break;
   case GL2PS_POINT :
-    PRINTCOLOR;
+    gl2psPrintPostScriptColor(prim->verts[0].rgba);
     fprintf(gl2ps->stream, "%g %g %g P\n", 
 	    prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width);
     break;
@@ -1097,7 +1102,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
     if(prim->dash)
       fprintf(gl2ps->stream, "[%d] 0 setdash\n", prim->dash);
     if(gl2ps->shade && !gl2psVertsSameColor(prim)){
-      CLEARCOLOR;
+      gl2psResetPostScriptColor();
       fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g SL\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[1].rgba[0], prim->verts[1].rgba[1],
@@ -1106,7 +1111,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
 	      prim->verts[0].rgba[1], prim->verts[0].rgba[2]);
     }
     else{
-      PRINTCOLOR;
+      gl2psPrintPostScriptColor(prim->verts[0].rgba);
       fprintf(gl2ps->stream, "%g %g %g %g L\n",
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
 	      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
@@ -1116,7 +1121,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
     break;
   case GL2PS_TRIANGLE :
     if(gl2ps->shade && !gl2psVertsSameColor(prim)){
-      CLEARCOLOR;
+      gl2psResetPostScriptColor();
       fprintf(gl2ps->stream, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g ST\n",
 	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
 	      prim->verts[2].rgba[0], prim->verts[2].rgba[1],
@@ -1128,7 +1133,7 @@ GLvoid gl2psPrintPostScriptPrimitive(GLvoid *a, GLvoid *b){
 	      prim->verts[0].rgba[2]);
     }
     else{
-      PRINTCOLOR;
+      gl2psPrintPostScriptColor(prim->verts[0].rgba);
       fprintf(gl2ps->stream, "%g %g %g %g %g %g T\n",
 	      prim->verts[2].xyz[0], prim->verts[2].xyz[1],
 	      prim->verts[1].xyz[0], prim->verts[1].xyz[1],
