@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.140 2003-09-05 14:22:35 remacle Exp $
+// $Id: Gmsh.y,v 1.141 2003-09-17 18:00:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -2919,6 +2919,7 @@ ListOfDouble :
 	(*pd) = - (*pd);
       }
     }
+/* FIXME: removed until we clean up the syntax, sorry
   | MultipleShape
   {
     $$ = List_Create(List_Nbr($1),1,sizeof(double)) ;
@@ -2929,6 +2930,7 @@ ListOfDouble :
 	List_Add($$,&d);
       }
   }
+*/
 ;
 
 FExpr_Multi :
@@ -2949,7 +2951,8 @@ FExpr_Multi :
 	for(d=$1 ; ($5>0)?(d<=$3):(d>=$3) ; d+=$5)
 	  List_Add($$, &d) ;
    }
-  | tPoint '(' FExpr ')'
+/* FIXME: removed until we clean up the syntax, sorry
+  | tPoint '{' FExpr '}'
     {
       /// JF Remacle, sept. 2003
       /// returns the coordinates of a point 
@@ -2971,6 +2974,7 @@ FExpr_Multi :
 	List_Add($$, &v->Pos.Z) ;
       }
     }
+*/
   | tSTRING '[' ']'
     {
       $$ = List_Create(2,1,sizeof(double)) ;

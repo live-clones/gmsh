@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.57 2003-09-05 14:22:34 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.58 2003-09-17 18:00:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -230,6 +230,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * File_GEO)
             v = *vv;
           break;
         default:
+	  // JF, why did you add this?
 	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
           break;
         }

@@ -1,11 +1,7 @@
+/* $Id: gl2ps.cpp,v 1.71 2003-09-17 18:00:53 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2003 Christophe Geuzaine 
- *
- * $Id: gl2ps.cpp,v 1.70 2003-09-16 23:50:58 geuzaine Exp $
- *
- * E-mail: geuz@geuz.org
- * URL: http://www.geuz.org/gl2ps/
+ * Copyright (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -21,7 +17,7 @@
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * Contributor(s):
+ * Contributors:
  *   Michael Sweet <mike@easysw.com>
  *   Marc Ume <marc.ume@digitalgraphics.be>
  *   Jean-Francois Remacle <remacle@scorec.rpi.edu>
@@ -36,6 +32,8 @@
  *   Lassi Tuura <lassi.tuura@cern.ch>
  *   Guy Barrand <barrand@lal.in2p3.fr>
  *   Micha Bieber <bieber@traits.de>
+ *
+ * For the latest info about gl2ps, see http://www.geuz.org/gl2ps/
  */
 
 #include <string.h>
@@ -172,6 +170,16 @@ void *gl2psListPointer(GL2PSlist *list, GLint index){
     return(&list->array[0]);
   }
   return(&list->array[index * list->size]);
+}
+
+void gl2psListRead(GL2PSlist *list, GLint index, void *data){
+  if((index < 0) || (index >= list->n)){
+    gl2psMsg(GL2PS_ERROR, "Wrong list index in gl2psListRead");
+    data = 0;
+  }
+  else{
+    memcpy(data, &list->array[index * list->size], list->size);
+  }
 }
 
 void gl2psListSort(GL2PSlist *list,
@@ -1585,7 +1593,7 @@ void gl2psPrintPostScriptHeader(void){
 
   fprintf(gl2ps->stream, 
 	  "%%%%Title: %s\n"
-	  "%%%%Creator: GL2PS %d.%d.%d, an OpenGL to PostScript Printing Library\n"
+	  "%%%%Creator: GL2PS %d.%d.%d, (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>\n"
 	  "%%%%For: %s\n"
 	  "%%%%CreationDate: %s"
 	  "%%%%LanguageLevel: 3\n"
@@ -1607,7 +1615,6 @@ void gl2psPrintPostScriptHeader(void){
 
   fprintf(gl2ps->stream,
 	  "%%%%BoundingBox: %d %d %d %d\n"
-	  "%%%%Copyright: GNU LGPL (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>\n"
 	  "%%%%EndComments\n",
 	  (gl2ps->options & GL2PS_LANDSCAPE) ? (int)gl2ps->viewport[1] : 
 	  (int)gl2ps->viewport[0],
@@ -2047,21 +2054,21 @@ GLint gl2psPrintTeXEndViewport(void){
  *********************************************************************/
 
 int gl2psPrintPDFCompressorType(){
-  if(gl2ps->options & GL2PS_DEFLATE){	
+  if(gl2ps->options & GL2PS_DEFLATE){
     return fprintf(gl2ps->stream, "/Filter [/FlateDecode]\n");
-  }	
+  }
   return 0;
 }
 
 int gl2psPrintPDFStrokeColor(GL2PSrgba rgba){
   int offs = 0;
-  int i;	
-  
+  int i;
+
   gl2psSetLastColor(rgba);
   for(i = 0; i < 3; ++i){
     if(GL2PS_ZERO(rgba[i]))
       offs += fprintf(gl2ps->stream, "%.0f ", 0.);
-    else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting*/
+    else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting */
       offs += fprintf(gl2ps->stream, "%f ", rgba[i]);
     else
       offs += fprintf(gl2ps->stream, "%g ", rgba[i]);
@@ -2072,12 +2079,12 @@ int gl2psPrintPDFStrokeColor(GL2PSrgba rgba){
 
 int gl2psPrintPDFFillColor(GL2PSrgba rgba){
   int offs = 0;
-  int i;	
+  int i;
   
   for(i = 0; i < 3; ++i){
     if(GL2PS_ZERO(rgba[i]))
       offs += fprintf(gl2ps->stream, "%.0f ", 0.);
-    else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting*/
+    else if(rgba[i] < 1e-4 || rgba[i] > 1e6) /* avoid %e formatting */
       offs += fprintf(gl2ps->stream, "%f ", rgba[i]);
     else
       offs += fprintf(gl2ps->stream, "%g ", rgba[i]);
@@ -2089,7 +2096,7 @@ int gl2psPrintPDFFillColor(GL2PSrgba rgba){
 int gl2psPrintPDFLineWidth(float lw){
   if(GL2PS_ZERO(lw))
     return fprintf(gl2ps->stream, "%.0f w\n", 0.);
-  else if(lw < 1e-4 || lw > 1e6) /* avoid %e formatting*/
+  else if(lw < 1e-4 || lw > 1e6) /* avoid %e formatting */
     return fprintf(gl2ps->stream, "%f w\n", lw);
   else
     return fprintf(gl2ps->stream, "%g w\n", lw);
@@ -2105,19 +2112,19 @@ int gl2psPrintPDFInfo(){
   time(&now);
   newtime = gmtime(&now);
   
-  offs = fprintf(gl2ps->stream, 
+  offs = fprintf(gl2ps->stream,
 		 "1 0 obj\n"
 		 "<<\n"
 		 "/Title (%s)\n"
 		 "/Creator (%s)\n"
-		 "/Producer (GL2PS %d.%d.%d, an OpenGL to PostScript Printing Library)\n",
-		 gl2ps->title, gl2ps->producer, 
+		 "/Producer (GL2PS %d.%d.%d, (C) 1999-2003 Christophe Geuzaine <geuz@geuz.org>)\n",
+		 gl2ps->title, gl2ps->producer,
 		 GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION);
   
   if(!newtime){
     offs += fprintf(gl2ps->stream, 
 		    ">>\n"
-		    "endobj\n");	
+		    "endobj\n");
     return offs;
   }
   
@@ -2139,7 +2146,7 @@ int gl2psPrintPDFInfo(){
 int gl2psPrintPDFCatalog(){
   return fprintf(gl2ps->stream, 
 		 "2 0 obj\n"
-		 "<<\n" 
+		 "<<\n"
 		 "/Type /Catalog\n"
 		 "/Pages 3 0 R\n"
 		 ">>\n"
@@ -2193,7 +2200,7 @@ int gl2psOpenPDFDataStreamWritePreface(){
       rgba[2] = gl2ps->colormap[index][2];
       rgba[3] = 0.;
     }
-    offs += gl2psPrintPDFFillColor(rgba);    
+    offs += gl2psPrintPDFFillColor(rgba);
     offs += fprintf(gl2ps->stream, "%d %d %d %d re\n",
 		    (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
 		    (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
@@ -2209,10 +2216,10 @@ void gl2psPrintPDFHeader(){
   
   /* tlist, tidxlist, ilist and slist contain triangles, indexes for
      consecutive triangles, images and strings */
-  gl2ps->tlist = gl2psListCreate(0, 1, sizeof(GL2PStriangle));
-  gl2ps->tidxlist = gl2psListCreate(0, 1, sizeof(int));
-  gl2ps->ilist = gl2psListCreate(0, 1, sizeof(GL2PSimage));
-  gl2ps->slist = gl2psListCreate(0, 1, sizeof(GL2PSstring));
+  gl2ps->tlist = gl2psListCreate(100, 100, sizeof(GL2PStriangle));
+  gl2ps->tidxlist = gl2psListCreate(100, 100, sizeof(int));
+  gl2ps->ilist = gl2psListCreate(100, 100, sizeof(GL2PSimage*));
+  gl2ps->slist = gl2psListCreate(100, 100, sizeof(GL2PSstring*));
   
   gl2ps->lasttype = GL2PS_NOTYPE;
   gl2ps->consec_cnt = 0;
@@ -2221,25 +2228,25 @@ void gl2psPrintPDFHeader(){
   offs = fprintf(gl2ps->stream, "%%PDF-1.3\n");
   gl2ps->cref[0] = offs;
   
-  offs += gl2psPrintPDFInfo();   
+  offs += gl2psPrintPDFInfo();
   gl2ps->cref[1] = offs;
   
   offs += gl2psPrintPDFCatalog();
-  gl2ps->cref[2] = offs;  
+  gl2ps->cref[2] = offs;
   
   offs += gl2psPrintPDFPages();
-  gl2ps->cref[3] = offs;  
+  gl2ps->cref[3] = offs;
   
   offs += gl2psOpenPDFDataStream();
   gl2ps->cref[4] = offs; /* finished in gl2psPrintPDFFooter */
   gl2ps->streamlength = gl2psOpenPDFDataStreamWritePreface();
 }
 
-
 int gl2psFlushPDFTriangles(){
   int offs = 0;
+
   if(gl2ps->lasttype == GL2PS_TRIANGLE){
-    gl2psListAdd(gl2ps->tidxlist,&gl2ps->consec_inner_cnt);
+    gl2psListAdd(gl2ps->tidxlist, &gl2ps->consec_inner_cnt);
     offs = fprintf(gl2ps->stream, "/Sh%d sh\n", gl2ps->consec_cnt++);
     gl2ps->consec_inner_cnt = 0;
     gl2ps->streamlength += offs;
@@ -2249,6 +2256,7 @@ int gl2psFlushPDFTriangles(){
 
 int gl2psFlushPDFLines(){
   int offs = 0;
+
   if(gl2ps->lasttype == GL2PS_LINE && !gl2ps->line_stroked){
     offs = fprintf(gl2ps->stream, "S\n");
     gl2ps->streamlength += offs;
@@ -2289,9 +2297,9 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
     break;
   case GL2PS_TEXT :
     str = gl2psCopyText(prim->text);
-    gl2psListAdd(gl2ps->slist, &str);		
+    gl2psListAdd(gl2ps->slist, &str);
     gl2ps->streamlength += gl2psPrintPDFFillColor(prim->verts[0].rgba);
-    gl2ps->streamlength += fprintf(gl2ps->stream,			
+    gl2ps->streamlength += fprintf(gl2ps->stream,
 				   "BT\n"
 				   "/F%d %d Tf\n"
 				   "%f %f Td\n"
@@ -2336,7 +2344,6 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
     gl2ps->line_stroked = 0;
     
     if(prim->dash){
-      /* FIXME: use prim->dash */
       gl2ps->streamlength += fprintf(gl2ps->stream, "S\n[] 0 d\n"); 
       gl2ps->line_stroked = 1;
     }
@@ -2346,7 +2353,7 @@ void gl2psPrintPDFPrimitive(void *a, void *b){
     t[1] = prim->verts[1];
     t[2] = prim->verts[2];
     
-    gl2psListAdd(gl2ps->tlist, t);		
+    gl2psListAdd(gl2ps->tlist, t);
     ++gl2ps->consec_inner_cnt;
     break;
   case GL2PS_QUADRANGLE :
@@ -2366,7 +2373,6 @@ int gl2psClosePDFDataStream(){
   
   offs += gl2psFlushPDFTriangles();
   offs += gl2psFlushPDFLines();
-  
   offs += fprintf(gl2ps->stream, 
 		  "endstream\n"
 		  "endobj\n");
@@ -2391,12 +2397,10 @@ int gl2psPrintPDFShaderResources(int firstObject, int size){
   offs += fprintf(gl2ps->stream,
 		  "/Shading\n"
 		  "<<\n");
-  
   for(i = 0; i < size; ++i){
     offs += fprintf(gl2ps->stream, "/Sh%d %d 0 R\n", i, firstObject+i);
   }
   offs += fprintf(gl2ps->stream, ">>\n");
-  
   return offs;
 }
 
@@ -2409,12 +2413,10 @@ int gl2psPrintPDFPixmapResources(int firstObject, int size){
   offs += fprintf(gl2ps->stream,
 		  "/XObject\n"
 		  "<<\n");
-  
   for(i = 0; i < size; ++i){
     offs += fprintf(gl2ps->stream, "/Im%d %d 0 R\n", i, firstObject + i);
   }
   offs += fprintf(gl2ps->stream, ">>\n");
-  
   return offs;
 }
 
@@ -2427,12 +2429,10 @@ int gl2psPrintPDFTextResources(int firstObject, int size){
   offs += fprintf(gl2ps->stream,
 		  "/Font\n"
 		  "<<\n");
-  
   for(i = 0; i < size; ++i){
     offs += fprintf(gl2ps->stream, "/F%d %d 0 R\n", i, firstObject + i);
   }
   offs += fprintf(gl2ps->stream, ">>\n");
-  
   return offs;
 }
 
@@ -2447,20 +2447,20 @@ int gl2psPrintPDFSinglePage(){
 		 "/Type /Page\n"
 		 "/Parent 3 0 R\n"
 		 "/MediaBox [%d %d %d %d]\n",
-		 (int)gl2ps->viewport[0], (int)gl2ps->viewport[1], 
+		 (int)gl2ps->viewport[0], (int)gl2ps->viewport[1],
 		 (int)gl2ps->viewport[2], (int)gl2ps->viewport[3]);
   
   if(gl2ps->options & GL2PS_LANDSCAPE)
     offs += fprintf(gl2ps->stream, "/Rotate -90\n");
   
-  offs += fprintf(gl2ps->stream, 
+  offs += fprintf(gl2ps->stream,
 		  "/Contents 4 0 R\n"
 		  "/Resources\n" 
 		  "<<\n" 
 		  "/ProcSet [/PDF /Text /ImageB /ImageC]  %%/ImageI\n"
 		  "/Length 5 0 R\n"
 		  "/ExtGState\n" 
-		  "<<\n"	
+		  "<<\n"
 		  "/GS1 7 0 R\n"
 		  ">>\n");
   
@@ -2477,7 +2477,6 @@ int gl2psPrintPDFSinglePage(){
 		  ">>\n"
 		  ">>\n"
 		  "endobj\n");
-  
   return offs;
 }
 
@@ -2507,7 +2506,6 @@ int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle){
   int i;
   unsigned long imap;
   GLfloat  diff, dx, dy;
-  
   char edgeflag = 0;
   double dmax = ~1UL;
   
@@ -2526,7 +2524,7 @@ int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle){
     }
     else{
       diff = (triangle[i].xyz[0] - gl2ps->viewport[0]) / dx;
-      if(diff>1)
+      if(diff > 1)
 	diff = 1;
       else if(diff < 0)
 	diff = 0;
@@ -2534,7 +2532,7 @@ int gl2psPrintPDFShaderStreamData(GL2PStriangle triangle){
       offs += gl2psWriteBigEndian(imap, 4, gl2ps->stream);
       
       diff = (triangle[i].xyz[1] - gl2ps->viewport[1]) / dy;
-      if(diff>1)
+      if(diff > 1)
 	diff = 1;
       else if(diff < 0)
 	diff = 0;
@@ -2575,7 +2573,7 @@ int gl2psPrintPDFShader(int obj, GL2PSlist* triangles, int idx, int cnt ){
 		  (int)gl2ps->viewport[1], (int)gl2ps->viewport[3]);
   
   offs += gl2psPrintPDFCompressorType();
-  
+
   offs += fprintf(gl2ps->stream,
 		  "/Length %d "
 		  ">>\n"
@@ -2606,8 +2604,7 @@ int* gl2psPrintPDFShaderObjects(int firstObjnumber, int firstOffs){
   offs[0] = firstOffs;
   
   for(i = 0; i < size; ++i){
-    tmp = *(int*)gl2psListPointer(gl2ps->tidxlist, i);
-    
+    gl2psListRead(gl2ps->tidxlist, i, &tmp);
     firstOffs += gl2psPrintPDFShader(i+firstObjnumber, gl2ps->tlist, idx, tmp);
     offs[i+1] = firstOffs;
     idx += tmp;
@@ -2618,8 +2615,8 @@ int* gl2psPrintPDFShaderObjects(int firstObjnumber, int firstOffs){
 /* Similar groups of  functions for pixmaps and text */
 
 int gl2psPrintPDFPixmapStreamData(GL2PSimage* im){
-  int x,y;
-  GLfloat r,g,b;
+  int x, y;
+  GLfloat r, g, b;
   
   for(y = 0; y < im->height; ++y)
     for(x = 0; x < im->width; ++x){
@@ -2631,7 +2628,7 @@ int gl2psPrintPDFPixmapStreamData(GL2PSimage* im){
   return 3 * im->width * im->height;
 }
 
-int gl2psPrintPDFPixmap(int obj, GL2PSimage* im ){
+int gl2psPrintPDFPixmap(int obj, GL2PSimage* im){
   int offs = 0;
   
   offs += fprintf(gl2ps->stream,
@@ -2751,19 +2748,19 @@ void gl2psPrintPDFFooter(){
   fprintf(gl2ps->stream,
 	  "xref\n"
 	  "0 %d\n"
-	  "%010d 65535 f \n", objnumber, 0); 
+	  "%010d 65535 f \n", objnumber, 0);
   
   for(i = 0; i < GL2PS_FIXED_XREF_ENTRIES; ++i){
-    fprintf(gl2ps->stream, "%010d 00000 n \n", gl2ps->cref[i]); 
+    fprintf(gl2ps->stream, "%010d 00000 n \n", gl2ps->cref[i]);
   }
   for(i = 0; i < shader_size; ++i){
-    fprintf(gl2ps->stream, "%010d 00000 n \n", shader_offs[i]); 
+    fprintf(gl2ps->stream, "%010d 00000 n \n", shader_offs[i]);
   }
   for(i = 0; i < image_size; ++i){
-    fprintf(gl2ps->stream, "%010d 00000 n \n", image_offs[i]); 
+    fprintf(gl2ps->stream, "%010d 00000 n \n", image_offs[i]);
   }
   for(i = 0; i < text_size; ++i){
-    fprintf(gl2ps->stream, "%010d 00000 n \n", text_offs[i]); 
+    fprintf(gl2ps->stream, "%010d 00000 n \n", text_offs[i]);
   }
   
   fprintf(gl2ps->stream,
@@ -2784,10 +2781,10 @@ void gl2psPrintPDFFooter(){
   gl2psListDelete(gl2ps->tlist);
   gl2psListDelete(gl2ps->tidxlist);
   for(i = 0; i < gl2psListNbr(gl2ps->ilist); ++i)
-    gl2psFreePixmap(*(GL2PSimage**)gl2psListPointer(gl2ps->ilist,i));
+    gl2psFreePixmap(*(GL2PSimage**)gl2psListPointer(gl2ps->ilist, i));
   gl2psListDelete(gl2ps->ilist);
   for(i = 0; i < gl2psListNbr(gl2ps->slist); ++i)
-    gl2psFreeText(*(GL2PSstring**)gl2psListPointer(gl2ps->slist,i));
+    gl2psFreeText(*(GL2PSstring**)gl2psListPointer(gl2ps->slist, i));
   gl2psListDelete(gl2ps->slist);
 }
 
@@ -2819,10 +2816,18 @@ void gl2psPrintPDFBeginViewport(GLint viewport[4]){
     offs += fprintf(gl2ps->stream,
 		    "%f %f %f rg\n"
 		    "%d %d %d %d re\n"
-		    /* "W\n" */  
+		    "W\n"
 		    "f\n",
-		    rgba[0], rgba[1], rgba[2],x, y, w, h);
+		    rgba[0], rgba[1], rgba[2], x, y, w, h);
   }
+  else{
+    offs += fprintf(gl2ps->stream,
+		    "%d %d %d %d re\n"
+		    "W\n"   
+		    "n\n",
+		    x, y, w, h);		
+  }
+
   gl2ps->streamlength += offs;
 }
 
@@ -2831,6 +2836,9 @@ GLint gl2psPrintPDFEndViewport(){
   GLint gl2psPrintPrimitives(void);
   
   res = gl2psPrintPrimitives();
+  res += gl2psFlushPDFTriangles();
+  res += gl2psFlushPDFLines();
+
   gl2ps->streamlength += fprintf(gl2ps->stream, "Q\n");
   
   return res;

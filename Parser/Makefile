@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2003-03-28 02:43:19 geuzaine Exp $
+# $Id: Makefile,v 1.50 2003-09-17 18:00:56 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -48,6 +48,7 @@ ${LIB}: ${OBJ}
 parser:
 	${YACC} --output Gmsh.tab.cpp -d Gmsh.y 
 	${LEX}  -oGmsh.yy.cpp Gmsh.l
+	if [ -r Gmsh.tab.cpp.h ]; then mv Gmsh.tab.cpp.h Gmsh.tab.hpp ; fi
 
 clean:
 	rm -f *.o
