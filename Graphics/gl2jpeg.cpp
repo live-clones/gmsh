@@ -2,7 +2,7 @@
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2jpeg.cpp,v 1.16 2003-03-01 22:36:40 geuzaine Exp $
+ * $Id: gl2jpeg.cpp,v 1.17 2003-04-02 05:53:23 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -27,7 +27,7 @@
 
 void create_jpeg(FILE * outfile, int width, int height, int quality)
 {
-  Msg(GERROR, "This version of Gmsh was compiled without jpeg support");
+  Msg(GERROR, "This version of Gmsh was compiled without JPEG support");
 }
 
 #else

@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.41 2003-03-21 00:52:38 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.42 2003-04-02 05:53:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -33,6 +33,7 @@ extern Mesh M;
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
+#include "gl2png.h"
 #include "gl2ppm.h"
 #include "gl2yuv.h"
 
@@ -83,6 +84,8 @@ void CreateOutputFile(char *name, int format)
       CreateOutputFile(name, FORMAT_JPEG);
     else if(!strcmp(ext, ".jpeg"))
       CreateOutputFile(name, FORMAT_JPEG);
+    else if(!strcmp(ext, ".png"))
+      CreateOutputFile(name, FORMAT_PNG);
     else if(!strcmp(ext, ".ps"))
       CreateOutputFile(name, FORMAT_PS);
     else if(!strcmp(ext, ".eps"))
@@ -119,79 +122,68 @@ void CreateOutputFile(char *name, int format)
     break;
 
   case FORMAT_MSH:
-    Print_Mesh(&M, name, FORMAT_MSH);
-    break;
-
   case FORMAT_UNV:
-    Print_Mesh(&M, name, FORMAT_UNV);
-    break;
-
   case FORMAT_GREF:
-    Print_Mesh(&M, name, FORMAT_GREF);
-    break;
-
   case FORMAT_VRML:
-    Print_Mesh(&M, name, FORMAT_VRML);
+    Print_Mesh(&M, name, format);
     break;
 
   case FORMAT_JPEG:
   case FORMAT_JPEGTEX:
+  case FORMAT_PNG:
+  case FORMAT_PNGTEX:
     if(!(fp = fopen(name, "wb"))) {
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
-    if(format == FORMAT_JPEGTEX)
+    if(format == FORMAT_JPEGTEX || format == FORMAT_PNGTEX){
       CTX.print.gl_fonts = 0;
+    }
     FillBuffer();
     CTX.print.gl_fonts = 1;
-    create_jpeg(fp, CTX.viewport[2] - CTX.viewport[0],
-                CTX.viewport[3] - CTX.viewport[1], CTX.print.jpeg_quality);
-    Msg(INFO, "JPEG creation complete '%s'", name);
+    if(format == FORMAT_JPEG || format == FORMAT_JPEGTEX){
+      create_jpeg(fp, CTX.viewport[2] - CTX.viewport[0],
+		  CTX.viewport[3] - CTX.viewport[1], CTX.print.jpeg_quality);
+      Msg(INFO, "JPEG creation complete '%s'", name);
+    }
+    else{
+      create_png(fp, CTX.viewport[2] - CTX.viewport[0],
+		 CTX.viewport[3] - CTX.viewport[1], 100);
+      Msg(INFO, "PNG creation complete '%s'", name);
+    }
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;
 
+  case FORMAT_PPM:
+  case FORMAT_YUV:
   case FORMAT_GIF:
     if(!(fp = fopen(name, "wb"))) {
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
     FillBuffer();
-    create_gif(fp, CTX.viewport[2] - CTX.viewport[0],
-               CTX.viewport[3] - CTX.viewport[1],
-               CTX.print.gif_dither,
-               CTX.print.gif_sort,
-               CTX.print.gif_interlace,
-               CTX.print.gif_transparent,
-               UNPACK_RED(CTX.color.bg),
-               UNPACK_GREEN(CTX.color.bg), UNPACK_BLUE(CTX.color.bg));
-    Msg(INFO, "GIF creation complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
-    fclose(fp);
-    break;
-
-  case FORMAT_PPM:
-    if(!(fp = fopen(name, "wb"))) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      return;
+    if(format == FORMAT_PPM){
+      create_ppm(fp, CTX.viewport[2] - CTX.viewport[0],
+		 CTX.viewport[3] - CTX.viewport[1]);
+      Msg(INFO, "PPM creation complete '%s'", name);
     }
-    FillBuffer();
-    create_ppm(fp, CTX.viewport[2] - CTX.viewport[0],
-               CTX.viewport[3] - CTX.viewport[1]);
-    Msg(INFO, "PPM creation complete '%s'", name);
-    Msg(STATUS2, "Wrote '%s'", name);
-    fclose(fp);
-    break;
-
-  case FORMAT_YUV:
-    if(!(fp = fopen(name, "wb"))) {
-      Msg(GERROR, "Unable to open file '%s'", name);
-      return;
+    else if (format == FORMAT_YUV){
+      create_yuv(fp, CTX.viewport[2] - CTX.viewport[0],
+		 CTX.viewport[3] - CTX.viewport[1]);
+      Msg(INFO, "YUV creation complete '%s'", name);
     }
-    FillBuffer();
-    create_yuv(fp, CTX.viewport[2] - CTX.viewport[0],
-               CTX.viewport[3] - CTX.viewport[1]);
-    Msg(INFO, "YUV creation complete '%s'", name);
+    else{
+      create_gif(fp, CTX.viewport[2] - CTX.viewport[0],
+		 CTX.viewport[3] - CTX.viewport[1],
+		 CTX.print.gif_dither,
+		 CTX.print.gif_sort,
+		 CTX.print.gif_interlace,
+		 CTX.print.gif_transparent,
+		 UNPACK_RED(CTX.color.bg),
+		 UNPACK_GREEN(CTX.color.bg), UNPACK_BLUE(CTX.color.bg));
+      Msg(INFO, "GIF creation complete '%s'", name);
+    }
     Msg(STATUS2, "Wrote '%s'", name);
     fclose(fp);
     break;

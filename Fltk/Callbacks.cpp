@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.172 2003-04-01 17:14:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.173 2003-04-02 05:53:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -473,6 +473,10 @@ void _save_jpegtex(char *name)
 {
   CreateOutputFile(name, FORMAT_JPEGTEX);
 }
+void _save_pngtex(char *name)
+{
+  CreateOutputFile(name, FORMAT_PNGTEX);
+}
 void _save_tex(char *name)
 {
   CreateOutputFile(name, FORMAT_TEX);
@@ -480,6 +484,10 @@ void _save_tex(char *name)
 void _save_jpeg(char *name)
 {
   CreateOutputFile(name, FORMAT_JPEG);
+}
+void _save_png(char *name)
+{
+  CreateOutputFile(name, FORMAT_PNG);
 }
 void _save_gif(char *name)
 {
@@ -546,12 +554,14 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"GIF dithered (*.gif)", _save_gif_dithered},
     {"GIF transparent (*.gif)", _save_gif_transparent},
     {"JPEG (*.jpg)", _save_jpeg},
+    {"PNG (*.png)", _save_png},
     {"PostScript fast (*.ps)", _save_ps_simple},
     {"PostScript accurate (*.ps)", _save_ps_accurate},
     {"Encapsulated PostScript fast (*.eps)", _save_eps_simple},
     {"Encapsulated PostScript accurate (*.eps)", _save_eps_accurate},
     {"PPM (*.ppm)", _save_ppm},
     {"LaTeX JPEG part (*.jpg)", _save_jpegtex},
+    {"LaTeX PNG part (*.png)", _save_pngtex},
     {"LaTeX EPS part fast (*.eps)", _save_epstex_simple},
     {"LaTeX EPS part accurate (*.eps)", _save_epstex_accurate},
     {"LaTeX TeX part (*.tex)", _save_tex},
@@ -670,8 +680,14 @@ void file_save_as_pstex_accurate_cb(CALLBACK_ARGS)
 
 void file_save_as_jpegtex_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, "Save LaTeX file (Jpeg part)", "*", 0))
+  if(file_chooser(0, "Save LaTeX file (JPEG part)", "*", 0))
     _save_jpegtex(file_chooser_get_name(1));
+}
+
+void file_save_as_pngtex_cb(CALLBACK_ARGS)
+{
+  if(file_chooser(0, "Save LaTeX file (PNG part)", "*", 0))
+    _save_pngtex(file_chooser_get_name(1));
 }
 
 void file_save_as_tex_cb(CALLBACK_ARGS)
@@ -684,6 +700,12 @@ void file_save_as_jpeg_cb(CALLBACK_ARGS)
 {
   if(file_chooser(0, "Save JPEG file", "*", 0))
     _save_jpeg(file_chooser_get_name(1));
+}
+
+void file_save_as_png_cb(CALLBACK_ARGS)
+{
+  if(file_chooser(0, "Save PNG file", "*", 0))
+    _save_png(file_chooser_get_name(1));
 }
 
 void file_save_as_gif_cb(CALLBACK_ARGS)

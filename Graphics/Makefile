@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.50 2003-03-26 21:43:10 geuzaine Exp $
+# $Id: Makefile,v 1.51 2003-04-02 05:53:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -42,6 +42,7 @@ SRC = Draw.cpp \
       gl2ps.cpp\
       gl2gif.cpp\
       gl2jpeg.cpp\
+      gl2png.cpp\
       gl2ppm.cpp\
       gl2yuv.cpp
 
@@ -154,7 +155,7 @@ CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Parser/OpenFile.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/Context.h ../Common/Options.h gl2ps.h gl2gif.h gl2jpeg.h \
-  gl2ppm.h gl2yuv.h
+  gl2ppm.h gl2yuv.h gl2png.h
 gl2ps.o: gl2ps.cpp gl2ps.h
 gl2gif.o: gl2gif.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

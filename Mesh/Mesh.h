@@ -48,6 +48,8 @@
 #define FORMAT_VRML    19
 #define FORMAT_EPS     20
 #define FORMAT_EPSTEX  21
+#define FORMAT_PNG     22
+#define FORMAT_PNGTEX  23
 
 #define CONV_VALUE    0.8
 

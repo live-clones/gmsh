@@ -842,7 +842,12 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-fltk-prefix=PFX  prefix where FLTK is installed
   --with-gsl-prefix=PFX   prefix where GSL is installed
-  --with-jpeg-prefix=PFX  prefix where the JPEG code is installed
+  --with-jpeg-prefix=PFX  prefix where the JPEG library and includes are
+                          installed
+  --with-png-prefix=PFX   prefix where the PNG library and includes are
+                          installed
+  --with-z-prefix=PFX     prefix where the ZLIB library and includes are
+                          installed
 
 Some influential environment variables:
   CC          C compiler command
@@ -1227,6 +1232,22 @@ if test "${with_jpeg_prefix+set}" = set; then
   JPEG_PREFIX=$withval
 else
   JPEG_PREFIX="$JPEG_DIR"
+fi;
+
+# Check whether --with-png-prefix or --without-png-prefix was given.
+if test "${with_png_prefix+set}" = set; then
+  withval="$with_png_prefix"
+  PNG_PREFIX=$withval
+else
+  PNG_PREFIX="$PNG_DIR"
+fi;
+
+# Check whether --with-z-prefix or --without-z-prefix was given.
+if test "${with_z_prefix+set}" = set; then
+  withval="$with_z_prefix"
+  Z_PREFIX=$withval
+else
+  Z_PREFIX="$Z_DIR"
 fi;
 
 # Check whether --enable-gsl or --disable-gsl was given.
@@ -2908,6 +2929,137 @@ fi
     else
             GMSH_LIBS="${GMSH_LIBS} -L${JPEG_PREFIX} -L${JPEG_PREFIX}/lib -ljpeg"
       INCLS="${INCLS} -I${JPEG_PREFIX} -I${JPEG_PREFIX}/include"
+    fi
+  fi
+
+    if test "x${Z_PREFIX}" != "x"; then
+    LDFLAGS="-L${Z_PREFIX} -L${Z_PREFIX}/lib ${LDFLAGS}"
+  fi
+  echo "$as_me:$LINENO: checking for main in -lz" >&5
+echo $ECHO_N "checking for main in -lz... $ECHO_C" >&6
+if test "${ac_cv_lib_z_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lz  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_z_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_z_main=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_z_main" >&5
+echo "${ECHO_T}$ac_cv_lib_z_main" >&6
+if test $ac_cv_lib_z_main = yes; then
+  Z="yes"
+else
+  Z="no"
+fi
+
+  if test "x${Z}" = "xyes"; then
+        if test "x${PNG_PREFIX}" != "x"; then
+      LDFLAGS="-L${PNG_PREFIX} -L${PNG_PREFIX}/lib ${LDFLAGS}"
+    fi
+    echo "$as_me:$LINENO: checking for main in -lpng" >&5
+echo $ECHO_N "checking for main in -lpng... $ECHO_C" >&6
+if test "${ac_cv_lib_png_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpng  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_png_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_png_main=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_png_main" >&5
+echo "${ECHO_T}$ac_cv_lib_png_main" >&6
+if test $ac_cv_lib_png_main = yes; then
+  PNG="yes"
+else
+  PNG="no"
+fi
+
+    if test "x${PNG}" = "xyes"; then
+      FLAGS="-DHAVE_LIBPNG ${FLAGS}"
+            if test "x${PNG_PREFIX}" != "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -L${PNG_PREFIX} -L${PNG_PREFIX}/lib"
+        INCLS="${INCLS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
+      fi
+      if test "x${Z_PREFIX}" != "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -L${Z_PREFIX} -L${Z_PREFIX}/lib -lz"
+        INCLS="${INCLS} -I${Z_PREFIX} -I${Z_PREFIX}/include"
+      fi
+      GMSH_LIBS="${GMSH_LIBS} -lpng -lz"
     fi
   fi
 
