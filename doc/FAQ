@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.34 2004-03-05 23:47:35 geuzaine Exp $
+$Id: FAQ,v 1.35 2004-04-08 23:45:02 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -58,10 +58,9 @@ found at <http://www.mesa3d.org>.
 You need a C and a C++ compiler (e.g. the GNU compilers gcc and g++)
 as well as the GSL (version 1.2 or higher; freely available from
 http://sources.redhat.com/gsl/) and FLTK (version 1.1.x, configured
-with OpenGL support; freely available from http://www.fltk.org)
-installed on your system. You'll also need the jpeg library if you
-want to save jpeg images, and the libpng and zlib libraries if you
-want to save png images.
+with OpenGL support; freely available from http://www.fltk.org).
+You'll also need the jpeg library if you want to save jpeg images, and
+the libpng and zlib libraries if you want to save png images.
 
 Under Windows, you will need the Cygwin tools and compilers (freely
 available from http://www.cygwin.com).
