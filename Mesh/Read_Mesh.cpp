@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.67 2003-12-11 17:15:38 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.68 2003-12-12 02:25:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -185,8 +185,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
     /*  POINTS -- this field is deprecated, and will eventually disappear */
 
-    if(!strncmp(&String[1], "PTS", 3) ||
-       !strncmp(&String[1], "Points", 6)) {
+    else if(!strncmp(&String[1], "PTS", 3) ||
+	    !strncmp(&String[1], "Points", 6)) {
 
       fscanf(fp, "%d", &Nbr_Nodes);
       Msg(INFO, "%d points", Nbr_Nodes);
@@ -204,9 +204,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
     /*  NODES  */
 
-    if(!strncmp(&String[1], "NOD", 3) ||
-       !strncmp(&String[1], "NOE", 3) ||
-       !strncmp(&String[1], "Nodes", 5)) {
+    else if(!strncmp(&String[1], "NOD", 3) ||
+	    !strncmp(&String[1], "NOE", 3) ||
+	    !strncmp(&String[1], "Nodes", 5)) {
 
       fscanf(fp, "%d", &Nbr_Nodes);
       Msg(INFO, "%d nodes", Nbr_Nodes);
