@@ -12,7 +12,7 @@ path=$1
 # Remove the big license blocks
 
 files=`find ${path} -name "*.cpp" -o -name "*.h" -o -name "*.y" -o -name "*.in"\
-                 -o -name "*.l" -o -name "*.texi" -o -name "Makefile*"`
+         -o -name "*.c" -o -name "*.l" -o -name "*.texi" -o -name "Makefile*"`
 
 for A in $files; do
   echo "cleaning up \"$A\""
@@ -27,6 +27,11 @@ for A in $files; do
 #\
 # This software is provided "as is" without express or implied warranty.\
 # See the file "doc/LICENSE" for the licensing terms.'\
+      -e "/ \* This program is free software; you can redistribute/,/provide one./D"\
+      -e '/ \* Copyright (C).*Christophe/a\
+\ \*\
+\ \* This software is provided "as is" without express or implied warranty.\
+\ \* See the file "doc/LICENSE" for the licensing terms.'\
       -e "/@c This program is free software; you can redistribute/,/USA./D"\
       -e '/@c Copyright (C).*Remacle/a\
 @c\
