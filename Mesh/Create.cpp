@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.41 2003-03-01 22:36:41 geuzaine Exp $
+// $Id: Create.cpp,v 1.42 2003-03-18 14:31:02 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -496,7 +496,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->uend = u2;
 
   if(Knots) {
-    pC->k = (float *)malloc(List_Nbr(Knots) * sizeof(float));
+    pC->k = (float *)Malloc(List_Nbr(Knots) * sizeof(float));
     double kmin = .0, kmax = 1.;
     List_Read(Knots, 0, &kmin);
     List_Read(Knots, List_Nbr(Knots) - 1, &kmax);
