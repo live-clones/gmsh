@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.187 2004-12-17 05:12:01 geuzaine Exp $
+// $Id: Gmsh.y,v 1.188 2004-12-26 19:50:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2371,11 +2371,31 @@ Delete :
 	  UpdateViewsInGUI();
 #endif
       }
+      else{
+	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
+      }
     }
     | tDelete tSTRING tEND
     {
-      if(!strcmp($2, "Meshes") || !strcmp($2, "All"))
+      if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
 	Init_Mesh(THEM);
+      }
+      else{
+	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
+      }
+    }
+    | tDelete tSTRING tSTRING tEND
+    {
+      if(!strcmp($2, "Empty") && !strcmp($3, "Views")){
+	for(int i = 0; i < List_Nbr(CTX.post.list); i++){
+	  Post_View *v = *(Post_View **)List_Pointer_Test(CTX.post.list, i);
+	  if(v->empty())
+	    RemoveViewByIndex(i);
+	}
+      }
+      else{
+	yymsg(GERROR, "Unknown command 'Delete %s %s'", $2, $3);
+      }
     }
 ;
 

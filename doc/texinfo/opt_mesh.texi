@@ -40,7 +40,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CpuTime
-CPU time for the generation of the current mesh (in seconds)@*
+CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -155,37 +155,37 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
-Number of hexahedra in the current mesh@*
+Number of hexahedra in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.NbNodes
-Number of nodes in the current mesh@*
+Number of nodes in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.NbPrisms
-Number of prisms in the current mesh@*
+Number of prisms in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.NbPyramids
-Number of pyramids in the current mesh@*
+Number of pyramids in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.NbQuadrangles
-Number of quadrangles in the current mesh@*
+Number of quadrangles in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.NbTetrahedra
-Number of tetrahedra in the current mesh@*
+Number of tetrahedra in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.NbTriangles
-Number of triangles in the current mesh@*
+Number of triangles in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 

@@ -18,7 +18,7 @@ Combine Views;
 Plugin(DecomposeInSimplex).iView = 0;
 Plugin(DecomposeInSimplex).Run;
 
-View[0].AlphaChannel = 0.6;
+View[0].ColormapAlpha = 0.6;
 
 General.FastRedraw = 0;
 General.Color.Background = White;

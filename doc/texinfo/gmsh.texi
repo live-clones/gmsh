@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.149 2004-12-13 15:57:35 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.150 2004-12-26 19:50:19 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2278,6 +2278,9 @@ Combines all post-processing views in a single new view.
 @item Delete View[@var{expression}];
 Deletes (removes) the @var{expression}-th post-processing view. Note that
 post-processing view numbers start at 0.
+
+@item Delete Empty Views;
+Deletes (removes) all the empty post-processing views.
 
 @item Duplicata View[@var{expression}];
 Duplicates the @var{expression}-th post-processing view. 

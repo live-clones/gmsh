@@ -609,7 +609,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.MaximumDelay
-Maximum delay allowed for solver response (in seconds)@*
+Maximum delay (in seconds) allowed for solver response@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 

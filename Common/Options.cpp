@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.216 2004-12-24 23:10:26 geuzaine Exp $
+// $Id: Options.cpp,v 1.217 2004-12-26 19:50:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4439,20 +4439,12 @@ double opt_view_timestep(OPT_ARGS_NUM)
 double opt_view_min(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  if(action & GMSH_SET) {
-    v->Min = val;
-    v->Changed = 1;
-  }
   return v->Min;
 }
 
 double opt_view_max(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  if(action & GMSH_SET) {
-    v->Max = val;
-    v->Changed = 1;
-  }
   return v->Max;
 }
 
@@ -4483,6 +4475,42 @@ double opt_view_custom_max(OPT_ARGS_NUM)
     WID->view_value[32]->value(v->CustomMax);
 #endif
   return v->CustomMax;
+}
+
+double opt_view_xmin(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  return v->BBox[0];
+}
+
+double opt_view_xmax(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  return v->BBox[1];
+}
+
+double opt_view_ymin(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  return v->BBox[2];
+}
+
+double opt_view_ymax(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  return v->BBox[3];
+}
+
+double opt_view_zmin(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  return v->BBox[4];
+}
+
+double opt_view_zmax(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  return v->BBox[5];
 }
 
 double opt_view_offset0(OPT_ARGS_NUM)

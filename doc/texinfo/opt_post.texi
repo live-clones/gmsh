@@ -30,7 +30,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.NbViews
-Current number of views merged@*
+Current number of views merged (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
