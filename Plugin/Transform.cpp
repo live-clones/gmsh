@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.25 2004-11-13 22:52:46 geuzaine Exp $
+// $Id: Transform.cpp,v 1.26 2004-11-15 18:15:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,6 +37,9 @@ StringXNumber TransformOptions_Number[] = {
   {GMSH_FULLRC, "A31", NULL, 0.},
   {GMSH_FULLRC, "A32", NULL, 0.},
   {GMSH_FULLRC, "A33", NULL, 1.},
+  {GMSH_FULLRC, "T1", NULL, 0.},
+  {GMSH_FULLRC, "T2", NULL, 0.},
+  {GMSH_FULLRC, "T3", NULL, 0.},
   {GMSH_FULLRC, "swapOrientation", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -66,11 +69,12 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Transform) transforms the node coordinates\n"
-	 "of the elements in the view `iView' by the matrix\n"
-         "[`A11' `A12' `A13']\n"
-	 "[`A21' `A22' `A23']\n"
-	 "[`A31' `A32' `A33'].\n"
+         "Plugin(Transform) transforms the homogenous\n"
+	 "node coordinates (x,y,z,1) of the elements in\n"
+	 "the view `iView' by the matrix\n"
+         "[`A11' `A12' `A13' `T1']\n"
+	 "[`A21' `A22' `A23' `T2']\n"
+	 "[`A31' `A32' `A33' `T3'].\n"
 	 "If `swapOrientation' is set, the orientation of the\n"
 	 "elements is reversed. If `iView' < 0, the plugin\n"
 	 "is run on the current view.\n"
@@ -95,16 +99,16 @@ void GMSH_TransformPlugin::catchErrorMessage(char *errorMessage) const
 
 // Transformation
 
-static void transform(double mat[3][3], double v[3],
+static void transform(double mat[3][4], double v[3],
                       double *x, double *y, double *z)
 {
-  *x = mat[0][0] * v[0] + mat[0][1] * v[1] + mat[0][2] * v[2];
-  *y = mat[1][0] * v[0] + mat[1][1] * v[1] + mat[1][2] * v[2];
-  *z = mat[2][0] * v[0] + mat[2][1] * v[1] + mat[2][2] * v[2];
+  *x = mat[0][0] * v[0] + mat[0][1] * v[1] + mat[0][2] * v[2] + mat[0][3];
+  *y = mat[1][0] * v[0] + mat[1][1] * v[1] + mat[1][2] * v[2] + mat[1][3];
+  *z = mat[2][0] * v[0] + mat[2][1] * v[1] + mat[2][2] * v[2] + mat[2][3];
 }
 
 static void transform_list(Post_View *view, List_T *list, int nbList, 
-			   int nbVert, int nbComp, double mat[3][3], int swap)
+			   int nbVert, int nbComp, double mat[3][4], int swap)
 {
   if(!nbList) return;
 
@@ -150,7 +154,7 @@ static void transform_list(Post_View *view, List_T *list, int nbList,
 
 Post_View *GMSH_TransformPlugin::execute(Post_View * v)
 {
-  double mat[3][3];
+  double mat[3][4];
 
   mat[0][0] = TransformOptions_Number[0].def;
   mat[0][1] = TransformOptions_Number[1].def;
@@ -162,9 +166,12 @@ Post_View *GMSH_TransformPlugin::execute(Post_View * v)
   mat[2][1] = TransformOptions_Number[7].def;
   mat[2][2] = TransformOptions_Number[8].def;
 
-  int swap = (int)TransformOptions_Number[9].def;
+  mat[0][3] = TransformOptions_Number[9].def;
+  mat[1][3] = TransformOptions_Number[10].def;
+  mat[2][3] = TransformOptions_Number[11].def;
 
-  int iView = (int)TransformOptions_Number[10].def;
+  int swap = (int)TransformOptions_Number[12].def;
+  int iView = (int)TransformOptions_Number[13].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
