@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.12 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.13 2001-10-30 08:18:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -239,7 +239,7 @@ void Colorbar_Window::redraw_range(int a, int b){
    // print colortable mode and help
    fl_font(FL_HELVETICA, font_height);
    fl_color(contrast(FL_BLACK,color_bg));
-   int xx0=10, xx1=12*font_height, yy0=10;
+   int xx0=10, xx1=13*font_height, yy0=10;
    if (help_flag){
      i = 0;
      fl_draw("1, 2, ..., 6", xx0,yy0+(i+1)*font_height); 

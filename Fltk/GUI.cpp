@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.120 2001-10-29 16:35:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.121 2001-10-30 08:18:50 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -978,15 +978,29 @@ void GUI::create_general_options_window(){
 	o->end();
       }
       { 
-	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Projection");
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
 	o->labelsize(CTX.fontsize);
 	o->hide();
-	gen_butt[10] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Orthographic");
-	gen_butt[11] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Perspective");
+	gen_butt[10] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Orthographic projection");
+	gen_butt[11] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Perspective projection");
 	for(i=10 ; i<12 ; i++){
 	  gen_butt[i]->type(FL_RADIO_BUTTON);
 	  gen_butt[i]->labelsize(CTX.fontsize);
 	  gen_butt[i]->selection_color(FL_YELLOW);
+	}
+	gen_value[6] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Point size");
+	gen_value[6]->minimum(1);
+	gen_value[6]->maximum(50);
+	gen_value[6]->step(1);
+	gen_value[7] = new Fl_Value_Input(2*WB, 2*WB+4*BH, IW, BH, "Line width");
+	gen_value[7]->minimum(1);
+	gen_value[7]->maximum(50);
+	gen_value[7]->step(1);
+	for(i=6 ; i<= 7 ; i++){
+	  gen_value[i]->labelsize(CTX.fontsize);
+	  gen_value[i]->textsize(CTX.fontsize);
+	  gen_value[i]->type(FL_HORIZONTAL);
+	  gen_value[i]->align(FL_ALIGN_RIGHT);
 	}
 	o->end();
       }
@@ -1138,6 +1152,26 @@ void GUI::create_geometry_options_window(){
 	geo_value[1]->maximum(100);
 	geo_value[1]->step(0.1);
 	for(i=0 ; i<2 ; i++){
+	  geo_value[i]->labelsize(CTX.fontsize);
+	  geo_value[i]->textsize(CTX.fontsize);
+	  geo_value[i]->type(FL_HORIZONTAL);
+	  geo_value[i]->align(FL_ALIGN_RIGHT);
+	}
+	o->end();
+      }
+      { 
+	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
+	o->labelsize(CTX.fontsize);
+	o->hide();
+	geo_value[3] = new Fl_Value_Input(2*WB, 2*WB+1*BH, IW, BH, "Point size");
+	geo_value[3]->minimum(1);
+	geo_value[3]->maximum(50);
+	geo_value[3]->step(1);
+	geo_value[4] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Line width");
+	geo_value[4]->minimum(1);
+	geo_value[4]->maximum(50);
+	geo_value[4]->step(1);
+	for(i=3 ; i<= 4 ; i++){
 	  geo_value[i]->labelsize(CTX.fontsize);
 	  geo_value[i]->textsize(CTX.fontsize);
 	  geo_value[i]->type(FL_HORIZONTAL);
@@ -1328,10 +1362,20 @@ void GUI::create_mesh_options_window(){
 	mesh_value[9]->minimum(0);
 	mesh_value[9]->maximum(1);
 	mesh_value[9]->step(0.01);
-	mesh_value[9]->labelsize(CTX.fontsize);
-	mesh_value[9]->textsize(CTX.fontsize);
-	mesh_value[9]->type(FL_HORIZONTAL);
-	mesh_value[9]->align(FL_ALIGN_RIGHT);
+	mesh_value[10] = new Fl_Value_Input(2*WB, 2*WB+5*BH, IW, BH, "Point size");
+	mesh_value[10]->minimum(1);
+	mesh_value[10]->maximum(50);
+	mesh_value[10]->step(1);
+	mesh_value[11] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Line width");
+	mesh_value[11]->minimum(1);
+	mesh_value[11]->maximum(50);
+	mesh_value[11]->step(1);
+	for(i=9 ; i<= 11 ; i++){
+	  mesh_value[i]->labelsize(CTX.fontsize);
+	  mesh_value[i]->textsize(CTX.fontsize);
+	  mesh_value[i]->type(FL_HORIZONTAL);
+	  mesh_value[i]->align(FL_ALIGN_RIGHT);
+	}
 	o->end();
       }
       { 
@@ -1344,15 +1388,15 @@ void GUI::create_mesh_options_window(){
 	mesh_butt[17]->labelsize(CTX.fontsize);
 	mesh_butt[17]->selection_color(FL_YELLOW);
 
-	mesh_value[10] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Predefined color scheme");
-	mesh_value[10]->minimum(0); 
-	mesh_value[10]->maximum(2); 
-	mesh_value[10]->step(1);
-	mesh_value[10]->labelsize(CTX.fontsize);
-	mesh_value[10]->textsize(CTX.fontsize);
-	mesh_value[10]->type(FL_HORIZONTAL);
-	mesh_value[10]->align(FL_ALIGN_RIGHT);
-	mesh_value[10]->callback(opt_mesh_color_scheme_cb);
+	mesh_value[12] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Predefined color scheme");
+	mesh_value[12]->minimum(0); 
+	mesh_value[12]->maximum(2); 
+	mesh_value[12]->step(1);
+	mesh_value[12]->labelsize(CTX.fontsize);
+	mesh_value[12]->textsize(CTX.fontsize);
+	mesh_value[12]->type(FL_HORIZONTAL);
+	mesh_value[12]->align(FL_ALIGN_RIGHT);
+	mesh_value[12]->callback(opt_mesh_color_scheme_cb);
 
 	Fl_Scroll* s = new Fl_Scroll(2*WB, 3*WB+3*BH, IW+20, height-3*WB-5*BH);
 	i = 0;
@@ -1983,7 +2027,7 @@ void GUI::create_view_options_window(int num){
       view_input[i] = NULL;
     }
 
-    int width = 32*CTX.fontsize;
+    int width = 34*CTX.fontsize;
     int height = 5*WB+11*BH;
     
     view_window = new Fl_Window(width,height);
@@ -2215,41 +2259,56 @@ void GUI::create_view_options_window(int num){
 
 	view_timestep->end();
       }
-      // Vector display
+      // Aspect
       { 
-	view_vector = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Vector");
-	view_vector->labelsize(CTX.fontsize);
-        view_vector->hide();
+	Fl_Group *o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Aspect");
+	o->labelsize(CTX.fontsize);
+        o->hide();
 
 	{
-	  Fl_Group *o = new Fl_Group(width/2, 2*WB+1*BH, width-4*WB, 4*BH, 0);
-	  view_butt[60] = new Fl_Check_Button(width/2, 2*WB+1*BH, IW, BH, "Line");
-	  view_butt[61] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Arrow");
-	  view_butt[62] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Cone");
-	  view_butt[63] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Displacement");
-	  o->end();
-	}
-	{
-	  Fl_Group *o = new Fl_Group(2*WB, 2*WB+2*BH, width-4*WB, 2*BH, 0);
-	  view_butt[64] = new Fl_Check_Button(2*WB, 2*WB+2*BH, IW, BH, "Cell centered");
-	  view_butt[65] = new Fl_Check_Button(2*WB, 2*WB+3*BH, IW, BH, "Vertex centered");
-	  o->end();
-	}
-	for(i=60 ; i<=65 ; i++){
-	  view_butt[i]->type(FL_RADIO_BUTTON);
-	  view_butt[i]->labelsize(CTX.fontsize);
-	  view_butt[i]->selection_color(FL_YELLOW);
-	  view_butt[i]->callback(set_changed_cb, 0);
+	  view_vector = new Fl_Group(width/2, WB+BH, width-2*WB, height-3*WB-2*BH, 0);
+	  {
+	    Fl_Group *o = new Fl_Group(width/2, 2*WB+2*BH, width-4*WB, 4*BH, 0);
+	    view_butt[60] = new Fl_Check_Button(width/2, 2*WB+2*BH, IW, BH, "Line");
+	    view_butt[61] = new Fl_Check_Button(width/2, 2*WB+3*BH, IW, BH, "Arrow");
+	    view_butt[62] = new Fl_Check_Button(width/2, 2*WB+4*BH, IW, BH, "Cone");
+	    view_butt[63] = new Fl_Check_Button(width/2, 2*WB+5*BH, IW, BH, "Displacement");
+	    o->end();
+	  }
+	  {
+	    Fl_Group *o = new Fl_Group(width/2, 2*WB+6*BH, width-4*WB, 2*BH, 0);
+	    view_butt[64] = new Fl_Check_Button(width/2, 2*WB+6*BH, IW, BH, "Cell centered");
+	    view_butt[65] = new Fl_Check_Button(width/2, 2*WB+7*BH, IW, BH, "Vertex centered");
+	    o->end();
+	  }
+	  for(i=60 ; i<=65 ; i++){
+	    view_butt[i]->type(FL_RADIO_BUTTON);
+	    view_butt[i]->labelsize(CTX.fontsize);
+	    view_butt[i]->selection_color(FL_YELLOW);
+	    view_butt[i]->callback(set_changed_cb, 0);
+	  }
+	  
+	  view_value[60] = new Fl_Value_Input(width/2, 2*WB+ 1*BH, IW, BH, "Vector size");
+	  view_value[60]->minimum(0); 
+	  view_vector->end();
 	}
 
-	view_value[60] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "Size");
-	view_value[60]->labelsize(CTX.fontsize);
-	view_value[60]->textsize(CTX.fontsize);
-	view_value[60]->type(FL_HORIZONTAL);
-	view_value[60]->align(FL_ALIGN_RIGHT);
-	view_value[60]->minimum(0); 
-	view_value[60]->callback(set_changed_cb, 0);
-	view_vector->end();
+	view_value[61] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "Point size");
+	view_value[61]->minimum(1); 
+	view_value[61]->maximum(50);
+	view_value[61]->step(1);
+	view_value[62] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Line width");
+	view_value[62]->minimum(1); 
+	view_value[62]->maximum(50);
+	view_value[62]->step(1);
+	for(i=60 ; i<=62 ; i++){
+	  view_value[i]->labelsize(CTX.fontsize);
+	  view_value[i]->textsize(CTX.fontsize);
+	  view_value[i]->type(FL_HORIZONTAL);
+	  view_value[i]->align(FL_ALIGN_RIGHT);
+	  view_value[i]->callback(set_changed_cb, 0);
+	}
+	o->end();
       }
       // Colors
       { 
@@ -2378,9 +2437,11 @@ void GUI::update_view_window(int num){
   opt_view_timestep(num, GMSH_GUI, 0);
   opt_view_show_time(num, GMSH_GUI, 0);
 
-  // vector
+  // aspect
   if(v->ScalarOnly) view_vector->deactivate();
   else view_vector->activate();
+  opt_view_point_size(num, GMSH_GUI, 0);
+  opt_view_line_width(num, GMSH_GUI, 0);
   opt_view_arrow_type(num, GMSH_GUI, 0);
   opt_view_arrow_scale(num, GMSH_GUI, 0);
   opt_view_arrow_location(num, GMSH_GUI, 0);

@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.23 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: Scale.cpp,v 1.24 2001-10-30 08:18:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -11,15 +11,8 @@
 
 extern Context_T   CTX;
 
-#if _FLTK
 static double overall ; 
 #define CHECK_W  overall=gl_width(label) ; if(overall > cv_w) cv_w=overall
-
-#else
-
-#define CHECK_W  cv_w=200
-
-#endif
 
 /* Even if all computations in these routines are made in window
    coordinates, double precision is used to work at subpixel accuracy */
@@ -41,6 +34,7 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
   char      label[1024] ;
   double    Val, ValMin, ValMax;
 
+  gl_font(FL_HELVETICA,CTX.gl_fontsize);
   font_h  = gl_height() ;             /* hauteur totale de la fonte */
   font_a  = gl_height()-gl_descent() ;/* hauteur de la fonte au dessus de pt de ref */
   label_h = 1.8*font_h ;              /* hauteur du label */

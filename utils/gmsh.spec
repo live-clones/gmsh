@@ -1,24 +1,24 @@
 Summary: A 3D mesh generator with pre- and post-processing facilities
 Name: gmsh
-Version: 1.00
-Source: gmsh-1.00.tar.gz
+Version: 1.28
+Source: gmsh-1.28.tar.gz
 Release: 1
 Copyright: distributable
 Group: Applications/Engineering
 URL: http://www.geuz.org/gmsh/
 Packager: Christophe.Geuzaine@AdValvas.be
 Buildroot: /var/tmp/%{name}-buildroot
-Requires: Mesa >= 3.0 lesstif >= 0.90
+Requires: Mesa >= 3.2
 
-%description
+%description 
 Gmsh is an automatic three-dimensional finite element mesh generator,
 primarily Delaunay, with built-in pre- and post-processing
 facilities. Its primal goal is to provide a simple meshing tool for
 academic test cases with parametric input and up to date visualization
 capabilities.  One of the strengths of Gmsh is its ability to respect
 a characteristic length field for the generation of adapted meshes on
-lines, surfaces and volumes. Gmsh requires the Mesa and Lesstif
-libraries to be installed on your system.
+lines, surfaces and volumes. Gmsh requires OpenGL (or Mesa) to be
+installed on your system.
 
 Install Gmsh if you need a simple 3D finite element mesh generator
 and/or post-processor.
@@ -28,7 +28,9 @@ and/or post-processor.
 %setup -c -q
 
 %build
-make motif_linux_2952
+make linux_gcc-2.95
+#make linux
+make distrib
 make utilities
 rm -rf CVS */CVS */*/CVS
 
@@ -46,11 +48,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc doc/FORMATS demos tutorial
+%doc doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS demos tutorial
 /usr/bin/gmsh
 /usr/bin/dxf2geo
 /usr/man/man1/gmsh*
 
-%changelog
-* Sat Sep 23 2000 Christophe Geuzaine <Christophe.Geuzaine@AdValvas.be> 
- - initial revision

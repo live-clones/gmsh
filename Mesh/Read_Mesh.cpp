@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.30 2001-09-05 09:35:29 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.31 2001-10-30 08:18:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -53,7 +53,8 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
   Surface S , *s , **ss;
   Volume  V , *v , **vv;
   Tree_T *Duplicates ;
-  
+  List_T *Physicals ;
+
   while (1) {
     do { 
       fgets(String,sizeof(String), File_GEO) ; 
@@ -111,6 +112,8 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
       if(CTX.mesh.check_duplicates)
 	Duplicates = Tree_Create (sizeof (Vertex *), comparePosition);
 
+      Physicals = List_Create(10,10,sizeof(int));
+
       for (i_Element = 0 ; i_Element < Nbr_Elements ; i_Element++) {
         
 	// HACK FROM JF
@@ -118,7 +121,9 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
         //       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes) ;
         fscanf(File_GEO, "%d %d %d %d %d", 
                &Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
-        
+
+        List_Insert(Physicals, &Elementary, fcmp_int);
+
         for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;
         
@@ -285,6 +290,11 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
     M->status = 0 ;
   else
     M->status = -1 ;
+
+  for(i=0;i<List_Nbr(Physicals);i++){
+    List_Read(Physicals, i, &Physical);
+    Msg(INFO, "Got physical %d", Physical);
+  }
 
 }
 

@@ -85,6 +85,7 @@ public :
 
   int fontsize;               // font size for fltk UI
   int gl_fontsize;            // font size for opengl graphics
+  int point_size, line_width; // point/line widths
 
   int viewport[4];            // current viewport 
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 

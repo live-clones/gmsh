@@ -6,44 +6,68 @@
  *
  *********************************************************************/
 
-// The first example is included, as well as two post-processing maps
+// The first example is included, as well as some post-processing maps
 // (for the format of the post-processing maps, see the FORMATS file):
 
 Include "t1.geo" ;
 Include "view1.pos" ;
 Include "view1.pos" ;
+Include "view4.pos" ;
 
 // Some general options are set (all the options specified
 // interactively can be directly specified in the ascii input
 // files. The current options can be saved into a file by selecting
-// 'File->Save as->GEO complete options')...
+// 'File->Save as->GEO complete options').
 
 General.Trackball = 0 ;
 General.RotationX = 0 ;
 General.RotationY = 0 ;
 General.RotationZ = 0 ;
 General.Color.Background = White ;
+General.Color.Foreground = Black ;
 General.Color.Text = Black ;
 General.Orthographic = 0 ;
 General.Axes = 0 ;
+General.SmallAxes = 0 ;
 
-// ...as well as some options for each post-processing view...
+// Some options are also specified for each post-processing view:
 
-View[0].Name = "This is a very stupid demonstration..." ;
 View[0].IntervalsType = 2 ;
 View[0].OffsetZ = 0.05 ;
 View[0].RaiseZ = 0 ;
 View[0].Light = 1 ;
+View[0].ShowScale = 0;
+View[0].SmoothNormals = 1;
 
-View[1].Name = "...of Gmsh's scripting capabilities" ;
 View[1].IntervalsType = 1 ;
 View[1].ColorTable = { Green, Blue } ;
 View[1].NbIso = 10 ;
+View[1].ShowScale = 0;
 
-// ...and loop from 1 to 255 with a step of 1 is performed (to use a
-// step different from 1, just add a third argument in the list,
-// e.g. 'For num In {0.5:1.5:0.1}' increments num from 0.5 to 1.5 with
-// a step of 0.1):
+View[2].Name = "Test..." ;
+View[2].IntervalsType = 2 ;
+View[2].GraphType = 2;
+View[2].IntervalsType = 2 ;
+View[2].GraphPositionX = 85;
+View[2].GraphPositionY = 50;
+View[2].GraphWidth = 200;
+View[2].GraphHeight = 150;
+
+View[3].GraphType = 3;
+View[3].RangeType = 2;
+View[3].IntervalsType = 4 ;
+View[3].ShowScale = 0;
+View[3].CustomMin = View[2].CustomMin;
+View[3].CustomMax = View[2].CustomMax;
+View[3].GraphPositionX = View[2].GraphPositionX;
+View[3].GraphPositionY = View[2].GraphPositionY;
+View[3].GraphWidth = View[2].GraphWidth;
+View[3].GraphHeight = View[2].GraphHeight;
+
+// We loop from 1 to 255 with a step of 1 (to use a step different
+// from 1, just add a third argument in the list. For example, 'For
+// num In {0.5:1.5:0.1}' would increment num from 0.5 to 1.5 with a
+// step of 0.1).
 
 t = 0 ;
 
@@ -51,20 +75,20 @@ For num In {1:255}
 
   View[0].TimeStep = t ;
   View[1].TimeStep = t ;
+  View[2].TimeStep = t ;
+  View[3].TimeStep = t ;
 
   t = (View[0].TimeStep < View[0].NbTimeStep-1) ? t+1 : 0 ;
   
   View[0].RaiseZ += 0.01*t ;
 
   If (num == 3)
-    // We want to use mpeg_encode to create a nice 320x240 animation
-    // for all frames when num==3:
+    // We want to create 320x240 frames when num==3:
     General.GraphicsWidth = 320 ; 
     General.GraphicsHeight = 240 ;
   EndIf
 
   // It is possible to nest loops:
-
   For num2 In {1:50}
 
     General.RotationX += 10 ;
@@ -79,18 +103,22 @@ For num In {1:255}
       // variables (since all Gmsh variables are treated internally as
       // double precision numbers, the format should only contain valid
       // double precision number format specifiers):
+      Print Sprintf("t8-0%g.gif", num2);
       Print Sprintf("t8-0%g.jpg", num2);
     EndIf
 
     If ((num == 3) && (num2 >= 10))
-      Print Sprintf("t8-%g.jpg", num2);
+       Print Sprintf("t8-%g.gif", num2);
+       Print Sprintf("t8-%g.jpg", num2);
     EndIf
 
   EndFor
 
   If(num == 3)
-    // We make a system call to generate the mpeg
-    System "mpeg_encode t8.par" ;    
+    // We could make a system call to generate the mpeg (uncomment the
+    // following of mpeg_encode is installed on your computer)
+
+    // System "mpeg_encode t8.par" ;
   EndIf
 
 EndFor

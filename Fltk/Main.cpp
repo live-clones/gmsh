@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.33 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Main.cpp,v 1.34 2001-10-30 08:18:50 geuzaine Exp $
 
 #include <signal.h>
 #include <time.h>
@@ -191,8 +191,6 @@ int main(int argc, char *argv[]){
     else
       Msg(GERROR, "Invalid background mesh (no view)");
   }
-
-  gl_font(FL_HELVETICA, CTX.gl_fontsize);
 
   // Draw the actual scene
   Draw();

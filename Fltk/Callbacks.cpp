@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.87 2001-10-29 16:06:55 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.88 2001-10-30 08:18:50 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -347,6 +347,8 @@ void opt_general_ok_cb(CALLBACK_ARGS){
   opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
   opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
   opt_general_verbosity(0, GMSH_SET, WID->gen_value[5]->value());
+  opt_general_point_size(0, GMSH_SET, WID->gen_value[6]->value());
+  opt_general_line_width(0, GMSH_SET, WID->gen_value[7]->value());
 
   opt_general_default_filename(0, GMSH_SET, (char*)WID->gen_input[0]->value());
   opt_general_tmp_filename(0, GMSH_SET, (char*)WID->gen_input[1]->value());
@@ -392,6 +394,8 @@ void opt_geometry_ok_cb(CALLBACK_ARGS) {
 
   opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, WID->geo_value[1]->value());
+  opt_geometry_point_size(0, GMSH_SET, WID->geo_value[3]->value());
+  opt_geometry_line_width(0, GMSH_SET, WID->geo_value[4]->value());
   Draw();
 }
 
@@ -404,7 +408,7 @@ void opt_mesh_show_by_entity_num_cb(CALLBACK_ARGS) {
   opt_geometry_show_by_entity_num_cb(w,data);
 }
 void opt_mesh_color_scheme_cb(CALLBACK_ARGS){
-  opt_mesh_color_scheme(0,GMSH_SET, WID->mesh_value[10]->value());
+  opt_mesh_color_scheme(0,GMSH_SET, WID->mesh_value[12]->value());
   Draw();
 }
 void opt_mesh_ok_cb(CALLBACK_ARGS) {
@@ -439,6 +443,8 @@ void opt_mesh_ok_cb(CALLBACK_ARGS) {
   opt_mesh_radius_sup(0, GMSH_SET, WID->mesh_value[7]->value());
   opt_mesh_normals(0, GMSH_SET, WID->mesh_value[8]->value());
   opt_mesh_explode(0, GMSH_SET, WID->mesh_value[9]->value());
+  opt_mesh_point_size(0, GMSH_SET, WID->mesh_value[10]->value());
+  opt_mesh_line_width(0, GMSH_SET, WID->mesh_value[11]->value());
 
   Draw();
 }
@@ -1897,6 +1903,12 @@ void view_options_ok_cb(CALLBACK_ARGS){
 
       if(force || WID->view_value[60]->changed())
 	opt_view_arrow_scale(i, GMSH_SET, WID->view_value[60]->value());
+
+      if(force || WID->view_value[61]->changed())
+	opt_view_point_size(i, GMSH_SET, WID->view_value[61]->value());
+
+      if(force || WID->view_value[62]->changed())
+	opt_view_line_width(i, GMSH_SET, WID->view_value[62]->value());
 
       if(force || WID->view_value[11]->changed())
 	opt_view_boundary(i, GMSH_SET, WID->view_value[11]->value());

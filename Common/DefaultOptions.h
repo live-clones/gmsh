@@ -133,6 +133,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Y-axis scale factor" },
   { F, "ScaleZ" , opt_general_scale2 , 1.0 , 
     "Z-axis scale factor" },
+  { F|O, "PointSize" , opt_general_point_size , 3. , 
+    "Display size of points (in pixels)" },
+  { F|O, "LineWidth" , opt_general_line_width , 1. , 
+    "Display width of lines (in pixels)" },
   { F|O, "Shininess" , opt_general_shine , 0.4 , 
     "Material shininess (must be > 0)" },
   { F|O, "ColorScheme", opt_general_color_scheme , 0. ,
@@ -435,8 +439,8 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Apply (non-reversible) smoothing to post-processing view when merged" },
   { F|O, "AnimationDelay" , opt_post_anim_delay , 0.25 ,
     "Delay (in seconds) between to animation frames" },
-  { F, "NbViews" , opt_post_nb_views , 0. ,
-    "Current number of views merged (do _not_ change this!)" },
+  { F, "NbViews" , opt_post_nb_views , 0. ,//this default val is not used
+    "Current number of views merged" },
   { 0, NULL , NULL , 0. }
 } ;
 

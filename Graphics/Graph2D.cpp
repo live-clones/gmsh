@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.5 2001-10-29 17:12:59 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.6 2001-10-30 08:18:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -13,10 +13,10 @@ extern Context_T   CTX;
 
 #define TIC 5
 
-void addval(Post_View *v, double min, double max, 
-	    int i, int j, int j_inc, 
-	    double xtop, double dx, double ybot,
-	    int numeric){
+static void addval(Post_View *v, double min, double max, 
+		   int i, int j, int j_inc, 
+		   double xtop, double dx, double ybot,
+		   int numeric){
   char label[256];
   double d, x, y;
 
@@ -28,12 +28,13 @@ void addval(Post_View *v, double min, double max,
     d = ((double*)List_Pointer_Fast(v->SP,i+3))[j];
     x = xtop+j*dx;
   }
-  y = ybot+(d-min)/(max-min)*v->GraphSize[1];
 
   if(v->SaturateValues){
     if(d > max) d = max;
     else if(d < min) d = min;
   }
+  y = ybot+(d-min)/(max-min)*v->GraphSize[1];
+
   if(d>=min && d<=max){      
     Palette2(v,min,max,d);
     if(numeric){
@@ -47,16 +48,19 @@ void addval(Post_View *v, double min, double max,
 }
 
 
-void Draw_Graph2D(Post_View *v){
+static void Draw_Graph2D(Post_View *v){
   char label[1024] ;
-  int font_h = gl_height() ; // hauteur totale de la fonte
-  int font_a = gl_height()-gl_descent() ; // hauteur de la fonte au dessus de pt de ref
+  int font_h, font_a ;
   int i, i_inc, i_max, j, j_inc, j_max, k, nb;
   double dx, dy, dv;
   double xtop = v->GraphPosition[0];
   double ytop = CTX.viewport[3]-v->GraphPosition[1];
   double ybot = ytop-v->GraphSize[1];
   double ValMin, ValMax;
+
+  gl_font(FL_HELVETICA,CTX.gl_fontsize);
+  font_h = gl_height() ; // hauteur totale de la fonte
+  font_a = gl_height()-gl_descent() ; // hauteur de la fonte au dessus de pt de ref
 
   switch(v->RangeType){
   case DRAW_POST_DEFAULT : ValMin = v->Min ; ValMax = v->Max ; break;
@@ -76,11 +80,11 @@ void Draw_Graph2D(Post_View *v){
   // The axes + labels
   
   if(v->ShowScale){
-    glPointSize(CTX.geom.point_size); 
-    gl2psPointSize(CTX.geom.point_size * CTX.print.eps_point_size_factor);
+    glPointSize(CTX.point_size); 
+    gl2psPointSize(CTX.point_size * CTX.print.eps_point_size_factor);
 
-    glLineWidth(CTX.geom.line_width); 
-    gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
+    glLineWidth(CTX.line_width); 
+    gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
 
     // 2 axes
     glColor4ubv((GLubyte*)&CTX.color.fg);
@@ -118,10 +122,9 @@ void Draw_Graph2D(Post_View *v){
     // x tics + labels
     if(v->GraphType==DRAW_POST_2D_SPACE)
       nb = v->NbSP;
-    else if(v->NbTimeStep>1)
-      nb = v->NbTimeStep;
     else
-      nb = 0;
+      nb = v->NbTimeStep;
+    if(nb == 1) nb=0;
     sprintf(label, v->Format, 9.999);
     if(nb*gl_width(label) > v->GraphSize[0])
       nb = 2;
@@ -164,21 +167,21 @@ void Draw_Graph2D(Post_View *v){
   if(v->GraphType==DRAW_POST_2D_SPACE){
     i_inc = 1;
     i_max = 1;
-    dx = v->GraphSize[0]/(double)(v->NbSP-1);
+    nb = v->NbSP;
     j_inc = List_Nbr(v->SP) / v->NbSP ;
     j_max = List_Nbr(v->SP);
   }
-  else if(v->NbTimeStep>1){
+  else{
     i_inc = List_Nbr(v->SP) / v->NbSP ;
     i_max = List_Nbr(v->SP) ;
-    dx = v->GraphSize[0]/(double)(v->NbTimeStep-1);
+    nb = v->NbTimeStep;
     j_inc = 1;
     j_max = v->TimeStep+1;
   }
-  else{
-    i_max = 0;
-  }
-  
+
+  if(nb==1) nb=0;
+  dx = v->GraphSize[0]/(double)(nb-1);
+
   for(i=0; i<i_max; i+=i_inc){
     if(v->IntervalsType == DRAW_POST_ISO || 
        v->IntervalsType == DRAW_POST_DISCRETE ||
