@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.180 2005-03-26 05:39:48 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.181 2005-03-26 21:24:23 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -3185,11 +3185,12 @@ post-processing file formats.}, i.e.,
 etc.
 @end itemize
 
-and the ordering of the nodes is given in @ref{Gmsh node ordering}; for
-second order elements, the first order nodes are given first, followed by
-the nodes associated with the edges, followed by the nodes associated with
-the quadrangular faces (if any), followed by the nodes associated with the
-volume (if any).
+The ordering of the nodes is given in @ref{Gmsh node ordering}. For second
+order elements, the first order nodes are given first, followed by the nodes
+associated with the edges, followed by the nodes associated with the
+quadrangular faces (if any), followed by the nodes associated with the
+volume (if any). The ordering of these additional nodes follows the ordering
+of the edges and quadrangular faces given in @ref{Gmsh node ordering}.
 
 The values are given by time step, by node and by component, i.e.:
 @example
@@ -3219,12 +3220,9 @@ define the text alignment (0=bottom-left, 1=bottom-center, 2=bottom-right,
 8=center-right).
 
 For the 3D text objects, the three first @w{@var{expression}s} in
-@var{list-of-coords} give the position of the leftmost element of the string
-in model (real world) coordinates.  If the fourth @var{expression} is equal
-to zero, the text is displayed using the default font and size. Otherwise,
-the fourth @var{expression} is converted into an integer whose eight lower
-bits give the font size and whose eight next bits select the font (the index
-corresponds to the position in the font menu in the GUI).
+@var{list-of-coords} give the XYZ position of the string in model (real
+world) coordinates.  The fourth @var{expression} has the same meaning as the
+third @var{expression} in 2D text objects.
 
 For both 2D and 3D text objects, the @var{list-of-values} can contain an
 arbitrary number of @w{@var{char-expression}s}.
@@ -3362,6 +3360,13 @@ For example, @var{vector-triangle-value} is defined as:
 @dots{}
 @end example
 
+The ordering of the nodes is given in @ref{Gmsh node ordering}. For second
+order elements, the first order nodes are given first, followed by the nodes
+associated with the edges, followed by the nodes associated with the
+quadrangular faces (if any), followed by the nodes associated with the
+volume (if any). The ordering of these additional nodes follows the ordering
+of the edges and quadrangular faces given in @ref{Gmsh node ordering}.
+
 @item @var{text2d}
 is a list of 4 double precision numbers:
 @example
@@ -3391,13 +3396,10 @@ is a list of 5 double precision numbers
 @example
 @var{coord1} @var{coord2} @var{coord3} @var{style} @var{index}
 @end example
-where @var{coord1}, @var{coord2} and @var{coord3} give the coordinates of
-the leftmost element of the 3D string in model (real world) coordinates,
-@var{index} gives the starting index of the string in @var{text3d-chars}.
-If @var{style} is equal to zero, the text is displayed using the default
-font and size. Otherwise, @var{style} is converted into an integer whose
-eight lower bits give the font size and whose eight next bits select the font
-(the index corresponds to the position in the font menu in the GUI).
+where @var{coord1}, @var{coord2} and @var{coord3} give the XYZ coordinates
+of the string in model (real world) coordinates, @var{index} gives the
+starting index of the string in @var{text3d-chars}, and @var{style} has the
+same meaning as in @var{text2d}.
 
 @item @var{text3d-chars}
 is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
