@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.35 2005-01-16 20:41:38 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.36 2005-03-14 06:32:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,10 @@
 
 #include "Gmsh.h"
 #include "GmshServer.h"
+
+// FIXME: this should be removed
+int GmshServer::init = 0;
+int GmshServer::s;
 
 #include <sys/types.h>
 #include <sys/socket.h>

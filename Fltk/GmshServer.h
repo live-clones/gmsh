@@ -61,6 +61,9 @@ class GmshServer {
 		CLIENT_OPTION_3 = 102,
 		CLIENT_OPTION_4 = 103,
 		CLIENT_OPTION_5 = 104 } MessageType;
+  // FIXME: this should be removed
+  static int init, s;
+
  private:
   int _maxdelay, _portno, _sock;
   char *_sockname;
@@ -84,9 +87,6 @@ class GmshServer {
   ~GmshServer(){}
   int StartClient(char *command, char *sockname = NULL)
   {
-    static int init = 0;
-    static int s;
-
     _sockname = sockname;
 
     // no socket? launch the command directly

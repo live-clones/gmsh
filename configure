@@ -3872,6 +3872,7 @@ case "$UNAME" in
     ;;
 
   OSF1*)
+    FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}"
     if test "x${CXX}" = "xcxx" ; then
       FLAGS="-D__USE_STD_IOSTREAM ${FLAGS}"
     fi
