@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2000-11-25 15:26:10 geuzaine Exp $
+# $Id: Makefile,v 1.5 2000-12-07 08:46:09 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -55,7 +55,7 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
  ../Common/Views.h ../Common/Const.h ../Graphics/ColorTable.h \
- Context.h
+ Context.h trackball.c trackball.h
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
  ../DataStr/Tools.h Views.h Const.h ../Graphics/ColorTable.h Context.h

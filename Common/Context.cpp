@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.14 2000-12-06 22:09:53 geuzaine Exp $ */
+/* $Id: Context.cpp,v 1.15 2000-12-07 08:46:09 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -298,8 +298,8 @@ void Init_Context(void){
   CTX.fixed_font = "fixed" ;
 
   CTX.min[0]   = CTX.min[1]   = CTX.min[2]   = 0.0 ;
-  CTX.max[0]   = CTX.max[1]   = CTX.max[2]   = 0.0 ;
-  CTX.range[0] = CTX.range[1] = CTX.range[2] = 0.0 ;
+  CTX.max[0]   = CTX.max[1]   = CTX.max[2]   = 1.0 ;
+  CTX.range[0] = CTX.range[1] = CTX.range[2] = 1.0 ;
 
   CTX.viewport[0] = CTX.viewport[1] = 0 ;
   CTX.viewport[2] = CTX.viewport[3] = 1 ;
@@ -341,34 +341,30 @@ void Init_Context(void){
 }
 
 void Print_Context(FILE *file){
-
-  fprintf(file, "Options{\n\n");
-  Print_StringOptions(GeneralOptions_String, "  General.", file);
-  Print_NumberOptions(GeneralOptions_Number, "  General.", file);
-  Print_ArrayOptions(GeneralOptions_Array, "  General.", file);
-  Print_ColorOptions(GeneralOptions_Color, "  General.", file);
-  fprintf(file, "  \n");
-  Print_StringOptions(GeometryOptions_String, "  Geometry.", file);
-  Print_NumberOptions(GeometryOptions_Number, "  Geometry.", file);
-  Print_ArrayOptions(GeometryOptions_Array, "  Geometry.", file);
-  Print_ColorOptions(GeometryOptions_Color, "  Geometry.", file);
-  fprintf(file, "  \n");
-  Print_StringOptions(MeshOptions_String, "  Mesh.", file);
-  Print_NumberOptions(MeshOptions_Number, "  Mesh.", file);
-  Print_ArrayOptions(MeshOptions_Array, "  Mesh.", file);
-  Print_ColorOptions(MeshOptions_Color, "  Mesh.", file);
-  fprintf(file, "  \n");
-  Print_StringOptions(PostProcessingOptions_String, "  PostProcessing.", file);
-  Print_NumberOptions(PostProcessingOptions_Number, "  PostProcessing.", file);
-  Print_ArrayOptions(PostProcessingOptions_Array, "  PostProcessing.", file);
-  Print_ColorOptions(PostProcessingOptions_Color, "  PostProcessing.", file);
-  fprintf(file, "  \n");
-  Print_StringOptions(PrintOptions_String, "  Print.", file);
-  Print_NumberOptions(PrintOptions_Number, "  Print.", file);
-  Print_ArrayOptions(PrintOptions_Array, "  Print.", file);
-  Print_ColorOptions(PrintOptions_Color, "  Print.", file);
-  fprintf(file, "  \n");
-  fprintf(file, "}\n");
+  Print_StringOptions(GeneralOptions_String, "General.", file);
+  Print_NumberOptions(GeneralOptions_Number, "General.", file);
+  Print_ArrayOptions(GeneralOptions_Array, "General.", file);
+  Print_ColorOptions(GeneralOptions_Color, "General.", file);
+  fprintf(file, "\n");
+  Print_StringOptions(GeometryOptions_String, "Geometry.", file);
+  Print_NumberOptions(GeometryOptions_Number, "Geometry.", file);
+  Print_ArrayOptions(GeometryOptions_Array, "Geometry.", file);
+  Print_ColorOptions(GeometryOptions_Color, "Geometry.", file);
+  fprintf(file, "\n");
+  Print_StringOptions(MeshOptions_String, "Mesh.", file);
+  Print_NumberOptions(MeshOptions_Number, "Mesh.", file);
+  Print_ArrayOptions(MeshOptions_Array, "Mesh.", file);
+  Print_ColorOptions(MeshOptions_Color, "Mesh.", file);
+  fprintf(file, "\n");
+  Print_StringOptions(PostProcessingOptions_String, "PostProcessing.", file);
+  Print_NumberOptions(PostProcessingOptions_Number, "PostProcessing.", file);
+  Print_ArrayOptions(PostProcessingOptions_Array, "PostProcessing.", file);
+  Print_ColorOptions(PostProcessingOptions_Color, "PostProcessing.", file);
+  fprintf(file, "\n");
+  Print_StringOptions(PrintOptions_String, "Print.", file);
+  Print_NumberOptions(PrintOptions_Number, "Print.", file);
+  Print_ArrayOptions(PrintOptions_Array, "Print.", file);
+  Print_ColorOptions(PrintOptions_Color, "Print.", file);
 }
 
 void Context_T::buildRotmatrix(float m[4][4])
