@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude_Old.cpp,v 1.17 2001-12-05 16:02:38 geuzaine Exp $
+// $Id: 3D_Extrude_Old.cpp,v 1.18 2001-12-06 08:10:31 geuzaine Exp $
 
 // This is the old extrusion mesh generator -> only available through
 // the command line option -extrude (w/o -recombine). This mesh
@@ -38,8 +38,6 @@ extern Mesh   *LOCAL, *THEM;
 
 static Tree_T *Tree_Ares, *Tree_Swaps;
 
-FILE          *file;
-Mesh          *THEm;
 Surface       *THES;
 Volume        *THEV;
 int            TEST_IS_ALL_OK, NbLayer;
@@ -67,25 +65,35 @@ static int compnxn(const void *a, const void *b){
 }
 
 static void InitExtrudeParams (void){
+  FILE *file;
   int i;
+
   printf("Number of layers: ");
   scanf("%d",&NbLayer);
-  if(NbLayer >MAXLAYERS)
-    Msg(GERROR, "Max number of layer exceeded");
-  fprintf(file, "%d\n", NbLayer); fflush(file);
+  if(NbLayer>MAXLAYERS) Msg(FATAL, "Max number of layer (%d) exceeded", MAXLAYERS);
+
+  file = fopen("xtrude","w");
+
+  if(file) fprintf(file, "%d\n", NbLayer);
   for(i=0;i<NbLayer;i++){
     printf("Number of elements in layer %d: ",i+1);
     scanf("%d",&NbElmLayer[i]);
-    fprintf(file, "%d\n", NbElmLayer[i]);fflush(file);
+    if(file) fprintf(file, "%d\n", NbElmLayer[i]);
 
     printf("Depth of layer %d: ",i+1);
     scanf("%lf",&hLayer[i]);
-    fprintf(file, "%g\n", hLayer[i]);fflush(file);
+    if(file) fprintf(file, "%g\n", hLayer[i]);
 
     printf("Progresion ratio for layer %d: ",i+1);
     scanf("%lf",&parLayer[i]);
-    fprintf(file, "%g\n", parLayer[i]);fflush(file);
+    if(file) fprintf(file, "%g\n", parLayer[i]);
   }
+  
+  if(file){
+    fflush(file);
+    fclose(file);
+  }
+
   Tree_Ares = Tree_Create(sizeof(nxn),compnxn);
   Tree_Swaps = Tree_Create(sizeof(nxn),compnxn);
 }
@@ -582,8 +590,6 @@ void Extrude_Mesh_Old(Mesh *M){
   int j;
   Mesh MM;
 
-  file = fopen("xtrude","w");
-
   InitExtrudeParams();
   LOCAL = &MM;
   THEM  = M;
@@ -611,8 +617,5 @@ void Extrude_Mesh_Old(Mesh *M){
   Tree_Action ( M->Surfaces , Extrude_Surface3 );
   Tree_Action ( M->Curves , Extrude_Curve );
   Tree_Action ( M->Points , Extrude_Point );
-
-  fclose(file);
-
 }
 
