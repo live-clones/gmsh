@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.105 2004-04-18 17:03:35 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.106 2004-04-21 00:11:19 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2697,19 +2697,25 @@ ordered) way.
 defines the geometrical type of the @var{n}-th element:
 @table @code
 @item 1
-Line (2 nodes, 1 edge).
+Line (2 nodes).
 @item 2
-Triangle (3 nodes, 3 edges).
+Triangle (3 nodes).
 @item 3
-Quadrangle (4 nodes, 4 edges).
+Quadrangle (4 nodes).
 @item 4
-Tetrahedron (4 nodes, 6 edges, 4 faces).
+Tetrahedron (4 nodes).
 @item 5
-Hexahedron (8 nodes, 12 edges, 6 faces).
+Hexahedron (8 nodes).
 @item 6
-Prism (6 nodes, 9 edges, 5 faces).
+Prism (6 nodes).
 @item 7
-Pyramid (5 nodes, 8 edges, 5 faces).
+Pyramid (5 nodes).
+@item 8
+Second order line (3 nodes).
+@item 9
+Second order triangle (6 nodes).
+@item 11
+Second order tetrahedron (10 nodes).
 @item 15
 Point (1 node).
 @end table
@@ -2726,7 +2732,12 @@ kept for backward compatibility.
 
 @item @var{node-number-list}
 is the list of the @var{number-of-nodes} node numbers of the @var{n}-th
-element (separated by white space, without commas).
+element (separated by white space, without commas). The ordering of the
+nodes is given in @ref{Gmsh node ordering}; for second order elements, the
+first order nodes are given first, followed by the nodes associated with the
+edges, followed by the nodes associated with the faces (if any). The
+ordering of these additional nodes follows the ordering of the edges/faces
+given in @ref{Gmsh node ordering}.
 @end table
 
 @c .........................................................................
@@ -2796,19 +2807,25 @@ ordered) way.
 defines the geometrical type of the @var{n}-th element:
 @table @code
 @item 1
-Line (2 nodes, 1 edge).
+Line (2 nodes).
 @item 2
-Triangle (3 nodes, 3 edges).
+Triangle (3 nodes).
 @item 3
-Quadrangle (4 nodes, 4 edges).
+Quadrangle (4 nodes).
 @item 4
-Tetrahedron (4 nodes, 6 edges, 4 faces).
+Tetrahedron (4 nodes).
 @item 5
-Hexahedron (8 nodes, 12 edges, 6 faces).
+Hexahedron (8 nodes).
 @item 6
-Prism (6 nodes, 9 edges, 5 faces).
+Prism (6 nodes).
 @item 7
-Pyramid (5 nodes, 8 edges, 5 faces).
+Pyramid (5 nodes).
+@item 8
+Second order line (3 nodes).
+@item 9
+Second order triangle (6 nodes).
+@item 11
+Second order tetrahedron (10 nodes).
 @item 15
 Point (1 node).
 @end table
@@ -2827,7 +2844,12 @@ element belongs.
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element (separated by
-white space, without commas).
+white space, without commas). The ordering of the nodes is given in
+@ref{Gmsh node ordering}; for second order elements, the first order nodes
+are given first, followed by the nodes associated with the edges, followed
+by the nodes associated with the faces (if any). The ordering of these
+additional nodes follows the ordering of the edges/faces given in @ref{Gmsh
+node ordering}.
 @end table
 
 @c -------------------------------------------------------------------------
