@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.40 2001-08-20 08:06:47 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.41 2001-08-20 13:33:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -106,8 +106,8 @@ List_T* getnxl(Vertex *v, int dim){
     }
   }
 
-  Msg(GERROR, "Could not find extruded list for vertex %d", v->Num);
-  return 0;
+  Msg(FATAL, "Could not find extruded list for vertex %d", v->Num);
+  return NULL;
 }
 
 void Free_ExtrudedPoints(List_T* Extruded_Points){
