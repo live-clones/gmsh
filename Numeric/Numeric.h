@@ -66,8 +66,14 @@ int sys2x2(double mat[2][2], double b[2], double res[2]);
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
 int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
 double det3x3(double mat[3][3]);
+double trace3x3(double mat[3][3]);
+double trace2 (double mat[3][3]);
 int inv3x3(double mat[3][3], double inv[3][3], double *det);
 double angle_02pi(double A3);
+void eigenvalue(double mat[3][3], double re[3]);
+void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
+void eigsort(double d[3]);
+int EigenSolve3x3(double A[3][3], double wr[3], double wi[3], double B[3][3]);
 
 double InterpolateIso(double *X, double *Y, double *Z, 
 		      double *Val, double V, int I1, int I2, 
@@ -84,11 +90,5 @@ void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
 	    double *fc, double (*func)(double));
 void newt(double x[], int n, int *check,
 	  void (*vecfunc)(int, double [], double []));
-void eigenvalue(double mat[3][3], double v[3]);
-void FindCubicRoots(const double coeff[4], double x[3]);
-double trace(double mat[3][3]);
-double det(double mat[3][3]);
-double trace2 (double mat[3][3]);
-void eigsort(double d[3]);
 
 #endif

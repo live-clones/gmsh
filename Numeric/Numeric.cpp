@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.18 2004-11-25 16:22:45 remacle Exp $
+// $Id: Numeric.cpp,v 1.19 2004-12-08 03:08:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -152,6 +152,20 @@ double det3x3(double mat[3][3])
 	  mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]));
 }
 
+double trace3x3(double mat[3][3])
+{
+  return mat[0][0] + mat[1][1] + mat[2][2];
+}
+
+double trace2 (double mat[3][3])
+{
+  double a00 =  mat[0][0] * mat[0][0] + mat[1][0] * mat[0][1] + mat[2][0] * mat[0][2]; 
+  double a11 =  mat[1][0] * mat[0][1] + mat[1][1] * mat[1][1] + mat[1][2] * mat[2][1]; 
+  double a22 =  mat[2][0] * mat[0][2] + mat[2][1] * mat[1][2] + mat[2][2] * mat[2][2];
+  
+  return a00 + a11 + a22;
+}
+
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det)
 {
   double ud;
@@ -283,112 +297,92 @@ void gradSimplex(double *x, double *y, double *z, double *v, double *grad)
 }
 
 void eigenvalue(double mat[3][3], double v[3])
-  {            
-    /// characteristic polynomial of T : find v root of
-    /// v^3 - I1 v^2 + I2 T + I3 = 0
-    /// I1 : first invariant , trace(T)
-    /// I2 : second invariant , 1/2 (I1^2 -trace(T^2))
-    /// I3 : third invariant , det T
+{            
+  // characteristic polynomial of T : find v root of
+  // v^3 - I1 v^2 + I2 T - I3 = 0
+  // I1 : first invariant , trace(T)
+  // I2 : second invariant , 1/2 (I1^2 -trace(T^2))
+  // I3 : third invariant , det T
 
-    double In[4];
-    In[3] = 1.0;
-    In[2] = - trace(mat);
-    In[1] = 0.5 * (In[2]*In[2] - trace2(mat));
-    In[0] = - det(mat);
+  double c[4];
+  c[3] = 1.0;
+  c[2] = - trace3x3(mat);
+  c[1] = 0.5 * (c[2]*c[2] - trace2(mat));
+  c[0] = - det3x3(mat);
+  
+  //printf("%g %g %g\n", mat[0][0], mat[0][1], mat[0][2]);
+  //printf("%g %g %g\n", mat[1][0], mat[1][1], mat[1][2]);
+  //printf("%g %g %g\n", mat[2][0], mat[2][1], mat[2][2]);
+  //printf("%g x^3 + %g x^2 + %g x + %g = 0\n", c[3], c[2], c[1], c[0]);
+  
+  double imag[3];
+  FindCubicRoots(c, v, imag);
+  eigsort(v);
+}
 
-    //    printf (" %lf x^3 +  %lf x^2 + %lf x + %lf = 0\n",
-    //    	  I[3],I[2],I[1],I[0]);
+void FindCubicRoots(const double coef[4], double real[3], double imag[3])
+{
+  double a = coef[3];
+  double b = coef[2];
+  double c = coef[1];
+  double d = coef[0];
 
-    FindCubicRoots(In,v);
-
-    eigsort(v);
- 
+  if(!a || !d){
+    Msg(GERROR, "Degenerate cubic: use a second degree solver!");
+    return;
   }
 
-void  FindCubicRoots(const double coeff[4], double x[3])
-  {
-    double a1 = coeff[2] / coeff[3];
-    double a2 = coeff[1] / coeff[3];
-    double a3 = coeff[0] / coeff[3];
-    
-    double Q = (a1 * a1 - 3 * a2) / 9.;
-    double R = (2. * a1 * a1 * a1 - 9. * a1 * a2 + 27. * a3) / 54.;
-    double Qcubed = Q * Q * Q;
-    double d = Qcubed - R * R;
+  b /= a;
+  c /= a;
+  d /= a;
+  
+  double q = (3.0*c - (b*b))/9.0;
+  double r = -(27.0*d) + b*(9.0*c - 2.0*(b*b));
+  r /= 54.0;
 
-    //    printf ("d = %22.15e Q = %12.5E R = %12.5E Qcubed %12.5E\n",d,Q,R,Qcubed);
+  double discrim = q*q*q + r*r;
+  imag[0] = 0.0; // The first root is always real.
+  double term1 = (b/3.0);
 
-    /// three roots, 2 equal 
-    if(Qcubed == 0.0 || fabs ( Qcubed - R * R ) < 1.e-8 * (fabs ( Qcubed) + fabs( R * R)) )
-      {
-	double theta;
-	if (Qcubed <= 0.0)theta = acos(1.0);
-	else if (R / sqrt(Qcubed) > 1.0)theta = acos(1.0); 
-	else if (R / sqrt(Qcubed) < -1.0)theta = acos(-1.0); 
-	else theta = acos(R / sqrt(Qcubed));
-	double sqrtQ = sqrt(Q);
-	//	printf("sqrtQ = %12.5E teta=%12.5E a1=%12.5E\n",sqrt(Q),theta,a1);
-	x[0] = -2 * sqrtQ * cos( theta           / 3) - a1 / 3;
-	x[1] = -2 * sqrtQ * cos((theta + 2 * M_PI) / 3) - a1 / 3;
-	x[2] = -2 * sqrtQ * cos((theta + 4 * M_PI) / 3) - a1 / 3;
-	// return (3);
-      }
-
-    /* Three real roots */
-    if (d >= 0.0) {
-      double theta = acos(R / sqrt(Qcubed));
-      double sqrtQ = sqrt(Q);
-      x[0] = -2 * sqrtQ * cos( theta           / 3) - a1 / 3;
-      x[1] = -2 * sqrtQ * cos((theta + 2 * M_PI) / 3) - a1 / 3;
-      x[2] = -2 * sqrtQ * cos((theta + 4 * M_PI) / 3) - a1 / 3;
-      //  return (3);
-    }
-    
-    /* One real root */
-    else {
-      printf("IMPOSSIBLE !!!\n");
-
-      double e = pow(sqrt(-d) + fabs(R), 1. / 3.);
-      if (R > 0)
-	e = -e;
-      x[0] = (e + Q / e) - a1 / 3.;
-      // return (1);
-    }
-
+  if (discrim > 0) { // one root is real, two are complex
+    double s = r + sqrt(discrim);
+    s = ((s < 0) ? -pow(-s, (1.0/3.0)) : pow(s, (1.0/3.0)));
+    double t = r - sqrt(discrim);
+    t = ((t < 0) ? -pow(-t, (1.0/3.0)) : pow(t, (1.0/3.0)));
+    real[0] = -term1 + s + t;
+    term1 += (s + t)/2.0;
+    real[1] = real[2] = -term1;
+    term1 = sqrt(3.0)*(-t + s)/2;
+    imag[1] = term1;
+    imag[2] = -term1;
+    return;
   }
 
-double trace(double mat[3][3])
-  {
-    return mat[0][0] + mat[1][1] + mat[2][2];
+  // The remaining options are all real
+  imag[1] = imag[2] = 0.0;
+  
+  double r13;
+  if (discrim == 0){ // All roots real, at least two are equal.
+    r13 = ((r < 0) ? -pow(-r,(1.0/3.0)) : pow(r,(1.0/3.0)));
+    real[0] = -term1 + 2.0*r13;
+    real[1] = real[2] = -(r13 + term1);
+    return;
   }
 
-
-double det(double mat[3][3])
-  {
-    return mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
-      mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
-      mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
-  }
-
-double trace2 (double mat[3][3])
-  {
-    double a00 =  mat[0][0] * mat[0][0] + 
-      mat[1][0] * mat[0][1] + 
-      mat[2][0] * mat[0][2]; 
-    double a11 =  mat[1][0] * mat[0][1] + 
-      mat[1][1] * mat[1][1] + 
-      mat[1][2] * mat[2][1]; 
-    double a22 =  mat[2][0] * mat[0][2] + 
-      mat[2][1] * mat[1][2] + 
-      mat[2][2] * mat[2][2];
-
-    return a00 + a11 + a22;
-  }
+  // Only option left is that all roots are real and unequal (to get
+  // here, q < 0)
+  q = -q;
+  double dum1 = q*q*q;
+  dum1 = acos(r/sqrt(dum1));
+  r13 = 2.0*sqrt(q);
+  real[0] = -term1 + r13*cos(dum1/3.0);
+  real[1] = -term1 + r13*cos((dum1 + 2.0*M_PI)/3.0);
+  real[2] = -term1 + r13*cos((dum1 + 4.0*M_PI)/3.0);
+}
 
 void  eigsort(double d[3])
-
 {
-  int k,j,i;
+  int k, j, i;
   double p;
   
   for (i=0; i<3; i++) {
