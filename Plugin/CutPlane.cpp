@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.35 2004-10-30 03:07:29 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.36 2004-10-30 15:23:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,9 @@ GMSH_CutPlanePlugin::GMSH_CutPlanePlugin()
 void GMSH_CutPlanePlugin::draw()
 {
 #if defined(HAVE_FLTK)
-  Post_View *v = (Post_View*)List_Pointer_Test(CTX.post.list, iview);
+  int num = (int)CutPlaneOptions_Number[4].def;
+  if(num < 0) num = iview;
+  Post_View *v = (Post_View*)List_Pointer_Test(CTX.post.list, num);
   if(!v) return;
   Draw_PlaneInBoundingBox(v->BBox[0], v->BBox[2], v->BBox[4],
 			  v->BBox[1], v->BBox[3], v->BBox[5],
