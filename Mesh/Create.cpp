@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.15 2001-05-22 07:11:14 geuzaine Exp $
+// $Id: Create.cpp,v 1.16 2001-05-29 13:28:26 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -7,6 +7,7 @@
 #include "Mesh.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "Create.h"
 
 extern Mesh      *THEM;
 extern Context_T  CTX;
@@ -511,6 +512,20 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
   return (pC);
 }
 
+void Free_Curve(void *a, void *b){
+  Curve *pC = *(Curve**)a;
+  if(pC){
+    List_Delete(pC->Vertices);
+    Tree_Action(pC->Simplexes, Free_Simplex);
+    Tree_Delete(pC->Simplexes);
+    List_Delete(pC->TrsfSimplexes);
+    Free(pC->k);
+    List_Delete(pC->Control_Points);
+    Free(pC);
+    pC = NULL;
+  }
+}
+
 Surface * Create_Surface (int Num, int Typ, int Mat){
   Surface *pS;
 
@@ -534,6 +549,21 @@ Surface * Create_Surface (int Num, int Typ, int Mat){
   return (pS);
 }
 
+void Free_Surface(void *a, void *b){
+  Surface *pS = *(Surface**)a;
+  if(pS){
+    Tree_Action(pS->Simplexes, Free_Simplex);
+    Tree_Delete(pS->Simplexes);
+    List_Delete(pS->TrsfSimplexes);
+    Tree_Delete(pS->Vertices); //the vertices are freed globally before
+    List_Delete(pS->TrsfVertices);
+    List_Delete(pS->Contours);
+    List_Delete(pS->Control_Points);
+    Free(pS);
+    pS = NULL;
+  }
+}
+
 Volume * Create_Volume (int Num, int Typ, int Mat){
   Volume *pV;
 
@@ -551,6 +581,23 @@ Volume * Create_Volume (int Num, int Typ, int Mat){
   return pV;
 }
 
+void Free_Volume(void *a, void *b){
+  /*
+  Volume *pV = *(Volume**)a;
+  if(pV){
+    List_Delete(pV->Surfaces); //surfaces freed elsewhere
+    Tree_Action(pV->Simplexes, Free_Simplex);
+    Tree_Delete(pV->Simplexes);
+    Tree_Delete(pV->Vertices); //vertices freed elsewhere
+    Tree_Action(pV->Hexahedra, Free_Hexahedron);
+    Tree_Delete(pV->Hexahedra);
+    Tree_Action(pV->Prisms, Free_Prism);
+    Tree_Delete(pV->Prisms);
+    Free(pV);
+    pV = NULL;
+  }
+  */
+}
 
 Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4,
                                 Vertex * v5, Vertex * v6, Vertex * v7, Vertex * v8){
@@ -572,6 +619,14 @@ Hexahedron * Create_Hexahedron (Vertex * v1, Vertex * v2, Vertex * v3, Vertex * 
   return (h);
 }
 
+void Free_Hexahedron(void *a, void *b){
+  Hexahedron *pH = *(Hexahedron**)a;
+  if(pH){
+    Free(pH);
+    pH = NULL;
+  }
+}
+
 Prism * Create_Prism (Vertex * v1, Vertex * v2, Vertex * v3,
                       Vertex * v4, Vertex * v5, Vertex * v6){
   Prism *p;
@@ -588,4 +643,12 @@ Prism * Create_Prism (Vertex * v1, Vertex * v2, Vertex * v3,
   p->VSUP = NULL;
 
   return (p);
+}
+
+void Free_Prism(void *a, void *b){
+  Prism *pP = *(Prism**)a;
+  if(pP){
+    Free(pP);
+    pP = NULL;
+  }
 }
