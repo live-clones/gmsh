@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.41 2001-08-20 13:33:35 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.42 2001-08-28 15:37:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -272,11 +272,22 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
             newh = Create_Hexahedron(v1,v2,v3,v4,v5,v6,v7,v8);
             newh->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add(THEV->Hexahedra,&newh);
+	    if(v1->Num == v5->Num || v2->Num == v6->Num ||
+	       v3->Num == v7->Num || v3->Num == v8->Num)
+	      Msg(WARNING, "Fixme! Hexahedron %d (nodes %d %d %d %d %d %d %d %d) is degenerated", 
+		  newh->Num, 
+		  v1->Num, v2->Num, v3->Num, v4->Num, 
+		  v5->Num, v6->Num, v7->Num, v8->Num);
           }
           else{
             newp = Create_Prism(v1,v2,v3,v4,v5,v6);
             newp->iEnt = ep->mesh.ZonLayer[i];
             Tree_Add(THEV->Prisms,&newp);
+	    if(v1->Num == v4->Num || v2->Num == v5->Num || v3->Num == v6->Num)
+	      Msg(WARNING, "Fixme! Prism %d (nodes %d %d %d %d %d %d) is degenerated", 
+		  newp->Num, 
+		  v1->Num, v2->Num, v3->Num,
+		  v4->Num, v5->Num, v6->Num);
           }
         }
         else{
