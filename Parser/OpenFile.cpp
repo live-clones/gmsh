@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.45 2003-11-27 02:33:35 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.46 2003-12-07 02:56:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -142,7 +142,8 @@ int MergeProblem(char *name)
 
     if(!strncmp(tmp, "$PTS", 4) || 
        !strncmp(tmp, "$NO", 3) || 
-       !strncmp(tmp, "$ELM", 4)) {
+       !strncmp(tmp, "$ELM", 4) ||
+       !strncmp(tmp, "$MeshFormat", 4)) {
       if(THEM->status < 0)
 	mai3d(THEM, 0);
       Read_Mesh(THEM, fp, name, FORMAT_MSH);

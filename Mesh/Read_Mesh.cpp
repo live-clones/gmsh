@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.60 2003-12-07 00:23:07 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.61 2003-12-07 02:56:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -89,8 +89,10 @@ void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
 void Read_Mesh_MSH(Mesh * M, FILE * fp)
 {
   char String[256];
+  double version = 1.0;
+  int format = LIST_FORMAT_ASCII, size = sizeof(double);
   int Nbr_Nodes, Nbr_Elements, i_Node, i_Element;
-  int Num, Type, Physical, Elementary, i, j;
+  int Num, Type, Physical, Elementary, Partition, i, j;
   double x, y, z, lc1, lc2;
   Vertex *vert, verts[NB_NOD_MAX_ELM], *vertsp[NB_NOD_MAX_ELM], **vertspp;
   Simplex *simp;
@@ -112,9 +114,25 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
     if(feof(fp))
       break;
 
+    /*  F o r m a t  */
+
+    if(!strncmp(&String[1], "MeshFormat", 10)) {
+      fscanf(fp, "%lf %d %d\n", &version, &format, &size);
+      Msg(INFO, "Detected mesh file format %g", version);
+      if(format == 0)
+        format = LIST_FORMAT_ASCII;
+      else if(format == 1)
+        format = LIST_FORMAT_BINARY;
+      else {
+        Msg(GERROR, "Unknown data format for mesh");
+        return;
+      }
+    }
+
     /*  P T S  */
 
-    if(!strncmp(&String[1], "PTS", 3)) {
+    if(!strncmp(&String[1], "PTS", 3) ||
+       !strncmp(&String[1], "Points", 6)) {
 
       fscanf(fp, "%d", &Nbr_Nodes);
       Msg(INFO, "%d points", Nbr_Nodes);
@@ -132,7 +150,9 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
     /*  N O E  */
 
-    if(!strncmp(&String[1], "NO", 2)) { /* $NOE or $NOD */
+    if(!strncmp(&String[1], "NOD", 3) ||
+       !strncmp(&String[1], "NOE", 3) ||
+       !strncmp(&String[1], "Nodes", 5)) {
 
       fscanf(fp, "%d", &Nbr_Nodes);
       Msg(INFO, "%d nodes", Nbr_Nodes);
@@ -160,7 +180,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 
     /* ELEMENTS */
 
-    else if(!strncmp(&String[1], "ELM", 3)) {
+    else if(!strncmp(&String[1], "ELM", 3) ||
+	    !strncmp(&String[1], "Elements", 8)) {
 
       fscanf(fp, "%d", &Nbr_Elements);
       Msg(INFO, "%d elements", Nbr_Elements);
@@ -169,9 +190,16 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
         Duplicates = Tree_Create(sizeof(Vertex *), comparePosition);
 
       for(i_Element = 0; i_Element < Nbr_Elements; i_Element++) {
-
-        fscanf(fp, "%d %d %d %d %d",
-	       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
+	
+	if(version <= 1.0){
+	  fscanf(fp, "%d %d %d %d %d",
+		 &Num, &Type, &Physical, &Elementary, &Nbr_Nodes);
+	  Partition = Physical;
+	}
+	else{
+	  fscanf(fp, "%d %d %d %d %d %d",
+		 &Num, &Type, &Physical, &Elementary, &Partition, &Nbr_Nodes);
+	}
 
         for(j = 0; j < Nbr_Nodes; j++)
           fscanf(fp, "%d", &verts[j].Num);
@@ -232,7 +260,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  // JF, why did you add this?
 	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
           break;
-        }
+       } 
 
         for(i = 0; i < Nbr_Nodes; i++) {
           vertsp[i] = &verts[i];
@@ -265,7 +293,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Simplex(vertsp[0], vertsp[1], NULL, NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Physical, M);
+          simp->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == LGN2){
 	    simp->VSUP = (Vertex **) Malloc(1 * sizeof(Vertex *));
 	    simp->VSUP[0] = vertsp[2];
@@ -281,7 +309,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Physical, M);
+          simp->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == TRI2){
 	    simp->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
 	    for(i = 0; i < 3; i++){
@@ -301,7 +329,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Physical, M);
+          simp->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == QUA2){
 	    simp->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
 	    for(i = 0; i < 4; i++){
@@ -322,7 +350,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
           simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
           simp->Num = Num;
           simp->iEnt = Elementary;
-          simp->iPart = Add_MeshPartition(Physical, M);
+          simp->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == TET2){
 	    simp->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
 	    for(i = 0; i < 6; i++){
@@ -343,7 +371,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                                   vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
           hex->Num = Num;
           hex->iEnt = Elementary;
-          hex->iPart = Add_MeshPartition(Physical, M);
+          hex->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == HEX2){
 	    hex->VSUP = (Vertex **) Malloc(12 * sizeof(Vertex *));
 	    for(i = 0; i < 12; i++){
@@ -364,7 +392,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                              vertsp[3], vertsp[4], vertsp[5]);
           pri->Num = Num;
           pri->iEnt = Elementary;
-          pri->iPart = Add_MeshPartition(Physical, M);
+          pri->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == PRI2){
 	    pri->VSUP = (Vertex **) Malloc(9 * sizeof(Vertex *));
 	    for(i = 0; i < 9; i++){
@@ -385,7 +413,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
                                vertsp[3], vertsp[4]);
           pyr->Num = Num;
           pyr->iEnt = Elementary;
-          pyr->iPart = Add_MeshPartition(Physical, M);
+          pyr->iPart = Add_MeshPartition(Partition, M);
 	  if(Type == PYR2){
 	    pyr->VSUP = (Vertex **) Malloc(8 * sizeof(Vertex *));
 	    for(i = 0; i < 8; i++){

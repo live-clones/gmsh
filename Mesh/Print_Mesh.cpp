@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.44 2003-11-27 07:14:29 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.45 2003-12-07 02:56:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -49,6 +49,7 @@ static FILE *meshfile;
 #define PYRAMID_2      14
 #define POINT          15
 
+static double MSH_VERSION = 1.0;
 static int MSH_VOL_NUM, MSH_SUR_NUM, MSH_LIN_NUM;
 static int MSH_NODE_NUM, MSH_ELEMENT_NUM, MSH_3D, MSH_ADD;
 static int MSH_PHYSICAL_NUM, MSH_PHYSICAL_ORI;
@@ -89,10 +90,16 @@ void process_msh_nodes(Mesh * M)
 
   MSH_NODE_NUM = Tree_Nbr(M->Vertices);
 
-  fprintf(meshfile, "$NOD\n");
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "$Nodes\n");
+  else
+    fprintf(meshfile, "$NOD\n");
   fprintf(meshfile, "%d\n", MSH_NODE_NUM);
   Tree_Action(M->Vertices, print_msh_node);
-  fprintf(meshfile, "$ENDNOD\n");
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "$ENDNOD\n");
+  else
+    fprintf(meshfile, "$EndNodes\n");
 }
 
 void print_msh_simplex(void *a, void *b)
@@ -161,11 +168,16 @@ void print_msh_simplex(void *a, void *b)
     }
   }
 
-  fprintf(meshfile, "%d %d %d %d %d",
-          //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*S)->Num, type, 
-          MSH_ELEMENT_NUM++, type,
-          MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*S)->iEnt, (*S)->iEnt,
-          nbn + nbs);
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "%d %d %d %d 0 %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*S)->iEnt, (*S)->iEnt,
+	    nbn + nbs);
+  else
+    fprintf(meshfile, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*S)->iEnt, (*S)->iEnt,
+	    nbn + nbs);
 
   if(MSH_PHYSICAL_ORI > 0) {
     for(i = 0; i < nbn; i++)
@@ -206,11 +218,16 @@ void print_msh_hexahedron(void *a, void *b)
   else
     type = HEXAHEDRON;
 
-  fprintf(meshfile, "%d %d %d %d %d",
-          //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*H)->Num, type,
-          MSH_ELEMENT_NUM++, type,
-          MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*H)->iEnt, (*H)->iEnt,
-          nbn + nbs);
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "%d %d %d %d 0 %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*H)->iEnt, (*H)->iEnt,
+	    nbn + nbs);
+  else
+    fprintf(meshfile, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*H)->iEnt, (*H)->iEnt,
+	    nbn + nbs);
 
   for(i = 0; i < nbn; i++)
     fprintf(meshfile, " %d", (*H)->V[i]->Num);
@@ -244,11 +261,16 @@ void print_msh_prism(void *a, void *b)
     type = PRISM;
   }
 
-  fprintf(meshfile, "%d %d %d %d %d",
-          //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*P)->Num, type, 
-          MSH_ELEMENT_NUM++, type,
-          MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
-          nbn + nbs);
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "%d %d %d %d 0 %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
+	    nbn + nbs);
+  else
+    fprintf(meshfile, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
+	    nbn + nbs);
 
   for(i = 0; i < nbn; i++)
     fprintf(meshfile, " %d", (*P)->V[i]->Num);
@@ -282,11 +304,16 @@ void print_msh_pyramid(void *a, void *b)
     type = PYRAMID;
   }
 
-  fprintf(meshfile, "%d %d %d %d %d",
-          //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : (*P)->Num, type,
-          MSH_ELEMENT_NUM++, type,
-          MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
-          nbn + nbs);
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "%d %d %d %d 0 %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
+	    nbn + nbs);
+  else
+    fprintf(meshfile, "%d %d %d %d %d",
+	    MSH_ELEMENT_NUM++, type,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : (*P)->iEnt, (*P)->iEnt,
+	    nbn + nbs);
 
   for(i = 0; i < nbn; i++)
     fprintf(meshfile, " %d", (*P)->V[i]->Num);
@@ -303,10 +330,14 @@ void print_msh_point(Vertex * V)
     return;
   }
 
-  fprintf(meshfile, "%d %d %d %d 1 %d\n",
-          //MSH_PHYSICAL_NUM ? MSH_ELEMENT_NUM++ : V->Num, POINT, 
-          MSH_ELEMENT_NUM++, POINT,
-          MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num, V->Num);
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "%d %d %d %d 0 1 %d\n",
+	    MSH_ELEMENT_NUM++, POINT,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num, V->Num);
+  else
+    fprintf(meshfile, "%d %d %d %d 1 %d\n",
+	    MSH_ELEMENT_NUM++, POINT,
+	    MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : V->Num, V->Num, V->Num);
 }
 
 void print_msh_elements(Mesh * M)
@@ -471,7 +502,11 @@ void process_msh_elements(Mesh * M)
   else
     print_msh_elements(M);
 
-  fprintf(meshfile, "$ELM\n");
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "$Elements\n");
+  else
+    fprintf(meshfile, "$ELM\n");
+
   fprintf(meshfile, "%d\n", MSH_ELEMENT_NUM - 1);
 
   if(MSH_ELEMENT_NUM == 1)
@@ -483,7 +518,11 @@ void process_msh_elements(Mesh * M)
     print_all_msh_elements(M);
   else
     print_msh_elements(M);
-  fprintf(meshfile, "$ENDELM\n");
+
+  if(MSH_VERSION > 1.0)
+    fprintf(meshfile, "$EndElements\n");
+  else
+    fprintf(meshfile, "$ENDELM\n");
 }
 
 
@@ -1360,6 +1399,12 @@ void Print_Mesh(Mesh * M, char *c, int Type)
 
   switch(Type){
   case FORMAT_MSH:
+    MSH_VERSION = 0.0;
+    if(MSH_VERSION > 1.0){
+      fprintf(meshfile, "$MeshFormat\n");
+      fprintf(meshfile, "%g %d %d\n", MSH_VERSION, LIST_FORMAT_ASCII, sizeof(double));
+      fprintf(meshfile, "$EndMeshFormat\n");
+    }
     process_msh_nodes(M);
     process_msh_elements(M);
     Msg(INFO, "%d nodes", MSH_NODE_NUM);
