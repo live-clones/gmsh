@@ -14,6 +14,11 @@ Remove original views after a Combine operation@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item PostProcessing.Format
+Default file format for post-processing views@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item PostProcessing.HorizontalScales
 Display value scales horizontally@*
 Default value: @code{0}@*

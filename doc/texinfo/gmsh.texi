@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.137 2004-10-13 17:29:37 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.138 2004-10-15 17:13:54 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -231,16 +231,20 @@ Running Gmsh
 
 File formats
 
-* Gmsh mesh file format::       
-* Gmsh ASCII post-processing file format::  
-* Gmsh binary post-processing file format::  
-* Gmsh parsed post-processing file format::  
+* Gmsh mesh file formats::      
+* Gmsh post-processing file formats::  
 * Gmsh node ordering::          
 
-Gmsh mesh file format
+Gmsh mesh file formats
 
 * Version 1.0::                 
 * Version 2.0::                 
+
+Gmsh post-processing file formats
+
+* Parsed post-processing file format::  
+* ASCII post-processing file format::  
+* Binary post-processing file format::  
 
 Bugs, versions and credits
 
@@ -1813,7 +1817,7 @@ If only elementary geometrical entities are defined (or if the
 produced by the mesh module will be saved ``as is''. That is, all the
 elements in the grid will be saved to disk using the identification number
 of the elementary entities they discretize as their region number
-(@pxref{Gmsh mesh file format}). This can sometimes be inconvenient:
+(@pxref{Gmsh mesh file formats}). This can sometimes be inconvenient:
 
 @itemize @bullet
 @item
@@ -2235,7 +2239,7 @@ inside the graphical window, or be automatically positioned in order to
 avoid overlaps.
 
 Sample post-processing files in human-readable ``parsed'' format
-(@pxref{Gmsh parsed post-processing file format}) are available in the
+(@pxref{Parsed post-processing file format}) are available in the
 @file{tutorial} directory of Gmsh's distribution (@file{.pos} files).
 
 @menu
@@ -2292,14 +2296,13 @@ Saves the the @var{expression}-th post-processing view in a file named
 @item View "@var{string}" @{ @var{string} ( @var{expression-list} ) @{ @var{expression-list} @}; @dots{} @}
 Creates a new post-processing view, named @code{"@var{string}"}. This is the
 easiest way to create a post-processing view, but also the least efficient
-(the view is read through Gmsh's script parser, which can become quite slow
-if the view is large---e.g., with more than 100,000 elements).  Though,
-this ``parsed'' post-processing format (explained in detail in @ref{Gmsh
-parsed post-processing file format}) is very powerful for testing proposes,
-since all the values are @var{expressions}. Two other formats, better
-adapted for large data sets, are described in @ref{Gmsh ASCII
-post-processing file format} and @ref{Gmsh binary post-processing file
-format}.
+(the view is read through Gmsh's script parser, which can become a bit slow
+if the view is very large---e.g., with more than 500,000 elements).  Though,
+this ``parsed'' post-processing format (explained in detail in @ref{Parsed
+post-processing file format}) is very powerful, since all the values are
+@var{expressions}. Two other formats, better suited for very large data
+sets, are described in @ref{ASCII post-processing file format} and
+@ref{Binary post-processing file format}.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -2683,23 +2686,21 @@ This chapter describes the file formats that cannot be modified by the
 user. These formats have a version number (currently 1.2), independent of the
 Gmsh version number (currently @value{GMSH-VERSION}).
 
-All non-parsed file formats have sections enclosed between @code{$KEY} and
-@code{$ENDKEY} tags.
+All non-parsed file formats have sections enclosed between @code{$Key} and
+@code{$EndKey} tags.
 
 @menu
-* Gmsh mesh file format::       
-* Gmsh ASCII post-processing file format::  
-* Gmsh binary post-processing file format::  
-* Gmsh parsed post-processing file format::  
+* Gmsh mesh file formats::      
+* Gmsh post-processing file formats::  
 * Gmsh node ordering::          
 @end menu
 
 @c -------------------------------------------------------------------------
-@c Gmsh mesh file format
+@c Gmsh mesh file formats
 @c -------------------------------------------------------------------------
 
-@node Gmsh mesh file format, Gmsh ASCII post-processing file format, File formats, File formats
-@section Gmsh mesh file format
+@node Gmsh mesh file formats, Gmsh post-processing file formats, File formats, File formats
+@section Gmsh mesh file formats
 
 @cindex Mesh, file format
 @cindex File format, mesh
@@ -2722,7 +2723,7 @@ program is also a good example on how to read and write files in the
 @c Version 1.0
 @c .........................................................................
 
-@node Version 1.0, Version 2.0, Gmsh mesh file format, Gmsh mesh file format
+@node Version 1.0, Version 2.0, Gmsh mesh file formats, Gmsh mesh file formats
 @subsection Version 1.0
 
 The @file{.msh} file format, version 1.0, is Gmsh's old native mesh file
@@ -2835,7 +2836,7 @@ of the edges and quadrangular faces given in @ref{Gmsh node ordering}.
 @c Version 2.0
 @c .........................................................................
 
-@node Version 2.0,  , Version 1.0, Gmsh mesh file format
+@node Version 2.0,  , Version 1.0, Gmsh mesh file formats
 @subsection Version 2.0
 
 Version 2.0 of the @file{.msh} file format is Gmsh's new native mesh file
@@ -2960,15 +2961,140 @@ quadrangular faces given in @ref{Gmsh node ordering}.
 @end table
 
 @c -------------------------------------------------------------------------
-@c Gmsh ASCII post-processing file format
+@c Gmsh post-processing file formats
 @c -------------------------------------------------------------------------
 
-@node Gmsh ASCII post-processing file format, Gmsh binary post-processing file format, Gmsh mesh file format, File formats
-@section Gmsh ASCII post-processing file format
+@node Gmsh post-processing file formats, Gmsh node ordering, Gmsh mesh file formats, File formats
+@section Gmsh post-processing file formats
+
+@cindex @file{.pos} file
+
+Gmsh can read and write data sets in three different file formats: the
+``parsed'', ``ASCII'' and ``binary'' file formats. The parsed format is the
+oldest and most flexible, but also the slowest to read/write. The ASCII and
+binary formats are less flexible but allow for faster read/write operations,
+which is useful for (very) large data sets.
+
+Gmsh can convert any format to any other, either in a script (cf. @code{Save
+View} and @code{PostProcessing.Format} in @ref{Post-processing commands},
+and @ref{Post-processing options}, respectively) or in the graphical user
+interface (using the `View->Save as' menu).
+
+@menu
+* Parsed post-processing file format::  
+* ASCII post-processing file format::  
+* Binary post-processing file format::  
+@end menu
+
+@c .........................................................................
+@c Parsed post-processing file format
+@c .........................................................................
+
+@node Parsed post-processing file format, ASCII post-processing file format, Gmsh post-processing file formats, Gmsh post-processing file formats
+@subsection Parsed post-processing file format
+
+@cindex Post-processing, parsed file format
+@cindex File format, post-processing, parsed
+@cindex @file{.pos} file
+
+Gmsh's oldest post-processing format (``parsed'') is read by Gmsh's script
+parser (see also @ref{Post-processing commands}). You can thus, for example,
+embed parsed post-processing views directly into your geometrical
+descriptions (see, e.g., @ref{t4.geo}). 
+
+The parsed format is very powerful, since all the values are
+@var{expressions}, and it can be easily generated ``on-the-fly'', as there
+is no header containing @emph{a priori} information on the size of the data
+set. Its syntax is also very permissive, which makes it ideal for testing
+purposes. Its main disadvantage resides in the overhead introduced by the
+parser, which makes loading a view in parsed format slower than loading a
+view in ASCII or binary format. This is only a disadvantage for very large
+data sets, tough.
+
+The format of the parsed post-processing file is the following:
+
+@example
+@group
+View "@var{string}" @{
+  @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @};
+  @dots{}
+@};
+@end group
+@end example
+
+The 26 objects that can be displayed are:
+
+@sp 1 
+
+@example
+                    @var{type}  #@var{list-of-coords}  #@var{list-of-values}
+------------------------------------------------------------
+scalar point        SP    3            1  * @var{nb-time-steps}
+vector point        VP    3            3  * @var{nb-time-steps}
+tensor point        TP    3            9  * @var{nb-time-steps}
+scalar line         SL    6            2  * @var{nb-time-steps}
+vector line         VL    6            6  * @var{nb-time-steps}
+tensor line         TL    6            18 * @var{nb-time-steps}
+scalar triangle     ST    9            3  * @var{nb-time-steps}
+vector triangle     VT    9            9  * @var{nb-time-steps}
+tensor triangle     TT    9            27 * @var{nb-time-steps}
+scalar quadrangle   SQ    12           4  * @var{nb-time-steps}
+vector quadrangle   VQ    12           12 * @var{nb-time-steps}
+tensor quadrangle   TQ    12           36 * @var{nb-time-steps}
+scalar tetrahedron  SS    12           4  * @var{nb-time-steps}
+vector tetrahedron  VS    12           12 * @var{nb-time-steps}
+tensor tetrahedron  TS    12           36 * @var{nb-time-steps}
+scalar hexahedron   SH    24           8  * @var{nb-time-steps}
+vector hexahedron   VH    24           24 * @var{nb-time-steps}
+tensor hexahedron   TH    24           72 * @var{nb-time-steps}
+scalar prism        SI    18           6  * @var{nb-time-steps}
+vector prism        VI    18           18 * @var{nb-time-steps}
+tensor prism        TI    18           54 * @var{nb-time-steps}
+scalar pyramid      SY    15           5  * @var{nb-time-steps}
+vector pyramid      VY    15           15 * @var{nb-time-steps}
+tensor pyramid      TY    15           45 * @var{nb-time-steps}
+text 2d             T2    4            arbitrary
+text 3d             T3    5            arbitrary
+@end example
+
+The coordinates are given `by node'@footnote{Beware that this is different
+from the ordering of the node coordinates in the ASCII and binary
+post-processing file formats.}, i.e.:
+
+@itemize @bullet
+@item
+@code{(@var{coord1}, @var{coord2}, @var{coord3})} for a point,
+@item 
+@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@* 
+@code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2})} for a line,
+@item 
+@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@*
+@code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2},}@*
+@code{ @var{coord1-node3}, @var{coord2-node3}, @var{coord3-node3})} for a triangle,
+@item
+etc.
+@end itemize
+
+The values are given by time step, by node and by component, i.e.:
+@example
+@var{comp1-node1-time1}, @var{comp2-node1-time1}, @var{comp3-node1-time1},
+@var{comp1-node2-time1}, @var{comp2-node2-time1}, @var{comp3-node2-time1},
+@var{comp1-node3-time1}, @var{comp2-node3-time1}, @var{comp3-node3-time1},
+@var{comp1-node1-time2}, @var{comp2-node1-time2}, @var{comp3-node1-time2},
+@var{comp1-node2-time2}, @var{comp2-node2-time2}, @var{comp3-node2-time2},
+@var{comp1-node3-time2}, @var{comp2-node3-time2}, @var{comp3-node3-time2},
+@dots{}
+@end example
+
+@c .........................................................................
+@c ASCII post-processing file format
+@c .........................................................................
+
+@node ASCII post-processing file format, Binary post-processing file format, Parsed post-processing file format, Gmsh post-processing file formats
+@subsection ASCII post-processing file format
 
 @cindex Post-processing, ASCII file format
 @cindex File format, post-processing, ASCII
-@cindex @file{.pos} file
 
 The ASCII post-processing file is divided in several sections: one format
 section, enclosed between @code{$PostFormat}-@code{$EndPostFormat} tags, and
@@ -3106,19 +3232,18 @@ is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
 `@code{^}' character.
 @end table
 
-@c -------------------------------------------------------------------------
-@c Gmsh binary post-processing file format
-@c -------------------------------------------------------------------------
+@c .........................................................................
+@c Binary post-processing file format
+@c .........................................................................
 
-@node Gmsh binary post-processing file format, Gmsh parsed post-processing file format, Gmsh ASCII post-processing file format, File formats
-@section Gmsh binary post-processing file format
+@node Binary post-processing file format,  , ASCII post-processing file format, Gmsh post-processing file formats
+@subsection Binary post-processing file format
 
 @cindex Post-processing, binary file format
 @cindex File format, post-processing, binary
-@cindex @file{.pos} file
 
 The binary post-processing file format is the same as the ASCII file format
-described in @ref{Gmsh ASCII post-processing file format}, except that:
+described in @ref{ASCII post-processing file format}, except that:
 
 @enumerate
 @item
@@ -3175,96 +3300,10 @@ after each other in order to form a long array of doubles. The principle is
 the same for all other kinds of values.
 
 @c -------------------------------------------------------------------------
-@c Gmsh parsed post-processing file format
-@c -------------------------------------------------------------------------
-
-@node Gmsh parsed post-processing file format, Gmsh node ordering, Gmsh binary post-processing file format, File formats
-@section Gmsh parsed post-processing file format
-
-@cindex Post-processing, parsed file format
-@cindex File format, post-processing, parsed
-@cindex @file{.pos} file
-
-For relatively small data sets Gmsh provides an additional post-processing
-format, which is read by Gmsh's script parser. You can thus, for example,
-embed small post-processing views directly into your geometrical
-descriptions (see e.g., @ref{t4.geo}). This format is also useful for
-testing purposes: its syntax is very permissive, and you can easily generate
-it by hand or on the fly. The format of the parsed post-processing file is
-the following:
-
-@example
-@group
-View "@var{string}" @{
-  @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @};
-  @dots{}
-@};
-@end group
-@end example
-
-The 26 objects that can be displayed are the same as in the ASCII or binary
-post-processing file formats:
-
-@sp 1 
-
-@example
-@group
-                    @var{type}  #@var{list-of-coords}  #@var{list-of-values}
-------------------------------------------------------------
-scalar point        SP    3            1  * @var{nb-time-steps}
-vector point        VP    3            3  * @var{nb-time-steps}
-tensor point        TP    3            9  * @var{nb-time-steps}
-scalar line         SL    6            2  * @var{nb-time-steps}
-vector line         VL    6            6  * @var{nb-time-steps}
-tensor line         TL    6            18 * @var{nb-time-steps}
-scalar triangle     ST    9            3  * @var{nb-time-steps}
-vector triangle     VT    9            9  * @var{nb-time-steps}
-tensor triangle     TT    9            27 * @var{nb-time-steps}
-scalar quadrangle   SQ    12           4  * @var{nb-time-steps}
-vector quadrangle   VQ    12           12 * @var{nb-time-steps}
-tensor quadrangle   TQ    12           36 * @var{nb-time-steps}
-scalar tetrahedron  SS    12           4  * @var{nb-time-steps}
-vector tetrahedron  VS    12           12 * @var{nb-time-steps}
-tensor tetrahedron  TS    12           36 * @var{nb-time-steps}
-scalar hexahedron   SH    24           8  * @var{nb-time-steps}
-vector hexahedron   VH    24           24 * @var{nb-time-steps}
-tensor hexahedron   TH    24           72 * @var{nb-time-steps}
-scalar prism        SI    18           6  * @var{nb-time-steps}
-vector prism        VI    18           18 * @var{nb-time-steps}
-tensor prism        TI    18           54 * @var{nb-time-steps}
-scalar pyramid      SY    15           5  * @var{nb-time-steps}
-vector pyramid      VY    15           15 * @var{nb-time-steps}
-tensor pyramid      TY    15           45 * @var{nb-time-steps}
-text 2d             T2    4            arbitrary
-text 3d             T3    5            arbitrary
-@end group
-@end example
-
-For historical reasons, contrary to the ASCII and binary post-processing
-file formats, the coordinates are given `by node', i.e.:
-
-@itemize @bullet
-@item
-@code{(coord1, coord2,coord3)} for a point,
-@item 
-@code{(coord1-node1, coord2-node1, coord3-node1,}@* 
-@code{ coord1-node2, coord2-node2, coord3-node2)} for a line,
-@item 
-@code{(coord1-node1, coord2-node1, coord3-node1,}@*
-@code{ coord1-node2, coord2-node2, coord3-node2,}@*
-@code{ coord1-node3, coord2-node3, coord3-node3)} for a triangle,
-@item
-etc.
-@end itemize
-
-@noindent The values are given in the same order as for the ASCII and binary
-post-processing file formats.
-
-@c -------------------------------------------------------------------------
 @c Gmsh node ordering
 @c -------------------------------------------------------------------------
 
-@node Gmsh node ordering,  , Gmsh parsed post-processing file format, File formats
+@node Gmsh node ordering,  , Gmsh post-processing file formats, File formats
 @section Gmsh node ordering
 
 @cindex Nodes, ordering
