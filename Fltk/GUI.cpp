@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.240 2003-06-14 06:23:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.241 2003-06-19 16:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -192,11 +192,11 @@ Context_Item menu_geometry[] = {
 	      { "0Geometry Elementary Add New", NULL } ,
               { "Parameter",     (Fl_Callback *)geometry_elementary_add_new_parameter_cb } ,
 	      { "Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb } ,
-	      { "Line",          (Fl_Callback *)geometry_elementary_add_new_line_cb } ,
+	      { "Straight line", (Fl_Callback *)geometry_elementary_add_new_line_cb } ,
 	      { "Spline",        (Fl_Callback *)geometry_elementary_add_new_spline_cb } ,
 	      { "B-Spline",      (Fl_Callback *)geometry_elementary_add_new_bspline_cb } ,
-	      { "Circle",        (Fl_Callback *)geometry_elementary_add_new_circle_cb } ,
-	      { "Ellipse",       (Fl_Callback *)geometry_elementary_add_new_ellipse_cb } ,
+	      { "Circle arc",    (Fl_Callback *)geometry_elementary_add_new_circle_cb } ,
+	      { "Ellipse arc",   (Fl_Callback *)geometry_elementary_add_new_ellipse_cb } ,
 	      { "Plane surface", (Fl_Callback *)geometry_elementary_add_new_planesurface_cb } ,
 	      { "Ruled surface", (Fl_Callback *)geometry_elementary_add_new_ruledsurface_cb } ,
 	      { "Volume",        (Fl_Callback *)geometry_elementary_add_new_volume_cb } ,
@@ -205,56 +205,56 @@ Context_Item menu_geometry[] = {
             Context_Item menu_geometry_elementary_add_translate[] = {
 	      { "0Geometry Elementary Add Translate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_translate_point_cb } ,
-	      { "Curve",   (Fl_Callback *)geometry_elementary_add_translate_curve_cb } ,
+	      { "Line",    (Fl_Callback *)geometry_elementary_add_translate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_rotate[] = {
 	      { "0Geometry Elementary Add Rotate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_rotate_point_cb } ,
-	      { "Curve",   (Fl_Callback *)geometry_elementary_add_rotate_curve_cb } ,
+	      { "Line",    (Fl_Callback *)geometry_elementary_add_rotate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_scale[] = {
 	      { "0Geometry Elementary Add Scale", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_scale_point_cb } ,
-	      { "Curve",   (Fl_Callback *)geometry_elementary_add_scale_curve_cb } ,
+	      { "Line",    (Fl_Callback *)geometry_elementary_add_scale_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_scale_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_symmetry[] = {
 	      { "0Geometry Elementary Add Symmetry", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_symmetry_point_cb } ,
-	      { "Curve",   (Fl_Callback *)geometry_elementary_add_symmetry_curve_cb } ,
+	      { "Line",    (Fl_Callback *)geometry_elementary_add_symmetry_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_symmetry_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_translate[] = {
 	  { "0Geometry Elementary Translate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_translate_point_cb } ,
-	  { "Curve",   (Fl_Callback *)geometry_elementary_translate_curve_cb } ,
+	  { "Line",    (Fl_Callback *)geometry_elementary_translate_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_translate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_rotate[] = {
 	  { "0Geometry Elementary Rotate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_rotate_point_cb } ,
-	  { "Curve",   (Fl_Callback *)geometry_elementary_rotate_curve_cb } ,
+	  { "Line",    (Fl_Callback *)geometry_elementary_rotate_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_rotate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_scale[] = {
 	  { "0Geometry Elementary Scale", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_scale_point_cb } ,
-	  { "Curve",   (Fl_Callback *)geometry_elementary_scale_curve_cb } ,
+	  { "Line",    (Fl_Callback *)geometry_elementary_scale_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_scale_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_symmetry[] = {
 	  { "0Geometry Elementary Symmetry", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_symmetry_point_cb } ,
-	  { "Curve",   (Fl_Callback *)geometry_elementary_symmetry_curve_cb } ,
+	  { "Line",    (Fl_Callback *)geometry_elementary_symmetry_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_symmetry_surface_cb } ,
 	  { NULL } 
 	};  
@@ -267,21 +267,21 @@ Context_Item menu_geometry[] = {
             Context_Item menu_geometry_elementary_extrude_translate[] = {
 	      { "0Geometry Elementary Extrude Translate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_translate_point_cb } ,
-	      { "Curve",   (Fl_Callback *)geometry_elementary_extrude_translate_curve_cb } ,
+	      { "Line",    (Fl_Callback *)geometry_elementary_extrude_translate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_extrude_rotate[] = {
 	      { "0Geometry Elementary Extrude Rotate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_point_cb } ,
-	      { "Curve",   (Fl_Callback *)geometry_elementary_extrude_rotate_curve_cb } ,
+	      { "Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_line_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_delete[] = {
 	  { "0Geometry Elementary Delete", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_delete_point_cb } ,
-	  { "Curve",   (Fl_Callback *)geometry_elementary_delete_curve_cb } ,
+	  { "Line",    (Fl_Callback *)geometry_elementary_delete_line_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_delete_surface_cb } ,
 	  { NULL } 
 	};  
@@ -293,7 +293,7 @@ Context_Item menu_geometry[] = {
         Context_Item menu_geometry_physical_add[] = {
 	  { "0Geometry Physical Add", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_physical_add_point_cb  } ,
-	  { "Curve",   (Fl_Callback *)geometry_physical_add_curve_cb  } ,
+	  { "Line",    (Fl_Callback *)geometry_physical_add_line_cb  } ,
 	  { "Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
 	  { "Volume",  (Fl_Callback *)geometry_physical_add_volume_cb  } ,
 	  { NULL } 
@@ -1523,11 +1523,11 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Visibility");
       geo_butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Points");
-      geo_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Curves");
+      geo_butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
       geo_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surfaces");
       geo_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volumes");
       geo_butt[4] = new Fl_Check_Button(width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Point numbers");
-      geo_butt[5] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Curve numbers");
+      geo_butt[5] = new Fl_Check_Button(width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line numbers");
       geo_butt[6] = new Fl_Check_Button(width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface numbers");
       geo_butt[7] = new Fl_Check_Button(width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume numbers");
       for(i = 0; i < 8; i++) {
@@ -2325,14 +2325,14 @@ void GUI::create_statistics_window()
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Geometry");
       o->hide();
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Points");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Curves");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Lines");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Surfaces");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Volumes");
       o->end();
     }
     {
       Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Mesh");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Nodes on curves");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Nodes on Lines");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Nodes on surfaces");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Nodes in volumes");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Triangles");
@@ -2752,7 +2752,7 @@ void GUI::create_visibility_window()
     {"Node", 0, 0},
     {"Element", 0, 0},
     {"Point", 0, 0},
-    {"Curve", 0, 0},
+    {"Line", 0, 0},
     {"Surface", 0, 0},
     {"Volume", 0, 0},
     {0}

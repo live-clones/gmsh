@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.177 2003-06-19 16:20:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.178 2003-06-19 16:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1365,7 +1365,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "Other shortcuts");
   Msg(DIRECT, "");
   Msg(DIRECT, "  0 or Esc      reload geometry input file");
-  Msg(DIRECT, "  1 or F1       mesh curves");
+  Msg(DIRECT, "  1 or F1       mesh lines");
   Msg(DIRECT, "  2 or F2       mesh surfaces");
   Msg(DIRECT, "  3 or F3       mesh volumes");
   Msg(DIRECT, "  Alt+a         hide/show small axes"); 
@@ -1720,7 +1720,7 @@ static void _new_surface_volume(int mode)
     List_Reset(Liste2);
 
     while(1) {
-      Msg(STATUS3N, "Select boundary ('q'=quit)");
+      Msg(STATUS3N, "Select exterior boundary ('q'=quit)");
       ib = SelectEntity(type, &v, &c, &s);
       if(ib <= 0) {
         ZeroHighlight(THEM);
@@ -1792,7 +1792,7 @@ void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS)
   _new_surface_volume(2);
 }
 
-static void _transform_point_curve_surface(int transfo, int mode, char *what)
+static void _transform_point_line_surface(int transfo, int mode, char *what)
 {
   Vertex *v;
   Curve *c;
@@ -1876,19 +1876,19 @@ void geometry_elementary_add_translate_cb(CALLBACK_ARGS)
 void geometry_elementary_add_translate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(0, 1, "Point");
+  _transform_point_line_surface(0, 1, "Point");
 }
 
-void geometry_elementary_add_translate_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_add_translate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(0, 1, "Line");
+  _transform_point_line_surface(0, 1, "Line");
 }
 
 void geometry_elementary_add_translate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(0, 1, "Surface");
+  _transform_point_line_surface(0, 1, "Surface");
 }
 
 void geometry_elementary_translate_cb(CALLBACK_ARGS)
@@ -1899,19 +1899,19 @@ void geometry_elementary_translate_cb(CALLBACK_ARGS)
 void geometry_elementary_translate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(0, 0, "Point");
+  _transform_point_line_surface(0, 0, "Point");
 }
 
-void geometry_elementary_translate_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_translate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(0, 0, "Line");
+  _transform_point_line_surface(0, 0, "Line");
 }
 
 void geometry_elementary_translate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(0, 0, "Surface");
+  _transform_point_line_surface(0, 0, "Surface");
 }
 
 void geometry_elementary_add_rotate_cb(CALLBACK_ARGS)
@@ -1922,19 +1922,19 @@ void geometry_elementary_add_rotate_cb(CALLBACK_ARGS)
 void geometry_elementary_add_rotate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(1, 1, "Point");
+  _transform_point_line_surface(1, 1, "Point");
 }
 
-void geometry_elementary_add_rotate_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_add_rotate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(1, 1, "Line");
+  _transform_point_line_surface(1, 1, "Line");
 }
 
 void geometry_elementary_add_rotate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(1, 1, "Surface");
+  _transform_point_line_surface(1, 1, "Surface");
 }
 
 void geometry_elementary_rotate_cb(CALLBACK_ARGS)
@@ -1945,19 +1945,19 @@ void geometry_elementary_rotate_cb(CALLBACK_ARGS)
 void geometry_elementary_rotate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(1, 0, "Point");
+  _transform_point_line_surface(1, 0, "Point");
 }
 
-void geometry_elementary_rotate_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_rotate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(1, 0, "Line");
+  _transform_point_line_surface(1, 0, "Line");
 }
 
 void geometry_elementary_rotate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(1, 0, "Surface");
+  _transform_point_line_surface(1, 0, "Surface");
 }
 
 void geometry_elementary_add_scale_cb(CALLBACK_ARGS)
@@ -1968,19 +1968,19 @@ void geometry_elementary_add_scale_cb(CALLBACK_ARGS)
 void geometry_elementary_add_scale_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_curve_surface(2, 1, "Point");
+  _transform_point_line_surface(2, 1, "Point");
 }
 
-void geometry_elementary_add_scale_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_add_scale_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_curve_surface(2, 1, "Line");
+  _transform_point_line_surface(2, 1, "Line");
 }
 
 void geometry_elementary_add_scale_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_curve_surface(2, 1, "Surface");
+  _transform_point_line_surface(2, 1, "Surface");
 }
 
 void geometry_elementary_scale_cb(CALLBACK_ARGS)
@@ -1991,19 +1991,19 @@ void geometry_elementary_scale_cb(CALLBACK_ARGS)
 void geometry_elementary_scale_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_curve_surface(2, 0, "Point");
+  _transform_point_line_surface(2, 0, "Point");
 }
 
-void geometry_elementary_scale_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_scale_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_curve_surface(2, 0, "Line");
+  _transform_point_line_surface(2, 0, "Line");
 }
 
 void geometry_elementary_scale_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(4);
-  _transform_point_curve_surface(2, 0, "Surface");
+  _transform_point_line_surface(2, 0, "Surface");
 }
 
 void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS)
@@ -2014,19 +2014,19 @@ void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS)
 void geometry_elementary_add_symmetry_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_curve_surface(3, 1, "Point");
+  _transform_point_line_surface(3, 1, "Point");
 }
 
-void geometry_elementary_add_symmetry_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_add_symmetry_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_curve_surface(3, 1, "Line");
+  _transform_point_line_surface(3, 1, "Line");
 }
 
 void geometry_elementary_add_symmetry_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_curve_surface(3, 1, "Surface");
+  _transform_point_line_surface(3, 1, "Surface");
 }
 
 void geometry_elementary_symmetry_cb(CALLBACK_ARGS)
@@ -2037,19 +2037,19 @@ void geometry_elementary_symmetry_cb(CALLBACK_ARGS)
 void geometry_elementary_symmetry_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_curve_surface(3, 0, "Point");
+  _transform_point_line_surface(3, 0, "Point");
 }
 
-void geometry_elementary_symmetry_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_symmetry_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_curve_surface(3, 0, "Line");
+  _transform_point_line_surface(3, 0, "Line");
 }
 
 void geometry_elementary_symmetry_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(5);
-  _transform_point_curve_surface(3, 0, "Surface");
+  _transform_point_line_surface(3, 0, "Surface");
 }
 
 void geometry_elementary_extrude_cb(CALLBACK_ARGS)
@@ -2065,19 +2065,19 @@ void geometry_elementary_extrude_translate_cb(CALLBACK_ARGS)
 void geometry_elementary_extrude_translate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(4, 0, "Point");
+  _transform_point_line_surface(4, 0, "Point");
 }
 
-void geometry_elementary_extrude_translate_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_extrude_translate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(4, 0, "Line");
+  _transform_point_line_surface(4, 0, "Line");
 }
 
 void geometry_elementary_extrude_translate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(2);
-  _transform_point_curve_surface(4, 0, "Surface");
+  _transform_point_line_surface(4, 0, "Surface");
 }
 
 void geometry_elementary_extrude_rotate_cb(CALLBACK_ARGS)
@@ -2088,19 +2088,19 @@ void geometry_elementary_extrude_rotate_cb(CALLBACK_ARGS)
 void geometry_elementary_extrude_rotate_point_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(5, 0, "Point");
+  _transform_point_line_surface(5, 0, "Point");
 }
 
-void geometry_elementary_extrude_rotate_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_extrude_rotate_line_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(5, 0, "Line");
+  _transform_point_line_surface(5, 0, "Line");
 }
 
 void geometry_elementary_extrude_rotate_surface_cb(CALLBACK_ARGS)
 {
   WID->create_geometry_context_window(3);
-  _transform_point_curve_surface(5, 0, "Surface");
+  _transform_point_line_surface(5, 0, "Surface");
 }
 
 void geometry_elementary_delete_cb(CALLBACK_ARGS)
@@ -2110,17 +2110,17 @@ void geometry_elementary_delete_cb(CALLBACK_ARGS)
 
 void geometry_elementary_delete_point_cb(CALLBACK_ARGS)
 {
-  _transform_point_curve_surface(6, 0, "Point");
+  _transform_point_line_surface(6, 0, "Point");
 }
 
-void geometry_elementary_delete_curve_cb(CALLBACK_ARGS)
+void geometry_elementary_delete_line_cb(CALLBACK_ARGS)
 {
-  _transform_point_curve_surface(6, 0, "Line");
+  _transform_point_line_surface(6, 0, "Line");
 }
 
 void geometry_elementary_delete_surface_cb(CALLBACK_ARGS)
 {
-  _transform_point_curve_surface(6, 0, "Surface");
+  _transform_point_line_surface(6, 0, "Surface");
 }
 
 static void _add_physical(char *what)
@@ -2206,7 +2206,7 @@ void geometry_physical_add_point_cb(CALLBACK_ARGS)
   _add_physical("Point");
 }
 
-void geometry_physical_add_curve_cb(CALLBACK_ARGS)
+void geometry_physical_add_line_cb(CALLBACK_ARGS)
 {
   _add_physical("Line");
 }
