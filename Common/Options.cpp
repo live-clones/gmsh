@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.35 2001-07-30 20:22:55 geuzaine Exp $
+// $Id: Options.cpp,v 1.36 2001-07-31 22:20:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -507,7 +507,7 @@ char * opt_view_name(OPT_ARGS_STR){
   if(action & GMSH_SET){
     strcpy(v->Name, val);
 #ifdef _FLTK
-    if(WID){
+    if(WID && num<NB_BUTT_MAX){
       WID->m_toggle_butt[num]->label(v->Name);
       WID->m_toggle_butt[num]->redraw();
     }
@@ -1708,7 +1708,7 @@ double opt_view_visible(OPT_ARGS_NUM){
     v->Visible = (int)val;
   }
 #ifdef _FLTK
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI) && num<NB_BUTT_MAX)
     WID->m_toggle_butt[num]->value(v->Visible);
 #endif
   Msg(DEBUG1, "View %d", v->Num);
