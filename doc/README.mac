@@ -1,4 +1,4 @@
-$Id: README.mac,v 1.5 2003-05-09 16:29:57 geuzaine Exp $
+$Id: README.mac,v 1.6 2004-06-04 18:58:46 geuzaine Exp $
 
 How to make a version recognized by the Mac Finder?
 
@@ -8,7 +8,7 @@ The old way (using resource forks):
 
 - append the resources to the executable:
 
-  /Developer/Tools/Rez -t APPL -o $(GMSH_BIN_DIR)/gmsh $(FLTK_DIR)/FL/mac.r
+  /Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r
 
 - copy all the stuff you want to distribute (using the finder or
   'ditto'! copying with 'cp' in a shell will destroy the resources!)
