@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.3 2001-05-03 00:34:01 geuzaine Exp $ */
+/* $Id: Socket.cpp,v 1.4 2001-05-03 01:04:07 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,7 +123,7 @@ int Socket_StartProgram(char *progname, char *sockname){
   /* Watch s to see when it has input. */
   FD_ZERO(&rfds);
   FD_SET(s, &rfds);
-  /* Wait up to one second */
+  /* Wait up to 2 seconds */
   tv.tv_sec = 2;
   tv.tv_usec = 0;
   retval = select(s+1, &rfds, NULL, NULL, &tv);
