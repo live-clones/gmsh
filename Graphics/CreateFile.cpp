@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.30 2002-05-20 18:28:25 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.31 2002-06-10 16:42:20 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -182,7 +182,7 @@ void CreateOutputFile (char *name, int format) {
       gl2psBeginPage(CTX.base_filename, "Gmsh", 
 		     GL2PS_PS,
 		     (CTX.print.eps_quality == 1 ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT),
-		     GL2PS_SIMPLE_LINE_OFFSET | 
+		     GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
 		     (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
 		     (format==FORMAT_PSTEX ? GL2PS_NO_TEXT : 0),
 		     GL_RGBA, 0, NULL, size3d, fp, name);
