@@ -1,4 +1,9 @@
-$Id: TODO,v 1.27 2003-12-29 05:39:14 geuzaine Exp $
+$Id: TODO,v 1.28 2003-12-30 22:08:04 geuzaine Exp $
+
+compute min/max for each time step and allow to use that instead of
+the global min/max
+
+********************************************************************
 
 add nicer 3d drawing code for arrows (cylinder+cone, with lights)
 
