@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.64 2003-12-08 15:31:57 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.65 2003-12-08 15:51:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,7 @@ void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
   pg->Num = Physical;
   if((ppg = (PhysicalGroup **) List_PQuery(M->PhysicalGroups, &pg,
                                            comparePhysicalGroup))) {
-    List_Replace((*ppg)->Entities, &Elementary, fcmp_int);
+    List_Insert((*ppg)->Entities, &Elementary, fcmp_int);
   }
   else {
     List_T *tmp = List_Create(1, 1, sizeof(int));
