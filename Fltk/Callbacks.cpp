@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.269 2004-09-16 19:15:26 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.270 2004-09-16 21:26:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3073,66 +3073,52 @@ void view_reload_cb(CALLBACK_ARGS)
     Draw();
 }
 
-static int REMOVE_ALL_VIEWS = 0;
-
 void view_remove_all_cb(CALLBACK_ARGS)
 {
-  if(!CTX.post.list)
-    return;
-  REMOVE_ALL_VIEWS = 1;
+  if(!CTX.post.list) return;
   while(List_Nbr(CTX.post.list))
-    view_remove_cb(NULL, (void *)0);
-  REMOVE_ALL_VIEWS = 0;
+    RemoveViewByIndex(0);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_visible_cb(CALLBACK_ARGS)
 {
-  int i;
-  if(!CTX.post.list)
-    return;
-  REMOVE_ALL_VIEWS = 1;
-  for(i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
+  if(!CTX.post.list) return;
+  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
     if(opt_view_visible(i, GMSH_GET, 0))
-      view_remove_cb(NULL, (void *)i);
-  REMOVE_ALL_VIEWS = 0;
+      RemoveViewByIndex(i);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_invisible_cb(CALLBACK_ARGS)
 {
-  int i;
-  if(!CTX.post.list)
-    return;
-  REMOVE_ALL_VIEWS = 1;
-  for(i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
+  if(!CTX.post.list) return;
+  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
     if(!opt_view_visible(i, GMSH_GET, 0))
-      view_remove_cb(NULL, (void *)i);
-  REMOVE_ALL_VIEWS = 0;
+      RemoveViewByIndex(i);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_empty_cb(CALLBACK_ARGS)
 {
-  int i;
-  if(!CTX.post.list)
-    return;
-  REMOVE_ALL_VIEWS = 1;
-  for(i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
+  if(!CTX.post.list) return;
+  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
     Post_View *v = (Post_View*) List_Pointer(CTX.post.list, i);
     if(v->empty())
-      view_remove_cb(NULL, (void *)i);
+      RemoveViewByIndex(i);
   }
-  REMOVE_ALL_VIEWS = 0;
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_cb(CALLBACK_ARGS)
 {
   RemoveViewByIndex((long int)data);
-
-  if(!REMOVE_ALL_VIEWS)
-    Draw();
+  UpdateViewsInGUI();
+  Draw();
 }
 
 void view_save_ascii_cb(CALLBACK_ARGS)

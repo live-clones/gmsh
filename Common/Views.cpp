@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.127 2004-09-01 20:23:49 geuzaine Exp $
+// $Id: Views.cpp,v 1.128 2004-09-16 21:26:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -500,9 +500,6 @@ bool RemoveViewByIndex(int index)
     v->Index = i;
   }
 
-#if defined(HAVE_FLTK)
-  UpdateViewsInGUI();
-#endif
   Msg(DEBUG, "Removed View[%d] (%d views left)", index, List_Nbr(CTX.post.list));
   return true;
 }
@@ -1362,24 +1359,19 @@ void combine_time(struct nameidx *id, List_T *to_remove)
     }
   }
 
-  if(vm->empty()) {
-    RemoveViewByNumber(vm->Num);
-  }
-  else{
-    // create the time data
-    for(int i = 0; i < List_Nbr(id->indices); i++){
-      List_Read(id->indices, i, &index);
-      v = (Post_View*)List_Pointer(CTX.post.list, index);
-      for(int j = 0; j < List_Nbr(v->Time); j++){
-	List_Add(vm->Time, List_Pointer(v->Time, j));
-      }
+  // create the time data
+  for(int i = 0; i < List_Nbr(id->indices); i++){
+    List_Read(id->indices, i, &index);
+    v = (Post_View*)List_Pointer(CTX.post.list, index);
+    for(int j = 0; j < List_Nbr(v->Time); j++){
+      List_Add(vm->Time, List_Pointer(v->Time, j));
     }
-    // finalize
-    char name[256], filename[256];
-    sprintf(name, "combined-%s", id->name);
-    sprintf(filename, "combined-%s.pos", id->name);
-    EndView(vm, 0, filename, name);
   }
+  // finalize
+  char name[256], filename[256];
+  sprintf(name, "combined-%s", id->name);
+  sprintf(filename, "combined-%s.pos", id->name);
+  EndView(vm, 0, filename, name);
 }
 
 void CombineViews_Time(int how, int remove)

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.175 2004-08-27 18:06:20 geuzaine Exp $
+// $Id: Gmsh.y,v 1.176 2004-09-16 21:26:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -65,6 +65,10 @@ static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
+
+#if defined(HAVE_FLTK)
+void UpdateViewsInGUI();
+#endif
 
 void yyerror (char *s);
 void yymsg (int type, char *fmt, ...);
@@ -2377,7 +2381,13 @@ Delete :
     }
     | tDelete tSTRING '[' FExpr ']' tEND
     {
-      if(!strcmp($2, "View")) RemoveViewByIndex((int)$4);
+      if(!strcmp($2, "View")){
+	RemoveViewByIndex((int)$4);
+#if defined(HAVE_FLTK)
+	if(!CTX.batch)
+	  UpdateViewsInGUI();
+#endif
+      }
     }
     | tDelete tSTRING tEND
     {
