@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.227 2004-05-12 03:46:16 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.228 2004-05-12 16:47:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3179,7 +3179,7 @@ void view_plugin_cb(CALLBACK_ARGS)
   }
 
   try {
-    Post_View *v = (Post_View *) List_Pointer(CTX.post.list, iView);
+    Post_View *v = (Post_View *) List_Pointer_Test(CTX.post.list, iView);
     p->execute(v);
     Draw();
   }
