@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.57 2001-01-29 08:43:45 geuzaine Exp $
+// $Id: Gmsh.y,v 1.58 2001-02-05 20:32:33 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -32,7 +32,6 @@ List_T *Symbol_L;
 
 extern Mesh      *THEM;
 extern Post_View *ActualView;
-extern char       ThePathForIncludes[NAME_STR_L];
 
 static FILE          *yyinTab[MAX_OPEN_FILES];
 static int            yylinenoTab[MAX_OPEN_FILES];
@@ -1608,12 +1607,18 @@ Command :
       if(!strcmp($1, "Include")){
 
 	yyinTab[RecursionLevel++] = yyin;
-	strcpy(tmpstring, ThePathForIncludes);
-	if((yyin = fopen(strcat(tmpstring,$2),"r"))){
+
+	strcpy(tmpstring, yyname);
+	i = strlen(yyname)-1 ;
+	while(i >= 0 && yyname[i] != '/' && yyname[i] != '\\') i-- ;
+	tmpstring[i+1] = '\0';
+	strcat(tmpstring,$2);
+
+	if((yyin = fopen(tmpstring,"r"))){
 	  strcpy(yynameTab[RecursionLevel-1],yyname);
 	  yylinenoTab[RecursionLevel-1]=yylineno;
 	  yylineno=1;
-	  strcpy(yyname,$2);
+	  strcpy(yyname,tmpstring);
 	  while(!feof(yyin)){
 	    yyparse();
 	  }
@@ -1623,7 +1628,7 @@ Command :
 	  yylineno = yylinenoTab[RecursionLevel];
 	}
 	else{
-	  vyyerror("Unknown File '%s'", $2) ;  
+	  vyyerror("Unknown File '%s'", tmpstring) ;  
 	  yyin = yyinTab[--RecursionLevel];
 	}
 

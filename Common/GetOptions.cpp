@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.8 2001-02-05 07:56:57 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.9 2001-02-05 20:32:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -14,7 +14,6 @@ extern Context_T  CTX;
 
 char  *TheFileNameTab[MAX_OPEN_FILES];
 char  *TheBgmFileName=NULL;
-char   ThePathForIncludes[NAME_STR_L];
 
 char gmsh_progname[]  = "This is Gmsh" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2001 J.-F. Remacle, C. Geuzaine";
@@ -72,7 +71,6 @@ char gmsh_options[]   =
 #ifdef _MOTIF
   "  -nothreads            disable threads\n"
 #endif
-  "  -path string          set path for included files\n"
   "  -version              show version number\n"
   "  -info                 show detailed version information\n"
   "  -help                 show this message\n"
@@ -112,16 +110,6 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "3")){ 
         CTX.interactive = 3; i++;
-      }
-      else if(!strcmp(argv[i]+1, "path")){ 
-        i++;
-        /* we need to make a copy because of bison */
-        if(argv[i] != NULL) 
-          strncpy(ThePathForIncludes, argv[i++], NAME_STR_L) ;
-        else {    
-          fprintf(stderr, ERROR_STR "Missing String\n");
-          exit(1);
-        }
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
         i++;
