@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.7 2001-08-08 17:51:14 remacle Exp $
+// $Id: Main.cpp,v 1.8 2001-08-08 18:03:15 remacle Exp $
 
 #include <signal.h>
 #include "ParUtil.h"
@@ -40,22 +40,29 @@ void CreateOutputFile(char *, int){}
 void Info (int level, char *arg0){
   switch(level){
   case 0 :
-    fprintf(stderr, "%s\n", gmsh_progname);
-    fprintf(stderr, "%s\n", gmsh_copyright);
-    Print_Usage(arg0);
-    exit(1);
+    if(ParUtil::Instance()->master())
+      {
+	fprintf(stderr, "%s\n", gmsh_progname);
+	fprintf(stderr, "%s\n", gmsh_copyright);
+	Print_Usage(arg0);
+      }
+    ParUtil::Instance()->Exit();
   case 1:
-    fprintf(stderr, "%.2f\n", GMSH_VERSION);
-    exit(1) ; 
+    if(ParUtil::Instance()->master())
+      fprintf(stderr, "%.2f\n", GMSH_VERSION);
+    ParUtil::Instance()->Exit();
   case 2:
-    fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
-    fprintf(stderr, "%s\n", gmsh_os);
-    fprintf(stderr, "%s\n", gmsh_date);
-    fprintf(stderr, "%s\n", gmsh_host);
-    fprintf(stderr, "%s\n", gmsh_packager);
-    fprintf(stderr, "%s\n", gmsh_url);
-    fprintf(stderr, "%s\n", gmsh_email);
-    exit(1) ; 
+    if(ParUtil::Instance()->master())
+      {
+	fprintf(stderr, "%s%.2f\n", gmsh_version, GMSH_VERSION);
+	fprintf(stderr, "%s\n", gmsh_os);
+	fprintf(stderr, "%s\n", gmsh_date);
+	fprintf(stderr, "%s\n", gmsh_host);
+	fprintf(stderr, "%s\n", gmsh_packager);
+	fprintf(stderr, "%s\n", gmsh_url);
+	fprintf(stderr, "%s\n", gmsh_email);
+      }
+    ParUtil::Instance()->Exit();
   default :
     break;
   }
@@ -115,9 +122,11 @@ int main(int argc, char *argv[]){
       Print_Geo(THEM, CTX.output_filename);
     if(CTX.mesh.histogram)
       Print_Histogram(THEM->Histogram[0]);
+    ParUtil::Instance()->Barrier(__LINE__,__FILE__);
     ParUtil::Instance()->Exit();
   }
-
+  ParUtil::Instance()->Barrier(__LINE__,__FILE__);
+  ParUtil::Instance()->Exit();
 }
 
 
