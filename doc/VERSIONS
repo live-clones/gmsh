@@ -1,13 +1,14 @@
-$Id: VERSIONS,v 1.266 2004-11-18 16:35:03 geuzaine Exp $
+$Id: VERSIONS,v 1.267 2004-11-18 23:51:53 geuzaine Exp $
 
 New since 1.56: generalized displacement maps to display arbitrary
 view types; the arrows representing a vector field can now also be
 colored by the values from other scalar, vector or tensor fields; new
-adaptive high order visualization mode; new options for solvers
-(SocketCommand and NameCommand) and views (ArrowSizeProportional,
-Normals, Tangents); fixed display of undesired solver plugin popups;
-enhanced interactive plugin behaviour; new Plugin(HarmonicToTime); new
-Plugin(Integrate); various small bug fixes and enhancements;
+adaptive high order visualization mode; new options
+(Solver.SocketCommand, Solver.NameCommand, View.ArrowSizeProportional,
+View.Normals, View.Tangents and General.ClipFactor); fixed display of
+undesired solver plugin popups; enhanced interactive plugin behaviour;
+new plugins (HarmonicToTime and Integrate); tetrahedral mesh file
+reading speedup; various small bug fixes and enhancements;
 
 New in 1.56: new post-processing option to draw a scalar view raised
 by a displacement view without using Plugin(DisplacementRaise) (makes
