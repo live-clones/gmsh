@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.96 2001-05-04 13:45:08 geuzaine Exp $
+# $Id: Makefile,v 1.97 2001-05-07 07:35:40 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -403,6 +403,16 @@ fltk_compile_big_endian:
            "GUI_INCLUDE=$(FLTK_INC)" \
         ); done
 
+fltk_compile_ibm:
+	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
+           "CC=$(CC)" \
+           "C_FLAGS=-O3" \
+           "OS_FLAGS=-D_BSD" \
+           "VERSION_FLAGS=-D_FLTK -D_NODLL" \
+           "GL_INCLUDE=$(OPENGL_INC)" \
+           "GUI_INCLUDE=$(FLTK_INC)" \
+        ); done
+
 fltk_compile_solaris_scorec :
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=$(CC)" \
@@ -478,7 +488,7 @@ fltk_sun: tag fltk_compile_big_endian fltk_link_sun strip_bin compress_bin
 
 fltk_hp: tag fltk_compile_big_endian fltk_link_hp strip_bin compress_bin
 
-fltk_ibm: tag fltk_compile_big_endian fltk_link_ibm strip_bin compress_bin
+fltk_ibm: tag fltk_compile_ibm fltk_link_ibm strip_bin compress_bin
 
 fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
 
