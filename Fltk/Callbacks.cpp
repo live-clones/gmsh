@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.347 2005-03-13 17:58:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.348 2005-03-14 18:55:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -4074,6 +4074,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_color_normals(i, GMSH_SET, opt_view_color_normals(current, GMSH_GET, 0));
         opt_view_color_text2d(i, GMSH_SET, opt_view_color_text2d(current, GMSH_GET, 0));
         opt_view_color_text3d(i, GMSH_SET, opt_view_color_text3d(current, GMSH_GET, 0));
+        opt_view_color_axes(i, GMSH_SET, opt_view_color_axes(current, GMSH_GET, 0));
       }
 
       // colorbar window

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.234 2005-03-13 07:16:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.235 2005-03-14 18:55:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -6983,5 +6983,19 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
   }
 #endif
   return v->color.text3d;
+}
+
+unsigned int opt_view_color_axes(OPT_ARGS_COL)
+{
+  GET_VIEW(0);
+  if(action & GMSH_SET) {
+    v->color.axes = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(v->color.axes, WID->view_col[12]);
+  }
+#endif
+  return v->color.axes;
 }
 

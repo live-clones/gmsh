@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.431 2005-03-14 17:21:54 geuzaine Exp $
+// $Id: GUI.cpp,v 1.432 2005-03-14 18:55:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3237,6 +3237,7 @@ void GUI::update_view_window(int num)
   opt_view_color_normals(num, GMSH_GUI, 0);
   opt_view_color_text2d(num, GMSH_GUI, 0);
   opt_view_color_text3d(num, GMSH_GUI, 0);
+  opt_view_color_axes(num, GMSH_GUI, 0);
 
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
 }

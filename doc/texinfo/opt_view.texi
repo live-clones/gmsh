@@ -624,6 +624,11 @@ Saved in: @code{General.OptionsFileName}
 Default value: @code{@{255,255,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.Color.Axes
+Axes color@*
+Default value: @code{@{255,255,255@}}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ColorTable
 Color table used to draw the view@*
 Saved in: @code{General.OptionsFileName}

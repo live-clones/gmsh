@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.98 2005-03-13 20:36:26 geuzaine Exp $
+// $Id: Post.cpp,v 1.99 2005-03-14 18:55:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -783,7 +783,7 @@ void Draw_Post(void)
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
       if(v->Axes && v->Type == DRAW_POST_3D){
-	glColor4ubv((GLubyte *) & CTX.color.fg);
+	glColor4ubv((GLubyte *) & v->color.axes);
 	glLineWidth(CTX.line_width);
 	gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
 	if(!v->AxesAutoPosition){
