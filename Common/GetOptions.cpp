@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.26 2001-06-25 13:05:16 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.27 2001-06-25 13:12:50 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -45,6 +45,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -bgm file             load backround mesh from file");
   Msg(DIRECT, "  -constrain            constrain background mesh with characteristic lengths");
   Msg(DIRECT, "  -histogram            print mesh quality histogram");
+  Msg(DIRECT, "  -extrude              use old extrusion mesh generator");
+  Msg(DIRECT, "  -recombine            recombine meshes from old extrusion mesh generator");
 #ifndef _BLACKBOX
   Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
   Msg(DIRECT, "Post-processing options:");
