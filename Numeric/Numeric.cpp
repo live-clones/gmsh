@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.12 2004-04-13 18:47:32 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.13 2004-04-13 19:27:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -106,15 +106,15 @@ void prosca(double a[3], double b[3], double *c)
   *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-void norme(double a[3])
+double norme(double a[3])
 {
-  double mod;
-  mod = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-  if(mod == 0.0)
-    return;
-  a[0] /= mod;
-  a[1] /= mod;
-  a[2] /= mod;
+  double mod = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+  if(mod != 0.0){
+    a[0] /= mod;
+    a[1] /= mod;
+    a[2] /= mod;
+  }
+  return mod;
 }
 
 int sys2x2(double mat[2][2], double b[2], double res[2])

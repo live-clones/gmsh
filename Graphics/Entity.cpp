@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.33 2004-04-13 18:47:32 geuzaine Exp $
+// $Id: Entity.cpp,v 1.34 2004-04-13 19:27:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ void Draw_Sphere(double size, double x, double y, double z, int light)
     glEndList();
   }
   glPushMatrix();
-  glTranslatef(x, y, z);
+  glTranslated(x, y, z);
   glScalef(s, s, s);
   glCallList(listnum);
   glPopMatrix();
@@ -86,11 +86,16 @@ void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
   double vdir[3] = {dx/length, dy/length, dz/length};
   double axis[3], cosphi, phi;
   prodve(zdir, vdir, axis);
-  norme(axis);
   prosca(zdir, vdir, &cosphi);
+  if(!norme(axis)){
+    axis[0] = 0.;
+    axis[1] = 1.;
+    axis[2] = 0.;
+  }
   phi = 180. * myacos(cosphi) / M_PI;
-  glTranslatef(x[0], y[0], z[0]);
-  glRotatef(phi, axis[0], axis[1], axis[2]);
+
+  glTranslated(x[0], y[0], z[0]);
+  glRotated(phi, axis[0], axis[1], axis[2]);
   gluCylinder(qua, radius, radius, length, CTX.quadric_subdivisions, 1);
   glPopMatrix();
 
@@ -349,18 +354,22 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
   double vdir[3] = {dx/length, dy/length, dz/length};
   double axis[3], cosphi, phi;
   prodve(zdir, vdir, axis);
-  norme(axis);
   prosca(zdir, vdir, &cosphi);
+  if(!norme(axis)){
+    axis[0] = 0.;
+    axis[1] = 1.;
+    axis[2] = 0.;
+  }
   phi = 180. * myacos(cosphi) / M_PI; 
 
-  glTranslatef(x, y, z);
-  glRotatef(phi, axis[0], axis[1], axis[2]);
+  glTranslated(x, y, z);
+  glRotated(phi, axis[0], axis[1], axis[2]);
   
   if(head_l && head_r){
-    glTranslatef(0., 0., stem_l);
+    glTranslated(0., 0., stem_l);
     gluCylinder(qua, head_r, 0., head_l, subdiv, 1);
     gluDisk(qua, stem_r, head_r, subdiv, 1);
-    glTranslatef(0., 0., -stem_l);
+    glTranslated(0., 0., -stem_l);
   }
 
   if(stem_l && stem_r){

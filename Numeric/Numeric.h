@@ -61,7 +61,7 @@ double myasin(double a);
 double myacos(double a);
 void prodve(double a[3], double b[3], double c[3]);
 void prosca(double a[3], double b[3], double *c);
-void norme(double a[3]);
+double norme(double a[3]);
 int sys2x2(double mat[2][2], double b[2], double res[2]);
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
 int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
