@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.74 2003-07-20 01:16:24 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.75 2003-07-23 17:55:49 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -144,7 +144,7 @@ the @cite{Gmsh Reference Manual}, for Gmsh @value{GMSH-VERSION}.
 * Running Gmsh::                How to run Gmsh on your operating system.
 * File formats::                Input and output file formats.
 * Programming notes::           Random notes for developers.
-* Bugs and versions::           Contact information, version history and contributors.
+* Bugs and versions::           
 * Tips and tricks::             Some tips to make your life easier with Gmsh.
 * GNU General Public License::  Copy of the GNU GPL.
 * Concept index::               Index of concepts.
@@ -244,11 +244,11 @@ File formats
 * Gmsh parsed post-processing file format::  
 * Gmsh node ordering::          
 
-Bugs, versions and contributors
+Bugs, versions and credits
 
 * Bugs::                        
 * Version history::             
-* Contributors::                
+* Credits::                     
 
 @end detailmenu
 @end menu
@@ -297,6 +297,7 @@ The precise conditions of the license for Gmsh are found in the General
 Public License that accompanies the source code (@pxref{GNU General Public
 License}). Further information about this license is available from the GNU
 Project webpage @uref{http://www.gnu.org/copyleft/gpl-faq.html}.
+Detailed copyright information can be found in @ref{Credits}.
 
 The source code and various pre-compiled versions of Gmsh (for most of the
 classical UNIX platforms, for Windows and for Mac OS) can be downloaded from
@@ -3186,18 +3187,18 @@ with @file{utils/misc/untabify.sh}).
 @c * memprof
 
 @c =========================================================================
-@c Bugs, versions and contributors
+@c Bugs, versions and credits
 @c =========================================================================
 
 @ifclear COMMERCIAL
 
 @node Bugs and versions, Tips and tricks, Programming notes, Top
-@chapter Bugs, versions and contributors
+@chapter Bugs, versions and credits
 
 @menu
 * Bugs::                        
 * Version history::             
-* Contributors::                
+* Credits::                     
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3228,7 +3229,7 @@ problems we already know about.
 @c Versions
 @c -------------------------------------------------------------------------
 
-@node Version history, Contributors, Bugs, Bugs and versions
+@node Version history, Credits, Bugs, Bugs and versions
 @section Version history
 
 @cindex Versions
@@ -3238,17 +3239,17 @@ problems we already know about.
 @verbatiminclude ../VERSIONS
 
 @c -------------------------------------------------------------------------
-@c Contributors
+@c Credits
 @c -------------------------------------------------------------------------
 
-@node Contributors,  , Version history, Bugs and versions
-@section Contributors
+@node Credits,  , Version history, Bugs and versions
+@section Credits
 
 @cindex Acknowledgments
 @cindex Contributors, list
 @cindex Credits 
 
-@verbatiminclude ../CONTRIBUTORS
+@verbatiminclude ../CREDITS
 
 @end ifclear
 

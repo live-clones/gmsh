@@ -1,0 +1,69 @@
+$Id: CREDITS,v 1.1 2003-07-23 17:55:49 geuzaine Exp $
+
+Gmsh is copyright (c) 1997-2003 by Christophe Geuzaine
+<geuzaine@acm.caltech.edu> and Jean-Francois Remacle
+<remacle@gce.ucl.ac.be>.
+
+The AVL tree code and YUV image code (DataStr/avl.* and
+Graphics/gl2yuv.*) are copyright (c) 1988-1993, 1995 The Regents of
+the University of California. Permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of the University of California not be used in advertising or
+publicity pertaining to distribution of the software without specific,
+written prior permission.  The University of California makes no
+representations about the suitability of this software for any
+purpose.  It is provided "as is" without express or implied warranty.
+
+The trackball code (Common/Trackball.*) is copyright (c) 1993, 1994,
+Silicon Graphics, Inc.  ALL RIGHTS RESERVED. Permission to use, copy,
+modify, and distribute this software for any purpose and without fee
+is hereby granted, provided that the above copyright notice appear in
+all copies and that both the copyright notice and this permission
+notice appear in supporting documentation, and that the name of
+Silicon Graphics, Inc. not be used in advertising or publicity
+pertaining to distribution of the software without specific, written
+prior permission.
+
+The colorbar widget (Fltk/Colorbar_Window.cpp) is based on code
+copyright (c) 1990-1995, Bill Hibbard, Brian Paul, Dave Santek, and
+Andre Battaiola.
+
+The GIF routines (Graphics/gl2gif.cpp) are based on code copyright (c)
+1989, 1991, Jef Poskanzer.
+
+This version of Gmsh may also contain code (in the Triangle
+subdirectory) copyright (c) 1993, 1995, 1997, 1998, 2002, Jonathan
+Richard Shewchuk.
+
+Special thanks to David Colignon <David.Colignon@univ.u-3mrs.fr> for
+new colormaps; Patrick Dular <patrick.dular@ulg.ac.be> for transfinite
+mesh bug fixes; Laurent Stainier <l.stainier@ulg.ac.be> for the Mac OS
+port and the tensor display code; Nicolas Tardieu
+<nicolas.tardieu@edf.fr> and Pierre Badel <badel@freesurf.fr> for help
+with the GSL integration and Marc Ume <Marc.Ume@digitalgraphics.be>
+for the original list code.
+
+Special thanks also to Bill Spitzak <spitzak@users.sourceforge.net>,
+Michael Sweet <easysw@users.sourceforge.net>, Matthias Melcher
+<mm@matthiasm.com> and others for the Fast Light Tool Kit on which
+Gmsh's GUI is based. See http://www.fltk.org for more info on this
+excellent object-oriented, cross-platform toolkit.
+
+Finally, thanks to the following folks who have contributed by
+providing fresh ideas on theoretical or programming topics, who have
+sent patches, requests for changes or improvements, or who gave us
+access to exotic machines for testing Gmsh: Juan Abanto
+<juanabanto@yahoo.com>, Olivier Adam <o.adam@ulg.ac.be>, Guillaume
+Alleon <guillaume.alleon@airbus.aeromatra.com>, Eric Bechet
+<eric.bechet@epost.de>, Laurent Champaney
+<laurent.champaney@meca.uvsq.fr>, Pascal Dupuis
+<Pascal.Dupuis@esat.kuleuven.ac.be>, Philippe Geuzaine
+<geuzaine@gnat.colorado.edu>, Johan Gyselinck
+<johan.gyselinck@ulg.ac.be>, Francois Henrotte
+<fhenrott@esat.kuleuven.ac.be>, Benoit Meys <bmeys@techspace-aero.be>,
+Nicolas Moes <moes@tam9.mech.nwu.edu>, Osamu Nakamura
+<naka@hasaki.sumitomometals.co.jp> and Chad Schmutzer
+<schmutze@acm.caltech.edu>.

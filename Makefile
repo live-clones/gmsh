@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.293 2003-06-24 23:34:45 geuzaine Exp $
+# $Id: Makefile,v 1.294 2003-07-23 17:55:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -86,7 +86,7 @@ converters:
 doc:
 	cd doc/texinfo && ${MAKE} all
 	cd doc && tar zcvf ../gmsh-${GMSH_RELEASE}-doc.tgz\
-          FAQ CONTRIBUTORS VERSIONS README.win32 gmsh.1\
+          FAQ CREDITS VERSIONS README.win32 gmsh.1\
           texinfo/gmsh.ps texinfo/gmsh.pdf texinfo/gmsh.txt\
           texinfo/*.html texinfo/gmsh-info.tgz
 
@@ -166,7 +166,7 @@ package-unix:
 	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_RELEASE}
-	cp doc/gmsh.1 doc/COPYING doc/VERSIONS doc/FAQ doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}
+	cp doc/gmsh.1 doc/COPYING doc/VERSIONS doc/FAQ doc/CREDITS gmsh-${GMSH_RELEASE}
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
@@ -185,7 +185,7 @@ package-win:
 	cp doc/README.win32 gmsh-${GMSH_RELEASE}/README.txt
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
-	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
+	cp doc/CREDITS gmsh-${GMSH_RELEASE}/CREDITS.txt
 	cp doc/COPYING gmsh-${GMSH_RELEASE}/COPYING.txt
 	cd utils/misc && unix2dos.bash ../../gmsh-${GMSH_RELEASE}/*.txt
 	cp -R tutorial gmsh-${GMSH_RELEASE}
@@ -229,7 +229,7 @@ package-mac:
 	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_RELEASE}
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
-	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
+	cp doc/CREDITS gmsh-${GMSH_RELEASE}/CREDITS.txt
 	cp doc/COPYING gmsh-${GMSH_RELEASE}/COPYING.txt
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS\
                gmsh-${GMSH_RELEASE}/*/*~\
