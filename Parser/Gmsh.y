@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.61 2001-02-08 10:32:43 geuzaine Exp $
+// $Id: Gmsh.y,v 1.62 2001-02-08 16:32:15 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -26,6 +26,8 @@
 #ifdef __DECCXX // bug in bison
 #include <alloca.h>
 #endif
+
+
 
 int     Force_ViewNumber = 0 ;
 List_T *Symbol_L;
@@ -1648,14 +1650,10 @@ Command :
 
       }
       else if(!strcmp($1, "Print")){
-#if !defined(__CYGWIN__) // comprends pas pq ca ne marche pas
-	if(!CTX.interactive) CreateFile($2, CTX.print.format);
-#endif
+	if(!CTX.interactive) CreateOutputFile($2, CTX.print.format);
       }
       else if(!strcmp($1, "Save")){
-#if !defined(__CYGWIN__) // comprends pas pq ca ne marche pas
-	CreateFile($2, CTX.mesh.format);
-#endif
+	CreateOutputFile($2, CTX.mesh.format);
       }
       else if(!strcmp($1, "Merge")){
 

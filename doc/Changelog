@@ -1,5 +1,6 @@
 New in 1.12: Corrected vector lines in post-processing parsed format;
-corrected animation on Windows; Direct affectation of variable arrays;
+corrected animation on Windows; Corrected file creation in scripts on
+Windows; Direct affectation of variable arrays; 
 
 New in 1.11: Corrected included file loading problem.
 

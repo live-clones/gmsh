@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.13 2001-02-04 12:46:09 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.14 2001-02-08 16:32:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -36,7 +36,7 @@ void FillBuffer(void){
   Draw2d();
 }
 
-void CreateFile (char *name, int format) {
+void CreateOutputFile (char *name, int format) {
   FILE    *fp;
   GLint    size3d;
   char     ext[10];
@@ -58,24 +58,24 @@ void CreateFile (char *name, int format) {
       Msg(GERROR, "Unknown Extension for Automatic Format Detection");
     else{
       strcpy(ext,name+(strlen(name)-4));
-      if(!strcmp(ext,".geo")) CreateFile(name, FORMAT_GEO);
-      else if(!strcmp(ext,".msh")) CreateFile(name, FORMAT_MSH);
-      else if(!strcmp(ext,".unv")) CreateFile(name, FORMAT_UNV);
-      else if(!strcmp(ext,".gif")) CreateFile(name, FORMAT_GIF);
-      else if(!strcmp(ext,".jpg")) CreateFile(name, FORMAT_JPEG);
-      else if(!strcmp(ext,".eps")) CreateFile(name, FORMAT_EPS);
-      else if(!strcmp(ext,".xpm")) CreateFile(name, FORMAT_XPM);
-      else if(!strcmp(ext,".ppm")) CreateFile(name, FORMAT_PPM);
-      else if(!strcmp(ext,".yuv")) CreateFile(name, FORMAT_YUV);
+      if(!strcmp(ext,".geo")) CreateOutputFile(name, FORMAT_GEO);
+      else if(!strcmp(ext,".msh")) CreateOutputFile(name, FORMAT_MSH);
+      else if(!strcmp(ext,".unv")) CreateOutputFile(name, FORMAT_UNV);
+      else if(!strcmp(ext,".gif")) CreateOutputFile(name, FORMAT_GIF);
+      else if(!strcmp(ext,".jpg")) CreateOutputFile(name, FORMAT_JPEG);
+      else if(!strcmp(ext,".eps")) CreateOutputFile(name, FORMAT_EPS);
+      else if(!strcmp(ext,".xpm")) CreateOutputFile(name, FORMAT_XPM);
+      else if(!strcmp(ext,".ppm")) CreateOutputFile(name, FORMAT_PPM);
+      else if(!strcmp(ext,".yuv")) CreateOutputFile(name, FORMAT_YUV);
       else {
 	if(strlen(name) < 5)
 	  Msg(GERROR, "Unknown Extension in \"%s\" for Automatic Format Detection",
 	      name);
 	else{
 	  strcpy(ext,name+(strlen(name)-5));
-	  if(!strcmp(ext,".jpeg")) CreateFile(name, FORMAT_JPEG);
-	  else if(!strcmp(ext,".gref")) CreateFile(name, FORMAT_GREF);
-	  else if(!strcmp(ext,".Gref")) CreateFile(name, FORMAT_GREF);
+	  if(!strcmp(ext,".jpeg")) CreateOutputFile(name, FORMAT_JPEG);
+	  else if(!strcmp(ext,".gref")) CreateOutputFile(name, FORMAT_GREF);
+	  else if(!strcmp(ext,".Gref")) CreateOutputFile(name, FORMAT_GREF);
 	  else Msg(GERROR, "Unknown Extension in \"%s\" for Automatic Format Detection",
 		   name);
 	}

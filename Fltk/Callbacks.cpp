@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.27 2001-02-07 13:25:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.28 2001-02-08 16:32:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -248,13 +248,13 @@ void file_save_cb(CALLBACK_ARGS) {
 void file_save_as_auto_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save File by Extension", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = FORMAT_AUTO); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_AUTO); 
 }
 
 void file_save_as_geo_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save GEO File", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = FORMAT_GEO); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_GEO); 
 }
 
 void file_save_as_geo_options_cb(CALLBACK_ARGS) {
@@ -266,36 +266,36 @@ void file_save_as_geo_options_cb(CALLBACK_ARGS) {
 void file_save_as_msh_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save MSH File", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+    CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
 }
 void file_save_as_unv_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save UNV File", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_UNV); 
+    CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_UNV); 
 }
 void file_save_as_gref_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save GREF File", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_GREF); 
+    CreateOutputFile(newfile, CTX.print.format = CTX.mesh.format = FORMAT_GREF); 
 }
 void file_save_as_eps_simple_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save EPS File", "*", NULL))){
     CTX.print.eps_quality = 1; 
-    CreateFile(newfile, CTX.print.format = FORMAT_EPS); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
   }
 }
 void file_save_as_eps_accurate_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save EPS File", "*", NULL))){
     CTX.print.eps_quality = 2; 
-    CreateFile(newfile, CTX.print.format = FORMAT_EPS); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_EPS); 
   }
 }
 void file_save_as_jpeg_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save JPEG File", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = FORMAT_JPEG); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_JPEG); 
 }
 
 void file_save_as_gif_cb(CALLBACK_ARGS) {
@@ -303,7 +303,7 @@ void file_save_as_gif_cb(CALLBACK_ARGS) {
   if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
     CTX.print.gif_dither = 0;
     CTX.print.gif_transparent = 0;
-    CreateFile(newfile, CTX.print.format = FORMAT_GIF); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF); 
   }
 }
 void file_save_as_gif_dithered_cb(CALLBACK_ARGS) {
@@ -311,7 +311,7 @@ void file_save_as_gif_dithered_cb(CALLBACK_ARGS) {
   if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
     CTX.print.gif_dither = 1; 
     CTX.print.gif_transparent = 0; 
-    CreateFile(newfile, CTX.print.format = FORMAT_GIF); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF); 
   }
 }
 void file_save_as_gif_transparent_cb(CALLBACK_ARGS) {
@@ -319,18 +319,18 @@ void file_save_as_gif_transparent_cb(CALLBACK_ARGS) {
   if((newfile = fl_file_chooser("Save GIF File", "*", NULL))){
     CTX.print.gif_dither = 0;
     CTX.print.gif_transparent = 1; 
-    CreateFile(newfile, CTX.print.format = FORMAT_GIF);
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_GIF);
   }
 }
 void file_save_as_ppm_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save PPM File", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = FORMAT_PPM); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_PPM); 
 }
 void file_save_as_yuv_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save YUV File", "*", NULL)))
-    CreateFile(newfile, CTX.print.format = FORMAT_YUV); 
+    CreateOutputFile(newfile, CTX.print.format = FORMAT_YUV); 
 }
 
 static int RELOAD_ALL_VIEWS = 0 ;

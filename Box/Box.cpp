@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.22 2001-02-03 21:20:32 geuzaine Exp $
+// $Id: Box.cpp,v 1.23 2001-02-08 16:32:15 geuzaine Exp $
 
 #include <signal.h>
 
@@ -23,7 +23,7 @@ void set_r(int, double){}
 void Draw(void){}
 void DrawUI(void){}
 void Replot(void){}
-void CreateFile(char *, int){}
+void CreateOutputFile(char *, int){}
 
 /* ------------------------------------------------------------------------ */
 /*  I n f o                                                                 */
