@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.55 2004-06-08 00:30:21 geuzaine Exp $
+// $Id: Message.cpp,v 1.56 2004-06-17 21:16:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -197,8 +197,8 @@ void Msg(int level, char *fmt, ...)
   if(abort) {
     Debug();
     if(WID) {
-      WID->save_message(CTX.errorrc_filename);
-      WID->fatal_error(CTX.errorrc_filename);
+      WID->save_message(CTX.error_filename_fullpath);
+      WID->fatal_error(CTX.error_filename_fullpath);
     }
     Exit(1);
   }
@@ -210,7 +210,7 @@ void Msg(int level, char *fmt, ...)
 void Exit(int level)
 {
   // delete the temp file
-  unlink(CTX.tmprc_filename);
+  unlink(CTX.tmp_filename_fullpath);
 
   if(level){
     // in case of an abnormal exit, force the abort directly
@@ -242,10 +242,10 @@ void Exit(int level)
       CTX.ctx_position[1] = WID->context_geometry_window->y();
       CTX.solver_position[0] = WID->solver[0].window->x();
       CTX.solver_position[1] = WID->solver[0].window->y();
-      Print_Options(0, GMSH_SESSIONRC, false, CTX.sessionrc_filename);
+      Print_Options(0, GMSH_SESSIONRC, false, CTX.session_filename_fullpath);
     }
     if(CTX.options_save)
-      Print_Options(0, GMSH_OPTIONSRC, true, CTX.optionsrc_filename);
+      Print_Options(0, GMSH_OPTIONSRC, true, CTX.options_filename_fullpath);
   }
 
   exit(0);

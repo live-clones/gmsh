@@ -50,14 +50,15 @@ public :
   char filename[256];         // the name of the currently opened file
   char base_filename[256];    // the same without the extension
   char *output_filename;      // output file specified with command line option '-o'
-  char *default_filename;     // the name of the default file
-  char *tmp_filename, tmprc_filename[256];
+  char *default_filename, default_filename_fullpath[256];
+                              // the name of the default file
+  char *tmp_filename, tmp_filename_fullpath[256];
                               // the name of the temp file
-  char *session_filename, sessionrc_filename[256];
-                              // the name of the sessionrc configuration file
-  char *options_filename, optionsrc_filename[256]; 
-                              // the name of the optionrc configuration file
-  char *error_filename, errorrc_filename[256];
+  char *session_filename, session_filename_fullpath[256];
+                              // the name of the session configuration file
+  char *options_filename, options_filename_fullpath[256]; 
+                              // the name of the option configuration file
+  char *error_filename, error_filename_fullpath[256];
                               // the name of the error file
 
   int session_save, options_save; // save session/option file on exit

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.247 2004-06-12 18:34:31 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.248 2004-06-17 21:16:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -775,14 +775,14 @@ void options_browser_cb(CALLBACK_ARGS)
 
 void options_save_cb(CALLBACK_ARGS)
 {
-  Print_Options(0, GMSH_OPTIONSRC, true, CTX.optionsrc_filename);
+  Print_Options(0, GMSH_OPTIONSRC, true, CTX.options_filename_fullpath);
 }
 
 void options_restore_defaults_cb(CALLBACK_ARGS)
 {
   // not sure if we have to remove the file...
-  unlink(CTX.sessionrc_filename);
-  unlink(CTX.optionsrc_filename);
+  unlink(CTX.session_filename_fullpath);
+  unlink(CTX.options_filename_fullpath);
   ReInit_Options(0);
   Init_Options_GUI(0);
   if(WID && WID->get_context() == 3)    // hack to refresh the buttons
@@ -864,7 +864,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   double sessionrc = opt_general_session_save(0, GMSH_GET, 0);
   opt_general_session_save(0, GMSH_SET, WID->gen_butt[8]->value());
   if(sessionrc && !opt_general_session_save(0, GMSH_GET, 0))
-    Print_Options(0, GMSH_SESSIONRC, true, CTX.sessionrc_filename);
+    Print_Options(0, GMSH_SESSIONRC, true, CTX.session_filename_fullpath);
   opt_general_options_save(0, GMSH_SET, WID->gen_butt[9]->value());
   opt_general_orthographic(0, GMSH_SET | GMSH_GUI, WID->gen_butt[10]->value());
   opt_general_tooltips(0, GMSH_SET, WID->gen_butt[13]->value());

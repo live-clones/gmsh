@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.41 2004-05-31 18:36:20 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.42 2004-06-17 21:16:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -155,12 +155,12 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
 
   // Parse session and option files
 
-  ParseFile(CTX.sessionrc_filename, 1, 1);
-  ParseFile(CTX.optionsrc_filename, 1, 1);
+  ParseFile(CTX.session_filename_fullpath, 1, 1);
+  ParseFile(CTX.options_filename_fullpath, 1, 1);
 
   // Get command line options
 
-  TheFileNameTab[0] = CTX.default_filename;
+  TheFileNameTab[0] = CTX.default_filename_fullpath;
   *nbfiles = 0;
 
   while(i < argc) {

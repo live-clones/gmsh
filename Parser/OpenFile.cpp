@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.58 2004-05-30 21:21:42 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.59 2004-06-17 21:16:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -155,10 +155,10 @@ void ParseString(char *str)
   FILE *fp;
   if(!str)
     return;
-  if((fp = fopen(CTX.tmprc_filename, "w"))) {
+  if((fp = fopen(CTX.tmp_filename_fullpath, "w"))) {
     fprintf(fp, "%s\n", str);
     fclose(fp);
-    ParseFile(CTX.tmprc_filename, 0, 1);
+    ParseFile(CTX.tmp_filename_fullpath, 0, 1);
   }
 }
 

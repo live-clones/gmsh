@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.166 2004-06-12 18:34:31 geuzaine Exp $
+// $Id: Options.cpp,v 1.167 2004-06-17 21:16:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -793,8 +793,11 @@ char *opt_general_display(OPT_ARGS_STR)
 
 char *opt_general_default_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.default_filename = val;
+    strcpy(CTX.default_filename_fullpath, getenv("PWD") ? "" : CTX.home_dir);
+    strcat(CTX.default_filename_fullpath, CTX.default_filename);
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->gen_input[0]->value(CTX.default_filename);
@@ -806,8 +809,8 @@ char *opt_general_tmp_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET){
     CTX.tmp_filename = val;
-    strcpy(CTX.tmprc_filename, CTX.home_dir);
-    strcat(CTX.tmprc_filename, CTX.tmp_filename);
+    strcpy(CTX.tmp_filename_fullpath, CTX.home_dir);
+    strcat(CTX.tmp_filename_fullpath, CTX.tmp_filename);
   }
   return CTX.tmp_filename;
 }
@@ -816,8 +819,8 @@ char *opt_general_error_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET){
     CTX.error_filename = val;
-    strcpy(CTX.errorrc_filename, CTX.home_dir);
-    strcat(CTX.errorrc_filename, CTX.error_filename);
+    strcpy(CTX.error_filename_fullpath, CTX.home_dir);
+    strcat(CTX.error_filename_fullpath, CTX.error_filename);
   }
   return CTX.error_filename;
 }
@@ -826,8 +829,8 @@ char *opt_general_session_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
     CTX.session_filename = val;
-    strcpy(CTX.sessionrc_filename, CTX.home_dir);
-    strcat(CTX.sessionrc_filename, CTX.session_filename);
+    strcpy(CTX.session_filename_fullpath, CTX.home_dir);
+    strcat(CTX.session_filename_fullpath, CTX.session_filename);
   }
   return CTX.session_filename;
 }
@@ -836,8 +839,8 @@ char *opt_general_options_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
     CTX.options_filename = val;
-    strcpy(CTX.optionsrc_filename, CTX.home_dir);
-    strcat(CTX.optionsrc_filename, CTX.options_filename);
+    strcpy(CTX.options_filename_fullpath, CTX.home_dir);
+    strcat(CTX.options_filename_fullpath, CTX.options_filename);
   }
   return CTX.options_filename;
 }

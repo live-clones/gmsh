@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.40 2004-05-18 04:54:50 geuzaine Exp $
+// $Id: Geo.cpp,v 1.41 2004-06-17 21:16:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -47,8 +47,8 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
   FILE *tempf;
   tempf = yyin;
 
-  if(!(yyin = fopen(CTX.tmprc_filename, "w"))) {
-    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmprc_filename);
+  if(!(yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
+    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return 0.;
   }
 
@@ -56,7 +56,7 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
   fprintf(yyin, "%s = %.16g ;\n", var, val);
   fprintf(yyin, "ValeurTemporaire__ = %s ;\n", funct);
   fclose(yyin);
-  yyin = fopen(CTX.tmprc_filename, "r");
+  yyin = fopen(CTX.tmp_filename_fullpath, "r");
   while(!feof(yyin)) {
     yyparse();
   }
@@ -79,8 +79,8 @@ void add_infile(char *text, char *fich)
 {
   FILE *file;
 
-  if(!(yyin = fopen(CTX.tmprc_filename, "w"))) {
-    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmprc_filename);
+  if(!(yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
+    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return;
   }
   if(!(file = fopen(fich, "a"))) {
@@ -90,7 +90,7 @@ void add_infile(char *text, char *fich)
   fprintf(yyin, "%s\n", text);
   Msg(STATUS1, "%s", text);
   fclose(yyin);
-  yyin = fopen(CTX.tmprc_filename, "r");
+  yyin = fopen(CTX.tmp_filename_fullpath, "r");
   while(!feof(yyin)) {
     yyparse();
   }
