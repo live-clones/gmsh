@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.66 2003-10-29 22:24:24 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.67 2003-12-04 00:13:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -370,10 +370,21 @@ void Create_PriPyrTet(int iEnt, Vertex * v[6])
 
 }
 
+void Create_Sim(int iEnt, Vertex * v1, Vertex * v2, Vertex * v3, Vertex * v4)
+{
+  Simplex *news;
+  if(CTX.mesh.allow_degenerated_extrude ||
+     (v1->Num != v2->Num && v1->Num != v3->Num && v1->Num != v4->Num &&
+      v2->Num != v3->Num && v2->Num != v4->Num && v3->Num != v4->Num)) {
+    news = Create_Simplex(v1, v2, v3, v4);
+    news->iEnt = iEnt;
+    Tree_Add(THEV->Simplexes, &news);
+  }
+}
 
 void Extrude_Simplex_Phase3(void *data, void *dum)
 {
-  Simplex **pS, *s, *news;
+  Simplex **pS, *s;
   int i, j, k;
   Vertex *v[8];
   List_T *L0, *L1, *L2, *L3 = NULL;
@@ -437,80 +448,44 @@ void Extrude_Simplex_Phase3(void *data, void *dum)
           if(are_exist(v[3], v[1], Tree_Ares) &&
              are_exist(v[4], v[2], Tree_Ares) &&
              are_exist(v[3], v[2], Tree_Ares)) {
-            news = Create_Simplex(v[0], v[1], v[2], v[3]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[3], v[4], v[5], v[2]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[1], v[3], v[4], v[2]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[3]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[4], v[2]);
           }
           if(are_exist(v[3], v[1], Tree_Ares) &&
              are_exist(v[1], v[5], Tree_Ares) &&
              are_exist(v[3], v[2], Tree_Ares)) {
-            news = Create_Simplex(v[0], v[1], v[2], v[3]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[3], v[4], v[5], v[1]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[3], v[1], v[5], v[2]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[3]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[1], v[5], v[2]);
           }
           if(are_exist(v[3], v[1], Tree_Ares) &&
              are_exist(v[1], v[5], Tree_Ares) &&
              are_exist(v[5], v[0], Tree_Ares)) {
-            news = Create_Simplex(v[0], v[1], v[2], v[5]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[3], v[4], v[5], v[1]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[1], v[3], v[5], v[0]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[1]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[1], v[3], v[5], v[0]);
           }
           if(are_exist(v[4], v[0], Tree_Ares) &&
              are_exist(v[4], v[2], Tree_Ares) &&
              are_exist(v[3], v[2], Tree_Ares)) {
-            news = Create_Simplex(v[0], v[1], v[2], v[4]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[3], v[4], v[5], v[2]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[0], v[3], v[4], v[2]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[2]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[3], v[4], v[2]);
           }
           if(are_exist(v[4], v[0], Tree_Ares) &&
              are_exist(v[4], v[2], Tree_Ares) &&
              are_exist(v[5], v[0], Tree_Ares)) {
-            news = Create_Simplex(v[0], v[1], v[2], v[4]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[3], v[4], v[5], v[0]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[0], v[2], v[4], v[5]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[4]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[2], v[4], v[5]);
           }
           if(are_exist(v[4], v[0], Tree_Ares) &&
              are_exist(v[1], v[5], Tree_Ares) &&
              are_exist(v[5], v[0], Tree_Ares)) {
-            news = Create_Simplex(v[0], v[1], v[2], v[5]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[3], v[4], v[5], v[0]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
-            news = Create_Simplex(v[0], v[1], v[4], v[5]);
-            news->iEnt = ep->mesh.ZonLayer[i];
-            Tree_Add(THEV->Simplexes, &news);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[2], v[5]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[3], v[4], v[5], v[0]);
+            Create_Sim(ep->mesh.ZonLayer[i], v[0], v[1], v[4], v[5]);
           }
         }
       }
