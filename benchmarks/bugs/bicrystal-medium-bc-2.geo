@@ -1,8 +1,10 @@
 
 /*
+mesh 3d incorrectly leaves some 1d elements intact 
 
-mesh 3d leaves hanging (non-connected) nodes on curves
-
+this results in 
+- incorrect final 1d mesh
+- hanging (non-connected) 2nd order nodes on curves
 */
 
 /**
