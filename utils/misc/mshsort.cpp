@@ -1,4 +1,4 @@
-// $Id: mshdensify.cpp,v 1.1 2004-10-08 02:41:56 geuzaine Exp $
+// $Id: mshsort.cpp,v 1.1 2004-10-08 04:36:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -135,10 +135,8 @@ double readMesh(char *fileName, map<int, node*> &nodes, vector<element*> &elemen
 	  fprintf(stderr, "Error: node %d already exists\n", num);
 	  exit(1);
 	}
-	else{
-	  node *n = new node(x, y, z);
-	  nodes[num] = n;
-	}
+	else
+	  nodes[num] = new node(x, y, z);
       }
     }
     else if(!strncmp(&str[1], "ELM", 3) ||
@@ -184,9 +182,8 @@ double readMesh(char *fileName, map<int, node*> &nodes, vector<element*> &elemen
         for(int j = 0; j < numNodes; j++){
 	  int numNode;
           fscanf(fp, "%d", &numNode);
-	  if(nodes.count(numNode)){
+	  if(nodes.count(numNode))
 	    e->addNode(nodes[numNode]);
-	  }
 	  else{
             fprintf(stderr, "Error: Unknown vertex %d in element %d\n", numNode,  num);
 	    exit(1);
@@ -256,7 +253,8 @@ void printMesh(double version, map<int, node*> nodes, vector<element*> elements)
 int main(int argc, char **argv)
 {
   if(argc != 2){
-    fprintf(stderr, "Usage: %s file\n", argv[0]);
+    fprintf(stderr, "mshsort, a utility to reorder the node and element lists in Gmsh MSH files\n");
+    fprintf(stderr, "Usage: %s file.msh\n", argv[0]);
     exit(1);
   }
 

@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.134 2004-10-04 04:40:59 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.135 2004-10-08 04:36:21 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2689,6 +2689,14 @@ All non-parsed file formats have sections enclosed between @code{$KEY} and
 @cindex Mesh, file format
 @cindex File format, mesh
 @cindex @file{.msh} file
+
+Please note that the list of nodes and elements in Gmsh's mesh files do not
+have to be dense or ordered (i.e., the node and element numbers do not have
+to be given in a consecutive or even an ordered way). A sample C++ program
+to transform the formats so that all lists are dense and ordered is
+available in the source distribution (@file{utils/misc/mshsort.cpp}). This
+program is also a good example on how to read and write files in the
+@file{.msh} format.
 
 @menu
 * Version 1.0::                 

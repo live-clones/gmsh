@@ -32,7 +32,7 @@ and/or post-processor.
 
 %build
 make distrib-unix
-make converters
+make utils
 make doc-info
 strip bin/gmsh
 rm -rf CVS */CVS */*/CVS
@@ -45,6 +45,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/info
 
 install -m 755 bin/gmsh $RPM_BUILD_ROOT/usr/bin/gmsh
 install -m 755 bin/dxf2geo $RPM_BUILD_ROOT/usr/bin/dxf2geo
+install -m 755 bin/mshsort $RPM_BUILD_ROOT/usr/bin/mshsort
 install -m 644 doc/gmsh.1 $RPM_BUILD_ROOT/usr/share/man/man1/gmsh.1
 install -m 644 doc/texinfo/gmsh.info* $RPM_BUILD_ROOT/usr/share/info/
 
@@ -59,5 +60,6 @@ rm -rf $RPM_BUILD_ROOT
 %doc doc/LICENSE doc/VERSIONS doc/FAQ doc/CREDITS demos tutorial
 /usr/bin/gmsh
 /usr/bin/dxf2geo
+/usr/bin/mshsort
 /usr/share/man/man1/gmsh*
 /usr/share/info/gmsh*

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.372 2004-10-04 05:08:14 geuzaine Exp $
+# $Id: Makefile,v 1.373 2004-10-08 04:36:20 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -64,8 +64,10 @@ variables: configure
 parser:
 	cd Parser && ${MAKE} parser
 
-converters:
+.PHONY: utils
+utils:
 	cd utils/converters/autocad && ${MAKE}
+	cd utils/misc && ${MAKE}
 
 .PHONY: doc
 doc:
