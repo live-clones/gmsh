@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.266 2003-02-25 16:53:15 geuzaine Exp $
+# $Id: Makefile,v 1.267 2003-02-26 03:25:30 geuzaine Exp $
 
 include variables
 
@@ -137,27 +137,39 @@ package-unix:
 	mv gmsh-${GMSH_RELEASE}-${UNAME}.tar.gz gmsh-${GMSH_RELEASE}-${UNAME}.tgz
 
 package-windows:
+	@echo "********************************************************************"
+	@echo "Remember to change -ljpeg, etc. to /usr/lib/libjpeg.a, etc. in"
+	@echo "./variables and relink if the list below contains non-standard"
+	@echo "dynamic libs:"
+	objdump -p bin/gmsh.exe | grep DLL
+	@echo "********************************************************************"
+	rm -rf gmsh-${GMSH_RELEASE}
+	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh.exe
-	cp bin/gmsh.exe ../gmsh-distrib
-	cp doc/README.txt ../gmsh-distrib
-	cp doc/FORMATS ../gmsh-distrib/FORMATS.txt
-	cp doc/VERSIONS ../gmsh-distrib/VERSIONS.txt
-	cp doc/FAQ ../gmsh-distrib/FAQ.txt
-	cp doc/CONTRIBUTORS ../gmsh-distrib/CONTRIBUTORS.txt
-	cd utils && unix2dos ../../gmsh-distrib/*.txt
-	cp -R tutorial ../gmsh-distrib
-	cp -R demos ../gmsh-distrib
-	rm -rf ../gmsh-distrib/*/CVS
-	rm -f ../gmsh-distrib/*/*.msh
-	rm -f ../gmsh-distrib/*/*~
-	cd utils && unix2dos ../../gmsh-distrib/tutorial/* ../../gmsh-distrib/demos/*
-	cd ../gmsh-distrib && zip -r gmsh-${GMSH_RELEASE}-Windows.zip *
-	mv ../gmsh-distrib/gmsh-${GMSH_RELEASE}-Windows.zip .
-	rm -rf ../gmsh-distrib/*.txt
-	rm -rf ../gmsh-distrib/tutorial
-	rm -rf ../gmsh-distrib/demos
+	cp /usr/bin/cygwin1.dll gmsh-${GMSH_RELEASE}
+	cp bin/gmsh.exe gmsh-${GMSH_RELEASE}
+	cp doc/README.txt gmsh-${GMSH_RELEASE}
+	cp doc/FORMATS gmsh-${GMSH_RELEASE}/FORMATS.txt
+	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
+	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
+	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
+	cd utils && unix2dos ../gmsh-${GMSH_RELEASE}/*.txt
+	cp -R tutorial gmsh-${GMSH_RELEASE}
+	cp -R demos gmsh-${GMSH_RELEASE}
+	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
+	rm -f gmsh-${GMSH_RELEASE}/*/*.msh
+	rm -f gmsh-${GMSH_RELEASE}/*/*~
+	cd utils && unix2dos ../gmsh-${GMSH_RELEASE}/tutorial/* ../gmsh-${GMSH_RELEASE}/demos/*
+	cd gmsh-${GMSH_RELEASE} && zip -r gmsh-${GMSH_RELEASE}-Windows.zip *
+	mv gmsh-${GMSH_RELEASE}/gmsh-${GMSH_RELEASE}-Windows.zip .
 
 package-mac:
+	@echo "********************************************************************"
+	@echo "Remember to change -ljpeg, etc. to /usr/lib/libjpeg.a, etc. in"
+	@echo "./variables and relink if the list below contains non-standard"
+	@echo "dynamic libs:"
+	otool -L bin/gmsh
+	@echo "********************************************************************"
 	rm -rf gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}
 	mkdir gmsh-${GMSH_RELEASE}/Gmsh.app
