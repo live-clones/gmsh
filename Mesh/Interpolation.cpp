@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.13 2001-08-17 09:53:23 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.14 2001-08-17 10:40:23 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -37,7 +37,6 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
   switch (Curve->Typ){
 
   case MSH_SEGM_LINE:
-    
     N = List_Nbr (Curve->Control_Points);
     i = (int) ((double) (N - 1) * u);
     while (i >= N - 1)
@@ -68,7 +67,6 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
   case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
-    
     if (Curve->Typ == MSH_SEGM_CIRC_INV ||
         Curve->Typ == MSH_SEGM_ELLI_INV){
       V.u = 1. - u;
@@ -404,14 +402,6 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
     S[3] = C[3]->beg;
-    
-    /*
-      List_Read(C[0]->Control_Points, 0, &S[0]);
-      List_Read(C[1]->Control_Points, 0, &S[1]);
-      List_Read(C[2]->Control_Points, 0, &S[2]);
-      List_Read(C[3]->Control_Points, 0, &S[3]);
-    */
-
     V[0] = InterpolateCurve (C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
     V[1] = InterpolateCurve (C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
     V[2] = InterpolateCurve (C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
@@ -444,10 +434,9 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
       }
     }
     
-    List_Read (C[0]->Control_Points, 0, &S[0]);
-    List_Read (C[1]->Control_Points, 0, &S[1]);
-    List_Read (C[2]->Control_Points, 0, &S[2]);
-    
+    S[0] = C[0]->beg;
+    S[1] = C[1]->beg;
+    S[2] = C[2]->beg;
     V[0] = InterpolateCurve (C[0], u, 0);
     V[1] = InterpolateCurve (C[1], v, 0);
     V[2] = InterpolateCurve (C[2], 1. - u, 0);
