@@ -82,6 +82,11 @@ insertion of new nodes by the Bowyer algorithm until the
 characteristic size of each simplex is lower or equal to the
 characteristic length field evaluated at the center of its
 circumscribed circle/sphere.
+.SS External solver interface
+External solvers can be interfaced with Gmsh through a socket
+mechanism, which permits to easily launch computations either locally
+or on remote computers, and to collect and exploit the simulation
+results within Gmsh.
 .SS Scalar, vector and tensor field Visualization
 Multiple post-processing scalar or vector maps can be loaded and
 manipulated (globally or individually) along with the geometry and the
