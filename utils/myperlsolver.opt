@@ -7,7 +7,7 @@ solver implementation in Gmsh...";
 Solver.Executable1 = "./myperlsolver.pl";
 Solver.Extension1 = "";
 Solver.MeshName1 = "";
-Solver.MeshCommand1 = "-mesh %s";
+Solver.MeshCommand1 = "";
 Solver.OptionCommand1 = "-options";
 Solver.FirstOption1 = "Option";
 Solver.SecondOption1 = "";
