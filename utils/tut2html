@@ -6,7 +6,7 @@
 #fi
 
 #enscript -Ecpp --color -Whtml --toc -pt.html $*
-enscript -Ecpp --color -Whtml --toc -pt.html README.txt *.geo
+enscript -Ecpp --color -Whtml --toc -pt.html README *.geo
 
 cat t.html | \
 sed "s/<FONT COLOR=\"#BC8F8F\"><B>//g" | \

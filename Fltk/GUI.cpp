@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.47 2001-02-18 18:04:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.48 2001-02-18 18:43:11 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1109,7 +1109,7 @@ void GUI::create_mesh_options_window(){
   if(!init_mesh_options_window){
     init_mesh_options_window = 1 ;
 
-    int width = 29*CTX.fontsize;
+    int width = 25*CTX.fontsize;
     int height = 5*WB+9*BH ;
     
     mesh_window = new Fl_Window(width,height);
@@ -1138,7 +1138,7 @@ void GUI::create_mesh_options_window(){
 	mesh_value[1]->minimum(0.001);
 	mesh_value[1]->maximum(1000); 
 	mesh_value[1]->step(0.001);
-        mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Characteristic length scaling factor");
+        mesh_value[2] = new Fl_Value_Input(2*WB, 2*WB+6*BH, IW, BH, "Characteristic length factor");
 	mesh_value[2]->minimum(0.001);
 	mesh_value[2]->maximum(1000); 
 	mesh_value[2]->step(0.001);
