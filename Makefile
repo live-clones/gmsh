@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.313 2003-12-03 21:06:38 geuzaine Exp $
+# $Id: Makefile,v 1.314 2003-12-04 15:55:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -171,6 +171,7 @@ distrib-win: clean all package-win distrib-msg
 	objdump -p bin/gmsh.exe | grep DLL
 
 distrib-mac: clean all package-mac distrib-msg
+	${POSTBUILD}
 	otool -L bin/gmsh
 
 package-unix:

@@ -1,4 +1,4 @@
-// $Id: SMS.cpp,v 1.15 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: SMS.cpp,v 1.16 2003-12-04 15:55:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -31,14 +31,6 @@
 #include "Message.h"
 
 extern Context_T CTX;
-
-/*
-  Reads a SMS mesh file format.
-  Fills the Mesh structure and says
-  the interface that the state of the current
-  mesh is 3.
-
-*/
 
 #define ENTITY_VERTEX 0
 #define ENTITY_EDGE   1
@@ -73,7 +65,7 @@ void Read_VTK_File(char *file, Mesh * m)
   sscanf(line, "%s %d %s", dumline1, &NbVertices, dumline2);
 
   Surface *surf = Create_Surface(1, MSH_SURF_DISCRETE);
-  surf->Generatrices = List_Create(1, 1, sizeof(Curve *));
+  surf->Dirty = 1;
   Tree_Add(m->Surfaces, &surf);
 
   for(i = 0; i < NbVertices; i++) {
@@ -95,8 +87,8 @@ void Read_VTK_File(char *file, Mesh * m)
       v4 = NULL;
     }
     else {
-      printf("no quads man !\n");
-      exit(-1);
+      Msg(GERROR, "No quads in VTK file, man!");
+      return;
     }
     Simplex *s = Create_Simplex(v1, v2, v3, v4);
     s->V[0] = v1;
@@ -108,7 +100,7 @@ void Read_VTK_File(char *file, Mesh * m)
     }
     else {
       surf = Create_Surface(1, MSH_SURF_DISCRETE);
-      surf->Generatrices = List_Create(1, 1, sizeof(Curve *));
+      surf->Dirty = 1;
       Tree_Add(m->Surfaces, &surf);
     }
     Tree_Add(surf->Simplexes, &s);
@@ -119,6 +111,7 @@ void Read_VTK_File(char *file, Mesh * m)
     m->status = 2;
 
   Volume *vol = Create_Volume(1, MSH_VOLUME);
+  vol->Dirty = 1;
   vol->Surfaces = List_Create(1, 1, sizeof(Surface *));
   List_Add(vol->Surfaces, &surf);
   Tree_Add(m->Volumes, &vol);
@@ -138,12 +131,11 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
   List_T *AllEdges, *AllFaces;
   Vertex *v1 = NULL, *v2 = NULL, *v3 = NULL, *v4 = NULL;
 
-
   fscanf(in, "%s %d", line, &Dummy);
   fscanf(in, "%d %d %d %d %d", &NbRegions, &NbFaces, &NbEdges, &NbVertices,
          &NbPoints);
 
-  Msg(INFO, "reading a mesh in scorec format");
+  Msg(INFO, "Reading a mesh in scorec format");
   Msg(INFO, "%d Vertices", NbVertices);
 
   for(i = 0; i < NbVertices; i++) {
@@ -155,7 +147,12 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
       Tree_Add(m->Vertices, &vert);
       switch (GEntityType) {
       case 0:
-        Tree_Add(m->Points, &vert);
+	{
+	  // we need to make a new one: vertices in m->Vertices and
+	  // m->Points should never point to the same memory location
+	  Vertex *pnt = Create_Vertex(i, x, y, z, 1.0, 1.0);
+	  Tree_Add(m->Points, &pnt);
+	}
         break;
       case 1:
         fscanf(in, "%le", &u);
@@ -169,7 +166,7 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
     }
   }
 
-  Msg(INFO, "%d Edges", NbEdges);
+  Msg(INFO, "%d edges", NbEdges);
   AllEdges = List_Create(NbEdges, 1, sizeof(Edge));
   Edge e;
 
@@ -206,18 +203,13 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
         if((c = FindCurve(GEntityId, m))) {
         }
         else {
-          c =
-            Create_Curve(GEntityId, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1,
-                         0, 1);
-          c->beg = v1;
-          c->end = v2;
+          c = Create_Curve(GEntityId, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0, 1);
+	  c->Dirty = 1;
           Tree_Add(m->Curves, &c);
         }
         s->iEnt = GEntityId;
-        //              List_Add(v1->ListCurves,&c);
-        // List_Add(v2->ListCurves,&c);
-        Tree_Add(c->Simplexes, &s);
         s->Num = i;
+        Tree_Add(c->Simplexes, &s);
       }
     }
   }
@@ -225,11 +217,12 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
   AllFaces = List_Create(NbFaces, 1, sizeof(Simplex *));
 
   Volume *vol = Create_Volume(1, MSH_VOLUME);
+  vol->Dirty = 1;
   vol->Surfaces = List_Create(1, 1, sizeof(Surface *));
   Tree_Add(m->Volumes, &vol);
   FACE_DIMENSION = 2;
 
-  Msg(INFO, "%d Faces", NbFaces);
+  Msg(INFO, "%d faces", NbFaces);
   for(int i = 0; i < NbFaces; i++) {
     fscanf(in, "%d", &GEntityId);
     if(GEntityId) {
@@ -283,7 +276,7 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
           v4 = e.V[1];
       }
       else {
-        Msg(FATAL, "Read mesh SMS exiting");
+        Msg(GERROR, "Wrong number pf edges on face (%d)", NbEdgesOnFace);
       }
       for(int j = 0; j < nbPts; j++) {
         switch (GEntityType) {
@@ -314,9 +307,9 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
         }
         else {
           surf = Create_Surface(GEntityId + 10000, MSH_SURF_DISCRETE);
+          surf->Dirty = 1;
           if(!NbRegions)
             List_Add(vol->Surfaces, &surf);
-          surf->Generatrices = List_Create(1, 1, sizeof(Curve *));
           Tree_Add(m->Surfaces, &surf);
         }
         Tree_Add(surf->Vertices, &s->V[0]);
@@ -328,7 +321,7 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
   }
 
 
-  Msg(INFO, "%d Region", NbRegions);
+  Msg(INFO, "%d region", NbRegions);
 
   for(int i = 0; i < NbRegions; i++) {
     fscanf(in, "%d", &GEntityId);
@@ -349,11 +342,11 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
             v4 = myS2->V[hh];
       }
       if(!v1 || !v2 || !v3 || !v4) {
-        printf("%d\n", NbFacesOnRegion);
-        printf("%p %p %p %p\n", v1, v2, v3, v4);
-        printf("%p %p %p \n", myS1->V[0], myS1->V[1], myS1->V[2]);
-        printf("%p %p %p \n", myS2->V[0], myS2->V[1], myS2->V[2]);
-        assert(1 == 0);
+        Msg(GERROR, "%d\n", NbFacesOnRegion);
+        Msg(GERROR, "%p %p %p %p\n", v1, v2, v3, v4);
+	Msg(GERROR, "%p %p %p \n", myS1->V[0], myS1->V[1], myS1->V[2]);
+        Msg(GERROR, "%p %p %p \n", myS2->V[0], myS2->V[1], myS2->V[2]);
+        return;
       }
       Simplex *s = Create_Simplex(v1, v2, v3, v4);
 
@@ -361,6 +354,7 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
       }
       else {
         vol = Create_Volume(GEntityId, MSH_VOLUME);
+	vol->Dirty = 1;
         Tree_Add(m->Volumes, &vol);
       }
       s->iEnt = GEntityId;
@@ -369,16 +363,22 @@ void Read_Mesh_SMS(Mesh * m, FILE * in)
     }
   }
 
+  List_Delete(AllEdges);
   List_Delete(AllFaces);
 
-
-  if(NbRegions)
+  if(Tree_Nbr(m->Volumes)) {
     m->status = 3;
-  else if(NbFaces)
+  }
+  else if(Tree_Nbr(m->Surfaces)) {
     m->status = 2;
-  else if(NbEdges)
+  }
+  else if(Tree_Nbr(m->Curves)) {
     m->status = 1;
-  Msg(INFO, "Done.");
+  }
+  else if(Tree_Nbr(m->Points))
+    m->status = 0;
+  else
+    m->status = -1;
 }
 
 #if 0
