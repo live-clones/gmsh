@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.22 2000-12-21 10:41:01 geuzaine Exp $ */
+/* $Id: Context.h,v 1.23 2000-12-21 12:30:36 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -114,6 +114,7 @@ class Context_T {
     int highlight;
     int level;
     double normals, tangents;
+    double scaling_factor;
   } geom;
 
   /* mesh options */

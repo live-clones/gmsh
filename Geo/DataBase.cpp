@@ -1,4 +1,4 @@
-/* $Id: DataBase.cpp,v 1.5 2000-12-13 20:21:03 geuzaine Exp $ */
+/* $Id: DataBase.cpp,v 1.6 2000-12-21 12:30:37 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -7,16 +7,24 @@
 #include "CAD.h"
 #include "Create.h"
 #include "Verif.h"
+#include "Context.h"
 
-extern int    CurrentNodeNumber;
-extern Mesh  *THEM;
+
+extern Context_T  CTX ;
+extern int        CurrentNodeNumber;
+extern Mesh      *THEM;
 
 /* POINTS */
 
 void Cdbpts101(int ip, double x, double y, double z, double l, double w){
   Vertex *v;
   CurrentNodeNumber = IMAX(CurrentNodeNumber, ip);
-  v = Create_Vertex(ip,x,y,z,l,0.0);
+  v = Create_Vertex(ip,
+		    CTX.geom.scaling_factor*x,
+		    CTX.geom.scaling_factor*y,
+		    CTX.geom.scaling_factor*z,
+		    CTX.geom.scaling_factor*l,
+		    0.0);
   v->w = w;
   Tree_Insert(THEM->Points,&v);
 }

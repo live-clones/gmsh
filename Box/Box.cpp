@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.16 2000-12-21 08:02:05 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.17 2000-12-21 12:30:34 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -42,6 +42,7 @@ char gmsh_help[]      =
   "  -format msh|unv|gref  set output mesh format (default: msh)\n"
   "  -algo iso|aniso       select mesh algorithm (default: iso)\n"
   "  -scale float          set global scaling factor (default: 1.0)\n"
+  "  -meshscale float      set mesh scaling factor (default: 1.0)\n"
   "  -clscale float        set characteristic length scaling factor (default: 1.0)\n"
   "  -bgm file             load backround mesh from file\n"
   "Other options:\n"      
@@ -227,6 +228,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         }
       }
       else if(!strcmp(argv[i]+1, "scale")){
+        i++;
+        if(argv[i] != NULL) CTX.geom.scaling_factor = atof(argv[i++]);
+        else{
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i]+1, "meshscale")){
         i++;
         if(argv[i] != NULL) CTX.mesh.scaling_factor = atof(argv[i++]);
         else{

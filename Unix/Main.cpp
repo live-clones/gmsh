@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.32 2000-12-21 08:02:06 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.33 2000-12-21 12:30:39 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -51,6 +51,7 @@ char gmsh_help[]      =
   "  -smooth int           set mesh smoothing (default: 0)\n"
   "  -degree int           set mesh degree (default: 1)\n"
   "  -scale float          set global scaling factor (default: 1.0)\n"
+  "  -meshscale float      set mesh scaling factor (default: 1.0)\n"
   "  -clscale float        set characteristic length scaling factor (default: 1.0)\n"
   "  -rand float           set random perturbation factor (default: 1.e-5)\n"
   "  -bgm file             load backround mesh from file\n"
@@ -248,6 +249,14 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         CTX.mesh.interactive = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "scale")){
+        i++;
+        if(argv[i]!=NULL) CTX.geom.scaling_factor = atof(argv[i++]);
+        else {    
+          fprintf(stderr, ERROR_STR "Missing Number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i]+1, "meshscale")){
         i++;
         if(argv[i]!=NULL) CTX.mesh.scaling_factor = atof(argv[i++]);
         else {    

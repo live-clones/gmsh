@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.11 2000-12-21 10:41:02 geuzaine Exp $ */
+/* $Id: Options.h,v 1.12 2000-12-21 12:30:36 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -146,6 +146,7 @@ StringXNumber GeometryOptions_Number[] = {
   { "HiddenLines"     , GMSH_INT,    (void*)&CTX.geom.hidden       , 0. }, 
   { "Shading"         , GMSH_INT,    (void*)&CTX.geom.shade        , 0. }, 
   { "Highlight"       , GMSH_INT,    (void*)&CTX.geom.highlight    , 1. }, 
+  { "ScalingFactor"   , GMSH_DOUBLE, (void*)&CTX.geom.scaling_factor , 1.0 }, 
   { NULL              , GMSH_DOUBLE, NULL , 0. }
 } ;
 
