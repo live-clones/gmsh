@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.27 2001-03-08 14:28:41 geuzaine Exp $
+// $Id: Gmsh.l,v 1.28 2001-03-09 08:02:58 geuzaine Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +62,7 @@ stepid  {dieze}({digit})*
 
 %%
 
-[\ \t\n]		/* none */ ;
+[\ \t\n\r\f]		/* none */ ;
 ";"                     return tEND;
 "/*"			skipcomments();
 "//"			skipline();
