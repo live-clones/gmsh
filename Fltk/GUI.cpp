@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.221 2002-11-18 05:28:29 geuzaine Exp $
+// $Id: GUI.cpp,v 1.222 2002-11-20 23:26:46 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -2691,7 +2691,11 @@ void GUI::create_about_window(){
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add("");
     o->add("@c@.Copyright (c) 1997-2002");
+#if defined(__APPLE__)
+    o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
+#else
     o->add("@c@.Christophe Geuzaine and Jean-François Remacle");
+#endif
     o->add("");
     o->add("@c@.Please send all questions and bug reports to");
     o->add("@c@b@.gmsh@geuz.org");
