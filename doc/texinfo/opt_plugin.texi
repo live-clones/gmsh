@@ -148,14 +148,16 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Evaluate)
-Plugin(Evaluate) sets the values associated with
-the `TimeStep'-th time step in the view `iView'
-to the expression `Expression'. In addition to
-the usual mathematical functions, `Expression'
-can contain the symbols x, y, z and v, which
+Plugin(Evaluate) sets the values associated
+with the `TimeStep'-th time step in the scalar
+view `iView' to the expression `Expression'. In
+addition to the usual mathematical functions
+(Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and
+operators (+, -, *, /, ^), `Expression' can
+contain the symbols x, y, z and v, which
 represent the three spatial coordinates and the
-value of the field, respectively. If `iView' < 0, the
-plugin is run on the current view.
+value of the field, respectively. If `iView' < 0,
+the plugin is run on the current view.
 
 Plugin(Evaluate) is executed in-place.
 
@@ -174,19 +176,28 @@ Default value: @code{-1}
 
 @item Plugin(Extract)
 Plugin(Extract) extracts a combination of
-components from the view `iView', as specified
-by `Expression'. In addition to the usual
-mathematical functions, `Expression' can contain
-the symbols v0, v1, v2, ..., vn, which represent
-the n components of the field. If `iView' < 0, the
+components from the view `iView'. If
+`Expression1' or `Expression2' is empty, the
+plugin creates a scalar view using
+`Expression0'; otherwise the plugin creates
+a vector view. In addition to the usual
+mathematical functions (Exp, Log, Sqrt, Sin,
+Cos, Fabs, etc.) and operators (+, -, *, /, ^),
+the expressions can contain the symbols v0,
+v1, v2, ..., vn, which represent the n
+components of the field. If `iView' < 0, the
 plugin is run on the current view.
 
 Plugin(Extract) creates one new view.
 
 String options:
 @table @code
-@item Expression
+@item Expression0
 Default value: @code{"v0"}
+@item Expression1
+Default value: @code{""}
+@item Expression2
+Default value: @code{""}
 @end table
 Numeric options:
 @table @code

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.4 2004-05-13 15:09:45 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.5 2004-05-13 15:54:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -67,8 +67,8 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Evaluate) sets the values associated\n"
-         "with the `TimeStep'-th time step in the view\n"
-	 "`iView' to the expression `Expression'. In\n"
+         "with the `TimeStep'-th time step in the scalar\n"
+	 "view `iView' to the expression `Expression'. In\n"
 	 "addition to the usual mathematical functions\n"
 	 "(Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and\n"
 	 "operators (+, -, *, /, ^), `Expression' can\n"
