@@ -1,4 +1,4 @@
-/* $Id: Draw.cpp,v 1.12 2000-12-20 15:28:44 geuzaine Exp $ */
+/* $Id: Draw.cpp,v 1.13 2000-12-27 10:07:20 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -185,7 +185,7 @@ void Init(void){
 		 xattrib.height+CTX.viewport[3]-CTX.viewport[1],
 		 0);
   /* X11 forbids to change the context (GLX) in GL_FEEDBACK or GL_SELECT mode,
-     which would happen for postcript output */
+     which would happen for postscript output */
   if(CTX.stream == TO_SCREEN)
     glXMakeCurrent(XtDisplay(WID.G.glw), XtWindow(WID.G.glw), XCTX.glw.context);
 #endif

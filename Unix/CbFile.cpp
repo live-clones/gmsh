@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.17 2000-12-26 17:40:18 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.18 2000-12-27 10:07:23 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -131,7 +131,6 @@ void CreateFile (char *name, int format) {
     break;
 
   case FORMAT_GIF :
-    // have to replot for filling again buffer ...
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
       return;
