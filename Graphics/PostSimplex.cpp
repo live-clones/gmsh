@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.12 2001-03-03 08:44:32 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.13 2001-03-23 09:27:04 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -67,7 +67,7 @@ void Draw_VectorPoint(Post_View *View,
     
     if(d!=0.0 && d>=ValMin && d<=ValMax){
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
+      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
       if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
         dx /= d ; dy /= d ; dz /= d ;
         d = log10(d/ValMin) ; 
@@ -174,7 +174,7 @@ void Draw_VectorLine(Post_View *View,
     d = sqrt(dx*dx+dy*dy+dz*dz);          
     if(d!=0.0 && d>=ValMin && d<=ValMax){           
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));            
-      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
+      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
       if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	dx /= d ; dy /= d ; dz /= d ;
 	d = log10(d/ValMin) ; 
@@ -197,7 +197,7 @@ void Draw_VectorLine(Post_View *View,
       d = sqrt(dx*dx+dy*dy+dz*dz);            
       if(d!=0.0 && d>=ValMin && d<=ValMax){           
 	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
+	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
 	if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	  dx /= d ; dy /= d ; dz /= d ;
 	  d = log10(d/ValMin) ; 
@@ -379,7 +379,7 @@ void Draw_VectorTriangle(Post_View *View,
       d = sqrt(dx*dx+dy*dy+dz*dz);
       if(d!=0.0 && d>=ValMin && d<=ValMax){             
         Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));            
-	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
+	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
           dx /= d ; dy /= d ; dz /= d ;
           d = log10(d/ValMin) ; 
@@ -403,7 +403,7 @@ void Draw_VectorTriangle(Post_View *View,
         
         if(d!=0.0 && d>=ValMin && d<=ValMax){           
           Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-	  fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
+	  fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
           if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
             dx /= d ; dy /= d ; dz /= d ;
             d = log10(d/ValMin) ; 
@@ -474,7 +474,7 @@ void Draw_VectorTetrahedron(Post_View *View,
     
     if(d!=0.0 && d>=ValMin && d<=ValMax){             
       Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
+      fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
       if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	dx /= d ; dy /= d ; dz /= d ;
 	d = log10(d/ValMin) ; 
@@ -498,7 +498,7 @@ void Draw_VectorTetrahedron(Post_View *View,
       
       if(d!=0.0 && d>=ValMin && d<=ValMax){     
 	Palette(View,View->NbIso,View->GIFV(ValMin,ValMax,View->NbIso,d));
-	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/View->Max ;
+	fact = CTX.pixel_equiv_x/CTX.s[0] * View->ArrowScale/ValMax ;
 	if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin>0){
 	  dx /= d ; dy /= d ; dz /= d ;
 	  d = log10(d/ValMin) ; 
