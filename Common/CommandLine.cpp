@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.56 2005-03-01 17:47:54 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.57 2005-04-04 16:28:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "Post-processing options:");
   Msg(DIRECT, "  -noview               Hide all views on startup");
   Msg(DIRECT, "  -link int             Select link mode between views (0, 1, 2, 3, 4)");
-  Msg(DIRECT, "  -combine              Combine input views into multi-time-step ones");
+  Msg(DIRECT, "  -combine              Combine views having identical names into multi-time-step views");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 Disable double buffering");
   Msg(DIRECT, "  -fontsize int         Specify the font size for the GUI");

@@ -60,7 +60,7 @@ Select link mode between views (0, 1, 2, 3, 4)
 @item -smoothview
 Smooth views
 @item -combine
-Combine input views into multi-time-step ones
+Combine views having identical names into multi-time-step views
 @end ftable
 
 @sp 1 
