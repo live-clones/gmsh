@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.139 2001-08-20 08:25:23 geuzaine Exp $
+# $Id: Makefile,v 1.140 2001-08-20 08:30:05 geuzaine Exp $
 
 GMSH_RELEASE = 1.24
 
@@ -206,7 +206,7 @@ bb-parallel: tag
 	PARALLEL=1
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
            "CXX=mpiCC" \
-           "CC=$(CC)" \
+           "CC=mpicc" \
            "OPT_FLAGS=-O3" \
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_BLACKBOX -DPARALLEL" \
