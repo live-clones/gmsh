@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2000-12-11 22:09:42 geuzaine Exp $
+# $Id: Makefile,v 1.22 2000-12-12 15:26:14 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -248,6 +248,7 @@ compile_sgi:
            "CC=CC" \
            "C_FLAGS=-O2 -o32 -Olimit 3000" \
            "RANLIB=true"\
+           "AR=CC -o32 -ar -o"\
            "OS_FLAGS=-D_UNIX" \
            "VERSION_FLAGS=" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -256,6 +257,7 @@ compile_sgi:
 	@for i in Mesh; do (cd $$i && $(MAKE) \
            "CC=CC" \
            "C_FLAGS=-O1 -o32" \
+           "AR=CC -o32 -ar -o"\
            "RANLIB=true"\
            "OS_FLAGS=-D_UNIX" \
            "VERSION_FLAGS=" \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2000-12-08 10:56:49 geuzaine Exp $
+# $Id: Makefile,v 1.9 2000-12-12 15:26:14 geuzaine Exp $
 #
 # Makefile for "libParser.a"
 #
@@ -10,6 +10,7 @@ C_FLAGS   = -g -Wall
 
 OS_FLAGS  = -D_UNIX
 
+AR       = ar ruvs
 RANLIB   = ranlib
 RM       = rm
 RMFLAGS  = -f
@@ -31,7 +32,7 @@ OBJ = $(SRC:.cpp=.o)
 .SUFFIXES: .o .cpp
 
 $(LIB): $(OBJ) 
-	ar ruvs $(LIB) $(OBJ)
+	$(AR) $(LIB) $(OBJ)
 	$(RANLIB) $(LIB)
 
 .cpp.o:
