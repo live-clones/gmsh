@@ -1,11 +1,14 @@
-$Id: BUGS,v 1.6 2002-05-19 19:56:19 geuzaine Exp $
+$Id: BUGS,v 1.7 2003-03-03 16:07:15 geuzaine Exp $
 
 * All surface meshes are made in a mean plane. If your surface cannot
 be projected into a plane with a 1-to-1 correspondance between the
 nodes, then gmsh will fail. We should mesh in the parametric space in
 these cases.
 
-* Improve Triangle integration (bgmesh on file, 2eme intermediate
-mesh?, etc.).
+* Improve Triangle integration: bgmesh on file, 2nd intermediate
+mesh?, etc.
 
-* purify, purify...
+* purify, purify... The old 2D algorithm (mainly, mesh_domain(), if
+full of memory leaks.
+
+

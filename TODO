@@ -1,4 +1,4 @@
-$Id: TODO,v 1.9 2003-02-05 02:05:21 geuzaine Exp $
+$Id: TODO,v 1.10 2003-03-03 16:07:15 geuzaine Exp $
 
 =================================================================================
 
@@ -16,6 +16,19 @@ values up to MIN(NbTimeStep for all merged views).
 
 -> need to make merge() more intelligent. First pass on NbTimeStep,
 then List_Add() only up to common TimeStep value.
+
+=================================================================================
+
+* Include Tetgen (the same way we did it with Triangle--the license is
+the same).
+
+=================================================================================
+
+* Rewrite the View interface in C++
+
+=================================================================================
+
+* Memory leaks, memory leaks (start with mesh_domain() and the parser)
 
 =================================================================================
 
