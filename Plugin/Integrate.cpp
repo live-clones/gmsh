@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.1 2004-11-13 23:57:28 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.2 2004-11-22 11:35:26 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,8 @@
 extern Context_T CTX;
 
 StringXNumber IntegrateOptions_Number[] = {
-  {GMSH_FULLRC, "iView", NULL, -1.}
+  {GMSH_FULLRC, "iView", NULL, -1.},
+  {GMSH_FULLRC, "computeLevelsetPositive", NULL, 0.}
 };
 
 extern "C"
@@ -63,7 +64,11 @@ void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
 	 "line/surface elements. If `iView' < 0, the plugin\n"
 	 "is run on the current view.\n"
 	 "\n"
-	 "Plugin(Integrate) creates one new view.\n");
+	 "If computeLevelsetPositive is not 0, then the plugin \n"
+         "computes the positive area (volume)of the map\n"
+	 "\n"
+	 "Plugin(Integrate) creates one new view.\n"
+);
 }
 
 int GMSH_IntegratePlugin::getNbOptions() const
@@ -86,6 +91,8 @@ static double integrate(int nbList, List_T *list, int dim,
 {
   if(!nbList) return 0.;
   
+  const int levelsetPositive = (int)IntegrateOptions_Number[1].def;
+
   double res = 0.;
   int nb = List_Nbr(list) / nbList;
   for(int i = 0; i < List_Nbr(list); i += nb) {
@@ -110,7 +117,20 @@ static double integrate(int nbList, List_T *list, int dim,
     else if(dim == 2){
       if(nbNod == 3){
 	triangle t(x, y, z);
-	if(nbComp == 1) res += t.integrate(v); 
+	if(nbComp == 1) 
+	  {
+	    if ( ! levelsetPositive )
+	      res += t.integrate(v); 
+	    else
+	      {
+		double ONES[]       = { 1.0 , 1.0 , 1.0 }; 
+		const double area   = t.integrate (ONES);
+		const double SUM    = v[0] + v[1] + v[2];
+		const double SUMABS = fabs(v[0]) + fabs(v[1]) + fabs (v[2]);		
+		const double XI     = SUM / SUMABS;
+		res                += area * (1 - XI) * 0.5 ;
+	      }
+	  }
 	else if(nbComp == 3) res += t.integrateFlux(v); 
       }
       else if(nbNod == 4){ 
@@ -138,6 +158,7 @@ static double integrate(int nbList, List_T *list, int dim,
       }
     }
   }
+  printf("integration res = %22.15E\n",res);
   return res;
 }
 

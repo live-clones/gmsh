@@ -80,6 +80,19 @@ void _triangle::Recur_Create (_triangle *t, int maxlevel, int level , Double_Mat
   all_triangles.push_back(t);
   if (level++ >= maxlevel)
     return;
+
+  /*
+
+  p3
+
+
+  p13   p23
+
+
+  p1    p12    p2
+
+
+  */
   
   _point *p1  = t->p[0]; 
   _point *p2  = t->p[1]; 
@@ -87,13 +100,13 @@ void _triangle::Recur_Create (_triangle *t, int maxlevel, int level , Double_Mat
   _point *p12 = _point::New ( (p1->x+p2->x)*0.5,(p1->y+p2->y)*0.5,0, coeffs, eexps);
   _point *p13 = _point::New ( (p1->x+p3->x)*0.5,(p1->y+p3->y)*0.5,0, coeffs, eexps);
   _point *p23 = _point::New ( (p3->x+p2->x)*0.5,(p3->y+p2->y)*0.5,0, coeffs, eexps);
-  _triangle *t1 = new _triangle (p1,p12,p13);
+  _triangle *t1 = new _triangle (p1,p13,p12);
   Recur_Create (t1, maxlevel,level,coeffs,eexps);
   _triangle *t2 = new _triangle (p12,p23,p2);
   Recur_Create (t2, maxlevel,level,coeffs,eexps); 
   _triangle *t3 = new _triangle (p23,p13,p3);
   Recur_Create (t3, maxlevel,level,coeffs,eexps); 
-  _triangle *t4 = new _triangle (p12,p23,p13);
+  _triangle *t4 = new _triangle (p12,p13,p23);
   Recur_Create (t4, maxlevel,level,coeffs,eexps);
   t->t[0]=t1;t->t[1]=t2;t->t[2]=t3;t->t[3]=t4;      
 
@@ -215,17 +228,14 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
     {
       _point *p = (_point*) &(*it);
       p->val = res(kk);
-      //      for ( int k=0;k<N;++k)
-      //	{
-      //	  p->val += p->shape_functions[k] * (*_STval )( ielem , k );
-      //	}	        
-      //      p->X = (*_STposX) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposX) ( ielem , 1 ) * p->x + (*_STposX) ( ielem , 2 ) * p->y;
-      //      p->Y = (*_STposY) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposY) ( ielem , 1 ) * p->x + (*_STposY) ( ielem , 2 ) * p->y;
-      //      p->Z = (*_STposZ) ( ielem , 0 ) * ( 1.-p->x-p->y) + (*_STposZ) ( ielem , 1 ) * p->x + (*_STposZ) ( ielem , 2 ) * p->y;
-
       p->X = XYZ(kk,0);
       p->Y = XYZ(kk,1);
       p->Z = XYZ(kk,2);
+
+      /// -----------------------------------------------
+      ///  TEST TEST ZZUT CHIOTTE VIREZ MOI CA VITE FAIT
+      /// -----------------------------------------------
+      //      p->val = p->X * p->X + p->Y*p->Y - 1;
 
       if (min > p->val) min = p->val;
       if (max < p->val) max = p->val;
