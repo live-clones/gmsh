@@ -23,9 +23,10 @@ manext = 1
 # The name of your C compiler:
 #CC= gcc
 CC= g++
+C_FLAGS= -O
 
 # You may need to adjust these cc options:
-CFLAGS= -O -I$(srcdir)
+CFLAGS= $(C_FLAGS) -I$(srcdir)
 # Generally, we recommend defining any configuration symbols in jconfig.h,
 # NOT via -D switches here.
 # However, any special defines for ansi2knr.c may be included here:
