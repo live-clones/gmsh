@@ -197,17 +197,10 @@ Plane Surface(130) = {128,129};
 Surface Loop(131) = {97,-113,-130,127,125,79,-77,121,123,119,-101,-103,-105,107,115,-95};
 Complex Volume(132) = {131};
 
-Physical Volume(500) = { 99 , 131 }; /* boite air + air */
+Physical Volume(500) = { 99 , 132 }; /* boite air + air */
 Physical Volume(501) = { 83 }; /* tole */
-Physical Volume(501) = { 117 }; /* ind */
+Physical Volume(502) = { 117 }; /* ind */
 
 Physical Surface(1000) = { 87 , 109 , 111 , 119 , 121 , 123 , 125 , 127 , 130 };
 Physical Surface(700) = { 109 };
 Physical Surface(701) = { 111 };
-
-
-
-
-
-
-
