@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.40 2004-05-18 17:00:37 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.41 2004-05-19 07:44:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -89,7 +89,7 @@ void Draw_String(char *s)
 void Draw_OnScreenMessages()
 {
 
-  glColor4ubv((GLubyte *) & CTX.color.fg);
+  glColor4ubv((GLubyte *) & CTX.color.text);
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
   double h = gl_height();
   
