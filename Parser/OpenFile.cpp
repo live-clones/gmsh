@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.35 2003-01-24 23:13:36 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.36 2003-01-25 22:33:38 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -192,7 +192,7 @@ void OpenProblem(char *name){
 
 // replace "/cygwin/x/" with "x:/"
 void decygwin(char *in, char *out){
-  int i = 0, j = 0;
+  unsigned int i = 0, j = 0;
 
   while(i<strlen(in)){
     if(!strncmp(in+i, "/cygdrive/", 10)){
@@ -218,7 +218,7 @@ void SystemCall(char *command){
   
   char copy[strlen(command)+1];
   decygwin(command, copy);
-  Msg(INFO, "Calling \"%s\"", copy);
+  Msg(INFO, "Calling '%s'", copy);
   CreateProcess(NULL, copy, NULL, NULL, FALSE,
 		NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
 
@@ -227,7 +227,7 @@ void SystemCall(char *command){
     Msg(GERROR, "Could not find /bin/sh: aborting system call");
     return;
   }
-  Msg(INFO, "Calling \"%s\"", command);
+  Msg(INFO, "Calling '%s'", command);
   system(command);
 #endif
 }
