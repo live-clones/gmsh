@@ -1,4 +1,4 @@
-/* $Id: Print_Mesh.cpp,v 1.8 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: Print_Mesh.cpp,v 1.9 2000-11-30 10:14:09 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -218,8 +218,43 @@ void add_msh_elements (Mesh * M){
   for (i = 0; i < List_Nbr (M->PhysicalGroups); i++){
     List_Read (M->PhysicalGroups, i, &p);
     MSH_PHYSICAL_NUM = p->Num;
+    MSH_VOL_NUM = 0;
 
     switch (p->Typ){
+
+    case MSH_PHYSICAL_POINT:
+      for (j = 0; j < List_Nbr (p->Entities); j++){
+        pv = &v;
+        List_Read (p->Entities, j, &Num);
+        pv->Num = abs (Num);
+        MSH_PHYSICAL_ORI = sign (Num);
+        if (Tree_Query (M->Vertices, &pv))
+          add_msh_point (pv);
+      }
+      break;
+
+    case MSH_PHYSICAL_LINE:
+      for (j = 0; j < List_Nbr (p->Entities); j++){
+        pc = &c;
+        List_Read (p->Entities, j, &Num);
+        pc->Num = abs (Num);
+        MSH_PHYSICAL_ORI = sign (Num);
+        if (Tree_Query (M->Curves, &pc))
+          Tree_Action (pc->Simplexes, add_msh_simplex);
+      }
+      break;
+
+    case MSH_PHYSICAL_SURFACE:
+      for (j = 0; j < List_Nbr (p->Entities); j++){
+        ps = &s;
+        List_Read (p->Entities, j, &Num);
+        ps->Num = abs (Num);
+        MSH_PHYSICAL_ORI = sign (Num);
+        if (Tree_Query (M->Surfaces, &ps)){
+          Tree_Action (ps->Simplexes, add_msh_simplex);
+	}
+      }
+      break;
 
     case MSH_PHYSICAL_VOLUME:
       for (k = 0; k < List_Nbr (ListVolumes); k++){
@@ -234,42 +269,14 @@ void add_msh_elements (Mesh * M){
         }
       }
       break;
-
-    case MSH_PHYSICAL_SURFACE:
-      for (j = 0; j < List_Nbr (p->Entities); j++){
-        ps = &s;
-        List_Read (p->Entities, j, &Num);
-        ps->Num = abs (Num);
-        MSH_PHYSICAL_ORI = sign (Num);
-        if (Tree_Query (M->Surfaces, &ps))
-          Tree_Action (ps->Simplexes, add_msh_simplex);
-      }
-      break;
       
-    case MSH_PHYSICAL_LINE:
-      for (j = 0; j < List_Nbr (p->Entities); j++){
-        pc = &c;
-        List_Read (p->Entities, j, &Num);
-        pc->Num = abs (Num);
-        MSH_PHYSICAL_ORI = sign (Num);
-        if (Tree_Query (M->Curves, &pc))
-          Tree_Action (pc->Simplexes, add_msh_simplex);
-      }
+    default :
+      Msg(ERROR, "Unknown Type of Physical Group");
       break;
-      
-    case MSH_PHYSICAL_POINT:
-      for (j = 0; j < List_Nbr (p->Entities); j++){
-        pv = &v;
-        List_Read (p->Entities, j, &Num);
-        pv->Num = abs (Num);
-        MSH_PHYSICAL_ORI = sign (Num);
-        if (Tree_Query (M->Vertices, &pv))
-          add_msh_point (pv);
-      }
-      break;
-      
     }
+
   }
+
 }
 
 void process_msh_elements (Mesh * M){
