@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.158 2004-12-30 00:30:04 geuzaine Exp $
+// $Id: Views.cpp,v 1.159 2005-01-01 18:56:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -846,7 +846,7 @@ void ReadView(FILE *file, char *filename)
                &v->NbVS, &v->NbTS, &v->NbT2, &t2l, &v->NbT3, &t3l);
         Msg(DEBUG, "Detected post-processing view format 1.1");
       }
-      else if(version == 1.2) {
+      else if(version == 1.2 || version == 1.3) {
         fscanf(file, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &v->NbTimeStep,
@@ -858,7 +858,7 @@ void ReadView(FILE *file, char *filename)
                &v->NbSH, &v->NbVH, &v->NbTH,
                &v->NbSI, &v->NbVI, &v->NbTI,
                &v->NbSY, &v->NbVY, &v->NbTY, &v->NbT2, &t2l, &v->NbT3, &t3l);
-        Msg(DEBUG, "Detected post-processing view format 1.2");
+        Msg(DEBUG, "Detected post-processing view format %g", version);
       }
       else {
         Msg(GERROR, "Unknown post-processing file format (version %g)",
@@ -884,85 +884,88 @@ void ReadView(FILE *file, char *filename)
       // Time values
       v->Time = List_CreateFromFile(v->NbTimeStep, 10, size, file, format, swap);
 
-      // if nb==0, this still allocates a list (empty, but ready to be
-      // filled later, e.g. in a plugin)
-#define LL List_CreateFromFile(nb, 100, size, file, format, swap)
+      // Note: if nb==0, we still allocates the lists (so that they
+      // are ready to be filled later, e.g. in plugins)
 
       // Points
       nb = v->NbSP ? v->NbSP * (v->NbTimeStep + 3) : 0;
-      v->SP = LL;
+      v->SP = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVP ? v->NbVP * (v->NbTimeStep * 3 + 3) : 0;
-      v->VP = LL;
+      v->VP = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTP ? v->NbTP * (v->NbTimeStep * 9 + 3) : 0;
-      v->TP = LL;
+      v->TP = List_CreateFromFile(nb, 100, size, file, format, swap);
 
       // Lines
       nb = v->NbSL ? v->NbSL * (v->NbTimeStep * 2 + 6) : 0;
-      v->SL = LL;
+      v->SL = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVL ? v->NbVL * (v->NbTimeStep * 2 * 3 + 6) : 0;
-      v->VL = LL;
+      v->VL = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTL ? v->NbTL * (v->NbTimeStep * 2 * 9 + 6) : 0;
-      v->TL = LL;
+      v->TL = List_CreateFromFile(nb, 100, size, file, format, swap);
 
       // Triangles
       nb = v->NbST ? v->NbST * (v->NbTimeStep * 3 + 9) : 0;
-      v->ST = LL;
+      v->ST = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVT ? v->NbVT * (v->NbTimeStep * 3 * 3 + 9) : 0;
-      v->VT = LL;
+      v->VT = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTT ? v->NbTT * (v->NbTimeStep * 3 * 9 + 9) : 0;
-      v->TT = LL;
+      v->TT = List_CreateFromFile(nb, 100, size, file, format, swap);
 
       // Quadrangles
       nb = v->NbSQ ? v->NbSQ * (v->NbTimeStep * 4 + 12) : 0;
-      v->SQ = LL;
+      v->SQ = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVQ ? v->NbVQ * (v->NbTimeStep * 4 * 3 + 12) : 0;
-      v->VQ = LL;
+      v->VQ = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTQ ? v->NbTQ * (v->NbTimeStep * 4 * 9 + 12) : 0;
-      v->TQ = LL;
+      v->TQ = List_CreateFromFile(nb, 100, size, file, format, swap);
 
       // Tetrahedra
       nb = v->NbSS ? v->NbSS * (v->NbTimeStep * 4 + 12) : 0;
-      v->SS = LL;
+      v->SS = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVS ? v->NbVS * (v->NbTimeStep * 4 * 3 + 12) : 0;
-      v->VS = LL;
+      v->VS = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTS ? v->NbTS * (v->NbTimeStep * 4 * 9 + 12) : 0;
-      v->TS = LL;
+      v->TS = List_CreateFromFile(nb, 100, size, file, format, swap);
 
       // Hexahedra
       nb = v->NbSH ? v->NbSH * (v->NbTimeStep * 8 + 24) : 0;
-      v->SH = LL;
+      v->SH = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVH ? v->NbVH * (v->NbTimeStep * 8 * 3 + 24) : 0;
-      v->VH = LL;
+      v->VH = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTH ? v->NbTH * (v->NbTimeStep * 8 * 9 + 24) : 0;
-      v->TH = LL;
+      v->TH = List_CreateFromFile(nb, 100, size, file, format, swap);
 
       // Prisms
       nb = v->NbSI ? v->NbSI * (v->NbTimeStep * 6 + 18) : 0;
-      v->SI = LL;
+      v->SI = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVI ? v->NbVI * (v->NbTimeStep * 6 * 3 + 18) : 0;
-      v->VI = LL;
+      v->VI = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTI ? v->NbTI * (v->NbTimeStep * 6 * 9 + 18) : 0;
-      v->TI = LL;
+      v->TI = List_CreateFromFile(nb, 100, size, file, format, swap);
 
       // Pyramids
       nb = v->NbSY ? v->NbSY * (v->NbTimeStep * 5 + 15) : 0;
-      v->SY = LL;
+      v->SY = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbVY ? v->NbVY * (v->NbTimeStep * 5 * 3 + 15) : 0;
-      v->VY = LL;
+      v->VY = List_CreateFromFile(nb, 100, size, file, format, swap);
       nb = v->NbTY ? v->NbTY * (v->NbTimeStep * 5 * 9 + 15) : 0;
-      v->TY = LL;
+      v->TY = List_CreateFromFile(nb, 100, size, file, format, swap);
 
-#undef LL
-
-      // Strings
+      // 2D strings
       nb = v->NbT2 ? v->NbT2 * 4 : 0;
       v->T2D = List_CreateFromFile(nb, 10, size, file, format, swap);
-      v->T2C = List_CreateFromFile(t2l, 10, sizeof(char), file, format, swap);
+      if(version <= 1.2)
+	v->T2C = List_CreateFromFileOld(t2l, 10, sizeof(char), file, format, swap);
+      else
+	v->T2C = List_CreateFromFile(t2l, 10, sizeof(char), file, format, swap);
 
+      // 3D strings
       nb = v->NbT3 ? v->NbT3 * 5 : 0;
       v->T3D = List_CreateFromFile(nb, 10, size, file, format, swap);
-      v->T3C = List_CreateFromFile(t3l, 10, sizeof(char), file, format, swap);
-
+      if(version <= 1.2)
+	v->T3C = List_CreateFromFileOld(t3l, 10, sizeof(char), file, format, swap);
+      else
+	v->T3C = List_CreateFromFile(t3l, 10, sizeof(char), file, format, swap);
 
       Msg(DEBUG,
           "Read View '%s' (%d TimeSteps): %d %d %d %d %d %d %d %d %d %d %d "
@@ -1090,20 +1093,15 @@ void WriteView(Post_View *v, char *filename, int format, int append)
     file = stdout;
 
   if(!parsed && !append){
-    fprintf(file, "$PostFormat /* Gmsh 1.2, %s */\n",
+    fprintf(file, "$PostFormat /* Gmsh 1.3, %s */\n",
 	    binary ? "binary" : "ascii");
-    fprintf(file, "1.2 %d %d\n", binary, (int)sizeof(double));
+    fprintf(file, "1.3 %d %d\n", binary, (int)sizeof(double));
     fprintf(file, "$EndPostFormat\n");
   }
 
-  int i;
-  for(i = 0; i < (int)strlen(v->Name); i++) {
-    if(v->Name[i] == ' ')
-      name[i] = '^';
-    else
-      name[i] = v->Name[i];
-  }
-  name[i] = '\0';
+  strcpy(name, v->Name);
+  for(int i = 0; i < (int)strlen(name); i++)
+    if(name[i] == ' ') name[i] = '^';
 
   if(!parsed){
     fprintf(file, "$View /* %s */\n", v->Name);

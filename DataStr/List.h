@@ -72,5 +72,8 @@ void    List_Copy(List_T *a , List_T *b);
 List_T *List_CreateFromFile(int n, int incr, int size, FILE *file, int format, int swap);
 void    List_WriteToFile(List_T *liste, FILE *file, int format);
 
+// for backward compatibility
+List_T *List_CreateFromFileOld(int n, int incr, int size, FILE *file, int format, int swap);
+
 #endif
 
