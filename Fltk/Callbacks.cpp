@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.266 2004-09-01 20:23:49 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.267 2004-09-03 19:00:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -878,6 +878,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
   opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
   opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());
+  opt_general_light03(0, GMSH_SET, WID->gen_value[13]->value());
   opt_general_verbosity(0, GMSH_SET, WID->gen_value[5]->value());
   opt_general_point_size(0, GMSH_SET, WID->gen_value[6]->value());
   opt_general_line_width(0, GMSH_SET, WID->gen_value[7]->value());

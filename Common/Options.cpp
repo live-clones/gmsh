@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.180 2004-09-01 20:23:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.181 2004-09-03 19:00:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2852,6 +2852,17 @@ double opt_general_light02(OPT_ARGS_NUM)
   return CTX.light_position[0][2];
 }
 
+double opt_general_light03(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.light_position[0][3] = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[13]->value(CTX.light_position[0][3]);
+#endif
+  return CTX.light_position[0][3];
+}
+
 double opt_general_light1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -2878,6 +2889,13 @@ double opt_general_light12(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.light_position[1][2] = val;
   return CTX.light_position[1][2];
+}
+
+double opt_general_light13(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.light_position[1][3] = val;
+  return CTX.light_position[1][3];
 }
 
 double opt_general_light2(OPT_ARGS_NUM)
@@ -2908,6 +2926,13 @@ double opt_general_light22(OPT_ARGS_NUM)
   return CTX.light_position[2][2];
 }
 
+double opt_general_light23(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.light_position[2][3] = val;
+  return CTX.light_position[2][3];
+}
+
 double opt_general_light3(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -2934,6 +2959,13 @@ double opt_general_light32(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.light_position[3][2] = val;
   return CTX.light_position[3][2];
+}
+
+double opt_general_light33(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.light_position[3][3] = val;
+  return CTX.light_position[3][3];
 }
 
 double opt_general_light4(OPT_ARGS_NUM)
@@ -2964,6 +2996,13 @@ double opt_general_light42(OPT_ARGS_NUM)
   return CTX.light_position[4][2];
 }
 
+double opt_general_light43(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.light_position[4][3] = val;
+  return CTX.light_position[4][3];
+}
+
 double opt_general_light5(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -2990,6 +3029,13 @@ double opt_general_light52(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.light_position[5][2] = val;
   return CTX.light_position[5][2];
+}
+
+double opt_general_light53(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.light_position[5][3] = val;
+  return CTX.light_position[5][3];
 }
 
 double opt_geometry_auto_coherence(OPT_ARGS_NUM)

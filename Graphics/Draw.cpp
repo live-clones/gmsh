@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.61 2004-08-15 02:27:49 geuzaine Exp $
+// $Id: Draw.cpp,v 1.62 2004-09-03 19:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -154,7 +154,7 @@ void InitRenderModel(void)
       GLfloat position[4] = {(GLfloat)CTX.light_position[i][0],
 			     (GLfloat)CTX.light_position[i][1],
 			     (GLfloat)CTX.light_position[i][2],
-			     0.0};
+			     (GLfloat)CTX.light_position[i][3]};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
 
       r = UNPACK_RED(CTX.color.ambient_light[i])/255.;
