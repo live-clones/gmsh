@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.112 2001-11-13 08:38:01 geuzaine Exp $
+// $Id: Gmsh.y,v 1.113 2001-11-13 08:41:03 geuzaine Exp $
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN
@@ -44,7 +44,7 @@ static int            yylinenoImbricatedLoopsTab[MAX_OPEN_FILES];
 static double         LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char*          LoopControlVariablesNameTab[MAX_OPEN_FILES];
 static char           yynameTab[MAX_OPEN_FILES][256];
-static char           tmpstring[256];
+static char           tmpstring[1024];
 static Symbol         TheSymbol, *pSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
