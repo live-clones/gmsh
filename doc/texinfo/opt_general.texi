@@ -75,154 +75,164 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Clip0
-Enable clip plane 0@*
+Enable clipping plane 0 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0A
-First coefficient in equation for clip plane 0 (`A' in `AX+BY+CZ+D=0')@*
+First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0B
-Second coefficient in equation for clip plane 0 (`B' in `AX+BY+CZ+D=0')@*
+Second coefficient in equation for clipping plane 0 (`B' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0C
-Third coefficient in equation for clip plane 0 (`C' in `AX+BY+CZ+D=0')@*
+Third coefficient in equation for clipping plane 0 (`C' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip0D
-Fourth coefficient in equation for clip plane 0 (`D' in `AX+BY+CZ+D=0')@*
+Fourth coefficient in equation for clipping plane 0 (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip1
-Enable clip plane 1@*
+Enable clipping plane 1 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip1A
-First coefficient in equation for clip plane 1@*
+First coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip1B
-Second coefficient in equation for clip plane 1@*
+Second coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip1C
-Third coefficient in equation for clip plane 1@*
+Third coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip1D
-Fourth coefficient in equation for clip plane 1@*
+Fourth coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip2
-Enable clip plane 2@*
+Enable clipping plane 2 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip2A
-First coefficient in equation for clip plane 2@*
+First coefficient in equation for clipping plane 2@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip2B
-Second coefficient in equation for clip plane 2@*
+Second coefficient in equation for clipping plane 2@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip2C
-Third coefficient in equation for clip plane 2@*
+Third coefficient in equation for clipping plane 2@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip2D
-Fourth coefficient in equation for clip plane 2@*
+Fourth coefficient in equation for clipping plane 2@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip3
-Enable clip plane 3@*
+Enable clipping plane 3 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip3A
-First coefficient in equation for clip plane 3@*
+First coefficient in equation for clipping plane 3@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip3B
-Second coefficient in equation for clip plane 3@*
+Second coefficient in equation for clipping plane 3@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip3C
-Third coefficient in equation for clip plane 3@*
+Third coefficient in equation for clipping plane 3@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip3D
-Fourth coefficient in equation for clip plane 3@*
+Fourth coefficient in equation for clipping plane 3@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip4
-Enable clip plane 4@*
+Enable clipping plane 4 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip4A
-First coefficient in equation for clip plane 4@*
+First coefficient in equation for clipping plane 4@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip4B
-Second coefficient in equation for clip plane 4@*
+Second coefficient in equation for clipping plane 4@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip4C
-Third coefficient in equation for clip plane 4@*
+Third coefficient in equation for clipping plane 4@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip4D
-Fourth coefficient in equation for clip plane 4@*
+Fourth coefficient in equation for clipping plane 4@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip5
-Enable clip plane 5@*
+Enable clipping plane 5 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip5A
-First coefficient in equation for clip plane 5@*
+First coefficient in equation for clipping plane 5@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip5B
-Second coefficient in equation for clip plane 5@*
+Second coefficient in equation for clipping plane 5@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip5C
-Third coefficient in equation for clip plane 5@*
+Third coefficient in equation for clipping plane 5@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.Clip5D
-Fourth coefficient in equation for clip plane 5@*
+Fourth coefficient in equation for clipping plane 5@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item General.ClipPositionX
+Horizontal position (in pixels) of the upper left corner of the clipping planes window@*
+Default value: @code{650}@*
+Saved in: @code{General.SessionFileName}
+
+@item General.ClipPositionY
+Vertical position (in pixels) of the upper left corner of the clipping planes window@*
+Default value: @code{150}@*
+Saved in: @code{General.SessionFileName}
 
 @item General.ColorScheme
 Default color scheme (0, 1 or 2)@*
