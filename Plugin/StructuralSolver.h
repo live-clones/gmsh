@@ -54,12 +54,20 @@
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Tooltip.H>
+#include <GL/glu.h>
 #endif
 
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterStructuralSolverPlugin();
 }
+
+struct Structural_Texture
+{
+  std::string filename;
+  GLuint  tag ;
+  void setup();
+};
 
 struct Structural_BeamSection
 {
@@ -69,7 +77,7 @@ struct Structural_BeamSection
   Structural_BeamSection ( const char *direct, std::string _name );
   ~Structural_BeamSection();
   void computeGeometricalProperties();
-  void GL_DrawBeam (double pinit[3], double dir[3]);
+  void GL_DrawBeam (double pinit[3], double dir[3], const double Y[3], Structural_Texture &texture);
 };
 
 struct Structural_Material
@@ -79,17 +87,20 @@ struct Structural_Material
 };
 
 
+
 struct PhysicalPointInfo 
 {
+  double angle;
   int disp[3];
-  double val[6];
+  double val[3];
 };
 
 struct PhysicalLineInfo 
 {
-  PhysicalLineInfo() : fx1(0),fx2(0),fy1(0),fy2(0){}
+  PhysicalLineInfo() : fx1(0),fx2(0),fy1(0),fy2(0),fz1(0),fz2(0){dirz[0]=0;dirz[1]=0;dirz[2]=1;}
   std::string material, section;
-  double fx1,fx2,fy1,fy2;
+  double fx1,fx2,fy1,fy2,fz1,fz2;
+  double dirz[3];
 };
 
 
@@ -99,8 +110,9 @@ class StructuralSolver : public GMSH_Solve_Plugin
   std::list < struct Structural_Material  > materials;
   std::map <int, struct PhysicalPointInfo  > points;
   std::map <int, struct PhysicalLineInfo   > lines;
-  void RegisterBeamSections     ();
-  void RegisterMaterials        ();
+  std::map <std::string , struct Structural_Texture   > textures;
+  void    RegisterBeamSections     ();
+  void    RegisterMaterials        ();
   void addPhysicalPoint         (int id);
   void addPhysicalLine          (int id);
 #ifdef HAVE_FLTK 

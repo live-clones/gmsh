@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.45 2004-07-23 04:47:42 geuzaine Exp $
+// $Id: Entity.cpp,v 1.46 2004-08-16 17:52:59 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -53,6 +53,28 @@ void Draw_Sphere(double size, double x, double y, double z, int light)
     listnum = glGenLists(1);
     glNewList(listnum, GL_COMPILE);
     gluSphere(qua, 1, CTX.quadric_subdivisions, CTX.quadric_subdivisions);
+    glEndList();
+  }
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glScaled(s, s, s);
+  glCallList(listnum);
+  glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+
+void Draw_Disk(double size, double rint, double x, double y, double z, int light)
+{
+  if(light) glEnable(GL_LIGHTING);
+  static GLUquadricObj *qua;
+  static int first = 1, listnum;
+  double s = size;
+  if(first) {
+    first = 0;
+    qua = gluNewQuadric();
+    listnum = glGenLists(1);
+    glNewList(listnum, GL_COMPILE);
+    gluDisk(qua, rint, 1, 2*CTX.quadric_subdivisions, 2*CTX.quadric_subdivisions);
     glEndList();
   }
   glPushMatrix();

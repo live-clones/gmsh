@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.335 2004-08-15 15:25:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.336 2004-08-16 17:52:59 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -335,9 +335,23 @@ static Fl_Menu_Item menu_point_display[] = {
   {0}
 };
 
+static Fl_Menu_Item menu_point_display_with_plugin[] = {
+  {"Color dot",   0, 0, 0},
+  {"3D sphere",   0, 0, 0},
+  {"Use Solver Plugin",   0, 0, 0},
+  {0}
+};
+
 static Fl_Menu_Item menu_line_display[] = {
   {"Color segment", 0, 0, 0},
   {"3D cylinder",   0, 0, 0},
+  {0}
+};
+
+static Fl_Menu_Item menu_line_display_with_plugin[] = {
+  {"Color segment", 0, 0, 0},
+  {"3D cylinder",   0, 0, 0},
+  {"Use Solver Plugin",   0, 0, 0},
   {0}
 };
 
@@ -1774,7 +1788,15 @@ void GUI::create_option_window()
       o->hide();
 
       geo_choice[0] = new Fl_Choice(2 * WB, 2 * WB + 1 * BH, IW, BH, "Point display");
-      geo_choice[0]->menu(menu_point_display);
+      GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
+      if (sp)
+	{
+	  geo_choice[0]->menu(menu_point_display_with_plugin);
+	}
+      else
+	{
+	  geo_choice[0]->menu(menu_point_display);
+	}
       geo_choice[0]->align(FL_ALIGN_RIGHT);
 
       geo_value[3] = new Fl_Value_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Point size");
@@ -1789,9 +1811,20 @@ void GUI::create_option_window()
       geo_value[5]->step(0.1);
       geo_value[5]->align(FL_ALIGN_RIGHT);
 
-      geo_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
-      geo_choice[1]->menu(menu_line_display);
-      geo_choice[1]->align(FL_ALIGN_RIGHT);
+
+      {
+	geo_choice[1] = new Fl_Choice(2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
+	GMSH_Solve_Plugin *sp = GMSH_PluginManager::instance()->findSolverPlugin();   
+	if (sp)
+	  {
+	    geo_choice[1]->menu(menu_line_display_with_plugin);
+	  }
+	else
+	  {
+	    geo_choice[1]->menu(menu_line_display);
+	  }
+	geo_choice[1]->align(FL_ALIGN_RIGHT);	
+      }
 
       geo_value[4] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       geo_value[4]->minimum(0.1);
@@ -2155,14 +2188,16 @@ void GUI::create_option_window()
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
-
-      Fl_Box *text = new Fl_Box(FL_NO_BOX, 2 * WB, 3 * WB + 1 * BH, width - 4 * WB, 2 * BH,
-				"There are no global solver options available yet.\n\n"
-				"To define your own solver interface, you have to edit the option file.");
-      text->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
-
-      o->end();
+      {
+	Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
+	
+	Fl_Box *text = new Fl_Box(FL_NO_BOX, 2 * WB, 3 * WB + 1 * BH, width - 4 * WB, 2 * BH,
+				  "There are no global solver options available yet.\n\n"
+				  "To define your own solver interface, you have to edit the option file.");
+	text->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
+	
+	o->end();
+      }
     }
     o->end();
   }

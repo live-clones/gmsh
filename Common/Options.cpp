@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.178 2004-08-15 02:27:48 geuzaine Exp $
+// $Id: Options.cpp,v 1.179 2004-08-16 17:52:58 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3142,7 +3142,7 @@ double opt_geometry_point_type(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->geo_choice[0]->value(CTX.geom.point_type ? 1 : 0);
+    WID->geo_choice[0]->value(CTX.geom.point_type);
   }
 #endif
   return CTX.geom.point_type;
@@ -3177,7 +3177,7 @@ double opt_geometry_line_type(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    WID->geo_choice[1]->value(CTX.geom.line_type ? 1 : 0);
+    WID->geo_choice[1]->value(CTX.geom.line_type);
   }
 #endif
   return CTX.geom.line_type;

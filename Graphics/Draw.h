@@ -66,6 +66,7 @@ void Draw_OnScreenMessages(void);
 void Draw_Scales(void);
 void Draw_Axes(double s);
 void Draw_SmallAxes(void);
+void Draw_Disk(double size, double rint, double x, double y, double z, int light);
 void Draw_Sphere(double size, double x, double y, double z, int light);
 void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
 void Draw_Point(int type, double size, double *x, double *y, double *z, 
