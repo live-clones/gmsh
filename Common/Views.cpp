@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.86 2003-02-05 02:05:21 geuzaine Exp $
+// $Id: Views.cpp,v 1.87 2003-02-12 20:27:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -307,7 +307,7 @@ void EndView(Post_View *v, int add_in_gui, char *file_name, char *name){
 
   if(CTX.post.smooth) v->smooth();
 
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
   extern int AddViewInUI(int, char *, int);
   if(!CTX.post.force_num && add_in_gui)
     AddViewInUI(List_Nbr(CTX.post.list), v->Name, v->Num);
@@ -394,7 +394,7 @@ void DuplicateView(Post_View *v1, int withoptions){
 
   if(withoptions) CopyViewOptions(v1, v2);
 
-#ifndef _BLACKBOX
+#if defined(HAVE_FLTK)
   extern int AddViewInUI(int, char *, int);
   AddViewInUI(List_Nbr(CTX.post.list), v2->Name, v2->Num);
 #endif

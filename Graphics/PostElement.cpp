@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.7 2003-02-05 01:35:08 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.9 2003-02-14 09:32:31 stainier Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -51,6 +51,8 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
   int k;
   double xx[8], yy[8], zz[8];
 
+  if(View->Light) glDisable(GL_LIGHTING);
+
   glColor4ubv((GLubyte*)&CTX.color.fg);
   switch(type){
   case POINT :
@@ -71,7 +73,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
@@ -80,7 +81,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[3], yy[3], zz[3]);
     glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[3], yy[3], zz[3]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   case QUADRANGLE :
     glBegin(GL_LINE_LOOP);
@@ -94,7 +94,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[3], yy[3], zz[3]);
@@ -109,7 +108,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[5], yy[5], zz[5]); glVertex3d(xx[6], yy[6], zz[6]);
     glVertex3d(xx[6], yy[6], zz[6]); glVertex3d(xx[7], yy[7], zz[7]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   case PRISM :
     for(k=0 ; k<6 ; k++){
@@ -117,7 +115,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[2], yy[2], zz[2]);
@@ -129,7 +126,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[3], yy[3], zz[3]); glVertex3d(xx[5], yy[5], zz[5]);
     glVertex3d(xx[4], yy[4], zz[4]); glVertex3d(xx[5], yy[5], zz[5]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   case PYRAMID :
     for(k=0 ; k<5 ; k++){
@@ -137,7 +133,6 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
       yy[k] = Y[k]+Raise[1][k] ;
       zz[k] = Z[k]+Raise[2][k] ;
     }
-    if(View->Light) glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
     glVertex3d(xx[0], yy[0], zz[0]); glVertex3d(xx[1], yy[1], zz[1]);
     glVertex3d(xx[1], yy[1], zz[1]); glVertex3d(xx[2], yy[2], zz[2]);
@@ -148,9 +143,10 @@ void Draw_ElementBoundary(int type, Post_View *View, double *X, double *Y, doubl
     glVertex3d(xx[3], yy[3], zz[3]); glVertex3d(xx[4], yy[4], zz[4]);
     glVertex3d(xx[2], yy[2], zz[2]); glVertex3d(xx[4], yy[4], zz[4]);
     glEnd();
-    if(View->Light) glEnable(GL_LIGHTING);
     break;
   }
+
+  if(View->Light) glEnable(GL_LIGHTING);
 }
 
 void SaturateValues(int saturate, double min, double max,
@@ -667,7 +663,7 @@ void Draw_ScalarPyramid(Post_View *View, int preproNormals,
   static int error=0 ;
   if(!error){
     error = 1;
-    Msg(GERROR, "Pyramid drawing not implemented yet...");
+    Msg(WARNING, "Pyramid drawing not implemented yet...");
   }
 }
 
@@ -838,12 +834,58 @@ void Draw_VectorPyramid(ARGS){
 void Draw_TensorElement(int type, Post_View *View, 
 			double ValMin, double ValMax, double Raise[3][8],
 			double *X, double *Y, double *Z, double *V){
-  static int error=0 ;
-  if(!error){
-    error = 1;
-    Msg(GERROR, "Tensor field visualization is not implemented");
-    Msg(GERROR, "We *need* some ideas on how to implement this!");
-    Msg(GERROR, "Send your ideas to <gmsh@geuz.org>!");
+  int nbnod ;
+
+  switch(type){
+  case POINT : nbnod = 1; break;
+  case LINE : nbnod = 2; break;
+  case TRIANGLE : nbnod = 3; break;
+  case QUADRANGLE : nbnod = 4; break;
+  case TETRAHEDRON : nbnod = 4; break;
+  case HEXAHEDRON : nbnod = 8; break;
+  case PRISM : nbnod = 6; break;
+  case PYRAMID : nbnod = 5; break;
+  }
+
+  /// we want to compute "von mises" value i.e. max eigenvalue
+  /// this will simply call the scalar function
+  if(View->TensorType == DRAW_POST_VONMISES){
+    static const double THIRD = 1.e0/3.e0;
+    double V_VonMises [8];
+    for(int i=0;i<nbnod;i++){
+      double tr = (V[0+9*i]+V[4+9*i]+V[8+9*i])*THIRD;
+      double v11 = V[0+9*i]-tr;
+      double v12 = V[1+9*i];
+      double v13 = V[2+9*i];
+      double v21 = V[3+9*i];
+      double v22 = V[4+9*i]-tr;
+      double v23 = V[5+9*i];
+      double v31 = V[6+9*i];
+      double v32 = V[7+9*i];
+      double v33 = V[8+9*i]-tr;
+      V_VonMises[i] = sqrt (1.5 * ( v11*v11 + v12*v12 + v13*v13 +
+                                    v21*v21 + v22*v22 + v23*v23 +
+                                    v31*v31 + v32*v32 + v33*v33 ) );
+    }
+    switch(type){
+    case POINT : Draw_ScalarPoint(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    case LINE : Draw_ScalarLine(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    case TRIANGLE : Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    case QUADRANGLE : Draw_ScalarQuadrangle(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    case TETRAHEDRON : Draw_ScalarTetrahedron(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    case HEXAHEDRON : Draw_ScalarHexahedron(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    case PRISM : Draw_ScalarPrism(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    case PYRAMID : Draw_ScalarPyramid(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises); break;
+    }
+  }
+  else {
+    static int error=0 ;
+    if(!error){
+      error = 1;
+      Msg(GERROR, "Tensor field visualization is not implemented");
+      Msg(GERROR, "We *need* some ideas on how to implement this!");
+      Msg(GERROR, "Send your ideas to <gmsh@geuz.org>!");
+    }
   }
 }
 
@@ -856,6 +898,7 @@ void Draw_TensorPoint(ARGS){
 void Draw_TensorLine(ARGS){
   Draw_TensorElement(LINE, View, ValMin, ValMax, Raise, X, Y, Z, V); }
 void Draw_TensorTriangle(ARGS){
+  /*
   /// we want to compute "von mises" value i.e. max eigenvalue
   /// this will simply call the scalar function
   if(View->TensorType == DRAW_POST_VONMISES){
@@ -870,7 +913,8 @@ void Draw_TensorTriangle(ARGS){
     }
     Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, X,Y,Z,V_VonMises);
   }
-}
+  */
+  Draw_TensorElement(TRIANGLE, View, ValMin, ValMax, Raise, X, Y, Z, V); }
 void Draw_TensorTetrahedron(ARGS){
   Draw_TensorElement(TETRAHEDRON, View, ValMin, ValMax, Raise, X, Y, Z, V); }
 void Draw_TensorQuadrangle(ARGS){

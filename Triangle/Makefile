@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2003-02-12 01:41:33 geuzaine Exp $
+# $Id: Makefile,v 1.12 2003-02-16 19:17:36 geuzaine Exp $
 
 include ../variables
 
@@ -21,7 +21,7 @@ ${LIB}: ${OBJ}
 	${CC} ${CFLAGS} -c $<
 
 clean:
-	rm -f *.o triangle showme tricall *.?.poly *.?.node *.?.ele
+	rm -f *.o
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

@@ -2,7 +2,7 @@
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2jpeg.cpp,v 1.12 2002-05-25 19:17:45 geuzaine Exp $
+ * $Id: gl2jpeg.cpp,v 1.15 2003-02-17 02:08:46 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -23,8 +23,26 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 
-#include "jpeglib.h"
-#include "jerror.h"
+#if !defined(HAVE_LIBJPEG)
+
+void create_jpeg(FILE *outfile, int width, int height, int quality){
+  Msg(GERROR, "This version of Gmsh was compiled without jpeg support");
+}
+
+#else
+
+/* Some releases of the Cygwin JPEG libraries don't have a correctly
+   updated header file for the INT32 data type; the following define
+   from Shane Hill seems to be a usable workaround... */
+
+#if defined(WIN32)
+#define XMD_H
+#endif
+
+extern "C" {
+#include <jpeglib.h>
+#include <jerror.h>
+}
 
 void my_output_message (j_common_ptr cinfo){
   char buffer[JMSG_LENGTH_MAX];
@@ -73,3 +91,4 @@ void create_jpeg(FILE *outfile, int width, int height, int quality){
   Free(pixels);
 }
 
+#endif

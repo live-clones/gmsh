@@ -50,7 +50,7 @@ StringXString GeneralOptions_String[] = {
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "File into which session specific information is saved, and which is read on startup" },
 
-#ifdef WIN32
+#if defined(WIN32)
   { F|O, "TextEditor" , opt_general_editor , "notepad.exe %s" , 
 #else
   { F|O, "TextEditor" , opt_general_editor , "emacs %s &" ,
@@ -81,7 +81,7 @@ StringXString SolverOptions_String[] = {
     "Visit http://www.geuz.org/getdp/ for more info",
     "Help string for solver 0" },
   { F|O, "Executable0" , opt_solver_executable0 , 
-#ifdef WIN32
+#if defined(WIN32)
     "getdp.exe" , 
 #else
     "getdp" , 
@@ -543,7 +543,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the statistic window" }, 
 
-#ifdef _FLTK
+#if defined(HAVE_FLTK)
   { F|O, "Terminal" , opt_general_terminal , 0. ,
 #else		      
   { F|O, "Terminal" , opt_general_terminal , 1. ,
