@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2001-08-11 23:24:10 geuzaine Exp $
+# $Id: Makefile,v 1.16 2001-08-11 23:32:25 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -53,3 +53,25 @@ depend:
 	$(RM) $(RMFLAGS) Makefile.new
 
 # DO NOT DELETE THIS LINE
+Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+ PluginManager.h CutMap.h LevelsetPlugin.h CutPlane.h CutSphere.h \
+ Skin.h Smooth.h Transform.h
+LevelsetPlugin.o: LevelsetPlugin.cpp LevelsetPlugin.h Plugin.h \
+ ../Common/Options.h ../Common/Message.h ../DataStr/List.h \
+ ../Common/Views.h ../Common/ColorTable.h ../Common/Iso.h \
+ ../Common/Numeric.h
+CutPlane.o: CutPlane.cpp CutPlane.h LevelsetPlugin.h Plugin.h \
+ ../Common/Options.h ../Common/Message.h ../DataStr/List.h
+CutSphere.o: CutSphere.cpp CutSphere.h LevelsetPlugin.h Plugin.h \
+ ../Common/Options.h ../Common/Message.h ../DataStr/List.h
+CutMap.o: CutMap.cpp CutMap.h LevelsetPlugin.h Plugin.h \
+ ../Common/Options.h ../Common/Message.h ../DataStr/List.h
+Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+ Smooth.h ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h
+Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
+ ../Common/Message.h Transform.h ../DataStr/List.h ../Common/Views.h \
+ ../Common/ColorTable.h
+Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
+ Skin.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+ ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
+ ../DataStr/Malloc.h
