@@ -1,4 +1,4 @@
-$Id: README.txt,v 1.1 2001-03-04 16:27:07 geuzaine Exp $
+$Id: README.txt,v 1.2 2001-05-07 08:38:02 geuzaine Exp $
 
 For Windows versions of Gmsh only:
 ==================================
@@ -30,3 +30,11 @@ the HOME variable is defined, e.g. in your autoexec.bat file), $TEMP
 variables are defined, Gmsh will try to save/load its configuration
 files from the current working directory.
 
+4) About solvers:
+
+Gmsh can be used as a front end to solvers, e.g. to GetDP. The default
+behaviour of Gmsh is to look for these executables in the same
+directory as the Gmsh executable (i.e. to look for getdp.exe in the
+same directory as gmsh.exe). If you don't want to copy the solver
+executable to this directory, you have to modify the path in the
+solver command defined in the solver options.
