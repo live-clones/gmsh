@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.26 2002-05-18 07:56:49 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.27 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 extern Mesh      *THEM;
 extern Context_T  CTX;
 
-Curve *THEC;
+static Curve *THEC=NULL;
 
 // ipar[0] = nbpoints
 // abs(ipar[1]) = method
@@ -115,7 +115,7 @@ double F_Lc (double t){
 }
 
 void Maillage_Curve (void *data, void *dummy){
-  Curve **pc, *c;
+  Curve *c;
   Simplex *s;
   double b, a, d, dt, dp, t;
   int i, N, count, NUMP;
@@ -123,9 +123,7 @@ void Maillage_Curve (void *data, void *dummy){
   List_T *Points;
   IntPoint P1, P2;
 
-  pc = (Curve **) data;
-  c = *pc;
-  THEC = c;
+  THEC = c = *(Curve **) data;
 
   if (c->Num < 0)
     return;

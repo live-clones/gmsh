@@ -1,4 +1,4 @@
-// $Id: 2D_Parametric.cpp,v 1.8 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: 2D_Parametric.cpp,v 1.9 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,7 @@ extern Mesh      *THEM;
 extern Context_T  CTX;
 
 static Surface *SURF;
+
 Surface *PARAMETRIC;
 
 /* SURFACES CYLINDRIQUES */

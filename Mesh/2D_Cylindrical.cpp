@@ -1,4 +1,4 @@
-// $Id: 2D_Cylindrical.cpp,v 1.10 2002-05-18 07:56:49 geuzaine Exp $
+// $Id: 2D_Cylindrical.cpp,v 1.11 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -25,20 +25,20 @@ extern Mesh      *THEM;
 extern Context_T  CTX;
 
 static Surface *SURF;
-double TETAMIN, TETAMAX, TETAFABSMIN;
+static double THETAMIN, THETAMAX;
 
 void ChangePi (void *a, void *dum){
   Vertex *v;
   v = *(Vertex **) a;
 
-  if ((v->Pos.X / SURF->Cyl.radius1) >= TETAMIN + .99999 * Pi){
+  if ((v->Pos.X / SURF->Cyl.radius1) >= THETAMIN + .99999 * Pi){
     Msg(INFO, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
     v->Pos.X -= (2. * Pi) * SURF->Cyl.radius1;
     Msg(INFO, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
   }
 }
 
-void TETAMINMAX (void *a, void *dum){
+void THETAMINMAX (void *a, void *dum){
   Vertex *v;
   double ZRepere, S, C, y[3], teta;
   double p[3], z[3], x[3], o[3];
@@ -70,8 +70,8 @@ void TETAMINMAX (void *a, void *dum){
   prosca (o, x, &C);
   prosca (o, y, &S);
   teta = atan2 (S, C);
-  TETAMIN = DMIN (teta, TETAMIN);
-  TETAMAX = DMAX (teta, TETAMAX);
+  THETAMIN = DMIN (teta, THETAMIN);
+  THETAMAX = DMAX (teta, THETAMAX);
 }
 
 // Cylindrical surfaces
@@ -182,7 +182,7 @@ void XYZtoCone (void *a, void *dum){
   prosca (o, x, &C);
   prosca (o, y, &S);
   teta = atan2 (S, C);
-  if (teta >= TETAMIN + .99999 * Pi)
+  if (teta >= THETAMIN + .99999 * Pi)
     teta -= (2. * Pi);
 
   inclinaison = Pi * SURF->Cyl.radius2 / 180.;
@@ -266,9 +266,9 @@ int MeshCylindricalSurface (Surface * s){
       Tree_Insert (s->Vertices, List_Pointer (pC->Vertices, j));
     }
   }
-  TETAMIN = 2. * Pi;
-  TETAMAX = -2. * Pi;
-  Tree_Action (s->Vertices, TETAMINMAX);
+  THETAMIN = 2. * Pi;
+  THETAMAX = -2. * Pi;
+  Tree_Action (s->Vertices, THETAMINMAX);
   Tree_Action (s->Vertices, Freeze_Vertex);
 
   if (s->Typ == MSH_SURF_CYLNDR)
@@ -276,9 +276,9 @@ int MeshCylindricalSurface (Surface * s){
   else if (s->Typ == MSH_SURF_CONE)
     Tree_Action (s->Vertices, XYZtoCone);
 
-  Msg(DEBUG, "%12.5E %12.5E", TETAMAX, TETAMIN);
+  Msg(DEBUG, "%12.5E %12.5E", THETAMAX, THETAMIN);
 
-  if ((s->Typ == MSH_SURF_CYLNDR) && (TETAMAX - TETAMIN > Pi * 1.01))
+  if ((s->Typ == MSH_SURF_CYLNDR) && (THETAMAX - THETAMIN > Pi * 1.01))
     Tree_Action (s->Vertices, ChangePi);
 
   ori = Calcule_Contours (s);

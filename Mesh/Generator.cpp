@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.34 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: Generator.cpp,v 1.35 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -26,8 +26,6 @@
 extern Mesh     *THEM;
 extern Context_T CTX;
 
-static List_T *Curves;
-
 void GetStatistics (double s[50]){
   int i;
   if(!THEM){
@@ -52,11 +50,13 @@ void ApplyLcFactor_Point(void *a, void *b){
   }
   v->lc *= CTX.mesh.lc_factor;
 }
+
 void ApplyLcFactor_Attractor(void *a, void *b){
   Attractor *v = *(Attractor**)a;
   v->lc1 *= CTX.mesh.lc_factor;
   v->lc2 *= CTX.mesh.lc_factor;
 }
+
 void ApplyLcFactor(Mesh *M){
   Tree_Action(M->Points, ApplyLcFactor_Point);
   List_Action(M->Metric->Attractors, ApplyLcFactor_Attractor);
@@ -74,6 +74,7 @@ void Maillage_Dimension_0 (Mesh * M){
   // - FUNCTION
   Create_BgMesh (WITHPOINTS, .2, M);
 }
+
 void Maillage_Dimension_1 (Mesh * M){
   double t1, t2;
   t1 = Cpu();
@@ -89,9 +90,9 @@ void Maillage_Dimension_2 (Mesh * M){
 
   t1 = Cpu();
 
-  /* maillage 1-D inverses */
+  // create reverse 1D meshes
 
-  Curves = Tree2List (M->Curves);
+  List_T *Curves = Tree2List (M->Curves);
   for (i = 0; i < List_Nbr (Curves); i++){
     List_Read (Curves, i, &c);
     if (c->Num > 0){
@@ -107,6 +108,8 @@ void Maillage_Dimension_2 (Mesh * M){
 
   Msg(DEBUG, "Shortest curve has length %g", shortest);
 
+  // mesh 2D
+  
   Tree_Action (M->Surfaces, Maillage_Surface);
 
   t2 = Cpu();  
@@ -136,12 +139,12 @@ void Maillage_Dimension_3 (Mesh * M){
   List_Delete (list);
   Tree_Insert (M->Volumes, &v);
 
-  if(CTX.mesh.oldxtrude){//old automatic extrusion algorithm
-    Extrude_Mesh_Old(M);
+  if(CTX.mesh.oldxtrude){
+    Extrude_Mesh_Old(M); // old automatic extrusion algorithm
   }
   else{
-    Extrude_Mesh(M->Volumes);
-    Tree_Action(M->Volumes, Maillage_Volume);
+    Extrude_Mesh(M->Volumes); // new extrusion
+    Tree_Action(M->Volumes, Maillage_Volume); // delaunay of remaining parts
   }
 
   t2 = Cpu();
@@ -173,8 +176,7 @@ void Init_Mesh (Mesh * M, int all){
     Tree_Delete (M->VertexEdges);
   }
   if (M->Simplexes){
-    // Tree_Action (M->Simplexes, Free_Simplex);
-    //produit des crashes innatendus...
+    // Tree_Action (M->Simplexes, Free_Simplex); //produit des crashes innatendus...
     // normal, cette memoire est dupliquee 
     // dans les volumes. Je crois qu'on a besoin
     // des 2, ce truc ne provoque pas de leaks.
@@ -201,7 +203,7 @@ void Init_Mesh (Mesh * M, int all){
     Tree_Delete (M->Surfaces);
   }
   if (M->Volumes){
-    Tree_Action (M->Volumes, Free_Volume);//produit des crashes innatendus...
+    Tree_Action (M->Volumes, Free_Volume); //produit des crashes innatendus...
     Tree_Delete (M->Volumes);
   }
   if (M->PhysicalGroups){
@@ -243,7 +245,7 @@ void mai3d (Mesh * M, int Asked){
 
   oldstatus = M->status;
 
-  /* initialisations - Maillage 0-D */
+  // re-read data
 
   if ((Asked > oldstatus && Asked >= 0 && oldstatus < 0) ||
       (Asked < oldstatus)){
@@ -253,7 +255,7 @@ void mai3d (Mesh * M, int Asked){
 
   CTX.threads_lock = 1 ;
   
-  /* Maillage 1-D */
+  // 1D mesh
   
   if ((Asked > oldstatus && Asked > 0 && oldstatus < 1) ||
       (Asked < oldstatus && Asked > 0)){
@@ -271,7 +273,7 @@ void mai3d (Mesh * M, int Asked){
     M->status = 1;
   }
   
-  /* Maillage 2-D */
+  // 2D mesh
   
   if ((Asked > oldstatus && Asked > 1 && oldstatus < 2) ||
       (Asked < oldstatus && Asked > 1)){
@@ -290,7 +292,7 @@ void mai3d (Mesh * M, int Asked){
     M->status = 2;
   }
 
-  /* Maillage 3-D */
+  // 3D mesh
 
   if ((Asked > oldstatus && Asked > 2 && oldstatus < 3) ||
       (Asked < oldstatus && Asked > 2)){

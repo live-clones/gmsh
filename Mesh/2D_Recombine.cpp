@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.11 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.12 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -26,10 +26,10 @@
 
 extern Context_T CTX;
 
-Tree_T    *RecEdges,*Triangles;
-Tree_T    *RecSimplex,*TREEELM;
-double     ALPHA;
-int        RECNUM;
+static Tree_T    *RecEdges,*Triangles;
+static Tree_T    *RecSimplex,*TREEELM;
+static double     ALPHA;
+static int        RECNUM;
 
 void addTriangles(void *data, void *dum){
   Simplex *S;

@@ -1,4 +1,4 @@
-// $Id: 2D_Util.cpp,v 1.14 2002-05-18 07:56:50 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.15 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -367,7 +367,6 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
 
 }
   
-/********************************************************************/
 
 void alloue_Mai_Pts(maillage *mai , int Nballoc , int incrAlloc){
   int i;

@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.10 2002-05-18 07:56:49 geuzaine Exp $
+// $Id: 2D_Elliptic.cpp,v 1.11 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -54,7 +54,8 @@ int MeshEllipticSurface (Surface * sur){
   if (!(S[3] = FindPoint (sur->ipar[3], THEM)))
     return 0;
   N1 = N2 = N3 = N4 = 0;
-  /*Remplissure de la premiere cuvee de merde */
+
+  // step 1
   l1 = List_Create (20, 10, sizeof (Vertex *));
   for (i = 0; i < nb; i++){
     if (!compareVertex (&GG[i]->beg, &S[0])){
@@ -71,7 +72,8 @@ int MeshEllipticSurface (Surface * sur){
       while (compareVertex (&GG[j]->beg, &S[1]));
     }
   }
-  /*Remplissure de la deuxieme cuvee de merde */
+  
+  // step 2
   l2 = List_Create (20, 10, sizeof (Vertex *));
   for (i = 0; i < nb; i++){
     if (!compareVertex (&GG[i]->beg, &S[1])){
@@ -88,7 +90,8 @@ int MeshEllipticSurface (Surface * sur){
       while (compareVertex (&GG[j]->beg, &S[2]));
     }
   }
-  /*Remplissure de la TROISIEME cuvee de merde */
+
+  // step 3
   l3 = List_Create (20, 10, sizeof (Vertex *));
   for (i = 0; i < nb; i++){
     if (!compareVertex (&GG[i]->beg, &S[2])){
@@ -105,7 +108,8 @@ int MeshEllipticSurface (Surface * sur){
       while (compareVertex (&GG[j]->beg, &S[3]));
     }
   }
-  /*Remplissure de la quatrieme cuvee de merde */
+
+  // step 4
   l4 = List_Create (20, 10, sizeof (Vertex *));
   for (i = 0; i < nb; i++){
     if (!compareVertex (&GG[i]->beg, &S[3])){
@@ -122,6 +126,7 @@ int MeshEllipticSurface (Surface * sur){
       while (compareVertex (&GG[j]->beg, &S[0]));
     }
   }
+
   N1 = List_Nbr (l1);
   N2 = List_Nbr (l2);
   N3 = List_Nbr (l3);
@@ -133,7 +138,6 @@ int MeshEllipticSurface (Surface * sur){
     List_Delete (l4);
     return 0;
   }
-
 
   sur->Nu = N1;
   sur->Nv = N2;

@@ -1,4 +1,4 @@
-// $Id: 2D_InitMesh.cpp,v 1.13 2002-05-18 07:56:49 geuzaine Exp $
+// $Id: 2D_InitMesh.cpp,v 1.14 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -75,12 +75,11 @@
 #include "Mesh.h"
 #include "2D_Mesh.h"
 
-static int            pointA,pointB,Counter,Stagnant,StopNow;
-static Tree_T        *ETree=NULL,*EDToSwap=NULL;
-
 extern PointRecord   *gPointArray;
 
-int                  *permut;
+static Tree_T  *ETree=NULL,*EDToSwap=NULL;
+static int      pointA,pointB,Counter,Stagnant,StopNow;
+static int     *permut;
 
 typedef struct {
   int from;

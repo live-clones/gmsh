@@ -1,4 +1,4 @@
-// $Id: 2D_DivAndConq.cpp,v 1.13 2002-05-18 07:56:49 geuzaine Exp $
+// $Id: 2D_DivAndConq.cpp,v 1.14 2002-05-20 02:15:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -41,8 +41,7 @@
 
 extern double LC2D;
 
-PointRecord *pPointArray;
-DocPeek      gDocTemp;
+static PointRecord *pPointArray;
 
 int Insert(PointNumero a,PointNumero b);
 int Delete(PointNumero a,PointNumero b);
@@ -339,7 +338,6 @@ int DelaunayAndVoronoi(DocPeek doc){
   if (doc->numPoints < 2) return(1);
 
   qsort(doc->points,doc->numPoints,sizeof(PointRecord),comparePoints);
-  gDocTemp = doc;
   recur_trig(0,doc->numPoints - 1);  
 
   return 1;        
