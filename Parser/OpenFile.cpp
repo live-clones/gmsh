@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.19 2001-08-11 23:28:34 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.20 2001-09-06 05:25:19 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -110,6 +110,9 @@ void OpenProblem(char *name){
 
   InitSymbols();
   Init_Mesh(&M, 1);
+
+  // Initialize pseudo random mesh generator to the same seed
+  srand(1);
 
   ParseString(TheOptString);
 
