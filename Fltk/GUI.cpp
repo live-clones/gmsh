@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.411 2005-01-13 05:45:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.412 2005-01-13 20:35:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2706,24 +2706,28 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Offset");
       o->hide();
-      
-      int ss = 2*IW/3/3+2;
-      view_value[51] = new Fl_Value_Input(L + width/2       , 2 * WB + 1 * BH, ss, BH);
-      view_value[52] = new Fl_Value_Input(L + width/2 + ss  , 2 * WB + 1 * BH, ss, BH);
-      view_value[53] = new Fl_Value_Input(L + width/2 + 2*ss, 2 * WB + 1 * BH, ss, BH, "X");
-      view_value[40] = new Fl_Value_Input(L + width/2 + 4*ss, 2 * WB + 1 * BH, IW/2, BH);
+
+      Fl_Box *b = new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Coordinate transformation:");
+      b->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
+
+      int ss = 2*IW/3/3+4;
+
+      view_value[51] = new Fl_Value_Input(L + 2 * WB       , 2 * WB + 2 * BH, ss, BH);
+      view_value[52] = new Fl_Value_Input(L + 2 * WB + ss  , 2 * WB + 2 * BH, ss, BH);
+      view_value[53] = new Fl_Value_Input(L + 2 * WB + 2*ss, 2 * WB + 2 * BH, ss, BH, " X");
+      view_value[40] = new Fl_Value_Input(L + 2 * WB + IW  , 2 * WB + 2 * BH, 7*IW/10, BH);
       view_value[40]->align(FL_ALIGN_RIGHT);
 
-      view_value[54] = new Fl_Value_Input(L + width/2       , 2 * WB + 2 * BH, ss, BH);
-      view_value[55] = new Fl_Value_Input(L + width/2 + ss  , 2 * WB + 2 * BH, ss, BH);
-      view_value[56] = new Fl_Value_Input(L + width/2 + 2*ss, 2 * WB + 2 * BH, ss, BH, "Y +");
-      view_value[41] = new Fl_Value_Input(L + width/2 + 4*ss, 2 * WB + 2 * BH, IW/2, BH);
+      view_value[54] = new Fl_Value_Input(L + 2 * WB       , 2 * WB + 3 * BH, ss, BH);
+      view_value[55] = new Fl_Value_Input(L + 2 * WB + ss  , 2 * WB + 3 * BH, ss, BH);
+      view_value[56] = new Fl_Value_Input(L + 2 * WB + 2*ss, 2 * WB + 3 * BH, ss, BH, " Y +");
+      view_value[41] = new Fl_Value_Input(L + 2 * WB + IW  , 2 * WB + 3 * BH, 7*IW/10, BH);
       view_value[41]->align(FL_ALIGN_RIGHT);
 
-      view_value[57] = new Fl_Value_Input(L + width/2       , 2 * WB + 3 * BH, ss, BH);
-      view_value[58] = new Fl_Value_Input(L + width/2 + ss  , 2 * WB + 3 * BH, ss, BH);
-      view_value[59] = new Fl_Value_Input(L + width/2 + 2*ss, 2 * WB + 3 * BH, ss, BH, "Z");
-      view_value[42] = new Fl_Value_Input(L + width/2 + 4*ss, 2 * WB + 3 * BH, IW/2, BH);
+      view_value[57] = new Fl_Value_Input(L + 2 * WB       , 2 * WB + 4 * BH, ss, BH);
+      view_value[58] = new Fl_Value_Input(L + 2 * WB + ss  , 2 * WB + 4 * BH, ss, BH);
+      view_value[59] = new Fl_Value_Input(L + 2 * WB + 2*ss, 2 * WB + 4 * BH, ss, BH, " Z");
+      view_value[42] = new Fl_Value_Input(L + 2 * WB + IW  , 2 * WB + 4 * BH, 7*IW/10, BH);
       view_value[42]->align(FL_ALIGN_RIGHT);
       for(int i = 51; i <= 59; i++){
 	view_value[i]->minimum(-1.);
@@ -2732,34 +2736,34 @@ void GUI::create_option_window()
 	view_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      view_value[43] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "X raise");
+      view_value[43] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 2 * BH, 7*IW/10, BH, "X raise");
       view_value[43]->align(FL_ALIGN_RIGHT);
 
-      view_value[44] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Y raise");
+      view_value[44] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 3 * BH, 7*IW/10, BH, "Y raise");
       view_value[44]->align(FL_ALIGN_RIGHT);
 
-      view_value[45] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Z raise");
+      view_value[45] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 4 * BH, 7*IW/10, BH, "Z raise");
       view_value[45]->align(FL_ALIGN_RIGHT);
 
-      view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Use general raise expressions");
+      view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Use general transformation expressions");
       view_butt[6]->type(FL_TOGGLE_BUTTON);
       view_butt[6]->down_box(GMSH_TOGGLE_BOX);
       view_butt[6]->selection_color(GMSH_TOGGLE_COLOR);
 
-      view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Raise data source");
+      view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Data source");
       view_choice[11]->align(FL_ALIGN_RIGHT);
       view_choice[11]->add("Self");
 
-      view_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Raise factor");
+      view_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Factor");
       view_value[2]->align(FL_ALIGN_RIGHT);
 
-      view_input[4] = new Fl_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "X raise expression");
+      view_input[4] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "X expression");
       view_input[4]->align(FL_ALIGN_RIGHT);
 
-      view_input[5] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Y raise expression");
+      view_input[5] = new Fl_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Y expression");
       view_input[5]->align(FL_ALIGN_RIGHT);
 
-      view_input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Z raise expression");
+      view_input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Z expression");
       view_input[6]->align(FL_ALIGN_RIGHT);
 
       o->end();
