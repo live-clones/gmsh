@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.178 2002-01-03 10:25:06 geuzaine Exp $
+# $Id: Makefile,v 1.179 2002-01-19 00:13:33 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 33
@@ -325,7 +325,7 @@ link-linux-gcc-2.95:
 	$(HOME)/gcc-2.95.3/bin/g++ -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) -L/usr/X11R6/lib $(X11_LIB) -lm -ldl
 linux-gcc-2.95: compile-linux-gcc-2.95 link-linux-gcc-2.95 strip-bin
-linux-gcc-2.95-distrib:
+distrib-linux-gcc-2.95:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -384,7 +384,7 @@ link-dec:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
 dec: compile-dec link-dec strip-bin
-dec-distrib:
+distrib-dec:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -419,7 +419,7 @@ link-hp:
                       -L$(HOME)/SOURCES/Mesa-3.1/lib $(OPENGL_LIB)\
                       -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
 hp: compile-hp link-hp strip-bin
-hp-distrib:
+distrib-hp:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -453,7 +453,7 @@ link-ibm:
 	$(CXX) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) -lm
 ibm: compile-ibm link-ibm strip-bin
-ibm-distrib:
+distrib-ibm:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -489,7 +489,7 @@ link-sgi:
 	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB) $(X11_LIB) $(OPENGL_LIB) -lm
 sgi: compile-sgi link-sgi strip-bin
-sgi-distrib:
+distrib-sgi:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
@@ -547,7 +547,7 @@ link-cygwin:
                  -lglu32 -lopengl32 -lgdi32 -lwsock32 -lm
 cygwin: compile-cygwin link-cygwin
 	strip $(GMSH_BIN_DIR)/gmsh.exe
-cygwin-distrib:
+distrib-cygwin:
 	make tag
 	make cygwin
 	make distrib-win
@@ -627,7 +627,7 @@ link-sun:
                  -L$(HOME)/SOURCES/fltk/lib $(FLTK_LIB)\
                  $(X11_LIB) -lXext -lsocket -lnsl -ldl -lm
 sun: compile-sun link-sun strip-bin
-sun-distrib:
+distrib-sun:
 	make tag
 	make clean
 	@for i in $(GMSH_BOX_DIR); do (cd $$i && $(MAKE) \
