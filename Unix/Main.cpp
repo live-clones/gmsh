@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.28 2000-12-09 22:26:13 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.29 2000-12-14 13:10:55 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -52,6 +52,7 @@ char gmsh_help[]      =
   "  -degree int           set mesh degree (default: 1)\n"
   "  -scale float          set global scaling factor (default: 1.0)\n"
   "  -clscale float        set characteristic length scaling factor (default: 1.0)\n"
+  "  -rand float           set random perturbation factor (default: 1.e-5)\n"
   "  -bgm file             load backround mesh from file\n"
   "  -interactive          display 2D mesh construction interactively\n"
   "Post Processing options:\n"
