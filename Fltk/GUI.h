@@ -51,6 +51,7 @@
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
+#include "File_Picker.h"
 
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
 #include <FL/Fl_Sys_Menu_Bar.H>
@@ -129,6 +130,9 @@ class GUI{
 public:
 
   Fl_Bitmap  *ortho_bmp, *persp_bmp;
+
+  // file chooser
+  File_Picker *fc;
 
   // menu window
   Fl_Window        *m_window ;

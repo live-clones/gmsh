@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.352 2004-09-23 23:13:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.353 2004-09-25 06:16:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -710,6 +710,7 @@ GUI::GUI(int argc, char **argv)
   int i;
 
   // initialize static windows
+  fc = NULL;
   m_window = NULL;
   g_window = NULL;
   opt_window = NULL;

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.185 2004-09-23 23:14:38 geuzaine Exp $
+// $Id: Options.cpp,v 1.186 2004-09-25 06:16:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1897,6 +1897,20 @@ double opt_general_context_position1(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.ctx_position[1] = (int)val;
   return CTX.ctx_position[1];
+}
+
+double opt_general_file_chooser_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.file_chooser_position[0] = (int)val;
+  return CTX.file_chooser_position[0];
+}
+
+double opt_general_file_chooser_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.file_chooser_position[1] = (int)val;
+  return CTX.file_chooser_position[1];
 }
 
 double opt_general_system_menu_bar(OPT_ARGS_NUM)

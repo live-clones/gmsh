@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.277 2004-09-19 16:44:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.278 2004-09-25 06:16:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -56,11 +56,6 @@ extern Context_T CTX;
 
 // File chooser (re)definitions
 
-#include <FL/filename.H>
-#include <FL/Fl_File_Chooser.H>
-
-static Fl_File_Chooser *fc = NULL;
-
 int file_chooser(int multi, int create, const char *message,
 		 const char *pat, int patindex, char *fname=NULL)
 {
@@ -69,56 +64,54 @@ int file_chooser(int multi, int create, const char *message,
   Fl_File_Chooser::show_label = "Format:";
   Fl_File_Chooser::all_files_label = "All files (*)";
 
-  if(!fc) {
-    fc = new Fl_File_Chooser(getenv("PWD") ? "." : CTX.home_dir, pat, 
-			     Fl_File_Chooser::SINGLE, message);
+  if(!WID->fc) {
+    WID->fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, pat, 
+			      Fl_File_Chooser::SINGLE, message);
     strncpy(oldfilter, pat, 1024);
   }
 
-  fc->label(message);
+  WID->fc->label(message);
 
   if(fname)
-    fc->value(fname);
+    WID->fc->value(fname);
 
   if(strncmp(oldfilter, pat, 1024)) {
     strncpy(oldfilter, pat, 1024);
-    fc->filter(pat);
-    fc->filter_value(patindex);
+    WID->fc->filter(pat);
+    WID->fc->filter_value(patindex);
   }
 
   if(multi)
-    fc->type(Fl_File_Chooser::MULTI);
+    WID->fc->type(Fl_File_Chooser::MULTI);
   else if(create)
-    fc->type(Fl_File_Chooser::CREATE);
+    WID->fc->type(Fl_File_Chooser::CREATE);
   else
-    fc->type(Fl_File_Chooser::SINGLE);
+    WID->fc->type(Fl_File_Chooser::SINGLE);
 
-  fc->show();
-  //fc->newButton->parent()->parent()->position(200,200);
-  //fc->newButton->parent()->parent()->show();
+  WID->fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
+  WID->fc->show();
 
-  while(fc->shown())
+  while(WID->fc->shown())
     Fl::wait();
 
-  if(fc->value())
-    return fc->count();
+  if(WID->fc->value())
+    return WID->fc->count();
   else
     return 0;
 }
 
 char *file_chooser_get_name(int num)
 {
-  // to get the relative path:
-  // static char retname[1024];
-  // fl_filename_relative(retname, sizeof(retname), fc->value(num));
-  // return retname;
-
-  return (char *)fc->value(num);
+  if(!WID->fc)
+    return "";
+  return (char *)WID->fc->value(num);
 }
 
 int file_chooser_get_filter()
 {
-  return fc->filter_value();
+  if(!WID->fc)
+    return 0;
+  return WID->fc->filter_value();
 }
 
 // arrow editor

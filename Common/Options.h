@@ -196,6 +196,8 @@ double opt_general_solver_position0(OPT_ARGS_NUM);
 double opt_general_solver_position1(OPT_ARGS_NUM);
 double opt_general_context_position0(OPT_ARGS_NUM);
 double opt_general_context_position1(OPT_ARGS_NUM);
+double opt_general_file_chooser_position0(OPT_ARGS_NUM);
+double opt_general_file_chooser_position1(OPT_ARGS_NUM);
 double opt_general_viewport2(OPT_ARGS_NUM);
 double opt_general_viewport3(OPT_ARGS_NUM);
 double opt_general_menu_position0(OPT_ARGS_NUM);

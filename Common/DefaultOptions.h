@@ -454,6 +454,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Use fake transparency (cheaper than the real thing, but incorrect)" },
   { F|O, "FastRedraw" , opt_general_fast_redraw, 1. ,
     "Draw simplified model while rotating, panning and zooming" },
+  { F|S, "FileChooserPositionX" , opt_general_file_chooser_position0 , 200. , 
+    "Horizontal position (in pixels) of the upper left corner of the file chooser windows" }, 
+  { F|S, "FileChooserPositionY" , opt_general_file_chooser_position1 , 200. ,
+    "Vertical position (in pixels) of the upper left corner of the file chooser windows" }, 
   { F|S, "FontSize" , opt_general_fontsize , 12. , 
     "Size of the font in the user interface" },
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.62 2004-08-09 10:32:32 geuzaine Exp $
+# $Id: Makefile,v 1.63 2004-09-25 06:16:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -119,14 +119,14 @@ Iso.o: Iso.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h Draw.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
   ../Numeric/Numeric.h
-Entity.o: Entity.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
-  ../Numeric/Numeric.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
-  ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
-  ../Mesh/STL.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/Context.h
+Entity.o: Entity.cpp ../Mesh/Mesh.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/Tools.h ../Common/GmshUI.h \
+  ../Numeric/Numeric.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/Context.h
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

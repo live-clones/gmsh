@@ -81,6 +81,7 @@ public :
   int stat_position[2];       // position of the statistics window on the screen
   int ctx_position[2];        // position of the geo/mesh context windows on the screen
   int solver_position[2];     // position of the solver windows on the screen
+  int file_chooser_position[2]; // position of the file chooser window on the screen
   int system_menu_bar;        // use the system menu bar on MacOS?
 
   int batch;                  // 0=full gfx; -1=just parse; 1,2,3=batch 1D, 2D, 3D mesh 
