@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.51 2004-03-30 18:17:11 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.52 2004-04-13 18:49:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -110,8 +110,16 @@ int ParseFile(char *f, int silent, int close)
   fgets(tmp, sizeof(tmp), yyin);
   fsetpos(yyin, &position);
 
-  while(!feof(yyin))
+  int errorcount = 0;
+  while(!feof(yyin)){
     yyparse();
+    if(yyerrorstate)
+      errorcount++;
+    if(errorcount > 20){
+      Msg(GERROR, "Too many errors: aborting...");
+      break;
+    }
+  }
   if(THEM)
     status = THEM->status;
   else
