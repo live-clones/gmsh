@@ -1,4 +1,4 @@
-/* $Id: mysolver.c,v 1.5 2004-05-22 01:24:19 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.1 2005-01-13 20:36:54 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *

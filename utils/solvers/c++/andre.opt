@@ -1,0 +1,10 @@
+Solver.Name1 = "Solveur Andre";
+Solver.Help1 = "Mon petit solveur";
+Solver.Executable1 = "./andre.exe";
+Solver.OptionCommand1 = "-options";
+Solver.FirstOption1 = "Mes options";
+Solver.FirstButton1 = "Run !";
+Solver.FirstButtonCommand1 = "-run %s";
+Solver.ClientServer1 = 1;
+Solver.MergeViews1 = 1;
+Solver.PopupMessages1 = 1;

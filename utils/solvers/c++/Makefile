@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2005-01-01 19:35:41 geuzaine Exp $
+# $Id: Makefile,v 1.1 2005-01-13 20:36:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -19,17 +19,13 @@
 # 
 # Please report all bugs and problems to <gmsh@geuz.org>.
 
-include ../../variables
+include ../../../variables
 
-mysolver: mysolver.c GmshClient.c
-	${CXX} ${OPTIM} -o mysolver.exe mysolver.c GmshClient.c
-
-tgz:
-	tar zcvf mysolver.tgz mysolver.c mysolver.opt GmshClient.c GmshClient.h
-	tar zcvf myperlsolver.tgz myperlsolver.pl myperlsolver.opt GMSH_CLIENT.pm
+andre: andre.cpp
+	${CXX} ${OPTIM} -o andre.exe andre.cpp
 
 clean:
-	rm -f *.o *.exe
+	rm -f *.o *.exe *.pos
 
 depend:
 	true

@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.10 2005-01-01 18:57:19 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.1 2005-01-13 20:36:54 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -130,9 +130,9 @@ int Gmsh_Connect(char *sockname)
       return -1;  /* Error: Couldn't create socket */
     if(!(server = gethostbyname(remote)))
       return -3; /* Error: No such host */
-    bzero((char *) &addr_in, sizeof(addr_in));
+    memset((char *) &addr_in, 0, sizeof(addr_in));
     addr_in.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, (char *)&addr_in.sin_addr.s_addr, server->h_length);
+    memcpy((char *)&addr_in.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
     addr_in.sin_port = htons(portno);
     addr_in.sin_addr.s_addr = INADDR_ANY;
     for(tries = 0; tries < 5; tries++) {
