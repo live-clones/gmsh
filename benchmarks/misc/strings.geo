@@ -1,6 +1,5 @@
 
-
-Include "../../tutorial/view1.pos" ;
+MergeWithBoundingBox "../../tutorial/view1.pos" ;
 
 View[0].Name = "gloups.prout" ;
 
