@@ -1,20 +1,16 @@
-/* $Id: Simplex.h,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
-#ifndef _SIMPLEX_GMSH_
-#define _SIMPLEX_GMSH_
-#include <stdio.h>
-#include <iostream.h>
-#include <stddef.h>
-#include <math.h>
-#include <stdlib.h>
+/* $Id: Simplex.h,v 1.3 2000-11-23 15:05:59 geuzaine Exp $ */
+#ifndef _SIMPLEX_H_
+#define _SIMPLEX_H_
+
 #include "Vertex.h"
 
 typedef struct {
   Vertex *V[3];
 }Face;
 
-class Simplex
-{
-  public:
+class Simplex{
+
+public:
   int     Num;           /* Numero                                       */
   int     iEnt;          /* Entite geometrique                           */
   Face    F[4];          /* 4 faces                                      */
@@ -39,7 +35,7 @@ class Simplex
   double AireFace (Vertex *V[3]);
   double surfsimpl();
   int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
-		     double *xc,double *yc);
+		   double *xc,double *yc);
   double Volume_Simplexe2D();
   void Center_Ellipsum_2D (double m[3][3]);
   int Pt_In_Ellipsis (Vertex *v,double m[3][3]);
@@ -56,6 +52,7 @@ class Simplex
   double lij (int i, int j);
   double rhoin ();
 };
+
 int compareSimplex(const void *a, const void *b);
 Simplex *Create_Simplex (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);
 Simplex *Create_Quadrangle (Vertex *v1, Vertex *v2, Vertex *v3, Vertex *v4);

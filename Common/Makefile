@@ -49,11 +49,12 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  Const.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/Metric.h \
-  ../Graphics/Draw.h ../Common/Views.h ../Common/Const.h \
-  ../Graphics/ColorTable.h Context.h
-Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Views.h Const.h \
-  ../Graphics/ColorTable.h Context.h
+ ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+ ../DataStr/Tools.h Const.h ../Geo/Geo.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
+ ../Common/Views.h ../Common/Const.h ../Graphics/ColorTable.h \
+ Context.h
+Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+ ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+ ../DataStr/Tools.h Views.h Const.h ../Graphics/ColorTable.h Context.h

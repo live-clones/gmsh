@@ -1,4 +1,4 @@
-/* $Id: CbMesh.cpp,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: CbMesh.cpp,v 1.3 2000-11-23 15:06:03 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -12,7 +12,7 @@
 extern Widgets_T  WID;
 extern Context_T  CTX;
 extern Mesh       M;
-extern char       TheFileName[256];
+extern char       TheFileName[NAME_STR_L];
 
 extern char   trsf_pts_text[100], trsf_type_text[100];
 extern char   trsf_vol_text[100], char_length_text[100];

@@ -1,4 +1,4 @@
-/* $Id: Mesh.h,v 1.3 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Mesh.h,v 1.4 2000-11-23 15:05:59 geuzaine Exp $ */
 #ifndef _MESH_H_
 #define _MESH_H_
 
@@ -19,11 +19,6 @@
 #define BOF         1
 #define A_TOUT_PRIX 2
 
-#define LossMemory  1
-#define BadLink2    2
-#define DegTriangle 3
-#define PtExterior  4
-
 #define CENTER_CIRCCIRC 1
 #define VORONOI_INSERT  2
 #define BARYCENTER      3
@@ -36,32 +31,17 @@
 #define ACCEPTED    5
 #define NONACCEPTED 6
 
-#define NONE        0
 #define CONSTANT    1
 #define ONFILE      2
 #define WITHPOINTS  3
 #define FUNCTION    4
-#define LINEAR      5
-#define QUADRATIC   6
-#define CUBIC       7
-#define LOGARITHMIC 8
-#define EXPONENTIAL 9
-
-#define DROITE 1
-#define SPLINE 2
 
 #define TRANSFINI 1
 #define LIBRE     2
 #define ELLIPTIC  3
 
-#define REMOVE 1
-#define ADD    2
-
 #define BOULE 1
 #define BOITE 2
-
-#define HYPOTENU  1
-#define SMALLFACE 2
 
 typedef struct _POINT PointRecord, *PointPeek;
 typedef struct _CONTOUR ContourRecord, *ContourPeek;
@@ -73,11 +53,11 @@ typedef struct _DELAUNAY Delaunay, *delpeek;
 typedef int PointNumero;
 
 struct _DOC{
-  PointRecord *points;	/* points a trianguler */
-  List_T *hotpoints;		/* hotpoints */
-  int numPoints;		/* nombre de points */
-  int numTriangles;		/* nombre de triangles */
-  Delaunay *delaunay;		/* resultats 2D */
+  PointRecord *points;  /* points a trianguler */
+  List_T *hotpoints;    /* hotpoints */
+  int numPoints;        /* nombre de points */
+  int numTriangles;     /* nombre de triangles */
+  Delaunay *delaunay;   /* resultats 2D */
 };
 
 typedef struct{
@@ -98,7 +78,7 @@ typedef struct{
 }IntPoint;
 
 struct _CDLIST{
-  PointNumero point_num;	/* numero du point */
+  PointNumero point_num; /* numero du point */
   DListPeek next, prev;
 };
 
@@ -173,17 +153,17 @@ typedef struct{
 }NXE;
 
 typedef struct{
-  int Num;		/* Numero                                       */
-  int iEnt;		/* Entite geometrique                           */
-  Vertex *V[8];		/* 8 noeuds                                     */
-  Vertex **VSUP;	/* noeuds supplem pour les elts de degre eleves */
+  int Num;              /* Numero                                       */
+  int iEnt;             /* Entite geometrique                           */
+  Vertex *V[8];         /* 8 noeuds                                     */
+  Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
 }Hexahedron;
 
 typedef struct{
-  int Num;		/* Numero                                       */
-  int iEnt;		/* Entite geometrique                           */
-  Vertex *V[6];		/* 6 noeuds                                     */
-  Vertex **VSUP;	/* noeuds supplem pour les elts de degre eleves */
+  int Num;              /* Numero                                       */
+  int iEnt;             /* Entite geometrique                           */
+  Vertex *V[6];         /* 6 noeuds                                     */
+  Vertex **VSUP;        /* noeuds supplem pour les elts de degre eleves */
 }Prism;
 
 typedef struct{
@@ -213,8 +193,8 @@ class STL_Data{
   List_T *LVertices;
   List_T *LSimplexes;
   void Add_Facet (double x1, double y1, double z1,
-		  double x2, double y2, double z2,
-		  double x3, double y3, double z3);
+                  double x2, double y2, double z2,
+                  double x3, double y3, double z3);
   int GetNbFacets (){
     return Tree_Nbr (Simplexes);
   }
@@ -237,9 +217,9 @@ struct _Surf{
   int ipar[4];
   int Nu, Nv;
   union{
-    List_T *Generatrices;	/* Surface reglee    */
+    List_T *Generatrices;       /* Surface reglee    */
   }s;
-  List_T *Control_Points;	/* Patchs bicubiques */
+  List_T *Control_Points;       /* Patchs bicubiques */
   double plan[3][3];
   double invplan[3][3];
   double a, b, c, d;
@@ -254,7 +234,7 @@ struct _Surf{
   float *ku, *kv, *cp;
   struct _Surf *Support;
   CylParam Cyl;
-  Grid_T Grid;		/* Grille de recherches rapides          */
+  Grid_T Grid;          /* Grille de recherches rapides */
   ExtrudeParams *Extrude;
   STL_Data *STL;
 };
@@ -307,20 +287,20 @@ typedef struct {
 /* Structure intersection arete - Simplexe */
 
 typedef struct{
-  int NbIntersect;	/* nombre total d'intersections                   */
-  Edge *e;		/* arete                                          */
-  Simplex *s;		/* simplexe                                       */
-  Face *f;		/* face                                           */
-  int NbVertex;		/* nombre de noeuds du simplexe que coupe l'arete */
-  Vertex *V[12];	/* noeuds du simplexe que coupe l'arete           */
-  int iV[12];		/* noeuds du simplexe que coupe l'arete           */
-  int NbEdge;		/* nombre d'intersections arete-arete             */
-  int E[12];		/* aretes                                         */
-  Vertex *VE[12];	/* noeuds d'intersection                          */
-  int NbFace;		/* nombre d'intersections face-arete              */
-  Face *F[12];		/* faces                                          */
-  int iF[12];		/* faces                                          */
-  Vertex *VF[12];	/* position des points d'intersections face-arete */
+  int NbIntersect;      /* nombre total d'intersections                   */
+  Edge *e;              /* arete                                          */
+  Simplex *s;           /* simplexe                                       */
+  Face *f;              /* face                                           */
+  int NbVertex;         /* nombre de noeuds du simplexe que coupe l'arete */
+  Vertex *V[12];        /* noeuds du simplexe que coupe l'arete           */
+  int iV[12];           /* noeuds du simplexe que coupe l'arete           */
+  int NbEdge;           /* nombre d'intersections arete-arete             */
+  int E[12];            /* aretes                                         */
+  Vertex *VE[12];       /* noeuds d'intersection                          */
+  int NbFace;           /* nombre d'intersections face-arete              */
+  Face *F[12];          /* faces                                          */
+  int iF[12];           /* faces                                          */
+  Vertex *VF[12];       /* position des points d'intersections face-arete */
 }Intersection;
 
 typedef struct _Mesh Mesh;
@@ -396,22 +376,22 @@ class MeshParameters{
 };
 
 struct _Mesh{
-  char name[256];		/* Nom du probleme                       */
-  int status;			/* Etat actuel du maillage               */
-  Tree_T *Points;		/* Points de controle                    */
-  Tree_T *Vertices;		/* Noeuds du maillage                    */
-  Tree_T *Simplexes;		/* Simplexes                             */
-  Tree_T *Curves;		/* Courbes                               */
-  Tree_T *Surfaces;		/* Surfaces                              */
-  Tree_T *Volumes;		/* Volumes                               */
-  Tree_T *SurfaceLoops;	        /* Surface Loops                         */
-  Tree_T *EdgeLoops;		/* Edge Loops                            */
-  List_T *PhysicalGroups;	/*Physical Groups                      */
-  Tree_T *VertexEdges;	        /* 2nd order Vertices on edges           */
-  Grid_T Grid;		        /* Grille de recherches rapides          */
-  LcField BGM;		        /* Background mesh                       */
-  double Statistics[50];	/* Statistiques pour le maillage         */
-  GMSHMetric *Metric;		/* Metrique */
+  char name[256];               /* Nom du probleme                       */
+  int status;                   /* Etat actuel du maillage               */
+  Tree_T *Points;               /* Points de controle                    */
+  Tree_T *Vertices;             /* Noeuds du maillage                    */
+  Tree_T *Simplexes;            /* Simplexes                             */
+  Tree_T *Curves;               /* Courbes                               */
+  Tree_T *Surfaces;             /* Surfaces                              */
+  Tree_T *Volumes;              /* Volumes                               */
+  Tree_T *SurfaceLoops;         /* Surface Loops                         */
+  Tree_T *EdgeLoops;            /* Edge Loops                            */
+  List_T *PhysicalGroups;       /* Physical Groups                      */
+  Tree_T *VertexEdges;          /* 2nd order Vertices on edges           */
+  Grid_T Grid;                  /* Grille de recherches rapides          */
+  LcField BGM;                  /* Background mesh                       */
+  double Statistics[50];        /* Statistiques pour le maillage         */
+  GMSHMetric *Metric;           /* Metrique */
   MeshParameters MeshParams;
 };
 
@@ -429,45 +409,38 @@ struct Map{
 
 /* public functions */
 
-double Correction_LC_Attractors (double X, double Y, double Z,
-				 double *u, Mesh * m, double metr[3][3]);
-int Extrude_Mesh (Curve * c);
-int Extrude_Mesh (Surface * s);
-int Extrude_Mesh (Volume * v);
-
-int Calcule_Contours (Surface * s);
-
-void Link_Simplexes (List_T * Sim, Tree_T * Tim);
-void Maillage_Curve (void *data, void *dummy);
-
-int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s);
-void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori);
-void Maillage_Surface (void *data, void *dum);
-void Maillage_Volume (void *data, void *dum);
-
 void mai3d (Mesh * M, int Asked);
+
 void Init_Mesh (Mesh * M, int all);
+void Create_BgMesh (int i, double d, Mesh * m);
+void Print_Mesh (Mesh * M, char *c, int Type);
+void Read_Mesh (Mesh * M, FILE * File_GEO, int Type);
 void GetStatistics (double s[50]);
+
 void Maillage_Dimension_0 (Mesh * M);
 void Maillage_Dimension_1 (Mesh * M);
 void Maillage_Dimension_2 (Mesh * M);
 void Maillage_Dimension_3 (Mesh * M);
-void mai3d (Mesh * M, int Asked);
-void Create_BgMesh (int i, double d, Mesh * m);
-void Print_Mesh (Mesh * M, char *c, int Type);
-void Read_Mesh (Mesh * M, FILE * File_GEO, int Type);
-void Degre2 (Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
-	     Curve * c, Surface * s);
-double Lc_XYZ (double X, double Y, double Z, Mesh * m);
+
+void Maillage_Curve (void *data, void *dummy);
+void Maillage_Surface (void *data, void *dum);
+void Maillage_Volume (void *data, void *dum);
+
+int Extrude_Mesh (Curve * c);
+int Extrude_Mesh (Surface * s);
+int Extrude_Mesh (Volume * v);
+
 int MeshTransfiniteSurface (Surface *sur);
 int MeshTransfiniteVolume (Volume *vol);
 int MeshCylindricalSurface (Surface * s);
 int MeshParametricSurface (Surface * s);
 int MeshEllipticSurface (Surface * sur);
-void ActionLiss (void *data, void *dummy);
-void ActionLissSurf (void *data, void *dummy);
-void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
 
+int  AlgorithmeMaillage2DAnisotropeModeJF (Surface * s);
+void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori);
+
+int  Calcule_Contours (Surface * s);
+void Link_Simplexes (List_T * Sim, Tree_T * Tim);
 void Calcule_Z (void *data, void *dum);
 void Calcule_Z_Plan (void *data, void *dum);
 void Projette_Plan_Moyen (void *a, void *b);
@@ -476,5 +449,13 @@ void Freeze_Vertex (void *a, void *b);
 void deFreeze_Vertex (void *a, void *b);
 void crEdges (Tree_T * TreeElem, Tree_T * treeedges);
 
+double Correction_LC_Attractors (double X, double Y, double Z,
+                                 double *u, Mesh * m, double metr[3][3]);
+double Lc_XYZ (double X, double Y, double Z, Mesh * m);
+void Degre2 (Tree_T * AllNodes, Tree_T * TreeNodes, Tree_T * TreeElm,
+             Curve * c, Surface * s);
+void ActionLiss (void *data, void *dummy);
+void ActionLissSurf (void *data, void *dummy);
+void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
 
 #endif

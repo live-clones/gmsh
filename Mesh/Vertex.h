@@ -1,11 +1,4 @@
-/* $Id: Vertex.h,v 1.2 2000-11-23 14:11:36 geuzaine Exp $ */
-/*
-  Classe de Points (Vertex)
-  premiere classe de gmsh
-  pas d'encapsulation a priori
-  mais peut-etre dans la suite
-*/
-
+/* $Id: Vertex.h,v 1.3 2000-11-23 15:05:59 geuzaine Exp $ */
 #ifndef _VERTEX_H_
 #define _VERTEX_H_
 

@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.h,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Mesh.h,v 1.3 2000-11-23 15:05:59 geuzaine Exp $ */
 #ifndef _2D_MESH_H_
 #define _2D_MESH_H_
 
@@ -11,35 +11,35 @@ typedef struct avl{
 
 typedef avlstruct *avlptr;
 
-int remove_tree (avlstruct ** root);
-int insert_avltree (avlstruct ** root, void *item, 
-		    int (*fcmp)(void *a, void *b));
-int delete_avltree (avlstruct ** root, void *item, 
-		    int (*fcmp)(void *a, void *b));
-int avltree_remove (avlstruct **root);
+int  remove_tree (avlstruct ** root);
+int  insert_avltree (avlstruct ** root, void *item, 
+		     int (*fcmp)(void *a, void *b));
+int  delete_avltree (avlstruct ** root, void *item, 
+		     int (*fcmp)(void *a, void *b));
+int  avltree_remove (avlstruct **root);
 void avltree_count (avlptr root, int *numtri);
 void avltree_print (avlptr root, Delaunay **listdel, int *numtri);
-int avltree_insert (avlstruct **root, void *item, 
-		    int (*fcmp)(void *a, void *b));
-int avltree_delete (avlstruct **root, void *item, 
-		    int (*fcmp)(void *a, void *b));
+int  avltree_insert (avlstruct **root, void *item, 
+		     int (*fcmp)(void *a, void *b));
+int  avltree_delete (avlstruct **root, void *item, 
+		     int (*fcmp)(void *a, void *b));
+void findtree(avlptr root, double *qualm, 
+	      Delaunay **delf, DocRecord *MESH);
+Delaunay *findrightest(avlptr root, DocRecord *MESH);
+
 
 PointNumero Successor(PointNumero a,PointNumero b);
 
-		    
+Delaunay * Find_Triangle (MPoint pt, DocRecord *MESH, int typ);
 int Insert_Triangle (avlstruct **root, Delaunay * del);
 int Delete_Triangle ( avlstruct **root, Delaunay * del );
 int Insert_Point (MPoint pt, int *numpoints, int *numalloc, 
 		  DocRecord *doc, DocRecord *BGM, int is3d);
-
-void findtree(avlptr root, double *qualm, Delaunay **delf, DocRecord *MESH);
-Delaunay *findrightest(avlptr root, DocRecord *MESH);
 MPoint Localize (Delaunay * del , DocRecord *MESH);
 void alloue_Mai_Pts(maillage *mai , int Nballoc , int incrAlloc);
 void alloue_Mai_Del(maillage *mai , int Nballoc , int incrAlloc);
 
 void InitBricks (DocRecord *MESH);
-Delaunay * Find_Triangle (MPoint pt, DocRecord *MESH, int typ);
 int PtInTriangle(MPoint p , PointNumero a , PointNumero b , PointNumero c);
 int DelaunayAndVoronoi(DocPeek doc);
 

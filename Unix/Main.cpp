@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.3 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.4 2000-11-23 15:06:04 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -28,8 +28,8 @@
 #include "Static.h"
 #include "XStatic.h"
 
-char *TheFileNameTab[MAX_OPEN_FILES];
-char *ThePathForIncludes=NULL, *TheBgmFileName=NULL;
+char *TheFileNameTab[MAX_OPEN_FILES], *TheBgmFileName=NULL;
+char  ThePathForIncludes[NAME_STR_L];
 
 /* ------------------------------------------------------------------------ */
 /*  P a r s e                                                               */
@@ -159,7 +159,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "path")){ 
 	i++;
-	if(argv[i] != NULL) ThePathForIncludes = argv[i++];
+	/* we need to make a copy because of bison */
+	if(argv[i] != NULL) 
+	  strncpy(ThePathForIncludes, argv[i++], NAME_STR_L) ;
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
 	i++;

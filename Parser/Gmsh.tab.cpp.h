@@ -1,4 +1,3 @@
-/* $Id: Gmsh.tab.cpp.h,v 1.3 2000-11-23 14:11:38 geuzaine Exp $ */
 typedef union {
   char    *c;
   int      i;

@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh_Aniso.cpp,v 1.3 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Mesh_Aniso.cpp,v 1.4 2000-11-23 15:05:59 geuzaine Exp $ */
 /*
    Jean-Francois Remacle
 
@@ -690,7 +690,6 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
       ca_marche = Bowyer_Watson_2D (s, THEV, THES, 1);
       THEV->Pos.X -= dx;
       THEV->Pos.Y -= dy;
-      cout << "pb " << endl;
     }
   }
 

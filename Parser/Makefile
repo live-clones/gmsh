@@ -56,15 +56,15 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h ../Geo/CAD.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h Gmsh.tab.cpp.h
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h ../Geo/CAD.h \
+ ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h Gmsh.tab.cpp.h
 Gmsh.tab.o: Gmsh.tab.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
-  ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
-  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
-  ../Mesh/Create.h ../Common/Views.h ../Graphics/ColorTable.h \
-  ../Geo/StepGeomDatabase.h ../Common/Colors.h Parser.h
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h \
+ ../Common/Context.h ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h \
+ ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+ ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Geo/DataBase.h \
+ ../Mesh/Create.h ../Common/Views.h ../Graphics/ColorTable.h \
+ ../Geo/StepGeomDatabase.h ../Common/Colors.h Parser.h

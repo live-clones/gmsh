@@ -1,4 +1,4 @@
-/* $Id: Generator.cpp,v 1.3 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Generator.cpp,v 1.4 2000-11-23 15:05:59 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -157,16 +157,16 @@ void Init_Mesh (Mesh * M, int all){
 
   CurrentNodeNumber = 1;
   CurrentSimplexNumber = 0;
-
-  M->MeshParams.DelaunayAlgorithm = CTX.mesh.algo ;
-  M->MeshParams.NbSmoothing = CTX.mesh.nb_smoothing ;
-  M->MeshParams.InteractiveDelaunay = CTX.mesh.interactive ;
   M->status = 0;
 }
 
 void mai3d (Mesh * M, int Asked){
   double t1, t2;
   int oldstatus;
+
+  M->MeshParams.DelaunayAlgorithm = CTX.mesh.algo ;
+  M->MeshParams.NbSmoothing = CTX.mesh.nb_smoothing ;
+  M->MeshParams.InteractiveDelaunay = CTX.mesh.interactive ;
 
   oldstatus = M->status;
 

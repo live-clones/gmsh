@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.3 2000-11-23 14:11:38 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.4 2000-11-23 15:06:02 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -16,7 +16,7 @@
 #include "Parser.h"
 
 extern Mesh    *THEM;
-extern char    *ThePathForIncludes;
+extern char    ThePathForIncludes[NAME_STR_L];
 
 FILE           *yyinTab[MAX_OPEN_FILES];
 int             yylinenoTab[MAX_OPEN_FILES];

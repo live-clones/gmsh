@@ -60,8 +60,9 @@ brent.o: brent.cpp nrutil.h ../Common/Const.h
 mnbrak.o: mnbrak.cpp nrutil.h ../Common/Const.h
 nrutil.o: nrutil.cpp
 optimesh.o: optimesh.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Adapt.h nrutil.h ../Common/Const.h
+ ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+ ../DataStr/avl.h ../DataStr/Tools.h Adapt.h nrutil.h \
+ ../Common/Const.h
 dsvdcmp.o: dsvdcmp.cpp nrutil.h ../Common/Const.h
 newt.o: newt.cpp nrutil.h ../Common/Const.h
 fmin.o: fmin.cpp nrutil.h ../Common/Const.h
