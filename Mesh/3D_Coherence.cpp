@@ -1,4 +1,4 @@
-/* $Id: 3D_Coherence.cpp,v 1.8 2000-11-30 14:57:52 geuzaine Exp $ */
+/* $Id: 3D_Coherence.cpp,v 1.9 2000-12-03 16:25:42 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -31,7 +31,6 @@ int edges_tetra[6][2] = { {0, 1},
                           {3, 2},
                           {3, 1} };
 int edges_non[3] = {2, 0, 1};
-int NbQ;
 int EdgesInVolume = 1;
 
 int memesens (Vertex * v1, Vertex * v2, Vertex * v3,
@@ -341,7 +340,6 @@ List_T *Missing_Edges (Volume * V){
   Surface *S;
   Missing = List_Create (10, 10, sizeof (Edge));
 
-  NbQ = 0;
   EdgesTree = V->Edges;
   for (i = 0; i < List_Nbr (V->Surfaces); i++){
     List_Read (V->Surfaces, i, &S);
@@ -1339,6 +1337,7 @@ int Coherence (Volume * v, Mesh * m){
   Impression_Resultats ();
 
   if (List_Nbr (MissingFaces) || List_Nbr (MissingEdges)){
+    Msg(ERROR, "Could not Restore all Edges/Faces");
     return 0;
   }
 
