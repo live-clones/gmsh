@@ -116,8 +116,7 @@ Function CheeseHole
 
   theloops[t] = newreg ; 
 
-  Surface Loop(theloops[t]) = {l8+1, l5+1, l1+1, l2+1, -(l3+1), -(l7+1),
-			       l6+1, l4+1};
+  Surface Loop(theloops[t]) = {l8+1, l5+1, l1+1, l2+1, l3+1, l7+1, l6+1, l4+1};
 
   thehole = newreg ; 
   Volume(thehole) = theloops[t] ;
