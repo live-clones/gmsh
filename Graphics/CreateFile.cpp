@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.52 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.53 2004-03-05 23:47:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ void FillBuffer(void)
 void CreateOutputFile(char *name, int format)
 {
   FILE *fp;
-  GLint size3d, viewport[4];
+  GLint size3d, viewport[4], width, height;
   char ext[256];
   int len, res, oldformat, psformat, pssort, psoptions;
 
@@ -59,7 +59,9 @@ void CreateOutputFile(char *name, int format)
   CTX.print.format = format;
 
   for(int i = 0; i < 4; i++) viewport[i] = CTX.viewport[i];
-
+  width = viewport[2]-viewport[0];
+  height = viewport[3]-viewport[1];
+  
   switch (format) {
 
   case FORMAT_AUTO:
@@ -89,19 +91,17 @@ void CreateOutputFile(char *name, int format)
     else if(!strcmp(ext, ".png"))
       CreateOutputFile(name, FORMAT_PNG);
     else if(!strcmp(ext, ".ps"))
-      CreateOutputFile(name, FORMAT_PS);
+      CreateOutputFile(name, FORMAT_PS_RASTER);
     else if(!strcmp(ext, ".eps"))
-      CreateOutputFile(name, FORMAT_EPS);
+      CreateOutputFile(name, FORMAT_EPS_RASTER);
     else if(!strcmp(ext, ".pdf"))
-      CreateOutputFile(name, FORMAT_PDF);
+      CreateOutputFile(name, FORMAT_PDF_RASTER);
     else if(!strcmp(ext, ".tex"))
       CreateOutputFile(name, FORMAT_TEX);
-    else if(!strcmp(ext, ".pstex"))
-      CreateOutputFile(name, FORMAT_PSTEX);
     else if(!strcmp(ext, ".epstex"))
-      CreateOutputFile(name, FORMAT_EPSTEX);
+      CreateOutputFile(name, FORMAT_EPSTEX_RASTER);
     else if(!strcmp(ext, ".pdftex"))
-      CreateOutputFile(name, FORMAT_PDFTEX);
+      CreateOutputFile(name, FORMAT_PDFTEX_RASTER);
     else if(!strcmp(ext, ".jpegtex"))
       CreateOutputFile(name, FORMAT_JPEGTEX);
     else if(!strcmp(ext, ".ppm"))
@@ -149,12 +149,12 @@ void CreateOutputFile(char *name, int format)
     CTX.print.gl_fonts = 1;
     if(format == FORMAT_JPEG || format == FORMAT_JPEGTEX){
       Msg(INFO, "Writing JPEG file '%s'", name);
-      create_jpeg(fp, viewport[2]-viewport[0], viewport[3]-viewport[1], CTX.print.jpeg_quality);
+      create_jpeg(fp, width, height, CTX.print.jpeg_quality);
       Msg(INFO, "Wrote JPEG file '%s'", name);
     }
     else{
       Msg(INFO, "Writing PNG file '%s'", name);
-      create_png(fp, viewport[2]-viewport[0], viewport[3]-viewport[1], 100);
+      create_png(fp, width, height, 100);
       Msg(INFO, "Wrote PNG file '%s'", name);
     }
     Msg(STATUS2N, "Wrote '%s'", name);
@@ -171,17 +171,17 @@ void CreateOutputFile(char *name, int format)
     FillBuffer();
     if(format == FORMAT_PPM){
       Msg(INFO, "Writing PPM file '%s'", name);
-      create_ppm(fp, viewport[2]-viewport[0], viewport[3]-viewport[1]);
+      create_ppm(fp, width, height);
       Msg(INFO, "Wrote PPM file '%s'", name);
     }
     else if (format == FORMAT_YUV){
       Msg(INFO, "Writing YUV file '%s'", name);
-      create_yuv(fp, viewport[2]-viewport[0], viewport[3]-viewport[1]);
+      create_yuv(fp, width, height);
       Msg(INFO, "Wrote YUV file '%s'", name);
     }
     else{
       Msg(INFO, "Writing GIF file '%s'", name);
-      create_gif(fp, viewport[2]-viewport[0], viewport[3]-viewport[1],
+      create_gif(fp, width, height,
 		 CTX.print.gif_dither,
 		 CTX.print.gif_sort,
 		 CTX.print.gif_interlace,
@@ -195,50 +195,88 @@ void CreateOutputFile(char *name, int format)
     break;
 
   case FORMAT_PS:
-  case FORMAT_PSTEX:
+  case FORMAT_PS_RASTER:
   case FORMAT_EPS:
+  case FORMAT_EPS_RASTER:
   case FORMAT_EPSTEX:
+  case FORMAT_EPSTEX_RASTER:
   case FORMAT_PDF:
+  case FORMAT_PDF_RASTER:
   case FORMAT_PDFTEX:
+  case FORMAT_PDFTEX_RASTER:
     if(!(fp = fopen(name, "wb"))) {
       Msg(GERROR, "Unable to open file '%s'", name);
       return;
     }
 
-    if(format == FORMAT_PDF || format == FORMAT_PDFTEX){
+    switch(format){
+    case FORMAT_PDF:
+    case FORMAT_PDF_RASTER:
+    case FORMAT_PDFTEX:
+    case FORMAT_PDFTEX_RASTER:
       psformat = GL2PS_PDF;
+      break;
+    case FORMAT_PS:
+    case FORMAT_PS_RASTER:
+      psformat = GL2PS_PS;
+      break;
+    default:
+      psformat = GL2PS_EPS;
+      break;
     }
-    else{
-      if(format == FORMAT_PS || format == FORMAT_PSTEX)
-	psformat = GL2PS_PS;
-      else
-	psformat = GL2PS_EPS;
-    }
 
-    pssort = (CTX.print.eps_quality == 1) ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT;
-    psoptions =
-      GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT | 
-      (CTX.print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
-      (CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
-      (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
-      (CTX.print.eps_compress ? GL2PS_COMPRESS : 0) |
-      (format == FORMAT_PSTEX ? GL2PS_NO_TEXT : 0) |
-      (format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0) |
-      (format == FORMAT_PDFTEX ? GL2PS_NO_TEXT : 0);
-
-    Msg(INFO, "Writing %s file '%s'", (psformat == GL2PS_PDF) ? "PDF" : "PS/EPS", name);
-
-    size3d = 0;
-    res = GL2PS_OVERFLOW;
-    while(res == GL2PS_OVERFLOW) {
-      size3d += 2048 * 2048;
-      gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
-		     psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
-		     0, 0, 0, size3d, fp, name);
-      CTX.print.gl_fonts = 0;
-      FillBuffer();
-      CTX.print.gl_fonts = 1;
-      res = gl2psEndPage();
+    {
+      int raster = 0;
+      float *pixels = NULL;
+      if(format == FORMAT_PS_RASTER || 
+	 format == FORMAT_EPS_RASTER || format == FORMAT_EPSTEX_RASTER ||
+	 format == FORMAT_PDF_RASTER || format == FORMAT_PDFTEX_RASTER){
+	if(format == FORMAT_EPSTEX_RASTER || format == FORMAT_PDFTEX_RASTER)
+	  CTX.print.gl_fonts = 0;
+	FillBuffer();
+	CTX.print.gl_fonts = 1;
+	pixels = new float[width * height * 3];
+	glReadPixels(0, 0, width, height, GL_RGB, GL_FLOAT, pixels);
+	raster = 1;
+      }
+      
+      pssort = (CTX.print.eps_quality == 1) ? GL2PS_SIMPLE_SORT : GL2PS_BSP_SORT;
+      psoptions =
+	GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT | 
+	(CTX.print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
+	(CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
+	(CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
+	(CTX.print.eps_compress ? GL2PS_COMPRESS : 0) |
+	(format == FORMAT_EPSTEX ? GL2PS_NO_TEXT : 0) |
+	(format == FORMAT_PDFTEX ? GL2PS_NO_TEXT : 0) |
+	(format == FORMAT_EPSTEX_RASTER ? GL2PS_NO_TEXT : 0) |
+	(format == FORMAT_PDFTEX_RASTER ? GL2PS_NO_TEXT : 0);
+      
+      Msg(INFO, "Writing %s file '%s'", (psformat == GL2PS_PDF) ? "PDF" : "PS/EPS", name);
+      
+      size3d = 0;
+      res = GL2PS_OVERFLOW;
+      while(res == GL2PS_OVERFLOW) {
+	size3d += 2048 * 2048;
+	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
+		       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
+		       0, 0, 0, size3d, fp, name);
+	if(raster){
+	  glMatrixMode(GL_PROJECTION);
+	  glLoadIdentity();
+	  glPushMatrix();
+	  glRasterPos3f(-1.0, -1.0, -1.0);
+	  gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, pixels);
+	  glPopMatrix();  
+	  delete [] pixels;
+	}
+	else{
+	  CTX.print.gl_fonts = 0;
+	  FillBuffer();
+	  CTX.print.gl_fonts = 1;
+	}
+	res = gl2psEndPage();
+      }
     }
     Msg(INFO, "Wrote %s file '%s'", (psformat == GL2PS_PDF) ? "PDF" : "PS/EPS", name);
     Msg(STATUS2N, "Wrote '%s'", name);

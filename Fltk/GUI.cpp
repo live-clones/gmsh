@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.276 2004-03-01 17:58:49 geuzaine Exp $
+// $Id: GUI.cpp,v 1.277 2004-03-05 23:47:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -112,8 +112,8 @@ Fl_Menu_Item m_menubar_table[] = {
 #if defined(HAVE_LIBPNG)
          {"PNG (*.png)...",               0, (Fl_Callback *)file_save_as_png_cb, 0},
 #endif
-         {"PostScript fast (*.ps)...",    0, (Fl_Callback *)file_save_as_ps_simple_cb, 0},
-         {"PostScript accurate...",       0, (Fl_Callback *)file_save_as_ps_accurate_cb, 0},
+         {"Vector PS fast (*.ps)...",     0, (Fl_Callback *)file_save_as_ps_simple_cb, 0},
+         {"Vector PS accurate...",        0, (Fl_Callback *)file_save_as_ps_accurate_cb, 0},
          {"PPM (*.ppm)...",               0, (Fl_Callback *)file_save_as_ppm_cb, 0},
 #if defined(HAVE_LIBJPEG)
          {"LaTeX JPEG...",                0, (Fl_Callback *)file_save_as_jpegtex_cb, 0},
@@ -121,8 +121,8 @@ Fl_Menu_Item m_menubar_table[] = {
 #if defined(HAVE_LIBPNG)
          {"LaTeX PNG...",                 0, (Fl_Callback *)file_save_as_pngtex_cb, 0},
 #endif
-         {"LaTeX PostScript fast...",     0, (Fl_Callback *)file_save_as_pstex_simple_cb, 0},
-         {"LaTeX PostScript accurate...", 0, (Fl_Callback *)file_save_as_pstex_accurate_cb, 0},
+         {"LaTeX Vector EPS fast...",     0, (Fl_Callback *)file_save_as_epstex_simple_cb, 0},
+         {"LaTeX Vector EPS accurate...", 0, (Fl_Callback *)file_save_as_epstex_accurate_cb, 0},
          {"LaTeX TeX (*.tex)...",         0, (Fl_Callback *)file_save_as_tex_cb, 0},
          {"UCB YUV (*.yuv)...",           0, (Fl_Callback *)file_save_as_yuv_cb, 0},
          {0},

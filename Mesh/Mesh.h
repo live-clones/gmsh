@@ -28,30 +28,34 @@
 #include "ExtrudeParams.h"
 #include "STL.h"
 
-#define FORMAT_MSH     1
-#define FORMAT_UNV     2
-#define FORMAT_GREF    3
-#define FORMAT_XPM     4
-#define FORMAT_PS      5
-#define FORMAT_BMP     6
-#define FORMAT_GIF     7
-#define FORMAT_GEO     8
-#define FORMAT_JPEG    9
-#define FORMAT_AUTO    10
-#define FORMAT_PPM     11
-#define FORMAT_YUV     12
-#define FORMAT_SMS     14
-#define FORMAT_OPT     15
-#define FORMAT_PSTEX   16
-#define FORMAT_JPEGTEX 17
-#define FORMAT_TEX     18
-#define FORMAT_VRML    19
-#define FORMAT_EPS     20
-#define FORMAT_EPSTEX  21
-#define FORMAT_PNG     22
-#define FORMAT_PNGTEX  23
-#define FORMAT_PDF     24
-#define FORMAT_PDFTEX  25
+#define FORMAT_MSH           1
+#define FORMAT_UNV           2
+#define FORMAT_GREF          3
+#define FORMAT_XPM           4
+#define FORMAT_PS            5
+#define FORMAT_BMP           6
+#define FORMAT_GIF           7
+#define FORMAT_GEO           8
+#define FORMAT_JPEG          9
+#define FORMAT_AUTO          10
+#define FORMAT_PPM           11
+#define FORMAT_YUV           12
+#define FORMAT_SMS           14
+#define FORMAT_OPT           15
+#define FORMAT_JPEGTEX       17
+#define FORMAT_TEX           18
+#define FORMAT_VRML          19
+#define FORMAT_EPS           20
+#define FORMAT_EPSTEX        21
+#define FORMAT_PNG           22
+#define FORMAT_PNGTEX        23
+#define FORMAT_PDF           24
+#define FORMAT_PDFTEX        25
+#define FORMAT_PS_RASTER     26
+#define FORMAT_EPS_RASTER    27
+#define FORMAT_PDF_RASTER    28
+#define FORMAT_EPSTEX_RASTER 29
+#define FORMAT_PDFTEX_RASTER 30
 
 #define CONV_VALUE    0.8
 

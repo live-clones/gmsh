@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.208 2004-02-28 05:52:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.209 2004-03-05 23:47:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -465,6 +465,10 @@ void _save_vrml(char *name)
 {
   CreateOutputFile(name, CTX.mesh.format = FORMAT_VRML);
 }
+void _save_ps_raster(char *name)
+{
+  CreateOutputFile(name, FORMAT_PS_RASTER);
+}
 void _save_ps_simple(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -478,6 +482,10 @@ void _save_ps_accurate(char *name)
   CTX.print.eps_quality = 2;
   CreateOutputFile(name, FORMAT_PS);
   CTX.print.eps_quality = old;
+}
+void _save_eps_raster(char *name)
+{
+  CreateOutputFile(name, FORMAT_EPS_RASTER);
 }
 void _save_eps_simple(char *name)
 {
@@ -493,19 +501,9 @@ void _save_eps_accurate(char *name)
   CreateOutputFile(name, FORMAT_EPS);
   CTX.print.eps_quality = old;
 }
-void _save_pstex_simple(char *name)
+void _save_epstex_raster(char *name)
 {
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 1;
-  CreateOutputFile(name, FORMAT_PSTEX);
-  CTX.print.eps_quality = old;
-}
-void _save_pstex_accurate(char *name)
-{
-  int old = CTX.print.eps_quality;
-  CTX.print.eps_quality = 2;
-  CreateOutputFile(name, FORMAT_PSTEX);
-  CTX.print.eps_quality = old;
+  CreateOutputFile(name, FORMAT_EPSTEX_RASTER);
 }
 void _save_epstex_simple(char *name)
 {
@@ -521,6 +519,10 @@ void _save_epstex_accurate(char *name)
   CreateOutputFile(name, FORMAT_EPSTEX);
   CTX.print.eps_quality = old;
 }
+void _save_pdf_raster(char *name)
+{
+  CreateOutputFile(name, FORMAT_PDF_RASTER);
+}
 void _save_pdf_simple(char *name)
 {
   int old = CTX.print.eps_quality;
@@ -534,6 +536,10 @@ void _save_pdf_accurate(char *name)
   CTX.print.eps_quality = 2;
   CreateOutputFile(name, FORMAT_PDF);
   CTX.print.eps_quality = old;
+}
+void _save_pdftex_raster(char *name)
+{
+  CreateOutputFile(name, FORMAT_PDFTEX_RASTER);
 }
 void _save_pdftex_simple(char *name)
 {
@@ -638,12 +644,15 @@ void file_save_as_cb(CALLBACK_ARGS)
 #if defined(HAVE_LIBPNG)
     {"PNG (*.png)", _save_png},
 #endif
-    {"PostScript fast (*.ps)", _save_ps_simple},
-    {"PostScript accurate (*.ps)", _save_ps_accurate},
-    {"Encapsulated PostScript fast (*.eps)", _save_eps_simple},
-    {"Encapsulated PostScript accurate (*.eps)", _save_eps_accurate},
-    {"PDF fast (*.pdf)", _save_pdf_simple},
-    {"PDF accurate (*.pdf)", _save_pdf_accurate},
+    {"Raster PS (*.ps)", _save_ps_raster},
+    {"Raster EPS (*.eps)", _save_eps_raster},
+    {"Raster PDF (*.pdf)", _save_pdf_raster},
+    {"Vector PS fast (*.ps)", _save_ps_simple},
+    {"Vector PS accurate (*.ps)", _save_ps_accurate},
+    {"Vector EPS fast (*.eps)", _save_eps_simple},
+    {"Vector EPS accurate (*.eps)", _save_eps_accurate},
+    {"Vector PDF fast (*.pdf)", _save_pdf_simple},
+    {"Vector PDF accurate (*.pdf)", _save_pdf_accurate},
     {"PPM (*.ppm)", _save_ppm},
 #if defined(HAVE_LIBJPEG)
     {"LaTeX JPEG part (*.jpg)", _save_jpegtex},
@@ -651,10 +660,12 @@ void file_save_as_cb(CALLBACK_ARGS)
 #if defined(HAVE_LIBPNG)
     {"LaTeX PNG part (*.png)", _save_pngtex},
 #endif
-    {"LaTeX EPS part fast (*.eps)", _save_epstex_simple},
-    {"LaTeX EPS part accurate (*.eps)", _save_epstex_accurate},
-    {"LaTeX PDF part fast (*.pdf)", _save_pdftex_simple},
-    {"LaTeX PDF part accurate (*.pdf)", _save_pdftex_accurate},
+    {"LaTeX Raster EPS part (*.eps)", _save_epstex_raster},
+    {"LaTeX Raster PDF part (*.pdf)", _save_pdftex_raster},
+    {"LaTeX Vector EPS part fast (*.eps)", _save_epstex_simple},
+    {"LaTeX Vector EPS part accurate (*.eps)", _save_epstex_accurate},
+    {"LaTeX Vector PDF part fast (*.pdf)", _save_pdftex_simple},
+    {"LaTeX Vector PDF part accurate (*.pdf)", _save_pdftex_accurate},
     {"LaTeX TeX part (*.tex)", _save_tex},
     {"UCB YUV (*.yuv)", _save_yuv}
   };
@@ -757,16 +768,16 @@ void file_save_as_ps_accurate_cb(CALLBACK_ARGS)
     _save_ps_accurate(file_chooser_get_name(1));
 }
 
-void file_save_as_pstex_simple_cb(CALLBACK_ARGS)
+void file_save_as_epstex_simple_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, 1, "Save LaTeX file (PS part)", "*", 0))
-    _save_pstex_simple(file_chooser_get_name(1));
+  if(file_chooser(0, 1, "Save LaTeX file (EPS part)", "*", 0))
+    _save_epstex_simple(file_chooser_get_name(1));
 }
 
-void file_save_as_pstex_accurate_cb(CALLBACK_ARGS)
+void file_save_as_epstex_accurate_cb(CALLBACK_ARGS)
 {
-  if(file_chooser(0, 1, "Save LaTeX file (PS part)", "*", 0))
-    _save_ps_accurate(file_chooser_get_name(1));
+  if(file_chooser(0, 1, "Save LaTeX file (EPS part)", "*", 0))
+    _save_epstex_accurate(file_chooser_get_name(1));
 }
 
 void file_save_as_jpegtex_cb(CALLBACK_ARGS)
