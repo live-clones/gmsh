@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.18 2000-12-06 22:25:24 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.19 2000-12-06 22:36:44 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -1148,7 +1148,7 @@ Command :
 
 Loop :   
 
-  tFor '(' FExpr ':' FExpr ')' 
+  tFor '(' FExpr tDOTS FExpr ')' 
   {
     FILE* ff;
     if(RecursionLevel)
@@ -1161,7 +1161,7 @@ Loop :
     LoopControlVariablesTab[ImbricatedLoop][2] = 1 ;
     fgetpos( ff, &yyposImbricatedLoopsTab[ImbricatedLoop++]);
   }
-  | tFor '(' FExpr ':' FExpr ':' FExpr ')' 
+  | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')' 
   {
     FILE* ff;
     if(RecursionLevel)
@@ -1792,15 +1792,15 @@ FExpr_Range :
       for(d=$1 ; ($1<$3)?(d<=$3):(d>=$3) ; ($1<$3)?(d+=1.):(d-=1.)) 
 	List_Add(ListOfDouble2_L, &d) ;
     }
-  | FExpr tDOTS '[' FExpr ']' FExpr
+  | FExpr tDOTS FExpr tDOTS FExpr
    {
       ListOfDouble2_L = List_Create(2,1,sizeof(double)) ; 
-      if(!$4 || ($1<$6 && $4<0) || ($1>$6 && $4>0)){
-        vyyerror("Wrong Increment in '%g :[%g] %g'", $1, $4, $6) ;
+      if(!$5 || ($1<$3 && $5<0) || ($1>$3 && $5>0)){
+        vyyerror("Wrong Increment in '%g:%g:%g'", $1, $3, $5) ;
 	List_Add(ListOfDouble2_L, &($1)) ;
       }
       else 
-	for(d=$1 ; ($4>0)?(d<=$6):(d>=$6) ; d+=$4)
+	for(d=$1 ; ($5>0)?(d<=$3):(d>=$3) ; d+=$5)
 	  List_Add(ListOfDouble2_L, &d) ;
    }
   ;

@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.9 2000-12-06 22:09:53 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.10 2000-12-06 22:36:44 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,8 +73,8 @@ stepid  {dieze}({digit})*
 "-="                    return tAFFECTMINUS ;
 "*="                    return tAFFECTTIMES ;
 "/="                    return tAFFECTDIVIDE ;
+":"                     return tDOTS;
 "..."                   return tDOTS;
-":"                     return tDOTS ;
 "/\\"                   return tCROSSPRODUCT ;
 "||"                    return tOR ;
 "&&"                    return tAND ;
