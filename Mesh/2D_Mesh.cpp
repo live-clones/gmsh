@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.59 2004-06-20 23:25:32 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.60 2004-06-22 00:58:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "Create.h"
 #include "2D_Mesh.h"
 #include "Context.h"
+#include "Interpolation.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
@@ -772,6 +773,22 @@ void ActionEndTheCurve(void *a, void *b)
   End_Curve(c);
 }
 
+void ActionInvertTriQua(void *a, void *b)
+{
+  Simplex *s = *(Simplex **) a;
+  Vertex *tmp;
+  if(s->V[3]){
+    tmp = s->V[1];
+    s->V[1] = s->V[3];
+    s->V[3] = tmp;
+  }
+  else if(s->V[2]){
+    tmp = s->V[1];
+    s->V[1] = s->V[2];
+    s->V[2] = tmp;
+  }
+}
+
 void Maillage_Surface(void *data, void *dum)
 {
   Surface **pS, *s;
@@ -874,6 +891,54 @@ void Maillage_Surface(void *data, void *dum)
     Tree_Action(THEM->Curves, ActionEndTheCurve);
     End_Surface(s->Support, 0);
     End_Surface(s, 0);
+
+    // Horrible (tm) hack to orient the elements correctly. This
+    // *definitely* not the best way to do it, but I don't have time
+    // to look into this issue right now.
+    Simplex *simp;
+    if(Tree_Right(s->Simplexes, &simp)){
+      double t1[3], t2[3], n1[3], n2[3], res;
+      if(s->Typ == MSH_SURF_PLAN){
+	n1[0] = s->plan[2][0];
+	n1[1] = s->plan[2][1];
+	n1[2] = s->plan[2][2];
+      }
+      else{
+	Vertex v1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
+	Vertex v2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
+	Vertex v3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
+	t1[0] = v2.Pos.X - v1.Pos.X;
+	t1[1] = v2.Pos.Y - v1.Pos.Y;
+	t1[2] = v2.Pos.Z - v1.Pos.Z;
+	t2[0] = v3.Pos.X - v1.Pos.X;
+	t2[1] = v3.Pos.Y - v1.Pos.Y;
+	t2[2] = v3.Pos.Z - v1.Pos.Z;
+	prodve(t1, t2, n1);
+      }
+      norme(n1);
+      t1[0] = simp->V[1]->Pos.X - simp->V[0]->Pos.X;
+      t1[1] = simp->V[1]->Pos.Y - simp->V[0]->Pos.Y;
+      t1[2] = simp->V[1]->Pos.Z - simp->V[0]->Pos.Z;
+      t2[0] = simp->V[2]->Pos.X - simp->V[0]->Pos.X;
+      t2[1] = simp->V[2]->Pos.Y - simp->V[0]->Pos.Y;
+      t2[2] = simp->V[2]->Pos.Z - simp->V[0]->Pos.Z;
+      prodve(t1, t2, n2);
+      norme(n2);
+      /*
+      printf("n1=%g %g %g\n", n1[0], n1[1], n1[2]);
+      printf("n2=%g %g %g (elt: (%g,%g,%g) (%g,%g,%g) (%g,%g,%g))\n", 
+	     n2[0], n2[1], n2[2],
+	     simp->V[0]->Pos.X, simp->V[0]->Pos.Y, simp->V[0]->Pos.Z,
+	     simp->V[1]->Pos.X, simp->V[1]->Pos.Y, simp->V[1]->Pos.Z,
+	     simp->V[2]->Pos.X, simp->V[2]->Pos.Y, simp->V[2]->Pos.Z);
+      */
+      prosca(n1, n2, &res);
+      if(res < 0.0){
+	Msg(DEBUG, "Inverting orientation of elements in %s surface %d (res = %g)",
+	    (s->Typ == MSH_SURF_PLAN) ? "Plane" : "NonPlane", s->Num, res);
+	Tree_Action(s->Simplexes, ActionInvertTriQua);
+      }
+    }
   }
 
 }
