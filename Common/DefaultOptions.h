@@ -468,9 +468,9 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "Light0" , opt_general_light0 , 1. ,
     "Enable light source 0" },
-  { F|O, "Light0X" , opt_general_light00 , 0.5 ,
+  { F|O, "Light0X" , opt_general_light00 , 0.65 ,
     "X position of light source 0" },
-  { F|O, "Light0Y" , opt_general_light01 , 0.3 , 
+  { F|O, "Light0Y" , opt_general_light01 , 0.65 , 
     "Y position of light source 0" },
   { F|O, "Light0Z" , opt_general_light02 , 1.0 , 
     "Z position of light source 0" },
@@ -647,7 +647,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Highlight" , opt_geometry_highlight , 1. , 
     "Not used" },
 
-  { F|O, "Light" , opt_geometry_light , 0. , 
+  { F|O, "Light" , opt_geometry_light , 1. , 
     "Enable lighting for the geometry" },
   { F|O, "Lines" , opt_geometry_lines , 1. , 
     "Display geometry curves?" },
@@ -751,7 +751,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Interactive" , opt_mesh_interactive , 0. ,
     "Show the construction of the 2D mesh in real time (only with the 2D anisotropic algorithm)" },
 
-  { F|O, "Light" , opt_mesh_light , 0. , 
+  { F|O, "Light" , opt_mesh_light , 1. , 
     "Enable lighting for the mesh" },
   { F|O, "Lines" , opt_mesh_lines , 0. , 
     "Display mesh lines (1D elements)?" },
@@ -903,7 +903,7 @@ StringXNumber PostProcessingOptions_Number[] = {
 StringXNumber ViewOptions_Number[] = {
   { F|O, "AlphaChannel" , opt_view_alpha_channel , 1.0 ,
     "Global alpha channel value (used only if != 1)" },
-  { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 15. ,
+  { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 180. ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "ArrowHeadRadius" , opt_view_arrow_head_radius , 0.12 ,
     "Relative radius of arrow head" },
@@ -965,7 +965,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_CONTINUOUS ,
     "Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)" },
 
-  { F|O, "Light" , opt_view_light , 0. ,
+  { F|O, "Light" , opt_view_light , 1. ,
     "Enable lighting for the view" },
   { F|O, "LineType" , opt_view_line_type , 0. , 
     "Display lines as solid color segments (0) or 3D cylinders (1)" },
