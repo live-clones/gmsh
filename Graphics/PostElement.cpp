@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.39 2004-07-16 18:02:20 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.40 2004-08-07 06:59:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -266,7 +266,7 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
 {
   int nb = 0;
   double d;
-  double Xp[5], Yp[5], Zp[5], Vp[5], Val[5], thev;
+  double Xp[5], Yp[5], Zp[5], Vp[5], Val[5];
   char Num[100];
 
   double *vv = &V[2 * View->TimeStep];
@@ -328,11 +328,13 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
 
   if(View->IntervalsType == DRAW_POST_DISCRETE) {
     for(int k = 0; k < View->NbIso; k++) {
+      if(ValMin == ValMax)
+	k = View->NbIso / 2;
       PaletteDiscrete(View, View->NbIso, k);
-      CutLine1D(X, Y, Z, &Val[0],
-		View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
-		View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
-		Xp, Yp, Zp, &nb, Vp);
+      CutLine(X, Y, Z, &Val[0],
+	      View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
+	      View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
+	      Xp, Yp, Zp, &nb, Vp);
       if(nb == 2) {
 	for(int i = 0; i < 3; i++)
 	  for(int l = 0; l < 2; l++)
@@ -346,14 +348,11 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
 
   if(View->IntervalsType == DRAW_POST_ISO) {
     for(int k = 0; k < View->NbIso; k++) {
+      if(ValMin == ValMax)
+	k = View->NbIso / 2;
       PaletteDiscrete(View, View->NbIso, k);
-      thev = View->GVFI(ValMin, ValMax, View->NbIso, k);
-      CutLine0D(X, Y, Z, &Val[0], thev, Xp, Yp, Zp, &nb);
-      if(nb) {
-	for(int i = 0; i < 3; i++)
-	  Raise[i][0] = View->Raise[i] * thev;
-	Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, Raise, View->Light);
-      }
+      IsoLine(View, X, Y, Z, &Val[0],
+	      View->GVFI(ValMin, ValMax, View->NbIso, k));
       if(ValMin == ValMax)
 	break;
     }
@@ -368,7 +367,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   int nb = 0;
   double d;
   double x1x0, y1y0, z1z0, x2x0, y2y0, z2z0, nn[3], norms[30];
-  double Xp[10], Yp[10], Zp[10], Vp[10], xx[10], yy[10], zz[10], Val[3], thev;
+  double Xp[10], Yp[10], Zp[10], Vp[10], xx[10], yy[10], zz[10], Val[3];
   char Num[100];
 
   double *vv = &V[3 * View->TimeStep];
@@ -474,7 +473,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
     }
     else {
-      CutTriangle2D(X, Y, Z, Val, ValMin, ValMax, Xp, Yp, Zp, &nb, Vp);
+      CutTriangle(X, Y, Z, Val, ValMin, ValMax, Xp, Yp, Zp, &nb, Vp);
       if(nb >= 3) {
 	for(int i = 0; i < nb; i++) {
 	  xx[i] = Xp[i] + View->Raise[0] * Vp[i];
@@ -532,11 +531,13 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
      (preproNormals || !View->TriVertexArray || 
       (View->TriVertexArray && View->TriVertexArray->fill))) {
     for(int k = 0; k < View->NbIso; k++) {
+      if(ValMin == ValMax)
+	k = View->NbIso / 2;
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
-      CutTriangle2D(X, Y, Z, Val,
-		    View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
-		    View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
-		    Xp, Yp, Zp, &nb, Vp);
+      CutTriangle(X, Y, Z, Val,
+		  View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
+		  View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
+		  Xp, Yp, Zp, &nb, Vp);
       if(nb >= 3) {
 	for(int i = 0; i < nb; i++) {
 	  xx[i] = Xp[i] + View->Raise[0] * Vp[i];
@@ -590,16 +591,11 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   
   if(!preproNormals && View->IntervalsType == DRAW_POST_ISO) {
     for(int k = 0; k < View->NbIso; k++) {
+      if(ValMin == ValMax)
+	k = View->NbIso / 2;
       PaletteDiscrete(View, View->NbIso, k);
-      thev = View->GVFI(ValMin, ValMax, View->NbIso, k);
-      CutTriangle1D(X, Y, Z, Val, thev, Xp, Yp, Zp, &nb);
-      if(nb == 2) {
-	for(int i = 0; i < 3; i++)
-	  for(int l = 0; l < 2; l++)
-	    Raise[i][l] = View->Raise[i] * thev;
-	Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp,
-		  Raise, View->Light);
-      }
+      IsoTriangle(View, X, Y, Z, Val,
+		  View->GVFI(ValMin, ValMax, View->NbIso, k));
       if(ValMin == ValMax) 
 	break;
     }
@@ -660,6 +656,8 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
   }
   else if(!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill)){
     for(int k = 0; k < View->NbIso; k++) {
+      if(ValMin == ValMax)
+	k = View->NbIso / 2;
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
       IsoSimplex(View, preproNormals, X, Y, Z, Val,
                  View->GVFI(ValMin, ValMax, View->NbIso, k), col);

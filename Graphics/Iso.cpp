@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.29 2004-07-16 18:02:20 geuzaine Exp $
+// $Id: Iso.cpp,v 1.30 2004-08-07 06:59:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -30,31 +30,46 @@
 
 extern Context_T CTX;
 
-// Iso line computation for triangles.
+// Draw an iso-line inside a triangle
 
-void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
-                   double V, double *Xp, double *Yp, double *Zp, int *nb)
+void IsoTriangle(Post_View * View, double *X, double *Y, double *Z,
+		 double *Val, double V)
 {
-  *nb = 0;
+  // don't draw anything if the value is constant
+  if(Val[0] == Val[1] && Val[0] == Val[2])
+    return;
+
+  double Xp[3], Yp[3], Zp[3];
+  int nb = 0;
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
-    InterpolateIso(X, Y, Z, Val, V, 0, 1, &Xp[*nb], &Yp[*nb], &Zp[*nb]);
-    (*nb)++;
+    InterpolateIso(X, Y, Z, Val, V, 0, 1, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
   }
   if((Val[0] >= V && Val[2] <= V) || (Val[2] >= V && Val[0] <= V)) {
-    InterpolateIso(X, Y, Z, Val, V, 0, 2, &Xp[*nb], &Yp[*nb], &Zp[*nb]);
-    (*nb)++;
+    InterpolateIso(X, Y, Z, Val, V, 0, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
   }
   if((Val[1] >= V && Val[2] <= V) || (Val[2] >= V && Val[1] <= V)) {
-    InterpolateIso(X, Y, Z, Val, V, 1, 2, &Xp[*nb], &Yp[*nb], &Zp[*nb]);
-    (*nb)++;
+    InterpolateIso(X, Y, Z, Val, V, 1, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  
+  if(nb == 2) {
+    double Raise[3][8];
+    for(int i = 0; i < 3; i++)
+      for(int l = 0; l < 2; l++)
+	Raise[i][l] = View->Raise[i] * V;
+    Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp,
+	      Raise, View->Light);
   }
 }
 
-// Contour computation for triangles
+// Compute the polygon between the two iso-lines V1 and V2 in a
+// triangle
 
-void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
-		   double V1, double V2, double *Xp2, double *Yp2,
-		   double *Zp2, int *Np2, double *Vp2)
+void CutTriangle(double *X, double *Y, double *Z, double *Val,
+		 double V1, double V2, double *Xp2, double *Yp2,
+		 double *Zp2, int *Np2, double *Vp2)
 {
   int i, io[3], j, iot, Np, Fl;
   double Xp[10], Yp[10], Zp[10], Vp[10];
@@ -210,22 +225,31 @@ void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
   }
 }
 
-// Iso for lines
+// Draw an iso-point in a line
 
-void CutLine0D(double *X, double *Y, double *Z, double *Val,
-               double V, double *Xp, double *Yp, double *Zp, int *nb)
+void IsoLine(Post_View *View, double *X, double *Y, double *Z, 
+	     double *Val, double V)
 {
-  *nb = 0;
+  double Xp[2], Yp[2], Zp[2];
+
+  // don't draw anything if the value is constant
+  if(Val[0] == Val[1])
+    return;
 
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
     InterpolateIso(X, Y, Z, Val, V, 0, 1, Xp, Yp, Zp);
-    *nb = 1;
+    double Raise[3][8];
+    for(int i = 0; i < 3; i++)
+      Raise[i][0] = View->Raise[i] * V;
+    Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, Raise, View->Light);
   }
 }
 
-void CutLine1D(double *X, double *Y, double *Z, double *Val,
-               double V1, double V2, double *Xp2, double *Yp2, double *Zp2,
-               int *Np2, double *Vp2)
+// Compute the line between the two iso-points V1 and V2 in a line
+
+void CutLine(double *X, double *Y, double *Z, double *Val,
+	     double V1, double V2, double *Xp2, double *Yp2, double *Zp2,
+	     int *Np2, double *Vp2)
 {
   int i, io[2];
 
@@ -282,7 +306,7 @@ void CutLine1D(double *X, double *Y, double *Z, double *Val,
   }
 }
 
-// compute the gradient of a linear interpolation in a tetrahedron
+// Compute the gradient of a linear interpolation in a tetrahedron
 
 void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polygon 
                            double *Xp,  // x positions
@@ -380,6 +404,16 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
   }
 }
 
+static void affect(double *xi, double *yi, double *zi, int i,
+		   double *xp, double *yp, double *zp, int j)
+{
+  xi[i] = xp[j];
+  yi[i] = yp[j];
+  zi[i] = zp[j];
+}
+
+// Draw an iso-surface inside a tetrahedron
+
 void IsoSimplex(Post_View * View, int preproNormals,
                 double *X, double *Y, double *Z, double *Val,
                 double V, unsigned int color)
@@ -387,6 +421,10 @@ void IsoSimplex(Post_View * View, int preproNormals,
   int nb;
   double Xp[6], Yp[6], Zp[6], PVals[6];
   double norms[12];
+
+  // don't draw anything if the value is constant
+  if(Val[0] == Val[1] && Val[0] == Val[2] && Val[0] == Val[3])
+    return;
 
   nb = 0;
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
@@ -412,6 +450,33 @@ void IsoSimplex(Post_View * View, int preproNormals,
   if((Val[2] >= V && Val[3] <= V) || (Val[3] >= V && Val[2] <= V)) {
     InterpolateIso(X, Y, Z, Val, V, 2, 3, &Xp[nb], &Yp[nb], &Zp[nb]);
     nb++;
+  }
+
+  // Remove identical nodes (this can happen if an edge actually
+  // belongs to the zero levelset). We should be doing this even for
+  // nb < 4, but it would slow us down even more... (And we don't
+  // really care if some nodes in a postprocessing element are
+  // identical.)
+  if(nb > 4) {
+    double xi[6], yi[6], zi[6];
+    affect(xi, yi, zi, 0, Xp, Yp, Zp, 0);
+    int ni = 1;
+    for(int j = 1; j < nb; j++) {
+      for(int i = 0; i < ni; i++) {
+	if(fabs(Xp[j] - xi[i]) < 1.e-12 &&
+	   fabs(Yp[j] - yi[i]) < 1.e-12 &&
+	   fabs(Zp[j] - zi[i]) < 1.e-12) {
+	  break;
+	}
+	if(i == ni-1) {
+	  affect(xi, yi, zi, i+1, Xp, Yp, Zp, j);
+	  ni++;
+	}
+      }
+    }
+    for(int i = 0; i < ni; i++)
+      affect(Xp, Yp, Zp, i, xi, yi, zi, i);
+    nb = ni;
   }
 
   if(nb < 3 || nb > 4)

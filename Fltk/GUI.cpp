@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.330 2004-08-03 15:22:18 remacle Exp $
+// $Id: GUI.cpp,v 1.331 2004-08-07 06:59:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2153,7 +2153,7 @@ void GUI::create_option_window()
 
       Fl_Box *text = new Fl_Box(FL_NO_BOX, 2 * WB, 3 * WB + 1 * BH, width - 4 * WB, 2 * BH,
 				"There are no global solver options available yet.\n\n"
-				"To define your own solver interface, you must edit the option file.");
+				"To define your own solver interface, you have to edit the option file.");
       text->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
 
       o->end();
@@ -2624,7 +2624,7 @@ void GUI::create_option_window()
       o->end();
     }
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB, "Light");
+      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Light");
       o->hide();
 
       view_butt[11] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable lighting");
@@ -2656,7 +2656,7 @@ void GUI::create_option_window()
       o->end();
     }
     {
-      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB, "Color");
+      Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Color");
       o->hide();
 
       view_colorbar_window = new Colorbar_Window(2 * WB, 2 * WB + BH, width - 4 * WB, height - 4 * WB - BH);

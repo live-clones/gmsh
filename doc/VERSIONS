@@ -1,10 +1,10 @@
-$Id: VERSIONS,v 1.239 2004-07-30 12:22:02 geuzaine Exp $
+$Id: VERSIONS,v 1.240 2004-08-07 06:59:16 geuzaine Exp $
 
 New since 1.54: added background mesh support for Triangle; meshes can
 now be displayed using "smoothed" normals (like post-processing
 views); added GUI for clipping planes; new interactive
-clipping/cutting plane definition; reorganized the Options GUI; small
-bug fixes.
+clipping/cutting plane definition; reorganized the Options GUI;
+enhanced 3D iso computation; small bug fixes.
 
 New in 1.54: integrated Netgen (3D mesh quality optimization +
 alternative 3D algorithm); Extrude Surface now always automatically

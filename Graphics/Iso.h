@@ -22,19 +22,19 @@
 
 #include "Views.h"
 
-void CutTriangle1D(double *X, double *Y, double *Z, double *Val,
-		   double V, double *Xp, double *Yp, double *Zp, int *nb);
+void CutTriangle(double *X, double *Y, double *Z, double *Val,
+		 double V1, double V2, double *Xp, double *Yp, double *Zp, 
+		 int *nb, double *value);
 
-void CutTriangle2D(double *X, double *Y, double *Z, double *Val,
-		   double V1, double V2, double *Xp, double *Yp, double *Zp, 
-		   int *nb, double *value);
+void CutLine(double *X, double *Y, double *Z, double *Val,
+	     double V1, double V2, double *Xp, double *Yp, double *Zp,
+	     int *nb, double *value);
 
-void CutLine0D(double *X, double *Y, double *Z, double *Val,
-	       double V, double *Xp, double *Yp, double *Zp, int *nb);
+void IsoLine(Post_View *View, double *X, double *Y, double *Z, 
+	     double *Val, double V);
 
-void CutLine1D(double *X, double *Y, double *Z, double *Val,
-	       double V1, double V2, double *Xp, double *Yp, double *Zp,
-	       int *nb, double *value);
+void IsoTriangle(Post_View *View, double *X, double *Y, double *Z,
+		 double *Val, double V);
 
 void IsoSimplex(Post_View *View, int preproNormals, 
 		double *X, double *Y, double *Z, double *Val, double V,
