@@ -1,6 +1,6 @@
 %{
 
-// $Id: Gmsh.l,v 1.32 2001-07-25 13:11:07 geuzaine Exp $
+// $Id: Gmsh.l,v 1.33 2001-07-26 19:21:01 remacle Exp $
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,7 +163,8 @@ Point                   return tPoint;
 Power                   return tProgression;
 Progression             return tProgression;
 Parametric		return tParametric;
-Printf                  return tPrintf ;
+Printf                  return tPrintf;
+Plugin                  return tPlugin;
 
 Recombine               return tRecombine;
 Rotate                  return tRotate;
