@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.11 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.12 2004-06-16 18:03:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -116,8 +116,7 @@ static void decomposeList(Post_View *v, int nbNod, int nbComp,
 
   delete [] valNew;
 
-  List_Delete(*listIn);
-  *listIn = NULL;
+  List_Reset(*listIn);
   *nbIn = 0;
 }
 
