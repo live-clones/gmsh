@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.64 2004-05-07 18:42:48 geuzaine Exp $
+// $Id: Main.cpp,v 1.65 2004-05-12 20:16:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -72,14 +72,6 @@ int main(int argc, char *argv[])
 
   Init_Options(0);
 
-  // Generate automatic documentation (before getting user-defined options)
-  
-  if(argc == 2 && !strcmp(argv[1], "-doc")){
-    GMSH_PluginManager::instance()->registerDefaultPlugins();
-    Print_OptionsDoc();
-    exit(0);
-  }
-
   // Initialize the static Mesh
 
   M.Vertices = NULL;
@@ -96,7 +88,18 @@ int main(int argc, char *argv[])
   M.BGM.bgm = NULL;
   M.Grid.init = 0;
 
-  // Configuration files and command line options
+  // Initialize the default plugins
+
+  GMSH_PluginManager::instance()->registerDefaultPlugins();
+
+  // Generate automatic documentation (before getting user-defined options)
+  
+  if(argc == 2 && !strcmp(argv[1], "-doc")){
+    Print_OptionsDoc();
+    exit(0);
+  }
+
+  // Read configuration files and command line options
 
   Get_Options(argc, argv, &nbf);
 
@@ -114,8 +117,8 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Gmsh %s, started %s\n", GMSH_VERSION, currtime);
 
   // Register Default Plugins
-  if(CTX.default_plugins)
-    GMSH_PluginManager::instance()->registerDefaultPlugins();
+
+
 
   // Signal handling
 

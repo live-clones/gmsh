@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.35 2004-04-22 05:59:08 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.36 2004-05-12 20:16:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -477,14 +477,6 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       }
       else if(!strcmp(argv[i] + 1, "noview")) {
         opt_view_visible(0, GMSH_SET, 0);
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "plugin")) {
-        opt_general_default_plugins(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "noplugin")) {
-        opt_general_default_plugins(0, GMSH_SET, 0);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "link")) {

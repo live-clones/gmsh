@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.151 2004-05-12 04:31:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.152 2004-05-12 20:16:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2427,13 +2427,6 @@ double opt_general_zoom_factor(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.zoom_factor = val;
   return CTX.zoom_factor;
-}
-
-double opt_general_default_plugins(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.default_plugins = (int)val;
-  return CTX.default_plugins;
 }
 
 double opt_general_clip0(OPT_ARGS_NUM)

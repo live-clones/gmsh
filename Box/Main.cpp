@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.39 2004-05-07 18:42:48 geuzaine Exp $
+// $Id: Main.cpp,v 1.40 2004-05-12 20:16:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -93,8 +93,6 @@ int main(int argc, char *argv[])
   if(argc < 2)
     Info(0, argv[0]);
 
-  Get_Options(argc, argv, &nbf);
-
   M.Vertices = NULL;
   M.Simplexes = NULL;
   M.Points = NULL;
@@ -113,8 +111,9 @@ int main(int argc, char *argv[])
   signal(SIGSEGV, Signal);
   signal(SIGFPE, Signal);
 
-  if(CTX.default_plugins)
-    GMSH_PluginManager::instance()->registerDefaultPlugins();
+  GMSH_PluginManager::instance()->registerDefaultPlugins();
+
+  Get_Options(argc, argv, &nbf);
 
   check_gsl();
 

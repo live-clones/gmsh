@@ -442,8 +442,6 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "ContextPositionY" , opt_general_context_position1 , 150. ,
     "Vertical position (in pixels) of the upper left corner of the contextual windows" }, 
 
-  { F|O, "DefaultPlugins" , opt_general_default_plugins , 1. ,
-    "Load default plugins on startup" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)" },
 

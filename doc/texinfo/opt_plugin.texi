@@ -151,17 +151,18 @@ Default value: @code{-1}
 Plugin(Evaluate) sets the values associated with
 the `TimeStep'-th time step in the view `iView'
 to the expression `Expression'. In addition to
-the usual mathematical functions, `Expression' can
-contain the symbols x, y, z and v, which represent
-the three spatial coordinates and the value of the
-field, respectively.
+the usual mathematical functions, `Expression'
+can contain the symbols x, y, z and v, which
+represent the three spatial coordinates and the
+value of the field, respectively. If `iView' < 0, the
+plugin is run on the current view.
 
 Plugin(Evaluate) is executed in-place.
 
 String options:
 @table @code
 @item Expression
-Default value: @code{"Sin(v) * Sqrt(x^2+y^2)"}
+Default value: @code{"0.01*(Fabs(Sin(30*y)*Fabs(Cos(30*x)))+0.3)"}
 @end table
 Numeric options:
 @table @code
@@ -172,7 +173,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Extract)
-Plugin(Extract) extracts the iComponent-th
+Plugin(Extract) extracts the `iComponent'-th
 component of the view `iView'. If `iView' < 0, the
 plugin is run on the current view.
 

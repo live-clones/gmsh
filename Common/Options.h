@@ -254,7 +254,6 @@ double opt_general_arrow_stem_radius(OPT_ARGS_NUM);
 double opt_general_trackball(OPT_ARGS_NUM);
 double opt_general_rotation_center_cg(OPT_ARGS_NUM);
 double opt_general_zoom_factor(OPT_ARGS_NUM);
-double opt_general_default_plugins(OPT_ARGS_NUM);
 double opt_general_clip0(OPT_ARGS_NUM);
 double opt_general_clip0a(OPT_ARGS_NUM);
 double opt_general_clip0b(OPT_ARGS_NUM);
