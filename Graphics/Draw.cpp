@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.57 2004-06-01 17:14:30 geuzaine Exp $
+// $Id: Draw.cpp,v 1.58 2004-06-02 15:04:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -176,7 +176,12 @@ void InitRenderModel(void)
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
   glShadeModel(GL_SMOOTH);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
+#if defined(GL_VERSION_1_2)
+  // this is more efficient, since we already specify unit normals
   glEnable(GL_RESCALE_NORMAL);
+#else
+  glEnable(GL_NORMALIZE);
+#endif
   glEnable(GL_COLOR_MATERIAL);
   // lighting is enabled/disabled for each particular primitive later
   glDisable(GL_LIGHTING);
