@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.120 2002-05-01 21:11:53 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.121 2002-05-07 05:32:20 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1699,8 +1699,13 @@ void mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
 
 void solver_cb(CALLBACK_ARGS){
   char file[256], tmp[256];
-  static int first[5]={1,1,1,1,1};
-  int num = (int)data;
+  static int init=0, first[MAXSOLVERS];
+  int i, num = (int)data;
+
+  if(!init){
+    for(i=0; i<MAXSOLVERS; i++) first[i] = 1;
+    init = 1;
+  }
 
   if(first[num]){
     first[num] = 0;

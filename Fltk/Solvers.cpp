@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.9 2002-01-03 10:25:06 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.10 2002-05-07 05:32:20 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshClient.h"
@@ -21,7 +21,7 @@
 extern Context_T  CTX;
 extern GUI       *WID;
 
-SolverInfo SINFO[5] ;
+SolverInfo SINFO[MAXSOLVERS] ;
 
 int Solver(int num, char *args){
   int sock, type, stop=0, i, j, n;
