@@ -945,7 +945,7 @@ bool StructuralSolver :: GL_enhancePoint ( Vertex *v)
 		  Draw_Vector (CTX.vector_type,  0, CTX.arrow_rel_head_radius, 
 			       CTX.arrow_rel_stem_length, 0.5*CTX.arrow_rel_stem_radius,
 			       v->Pos.X-dv[0]*kk, v->Pos.Y-dv[1]*kk, v->Pos.Z-dv[2]*kk,
-			       dv[0]*kk, dv[1]*kk, dv[2]*kk, NULL, CTX.geom.light);
+			       dv[0]*kk, dv[1]*kk, dv[2]*kk, CTX.geom.light);
 		  sprintf(Num, "%g kN", l);
 		  glRasterPos3d((v->Pos.X + dv[0])+ offset / CTX.s[0],
 				(v->Pos.Y + dv[1])+ offset / CTX.s[1],

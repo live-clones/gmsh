@@ -72,13 +72,13 @@ void Draw_Disk(double size, double rint, double x, double y, double z, int light
 void Draw_Sphere(double size, double x, double y, double z, int light);
 void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
 void Draw_Point(int type, double size, double *x, double *y, double *z, 
-		double Raise[3][8], int light);
+		int light);
 void Draw_Line(int type, double width, double *x, double *y, double *z,
-	       double Raise[3][8], int light);
+	       int light);
 void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,
-		 double Raise[3][8], int light);
+		 int light);
 
 void Draw_Mesh(Mesh *M);
 void Draw_Mesh_Volume(void *a, void *b);
@@ -140,5 +140,8 @@ double GiveValueFromIndex_DoubleLog(double ValMin, double ValMax, int NbIso, int
 int GiveIndexFromValue_Lin(double ValMin, double ValMax, int NbIso, double Val);
 int GiveIndexFromValue_Log(double ValMin, double ValMax, int NbIso, double Val);
 int GiveIndexFromValue_DoubleLog(double ValMin, double ValMax, int NbIso, double Val);
+
+int GetValuesFromExternalView(Post_View *v, int type, int refcomp, 
+			      int *nbcomp, double **vals, int viewIndex);
 
 #endif

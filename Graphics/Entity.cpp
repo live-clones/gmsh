@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.47 2004-09-14 10:33:37 remacle Exp $
+// $Id: Entity.cpp,v 1.48 2004-12-07 04:52:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -120,14 +120,13 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 }
 
 void Draw_Point(int type, double size, double *x, double *y, double *z,
-                double Raise[3][8], int light)
+                int light)
 {
   if(type)
-    Draw_Sphere(size, x[0] + Raise[0][0], y[0] + Raise[1][0],
-                z[0] + Raise[2][0], light);
+    Draw_Sphere(size, x[0], y[0], z[0], light);
   else {
     glBegin(GL_POINTS);
-    glVertex3d(x[0] + Raise[0][0], y[0] + Raise[1][0], z[0] + Raise[2][0]);
+    glVertex3d(x[0], y[0], z[0]);
     glEnd();
   }
 }
@@ -217,24 +216,14 @@ void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
 }
 
 void Draw_Line(int type, double width, double *x, double *y, double *z,
-               double Raise[3][8], int light)
+               int light)
 {
-  double X[2], Y[2], Z[2];
-
-  X[0] = x[0] + Raise[0][0];
-  Y[0] = y[0] + Raise[1][0];
-  Z[0] = z[0] + Raise[2][0];
-
-  X[1] = x[1] + Raise[0][1];
-  Y[1] = y[1] + Raise[1][1];
-  Z[1] = z[1] + Raise[2][1];
-
   if(type)
-    Draw_Cylinder(width, X, Y, Z, light);
+    Draw_Cylinder(width, x, y, z, light);
   else {
     glBegin(GL_LINES);
-    glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[1], Y[1], Z[1]);
+    glVertex3d(x[0], y[0], z[0]);
+    glVertex3d(x[1], y[1], z[1]);
     glEnd();
   }
 }
@@ -442,18 +431,12 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
 void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
                  double x, double y, double z, double dx, double dy, double dz,
-                 double Raise[3][8], int light)
+                 int light)
 {
   double length = sqrt(dx * dx + dy * dy + dz * dz);
 
   if(length == 0.0)
     return;
-
-  if(Raise != NULL) {
-    x += Raise[0][0];
-    y += Raise[1][0];
-    z += Raise[2][0];
-  }
 
   switch(Type){
   case DRAW_POST_SEGMENT:

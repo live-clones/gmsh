@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.85 2004-11-25 02:10:32 geuzaine Exp $
+// $Id: Post.cpp,v 1.86 2004-12-07 04:52:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -126,20 +126,112 @@ unsigned int PaletteDiscrete(Post_View * v, int nbi, int i)
   return v->CT.table[index];
 }
 
-// Compute node coordinates taking Offset and Explode into account
+// Get values from a compatible external view (i.e., a view that has
+// the same number of elements as the {type,refcomp} list in the
+// reference view, and the same number of time steps)
 
-void Get_Coords(double Explode, double *Offset, int nbnod,
-                double *x1, double *y1, double *z1,
+int GetValuesFromExternalView(Post_View *v, int type, int refcomp, 
+			      int *nbcomp, double **vals, int viewIndex)
+{
+  Post_View **vv = (Post_View **) List_Pointer_Test(CTX.post.list, viewIndex);  
+
+  if(!vv){
+    if(!v->ExternalElementIndex)
+      Msg(GERROR, "Nonexistent external view: drawing self instead");
+    return 0;
+  }
+
+  Post_View *v2 = *vv;
+  int nbelm = 0, comp = 0, nbnod = 0, ref;
+  List_T *l = NULL;
+
+  switch(type){
+  case POST_POINT:
+    nbnod = 1;
+    ref = (refcomp == 1) ? v->NbSP : ((refcomp == 3) ? v->NbVP : v->NbTP);
+    if(ref == v2->NbSP){ nbelm = v2->NbSP; l = v2->SP; comp = 1; }
+    else if(ref == v2->NbVP){ nbelm = v2->NbVP; l = v2->VP; comp = 3; }
+    else if(ref == v2->NbTP){ nbelm = v2->NbTP; l = v2->TP; comp = 9; }
+    break;
+  case POST_LINE:
+    nbnod = 2;
+    ref = (refcomp == 1) ? v->NbSL : ((refcomp == 3) ? v->NbVL : v->NbTL);
+    if(ref == v2->NbSL){ nbelm = v2->NbSL; l = v2->SL; comp = 1; } 
+    else if(ref == v2->NbVL){ nbelm = v2->NbVL; l = v2->VL; comp = 3; } 
+    else if(ref == v2->NbTL){ nbelm = v2->NbTL; l = v2->TL; comp = 9; } 
+    break;
+  case POST_TRIANGLE:
+    nbnod = 3;
+    ref = (refcomp == 1) ? v->NbST : ((refcomp == 3) ? v->NbVT : v->NbTT);
+    if(ref == v2->NbST){ nbelm = v2->NbST; l = v2->ST; comp = 1;  } 
+    else if(ref == v2->NbVT){ nbelm = v2->NbVT; l = v2->VT; comp = 3;  } 
+    else if(ref == v2->NbTT){ nbelm = v2->NbTT; l = v2->TT; comp = 9;  } 
+    break;
+  case POST_QUADRANGLE:
+    nbnod = 4;
+    ref = (refcomp == 1) ? v->NbSQ : ((refcomp == 3) ? v->NbVQ : v->NbTQ);
+    if(ref == v2->NbSQ){ nbelm = v2->NbSQ; l = v2->SQ; comp = 1;  } 
+    else if(ref == v2->NbVQ){ nbelm = v2->NbVQ; l = v2->VQ; comp = 3;  } 
+    else if(ref == v2->NbTQ){ nbelm = v2->NbTQ; l = v2->TQ; comp = 9;  } 
+    break;
+  case POST_TETRAHEDRON:
+    nbnod = 4;
+    ref = (refcomp == 1) ? v->NbSS : ((refcomp == 3) ? v->NbVS : v->NbTS);
+    if(ref == v2->NbSS){ nbelm = v2->NbSS; l = v2->SS; comp = 1;  } 
+    else if(ref == v2->NbVS){ nbelm = v2->NbVS; l = v2->VS; comp = 3;  } 
+    else if(ref == v2->NbTS){ nbelm = v2->NbTS; l = v2->TS; comp = 9;  } 
+    break;
+  case POST_HEXAHEDRON:
+    nbnod = 8;
+    ref = (refcomp == 1) ? v->NbSH : ((refcomp == 3) ? v->NbVH : v->NbTH);
+    if(ref == v2->NbSH){ nbelm = v2->NbSH; l = v2->SH; comp = 1;  }
+    else if(ref == v2->NbVH){ nbelm = v2->NbVH; l = v2->VH; comp = 3;  }
+    else if(ref == v2->NbTH){ nbelm = v2->NbTH; l = v2->TH; comp = 9;  }
+    break;
+  case POST_PRISM:
+    nbnod = 6;
+    ref = (refcomp == 1) ? v->NbSI : ((refcomp == 3) ? v->NbVI : v->NbTI);
+    if(ref == v2->NbSI){ nbelm = v2->NbSI; l = v2->SI; comp = 1;  }
+    else if(ref == v2->NbVI){ nbelm = v2->NbVI; l = v2->VI; comp = 3;  }
+    else if(ref == v2->NbTI){ nbelm = v2->NbTI; l = v2->TI; comp = 9;  }
+    break;
+  case POST_PYRAMID:
+    nbnod = 5;
+    ref = (refcomp == 1) ? v->NbSY : ((refcomp == 3) ? v->NbVY : v->NbTY);
+    if(ref == v2->NbSY){ nbelm = v2->NbSY; l = v2->SY; comp = 1;  } 
+    else if(ref == v2->NbVY){ nbelm = v2->NbVY; l = v2->VY; comp = 3;  } 
+    else if(ref == v2->NbTY){ nbelm = v2->NbTY; l = v2->TY; comp = 9;  } 
+    break;
+  }
+
+  if(!l || !nbelm || v2->NbTimeStep != v->NbTimeStep ||
+     v->ExternalElementIndex < 0 || v->ExternalElementIndex >= nbelm){
+    if(!v->ExternalElementIndex)
+      Msg(GERROR, "Incompatible external view: drawing self instead");
+    return 0;
+  }
+
+  int nb = List_Nbr(l) / nbelm;
+  *nbcomp = comp;
+  *vals = (double *)List_Pointer(l, v->ExternalElementIndex * nb + 
+				 3 * nbnod + comp * nbnod * v->TimeStep);
+  return 1;
+}
+
+// Compute node coordinates taking Offset, Raise and Explode into account
+
+void Get_Coords(Post_View *v, int type, int nbnod, int nbcomp,
+                double *x1, double *y1, double *z1, double *vals,
                 double *x2, double *y2, double *z2)
 {
   int i;
   double xc = 0., yc = 0., zc = 0.;
 
-  if(Explode == 1) {
+  if(v->Explode == 1.) {
     for(i = 0; i < nbnod; i++) {
-      x2[i] = x1[i] + Offset[0];
-      y2[i] = y1[i] + Offset[1];
-      z2[i] = z1[i] + Offset[2];
+      x2[i] = x1[i] + v->Offset[0];
+      y2[i] = y1[i] + v->Offset[1];
+      z2[i] = z1[i] + v->Offset[2];
     }
   }
   else {
@@ -152,10 +244,36 @@ void Get_Coords(double Explode, double *Offset, int nbnod,
     yc /= (double)nbnod;
     zc /= (double)nbnod;
     for(i = 0; i < nbnod; i++) {
-      x2[i] = xc + Explode * (x1[i] - xc) + Offset[0];
-      y2[i] = yc + Explode * (y1[i] - yc) + Offset[1];
-      z2[i] = zc + Explode * (z1[i] - zc) + Offset[2];
+      x2[i] = xc + v->Explode * (x1[i] - xc) + v->Offset[0];
+      y2[i] = yc + v->Explode * (y1[i] - yc) + v->Offset[1];
+      z2[i] = zc + v->Explode * (z1[i] - zc) + v->Offset[2];
     }
+  }
+
+  if(v->Raise[0] || v->Raise[1] || v->Raise[2]){
+    for(int k = 0; k < nbnod; k++){
+      double norm = 0.;
+      if(nbcomp == 1)
+	norm = vals[k];
+      else if(nbcomp == 3)
+	norm = sqrt(vals[3*k] * vals[3*k] + 
+		    vals[3*k+1] * vals[3*k+1] + 
+		    vals[3*k+2] * vals[3*k+2]);
+      else if(nbcomp == 9)
+	norm = ComputeVonMises(vals + 9*k);
+      x2[k] += v->Raise[0] * norm;
+      y2[k] += v->Raise[1] * norm;
+      z2[k] += v->Raise[2] * norm;
+    }
+  }
+
+  if(v->UseGenRaise){
+    int ext_nbcomp = nbcomp;
+    double *ext_vals = vals;
+    if(v->ViewIndexForGenRaise >= 0)
+      GetValuesFromExternalView(v, type, nbcomp, &ext_nbcomp, &ext_vals, 
+				v->ViewIndexForGenRaise);
+    ApplyGeneralizedRaise(v, nbnod, ext_nbcomp, ext_vals, x2, y2, z2);
   }
 }
 
@@ -180,8 +298,6 @@ int changedEye()
   }
   return 0;
 }
-
-// to be rigorous, we should take Raise into account
 
 int compareEye(double *q, double *w, int nbnodes)
 {
@@ -231,8 +347,8 @@ int compareEye8Nodes(const void *a, const void *b)
 
 // Draw_Post
 
-void Draw_List(Post_View * v, double ValMin, double ValMax,
-	       List_T * list, int nbelm, int nbnod,
+void Draw_List(Post_View * v, double ValMin, double ValMax, int type,
+	       List_T * list, int nbelm, int nbnod, int nbcomp,
 	       void (*draw) (Post_View *, int, double, double, double *, 
 			     double *, double *, double *))
 {
@@ -246,10 +362,13 @@ void Draw_List(Post_View * v, double ValMin, double ValMax,
       Msg(DEBUG, "Preprocessing of normals in View[%d]", v->Index);
       v->ExternalElementIndex = 0;
       for(i = 0; i < List_Nbr(list); i += nb) {
-        Get_Coords(v->Explode, v->Offset, nbnod,
+        Get_Coords(v, type, nbnod, nbcomp,
                    (double *)List_Pointer_Fast(list, i),
                    (double *)List_Pointer_Fast(list, i + nbnod),
-                   (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
+                   (double *)List_Pointer_Fast(list, i + 2 * nbnod), 
+		   (double *)List_Pointer_Fast(list, i + 3 * nbnod +
+					       v->TimeStep * nbnod * nbcomp),
+		   X, Y, Z);
         draw(v, 1, ValMin, ValMax, X, Y, Z,
              (double *)List_Pointer_Fast(list, i + 3 * nbnod));
 	v->ExternalElementIndex++;
@@ -258,10 +377,13 @@ void Draw_List(Post_View * v, double ValMin, double ValMax,
 
     v->ExternalElementIndex = 0;
     for(i = 0; i < List_Nbr(list); i += nb) {
-      Get_Coords(v->Explode, v->Offset, nbnod,
+      Get_Coords(v, type, nbnod, nbcomp,
                  (double *)List_Pointer_Fast(list, i),
                  (double *)List_Pointer_Fast(list, i + nbnod),
-                 (double *)List_Pointer_Fast(list, i + 2 * nbnod), X, Y, Z);
+                 (double *)List_Pointer_Fast(list, i + 2 * nbnod),
+		 (double *)List_Pointer_Fast(list, i + 3 * nbnod +
+					     v->TimeStep * nbnod * nbcomp),
+		 X, Y, Z);
       draw(v, 0, ValMin, ValMax, X, Y, Z,
            (double *)List_Pointer_Fast(list, i + 3 * nbnod));
       v->ExternalElementIndex++;
@@ -396,6 +518,9 @@ void Draw_Post(void)
       if(v->Light && v->SmoothNormals && v->Changed)
 	v->reset_normals();
 
+      if(v->UseGenRaise)
+	InitGeneralizedRaise(v);
+
       // initialize alpha blending for transparency
       if(CTX.alpha && ColorTable_IsAlpha(&v->CT)){
 	if(CTX.fake_transparency){
@@ -446,19 +571,25 @@ void Draw_Post(void)
 
       if(v->DrawPoints) {
 	if(v->Type == DRAW_POST_3D && v->DrawScalars)
-	  Draw_List(v, ValMin, ValMax, v->SP, v->NbSP, 1, Draw_ScalarPoint);
+	  Draw_List(v, ValMin, ValMax, POST_POINT, v->SP, v->NbSP, 1, 1, 
+		    Draw_ScalarPoint);
 	if(v->DrawVectors)
-	  Draw_List(v, ValMin, ValMax, v->VP, v->NbVP, 1, Draw_VectorPoint);
+	  Draw_List(v, ValMin, ValMax, POST_POINT, v->VP, v->NbVP, 1, 3, 
+		    Draw_VectorPoint);
 	if(v->DrawTensors)
-	  Draw_List(v, ValMin, ValMax, v->TP, v->NbTP, 1, Draw_TensorPoint);
+	  Draw_List(v, ValMin, ValMax, POST_POINT, v->TP, v->NbTP, 1, 9, 
+		    Draw_TensorPoint);
       }
       if(v->DrawLines) {
 	if(v->DrawScalars)
-	  Draw_List(v, ValMin, ValMax, v->SL, v->NbSL, 2, Draw_ScalarLine);
+	  Draw_List(v, ValMin, ValMax, POST_LINE, v->SL, v->NbSL, 2, 1,
+		    Draw_ScalarLine);
 	if(v->DrawVectors)
-	  Draw_List(v, ValMin, ValMax, v->VL, v->NbVL, 2, Draw_VectorLine);
+	  Draw_List(v, ValMin, ValMax, POST_LINE, v->VL, v->NbVL, 2, 3, 
+		    Draw_VectorLine);
 	if(v->DrawTensors)
-	  Draw_List(v, ValMin, ValMax, v->TL, v->NbTL, 2, Draw_TensorLine);
+	  Draw_List(v, ValMin, ValMax, POST_LINE, v->TL, v->NbTL, 2, 9, 
+		    Draw_TensorLine);
       }
 
       for(int pass = 0; pass < 2; pass++){
@@ -494,51 +625,69 @@ void Draw_Post(void)
       pass_0:
 	if(v->DrawTriangles) {
 	  if(!skip_2d && v->DrawScalars)
-	    Draw_List(v, ValMin, ValMax, v->ST, v->NbST, 3, Draw_ScalarTriangle);
+	    Draw_List(v, ValMin, ValMax, POST_TRIANGLE, v->ST, v->NbST, 3, 1,
+		      Draw_ScalarTriangle);
 	  if(v->DrawVectors)
-	    Draw_List(v, ValMin, ValMax, v->VT, v->NbVT, 3, Draw_VectorTriangle);
+	    Draw_List(v, ValMin, ValMax, POST_TRIANGLE, v->VT, v->NbVT, 3, 3,
+		      Draw_VectorTriangle);
 	  if(v->DrawTensors)
-	    Draw_List(v, ValMin, ValMax, v->TT, v->NbTT, 3, Draw_TensorTriangle);
+	    Draw_List(v, ValMin, ValMax, POST_TRIANGLE, v->TT, v->NbTT, 3, 9,
+		      Draw_TensorTriangle);
 	}
 	if(v->DrawQuadrangles) {
 	  if(!skip_2d && v->DrawScalars)
-	    Draw_List(v, ValMin, ValMax, v->SQ, v->NbSQ, 4, Draw_ScalarQuadrangle);
+	    Draw_List(v, ValMin, ValMax, POST_QUADRANGLE, v->SQ, v->NbSQ, 4, 1,
+		      Draw_ScalarQuadrangle);
 	  if(v->DrawVectors)
-	    Draw_List(v, ValMin, ValMax, v->VQ, v->NbVQ, 4, Draw_VectorQuadrangle);
+	    Draw_List(v, ValMin, ValMax, POST_QUADRANGLE, v->VQ, v->NbVQ, 4, 3,
+		      Draw_VectorQuadrangle);
 	  if(v->DrawTensors)
-	    Draw_List(v, ValMin, ValMax, v->TQ, v->NbTQ, 4, Draw_TensorQuadrangle);
+	    Draw_List(v, ValMin, ValMax, POST_QUADRANGLE, v->TQ, v->NbTQ, 4, 9,
+		      Draw_TensorQuadrangle);
 	}
 	if(v->DrawTetrahedra) {
 	  if(!skip_3d && v->DrawScalars)
-	    Draw_List(v, ValMin, ValMax, v->SS, v->NbSS, 4, Draw_ScalarTetrahedron);
+	    Draw_List(v, ValMin, ValMax, POST_TETRAHEDRON, v->SS, v->NbSS, 4, 1,
+		      Draw_ScalarTetrahedron);
 	  if(v->DrawVectors)
-	    Draw_List(v, ValMin, ValMax, v->VS, v->NbVS, 4, Draw_VectorTetrahedron);
+	    Draw_List(v, ValMin, ValMax, POST_TETRAHEDRON, v->VS, v->NbVS, 4, 3,
+		      Draw_VectorTetrahedron);
 	  if(v->DrawTensors)
-	    Draw_List(v, ValMin, ValMax, v->TS, v->NbTS, 4, Draw_TensorTetrahedron);
+	    Draw_List(v, ValMin, ValMax, POST_TETRAHEDRON, v->TS, v->NbTS, 4, 9,
+		      Draw_TensorTetrahedron);
 	}
 	if(v->DrawHexahedra) {
 	  if(!skip_3d && v->DrawScalars)
-	    Draw_List(v, ValMin, ValMax, v->SH, v->NbSH, 8, Draw_ScalarHexahedron);
+	    Draw_List(v, ValMin, ValMax, POST_HEXAHEDRON, v->SH, v->NbSH, 8, 1,
+		      Draw_ScalarHexahedron);
 	  if(v->DrawVectors)
-	    Draw_List(v, ValMin, ValMax, v->VH, v->NbVH, 8, Draw_VectorHexahedron);
+	    Draw_List(v, ValMin, ValMax, POST_HEXAHEDRON, v->VH, v->NbVH, 8, 3,
+		      Draw_VectorHexahedron);
 	  if(v->DrawTensors)
-	    Draw_List(v, ValMin, ValMax, v->TH, v->NbTH, 8, Draw_TensorHexahedron);
+	    Draw_List(v, ValMin, ValMax, POST_HEXAHEDRON, v->TH, v->NbTH, 8, 9,
+		      Draw_TensorHexahedron);
 	}
 	if(v->DrawPrisms) {
 	  if(!skip_3d && v->DrawScalars)
-	    Draw_List(v, ValMin, ValMax, v->SI, v->NbSI, 6, Draw_ScalarPrism);
+	    Draw_List(v, ValMin, ValMax, POST_PRISM, v->SI, v->NbSI, 6, 1,
+		      Draw_ScalarPrism);
 	  if(v->DrawVectors)
-	    Draw_List(v, ValMin, ValMax, v->VI, v->NbVI, 6, Draw_VectorPrism);
+	    Draw_List(v, ValMin, ValMax, POST_PRISM, v->VI, v->NbVI, 6, 3,
+		      Draw_VectorPrism);
 	  if(v->DrawTensors)
-	    Draw_List(v, ValMin, ValMax, v->TI, v->NbTI, 6, Draw_TensorPrism);
+	    Draw_List(v, ValMin, ValMax, POST_PRISM, v->TI, v->NbTI, 6, 9,
+		      Draw_TensorPrism);
 	}
 	if(v->DrawPyramids) {
 	  if(!skip_3d && v->DrawScalars)
-	    Draw_List(v, ValMin, ValMax, v->SY, v->NbSY, 5, Draw_ScalarPyramid);
+	    Draw_List(v, ValMin, ValMax, POST_PYRAMID, v->SY, v->NbSY, 5, 1,
+		      Draw_ScalarPyramid);
 	  if(v->DrawVectors)
-	    Draw_List(v, ValMin, ValMax, v->VY, v->NbVY, 5, Draw_VectorPyramid);
+	    Draw_List(v, ValMin, ValMax, POST_PYRAMID, v->VY, v->NbVY, 5, 3,
+		      Draw_VectorPyramid);
 	  if(v->DrawTensors)
-	    Draw_List(v, ValMin, ValMax, v->TY, v->NbTY, 5, Draw_TensorPyramid);
+	    Draw_List(v, ValMin, ValMax, POST_PYRAMID, v->TY, v->NbTY, 5, 9,
+		      Draw_TensorPyramid);
 	}
 
       pass_1:
@@ -591,7 +740,7 @@ void Draw_Post(void)
 
       for(int i = 0; i < 6; i++)
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
-      
+
       v->Changed = 0;
     }
   }

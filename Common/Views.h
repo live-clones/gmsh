@@ -31,6 +31,15 @@
 #define VIEW_MAX_ELEMENT_NODES  8
 #define VAL_INF 1.e200
 
+#define POST_POINT           0
+#define POST_LINE            1
+#define POST_TRIANGLE        2
+#define POST_QUADRANGLE      3
+#define POST_TETRAHEDRON     4
+#define POST_HEXAHEDRON      5
+#define POST_PRISM           6
+#define POST_PYRAMID         7
+
 class Post_View{
  public :
   // intrinsic to a view
@@ -86,7 +95,11 @@ class Post_View{
   int Boundary, Grid, PointType, LineType;
   double PointSize, LineWidth;
   GmshColorTable CT;
-  int ExternalViewIndex;
+  int ExternalViewIndex, ViewIndexForGenRaise;
+  int UseGenRaise;
+  double GenRaiseFactor;
+  char GenRaiseX[256], GenRaiseY[256], GenRaiseZ[256];
+  void *GenRaise_f[3];
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
@@ -184,5 +197,10 @@ GmshColorTable *Get_ColorTable(int num);
 void Print_ColorTable(int num, int diff, char *prefix, FILE *file);
 
 double ComputeVonMises(double* val);
+
+void InitGeneralizedRaise(Post_View *v);
+void FreeGeneralizedRaise(Post_View *v);
+void ApplyGeneralizedRaise(Post_View * v, int numNodes, int numComp, double *vals,
+			   double *x, double *y, double *z);
 
 #endif

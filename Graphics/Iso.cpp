@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.31 2004-12-06 04:59:08 geuzaine Exp $
+// $Id: Iso.cpp,v 1.32 2004-12-07 04:52:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -54,14 +54,8 @@ void IsoTriangle(Post_View * View, double *X, double *Y, double *Z,
     nb++;
   }
   
-  if(nb == 2) {
-    double Raise[3][8];
-    for(int i = 0; i < 3; i++)
-      for(int l = 0; l < 2; l++)
-	Raise[i][l] = View->Raise[i] * V;
-    Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp,
-	      Raise, View->Light);
-  }
+  if(nb == 2)
+    Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, View->Light);
 }
 
 // Compute the polygon between the two iso-lines V1 and V2 in a
@@ -238,10 +232,7 @@ void IsoLine(Post_View *View, double *X, double *Y, double *Z,
 
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
     InterpolateIso(X, Y, Z, Val, V, 0, 1, Xp, Yp, Zp);
-    double Raise[3][8];
-    for(int i = 0; i < 3; i++)
-      Raise[i][0] = View->Raise[i] * V;
-    Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, Raise, View->Light);
+    Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, View->Light);
   }
 }
 
@@ -481,12 +472,6 @@ void IsoSimplex(Post_View * View, int preproNormals,
 
   if(nb < 3 || nb > 4)
     return;
-
-  for(int i = 0; i < nb; i++){
-    Xp[i] += View->Raise[0] * V;
-    Yp[i] += View->Raise[1] * V;
-    Zp[i] += View->Raise[2] * V;
-  }
 
   EnhanceSimplexPolygon(View, nb, Xp, Yp, Zp, PVals, X, Y, Z, Val, norms,
                         preproNormals);

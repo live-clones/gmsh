@@ -19,6 +19,21 @@ Number format (in standard C form)@*
 Default value: @code{"%.3e"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.GeneralizedRaiseX
+Generalized elevation of the view along X-axis (in model coordinates)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.GeneralizedRaiseY
+Generalized elevation of the view along Y-axis (in model coordinates)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.GeneralizedRaiseZ
+Generalized elevation of the view along Z-axis (in model coordinates)@*
+Default value: @code{"v0"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.Name
 Default post-processing view name@*
 Default value: @code{""}@*
@@ -156,6 +171,16 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.ExternalView
 Index of the view used to color vector fields (-1=self)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.GeneralizedRaiseFactor
+Generalized raise amplification factor@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.GeneralizedRaiseView
+Index of the view used for generalized raise (-1=self)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -328,6 +353,11 @@ Saved in: @code{-}
 Type of graph (1=3D, 2=2D-space, 3=2D-time)@*
 Default value: @code{1}@*
 Saved in: @code{-}
+
+@item View.UseGeneralizedRaise
+Use generalized raise?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item View.VectorType
 Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)@*

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.113 2004-11-19 18:26:47 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.114 2004-12-07 04:52:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -546,7 +546,7 @@ void Draw_Mesh_Line(void *a, void *b)
     m[2] *= CTX.mesh.tangents * CTX.pixel_equiv_x / CTX.s[2];
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		Xc, Yc, Zc, m[0], m[1], m[2], NULL, CTX.mesh.light);
+		Xc, Yc, Zc, m[0], m[1], m[2], CTX.mesh.light);
   }
 }
 
@@ -886,7 +886,7 @@ void Draw_Mesh_Triangle(void *a, void *b)
     n[2] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[2];
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		Xc, Yc, Zc, n[0], n[1], n[2], NULL, CTX.mesh.light);
+		Xc, Yc, Zc, n[0], n[1], n[2], CTX.mesh.light);
   }
 }
 
@@ -1048,7 +1048,7 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     n[2] *= CTX.mesh.normals * CTX.pixel_equiv_x / CTX.s[2];
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		Xc, Yc, Zc, n[0], n[1], n[2], NULL, CTX.mesh.light);
+		Xc, Yc, Zc, n[0], n[1], n[2], CTX.mesh.light);
   }
 }
 

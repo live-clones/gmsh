@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.15 2004-12-06 04:59:09 geuzaine Exp $
+// $Id: Extract.cpp,v 1.16 2004-12-07 04:52:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -134,18 +134,18 @@ static void extract(char *expr[3], List_T *inList, int inNb,
   // otherwise, we only allow to extract single components
 
 #if defined(HAVE_MATH_EVAL)
-  void *f[3];
+  void *f[3] = { NULL, NULL, NULL };
   for(int i = 0; i < outNbComp; i++){
     f[i] = evaluator_create(expr[i]);
     if(!f[i]){
       Msg(GERROR, "Invalid expression '%s'", expr[i]);
       for(int j = 0; j < i; j++)
-	evaluator_destroy(f[j]);
+	if(f[j]) evaluator_destroy(f[j]);
       return;
     }
   }
 #else
-  int comp[3];
+  int comp[3] = { 0, 0, 0 };
   for(int i = 0; i < outNbComp; i++){
     if     (!strcmp(expr[i], "v0")) comp[i] = 0;
     else if(!strcmp(expr[i], "v1")) comp[i] = 1;

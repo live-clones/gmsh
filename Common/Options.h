@@ -197,6 +197,9 @@ char * opt_view_format(OPT_ARGS_STR);
 char * opt_view_filename(OPT_ARGS_STR);
 char * opt_view_abscissa_name(OPT_ARGS_STR);
 char * opt_view_abscissa_format(OPT_ARGS_STR);
+char * opt_view_gen_raise0(OPT_ARGS_STR);
+char * opt_view_gen_raise1(OPT_ARGS_STR);
+char * opt_view_gen_raise2(OPT_ARGS_STR);
 
 // NUMBERS
 
@@ -482,6 +485,9 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM);
 double opt_view_target_error(OPT_ARGS_NUM);
 double opt_view_alpha_channel(OPT_ARGS_NUM);
 double opt_view_external_view(OPT_ARGS_NUM);
+double opt_view_gen_raise_view(OPT_ARGS_NUM);
+double opt_view_gen_raise_factor(OPT_ARGS_NUM);
+double opt_view_use_gen_raise(OPT_ARGS_NUM);
 double opt_view_type(OPT_ARGS_NUM);
 double opt_view_grid(OPT_ARGS_NUM);
 double opt_view_position0(OPT_ARGS_NUM);

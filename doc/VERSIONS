@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.270 2004-12-06 07:05:38 geuzaine Exp $
+$Id: VERSIONS,v 1.271 2004-12-07 04:52:27 geuzaine Exp $
 
 New in 1.57: generalized displacement maps to display arbitrary view
 types; the arrows representing a vector field can now also be colored
@@ -10,8 +10,9 @@ solver plugin popups; enhanced interactive plugin behaviour; new
 plugins (HarmonicToTime and Integrate); tetrahedral mesh file reading
 speedup (50% faster on large meshes); large memory footprint reduction
 (up to 50%) for the visualization of triangular/tetrahadral meshes;
-the solver interface now supports TCP/IP connections; various small
-bug fixes and enhancements;
+the solver interface now supports TCP/IP connections; new generalized
+raise mode (allows to use complex expressions to offset
+post-processing maps); various small bug fixes and enhancements;
 
 New in 1.56: new post-processing option to draw a scalar view raised
 by a displacement view without using Plugin(DisplacementRaise) (makes

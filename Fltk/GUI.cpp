@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.386 2004-12-06 06:54:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.387 2004-12-07 04:52:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1480,13 +1480,18 @@ void GUI::reset_external_view_list()
 {
   char str[32];
   view_choice[10]->clear();
+  view_choice[11]->clear();
   view_choice[10]->add("Self");
+  view_choice[11]->add("Self");
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     sprintf(str, "View [%d]", i);
     view_choice[10]->add(str, 0, NULL);
+    view_choice[11]->add(str, 0, NULL);
   }
-  if(view_number >= 0)
+  if(view_number >= 0){
     opt_view_external_view(view_number, GMSH_GUI, 0);
+    opt_view_gen_raise_view(view_number, GMSH_GUI, 0);
+  }
 }
 
 void GUI::check_rotation_center_button()
@@ -2624,23 +2629,44 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Offset");
       o->hide();
 
-      view_value[40] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "X offset");
+      view_value[40] = new Fl_Value_Input(L + width / 2, 2 * WB + 1 * BH, IW, BH, "X offset");
       view_value[40]->align(FL_ALIGN_RIGHT);
 
-      view_value[41] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Y offset");
+      view_value[41] = new Fl_Value_Input(L + width / 2, 2 * WB + 2 * BH, IW, BH, "Y offset");
       view_value[41]->align(FL_ALIGN_RIGHT);
 
-      view_value[42] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Z offset");
+      view_value[42] = new Fl_Value_Input(L + width / 2, 2 * WB + 3 * BH, IW, BH, "Z offset");
       view_value[42]->align(FL_ALIGN_RIGHT);
 
-      view_value[43] = new Fl_Value_Input(L + width / 2, 2 * WB + 1 * BH, IW, BH, "X raise");
+      view_value[43] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "X raise");
       view_value[43]->align(FL_ALIGN_RIGHT);
 
-      view_value[44] = new Fl_Value_Input(L + width / 2, 2 * WB + 2 * BH, IW, BH, "Y raise");
+      view_value[44] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Y raise");
       view_value[44]->align(FL_ALIGN_RIGHT);
 
-      view_value[45] = new Fl_Value_Input(L + width / 2, 2 * WB + 3 * BH, IW, BH, "Z raise");
+      view_value[45] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Z raise");
       view_value[45]->align(FL_ALIGN_RIGHT);
+
+      view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Use general raise expressions");
+      view_butt[6]->type(FL_TOGGLE_BUTTON);
+      view_butt[6]->down_box(TOGGLE_BOX);
+      view_butt[6]->selection_color(TOGGLE_COLOR);
+
+      view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Raise data source");
+      view_choice[11]->align(FL_ALIGN_RIGHT);
+      view_choice[11]->add("Self");
+
+      view_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Raise factor");
+      view_value[2]->align(FL_ALIGN_RIGHT);
+
+      view_input[4] = new Fl_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "X raise expression");
+      view_input[4]->align(FL_ALIGN_RIGHT);
+
+      view_input[5] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Y raise expression");
+      view_input[5]->align(FL_ALIGN_RIGHT);
+
+      view_input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Z raise expression");
+      view_input[6]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }
@@ -2790,6 +2816,8 @@ void GUI::update_view_window(int num)
 
   double maxval = MAX(fabs(v->Min), fabs(v->Max));
   if(!maxval) maxval = 1.;
+  double val1 = 10. * CTX.lc;
+  double val2 = 2. * CTX.lc / maxval;
 
   opt_view_name(num, GMSH_GUI, NULL);
   opt_view_format(num, GMSH_GUI, NULL);
@@ -2881,7 +2909,6 @@ void GUI::update_view_window(int num)
   opt_view_offset0(num, GMSH_GUI, 0);
   opt_view_offset1(num, GMSH_GUI, 0);
   opt_view_offset2(num, GMSH_GUI, 0);
-  double val1 = 10. * CTX.lc;
   for(int i = 40; i <= 42; i++) {
     view_value[i]->step(val1/100.);
     view_value[i]->minimum(-val1);
@@ -2890,12 +2917,20 @@ void GUI::update_view_window(int num)
   opt_view_raise0(num, GMSH_GUI, 0);
   opt_view_raise1(num, GMSH_GUI, 0);
   opt_view_raise2(num, GMSH_GUI, 0);
-  double val2 = 2. * CTX.lc / maxval;
   for(int i = 43; i <= 45; i++) {
     view_value[i]->step(val2/100.);
     view_value[i]->minimum(-val2);
     view_value[i]->maximum(val2);
   }
+  opt_view_use_gen_raise(num, GMSH_GUI, 0);
+  opt_view_gen_raise_view(num, GMSH_GUI, 0);
+  opt_view_gen_raise_factor(num, GMSH_GUI, 0);
+  opt_view_gen_raise0(num, GMSH_GUI, 0);
+  opt_view_gen_raise1(num, GMSH_GUI, 0);
+  opt_view_gen_raise2(num, GMSH_GUI, 0);
+  view_value[2]->step(val2/100.);
+  view_value[2]->minimum(-val2);
+  view_value[2]->maximum(val2);
 
   if(v->NbTimeStep == 1) {
     view_value[50]->deactivate();

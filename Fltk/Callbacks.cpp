@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.301 2004-12-06 06:54:32 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.302 2004-12-07 04:52:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3482,6 +3482,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double range_type = opt_view_range_type(current, GMSH_GET, 0);
   double grid = opt_view_grid(current, GMSH_GET, 0);
   double boundary = opt_view_boundary(current, GMSH_GET, 0);
+  double external_view = opt_view_external_view(current, GMSH_GET, 0);
+  double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
 
   double type = opt_view_type(current, GMSH_GET, 0);
   double saturate_values = opt_view_saturate_values(current, GMSH_GET, 0);
@@ -3506,9 +3508,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double draw_scalars = opt_view_draw_scalars(current, GMSH_GET, 0);
   double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
+  double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
+
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
-
   double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
   double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
   double nb_iso = opt_view_nb_iso(current, GMSH_GET, 0);
@@ -3522,7 +3525,6 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
   double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
   double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
-  double external_view = opt_view_external_view(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
@@ -3532,6 +3534,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double size0 = opt_view_size0(current, GMSH_GET, 0);
   double size1 = opt_view_size1(current, GMSH_GET, 0);
   double nb_abscissa = opt_view_nb_abscissa(current, GMSH_GET, 0);
+  double gen_raise_factor = opt_view_gen_raise_factor(current, GMSH_GET, 0);
 
   char name[256];
   strcpy(name, opt_view_name(current, GMSH_GET, NULL));
@@ -3541,6 +3544,12 @@ void view_options_ok_cb(CALLBACK_ARGS)
   strcpy(abscissa_name, opt_view_abscissa_name(current, GMSH_GET, NULL));
   char abscissa_format[256];
   strcpy(abscissa_format, opt_view_abscissa_format(current, GMSH_GET, NULL));
+  char gen_raise0[256];
+  strcpy(gen_raise0, opt_view_gen_raise0(current, GMSH_GET, NULL));
+  char gen_raise1[256];
+  strcpy(gen_raise1, opt_view_gen_raise1(current, GMSH_GET, NULL));
+  char gen_raise2[256];
+  strcpy(gen_raise2, opt_view_gen_raise2(current, GMSH_GET, NULL));
 
   // modify only the views that need to be updated
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
@@ -3662,6 +3671,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != external_view))
         opt_view_external_view(i, GMSH_SET, val);
 
+      val = WID->view_choice[11]->value()-1;
+      if(force || (val != gen_raise_view))
+        opt_view_gen_raise_view(i, GMSH_SET, val);
+
       // view_butts
 
       val = WID->view_butt[0]->value();
@@ -3752,6 +3765,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[23]->value();
       if(force || (val != draw_tensors))
         opt_view_draw_tensors(i, GMSH_SET, val);
+
+      val = WID->view_butt[6]->value();
+      if(force || (val != use_gen_raise))
+        opt_view_use_gen_raise(i, GMSH_SET, val);
 
       // view_values
       
@@ -3855,6 +3872,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != nb_abscissa))
         opt_view_nb_abscissa(i, GMSH_SET, val);
 
+      val = WID->view_value[2]->value();
+      if(force || (val != gen_raise_factor))
+        opt_view_gen_raise_factor(i, GMSH_SET, val);
+
       // view_inputs
 
       char *str;
@@ -3874,6 +3895,18 @@ void view_options_ok_cb(CALLBACK_ARGS)
       str = (char *)WID->view_input[3]->value();
       if(force || strcmp(str, abscissa_format))
         opt_view_abscissa_format(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[4]->value();
+      if(force || strcmp(str, gen_raise0))
+        opt_view_gen_raise0(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[5]->value();
+      if(force || strcmp(str, gen_raise1))
+        opt_view_gen_raise1(i, GMSH_SET, str);
+
+      str = (char *)WID->view_input[6]->value();
+      if(force || strcmp(str, gen_raise2))
+        opt_view_gen_raise2(i, GMSH_SET, str);
 
       // colorbar window
 

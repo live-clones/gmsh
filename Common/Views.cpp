@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.147 2004-11-25 22:07:50 geuzaine Exp $
+// $Id: Views.cpp,v 1.148 2004-12-07 04:52:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,9 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Nicolas Tardieu
 
 #include <set>
 #include "Gmsh.h"
@@ -27,6 +30,10 @@
 #include "Options.h"
 #include "ColorTable.h"
 #include "SmoothNormals.h"
+
+#if defined(HAVE_MATH_EVAL)
+#include "matheval.h"
+#endif
 
 extern Context_T CTX;
 
@@ -172,6 +179,8 @@ Post_View *BeginView(int allocate)
     v->BBox[2 * i] = VAL_INF;
     v->BBox[2 * i + 1] = -VAL_INF;
   }
+  for(i = 0; i < 3; i++)
+    v->GenRaise_f[i] = NULL;
 
   return v;
 }
@@ -575,6 +584,7 @@ void FreeView(Post_View * v)
     if(v->normals) delete v->normals;
     if(v->TriVertexArray) delete v->TriVertexArray;
     if(v->adaptive) delete v->adaptive;
+    FreeGeneralizedRaise(v);
     Free(v);
   }
 }
@@ -645,6 +655,12 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   dest->LineType = src->LineType;
   dest->Grid = src->Grid;
   dest->ExternalViewIndex = src->ExternalViewIndex;
+  dest->ViewIndexForGenRaise = src->ViewIndexForGenRaise;
+  dest->UseGenRaise = src->UseGenRaise;
+  dest->GenRaiseFactor = src->GenRaiseFactor;
+  strcpy(dest->GenRaiseX, src->GenRaiseX);
+  strcpy(dest->GenRaiseY, src->GenRaiseY);
+  strcpy(dest->GenRaiseZ, src->GenRaiseZ);
   ColorTable_Copy(&src->CT);
   ColorTable_Paste(&dest->CT);
 }
@@ -1512,5 +1528,79 @@ void Post_View::get_raw_data(int type, List_T **list, int **nbe, int *nbc, int *
   case 22: *list = VY; *nbe = &NbVY; *nbc = 3; *nbn = 5; break;
   case 23: *list = TY; *nbe = &NbTY; *nbc = 9; *nbn = 5; break;
   default: Msg(GERROR, "Wrong type in Post_View::get_raw_data"); break;
+  }
+}
+
+// Generalized raise
+
+void InitGeneralizedRaise(Post_View *v)
+{
+  FreeGeneralizedRaise(v);
+
+  char *expr[3] = { v->GenRaiseX, v->GenRaiseY, v->GenRaiseZ };
+#if defined(HAVE_MATH_EVAL)
+  for(int i = 0; i < 3; i++) {
+    if(strlen(expr[i])) {
+      if(!(v->GenRaise_f[i] = evaluator_create(expr[i])))
+        Msg(GERROR, "Invalid expression '%s'", expr[i]);
+    }
+  }
+#else
+  for(int i = 0; i < 3; i++) {
+    if(!strcmp(expr[i], "v0")) v->GenRaise_f[i] = (void*)0;
+    else if(!strcmp(expr[i], "v1")) v->GenRaise_f[i] = (void*)1;
+    else if(!strcmp(expr[i], "v2")) v->GenRaise_f[i] = (void*)2;
+    else if(!strcmp(expr[i], "v3")) v->GenRaise_f[i] = (void*)3;
+    else if(!strcmp(expr[i], "v4")) v->GenRaise_f[i] = (void*)4;
+    else if(!strcmp(expr[i], "v5")) v->GenRaise_f[i] = (void*)5;
+    else if(!strcmp(expr[i], "v6")) v->GenRaise_f[i] = (void*)6;
+    else if(!strcmp(expr[i], "v7")) v->GenRaise_f[i] = (void*)7;
+    else if(!strcmp(expr[i], "v8")) v->GenRaise_f[i] = (void*)8;
+    else if(strlen(expr[i])) {
+      Msg(GERROR, "Invalid expression '%s'", expr[i]);
+      return;
+    }
+  }
+#endif
+}
+
+void FreeGeneralizedRaise(Post_View *v)
+{
+  for(int i = 0; i < 3; i++){
+#if defined(HAVE_MATH_EVAL)
+    if(v->GenRaise_f[i])
+      evaluator_destroy(v->GenRaise_f[i]);
+    v->GenRaise_f[i] = NULL;
+#else
+    v->GenRaise_f[i] = (void*)-1;
+#endif
+  }
+}
+
+void ApplyGeneralizedRaise(Post_View * v, int numNodes, int numComp, double *vals,
+			   double *x, double *y, double *z)
+{
+  double *coords[3] = { x, y, z };
+
+  for(int k = 0; k < numNodes; k++) {
+    double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+    for(int l = 0; l < numComp; l++)
+      d[l] = vals[numComp * k + l];
+#if defined(HAVE_MATH_EVAL)
+    char *names[] = { "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" };
+    double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8] };
+    for(int i = 0; i < 3; i++) {
+      if(v->GenRaise_f[i])
+        coords[i][k] += 
+	  evaluator_evaluate(v->GenRaise_f[i], sizeof(names) / 
+			     sizeof(names[0]), names, values) * v->GenRaiseFactor;
+    }
+#else
+    for(int i = 0; i < 3; i++){
+      int comp = (int)v->GenRaise_f[i];
+      if(comp >= 0)
+	coords[i][k] += d[comp] * v->GenRaiseFactor;
+    }
+#endif
   }
 }

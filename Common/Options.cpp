@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.208 2004-12-06 06:54:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.209 2004-12-07 04:52:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1889,8 +1889,49 @@ char *opt_view_abscissa_format(OPT_ARGS_STR)
   return v->AbscissaFormat;
 }
 
-// Numeric option routines
+char * opt_view_gen_raise0(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strcpy(v->GenRaiseX, val);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_input[4]->value(v->GenRaiseX);
+#endif
+  return v->GenRaiseX;
+}
 
+char * opt_view_gen_raise1(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strcpy(v->GenRaiseY, val);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_input[5]->value(v->GenRaiseY);
+#endif
+  return v->GenRaiseY;
+}
+
+char * opt_view_gen_raise2(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strcpy(v->GenRaiseZ, val);
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_input[6]->value(v->GenRaiseZ);
+#endif
+  return v->GenRaiseZ;
+}
+
+// Numeric option routines
 
 double opt_general_initial_context(OPT_ARGS_NUM)
 {
@@ -5382,6 +5423,54 @@ double opt_view_external_view(OPT_ARGS_NUM)
   }
 #endif
   return v->ExternalViewIndex;
+}
+
+double opt_view_gen_raise_view(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->ViewIndexForGenRaise = (int)val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    // warning: Fl_Choice::size() returns number of items+1
+    int item = v->ViewIndexForGenRaise + 1;
+    if(item > -1 && item < WID->view_choice[11]->size()-1)
+      WID->view_choice[11]->value(item);
+    else
+      WID->view_choice[11]->value(0);
+  }
+#endif
+  return v->ViewIndexForGenRaise;
+}
+
+double opt_view_gen_raise_factor(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->GenRaiseFactor = val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[2]->value(v->GenRaiseFactor);
+#endif
+  return v->GenRaiseFactor;
+}
+
+double opt_view_use_gen_raise(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->UseGenRaise = (int)val;
+    v->Changed = 1;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_butt[6]->value(v->UseGenRaise);
+#endif
+  return v->UseGenRaise;
 }
 
 double opt_print_format(OPT_ARGS_NUM)

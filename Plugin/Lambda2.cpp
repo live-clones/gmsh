@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.2 2004-11-26 16:16:39 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.3 2004-12-07 04:52:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -116,9 +116,6 @@ static void eigen(List_T *inList, int inNb,
     
     for(int j = 0; j < nbTime; j++){
       
-      double *x = (double *)List_Pointer_Fast(inList, i);
-      double *y = (double *)List_Pointer_Fast(inList, i + nbNod);
-      double *z = (double *)List_Pointer_Fast(inList, i + 2 * nbNod);
       double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
 					      nbNod * nbComp * j + nbComp * 0);
       double GradVel[3][3];

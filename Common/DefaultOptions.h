@@ -373,8 +373,16 @@ StringXString ViewOptions_String[] = {
   { F|O, "Format" , opt_view_format , "%.3e" , 
     "Number format (in standard C form)" },
 
+  { F|O, "GeneralizedRaiseX" , opt_view_gen_raise0 , "" , 
+    "Generalized elevation of the view along X-axis (in model coordinates)" },
+  { F|O, "GeneralizedRaiseY" , opt_view_gen_raise1 , "" , 
+    "Generalized elevation of the view along Y-axis (in model coordinates)" },
+  { F|O, "GeneralizedRaiseZ" , opt_view_gen_raise2 , "v0" , 
+    "Generalized elevation of the view along Z-axis (in model coordinates)" },
+
   { F,   "Name" , opt_view_name , "" , 
     "Default post-processing view name" },
+
   { 0, NULL , NULL , NULL , NULL }
 } ;
 
@@ -1034,6 +1042,10 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ExternalView" , opt_view_external_view , -1. ,
     "Index of the view used to color vector fields (-1=self)" },
 
+  { F|O, "GeneralizedRaiseFactor" , opt_view_gen_raise_factor , 1. ,
+    "Generalized raise amplification factor" },
+  { F|O, "GeneralizedRaiseView" , opt_view_gen_raise_view , -1. ,
+    "Index of the view used for generalized raise (-1=self)" },
   { F|O, "Grid" , opt_view_grid , 2 ,
     "Grid mode for 2D graphs (0=none, 1=simple, 2=frame, 3=grid)" },
 
@@ -1112,6 +1124,9 @@ StringXNumber ViewOptions_Number[] = {
     "Current time step displayed" },
   { F, "Type" , opt_view_type , DRAW_POST_3D ,
     "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
+
+  { F|O, "UseGeneralizedRaise" , opt_view_use_gen_raise , 0 ,
+    "Use generalized raise?" },
 
   { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW3D ,
     "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)" },

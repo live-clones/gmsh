@@ -1,6 +1,6 @@
 @ftable @code
 @item Solver.SocketName
-Name of socket (TCP/IP socket if it contains `:', UNIX socket otherwise)@*
+Name of socket (TCP/IP if it contains the `:' character, UNIX otherwise)@*
 Default value: @code{".gmshsock"}@*
 Saved in: @code{General.OptionsFileName}
 

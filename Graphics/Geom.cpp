@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.73 2004-10-28 03:44:37 geuzaine Exp $
+// $Id: Geom.cpp,v 1.74 2004-12-07 04:52:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -221,7 +221,7 @@ void Draw_Curve(void *a, void *b)
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
 		v.Pos.X, v.Pos.Y, v.Pos.Z,
-                dv.Pos.X, dv.Pos.Y, dv.Pos.Z, NULL, CTX.geom.light);
+                dv.Pos.X, dv.Pos.Y, dv.Pos.Z, CTX.geom.light);
   }
 
   if(CTX.render_mode == GMSH_SELECT) {
@@ -514,7 +514,7 @@ void Draw_Plane_Surface(Surface * s)
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
       Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-		  x, y, z, n[0], n[1], n[2], NULL, CTX.geom.light);
+		  x, y, z, n[0], n[1], n[2], CTX.geom.light);
     }
 
   }
@@ -595,7 +595,7 @@ void Draw_NonPlane_Surface(Surface * s)
     glColor4ubv((GLubyte *) & CTX.color.geom.normals);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		v1.Pos.X, v1.Pos.Y, v1.Pos.Z, n[0], n[1], n[2], NULL,
+		v1.Pos.X, v1.Pos.Y, v1.Pos.Z, n[0], n[1], n[2],
 		CTX.geom.light);
   }
 }
