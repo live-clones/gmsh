@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.245 2002-11-21 17:34:36 geuzaine Exp $
+# $Id: Makefile,v 1.246 2003-01-14 22:14:33 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 36
@@ -369,7 +369,7 @@ compile-cygwin: initialtag
            "CC=gcc" \
            "OPT_FLAGS=-O2" \
            "OS_FLAGS=-mwindows -DWIN32 -D_LITTLE_ENDIAN" \
-           "VERSION_FLAGS=-D_FLTK -I/usr/include/w32api" \
+           "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=" \
            "GUI_INCLUDE=-I$(FLTK_DIR)" \
         ); done
