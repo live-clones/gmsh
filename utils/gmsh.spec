@@ -39,7 +39,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/bin
 mkdir -p $RPM_BUILD_ROOT/usr/man/man1
 
 install -m 755 bin/gmsh $RPM_BUILD_ROOT/usr/bin/gmsh
-install -m 755 bin/gmsh $RPM_BUILD_ROOT/usr/bin/gmsh-batch
+install -m 755 bin/gmsh-batch $RPM_BUILD_ROOT/usr/bin/gmsh-batch
 install -m 755 bin/dxf2geo $RPM_BUILD_ROOT/usr/bin/dxf2geo
 install -m 644 doc/gmsh.1 $RPM_BUILD_ROOT/usr/man/man1/gmsh.1
 
