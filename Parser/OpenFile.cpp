@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.67 2004-12-30 00:30:04 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.68 2004-12-30 01:48:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -173,7 +173,7 @@ int ParseFile(char *f, int silent, int close, int warn_if_missing)
   yyerrorstate = yyerrorstate_old;
   yylineno = yylineno_old;
 
-  if(List_Nbr(CTX.post.list) > numviews_old){
+  if(List_Nbr(CTX.post.list) != numviews_old){
 #if defined(HAVE_FLTK)
     UpdateViewsInGUI();
 #endif

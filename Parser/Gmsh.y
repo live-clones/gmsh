@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.192 2004-12-30 01:36:15 geuzaine Exp $
+// $Id: Gmsh.y,v 1.193 2004-12-30 01:48:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -66,10 +66,6 @@ static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
-
-#if defined(HAVE_FLTK)
-void UpdateViewsInGUI();
-#endif
 
 void yyerror(char *s);
 void yymsg(int type, char *fmt, ...);
@@ -2368,10 +2364,6 @@ Delete :
     {
       if(!strcmp($2, "View")){
 	RemoveViewByIndex((int)$4);
-#if defined(HAVE_FLTK)
-	if(!CTX.batch)
-	  UpdateViewsInGUI();
-#endif
       }
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
@@ -2394,10 +2386,6 @@ Delete :
 	  if(v->empty())
 	    RemoveViewByIndex(i);
 	}
-#if defined(HAVE_FLTK)
-	if(!CTX.batch)
-	  UpdateViewsInGUI();
-#endif
       }
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s %s'", $2, $3);
