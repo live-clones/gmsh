@@ -721,7 +721,7 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "CutPlane" , opt_mesh_use_cut_plane , 0 ,
     "Enable mesh cut plane" },
   { F,   "CutPlaneAsSurface" , opt_mesh_cut_plane_as_surface , 1 ,
-    "Draw the cut as a surface to speed up drawing" },
+    "Draw the intersection layer as a surface" },
   { F,   "CutPlaneA" , opt_mesh_cut_planea , 1. , 
     "First cut plane equation coefficient (`A' in `AX+BY+CZ+D=0')" },
   { F,   "CutPlaneB" , opt_mesh_cut_planeb , 0. , 
