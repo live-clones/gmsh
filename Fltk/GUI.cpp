@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.52 2001-02-23 08:18:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.53 2001-02-24 08:53:20 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -81,14 +81,14 @@ Fl_Menu_Item m_module_table[] = {
 //********************* Definition of the dynamic contexts *****************************
 
 Context_Item menu_geometry[] = 
-{ { "0", NULL } ,
+{ { "0Geometry", NULL } ,
   { "Elementary", (Fl_Callback *)geometry_elementary_cb } ,
   { "Physical",   (Fl_Callback *)geometry_physical_cb } ,
   { "Reload",     (Fl_Callback *)geometry_reload_cb } , 
   { NULL }
 };  
     Context_Item menu_geometry_elementary[] = 
-    { { "0Elementary", NULL } ,
+    { { "0Geometry Elementary", NULL } ,
       { "Add",       (Fl_Callback *)geometry_elementary_add_cb } ,
       { "Translate", (Fl_Callback *)geometry_elementary_translate_cb } ,
       { "Rotate",    (Fl_Callback *)geometry_elementary_rotate_cb } ,
@@ -99,7 +99,7 @@ Context_Item menu_geometry[] =
       { NULL } 
     };  
         Context_Item menu_geometry_elementary_add[] = 
-	{ { "0Elementary Add", NULL } ,
+	{ { "0Geometry Elementary Add", NULL } ,
           { "New",       (Fl_Callback *)geometry_elementary_add_new_cb } ,
 	  { "Translate", (Fl_Callback *)geometry_elementary_add_translate_cb } ,
 	  { "Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb } ,
@@ -108,7 +108,7 @@ Context_Item menu_geometry[] =
 	  { NULL } 
 	};  
             Context_Item menu_geometry_elementary_add_new[] = 
-	    { { "0Elementary Add New", NULL } ,
+	    { { "0Geometry Elementary Add New", NULL } ,
               { "Parameter",     (Fl_Callback *)geometry_elementary_add_new_parameter_cb } ,
 	      { "Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb } ,
 	      { "Line",          (Fl_Callback *)geometry_elementary_add_new_line_cb } ,
@@ -121,95 +121,95 @@ Context_Item menu_geometry[] =
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_translate[] = 
-	    { { "0Elementary Add Translate", NULL } ,
+	    { { "0Geometry Elementary Add Translate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_translate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_translate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_rotate[] = 
-	    { { "0Elementary Add Rotate", NULL } ,
+	    { { "0Geometry Elementary Add Rotate", NULL } ,
               { "Point",   (Fl_Callback *)geometry_elementary_add_rotate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_rotate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_scale[] = 
-	    { { "0Elementary Add Scale", NULL } ,
+	    { { "0Geometry Elementary Add Scale", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_scale_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_scale_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_scale_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_add_symmetry[] = 
-	    { { "0Elementary Add Symmetry", NULL } ,
+	    { { "0Geometry Elementary Add Symmetry", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_add_symmetry_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_add_symmetry_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_add_symmetry_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_translate[] = 
-	{ { "0Elementary Translate", NULL } ,
+	{ { "0Geometry Elementary Translate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_translate_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_translate_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_translate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_rotate[] = 
-	{ { "0Elementary Rotate", NULL } ,
+	{ { "0Geometry Elementary Rotate", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_rotate_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_rotate_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_rotate_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_scale[] = 
-	{ { "0Elementary Scale", NULL } ,
+	{ { "0Geometry Elementary Scale", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_scale_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_scale_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_scale_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_symmetry[] = 
-	{ { "0Elementary Symmetry", NULL } ,
+	{ { "0Geometry Elementary Symmetry", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_symmetry_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_symmetry_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_symmetry_surface_cb } ,
 	  { NULL } 
 	};  
         Context_Item menu_geometry_elementary_extrude[] = 
-	{ { "0Elementary Extrude", NULL } ,
+	{ { "0Geometry Elementary Extrude", NULL } ,
 	  { "Translate",   (Fl_Callback *)geometry_elementary_extrude_translate_cb } ,
 	  { "Rotate",   (Fl_Callback *)geometry_elementary_extrude_rotate_cb } ,
 	  { NULL } 
  	};  
             Context_Item menu_geometry_elementary_extrude_translate[] = 
-	    { { "0Elementary Extrude Translate", NULL } ,
+	    { { "0Geometry Elementary Extrude Translate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_translate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_extrude_translate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_translate_surface_cb } ,
 	      { NULL } 
 	    };  
             Context_Item menu_geometry_elementary_extrude_rotate[] = 
-	    { { "0Elementary Extrude Rotate", NULL } ,
+	    { { "0Geometry Elementary Extrude Rotate", NULL } ,
 	      { "Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_point_cb } ,
 	      { "Curve",   (Fl_Callback *)geometry_elementary_extrude_rotate_curve_cb } ,
 	      { "Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_surface_cb } ,
 	      { NULL } 
 	    };  
         Context_Item menu_geometry_elementary_delete[] = 
-	{ { "0Elementary Delete", NULL } ,
+	{ { "0Geometry Elementary Delete", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_elementary_delete_point_cb } ,
 	  { "Curve",   (Fl_Callback *)geometry_elementary_delete_curve_cb } ,
 	  { "Surface", (Fl_Callback *)geometry_elementary_delete_surface_cb } ,
 	  { NULL } 
 	};  
     Context_Item menu_geometry_physical[] = 
-    { { "0Physical", NULL } ,
+    { { "0Geometry Physical", NULL } ,
       { "Add",    (Fl_Callback *)geometry_physical_add_cb } ,
       { NULL } 
     };  
         Context_Item menu_geometry_physical_add[] = 
-	{ { "0Physical Add", NULL } ,
+	{ { "0Geometry Physical Add", NULL } ,
 	  { "Point",   (Fl_Callback *)geometry_physical_add_point_cb  } ,
 	  { "Curve",   (Fl_Callback *)geometry_physical_add_curve_cb  } ,
 	  { "Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
@@ -218,7 +218,7 @@ Context_Item menu_geometry[] =
 	};  
 
 Context_Item menu_mesh[] = 
-{ { "1", NULL } ,
+{ { "1Mesh", NULL } ,
   { "Define", (Fl_Callback *)mesh_define_cb } ,
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
@@ -241,7 +241,7 @@ Context_Item menu_mesh[] =
 	};  
 
 Context_Item menu_post[] = 
-{ { "2", NULL } ,
+{ { "2Post-Processing", NULL } ,
   { NULL } };
 
 //********************** Definition of global shortcuts ********************************
@@ -651,6 +651,8 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     return;
   }
 
+  Msg(STATUS2, menu[0].label+1);
+
   if(m_module_butt->value() == 2){ // post-processing contexts
     for(i = 0 ; i < List_Nbr(Post_ViewList) ; i++) {
       if(i == NB_BUTT_MAX) break;
@@ -669,7 +671,6 @@ void GUI::set_context(Context_Item *menu_asked, int flag){
     }
   }
   else{ // geometry and mesh contexts
-    Msg(STATUS2, menu[0].label+1);
     for(i=0 ; i < NB_BUTT_MAX ; i++){
       m_toggle_butt[i]->hide();
       m_popup_butt[i]->hide();
