@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.328 2005-01-13 05:45:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.329 2005-01-13 09:22:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -886,13 +886,13 @@ void statistics_update_cb(CALLBACK_ARGS)
 
 void statistics_histogram_cb(CALLBACK_ARGS)
 {
-  int i, type = (long)data;
+  int type = (int)(long)data;
 
   Print_Histogram(THEM->Histogram[type]);
 
   double *x = (double *)Malloc(NB_HISTOGRAM * sizeof(double));
   double *y = (double *)Malloc(NB_HISTOGRAM * sizeof(double));
-  for(i = 0; i < NB_HISTOGRAM; i++) {
+  for(int i = 0; i < NB_HISTOGRAM; i++) {
     x[i] = (double)(i + 1) / (double)NB_HISTOGRAM;
     y[i] = (double)THEM->Histogram[type][i];
   }
@@ -1085,17 +1085,17 @@ void visibility_ok_cb(CALLBACK_ARGS)
 
 void visibility_sort_cb(CALLBACK_ARGS)
 {
-  int i, val = (long)data, selectall;
+  int selectall, val = (int)(long)data;
 
   if(!val) {
     selectall = 0;
-    for(i = 1; i <= WID->vis_browser->size(); i++)
+    for(int i = 1; i <= WID->vis_browser->size(); i++)
       if(!WID->vis_browser->selected(i)) {
         selectall = 1;
         break;
       }
     if(selectall)
-      for(i = 1; i <= WID->vis_browser->size(); i++)
+      for(int i = 1; i <= WID->vis_browser->size(); i++)
         WID->vis_browser->select(i);
     else
       WID->vis_browser->deselect();
@@ -1108,7 +1108,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
 
 void visibility_number_cb(CALLBACK_ARGS)
 {
-  int pos, mode, type = WID->vis_input_mode->value(), val = (long)data;
+  int pos, mode, type = WID->vis_input_mode->value(), val = (int)(long)data;
   char *str = (char *)WID->vis_input->value();
 
   if(val){ // show
@@ -2649,10 +2649,10 @@ void solver_cb(CALLBACK_ARGS)
 {
   char file[256], tmp[256];
   static int init = 0, first[MAXSOLVERS];
-  int i, num = (long)data;
+  int num = (int)(long)data;
 
   if(!init) {
-    for(i = 0; i < MAXSOLVERS; i++)
+    for(int i = 0; i < MAXSOLVERS; i++)
       first[i] = 1;
     init = 1;
   }
@@ -2677,7 +2677,7 @@ void solver_cb(CALLBACK_ARGS)
 void solver_file_open_cb(CALLBACK_ARGS)
 {
   char tmp[256];
-  int num = (long)data;
+  int num = (int)(long)data;
   sprintf(tmp, "*%s", SINFO[num].extension);
 
   // We allow to create the .pro file... Or should we add a "New file"
@@ -2698,7 +2698,7 @@ void solver_file_open_cb(CALLBACK_ARGS)
 void solver_file_edit_cb(CALLBACK_ARGS)
 {
   char prog[1024], file[1024], cmd[1024];
-  int num = (long)data;
+  int num = (int)(long)data;
   FixWindowsPath(CTX.editor, prog);
   FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
   _replace_multi_format(prog, file, cmd);
@@ -2707,7 +2707,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 
 void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
-  int num = (long)data;
+  int num = (int)(long)data;
   if(file_chooser(0, 0, "Choose", "*.msh", 0))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
@@ -2766,7 +2766,7 @@ void solver_command_cb(CALLBACK_ARGS)
 
 void solver_kill_cb(CALLBACK_ARGS)
 {
-  int num = (long)data;
+  int num = (int)(long)data;
   if(SINFO[num].pid > 0) {
     kill(SINFO[num].pid, 9);
     Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
@@ -2776,7 +2776,7 @@ void solver_kill_cb(CALLBACK_ARGS)
 
 void solver_choose_executable_cb(CALLBACK_ARGS)
 {
-  int num = (long)data;
+  int num = (int)(long)data;
   if(file_chooser(0, 0, "Choose",
 #if defined(WIN32)
                   "*.exe"
@@ -2789,7 +2789,7 @@ void solver_choose_executable_cb(CALLBACK_ARGS)
 
 void solver_ok_cb(CALLBACK_ARGS)
 {
-  int num = (long)data, retry = 0;
+  int retry = 0, num = (int)(long)data;
   opt_solver_popup_messages(num, GMSH_SET, WID->solver[num].butt[0]->value());
   opt_solver_merge_views(num, GMSH_SET, WID->solver[num].butt[1]->value());
   opt_solver_client_server(num, GMSH_SET, WID->solver[num].butt[2]->value());
@@ -2806,8 +2806,9 @@ void solver_ok_cb(CALLBACK_ARGS)
 
 void view_toggle_cb(CALLBACK_ARGS)
 {
-  opt_view_visible((long)data, GMSH_SET,
-                   WID->m_toggle_butt[(long)data]->value());
+  int num = (int)(long)data;
+  opt_view_visible(num, GMSH_SET,
+                   WID->m_toggle_butt[num]->value());
   Draw();
 }
 
@@ -2840,7 +2841,7 @@ static void _view_reload(int num)
 
 void view_reload_cb(CALLBACK_ARGS)
 {
-  _view_reload((long)data);
+  _view_reload((int)(long)data);
   Draw();
 }
 
@@ -2912,7 +2913,7 @@ void view_remove_empty_cb(CALLBACK_ARGS)
 
 void view_remove_cb(CALLBACK_ARGS)
 {
-  RemoveViewByIndex((long)data);
+  RemoveViewByIndex((int)(long)data);
   UpdateViewsInGUI();
   Draw();
 }
@@ -2936,38 +2937,38 @@ static void _view_save_as(int view_num, char *title, int type)
 
 void view_save_ascii_cb(CALLBACK_ARGS)
 {
-  _view_save_as((long)data, "Save As ASCII View", 0);
+  _view_save_as((int)(long)data, "Save As ASCII View", 0);
 }
 
 void view_save_binary_cb(CALLBACK_ARGS)
 {
-  _view_save_as((long)data, "Save As Binary View", 1);
+  _view_save_as((int)(long)data, "Save As Binary View", 1);
 }
 
 void view_save_parsed_cb(CALLBACK_ARGS)
 {
-  _view_save_as((long)data, "Save As Parsed View", 2);
+  _view_save_as((int)(long)data, "Save As Parsed View", 2);
 }
 
 void view_save_stl_cb(CALLBACK_ARGS)
 {
-  _view_save_as((long)data, "Save As STL Triangulation", 3);
+  _view_save_as((int)(long)data, "Save As STL Triangulation", 3);
 }
 
 void view_save_txt_cb(CALLBACK_ARGS)
 {
-  _view_save_as((long)data, "Save As Text", 4);
+  _view_save_as((int)(long)data, "Save As Text", 4);
 }
 
 void view_alias_cb(CALLBACK_ARGS)
 {
-  AliasView((long)data, 0);
+  AliasView((int)(long)data, 0);
   Draw();
 }
 
 void view_alias_with_options_cb(CALLBACK_ARGS)
 {
-  AliasView((long)data, 1);
+  AliasView((int)(long)data, 1);
   Draw();
 }
 
@@ -3016,7 +3017,7 @@ void view_all_visible_cb(CALLBACK_ARGS)
 
 void view_applybgmesh_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (long)data);
+  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (int)(long)data);
   if(!v->ScalarOnly || v->TextOnly) {
     Msg(GERROR, "Background mesh generation impossible with non-scalar view");
     return;
@@ -3026,7 +3027,7 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
 
 void view_options_cb(CALLBACK_ARGS)
 {
-  WID->create_view_options_window((long)data);
+  WID->create_view_options_window((int)(long)data);
 }
 
 void view_plugin_cancel_cb(CALLBACK_ARGS)
@@ -3118,9 +3119,7 @@ void view_plugin_options_cb(CALLBACK_ARGS)
 
 void view_options_custom_cb(CALLBACK_ARGS)
 {
-  int custom = (long)data;
-    
-  if(custom){
+  if((long)data){
     WID->view_value[31]->activate();
     WID->view_value[32]->activate();
   }
@@ -3132,7 +3131,7 @@ void view_options_custom_cb(CALLBACK_ARGS)
 
 void view_options_timestep_cb(CALLBACK_ARGS)
 {
-  int links = (long)opt_post_link(0, GMSH_GET, 0);
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
@@ -3145,7 +3144,7 @@ void view_options_timestep_cb(CALLBACK_ARGS)
 
 void view_options_timestep_decr_cb(CALLBACK_ARGS)
 {
-  int links = (long)opt_post_link(0, GMSH_GET, 0);
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
@@ -3159,7 +3158,7 @@ void view_options_timestep_decr_cb(CALLBACK_ARGS)
 
 void view_options_timestep_incr_cb(CALLBACK_ARGS)
 {
-  int links = (long)opt_post_link(0, GMSH_GET, 0);
+  int links = (int)opt_post_link(0, GMSH_GET, 0);
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
@@ -3173,15 +3172,14 @@ void view_options_timestep_incr_cb(CALLBACK_ARGS)
 
 void view_options_ok_cb(CALLBACK_ARGS)
 {
-  int links, force = 0;
+  int current = (int)(long)data;
 
-  if((long)data < 0)
+  if(current < 0)
     return;
 
-  links = (int)opt_post_link(0, GMSH_GET, 0);
+  int force = 0, links = (int)opt_post_link(0, GMSH_GET, 0);
 
   // get the old values for the current view
-  int current = (long)data;
 
   double scale_type = opt_view_scale_type(current, GMSH_GET, 0);
   double intervals_type = opt_view_intervals_type(current, GMSH_GET, 0);
