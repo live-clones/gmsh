@@ -1,24 +1,31 @@
-/* $Id: mysolver.c,v 1.1 2003-05-09 16:30:01 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.2 2003-10-29 20:43:46 geuzaine Exp $ */
 /*
-  Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
- 
-  Please report all bugs and problems to "gmsh@geuz.org".
-*/
+ * Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, and/or sell copies of the
+ * Software, and to permit persons to whom the Software is furnished
+ * to do so, provided that the above copyright notice(s) and this
+ * permission notice appear in all copies of the Software and that
+ * both the above copyright notice(s) and this permission notice
+ * appear in supporting documentation.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR
+ * ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY
+ * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+ * OF THIS SOFTWARE.
+ * 
+ *  Please report all bugs and problems to "gmsh@geuz.org".
+ */
 
 /* This file contains a dummy client solver for Gmsh. It does not
    solve anything, but shows how to program your own solver to interact
