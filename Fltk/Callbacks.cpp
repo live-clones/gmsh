@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.275 2004-09-19 03:42:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.276 2004-09-19 06:42:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1543,6 +1543,13 @@ void help_online_cb(CALLBACK_ARGS)
 {
   char cmd[1000];
   _replace_multi_format(CTX.web_browser, "http://www.geuz.org/gmsh/doc/texinfo/", cmd);
+  SystemCall(cmd);
+}
+
+void help_credits_cb(CALLBACK_ARGS)
+{
+  char cmd[1000];
+  _replace_multi_format(CTX.web_browser, "http://www.geuz.org/gmsh/doc/CREDITS", cmd);
   SystemCall(cmd);
 }
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.349 2004-09-19 03:42:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.350 2004-09-19 06:42:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3383,20 +3383,14 @@ void GUI::create_about_window()
     return;
   }
 
-  int width = 40 * fontsize;
-  int height = 10 * BH;
+  int width = 33 * fontsize;
+  int height = 15 * BH;
 
   about_window = new Fl_Window(width, height, "About Gmsh");
   about_window->box(WINDOW_BOX);
 
   {
-    Fl_Box *o = new Fl_Box(2 * WB, WB, about_width, height - 3 * WB - BH);
-    about_bmp = new Fl_Bitmap(about_bits, about_width, about_height);
-    about_bmp->label(o);
-  }
-
-  {
-    Fl_Browser *o = new Fl_Browser(WB + 80, WB, width - 2 * WB - 80, height - 3 * WB - BH);
+    Fl_Browser *o = new Fl_Browser(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     o->add(" ");
     o->add("@c@b@.Gmsh");
     o->add("@c@.A three-dimensional finite element mesh generator");
@@ -3421,11 +3415,11 @@ void GUI::create_about_window()
     o->add(buffer);
     sprintf(buffer, "@c@.Build OS: %s", GMSH_OS);
     o->add(buffer);
-    sprintf(buffer, "@c@.Build options: %s", Get_BuildOptions());
-    o->add(buffer);
     sprintf(buffer, "@c@.Build date: %s", GMSH_DATE);
     o->add(buffer);
     sprintf(buffer, "@c@.Build host: %s", GMSH_HOST);
+    o->add(buffer);
+    sprintf(buffer, "@c@.Options: %s", Get_BuildOptions());
     o->add(buffer);
     sprintf(buffer, "@c@.Packaged by: %s", GMSH_PACKAGER);
     o->add(buffer);
@@ -3435,8 +3429,13 @@ void GUI::create_about_window()
   }
 
   {
-    Fl_Button *o = new Fl_Button(width - 2*BB - 2*WB, height - BH - WB, BB, BH, "License");
+    Fl_Button *o = new Fl_Button(width - 3*BB - 3*WB, height - BH - WB, BB, BH, "License");
     o->callback(help_license_cb);
+  }
+
+  {
+    Fl_Button *o = new Fl_Button(width - 2*BB - 2*WB, height - BH - WB, BB, BH, "Credits");
+    o->callback(help_credits_cb);
   }
 
   {
