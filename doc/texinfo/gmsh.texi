@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.81 2003-09-19 17:22:27 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.82 2003-10-20 17:07:21 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -765,7 +765,7 @@ are those corresponding to the indices provided by the
 @var{expression-list}). The sixth case permits to retrieve the coordinates
 of a given geometry point (@pxref{Points}). The last two cases permit to
 retreive the indices of entities created through geometrical transformations
-(see @ref{Transformations}, and @ref{Extrusions}).
+adn extrusions (see @ref{Transformations}, and @ref{Extrusions}).
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -1137,7 +1137,7 @@ Ends a matching @code{If} command.
 
 See @ref{t5.geo}, for an example of @code{For} and @code{If} commands. Gmsh
 does not provide any @code{Else} (or similar) command at the time of this
-writing (Gmsh 1.46).
+writing.
 
 @c -------------------------------------------------------------------------
 @c General commands
