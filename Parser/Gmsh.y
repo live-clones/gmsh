@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.37 2000-12-10 13:28:49 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.38 2000-12-10 23:32:39 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -2185,11 +2185,15 @@ FExpr_Single :
     }
   | tSTRING '.' tSTRING 
     {
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
+      if(!(pNumCat = Get_NumberOptionCategory($1))){
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
+	$$ = 0. ;
+      }
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i))){
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	  $$ = 0. ;
+	}
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE : $$ = *(double*)pNumOpt ; break ;
@@ -2202,13 +2206,16 @@ FExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
     {
-      if(strcmp($1, "PostProcessing"))
+      if(strcmp($1, "PostProcessing")){
 	vyyerror("Unknown View Option Class '%s'", $1);
+	$$ = 0. ;
+      }
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
 	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
 	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
 			     $1, (int)$5, $8);
+	  $$ = 0. ;
 	}
 	else{
 	  switch(i){
@@ -2223,11 +2230,15 @@ FExpr_Single :
 
   | tSTRING '.' tSTRING tPLUSPLUS
     {
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
+      if(!(pNumCat = Get_NumberOptionCategory($1))){
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
+	$$ = 0. ;
+      }
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i))){
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	  $$ = 0. ;
+	}
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt += 1.) ; break ;
@@ -2240,13 +2251,16 @@ FExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tPLUSPLUS
     {
-      if(strcmp($1, "PostProcessing"))
+      if(strcmp($1, "PostProcessing")){
 	vyyerror("Unknown View Option Class '%s'", $1);
+	$$ = 0. ;
+      }
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
 	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
 	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
 			     $1, (int)$5, $8);
+	  $$ = 0. ;
 	}
 	else{
 	  switch(i){
@@ -2261,11 +2275,15 @@ FExpr_Single :
 
   | tSTRING '.' tSTRING tMINUSMINUS
     {
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
+      if(!(pNumCat = Get_NumberOptionCategory($1))){
 	vyyerror("Unknown Numeric Option Class '%s'", $1);
+	$$ = 0. ;
+      }
       else{
-	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i))){
 	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	  $$ = 0. ;
+	}
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt -= 1.) ; break ;
@@ -2278,13 +2296,16 @@ FExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tMINUSMINUS
     {
-      if(strcmp($1, "PostProcessing"))
+      if(strcmp($1, "PostProcessing")){
 	vyyerror("Unknown View Option Class '%s'", $1);
+	$$ = 0. ;
+      }
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
 	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
 	  else	    vyyerror("Unknown Numeric Option '%s.View[%d].%s'", 
 			     $1, (int)$5, $8);
+	  $$ = 0. ;
 	}
 	else{
 	  switch(i){
@@ -2361,11 +2382,17 @@ VExpr_Single :
     }
   | tSTRING '.' tSTRING
     {
-      if(!(pArrCat = Get_ArrayOptionCategory($1)))
+      if(!(pArrCat = Get_ArrayOptionCategory($1))){
 	vyyerror("Unknown Array Option Class '%s'", $1);
+	$$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
+	$$[4]= 1.0 ;
+      }
       else{
-	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
+	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i))){
 	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
+	  $$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
+	  $$[4]= 1.0 ;
+	}
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE :
@@ -2387,13 +2414,18 @@ VExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
     {
-      if(strcmp($1, "PostProcessing"))
+      if(strcmp($1, "PostProcessing")){
 	vyyerror("Unknown View Option Class '%s'", $1);
+	$$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
+	$$[4]= 1.0 ;
+      }
       else{
 	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
 	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
 	  else	    vyyerror("Unknown Array Option '%s.View[%d].%s'", 
 			     $1, (int)$5, $8);
+	  $$[0]=$$[1]=$$[2]=$$[3]= 0.0 ;
+	  $$[4]= 1.0 ;
 	}
 	else{
 	  switch(i){
@@ -2528,11 +2560,15 @@ ColorExpr :
     }
   | tSTRING '.' tColor '.' tSTRING 
     {
-      if(!(pColCat = Get_ColorOptionCategory($1)))
+      if(!(pColCat = Get_ColorOptionCategory($1))){
 	vyyerror("Unknown Color Option Class '%s'", $1);
+	$$ = 0 ;
+      }
       else{
-	if(!(pColOpt = Get_ColorOption($5, pColCat)))
+	if(!(pColOpt = Get_ColorOption($5, pColCat))){
 	  vyyerror("Unknown Color Option '%s.%s'", $1, $5);
+	  $$ = 0 ;
+	}
 	else{
 	  $$ = *pColOpt ;
 	}
