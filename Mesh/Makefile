@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2000-11-27 17:13:49 geuzaine Exp $
+# $Id: Makefile,v 1.6 2000-12-08 10:56:47 geuzaine Exp $
 #
 # Makefile for "libMesh.a"
 #
@@ -178,8 +178,7 @@ depend:
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
  ../Geo/ExtrudeParams.h Metric.h 2D_Mesh.h 3D_Mesh.h ../Adapt/Adapt.h \
- ../Common/Views.h ../Common/Const.h ../Graphics/ColorTable.h \
- Numeric.h
+ ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Numeric.h
 3D_Extrude.o: 3D_Extrude.cpp ../Common/Gmsh.h ../Common/Message.h \
  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
  ../DataStr/avl.h ../DataStr/Tools.h ../Common/Const.h ../Geo/Geo.h \

@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.10 2000-12-05 19:03:21 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.11 2000-12-08 10:56:51 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -124,9 +124,6 @@ void RegisterCallbacks_ED(Widgets_T *w){
   register_ok_cb     (w->ED.printDialog, FileCb, FILE_PRINT);
   register_cancel_cb (w->ED.printDialog, FileCb, FILE_CANCEL);
 
-  register_ok_cb     (w->ED.saveDialog, FileCb, FILE_SAVE_COLORTABLE_AS);
-  register_cancel_cb (w->ED.saveDialog, FileCb, FILE_CANCEL);
-
 }
 
 
@@ -137,9 +134,6 @@ void RegisterCallbacks_FD(Widgets_T *w){
 
   register_ok_cb       (w->FD.mergeDialog,     FileCb,    FILE_LOAD_POST);
   register_cancel_cb   (w->FD.mergeDialog,     ManageCb,  w->FD.mergeDialog);
-
-  register_ok_cb       (w->FD.saveDialog,     FileCb,    FILE_SAVE_COLORTABLE_AS);
-  register_cancel_cb   (w->FD.saveDialog,     ManageCb,  w->FD.saveDialog);
 
   register_ok_cb       (w->FD.saveAsDialog,      FileCb,    FILE_SAVE_MESH_AS);
   register_cancel_cb   (w->FD.saveAsDialog,      ManageCb,  w->FD.saveAsDialog);

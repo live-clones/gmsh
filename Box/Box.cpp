@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.11 2000-12-05 19:38:22 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.12 2000-12-08 10:56:30 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -55,10 +55,6 @@ char gmsh_help[]      =
 
 /* dummy defs for link purposes */
 
-void ColorTable_InitParam (int number, ColorTable * ct, int rgb_flag, int alpha_flag){}
-void ColorTable_Recompute (ColorTable * ct, int rgb_flag, int alpha_flag){}
-void ColorTable_Copy(ColorTable *ct){}
-void ColorTable_Paste(ColorTable *ct){}
 void ZeroHighlight(Mesh *){}
 void AddViewInUI(int, char *, int){}
 void draw_polygon_2d (double, double, double, int, double *, double *, double *){}

@@ -1,4 +1,4 @@
-/* $Id: CbColorbar.cpp,v 1.3 2000-11-26 15:43:47 geuzaine Exp $ */
+/* $Id: CbColorbar.cpp,v 1.4 2000-12-08 10:56:51 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -129,7 +129,7 @@ static void redraw_range(ColorBar *cb, int a, int b){
      "h           show this message",
      "1 -> 6      choose predefined colormap",
      "m           switch color mode",
-     "s/l/c/p/r   save/load/copy/paste/reset",
+     "c/p/r       copy/paste/reset",
      "mouse       draw color or alpha",
      "left/right  move or rotate",
      "up/down     color or alpha curvature",
@@ -424,8 +424,6 @@ void ColorBarInputCb (Widget w, XtPointer client_data,
 
     case XK_c : case XK_C : ColorTable_Copy(TheCB->ct); break;
     case XK_p : case XK_P : ColorTable_Paste(TheCB->ct); ColorBarRedraw(); break;
-    case XK_s : case XK_S : ManageCb(NULL, (XtPointer)WID.FD.saveDialog, NULL); break;
-    case XK_l : case XK_L : ManageCb(NULL, (XtPointer)WID.FD.mergeDialog, NULL); return ;
     case XK_h : case XK_H : TheCB->helpflag = !TheCB->helpflag; ColorBarRedraw(); break;
 
     case XK_r : 

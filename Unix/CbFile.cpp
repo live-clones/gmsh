@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.8 2000-12-06 18:28:30 remacle Exp $ */
+/* $Id: CbFile.cpp,v 1.9 2000-12-08 10:56:51 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -9,7 +9,6 @@
 #include "Draw.h"
 #include "Widgets.h"
 #include "Context.h"
-#include "ColorTable.h"
 #include "XContext.h"
 
 #include "CbFile.h"
@@ -131,8 +130,6 @@ void CreateImage (FILE *fp) {
 /*  file                                                                    */
 /* ------------------------------------------------------------------------ */
 
-void SaveColorTable(FILE *fp);
-
 void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   char      *c;
   XmString  xms;
@@ -150,7 +147,6 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   case FILE_LOAD_GEOM          : OpenProblem(c); Init(); Draw(); break;
   case FILE_LOAD_POST          : MergeProblem(c); ColorBarRedraw(); Init(); Draw(); break;
   case FILE_SAVE_MESH_AS       : Print_Mesh(&M, c, CTX.mesh.format); break;
-  case FILE_SAVE_COLORTABLE_AS : SaveToDisk(c, WID.ED.saveDialog, SaveColorTable); break;
   case FILE_CANCEL             : WARNING_OVERRIDE = 0; break;
   case FILE_PRINT              : 
     if(CTX.print.format == FORMAT_GEO)

@@ -1,4 +1,4 @@
-/* $Id: ColorTable.cpp,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: ColorTable.cpp,v 1.1 2000-12-08 10:56:36 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -181,43 +181,18 @@ void ColorTable_Paste(ColorTable *ct){
 }
 
 
-/*
- * File format is ASCII:
- *    $COL
- *    <table_size>
- *    <r> <g> <b> <a>    - n lines of rgba values as integers in [0,255]
- *    .....
- *    <r> <g> <b> <a>
- */
-void ColorTable_Save(FILE *fp, ColorTable *ct){
+void ColorTable_Print(ColorTable *ct, FILE *fp){
   int i, r, g, b, a;  
 
-  fprintf(fp, "$COL\n");
-  fprintf(fp, "%d\n", ct->size);
   for (i=0;i<ct->size;i++) {
     r = UNPACK_RED( ct->table[i] );
     g = UNPACK_GREEN( ct->table[i] );
     b = UNPACK_BLUE( ct->table[i] );
     a = UNPACK_ALPHA( ct->table[i] );
-    fprintf(fp, "%d %d %d %d\n", r, g, b, a );
+    if(!((i+1)%4)) fprintf(fp, "\n  ");
+    fprintf(fp, "{%d, %d, %d, %d}", r, g, b, a );
+    if(i!=ct->size-1) fprintf(fp, ", ");
   }
 }
 
-void ColorTable_Load(FILE *fp, ColorTable *ct){
-  int i, r, g, b, a;
-  
-  fscanf(fp, "$COL\n");
-  fscanf(fp, "%d\n", &ct->size);
-
-  if(ct->size>COLORTABLE_NBMAX_COLOR){
-    Msg(ERROR, "Too many colors in ColorTable (%d > %d)", 
-        ct->size, COLORTABLE_NBMAX_COLOR);
-    return;
-  }
-
-  for (i=0;i<ct->size;i++) {
-    fscanf(fp, "%d %d %d %d\n", &r, &g, &b, &a);
-    ct->table[i] = PACK_COLOR(r, g, b, a);
-  }
-}
 

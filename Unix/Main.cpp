@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.21 2000-12-06 18:28:30 remacle Exp $ */
+/* $Id: Main.cpp,v 1.22 2000-12-08 10:56:51 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -90,7 +90,6 @@ extern List_T *Post_ViewList;
 
 void ParseFile(char *f){
   char String[256];
-  Post_View *v;
 
   strncpy(yyname,f,NAME_STR_L);
   yyerrorstate=0;
@@ -106,22 +105,13 @@ void ParseFile(char *f){
   fgets(String, sizeof(String), yyin) ; 
   fsetpos(yyin, &position);
 
-  printf("String :: %s",String);
+  //printf("String :: %s",String);
   
   if(!strncmp(String, "$PTS", 4) || 
      !strncmp(String, "$NO", 3) || 
      !strncmp(String, "$ELM", 4)){
     if(THEM->status < 0) mai3d(THEM, 0);
     Read_Mesh(THEM, yyin, FORMAT_MSH);
-  }
-  else if(!strncmp(String, "$COL", 4)){
-    if(List_Nbr(Post_ViewList)){
-      v = (Post_View*)List_Pointer(Post_ViewList, List_Nbr(Post_ViewList)-1);
-      ColorTable_Load(yyin, &v->CT);
-    }
-    else{
-      Msg(WARNING, "No Post-Processing View Available to set Colors From");
-    }
   }
   else if(!strncmp(String, "$PostFormat", 11) ||
           !strncmp(String, "$View", 5)){

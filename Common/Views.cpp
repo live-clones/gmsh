@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.14 2000-12-07 19:03:56 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.15 2000-12-08 10:56:36 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -331,7 +331,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   ColorTable_Paste(&dest->CT);
 }
 
-char **Get_StringViewOption(int num, char *str, int *type){
+char *Get_StringViewOption(int num, char *str, int *type){
   Post_View *v;
 
   if(num < 0 || num >= List_Nbr(Post_ViewList)){
@@ -341,13 +341,13 @@ char **Get_StringViewOption(int num, char *str, int *type){
   v = (Post_View*)List_Pointer(Post_ViewList, num);
 
   if(!strcmp(str, "Format")){
-    return (char**)&v->Format ;
+    return v->Format ;
   }
   else if(!strcmp(str, "FileName")){
-    return (char**)&v->FileName ;
+    return v->FileName ;
   }
   else if(!strcmp(str, "Name")){
-    return (char**)&v->Name ;
+    return v->Name ;
   }
   else{
     return NULL ;
@@ -361,9 +361,9 @@ void Print_StringViewOptions(int num, FILE *file){
     return ;
   v = (Post_View*)List_Pointer(Post_ViewList, num);
 
-  fprintf(file, "Post.View[%d].Format = \"%s\";\n", num, v->Format);
-  fprintf(file, "Post.View[%d].FileName = \"%s\";\n", num, v->FileName);
-  fprintf(file, "Post.View[%d].Name = \"%s\";\n", num, v->Name);
+  fprintf(file, "PostProcessing.View[%d].Format = \"%s\";\n", num, v->Format);
+  fprintf(file, "PostProcessing.View[%d].FileName = \"%s\";\n", num, v->FileName);
+  fprintf(file, "PostProcessing.View[%d].Name = \"%s\";\n", num, v->Name);
 }
 
 void *Get_NumberViewOption(int num, char *str, int *type){
@@ -395,7 +395,7 @@ void *Get_NumberViewOption(int num, char *str, int *type){
     *type = GMSH_DOUBLE ;
     return (void*)&v->CustomMin ;
   }
-  else if(!strcmp(str, "CustomMin")){
+  else if(!strcmp(str, "CustomMax")){
     *type = GMSH_DOUBLE ;
     return (void*)&v->CustomMax ;
   }
@@ -425,11 +425,11 @@ void *Get_NumberViewOption(int num, char *str, int *type){
   }
   else if(!strcmp(str, "ShowTime")){
     *type = GMSH_INT ;
-    return (void*)&v->ShowElement ;
+    return (void*)&v->ShowTime ;
   }
   else if(!strcmp(str, "ShowScale")){
     *type = GMSH_INT ;
-    return (void*)&v->ShowElement ;
+    return (void*)&v->ShowScale ;
   }
   else if(!strcmp(str, "TransparentScale")){
     *type = GMSH_INT ;
@@ -463,25 +463,25 @@ void Print_NumberViewOptions(int num, FILE *file){
     return ;
   v = (Post_View*)List_Pointer(Post_ViewList, num);
 
-  fprintf(file, "Post.View[%d].NbTimeStep = %d;\n", num, v->NbTimeStep);
-  fprintf(file, "Post.View[%d].TimeStep = %d;\n", num, v->TimeStep);
-  fprintf(file, "Post.View[%d].Min = %g;\n", num, v->Min);
-  fprintf(file, "Post.View[%d].Max = %g;\n", num, v->Max);
-  fprintf(file, "Post.View[%d].CustomMin = %g;\n", num, v->CustomMin);
-  fprintf(file, "Post.View[%d].CustomMax = %g;\n", num, v->CustomMax);
-  fprintf(file, "Post.View[%d].ArrowScale = %g;\n", num, v->ArrowScale);
-  fprintf(file, "Post.View[%d].Visible = %d;\n", num, v->Visible);
-  fprintf(file, "Post.View[%d].IntervalsType = %d;\n", num, v->IntervalsType);
-  fprintf(file, "Post.View[%d].NbIso = %d;\n", num, v->NbIso);
-  fprintf(file, "Post.View[%d].Light = %d;\n", num, v->Light);
-  fprintf(file, "Post.View[%d].ShowElement = %d;\n", num, v->ShowElement);
-  fprintf(file, "Post.View[%d].ShowTime = %d;\n", num, v->ShowTime);
-  fprintf(file, "Post.View[%d].ShowScale = %d;\n", num, v->ShowScale);
-  fprintf(file, "Post.View[%d].TransparentScale = %d;\n", num, v->TransparentScale);
-  fprintf(file, "Post.View[%d].ScaleType = %d;\n", num, v->ScaleType);
-  fprintf(file, "Post.View[%d].RangeType = %d;\n", num, v->RangeType);
-  fprintf(file, "Post.View[%d].ArrowType = %d;\n", num, v->ArrowType);
-  fprintf(file, "Post.View[%d].ArrowLocation = %d;\n", num, v->ArrowLocation);
+  fprintf(file, "PostProcessing.View[%d].NbTimeStep = %d;\n", num, v->NbTimeStep);
+  fprintf(file, "PostProcessing.View[%d].TimeStep = %d;\n", num, v->TimeStep);
+  fprintf(file, "PostProcessing.View[%d].Min = %g;\n", num, v->Min);
+  fprintf(file, "PostProcessing.View[%d].Max = %g;\n", num, v->Max);
+  fprintf(file, "PostProcessing.View[%d].CustomMin = %g;\n", num, v->CustomMin);
+  fprintf(file, "PostProcessing.View[%d].CustomMax = %g;\n", num, v->CustomMax);
+  fprintf(file, "PostProcessing.View[%d].ArrowScale = %g;\n", num, v->ArrowScale);
+  fprintf(file, "PostProcessing.View[%d].Visible = %d;\n", num, v->Visible);
+  fprintf(file, "PostProcessing.View[%d].IntervalsType = %d;\n", num, v->IntervalsType);
+  fprintf(file, "PostProcessing.View[%d].NbIso = %d;\n", num, v->NbIso);
+  fprintf(file, "PostProcessing.View[%d].Light = %d;\n", num, v->Light);
+  fprintf(file, "PostProcessing.View[%d].ShowElement = %d;\n", num, v->ShowElement);
+  fprintf(file, "PostProcessing.View[%d].ShowTime = %d;\n", num, v->ShowTime);
+  fprintf(file, "PostProcessing.View[%d].ShowScale = %d;\n", num, v->ShowScale);
+  fprintf(file, "PostProcessing.View[%d].TransparentScale = %d;\n", num, v->TransparentScale);
+  fprintf(file, "PostProcessing.View[%d].ScaleType = %d;\n", num, v->ScaleType);
+  fprintf(file, "PostProcessing.View[%d].RangeType = %d;\n", num, v->RangeType);
+  fprintf(file, "PostProcessing.View[%d].ArrowType = %d;\n", num, v->ArrowType);
+  fprintf(file, "PostProcessing.View[%d].ArrowLocation = %d;\n", num, v->ArrowLocation);
 }
 
 void *Get_ArrayViewOption(int num, char *str, int *type){
@@ -506,6 +506,15 @@ void *Get_ArrayViewOption(int num, char *str, int *type){
   }
 }
 
+ColorTable *Get_ColorTableViewOption(int num){
+  Post_View *v;
+
+  if(num < 0 || num >= List_Nbr(Post_ViewList))
+    return NULL ;
+  v = (Post_View*)List_Pointer(Post_ViewList, num);
+  return &v->CT ;
+}
+
 void Print_ArrayViewOptions(int num, FILE *file){
   Post_View *v;
 
@@ -513,11 +522,14 @@ void Print_ArrayViewOptions(int num, FILE *file){
     return ;
   v = (Post_View*)List_Pointer(Post_ViewList, num);
 
-  fprintf(file, "Post.View[%d].Offset = {%g,%g,%g};\n", 
+  fprintf(file, "PostProcessing.View[%d].Offset = {%g,%g,%g};\n", 
 	  num, v->Offset[0], v->Offset[1], v->Offset[2]);
-  fprintf(file, "Post.View[%d].Raise = {%g,%g,%g};\n", 
+  fprintf(file, "PostProcessing.View[%d].Raise = {%g,%g,%g};\n", 
 	  num, v->Raise[0], v->Raise[1], v->Raise[2]);
 
+  fprintf(file, "PostProcessing.View[%d].Color = { ", num);
+  ColorTable_Print(&v->CT, file);
+  fprintf(file, " };\n");
 }
 
 

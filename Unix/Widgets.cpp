@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.15 2000-12-05 18:54:11 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.16 2000-12-08 10:56:51 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -561,14 +561,7 @@ void CreateWidgets_ED(Widgets_T *w){
   XtSetArg(arg[i], XmNmessageString, XmStringCreateSimple("File exists")); i++;
   w->ED.printDialog = XmCreateWarningDialog(w->M.shell, "EDprintDialog", arg, i);
 
-  i=0 ;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Warning")); i++;
-  XtSetArg(arg[i], XmNmessageString, XmStringCreateSimple("File exists")); i++;
-  w->ED.saveDialog = XmCreateWarningDialog(w->M.shell, "EDsaveDialog", arg, i);
-
   tmp = XmMessageBoxGetChild(w->ED.printDialog, XmDIALOG_HELP_BUTTON); 
-  XtUnmanageChild(tmp);
-  tmp = XmMessageBoxGetChild(w->ED.saveDialog, XmDIALOG_HELP_BUTTON); 
   XtUnmanageChild(tmp);
 
 }
@@ -600,15 +593,6 @@ void CreateWidgets_FD(Widgets_T *w){
   XtSetArg(arg[i], XmNautoUnmanage, True); i++;
   w->FD.mergeDialog = XmCreateFileSelectionDialog(w->M.shell, "FDmergeDialog", arg, i);
   XtUnmanageChild(w->FD.mergeDialog);
-
-  /* save */
-  i=0 ;
-  XtSetArg(arg[i], XmNdialogTitle, XmStringCreateSimple("Save")); i++;
-  XtSetArg(arg[i], XmNnoMatchString, XmStringCreateSimple("[ NONE ]")); i++;
-  XtSetArg(arg[i], XmNdirMask, XmStringCreateSimple("*")); i++;
-  XtSetArg(arg[i], XmNautoUnmanage, True); i++;
-  w->FD.saveDialog = XmCreateFileSelectionDialog(w->M.shell, "FDsaveDialog", arg, i);
-  XtUnmanageChild(w->FD.saveDialog);
 
   /* save as */
   i=0 ;
@@ -711,35 +695,9 @@ void CreateWidgets_FD(Widgets_T *w){
   w->FD.printMenu[0] = XmCreateOptionMenu(w->FD.printRowCol, "FDprintMenu0", arg, i);
   XtManageChild(w->FD.printMenu[0]);
 
-  /* print - format options 
-  i=0;
-  w->FD.printPane[1] = XmCreatePulldownMenu(w->FD.printRowCol, "FDprintPane1", arg, i);
-
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("xpm")); i++;
-  w->FD.printButt[6] = XmCreatePushButton(w->FD.printPane[1], "MprintButt6", arg, i);
-  XtManageChild(w->FD.printButt[6]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("ps")); i++;
-  w->FD.printButt[7] = XmCreatePushButton(w->FD.printPane[1], "MprintButt7", arg, i);
-  XtManageChild(w->FD.printButt[7]);
-  i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("eps")); i++;
-  w->FD.printButt[8] = XmCreatePushButton(w->FD.printPane[1], "MprintButt8", arg, i);
-  XtManageChild(w->FD.printButt[8]);
-
-  i=0;
-  XtSetArg(arg[i], XmNsubMenuId, w->FD.printPane[1]); i++;
-  XtSetArg(arg[i], XmNspacing, 0); i++;
-  w->FD.printMenu[1] = XmCreateOptionMenu(w->FD.printRowCol, "FDprintMenu1", arg, i);
-  XtManageChild(w->FD.printMenu[1]);
-  */
-
   tmp = XmFileSelectionBoxGetChild(w->FD.openDialog, XmDIALOG_HELP_BUTTON); 
   XtUnmanageChild(tmp);
   tmp = XmFileSelectionBoxGetChild(w->FD.mergeDialog, XmDIALOG_HELP_BUTTON);
-  XtUnmanageChild(tmp);
-  tmp = XmFileSelectionBoxGetChild(w->FD.saveDialog, XmDIALOG_HELP_BUTTON);
   XtUnmanageChild(tmp);
   tmp = XmFileSelectionBoxGetChild(w->FD.saveAsDialog, XmDIALOG_HELP_BUTTON);
   XtUnmanageChild(tmp);

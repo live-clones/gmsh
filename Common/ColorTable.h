@@ -1,4 +1,4 @@
-/* $Id: ColorTable.h,v 1.3 2000-11-26 15:43:46 geuzaine Exp $ */
+/* $Id: ColorTable.h,v 1.1 2000-12-08 10:56:36 geuzaine Exp $ */
 #ifndef _COLORTABLE_H_
 #define _COLORTABLE_H_
 
@@ -40,7 +40,6 @@ void ColorTable_InitParam (int number, ColorTable * ct, int rgb_flag, int alpha_
 void ColorTable_Recompute (ColorTable * ct, int rgb_flag, int alpha_flag);
 void ColorTable_Copy(ColorTable *ct);
 void ColorTable_Paste(ColorTable *ct);
-void ColorTable_Load(FILE *fp, ColorTable *ct);
-void ColorTable_Save(FILE *fp, ColorTable *ct) ;
+void ColorTable_Print(ColorTable *ct, FILE *fp) ;
 
 #endif

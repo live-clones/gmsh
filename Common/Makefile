@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2000-12-07 08:46:09 geuzaine Exp $
+# $Id: Makefile,v 1.6 2000-12-08 10:56:36 geuzaine Exp $
 #
 # Makefile for "libCommon.a"
 #
@@ -21,7 +21,8 @@ INCLUDE  = -I../includes -I../Common -I../DataStr -I../Geo -I../Graphics\
 CFLAGS = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE) $(GL_INCLUDE)
 
 SRC =  	Context.cpp\
-        Views.cpp
+        Views.cpp\
+        ColorTable.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -54,8 +55,11 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
  ../DataStr/Tools.h Const.h ../Geo/Geo.h ../Mesh/Mesh.h \
  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
  ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
- ../Common/Views.h ../Common/Const.h ../Graphics/ColorTable.h \
- Context.h trackball.c trackball.h
+ ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h Context.h \
+ trackball.c trackball.h
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
- ../DataStr/Tools.h Views.h Const.h ../Graphics/ColorTable.h Context.h
+ ../DataStr/Tools.h Views.h Const.h ColorTable.h Context.h
+ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+ ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+ ../DataStr/Tools.h ColorTable.h Context.h

@@ -1,4 +1,4 @@
-/* $Id: Geometry.cpp,v 1.3 2000-11-26 15:43:48 geuzaine Exp $ */
+/* $Id: Geometry.cpp,v 1.4 2000-12-08 10:56:51 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -257,11 +257,6 @@ void ForceGeometry_FD (Widgets_T *w){
                 NULL);
 
   XtVaSetValues(w->FD.mergeDialog,
-                XmNmarginHeight, DIALOG_H,
-                XmNmarginWidth, DIALOG_W,
-                NULL);
-
-  XtVaSetValues(w->FD.saveDialog,
                 XmNmarginHeight, DIALOG_H,
                 XmNmarginWidth, DIALOG_W,
                 NULL);

@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.8 2000-11-27 14:23:21 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.9 2000-12-08 10:56:51 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -188,16 +188,6 @@ void ReloadAllViewsCb(Widget w, XtPointer client_data, XtPointer call_data){
   All = 0;
   Init();
   Draw();
-}
-
-
-void SaveColorTable(FILE *fp){
-  if(!CurrentView){
-    Msg(WARNING, "No View to get Color Information From"); 
-  }
-  else{
-    ColorTable_Save(fp, &CurrentView->CT);
-  }
 }
 
 /* ------------------------------------------------------------------------ 

@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.12 2000-12-07 19:03:56 geuzaine Exp $ */
+/* $Id: Views.h,v 1.13 2000-12-08 10:56:36 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -82,9 +82,10 @@ int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
               double OptiValue, double *ObjFunct, char *OutFile);
 double ErrorInView(Post_View * ErrView, int *n);
 
-char **Get_StringViewOption(int num, char *str, int *type);
+char *Get_StringViewOption(int num, char *str, int *type);
 void *Get_NumberViewOption(int num, char *str, int *type);
 void *Get_ArrayViewOption(int num, char *str, int *type);
+ColorTable *Get_ColorTableViewOption(int num);
 
 void Print_StringViewOptions(int num, FILE *file);
 void Print_NumberViewOptions(int num, FILE *file);

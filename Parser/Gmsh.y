@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.27 2000-12-07 16:24:58 remacle Exp $ */
+%{ /* $Id: Gmsh.y,v 1.28 2000-12-08 10:56:49 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -17,6 +17,7 @@
 #include "Parser.h"
 #include "Main.h"
 #include "FunctionManager.h"
+#include "ColorTable.h"
 
 #ifdef __DECCXX // bug in bison
 #include <alloca.h>
@@ -42,10 +43,10 @@ static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
 static double         d;
 static ExtrudeParams  extr;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
-static List_T         *ListOfListOfDouble_L;
+static List_T         *ListOfListOfDouble_L, *ListOfColor_L=NULL;
 
 static void           *pNumOpt, *pArrOpt;
-static char          **pStrOpt;
+static char          **pStrOpt, *pStrViewOpt;
 static unsigned int   *pColOpt;
 static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
@@ -106,7 +107,7 @@ void  vyyerror (char *fmt, ...);
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single
 %type <l> ListOfShapes Duplicata Transform MultipleShape
-%type <l> ListOfStrings ListOfDouble ListOfListOfDouble
+%type <l> ListOfStrings ListOfDouble ListOfListOfDouble ListOfColor
 %type <s> Shape
 %type <i> BoolExpr
 %type <u> Color
@@ -780,16 +781,16 @@ Affectation :
 
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT tBIGSTR tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
-	if(!(pStrOpt = Get_StringViewOption((int)$5, $8, &i))){
+	if(!(pStrViewOpt = Get_StringViewOption((int)$5, $8, &i))){
 	  if(i < 0) vyyerror("PostProcessing View %d does not Exist", (int)$5);
 	  else	    vyyerror("Unknown String Option '%s.View[%d].%s'", 
 			     $1, (int)$5, $8);
 	}
 	else{
-	  *pStrOpt = $10 ;
+	  strcpy(pStrViewOpt, $10) ;
 	}
       }
     }
@@ -815,7 +816,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT FExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -853,7 +854,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTPLUS FExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -891,7 +892,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTMINUS FExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -929,7 +930,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTTIMES FExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -967,7 +968,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTDIVIDE FExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -1005,7 +1006,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tPLUSPLUS FExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -1043,7 +1044,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tMINUSMINUS FExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -1091,7 +1092,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECT VExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
@@ -1145,7 +1146,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTPLUS VExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
@@ -1199,7 +1200,7 @@ Affectation :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tAFFECTMINUS VExpr tEND 
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
@@ -1241,6 +1242,24 @@ Affectation :
       }
     }
 
+  | tSTRING '.' tView '[' FExpr ']' '.' tColor tAFFECT ListOfColor tEND 
+    {
+      if(strcmp($1, "PostProcessing"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	ColorTable *ct = Get_ColorTableViewOption((int)$5);
+	if(!ct)
+	  vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	else{
+	  ct->size = List_Nbr($10);
+	  if(ct->size > COLORTABLE_NBMAX_COLOR)
+	    vyyerror("Too Many (%d>%d) Colors in Post.View[%d].Color", 
+		     ct->size, COLORTABLE_NBMAX_COLOR, (int)$5);
+	  else
+	    for(i=0 ; i<ct->size ; i++) List_Read($10, i, &ct->table[i]);
+	}
+      }
+    }
 ;
 
 
@@ -2108,7 +2127,7 @@ FExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -2146,7 +2165,7 @@ FExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tPLUSPLUS
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -2184,7 +2203,7 @@ FExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING tMINUSMINUS
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pNumOpt = Get_NumberViewOption((int)$5, $8, &i))){
@@ -2291,7 +2310,7 @@ VExpr_Single :
     }
   | tSTRING '.' tView '[' FExpr ']' '.' tSTRING
     {
-      if(strcmp($1, "Post"))
+      if(strcmp($1, "PostProcessing"))
 	vyyerror("Unknown View Option Class '%s'", $1);
       else{
 	if(!(pArrOpt = Get_ArrayViewOption((int)$5, $8, &i))){
@@ -2443,6 +2462,30 @@ Color :
       }
     }
 ;
+
+
+ListOfColor :
+    '{' RecursiveListOfColor '}'
+    {
+      $$ = ListOfColor_L;
+    }
+;
+
+RecursiveListOfColor :
+    Color
+    {
+      if(!ListOfColor_L)
+	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
+      else
+	List_Reset(ListOfColor_L) ;
+      List_Add(ListOfColor_L, &($1)) ;
+    }
+  | RecursiveListOfColor ',' Color
+    {
+      List_Add(ListOfColor_L, &($3)) ;
+    }
+;
+
 
 %%
 

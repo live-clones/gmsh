@@ -1,4 +1,4 @@
-/* $Id: Widgets.h,v 1.6 2000-12-05 18:45:13 geuzaine Exp $ */
+/* $Id: Widgets.h,v 1.7 2000-12-08 10:56:51 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 
@@ -67,7 +67,7 @@ typedef struct {
   /* error dialogs */
 
   struct {
-    Widget   printDialog, saveDialog ;
+    Widget   printDialog ;
   } ED;
 
   /* file dialogs */
@@ -75,7 +75,6 @@ typedef struct {
   struct {
     Widget   openDialog ;
     Widget   mergeDialog ;
-    Widget   saveDialog ;
     Widget   saveAsDialog ;
     Widget     saveAsFrame[2], saveAsRowCol ;
     Widget     saveAsPane, saveAsButt[3], saveAsMenu ;
