@@ -43,8 +43,9 @@ Complex Volume(26) = {25};
 
 Transfinite Line {7,9,11,12} = 5;
 Transfinite Line {3,10,14} = 10;
-Transfinite Line {4} = 10 Using Bump 1.5;
-Transfinite Line {-1,2} = 20 Using Power 1.6;
+Transfinite Line {4} = 10 Using Bump 10;
+Transfinite Line {1} = 20 Using Power 1.1;
+Transfinite Line {2} = 20 Using Power 0.9;
 Transfinite Line {8,13} = 20 ;
 
 Transfinite Surface {6} = {1,2,6,5};

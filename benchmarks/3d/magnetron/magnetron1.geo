@@ -42,7 +42,6 @@ centre1=newp;Point(centre1)= { 0.0,    0.0   ,    0.0      ,  lcpba2  };
 centre2=newp;Point(centre2)= { 0.0,    0.0   ,   eppba2       ,  lcpba2  }; 
 centre3=newp;Point(centre3)= { 0.0,    0.0   ,   eppba1      ,  lcpba2  }; 
 centre4=newp;Point(centre4)= { 0.0,    0.0   ,   eppba3      ,  lcpba2  }; 
-
 Circle(20) = {1,centre1,9};
 Circle(21) = {2,centre2,10};
 Circle(22) = {3,centre2,11};
@@ -111,7 +110,7 @@ EndFor
 arc1=newreg; Circle(arc1)={8,centre3,Boxes_Point2[2]};
 arc2=newreg; Circle(arc2)={Boxes_Point5[2],centre3,Boxes_Point2[1]};
 arc3=newreg; Circle(arc3)={7,centre4,Boxes_Point11[2]};
-arc4=newreg; Circle(arc4)={Boxes_Point12[2],centre3,Boxes_Point11[1]};
+arc4=newreg; Circle(arc4)={Boxes_Point12[2],centre4,Boxes_Point11[1]};
 axex1=newreg;
 Line(axex1) = {Cyles_Point2[0],8};
 axex2=newreg;
@@ -258,10 +257,3 @@ Circle(906) = {900,centre1,901};
 Circle(907) = {902,centre1,903};
 Circle(908) = {904,centre1,905};
 */
-
-
-
-
-
-
-
