@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.125 2002-05-18 23:07:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.126 2002-05-19 07:30:40 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -805,9 +805,9 @@ void help_short_cb(CALLBACK_ARGS){
   Msg(DIRECT, "  move            - highlight the elementary geometrical entity");
   Msg(DIRECT, "                    currently under the mouse pointer and display");
   Msg(DIRECT, "                    its properties in the status bar");
-  Msg(DIRECT, "                  - size a rubber zoom started with "XX"+mouse1");
+  Msg(DIRECT, "                  - size a rubber zoom started with "XX"+LeftButt");
   Msg(DIRECT, "  LeftButt        - rotate");
-  Msg(DIRECT, "                  - accept a rubber zoom started with "XX"+mouse1"); 
+  Msg(DIRECT, "                  - accept a rubber zoom started with "XX"+LeftButt"); 
   Msg(DIRECT, "  "XX"+LeftButt   start (anisotropic) rubber zoom"); 
   Msg(DIRECT, "  MiddleButt      - zoom (isotropic)");
   Msg(DIRECT, "                  - cancel a rubber zoom");
