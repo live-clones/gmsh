@@ -9,7 +9,7 @@ class Post_View{
   public :
   // intrinsic to a view
   int Num, Index, Changed, DuplicateOf, Links, Dirty;
-  char FileName[256], Name[256];
+  char FileName[256], Name[256], AbscissaName[256];
 
   // the data
   int datasize; // size(double) or sizeof(float)
@@ -28,10 +28,11 @@ class Post_View{
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
 
   // options
+  int Type, Position[2], AutoPosition, Size[2];
   char   Format[256];
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], ArrowScale, Explode;
-  int Visible, IntervalsType, NbIso, Light, SmoothNormals ;
+  int Visible, IntervalsType, NbIso, NbAbscissa, Light, SmoothNormals ;
   double AngleSmoothNormals;
   int SaturateValues;
   int ShowElement, ShowTime, ShowScale;
@@ -41,9 +42,8 @@ class Post_View{
   int DrawStrings;
   int DrawPoints, DrawLines, DrawTriangles, DrawTetrahedra;
   int DrawScalars, DrawVectors, DrawTensors;
-  int Boundary, PointSize, LineWidth;
+  int Boundary, PointSize, LineWidth, Grid;
   ColorTable CT;
-  int GraphType, GraphPosition[2], GraphSize[2], GraphGrid;
 
   // dynamic
   double (*GVFI) (double min, double max, int nb, int index);
@@ -61,7 +61,7 @@ class Post_View{
   void transform(double mat[3][3]);
 };
 
-// GraphType
+// Type
 #define DRAW_POST_3D       1
 #define DRAW_POST_2D_SPACE 2
 #define DRAW_POST_2D_TIME  3
@@ -110,6 +110,7 @@ int BGMWithView (Post_View *ErrView);
 int CreateBGM(Post_View *ErrView, int OptiMethod, double Degree,
               double OptiValue, double *ObjFunct, char *OutFile);
 double ErrorInView(Post_View * ErrView, int *n);
+Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double *y);
 
 ColorTable *Get_ColorTable(int num);
 void Print_ColorTable(int num, char *prefix, FILE *file);

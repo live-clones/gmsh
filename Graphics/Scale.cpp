@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.25 2001-10-31 08:34:19 geuzaine Exp $
+// $Id: Scale.cpp,v 1.26 2001-11-05 08:37:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -10,9 +10,6 @@
 #include "gl2ps.h"
 
 extern Context_T   CTX;
-
-static double overall ; 
-#define CHECK_W  overall=gl_width(label) ; if(overall > cv_w) cv_w=overall
 
 /* Even if all computations in these routines are made in window
    coordinates, double precision is used to work at subpixel accuracy */
@@ -26,36 +23,40 @@ extern double GiveValueFromIndex_Log(double ValMin, double ValMax, int NbIso, in
 extern int GiveIndexFromValue_Lin(double ValMin, double ValMax, int NbIso, double Val);
 extern int GiveIndexFromValue_Log(double ValMin, double ValMax, int NbIso, double Val);
 
-void draw_scale(Post_View *v, double xmin, double ymin, double *width, double height){
+void draw_scale(Post_View *v, 
+		double xmin, double ymin, double width, double height,
+		double tic, double space, double dx, double dy){
+
   int       i, nbv;
-  double    font_h, font_a, label_h;
-  double    cs_xmin, cs_ymin, cs_h, cs_w, cs_bh;
-  double    cv_xmin, cv_ymin, cv_h, cv_w, cv_bh;
+  double    font_h, font_a;
+  double    cs_bh, cv_xmin, cv_bh;
   char      label[1024] ;
   double    Val, ValMin, ValMax;
 
   gl_font(FL_HELVETICA,CTX.gl_fontsize);
-  font_h  = gl_height() ;             /* hauteur totale de la fonte */
-  font_a  = gl_height()-gl_descent() ;/* hauteur de la fonte au dessus de pt de ref */
-  label_h = 1.8*font_h ;              /* hauteur du label */
-
-  cs_xmin = xmin ;                    /* colorscale xmin */
-  cs_ymin = ymin+label_h ;            /* colorscale ymin */
-  cs_w    = 16. ;                     /* colorscale width */
-  cs_h    = height-label_h ;          /* colorscale height */
-  cs_bh   = cs_h/v->NbIso ;           /* colorscale box height */
-
-  cv_xmin = cs_xmin+cs_w+5 ;          /* valuescale xmin */
-  cv_ymin = cs_ymin ;                 /* valuescale ymin */
-  cv_w    = 0.0 ;                     /* valuescale width: to be computed */
-  cv_h    = cs_h ;                    /* valuescale height */
-  cv_bh   = 0.0 ;                     /* valuescale box height: to be computed */
+  font_h  = gl_height() ;              // hauteur totale de la fonte
+  font_a  = gl_height()-gl_descent() ; // hauteur de la fonte au dessus de pt de ref
+  cs_bh   = height/v->NbIso ; // colorscale box height
+  cv_xmin = xmin+width+tic ;  // valuescale xmin
 
   glPointSize(v->PointSize); 
   gl2psPointSize(v->PointSize * CTX.print.eps_point_size_factor);
 
   glLineWidth(v->LineWidth); 
   gl2psLineWidth(v->LineWidth * CTX.print.eps_line_width_factor);
+
+  if(!v->TransparentScale){
+    double dytop=0.;
+    if(v->IntervalsType != DRAW_POST_ISO)
+      dytop = font_h/2.;
+    glColor4ubv((GLubyte*)&CTX.color.bg);
+    glBegin(GL_QUADS);
+    glVertex2d(xmin-space,ymin-dy-space);
+    glVertex2d(xmin+width+dx+space,ymin-dy-space);
+    glVertex2d(xmin+width+dx+space,ymin+height+dytop+space);
+    glVertex2d(xmin-space,ymin+height+dytop+space);
+    glEnd();    
+  }
 	
   if(v->IntervalsType == DRAW_POST_CONTINUOUS)
     glShadeModel(GL_SMOOTH);
@@ -80,128 +81,105 @@ void draw_scale(Post_View *v, double xmin, double ymin, double *width, double he
     break;
   }
 
-  /* background : bidouille
-     il faudra changer l'ordre des operations
-   */
-
-  if(!v->TransparentScale){
-    sprintf(label, v->Format, (ValMin+ValMax)/Pi);
-    CHECK_W;
-    *width = cv_xmin-cs_xmin+cv_w;   
-    glColor4ubv((GLubyte*)&CTX.color.bg);
-    glBegin(GL_QUADS);
-    glVertex2d(xmin,        ymin);
-    glVertex2d(xmin+*width, ymin);
-    glVertex2d(xmin+*width, ymin+height);
-    glVertex2d(xmin,        ymin+height);
-    glEnd();    
-  }
-
-  /* colorscale */
+  // colorscale
 
   for(i=0;i<v->NbIso;i++){
     if(v->IntervalsType==DRAW_POST_DISCRETE){
       Palette(v,v->NbIso,i);   
       glBegin(GL_QUADS);
-      glVertex2d(cs_xmin,      cs_ymin+i*cs_bh);
-      glVertex2d(cs_xmin+cs_w, cs_ymin+i*cs_bh);
-      glVertex2d(cs_xmin+cs_w, cs_ymin+(i+1)*cs_bh);
-      glVertex2d(cs_xmin,      cs_ymin+(i+1)*cs_bh);
+      glVertex2d(xmin,       ymin+i*cs_bh);
+      glVertex2d(xmin+width, ymin+i*cs_bh);
+      glVertex2d(xmin+width, ymin+(i+1)*cs_bh);
+      glVertex2d(xmin,       ymin+(i+1)*cs_bh);
       glEnd();
     }
     else if (v->IntervalsType==DRAW_POST_CONTINUOUS){
       glBegin(GL_QUADS);
       Palette2(v,ValMin,ValMax,ValMin+i*(ValMax-ValMin)/v->NbIso);
-      glVertex2d(cs_xmin,      cs_ymin+i*cs_bh);
-      glVertex2d(cs_xmin+cs_w, cs_ymin+i*cs_bh);
+      glVertex2d(xmin,       ymin+i*cs_bh);
+      glVertex2d(xmin+width, ymin+i*cs_bh);
       Palette2(v,ValMin,ValMax,ValMin+(i+1)*(ValMax-ValMin)/v->NbIso);
-      glVertex2d(cs_xmin+cs_w, cs_ymin+(i+1)*cs_bh);
-      glVertex2d(cs_xmin,      cs_ymin+(i+1)*cs_bh);
+      glVertex2d(xmin+width, ymin+(i+1)*cs_bh);
+      glVertex2d(xmin,       ymin+(i+1)*cs_bh);
       glEnd();  
     }
     else{
       Palette(v,v->NbIso,i);
       glBegin(GL_LINES);
-      glVertex2d(cs_xmin,      cs_ymin+i*cs_bh+0.5*cs_bh);
-      glVertex2d(cs_xmin+cs_w, cs_ymin+i*cs_bh+0.5*cs_bh);
+      glVertex2d(xmin,       ymin+i*cs_bh+0.5*cs_bh);
+      glVertex2d(xmin+width, ymin+i*cs_bh+0.5*cs_bh);
       glEnd();
     }
   }  
   
-  /* valuescale */
+  // valuescale
   
-  nbv = (v->NbIso<floor(cs_h/font_h))?v->NbIso:-1;
-  cv_bh = cv_h/nbv;
+  nbv = (v->NbIso<floor(height/font_h))?v->NbIso:-1;
+  cv_bh = height/nbv;
 
   glColor4ubv((GLubyte*)&CTX.color.text);
 
-  /* only min and max if not enough room */
-  if(nbv<0){
+  
+  if(nbv<0){ // only min and max if not enough room
     if(v->IntervalsType == DRAW_POST_DISCRETE ||
        v->IntervalsType == DRAW_POST_CONTINUOUS){
       sprintf(label, v->Format, ValMin);
-      glRasterPos2d(cv_xmin,cv_ymin-font_a/3.);
-      Draw_String(label); CHECK_W;
+      glRasterPos2d(cv_xmin,ymin-font_a/3.);
+      Draw_String(label);
 
       sprintf(label, v->Format, ValMax);
-      glRasterPos2d(cv_xmin,cv_ymin+cv_h-font_a/3.);
-      Draw_String(label); CHECK_W;
+      glRasterPos2d(cv_xmin,ymin+height-font_a/3.);
+      Draw_String(label);
     }
     else {
       sprintf(label, v->Format, ValMin);
-      glRasterPos2d(cv_xmin,cv_ymin+(cs_bh/2)-font_a/3.);
-      Draw_String(label); CHECK_W;
+      glRasterPos2d(cv_xmin,ymin+(cs_bh/2)-font_a/3.);
+      Draw_String(label);
 
       sprintf(label, v->Format, ValMax);
-      glRasterPos2d(cv_xmin,cv_ymin+cv_h-(cs_bh/2)-font_a/3.);
-      Draw_String(label); CHECK_W;
+      glRasterPos2d(cv_xmin,ymin+height-(cs_bh/2)-font_a/3.);
+      Draw_String(label);
     }
   }
-
-  /* all the values if enough space */
   else {
     if(v->IntervalsType == DRAW_POST_DISCRETE ||
        v->IntervalsType == DRAW_POST_CONTINUOUS){
       for(i=0 ; i<nbv+1 ; i++){
         Val = v->GVFI(ValMin,ValMax,nbv+1,i); 
         sprintf(label, v->Format, Val);
-	/* suppressing the 2 following lines improves fltk performance
-           a lot on linux. and only on linux.  Why? */
-        glRasterPos2d(cv_xmin,cv_ymin+i*cv_bh-font_a/3.);
-        Draw_String(label); CHECK_W;
+        glRasterPos2d(cv_xmin,ymin+i*cv_bh-font_a/3.);
+        Draw_String(label);
       }
     }
     else {
       for(i=0 ; i<nbv ; i++){
         Val = v->GVFI(ValMin,ValMax,nbv,i); 
         sprintf(label, v->Format, Val);
-        glRasterPos2d(cv_xmin,cv_ymin+(2*i+1)*(cv_bh/2)-font_a/3.);
-        Draw_String(label); CHECK_W;
+        glRasterPos2d(cv_xmin,ymin+(2*i+1)*(cv_bh/2)-font_a/3.);
+        Draw_String(label);
       }
     }
   }
 
-  /* the label */
+  // the label
   
-  glRasterPos2d(cv_xmin,ymin);
+  glRasterPos2d(cv_xmin,ymin-2*font_h);
   if(List_Nbr(v->Time)>1 && v->ShowTime)
     sprintf(label, "%s (%g)", v->Name, *(double*)List_Pointer(v->Time,v->TimeStep));
   else
     sprintf(label, "%s", v->Name);
-  Draw_String(label); CHECK_W;
-
-
-  /* compute the width */
-  *width = cv_xmin-cs_xmin+cv_w;
+  Draw_String(label);
 
 }
 
 static List_T  *todraw=NULL;
 
 void Draw_Scales(void){
-  int         i;
-  double      xmin, ymin, width, height, xsep, ysep;
-  double      oldwidth, totalwidth;
+  int i;
+  double xmin, ymin, width, height, xsep, ysep;
+  double oldwidth, totalwidth;
+  double dx=0., dy=0., tic=5., space=10.;
+  char label[1024];
   Post_View  *v;
 
   if(!CTX.post.list) return;
@@ -215,7 +193,7 @@ void Draw_Scales(void){
 
   for(i=0;i<List_Nbr(CTX.post.list);i++){
     v = (Post_View*)List_Pointer(CTX.post.list,i);
-    if(v->Visible && v->ShowScale && v->GraphType==DRAW_POST_3D && !v->TextOnly) 
+    if(v->Visible && v->ShowScale && v->Type==DRAW_POST_3D && !v->TextOnly) 
       List_Add(todraw,&v);
   }
   
@@ -223,37 +201,50 @@ void Draw_Scales(void){
     return;
   }
 
-  if(List_Nbr(todraw)==1){
-    xsep = 20. ;
+  xsep = 20. ;
+  width = 16.0;
+  totalwidth = 0.0;
+  if(List_Nbr(todraw)==1)
     ysep = (CTX.viewport[3]-CTX.viewport[1])/6. ;
-    xmin = CTX.viewport[0] + xsep ;    
-    ymin = CTX.viewport[1] + ysep ;
-    width = 0.0;
-    height = CTX.viewport[3]-CTX.viewport[1] - 2*ysep ;
-
-    v = *((Post_View**)List_Pointer(todraw,0));
-    draw_scale(v,xmin,ymin,&width,height);
-  }
-  else{
-    xsep = 20. ;
+  else
     ysep = (CTX.viewport[3]-CTX.viewport[1])/15. ;    
-    xmin = CTX.viewport[0] + xsep ;
-    ymin = CTX.viewport[1] + ysep ;
-    width = 0.0;
-    totalwidth = 0.0;
-    height = (CTX.viewport[3]-CTX.viewport[1]-3*ysep)/2. ;
+  xmin = CTX.viewport[0] + xsep ;    
+  ymin = CTX.viewport[1] + ysep ;
 
-    for(i=0;i<List_Nbr(todraw);i++){
-      v = *(Post_View**)List_Pointer(todraw,i);
-      oldwidth = width;
-      draw_scale(v,
-                 xmin+totalwidth+(i/2)*xsep,
-                 ymin+(1-i%2)*(height+ysep),
-                 &width,
-                 height);      
-      if(i%2) totalwidth += DMAX(width,oldwidth);
+  for(i=0;i<List_Nbr(todraw);i++){
+    v = *(Post_View**)List_Pointer(todraw,i);
+    oldwidth = width+dx+space;
+    dx = dy = 0.;
+    gl_font(FL_HELVETICA,CTX.gl_fontsize);
+    sprintf(label,v->Format,v->CustomMin);
+    if(gl_width(label)+tic > dx) dx = gl_width(label)+tic;
+    sprintf(label,v->Format,v->CustomMax);
+    if(gl_width(label)+tic > dx) dx = gl_width(label)+tic;
+    if(List_Nbr(v->Time)>1 && v->ShowTime)
+      sprintf(label, "%s (%g)", v->Name, *(double*)List_Pointer(v->Time,v->TimeStep));
+    else
+      sprintf(label, "%s", v->Name);
+    if(gl_width(label)+tic > dx) dx = gl_width(label)+tic;
+    dy = 2.*gl_height();
+    if(v->AutoPosition){
+      if(List_Nbr(todraw)==1){
+	height = CTX.viewport[3]-CTX.viewport[1]-2*ysep-dy ;
+	draw_scale(v,xmin,ymin+dy,width,height,tic,space,dx,dy);
+      }
+      else{
+	height = (CTX.viewport[3]-CTX.viewport[1]-3*ysep-2.5*dy)/2. ;
+	draw_scale(v,
+		   xmin+totalwidth+(i/2)*xsep,
+		   ymin+dy+(1-i%2)*(height+1.5*dy+ysep),
+		   width, height, tic, space,dx, dy); 
+      }
+      if(i%2) totalwidth += DMAX(width+dx+space,oldwidth);
     }
+    else
+      draw_scale(v,v->Position[0],CTX.viewport[3]-v->Size[1]-v->Position[1],
+		 v->Size[0],v->Size[1],tic,space,dx,dy);
   }
+
 
 }
 

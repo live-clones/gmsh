@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.58 2001-10-31 08:34:18 geuzaine Exp $
+// $Id: Views.cpp,v 1.59 2001-11-05 08:37:43 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -394,7 +394,14 @@ void FreeView(Post_View *v){
 }
 
 void CopyViewOptions(Post_View *src, Post_View *dest){
+  dest->Type = src->Type;
+  dest->Position[0] = src->Position[0];
+  dest->Position[1] = src->Position[1];
+  dest->AutoPosition = src->AutoPosition;
+  dest->Size[0] = src->Size[0];
+  dest->Size[1] = src->Size[1];
   strcpy(dest->Format, src->Format);
+  strcpy(dest->AbscissaName, src->AbscissaName);
   dest->CustomMin = src->CustomMin;
   dest->CustomMax = src->CustomMax;
   dest->Offset[0] = src->Offset[0];
@@ -408,13 +415,8 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->Visible = src->Visible;
   dest->IntervalsType = src->IntervalsType;
   dest->SaturateValues = src->SaturateValues;
-  dest->GraphType = src->GraphType;
-  dest->GraphGrid = src->GraphGrid;
-  dest->GraphPosition[0] = src->GraphPosition[0];
-  dest->GraphPosition[1] = src->GraphPosition[1];
-  dest->GraphSize[0] = src->GraphSize[0];
-  dest->GraphSize[1] = src->GraphSize[1];
   dest->Boundary = src->Boundary ;
+  dest->NbAbscissa = src->NbAbscissa;
   dest->NbIso = src->NbIso;
   dest->Light = src->Light ;
   dest->SmoothNormals = src->SmoothNormals ;
@@ -438,6 +440,7 @@ void CopyViewOptions(Post_View *src, Post_View *dest){
   dest->TimeStep = src->TimeStep;
   dest->PointSize = src->PointSize;
   dest->LineWidth = src->LineWidth;
+  dest->Grid = src->Grid;
   ColorTable_Copy(&src->CT);
   ColorTable_Paste(&dest->CT);
 }
@@ -470,6 +473,27 @@ void Print_ColorTable(int num, char *prefix, FILE *file){
   if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
 }
 
+Post_View *Create2DGraph(char *xname, char *yname, 
+			 int nbdata, double *x, double *y){
+  int i;
+  double d=0.;
+  char filename[1024];
+  Post_View *v;
+
+  v = BeginView(1);
+  for(i=0;i<nbdata;i++){
+    List_Add(v->SP, &x[i]);
+    List_Add(v->SP, &d);
+    List_Add(v->SP, &d);
+    List_Add(v->SP, &y[i]);
+    v->NbSP++;
+  }
+  sprintf(filename,"%s.pos",yname);
+  EndView(v, 1, filename, yname);
+  v->Type = DRAW_POST_2D_SPACE;
+  strcpy(v->AbscissaName, xname);
+  return v;
+}
 
 /* ------------------------------------------------------------------------ */
 /*  R e a d _ V i e w                                                       */

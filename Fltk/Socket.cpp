@@ -1,4 +1,4 @@
-/* $Id: Socket.cpp,v 1.13 2001-10-31 16:33:46 remacle Exp $ */
+/* $Id: Socket.cpp,v 1.14 2001-11-05 08:37:43 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,8 +147,7 @@ int Socket_StartProgram(char *progname, char *sockname){
   }
   
   len = sizeof(from);
-  socklen_t slen = len;
-  if ( (sock = accept(s, (struct sockaddr *)&from, &slen)) < 0) {
+  if ( (sock = accept(s, (struct sockaddr *)&from, &len)) < 0) {
     Msg(GERROR, "Socket accept failed");	
     return -1;
   }

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.28 2001-10-31 08:34:19 geuzaine Exp $
+// $Id: Post.cpp,v 1.29 2001-11-05 08:37:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -144,7 +144,7 @@ void Draw_Post (void) {
   if(!CTX.post.draw){ // draw only the bbox of the visible views
     for(iView=0 ; iView<List_Nbr(CTX.post.list) ; iView++){
       v = (Post_View*)List_Pointer(CTX.post.list,iView);
-      if(v->Visible && v->GraphType==DRAW_POST_3D){ 
+      if(v->Visible && v->Type==DRAW_POST_3D){ 
 	glColor4ubv((GLubyte*)&CTX.color.fg);
 	glBegin(GL_LINE_LOOP);
 	glVertex3d(v->BBox[0], v->BBox[2], v->BBox[4]);
@@ -245,7 +245,7 @@ void Draw_Post (void) {
 
 	// Points
 
-	if(v->GraphType==DRAW_POST_3D && v->NbSP && v->DrawPoints && v->DrawScalars){
+	if(v->Type==DRAW_POST_3D && v->NbSP && v->DrawPoints && v->DrawScalars){
 	  nb = List_Nbr(v->SP) / v->NbSP ;
 	  for(i = 0 ; i < List_Nbr(v->SP) ; i+=nb){
 	    Get_Coords(1., v->Offset, 1, 

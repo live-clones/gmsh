@@ -52,7 +52,7 @@ Extrude Surface { 11, {0, 0, h} } ;
 // manually a characteristic length for some of the automatically
 // created points:
 
-Characteristic Length{6,2,52,3,16,12} = lc * 3 ;
+Characteristic Length{6,2,52,3,16,12} = lc * 2 ;
 
 // If the transformation tools are handy to create complex geometries,
 // it is sometimes useful to generate the flat geometry, consisting

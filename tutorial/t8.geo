@@ -46,23 +46,26 @@ View[1].ShowScale = 0;
 
 View[2].Name = "Test..." ;
 View[2].IntervalsType = 2 ;
-View[2].GraphType = 2;
+View[2].Type = 2;
 View[2].IntervalsType = 2 ;
-View[2].GraphPositionX = 85;
-View[2].GraphPositionY = 50;
-View[2].GraphWidth = 200;
-View[2].GraphHeight = 150;
+View[2].AutoPosition = 0;
+View[2].PositionX = 85;
+View[2].PositionY = 50;
+View[2].Width = 200;
+View[2].Height = 150;
 
-View[3].GraphType = 3;
+View[3].Type = 3;
 View[3].RangeType = 2;
 View[3].IntervalsType = 4 ;
 View[3].ShowScale = 0;
+View[3].Grid = 0;
 View[3].CustomMin = View[2].CustomMin;
 View[3].CustomMax = View[2].CustomMax;
-View[3].GraphPositionX = View[2].GraphPositionX;
-View[3].GraphPositionY = View[2].GraphPositionY;
-View[3].GraphWidth = View[2].GraphWidth;
-View[3].GraphHeight = View[2].GraphHeight;
+View[3].AutoPosition = 0;
+View[3].PositionX = View[2].PositionX;
+View[3].PositionY = View[2].PositionY;
+View[3].Width = View[2].Width;
+View[3].Height = View[2].Height;
 
 // We loop from 1 to 255 with a step of 1 (to use a step different
 // from 1, just add a third argument in the list. For example, 'For

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.125 2001-11-01 09:40:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.126 2001-11-05 08:37:43 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1636,13 +1636,13 @@ void GUI::create_statistics_window(){
 	stat_value[num++] = new Fl_Output(2*WB, 2*WB+14*BH, IW, BH, "Eta factor");
 	stat_value[num++] = new Fl_Output(2*WB, 2*WB+15*BH, IW, BH, "Rho factor");
 
-	Fl_Button* b0 = new Fl_Button(width-BB-2*WB, 2*WB+13*BH, BB, BH, "List");
+	Fl_Button* b0 = new Fl_Button(width-BB-2*WB, 2*WB+13*BH, BB, BH, "Graph");
 	b0->labelsize(CTX.fontsize);
 	b0->callback(opt_statistics_histogram_cb, (void*)0);
-	Fl_Button* b1 = new Fl_Button(width-BB-2*WB, 2*WB+14*BH, BB, BH, "List");
+	Fl_Button* b1 = new Fl_Button(width-BB-2*WB, 2*WB+14*BH, BB, BH, "Graph");
 	b1->labelsize(CTX.fontsize);
 	b1->callback(opt_statistics_histogram_cb, (void*)1);
-	Fl_Button* b2 = new Fl_Button(width-BB-2*WB, 2*WB+15*BH, BB, BH, "List");
+	Fl_Button* b2 = new Fl_Button(width-BB-2*WB, 2*WB+15*BH, BB, BH, "Graph");
 	b2->labelsize(CTX.fontsize);
 	b2->callback(opt_statistics_histogram_cb, (void*)2);
 
@@ -2070,14 +2070,27 @@ void GUI::create_view_options_window(int num){
 	  view_input[i]->callback(set_changed_cb, 0);
 	}
         view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+3*BH, BW, BH, "Show scale");
-        view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Show annotations");
-        view_butt[6] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Transparent labels");
-	for(i=4 ; i<=6 ; i++){
+        view_butt[5] = new Fl_Check_Button(width/2, 2*WB+4*BH, BW, BH, "Show annotations");
+        view_butt[6] = new Fl_Check_Button(2*WB, 2*WB+4*BH, BW, BH, "Transparent scale");
+        view_butt[7] = new Fl_Check_Button(2*WB, 2*WB+5*BH, BW, BH, "Auto position");
+	for(i=4 ; i<=7 ; i++){
 	  view_butt[i]->type(FL_TOGGLE_BUTTON);
 	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
 	  view_butt[i]->callback(set_changed_cb, 0);
+	}
+
+	view_value[20] = new Fl_Value_Input(2*WB, 2*WB+ 6*BH, IW, BH, "X position");
+	view_value[21] = new Fl_Value_Input(2*WB, 2*WB+ 7*BH, IW, BH, "Y position");
+	view_value[22] = new Fl_Value_Input(2*WB, 2*WB+ 8*BH, IW, BH, "Width");
+	view_value[23] = new Fl_Value_Input(2*WB, 2*WB+ 9*BH, IW, BH, "Height");
+	for(i=20 ; i<=23 ; i++){
+	  view_value[i]->labelsize(CTX.fontsize);
+	  view_value[i]->textsize(CTX.fontsize);
+	  view_value[i]->type(FL_HORIZONTAL);
+	  view_value[i]->align(FL_ALIGN_RIGHT);
+	  view_value[i]->callback(set_changed_cb, 0);
 	}
 
         o->end();
@@ -2140,16 +2153,22 @@ void GUI::create_view_options_window(int num){
 	view_2d = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "2D");
 	view_2d->labelsize(CTX.fontsize);
         view_2d->hide();
+	
+	view_input[2] = new Fl_Input(2*WB, 2*WB+1*BH, IW, BH, "Abscissa name");
+	view_input[2]->labelsize(CTX.fontsize);
+	view_input[2]->textsize(CTX.fontsize);
+	view_input[2]->align(FL_ALIGN_RIGHT);
+	view_input[2]->callback(set_changed_cb, 0);
 
-	view_value[20] = new Fl_Value_Input(2*WB, 2*WB+ 1*BH, IW, BH, "X position");
-	view_value[21] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Y position");
-	view_value[22] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Width");
-	view_value[23] = new Fl_Value_Input(2*WB, 2*WB+ 4*BH, IW, BH, "Height");
-        view_value[24] = new Fl_Value_Input(2*WB, 2*WB+ 5*BH, IW, BH, "Grid mode");
-	view_value[24]->minimum(0.); 
-	view_value[24]->step(1); 
-	view_value[24]->maximum(3); 
-	for(i=20 ; i<=24 ; i++){
+        view_value[25] = new Fl_Value_Input(2*WB, 2*WB+ 2*BH, IW, BH, "Abscissa points");
+	view_value[25]->minimum(0.); 
+	view_value[25]->step(1); 
+	view_value[25]->maximum(256); 
+        view_value[26] = new Fl_Value_Input(2*WB, 2*WB+ 3*BH, IW, BH, "Grid mode");
+	view_value[26]->minimum(0.); 
+	view_value[26]->step(1); 
+	view_value[26]->maximum(3); 
+	for(i=25 ; i<=26 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->textsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
@@ -2157,7 +2176,7 @@ void GUI::create_view_options_window(int num){
 	  view_value[i]->callback(set_changed_cb, 0);
 	}
 
-        view_2d->end();
+	view_2d->end();
       }
       // Range
       { 
@@ -2324,6 +2343,7 @@ void GUI::create_view_options_window(int num){
 	  view_value[i]->align(FL_ALIGN_RIGHT);
 	  view_value[i]->callback(set_changed_cb, 0);
 	}
+
 	o->end();
       }
       // Colors
@@ -2380,10 +2400,23 @@ void GUI::update_view_window(int num){
   // general
   opt_view_name(num, GMSH_GUI, NULL);
   opt_view_format(num, GMSH_GUI, NULL);
-  opt_view_graph_type(num, GMSH_GUI, 0);
+  opt_view_type(num, GMSH_GUI, 0);
   opt_view_show_scale(num, GMSH_GUI, 0);
   opt_view_draw_strings(num, GMSH_GUI, 0);
   opt_view_transparent_scale(num, GMSH_GUI, 0);
+  opt_view_auto_position(num, GMSH_GUI, 0);
+  if(v->NbSP){
+    view_butt[2]->activate();
+    view_butt[3]->activate();
+  }
+  else{
+    view_butt[2]->deactivate();
+    view_butt[3]->deactivate();
+  }
+  opt_view_position0(num, GMSH_GUI, 0);
+  opt_view_position1(num, GMSH_GUI, 0);
+  opt_view_size0(num, GMSH_GUI, 0);
+  opt_view_size1(num, GMSH_GUI, 0);
 
   //3D
   if(v->TextOnly){
@@ -2411,21 +2444,13 @@ void GUI::update_view_window(int num){
   opt_view_draw_tensors(num, GMSH_GUI, 0);
 
   //2D
-  if(v->NbSP){
+  if(v->NbSP)
     view_2d->activate();
-    view_butt[2]->activate();
-    view_butt[3]->activate();
-  }
-  else{
+  else
     view_2d->deactivate();
-    view_butt[2]->deactivate();
-    view_butt[3]->deactivate();
-  }
-  opt_view_graph_position0(num, GMSH_GUI, 0);
-  opt_view_graph_position1(num, GMSH_GUI, 0);
-  opt_view_graph_size0(num, GMSH_GUI, 0);
-  opt_view_graph_size1(num, GMSH_GUI, 0);
-  opt_view_graph_grid(num, GMSH_GUI, 0);
+  opt_view_abscissa_name(num, GMSH_GUI, NULL);
+  opt_view_nb_abscissa(num, GMSH_GUI, 0);
+  opt_view_grid(num, GMSH_GUI, 0);
 
   // range
   opt_view_nb_iso(num, GMSH_GUI, 0);

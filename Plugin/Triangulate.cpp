@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.2 2001-10-29 08:52:21 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.3 2001-11-05 08:37:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Plugin.h"
@@ -71,13 +71,13 @@ extern "C" {
 }
 
 void Triangulate(Post_View *vin, Post_View *vout){
-  int i, j=0, j0, j1, j2;
+  int nb, i, j=0, j0, j1, j2;
   Surface *s;
   Vertex *v;
   struct triangulateio in, out;
 
-  int nb = List_Nbr(vin->SP)/vin->NbSP ;
-  List_T *points = List_Create(nb,1,sizeof(Vertex*));
+  List_T *points = List_Create(vin->NbSP,1,sizeof(Vertex*));
+  nb = List_Nbr(vin->SP)/vin->NbSP ;
 
   for(i = 0 ; i < List_Nbr(vin->SP) ; i+=nb){
     v = Create_Vertex(j++,

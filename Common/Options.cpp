@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.54 2001-10-31 08:34:18 geuzaine Exp $
+// $Id: Options.cpp,v 1.55 2001-11-05 08:37:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -324,7 +324,7 @@ void Print_NumberOptions(int num, int level, StringXNumber s[], char *prefix, FI
   char tmp[1024];
   while(s[i].str){
     if(s[i].level & level){
-      sprintf(tmp, "%s%s = %g; // %s", prefix, 
+      sprintf(tmp, "%s%s = %.16g; // %s", prefix, 
 	      s[i].str, s[i].function(num, GMSH_GET, 0), s[i].help);
       if(file) fprintf(file, "%s\n", tmp); else Msg(DIRECT, tmp);
     }
@@ -533,6 +533,17 @@ char * opt_view_filename(OPT_ARGS_STR){
   if(action & GMSH_SET)
     strcpy(v->FileName, val);
   return v->FileName;
+}
+char * opt_view_abscissa_name(OPT_ARGS_STR){
+  GET_VIEW(NULL) ;
+  if(action & GMSH_SET){
+    strcpy(v->AbscissaName, val);
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_input[2]->value(v->AbscissaName);
+#endif
+  return v->AbscissaName;
 }
 
 
@@ -1230,6 +1241,11 @@ double opt_geometry_old_newreg(OPT_ARGS_NUM){
     CTX.geom.old_newreg = (int)val;
   return CTX.geom.old_newreg;
 }
+double opt_geometry_circle_points(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.geom.circle_points = (int)val;
+  return CTX.geom.circle_points;
+}
 double opt_geometry_scaling_factor(OPT_ARGS_NUM){
   if(action & GMSH_SET) 
     CTX.geom.scaling_factor = (int)val;
@@ -1859,86 +1875,114 @@ double opt_view_saturate_values(OPT_ARGS_NUM){
   return v->SaturateValues;
 }
 
-double opt_view_graph_type(OPT_ARGS_NUM){
+double opt_view_type(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    v->GraphType = (int)val;
+    v->Type = (int)val;
     v->Changed = 1;
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    WID->view_butt[1]->value(v->GraphType==DRAW_POST_3D);
-    WID->view_butt[2]->value(v->GraphType==DRAW_POST_2D_SPACE);
-    WID->view_butt[3]->value(v->GraphType==DRAW_POST_2D_TIME);
+    WID->view_butt[1]->value(v->Type==DRAW_POST_3D);
+    WID->view_butt[2]->value(v->Type==DRAW_POST_2D_SPACE);
+    WID->view_butt[3]->value(v->Type==DRAW_POST_2D_TIME);
   }
 #endif
-  return v->GraphType;
+  return v->Type;
 }
 
-double opt_view_graph_position0(OPT_ARGS_NUM){
+double opt_view_position0(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    v->GraphPosition[0] = (int)val;
+    v->Position[0] = (int)val;
     v->Changed = 1;
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_value[20]->value(v->GraphPosition[0]);
+    WID->view_value[20]->value(v->Position[0]);
 #endif
-  return v->GraphPosition[0];
+  return v->Position[0];
 }
 
-double opt_view_graph_position1(OPT_ARGS_NUM){
+double opt_view_position1(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    v->GraphPosition[1] = (int)val;
+    v->Position[1] = (int)val;
     v->Changed = 1;
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_value[21]->value(v->GraphPosition[1]);
+    WID->view_value[21]->value(v->Position[1]);
 #endif
-  return v->GraphPosition[1];
+  return v->Position[1];
 }
 
-double opt_view_graph_size0(OPT_ARGS_NUM){
+double opt_view_auto_position(OPT_ARGS_NUM){
   GET_VIEW(0.) ;
   if(action & GMSH_SET){
-    v->GraphSize[0] = (int)val;
-    v->Changed = 1;
-  }
-#ifdef _FLTK
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_value[22]->value(v->GraphSize[0]);
-#endif
-  return v->GraphSize[0];
-}
-
-double opt_view_graph_size1(OPT_ARGS_NUM){
-  GET_VIEW(0.) ;
-  if(action & GMSH_SET){
-    v->GraphSize[1] = (int)val;
-    v->Changed = 1;
-  }
-#ifdef _FLTK
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
-    WID->view_value[23]->value(v->GraphSize[1]);
-#endif
-  return v->GraphSize[1];
-}
-
-double opt_view_graph_grid(OPT_ARGS_NUM){
-  GET_VIEW(0.) ;
-  if(action & GMSH_SET){
-    v->GraphGrid = (int)val;
+    v->AutoPosition = (int)val;
     v->Changed = 1;
   }
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
-    WID->view_value[24]->value(v->GraphGrid);
+    WID->view_butt[7]->value(v->AutoPosition);
   }
 #endif
-  return v->GraphGrid;
+  return v->AutoPosition;
+}
+
+double opt_view_size0(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->Size[0] = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_value[22]->value(v->Size[0]);
+#endif
+  return v->Size[0];
+}
+
+double opt_view_size1(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->Size[1] = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+    WID->view_value[23]->value(v->Size[1]);
+#endif
+  return v->Size[1];
+}
+
+double opt_view_grid(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->Grid = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_value[26]->value(v->Grid);
+  }
+#endif
+  return v->Grid;
+}
+
+double opt_view_nb_abscissa(OPT_ARGS_NUM){
+  GET_VIEW(0.) ;
+  if(action & GMSH_SET){
+    v->NbAbscissa = (int)val;
+    v->Changed = 1;
+  }
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI) && (num == WID->view_number)){
+    WID->view_value[25]->value(v->NbAbscissa);
+  }
+#endif
+  return v->NbAbscissa;
 }
 
 double opt_view_nb_iso(OPT_ARGS_NUM){

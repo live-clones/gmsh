@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.90 2001-10-31 08:34:19 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.91 2001-11-05 08:37:43 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -484,8 +484,23 @@ void opt_statistics_update_cb(CALLBACK_ARGS) {
   WID->set_statistics();
 }
 void opt_statistics_histogram_cb(CALLBACK_ARGS) {
-  Print_Histogram(M.Histogram[(int)data]);
-  WID->create_message_window();
+  int i, type=(int)data;
+
+  Print_Histogram(M.Histogram[type]);
+  //WID->create_message_window();
+
+  double *x=(double*)Malloc(NB_HISTOGRAM*sizeof(double));
+  double *y=(double*)Malloc(NB_HISTOGRAM*sizeof(double));
+  for(i=0;i<NB_HISTOGRAM;i++){
+    x[i]=(double)(i+1)/(double)NB_HISTOGRAM;
+    y[i]=(double)M.Histogram[type][i];
+  }
+  char *name;
+  if(type==0) name = "Gamma";
+  else if(type==1) name = "Eta";
+  else name = "Rho";
+  Create2DGraph(name,"Elements",NB_HISTOGRAM,x,y);
+  Draw(); 
 }
 
 // Option Messages Menu
@@ -1790,10 +1805,10 @@ void view_options_ok_cb(CALLBACK_ARGS){
       if(force || WID->view_butt[1]->changed() ||
 	 WID->view_butt[2]->changed() ||
 	 WID->view_butt[3]->changed())
-	opt_view_graph_type(i, GMSH_SET, 
-			    WID->view_butt[1]->value()?DRAW_POST_3D:
-			    WID->view_butt[2]->value()?DRAW_POST_2D_SPACE:
-			    DRAW_POST_2D_TIME);
+	opt_view_type(i, GMSH_SET, 
+		      WID->view_butt[1]->value()?DRAW_POST_3D:
+		      WID->view_butt[2]->value()?DRAW_POST_2D_SPACE:
+		      DRAW_POST_2D_TIME);
 
       if(force || WID->view_butt[35]->changed() ||
 	 WID->view_butt[36]->changed() ||
@@ -1838,6 +1853,10 @@ void view_options_ok_cb(CALLBACK_ARGS){
 
       if(force || WID->view_butt[4]->changed())
 	opt_view_show_scale(i, GMSH_SET, WID->view_butt[4]->value());
+
+      if(force || WID->view_butt[7]->changed())
+	opt_view_auto_position(i, GMSH_SET, 
+			       WID->view_butt[7]->value());
 
       if(force || WID->view_butt[50]->changed())
 	opt_view_show_time(i, GMSH_SET, WID->view_butt[50]->value());
@@ -1926,19 +1945,22 @@ void view_options_ok_cb(CALLBACK_ARGS){
 	opt_view_angle_smooth_normals(i,GMSH_SET,WID->view_value[10]->value());
 
       if(force || WID->view_value[20]->changed())
-	opt_view_graph_position0(i,GMSH_SET,WID->view_value[20]->value());
+	opt_view_position0(i,GMSH_SET,WID->view_value[20]->value());
 
       if(force || WID->view_value[21]->changed())
-	opt_view_graph_position1(i,GMSH_SET,WID->view_value[21]->value());
+	opt_view_position1(i,GMSH_SET,WID->view_value[21]->value());
 
       if(force || WID->view_value[22]->changed())
-	opt_view_graph_size0(i,GMSH_SET,WID->view_value[22]->value());
+	opt_view_size0(i,GMSH_SET,WID->view_value[22]->value());
 
       if(force || WID->view_value[23]->changed())
-	opt_view_graph_size1(i,GMSH_SET,WID->view_value[23]->value());
+	opt_view_size1(i,GMSH_SET,WID->view_value[23]->value());
 
-      if(force || WID->view_value[24]->changed())
-	opt_view_graph_grid(i,GMSH_SET,WID->view_value[24]->value());
+      if(force || WID->view_value[25]->changed())
+	opt_view_nb_abscissa(i,GMSH_SET,WID->view_value[25]->value());
+
+      if(force || WID->view_value[26]->changed())
+	opt_view_grid(i,GMSH_SET,WID->view_value[26]->value());
 
       // view_inputs
 
@@ -1947,6 +1969,9 @@ void view_options_ok_cb(CALLBACK_ARGS){
 
       if(force || WID->view_input[1]->changed())
 	opt_view_format(i, GMSH_SET, (char*)WID->view_input[1]->value());
+
+      if(force || WID->view_input[2]->changed())
+	opt_view_abscissa_name(i, GMSH_SET, (char*)WID->view_input[2]->value());
 
       // colorbar window
 

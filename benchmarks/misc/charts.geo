@@ -15,9 +15,9 @@ View "test" {
   SP(9,0,0){0   ,0.2+0  ,0.42+0  ,0.2+0  ,0.42+0  ,0.2+0  ,0.42+0  ,0.2+0  ,0.42+0   };
 };
 
-View[PostProcessing.NbViews-1].GraphType=2;
+View[PostProcessing.NbViews-1].Type=2;
 View[PostProcessing.NbViews-1].Format="%.3g";
-View[PostProcessing.NbViews-1].GraphGrid=3;
+View[PostProcessing.NbViews-1].Grid=3;
 
 /*
 View "annote" {

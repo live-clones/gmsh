@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.18 2001-10-31 08:34:19 geuzaine Exp $
+// $Id: List.cpp,v 1.19 2001-11-05 08:37:43 geuzaine Exp $
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -413,9 +413,9 @@ void List_WriteToFile(List_T *liste, FILE *file, int format){
   switch(format){
   case LIST_FORMAT_ASCII :
     if(liste->size == sizeof(double))
-      for(i=0;i<n;i++) fprintf(file, " %g", *((double*)&liste->array[i*liste->size])) ;
+      for(i=0;i<n;i++) fprintf(file, " %.16g", *((double*)&liste->array[i*liste->size])) ;
     else if(liste->size == sizeof(float))
-      for(i=0;i<n;i++) fprintf(file, " %g", *((float*)&liste->array[i*liste->size])) ;
+      for(i=0;i<n;i++) fprintf(file, " %.16g", *((float*)&liste->array[i*liste->size])) ;
     else if(liste->size == sizeof(int))
       for(i=0;i<n;i++) fprintf(file, " %d", *((int*)&liste->array[i*liste->size])) ;
     else if(liste->size == sizeof(char))

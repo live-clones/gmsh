@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.30 2001-10-29 08:52:19 geuzaine Exp $
+// $Id: Geom.cpp,v 1.31 2001-11-05 08:37:43 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -110,11 +110,20 @@ void Draw_Curve (void *a, void *b){
   if(CTX.geom.lines){
   
     int n = List_Nbr(c->Control_Points);
-    if(c->Typ == MSH_SEGM_LINE)
-      N = n;
-    else
-      N = (n<10) ? 50 : 10 * n;
-
+    switch(c->Typ){
+    case MSH_SEGM_LINE : 
+      N = n; 
+      break;
+    case MSH_SEGM_CIRC :
+    case MSH_SEGM_CIRC_INV :
+    case MSH_SEGM_ELLI :
+    case MSH_SEGM_ELLI_INV :
+      N = CTX.geom.circle_points;
+      break;
+    default :
+      N = 10 * n;
+      break;
+    }
     if(c->Typ == MSH_SEGM_DISCRETE){
       Simplex *s;
       List_T *temp = Tree2List(c->Simplexes);
