@@ -59,6 +59,56 @@ Default post-processing view name@*
 Default value: @code{""}@*
 Saved in: @code{-}
 
+@item View.Stipple0
+First stippling pattern@*
+Default value: @code{"1*0x1F1F"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple1
+Second stippling pattern@*
+Default value: @code{"1*0x3333"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple2
+Third stippling pattern@*
+Default value: @code{"1*0x087F"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple3
+Fourth stippling pattern@*
+Default value: @code{"1*0xFCCC"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple4
+Fifth stippling pattern@*
+Default value: @code{"2*0x1111"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple5
+Sixth stippling pattern@*
+Default value: @code{"2*0xF0F0"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple6
+Seventh stippling pattern@*
+Default value: @code{"1*0xFFFC"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple7
+Eighth stippling pattern@*
+Default value: @code{"2*0x0202"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple8
+Ninth stippling pattern@*
+Default value: @code{"2*0x087F"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple9
+Tenth stippling pattern@*
+Default value: @code{"1*0xFFFF"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.AngleSmoothNormals
 Threshold angle below which normals are not smoothed@*
 Default value: @code{180}@*
@@ -476,6 +526,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.SmoothNormals
 Smooth the normals?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Stipple
+Stipple curves in 2D plots?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

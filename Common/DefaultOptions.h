@@ -407,6 +407,27 @@ StringXString ViewOptions_String[] = {
   { F,   "Name" , opt_view_name , "" , 
     "Default post-processing view name" },
 
+  { F|O, "Stipple0" , opt_view_stipple0 , "1*0x1F1F" , 
+    "First stippling pattern" },
+  { F|O, "Stipple1" , opt_view_stipple1 , "1*0x3333" , 
+    "Second stippling pattern" },
+  { F|O, "Stipple2" , opt_view_stipple2 , "1*0x087F" , 
+    "Third stippling pattern" },
+  { F|O, "Stipple3" , opt_view_stipple3 , "1*0xFCCC" , 
+    "Fourth stippling pattern" },
+  { F|O, "Stipple4" , opt_view_stipple4 , "2*0x1111" , 
+    "Fifth stippling pattern" },
+  { F|O, "Stipple5" , opt_view_stipple5 , "2*0xF0F0" , 
+    "Sixth stippling pattern" },
+  { F|O, "Stipple6" , opt_view_stipple6 , "1*0xFFFC" , 
+    "Seventh stippling pattern" },
+  { F|O, "Stipple7" , opt_view_stipple7 , "2*0x0202" , 
+    "Eighth stippling pattern" },
+  { F|O, "Stipple8" , opt_view_stipple8 , "2*0x087F" , 
+    "Ninth stippling pattern" },
+  { F|O, "Stipple9" , opt_view_stipple9 , "1*0xFFFF" , 
+    "Tenth stippling pattern" },
+
   { 0, NULL , NULL , NULL , NULL }
 } ;
 
@@ -1223,6 +1244,8 @@ StringXNumber ViewOptions_Number[] = {
     "Show time value in the scale? (1=only if NbTimeStep>1, 2=always)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
+  { F|O, "Stipple" , opt_view_use_stipple , 0. ,
+    "Stipple curves in 2D plots?" },
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" }, 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.348 2005-03-14 18:55:22 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.349 2005-03-21 00:42:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3543,6 +3543,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
   double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
   double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
+  double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
 
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
@@ -3836,6 +3837,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[24]->value();
       if(force || (val != fake_transparency))
         opt_view_fake_transparency(i, GMSH_SET, val);
+
+      val = WID->view_butt[26]->value();
+      if(force || (val != use_stipple))
+        opt_view_use_stipple(i, GMSH_SET, val);
 
       // view_values
       

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.236 2005-03-20 20:45:10 geuzaine Exp $
+// $Id: Options.cpp,v 1.237 2005-03-21 00:42:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -2036,6 +2036,147 @@ char * opt_view_gen_raise2(OPT_ARGS_STR)
     WID->view_input[6]->value(v->GenRaiseZ);
 #endif
   return v->GenRaiseZ;
+}
+
+int _h2d(char c)
+{
+  switch(c){
+  case 'a': case 'A': return 10;
+  case 'b': case 'B': return 11;
+  case 'c': case 'C': return 12;
+  case 'd': case 'D': return 13;
+  case 'e': case 'E': return 14;
+  case 'f': case 'F': return 15;
+  default :
+    if(c >= '0' && c <= '9')
+      return c - '0';
+    else
+      return 0;
+  }
+}
+
+void _string2stipple(char str[32], int &repeat, int &pattern)
+{
+  // "n*0xabcd"
+  if(str[1] != '*' || str[2] != '0' || str[3] != 'x'){
+    // bad format
+    repeat = 1;
+    pattern = 0xFFFF;
+  }
+  else{
+    repeat = (int)str[0] - '0';
+    pattern = 16*16*16*_h2d(str[4]) + 16*16*_h2d(str[5]) + 16*_h2d(str[6]) + _h2d(str[7]);
+  }
+}
+
+char * opt_view_stipple0(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[0], val, 31);
+    v->StippleString[0][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[0], v->Stipple[0][0], v->Stipple[0][1]);
+  }
+  return v->StippleString[0];
+}
+
+char * opt_view_stipple1(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[1], val, 31);
+    v->StippleString[1][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[1], v->Stipple[1][0], v->Stipple[1][1]);
+  }
+  return v->StippleString[1];
+}
+
+char * opt_view_stipple2(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[2], val, 31);
+    v->StippleString[2][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[2], v->Stipple[2][0], v->Stipple[2][1]);
+  }
+  return v->StippleString[2];
+}
+
+char * opt_view_stipple3(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[3], val, 31);
+    v->StippleString[3][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[3], v->Stipple[3][0], v->Stipple[3][1]);
+  }
+  return v->StippleString[3];
+}
+
+char * opt_view_stipple4(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[4], val, 31);
+    v->StippleString[4][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[4], v->Stipple[4][0], v->Stipple[4][1]);
+  }
+  return v->StippleString[4];
+}
+
+char * opt_view_stipple5(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[5], val, 31);
+    v->StippleString[5][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[5], v->Stipple[5][0], v->Stipple[5][1]);
+  }
+  return v->StippleString[5];
+}
+
+char * opt_view_stipple6(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[6], val, 31);
+    v->StippleString[6][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[6], v->Stipple[6][0], v->Stipple[6][1]);
+  }
+  return v->StippleString[6];
+}
+
+char * opt_view_stipple7(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[7], val, 31);
+    v->StippleString[7][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[7], v->Stipple[7][0], v->Stipple[7][1]);
+  }
+  return v->StippleString[7];
+}
+
+char * opt_view_stipple8(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[8], val, 31);
+    v->StippleString[8][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[8], v->Stipple[8][0], v->Stipple[8][1]);
+  }
+  return v->StippleString[8];
+}
+
+char * opt_view_stipple9(OPT_ARGS_STR)
+{
+  GET_VIEW("");
+  if(action & GMSH_SET) {
+    strncpy(v->StippleString[9], val, 31);
+    v->StippleString[9][31] = '\0'; // just as a precaution
+    _string2stipple(v->StippleString[9], v->Stipple[9][0], v->Stipple[9][1]);
+  }
+  return v->StippleString[9];
 }
 
 // Numeric option routines
@@ -6242,6 +6383,20 @@ double opt_view_use_gen_raise(OPT_ARGS_NUM)
   }
 #endif
   return v->UseGenRaise;
+}
+
+double opt_view_use_stipple(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->UseStipple = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    WID->view_butt[26]->value(v->UseStipple);
+  }
+#endif
+  return v->UseStipple;
 }
 
 double opt_print_format(OPT_ARGS_NUM)

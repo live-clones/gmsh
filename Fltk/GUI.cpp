@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.434 2005-03-20 20:45:10 geuzaine Exp $
+// $Id: GUI.cpp,v 1.435 2005-03-21 00:42:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -3017,11 +3017,16 @@ void GUI::create_option_window()
       view_butt[24]->type(FL_TOGGLE_BUTTON);
       view_butt[24]->down_box(GMSH_TOGGLE_BOX);
       view_butt[24]->selection_color(GMSH_TOGGLE_COLOR);
+
+      view_butt[26] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Stipple curves in 2D plots");
+      view_butt[26]->type(FL_TOGGLE_BUTTON);
+      view_butt[26]->down_box(GMSH_TOGGLE_BOX);
+      view_butt[26]->selection_color(GMSH_TOGGLE_COLOR);
       
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 2 * BH, IW + 20, height - 5 * WB - 2 * BH);
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 3 * BH, IW + 20, height - 5 * WB - 3 * BH);
       int i = 0;
       while(ViewOptions_Color[i].str) {
-        view_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (2 + i) * BH, IW, BH, ViewOptions_Color[i].str);
+        view_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (3 + i) * BH, IW, BH, ViewOptions_Color[i].str);
         view_col[i]->callback(view_color_cb, (void *)ViewOptions_Color[i].function);
         i++;
       }
@@ -3228,6 +3233,7 @@ void GUI::update_view_window(int num)
   //opt_view_tensor_type(num, GMSH_GUI, 0);
 
   opt_view_fake_transparency(num, GMSH_GUI, 0);
+  opt_view_use_stipple(num, GMSH_GUI, 0);
   opt_view_color_points(num, GMSH_GUI, 0);
   opt_view_color_lines(num, GMSH_GUI, 0);
   opt_view_color_triangles(num, GMSH_GUI, 0);

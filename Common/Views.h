@@ -99,6 +99,8 @@ class Post_View{
   int Boundary, PointType, LineType;
   double PointSize, LineWidth;
   GmshColorTable CT;
+  int UseStipple, Stipple[10][2];
+  char StippleString[10][32];
   int ExternalViewIndex, ViewIndexForGenRaise;
   int UseGenRaise;
   double GenRaiseFactor;

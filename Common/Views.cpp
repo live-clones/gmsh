@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.169 2005-03-14 18:55:22 geuzaine Exp $
+// $Id: Views.cpp,v 1.170 2005-03-21 00:42:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -685,6 +685,12 @@ void CopyViewOptions(Post_View * src, Post_View * dest)
   strcpy(dest->GenRaiseX, src->GenRaiseX);
   strcpy(dest->GenRaiseY, src->GenRaiseY);
   strcpy(dest->GenRaiseZ, src->GenRaiseZ);
+  dest->UseStipple = src->UseStipple;
+  for(int i = 0; i < 10; i++){
+    dest->Stipple[i][0] = src->Stipple[i][0];
+    dest->Stipple[i][1] = src->Stipple[i][1];
+    strcpy(dest->StippleString[i], src->StippleString[i]);
+  }
   dest->color.point = src->color.point;
   dest->color.line = src->color.line;
   dest->color.triangle = src->color.triangle;

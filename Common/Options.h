@@ -211,6 +211,16 @@ char * opt_view_axes_format2(OPT_ARGS_STR);
 char * opt_view_gen_raise0(OPT_ARGS_STR);
 char * opt_view_gen_raise1(OPT_ARGS_STR);
 char * opt_view_gen_raise2(OPT_ARGS_STR);
+char * opt_view_stipple0(OPT_ARGS_STR);
+char * opt_view_stipple1(OPT_ARGS_STR);
+char * opt_view_stipple2(OPT_ARGS_STR);
+char * opt_view_stipple3(OPT_ARGS_STR);
+char * opt_view_stipple4(OPT_ARGS_STR);
+char * opt_view_stipple5(OPT_ARGS_STR);
+char * opt_view_stipple6(OPT_ARGS_STR);
+char * opt_view_stipple7(OPT_ARGS_STR);
+char * opt_view_stipple8(OPT_ARGS_STR);
+char * opt_view_stipple9(OPT_ARGS_STR);
 
 // NUMBERS
 
@@ -519,6 +529,7 @@ double opt_view_normals(OPT_ARGS_NUM);
 double opt_view_tangents(OPT_ARGS_NUM);
 double opt_view_displacement_factor(OPT_ARGS_NUM);
 double opt_view_fake_transparency(OPT_ARGS_NUM);
+double opt_view_use_stipple(OPT_ARGS_NUM);
 double opt_view_explode(OPT_ARGS_NUM);
 double opt_view_visible(OPT_ARGS_NUM);
 double opt_view_intervals_type(OPT_ARGS_NUM);

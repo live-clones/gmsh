@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.52 2005-03-20 20:45:11 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.53 2005-03-21 00:42:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -322,6 +322,11 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
     }
     if(v->IntervalsType == DRAW_POST_DISCRETE ||
        v->IntervalsType == DRAW_POST_CONTINUOUS) {
+      if(v->UseStipple){
+	glEnable(GL_LINE_STIPPLE);
+	glLineStipple(v->Stipple[(i/i_inc)%10][0], v->Stipple[(i/i_inc)%10][1]);
+	gl2psEnable(GL2PS_LINE_STIPPLE);
+      }
       glBegin(GL_LINE_STRIP);
       Abs = Val = p1[0] = p1[1] = p1[2] = 0.;
       for(j = 0; j < j_max; j += j_inc) {
@@ -330,6 +335,10 @@ static void Draw_Graph2D(Post_View * v, double xtop, double ytop,
                height, 0);
       }
       glEnd();
+      if(v->UseStipple){
+	glDisable(GL_LINE_STIPPLE);
+	gl2psDisable(GL2PS_LINE_STIPPLE);
+      }
     }
   }
 
