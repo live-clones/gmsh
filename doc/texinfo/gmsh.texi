@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.99 2004-02-28 00:48:57 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.100 2004-03-13 21:00:19 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -37,7 +37,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename        gmsh.info
-@set EDITION        1.18
+@set EDITION        1.19
 @set GMSH-VERSION   1.51
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2004 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
@@ -206,6 +206,7 @@ Solver module
 Post-processing module
 
 * Post-processing commands::    
+* Post-processing plugins::     
 * Post-processing options::     
 
 Tutorial
@@ -1855,8 +1856,8 @@ You can use geometrical ``attractors'', an elaborate version of the method
 described in the preceding item: see the definition of the @code{Attractor}
 command below.
 
-Attractors currently only work with the 2D anisotropic algorithm (see the
-@code{Mesh.Algorithm} option in @ref{Mesh options}).
+Note that attractors currently only work with the 2D anisotropic algorithm
+(see the @code{Mesh.Algorithm} option in @ref{Mesh options}).
 @item
 You can give Gmsh an explicit background mesh in the form of a scalar
 post-processing view (see @ref{Post-processing commands}, and @ref{File
@@ -1919,8 +1920,8 @@ extruded and has the following syntax:
 @example
 @var{layers}:
 @group
-  Layer @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @} @}; |
-  Recombine;
+  Layer @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, 
+          @{ @var{expression-list} @} @}; | Recombine;
 @end group
 @end example
 
@@ -1988,14 +1989,14 @@ Here is a list of all other mesh commands currently available:
 
 @ftable @code
 @item Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
-Sets the mesh color of the entities listed in @var{expression-list} to @var{color-expression}.
+Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
 
 @item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
-Hide the mesh of the entities listed in @var{expression-list}, if
+Hides the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
 @item Hide @var{char-expression};
-Hide the mesh of the entity @var{char-expression}, if
+Hides the mesh of the entity @var{char-expression}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}
 (@var{char-expression} can for example be @code{"*"}).
 
@@ -2011,11 +2012,11 @@ Saves the mesh in a file named @var{char-expression}, using the current
 @code{Mesh.Format} (@pxref{Mesh options}).
 
 @item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
-Show the mesh of the entities listed in @var{expression-list}, if
+Shows the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
 @item Show @var{char-expression};
-Show the mesh of the entity @var{char-expression}, if
+Shows the mesh of the entity @var{char-expression}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}
 (@var{char-expression} can for example be @code{"*"}).
 @end ftable
@@ -2177,6 +2178,7 @@ Sample post-processing files in human-readable ``parsed'' format
 
 @menu
 * Post-processing commands::    
+* Post-processing plugins::     
 * Post-processing options::     
 @end menu
 
@@ -2184,7 +2186,7 @@ Sample post-processing files in human-readable ``parsed'' format
 @c Post-processing commands
 @c -------------------------------------------------------------------------
 
-@node Post-processing commands, Post-processing options, Post-processing module, Post-processing module
+@node Post-processing commands, Post-processing plugins, Post-processing module, Post-processing module
 @section Post-processing commands
 
 @cindex Post-processing commands
@@ -2205,14 +2207,13 @@ post-processing view numbers start at 0.
 @item Duplicata View[@var{expression}];
 Duplicates the @var{expression}-th post-processing view.
 
-@item Plugin (@var{string}) . @var{string};
-Executes a plugin function. The plugin name is given between the parentheses.
-Several plugins are loaded by default: see e.g.@: @ref{t9.geo}.
+@item Plugin (@var{string}) . Run;
+Executes the plugin @var{string}. The list of default plugins is given in
+@ref{Post-processing plugins}.
 
-@item Plugin (@var{string}) . @var{string} = @var{expression} | @var{char-expression};
-Sets a floating point (@var{expression}) or a character
-(@var{char-expression}) option for a given plugin. See @ref{t9.geo}, for an
-example.
+@item Plugin (@var{string}) . @var{string} = @var{expression};
+Sets a floating point option for a given plugin. See @ref{t9.geo}, for some
+examples.
 
 @item Save View[@var{expression}] @var{char-expression};
 Saves the the @var{expression}-th post-processing view in a file named
@@ -2232,10 +2233,22 @@ format}.
 @end ftable
 
 @c -------------------------------------------------------------------------
+@c Post-processing plugins
+@c -------------------------------------------------------------------------
+
+@node Post-processing plugins, Post-processing options, Post-processing commands, Post-processing module
+@section Post-processing plugins
+
+@cindex Post-processing plugins
+@cindex Plugins, post-processing
+
+@include opt_plugin.texi
+
+@c -------------------------------------------------------------------------
 @c Post-processing options
 @c -------------------------------------------------------------------------
 
-@node Post-processing options,  , Post-processing commands, Post-processing module
+@node Post-processing options,  , Post-processing plugins, Post-processing module
 @section Post-processing options
 
 @cindex Post-processing, options

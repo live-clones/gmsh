@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.278 2004-03-11 05:43:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.279 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,8 +37,6 @@
 // *INDENT-OFF*
 
 #include "PluginManager.h"
-#include "Plugin.h"
-
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Numeric.h"

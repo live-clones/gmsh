@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.30 2004-02-07 01:40:27 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.31 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -59,9 +59,9 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutSphere) cuts the view 'iView' with the\n"
-	 "sphere (X-'Xc')^2 + (Y-'Yc')^2 + (Z-'Zc')^2 = 'R'^2.\n"
-	 "If 'iView' < 0, the plugin is run on the current\n"
+         "Plugin(CutSphere) cuts the view `iView' with the\n"
+	 "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
+	 "If `iView' < 0, the plugin is run on the current\n"
 	 "view.\n"
 	 "\n"
 	 "Plugin(CutSphere) creates one new view.\n");

@@ -1,4 +1,4 @@
-/* $Id: mysolver.c,v 1.3 2004-02-07 01:40:35 geuzaine Exp $ */
+/* $Id: mysolver.c,v 1.4 2004-03-13 21:00:20 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
  *
@@ -119,7 +119,8 @@ int main(int argc, char *argv[])
       name = argv[i++];
   }
 
-  /* 2. If the '-socket' option was not given, we cannot connect to Gmsh... */
+  /* 2. If the '-socket' option was not given, we cannot connect to
+        Gmsh... */
 
   if(!socket) {
     printf("No socket specified: running non-interactively...\n");

@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.12 2004-02-07 01:40:30 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.13 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -63,14 +63,14 @@ void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(SphericalRaise) transforms the\n"
-         "coordinates of the elements in the view 'iView'\n"
+         "coordinates of the elements in the view `iView'\n"
          "using the values associated with the\n"
-         "'TimeStep'-th time step. Instead of elevating\n"
+         "`TimeStep'-th time step. Instead of elevating\n"
          "the nodes along the X, Y and Z axes as in\n"
-	 "View['iView'].RaiseX, View['iView'].RaiseY\n"
-	 "and View['iView'].RaiseZ, the raise is applied\n"
-	 " along the radius of a sphere centered at ('Xc',\n"
-	 "'Yc', 'Zc'). If 'iView' < 0, the plugin is run\n"
+	 "View[`iView'].RaiseX, View[`iView'].RaiseY\n"
+	 "and View[`iView'].RaiseZ, the raise is applied\n"
+	 " along the radius of a sphere centered at (`Xc',\n"
+	 "`Yc', `Zc'). If `iView' < 0, the plugin is run\n"
 	 "on the current view.\n"
 	 "\n"
 	 "Plugin(SphericalRaise) is executed in-place.\n");

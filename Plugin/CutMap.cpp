@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.35 2004-02-07 01:40:27 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.36 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -57,16 +57,16 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutMap) extracts the isovalue surface of\n"
-         "value 'A' from the view 'iView' and draws the\n"
-	 "'dTimeStep'-th value of the view 'dView' on this\n"
-	 "isovalue surface. If 'iView' < 0, the plugin is\n"
-	 "run on the current view. If 'dTimeStep' < 0, the\n"
-	 "plugin uses, for each time step in 'iView', the\n"
-	 "corresponding time step in 'dView'. If 'dView'\n"
-	 "< 0, the plugin uses 'iView' as the value source.\n"
+         "value `A' from the view `iView' and draws the\n"
+	 "`dTimeStep'-th value of the view `dView' on this\n"
+	 "isovalue surface. If `iView' < 0, the plugin is\n"
+	 "run on the current view. If `dTimeStep' < 0, the\n"
+	 "plugin uses, for each time step in `iView', the\n"
+	 "corresponding time step in `dView'. If `dView'\n"
+	 "< 0, the plugin uses `iView' as the value source.\n"
 	 "\n"
 	 "Plugin(CutMap) creates (at most) as many views\n"
-	 "as there are time steps in 'iView'.\n");
+	 "as there are time steps in `iView'.\n");
 }
 
 int GMSH_CutMapPlugin::getNbOptions() const

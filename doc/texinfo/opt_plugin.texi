@@ -1,0 +1,233 @@
+@ftable @code
+@item Plugin(CutMap)
+Plugin(CutMap) extracts the isovalue surface of
+value `A' from the view `iView' and draws the
+`dTimeStep'-th value of the view `dView' on this
+isovalue surface. If `iView' < 0, the plugin is
+run on the current view. If `dTimeStep' < 0, the
+plugin uses, for each time step in `iView', the
+corresponding time step in `dView'. If `dView'
+< 0, the plugin uses `iView' as the value source.
+
+Plugin(CutMap) creates (at most) as many views
+as there are time steps in `iView'.
+
+Numeric options:
+@table @code
+@item A
+Default value: 1
+@item dTimeStep
+Default value: -1
+@item dView
+Default value: -1
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(CutPlane)
+Plugin(CutPlane) cuts the view `iView' with
+the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If
+`iView' < 0, the plugin is run on the current
+view.
+
+Plugin(CutPlane) creates one new view.
+
+Numeric options:
+@table @code
+@item A
+Default value: 1
+@item B
+Default value: 0
+@item C
+Default value: 0
+@item D
+Default value: -0.01
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(CutSphere)
+Plugin(CutSphere) cuts the view `iView' with the
+sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.
+If `iView' < 0, the plugin is run on the current
+view.
+
+Plugin(CutSphere) creates one new view.
+
+Numeric options:
+@table @code
+@item Xc
+Default value: 0
+@item Yc
+Default value: 0
+@item Zc
+Default value: 0
+@item R
+Default value: 0.25
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(DecomposeInSimplex)
+Plugin(DecomposeInSimplex) decomposes all
+non-simplectic elements (quadrangles, prisms
+pyramids, hexahedra) in the view `iView' into
+simplices (triangles, tetrahedra). If `iView' < 0,
+the plugin is run on the current view.
+
+Plugin(DecomposeInSimplex) is executed
+in-place.
+
+Numeric options:
+@table @code
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(DisplacementRaise)
+Plugin(DisplacementRaise) transforms the
+coordinates of the elements in the view 'iView'
+using the vectorial values (the displacements)
+stored in the 'dTimeStep'-th time step of the
+view 'dView'. If 'iView' < 0, the plugin is
+run on the current view. If 'dView' < 0, the
+plugin looks for the displacements in the
+view located just after 'iView' in the view
+list.
+
+Plugin(DisplacementRaise) is executed in-place.
+
+Numeric options:
+@table @code
+@item Factor
+Default value: 1
+@item dTimeStep
+Default value: 0
+@item dView
+Default value: -1
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(Extract)
+Plugin(Extract) extracts the iComponent-th
+component of the view `iView'. If `iView' < 0, the
+plugin is run on the current view.
+
+Plugin(Extract) creates one new view.
+
+Numeric options:
+@table @code
+@item iView
+Default value: -1
+@item iComponent
+Default value: 0
+@end table
+
+@item Plugin(Skin)
+Plugin(Skin) extracts the skin (the boundary) of
+the view `iView'. If `iView' < 0, the plugin is run
+on the current view.
+
+Plugin(Skin) creates one new view.
+
+Numeric options:
+@table @code
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(Smooth)
+Plugin(Smooth) averages the values at the nodes
+of the scalar view `iView'. If `iView' < 0, the
+plugin is run on the current view.
+
+Plugin(Smooth) is executed in-place.
+
+Numeric options:
+@table @code
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(SphericalRaise)
+Plugin(SphericalRaise) transforms the
+coordinates of the elements in the view `iView'
+using the values associated with the
+`TimeStep'-th time step. Instead of elevating
+the nodes along the X, Y and Z axes as in
+View[`iView'].RaiseX, View[`iView'].RaiseY
+and View[`iView'].RaiseZ, the raise is applied
+ along the radius of a sphere centered at (`Xc',
+`Yc', `Zc'). If `iView' < 0, the plugin is run
+on the current view.
+
+Plugin(SphericalRaise) is executed in-place.
+
+Numeric options:
+@table @code
+@item Xc
+Default value: 0
+@item Yc
+Default value: 0
+@item Zc
+Default value: 0
+@item Raise
+Default value: 1
+@item TimeStep
+Default value: 0
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(Transform)
+Plugin(Transform) transforms the coordinates of
+the nodes of the view `iView' by the matrix
+[`A11' `A12' `A13']
+[`A21' `A22' `A23']
+[`A31' `A32' `A33'].
+If `iView' < 0, the plugin is run on the current
+view.
+
+Plugin(Transform) is executed in-place.
+
+Numeric options:
+@table @code
+@item A11
+Default value: 1
+@item A12
+Default value: 0
+@item A13
+Default value: 0
+@item A21
+Default value: 0
+@item A22
+Default value: 1
+@item A23
+Default value: 0
+@item A31
+Default value: 0
+@item A32
+Default value: 0
+@item A33
+Default value: 1
+@item iView
+Default value: -1
+@end table
+
+@item Plugin(Triangulate)
+Plugin(Triangulate) triangulates the points
+in the scalar view `iView', assuming that all
+the points belong to a surface that can be
+univoquely projected into a plane. If `iView'
+< 0, the plugin is run on the current view.
+
+Plugin(Triangulate) creates one new view.
+
+Numeric options:
+@table @code
+@item iView
+Default value: -1
+@end table
+
+@end ftable

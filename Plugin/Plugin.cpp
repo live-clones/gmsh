@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.48 2004-03-07 22:24:48 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.49 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -196,7 +196,7 @@ void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
   char plugin_name[256];
   char plugin_author[256];
   char plugin_copyright[256];
-  char plugin_help[256];
+  char plugin_help[1024];
   class GMSH_Plugin *(*registerPlugin) (void);
   sprintf(dynamic_lib, "%s/%s", dirName, pluginName);
   Msg(INFO, "Opening Plugin '%s'", dynamic_lib);

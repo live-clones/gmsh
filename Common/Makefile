@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2004-02-28 00:48:47 geuzaine Exp $
+# $Id: Makefile,v 1.50 2004-03-13 21:00:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB     = ../lib/libGmshCommon.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Graphics\
-          -I../Mesh -I../Numeric -I../Parser -I../Fltk
+          -I../Mesh -I../Numeric -I../Parser -I../Plugin -I../Fltk
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Context.cpp\
@@ -73,8 +73,9 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
   ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h Context.h Options.h ../Fltk/Solvers.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
+  ../Common/ColorTable.h Context.h Options.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h ../Fltk/Solvers.h ../Fltk/GUI.h \
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   GmshUI.h GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h \

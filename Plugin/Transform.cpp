@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.22 2004-02-07 01:40:30 geuzaine Exp $
+// $Id: Transform.cpp,v 1.23 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -66,11 +66,11 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Transform) transforms the coordinates of\n"
-	 "the nodes of the view 'iView' by the matrix\n"
-         "['A11' 'A12' 'A13']\n"
-	 "['A21' 'A22' 'A23']\n"
-	 "['A31' 'A32' 'A33'].\n"
-	 "If 'iView' < 0, the plugin is run on the current\n"
+	 "the nodes of the view `iView' by the matrix\n"
+         "[`A11' `A12' `A13']\n"
+	 "[`A21' `A22' `A23']\n"
+	 "[`A31' `A32' `A33'].\n"
+	 "If `iView' < 0, the plugin is run on the current\n"
 	 "view.\n"
 	 "\n"
 	 "Plugin(Transform) is executed in-place.\n");

@@ -1,4 +1,4 @@
-// $Id: Harmonic2Time.cpp,v 1.12 2004-03-13 19:24:12 geuzaine Exp $
+// $Id: Harmonic2Time.cpp,v 1.13 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -61,12 +61,12 @@ void GMSH_Harmonic2TimePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Harmonic2Time) takes the values in the\n"
-	 "time steps 'realPart' and 'imaginaryPart' of\n"
-         "the view 'iView', and creates a new view\n"
-         "containing ('iView'['realPart'] * cos(p) -\n"
-         "'iView'['imaginaryPart'] * sin(p)), with\n"
-         "p = 2*Pi*k/'nbSteps', k = 0, ..., 'nbSteps'-1.\n"
-	 "If 'iView' < 0, the plugin is run on the\n"
+	 "time steps `realPart' and `imaginaryPart' of\n"
+         "the view `iView', and creates a new view\n"
+         "containing (`iView'[`realPart'] * cos(p) -\n"
+         "`iView'[`imaginaryPart'] * sin(p)), with\n"
+         "p = 2*Pi*k/`nbSteps', k = 0, ..., `nbSteps'-1.\n"
+	 "If `iView' < 0, the plugin is run on the\n"
 	 "current view.\n"
 	 "\n"
 	 "Plugin(Harmonic2Time) creates one new view.\n");

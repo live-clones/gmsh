@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.25 2004-03-13 19:24:12 geuzaine Exp $
+// $Id: Skin.cpp,v 1.26 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -64,7 +64,7 @@ void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) c
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Skin) extracts the skin (the boundary) of\n"
-	 "the view 'iView'. If 'iView' < 0, the plugin is run\n"
+	 "the view `iView'. If `iView' < 0, the plugin is run\n"
 	 "on the current view.\n"
 	 "\n"
 	 "Plugin(Skin) creates one new view.\n");

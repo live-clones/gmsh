@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.137 2004-02-29 16:51:34 geuzaine Exp $
+// $Id: Options.cpp,v 1.138 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "PluginManager.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Geo.h"
@@ -399,6 +400,37 @@ void Print_OptionsDoc()
   fprintf(file, "Color table used to draw the view@*\n");
   fprintf(file, "Saved in: @code{%s})\n\n",
 	  Get_OptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
+  fprintf(file, "@end ftable\n");
+  fclose(file);
+
+
+  file = fopen("opt_plugin.texi", "w");
+  if(!file) {
+    Msg(GERROR, "Unable to open file 'opt_plugin.texi'");
+    return;
+  }
+  fprintf(file, "@ftable @code\n");
+  char author[256], copyright[256], help[1024];
+  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
+      it != GMSH_PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = (*it).second;
+    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
+      p->getInfos(author, copyright, help);
+      fprintf(file, "@item Plugin(%s)\n", (*it).first);
+      fprintf(file, "%s\n", help);
+      fprintf(file, "Numeric options:\n");
+      fprintf(file, "@table @code\n");
+      int n = p->getNbOptions();
+      for(int i = 0; i < n; i++) {
+        StringXNumber *sxn;
+        sxn = p->getOption(i);
+        fprintf(file, "@item %s\n", sxn->str);
+	fprintf(file, "Default value: %g\n", sxn->def);
+      }
+      fprintf(file, "@end table\n");
+    }
+    fprintf(file, "\n");
+  }
   fprintf(file, "@end ftable\n");
   fclose(file);
 }

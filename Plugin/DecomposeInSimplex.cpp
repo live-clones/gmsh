@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.8 2004-02-07 01:40:29 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.9 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -59,8 +59,8 @@ void GMSH_DecomposeInSimplexPlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(DecomposeInSimplex) decomposes all\n"
 	 "non-simplectic elements (quadrangles, prisms\n"
-	 "pyramids, hexahedra) in the view 'iView' into\n"
-	 "simplices (triangles, tetrahedra). If 'iView' < 0,\n"
+	 "pyramids, hexahedra) in the view `iView' into\n"
+	 "simplices (triangles, tetrahedra). If `iView' < 0,\n"
 	 "the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(DecomposeInSimplex) is executed\n"

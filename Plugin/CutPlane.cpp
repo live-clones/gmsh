@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.32 2004-02-07 01:40:27 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.33 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -58,9 +58,9 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutPlane) cuts the view 'iView' with\n"
-	 "the plane 'A'*X + 'B'*Y + 'C'*Z + 'D' = 0. If\n"
-	 "'iView' < 0, the plugin is run on the current\n"
+         "Plugin(CutPlane) cuts the view `iView' with\n"
+	 "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"
+	 "`iView' < 0, the plugin is run on the current\n"
 	 "view.\n"
 	 "\n"
 	 "Plugin(CutPlane) creates one new view.\n");

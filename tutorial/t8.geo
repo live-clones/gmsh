@@ -129,12 +129,15 @@ For num In {1:255}
 
     // with mencoder:
     //
-    // System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc -lavcopts vcodec=mpeg1video:vhq";
-    // System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc -lavcopts vcodec=mpeg4:vhq";
+    // System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc
+    //         -lavcopts vcodec=mpeg1video:vhq";
+    // System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc
+    //         -lavcopts vcodec=mpeg4:vhq";
 
     // with ffmpeg:
     //
-    // System "ffmpeg -hq -r 5 -b 800 -vcodec mpeg1video -i t8-%02d.jpg t8.mpg"
+    // System "ffmpeg -hq -r 5 -b 800 -vcodec mpeg1video
+    //         -i t8-%02d.jpg t8.mpg"
     // System "ffmpeg -hq -r 5 -b 800 -i t8-%02d.jpg t8.asf"
   EndIf
 

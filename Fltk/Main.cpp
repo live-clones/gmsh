@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.57 2004-02-28 00:48:48 geuzaine Exp $
+// $Id: Main.cpp,v 1.58 2004-03-13 21:00:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -72,9 +72,10 @@ int main(int argc, char *argv[])
 
   Init_Options(0);
 
-  // Generate automatic documentation
+  // Generate automatic documentation (before getting user-defined options)
   
   if(argc == 2 && !strcmp(argv[1], "-doc")){
+    GMSH_PluginManager::instance()->registerDefaultPlugins();
     Print_OptionsDoc();
     exit(0);
   }
