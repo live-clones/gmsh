@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.81 2001-03-10 19:55:06 remacle Exp $
+# $Id: Makefile,v 1.82 2001-03-18 15:48:48 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -407,9 +407,9 @@ fltk_compile_linux_scorec :
 fltk_compile_sgi:
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
            "CC=CC" \
-           "C_FLAGS=-O2 -n32 -OPT:Olimit=0 -LANG:std" \
+           "C_FLAGS=-O2 -mips3 -n32 -OPT:Olimit=0 -LANG:std" \
            "RANLIB=true"\
-           "AR=CC -n32 -ar -o"\
+           "AR=CC -mips3 -n32 -ar -o"\
            "OS_FLAGS=" \
            "VERSION_FLAGS=-D_FLTK" \
            "GL_INCLUDE=$(OPENGL_INC)" \
@@ -429,7 +429,7 @@ fltk_link_opengl:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(OPENGL_LIB) \
                  $(FLTK_LIB) -lm -ldl
 fltk_link_sgi:
-	CC -O2 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
+	CC -O2 -mips3 -n32 -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB)\
                   $(FLTK_LIB) $(OPENGL_LIB) -lm -ldl
 fltk_link_sun:
 	$(CC) -o $(GMSH_BIN_DIR)/gmsh $(GMSH_FLTK_LIB) $(MESA_LIB) \
