@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.72 2004-04-20 01:26:13 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.73 2004-04-20 20:55:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -472,27 +472,100 @@ void Draw_Simplex_Volume(void *a, void *b)
       glColor4ubv((GLubyte *) & CTX.color.mesh.tetrahedron);
 
     double n[3];
-    // FIXME: should subdivide if s->VSUP
     if(CTX.mesh.light) glEnable(GL_LIGHTING);
     glEnable(GL_POLYGON_OFFSET_FILL);
-    glBegin(GL_TRIANGLES);
-    if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[2], s->V[1], n);
-    glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[2], Y[2], Z[2]);
-    glVertex3d(X[1], Y[1], Z[1]);
-    if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[1], s->V[3], n);
-    glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[1], Y[1], Z[1]);
-    glVertex3d(X[3], Y[3], Z[3]);
-    if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[3], s->V[2], n);
-    glVertex3d(X[0], Y[0], Z[0]);
-    glVertex3d(X[3], Y[3], Z[3]);
-    glVertex3d(X[2], Y[2], Z[2]);
-    if(CTX.mesh.light) glNormal3verts(s->V[3], s->V[1], s->V[2], n);
-    glVertex3d(X[3], Y[3], Z[3]);
-    glVertex3d(X[1], Y[1], Z[1]);
-    glVertex3d(X[2], Y[2], Z[2]);
-    glEnd();
+    if(!s->VSUP){
+      glBegin(GL_TRIANGLES);
+      if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[2], s->V[1], n);
+      glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X[2], Y[2], Z[2]);
+      glVertex3d(X[1], Y[1], Z[1]);
+      if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[1], s->V[3], n);
+      glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X[1], Y[1], Z[1]);
+      glVertex3d(X[3], Y[3], Z[3]);
+      if(CTX.mesh.light) glNormal3verts(s->V[0], s->V[3], s->V[2], n);
+      glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X[3], Y[3], Z[3]);
+      glVertex3d(X[2], Y[2], Z[2]);
+      if(CTX.mesh.light) glNormal3verts(s->V[3], s->V[1], s->V[2], n);
+      glVertex3d(X[3], Y[3], Z[3]);
+      glVertex3d(X[1], Y[1], Z[1]);
+      glVertex3d(X[2], Y[2], Z[2]);
+      glEnd();
+    }
+    else{
+      glBegin(GL_TRIANGLES);
+      // face 1
+      if(CTX.mesh.light) glNormal3verts(s->V[0], s->VSUP[2], s->VSUP[0], n);
+      glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X2[2], Y2[2], Z2[2]);
+      glVertex3d(X2[0], Y2[0], Z2[0]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[0], s->VSUP[1], s->V[1], n);
+      glVertex3d(X2[0], Y2[0], Z2[0]);
+      glVertex3d(X2[1], Y2[1], Z2[1]);
+      glVertex3d(X[1], Y[1], Z[1]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[2], s->V[2], s->VSUP[1], n);
+      glVertex3d(X2[2], Y2[2], Z2[2]);
+      glVertex3d(X[2], Y[2], Z[2]);
+      glVertex3d(X2[1], Y2[1], Z2[1]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[0], s->VSUP[2], s->VSUP[1], n);
+      glVertex3d(X2[0], Y2[0], Z2[0]);
+      glVertex3d(X2[2], Y2[2], Z2[2]);
+      glVertex3d(X2[1], Y2[1], Z2[1]);
+      // face 2
+      if(CTX.mesh.light) glNormal3verts(s->V[0], s->VSUP[0], s->VSUP[3], n);
+      glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X2[0], Y2[0], Z2[0]);
+      glVertex3d(X2[3], Y2[3], Z2[3]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[0], s->V[1], s->VSUP[5], n);
+      glVertex3d(X2[0], Y2[0], Z2[0]);
+      glVertex3d(X[1], Y[1], Z[1]);
+      glVertex3d(X2[5], Y2[5], Z2[5]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[3], s->VSUP[5], s->V[3], n);
+      glVertex3d(X2[3], Y2[3], Z2[3]);
+      glVertex3d(X2[5], Y2[5], Z2[5]);
+      glVertex3d(X[3], Y[3], Z[3]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[0], s->VSUP[5], s->VSUP[3], n);
+      glVertex3d(X2[0], Y2[0], Z2[0]);
+      glVertex3d(X2[5], Y2[5], Z2[5]);
+      glVertex3d(X2[3], Y2[3], Z2[3]);
+      // face 3
+      if(CTX.mesh.light) glNormal3verts(s->V[0], s->VSUP[3], s->VSUP[2], n);
+      glVertex3d(X[0], Y[0], Z[0]);
+      glVertex3d(X2[3], Y2[3], Z2[3]);
+      glVertex3d(X2[2], Y2[2], Z2[2]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[3], s->V[3], s->VSUP[4], n);
+      glVertex3d(X2[3], Y2[3], Z2[3]);
+      glVertex3d(X[3], Y[3], Z[3]);
+      glVertex3d(X2[4], Y2[4], Z2[4]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[2], s->VSUP[4], s->V[2], n);
+      glVertex3d(X2[2], Y2[2], Z2[2]);
+      glVertex3d(X2[4], Y2[4], Z2[4]);
+      glVertex3d(X[2], Y[2], Z[2]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[2], s->VSUP[3], s->VSUP[4], n);
+      glVertex3d(X2[2], Y2[2], Z2[2]);
+      glVertex3d(X2[3], Y2[3], Z2[3]);
+      glVertex3d(X2[4], Y2[4], Z2[4]);
+      // face 4
+      if(CTX.mesh.light) glNormal3verts(s->V[3], s->VSUP[5], s->VSUP[4], n);
+      glVertex3d(X[3], Y[3], Z[3]);
+      glVertex3d(X2[5], Y2[5], Z2[5]);
+      glVertex3d(X2[4], Y2[4], Z2[4]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[5], s->V[1], s->VSUP[1], n);
+      glVertex3d(X2[5], Y2[5], Z2[5]);
+      glVertex3d(X[1], Y[1], Z[1]);
+      glVertex3d(X2[1], Y2[1], Z2[1]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[4], s->VSUP[1], s->V[2], n);
+      glVertex3d(X2[4], Y2[4], Z2[4]);
+      glVertex3d(X2[1], Y2[1], Z2[1]);
+      glVertex3d(X[2], Y[2], Z[2]);
+      if(CTX.mesh.light) glNormal3verts(s->VSUP[1], s->VSUP[4], s->VSUP[5], n);
+      glVertex3d(X2[1], Y2[1], Z2[1]);
+      glVertex3d(X2[4], Y2[4], Z2[4]);
+      glVertex3d(X2[5], Y2[5], Z2[5]);
+      glEnd();
+    }
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
   }
