@@ -54,7 +54,7 @@ For num In {1:255}
 
   t = (View[0].TimeStep < View[0].NbTimeStep-1) ? t+1 : 0 ;
   
-  View[0].RaiseZ += 0.001*t ;
+  View[0].RaiseZ += 0.01*t ;
 
   If (num == 3)
     // We want to use mpeg_encode to create a nice 320x240 animation
