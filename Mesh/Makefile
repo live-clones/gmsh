@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.71 2004-08-09 10:32:32 geuzaine Exp $
+# $Id: Makefile,v 1.72 2004-10-28 06:11:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -225,8 +225,8 @@ depend:
   ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
   Face.h Edge.h ../Geo/ExtrudeParams.h STL.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h Metric.h Matrix.h 2D_Mesh.h 3D_Mesh.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Numeric/Numeric.h \
-  ../Common/Context.h
+  ../Common/Views.h ../Common/ColorTable.h ../Common/GmshMatrix.h \
+  ../Numeric/Numeric.h ../Common/Context.h
 3D_Extrude.o: 3D_Extrude.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
@@ -281,7 +281,7 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   Vertex.h Element.h Simplex.h Face.h Edge.h ../Geo/ExtrudeParams.h STL.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h Metric.h Matrix.h \
   Create.h ../Common/Context.h ../Parser/OpenFile.h ../Common/Views.h \
-  ../Common/ColorTable.h
+  ../Common/ColorTable.h ../Common/GmshMatrix.h
 Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \

@@ -32,6 +32,7 @@
 
 #define NMAX_SPLINE   100
 
+#define ENT_NONE     0
 #define ENT_POINT    1
 #define ENT_LINE     2
 #define ENT_SURFACE  3

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.42 2004-05-22 01:29:46 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.43 2004-10-28 06:11:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -166,12 +166,17 @@ char SelectEntity(int type, Vertex ** v, Curve ** c, Surface ** s)
     }
     if(WID->try_selection) {
       WID->try_selection = 0;
-      Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
-      Filter_SelectionBuffer(hits, ii, jj, v, c, s, &M);
-      if(check_type(type, *v, *c, *s)) {
-        HighlightEntity(*v, *c, *s, 1);
-        WID->selection = 0;
-        return 'l';
+      if(type == ENT_NONE){ // just report the mouse click
+	return 'c';
+      }
+      else{
+	Process_SelectionBuffer(Fl::event_x(), Fl::event_y(), &hits, ii, jj);
+	Filter_SelectionBuffer(hits, ii, jj, v, c, s, &M);
+	if(check_type(type, *v, *c, *s)) {
+	  HighlightEntity(*v, *c, *s, 1);
+	  WID->selection = 0;
+	  return 'l';
+	}
       }
     }
   }

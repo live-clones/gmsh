@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.62 2004-10-20 14:38:56 remacle Exp $
+# $Id: Makefile,v 1.63 2004-10-28 06:11:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -68,22 +68,25 @@ Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h Context.h \
-  Options.h DefaultOptions.h Trackball.h
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/GmshMatrix.h Context.h Options.h DefaultOptions.h Trackball.h
+AdaptiveViews.o: AdaptiveViews.cpp Views.h ColorTable.h ../DataStr/List.h \
+  VertexArray.h SmoothNormals.h GmshMatrix.h
 Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h Views.h ColorTable.h VertexArray.h SmoothNormals.h \
-  Context.h Options.h
+  GmshMatrix.h Context.h Options.h
 Options.o: Options.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h Gmsh.h ../DataStr/Malloc.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h GmshUI.h ../Geo/Geo.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
-  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h Context.h \
-  ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
-  ../Fltk/Colorbar_Window.h ../Fltk/File_Picker.h
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h Gmsh.h \
+  ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../DataStr/Tools.h GmshUI.h ../Geo/Geo.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Graphics/Draw.h Context.h ../Fltk/Solvers.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
+  ../Fltk/File_Picker.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   GmshUI.h GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h \
@@ -91,7 +94,7 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Common/VertexArray.h \
   ../Common/SmoothNormals.h ../Mesh/Metric.h ../Mesh/Matrix.h Views.h \
-  ColorTable.h ../Parser/OpenFile.h ../Parser/Parser.h
+  ColorTable.h GmshMatrix.h ../Parser/OpenFile.h ../Parser/Parser.h
 Timer.o: Timer.cpp
 ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \

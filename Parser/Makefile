@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.62 2004-09-25 06:16:14 geuzaine Exp $
+# $Id: Makefile,v 1.63 2004-10-28 06:11:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -69,8 +69,8 @@ Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
 Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Parallel/ParUtil.h ../Common/Gmsh.h \
-  ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h ../Parallel/ParUtil.h \
+  ../Common/Gmsh.h ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../DataStr/Tools.h ../Numeric/Numeric.h ../Common/Context.h \
   ../Geo/Geo.h ../Geo/GeoUtils.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
@@ -85,10 +85,11 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/Context.h Parser.h OpenFile.h ../Common/CommandLine.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Face.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Geo/MinMax.h ../Common/Visibility.h ../Graphics/ReadImg.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Fltk/File_Picker.h
+  ../Common/SmoothNormals.h ../Common/GmshMatrix.h ../Geo/Geo.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Geo/MinMax.h \
+  ../Common/Visibility.h ../Graphics/ReadImg.h ../Common/GmshUI.h \
+  ../Graphics/Draw.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Fltk/Colorbar_Window.h ../Fltk/File_Picker.h
 FunctionManager.o: FunctionManager.cpp FunctionManager.h
