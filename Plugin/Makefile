@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2001-08-20 08:25:24 geuzaine Exp $
+# $Id: Makefile,v 1.19 2001-10-25 07:22:46 geuzaine Exp $
 #
 # Makefile for "libAdapt.a"
 #
@@ -11,7 +11,7 @@ RM        = rm
 RANLIB    = ranlib
 
 LIB       = ../lib/libPlugin.a
-INCLUDE   = -I../Common -I../Graphics -I../DataStr -I../Mesh
+INCLUDE   = -I../Common -I../Graphics -I../DataStr -I../Geo -I../Mesh -I../Triangle
 
 OPT_FLAGS     = -g -Wall
 OS_FLAGS      = 
@@ -25,6 +25,7 @@ SRC = Plugin.cpp\
           CutPlane.cpp CutSphere.cpp CutMap.cpp\
         Smooth.cpp\
         Transform.cpp\
+        Triangulate.cpp\
         Skin.cpp
 
 OBJ = $(SRC:.cpp=.o)

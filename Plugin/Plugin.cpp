@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.20 2001-08-07 21:00:10 remacle Exp $
+// $Id: Plugin.cpp,v 1.21 2001-10-25 07:22:46 geuzaine Exp $
 
 #ifndef _NODLL
 #include <dlfcn.h>
@@ -19,6 +19,7 @@
 #include "Skin.h"
 #include "Smooth.h"
 #include "Transform.h"
+#include "Triangulate.h"
 
 using namespace std;
 
@@ -118,6 +119,8 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 						  GMSH_RegisterSmoothPlugin()));
   allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Transform",
 						  GMSH_RegisterTransformPlugin()));
+  allPlugins.insert(std::pair<char*,GMSH_Plugin*>("Triangulate",
+						  GMSH_RegisterTriangulatePlugin()));
 
 #ifdef _FLTK
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
