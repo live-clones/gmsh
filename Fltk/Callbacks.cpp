@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.334 2005-02-12 18:43:09 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.335 2005-02-12 20:22:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -137,6 +137,8 @@ void redraw_cb(CALLBACK_ARGS)
 
 void window_cb(CALLBACK_ARGS)
 {
+  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 1;
+
   switch((long)data){
   case 0: // minimize
     WID->g_window->iconize();
@@ -147,8 +149,19 @@ void window_cb(CALLBACK_ARGS)
     if(WID->msg_window->shown()) WID->msg_window->iconize();
     WID->m_window->iconize();
     break;
-  case 1: // maximize
-    WID->g_window->size((int)(0.95*Fl::w()), (int)(0.95*Fl::h())); // bof bof bof
+  case 1: // zoom
+    if(zoom){
+      oldx = WID->g_window->x();
+      oldy = WID->g_window->y();
+      oldw = WID->g_window->w();
+      oldh = WID->g_window->h();
+      WID->g_window->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
+      zoom = 0;
+    }
+    else{
+      WID->g_window->resize(oldx, oldy, oldw, oldh);
+      zoom = 1;
+    }
     WID->g_window->show();
     WID->m_window->show();
     break;
