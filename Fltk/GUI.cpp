@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.178 2002-05-21 16:36:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.179 2002-05-23 17:25:09 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -278,7 +278,8 @@ Context_Item menu_mesh[] =
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
   { "Save",   (Fl_Callback *)mesh_save_cb } ,
-  { "Save all", (Fl_Callback *)mesh_save_all_cb } ,
+  // this one is confusing for beginners -> "Save (No Physical)" ??
+  //{ "Save All", (Fl_Callback *)mesh_save_all_cb } ,
   { NULL } 
 };  
     Context_Item menu_mesh_define[] = 
