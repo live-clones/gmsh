@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.78 2001-08-13 16:13:14 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.79 2001-08-13 16:30:22 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -598,7 +598,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS){
   WID->create_geometry_context_window(1);
 }
 
-static void _new_line_spline(int dim){
+static void _new_multiline_spline(int dim){
   Vertex   *v;
   Curve    *c;
   Surface  *s;
@@ -639,10 +639,47 @@ static void _new_line_spline(int dim){
 }
 
 void geometry_elementary_add_new_line_cb(CALLBACK_ARGS){
-  _new_line_spline(0);
+  // Disallow multiline selection at the moment, since multilines
+  // dont't work so well...
+  //
+  //_new_multiline_spline(0);
+  //
+  Vertex   *v;
+  Curve    *c;
+  Surface  *s;
+  int      ib;
+  static int n, p[100];
+
+  if(!opt_geometry_points(0,GMSH_GET,0)){
+    opt_geometry_points(0,GMSH_SET|GMSH_GUI,1);
+    Draw();
+  }
+
+  n=0;
+  while(1){
+    if(n == 0) Msg(STATUS3N,"Select start Point ('q'=quit)");
+    if(n == 1) Msg(STATUS3N,"Select end Point ('q'=quit)");
+    ib = SelectEntity(ENT_POINT, &v,&c,&s);
+    if(ib == 1) { /* left mouse butt */
+      p[n++] = v->Num; 
+    }
+    if(ib == 0) { /* 'q' */
+      n=0 ;
+      ZeroHighlight(&M);
+      Draw();
+      break;
+    }
+    if(n == 2){
+      add_multline(2,p,CTX.filename);
+      ZeroHighlight(&M);
+      Draw();
+      n=0;
+    }
+  }
+  Msg(STATUS3N,"Ready");
 }
 void geometry_elementary_add_new_spline_cb(CALLBACK_ARGS){
-  _new_line_spline(1);
+  _new_multiline_spline(1);
 }
 void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS){
   Vertex   *v;
