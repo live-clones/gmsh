@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.7 2004-05-19 18:43:16 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.8 2004-05-31 20:09:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -108,18 +108,18 @@ void GMSH_StreamLinesPlugin::catchErrorMessage(char *errorMessage) const
 
 int GMSH_StreamLinesPlugin::getNbU()const 
 {
-  return   (int)StreamLinesOptions_Number[9].def;
+  return (int)StreamLinesOptions_Number[9].def;
 }
 
 int GMSH_StreamLinesPlugin::getNbV()const 
 {
-  return   (int)StreamLinesOptions_Number[10].def;
+  return (int)StreamLinesOptions_Number[10].def;
 }
 
 void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X) const 
 {
-  double u = (double)iU / (double)(getNbU ());
-  double v = (double)iV / (double)(getNbV ());
+  double u = (double)iU / (double)(getNbU());
+  double v = (double)iV / (double)(getNbV());
   X[0] = StreamLinesOptions_Number[0].def + 
     u  * (StreamLinesOptions_Number[3].def-StreamLinesOptions_Number[0].def) +
     v  * (StreamLinesOptions_Number[6].def-StreamLinesOptions_Number[0].def) ;
@@ -186,6 +186,7 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(Post_View * v) const
 	for(int k = 0; k < 3; k++) X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
 					    b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
 	for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
+
 	List_Add(View->VP, &DX[0]);
 	List_Add(View->VP, &DX[1]);
 	List_Add(View->VP, &DX[2]);	      
