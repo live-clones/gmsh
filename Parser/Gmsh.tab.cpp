@@ -174,7 +174,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.102 2001-08-08 14:05:26 remacle Exp $
+// $Id: Gmsh.tab.cpp,v 1.103 2001-08-09 15:24:54 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -4744,7 +4744,7 @@ case 227:
 	j = (int)fabs(d);
         c = FindCurve(j,THEM);
 	if(!c)
-	  vyyerror("Unkown Curve %d", j);
+	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)yyvsp[-1].d;
@@ -4764,7 +4764,7 @@ case 228:
 	j = (int)fabs(d);
         c = FindCurve(j,THEM);
 	if(!c)
-	  vyyerror("Unkown Curve %d", j);
+	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)yyvsp[-4].d;
@@ -4784,7 +4784,7 @@ case 229:
 	j = (int)fabs(d);
         c = FindCurve(j,THEM);
 	if(!c)
-	  vyyerror("Unkown Curve %d", j);
+	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)yyvsp[-4].d;
@@ -4800,7 +4800,7 @@ case 230:
 {
       Surface *s = FindSurface((int)yyvsp[-4].d,THEM);
       if(!s)
-	vyyerror("Unkown Surface %d", (int)yyvsp[-4].d);
+	Msg(WARNING, "Unkown Surface %d", (int)yyvsp[-4].d);
       else{
 	s->Method = TRANSFINI;
 	k = List_Nbr(yyvsp[-1].l);
@@ -4824,7 +4824,7 @@ case 231:
 {
       Surface *s = FindSurface((int)yyvsp[-4].d,THEM);
       if(!s)
-	vyyerror("Unkown Surface %d", (int)yyvsp[-4].d);
+	Msg(WARNING, "Unkown Surface %d", (int)yyvsp[-4].d);
       else{
         s->Method = ELLIPTIC;
         k = List_Nbr(yyvsp[-1].l);
@@ -4847,7 +4847,7 @@ case 232:
 {
       Volume *v = FindVolume((int)yyvsp[-4].d,THEM);
       if(!v)
-	vyyerror("Unkown Volume %d", (int)yyvsp[-4].d);
+	Msg(WARNING, "Unkown Volume %d", (int)yyvsp[-4].d);
       else{
 	v->Method = TRANSFINI;
 	k = List_Nbr(yyvsp[-1].l);

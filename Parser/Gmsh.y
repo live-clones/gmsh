@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.89 2001-08-08 14:05:27 remacle Exp $
+// $Id: Gmsh.y,v 1.90 2001-08-09 15:24:54 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1818,7 +1818,7 @@ Transfini :
 	j = (int)fabs(d);
         c = FindCurve(j,THEM);
 	if(!c)
-	  vyyerror("Unkown Curve %d", j);
+	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)$5;
@@ -1836,7 +1836,7 @@ Transfini :
 	j = (int)fabs(d);
         c = FindCurve(j,THEM);
 	if(!c)
-	  vyyerror("Unkown Curve %d", j);
+	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)$5;
@@ -1854,7 +1854,7 @@ Transfini :
 	j = (int)fabs(d);
         c = FindCurve(j,THEM);
 	if(!c)
-	  vyyerror("Unkown Curve %d", j);
+	  Msg(WARNING, "Unkown Curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->ipar[0] = (int)$5;
@@ -1868,7 +1868,7 @@ Transfini :
     {
       Surface *s = FindSurface((int)$4,THEM);
       if(!s)
-	vyyerror("Unkown Surface %d", (int)$4);
+	Msg(WARNING, "Unkown Surface %d", (int)$4);
       else{
 	s->Method = TRANSFINI;
 	k = List_Nbr($7);
@@ -1890,7 +1890,7 @@ Transfini :
     {
       Surface *s = FindSurface((int)$4,THEM);
       if(!s)
-	vyyerror("Unkown Surface %d", (int)$4);
+	Msg(WARNING, "Unkown Surface %d", (int)$4);
       else{
         s->Method = ELLIPTIC;
         k = List_Nbr($7);
@@ -1911,7 +1911,7 @@ Transfini :
     {
       Volume *v = FindVolume((int)$4,THEM);
       if(!v)
-	vyyerror("Unkown Volume %d", (int)$4);
+	Msg(WARNING, "Unkown Volume %d", (int)$4);
       else{
 	v->Method = TRANSFINI;
 	k = List_Nbr($7);
