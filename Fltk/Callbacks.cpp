@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.205 2004-02-20 23:22:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.206 2004-02-28 00:48:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include "GmshUI.h"
 #include "Geo.h"
 #include "CAD.h"
-#include "Verif.h"
+#include "ExtractContour.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Views.h"
@@ -1073,7 +1073,9 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[15]->value());
   opt_mesh_color_carousel(0, GMSH_SET,
 			  WID->mesh_butt[17]->value()? 0 :
-			  WID->mesh_butt[18]->value()? 1 : 2);
+			  WID->mesh_butt[18]->value()? 1 : 
+			  WID->mesh_butt[19]->value()? 2 : 
+			  3);
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_scaling_factor(0, GMSH_SET, WID->mesh_value[1]->value());

@@ -1,7 +1,7 @@
 #ifndef _STL_H_
 #define _STL_H_
 
-// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to <gmsh@geuz.org>.
+// Please report all bugs and problems to "gmsh@geuz.org".
 
 #include "List.h"
 #include "Tree.h"
@@ -32,28 +32,44 @@ class STL_Data
   List_T *LSimplexes;
   void Add_Facet (double x1, double y1, double z1,
                   double x2, double y2, double z2,
-                  double x3, double y3, double z3);
+                  double x3, double y3, double z3,
+		  int in_geometry=0);
   int GetNbFacets (){
-    return Tree_Nbr (Simplexes);
+    return Tree_Nbr(Simplexes);
   }
   int GetNbVertices (){
     return Tree_Nbr (Vertices);
   }
   void GetFacet (int iFac, int &v1, int &v2, int &v3);
   void GetVertex (int iVertex, double &x, double &y, double &z);
+  void ReplaceDuplicate ();
+  void CreatePhysicalSurface ();
   STL_Data ();
   ~STL_Data ();
 };
 
-// more convenient representation
+
+// This is a more convinient surface representation, that can be used
+// as a triangulation for any given surface. See the "Triangulation
+// Surface" command, which takes a surface defined by edge loops (that
+// may be initially planar or anything else) and adds a triangulation
+// to it in order to represent the shape of the surface. This
+// triangulation may be a STL triangulation (polygons are triangle)
+// but anything else is okay. Solid modelers like parasolid or proE
+// are able to provide such representations. I have written a
+// translator from ideas to gmsh that does that.
+
 class POLY_rep 
 {
 public :
   List_T *points_and_normals;  // 6 * nbrPoints 
   List_T *polygons; // first integer gives the number of point of the polygon
-                   // then next ones are the points id's of the polygon
+                    // then next ones are the points id's of the polygon
   POLY_rep (List_T *_p, List_T *_pol) : points_and_normals (_p),polygons(_pol){}
-  ~POLY_rep(){if(polygons)List_Delete(polygons);if(points_and_normals)List_Delete(points_and_normals);}
+  ~POLY_rep(){
+    if(polygons)List_Delete(polygons);
+    if(points_and_normals)List_Delete(points_and_normals);
+  }
 };
 
 #endif

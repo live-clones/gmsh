@@ -49,8 +49,7 @@ RR = (h2-Rsl*(1+1/Sin(Pi/NbrSect)))/(1-1/Sin(Pi/NbrSect));
 RX2 = RR*Cos(Pi/NbrSect) ;
 RY2 = RR*Sin(Pi/NbrSect) ;
 
-
-Point(0)  = {0,0,0,p};
+//Point(0)  = {0,0,0,p};
 
 dP=newp-1;
 Point(dP+1)  = {d1/2,Y1,0,pslo};

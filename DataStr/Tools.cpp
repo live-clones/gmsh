@@ -1,4 +1,4 @@
-// $Id: Tools.cpp,v 1.11 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Tools.cpp,v 1.12 2004-02-28 00:48:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,21 @@ int fcmp_double(const void *a, const void *b)
     return -1;
   else
     return 0;
+}
+
+// List utilities
+
+List_T *ListOfDouble2ListOfInt(List_T *dList)
+{
+  int n = List_Nbr(dList); 
+  List_T *iList = List_Create(n, n, sizeof(int));
+  for(int i = 0; i < n; i++){
+    double d;
+    List_Read(dList, i, &d);
+    int j = (int)d;
+    List_Add(iList, &j);
+  }
+  return iList;
 }
 
 // Tree -> List transfer

@@ -171,7 +171,7 @@ public:
   
   // mesh options
   Fl_Window        *mesh_window ;
-  Fl_Check_Button  *mesh_butt[20] ;
+  Fl_Check_Button  *mesh_butt[50] ;
   Fl_Input         *mesh_input[20] ;
   Fl_Value_Input   *mesh_value[20] ;
   Fl_Button        *mesh_col[50] ;

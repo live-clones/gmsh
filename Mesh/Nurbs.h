@@ -1,5 +1,5 @@
-#ifndef _VERIF_H_
-#define _VERIF_H_
+#ifndef _NURBS_H_
+#define _NURBS_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,9 +20,18 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "Vertex.h"
+#include "Mesh.h"
 #include "List.h"
 
-int alledgeslinked (int ed, List_T * Liste, List_T * old);
-int allfaceslinked (int iz, List_T * Liste, List_T * old);
+Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
+                               int derivee, double t1, double t2);
+Vertex InterpolateUBS (Curve * Curve, double u, int derivee);
+Vertex InterpolateNurbs (Curve * Curve, double u, int derivee);
+Vertex InterpolateNurbsSurface (Surface * s, double u, double v);
+
+void CreateNurbsSurface (int Num, int Order1, int Order2, List_T *, List_T *, List_T *);
+void CreateNurbsSurfaceSupport (int Num, int Order2, int Order1, 
+                                List_T * List, List_T *, List_T *);
 
 #endif

@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.10 2004-02-20 17:58:01 geuzaine Exp $
+$Id: CREDITS,v 1.11 2004-02-28 00:48:57 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2004 
 
@@ -54,9 +54,10 @@ Special thanks to David Colignon <David.Colignon at univ.u-3mrs.fr>
 for new colormaps; Patrick Dular <patrick.dular at ulg.ac.be> for
 transfinite mesh bug fixes; Laurent Stainier <l.stainier at ulg.ac.be>
 for the Mac OS port and the tensor display code; Nicolas Tardieu
-<nicolas.tardieu at edf.fr> and Pierre Badel <badel at freesurf.fr>
-for help with the GSL integration and Marc Ume <Marc.Ume at
-digitalgraphics.be> for the original list code.
+<nicolas.tardieu at edf.fr> for help with the GSL integration and the
+new STL to elementary geometry interface; Pierre Badel <badel at
+freesurf.fr> for help with the GSL integration; and Marc Ume <Marc.Ume
+at digitalgraphics.be> for the original list code.
 
 Special thanks also to Bill Spitzak <spitzak at
 users.sourceforge.net>, Michael Sweet <easysw at

@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.6 2004-02-20 19:28:25 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.7 2004-02-28 00:48:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Geo.h"
 #include "CAD.h"
 #include "Mesh.h"
-#include "DataBase.h"
 #include "Parser.h"
 #include "Visibility.h"
 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.135 2004-02-20 17:57:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.136 2004-02-28 00:48:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2989,6 +2989,19 @@ double opt_geometry_color_scheme(OPT_ARGS_NUM)
   return CTX.geom.color_scheme;
 }
 
+double opt_geometry_stl_create_elementary(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.stl_create_elementary = (int)val;
+  return CTX.geom.stl_create_elementary;
+}
+
+double opt_geometry_stl_create_physical(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.stl_create_physical = (int)val;
+  return CTX.geom.stl_create_physical;
+}
 
 double opt_mesh_quality(OPT_ARGS_NUM)
 {
@@ -3490,6 +3503,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     WID->mesh_butt[17]->value(CTX.mesh.color_carousel==0);
     WID->mesh_butt[18]->value(CTX.mesh.color_carousel==1);
     WID->mesh_butt[19]->value(CTX.mesh.color_carousel==2);
+    WID->mesh_butt[20]->value(CTX.mesh.color_carousel==3);
   }
 #endif
   return CTX.mesh.color_carousel;
@@ -3563,7 +3577,6 @@ double opt_mesh_display_lists(OPT_ARGS_NUM)
 #endif
   return CTX.mesh.display_lists;
 }
-
 
 double opt_solver_client_server(OPT_ARGS_NUM)
 {

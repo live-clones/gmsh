@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.22 2004-02-20 17:58:00 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.23 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,7 @@
 //
 // Contributor(s):
 //   Laurent Stainier
-//
+//   Jean-Luc Flejou
 
 // OK, I understand why the Cut2D stuff does not work correctly with a
 // TWO_FACE light: the normal has too be coherent with the vertex
@@ -818,6 +818,10 @@ void Draw_VectorElement(int type, Post_View * View,
       if(ts) {  //draw trajectory
         if(View->LineType) {
           double dx2, dy2, dz2, XX[2], YY[2], ZZ[2];
+	  // warning, warning...
+	  Raise[0][1] = Raise[0][0];
+	  Raise[1][1] = Raise[1][0];
+	  Raise[2][1] = Raise[2][0];
           for(j = 0; j < ts; j++) {
             dx = V[3 * (ts - j)];
             dy = V[3 * (ts - j) + 1];
@@ -829,11 +833,11 @@ void Draw_VectorElement(int type, Post_View * View,
             // not perfect...
             Palette2(View, ValMin, ValMax, dd);
             XX[0] = X[0] + fact * dx;
-            XX[1] = X[1] + fact * dx2;
+            XX[1] = X[0] + fact * dx2;
             YY[0] = Y[0] + fact * dy;
-            YY[1] = Y[1] + fact * dy2;
+            YY[1] = Y[0] + fact * dy2;
             ZZ[0] = Z[0] + fact * dz;
-            ZZ[1] = Z[1] + fact * dz2;
+            ZZ[1] = Z[0] + fact * dz2;
             Draw_Line(View->LineType, View->LineWidth, XX, YY, ZZ, Raise, View->Light);
           }
         }
@@ -1041,10 +1045,12 @@ void Draw_TensorElement(int type, Post_View * View,
   /// the scalar function...
 
   // View->TensorType == DRAW_POST_VONMISES 
+  int ts = View->TimeStep;
+  View->TimeStep = 0;
 
   double V_VonMises[8];
   for(int i = 0; i < nbnod; i++){
-    V_VonMises[i] = ComputeVonMises(V + 9*i);
+    V_VonMises[i] = ComputeVonMises(V + 9*(i + nbnod * ts));
   }
 
   switch (type) {
@@ -1073,6 +1079,8 @@ void Draw_TensorElement(int type, Post_View * View,
     Draw_ScalarPyramid(View, 0, ValMin, ValMax, Raise, X, Y, Z, V_VonMises);
     break;
   }
+
+  View->TimeStep = ts;
 }
 
 #define ARGS Post_View *View, 					\
@@ -1120,4 +1128,3 @@ void Draw_TensorPyramid(ARGS)
 }
 
 #undef ARGS
-

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.54 2004-02-07 01:40:22 geuzaine Exp $
+# $Id: Makefile,v 1.55 2004-02-28 00:48:50 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -251,13 +251,15 @@ Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Matrix.h Create.h ../Common/Context.h
 Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \
-  Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h ../Geo/CAD.h \
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   3D_Mesh.h Create.h ../Geo/MinMax.h ../Common/Context.h
 STL.o: STL.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h
+  ../Numeric/Numeric.h Mesh.h Vertex.h Simplex.h Edge.h \
+  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h ../Geo/CAD.h \
+  ../Geo/Geo.h Create.h Interpolation.h ../Common/Context.h
 SMS.o: SMS.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Geo/Geo.h Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h \
@@ -282,14 +284,14 @@ Metric.o: Metric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Mesh/Matrix.h Interpolation.h
 Nurbs.o: Nurbs.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
-  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h
+  ../DataStr/avl.h ../DataStr/Tools.h Nurbs.h Vertex.h Mesh.h Simplex.h \
+  Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h ../Geo/Geo.h \
+  ../Geo/GeoUtils.h Create.h ../Geo/CAD.h
 Interpolation.o: Interpolation.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Utils.h Interpolation.h
+  Nurbs.h Vertex.h Mesh.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h ../Geo/CAD.h Utils.h Interpolation.h
 SecondOrder.o: SecondOrder.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \

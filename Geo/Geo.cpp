@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.38 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: Geo.cpp,v 1.39 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Numeric.h"
 #include "Geo.h"
 #include "CAD.h"
-#include "DataBase.h"
 #include "Parser.h"
 #include "Context.h"
 

@@ -1,5 +1,5 @@
-#ifndef _GMSH_UI_H_
-#define _GMSH_UI_H_
+#ifndef _EXTRACT_CONTOUR_H_
+#define _EXTRACT_CONTOUR_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,14 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#if defined(HAVE_FLTK)
-#  include <FL/Fl.H>
-#  include <FL/gl.h>
-#  if defined(__APPLE__)
-#    include <OpenGL/glu.h>
-#  else
-#    include <GL/glu.h>
-#  endif
-#endif
+#include "List.h"
+
+int alledgeslinked(int ed, List_T * Liste, List_T * old);
+int allfaceslinked(int iz, List_T * Liste, List_T * old);
 
 #endif

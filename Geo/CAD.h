@@ -42,6 +42,7 @@ Surface *FindSurface(int inum, Mesh *M);
 Volume *FindVolume(int inum, Mesh *M);
 EdgeLoop *FindEdgeLoop(int inum, Mesh *M);
 SurfaceLoop *FindSurfaceLoop(int inum, Mesh *M);
+PhysicalGroup *FindPhysicalGroup(int inum, int type, Mesh * M);
 
 
 Curve * CreateReversedCurve (Mesh *M,Curve *c);

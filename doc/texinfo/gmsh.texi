@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.98 2004-02-07 01:40:34 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.99 2004-02-28 00:48:57 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -1513,11 +1513,7 @@ right hand side should the identification number of a single line loop,
 composed of either three or four elementary lines.
 
 @c todo:
-@c @item Triangulation Surface ( @var{expression} ) = ( @var{expression}, @var{expression} ) @{ @var{expression-list} @} @{ @var{expression-list} @};
-
-@c todo:
 @c @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
-
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
 parentheses is the surface loop's identification number; the
@@ -1703,6 +1699,12 @@ Show the entities listed in @var{expression-list}, if
 Show the entity @var{char-expression}, if @code{General.VisibilityMode} is
 set to @code{0} or @code{1} (@var{char-expression} can for example be
 @code{"*"}).
+
+@c @item Triangulation Surface @{ @var{expression} @} = ( @var{expression}, @var{expression} ) @{ @var{expression-list} @} @{ @var{expression-list} @};
+@c Adds a triangulation to the surface @var{expression}, originally defined by
+@c a list of edge loops (see @ref{Surfaces}; the surface may be planar or
+@c anything else). The triangulation is used to represent the shape of the
+@c surface.
 
 @c todo:
 @c @item Intersect;

@@ -1,5 +1,5 @@
-#ifndef _GMSH_UI_H_
-#define _GMSH_UI_H_
+#ifndef _GEO_UTILS_H_
+#define _GEO_UTILS_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,14 +20,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#if defined(HAVE_FLTK)
-#  include <FL/Fl.H>
-#  include <FL/gl.h>
-#  if defined(__APPLE__)
-#    include <OpenGL/glu.h>
-#  else
-#    include <GL/glu.h>
-#  endif
-#endif
+#include "Mesh.h"
+#include "List.h"
+
+void sortEdgesInLoop(int num, List_T *edges);
+void setSurfaceGeneratrices(Surface *s, List_T *loops);
+void setVolumeSurfaces(Volume *v, List_T * loops);
 
 #endif

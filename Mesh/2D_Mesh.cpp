@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.51 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.52 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -922,6 +922,11 @@ void Maillage_Surface(void *data, void *dum)
 
   if(s->Dirty) {
     Msg(INFO, "Not meshing dirty Surface %d", s->Num);
+    return;
+  }
+
+  if(s->Typ == MSH_SURF_STL) {
+    Msg(GERROR, "Remeshing of STL surfaces is not implemented (yet)");
     return;
   }
 

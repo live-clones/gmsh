@@ -153,6 +153,7 @@ public :
     double scaling_factor;
     int color_scheme ;
     int auto_coherence;
+    int stl_create_elementary, stl_create_physical;
   } geom;
 
   // mesh options 

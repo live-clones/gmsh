@@ -10,8 +10,8 @@ Printf("Stator conductors : physical ssurfaces %g to %g", PhysNum_, PhysNum_+(Nb
 Call CopySlot;
 
 
-LineLoop_[] = LineLoop3[] ; NbrLines_ = NbrLines3; PhysNum_ = StatorSlotOpening; dPhysNum_ = 0; 
-Printf("Stator slot openings : physical surface %g", PhysNum_);
+LineLoop_[] = LineLoop3[] ; NbrLines_ = NbrLines3; PhysNum_ = StatorSlotOpening; dPhysNum_ = 1; 
+Printf("Stator slot openings");
 Call CopySlot;
 
 

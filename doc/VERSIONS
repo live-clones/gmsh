@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.185 2004-02-20 17:58:01 geuzaine Exp $
+$Id: VERSIONS,v 1.186 2004-02-28 00:48:57 geuzaine Exp $
 
 New in 1.51: initial support for visualizing mesh partitions;
 integrated version 2.0 of the MSH mesh file format; new option to
@@ -6,8 +6,11 @@ compute post-processing ranges (min/max) per time step; Multiple views
 can now be combined into multi time step ones (e.g. for programs that
 generate data one time step at a time); new syntax: #var[] returns the
 size of the list var[]; enhanced "gmsh -convert"; temporary and error
-files are now created in home directory to avoid file permission
-issues; new 3D arrows; better lighting support;
+files are now created in the home directory to avoid file permission
+issues; new 3D arrows; better lighting support; STL facets can now be
+converted into individual geometrical surfaces; many other small
+improvements and bug fixes (multi timestep tensors, color by physical
+entity, parser cleanup, etc.);
 
 New in 1.50: small changes to the visibility browser + made visibility
 scriptable (new Show/Hide commands); fixed (rare) crash when deleting

@@ -20,7 +20,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
-Use a `color by region' coloring scheme (0=no, 1=by geometrical entity, 2=by partition)@*
+Color mesh by region? (0=no, 1=by elementary entity, 2=by physical entity, 3=by partition)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

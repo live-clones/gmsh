@@ -48,14 +48,6 @@ void TransfiniteSph (Vertex S, Vertex center, Vertex * T);
 
 void Normal2Surface (Surface * s, double u, double v, double n[3]);
 
-Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
-                               int derivee, double t1, double t2);
-Vertex InterpolateUBS (Curve * Curve, double u, int derivee);
-  
-Vertex InterpolateNurbs (Curve * Curve, double u, int derivee);
-
-Vertex InterpolateNurbsSurface (Surface * s, double u, double v);
-
 #endif
 
 

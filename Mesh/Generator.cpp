@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.48 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Generator.cpp,v 1.49 2004-02-28 00:48:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -200,10 +200,10 @@ void Init_Mesh(Mesh * M)
   Tree_Action(M->Curves, Free_Curve);
   Tree_Delete(M->Curves);
 
-  //Tree_Action (M->SurfaceLoops, Free_SurfaceLoop); // todo
+  Tree_Action (M->SurfaceLoops, Free_SurfaceLoop);
   Tree_Delete(M->SurfaceLoops);
 
-  //Tree_Action (M->EdgeLoops, Free_EdgeLoop); // todo
+  Tree_Action (M->EdgeLoops, Free_EdgeLoop);
   Tree_Delete(M->EdgeLoops);
 
   Tree_Action(M->Surfaces, Free_Surface);

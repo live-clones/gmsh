@@ -1,6 +1,6 @@
 // This factor has to be modified in
 // order to control mesh size
-fact     = .1 ;
+fact     = 0.5 ;
 
 rondelle = fact * 0.01;
 iris     = fact * 0.004;
@@ -108,7 +108,7 @@ Coherence;
 
 //Characteristic Length {58,71} = 0.01; 
 
-Point(85) = {0.0,0.0,0.0,1.0};
+//Point(85) = {0.0,0.0,0.0,1.0};
 Surface Loop(158) = {67,27,43,47,51,55,59,63,68};
 Volume(159) = {158};
 Surface Loop(159) = {112,29,84,67,125,92,96,100,104,108,116,120,124};

@@ -1,4 +1,4 @@
-// $Id: Verif.cpp,v 1.16 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: ExtractContour.cpp,v 1.1 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Geo.h"
 #include "CAD.h"
 #include "Mesh.h"
-#include "DataBase.h"
 
 extern Mesh *THEM;
 

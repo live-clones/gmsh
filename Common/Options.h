@@ -336,6 +336,8 @@ double opt_geometry_circle_warning(OPT_ARGS_NUM);
 double opt_geometry_extrude_spline_points(OPT_ARGS_NUM);
 double opt_geometry_scaling_factor(OPT_ARGS_NUM);
 double opt_geometry_color_scheme(OPT_ARGS_NUM);
+double opt_geometry_stl_create_elementary(OPT_ARGS_NUM);
+double opt_geometry_stl_create_physical(OPT_ARGS_NUM);
 double opt_mesh_quality(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
 double opt_mesh_tangents(OPT_ARGS_NUM);

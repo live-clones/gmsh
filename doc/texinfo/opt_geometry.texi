@@ -104,6 +104,16 @@ Global geometry scaling factor@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.StlCreateElementary
+Treat each STL input face as a new geometrical surface@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.StlCreatePhysical
+Automatically create physical entities when importing STL faces as geometrical surfaces@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Surfaces
 Display geometry surfaces?@*
 Default value: @code{0}@*

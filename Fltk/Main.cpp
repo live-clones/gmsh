@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.56 2004-02-07 01:40:17 geuzaine Exp $
+// $Id: Main.cpp,v 1.57 2004-02-28 00:48:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,6 @@
 #include "GmshVersion.h"
 
 #include "Geo.h"
-#include "Verif.h"
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"

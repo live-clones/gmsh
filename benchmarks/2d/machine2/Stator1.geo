@@ -36,7 +36,7 @@ R_=54.9;
 //R_=54.3;
 
 
-Point(0)  = {0,0,0,psl};
+//Point(0)  = {0,0,0,psl};
 
 For i In {0:NbrSect-1}
 For j In {0:1}

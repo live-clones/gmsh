@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.49 2004-02-20 17:58:00 geuzaine Exp $
+// $Id: Geom.cpp,v 1.50 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,6 @@
 #include "Utils.h"
 #include "Draw.h"
 #include "Context.h"
-#include "Verif.h"
 #include "Interpolation.h"
 #include "STL.h"
 #include "gl2ps.h"
@@ -282,13 +281,12 @@ void Draw_Triangulated_Surface(Surface * s)
     if(CTX.geom.light) glEnable(GL_LIGHTING);
     glBegin(GL_TRIANGLES);
     while (k < List_Nbr(s->thePolyRep->polygons)){
-      points = (double*)List_Pointer (s->thePolyRep->polygons,k);
+      points = (double*)List_Pointer(s->thePolyRep->polygons,k);
       k+= ((int)points[0] + 1);
-      
       if (points[0] == 3){
-	p1 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[1]);
-	p2 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[2]);
-	p3 = (double*)List_Pointer (s->thePolyRep->points_and_normals,6*(int)points[3]);
+	p1 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[1]);
+	p2 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[2]);
+	p3 = (double*)List_Pointer(s->thePolyRep->points_and_normals, 6*(int)points[3]);
 	glNormal3dv(&p1[3]);
 	glVertex3d(p1[0],p1[1],p1[2]);
 	glNormal3dv(&p2[3]);

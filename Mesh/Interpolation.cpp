@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.23 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.24 2004-02-28 00:48:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
+#include "Nurbs.h"
 #include "CAD.h"
 #include "Mesh.h"
 #include "Utils.h"
@@ -420,20 +421,11 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
     S[3] = C[3]->beg;
-    V[0] =
-      InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
-    V[1] =
-      InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
-    V[2] =
-      InterpolateCurve(C[2],
-                       C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
-    V[3] =
-      InterpolateCurve(C[3],
-                       C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
-
-    T =
-      TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u,
-                     v);
+    V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
+    V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
+    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
+    V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
+    T = TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
     if(issphere)
       TransfiniteSph(*S[0], *c1, &T);
 

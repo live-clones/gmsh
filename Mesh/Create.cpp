@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.47 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: Create.cpp,v 1.48 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,10 @@
 #include "Utils.h"
 #include "Context.h"
 #include "Create.h"
+
+// This file contains the C-style interface for creation/deletion of
+// objects. All this could be easily rewritten in C++ (and split into
+// separate classes: Line, Surface, Volume, etc.).
 
 extern Mesh *THEM;
 extern Context_T CTX;
@@ -155,6 +159,37 @@ int compareSxF(const void *a, const void *b)
   return compareFace(&q->F, &w->F);
 }
 
+int comparePhysicalGroup(const void *a, const void *b)
+{
+  PhysicalGroup *q, *w;
+  int cmp;
+
+  q = *(PhysicalGroup **) a;
+  w = *(PhysicalGroup **) b;
+  cmp = q->Typ - w->Typ;
+
+  if(cmp)
+    return cmp;
+  else
+    return (q->Num - w->Num);
+}
+
+int compareMeshPartitionNum(const void *a, const void *b)
+{
+  MeshPartition *q, *w;
+  q = *(MeshPartition **) a;
+  w = *(MeshPartition **) b;
+  return (q->Num - w->Num);
+}
+
+int compareMeshPartitionIndex(const void *a, const void *b)
+{
+  MeshPartition *q, *w;
+  q = *(MeshPartition **) a;
+  w = *(MeshPartition **) b;
+  return (q->Index - w->Index);
+}
+
 Attractor *Create_Attractor(int Num, double lc1, double lc2, double Radius,
                             Vertex * v, Curve * c, Surface * s)
 {
@@ -170,36 +205,20 @@ Attractor *Create_Attractor(int Num, double lc1, double lc2, double Radius,
   return pA;
 }
 
-void Add_SurfaceLoop(int Num, List_T * intlist, Mesh * M)
+PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist)
 {
-  SurfaceLoop *pSL;
-  int i, j;
-  pSL = (SurfaceLoop *) Malloc(sizeof(SurfaceLoop));
-  pSL->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
-  pSL->Num = Num;
-  THEM->MaxSurfaceLoopNum = IMAX(THEM->MaxSurfaceLoopNum, Num);
-  for(i = 0; i < List_Nbr(intlist); i++) {
-    List_Read(intlist, i, &j);
-    List_Add(pSL->Surfaces, &j);
-  }
-  Tree_Add(M->SurfaceLoops, &pSL);
-}
-
-void Add_PhysicalGroup(int Num, int typ, List_T * intlist, Mesh * M)
-{
-  PhysicalGroup *p;
-  int i, j;
-  p = (PhysicalGroup *) Malloc(sizeof(PhysicalGroup));
+  PhysicalGroup *p = (PhysicalGroup *) Malloc(sizeof(PhysicalGroup));
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
   p->Num = Num;
   THEM->MaxPhysicalNum = IMAX(THEM->MaxPhysicalNum, Num);
   p->Typ = typ;
   p->Visible = VIS_GEOM | VIS_MESH;
-  for(i = 0; i < List_Nbr(intlist); i++) {
+  for(int i = 0; i < List_Nbr(intlist); i++) {
+    int j;
     List_Read(intlist, i, &j);
     List_Add(p->Entities, &j);
   }
-  List_Add(M->PhysicalGroups, &p);
+  return p;
 }
 
 void Free_PhysicalGroup(void *a, void *b)
@@ -239,35 +258,52 @@ void Free_MeshPartition(void *a, void *b)
   }
 }
 
-int compareMeshPartitionNum(const void *a, const void *b)
+EdgeLoop *Create_EdgeLoop(int Num, List_T * intlist)
 {
-  MeshPartition *q, *w;
-  q = *(MeshPartition **) a;
-  w = *(MeshPartition **) b;
-  return (q->Num - w->Num);
-}
-
-int compareMeshPartitionIndex(const void *a, const void *b)
-{
-  MeshPartition *q, *w;
-  q = *(MeshPartition **) a;
-  w = *(MeshPartition **) b;
-  return (q->Index - w->Index);
-}
-
-void Add_EdgeLoop(int Num, List_T * intlist, Mesh * M)
-{
-  EdgeLoop *pEL;
-  int i, j;
-  pEL = (EdgeLoop *) Malloc(sizeof(EdgeLoop));
-  pEL->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
-  pEL->Num = Num;
+  EdgeLoop *l = (EdgeLoop *) Malloc(sizeof(EdgeLoop));
+  l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
+  l->Num = Num;
   THEM->MaxLineLoopNum = IMAX(THEM->MaxLineLoopNum, Num);
-  for(i = 0; i < List_Nbr(intlist); i++) {
+  for(int i = 0; i < List_Nbr(intlist); i++) {
+    int j;
     List_Read(intlist, i, &j);
-    List_Add(pEL->Curves, &j);
+    List_Add(l->Curves, &j);
   }
-  Tree_Add(M->EdgeLoops, &pEL);
+  return l;
+}
+
+void Free_EdgeLoop(void *a, void *b)
+{
+  EdgeLoop *l = *(EdgeLoop **) a;
+  if(l) {
+    List_Delete(l->Curves);
+    Free(l);
+    l = NULL;
+  }
+}
+
+SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist)
+{
+  SurfaceLoop *l = (SurfaceLoop *) Malloc(sizeof(SurfaceLoop));
+  l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
+  l->Num = Num;
+  THEM->MaxSurfaceLoopNum = IMAX(THEM->MaxSurfaceLoopNum, Num);
+  for(int i = 0; i < List_Nbr(intlist); i++) {
+    int j;
+    List_Read(intlist, i, &j);
+    List_Add(l->Surfaces, &j);
+  }
+  return l;
+}
+
+void Free_SurfaceLoop(void *a, void *b)
+{
+  SurfaceLoop *l = *(SurfaceLoop **) a;
+  if(l) {
+    List_Delete(l->Surfaces);
+    Free(l);
+    l = NULL;
+  }
 }
 
 void End_Curve(Curve * c)
@@ -279,8 +315,7 @@ void End_Curve(Curve * c)
   int i;
   Curve *Curve;
 
-  if(c->Typ == MSH_SEGM_CIRC ||
-     c->Typ == MSH_SEGM_CIRC_INV ||
+  if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
      c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
 
     Curve = c;
@@ -492,7 +527,6 @@ void End_Surface(Surface * s)
 }
 
 
-
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
                     List_T * Knots, int p1, int p2, double u1, double u2)
 {
@@ -501,20 +535,17 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   int i, j, iPnt;
   double d;
   double matcr[4][4] = { {-0.5, 1.5, -1.5, 0.5},
-  {1.0, -2.5, 2.0, -0.5},
-  {-0.5, 0.0, 0.5, 0.0},
-  {0.0, 1.0, 0.0, 0.0}
-  };
+			 {1.0, -2.5, 2.0, -0.5},
+			 {-0.5, 0.0, 0.5, 0.0},
+			 {0.0, 1.0, 0.0, 0.0} };
   double matbs[4][4] = { {-1.0, 3, -3, 1},
-  {3, -6, 3.0, 0},
-  {-3, 0.0, 3, 0.0},
-  {1, 4, 1, 0.0}
-  };
+			 {3, -6, 3.0, 0},
+			 {-3, 0.0, 3, 0.0},
+			 {1, 4, 1, 0.0} };
   double matbez[4][4] = { {-1.0, 3, -3, 1},
-  {3, -6, 3.0, 0},
-  {-3, 3.0, 0, 0.0},
-  {1, 0, 0, 0.0}
-  };
+			  {3, -6, 3.0, 0},
+			  {-3, 3.0, 0, 0.0},
+			  {1, 0, 0, 0.0} };
 
   pC = (Curve *) Malloc(sizeof(Curve));
   pC->Dirty = 0;

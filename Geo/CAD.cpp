@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.70 2004-02-07 01:40:18 geuzaine Exp $
+// $Id: CAD.cpp,v 1.71 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Numeric.h"
 #include "Geo.h"
 #include "Mesh.h"
-#include "DataBase.h"
 #include "Interpolation.h"
 #include "Create.h"
 #include "CAD.h"
@@ -157,7 +156,6 @@ void dist_ddg(double x1, double y1, double z1,
   *z = d * z4 + z3 * (1. - d);
 }
 
-
 Vertex *FindPoint(int inum, Mesh * M)
 {
   Vertex C, *pc;
@@ -235,6 +233,19 @@ SurfaceLoop *FindSurfaceLoop(int inum, Mesh * M)
   return NULL;
 }
 
+PhysicalGroup *FindPhysicalGroup(int num, int type, Mesh * M)
+{
+  PhysicalGroup P, *pp, **ppp;
+  pp = &P;
+  pp->Num = num;
+  pp->Typ = type;
+  if((ppp = (PhysicalGroup **) List_PQuery(M->PhysicalGroups, &pp,
+                                           comparePhysicalGroup))) {
+    return *ppp;
+  }
+  return NULL;
+}
+
 void CopyVertex(Vertex * v, Vertex * vv)
 {
   vv->lc = v->lc;
@@ -279,6 +290,11 @@ void CopyCurve(Curve * c, Curve * cc)
   cc->Control_Points =
     List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
   List_Copy(c->Control_Points, cc->Control_Points);
+  if(c->Typ == MSH_SEGM_PARAMETRIC){
+    strcpy(cc->functu, c->functu);
+    strcpy(cc->functv, c->functv);
+    strcpy(cc->functw, c->functw);
+  }
   End_Curve(cc);
   Tree_Insert(THEM->Curves, &cc);
 }
@@ -383,6 +399,7 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:
+  case MSH_SEGM_PARAMETRIC:
     if(!(c = FindCurve(Num, THEM))) {
       Msg(GERROR, "Unknown Curve %d", Num);
       return;
@@ -482,6 +499,7 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:
+  case MSH_SEGM_PARAMETRIC:
     DeleteCurve(Num);
     break;
   case MSH_SURF_NURBS:
@@ -535,6 +553,7 @@ void ColorShape(int Type, int Num, unsigned int Color)
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:
+  case MSH_SEGM_PARAMETRIC:
     ColorCurve(Num, Color);
     break;
   case MSH_SURF_NURBS:
@@ -564,6 +583,7 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:
+  case MSH_SEGM_PARAMETRIC:
     SetVisibilityByNumber(Num, 3, Mode);
     break;
   case MSH_SURF_NURBS:
@@ -629,13 +649,13 @@ Curve *CreateReversedCurve(Mesh * M, Curve * c)
   Curve **pc;
 
   if((pc = (Curve **) Tree_PQuery(M->Curves, &newc))) {
-    Free_Curve(&newc, 0);
+    Free_Curve(&newc, NULL);
     return *pc;
   }
-  else
-    Tree_Insert(M->Curves, &newc);
-
-  return newc;
+  else{
+    Tree_Add(M->Curves, &newc);
+    return newc;
+  }
 }
 
 void ModifyLcPoint(int ip, double lc)
@@ -961,6 +981,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
     case MSH_SEGM_CIRC:
     case MSH_SEGM_ELLI:
     case MSH_SEGM_NURBS:
+    case MSH_SEGM_PARAMETRIC:
       c = FindCurve(O.Num, THEM);
       if(c)
         ApplyTransformationToCurve(matrix, c);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.48 2004-02-07 01:40:17 geuzaine Exp $
+# $Id: Makefile,v 1.49 2004-02-28 00:48:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -90,8 +90,7 @@ Visibility.o: Visibility.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Geo/Geo.h ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Geo/DataBase.h ../Parser/Parser.h \
-  Visibility.h
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Parser/Parser.h Visibility.h
 Trackball.o: Trackball.cpp Trackball.h
 License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h

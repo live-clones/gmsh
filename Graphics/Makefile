@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.54 2004-02-07 01:40:19 geuzaine Exp $
+# $Id: Makefile,v 1.55 2004-02-28 00:48:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -82,14 +82,14 @@ Mesh.o: Mesh.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   Draw.h ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
-  ../Geo/MinMax.h gl2ps.h ../Geo/Verif.h ../Numeric/Numeric.h
+  ../Geo/MinMax.h gl2ps.h ../Numeric/Numeric.h
 Geom.o: Geom.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Numeric/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
   ../Mesh/Utils.h Draw.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/Context.h ../Geo/Verif.h ../Mesh/Interpolation.h gl2ps.h
+  ../Common/Context.h ../Mesh/Interpolation.h gl2ps.h
 Post.o: Post.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Common/GmshUI.h ../Numeric/Numeric.h ../Geo/Geo.h ../Mesh/Mesh.h \

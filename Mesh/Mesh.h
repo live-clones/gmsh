@@ -243,10 +243,11 @@ typedef struct{
   double center[3];
 }CylParam;
 
-typedef struct{
+class DrawingColor{
+ public:
   int type;
   unsigned int geom, mesh;
-}DrawingColor;
+};
 
 struct _Surf{
   int Num;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2004-02-07 01:40:17 geuzaine Exp $
+# $Id: Makefile,v 1.50 2004-02-28 00:48:48 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -68,12 +68,11 @@ Main.o: Main.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/Gmsh.h \
   ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../DataStr/Tools.h ../Common/GmshUI.h ../Common/GmshVersion.h \
-  ../Geo/Geo.h ../Geo/Verif.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Graphics/Draw.h \
-  ../Common/Context.h ../Parser/Parser.h GUI.h Opengl_Window.h \
-  Colorbar_Window.h ../Parser/OpenFile.h ../Common/CommandLine.h \
-  ../Numeric/Numeric.h
+  ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h ../Graphics/Draw.h ../Common/Context.h \
+  ../Parser/Parser.h GUI.h Opengl_Window.h Colorbar_Window.h \
+  ../Parser/OpenFile.h ../Common/CommandLine.h ../Numeric/Numeric.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \
@@ -95,11 +94,12 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Geo/Geo.h \
   ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
   ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h ../Geo/Verif.h ../Graphics/Draw.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/Timer.h ../Graphics/CreateFile.h \
-  ../Parser/OpenFile.h ../Common/CommandLine.h ../Common/Context.h \
-  ../Common/Options.h GUI.h Opengl_Window.h Colorbar_Window.h Callbacks.h \
-  ../Plugin/Plugin.h ../Common/Visibility.h Solvers.h
+  ../Mesh/Matrix.h ../Geo/ExtractContour.h ../Graphics/Draw.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/Timer.h \
+  ../Graphics/CreateFile.h ../Parser/OpenFile.h ../Common/CommandLine.h \
+  ../Common/Context.h ../Common/Options.h GUI.h Opengl_Window.h \
+  Colorbar_Window.h Callbacks.h ../Plugin/Plugin.h ../Common/Visibility.h \
+  Solvers.h
 Opengl.o: Opengl.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

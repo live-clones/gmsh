@@ -6,7 +6,8 @@ View.Visible = 0;
 
 For i In {1:250}
 
-Include "../../tutorial/view1.pos" ;
-Include "../../tutorial/view2.pos" ;
+Printf("i=%g", i);
+Merge "../../tutorial/view1.pos" ;
+Merge "../../tutorial/view2.pos" ;
 
 EndFor

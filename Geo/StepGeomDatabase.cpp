@@ -1,4 +1,4 @@
-// $Id: StepGeomDatabase.cpp,v 1.15 2004-02-07 01:40:19 geuzaine Exp $
+// $Id: StepGeomDatabase.cpp,v 1.16 2004-02-28 00:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -22,14 +22,20 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
+#include "GeoUtils.h"
+#include "Nurbs.h"
+#include "CAD.h"
 #include "StepGeomDatabase.h"
-#include "DataBase.h"
+#include "Create.h"
 #include "Context.h"
 
+// WARNING: NOT FUNCTIONAL AT THE MOMENT -- NEEDS TO BE PORTED TO THE NEW
+// GEO CREATION INTERFACES (SEE "TODO"s)
+
 extern Context_T CTX;
+extern Mesh *THEM;
 
 static Step_Solid_BRep_t *BREP = NULL;
-
 
 Step_Solid_BRep_t *Create_Step_Solid_BRep(void)
 {
@@ -632,14 +638,14 @@ void Resolve_BREP(void)
   // resolving cartesian_points
   for(i = 0; i < List_Nbr(BREP->AllCartesian_Points); i++) {
     List_Read(BREP->AllCartesian_Points, i, &cp);
-    Cdbpts101(cp.Num, cp.Pos.X, cp.Pos.Y, cp.Pos.Z, L * .01, 1);
+    //TODO Cdbpts101(cp.Num, cp.Pos.X, cp.Pos.Y, cp.Pos.Z, L * .01, 1);
   }
 
   // resolving vertex_points
   for(i = 0; i < List_Nbr(BREP->AllVertex_Points); i++) {
     List_Read(BREP->AllVertex_Points, i, &vp);
     if((pcp = Get_Cartesian_Point(vp.Cartesian_Point))) {
-      Cdbpts101(vp.Num, pcp->Pos.X, pcp->Pos.Y, pcp->Pos.Z, L * .01, 1);
+      //TODO Cdbpts101(vp.Num, pcp->Pos.X, pcp->Pos.Y, pcp->Pos.Z, L * .01, 1);
     }
   }
 
@@ -650,21 +656,22 @@ void Resolve_BREP(void)
       if(pc->Typ == STEP_LINE) {
         List_Add(ListInt, &ec.Step_Vertex_Point_Begin);
         List_Add(ListInt, &ec.Step_Vertex_Point_End);
-        Cdbseg101(ec.Num, MSH_SEGM_LINE, 1, NULL, ListInt, -1, -1, 0., 1.,
-                  NULL, NULL, NULL);
+        //TODO Cdbseg101(ec.Num, MSH_SEGM_LINE, 1, NULL, ListInt, -1, -1, 0., 1.,
+	// NULL, NULL, NULL);
         List_Reset(ListInt);
       }
       else if(pc->Typ == STEP_BSPL) {
         List_Read(pc->Curve.BSpline.ListOf_Knots, 0, &ubeg);
         List_Read(pc->Curve.BSpline.ListOf_Knots,
                   List_Nbr(pc->Curve.BSpline.ListOf_Knots) - 1, &uend);
-        AddCurveInDataBase(ec.Num,
-                           MSH_SEGM_NURBS,
-                           pc->Curve.BSpline.Order,
-                           pc->Curve.BSpline.ListOf_Cartesian_Points,
-                           pc->Curve.BSpline.ListOf_Knots,
-                           ec.Step_Vertex_Point_Begin,
-                           ec.Step_Vertex_Point_End, ubeg, uend);
+	// TODO
+        //AddCurveInDataBase(ec.Num,
+        //                   MSH_SEGM_NURBS,
+        //                   pc->Curve.BSpline.Order,
+        //                   pc->Curve.BSpline.ListOf_Cartesian_Points,
+        //                   pc->Curve.BSpline.ListOf_Knots,
+        //                   ec.Step_Vertex_Point_Begin,
+        //                   ec.Step_Vertex_Point_End, ubeg, uend);
       }
       else if(pc->Typ == STEP_CIRC || pc->Typ == STEP_ELLP) {
         axs = Get_Axis2_Placement3D(pc->Curve.Circle.Step_Axis2_Placement3D);
@@ -678,9 +685,7 @@ void Resolve_BREP(void)
         List_Add(ListInt, &ec.Step_Vertex_Point_Begin);
         List_Add(ListInt, &pcp->Num);
         List_Add(ListInt, &ec.Step_Vertex_Point_End);
-        AddCircleInDataBase(ec.Num, MSH_SEGM_CIRC, ListInt, n);
-        // Cdbseg101(ec.Num,MSH_SEGM_CIRC,1,NULL,
-        // ListInt,-1,-1,0.,1.,NULL,NULL,NULL);
+        //AddCircleInDataBase(ec.Num, MSH_SEGM_CIRC, ListInt, n);
         List_Reset(ListInt);
       }
     }
@@ -727,8 +732,7 @@ void Resolve_BREP(void)
         else
           err = 1;
         if(!err) {
-          Cdbz101(pfab->Num, MSH_SEGM_LOOP, 0, 0, 0, 0, 0, NULL, NULL,
-                  ListInt);
+          //TODO Cdbz101(pfab->Num, MSH_SEGM_LOOP, 0, 0, 0, 0, 0, NULL, NULL, ListInt);
           List_Add(ListIntBis, &pfab->Num);
         }
         List_Reset(ListInt);
@@ -738,7 +742,7 @@ void Resolve_BREP(void)
     }
     if(!err && (ps = Get_Surface(af.Step_Surface))) {
       if(ps->Typ == STEP_PLAN) {
-        Cdbz101(af.Num, MSH_SURF_PLAN, 0, 0, 0, 0, 0, NULL, NULL, ListIntBis);
+        //TODO Cdbz101(af.Num, MSH_SURF_PLAN, 0, 0, 0, 0, 0, NULL, NULL, ListIntBis);
       }
       else if(ps->Typ == STEP_CYLD || ps->Typ == STEP_CONE
               /*|| ps->Typ == STEP_TORD || ps->Typ == STEP_CONE */ ) {
@@ -768,18 +772,28 @@ void Resolve_BREP(void)
           typ = MSH_SURF_CONE;
           break;
         }
-        AddQuadricSurfaceInDataBase(typ,
-                                    af.Num,
-                                    n, t, p,
-                                    ps->Surface.Quadric.Radius1,
-                                    ps->Surface.Quadric.Radius2, ListIntBis);
-
-        //Cdbz101(af.Num,MSH_SURF_REGL,0,0,0,0,0,NULL,NULL,ListIntBis);
+	if(FindSurface(af.Num, THEM)){
+	  Msg(GERROR, "Surface %d already exists", af.Num);
+	}
+	else{
+	  Surface *s = Create_Surface(af.Num, typ);
+	  for(int i = 0; i < 3; i++)
+	    s->Cyl.xaxis[i] = t[i];
+	  for(int i = 0; i < 3; i++)
+	    s->Cyl.zaxis[i] = n[i];
+	  for(int i = 0; i < 3; i++)
+	    s->Cyl.center[i] = p[i];
+	  s->Cyl.radius1 = ps->Surface.Quadric.Radius1;
+	  s->Cyl.radius2 = ps->Surface.Quadric.Radius2;
+	  setSurfaceGeneratrices(s, ListIntBis);
+	  s->Support = s;
+	  End_Surface(s);
+	  Tree_Add(THEM->Surfaces, &s);
+	}
       }
-
       else if(ps->Typ == STEP_BSPL) {
-        Cdbz101(af.Num, MSH_SURF_TRIMMED, 0, 0, 0, 0, af.Step_Surface, NULL,
-                NULL, ListIntBis);
+        //TODO Cdbz101(af.Num, MSH_SURF_TRIMMED, 0, 0, 0, 0, af.Step_Surface, NULL,
+	//  NULL, ListIntBis);
       }
     }
     List_Reset(ListIntBis);
@@ -796,11 +810,12 @@ void Resolve_BREP(void)
         List_Add(ListInt, &paf->Num);
       }
     }
-    Cdbz101(cs.Num + 1000000, MSH_SURF_LOOP, 0, 0, 0, 0, 0, NULL, NULL,
-            ListInt);
+    //TODO Cdbz101(cs.Num + 1000000, MSH_SURF_LOOP, 0, 0, 0, 0, 0, NULL, NULL, ListInt);
     List_Reset(ListInt);
     j = cs.Num + 1000000;
     List_Add(ListInt, &j);
-    Cdbz101(cs.Num, MSH_VOLUME, 0, 0, 0, 0, 0, NULL, NULL, ListInt);
+    //TODO Cdbz101(cs.Num, MSH_VOLUME, 0, 0, 0, 0, 0, NULL, NULL, ListInt);
   }
 }
+
+

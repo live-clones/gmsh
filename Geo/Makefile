@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.42 2004-02-07 01:40:19 geuzaine Exp $
+# $Id: Makefile,v 1.43 2004-02-28 00:48:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -27,12 +27,12 @@ INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric -I../NR\
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = CAD.cpp \
-      DataBase.cpp \
       MinMax.cpp \
       ExtrudeParams.cpp \
       Geo.cpp \
+      GeoUtils.cpp \
       StepGeomDatabase.cpp \
-      Verif.cpp \
+      ExtractContour.cpp \
       Print_Geo.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -62,14 +62,8 @@ CAD.o: CAD.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h DataBase.h ../Mesh/Interpolation.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Interpolation.h \
   ../Mesh/Create.h CAD.h ../Common/Visibility.h ../Common/Context.h
-DataBase.o: DataBase.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Geo.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  CAD.h ../Mesh/Create.h Verif.h ../Common/Context.h
 MinMax.o: MinMax.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h \
@@ -83,19 +77,25 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../Numeric/Numeric.h Geo.h CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
   ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h DataBase.h ../Parser/Parser.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Parser/Parser.h \
   ../Common/Context.h
-StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Numeric/Numeric.h Geo.h StepGeomDatabase.h DataBase.h \
-  ../Common/Context.h
-Verif.o: Verif.cpp ../Common/Gmsh.h ../Common/Message.h \
+GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
   ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  DataBase.h
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h
+StepGeomDatabase.o: StepGeomDatabase.cpp ../Common/Gmsh.h \
+  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../Numeric/Numeric.h Geo.h GeoUtils.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Nurbs.h CAD.h \
+  StepGeomDatabase.h ../Mesh/Create.h ../Common/Context.h
+ExtractContour.o: ExtractContour.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Geo.h CAD.h ../Mesh/Mesh.h \
+  ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h
 Print_Geo.o: Print_Geo.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h Geo.h ../Mesh/Mesh.h \

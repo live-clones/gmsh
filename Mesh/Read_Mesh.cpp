@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.69 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.70 2004-02-28 00:48:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "Gmsh.h"
 #include "Geo.h"
+#include "CAD.h"
 #include "Mesh.h"
 #include "3D_Mesh.h"
 #include "Create.h"
@@ -49,35 +50,17 @@ extern Context_T CTX;
 
 #define NB_NOD_MAX_ELM 30
 
-int comparePhysicalGroup(const void *a, const void *b)
-{
-  PhysicalGroup *q, *w;
-  int cmp;
-
-  q = *(PhysicalGroup **) a;
-  w = *(PhysicalGroup **) b;
-  cmp = q->Typ - w->Typ;
-
-  if(cmp)
-    return cmp;
-  else
-    return (q->Num - w->Num);
-}
-
 void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
 {
-  PhysicalGroup PG, *pg, **ppg;
-  pg = &PG;
-  pg->Typ = Type;
-  pg->Num = Physical;
-  if((ppg = (PhysicalGroup **) List_PQuery(M->PhysicalGroups, &pg,
-                                           comparePhysicalGroup))) {
-    List_Insert((*ppg)->Entities, &Elementary, fcmp_int);
+  PhysicalGroup *pg;
+  if((pg = FindPhysicalGroup(Physical, Type, M))) {
+    List_Insert(pg->Entities, &Elementary, fcmp_int);
   }
   else {
     List_T *tmp = List_Create(1, 1, sizeof(int));
     List_Add(tmp, &Elementary);
-    Add_PhysicalGroup(Physical, Type, tmp, M);
+    pg = Create_PhysicalGroup(Physical, Type, tmp);
+    List_Add(M->PhysicalGroups, &pg);
     List_Delete(tmp);
   }
 }
@@ -88,46 +71,34 @@ void addPhysicalGroup(Mesh * M, int Type, int Physical, int Elementary)
 
 Curve *addElementaryCurve(Mesh * M, int Num)
 {
-  Curve C, *c, **cc;
-  c = &C;
-  c->Num = Num;
-  if(!(cc = (Curve **) Tree_PQuery(M->Curves, &c))) {
+  Curve *c;
+  if(!(c = FindCurve(Num, M))) {
     c = Create_Curve(Num, MSH_SEGM_LINE, 0, NULL, NULL, -1, -1, 0., 1.);
     c->Dirty = 1;
     Tree_Add(M->Curves, &c);
   }
-  else
-    c = *cc;
   return c;
 }
 
 Surface *addElementarySurface(Mesh * M, int Num)
 {
-  Surface S, *s, **ss;
-  s = &S;
-  s->Num = Num;
-  if(!(ss = (Surface **) Tree_PQuery(M->Surfaces, &s))) {
+  Surface *s;
+  if(!(s = FindSurface(Num, M))) {
     s = Create_Surface(Num, MSH_SURF_PLAN);
     s->Dirty = 1;
     Tree_Add(M->Surfaces, &s);
   }
-  else
-    s = *ss;
   return s;
 }
 
 Volume *addElementaryVolume(Mesh * M, int Num)
 {
-  Volume V, *v, **vv;
-  v = &V;
-  v->Num = Num;
-  if(!(vv = (Volume **) Tree_PQuery(M->Volumes, &v))) {
+  Volume *v;
+  if(!(v = FindVolume(Num, M))) {
     v = Create_Volume(Num, MSH_VOLUME);
     v->Dirty = 1;
     Tree_Add(M->Volumes, &v);
   }
-  else
-    v = *vv;
   return v;
 }
 

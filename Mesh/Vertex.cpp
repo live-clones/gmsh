@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.23 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.24 2004-02-28 00:48:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -35,6 +35,7 @@ Vertex::Vertex()
   Pos.X = 0.0;
   Pos.Y = 0.0;
   Pos.Z = 0.0;
+  w = 1.0;
   lc = 1.0;
   Mov = NULL;
   ListSurf = NULL;

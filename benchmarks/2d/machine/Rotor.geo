@@ -5,8 +5,8 @@ NbrSect_ = NbrSect; NbrLine_ = NbrLine; L_[]=L[];
 Printf("Copy lines");
 Call CopyLines;
 
-LineLoop_[] = LineLoop3[] ; NbrLines_ = NbrLines3; PhysNum_ = RotorSlotOpening; dPhysNum_ = 0; 
-Printf("Rotor slot openings : physical surface %g", PhysNum_);
+LineLoop_[] = LineLoop3[] ; NbrLines_ = NbrLines3; PhysNum_ = RotorSlotOpening; dPhysNum_ = 1; 
+Printf("Rotor slot openings");
 Call CopySlot;
 
 geuz1[{0:NbrSect_-1}] = geuz[{0:NbrSect_-1}];

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.321 2004-02-20 17:57:58 geuzaine Exp $
+# $Id: Makefile,v 1.322 2004-02-28 00:48:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -144,6 +144,10 @@ initialtag:
 tags:
 	gtags
 	htags
+
+etags:
+	etags `find . \( -name "*.cpp" -o -name "*.c" -o -name "*.h"\
+                      -o -name "*.y" -o -name "*.l" \)`
 
 tgz:
 	if (test -f ${GMSH_ARCHIVE}.tar.gz); then \

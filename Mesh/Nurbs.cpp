@@ -1,4 +1,4 @@
-// $Id: Nurbs.cpp,v 1.14 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Nurbs.cpp,v 1.15 2004-02-28 00:48:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,14 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
+#include "Nurbs.h"
 #include "Mesh.h"
+#include "Geo.h"
+#include "GeoUtils.h"
+#include "Create.h"
+#include "CAD.h"
+
+extern Mesh *THEM;
 
 // Cubic spline
 
@@ -227,3 +234,214 @@ Vertex InterpolateNurbsSurface(Surface * s, double u, double v)
   }
   return sp;
 }
+
+
+// Surface creation helpers
+
+void CreateNurbsSurfaceSupport(int Num, int Order1, int Order2,
+                               List_T * List, List_T * ku, List_T * kv)
+{
+  // This routine has been heavily modified to fit the new interfaces,
+  // but has not been tested since then. It's probably full of bugs
+  // now.
+  List_T *ListOfDouble_L;
+  List_T *ListCP = List_Create(2, 2, sizeof(int));
+
+  for(int j = 0; j < List_Nbr(List); j++) {
+    List_Read(List, j, &ListOfDouble_L);
+    for(int i = 0; i < List_Nbr(ListOfDouble_L); i++) {
+      double d;
+      List_Read(ListOfDouble_L, i, &d);
+      int N = (int)d;
+      List_Add(ListCP, &N);
+    }
+  }
+  List_Read(List, 0, &ListOfDouble_L);
+  int Nu = List_Nbr(List);
+  int Nv = List_Nbr(ListOfDouble_L);
+
+  Surface *s = Create_Surface(Num, MSH_SURF_NURBS);
+  s->Support = NULL;
+  s->Control_Points = List_Create(4, 1, sizeof(Vertex *));
+  s->OrderU = Order1;
+  s->OrderV = Order2;
+  s->Nu = Nu;
+  s->Nv = Nv;
+  for(int i = 0; i < List_Nbr(ListCP); i++) {
+    int j;
+    List_Read(ListCP, i, &j);
+    Vertex *v = FindPoint(j, THEM);
+    if(v){
+      List_Add(s->Control_Points, &v);
+    }
+    else{
+      Msg(GERROR, "Unknown control point %d in nurbs surface", j);
+    }
+  }
+
+  s->ku = (float *)malloc(List_Nbr(ku) * sizeof(float));
+  s->kv = (float *)malloc(List_Nbr(kv) * sizeof(float));
+
+  double kumin = 0., kumax = 1.;
+  double kvmin = 0., kvmax = 1.;
+
+  for(int i = 0; i < List_Nbr(ku); i++) {
+    double d;
+    List_Read(ku, i, &d);
+    float f = (float)((d - kumin) / (kumax - kumin));
+    s->ku[i] = f;
+  }
+  for(int i = 0; i < List_Nbr(kv); i++) {
+    double d;
+    List_Read(kv, i, &d);
+    float f = (float)((d - kvmin) / (kvmax - kvmin));
+    s->kv[i] = f;
+  }
+
+  List_Delete(ListCP);
+
+  End_Surface(s);
+  Tree_Add(THEM->Surfaces, &s);
+}
+
+void CreateNurbsSurface(int Num, int Order1, int Order2, List_T * List,
+                        List_T * ku, List_T * kv)
+{
+  // This routine has been heavily modified to fit the new interfaces,
+  // but has not been tested since then. It's probably full of bugs
+  // now.
+
+  List_T *ListOfDouble_L, *Listint, *ListCP;
+  int Loop[4];
+
+  ListCP = List_Create(2, 2, sizeof(int));
+
+  double kumin, kumax;
+  List_Read(ku, 0, &kumin);
+  List_Read(ku, List_Nbr(ku) - 1, &kumax);
+  double kvmin, kvmax;
+  List_Read(kv, 0, &kvmin);
+  List_Read(kv, List_Nbr(kv) - 1, &kvmax);
+  for(int j = 0; j < List_Nbr(List); j++) {
+    List_Read(List, j, &ListOfDouble_L);
+    for(int i = 0; i < List_Nbr(ListOfDouble_L); i++) {
+      double d;
+      List_Read(ListOfDouble_L, i, &d);
+      int N = (int)d;
+      List_Add(ListCP, &N);
+    }
+  }
+
+  // 1st and 3rd gen
+  List_Read(List, 0, &ListOfDouble_L);
+  Listint = ListOfDouble2ListOfInt(ListOfDouble_L);
+  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[0])) {
+  }
+  else {
+    Loop[0] = NEWREG();
+    Curve *c = Create_Curve(Loop[0], MSH_SEGM_NURBS, Order1, Listint, NULL, 
+			    -1, -1, kumin, kumax);
+    Tree_Add(THEM->Curves, &c);
+    CreateReversedCurve(THEM, c);
+    c->k = (float *)malloc(4 * List_Nbr(ku) * sizeof(float));
+    for(int i = 0; i < List_Nbr(ku); i++) {
+      double d;
+      List_Read(ku, i, &d);
+      c->k[i] = (float)d /*((d-kumin)/(kumax-kumin)) */ ;
+    }
+  }
+  List_Delete(Listint);
+
+  List_Read(List, List_Nbr(List) - 1, &ListOfDouble_L);
+  Listint = ListOfDouble2ListOfInt(ListOfDouble_L);
+  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[2])) {
+  }
+  else {
+    Loop[2] = NEWREG();
+    Curve *c = Create_Curve(Loop[2], MSH_SEGM_NURBS, Order1, Listint, NULL, 
+			    -1, -1, kumin, kumax);
+    Tree_Add(THEM->Curves, &c);
+    CreateReversedCurve(THEM, c);
+    c->k = (float *)malloc(4 * List_Nbr(ku) * sizeof(float));
+    for(int i = 0; i < List_Nbr(ku); i++) {
+      double d;
+      List_Read(ku, i, &d);
+      c->k[i] = (float)d /*((d-kumin)/(kumax-kumin)) */ ;
+    }
+  }
+  List_Delete(Listint);
+
+  // 2nd and 4th gen
+  List_T *List1 = List_Create(List_Nbr(List), 1, sizeof(double));
+  List_T *List2 = List_Create(List_Nbr(List), 1, sizeof(double));
+  for(int i = 0; i < List_Nbr(List); i++) {
+    List_Read(List, i, &ListOfDouble_L);
+    List_Add(List1, List_Pointer(ListOfDouble_L, 0));
+    List_Add(List2, List_Pointer(ListOfDouble_L, List_Nbr(ListOfDouble_L) - 1));
+  }
+
+  Listint = ListOfDouble2ListOfInt(List1);
+  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[1])) {
+  }
+  else {
+    Loop[1] = NEWREG();
+    Curve *c = Create_Curve(Loop[1], MSH_SEGM_NURBS, Order2, Listint, NULL, 
+			    -1, -1, kumin, kumax);
+    Tree_Add(THEM->Curves, &c);
+    CreateReversedCurve(THEM, c);
+    c->k = (float *)malloc(4 * List_Nbr(kv) * sizeof(float));
+    for(int i = 0; i < List_Nbr(kv); i++) {
+      double d;
+      List_Read(kv, i, &d);
+      c->k[i] = (float)d /*((d-kvmin)/(kvmax-kvmin)) */ ;
+    }
+  }
+  List_Delete(Listint);
+
+  Listint = ListOfDouble2ListOfInt(List2);
+  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[3])) {
+  }
+  else {
+    Loop[3] = NEWREG();
+    Curve *c = Create_Curve(Loop[3], MSH_SEGM_NURBS, Order2, Listint, NULL,
+			    -1, -1, kumin, kumax);
+    Tree_Add(THEM->Curves, &c);
+    CreateReversedCurve(THEM, c);
+    c->k = (float *)malloc(4 * List_Nbr(kv) * sizeof(float));
+    for(int i = 0; i < List_Nbr(kv); i++) {
+      double d;
+      List_Read(kv, i, &d);
+      c->k[i] = (float)d /*((d-kvmin)/(kvmax-kvmin)) */ ;
+    }
+  }
+  List_Delete(Listint);
+  List_Delete(List1);
+  List_Delete(List2);
+
+  Listint = List_Create(10, 10, sizeof(int));
+  int l0 = -Loop[0];
+  List_Add(Listint, &l0);
+  List_Add(Listint, &Loop[1]);
+  List_Add(Listint, &Loop[2]);
+  int l3 = -Loop[3];
+  List_Add(Listint, &l3);
+
+  int topnew = NEWREG();
+  CreateNurbsSurfaceSupport(topnew, Order1, Order2, List, ku, kv);
+
+  int il = NEWREG();
+  SurfaceLoop *l = Create_SurfaceLoop(il, Listint);
+  Tree_Add(THEM->SurfaceLoops, &l);
+  List_Reset(Listint);
+  List_Add(Listint, &il);
+
+  Surface *s = Create_Surface(NEWREG(), MSH_SURF_TRIMMED);
+  setSurfaceGeneratrices(s, Listint);
+  s->Support = s;
+  End_Surface(s);
+  Tree_Add(THEM->Surfaces, &s);
+
+  List_Delete(Listint);
+  List_Delete(ListCP);
+}
+

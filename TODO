@@ -1,4 +1,9 @@
-$Id: TODO,v 1.32 2004-02-20 17:57:58 geuzaine Exp $
+$Id: TODO,v 1.33 2004-02-28 00:48:47 geuzaine Exp $
+
+should save only those options that differ from the default values (or
+at least make this behaviour optional)
+
+********************************************************************
 
 degre2: remove from after each 1d/2d/3d step, and add a global
 "add_degre2_nodes" and "remove_degre2_nodes" menu
@@ -39,20 +44,16 @@ The "Symmetry" operation should be renamed "Reflection"
 
 ********************************************************************
 
-We sould somehow keep track (or compute) the min/max for each time
-step.
-
-********************************************************************
-
 Memory leaks, memory leaks
 
 - start with mesh_domain() and the parser
 
 - check all calls to Tree_Replace: we shouldn't use it with trees of
-pointers, since we loose the original pointer when we actually do a
-'replace'
+  pointers, since we loose the original pointer when we actually do a
+  'replace'
 
-- check all calls to Tree_Insert, and test the return value
+- check all calls to Tree_Insert, and test the return value (if we
+  don't do the insert, free the data!)
 
 ********************************************************************
 
