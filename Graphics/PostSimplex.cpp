@@ -1,4 +1,4 @@
-// $Id: PostSimplex.cpp,v 1.24 2001-08-03 19:23:38 geuzaine Exp $
+// $Id: PostSimplex.cpp,v 1.25 2001-08-03 19:40:01 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -97,15 +97,19 @@ void Draw_ScalarLine(Post_View *View,
   double  Xp[5],Yp[5],Zp[5],Val[5],value[5],thev;
   char    Num[100] ;
 
+  double *vv = &V[2*View->TimeStep];
+
   if(View->Boundary > 0){
     View->Boundary--;
-    Draw_ScalarPoint(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//0
-    Draw_ScalarPoint(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//1
+    int ts = View->TimeStep;
+    View->TimeStep = 0;
+    Draw_ScalarPoint(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &vv[0]);//0
+    Draw_ScalarPoint(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &vv[1]);//1
+    View->TimeStep = ts;
     View->Boundary++;
     return;
   }
 
-  double *vv = &V[2*View->TimeStep];
   if(View->SaturateValues){
     for(i=0;i<2;i++){
       if(vv[i] > ValMax) Val[i] = ValMax;
@@ -199,18 +203,22 @@ void Draw_ScalarTriangle(Post_View *View, int preproNormals,
   double  Xp[5],Yp[5],Zp[5],Val[3],value[5],thev;
   char    Num[100] ;
 
+  double *vv = &V[3*View->TimeStep];
+
   if(!preproNormals && View->Boundary > 0){
     View->Boundary--;
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//01
-    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//12
-    Xp[0] = X[0]; Yp[0] = Y[0]; Zp[0] = Z[0]; Val[0] = V[0];
-    Xp[1] = X[2]; Yp[1] = Y[2]; Zp[1] = Z[2]; Val[1] = V[2];
+    int ts = View->TimeStep;
+    View->TimeStep = 0;
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &vv[0]);//01
+    Draw_ScalarLine(View, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &vv[1]);//12
+    Xp[0] = X[0]; Yp[0] = Y[0]; Zp[0] = Z[0]; Val[0] = vv[0];
+    Xp[1] = X[2]; Yp[1] = Y[2]; Zp[1] = Z[2]; Val[1] = vv[2];
     Draw_ScalarLine(View, ValMin, ValMax, Raise, Xp, Yp, Zp, Val);//02
+    View->TimeStep = ts;
     View->Boundary++;
     return;
   }
 
-  double *vv = &V[3*View->TimeStep];
   if(View->SaturateValues){
     for(i=0;i<3;i++){
       if(vv[i] > ValMax) Val[i] = ValMax;
@@ -370,21 +378,25 @@ void Draw_ScalarTetrahedron(Post_View *View, int preproNormals,
   char Num[100];
   double Val[4];
 
+  double *vv = &V[4*View->TimeStep];
+
   if(!preproNormals && View->Boundary > 0){
     View->Boundary--;
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &V[0]);//012
-    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &V[1]);//123
-    xx[0] = X[0]; yy[0] = Y[0]; zz[0] = Z[0]; Val[0] = V[0];
-    xx[1] = X[1]; yy[1] = Y[1]; zz[1] = Z[1]; Val[1] = V[1];
-    xx[2] = X[3]; yy[2] = Y[3]; zz[2] = Z[3]; Val[2] = V[3];
+    int ts = View->TimeStep;
+    View->TimeStep = 0;
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[0], &Y[0], &Z[0], &vv[0]);//012
+    Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, &X[1], &Y[1], &Z[1], &vv[1]);//123
+    xx[0] = X[0]; yy[0] = Y[0]; zz[0] = Z[0]; Val[0] = vv[0];
+    xx[1] = X[1]; yy[1] = Y[1]; zz[1] = Z[1]; Val[1] = vv[1];
+    xx[2] = X[3]; yy[2] = Y[3]; zz[2] = Z[3]; Val[2] = vv[3];
     Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, Val);//013
-    xx[1] = X[2]; yy[1] = Y[2]; zz[1] = Z[2]; Val[1] = V[2];
+    xx[1] = X[2]; yy[1] = Y[2]; zz[1] = Z[2]; Val[1] = vv[2];
     Draw_ScalarTriangle(View, 0, ValMin, ValMax, Raise, xx, yy, zz, Val);//023
+    View->TimeStep = ts;
     View->Boundary++;
     return;
   }
 
-  double *vv = &V[4*View->TimeStep];
   if(View->SaturateValues){
     for(i=0;i<4;i++){
       if(vv[i] > ValMax) Val[i] = ValMax;
