@@ -1,0 +1,11 @@
+
+Plugin(Skin):
+- options: none
+- help: Gets the skin of a 3D scalar map (eliminates all interior drawing)
+
+Plugin(Transform): 
+- options: matrice de transformation 4x4, option pour effectuer la
+transformation in place ou pour creer une nouvelle carte
+- help: transforms the view by the transformation matrix
+
+
