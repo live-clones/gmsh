@@ -1,4 +1,4 @@
-// $Id: Utils.cpp,v 1.3 2001-11-01 09:36:59 geuzaine Exp $
+// $Id: Utils.cpp,v 1.4 2001-11-05 08:37:27 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -12,7 +12,6 @@
 extern Context_T CTX;
 
 void dsvdcmp(double **a, int m, int n, double w[], double **v);
-void dsvbksb(double **u, double w[], double **v, int m, int n, double b[], double x[]);
 
 void direction (Vertex * v1, Vertex * v2, double d[3]){
   d[0] = v2->Pos.X - v1->Pos.X;
@@ -33,13 +32,14 @@ void Projette (Vertex * v, double mat[3][3]){
 
 /*
   Le concept d'un plan moyen calcule au sens des moidres carres n'est
-  pas le bon. Imagine un quart de cercle extrude d'une faible
-  hauteur. Le plan moyen sera dans le plan du cercle! En attendant
-  mieux, il y a un test de coherence pour les surfaces non-planes. */
+  pas le bon pour les surfaces non-planes : imagine un quart de cercle
+  extrude d'une faible hauteur. Le plan moyen sera dans le plan du
+  cercle! En attendant mieux, il y a donc un test de coherence
+  supplementaire pour les surfaces non-planes. */
 
 void MeanPlane(List_T *points, Surface *s){
   int    i, j, min, ndata, na;
-  double **U, **V, *W, res[4], ex[3], t1[3], t2[3];
+  double **U, **V, *W, res[4], ex[3], t1[3], t2[3], svd[3];
   Vertex *v;
   double xm=0., ym=0., zm=0.;
 
@@ -67,9 +67,12 @@ void MeanPlane(List_T *points, Surface *s){
     U[i+1][3] = v->Pos.Z-zm;
   }
   dsvdcmp(U,ndata,na,W,V);
-  if(W[1]<W[2] && W[1]<W[3]) min=1;
-  else if(W[2]<W[1] && W[2]<W[3]) min=2;
+  if(fabs(W[1])<fabs(W[2]) && fabs(W[1])<fabs(W[3])) min=1;
+  else if(fabs(W[2])<fabs(W[1]) && fabs(W[2])<fabs(W[3])) min=2;
   else min=3;
+  svd[0] = W[1];
+  svd[1] = W[2];
+  svd[2] = W[3];
   res[0] = V[1][min];
   res[1] = V[2][min];
   res[2] = V[3][min];
@@ -137,7 +140,7 @@ end:
   for(i=0; i<3; i++) s->plan[2][i] = res[i];
 
   Msg(DEBUG1, "Surface: %d", s->Num);
-  Msg(DEBUG2, "SVD    : %g,%g,%g (min=%d)", W[1],W[2],W[3],min);
+  Msg(DEBUG2, "SVD    : %g,%g,%g (min=%d)", svd[0],svd[1],svd[2],min);
   Msg(DEBUG2, "Plane  : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
   Msg(DEBUG2, "Normal : (%g , %g , %g )", s->a, s->b, s->c);
   Msg(DEBUG2, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
