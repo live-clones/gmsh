@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.270 2003-03-02 04:56:14 geuzaine Exp $
+# $Id: Makefile,v 1.271 2003-03-03 20:18:29 geuzaine Exp $
 
 include variables
 
@@ -40,9 +40,9 @@ variables: configure
 
 source-common:
 	rm -rf gmsh-${GMSH_RELEASE}
-	tar zcvf gmsh.tgz `ls README* */README* configure *.in Makefile */Makefile\
-                           */*.[chyl] */*.[ch]pp */*.rc */*.res */*.r */*.ico */*.icns\
-                           */*.pl */*.pm */*.sh */*.opt */*.spec`\
+	tar zcvf gmsh.tgz `ls TODO README* */README* configure *.in Makefile */Makefile\
+                           */*.[chylr] */*.[ch]pp */*.rc */*.res */*.ico */*.icns\
+                           */*.p[lm] */*.sh */*.opt */*.spec`\
                            doc demos tutorial
 	mkdir gmsh-${GMSH_RELEASE}
 	cd gmsh-${GMSH_RELEASE} && tar zxvf ../gmsh.tgz
@@ -126,7 +126,8 @@ package-unix:
 	mkdir gmsh-${GMSH_RELEASE}
 	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_RELEASE}
-	cp doc/COPYING doc/gmsh.1 doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}
+	cp doc/COPYING doc/gmsh.1 doc/FORMATS doc/VERSIONS doc/FAQ\
+           doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS
