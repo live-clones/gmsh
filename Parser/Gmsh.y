@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.16 2000-12-06 18:28:30 remacle Exp $ */
+%{ /* $Id: Gmsh.y,v 1.17 2000-12-06 22:09:53 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -40,17 +40,26 @@ static Shape          TheShape;
 static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
 static double         d;
 static ExtrudeParams  extr;
-static StringXColor   *ColorField ;
 static List_T         *ListOfDouble_L,*ListOfDouble2_L;
 static List_T         *ListOfListOfDouble_L;
 
+static void           *pNumOpt, *pArrOpt;
+static char          **pStrOpt;
+static unsigned int   *pColOpt;
+static StringXString  *pStrCat;
+static StringXNumber  *pNumCat;
+static StringXArray   *pArrCat;
+static StringXColor   *pColCat;
+
 void  yyerror (char *s);
 void  vyyerror (char *fmt, ...);
+
 %}
 
 %union {
   char    *c;
   int      i;
+  unsigned int u;
   double   d;
   double   v[5];
   Shape    s;
@@ -63,11 +72,11 @@ void  vyyerror (char *fmt, ...);
 %token tEND tAFFECT tDOTS tPi
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
-%token tFmod tModulo tHypot
+%token tFmod tModulo tHypot tPrintf
 %token tPoint tCircle tEllipsis tLine tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
-%token tUsing tPower tBump tProgression tAssociation
+%token tUsing tBump tProgression
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tInclude tRecombine tDelete tCoherence
 %token tView tOffset tAttractor tLayers
@@ -77,7 +86,6 @@ void  vyyerror (char *fmt, ...);
 %token tScalarPoint tVectorPoint tTensorPoint
 %token tBSpline tNurbs tOrder tWith tBounds tKnots
 %token tColor tOptions tFor tEndFor tScript tExit tMerge
-%token tGeneral tGeometry tMesh tPostProcessing tPrint
 
 %token tB_SPLINE_SURFACE_WITH_KNOTS
 %token tB_SPLINE_CURVE_WITH_KNOTS
@@ -93,18 +101,32 @@ void  vyyerror (char *fmt, ...);
 
 %token tSolid tEndSolid tVertex tFacet tNormal tOuter tLoopSTL tEndLoop tEndFacet
 
-%type <d> FExpr  FExpr_Single
-%type <v> VExpr RGBAExpr
+%type <d> FExpr FExpr_Single
+%type <v> VExpr VExpr_Single
 %type <l> ListOfShapes Duplicata Transform MultipleShape
 %type <l> ListOfStrings ListOfDouble ListOfListOfDouble
 %type <s> Shape
 %type <i> BoolExpr
+%type <u> Color
 
-%left '<' '>'
-%left '+' '-'
-%left '*' '/' '%'
-%left UMINUS
-%right '^'
+/* ------------------------------------------------------------------ */
+/* Operators (with ascending priority) : cf. C language               */
+/*                                                                    */
+/* Notes: - evaluation order (%left, %right)                          */
+/*        - UNARYPREC is a dummy terminal to resolve ambiguous cases  */ 
+/*          for + and - (which exist in both unary and binary form)   */
+/* ------------------------------------------------------------------ */
+%left    tAFFECT tAFFECTPLUS tAFFECTMINUS tAFFECTTIMES tAFFECTDIVIDE
+%right   '?' tDOTS
+%left    tAND tOR
+%left    tNOTEQUAL tEQUAL tAPPROXEQUAL
+%left    '<' '>' tLESSOREQUAL tGREATEROREQUAL
+%left    '+' '-'
+%left    '*' '/' '%'
+%left    tCROSSPRODUCT
+%left    UNARYPREC '!'
+%right   '^'
+%left    tPLUSPLUS tMINUSMINUS
 
 %start All
 
@@ -341,6 +363,7 @@ GeomFormatList :
 
 GeomFormat :
     View        { return 1; }
+  | Printf      { return 1; }
   | Affectation { return 1; }
   | Shape       { return 1; }
   | Transform   { return 1; }
@@ -354,7 +377,15 @@ GeomFormat :
 /*  | Script      { return 1; }*/
   | Command     { return 1; }
   | tOptions '{' Options '}' { return 1; }
+  | tScript  '{' Scripts '}' { return 1; }
   | error tEND  { yyerrok; return 1;}
+;
+
+Printf :
+    tPrintf '(' tBIGSTR ',' FExpr ')' tEND
+    {
+      Msg(PARSER_INFO, $3, $5); 
+    }
 ;
 
 /* ------------
@@ -1429,186 +1460,209 @@ Options :
 ;
 
 Option :
-    tGeneral '{' GeneralOptions '}'
-  | tGeometry '{' GeometryOptions '}'
-  | tMesh '{' MeshOptions '}'
-  | tPostProcessing '{' PostProcessingOptions '}'
-  | tPrint '{' PrintOptions '}'
+    Printf 
+    {
+    }
+  | tSTRING '.' tSTRING tAFFECT tBIGSTR tEND 
+    { 
+      if(!(pStrCat = Get_StringOptionCategory($1)))
+	vyyerror("Unknown String Option Class '%s'", $1);
+      else{
+	if(!(pStrOpt = Get_StringOption($3, pStrCat)))
+	  vyyerror("Unknown String Option '%s.%s'", $1, $3);
+	else{
+	  *pStrOpt = $5 ;
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECT FExpr tEND 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt = $5 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt = (float)$5 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt = (long)$5 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt = (int)$5 ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECTPLUS FExpr tEND 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt += $5 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt += (float)$5 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt += (long)$5 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt += (int)$5 ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECTMINUS FExpr tEND 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt -= $5 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt -= (float)$5 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt -= (long)$5 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt -= (int)$5 ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECTTIMES FExpr tEND 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt *= $5 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt *= (float)$5 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt *= (long)$5 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt *= (int)$5 ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECTDIVIDE FExpr tEND 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt /= $5 ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt /= (float)$5 ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt /= (long)$5 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt /= (int)$5 ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tPLUSPLUS tEND 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt += 1. ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt += 1. ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt += 1 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt += 1 ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tMINUSMINUS tEND 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : *(double*)pNumOpt -= 1. ; break ;
+	  case GMSH_FLOAT : *(float*)pNumOpt -= 1. ; break ;
+	  case GMSH_LONG : *(long*)pNumOpt -= 1 ; break ;
+	  case GMSH_INT : *(int*)pNumOpt -= 1 ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECT VExpr tEND 
+    {
+      if(!(pArrCat = Get_ArrayOptionCategory($1)))
+	vyyerror("Unknown Array Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
+	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    ((double*)pNumOpt)[0] = $5[0] ;
+	    ((double*)pNumOpt)[1] = $5[1] ;
+	    ((double*)pNumOpt)[2] = $5[2] ;
+	    ((double*)pNumOpt)[3] = $5[3] ;
+	    break ;
+	  case GMSH_FLOAT :
+	    ((float*)pNumOpt)[0] = (float)$5[0] ;
+	    ((float*)pNumOpt)[1] = (float)$5[1] ;
+	    ((float*)pNumOpt)[2] = (float)$5[2] ;
+	    ((float*)pNumOpt)[3] = (float)$5[3] ;
+	    break ;
+	  case GMSH_LONG :
+	    ((long*)pNumOpt)[0] = (long)$5[0] ;
+	    ((long*)pNumOpt)[1] = (long)$5[1] ;
+	    ((long*)pNumOpt)[2] = (long)$5[2] ;
+	    ((long*)pNumOpt)[3] = (long)$5[3] ;
+	    break ;
+	  case GMSH_INT :
+	    ((int*)pNumOpt)[0] = (int)$5[0] ;
+	    ((int*)pNumOpt)[1] = (int)$5[1] ;
+	    ((int*)pNumOpt)[2] = (int)$5[2] ;
+	    ((int*)pNumOpt)[3] = (int)$5[3] ;
+	    break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tColor '.' tSTRING tAFFECT Color tEND 
+    {
+      if(!(pColCat = Get_ColorOptionCategory($1)))
+	vyyerror("Unknown Color Option Class '%s'", $1);
+      else{
+	if(!(pColOpt = Get_ColorOption($5, pColCat)))
+	  vyyerror("Unknown Color Option '%s.%s'", $1, $5);
+	else{
+	  *pColOpt = $7 ;
+	}
+      }
+    }
 ;
 
-GeneralOptions :
+/* ---------------
+    S C R I P T S 
+   --------------- */
+
+Scripts :
   /* empty */
-  | GeneralOptions GeneralOption
+  | Scripts Script
 ;
 
-GeneralOption :
-    tSTRING tAFFECT tBIGSTR tEND
-    { 
-      if(!Set_StringOption($1, GeneralOptions_String, $3))
-	vyyerror("Unknown General Option (String) '%s'", $1);
-    }
-  | tSTRING tAFFECT FExpr tEND
-    { 
-      if(!Set_NumberOption($1, GeneralOptions_Number, $3))
-	vyyerror("Unknown General Option (Number) '%s'", $1);
-    }
-  | tSTRING tAFFECT VExpr tEND
-    { if(!Set_ArrayOption($1, GeneralOptions_Array, $3)) 
-	vyyerror("Unknown General Option (Array) '%s'", $1);
-    }
-  | tColor 
-    { ColorField = GeneralOptions_Color; }
-    '{' ColorAffects '}'
+Script :
+    Option 
+/*
+  | Action
+  | Loop
+  | Test
+*/
 ;
 
-GeometryOptions :
-  /* empty */
-  | GeometryOptions GeometryOption
-;
-
-GeometryOption :
-    tSTRING tAFFECT tBIGSTR tEND
-    { 
-      if(!Set_StringOption($1, GeometryOptions_String, $3))
-	vyyerror("Unknown Geometry Option (String) '%s'", $1);
-    }
-  | tSTRING tAFFECT FExpr tEND
-    { 
-      if(!Set_NumberOption($1, GeometryOptions_Number, $3))
-	vyyerror("Unknown Geometry Option (Number) '%s'", $1);
-    }
-  | tSTRING tAFFECT VExpr tEND
-    {
-      if(!Set_ArrayOption($1, GeometryOptions_Array, $3))
-	vyyerror("Unknown Geometry Option (Array) '%s'", $1);
-    }
-  | tColor 
-    { ColorField = GeometryOptions_Color; }
-    '{' ColorAffects '}'
-;
-
-MeshOptions :
-  /* empty */
-  | MeshOptions MeshOption
-;
-
-MeshOption :
-    tSTRING tAFFECT tBIGSTR tEND
-    { 
-      if(!Set_StringOption($1, MeshOptions_String, $3))
-	vyyerror("Unknown Mesh Option (String) '%s'", $1);
-    }
-  | tSTRING tAFFECT FExpr tEND
-    {
-      if(!Set_NumberOption($1, MeshOptions_Number, $3))
-	vyyerror("Unknown Mesh Option (Number) '%s'", $1);
-    }
-  | tSTRING tAFFECT VExpr tEND
-    {
-      if(!Set_ArrayOption($1, MeshOptions_Array, $3))
-	vyyerror("Unknown Mesh Option (Array) '%s'", $1);
-    }
-  | tColor 
-    { ColorField = MeshOptions_Color; }
-    '{' ColorAffects '}'
-;
-
-PostProcessingOptions :
-  /* empty */
-  | PostProcessingOptions PostProcessingOption
-;
-
-PostProcessingOption :
-    tSTRING tAFFECT tBIGSTR tEND
-    { 
-      if(!Set_StringOption($1, PostProcessingOptions_String, $3))
-	vyyerror("Unknown PostProcessing Option (String) '%s'", $1);
-    }
-  | tSTRING tAFFECT FExpr tEND
-    { 
-      if(!Set_NumberOption($1, PostProcessingOptions_Number, $3)) 
-	vyyerror("Unknown PostProcessing Option (Number) '%s'", $1);
-    }
-  | tSTRING tAFFECT VExpr tEND
-    { 
-      if(!Set_ArrayOption($1, PostProcessingOptions_Array, $3))
-	vyyerror("Unknown PostProcessing (Array) Option '%s'", $1);
-    }
-  | tColor 
-    { ColorField = PostProcessingOptions_Color; }
-    '{' ColorAffects '}'
-;
-
-PrintOptions :
-  /* empty */
-  | PrintOptions PrintOption
-;
-
-PrintOption :
-    tSTRING tAFFECT tBIGSTR tEND
-    {
-      if(!Set_StringOption($1, PrintOptions_String, $3))
-	vyyerror("Unknown Print Option (String) '%s'", $1);
-    }
-  | tSTRING tAFFECT FExpr tEND
-    {
-      if(!Set_NumberOption($1, PrintOptions_Number, $3)) 
-	vyyerror("Unknown Print Option (Number) '%s'", $1);
-    }
-  | tSTRING tAFFECT VExpr tEND
-    {
-      if(!Set_ArrayOption($1, PrintOptions_Array, $3))
-	vyyerror("Unknown Print Option (Array) '%s'", $1);
-    }
-  | tColor 
-    { ColorField = PrintOptions_Color; }
-    '{' ColorAffects '}'
-;
-
-ColorAffects :
-  /* empty */
-  | ColorAffect ColorAffects
-;
-
-ColorAffect : 
-    tSTRING tAFFECT tSTRING tEND
-    {
-      i = Get_ColorForString(ColorString, -1, $3, &flag);
-      if(flag) vyyerror("Unknown Color '%s'", $3);
-      if(!Set_ColorOption($1, ColorField, i))
-	vyyerror("Unknown Color Field '%s'", $1);
-    }
-  | tSTRING tAFFECT '{' tSTRING ',' FExpr '}' tEND
-    {
-      i = Get_ColorForString(ColorString, (int)$6, $4, &flag);
-      if(flag) vyyerror("Unknown Color '%s'", $4);
-      if(!Set_ColorOption($1, ColorField, i))
-	 vyyerror("Unknown Color Field '%s'", $1);
-    }
-  | tSTRING tAFFECT RGBAExpr tEND
-    {
-      if(!Set_ColorOption($1, ColorField,
-			  PACK_COLOR((int)$3[0], (int)$3[1], (int)$3[2], (int)$3[3])))
-	vyyerror("Unknown Color Field '%s'", $1);
-    }
-;
-
-RGBAExpr :
-    '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
-    {
-      $$[0]=$2;
-      $$[1]=$4;
-      $$[2]=$6;
-      $$[3]=$8;
-    }
-  | '{' FExpr ',' FExpr ',' FExpr '}'
-    {
-      $$[0]=$2;
-      $$[1]=$4;
-      $$[2]=$6;
-      $$[3]=255.;
-    }
-;
 
 /* ---------------
     G E N E R A L
@@ -1624,15 +1678,26 @@ BoolExpr :
   ;
 
 FExpr :
-    FExpr_Single             { $$ = $1; }
-  | '(' FExpr ')'            { $$ = $2; }
-  | FExpr '-' FExpr          { $$ = $1 - $3; }
-  | FExpr '+' FExpr          { $$ = $1 + $3; }
-  | FExpr '*' FExpr          { $$ = $1 * $3; }
-  | FExpr '/' FExpr          { $$ = $1 / $3; }
-  | FExpr '^' FExpr          { $$ = pow($1, $3); }
-  | '-' FExpr %prec UMINUS   { $$ = - $2; }
-  | '+' FExpr %prec UMINUS   { $$ = $2; }
+    FExpr_Single                     { $$ = $1;           }
+  | '(' FExpr ')'                    { $$ = $2 ;          }
+  | '-' FExpr %prec UNARYPREC        { $$ = -$2 ;         }
+  | '+' FExpr %prec UNARYPREC        { $$ = $2;           }
+  | '!' FExpr                        { $$ = !$2 ;         }
+  | FExpr '-' FExpr                  { $$ = $1 - $3 ;     }
+  | FExpr '+' FExpr                  { $$ = $1 + $3 ;     }
+  | FExpr '*' FExpr                  { $$ = $1 * $3 ;     }
+  | FExpr '/' FExpr                  { $$ = $1 / $3 ;     }
+  | FExpr '%' FExpr                  { $$ = (int)$1 % (int)$3 ;  }
+  | FExpr '^' FExpr                  { $$ = pow($1,$3) ;  }
+  | FExpr '<' FExpr                  { $$ = $1 < $3 ;     }
+  | FExpr '>' FExpr                  { $$ = $1 > $3 ;     }
+  | FExpr tLESSOREQUAL FExpr         { $$ = $1 <= $3 ;    }
+  | FExpr tGREATEROREQUAL FExpr      { $$ = $1 >= $3 ;    }
+  | FExpr tEQUAL FExpr               { $$ = $1 == $3 ;    }
+  | FExpr tNOTEQUAL FExpr            { $$ = $1 != $3 ;    }
+  | FExpr tAND FExpr                 { $$ = $1 && $3 ;    }
+  | FExpr tOR FExpr                  { $$ = $1 || $3 ;    }
+  | FExpr '?' FExpr tDOTS FExpr      { $$ = $1? $3 : $5 ; }
   | tExp    '(' FExpr ')'            { $$ = exp($3);      }
   | tLog    '(' FExpr ')'            { $$ = log($3);      }
   | tLog10  '(' FExpr ')'            { $$ = log10($3);    }
@@ -1667,6 +1732,57 @@ FExpr_Single :
       else  $$ = TheSymbol.val ;
       Free($1);
     }
+  | tSTRING '.' tSTRING 
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : $$ = *(double*)pNumOpt ; break ;
+	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt) ; break ;
+	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt) ; break ;
+	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt) ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tPLUSPLUS
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt += 1.) ; break ;
+	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt += 1.) ; break ;
+	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt += 1) ; break ;
+	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt += 1) ; break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tMINUSMINUS
+    {
+      if(!(pNumCat = Get_NumberOptionCategory($1)))
+	vyyerror("Unknown Numeric Option Class '%s'", $1);
+      else{
+	if(!(pNumOpt = Get_NumberOption($3, pNumCat, &i)))
+	  vyyerror("Unknown Numeric Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE : $$ = (*(double*)pNumOpt -= 1.) ; break ;
+	  case GMSH_FLOAT : $$ = (double)(*(float*)pNumOpt -= 1.) ; break ;
+	  case GMSH_LONG : $$ = (double)(*(long*)pNumOpt -= 1) ; break ;
+	  case GMSH_INT : $$ = (double)(*(int*)pNumOpt -= 1) ; break ;
+	  }
+	}
+      }
+    }
 ;
 
 FExpr_Range :
@@ -1690,37 +1806,43 @@ FExpr_Range :
   ;
 
 VExpr :
-    '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr  '}'
+    VExpr_Single
     {
-      $$[0]=$2;
-      $$[1]=$4;
-      $$[2]=$6;
-      $$[3]=$8;
-      $$[4]=$10;
+      $$ = $1;
+    }
+  | '-' VExpr %prec UNARYPREC
+    {
+      for(i=0 ; i<6 ; i++) $$[i] = -$2[i] ;
+    }
+  | '+' VExpr %prec UNARYPREC
+    { 
+      $$ = $2;
+    }
+  | VExpr '-' VExpr
+    { 
+      for(i=0 ; i<6 ; i++) $$[i] = $1[i] - $3[i] ;
+    }
+  | VExpr '+' VExpr
+    {
+      for(i=0 ; i<6 ; i++) $$[i] = $1[i] + $3[i] ;
+    }
+
+VExpr_Single :
+    '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr  '}'
+    { 
+      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=$8; $$[4]=$10;
     }
   | '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
-    {
-      $$[0]=$2;
-      $$[1]=$4;
-      $$[2]=$6;
-      $$[3]=$8;
-      $$[4]=1.0;
+    { 
+      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=$8; $$[4]=1.0;
     }
   | '{' FExpr ',' FExpr ',' FExpr '}'
     {
-      $$[0]=$2;
-      $$[1]=$4;
-      $$[2]=$6;
-      $$[3]=0.0;
-      $$[4]=1.0;
+      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=0.0; $$[4]=1.0;
     }
   | '(' FExpr ',' FExpr ',' FExpr ')'
     {
-      $$[0]=$2;
-      $$[1]=$4;
-      $$[2]=$6;
-      $$[3]=0.0;
-      $$[4]=1.0;
+      $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=0.0; $$[4]=1.0;
     }
 ;
 
@@ -1782,12 +1904,6 @@ ListOfDouble :
     {
       $$=ListOfDouble_L;
     }
-/*
-  | '(' RecursiveListOfDouble ')'
-    {
-      $$=ListOfDouble_L;
-    }
-*/
 ;
 
 
@@ -1820,6 +1936,38 @@ RecursiveListOfDouble :
     }
 ;
 
+Color :
+    '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+    {
+      $$ = PACK_COLOR((int)$2, (int)$4, (int)$6, (int)$8);
+    }
+  | '{' FExpr ',' FExpr ',' FExpr '}'
+    {
+      $$ = PACK_COLOR((int)$2, (int)$4, (int)$6, 255);
+    }
+  | '{' tSTRING ',' FExpr '}'
+    {
+      $$ = Get_ColorForString(ColorString, (int)$4, $2, &flag);
+      if(flag) vyyerror("Unknown Color '%s'", $2);
+    }
+  | tSTRING
+    {
+      $$ = Get_ColorForString(ColorString, -1, $1, &flag);
+      if(flag) vyyerror("Unknown Color '%s'", $1);
+    }
+  | tSTRING '.' tColor '.' tSTRING 
+    {
+      if(!(pColCat = Get_ColorOptionCategory($1)))
+	vyyerror("Unknown Color Option Class '%s'", $1);
+      else{
+	if(!(pColOpt = Get_ColorOption($5, pColCat)))
+	  vyyerror("Unknown Color Option '%s.%s'", $1, $5);
+	else{
+	  $$ = *pColOpt ;
+	}
+      }
+    }
+;
 
 %%
 

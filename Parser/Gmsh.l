@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.8 2000-12-06 18:28:30 remacle Exp $ */
+%{ /* $Id: Gmsh.l,v 1.9 2000-12-06 22:09:53 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,8 +69,22 @@ stepid  {dieze}({digit})*
 "newreg"		{yylval.d = NEWREG(); return tDOUBLE;}
 "newp"  		{yylval.d = NEWPOINT(); return tDOUBLE;}
 "="                     return tAFFECT;
+"+="                    return tAFFECTPLUS ;
+"-="                    return tAFFECTMINUS ;
+"*="                    return tAFFECTTIMES ;
+"/="                    return tAFFECTDIVIDE ;
 "..."                   return tDOTS;
-
+":"                     return tDOTS ;
+"/\\"                   return tCROSSPRODUCT ;
+"||"                    return tOR ;
+"&&"                    return tAND ;
+"++"                    return tPLUSPLUS ;
+"--"                    return tMINUSMINUS ;
+"=="                    return tEQUAL ;
+"!="                    return tNOTEQUAL ;
+"~="                    return tAPPROXEQUAL ;
+"<="                    return tLESSOREQUAL ;
+">="                    return tGREATEROREQUAL ;
 
 ACos                    return tAcos ;
 ArcCos                  return tAcos ;
@@ -80,7 +94,6 @@ Atan                    return tAtan ;
 ArcTan                  return tAtan ;
 Atan2                   return tAtan2 ;
 ArcTan2                 return tAtan2 ;
-Association             return tAssociation;
 Attractor		return tAttractor;
 
 Bump                    return tBump;
@@ -111,9 +124,6 @@ Fabs                    return tFabs ;
 Floor                   return tFloor ;
 Fmod                    return tFmod ;
 
-General                 return tGeneral;
-Geometry                return tGeometry;
-
 Hypot                   return tHypot ;
 
 Include                 return tInclude;
@@ -127,7 +137,6 @@ Log                     return tLog ;
 Log10                   return tLog10 ;
 Layers                  return tLayers;
 
-Mesh                    return tMesh;
 Modulo                  return tModulo ;
 
 Nurbs			return tNurbs;
@@ -143,8 +152,7 @@ Point                   return tPoint;
 Power                   return tProgression;
 Progression             return tProgression;
 Parametric		return tParametric;
-PostProcessing          return tPostProcessing;
-Print                   return tPrint;
+Printf                  return tPrintf ;
 
 Recombine               return tRecombine;
 Rotate                  return tRotate;
@@ -157,6 +165,7 @@ Save                    return tPhysical;
 Spline                  return tSpline;
 Surface                 return tSurface;
 Symmetry                return tSymmetry;
+Script                  return tScript;
 
 Transfinite             return tTransfinite;
 Translate               return tTranslate;

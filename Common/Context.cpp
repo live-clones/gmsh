@@ -1,4 +1,4 @@
-/* $Id: Context.cpp,v 1.13 2000-12-06 18:28:30 remacle Exp $ */
+/* $Id: Context.cpp,v 1.14 2000-12-06 22:09:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -37,6 +37,15 @@ extern StringXColor PrintOptions_Color[] ;
 
 // STRING OPTIONS
 
+StringXString * Get_StringOptionCategory(char * cat){
+  if     (!strcmp(cat,"General"))        return GeneralOptions_String ;
+  else if(!strcmp(cat,"Geometry"))       return GeometryOptions_String ;
+  else if(!strcmp(cat,"Mesh"))           return MeshOptions_String ;
+  else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_String ;
+  else if(!strcmp(cat,"Print"))          return PrintOptions_String ;
+  else                                   return NULL ;
+}
+
 void Set_DefaultStringOptions(StringXString s[]){
   int i = 0;
   while(s[i].str){
@@ -45,32 +54,36 @@ void Set_DefaultStringOptions(StringXString s[]){
   }
 }
 
-int Set_StringOption(char *str, StringXString s[], char *val){
-  int  i = 0 ;
-
+char ** Get_StringOption(char *str, StringXString s[]){
+  int i = 0;
   while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
   if(!s[i].str)
-    return 0;
-  else{
-    *s[i].ptr = val ;
-    return 1;
-  }
+    return NULL;
+  else
+    return s[i].ptr;
 }
 
-void Print_StringOptions(StringXString s[], FILE *file){
+void Print_StringOptions(StringXString s[], char *prefix, FILE *file){
   int i = 0;
-
   while(s[i].str){
-    fprintf(file, "    %s = \"%s\";\n", s[i].str, *s[i].ptr) ;
+    fprintf(file, "%s%s = \"%s\";\n", prefix, s[i].str, *s[i].ptr) ;
     i++;
   }
 }
 
 // NUMBER OPTIONS
 
+StringXNumber * Get_NumberOptionCategory(char * cat){
+  if     (!strcmp(cat,"General"))        return GeneralOptions_Number ;
+  else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Number ;
+  else if(!strcmp(cat,"Mesh"))           return MeshOptions_Number ;
+  else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Number ;
+  else if(!strcmp(cat,"Print"))          return PrintOptions_Number ;
+  else                                   return NULL ;
+}
+
 void Set_DefaultNumberOptions(StringXNumber s[]){
   int i = 0;
-  
   while(s[i].str){
     switch(s[i].type){
     case GMSH_INT: *(int*)s[i].ptr = (int)s[i].def; break;
@@ -82,32 +95,27 @@ void Set_DefaultNumberOptions(StringXNumber s[]){
   }
 }
 
-int Set_NumberOption(char *str, StringXNumber s[], double val){
+void * Get_NumberOption(char *str, StringXNumber s[], int *type){
   int i = 0;
 
   while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
   if(!s[i].str)
-    return 0;
+    return NULL;
   else{
-    switch(s[i].type){
-    case GMSH_INT: *(int*)s[i].ptr = (int)val; break;
-    case GMSH_LONG: *(long*)s[i].ptr = (long)val; break;
-    case GMSH_FLOAT: *(float*)s[i].ptr = (float)val; break;
-    case GMSH_DOUBLE: *(double*)s[i].ptr = (double)val; break;
-    }
-    return 1;
+    *type = s[i].type ;
+    return s[i].ptr;
   }
 }
 
-void Print_NumberOptions(StringXNumber s[], FILE *file){
+void Print_NumberOptions(StringXNumber s[], char *prefix, FILE *file){
   int i = 0;
-
   while(s[i].str){
+    fprintf(file, "%s%s = ", prefix, s[i].str);
     switch(s[i].type){
-    case GMSH_INT : fprintf(file, "    %s = %d;\n", s[i].str, *(int*)s[i].ptr); break;
-    case GMSH_LONG : fprintf(file, "    %s = %ld;\n", s[i].str, *(long*)s[i].ptr); break;
-    case GMSH_FLOAT : fprintf(file, "    %s = %g;\n", s[i].str, *(float*)s[i].ptr); break;
-    case GMSH_DOUBLE : fprintf(file, "    %s = %g;\n", s[i].str, *(double*)s[i].ptr); break;
+    case GMSH_INT : fprintf(file, "%d;\n", *(int*)s[i].ptr); break;
+    case GMSH_LONG : fprintf(file, "%ld;\n", *(long*)s[i].ptr); break;
+    case GMSH_FLOAT : fprintf(file, "%g;\n", *(float*)s[i].ptr); break;
+    case GMSH_DOUBLE : fprintf(file, "%g;\n", *(double*)s[i].ptr); break;
     }
     i++;
   }
@@ -115,6 +123,15 @@ void Print_NumberOptions(StringXNumber s[], FILE *file){
 
 
 // ARRAY OPTIONS
+
+StringXArray * Get_ArrayOptionCategory(char * cat){
+  if     (!strcmp(cat,"General"))        return GeneralOptions_Array ;
+  else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Array ;
+  else if(!strcmp(cat,"Mesh"))           return MeshOptions_Array ;
+  else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Array ;
+  else if(!strcmp(cat,"Print"))          return PrintOptions_Array ;
+  else                                   return NULL ;
+}
 
 void Set_DefaultArrayOptions(StringXArray s[]){
   int i = 0;
@@ -150,48 +167,21 @@ void Set_DefaultArrayOptions(StringXArray s[]){
   }
 }
 
-int Set_ArrayOption(char *str, StringXArray s[], double *val){
+void * Get_ArrayOption(char *str, StringXArray s[], int *type){
   int i = 0;
-
   while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
   if(!s[i].str)
-    return 0;
+    return NULL;
   else{
-    switch(s[i].type){
-    case GMSH_INT: 
-      ((int*)s[i].ptr)[0] = (int)val[0]; 
-      ((int*)s[i].ptr)[1] = (int)val[1]; 
-      ((int*)s[i].ptr)[2] = (int)val[2]; 
-      ((int*)s[i].ptr)[3] = (int)val[3]; 
-      break;
-    case GMSH_LONG: 
-      ((long*)s[i].ptr)[0] = (long)val[0]; 
-      ((long*)s[i].ptr)[1] = (long)val[1]; 
-      ((long*)s[i].ptr)[2] = (long)val[2]; 
-      ((long*)s[i].ptr)[3] = (long)val[3]; 
-      break;
-    case GMSH_FLOAT: 
-      ((float*)s[i].ptr)[0] = (float)val[0]; 
-      ((float*)s[i].ptr)[1] = (float)val[1]; 
-      ((float*)s[i].ptr)[2] = (float)val[2]; 
-      ((float*)s[i].ptr)[3] = (float)val[3]; 
-      break;
-    case GMSH_DOUBLE: 
-      ((double*)s[i].ptr)[0] = (double)val[0]; 
-      ((double*)s[i].ptr)[1] = (double)val[1]; 
-      ((double*)s[i].ptr)[2] = (double)val[2]; 
-      ((double*)s[i].ptr)[3] = (double)val[3]; 
-      break;
-    }
-    return 1;
+    *type = s[i].type ;
+    return s[i].ptr;
   }
 }
 
-void Print_ArrayOptions(StringXArray s[], FILE *file){
+void Print_ArrayOptions(StringXArray s[], char *prefix, FILE *file){
   int i = 0;
-
   while(s[i].str){
-    fprintf(file, "    %s = {", s[i].str);
+    fprintf(file, "%s%s = {", prefix, s[i].str);
     switch(s[i].type){
     case GMSH_INT : 
       fprintf(file, "%d,%d,%d,%d};\n", 
@@ -221,9 +211,17 @@ void Print_ArrayOptions(StringXArray s[], FILE *file){
 
 // COLORS
 
+StringXColor * Get_ColorOptionCategory(char * cat){
+  if     (!strcmp(cat,"General"))        return GeneralOptions_Color ;
+  else if(!strcmp(cat,"Geometry"))       return GeometryOptions_Color ;
+  else if(!strcmp(cat,"Mesh"))           return MeshOptions_Color ;
+  else if(!strcmp(cat,"PostProcessing")) return PostProcessingOptions_Color ;
+  else if(!strcmp(cat,"Print"))          return PrintOptions_Color ;
+  else                                   return NULL ;
+}
+
 void Set_DefaultColorOptions(StringXColor s[], int num){
   int i = 0;
-
   while(s[i].str){
     switch(num){
     case 0 : *s[i].ptr = s[i].def1; break;
@@ -234,31 +232,25 @@ void Set_DefaultColorOptions(StringXColor s[], int num){
   }
 }
 
-int Set_ColorOption(char *str, StringXColor s[], unsigned int val) {
-  int  i = 0 ;
-
+unsigned int * Get_ColorOption(char *str, StringXColor s[]) {
+  int i = 0;
   while ((s[i].str != NULL) && (strcmp(s[i].str, str))) i++ ;
   if(!s[i].str)
-    return 0;
-  else{
-    *s[i].ptr = val ;
-    return 1;
-  }
+    return NULL;
+  else
+    return s[i].ptr;
 }
 
-void Print_ColorOptions(StringXColor s[], FILE *file){
+void Print_ColorOptions(StringXColor s[], char *prefix, FILE *file){
   int i = 0;
-
-  fprintf(file, "    Color {\n");
   while(s[i].str){
-    fprintf(file, "      %s = {%d,%d,%d};\n", 
-	    s[i].str,
+    fprintf(file, "%sColor.%s = {%d,%d,%d};\n", 
+	    prefix, s[i].str,
 	    UNPACK_RED(*s[i].ptr),
 	    UNPACK_GREEN(*s[i].ptr),
 	    UNPACK_BLUE(*s[i].ptr));
     i++;
   }
-  fprintf(file, "    }\n");
 }
 
 int Get_ColorForString(StringX4Int SX4I[], int alpha, 
@@ -350,43 +342,32 @@ void Init_Context(void){
 
 void Print_Context(FILE *file){
 
-  fprintf(file, "Options{\n");
-
-  fprintf(file, "  General{\n");
-  Print_StringOptions(GeneralOptions_String, file);
-  Print_NumberOptions(GeneralOptions_Number, file);
-  Print_ArrayOptions(GeneralOptions_Array, file);
-  Print_ColorOptions(GeneralOptions_Color, file);
-  fprintf(file, "  }\n");
-
-  fprintf(file, "  Geometry{\n");
-  Print_StringOptions(GeometryOptions_String, file);
-  Print_NumberOptions(GeometryOptions_Number, file);
-  Print_ArrayOptions(GeometryOptions_Array, file);
-  Print_ColorOptions(GeometryOptions_Color, file);
-  fprintf(file, "  }\n");
-
-  fprintf(file, "  Mesh{\n");
-  Print_StringOptions(MeshOptions_String, file);
-  Print_NumberOptions(MeshOptions_Number, file);
-  Print_ArrayOptions(MeshOptions_Array, file);
-  Print_ColorOptions(MeshOptions_Color, file);
-  fprintf(file, "  }\n");
-
-  fprintf(file, "  PostProcessing{\n");
-  Print_StringOptions(PostProcessingOptions_String, file);
-  Print_NumberOptions(PostProcessingOptions_Number, file);
-  Print_ArrayOptions(PostProcessingOptions_Array, file);
-  Print_ColorOptions(PostProcessingOptions_Color, file);
-  fprintf(file, "  }\n");
-
-  fprintf(file, "  Print{\n");
-  Print_StringOptions(PrintOptions_String, file);
-  Print_NumberOptions(PrintOptions_Number, file);
-  Print_ArrayOptions(PrintOptions_Array, file);
-  Print_ColorOptions(PrintOptions_Color, file);
-  fprintf(file, "  }\n");
-
+  fprintf(file, "Options{\n\n");
+  Print_StringOptions(GeneralOptions_String, "  General.", file);
+  Print_NumberOptions(GeneralOptions_Number, "  General.", file);
+  Print_ArrayOptions(GeneralOptions_Array, "  General.", file);
+  Print_ColorOptions(GeneralOptions_Color, "  General.", file);
+  fprintf(file, "  \n");
+  Print_StringOptions(GeometryOptions_String, "  Geometry.", file);
+  Print_NumberOptions(GeometryOptions_Number, "  Geometry.", file);
+  Print_ArrayOptions(GeometryOptions_Array, "  Geometry.", file);
+  Print_ColorOptions(GeometryOptions_Color, "  Geometry.", file);
+  fprintf(file, "  \n");
+  Print_StringOptions(MeshOptions_String, "  Mesh.", file);
+  Print_NumberOptions(MeshOptions_Number, "  Mesh.", file);
+  Print_ArrayOptions(MeshOptions_Array, "  Mesh.", file);
+  Print_ColorOptions(MeshOptions_Color, "  Mesh.", file);
+  fprintf(file, "  \n");
+  Print_StringOptions(PostProcessingOptions_String, "  PostProcessing.", file);
+  Print_NumberOptions(PostProcessingOptions_Number, "  PostProcessing.", file);
+  Print_ArrayOptions(PostProcessingOptions_Array, "  PostProcessing.", file);
+  Print_ColorOptions(PostProcessingOptions_Color, "  PostProcessing.", file);
+  fprintf(file, "  \n");
+  Print_StringOptions(PrintOptions_String, "  Print.", file);
+  Print_NumberOptions(PrintOptions_Number, "  Print.", file);
+  Print_ArrayOptions(PrintOptions_Array, "  Print.", file);
+  Print_ColorOptions(PrintOptions_Color, "  Print.", file);
+  fprintf(file, "  \n");
   fprintf(file, "}\n");
 }
 

@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.15 2000-12-06 18:28:30 remacle Exp $ */
+/* $Id: Context.h,v 1.16 2000-12-06 22:09:53 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -180,21 +180,25 @@ typedef struct {
   unsigned int def1, def2, def3 ;
 } StringXColor ;
 
+StringXString * Get_StringOptionCategory(char * cat);
+StringXNumber * Get_NumberOptionCategory(char * cat);
+StringXArray * Get_ArrayOptionCategory(char * cat);
+StringXColor * Get_ColorOptionCategory(char * cat);
 
 void Set_DefaultStringOptions(StringXString s[]);
 void Set_DefaultNumberOptions(StringXNumber s[]);
 void Set_DefaultArrayOptions(StringXArray s[]);
 void Set_DefaultColorOptions(StringXColor s[], int num);
 
-int Set_StringOption(char *str, StringXString s[], char *val);
-int Set_NumberOption(char *str, StringXNumber s[], double val);
-int Set_ArrayOption(char *str, StringXArray s[], double *val);
-int Set_ColorOption(char *str, StringXColor s[], unsigned int val);
+char ** Get_StringOption(char *str, StringXString s[]);
+void * Get_NumberOption(char *str, StringXNumber s[], int *type);
+void * Get_ArrayOption(char *str, StringXArray s[], int *type);
+unsigned int * Get_ColorOption(char *str, StringXColor s[]);
 
-void Print_StringOptions(StringXString s[], FILE *file);
-void Print_NumberOptions(StringXNumber s[], FILE *file);
-void Print_ArrayOptions(StringXArray s[], FILE *file);
-void Print_ColorOptions(StringXArray s[], FILE *file);
+void Print_StringOptions(StringXString s[], char *prefix, FILE *file);
+void Print_NumberOptions(StringXNumber s[], char *prefix, FILE *file);
+void Print_ArrayOptions(StringXArray s[], char *prefix, FILE *file);
+void Print_ColorOptions(StringXArray s[], char *prefix, FILE *file);
 
 void Init_Colors (int num);
 void Init_Context (void);
