@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.29 2004-05-08 00:19:47 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.30 2004-05-13 00:50:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ void ExportLcFieldOnVolume(Mesh * M, char *filename)
     List_T *ll = Tree2List(vol->Simplexes);
     for(int j = 0; j < List_Nbr(ll); j++) {
       List_Read(ll, j, &simp);
-      simp->ExportLcField(f);
+      simp->ExportLcField(f, 3);
     }
     List_Delete(ll);
   }
@@ -75,7 +75,7 @@ void ExportLcFieldOnSurfaces(Mesh * M, char *filename)
     List_T *ll = Tree2List(surf->Simplexes);
     for(int j = 0; j < List_Nbr(ll); j++) {
       List_Read(ll, j, &simp);
-      simp->ExportLcField(f);
+      simp->ExportLcField(f, 2);
     }
     List_Delete(ll);
   }

@@ -60,7 +60,7 @@ class Simplex : public Element {
   bool SwapEdge (int iFac);
   bool SwapFace (int iFac, List_T *newsimp, List_T *delsimp);
   bool ExtractOppositeEdges ( int iFac, Vertex *p[2], Vertex *q[2]);
-  void ExportLcField (FILE *f);
+  void ExportLcField (FILE *f, int dim=3);
   void Center_Ellipsum_3D (double m[3][3]);
   double GammaShapeMeasure ();
   double RhoShapeMeasure ();

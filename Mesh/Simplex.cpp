@@ -1,4 +1,4 @@
-// $Id: Simplex.cpp,v 1.30 2004-05-07 21:13:34 geuzaine Exp $
+// $Id: Simplex.cpp,v 1.31 2004-05-13 00:50:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -589,22 +589,24 @@ int Simplex::Pt_In_Simplex_2D(Vertex * v)
   return 1;
 }
 
-void Simplex::ExportLcField(FILE * f)
+void Simplex::ExportLcField(FILE * f, int dim)
 {
-  if(!V[3]) {
+  if(!V[2])
+    fprintf(f, "SL(%f,%f,%f,%f,%f,%f){%12.5E,%12.5E};\n",
+            V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+            V[1]->Pos.Z, V[0]->lc, V[1]->lc);
+  else if(!V[3])
     fprintf(f, "ST(%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E};\n",
             V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
             V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[0]->lc,
             V[1]->lc, V[2]->lc);
-  }
-  else {
+  else
     fprintf(f,
-            "SS(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
-            V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
-            V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
-            V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
-  }
-
+	    "%s(%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f){%12.5E,%12.5E,%12.5E,%12.5E};\n",
+	    (dim == 3) ? "SS" : "SQ",
+	    V[0]->Pos.X, V[0]->Pos.Y, V[0]->Pos.Z, V[1]->Pos.X, V[1]->Pos.Y,
+	    V[1]->Pos.Z, V[2]->Pos.X, V[2]->Pos.Y, V[2]->Pos.Z, V[3]->Pos.X,
+	    V[3]->Pos.Y, V[3]->Pos.Z, V[0]->lc, V[1]->lc, V[2]->lc, V[3]->lc);
 }
 
 double Simplex::AireFace(Vertex * V[3])
