@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.143 2004-10-24 19:49:09 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.144 2004-10-25 17:02:19 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -2204,14 +2204,17 @@ Gmsh's post-processing module can handle multiple scalar, vector or tensor
 data sets along with the geometry and the mesh. The data sets should be
 given in one of Gmsh's post-processing file formats described in @ref{File
 formats}. Once loaded into Gmsh, scalar fields can be displayed as iso-value
-lines and surfaces or color maps, whereas vector and tensor fields can be
-represented either by three-dimensional arrows or by displacement maps. In
-Gmsh's jargon, each data set is called a ``view'', and can arbitrarily mix
-all types of elements and fields. Each view is given a name, and can be
+lines and surfaces or color maps, whereas vector fields can be represented
+either by three-dimensional arrows or by displacement maps. (Tensor fields
+are currently displayed as Von-Mises effective stresses. To display other
+(combinations of) components, use @code{Plugin(Extract)}: see
+@ref{Post-processing plugins}.) 
+
+In Gmsh's jargon, each data set is called a ``view'', and can arbitrarily
+mix all types of elements and fields. Each view is given a name, and can be
 manipulated either individually (each view has its own button in the GUI and
-can be referred to by its index in the scripting language) or globally (see
-the @code{PostProcessing.Link} option in @ref{Post-processing
-options}).
+can be referred to by its index in a script) or globally (see the
+@code{PostProcessing.Link} option in @ref{Post-processing options}).
 
 By default, Gmsh treats all post-processing views as three-dimensional
 plots, i.e., draws the scalar, vector and tensor primitives (points, lines,
@@ -2303,11 +2306,11 @@ Saves the the @var{expression}-th post-processing view in a file named
 Creates a new post-processing view, named @code{"@var{string}"}. This is the
 easiest way to create a post-processing view, but also the least efficient
 (the view is read through Gmsh's script parser, which can become a bit slow
-if the view is very large---e.g., with more than 500,000 elements).  Though,
+if the view is very large---e.g., with one million elements). Nevertheless,
 this ``parsed'' post-processing format (explained in detail in @ref{Parsed
 post-processing file format}) is very powerful, since all the values are
 @var{expressions}. Two other formats, better suited for very large data
-sets, are described in @ref{ASCII post-processing file format} and
+sets, are described in @ref{ASCII post-processing file format}, and
 @ref{Binary post-processing file format}.
 @end ftable
 
