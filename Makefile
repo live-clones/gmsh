@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.331 2004-04-15 02:13:22 geuzaine Exp $
+# $Id: Makefile,v 1.332 2004-04-15 03:04:48 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -24,7 +24,7 @@ include variables
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 51
 GMSH_PATCH_VERSION = 5
-GMSH_EXTRA_VERSION = 
+GMSH_EXTRA_VERSION = "-cvs"
 
 GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
 
@@ -74,7 +74,7 @@ source-common:
 
 source: source-common
 	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-           NR Triangle/triangle.* utils/commercial
+          NR Triangle/triangle.* utils/commercial
 	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 source-nightly:
@@ -86,8 +86,8 @@ source-nightly:
 
 source-commercial: source-common
 	cd gmsh-${GMSH_VERSION} && rm -rf CVS */CVS */*/CVS */.globalrc ${GMSH_VERSION_FILE}\
-           Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
-           utils/commercial
+          Triangle/triangle.* TODO *.spec doc/gmsh.html doc/FAQ doc/README.cvs\
+          utils/commercial
 	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
 	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
 	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp
@@ -168,22 +168,28 @@ tgz:
 
 minizip:
 	tar jcvf gmsh-`date "+%Y.%m.%d"`.tar.bz2 \
-        `ls Makefile */Makefile */*.[chyl] */*.[ch]pp */*.rc */*.res */*.ico`
+          `ls Makefile */Makefile */*.[chyl] */*.[ch]pp */*.rc */*.res */*.ico`
 
-distrib-msg:
+distrib-pre:
+	mv -f Makefile Makefile.distrib
+	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION =/g"\
+          Makefile.distrib > Makefile
+
+distrib-post:
+	mv -f Makefile.distrib Makefile
 	@echo "********************************************************************"
 	@echo "Remember to change -ljpeg, etc. to /usr/lib/libjpeg.a, etc. in"
 	@echo "./variables and relink if the list below contains non-standard"
 	@echo "dynamic libs and you want to distribute a portable binary:"
 	@echo "********************************************************************"
 
-distrib-unix: clean all package-unix distrib-msg
+distrib-unix: clean distrib-pre all package-unix distrib-post
 	ldd bin/gmsh
 
-distrib-win: clean all package-win distrib-msg
+distrib-win: clean distrib-pre all package-win distrib-post
 	objdump -p bin/gmsh.exe | grep DLL
 
-distrib-mac: clean all package-mac distrib-msg
+distrib-mac: clean distrib-pre all package-mac distrib-post
 	${POSTBUILD}
 	otool -L bin/gmsh
 
