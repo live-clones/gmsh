@@ -433,7 +433,7 @@ StringXNumber MeshOptions_Number[] = {
     "Number of tetrahedra in the current mesh" },
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh" },
-  { F, "NbPrims" , opt_mesh_nb_prisms , 0. , 
+  { F, "NbPrisms" , opt_mesh_nb_prisms , 0. , 
     "Number of prisms in the current mesh" },
   { F, "NbPyramids" , opt_mesh_nb_pyramids , 0. , 
     "Number of pyramids in the current mesh" },
