@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.152 2004-05-12 20:16:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.153 2004-05-15 09:19:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -209,7 +209,7 @@ void Print_Options(int num, int level, int diff, char *filename)
     fprintf(file, "// not supposed to edit it manually, but of course you\n");
     fprintf(file, "// can. This file will be entirely rewritten every time\n");
     fprintf(file, "// you quit Gmsh if the option 'General.SaveSession' is\n");
-    fprintf(file, "// set. If this file isn't found, defaults are used.\n");
+    fprintf(file, "// set.\n");
     fprintf(file, "//\n");
   }
 
@@ -221,7 +221,7 @@ void Print_Options(int num, int level, int diff, char *filename)
     fprintf(file, "// this file by hand, or let Gmsh generate it for you (with\n");
     fprintf(file, "// 'Tools->Options->Save'). This file can also be automatically\n");
     fprintf(file, "// saved every time you quit Gmsh if the option 'General.SaveOptions'\n");
-    fprintf(file, "// is set. If this file isn't found, defaults are used.\n");
+    fprintf(file, "// is set.\n");
     fprintf(file, "//\n");
   }
 
