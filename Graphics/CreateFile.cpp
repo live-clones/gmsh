@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.45 2003-09-16 23:50:58 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.46 2003-09-17 17:51:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -241,8 +241,8 @@ void CreateOutputFile(char *name, int format)
       return;
     }
     gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
-                   GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
-		   0, 0, 0, 1, fp, name);
+                   GL2PS_TEX, GL2PS_NO_SORT, GL2PS_SILENT, GL_RGBA, 0, NULL, 
+		   0, 0, 0, 1000, fp, name);
     CTX.print.gl_fonts = 0;
     FillBuffer();
     CTX.print.gl_fonts = 1;
