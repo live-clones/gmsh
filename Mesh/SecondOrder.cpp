@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.16 2003-06-14 04:37:42 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.17 2003-06-14 16:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,7 @@ extern Mesh *THEM;
 static Surface *THES;
 static Curve *THEC;
 
-Vertex *middlecurve(Vertex * v1, Vertex * v2)
+Vertex *oncurve(Vertex * v1, Vertex * v2)
 {
   Vertex v, *pv;
 
@@ -128,11 +128,9 @@ void PutMiddlePoint(void *a, void *b)
   if(ed->newv){
     v = ed->newv;
   }
-  else if((v = middlecurve(ed->V[0], ed->V[1]))){
-    ;
+  else if((v = oncurve(ed->V[0], ed->V[1]))){
   }
   else if((v = onsurface(ed->V[0], ed->V[1]))){
-    ;
   }
   else{
     v = Create_Vertex(++THEM->MaxPointNum,

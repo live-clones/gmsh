@@ -110,7 +110,7 @@ View "comments" {
   T3(0,0.11,0,0){"Hole"};
 };
 
-Color White{ Surface{ 22 }; }
+Color Grey70{ Surface{ 22 }; }
 Color Purple{ Surface{ 24 }; }
 Color Red{ Line{ 1:14 }; }
 Color Yellow{ Line{ 15:20 }; }
