@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.17 2003-01-25 22:33:38 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.18 2003-01-25 22:53:09 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -65,7 +65,7 @@ int Solver(int num, char *args){
     case -1 : Msg(GERROR, "Couldn't create socket '%s'", socket_name); break;
     case -2 : Msg(GERROR, "Couldn't bin socket to name '%s'", socket_name); break;
     case -3 : Msg(GERROR, "Socket listen failed on '%s'", socket_name); break;
-    case -4 : Msg(GERROR, "Solver is not responding (is '%s' correctly installed/in your path?)", 
+    case -4 : Msg(GERROR, "Solver not responding (is '%s' correctly installed/in your path?)", 
 		  SINFO[num].executable_name); break;
     case -5 : Msg(GERROR, "Socket accept failed on '%s'", socket_name); break;
     }
