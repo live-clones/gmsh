@@ -1,4 +1,4 @@
-// $Id: DisplacementRaise.cpp,v 1.19 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: DisplacementRaise.cpp,v 1.20 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -64,11 +64,10 @@ void GMSH_DisplacementRaisePlugin::getInfos(char *author, char *copyright,
          "coordinates of the elements in the view `iView'\n"
          "using the vectorial values (the displacements)\n"
          "stored in the `dTimeStep'-th time step of the\n"
-	 "view `dView'. If `iView' < 0, the plugin is\n"
-	 "run on the current view. If `dView' < 0, the\n"
-	 "plugin looks for the displacements in the\n"
-	 "view located just after `iView' in the view\n"
-	 "list.\n"
+	 "view `dView'. If `iView' < 0, the plugin is run\n"
+	 "on the current view. If `dView' < 0, the plugin\n"
+	 "looks for the displacements in the view located\n"
+	 "just after `iView' in the view list.\n"
 	 "\n"
 	 "Plugin(DisplacementRaise) is executed in-place.\n");
 }

@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.44 2005-01-01 19:35:38 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.45 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -37,9 +37,10 @@ StringXNumber CutPlaneOptions_Number[] = {
   {GMSH_FULLRC, "B", GMSH_CutPlanePlugin::callbackB, 0.},
   {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0.},
   {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01},
-  {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "recurLevel", NULL, 4},
-  {GMSH_FULLRC, "targetError", NULL, 0}
+  {GMSH_FULLRC, "extractVolume", GMSH_CutPlanePlugin::callbackVol, 0},
+  {GMSH_FULLRC, "recurLevel", GMSH_CutPlanePlugin::callbackRecur, 4},
+  {GMSH_FULLRC, "targetError", GMSH_CutPlanePlugin::callbackTarget, 0.},
+  {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
@@ -58,7 +59,7 @@ GMSH_CutPlanePlugin::GMSH_CutPlanePlugin()
 void GMSH_CutPlanePlugin::draw()
 {
 #if defined(HAVE_FLTK)
-  int num = (int)CutPlaneOptions_Number[4].def;
+  int num = (int)CutPlaneOptions_Number[7].def;
   if(num < 0) num = iview;
   Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, num);
   if(!vv) return;
@@ -113,6 +114,24 @@ double GMSH_CutPlanePlugin::callbackD(int num, int action, double value)
 		  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
+double GMSH_CutPlanePlugin::callbackVol(int num, int action, double value)
+{
+  return callback(num, action, value, &CutPlaneOptions_Number[4].def,
+		  1., -1, 1);
+}
+
+double GMSH_CutPlanePlugin::callbackRecur(int num, int action, double value)
+{
+  return callback(num, action, value, &CutPlaneOptions_Number[5].def,
+		  1, 0, 10);
+}
+
+double GMSH_CutPlanePlugin::callbackTarget(int num, int action, double value)
+{
+  return callback(num, action, value, &CutPlaneOptions_Number[6].def,
+		  0.01, 0., 1.);
+}
+
 void GMSH_CutPlanePlugin::getName(char *name) const
 {
   strcpy(name, "Cut Plane");
@@ -126,8 +145,10 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(CutPlane) cuts the view `iView' with\n"
 	 "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"
-	 "`iView' < 0, the plugin is run on the current\n"
-	 "view.\n"
+	 "`extractVolume' is nonzero, the plugin extracts\n"
+	 "the elements on one side of the plane (depending\n"
+	 "on the sign of `extractVolume'). If `iView' < 0,\n"
+	 "the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutPlane) creates one new view.\n");
 }
@@ -156,7 +177,7 @@ double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) c
 
 Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
 {
-  int iView = (int)CutPlaneOptions_Number[4].def;
+  int iView = (int)CutPlaneOptions_Number[7].def;
   _ref[0] = CutPlaneOptions_Number[0].def;
   _ref[1] = CutPlaneOptions_Number[1].def;
   _ref[2] = CutPlaneOptions_Number[2].def;
@@ -164,6 +185,7 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   _valueView = -1;
   _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::PLANE;
+  _extractVolume = (int)CutPlaneOptions_Number[4].def;
   _recurLevel = (int)CutPlaneOptions_Number[5].def;
   _targetError = CutPlaneOptions_Number[6].def;
   

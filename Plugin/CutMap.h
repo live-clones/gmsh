@@ -39,6 +39,9 @@ class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
   StringXNumber* getOption (int iopt);  
   Post_View *execute (Post_View *);
   static double callbackA(int, int, double);
+  static double callbackVol(int, int, double);
+  static double callbackRecur(int, int, double);
+  static double callbackTarget(int, int, double);
 };
 
 #endif

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.75 2005-01-01 19:35:39 geuzaine Exp $
+# $Id: Makefile,v 1.76 2005-01-03 04:09:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -210,7 +210,7 @@ DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h DecomposeInSimplex.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
-  ../DataStr/Malloc.h
+  ../DataStr/Malloc.h ../Numeric/Numeric.h
 Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \

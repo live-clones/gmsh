@@ -32,10 +32,20 @@ public:
   virtual double levelset(double x, double y, double z, double val) const = 0;
 protected:
   double _ref[3], _targetError;
-  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel;  
+  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel, _extractVolume;  
   ORIENTATION _orientation;
 private:
   double _invert;
+  void addElement(int timeStep, int np, int nbEdg, int dNbComp,
+		  double xp[12], double yp[12], double zp[12],
+		  double valp[12][9], vector<Post_View *> out);
+  void evalLevelset(int nbNod, int nbComp,
+		    double *x, double *y, double *z, double *val,
+		    double *levels, double *scalarVal);
+  void nonZeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
+		       double *x, double *y, double *z, 
+		       double *iVal, int iNbComp, double *dVal, int dNbComp,
+		       vector<Post_View*> out);
   int zeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
 		   double *x, double *y, double *z, 
 		   double *iVal, int iNbComp, double *dVal, int dNbComp,

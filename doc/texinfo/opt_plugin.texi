@@ -1,14 +1,13 @@
 @ftable @code
 @item Plugin(Annotate)
 Plugin(Annotate) adds a text string of size
-`FontSize' in the view `iView'. If `3D' is
-equal to 1, the plugin inserts the string
-in model coordinates at the position (`X',`Y',`Z').
-If `3D' is equal to 0, the plugin inserts the
-string in screen coordinates at the position
-(`X',`Y'), and aligns it according to `Align'.
-If `iView' < 0, the plugin is run on the current
-view.
+`FontSize' in the view `iView'. If `3D' is equal
+to 1, the plugin inserts the string in model
+coordinates at the position (`X',`Y',`Z'). If
+`3D' is equal to 0, the plugin inserts the string
+in screen coordinates at the position (`X',`Y'),
+and aligns it according to `Align'. If `iView'
+< 0, the plugin is run on the current view.
 
 Plugin(Annotate) is executed in-place.
 
@@ -76,14 +75,18 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutMap)
-Plugin(CutMap) extracts the isovalue surface of
-value `A' from the view `iView' and draws the
+Plugin(CutMap) extracts the isosurface of value
+`A' from the view `iView' and draws the
 `dTimeStep'-th value of the view `dView' on this
 isovalue surface. If `iView' < 0, the plugin is
 run on the current view. If `dTimeStep' < 0, the
 plugin uses, for each time step in `iView', the
 corresponding time step in `dView'. If `dView'
 < 0, the plugin uses `iView' as the value source.
+If `extractVolume' is nonzero, the plugin
+extracts the isovolume with values smaller (if
+`extractVolume' > 0) or greater (if `extractVolume'
+< 0) than the isosurface `A'.
 
 Plugin(CutMap) creates as many views as there
 are time steps in `iView'.
@@ -96,12 +99,14 @@ Default value: @code{1}
 Default value: @code{-1}
 @item dView
 Default value: @code{-1}
-@item iView
-Default value: @code{-1}
+@item extractVolume
+Default value: @code{0}
 @item recurLevel
 Default value: @code{4}
 @item targetError
 Default value: @code{0}
+@item iView
+Default value: @code{-1}
 @end table
 
 @item Plugin(CutParametric)
@@ -141,8 +146,10 @@ Default value: @code{-1}
 @item Plugin(CutPlane)
 Plugin(CutPlane) cuts the view `iView' with
 the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If
-`iView' < 0, the plugin is run on the current
-view.
+`extractVolume' is nonzero, the plugin extracts
+the elements on one side of the plane (depending
+on the sign of `extractVolume'). If `iView' < 0,
+the plugin is run on the current view.
 
 Plugin(CutPlane) creates one new view.
 
@@ -156,19 +163,23 @@ Default value: @code{0}
 Default value: @code{0}
 @item D
 Default value: @code{-0.01}
-@item iView
-Default value: @code{-1}
+@item extractVolume
+Default value: @code{0}
 @item recurLevel
 Default value: @code{4}
 @item targetError
 Default value: @code{0}
+@item iView
+Default value: @code{-1}
 @end table
 
 @item Plugin(CutSphere)
 Plugin(CutSphere) cuts the view `iView' with the
 sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.
-If `iView' < 0, the plugin is run on the current
-view.
+If `extractVolume' is nonzero, the plugin extracts
+the elements inside (if `extractVolume' < 0) or
+outside (if `extractVolume' > 0) the sphere. If
+`iView' < 0, the plugin is run on the current view.
 
 Plugin(CutSphere) creates one new view.
 
@@ -182,10 +193,12 @@ Default value: @code{0}
 Default value: @code{0}
 @item R
 Default value: @code{0.25}
-@item iView
-Default value: @code{-1}
+@item extractVolume
+Default value: @code{0}
 @item recurLevel
 Default value: @code{4}
+@item iView
+Default value: @code{-1}
 @end table
 
 @item Plugin(DecomposeInSimplex)
@@ -209,11 +222,10 @@ Plugin(DisplacementRaise) transforms the
 coordinates of the elements in the view `iView'
 using the vectorial values (the displacements)
 stored in the `dTimeStep'-th time step of the
-view `dView'. If `iView' < 0, the plugin is
-run on the current view. If `dView' < 0, the
-plugin looks for the displacements in the
-view located just after `iView' in the view
-list.
+view `dView'. If `iView' < 0, the plugin is run
+on the current view. If `dView' < 0, the plugin
+looks for the displacements in the view located
+just after `iView' in the view list.
 
 Plugin(DisplacementRaise) is executed in-place.
 
@@ -230,15 +242,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Eigenvectors)
-Plugin(Eigenvectors) computes the three
-(right) eigenvectors of each tensor in the
-view `iView' and sorts them according to
-the value of the associated eigenvalues.
-If `ScaleByEigenvalues' is set, each
-eigenvector is scaled by its associated
-eigenvalue. The plugin gives an error if
-the eigenvectors are complex. If `iView'
-< 0, the plugin is run on the current view.
+Plugin(Eigenvectors) computes the three (right)
+eigenvectors of each tensor in the view `iView'
+and sorts them according to the value of the
+associated eigenvalues. If `ScaleByEigenvalues'
+is set, each eigenvector is scaled by its
+associated eigenvalue. The plugin gives an error
+if the eigenvectors are complex. If `iView' < 0,
+the plugin is run on the current view.
 
 Plugin(Eigenvectors) creates three new
 vector views.
@@ -407,8 +418,8 @@ Default value: @code{-1}
 
 @item Plugin(Remove)
 Plugin(Remove) removes the marked items
-from the view `iView'. If `iView' < 0, the
-plugin is run on the current view.
+from the view `iView'. If `iView' < 0, the plugin
+is run on the current view.
 
 Plugin(Remove) is executed in-place.
 

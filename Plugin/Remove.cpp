@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.3 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Remove.cpp,v 1.4 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -70,8 +70,8 @@ void GMSH_RemovePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Remove) removes the marked items\n"
-	 "from the view `iView'. If `iView' < 0, the\n"
-	 "plugin is run on the current view.\n"
+	 "from the view `iView'. If `iView' < 0, the plugin\n"
+	 "is run on the current view.\n"
 	 "\n"
 	 "Plugin(Remove) is executed in-place.\n");
 }

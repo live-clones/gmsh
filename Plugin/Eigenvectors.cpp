@@ -1,4 +1,4 @@
-// $Id: Eigenvectors.cpp,v 1.4 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Eigenvectors.cpp,v 1.5 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -58,15 +58,14 @@ void GMSH_EigenvectorsPlugin::getInfos(char *author, char *copyright, char *help
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Eigenvectors) computes the three\n"
-	 "(right) eigenvectors of each tensor in the\n"
-	 "view `iView' and sorts them according to\n"
-	 "the value of the associated eigenvalues.\n"
-	 "If `ScaleByEigenvalues' is set, each\n"
-	 "eigenvector is scaled by its associated\n"
-	 "eigenvalue. The plugin gives an error if\n"
-	 "the eigenvectors are complex. If `iView'\n"
-	 "< 0, the plugin is run on the current view.\n"
+         "Plugin(Eigenvectors) computes the three (right)\n"
+	 "eigenvectors of each tensor in the view `iView'\n"
+	 "and sorts them according to the value of the\n"
+	 "associated eigenvalues. If `ScaleByEigenvalues'\n"
+	 "is set, each eigenvector is scaled by its\n"
+	 "associated eigenvalue. The plugin gives an error\n"
+	 "if the eigenvectors are complex. If `iView' < 0,\n"
+	 "the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(Eigenvectors) creates three new\n"
 	 "vector views.\n");

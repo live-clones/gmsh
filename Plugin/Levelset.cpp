@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.23 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.24 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -39,39 +39,139 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
   _valueView = -1; // use same view for levelset and field data
   _valueTimeStep = -1; // use same time step in levelset and field data views
   _recurLevel = 4;
-  _targetError = 0;
+  _targetError = 0.;
+  _extractVolume = 0; // to create isovolumes (keep all elements < or > levelset)
   _orientation = GMSH_LevelsetPlugin::NONE;
 }
 
-static void affect(double *xpi, double *ypi, double *zpi, double valpi[12][9], int i,
-		   double *xp, double *yp, double *zp, double valp[12][9], int j,
-		   int nb)
+static void affect(double *xpi, double *ypi, double *zpi, double valpi[12][9], int epi[12],
+		   int i,
+		   double *xp, double *yp, double *zp, double valp[12][9], int ep[12],
+		   int j, int nb)
 {
   xpi[i] = xp[j];
   ypi[i] = yp[j];
   zpi[i] = zp[j];
   for(int k = 0; k < nb; k++)
     valpi[i][k] = valp[j][k];
+  epi[i] = ep[j];
 }
 
-int GMSH_LevelsetPlugin::zeroLevelset(int timeStep, 
-				      int nbNod, int nbEdg, int exn[12][2],
-				      double *x, double *y, double *z, 
-				      double *iVal, int iNbComp,
-				      double *dVal, int dNbComp,
-				      vector<Post_View *> out)
+static void removeIdenticalNodes(int *np, int nbComp, 
+				 double xp[12], double yp[12], double zp[12], 
+				 double valp[12][9], int ep[12])
 {
-  double levels[8], scalarVal[8];
+  double xpi[12], ypi[12], zpi[12], valpi[12][9];
+  int epi[12];
 
-  // compute the value of the levelset function at each node
+  affect(xpi, ypi, zpi, valpi, epi, 0, xp, yp, zp, valp, ep, 0, nbComp);
+  int npi = 1;
+  for(int j = 1; j < *np; j++) {
+    for(int i = 0; i < npi; i++) {
+      if(fabs(xp[j] - xpi[i]) < 1.e-12 &&
+	 fabs(yp[j] - ypi[i]) < 1.e-12 &&
+	 fabs(zp[j] - zpi[i]) < 1.e-12) {
+	break;
+      }
+      if(i == npi-1) {
+	affect(xpi, ypi, zpi, valpi, epi, npi, xp, yp, zp, valp, ep, j, nbComp);
+	npi++;
+	break;
+      }
+    }
+  }
+  for(int i = 0; i < npi; i++)
+    affect(xp, yp, zp, valp, ep, i, xpi, ypi, zpi, valpi, epi, i, nbComp);
+  *np = npi;
+}
+
+static void reorderQuad(int nbComp, 
+			double xp[12], double yp[12], double zp[12], 
+			double valp[12][9], int ep[12])
+{
+  double xpi[1], ypi[1], zpi[1], valpi[1][9];
+  int epi[12];
+  affect(xpi, ypi, zpi, valpi, epi, 0, xp, yp, zp, valp, ep, 3, nbComp);
+  affect(xp, yp, zp, valp, ep, 3, xp, yp, zp, valp, ep, 2, nbComp);
+  affect(xp, yp, zp, valp, ep, 2, xpi, ypi, zpi, valpi, epi, 0, nbComp);
+}
+
+static void reorderPrism(int nbComp, 
+			 double xp[12], double yp[12], double zp[12], 
+			 double valp[12][9], int ep[12],
+			 int nbCut, int exn[12][2])
+{
+  double xpi[6], ypi[6], zpi[6], valpi[6][9];
+  int epi[12];
+
+  if(nbCut == 3){
+    // 3 first nodes come from zero levelset intersection, next 3 are
+    // endpoints of relative edges
+    affect(xpi, ypi, zpi, valpi, epi, 0, xp, yp, zp, valp, ep, 3, nbComp);
+    affect(xpi, ypi, zpi, valpi, epi, 1, xp, yp, zp, valp, ep, 4, nbComp);
+    affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 5, nbComp);
+    for(int i = 0; i < 3; i++){
+      int edgecut = ep[i]-1;
+      for(int j = 0; j < 3; j++){
+	int p = -epi[j]-1;
+	if(exn[edgecut][0] == p || exn[edgecut][1] == p)
+	  affect(xp, yp, zp, valp, ep, 3+i, xpi, ypi, zpi, valpi, epi, j, nbComp);	  
+      }
+    }
+  }
+  else if(nbCut == 4){
+    // 4 first nodes come from zero levelset intersection
+    affect(xpi, ypi, zpi, valpi, epi, 0, xp, yp, zp, valp, ep, 0, nbComp);
+    int edgecut = ep[0]-1;
+    int p0 = -ep[4]-1;
+
+    if(exn[edgecut][0] == p0 || exn[edgecut][1] == p0){
+      affect(xpi, ypi, zpi, valpi, epi, 1, xp, yp, zp, valp, ep, 4, nbComp);
+      if(exn[ep[1]-1][0] == p0 || exn[ep[1]-1][1] == p0){
+	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 1, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 3, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 5, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, nbComp);
+      }
+      else{
+	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 3, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 1, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 5, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, nbComp);
+      }
+    }
+    else{
+      affect(xpi, ypi, zpi, valpi, epi, 1, xp, yp, zp, valp, ep, 5, nbComp);
+      if(exn[ep[1]-1][0] == p0 || exn[ep[1]-1][1] == p0){
+	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 1, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 3, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 4, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, nbComp);
+      }
+      else{
+	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 3, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 1, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 4, nbComp);
+	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, nbComp);
+      }
+    }
+    for(int i = 0; i < 6; i++)
+      affect(xp, yp, zp, valp, ep, i, xpi, ypi, zpi, valpi, epi, i, nbComp);
+  }
+}
+ 
+void GMSH_LevelsetPlugin::evalLevelset(int nbNod, int nbComp,
+				       double *x, double *y, double *z, double *val,
+				       double *levels, double *scalarVal)
+{
   if(_valueIndependent) {
     for(int k = 0; k < nbNod; k++)
       levels[k] = levelset(x[k], y[k], z[k], 0.0);
   }
   else{
     for(int k = 0; k < nbNod; k++) {
-      double *vals = &iVal[iNbComp * k];
-      switch(iNbComp) {
+      double *vals = &val[nbComp * k];
+      switch(nbComp) {
       case 1: // scalar
 	scalarVal[k] = vals[0];
 	break;
@@ -85,10 +185,125 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
       levels[k] = levelset(x[k], y[k], z[k], scalarVal[k]);
     }
   }
+}
+
+void GMSH_LevelsetPlugin::addElement(int timeStep, int np, int nbEdg, int dNbComp,
+				     double xp[12], double yp[12], double zp[12],
+				     double valp[12][9], vector<Post_View *> out)
+{
+  // select the output view
+  Post_View *view = _valueIndependent ? out[0] : out[timeStep];
+  List_T *list;
+  int *nbPtr;
+  switch(np){
+  case 1:
+    if(dNbComp == 1)      { list = view->SP; nbPtr = &view->NbSP; }
+    else if(dNbComp == 3) { list = view->VP; nbPtr = &view->NbVP; }
+    else                  { list = view->TP; nbPtr = &view->NbTP; }
+    break;
+  case 2:
+    if(dNbComp == 1)      { list = view->SL; nbPtr = &view->NbSL; }
+    else if(dNbComp == 3) { list = view->VL; nbPtr = &view->NbVL; }
+    else                  { list = view->TL; nbPtr = &view->NbTL; }
+    break;
+  case 3:
+    if(dNbComp == 1)      { list = view->ST; nbPtr = &view->NbST; }
+    else if(dNbComp == 3) { list = view->VT; nbPtr = &view->NbVT; }
+    else                  { list = view->TT; nbPtr = &view->NbTT; }
+    break;
+  case 4:
+    if(!_extractVolume || nbEdg <= 4){
+      if(dNbComp == 1)      { list = view->SQ; nbPtr = &view->NbSQ; }
+      else if(dNbComp == 3) { list = view->VQ; nbPtr = &view->NbVQ; }
+      else                  { list = view->TQ; nbPtr = &view->NbTQ; }
+    }
+    else{
+      if(dNbComp == 1)      { list = view->SS; nbPtr = &view->NbSS; }
+      else if(dNbComp == 3) { list = view->VS; nbPtr = &view->NbVS; }
+      else                  { list = view->TS; nbPtr = &view->NbTS; }
+    }
+    break;
+  case 5:
+    if(dNbComp == 1)      { list = view->SY; nbPtr = &view->NbSY; }
+    else if(dNbComp == 3) { list = view->VY; nbPtr = &view->NbVY; }
+    else                  { list = view->TY; nbPtr = &view->NbTY; }
+    break;
+  case 6:
+    if(dNbComp == 1)      { list = view->SI; nbPtr = &view->NbSI; }
+    else if(dNbComp == 3) { list = view->VI; nbPtr = &view->NbVI; }
+    else                  { list = view->TI; nbPtr = &view->NbTI; }
+    break;
+  case 8: // should never happen
+    if(dNbComp == 1)      { list = view->SH; nbPtr = &view->NbSH; }
+    else if(dNbComp == 3) { list = view->VH; nbPtr = &view->NbVH; }
+    else                  { list = view->TH; nbPtr = &view->NbTH; }
+    break;
+  default:
+    return;
+  }
+
+  // copy the elements in the output view
+  if(!timeStep || !_valueIndependent) {
+    for(int k = 0; k < np; k++) 
+      List_Add(list, &xp[k]);
+    for(int k = 0; k < np; k++)
+      List_Add(list, &yp[k]);
+    for(int k = 0; k < np; k++)
+      List_Add(list, &zp[k]);
+    (*nbPtr)++;
+  }
+  for(int k = 0; k < np; k++)
+    for(int l = 0; l < dNbComp; l++)
+      List_Add(list, &valp[k][l]);
+}
+
+void GMSH_LevelsetPlugin::nonZeroLevelset(int timeStep, 
+					  int nbNod, int nbEdg, int exn[12][2],
+					  double *x, double *y, double *z, 
+					  double *iVal, int iNbComp,
+					  double *dVal, int dNbComp,
+					  vector<Post_View *> out)
+{
+  double levels[8], scalarVal[8];
   
+  evalLevelset(nbNod, iNbComp, x, y, z, iVal, levels, scalarVal);
+  
+  int add = 1;
+  for(int k = 0; k < nbNod; k++){
+    if((_extractVolume < 0. && levels[k] > 0.) ||
+       (_extractVolume > 0. && levels[k] < 0.)){
+      add = 0;
+      break;
+    }
+  }
+  
+  if(add){
+    double xp[12], yp[12], zp[12], valp[12][9];
+    for(int k = 0; k < nbNod; k++){
+      xp[k] = x[k];
+      yp[k] = y[k];
+      zp[k] = z[k];
+      for(int l = 0; l < dNbComp; l++)
+	valp[k][l] = dVal[dNbComp * k + l];
+    }
+    addElement(timeStep, nbNod, nbEdg, dNbComp, xp, yp, zp, valp, out);
+  }
+}
+
+int GMSH_LevelsetPlugin::zeroLevelset(int timeStep, 
+				      int nbNod, int nbEdg, int exn[12][2],
+				      double *x, double *y, double *z, 
+				      double *iVal, int iNbComp,
+				      double *dVal, int dNbComp,
+				      vector<Post_View *> out)
+{
+  double levels[8], scalarVal[8];
+
+  evalLevelset(nbNod, iNbComp, x, y, z, iVal, levels, scalarVal);
+
   // interpolate the zero levelset and the field to plot on it
   double xp[12], yp[12], zp[12], valp[12][9];
-  int np = 0;
+  int np = 0, ep[12];
   for(int k = 0; k < nbEdg; k++) {
     if(levels[exn[k][0]] * levels[exn[k][1]] <= 0.0) {
       if(iVal && dVal) {
@@ -99,6 +314,7 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
 	for(int l = 0; l < dNbComp; l++)
 	  valp[np][l] = coef * (val2[l] - val1[l]) + val1[l];
       }
+      ep[np] = k+1;
       np++;
     }
   }
@@ -106,48 +322,24 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
   if(!iVal || !dVal)
     return np;
 
-  double xpi[12], ypi[12], zpi[12], valpi[12][9];
-
   // Remove identical nodes (this can happen if an edge actually
-  // belongs to the zero levelset, i.e., if levels[] * levels[] ==
-  // 0). We should be doing this even for np < 4, but it would slow us
-  // down even more... (And we don't really care if some nodes in a
-  // postprocessing element are identical.)
-  if(np > 4) {
-    int npi;
-    affect(xpi, ypi, zpi, valpi, 0, xp, yp, zp, valp, 0, dNbComp);
-    npi = 1;
-    for(int j = 1; j < np; j++) {
-      for(int i = 0; i < npi; i++) {
-	if(fabs(xp[j] - xpi[i]) < 1.e-12 &&
-	   fabs(yp[j] - ypi[i]) < 1.e-12 &&
-	   fabs(zp[j] - zpi[i]) < 1.e-12) {
-	  break;
-	}
-	if(i == npi-1) {
-	  affect(xpi, ypi, zpi, valpi, i+1, xp, yp, zp, valp, j, dNbComp);
-	  npi++;
-	}
-      }
-    }
-    for(int i = 0; i < npi; i++)
-      affect(xp, yp, zp, valp, i, xpi, ypi, zpi, valpi, i, dNbComp);
-    np = npi;
-  }
+  // belongs to the zero levelset, i.e., if levels[] * levels[] == 0)
+  if(np > 1)
+    removeIdenticalNodes(&np, dNbComp, xp, yp, zp, valp, ep);
 
-  // can't deal with this--just return...
-  if(np < 1 || np > 4)
+  if(nbEdg > 4 && np < 3) // 3D input should only lead to 2D output
+    return 0;
+  else if(nbEdg > 1 && np < 2) // 2D input should only lead to 1D output
+    return 0;
+  else if(np < 1 || np > 4) // can't deal with this
     return 0;
 
-  // avoid ``butterflies''
-  if(np == 4) {
-    affect(xpi, ypi, zpi, valpi, 0, xp, yp, zp, valp, 3, dNbComp);
-    affect(xp, yp, zp, valp, 3, xp, yp, zp, valp, 2, dNbComp);
-    affect(xp, yp, zp, valp, 2, xpi, ypi, zpi, valpi, 0, dNbComp);
-  }
+  // avoid "butterflies"
+  if(np == 4)
+    reorderQuad(dNbComp, xp, yp, zp, valp, ep);
       
   // orient the triangles and the quads to get the normals right
-  if(np == 3 || np == 4) {
+  if(!_extractVolume && (np == 3 || np == 4)) {
     if(!timeStep || !_valueIndependent) {
       // test this only once for spatially-fixed views
       double v1[3] = { xp[2] - xp[0], yp[2] - yp[0], zp[2] - zp[0] };
@@ -173,51 +365,40 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
       }
     }
     if(_invert > 0.) {
+      double xpi[12], ypi[12], zpi[12], valpi[12][9];
+      int epi[12];
       for(int k = 0; k < np; k++)
-	affect(xpi, ypi, zpi, valpi, k, xp, yp, zp, valp, k, dNbComp);
+	affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k, dNbComp);
       for(int k = 0; k < np; k++)
-	affect(xp, yp, zp, valp, k, xpi, ypi, zpi, valpi, np-k-1, dNbComp);
+	affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi, np-k-1, dNbComp);
     }
   }
 
-  // select the output view
-  Post_View *view = _valueIndependent ? out[0] : out[timeStep];
-  List_T *list;
-  int *nbPtr;
-  if(np == 1) {
-    if(dNbComp == 1)      { list = view->SP; nbPtr = &view->NbSP; }
-    else if(dNbComp == 3) { list = view->VP; nbPtr = &view->NbVP; }
-    else                  { list = view->TP; nbPtr = &view->NbTP; }
+  // if we compute isovolumes, add the nodes on the chosen side
+  if(_extractVolume){
+    int nbCut = np;
+    for(int k = 0; k < nbNod; k++){
+      if((_extractVolume < 0. && levels[k] < 0.0) ||
+	 (_extractVolume > 0. && levels[k] > 0.0)){
+	xp[np] = x[k];
+	yp[np] = y[k];
+	zp[np] = z[k];
+	for(int l = 0; l < dNbComp; l++)
+	  valp[np][l] = dVal[dNbComp * k + l];
+	ep[np] = -(k+1); // node num!
+	np++;
+      }
+    }
+    removeIdenticalNodes(&np, dNbComp, xp, yp, zp, valp, ep);
+    if(np == 4 && nbEdg <= 4)
+      reorderQuad(dNbComp, xp, yp, zp, valp, ep);
+    if(np == 6)
+      reorderPrism(dNbComp, xp, yp, zp, valp, ep, nbCut, exn);
+    if(np > 8) // can't deal with this
+      return 0;
   }
-  else if(np == 2) {
-    if(dNbComp == 1)      { list = view->SL; nbPtr = &view->NbSL; }
-    else if(dNbComp == 3) { list = view->VL; nbPtr = &view->NbVL; }
-    else                  { list = view->TL; nbPtr = &view->NbTL; }
-  }
-  else if(np == 3) {
-    if(dNbComp == 1)      { list = view->ST; nbPtr = &view->NbST; }
-    else if(dNbComp == 3) { list = view->VT; nbPtr = &view->NbVT; }
-    else                  { list = view->TT; nbPtr = &view->NbTT; }
-  }
-  else{
-    if(dNbComp == 1)      { list = view->SQ; nbPtr = &view->NbSQ; }
-    else if(dNbComp == 3) { list = view->VQ; nbPtr = &view->NbVQ; }
-    else                  { list = view->TQ; nbPtr = &view->NbTQ; }
-  }
-  
-  // copy the elements in the output view
-  if(!timeStep || !_valueIndependent) {
-    for(int k = 0; k < np; k++) 
-      List_Add(list, &xp[k]);
-    for(int k = 0; k < np; k++)
-      List_Add(list, &yp[k]);
-    for(int k = 0; k < np; k++)
-      List_Add(list, &zp[k]);
-    (*nbPtr)++;
-  }
-  for(int k = 0; k < np; k++)
-    for(int l = 0; l < dNbComp; l++)
-      List_Add(list, &valp[k][l]);
+
+  addElement(timeStep, np, nbEdg, dNbComp, xp, yp, zp, valp, out);
   
   return 0;
 }
@@ -263,6 +444,9 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 						     dNbComp * nbNod * dTS);
 	  zeroLevelset(iTS, nbNod, nbEdg, exn, x, y, z, 
 		       iVal, iNbComp, dVal, dNbComp, out);
+	  if(_extractVolume)
+	    nonZeroLevelset(iTS, nbNod, nbEdg, exn, x, y, z, 
+			    iVal, iNbComp, dVal, dNbComp, out);
 	}
       }
     }
@@ -299,7 +483,24 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 		dDec.decompose(k, x, y, z, dVal, xNew, yNew, zNew, dValNew);
 		zeroLevelset(iTS, nbNodNew, nbEdgNew, (nbNodNew == 4) ? exnTet : exnTri, 
 			     xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
+		if(_extractVolume)
+		  nonZeroLevelset(iTS, nbNodNew, nbEdgNew, (nbNodNew == 4) ? exnTet : exnTri, 
+				  xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
 	      }
+	    }
+	  }
+	}
+	else if(_extractVolume){
+	  for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
+	    int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
+	    // don't compute the zero levelset of the value view
+	    if(dTimeStep < 0 || iView != dView || dTS != iTS) {
+	      double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod + 
+							 iNbComp * nbNod * iTS); 
+	      double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod + 
+							 dNbComp * nbNod * dTS);
+	      nonZeroLevelset(iTS, nbNod, nbEdg, exn, x, y, z, 
+			      iVal, iNbComp, dVal, dNbComp, out);
 	    }
 	  }
 	}
@@ -313,21 +514,27 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 	  if(dTimeStep < 0 || iView != dView || dTS != iTS) {
 	    double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod +
 						       iNbComp * nbNod * iTS); 
+	    double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod +
+						       dNbComp * nbNod * dTS);
 	    if(zeroLevelset(iTS, nbNod, nbEdg, exn, x, y, z, iVal, iNbComp, 
 			    NULL, 0, out)) {
-	      double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod +
-							 dNbComp * nbNod * dTS);
 	      for(int k = 0; k < iDec.numSimplices(); k++) {
 		iDec.decompose(k, x, y, z, iVal, xNew, yNew, zNew, iValNew);
 		dDec.decompose(k, x, y, z, dVal, xNew, yNew, zNew, dValNew);
 		zeroLevelset(iTS, nbNodNew, nbEdgNew, (nbNodNew == 4) ? exnTet : exnTri, 
 			     xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
+		if(_extractVolume)
+		  nonZeroLevelset(iTS, nbNodNew, nbEdgNew, (nbNodNew == 4) ? exnTet : exnTri, 
+				  xNew, yNew, zNew, iValNew, iNbComp, dValNew, dNbComp, out);
 	      }
 	    }
+	    else if(_extractVolume)
+	      nonZeroLevelset(iTS, nbNod, nbEdg, exn, x, y, z, 
+			      iVal, iNbComp, dVal, dNbComp, out);
 	  }
 	}
       }
-
+      
       delete [] iValNew;
       delete [] dValNew;
     }
@@ -351,7 +558,6 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   if (v->adaptive && v->NbSH)
       v->setAdaptiveResolutionLevel ( _recurLevel , this );
   
-
   if(_valueView < 0) {
     w = v;
   }

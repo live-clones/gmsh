@@ -45,6 +45,8 @@ public:
   static double callbackY(int, int, double);
   static double callbackZ(int, int, double);
   static double callbackR(int, int, double);
+  static double callbackVol(int, int, double);
+  static double callbackRecur(int, int, double);
   static void draw();
 };
 

@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.16 2005-01-01 19:35:38 geuzaine Exp $
+// $Id: DecomposeInSimplex.cpp,v 1.17 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Views.h"
 #include "Context.h"
 #include "Malloc.h"
+#include "Numeric.h"
 
 extern Context_T CTX;
 
@@ -200,11 +201,32 @@ void DecomposeInSimplex::reorder(int map[4], int n,
     zn[i] = z[map[i]];
   }
 
+  int map2[4] = {map[0], map[1], map[2], map[3]};
+#if 0
+  // make sure to create tets with positive volume?
+  if(n == 4){ // tets
+    double mat[3][3];
+    mat[0][0] = xn[1] - xn[0]; mat[0][1] = xn[2] - xn[0]; mat[0][2] = xn[3] - xn[0];
+    mat[1][0] = yn[1] - yn[0]; mat[1][1] = yn[2] - yn[0]; mat[1][2] = yn[3] - yn[0];
+    mat[2][0] = zn[1] - zn[0]; mat[2][1] = zn[2] - zn[0]; mat[2][2] = zn[3] - zn[0];
+    if(det3x3(mat) < 0.){
+      map2[0] = map[1];
+      map2[1] = map[0];
+      xn[0] = x[map2[0]];
+      yn[0] = y[map2[0]];
+      zn[0] = z[map2[0]];
+      xn[1] = x[map2[1]];
+      yn[1] = y[map2[1]];
+      zn[1] = z[map2[1]];
+    }
+  }
+#endif
+
   for(int ts = 0; ts < _numTimeSteps; ts++)
     for(int i = 0; i < n; i++) {
       for(int j = 0; j < _numComponents; j++)
 	valn[ts*n*_numComponents + i*_numComponents + j] = 
-	  val[ts*_numNodes*_numComponents + map[i]*_numComponents + j];
+	  val[ts*_numNodes*_numComponents + map2[i]*_numComponents + j];
   }
 }
 

@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.41 2005-01-01 19:35:38 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.42 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -36,8 +36,9 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0.},
   {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0.},
   {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25},
-  {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "recurLevel", NULL, 4}
+  {GMSH_FULLRC, "extractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
+  {GMSH_FULLRC, "recurLevel", GMSH_CutSpherePlugin::callbackRecur, 4},
+  {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
@@ -117,6 +118,18 @@ double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
 		  CTX.lc/200., 0., 2 * CTX.lc);
 }
 
+double GMSH_CutSpherePlugin::callbackVol(int num, int action, double value)
+{
+  return callback(num, action, value, &CutSphereOptions_Number[4].def,
+		  1., -1., 1.);
+}
+
+double GMSH_CutSpherePlugin::callbackRecur(int num, int action, double value)
+{
+  return callback(num, action, value, &CutSphereOptions_Number[5].def,
+		  1, 0, 10);
+}
+
 void GMSH_CutSpherePlugin::getName(char *name) const
 {
   strcpy(name, "Cut Sphere");
@@ -130,8 +143,10 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(CutSphere) cuts the view `iView' with the\n"
 	 "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
-	 "If `iView' < 0, the plugin is run on the current\n"
-	 "view.\n"
+	 "If `extractVolume' is nonzero, the plugin extracts\n"
+	 "the elements inside (if `extractVolume' < 0) or\n"
+	 "outside (if `extractVolume' > 0) the sphere. If\n"
+	 "`iView' < 0, the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutSphere) creates one new view.\n");
 }
@@ -163,10 +178,11 @@ double GMSH_CutSpherePlugin::levelset(double x, double y, double z,
 
 Post_View *GMSH_CutSpherePlugin::execute(Post_View * v)
 {
-  int iView = (int)CutSphereOptions_Number[4].def;
+  int iView = (int)CutSphereOptions_Number[6].def;
   _ref[0] = CutSphereOptions_Number[0].def;
   _ref[1] = CutSphereOptions_Number[1].def;
   _ref[2] = CutSphereOptions_Number[2].def;
+  _extractVolume = (int)CutSphereOptions_Number[4].def;
   _recurLevel = (int)CutSphereOptions_Number[5].def;
 
   _valueIndependent = 1;

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.46 2005-01-01 19:35:37 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.47 2005-01-03 04:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -29,9 +29,10 @@ StringXNumber CutMapOptions_Number[] = {
   {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 1.},
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
-  {GMSH_FULLRC, "iView", NULL, -1.},
-  {GMSH_FULLRC, "recurLevel", NULL, 4},
-  {GMSH_FULLRC, "targetError", NULL, 0}
+  {GMSH_FULLRC, "extractVolume", GMSH_CutMapPlugin::callbackVol, 0.},
+  {GMSH_FULLRC, "recurLevel", GMSH_CutMapPlugin::callbackRecur, 4},
+  {GMSH_FULLRC, "targetError", GMSH_CutMapPlugin::callbackTarget, 0},
+  {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
@@ -51,7 +52,7 @@ double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
 {
   double min = 0., max = 1.;
   if(action > 0){
-    int iview = (int)CutMapOptions_Number[3].def;
+    int iview = (int)CutMapOptions_Number[6].def;
     if(iview < 0) iview = num;
     Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, iview);
     if(vv){
@@ -68,6 +69,39 @@ double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
   return 0.;
 }
 
+double GMSH_CutMapPlugin::callbackVol(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return 1.;
+  case 2: return -1.;
+  case 3: return 1.;
+  default: break;
+  }
+  return 0.;
+}
+
+double GMSH_CutMapPlugin::callbackRecur(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return 1.;
+  case 2: return 0.;
+  case 3: return 10.;
+  default: break;
+  }
+  return 0.;
+}
+
+double GMSH_CutMapPlugin::callbackTarget(int num, int action, double value)
+{
+  switch(action){ // configure the input field
+  case 1: return 0.01;
+  case 2: return 0.;
+  case 3: return 1.;
+  default: break;
+  }
+  return 0.;
+}
+
 void GMSH_CutMapPlugin::getName(char *name) const
 {
   strcpy(name, "Cut Map");
@@ -79,14 +113,18 @@ void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutMap) extracts the isovalue surface of\n"
-         "value `A' from the view `iView' and draws the\n"
+         "Plugin(CutMap) extracts the isosurface of value\n"
+         "`A' from the view `iView' and draws the\n"
 	 "`dTimeStep'-th value of the view `dView' on this\n"
 	 "isovalue surface. If `iView' < 0, the plugin is\n"
 	 "run on the current view. If `dTimeStep' < 0, the\n"
 	 "plugin uses, for each time step in `iView', the\n"
 	 "corresponding time step in `dView'. If `dView'\n"
 	 "< 0, the plugin uses `iView' as the value source.\n"
+	 "If `extractVolume' is nonzero, the plugin\n" 
+	 "extracts the isovolume with values smaller (if\n"
+	 "`extractVolume' > 0) or greater (if `extractVolume'\n"
+	 "< 0) than the isosurface `A'.\n"
 	 "\n"
 	 "Plugin(CutMap) creates as many views as there\n"
 	 "are time steps in `iView'.\n");
@@ -117,10 +155,11 @@ double GMSH_CutMapPlugin::levelset(double x, double y, double z, double val) con
 
 Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
 {
-  int iView = (int)CutMapOptions_Number[3].def;
+  int iView = (int)CutMapOptions_Number[6].def;
   _valueIndependent = 0;
   _valueView = (int)CutMapOptions_Number[2].def;
   _valueTimeStep = (int)CutMapOptions_Number[1].def;
+  _extractVolume = (int)CutMapOptions_Number[3].def;
   _recurLevel = (int)CutMapOptions_Number[4].def;
   _targetError = CutMapOptions_Number[5].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
