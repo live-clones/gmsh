@@ -28,8 +28,8 @@ Rotate { {0,0,1},{0,0,0},3.14/4 } {
 
 
 Point(400) = {5,2,0,1};
-Ellipsis(100) = {3,1,2,400};
-Ellipsis(200) = {400,1,2,2};
+Ellipsis(100) = {2,1,2,400};
+Ellipsis(200) = {400,1,2,3};
 
 Rotate { {4,3,1},{1,1,1},3.14/3.6 } {
   Duplicata { Line{6}; }
@@ -43,3 +43,10 @@ Rotate { {4,3,1},{1,1,1},3.14/3.6 } {
 Rotate { {4,3,1},{1,1,1},3.14/3.6 } {
   Duplicata { Line{200}; }
 }
+
+//axe principal specifie dans le quadrant oppose
+
+Point(300) = {-9,1,0,1};
+Point(500) = {-1,4,0,1};
+
+Ellipsis(300) = {500,1,2,300};

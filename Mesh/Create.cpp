@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.29 2001-11-29 08:19:06 geuzaine Exp $
+// $Id: Create.cpp,v 1.30 2001-11-30 14:15:10 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -185,7 +185,7 @@ void Add_EdgeLoop (int Num, List_T * intlist, Mesh * M){
 void End_Curve (Curve * c){
   double R2, mat[3][3], R, A3, A1, A4;
   Vertex *v[4], v0, v2, v3;
-  double f1, f2, DP, dir32[3], dir12[3], n[3], m[3], dir42[3];
+  double f1, f2, dir32[3], dir12[3], n[3], m[3], dir42[3];
   double rhs[2], sys[2][2], sol[2];
   int i;
   Curve *Curve;
@@ -303,19 +303,9 @@ void End_Curve (Curve * c){
     // A3 = angle last pt
     // A4 = angle major axis
 
-    A1 = myatan2(v0.Pos.Y, v0.Pos.X);
-    A3 = myatan2(v2.Pos.Y, v2.Pos.X);
-    if(v[3]) A4 = myatan2(v3.Pos.Y, v3.Pos.X);
-    else     A4 = 0.0;
-    
-    DP = 2*Pi;
-    A1 = angle_02pi(A1);    
-    A3 = angle_02pi(A3);
-    if(A1 >= A3) A3 += DP;
-    if(v[3]) A4 = angle_02pi(A4);
-    if(A4 > A1) A4 -= DP;
-   
     if (v[3]){
+      A4 = myatan2(v3.Pos.Y, v3.Pos.X);
+      A4 = angle_02pi(A4);
       double x1 = v0.Pos.X * cos (A4) + v0.Pos.Y * sin(A4);
       double y1 = -v0.Pos.X * sin (A4) + v0.Pos.Y * cos(A4); 
       double x3 = v2.Pos.X * cos (A4) + v2.Pos.Y * sin(A4);
@@ -331,21 +321,34 @@ void End_Curve (Curve * c){
 	Msg(GERROR, "Ellipsis %d is wrong", Curve->Num);	
       f1 = sqrt(1./sol[0]);
       f2 = sqrt(1./sol[1]);
-      A1 = asin(y1/f2) + A4; 
-      A3 = asin(y3/f2) + A4; 
+      if(x1 < 0) 
+	A1 = -asin(y1/f2) + A4 + Pi; 
+      else
+	A1 = asin(y1/f2) + A4; 
+      if(x3 < 0) 
+	A3 = -asin(y3/f2) + A4 + Pi; 
+      else
+	A3 = asin(y3/f2) + A4; 
     }
     else{
+      A1 = myatan2(v0.Pos.Y, v0.Pos.X);
+      A3 = myatan2(v2.Pos.Y, v2.Pos.X);
+      A4 = 0.;
       f1 = f2 = R;
     }
 
+    A1 = angle_02pi(A1);    
+    A3 = angle_02pi(A3);
+    if(A1 >= A3) A3 += 2*Pi;
+
     //printf("f1=%g f2=%g a1=%g a3=%g a4=%g\n", 
-    //	   f1, f2, A1*180./M_PI, A3*180./M_PI, A4*180./M_PI);
+    //	   f1, f2, A1*180./M_PI, A3*180./Pi, A4*180./Pi);
 
     Curve->Circle.t1 = A1;
     Curve->Circle.t2 = A3;
+    Curve->Circle.incl = A4;
     Curve->Circle.f1 = f1;
     Curve->Circle.f2 = f2;
-    Curve->Circle.incl = A4;
     
     for (i = 0; i < 4; i++)
       Curve->Circle.v[i] = v[i];
