@@ -1,4 +1,4 @@
-/* $Id: Views.h,v 1.14 2000-12-17 21:17:29 remacle Exp $ */
+/* $Id: Views.h,v 1.15 2000-12-26 20:45:42 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 
@@ -11,6 +11,7 @@ typedef struct{
   char FileName[NAME_STR_L], Name[NAME_STR_L];
 
   /* the data */
+  int datasize; // size(double) or sizeof(float)
   List_T *Time;
   int NbSP, NbVP, NbTP;
   List_T *SP, *VP, *TP; // points

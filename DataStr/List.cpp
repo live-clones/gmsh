@@ -1,4 +1,4 @@
-/* $Id: List.cpp,v 1.10 2000-12-11 16:22:43 geuzaine Exp $ */
+/* $Id: List.cpp,v 1.11 2000-12-26 20:45:42 geuzaine Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -376,7 +376,16 @@ List_T *List_CreateFromFile(int n, int size, FILE *file, int format, int swap){
   liste->n = n;
   switch(format){
   case LIST_FORMAT_ASCII :
-    for(i=0;i<n;i++) fscanf(file, "%lf", (double*)&liste->array[i*size]) ;
+    if(size == sizeof(double))
+      for(i=0;i<n;i++) fscanf(file, "%lf", (double*)&liste->array[i*size]) ;
+    else if(size == sizeof(float))
+      for(i=0;i<n;i++) fscanf(file, "%f", (float*)&liste->array[i*size]) ;
+    else if(size == sizeof(int))
+      for(i=0;i<n;i++) fscanf(file, "%d", (int*)&liste->array[i*size]) ;
+    else{
+      Msg(ERROR, "Unknown Type of Data to Create List From");
+      return NULL;
+    }
     return liste;
   case LIST_FORMAT_BINARY :
     fread(liste->array, size, n, file);
@@ -396,7 +405,14 @@ void List_WriteToFile(List_T *liste, FILE *file, int format){
 
   switch(format){
   case LIST_FORMAT_ASCII :
-    for(i=0;i<n;i++) fprintf(file, "%g ", *((double*)&liste->array[i*liste->size])) ;
+    if(liste->size == sizeof(double))
+      for(i=0;i<n;i++) fprintf(file, "%g ", *((double*)&liste->array[i*liste->size])) ;
+    else if(liste->size == sizeof(float))
+      for(i=0;i<n;i++) fprintf(file, "%g ", *((float*)&liste->array[i*liste->size])) ;
+    else if(liste->size == sizeof(int))
+      for(i=0;i<n;i++) fprintf(file, "%d ", *((int*)&liste->array[i*liste->size])) ;
+    else
+      Msg(ERROR, "Unknown Type of Data to Write List to File");
     fprintf(file, "\n");
     break;
   case LIST_FORMAT_BINARY :

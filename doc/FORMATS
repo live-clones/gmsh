@@ -1,7 +1,7 @@
-$Id: FORMATS,v 1.5 2000-12-11 22:09:43 geuzaine Exp $
+$Id: FORMATS,v 1.6 2000-12-26 20:45:42 geuzaine Exp $
 
 This document describes the mesh and post-processing file formats for
-Gmsh, version >= 0.995. 
+Gmsh, version >= 1.0. 
 
 (This document deals only with the import/export interfaces for
 Gmsh. The language driving Gmsh's behaviour for defining geometries,
@@ -54,7 +54,7 @@ multiple) post-processing views (enclosed between $View/$EndView
 pairs).
 
     $PostFormat
-    version-number file-type
+    version-number file-type data-size
     $EndPostFormat
 
     $View
@@ -79,9 +79,12 @@ pairs).
     $endView
 
 version-number is a floating point number giving the version of
-Gmsh to which the file is destined (e.g. 0.995).
+Gmsh to which the file is destined (e.g. 1.0).
 
 file-type is an integer equal to 0 in for the ascii file format.
+
+data-size is an integer equal to the size of the floating point
+numbers used in the file (usually, data-size == sizeof(double)).
 
 view-name is a string containing the name of the view (max. 256 characters)
 
@@ -133,7 +136,7 @@ file in binary format:
 int one = 1;
 
 fprintf(file, "$PostFormat\n");
-fprintf(file, "%g %d\n", 0.995, 1);
+fprintf(file, "%g %d %d\n", 1.0, 1, sizeof(double));
 fprintf(file, "$EndPostFormat\n");
 
 fprintf(file, "$View\n");
