@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.66 2001-02-21 11:01:20 geuzaine Exp $
+# $Id: Makefile,v 1.67 2001-02-21 11:19:29 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -442,8 +442,7 @@ fltk_rpm: src
 	mv $(GMSH_SRCRPM).tar.gz /usr/src/redhat/SOURCES
 	rpm -bb utils/gmsh_fltk.spec
 	cp /usr/src/redhat/RPMS/i386/$(GMSH_SRCRPM)-1.i386.rpm .
-	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/bin/gmsh $(GMSH_BIN_DIR)
-	make compress_bin
+	cp /usr/src/redhat/BUILD/$(GMSH_SRCRPM)/gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz .
 
 fltk_mingw: tag
 	@for i in $(GMSH_FLTK_DIR); do (cd $$i && $(MAKE) \
