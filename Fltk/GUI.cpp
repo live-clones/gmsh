@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.104 2001-08-06 09:44:22 geuzaine Exp $
+// $Id: GUI.cpp,v 1.105 2001-08-10 07:25:02 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1659,18 +1659,18 @@ void GUI::set_statistics(){
     p[3] += v->NbST + v->NbVT + v->NbTT;
     p[4] += v->NbSS + v->NbVS + v->NbTS;
     if(v->Visible){
-      if(v->DrawPoints)	p[5] += v->DrawScalars ? v->NbSP : 0 + 
-			        v->DrawVectors ? v->NbVP : 0 + 
-			        v->DrawTensors ? v->NbTP : 0 ;
-      if(v->DrawLines) p[6] += v->DrawScalars ? v->NbSL : 0 + 
-			       v->DrawVectors ? v->NbVL : 0 + 
-			       v->DrawTensors ? v->NbTL : 0 ;
-      if(v->DrawTriangles) p[7] += v->DrawScalars ? v->NbST : 0 + 
-			           v->DrawVectors ? v->NbVT : 0 + 
-			           v->DrawTensors ? v->NbTT : 0 ;
-      if(v->DrawTetrahedra) p[8] += v->DrawScalars ? v->NbSS : 0 + 
-			            v->DrawVectors ? v->NbVS : 0 + 
-   			            v->DrawTensors ? v->NbTS : 0 ;
+      if(v->DrawPoints)	p[5] += (v->DrawScalars ? v->NbSP : 0) + 
+			        (v->DrawVectors ? v->NbVP : 0) + 
+			        (v->DrawTensors ? v->NbTP : 0) ;
+      if(v->DrawLines) p[6] += (v->DrawScalars ? v->NbSL : 0) + 
+			       (v->DrawVectors ? v->NbVL : 0) + 
+			       (v->DrawTensors ? v->NbTL : 0) ;
+      if(v->DrawTriangles) p[7] += (v->DrawScalars ? v->NbST : 0) + 
+			           (v->DrawVectors ? v->NbVT : 0) + 
+			           (v->DrawTensors ? v->NbTT : 0) ;
+      if(v->DrawTetrahedra) p[8] += (v->DrawScalars ? v->NbSS : 0) + 
+			            (v->DrawVectors ? v->NbVS : 0) + 
+   			            (v->DrawTensors ? v->NbTS : 0) ;
     }
   }
   sprintf(label[19], "%g/%g", p[5],p[1]); stat_value[19]->value(label[19]);
