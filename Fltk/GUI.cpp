@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.348 2004-09-18 20:25:26 geuzaine Exp $
+// $Id: GUI.cpp,v 1.349 2004-09-19 03:42:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -827,11 +827,13 @@ void GUI::add_post_plugins(Fl_Menu_Button * button, int iView)
     GMSH_Plugin *p = (*it).second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
       p->getName(name);
-      std::pair<int, GMSH_Plugin*> *pair = new std::pair < int, GMSH_Plugin * >(iView, p);
+      // FIXME: memory leak (hard to plug, since a plugin option
+      // window can stay alive longer than the plugin menu. We should
+      // change the way the plugin info is passed to the callbacks; or
+      // store the pair info in a persistent way and reuse it.)
+      std::pair<int, GMSH_Plugin*> *pair = new std::pair<int, GMSH_Plugin *>(iView, p);
       sprintf(menuname, "Plugins/%s...", name);
-      button->add(menuname, 0, (Fl_Callback *) view_options_plugin_cb, (void *)(pair), 0);
-      m_pop_plugin.push_back(pair);
-      p->dialogBox = 0;
+      button->add(menuname, 0, (Fl_Callback *) view_options_plugin_cb, (void *)pair, 0);
     }
   }
 }
@@ -1007,9 +1009,6 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   for(unsigned int i = 0; i < m_pop_label.size(); i++)
     delete [] m_pop_label[i];
   m_pop_label.clear();
-  for(unsigned int i = 0; i < m_pop_plugin.size(); i++)
-    delete m_pop_plugin[i];
-  m_pop_plugin.clear();
 
   int width = m_window->w();
   int popw = 4 * fontsize + 3;

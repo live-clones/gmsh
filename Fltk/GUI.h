@@ -143,7 +143,6 @@ public:
   std::vector<Fl_Menu_Button*>  m_popup_butt ;
   std::vector<Fl_Menu_Button*>  m_popup2_butt ;
   std::vector<char*>            m_pop_label ;
-  std::vector<std::pair<int, GMSH_Plugin*>*> m_pop_plugin;
 
   // graphic window
   Fl_Window        *g_window ;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.274 2004-09-18 20:25:25 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.275 2004-09-19 03:42:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3237,13 +3237,12 @@ void view_options_cb(CALLBACK_ARGS)
 void view_plugin_cb(CALLBACK_ARGS)
 {
   char name[256];
-  std::pair < int, GMSH_Plugin * >*pair =
-    (std::pair < int, GMSH_Plugin * >*)data;
+  std::pair<int, GMSH_Plugin *> *pair = (std::pair<int, GMSH_Plugin *>*) data;
   int iView = pair->first;
   GMSH_Post_Plugin *p = (GMSH_Post_Plugin *) pair->second;
   p->getName(name);
 
-  if(p->dialogBox) {    //Get the values from the GUI
+  if(p->dialogBox) { // get the values from the GUI
     int m = p->getNbOptionsStr();
     int n = p->getNbOptions();
     if(m > 20) m = 20;
@@ -3271,8 +3270,7 @@ void view_plugin_cb(CALLBACK_ARGS)
 
 void view_options_plugin_cb(CALLBACK_ARGS)
 {
-  std::pair < int, GMSH_Plugin * >*pair =
-    (std::pair < int, GMSH_Plugin * >*)data;
+  std::pair<int, GMSH_Plugin *> *pair = (std::pair<int, GMSH_Plugin *>*) data;
   GMSH_Plugin *p = pair->second;
 
   if(!p->dialogBox)
