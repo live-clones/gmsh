@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.36 2003-04-04 02:20:48 geuzaine Exp $
+dnl $Id: configure.in,v 1.37 2003-04-16 16:00:59 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -120,7 +120,10 @@ if test "x$enable_gui" != "xno"; then
   FLAGS="-DHAVE_FLTK ${FLAGS}"
 
   if test "x${FLTK_PREFIX}" != "x" ; then
-    AC_PATH_PROG(FLTKCONFIG,fltk-config,"",${FLTK_PREFIX})
+    AC_PATH_PROG(FLTKCONFIG,fltk-config,"",[$PATH:${FLTK_PREFIX}])
+    if test "x$FLTKCONFIG" = "x"; then
+      AC_PATH_PROG(FLTKCONFIG,fltk-config,"",[$PATH:${FLTK_PREFIX}/bin])
+    fi
     dnl Find the libs/includes even if fltk is _not_ properly installed (ugly hack!)
     GMSH_LIBS="${GMSH_LIBS} -L${FLTK_PREFIX}/lib"
     INCLS="${INCLS} -I${FLTK_PREFIX}"
