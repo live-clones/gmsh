@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.11 2005-01-01 19:35:39 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.12 2005-01-09 02:15:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -428,18 +428,18 @@ bool OctreePost::searchScalar(double x,
     if(timestep < 0){
       for (int i = 0; i < theView->NbTimeStep; ++i){
 	values[i] = 
-	  V[3*i+1] * U[0] + 
-	  V[3*i+2] * U[1] + 
-	  V[3*i+3] * U[2] + 
-	  V[3*i+0] * (1.-U[0]-U[1]-U[2]); 
+	  V[4*i+1] * U[0] + 
+	  V[4*i+2] * U[1] + 
+	  V[4*i+3] * U[2] + 
+	  V[4*i+0] * (1.-U[0]-U[1]-U[2]); 
       }
     }
     else{
       values[0] = 
-	V[3*timestep+1] * U[0] + 
-	V[3*timestep+2] * U[1] + 
-	V[3*timestep+3] * U[2] + 
-	V[3*timestep  ] * (1-U[0]-U[1]-U[2]); 
+	V[4*timestep+1] * U[0] + 
+	V[4*timestep+2] * U[1] + 
+	V[4*timestep+3] * U[2] + 
+	V[4*timestep  ] * (1-U[0]-U[1]-U[2]); 
     }
     return true;
   } 
