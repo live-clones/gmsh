@@ -1,4 +1,4 @@
-$Id: README,v 1.15 2002-04-24 22:12:43 geuzaine Exp $
+$Id: README,v 1.16 2002-09-11 18:29:56 geuzaine Exp $
 
 Here are the examples in the Gmsh tutorial. These examples are
 commented (both C and C++-style comments can be used in Gmsh input
@@ -95,10 +95,10 @@ all the other views, select the 'Apply next changes to all views' or
 [NOTE: All the options specified interactively can also be directly
 specified in the ascii input files. All available options, with their
 current values, can be saved into a file by selecting 'File->Save
-as->Geometry->Gmsh current options', or simply viewed by pressing the
-'?' button in the status bar. To save the current options as your
-default preferences for all future Gmsh sessions, use the
-'Options->Save options now' menu.]
+as->Gmsh options', or simply viewed by pressing the '?' button in the
+status bar. To save the current options as your default preferences
+for all future Gmsh sessions, use the 'Options->Save options now'
+menu.]
 
 
 OK, that's all, folks. Enjoy the tutorial.
