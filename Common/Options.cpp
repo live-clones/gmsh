@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.68 2002-01-03 10:25:06 geuzaine Exp $
+// $Id: Options.cpp,v 1.69 2002-01-27 20:24:54 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -2045,7 +2045,7 @@ double opt_post_smooth(OPT_ARGS_NUM){
     CTX.post.smooth = (int)val;
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->post_butt[3]->value(CTX.post.smooth);
+    WID->post_butt[5]->value(CTX.post.smooth);
 #endif
   return CTX.post.smooth;
 }
@@ -2057,6 +2057,15 @@ double opt_post_anim_delay(OPT_ARGS_NUM){
     WID->post_value[0]->value(CTX.post.anim_delay);
 #endif
   return CTX.post.anim_delay;
+}
+double opt_post_anim_cycle(OPT_ARGS_NUM){
+  if(action & GMSH_SET) 
+    CTX.post.anim_cycle = (int)val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->post_butt[6]->value(CTX.post.anim_cycle);
+#endif
+  return CTX.post.anim_cycle;
 }
 double opt_post_nb_views(OPT_ARGS_NUM){
   return List_Nbr(CTX.post.list);
@@ -2071,8 +2080,10 @@ double opt_view_nb_timestep(OPT_ARGS_NUM){
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI) && (num == WID->view_number))
     WID->view_value[50]->maximum(v->NbTimeStep-1);
-  if(WID && (action & GMSH_GUI) && v->NbTimeStep > 1)
+  if(WID && (action & GMSH_GUI) && v->NbTimeStep > 1){
     WID->g_status_butt[5]->activate();
+    WID->g_status_butt[6]->activate();
+  }
 #endif
   return v->NbTimeStep;
 }

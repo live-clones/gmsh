@@ -360,6 +360,7 @@ double opt_post_scales(OPT_ARGS_NUM);
 double opt_post_link(OPT_ARGS_NUM);
 double opt_post_smooth(OPT_ARGS_NUM);
 double opt_post_anim_delay(OPT_ARGS_NUM);
+double opt_post_anim_cycle(OPT_ARGS_NUM);
 double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_post_color_scheme(OPT_ARGS_NUM);
 double opt_view_nb_timestep(OPT_ARGS_NUM);

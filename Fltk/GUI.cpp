@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.144 2002-01-26 01:25:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.145 2002-01-27 20:24:54 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -865,20 +865,27 @@ void GUI::create_graphic_window(int argc, char **argv){
   g_status_butt[4]->callback(status_xyz1p_cb, (void*)4);
   //g_status_butt[4]->tooltip("Show current options");
   g_status_butt[5] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
-  g_status_butt[5]->callback(status_play_cb);
-  start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
-  start_bmp->label(g_status_butt[5]);
-  stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
+  g_status_butt[5]->callback(status_rewind_cb);
+  rewind_bmp = new Fl_Bitmap(rewind_bits,rewind_width,rewind_height);
+  rewind_bmp->label(g_status_butt[5]);
   g_status_butt[5]->deactivate();
   //g_status_butt[5]->tooltip("Play/pause animation");
-  /*
   g_status_butt[6] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
-  g_status_butt[6]->callback(status_cancel_cb);
-  abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
-  abort_bmp->label(g_status_butt[6]);
+  g_status_butt[6]->callback(status_play_cb);
+  start_bmp = new Fl_Bitmap(start_bits,start_width,start_height);
+  start_bmp->label(g_status_butt[6]);
+  stop_bmp = new Fl_Bitmap(stop_bits,stop_width,stop_height);
   g_status_butt[6]->deactivate();
+  //g_status_butt[6]->tooltip("Play/pause animation");
+
+  /*
+  g_status_butt[7] = new Fl_Button(x,glheight+2,sw,sh-4); x+=sw;
+  g_status_butt[7]->callback(status_cancel_cb);
+  abort_bmp = new Fl_Bitmap(abort_bits,abort_width,abort_height);
+  abort_bmp->label(g_status_butt[7]);
+  g_status_butt[7]->deactivate();
   */
-  for(i = 0 ; i<6/*7*/ ; i++){
+  for(i = 0 ; i<7 ; i++){
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
     g_status_butt[i]->labelsize(CTX.fontsize);
@@ -914,14 +921,27 @@ void GUI::set_title(char *str){
 
 // Set animation button
 
-void GUI::set_anim(int mode){
+void GUI::set_anim_buttons(int mode){
   if(mode){
-    g_status_butt[5]->callback(status_play_cb);
-    start_bmp->label(g_status_butt[5]);
+    g_status_butt[6]->callback(status_play_cb);
+    start_bmp->label(g_status_butt[6]);
   }
   else{
-    g_status_butt[5]->callback(status_pause_cb);
-    stop_bmp->label(g_status_butt[5]);
+    g_status_butt[6]->callback(status_pause_cb);
+    stop_bmp->label(g_status_butt[6]);
+  }
+}
+
+void GUI::check_anim_buttons(){
+  int i, play=0;
+  for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+    if(((Post_View*)List_Pointer(CTX.post.list,i))->NbTimeStep > 1){
+      play = 1 ; 
+      break ;
+    }
+  if(!play){
+    g_status_butt[5]->deactivate();
+    g_status_butt[6]->deactivate();
   }
 }
 
@@ -1572,11 +1592,11 @@ void GUI::create_post_options_window(){
     { 
       Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Smoothing");
       o->labelsize(CTX.fontsize);
-      post_butt[3] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Smooth views during merge");
-      post_butt[3]->type(FL_TOGGLE_BUTTON);
-      post_butt[3]->down_box(TOGGLE_BOX);
-      post_butt[3]->labelsize(CTX.fontsize);
-      post_butt[3]->selection_color(TOGGLE_COLOR);
+      post_butt[5] = new Fl_Check_Button(2*WB, 2*WB+1*BH, BW, BH, "Smooth views during merge");
+      post_butt[5]->type(FL_TOGGLE_BUTTON);
+      post_butt[5]->down_box(TOGGLE_BOX);
+      post_butt[5]->labelsize(CTX.fontsize);
+      post_butt[5]->selection_color(TOGGLE_COLOR);
       o->end();
     }
     { 
@@ -1591,6 +1611,12 @@ void GUI::create_post_options_window(){
       post_value[0]->textsize(CTX.fontsize);
       post_value[0]->type(FL_HORIZONTAL);
       post_value[0]->align(FL_ALIGN_RIGHT);
+
+      post_butt[6] = new Fl_Check_Button(2*WB, 2*WB+2*BH, BW, BH, "Cycle through views instead of time steps");
+      post_butt[6]->type(FL_TOGGLE_BUTTON);
+      post_butt[6]->down_box(TOGGLE_BOX);
+      post_butt[6]->labelsize(CTX.fontsize);
+      post_butt[6]->selection_color(TOGGLE_COLOR);
       o->end();
     }
     o->end();

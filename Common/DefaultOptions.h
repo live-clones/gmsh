@@ -761,6 +761,8 @@ StringXNumber SolverOptions_Number[] = {
 StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "AnimationDelay" , opt_post_anim_delay , 0.25 ,
     "Delay (in seconds) between to animation frames" },
+  { F|O, "AnimationCycle" , opt_post_anim_cycle , 0. ,
+    "Cycle through views instead of time steps for the animation" },
 
   { F|O, "Link" , opt_post_link , 0. ,
     "Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)" },

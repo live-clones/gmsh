@@ -149,7 +149,7 @@ public :
     List_T *list ;
     int force_num, compute_bb;
     int draw, scales, link ;
-    int smooth ;
+    int smooth, anim_cycle ;
     double anim_delay ;
   }post;
 

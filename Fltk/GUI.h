@@ -95,7 +95,7 @@ class GUI{
   int MH ;
 
   // Bitmaps
-  Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *about_bmp ;
+  Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *about_bmp ;
   void add_post_plugins ( Fl_Menu_Button *button , int iView);
   void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
@@ -220,7 +220,8 @@ public:
   void set_menu_size(int nb_butt);
   void set_context(Context_Item menu[], int flag);
   int  get_context();
-  void set_anim(int mode);
+  void set_anim_buttons(int mode);
+  void check_anim_buttons();
   void set_status(char *msg, int num);
   void add_message(char *msg);
   void save_message(char *filename);

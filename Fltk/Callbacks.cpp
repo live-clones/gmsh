@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.102 2002-01-26 01:25:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.103 2002-01-27 20:24:54 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -146,19 +146,30 @@ void status_xyz1p_cb(CALLBACK_ARGS){
   }
 }
 
-static int stop_anim ;
+static int stop_anim, view_in_cycle=0 ;
 void status_play_cb(CALLBACK_ARGS){
   static long anim_time ;
   int i;
-  WID->set_anim(0);
+  WID->set_anim_buttons(0);
   stop_anim = 0 ;
   anim_time = GetTime();
   while(1){
     if(stop_anim) break ;
     if(GetTime() - anim_time > 1.e6*CTX.post.anim_delay){
       anim_time = GetTime();
-      for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
-	opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i, GMSH_GET, 0)+1);
+      if(!CTX.post.anim_cycle){
+	for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+	  opt_view_timestep(i, GMSH_SET|GMSH_GUI, opt_view_timestep(i, GMSH_GET, 0)+1);
+      }
+      else{//hide all views except view_in_cycle
+	for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
+	  if(i == view_in_cycle)
+	    opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
+	  else
+	    opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
+	}
+	if(++view_in_cycle>=List_Nbr(CTX.post.list)) view_in_cycle=0;
+      }
       Draw();
     }
     WID->check();
@@ -167,7 +178,25 @@ void status_play_cb(CALLBACK_ARGS){
 
 void status_pause_cb(CALLBACK_ARGS){
   stop_anim = 1;
-  WID->set_anim(1);
+  WID->set_anim_buttons(1);
+}
+
+void status_rewind_cb(CALLBACK_ARGS){
+  int i;
+  if(!CTX.post.anim_cycle){
+    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
+      opt_view_timestep(i, GMSH_SET|GMSH_GUI, 0);
+  }
+  else{
+    view_in_cycle = 0;
+    for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
+      if(!i)
+	opt_view_visible(i, GMSH_SET|GMSH_GUI, 1);
+      else
+	opt_view_visible(i, GMSH_SET|GMSH_GUI, 0);
+    }
+  }
+  Draw();
 }
 
 void status_cancel_cb(CALLBACK_ARGS){
@@ -481,7 +510,14 @@ void opt_post_ok_cb(CALLBACK_ARGS) {
 		WID->post_butt[2]->value()?2:
 		WID->post_butt[3]->value()?3:
 		4);
-  opt_post_smooth(0, GMSH_SET, WID->post_butt[3]->value());
+  opt_post_smooth(0, GMSH_SET, WID->post_butt[5]->value());
+  opt_post_anim_cycle(0, GMSH_SET, WID->post_butt[6]->value());
+  if(WID->post_butt[6]->value()){
+    WID->g_status_butt[5]->activate();
+    WID->g_status_butt[6]->activate();
+  }
+  else
+    WID->check_anim_buttons();
 
   opt_post_anim_delay(0, GMSH_SET, WID->post_value[0]->value());
   Draw();
@@ -1787,16 +1823,9 @@ void view_remove_invisible_cb(CALLBACK_ARGS) {
 }
 
 void view_remove_cb(CALLBACK_ARGS){
-  int i, play=0;
-
   FreeView((long int)data);
 
-  for(i=0 ; i<List_Nbr(CTX.post.list) ; i++)
-    if(((Post_View*)List_Pointer(CTX.post.list,i))->NbTimeStep > 1){
-      play = 1 ; 
-      break ;
-    }
-  if(!play) WID->g_status_butt[5]->deactivate();
+  WID->check_anim_buttons();
 
   if(WID->get_context() == 3)
     WID->set_context(menu_post, 0);  
