@@ -1,3 +1,4 @@
+/* $Id: CbFile.cpp,v 1.3 2000-11-23 14:11:40 geuzaine Exp $ */
 
 #include <unistd.h>
 

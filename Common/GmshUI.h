@@ -1,3 +1,4 @@
+/* $Id: GmshUI.h,v 1.3 2000-11-23 14:11:28 geuzaine Exp $ */
 
 #ifdef _UNIX
 

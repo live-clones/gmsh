@@ -1,3 +1,4 @@
+/* $Id: Adapt.h,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
 #ifndef _ADAPT_H_
 #define _ADAPT_H_
 

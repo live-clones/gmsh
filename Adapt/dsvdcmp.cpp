@@ -1,3 +1,4 @@
+/* $Id: dsvdcmp.cpp,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
 #include <math.h>
 
 #include "nrutil.h"

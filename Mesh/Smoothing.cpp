@@ -1,3 +1,4 @@
+/* $Id: Smoothing.cpp,v 1.2 2000-11-23 14:11:36 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"

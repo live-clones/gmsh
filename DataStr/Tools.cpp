@@ -1,4 +1,5 @@
-#define RCSID "$Id: Tools.cpp,v 1.1.1.1 2000-11-23 09:22:47 geuzaine Exp $"
+/* $Id: Tools.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
+#define RCSID "$Id: Tools.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $"
 #include <stdlib.h>
 #include <math.h>
 #include "Tools.h"

@@ -1,3 +1,4 @@
+/* $Id: Verif.cpp,v 1.2 2000-11-23 14:11:31 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"

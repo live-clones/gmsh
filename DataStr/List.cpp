@@ -1,4 +1,5 @@
-#define RCSID "$Id: List.cpp,v 1.1.1.1 2000-11-23 09:22:47 geuzaine Exp $"
+/* $Id: List.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
+#define RCSID "$Id: List.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $"
 /* Original author: Marc UME */
 
 #include <stdlib.h>

@@ -1,3 +1,4 @@
+/* $Id: Views.cpp,v 1.2 2000-11-23 14:11:28 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"

@@ -1,3 +1,4 @@
+/* $Id: gl2gif.cpp,v 1.2 2000-11-23 14:11:33 geuzaine Exp $ */
 /*
   This file is a big hack from
 

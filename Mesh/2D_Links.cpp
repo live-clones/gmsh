@@ -1,3 +1,4 @@
+/* $Id: 2D_Links.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"

@@ -1,3 +1,4 @@
+/* $Id: 2D_InitMesh.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
 /*
  
    Generation du maillage initial 2D

@@ -1,3 +1,4 @@
+/* $Id: ExtrudeParams.h,v 1.3 2000-11-23 14:11:30 geuzaine Exp $ */
 #ifndef _EXTRUDE_PARAMS_H_
 #define _EXTRUDE_PARAMS_H_
 

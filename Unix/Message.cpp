@@ -1,3 +1,4 @@
+/* $Id: Message.cpp,v 1.3 2000-11-23 14:11:41 geuzaine Exp $ */
 
 #include <signal.h>
 #include <sys/resource.h>

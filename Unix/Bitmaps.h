@@ -1,3 +1,4 @@
+/* $Id: Bitmaps.h,v 1.2 2000-11-23 14:11:40 geuzaine Exp $ */
 #ifndef _BITMAPS_H_
 #define _BITMAPS_H_
 

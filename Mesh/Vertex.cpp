@@ -1,3 +1,4 @@
+/* $Id: Vertex.cpp,v 1.2 2000-11-23 14:11:36 geuzaine Exp $ */
 #include "Vertex.h"
 #include <stddef.h>
 #include <stdlib.h>

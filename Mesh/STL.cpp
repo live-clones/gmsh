@@ -1,3 +1,4 @@
+/* $Id: STL.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"

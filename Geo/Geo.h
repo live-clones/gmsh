@@ -1,3 +1,4 @@
+/* $Id: Geo.h,v 1.2 2000-11-23 14:11:30 geuzaine Exp $ */
 #ifndef _GEO_H_
 #define _GEO_H_
 

@@ -1,3 +1,4 @@
+/* $Id: DataBase.h,v 1.2 2000-11-23 14:11:30 geuzaine Exp $ */
 #ifndef _DATABASE_H_
 #define _DATABASE_H_
 

@@ -1,3 +1,4 @@
+/* $Id: XColors.cpp,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
 /*
   Attention. Toutes les couleurs sont crees a partir de la colormap de
   l'interface : XCTX.gui.colormap

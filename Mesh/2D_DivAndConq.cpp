@@ -1,3 +1,4 @@
+/* $Id: 2D_DivAndConq.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
 /*
 
    A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   

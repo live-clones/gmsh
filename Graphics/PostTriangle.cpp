@@ -1,3 +1,4 @@
+/* $Id: PostTriangle.cpp,v 1.2 2000-11-23 14:11:32 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"

@@ -1,3 +1,4 @@
+/* $Id: Box.cpp,v 1.3 2000-11-23 14:11:26 geuzaine Exp $ */
 
 #include <signal.h>
 

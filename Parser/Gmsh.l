@@ -1,4 +1,5 @@
-%{
+%{ /* $Id: Gmsh.l,v 1.2 2000-11-23 14:11:38 geuzaine Exp $ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,3 +1,4 @@
+/* $Id: Views.h,v 1.2 2000-11-23 14:11:28 geuzaine Exp $ */
 #ifndef _VIEWS_H_
 #define _VIEWS_H_
 

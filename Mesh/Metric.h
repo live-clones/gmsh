@@ -1,3 +1,4 @@
+/* $Id: Metric.h,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
 class GMSHMetric
 {
 	public:

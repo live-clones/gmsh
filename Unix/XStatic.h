@@ -1,3 +1,4 @@
+/* $Id: XStatic.h,v 1.2 2000-11-23 14:11:42 geuzaine Exp $ */
 #ifndef _XSTATIC_H_
 #define _XSTATIC_H_
 

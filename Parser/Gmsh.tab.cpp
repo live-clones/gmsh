@@ -1,3 +1,4 @@
+/* $Id: Gmsh.tab.cpp,v 1.3 2000-11-23 14:11:38 geuzaine Exp $ */
 
 /*  A Bison parser, made from Gmsh.y
  by  GNU Bison version 1.25

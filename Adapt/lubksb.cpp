@@ -1,3 +1,4 @@
+/* $Id: lubksb.cpp,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
 void 
 lubksb (float **a, int n, int *indx, float b[])
 {
