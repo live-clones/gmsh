@@ -1,5 +1,5 @@
 #ifndef _DISPLACEMENT_RAISE_H_
-#define _DISPLACEMENT_RAISE_H
+#define _DISPLACEMENT_RAISE_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //

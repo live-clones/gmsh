@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.379 2004-11-10 01:45:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.380 2004-11-13 22:52:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2414,9 +2414,6 @@ void GUI::create_option_window()
       view_value[23]->maximum(1024);
       view_value[23]->step(1);
 
-
-      
-
       o->end();
     }
     {
@@ -2463,6 +2460,18 @@ void GUI::create_option_window()
       view_butt[20]->down_box(TOGGLE_BOX);
       view_butt[20]->selection_color(TOGGLE_COLOR);
 
+      view_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Normals");
+      view_value[0]->minimum(0);
+      view_value[0]->maximum(500);
+      view_value[0]->step(1);
+      view_value[0]->align(FL_ALIGN_RIGHT);
+
+      view_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Tangents");
+      view_value[1]->minimum(0);
+      view_value[1]->maximum(500);
+      view_value[1]->step(1);
+      view_value[1]->align(FL_ALIGN_RIGHT);
+      
       view_butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Scale");
       view_butt[4]->tooltip("(Alt+i)");
       view_butt[4]->type(FL_TOGGLE_BUTTON);
@@ -2811,6 +2820,8 @@ void GUI::update_view_window(int num)
   opt_view_draw_scalars(num, GMSH_GUI, 0);
   opt_view_draw_vectors(num, GMSH_GUI, 0);
   opt_view_draw_tensors(num, GMSH_GUI, 0);
+  opt_view_normals(num, GMSH_GUI, 0);
+  opt_view_tangents(num, GMSH_GUI, 0);
 
   if(v->NbSP)
     view_2d->activate();

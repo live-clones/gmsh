@@ -1,5 +1,5 @@
 #ifndef _CUT_PARAMETRIC_H_
-#define _CUT_PARAMETRIC_H
+#define _CUT_PARAMETRIC_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //

@@ -1,4 +1,11 @@
-$Id: TODO,v 1.66 2004-10-26 00:43:21 geuzaine Exp $
+$Id: TODO,v 1.67 2004-11-13 22:52:44 geuzaine Exp $
+
+********************************************************************
+
+add a "non-formatted" view->save mode; would enable to exploit results
+from plugins in gnuplot & co.
+
+********************************************************************
 
 add an interactive way to choose the orientation of surfaces in
 surface loops and lines in line loops

@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.52 2004-11-08 23:28:48 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.53 2004-11-13 22:52:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -295,6 +295,23 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
   if(View->ShowElement)
     Draw_ElementBoundary(LINE, View, X, Y, Z, Raise);
 
+  if(View->Tangents){
+    double t[3] = { (X[1] + Raise[0][1]) - (X[0] + Raise[0][0]),
+		    (Y[1] + Raise[1][1]) - (Y[0] + Raise[1][0]),
+		    (Z[1] + Raise[2][1]) - (Z[0] + Raise[2][0]) };
+    norme(t);
+    t[0] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[0];
+    t[1] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[1];
+    t[2] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[2];
+    glColor4ubv((GLubyte *) & CTX.color.mesh.tangents);
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+		(X[0] + Raise[0][0] + X[1] + Raise[0][1]) / 2.,
+		(Y[0] + Raise[1][0] + Y[1] + Raise[1][1]) / 2.,
+		(Z[0] + Raise[2][0] + Z[1] + Raise[2][1]) / 2.,
+		t[0], t[1], t[2], NULL, View->Light);
+  }
+  
   if(View->IntervalsType == DRAW_POST_NUMERIC) {
     d = (Val[0] + Val[1]) / 2.;
     if(d >= ValMin && d <= ValMax) {
@@ -395,7 +412,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
     for(int k = 0; k < 3; k++)
       Raise[i][k] = View->Raise[i] * Val[k];
 
-  if(preproNormals || 
+  if(preproNormals || View->Normals ||
      (View->Light && 
       (!View->TriVertexArray || (View->TriVertexArray && View->TriVertexArray->fill)))) {
     x1x0 = (X[1] + Raise[0][1]) - (X[0] + Raise[0][0]);
@@ -413,6 +430,20 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
   if(!preproNormals && View->ShowElement)
     Draw_ElementBoundary(TRIANGLE, View, X, Y, Z, Raise);
 
+  if(!preproNormals && View->Normals){
+    double t[3] = { nn[0], nn[1], nn[2] };
+    t[0] *= View->Normals * CTX.pixel_equiv_x / CTX.s[0];
+    t[1] *= View->Normals * CTX.pixel_equiv_x / CTX.s[1];
+    t[2] *= View->Normals * CTX.pixel_equiv_x / CTX.s[2];
+    glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+		(X[0] + Raise[0][0] + X[1] + Raise[0][1] + X[2] + Raise[0][2]) / 3.,
+		(Y[0] + Raise[1][0] + Y[1] + Raise[1][1] + Y[2] + Raise[1][2]) / 3.,
+		(Z[0] + Raise[2][0] + Z[1] + Raise[2][1] + Z[2] + Raise[2][2]) / 3.,
+		t[0], t[1], t[2], NULL, View->Light);
+  }
+  
   if(!preproNormals && View->IntervalsType == DRAW_POST_NUMERIC) {
     d = (Val[0] + Val[1] + Val[2]) / 3.;
     if(d >= ValMin && d <= ValMax) {
@@ -1130,29 +1161,70 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
   if(View->ShowElement)
     Draw_ElementBoundary(type, View, X, Y, Z, Raise);
 
+  double xc = 0., yc = 0., zc = 0.;
+  if(View->Normals || View->Tangents || 
+     View->IntervalsType == DRAW_POST_NUMERIC ||
+     View->ArrowLocation == DRAW_POST_LOCATE_COG){
+    for(int k = 0; k < nbnod; k++) {
+      xc += X[k] + Raise[0][k];
+      yc += Y[k] + Raise[1][k];
+      zc += Z[k] + Raise[2][k];
+    }
+    xc /= (double)nbnod;
+    yc /= (double)nbnod;
+    zc /= (double)nbnod;
+  }
+
+  if(View->Normals && (type == TRIANGLE || type == QUADRANGLE)){
+    double x1x0 = (X[1] + Raise[0][1]) - (X[0] + Raise[0][0]);
+    double y1y0 = (Y[1] + Raise[1][1]) - (Y[0] + Raise[1][0]);
+    double z1z0 = (Z[1] + Raise[2][1]) - (Z[0] + Raise[2][0]);
+    double x2x0 = (X[2] + Raise[0][2]) - (X[0] + Raise[0][0]);
+    double y2y0 = (Y[2] + Raise[1][2]) - (Y[0] + Raise[1][0]);
+    double z2z0 = (Z[2] + Raise[2][2]) - (Z[0] + Raise[2][0]);
+    double nn[3];
+    nn[0] = y1y0 * z2z0 - z1z0 * y2y0;
+    nn[1] = z1z0 * x2x0 - x1x0 * z2z0;
+    nn[2] = x1x0 * y2y0 - y1y0 * x2x0;
+    norme(nn);
+    nn[0] *= View->Normals * CTX.pixel_equiv_x / CTX.s[0];
+    nn[1] *= View->Normals * CTX.pixel_equiv_x / CTX.s[1];
+    nn[2] *= View->Normals * CTX.pixel_equiv_x / CTX.s[2];
+    glColor4ubv((GLubyte *) & CTX.color.mesh.normals);
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+		xc, yc, zc, nn[0], nn[1], nn[2], NULL, View->Light);
+  }
+
+  if(View->Tangents && (type == LINE)){
+    double t[3] = { (X[1] + Raise[0][1]) - (X[0] + Raise[0][0]),
+		    (Y[1] + Raise[1][1]) - (Y[0] + Raise[1][0]),
+		    (Z[1] + Raise[2][1]) - (Z[0] + Raise[2][0]) };
+    norme(t);
+    t[0] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[0];
+    t[1] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[1];
+    t[2] *= View->Tangents * CTX.pixel_equiv_x / CTX.s[2];
+    glColor4ubv((GLubyte *) & CTX.color.mesh.tangents);
+    Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+		xc, yc, zc, t[0], t[1], t[2], NULL, View->Light);
+  }
+
   if(View->ArrowLocation == DRAW_POST_LOCATE_COG ||
      View->IntervalsType == DRAW_POST_NUMERIC) {
     double dd = 0., ext_dd = 0., dx = 0., dy = 0., dz = 0.;
-    double xc = 0., yc = 0., zc = 0.;
     for(int k = 0; k < nbnod; k++) {
       dd += norm[k];
       ext_dd += ext_norm[k];
       dx += Val[k][0];
       dy += Val[k][1];
       dz += Val[k][2];
-      xc += X[k] + Raise[0][k];
-      yc += Y[k] + Raise[1][k];
-      zc += Z[k] + Raise[2][k];
     }
     dd /= (double)nbnod;
     ext_dd /= (double)nbnod;
     dx /= (double)nbnod;
     dy /= (double)nbnod;
     dz /= (double)nbnod;
-    xc /= (double)nbnod;
-    yc /= (double)nbnod;
-    zc /= (double)nbnod;
-
     // allow for some roundoff error due to the computation at the barycenter
     if(ext_dd != 0.0 && 
        ext_dd >= ext_min * (1. - 1.e-15) && 

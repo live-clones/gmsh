@@ -1,5 +1,5 @@
 #ifndef _TRANSFORM_H_
-#define _TRANSFORM_H
+#define _TRANSFORM_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //

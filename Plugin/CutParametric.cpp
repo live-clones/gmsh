@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.4 2004-06-24 16:02:21 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.5 2004-11-13 22:52:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,7 @@ StringXNumber CutParametricOptions_Number[] = {
   //{GMSH_FULLRC, "minW", NULL, 0.},
   //{GMSH_FULLRC, "maxW", NULL, 1.},
   //{GMSH_FULLRC, "nPointsW", NULL, 0.},
+  {GMSH_FULLRC, "connectPoints", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -78,8 +79,10 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
          "Plugin(CutParametric) cuts a triangle/tetrahedron\n"
 	 "scalar view `iView' with the parametric function\n"
 	 "(`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of\n"
-	 "the parameter u in [`minU', `maxU']. If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
+	 "the parameter u in [`minU', `maxU']. If `connect'\n"
+	 "is set, the plugin creates scalar line elements;\n"
+	 "otherwise, the plugin generates scalar points. If\n"
+	 "`iView' < 0, the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutParametric) creates one new view.\n");
 }
@@ -111,7 +114,7 @@ void GMSH_CutParametricPlugin::catchErrorMessage(char *errorMessage) const
 
 Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
 {
-  int iView = (int)CutParametricOptions_Number[3].def;
+  int iView = (int)CutParametricOptions_Number[4].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
@@ -131,6 +134,8 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
   double minU = CutParametricOptions_Number[0].def;
   double maxU = CutParametricOptions_Number[1].def;
   int nbU = (int)CutParametricOptions_Number[2].def;
+  int connect = (int)CutParametricOptions_Number[3].def;
+  if(nbU < 2) connect = 0;
 
   char *exprx = CutParametricOptions_String[0].def;
   char *expry = CutParametricOptions_String[1].def;
@@ -160,22 +165,46 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
   Post_View *v2 = BeginView(1);
   Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
   OctreePost o(v1);
-  double *res = new double[9*v1->NbTimeStep];
-
+  double *res0 = new double[v1->NbTimeStep];
+  double *res = new double[v1->NbTimeStep];
+  double x, y, z, x0, y0, z0;
   for(int i = 0; i < nbU; ++i){
+    if(i && connect){
+      x0 = x;
+      y0 = y;
+      z0 = z;
+      for(int k = 0; k < v1->NbTimeStep; ++k) res0[k] = res[k];
+    }
     double u = minU + (double)(i)/(double)(nbU-1) * (maxU - minU);
     char *names[] = { "u" };
     double values[] = { u };
-    double x = evaluator_evaluate(fx, sizeof(names)/sizeof(names[0]), names, values);
-    double y = evaluator_evaluate(fy, sizeof(names)/sizeof(names[0]), names, values);
-    double z = evaluator_evaluate(fz, sizeof(names)/sizeof(names[0]), names, values);
+    x = evaluator_evaluate(fx, sizeof(names)/sizeof(names[0]), names, values);
+    y = evaluator_evaluate(fy, sizeof(names)/sizeof(names[0]), names, values);
+    z = evaluator_evaluate(fz, sizeof(names)/sizeof(names[0]), names, values);
     o.searchScalar(x, y, z, res);
-    List_Add(v2->SP, &x);
-    List_Add(v2->SP, &y);
-    List_Add(v2->SP, &z);
-    for(int k = 0; k < v1->NbTimeStep; ++k)
-      List_Add(v2->SP, &res[k]);	      
-    v2->NbSP++;
+    if(connect){
+      if(i){
+	List_Add(v2->SL, &x0);
+	List_Add(v2->SL, &x);
+	List_Add(v2->SL, &y0);
+	List_Add(v2->SL, &y);
+	List_Add(v2->SL, &z0);
+	List_Add(v2->SL, &z);
+	for(int k = 0; k < v1->NbTimeStep; ++k){
+	  List_Add(v2->SL, &res0[k]);
+	  List_Add(v2->SL, &res[k]);
+	}
+	v2->NbSL++;
+      }
+    }
+    else{
+      List_Add(v2->SP, &x);
+      List_Add(v2->SP, &y);
+      List_Add(v2->SP, &z);
+      for(int k = 0; k < v1->NbTimeStep; ++k)
+	List_Add(v2->SP, &res[k]);
+      v2->NbSP++;
+    }
   }
 
   char name[1024], filename[1024];
@@ -186,6 +215,7 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
   evaluator_destroy(fx);
   evaluator_destroy(fy);
   evaluator_destroy(fz);
+  delete [] res0;
   delete [] res;
 
   return v2;

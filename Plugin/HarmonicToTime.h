@@ -1,5 +1,5 @@
 #ifndef _HARMONIC_2_TIME_H_
-#define _HARMONIC_2_TIME_H
+#define _HARMONIC_2_TIME_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //

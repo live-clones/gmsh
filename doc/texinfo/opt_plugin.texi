@@ -68,8 +68,10 @@ Default value: @code{4}
 Plugin(CutParametric) cuts a triangle/tetrahedron
 scalar view `iView' with the parametric function
 (`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of
-the parameter u in [`minU', `maxU']. If `iView' < 0,
-the plugin is run on the current view.
+the parameter u in [`minU', `maxU']. If `connect'
+is set, the plugin creates scalar line elements;
+otherwise, the plugin generates scalar points. If
+`iView' < 0, the plugin is run on the current view.
 
 Plugin(CutParametric) creates one new view.
 
@@ -90,6 +92,8 @@ Default value: @code{0}
 Default value: @code{6.28319}
 @item nPointsU
 Default value: @code{360}
+@item connectPoints
+Default value: @code{0}
 @item iView
 Default value: @code{-1}
 @end table
@@ -270,6 +274,21 @@ Default value: @code{20}
 Default value: @code{-1}
 @end table
 
+@item Plugin(Integrate)
+Plugin(Integrate) integrates scalar fields over
+all the elements in the view `iView', as well as
+the circulation/flux of vector fields over
+line/surface elements. If `iView' < 0, the plugin
+is run on the current view.
+
+Plugin(Integrate) creates one new view.
+
+Numeric options:
+@table @code
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(Skin)
 Plugin(Skin) extracts the skin (the boundary) of
 the view `iView'. If `iView' < 0, the plugin is run
@@ -383,13 +402,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Transform)
-Plugin(Transform) transforms the coordinates of
-the nodes of the view `iView' by the matrix
+Plugin(Transform) transforms the node coordinates
+of the elements in the view `iView' by the matrix
 [`A11' `A12' `A13']
 [`A21' `A22' `A23']
 [`A31' `A32' `A33'].
-If `iView' < 0, the plugin is run on the current
-view.
+If `swapOrientation' is set, the orientation of the
+elements is reversed. If `iView' < 0, the plugin
+is run on the current view.
 
 Plugin(Transform) is executed in-place.
 
@@ -413,6 +433,8 @@ Default value: @code{0}
 Default value: @code{0}
 @item A33
 Default value: @code{1}
+@item swapOrientation
+Default value: @code{0}
 @item iView
 Default value: @code{-1}
 @end table

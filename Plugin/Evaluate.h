@@ -1,5 +1,5 @@
 #ifndef _EVALUATE_H_
-#define _EVALUATE_H
+#define _EVALUATE_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //

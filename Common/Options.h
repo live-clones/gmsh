@@ -469,6 +469,8 @@ double opt_view_arrow_size_proportional(OPT_ARGS_NUM);
 double opt_view_arrow_head_radius(OPT_ARGS_NUM);
 double opt_view_arrow_stem_length(OPT_ARGS_NUM);
 double opt_view_arrow_stem_radius(OPT_ARGS_NUM);
+double opt_view_normals(OPT_ARGS_NUM);
+double opt_view_tangents(OPT_ARGS_NUM);
 double opt_view_displacement_factor(OPT_ARGS_NUM);
 double opt_view_explode(OPT_ARGS_NUM);
 double opt_view_visible(OPT_ARGS_NUM);

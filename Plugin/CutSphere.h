@@ -1,5 +1,5 @@
 #ifndef _CUT_SPHERE_H_
-#define _CUT_SPHERE_H
+#define _CUT_SPHERE_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //

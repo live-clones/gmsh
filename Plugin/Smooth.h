@@ -1,5 +1,5 @@
 #ifndef _SMOOTH_H_
-#define _SMOOTH_H
+#define _SMOOTH_H_
 
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.296 2004-11-09 16:27:49 remacle Exp $
+// $Id: Callbacks.cpp,v 1.297 2004-11-13 22:52:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3517,6 +3517,8 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double draw_scalars = opt_view_draw_scalars(current, GMSH_GET, 0);
   double draw_vectors = opt_view_draw_vectors(current, GMSH_GET, 0);
   double draw_tensors = opt_view_draw_tensors(current, GMSH_GET, 0);
+  double normals = opt_view_normals(current, GMSH_GET, 0);
+  double tangents = opt_view_tangents(current, GMSH_GET, 0);
 
   double custom_min = opt_view_custom_min(current, GMSH_GET, 0);
   double custom_max = opt_view_custom_max(current, GMSH_GET, 0);
@@ -3764,6 +3766,14 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
       // view_values
       
+      val = WID->view_value[0]->value();
+      if(force || (val != normals))
+        opt_view_normals(i, GMSH_SET, val);
+
+      val = WID->view_value[1]->value();
+      if(force || (val != tangents))
+        opt_view_tangents(i, GMSH_SET, val);
+
       val = WID->view_value[31]->value();
       if(force || (val != custom_min))
         opt_view_custom_min(i, GMSH_SET, val);

@@ -946,7 +946,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|0, "Format" , opt_post_file_format , 0. ,
     "Default file format for post-processing views" },
 
-  { F|O, "HorizontalScales" , opt_post_horizontal_scales , 0. , 
+  { F|O, "HorizontalScales" , opt_post_horizontal_scales , 1. , 
     "Display value scales horizontally" },
 
   { F|O, "Link" , opt_post_link , 0. ,
@@ -1058,6 +1058,8 @@ StringXNumber ViewOptions_Number[] = {
     "Number of intervals" },
   { F,   "NbTimeStep" , opt_view_nb_timestep , 1. ,
     "Number of time steps in the view (do not change this!)" },
+  { F|O, "Normals" , opt_view_normals , 0. ,
+    "Display size of normal vectors (in pixels)" }, 
 
   { F,   "OffsetX" , opt_view_offset0 , 0. , 
     "Translation of the view along X-axis (in model coordinates)" },
@@ -1096,6 +1098,9 @@ StringXNumber ViewOptions_Number[] = {
     "Show time value in the scale? (1=only if NbTimeStep>1, 2=always)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
+
+  { F|0, "Tangents" , opt_view_normals , 0. ,
+    "Display size of tangent vectors (in pixels)" }, 
   { F|O, "TensorType" , opt_view_tensor_type , 0. ,
     "Tensor Visualization Type" },
   { F,   "TimeStep" , opt_view_timestep , 0. ,

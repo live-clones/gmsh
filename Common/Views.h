@@ -184,6 +184,7 @@ class Post_View{
   double CustomMin, CustomMax;
   double Offset[3], Raise[3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
+  double Normals, Tangents;
   int Visible, IntervalsType, NbIso, NbAbscissa, ArrowSizeProportional;
   int Light, LightTwoSide, SmoothNormals;
   double AngleSmoothNormals, AlphaChannel;
@@ -212,8 +213,6 @@ class Post_View{
   // smooth normals
   smooth_normals *normals;
   void reset_normals();
-  // transform the view
-  void transform(double mat[3][3]);
 
   // some generic access functions
   int empty();

@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.24 2004-05-16 20:04:43 geuzaine Exp $
+// $Id: Transform.cpp,v 1.25 2004-11-13 22:52:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -37,6 +37,7 @@ StringXNumber TransformOptions_Number[] = {
   {GMSH_FULLRC, "A31", NULL, 0.},
   {GMSH_FULLRC, "A32", NULL, 0.},
   {GMSH_FULLRC, "A33", NULL, 1.},
+  {GMSH_FULLRC, "swapOrientation", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -65,13 +66,14 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuz@geuz.org)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Transform) transforms the coordinates of\n"
-	 "the nodes of the view `iView' by the matrix\n"
+         "Plugin(Transform) transforms the node coordinates\n"
+	 "of the elements in the view `iView' by the matrix\n"
          "[`A11' `A12' `A13']\n"
 	 "[`A21' `A22' `A23']\n"
 	 "[`A31' `A32' `A33'].\n"
-	 "If `iView' < 0, the plugin is run on the current\n"
-	 "view.\n"
+	 "If `swapOrientation' is set, the orientation of the\n"
+	 "elements is reversed. If `iView' < 0, the plugin\n"
+	 "is run on the current view.\n"
 	 "\n"
 	 "Plugin(Transform) is executed in-place.\n");
 }
@@ -91,6 +93,61 @@ void GMSH_TransformPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Transform failed...");
 }
 
+// Transformation
+
+static void transform(double mat[3][3], double v[3],
+                      double *x, double *y, double *z)
+{
+  *x = mat[0][0] * v[0] + mat[0][1] * v[1] + mat[0][2] * v[2];
+  *y = mat[1][0] * v[0] + mat[1][1] * v[1] + mat[1][2] * v[2];
+  *z = mat[2][0] * v[0] + mat[2][1] * v[1] + mat[2][2] * v[2];
+}
+
+static void transform_list(Post_View *view, List_T *list, int nbList, 
+			   int nbVert, int nbComp, double mat[3][3], int swap)
+{
+  if(!nbList) return;
+
+  int nb = List_Nbr(list) / nbList;
+  double *copy = NULL;
+  if(swap) copy = new double[nb];
+
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    for(int j = 0; j < nbVert; j++) {
+      double v[3] = { x[j], y[j], z[j] };
+      transform(mat, v, &x[j], &y[j], &z[j]);
+      if(x[j] < view->BBox[0]) view->BBox[0] = x[j];
+      if(x[j] > view->BBox[1]) view->BBox[1] = x[j];
+      if(y[j] < view->BBox[2]) view->BBox[2] = y[j];
+      if(y[j] > view->BBox[3]) view->BBox[3] = y[j];
+      if(z[j] < view->BBox[4]) view->BBox[4] = z[j];
+      if(z[j] > view->BBox[5]) view->BBox[5] = z[j];
+    }
+    if(copy){
+      for(int j = 0; j < nb; j++)
+	copy[j] = x[j];
+      for(int j = 0; j < nbVert; j++){
+	x[j] = copy[nbVert-j-1];
+	x[nbVert+j] = copy[2*nbVert-j-1];
+	x[2*nbVert+j] = copy[3*nbVert-j-1];
+      }
+      for(int ts = 0; ts < view->NbTimeStep; ts++){
+	for(int j = 0; j < nbVert; j++){
+	  for(int k = 0; k < nbComp; k++){
+	    x[3*nbVert+nbComp*nbVert*ts+nbComp*j+k] = 
+	      copy[3*nbVert+nbComp*nbVert*ts+nbComp*(nbVert-j-1)+k];
+	  }
+	}
+      }
+    }
+  }
+
+  if(copy) delete [] copy;
+}
+
 Post_View *GMSH_TransformPlugin::execute(Post_View * v)
 {
   double mat[3][3];
@@ -105,7 +162,9 @@ Post_View *GMSH_TransformPlugin::execute(Post_View * v)
   mat[2][1] = TransformOptions_Number[7].def;
   mat[2][2] = TransformOptions_Number[8].def;
 
-  int iView = (int)TransformOptions_Number[9].def;
+  int swap = (int)TransformOptions_Number[9].def;
+
+  int iView = (int)TransformOptions_Number[10].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
@@ -117,8 +176,39 @@ Post_View *GMSH_TransformPlugin::execute(Post_View * v)
 
   Post_View *v1 = (Post_View*)List_Pointer(CTX.post.list, iView);
 
-  v1->transform(mat);
+  for(int i = 0; i < 3; i++) {
+    v1->BBox[2 * i] = VAL_INF;
+    v1->BBox[2 * i + 1] = -VAL_INF;
+  }
+
+  transform_list(v1, v1->SP, v1->NbSP, 1, 1, mat, swap);
+  transform_list(v1, v1->SL, v1->NbSL, 2, 1, mat, swap);
+  transform_list(v1, v1->ST, v1->NbST, 3, 1, mat, swap);
+  transform_list(v1, v1->SQ, v1->NbSQ, 4, 1, mat, swap);
+  transform_list(v1, v1->SS, v1->NbSS, 4, 1, mat, swap);
+  transform_list(v1, v1->SH, v1->NbSH, 8, 1, mat, swap);
+  transform_list(v1, v1->SI, v1->NbSI, 6, 1, mat, swap);
+  transform_list(v1, v1->SY, v1->NbSY, 5, 1, mat, swap);
+
+  transform_list(v1, v1->VP, v1->NbVP, 1, 3, mat, swap);
+  transform_list(v1, v1->VL, v1->NbVL, 2, 3, mat, swap);
+  transform_list(v1, v1->VT, v1->NbVT, 3, 3, mat, swap);
+  transform_list(v1, v1->VQ, v1->NbVQ, 4, 3, mat, swap);
+  transform_list(v1, v1->VS, v1->NbVS, 4, 3, mat, swap);
+  transform_list(v1, v1->VH, v1->NbVH, 8, 3, mat, swap);
+  transform_list(v1, v1->VI, v1->NbVI, 6, 3, mat, swap);
+  transform_list(v1, v1->VY, v1->NbVY, 5, 3, mat, swap);
+
+  transform_list(v1, v1->TP, v1->NbTP, 1, 9, mat, swap);
+  transform_list(v1, v1->TL, v1->NbTL, 2, 9, mat, swap);
+  transform_list(v1, v1->TT, v1->NbTT, 3, 9, mat, swap);
+  transform_list(v1, v1->TQ, v1->NbTQ, 4, 9, mat, swap);
+  transform_list(v1, v1->TS, v1->NbTS, 4, 9, mat, swap);
+  transform_list(v1, v1->TH, v1->NbTH, 8, 9, mat, swap);
+  transform_list(v1, v1->TI, v1->NbTI, 6, 9, mat, swap);
+  transform_list(v1, v1->TY, v1->NbTY, 5, 9, mat, swap);
+
+  v1->Changed = 1;
 
   return v1;
 }
-

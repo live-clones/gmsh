@@ -219,6 +219,11 @@ Number of time steps in the view (do not change this!)@*
 Default value: @code{1}@*
 Saved in: @code{-}
 
+@item View.Normals
+Display size of normal vectors (in pixels)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.OffsetX
 Translation of the view along X-axis (in model coordinates)@*
 Default value: @code{0}@*
@@ -303,6 +308,11 @@ Saved in: @code{General.OptionsFileName}
 Smooth the normals?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
+
+@item View.Tangents
+Display size of tangent vectors (in pixels)@*
+Default value: @code{0}@*
+Saved in: @code{-}
 
 @item View.TensorType
 Tensor Visualization Type@*

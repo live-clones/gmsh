@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.83 2004-11-01 15:10:36 geuzaine Exp $
+// $Id: Post.cpp,v 1.84 2004-11-13 22:52:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -478,7 +478,7 @@ void Draw_Post(void)
 	else{
 	  // don't even enter the classic data path if we don't have to
 	  if(v->TriVertexArray){
-	    if(v->Boundary < 1 && !v->ShowElement &&
+	    if(v->Boundary < 1 && !v->ShowElement && !v->Normals &&
 	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
 	      Msg(DEBUG, "View[%d]: skiping 2D scalar pass alltogether", v->Index);
 	      skip_2d = 1;

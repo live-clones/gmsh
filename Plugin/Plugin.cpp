@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.63 2004-11-09 16:27:53 remacle Exp $
+// $Id: Plugin.cpp,v 1.64 2004-11-13 22:52:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,7 @@
 #include "Skin.h"
 #include "Extract.h"
 #include "HarmonicToTime.h"
+#include "Integrate.h"
 #include "DecomposeInSimplex.h"
 #include "Smooth.h"
 #include "Transform.h"
@@ -155,8 +156,9 @@ GMSH_PluginManager *GMSH_PluginManager::instance()
 
 void GMSH_PluginManager::registerDefaultPlugins()
 {
-  // SOLVE PLUGINS
   char *homeplugins = getenv("GMSHPLUGINSHOME");
+
+  // SOLVE PLUGINS
   if(CTX.solver.plugins){
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("StructuralSolver", GMSH_RegisterStructuralSolverPlugin()));
@@ -190,6 +192,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("DisplacementRaise", GMSH_RegisterDisplacementRaisePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("Integrate", GMSH_RegisterIntegratePlugin()));
 #if defined(HAVE_TRIANGLE)
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));

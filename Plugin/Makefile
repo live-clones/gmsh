@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.59 2004-11-09 16:27:53 remacle Exp $
+# $Id: Makefile,v 1.60 2004-11-13 22:52:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -41,6 +41,7 @@ SRC = Plugin.cpp\
         Extract.cpp\
         DecomposeInSimplex.cpp\
         Evaluate.cpp\
+        Integrate.cpp\
         HarmonicToTime.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -72,7 +73,7 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/GmshMatrix.h PluginManager.h CutMap.h Levelset.h CutGrid.h \
   StreamLines.h CutPlane.h CutParametric.h CutSphere.h Skin.h \
   ../DataStr/Tree.h ../DataStr/avl.h Extract.h HarmonicToTime.h \
-  DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
+  Integrate.h DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h \
   SphericalRaise.h DisplacementRaise.h StructuralSolver.h ../Geo/Geo.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
   ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
@@ -181,6 +182,11 @@ Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h Evaluate.h ../Common/Context.h \
   ../Numeric/Numeric.h
+Integrate.o: Integrate.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/GmshMatrix.h Integrate.h ../Common/Context.h \
+  ../Numeric/Numeric.h ShapeFunctions.h
 HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.203 2004-11-09 16:27:49 remacle Exp $
+// $Id: Options.cpp,v 1.204 2004-11-13 22:52:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4556,6 +4556,32 @@ double opt_view_arrow_stem_radius(OPT_ARGS_NUM)
     v->ArrowRelStemRadius = val;
   }
   return v->ArrowRelStemRadius;
+}
+
+double opt_view_normals(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Normals = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[0]->value(v->Normals);
+#endif
+  return v->Normals;
+}
+
+double opt_view_tangents(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->Tangents = val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[1]->value(v->Tangents);
+#endif
+  return v->Tangents;
 }
 
 double opt_view_displacement_factor(OPT_ARGS_NUM)
