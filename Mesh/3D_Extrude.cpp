@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.39 2001-08-17 11:58:05 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.40 2001-08-20 08:06:47 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -70,9 +70,7 @@ List_T* getnxl(Vertex *v, int dim){
   Curve *c;
   Surface *s;
   List_T *list;
-  nxl NXL;
 
-  NXL.Dim = dim;
   if(dim==1){
     if((list = getnxl(v, THEC)))
       return list;
