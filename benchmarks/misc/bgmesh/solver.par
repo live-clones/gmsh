@@ -1,0 +1,140 @@
+/*
+
+Matrix_Format (Integer): 
+    - 1  Sparse 
+    - 2  Full 
+    - default : 1
+
+Matrix_Printing (Integer): Disk write ('fort.*') 
+    - 1  matrix (csr) 
+    - 2  preconditioner (msr) 
+    - 3  both 
+    - default : 0
+
+Matrix_Storage (Integer): Disk Write or Read in internal format 
+    - 0  none 
+    - 1  write matrix (sparse) 
+    - 2  read matrix (sparse) 
+    - default : 0
+
+Scaling (Integer): Scale system 
+    - 0  no 
+    - 1  on basis of diagonal elements  (no loss of possible symmetry) 
+    - 2  on basis of inf. norm  of first rows and then columns  (asymmetric) 
+    - 3  on basis of norm 1     of first rows and then columns  (asymmetric) 
+    - 4  on basis of norm 2     of first rows and then columns  (asymmetric) 
+    - default : 0
+
+Renumbering_Technique (Integer): 
+    - 0  No renumbering 
+    - 1  Reverse Cuthill-Mc Kee 
+    - default : 1 
+
+Preconditioner (Integer): 
+    - 0  NONE     No Factorization
+    - 1  ILUT     Incomplete LU factorization with dual truncation strategy 
+    - 2  ILUTP    ILUT with column  pivoting                                
+    - 3  ILUD     ILU with single dropping + diagonal compensation (~MILUT) 
+    - 4  ILUDP    ILUD with column pivoting                                 
+    - 5  ILUK     level-k ILU                                               
+    - 6  ILU0     simple ILU(0) preconditioning                             
+    - 7  MILU0    MILU(0) preconditioning                                   
+    - 8  DIAGONAL                                                           
+    - default : 2 
+
+Preconditioner_Position (Integer): 
+    - 0  No Preconditioner 
+    - 1  Left Preconditioner 
+    - 2  Right Preconditioner 
+    - 3  Both Left and Right Preconditioner 
+    - default : 2 
+
+Nb_Fill (Integer): 
+    - ILUT/ILUTP : maximum number of elements per line 
+      of L and U (except diagonal element) 
+    - ILUK : each element whose fill-in level is greater than NB_FILL 
+      is dropped. 
+    - default : 20
+
+Permutation_Tolerance (Real): Tolerance for column permutation in ILUTP/ILUDP. 
+    At stage i, columns i and j are permuted if 
+    abs(a(i,j))*PERMUTATION_TOLERANCE > abs(a(i,i)). 
+    - 0  no permutations 
+    - 0.001 -> 0.1  classical 
+    - default : 0.05
+
+Dropping_Tolerance (Real): 
+    - ILUT/ILUTP/ILUK: a(i,j) is dropped if 
+      abs(a(i,j)) < DROPPING_TOLERANCE * abs(diagonal element in U). 
+    - ILUD/ILUDP : a(i,j) is dropped if 
+      abs(a(i,j)) < DROPPING_TOLERANCE * [weighted norm of line i]. 
+      Weighted norm = 1-norm / number of nonzero elements on the line. 
+    - default : 0
+
+Diagonal_Compensation (Real): ILUD/ILUDP: the term 'DIAGONAL_COMPENSATION * (sum 
+    of all dropped elements of the line)' is added to the diagonal element in U 
+    - 0  ~ ILU with threshold 
+      1  ~ MILU with threshold. 
+    - default : 0
+
+Re_Use_ILU (Integer): Reuse ILU decomposition (and renumbering if any)
+    - 0  no 
+    - 1  yes 
+    - default : 0
+
+Algorithm (Integer): 
+    - 1  CG       Conjugate Gradient                    
+    - 2  CGNR     CG (Normal Residual equation)         
+    - 3  BCG      Bi-Conjugate Gradient                 
+    - 4  DBCG     BCG with partial pivoting             
+    - 5  BCGSTAB  BCG stabilized                        
+    - 6  TFQMR    Transpose-Free Quasi-Minimum Residual 
+    - 7  FOM      Full Orthogonalization Method         
+    - 8  GMRES    Generalized Minimum RESidual          
+    - 9  FGMRES   Flexible version of GMRES             
+    - 10 DQGMRES  Direct versions of GMRES              
+    - 11 LU       LU Factorization                      
+    - 12 PGMRES   Alternative version of GMRES          
+    - default : 8
+
+Krylov_Size (Integer): Krylov subspace size 
+    - default : 40
+
+IC_Acceleration (Real): IC accelerator
+    - default : 1 
+
+Re_Use_LU (Integer): Reuse LU decomposition
+    - 0  no 
+    - 1  yes 
+    - default : 0
+
+Iterative_Improvement (Integer): Iterative improvement of the solution obtained by a LU 
+    - default : 0
+
+Nb_Iter_Max (Integer): Maximum number of iterations 
+    - default : 1000 
+
+Stopping_Test (Real): Target relative residual 
+    - default : 1e-10 
+
+*/
+
+            Matrix_Format            1
+          Matrix_Printing            0
+           Matrix_Storage            0
+                  Scaling            0
+    Renumbering_Technique            1
+           Preconditioner            2
+  Preconditioner_Position            2
+                  Nb_Fill           20
+    Permutation_Tolerance         0.05
+       Dropping_Tolerance            0
+    Diagonal_Compensation            0
+               Re_Use_ILU            0
+                Algorithm            8
+              Krylov_Size           40
+          IC_Acceleration            1
+                Re_Use_LU            0
+    Iterative_Improvement            0
+              Nb_Iter_Max         1000
+            Stopping_Test        1e-10
