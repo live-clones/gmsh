@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.61 2003-03-11 05:57:06 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.62 2003-03-11 06:53:36 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -749,7 +749,7 @@ void copy_mesh(Curve * from, Curve * to, int direction)
   int nb = List_Nbr(to->Vertices);
   if(nb) {
     if(nb != List_Nbr(from->Vertices))
-      Msg(GERROR, "Uncompatible extrusion of curve %d into curve %d",
+      Msg(GERROR, "Incompatible extrusion of curve %d into curve %d",
           from->Num, to->Num);
     return;
   }
@@ -901,7 +901,7 @@ void copy_mesh(Surface * from, Surface * to)
   int nb = Tree_Nbr(to->Simplexes);
   if(nb) {
     if(nb != Tree_Nbr(from->Simplexes))
-      Msg(GERROR, "Uncompatible extrusion of surface %d into surface %d",
+      Msg(GERROR, "Incompatible extrusion of surface %d into surface %d",
           from->Num, to->Num);
     return;
   }
