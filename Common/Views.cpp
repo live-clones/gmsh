@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.96 2003-05-14 14:23:10 geuzaine Exp $
+// $Id: Views.cpp,v 1.97 2003-05-14 14:49:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -157,7 +157,8 @@ Post_View *BeginView(int allocate)
   return v;
 }
 
-double ComputeVonMises(double *V) {
+double ComputeVonMises(double *V)
+{
   static const double THIRD = 1.e0 / 3.e0;
   double tr = (V[0] + V[4] + V[8]) * THIRD;
   double v11 = V[0] - tr;
