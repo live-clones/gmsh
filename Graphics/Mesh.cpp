@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.85 2004-05-26 23:53:37 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.86 2004-05-27 06:23:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1010,35 +1010,23 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
     gl2psEnable(GL2PS_LINE_STIPPLE);
     glBegin(GL_LINES);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((h->V[0]->Pos.X + h->V[1]->Pos.X + h->V[5]->Pos.X + h->V[4]->Pos.X) / 4.,
-       (h->V[0]->Pos.Y + h->V[1]->Pos.Y + h->V[5]->Pos.Y + h->V[4]->Pos.Y) / 4.,
-       (h->V[0]->Pos.Z + h->V[1]->Pos.Z + h->V[5]->Pos.Z + h->V[4]->Pos.Z) / 4.);
+    glVertex3d((X[0] + X[1] + X[5] + X[4]) / 4., (Y[0] + Y[1] + Y[5] + Y[4]) / 4.,
+	       (Z[0] + Z[1] + Z[5] + Z[4]) / 4.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((h->V[0]->Pos.X + h->V[3]->Pos.X + h->V[2]->Pos.X + h->V[1]->Pos.X) / 4.,
-       (h->V[0]->Pos.Y + h->V[3]->Pos.Y + h->V[2]->Pos.Y + h->V[1]->Pos.Y) / 4.,
-       (h->V[0]->Pos.Z + h->V[3]->Pos.Z + h->V[2]->Pos.Z + h->V[1]->Pos.Z) / 4.);
+    glVertex3d((X[0] + X[3] + X[2] + X[1]) / 4., (Y[0] + Y[3] + Y[2] + Y[1]) / 4.,
+	       (Z[0] + Z[3] + Z[2] + Z[1]) / 4.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((h->V[0]->Pos.X + h->V[4]->Pos.X + h->V[7]->Pos.X + h->V[3]->Pos.X) / 4.,
-       (h->V[0]->Pos.Y + h->V[4]->Pos.Y + h->V[7]->Pos.Y + h->V[3]->Pos.Y) / 4.,
-       (h->V[0]->Pos.Z + h->V[4]->Pos.Z + h->V[7]->Pos.Z + h->V[3]->Pos.Z) / 4.);
+    glVertex3d((X[0] + X[4] + X[7] + X[3]) / 4., (Y[0] + Y[4] + Y[7] + Y[3]) / 4.,
+	       (Z[0] + Z[4] + Z[7] + Z[3]) / 4.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((h->V[1]->Pos.X + h->V[2]->Pos.X + h->V[6]->Pos.X + h->V[5]->Pos.X) / 4.,
-       (h->V[1]->Pos.Y + h->V[2]->Pos.Y + h->V[6]->Pos.Y + h->V[5]->Pos.Y) / 4.,
-       (h->V[1]->Pos.Z + h->V[2]->Pos.Z + h->V[6]->Pos.Z + h->V[5]->Pos.Z) / 4.);
+    glVertex3d((X[1] + X[2] + X[6] + X[5]) / 4., (Y[1] + Y[2] + Y[6] + Y[5]) / 4.,
+	       (Z[1] + Z[2] + Z[6] + Z[5]) / 4.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((h->V[2]->Pos.X + h->V[3]->Pos.X + h->V[7]->Pos.X + h->V[6]->Pos.X) / 4.,
-       (h->V[2]->Pos.Y + h->V[3]->Pos.Y + h->V[7]->Pos.Y + h->V[6]->Pos.Y) / 4.,
-       (h->V[2]->Pos.Z + h->V[3]->Pos.Z + h->V[7]->Pos.Z + h->V[6]->Pos.Z) / 4.);
+    glVertex3d((X[2] + X[3] + X[7] + X[6]) / 4., (Y[2] + Y[3] + Y[7] + Y[6]) / 4.,
+	       (Z[2] + Z[3] + Z[7] + Z[6]) / 4.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((h->V[4]->Pos.X + h->V[5]->Pos.X + h->V[6]->Pos.X + h->V[7]->Pos.X) / 4.,
-       (h->V[4]->Pos.Y + h->V[5]->Pos.Y + h->V[6]->Pos.Y + h->V[7]->Pos.Y) / 4.,
-       (h->V[4]->Pos.Z + h->V[5]->Pos.Z + h->V[6]->Pos.Z + h->V[7]->Pos.Z) / 4.);
+    glVertex3d((X[4] + X[5] + X[6] + X[7]) / 4., (Y[4] + Y[5] + Y[6] + Y[7]) / 4.,
+	       (Z[4] + Z[5] + Z[6] + Z[7]) / 4.);
     glEnd();
     glDisable(GL_LINE_STIPPLE);
     gl2psDisable(GL2PS_LINE_STIPPLE);
@@ -1182,30 +1170,20 @@ void Draw_Mesh_Prism(void *a, void *b)
     gl2psEnable(GL2PS_LINE_STIPPLE);
     glBegin(GL_LINES);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((p->V[0]->Pos.X + p->V[2]->Pos.X + p->V[1]->Pos.X) / 3.,
-       (p->V[0]->Pos.Y + p->V[2]->Pos.Y + p->V[1]->Pos.Y) / 3.,
-       (p->V[0]->Pos.Z + p->V[2]->Pos.Z + p->V[1]->Pos.Z) / 3.);
+    glVertex3d((X[0] + X[2] + X[1]) / 3., (Y[0] + Y[2] + Y[1]) / 3.,
+	       (Z[0] + Z[2] + Z[1]) / 3.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((p->V[3]->Pos.X + p->V[4]->Pos.X + p->V[5]->Pos.X) / 3.,
-       (p->V[3]->Pos.Y + p->V[4]->Pos.Y + p->V[5]->Pos.Y) / 3.,
-       (p->V[3]->Pos.Z + p->V[4]->Pos.Z + p->V[5]->Pos.Z) / 3.);
+    glVertex3d((X[3] + X[4] + X[5]) / 3., (Y[3] + Y[4] + Y[5]) / 3.,
+	       (Z[3] + Z[4] + Z[5]) / 3.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((p->V[0]->Pos.X + p->V[1]->Pos.X + p->V[4]->Pos.X + p->V[3]->Pos.X) / 4.,
-       (p->V[0]->Pos.Y + p->V[1]->Pos.Y + p->V[4]->Pos.Y + p->V[3]->Pos.Y) / 4.,
-       (p->V[0]->Pos.Z + p->V[1]->Pos.Z + p->V[4]->Pos.Z + p->V[3]->Pos.Z) / 4.);
+    glVertex3d((X[0] + X[1] + X[4] + X[3]) / 4., (Y[0] + Y[1] + Y[4] + Y[3]) / 4.,
+	       (Z[0] + Z[1] + Z[4] + Z[3]) / 4.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((p->V[0]->Pos.X + p->V[3]->Pos.X + p->V[5]->Pos.X + p->V[2]->Pos.X) / 4.,
-       (p->V[0]->Pos.Y + p->V[3]->Pos.Y + p->V[5]->Pos.Y + p->V[2]->Pos.Y) / 4.,
-       (p->V[0]->Pos.Z + p->V[3]->Pos.Z + p->V[5]->Pos.Z + p->V[2]->Pos.Z) / 4.);
+    glVertex3d((X[0] + X[3] + X[5] + X[2]) / 4., (Y[0] + Y[3] + Y[5] + Y[2]) / 4.,
+	       (Z[0] + Z[3] + Z[5] + Z[2]) / 4.);
     glVertex3d(Xc, Yc, Zc);
-    glVertex3d
-      ((p->V[1]->Pos.X + p->V[2]->Pos.X + p->V[5]->Pos.X + p->V[4]->Pos.X) / 4.,
-       (p->V[1]->Pos.Y + p->V[2]->Pos.Y + p->V[5]->Pos.Y + p->V[4]->Pos.Y) / 4.,
-       (p->V[1]->Pos.Z + p->V[2]->Pos.Z + p->V[5]->Pos.Z + p->V[4]->Pos.Z) / 4.);
+    glVertex3d((X[1] + X[2] + X[5] + X[4]) / 4., (Y[1] + Y[2] + Y[5] + Y[4]) / 4.,
+	       (Z[1] + Z[2] + Z[5] + Z[4]) / 4.);
     glEnd();
     glDisable(GL_LINE_STIPPLE);
     gl2psDisable(GL2PS_LINE_STIPPLE);

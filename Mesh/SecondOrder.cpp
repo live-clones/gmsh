@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.25 2004-05-26 00:33:37 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.26 2004-05-27 06:23:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -42,6 +42,12 @@ static Curve *THEC = NULL;
 static EdgesContainer *edges = NULL;
 static QuadFacesContainer *faces = NULL;
 static List_T *VerticesToDelete = NULL;
+
+// using the following onCurve and onSurface functions instead of
+// adding the second order nodes directly in the mesh algorithms is
+// far less efficient... But it's much more general, as we want to be
+// able to couple many algorithms, some of which we don't want
+// to/cannot modify.
 
 Vertex *onCurve(Vertex * v1, Vertex * v2)
 {
@@ -197,7 +203,7 @@ void putMiddleEdgePoint(void *a, void *b)
     Quadrangle *q;
     List_Read(ed->Quadrangles, i, &q);
     if(!q->VSUP)
-      q->VSUP = (Vertex **) Malloc(5 * sizeof(Vertex *));
+      q->VSUP = (Vertex **) Malloc((4 + 1) * sizeof(Vertex *));
     for(int j = 0; j < 4; j++) {
       if((!compareVertex(&q->V[edges_quad[j][0]], &ed->V[0]) &&
           !compareVertex(&q->V[edges_quad[j][1]], &ed->V[1])) ||
@@ -212,7 +218,7 @@ void putMiddleEdgePoint(void *a, void *b)
     Hexahedron *h;
     List_Read(ed->Hexahedra, i, &h);
     if(!h->VSUP)
-      h->VSUP = (Vertex **) Malloc(18 * sizeof(Vertex *));
+      h->VSUP = (Vertex **) Malloc((12 + 6 + 1) * sizeof(Vertex *));
     for(int j = 0; j < 12; j++) {
       if((!compareVertex(&h->V[edges_hexa[j][0]], &ed->V[0]) &&
           !compareVertex(&h->V[edges_hexa[j][1]], &ed->V[1])) ||
@@ -227,7 +233,7 @@ void putMiddleEdgePoint(void *a, void *b)
     Prism *p;
     List_Read(ed->Prisms, i, &p);
     if(!p->VSUP)
-      p->VSUP = (Vertex **) Malloc(12 * sizeof(Vertex *));
+      p->VSUP = (Vertex **) Malloc((9 + 3) * sizeof(Vertex *));
     for(int j = 0; j < 9; j++) {
       if((!compareVertex(&p->V[edges_prism[j][0]], &ed->V[0]) &&
           !compareVertex(&p->V[edges_prism[j][1]], &ed->V[1])) ||
@@ -242,7 +248,7 @@ void putMiddleEdgePoint(void *a, void *b)
     Pyramid *p;
     List_Read(ed->Pyramids, i, &p);
     if(!p->VSUP)
-      p->VSUP = (Vertex **) Malloc(9 * sizeof(Vertex *));
+      p->VSUP = (Vertex **) Malloc((8 + 1) * sizeof(Vertex *));
     for(int j = 0; j < 8; j++) {
       if((!compareVertex(&p->V[edges_pyramid[j][0]], &ed->V[0]) &&
           !compareVertex(&p->V[edges_pyramid[j][1]], &ed->V[1])) ||
@@ -298,7 +304,7 @@ void putMiddleFacePoint(void *a, void *b)
 	F.V[3] = fac->hexa[i]->V[quadfaces_hexa[j][3]];
 	qsort(F.V, 4, sizeof(Vertex *), compareVertex);
 	if(!compareQuadFace(fac, &F))
-	  fac->hexa[i]->VSUP[12+j] = v;
+	  fac->hexa[i]->VSUP[12 + j] = v;
       }
     }
   }
@@ -312,7 +318,7 @@ void putMiddleFacePoint(void *a, void *b)
 	F.V[3] = fac->prism[i]->V[quadfaces_prism[j][3]];
 	qsort(F.V, 4, sizeof(Vertex *), compareVertex);
 	if(!compareQuadFace(fac, &F))
-	  fac->prism[i]->VSUP[9+j] = v;
+	  fac->prism[i]->VSUP[9 + j] = v;
       }
     }
   }
@@ -328,6 +334,35 @@ void putMiddleFacePoint(void *a, void *b)
 	fac->pyramid[i]->VSUP[8] = v;
     }
   }
+}
+
+void putMiddleVolumePoint(void *a, void *b)
+{
+  Hexahedron *h = *(Hexahedron**)a;
+  double x = 0., y = 0., z = 0., lc = 0., u = 0.;
+  for(int i = 0; i < 8; i++){
+    x += h->V[i]->Pos.X;
+    y += h->V[i]->Pos.Y;
+    z += h->V[i]->Pos.Z;
+    lc += h->V[i]->lc;
+    u += h->V[i]->u;
+  }
+  for(int i = 0; i < 18; i++){
+    x += h->VSUP[i]->Pos.X;
+    y += h->VSUP[i]->Pos.Y;
+    z += h->VSUP[i]->Pos.Z;
+    lc += h->VSUP[i]->lc;
+    u += h->VSUP[i]->u;
+  }
+  x /= 26.;
+  y /= 26.;
+  z /= 26.;
+  lc /= 26.;
+  u /= 26.;
+  Vertex *v = Create_Vertex(++THEM->MaxPointNum, x, y, z, lc, u);
+  v->Degree = 2;
+  Tree_Insert(THEM->Vertices, &v);
+  h->VSUP[18] = v;
 }
 
 void ResetDegre2_Vertex(void *a, void *b)
@@ -474,6 +509,8 @@ void Degre2_Volume(void *a, void *b)
   faces->AddPrismTree(v->Prisms);
   faces->AddPyramidTree(v->Pyramids);
   Tree_Action(faces->AllFaces, putMiddleFacePoint);
+
+  Tree_Action(v->Hexahedra, putMiddleVolumePoint);
 }
 
 void Degre2(int dim)

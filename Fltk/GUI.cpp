@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.306 2004-05-25 04:10:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.307 2004-05-27 06:23:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3059,11 +3059,11 @@ void GUI::create_geometry_context_window(int num)
     {
       g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Translation");
       context_geometry_input[6] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component");
-      context_geometry_input[6]->value("1.0");
+      context_geometry_input[6]->value("0.0");
       context_geometry_input[7] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component");
       context_geometry_input[7]->value("0.0");
       context_geometry_input[8] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z component");
-      context_geometry_input[8]->value("0.0");
+      context_geometry_input[8]->value("1.0");
       for(i = 6; i < 9; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }

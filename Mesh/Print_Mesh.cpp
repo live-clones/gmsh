@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.52 2004-05-25 23:16:26 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.53 2004-05-27 06:23:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -253,7 +253,7 @@ static void _msh_print_hexahedron(void *a, void *b)
   nbn = 8;
   if(h->VSUP) {
     type = HEXAHEDRON_2;
-    nbs = 12 + 6;
+    nbs = 12 + 6 + 1;
   }
   else
     type = HEXAHEDRON;
@@ -811,7 +811,7 @@ static void _unv_process_3D_elements(Mesh *m)
     for(int j = 0; j < List_Nbr(Elements); j++) {
       List_Read(Elements, j, &hx);
       if(hx->VSUP)
-	_unv_print_record(ELEMENT_ID++, BRICK, v->Num, 8, 12+6, &hx->V[0], hx->VSUP);
+	_unv_print_record(ELEMENT_ID++, BRICK, v->Num, 8, 12+6+1, &hx->V[0], hx->VSUP);
       else
 	_unv_print_record(ELEMENT_ID++, BRICK, v->Num, 8, 0, &hx->V[0], NULL);
     }
