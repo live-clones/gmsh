@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.159 2002-03-12 19:07:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.160 2002-03-21 21:59:05 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -559,8 +559,11 @@ GUI::GUI(int argc, char **argv) {
   context_mesh_window = NULL;
 
   if(strlen(CTX.display)) Fl::display(CTX.display);
-
   Fl::add_handler(SetGlobalShortcut);
+
+#ifdef __APPLE__
+  Fl::scheme("plastic");
+#endif
 
   // Fl::visible_focus(0); 
   // we could use that to prohibit all default fltk navigation. It is
@@ -574,7 +577,7 @@ GUI::GUI(int argc, char **argv) {
   create_menu_window(argc, argv);
   create_graphic_window(argc, argv);
 
-#ifdef WIN32
+#if defined(WIN32)
   m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
   				   IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #elif defined(__APPLE__)
@@ -2098,11 +2101,11 @@ void GUI::create_visibility_window(){
   vis_type->menu(type_table);
   vis_type->textsize(CTX.fontsize);
   
-  vis_browser_mode = new Fl_Choice(2*WB+brw/3,1*WB+0*BH,brw/3,BH);
+  vis_browser_mode = new Fl_Choice(2*WB+(brw-2*WB)/3,1*WB+0*BH,(brw-2*WB)/3,BH);
   vis_browser_mode->menu(browser_mode_table);
   vis_browser_mode->textsize(CTX.fontsize);
   
-  vis_butt[0] = new Fl_Check_Button(3*WB+2*brw/3, 1*WB+0*BH, brw/3, BH, "Recursive");
+  vis_butt[0] = new Fl_Check_Button(3*WB+2*(brw-2*WB)/3, 1*WB+0*BH, (brw-2*WB)/3, BH, "Recursive");
   vis_butt[0]->type(FL_TOGGLE_BUTTON);
   vis_butt[0]->down_box(TOGGLE_BOX);
   vis_butt[0]->labelsize(CTX.fontsize);
@@ -2139,13 +2142,13 @@ void GUI::create_visibility_window(){
   vis_window->resizable(new Fl_Box(width-3*WB-2*BB-10,3*WB+2*BH+10, 10,10));
   vis_window->size_range(width, 5*BH+5*WB);
 
-  vis_input = new Fl_Input(1*WB, height-2*WB-2*BH, brw/3, BH);
+  vis_input = new Fl_Input(1*WB, height-2*WB-2*BH, (brw-2*WB)/3, BH);
   vis_input->labelsize(CTX.fontsize);
   vis_input->textsize(CTX.fontsize);
   vis_input->callback(opt_visibility_number_cb);
   vis_input->when(FL_WHEN_ENTER_KEY|FL_WHEN_NOT_CHANGED);
 
-  vis_input_mode = new Fl_Choice(2*WB+brw/3, height-2*WB-2*BH, brw/3, BH);
+  vis_input_mode = new Fl_Choice(2*WB+(brw-2*WB)/3, height-2*WB-2*BH, (brw-2*WB)/3, BH);
   vis_input_mode->menu(input_mode_table);
   vis_input_mode->textsize(CTX.fontsize);
   
