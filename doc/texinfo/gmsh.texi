@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.5 2003-03-21 00:52:48 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.6 2003-04-10 23:14:17 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -54,7 +54,7 @@
 @c %**start of header
 @setfilename        gmsh.info
 @set EDITION        1.0
-@set GMSH-VERSION   1.41
+@set GMSH-VERSION   1.44
 @set GMSH-WEB       @uref{http://www.geuz.org/gmsh/}
 @set COPYRIGHT      @copyright{} 1997-2003 Christophe Geuzaine, Jean-Francois Remacle
 @c
@@ -111,12 +111,7 @@ Copyright @value{COPYRIGHT}
 @subtitle The documentation for Gmsh, Version @value{GMSH-VERSION}
 @subtitle A finite element mesh generator with built-in pre- and post-processing facilities
 @subtitle 
-@ifclear COMMERCIAL
 @subtitle Edition @value{EDITION}/@today{}
-@end ifclear
-@ifset COMMERCIAL
-@subtitle Commercial edition @value{EDITION}/@today{}
-@end ifset
 
 @author Christophe Geuzaine
 @author Jean-Francois Remacle
@@ -124,12 +119,10 @@ Copyright @value{COPYRIGHT}
 @page
 @vskip 0pt plus 1filll
 Copyright @value{COPYRIGHT}
-@ifclear COMMERCIAL
 @sp 1
 Permission is granted to make and distribute verbatim copies of this manual
 provided the copyright notice and this permission notice are preserved on
 all copies.
-@end ifclear
 
 @end titlepage
 
@@ -167,11 +160,12 @@ post-processing facilities. This is edition @value{EDITION}/@today{} of the
 * Introduction::                What is Gmsh?
 * Overview::                    Quick overview of the general philosophy of Gmsh.
 * Expressions::                 Definition of basic expressions in Gmsh.
+* General::                     
 * Geometry module::             The Geometry module.
 * Mesh module::                 The Mesh module.
 * Solver module::               The Solver module.
 * Post-processing module::      The Post-processing module.
-* Short examples::              Simple object examples.
+* Tutorial::                    
 * Running Gmsh::                How to run Gmsh on your operating system.
 * File formats::                Input and output file formats.
 * Programming comments::        
@@ -186,41 +180,6 @@ post-processing facilities. This is edition @value{EDITION}/@today{} of the
 
 Overview
 
-* Syntactic rules::             
-* Comments::                    
-* Includes::                    
-
-Expressions 
-
-* Expression definition::       
-* Constants::                   
-* Operators::                   
-* Functions::                   
-* Current values::              
-* Arguments::                   
-* Registers::                   
-* Fields::                      
-
-Definition
-
-* Operators::                   
-* Constants::                   
-* Functions::                   
-* Current values::              
-* Fields::                      
-
-Operators
-
-* Operator types::              
-* Evaluation order::            
-
-Bugs, versions and contributors
-
-* Bugs::                        
-* Version history::             
-* Contributors::                
-
-@end detailmenu
 @end menu
 
 @c =========================================================================
@@ -287,9 +246,36 @@ developments and download information, are always available on
 @cindex Introduction
 @cindex Reading, guidelines
 
-Gmsh is...
+Gmsh is an automatic three-dimensional finite element mesh generator,
+primarily Delaunay, with built-in pre- and post-processing facilities. Its
+primal design goal is to provide a simple meshing tool for academic test
+cases with parametric input and up to date visualization capabilities.
 
-The main feature of Gmsh is...
+One of the strengths of Gmsh is its ability to respect a characteristic
+length field for the generation of adapted meshes on lines, surfaces and
+volumes. These adapted meshes can be mixed with simple structured
+(transfinite, elliptic, etc.)  meshes in order to augment the flexibility.
+
+What Gmsh should be pretty good at
+
+
+
+
+What Gmsh will suck at
+
+- complex unstructured mesh generator. only transfinite, extruded
+
+- a multibloc generator. all meshes are finite element-type, i.e. ...
+All the meshes produced by Gmsh are conforming in the sense of finite
+element meshes 
+
+- very large problems: (> million elements) both for geometry, mesh and
+post-processing. Gmsh is NOT optimized for speed.
+
+All geometrical, mesh, solver and post-processing instructions are
+prescribed in a language analyzed by Lex and Yacc. The code itself is
+written in C++, while the graphics are rendered with OpenGL and the user
+interface is based on the FLTK widget set.
 
 How to Read this Manual...
 
@@ -318,14 +304,115 @@ Tutorial...
 
 @cindex Overview
 
-Four modules...
+Working philosophy:
 
-ASCII files...
+Gmsh is structured around four modules: geometry, mesh, solver and
+post-processing. The specification of any input to these modules is done
+either interactively, or in text data files (interactive specifications
+generate language bits in the input file, and XXXlatin vice versa). The
+accessibility of most features in the ASCII text file makes it possible to
+automate all treatments (loops, tests and external access methods permit
+advanced scripting capabilities). The internal kernel of Gmsh reflects this
+structure: it is built around a geometry, mesh, solver and post-processing
+database. It is interesting to notice that the data can be provided to these
+databases either in the native format or thanks to dynamically loadable
+modules (plug-ins). This is most interesting to convert CAD data from other
+description languages (e.g. DXF or STEP), to launch external applications
+from inside Gmsh (e.g. GetDP or other solvers) or to apply complex
+user-defined treatments to geometry, mesh or post-processing data.  A brief
+description of the four modules is given hereafter.
+
+
+Geometry: geometrical entity definition
+
+Geometries are created in a bottom-up flow by successively defining
+points, oriented curves (segments, circles, ellipses, splines, etc.),
+oriented surfaces (plane surfaces, ruled surfaces, etc.) and
+volumes. Compound groups of geometrical entities can be defined, based
+on these elementary parametrized geometric entities. Data can be
+defined either interactively thanks to the menu system, or directly in
+the ASCII input files.  The scripting possibilities (with loops,
+tests, arrays of variables, etc.) allow fully parametrized definitions
+of all geometrical entities.
+
+Mesh: finite element mesh generation
+
+A finite element mesh is a tessellation of a given subset of
+R<sup>3</sup> by elementary geometrical elements of various shapes (in
+this case lines, triangles, quadrangles, tetrahedra, prisms, hexahedra
+and pyramids), arranged in such a way that if two of them intersect,
+they do so along a face, an edge or a node, and never otherwise. All
+the finite element meshes produced by Gmsh as unstructured, even if
+they were generated in a structured way. This implies that the
+elementary geometrical elements are defined only by an ordered list of
+their vertices (which allows the orientation of all their lower order
+geometrical entities) but no predefined relation is assumed between
+any two elementary elements.
+
+The mesh generation is performed in the same order as the geometry
+creation: curves are discretized first; the mesh of the curves is then
+used to mesh the surfaces; then the mesh of the surfaces is used to
+mesh the volumes. This automatically assures the continuity of the
+mesh when, for example, two surfaces share a common curve. Every
+meshing step is constrained by the characteristic length field, which
+can be uniform, specified by characteristic length associated to
+elementary geometrical entities, or associated to another mesh (the
+background mesh).
+
+For each meshing step (i.e. the discretization of lines, surfaces and
+volumes), all structured mesh directives are executed first, and serve
+as additional constraints for the unstructured parts. The implemented
+Delaunay algorithm is subdivided in the following five steps for
+surface/volume discretization:
+
+1. trivial meshing of a box including the convex polygon/polyhedron
+defined by the boundary nodes resulting from the discretization of the
+curves/surfaces;
+
+2. creation of the initial mesh by insertion of all the nodes on the
+curves/surfaces thanks to the Bowyer algorithm;
+
+3. boundary restoration to force all the edges/faces of the
+curves/surfaces to be present in the initial mesh;
+
+4. suppression of all the unwanted triangles/tetrahedra (in
+particular those containing the nodes of the initial box);
+
+5. insertion of new nodes by the Bowyer algorithm until the
+characteristic size of each simplex is lower or equal to the
+characteristic length field evaluated at the center of its
+circumscribed circle/sphere.
+
+
+Solver: external solver interface
+
+External solvers can be interfaced with Gmsh through a socket
+mechanism, which permits to easily launch computations either locally
+or on remote computers, and to collect and exploit the simulation
+results within Gmsh. The default solver interfaced with Gmsh is <a
+href="/getdp/">GetDP</a>. Check the <a href="#mysolver">solver
+examples</a> to see how to define your own solver (be sure to also
+read the answer to the question 6.1 in the <a
+HREF="/gmsh/doc/FAQ">FAQ</a>).
+
+Post-processing: scalar and vector field visualization
+
+Multiple post-processing scalar or vector maps can be loaded and
+manipulated (globally or individually) along with the geometry and the
+mesh. Scalar fields are represented by iso-value curves/surfaces or
+color maps and vector fields by three-dimensional arrows or
+displacement maps. Post-processing functions include arbitrary section
+computation, offset, elevation, boundary extraction, color map and
+range modification, animation, <a href="/gl2ps/">vector graphic
+output</a>, etc. All post-processing options can be accessed either
+interactively or through the input ASCII text files. Scripting permits
+to automate all the post-processing operations (e.g. for the creation
+of complex animations).
+
 
 @menu
 * Syntactic rules::             
 * Comments::                    
-* Includes::                    
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -377,7 +464,7 @@ The @var{etc} symbol replaces nonlisted rules.
 @c Comments
 @c -------------------------------------------------------------------------
 
-@node Comments, Includes, Syntactic rules, Overview
+@node Comments,  , Syntactic rules, Overview
 @section Comments
 
 @cindex Comments
@@ -397,39 +484,16 @@ the rest of a line after a double slash @code{//} is ignored.
 @end enumerate
 
 These commands won't have the described effects inside double quotes or
-inside GetDP keywords.
+inside Gmsh keywords.
 
-@c -------------------------------------------------------------------------
-@c Includes
-@c -------------------------------------------------------------------------
-
-@node Includes,  , Comments, Overview
-@section Includes
-
-@cindex Includes
-@cindex File, include
-
-@tindex Include
-@tindex #include
-
-Files can be included by placing one of the following commands
-(@var{expression-char} represents a file name) on a separate line, and
-outside any GetDP object.  Any text placed after an include command on the
-same line is ignored.
-
-@example
-@code{Include @var{expression-char}} 
-@code{#include @var{expression-char}} 
-@end example
-
-@xref{Constants}, for the definition of the character expression
-@var{expression-char}.
+Note that `white space' (spaces, tabs, new line characters) is ignored
+inside all Gmsh expressions.
 
 @c =========================================================================
 @c Expressions
 @c =========================================================================
 
-@node Expressions, Geometry module, Overview, Top
+@node Expressions, General, Overview, Top
 @chapter Expressions 
 
 @c -------------------------------------------------------------------------
@@ -441,10 +505,6 @@ same line is ignored.
 * Constants::                   
 * Operators::                   
 * Functions::                   
-* Current values::              
-* Arguments::                   
-* Registers::                   
-* Fields::                      
 @end menu
 
 @node Expression definition, Constants, Expressions, Expressions
@@ -454,13 +514,6 @@ same line is ignored.
 
 @vindex @var{expression}
 @vindex @var{expression-list}
-
-Expressions are the basic tool of GetDP. They cover a wide range of
-functional expressions, from constants to formal expressions containing
-functions (built-in or user-defined, depending on space and time, etc.),
-arguments, discrete quantities and their associated differential operators,
-etc. Note that `white space' (spaces, tabs, new line characters) is ignored
-inside expressions (as well as inside all GetDP objects).
 
 Expressions are denoted by the metasyntactic variable @var{expression}
 (remember the definition of the syntactic rules in @ref{Syntactic rules}):
@@ -551,98 +604,68 @@ purely constant expressions, denoted by the metasyntactic variable
 @var{expression-cst}, are also used:
 
 @example
-@var{expression-cst}:
-  @var{integer} |
+@var{expression}:
   @var{real} |
-  @var{constant-id} |
-  @var{operator-unary} @var{expression-cst} |
-  @var{expression-cst} @var{operator-binary} @var{expression-cst} |
-  @var{expression-cst} @var{operator-ternary-left} @var{expression-cst} @var{operator-ternary-right} 
-      @var{expression-cst} |
-  @var{math-function-id} [ < @var{expression-cst-list} > ]
+  @var{expression-id} |
+  @var{operator-unary} @var{expression} |
+  @var{expression} @var{operator-binary} @var{expression} |
+  @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} 
+      @var{expression} |
+  @var{math-function-id} [ < @var{expression-list} > ]
 @end example
 
 List of constant expressions are defined as:
 
 @example
-@var{expression-cst-list}:
-  @var{expression-cst-list-item} <,@dots{}>
+@var{expression-list}:
+  @var{expression-list-item} <,@dots{}>
 @end example
 
 @noindent with
 
 @example
-@var{expression-cst-list-item}:
-  @var{expression-cst} |
-  @var{expression-cst} : @var{expression-cst} |
-  @var{expression-cst} : @var{expression-cst} : @var{expression-cst} |
-  @var{constant-id} @{@} |
-  @var{constant-id} @{ @var{expression-cst-list} @} |
-  List[ @var{constant-id} ] |
-  ListAlt[ @var{constant-id}, @var{constant-id} ]
+@var{expression-list-item}:
+  @var{expression} |
+  @var{expression} : @var{expression} |
+  @var{expression} : @var{expression} : @var{expression} |
+  @var{expression-id} @{@} |
+  @var{expression-id} @{ @var{expression-list} @}
 @end example
 
 The second case in this last definition permits to create a list containing
-the range of numbers comprised between the two @var{expression-cst}, with a
+the range of numbers comprised between the two @var{expression}, with a
 unit incrementation step. The third case also permits to create a list
 containing the range of numbers comprised between the two
-@var{expression-cst}, but with a positive or negative incrementation step
-equal to the third @var{expression-cst}. The fourth and fifth cases permit
-to reference constant identifiers (@var{constant-id}s) of lists of constants
+@var{expression}, but with a positive or negative incrementation step
+equal to the third @var{expression}. The fourth and fifth cases permit
+to reference constant identifiers (@var{expression-id}s) of lists of constants
 and constant identifiers of sublists of constants (see below for the
-definition of constant identifiers) . The sixth case is a synonym for the
-fourth. The last case permits to create alternate lists: the arguments of
-@code{ListAlt} must be @var{constant-id}s of lists of constants of the same
-dimension. The result is an alternate list of these constants: first
-constant of argument 1, first constant of argument 2, second constant of
-argument 1, etc. These kinds of lists of constants are for example often
-used for function parameters (@pxref{Functions}).
+definition of constant identifiers) .
 
-Contrary to a general @var{expression} which is evaluated at runtime (thanks
-to an internal stack mechanism), an @var{expression-cst} is completely
-evaluated during the syntactic analysis of the problem (when GetDP reads the
-@file{.pro} file). The definition of such constants or lists of constants
-with identifiers can be made outside or inside any GetDP object. The syntax
-for the definition of constants is:
+All @var{expression-cst} are evaluated during the parsing of the data file
+syntactic analysis of the problem. The syntax for the definition of
+expression identifiers is:
 
 @example
-DefineConstant [ @var{constant-id} < = @var{expression-cst} > <,@dots{}> ]; |
-@var{constant-id} = @var{constant-def};
+@var{expression-id} = @var{expression-def};
 @end example
 
 @noindent with
 
 @example
-@var{constant-id}:
+@var{expression-id}:
   @var{string}
 
-@var{constant-def}:
-  @var{expression-cst-list-item} |
-  @{ @var{expression-cst-list} @}
+@var{expression-def}:
+  @var{expression-list-item} |
+  @{ @var{expression-list} @}
 @end example
 
-@noindent Notes:
-@enumerate
-@item
-Five constants are predefined in GetDP: @code{Pi} (3.1415926535897932),
-@code{0D} (0), @code{1D} (1), @code{2D} (2) and @code{3D} (3).
-@item
-The assignment in @code{DefineConstant} (zero if no @var{expression-cst} is
-given) is performed only if @var{constant-id} has not yet been defined. This
-kind of explicit default definition mechanism is most useful in general
-problem definition structures making use of a large number of generic
-constants, functions or groups. When exploiting only a part of a complex
-problem definition structure, the default definition mechanism allows to
-define the quantities of interest only, the others being assigned a default
-value (that will not be used during the processing but that avoids the error
-messages produced when references to undefined quantities are made).
-@end enumerate
-
-@xref{Constant expression examples}, as well as @ref{Function examples}, for
-some examples.
+Note: Only one constant is predefined in Gmsh: @code{Pi} =
+3.1415926535897932.
 
 Constant character strings can also be defined. The syntax for their
-definition is the following:
+definition is the following: XXX do we have this at the moment?
 
 @example
 @var{string-id} = "@var{string}";
@@ -662,6 +685,7 @@ Character expressions can be defined, using these constant strings:
   "@var{string}" |
   @var{string-id} |
   StrCat[ @var{expression-char} , @var{expression-char} ]
+XXX Sprintf, etc.
 @end example
 
 @noindent The third case in this definition permits to concatenate two
@@ -686,7 +710,7 @@ character expressions.
 @node Operator types, Evaluation order, Operators, Operators
 @subsection Operator types
 
-The operators in GetDP are similar to the corresponding operators in the C
+The operators in Gmsh are similar to the corresponding operators in the C
 or C++ programming languages.
 
 @cindex Operators, definition
@@ -702,6 +726,8 @@ or C++ programming languages.
 @tindex -
 @tindex !
 @tindex +
+@tindex ++
+@tindex --
 @tindex -
 @tindex *
 @tindex /\
@@ -713,11 +739,14 @@ or C++ programming languages.
 @tindex >=
 @tindex <=
 @tindex ==
+@tindex +=
+@tindex -=
+@tindex *=
+@tindex /=
 @tindex !=
 @tindex ||
 @tindex &&
 @tindex ?:
-
 
 @noindent
 @var{operator-unary}:
@@ -726,6 +755,10 @@ or C++ programming languages.
 Unary minus.
 @item !
 Logical not.
+@item ++
+XXX.
+@item --
+XXX.
 @end table
 
 @noindent
@@ -750,6 +783,14 @@ Subtraction.
 Equality.
 @item !=
 Inequality.
+@item +=
+XXX.
+@item -=
+XXX.
+@item *=
+XXX.
+@item /=
+XXX.
 @item >
 Greater. The evaluation of both arguments must result in scalar values.
 @item >=
@@ -824,296 +865,246 @@ i.e.@: @code{^} has the highest evaluation priority). Parentheses
 @c Functions
 @c -------------------------------------------------------------------------
 
-@node Functions, Current values, Operators, Expressions
+@node Functions,  , Operators, Expressions
 @section Functions
 
 @cindex Function, definition
 @cindex Built-in functions
-@cindex Piecewise functions
-@cindex Arguments
-@cindex Parameters
 
-@vindex @var{built-in-function-id}
+@vindex @var{function-id}
 
-Two types of functions coexist in GetDP: user-defined functions
-(@var{function-id}, see @ref{Function}) and built-in functions
-(@var{built-in-function-id}, defined in this section). 
+Built-in functions (@var{function-id}): XXX.
 
-Both types of functions are always followed by a pair of brackets @code{[]}
-that can possibly contain arguments (@pxref{Arguments}). This makes it
-simple to distinguish a @var{function-id} or a @var{built-in-function-id}
-from a @var{constant-id}. As shown below, built-in functions might also have
-parameters, given between braces @code{@{@}}, and which are completely
-evaluated during the analysis of the syntax (since they are of
-@var{expression-cst-list} type):
+are always followed by a pair of parentheses @code{()} containing a
+@var{expression-list}, the list of their arguments. XXX for compatibility
+with getdp, parentheses can be replaced by brackets @code{[]}.
 
 @example
-@var{built-in-function-id} [ < @var{expression-list} > ] < @{ @var{expression-cst-list} @} >
+@var{function-id} [ @var{expression-list} ]
 @end example
 
-@noindent with
-
-@example
-@var{built-in-function-id}:
-  @var{math-function-id} |
-  @var{extended-math-function-id} |
-  @var{green-function-id} |
-  @var{type-function-id} |
-  @var{coord-function-id} |
-  @var{misc-function-id}
-@end example
-
-@noindent Notes:
-@enumerate
-@item
-All possible values for @var{built-in-function-id} are listed in
-@ref{Types for Function}.  
-@item 
-Classical mathematical functions (@pxref{Math functions}) are
-the only functions allowed in a constant definition (see the definition of
-@var{expression-cst} in @ref{Constants}).
-@end enumerate
-
-
-@c -------------------------------------------------------------------------
-@c Current Values
-@c -------------------------------------------------------------------------
-
-@node Current values, Arguments, Functions, Expressions
-@section Current values
-
-@cindex Current values
-@cindex Values, current
-
-@tindex $Time
-@tindex $DTime
-@tindex $Theta
-@tindex $TimeStep
-@tindex $Iteration
-@tindex $X
-@tindex $XS
-@tindex $Y
-@tindex $YS
-@tindex $Z
-@tindex $ZS
-@tindex $A
-@tindex $B
-@tindex $C
-
-Current values are a special kind of arguments (@pxref{Arguments}) which
-return the current integer or floating point value of an internal GetDP
-variable:
-
-@table @code
-@item $Time
-Value of the current time. This value is set to zero for non time dependent 
-analyses.
-@item $DTime
-Value of the current time increment used in a time stepping algorithm.
-@item $Theta
-Current theta value in a theta time stepping algorithm.
-@item $TimeStep
-Number of the current time step in a time stepping algorithm.
-@item $Iteration
-Number of the current iteration in a nonlinear loop.
-@item $X, $XS
-Value of the current (destination or source) X-coordinate.
-@item $Y, $YS
-Value of the current (destination or source) Y-coordinate.
-@item $Z, $ZS
-Value of the current (destination or source) Z-coordinate.
-@item $A, $B, $C
-Value of the current parametric coordinates used in the parametric
-@code{OnGrid} @code{PostOperation} (@pxref{Types for PostOperation}).
-@end table
-
-@noindent Note:
-@enumerate
-@item
-The current X, Y and Z coordinates refer to the `physical world'
-coordinates, i.e.@: coordinates in which the mesh is expressed.
-@end enumerate
-
-
-@c -------------------------------------------------------------------------
-@c Arguments
-@c -------------------------------------------------------------------------
-
-@node Arguments, Registers, Current values, Expressions
-@section Arguments
-
-@cindex Arguments, definition
-
-@vindex @var{argument}
-
-@tindex $@var{integer}
-
-Function arguments can be used in expressions and have the following
-syntax (@var{integer} indicates the position of the argument in the
-@var{expression-list} of the function, starting from 1):
-
-@example
-@var{argument}:
-  $@var{integer}
-@end example
-
-@xref{Function}, and @ref{Function examples}, for more details.
-
-
-@c -------------------------------------------------------------------------
-@c Registers
-@c -------------------------------------------------------------------------
-
-@node Registers, Fields, Arguments, Expressions
-@section Registers
-
-@cindex Registers, definition
-
-@vindex @var{register-value-set}
-@vindex @var{register-value-get}
-
-@tindex #@var{integer}
-
-In many situations, identical parts of expressions are used more than
-once. If this is not a problem with constant expressions (since
-@var{expression-cst}s are evaluated only once during the analysis of the
-problem definition structure, cf.@: @ref{Constants}), it may introduce some
-important overhead while evaluating complex @var{expression}s (which are
-evaluated at runtime, thanks to an internal stack mechanism). In order to
-circumvent this problem, the evaluation result of any part of an
-@var{expression} can be saved in a register: a memory location where this
-partial result will be accessible without any costly reevaluation of the
-partial expression.
-
-Registers have the following syntax: 
-@example
-@var{register-value-set}:
-  @var{expression}#@var{integer}
-
-@var{register-value-get}:
-  #@var{integer}
-@end example
-
-@noindent Thus, to store any part of an expression in the register 5, one
-should add @code{#5} directly after the expression. To reuse the value
-stored in this register, one simply uses @code{#5} instead of the expression
-it should replace.
-
-@xref{Function examples}, for an example.
-
-
-@c -------------------------------------------------------------------------
-@c Fields
-@c -------------------------------------------------------------------------
-
-@node Fields,  , Registers, Expressions
-@section Fields
-
-@cindex Fields
-@cindex Operators, differential
-@cindex Differential operators
-@cindex Discrete quantities
-@cindex Quantities, discrete
-@cindex Interpolation
-@cindex Gradient
-@cindex Curl
-@cindex Divergence
-@cindex Exterior derivative
-@cindex Derivative, exterior
-
-@vindex @var{quantity}
-@vindex @var{quantity-id}
-@vindex @var{quantity-dof}
-@vindex @var{quantity-operator}
-
-A discretized quantity (defined in a function space, cf.@:
-@ref{FunctionSpace}) is represented between braces @code{@{@}}, and can only
-appear in well-defined expressions in @code{Formulation}
-(@pxref{Formulation}) and @code{PostProcessing} (@pxref{PostProcessing})
-objects:
-
-@example
-@var{quantity}:
-  < @var{quantity-dof} > @{ < @var{quantity-operator} > @var{quantity-id} @}
-@end example
-
-@noindent with 
-
-@example
-@var{quantity-id}:
-  @var{string}
-@end example
-
-@noindent and
-
-@noindent
-@var{quantity-dof}:
 @ftable @code
 
-@item Dof
-Defines a vector of discrete quantities (vector of @code{D}egrees @code{o}f
-@code{f}reedom), to be used only in @code{Equation} terms of formulations to
-define (elementary) matrices.  Roughly said, the @code{Dof} symbol in front
-of a discrete quantity indicates that this quantity is an unknown quantity,
-and should therefore not be considered as already computed.
+@item Acos 
+@code{[@var{expression}]}
 
-@item BF
-Indicates that only a basis function will be used (only valid with basis
-functions associated with regions).
+Arc cosine (inverse cosine) of @var{expression} in [0,Pi], @var{expression} in [-1,1].
 
-@end ftable
+@item Asin 
+@code{[@var{expression}]}
 
-@noindent
-@var{quantity-operator}:
-@ftable @code
+Arc sine (inverse sine) of @var{expression} in [-Pi/2,Pi/2], @var{expression} in [-1,1].
 
-@item d
-Exterior derivative (d): applied to a @var{p}-form, gives a (@var{p+1})-form.
+@item Atan 
+@code{[@var{expression}]}
 
-@item Grad
-Gradient: applied to a scalar field, gives a vector.
+Arc tangent (inverse tangent) of @var{expression} in [-Pi/2,Pi/2].
 
-@item Curl
-@itemx Rot
-Curl: applied to a vector field, gives a vector.
+@item Atan2
+@code{[@var{expression},@var{expression}]}
 
-@item Div
-Divergence (div): applied to a vector field, gives a scalar.
+Arc tangent (inverse tangent) of the first @var{expression} divided by the
+second, in [-Pi,Pi].
 
-@item dInv
-d^(-1): applied to a p-form, gives a (p-1)-form.
+@item Ceil
+@code{[@var{expression}]}
 
-@item GradInv
-Inverse grad: applied to a gradient field, gives a scalar.
+XXX
 
-@item CurlInv
-@itemx RotInv
-Inverse curl: applied to a curl field, gives a vector.
+@item Cos  
+@code{[@var{expression}]}
 
-@item DivInv
-Inverse div: applied to a divergence field.
+Cosine of @var{expression}.
+
+@item Cosh 
+@code{[@var{expression}]}
+
+Hyperbolic cosine of @var{expression}.
+
+@item Exp 
+@code{[@var{expression}]}
+
+Exponential function: e^@var{expression}.
+
+@item Fabs 
+@code{[@var{expression}]}
+
+Absolute value of @var{expression}.
+
+@item Fmod
+@code{[@var{expression},@var{expression}]}
+
+Remainder of the division of the first @var{expression} by the second, with
+the sign of the first.
+
+@item Floor
+@code{[@var{expression}]}
+
+XXX
+
+@item Hypot
+@code{[@var{expression},@var{expression}]}
+
+XXX
+
+@item Log
+@code{[@var{expression}]}
+
+Natural logarithm: ln(@var{expression}), @var{expression}>0.
+
+@item Log10
+@code{[@var{expression}]}
+
+Base 10 logarithm: log10(@var{expression}), @var{expression}>0.
+
+@item Modulo
+@code{[@var{expression}]}
+
+XXX
+
+@item Rand            
+
+XXX
+
+@item Sqrt
+@code{[@var{expression}]}
+
+Square root, @var{expression}>=0.
+
+@item Sin
+@code{[@var{expression}]}
+
+Sine of @var{expression}.
+
+@item Sinh 
+@code{[@var{expression}]}
+
+Hyperbolic sine of @var{expression}.
+
+@item Tan  
+@code{[@var{expression}]}
+
+Tangent of @var{expression}.
+
+@item Tanh 
+@code{[@var{expression}]}
+
+Hyperbolic tangent of @var{expression}.
 
 @end ftable
 
 
-@noindent Note:
-@enumerate
-@item
-While the operators @code{Grad}, @code{Curl} and @code{Div} can be applied
-to 0, 1 and 2-forms respectively, the exterior derivative operator @code{d}
-is usually preferred with such fields.
-@end enumerate
+@c =========================================================================
+@c General 
+@c =========================================================================
+
+@node General, Geometry module, Expressions, Top
+@chapter General stuff
+
+general commands:
+
+Call
+EndFor          
+EndIf           
+Exit            
+For             
+Function        
+If              
+MPI_Rank        
+MPI_Size        
+Printf          
+Return          
+Sprintf         
+StrCat          
+StrPrefix       
+
+Merge string;                (to merge a file)
+MergeWithBoundingBox string; (to merge a file and force the recalculation
+                               of the scene's bounding box)
+Draw;                        (to redraw the scene)
+Save string;                 (to save the mesh)
+Print string;                (to print the graphic window in the format
+                               defined in Print.Format)
+Sleep expr;                  (to sleep during expr seconds)
+Delete View[int];            (to free the view int)
+Delete Meshes;               (to free all meshes)
+Duplicata View[int];         (to duplicate the view int)
+System string;               (to execute a system call)
+
+Include  string
+#include string
+
+Files can be included by placing one of the following commands
+(@var{expression-char} represents a file name) on a separate line, and
+outside any Gmsh command.  Any text placed after an include command on the
+same line is ignored. XXX verify this
+
+@example
+@code{Include @var{expression-char}} 
+@code{#include @var{expression-char}} 
+@end example
+
+unused keywords:
+Bounds
+Complex
+Ellipse         
+Extrude         
+ELLIPSE
+
+@c =========================================================================
+@c Option database
+@c =========================================================================
+
+XXX
 
 
 @c =========================================================================
 @c Geometry module
 @c =========================================================================
 
-@node Geometry module, Mesh module, Expressions, Top
+@node Geometry module, Mesh module, General, Top
 @chapter Geometry module
 
 @cindex Geometry
 @cindex Module, Geometry
+
+newreg
+newp
+newc
+news
+newv
+Attractor
+Bezier		
+BSpline		
+Circle          
+Coherence       
+CatmullRom	
+Delete          
+Dilate          
+Duplicata       
+Ellipsis        
+Intersect       
+Knots		
+Line            
+Loop            
+Nurbs		
+Order
+Physical        
+Plane           
+Point           
+Rotate          
+Ruled           
+Spline          
+Surface         
+Symmetry        
+Triangulation   
+Translate       
+Trimmed		
+Volume          
+
+
+
+Describe option database in expressions above...
 
 
 @c =========================================================================
@@ -1125,6 +1116,23 @@ is usually preferred with such fields.
 
 @cindex Mesh
 @cindex Module, Mesh
+
+
+Bump
+Characteristic
+Elliptic
+Length
+Layers          
+Meshes          
+Power           
+Progression     
+Parametric	
+Recombine
+Transfinite     
+With		
+Using           
+In              
+
 
 
 @c =========================================================================
@@ -1142,18 +1150,49 @@ is usually preferred with such fields.
 @c Post-processing module
 @c =========================================================================
 
-@node Post-processing module, Short examples, Solver module, Top
+@node Post-processing module, Tutorial, Solver module, Top
 @chapter Post-processing module
 
 @cindex Post-processing
 @cindex Module, Post-processing
 
+Color
+ColorTable
+Plugin          
+SP
+VP
+TP
+SL
+VL
+TL
+ST
+VT
+TT
+SQ
+VQ
+TQ
+SS
+VS
+TS
+SH
+VH
+TH
+SI
+VI
+TI
+SY
+VY
+TY
+T2
+T3
+
+
 @c =========================================================================
-@c Short Examples
+@c Tutorial
 @c =========================================================================
 
-@node Short examples, Running Gmsh, Post-processing module, Top
-@chapter Short examples
+@node Tutorial, Running Gmsh, Post-processing module, Top
+@chapter Tutorial
 
 @cindex Short examples
 @cindex Examples, short
@@ -1172,7 +1211,7 @@ is usually preferred with such fields.
 @c Running Gmsh
 @c =========================================================================
 
-@node Running Gmsh, File formats, Short examples, Top
+@node Running Gmsh, File formats, Tutorial, Top
 @chapter Running Gmsh
 
 @cindex Operating system
@@ -1181,12 +1220,17 @@ is usually preferred with such fields.
 @cindex Options, command line
 @cindex Running Gmsh
 
+XXX include tutorial/README
+
+
 @c =========================================================================
 @c File Formats
 @c =========================================================================
 
 @node File formats, Programming comments, Running Gmsh, Top
 @chapter File formats
+
+XXX include FORMATS
 
 This chapter describes the file formats that cannot be modified by the
 user. 
