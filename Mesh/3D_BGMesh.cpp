@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.6 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.7 2000-11-24 09:43:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -152,7 +152,7 @@ int BGMWithView (Post_View * ErrView){
       v->Pos.Z = t.Z[j];
       if (0 /*Tree_Query(Pts,&v) */ ){
 	/* Corriger la Lc pour lissage */
-	ver[j] = v;
+	//ver[j] = v;
       }
       else{
 	v = Create_Vertex (k++, t.X[j], t.Y[j], t.Z[j]

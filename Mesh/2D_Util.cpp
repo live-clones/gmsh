@@ -1,4 +1,4 @@
-/* $Id: 2D_Util.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
+/* $Id: 2D_Util.cpp,v 1.5 2000-11-24 09:43:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -338,6 +338,8 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
     return(pt);
   }
 
+  pt.h = 0.0;
+  pt.v = 0.0;
   return pt;
 
 }

@@ -1,4 +1,4 @@
-/* $Id: 3D_Bricks.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: 3D_Bricks.cpp,v 1.4 2000-11-24 09:43:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -9,6 +9,7 @@ Brick LaBrique (Grid_T * pGrid, double X, double Y, double Z){
   Brick B;
 
   B.N = -1;
+  B.pT = NULL;
   if (X > pGrid->max.X || X < pGrid->min.X || Y > pGrid->max.Y ||
       Y < pGrid->min.Y || Z > pGrid->max.Z || Z < pGrid->min.Z){
     return (B);
