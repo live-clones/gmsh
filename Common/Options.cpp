@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.193 2004-10-25 00:45:47 geuzaine Exp $
+// $Id: Options.cpp,v 1.194 2004-10-25 19:19:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -4492,6 +4492,19 @@ double opt_view_arrow_size(OPT_ARGS_NUM)
     WID->view_value[60]->value(v->ArrowSize);
 #endif
   return v->ArrowSize;
+}
+
+double opt_view_arrow_size_proportional(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    v->ArrowSizeProportional = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_butt[0]->value(v->ArrowSizeProportional);
+#endif
+  return v->ArrowSizeProportional;
 }
 
 double opt_view_arrow_head_radius(OPT_ARGS_NUM)

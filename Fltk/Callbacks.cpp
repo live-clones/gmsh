@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.288 2004-10-25 00:45:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.289 2004-10-25 19:19:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3468,6 +3468,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double raise2 = opt_view_raise2(current, GMSH_GET, 0);
   double timestep = opt_view_timestep(current, GMSH_GET, 0);
   double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
+  double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
   double displacement_factor = opt_view_displacement_factor(current, GMSH_GET, 0);
   double raised_view = opt_view_raised_view(current, GMSH_GET, 0);
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
@@ -3609,6 +3610,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
         opt_view_boundary(i, GMSH_SET, val);
 
       // view_butts
+
+      val = WID->view_butt[0]->value();
+      if(force || (val != arrow_size_proportional))
+        opt_view_arrow_size_proportional(i, GMSH_SET, val);
 
       val = WID->view_butt[1]->value() ? DRAW_POST_3D :
 	WID->view_butt[2]->value() ? DRAW_POST_2D_SPACE : DRAW_POST_2D_TIME;

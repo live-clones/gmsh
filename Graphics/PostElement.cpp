@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.47 2004-10-21 23:42:50 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.48 2004-10-25 19:19:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1162,7 +1162,8 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
         Draw_String(Num);
       }
       else {
-        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / ValMax;
+        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / 
+	  (View->ArrowSizeProportional ? ValMax : dd);
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
           dx /= dd;
           dy /= dd;
@@ -1187,7 +1188,8 @@ void Draw_VectorElement(int type, Post_View * View, int preproNormals,
 	else
 	  PaletteDiscrete(View, View->NbIso,
 			  View->GIFV(ValMin, ValMax, View->NbIso, norm[k]));
-        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize / ValMax;
+        fact = CTX.pixel_equiv_x / CTX.s[0] * View->ArrowSize /
+	  (View->ArrowSizeProportional ? ValMax : norm[k]);
         if(View->ScaleType == DRAW_POST_LOGARITHMIC && ValMin > 0) {
           Val[k][0] /= norm[k];
           Val[k][1] /= norm[k];

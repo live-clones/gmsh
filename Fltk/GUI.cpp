@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.367 2004-10-21 17:02:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.368 2004-10-25 19:19:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2627,6 +2627,11 @@ void GUI::create_option_window()
         view_value[60]->step(1);
         view_value[60]->align(FL_ALIGN_RIGHT);
 
+	view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.5*BB), BH, "Proportional");
+	view_butt[0]->type(FL_TOGGLE_BUTTON);
+	view_butt[0]->down_box(TOGGLE_BOX);
+	view_butt[0]->selection_color(TOGGLE_COLOR);
+
         view_value[63] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view_value[63]->minimum(0.);
         view_value[63]->maximum(1.);
@@ -2844,6 +2849,7 @@ void GUI::update_view_window(int num)
   opt_view_line_type(num, GMSH_GUI, 0);
   opt_view_vector_type(num, GMSH_GUI, 0);
   opt_view_arrow_size(num, GMSH_GUI, 0);
+  opt_view_arrow_size_proportional(num, GMSH_GUI, 0);
 
   opt_view_displacement_factor(num, GMSH_GUI, 0);
   double val3 = 2. * CTX.lc / maxval;
