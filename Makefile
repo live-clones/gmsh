@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.223 2002-05-19 20:53:54 geuzaine Exp $
+# $Id: Makefile,v 1.224 2002-05-20 16:06:46 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -69,14 +69,15 @@ default:
 # Source distribution
 #
 source:
-	tar zcvf gmsh.tgz `ls README* COPYING Makefile */Makefile */*.[chyl]\
-                           */*.rc */*.res */*.ico */*.cpp */*.pl */*.pm */*.opt */*.spec`\
-                           demos tutorial
+	tar zcvf gmsh.tgz `ls README* Makefile */Makefile */*.[chyl] */*.cpp\
+                           */*.rc */*.res */*.ico */*.pl */*.pm */*.opt */*.spec`\
+                           doc demos tutorial
 	mkdir gmsh-$(GMSH_RELEASE)
 	cd gmsh-$(GMSH_RELEASE) && tar zxvf ../gmsh.tgz
-	cd gmsh-$(GMSH_RELEASE) && zip -r gmsh-$(GMSH_RELEASE)-source.zip *
-	mv gmsh-$(GMSH_RELEASE)/gmsh-$(GMSH_RELEASE)-source.zip .
 	rm -f gmsh.tgz
+	cd gmsh-$(GMSH_RELEASE) && rm -rf CVS */CVS */*/CVS */.globalrc
+#	cd gmsh-$(GMSH_RELEASE) && zip -r gmsh-$(GMSH_RELEASE)-source.zip *
+#	mv gmsh-$(GMSH_RELEASE)/gmsh-$(GMSH_RELEASE)-source.zip .
 	tar zcvf gmsh-$(GMSH_RELEASE)-source.tgz gmsh-$(GMSH_RELEASE)
 	rm -rf gmsh-$(GMSH_RELEASE)
 
