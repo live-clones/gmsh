@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.326 2004-03-04 23:31:18 geuzaine Exp $
+# $Id: Makefile,v 1.327 2004-03-05 00:05:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -74,7 +74,7 @@ source: source-common
            NR Triangle/triangle.* utils/commercial
 	tar zcvf gmsh-${GMSH_RELEASE}-source.tgz gmsh-${GMSH_RELEASE}
 
-nightly: source
+source-nightly: source
 	rm -rf gmsh-${GMSH_RELEASE}
 	mv gmsh-${GMSH_RELEASE}-source.tgz gmsh-nightly-source.tgz
 
