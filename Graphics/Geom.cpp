@@ -1,4 +1,4 @@
-/* $Id: Geom.cpp,v 1.2 2000-11-23 14:11:32 geuzaine Exp $ */
+/* $Id: Geom.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -339,7 +339,7 @@ void Plan_SurfPlane (void *data,void *dum){
 	  res[2] = 1.;
 	}
 	else {
-	  printf("erreur Plan_SurfPlane\n");
+	  Msg(ERROR, "Draw Geometry (Plan_SurfPlane)");
 	}
       }
     }
@@ -485,7 +485,7 @@ void Draw_Plane_Surface (Surface *s){
       }
     }
     if(k)List_Add(s->Orientations,&vv);
-    fprintf(stderr, "Surface %d %d points\n",s->Num,List_Nbr(s->Orientations)); 
+    Msg(INFO, "Surface %d (%d points)",s->Num,List_Nbr(s->Orientations)); 
   }
 
   if(CTX.geom.surfaces){

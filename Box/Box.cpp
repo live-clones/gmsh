@@ -1,4 +1,4 @@
-/* $Id: Box.cpp,v 1.4 2000-11-23 16:51:27 geuzaine Exp $ */
+/* $Id: Box.cpp,v 1.5 2000-11-23 23:20:34 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -56,6 +56,34 @@ void AddView(int, char *, int){;}
 void draw_polygon_2d (double, double, double, int, double *, double *, double *){;}
 
 /* ------------------------------------------------------------------------ */
+/*  I n f o                                                                 */
+/* ------------------------------------------------------------------------ */
+
+void Info (int level, char *arg0){
+  switch(level){
+  case 0 :
+    fprintf(stderr, "%s\n", gmsh_progname);
+    fprintf(stderr, "%s\n", gmsh_copyright);
+    fprintf(stderr, gmsh_help, arg0);
+    exit(1);
+  case 1:
+    fprintf(stderr, "%g\n", GMSH_VERSION);
+    exit(1) ; 
+  case 2:
+    fprintf(stderr, "%s%g\n", gmsh_version, GMSH_VERSION);
+    fprintf(stderr, "%s\n", gmsh_os);
+    fprintf(stderr, "%s\n", gmsh_date);
+    fprintf(stderr, "%s\n", gmsh_host);
+    fprintf(stderr, "%s\n", gmsh_packager);
+    fprintf(stderr, "%s\n", gmsh_email);
+    fprintf(stderr, "%s\n", gmsh_url);
+    exit(1) ; 
+  default :
+    break;
+  }
+}
+
+/* ------------------------------------------------------------------------ */
 /*  p a r s e                                                               */
 /* ------------------------------------------------------------------------ */
 
@@ -64,7 +92,7 @@ void ParseFile(char *f){
   yyerrorstate=0;
   yylineno=1;
   if(!(yyin = fopen(yyname,"r"))){
-    Msg(INFO, "File '%s' dos not exist", f);
+    Msg(INFOS, "File '%s' dos not exist", f);
     return;
   }
   while(!feof(yyin)) yyparse();
@@ -163,12 +191,12 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	if(argv[i]!=NULL){
 	  CTX.mesh.degree = atoi(argv[i]); i++;
 	  if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
-	    fprintf(stderr, "Error: Wrong degree\n");
+	    fprintf(stderr, ERROR_STR "Wrong degree\n");
 	    exit(1);
 	  }
 	}
 	else {	  
-	  fprintf(stderr, "Error: Missing Number\n");
+	  fprintf(stderr, ERROR_STR "Missing Number\n");
 	  exit(1);
 	}
       }
@@ -182,13 +210,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	  else if(!strcmp(argv[i],"gref"))
 	    CTX.mesh.format = FORMAT_GREF ;
 	  else{
-	    fprintf(stderr, "Error: Unknown mesh format\n");
+	    fprintf(stderr, ERROR_STR "Unknown mesh format\n");
 	    exit(1);
 	  }
 	  i++;
 	}
 	else {	  
-	  fprintf(stderr, "Error: Missing format\n");
+	  fprintf(stderr, ERROR_STR "Missing format\n");
 	  exit(1);
 	}
       }
@@ -200,13 +228,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	  else if(!strcmp(argv[i],"aniso"))
 	    CTX.mesh.algo = DELAUNAY_NEWALGO ;
 	  else{
-	    fprintf(stderr, "Error: Unknown mesh algorithm\n");
+	    fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
 	    exit(1);
 	  }
 	  i++;
 	}
 	else {	  
-	  fprintf(stderr, "Error: Missing algorithm\n");
+	  fprintf(stderr, ERROR_STR "Missing algorithm\n");
 	  exit(1);
 	}
       }
@@ -220,7 +248,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	Info(0,argv[0]);
       }
       else{
-	fprintf(stderr, "Warning: Unknown option '%s'\n", argv[i]);
+	fprintf(stderr, WARNING_STR "Unknown option '%s'\n", argv[i]);
 	Info(0,argv[0]);
       }
     }
@@ -230,7 +258,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       }
       else{
-	fprintf(stderr, "Error: Too many input files\n");
+	fprintf(stderr, ERROR_STR "Too many input files\n");
 	exit(1);
       }
     }
@@ -270,7 +298,7 @@ int main(int argc, char *argv[]){
 	Create_BgMesh(TYPBGMESH,.2,THEM);
       }
       else{
-	fprintf(stderr, "Error: invalid BGM (no view)\n"); exit(1);
+	fprintf(stderr, ERROR_STR "Invalid BGM (no view)\n"); exit(1);
       }
     }
     if(CTX.interactive > 0){
@@ -283,36 +311,6 @@ int main(int argc, char *argv[]){
 }
 
 
-
-/* ------------------------------------------------------------------------ */
-/*  I n f o                                                                 */
-/* ------------------------------------------------------------------------ */
-
-void Info (int level, char *arg0){
-  switch(level){
-  case 0 :
-    fprintf(stderr, "%s\n", gmsh_progname);
-    fprintf(stderr, "%s\n", gmsh_copyright);
-    fprintf(stderr, gmsh_help, arg0);
-    exit(1);
-  case 1:
-    fprintf(stderr, "%g\n", GMSH_VERSION);
-    exit(1) ; 
-  case 2:
-    fprintf(stderr, "%s%g\n", gmsh_version, GMSH_VERSION);
-    fprintf(stderr, "%s\n", gmsh_os);
-    fprintf(stderr, "%s\n", gmsh_date);
-    fprintf(stderr, "%s\n", gmsh_host);
-    fprintf(stderr, "%s\n", gmsh_packager);
-    fprintf(stderr, "%s\n", gmsh_email);
-    fprintf(stderr, "%s\n", gmsh_url);
-    exit(1) ; 
-  default :
-    break;
-  }
-}
-
-
 /* ------------------------------------------------------------------------ */
 /*  S i g n a l                                                             */
 /* ------------------------------------------------------------------------ */
@@ -321,10 +319,10 @@ void Info (int level, char *arg0){
 void Signal (int sig_num){
 
   switch (sig_num){
-  case SIGSEGV : Msg(ERROR, "Segmentation Violation (invalid memory reference)"); break;
-  case SIGFPE  : Msg(ERROR, "Floating point exception (division by zero?)"); break;
-  case SIGINT  : Msg(ERROR, "Interrupt (generated from terminal special char)"); break;
-  default      : Msg(ERROR, "Unknown signal"); break;
+  case SIGSEGV : Msg(FATAL, "Segmentation Violation (Invalid Memory Reference)"); break;
+  case SIGFPE  : Msg(FATAL, "Floating Point Exception (Division by Zero?)"); break;
+  case SIGINT  : Msg(FATAL, "Interrupt (Generated from Terminal Special Char)"); break;
+  default      : Msg(FATAL, "Unknown Signal"); break;
   }
 }
 
@@ -342,30 +340,42 @@ void Msg(int level, char *fmt, ...){
 
   switch(level){
 
-  case PARSER_ERROR :
-    fprintf(stderr, "Parse Error: "); vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
-    break ;
-
-  case PARSER_INFO :
-    if(VERBOSE){
-      fprintf(stderr, "Parse Info: "); vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
-    }
+  case FATAL :
+    fprintf(stderr, FATAL_STR);
+    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    abort = 1 ;
     break ;
 
   case ERROR :
-    fprintf(stderr, "Error: "); vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    fprintf(stderr, ERROR_STR);
+    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     abort = 1 ;
     break ;
 
   case WARNING :
-    fprintf(stderr, "Warning: "); vfprintf(stderr, fmt,args); fprintf(stderr, "\n");
+    fprintf(stderr, WARNING_STR);
+    vfprintf(stderr, fmt,args); fprintf(stderr, "\n");
     break;
 
+  case PARSER_ERROR :
+    fprintf(stderr, PARSER_ERROR_STR); 
+    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    break ;
+
+  case PARSER_INFO :
+    if(VERBOSE){
+      fprintf(stderr, PARSER_INFO_STR);
+      vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    }
+    break ;
+
+  case DEBUG :
   case INFOS :
   case INFO :
   case SELECT :
   case STATUS :
     if(VERBOSE){
+      fprintf(stderr, INFO_STR);
       vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     }
     break;

@@ -1,4 +1,4 @@
-/* $Id: 1D_Mesh.cpp,v 1.3 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: 1D_Mesh.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -89,7 +89,7 @@ void Maillage_Curve (void *data, void *dummy){
   if (c->Num < 0)
     return;
 
-  Msg(INFO, "Meshing Curve %d ", c->Num);
+  Msg(INFO, "Meshing Curve %d", c->Num);
 
   if (c->Method != TRANSFINI && Extrude_Mesh (c)){
     Points = List_Create (10, 10, sizeof (IntPoint));

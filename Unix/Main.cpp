@@ -1,4 +1,4 @@
-/* $Id: Main.cpp,v 1.5 2000-11-23 16:51:30 geuzaine Exp $ */
+/* $Id: Main.cpp,v 1.6 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include <signal.h>
 
@@ -39,6 +39,40 @@ char gmsh_host[]      = "Build Host       : " GMSH_HOST ;
 char gmsh_packager[]  = "Packager         : " GMSH_PACKAGER ;
 char gmsh_email[]     = "E-Mail           : " GMSH_EMAIL ;
 char gmsh_url[]       = "URL              : " GMSH_URL ;
+char gmsh_help[]      = 
+  "Usage: %s [options] [files]\n"
+  "Mesh options:\n"
+  "  -0                    parse input and exit\n"
+  "  -1, -2, -3            batch 1-, 2- or 3-dimensional mesh\n"
+  "  -format msh|unv       mesh format (default: msh)\n"
+  "  -algo iso|aniso       mesh algorithm (default: iso)\n"
+  "  -smooth int           mesh smoothing (default: 0)\n"
+  "  -degree int           mesh degree (default: 1)\n"
+  "  -scale float          scaling factor (default: 1.0)\n"
+  "  -bgm file             load backround mesh from file\n"
+  "  -interactive          display the mesh construction\n"
+  "Post Processing options:\n"
+  "  -dl                   enable display lists\n"
+  "  -noview               hide all views at startup\n"
+  "Display options:\n"	  
+  "  -nodb                 no double buffer\n"
+  "  -noov                 no overlay visual\n"
+  "  -alpha                enable alpha blending\n"
+  "  -visinfo              show visual information at startup\n"
+  "  -geometry geom        specify main window geometry\n"
+  "  -viewport 9*float     specify rotation, translation and scale\n"
+  "  -display disp         specify display\n"
+  "  -perspective          perspective instead of orthographic projection\n"
+  "  -flash                allow colormap flashing\n"
+  "  -samevisual           force same visual for OpenGL and GUI\n"
+  "Other options:\n"	  
+  "  -v int                set verbosity level (default: 2)\n"
+  "  -threads              enable threads\n"
+  "  -path string          path for included files\n"
+  "  -version              show version number\n"
+  "  -info                 show detailed version information\n"
+  "  -help                 show this message\n"
+  ;
 
 char *TheFileNameTab[MAX_OPEN_FILES], *TheBgmFileName=NULL;
 char  ThePathForIncludes[NAME_STR_L];
@@ -56,7 +90,7 @@ void ParseFile(char *f){
   yylineno=1;
 
   if(!(yyin = fopen(yyname,"r"))){
-    Msg(INFO, "File '%s' dos not exist", f);
+    Msg(INFO, "File '%s' Does not Exist", f);
     return;
   }
 
@@ -75,7 +109,7 @@ void ParseFile(char *f){
       load_color_table(yyin, &v->CT);
     }
     else{
-      Msg(WARNING, "No Post-Processing View available to set Colors");
+      Msg(WARNING, "No Post-Processing View Available to set Colors From");
     }
   }
   else{
@@ -87,7 +121,7 @@ void ParseFile(char *f){
 extern int SHOW_ALL_ENTITIES ;
 
 void MergeProblem(char *name){
-  Msg(INFOS, "Merging %s",name); 
+  Msg(INFOS, "Merging '%s'",name); 
 
   ParseFile(name);  
   if (yyerrorstate) return;
@@ -126,7 +160,7 @@ void OpenProblem(char *name){
 		  XmNiconName, TheBaseFileName,
 		  NULL);
 
-  Msg(INFOS, "Opening %s", TheFileName); 
+  Msg(INFOS, "Opening '%s'", TheFileName); 
 
   ParseFile(TheFileName);  
 
@@ -149,7 +183,7 @@ void OpenProblem(char *name){
 
 void Get_Options (int argc, char *argv[], int *nbfiles) {
   int i=1;
-  
+
   TheFileNameTab[0] = "unnamed.geo" ;
   *nbfiles = 0;
   
@@ -218,12 +252,12 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	if(argv[i]!=NULL){
 	  CTX.mesh.degree = atoi(argv[i]); i++;
 	  if(CTX.mesh.degree != 1 || CTX.mesh.degree != 2){
-	    fprintf(stderr, "Error: Wrong degree\n");
+	    fprintf(stderr, ERROR_STR "Wrong degree\n");
 	    exit(1);
 	  }
 	}
 	else {	  
-	  fprintf(stderr, "Error: Missing Number\n");
+	  fprintf(stderr, ERROR_STR "Missing Number\n");
 	  exit(1);
 	}
       }
@@ -247,13 +281,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	    CTX.mesh.format = FORMAT_GREF ;
 	  }
 	  else{
-	    fprintf(stderr, "Error: Unknown mesh format\n");
+	    fprintf(stderr, ERROR_STR "Unknown mesh format\n");
 	    exit(1);
 	  }
 	  i++;
 	}
 	else {	  
-	  fprintf(stderr, "Error: Missing format\n");
+	  fprintf(stderr, ERROR_STR "Missing format\n");
 	  exit(1);
 	}
       }
@@ -265,13 +299,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	  else if(!strcmp(argv[i],"aniso"))
 	    CTX.mesh.algo = DELAUNAY_NEWALGO ;
 	  else{
-	    fprintf(stderr, "Error: Unknown mesh algorithm\n");
+	    fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
 	    exit(1);
 	  }
 	  i++;
 	}
 	else {	  
-	  fprintf(stderr, "Error: Missing algorithm\n");
+	  fprintf(stderr, ERROR_STR "Missing algorithm\n");
 	  exit(1);
 	}
       }
@@ -352,25 +386,37 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
 	  CTX.verbosity = atoi(argv[i]); i++;
 	}
 	else {	  
-	  fprintf(stderr, "Error: Missing Number\n");
+	  fprintf(stderr, ERROR_STR "Missing Number\n");
 	  exit(1);
 	}
       }
       else if(!strcmp(argv[i]+1, "version") || 
 	      !strcmp(argv[i]+1, "-version")){
-	Info(2,argv[0]); 
+	fprintf(stderr, "%g\n", GMSH_VERSION);
+	exit(1);
       }
       else if(!strcmp(argv[i]+1, "info") || 
 	      !strcmp(argv[i]+1, "-info")){
-	Info(1,argv[0]); 
+	fprintf(stderr, "%s%g\n", gmsh_version, GMSH_VERSION);
+	fprintf(stderr, "%s\n", gmsh_os);
+	fprintf(stderr, "%s\n", gmsh_date);
+	fprintf(stderr, "%s\n", gmsh_host);
+	fprintf(stderr, "%s\n", gmsh_packager);
+	fprintf(stderr, "%s\n", gmsh_email);
+	fprintf(stderr, "%s\n", gmsh_url);
+	exit(1) ; 
       }
       else if(!strcmp(argv[i]+1, "help") || 
 	      !strcmp(argv[i]+1, "-help")){
-	Info(0,argv[0]);
+	fprintf(stderr, "%s\n", gmsh_progname);
+	fprintf(stderr, "%s\n", gmsh_copyright);
+	fprintf(stderr, gmsh_help, argv[0]);
+	exit(1);
       }
       else{
-	fprintf(stderr, "Warning: Unknown option '%s'\n", argv[i]);
-	Info(0,argv[0]);
+	fprintf(stderr, "Unknown option '%s'\n", argv[i]);
+	fprintf(stderr, gmsh_help, argv[0]);
+	exit(1);
       }
     }
 
@@ -378,7 +424,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       if(*nbfiles < MAX_OPEN_FILES)
 	TheFileNameTab[(*nbfiles)++] = argv[i++]; 
       else{
-	fprintf(stderr, "Error: Too many input files\n");
+	fprintf(stderr, ERROR_STR "Too many input files\n");
 	exit(1);
       }
     }
@@ -415,6 +461,8 @@ int main(int argc, char *argv[]){
   /* Command line options */
 
   Get_Options(argc, argv, &nbf);
+
+  Msg(INFOS, "%s %g", gmsh_progname, GMSH_VERSION);
 
   /* Initialize the static Mesh */
 
@@ -454,7 +502,7 @@ int main(int argc, char *argv[]){
 	  Create_BgMesh(TYPBGMESH,.2,THEM);
 	}
 	else{
-	  Msg(ERROR, "Invalid background mesh (no view)");
+	  Msg(ERROR, "Invalid Background Mesh (no View)");
 	}
       }
       if(CTX.interactive > 0){
@@ -483,7 +531,7 @@ int main(int argc, char *argv[]){
 #ifndef _NOTHREADS  
   if(CTX.threads){
     if(!XInitThreads()){
-      Msg(WARNING, "Xlib is not thread safe: reverting to '-nothreads'");
+      Msg(WARNING, "Xlib is not Thread Safe (Reverting to '-nothreads')");
       CTX.threads = 0;
     }
   }
@@ -498,7 +546,7 @@ int main(int argc, char *argv[]){
 #ifndef _NOTHREADS  
   if(CTX.threads){
     if(!XtToolkitThreadInitialize()){
-      Msg(WARNING, "Xtoolkit is not thread safe: reverting to '-nothreads'");
+      Msg(WARNING, "Xtoolkit is not Thread Safe (Reverting to '-nothreads')");
       CTX.threads = 0;
     }
   }
@@ -516,15 +564,15 @@ int main(int argc, char *argv[]){
 			       NULL, 0, &argc, argv);
 
   if(!XCTX.display)
-    Msg(ERROR, "Unable to open the specified display. Set the `DISPLAY'\n"
-   	"       environment variable properly or use the `xhost' command\n"
-	"       to authorize access to the display");
+    Msg(FATAL, "Unable to open the specified display. Set the `DISPLAY'\n"
+   	WHITE_STR "environment variable properly or use the `xhost' command\n"
+	WHITE_STR "to authorize access to the display");
 
   /* Check for GLX extension; for Mesa, this is always OK */
   
   if(!glXQueryExtension(XCTX.display,NULL,NULL))
-    Msg(ERROR, "The specified display does not support the OpenGL extension (GLX).\n"
-	"       You may consider using Mesa instead");
+    Msg(FATAL, "The specified display does not support the OpenGL extension (GLX).\n"
+	WHITE_STR "You may consider using Mesa instead");
   
   /* Init with default screen num and default depth */
   
@@ -540,7 +588,7 @@ int main(int argc, char *argv[]){
   if(CTX.db){
     if(!(XCTX.glw.visinfo = 
 	 glXChooseVisual(XCTX.display,XCTX.scrnum, glw_attrib_db))){
-      Msg(WARNING,"GBA double buffured visual not available");
+      Msg(WARNING,"GBA Double Buffured Visual not Available");
       CTX.db = 0;
     }
   }
@@ -548,10 +596,10 @@ int main(int argc, char *argv[]){
   if(!CTX.db){
     if(!(XCTX.glw.visinfo = 
 	 glXChooseVisual(XCTX.display,XCTX.scrnum, glw_attrib_sb)))
-      Msg(ERROR, "RGBA single buffured visual not available");
+      Msg(FATAL, "RGBA Single Buffured Visual not Available");
   }
   
-  Msg(INFOS,"Visual id=%lx depth=%d screen=%d bits/rgb=%d class=%s dblbuf=%d",
+  Msg(DEBUG, "Visual id=%lx depth=%d screen=%d bits/rgb=%d class=%s dblbuf=%d",
       XCTX.glw.visinfo->visualid, XCTX.glw.visinfo->depth,
       XCTX.glw.visinfo->screen, XCTX.glw.visinfo->bits_per_rgb,
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -566,7 +614,7 @@ int main(int argc, char *argv[]){
 #ifndef _NOOV
   if(CTX.overlay){
     if(!(XCTX.glo.visinfo = glXChooseVisual(XCTX.display,XCTX.scrnum,glo_attrib))){
-      Msg(INFOS, "Overlay visual not available (using blend function instead)");
+      Msg(DEBUG, "Overlay Visual not Available (Using Blend Function Instead)");
       CTX.overlay = 0;
       CTX.geom.highlight = 0;
     }
@@ -577,7 +625,7 @@ int main(int argc, char *argv[]){
 #endif
 
   if(CTX.overlay){
-    Msg(INFO,"Overlay Visual id=%lx depth=%d screen=%d bits/rgb=%d class=%s",
+    Msg(DEBUG,"Overlay Visual id=%lx depth=%d screen=%d bits/rgb=%d class=%s",
 	XCTX.glo.visinfo->visualid, XCTX.glo.visinfo->depth, 
 	XCTX.glo.visinfo->screen, XCTX.glo.visinfo->bits_per_rgb, 
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -604,21 +652,21 @@ int main(int argc, char *argv[]){
     */
   
   if(!CTX.flash && (XCTX.glw.visinfo->visual != XCTX.gui.visual)){
-    Msg(INFOS,"Making another colormap for graphic window");
+    Msg(DEBUG, "Making Another Colormap for Graphic Window");
     XCTX.glw.colormap = XCreateColormap(XCTX.display, RootWindow(XCTX.display,XCTX.scrnum),
 					XCTX.glw.visinfo->visual, AllocNone);
     if(!XCTX.glw.colormap)
-      Msg(ERROR, "Unable to create colormap for graphic window: Try option '-flash'");
+      Msg(FATAL, "Unable to Create Colormap for Graphic Window (Try Option '-flash')");
   }
 
   if(CTX.overlay){
     if(!CTX.flash && (XCTX.glo.visinfo->visual != XCTX.gui.visual)){
-      Msg(INFOS, "Making another colormap for overlay window");
+      Msg(DEBUG, "Making Another Colormap for Overlay Window");
       XCTX.glo.colormap = XCreateColormap(XCTX.display, RootWindow(XCTX.display,XCTX.scrnum),
 					  XCTX.glo.visinfo->visual, AllocNone);
       if(!XCTX.glo.colormap)
-	Msg(ERROR, "Unable to create private colormap for overlay window:\n"
-	    "       Try '-noov' and/or '-flash' options");
+	Msg(FATAL, "Unable to Create Private Colormap for Overlay Window\n"
+	    WHITE_STR "(Try '-noov' and/or '-flash' Options)");
     }
   }
   
@@ -646,7 +694,7 @@ int main(int argc, char *argv[]){
 
     if (!XAllocNamedColor(XCTX.display, XCTX.glo.colormap, 
 			  "white", &ov_color_def, &ov_color_exact)) {
-      Msg(WARNING, "Couldn't allocate white for overlay window: Reverting to '-noov'");
+      Msg(WARNING, "Couldn't Allocate White for Overlay window (Reverting to '-noov')");
       CTX.overlay = 0;
     }
     else
@@ -656,7 +704,7 @@ int main(int argc, char *argv[]){
   if(CTX.overlay){
     if (!XAllocNamedColor(XCTX.display, XCTX.glo.colormap, 
 			  "black", &ov_color_def, &ov_color_exact)) {
-      Msg(WARNING, "Couldn't allocate black for overlay window: Reverting to '-noov'");
+      Msg(WARNING, "Couldn't Allocate Black for Overlay Window (Reverting to '-noov')");
       CTX.overlay = 0;
     }
     else
@@ -668,13 +716,11 @@ int main(int argc, char *argv[]){
   XCTX.xfont.fixed = XLoadQueryFont(XCTX.display, CTX.colorbar_font_string);
 
   if(XCTX.xfont.helve == NULL){
-    Msg(WARNING, "Unable to load font %s", CTX.font_string);
+    Msg(WARNING, "Unable to Load Font '%s'", CTX.font_string);
     XCTX.xfont.helve = XCTX.xfont.fixed ;
   }
-  if(XCTX.xfont.fixed == NULL){
-    Msg(ERROR, "Unable to load font %s", CTX.colorbar_font_string);
-    exit(1);
-  }
+  if(XCTX.xfont.fixed == NULL)
+    Msg(FATAL, "Unable to Load Font '%s'", CTX.colorbar_font_string);
   
   XCTX.xfont.helve_h = XCTX.xfont.helve->max_bounds.ascent + 
     XCTX.xfont.helve->max_bounds.descent;
@@ -721,7 +767,7 @@ int main(int argc, char *argv[]){
   /* OpenGL display list for the font */
 
   if((CTX.font_base = glGenLists(XCTX.xfont.helve->max_char_or_byte2+1)) == 0)
-    Msg(ERROR, "Font out of OpenGL display lists");
+    Msg(FATAL, "Font out of OpenGL Display Lists");
 
   glXUseXFont(XCTX.xfont.helve->fid, 
 	      XCTX.xfont.helve->min_char_or_byte2, 
@@ -760,9 +806,8 @@ int main(int argc, char *argv[]){
       TYPBGMESH = ONFILE; 
       Create_BgMesh(TYPBGMESH,.2,THEM);
     }
-    else{
-      Msg(ERROR, "Invalid background mesh (no view)");
-    }
+    else
+      Msg(ERROR, "Invalid Background Mesh (no View)");
   }
   
   /* Compute viewport and Draw */

@@ -1,4 +1,4 @@
-/* $Id: CbPost.cpp,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: CbPost.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -130,7 +130,7 @@ void DuplicateViewCb (Widget w, XtPointer client_data, XtPointer call_data){
 
 void SaveColorTable(FILE *fp){
   if(!CurrentView){
-    Msg(WARNING, "No View to get Color Information from"); 
+    Msg(WARNING, "No View to get Color Information From"); 
   }
   else{
     save_color_table(fp, &CurrentView->CT);
@@ -300,7 +300,7 @@ void PostDialogCb (Widget w, XtPointer client_data, XtPointer call_data){
     break;
 
   default:
-    Msg(WARNING, "Unknown event in PostDialogCb : %d", (long int)client_data); 
+    Msg(WARNING, "Unknown Event in PostDialogCb (%d)", (long int)client_data); 
     break;
   }
 }
@@ -416,7 +416,7 @@ void PostCb (Widget w, XtPointer client_data, XtPointer call_data){
       v = ViewForDialog[POST_VECTOR];
       break;
     default :
-      Msg(WARNING, "Unknown event in PostCb");
+      Msg(WARNING, "Unknown Event in PostCb");
       break;
     }
     ChangeViewParam(v, client_data, call_data);
@@ -661,7 +661,7 @@ void ChangeViewParam (Post_View *v, XtPointer client_data, XtPointer call_data){
     break;
 
   default:
-    Msg(WARNING, "Unknown event in PostCb : %d", (long int)client_data); 
+    Msg(WARNING, "Unknown Event in PostCb (%d)", (long int)client_data); 
     break;
 
   }

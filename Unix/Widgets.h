@@ -1,4 +1,4 @@
-/* $Id: Widgets.h,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: Widgets.h,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 #ifndef _WIDGETS_H_
 #define _WIDGETS_H_
 
@@ -106,6 +106,7 @@ typedef struct {
     Widget     meshVisibleTypeCheck, meshVisibleTypeButt[2] ;
     Widget     meshVisibleCheck, meshVisibleButt[4] ;
     Widget   meshVisibleByNumFrame[2], meshVisibleByNumRowCol ;
+    Widget     meshVisibleByNumCheck, meshVisibleByNumButt[4];
     Widget     meshVisibleByNumText ;
     Widget   meshAspectFrame[2] ;
     Widget     meshAspectCheck, meshAspectButt[3] ;

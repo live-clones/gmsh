@@ -1,4 +1,4 @@
-/* $Id: 2D_BGMesh.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_BGMesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -19,8 +19,10 @@ double find_quality (MPoint center, DocRecord * BGMESH){
   double qual, q1, q2, q3, X[3], Y[3], u, v, det, Xp, Yp;
   double Exp = 2., r, deno, nume;
 
-  if ((del = Find_Triangle (center, BGMESH, BOF)) == NULL)
-    Msg(WARNING, "Point X=%g Y=%g out of Mesh\n", center.v, center.h);
+  if ((del = Find_Triangle (center, BGMESH, BOF)) == NULL){
+    Msg(ERROR, "Exterior Point (%g,%g)", center.v, center.h);
+    return 1.e-15;
+  }
 
   pPointArray = BGMESH->points;
 

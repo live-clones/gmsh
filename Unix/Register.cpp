@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -142,9 +142,7 @@ void RegisterCallbacks_FD(Widgets_T *w){
   register_cancel_cb   (w->FD.saveAsDialog,      ManageCb,  w->FD.saveAsDialog);
   register_activate_cb (w->FD.saveAsButt[0],     OptionsCb, OPTIONS_MESH_FORMAT_MSH);
   register_activate_cb (w->FD.saveAsButt[1],     OptionsCb, OPTIONS_MESH_FORMAT_UNV);
-  /*
   register_activate_cb (w->FD.saveAsButt[2],     OptionsCb, OPTIONS_MESH_FORMAT_GREF);
-  */
 
   register_ok_cb       (w->FD.printDialog,     FileCb,    FILE_PRINT);
   register_cancel_cb   (w->FD.printDialog,     ManageCb,  w->FD.printDialog);
@@ -186,6 +184,8 @@ void RegisterCallbacks_OD(Widgets_T *w){
   register_valchg_cb  (w->OD.meshVisibleButt[1], OptionsCb,  OPTIONS_MESH_LINES);
   register_valchg_cb  (w->OD.meshVisibleButt[2], OptionsCb,  OPTIONS_MESH_SURFACES);
   register_valchg_cb  (w->OD.meshVisibleButt[3], OptionsCb,  OPTIONS_MESH_VOLUMES);
+  register_valchg_cb  (w->OD.meshVisibleByNumButt[0], OptionsCb,  OPTIONS_MESH_SELECT_ENTITY);
+  register_valchg_cb  (w->OD.meshVisibleByNumButt[1], OptionsCb,  OPTIONS_MESH_SELECT_QUALITY);
   register_activate_cb(w->OD.meshVisibleByNumText,    OptionsCb,  OPTIONS_MESH_HIDE_SHOW);
   register_valchg_cb  (w->OD.meshAspectButt[0],  OptionsCb,  OPTIONS_MESH_WIREFRAME);
   register_valchg_cb  (w->OD.meshAspectButt[1],  OptionsCb,  OPTIONS_MESH_HIDDEN_LINES);

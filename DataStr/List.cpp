@@ -1,5 +1,5 @@
-/* $Id: List.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
-#define RCSID "$Id: List.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $"
+/* $Id: List.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
+#define RCSID "$Id: List.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $"
 /* Original author: Marc UME */
 
 #include <stdlib.h>
@@ -98,7 +98,7 @@ int List_Replace(List_T *liste, void *data,
 void List_Read(List_T *liste, int index, void *data)
 {
   if ((index < 0) || (index >= liste->n))
-    Msg(ERROR, "Wrong List Index in List_Read");
+    Msg(FATAL, "Wrong List Index in List_Read");
   memcpy(data,&liste->array[index * liste->size],liste->size);
 }
 
@@ -106,21 +106,25 @@ void List_Write(List_T *liste, int index, void *data)
 {
   if ((index < 0) || (index >= liste->n))
     Msg(ERROR, "Wrong List Index in List_Write");
-  liste->isorder = 0;
-  memcpy(&liste->array[index * liste->size],data,liste->size);
+  else{
+    liste->isorder = 0;
+    memcpy(&liste->array[index * liste->size],data,liste->size);
+  }
 }
 
 void List_Put(List_T *liste, int index, void *data)
 {
   if (index < 0)
     Msg(ERROR, "Wrong List Index in List_Put");
-
-  if (index >= liste->n) {
-    liste->n = index + 1;
-    List_Realloc(liste,liste->n);
-    List_Write(liste,index,data);
-  } else {
-    List_Write(liste,index,data);
+  else{
+    if (index >= liste->n) {
+      liste->n = index + 1;
+      List_Realloc(liste,liste->n);
+      List_Write(liste,index,data);
+    } 
+    else {
+      List_Write(liste,index,data);
+    }
   }
 }
 
@@ -132,8 +136,8 @@ void List_Pop(List_T *liste)
 void *List_Pointer(List_T *liste, int index)
 {
   if ((index < 0) || (index >= liste->n))
-    Msg(ERROR, "Wrong List Index in List_Pointer");
-
+    Msg(FATAL, "Wrong List Index in List_Pointer");
+    
   liste->isorder = 0; /* getdp: a examiner... */
   return(&liste->array[index * liste->size]);
 }
@@ -141,7 +145,7 @@ void *List_Pointer(List_T *liste, int index)
 void *List_Pointer_NoChange(List_T *liste, int index)
 {
   if ((index < 0) || (index >= liste->n))
-    Msg(ERROR, "Wrong List Index in List_Pointer_NoChange");
+    Msg(FATAL, "Wrong List Index in List_Pointer_NoChange");
 
   return(&liste->array[index * liste->size]);
 }

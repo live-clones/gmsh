@@ -1,4 +1,4 @@
-/* $Id: Geo.cpp,v 1.2 2000-11-23 14:11:30 geuzaine Exp $ */
+/* $Id: Geo.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -53,10 +53,6 @@ double evaluate_scalarfunction (char *var, double val, char *funct){
   return TheSymbol.val;
 }
 
-#ifndef _UNIX
-extern AddALineInTheEditGeometryForm (char* line);
-#endif
-
 void add_infile(char *text, char *fich){
   FILE *file;
 
@@ -71,9 +67,7 @@ void add_infile(char *text, char *fich){
   fclose(yyin);
   fprintf(file,"%s\n",text);
   fclose(file);
-#ifndef _UNIX
   AddALineInTheEditGeometryForm (text);
-#endif
 }
 
 void del_pnt(int p1, char *fich){

@@ -1,4 +1,4 @@
-/* $Id: 2D_Mesh.cpp,v 1.3 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Mesh.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
 
@@ -37,7 +37,6 @@ double         qual, newqual, L;
 int            is_3D = 0, UseBGMesh;
 
 static Surface  *THESURFACE, *THESUPPORT;
-static int       DEBUG = 0;
 
 void ProjetteSurface (void *a, void *b){
   Vertex *v;
@@ -144,8 +143,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = X;
     res[0] = 1.;
     res[1] = res[2] = 0.0;
-    if (DEBUG)
-      Msg(INFO, "Plan de type x = c");
+    Msg(DEBUG, "Plan Type x = c");
   }
 
   /* y = Y */
@@ -154,8 +152,7 @@ void Plan_Moyen (void *data, void *dum){
     s->d = Y;
     res[1] = 1.;
     res[0] = res[2] = 0.0;
-    if (DEBUG)
-      Msg(INFO, "Plan de type y = c");
+    Msg(DEBUG, "Plan Type y = c");
   }
 
   /* z = Z */
@@ -180,8 +177,7 @@ void Plan_Moyen (void *data, void *dum){
       res[0] = 1.;
       res[1] = r2[0];
       res[2] = r2[1];
-      if (DEBUG)
-	Msg(INFO, "Plan de type by + cz = -x");
+      Msg(DEBUG, "Plan Type by + cz = -x");
     }
 
     /* ax + cz = -y */
@@ -198,8 +194,7 @@ void Plan_Moyen (void *data, void *dum){
 	res[0] = r2[0];
 	res[1] = 1.;
 	res[2] = r2[1];
-	if (DEBUG)
-	  Msg(INFO, "Plan de type ax + cz = -y");
+	Msg(DEBUG, "Plan Type ax + cz = -y");
       }
       
       /* ax + by = -z */
@@ -216,8 +211,7 @@ void Plan_Moyen (void *data, void *dum){
 	  res[0] = r2[0];
 	  res[1] = r2[1];
 	  res[2] = 1.;
-	  if (DEBUG)
-	    Msg(INFO, "Plan de type ax + by = -z");
+	  Msg(DEBUG, "Plan Type ax + by = -z");
 	}
 	else{
 	  Msg(ERROR, "Mean Plane");
@@ -262,12 +256,14 @@ void Plan_Moyen (void *data, void *dum){
   for (i = 0; i < 3; i++)
     s->plan[2][i] = res[i];
 
-  if (DEBUG){
-    Msg(INFO, "plan    : (%g x + %g y + %g z = %g)", s->a, s->b, s->c, s->d);
-    Msg(INFO, "normale : (%g , %g , %g )", res[0], res[1], res[2]);
-    Msg(INFO, "t1      : (%g , %g , %g )", t1[0], t1[1], t1[2]);
-    Msg(INFO, "t2      : (%g , %g , %g )", t2[0], t2[1], t2[2]);
-  }
+  Msg(DEBUG, "Plan   : (%g x + %g y + %g z = %g)\n"
+      WHITE_STR "Normal : (%g , %g , %g )\n"
+      WHITE_STR "t1     : (%g , %g , %g )\n"
+      WHITE_STR "t2     : (%g , %g , %g )",
+      s->a, s->b, s->c, s->d,
+      res[0], res[1], res[2],
+      t1[0], t1[1], t1[2],
+      t2[0], t2[1], t2[2]);
 
   /* Matrice orthogonale */
 
@@ -585,7 +581,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
     list = NULL;
 
     if (!PE_Del_Triangle (del, pt, &list, kill_L, del_L, &numlink, &numkil)){
-      Msg(WARNING, "Triangle Non Delete");
+      Msg(WARNING, "Triangle Non Deleted");
       Delete_Triangle (root, del);
       Delete_Triangle (root_w, del);
       del->t.quality_value /= 10.;
@@ -644,7 +640,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
     }
     
     if ((volume_old - volume_new) / (volume_old + volume_new) > 1.e-6){
-      Msg(WARNING, "Volume has changed : %g -> %g", volume_old, volume_new);
+      Msg(WARNING, "Volume has Changed (%g->%g)", volume_old, volume_new);
       Delete_Triangle (root, del);
       Delete_Triangle (root_w, del);
       del->t.quality_value /= 10.;
@@ -894,7 +890,7 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       }
       else{
 	err = 1;
-	Msg(ERROR, "Unknown Vertex %d\n", ver[j]->Num);
+	Msg(ERROR, "Unknown Vertex %d", ver[j]->Num);
       }
     }
     if (ori && !err)
@@ -1102,11 +1098,6 @@ void Maillage_Surface (void *data, void *dum){
   Tree_Action (THEM->Curves, ActionEndTheCurve);
   End_Surface (s->Support);
   End_Surface (s);
-
-  if (DEBUG){
-    Msg (INFO, "Nombre de triangles : %d", Tree_Nbr(s->Simplexes));
-    Msg (INFO, "Nombre de points    : %d", Tree_Nbr(s->Vertices));
-  }
 
   if (CTX.mesh.degree == 2)
     Degre2 (THEM->Vertices, THEM->VertexEdges, s->Simplexes, NULL, THESUPPORT);

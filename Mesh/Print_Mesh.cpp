@@ -1,4 +1,4 @@
-/* $Id: Print_Mesh.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Print_Mesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -274,7 +274,7 @@ void process_msh_elements (Mesh * M){
   fprintf (mshfile, "%d\n", MSH_ELEMENT_NUM - 1);
 
   if (MSH_ELEMENT_NUM == 1)
-    Msg (WARNING, "No elements to save: did you forget to define Physical Entities?");
+    Msg (WARNING, "No Elements to Save (Did You Forget to Define Physical Entities?)");
 
   MSH_ADD = 1;
   MSH_ELEMENT_NUM = 1;
@@ -526,7 +526,7 @@ int process_3D_elements (FILE * funv, Mesh * m){
 	sx->V[0] = sx->V[1];
 	sx->V[1] = temp;
 	if (sx->Volume_Simplexe () < 0)
-	  Msg(WARNING, "Argh... Negative Volume");
+	  Msg(WARNING, "Negative Volume for Simplex %d", sx->Num);
       }
       geo = v->Num;
       fprintf (funv, "%10d%10d%10d%10d%10d%10d\n",
@@ -1014,10 +1014,11 @@ void Print_Mesh (Mesh * M, char *c, int Type){
       Msg(WARNING, "Unable to Open File '%s'", name);
       return;
     }
-    Msg (INFOS, "Writing file %s", name);
+    Msg (INFOS, "Writing File '%s'", name);
     process_msh_nodes (M);
     process_msh_elements (M);
     Msg (INFOS, "Wrote %d Nodes, %d Elements", MSH_NODE_NUM, MSH_ELEMENT_NUM - 1);
+    Msg (INFO, "Wrote File '%s'", name);
     fclose (mshfile);
   }
   else if (Type == FORMAT_UNV){
@@ -1027,7 +1028,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
       Msg(WARNING, "Unable to Open File '%s'", name);
       return;
     }
-    Msg (INFOS, "Writing file %s", name);
+    Msg (INFOS, "Writing File '%s'", name);
     process_nodes (unvfile, M);
     fprintf (unvfile, "%6d\n", -1);
     fprintf (unvfile, "%6d\n", ELEMENTS);
@@ -1038,6 +1039,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     fprintf (unvfile, "%6d\n", -1);
     PrintGroups (M);
     fclose (unvfile);
+    Msg (INFO, "Wrote File '%s'", name);
   }
   else if (Type == FORMAT_GREF){
     c ? strcpy (name, c) : strcat (name, ".Gref");
@@ -1048,7 +1050,7 @@ void Print_Mesh (Mesh * M, char *c, int Type){
       Msg(WARNING, "Unable to Open File '%s'", name);
       return;
     }
-    Msg (INFOS, "Writing file %s", name);
+    Msg (INFOS, "Writing File '%s'", name);
     process_Gref_nodes (Greffile, M, TRN, TRE);
     process_Gref_elements (Greffile, M, Tree_Nbr (TRN));
     process_Gref_poundarybonditions (Greffile, M, TRN, TRE);
@@ -1056,5 +1058,6 @@ void Print_Mesh (Mesh * M, char *c, int Type){
     Tree_Delete (TRN);
     Tree_Delete (TRE);
     EndConsecutiveNodes (M);
+    Msg (INFO, "Wrote File '%s'", name);
   }
 }

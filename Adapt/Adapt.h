@@ -1,4 +1,4 @@
-/* $Id: Adapt.h,v 1.2 2000-11-23 14:11:24 geuzaine Exp $ */
+/* $Id: Adapt.h,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
 #ifndef _ADAPT_H_
 #define _ADAPT_H_
 
@@ -7,15 +7,12 @@
 #define ADAPT_H1 3
 #define ADAPT_H2 4
 
-double optimesh (
-		 int N,        /* Nombre d'elements a traiter        */
-		 int method,   /* H1 , P1 , H2 ou P2                 */
-		 int dim,      /* 2 pour 2D et 3 pour 3D             */
-		 double *err,  /* erreurs elementaires               */
-		 double *h,    /* tailles de mailles elementaires    */
-		 double *p,    /* exposante elementaires             */
-		 double e0,    /* erreur prescrite par l'utilisateur */
-		 double N0     /* nbre d'elements ds le maillage opt */
-		 );
+double AdaptMesh (int N,        /* Number of elements */
+		  int method,   /* ADAPT_H1, ADAPT_H2, ADAPT_P1 or ADAPT_P2 */
+		  int dim,      /* 2 or 3 */
+		  double *err,  /* elementary errors */
+		  double *h,    /* elementary mesh sizes */
+		  double *p,    /* elementary exponents */
+		  double e0     /* prescribed error or number of elements */);
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: Simplex.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: Simplex.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -49,7 +49,7 @@ int Simplex:: CircumCircle (double x1, double y1,
   d = 2. * (double) (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if (d == 0.0){
     *xc = *yc = -99999.;
-    Msg(WARNING, "Degenerated Simplex");
+    Msg(WARNING, "Deganarated Simplex");
     return 0;
   }
 

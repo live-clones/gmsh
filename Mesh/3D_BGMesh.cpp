@@ -1,4 +1,4 @@
-/* $Id: 3D_BGMesh.cpp,v 1.5 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: 3D_BGMesh.cpp,v 1.6 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -104,7 +104,7 @@ double Lc_XYZ (double X, double Y, double Z, Mesh * m){
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.2));
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.5));
     else{
-      Msg(WARNING, "Exterior Point");
+      Msg(ERROR, "Exterior Point (%g,%g,%g)", X, Y, Z);
       l = 1.e-25;
     }
     break;
@@ -205,8 +205,8 @@ int BGMWithView (Post_View * ErrView){
 
   Tree_Action (m.Simplexes, AIG);
 
-  Msg(INFO, "Background Mesh Loaded (%d Nodes, %d Elements)",
-	  Tree_Nbr(m.Vertices), Tree_Nbr(m.Simplexes)); 
+  Msg(INFOS, "Background Mesh Loaded (%d Nodes, %d Elements)",
+      Tree_Nbr(m.Vertices), Tree_Nbr(m.Simplexes)); 
 
   return (1);
 }
@@ -307,7 +307,7 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
     j++;
   }
 
-  *ObjFunct = optimesh (j, OptiMethod, dim, e, h, p, OptiValue, OptiValue);
+  *ObjFunct = AdaptMesh (j, OptiMethod, dim, e, h, p, OptiValue);
 
   f = fopen (OutFile, "w");
 
@@ -335,7 +335,7 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   fprintf (f, "};\n");
   fclose (f);
 
-  Msg(INFO,"Wrote background mesh in '%s'", OutFile); 
+  Msg(INFOS, "Background Mesh Wriiten in '%s'", OutFile); 
 
   return 1;
 }

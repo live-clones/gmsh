@@ -1,4 +1,4 @@
-/* $Id: 2D_InitMesh.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_InitMesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 /*
  
    Generation du maillage initial 2D
@@ -233,7 +233,7 @@ void SwapED ( void *data , void *dummy){
   
 void SuppressInETree( void *data , void *dummy){
   if(!Tree_Suppress(ETree,data))
-    Msg(WARNING, "Cannot suppress in ETree"); 
+    Msg(WARNING, "Cannot Suppress in ETree"); 
 }
 
 void AddInETree( void *data , void *dummy){
@@ -348,7 +348,7 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
     if(!ok){
       return;
     }
-    Msg(WARNING, "Swapping : %d missing edges",ok); 
+    Msg(INFOS, "Swapping (%d Missing Edge(s))", ok); 
     
     EDToSwap = NULL;
     if(EDToSwap)Tree_Delete(EDToSwap);
@@ -373,7 +373,7 @@ void verify_edges (List_T *ListDelaunay, ContourRecord **ListContour,
 	
       }
     }
-    Msg(WARNING, "Elimination : %d swaps", Tree_Nbr(EDToSwap)); 
+    Msg(INFOS, "Elimination (%d Swaps)", Tree_Nbr(EDToSwap)); 
 
     Tree_Action (EDToSwap , SuppressInETree);
     Tree_Action (EDToSwap , SwapED);

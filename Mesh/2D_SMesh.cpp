@@ -1,4 +1,4 @@
-/* $Id: 2D_SMesh.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_SMesh.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 /*  
   Maillage transfini surfacique                                                 
                                             *s2
@@ -69,7 +69,7 @@ int MeshTransfiniteSurface (Surface *sur) {
       pV = &V;
       if((vexist = (Vertex**)Tree_PQuery(THEM->Vertices,&pV)) == NULL) {
 	Msg(WARNING, "Unknown Control Point %d in Transfinite Surface %d",
-		V.Num,sur->Num); 
+	    V.Num,sur->Num); 
 	return(0);
       }
       else{
@@ -105,8 +105,8 @@ int MeshTransfiniteSurface (Surface *sur) {
 
     for(i=0;i<nb;i++)
       if(G[i] == NULL) {
-	Msg(WARNING, "Wrong definition of Transfinite Surface(%d)", 
-		sur->Num); 
+	Msg(WARNING, "Wrong definition of Transfinite Surface %d", 
+	    sur->Num); 
 	return(0);
       }
 

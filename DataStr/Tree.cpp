@@ -1,5 +1,5 @@
-/* $Id: Tree.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $ */
-#define RCSID "$Id: Tree.cpp,v 1.2 2000-11-23 14:11:29 geuzaine Exp $"
+/* $Id: Tree.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $ */
+#define RCSID "$Id: Tree.cpp,v 1.3 2000-11-23 23:20:34 geuzaine Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,9 +33,11 @@ void Tree_Add(Tree_T *tree, void *data)
 
   if(!tree) 
     Msg(ERROR, "Impossible to Add in Unallocated Tree");
-  ptr = Malloc(tree->size);
-  memcpy(ptr,data,tree->size);
-  avl_insert(tree->root, ptr, ptr);
+  else{
+    ptr = Malloc(tree->size);
+    memcpy(ptr,data,tree->size);
+    avl_insert(tree->root, ptr, ptr);
+  }
 }
 
 void * Tree_AddP(Tree_T *tree, void *data)
@@ -43,7 +45,7 @@ void * Tree_AddP(Tree_T *tree, void *data)
   void *ptr;
 
   if(!tree) 
-    Msg(ERROR, "Impossible to Add in Unallocated Tree");
+    Msg(FATAL, "Impossible to Add in Unallocated Tree");
   ptr = Malloc(tree->size);
   memcpy(ptr,data,tree->size);
   avl_insert(tree->root, ptr, ptr);
@@ -67,8 +69,10 @@ int Tree_Replace(Tree_T *tree, void *data)
   void *ptr;
   int state;
 
-  if(!tree) 
+  if(!tree) {
     Msg(ERROR, "Impossible to Replace in Unallocated Tree");
+    return(0);
+  }
   state = avl_lookup(tree->root, data, &ptr);
   if (state == 0) {
     Tree_Add(tree,data);

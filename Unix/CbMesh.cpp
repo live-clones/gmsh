@@ -1,4 +1,4 @@
-/* $Id: CbMesh.cpp,v 1.3 2000-11-23 15:06:03 geuzaine Exp $ */
+/* $Id: CbMesh.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -134,7 +134,7 @@ void mesh_event_handler (int event) {
   case MESH_DEFINE_CHAR_LENGTH :
     n=0;
     while(1){
-      Msg(STATUS,"Select Point: (e) to end, (q) to quit");
+      Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_POINT, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
 	p[n++] = v->Num; 
@@ -159,7 +159,7 @@ void mesh_event_handler (int event) {
   case MESH_DEFINE_RECOMBINE :
     n=0;
     while(1){
-      Msg(STATUS,"Select Surface: (e) to end, (q) to quit");
+      Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
       ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
       if(ib == 1){ /* left mouse butt */
 	p[n++] = s->Num; 
@@ -188,11 +188,11 @@ void mesh_event_handler (int event) {
     while(1){
       switch (event) {    
       case MESH_DEFINE_TRSF_LINE :
-	Msg(STATUS,"Select Line: (e) to end, (q) to quit");
+	Msg(STATUS,"Select Line ('e'=end, 'q'=quit)");
 	ib = SelectEntity(ENT_LINE, &v,&c,&s);
 	break ;
       case MESH_DEFINE_TRSF_SURFACE :
-	Msg(STATUS,"Select Surface: (e) to end, (q) to quit");
+	Msg(STATUS,"Select Surface ('e'=end, 'q'=quit)");
 	ib = SelectEntity(ENT_SURFACE, &v,&c,&s);
 	break;
       case MESH_DEFINE_TRSF_VOLUME :
@@ -205,7 +205,7 @@ void mesh_event_handler (int event) {
 	case MESH_DEFINE_TRSF_SURFACE : p[n++] = s->Num;
 	case MESH_DEFINE_TRSF_VOLUME :
 	  while(1){
-	    Msg(STATUS,"Select Point: (e) to end, (q) to quit");
+	    Msg(STATUS,"Select Point ('e'=end, 'q'=quit)");
 	    ib = SelectEntity(ENT_POINT, &v,&c,&s);
 	    if(ib == 1){ /* left mouse butt */
 	      p[n++] = v->Num ;
@@ -260,11 +260,11 @@ void mesh_event_handler (int event) {
   case MESH_DEFINE_ATTRACTOR_POINT :
   case MESH_DEFINE_ATTRACTOR_LINE :
   case MESH_DEFINE_ATTRACTOR_SURFACE :
-    Msg(WARNING, "Interactive Attractor Definition not Done..."); 
+    Msg(WARNING, "Interactive Attractor Definition not done yet"); 
     break ;
 
   default : 
-    Msg(WARNING, "Unkown event in mesh_event_handler"); 
+    Msg(WARNING, "Unkown Event in mesh_event_handler"); 
     break;
   }
 
@@ -291,7 +291,7 @@ void MeshCb (Widget w, XtPointer client_data, XtPointer call_data){
   case MESH_ATTRACTOR_Y    : strcpy(attry_text,XmTextGetString(w)); break;
   case MESH_ATTRACTOR_Z    : strcpy(attrz_text,XmTextGetString(w)); break;
   default :
-    Msg(WARNING, "Unknown value in MeshCb : %d", (long int)client_data); 
+    Msg(WARNING, "Unknown Event in MeshCb (%d)", (long int)client_data); 
     break;
 
   }

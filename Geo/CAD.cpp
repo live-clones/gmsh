@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.3 2000-11-23 17:16:37 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.4 2000-11-23 23:20:34 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -190,7 +190,7 @@ SurfaceLoop *FindSurfaceLoop(int inum, Mesh *M){
 static Curve *CURVE, *CURVE_2;
 static Surface *SURFACE;
 static Vertex *VERTEX;
-extern double min1d ( double (*funct)(double), double *xmin);
+extern double min1d (int, double (*funct)(double), double *xmin);
 extern void newt(float x[], int n, int *check,
                  void (*vecfunc)(int, float [], float []));
 
@@ -270,7 +270,7 @@ bool ProjectPointOnCurve (Curve *c, Vertex *v, Vertex *RES, Vertex *DER){
   double xmin;
   CURVE = c;
   VERTEX = v;
-  min1d ( projectPC, &xmin);
+  min1d (0, projectPC, &xmin);
   *RES = InterpolateCurve(CURVE,xmin,0);
   *DER = InterpolateCurve(CURVE,xmin,1);
   if(xmin > c->uend){
@@ -326,7 +326,7 @@ bool search_in_boundary ( Surface *s, Vertex *p, double t, int Fixu,
   double xm;
   if(Fixu)xm = vmin;
   else xm = umin;
-  if(lmin > 1.e-3) min1d ( projectPCS, &xm);
+  if(lmin > 1.e-3) min1d (0, projectPCS, &xm);
   if(Fixu){
     *uu = t;
     *vv = xm;
@@ -799,10 +799,10 @@ void ApplyTransformationToSurface (double matrix[4][4],Surface *s){
 void printCurve(Curve *c){
   Vertex *v;
   int N = List_Nbr(c->Control_Points);
-  Msg(INFO,"Curve %d %d cp (%d->%d)",c->Num,N,c->beg->Num,c->end->Num);
+  Msg(INFOS,"Curve %d %d cp (%d->%d)",c->Num,N,c->beg->Num,c->end->Num);
   for(int i=0;i<N;i++){
     List_Read(c->Control_Points,i,&v);
-    Msg(INFO,"Vertex %d (%f %f %f %f)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
+    Msg(INFOS,"Vertex %d (%f %f %f %f)",v->Num,v->Pos.X,v->Pos.Y,v->Pos.Z,v->lc);
   }
 }
 
@@ -865,7 +865,7 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
     SetTranslationMatrix(matrix,T);
     ApplyTransformationToPoint(matrix,chapeau);
     List_Reset(ListOfTransformedPoints);
-    Msg(INFO,"Angle %f point %f %f %f axe %f %f %f",alpha,X,Y,Z,A,B,C);
+    Msg(INFOS,"Angle %g Point (%g,%g,%g) Axis (%g,%g,%g)",alpha,X,Y,Z,A,B,C);
   }
 
   c = Create_Curve(MAXREG++,(ep)?MSH_SEGM_LINE:MSH_SEGM_CIRC,1,NULL,NULL,-1,-1,0.,1.);
@@ -910,7 +910,7 @@ void printSurface(Surface*s){
   Curve *c;
   int N = List_Nbr(s->s.Generatrices);
 
-  Msg(INFO,"Surface %d %d generatrices",s->Num,N);
+  Msg(INFOS,"Surface %d, %d generatrices",s->Num,N);
   for(int i=0;i<N;i++){
     List_Read(s->s.Generatrices,i,&c);
     printCurve(c);
@@ -933,17 +933,15 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   pc    = FindCurve(ic,THEM);
   revpc = FindCurve(-ic,THEM);
   
-  if(!pc || !revpc){
-    return NULL;
-  }
+  if(!pc || !revpc) return NULL;
+
   chapeau = DuplicateCurve(pc);
   
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
   chapeau->Extrude->geo.Source = pc->Num;
-  if(e)chapeau->Extrude->mesh = e->mesh;
+  if(e) chapeau->Extrude->mesh = e->mesh;
   
-  ReverseChapeau = FindCurve(-chapeau->Num,THEM);
   if(ep){
     T[0] = A; T[1] = B; T[2] = C;
     SetTranslationMatrix(matrix,T);
@@ -977,17 +975,14 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   s->Extrude = new ExtrudeParams;
   s->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
   s->Extrude->geo.Source = pc->Num;
-  if(e)s->Extrude->mesh = e->mesh;
+  if(e) s->Extrude->mesh = e->mesh;
   
-  if(!pc)
-    Msg(INFO,"zarbi 1");
-  if(!CurveEnd)
-    Msg(INFO,"zarbi 2");
-  if(!ReverseChapeau)
-    Msg(INFO,"zarbi 3");
-  if(!ReverseBeg)
-    Msg(INFO,"zarbi 4");
-  
+  ReverseChapeau = FindCurve(-chapeau->Num,THEM);
+
+  if(!CurveEnd || !ReverseBeg || !CurveEnd || !ReverseEnd || !ReverseChapeau){
+    return NULL;
+  }
+
   List_Add(s->s.Generatrices,&pc);
   List_Add(s->s.Generatrices,&CurveEnd);
   List_Add(s->s.Generatrices,&ReverseChapeau);
@@ -1027,12 +1022,14 @@ void Extrude_ProtudeSurface(int ep, int is,
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
   chapeau->Extrude->geo.Source = ps->Num;
-  if(e)chapeau->Extrude->mesh = e->mesh;
+  if(e) chapeau->Extrude->mesh = e->mesh;
   
   for(i=0;i<List_Nbr(chapeau->s.Generatrices);i++) {
     List_Read(ps->s.Generatrices,i,&c2);
     List_Read(chapeau->s.Generatrices,i,&c);
-    if(c->Num<0)c = FindCurve(-c->Num,THEM);
+    if(c->Num<0)
+      if(!(c = FindCurve(-c->Num,THEM)))
+	 Msg(FATAL, "Unknown Curve %d", -c->Num);
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
     c->Extrude->geo.Source = abs(c2->Num);
@@ -1144,7 +1141,7 @@ bool IntersectAllSegmentsTogether (void) {
         List_Read(TempList,j,&c2);
         if(c1->Num > 0 && c2->Num >0 && i!=j && intersectionfound == false){
           if(IntersectCurves(c1,c2,&c11,&c12,&c21,&c22,&v)){
-            Msg(INFO, "Intersection curve %d %d",c1->Num,c2->Num);
+            Msg(INFOS, "Intersection Curve %d->%d",c1->Num,c2->Num);
             intersectionfound = true;
             DeleteCurve(c1->Num);
             DeleteCurve(c2->Num);
@@ -1226,7 +1223,7 @@ void ReplaceAllDuplicates ( Mesh *m ){
   /*Creation de points uniques*/
   Tree_T *allNonDulpicatedPoints;
   allNonDulpicatedPoints = Tree_Create(sizeof(Vertex*),comparePosition);
-  Msg(INFO, "Beginning with %d points",List_Nbr(All));
+  Msg(INFOS, "Beginning with %d Points", List_Nbr(All));
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&v);
     if(!Tree_Search(allNonDulpicatedPoints,&v)){
@@ -1238,12 +1235,12 @@ void ReplaceAllDuplicates ( Mesh *m ){
   }
   
   List_Delete(All);
-  Msg(INFO, "Ending with %d points",Tree_Nbr(m->Points));
+  Msg(INFOS, "Ending with %d Points", Tree_Nbr(m->Points));
 
   /*Remplacement dans les courbes*/
   All = Tree2List(m->Curves);
   
-  Msg(INFO, "Beginning with %d curves",List_Nbr(All));
+  Msg(INFOS, "Beginning with %d Curves", List_Nbr(All));
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&c);
     Tree_Query( allNonDulpicatedPoints,&c->beg);
@@ -1276,19 +1273,21 @@ void ReplaceAllDuplicates ( Mesh *m ){
     if(c->Num > 0){
       if(!Tree_Search(allNonDulpicatedCurves,&c)){
         Tree_Insert(allNonDulpicatedCurves,&c);
-        c2 = FindCurve(-c->Num,m);
+        if(!(c2 = FindCurve(-c->Num,m)))
+	  Msg(FATAL, "Unknown Curve %d", -c->Num);
         Tree_Insert(allNonDulpicatedCurves,&c2);
       }
       else{
         Tree_Suppress(m->Curves,&c);
-        c2 = FindCurve(-c->Num,m);
+        if(!(c2 = FindCurve(-c->Num,m)))
+	  Msg(FATAL, "Unknown Curve %d", -c->Num);
         Tree_Suppress(m->Curves,&c2);
       }
     }
   }
   
   List_Delete(All);
-  Msg(INFO, "Ending with %d curves",Tree_Nbr(m->Curves));
+  Msg(INFOS, "Ending with %d Curves", Tree_Nbr(m->Curves));
 
   /*Remplacement dans les surfaces*/
   All = Tree2List(m->Surfaces);
@@ -1302,7 +1301,7 @@ void ReplaceAllDuplicates ( Mesh *m ){
   }
   
   /*Creation de surfaces uniques*/
-  Msg(INFO, "Beginning with %d surfaces",List_Nbr(All));
+  Msg(INFOS, "Beginning with %d Surfaces",List_Nbr(All));
   
   Tree_T *allNonDulpicatedSurfaces;
   allNonDulpicatedSurfaces = Tree_Create(sizeof(Curve*),compareTwoSurfaces);
@@ -1319,7 +1318,7 @@ void ReplaceAllDuplicates ( Mesh *m ){
     }
   }
   List_Delete(All);
-  Msg(INFO, "Ending with %d surfaces",Tree_Nbr(m->Surfaces));
+  Msg(INFOS, "Ending with %d Surfaces",Tree_Nbr(m->Surfaces));
 
   /*Remplacement dans les volumes*/
   All = Tree2List(m->Volumes);
@@ -1438,7 +1437,8 @@ void CopyShape(int Type, int Num, int *New){
 
   switch(Type){
   case MSH_POINT:
-    v = FindVertex(Num,THEM);
+    if(!(v = FindVertex(Num,THEM)))
+      Msg(FATAL, "Unknown Vertex %d", Num);
     newv = DuplicateVertex(v);
     *New = newv->Num;
     break;
@@ -1447,7 +1447,8 @@ void CopyShape(int Type, int Num, int *New){
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:
-    c = FindCurve(Num,THEM);
+    if(!(c = FindCurve(Num,THEM)))
+      Msg(FATAL, "Unknown Curve %d", Num);
     newc = DuplicateCurve(c);
     *New = newc->Num;
     break;
@@ -1455,7 +1456,8 @@ void CopyShape(int Type, int Num, int *New){
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
-    s = FindSurface(Num,THEM);
+    if(!(s = FindSurface(Num,THEM)))
+      Msg(FATAL, "Unknown Surface %d", Num);
     news = DuplicateSurface(s,1);
     *New = news->Num;
     break;
@@ -1467,7 +1469,7 @@ void CopyShape(int Type, int Num, int *New){
 
 void DeletePoint(int ip){
   Vertex *v = FindVertex(ip,THEM);
-  if(!v)return;
+  if(!v) return;
   List_T *Curves = Tree2List(THEM->Curves);
   for(int i=0;i<List_Nbr(Curves);i++){
     Curve *c;
@@ -1482,7 +1484,7 @@ void DeletePoint(int ip){
 
 void DeleteCurve(int ip){
   Curve *c = FindCurve(ip,THEM);
-  if(!c)return;
+  if(!c) return;
   List_T *Surfs = Tree2List(THEM->Surfaces);
   for(int i=0;i<List_Nbr(Surfs);i++){
     Surface *s;
@@ -1500,7 +1502,7 @@ void DeleteSurf( int is ){
   // Il faut absolument coder une
   // structure coherente pour les volumes.
   Surface *s = FindSurface(is,THEM);
-  if(!s)return;
+  if(!s) return;
   List_T *Vols = Tree2List(THEM->Volumes);
   for(int i=0;i<List_Nbr(Vols);i++){
     Volume *v;

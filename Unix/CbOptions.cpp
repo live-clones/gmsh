@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -29,7 +29,7 @@ extern Mesh       M;
 extern Tree_T    *EntitesVisibles;
 extern double   LC;
 
-int SHOW_ALL_ENTITIES ;
+int SHOW_ALL_ENTITIES, SELECT_BY_NUMBER=OPTIONS_MESH_SELECT_ENTITY ;
 
 static int  stop_anim ;
 static long anim_time ;
@@ -248,6 +248,8 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_MESH_ABORT : 
     CancelMeshThread();
     break;
+  case OPTIONS_MESH_SELECT_ENTITY : SELECT_BY_NUMBER = OPTIONS_MESH_SELECT_ENTITY; break; 
+  case OPTIONS_MESH_SELECT_QUALITY : SELECT_BY_NUMBER = OPTIONS_MESH_SELECT_QUALITY; break; 
 
     /* post */
     
@@ -286,22 +288,26 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
 
     /* mesh + geom : a changer...*/
   case OPTIONS_GEOM_HIDE_SHOW :  
+    SELECT_BY_NUMBER=OPTIONS_MESH_SELECT_ENTITY;
+    /* Fal-through */
   case OPTIONS_MESH_HIDE_SHOW :  
     c = XmTextGetString(w); 
-    if (!strcmp(c,"all") || !strcmp(c,"*")){
-      if(SHOW_ALL_ENTITIES){ 
-	RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; 
+    if(SELECT_BY_NUMBER == OPTIONS_MESH_SELECT_ENTITY){
+      if (!strcmp(c,"all") || !strcmp(c,"*")){
+	if(SHOW_ALL_ENTITIES){ RemplirEntitesVisibles(0); SHOW_ALL_ENTITIES = 0; }
+	else { RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; }
       }
-      else { 
-	RemplirEntitesVisibles(1); SHOW_ALL_ENTITIES = 1; 
+      else{ 
+	i = atoi(c);
+	if(EntiteEstElleVisible(i)) ToutesLesEntitesRelatives(i,EntitesVisibles,0);
+	else ToutesLesEntitesRelatives(i,EntitesVisibles,1);
       }
     }
     else{
-      i = atoi(c);
-      if(EntiteEstElleVisible(i))
-	ToutesLesEntitesRelatives(i,EntitesVisibles,0);
+      if (!strcmp(c,"all") || !strcmp(c,"*"))
+	CTX.mesh.limit_gamma = 0.0 ;
       else
-	ToutesLesEntitesRelatives(i,EntitesVisibles,1);
+	CTX.mesh.limit_gamma = atof(c);
     }
     break;
 

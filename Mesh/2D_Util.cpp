@@ -1,4 +1,4 @@
-/* $Id: 2D_Util.cpp,v 1.3 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Util.cpp,v 1.4 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -231,7 +231,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
 	  b = del->t.b;
 	}
 	else{
-	  Msg(ERROR, "vor insert 1"); 
+	  Msg(ERROR, "Voronoi Insert 1"); 
 	}
       }      
       else if(v2 != NULL) {	
@@ -248,7 +248,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
 	  b = del->t.c;
 	}
 	else {
-	  Msg(ERROR,"vor insert 2"); 
+	  Msg(ERROR,"Voronoi Insert 2"); 
 	}
       }      
       else if(v3 != NULL) {	
@@ -265,7 +265,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
 	  b = del->t.c;
 	}
 	else {
-	  Msg(ERROR, "vor insert 3"); 
+	  Msg(ERROR, "Voronoi Insert 3"); 
 	}
       }
     }    
@@ -274,7 +274,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
       else if( v2->t.position == ACCEPTED )del2 = v2;
       else if( v3->t.position == ACCEPTED )del2 = v3;
       else {
-	Msg(ERROR,"coherence"); 
+	Msg(ERROR,"Coherence in Localize"); 
       }
  
       if((del->t.a != del2->t.a) && (del->t.a != del2->t.b) && (del->t.a != del2->t.c)){
@@ -290,7 +290,7 @@ MPoint Localize (Delaunay * del , DocRecord *MESH) {
 	b = del->t.b;
       }
       else{
-	Msg(ERROR,"vor insert"); 
+	Msg(ERROR,"Voronoi Insert"); 
       }
     }
 

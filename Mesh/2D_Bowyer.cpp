@@ -1,4 +1,4 @@
-/* $Id: 2D_Bowyer.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Bowyer.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 /*
 
    A L G O R I T H M E       D E      B O W Y E R  -  W A T S O N
@@ -86,9 +86,8 @@ int PE_Del_Triangle (Delaunay *del , MPoint pt, DListPeek *ListEdges ,
       rslt  = DListInsert(ListEdges,pt,a);
       rslt &= DListInsert(ListEdges,pt,b);
       rslt &= DListInsert(ListEdges,pt,c);
-      if(!rslt){
-	Msg(ERROR, "List insert error"); 
-      }
+      if(!rslt)
+	Msg(ERROR, "List Insert Failed in Boyer Watson"); 
       
     }
     else { 
@@ -147,28 +146,22 @@ int PE_Del_Triangle (Delaunay *del , MPoint pt, DListPeek *ListEdges ,
       if (de1->v.voisin1 == del )de1->v.voisin1 = NULL;
 	else if (de1->v.voisin2 == del )de1->v.voisin2 = NULL;
       else if (de1->v.voisin3 == del )de1->v.voisin3 = NULL;
-      else {
-	Msg(ERROR, "Bad Link"); 
-	exit(1);
-      }
+      else
+	Msg(ERROR, "Bad Link in Boyer Watson"); 
     }
     if(de2 != NULL){
       if (de2->v.voisin1 == del )de2->v.voisin1 = NULL;
       else if (de2->v.voisin2 == del )de2->v.voisin2 = NULL;
       else if (de2->v.voisin3 == del )de2->v.voisin3 = NULL;
-      else {
-	Msg(ERROR," Bad Link"); 
-	exit(1);
-      }
+      else
+	Msg(ERROR, "Bad Link in Boyer Watson"); 
     }      
     if(de3 != NULL){
       if (de3->v.voisin1 == del )de3->v.voisin1 = NULL;
       else if (de3->v.voisin2 == del )de3->v.voisin2 = NULL;
       else if (de3->v.voisin3 == del )de3->v.voisin3 = NULL;
-      else {
-	Msg(ERROR," Bad Link"); 
-	exit(1);
-      }
+      else
+	Msg(ERROR, "Bad Link in Boyer Watson");
     }      
     
     del->v.voisin1 = NULL ;

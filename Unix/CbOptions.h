@@ -1,4 +1,4 @@
-/* $Id: CbOptions.h,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
+/* $Id: CbOptions.h,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 
@@ -83,6 +83,8 @@
 #define  OPTIONS_MESH_INTERACTIVE               222
 #define  OPTIONS_MESH_VISIBILITY_ENTITY         223
 #define  OPTIONS_MESH_VISIBILITY_NUMBER         224
+#define  OPTIONS_MESH_SELECT_ENTITY             225
+#define  OPTIONS_MESH_SELECT_QUALITY            226
 
 /* options post */
 

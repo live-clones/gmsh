@@ -18,10 +18,10 @@ INCLUDE   = -I../Common -I../DataStr
 
 CFLAGS    = $(C_FLAGS) $(OS_FLAGS) $(INCLUDE) 
 
-SRC = brent.cpp \
+SRC = Adapt.cpp \
       mnbrak.cpp \
+      brent.cpp \
       nrutil.cpp \
-      optimesh.cpp \
       dsvdcmp.cpp \
       newt.cpp \
       fmin.cpp \

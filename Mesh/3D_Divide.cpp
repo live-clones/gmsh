@@ -1,4 +1,4 @@
-/* $Id: 3D_Divide.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 3D_Divide.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 /* Routine de division des elements tetraedriques
    ou triangulaires
 
@@ -54,11 +54,12 @@ void Remise_A_Zero (void){
 }
 
 void Impression_Resultats (void){
-  Msg(INFOS,"==============================================="); 
-  Msg(INFOS," Surface coherence results: intersections:"); 
-  Msg(INFOS," %d EV, %d EE, %d FV, %d FF, %d FE, %d EEE, %d EEEE",
-	  EV,EE,FV,FF,FE,EEE,EEEE); 
-  Msg(INFOS,"==============================================="); 
+
+  Msg(INFOS,    "===================================================\n"
+      WHITE_STR "Surface Coherence Results (Number of Intersections)\n"
+      WHITE_STR "%d EV, %d EE, %d FV, %d FF, %d FE, %d EEE, %d EEEE\n"
+      WHITE_STR "===================================================",
+      EV, EE, FV, FF, FE, EEE, EEEE); 
 }
 
 int PARLE = 0;
@@ -70,7 +71,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   Simplex *news;
   Vertex *e1;
 
-  Msg (INFOS, "Prism Cut");
+  Msg(INFOS, "Prism Cut");
 
   /* test des meilleures aretes a creer */
   /*
@@ -210,14 +211,15 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   else if (are_exists (v6, v1) &&
 	   are_exists (v5, v3) &&
 	   are_exists (v4, v2)) {
-    Msg(INFOS, "Steiner Prism  1 found !");
+    Msg(INFOS, "Found Steiner Prism 1!");
     
-    e1 = Create_Vertex (++CurrentNodeNumber,
-			(v1->Pos.X + v2->Pos.X + v3->Pos.X + v4->Pos.X + v5->Pos.X + v6->Pos.X) / 6.,
-			(v1->Pos.Y + v2->Pos.Y + v3->Pos.Y + v4->Pos.Y + v5->Pos.Y + v6->Pos.Y) / 6.,
-			(v1->Pos.Z + v2->Pos.Z + v3->Pos.Z + v4->Pos.Z + v5->Pos.Z + v6->Pos.Z) / 6.,
-			(v1->lc + v2->lc + v3->lc + v4->lc + v5->lc + v6->lc) / 6.,
-			0.0);
+    e1 = Create_Vertex 
+      (++CurrentNodeNumber,
+       (v1->Pos.X + v2->Pos.X + v3->Pos.X + v4->Pos.X + v5->Pos.X + v6->Pos.X) / 6.,
+       (v1->Pos.Y + v2->Pos.Y + v3->Pos.Y + v4->Pos.Y + v5->Pos.Y + v6->Pos.Y) / 6.,
+       (v1->Pos.Z + v2->Pos.Z + v3->Pos.Z + v4->Pos.Z + v5->Pos.Z + v6->Pos.Z) / 6.,
+       (v1->lc + v2->lc + v3->lc + v4->lc + v5->lc + v6->lc) / 6.,
+       0.0);
     Tree_Add (newpoints, &e1);
     news = Create_Simplex (e1, v6, v1, v4);
     news->iEnt = IENT;
@@ -242,14 +244,15 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
   else if (are_exists (v4, v3) &&
 	   are_exists (v6, v2) &&
 	   are_exists (v5, v1)){
-    Msg(INFOS, "Steiner Prism 2 found !");
+    Msg(INFOS, "Found Steiner Prism 2!");
 
-    e1 = Create_Vertex (++CurrentNodeNumber,
-			(v1->Pos.X + v2->Pos.X + v3->Pos.X + v4->Pos.X + v5->Pos.X + v6->Pos.X) / 6.,
-			(v1->Pos.Y + v2->Pos.Y + v3->Pos.Y + v4->Pos.Y + v5->Pos.Y + v6->Pos.Y) / 6.,
-			(v1->Pos.Z + v2->Pos.Z + v3->Pos.Z + v4->Pos.Z + v5->Pos.Z + v6->Pos.Z) / 6.,
-			(v1->lc + v2->lc + v3->lc + v4->lc + v5->lc + v6->lc) / 6.,
-			0.0);
+    e1 = Create_Vertex 
+      (++CurrentNodeNumber,
+       (v1->Pos.X + v2->Pos.X + v3->Pos.X + v4->Pos.X + v5->Pos.X + v6->Pos.X) / 6.,
+       (v1->Pos.Y + v2->Pos.Y + v3->Pos.Y + v4->Pos.Y + v5->Pos.Y + v6->Pos.Y) / 6.,
+       (v1->Pos.Z + v2->Pos.Z + v3->Pos.Z + v4->Pos.Z + v5->Pos.Z + v6->Pos.Z) / 6.,
+       (v1->lc + v2->lc + v3->lc + v4->lc + v5->lc + v6->lc) / 6.,
+       0.0);
     Tree_Add (newpoints, &e1);
     news = Create_Simplex (e1, v4, v3, v6);
     news->iEnt = IENT;
@@ -272,7 +275,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     
   }
   else{
-    Msg (ERROR, "Uncoherent prism !");
+    Msg(ERROR, "Uncoherent Prism");
   }
 }
 
@@ -437,7 +440,7 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       v7 = pI->s->V[3];
     }
     else{
-      Msg (ERROR, "Tree Edges Cut Without Common Point");
+      Msg(ERROR, "Three Edges Cut Without Common Point!");
       return;
     }
     
@@ -689,7 +692,7 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       v8 = pI->VE[3];
     }
     else{
-      Msg(ERROR, "Incoherent intersection EEEE");
+      Msg(ERROR, "Incoherent 4 Edges Intersection");
       return;
     }
     cut_prism (v8, v4, v6, v7, v3, v5, newpoints, AddedTet);

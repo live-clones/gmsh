@@ -1,4 +1,4 @@
-/* $Id: Interpolation.cpp,v 1.2 2000-11-23 14:11:35 geuzaine Exp $ */
+/* $Id: Interpolation.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -234,7 +234,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     return V;
 
   default :
-    Msg(ERROR, "Unknown Curve Type in Interpolation");
+    Msg(FATAL, "Unknown Curve Type in Interpolation");
     return V;
   }
 
@@ -461,7 +461,7 @@ Vertex InterpolateSurface (Surface * s, double u, double v,
     return (T);
 
   default :
-    Msg(ERROR, "Unknown Surface Type in Interpolation");
+    Msg(FATAL, "Unknown Surface Type in Interpolation");
     return T;
   }
 

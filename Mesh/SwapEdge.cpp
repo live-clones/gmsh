@@ -1,4 +1,4 @@
-/* $Id: SwapEdge.cpp,v 1.2 2000-11-23 14:11:36 geuzaine Exp $ */
+/* $Id: SwapEdge.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -157,7 +157,7 @@ bool FindBestPattern (int N, Vertex * Contour[100], Vertex * Ed[2],
 	worst_tet_new = DMIN (worst_tet_new, s->GammaShapeMeasure ());
       }
       if (fabs (new_volume - old_volume) > 1.e-5 * fabs (new_volume + old_volume))
-	Msg(INFO, "Edge swapping failed");
+	Msg(WARNING, "Edge Swapping Failed");
       if (fabs (new_volume - old_volume) > 1.e-5 * fabs (new_volume + old_volume)
 	  || worst_tet_new < worst_tet_old){
 	for (k = 0; k < 2 * sp->GetNbTriangles (); k++){

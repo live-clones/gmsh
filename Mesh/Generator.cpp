@@ -1,4 +1,4 @@
-/* $Id: Generator.cpp,v 1.4 2000-11-23 15:05:59 geuzaine Exp $ */
+/* $Id: Generator.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -186,7 +186,7 @@ void mai3d (Mesh * M, int Asked){
     t1 = Cpu();
     Maillage_Dimension_1 (M);
     t2 = Cpu();
-    Msg (INFO, "Mesh 1D complete (%f s)", t2 - t1);
+    Msg (INFO, "Mesh 1D complete (%g s)", t2 - t1);
     M->status = 1;
   }
   
@@ -198,7 +198,7 @@ void mai3d (Mesh * M, int Asked){
     t1 = Cpu();
     Maillage_Dimension_2 (M);
     t2 = Cpu();
-    Msg (INFO, "Mesh 2D complete (%f s)", t2 - t1);
+    Msg (INFO, "Mesh 2D complete (%g s)", t2 - t1);
     M->status = 2;
   }
 
@@ -210,7 +210,7 @@ void mai3d (Mesh * M, int Asked){
     t1 = Cpu();
     Maillage_Dimension_3 (M);
     t2 = Cpu();
-    Msg (INFO, "Mesh 3D complete (%f s)", t2 - t1);
+    Msg (INFO, "Mesh 3D complete (%g s)", t2 - t1);
     M->status = 3;
   }
 

@@ -1,4 +1,4 @@
-/* $Id: 2D_DivAndConq.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_DivAndConq.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 /*
 
    A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   
@@ -163,7 +163,7 @@ int Qtest(PointNumero h,PointNumero i,PointNumero j,PointNumero k){
   double xc,yc,rcarre,distca;
   
   if ((h == i) && (h == j) && (h == k)){
-    Msg(WARNING, "3 points identical"); 
+    Msg(WARNING, "3 Points Identical in Qtest"); 
     return(0);  /* returning 1 will cause looping for ever */
   }
   if (CircumCircle( (double) pPointArray[h].where.h,
@@ -343,7 +343,7 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
   
   d = 2. * (double)(y1*(x2-x3)+y2*(x3-x1)+y3*(x1-x2));
   if (d == 0.0){
-    Msg(WARNING, "Points colinear"); 
+    Msg(WARNING, "Points Colinear in CircumCircle"); 
     *xc = *yc = -99999.;      
     return(0);
   }
@@ -354,9 +354,8 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
   *xc = (double) ((a1*(y3-y2) + a2*(y1-y3) + a3*(y2-y1)) / d);
   *yc = (double) ((a1*(x2-x3) + a2*(x3-x1) + a3*(x1-x2)) / d);
   
-  if(fabs(d) < EPSILON_LC){
-    Msg(WARNING, "Points almost colinear d = %g (xc = %g, yc = %g)",d,*xc,*yc); 
-  }
+  if(fabs(d) < EPSILON_LC)
+    Msg(WARNING, "Points Almost Colinear in CircumCircle (d = %g)", d); 
 
   return(1);
 }

@@ -1,4 +1,4 @@
-/* $Id: CbInput.cpp,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: CbInput.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -203,8 +203,8 @@ void KeyboardAccel(XEvent *event){
       break;
     case XK_h : case XK_H :
       CTX.geom.highlight = !CTX.geom.highlight;
-      CTX.geom.highlight ? Msg(INFOS, "Highlight enabled") : 
-	Msg(INFOS, "Highlight disabled");
+      CTX.geom.highlight ? Msg(INFOS, "Highlight Enabled") : 
+	Msg(INFOS, "Highlight Disabled");
       break;
     case XK_c : case XK_C :
       if(CTX.color.id==0) InitColors(&CTX.color,1);

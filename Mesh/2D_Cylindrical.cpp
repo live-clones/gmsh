@@ -1,4 +1,4 @@
-/* $Id: 2D_Cylindrical.cpp,v 1.2 2000-11-23 14:11:34 geuzaine Exp $ */
+/* $Id: 2D_Cylindrical.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -17,9 +17,9 @@ void ChangePi (void *a, void *dum){
   v = *(Vertex **) a;
 
   if ((v->Pos.X / SURF->Cyl.radius1) >= TETAMIN + .99999 * Pi){
-    Msg(INFO, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
+    Msg(INFOS, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
     v->Pos.X -= (2. * Pi) * SURF->Cyl.radius1;
-    Msg(INFO, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
+    Msg(INFOS, "%g -> ", v->Pos.X / SURF->Cyl.radius1);
   }
 }
 
@@ -92,7 +92,7 @@ void XYZtoTZ (void *a, void *dum){
   prosca (o, x, &C);
   prosca (o, y, &S);
   teta = atan2 (S, C);
-  Msg(INFO, "pt %d %g %g", v->Num, ZRepere, teta);
+  Msg(DEBUG, "pt %d %g %g", v->Num, ZRepere, teta);
 
   v->Pos.X = teta * SURF->Cyl.radius1;
   v->Pos.Y = ZRepere;
@@ -175,7 +175,7 @@ void XYZtoCone (void *a, void *dum){
   v->Pos.X = ract * cos (teta);
   v->Pos.Y = ract * sin (teta);
   v->Pos.Z = 0.0;
-  Msg (INFO, "%g %g", ZRepere, v->Pos.X);
+  Msg (DEBUG, "%g %g", ZRepere, v->Pos.X);
 }
 
 void ConetoXYZ (void *a, void *dum){
@@ -235,9 +235,9 @@ int MeshCylindricalSurface (Surface * s){
   if (s->Typ == MSH_SURF_TORUS)
     return 1;
 
-  Msg (INFO, "z %d : %12.5E %12.5E %12.5E", s->Num, s->Cyl.zaxis[0],
+  Msg (DEBUG, "z %d : %12.5E %12.5E %12.5E", s->Num, s->Cyl.zaxis[0],
        s->Cyl.zaxis[1], s->Cyl.zaxis[2]);
-  Msg(INFO, "x %d : %12.5E %12.5E %12.5E", s->Num, s->Cyl.xaxis[0],
+  Msg(DEBUG, "x %d : %12.5E %12.5E %12.5E", s->Num, s->Cyl.xaxis[0],
       s->Cyl.xaxis[1], s->Cyl.xaxis[2]);
 
   SURF = s;
@@ -259,7 +259,7 @@ int MeshCylindricalSurface (Surface * s){
   else if (s->Typ == MSH_SURF_CONE)
     Tree_Action (s->Vertices, XYZtoCone);
 
-  Msg(INFO, "%12.5E %12.5E", TETAMAX, TETAMIN);
+  Msg(DEBUG, "%12.5E %12.5E", TETAMAX, TETAMIN);
 
   if ((s->Typ == MSH_SURF_CYLNDR) && (TETAMAX - TETAMIN > Pi * 1.01))
     Tree_Action (s->Vertices, ChangePi);

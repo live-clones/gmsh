@@ -1,4 +1,4 @@
-/* $Id: 3D_Mesh.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: 3D_Mesh.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 /*
  
   J-F Remacle 1995
@@ -400,7 +400,7 @@ void CrSi (void *a, void *b){
     List_Add (Simplexes_New, &s);
   }
   else if (S->NumFaceSimpl != 2){
-    Msg(WARNING, "GROSSE PANIQUE ...\n");
+    Msg(WARNING, "Huh! Panic in CrSi");
   }
 }
 
@@ -419,7 +419,7 @@ void NewSimplexes (Mesh * m, List_T * Sim, List_T * news){
       ZONEELIMINEE = S->iEnt;
     else {
       if (S->iEnt != ZONEELIMINEE){
-	Msg(WARNING, "Bizzare, l'elimination est foireuse %d %d\n", 
+	Msg(WARNING, "Huh! The Elimination Failed %d %d",
 	    S->iEnt, ZONEELIMINEE);
       }
     }
@@ -552,7 +552,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
     for (i = 0; i < List_Nbr (Simplexes_Destroyed); i++){
       List_Read (Simplexes_Destroyed, i, &s);
       if (!Tree_Suppress (m->Simplexes, &s))
-	printf ("Error : Impossible to Delete Simplex\n");
+	Msg(ERROR, "Impossible to Delete Simplex");
       Free (s);
     }
     
@@ -606,8 +606,8 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       Msg(STATUS, "Vol=%g",volume); 
     }
     if (!THES){
-      Msg(WARNING, "Vertex %12.5E %12.5E %12.5E in no simplex",
-	      THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
+      Msg(WARNING, "Vertex (%g,%g,%g) in no Simplex",
+	  THEV->Pos.X,THEV->Pos.Y,THEV->Pos.Z); 
       THEV->Pos.X += 10 * RAND_LONG;
       THEV->Pos.Y += 10 * RAND_LONG;
       THEV->Pos.Z += 10 * RAND_LONG;
@@ -632,7 +632,8 @@ void Convex_Hull_Mesh (List_T * Points, Mesh * m){
       if(count > 5){
 	N++;
 	List_Add(POINTS,&THEV);
-	Msg(WARNING,"UNABLE TO ADD THE POINT %d...  WILL DO IT LATER",THEV->Num);
+	Msg(WARNING, "Unable to Add Point %d (Will do it Later)",
+	    THEV->Num);
 	break;
       }
     }
@@ -815,9 +816,9 @@ void Maillage_Volume (void *data, void *dum){
       if (i % n == n - 1){
 	volume = 0.0;
 	Tree_Action (LOCAL->Simplexes, VSIM);
-	Msg(STATUS, "%d Nodes, %d Elements",
+	Msg(STATUS, "Nod=%d Elm=%d",
 	    Tree_Nbr (LOCAL->Vertices), Tree_Nbr (LOCAL->Simplexes));
-	Msg(SELECT, "Vol(%.6e) Conv(%g->%.1f)", volume, simp->Quality, CONV_VALUE);
+	Msg(SELECT, "Vol(%g) Conv(%g->%g)", volume, simp->Quality, CONV_VALUE);
 	double adv = 100. * (CONV_VALUE / simp->Quality);
 	Progress ((int) adv);
       }

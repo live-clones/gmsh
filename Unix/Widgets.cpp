@@ -1,4 +1,4 @@
-/* $Id: Widgets.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
+/* $Id: Widgets.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -622,12 +622,10 @@ void CreateWidgets_FD(Widgets_T *w){
   XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Ideas universal [.unv]")); i++;
   w->FD.saveAsButt[1] = XmCreatePushButton(w->FD.saveAsPane, "MsaveAsButt1", arg, i);
   XtManageChild(w->FD.saveAsButt[1]);
-  /*
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Gref [.gre]")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Gref [.Gref]")); i++;
   w->FD.saveAsButt[2] = XmCreatePushButton(w->FD.saveAsPane, "MsaveAsButt2", arg, i);
   XtManageChild(w->FD.saveAsButt[2]);
-  */
   i=0;
   XtSetArg(arg[i], XmNsubMenuId, w->FD.saveAsPane); i++;
   XtSetArg(arg[i], XmNspacing, 0); i++;
@@ -1049,7 +1047,7 @@ void CreateWidgets_OD(Widgets_T *w){
   XtManageChild(w->OD.meshVisibleByNumFrame[0]);
 
   i=0;
-  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Visibility by Number")); i++;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("Visibility")); i++;
   XtSetArg(arg[i], XmNchildType, XmFRAME_TITLE_CHILD); i++;
   w->OD.meshVisibleByNumFrame[1] = XmCreateLabel(w->OD.meshVisibleByNumFrame[0], "ODmeshVisibleByNumFrame1", arg, i);
   XtManageChild(w->OD.meshVisibleByNumFrame[1]);
@@ -1057,6 +1055,23 @@ void CreateWidgets_OD(Widgets_T *w){
   i=0;
   w->OD.meshVisibleByNumRowCol = XmCreateRowColumn(w->OD.meshVisibleByNumFrame[0], "ODmeshVisibleByNumRowCol", arg, i);
   XtManageChild(w->OD.meshVisibleByNumRowCol);
+
+  i=0;
+  XtSetArg(arg[i], XmNnumColumns, 2); i++;
+  w->OD.meshVisibleByNumCheck = XmCreateRadioBox(w->OD.meshVisibleByNumRowCol, "ODmeshVisibleByNumCheck", arg, i);
+  XtManageChild(w->OD.meshVisibleByNumCheck);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("By Entity")); i++;
+  XtSetArg(arg[i], XmNset, True); i++;
+  w->OD.meshVisibleByNumButt[0] = XmCreateToggleButton(w->OD.meshVisibleByNumCheck, "ODmeshVisibleByNumButt0", arg, i);
+  XtManageChild(w->OD.meshVisibleByNumButt[0]);
+
+  i=0;
+  XtSetArg(arg[i], XmNlabelString, XmStringCreateSimple("By Quality")); i++;
+  XtSetArg(arg[i], XmNset, False); i++;
+  w->OD.meshVisibleByNumButt[1] = XmCreateToggleButton(w->OD.meshVisibleByNumCheck, "ODmeshVisibleByNumButt1", arg, i);
+  XtManageChild(w->OD.meshVisibleByNumButt[1]);
 
   i=0;
   XtSetArg(arg[i], XmNvalue, "*"); i++;

@@ -1,4 +1,4 @@
-/* $Id: Numeric.cpp,v 1.4 2000-11-23 17:16:38 geuzaine Exp $ */
+/* $Id: Numeric.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -224,9 +224,9 @@ void XYZtoUV (Surface *s, double X, double Y, double Z, double *U, double *V) {
     *V = Vnew;
   }
 
-  if(iter == MaxIter) Msg(WARNING, "Could not converge in XYZtoUV");
+  if(iter == MaxIter) Msg(WARNING, "Could not Converge in XYZtoUV");
 
-  if(iter > 10) Msg(WARNING, "Many (%d) iterations in XYZtoUV\n", iter);
+  if(iter > 10) Msg(WARNING, "Many (%d) Iterations in XYZtoUV", iter);
 
   free_dmatrix(mat,1,3,1,3);
   free_dmatrix(jac,1,3,1,3);

@@ -1,4 +1,4 @@
-/* $Id: CbFile.cpp,v 1.4 2000-11-23 16:51:30 geuzaine Exp $ */
+/* $Id: CbFile.cpp,v 1.5 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include <unistd.h>
 
@@ -50,7 +50,7 @@ void SaveToDisk (char *FileName, Widget warning,
   }
 
   if(!(fp = fopen(KeepFileName,"w"))) {
-    Msg(WARNING, "Unable to open file '%s'", KeepFileName); 
+    Msg(WARNING, "Unable to Open File '%s'", KeepFileName); 
     WARNING_OVERRIDE = 0;
     return;
   }
@@ -81,18 +81,18 @@ void CreateImage (FILE *fp) {
       Window_Dump(XCTX.display, XCTX.scrnum, XtWindow(WID.G.glw), tmp);
       fclose(tmp);
       sprintf(cmd, "xpr -device ps -gray 4 %s >%s", tmpFileName, KeepFileName);
-      Msg(INFOS, "Executing: %s\n", cmd);
+      Msg(INFOS, "Executing '%s'", cmd);
       system(cmd);
       unlink(tmpFileName);
       break;
     }
-    Msg(INFOS, "X image dump complete: '%s'", KeepFileName);
+    Msg(INFOS, "X Image Dump Complete '%s'", KeepFileName);
     break ;
 
   case PRINT_GL2GIF :
     create_gif(fp, CTX.viewport[2]-CTX.viewport[0],
 	       CTX.viewport[3]-CTX.viewport[1]);
-    Msg(INFOS, "GIF dump complete: '%s'", KeepFileName);
+    Msg(INFOS, "GIF Dump Complete '%s'", KeepFileName);
     break;
 
   case PRINT_GL2PS_SIMPLE :
@@ -111,11 +111,11 @@ void CreateImage (FILE *fp) {
       CTX.stream = TO_SCREEN ;
       res = gl2psEndPage();
     }
-    Msg(INFOS, "GL2PS postscript output complete: '%s'", KeepFileName);
+    Msg(INFOS, "GL2PS Output Complete '%s'", KeepFileName);
     break;
 
   default :
-    Msg(WARNING, "Unknown print type");
+    Msg(WARNING, "Unknown Print Type");
     break;
   }
 
@@ -146,7 +146,9 @@ void FileCb(Widget w, XtPointer client_data, XtPointer call_data){
   case FILE_SAVE_MESH_AS       : Print_Mesh(&M, c, CTX.mesh.format); break;
   case FILE_SAVE_COLORTABLE_AS : SaveToDisk(c, WID.ED.saveDialog, SaveColorTable); break;
   case FILE_CANCEL             : WARNING_OVERRIDE = 0; break;
-  case FILE_PRINT              : SaveToDisk(c, WID.ED.printDialog, CreateImage); Init(); Draw(); break;
+  case FILE_PRINT              : 
+    SaveToDisk(c, WID.ED.printDialog, CreateImage); 
+    Init(); Draw(); break;
   default :
     Msg(WARNING, "Unknown event in FileCb : %d", (long int)client_data); 
     break;

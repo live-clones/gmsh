@@ -1,4 +1,4 @@
-/* $Id: XColors.cpp,v 1.2 2000-11-23 14:11:41 geuzaine Exp $ */
+/* $Id: XColors.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 /*
   Attention. Toutes les couleurs sont crees a partir de la colormap de
   l'interface : XCTX.gui.colormap
@@ -97,7 +97,7 @@ unsigned long AllocateColorInt( int r, int g, int b )
                           &xcol );
          return xcol.pixel;
       default:
-         printf("Error in AllocateColorInt %d\n", pixelformat);
+         Msg(ERROR, "Error in AllocateColorInt %d", pixelformat);
          exit(0);
    }
    return 0;

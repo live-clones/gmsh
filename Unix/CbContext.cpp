@@ -1,4 +1,4 @@
-/* $Id: CbContext.cpp,v 1.2 2000-11-23 14:11:40 geuzaine Exp $ */
+/* $Id: CbContext.cpp,v 1.3 2000-11-23 23:20:35 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -23,7 +23,7 @@ static char *txt_new [] =
   { "Parameter", "Point", "Line", "Spline", "Bezier", "BSpline", "Circle", "Ellipsis", 
     "Plane Surface", "Ruled Surface", "Nurbs Surface", "Volume", NULL };  
 
-static char *txt_translate_rotate_dilate_symetry_delete [] = 
+static char *txt_translate_rotate_dilate_symmetry_delete [] = 
   { "Point", "Line", "Surface", NULL };  
 
 static char *txt_add [] = 
@@ -176,25 +176,25 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
   case CONTEXT_GEOM_ELEM_ADD_TRANSLATE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Add Translate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_ROTATE : 
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Add Rotate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_ADD_DILATE : 
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Add Dilate"); 
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
-  case CONTEXT_GEOM_ELEM_ADD_SYMETRY :
+  case CONTEXT_GEOM_ELEM_ADD_SYMMETRY :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Add Symetry");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    Msg(INFO, "Elementary Add Symmetry");
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE :
@@ -206,25 +206,25 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
   case CONTEXT_GEOM_ELEM_MOVE_TRANSLATE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Move Translate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE_ROTATE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Move Rotate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_MOVE_DILATE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Move Dilate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
-  case CONTEXT_GEOM_ELEM_MOVE_SYMETRY :
+  case CONTEXT_GEOM_ELEM_MOVE_SYMMETRY :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Move Symetry");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    Msg(INFO, "Elementary Move Symmetry");
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE :
@@ -236,31 +236,31 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
   case CONTEXT_GEOM_ELEM_EXTRUDE_TRANSLATE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Extrude Translate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE_ROTATE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Extrude Rotate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE_DILATE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Extrude Dilate");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
-  case CONTEXT_GEOM_ELEM_EXTRUDE_SYMETRY :
+  case CONTEXT_GEOM_ELEM_EXTRUDE_SYMMETRY :
     actual_global_context = CONTEXT_GEOM;
-    Msg(INFO, "Elementary Extrude Symetry");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    Msg(INFO, "Elementary Extrude Symmetry");
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_ELEM_DELETE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Elementary Delete");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_GEOM_PHYS :
@@ -279,7 +279,7 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
   case CONTEXT_GEOM_PHYS_DELETE :
     actual_global_context = CONTEXT_GEOM;
     Msg(INFO, "Physical Delete");
-    ButtonText = txt_translate_rotate_dilate_symetry_delete;
+    ButtonText = txt_translate_rotate_dilate_symmetry_delete;
     break;
 
   case CONTEXT_MESH :
@@ -303,7 +303,7 @@ void ActualizeContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     return;    
 
   default :
-    Msg(WARNING, "Unknown Event in ActualizeContextCb : %d", actual_context); 
+    Msg(WARNING, "Unknown Event in ActualizeContextCb (%d)", actual_context); 
     return;
 
   }
@@ -374,7 +374,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_ADD_DILATE,call_data);
       break;
     case 5: 
-      ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_ADD_SYMETRY,call_data); 
+      ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_ADD_SYMMETRY,call_data); 
       break;
     }
     break;    
@@ -421,8 +421,8 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     }
     break;
 
-  case CONTEXT_GEOM_ELEM_ADD_SYMETRY :
-    Msg(WARNING, "CONTEXT_GEOM_ELEM_ADD_SYMETRY not done yet!"); 
+  case CONTEXT_GEOM_ELEM_ADD_SYMMETRY :
+    Msg(WARNING, "Add Symmetry not done yet"); 
     break;
      
   case CONTEXT_GEOM_ELEM_MOVE :
@@ -440,7 +440,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_MOVE_DILATE,call_data);
       break;
     case 4:
-      ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_MOVE_SYMETRY,call_data);
+      ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_MOVE_SYMMETRY,call_data);
       break;
     }
     break;    
@@ -470,8 +470,8 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     }
     break;
 
-  case CONTEXT_GEOM_ELEM_MOVE_SYMETRY :
-    Msg(WARNING, "CONTEXT_GEOM_ELEM_MOVE_SYMETRY not done yet!"); 
+  case CONTEXT_GEOM_ELEM_MOVE_SYMMETRY :
+    Msg(WARNING, "Move Symmetry not done yet"); 
     break;
 
   case CONTEXT_GEOM_ELEM_EXTRUDE :
@@ -489,7 +489,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
       ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_EXTRUDE_DILATE,call_data);
       break;
     case 4:
-      ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_EXTRUDE_SYMETRY,call_data);
+      ActualizeContextCb(w,(XtPointer)CONTEXT_GEOM_ELEM_EXTRUDE_SYMMETRY,call_data);
       break;
     }
     break;    
@@ -511,11 +511,11 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     break;
     
   case CONTEXT_GEOM_ELEM_EXTRUDE_DILATE :
-    Msg(WARNING, "CONTEXT_GEOM_ELEM_EXTRUDE_DILATE not done yet!"); 
+    Msg(WARNING, "Extrude Dilate not done yet!"); 
     break;
 
-  case CONTEXT_GEOM_ELEM_EXTRUDE_SYMETRY :
-    Msg(WARNING, "CONTEXT_GEOM_ELEM_EXTRUDE_SYMETRY not done yet!"); 
+  case CONTEXT_GEOM_ELEM_EXTRUDE_SYMMETRY :
+    Msg(WARNING, "Extrude Symmetry not done yet!"); 
     break;
      
   case CONTEXT_GEOM_ELEM_DELETE :
@@ -580,7 +580,7 @@ void NextContextCb (Widget w, XtPointer client_data, XtPointer call_data){
     break;
 
   default :
-    Msg(WARNING, "Unknown Context in NextContextCb : %d", actual_global_context); 
+    Msg(WARNING, "Unknown Context in NextContextCb (%d)", actual_global_context); 
     break;
     
   }
