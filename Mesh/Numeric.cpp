@@ -1,4 +1,4 @@
-/* $Id: Numeric.cpp,v 1.10 2000-12-18 08:31:58 geuzaine Exp $ */
+/* $Id: Numeric.cpp,v 1.11 2000-12-18 09:03:53 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -90,13 +90,6 @@ int sys3x3 (double mat[3][3], double b[3], double res[3], double *det){
     mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
 
   if (*det == 0.0){
-    res[0] = res[1] = res[2] = 0.0 ;
-    return (0);
-  }
-
-  // WARNING, WARNING
-  if (fabs(*det) < 1.e-12){
-    Msg(INFOS, "Assuming 3x3 Matrix is Singular (Is this OK?)");
     res[0] = res[1] = res[2] = 0.0 ;
     return (0);
   }

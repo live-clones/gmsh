@@ -1,7 +1,7 @@
 Summary: A 3D mesh generator with pre- and post-processing facilities
 Name: gmsh
-Version: 0.997
-Source: gmsh-0.997.tar.gz
+Version: 0.998
+Source: gmsh-0.998.tar.gz
 Release: 1
 Copyright: distributable
 Group: Applications/Engineering
