@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.50 2004-10-11 21:24:05 geuzaine Exp $
+// $Id: Scale.cpp,v 1.51 2004-10-11 22:52:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -323,11 +323,11 @@ void Draw_Scales(void)
 		     tic, 1);
 	}
 	else{
-	  double xsep = largest_number/2. + 30;
-	  double ww = (CTX.viewport[2] - CTX.viewport[0]) / 2.3 - 2 * xsep;
+	  double xsep = largest_number/4. + (CTX.viewport[2] - CTX.viewport[0])/10.;
+	  double ww = (CTX.viewport[2] - CTX.viewport[0] - 4 * xsep) / 2.;
 	  if(ww < 20) ww = 20;
 	  draw_scale(v, 
-		     (CTX.viewport[2] - CTX.viewport[0]) / 2. - (i%2 ? -(xsep-15) : ww+xsep-15),
+		     (CTX.viewport[2] - CTX.viewport[0])/2. - (i%2 ? -xsep/1.5 : ww+xsep/1.5),
 		     CTX.viewport[1] + ysep + (i/2) * (bar_size+tic+2*gl_height()+ysep), 
 		     ww, bar_size, 
 		     tic, 1);
