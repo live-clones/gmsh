@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.21 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Box.cpp,v 1.22 2001-02-03 21:20:32 geuzaine Exp $
 
 #include <signal.h>
 
@@ -121,18 +121,27 @@ void Msg(int level, char *fmt, ...){
   switch(level){
 
   case FATAL :
+  case FATAL1 :
+  case FATAL2 :
+  case FATAL3 :
     fprintf(stderr, FATAL_STR);
     vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     abort = 1 ;
     break ;
 
-  case ERROR :
+  case GERROR :
+  case GERROR1 :
+  case GERROR2 :
+  case GERROR3 :
     fprintf(stderr, ERROR_STR);
     vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     abort = 1 ;
     break ;
 
   case WARNING :
+  case WARNING1 :
+  case WARNING2 :
+  case WARNING3 :
     fprintf(stderr, WARNING_STR);
     vfprintf(stderr, fmt,args); fprintf(stderr, "\n");
     break;
@@ -149,11 +158,7 @@ void Msg(int level, char *fmt, ...){
     }
     break ;
 
-  case DEBUG :
-  case INFOS :
-  case INFO :
-  case SELECT :
-  case STATUS :
+  default :
     if(CTX.verbosity == 5){
       fprintf(stderr, INFO_STR);
       vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
