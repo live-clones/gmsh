@@ -1,4 +1,4 @@
-/* $Id: Options.h,v 1.10 2000-12-21 10:19:56 geuzaine Exp $ */
+/* $Id: Options.h,v 1.11 2000-12-21 10:41:02 geuzaine Exp $ */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
@@ -190,6 +190,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { "IntervalsMode"    , GMSH_INT,    (void*)&CTX.post.initial_intervals  , DRAW_POST_ISO }, 
   { "IntervalsNumber"  , GMSH_INT,    (void*)&CTX.post.initial_nbiso      , 15. }, 
   { "AnimationDelay"   , GMSH_INT,    (void*)&CTX.post.anim_delay         , 0. }, 
+  { "NbViews"          , GMSH_INT,    (void*)&CTX.post.nb_views           , 0. }, 
   { NULL               , GMSH_DOUBLE, NULL , 0. }
 } ;
 

@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.21 2000-12-20 10:40:49 geuzaine Exp $ */
+/* $Id: Context.h,v 1.22 2000-12-21 10:41:01 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -135,7 +135,7 @@ class Context_T {
   struct{
     int draw, scales, link ;
     int  initial_visibility, initial_nbiso, initial_intervals ;
-    long anim_delay ;
+    long anim_delay, nb_views ;
   }post;
 
   /* print options */

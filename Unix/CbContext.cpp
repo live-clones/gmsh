@@ -1,4 +1,4 @@
-/* $Id: CbContext.cpp,v 1.8 2000-12-13 13:57:00 geuzaine Exp $ */
+/* $Id: CbContext.cpp,v 1.9 2000-12-21 10:41:03 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -632,6 +632,8 @@ void RemoveViewCb(Widget w, XtPointer client_data, XtPointer call_data){
 
   if(!List_Suppress(Post_ViewList, v, fcmpPostViewNum))
     Msg(ERROR, "Could Not Suppress View from List");
+
+  CTX.post.nb_views = List_Nbr(Post_ViewList);
 
   if(actual_global_context == CONTEXT_POST)
     ActualizeContextCb(NULL,(XtPointer)actual_global_context,NULL);  

@@ -1,4 +1,4 @@
-/* $Id: Views.cpp,v 1.18 2000-12-18 09:03:51 geuzaine Exp $ */
+/* $Id: Views.cpp,v 1.19 2000-12-21 10:41:02 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -254,6 +254,7 @@ void EndView(int AddInUI, int Number, char *FileName, char *Name,
   if(!Number){
     ActualView->Num = ++ActualViewNum;    
     List_Add(Post_ViewList,ActualView);
+    CTX.post.nb_views = List_Nbr(Post_ViewList);
     if(AddInUI)
       AddViewInUI(List_Nbr(Post_ViewList), ActualView->Name, ActualView->Num);
   }
@@ -276,6 +277,7 @@ bool FreeView(int num){
   v = (Post_View*)List_Pointer(Post_ViewList, num);
   FreeView(v);
   List_Suppress(Post_ViewList, v, fcmpPostViewNum);
+  CTX.post.nb_views = List_Nbr(Post_ViewList);
 
   Msg(INFOS, "View %d deleted (%d views left)",num, List_Nbr(Post_ViewList));
   return true;
