@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.174 2004-07-23 01:28:57 geuzaine Exp $
+// $Id: Options.cpp,v 1.175 2004-07-23 04:47:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3759,6 +3759,14 @@ double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     if(CTX.mesh.use_cut_plane != (int)val) CTX.mesh.changed = 1;
     CTX.mesh.use_cut_plane = (int)val;
+#if defined(HAVE_FLTK)
+    if(WID){
+      double val1 = CTX.lc;
+      WID->mesh_value[17]->step(val1/200.);
+      WID->mesh_value[17]->minimum(-val1);
+      WID->mesh_value[17]->maximum(val1);
+    }
+#endif
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))

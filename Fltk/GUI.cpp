@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.327 2004-07-23 01:28:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.328 2004-07-23 04:47:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -61,7 +61,7 @@
 #define RADIO_COLOR FL_BLACK
 
 #define IW (10*fontsize)  // input field width
-#define BB (6*fontsize+4) // width of a button with internal label
+#define BB (7*fontsize)   // width of a button with internal label
 #define BH (2*fontsize+1) // button height
 #define WB (6)            // window border
 
@@ -1891,6 +1891,10 @@ void GUI::create_option_window()
       mesh_value[17] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "D");
       for(i = 14; i <= 17; i++) {
         mesh_value[i]->align(FL_ALIGN_RIGHT);
+	mesh_value[i]->callback(mesh_cut_plane_cb);
+	mesh_value[i]->step(0.01);
+	mesh_value[i]->minimum(-1.0);
+	mesh_value[i]->maximum(1.0);
       }
 
       mesh_butt[22] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw intersecting volume layer as surface");
@@ -3000,11 +3004,22 @@ void GUI::reset_clip_browser()
       clip_browser->select(i+1);
   for(int i = 0; i < 4; i++)
     clip_value[i]->value(CTX.clip_plane[idx][i]);
+
+  for(int i = 0; i < 3; i++) {
+    clip_value[i]->step(0.01);
+    clip_value[i]->minimum(-1.0);
+    clip_value[i]->maximum(1.0);
+  }
+  double val1 = CTX.lc;
+  clip_value[3]->step(val1/200.);
+  clip_value[3]->minimum(-val1);
+  clip_value[3]->maximum(val1);
 }
 
 void GUI::create_clip_window()
 {
   if(clip_window) {
+    reset_clip_browser();
     clip_window->show();
     return;
   }
@@ -3022,13 +3037,13 @@ void GUI::create_clip_window()
   int width = 3 * BB + 4 * WB;
   int height = 6 * BH + 3 * WB;
   int brw = 105;
-  int BW = width - brw - 3 * WB - 3 * fontsize / 2;
-
+  int BW = width - brw - 3 * WB - 2 * fontsize;
 
   clip_window = new Fl_Window(width, height, "Clipping Planes");
   clip_window->box(WINDOW_BOX);
 
   clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, brw, 5 * BH);
+  clip_browser->callback(clip_update_cb);
 
   clip_choice = new Fl_Choice(2 * WB + brw, 1 * WB + 0 * BH, BW, BH);
   clip_choice->menu(plane_number);
@@ -3038,14 +3053,16 @@ void GUI::create_clip_window()
   clip_value[1] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 2 * BH, BW, BH, "B");
   clip_value[2] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 3 * BH, BW, BH, "C");
   clip_value[3] = new Fl_Value_Input(2 * WB + brw, 1 * WB + 4 * BH, BW, BH, "D");
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 4; i++){
     clip_value[i]->align(FL_ALIGN_RIGHT);
+    clip_value[i]->callback(clip_update_cb);
+  }
 
   reset_clip_browser();
 
   {
-    Fl_Return_Button *o = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Apply");
-    o->callback(clip_ok_cb);
+    Fl_Return_Button *o = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Redraw");
+    o->callback(redraw_cb);
   }
   {
     Fl_Button *o = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Reset");

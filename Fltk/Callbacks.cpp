@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.258 2004-07-23 01:28:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.259 2004-07-23 04:47:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -241,6 +241,11 @@ void color_cb(CALLBACK_ARGS)
 void set_changed_cb(CALLBACK_ARGS)
 {
   w->set_changed();
+}
+
+void redraw_cb(CALLBACK_ARGS)
+{
+  Draw();
 }
 
 // Graphical window 
@@ -1014,6 +1019,30 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_choice[4]->value());
 }
 
+void mesh_cut_plane_cb(CALLBACK_ARGS)
+{
+  if(!CTX.mesh.use_cut_plane)
+    return;
+
+  int old = CTX.draw_bbox;
+  CTX.draw_bbox = 1;
+  if(CTX.fast_redraw){
+    CTX.post.draw = 0;
+    CTX.mesh.draw = 0;
+  }
+
+  opt_mesh_cut_planea(0, GMSH_SET, WID->mesh_value[14]->value());
+  opt_mesh_cut_planeb(0, GMSH_SET, WID->mesh_value[15]->value());
+  opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());
+  opt_mesh_cut_planed(0, GMSH_SET, WID->mesh_value[17]->value());
+
+  Draw();
+
+  CTX.draw_bbox = old;
+  CTX.post.draw = 1;
+  CTX.mesh.draw = 1;
+}
+
 // Solver options
 
 void solver_options_cb(CALLBACK_ARGS)
@@ -1323,19 +1352,15 @@ void clip_num_cb(CALLBACK_ARGS)
   WID->reset_clip_browser();
 }
 
-void clip_reset_cb(CALLBACK_ARGS)
+void clip_update_cb(CALLBACK_ARGS)
 {
-  for(int i = 0; i < 6; i++){
-    CTX.clip[i] = 0;
-    for(int j = 0; j < 4; j++)
-      CTX.clip_plane[i][j] = 0.;
+  int old = CTX.draw_bbox;
+  CTX.draw_bbox = 1;
+  if(CTX.fast_redraw){
+    CTX.post.draw = 0;
+    CTX.mesh.draw = 0;
   }
-  WID->reset_clip_browser();
-  Draw();
-}
 
-void clip_ok_cb(CALLBACK_ARGS)
-{
   int idx = WID->clip_choice->value();
   CTX.clip[idx] = 0;
   for(int i = 0; i < WID->clip_browser->size(); i++)
@@ -1343,6 +1368,22 @@ void clip_ok_cb(CALLBACK_ARGS)
       CTX.clip[idx] += (1<<i);
   for(int i = 0; i < 4; i++)
     CTX.clip_plane[idx][i] = WID->clip_value[i]->value();
+  Draw();
+
+  CTX.draw_bbox = old;
+  CTX.post.draw = 1;
+  CTX.mesh.draw = 1;
+}
+
+void clip_reset_cb(CALLBACK_ARGS)
+{
+  for(int i = 0; i < 6; i++){
+    CTX.clip[i] = 0;
+    CTX.clip_plane[i][0] = 1.;
+    for(int j = 1; j < 4; j++)
+      CTX.clip_plane[i][j] = 0.;
+  }
+  WID->reset_clip_browser();
   Draw();
 }
 

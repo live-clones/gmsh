@@ -32,6 +32,7 @@ void ManualPlay(int time, int step);
 void cancel_cb(CALLBACK_ARGS) ;
 void color_cb(CALLBACK_ARGS) ;
 void set_changed_cb(CALLBACK_ARGS);
+void redraw_cb(CALLBACK_ARGS);
 
 // Graphical window
 
@@ -84,12 +85,14 @@ void general_options_color_scheme_cb(CALLBACK_ARGS) ;
 void general_options_rotation_center_cb(CALLBACK_ARGS) ;
 void general_options_rotation_center_select_cb(CALLBACK_ARGS) ;
 void general_options_ok_cb(CALLBACK_ARGS) ;
+void general_arrow_param_cb(CALLBACK_ARGS);
 
 void geometry_options_cb(CALLBACK_ARGS) ;
 void geometry_options_ok_cb(CALLBACK_ARGS) ;
 
 void mesh_options_cb(CALLBACK_ARGS) ;
 void mesh_options_ok_cb(CALLBACK_ARGS) ;
+void mesh_cut_plane_cb(CALLBACK_ARGS) ;
 
 void solver_options_cb(CALLBACK_ARGS) ;
 void solver_options_ok_cb(CALLBACK_ARGS) ;
@@ -128,6 +131,7 @@ void view_options_timestep_cb(CALLBACK_ARGS) ;
 void view_options_timestep_decr_cb(CALLBACK_ARGS);
 void view_options_timestep_incr_cb(CALLBACK_ARGS);
 void view_options_ok_cb(CALLBACK_ARGS) ;
+void view_arrow_param_cb(CALLBACK_ARGS);
 
 // Statistics Menu
 
@@ -152,9 +156,9 @@ void visibility_ok_cb(CALLBACK_ARGS) ;
 // Clipping planes Menu
 
 void clip_cb(CALLBACK_ARGS) ;
+void clip_update_cb(CALLBACK_ARGS) ;
 void clip_num_cb(CALLBACK_ARGS) ;
 void clip_reset_cb(CALLBACK_ARGS) ;
-void clip_ok_cb(CALLBACK_ARGS) ;
 
 // Help Menu
 
@@ -273,11 +277,6 @@ void solver_command_cb(CALLBACK_ARGS);
 void solver_kill_cb(CALLBACK_ARGS);
 void solver_choose_executable_cb(CALLBACK_ARGS);
 void solver_ok_cb(CALLBACK_ARGS);
-
-// Arrow editor windows
-
-void general_arrow_param_cb(CALLBACK_ARGS);
-void view_arrow_param_cb(CALLBACK_ARGS);
 
 #endif
 

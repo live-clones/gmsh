@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.44 2004-07-22 19:32:02 geuzaine Exp $
+// $Id: Entity.cpp,v 1.45 2004-07-23 04:47:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -388,10 +388,15 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
     };
     point intersect(point &p1, point &p2){
       double v1 = val(p1), v2 = val(p2);
-      if(fabs(v1) < 1.e-12)
-	return point(p1.x, p1.y, p1.z);
-      else if(fabs(v2) < 1.e-12)
+      if(fabs(v1) < 1.e-12){
+	if(fabs(v2) < 1.e-12)
+	  return point();
+	else
+	  return point(p1.x, p1.y, p1.z);
+      }
+      else if(fabs(v2) < 1.e-12){
 	return point(p2.x, p2.y, p2.z);
+      }
       else if(v1 * v2 < 0.){
 	double coef = - v1 / (v2 - v1);
 	return point(coef * (p2.x - p1.x) + p1.x,
