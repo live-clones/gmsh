@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.3 2004-06-27 00:20:25 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.4 2004-06-28 00:56:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -76,17 +76,15 @@ Netgen::Netgen(Volume *vol, int importVolumeMesh)
     _vertices = Tree2List(_vol->Vertices);
   }
   else{
-    // Transfert all surface vertices we must *not* add 2 times the
+    // Transfer all surface vertices we must *not* add 2 times the
     // same vertex (the same vertex can belong to several surfaces)
-    _vertices = List_Create(100, 100, sizeof(Vertex*));
+    Tree_T *tree = Tree_Create(sizeof(Vertex*), compareVertex);
     for(int i = 0; i < List_Nbr(_vol->Surfaces); i++) {
       Surface *s;
       List_Read(_vol->Surfaces, i, &s);
-      List_T *vlist = Tree2List(s->Vertices);
-      for(int j = 0; j < List_Nbr(vlist); j++) 
-	List_Insert(_vertices, List_Pointer(vlist, j), compareVertex);
-      List_Delete(vlist);
+      Tree_Unit(tree, s->Vertices);
     }
+    _vertices = Tree2List(tree);
   }
   List_Sort(_vertices, compareVertex);
 

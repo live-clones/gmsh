@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.120 2004-06-21 20:53:38 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.121 2004-06-28 00:56:07 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -725,7 +725,9 @@ To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
 syntax, you can always omit the braces @code{@{@}} enclosing an
 @var{expression-list} if this @var{expression-list} only contains a single
-item.
+item. Also note that a braced @var{expression-list} can be preceded by a
+minus sign in order to change the sign of all the
+@var{expression-list-item}s.
 
 @c .........................................................................
 @c Character expressions
