@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.45 2004-10-11 17:22:57 geuzaine Exp $
+// $Id: Scale.cpp,v 1.46 2004-10-11 19:02:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -159,21 +159,20 @@ void draw_scale(Post_View * v,
   char label[1024];
   int nbv;
   double cv_box;
-
   if(horizontal){
     sprintf(label, v->Format, -100*M_PI);
     double estim = gl_width(label);
-    nbv = (v->NbIso < floor(width / estim)) ? v->NbIso : -1;
+    nbv = (width/estim > v->NbIso) ? v->NbIso : ((width/estim > 2.) ? -2 : -1);
     cv_box = width / nbv;
   }
   else{
-    nbv = (v->NbIso < floor(height / font_h)) ? v->NbIso : -1;
+    nbv = (height/font_h > v->NbIso) ? v->NbIso : ((height/font_h > 3.) ? -2 : -1);
     cv_box = height / nbv;
   }
 
   glColor4ubv((GLubyte *) & CTX.color.text);
 
-  if(nbv < 0) { // only min and max if not enough room
+  if(nbv < 0) { // only min and max (+ possibly mid value) if not enough room
     if(v->IntervalsType == DRAW_POST_DISCRETE ||
        v->IntervalsType == DRAW_POST_CONTINUOUS) {
       sprintf(label, v->Format, ValMin);
@@ -203,6 +202,15 @@ void draw_scale(Post_View * v,
 	glRasterPos2d(xmin + width - (box / 2) - gl_width(label)/2., ymin + height + tic);
       else
 	glRasterPos2d(xmin + width + tic, ymin + height - (box / 2) - font_a / 3.);
+      Draw_String(label);
+    }
+    if(nbv == -2){
+      double Val = v->GVFI(ValMin, ValMax, v->NbIso, v->NbIso/2);
+      sprintf(label, v->Format, Val);
+      if(horizontal)
+	glRasterPos2d(xmin + width/2. - gl_width(label)/2., ymin + height + tic);
+      else
+	glRasterPos2d(xmin + width + tic, ymin + height/2 - font_a / 3.);
       Draw_String(label);
     }
   }
