@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.30 2001-09-06 07:12:16 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.31 2001-10-06 09:21:04 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -50,7 +50,7 @@ void print_msh_node (void *a, void *b){
 void process_msh_nodes (Mesh * M){
   int i, j, Num;
   PhysicalGroup *p;
-  Vertex *pv, *ppv, v;
+  Vertex *pv, **ppv, v;
 
   for (i = 0; i < List_Nbr (M->PhysicalGroups); i++){
     List_Read (M->PhysicalGroups, i, &p);
@@ -60,8 +60,8 @@ void process_msh_nodes (Mesh * M){
         pv = &v;
         pv->Num = abs(Num);
 	if(!Tree_Search(M->Vertices, &pv)){
-	  if((ppv = *(Vertex**)Tree_PQuery(M->Points, &pv)))
-	    Tree_Add(M->Vertices, &ppv);
+	  if((ppv = (Vertex**)Tree_PQuery(M->Points, &pv)))
+	    Tree_Add(M->Vertices, ppv);
 	}
       }
     }
