@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.10 2001-04-07 07:20:22 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.11 2001-04-08 12:49:31 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -250,7 +250,7 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
   int      i,j;
   double   f;
   List_T  *templist;
-  Curve   *c, **pc1, **pc2;
+  Curve   *c, *c0, *c1, *c2;
 
   if(liste){
     templist = List_Create(List_Nbr(liste),1,sizeof(int));
@@ -289,23 +289,35 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
 	    *(int*)List_Pointer(templist,i), izon);
     }
     List_Reset(templist);
-    pc1 = (Curve**)List_Pointer(curves, 0);
-    List_Add(templist, &(*pc1)->Num);
-    int j=0;
+
+    int j = 0;
+    c0 = c1 = *(Curve**)List_Pointer(curves, 0);
+    List_Add(templist, &c1->Num);
+    List_PSuppress(curves, 0);
     while(List_Nbr(templist) < NbCurves){
-      for(i=0 ; i<NbCurves ; i++){
-	pc2 = (Curve**)List_Pointer(curves, i);
-	if((*pc1)->end == (*pc2)->beg){
-	  List_Add(templist, &(*pc2)->Num);
-	  pc1 = pc2 ;
+      for(i=0 ; i<List_Nbr(curves); i++){
+	c2 = *(Curve**)List_Pointer(curves, i);
+	if(c1->end == c2->beg){
+	  List_Add(templist, &c2->Num);
+	  List_PSuppress(curves, i);
+	  c1 = c2 ;
+	  if(c2->end == c0->beg){
+	    if(List_Nbr(curves)){
+	      Msg(INFO, "Starting new sub loop in Line Loop %d: are you sure about this?", izon);
+	      c0 = c1 = *(Curve**)List_Pointer(curves, 0);
+	      List_Add(templist, &c1->Num);
+	      List_PSuppress(curves, 0);
+	    }
+	  }
 	  break;
 	}
       }
       if(j++ > NbCurves){
-	Msg(GERROR, "Wrong Line Loop %d", izon);
+	Msg(GERROR, "Line Loop %d is wrong", izon);
 	break;
       }
     }  
+    List_Delete(curves);
 
     Add_EdgeLoop(izon,templist,THEM);
   }

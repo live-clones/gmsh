@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.85 2001-03-23 14:41:52 geuzaine Exp $
+# $Id: Makefile,v 1.86 2001-04-08 12:49:31 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -39,7 +39,7 @@ FLTK_LIB_LINUX_SCOREC = /users/develop/develop/visual/fltk/1.0/lib/x86_linux/lib
 
            THREAD_LIB = -L/usr/lib -lpthread
 
-             GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk\
+             GMSH_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif Fltk Plugin\
                         jpeg utils
       GMSH_XMOTIF_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Motif jpeg
         GMSH_FLTK_DIR = Adapt Common DataStr Geo Graphics Mesh Parser Fltk jpeg Plugin

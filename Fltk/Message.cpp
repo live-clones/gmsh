@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.16 2001-03-17 21:33:13 geuzaine Exp $
+// $Id: Message.cpp,v 1.17 2001-04-08 12:49:31 geuzaine Exp $
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -25,9 +25,9 @@ void Signal (int sig_num){
   case SIGSEGV : 
     Msg(FATAL1, "Segmentation Violation (Invalid Memory Reference)");
     Msg(FATAL2, "------------------------------------------------------");
-    Msg(FATAL2, "You have discovered a bug in Gmsh. You may e-mail the");
-    Msg(FATAL2, "context in which it occurred to one of the authors:");
-    Msg(FATAL3, "type 'gmsh -info' to get feedback information"); 
+    Msg(FATAL2, "You have discovered a bug in Gmsh! You may report it");
+    Msg(FATAL2, "by e-mail (together with any helpful data permitting to");
+    Msg(FATAL3, "reproduce it) to <gmsh@geuz.org>"); 
     break;
   case SIGFPE : 
     Msg(FATAL, "Floating Point Exception (Division by Zero?)"); 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.8 2001-04-06 12:30:34 geuzaine Exp $
+// $Id: Options.cpp,v 1.9 2001-04-08 12:49:31 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -53,16 +53,9 @@ void Init_Options(int num){
   // The following defaults cannot be set by the user 
   CTX.batch = 0 ;
   CTX.expose = 0 ;
-  CTX.db = 1 ; // motif only
-  CTX.overlay = 1 ; // motif only
   CTX.stream = TO_SCREEN ;
-  CTX.command_win = 0 ; // motif only
-  CTX.threads = 1 ; // motif only
-  CTX.threads_lock = 0 ; // motif only
   CTX.gl_fontheight = 12;
   CTX.gl_fontascent = 8;
-  CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ; // motif only
-  CTX.fixed_font = "fixed" ; // motif only
   CTX.lc = 1.0 ;
   CTX.viewport[0] = CTX.viewport[1] = 0 ;
   CTX.min[0] = CTX.min[1] = CTX.min[2] = 0.0 ;
@@ -76,6 +69,14 @@ void Init_Options(int num){
   CTX.mesh.vis_type = 0 ;
   CTX.mesh.draw = 1 ;  
   CTX.post.draw = 1 ;
+
+  // For motif versions only:
+  CTX.overlay = 1 ;
+  CTX.command_win = 0 ;
+  CTX.threads = 1 ;
+  CTX.threads_lock = 0 ;
+  CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
+  CTX.fixed_font = "fixed" ;
 }
 
 void Init_Options_GUI(int num){

@@ -23,10 +23,10 @@ struct ltstrpg
 class GMSH_PluginManager
 {
   GMSH_PluginManager();
-  virtual ~GMSH_PluginManager();
   static GMSH_PluginManager *instance;
   std::map<char*,GMSH_Plugin*,ltstrpg> allPlugins;
 public :
+  virtual ~GMSH_PluginManager();
   typedef std::map<char*,GMSH_Plugin*,ltstrpg>::iterator iter;
 /**
   Registering all default plugins that are in $(GMSHPLUGINSHOME)
