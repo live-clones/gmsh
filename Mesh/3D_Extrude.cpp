@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.10 2001-06-07 14:20:08 remacle Exp $
+// $Id: 3D_Extrude.cpp,v 1.11 2001-06-25 18:34:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -16,7 +16,7 @@ static int TEST_IS_ALL_OK;
 static Surface *THES;
 static Volume *THEV;
 static ExtrudeParams *ep;
-static Tree_T *Vertex_Bound, *ToAdd = NULL;
+static Tree_T *Vertex_Bound = NULL, *ToAdd = NULL;
 
 typedef struct{
   int a, b;
@@ -42,6 +42,19 @@ void InitExtrude (){
     Tree_Ares = Tree_Create (sizeof (nxn), compnxn);
   if (!Tree_Swaps)
     Tree_Swaps = Tree_Create (sizeof (nxn), compnxn);
+  if(Vertex_Bound)
+    Tree_Delete(Vertex_Bound);
+  Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
+  List_T *l1 = Tree2List (THEM->Points);
+  List_T *l2 = Tree2List (THEM->Vertices);
+
+  for(int i=0;i<List_Nbr(l1);i++)Tree_Insert(Vertex_Bound,List_Pointer(l1,i));
+  for(int i=0;i<List_Nbr(l2);i++)Tree_Insert(Vertex_Bound,List_Pointer(l2,i));
+
+  List_Delete(l1);
+  List_Delete(l2);
+
+  //Vertex_Bound = THEM->Vertices;
 }
 
 /* MEMORY LEAK JF */
@@ -325,8 +338,9 @@ void Extrude_Vertex (void *data, void *dum){
 
   pV = (Vertex **) data;
   v = *pV;
-  if (v->Extruded_Points)
-    List_Delete (v->Extruded_Points);
+  // BUG FOR MULTIPLE POINTS IN EXTRUSION
+  if (v->Extruded_Points)return;
+  //    List_Delete (v->Extruded_Points);
   v->Extruded_Points = List_Create (ep->mesh.NbLayer, 1, sizeof (Vertex *));
   List_Add (v->Extruded_Points, &v);
 
@@ -346,6 +360,7 @@ void Extrude_Vertex (void *data, void *dum){
       else{
         List_Add (v->Extruded_Points, &newv);
         Tree_Insert (THEM->Vertices, &newv);
+        Tree_Insert (Vertex_Bound, &newv);
         if (ToAdd)
           Tree_Insert (ToAdd, &newv);
       }
@@ -437,10 +452,12 @@ int Extrude_Mesh (Curve * c){
   if (!c->Extrude->mesh.ExtrudeMesh)
     return false;
 
-  Vertex_Bound = NULL;
+  InitExtrude();
+
+  //  Vertex_Bound = NULL;
   ep = c->Extrude;
 
-  Tree_Ares = Tree_Swaps = NULL;
+  //  Tree_Ares = Tree_Swaps = NULL;
 
   if (ep->geo.Mode == EXTRUDED_ENTITY){
     Extrude_Vertex (&c->beg, NULL);
@@ -576,7 +593,7 @@ int Extrude_Mesh (Surface * s){
   if (!s->Extrude->mesh.ExtrudeMesh)
     return false;
   FACE_DIMENSION = 2;
-  Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
+  //  Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
 
   ep = s->Extrude;
   THES = s;
@@ -620,8 +637,6 @@ int Extrude_Mesh (Volume * v){
     return 0;
   if (!v->Extrude->mesh.ExtrudeMesh)
     return false;
-
-  Vertex_Bound = Tree_Create (sizeof (Vertex *), comparePosition);
 
   ep = v->Extrude;
   THEV = v;

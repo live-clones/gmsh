@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.28 2001-06-25 13:30:57 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.29 2001-06-25 18:34:59 remacle Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -693,6 +693,8 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
           break;
         }
       }
+      // MEMORY_LEAK -JF
+      //      Free(del_P);
     }
 
     *numpoints = doc->numPoints;

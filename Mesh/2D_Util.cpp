@@ -1,4 +1,4 @@
-// $Id: 2D_Util.cpp,v 1.10 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: 2D_Util.cpp,v 1.11 2001-06-25 18:34:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -82,7 +82,7 @@ int Insert_Point (MPoint pt, int *numpoints, int *numalloc,
       gPointArray[*numpoints].quality = MIN(find_quality(pt,BGM),qual);
     else 
       gPointArray[*numpoints].quality = qual;
-    Free(v);
+    Free_Vertex(&v,0);
   }
     
   (*numpoints)++;

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.24 2001-06-07 15:13:08 geuzaine Exp $
+// $Id: CAD.cpp,v 1.25 2001-06-25 18:34:59 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1258,6 +1258,8 @@ void ReplaceAllDuplicates ( Mesh *m ){
   Volume *vol;
   int i,j,start,end;
 
+  List_T *points2delete = List_Create(100,100,sizeof(Vertex*));
+
   /* Create unique points */
 
   All = Tree2List(m->Points);
@@ -1271,6 +1273,8 @@ void ReplaceAllDuplicates ( Mesh *m ){
     }
     else{
       Tree_Suppress(m->Points,&v);
+      Tree_Suppress(m->Vertices,&v);      
+      //      List_Add(points2delete,&v);      
     }
   }
 
@@ -1396,6 +1400,14 @@ void ReplaceAllDuplicates ( Mesh *m ){
                               List_Pointer(vol->Surfaces,j)));
     }
   }
+
+  for(int k = 0; k < List_Nbr(points2delete);k++)
+    {
+      List_Read(points2delete,i,&v);      
+      Free_Vertex(&v,0);
+    }
+
+
 }
 
 /* NEW CAD FUNCTIONS */
