@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.314 2004-06-04 02:07:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.315 2004-06-08 00:30:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2810,7 +2810,7 @@ void GUI::save_message(char *filename)
   for(int i = 1; i <= msg_browser->size(); i++) {
     const char *c = msg_browser->text(i);
     if(c[0] == '@')
-      fprintf(fp, "%s\n", &c[3]);
+      fprintf(fp, "%s\n", &c[5]);
     else
       fprintf(fp, "%s\n", c);
   }

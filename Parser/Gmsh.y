@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.171 2004-05-31 21:37:23 geuzaine Exp $
+// $Id: Gmsh.y,v 1.172 2004-06-08 00:30:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3981,7 +3981,9 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
   char tmp1[256], tmp2[256];
 
   j = 0;
-  while(j < (int)strlen(format) && format[j]!='%') j++;
+  buffer[j] = '\0';
+
+  while(j < (int)strlen(format) && format[j] != '%') j++;
   strncpy(buffer, format, j); 
   buffer[j]='\0'; 
   for(int i = 0; i < List_Nbr(list); i++){
@@ -3992,10 +3994,10 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
 	strcat(buffer, "%");
 	j++;
       }
-      while(format[j] != '%' && j < (int)strlen(format)) j++;
+      while(j < (int)strlen(format) && format[j] != '%') j++;
       if(k != j){
 	strncpy(tmp1, &(format[k]), j-k);
-	tmp1[j-k]='\0';
+	tmp1[j-k] = '\0';
 	sprintf(tmp2, tmp1, *(double*)List_Pointer(list, i)); 
 	strcat(buffer, tmp2);
       }

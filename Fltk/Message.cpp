@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.54 2004-05-22 01:24:17 geuzaine Exp $
+// $Id: Message.cpp,v 1.55 2004-06-08 00:30:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -167,7 +167,7 @@ void Msg(int level, char *fmt, ...)
       }
     }
     else if(log) {
-      sprintf(buff1, "@C%d", color);
+      sprintf(buff1, "@C%d@.", color);
       if(str)
         strncat(buff1, str, BUFFSIZE-strlen(buff1));
 
@@ -178,12 +178,12 @@ void Msg(int level, char *fmt, ...)
 #endif
       strncat(buff1, buff2, BUFFSIZE-strlen(buff1));
       if(CTX.terminal)
-        fprintf(stderr, "%s\n", &buff1[3]);
+        fprintf(stderr, "%s\n", &buff1[5]);
       if(WID) {
         if(color)
           WID->add_message(buff1);
         else
-          WID->add_message(&buff1[3]);
+          WID->add_message(&buff1[5]);
         if(!verb)
           WID->create_message_window();
       }
