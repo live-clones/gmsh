@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.62 2003-12-07 05:37:00 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.63 2003-12-07 20:32:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -296,8 +296,8 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  // JF, why did you add this?
 	  addPhysicalGroup(M, MSH_PHYSICAL_POINT, Physical, Elementary);
           break;
-       } 
-
+	} 
+	
         for(i = 0; i < Nbr_Nodes; i++) {
           vertsp[i] = &verts[i];
           if(!(vertspp = (Vertex **) Tree_PQuery(M->Vertices, &vertsp[i])))
@@ -515,7 +515,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
   // For efficiency reasons, we store the partition index (and not the
   // partition number) in the various mesh elements. We need to
   // re-sort the list according to these indices to allow direct
-  // access through Llist_Pointer & co.
+  // access through List_Pointer & co.
   List_Sort(M->Partitions, compareMeshPartitionIndex);
 }
 
