@@ -1,4 +1,4 @@
-// $Id: mshsort.cpp,v 1.3 2004-10-08 06:23:01 geuzaine Exp $
+// $Id: mshsort.cpp,v 1.4 2004-11-08 17:03:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -60,8 +60,8 @@ class node{
     : _num(0), _x(x), _y(y), _z(z) {}
   void setNum(int num){ _num = num; }
   int getNum(){ return _num; }
-  void print(double version){
-    fprintf(stdout, "%d %.16g %.16g %.16g\n", _num, _x, _y, _z);
+  void print(FILE *fp, double version){
+    fprintf(fp, "%d %.16g %.16g %.16g\n", _num, _x, _y, _z);
   }
 };
 
@@ -75,28 +75,21 @@ class element{
       _partition(partition) {}
   void setNum(int num){ _num = num; }
   void addNode(node *n){ _nodes.push_back(n); }
-  void print(double version){
+  void print(FILE *fp, double version){
     if(version == 2.0)
-      fprintf(stdout, "%d %d 3 %d %d %d", _num, _type, _physical, 
+      fprintf(fp, "%d %d 3 %d %d %d", _num, _type, _physical, 
 	      _elementary, _partition);
     else
-      fprintf(stdout, "%d %d %d %d %d", _num, _type, _physical,
+      fprintf(fp, "%d %d %d %d %d", _num, _type, _physical,
 	      _elementary, (int)_nodes.size());
     for(unsigned int i = 0; i < _nodes.size(); i++)
-      fprintf(stdout, " %d", _nodes[i]->getNum());
-    fprintf(stdout, "\n");
+      fprintf(fp, " %d", _nodes[i]->getNum());
+    fprintf(fp, "\n");
   }
 };
 
-double readMesh(char *fileName, map<int, node*> &nodes, vector<element*> &elements)
+double readMesh(FILE *fp, map<int, node*> &nodes, vector<element*> &elements)
 {
-  FILE *fp = fopen(fileName, "r");
-
-  if(!fp){
-    fprintf(stderr, "Error: Unable to open file '%s'\n", fileName);
-    exit(1);
-  }
-
   double version = 1.0;
 
   while(1) {
@@ -208,58 +201,73 @@ double readMesh(char *fileName, map<int, node*> &nodes, vector<element*> &elemen
   return version;
 }
 
-void printMesh(double version, map<int, node*> nodes, vector<element*> elements)
+void printMesh(FILE *fp, double version, map<int, node*> nodes, vector<element*> elements)
 {
   map<int, node*>::const_iterator it = nodes.begin();
   map<int, node*>::const_iterator ite = nodes.end();
 
   if(version == 2.0){
-    fprintf(stdout, "$MeshFormat\n");
-    fprintf(stdout, "2.0 0 %d\n", sizeof(double));
-    fprintf(stdout, "$EndMeshFormat\n");
-    fprintf(stdout, "$Nodes\n");
+    fprintf(fp, "$MeshFormat\n");
+    fprintf(fp, "2.0 0 %d\n", sizeof(double));
+    fprintf(fp, "$EndMeshFormat\n");
+    fprintf(fp, "$Nodes\n");
   }
   else
-    fprintf(stdout, "$NOD\n");
-  fprintf(stdout, "%d\n", (int)nodes.size());
+    fprintf(fp, "$NOD\n");
+  fprintf(fp, "%d\n", (int)nodes.size());
 
   int index = 1;
   for(;it!=ite;++it){
     it->second->setNum(index++);
-    it->second->print(version);
+    it->second->print(fp, version);
   }
 
   if(version == 2.0){
-    fprintf(stdout, "$EndNodes\n");
-    fprintf(stdout, "$Elements\n");
+    fprintf(fp, "$EndNodes\n");
+    fprintf(fp, "$Elements\n");
   }
   else{
-    fprintf(stdout, "$ENDNOD\n");
-    fprintf(stdout, "$ELM\n");
+    fprintf(fp, "$ENDNOD\n");
+    fprintf(fp, "$ELM\n");
   }
-  fprintf(stdout, "%d\n", (int)elements.size());
+  fprintf(fp, "%d\n", (int)elements.size());
 
   for(unsigned int i = 0; i < elements.size(); i++){
     elements[i]->setNum(i+1);
-    elements[i]->print(version);
+    elements[i]->print(fp, version);
   }
 
   if(version == 2.0)
-    fprintf(stdout, "$EndElements\n");
+    fprintf(fp, "$EndElements\n");
   else
-    fprintf(stdout, "$ENDELM\n");
+    fprintf(fp, "$ENDELM\n");
 }
 
 int main(int argc, char **argv)
 {
-  if(argc != 2){
+  if(argc < 2 || argc > 3){
     fprintf(stderr, "mshsort, a utility to reorder the node and element lists in Gmsh MSH files\n");
-    fprintf(stderr, "Usage: %s file.msh\n", argv[0]);
+    fprintf(stderr, "Usage: %s in.msh [out.msh]\n", argv[0]);
     exit(1);
+  }
+
+  FILE *in, *out;
+  if(!(in = fopen(argv[1], "r"))){
+    fprintf(stderr, "Error: Unable to open input file '%s'\n", argv[1]);
+    exit(1);
+  }
+  if(argc == 3){
+    if(!(out = fopen(argv[2], "w"))){
+      fprintf(stderr, "Error: Unable to open output file '%s'\n", argv[2]);
+      exit(1);
+    }
+  }
+  else{
+    out = stdout;
   }
 
   map<int, node*> nodes;
   vector<element*> elements;
-  double version = readMesh(argv[1], nodes, elements);
-  printMesh(version, nodes, elements);
+  double version = readMesh(in, nodes, elements);
+  printMesh(out, version, nodes, elements);
 }
