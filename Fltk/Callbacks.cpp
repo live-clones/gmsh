@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.17 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.18 2001-01-12 00:43:05 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1581,6 +1581,9 @@ void view_options_vector_displacement_cb(CALLBACK_ARGS){
   ENDVIEWMOD
 }
 void view_options_vector_scale_cb(CALLBACK_ARGS){
+  STARTVIEWMOD
+    v->ArrowScale = ((Fl_Value_Input*)w)->value() ;
+  ENDVIEWMOD
 }
 void view_options_vector_cog_cb(CALLBACK_ARGS){
   STARTVIEWMOD

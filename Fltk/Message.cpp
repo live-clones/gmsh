@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.6 2001-01-11 22:27:55 geuzaine Exp $
+// $Id: Message.cpp,v 1.7 2001-01-12 00:43:05 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -22,11 +22,11 @@ void Signal (int sig_num){
 
   switch (sig_num){
   case SIGSEGV : 
-    Msg(FATAL, "Segmentation Violation (Invalid Memory Reference)\n"
-        "------------------------------------------------------\n"
-        "You have discovered a bug in Gmsh. You may e-mail the\n"
-        "context in which it occurred to one of the authors:\n"
-        "type 'gmsh -info' to get feedback information"); 
+    Msg(FATAL1, "Segmentation Violation (Invalid Memory Reference)");
+    Msg(FATAL2, "------------------------------------------------------");
+    Msg(FATAL2, "You have discovered a bug in Gmsh. You may e-mail the");
+    Msg(FATAL2, "context in which it occurred to one of the authors:");
+    Msg(FATAL3, "type 'gmsh -info' to get feedback information"); 
     break;
   case SIGFPE : 
     Msg(FATAL, "Floating Point Exception (Division by Zero?)"); 
@@ -153,7 +153,12 @@ void Msg(int level, char *fmt, ...){
 
   va_end (args);
 
-  if(abort) exit(1);
+  if(!verb) WID->create_message_window();
+
+  if(abort){
+    WID->save_message("error.log");
+    exit(1);
+  }
 }
 
 
