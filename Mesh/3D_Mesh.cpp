@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.20 2001-06-07 14:20:08 remacle Exp $
+// $Id: 3D_Mesh.cpp,v 1.21 2001-06-25 15:22:26 remacle Exp $
 
 /*
  
@@ -471,7 +471,7 @@ int recur_bowyer (Simplex * s){
 bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
   int i;
   Simplex *s;
-  static int init = 1;
+  //  static int init = 1;
   double volumeold, volumenew;
 
   THEV = v;
@@ -487,11 +487,9 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
 
   Tsd = Tree_Create (sizeof (Simplex *), compareSimplex);
   Sim_Sur_Le_Bord = Tree_Create (sizeof (Simplex *), compareSimplex);
-  if (init){
-    Simplexes_New = List_Create (10, 10, sizeof (Simplex *));
-    Simplexes_Destroyed = List_Create (10, 10, sizeof (Simplex *));
-    init = 0;
-  }
+  //  if (init){
+    //    init = 0;
+    //  }
   List_Reset (Simplexes_Destroyed);
   List_Reset (Simplexes_New);
 
@@ -716,6 +714,9 @@ void Maillage_Volume (void *data, void *dum){
   double uvw[3];
   int i;
 
+  Simplexes_New = List_Create (10, 10, sizeof (Simplex *));
+  Simplexes_Destroyed = List_Create (10, 10, sizeof (Simplex *));
+
   FACE_DIMENSION = 2;
 
   pv = (Volume **) data;
@@ -876,5 +877,6 @@ void Maillage_Volume (void *data, void *dum){
     Eta_Maillage (THEM, &THEM->Statistics[20], &THEM->Statistics[21], &THEM->Statistics[22]);
     R_Maillage (THEM, &THEM->Statistics[23], &THEM->Statistics[24], &THEM->Statistics[25]);
   }
-
+  List_Delete(Simplexes_New);
+  List_Delete(Simplexes_Destroyed);
 }
