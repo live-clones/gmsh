@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.52 2005-02-11 02:27:13 geuzaine Exp $
+$Id: FAQ,v 1.53 2005-02-24 21:26:31 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -282,9 +282,9 @@ is too small (or too large), you can scale it with the 'Displacement
 factor' option. (Remember that you can drag the mouse in all numeric
 input fields to slide the value!)
 
-Another option is to use the "general raise expressions" (in
+Another option is to use the "general transformation expressions" (in
 View->Options->Offset) on a scalar view, with the displacement map
-selected as the raise data source.
+selected as the transformation data source.
 
 * 7.6 Can I visualize a field on a deformed mesh?
 
@@ -300,9 +300,9 @@ point to the second view. (You might want to make the second view
 invisible, too. If you want to amplify or decrease the amount of
 deformation, just modify the 'Displacement factor' option.)
 
-Another solution is to use the "general raise expressions" (in
-View->Options->Offset) on the field you want to display, with the
-displacement map selected as the raise data source.
+Another solution is to use the "general transformation expressions"
+(in View->Options->Offset) on the field you want to display, with the
+displacement map selected as the transformation data source.
 
 And yet another solution is to use the DiplacementRaise plugin.
 
