@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.121 2002-05-07 05:32:20 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.122 2002-05-13 23:15:40 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -58,8 +58,7 @@ static Fl_File_Chooser *fc = NULL;
 
 int file_chooser(int multi, const char* message, const char* pat){
   if (!fc) {
-    fc = new Fl_File_Chooser(".", pat, multi ? Fl_File_Chooser::MULTI : 
-			     Fl_File_Chooser::CREATE, message);
+    fc = new Fl_File_Chooser(".", pat, Fl_File_Chooser::CREATE, message);
   }
   else {
     if (fc->value() && 
@@ -73,10 +72,15 @@ int file_chooser(int multi, const char* message, const char* pat){
       else i = strlen(q);
       p[i] = 0;
     }
-    fc->type(multi ? Fl_File_Chooser::MULTI : Fl_File_Chooser::CREATE);
     fc->filter(pat);
     fc->label(message);
   }
+
+  if(multi)
+    fc->type(Fl_File_Chooser::MULTI);
+  else
+    fc->type(Fl_File_Chooser::CREATE);
+
   fc->show();
 
   while (fc->shown()) Fl::wait();
