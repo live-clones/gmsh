@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.107 2004-08-12 16:57:32 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.108 2004-08-13 21:23:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -262,9 +262,9 @@ void Draw_Mesh_Volume(void *a, void *b)
   theColor = v->Color;
   thePhysical = getFirstPhysical(MSH_PHYSICAL_VOLUME, v->Num);
 
-  // we don't use vertex arrays for every volume primitive: on;y for
-  // volume cuts drawn "as surfaces" (using vefrtex arrays for
-  // everything would require quite a bit of memory)
+  // we don't use vertex arrays for every volume primitive: only for
+  // volume cuts drawn "as surfaces" (using vertex arrays for
+  // everything would require quite a bit of memory...)
   if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface && 
      CTX.mesh.vertex_arrays){
     if(CTX.mesh.changed){
