@@ -40,3 +40,11 @@ If you use Gmsh, we would appreciate that you mention it in your
 work. References, as well as the latest news about Gmsh development, are
 always available on @value{GMSH-WEB}. Please send all Gmsh-related questions
 to the public Gmsh mailing list at @email{gmsh@@geuz.org}.
+
+@sp 2
+
+If you want to integrate Gmsh into a closed-source software, or want to sell
+a modified closed-source version of Gmsh, please contact one of the
+authors. You can purchase a version of Gmsh under a different license, with
+``no strings attached'' (for example allowing you to take parts of Gmsh and
+integrate them into your own proprietary code).
