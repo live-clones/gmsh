@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.31 2001-02-17 22:02:17 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.32 2001-02-18 19:24:06 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -161,7 +161,7 @@ void status_cancel_cb(CALLBACK_ARGS){
 void file_open_cb(CALLBACK_ARGS) {
   char *newfile;
   int n = List_Nbr(Post_ViewList);
-  newfile = fl_file_chooser("Open File", "*.geo", NULL);
+  newfile = fl_file_chooser("Open File", "*.[gG][eE][oO]", NULL);
   if (newfile != NULL) {
     OpenProblem(newfile); 
     Draw(); 
