@@ -122,9 +122,9 @@ public :
 
   int viewport[4];            // current viewport 
   double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
-  int light[6];               // status of light 
+  int light[6];               // status of lights
   double light_position[6][3]; // light sources positions 
-  double shine;                // specular value 
+  double shine, shine_exponent; // material specular reflection parameters
   int render_mode;            // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   int clip[6];                // status of clip planes (bit arrays)
   double clip_plane[6][4];    // clip planes 
@@ -210,6 +210,7 @@ public :
   // color options
   struct{
     unsigned int bg, fg, text, axes, small_axes;
+    unsigned int ambient_light[6], diffuse_light[6], specular_light[6];
     struct{
       unsigned int point, line, surface, volume;
       unsigned int point_sel, line_sel, surface_sel, volume_sel;

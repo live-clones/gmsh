@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.333 2004-08-13 20:59:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.334 2004-08-15 02:27:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1651,6 +1651,12 @@ void GUI::create_option_window()
       gen_value[1]->maximum(10);
       gen_value[1]->step(0.1);
       gen_value[1]->align(FL_ALIGN_RIGHT);
+
+      gen_value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Material shininess exponent");
+      gen_value[0]->minimum(0);
+      gen_value[0]->maximum(128);
+      gen_value[0]->step(1);
+      gen_value[0]->align(FL_ALIGN_RIGHT);
 
       o->end();
     }

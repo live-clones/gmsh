@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.60 2004-07-22 19:32:02 geuzaine Exp $
+// $Id: Draw.cpp,v 1.61 2004-08-15 02:27:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -49,12 +49,9 @@ void Draw3d(void)
 
 void Draw2d(void)
 {
-  GLenum clip[6] = { GL_CLIP_PLANE0, GL_CLIP_PLANE1, GL_CLIP_PLANE2, 
-		     GL_CLIP_PLANE3, GL_CLIP_PLANE4, GL_CLIP_PLANE5 };
-
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++)
-    glDisable(clip[i]);
+    glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -150,34 +147,59 @@ void Orthogonalize(int x, int y)
 
 void InitRenderModel(void)
 {
-  GLenum light[6] = {GL_LIGHT0, GL_LIGHT1, GL_LIGHT2, 
-		     GL_LIGHT3, GL_LIGHT4, GL_LIGHT5};
-  GLfloat pos[4] = {0., 0., 0., 0.};
-  GLfloat spec[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
+  GLfloat r, g, b;
 
   for(int i = 0; i < 6; i++) {
     if(CTX.light[i]) {
-      for(int j = 0; j < 3; j++) 
-	pos[j] = (GLfloat)CTX.light_position[i][j];
-      glEnable(light[i]);
-      glLightfv(light[i], GL_POSITION, pos);
+      GLfloat position[4] = {(GLfloat)CTX.light_position[i][0],
+			     (GLfloat)CTX.light_position[i][1],
+			     (GLfloat)CTX.light_position[i][2],
+			     0.0};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
+
+      r = UNPACK_RED(CTX.color.ambient_light[i])/255.;
+      g = UNPACK_GREEN(CTX.color.ambient_light[i])/255.;
+      b = UNPACK_BLUE(CTX.color.ambient_light[i])/255.;
+      GLfloat ambient[4] = {r, g, b, 1.0};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+
+      r = UNPACK_RED(CTX.color.diffuse_light[i])/255.;
+      g = UNPACK_GREEN(CTX.color.diffuse_light[i])/255.;
+      b = UNPACK_BLUE(CTX.color.diffuse_light[i])/255.;
+      GLfloat diffuse[4] = {r, g, b, 1.0};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+
+      r = UNPACK_RED(CTX.color.specular_light[i])/255.;
+      g = UNPACK_GREEN(CTX.color.specular_light[i])/255.;
+      b = UNPACK_BLUE(CTX.color.specular_light[i])/255.;
+      GLfloat specular[4] = {r, g, b, 1.0};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
+
+      glEnable((GLenum)(GL_LIGHT0 + i));
     }
     else{
-      glDisable(light[i]);
+      glDisable((GLenum)(GL_LIGHT0 + i));
     }
   }
 
+  // ambient and diffuse material colors track glColor automatically
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
-  glShadeModel(GL_SMOOTH);
+  glEnable(GL_COLOR_MATERIAL);
+  // "white"-only specular material reflection color
+  GLfloat spec[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
+  // specular exponent in [0,128] (larger means more "focused"
+  // reflection)
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, CTX.shine_exponent);
+
+  glShadeModel(GL_SMOOTH);
 #if defined(GL_VERSION_1_2)
   // this is more efficient, since we already specify unit normals
   glEnable(GL_RESCALE_NORMAL);
 #else
   glEnable(GL_NORMALIZE);
 #endif
-  glEnable(GL_COLOR_MATERIAL);
+
   // lighting is enabled/disabled for each particular primitive later
   glDisable(GL_LIGHTING);
 }

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.264 2004-08-12 16:52:03 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.265 2004-08-15 02:27:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -874,6 +874,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_draw_bounding_box(0, GMSH_SET, WID->gen_butt[6]->value());
 
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
+  opt_general_shine_exponent(0, GMSH_SET, WID->gen_value[0]->value());
   opt_general_light00(0, GMSH_SET, WID->gen_value[2]->value());
   opt_general_light01(0, GMSH_SET, WID->gen_value[3]->value());
   opt_general_light02(0, GMSH_SET, WID->gen_value[4]->value());

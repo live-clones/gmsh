@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.177 2004-08-12 16:57:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.178 2004-08-15 02:27:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2191,6 +2191,17 @@ double opt_general_shine(OPT_ARGS_NUM)
     WID->gen_value[1]->value(CTX.shine);
 #endif
   return CTX.shine;
+}
+
+double opt_general_shine_exponent(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.shine_exponent = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[0]->value(CTX.shine_exponent);
+#endif
+  return CTX.shine_exponent;
 }
 
 double opt_general_verbosity(OPT_ARGS_NUM)
@@ -5218,6 +5229,36 @@ unsigned int opt_general_color_small_axes(OPT_ARGS_COL)
   CCC(CTX.color.small_axes, WID->gen_col[4]);
 #endif
   return CTX.color.small_axes;
+}
+unsigned int opt_general_color_ambient_light(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET)
+    for(int i = 0; i < 6; i++)
+      CTX.color.ambient_light[i] = val;
+#if defined(HAVE_FLTK)
+  CCC(CTX.color.ambient_light[0], WID->gen_col[5]);
+#endif
+  return CTX.color.ambient_light[0];
+}
+unsigned int opt_general_color_diffuse_light(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET)
+    for(int i = 0; i < 6; i++)
+      CTX.color.diffuse_light[i] = val;
+#if defined(HAVE_FLTK)
+  CCC(CTX.color.diffuse_light[0], WID->gen_col[6]);
+#endif
+  return CTX.color.diffuse_light[0];
+}
+unsigned int opt_general_color_specular_light(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET)
+    for(int i = 0; i < 6; i++)
+      CTX.color.specular_light[i] = val;
+#if defined(HAVE_FLTK)
+  CCC(CTX.color.specular_light[0], WID->gen_col[7]);
+#endif
+  return CTX.color.specular_light[0];
 }
 unsigned int opt_geometry_color_points(OPT_ARGS_COL)
 {
