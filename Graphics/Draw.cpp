@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.39 2003-03-24 18:35:41 geuzaine Exp $
+// $Id: Draw.cpp,v 1.40 2003-03-24 19:47:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -142,7 +142,7 @@ void Orthogonalize(int x, int y)
   if(CTX.ortho) {
     // Warning: for large s (i.e. big zooms) the PolygonOffset will
     // degrade...
-    double clip = CTX.s[0] * 30;
+    double clip = CTX.s[0] * 10;
     glOrtho(CTX.vxmin, CTX.vxmax, CTX.vymin, CTX.vymax, 0, clip * CTX.lc);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
