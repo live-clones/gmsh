@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.320 2004-06-30 16:38:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.321 2004-06-30 17:49:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -285,11 +285,11 @@ Context_Item menu_mesh[] = {
   { "1D",     (Fl_Callback *)mesh_1d_cb } ,
   { "2D",     (Fl_Callback *)mesh_2d_cb } , 
   { "3D",     (Fl_Callback *)mesh_3d_cb } , 
-#if defined(HAVE_NETGEN)
-  { "Optimize 3D", (Fl_Callback *)mesh_optimize_cb } , 
-#endif
   { "First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   { "Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
+#if defined(HAVE_NETGEN)
+  { "Optimize quality", (Fl_Callback *)mesh_optimize_cb } , 
+#endif
   { "Save",   (Fl_Callback *)mesh_save_cb } ,
   { NULL } 
 };  
@@ -1788,12 +1788,20 @@ void GUI::create_option_window()
         mesh_value[i]->align(FL_ALIGN_RIGHT);
       }
 
-      mesh_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, BW, BH, "Generate second order elements");
+      mesh_butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, BW, BH, "Optimize quality of tetrahedral elements");
+      mesh_butt[2]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[2]->down_box(TOGGLE_BOX);
+      mesh_butt[2]->selection_color(TOGGLE_COLOR);
+#if !defined(HAVE_NETGEN)
+      mesh_butt[2]->deactivate();
+#endif
+
+      mesh_butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 9 * BH, BW, BH, "Generate second order elements");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->down_box(TOGGLE_BOX);
       mesh_butt[3]->selection_color(TOGGLE_COLOR);
 
-      mesh_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 9 * BH, BW, BH, "Constrain background mesh");
+      mesh_butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 10 * BH, BW, BH, "Constrain background mesh");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->down_box(TOGGLE_BOX);
       mesh_butt[5]->selection_color(TOGGLE_COLOR);

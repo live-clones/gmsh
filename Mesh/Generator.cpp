@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.58 2004-06-30 07:27:20 geuzaine Exp $
+// $Id: Generator.cpp,v 1.59 2004-06-30 17:49:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -295,14 +295,6 @@ void Maillage_Dimension_3(Mesh * M)
   Tree_Suppress(M->Volumes, &v);
   Free_Volume_But_Not_Elements(&v, NULL);
 
-  // optimize quality
-  if(CTX.mesh.quality) {
-    for(int i = 0; i < List_Nbr(list); i++){
-      List_Read(list, i, &v);
-      Optimize_Netgen(v);
-    }
-  }
-
   List_Delete(list);
 
   t2 = Cpu();
@@ -464,6 +456,11 @@ void mai3d(Mesh * M, int Asked)
     Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
     M->status = 3;
   }
+
+  // Optimize quality
+
+  if(M->status == 3 && CTX.mesh.optimize)
+    Optimize_Netgen(M);
 
   // Second order elements
 

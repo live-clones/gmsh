@@ -22,6 +22,8 @@ set output mesh format (default: msh)
 select 2D mesh algorithm (default: iso)
 @item -smooth int
 set mesh smoothing (default: 0)
+@item -optimize
+optimize quality of tetrahedral elements
 @item -order int
 set the order of the generated elements (default: 1)
 @item -scale float

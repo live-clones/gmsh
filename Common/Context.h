@@ -162,6 +162,7 @@ public :
     int points_num, lines_num, surfaces_num, volumes_num;
     int point_type, line_type; // flat or 3D
     double point_size, line_width;
+    int optimize;
     double quality;
     double gamma_inf, gamma_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;

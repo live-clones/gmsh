@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.251 2004-06-30 07:51:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.252 2004-06-30 17:49:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -972,6 +972,7 @@ void mesh_options_color_scheme_cb(CALLBACK_ARGS)
 
 void mesh_options_ok_cb(CALLBACK_ARGS)
 {
+  opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
   opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[4]->value());
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
@@ -2490,13 +2491,14 @@ void mesh_degree_cb(CALLBACK_ARGS)
 
 void mesh_optimize_cb(CALLBACK_ARGS)
 {
-  List_T *list = Tree2List(THEM->Volumes);
-  for(int i = 0; i < List_Nbr(list); i++){
-    Volume *v;
-    List_Read(list, i, &v);
-    Optimize_Netgen(v);
+  if(CTX.threads_lock) {
+    Msg(INFO, "I'm busy! Ask me that later...");
+    return;
   }
-  List_Delete(list);
+  CTX.threads_lock = 1;
+  Optimize_Netgen(THEM);
+  CTX.threads_lock = 0;
+
   CTX.mesh.changed = 1;
   Draw();
   Msg(STATUS3N, "Ready");

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.44 2004-06-26 17:58:14 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.45 2004-06-30 17:49:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -74,6 +74,9 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
   Msg(DIRECT, "  -algo iso|tri|aniso   select mesh algorithm (default: iso)");
   Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
+#if defined(HAVE_NETGEN)
+  Msg(DIRECT, "  -optimize             optimize quality of tetrahedral elements");
+#endif
   Msg(DIRECT, "  -order int            set mesh order (default: 1)");
   Msg(DIRECT, "  -scale float          set global scaling factor (default: 1.0)");
   Msg(DIRECT, "  -meshscale float      set mesh scaling factor (default: 1.0)");
@@ -229,6 +232,10 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       }
       else if(!strcmp(argv[i] + 1, "histogram")) {
         CTX.mesh.histogram = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "optimize")) {
+        CTX.mesh.optimize = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "option")) {

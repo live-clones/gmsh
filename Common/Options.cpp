@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.168 2004-06-20 23:25:31 geuzaine Exp $
+// $Id: Options.cpp,v 1.169 2004-06-30 17:49:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3105,6 +3105,17 @@ double opt_geometry_stl_create_physical(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.geom.stl_create_physical = (int)val;
   return CTX.geom.stl_create_physical;
+}
+
+double opt_mesh_optimize(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.optimize =(int) val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[2]->value(CTX.mesh.optimize);
+#endif
+  return CTX.mesh.optimize;
 }
 
 double opt_mesh_quality(OPT_ARGS_NUM)

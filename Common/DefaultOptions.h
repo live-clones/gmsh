@@ -783,6 +783,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" }, 
 
+  { F|O, "Optimize" , opt_mesh_optimize , 0. , 
+    "Optimize the mesh using Netgen to improve the quality of tetrahedral elements" },
+
   { F|O, "Points" , opt_mesh_points , 1. , 
     "Display mesh vertices (nodes)?" },
   { F|O, "PointInsertion" , opt_mesh_point_insertion, CENTER_CIRCCIRC ,
@@ -794,8 +797,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PointType" , opt_mesh_point_type , 0. , 
     "Display mesh vertices as solid color dots (0) or 3D spheres (1)" },
 
-  { F|O, "Quality" , opt_mesh_quality , 0.0 ,
-    "Target quality for tetrahedral elements (not fully functional)" },
+  //{ F|O, "Quality" , opt_mesh_quality , 0.0 ,
+  //  "Target quality for tetrahedral elements (not fully functional)" },
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 , 
     "Only display elements whose Radius is greater than RadiusInf" },

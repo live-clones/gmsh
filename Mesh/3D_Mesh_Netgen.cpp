@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.8 2004-06-30 16:38:58 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.9 2004-06-30 17:49:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,11 @@ void Optimize_Netgen(Volume * v)
   Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 }
 
+void Optimize_Netgen(Mesh * m)
+{
+  Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
+}
+
 #else
 
 #include "nglib.h"
@@ -53,12 +58,12 @@ void Optimize_Netgen(Volume * v)
 
 class Netgen{
  private:
-  List_T *_vertices, *_volverts;
+  List_T *_surverts, *_volverts;
   Volume *_vol;
   Ng_Mesh *_ngmesh;
  public:
   Netgen(Volume *vol, int importVolumeMesh = 0);
-  Netgen(Surface *s, int importSurfaceMesh = 0);
+  Netgen(Surface *sur, int importSurfaceMesh = 0);
   ~Netgen();
   void MeshVolume();
   void TransferVolumeMesh();
@@ -81,8 +86,8 @@ Netgen::Netgen(Volume *vol, int importVolumeMesh)
     List_Read(_vol->Surfaces, i, &s);
     Tree_Unit(tree, s->Vertices);
   }
-  _vertices = Tree2List(tree);
-  List_Sort(_vertices, compareVertex);
+  _surverts = Tree2List(tree);
+  List_Sort(_surverts, compareVertex);
 
   if(importVolumeMesh){
     Tree_T *tree2 = Tree_Soustraction(_vol->Vertices, tree);
@@ -94,9 +99,9 @@ Netgen::Netgen(Volume *vol, int importVolumeMesh)
   Tree_Delete(tree);
   
   // Transfer the vertices
-  for(int i = 0; i < List_Nbr(_vertices); i++){
+  for(int i = 0; i < List_Nbr(_surverts); i++){
     Vertex *v;
-    List_Read(_vertices, i, &v);
+    List_Read(_surverts, i, &v);
     double tmp[3];
     tmp[0] = v->Pos.X;
     tmp[1] = v->Pos.Y;
@@ -134,9 +139,9 @@ Netgen::Netgen(Volume *vol, int importVolumeMesh)
 	index[1] = 2;
 	index[2] = 1;
       }
-      tmp[0] = 1 + List_ISearch(_vertices, &simp->V[index[0]], compareVertex);
-      tmp[1] = 1 + List_ISearch(_vertices, &simp->V[index[1]], compareVertex);
-      tmp[2] = 1 + List_ISearch(_vertices, &simp->V[index[2]], compareVertex);
+      tmp[0] = 1 + List_ISearch(_surverts, &simp->V[index[0]], compareVertex);
+      tmp[1] = 1 + List_ISearch(_surverts, &simp->V[index[1]], compareVertex);
+      tmp[2] = 1 + List_ISearch(_surverts, &simp->V[index[2]], compareVertex);
       Ng_AddSurfaceElement(_ngmesh, NG_TRIG, tmp);
     }
     List_Delete(simplist);
@@ -154,11 +159,11 @@ Netgen::Netgen(Volume *vol, int importVolumeMesh)
 	simp->V[1] = temp;
       }
       int tmp[4];
-      tmp[0] = 1 + List_ISearch(_vertices, &simp->V[0], compareVertex);
-      tmp[1] = 1 + List_ISearch(_vertices, &simp->V[1], compareVertex);
-      tmp[2] = 1 + List_ISearch(_vertices, &simp->V[2], compareVertex);
-      tmp[3] = 1 + List_ISearch(_vertices, &simp->V[3], compareVertex);
-      int n = List_Nbr(_vertices) + 1;
+      tmp[0] = 1 + List_ISearch(_surverts, &simp->V[0], compareVertex);
+      tmp[1] = 1 + List_ISearch(_surverts, &simp->V[1], compareVertex);
+      tmp[2] = 1 + List_ISearch(_surverts, &simp->V[2], compareVertex);
+      tmp[3] = 1 + List_ISearch(_surverts, &simp->V[3], compareVertex);
+      int n = List_Nbr(_surverts) + 1;
       if(!tmp[0]) tmp[0] = n + List_ISearch(_volverts, &simp->V[0], compareVertex);
       if(!tmp[1]) tmp[1] = n + List_ISearch(_volverts, &simp->V[1], compareVertex);
       if(!tmp[2]) tmp[2] = n + List_ISearch(_volverts, &simp->V[2], compareVertex);
@@ -176,7 +181,7 @@ Netgen::Netgen(Surface *sur, int importSurfaceMesh)
 
 Netgen::~Netgen()
 {
-  List_Delete(_vertices);
+  List_Delete(_surverts);
   List_Delete(_volverts);
   Ng_DeleteMesh(_ngmesh);
   Ng_Exit();
@@ -201,14 +206,14 @@ void Netgen::TransferVolumeMesh()
   Vertex **vtable = (Vertex **)Malloc(nbv * sizeof(Vertex*));
   
   // Get existing unmodified surface vertices
-  for(int i = 0; i < List_Nbr(_vertices); i++){
-    List_Read(_vertices, i, &vtable[i]);
+  for(int i = 0; i < List_Nbr(_surverts); i++){
+    List_Read(_surverts, i, &vtable[i]);
     Tree_Insert(_vol->Vertices, &vtable[i]);
     Tree_Insert(THEM->Vertices, &vtable[i]);
   }
 
   // Create new volume vertices
-  for(int i = List_Nbr(_vertices); i < nbv; i++) {
+  for(int i = List_Nbr(_surverts); i < nbv; i++) {
     double tmp[3];
     Ng_GetPoint(_ngmesh, i+1, tmp);
     vtable[i] = Create_Vertex(++(THEM->MaxPointNum), tmp[0], tmp[1], tmp[2], 1., 0);
@@ -290,6 +295,23 @@ void Optimize_Netgen(Volume * v)
   Netgen ng(v, 1);
   ng.OptimizeVolume();
   ng.TransferVolumeMesh();
+}
+
+void Optimize_Netgen(Mesh *m)
+{
+  Msg(STATUS2, "Optimize volume mesh...");
+  double t1 = Cpu();
+
+  List_T *list = Tree2List(m->Volumes);
+  for(int i = 0; i < List_Nbr(list); i++){
+    Volume *v;
+    List_Read(list, i, &v);
+    Optimize_Netgen(v);
+  }
+  List_Delete(list);
+
+  double t2 = Cpu();
+  Msg(STATUS2, "Optimize volume mesh complete (%g s)", t2 - t1);
 }
 
 #endif // !HAVE_NETGEN
