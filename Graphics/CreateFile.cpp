@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.53 2004-03-05 23:47:35 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.54 2004-03-06 00:19:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -265,7 +265,7 @@ void CreateOutputFile(char *name, int format)
 	  glMatrixMode(GL_PROJECTION);
 	  glLoadIdentity();
 	  glPushMatrix();
-	  glRasterPos3f(-1.0, -1.0, -1.0);
+	  glRasterPos2d(-1., -1.);
 	  gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, pixels);
 	  glPopMatrix();  
 	  delete [] pixels;
