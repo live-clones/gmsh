@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.7 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.8 2001-02-23 00:07:51 remacle Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -48,6 +48,12 @@ void ParseFile(char *f){
      !strncmp(String, "$ELM", 4)){
     if(THEM->status < 0) mai3d(THEM, 0);
     Read_Mesh(THEM, yyin, FORMAT_MSH);
+  }
+  else if(!strncmp(String, "sms", 3))
+  {
+   
+    if(THEM->status < 0) mai3d(THEM, 0);
+    Read_Mesh(THEM, yyin, FORMAT_SMS);
   }
   else if(!strncmp(String, "$PostFormat", 11) ||
           !strncmp(String, "$View", 5)){

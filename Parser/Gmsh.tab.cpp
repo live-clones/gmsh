@@ -169,7 +169,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.74 2001-02-20 18:32:58 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.75 2001-02-23 00:07:51 remacle Exp $
 
 #include <stdarg.h>
 
@@ -3828,7 +3828,7 @@ case 154:
       for(int i=0;i<List_Nbr(yyvsp[-9].l);i++){
       	List_Read(yyvsp[-9].l,i,&p);
         ip = (int)p;
-        v = FindVertex(ip,THEM);
+        v = FindPoint(ip,THEM);
         if(!v)
 	  vyyerror("Unkown Point %d", ip);
 	else{
@@ -3844,7 +3844,7 @@ case 155:
 {
       for(i=0;i<List_Nbr(yyvsp[-3].l);i++){
 	List_Read(yyvsp[-3].l,i,&d);
-	Vertex *v = FindVertex((int)d,THEM);
+	Vertex *v = FindPoint((int)d,THEM);
 	if(!v)
 	  vyyerror("Unkown Point %d", (int)d);
 	else

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.15 2001-01-29 08:43:44 geuzaine Exp $
+// $Id: Geom.cpp,v 1.16 2001-02-23 00:07:51 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -104,14 +104,29 @@ void Draw_Curve (void *a, void *b){
       N = List_Nbr(c->Control_Points);
     else
       N = 50;
-
-    glBegin(GL_LINE_STRIP);
-    for(i=0;i<N;i++){
-      v = InterpolateCurve(c,(double)i/(double)(N-1),0);
-      glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
-    }
-    glEnd();
-
+    if(c->Typ == MSH_SEGM_DISCRETE)
+      {
+	Simplex *s;
+	List_T *temp = Tree2List(c->Simplexes);
+	for(i=0;i<List_Nbr(temp);i++)
+	  {
+	    List_Read(temp,i,&s);
+	    glBegin(GL_LINE_STRIP);
+	    glVertex3d(s->V[0]->Pos.X,s->V[0]->Pos.Y,s->V[0]->Pos.Z);
+	    glVertex3d(s->V[1]->Pos.X,s->V[1]->Pos.Y,s->V[1]->Pos.Z);
+	    glEnd();
+	  }
+	List_Delete(temp);
+      }
+    else
+      {
+	glBegin(GL_LINE_STRIP);
+	for(i=0;i<N;i++){
+	  v = InterpolateCurve(c,(double)i/(double)(N-1),0);
+	  glVertex3d(v.Pos.X,v.Pos.Y,v.Pos.Z);
+	}
+	glEnd();
+      }
   }
 
   if(CTX.geom.lines_num){
@@ -831,9 +846,9 @@ void HighlightEntity(Vertex *v,Curve *c, Surface *s, int permanent){
     if(permanent) c->ipar[3] = 1;
     if(CTX.geom.highlight) Draw_Curve(&c,NULL);
 
-    List_Read(c->Control_Points,0,&v1);
-    List_Read(c->Control_Points,List_Nbr(c->Control_Points)-1,&v2);
-    Msg(STATUS1N,"Curve %d  {%d->%d}",c->Num,v1->Num,v2->Num);
+    //    List_Read(c->Control_Points,0,&v1);
+    //    List_Read(c->Control_Points,List_Nbr(c->Control_Points)-1,&v2);
+    Msg(STATUS1N,"Curve %d  {%d->%d}",c->Num,c->beg->Num,c->end->Num);
   }
   else if(s){
     if(permanent && s->Mat == 1) return;

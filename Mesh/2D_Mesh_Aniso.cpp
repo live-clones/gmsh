@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.12 2001-02-17 22:08:58 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.13 2001-02-23 00:07:51 remacle Exp $
 
 /*
    Jean-Francois Remacle
@@ -334,19 +334,9 @@ void Recover_Edge (Surface * s, Edge * e, EdgesContainer & Edges){
   /*On swappe */
 }
 
-Vertex * FindVertex2 (int inum, Mesh * M){
-  Vertex C, *pc;
-  pc = &C;
-  pc->Num = inum;
-  if (Tree_Query (M->Vertices, &pc)){
-    return pc;
-  }
-  return NULL;
-}
-
 void constraint_the_edge (int isurf, int iv1, int iv2){
-  Vertex *v1 = FindVertex2 (iv1, THEM);
-  Vertex *v2 = FindVertex2 (iv2, THEM);
+  Vertex *v1 = FindVertex (iv1, THEM);
+  Vertex *v2 = FindVertex (iv2, THEM);
   Surface *s = FindSurface (isurf, THEM);
   Edge e;
 

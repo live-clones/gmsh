@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.9 2001-02-21 07:30:09 geuzaine Exp $
+// $Id: Create.cpp,v 1.10 2001-02-23 00:07:51 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -471,7 +471,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
     pC->Control_Points = List_Create (List_Nbr (Liste), 1, sizeof (Vertex *));
     for (j = 0; j < List_Nbr (Liste); j++){
       List_Read (Liste, j, &iPnt);
-      if ((v = FindVertex (iPnt, THEM)))
+      if ((v = FindPoint (iPnt, THEM)))
         List_Add (pC->Control_Points, &v);
       else
         Msg(FATAL, "Unknown Control Point %d in Curve %d", iPnt, pC->Num);
@@ -488,7 +488,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
     List_Read (pC->Control_Points, List_Nbr (pC->Control_Points) - 1, &pC->end);
   }
   else {
-    if ((v = FindVertex (p1, THEM))){
+    if ((v = FindPoint (p1, THEM))){
       pC->beg = v;
       Msg(INFO, "Curve %d First Control Point %d ", pC->Num, v->Num);
     }
@@ -496,7 +496,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
       List_Read (pC->Control_Points, 0, &pC->beg);
       Msg(FATAL, "Unknown Control Point %d in Curve %d", p1, pC->Num);
     }
-    if ((v = FindVertex (p2, THEM))){
+    if ((v = FindPoint (p2, THEM))){
       pC->end = v;
       Msg(INFO, "Curve %d First Control Point %d ", pC->Num, v->Num);
     }

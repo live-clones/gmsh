@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.16 2001-01-17 21:26:24 remacle Exp $
+// $Id: CAD.cpp,v 1.17 2001-02-23 00:07:51 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -116,11 +116,21 @@ int NEWPOINT(void){
   return MAXPOINT+1;
 }
 
-Vertex *FindVertex(int inum, Mesh *M){
+Vertex *FindPoint(int inum, Mesh *M){
   Vertex  C,*pc;
   pc = &C;
   pc->Num = inum;
   if(Tree_Query(M->Points,&pc)){
+    return pc;
+  }
+  return NULL;
+}
+
+Vertex *FindVertex(int inum, Mesh *M){
+  Vertex  C,*pc;
+  pc = &C;
+  pc->Num = inum;
+  if(Tree_Query(M->Vertices,&pc)){
     return pc;
   }
   return NULL;
@@ -1382,12 +1392,12 @@ void ReplaceAllDuplicates ( Mesh *m ){
 /* NEW CAD FUNCTIONS */
 
 void ModifyLcPoint(int ip, double lc){
-  Vertex *v = FindVertex(ip,THEM);
+  Vertex *v = FindPoint(ip,THEM);
   if(v)v->lc = lc;
 }
 
 void ApplicationOnPoint(int ip,double matrix[4][4]){
-  Vertex *v = FindVertex(ip,THEM);
+  Vertex *v = FindPoint(ip,THEM);
   if(v)ApplyTransformationToPoint ( matrix, v );
 }
 
@@ -1485,7 +1495,7 @@ void CopyShape(int Type, int Num, int *New){
 
   switch(Type){
   case MSH_POINT:
-    if(!(v = FindVertex(Num,THEM)))
+    if(!(v = FindPoint(Num,THEM)))
       Msg(FATAL, "Unknown Vertex %d", Num);
     newv = DuplicateVertex(v);
     *New = newv->Num;
@@ -1516,7 +1526,7 @@ void CopyShape(int Type, int Num, int *New){
 }
 
 void DeletePoint(int ip){
-  Vertex *v = FindVertex(ip,THEM);
+  Vertex *v = FindPoint(ip,THEM);
   if(!v) return;
   List_T *Curves = Tree2List(THEM->Curves);
   for(int i=0;i<List_Nbr(Curves);i++){

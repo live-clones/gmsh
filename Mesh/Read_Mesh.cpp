@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.8 2001-01-17 21:26:24 remacle Exp $
+// $Id: Read_Mesh.cpp,v 1.9 2001-02-23 00:07:51 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -217,11 +217,13 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 /* ------------------------------------------------------------------------ */
 /*  R e a d _ M e s h                                                       */
 /* ------------------------------------------------------------------------ */
+void Read_Mesh_SMS (Mesh *m, FILE *File_GEO);
 
 void Read_Mesh (Mesh *M, FILE *File_GEO, int type){
 
   switch(type){
   case FORMAT_MSH : Read_Mesh_MSH(M,File_GEO); break;
+  case FORMAT_SMS : Read_Mesh_SMS(M,File_GEO); break;
   default : Msg(WARNING, "Unkown Mesh File Format to Read"); break;
   }
 

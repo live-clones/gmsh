@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.67 2001-02-21 11:19:29 geuzaine Exp $
+# $Id: Makefile,v 1.68 2001-02-23 00:07:51 remacle Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -434,7 +434,7 @@ fltk_dec: tag fltk_compile_little_endian fltk_link_opengl strip_bin compress_bin
 
 fltk_solaris_scorec : tag fltk_compile_solaris_scorec fltk_link_solaris_scorec strip_bin 
 
-fltk_linux_scorec : tag fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin 
+fltk_linux_scorec : fltk_compile_linux_scorec fltk_link_linux_scorec strip_bin 
 
 fltk_sgi: tag fltk_compile_sgi fltk_link_sgi strip_bin compress_bin
 

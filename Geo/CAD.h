@@ -6,6 +6,7 @@
 int NEWREG(void);
 int NEWPOINT(void);
 
+Vertex *FindPoint(int inum, Mesh *M);
 Vertex *FindVertex(int inum, Mesh *M);
 Curve *FindCurve(int inum, Mesh *M);
 Surface *FindSurface(int inum, Mesh *M);

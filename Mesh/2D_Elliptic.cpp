@@ -1,4 +1,4 @@
-// $Id: 2D_Elliptic.cpp,v 1.4 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Elliptic.cpp,v 1.5 2001-02-23 00:07:51 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -30,13 +30,13 @@ int MeshEllipticSurface (Surface * sur){
     List_Read (sur->s.Generatrices, i, &GG[i]);
   }
 
-  if (!(S[0] = FindVertex (sur->ipar[0], THEM)))
+  if (!(S[0] = FindPoint (sur->ipar[0], THEM)))
     return 0;
-  if (!(S[1] = FindVertex (sur->ipar[1], THEM)))
+  if (!(S[1] = FindPoint (sur->ipar[1], THEM)))
     return 0;
-  if (!(S[2] = FindVertex (sur->ipar[2], THEM)))
+  if (!(S[2] = FindPoint (sur->ipar[2], THEM)))
     return 0;
-  if (!(S[3] = FindVertex (sur->ipar[3], THEM)))
+  if (!(S[3] = FindPoint (sur->ipar[3], THEM)))
     return 0;
   N1 = N2 = N3 = N4 = 0;
   /*Remplissure de la premiere cuvee de merde */
