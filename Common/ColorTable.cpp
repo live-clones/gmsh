@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.6 2002-02-14 15:39:09 colignon Exp $
+// $Id: ColorTable.cpp,v 1.7 2002-02-14 17:09:45 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "ColorTable.h"
@@ -130,7 +130,7 @@ void ColorTable_Recompute(GmshColorTable *ct, int rgb_flag, int alpha_flag){
           r = 0 ; g = 0 ; b = 0 ; 
         }
         else if(s-bias<=0.2){
-          r = 57*(1-100*((s-bias)-0.1)*((s-bias)-0.1)) ; g = 0 ; b = (int)((s-bias)*(255./0.2)) ;
+          r = (int)(57*(1-100*((s-bias)-0.1)*((s-bias)-0.1))) ; g = 0 ; b = (int)((s-bias)*(255./0.2)) ;
         }
         else if(s-bias<=0.3624){
           r = 0 ; g = (int)((s-bias-0.2)*(255./0.1624)) ; b = 255 ; 

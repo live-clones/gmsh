@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.9 2002-02-13 17:14:46 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.10 2002-02-14 17:09:45 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
@@ -7,6 +7,7 @@ Gmsh is copyright (c) 1997-2002 by
 
 Parts of the code have been contributed by
 
+    David Colignon <david.colignon@ulg.ac.be>
     Patrick Dular <patrick.dular@ulg.ac.be>
     Marc Umé <Marc.Ume@digitalgraphics.be>
     Laurent Stainier <l.stainier@ulg.ac.be>
@@ -24,7 +25,6 @@ will be added to the list!
     Guillaume Alleon <guillaume.alleon@airbus.aeromatra.com>
     Éric Bechet <eric.bechet@epost.de>
     Laurent Champaney <laurent.champaney@meca.uvsq.fr>
-    David Colignon <david.colignon@ulg.ac.be>
     Philippe Geuzaine <geuzaine@gnat.colorado.edu>
     Johan Gyselinck <johan.gyselinck@ulg.ac.be>
     François Henrotte <fhenrott@esat.kuleuven.ac.be>
