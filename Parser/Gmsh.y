@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.28 2000-12-08 10:56:49 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.29 2000-12-08 12:38:29 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -2467,6 +2467,25 @@ Color :
 ListOfColor :
     '{' RecursiveListOfColor '}'
     {
+      $$ = ListOfColor_L;
+    }
+  | tSTRING '.' tView '[' FExpr ']' '.' tColor
+    {
+      if(!ListOfColor_L)
+	ListOfColor_L = List_Create(256,10,sizeof(unsigned int)) ;
+      else
+	List_Reset(ListOfColor_L) ;
+      if(strcmp($1, "PostProcessing"))
+	vyyerror("Unknown View Option Class '%s'", $1);
+      else{
+	ColorTable *ct = Get_ColorTableViewOption((int)$5);
+	if(!ct)
+	  vyyerror("PostProcessing View %d does not Exist", (int)$5);
+	else{
+	  for(i=0 ; i<ct->size ; i++) 
+	    List_Add(ListOfColor_L, &ct->table[i]);
+	}
+      }
       $$ = ListOfColor_L;
     }
 ;
