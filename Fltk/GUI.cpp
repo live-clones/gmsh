@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.82 2001-05-28 07:33:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.83 2001-06-06 09:39:49 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -443,6 +443,12 @@ int GUI::global_shortcuts(int event){
 			      (j == DRAW_POST_DISCRETE) ? DRAW_POST_CONTINUOUS :
 			      DRAW_POST_ISO);
     }
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT+'h')){
+    for(i=0 ; i<List_Nbr(Post_ViewList) ; i++)
+      opt_view_visible(i, GMSH_SET|GMSH_GUI, !opt_view_visible(i, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }

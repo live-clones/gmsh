@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.26 2001-06-06 08:47:48 geuzaine Exp $
+// $Id: Options.cpp,v 1.27 2001-06-06 09:39:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1696,7 +1696,7 @@ double opt_view_visible(OPT_ARGS_NUM){
     v->Visible = (int)val;
   }
 #ifdef _FLTK
-  if(WID && (action & GMSH_GUI) && (num == WID->view_number))
+  if(WID && (action & GMSH_GUI))
     WID->m_toggle_butt[num]->value(v->Visible);
 #endif
   Msg(DEBUG1, "View %d", v->Num);
