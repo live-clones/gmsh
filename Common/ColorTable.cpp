@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.20 2004-02-07 01:40:16 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.21 2004-05-12 04:31:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -267,6 +267,14 @@ void ColorTable_Paste(GmshColorTable * ct)
   memcpy(ct->table, clip.table, clip.size * sizeof(unsigned int));
   memcpy(ct->ipar, clip.ipar, COLORTABLE_NBMAX_PARAM * sizeof(int));
   memcpy(ct->fpar, clip.fpar, COLORTABLE_NBMAX_PARAM * sizeof(float));
+}
+
+int ColorTable_Diff(GmshColorTable * ct1, GmshColorTable * ct2)
+{
+  if(ct1->size != ct2->size) return 1;
+  for(int i = 0; i < ct1->size; i++)
+    if(ct1->table != ct2->table) return 1;
+  return 0;
 }
 
 void ColorTable_Print(GmshColorTable * ct, FILE * fp)

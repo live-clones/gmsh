@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.116 2004-05-12 02:02:20 geuzaine Exp $
+// $Id: Views.cpp,v 1.117 2004-05-12 04:31:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -678,7 +678,7 @@ GmshColorTable *Get_ColorTable(int num)
     return NULL;
 }
 
-void Print_ColorTable(int num, char *prefix, FILE * file)
+void Print_ColorTable(int num, int diff, char *prefix, FILE * file)
 {
   char tmp[1024];
   Post_View *v;
@@ -688,6 +688,10 @@ void Print_ColorTable(int num, char *prefix, FILE * file)
     v = (Post_View *) List_Pointer_Test(CTX.post.list, num);
   if(!v)
     return;
+
+  if(diff && !ColorTable_Diff(&Post_ViewReference->CT, &v->CT))
+    return;
+
   sprintf(tmp, "%s = {", prefix);
   if(file)
     fprintf(file, "%s\n", tmp);

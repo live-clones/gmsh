@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.150 2004-05-12 03:22:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.151 2004-05-12 04:31:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -273,7 +273,7 @@ void Print_Options(int num, int level, int diff, char *filename)
       Print_OptionCategory(level, "View options (colors)", file);
       Print_ColorOptions(i, level, diff, ViewOptions_Color, tmp, file);
       strcat(tmp, "ColorTable");
-      Print_ColorTable(i, tmp, file);
+      Print_ColorTable(i, diff, tmp, file);
     }
   }
   else if(level & GMSH_OPTIONSRC) {
@@ -283,6 +283,7 @@ void Print_Options(int num, int level, int diff, char *filename)
     Print_NumberOptions(num, level, diff, ViewOptions_Number, "View.", file);
     Print_OptionCategory(level, "View options (colors)", file);
     Print_ColorOptions(num, level, diff, ViewOptions_Color, "View.", file);
+    Print_ColorTable(num, diff, "View.ColorTable", file);
   }
 
   Print_OptionCategory(level, "Print options (strings)", file);

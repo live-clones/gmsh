@@ -161,7 +161,7 @@ double ErrorInView(Post_View * ErrView, int *n);
 Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double *y);
 
 GmshColorTable *Get_ColorTable(int num);
-void Print_ColorTable(int num, char *prefix, FILE *file);
+void Print_ColorTable(int num, int diff, char *prefix, FILE *file);
 
 double ComputeVonMises(double* val);
 
