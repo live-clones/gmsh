@@ -346,8 +346,8 @@ StringXString PrintOptions_String[] = {
 StringXNumber GeneralOptions_Number[] = {
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
-  { F|S, "AppleMenuBar" , opt_general_apple_menu_bar , 0. , 
-    "Use Apple-style menu bar on Mac OS X?" }, 
+  { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
+    "Use the system menu bar on Mac OS X (if possible)?" }, 
   { F|O, "Axes" , opt_general_axes , 1. ,
     "Display the axes linked to the model" },
 

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.123 2003-12-01 21:51:19 geuzaine Exp $
+// $Id: Options.cpp,v 1.124 2003-12-02 22:57:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -1739,11 +1739,11 @@ double opt_general_menu_position1(OPT_ARGS_NUM)
   return CTX.position[1];
 }
 
-double opt_general_apple_menu_bar(OPT_ARGS_NUM)
+double opt_general_system_menu_bar(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.apple_menu_bar = (int)val;
-  return CTX.apple_menu_bar;
+    CTX.system_menu_bar = (int)val;
+  return CTX.system_menu_bar;
 }
 
 double opt_general_message_position0(OPT_ARGS_NUM)

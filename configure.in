@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.47 2003-11-23 07:41:26 geuzaine Exp $
+dnl $Id: configure.in,v 1.48 2003-12-02 22:57:41 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 dnl
@@ -57,9 +57,9 @@ AC_ARG_ENABLE(gsl,
 AC_ARG_ENABLE(gui,
               AC_HELP_STRING([--enable-gui],
                              [build the graphical user interface (default=yes)]))
-AC_ARG_ENABLE(macmenu,
-              AC_HELP_STRING([--enable-macmenu],
-                             [enable Apple-style menu bar on Mac OS X (default=no)]))
+AC_ARG_ENABLE(system-menubar,
+              AC_HELP_STRING([--enable-system-menubar],
+                             [use the system menu bar on MacOS X (default=no)]))
 AC_ARG_ENABLE(parallel,
               AC_HELP_STRING([--enable-parallel],
                              [enable parallel version (default=no)]))
@@ -291,8 +291,8 @@ if test "x$enable_parallel" = "xyes"; then
   FLAGS="-DPARALLEL ${FLAGS}"
 fi
 
-dnl Check if we should enable the Apple-style menu bar
-if test "x$enable_macmenu" = "xyes"; then
+dnl Check if we should enable the system menu bar on MacOS X
+if test "x$enable_system_menubar" = "xyes"; then
   FLAGS="-DHAVE_FL_SYS_MENU_BAR ${FLAGS}"
 fi
 

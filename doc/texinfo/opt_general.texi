@@ -44,9 +44,9 @@ Enable alpha blending (transparency) in post-processing views@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.AppleMenuBar
-Use Apple-style menu bar on Mac OS X?@*
-Default value: @code{0}@*
+@item General.SystemMenuBar
+Use the system menu bar on Mac OS X (if possible)?@*
+Default value: @code{1}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.Axes
@@ -599,6 +599,11 @@ Level of information printed during processing (0=no information)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.VisibilityMode
+Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)@*
+Default value: @code{0}@*
+Saved in: @code{General.SessionFileName}
+
 @item General.VisibilityPositionX
 Horizontal position (in pixels) of the upper left corner of the visibility window@*
 Default value: @code{650}@*
@@ -607,11 +612,6 @@ Saved in: @code{General.SessionFileName}
 @item General.VisibilityPositionY
 Vertical position (in pixels) of the upper left corner of the visibility window@*
 Default value: @code{150}@*
-Saved in: @code{General.SessionFileName}
-
-@item General.VisibilityMode
-Default mode for the visibility browser (0=Geometry+Mesh, 1=Geometry, 2=Mesh)@*
-Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.ZoomFactor

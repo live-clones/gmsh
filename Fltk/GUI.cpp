@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.258 2003-12-01 22:02:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.259 2003-12-02 22:57:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -788,7 +788,7 @@ void GUI::create_menu_window(int argc, char **argv)
 
   // this is the initial height: no dynamic button is shown!
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
-  if(CTX.apple_menu_bar){
+  if(CTX.system_menu_bar){
     MH = BH + 6;  // the menu bar is not in the application!
   }
   else{
@@ -803,7 +803,7 @@ void GUI::create_menu_window(int argc, char **argv)
   m_window->callback(file_quit_cb);
 
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
-  if(CTX.apple_menu_bar){
+  if(CTX.system_menu_bar){
     m_sys_menu_bar = new Fl_Sys_Menu_Bar(0, 0, width, BH);
     m_sys_menu_bar->menu(m_menubar_table);
     m_sys_menu_bar->global();
