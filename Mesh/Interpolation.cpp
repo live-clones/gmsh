@@ -1,4 +1,4 @@
-// $Id: Interpolation.cpp,v 1.10 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Interpolation.cpp,v 1.11 2001-08-12 20:45:02 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -112,7 +112,7 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
            0                   i    P     i+1                  N-1
      vfirst*---------*---------*----X-----*----------*----------* vlast
            0                  t1   absc   t2                    1
-                             0    t     1
+                               0    t     1
 
      Splines uniformes -> Le point se trouve entre v[1] et v[2] 
      -> Calcul de l'abcisse curviligne locale t ( entre 0 et 1 )
@@ -125,6 +125,8 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee){
     */
 
     i = (int) ((double) (N - 1) * u);
+    if (i < 0)
+      i = 0;
     if (i >= N - 1)
       i = N - 2;
     
