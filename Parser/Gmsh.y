@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.y,v 1.19 2000-12-06 22:36:44 geuzaine Exp $ */
+%{ /* $Id: Gmsh.y,v 1.20 2000-12-06 23:01:55 geuzaine Exp $ */
 
 #include <stdarg.h>
 
@@ -34,7 +34,7 @@ static fpos_t         yyposImbricatedLoopsTab[MAX_OPEN_FILES];
 static int            LoopControlVariablesTab[MAX_OPEN_FILES][3];
 static char           yynameTab[MAX_OPEN_FILES][NAME_STR_L];
 static char           tmpstring[NAME_STR_L];
-static Symbol         TheSymbol;
+static Symbol         TheSymbol, *pSymbol;
 static Surface       *STL_Surf;
 static Shape          TheShape;
 static int            i,j,k,flag,RecursionLevel=0,ImbricatedLoop = 0;
@@ -707,6 +707,54 @@ Affectation :
       TheSymbol.Name = $1;
       TheSymbol.val  = $3;
       List_Replace(Symbol_L,&TheSymbol,CompareSymbols);
+    }
+  | tSTRING tAFFECTPLUS FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val += $3 ;
+    }
+  | tSTRING tAFFECTMINUS FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val -= $3 ;
+    }
+  | tSTRING tPLUSPLUS FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val += 1. ;
+    }
+  | tSTRING tAFFECTMINUS FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val -= $3 ;
+    }
+  | tSTRING tAFFECTTIMES FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val *= $3 ;
+    }
+  | tSTRING tAFFECTDIVIDE FExpr tEND
+    {
+      TheSymbol.Name = $1 ;
+      if (!(pSymbol = (Symbol*)List_PQuery(Symbol_L, &TheSymbol, CompareSymbols)))
+	vyyerror("Unknown Variable '%s'", $1) ;
+      else
+	pSymbol->val /= $3 ;
     }
 ;
 
@@ -1604,28 +1652,66 @@ Option :
 	else{
 	  switch(i){
 	  case GMSH_DOUBLE :
-	    ((double*)pNumOpt)[0] = $5[0] ;
-	    ((double*)pNumOpt)[1] = $5[1] ;
-	    ((double*)pNumOpt)[2] = $5[2] ;
-	    ((double*)pNumOpt)[3] = $5[3] ;
+	    for(j=0 ; j<4; j++) ((double*)pNumOpt)[j] = $5[j] ;
 	    break ;
 	  case GMSH_FLOAT :
-	    ((float*)pNumOpt)[0] = (float)$5[0] ;
-	    ((float*)pNumOpt)[1] = (float)$5[1] ;
-	    ((float*)pNumOpt)[2] = (float)$5[2] ;
-	    ((float*)pNumOpt)[3] = (float)$5[3] ;
+	    for(j=0 ; j<4; j++) ((float*)pNumOpt)[j] = (float)$5[j] ;
 	    break ;
 	  case GMSH_LONG :
-	    ((long*)pNumOpt)[0] = (long)$5[0] ;
-	    ((long*)pNumOpt)[1] = (long)$5[1] ;
-	    ((long*)pNumOpt)[2] = (long)$5[2] ;
-	    ((long*)pNumOpt)[3] = (long)$5[3] ;
+	    for(j=0 ; j<4; j++) ((long*)pNumOpt)[j] = (long)$5[j] ;
 	    break ;
 	  case GMSH_INT :
-	    ((int*)pNumOpt)[0] = (int)$5[0] ;
-	    ((int*)pNumOpt)[1] = (int)$5[1] ;
-	    ((int*)pNumOpt)[2] = (int)$5[2] ;
-	    ((int*)pNumOpt)[3] = (int)$5[3] ;
+	    for(j=0 ; j<4; j++) ((int*)pNumOpt)[j] = (int)$5[j] ;
+	    break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECTPLUS VExpr tEND 
+    {
+      if(!(pArrCat = Get_ArrayOptionCategory($1)))
+	vyyerror("Unknown Array Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
+	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    for(j=0 ; j<4; j++) ((double*)pNumOpt)[j] += $5[j] ;
+	    break ;
+	  case GMSH_FLOAT :
+	    for(j=0 ; j<4; j++) ((float*)pNumOpt)[j] += (float)$5[j] ;
+	    break ;
+	  case GMSH_LONG :
+	    for(j=0 ; j<4; j++) ((long*)pNumOpt)[j] += (long)$5[j] ;
+	    break ;
+	  case GMSH_INT :
+	    for(j=0 ; j<4; j++) ((int*)pNumOpt)[j] += (int)$5[j] ;
+	    break ;
+	  }
+	}
+      }
+    }
+  | tSTRING '.' tSTRING tAFFECTMINUS VExpr tEND 
+    {
+      if(!(pArrCat = Get_ArrayOptionCategory($1)))
+	vyyerror("Unknown Array Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
+	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    for(j=0 ; j<4; j++) ((double*)pNumOpt)[j] -= $5[j] ;
+	    break ;
+	  case GMSH_FLOAT :
+	    for(j=0 ; j<4; j++) ((float*)pNumOpt)[j] -= (float)$5[j] ;
+	    break ;
+	  case GMSH_LONG :
+	    for(j=0 ; j<4; j++) ((long*)pNumOpt)[j] -= (long)$5[j] ;
+	    break ;
+	  case GMSH_INT :
+	    for(j=0 ; j<4; j++) ((int*)pNumOpt)[j] -= (int)$5[j] ;
 	    break ;
 	  }
 	}
@@ -1727,7 +1813,7 @@ FExpr_Single :
     {
       TheSymbol.Name = $1 ;
       if (!List_Query(Symbol_L, &TheSymbol, CompareSymbols)) {
-	vyyerror("Unknown variable '%s'", $1) ;  $$ = 0. ;
+	vyyerror("Unknown Variable '%s'", $1) ;  $$ = 0. ;
       }
       else  $$ = TheSymbol.val ;
       Free($1);
@@ -1843,6 +1929,32 @@ VExpr_Single :
   | '(' FExpr ',' FExpr ',' FExpr ')'
     {
       $$[0]=$2;  $$[1]=$4;  $$[2]=$6;  $$[3]=0.0; $$[4]=1.0;
+    }
+  | tSTRING '.' tSTRING
+    {
+      if(!(pArrCat = Get_ArrayOptionCategory($1)))
+	vyyerror("Unknown Array Option Class '%s'", $1);
+      else{
+	if(!(pArrOpt = Get_ArrayOption($3, pArrCat, &i)))
+	  vyyerror("Unknown Array Option '%s.%s'", $1, $3);
+	else{
+	  switch(i){
+	  case GMSH_DOUBLE :
+	    for(j=0 ; j<4 ; j++) $$[j] = ((double*)pArrOpt)[j] ; 
+	    break ;
+	  case GMSH_FLOAT :
+	    for(j=0 ; j<4 ; j++) $$[j] = (double)((float*)pArrOpt)[j] ;
+	    break ;
+	  case GMSH_LONG : 
+	    for(j=0 ; j<4 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
+	    break ;
+	  case GMSH_INT :
+	    for(j=0 ; j<4 ; j++) $$[j] = (double)((int*)pArrOpt)[j] ; 
+	    break ;
+	  }
+	  $$[4] = 1. ;
+	}
+      }
     }
 ;
 
@@ -1999,5 +2111,4 @@ void vyyerror(char *fmt, ...){
   Msg(PARSER_ERROR, "'%s', line %d : %s", yyname, yylineno-1, tmp);
   yyerrorstate=1;
 }
-
 
