@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.349 2004-06-08 02:10:32 geuzaine Exp $
+# $Id: Makefile,v 1.350 2004-06-12 22:01:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -160,8 +160,8 @@ source-commercial: source-common
 package-unix:
 	rm -rf gmsh-${GMSH_VERSION}
 	mkdir gmsh-${GMSH_VERSION}
-	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_VERSION}
+	strip gmsh-${GMSH_VERSION}/gmsh
 	cp doc/gmsh.1 doc/LICENSE doc/VERSIONS doc/FAQ doc/CREDITS gmsh-${GMSH_VERSION}
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
@@ -175,9 +175,9 @@ package-unix:
 package-win:
 	rm -rf gmsh-${GMSH_VERSION}
 	mkdir gmsh-${GMSH_VERSION}
-	strip bin/gmsh.exe
 	cp /usr/bin/cygwin1.dll gmsh-${GMSH_VERSION}
 	cp bin/gmsh.exe gmsh-${GMSH_VERSION}
+	strip gmsh-${GMSH_VERSION}/gmsh.exe
 	cp doc/README.win32 gmsh-${GMSH_VERSION}/README.txt
 	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt
@@ -243,8 +243,8 @@ package-mac:
         "      </array>\n"\
         "  </dict>\n"\
         "</plist>" > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Info.plist
-	strip bin/gmsh
 	cp bin/gmsh gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS/Gmsh
+	strip gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS/Gmsh
 	cp Fltk/MacIcons.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/gmsh.icns
 	cp -R doc/gmsh.1 tutorial demos gmsh-${GMSH_VERSION}
 	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
