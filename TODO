@@ -1,4 +1,9 @@
-$Id: TODO,v 1.45 2004-05-13 05:34:06 geuzaine Exp $
+$Id: TODO,v 1.46 2004-05-14 16:47:30 geuzaine Exp $
+
+add a way to undo the geometry contour selections in the
+GUI... (un-click)
+
+********************************************************************
 
 add ternary operator and <,>,<=,>=,== tests in MathEval
 

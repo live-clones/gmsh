@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.50 2004-05-12 03:22:13 geuzaine Exp $
+// $Id: Draw.cpp,v 1.51 2004-05-14 16:47:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -38,11 +38,6 @@ void Draw3d(void)
   if(CTX.alpha) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-#if !defined(WIN32)
-    // This seems to perturb the font rendering on Windows... And
-    // everything seems to work fine without, so...
-    glEnable(GL_ALPHA);
-#endif
   }
   glPolygonOffset(1.0, 1.0);
   glDepthFunc(GL_LESS);
@@ -157,10 +152,7 @@ void Orthogonalize(int x, int y)
 
 void InitRenderModel(void)
 {
-  int i;
-  float specular[4];
-
-  for(i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; i++) {
     if(CTX.light[i]) {
       GLfloat tmp[4];
       for(int j = 0; j < 4; j++) 
@@ -173,11 +165,7 @@ void InitRenderModel(void)
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40.);
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   glShadeModel(GL_SMOOTH);
-  // let's add some shininess to all these automatically created materials
-  specular[0] = CTX.shine;
-  specular[1] = CTX.shine;
-  specular[2] = CTX.shine;
-  specular[3] = 1.0;
+  float specular[4] = {CTX.shine, CTX.shine, CTX.shine, 1.0};
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
   glEnable(GL_NORMALIZE);
   glEnable(GL_COLOR_MATERIAL);
