@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.7 2001-04-06 12:29:32 geuzaine Exp $
+// $Id: Options.cpp,v 1.8 2001-04-06 12:30:34 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -734,7 +734,7 @@ double opt_general_zoom_factor(OPT_ARGS_NUM){
   return CTX.zoom_factor;
 }
 double opt_general_default_plugins(OPT_ARGS_NUM){
-  if(action & GMSH_SET) CTX.default_plugins = val;
+  if(action & GMSH_SET) CTX.default_plugins = (int)val;
   return CTX.default_plugins;
 }
 double opt_general_clip0(OPT_ARGS_NUM){

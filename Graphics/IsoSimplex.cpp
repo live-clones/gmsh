@@ -144,7 +144,7 @@ void IsoSimplex( Post_View *View,
 		 double *X, double *Y, double *Z, double *Val, 
 		 double V, double Vmin, double Vmax, 
 		 double *Offset, double Raise[3][5], int shade){
-  int    nb,i;
+  int    nb;
   double Xp[6],Yp[6],Zp[6],PVals[6];
   double norms[12];
 

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.20 2001-03-05 23:14:57 remacle Exp $
+// $Id: Main.cpp,v 1.21 2001-04-06 12:29:32 geuzaine Exp $
 
 #include <signal.h>
 
@@ -47,7 +47,8 @@ int main(int argc, char *argv[]){
     fprintf(stderr, "%s, Version %.2f\n", gmsh_progname, GMSH_VERSION);
 
   // Register Default Plugins (in test ...)
-  GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
+  if(CTX.default_plugins)
+    GMSH_PluginManager::Instance()->RegisterDefaultPlugins();
 
   // Initialize the static Mesh
 

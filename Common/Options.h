@@ -71,6 +71,7 @@ double opt_general_double_buffer(OPT_ARGS_NUM);
 double opt_general_alpha_blending(OPT_ARGS_NUM);
 double opt_general_trackball(OPT_ARGS_NUM);
 double opt_general_zoom_factor(OPT_ARGS_NUM);
+double opt_general_default_plugins(OPT_ARGS_NUM);
 double opt_general_clip0(OPT_ARGS_NUM);
 double opt_general_clip0a(OPT_ARGS_NUM);
 double opt_general_clip0b(OPT_ARGS_NUM);
