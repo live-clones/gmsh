@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.26 2001-01-09 14:24:05 geuzaine Exp $
+// $Id: Context.cpp,v 1.27 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -177,7 +177,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 
 void Init_Colors(int num){
   if(num < 0 || num > 2){
-    Msg(ERROR, "Unknown Default Color Scheme");
+    Msg(GERROR, "Unknown Default Color Scheme");
     return;
   }
   CTX.color.id = num ;

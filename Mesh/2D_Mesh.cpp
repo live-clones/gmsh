@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.14 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.15 2001-01-09 19:40:56 remacle Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -218,7 +218,7 @@ void Plan_Moyen (void *data, void *dum){
           Msg(DEBUG, "Mean Plane of Type 'ax + by = -z'");
         }
         else{
-          Msg(ERROR, "Problem in Mean Plane");
+          Msg(GERROR, "Problem in Mean Plane");
         }
       }
     }
@@ -470,7 +470,7 @@ int mesh_domain (ContourPeek * ListContours, int numcontours,
   mai->numpoints = 0;
 
   if (!numcontours){
-    Msg(ERROR, "No Contour");
+    Msg(GERROR, "No Contour");
     return 0;
   }
 
@@ -916,7 +916,7 @@ void Maillage_Automatique_VieuxCode (Surface * pS, Mesh * m, int ori){
       }
       else{
         err = 1;
-        Msg(ERROR, "Unknown Vertex %d", ver[j]->Num);
+        Msg(GERROR, "Unknown Vertex %d", ver[j]->Num);
       }
     }
     if (ori && !err)

@@ -1,4 +1,4 @@
-// $Id: XDump.cpp,v 1.2 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: XDump.cpp,v 1.3 2001-01-09 19:40:56 remacle Exp $
 
 /* This is a modified version for Gmsh (mainly for c++ compliance) */
 
@@ -55,6 +55,12 @@
  * systems, sizeof(XColor)=16.  We MUST have an XColor struct of size
  * 12 so a correct file is written.  BEP July-21-95
  */
+
+#ifdef WIN32
+
+#else
+
+
 typedef struct {
         unsigned int /*long*/ pixel;
         unsigned short red, green, blue;
@@ -449,3 +455,4 @@ void Window_Dump(Display *display, int scr, Window window, FILE *out){
      */
     XDestroyImage(image);
 }
+#endif

@@ -413,6 +413,8 @@ void GUI::set_status(char *msg, int num){
 
 // Set the statistics
 void GUI::set_statistics(){
+
+  int i;	
   static double  s[50];
   static char    label[50][256];
 
@@ -448,7 +450,7 @@ void GUI::set_statistics(){
   sprintf(label[18], "%g", s[15]);   stat_value[18]->value(label[18]);
 
   s[16] = s[17] = s[18] = s[19] = 0 ;
-  for(int i=0 ; i<List_Nbr(Post_ViewList) ; i++){
+  for(i=0 ; i<List_Nbr(Post_ViewList) ; i++){
     Post_View *v = (Post_View*)List_Pointer(Post_ViewList, i);
     if(v->Visible){
       s[16] += v->NbSP + v->NbVP + v->NbTP;
@@ -462,7 +464,7 @@ void GUI::set_statistics(){
   sprintf(label[21], "%g", s[18]); stat_value[21]->value(label[21]);
   sprintf(label[22], "%g", s[19]); stat_value[22]->value(label[22]);
 
-  for(int i=0 ; i<23 ; i++)
+  for(i=0 ; i<23 ; i++)
     stat_value[16]->redraw();
 
 }
@@ -738,6 +740,7 @@ void GUI::create_general_options_window(){
 
 void GUI::create_geometry_options_window(){
   static int init_opt_geometry = 0;
+  int i;
 
   if(!init_opt_geometry){
     init_opt_geometry = 1 ;
@@ -777,7 +780,7 @@ void GUI::create_geometry_options_window(){
         geo_butt[7] = new Fl_Check_Button(2*WB+120, 2*WB+4*BH, 100, BH, "Volume numbers");
 	geo_butt[7]->callback(opt_geometry_num_cb, (void*)3);
 	geo_butt[7]->value(CTX.geom.volumes_num);
-	for(int i=0 ; i<8 ; i++){
+	for(i=0 ; i<8 ; i++){
 	  geo_butt[i]->type(FL_TOGGLE_BUTTON);
 	  geo_butt[i]->down_box(FL_DOWN_BOX);
 	  geo_butt[i]->labelsize(CTX.fontsize);
@@ -802,7 +805,7 @@ void GUI::create_geometry_options_window(){
 	geo_value[1]->step(0.1);
 	geo_value[1]->callback(opt_geometry_tangents_cb);
 	geo_value[1]->value(CTX.mesh.tangents);
-	for(int i=0 ; i<2 ; i++){
+	for(i=0 ; i<2 ; i++){
 	  geo_value[i]->labelsize(CTX.fontsize);
 	  geo_value[i]->type(FL_HORIZONTAL);
 	  geo_value[i]->align(FL_ALIGN_RIGHT);
@@ -840,6 +843,7 @@ void GUI::create_geometry_options_window(){
 
 void GUI::create_mesh_options_window(){
   static int init_opt_mesh = 0;
+  int i;
 
   if(!init_opt_mesh){
     init_opt_mesh = 1 ;
@@ -865,7 +869,7 @@ void GUI::create_mesh_options_window(){
         mesh_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Anisotropic");
 	mesh_butt[2]->callback(opt_mesh_algo_cb, (void*)0);
 	mesh_butt[2]->value(CTX.mesh.algo==DELAUNAY_NEWALGO);
-	for(int i=0 ; i<3 ; i++){
+	for(i=0 ; i<3 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
@@ -910,7 +914,7 @@ void GUI::create_mesh_options_window(){
         mesh_butt[10] = new Fl_Check_Button(2*WB+120, 2*WB+4*BH, 100, BH, "Volume Numbers");
 	mesh_butt[10]->callback(opt_mesh_entity_cb, (void*)3);
 	mesh_butt[10]->value(CTX.mesh.volumes_num);
-	for(int i=3 ; i<11 ; i++){
+	for(i=3 ; i<11 ; i++){
 	  mesh_butt[i]->type(FL_TOGGLE_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
@@ -934,7 +938,7 @@ void GUI::create_mesh_options_window(){
 	mesh_value[2]->step(1);
 	mesh_value[2]->callback(opt_mesh_normals_cb);
 	mesh_value[2]->value(CTX.mesh.normals);
-	for(int i=1 ; i<3 ; i++){
+	for(i=1 ; i<3 ; i++){
 	  mesh_value[i]->labelsize(CTX.fontsize);
 	  mesh_value[i]->type(FL_HORIZONTAL);
 	  mesh_value[i]->align(FL_ALIGN_RIGHT);
@@ -954,7 +958,7 @@ void GUI::create_mesh_options_window(){
         mesh_butt[13] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Solid");
 	mesh_butt[13]->callback(opt_mesh_aspect_cb, (void*)2);
 	mesh_butt[13]->value(CTX.mesh.shade);
-	for(int i=11 ; i<14 ; i++){
+	for(i=11 ; i<14 ; i++){
 	  mesh_butt[i]->type(FL_RADIO_BUTTON);
 	  mesh_butt[i]->down_box(FL_DOWN_BOX);
 	  mesh_butt[i]->labelsize(CTX.fontsize);
@@ -1265,6 +1269,7 @@ void GUI::create_about_window(){
 
 void GUI::create_view_window(){
   static int init_opt_view = 0;
+  int i;
 
   if(!init_opt_view){
     init_opt_view = 1 ;
@@ -1285,7 +1290,7 @@ void GUI::create_view_window(){
         view_butt[0] = new Fl_Check_Button(2*WB, 2*WB+BH, 100, BH, "Show color bar");
         view_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 100, BH, "Display time");
         view_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Transparent bar");
-	for(int i=0 ; i<3 ; i++){
+	for(i=0 ; i<3 ; i++){
 	  view_butt[i]->type(FL_TOGGLE_BUTTON);
 	  view_butt[i]->down_box(FL_DOWN_BOX);
 	  view_butt[i]->labelsize(CTX.fontsize);
@@ -1293,7 +1298,7 @@ void GUI::create_view_window(){
 	}
 	view_input[0] = new Fl_Input (2*WB, 2*WB+4*BH, IW, BH, "Title");
 	view_input[1] = new Fl_Input (2*WB, 2*WB+5*BH, IW, BH, "Format");
-	for(int i=0 ; i<2 ; i++){
+	for(i=0 ; i<2 ; i++){
 	  view_input[i]->labelsize(CTX.fontsize);
 	  view_input[i]->type(FL_HORIZONTAL);
 	  view_input[i]->align(FL_ALIGN_RIGHT);
@@ -1313,14 +1318,14 @@ void GUI::create_view_window(){
 
         view_value[0] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Min");
         view_value[1] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Max");
-	for(int i=0 ; i<2 ; i++){
+	for(i=0 ; i<2 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
 	  view_value[i]->align(FL_ALIGN_RIGHT);
 	}
 	view_butt[4] = new Fl_Check_Button(2*WB, 2*WB+4*BH, 100, BH, "Linear");
 	view_butt[5] = new Fl_Check_Button(2*WB, 2*WB+5*BH, 100, BH, "Logarithmic");
-	for(int i=4 ; i<6 ; i++){
+	for(i=4 ; i<6 ; i++){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
@@ -1343,7 +1348,7 @@ void GUI::create_view_window(){
 	view_butt[7] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 100, BH, "Filled iso-values");
 	view_butt[8] = new Fl_Check_Button(2*WB, 2*WB+4*BH, 100, BH, "Continuous map");
 	view_butt[9] = new Fl_Check_Button(2*WB, 2*WB+5*BH, 100, BH, "Numeric values");
-	for(int i=6 ; i<10 ; i++){
+	for(i=6 ; i<10 ; i++){
 	  view_butt[i]->type(FL_RADIO_BUTTON);
 	  view_butt[i]->labelsize(CTX.fontsize);
 	  view_butt[i]->selection_color(FL_YELLOW);
@@ -1358,7 +1363,7 @@ void GUI::create_view_window(){
 	view_value[3] = new Fl_Value_Input(2*WB, 2*WB+ BH, IW, BH, "X offset");
         view_value[4] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Y offset");
 	view_value[5] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Z offset");
-	for(int i=3 ; i<6 ; i++){
+	for(i=3 ; i<6 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
 	  view_value[i]->align(FL_ALIGN_RIGHT);
@@ -1373,7 +1378,7 @@ void GUI::create_view_window(){
 	view_value[6] = new Fl_Value_Input(2*WB, 2*WB+ BH, IW, BH, "X raise");
         view_value[7] = new Fl_Value_Input(2*WB, 2*WB+2*BH, IW, BH, "Y raise");
 	view_value[8] = new Fl_Value_Input(2*WB, 2*WB+3*BH, IW, BH, "Z raise");
-	for(int i=6 ; i<9 ; i++){
+	for(i=6 ; i<9 ; i++){
 	  view_value[i]->labelsize(CTX.fontsize);
 	  view_value[i]->type(FL_HORIZONTAL);
 	  view_value[i]->align(FL_ALIGN_RIGHT);

@@ -169,7 +169,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.57 2001-01-08 08:05:47 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.58 2001-01-09 19:40:56 remacle Exp $
 
 #include <stdarg.h>
 
@@ -227,7 +227,7 @@ static StringXString  *pStrCat;
 static StringXNumber  *pNumCat;
 static StringXColor   *pColCat;
 
-void CreateFile (char *name, int format);
+void CreateFile (char *name, int format){}
 
 char *strsave(char *ptr);
 void  yyerror (char *s);

@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.21 2001-01-08 08:05:40 geuzaine Exp $
+// $Id: Views.cpp,v 1.22 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Views.h"
@@ -148,14 +148,14 @@ void Stat_VectorSimplex(int nbnod, int N, double *V){
 }
 
 void Stat_TensorSimplex(int nbnod, int N, double *v){
-  Msg(ERROR, "Tensor Field Views not Implemented Yet");
+  Msg(GERROR, "Tensor Field Views not Implemented Yet");
 }
 
 void EndView(int AddInUI, int Number, char *FileName, char *Name, 
              double XOffset, double YOffset, double ZOffset){
   int i, nb;
   double d;
-  extern void AddViewInUI(int , char *, int);
+  extern int AddViewInUI(int , char *, int);
 
   // Points
 
@@ -491,7 +491,7 @@ void Read_View(FILE *file, char *filename){
     if (!strncmp(&str[1], "PostFormat", 10)){
       fscanf(file, "%lf %d %d\n", &version, &format, &size) ;
       if(version < 1.0){
-        Msg(ERROR, "The Version of this File is too old (%g < 1.0)", version);
+        Msg(GERROR, "The Version of this File is too old (%g < 1.0)", version);
         return;
       }
       if(size == sizeof(double))
@@ -499,7 +499,7 @@ void Read_View(FILE *file, char *filename){
       else if(size == sizeof(float))
 	Msg(DEBUG, "Data is in Single Precision Format (size==%d)", size);
       else{
-        Msg(ERROR, "Unknown Type of Data (Size = %d) in Post-Processing File", 
+        Msg(GERROR, "Unknown Type of Data (Size = %d) in Post-Processing File", 
 	    size);
         return;
       }
@@ -508,7 +508,7 @@ void Read_View(FILE *file, char *filename){
       else if(format == 1)
 	format = LIST_FORMAT_BINARY ;
       else{
-	Msg(ERROR, "Unknown Format for View");
+	Msg(GERROR, "Unknown Format for View");
 	return ;
       }
     }
@@ -598,7 +598,7 @@ void Read_View(FILE *file, char *filename){
 
     do {
       fgets(str, NAME_STR_L, file) ;
-      if (feof(file)) Msg(ERROR,"Prematured End of File");
+      if (feof(file)) Msg(GERROR,"Prematured End of File");
     } while (str[0] != '$') ;
 
   }   /* while 1 ... */

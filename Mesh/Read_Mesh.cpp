@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.5 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.6 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -131,7 +131,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
         for(i=0 ; i<Nbr_Nodes ; i++) {
           vertsp[i] = &verts[i];
           if(!(vertspp = (Vertex**)Tree_PQuery(M->Vertices, &vertsp[i])))
-            Msg(ERROR, "Unknown Vertex %d in Element %d", verts[i].Num, Num);
+            Msg(GERROR, "Unknown Vertex %d in Element %d", verts[i].Num, Num);
           else
             vertsp[i] = *vertspp;
         }
@@ -191,7 +191,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 
     do {
       fgets(String, 256, File_GEO) ;
-      if (feof(File_GEO)) Msg(ERROR, "Prematured End of Mesh File");
+      if (feof(File_GEO)) Msg(GERROR, "Prematured End of Mesh File");
     } while (String[0] != '$') ;
     
   }   

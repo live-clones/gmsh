@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.6 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.7 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -111,7 +111,7 @@ void Extrude_Simplex_Phase3 (void *data, void *dum){
   s = *pS;
 
   if(s->V[3] && !ep->mesh.Recombine){
-    Msg(ERROR, "Use '-recombine' to extrude with quadrangles");
+    Msg(GERROR, "Use '-recombine' to extrude with quadrangles");
   }
 
   k = 0;

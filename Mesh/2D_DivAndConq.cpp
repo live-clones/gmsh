@@ -1,4 +1,4 @@
-// $Id: 2D_DivAndConq.cpp,v 1.8 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_DivAndConq.cpp,v 1.9 2001-01-09 19:40:56 remacle Exp $
 
 /*
 
@@ -162,7 +162,7 @@ int Qtest(PointNumero h,PointNumero i,PointNumero j,PointNumero k){
   double xc,yc,rcarre,distca;
   
   if ((h == i) && (h == j) && (h == k)){
-    Msg(ERROR, "3 Points Identical in Qtest"); 
+    Msg(GERROR, "3 Points Identical in Qtest"); 
     return(0);  /* returning 1 will cause looping for ever */
   }
   if (CircumCircle( (double) pPointArray[h].where.h,

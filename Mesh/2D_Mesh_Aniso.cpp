@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.9 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.10 2001-01-09 19:40:56 remacle Exp $
 
 /*
    Jean-Francois Remacle
@@ -459,7 +459,7 @@ void CrSi_2D (void *a, void *b){
     List_Add (Simplexes_New, &s);
   }
   else if (S->NumFaceSimpl != 2){
-    Msg(ERROR, "Panic in CrSi_2D...");
+    Msg(GERROR, "Panic in CrSi_2D...");
   }
 }
 
@@ -677,7 +677,7 @@ void Convex_Hull_Mesh_2D (List_T * Points, Surface * s){
       } 
     */
     if (!THES){
-      Msg(ERROR, "Vertex (%g,%g,%g) in no Simplex",
+      Msg(GERROR, "Vertex (%g,%g,%g) in no Simplex",
           THEV->Pos.X, THEV->Pos.Y, THEV->Pos.Z);
       THEV->Pos.X += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;
       THEV->Pos.Y += CTX.mesh.rand_factor * LC2D * rand()/RAND_MAX;

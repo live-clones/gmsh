@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.12 2001-01-08 08:05:40 geuzaine Exp $
+// $Id: List.cpp,v 1.13 2001-01-09 19:40:56 remacle Exp $
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -104,7 +104,7 @@ void List_Read(List_T *liste, int index, void *data)
 void List_Write(List_T *liste, int index, void *data)
 {
   if ((index < 0) || (index >= liste->n))
-    Msg(ERROR, "Wrong List Index in List_Write");
+    Msg(GERROR, "Wrong List Index in List_Write");
   else{
     liste->isorder = 0;
     memcpy(&liste->array[index * liste->size],data,liste->size);
@@ -114,7 +114,7 @@ void List_Write(List_T *liste, int index, void *data)
 void List_Put(List_T *liste, int index, void *data)
 {
   if (index < 0)
-    Msg(ERROR, "Wrong List Index in List_Put");
+    Msg(GERROR, "Wrong List Index in List_Put");
   else{
     if (index >= liste->n) {
       liste->n = index + 1;
@@ -383,7 +383,7 @@ List_T *List_CreateFromFile(int n, int size, FILE *file, int format, int swap){
     else if(size == sizeof(int))
       for(i=0;i<n;i++) fscanf(file, "%d", (int*)&liste->array[i*size]) ;
     else{
-      Msg(ERROR, "Unknown Type of Data to Create List From");
+      Msg(GERROR, "Unknown Type of Data to Create List From");
       return NULL;
     }
     return liste;
@@ -392,7 +392,7 @@ List_T *List_CreateFromFile(int n, int size, FILE *file, int format, int swap){
     if(swap) swap_bytes(liste->array, size, n);
     return liste;
   default :
-    Msg(ERROR, "Unknown List Format");
+    Msg(GERROR, "Unknown List Format");
     return NULL;
   }
 
@@ -412,13 +412,13 @@ void List_WriteToFile(List_T *liste, FILE *file, int format){
     else if(liste->size == sizeof(int))
       for(i=0;i<n;i++) fprintf(file, "%d ", *((int*)&liste->array[i*liste->size])) ;
     else
-      Msg(ERROR, "Unknown Type of Data to Write List to File");
+      Msg(GERROR, "Unknown Type of Data to Write List to File");
     fprintf(file, "\n");
     break;
   case LIST_FORMAT_BINARY :
     fwrite(liste->array, liste->size, n, file);
     break;
   default :
-    Msg(ERROR, "Unknown List Format");
+    Msg(GERROR, "Unknown List Format");
   }
 }

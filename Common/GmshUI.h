@@ -1,6 +1,12 @@
 #ifndef _GMSH_UI_H_
 #define _GMSH_UI_H_
 
+#ifdef WIN32
+#include <windows.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif
+
 #if _XMOTIF // X11 Motif for Unix
 
 #include <X11/keysym.h>

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.13 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.14 2001-01-09 19:40:56 remacle Exp $
 
 /*
  
@@ -551,7 +551,7 @@ bool Bowyer_Watson (Mesh * m, Vertex * v, Simplex * S, int force){
     for (i = 0; i < List_Nbr (Simplexes_Destroyed); i++){
       List_Read (Simplexes_Destroyed, i, &s);
       if (!Tree_Suppress (m->Simplexes, &s))
-        Msg(ERROR, "Impossible to Delete Simplex");
+        Msg(GERROR, "Impossible to Delete Simplex");
       Free (s);
     }
     

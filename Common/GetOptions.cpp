@@ -1,11 +1,11 @@
-// $Id: GetOptions.cpp,v 1.1 2001-01-08 08:08:47 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.2 2001-01-09 19:40:56 remacle Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
 #include "Geo.h"
 #include "Mesh.h"
 #include "Views.h"
-#include "Version.h"
+#include "./Version.h"
 
 extern Context_T  CTX;
 

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.13 2001-01-08 08:05:42 geuzaine Exp $
+// $Id: CAD.cpp,v 1.14 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -1424,7 +1424,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
       ApplicationOnSurface(O.Num,matrix);
       break;
     default:
-      Msg(ERROR, "Impossible to Translate Entity %d (of Type %d)", 
+      Msg(GERROR, "Impossible to Translate Entity %d (of Type %d)", 
           O.Num, O.Type);
       break;
     }
@@ -1509,7 +1509,7 @@ void CopyShape(int Type, int Num, int *New){
     *New = news->Num;
     break;
   default:
-    Msg(ERROR, "Impossible to Copy the Entity %d (of Type %d)", Num, Type);
+    Msg(GERROR, "Impossible to Copy the Entity %d (of Type %d)", Num, Type);
     break;
   }
 }
@@ -1585,7 +1585,7 @@ void DeleteShape(int Type, int Num){
     DeleteSurf(Num);
     break;
   default:
-    Msg(ERROR, "Impossible to Delete the Entity %d (of Type %d)", Num, Type);
+    Msg(GERROR, "Impossible to Delete the Entity %d (of Type %d)", Num, Type);
     break;
   }
 }

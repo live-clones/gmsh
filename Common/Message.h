@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 #define FATAL          0  // Fatal error (causes Gmsh to exit)
-#define ERROR          1  // Error (but Gmsh can live with it)
+#define GERROR         1  // Error (but Gmsh can live with it)
 #define WARNING        2  // Warning
 #define INFOS          3  // Long informations
 #define INFO           4  // Small information in status bar

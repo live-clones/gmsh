@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.10 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.11 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -271,7 +271,7 @@ void add_msh_elements (Mesh * M){
       break;
       
     default :
-      Msg(ERROR, "Unknown Type of Physical Group");
+      Msg(GERROR, "Unknown Type of Physical Group");
       break;
     }
 

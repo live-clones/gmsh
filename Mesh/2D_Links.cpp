@@ -1,4 +1,4 @@
-// $Id: 2D_Links.cpp,v 1.5 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_Links.cpp,v 1.6 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -197,7 +197,7 @@ int CreateLinks(List_T * ListDelaunay , int NumDelaunay,
         else if (del_Pi->v.voisin3 == NULL)
           del_Pi->v.voisin3 = del_Pj;
         else
-          Msg(ERROR, "Bad Link in CreateLinks"); 
+          Msg(GERROR, "Bad Link in CreateLinks"); 
 
         if (del_Pj->v.voisin1 == NULL)
           del_Pj->v.voisin1 = del_Pi;
@@ -206,7 +206,7 @@ int CreateLinks(List_T * ListDelaunay , int NumDelaunay,
         else if (del_Pj->v.voisin3 == NULL)
           del_Pj->v.voisin3 = del_Pi;
         else
-          Msg(ERROR, "Bad Link in CreateLinks"); 
+          Msg(GERROR, "Bad Link in CreateLinks"); 
       }
       i+=2;
     }

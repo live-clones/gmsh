@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.3 2001-01-09 13:28:46 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.4 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -45,7 +45,7 @@ void CreateFile (char *name, int format) {
 
   case FORMAT_AUTO :
     if(strlen(name) < 4)
-      Msg(ERROR, "Unknown Extension for Automatic Format Detection");
+      Msg(GERROR, "Unknown Extension for Automatic Format Detection");
     else{
       strcpy(ext,name+(strlen(name)-4));
       if(!strcmp(ext,".geo")) CreateFile(name, FORMAT_GEO);
@@ -59,7 +59,7 @@ void CreateFile (char *name, int format) {
       else if(!strcmp(ext,".yuv")) CreateFile(name, FORMAT_YUV);
       else {
 	if(strlen(name) < 5)
-	  Msg(ERROR, "Unknown Extension for Automatic Format Detection");
+	  Msg(GERROR, "Unknown Extension for Automatic Format Detection");
 	else{
 	  strcpy(ext,name+(strlen(name)-5));
 	  if(!strcmp(ext,".jpeg")) CreateFile(name, FORMAT_JPEG);
@@ -101,7 +101,7 @@ void CreateFile (char *name, int format) {
     break;
 
 #endif
-
+#ifndef WIN32
   case FORMAT_JPEG :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 
@@ -115,7 +115,7 @@ void CreateFile (char *name, int format) {
     Msg (INFO, "Wrote File '%s'", name);
     fclose(fp);
     break;
-
+#endif
   case FORMAT_GIF :
     if(!(fp = fopen(name,"wb"))) {
       Msg(WARNING, "Unable to Open File '%s'", name); 

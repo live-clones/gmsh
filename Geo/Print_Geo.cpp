@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.11 2001-01-08 08:05:43 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.12 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -67,7 +67,7 @@ void Print_Curve(void *a, void *b){
     fprintf(FOUT,"CatmullRom (%d) = ",c->Num);
     break;
   default:
-    Msg(ERROR, "Unknown Curve Type %d", c->Typ);
+    Msg(GERROR, "Unknown Curve Type %d", c->Typ);
     return;
   }
   

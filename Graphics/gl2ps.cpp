@@ -1,4 +1,4 @@
-// $Id: gl2ps.cpp,v 1.5 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: gl2ps.cpp,v 1.6 2001-01-09 19:40:56 remacle Exp $
 
 /*
  * GL2PS, an OpenGL to Postscript Printing Library, version 0.31
@@ -24,7 +24,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <string.h>
 #include <sys/types.h>
 #include <malloc.h>

@@ -1,4 +1,4 @@
-// $Id: 3D_BGMesh.cpp,v 1.13 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 3D_BGMesh.cpp,v 1.14 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -20,7 +20,7 @@ void ExportLcFieldOnVolume (Mesh * M){
   FILE *f = fopen ("OutFile.pos", "w");
 
   if(!f){
-    Msg(ERROR, "Unable to Open File");
+    Msg(GERROR, "Unable to Open File");
     return;
   }
 
@@ -46,7 +46,7 @@ void ExportLcFieldOnSurfaces (Mesh * M){
   FILE *f = fopen ("OutFileS.pos", "w");
 
   if(!f){
-    Msg(ERROR, "Unable to Open File");
+    Msg(GERROR, "Unable to Open File");
     return;
   }
 
@@ -115,7 +115,7 @@ double Lc_XYZ (double X, double Y, double Z, Mesh * m){
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.2));
     else if (Pt_In_Volume (X, Y, Z, m, &l, 0.5));
     else{
-      Msg(ERROR, "Exterior Point (%g,%g,%g)", X, Y, Z);
+      Msg(GERROR, "Exterior Point (%g,%g,%g)", X, Y, Z);
       l = 1.e-25;
     }
     break;
@@ -342,7 +342,7 @@ int CreateBGM (Post_View * ErrView, int OptiMethod, double Degree,
   f = fopen (OutFile, "w");
 
   if(!f){
-    Msg(ERROR, "Unable to Open File '%s'", OutFile);
+    Msg(GERROR, "Unable to Open File '%s'", OutFile);
     return 0;
   }
 

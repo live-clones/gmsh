@@ -1,7 +1,9 @@
-// $Id: Message.cpp,v 1.2 2001-01-09 09:52:16 geuzaine Exp $
+// $Id: Message.cpp,v 1.3 2001-01-09 19:40:56 remacle Exp $
 
 #include <signal.h>
+#ifndef WIN32
 #include <sys/resource.h>
+#endif
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -64,7 +66,7 @@ void Msg(int level, char *fmt, ...){
     fprintf(stderr, "\n");
     abort = 1; 
     break;
-  case ERROR :
+  case GERROR :
     if(CTX.interactive || !CTX.command_win){
       fprintf(stderr, ERROR_STR);
       vfprintf(stderr, fmt, args); 
@@ -190,12 +192,17 @@ void Msg(int level, char *fmt, ...){
 /* ------------------------------------------------------------------------ */
 
 void GetResources(long *s, long *us, long *mem){
+#ifndef WIN32
   static struct rusage r;
 
   getrusage(RUSAGE_SELF,&r);
   *s   = (long)r.ru_utime.tv_sec ;
   *us  = (long)r.ru_utime.tv_usec ;
   *mem = (long)r.ru_maxrss ;
+#else
+  *s = *us = *mem = 0;
+#endif
+
 }
 
 void PrintResources(FILE *stream, char *fmt, long s, long us, long mem){

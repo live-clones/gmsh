@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.10 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.11 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -1207,7 +1207,7 @@ int Coherence (Volume * v, Mesh * m){
         pE1->V[0]->Num, pE1->V[1]->Num, List_Nbr(NewPoints));
 
     if (!List_Nbr (NewPoints))
-      Msg(ERROR, "Missing Edge Without Any Intersection (%g,%g,%g) (%g,%g,%g)",
+      Msg(GERROR, "Missing Edge Without Any Intersection (%g,%g,%g) (%g,%g,%g)",
           pE1->V[0]->Pos.X, pE1->V[0]->Pos.Y, pE1->V[0]->Pos.Z,
           pE1->V[1]->Pos.X, pE1->V[1]->Pos.Y, pE1->V[1]->Pos.Z);
     
@@ -1309,7 +1309,7 @@ int Coherence (Volume * v, Mesh * m){
       }
     }
     else{
-      Msg(ERROR, "*Unrecoverable* Face (%d <--> %d=2*(%d-1)-%d)",
+      Msg(GERROR, "*Unrecoverable* Face (%d <--> %d=2*(%d-1)-%d)",
           List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
       for (k = 0; k < List_Nbr (ListFaces); k++){
         List_Read (ListFaces, k, &Face);
@@ -1337,7 +1337,7 @@ int Coherence (Volume * v, Mesh * m){
   Impression_Resultats ();
 
   if (List_Nbr (MissingFaces) || List_Nbr (MissingEdges)){
-    Msg(ERROR, "Could not Restore all Edges/Faces");
+    Msg(GERROR, "Could not Restore all Edges/Faces");
     return 0;
   }
 

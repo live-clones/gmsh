@@ -1,4 +1,4 @@
-// $Id: 2D_BGMesh.cpp,v 1.5 2001-01-08 08:05:44 geuzaine Exp $
+// $Id: 2D_BGMesh.cpp,v 1.6 2001-01-09 19:40:56 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -20,7 +20,7 @@ double find_quality (MPoint center, DocRecord * BGMESH){
   double Exp = 2., r, deno, nume;
 
   if ((del = Find_Triangle (center, BGMESH, BOF)) == NULL){
-    Msg(ERROR, "Exterior Point (%g,%g)", center.v, center.h);
+    Msg(GERROR, "Exterior Point (%g,%g)", center.v, center.h);
     return 1.e-15;
   }
 

@@ -1,4 +1,4 @@
-// $Id: 3D_Divide.cpp,v 1.7 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: 3D_Divide.cpp,v 1.8 2001-01-09 19:40:56 remacle Exp $
 
 /* Routine de division des elements tetraedriques
    ou triangulaires
@@ -276,7 +276,7 @@ void cut_prism (Vertex * v1, Vertex * v2, Vertex * v3,
     
   }
   else{
-    Msg(ERROR, "Uncoherent Prism");
+    Msg(GERROR, "Uncoherent Prism");
   }
 }
 
@@ -454,7 +454,7 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       v7 = pI->s->V[3];
     }
     else{
-      Msg(ERROR, "Three Edges Cut Without Common Point!");
+      Msg(GERROR, "Three Edges Cut Without Common Point!");
       return;
     }
     
@@ -719,14 +719,14 @@ void cut_tetraedre (Intersection * pI, Tree_T * AddedTet, Tree_T * TetDel,
       v8 = pI->VE[3];
     }
     else{
-      Msg(ERROR, "Incoherent 4 Edges Intersection");
+      Msg(GERROR, "Incoherent 4 Edges Intersection");
       return;
     }
     cut_prism (v8, v4, v6, v7, v3, v5, newpoints, AddedTet);
     cut_prism (v2, v8, v7, v1, v6, v5, newpoints, AddedTet);
   }
   else{
-    Msg(ERROR, "Error On Cut %d %d %d", pI->NbVertex, pI->NbEdge, pI->NbFace);
+    Msg(GERROR, "Error On Cut %d %d %d", pI->NbVertex, pI->NbEdge, pI->NbFace);
   }
 }
 
