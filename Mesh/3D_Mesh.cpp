@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.18 2001-05-23 07:29:42 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.19 2001-06-06 21:29:58 remacle Exp $
 
 /*
  
@@ -855,7 +855,7 @@ void Maillage_Volume (void *data, void *dum){
       create_NXE (v->Vertices, v->Simplexes, tnxe);
       for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
         Tree_Action (tnxe, ActionLiss);
-      Tree_Delete (tnxe);
+      delete_NXE (tnxe);
       Msg(STATUS3, "Swapping edges (last pass)");
       SwapEdges3D (THEM, v, 0.5, true);
       */

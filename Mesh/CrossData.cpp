@@ -1,10 +1,27 @@
-// $Id: CrossData.cpp,v 1.4 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: CrossData.cpp,v 1.5 2001-06-06 21:29:58 remacle Exp $
 
 
 #include "Gmsh.h"
 #include "Mesh.h"
 
 Tree_T *TreeTemp;
+
+NXE::NXE()
+{
+  v = NULL;
+  Liste = NULL;
+}
+
+NXE::~NXE()
+{
+  //  if(Liste)List_Delete(Liste);
+}
+
+void Delete_NXE (void *data, void *dummy)
+{
+  NXE *pnxe = (NXE*)data;
+  if(pnxe->Liste)List_Delete(pnxe->Liste);
+}
 
 void AddTable (void *data, void *dummy){
   Simplex *s;
@@ -32,4 +49,9 @@ void create_NXE (Tree_T * TreeAllNod, Tree_T * TreeAllElg,
                  Tree_T * TreeAllNXE){
   TreeTemp = TreeAllNXE;
   Tree_Action (TreeAllElg, AddTable);
+}
+
+void delete_NXE (Tree_T * TreeAllNXE){
+  Tree_Action (TreeAllNXE, Delete_NXE);
+  Tree_Delete (TreeAllNXE);
 }

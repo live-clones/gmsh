@@ -1,4 +1,4 @@
-// $Id: Smoothing.cpp,v 1.4 2001-01-08 08:05:46 geuzaine Exp $
+// $Id: Smoothing.cpp,v 1.5 2001-06-06 21:29:58 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -50,24 +50,20 @@ void AmelioreSurface_EliminationTripet (Surface * surf, Mesh * m, Tree_T * tnxe)
 
 
 void ActionLiss (void *data, void *dummy){
-  static int deb = 1;
-  static List_T *nodes;
+  List_T *nodes;
 
   NXE *pnxe;
   Simplex *s;
   double X, Y, Z, Sum;
   int i, j;
 
-  if (deb){
-    deb = 0;
-    nodes = List_Create (2, 2, sizeof (Vertex *));
-  }
-  List_Reset (nodes);
+
   pnxe = (NXE *) data;
 
   /* On Ne Lisse Point Les Points sur les courbes (quelle horreur) */
   if (pnxe->v->ListCurves)
     return;
+  nodes = List_Create (2, 2, sizeof (Vertex *));
 
   X = Y = Z = Sum = 0.0;
   double volume_before = 0.0;
@@ -117,7 +113,7 @@ void ActionLiss (void *data, void *dummy){
     pnxe->v->Pos.Y = yold;
     pnxe->v->Pos.Z = zold;
   }
-  
+  List_Delete(nodes);
 }
 
 

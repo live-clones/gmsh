@@ -66,6 +66,7 @@ int CircumCircle(double x1,double y1,double x2,double y2,double x3,double y3,
 double find_quality (MPoint center, DocRecord * BGMESH);
 void create_NXE (Tree_T * TreeAllNod, Tree_T * TreeAllElg,
                  Tree_T * TreeAllNXE);
+void delete_NXE (Tree_T * TreeAllNXE);
 
 int Is_left_of(PointNumero x,PointNumero y,PointNumero check);
 int Is_right_of(PointNumero x,PointNumero y,PointNumero check);

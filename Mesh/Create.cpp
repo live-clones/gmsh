@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.18 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: Create.cpp,v 1.19 2001-06-06 21:29:58 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -370,7 +370,9 @@ void End_Curve (Curve * c){
     // c->end->lc = DMIN (R*Pi/(fabs(c->Circle.t1-c->Circle.t2)*CIRC_GRAN),c->end->lc);
     
   }
-  c->cp = (float *) malloc (4 * List_Nbr (c->Control_Points) * sizeof (float));
+  // MEMORY LEAK (JF)
+  if (c->cp) Free (c->cp);
+  c->cp = (float *) Malloc (4 * List_Nbr (c->Control_Points) * sizeof (float));
   for (i = 0; i < List_Nbr (c->Control_Points); i++){
     List_Read (c->Control_Points, i, &v[0]);
     c->cp[4 * i] = v[0]->Pos.X;
@@ -421,6 +423,7 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
                           {1, 0, 0, 0.0} };
 
   pC = (Curve *) Malloc (sizeof (Curve));
+  pC->cp = NULL;
   pC->Vertices = NULL;
   pC->Extrude = NULL;
   pC->Typ = Typ;
@@ -520,6 +523,8 @@ void Free_Curve(void *a, void *b){
     List_Delete(pC->TrsfSimplexes);
     Free(pC->k);
     List_Delete(pC->Control_Points);
+    // MEMORY_LEAK (JF)
+    Free(pC->cp);
     Free(pC);
     pC = NULL;
   }
@@ -556,7 +561,7 @@ void Free_Surface(void *a, void *b){
     Tree_Action(pS->Simplexes, Free_Simplex);
     Tree_Delete(pS->Simplexes);
     List_Delete(pS->TrsfSimplexes);
-    //Tree_Delete(pS->Vertices);//fait planter l'extrusion (1D-2D-1D boum)
+    Tree_Delete(pS->Vertices);//fait planter l'extrusion (1D-2D-1D boum)
                       //the vertices are freed globally before
     List_Delete(pS->TrsfVertices);
     List_Delete(pS->Contours);

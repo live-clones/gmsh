@@ -1,4 +1,4 @@
-// $Id: Edge.cpp,v 1.4 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: Edge.cpp,v 1.5 2001-06-06 21:29:58 remacle Exp $
 
 #include "Gmsh.h"
 #include "Mesh.h"
@@ -126,7 +126,16 @@ void EdgesContainer::AddTree (Tree_T * Simplexes, bool EdgesInVolume){
   List_Delete (temp);
 }
 
+void Free_Edge (void *a, void *b)
+{
+  Edge *e = (Edge*)a;
+  if(e->Liste)List_Delete(e->Liste);
+  if(e->Simplexes)List_Delete(e->Simplexes);
+  if(e->Points)List_Delete(e->Points);  
+}
+
 EdgesContainer::~EdgesContainer (){
+  Tree_Action (AllEdges,Free_Edge);
   Tree_Delete (AllEdges);
 }
 bool EdgesContainer::Search (Vertex * v1, Vertex * v2){

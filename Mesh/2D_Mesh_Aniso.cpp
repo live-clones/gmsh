@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh_Aniso.cpp,v 1.16 2001-06-06 15:30:18 remacle Exp $
+// $Id: 2D_Mesh_Aniso.cpp,v 1.17 2001-06-06 21:29:58 remacle Exp $
 
 /*
    Jean-Francois Remacle
@@ -239,6 +239,9 @@ void Box_2_Triangles (List_T * P, Surface * s){
         ps->S[j] = &MyNewBoundary;
     Tree_Replace (s->Simplexes, &ps);
   }
+  // MEMORY LEAK (JF)
+  List_Delete(smp);
+
 }
 
 
@@ -847,6 +850,11 @@ void Restore_Surface (Surface * s){
     List_Reset (ListCurves);
     List_Reset (StackSimp);
   }
+  // MEMORY LEAK (JF)
+  List_Delete (StackSimp);
+  List_Delete (ListCurves);
+  List_Delete (ListAllCurves);
+
 }
 
 void suppress_simplex_2D (void *data, void *dum){
@@ -1025,13 +1033,15 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
 
   Restore_Surface (s);
 
+  // MEMORY LEAK (JF)
+  Tree_Delete(FacesTree);
+
   Suppress = List_Create (10, 10, sizeof (Simplex *));
   Tree_Action (s->Simplexes, suppress_simplex_2D);
   for (i = 0; i < List_Nbr (Suppress); i++){
     Tree_Suppress (s->Simplexes, List_Pointer (Suppress, i));
   }
-  List_Delete (Suppress);
-  
+
   if(!Tree_Right (s->Simplexes, &simp))
     Msg(WARNING, "No simplex left");
   else{
@@ -1094,7 +1104,10 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
     List_Read (List, i, &THEV);
     if (THEV->Num < 0){
       Tree_Suppress (s->Vertices, &THEV);
-      //delete THEV;
+      // BUG BUG BUG BUG BUG BUG BUG BUG BUG BUG BUG BUG 
+      // MEMORY LEAK (JF) BUT THIS CAUSES PROBLEMS AFTER !!      
+      // Free(THEV);
+      // BUG BUG BUG BUG BUG BUG BUG BUG BUG BUG BUG BUG 
     }
   }
   List_Delete (List);
@@ -1109,5 +1122,15 @@ int AlgorithmeMaillage2DAnisotropeModeJF (Surface * s){
   //IntelligentSwapEdges(s,THEM->Metric);
 
   List_Delete (Points);
+
+
+  // WAS A MEMORY LEAK
+  for (i = 0; i < List_Nbr (Suppress); i++){
+    Free_Simplex(List_Pointer (Suppress, i),0);
+  }
+  List_Delete (Suppress);
+  
+
   return 1;
 }
+

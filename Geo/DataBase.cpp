@@ -1,4 +1,4 @@
-// $Id: DataBase.cpp,v 1.13 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: DataBase.cpp,v 1.14 2001-06-06 21:29:58 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -328,6 +328,10 @@ void Cdbz101(int izon, int typzon,int o1, int o2, int nbu, int nbv,
   else{
     Add_PhysicalGroup(izon,typzon,templist,THEM);
   }
+  
+  if(liste)List_Delete (templist);
+    
+
 }
 
 void CreateNurbsSurfaceSupport (int Num , int Order1, int Order2 ,

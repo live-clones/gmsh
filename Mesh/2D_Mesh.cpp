@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.26 2001-06-06 15:30:18 remacle Exp $
+// $Id: 2D_Mesh.cpp,v 1.27 2001-06-06 21:29:58 remacle Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -1102,7 +1102,8 @@ void Maillage_Surface (void *data, void *dum){
     create_NXE (s->Vertices, s->Simplexes, tnxe);
     for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
       Tree_Action (tnxe, ActionLiss);
-    Tree_Delete (tnxe);
+    // MEMORY LEAK (JF)
+    delete_NXE (tnxe);
   }
 
 

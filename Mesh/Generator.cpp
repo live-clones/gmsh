@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.18 2001-06-06 15:30:18 remacle Exp $
+// $Id: Generator.cpp,v 1.19 2001-06-06 21:29:58 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -88,7 +88,7 @@ void Maillage_Dimension_2 (Mesh * M){
 
   Tree_Action (M->Surfaces, Maillage_Surface);
 
-  t2 = Cpu();
+  t2 = Cpu();  
 
   M->Statistics[13] = t2 - t1;
 }
@@ -124,6 +124,8 @@ void Maillage_Dimension_3 (Mesh * M){
 
 void Init_Mesh (Mesh * M, int all){
   THEM = M;
+
+  ExitExtrude();
   
   if (M->Vertices){
     Tree_Action (M->Vertices, Free_Vertex);

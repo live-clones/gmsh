@@ -153,10 +153,13 @@ struct _MAILLAGE{
   int zone;
 };
 
-typedef struct{
+class NXE{
+  public :
   Vertex *v;
   List_T *Liste;
-}NXE;
+  ~NXE();
+  NXE();
+};
 
 typedef struct{
   int Num;              /* Numero                                       */
@@ -413,6 +416,7 @@ void Maillage_Volume (void *data, void *dum);
 int Extrude_Mesh (Curve * c);
 int Extrude_Mesh (Surface * s);
 int Extrude_Mesh (Volume * v);
+void ExitExtrude();
 
 int MeshTransfiniteSurface (Surface *sur);
 int MeshTransfiniteVolume (Volume *vol);

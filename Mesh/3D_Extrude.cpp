@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.8 2001-06-02 16:24:51 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.9 2001-06-06 21:29:58 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -16,6 +16,7 @@ static int TEST_IS_ALL_OK;
 static Surface *THES;
 static Volume *THEV;
 static ExtrudeParams *ep;
+static Tree_T *Vertex_Bound, *ToAdd = NULL;
 
 typedef struct{
   int a, b;
@@ -41,6 +42,15 @@ void InitExtrude (){
     Tree_Ares = Tree_Create (sizeof (nxn), compnxn);
   if (!Tree_Swaps)
     Tree_Swaps = Tree_Create (sizeof (nxn), compnxn);
+}
+
+/* MEMORY LEAK JF */
+void ExitExtrude (){
+  if (Tree_Ares)Tree_Delete(Tree_Ares);
+  if (Tree_Swaps)Tree_Delete(Tree_Swaps);
+  if(Vertex_Bound)Tree_Delete (Vertex_Bound);
+  Tree_Ares = Tree_Swaps = NULL;
+  ToAdd = Vertex_Bound = NULL;
 }
 
 int are_exist (Vertex * v1, Vertex * v2, Tree_T * t){
@@ -307,7 +317,6 @@ void Extrude_Simplex_Phase2 (void *data, void *dum){
   }
 }
 
-static Tree_T *Vertex_Bound, *ToAdd = NULL;
 
 void Extrude_Vertex (void *data, void *dum){
 
@@ -637,7 +646,6 @@ int Extrude_Mesh (Volume * v){
     }
 
     Extrude_Surface3 (s);
-    //Tree_Ares = Tree_Swaps = NULL;
     return true;
   }
   else{

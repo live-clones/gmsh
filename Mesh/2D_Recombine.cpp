@@ -1,4 +1,4 @@
-// $Id: 2D_Recombine.cpp,v 1.6 2001-06-03 11:19:52 geuzaine Exp $
+// $Id: 2D_Recombine.cpp,v 1.7 2001-06-06 21:29:58 remacle Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -98,7 +98,8 @@ int Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a){
       create_NXE(TreeAllVert,TreeAllElg,tnxe);
       for (int i = 0; i < CTX.mesh.nb_smoothing; i++)
 	Tree_Action(tnxe,ActionLissSurf);
-      Tree_Delete(tnxe);
+      // MEMORY LEAK (JF)
+      delete_NXE(tnxe);
     }
 
     /* Destruction */

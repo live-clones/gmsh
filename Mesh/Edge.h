@@ -23,6 +23,13 @@ public :
       Simplexes = NULL;
       Points = NULL;
     }
+  // MEMORY LEAK (JF)
+  ~Edge()
+    {
+      //if(Liste)List_Delete(Liste);
+      //if(Simplexes)List_Delete(Simplexes);
+      //if(Points)List_Delete(Points);
+    }
 };
 
 class EdgesContainer
