@@ -2,6 +2,49 @@
 #define _GMSH_BOOSTMATRIX_
 
 template <class SCALAR>
+class Gmsh_Vector
+{
+private:
+  int r;
+public:
+  inline int size() const {return r;}
+  SCALAR *data;
+  ~Gmsh_Vector() {delete [] data;}
+  Gmsh_Vector(int R)
+    : r(R)
+  {
+    data = new SCALAR [r];
+    scal(0);
+  }
+  Gmsh_Vector(const Gmsh_Vector<SCALAR> &other)
+    : r(other.r)
+  {
+    data = new double [r];
+    copy ( other.data ) ;
+  }
+  inline SCALAR operator () (int i) const
+  {
+    return data[i];
+  }
+  inline SCALAR & operator () (int i)
+  {
+    return data[i];
+  }
+  inline SCALAR operator *(const Gmsh_Vector<SCALAR> & other)
+  {
+    throw;
+  }
+  inline void scal ( const SCALAR s)
+  {
+    for (int i=0;i<r;++i)data[i]*=s;
+  }
+  inline void copy ( const SCALAR **other)
+  {
+    for (int i=0;i<r;++i)data[i]=other.data[i];
+  }
+};
+
+template <class SCALAR>
 class Gmsh_Matrix
 {
 private:
@@ -43,48 +86,13 @@ public:
   {
     for (int i=0;i<r*c;++i)data[i]=other.data[i];
   }
-};
-
-template <class SCALAR>
-class Gmsh_Vector
-{
-private:
-  int r;
-public:
-  inline int size() const {return r;}
-  SCALAR *data;
-  ~Gmsh_Vector() {delete [] data;}
-  Gmsh_Vector(int R)
-    : r(R)
-  {
-    data = new SCALAR [r];
-    scal(0);
-  }
-  Gmsh_Vector(const Gmsh_Vector<SCALAR> &other)
-    : r(other.r)
-  {
-    data = new double [r];
-    copy ( other.data ) ;
-  }
-  inline SCALAR operator () (int i) const
-  {
-    return data[i];
-  }
-  inline SCALAR & operator () (int i)
-  {
-    return data[i];
-  }
-  inline SCALAR operator *(const Gmsh_Vector<SCALAR> & other)
+  inline void mult(const Gmsh_Matrix<SCALAR> & x, const Gmsh_Matrix<SCALAR> & b)
   {
     throw;
   }
-  inline void scal ( const SCALAR s)
+  inline void mult (const Gmsh_Vector<SCALAR> & x, Gmsh_Vector<SCALAR> & b )
   {
-    for (int i=0;i<r;++i)data[i]*=s;
-  }
-  inline void copy ( const SCALAR **other)
-  {
-    for (int i=0;i<r;++i)data[i]=other.data[i];
+    throw;
   }
 };
 

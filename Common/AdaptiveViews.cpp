@@ -187,7 +187,7 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   std::set<_point>::iterator it  = _point::all_points.begin();
   std::set<_point>::iterator ite = _point::all_points.end();
 
-  clock_t c0 = clock();
+  double c0 = Cpu();
 
   const int N = _coefs->size1();
   Double_Vector val ( N ), res(_point::all_points.size());
@@ -208,7 +208,7 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   _Interpolate->mult(val,res);
   _Geometry->mult(xyz,XYZ);
   
-  clock_t c1 = clock();
+  double c1 = Cpu();
 
   int kk=0;
   for ( ; it !=ite ; ++it)
@@ -232,7 +232,7 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
       kk++;
     }
 
-  clock_t c2 = clock();
+  double c2 = Cpu();
 
   std::list<_triangle*>::iterator itt  = _triangle::all_triangles.begin();
   std::list<_triangle*>::iterator itte = _triangle::all_triangles.end();
@@ -248,7 +248,7 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
   else
     _triangle::Error ( max-min, tol );
  
-  clock_t c3 = clock();
+  double c3 = Cpu();
   itt  = _triangle::all_triangles.begin();
   for ( ;itt != itte ; itt++)
     {
@@ -272,12 +272,12 @@ void Adaptive_Post_View:: zoomElement (Post_View * view ,
 	  view->NbST++;
 	}
     }
-  clock_t c4 = clock();
+  double c4 = Cpu();
 
-  t0 += (double)(c1-c0)/CLOCKS_PER_SEC;
-  t1 += (double)(c2-c1)/CLOCKS_PER_SEC;
-  t2 += (double)(c3-c2)/CLOCKS_PER_SEC;
-  t3 += (double)(c4-c3)/CLOCKS_PER_SEC;
+  t0 += c1-c0;
+  t1 += c2-c1;
+  t2 += c3-c2;
+  t3 += c4-c3;
 
 }
 

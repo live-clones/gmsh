@@ -25,7 +25,8 @@
 #include "VertexArray.h"
 #include "SmoothNormals.h"
 #include "GmshMatrix.h"
-#include<list>
+#include <list>
+
 #define VIEW_NB_ELEMENT_TYPES  (8*3)
 #define VIEW_MAX_ELEMENT_NODES  8
 #define VAL_INF 1.e200
@@ -77,8 +78,7 @@ public:
 
   inline double V () const
   {
-    static const double THIRD = 1./3.;
-    return (p[0]->val + p[1]->val + p[2]->val)*THIRD;    
+    return (p[0]->val + p[1]->val + p[2]->val)/3.;    
   }
   void print ()
   {
