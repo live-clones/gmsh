@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.37 2001-10-29 08:52:20 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.38 2001-11-01 09:41:32 geuzaine Exp $
 
 /*
    Maillage Delaunay d'une surface (Point insertion Technique)
@@ -920,15 +920,13 @@ void Maillage_Surface (void *data, void *dum){
   }
 
   int TypSurface = s->Typ;
-  s->Typ = MSH_SURF_PLAN;
   Plan_Moyen (pS, dum);
-
   Tree_Action (THEM->Points, Freeze_Vertex);
   Tree_Action (s->Vertices, Freeze_Vertex);
   Tree_Action (THEM->Points, Projette_Plan_Moyen);
   Tree_Action (s->Vertices, Projette_Plan_Moyen);
   Tree_Action (THEM->Curves, ActionEndTheCurve);
-
+  s->Typ = MSH_SURF_PLAN;
   End_Surface (s);
 
   ori = Calcule_Contours (s);
