@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.10 2001-04-08 20:36:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.11 2001-04-14 06:55:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -69,12 +69,12 @@ void Init_Options(int num){
   CTX.mesh.vis_type = 0 ;
   CTX.mesh.draw = 1 ;  
   CTX.post.draw = 1 ;
+  CTX.threads_lock = 0 ; //very primitive locking during mesh generation
 
   // For motif versions only:
   CTX.overlay = 1 ;
   CTX.command_win = 0 ;
   CTX.threads = 1 ;
-  CTX.threads_lock = 0 ;
   CTX.font = "-*-helvetica-medium-r-*-*-*-*-*-*-*-*-*-*" ;
   CTX.fixed_font = "fixed" ;
 }

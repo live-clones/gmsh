@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.9 2001-03-18 13:57:12 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.10 2001-04-14 06:55:15 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -81,6 +81,11 @@ void MergeProblem(char *name){
 
 void OpenProblem(char *name){
   char ext[6];
+
+  if(CTX.threads_lock){
+    Msg(INFO, "I'm busy! Ask me that later...");
+    return;
+  }
   
   InitSymbols();
   Init_Mesh(&M, 1);
@@ -92,7 +97,8 @@ void OpenProblem(char *name){
   if(!strcmp(ext,".GEO") || 
      !strcmp(ext,".geo") || 
      //!strcmp(ext,".msh") || 
-     !strcmp(ext,".pos")){
+     !strcmp(ext,".pos")
+     ){
     CTX.basefilename[strlen(name)-4] = '\0';
   }
   else{

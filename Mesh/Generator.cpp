@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.12 2001-04-08 20:36:50 geuzaine Exp $
+// $Id: Generator.cpp,v 1.13 2001-04-14 06:55:15 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -25,7 +25,7 @@ void GetStatistics (double s[50]){
 void ApplyLcFactor_Point(void *a, void *b){
   Vertex *v = *(Vertex**)a;
   if(v->lc <= 0.0){
-    Msg(GERROR, "Wrong characteristic length (%g <= 0) for Point %d (defaulting to 1.0)",
+    Msg(GERROR, "Wrong characteristic length (%g <= 0) for Point %d, defaulting to 1.0",
         v->lc, v->Num);
     v->lc = 1.0 ;
   }
@@ -187,6 +187,13 @@ void mai3d (Mesh * M, int Asked){
   double t1, t2;
   int oldstatus;
 
+  if(CTX.threads_lock){
+    Msg(INFO, "I'm busy! Ask me that later...");
+    return;
+  }
+
+  CTX.threads_lock = 1 ;
+
   M->MeshParams.DelaunayAlgorithm = CTX.mesh.algo ;
   M->MeshParams.NbSmoothing = CTX.mesh.nb_smoothing ;
   M->MeshParams.InteractiveDelaunay = CTX.mesh.interactive ;
@@ -236,5 +243,7 @@ void mai3d (Mesh * M, int Asked){
     Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
     M->status = 3;
   }
+
+  CTX.threads_lock = 0 ;
 
 }

@@ -453,12 +453,12 @@ Line Loop(6023) = {-58,-6014,6007,6015};
 Ruled Surface(6024) = {6023};
 Line Loop(6025) = {6011,-59,-6015,6008};
 Ruled Surface(6026) = {6025};
-Line Loop(6027) = {-57,-6013,6009,6016};
-Ruled Surface(6028) = {6027};
+//Line Loop(6027) = {-57,-6013,6009,6016};
+//Ruled Surface(6028) = {6027};
 Line Loop(6029) = {-56,-6016,6010,6012};
 Ruled Surface(6030) = {6029};
 Surface Loop(6031) = {184,6020,6030,6028,6018,-6024,-6022,-6026};
-Complex Volume(6032) = {6031};
+//Complex Volume(6032) = {6031};
 
 
 AIR = 10000 ;
@@ -476,11 +476,10 @@ Physical Volume  (T1)      = 606;
 Physical Volume  (T2)      = 608;
 Physical Volume  (R1)      = 602;
 Physical Volume  (R2)      = 604;
-Physical Volume  (SOU)     = 6032;
+//Physical Volume  (SOU)     = 6032;
 
 Physical Surface (CLD0) = {231,229,223,237,227,
                            199,201,219,209,207,203,205,
                            180,182,188,176,178,174,172,
                            6026,6024,6028,6030};
 Physical Surface (CLTEM) = {211,6022};
-
