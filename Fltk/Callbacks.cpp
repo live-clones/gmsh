@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.234 2004-05-18 17:44:55 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.235 2004-05-18 18:00:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2172,7 +2172,7 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
 
   if(!strcmp(what, "Point")) {
     type = ENT_POINT;
-    str = "points";
+    str = "point";
     if(!opt_geometry_points(0, GMSH_GET, 0)) {
       opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2180,7 +2180,7 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   }
   else if(!strcmp(what, "Line")) {
     type = ENT_LINE;
-    str = "lines";
+    str = "line";
     if(!opt_geometry_lines(0, GMSH_GET, 0)) {
       opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2188,7 +2188,7 @@ static void _transform_point_line_surface(int transfo, int mode, char *what)
   }
   else {
     type = ENT_SURFACE;
-    str = "surfaces";
+    str = "surface";
     if(!opt_geometry_surfaces(0, GMSH_GET, 0)) {
       opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
       Draw();
@@ -2772,7 +2772,7 @@ void mesh_define_recombine_cb(CALLBACK_ARGS)
     Draw();
   }
 
-  Msg(ONSCREEN1, "Select surface");
+  Msg(ONSCREEN1, "Select surfaces");
   Msg(ONSCREEN2, "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
 
   n = 0;
