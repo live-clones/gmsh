@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.7 2004-06-01 03:36:28 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.8 2004-07-05 19:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -197,6 +197,7 @@ OctreePost::~OctreePost()
   Octree_Delete(TT);
   Octree_Delete(SS);
   Octree_Delete(VS);
+  Octree_Delete(TS);
 }
 
 OctreePost::OctreePost(Post_View *v) 
@@ -208,7 +209,7 @@ OctreePost::OctreePost(Post_View *v)
 		    v->BBox[3]-v->BBox[2],
 		    v->BBox[5]-v->BBox[4]};		    
   
-  ST = Octree_Create(2, min, size, 
+  ST = Octree_Create(1000, min, size, 
 		     PostTriangleBB,
 		     PostTriangleCentroid,
 		     PostTriangleInEle);
@@ -220,7 +221,7 @@ OctreePost::OctreePost(Post_View *v)
 		     PostTriangleInEle);
   addListOfStuff(VT, v->VT, 9 + 9 * v->NbTimeStep);
 
-  TT = Octree_Create(2, min, size, 
+  TT = Octree_Create(1000, min, size, 
 		     PostTriangleBB,
 		     PostTriangleCentroid,
 		     PostTriangleInEle);
@@ -237,12 +238,19 @@ OctreePost::OctreePost(Post_View *v)
 		     PostSimplexCentroid,
 		     PostSimplexInEle);
   addListOfStuff(VS, v->VS, 12 + 12 * v->NbTimeStep);
+
+  TS = Octree_Create(1000, min, size, 
+		     PostSimplexBB,
+		     PostSimplexCentroid,
+		     PostSimplexInEle);
+  addListOfStuff(TS, v->TS, 12 + 36 * v->NbTimeStep);
   
   Octree_Arrange(ST);
   Octree_Arrange(VT);
   Octree_Arrange(TT);
   Octree_Arrange(SS);
   Octree_Arrange(VS);
+  Octree_Arrange(TS);
 }
 
 bool OctreePost::searchVector(double x, 
