@@ -1,5 +1,7 @@
-// $Id: Callbacks.cpp,v 1.50 2001-05-04 20:16:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.51 2001-05-04 22:42:21 geuzaine Exp $
 
+#include <sys/types.h>
+#include <signal.h>
 #include <map>
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1306,46 +1308,47 @@ void mesh_define_transfinite_volume_cb(CALLBACK_ARGS){
 #include "Solvers.h"
 
 void getdp_cb(CALLBACK_ARGS){
+  char file[256];
   static int first=1;
   if(first){
     first = 0;
-    strcpy(GetDP_Info.file,CTX.basefilename);
-    strcat(GetDP_Info.file,".pro");
-    strcpy(GetDP_Info.mesh,"");
+    strcpy(file,CTX.basefilename);
+    strcat(file,".pro");
+    WID->getdp_input[0]->value(file);
   }
-  WID->getdp_value[0]->value(GetDP_Info.file);
-  GetDP(GetDP_Info.file);
+  GetDP((char*)WID->getdp_input[0]->value());
   WID->create_getdp_window();
 }
 void getdp_file_open_cb(CALLBACK_ARGS){
   char *newfile;
   newfile = fl_file_chooser("Open Problem Definition File", "*", NULL);
-  if (newfile != NULL) strcpy(GetDP_Info.file,newfile); 
-  WID->getdp_value[0]->value(GetDP_Info.file);
-  GetDP(GetDP_Info.file);
+  if (newfile != NULL){
+    WID->getdp_input[0]->value(newfile);
+    GetDP(newfile);
+  }
 }
 void getdp_file_edit_cb(CALLBACK_ARGS){
   char cmd[1000];
-  sprintf(cmd, CTX.editor, GetDP_Info.file);
+  sprintf(cmd, CTX.editor, WID->getdp_input[0]->value());
   Msg(INFO, "Starting text editor '%s'", cmd);
   system(cmd);
 }
 void getdp_choose_mesh_cb(CALLBACK_ARGS){
   char *newfile;
   newfile = fl_file_chooser("Open Mesh File", "*", NULL);
-  if (newfile != NULL) strcpy(GetDP_Info.mesh,newfile); 
-  WID->getdp_value[1]->value(GetDP_Info.mesh);
+  if (newfile != NULL) WID->getdp_input[1]->value(newfile);
 }
 void getdp_pre_cb(CALLBACK_ARGS){
   char arg[256];
   if(GetDP_Info.popupmessages) WID->create_message_window();
-  if(strlen(GetDP_Info.mesh))
+  if(strlen(WID->getdp_input[1]->value()))
     sprintf(arg, "%s -msh %s -pre %s", 
-	    GetDP_Info.file, GetDP_Info.mesh,
+	    WID->getdp_input[0]->value(),
+	    WID->getdp_input[1]->value(),
 	    GetDP_Info.res[WID->getdp_choice[0]->value()]);
   else
     sprintf(arg, "%s -pre %s", 
-	    GetDP_Info.file, 
+	    WID->getdp_input[0]->value(), 
 	    GetDP_Info.res[WID->getdp_choice[0]->value()]);
 
   GetDP(arg);
@@ -1353,35 +1356,42 @@ void getdp_pre_cb(CALLBACK_ARGS){
 void getdp_cal_cb(CALLBACK_ARGS){
   char arg[256];
   if(GetDP_Info.popupmessages) WID->create_message_window();
-  if(strlen(GetDP_Info.mesh))
-    sprintf(arg, "%s -msh %s -cal", GetDP_Info.file, GetDP_Info.mesh);
+  if(strlen(WID->getdp_input[1]->value()))
+    sprintf(arg, "%s -msh %s -cal", 
+	    WID->getdp_input[0]->value(),
+	    WID->getdp_input[1]->value());
   else
-    sprintf(arg, "%s -cal", GetDP_Info.file);
+    sprintf(arg, "%s -cal", WID->getdp_input[0]->value());
   GetDP(arg);
 }
 void getdp_post_cb(CALLBACK_ARGS){
   char arg[256];
   if(GetDP_Info.popupmessages) WID->create_message_window();
-  if(strlen(GetDP_Info.mesh))
+  if(strlen(WID->getdp_input[1]->value()))
     sprintf(arg, "%s -msh %s -bin -pos %s",
-	    GetDP_Info.file, GetDP_Info.mesh,
+	    WID->getdp_input[0]->value(),
+	    WID->getdp_input[1]->value(),
 	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
   else
     sprintf(arg, "%s -bin -pos %s",
-	    GetDP_Info.file,
+	    WID->getdp_input[0]->value(),
 	    GetDP_Info.postop[WID->getdp_choice[1]->value()]);
   GetDP(arg);
+}
+void getdp_kill_cb(CALLBACK_ARGS){
+  if(GetDP_Info.pid > 0) kill(GetDP_Info.pid, 9);
+  GetDP_Info.pid = -1;
 }
 void getdp_choose_command_cb(CALLBACK_ARGS){
   char *newfile;
   newfile = fl_file_chooser("Choose executable", "*", NULL);
-  if (newfile != NULL) WID->getdp_input[0]->value(newfile);
+  if (newfile != NULL) WID->getdp_input[2]->value(newfile);
 }
 void getdp_ok_cb(CALLBACK_ARGS){
   opt_solver_getdp_popupmessages(0, GMSH_SET, WID->getdp_butt[0]->value());
   opt_solver_getdp_mergeviews(0, GMSH_SET, WID->getdp_butt[1]->value());
 
-  opt_solver_getdp_command(0, GMSH_SET, (char*)WID->getdp_input[0]->value());
+  opt_solver_getdp_command(0, GMSH_SET, (char*)WID->getdp_input[2]->value());
 }
 
 

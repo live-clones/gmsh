@@ -13,10 +13,10 @@
 typedef struct{
   char command[256];
   int popupmessages, mergeviews;
+  int pid;
   int nbres, nbpostop;
   char res[100][100];
   char postop[100][100];
-  char file[256], mesh[256];
 } _GetDP_Info ;
 
 extern _GetDP_Info GetDP_Info ;

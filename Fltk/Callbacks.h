@@ -190,6 +190,7 @@ void getdp_choose_mesh_cb(CALLBACK_ARGS);
 void getdp_pre_cb(CALLBACK_ARGS);
 void getdp_cal_cb(CALLBACK_ARGS);
 void getdp_post_cb(CALLBACK_ARGS);
+void getdp_kill_cb(CALLBACK_ARGS);
 void getdp_choose_command_cb(CALLBACK_ARGS);
 void getdp_ok_cb(CALLBACK_ARGS);
 

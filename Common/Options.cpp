@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.16 2001-05-04 20:16:37 geuzaine Exp $
+// $Id: Options.cpp,v 1.17 2001-05-04 22:42:21 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -461,7 +461,7 @@ char * opt_solver_getdp_command(OPT_ARGS_STR){
   if(action & GMSH_SET) strcpy(GetDP_Info.command, val);
 #ifdef _FLTK
   if(WID && (action & GMSH_GUI))
-    WID->getdp_input[0]->value(GetDP_Info.command);
+    WID->getdp_input[2]->value(GetDP_Info.command);
 #endif
   return GetDP_Info.command;
 }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.68 2001-05-04 20:16:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.69 2001-05-04 22:42:21 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -2348,19 +2348,19 @@ void GUI::create_getdp_window(){
   if(!init_getdp_window){
     init_getdp_window = 1 ;
 
-    int width = 24*CTX.fontsize;
-    int height = 5*WB+9*BH  + WB;
+    int width = 5*BB+6*WB;
+    int height = 10*WB+ 8*BH  ;
     
     getdp_window = new Fl_Window(width,height);
     getdp_window->box(WINDOW_BOX);
     getdp_window->label("GetDP Solver");
     { 
-      Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-BH);
+      Fl_Tabs* o = new Fl_Tabs(WB, WB, width-2*WB, height-3*WB-1*BH);
       { 
 	g[0] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "General");
 	g[0]->labelsize(CTX.fontsize);
 
-	getdp_value[0] = new Fl_Output(2*WB, 2*WB+1*BH, BW, BH, "Problem");
+	getdp_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, BW, BH, "Problem");
 	Fl_Button *b1 = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
 	b1->callback(getdp_file_open_cb);
 	b1->labelsize(CTX.fontsize);
@@ -2371,17 +2371,15 @@ void GUI::create_getdp_window(){
 	getdp_choice[0] = new Fl_Choice(2*WB, 4*WB+3*BH, BW, BH,"Resolution");
 	getdp_choice[1] = new Fl_Choice(2*WB, 5*WB+4*BH, BW, BH,"PostOperation");
 
-	getdp_value[1] = new Fl_Output(2*WB, 6*WB+5*BH, BW, BH, "Mesh");
+	getdp_input[1] = new Fl_Input(2*WB, 6*WB+5*BH, BW, BH, "Mesh");
 	Fl_Button *b3 = new Fl_Button(2*WB, 7*WB+6*BH, BB, BH, "Choose");
 	b3->callback(getdp_choose_mesh_cb);
 	b3->labelsize(CTX.fontsize);
 
 	for(i=0 ; i<2 ; i++){
-	  getdp_value[i]->labelsize(CTX.fontsize);
-	  getdp_value[i]->textsize(CTX.fontsize);
-	  getdp_value[i]->type(FL_HORIZONTAL);
-	  getdp_value[i]->align(FL_ALIGN_RIGHT);
-	  getdp_value[i]->value(0);
+	  getdp_input[i]->labelsize(CTX.fontsize);
+	  getdp_input[i]->textsize(CTX.fontsize);
+	  getdp_input[i]->align(FL_ALIGN_RIGHT);
 	}
 	for(i=0 ; i<2 ; i++){
 	  getdp_choice[i]->textsize(CTX.fontsize);
@@ -2395,10 +2393,7 @@ void GUI::create_getdp_window(){
 	g[1] = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Options");
 	g[1]->labelsize(CTX.fontsize);
 
-	getdp_input[0] = new Fl_Input(2*WB, 2*WB+1*BH, BW, BH, "Command");
-	getdp_input[0]->labelsize(CTX.fontsize);
-	getdp_input[0]->textsize(CTX.fontsize);
-	getdp_input[0]->align(FL_ALIGN_RIGHT);
+	getdp_input[2] = new Fl_Input(2*WB, 2*WB+1*BH, BW, BH, "Command");
 	Fl_Button *b = new Fl_Button(2*WB, 3*WB+2*BH, BB, BH, "Choose");
 	b->callback(getdp_choose_command_cb);
 	b->labelsize(CTX.fontsize);
@@ -2407,6 +2402,10 @@ void GUI::create_getdp_window(){
 					    "Automatic message display");
 	getdp_butt[1] = new Fl_Check_Button(2*WB, 4*WB+4*BH, BW, BH, 
 					    "Automatic view merge");
+
+	getdp_input[2]->labelsize(CTX.fontsize);
+	getdp_input[2]->textsize(CTX.fontsize);
+	getdp_input[2]->align(FL_ALIGN_RIGHT);
 	for(i=0 ; i<2 ; i++){
 	  getdp_butt[i]->type(FL_TOGGLE_BUTTON);
 	  getdp_butt[i]->down_box(FL_DOWN_BOX);
@@ -2420,23 +2419,29 @@ void GUI::create_getdp_window(){
 
         g[0]->end();
       }
+
       o->end();
     }
 
     { 
-      Fl_Button* o = new Fl_Button(width-4*BB-4*WB, height-BH-WB, BB, BH, "Pre");
+      Fl_Button* o = new Fl_Button(width-5*BB-5*WB, height-BH-WB, BB, BH, "Pre");
       o->labelsize(CTX.fontsize);
       o->callback(getdp_pre_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "Cal");
+      Fl_Button* o = new Fl_Button(width-4*BB-4*WB, height-BH-WB, BB, BH, "Cal");
       o->labelsize(CTX.fontsize);
       o->callback(getdp_cal_cb);
     }
     { 
-      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Post");
+      Fl_Button* o = new Fl_Button(width-3*BB-3*WB, height-BH-WB, BB, BH, "Post");
       o->labelsize(CTX.fontsize);
       o->callback(getdp_post_cb);
+    }
+    { 
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Kill");
+      o->labelsize(CTX.fontsize);
+      o->callback(getdp_kill_cb);
     }
     { 
       Fl_Button* o = new Fl_Button(width-BB-WB, height-BH-WB, BB, BH, "Cancel");

@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.4 2001-05-04 13:54:03 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.5 2001-05-04 22:42:21 geuzaine Exp $
 
 #include "Gmsh.h"
 
@@ -43,7 +43,7 @@ extern GUI       *WID;
 _GetDP_Info GetDP_Info ;
 
 int GetDP(char *args){
-  int sock, type, i, n ;
+  int sock, type, i, n;
   char progname[1000], sockname[1000], str[1000];
 
   GET_PATH(sockname);
@@ -56,12 +56,16 @@ int GetDP(char *args){
     return 0;
   }
 
+  Socket_ReceiveInt(sock, &GetDP_Info.pid);
+
   Msg(INFO, "GetDP start (%s)", progname);
 
   GetDP_Info.nbres = 0;
   GetDP_Info.nbpostop = 0;
 
   while(1){
+    if(GetDP_Info.pid < 0) break;
+
     Socket_ReceiveInt(sock, &type);
 
     if(type == GETDP_END) break;
@@ -112,9 +116,11 @@ int GetDP(char *args){
     WID->getdp_choice[1]->value(0);
   }
 
-  Msg(STATUS3N, "");
+  Msg(STATUS3N, "Ready");
 
   Socket_StopProgram(progname, sockname, sock);
+
+  GetDP_Info.pid = -1;
 
   Msg(INFO, "GetDP stop (%s)", progname);
 
