@@ -1,4 +1,4 @@
-// $Id: Eigenvectors.cpp,v 1.1 2004-12-10 03:35:29 geuzaine Exp $
+// $Id: Eigenvectors.cpp,v 1.2 2004-12-10 03:42:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -64,8 +64,8 @@ void GMSH_EigenvectorsPlugin::getInfos(char *author, char *copyright, char *help
 	 "If `ScaleByEigenvalues' is set, each\n"
 	 "eigenvector is scaled by its associated\n"
 	 "eigenvalue. The plugin gives an error if\n"
-	 "the eigenvalues are complex. If `iView'\n"
-	 "< 0, the plugin is on the current view.\n"
+	 "the eigenvectors are complex. If `iView'\n"
+	 "< 0, the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(Eigenvectors) creates three new\n"
 	 "vector views.\n");

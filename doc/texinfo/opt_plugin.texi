@@ -199,8 +199,8 @@ the value of the associated eigenvalues.
 If `ScaleByEigenvalues' is set, each
 eigenvector is scaled by its associated
 eigenvalue. The plugin gives an error if
-the eigenvalues are complex. If `iView'
-< 0, the plugin is on the current view.
+the eigenvectors are complex. If `iView'
+< 0, the plugin is run on the current view.
 
 Plugin(Eigenvectors) creates three new
 vector views.
