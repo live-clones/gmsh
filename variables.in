@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.8 2003-03-21 00:52:34 geuzaine Exp $
+# $Id: variables.in,v 1.9 2003-11-20 20:26:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -22,9 +22,15 @@
 # OS
 UNAME=@UNAME@
 
-# The names of the C and C++ compilers and linker
+# The names of the C and C++ compilers
 CC=@CC@
 CXX=@CXX@
+
+# If you need to link to dynamic libraries installed in non-standard
+# locations and are using the GNU linker, you may want to add
+# '-Wl,--rpath,/path/to/dynamic/library' to the 'LINKER' variable
+# below. Alternatively, you could edit the 'LD_LIBARY_PATH'
+# environement variable or use the 'ldconfig' program.
 LINKER=@LINKER@
 
 # Compiler flags
