@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.62 2003-06-15 16:37:20 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.63 2003-06-15 16:43:32 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -3210,8 +3210,8 @@ files that produce the bug. Don't forget to mention both the version of Gmsh
 and the version of your operation system (@pxref{Command-line options} to
 see how to get this information).
 
-See the @file{TODO} file in the distribution to check the problems we
-already know about.
+See the @file{FAQ} and @file{TODO} files in the distribution to check the
+problems we already know about.
 
 @c -------------------------------------------------------------------------
 @c Versions

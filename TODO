@@ -1,4 +1,9 @@
-$Id: TODO,v 1.21 2003-06-14 17:28:02 geuzaine Exp $
+$Id: TODO,v 1.22 2003-06-15 16:43:32 geuzaine Exp $
+
+********************************************************************
+
+Document the 2nd order elements in "msh file format" and "node
+ordering".
 
 ********************************************************************
 
