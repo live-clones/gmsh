@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.50 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: Views.cpp,v 1.51 2001-08-15 06:56:22 geuzaine Exp $
 
 #include <set>
 #include "Gmsh.h"
@@ -661,6 +661,7 @@ public:
   static double eps;
   void update (int nbVals, double *);
   xyzv(double x, double y, double z);
+  xyzv(double x, double y, double z, double* v);
   ~xyzv();
   xyzv & operator = ( const xyzv &);
   xyzv ( const xyzv &);
@@ -670,6 +671,9 @@ double xyzv::eps = 0.0;
 
 xyzv::xyzv (double xx, double yy, double zz) 
   : x(xx),y(yy),z(zz),vals(0),nbvals(0),nboccurences(0){}
+
+xyzv::xyzv (double xx, double yy, double zz, double *vv) 
+  : x(xx),y(yy),z(zz),vals(vv),nbvals(0),nboccurences(0){}
 
 xyzv::~xyzv(){
   if(vals)delete [] vals;
@@ -738,6 +742,38 @@ struct lessthanxyzv{
     return false;  
   }
 };
+/*
+double angle (double * aa, double * bb){
+  double angplan, cosc, sinc, a[3],b[3],c[3];
+  if(!aa || !bb) return 0.;
+  a[0] = aa[0];
+  a[1] = aa[1];
+  a[2] = aa[2];
+  b[0] = bb[0];
+  b[1] = bb[1];
+  b[2] = bb[2];
+  norme (a);
+  norme (b);
+  prodve (a, b, c);
+  prosca (a, b, &cosc);
+  sinc = sqrt (c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+  angplan = myatan2 (sinc, cosc);
+  return angplan*180./Pi;
+}
+struct lessthanxyzv{
+  bool operator () (const xyzv & p2, const xyzv &p1) const{
+    if( p1.x - p2.x > xyzv::eps)return true;
+    if( p1.x - p2.x <-xyzv::eps)return false;
+    if( p1.y - p2.y > xyzv::eps)return true;
+    if( p1.y - p2.y <-xyzv::eps)return false;
+    if( p1.z - p2.z > xyzv::eps)return true;
+    if( p1.z - p2.z <-xyzv::eps)return false;
+    double a = angle(p1.vals,p2.vals);
+    if( a < 30 ) return true;
+    return false;
+  }
+};
+*/
 
 typedef set<xyzv,lessthanxyzv> mycont;
 typedef mycont::const_iterator iter;
@@ -844,7 +880,30 @@ void Post_View :: add_normal(double x, double y, double z,
     xx->update(3,n);
   }
 }
+/*
+void Post_View :: add_normal(double x, double y, double z, 
+			     double nx, double ny, double nz){
+  if(!normals) normals = new smooth_container;
+  double *n = new double[3];
+  n[0] = nx;
+  n[1] = ny;
+  n[2] = nz;
+  xyzv xyz(x,y,z,n);
+  iter it = normals->c.find(xyz);
 
+  xyzv xyz2(x,y,z);
+  double n2[3]={nx,ny,nz};
+
+  if(it == normals->c.end()){
+    xyz2.update(3,n2);
+    normals->c.insert(xyz2);
+  }
+  else{
+    xyzv *xx = (xyzv*) &(*it); 
+    xx->update(3,n);
+  }
+}
+*/
 bool Post_View :: get_normal(double x, double y, double z, 
 			     double &nx, double &ny, double &nz){
   if(!normals) return false;
