@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.240 2002-11-10 18:16:11 geuzaine Exp $
+# $Id: Makefile,v 1.241 2002-11-11 17:50:57 geuzaine Exp $
 
 GMSH_MAJOR_VERSION = 1
 GMSH_MINOR_VERSION = 35
@@ -608,6 +608,7 @@ minizip:
 # Add doc/COPYING as soon as we are GPL'ed
 
 distrib:
+	rm -rf gmsh-$(GMSH_RELEASE)
 	mkdir gmsh-$(GMSH_RELEASE)
 	strip $(GMSH_BIN_DIR)/gmsh
 	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)
@@ -622,7 +623,6 @@ distrib:
 	tar cvf gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar gmsh-$(GMSH_RELEASE)
 	gzip gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar
 	mv gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tar.gz gmsh-$(GMSH_RELEASE)-$(GMSH_UNAME).tgz
-	rm -rf gmsh-$(GMSH_RELEASE)
 
 distrib-win:
 	strip $(GMSH_BIN_DIR)/gmsh.exe
@@ -646,38 +646,41 @@ distrib-win:
 	rm -rf ../gmsh-distrib/demos
 
 distrib-mac:
-	rm -rf Gmsh.app
-	mkdir Gmsh.app
-	mkdir Gmsh.app/Contents
-	mkdir Gmsh.app/Contents/Resources
-	mkdir Gmsh.app/Contents/MacOS
-	echo "APPLGMSH" > Gmsh.app/Contents/PkgInfo 
+	rm -rf gmsh-$(GMSH_RELEASE)
+	mkdir gmsh-$(GMSH_RELEASE)
+	mkdir gmsh-$(GMSH_RELEASE)/Gmsh.app
+	mkdir gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents
+	mkdir gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/Resources
+	mkdir gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/MacOS
+	echo "APPLGMSH" > gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/PkgInfo 
 	echo -e "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
-	  "<!DOCTYPE plist SYSTEM \"file://localhost/System/Library/DTDs/PropertyList.dtd\">\n"\
-	  "<plist version=\"0.9\">\n"\
-	  "  <dict>\n"\
-	  "    <key>CFBundleName</key><string>Gmsh</string>\n"\
-          "    <key>CFBundleExecutable</key><string>Gmsh</string>\n"\
-	  "    <key>CFBundlePackageType</key><string>APPL</string>\n"\
-	  "    <key>CFBundleVersion</key><string>$(GMSH_RELEASE)</string>\n"\
-	  "    <key>CFBundleShortVersionString</key><string>$(GMSH_RELEASE)</string>\n"\
-	  "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
-	  "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
-	  "    <key>CFBundleGetInfoString</key><string>Gmsh $(GMSH_RELEASE),"\
-                 "(c) C. Geuzaine and J.-F. Remacle, 1997-2002</string>\n"\
-	  "    <key>CFAppleHelpAnchor</key><string>tutorial/tutorial</string>\n"\
-          "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
-	  "  </dict>\n"\
-	  "</plist>" > Gmsh.app/Contents/Info.plist
+        "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\""\
+                              " \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"\
+        "<plist version=\"1.0\">\n"\
+        "  <dict>\n"\
+        "    <key>CFBundleName</key><string>Gmsh</string>\n"\
+        "    <key>CFBundleExecutable</key><string>Gmsh</string>\n"\
+        "    <key>CFBundlePackageType</key><string>APPL</string>\n"\
+        "    <key>CFBundleVersion</key><string>$(GMSH_RELEASE)</string>\n"\
+        "    <key>CFBundleShortVersionString</key><string>$(GMSH_RELEASE)</string>\n"\
+        "    <key>CFBundleIconFile</key><string>gmsh.icns</string>\n"\
+        "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
+        "    <key>CFBundleGetInfoString</key><string>Gmsh $(GMSH_RELEASE),"\
+              "(c) C. Geuzaine and J.-F. Remacle, 1997-2002</string>\n"\
+        "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
+        "    <key>NSHelpFile</key><string>tutorial.html</string>\n"\
+        "  </dict>\n"\
+        "</plist>" > gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/Info.plist
 	strip $(GMSH_BIN_DIR)/gmsh
-	cp $(GMSH_BIN_DIR)/gmsh Gmsh.app/Contents/MacOS/Gmsh
-	cp Fltk/MacIcons.icns Gmsh.app/Contents/Resources/gmsh.icns
+	cp $(GMSH_BIN_DIR)/gmsh gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/MacOS/Gmsh
+	cp Fltk/MacIcons.icns gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/Resources/gmsh.icns
+	cp tutorial/tutorial.html gmsh-$(GMSH_RELEASE)/Gmsh.app/Contents/Resources
 	cp -R doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS doc/gmsh.1\
-              tutorial demos Gmsh.app/Contents/Resources
-	rm -rf Gmsh.app/Contents/Resources/*/CVS\
-               Gmsh.app/Contents/Resources/*/*~\
-               Gmsh.app/Contents/Resources/*/*.msh
-	tar zcvf gmsh-$(GMSH_RELEASE)-MacOSX.tgz Gmsh.app
+              tutorial demos gmsh-$(GMSH_RELEASE)
+	rm -rf gmsh-$(GMSH_RELEASE)/*/CVS\
+               gmsh-$(GMSH_RELEASE)/*/*~\
+               gmsh-$(GMSH_RELEASE)/*/*.msh
+	tar zcvf gmsh-$(GMSH_RELEASE)-MacOSX.tgz gmsh-$(GMSH_RELEASE)
 
 dem:
 	gtar zcvf gmsh-demos.tgz $(GMSH_DEMO_DIR)
