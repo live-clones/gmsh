@@ -204,6 +204,11 @@ Display mesh vertices (nodes)?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.PointsPerElement
+Display mesh nodes per element (slower, but permits to visualize only a subset of the nodes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PointInsertion
 Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=cog)@*
 Default value: @code{1}@*
