@@ -78,6 +78,7 @@ public:
     // non-singular jacobians, so that we can simply invert them with
     // inv3x3
     Msg(GERROR, "getInverseJacibian not done yet");
+    return 0.;
   }
   double interpolate(double val[], double u, double v, double w, int stride=1)
   {

@@ -1,4 +1,4 @@
-// $Id: EigSolve.cpp,v 1.3 2004-12-14 20:05:43 geuzaine Exp $
+// $Id: EigSolve.cpp,v 1.4 2004-12-22 17:49:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -706,7 +706,7 @@ int EigSolveSym(int n,int nm,double *A,double *d,double *V,
 {
   static const int NSWMAX = 50;
 
-  int i,j,k,ii,ij,ik,ki=0,kj=0,kki,kkj,ival,jval;
+  int i,j,k,ii,ij,ki=0,kj=0,kki,kkj,ival,jval;
   int nrot,nsweep;
   double c,g,h,s,t,tau,theta,tresh,sum;
 

@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.9 2004-12-21 20:23:15 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.10 2004-12-22 17:49:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -628,8 +628,8 @@ void SetVisibilityByNumber(int num, int type, int mode)
     List_Delete(tmp);
     if(found)
       break;
-    // in volumes (this tricky, since V->Simplexes contains the
-    // simplxes ordered by qualityad not by number; so we use the
+    // in volumes (this is tricky, since V->Simplexes contains the
+    // simplexes ordered by quality and not by number; so we use the
     // global tree of simplexes here)
     if((pS = (Simplex **) Tree_PQuery(THEM->Simplexes, &S))) {
       (*pS)->Visible = mode;

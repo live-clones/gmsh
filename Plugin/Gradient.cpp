@@ -1,4 +1,4 @@
-// $Id: Gradient.cpp,v 1.2 2004-11-26 16:16:39 geuzaine Exp $
+// $Id: Gradient.cpp,v 1.3 2004-12-22 17:49:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -96,8 +96,8 @@ static void computeGradient(List_T *inList, int inNb,
   outNb = outNbVector;
   outList = outListVector;
 
-  int MAX_NOD = 4; 
-  int MAX_COMP= 3;
+  const int MAX_NOD = 4; 
+  const int MAX_COMP= 3;
 
   int nb = List_Nbr(inList) / inNb;
   
