@@ -1,4 +1,4 @@
-$Id: FORMATS,v 1.10 2001-10-31 08:34:19 geuzaine Exp $
+$Id: FORMATS,v 1.11 2002-07-15 18:21:27 geuzaine Exp $
 
 This document describes the version 1.1 of Gmsh's mesh and
 post-processing file formats
@@ -55,7 +55,7 @@ multiple) post-processing views (enclosed between $View/$EndView
 pairs).
 
     $PostFormat
-    version-number file-type data-size
+    1.1 file-type data-size
     $EndPostFormat
     $View
     view-name nb-time-steps
@@ -80,9 +80,6 @@ pairs).
     text2d ... text2d-chars ...
     text3d ... text3d-chars ...
     $endView
-
-version-number is a floating point number giving the version of
-the file format (e.g. 1.1).
 
 file-type is an integer equal to 0 in the ASCII file format.
 
