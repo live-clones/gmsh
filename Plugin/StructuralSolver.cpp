@@ -184,8 +184,10 @@ void Structural_BeamSection ::  GL_DrawBeam (double pinit[3], double dir[3], con
   List_T *surfaces = Tree2List (m.Surfaces);
   List_T *curves = Tree2List (m.Curves);
   List_T *points = Tree2List (m.Points);
-  glEnable(GL_POLYGON_OFFSET_FILL);
-  if(CTX.geom.light) glEnable(GL_LIGHTING);
+  if(CTX.geom.light) 
+    glEnable(GL_LIGHTING);
+  if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+    glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   glEnable( GL_TEXTURE_2D );  
@@ -773,10 +775,11 @@ void Draw_Kinematic_Constraint ( const int type [3],
       return;
     }
 
-  if(CTX.geom.light) glEnable(GL_LIGHTING);
+  if(CTX.geom.light)
+    glEnable(GL_LIGHTING);
+  if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+    glEnable(GL_POLYGON_OFFSET_FILL);
 
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glEnable(GL_POLYGON_OFFSET_FILL);
   glColor3f    (0.8,0.8,0.8);
   
   glBegin(GL_QUADS);

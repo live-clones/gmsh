@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.69 2004-12-29 22:30:09 geuzaine Exp $
+// $Id: Draw.cpp,v 1.70 2004-12-31 21:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,12 @@ extern Mesh M;
 
 void Draw3d(void)
 {
-  glPolygonOffset(1.0, 1.0);
+  // offset = factor*DZ+r*units, where DZ is a measurement of the
+  // change in depth relative to the screen area of the polygon, and r
+  // is the smallest value that is guaranteed to produce a resolvable
+  // offset for a given implementation:
+  glPolygonOffset(CTX.polygon_offset_factor, CTX.polygon_offset_units);
+
   glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
 

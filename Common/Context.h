@@ -132,6 +132,7 @@ public :
   int render_mode;            // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   int clip[6];                // status of clip planes (bit arrays)
   double clip_plane[6][4];    // clip planes 
+  double polygon_offset_factor, polygon_offset_units; // params for glPolygonOffset
   double pixel_equiv_x, pixel_equiv_y ; 
                               // approximative equivalent model length of a pixel 
   int color_scheme ;          // general color scheme

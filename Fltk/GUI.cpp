@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.405 2004-12-31 16:19:20 geuzaine Exp $
+// $Id: GUI.cpp,v 1.406 2004-12-31 21:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1743,19 +1743,31 @@ void GUI::create_option_window()
       gen_value[14]->step(0.1);
       gen_value[14]->align(FL_ALIGN_RIGHT);
 
-      gen_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Number of quadric subdivisions");
+      gen_value[15] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW/2, BH);
+      gen_value[15]->minimum(0.);
+      gen_value[15]->maximum(10.);
+      gen_value[15]->step(0.01);
+      gen_value[15]->align(FL_ALIGN_RIGHT);
+
+      gen_value[16] = new Fl_Value_Input(L + 2 * WB + IW/2, 2 * WB + 3 * BH, IW/2, BH, "Polygon offset factor and units");
+      gen_value[16]->minimum(0.);
+      gen_value[16]->maximum(10.);
+      gen_value[16]->step(0.01);
+      gen_value[16]->align(FL_ALIGN_RIGHT);
+
+      gen_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of quadric subdivisions");
       gen_value[11]->minimum(3);
       gen_value[11]->maximum(30);
       gen_value[11]->step(1);
       gen_value[11]->align(FL_ALIGN_RIGHT);
 
-      gen_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Point size");
+      gen_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Point size");
       gen_value[6]->minimum(0.1);
       gen_value[6]->maximum(50);
       gen_value[6]->step(0.1);
       gen_value[6]->align(FL_ALIGN_RIGHT);
 
-      gen_value[7] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
+      gen_value[7] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Line width");
       gen_value[7]->minimum(0.1);
       gen_value[7]->maximum(50);
       gen_value[7]->step(0.1);
@@ -1768,18 +1780,18 @@ void GUI::create_option_window()
 	{"3D arrow", 0, 0, 0},
 	{0}
       };
-      gen_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
+      gen_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Vector display");
       gen_choice[0]->menu(menu_genvectype);
       gen_choice[0]->align(FL_ALIGN_RIGHT);
 
-      Fl_Button *b = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
+      Fl_Button *b = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
       b->callback(general_arrow_param_cb);
 
-      gen_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Font");
+      gen_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Font");
       gen_choice[1]->menu(menu_font_names);
       gen_choice[1]->align(FL_ALIGN_RIGHT);
 
-      gen_value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Font size");
+      gen_value[12] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Font size");
       gen_value[12]->minimum(5);
       gen_value[12]->maximum(40);
       gen_value[12]->step(1);

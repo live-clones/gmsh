@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.115 2004-12-28 17:24:25 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.116 2004-12-31 21:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -703,12 +703,12 @@ void Draw_Mesh_Array(VertexArray *va, int faces, int edges)
   glEnableClientState(GL_NORMAL_ARRAY);
 
   if(faces){
-    if(edges)
-      glEnable(GL_POLYGON_OFFSET_FILL);
     if(CTX.mesh.light)
       glEnable(GL_LIGHTING);
     else
       glDisableClientState(GL_NORMAL_ARRAY);
+    if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+      glEnable(GL_POLYGON_OFFSET_FILL);
     glDrawArrays((va->type == 3) ? GL_TRIANGLES : GL_QUADS, 0, va->type * va->num);
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
@@ -835,8 +835,10 @@ void Draw_Mesh_Triangle(void *a, void *b)
 
     if(CTX.mesh.surfaces_faces) {
       glColor4ubv((GLubyte *) & col);      
-      if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      if(CTX.mesh.surfaces_edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.light)
+	glEnable(GL_LIGHTING);
+      if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+	glEnable(GL_POLYGON_OFFSET_FILL);
       if(!s->VSUP) {
 	glBegin(GL_TRIANGLES);
 	_triFace(X[0], Y[0], Z[0], X[1], Y[1], Z[1], X[2], Y[2], Z[2]);
@@ -997,8 +999,10 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
 
     if(CTX.mesh.surfaces_faces) {
       glColor4ubv((GLubyte *) & col);
-      if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      if(CTX.mesh.surfaces_edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.light) 
+	glEnable(GL_LIGHTING);
+      if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+	glEnable(GL_POLYGON_OFFSET_FILL);
       if(!q->VSUP) {
 	glBegin(GL_QUADS);
 	_quadFace(X, Y, Z, 0, 1, 2, 3);
@@ -1169,8 +1173,10 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
     
     if(faces){
       glColor4ubv((GLubyte *) & col);
-      if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.light)
+	glEnable(GL_LIGHTING);
+      if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+	glEnable(GL_POLYGON_OFFSET_FILL);
       if(!s->VSUP){
 	glBegin(GL_TRIANGLES);
 	_triFace(X[0], Y[0], Z[0], X[2], Y[2], Z[2], X[1], Y[1], Z[1]);
@@ -1340,8 +1346,10 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
     
     if(faces){
       glColor4ubv((GLubyte *) & col);
-      if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.light) 
+	glEnable(GL_LIGHTING);
+      if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+	glEnable(GL_POLYGON_OFFSET_FILL);
       if(!h->VSUP){
 	glBegin(GL_QUADS);
 	_quadFace(X, Y, Z, 0, 3, 2, 1);
@@ -1539,8 +1547,10 @@ void Draw_Mesh_Prism(void *a, void *b)
     
     if(faces){
       glColor4ubv((GLubyte *) & col);
-      if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.light) 
+	glEnable(GL_LIGHTING);
+      if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+	glEnable(GL_POLYGON_OFFSET_FILL);
       if(!p->VSUP){
 	glBegin(GL_TRIANGLES);
 	_triFace(X[0], Y[0], Z[0], X[2], Y[2], Z[2], X[1], Y[1], Z[1]);
@@ -1733,8 +1743,10 @@ void Draw_Mesh_Pyramid(void *a, void *b)
 
     if(faces){
       glColor4ubv((GLubyte *) & col);
-      if(CTX.mesh.light) glEnable(GL_LIGHTING);
-      if(CTX.mesh.surfaces_edges || edges) glEnable(GL_POLYGON_OFFSET_FILL);
+      if(CTX.mesh.light)
+	glEnable(GL_LIGHTING);
+      if(CTX.polygon_offset_factor || CTX.polygon_offset_units)
+	glEnable(GL_POLYGON_OFFSET_FILL);
       if(!p->VSUP){
 	glBegin(GL_QUADS);
 	_quadFace(X, Y, Z, 0, 3, 2, 1);

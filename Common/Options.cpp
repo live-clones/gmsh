@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.220 2004-12-30 22:43:21 geuzaine Exp $
+// $Id: Options.cpp,v 1.221 2004-12-31 21:12:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1952,6 +1952,28 @@ double opt_general_viewport3(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.viewport[3] = (int)val;
   return CTX.viewport[3];
+}
+
+double opt_general_polygon_offset_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.polygon_offset_factor = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[15]->value(CTX.polygon_offset_factor);
+#endif
+  return CTX.polygon_offset_factor;
+}
+
+double opt_general_polygon_offset_units(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.polygon_offset_units = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_value[16]->value(CTX.polygon_offset_units);
+#endif
+  return CTX.polygon_offset_units;
 }
 
 double opt_general_graphics_position0(OPT_ARGS_NUM)
