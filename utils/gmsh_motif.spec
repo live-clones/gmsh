@@ -20,8 +20,8 @@ a characteristic length field for the generation of adapted meshes on
 lines, surfaces and volumes. Gmsh requires the Mesa and Lesstif
 libraries to be installed on your system.
 
-Install Gmsh if you need a 3D finite element mesh generator and/or
-post-processor.
+Install Gmsh if you need a simple 3D finite element mesh generator
+and/or post-processor.
 
 %prep
 

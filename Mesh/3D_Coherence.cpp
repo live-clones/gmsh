@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.19 2001-08-28 22:15:15 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.20 2001-08-29 07:27:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1233,19 +1233,18 @@ int Coherence (Volume * v, Mesh * m){
     Nh = List_Nbr (NewPoints);
     
     /* il reste des intersections */
-    
+
     if (List_Nbr (ListFaces) != Nh - 2){
       
-      Msg(INFO, "Intersections left");
-      Msg(INFO, "   Initial face contains %d existing faces", List_Nbr(ListFaces));
-      Msg(INFO, "   Face divided in %d points",List_Nbr(NewPoints));
+      Msg(INFO, "Intersections left (the face contains %d initial faces, divided in %d points)", 
+	  List_Nbr(ListFaces), List_Nbr(NewPoints));
       
       TreexNewv = Tree_Create (sizeof (xNewv), compxNewv);
       TetAdd = Tree_Create (sizeof (Simplex *), compareSimplex);
       TetDel = Tree_Create (sizeof (Simplex *), compareSimplex);
       Tree_Action (v->Simplexes, Recover_Face);
 
-      Msg(INFO, "The face is divided in %d points %d %d",
+      Msg(INFO, "The face is divided in %d points (simplexes added=%d, deleted=%d)",
 	  List_Nbr(NewPoints),Tree_Nbr(TetAdd),Tree_Nbr(TetDel));
 
       Actual_Tree = v->Simplexes;
@@ -1258,10 +1257,15 @@ int Coherence (Volume * v, Mesh * m){
     Np = List_Nbr (NewPoints);
 
     if (1 || List_Nbr (ListFaces) == 2 * (Np - 1) - Nh){
-      // on passe tjs ici pour le moment, meme si ca ne marche pas...
-      
-      Msg(INFO, "Recoverable face (%d <--> %d=2*(%d-1)-%d)",
-          List_Nbr (ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
+
+      // provisoire!!!
+      if (List_Nbr (ListFaces) != 2 * (Np - 1) - Nh){
+	Msg(WARNING, "*Unrecoverable* face (%d <--> %d=2*(%d-1)-%d)",
+	    List_Nbr(ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
+      }
+      else
+	Msg(INFO, "Recoverable face (%d <--> %d=2*(%d-1)-%d)",
+	    List_Nbr(ListFaces), 2 * (Np - 1) - Nh, Np, Nh);
       
       for (j = 0; j < List_Nbr (v->Surfaces); j++){
         List_Read (v->Surfaces, j, &s);

@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.43 2001-08-28 20:40:21 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.44 2001-08-29 07:27:51 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -303,7 +303,7 @@ void Create_PriPyrTet(int iEnt, Vertex *v[6]){
     newp->iEnt = iEnt;
     Tree_Add(THEV->Prisms,&newp);
     if(j)
-      Msg(GERROR, "Degenerated prism %d (nodes %d %d %d %d %d %d %d %d)", 
+      Msg(GERROR, "Degenerated prism %d (nodes %d %d %d %d %d %d)", 
 	  newp->Num,v[0],v[1],v[2],v[3],v[4],v[5]);
   }
 
