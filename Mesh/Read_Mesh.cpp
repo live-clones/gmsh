@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.32 2001-12-03 08:41:44 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.33 2001-12-03 10:38:31 gyselinc Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -196,23 +196,23 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    simp = Create_Simplex(vertsp[0], vertsp[1], NULL , NULL);
 	    simp->Num = Num ;
 	    simp->iEnt = Elementary ;
-	    Tree_Insert(c->Simplexes, &simp) ;
-	    //NO!!! Tree_Insert(M->Simplexes, &simp) ; 
+	    Tree_Replace(c->Simplexes, &simp) ;
+	    //NO!!! Tree_Replace(M->Simplexes, &simp) ; 
 	    break;
 	  case TRI1:
 	    simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], NULL);
 	    simp->Num = Num ;
 	    simp->iEnt = Elementary ;
-	    Tree_Insert(s->Simplexes, &simp) ;
-	    Tree_Insert(M->Simplexes, &simp) ;
+	    Tree_Replace(s->Simplexes, &simp) ;
+	    Tree_Replace(M->Simplexes, &simp) ;
 	    M->Statistics[7]++;
 	    break;
 	  case QUA1:
 	    simp = Create_Quadrangle(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
 	    simp->Num = Num ;
 	    simp->iEnt = Elementary ;
-	    Tree_Insert(s->Simplexes, &simp) ;
-	    Tree_Insert(M->Simplexes, &simp) ;
+	    Tree_Replace(s->Simplexes, &simp) ;
+	    Tree_Replace(M->Simplexes, &simp) ;
 	    M->Statistics[7]++;//since s->Simplexes holds quads, too :-(
 	    M->Statistics[8]++;
 	    break;
@@ -220,8 +220,8 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    simp = Create_Simplex(vertsp[0], vertsp[1], vertsp[2], vertsp[3]);
 	    simp->Num = Num ;
 	    simp->iEnt = Elementary ;
-	    Tree_Insert(v->Simplexes, &simp) ;
-	    Tree_Insert(M->Simplexes, &simp) ;
+	    Tree_Replace(v->Simplexes, &simp) ;
+	    Tree_Replace(M->Simplexes, &simp) ;
 	    M->Statistics[9]++;
 	    break;
 	  case HEX1:
@@ -229,7 +229,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 				    vertsp[4], vertsp[5], vertsp[6], vertsp[7]);
 	    hex->Num = Num ;
 	    hex->iEnt = Elementary ;
-	    Tree_Insert(v->Hexahedra, &hex) ;
+	    Tree_Replace(v->Hexahedra, &hex) ;
 	    M->Statistics[10]++;
 	    break;
 	  case PRI1:
@@ -237,7 +237,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 			       vertsp[3], vertsp[4], vertsp[5]);
 	    pri->Num = Num ;
 	    pri->iEnt = Elementary ;
-	    Tree_Insert(v->Prisms, &pri) ;
+	    Tree_Replace(v->Prisms, &pri) ;
 	    M->Statistics[11]++;
 	    break;
 	  case PYR1:
@@ -245,7 +245,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 				 vertsp[3], vertsp[4]);
 	    pyr->Num = Num ;
 	    pyr->iEnt = Elementary ;
-	    Tree_Insert(v->Pyramids, &pyr) ;
+	    Tree_Replace(v->Pyramids, &pyr) ;
 	    M->Statistics[12]++;
 	    break;
 	  case PNT:
