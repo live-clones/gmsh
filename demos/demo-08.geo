@@ -1,7 +1,7 @@
 /* 
    Gmsh demo file (C) 2000 C. Geuzaine, J.-F. Remacle
 
-   More complex 2D example with holes
+   More complex 2D example with holes, includes and a loop
 
    All important comments are marked with "README"
 */
@@ -112,14 +112,13 @@ R2 = r2r ;
    *ALL* variables in Gmsh are global. Including a file is similar to
    paste its content where the include command is located. */
 
-i = 1 ; th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ; 
-i  = 2 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
-i  = 3 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
-i  = 4 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
-i  = 5 ; th = th0r + (i - 1) * dthr ;  Include "demo-08.i1" ;
-i = 6 ; th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ;
-i = 7 ; th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ;
-i = 8 ;	th = th0r + (i - 1) * dthr ;   Include "demo-08.i1" ;
+i = 0;
+
+For(1:8)
+  i++ ;
+  th = th0r + (i - 1) * dthr ;
+  Include "demo-08.i1" ; 
+EndFor
 
 // 9 stator poles
 

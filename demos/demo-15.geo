@@ -6,18 +6,7 @@
    All important comments are marked with "README"
 */
 
-lc = 1;
-
-Point(1) = {0,  0,  0, lc};
-Point(2) = {.1, 0,  0, lc};
-Point(3) = {.1, .3, 0, lc};
-Point(4) = {0,  .3, 0, lc};
-
-Line(1) = {1,2};
-Line(2) = {2,3};
-Line(3) = {3,4};
-Line(4) = {4,1};
-
+Include "demo-01.geo" ;
 Include "view-01.pos" ;
 
 General.Trackball = 0 ;
