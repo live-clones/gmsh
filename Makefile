@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.269 2003-03-01 22:50:48 geuzaine Exp $
+# $Id: Makefile,v 1.270 2003-03-02 04:56:14 geuzaine Exp $
 
 include variables
 
@@ -153,6 +153,7 @@ package-windows:
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
 	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
+	cp doc/COPYING gmsh-${GMSH_RELEASE}/COPYING.txt
 	cd utils && unix2dos ../gmsh-${GMSH_RELEASE}/*.txt
 	cp -R tutorial gmsh-${GMSH_RELEASE}
 	cp -R demos gmsh-${GMSH_RELEASE}
@@ -204,6 +205,7 @@ package-mac:
 	cp doc/VERSIONS gmsh-${GMSH_RELEASE}/VERSIONS.txt
 	cp doc/FAQ gmsh-${GMSH_RELEASE}/FAQ.txt
 	cp doc/CONTRIBUTORS gmsh-${GMSH_RELEASE}/CONTRIBUTORS.txt
+	cp doc/COPYING gmsh-${GMSH_RELEASE}/COPYING.txt
 	rm -rf gmsh-${GMSH_RELEASE}/*/CVS\
                gmsh-${GMSH_RELEASE}/*/*~\
                gmsh-${GMSH_RELEASE}/*/*.msh
