@@ -15,7 +15,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA.
+// 
+// Please report all bugs and problems to "gmsh@geuz.org".
 
 Brick LaBrique (Grid_T * pGrid, double X, double Y, double Z);
 void AddSimplexInGrid (Mesh * m, Simplex * s, int boule_boite);

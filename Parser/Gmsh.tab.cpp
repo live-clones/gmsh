@@ -176,7 +176,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.141 2002-05-18 16:31:16 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.142 2002-05-20 18:28:28 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -192,7 +192,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA.
+// 
+// Please report all bugs and problems to "gmsh@geuz.org".
 
 #include <stdarg.h>
 #ifndef _NOPLUGIN

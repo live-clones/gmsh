@@ -1,4 +1,4 @@
-// $Id: SwapEdge.cpp,v 1.9 2002-05-18 08:01:39 geuzaine Exp $
+// $Id: SwapEdge.cpp,v 1.10 2002-05-20 18:28:28 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -14,7 +14,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA.
+// 
+// Please report all bugs and problems to "gmsh@geuz.org".
 
 #include "Gmsh.h"
 #include "Numeric.h"
