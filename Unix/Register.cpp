@@ -1,4 +1,4 @@
-/* $Id: Register.cpp,v 1.9 2000-11-26 15:43:48 geuzaine Exp $ */
+/* $Id: Register.cpp,v 1.10 2000-12-05 19:03:21 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -216,6 +216,7 @@ void RegisterCallbacks_OD(Widgets_T *w){
   register_valchg_cb  (w->OD.miscMiscButt[2],    OptionsCb,  OPTIONS_FAST_REDRAW);
   register_valchg_cb  (w->OD.miscMiscButt[3],    OptionsCb,  OPTIONS_DISPLAY_LISTS);
   register_valchg_cb  (w->OD.miscMiscButt[4],    OptionsCb,  OPTIONS_ALPHA_BLENDING);
+  register_valchg_cb  (w->OD.miscMiscButt[5],    OptionsCb,  OPTIONS_TRACKBALL);
   register_valchg_cb  (w->OD.miscColorSchemeScale, OptionsCb, OPTIONS_COLOR_SCHEME_SCALE);
   register_drag_cb    (w->OD.miscColorSchemeScale, OptionsCb, OPTIONS_COLOR_SCHEME_SCALE);
   register_valchg_cb  (w->OD.miscProjButt[0],    OptionsCb,  OPTIONS_ORTHOGRAPHIC);

@@ -1,4 +1,4 @@
-/* $Id: CbOptions.cpp,v 1.10 2000-12-05 18:38:11 geuzaine Exp $ */
+/* $Id: CbOptions.cpp,v 1.11 2000-12-05 19:03:21 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -59,6 +59,7 @@ void OptionsCb (Widget w, XtPointer client_data, XtPointer call_data){
   case OPTIONS_FAST_REDRAW   : CTX.fast = !CTX.fast ; break ;
   case OPTIONS_DISPLAY_LISTS : CTX.display_lists = !CTX.display_lists ; break ;
   case OPTIONS_ALPHA_BLENDING: CTX.alpha = !CTX.alpha; break;
+  case OPTIONS_TRACKBALL     : CTX.useTrackball = !CTX.useTrackball; break;
   case OPTIONS_COLOR_SCHEME_SCALE: 
     XmScaleGetValue(WID.OD.miscColorSchemeScale, &e); Init_Colors(e);
     Init(); Draw();

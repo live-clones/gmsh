@@ -1,4 +1,4 @@
-/* $Id: CbOptions.h,v 1.7 2000-11-26 15:43:48 geuzaine Exp $ */
+/* $Id: CbOptions.h,v 1.8 2000-12-05 19:03:21 geuzaine Exp $ */
 #ifndef _CB_OPTIONS_H_
 #define _CB_OPTIONS_H_
 
@@ -40,6 +40,7 @@
 #define  OPTIONS_DISPLAY_LISTS                  34
 #define  OPTIONS_FAST_REDRAW                    35
 #define  OPTIONS_COLOR_SCHEME_SCALE             36
+#define  OPTIONS_TRACKBALL                      37
 
 /* options geometrie */
 
