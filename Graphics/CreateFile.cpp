@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.31 2002-06-10 16:42:20 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.32 2002-07-03 23:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -50,6 +50,8 @@ void CreateOutputFile (char *name, int format) {
   int      res, i;
 
   if(!name || !strlen(name)) return;
+
+  CTX.print.format = format;
 
   switch(format){
 

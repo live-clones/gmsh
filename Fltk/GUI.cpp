@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.183 2002-06-24 05:03:18 geuzaine Exp $
+// $Id: GUI.cpp,v 1.184 2002-07-03 23:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -72,8 +72,8 @@ Fl_Menu_Item m_menubar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"Open...",          FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
     {"Merge...",         FL_CTRL+'m', (Fl_Callback *)file_merge_cb, 0},
-    {"Save",             FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
-  //FIXME: {"Save as...",       FL_CTRL+'a', (Fl_Callback *)file_save_as_cb, 0},
+    {"Save mesh",        FL_CTRL+'s', (Fl_Callback *)mesh_save_cb, 0},
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 0)
     {"Save as",          0, 0, 0, FL_MENU_DIVIDER|FL_SUBMENU},
       {"By extension...",  FL_CTRL+'e', (Fl_Callback *)file_save_as_auto_cb, 0, FL_MENU_DIVIDER},
       {"Geometry",  0, 0, 0, FL_SUBMENU},
@@ -102,6 +102,9 @@ Fl_Menu_Item m_menubar_table[] = {
          {"UCB YUV (*.yuv)...",           0, (Fl_Callback *)file_save_as_yuv_cb, 0},
          {0},
       {0},
+#else
+    {"Save as...",       FL_CTRL+'a', (Fl_Callback *)file_save_as_cb, 0, FL_MENU_DIVIDER},
+#endif
     {"Visibility...",    FL_SHIFT+'v', (Fl_Callback *)opt_visibility_cb, 0},
     {"Messages...",      FL_SHIFT+'l', (Fl_Callback *)opt_message_cb, 0},
     {"Statistics...",    FL_SHIFT+'i', (Fl_Callback *)opt_statistics_cb, 0, FL_MENU_DIVIDER},

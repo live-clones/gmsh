@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.131 2002-06-24 05:03:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.132 2002-07-03 23:54:10 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -82,6 +82,7 @@ int file_chooser(int multi, const char* message, const char* pat, int patindex){
   static char oldfilter[1024];
 
   Fl_File_Chooser::show_label = "Format:";
+  Fl_File_Chooser::all_files_label = "All files (*)";
 
   if (!fc) {
     fc = new Fl_File_Chooser(".", pat, Fl_File_Chooser::CREATE, message);
@@ -93,7 +94,7 @@ int file_chooser(int multi, const char* message, const char* pat, int patindex){
   if(strncmp(oldfilter, pat, 1024)){
     strncpy(oldfilter, pat, 1024);
     fc->filter(pat);
-    //FIXME fc->filter_value(patindex);
+    fc->filter_value(patindex);
   }
 
   if(multi)
@@ -116,7 +117,7 @@ char* file_chooser_get_name(int num){
 }
 
 int file_chooser_get_filter(){
-  return 0; //FIXME return fc->filter_value();
+  return fc->filter_value();
 }
 
 #endif
@@ -314,77 +315,72 @@ void file_merge_cb(CALLBACK_ARGS) {
     WID->set_context(menu_post, 0);
 }
 
-typedef struct{
-  char *pat;
-  void (*func)(char *name) ;
-} patXfunc;
-
 void _save_auto(char *name){
-  CreateOutputFile(name, CTX.print.format = FORMAT_AUTO); 
+  CreateOutputFile(name, FORMAT_AUTO); 
 }
 void _save_geo_options(char *name){
-  CreateOutputFile(name, CTX.print.format = FORMAT_OPT); 
+  CreateOutputFile(name, FORMAT_OPT); 
 }
 void _save_geo(char *name){
-  CreateOutputFile(name, CTX.print.format = FORMAT_GEO); 
+  CreateOutputFile(name, FORMAT_GEO); 
 }
 void _save_msh(char *name){
-  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH); 
 }
 void _save_msh_all(char *name){
   int all = CTX.mesh.save_all;
   CTX.mesh.save_all = 1;
-  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_MSH); 
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_MSH); 
   CTX.mesh.save_all = all;
 }
 void _save_gref(char *name){
-  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_GREF);  
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_GREF);  
 }
 void _save_unv(char *name){ 
- CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_UNV); 
+ CreateOutputFile(name, CTX.mesh.format = FORMAT_UNV); 
 }
 void _save_vrml(char *name){ 
-  CreateOutputFile(name, CTX.print.format = CTX.mesh.format = FORMAT_VRML); 
+  CreateOutputFile(name, CTX.mesh.format = FORMAT_VRML); 
 }
 void _save_ps_simple(char *name){ 
   int old = CTX.print.eps_quality;
   CTX.print.eps_quality = 1; 
-  CreateOutputFile(name, CTX.print.format = FORMAT_PS); 
+  CreateOutputFile(name, FORMAT_PS); 
   CTX.print.eps_quality = old; 
 }
 void _save_ps_accurate(char *name){ 
   int old = CTX.print.eps_quality;
   CTX.print.eps_quality = 2; 
-  CreateOutputFile(name, CTX.print.format = FORMAT_PS); 
+  CreateOutputFile(name, FORMAT_PS); 
   CTX.print.eps_quality = old; 
 }
 void _save_pstex_simple(char *name){ 
   int old = CTX.print.eps_quality;
   CTX.print.eps_quality = 1; 
-  CreateOutputFile(name, CTX.print.format = FORMAT_PSTEX); 
+  CreateOutputFile(name, FORMAT_PSTEX); 
   CTX.print.eps_quality = old; 
 }
 void _save_pstex_accurate(char *name){     
   int old = CTX.print.eps_quality;
   CTX.print.eps_quality = 2; 
-  CreateOutputFile(name, CTX.print.format = FORMAT_PSTEX); 
+  CreateOutputFile(name, FORMAT_PSTEX); 
   CTX.print.eps_quality = old; 
 }
 void _save_jpegtex(char *name){     
-  CreateOutputFile(name, CTX.print.format = FORMAT_JPEGTEX); 
+  CreateOutputFile(name, FORMAT_JPEGTEX); 
 }
 void _save_tex(char *name){ 
-  CreateOutputFile(name, CTX.print.format = FORMAT_TEX); 
+  CreateOutputFile(name, FORMAT_TEX); 
 }
 void _save_jpeg(char *name){ 
-  CreateOutputFile(name, CTX.print.format = FORMAT_JPEG); 
+  CreateOutputFile(name, FORMAT_JPEG); 
 }
 void _save_gif(char *name){ 
   int dither = CTX.print.gif_dither;
   int transp = CTX.print.gif_transparent;
   CTX.print.gif_dither = 0;
   CTX.print.gif_transparent = 0;
-  CreateOutputFile(name, CTX.print.format = FORMAT_GIF); 
+  CreateOutputFile(name, FORMAT_GIF); 
   CTX.print.gif_dither = dither;
   CTX.print.gif_transparent = transp;
 }
@@ -393,7 +389,7 @@ void _save_gif_dithered(char *name){
   int transp = CTX.print.gif_transparent;
   CTX.print.gif_dither = 1; 
   CTX.print.gif_transparent = 0; 
-  CreateOutputFile(name, CTX.print.format = FORMAT_GIF); 
+  CreateOutputFile(name, FORMAT_GIF); 
   CTX.print.gif_dither = dither;
   CTX.print.gif_transparent = transp;
 }
@@ -402,16 +398,21 @@ void _save_gif_transparent(char *name){
   int transp = CTX.print.gif_transparent;
   CTX.print.gif_dither = 0;
   CTX.print.gif_transparent = 1; 
-  CreateOutputFile(name, CTX.print.format = FORMAT_GIF);
+  CreateOutputFile(name, FORMAT_GIF);
   CTX.print.gif_dither = dither;
   CTX.print.gif_transparent = transp;
 }
 void _save_ppm(char *name){     
- CreateOutputFile(name, CTX.print.format = FORMAT_PPM); 
+ CreateOutputFile(name, FORMAT_PPM); 
 }
 void _save_yuv(char *name){ 
-  CreateOutputFile(name, CTX.print.format = FORMAT_YUV); 
+  CreateOutputFile(name, FORMAT_YUV); 
 }
+
+typedef struct{
+  char *pat;
+  void (*func)(char *name) ;
+} patXfunc;
 
 void file_save_as_cb(CALLBACK_ARGS) {
   int i, nbformats;
@@ -440,8 +441,9 @@ void file_save_as_cb(CALLBACK_ARGS) {
     { "UCB YUV (*.yuv)", _save_yuv }
   };
 
+  nbformats = sizeof(formats)/sizeof(formats[0]);
+
   if(!pat){
-    nbformats = sizeof(formats)/sizeof(formats[0]);
     pat = (char*)Malloc(nbformats*256*sizeof(char));
     strcpy(pat, formats[0].pat);
     for(i=1; i<nbformats; i++){
@@ -451,7 +453,11 @@ void file_save_as_cb(CALLBACK_ARGS) {
   }
 
   if(file_chooser(0,"Save file as", pat, patindex)){
-    formats[file_chooser_get_filter()].func(file_chooser_get_name(1));
+    i = file_chooser_get_filter();
+    if(i>=0 && i<nbformats)
+      formats[i].func(file_chooser_get_name(1));
+    else // handle any additional automatic fltk filter
+      _save_auto(file_chooser_get_name(1));
   }
   patindex = file_chooser_get_filter();
 }
