@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.211 2002-11-08 02:06:59 geuzaine Exp $
+// $Id: GUI.cpp,v 1.212 2002-11-13 06:16:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -635,9 +635,9 @@ GUI::GUI(int argc, char **argv) {
 #else
   fl_open_display();
   Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-				    g1_bits, g1_width, g1_height);
+				    gmsh32x32_bits, gmsh32x32_width, gmsh32x32_height);
   Pixmap p2 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-				    g2_bits, g2_width, g2_height);
+				    gmsh32x32_bits, gmsh32x32_width, gmsh32x32_height);
   m_window->icon((char *)p1); 
   g_window->icon((char *)p2);
 #endif
