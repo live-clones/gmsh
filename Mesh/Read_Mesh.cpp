@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.45 2002-06-23 09:34:01 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.46 2002-08-06 21:14:35 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -48,6 +48,37 @@ extern Context_T CTX;
 #define PNT  15 
 
 #define NB_NOD_MAX_ELM 20
+
+int comparePhysicalGroup(const void *a, const void *b){
+  PhysicalGroup *q, *w;
+  int cmp;
+
+  q = *(PhysicalGroup **) a;
+  w = *(PhysicalGroup **) b;
+  cmp = q->Typ - w->Typ;
+  
+  if(cmp)
+    return cmp;
+  else
+    return (q->Num - w->Num);
+}
+
+void addPhysicalGroup(Mesh *M, int Type, int Physical, int Elementary){
+  PhysicalGroup PG, *pg, **ppg;
+  pg = &PG;
+  pg->Typ = Type;
+  pg->Num = Physical;
+  if((ppg=(PhysicalGroup**)List_PQuery(M->PhysicalGroups, &pg, 
+				       comparePhysicalGroup))){
+    List_Replace((*ppg)->Entities, &Elementary, fcmp_int);
+  }
+  else{
+    List_T *tmp = List_Create(1,1,sizeof(int));
+    List_Add(tmp, &Elementary);
+    Add_PhysicalGroup(Physical, Type, tmp, M);
+    List_Delete(tmp);
+  }
+}
 
 /* Note: the 'Dirty' flag only has an influence if one doesn't load
    the geometry along with the mesh (since we make Tree_Insert for the
@@ -132,7 +163,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	       &Num, &Type, &Physical, &Elementary, &Nbr_Nodes) ;
 	//jf:  &Num, &Type, &Elementary, &Physical, &Nbr_Nodes) ;
 
-        for (j = 0 ; j < Nbr_Nodes ; j++)
+	for (j = 0 ; j < Nbr_Nodes ; j++)
           fscanf(File_GEO, "%d", &verts[j].Num) ;
 
 	switch(Type){
@@ -143,6 +174,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 			     NULL, -1, -1, 0., 1.);
 	    c->Dirty=1;
 	    Tree_Add(M->Curves, &c);
+	    addPhysicalGroup(M, MSH_PHYSICAL_LINE, Physical, abs(Elementary));
 	  }
 	  else
 	    c = *cc;
@@ -153,6 +185,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    s = Create_Surface(Elementary, MSH_SURF_PLAN);
 	    s->Dirty=1;
 	    Tree_Add(M->Surfaces, &s);
+	    addPhysicalGroup(M, MSH_PHYSICAL_SURFACE, Physical, Elementary);
 	  }
 	  else
 	    s = *ss;
@@ -164,6 +197,7 @@ void Read_Mesh_MSH (Mesh *M, FILE *File_GEO){
 	    v = Create_Volume(Elementary, MSH_VOLUME);
 	    v->Dirty=1;
 	    Tree_Add(M->Volumes, &v);
+	    addPhysicalGroup(M, MSH_PHYSICAL_VOLUME, Physical, Elementary);
 	  }
 	  else
 	    v = *vv;
