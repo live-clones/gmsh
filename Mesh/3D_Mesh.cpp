@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.43 2002-10-03 07:47:10 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.44 2002-10-12 18:17:15 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -1009,5 +1009,6 @@ void Maillage_Volume (void *data, void *dum){
   THEM->Statistics[9] += Tree_Nbr(v->Simplexes);
   THEM->Statistics[10] += Tree_Nbr(v->Hexahedra);
   THEM->Statistics[11] += Tree_Nbr(v->Prisms);
+  THEM->Statistics[12] += Tree_Nbr(v->Pyramids);
 
 }
