@@ -1,4 +1,6 @@
-// $Id: Colorbar.cpp,v 1.1 2001-01-10 08:50:29 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.1 2001-01-10 09:08:59 geuzaine Exp $
+
+#if 0
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -587,3 +589,4 @@ void ColorBarInput(){
    
 }
 
+#endif

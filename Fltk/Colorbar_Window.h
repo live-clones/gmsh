@@ -1,5 +1,5 @@
-#ifndef _CB_COLORBAR_H
-#define _CB_COLORBAR_H
+#ifndef _COLORBAR_WINDOW_H
+#define _COLORBAR_WINDOW_H
 
 typedef struct _colorbar {
   Window window;
