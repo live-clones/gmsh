@@ -29,7 +29,7 @@ typedef struct {
 class Vertex {
   public :
   int     Num;
-  char    Visible;
+  char    Visible, Degree;
   int     Frozen;
   double  lc,u,us[3],w;
   Coord   Pos;

@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.57 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.58 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1049,17 +1049,9 @@ void Maillage_Volume(void *data, void *dum)
     List_Delete(Simplexes_Destroyed);
   }
 
-  if(CTX.mesh.order == 2){
-    Msg(GERROR, "3D second order mesh not implemented yet");
-    // - hexa/prism/pyram: not done
-    // - tetra: wrong if edge swaps 
-    //Degre2(v->Simplexes, NULL, NULL);
-  }
-
   THEM->Statistics[6] += Tree_Nbr(v->Vertices);
   THEM->Statistics[9] += Tree_Nbr(v->Simplexes);
   THEM->Statistics[10] += Tree_Nbr(v->Hexahedra);
   THEM->Statistics[11] += Tree_Nbr(v->Prisms);
   THEM->Statistics[12] += Tree_Nbr(v->Pyramids);
-
 }

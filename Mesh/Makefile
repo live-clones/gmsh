@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.58 2004-04-13 20:56:40 geuzaine Exp $
+# $Id: Makefile,v 1.59 2004-04-18 03:36:07 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -100,223 +100,228 @@ depend:
 1D_Mesh.o: 1D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h Utils.h ../Common/Context.h Interpolation.h
+  Mesh.h Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h Utils.h ../Common/Context.h Interpolation.h
 2D_Mesh.o: 2D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Utils.h Create.h 2D_Mesh.h ../Common/Context.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Utils.h Create.h 2D_Mesh.h \
+  ../Common/Context.h
 2D_SMesh.o: 2D_SMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \
-  Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h \
-  ../Numeric/Numeric.h Interpolation.h
+  Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
+  Matrix.h ../Numeric/Numeric.h Interpolation.h
 2D_Elliptic.o: 2D_Elliptic.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h
 2D_BGMesh.o: 2D_BGMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 2D_Mesh.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 2D_Mesh.h
 2D_Recombine.o: 2D_Recombine.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h Utils.h 2D_Mesh.h Create.h ../Common/Context.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h Utils.h 2D_Mesh.h Create.h ../Common/Context.h
 2D_InitMesh.o: 2D_InitMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 2D_Mesh.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 2D_Mesh.h
 2D_Bowyer.o: 2D_Bowyer.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 2D_Mesh.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 2D_Mesh.h
 2D_Bricks.o: 2D_Bricks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 2D_Mesh.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 2D_Mesh.h
 2D_DivAndConq.o: 2D_DivAndConq.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 2D_Mesh.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 2D_Mesh.h
 2D_Util.o: 2D_Util.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 2D_Mesh.h ../Common/Context.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 2D_Mesh.h ../Common/Context.h
 2D_Links.o: 2D_Links.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 2D_Mesh.h ../Common/Context.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 2D_Mesh.h ../Common/Context.h
 2D_Tree.o: 2D_Tree.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
-  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h 2D_Mesh.h
+  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
+  Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h 2D_Mesh.h
 2D_Cylindrical.o: 2D_Cylindrical.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h ../Common/Context.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h ../Common/Context.h
 2D_Parametric.o: 2D_Parametric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Interpolation.h 2D_Mesh.h Create.h ../Common/Context.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Interpolation.h 2D_Mesh.h Create.h \
+  ../Common/Context.h
 2D_Mesh_Aniso.o: 2D_Mesh_Aniso.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Interpolation.h Create.h ../Common/Context.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Interpolation.h Create.h \
+  ../Common/Context.h
 2D_Mesh_Triangle.o: 2D_Mesh_Triangle.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h \
-  Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h \
-  ../Numeric/Numeric.h ../Common/Context.h
+  Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
+  Matrix.h ../Numeric/Numeric.h ../Common/Context.h
 3D_Mesh.o: 3D_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 3D_Mesh.h Create.h ../Common/Context.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 3D_Mesh.h Create.h ../Common/Context.h
 3D_SMesh.o: 3D_SMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
-  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h Interpolation.h Create.h
+  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
+  Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h Interpolation.h \
+  Create.h
 3D_BGMesh.o: 3D_BGMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
-  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h 2D_Mesh.h 3D_Mesh.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Numeric/Numeric.h \
+  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
+  Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h 2D_Mesh.h \
+  3D_Mesh.h ../Common/Views.h ../Common/ColorTable.h ../Numeric/Numeric.h \
   ../Common/Context.h
 3D_Extrude.o: 3D_Extrude.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h ../Common/Context.h Create.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/Context.h Create.h
 3D_Extrude_Old.o: 3D_Extrude_Old.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h ../Common/Context.h Create.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h ../Common/Context.h Create.h
 3D_Coherence.o: 3D_Coherence.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h 3D_Mesh.h Create.h
+  Mesh.h Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h 3D_Mesh.h Create.h
 3D_Divide.o: 3D_Divide.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h
 3D_Bricks.o: 3D_Bricks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h
 MeshQuality.o: MeshQuality.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h
 Create.o: Create.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Utils.h ../Common/Context.h Create.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Utils.h ../Common/Context.h Create.h
 Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h Create.h ../Common/Context.h ../Parser/OpenFile.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h Create.h ../Common/Context.h ../Parser/OpenFile.h
 Print_Mesh.o: Print_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Create.h ../Common/Context.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Create.h ../Common/Context.h
 Read_Mesh.o: Read_Mesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h ../Geo/CAD.h \
-  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
-  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  3D_Mesh.h Create.h ../Geo/MinMax.h ../Common/Context.h
+  ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
+  ../Mesh/Matrix.h 3D_Mesh.h Create.h ../Geo/MinMax.h ../Common/Context.h
 STL.o: STL.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Numeric/Numeric.h Mesh.h Vertex.h Simplex.h Edge.h \
+  ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Edge.h \
   ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h ../Geo/CAD.h \
   ../Geo/Geo.h Create.h Interpolation.h ../Common/Context.h
 SMS.o: SMS.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Geo/Geo.h Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h \
-  STL.h Metric.h Matrix.h Create.h ../Geo/MinMax.h ../Geo/CAD.h \
-  ../Common/Context.h
+  ../Geo/Geo.h Mesh.h Vertex.h Element.h Simplex.h Edge.h \
+  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h Create.h ../Geo/MinMax.h \
+  ../Geo/CAD.h ../Common/Context.h
 SwapEdge.o: SwapEdge.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h SwapPatterns.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h SwapPatterns.h
 Utils.o: Utils.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Interpolation.h ../Common/Context.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Interpolation.h ../Common/Context.h
 Metric.o: Metric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h \
-  ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h \
-  ../Mesh/Matrix.h Interpolation.h
+  ../Geo/CAD.h ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Element.h \
+  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
+  ../Mesh/Metric.h ../Mesh/Matrix.h Interpolation.h
 Nurbs.o: Nurbs.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Nurbs.h Vertex.h Mesh.h Simplex.h \
-  Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h ../Geo/Geo.h \
-  ../Geo/GeoUtils.h Create.h ../Geo/CAD.h
+  ../DataStr/avl.h ../DataStr/Tools.h Nurbs.h Vertex.h Mesh.h Element.h \
+  Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h \
+  ../Geo/Geo.h ../Geo/GeoUtils.h Create.h ../Geo/CAD.h
 Interpolation.o: Interpolation.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  Nurbs.h Vertex.h Mesh.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
-  Metric.h Matrix.h ../Geo/CAD.h Utils.h Interpolation.h
+  Nurbs.h Vertex.h Mesh.h Element.h Simplex.h Edge.h \
+  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h ../Geo/CAD.h Utils.h \
+  Interpolation.h
 SecondOrder.o: SecondOrder.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Geo/Geo.h Mesh.h Vertex.h \
-  Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h Utils.h \
-  Interpolation.h ../Numeric/Numeric.h
+  Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
+  Matrix.h Utils.h Interpolation.h ../Numeric/Numeric.h
 Smoothing.o: Smoothing.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Mesh.h \
-  Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h
+  Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h
 CrossData.o: CrossData.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Simplex.h Edge.h \
-  ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h
+  ../DataStr/avl.h ../DataStr/Tools.h Mesh.h Vertex.h Element.h Simplex.h \
+  Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h
 Vertex.o: Vertex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h Vertex.h \
-  Mesh.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h \
-  ../Common/Context.h
+  Mesh.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
+  Matrix.h ../Common/Context.h
 Edge.o: Edge.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../Numeric/Numeric.h Mesh.h Vertex.h Simplex.h Edge.h \
+  ../Numeric/Numeric.h Mesh.h Vertex.h Element.h Simplex.h Edge.h \
   ../Geo/ExtrudeParams.h STL.h Metric.h Matrix.h
 Simplex.o: Simplex.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Numeric/Numeric.h ../Geo/Geo.h \
-  Mesh.h Vertex.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h Metric.h \
-  Matrix.h ../Common/Context.h
+  Mesh.h Vertex.h Element.h Simplex.h Edge.h ../Geo/ExtrudeParams.h STL.h \
+  Metric.h Matrix.h ../Common/Context.h

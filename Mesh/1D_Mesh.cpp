@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.36 2004-02-07 01:40:20 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.37 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -158,9 +158,6 @@ void Maillage_Curve(void *data, void *dummy)
   }
 
   if(Extrude_Mesh(c)){
-    if(CTX.mesh.order == 2){
-      Degre2(c->Simplexes, c, NULL);
-    }
     THEM->Statistics[4] += List_Nbr(c->Vertices);
     return;
   }
@@ -253,10 +250,6 @@ void Maillage_Curve(void *data, void *dummy)
     s->iEnt = c->Num;
     Tree_Add(c->Simplexes, &s);
     List_Add(c->TrsfSimplexes, &s);
-  }
-
-  if(CTX.mesh.order == 2){
-    Degre2(c->Simplexes, c, NULL);
   }
 
   THEM->Statistics[4] += List_Nbr(c->Vertices);

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.49 2004-02-28 00:48:50 geuzaine Exp $
+// $Id: Generator.cpp,v 1.50 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -184,7 +184,7 @@ void Init_Mesh(Mesh * M)
   M->MaxSimplexNum = 0;
 
   ExitExtrude();
-  Reset_Degre2();
+  Degre1();
 
   Tree_Action(M->Vertices, Free_Vertex);  
   Tree_Delete(M->Vertices);
@@ -311,6 +311,16 @@ void mai3d(Mesh * M, int Asked)
     t2 = Cpu();
     Msg(STATUS2, "Mesh 3D complete (%g s)", t2 - t1);
     M->status = 3;
+  }
+
+  // Second order elements
+
+  if(M->status && CTX.mesh.order == 2){
+    Msg(STATUS2, "Mesh second order...");
+    t1 = Cpu();
+    Degre2(M->status);
+    t2 = Cpu();
+    Msg(STATUS2, "Mesh second order complete (%g s)", t2 - t1);
   }
 
   CTX.threads_lock = 0;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.43 2004-03-08 06:02:16 geuzaine Exp $
+# $Id: Makefile,v 1.44 2004-04-18 03:36:07 geuzaine Exp $
 #
 # Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 #
@@ -93,8 +93,9 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/avl.h ../DataStr/Tools.h Plugin.h ../Common/Options.h \
   ../Common/Views.h ../Common/ColorTable.h Triangulate.h \
   ../Common/Context.h ../Geo/Geo.h ../Mesh/Mesh.h ../Mesh/Vertex.h \
-  ../Mesh/Simplex.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h ../Mesh/STL.h \
-  ../Mesh/Metric.h ../Mesh/Matrix.h ../Mesh/Utils.h ../Mesh/Create.h
+  ../Mesh/Element.h ../Mesh/Simplex.h ../Mesh/Edge.h \
+  ../Geo/ExtrudeParams.h ../Mesh/STL.h ../Mesh/Metric.h ../Mesh/Matrix.h \
+  ../Mesh/Utils.h ../Mesh/Create.h
 SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h SphericalRaise.h ../Common/Context.h \

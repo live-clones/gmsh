@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.18 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.19 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,18 @@
 #include "Utils.h"
 #include "Interpolation.h"
 #include "Numeric.h"
+
+// FIXME: still todo
+// - middle edge nodes for hexas, prisms and pyramids
+// - middle face nodes for quads, hexas, prisms and pyramids
+
+// we really need to remove the quads from the simplex tree: it's a
+// real mess right now (EdgesInVolume makes sense only if we don't try
+// to do a 3D mesh with quads on surfaces)
+
+// -> add a Quad tree in Surface (like the Hax/Prism/Pyramid tree in
+// Volume); generalize Edge in terms of Element, and dynamic cast to
+// Simplex, Quandrangle, Hexahdra, etc.
 
 extern Mesh *THEM;
 
@@ -78,6 +90,7 @@ Vertex *oncurve(Vertex * v1, Vertex * v2)
   }
 
   pv = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
+  pv->Degree = 2;
 
   if(!pv->ListCurves) {
     pv->ListCurves = List_Create(1, 1, sizeof(Curve *));
@@ -103,17 +116,14 @@ Vertex *onsurface(Vertex * v1, Vertex * v2)
   V = 0.5 * (V1 + V2);
   v = InterpolateSurface(THES, U, V, 0, 0);
   pv = Create_Vertex(++THEM->MaxPointNum, v.Pos.X, v.Pos.Y, v.Pos.Z, v.lc, v.u);
+  pv->Degree = 2;
+
   return pv;
 }
 
 extern int edges_tetra[6][2];
 extern int edges_quad[4][2];
 extern int EdgesInVolume;
-
-// The following only works for additional nodes are associated with
-// the edges of the mesh. If you need a complete second order
-// representation, this is thus only valid for simplices (lines,
-// triangles, tetrahedra)...
 
 void PutMiddlePoint(void *a, void *b)
 {
@@ -139,6 +149,7 @@ void PutMiddlePoint(void *a, void *b)
                       0.5 * (ed->V[0]->Pos.Z + ed->V[1]->Pos.Z),
                       0.5 * (ed->V[0]->lc + ed->V[1]->lc),
                       0.5 * (ed->V[0]->u + ed->V[1]->u));
+    v->Degree = 2;
   }
 
   ed->newv = v;
@@ -191,31 +202,137 @@ void PutMiddlePoint(void *a, void *b)
 }
 
 static Tree_T *TreeEdges = NULL;
+static List_T *VerticesToDelete = NULL;
 
-void Reset_Degre2(){
-  if(TreeEdges){
-    Tree_Delete(TreeEdges);
-  }
-  TreeEdges = Tree_Create(sizeof(Edge), compareedge);
-}
-
-void Degre2(Tree_T * TreeElm, Curve * c, Surface * s)
+void ResetDegre2_Vertex(void *a, void *b)
 {
-  THES = s;
-  THEC = c;
+  Vertex *v = *(Vertex**)a;
+  if(v->Degree == 2)
+    List_Add(VerticesToDelete, &v);
+}
 
-  if(THES || THEC){ // 1D or 2D mesh
-    EdgesInVolume = 0;
+void ResetDegre2_Simplex(void *a, void *b)
+{
+  Simplex *s = *(Simplex**)a;
+  Free(s->VSUP);  
+  s->VSUP = NULL;
+}
+
+void ResetDegre2_Curve(void *a, void *b)
+{
+  Curve *c = *(Curve**)a;
+  if(c->Dirty) return;
+  Tree_Action(c->Simplexes, ResetDegre2_Simplex);
+}
+
+void ResetDegre2_Surface(void *a, void *b)
+{
+  Surface *s = *(Surface**)a;
+  if(s->Dirty) return;
+  Tree_Action(s->Simplexes, ResetDegre2_Simplex);
+}
+
+void ResetDegre2_Volume(void *a, void *b)
+{
+  Volume *v = *(Volume**)a;
+  if(v->Dirty) return;
+  Tree_Action(v->Simplexes, ResetDegre2_Simplex);
+}
+
+void Degre1()
+{
+  // (re-)initialize the global tree of edges
+  if(TreeEdges)
+    Tree_Delete(TreeEdges);
+  TreeEdges = Tree_Create(sizeof(Edge), compareedge);
+
+  // reset VSUP in each element
+  Tree_Action(THEM->Curves, ResetDegre2_Curve);
+  Tree_Action(THEM->Surfaces, ResetDegre2_Surface);
+  Tree_Action(THEM->Volumes, ResetDegre2_Volume);
+
+  // remove any supp vertex from the database
+  if(VerticesToDelete)
+    List_Delete(VerticesToDelete);
+  VerticesToDelete = List_Create(100, 100, sizeof(Vertex*));
+  Tree_Action(THEM->Vertices, ResetDegre2_Vertex);
+  for(int i = 0; i < List_Nbr(VerticesToDelete); i++){
+    Vertex **v = (Vertex**)List_Pointer(VerticesToDelete, i);
+    Tree_Suppress(THEM->Vertices, v);
+    Free_Vertex(v, NULL);
+  }
+}
+
+void Degre2_Curve(void *a, void *b)
+{
+  Curve *c = *(Curve**)a;
+  if(c->Dirty) return;
+  THEC = c;
+  THES = NULL;
+  EdgesInVolume = 0;
+  crEdges(c->Simplexes, TreeEdges);
+  Tree_Action(TreeEdges, PutMiddlePoint);
+}
+
+void Degre2_Surface(void *a, void *b)
+{
+  Surface *s = *(Surface**)a;
+  if(s->Dirty) return;
+  THEC = NULL;
+  THES = s;
+  EdgesInVolume = 0;
+  crEdges(s->Simplexes, TreeEdges);
+  Tree_Action(TreeEdges, PutMiddlePoint);
+}
+
+void Degre2_Volume(void *a, void *b)
+{
+  Volume *v = *(Volume**)a;
+  if(v->Dirty) return;
+
+  // FIXME: warn if we have unhandled elements
+  if(Tree_Nbr(v->Hexahedra) || Tree_Nbr(v->Prisms) || Tree_Nbr(v->Pyramids) ||
+     THEM->Statistics[8]){
+    Msg(GERROR, "Second order hexahedra, prisms and pyramids not supported yet");
+    return;
   }
 
-  // create middle edge vertices for lines, triangles, quadrangles and
-  // tetrahedra
-  crEdges(TreeElm, TreeEdges);
-  Tree_Action(TreeEdges, PutMiddlePoint);
-
+  THEC = NULL;
+  THES = NULL;
   EdgesInVolume = 1;
-
-  // FIXME: do the rest: middle face/volume vertices + hexahedra,
-  // prisms, pyramids
-
+  crEdges(v->Simplexes, TreeEdges);
+  Tree_Action(TreeEdges, PutMiddlePoint);
 }
+
+void Degre2(int dim)
+{
+  int old = EdgesInVolume;
+
+  Degre1();
+  if(dim >= 1)
+    Tree_Action(THEM->Curves, Degre2_Curve);
+  if(dim >= 2)
+    Tree_Action(THEM->Surfaces, Degre2_Surface);
+  if(dim >= 3)
+    Tree_Action(THEM->Volumes, Degre2_Volume);
+
+  EdgesInVolume = old;
+}
+
+/* new interface
+EdgesContainer *edges = NULL;
+
+void Degre2(int dim)
+{
+  if(edges)
+    delete edges;
+  edges = new EdgesContainer();
+  Degre1();
+  if(dim >= 1)
+    Tree_Action(THEM->Curves, Degre2_Curve);
+  if(dim >= 2)
+    Tree_Action(THEM->Surfaces, Degre2_Surface);
+  if(dim >= 3)
+    Tree_Action(THEM->Volumes, Degre2_Volume);
+}
+*/

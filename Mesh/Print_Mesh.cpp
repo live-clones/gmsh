@@ -1,4 +1,4 @@
-// $Id: Print_Mesh.cpp,v 1.47 2004-02-07 01:40:22 geuzaine Exp $
+// $Id: Print_Mesh.cpp,v 1.48 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -997,21 +997,15 @@ int process_Gref_nodes(FILE * fGref, Mesh * M,
   int i, nbtri;
   Vertex *v;
   Surface *s;
-  Curve *c;
-  List_T *ListSurfaces, *ListCurves, *Nodes;
+  List_T *Nodes;
 
-  ListCurves = Tree2List(M->Curves);
-  for(i = 0; i < List_Nbr(ListCurves); i++) {
-    List_Read(ListCurves, i, &c);
-    Degre2(c->Simplexes, c, NULL);
-  }
-  List_Delete(ListCurves);
-
-  ListSurfaces = Tree2List(M->Surfaces);
+  Tree_Action(M->Curves, Degre2_Curve);
+  Tree_Action(M->Surfaces, Degre2_Surface);
+ 
+  List_T *ListSurfaces = Tree2List(M->Surfaces);
   nbtri = 0;
   for(i = 0; i < List_Nbr(ListSurfaces); i++) {
     List_Read(ListSurfaces, i, &s);
-    Degre2(s->Simplexes, NULL, s);
     nbtri += Tree_Nbr(s->Simplexes);
   }
   List_Delete(ListSurfaces);

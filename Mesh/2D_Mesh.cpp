@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.53 2004-03-03 22:26:33 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.54 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -813,9 +813,6 @@ void Maillage_Surface(void *data, void *dum)
     Tree_Action(THEM->Points, PutVertex_OnSurf);
     Tree_Action(s->Vertices, PutVertex_OnSurf);
     Tree_Action(s->Vertices, Add_In_Mesh);
-    if(CTX.mesh.order == 2){
-      Degre2(s->Simplexes, NULL, s);
-    }
     THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
     THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);
 
@@ -886,12 +883,7 @@ void Maillage_Surface(void *data, void *dum)
   End_Surface(s->Support);
   End_Surface(s);
 
-  if(CTX.mesh.order == 2){
-    Degre2(s->Simplexes, NULL, THESUPPORT);
-  }
-
   THEM->Statistics[5] += Tree_Nbr(THESURFACE->Vertices);
   THEM->Statistics[7] += Tree_Nbr(THESURFACE->Simplexes);       // tri+qua
   THEM->Statistics[8] += nbqua;
-
 }

@@ -1,4 +1,4 @@
-// $Id: Vertex.cpp,v 1.24 2004-02-28 00:48:50 geuzaine Exp $
+// $Id: Vertex.cpp,v 1.25 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,7 @@ Vertex::Vertex()
 {
   Frozen = 0;
   Visible = VIS_GEOM | VIS_MESH;
+  Degree = 1;
   Pos.X = 0.0;
   Pos.Y = 0.0;
   Pos.Z = 0.0;
@@ -47,6 +48,7 @@ Vertex::Vertex(double X, double Y, double Z, double l, double W)
 {
   Frozen = 0;
   Visible = VIS_GEOM | VIS_MESH;
+  Degree = 1;
   Pos.X = X;
   Pos.Y = Y;
   Pos.Z = Z;

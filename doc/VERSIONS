@@ -1,12 +1,14 @@
-$Id: VERSIONS,v 1.192 2004-04-14 00:28:59 geuzaine Exp $
+$Id: VERSIONS,v 1.193 2004-04-18 03:36:07 geuzaine Exp $
 
-New since 1.51: new raster ("bitmap") PostScript/EPS/PDF output
-formats; new Plugin(Extract) to extract a given component from a
-post-processing view; various bug fixes (default postscript printing
-mode, drawing of 3D arrows/cylinders on Linux, default home directory
-on Windows, default initial file browser directory, extrusion of
-points with non-normalized axes of rotation, computation of the scene
-bounding box in scripts, + the usual documentation updates);
+New in 1.52: new raster ("bitmap") PostScript/EPS/PDF output formats;
+new Plugin(Extract) to extract a given component from a
+post-processing view; improved handling of 2nd order elements;
+improved mesh projection on non-planar surfaces; various bug fixes
+(default postscript printing mode, drawing of 3D arrows/cylinders on
+Linux, default home directory on Windows, default initial file browser
+directory, extrusion of points with non-normalized axes of rotation,
+computation of the scene bounding box in scripts, + the usual
+documentation updates);
 
 New in 1.51: initial support for visualizing mesh partitions;
 integrated version 2.0 of the MSH mesh file format; new option to

@@ -23,6 +23,7 @@
 #include "List.h"
 #include "Tree.h"
 #include "Vertex.h"
+#include "Element.h"
 #include "Simplex.h"
 #include "Edge.h"
 #include "ExtrudeParams.h"
@@ -185,39 +186,27 @@ struct _MAILLAGE{
 };
 
 class NXE{
-  public :
+ public :
   Vertex *v;
   List_T *Liste;
   ~NXE();
   NXE();
 };
 
-typedef struct{
-  int Num; 
-  int iEnt; // parent geometrical entity
-  int iPart; // mesh partition index
-  char Visible;
+class Hexahedron : public Element{
+ public:
   Vertex *V[8];
-  Vertex **VSUP;
-}Hexahedron;
+};
 
-typedef struct{
-  int Num;
-  int iEnt; // parent geometrical entity
-  int iPart; // mesh partition index
-  char Visible;
+class Prism : public Element{
+ public:
   Vertex *V[6];
-  Vertex **VSUP;
-}Prism;
+};
 
-typedef struct{
-  int Num;
-  int iEnt; // parent geometrical entity
-  int iPart; // mesh partition index
-  char Visible;
+class Pyramid : public Element{
+ public:
   Vertex *V[5];
-  Vertex **VSUP;
-}Pyramid;
+};
 
 typedef struct{
   int N;
@@ -509,8 +498,10 @@ void deFreeze_Vertex (void *a, void *b);
 void crEdges (Tree_T * TreeElem, Tree_T * treeedges);
 
 double Lc_XYZ (double X, double Y, double Z, Mesh * m);
-void Degre2 (Tree_T * TreeElm, Curve * c, Surface * s);
-void Reset_Degre2 ();
+void Degre1();
+void Degre2(int dim);
+void Degre2_Curve(void *a, void *b);
+void Degre2_Surface(void *a, void *b);
 void ActionLiss (void *data, void *dummy);
 void ActionLissSurf (void *data, void *dummy);
 int  Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);

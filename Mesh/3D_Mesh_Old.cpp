@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Old.cpp,v 1.10 2004-02-07 01:40:21 geuzaine Exp $
+// $Id: 3D_Mesh_Old.cpp,v 1.11 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -904,10 +904,6 @@ void Maillage_Volume(void *data, void *dum)
          Msg(STATUS3, "Swapping edges (last pass)");
          SwapEdges3D (THEM, v, 0.5, true);
        */
-    }
-
-    if(CTX.mesh.order == 2){
-      Degre2(v->Simplexes, NULL, NULL);
     }
 
     List_Delete(Simplexes_New);

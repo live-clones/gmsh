@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.103 2004-04-13 18:50:07 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.104 2004-04-18 03:36:07 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 @c
@@ -3143,7 +3143,9 @@ post-processing file formats.
 @cindex Faces, ordering
 
 For all mesh and post-processing file formats, the reference elements are
-defined as follows.
+defined as follows@footnote{Beware that the ordering of the edges and the
+faces, that determine the ordering of the nodes for the second order
+elements, is different from the ordering in GetDP.}.
 
 @example
 @group
@@ -3174,15 +3176,14 @@ Line:
 @group
 Triangle:
                   edge 1: nodes 1 -> 2         
-   v                   2:       1 -> 3                  
-   |                   3:       2 -> 3                  
+   v                   2:       2 -> 3                  
+   |                   3:       3 -> 1                  
    |                           
-   3              face 1: edges 1 -2 3   nodes 1 2 3
+   3              
    |\        
    | \       
    |__\___u                    
    1   2                       
-
 @end group
 @end example
 
@@ -3190,15 +3191,14 @@ Triangle:
 @group
 Quadrangle:
                   edge 1: nodes 1 -> 2 
-        v              2:       1 -> 4                    
-        |              3:       2 -> 3                    
-     4--|--3           4:       3 -> 4 
+        v              2:       2 -> 3                    
+        |              3:       3 -> 4                    
+     4--|--3           4:       4 -> 1 
      |  |  |     
-   -----------u   face 1: edges 1 -2 3 4   nodes 1 2 3 4
+   -----------u   
      |  |  |     
      1--|--2      
         |         
-
 @end group
 @end example
 
@@ -3206,16 +3206,16 @@ Quadrangle:
 @group
 Tetrahedron:
                   edge 1: nodes 1 -> 2                
-   v                   2:       1 -> 3                                            
-   |                   3:       1 -> 4                
-   |                   4:       2 -> 3                
-   |                   5:       2 -> 4                
-   3                   6:       3 -> 4                
+   v                   2:       2 -> 3                                            
+   |                   3:       3 -> 1                
+   |                   4:       4 -> 1                
+   |                   5:       4 -> 3                
+   3                   6:       4 -> 2                
    |\                                                 
-   | \            face 1: edges  1 -3  5  nodes 1 2 4
-   |__\2_____u         2:       -1  2 -4        1 3 2
-   1\ /                3:       -2  3 -6        1 4 3
-     \4                4:        4 -5  6        2 3 4
+   | \            
+   |__\2_____u    
+   1\ /           
+     \4           
       \          
        w         
 @end group
@@ -3224,67 +3224,56 @@ Tetrahedron:
 @example
 @group
 Hexahedron:
-                  edge 1: nodes 1 -> 2
-        v              2:       1 -> 4
-        |              3:       1 -> 5
-        |              4:       2 -> 3
-   4----|--3           5:       2 -> 6
-   |\   |  |\          6:       3 -> 4
-   | 8-------7         7:       3 -> 7
-   | |   ----|---u     8:       4 -> 8
-   1-|---\-2 |         9:       5 -> 6
-    \|    \ \|        10:       5 -> 8
-     5-----\-6        11:       6 -> 7
-            \         12:       7 -> 8
+                  
+        v          
+        |          
+        |          
+   4----|--3       
+   |\   |  |\      
+   | 8-------7     
+   | |   ----|---u 
+   1-|---\-2 |     
+    \|    \ \|     
+     5-----\-6     
+            \      
              w         
-                  face 1: edges  1 -3  5 -9    nodes 1 2 6 5
-                       2:       -1  2 -4 -6          1 4 3 2  
-                       3:       -2  3 -8  10         1 5 8 4
-                       4:        4 -5  7 -11         2 3 7 6
-                       5:        6 -7  8 -12         3 4 8 7
-                       6:        9 -10 11 12         5 6 7 8
-
 @end group
 @end example
 
 @example
 @group
 Prism:
-                  edge 1: nodes 1 -> 2
-      v                2:       1 -> 3
-    3 |                3:       1 -> 4
-    |\|                4:       2 -> 3
-    | |                5:       2 -> 5
-    1_|2               6:       3 -> 6
-     \| 6              7:       4 -> 5
-      |_|_\___u        8:       4 -> 6 
-       \|  \           9:       5 -> 6 
+                  
+      v           
+    3 |           
+    |\|           
+    | |           
+    1_|2          
+     \| 6         
+      |_|_\___u   
+       \|  \      
         4 __5
-         \        face 1: edges  1 -3  5 -7     nodes 1 2 5 4 
-          \            2:       -1  2 -4              1 3 2   
-           w           3:       -2  3 -6  8           1 4 6 3 
-                       4:        4 -5  6 -9           2 3 6 5 
-                       5:        7 -8  9              4 5 6   
+         \       
+          \      
+           w     
 @end group
 @end example
 
 @example
 @group
 Pyramid:
-                  edge 1: nodes 1 -> 2
-        v              2:       1 -> 4 
-        |              3:       1 -> 5
-        |              4:       2 -> 3
-    4---|---3          5:       2 -> 5
-    | \ |  /|          6:       3 -> 4
-    |  \ -/-|---u      7:       3 -> 5
-    |  / 5\ |          8:       4 -> 5
+                  
+        v         
+        |         
+        |         
+    4---|---3     
+    | \ |  /|     
+    |  \ -/-|---u 
+    |  / 5\ |     
     1/----\-2              
-           \      face 1: edges  1  5 -3       nodes 1 2 5  
-            \          2:        2 -6 -4 -1          1 4 3 2
-             w         3:        3 -8 -2             1 5 4  
-                       4:        4  7 -5             2 3 5  
-                       5:        6  8 -7             3 4 5  
+           \      
+            \     
+             w    
 @end group
 @end example
 

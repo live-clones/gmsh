@@ -22,20 +22,15 @@
 
 #include "List.h"
 #include "Vertex.h"
+#include "Element.h"
 
 typedef struct {
   Vertex *V[3];
 }Face;
 
-class Simplex{
-
-public:
-  int     Num;           // Number
-  int     iEnt;          // Elementary geometrical entity
-  int     iPart;         // Mesh partition index
-  char    Visible;       // Visualization flag
+class Simplex : public Element {
+ public:
   Face    F[4];          // 4 faces
-  Vertex  **VSUP;        // suppl. nodes for higher order elts
   Vertex  *V[4];         // 4 nodes
   double  Quality;       // simplex quality
   Coord   Center;        // CC center

@@ -1,4 +1,4 @@
-// $Id: Read_Mesh.cpp,v 1.70 2004-02-28 00:48:50 geuzaine Exp $
+// $Id: Read_Mesh.cpp,v 1.71 2004-04-18 03:36:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -293,6 +293,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	  if(Type == LGN2){
 	    simp->VSUP = (Vertex **) Malloc(1 * sizeof(Vertex *));
 	    simp->VSUP[0] = vertsp[2];
+	    simp->VSUP[0]->Degree = 2;
 	  }
           if(!Tree_Insert(c->Simplexes, &simp)){
 	    Msg(GERROR, "Line element %d already exists", simp->Num);
@@ -312,6 +313,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    simp->VSUP = (Vertex **) Malloc(3 * sizeof(Vertex *));
 	    for(i = 0; i < 3; i++){
 	      simp->VSUP[i] = vertsp[i+3];
+	      simp->VSUP[i]->Degree = 2;
 	    }
 	  }
           if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
@@ -334,6 +336,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    simp->VSUP = (Vertex **) Malloc(4 * sizeof(Vertex *));
 	    for(i = 0; i < 4; i++){
 	      simp->VSUP[i] = vertsp[i+4];
+	      simp->VSUP[i]->Degree = 2;
 	    }
 	  }
           if(Tree_Insert(s->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
@@ -357,6 +360,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    simp->VSUP = (Vertex **) Malloc(6 * sizeof(Vertex *));
 	    for(i = 0; i < 6; i++){
 	      simp->VSUP[i] = vertsp[i+4];
+	      simp->VSUP[i]->Degree = 2;
 	    }
 	  }
           if(Tree_Insert(v->Simplexes, &simp) && Tree_Insert(M->Simplexes, &simp)){
@@ -380,6 +384,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    hex->VSUP = (Vertex **) Malloc(12 * sizeof(Vertex *));
 	    for(i = 0; i < 12; i++){
 	      hex->VSUP[i] = vertsp[i+8];
+	      hex->VSUP[i]->Degree = 2;
 	    }
 	  }
           if(Tree_Insert(v->Hexahedra, &hex)){
@@ -403,6 +408,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    pri->VSUP = (Vertex **) Malloc(9 * sizeof(Vertex *));
 	    for(i = 0; i < 9; i++){
 	      pri->VSUP[i] = vertsp[i+6];
+	      pri->VSUP[i]->Degree = 2;
 	    }
 	  }
           if(Tree_Insert(v->Prisms, &pri)){
@@ -426,6 +432,7 @@ void Read_Mesh_MSH(Mesh * M, FILE * fp)
 	    pyr->VSUP = (Vertex **) Malloc(8 * sizeof(Vertex *));
 	    for(i = 0; i < 8; i++){
 	      pyr->VSUP[i] = vertsp[i+5];
+	      pyr->VSUP[i]->Degree = 2;
 	    }
 	  }
           if(Tree_Insert(v->Pyramids, &pyr)){
