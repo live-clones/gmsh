@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.8 2002-01-25 18:32:35 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.9 2002-02-13 17:14:46 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
@@ -9,6 +9,7 @@ Parts of the code have been contributed by
 
     Patrick Dular <patrick.dular@ulg.ac.be>
     Marc Umé <Marc.Ume@digitalgraphics.be>
+    Laurent Stainier <l.stainier@ulg.ac.be>
 
 Special thanks to the following folks who have greatly contributed by
 providing fresh ideas on theoretical or programming topics, or who
@@ -18,7 +19,9 @@ it is inevitable that some contributors have been omitted. If you are
 in this situation, just send an e-mail to one of the authors, and you
 will be added to the list!
 
+    Juan Abanto <juanabanto@yahoo.com>
     Olivier Adam <o.adam@ulg.ac.be>
+    Guillaume Alleon <guillaume.alleon@airbus.aeromatra.com>
     Éric Bechet <eric.bechet@epost.de>
     Laurent Champaney <laurent.champaney@meca.uvsq.fr>
     David Colignon <david.colignon@ulg.ac.be>
@@ -27,7 +30,7 @@ will be added to the list!
     François Henrotte <fhenrott@esat.kuleuven.ac.be>
     Benoît Meys <bmeys@techspace-aero.be>
     Nicolas Moës <moes@tam9.mech.nwu.edu>
-    Laurent Stainier <l.stainier@ulg.ac.be>
+    Nicolas Tardieu <nicolas.tardieu@edf.fr>
 
 Finally, thanks to all of you who sent e-mail showing interest. This
 has motivated us a lot to release the code as free software and to
