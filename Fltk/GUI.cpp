@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.122 2001-10-30 14:27:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.123 2001-10-30 14:33:52 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1657,6 +1657,7 @@ void GUI::create_statistics_window(){
 	stat_value[num++] = new Fl_Output(2*WB, 2*WB+3*BH, IW, BH, "Visible lines");
 	stat_value[num++] = new Fl_Output(2*WB, 2*WB+4*BH, IW, BH, "Visible triangles");
 	stat_value[num++] = new Fl_Output(2*WB, 2*WB+5*BH, IW, BH, "Visible tetrahedra");
+	stat_value[num++] = new Fl_Output(2*WB, 2*WB+6*BH, IW, BH, "Visible strings");
 	o->end();
       }
       o->end();
@@ -1739,32 +1740,35 @@ void GUI::set_statistics(){
   // post
   p[0] = List_Nbr(CTX.post.list) ;
   sprintf(label[num], "%g", p[0]); stat_value[num]->value(label[num]); num++;
-  p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = p[8] = 0 ;
+  p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = p[8] = p[9] = p[10] = 0 ;
   for(i=0 ; i<List_Nbr(CTX.post.list) ; i++){
     Post_View *v = (Post_View*)List_Pointer(CTX.post.list, i);
     p[1] += v->NbSP + v->NbVP + v->NbTP;
     p[2] += v->NbSL + v->NbVL + v->NbTL;
     p[3] += v->NbST + v->NbVT + v->NbTT;
     p[4] += v->NbSS + v->NbVS + v->NbTS;
+    p[5] += v->NbT2 + v->NbT3;
     if(v->Visible){
-      if(v->DrawPoints)	p[5] += (v->DrawScalars ? v->NbSP : 0) + 
+      if(v->DrawPoints)	p[6] += (v->DrawScalars ? v->NbSP : 0) + 
 			        (v->DrawVectors ? v->NbVP : 0) + 
 			        (v->DrawTensors ? v->NbTP : 0) ;
-      if(v->DrawLines) p[6] += (v->DrawScalars ? v->NbSL : 0) + 
+      if(v->DrawLines) p[7] += (v->DrawScalars ? v->NbSL : 0) + 
 			       (v->DrawVectors ? v->NbVL : 0) + 
 			       (v->DrawTensors ? v->NbTL : 0) ;
-      if(v->DrawTriangles) p[7] += (v->DrawScalars ? v->NbST : 0) + 
+      if(v->DrawTriangles) p[8] += (v->DrawScalars ? v->NbST : 0) + 
 			           (v->DrawVectors ? v->NbVT : 0) + 
 			           (v->DrawTensors ? v->NbTT : 0) ;
-      if(v->DrawTetrahedra) p[8] += (v->DrawScalars ? v->NbSS : 0) + 
+      if(v->DrawTetrahedra) p[9] += (v->DrawScalars ? v->NbSS : 0) + 
 			            (v->DrawVectors ? v->NbVS : 0) + 
    			            (v->DrawTensors ? v->NbTS : 0) ;
+      if(v->DrawStrings) p[10] += v->NbT2 + v->NbT3 ;
     }
   }
-  sprintf(label[num], "%g/%g", p[5],p[1]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", p[6],p[2]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", p[7],p[3]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", p[8],p[4]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[6],p[1]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[7],p[2]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[8],p[3]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[9],p[4]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g/%g", p[10],p[5]); stat_value[num]->value(label[num]); num++;
 }
 
 
