@@ -1,4 +1,4 @@
-$Id: TODO,v 1.90 2005-03-13 09:13:50 geuzaine Exp $
+$Id: TODO,v 1.91 2005-03-14 21:19:32 geuzaine Exp $
 
 ********************************************************************
 
@@ -20,10 +20,6 @@ add general extrusion along parametric curve
 ********************************************************************
 
 add option to draw "filled isos" using 1D textures?
-
-********************************************************************
-
-use marching cube algo for hexas to make iso-surfaces nicer?
 
 ********************************************************************
 

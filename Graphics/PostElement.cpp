@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.62 2005-03-11 05:47:56 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.63 2005-03-14 21:19:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -697,10 +697,20 @@ void Draw_ScalarHexahedron(Post_View * View, int preproNormals,
     Draw_ElementBoundary(POST_HEXAHEDRON, View, X, Y, Z);
   }
 
-  REORDER6(0, 1, 3, 4, 5, 7);
-  Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
-  REORDER6(1, 2, 3, 5, 6, 7);
-  Draw_ScalarPrism(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
+  // 6-tet subdivision whose edges match on each pair of opposite faces
+  REORDER4(0, 1, 3, 7);
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
+  REORDER4(0, 4, 1, 7);
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
+  REORDER4(1, 4, 5, 7);
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
+
+  REORDER4(1, 2, 3, 7);
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
+  REORDER4(1, 6, 2, 7);
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
+  REORDER4(1, 5, 6, 7);
+  Draw_ScalarTetrahedron(View, preproNormals, ValMin, ValMax, Xp, Yp, Zp, Val);
 
   View->TimeStep = ts;
   View->ShowElement = show;
