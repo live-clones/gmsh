@@ -1,4 +1,4 @@
-/* $Id: CAD.cpp,v 1.11 2000-12-13 20:21:03 geuzaine Exp $ */
+/* $Id: CAD.cpp,v 1.12 2000-12-18 14:18:04 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -859,7 +859,7 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
   *pc = *prc = NULL;
   if(!Tree_Query(THEM->Points, &pv) )return;
 
-  Msg(DEBUG, "Extrude Point %d\n", ip);
+  Msg(DEBUG, "Extrude Point %d", ip);
 
   chapeau = DuplicateVertex(pv);
   if(ep){
@@ -923,7 +923,6 @@ void Extrude_ProtudePoint(int ep, int ip, double A, double B, double C,
   CreateReversedCurve (THEM,c);
   *pc = c;
   *prc = FindCurve(-c->Num,THEM);
-  
 }
 
 Surface *Extrude_ProtudeCurve(int ep, int ic,
@@ -944,7 +943,7 @@ Surface *Extrude_ProtudeCurve(int ep, int ic,
   
   if(!pc || !revpc) return NULL;
 
-  Msg(DEBUG, "Extrude Curve %d\n", ic);
+  Msg(DEBUG, "Extrude Curve %d", ic);
 
   chapeau = DuplicateCurve(pc);
   
@@ -1028,7 +1027,7 @@ void Extrude_ProtudeSurface(int ep, int is,
   
   if(!(ps = FindSurface(is,THEM)) )return;
 
-  Msg(DEBUG, "Extrude Surface %d\n", is);
+  Msg(DEBUG, "Extrude Surface %d", is);
   
   if(NewVolume){
     pv = Create_Volume(NewVolume,0,0);
@@ -1244,8 +1243,8 @@ void ReplaceAllDuplicates ( Mesh *m ){
   Surface *s;
   Volume *vol;
   int i,j,start,end;
-  
-  /*Creation de points uniques*/
+
+  /* Create unique points */
 
   All = Tree2List(m->Points);
   start = List_Nbr(All);
@@ -1265,9 +1264,9 @@ void ReplaceAllDuplicates ( Mesh *m ){
 
   end = Tree_Nbr(m->Points);
 
-  if(start-end) Msg(INFOS, "Removed %d Duplicate Points", start-end);
+  if(start-end) Msg(DEBUG, "Removed %d Duplicate Points", start-end);
 
-  /*Remplacement dans les courbes*/
+  /* Replace old points in curves */
 
   All = Tree2List(m->Curves);
   start = List_Nbr(All);
@@ -1283,6 +1282,9 @@ void ReplaceAllDuplicates ( Mesh *m ){
     }
   }
   List_Delete(All);
+
+  /* Replace old points in surfaces */
+
   All = Tree2List(m->Surfaces);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
@@ -1294,9 +1296,10 @@ void ReplaceAllDuplicates ( Mesh *m ){
   }
   
   List_Delete(All);
-  All = Tree2List(m->Curves);
 
-  /*Creation de courbes uniques*/
+  /* Create unique curves */
+
+  All = Tree2List(m->Curves);
   Tree_T *allNonDulpicatedCurves;
   allNonDulpicatedCurves = Tree_Create(sizeof(Curve*),compareTwoCurves);
   for(i=0;i<List_Nbr(All);i++){
@@ -1321,9 +1324,10 @@ void ReplaceAllDuplicates ( Mesh *m ){
 
   end = Tree_Nbr(m->Curves);
 
-  if(start-end) Msg(INFOS, "Removed %d Duplicate Curves", start-end);
+  if(start-end) Msg(DEBUG, "Removed %d Duplicate Curves", start-end);
 
-  /*Remplacement dans les surfaces*/
+  /* Replace old curves in surfaces */
+
   All = Tree2List(m->Surfaces);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
@@ -1331,10 +1335,13 @@ void ReplaceAllDuplicates ( Mesh *m ){
       List_Write(s->s.Generatrices,j,
                  Tree_PQuery( allNonDulpicatedCurves,
                               List_Pointer(s->s.Generatrices,j)));
+
+      // Arghhh. Revoir compareTwoCurves !
+      End_Curve(*(Curve**)List_Pointer(s->s.Generatrices,j));
     }
   }
   
-  /*Creation de surfaces uniques*/
+  /* Create unique surfaces */
 
   start = List_Nbr(All);
   
@@ -1342,7 +1349,6 @@ void ReplaceAllDuplicates ( Mesh *m ){
   allNonDulpicatedSurfaces = Tree_Create(sizeof(Curve*),compareTwoSurfaces);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&s);
-    //printSurface(s);
     if(s->Num > 0){
       if(!Tree_Search(allNonDulpicatedSurfaces,&s)){
         Tree_Insert(allNonDulpicatedSurfaces,&s);
@@ -1357,9 +1363,10 @@ void ReplaceAllDuplicates ( Mesh *m ){
 
   end = Tree_Nbr(m->Surfaces);
 
-  if(start-end) Msg(INFOS, "Removed %d Duplicate Surfaces", start-end);
+  if(start-end) Msg(DEBUG, "Removed %d Duplicate Surfaces", start-end);
 
-  /*Remplacement dans les volumes*/
+  /* Replace old surfaces in volumes */
+
   All = Tree2List(m->Volumes);
   for(i=0;i<List_Nbr(All);i++){
     List_Read(All,i,&vol);
@@ -1619,8 +1626,8 @@ Curve * CreateReversedCurve (Mesh *M,Curve *c){
   newc->end = c->beg;
   newc->ubeg = 1. - c->uend;
   newc->uend = 1. - c->ubeg;
-  Tree_Insert(M->Curves, &newc);
   End_Curve(newc);
+  Tree_Insert(M->Curves, &newc);
   return newc;
 }
 
