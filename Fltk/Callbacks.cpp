@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.263 2004-08-09 10:29:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.264 2004-08-12 16:52:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3350,7 +3350,7 @@ void view_options_timestep_incr_cb(CALLBACK_ARGS)
 
 void view_options_ok_cb(CALLBACK_ARGS)
 {
-  int i, links, force = 0;
+  int links, force = 0;
 
   if((long int)data < 0)
     return;
@@ -3408,7 +3408,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double point_size = opt_view_point_size(current, GMSH_GET, 0);
   double line_width = opt_view_line_width(current, GMSH_GET, 0);
   double explode = opt_view_explode(current, GMSH_GET, 0);
-  double angle_smooth_normals = opt_view_angle_smooth_normals(i, GMSH_GET, 0);
+  double angle_smooth_normals = opt_view_angle_smooth_normals(current, GMSH_GET, 0);
   double position0 = opt_view_position0(current, GMSH_GET, 0);
   double position1 = opt_view_position1(current, GMSH_GET, 0);
   double size0 = opt_view_size0(current, GMSH_GET, 0);
@@ -3425,7 +3425,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   strcpy(abscissa_format, opt_view_abscissa_format(current, GMSH_GET, NULL));
 
   // modify only the views that need to be updated
-  for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == current)) {
