@@ -2,7 +2,7 @@
  * GL2JPEG, an OpenGL to JPEG Printing Library
  * Copyright (C) 1999-2002  Christophe Geuzaine 
  *
- * $Id: gl2jpeg.cpp,v 1.13 2003-02-12 16:12:27 geuzaine Exp $
+ * $Id: gl2jpeg.cpp,v 1.14 2003-02-12 16:57:38 geuzaine Exp $
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -30,6 +30,14 @@ void create_jpeg(FILE *outfile, int width, int height, int quality){
 }
 
 #else
+
+/* Some releases of the Cygwin JPEG libraries don't have a correctly
+   updated header file for the INT32 data type; the following define
+   from Shane Hill seems to be a usable workaround... */
+
+#if defined(WIN32)
+#define XMD_H
+#endif
 
 #include <jpeglib.h>
 #include <jerror.h>
