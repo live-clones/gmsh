@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.34 2004-04-24 04:19:43 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.35 2004-04-24 05:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -194,12 +194,8 @@ static void Draw_Graph2D(Post_View * v,
     if(v->ShowScale) {
       glColor4ubv((GLubyte *) & CTX.color.text);
       sprintf(label, v->Format, (i == nb) ? ValMin : (ValMax - i * dv));
-      if(!CTX.print.gl_fonts)
-        glRasterPos2d(xtop - gl_width(label) - 3 * tic,
-                      ytop - i * dy - font_a / 3.);
-      else
-        glRasterPos2d(xtop - gl_width(label) - tic,
-                      ytop - i * dy - font_a / 3.);
+      glRasterPos2d(xtop - gl_width(label) - 2 * tic,
+		    ytop - i * dy - font_a / 3.);
       Draw_String(label);
     }
   }
