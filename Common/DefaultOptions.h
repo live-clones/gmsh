@@ -506,7 +506,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "FontSize" , opt_print_font_size , 12. ,
     "Font size used for postscript printing" },
   { F|O, "GeometryLineWidth" , opt_print_geom_line_width , 1. ,
-    "Width factor for geometry lines in postscript output" },
+    "Width factor for geometry lines in postscript output (10 looks nice for geometry+mesh display)" },
   { 0, NULL , NULL , 0. }
 } ;
 
