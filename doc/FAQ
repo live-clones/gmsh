@@ -1,5 +1,5 @@
 
-GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2001-09-05 19:14:05 $)
+GMSH FREQUENTLY ASKED QUESTIONS ($Date: 2001-10-06 16:32:40 $)
 
 1. GENERAL
 ==========
@@ -64,6 +64,23 @@ Disable opaque move in your window manager.
 4.1) Does Gmsh support NURBS curves/surfaces?
 
 Not yet.
+
+4.2) Gmsh is very slow when I use many transformations (Translate,
+Rotate, Symmetry, Extrude, etc. ). What's wrong?
+
+The default behavior of Gmsh is to check and suppress all duplicate
+entities (points, lines and surfaces) each time a transformation
+command is issued. This can slow down things a lot if many
+transformations are performed. There are two solutions to this
+problem:
+- you may save the flattened geometry in another file (e.g. with 
+  gmsh file.geo -0 > flat.geo), and use this new file for subsequent
+  computations;
+- you may set the 'Geometry.AutoCoherence' option to 0. This will
+  prevent any automatic duplicate check/replacement. If you still
+  need to remove the duplicates entities, simply add 'Coherence;' at 
+  strategic locations in your geo files (e.g. before the creation of
+  line loops, etc.).
 
 
 5. MESH PROBLEMS
