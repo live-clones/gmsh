@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.22 2001-10-31 16:33:46 remacle Exp $
+// $Id: Plugin.cpp,v 1.23 2002-03-26 22:11:33 geuzaine Exp $
 
 #include <map>
 #ifndef _NODLL
@@ -8,6 +8,7 @@
 #include <map>
 
 #ifdef _FLTK
+#include <FL/Fl.H>
 #include <FL/filename.H>
 #endif
 
@@ -126,7 +127,11 @@ void GMSH_PluginManager::RegisterDefaultPlugins(){
 #ifdef _FLTK
   char *homeplugins = getenv ("GMSHPLUGINSHOME");
   if(!homeplugins)return;
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1)
+  int nbFiles = fl_filename_list(homeplugins,&list);
+#else
   int nbFiles = filename_list(homeplugins,&list);
+#endif
   if(nbFiles <= 0)  return;
   for(int i=0;i<nbFiles;i++){
     char *name = list[i]->d_name;
