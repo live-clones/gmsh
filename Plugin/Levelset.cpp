@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.20 2004-11-26 14:42:56 remacle Exp $
+// $Id: Levelset.cpp,v 1.21 2004-11-26 15:13:07 remacle Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -556,7 +556,7 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
 static bool recur_sign_change (_triangle *t, double val, const GMSH_LevelsetPlugin *plug)
 {
 
-  if (!t->t[0])
+  if (!t->t[0]|| t->visible)
     {
       double v1 = plug->levelset (t->p[0]->X,t->p[0]->Y,t->p[0]->Z,t->p[0]->val);
       double v2 = plug->levelset (t->p[1]->X,t->p[1]->Y,t->p[1]->Z,t->p[1]->val);
@@ -589,7 +589,7 @@ static bool recur_sign_change (_triangle *t, double val, const GMSH_LevelsetPlug
 static bool recur_sign_change (_tet *t, double val, const GMSH_LevelsetPlugin *plug)
 {
 
-  if (!t->t[0])
+  if (!t->t[0] || t->visible)
     {
       double v1 = plug->levelset (t->p[0]->X,t->p[0]->Y,t->p[0]->Z,t->p[0]->val);
       double v2 = plug->levelset (t->p[1]->X,t->p[1]->Y,t->p[1]->Z,t->p[1]->val);
@@ -621,6 +621,52 @@ static bool recur_sign_change (_tet *t, double val, const GMSH_LevelsetPlugin *p
 	  if (!sc6) t->t[5]->visible = true;
 	  if (!sc7) t->t[6]->visible = true;
 	  if (!sc8) t->t[7]->visible = true;
+	  return true;
+	}
+      t->visible = false;
+      return false;
+    }      
+}
+
+static bool recur_sign_change (_hex *t, double val, const GMSH_LevelsetPlugin *plug)
+{
+
+  if (!t->h[0]|| t->visible)
+    {
+      double v1 = plug->levelset (t->p[0]->X,t->p[0]->Y,t->p[0]->Z,t->p[0]->val);
+      double v2 = plug->levelset (t->p[1]->X,t->p[1]->Y,t->p[1]->Z,t->p[1]->val);
+      double v3 = plug->levelset (t->p[2]->X,t->p[2]->Y,t->p[2]->Z,t->p[2]->val);
+      double v4 = plug->levelset (t->p[3]->X,t->p[3]->Y,t->p[3]->Z,t->p[3]->val);
+      double v5 = plug->levelset (t->p[4]->X,t->p[4]->Y,t->p[4]->Z,t->p[4]->val);
+      double v6 = plug->levelset (t->p[5]->X,t->p[5]->Y,t->p[5]->Z,t->p[5]->val);
+      double v7 = plug->levelset (t->p[6]->X,t->p[6]->Y,t->p[6]->Z,t->p[6]->val);
+      double v8 = plug->levelset (t->p[7]->X,t->p[7]->Y,t->p[7]->Z,t->p[7]->val);
+      if ( v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 && v1 * v6 > 0 && v1 * v7 > 0 && v1 * v8 > 0)
+	t->visible = false;
+      else
+	t->visible = true;
+      return t->visible;
+    }
+  else
+    {
+      bool sc1 = recur_sign_change(t->h[0],val,plug);
+      bool sc2 = recur_sign_change(t->h[1],val,plug);
+      bool sc3 = recur_sign_change(t->h[2],val,plug);
+      bool sc4 = recur_sign_change(t->h[3],val,plug);
+      bool sc5 = recur_sign_change(t->h[4],val,plug);
+      bool sc6 = recur_sign_change(t->h[5],val,plug);
+      bool sc7 = recur_sign_change(t->h[6],val,plug);
+      bool sc8 = recur_sign_change(t->h[7],val,plug);
+      if (sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8)
+	{
+	  if (!sc1) t->h[0]->visible = true;
+	  if (!sc2) t->h[1]->visible = true;
+	  if (!sc3) t->h[2]->visible = true;
+	  if (!sc4) t->h[3]->visible = true;
+	  if (!sc5) t->h[4]->visible = true;
+	  if (!sc6) t->h[5]->visible = true;
+	  if (!sc7) t->h[6]->visible = true;
+	  if (!sc8) t->h[7]->visible = true;
 	  return true;
 	}
       t->visible = false;
@@ -678,5 +724,10 @@ void GMSH_LevelsetPlugin::assign_specific_visibility () const
     {
       _quad *qe  = *_quad::all_quads.begin();
       qe->visible = !recur_sign_change (qe, _valueView, this);
+    }
+  if (_hex::all_hexes.size())
+    {
+      _hex *he  = *_hex::all_hexes.begin();
+      he->visible = !recur_sign_change (he, _valueView, this);
     }
 }
