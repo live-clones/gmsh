@@ -1,13 +1,13 @@
-$Id: VERSIONS,v 1.254 2004-10-16 19:30:31 geuzaine Exp $
+$Id: VERSIONS,v 1.255 2004-10-17 01:54:16 geuzaine Exp $
 
-New in 1.56: new post-processing option to draw a scalar view
-raised by a displacement view without using Plugin(DisplacementRaise)
-(makes drawing arbitrary scalar fields on deformed meshes much
-easier); better post-processing menu (arbitrary number of
-views+scrollable+show view number); improved view->combine; new
-horizontal post-processing scales; new option to draw the mesh nodes
-per element; views can now also be saved in "parsed" format; small bug
-fixes.
+New in 1.56: new post-processing option to draw a scalar view raised
+by a displacement view without using Plugin(DisplacementRaise) (makes
+drawing arbitrary scalar fields on deformed meshes much easier);
+better post-processing menu (arbitrary number of views+scrollable+show
+view number); improved view->combine; new horizontal post-processing
+scales; new option to draw the mesh nodes per element; views can now
+also be saved in "parsed" format; fixed various path problems on
+Windows; small bug fixes.
 
 New in 1.55: added background mesh support for Triangle; meshes can
 now be displayed using "smoothed" normals (like post-processing
