@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.31 2002-08-28 21:26:40 geuzaine Exp $
+// $Id: Message.cpp,v 1.32 2002-09-19 21:44:12 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2002 C. Geuzaine, J.-F. Remacle
 //
@@ -112,10 +112,6 @@ void Msg(int level, char *fmt, ...){
   case DEBUG1   : str = DEBUG_STR; verb = 3; break ;
   case DEBUG2   :		     	  
   case DEBUG3   : str = DEBUG_NIL; verb = 3; break ;
-
-  case PARSER_ERROR : str = PARSER_ERROR_STR ; break ;
-
-  case PARSER_INFO : str = PARSER_INFO_STR ; verb = 2; break ;
 
   case LOG_INFO : verb = 2 ; window = 3; break ;
 

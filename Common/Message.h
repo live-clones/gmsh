@@ -55,8 +55,6 @@
 #define STATUS2N      25  // Same as STATUS2, but not going into the log file
 #define STATUS3N      26  // Same as STATUS3, but not going into the log file
 
-#define PARSER_ERROR  27  // Error during syntax parsing
-#define PARSER_INFO   28  // Info during syntax parsing
 #define LOG_INFO      29  // Info put only in the logfile
 
 #define DIRECT        30  // Direct message (no special formatting)
@@ -72,8 +70,6 @@
 #define DEBUG_STR          "Debug : "
 #define DEBUG_NIL          "      : "
 #define STATUS_STR         "Info : "
-#define PARSER_ERROR_STR   "Parse Error : "
-#define PARSER_INFO_STR    "Parse Info : "
 
 void   Signal (int signum);
 void   Msg (int level, char *fmt, ...);
