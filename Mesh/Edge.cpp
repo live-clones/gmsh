@@ -1,4 +1,4 @@
-// $Id: Edge.cpp,v 1.14 2004-04-18 03:20:53 geuzaine Exp $
+// $Id: Edge.cpp,v 1.15 2004-04-19 00:18:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -25,13 +25,7 @@
 #include "Edge.h"
 #include "Tools.h"
 
-static int edges_quad[4][2] = {
-  {0, 1},
-  {1, 2},
-  {2, 3},
-  {3, 0}
-};
-static int edges_tetra[6][2] = {
+int edges_tetra[6][2] = {
   {0, 1},
   {1, 2},
   {2, 0},
@@ -39,7 +33,15 @@ static int edges_tetra[6][2] = {
   {3, 2},
   {3, 1}
 };
-static int edges_non[3] = { 2, 0, 1 };
+
+int edges_quad[4][2] = {
+  {0, 1},
+  {1, 2},
+  {2, 3},
+  {3, 0}
+};
+
+int edges_non[3] = { 2, 0, 1 };
 
 int compareedge(const void *a, const void *b)
 {

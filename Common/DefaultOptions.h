@@ -789,7 +789,7 @@ StringXNumber MeshOptions_Number[] = {
     "Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=voronoi, 3=cog)" },
   { F|O, "PointsNumbers" , opt_mesh_points_num , 0. , 
     "Display mesh vertex numbers?" },
-  { F|O, "PointSize" , opt_mesh_point_size , 2. , 
+  { F|O, "PointSize" , opt_mesh_point_size , 3. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_mesh_point_type , 0. , 
     "Display points as solid color dots (0) or 3D spheres (1)" },
@@ -988,7 +988,7 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "OffsetZ" , opt_view_offset2 , 0. , 
     "Translation of the view along Z-axis (in model coordinates)" },
 
-  { F|O, "PointSize" , opt_view_point_size , 2. , 
+  { F|O, "PointSize" , opt_view_point_size , 3. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. , 
     "Display points as solid color dots (0) or 3D spheres (1)" },
@@ -1201,8 +1201,8 @@ StringXColor GeometryOptions_Color[] = {
 
 StringXColor MeshOptions_Color[] = {
   { F|O, "Points" , opt_mesh_color_points , 
-    PACK_COLOR(0  , 123, 59 , 255),
-    PACK_COLOR(0  , 123, 59 , 255),
+    PACK_COLOR(0  , 200, 70 , 255),
+    PACK_COLOR(0  , 200, 70 , 255),
     PACK_COLOR(0,   0,   0,   255),
     "Mesh vertex color" },
   { F|O, "PointsSup" , opt_mesh_color_points_deg2 , 

@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.21 2004-04-18 21:47:29 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.22 2004-04-19 00:18:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,8 @@
 // Element, and dynamic cast to Simplex, Quandrangle, Hexahdra, etc.
 
 extern Mesh *THEM;
+extern int edges_tetra[6][2];
+extern int edges_quad[4][2];
 
 static Surface *THES = NULL;
 static Curve *THEC = NULL;
@@ -119,22 +121,6 @@ Vertex *onsurface(Vertex * v1, Vertex * v2)
 
   return pv;
 }
-
-static int edges_tetra[6][2] = {
-  {0, 1},
-  {1, 2},
-  {2, 0},
-  {3, 0},
-  {3, 2},
-  {3, 1}
-};
-
-static int edges_quad[4][2] = {
-  {0, 1},
-  {1, 2},
-  {2, 3},
-  {3, 0}
-};
 
 void PutMiddlePoint(void *a, void *b)
 {

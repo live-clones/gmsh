@@ -1,4 +1,4 @@
-// $Id: 3D_Coherence.cpp,v 1.32 2004-04-18 17:45:39 geuzaine Exp $
+// $Id: 3D_Coherence.cpp,v 1.33 2004-04-19 00:18:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,8 @@
 extern Mesh *THEM;
 extern int FACE_DIMENSION;
 extern Simplex MyNewBoundary;
+extern int edges_tetra[6][2];
+extern int edges_non[3];
 
 static Volume *THEVOL;
 static Edge *TheEdge;
@@ -37,16 +39,6 @@ static List_T *Teti;
 
 List_T *Missing, *MissingF, *MissingS;
 Tree_T *EdgesTree, *FacesTree, *swaps, *touchedvertex;
-
-int edges_tetra[6][2] = {
-  {0, 1},
-  {1, 2},
-  {2, 0},
-  {3, 0},
-  {3, 2},
-  {3, 1}
-};
-int edges_non[3] = { 2, 0, 1 };
 
 int memesens(Vertex * v1, Vertex * v2, Vertex * v3,
              Vertex * c1, Vertex * c2, Vertex * c3)
