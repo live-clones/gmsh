@@ -98,6 +98,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 0. },
   { F|O, "Trackball" , opt_general_trackball , 1. },
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 1.1 }, 
+  { F|O, "DefaultPlugins" , opt_general_default_plugins , 1. }, 
   { F, "Clip0" , opt_general_clip0 , 0. },
   { F, "Clip0A" , opt_general_clip0a , 0.0 }, 
   { F, "Clip0B" , opt_general_clip0b , 0.0 }, 

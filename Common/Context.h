@@ -45,6 +45,8 @@ public :
   int msg_size[2];            // size of the message window on the screen
   int center_windows;         // center popup windows on the menu window
 
+  int default_plugins;        // do we load default plugins on startup?
+
   int batch;                  // 0=full gfx; -1=just parse; 1,2,3=batch 1D, 2D, 3D mesh 
   int verbosity;              // 0=silent -> 3=debug 
   int expose;                 // 1 if everything is ready to expose and draw 
