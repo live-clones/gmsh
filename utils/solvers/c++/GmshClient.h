@@ -131,13 +131,13 @@ class GmshClient {
       }
     }
     else{
-      // try to connect socket to given name
       _sock = socket(AF_INET, SOCK_STREAM, 0);
       if(_sock < 0)
 	return -1; // Error: Couldn't create socket
       struct hostent *server;
       if(!(server = gethostbyname(remote)))
 	return -3; // Error: No such host
+      // try to connect socket to given name
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
