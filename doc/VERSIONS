@@ -1,11 +1,11 @@
-$Id: VERSIONS,v 1.249 2004-09-28 22:45:53 geuzaine Exp $
+$Id: VERSIONS,v 1.250 2004-10-11 17:30:24 geuzaine Exp $
 
 New since 1.55: new post-processing option to draw a scalar view
 raised by a displacement view without using Plugin(DisplacementRaise)
 (makes drawing arbitrary scalar fields on deformed meshes much
 easier); better post-processing menu (arbitrary number of
-views+scrollable+show view number); improved view->combine; small bug
-fixes.
+views+scrollable+show view number); improved view->combine; new
+horizontal post-processing scales; small bug fixes.
 
 New in 1.55: added background mesh support for Triangle; meshes can
 now be displayed using "smoothed" normals (like post-processing
