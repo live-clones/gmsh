@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.40 2003-03-21 00:52:46 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.41 2003-06-18 20:47:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,8 @@
 #include "CutPlane.h"
 #include "CutSphere.h"
 #include "Skin.h"
+#include "Harmonic2Time.h"
+#include "DecomposeInSimplex.h"
 #include "Smooth.h"
 #include "Transform.h"
 #include "Triangulate.h"
@@ -129,30 +131,30 @@ GMSH_PluginManager *GMSH_PluginManager::Instance()
 
 void GMSH_PluginManager::RegisterDefaultPlugins()
 {
-  allPlugins.insert(std::pair < char *, GMSH_Plugin * >("CutMap",
-                                                        GMSH_RegisterCutMapPlugin
-                                                        ()));
-  allPlugins.insert(std::pair < char *,
-                    GMSH_Plugin * >("CutPlane",
-                                    GMSH_RegisterCutPlanePlugin()));
-  allPlugins.insert(std::pair < char *,
-                    GMSH_Plugin * >("CutSphere",
-                                    GMSH_RegisterCutSpherePlugin()));
-  allPlugins.insert(std::pair < char *,
-                    GMSH_Plugin * >("Skin", GMSH_RegisterSkinPlugin()));
-  allPlugins.insert(std::pair < char *,
-                    GMSH_Plugin * >("Smooth", GMSH_RegisterSmoothPlugin()));
-  allPlugins.insert(std::pair < char *,
-                    GMSH_Plugin * >("Transform",
-                                    GMSH_RegisterTransformPlugin()));
-#if defined(HAVE_TRIANGLE)
-  allPlugins.insert(std::pair < char *,
-                    GMSH_Plugin * >("Triangulate",
-                                    GMSH_RegisterTriangulatePlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("CutMap", GMSH_RegisterCutMapPlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("CutPlane", GMSH_RegisterCutPlanePlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("CutSphere", GMSH_RegisterCutSpherePlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Skin", GMSH_RegisterSkinPlugin()));
+#if 0 // not ready yet
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Harmonic2Time", GMSH_RegisterHarmonic2TimePlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("DecomposeInSimplex", GMSH_RegisterDecomposeInSimplexPlugin()));
 #endif
-  allPlugins.insert(std::pair < char *,
-                    GMSH_Plugin * >("SphericalRaise",
-                                    GMSH_RegisterSphericalRaisePlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Smooth", GMSH_RegisterSmoothPlugin()));
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Transform", GMSH_RegisterTransformPlugin()));
+#if defined(HAVE_TRIANGLE)
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("Triangulate", GMSH_RegisterTriangulatePlugin()));
+#endif
+  allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		    ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
 
 #if defined(HAVE_FLTK)
   struct dirent **list;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.35 2003-03-21 00:52:46 geuzaine Exp $
+# $Id: Makefile,v 1.36 2003-06-18 20:47:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -34,6 +34,7 @@ SRC = Plugin.cpp\
         Triangulate.cpp\
         SphericalRaise.cpp\
         Skin.cpp\
+        DecomposeInSimplex.cpp\
         Harmonic2Time.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -93,6 +94,10 @@ SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/Context.h \
   ../Numeric/Numeric.h
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h Skin.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/Context.h ../DataStr/Malloc.h
+DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h\
+  ../Common/Message.h DecomposeInSimplex.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/Context.h ../DataStr/Malloc.h
 Harmonic2Time.o: Harmonic2Time.cpp Plugin.h ../Common/Options.h \
