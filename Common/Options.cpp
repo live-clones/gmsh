@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.133 2004-02-06 17:53:15 geuzaine Exp $
+// $Id: Options.cpp,v 1.134 2004-02-07 01:28:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -1762,6 +1762,34 @@ double opt_general_menu_position1(OPT_ARGS_NUM)
   return CTX.position[1];
 }
 
+double opt_general_solver_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.solver_position[0] = (int)val;
+  return CTX.solver_position[0];
+}
+
+double opt_general_solver_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.solver_position[1] = (int)val;
+  return CTX.solver_position[1];
+}
+
+double opt_general_context_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.ctx_position[0] = (int)val;
+  return CTX.ctx_position[0];
+}
+
+double opt_general_context_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.ctx_position[1] = (int)val;
+  return CTX.ctx_position[1];
+}
+
 double opt_general_system_menu_bar(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -1850,13 +1878,6 @@ double opt_general_visibility_mode(OPT_ARGS_NUM)
   }
 #endif
   return CTX.visibility_mode;
-}
-
-double opt_general_center_windows(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.center_windows = (int)val;
-  return CTX.center_windows;
 }
 
 double opt_general_session_save(OPT_ARGS_NUM)

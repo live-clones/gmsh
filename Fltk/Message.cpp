@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.45 2004-02-06 17:53:15 geuzaine Exp $
+// $Id: Message.cpp,v 1.46 2004-02-07 01:28:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <unistd.h>
 #include <signal.h>
@@ -219,6 +219,12 @@ void Exit(int level)
       CTX.stat_position[1] = WID->stat_window->y();
       CTX.vis_position[0] = WID->vis_window->x();
       CTX.vis_position[1] = WID->vis_window->y();
+      // bof
+      CTX.ctx_position[0] = WID->context_geometry_window->x();
+      CTX.ctx_position[1] = WID->context_geometry_window->y();
+      CTX.solver_position[0] = WID->solver[0].window->x();
+      CTX.solver_position[1] = WID->solver[0].window->y();
+
       Print_Options(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
     }
     if(CTX.options_save)

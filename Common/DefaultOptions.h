@@ -18,7 +18,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Options.h"
 #include "Context.h"
@@ -100,7 +100,7 @@ StringXString SolverOptions_String[] = {
     "Name of solver 0" },
   { F|O, "Help0" , opt_solver_help0 , 
     "A General environment for the treatment of\nDiscrete Problems\n\n"
-    "Copyright (C) 1997-2003\nPatrick Dular and Christophe Geuzaine\n\n"
+    "Copyright (C) 1997-2004\nPatrick Dular and Christophe Geuzaine\n\n"
     "Visit http://www.geuz.org/getdp/ for more info",
     "Help string for solver 0" },
   { F|O, "Executable0" , opt_solver_executable0 , 
@@ -366,8 +366,6 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Axes" , opt_general_axes , 1. ,
     "Display the axes linked to the model" },
 
-  { F|O, "CenterWindows" , opt_general_center_windows , 1. , 
-    "Center new windows on the menu window" }, 
   { F,   "Clip0" , opt_general_clip0 , 0. ,
     "Enable clip plane 0" },
   { F,   "Clip0A" , opt_general_clip0a , 0.0 ,
@@ -432,6 +430,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Default color scheme (0, 1 or 2)" },
   { F|S, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
     "Ask confirmation before overwriting files?" }, 
+  { F|S, "ContextPositionX" , opt_general_context_position0 , 650. , 
+    "Horizontal position (in pixels) of the upper left corner of the contextual windows" }, 
+  { F|S, "ContextPositionY" , opt_general_context_position1 , 150. ,
+    "Vertical position (in pixels) of the upper left corner of the contextual windows" }, 
 
   { F|O, "DefaultPlugins" , opt_general_default_plugins , 1. ,
     "Load default plugins on startup" },
@@ -569,6 +571,10 @@ StringXNumber GeneralOptions_Number[] = {
     "X position of small axes (use negative values for right alignment)" },
   { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -35. ,
     "Y position of small axes (use negative values for bottom alignment)" },
+  { F|S, "SolverPositionX" , opt_general_solver_position0 , 650. , 
+    "Horizontal position (in pixels) of the upper left corner of the solver windows" }, 
+  { F|S, "SolverPositionY" , opt_general_solver_position1 , 150. ,
+    "Vertical position (in pixels) of the upper left corner of the solver windows" }, 
   { F|S, "StatisticsPositionX" , opt_general_statistics_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the statistic window" }, 
   { F|S, "StatisticsPositionY" , opt_general_statistics_position1 , 150. , 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.268 2004-01-25 09:35:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.269 2004-02-07 01:28:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 // To make the interface as visually consistent as possible, please:
 // - use the IW, BB, BH, BW and WB values
@@ -764,6 +764,8 @@ GUI::GUI(int argc, char **argv)
   create_statistics_window();
   create_visibility_window();
   create_about_window();
+  create_geometry_context_window(0);
+  create_mesh_context_window(0);
   for(i = 0; i < MAXSOLVERS; i++) {
     solver[i].window = NULL;
     create_solver_window(i);
@@ -953,7 +955,6 @@ void GUI::create_menu_window(int argc, char **argv)
   }
   m_window->position(CTX.position[0], CTX.position[1]);
   m_window->end();
-
 }
 
 // Dynamically set the height of the menu window
@@ -1471,7 +1472,6 @@ void GUI::create_option_window()
       gen_value[9] = new Fl_Value_Input(2 * WB + IW / 3, 2 * WB + 10 * BH, IW / 3, BH);
       gen_value[10] = new Fl_Value_Input(2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
-
 
       o->end();
     }
@@ -2733,11 +2733,9 @@ PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
   cancel->callback(cancel_cb, (void *)pdb->main_window);
 
   pdb->main_window->resizable(new Fl_Box(2 * WB, 2 * WB + BH, 10, 10));
-
-  if(CTX.center_windows)
-    pdb->main_window->position(m_window->x() + m_window->w() / 2 - width / 2,
-                               m_window->y() + 9 * BH - height / 2);
-
+  
+  pdb->main_window->position(m_window->x() + m_window->w() / 2 - width / 2,
+			     m_window->y() + 6 * BH);
   pdb->main_window->end();
 
   return pdb;
@@ -2785,7 +2783,6 @@ void GUI::create_message_window()
 
   msg_window->position(CTX.msg_position[0], CTX.msg_position[1]);
   msg_window->end();
-
 }
 
 void GUI::add_message(char *msg)
@@ -2975,7 +2972,7 @@ void GUI::create_about_window()
     o->add("@c@.A three-dimensional finite element mesh generator");
     o->add("@c@.with built-in pre- and post-processing facilities");
     o->add("");
-    o->add("@c@.Copyright (C) 1997-2003");
+    o->add("@c@.Copyright (C) 1997-2004");
 #if defined(__APPLE__)
     o->add("@c@.Christophe Geuzaine and Jean-Francois Remacle");
 #else
@@ -3016,11 +3013,7 @@ void GUI::create_about_window()
     o->callback(cancel_cb, (void *)about_window);
   }
 
-  if(CTX.center_windows)
-    about_window->position(m_window->x() + m_window->w() / 2 - width / 2,
-                           m_window->y() + 9 * BH - height / 2);
   about_window->end();
-
 }
 
 
@@ -3150,16 +3143,8 @@ void GUI::create_geometry_context_window(int num)
     o->callback(cancel_cb, (void *)context_geometry_window);
   }
 
-  for(i = 0; i < 6; i++)
-    g[i]->hide();
-  g[num]->show();
-
-  if(CTX.center_windows)
-    context_geometry_window->position(m_window->x() + m_window->w() / 2 - width / 2,
-                                      m_window->y() + 9 * BH - height / 2);
+  context_geometry_window->position(CTX.ctx_position[0], CTX.ctx_position[1]);
   context_geometry_window->end();
-  context_geometry_window->show();
-
 }
 
 // Create the window for mesh context dependant definitions
@@ -3235,15 +3220,8 @@ void GUI::create_mesh_context_window(int num)
     o->callback(cancel_cb, (void *)context_mesh_window);
   }
 
-  for(i = 0; i < 3; i++)
-    g[i]->hide();
-  g[num]->show();
-
-  if(CTX.center_windows)
-    context_mesh_window->position(m_window->x() + m_window->w() / 2 - width / 2,
-                                  m_window->y() + 9 * BH - height / 2);
+  context_mesh_window->position(CTX.ctx_position[0], CTX.ctx_position[1]);
   context_mesh_window->end();
-  context_mesh_window->show();
 }
 
 
@@ -3374,8 +3352,6 @@ void GUI::create_solver_window(int num)
     o->callback(cancel_cb, (void *)solver[num].window);
   }
 
-  if(CTX.center_windows)
-    solver[num].window->position(m_window->x() + m_window->w() / 2 - width / 2,
-                                 m_window->y() + 9 * BH - height / 2);
+  solver[num].window->position(CTX.solver_position[0], CTX.solver_position[1]);
   solver[num].window->end();
 }

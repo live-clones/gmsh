@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.202 2004-02-05 16:53:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.203 2004-02-07 01:28:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -1,7 +1,7 @@
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
-// Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to "gmsh@geuz.org".
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "List.h"
 
@@ -77,7 +77,8 @@ public :
   int opt_position[2];        // position of the option window on the screen
   int vis_position[2];        // position of the visibility window on the screen
   int stat_position[2];       // position of the statistics window on the screen
-  int center_windows;         // center popup windows on the menu window
+  int ctx_position[2];        // position of the geo/mesh context windows on the screen
+  int solver_position[2];     // position of the solver windows on the screen
   int system_menu_bar;        // use the system menu bar on MacOS?
 
   int default_plugins;        // do we load default plugins on startup?
