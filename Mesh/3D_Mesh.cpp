@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.53 2003-06-14 05:15:29 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.54 2003-06-14 06:23:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 //
@@ -895,19 +895,15 @@ void Maillage_Volume(void *data, void *dum)
     return;
   }
 
+  if(CTX.mesh.order == 2){
+    // - hexes, prisms, prisms: not done (extrusion, transfinite)
+    // - tets: wrong if edge swaps!! 
+    Msg(GERROR, "3D second order mesh not implemented yet");
+  }
+
   if(Extrude_Mesh(v)) {
-
-    if(CTX.mesh.order == 2){
-      Msg(GERROR, "Second order 3D extruded meshes not implemented");
-    }
-
   }
   else if(MeshTransfiniteVolume(v)) {
-
-    if(CTX.mesh.order == 2){
-      Msg(GERROR, "Second order 3D transfinite meshes not implemented");
-    }
-
   }
   else if(v->Typ == 99999) {
 
@@ -1058,7 +1054,7 @@ void Maillage_Volume(void *data, void *dum)
 #endif
 
     if(CTX.mesh.order == 2){
-      Degre2(v->Simplexes, NULL, NULL);
+      //Degre2(v->Simplexes, NULL, NULL);
     }
 
     List_Delete(Simplexes_New);
