@@ -53,18 +53,18 @@ Gmsh Ascii Post-Processing File Format
     nb-ST nb-VT nb-TT
     nb-SS nb-VS nb-TS
     time-step-values
-    SP-values
-    VP-values
-    TP-values
-    SL-values
-    VL-values
-    TL-values
-    ST-values
-    VT-values
-    TT-values
-    SS-values
-    VS-values
-    TS-values
+    SP-value SP-value SP-value ...
+    VP-value VP-value VP-value ...
+    TP-value TP-value TP-value ...
+    SL-value SL-value SL-value ...
+    VL-value VL-value VL-value ...
+    TL-value TL-value TL-value ...
+    ST-value ST-value ST-value ...
+    VT-value VT-value VT-value ...
+    TT-value TT-value TT-value ...
+    SS-value SS-value SS-value ...
+    VS-value VS-value VS-value ...
+    TS-value TS-value TS-value ...
     $endView
     $View
     ...
@@ -83,9 +83,10 @@ Gmsh Ascii Post-Processing File Format
       scalar points, vector points, tensor points, scalar lines, vector lines,
       tensor lines, scalar triangles, vector triangles, tensor triangles,
       scalar tetrahedra, vector tetrahedra and tensor tetrahedra.
-    - 'SP-values' is a list of double precision numbers:
-      the three first represent the corrdinates of the point
-      the 'nb-time-step' following
+    - 'SP-value' consists of a list of double precision numbers: the three
+      first represent the coordinates of the point, and the
+      'nb-time-step' following represent the field values.
+
 
 Gmsh Binary Post-Processing File Format
 =======================================
@@ -102,16 +103,33 @@ Gmsh Binary Post-Processing File Format
       which contains the value '1'. This integer serves as a test for little/big endian
       detection.
 
-    Here is an example, of C code to write the binary format:
+    Here is an example, of C code to write a view in binary format (nb-SP, nb-VP, ...
+    have their classical meaning; SP-values, VP-values, ... are arrays of double
+    precision numbers containing respectively nb-SP, nb-VP, ... 'SP-value'. 
+    'Time-values' is an array of 'nb-time-step' double precision numbers):
 
     int one=1;
 
-    fprintf(file, "$View /* %s */\n", name);
-    fprintf(file, "%s %g\n", name, version);
+    fprintf(file, "$View /* test */\n");
+    fprintf(file, "test %d %d %d %d %d %d %d %d %d %d %d %d %d\n", 
+	    nb-time-step, 
+            nb-SP, nb-VP, nb-TP, nb-SL, nb-VL, nb-TL, 
+            nb-ST, nb-VT, nb-TT, nb-SS, nb-VS, nb-TS);
+    fwrite(&one, sizeof(int), 1, file);
+    fwrite(Time-values, sizeof(double), nb-SP, file);
+    fwrite(SP-values, sizeof(double), nb-SP, file);
+    fwrite(VP-values, sizeof(double), nb-VP, file);
+    fwrite(TP-values, sizeof(double), nb-TP, file);
+    fwrite(SL-values, sizeof(double), nb-SL, file);
+    fwrite(VL-values, sizeof(double), nb-VL, file);
+    fwrite(TL-values, sizeof(double), nb-TL, file);
+    fwrite(ST-values, sizeof(double), nb-ST, file);
+    fwrite(VT-values, sizeof(double), nb-VT, file);
+    fwrite(TT-values, sizeof(double), nb-TT, file);
+    fwrite(SS-values, sizeof(double), nb-SS, file);
+    fwrite(VS-values, sizeof(double), nb-VS, file);
+    fwrite(TS-values, sizeof(double), nb-TS, file);
     fprintf(file, "$EndView\n");
-    
-    fwrite(&One, sizeof(int), 1, PostStream);
-
 
 
 Gmsh Parsed Post-Processing Format
