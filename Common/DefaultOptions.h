@@ -811,6 +811,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Points" , opt_mesh_points , 1. , 
     "Display mesh vertices (nodes)?" },
+  { F|O, "PointsPerElement" , opt_mesh_points_per_element , 0. , 
+    "Display mesh nodes per element (slower, but permits to visualize only a subset of the nodes)" },
   { F|O, "PointInsertion" , opt_mesh_point_insertion, CENTER_CIRCCIRC ,
     "Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=cog)" },
   { F|O, "PointNumbers" , opt_mesh_points_num , 0. , 

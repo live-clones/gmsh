@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.108 2004-08-13 21:23:23 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.109 2004-10-14 22:56:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -215,25 +215,27 @@ void Draw_Mesh(Mesh * M)
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
     
     if(M->status >= 3 && (CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
-			  CTX.mesh.volumes_num || 
+			  CTX.mesh.volumes_num || CTX.mesh.points_per_element ||
 			  (CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_as_surface &&
 			   (CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces)))) {
       Tree_Action(M->Volumes, Draw_Mesh_Volume);
     }
    
     if(M->status >= 2 && (CTX.mesh.surfaces_faces || CTX.mesh.surfaces_edges ||
-			  CTX.mesh.surfaces_num || CTX.mesh.normals)) {
+			  CTX.mesh.surfaces_num || CTX.mesh.points_per_element ||
+			  CTX.mesh.normals)) {
       Tree_Action(M->Surfaces, Draw_Mesh_Surface);
       if(CTX.mesh.oldxtrude)  //old extrusion algo
 	Tree_Action(M->Volumes, Draw_Mesh_Extruded_Surfaces);
     }
     
     if(M->status >= 1 && (CTX.mesh.lines || CTX.mesh.lines_num || 
-			  CTX.mesh.tangents)) {
+			  CTX.mesh.points_per_element || CTX.mesh.tangents)) {
       Tree_Action(M->Curves, Draw_Mesh_Curve);
     }
     
-    if(M->status >= 0 && (CTX.mesh.points || CTX.mesh.points_num)) {
+    if(M->status >= 0 && !CTX.mesh.points_per_element &&
+       (CTX.mesh.points || CTX.mesh.points_num)) {
       Tree_Action(M->Vertices, Draw_Mesh_Point);
     }
     CTX.mesh.changed = 0;
@@ -301,7 +303,8 @@ void Draw_Mesh_Volume(void *a, void *b)
   if(!CTX.mesh.use_cut_plane || !CTX.mesh.cut_plane_as_surface ||
      !v->TriVertexArray || !v->QuadVertexArray ||
      CTX.mesh.volumes_faces || CTX.mesh.volumes_edges ||
-     CTX.mesh.dual || CTX.mesh.volumes_num || CTX.mesh.normals){
+     CTX.mesh.dual || CTX.mesh.volumes_num || CTX.mesh.points_per_element ||
+     CTX.mesh.normals){
     Msg(DEBUG, "classic volume data path");
     Tree_Action(v->Simplexes, Draw_Mesh_Tetrahedron);
     Tree_Action(v->Hexahedra, Draw_Mesh_Hexahedron);
@@ -362,12 +365,14 @@ void Draw_Mesh_Surface(void *a, void *b)
 		      CTX.mesh.surfaces_faces, CTX.mesh.surfaces_edges);
   }
     
-  if(!s->TriVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num || CTX.mesh.normals){
+  if(!s->TriVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num ||
+     CTX.mesh.points_per_element || CTX.mesh.normals){
     Msg(DEBUG, "classic triangle data path");
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
   }
 
-  if(!s->QuadVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num || CTX.mesh.normals){
+  if(!s->QuadVertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num ||
+     CTX.mesh.points_per_element || CTX.mesh.normals){
     Msg(DEBUG, "classic quadrangle data path");
     Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
   }
@@ -394,47 +399,50 @@ void Draw_Mesh_Curve(void *a, void *b)
     return;
   theColor = c->Color;
   thePhysical = getFirstPhysical(MSH_PHYSICAL_LINE, c->Num);
+
   Tree_Action(c->Simplexes, Draw_Mesh_Line);
 }
 
-void Draw_Mesh_Point(void *a, void *b)
+void Draw_Mesh_Point(int num, double x, double y, double z, int degree, int visible)
 {
-  Vertex *v;
-  char Num[100];
-
-  v = *(Vertex **) a;
-
-  if(!(v->Visible & VIS_MESH))
+  if(!(visible & VIS_MESH))
     return;
 
-  if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(1, &v) < 0)
-    return;
-
-  if(v->Degree == 2)
+  if(degree == 2)
     glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_deg2);
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
 
   if(CTX.mesh.points) {
     if(CTX.mesh.point_type) {
-      Draw_Sphere(CTX.mesh.point_size, v->Pos.X, v->Pos.Y, v->Pos.Z,
-		  CTX.mesh.light);
+      Draw_Sphere(CTX.mesh.point_size, x, y, z, CTX.mesh.light);
     }
     else {
       glBegin(GL_POINTS);
-      glVertex3d(v->Pos.X, v->Pos.Y, v->Pos.Z);
+      glVertex3d(x, y, z);
       glEnd();
     }
   }
 
   if(CTX.mesh.points_num) {
-    sprintf(Num, "%d", v->Num);
+    char Num[100];
+    sprintf(Num, "%d", num);
     double offset = 0.5 * (CTX.mesh.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
-    glRasterPos3d(v->Pos.X + offset / CTX.s[0],
-                  v->Pos.Y + offset / CTX.s[1],
-                  v->Pos.Z + offset / CTX.s[2]);
+    glRasterPos3d(x + offset / CTX.s[0],
+                  y + offset / CTX.s[1],
+                  z + offset / CTX.s[2]);
     Draw_String(Num);
   }
+}
+
+void Draw_Mesh_Point(void *a, void *b)
+{
+  Vertex *v = *(Vertex **) a;
+
+  if(!CTX.mesh.cut_plane_only_volume && intersectCutPlane(1, &v) < 0)
+    return;
+
+  Draw_Mesh_Point(v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->Degree, v->Visible);
 }
 
 void Draw_Mesh_Line(void *a, void *b)
@@ -466,6 +474,9 @@ void Draw_Mesh_Line(void *a, void *b)
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(s->V[i]->Num, X[i], Y[i], Z[i], 
+		      s->V[i]->Degree, s->V[i]->Visible);
   }
   
   if(N == 3){
@@ -475,6 +486,9 @@ void Draw_Mesh_Line(void *a, void *b)
     X[1] = Xc + CTX.mesh.explode * (s->VSUP[0]->Pos.X - Xc);
     Y[1] = Yc + CTX.mesh.explode * (s->VSUP[0]->Pos.Y - Yc);
     Z[1] = Zc + CTX.mesh.explode * (s->VSUP[0]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(s->VSUP[0]->Num, X[1], Y[1], Z[1], 
+		      s->VSUP[0]->Degree, s->VSUP[0]->Visible);
   }
 
   if(theColor.type)
@@ -739,7 +753,11 @@ void Draw_Mesh_Triangle(void *a, void *b)
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(s->V[i]->Num, X[i], Y[i], Z[i], 
+		      s->V[i]->Degree, s->V[i]->Visible);
   }
+
   if(s->VSUP){
     if(theSurface && theSurface->TriVertexArray){
       // vertex arrays not implemented for second order elements
@@ -750,6 +768,9 @@ void Draw_Mesh_Triangle(void *a, void *b)
       X2[i] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
       Z2[i] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);
+      if(CTX.mesh.points_per_element)
+	Draw_Mesh_Point(s->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
+			s->VSUP[i]->Degree, s->VSUP[i]->Visible);
     }
   }
 
@@ -888,7 +909,11 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
     X[i] = Xc + CTX.mesh.explode * (q->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (q->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (q->V[i]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(q->V[i]->Num, X[i], Y[i], Z[i], 
+		      q->V[i]->Degree, q->V[i]->Visible);
   }
+
   if(q->VSUP){
     if(theSurface && theSurface->QuadVertexArray){
       // vertex arrays not implemented for second order elements
@@ -899,6 +924,9 @@ void Draw_Mesh_Quadrangle(void *a, void *b)
       X2[i] = Xc + CTX.mesh.explode * (q->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (q->VSUP[i]->Pos.Y - Yc);
       Z2[i] = Zc + CTX.mesh.explode * (q->VSUP[i]->Pos.Z - Zc);
+      if(CTX.mesh.points_per_element)
+	Draw_Mesh_Point(q->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
+			q->VSUP[i]->Degree, q->VSUP[i]->Visible);
     }
   }
 
@@ -1051,7 +1079,11 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
     X[i] = Xc + CTX.mesh.explode * (s->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (s->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(s->V[i]->Num, X[i], Y[i], Z[i], 
+		      s->V[i]->Degree, s->V[i]->Visible);
   }
+
   if(s->VSUP){
     if(theVolume && theVolume->TriVertexArray){
       // vertex arrays not implemented for second order elements
@@ -1062,6 +1094,9 @@ void Draw_Mesh_Tetrahedron(void *a, void *b)
       X2[i] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
       Z2[i] = Zc + CTX.mesh.explode * (s->VSUP[i]->Pos.Z - Zc);
+      if(CTX.mesh.points_per_element)
+	Draw_Mesh_Point(s->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
+			s->VSUP[i]->Degree, s->VSUP[i]->Visible);
     }
   }
 
@@ -1207,7 +1242,11 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
     X[i] = Xc + CTX.mesh.explode * (h->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (h->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (h->V[i]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(h->V[i]->Num, X[i], Y[i], Z[i], 
+		      h->V[i]->Degree, h->V[i]->Visible);
   }
+
   if(h->VSUP){
     if(theVolume && theVolume->QuadVertexArray){
       // vertex arrays not implemented for second order elements
@@ -1218,6 +1257,9 @@ void Draw_Mesh_Hexahedron(void *a, void *b)
       X2[i] = Xc + CTX.mesh.explode * (h->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (h->VSUP[i]->Pos.Y - Yc);
       Z2[i] = Zc + CTX.mesh.explode * (h->VSUP[i]->Pos.Z - Zc);
+      if(CTX.mesh.points_per_element)
+	Draw_Mesh_Point(h->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
+			h->VSUP[i]->Degree, h->VSUP[i]->Visible);
     }
   }
 
@@ -1375,7 +1417,11 @@ void Draw_Mesh_Prism(void *a, void *b)
     X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (p->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(p->V[i]->Num, X[i], Y[i], Z[i], 
+		      p->V[i]->Degree, p->V[i]->Visible);
   }
+
   if(p->VSUP){
     if(theVolume && theVolume->TriVertexArray){
       // vertex arrays not implemented for second order elements
@@ -1391,6 +1437,9 @@ void Draw_Mesh_Prism(void *a, void *b)
       X2[i] = Xc + CTX.mesh.explode * (p->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (p->VSUP[i]->Pos.Y - Yc);
       Z2[i] = Zc + CTX.mesh.explode * (p->VSUP[i]->Pos.Z - Zc);
+      if(CTX.mesh.points_per_element)
+	Draw_Mesh_Point(p->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
+			p->VSUP[i]->Degree, p->VSUP[i]->Visible);
     }
   }
 
@@ -1558,7 +1607,11 @@ void Draw_Mesh_Pyramid(void *a, void *b)
     X[i] = Xc + CTX.mesh.explode * (p->V[i]->Pos.X - Xc);
     Y[i] = Yc + CTX.mesh.explode * (p->V[i]->Pos.Y - Yc);
     Z[i] = Zc + CTX.mesh.explode * (p->V[i]->Pos.Z - Zc);
+    if(CTX.mesh.points_per_element)
+      Draw_Mesh_Point(p->V[i]->Num, X[i], Y[i], Z[i], 
+		      p->V[i]->Degree, p->V[i]->Visible);
   }
+
   if(p->VSUP){
     if(theVolume && theVolume->TriVertexArray){
       // vertex arrays not implemented for second order elements
@@ -1574,6 +1627,9 @@ void Draw_Mesh_Pyramid(void *a, void *b)
       X2[i] = Xc + CTX.mesh.explode * (p->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (p->VSUP[i]->Pos.Y - Yc);
       Z2[i] = Zc + CTX.mesh.explode * (p->VSUP[i]->Pos.Z - Zc);
+      if(CTX.mesh.points_per_element)
+	Draw_Mesh_Point(p->VSUP[i]->Num, X2[i], Y2[i], Z2[i], 
+			p->VSUP[i]->Degree, p->VSUP[i]->Visible);
     }
   }
 

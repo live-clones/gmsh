@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.187 2004-10-11 17:22:56 geuzaine Exp $
+// $Id: Options.cpp,v 1.188 2004-10-14 22:56:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -3573,6 +3573,18 @@ double opt_mesh_volumes_num(OPT_ARGS_NUM)
     WID->mesh_butt[15]->value(CTX.mesh.volumes_num);
 #endif
   return CTX.mesh.volumes_num;
+}
+
+double opt_mesh_points_per_element(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.points_per_element = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[0]->value(CTX.mesh.points_per_element);
+#endif
+  return CTX.mesh.points_per_element;
 }
 
 double opt_mesh_point_size(OPT_ARGS_NUM)

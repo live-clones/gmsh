@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.280 2004-10-11 17:22:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.281 2004-10-14 22:56:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -960,6 +960,7 @@ void mesh_options_cb(CALLBACK_ARGS)
 
 void mesh_options_ok_cb(CALLBACK_ARGS)
 {
+  opt_mesh_points_per_element(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
   opt_mesh_interactive(0, GMSH_SET, WID->mesh_butt[4]->value());
