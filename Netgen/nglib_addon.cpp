@@ -6,7 +6,7 @@
 
 using namespace netgen;
 
-#include <iostream.h>
+#include <iostream>
 #include "Message.h"
 
 class mystreambuf: public streambuf
