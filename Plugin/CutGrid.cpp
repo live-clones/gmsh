@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.15 2005-01-09 02:18:59 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.16 2005-03-02 07:49:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -192,17 +192,16 @@ void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutGrid) cuts a triangle/tetrahedron view\n"
-	 "with a rectangular grid defined by the 3 points\n"
+         "Plugin(CutGrid) cuts the view `iView' with a\n"
+	 "rectangular grid defined by the 3 points\n"
 	 "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U)\n"
 	 "and (`X2',`Y2',`Z2') (axis of V). The number of points\n"
 	 "along U and V is set with the options `nPointsU'\n"
 	 "and `nPointsV'. If `ConnectPoints' is zero, the\n"
-	 "plugin creates scalar or vector points; otherwise,\n"
-	 "the plugin generates scalar or vector quadrangles,\n"
-	 "lines or points depending on the values of `nPointsU'\n"
-	 "and `nPointsV'. If `iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
+	 "plugin creates points; otherwise, the plugin\n"
+	 "generates quadrangles, lines or points depending\n"
+	 "on the values of `nPointsU' and `nPointsV'. If\n"
+	 "`iView' < 0, the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutGrid) creates one new view.\n");
 }
@@ -247,7 +246,85 @@ void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
     v  * (CutGridOptions_Number[8].def-CutGridOptions_Number[2].def) ;
 }
 
-Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v, int connect) const 
+void GMSH_CutGridPlugin::addInView(Post_View *v, int connect, int nbcomp, 
+				   double ***pnts, double ***vals, 
+				   List_T *P, int *nP, 
+				   List_T *L, int *nL, 
+				   List_T *Q, int *nQ)
+{
+  if(!connect || (getNbU() == 1 && getNbV() == 1)){ // generate points
+    
+    for(int i = 0; i < getNbU(); ++i){
+      for(int j = 0; j < getNbV(); ++j){
+	List_Add(P, &pnts[i][j][0]);
+	List_Add(P, &pnts[i][j][1]);
+	List_Add(P, &pnts[i][j][2]);
+	(*nP)++;
+	for(int k = 0; k < v->NbTimeStep; ++k){
+	  for(int l = 0; l < nbcomp; ++l)
+	    List_Add(P, &vals[i][j][nbcomp*k+l]);
+	}
+      }
+    }
+    
+  }
+  else{ // generate lines or quads
+    
+    if(getNbU() == 1){
+      for(int i = 0; i < getNbV()-1; ++i){
+	List_Add(L, &pnts[0][i][0]); List_Add(L, &pnts[0][i+1][0]);
+	List_Add(L, &pnts[0][i][1]); List_Add(L, &pnts[0][i+1][1]);
+	List_Add(L, &pnts[0][i][2]); List_Add(L, &pnts[0][i+1][2]);
+	(*nL)++;
+	for(int k = 0; k < v->NbTimeStep; ++k){
+	  for(int l = 0; l < nbcomp; ++l)
+	    List_Add(L, &vals[0][i  ][nbcomp*k+l]);
+	  for(int l = 0; l < nbcomp; ++l)
+	    List_Add(L, &vals[0][i+1][nbcomp*k+l]);
+	}
+      }
+    }
+    else if(getNbV() == 1){
+      for(int i = 0; i < getNbU()-1; ++i){
+	List_Add(L, &pnts[i][0][0]); List_Add(L, &pnts[i+1][0][0]);
+	List_Add(L, &pnts[i][0][1]); List_Add(L, &pnts[i+1][0][1]);
+	List_Add(L, &pnts[i][0][2]); List_Add(L, &pnts[i+1][0][2]);
+	(*nL)++;
+	for(int k = 0; k < v->NbTimeStep; ++k){
+	  for(int l = 0; l < nbcomp; ++l)
+	    List_Add(L, &vals[i  ][0][nbcomp*k+l]);
+	  for(int l = 0; l < nbcomp; ++l)
+	    List_Add(L, &vals[i+1][0][nbcomp*k+l]);
+	}
+      }
+    }
+    else{
+      for(int i = 0; i < getNbU()-1; ++i){
+	for(int j = 0; j < getNbV()-1; ++j){
+	  List_Add(Q, &pnts[i  ][j  ][0]); List_Add(Q, &pnts[i+1][j  ][0]);
+	  List_Add(Q, &pnts[i+1][j+1][0]); List_Add(Q, &pnts[i  ][j+1][0]);
+	  List_Add(Q, &pnts[i  ][j  ][1]); List_Add(Q, &pnts[i+1][j  ][1]);
+	  List_Add(Q, &pnts[i+1][j+1][1]); List_Add(Q, &pnts[i  ][j+1][1]);
+	  List_Add(Q, &pnts[i  ][j  ][2]); List_Add(Q, &pnts[i+1][j  ][2]);
+	  List_Add(Q, &pnts[i+1][j+1][2]); List_Add(Q, &pnts[i  ][j+1][2]);
+	  (*nQ)++;
+	  for(int k = 0; k < v->NbTimeStep; ++k){
+	    for(int l = 0; l < nbcomp; ++l)
+	      List_Add(Q, &vals[i  ][j  ][nbcomp*k+l]);
+	    for(int l = 0; l < nbcomp; ++l)
+	      List_Add(Q, &vals[i+1][j  ][nbcomp*k+l]);
+	    for(int l = 0; l < nbcomp; ++l)
+	      List_Add(Q, &vals[i+1][j+1][nbcomp*k+l]);
+	    for(int l = 0; l < nbcomp; ++l)
+	      List_Add(Q, &vals[i  ][j+1][nbcomp*k+l]);
+	  }
+	}
+      }
+    }
+  }	
+}
+
+Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v, int connect)
 {
   if(getNbU() <= 0 || getNbV() <= 0)
     return v;
@@ -256,6 +333,17 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v, int connect) const
 
   OctreePost o(v);
 
+  int nbs = 0, nbv = 0, nbt = 0;
+
+  if(v->NbST || v->NbSQ || v->NbSS || v->NbSH || v->NbSI || v->NbSY)
+    nbs = 1;
+  if(v->NbVT || v->NbVQ || v->NbVS || v->NbVH || v->NbVI || v->NbVY)
+    nbv = 1;
+  if(v->NbTT || v->NbTQ || v->NbTS || v->NbTH || v->NbTI || v->NbTY)
+    nbt = 1;
+
+  int maxcomp = nbt ? 9 : (nbv ? 3 : 1);
+
   double ***pnts = new double** [getNbU()];
   double ***vals = new double** [getNbU()];
   for(int i = 0; i < getNbU(); i++){
@@ -263,190 +351,35 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v, int connect) const
     vals[i] = new double* [getNbV()];
     for(int j = 0; j < getNbV(); j++){
       pnts[i][j] = new double[3];
-      vals[i][j] = new double[3 * v->NbTimeStep]; // change to 9 for tensors
+      vals[i][j] = new double[maxcomp * v->NbTimeStep];
       getPoint(i, j, pnts[i][j]);
     }
   }
   
-  if(v->NbST || v->NbSS){
-
+  if(nbs){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
-	o.searchScalar(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], 
-		       vals[i][j]);
-    
-    if(!connect){ // generate points
-
-      for(int i = 0; i < getNbU(); ++i){
-	for(int j = 0; j < getNbV(); ++j){
-	  List_Add(View->SP, &pnts[i][j][0]);
-	  List_Add(View->SP, &pnts[i][j][1]);
-	  List_Add(View->SP, &pnts[i][j][2]);
-	  View->NbSP ++;
-	  for(int k = 0; k < v->NbTimeStep; ++k){
-	    List_Add(View->SP, &vals[i][j][k]);
-	  }
-	}
-      }
-
-    }
-    else{
-
-      if(getNbU() == 1 && getNbV() == 1){
-	List_Add(View->SP, &pnts[0][0][0]);
-	List_Add(View->SP, &pnts[0][0][1]);
-	List_Add(View->SP, &pnts[0][0][2]);
-	View->NbSP ++;
-	for(int k = 0; k < v->NbTimeStep; ++k){
-	  List_Add(View->SP, &vals[0][0][k]);
-	}
-      }
-      else if(getNbU() == 1){
-	for(int i = 0; i < getNbV()-1; ++i){
-	  List_Add(View->SL, &pnts[0][i][0]); List_Add(View->SL, &pnts[0][i+1][0]);
-	  List_Add(View->SL, &pnts[0][i][1]); List_Add(View->SL, &pnts[0][i+1][1]);
-	  List_Add(View->SL, &pnts[0][i][2]); List_Add(View->SL, &pnts[0][i+1][2]);
-	  View->NbSL ++;
-	  for(int k = 0; k < v->NbTimeStep; ++k){
-	    List_Add(View->SL, &vals[0][i  ][k]);
-	    List_Add(View->SL, &vals[0][i+1][k]);
-	  }
-	}
-      }
-      else if(getNbV() == 1){
-	for(int i = 0; i < getNbU()-1; ++i){
-	  List_Add(View->SL, &pnts[i][0][0]); List_Add(View->SL, &pnts[i+1][0][0]);
-	  List_Add(View->SL, &pnts[i][0][1]); List_Add(View->SL, &pnts[i+1][0][1]);
-	  List_Add(View->SL, &pnts[i][0][2]); List_Add(View->SL, &pnts[i+1][0][2]);
-	  View->NbSL ++;
-	  for(int k = 0; k < v->NbTimeStep; ++k){
-	    List_Add(View->SL, &vals[i  ][0][k]);
-	    List_Add(View->SL, &vals[i+1][0][k]);
-	  }
-	}
-      }
-      else{
-	for(int i = 0; i < getNbU()-1; ++i){
-	  for(int j = 0; j < getNbV()-1; ++j){
-	    List_Add(View->SQ, &pnts[i  ][j  ][0]); List_Add(View->SQ, &pnts[i+1][j  ][0]);
-	    List_Add(View->SQ, &pnts[i+1][j+1][0]); List_Add(View->SQ, &pnts[i  ][j+1][0]);
-	    List_Add(View->SQ, &pnts[i  ][j  ][1]); List_Add(View->SQ, &pnts[i+1][j  ][1]);
-	    List_Add(View->SQ, &pnts[i+1][j+1][1]); List_Add(View->SQ, &pnts[i  ][j+1][1]);
-	    List_Add(View->SQ, &pnts[i  ][j  ][2]); List_Add(View->SQ, &pnts[i+1][j  ][2]);
-	    List_Add(View->SQ, &pnts[i+1][j+1][2]); List_Add(View->SQ, &pnts[i  ][j+1][2]);
-	    View->NbSQ ++;
-	    for(int k = 0; k < v->NbTimeStep; ++k){
-	      List_Add(View->SQ, &vals[i  ][j  ][k]);
-	      List_Add(View->SQ, &vals[i+1][j  ][k]);
-	      List_Add(View->SQ, &vals[i+1][j+1][k]);
-	      List_Add(View->SQ, &vals[i  ][j+1][k]);
-	    }
-	  }
-	}
-      }
-    }	
-
+	o.searchScalar(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
+    addInView(v, connect, 1, pnts, vals,
+	      View->SP, &View->NbSP, View->SL, &View->NbSL, View->SQ, &View->NbSQ);
   }
 
-  if(v->NbVT || v->NbVS){
-
+  if(nbv){
     double sizeElem;
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
-	o.searchVector(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], 
-		       vals[i][j], &sizeElem);
-    
-    if(!connect){ // generate points
+	o.searchVector(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j], 
+		       &sizeElem);
+    addInView(v, connect, 3, pnts, vals,
+	      View->VP, &View->NbVP, View->VL, &View->NbVL, View->VQ, &View->NbVQ);
+  }
 
-      for(int i = 0; i < getNbU(); ++i){
-	for(int j = 0; j < getNbV(); ++j){
-	  List_Add(View->VP, &pnts[i][j][0]);
-	  List_Add(View->VP, &pnts[i][j][1]);
-	  List_Add(View->VP, &pnts[i][j][2]);
-	  View->NbVP ++;
-	  for(int k = 0; k < v->NbTimeStep; ++k){
-	    List_Add(View->VP, &vals[i][j][3*k]);
-	    List_Add(View->VP, &vals[i][j][3*k+1]);
-	    List_Add(View->VP, &vals[i][j][3*k+2]);
-	  }
-	}
-      }
-
-    }
-    else{
-
-      if(getNbU() == 1 && getNbV() == 1){
-	List_Add(View->VP, &pnts[0][0][0]);
-	List_Add(View->VP, &pnts[0][0][1]);
-	List_Add(View->VP, &pnts[0][0][2]);
-	View->NbVP ++;
-	for(int k = 0; k < v->NbTimeStep; ++k){
-	  List_Add(View->VP, &vals[0][0][3*k]);
-	  List_Add(View->VP, &vals[0][0][3*k+1]);
-	  List_Add(View->VP, &vals[0][0][3*k+2]);
-	}
-      }
-      else if(getNbU() == 1){
-	for(int i = 0; i < getNbV()-1; ++i){
-	  List_Add(View->VL, &pnts[0][i][0]); List_Add(View->VL, &pnts[0][i+1][0]);
-	  List_Add(View->VL, &pnts[0][i][1]); List_Add(View->VL, &pnts[0][i+1][1]);
-	  List_Add(View->VL, &pnts[0][i][2]); List_Add(View->VL, &pnts[0][i+1][2]);
-	  View->NbVL ++;
-	  for(int k = 0; k < v->NbTimeStep; ++k){
-	    List_Add(View->VL, &vals[0][i  ][3*k]);
-	    List_Add(View->VL, &vals[0][i  ][3*k+1]);
-	    List_Add(View->VL, &vals[0][i  ][3*k+2]);
-	    List_Add(View->VL, &vals[0][i+1][3*k]);
-	    List_Add(View->VL, &vals[0][i+1][3*k+1]);
-	    List_Add(View->VL, &vals[0][i+1][3*k+2]);
-	  }
-	}
-      }
-      else if(getNbV() == 1){
-	for(int i = 0; i < getNbU()-1; ++i){
-	  List_Add(View->VL, &pnts[i][0][0]); List_Add(View->VL, &pnts[i+1][0][0]);
-	  List_Add(View->VL, &pnts[i][0][1]); List_Add(View->VL, &pnts[i+1][0][1]);
-	  List_Add(View->VL, &pnts[i][0][2]); List_Add(View->VL, &pnts[i+1][0][2]);
-	  View->NbVL ++;
-	  for(int k = 0; k < v->NbTimeStep; ++k){
-	    List_Add(View->VL, &vals[i  ][0][3*k]);
-	    List_Add(View->VL, &vals[i  ][0][3*k+1]);
-	    List_Add(View->VL, &vals[i  ][0][3*k+2]);
-	    List_Add(View->VL, &vals[i+1][0][3*k]);
-	    List_Add(View->VL, &vals[i+1][0][3*k+1]);
-	    List_Add(View->VL, &vals[i+1][0][3*k+2]);
-	  }
-	}
-      }
-      else{
-	for(int i = 0; i < getNbU()-1; ++i){
-	  for(int j = 0; j < getNbV()-1; ++j){
-	    List_Add(View->VQ, &pnts[i  ][j  ][0]); List_Add(View->VQ, &pnts[i+1][j  ][0]);
-	    List_Add(View->VQ, &pnts[i+1][j+1][0]); List_Add(View->VQ, &pnts[i  ][j+1][0]);
-	    List_Add(View->VQ, &pnts[i  ][j  ][1]); List_Add(View->VQ, &pnts[i+1][j  ][1]);
-	    List_Add(View->VQ, &pnts[i+1][j+1][1]); List_Add(View->VQ, &pnts[i  ][j+1][1]);
-	    List_Add(View->VQ, &pnts[i  ][j  ][2]); List_Add(View->VQ, &pnts[i+1][j  ][2]);
-	    List_Add(View->VQ, &pnts[i+1][j+1][2]); List_Add(View->VQ, &pnts[i  ][j+1][2]);
-	    View->NbVQ ++;
-	    for(int k = 0; k < v->NbTimeStep; ++k){
-	      List_Add(View->VQ, &vals[i  ][j  ][3*k]);
-	      List_Add(View->VQ, &vals[i  ][j  ][3*k+1]);
-	      List_Add(View->VQ, &vals[i  ][j  ][3*k+2]);
-	      List_Add(View->VQ, &vals[i+1][j  ][3*k]);
-	      List_Add(View->VQ, &vals[i+1][j  ][3*k+1]);
-	      List_Add(View->VQ, &vals[i+1][j  ][3*k+2]);
-	      List_Add(View->VQ, &vals[i+1][j+1][3*k]);
-	      List_Add(View->VQ, &vals[i+1][j+1][3*k+1]);
-	      List_Add(View->VQ, &vals[i+1][j+1][3*k+2]);
-	      List_Add(View->VQ, &vals[i  ][j+1][3*k]);
-	      List_Add(View->VQ, &vals[i  ][j+1][3*k+1]);
-	      List_Add(View->VQ, &vals[i  ][j+1][3*k+2]);
-	    }
-	  }
-	}
-      }
-    }	
-
+  if(nbt){
+    for(int i = 0; i < getNbU(); i++)
+      for(int j = 0; j < getNbV(); j++)
+	o.searchTensor(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
+    addInView(v, connect, 9, pnts, vals,
+	      View->TP, &View->NbTP, View->TL, &View->NbTL, View->TQ, &View->NbTQ);
   }
 
   for(int i = 0; i < getNbU(); i++){

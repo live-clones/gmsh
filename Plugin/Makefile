@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.79 2005-01-12 19:10:41 geuzaine Exp $
+# $Id: Makefile,v 1.80 2005-03-02 07:49:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -147,7 +147,7 @@ OctreePost.o: OctreePost.cpp Octree.h OctreeInternals.h OctreePost.h \
   ../DataStr/List.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
   ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Numeric/Numeric.h \
-  ../Common/Message.h
+  ../Common/Message.h ShapeFunctions.h
 StreamLines.o: StreamLines.cpp OctreePost.h Octree.h OctreeInternals.h \
   StreamLines.h Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \

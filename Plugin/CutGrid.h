@@ -31,6 +31,12 @@ class GMSH_CutGridPlugin : public GMSH_Post_Plugin
 {
   static double callback(int num, int action, double value, double *opt,
 			 double step, double min, double max);
+  void addInView(Post_View *v, int connect, int nbcomp, 
+		 double ***pnts, double ***vals, 
+		 List_T *P, int *nP, 
+		 List_T *L, int *nL, 
+		 List_T *Q, int *nQ);
+  Post_View * GenerateView (Post_View * v, int connectPoints);
 public:
   GMSH_CutGridPlugin();
   void getName  (char *name) const;
@@ -41,7 +47,6 @@ public:
   int getNbOptions() const;
   StringXNumber *getOption (int iopt);  
   Post_View *execute (Post_View *);
-  virtual Post_View * GenerateView (Post_View * v, int connectPoints) const ;
 
   static int getNbU ();
   static int getNbV ();

@@ -22,6 +22,9 @@
 
 #include "Numeric.h"
 
+#define ONE  (1. + 1.e-6)
+#define ZERO (-1.e-6)
+
 class element{
 protected:
   double *_x, *_y, *_z;
@@ -186,6 +189,47 @@ public:
     Msg(GERROR, "integrateFlux not available for this element");
     return 0.;
   }
+  virtual void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    // general newton routine for the nonlinear case (more efficient
+    // routines are implemented for simplices, where the basis
+    // functions are linear)
+    uvw[0] = uvw[1] = uvw[2] = 0.0;
+
+    int iter = 1, maxiter = 20;
+    double error = 1., tol = 1.e-6;
+    
+    while (error > tol && iter < maxiter){
+      double jac[3][3];
+      if(!getJacobian(uvw[0], uvw[1], uvw[2], jac)) break;
+	
+      double xn = 0., yn = 0., zn = 0.;
+      for (int i = 0; i < getNumNodes(); i++) {
+	double s;
+	getShapeFunction(i, uvw[0], uvw[1], uvw[2], s);
+	xn += _x[i] * s;
+	yn += _y[i] * s;
+	zn += _z[i] * s;
+      }
+      double inv[3][3];
+      inv3x3(jac, inv);
+      
+      double un = uvw[0] +
+	inv[0][0] * (xyz[0] - xn) + inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
+      double vn = uvw[1] +
+	inv[0][1] * (xyz[0] - xn) + inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn) ;
+      double wn = uvw[2] +
+	inv[0][2] * (xyz[0] - xn) + inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn) ;
+      
+      error = sqrt(SQR(un - uvw[0]) + SQR(vn - uvw[1]) + SQR(wn - uvw[2]));
+      uvw[0] = un;
+      uvw[1] = vn;
+      uvw[2] = wn;
+      iter++ ;
+    }
+    //if(error > tol) Msg(WARNING, "Newton did not converge in xyz2uvw") ;
+  }
+  virtual int isInside(double u, double v, double w) = 0;
 };
 
 class point : public element{
@@ -213,6 +257,14 @@ public:
   void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
   {
     s[0] = s[1] = s[2] = 0.;
+  }
+  void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    uvw[0] = uvw[1] = uvw[2] = 0.;
+  }
+  int isInside(double u, double v, double w)
+  {
+    return 1;
   }
 };
 
@@ -263,6 +315,12 @@ public:
     double d;
     prosca(t, v, &d);
     return d;
+  }
+  int isInside(double u, double v, double w)
+  {
+    if(u < -ONE || u > ONE)
+      return 0; 
+    return 1;
   }
 };
 
@@ -324,6 +382,26 @@ public:
     double d;
     prosca(n, v, &d);
     return d;
+  }
+#if 0 // faster, but only valid for triangles in the z=0 plane 
+  void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    double mat[2][2], b[2];
+    mat[0][0] = _x[1] - _x[0];
+    mat[0][1] = _x[2] - _x[0];
+    mat[1][0] = _y[1] - _y[0];
+    mat[1][1] = _y[2] - _y[0];
+    b[0] = xyz[0] - _x[0];
+    b[1] = xyz[1] - _y[0];
+    sys2x2(mat, b, uvw);
+    uvw[2] = 0.;
+  }
+#endif
+  int isInside(double u, double v, double w)
+  {
+    if(u < ZERO || v < ZERO || u > (ONE - v))
+      return 0; 
+    return 1;
   }
 };
 
@@ -389,6 +467,12 @@ public:
     prosca(n, v, &d);
     return d;
   }
+  int isInside(double u, double v, double w)
+  {
+    if(u < -ONE || v < -ONE || u > ONE || v > ONE)
+      return 0;
+    return 1;
+  }
 };
 
 class tetrahedron : public element{
@@ -438,6 +522,30 @@ public:
     case 3  : s[0] =  0.; s[1] =  0.; s[2] =  1.; break;
     default : s[0] = s[1] = s[2] = 0.; break;
     }
+  }
+  void xyz2uvw(double xyz[3], double uvw[3])
+  {
+    double mat[3][3], b[3];
+    mat[0][0] = _x[1] - _x[0];
+    mat[0][1] = _x[2] - _x[0];
+    mat[0][2] = _x[3] - _x[0];
+    mat[1][0] = _y[1] - _y[0];
+    mat[1][1] = _y[2] - _y[0];
+    mat[1][2] = _y[3] - _y[0];
+    mat[2][0] = _z[1] - _z[0];
+    mat[2][1] = _z[2] - _z[0];
+    mat[2][2] = _z[3] - _z[0];
+    b[0] = xyz[0] - _x[0];
+    b[1] = xyz[1] - _y[0];
+    b[2] = xyz[2] - _z[0];
+    double det;
+    sys3x3(mat, b, uvw, &det);
+  }
+  int isInside(double u, double v, double w)
+  {
+    if(u < ZERO || v < ZERO || w < ZERO || u > (ONE - v - w))
+      return 0;
+    return 1;
   }
 };
 
@@ -521,6 +629,12 @@ public:
     default : s[0] = s[1] = s[2] = 0.; break;
     }
   }
+  int isInside(double u, double v, double w)
+  {
+    if(u < -ONE || v < -ONE || w < -ONE || u > ONE || v > ONE || w > ONE)
+      return 0;
+    return 1;
+  }
 };
 
 class prism : public element{
@@ -592,6 +706,12 @@ public:
               s[2] =  0.5 * v        ; break ;
     default : s[0] = s[1] = s[2] = 0.; break;
     }
+  }
+  int isInside(double u, double v, double w)
+  {
+    if(w > ONE || w < -ONE || u < ZERO || v < ZERO || u > (ONE - v))
+      return 0;
+    return 1;
   }
 };
 
@@ -678,6 +798,13 @@ public:
       }
     }
   }
+  int isInside(double u, double v, double w)
+  {
+    if(u < (w - ONE) || u > (ONE - w) || v < (w - ONE) || v > (ONE - w) ||
+       w < ZERO || w > ONE)
+      return 0;
+    return 1;
+  }
 };
 
 class elementFactory{
@@ -700,5 +827,8 @@ class elementFactory{
     }
   }
 };
+
+#undef ONE
+#undef ZERO
 
 #endif

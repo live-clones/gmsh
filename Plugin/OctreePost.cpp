@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.13 2005-01-24 17:39:28 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.14 2005-03-02 07:49:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -25,51 +25,10 @@
 #include "Views.h"
 #include "Numeric.h"
 #include "Message.h"
+#include "ShapeFunctions.h"
 
-static double computeBarycentricTriangle(double *X, double *Y, double *Z, 
-					 double *P, double *U)
-{
-  // FIXME: only valid for triangles in the XY-plane
-  double mat[2][2], b[2];
-  U[2] = 0.0;
-  mat[0][0] = X[1]-X[0];
-  mat[0][1] = X[2]-X[0];
-  mat[1][0] = Y[1]-Y[0];
-  mat[1][1] = Y[2]-Y[0];
-  b[0] = P[0] -X[0];
-  b[1] = P[1] -Y[0];
-
-  sys2x2(mat, b, U);
-  return 0.5 * ( mat[0][0] * mat[1][1] - mat[1][0] *mat[0][1]);
-}
-
-static void computeBarycentricSimplex(double *X, double *Y, double *Z, 
-				      double *P, double *U)
-{
-  double mat[3][3], b[3];
-
-  mat[0][0] = X[1]-X[0];
-  mat[0][1] = X[2]-X[0];
-  mat[0][2] = X[3]-X[0];
-  mat[1][0] = Y[1]-Y[0];
-  mat[1][1] = Y[2]-Y[0];
-  mat[1][2] = Y[3]-Y[0];
-  mat[2][0] = Z[1]-Z[0];
-  mat[2][1] = Z[2]-Z[0];
-  mat[2][2] = Z[3]-Z[0];
-  b[0] = P[0] - X[0];
-  b[1] = P[1] - Y[0];
-  b[2] = P[2] - Z[0];
-  double det;
-  sys3x3(mat, b, U, &det);
-}
-
-static void minmax(int n,
-		   double *X, 
-		   double *Y, 
-		   double *Z,
-		   double *min,
-		   double *max)
+static void minmax(int n, double *X, double *Y, double *Z,
+		   double *min, double *max)
 {
   min[0] = X[0];
   min[1] = Y[0];
@@ -78,27 +37,23 @@ static void minmax(int n,
   max[1] = Y[0];
   max[2] = Z[0];
 
-  for (int i = 1; i < n; ++i) {
-    min[0] = (X[i] < min[0]) ? X[i]:min[0];
-    min[1] = (Y[i] < min[1]) ? Y[i]:min[1];
-    min[2] = (Z[i] < min[2]) ? Z[i]:min[2];
-    max[0] = (X[i] > max[0]) ? X[i]:max[0];
-    max[1] = (Y[i] > max[1]) ? Y[i]:max[1];
-    max[2] = (Z[i] > max[2]) ? Z[i]:max[2];
+  for(int i = 1; i < n; i++) {
+    min[0] = (X[i] < min[0]) ? X[i] : min[0];
+    min[1] = (Y[i] < min[1]) ? Y[i] : min[1];
+    min[2] = (Z[i] < min[2]) ? Z[i] : min[2];
+    max[0] = (X[i] > max[0]) ? X[i] : max[0];
+    max[1] = (Y[i] > max[1]) ? Y[i] : max[1];
+    max[2] = (Z[i] > max[2]) ? Z[i] : max[2];
   }
 }
 
-static void centroid(int n, 
-		     double *X,
-		     double *Y,
-		     double *Z,
-		     double *c)
+static void centroid(int n, double *X, double *Y, double *Z, double *c)
 {
   const double oc = 1./(double)n;
   c[0] = X[0];
   c[1] = Y[0];
   c[2] = Z[0];
-  for (int i = 1; i < n; ++i) {
+  for(int i = 1; i < n; i++) {
     c[0] += X[i];
     c[1] += Y[i];
     c[2] += Z[i];
@@ -108,79 +63,127 @@ static void centroid(int n,
   c[2] *= oc;
 }
 
-void PostTriangleBB(void *a, double *min, double *max)
+void triBB(void *a, double *min, double *max)
 {
-  double *X = (double*) a;
-  double *Y = &X[3];
-  double *Z = &X[6];
-
+  double *X = (double*) a, *Y = &X[3], *Z = &X[6];
   minmax(3, X, Y, Z, min, max);
-
-  // FIXME: only valid for triangles in the XY-plane
-  min[2] = -1;
-  max[2] =  1;
 }
 
-int PostTriangleInEle(void *a, double *x)
+void quaBB(void *a, double *min, double *max)
 {
-  const double eps = 1.e-3;
-  double U[3];
-  double *X = (double*) a;
-  double *Y = &X[3];
-  double *Z = &X[6];
-  computeBarycentricTriangle(X, Y, Z, x, U);
-  double W = 1.-U[0]-U[1];
-  if (U[0] < -eps || U[0] > 1+eps || 
-      U[1] < -eps || U[1] > 1+eps ||
-      W    < -eps || W    > 1+eps) return 0;
-  return 1;
-}
-
-void PostTriangleCentroid(void *a, double *x)
-{
-  double *X = (double*) a;
-  double *Y = &X[3];
-  double *Z = &X[6];
-  centroid(3, X, Y, Z, x);
-}
-
-void PostSimplexBB(void *a, double *min, double *max)
-{
-  double *X = (double*) a;
-  double *Y = &X[4];
-  double *Z = &X[8];
-
+  double *X = (double*) a, *Y = &X[4], *Z = &X[8];
   minmax(4, X, Y, Z, min, max);
 }
 
-int PostSimplexInEle(void *a, double *x)
+void tetBB(void *a, double *min, double *max)
 {
-  const double eps = 1.e-5;
-  double U[3];
-  double *X = (double*) a;
-  double *Y = &X[4];
-  double *Z = &X[8];
-  computeBarycentricSimplex(X, Y, Z, x, U);
-  double W = 1.-U[0]-U[1]-U[2];
-
-  if(U[0] < -eps || U[0] > 1+eps || 
-     U[1] < -eps || U[1] > 1+eps ||
-     U[2] < -eps || U[2] > 1+eps ||
-     W    < -eps || W    > 1+eps) return 0;
-  return 1;
+  double *X = (double*) a, *Y = &X[4], *Z = &X[8];
+  minmax(4, X, Y, Z, min, max);
 }
 
-void PostSimplexCentroid(void *a, double *x)
+void hexBB(void *a, double *min, double *max)
 {
-  double *X = (double*) a;
-  double *Y = &X[4];
-  double *Z = &X[8];
-  centroid (4, X, Y, Z, x);
+  double *X = (double*) a, *Y = &X[8], *Z = &X[16];
+  minmax(8, X, Y, Z, min, max);
 }
 
-static void addListOfStuff(Octree *o, 
-			   List_T *l, 
-			   int nbelm)
+void priBB(void *a, double *min, double *max)
+{
+  double *X = (double*) a, *Y = &X[6], *Z = &X[12];
+  minmax(6, X, Y, Z, min, max);
+}
+
+void pyrBB(void *a, double *min, double *max)
+{
+  double *X = (double*) a, *Y = &X[5], *Z = &X[10];
+  minmax(5, X, Y, Z, min, max);
+}
+
+int triInEle(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[3], *Z = &X[6], uvw[3];
+  triangle tri(X, Y, Z);
+  tri.xyz2uvw(x, uvw);
+  return tri.isInside(uvw[0], uvw[1], uvw[2]);
+}
+
+int quaInEle(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[4], *Z = &X[8], uvw[3];
+  quadrangle qua(X, Y, Z);
+  qua.xyz2uvw(x, uvw);
+  return qua.isInside(uvw[0], uvw[1], uvw[2]);
+}
+
+int tetInEle(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[4], *Z = &X[8], uvw[3];
+  tetrahedron tet(X, Y, Z);
+  tet.xyz2uvw(x, uvw);
+  return tet.isInside(uvw[0], uvw[1], uvw[2]);
+}
+
+int hexInEle(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[8], *Z = &X[16], uvw[3];
+  hexahedron hex(X, Y, Z);
+  hex.xyz2uvw(x, uvw);
+  return hex.isInside(uvw[0], uvw[1], uvw[2]);
+}
+
+int priInEle(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[6], *Z = &X[12], uvw[3];
+  prism pri(X, Y, Z);
+  pri.xyz2uvw(x, uvw);
+  return pri.isInside(uvw[0], uvw[1], uvw[2]);
+}
+
+int pyrInEle(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[5], *Z = &X[10], uvw[3];
+  pyramid pyr(X, Y, Z);
+  pyr.xyz2uvw(x, uvw);
+  return pyr.isInside(uvw[0], uvw[1], uvw[2]);
+}
+
+void triCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[3], *Z = &X[6];
+  centroid(3, X, Y, Z, x);
+}
+
+void quaCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[4], *Z = &X[8];
+  centroid(4, X, Y, Z, x);
+}
+
+void tetCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[4], *Z = &X[8];
+  centroid(4, X, Y, Z, x);
+}
+
+void hexCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[8], *Z = &X[16];
+  centroid(8, X, Y, Z, x);
+}
+
+void priCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[6], *Z = &X[12];
+  centroid(6, X, Y, Z, x);
+}
+
+void pyrCentroid(void *a, double *x)
+{
+  double *X = (double*) a, *Y = &X[5], *Z = &X[10];
+  centroid(5, X, Y, Z, x);
+}
+
+static void addListOfStuff(Octree *o, List_T *l, int nbelm)
 {
   if(!l) return;
  
@@ -192,251 +195,178 @@ static void addListOfStuff(Octree *o,
 
 OctreePost::~OctreePost() 
 {
-  Octree_Delete(ST);
-  Octree_Delete(VT);
-  Octree_Delete(TT);
-  Octree_Delete(SS);
-  Octree_Delete(VS);
-  Octree_Delete(TS);
+  Octree_Delete(ST); Octree_Delete(VT); Octree_Delete(TT);
+  Octree_Delete(SQ); Octree_Delete(VQ); Octree_Delete(TQ);
+  Octree_Delete(SS); Octree_Delete(VS); Octree_Delete(TS);
+  Octree_Delete(SH); Octree_Delete(VH); Octree_Delete(TH);
+  Octree_Delete(SI); Octree_Delete(VI); Octree_Delete(TI);
+  Octree_Delete(SY); Octree_Delete(VY); Octree_Delete(TY);
 }
 
 OctreePost::OctreePost(Post_View *v) 
   : theView(v)
 {
-  double min [3] = {v->BBox[0],v->BBox[2],v->BBox[4]};
+  double min [3] = {v->BBox[0], v->BBox[2], v->BBox[4]};
 
-  double size[3] = {v->BBox[1]-v->BBox[0],
-		    v->BBox[3]-v->BBox[2],
-		    v->BBox[5]-v->BBox[4]};		    
+  double size[3] = {v->BBox[1] - v->BBox[0],
+		    v->BBox[3] - v->BBox[2],
+		    v->BBox[5] - v->BBox[4]};		    
   
   const int maxElePerBucket = 100; // memory vs. speed trade-off
 
-  ST = Octree_Create(maxElePerBucket, min, size, 
-		     PostTriangleBB,
-		     PostTriangleCentroid,
-		     PostTriangleInEle);
+  ST = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
   addListOfStuff(ST, v->ST, 9 + 3 * v->NbTimeStep);
-
-  VT = Octree_Create(maxElePerBucket, min, size, 
-		     PostTriangleBB,
-		     PostTriangleCentroid,
-		     PostTriangleInEle);
-  addListOfStuff(VT, v->VT, 9 + 9 * v->NbTimeStep);
-
-  TT = Octree_Create(maxElePerBucket, min, size, 
-		     PostTriangleBB,
-		     PostTriangleCentroid,
-		     PostTriangleInEle);
-  addListOfStuff(TT, v->TT, 9 + 27 * v->NbTimeStep);
-
-  SS = Octree_Create(maxElePerBucket, min, size, 
-		     PostSimplexBB,
-		     PostSimplexCentroid,
-		     PostSimplexInEle);
-  addListOfStuff(SS, v->SS, 12 + 4 * v->NbTimeStep);
-
-  VS = Octree_Create(maxElePerBucket, min, size, 
-		     PostSimplexBB,
-		     PostSimplexCentroid,
-		     PostSimplexInEle);
-  addListOfStuff(VS, v->VS, 12 + 12 * v->NbTimeStep);
-
-  TS = Octree_Create(maxElePerBucket, min, size, 
-		     PostSimplexBB,
-		     PostSimplexCentroid,
-		     PostSimplexInEle);
-  addListOfStuff(TS, v->TS, 12 + 36 * v->NbTimeStep);
-  
   Octree_Arrange(ST);
+  VT = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
+  addListOfStuff(VT, v->VT, 9 + 9 * v->NbTimeStep);
   Octree_Arrange(VT);
+  TT = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
+  addListOfStuff(TT, v->TT, 9 + 27 * v->NbTimeStep);
   Octree_Arrange(TT);
+
+  SQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
+  addListOfStuff(SQ, v->SQ, 12 + 4 * v->NbTimeStep);
+  Octree_Arrange(SQ);
+  VQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
+  addListOfStuff(VQ, v->VQ, 12 + 12 * v->NbTimeStep);
+  Octree_Arrange(VQ);
+  TQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
+  addListOfStuff(TQ, v->TQ, 12 + 36 * v->NbTimeStep);
+  Octree_Arrange(TQ);
+
+  SS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
+  addListOfStuff(SS, v->SS, 12 + 4 * v->NbTimeStep);
   Octree_Arrange(SS);
+  VS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
+  addListOfStuff(VS, v->VS, 12 + 12 * v->NbTimeStep);
   Octree_Arrange(VS);
+  TS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
+  addListOfStuff(TS, v->TS, 12 + 36 * v->NbTimeStep);
   Octree_Arrange(TS);
+
+  SH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
+  addListOfStuff(SH, v->SH, 24 + 8 * v->NbTimeStep);
+  Octree_Arrange(SH);
+  VH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
+  addListOfStuff(VH, v->VH, 24 + 24 * v->NbTimeStep);
+  Octree_Arrange(VH);
+  TH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
+  addListOfStuff(TH, v->TH, 24 + 72 * v->NbTimeStep);
+  Octree_Arrange(TH);
+
+  SI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
+  addListOfStuff(SI, v->SI, 18 + 6 * v->NbTimeStep);
+  Octree_Arrange(SI);
+  VI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
+  addListOfStuff(VI, v->VI, 18 + 18 * v->NbTimeStep);
+  Octree_Arrange(VI);
+  TI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
+  addListOfStuff(TI, v->TI, 18 + 54 * v->NbTimeStep);
+  Octree_Arrange(TI);
+
+  SY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
+  addListOfStuff(SY, v->SY, 15 + 5 * v->NbTimeStep);
+  Octree_Arrange(SY);
+  VY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
+  addListOfStuff(VY, v->VY, 15 + 15 * v->NbTimeStep);
+  Octree_Arrange(VY);
+  TY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
+  addListOfStuff(TY, v->TY, 15 + 45 * v->NbTimeStep);
+  Octree_Arrange(TY);
 }
 
-bool OctreePost::searchVector(double x, 
-			      double y, 
-			      double z,
-			      double * values,
-			      double * size_elem,
-			      int timestep)
+bool OctreePost::getValue(void *in, int dim, int nbNod, int nbComp, 
+			  double P[3], int timestep, double *values)
 {
-  double P[3] = {x,y,z};
+  if(!in) return false;
+
+  double *X = (double*)in, *Y = &X[nbNod], *Z = &X[2*nbNod], *V = &X[3*nbNod], U[3];
+
+  elementFactory factory;
+  element *e = factory.create(nbNod, dim, X, Y, Z);
+  if(!e) return false;
+
+  e->xyz2uvw(P, U);
+  if(timestep < 0){
+    for(int i = 0; i < theView->NbTimeStep; i++)
+      for(int j = 0; j < nbComp; j++)
+	values[nbComp * i + j] = e->interpolate(&V[nbNod * nbComp * i + j], 
+						U[0], U[1], U[2], nbComp);
+  }
+  else{
+    for(int j = 0; j < nbComp; j++)
+      values[j] = e->interpolate(&V[nbNod * nbComp * timestep + j], 
+				 U[0], U[1], U[2], nbComp);
+  }
+
+  delete e;
+  return true;
+} 
+
+bool OctreePost::searchScalar(double x, double y, double z,
+			      double * values, int timestep)
+{
+  double P[3] = {x, y, z};
 
   if(timestep < 0)
-    for (int i = 0; i < 3*theView->NbTimeStep; ++i)
-      values[i] = 0.0; 
-  else
-    values[0] = values[1] = values[2] = 0.0;
-  
-  void * inVT = Octree_Search(P, VT);
-
-  // values[0] = -0.5*y;
-  // values[1] = 0.5*x;
-  // values[2] = 1;
-  // return true;
-
-  if(inVT){
-    double U[3];
-    double *X = (double*) inVT;
-    double *Y = &X[3];
-    double *Z = &X[6];
-    double *V = &X[9];
-    *size_elem = fabs(computeBarycentricTriangle(X, Y, Z, P, U));
-    // bof
-    *size_elem = sqrt(*size_elem);
-    if(timestep < 0){
-      for (int i = 0; i < theView->NbTimeStep; ++i){
-	values[3*i] = 
-	  V[9*i+3] * U[0] + 
-	  V[9*i+6] * U[1] + 
-	  V[9*i+0] * (1-U[0]-U[1]); 
-	values[3*i+1] = 
-	  V[9*i+4] * U[0] + 
-	  V[9*i+7] * U[1] + 
-	  V[9*i+1] * (1-U[0]-U[1]); 
-	values[3*i+2] = 
-	  V[9*i+5] * U[0] + 
-	  V[9*i+8] * U[1] + 
-	  V[9*i+2] * (1-U[0]-U[1]); 
-      }
-    }
-    else{
-      values[0] = 
-	V[9*timestep+3] * U[0] + 
-	V[9*timestep+6] * U[1] + 
-	V[9*timestep+0] * (1-U[0]-U[1]); 
-      values[1] = 
-	V[9*timestep+4] * U[0] + 
-	V[9*timestep+7] * U[1] + 
-	V[9*timestep+1] * (1-U[0]-U[1]); 
-      values[2] = 
-	V[9*timestep+5] * U[0] + 
-	V[9*timestep+8] * U[1] + 
-	V[9*timestep+2] * (1-U[0]-U[1]); 
-    }
-    return true;
-  } 
-
-  void * inVS = Octree_Search(P, VS);
-
-  if(inVS){
-    double U[3];
-    double *X = (double*) inVS;
-    double *Y = &X[4];
-    double *Z = &X[8];
-    double *V = &X[12];
-    computeBarycentricSimplex(X, Y, Z, P, U);
-    // bof
-    *size_elem = .1;
-    if(timestep < 0){
-      for (int i=0;i<theView->NbTimeStep;++i){
-	values[3*i] = 
-	  V[12*i+3]  * U[0] + 
-	  V[12*i+6]  * U[1] + 
-	  V[12*i+9]  * U[2] + 
-	  V[12*i+0]  * (1-U[0]-U[1]-U[2]); 
-	values[3*i+1] = 
-	  V[12*i+4]  * U[0] + 
-	  V[12*i+9]  * U[1] + 
-	  V[12*i+10] * U[2] + 
-	  V[12*i+1]  * (1-U[0]-U[1]-U[2]); 
-	values[3*i+2] = 
-	  V[12*i+5]  * U[0] + 
-	  V[12*i+7]  * U[1] + 
-	  V[12*i+11] * U[2] + 
-	  V[12*i+2]  * (1-U[0]-U[1]-U[2]); 
-      }
-    }
-    else{
-      values[0] = 
-	V[12*timestep+3]  * U[0] + 
-	V[12*timestep+6]  * U[1] + 
-	V[12*timestep+9]  * U[2] + 
-	V[12*timestep+0]  * (1-U[0]-U[1]-U[2]); 
-      values[1] = 
-	V[12*timestep+4]  * U[0] + 
-	V[12*timestep+7]  * U[1] + 
-	V[12*timestep+10] * U[2] + 
-	V[12*timestep+1 ] * (1-U[0]-U[1]-U[2]); 
-      values[2] = 
-	V[12*timestep+5 ] * U[0] + 
-	V[12*timestep+8 ] * U[1] + 
-	V[12*timestep+11] * U[2] + 
-	V[12*timestep+2 ] * (1-U[0]-U[1]-U[2]); 
-    }
-    return true;
-  } 
-  return false;
-}
-
-bool OctreePost::searchScalar(double x,
-			      double y, 
-			      double z,
-			      double * values,
-			      int timestep)
-{
-  double P[3] = {x,y,z};
-  void * inST = Octree_Search(P, ST);
-
-  if(timestep < 0)
-    for(int i = 0; i <theView->NbTimeStep; ++i)
+    for(int i = 0; i < theView->NbTimeStep; i++)
       values[i] = 0.0; 
   else
     values[0] = 0.0;
 
-  if(inST){
-    double U[3];
-    double *X = (double*) inST;
-    double *Y = &X[3];
-    double *Z = &X[6];
-    double *V = &X[9];
-    computeBarycentricTriangle(X, Y, Z, P, U);
-    if(timestep < 0){
-      for (int i = 0; i < theView->NbTimeStep; ++i){
-	values[i] = 
-	  V[3*i+1] * U[0] + 
-	  V[3*i+2] * U[1] + 
-	  V[3*i+0] * (1-U[0]-U[1]); 
-      }
-    }
-    else{
-      values[0] = 
-	V[3*timestep+1] * U[0] + 
-	V[3*timestep+2] * U[1] + 
-	V[3*timestep+0] * (1-U[0]-U[1]); 
-    }
-    return true;
-  } 
-  
-  void * inSS = Octree_Search(P, SS);
-  
-  if(inSS){
-    double U[3];
-    double *X = (double*) inSS;
-    double *Y = &X[4];
-    double *Z = &X[8];
-    double *V = &X[12];
-    computeBarycentricSimplex(X, Y, Z, P, U);      
-    if(timestep < 0){
-      for (int i = 0; i < theView->NbTimeStep; ++i){
-	values[i] = 
-	  V[4*i+1] * U[0] + 
-	  V[4*i+2] * U[1] + 
-	  V[4*i+3] * U[2] + 
-	  V[4*i+0] * (1.-U[0]-U[1]-U[2]); 
-      }
-    }
-    else{
-      values[0] = 
-	V[4*timestep+1] * U[0] + 
-	V[4*timestep+2] * U[1] + 
-	V[4*timestep+3] * U[2] + 
-	V[4*timestep  ] * (1-U[0]-U[1]-U[2]); 
-    }
-    return true;
-  } 
-  
+  if(getValue(Octree_Search(P, SS), 3, 4, 1, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, SH), 3, 8, 1, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, SI), 3, 6, 1, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, SY), 3, 5, 1, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, ST), 2, 3, 1, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, SQ), 2, 4, 1, P, timestep, values)) return true;
+
+  return false;
+}
+
+bool OctreePost::searchVector(double x, double y, double z,
+			      double * values, double * size_elem, int timestep)
+{
+  double P[3] = {x, y, z};
+
+  if(timestep < 0)
+    for(int i = 0; i < 3 * theView->NbTimeStep; i++)
+      values[i] = 0.0; 
+  else
+    for(int i = 0; i < 3; i++)
+      values[i] = 0.0;
+
+  // FIXME: compute this!
+  *size_elem = 1.;
+
+  if(getValue(Octree_Search(P, VS), 3, 4, 3, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, VH), 3, 8, 3, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, VI), 3, 6, 3, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, VY), 3, 5, 3, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, VT), 2, 3, 3, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, VQ), 2, 4, 3, P, timestep, values)) return true;
+
+  return false;
+}
+
+bool OctreePost::searchTensor(double x, double y, double z,
+			      double * values, int timestep)
+{
+  double P[3] = {x, y, z};
+
+  if(timestep < 0)
+    for(int i = 0; i < 9 * theView->NbTimeStep; i++)
+      values[i] = 0.0; 
+  else
+    for(int i = 0; i < 9; i++)
+      values[i] = 0.0;
+
+  if(getValue(Octree_Search(P, TS), 3, 4, 9, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, TH), 3, 8, 9, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, TI), 3, 6, 9, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, TY), 3, 5, 9, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, TT), 2, 3, 9, P, timestep, values)) return true;
+  if(getValue(Octree_Search(P, TQ), 2, 4, 9, P, timestep, values)) return true;
+
   return false;
 }

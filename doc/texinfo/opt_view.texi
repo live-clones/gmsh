@@ -6,7 +6,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.AbscissaFormat
 Abscissa number format for 2D graphs (in standard C form)@*
-Default value: @code{"%.3e"}@*
+Default value: @code{"%.3g"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.FileName
@@ -16,7 +16,7 @@ Saved in: @code{-}
 
 @item View.Format
 Number format (in standard C form)@*
-Default value: @code{"%.3e"}@*
+Default value: @code{"%.3g"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseX

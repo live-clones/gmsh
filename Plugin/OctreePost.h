@@ -26,28 +26,29 @@ class  Post_View;
 
 class OctreePost 
 {
-  Octree    *ST,*VT,*TT;
-  Octree    *SS,*VS,*TS;
+  Octree *ST, *VT, *TT;
+  Octree *SQ, *VQ, *TQ;
+  Octree *SS, *VS, *TS;
+  Octree *SH, *VH, *TH;
+  Octree *SI, *VI, *TI;
+  Octree *SY, *VY, *TY;
   Post_View *theView;
+  bool getValue(void *in, int dim, int nbNod, int nbComp, 
+		double P[3], int timestep, double *values);
  public :
-  OctreePost ( Post_View * );
-  ~OctreePost ();
+  OctreePost(Post_View *);
+  ~OctreePost();
   // search for the value of the View at point
   // x, y, z. Values is interpolated linearly in
   // the post element. If several time steps
   // are present, they are all interpolated unless
   // time step is set to a different value than -1.
-  bool searchScalar ( double x , 
-		      double y , 
-		      double z, 
-		      double * values , 
-		      int timestep = -1);		
-  bool searchVector ( double x , 
-		      double y , 
-		      double z, 
-		      double * values , 
-		      double * size_elem , 
-		      int timestep = -1);		
+  bool searchScalar(double x, double y, double z, 
+		    double * values, int timestep = -1);		
+  bool searchVector(double x, double y, double z, 
+		    double * values, double * size_elem, int timestep = -1);
+  bool searchTensor(double x, double y, double z, 
+		    double * values, int timestep = -1);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.10 2005-01-09 02:18:59 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.11 2005-03-02 07:49:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -76,14 +76,13 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuzaine@acm.caltech.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(CutParametric) cuts a scalar triangle/\n"
-	 "tetrahedron view `iView' with the parametric function\n"
-	 "(`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of\n"
-	 "the parameter u in [`MinU', `MaxU']. If\n"
-	 "`ConnectPoints' is set, the plugin creates scalar\n"
-	 "line elements; otherwise, the plugin generates\n"
-	 "scalar points. If `iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
+         "Plugin(CutParametric) cuts the scalar view `iView'\n"
+	 "with the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
+	 "using `nPointsU' values of the parameter u in\n"
+	 "[`MinU', `MaxU']. If `ConnectPoints' is set, the\n"
+	 "plugin creates scalar line elements; otherwise,\n"
+	 "the plugin generates scalar points. If `iView' < 0,\n"
+	 "the plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(CutParametric) creates one new view.\n");
 }
@@ -111,6 +110,36 @@ StringXString *GMSH_CutParametricPlugin::getOptionStr(int iopt)
 void GMSH_CutParametricPlugin::catchErrorMessage(char *errorMessage) const
 {
   strcpy(errorMessage, "CutParametric failed...");
+}
+
+static void addInView(int connect, int i, int nbcomp, int nbtime,
+		      double x0, double y0, double z0, double *res0,
+		      double x, double y, double z, double *res,
+		      List_T *P, int *nP, List_T *L, int *nL)
+{
+  if(connect){
+    if(i){
+      List_Add(L, &x0); List_Add(L, &x);
+      List_Add(L, &y0); List_Add(L, &y);
+      List_Add(L, &z0); List_Add(L, &z);
+      for(int k = 0; k < nbtime; ++k){
+	for(int l = 0; l < nbcomp; ++l)
+	  List_Add(L, &res0[nbcomp*k+l]); 
+	for(int l = 0; l < nbcomp; ++l)
+	  List_Add(L, &res[nbcomp*k+l]);
+      }
+      (*nL)++;
+    }
+  }
+  else{
+    List_Add(P, &x);
+    List_Add(P, &y);
+    List_Add(P, &z);
+    for(int k = 0; k < nbtime; ++k)
+      for(int l = 0; l < nbcomp; ++l)
+	List_Add(P, &res[nbcomp*k+l]);
+    (*nP)++;
+  }
 }
 
 Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
@@ -167,45 +196,46 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
   OctreePost o(v1);
 
   Post_View *v2 = BeginView(1);
-  double *res0 = new double[v1->NbTimeStep];
-  double *res = new double[v1->NbTimeStep];
-  double x, y, z, x0, y0, z0;
+  double *res0 = new double[9*v1->NbTimeStep];
+  double *res = new double[9*v1->NbTimeStep];
+  double x = 0., y = 0., z = 0., x0 = 0., y0 = 0., z0 = 0.;
+
+  for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res[k] = 0.;
+
   for(int i = 0; i < nbU; ++i){
     if(i && connect){
       x0 = x;
       y0 = y;
       z0 = z;
-      for(int k = 0; k < v1->NbTimeStep; ++k) res0[k] = res[k];
+      for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res[k];
     }
-    double u = minU + (double)(i)/(double)(nbU-1) * (maxU - minU);
+
+    double u;
+    if(nbU == 1 || maxU == minU)
+      u = minU;
+    else
+      u = minU + (double)(i)/(double)(nbU-1) * (maxU - minU);
     char *names[] = { "u" };
     double values[] = { u };
     x = evaluator_evaluate(fx, sizeof(names)/sizeof(names[0]), names, values);
     y = evaluator_evaluate(fy, sizeof(names)/sizeof(names[0]), names, values);
     z = evaluator_evaluate(fz, sizeof(names)/sizeof(names[0]), names, values);
-    o.searchScalar(x, y, z, res);
-    if(connect){
-      if(i){
-	List_Add(v2->SL, &x0);
-	List_Add(v2->SL, &x);
-	List_Add(v2->SL, &y0);
-	List_Add(v2->SL, &y);
-	List_Add(v2->SL, &z0);
-	List_Add(v2->SL, &z);
-	for(int k = 0; k < v1->NbTimeStep; ++k){
-	  List_Add(v2->SL, &res0[k]);
-	  List_Add(v2->SL, &res[k]);
-	}
-	v2->NbSL++;
-      }
+
+    if(v->NbST || v->NbSQ || v->NbSS || v->NbSH || v->NbSI || v->NbSY){
+      o.searchScalar(x, y, z, res);
+      addInView(connect, i, 1, v1->NbTimeStep, x0, y0, z0, res0, x, y, z, res,
+		v2->SP, &v2->NbSP, v2->SL, &v2->NbSL);
     }
-    else{
-      List_Add(v2->SP, &x);
-      List_Add(v2->SP, &y);
-      List_Add(v2->SP, &z);
-      for(int k = 0; k < v1->NbTimeStep; ++k)
-	List_Add(v2->SP, &res[k]);
-      v2->NbSP++;
+    if(v->NbVT || v->NbVQ || v->NbVS || v->NbVH || v->NbVI || v->NbVY){
+      double size;
+      o.searchVector(x, y, z, res, &size);
+      addInView(connect, i, 3, v1->NbTimeStep, x0, y0, z0, res0, x, y, z, res,
+		v2->VP, &v2->NbVP, v2->VL, &v2->NbVL);
+    }
+    if(v->NbTT || v->NbTQ || v->NbTS || v->NbTH || v->NbTI || v->NbTY){
+      o.searchTensor(x, y, z, res);
+      addInView(connect, i, 9, v1->NbTimeStep, x0, y0, z0, res0, x, y, z, res,
+		v2->TP, &v2->NbTP, v2->TL, &v2->NbTL);
     }
   }
 

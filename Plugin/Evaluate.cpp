@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.16 2005-01-12 19:38:01 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.17 2005-03-02 07:49:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -77,8 +77,8 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "- the usual mathematical functions (Log, Sqrt\n"
 	 "Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);\n"
 	 "\n"
-	 "- the symbols x, y and z, to retrieve the coordinates\n"
-	 "of the current node;\n"
+	 "- the symbols x, y and z, to retrieve the\n"
+	 "coordinates of the current node;\n"
 	 "\n"
 	 "- the symbols Time and TimeStep, to retrieve the\n"
 	 "current time and time step values;\n"
@@ -93,11 +93,11 @@ void GMSH_EvaluatePlugin::getInfos(char *author, char *copyright,
 	 "\n"
 	 "- the symbol w, to retrieve the `Component'-th\n"
 	 "component of the field in `ExternalView' at the\n"
-	 "`ExternalTimeStep'-th time step. `ExternalView' and\n"
-	 "`iView' must be of the same type (scalar, vector\n"
-	 "or tensor); if `ExternalView' and `iView' are not\n"
-	 "based on the same spatial grid, `ExternalView' is\n"
-	 "interpolated onto `iView';\n"
+	 "`ExternalTimeStep'-th time step. `ExternalView'\n"
+	 "and `iView' must be of the same type (scalar,\n"
+	 "vector or tensor); if `ExternalView' and `iView'\n"
+	 "are not based on the same spatial grid,\n"
+	 "`ExternalView' is interpolated onto `iView';\n"
 	 "\n"
 	 "- the symbols w0, w1, w2, ..., w8, to retrieve each\n"
 	 "component of the field in `ExternalView' at the\n"
@@ -185,8 +185,10 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
 	val2 = tmp;
 	if(nbComp == 1)
 	  _octree->searchScalar(x[j], y[j], z[j], val2, timeStep2);
-	else
+	else if(nbComp == 3)
 	  _octree->searchVector(x[j], y[j], z[j], val2, &sizeElm, timeStep2);
+	else
+	  _octree->searchTensor(x[j], y[j], z[j], val2, timeStep2);
       }
       else
 	val2 = (double *)List_Pointer_Fast(list2, 

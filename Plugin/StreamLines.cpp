@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.20 2005-01-09 02:19:00 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.21 2005-03-02 07:49:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -171,9 +171,9 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
 	 "Plugin(StreamLines) computes stream lines\n"
-	 "from a triangle/tetrahedron vector view `iView'\n"
-	 "and optionally interpolates the scalar view `dView'\n"
-	 "on the resulting stream lines. It takes as input a\n"
+	 "from a vector view `iView' and optionally\n"
+	 "interpolates the scalar view `dView' on the\n"
+	 "resulting stream lines. It takes as input a\n"
 	 "grid defined by the 3 points (`X0',`Y0',`Z0')\n"
 	 "(origin), (`X1',`Y1',`Z1') (axis of U) and\n"
 	 "(`X2',`Y2',`Z2') (axis of V). The number of points\n"

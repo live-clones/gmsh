@@ -51,17 +51,16 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutGrid)
-Plugin(CutGrid) cuts a triangle/tetrahedron view
-with a rectangular grid defined by the 3 points
+Plugin(CutGrid) cuts the view `iView' with a
+rectangular grid defined by the 3 points
 (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U)
 and (`X2',`Y2',`Z2') (axis of V). The number of points
 along U and V is set with the options `nPointsU'
 and `nPointsV'. If `ConnectPoints' is zero, the
-plugin creates scalar or vector points; otherwise,
-the plugin generates scalar or vector quadrangles,
-lines or points depending on the values of `nPointsU'
-and `nPointsV'. If `iView' < 0, the plugin is run on
-the current view.
+plugin creates points; otherwise, the plugin
+generates quadrangles, lines or points depending on
+the values of `nPointsU' and `nPointsV'. If `iView' < 0,
+the plugin is run on the current view.
 
 Plugin(CutGrid) creates one new view.
 
@@ -131,14 +130,13 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutParametric)
-Plugin(CutParametric) cuts a scalar triangle/
-tetrahedron view `iView' with the parametric function
-(`X'(u), `Y'(u), `Z'(u)), using `nPointsU' values of
-the parameter u in [`MinU', `MaxU']. If
-`ConnectPoints' is set, the plugin creates scalar
-line elements; otherwise, the plugin generates
-scalar points. If `iView' < 0, the plugin is run on
-the current view.
+Plugin(CutParametric) cuts the scalar view `iView'
+with the parametric function (`X'(u), `Y'(u), `Z'(u)),
+using `nPointsU' values of the parameter u in
+[`MinU', `MaxU']. If `ConnectPoints' is set, the
+plugin creates scalar line elements; otherwise, the
+plugin generates scalar points. If `iView' < 0, the
+plugin is run on the current view.
 
 Plugin(CutParametric) creates one new view.
 
@@ -493,9 +491,9 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Probe)
-Plugin(Probe) gets the value of the simplectic view
-`iView' at the point (`X',`Y',`Z'). If `iView' < 0,
-the plugin is run on the current view.
+Plugin(Probe) gets the value of the view `iView' at
+the point (`X',`Y',`Z'). If `iView' < 0, the plugin
+is run on the current view.
 
 Plugin(Probe) creates one new view.
 
@@ -608,9 +606,9 @@ Default value: @code{-1}
 
 @item Plugin(StreamLines)
 Plugin(StreamLines) computes stream lines
-from a triangle/tetrahedron vector view `iView'
-and optionally interpolates the scalar view `dView'
-on the resulting stream lines. It takes as input a
+from a vector view `iView' and optionally
+interpolates the scalar view `dView' on the
+resulting stream lines. It takes as input a
 grid defined by the 3 points (`X0',`Y0',`Z0')
 (origin), (`X1',`Y1',`Z1') (axis of U) and
 (`X2',`Y2',`Z2') (axis of V). The number of points

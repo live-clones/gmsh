@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.7 2005-01-09 02:19:00 geuzaine Exp $
+// $Id: Probe.cpp,v 1.8 2005-03-02 07:49:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -131,9 +131,9 @@ void GMSH_ProbePlugin::getInfos(char *author, char *copyright,
   strcpy(author, "C. Geuzaine (geuzaine@acm.caltech.edu)");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(Probe) gets the value of the simplectic view\n"
-	 "`iView' at the point (`X',`Y',`Z'). If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
+         "Plugin(Probe) gets the value of the view `iView' at\n"
+	 "the point (`X',`Y',`Z'). If `iView' < 0, the plugin is\n"
+	 "run on the current view.\n"
 	 "\n"
 	 "Plugin(Probe) creates one new view.\n");
 }
@@ -189,14 +189,22 @@ Post_View *GMSH_ProbePlugin::execute(Post_View * v)
     List_Add(v2->VP, &y);
     List_Add(v2->VP, &z);
     for(int i = 0; i < v1->NbTimeStep; i++){
-      List_Add(v2->VP, &val[3*i]);
-      List_Add(v2->VP, &val[3*i+1]);
-      List_Add(v2->VP, &val[3*i+2]);
+      for(int j = 0; j < 3; j++)
+	List_Add(v2->VP, &val[3*i+j]);
     }
     v2->NbVP++;
   }
 
-  // FIXME: do the tensor stuff
+  if(o.searchTensor(x, y, z, val)){
+    List_Add(v2->TP, &x);
+    List_Add(v2->TP, &y);
+    List_Add(v2->TP, &z);
+    for(int i = 0; i < v1->NbTimeStep; i++){
+      for(int j = 0; j < 9; j++)
+	List_Add(v2->TP, &val[9*i+j]);
+    }
+    v2->NbTP++;
+  }
 
   delete [] val;
   
