@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.53 2004-04-20 01:26:13 geuzaine Exp $
+// $Id: Geom.cpp,v 1.54 2004-04-20 18:55:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -409,15 +409,12 @@ void Draw_Plane_Surface(Surface * s)
     k = 0;
     for(i = 0; i < 100; i++) {
       t = (double)i / (double)(100);
-      vv.Pos.X =
-        t * .5 * (V[0].Pos.X + V[3].Pos.X) + (1. - t) * .5 * (V[2].Pos.X +
-                                                              V[1].Pos.X);
-      vv.Pos.Y =
-        t * .5 * (V[0].Pos.Y + V[3].Pos.Y) + (1. - t) * .5 * (V[2].Pos.Y +
-                                                              V[1].Pos.Y);
-      vv.Pos.Z =
-        t * .5 * (V[0].Pos.Z + V[3].Pos.Z) + (1. - t) * .5 * (V[2].Pos.Z +
-                                                              V[1].Pos.Z);
+      vv.Pos.X = t * .5 * (V[0].Pos.X + V[3].Pos.X) + 
+	(1. - t) * .5 * (V[2].Pos.X + V[1].Pos.X);
+      vv.Pos.Y = t * .5 * (V[0].Pos.Y + V[3].Pos.Y) + 
+	(1. - t) * .5 * (V[2].Pos.Y + V[1].Pos.Y);
+      vv.Pos.Z = t * .5 * (V[0].Pos.Z + V[3].Pos.Z) + 
+	(1. - t) * .5 * (V[2].Pos.Z + V[1].Pos.Z);
       if(isPointOnPlanarSurface(s, vv.Pos.X, vv.Pos.Y, vv.Pos.Z, n)) {
         if(!k) {
           List_Add(s->Orientations, &vv);
@@ -484,81 +481,47 @@ void Draw_Plane_Surface(Surface * s)
 
 void Draw_NonPlane_Surface(Surface * s)
 {
-  Vertex v, n1, n2, n3;
-  int i, NbTics, N = 0;
-  double u, n[3], nx[3], ny[3];
-  double tics[20];
-  double u0, un, v0, vn;
-  int kk;
-  char Num[100];
-
-  u0 = v0 = 0;
-  un = vn = 1;
-
-  if(s->Typ == MSH_SURF_NURBS) {
-    NbTics = 5;
-    u0 = s->ku[0];
-    un = s->ku[s->OrderU + s->Nu];
-    v0 = s->kv[0];
-    vn = s->kv[s->OrderV + s->Nv];
-    for(i = 0; i < NbTics; i++)
-      tics[i] = v0 + ((double)(i + 1) / (double)NbTics) * (vn - v0);
-    if(CTX.geom.light) glEnable(GL_LIGHTING);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    GLUnurbsObj *nurb;
-    nurb = gluNewNurbsRenderer();
-#if defined(GLU_VERSION_1_3)
-    gluNurbsProperty(nurb, (GLenum) GLU_SAMPLING_TOLERANCE, 50.0);
-    gluNurbsProperty(nurb, (GLenum) GLU_DISPLAY_MODE, GLU_FILL);
-#endif
-    gluBeginSurface(nurb);
-    gluNurbsSurface(nurb, s->Nu + s->OrderU + 1, s->ku,
-		    s->Nv + s->OrderV + 1, s->kv, 4, 4 * s->Nu, s->cp,
-		    s->OrderU + 1, s->OrderV + 1, GL_MAP2_VERTEX_4);
-    gluEndSurface(nurb);
-    gluDeleteNurbsRenderer(nurb);
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
-    return;
-  }
-  else {
-    NbTics = 1;
-    tics[0] = 0.5;
-  }
-
   if(CTX.geom.surfaces) {
-    for(kk = 0; kk < NbTics; kk++) {
-      N = 50;
+    if(s->Typ == MSH_SURF_NURBS) {
+      if(CTX.geom.light) glEnable(GL_LIGHTING);
+      glEnable(GL_POLYGON_OFFSET_FILL);
+      GLUnurbsObj *nurb;
+      nurb = gluNewNurbsRenderer();
+#if defined(GLU_VERSION_1_3)
+      gluNurbsProperty(nurb, (GLenum) GLU_SAMPLING_TOLERANCE, 50.0);
+      gluNurbsProperty(nurb, (GLenum) GLU_DISPLAY_MODE, GLU_FILL);
+#endif
+      gluBeginSurface(nurb);
+      gluNurbsSurface(nurb, s->Nu + s->OrderU + 1, s->ku,
+		      s->Nv + s->OrderV + 1, s->kv, 4, 4 * s->Nu, s->cp,
+		      s->OrderU + 1, s->OrderV + 1, GL_MAP2_VERTEX_4);
+      gluEndSurface(nurb);
+      gluDeleteNurbsRenderer(nurb);
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glDisable(GL_LIGHTING);
+    }
+    else{
+      int N = 50;
       glBegin(GL_LINE_STRIP);
-      for(i = 0; i < N + 1; i++) {
-        u = u0 + (un - u0) * (double)i / (double)N;
-        v = InterpolateSurface(s, u, tics[kk], 0, 0);
-        glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
+      for(int i = 0; i < N + 1; i++) {
+	double u = (double)i / (double)N;
+	Vertex v = InterpolateSurface(s, u, 0.5, 0, 0);
+	glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
       }
       glEnd();
-    }
-  }
-
-  if(s->Typ == MSH_SURF_NURBS) {
-    for(i = 0; i < NbTics; i++) {
-      tics[i] = u0 + ((double)(i + 1) / (double)NbTics) * (un - u0);
-    }
-  }
-
-  if(CTX.geom.surfaces) {
-    for(kk = 0; kk < NbTics; kk++) {
       glBegin(GL_LINE_STRIP);
-      for(i = 0; i < N + 1; i++) {
-        u = v0 + (vn - v0) * (double)i / (double)N;
-        v = InterpolateSurface(s, tics[kk], u, 0, 0);
-        glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
+      for(int i = 0; i < N + 1; i++) {
+	double u = (double)i / (double)N;
+	Vertex v = InterpolateSurface(s, 0.5, u, 0, 0);
+	glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
       }
       glEnd();
     }
   }
 
   if(CTX.geom.surfaces_num) {
-    v = InterpolateSurface(s, 0.5, 0.5, 0, 0);
+    Vertex v = InterpolateSurface(s, 0.5, 0.5, 0, 0);
+    char Num[100];
     sprintf(Num, "%d", s->Num);
     double offset = 0.5 * CTX.gl_fontsize * CTX.pixel_equiv_x;
     glRasterPos3d(v.Pos.X + offset / CTX.s[0],
@@ -569,9 +532,10 @@ void Draw_NonPlane_Surface(Surface * s)
 
   if(CTX.geom.normals) {
     glDisable(GL_LINE_STIPPLE);
-    n1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
-    n2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
-    n3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
+    Vertex n1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
+    Vertex n2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
+    Vertex n3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
+    double nx[3], ny[3], n[3];
     nx[0] = n2.Pos.X - n1.Pos.X;
     nx[1] = n2.Pos.Y - n1.Pos.Y;
     nx[2] = n2.Pos.Z - n1.Pos.Z;
@@ -653,7 +617,6 @@ void Draw_Curve_For_Volume(void *a, void *b)
 {
   int i, N;
   Curve *c;
-  Vertex v;
 
   glLineWidth(CTX.geom.line_width);
   gl2psLineWidth(CTX.geom.line_width * CTX.print.eps_line_width_factor);
@@ -672,14 +635,14 @@ void Draw_Curve_For_Volume(void *a, void *b)
 
   glBegin(GL_LINE_STRIP);
   for(i = 0; i < N; i++) {
-    v = InterpolateCurve(c, 0.2 * (double)i / (double)(N - 1), 0);
+    Vertex v = InterpolateCurve(c, 0.2 * (double)i / (double)(N - 1), 0);
     glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
   }
   glEnd();
 
   glBegin(GL_LINE_STRIP);
   for(i = N - 1; i >= 0; i--) {
-    v = InterpolateCurve(c, 1. - 0.2 * (double)i / (double)(N - 1), 0);
+    Vertex v = InterpolateCurve(c, 1. - 0.2 * (double)i / (double)(N - 1), 0);
     glVertex3d(v.Pos.X, v.Pos.Y, v.Pos.Z);
   }
   glEnd();
@@ -704,9 +667,9 @@ void Draw_Geom(Mesh * m)
 
   if(CTX.geom.points || CTX.geom.points_num)
     Tree_Action(m->Points, Draw_GeoPoint);
-  if(CTX.geom.lines || CTX.geom.lines_num)
+  if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
     Tree_Action(m->Curves, Draw_Curve);
-  if(CTX.geom.surfaces || CTX.geom.surfaces_num)
+  if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
     Tree_Action(m->Surfaces, Draw_Surface);
   if(CTX.geom.volumes || CTX.geom.volumes_num)
     DrawVolumes(m);
