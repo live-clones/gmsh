@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.277 2004-03-05 23:47:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.278 2004-03-11 05:43:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -862,7 +862,12 @@ void GUI::create_menu_window(int argc, char **argv)
 
 #if defined(__APPLE__) && defined(HAVE_FL_SYS_MENU_BAR)
   if(CTX.system_menu_bar){
-    m_sys_menu_bar = new Fl_Sys_Menu_Bar(0, 0, width, BH);
+    // the system menubar is kind of a hack in fltk--it still creates
+    // a real (invisible) menubar. So we make it a 1x1 pixel rectangle
+    // (and 1 pixel off the edge, so it falls behind the navigation
+    // buttons) to really really really avoid unwanted mouse click
+    // events.
+    m_sys_menu_bar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
     m_sys_menu_bar->menu(m_sys_menubar_table);
     m_sys_menu_bar->global();
     Fl_Box *o = new Fl_Box(0, 0, width, BH + 6);
