@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.17 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.18 2001-05-23 07:29:42 geuzaine Exp $
 
 /*
  
@@ -870,7 +870,10 @@ void Maillage_Volume (void *data, void *dum){
   THEM->Statistics[10] += Tree_Nbr(v->Hexahedra);
   THEM->Statistics[11] += Tree_Nbr(v->Prisms);
 
-  Gamma_Maillage (v, &THEM->Statistics[17], &THEM->Statistics[18], &THEM->Statistics[19]);
-  Eta_Maillage (v, &THEM->Statistics[20], &THEM->Statistics[21], &THEM->Statistics[22]);
-  R_Maillage (v, &THEM->Statistics[23], &THEM->Statistics[24], &THEM->Statistics[25]);
+  if(v->Typ == 99999){
+    Gamma_Maillage (THEM, &THEM->Statistics[17], &THEM->Statistics[18], &THEM->Statistics[19]);
+    Eta_Maillage (THEM, &THEM->Statistics[20], &THEM->Statistics[21], &THEM->Statistics[22]);
+    R_Maillage (THEM, &THEM->Statistics[23], &THEM->Statistics[24], &THEM->Statistics[25]);
+  }
+
 }

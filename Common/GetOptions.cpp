@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.22 2001-05-22 08:30:26 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.23 2001-05-23 07:29:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -33,7 +33,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -0                    parse input files, output flattened geometry, and exit");
   Msg(DIRECT, "Mesh options:");
   Msg(DIRECT, "  -1, -2, -3            perform batch 1D, 2D and 3D mesh generation");
-  Msg(DIRECT, "  -o file               specify output file name");
+  Msg(DIRECT, "  -o file               specify mesh output file name");
   Msg(DIRECT, "  -format msh|unv|gref  set output mesh format (default: msh)");
   Msg(DIRECT, "  -algo iso|aniso       select 2D mesh algorithm (default: iso)");
   Msg(DIRECT, "  -smooth int           set mesh smoothing (default: 0)");
@@ -44,6 +44,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -rand float           set random perturbation factor (default: 1.e-4)");
   Msg(DIRECT, "  -bgm file             load backround mesh from file");
   Msg(DIRECT, "  -constrain            constrain background mesh with characteristic lengths");
+  Msg(DIRECT, "  -histogram            print mesh quality histogram");
 #ifndef _BLACKBOX
   Msg(DIRECT, "  -interactive          display 2D mesh construction interactively");
   Msg(DIRECT, "Post-processing options:");
@@ -121,6 +122,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
       }
       else if(!strcmp(argv[i]+1, "3")){ 
         CTX.batch = 3; i++;
+      }
+      else if(!strcmp(argv[i]+1, "histogram")){ 
+        CTX.mesh.histogram = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "o")){ 
         i++;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.58 2001-05-22 11:30:51 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.59 2001-05-23 07:29:42 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -421,6 +421,10 @@ void opt_statistics_cb(CALLBACK_ARGS) {
 }
 void opt_statistics_update_cb(CALLBACK_ARGS) {
   WID->set_statistics();
+}
+void opt_statistics_histogram_cb(CALLBACK_ARGS) {
+  Print_Histogram(M.Histogram[(int)data]);
+  WID->create_message_window();
 }
 
 // Option Messages Menu

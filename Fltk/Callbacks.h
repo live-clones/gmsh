@@ -66,6 +66,7 @@ void opt_post_ok_cb(CALLBACK_ARGS) ;
 
 void opt_statistics_cb(CALLBACK_ARGS) ;
 void opt_statistics_update_cb(CALLBACK_ARGS) ;
+void opt_statistics_histogram_cb(CALLBACK_ARGS) ;
 
 // Option Message Menu
 

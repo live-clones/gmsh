@@ -1,4 +1,4 @@
-// $Id: MeshQuality.cpp,v 1.3 2001-01-08 08:05:45 geuzaine Exp $
+// $Id: MeshQuality.cpp,v 1.4 2001-05-23 07:29:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Const.h"
@@ -14,8 +14,8 @@
              sqrt(6)    max(lij)
  */
 
-double GAMMAMAX, GAMMAMIN, GAMMA;
-int NbCalcGamma;
+static double GAMMAMAX, GAMMAMIN, GAMMA;
+static int NbCalcGamma, *Histogram;
 
 void CalculateGamma (void *a, void *b){
   Simplex *s = *(Simplex **) a;
@@ -24,6 +24,9 @@ void CalculateGamma (void *a, void *b){
   GAMMAMAX = DMAX (GAMMAMAX, gamma);
   GAMMA += gamma;
   GAMMAMIN = DMIN (GAMMAMIN, gamma);
+  for(int i=0; i<NB_HISTOGRAM; i++)
+    if(gamma > i/(double)NB_HISTOGRAM && gamma < (i+1)/(double)NB_HISTOGRAM)
+      Histogram[i]++;
 }
 
 void CalculateEta (void *a, void *b){
@@ -33,6 +36,9 @@ void CalculateEta (void *a, void *b){
   GAMMAMAX = DMAX (GAMMAMAX, gamma);
   GAMMA += gamma;
   GAMMAMIN = DMIN (GAMMAMIN, gamma);
+  for(int i=0; i<NB_HISTOGRAM; i++)
+    if(gamma > i/(double)NB_HISTOGRAM && gamma < (i+1)/(double)NB_HISTOGRAM)
+      Histogram[i]++;
 }
 
 void CalculateR (void *a, void *b){
@@ -42,43 +48,76 @@ void CalculateR (void *a, void *b){
   GAMMAMAX = DMAX (GAMMAMAX, gamma);
   GAMMA += gamma;
   GAMMAMIN = DMIN (GAMMAMIN, gamma);
+  for(int i=0; i<NB_HISTOGRAM; i++)
+    if(gamma > i/(double)NB_HISTOGRAM && gamma < (i+1)/(double)NB_HISTOGRAM)
+      Histogram[i]++;
 }
 
-void Gamma_Maillage (Volume * v, double *gamma, double *gammamax, double *gammamin){
+
+
+static void g(void *a, void *b){
+  Volume *v = *(Volume**)a;
+  Tree_Action (v->Simplexes, CalculateGamma);  
+  Msg(DEBUG, "Gamma computed in volume %d (%d values)", v->Num, NbCalcGamma);
+}
+
+void Gamma_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin){
   GAMMA = 0.0;
   GAMMAMAX = 0.0;
   GAMMAMIN = 1.0;
   NbCalcGamma = 0;
-  Tree_Action (v->Simplexes, CalculateGamma);
-  if (!NbCalcGamma)
-    NbCalcGamma = 1;
+  Histogram = m->Histogram[0];
+  for(int i=0; i<NB_HISTOGRAM; i++) Histogram[i] = 0;
+  Tree_Action (m->Volumes, g);
+  if(!NbCalcGamma) NbCalcGamma = 1;
   *gamma = GAMMA / (double) NbCalcGamma;
   *gammamax = GAMMAMAX;
   *gammamin = GAMMAMIN;
 }
 
-void Eta_Maillage (Volume * v, double *gamma, double *gammamax, double *gammamin){
+static void e(void *a, void *b){
+  Volume *v = *(Volume**)a;
+  Tree_Action (v->Simplexes, CalculateEta);  
+  Msg(DEBUG, "Eta computed in volume %d (%d values)", v->Num, NbCalcGamma);
+}
+
+void Eta_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin){
   GAMMA = 0.0;
   GAMMAMAX = 0.0;
   GAMMAMIN = 1.0;
   NbCalcGamma = 0;
-  Tree_Action (v->Simplexes, CalculateEta);
-  if (!NbCalcGamma)
-    NbCalcGamma = 1;
+  Histogram = m->Histogram[1];
+  for(int i=0; i<NB_HISTOGRAM; i++) Histogram[i] = 0;
+  Tree_Action (m->Volumes, e);
+  if(!NbCalcGamma) NbCalcGamma = 1;
   *gamma = GAMMA / (double) NbCalcGamma;
   *gammamax = GAMMAMAX;
   *gammamin = GAMMAMIN;
 }
 
-void R_Maillage (Volume * v, double *gamma, double *gammamax, double *gammamin){
+static void r(void *a, void *b){
+  Volume *v = *(Volume**)a;
+  Tree_Action (v->Simplexes, CalculateR);  
+  Msg(DEBUG, "Rho computed in volume %d (%d values)", v->Num, NbCalcGamma);
+}
+
+void R_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin){
   GAMMA = 0.0;
   GAMMAMAX = 0.0;
   GAMMAMIN = 1.0;
   NbCalcGamma = 0;
-  Tree_Action (v->Simplexes, CalculateR);
-  if (!NbCalcGamma)
-    NbCalcGamma = 1;
+  Histogram = m->Histogram[2];
+  for(int i=0; i<NB_HISTOGRAM; i++) Histogram[i] = 0;
+  Tree_Action (m->Volumes, r);
+  if(!NbCalcGamma) NbCalcGamma = 1;
   *gamma = GAMMA / (double) NbCalcGamma;
   *gammamax = GAMMAMAX;
   *gammamin = GAMMAMIN;
 }
+
+
+void Print_Histogram(int *h){
+  for(int i=0;i<NB_HISTOGRAM;i++)
+    Msg(DIRECT, "%g %d", (i+1)/(double)NB_HISTOGRAM, h[i]);
+}
+

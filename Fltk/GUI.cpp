@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.78 2001-05-20 19:24:53 geuzaine Exp $
+// $Id: GUI.cpp,v 1.79 2001-05-23 07:29:42 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -1455,7 +1455,7 @@ void GUI::create_statistics_window(){
   if(!init_statistics_window){
     init_statistics_window = 1 ;
 
-    int width = 22*CTX.fontsize;
+    int width = 24*CTX.fontsize;
     int height = 5*WB+16*BH ;
 
     stat_window = new Fl_Window(width,height);
@@ -1490,6 +1490,17 @@ void GUI::create_statistics_window(){
 	stat_value[15] = new Fl_Output(2*WB, 2*WB+12*BH, IW, BH, "Gamma factor");
 	stat_value[16] = new Fl_Output(2*WB, 2*WB+13*BH, IW, BH, "Eta factor");
 	stat_value[17] = new Fl_Output(2*WB, 2*WB+14*BH, IW, BH, "Rho factor");
+
+	Fl_Button* b0 = new Fl_Button(width-BB-2*WB, 2*WB+12*BH, BB, BH, "List");
+	b0->labelsize(CTX.fontsize);
+	b0->callback(opt_statistics_histogram_cb, (void*)0);
+	Fl_Button* b1 = new Fl_Button(width-BB-2*WB, 2*WB+13*BH, BB, BH, "List");
+	b1->labelsize(CTX.fontsize);
+	b1->callback(opt_statistics_histogram_cb, (void*)1);
+	Fl_Button* b2 = new Fl_Button(width-BB-2*WB, 2*WB+14*BH, BB, BH, "List");
+	b2->labelsize(CTX.fontsize);
+	b2->callback(opt_statistics_histogram_cb, (void*)2);
+
 	o->end();
       }
       { 
@@ -1515,7 +1526,7 @@ void GUI::create_statistics_window(){
     }
 
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-2*BB-BB/4-2*WB, height-BH-WB, BB+BB/4, BH, "Update");
+      Fl_Button* o = new Fl_Button(width-2*BB-2*WB, height-BH-WB, BB, BH, "Update");
       o->labelsize(CTX.fontsize);
       o->callback(opt_statistics_update_cb);
     }

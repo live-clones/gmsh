@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.26 2001-05-21 20:19:08 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.27 2001-05-23 07:29:42 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -211,6 +211,7 @@ void Draw_Simplex_Volume (void *a, void *b){
     if((*s)->Radius < CTX.mesh.radius_inf || (*s)->Radius > CTX.mesh.radius_sup) return;
     fulldraw = 1;
   }
+
 
   double Xc = .25 * ((*s)->V[0]->Pos.X + (*s)->V[1]->Pos.X + 
                      (*s)->V[2]->Pos.X + (*s)->V[3]->Pos.X);

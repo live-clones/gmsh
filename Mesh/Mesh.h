@@ -52,6 +52,8 @@
 #define BOULE 1
 #define BOITE 2
 
+#define NB_HISTOGRAM 100
+
 typedef struct _POINT PointRecord, *PointPeek;
 typedef struct _CONTOUR ContourRecord, *ContourPeek;
 typedef struct _DOC DocRecord, *DocPeek;
@@ -376,12 +378,13 @@ struct _Mesh{
   Tree_T *Volumes;              /* Volumes                               */
   Tree_T *SurfaceLoops;         /* Surface Loops                         */
   Tree_T *EdgeLoops;            /* Edge Loops                            */
-  List_T *PhysicalGroups;       /* Physical Groups                      */
+  List_T *PhysicalGroups;       /* Physical Groups                       */
   Tree_T *VertexEdges;          /* 2nd order Vertices on edges           */
   Grid_T Grid;                  /* Grille de recherches rapides          */
   LcField BGM;                  /* Background mesh                       */
-  double Statistics[50];        /* Statistiques pour le maillage         */
-  GMSHMetric *Metric;           /* Metrique */
+  double Statistics[50];        /* Mesh statistics                       */
+  int Histogram[3][NB_HISTOGRAM]; /* Quality histograms                 */
+  GMSHMetric *Metric;           /* Metric                                */
   MeshParameters MeshParams;
 };
 
@@ -447,5 +450,10 @@ void ActionLiss (void *data, void *dummy);
 void ActionLissSurf (void *data, void *dummy);
 void Recombine (Tree_T *TreeAllVert, Tree_T *TreeAllElg, double a);
 void ApplyLcFactor(Mesh *M);
+
+void Gamma_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void Eta_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void R_Maillage (Mesh * m, double *gamma, double *gammamax, double *gammamin);
+void Print_Histogram(int *h);
 
 #endif
