@@ -1,11 +1,12 @@
+$Id: FAQ,v 1.2 2001-03-06 21:31:17 geuzaine Exp $
 
 Q. Gmsh complains about missing libraries.
-A. Try 'ldd gmsh' to check if all required shared are installed on
-your system.
+A. Try 'ldd gmsh' to check if all required shared libraries are
+installed on your system.
 
 Q. Gmsh does not work under HP-UX.
 A. the HP version is reported not to work with native OpenGL. You
-should install install Mesa instead.
+should install Mesa instead.
 
 Q. When moving the mouse over the graphic window, everything that is
 drawn on it disappears, and each item is visible only when the cursor

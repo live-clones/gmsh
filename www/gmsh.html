@@ -50,7 +50,7 @@ ENDSCRIPT--->
 This page is a mirror of <a href="/gmsh/">/gmsh/</a><p>
 ENDMIRROR--->
 
-<!---BEGINDATE$Date: 2001-03-04 16:27:07 $ENDDATE--->
+<!---BEGINDATE$Date: 2001-03-06 21:31:17 $ENDDATE--->
 
 Copyright &copy; 1998-2001<br>
 Jean-François Remacle and
@@ -232,12 +232,14 @@ files.
 
     <ul>
       <li><A target="_top" href="/gmsh/doc/tutorial.html">Online tutorial</A>
-      <li><A target="_top" href="/gmsh/doc/FORMATS">File formats</A> description
+      <li><A target="_top" href="/gmsh/doc/FORMATS">Mesh and post-processing file formats</A>
       <li><A target="_top" href="/gmsh/doc/VERSIONS">Version history</A>
-      <li><a target="_top" href="/gmsh/doc/BUGS">List of open bugs</a>
       <li><a target="_top" href="/gmsh/doc/FAQ">Frequently asked questions</a>
-      <li><a target="_top" href="/gmsh/doc/CONTRIBUTORS">List of contributors</a>
       <li><a target="_top" href="/gmsh/doc/README.txt">For Windows versions only</a>
+<!------------
+      <li><a target="_top" href="/gmsh/doc/BUGS">List of open bugs</a>
+      <li><a target="_top" href="/gmsh/doc/CONTRIBUTORS">List of contributors</a>
+----------->
     </ul>
 
   </td>
@@ -258,50 +260,21 @@ files.
 
 <b>Latest Release: 1.16 (February 26, 2001)</b>
 <p>
-The development release of Gmsh is available for Windows, Linux,
-Compaq Tru64 Unix and SGI IRIX. All executables are dynamically linked
-with OpenGL. The tutorial and demo files are included in the archives. 
+The development release of Gmsh is available for Windows and most of
+the classical UNIX platforms. All executables (no source distribution
+is available for the moment) are dynamically linked with OpenGL<a
+href="#opengl-footnote" name="opengl-footmark"><sup>1</sup></a>. The
+tutorial and demo files are included in the archives.
 <ul>
 <li><A href="/gmsh/bin/gmsh-1.16-Windows.zip">Windows zip archive (95/98/NT)</A>
 <li><A href="/gmsh/bin/gmsh-1.16-1.i386.rpm">Linux RPM (Red Hat 6.2 and compatible, i386, glibc 2.1)</A> 
 <li><A href="/gmsh/bin/gmsh-1.16-Linux.tgz">Linux tarball (i386, glibc 2.1)</A> 
-<li><A href="/gmsh/bin/gmsh-1.16-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</A> 
 <li><A href="/gmsh/bin/gmsh-1.16-OSF1.tgz">Compaq Tru64 tarball (OSF 4.0)</A> 
-</ul>
+<li><A href="/gmsh/bin/gmsh-1.16-SunOS.tgz">Sun tarball (SunOS 5.5)</A> 
+<li><A href="/gmsh/bin/gmsh-1.16-AIX.tgz">IBM tarball (AIX)</A> 
+<li><A href="/gmsh/bin/gmsh-1.16-IRIX.tgz">SGI IRIX tarball (IRIX 6.5)</A> 
+<li><A href="/gmsh/bin/gmsh-1.16-HP-UX.tgz">HP tarball (HPUX 10.20)</A>
 
-<p><br>
-
-<b>Stable Release: Version 1.00 (January 1, 2001)</b>
-<p>
-The stable release of Gmsh is available for most classical UNIX
-platforms. All executables (no source distribution is available
-for the moment) are dynamically linked with OpenGL and Motif. You
-should have these libraries installed on your system, and in the
-path of the library loader. Free replacements for OpenGL and Motif
-can be found at <A target="_top"
-href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>
-and <A target="_top"
-href="http://www.lesstif.org">http://www.lesstif.org</A>.  (Linux
-RPMs are directly available here: <A
-href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">Mesa-3.2-2.i386.rpm</A>,
-<A
-href="/gmsh/thirdparty/lesstif-0.91.4-1.i386.rpm">lesstif-0.91.4-1.i386.rpm</A>.)
-Remember that you may have to reconfigure the loader (ldconfig
-under Linux) or modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP)
-in order for Gmsh to find these libraries.
-<ul>
-  <li><A href="/gmsh/1.00/gmsh-1.00-1.i386.rpm">Linux RPM (Red Hat 6.2 and compatible, i386, glibc 2.1)</A> 
-  <li><A href="/gmsh/1.00/gmsh-Linux.tgz">Linux binary (i386, glibc 2.1)</A>
-  <li><A href="/gmsh/1.00/gmsh-OSF1.tgz">Digital OSF 4.0/Compaq Tru64 binary</A>
-  <li><A href="/gmsh/1.00/gmsh-SunOS.tgz">Sun OS 5.5.1 binary</A>
-  <li><A href="/gmsh/1.00/gmsh-AIX.tgz">IBM AIX binary</A>
-  <li><A href="/gmsh/1.00/gmsh-HP-UX.tgz">HP-UX 10.20 binary</A>
-  <li><A href="/gmsh/1.00/gmsh-IRIX.tgz">SGI IRIX 6.5 binary</A>
-</ul>
-Tutorial and demos for version 1.00
-<ul>
-  <li><A href="/gmsh/1.00/gmsh-tutorial.tgz">Tutorial</A>
-  <li><A href="/gmsh/1.00/gmsh-demos.tgz">Demo files</A>
 </ul>
 
   </td>
@@ -395,6 +368,22 @@ Check out <A TARGET="_top" HREF="/getdp/">GetDP</A>, a scientific
 computation software for the numerical solution of
 integro-differential equations, using finite element and integral type
 methods.
+
+<p>
+<br>
+<p>
+<a name="opengl-footnote"></a><a
+href="#opengl-footmark"><sup>1</sup></a>For Unix versions only: you
+should have the OpenGL libraries installed on your system, and in the
+path of the library loader. A free replacement for OpenGL can be found
+at <A target="_top"
+href="http://mesa3d.sourceforge.net">http://mesa3d.sourceforge.net</A>
+(a Linux RPM is directly available <A
+href="/gmsh/thirdparty/Mesa-3.2-2.i386.rpm">here</A>).  Remember that
+you may have to reconfigure the loader (ldconfig under Linux) or
+modify the LD_LIBRARY_PATH (or SHLIB_PATH on HP) in order for Gmsh to
+find the libraries.
+
 
   </font></td>
 
