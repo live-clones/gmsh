@@ -1,4 +1,4 @@
-// $Id: 2D_Mesh.cpp,v 1.64 2004-06-23 03:57:43 geuzaine Exp $
+// $Id: 2D_Mesh.cpp,v 1.65 2004-06-23 18:52:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -789,6 +789,8 @@ void ActionInvertQua(void *a, void *b)
   q->V[3] = tmp;
 }
 
+int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z, double n[3]);
+
 int isMiddlePointOnPlanarSurface(Surface *s, Vertex *v1, Vertex *v2)
 {
   double n[3] = {s->a, s->b, s->c};
@@ -856,50 +858,36 @@ void Get_SurfaceNormal(Surface *s, double n[3])
   }
 }
 
-// Horrible (tm) hack to orient the elements correctly. This is
-// *definitely* not the best way to do it, but I don't have time to
-// look into the issue right now.
+// A little routine to re-orient the surface meshe to match the
+// geometrical orientation. It would be better to actually generate
+// the meshes correctly in the first place (!), but this is handy
+// since we use many different algorithms since the mean plane
+// computation doesn't take the original orientation into account.
 
 void ReOrientSurfaceMesh(Surface *s)
 {
-  double t1[3], t2[3], n1[3], n2[3], res;
-  Simplex *simp;
-  Quadrangle *quad;
+  Curve *c;
+  List_Read(s->Generatrices, 0, &c);
+  Vertex *v1, *v2;
+  List_Read(c->Vertices, 0, &v1);
+  List_Read(c->Vertices, 1, &v2);
+  Edge edge;
+  edge.V[0] = v1;
+  edge.V[1] = v2;
 
-  Get_SurfaceNormal(s, n1);
-
-  if(Tree_Right(s->Simplexes, &simp)){
-    t1[0] = simp->V[1]->Pos.X - simp->V[0]->Pos.X;
-    t1[1] = simp->V[1]->Pos.Y - simp->V[0]->Pos.Y;
-    t1[2] = simp->V[1]->Pos.Z - simp->V[0]->Pos.Z;
-    t2[0] = simp->V[2]->Pos.X - simp->V[0]->Pos.X;
-    t2[1] = simp->V[2]->Pos.Y - simp->V[0]->Pos.Y;
-    t2[2] = simp->V[2]->Pos.Z - simp->V[0]->Pos.Z;
-    prodve(t1, t2, n2);
-    norme(n2);
-    prosca(n1, n2, &res);
-    if(res < 0.0){
-      Msg(DEBUG, "Inverting triangles in %s surface %d (res = %g)",
-	  (s->Typ == MSH_SURF_PLAN) ? "Plane" : "NonPlane", s->Num, res);
+  if(Tree_Nbr(s->Simplexes)){
+    EdgesContainer edges;
+    edges.AddSimplexTree(s->Simplexes);
+    Edge *e = (Edge*)Tree_PQuery(edges.AllEdges, &edge);
+    if(e && e->V[0]->Num == v2->Num && e->V[1]->Num == v1->Num)
       Tree_Action(s->Simplexes, ActionInvertTri);
-    }
   }
-
-  if(Tree_Right(s->Quadrangles, &quad)){
-    t1[0] = quad->V[1]->Pos.X - quad->V[0]->Pos.X;
-    t1[1] = quad->V[1]->Pos.Y - quad->V[0]->Pos.Y;
-    t1[2] = quad->V[1]->Pos.Z - quad->V[0]->Pos.Z;
-    t2[0] = quad->V[2]->Pos.X - quad->V[0]->Pos.X;
-    t2[1] = quad->V[2]->Pos.Y - quad->V[0]->Pos.Y;
-    t2[2] = quad->V[2]->Pos.Z - quad->V[0]->Pos.Z;
-    prodve(t1, t2, n2);
-    norme(n2);
-    prosca(n1, n2, &res);
-    if(res < 0.0){
-      Msg(DEBUG, "Inverting quads in %s surface %d (res = %g)",
-	  (s->Typ == MSH_SURF_PLAN) ? "Plane" : "NonPlane", s->Num, res);
+  if(Tree_Nbr(s->Quadrangles)){
+    EdgesContainer edges;
+    edges.AddQuadrangleTree(s->Quadrangles);
+    Edge *e = (Edge*)Tree_PQuery(edges.AllEdges, &edge);
+    if(e && e->V[0]->Num == v2->Num && e->V[1]->Num == v1->Num)
       Tree_Action(s->Quadrangles, ActionInvertQua);
-    }
   }
 }
 
@@ -1006,7 +994,6 @@ void Maillage_Surface(void *data, void *dum)
     End_Surface(s->Support, 0);
     End_Surface(s, 0);
     
-    // FIXME: big hack
     ReOrientSurfaceMesh(s);
   }
 

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.67 2004-06-23 03:57:43 geuzaine Exp $
+// $Id: Geom.cpp,v 1.68 2004-06-23 18:52:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -207,7 +207,7 @@ void Draw_Curve(void *a, void *b)
 
 // Surfaces
 
-void put_Z(Vertex * v, Surface * s)
+void putZ(Vertex * v, Surface * s)
 {
   Vertex V;
   V.Pos.X = s->a;
@@ -253,6 +253,45 @@ int isPointOnPlanarSurface(Surface * S, double X, double Y, double Z,
   if(fabs(Angle) > 2*M_PI-0.5 && fabs(Angle) < 2*M_PI+0.5) 
     return 1;
   return 0;
+}
+
+void getPlaneSurfaceNormal(Surface *s, double x, double y, double z, double n[3])
+{
+  double t1[3], t2[3];
+  Curve *c;
+
+  for(int i = 0; i < 3; i++)
+    n[i] = 0.0;
+
+  if(s->Typ != MSH_SURF_PLAN)
+    return;
+
+  // We cannot use s->plan or InterpolateSurface here (they both rely
+  // on the mean plane, which borks the orientation). So we need to
+  // use this trick:
+
+  if(List_Nbr(s->Generatrices) > 1){
+    List_Read(s->Generatrices, 0, &c);
+    t1[0] = x - c->beg->Pos.X;
+    t1[1] = y - c->beg->Pos.Y;
+    t1[2] = z - c->beg->Pos.Z;
+    for(int i = 1; i < List_Nbr(s->Generatrices); i++){
+      List_Read(s->Generatrices, i, &c);
+      t2[0] = x - c->beg->Pos.X;
+      t2[1] = y - c->beg->Pos.Y;
+      t2[2] = z - c->beg->Pos.Z;
+      prodve(t1, t2, n);
+      if(norme(n))
+	break;
+    }
+  }
+  if(List_Nbr(s->Generatrices) < 2 || !norme(n)){
+    Msg(WARNING, "Reverting to mean plane normal for surface %d", s->Num);
+    n[0] = s->a;
+    n[1] = s->b;
+    n[2] = s->c;
+    norme(n);
+  }
 }
 
 void Draw_Triangulated_Surface(Surface * s)
@@ -344,7 +383,7 @@ void Draw_Plane_Surface(Surface * s)
 
     for(i = 0; i < 4; i++) {
       V[i].Pos.Z = 0.0;
-      put_Z(&V[i], s);
+      putZ(&V[i], s);
     }
 
     n[0] = s->plan[2][0];
@@ -441,21 +480,17 @@ void Draw_Plane_Surface(Surface * s)
     if(CTX.geom.normals) {
       List_Read(s->Orientations, 0, &vv1);
       List_Read(s->Orientations, 1, &vv2);
-      // don't rely on MeanPlane: teh orientation is arbotrary
-      //n[0] = s->plan[2][0];
-      //n[1] = s->plan[2][1];
-      //n[2] = s->plan[2][2];
-      //norme(n);
-      Get_SurfaceNormal(s, n);
+      double x = (vv1.Pos.X + vv2.Pos.X) / 2.;
+      double y = (vv1.Pos.Y + vv2.Pos.Y) / 2.;
+      double z = (vv1.Pos.Z + vv2.Pos.Z) / 2.;
+      getPlaneSurfaceNormal(s, x, y, z, n);
       n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
       n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
       n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
       Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-		  (vv2.Pos.X + vv1.Pos.X) / 2., (vv2.Pos.Y + vv1.Pos.Y) / 2., 
-		  (vv2.Pos.Z + vv1.Pos.Z) / 2., n[0], n[1], n[2], NULL, 
-		  CTX.geom.light);
+		  x, y, z, n[0], n[1], n[2], NULL, CTX.geom.light);
     }
 
   }
@@ -518,16 +553,25 @@ void Draw_NonPlane_Surface(Surface * s)
   }
 
   if(CTX.geom.normals) {
-    Vertex v = InterpolateSurface(s, 0.5, 0.5, 0, 0);
-    double n[3];
-    Get_SurfaceNormal(s, n);
+    Vertex v1 = InterpolateSurface(s, 0.5, 0.5, 0, 0);
+    Vertex v2 = InterpolateSurface(s, 0.6, 0.5, 0, 0);
+    Vertex v3 = InterpolateSurface(s, 0.5, 0.6, 0, 0);
+    double t1[3], t2[3], n[3];
+    t1[0] = v2.Pos.X - v1.Pos.X;
+    t1[1] = v2.Pos.Y - v1.Pos.Y;
+    t1[2] = v2.Pos.Z - v1.Pos.Z;
+    t2[0] = v3.Pos.X - v1.Pos.X;
+    t2[1] = v3.Pos.Y - v1.Pos.Y;
+    t2[2] = v3.Pos.Z - v1.Pos.Z;
+    prodve(t1, t2, n);
+    norme(n);
     n[0] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[0];
     n[1] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[1];
     n[2] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[2];
     glColor4ubv((GLubyte *) & CTX.color.geom.normals);
     Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 		CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		v.Pos.X, v.Pos.Y, v.Pos.Z, n[0], n[1], n[2], NULL,
+		v1.Pos.X, v1.Pos.Y, v1.Pos.Z, n[0], n[1], n[2], NULL,
 		CTX.geom.light);
   }
 }

@@ -1,12 +1,12 @@
-$Id: VERSIONS,v 1.226 2004-06-23 04:02:38 geuzaine Exp $
+$Id: VERSIONS,v 1.227 2004-06-23 18:52:45 geuzaine Exp $
 
 New since 1.53: fixed UNV output; make Layers' region numbering
 consistent between lines/surfaces/volumes; fixed home directory
 problem on Win98; new Plugin(CutParametric); the default project file
 is now created in the home directory if no current directory is
 defined (e.g. when double-clicking on the icon on Windows/MacOS);
-(partial) fix of the geometry/mesh surface orientation discrepancies;
-small bug fixes and cleanups.
+fixed the discrepancy between the orientation of geometrical surfaces
+and the associated surface meshes; small bug fixes and cleanups.
 
 New in 1.53: completed support for second order elements in the mesh
 module (lines, triangles, quadrangles, tetrahedra, hexahedra, prisms
