@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.288 2003-05-22 19:25:58 geuzaine Exp $
+# $Id: Makefile,v 1.289 2003-05-26 22:34:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 #
@@ -84,15 +84,12 @@ converters:
 
 doc-info:
 	cd doc/texinfo && ${MAKE} info
-	cp doc/texinfo/gmsh.info* doc/
 
 doc-ps:
 	cd doc/texinfo && ${MAKE} ps
-	cp doc/texinfo/gmsh.ps doc/
 
 doc-pdf:
 	cd doc/texinfo && ${MAKE} pdf
-	cp doc/texinfo/gmsh.pdf doc/
 
 purge:
 	for i in . bin lib utils archives demos tutorial doc ${GMSH_DIRS}; \

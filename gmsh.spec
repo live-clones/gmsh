@@ -32,7 +32,6 @@ and/or post-processor.
 %build
 make distrib-unix
 make converters
-make doc-pdf
 make doc-info
 rm -rf CVS */CVS */*/CVS
 
@@ -55,7 +54,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc doc/gmsh.pdf doc/COPYING doc/VERSIONS doc/FAQ doc/CONTRIBUTORS demos tutorial
+%doc doc/COPYING doc/VERSIONS doc/FAQ doc/CONTRIBUTORS demos tutorial
 /usr/bin/gmsh
 /usr/bin/dxf2geo
 /usr/share/man/man1/gmsh*
