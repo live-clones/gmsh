@@ -1,7 +1,7 @@
 New in 1.16: Added single/double buffer selection (only useful for
-Unix versions of Gmsh run from remote hosts without GLX, e.g. with
-Mesa and old X servers on old graphic cards :-(); fixed a bug in
-recent versions of the opengl32.dll on Windows;
+Unix versions of Gmsh run from remote hosts without GLX); fixed a bug
+in recent versions of the opengl32.dll on Windows, which caused OpenGL
+fonts not to show up;
 
 New in 1.15: Added automatic visibility setting during entity
 selection; Corrected geometrical extrusion bug;
