@@ -3,6 +3,11 @@
 
 #define CALLBACK_ARGS   Fl_Widget* w, void* data
 
+// Common callbacks
+
+void cancel_cb(CALLBACK_ARGS) ;
+void ok_cb(CALLBACK_ARGS) ;
+
 // Graphical window
 
 void status_xyz1p_cb(CALLBACK_ARGS) ;
@@ -20,12 +25,34 @@ void file_reload_all_views_cb(CALLBACK_ARGS) ;
 void file_remove_all_views_cb(CALLBACK_ARGS) ;
 void file_quit_cb(CALLBACK_ARGS) ;
 
-// Option Menu
+// Option General Menu
 
 void opt_general_cb(CALLBACK_ARGS) ;
+void opt_general_moving_axes_cb(CALLBACK_ARGS) ;
+void opt_general_small_axes_cb(CALLBACK_ARGS) ;
+void opt_general_fast_redraw_cb(CALLBACK_ARGS) ;
+void opt_general_display_lists_cb(CALLBACK_ARGS) ;
+void opt_general_alpha_blending_cb(CALLBACK_ARGS) ;
+void opt_general_trackball_cb(CALLBACK_ARGS) ;
+void opt_general_orthographic_cb(CALLBACK_ARGS) ;
+void opt_general_color_cb(CALLBACK_ARGS) ;
+void opt_general_shininess_cb(CALLBACK_ARGS) ;
+void opt_general_light_cb(CALLBACK_ARGS) ;
+
+// Option Geometry Menu
+
 void opt_geometry_cb(CALLBACK_ARGS) ;
+
+// Option Mesh Menu
+
 void opt_mesh_cb(CALLBACK_ARGS) ;
+
+// Option Post Menu
+
 void opt_post_cb(CALLBACK_ARGS) ;
+
+// Option Statistics Menu
+
 void opt_stat_cb(CALLBACK_ARGS) ;
 
 // Help Menu

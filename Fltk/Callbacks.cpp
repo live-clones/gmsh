@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.2 2001-01-09 08:58:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.3 2001-01-09 11:17:13 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -61,6 +61,17 @@ void MarkAllViewsChanged(int action){
 
 void CancelMeshThread(void){
   
+}
+
+// Common callbacks 
+
+void cancel_cb(CALLBACK_ARGS){
+  ((Fl_Window*)data)->hide();
+}
+
+void ok_cb(CALLBACK_ARGS){
+  Init();
+  Draw();
 }
 
 // Graphical window 
@@ -157,6 +168,68 @@ void file_save_as_cb(CALLBACK_ARGS) {
   char *newfile;
   newfile = fl_file_chooser("Save File", "*.{geo,pos,msh}", NULL);
   void CreateFile (char *name, int format) ;
+
+  /*
+
+  case OPTIONS_SAVE_MSH  : 
+    CTX.print.format = CTX.mesh.format = FORMAT_MSH; 
+    break;
+  case OPTIONS_SAVE_UNV  : 
+    CTX.print.format = CTX.mesh.format = FORMAT_UNV; 
+    break;
+  case OPTIONS_SAVE_GREF : 
+    CTX.print.format = CTX.mesh.format = FORMAT_GREF; 
+    break;
+  case OPTIONS_SAVE_GEO  : 
+    CTX.print.format = FORMAT_GEO; 
+    break;
+  case OPTIONS_SAVE_AUTO : 
+    CTX.print.format = FORMAT_AUTO; 
+    break;
+  case OPTIONS_SAVE_XPM  : 
+    CTX.print.format = FORMAT_XPM; 
+    break;
+  case OPTIONS_SAVE_GIF  : 
+    CTX.print.format = FORMAT_GIF;
+    CTX.print.gif_dither = 0;
+    CTX.print.gif_transparent = 0; 
+    break;
+  case OPTIONS_SAVE_GIF_DITHERED : 
+    CTX.print.format = FORMAT_GIF;
+    CTX.print.gif_dither = 1; 
+    CTX.print.gif_transparent = 0; 
+    break;
+  case OPTIONS_SAVE_GIF_TRANSPARENT :
+    CTX.print.format = FORMAT_GIF;
+    CTX.print.gif_dither = 0;
+    CTX.print.gif_transparent = 1; 
+    break;
+  case OPTIONS_SAVE_JPEG :
+    CTX.print.format = FORMAT_JPEG; 
+    break;
+  case OPTIONS_SAVE_PPM :
+    CTX.print.format = FORMAT_PPM; 
+    break;
+  case OPTIONS_SAVE_YUV :
+    CTX.print.format = FORMAT_YUV; 
+    break;
+  case OPTIONS_SAVE_EPS_IMAGE : 
+    CTX.print.format = FORMAT_EPS; 
+    CTX.print.eps_quality = 0;
+    break;
+  case OPTIONS_SAVE_EPS_SIMPLE :
+    CTX.print.format = FORMAT_EPS; 
+    CTX.print.eps_quality = 1; 
+    break;
+  case OPTIONS_SAVE_EPS_COMPLEX :
+    CTX.print.format = FORMAT_EPS; 
+    CTX.print.eps_quality = 2; 
+    break;
+
+  */
+
+
+
   if (newfile != NULL)
     CreateFile(newfile, FORMAT_AUTO); 
 }
@@ -166,7 +239,7 @@ static int RELOAD_ALL_VIEWS = 0 ;
 void file_reload_all_views_cb(CALLBACK_ARGS) {
   if(!Post_ViewList) return;
   RELOAD_ALL_VIEWS = 1;
-  for(int i = 1 ; i<=List_Nbr(Post_ViewList) ; i++)
+  for(int i = 0 ; i<List_Nbr(Post_ViewList) ; i++)
     view_reload_cb(NULL, (void *)i);
   RELOAD_ALL_VIEWS = 0;
   Init();
@@ -179,7 +252,7 @@ void file_remove_all_views_cb(CALLBACK_ARGS) {
   if(!Post_ViewList) return;
   REMOVE_ALL_VIEWS = 1;
   while(List_Nbr(Post_ViewList))
-    view_remove_cb(NULL, (void*)1);
+    view_remove_cb(NULL, (void*)0);
   REMOVE_ALL_VIEWS = 0;
   Init();
   Draw();
@@ -189,20 +262,63 @@ void file_quit_cb(CALLBACK_ARGS) {
   exit(0);
 }
 
-// Option Menu
+// Option General Menu
 
 void opt_general_cb(CALLBACK_ARGS) {
   WID->opt_general();
 }
+void opt_general_moving_axes_cb(CALLBACK_ARGS){
+  CTX.axes = !CTX.axes ;
+}
+void opt_general_small_axes_cb(CALLBACK_ARGS){
+  CTX.small_axes = !CTX.small_axes ;
+}
+void opt_general_fast_redraw_cb(CALLBACK_ARGS){
+  CTX.fast = !CTX.fast ;
+}
+void opt_general_display_lists_cb(CALLBACK_ARGS){
+  CTX.display_lists = !CTX.display_lists ;
+}
+void opt_general_alpha_blending_cb(CALLBACK_ARGS){
+  CTX.alpha = !CTX.alpha ;
+}
+void opt_general_trackball_cb(CALLBACK_ARGS){
+  CTX.useTrackball = !CTX.useTrackball ;
+}
+void opt_general_orthographic_cb(CALLBACK_ARGS){
+  if((int)data) CTX.ortho = 1;
+  else CTX.ortho = 0;
+}
+void opt_general_color_cb(CALLBACK_ARGS){
+  Init_Colors((int)((Fl_Value_Input*)w)->value()-1);
+}
+void opt_general_shininess_cb(CALLBACK_ARGS){
+  CTX.shine = ((Fl_Value_Input*)w)->value();
+}
+void opt_general_light_cb(CALLBACK_ARGS){
+  CTX.light_position[0][(int)data] = ((Fl_Value_Input*)w)->value();
+}
+
+// Option Geometry Menu
+
 void opt_geometry_cb(CALLBACK_ARGS) {
   WID->opt_geometry();
 }
+
+// Option Mesh Menu
+
 void opt_mesh_cb(CALLBACK_ARGS) {
   WID->opt_mesh();
 }
+
+// Option Post Menu
+
 void opt_post_cb(CALLBACK_ARGS) {
   WID->opt_post();
 }
+
+// Option Statistics Menu
+
 void opt_stat_cb(CALLBACK_ARGS) {
   WID->opt_stat();
 }

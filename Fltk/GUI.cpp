@@ -546,11 +546,23 @@ void GUI::opt_general(){
 	Fl_Group* o = new Fl_Group(WB, WB+BH, width-2*WB, height-3*WB-2*BH, "Miscellaneous");
 	o->labelsize(CTX.fontsize);
         gen_butt[0] = new Fl_Check_Button(2*WB, 2*WB+BH, 150, BH, "Show moving axes");
+	gen_butt[0]->callback(opt_general_moving_axes_cb);
+	gen_butt[0]->value(CTX.axes);
         gen_butt[1] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 150, BH, "Show small axes");
+	gen_butt[1]->callback(opt_general_small_axes_cb);
+	gen_butt[1]->value(CTX.small_axes);
         gen_butt[2] = new Fl_Check_Button(2*WB, 2*WB+3*BH, 150, BH, "Enable fast redraw");
+	gen_butt[2]->callback(opt_general_fast_redraw_cb);
+	gen_butt[2]->value(CTX.fast);
         gen_butt[3] = new Fl_Check_Button(2*WB, 2*WB+4*BH, 150, BH, "Use Display lists");
+	gen_butt[3]->callback(opt_general_display_lists_cb);
+	gen_butt[3]->value(CTX.display_lists);
         gen_butt[4] = new Fl_Check_Button(2*WB, 2*WB+5*BH, 150, BH, "Enable alpha blending");
+	gen_butt[4]->callback(opt_general_alpha_blending_cb);
+	gen_butt[4]->value(CTX.alpha);
         gen_butt[5] = new Fl_Check_Button(2*WB, 2*WB+6*BH, 150, BH, "Trackball rotation mode");
+	gen_butt[5]->callback(opt_general_trackball_cb);
+	gen_butt[5]->value(CTX.useTrackball);
 	for(int i=0 ; i<6 ; i++){
 	  gen_butt[i]->type(FL_TOGGLE_BUTTON);
 	  gen_butt[i]->down_box(FL_DOWN_BOX);
@@ -564,7 +576,11 @@ void GUI::opt_general(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         gen_butt[6] = new Fl_Check_Button(2*WB, 2*WB+BH, 150, BH, "Orthographic");
+	gen_butt[6]->callback(opt_general_orthographic_cb, (void*)1);
+	gen_butt[6]->value(CTX.ortho);
         gen_butt[7] = new Fl_Check_Button(2*WB, 2*WB+2*BH, 150, BH, "Perspective");
+	gen_butt[7]->callback(opt_general_orthographic_cb, (void*)0);
+	gen_butt[7]->value(!CTX.ortho);
 	for(int i=6 ; i<8 ; i++){
 	  gen_butt[i]->type(FL_RADIO_BUTTON);
 	  gen_butt[i]->labelsize(CTX.fontsize);
@@ -577,15 +593,35 @@ void GUI::opt_general(){
 	o->labelsize(CTX.fontsize);
         o->hide();
         gen_value[0] = new Fl_Value_Input(2*WB, 2*WB+BH, 100, BH, "Color Scheme");
-	gen_value[0]->minimum(1); gen_value[0]->maximum(3); gen_value[0]->step(1);
+	gen_value[0]->minimum(1); 
+	gen_value[0]->maximum(3); 
+	gen_value[0]->step(1);
+	gen_value[0]->value(0);
+	gen_value[0]->callback(opt_general_color_cb);
 	gen_value[1] = new Fl_Value_Input(2*WB, 2*WB+2*BH, 100, BH, "Shininess");
-	gen_value[1]->minimum(0); gen_value[1]->maximum(100); gen_value[1]->step(1);
+	gen_value[1]->minimum(0); 
+	gen_value[1]->maximum(10);
+	gen_value[1]->step(0.1);
+	gen_value[1]->value(CTX.shine);
+	gen_value[1]->callback(opt_general_shininess_cb);
         gen_value[2] = new Fl_Value_Input(2*WB, 2*WB+3*BH, 100, BH, "Light Position X");
-	gen_value[2]->minimum(0); gen_value[2]->maximum(100); gen_value[2]->step(1);
+	gen_value[2]->minimum(-1); 
+	gen_value[2]->maximum(1);
+	gen_value[2]->step(0.01);
+	gen_value[2]->value(CTX.light_position[0][0]);
+	gen_value[2]->callback(opt_general_light_cb, (void*)0);
         gen_value[3] = new Fl_Value_Input(2*WB, 2*WB+4*BH, 100, BH, "Light Position Y");
-	gen_value[3]->minimum(0); gen_value[3]->maximum(100); gen_value[3]->step(1);
+	gen_value[3]->minimum(-1); 
+	gen_value[3]->maximum(1); 
+	gen_value[3]->step(0.01);
+	gen_value[3]->value(CTX.light_position[0][1]);
+	gen_value[3]->callback(opt_general_light_cb, (void*)1);
         gen_value[4] = new Fl_Value_Input(2*WB, 2*WB+5*BH, 100, BH, "Light Position Z");
-	gen_value[4]->minimum(0); gen_value[4]->maximum(100); gen_value[4]->step(1);
+	gen_value[4]->minimum(-1); 
+	gen_value[4]->maximum(1); 
+	gen_value[4]->step(0.01);
+	gen_value[4]->value(CTX.light_position[0][2]);
+	gen_value[4]->callback(opt_general_light_cb, (void*)2);
 	for(int i=0 ; i<5 ; i++){
 	  gen_value[i]->labelsize(CTX.fontsize);
 	  gen_value[i]->type(FL_HORIZONTAL);
@@ -600,10 +636,12 @@ void GUI::opt_general(){
     { 
       Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
       o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)gen_window);
     }
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
       o->labelsize(CTX.fontsize);
+      o->callback(ok_cb);
     }
 
     gen_window->end();
@@ -670,10 +708,12 @@ void GUI::opt_geometry(){
     { 
       Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
       o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)geo_window);
     }
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
       o->labelsize(CTX.fontsize);
+      o->callback(ok_cb);
     }
 
     geo_window->end();
@@ -784,10 +824,12 @@ void GUI::opt_mesh(){
     { 
       Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
       o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)mesh_window);
     }
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
       o->labelsize(CTX.fontsize);
+      o->callback(ok_cb);
     }
 
     mesh_window->end();
@@ -851,10 +893,12 @@ void GUI::opt_post(){
     { 
       Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
       o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)post_window);
     }
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
       o->labelsize(CTX.fontsize);
+      o->callback(ok_cb);
     }
 
     post_window->end();
@@ -937,10 +981,12 @@ void GUI::opt_stat(){
     { 
       Fl_Button* o = new Fl_Button(width-2*60-2*WB, height-BH-WB, 60, BH, "cancel");
       o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)stat_window);
     }
     { 
       Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
       o->labelsize(CTX.fontsize);
+      o->callback(ok_cb);
     }
 
     stat_window->end();
@@ -982,8 +1028,9 @@ void GUI::help_short(){
     o->end();
     
     { 
-      Fl_Return_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "OK");
+      Fl_Button* o = new Fl_Return_Button(width-60-WB, height-BH-WB, 60, BH, "cancel");
       o->labelsize(CTX.fontsize);
+      o->callback(cancel_cb, (void*)help_window);
     }
 
     help_window->resizable(o);
@@ -1032,6 +1079,7 @@ void GUI::help_about(){
     o2->labelsize(CTX.fontsize);
     o2->labelfont(FL_COURIER);
     o2->align(FL_ALIGN_LEFT|FL_ALIGN_INSIDE);
+    o2->callback(cancel_cb, (void*)about_window);
 
     about_window->end();
     about_window->show();
