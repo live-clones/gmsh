@@ -1,6 +1,7 @@
-// $Id: Main.cpp,v 1.5 2001-05-25 11:03:38 geuzaine Exp $
+// $Id: Main.cpp,v 1.6 2001-08-08 15:36:09 remacle Exp $
 
 #include <signal.h>
+#include "ParUtil.h"
 
 #include <signal.h>
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -66,6 +67,8 @@ void Info (int level, char *arg0){
 int main(int argc, char *argv[]){
   int     i, nbf;
 
+  ParUtil::Instance()->init(argc,argv);
+
   if(argc < 2) Info(0,argv[0]);
 
   Init_Options(0);
@@ -90,7 +93,7 @@ int main(int argc, char *argv[]){
 
   OpenProblem(CTX.filename);
   if(yyerrorstate)
-    exit(1);
+    ParUtil::Instance()->Abort();
   else{
     for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
     if(TheBgmFileName){
@@ -108,7 +111,7 @@ int main(int argc, char *argv[]){
       Print_Geo(THEM, CTX.output_filename);
     if(CTX.mesh.histogram)
       Print_Histogram(THEM->Histogram[0]);
-    exit(1);
+    ParUtil::Instance()->Exit();
   }
 
 }

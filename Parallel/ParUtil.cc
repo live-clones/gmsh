@@ -79,6 +79,15 @@ void ParUtil::Abort()
 #endif
 }
 
+void ParUtil::Exit()
+{
+#ifdef PARALLEL
+  MPI_Finalize();
+#else
+  exit(1);
+#endif
+}
+
 void ParUtil::Barrier(int line, const char *fn)
 {
 #ifdef PARALLEL

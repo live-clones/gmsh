@@ -18,6 +18,8 @@ public:
   /// adds a barrier
   void Barrier(int, const char*);
   /// compute wall time
+  void Exit();
+  /// compute wall time
   double wTime () const;
   /// gets the processor name
   void processorName(char *name) const;
