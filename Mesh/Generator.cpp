@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.59 2004-06-30 17:49:51 geuzaine Exp $
+// $Id: Generator.cpp,v 1.60 2004-08-13 20:59:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -109,7 +109,6 @@ void GetStatistics(double stat[50])
   Tree_Action(THEM->Vertices, countOrder2);
   stat[16] = nbOrder2;
 
-  Mesh_Quality(THEM);
   stat[17] = THEM->quality_gamma[0];
   stat[18] = THEM->quality_gamma[1];
   stat[19] = THEM->quality_gamma[2];

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.332 2004-08-09 10:29:07 geuzaine Exp $
+// $Id: GUI.cpp,v 1.333 2004-08-13 20:59:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2849,6 +2849,9 @@ void GUI::set_statistics()
   static double s[50];
   static char label[50][256];
 
+  extern Mesh *THEM;
+
+  Mesh_Quality(THEM);
   GetStatistics(s);
 
   // geom
