@@ -1,4 +1,4 @@
-$Id: CONTRIBUTORS,v 1.6 2002-01-21 18:49:17 geuzaine Exp $
+$Id: CONTRIBUTORS,v 1.7 2002-01-21 19:23:18 geuzaine Exp $
 
 Gmsh is copyright (c) 1997-2002 by
 
@@ -18,6 +18,7 @@ it is inevitable that some contributors have been omitted. If you are
 in this situation, just send an e-mail to one of the authors, and you
 will be added to the list!
 
+    Olivier Adam <o.adam@ulg.ac.be>
     Éric Bechet <eric.bechet@epost.de>
     David Colignon <david.colignon@ulg.ac.be>
     Philippe Geuzaine <geuzaine@gnat.colorado.edu>
@@ -25,6 +26,7 @@ will be added to the list!
     François Henrotte <fhenrott@esat.kuleuven.ac.be>
     Benoît Meys <bmeys@techspace-aero.be>
     Nicolas Moës <moes@tam9.mech.nwu.edu>
+    Laurent Stainier <l.stainier@ulg.ac.be>
 
 Finally, thanks to all of you who sent e-mail showing interest. This
 has motivated us a lot to release the code as free software and to
