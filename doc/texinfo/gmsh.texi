@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.71 2003-06-24 23:34:45 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.72 2003-07-07 16:43:46 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2003 C. Geuzaine, J.-F. Remacle
 @c
@@ -1703,7 +1703,7 @@ identical coordinates). Note that Gmsh executes the @code{Coherence} command
 automatically after each geometrical transformation, unless
 @code{Geometry.AutoCoherence} is set to zero (@pxref{Geometry options}).
 
-@item Delete @{ Point | Line | Surface @{ @var{expression-list} @}; @dots{} @};
+@item Delete @{ Point | Line | Surface @{ @var{expression-list} @}; @dots{} @}
 Deletes all elementary entities (points, lines or surfaces) whose
 identification numbers are given in @var{expression-list}.
 
