@@ -1,4 +1,4 @@
-$Id: README.win32,v 1.4 2004-06-04 18:58:46 geuzaine Exp $
+$Id: README.win32,v 1.5 2004-07-04 22:22:12 geuzaine Exp $
 
 1) About opengl32.dll and glu32.dll:
 
@@ -21,3 +21,26 @@ Gmsh saves session information and default options in the $GMSH_HOME
 directory, or in the $HOME, $TMP or $TEMP directories if $GMSH_HOME is
 not defined. If none of theses variables are defined, Gmsh will
 save/load its configuration files from the current working directory.
+
+4) Adjusting the Cygwin memory limit:
+
+From the <cygwin at cygwin.com> mailing list archive (Charles Werner
+<cw at gamma-rs dot ch>, Tue 04 Feb 2003 10:31:03 +0100):
+
+Cygwin comes with a maximum program size (program+data) of 384
+MB. This means that by default no program can allocate more than
+this. To run using more real or virtual memory in your machine you
+must add a entry in the Cygwin HKEY_CURRENT_USER section of the
+registry. Add the DWORD value heap_chunk_in_mb and set it to desired
+memory limit in decimal MB using the regtool program included in the
+Cygwin cygutils package. In this example the limit is set to 1024 MB:
+
+regtool -i set /HKCU/Software/Cygnus\ Solutions/Cygwin/heap_chunk_in_mb 1024
+regtool -v list /HKCU/Software/Cygnus\ Solutions/Cygwin
+
+Exit all running Cygwin processes and restart them. Memory can be
+allocated up to the size of the system swap space minus any the size
+of any running processes. The system swap should be at least as large
+as the physically installed RAM and can be modified under the System
+category in the Control Panel accessible through the Settings tag of
+the Win32 Start menu.
