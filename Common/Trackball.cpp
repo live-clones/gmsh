@@ -1,4 +1,4 @@
-/* $Id: Trackball.cpp,v 1.3 2004-10-28 03:44:36 geuzaine Exp $ */
+/* $Id: Trackball.cpp,v 1.4 2004-11-01 15:10:36 geuzaine Exp $ */
 /*
  * (c) Copyright 1993, 1994, Silicon Graphics, Inc.
  * ALL RIGHTS RESERVED
@@ -49,6 +49,9 @@
  *
  * Much mucking with by:
  * Gavin Bell
+ */
+/*
+ * Modified for inclusion in Gmsh (rotmatrix as a vector + float->double
  */
 #include <math.h>
 #include "Trackball.h"
@@ -300,26 +303,26 @@ normalize_quat(double q[4])
  *
  */
 void
-build_rotmatrix(double m[4][4], double q[4])
+build_rotmatrix(double m[16], double q[4])
 {
-    m[0][0] = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2]);
-    m[0][1] = 2.0 * (q[0] * q[1] - q[2] * q[3]);
-    m[0][2] = 2.0 * (q[2] * q[0] + q[1] * q[3]);
-    m[0][3] = 0.0;
+    m[0] = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2]);
+    m[1] = 2.0 * (q[0] * q[1] - q[2] * q[3]);
+    m[2] = 2.0 * (q[2] * q[0] + q[1] * q[3]);
+    m[3] = 0.0;
 
-    m[1][0] = 2.0 * (q[0] * q[1] + q[2] * q[3]);
-    m[1][1]= 1.0 - 2.0 * (q[2] * q[2] + q[0] * q[0]);
-    m[1][2] = 2.0 * (q[1] * q[2] - q[0] * q[3]);
-    m[1][3] = 0.0;
+    m[4] = 2.0 * (q[0] * q[1] + q[2] * q[3]);
+    m[5]= 1.0 - 2.0 * (q[2] * q[2] + q[0] * q[0]);
+    m[6] = 2.0 * (q[1] * q[2] - q[0] * q[3]);
+    m[7] = 0.0;
 
-    m[2][0] = 2.0 * (q[2] * q[0] - q[1] * q[3]);
-    m[2][1] = 2.0 * (q[1] * q[2] + q[0] * q[3]);
-    m[2][2] = 1.0 - 2.0 * (q[1] * q[1] + q[0] * q[0]);
-    m[2][3] = 0.0;
+    m[8] = 2.0 * (q[2] * q[0] - q[1] * q[3]);
+    m[9] = 2.0 * (q[1] * q[2] + q[0] * q[3]);
+    m[10] = 1.0 - 2.0 * (q[1] * q[1] + q[0] * q[0]);
+    m[11] = 0.0;
 
-    m[3][0] = 0.0;
-    m[3][1] = 0.0;
-    m[3][2] = 0.0;
-    m[3][3] = 1.0;
+    m[12] = 0.0;
+    m[13] = 0.0;
+    m[14] = 0.0;
+    m[15] = 1.0;
 }
 

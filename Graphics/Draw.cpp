@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.63 2004-10-28 03:44:37 geuzaine Exp $
+// $Id: Draw.cpp,v 1.64 2004-11-01 15:10:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -217,7 +217,7 @@ void InitPosition(void)
 		 CTX.rotation_center[2]);
   
   CTX.buildRotmatrix();
-  glMultMatrixd(&(CTX.rot[0][0]));
+  glMultMatrixd(CTX.rot);
 
   if(CTX.rotation_center_cg)
     glTranslated(-CTX.cg[0], -CTX.cg[1], -CTX.cg[2]);
@@ -227,8 +227,8 @@ void InitPosition(void)
 		 -CTX.rotation_center[2]);
 
   // store the modelview and projection matrices
-  glGetDoublev(GL_MODELVIEW_MATRIX, &(CTX.mod[0][0]));
-  glGetDoublev(GL_PROJECTION_MATRIX, &(CTX.proj[0][0]));
+  glGetDoublev(GL_MODELVIEW_MATRIX, CTX.mod);
+  glGetDoublev(GL_PROJECTION_MATRIX, CTX.proj);
 }
 
 // Entity selection
@@ -334,11 +334,9 @@ void unproject(double x, double y, double p[3], double d[3])
 
   GLdouble x0, y0, z0, x1, y1, z1;
   
-  if(!gluUnProject(x, y, 0.0, &(CTX.mod[0][0]), &(CTX.proj[0][0]),
-		   viewport, &x0, &y0, &z0))
+  if(!gluUnProject(x, y, 0.0, CTX.mod, CTX.proj, viewport, &x0, &y0, &z0))
     Msg(WARNING, "unproject1 failed");
-  if(!gluUnProject(x, y, 1.0, &(CTX.mod[0][0]), &(CTX.proj[0][0]),
-		   viewport, &x1, &y1, &z1))
+  if(!gluUnProject(x, y, 1.0, CTX.mod, CTX.proj, viewport, &x1, &y1, &z1))
     Msg(WARNING, "unproject2 failed");
   
   p[0] = x0;

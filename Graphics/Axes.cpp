@@ -1,4 +1,4 @@
-// $Id: Axes.cpp,v 1.21 2004-04-24 16:24:34 geuzaine Exp $
+// $Id: Axes.cpp,v 1.22 2004-11-01 15:10:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -135,12 +135,12 @@ void Draw_SmallAxes(void)
   else
     cy = CTX.viewport[1] - CTX.small_axes_pos[1];
 
-  xx = l * CTX.rot[0][0];
-  xy = l * CTX.rot[0][1];
-  yx = l * CTX.rot[1][0];
-  yy = l * CTX.rot[1][1];
-  zx = l * CTX.rot[2][0];
-  zy = l * CTX.rot[2][1];
+  xx = l * CTX.rot[0];
+  xy = l * CTX.rot[1];
+  yx = l * CTX.rot[4];
+  yy = l * CTX.rot[5];
+  zx = l * CTX.rot[8];
+  zy = l * CTX.rot[9];
 
   glLineWidth(CTX.line_width);
   gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);

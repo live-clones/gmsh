@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.52 2004-10-28 03:44:36 geuzaine Exp $
+// $Id: Context.cpp,v 1.53 2004-11-01 15:10:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -29,27 +29,34 @@
 #include "DefaultOptions.h"
 #include "Trackball.h"
 
+/*
+00 01 02 03    0  1  2  3
+10 11 12 13    4  5  6  7
+20 21 22 23    8  9  10 11
+30 31 32 33    12 13 14 15
+*/
+
 void Context_T::buildRotmatrix(void)
 {
   if(useTrackball) {
     build_rotmatrix(rot, quaternion);
 
     // get Euler angles from rotation matrix
-    r[1] = asin(rot[2][0]); // Calculate Y-axis angle
+    r[1] = asin(rot[8]); // Calculate Y-axis angle
     double C =  cos(r[1]);
     r[1] *=  180. / Pi;
     if(fabs(C) > 0.005){ // Gimball lock?
-      double tmpx =  rot[2][2] / C; // No, so get X-axis angle
-      double tmpy = -rot[2][1] / C;
+      double tmpx =  rot[10] / C; // No, so get X-axis angle
+      double tmpy = -rot[9] / C;
       r[0] = atan2(tmpy, tmpx) * 180. / Pi;
-      tmpx =  rot[0][0] / C; // Get Z-axis angle
-      tmpy = -rot[1][0] / C;
+      tmpx =  rot[0] / C; // Get Z-axis angle
+      tmpy = -rot[4] / C;
       r[2] = atan2(tmpy, tmpx) * 180. / Pi;
     }
     else{ // Gimball lock has occurred
       r[0] = 0.; // Set X-axis angle to zero
-      double tmpx = rot[1][1]; // And calculate Z-axis angle
-      double tmpy = rot[0][1];
+      double tmpx = rot[5]; // And calculate Z-axis angle
+      double tmpy = rot[1];
       r[2] = atan2(tmpy, tmpx) * 180. / Pi;
     }
     // return only positive angles in [0,360]
@@ -69,10 +76,10 @@ void Context_T::buildRotmatrix(void)
     double F = sin(z);
     double AD = A * D;
     double BD = B * D;
-    rot[0][0] = C*E; rot[0][1] = BD*E+A*F; rot[0][2] =-AD*E+B*F; rot[0][3] = 0.;
-    rot[1][0] =-C*F; rot[1][1] =-BD*F+A*E; rot[1][2] = AD*F+B*E; rot[1][3] = 0.;
-    rot[2][0] = D;   rot[2][1] =-B*C;	   rot[2][2] = A*C;      rot[2][3] = 0.;
-    rot[3][0] = 0.;  rot[3][1] = 0.;       rot[3][2] = 0.;       rot[3][3] = 1.;
+    rot[0] = C*E; rot[1] = BD*E+A*F; rot[2] =-AD*E+B*F; rot[3] = 0.;
+    rot[4] =-C*F; rot[5] =-BD*F+A*E; rot[6] = AD*F+B*E; rot[7] = 0.;
+    rot[8] = D;   rot[9] =-B*C;	     rot[10] = A*C;     rot[11] = 0.;
+    rot[12] = 0.; rot[13] = 0.;      rot[14] = 0.;      rot[15] = 1.;
 
     // get the quaternion from the Euler angles
     // todo

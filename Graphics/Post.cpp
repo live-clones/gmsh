@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.82 2004-10-27 17:27:40 geuzaine Exp $
+// $Id: Post.cpp,v 1.83 2004-11-01 15:10:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -166,9 +166,9 @@ static double storedEye[3] = { 0., 0., 0. };
 int changedEye()
 {
   double zeye = 100 * CTX.lc, tmp[3];
-  tmp[0] = CTX.rot[0][2] * zeye;
-  tmp[1] = CTX.rot[1][2] * zeye;
-  tmp[2] = CTX.rot[2][2] * zeye;
+  tmp[0] = CTX.rot[2] * zeye;
+  tmp[1] = CTX.rot[6] * zeye;
+  tmp[2] = CTX.rot[10] * zeye;
   if(fabs(tmp[0] - storedEye[0]) > 1.e-3 ||
      fabs(tmp[1] - storedEye[1]) > 1.e-3 ||
      fabs(tmp[2] - storedEye[2]) > 1.e-3) {

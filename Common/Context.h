@@ -88,9 +88,9 @@ public :
   int initial_context;        // 0=automatic; 1=geom; 2=mesh; 3=solver; 4=post 
   int verbosity;              // 0=silent -> 3=debug 
 
-  double rot[4][4];           // current rotation matrix 
-  double mod[4][4];           // current modelview matrix 
-  double proj[4][4];          // current projection matrix
+  double rot[16];             // current rotation matrix 
+  double mod[16];             // current modelview matrix 
+  double proj[16];            // current projection matrix
   double r[3];                // position angles (if succ. rot. along x, y and z) 
   double t[3], s[3];          // current translation and scale 
   int rlock[3], tlock[3], slock[3];
