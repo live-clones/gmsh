@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.252 2004-06-30 17:49:51 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.253 2004-07-08 17:21:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1103,7 +1103,7 @@ void message_copy_cb(CALLBACK_ARGS)
         break;
       }
       if(c[0] == '@')
-        strcat(buff, &c[3]);
+        strcat(buff, &c[5]);
       else
         strcat(buff, c);
       strcat(buff, "\n");
