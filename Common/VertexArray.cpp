@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.1 2004-05-29 10:11:10 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.2 2004-05-29 20:25:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,9 @@
 
 triangleVertexArray::triangleVertexArray(int nb)
 {
-  num_triangles = 0;
+  num_triangles = fill = 0;
+  if(!nb)
+    nb = 1000;
   vertices = List_Create(nb * 3 * 3, 9000, sizeof(float));
   normals = List_Create(nb * 3 * 3, 9000, sizeof(float));
   colors = List_Create(nb * 3 * 4, 12000, sizeof(unsigned char));

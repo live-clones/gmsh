@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.24 2004-05-29 10:11:12 geuzaine Exp $
+// $Id: Iso.cpp,v 1.25 2004-05-29 20:25:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -422,7 +422,7 @@ void IsoSimplex(Post_View * View, int preproNormals,
   if(preproNormals)
     return;
 
-  if(View->FillVertexArray){
+  if(View->VertexArray && View->VertexArray->fill){
     for(int i = 2; i < nb; i++){
       View->VertexArray->add(Xp[0] + View->Raise[0] * V,
 			     Yp[0] + View->Raise[1] * V,

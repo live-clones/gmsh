@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.119 2004-05-29 10:11:10 geuzaine Exp $
+// $Id: Views.cpp,v 1.120 2004-05-29 20:25:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -73,8 +73,6 @@ Post_View *BeginView(int allocate)
   v->Index = i;
   v->Dirty = 1;
   v->VertexArray = NULL;
-  v->FillVertexArray = 0;
-  v->UseVertexArray = 0;
   v->NbTimeStep = 0;
   v->TimeStepMin = NULL;
   v->TimeStepMax = NULL;

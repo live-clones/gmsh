@@ -24,7 +24,7 @@
 
 class triangleVertexArray{
  public:
-  int num_triangles;
+  int num_triangles, fill;
   List_T *vertices, *normals, *colors;
   triangleVertexArray(int nb);
   ~triangleVertexArray();

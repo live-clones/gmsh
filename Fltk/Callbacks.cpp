@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.242 2004-05-29 10:11:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.243 2004-05-29 20:25:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -2487,7 +2487,7 @@ void mesh_degree_cb(CALLBACK_ARGS)
     Degre1();
     break;
   }
-
+  CTX.mesh.changed = 1;
   Draw();
   Msg(STATUS3N, "Ready");
 }

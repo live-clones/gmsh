@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.63 2004-05-29 11:08:32 geuzaine Exp $
+// $Id: Post.cpp,v 1.64 2004-05-29 20:25:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -447,34 +447,37 @@ void Draw_Post(void)
 	Draw_TensorList(v, ValMin, ValMax, v->TL, v->NbTL, 2, Draw_TensorLine);
       }
 
-      for(int p = 0; p < 2; p++){ // two-passes for vertex arrays
+      for(int pass = 0; pass < 2; pass++){
 	int skip_2d = 0, skip_3d = 0;
-	if(p == 0){
+	if(pass == 0){
 	  if(CTX.post.vertex_arrays){
 	    if(v->Changed){
 	      Msg(DEBUG, "regenerate View[%d] vertex array", v->Index);
 	      if(v->VertexArray) delete v->VertexArray;
 	      v->VertexArray = new triangleVertexArray(10000);
-	      v->FillVertexArray = 1;
+	      v->VertexArray->fill = 1;
+	      goto pass_0;
 	    }
-	    else
-	      goto pass2;
 	  }
-	  else
-	    goto pass2;
+	  goto pass_1;
 	}
-	if(p == 1){
-	  if(CTX.post.vertex_arrays && v->VertexArray){
-	    v->UseVertexArray = 1;
+	else{
+	  // don't even enter the classic data path if we don't have to
+	  if(v->VertexArray){
 	    if(v->Boundary < 1 && !v->ShowElement &&
-	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO)
+	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
+	      Msg(DEBUG, "Skiping 2D scalar pass alltogether!");
 	      skip_2d = 1;
+	    }
 	    if(v->Boundary < 2 && !v->ShowElement &&
-	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO)
+	       v->IntervalsType != DRAW_POST_NUMERIC && v->IntervalsType != DRAW_POST_ISO){
+	      Msg(DEBUG, "Skiping 3D scalar pass alltogether!");
 	      skip_3d = 1;
+	    }
 	  }
 	}
 
+      pass_0:
 	if(v->DrawTriangles) {
 	  if(!skip_2d)
 	    Draw_ScalarList(v, ValMin, ValMax, v->ST, v->NbST, 3, 1, Draw_ScalarTriangle);
@@ -512,37 +515,35 @@ void Draw_Post(void)
 	  Draw_TensorList(v, ValMin, ValMax, v->TY, v->NbTY, 5, Draw_TensorPyramid);
 	}
 
-      pass2:
-	v->FillVertexArray = 0;
-	v->UseVertexArray = 0;
+      pass_1:
+	if(v->VertexArray)
+	  v->VertexArray->fill = 0;
       }
 
-      if(CTX.post.vertex_arrays && v->VertexArray){
-	if(v->VertexArray->num_triangles){
+      if(v->VertexArray && v->VertexArray->num_triangles){
 
-	  if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && (changedEye() || v->Changed)){
-	    Msg(DEBUG, "Sorting for transparency (WITH vertex array)");
-	    v->VertexArray->sort(storedEye);
-	  }
-
-	  glVertexPointer(3, GL_FLOAT, 0, v->VertexArray->vertices->array);
-	  glNormalPointer(GL_FLOAT, 0, v->VertexArray->normals->array);
-	  glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->VertexArray->colors->array);
-
-	  glEnableClientState(GL_VERTEX_ARRAY);
-	  glEnableClientState(GL_COLOR_ARRAY);
-	  glEnableClientState(GL_NORMAL_ARRAY);
-
-	  if(v->Light)
-	    glEnable(GL_LIGHTING);
-	  else
-	    glDisableClientState(GL_NORMAL_ARRAY);
-	  glEnable(GL_POLYGON_OFFSET_FILL);
-	  glDrawArrays(GL_TRIANGLES, 0, 3 * v->VertexArray->num_triangles);
-	  glDisable(GL_POLYGON_OFFSET_FILL);
-	  glDisable(GL_LIGHTING);
+	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && (changedEye() || v->Changed)){
+	  Msg(DEBUG, "Sorting for transparency (WITH vertex array)");
+	  v->VertexArray->sort(storedEye);
 	}
 
+	glVertexPointer(3, GL_FLOAT, 0, v->VertexArray->vertices->array);
+	glNormalPointer(GL_FLOAT, 0, v->VertexArray->normals->array);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, v->VertexArray->colors->array);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	if(v->Light)
+	  glEnable(GL_LIGHTING);
+	else
+	  glDisableClientState(GL_NORMAL_ARRAY);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glDrawArrays(GL_TRIANGLES, 0, 3 * v->VertexArray->num_triangles);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	glDisable(GL_LIGHTING);
+      
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);

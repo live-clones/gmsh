@@ -62,7 +62,6 @@ class Post_View{
 
   // a vertex array to draw triangles efficiently
   triangleVertexArray *VertexArray;
-  int FillVertexArray, UseVertexArray;
 
   // options
   int Type, Position[2], AutoPosition, Size[2];

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.90 2004-05-29 10:39:32 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.91 2004-05-29 20:25:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -40,9 +40,7 @@ extern int edges_pyramid[8][2];
 
 static DrawingColor theColor;
 static int thePhysical = 0;
-static triangleVertexArray *theVertexArray = NULL;
-static int fillTheVertexArray = 0;
-static int useTheVertexArray = 0;
+static Surface *theSurface = NULL;
 
 void draw_polygon_2d(double r, double g, double b, int n,
                      double *x, double *y, double *z)
@@ -224,33 +222,35 @@ void Draw_Mesh_Volume(void *a, void *b)
 void Draw_Mesh_Surface(void *a, void *b)
 {
   Surface *s = *(Surface **) a;
-  theColor = s->Color;
-  thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
   if(!(s->Visible & VIS_MESH))
     return;
 
-  if(CTX.mesh.vertex_arrays && Tree_Nbr(s->Simplexes)){
+  theSurface = s;
+  theColor = s->Color;
+  thePhysical = getFirstPhysical(MSH_PHYSICAL_SURFACE, s->Num);
+
+  if(CTX.mesh.vertex_arrays){
     if(CTX.mesh.changed){
       Msg(DEBUG, "regenerate mesh vertex array");
       if(s->vertexArray) delete s->vertexArray;
       s->vertexArray = new triangleVertexArray(Tree_Nbr(s->Simplexes));
-      theVertexArray = s->vertexArray;
-      fillTheVertexArray = 1;
-      useTheVertexArray = 1;
+      s->vertexArray->fill = 1;
       Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
-      fillTheVertexArray = 0;
+      if(s->vertexArray)
+	s->vertexArray->fill = 0;
     }
-    if(s->vertexArray && useTheVertexArray)
+    if(s->vertexArray)
       Draw_Mesh_Triangle_Array(s->vertexArray);
   }
     
-  fillTheVertexArray = 0; // just to make sure...
-  if(!useTheVertexArray || CTX.mesh.dual || 
-     CTX.mesh.surfaces_num || CTX.mesh.normals){
+  if(!s->vertexArray || CTX.mesh.dual || CTX.mesh.surfaces_num || CTX.mesh.normals){
+    Msg(DEBUG, "classic triangle data path");
     Tree_Action(s->Simplexes, Draw_Mesh_Triangle);
   }
-  
+
   Tree_Action(s->Quadrangles, Draw_Mesh_Quadrangle);
+
+  theSurface = NULL;
 }
 
 void Draw_Mesh_Extruded_Surfaces(void *a, void *b)
@@ -520,7 +520,11 @@ void Draw_Mesh_Triangle(void *a, void *b)
     Z[i] = Zc + CTX.mesh.explode * (s->V[i]->Pos.Z - Zc);
   }
   if(s->VSUP){
-    useTheVertexArray = 0;
+    if(theSurface && theSurface->vertexArray){
+      // vertex arrays not implemented for second order elements
+      delete theSurface->vertexArray;
+      theSurface->vertexArray = NULL;
+    }
     for(int i = 0; i < 3; i++) {
       X2[i] = Xc + CTX.mesh.explode * (s->VSUP[i]->Pos.X - Xc);
       Y2[i] = Yc + CTX.mesh.explode * (s->VSUP[i]->Pos.Y - Yc);
@@ -528,34 +532,36 @@ void Draw_Mesh_Triangle(void *a, void *b)
     }
   }
 
-  if(CTX.mesh.normals || CTX.mesh.light || fillTheVertexArray)
+  if(CTX.mesh.normals || CTX.mesh.light ||
+     (theSurface && theSurface->vertexArray && theSurface->vertexArray->fill))
     _normal3points(X[0], Y[0], Z[0], 
 		   X[1], Y[1], Z[1],
 		   X[2], Y[2], Z[2], n);
 
-  if(fillTheVertexArray && !s->VSUP){
-    for(int i = 0; i < 3; i++) {
-      float x = X[i], y = Y[i], z = Z[i];
-      float n0 = n[0], n1 = n[1], n2 = n[2];
-      unsigned char r = UNPACK_RED(col);
-      unsigned char g = UNPACK_GREEN(col);
-      unsigned char b = UNPACK_BLUE(col);
-      unsigned char a = UNPACK_ALPHA(col);
-      List_Add(theVertexArray->vertices, &x);
-      List_Add(theVertexArray->vertices, &y);
-      List_Add(theVertexArray->vertices, &z);
-      List_Add(theVertexArray->normals, &n0);
-      List_Add(theVertexArray->normals, &n1);
-      List_Add(theVertexArray->normals, &n2);
-      List_Add(theVertexArray->colors, &r);
-      List_Add(theVertexArray->colors, &g);
-      List_Add(theVertexArray->colors, &b);
-      List_Add(theVertexArray->colors, &a);
+  if(theSurface && theSurface->vertexArray){
+    if(theSurface->vertexArray->fill){
+      for(int i = 0; i < 3; i++) {
+	float x = X[i], y = Y[i], z = Z[i];
+	float n0 = n[0], n1 = n[1], n2 = n[2];
+	unsigned char r = UNPACK_RED(col);
+	unsigned char g = UNPACK_GREEN(col);
+	unsigned char b = UNPACK_BLUE(col);
+	unsigned char a = UNPACK_ALPHA(col);
+	List_Add(theSurface->vertexArray->vertices, &x);
+	List_Add(theSurface->vertexArray->vertices, &y);
+	List_Add(theSurface->vertexArray->vertices, &z);
+	List_Add(theSurface->vertexArray->normals, &n0);
+	List_Add(theSurface->vertexArray->normals, &n1);
+	List_Add(theSurface->vertexArray->normals, &n2);
+	List_Add(theSurface->vertexArray->colors, &r);
+	List_Add(theSurface->vertexArray->colors, &g);
+	List_Add(theSurface->vertexArray->colors, &b);
+	List_Add(theSurface->vertexArray->colors, &a);
+      }
+      theSurface->vertexArray->num_triangles++;
     }
-    theVertexArray->num_triangles++;
   }    
-
-  if(!useTheVertexArray){
+  else{
     if(CTX.mesh.surfaces_edges){
       if(CTX.mesh.surfaces_faces)
 	glColor4ubv((GLubyte *) & CTX.color.mesh.line);
