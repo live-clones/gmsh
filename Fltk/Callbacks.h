@@ -34,6 +34,7 @@ void color_cb(CALLBACK_ARGS);
 void view_color_cb(CALLBACK_ARGS);
 void redraw_cb(CALLBACK_ARGS);
 void window_cb(CALLBACK_ARGS);
+void activate_cb(CALLBACK_ARGS);
 
 // Graphical window
 
@@ -84,7 +85,6 @@ void options_ok_cb(CALLBACK_ARGS);
 
 void general_options_cb(CALLBACK_ARGS);
 void general_options_color_scheme_cb(CALLBACK_ARGS);
-void general_options_rotation_center_cb(CALLBACK_ARGS);
 void general_options_rotation_center_select_cb(CALLBACK_ARGS);
 void general_options_ok_cb(CALLBACK_ARGS);
 void general_arrow_param_cb(CALLBACK_ARGS);
@@ -131,7 +131,6 @@ void view_applybgmesh_cb(CALLBACK_ARGS);
 void view_plugin_options_cb(CALLBACK_ARGS);
 void view_plugin_cancel_cb(CALLBACK_ARGS);
 void view_options_cb(CALLBACK_ARGS);
-void view_options_custom_cb(CALLBACK_ARGS);
 void view_options_timestep_cb(CALLBACK_ARGS);
 void view_options_timestep_decr_cb(CALLBACK_ARGS);
 void view_options_timestep_incr_cb(CALLBACK_ARGS);

@@ -848,7 +848,7 @@ StringXNumber MeshOptions_Number[] = {
     "Explode elements (between 0=point and 1=non-transformed)" },
 
   { F|O, "Format" , opt_mesh_format , FORMAT_MSH , 
-    "Mesh output format (1=MSH, 2=UNV, 3=GREF, 19=VRML)" },
+    "Mesh output format (1=msh, 2=unv, 3=gref, 19=vrml)" },
 
   { F|O, "GammaInf" , opt_mesh_gamma_inf , 0.0 , 
     "Only display elements whose Gamma factor is greater than GammaInf" },
@@ -874,7 +874,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 1.0 , 
-    "MSH mesh file version to generate" },
+    "Version of the `msh' file format to use" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. , 
     "Number of hexahedra in the current mesh (read-only)" },
@@ -901,7 +901,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PointsPerElement" , opt_mesh_points_per_element , 0. , 
     "Display mesh nodes per element (slower, but permits to visualize only a subset of the nodes)" },
   { F|O, "PointInsertion" , opt_mesh_point_insertion, CENTER_CIRCCIRC ,
-    "Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=cog)" },
+    "Point insertion method for isotropic 2D algorithm (1=center of circumscribed circle, 2=center of gravity)" },
   { F|O, "PointNumbers" , opt_mesh_points_num , 0. , 
     "Display mesh node numbers?" },
   { F|O, "PointSize" , opt_mesh_point_size , 4. , 
@@ -1042,7 +1042,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ArrowHeadRadius" , opt_view_arrow_head_radius , 0.12 ,
     "Relative radius of arrow head" },
   { F|O, "ArrowLocation" , opt_view_arrow_location , DRAW_POST_LOCATE_COG , 
-    "Arrow location (1=cog, 2=node)" },
+    "Arrow location (1=center of gravity, 2=node)" },
   { F|O, "ArrowSize" , opt_view_arrow_size , 60. ,
     "Display size of arrows (in pixels)" },
   { F|O, "ArrowSizeProportional" , opt_view_arrow_size_proportional , 1. ,
@@ -1052,7 +1052,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ArrowStemRadius" , opt_view_arrow_stem_radius , 0.02 ,
     "Relative radius of arrow stem" },
   { F|O, "AutoPosition" , opt_view_auto_position , 1. , 
-    "Position the scale or 2D graph automatically" }, 
+    "Position the scale or 2D plot automatically" }, 
   { F|O, "Axes" , opt_view_axes , 0 ,
     "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid)" },
   { F|O, "AxesAutoPosition" , opt_view_axes_auto_position , 1. , 
@@ -1147,7 +1147,7 @@ StringXNumber ViewOptions_Number[] = {
     "Grid mode (this option is deprecated: use View.Axes instead)" },
 
   { F|O, "Height" , opt_view_size1 , 200. , 
-    "Height (in pixels) of the scale or 2D graph" }, 
+    "Height (in pixels) of the scale or 2D plot" }, 
 
   { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_CONTINUOUS ,
     "Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)" },
@@ -1197,9 +1197,9 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "PointType" , opt_view_point_type , 0. , 
     "Display points as solid color dots (0) or 3D spheres (1)" },
   { F|O, "PositionX" , opt_view_position0 , 100. , 
-    "Horizontal position (in pixels) of the upper left corner of the scale or 2D graph" }, 
+    "Horizontal position (in pixels) of the upper left corner of the scale or 2D plot" }, 
   { F|O, "PositionY" , opt_view_position1 , 50. , 
-    "Vertical position (in pixels) of the upper left corner of the scale or 2D graph" }, 
+    "Vertical position (in pixels) of the upper left corner of the scale or 2D plot" }, 
 
   { F,   "RaiseX" , opt_view_raise0 , 0. , 
     "Elevation of the view along X-axis (in model coordinates)" },
@@ -1248,7 +1248,7 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "Transform33" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
   { F, "Type" , opt_view_type , DRAW_POST_3D ,
-    "Type of graph (1=3D, 2=2D-space, 3=2D-time)" },
+    "Type of plot (1=3D, 2=2D space, 3=2D time)" },
 
   { F|O, "UseGeneralizedRaise" , opt_view_use_gen_raise , 0 ,
     "Use generalized raise?" },
@@ -1259,7 +1259,7 @@ StringXNumber ViewOptions_Number[] = {
     "Is the view visible?" },
 
   { F|O, "Width" , opt_view_size0 , 300. , 
-    "Width (in pixels) of the scale or 2D graph" }, 
+    "Width (in pixels) of the scale or 2D plot" }, 
 
   { 0, NULL , NULL , 0. , NULL }
 } ;

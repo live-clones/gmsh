@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.174 2005-03-11 05:47:56 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.175 2005-03-12 20:17:41 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 @c
@@ -2298,13 +2298,13 @@ post-processing view containing @emph{scalar points} as two-dimensional
 
 @itemize @bullet
 @item
-in a `2D space table', the scalar points are taken in the same order as they
+in a `2D space' plot, the scalar points are taken in the same order as they
 are defined in the post-processing view: the abscissa of the 2D graph is
 the curvilinear abscissa of the curve defined by the point series, and only
 one curve is drawn using the values associated with the points. If several
 time steps are available, each time step generates a new curve;
 @item
-in a `2D time table', one curve is drawn for each scalar point in the view
+in a `2D time' plot, one curve is drawn for each scalar point in the view
 and the abscissa is the time step.
 @end itemize
 

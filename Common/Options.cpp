@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.231 2005-03-12 07:52:54 geuzaine Exp $
+// $Id: Options.cpp,v 1.232 2005-03-12 20:17:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,7 @@ extern Context_T CTX;
 #include "Solvers.h"
 #include "GUI.h"
 extern GUI *WID;
+extern void activate_cb(Fl_Widget* w, void* data);
 #endif
 
 extern Post_View *Post_ViewReference;
@@ -2643,8 +2644,10 @@ double opt_general_axes(OPT_ARGS_NUM)
       CTX.axes = 0;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_choice[4]->value(CTX.axes);
+    activate_cb(NULL, (void*)"general_axes");
+  }
 #endif
   return CTX.axes;
 }
@@ -2654,8 +2657,10 @@ double opt_general_axes_auto_position(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.axes_auto_position = (int)val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_butt[0]->value(CTX.axes_auto_position);
+    activate_cb(NULL, (void*)"general_axes_auto");
+  }
 #endif
   return CTX.axes_auto_position;
 }
@@ -2764,8 +2769,10 @@ double opt_general_small_axes(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.small_axes = (int)val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->gen_butt[1]->value(CTX.small_axes);
+    activate_cb(NULL, (void*)"general_small_axes");
+  }
 #endif
   return CTX.small_axes;
 }
@@ -2952,7 +2959,7 @@ double opt_general_rotation_center_cg(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)){
     WID->gen_butt[15]->value(CTX.rotation_center_cg);
-    WID->check_rotation_center_button();
+    activate_cb(NULL, (void*)"rotation_center");
   }
 #endif
   return CTX.rotation_center_cg;
@@ -4145,8 +4152,10 @@ double opt_mesh_light(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.light = (int)val;
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->mesh_butt[17]->value(CTX.mesh.light);
+    activate_cb(NULL, (void*)"mesh_light");
+  }
 #endif
   return CTX.mesh.light;
 }
@@ -4323,8 +4332,10 @@ double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
 #endif
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
+  if(WID && (action & GMSH_GUI)){
     WID->mesh_butt[16]->value(CTX.mesh.use_cut_plane);
+    activate_cb(NULL, (void*)"mesh_cut_plane");
+  }
 #endif
   return CTX.mesh.use_cut_plane;
 }
@@ -5321,6 +5332,7 @@ double opt_view_auto_position(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_butt[7]->value(v->AutoPosition);
+    activate_cb(NULL, (void*)"view_axes_auto_2d");
   }
 #endif
   return v->AutoPosition;
@@ -5389,6 +5401,7 @@ double opt_view_axes(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_choice[8]->value(v->Axes);
+    activate_cb(NULL, (void*)"view_axes");
   }
 #endif
   return v->Axes;
@@ -5403,6 +5416,7 @@ double opt_view_axes_auto_position(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_butt[25]->value(v->AxesAutoPosition);
+    activate_cb(NULL, (void*)"view_axes_auto_3d");
   }
 #endif
   return v->AxesAutoPosition;
@@ -5573,8 +5587,10 @@ double opt_view_light(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
+  if(_gui_action_valid(action, num)){
     WID->view_butt[11]->value(v->Light);
+    activate_cb(NULL, (void*)"view_light");
+  }
 #endif
   return v->Light;
 }
@@ -5879,6 +5895,7 @@ double opt_view_range_type(OPT_ARGS_NUM)
       WID->view_choice[7]->value(0);
       break;
     }
+    activate_cb(NULL, (void*)"custom_range");
   }
 #endif
   return v->RangeType;
@@ -6221,8 +6238,10 @@ double opt_view_use_gen_raise(OPT_ARGS_NUM)
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
-  if(_gui_action_valid(action, num))
+  if(_gui_action_valid(action, num)){
     WID->view_butt[6]->value(v->UseGenRaise);
+    activate_cb(NULL, (void*)"general_transform");
+  }
 #endif
   return v->UseGenRaise;
 }

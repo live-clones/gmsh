@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.48 2005-03-12 07:52:56 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.49 2005-03-12 20:17:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -232,7 +232,7 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
   }
 
   nb = v->AxesTics[0];
-  if(v->ShowScale) {
+  if(v->Axes) {
     sprintf(label, v->AxesFormat[0], -M_PI/1.e4);
     if((nb-1) * gl_width(label) > width)
       nb = (int)(width / gl_width(label)) + 1;
@@ -242,7 +242,7 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
   dx = width / (double)(nb - 1);
   
   for(i = 0; i < nb; i++) {
-    if(v->Axes > 0) {
+    if(v->Axes) {
       glColor4ubv((GLubyte *) & CTX.color.fg);
       glBegin(GL_LINES);
       glVertex2d(xtop + i * dx, ybot);
@@ -267,8 +267,7 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
         glLineWidth(CTX.line_width);
         gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
       }
-    }
-    if(v->ShowScale) {
+
       glColor4ubv((GLubyte *) & CTX.color.text);
       if(nb == 1)
         sprintf(label, v->AxesFormat[0], AbsMin);
@@ -279,7 +278,8 @@ static void Draw_Graph2D(Post_View * v, double xx, double yy,
       Draw_String_Center(label);
     }
   }
-  if(v->ShowScale) {
+
+  if(v->Axes) {
     glColor4ubv((GLubyte *) & CTX.color.text);
     sprintf(label, "%s", v->AxesLabel[0]);
     glRasterPos2d(xtop + width / 2, ybot - 2 * font_h - 2 * tic);

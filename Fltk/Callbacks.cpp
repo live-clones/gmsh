@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.345 2005-03-12 07:52:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.346 2005-03-12 20:17:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -138,9 +138,9 @@ void redraw_cb(CALLBACK_ARGS)
 void window_cb(CALLBACK_ARGS)
 {
   static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 1;
+  char *str = (char*)data;
 
-  switch((long)data){
-  case 0: // minimize
+  if(!strcmp(str, "minimize")){
     WID->g_window->iconize();
     if(WID->opt_window->shown()) WID->opt_window->iconize();
     if(WID->vis_window->shown()) WID->vis_window->iconize();
@@ -149,8 +149,8 @@ void window_cb(CALLBACK_ARGS)
     if(WID->stat_window->shown()) WID->stat_window->iconize();
     if(WID->msg_window->shown()) WID->msg_window->iconize();
     WID->m_window->iconize();
-    break;
-  case 1: // zoom
+  }
+  else if(!strcmp(str, "zoom")){
     if(zoom){
       oldx = WID->g_window->x();
       oldy = WID->g_window->y();
@@ -165,8 +165,9 @@ void window_cb(CALLBACK_ARGS)
     }
     WID->g_window->show();
     WID->m_window->show();
-    break;
-  case 2: // bring all to front (the order is important!)
+  }
+  else if(!strcmp(str, "front")){
+    // the order is important!
     WID->g_window->show();
     if(WID->opt_window->shown()) WID->opt_window->show();
     if(WID->vis_window->shown()) WID->vis_window->show();
@@ -175,9 +176,195 @@ void window_cb(CALLBACK_ARGS)
     if(WID->stat_window->shown()) WID->stat_window->show();
     if(WID->msg_window->shown()) WID->msg_window->show();
     WID->m_window->show();
-    break;
-  default:
-    break;
+  }
+}
+
+void activate_cb(CALLBACK_ARGS)
+{
+  // this is a central callback to activate/deactivate parts of the
+  // GUI depending on the user's choices (or the option settings)
+
+  char *str = (char*)data;
+
+  if(!strcmp(str, "rotation_center")){
+    if(WID->gen_butt[15]->value()) {
+      WID->gen_push_butt[0]->deactivate();
+      WID->gen_value[8]->deactivate();
+      WID->gen_value[9]->deactivate();
+      WID->gen_value[10]->deactivate();
+    }
+    else {
+      WID->gen_push_butt[0]->activate();
+      WID->gen_value[8]->activate();
+      WID->gen_value[9]->activate();
+      WID->gen_value[10]->activate();
+    }
+  }
+  else if(!strcmp(str, "custom_range")){
+    if(WID->view_choice[7]->value() == 2){
+      WID->view_value[31]->activate();
+      WID->view_value[32]->activate();
+    }
+    else {
+      WID->view_value[31]->deactivate();
+      WID->view_value[32]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "general_transform")){
+    if(WID->view_butt[6]->value()){
+      WID->view_choice[11]->activate();
+      WID->view_value[2]->activate();
+      WID->view_input[4]->activate();
+      WID->view_input[5]->activate();
+      WID->view_input[6]->activate();
+    }
+    else{
+      WID->view_choice[11]->deactivate();
+      WID->view_value[2]->deactivate();
+      WID->view_input[4]->deactivate();
+      WID->view_input[5]->deactivate();
+      WID->view_input[6]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "general_axes")){
+    if(WID->gen_choice[4]->value()){
+      WID->gen_value[17]->activate();
+      WID->gen_value[18]->activate();
+      WID->gen_value[19]->activate();
+      WID->gen_input[3]->activate();
+      WID->gen_input[4]->activate();
+      WID->gen_input[5]->activate();
+      WID->gen_input[6]->activate();
+      WID->gen_input[7]->activate();
+      WID->gen_input[8]->activate();
+    }
+    else{
+      WID->gen_value[17]->deactivate();
+      WID->gen_value[18]->deactivate();
+      WID->gen_value[19]->deactivate();
+      WID->gen_input[3]->deactivate();
+      WID->gen_input[4]->deactivate();
+      WID->gen_input[5]->deactivate();
+      WID->gen_input[6]->deactivate();
+      WID->gen_input[7]->deactivate();
+      WID->gen_input[8]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "general_axes_auto")){
+    if(WID->gen_butt[0]->value()){
+      WID->gen_value[20]->deactivate();
+      WID->gen_value[21]->deactivate();
+      WID->gen_value[22]->deactivate();
+      WID->gen_value[23]->deactivate();
+      WID->gen_value[24]->deactivate();
+      WID->gen_value[25]->deactivate();
+    }
+    else{
+      WID->gen_value[20]->activate();
+      WID->gen_value[21]->activate();
+      WID->gen_value[22]->activate();
+      WID->gen_value[23]->activate();
+      WID->gen_value[24]->activate();
+      WID->gen_value[25]->activate();
+    }
+  }
+  else if(!strcmp(str, "general_small_axes")){
+    if(WID->gen_butt[1]->value()){
+      WID->gen_value[26]->activate();
+      WID->gen_value[27]->activate();
+    }
+    else{
+      WID->gen_value[26]->deactivate();
+      WID->gen_value[27]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "mesh_cut_plane")){
+    if(WID->mesh_butt[16]->value()){
+      WID->mesh_cut_plane->activate();
+    }
+    else{
+      WID->mesh_cut_plane->deactivate();
+    }
+  }
+  else if(!strcmp(str, "mesh_light")){
+    if(WID->mesh_butt[17]->value()){
+      WID->mesh_butt[18]->activate();
+      WID->mesh_butt[19]->activate();
+      WID->mesh_value[18]->activate();
+    }
+    else{
+      WID->mesh_butt[18]->deactivate();
+      WID->mesh_butt[19]->deactivate();
+      WID->mesh_value[18]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "view_light")){
+    if(WID->view_butt[11]->value()){
+      WID->view_butt[9]->activate();
+      WID->view_butt[12]->activate();
+      WID->view_value[10]->activate();
+    }
+    else{
+      WID->view_butt[9]->deactivate();
+      WID->view_butt[12]->deactivate();
+      WID->view_value[10]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "view_axes")){
+    if(WID->view_choice[8]->value()){
+      WID->view_value[3]->activate();
+      WID->view_value[4]->activate();
+      WID->view_value[5]->activate();
+      WID->view_input[7]->activate();
+      WID->view_input[8]->activate();
+      WID->view_input[9]->activate();
+      WID->view_input[10]->activate();
+      WID->view_input[11]->activate();
+      WID->view_input[12]->activate();
+    }
+    else{
+      WID->view_value[3]->deactivate();
+      WID->view_value[4]->deactivate();
+      WID->view_value[5]->deactivate();
+      WID->view_input[7]->deactivate();
+      WID->view_input[8]->deactivate();
+      WID->view_input[9]->deactivate();
+      WID->view_input[10]->deactivate();
+      WID->view_input[11]->deactivate();
+      WID->view_input[12]->deactivate();
+    }
+  }
+  else if(!strcmp(str, "view_axes_auto_3d")){
+    if(WID->view_butt[25]->value()){
+      WID->view_value[13]->deactivate();
+      WID->view_value[14]->deactivate();
+      WID->view_value[15]->deactivate();
+      WID->view_value[16]->deactivate();
+      WID->view_value[17]->deactivate();
+      WID->view_value[18]->deactivate();
+    }
+    else{
+      WID->view_value[13]->activate();
+      WID->view_value[14]->activate();
+      WID->view_value[15]->activate();
+      WID->view_value[16]->activate();
+      WID->view_value[17]->activate();
+      WID->view_value[18]->activate();
+    }
+  }
+  else if(!strcmp(str, "view_axes_auto_2d")){
+    if(WID->view_butt[7]->value()){
+      WID->view_value[20]->deactivate();
+      WID->view_value[21]->deactivate();
+      WID->view_value[22]->deactivate();
+      WID->view_value[23]->deactivate();
+    }
+    else{
+      WID->view_value[20]->activate();
+      WID->view_value[21]->activate();
+      WID->view_value[22]->activate();
+      WID->view_value[23]->activate();
+    }
   }
 }
 
@@ -185,48 +372,51 @@ void window_cb(CALLBACK_ARGS)
 
 void status_xyz1p_cb(CALLBACK_ARGS)
 {
-  switch ((long)data) {
-  case 0: // X-axis pointing out of the screen
+  char *str = (char*)data;
+
+  if(!strcmp(str, "x")){ // X-axis pointing out of the screen
     CTX.r[0] = -90.;
     CTX.r[1] = 0.;
     CTX.r[2] = -90.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
-    break;
-  case 1: // Y-axis pointing out of the screen
-    if(CTX.useTrackball)
-      CTX.setQuaternion(1. / sqrt(2.), 0., 0., 1. / sqrt(2.));
+  }
+  else if(!strcmp(str, "y")){ // Y-axis pointing out of the screen
     CTX.r[0] = 0.;
     CTX.r[1] = 90.;
     CTX.r[2] = 90.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
-    break;
-  case 6: // reset everything
-    CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
-    CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
-    // fall-through
-  case 2: // Z-axis pointing out of the screen
+  }
+  else if(!strcmp(str, "z")){ // Z-axis pointing out of the screen
     CTX.r[0] = 0.;
     CTX.r[1] = 0.;
     CTX.r[2] = 0.;
     CTX.setQuaternionFromEulerAngles();
     Draw();
-    break;
-  case 3: // reset translation and scaling
+  }
+  else if(!strcmp(str, "1:1")){ // reset translation and scaling
     CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
     CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
     Draw();
-    break;
-  case 4: // switch projection mode
+  }
+  else if(!strcmp(str, "reset")){ // reset everything
+    CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
+    CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
+    CTX.r[0] = 0.;
+    CTX.r[1] = 0.;
+    CTX.r[2] = 0.;
+    CTX.setQuaternionFromEulerAngles();
+    Draw();
+  }
+  else if(!strcmp(str, "p")){ // switch projection mode
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 
 			     !opt_general_orthographic(0, GMSH_GET, 0));
     Draw();
-    break;
-  case 5: // display options
+  }
+  else if(!strcmp(str, "?")){ // display options
     Print_Options(0, GMSH_FULLRC, false, NULL);
     WID->create_message_window();
-    break;
   }
   WID->update_manip_window();
 }
@@ -659,11 +849,6 @@ void general_options_color_scheme_cb(CALLBACK_ARGS)
   Draw();
 }
 
-void general_options_rotation_center_cb(CALLBACK_ARGS)
-{
-  WID->check_rotation_center_button();
-}
-
 void general_options_rotation_center_select_cb(CALLBACK_ARGS)
 {
   Vertex *v;
@@ -959,7 +1144,14 @@ void statistics_update_cb(CALLBACK_ARGS)
 
 void statistics_histogram_cb(CALLBACK_ARGS)
 {
-  int type = (int)(long)data;
+  char *str = (char*)data;
+  int type;
+  if(!strcmp(str, "gamma"))
+    type = 0;
+  else if(!strcmp(str, "eta"))
+    type = 1;
+  else
+    type = 2;
 
   Print_Histogram(THEM->Histogram[type]);
 
@@ -1166,7 +1358,17 @@ void visibility_ok_cb(CALLBACK_ARGS)
 
 void visibility_sort_cb(CALLBACK_ARGS)
 {
-  int selectall, val = (int)(long)data;
+  int selectall, val;
+  char *str = (char*)data;
+
+  if(!strcmp(str, "type"))
+    val = 1;
+  else if(!strcmp(str, "number"))
+    val = 2;
+  else if(!strcmp(str, "name"))
+    val = 3;
+  else
+    val = 0;
 
   if(!val) {
     selectall = 0;
@@ -3248,18 +3450,6 @@ void view_plugin_options_cb(CALLBACK_ARGS)
   }
 
   p->dialogBox->main_window->show();
-}
-
-void view_options_custom_cb(CALLBACK_ARGS)
-{
-  if((long)data){
-    WID->view_value[31]->activate();
-    WID->view_value[32]->activate();
-  }
-  else {
-    WID->view_value[31]->deactivate();
-    WID->view_value[32]->deactivate();
-  }
 }
 
 void view_options_timestep_cb(CALLBACK_ARGS)

@@ -176,6 +176,7 @@ public:
   
   // mesh options
   Fl_Group         *mesh_group ;
+  Fl_Group         *mesh_cut_plane ;
   Fl_Check_Button  *mesh_butt[50] ;
   Fl_Input         *mesh_input[20] ;
   Fl_Value_Input   *mesh_value[20] ;
@@ -288,7 +289,6 @@ public:
   int  get_context();
   void set_anim_buttons(int mode);
   void check_anim_buttons();
-  void check_rotation_center_button();
   void set_status(char *msg, int num);
   void add_message(char *msg);
   void save_message(char *filename);
