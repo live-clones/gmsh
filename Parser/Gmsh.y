@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.82 2001-07-26 21:36:32 remacle Exp $
+// $Id: Gmsh.y,v 1.83 2001-07-30 12:54:40 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1065,7 +1065,7 @@ Affectation :
       List_Delete($8);
     }
     // P l u g i n s ...
-  | tPlugin '(' tBIGSTR ')' '.' tBIGSTR tAFFECT FExpr tEND 
+  | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
   {
 #ifndef _NOPLUGIN
     try 
@@ -1078,7 +1078,7 @@ Affectation :
       }
 #endif
   }
-  | tPlugin '(' tBIGSTR ')' '.' tBIGSTR tAFFECT tBIGSTR tEND 
+  | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
   {
 #ifndef _NOPLUGIN
     try 
@@ -1551,7 +1551,7 @@ Command :
       else
 	vyyerror("Unknown command '%s'", $1);
     }
-   | tPlugin '(' tBIGSTR ')' '.' tBIGSTR tEND
+   | tPlugin '(' tSTRING ')' '.' tSTRING tEND
    {
 #ifndef _NOPLUGIN
     GMSH_PluginManager::Instance()->Action($3,$6,0); 
