@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh_Netgen.cpp,v 1.9 2004-06-30 17:49:51 geuzaine Exp $
+// $Id: 3D_Mesh_Netgen.cpp,v 1.10 2004-06-30 19:51:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -193,7 +193,8 @@ void Netgen::MeshVolume()
   mp.maxh = 1;
   mp.fineness = 1;
   mp.secondorder = 0;
-  Ng_GenerateVolumeMesh(_ngmesh, &mp);
+  //Ng_GenerateVolumeMesh(_ngmesh, &mp);
+  NgAddOn_GenerateVolumeMesh(_ngmesh, &mp); // does not optimize
 }
 
 void Netgen::TransferVolumeMesh()

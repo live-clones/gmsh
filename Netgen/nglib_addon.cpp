@@ -24,7 +24,10 @@ class mystreambuf: public streambuf
       // ignore these messages
     }
     else{
-      Msg(INFO, txt);
+      if(!strncmp(txt, "ERROR", 5))
+	Msg(FATAL, txt);
+      else
+	Msg(INFO, txt);
     }
     index = 0; 
     return 0; 
@@ -56,8 +59,26 @@ void NgAddOn_Init ()
   testout = new ofstream ("/dev/null");
 }
 
-// optimizes an existing 3D mesh
+// generates volume mesh from surface mesh, without optimization
+Ng_Result NgAddOn_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
+{
+  Mesh * m = (Mesh*)mesh;
+  
+  
+  MeshingParameters mparam;
+  mparam.maxh = mp->maxh;
+  mparam.meshsizefilename = mp->meshsize_filename;
 
+  m->CalcLocalH();
+
+  MeshVolume (mparam, *m);
+  //RemoveIllegalElements (*m);
+  //OptimizeVolume (mparam, *m, NULL);
+
+  return NG_OK;
+}
+
+// optimizes an existing 3D mesh
 Ng_Result NgAddOn_OptimizeVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
 {
   Mesh * m = (Mesh*)mesh;
