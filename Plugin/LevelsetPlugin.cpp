@@ -1,4 +1,4 @@
-// $Id: LevelsetPlugin.cpp,v 1.20 2001-09-05 11:24:06 geuzaine Exp $
+// $Id: LevelsetPlugin.cpp,v 1.21 2001-11-16 10:57:33 geuzaine Exp $
 
 #include "LevelsetPlugin.h"
 #include "List.h"
@@ -80,60 +80,61 @@ Post_View *GMSH_LevelsetPlugin::execute (Post_View *v)
 	Zp[2] = zz;
 	myVals[2] = vv;
       }
-      
-      double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
-      double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
-      double gr[3];
-      double n[3],test;
-      prodve(v1,v2,n);
 
-      switch(_orientation){
-      case ORIENT_MAP:
-	gradSimplex(X,Y,Z,Vals,gr);      
-	prosca(gr,n,&test);
-	break;
-      case ORIENT_PLANE:
-	prosca(n,_ref,&test);
-	break;
-      case ORIENT_SPHERE:
-	gr[0] = Xp[0]-_ref[0];
-	gr[1] = Yp[0]-_ref[1];
-	gr[2] = Zp[0]-_ref[2];
-	prosca(gr,n,&test);
-	break;
-      default:
-	test = 0.;
-	break;
-      }
-      
-      if(test>0){
-	for(k=0;k<nx;k++){
-	  Xpi[k] = Xp[k];
-	  Ypi[k] = Yp[k];
-	  Zpi[k] = Zp[k];
-	  myValsi[k] = myVals[k];
+      if(nx == 3 || nx == 4){      
+	double v1[3] = {Xp[2]-Xp[0],Yp[2]-Yp[0],Zp[2]-Zp[0]};
+	double v2[3] = {Xp[1]-Xp[0],Yp[1]-Yp[0],Zp[1]-Zp[0]};
+	double gr[3];
+	double n[3],test;
+	prodve(v1,v2,n);
+
+	switch(_orientation){
+	case ORIENT_MAP:
+	  gradSimplex(X,Y,Z,Vals,gr);      
+	  prosca(gr,n,&test);
+	  break;
+	case ORIENT_PLANE:
+	  prosca(n,_ref,&test);
+	  break;
+	case ORIENT_SPHERE:
+	  gr[0] = Xp[0]-_ref[0];
+	  gr[1] = Yp[0]-_ref[1];
+	  gr[2] = Zp[0]-_ref[2];
+	  prosca(gr,n,&test);
+	  break;
+	default:
+	  test = 0.;
+	  break;
 	}
-	for(k=0;k<nx;k++){
-	  Xp[k] = Xpi[nx-k-1];
-	  Yp[k] = Ypi[nx-k-1];
-	  Zp[k] = Zpi[nx-k-1];	      
-	  myVals[k] = myValsi[nx-k-1];	      
+	
+	if(test>0){
+	  for(k=0;k<nx;k++){
+	    Xpi[k] = Xp[k];
+	    Ypi[k] = Yp[k];
+	    Zpi[k] = Zp[k];
+	    myValsi[k] = myVals[k];
+	  }
+	  for(k=0;k<nx;k++){
+	    Xp[k] = Xpi[nx-k-1];
+	    Yp[k] = Ypi[nx-k-1];
+	    Zp[k] = Zpi[nx-k-1];	      
+	    myVals[k] = myValsi[nx-k-1];	      
+	  }
 	}
-      }
-      
-      if(nx == 3 || nx == 4){
+	
 	for(k=0 ; k<3 ; k++) List_Add(View->ST, &Xp[k]);
 	for(k=0 ; k<3 ; k++) List_Add(View->ST, &Yp[k]);
 	for(k=0 ; k<3 ; k++) List_Add(View->ST, &Zp[k]);
 	for(k=0 ; k<3 ; k++) List_Add(View->ST, &myVals[k]);
 	View->NbST++;
-      }
-      if(nx == 4){	  
-	for(k=2 ; k<5 ; k++) List_Add(View->ST, &Xp[k % 4]);
-	for(k=2 ; k<5 ; k++) List_Add(View->ST, &Yp[k % 4]);
-	for(k=2 ; k<5 ; k++) List_Add(View->ST, &Zp[k % 4]);
-	for(k=2 ; k<5 ; k++) List_Add(View->ST, &myVals[k % 4]);
-	View->NbST++;
+
+	if(nx == 4){	  
+	  for(k=2 ; k<5 ; k++) List_Add(View->ST, &Xp[k % 4]);
+	  for(k=2 ; k<5 ; k++) List_Add(View->ST, &Yp[k % 4]);
+	  for(k=2 ; k<5 ; k++) List_Add(View->ST, &Zp[k % 4]);
+	  for(k=2 ; k<5 ; k++) List_Add(View->ST, &myVals[k % 4]);
+	  View->NbST++;
+	}
       }
     }
 
