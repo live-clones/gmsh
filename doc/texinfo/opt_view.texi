@@ -100,7 +100,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColormapCurvature
-Colormap curvature or slope coeficient@*
+Colormap curvature or slope coefficient@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
