@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.82 2001-03-18 15:48:48 geuzaine Exp $
+# $Id: Makefile,v 1.83 2001-03-19 15:24:49 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -18,7 +18,7 @@
            FLTK_INC   = -I$(HOME)/SOURCES/fltk
       FLTK_INC_SCOREC   = -I/users/develop/develop/visual/fltk/1.0/include
       FLTK_INC_LAPTOPJF = -I../../fltk-1.0.9
-	FLTK_INC_GERTHA_BURO = -I../../fltk
+   FLTK_INC_GERTHA_BURO = -I../../fltk
 
            OPENGL_LIB = -lGLU -lGL
      OPENGL_MOTIF_LIB = -lGLw
