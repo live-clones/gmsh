@@ -1,0 +1,9 @@
+
+gdb /home/geuzaine/SOURCES/gmsh-nl/bin/gmshm \
+  --directory /home/geuzaine/SOURCES/gmsh-nl/GmshUnix \
+  --directory /home/geuzaine/SOURCES/gmsh-nl/GmshMesh \
+  --directory /home/geuzaine/SOURCES/gmsh-nl/GmshGeo \
+  --directory /home/geuzaine/SOURCES/gmsh-nl/GmshDataStr \
+  --directory /home/geuzaine/SOURCES/gmsh-nl/GmshAdapt \
+  --directory /home/geuzaine/SOURCES/gmsh-nl/GmshParser \
+  --directory /home/geuzaine/SOURCES/gmsh-nl/GmshGL

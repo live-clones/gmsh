@@ -1,0 +1,220 @@
+\input texinfo.tex    @c -*-texinfo-*-
+@c =========================================================================
+@c
+@c This is the GMSH documentation texinfo source file
+@c
+@c Indexing : @cindex  == concepts
+@c            @tindex  == syntax
+@c            @mvindex == metasyntactic variables
+@c
+@c Before release, run C-u C-c C-u C-a in GNU Emacs
+@c This updates all node pointers and menus
+@c
+@c =========================================================================
+@c %**start of header
+@setfilename gmsh.info
+@set EDITION 0.1
+@set VERSION 0.98
+@set UPDATED 4 March 2000
+@set UPDATE-MONTH March 2000
+@set COPYRIGHT @copyright{} 1997-2000 Christophe Geuzaine, Jean-Francois Remacle
+@set WEB @uref{http://www.geuz.org/gmsh/}
+@settitle GMSH @value{VERSION}
+@footnotestyle separate
+@setchapternewpage odd
+@paragraphindent 0
+@finalout
+@defcodeindex mv
+@c %**end of header
+
+@ifinfo
+@dircategory Mesh Generation
+@direntry
+* Gmsh: (gmsh).         a mesh generator with pre- and post-processing facilities
+@end direntry
+@noindent
+This is Edition @value{EDITION}, last updated @value{UPDATED}, of the
+@cite{Gmsh Manual}, for Gmsh, Version @value{VERSION}.
+@noindent
+Copyright @value{COPYRIGHT}
+@end ifinfo
+
+@iftex
+@global@let@bullet=-
+@global@let@sl=@it
+@global@setfont@indit@itshape{9}{1000}
+@global@let@linkcolor=@Blue
+@parskip=5pt
+@end iftex
+
+@c =========================================================================
+@c Title page
+@c =========================================================================
+
+@shorttitlepage Gmsh
+@titlepage
+@title Gmsh
+@subtitle The documentation for Gmsh, Version @value{VERSION}
+@subtitle A automatic mesh generator with pre- and post-processing facilities
+@subtitle 
+@subtitle Edition @value{EDITION}, @value{UPDATE-MONTH}
+
+@author Christophe Geuzaine
+@author Jean-Francois Remacle
+
+@page
+@vskip 0pt plus 1filll
+Copyright @value{COPYRIGHT}
+@sp 1
+This document was prepared with Texinfo (@uref{http://texinfo.org}). The source
+of this document as well as formatted versions (info, postscript, pdf, html)
+are available at @value{WEB}.
+@end titlepage
+
+@c =========================================================================
+@c Table of contents
+@c =========================================================================
+
+@summarycontents
+@contents
+
+@c =========================================================================
+@c Top node
+@c =========================================================================
+
+@ifnottex
+@node Top, Copying, (dir), (dir)
+@top Gmsh
+
+Gmsh is an automatic three-dimensional mesh generator, with pre- and
+post-processing facilities.
+
+This is Edition @value{EDITION} of the @cite{Gmsh Manual}, last updated
+@value{UPDATED} for Gmsh Version @value{VERSION}.
+@end ifnottex
+
+
+@c =========================================================================
+@c Master menu
+@c =========================================================================
+
+@menu
+* Copying::                     Copyright and copying conditions
+* Introduction::                Basic presentation
+* Geometry::                    
+* Mesh::                        
+* Post-Processing::             
+* File formats::                Input and output file formats
+* Concept index::               
+* Syntax index::                
+* Variable index::              
+@end menu
+
+
+@c =========================================================================
+@c Copying Conditions
+@c =========================================================================
+
+@node Copying, Introduction, Top, Top
+@unnumbered Copying Conditions
+
+@cindex Copyright
+@cindex Web site
+@cindex Internet address
+@cindex Download
+@cindex Platforms
+
+Executable versions of Gmsh can be downloaded for most of the classical UNIX
+platforms (SUN, DEC, IBM, HP, SGI and Linux) and for Windows 95/98/NT from the
+web site @value{WEB} (no source distribution is available for the moment). The
+executable versions of Gmsh are free; the only thing asked if you use Gmsh is
+to mention it in your work. 
+
+@c =========================================================================
+@c Introduction
+@c =========================================================================
+
+@node Introduction, Geometry, Copying, Top
+@unnumbered Introduction
+
+@cindex Introduction
+
+Gmsh . Eventually, the most difficult thing about Gmsh is to find a way to
+pronouce 'Gmsh'...
+
+@c =========================================================================
+@c Geometry
+@c =========================================================================
+
+@node Geometry, Mesh, Introduction, Top
+@unnumbered Geometry
+
+@cindex Geometry
+
+@c =========================================================================
+@c Mesh
+@c =========================================================================
+
+@node Mesh, Post-Processing, Geometry, Top
+@unnumbered Mesh
+
+@cindex Mesh
+
+@c =========================================================================
+@c Post-Processing
+@c =========================================================================
+
+@node Post-Processing, File formats, Mesh, Top
+@unnumbered Post-Processing
+
+@cindex Post-Processing
+
+
+@c =========================================================================
+@c File Formats
+@c =========================================================================
+
+@node File formats, Concept index, Post-Processing, Top
+@appendix File Formats
+
+
+
+@c =========================================================================
+@c Concept Index
+@c =========================================================================
+
+@node Concept index, Syntax index, File formats, Top
+@unnumbered Concept Index
+
+@cindex Index, concepts
+@cindex Concepts, index
+
+@printindex cp
+
+@c =========================================================================
+@c Syntax Index
+@c =========================================================================
+
+@node Syntax index, Variable index, Concept index, Top
+@unnumbered Syntax Index
+
+@cindex Index, syntax
+@cindex Syntax, index
+@cindex Keywords, index
+
+@printindex tp
+
+@c =========================================================================
+@c Variable Index
+@c =========================================================================
+
+@node Variable index,  , Syntax index, Top
+@unnumbered Variable Index
+
+@cindex Index, metasyntactic variables
+@cindex Variables, index
+@cindex Metasyntactic variables, index
+
+@printindex mv
+
+@bye

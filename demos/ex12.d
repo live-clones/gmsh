@@ -1,0 +1,11 @@
+/*
+ * Sample Gmsh demo file
+ * 
+ * Copyright (C) 2000 C. Geuzaine, J.-F. Remacle
+ *
+ */
+
+Point((i_p) + 1) = { -ci , hi , -ci ,  pti } ;
+Point((i_p) + 2) = {  ci , hi , -ci ,  pti } ;
+Point((i_p) + 3) = {  ci , hi ,  ci ,  pti } ;
+Point((i_p) + 4) = { -ci , hi ,  ci ,  pti } ;
