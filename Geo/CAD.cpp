@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.73 2004-04-01 18:06:45 geuzaine Exp $
+// $Id: CAD.cpp,v 1.74 2004-04-13 18:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -1098,7 +1098,7 @@ int Extrude_ProtudePoint(int type, int ip,
 			 Curve ** pc, Curve ** prc, int final, 
 			 ExtrudeParams * e)
 {
-  double xnew, ynew, znew, matrix[4][4], T[3], Ax[3], d;
+  double matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
   Curve *c;
   int i;
