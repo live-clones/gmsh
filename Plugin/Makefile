@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.80 2005-03-02 07:49:41 geuzaine Exp $
+# $Id: Makefile,v 1.81 2005-03-09 02:19:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 #
@@ -123,7 +123,11 @@ CutParametric.o: CutParametric.cpp OctreePost.h Octree.h \
   OctreeInternals.h CutParametric.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothNormals.h \
-  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h
+  ../Common/GmshMatrix.h ../Common/AdaptiveViews.h ../Common/Context.h \
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Mesh/Mesh.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
+  ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
+  ../Mesh/DiscreteSurface.h ../Mesh/Metric.h ../Mesh/Matrix.h
 Lambda2.o: Lambda2.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \
@@ -253,7 +257,7 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../DataStr/avl.h ../Mesh/Vertex.h ../Mesh/Element.h ../Mesh/Simplex.h \
   ../Mesh/Face.h ../Mesh/Edge.h ../Geo/ExtrudeParams.h \
   ../Mesh/DiscreteSurface.h ../Mesh/Metric.h ../Mesh/Matrix.h \
-  ../Fltk/Colorbar_Window.h
+  ../Fltk/Colorbar_Window.h ../Graphics/Draw.h
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h \

@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.6 2005-01-17 05:19:59 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.7 2005-03-09 02:19:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -29,23 +29,24 @@
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
 #include "GUI.h"
+#include "Draw.h"
 #endif
 
 extern Context_T CTX;
 
 StringXNumber AnnotateOptions_Number[] = {
-  {GMSH_FULLRC, "X", NULL, 50.},
-  {GMSH_FULLRC, "Y", NULL, 30.},
-  {GMSH_FULLRC, "Z", NULL, 0.},
-  {GMSH_FULLRC, "3D", NULL, 0.},
-  {GMSH_FULLRC, "FontSize", NULL, 14.},
+  {GMSH_FULLRC, "X", GMSH_AnnotatePlugin::callbackX, 50.},
+  {GMSH_FULLRC, "Y", GMSH_AnnotatePlugin::callbackY, 30.},
+  {GMSH_FULLRC, "Z", GMSH_AnnotatePlugin::callbackZ, 0.},
+  {GMSH_FULLRC, "3D", GMSH_AnnotatePlugin::callback3D, 0.},
+  {GMSH_FULLRC, "FontSize", GMSH_AnnotatePlugin::callbackFontSize, 14.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 StringXString AnnotateOptions_String[] = {
-  {GMSH_FULLRC, "Text", NULL, "My Text"},
-  {GMSH_FULLRC, "Font", NULL, "Helvetica"},
-  {GMSH_FULLRC, "Align", NULL, "Left"}
+  {GMSH_FULLRC, "Text", GMSH_AnnotatePlugin::callbackText, "My Text"},
+  {GMSH_FULLRC, "Font", GMSH_AnnotatePlugin::callbackFont, "Helvetica"},
+  {GMSH_FULLRC, "Align", GMSH_AnnotatePlugin::callbackAlign, "Left"}
 };
 
 extern "C"
@@ -59,6 +60,136 @@ extern "C"
 GMSH_AnnotatePlugin::GMSH_AnnotatePlugin()
 {
   ;
+}
+
+static double getStyle()
+{
+  int fontsize = (int)AnnotateOptions_Number[4].def, font = 0, align = 0;
+#if defined(HAVE_FLTK)
+  font = GetFontIndex(AnnotateOptions_String[1].def);
+  // align only makes sense in screen coordinates at the moment:
+  if(!AnnotateOptions_Number[3].def)
+    align = GetFontAlign(AnnotateOptions_String[2].def);
+#endif
+  return (double)((align<<16)|(font<<8)|(fontsize));
+}
+
+void GMSH_AnnotatePlugin::draw()
+{
+#if defined(HAVE_FLTK)
+  double X = AnnotateOptions_Number[0].def;
+  double Y = AnnotateOptions_Number[1].def;
+  double Z = AnnotateOptions_Number[2].def;
+  double style = getStyle();
+
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+  if(AnnotateOptions_Number[3].def == 1){ // 3D
+    glRasterPos3d(X, Y, Z);
+    Draw_String(AnnotateOptions_String[0].def, style);
+    // draw 10-pixel marker
+    double d = 10 * CTX.pixel_equiv_x / CTX.s[0];
+    glBegin(GL_LINES);
+    glVertex3d(X-d,Y,Z); glVertex3d(X+d,Y,Z);
+    glVertex3d(X,Y-d,Z); glVertex3d(X,Y+d,Z);
+    glVertex3d(X,Y,Z-d); glVertex3d(X,Y,Z+d);
+    glEnd();
+  }
+  else{
+    double modelview[16], projection[16];
+    glGetDoublev(GL_PROJECTION_MATRIX, projection);
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
+	    (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    FixText2DCoordinates(&X, &Y);
+    glRasterPos2d(X, Y);
+    Draw_String(AnnotateOptions_String[0].def, style);
+    // draw 10-pixel marker
+    glBegin(GL_LINES);
+    glVertex2d(X-10,Y); glVertex2d(X+10,Y);
+    glVertex2d(X,Y-10); glVertex2d(X,Y+10);
+    glEnd();
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixd(projection);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixd(modelview);
+  }
+#endif
+}
+
+double GMSH_AnnotatePlugin::callback(int num, int action, double value, double *opt,
+				     double step, double min, double max)
+{
+  switch(action){ // configure the input field
+  case 1: return step;
+  case 2: return min;
+  case 3: return max;
+  default: break;
+  }
+  *opt = value;
+#if defined(HAVE_FLTK)
+  DrawPlugin(draw);
+#endif
+  return 0.;
+}
+
+char *GMSH_AnnotatePlugin::callbackStr(int num, int action, char *value, char **opt)
+{
+  *opt = value;
+#if defined(HAVE_FLTK)
+  DrawPlugin(draw);
+#endif
+  return NULL;
+}
+
+double GMSH_AnnotatePlugin::callbackX(int num, int action, double value)
+{
+  return callback(num, action, value, &AnnotateOptions_Number[0].def,
+		  0.5, -100., 100000.);
+}
+
+double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
+{
+  return callback(num, action, value, &AnnotateOptions_Number[1].def,
+		  0.5, -100., 100000.);
+}
+
+double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
+{
+  return callback(num, action, value, &AnnotateOptions_Number[2].def,
+		  0.5, -100., 100000.);
+}
+
+double GMSH_AnnotatePlugin::callback3D(int num, int action, double value)
+{
+  return callback(num, action, value, &AnnotateOptions_Number[3].def,
+		  1, 0, 1);
+}
+
+double GMSH_AnnotatePlugin::callbackFontSize(int num, int action, double value)
+{
+  return callback(num, action, value, &AnnotateOptions_Number[4].def,
+		  1, 5, 100);
+}
+
+char *GMSH_AnnotatePlugin::callbackText(int num, int action, char *value)
+{
+  return callbackStr(num, action, value, &AnnotateOptions_String[0].def);
+}
+
+char *GMSH_AnnotatePlugin::callbackFont(int num, int action, char *value)
+{
+  return callbackStr(num, action, value, &AnnotateOptions_String[1].def);
+}
+
+char *GMSH_AnnotatePlugin::callbackAlign(int num, int action, char *value)
+{
+  return callbackStr(num, action, value, &AnnotateOptions_String[2].def);
 }
 
 void GMSH_AnnotatePlugin::getName(char *name) const
@@ -116,11 +247,9 @@ Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
   double Y = AnnotateOptions_Number[1].def;
   double Z = AnnotateOptions_Number[2].def;
   int dim3 = (int)AnnotateOptions_Number[3].def;
-  int fontsize = (int)AnnotateOptions_Number[4].def;
   int iView = (int)AnnotateOptions_Number[5].def;
   char *text = AnnotateOptions_String[0].def;
-  char *fontname = AnnotateOptions_String[1].def;
-  char *alignstr =  AnnotateOptions_String[2].def;
+  double style = getStyle();
 
   if(iView < 0)
     iView = v ? v->Index : 0;
@@ -130,17 +259,7 @@ Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
     return v;
   }
 
-  int font = 0, align = 0;
-#if defined(HAVE_FLTK)
-  font = GetFontIndex(fontname);
-  // align only makes sense in screen coordinates at the moment:
-  if(!dim3)
-    align = GetFontAlign(alignstr);
-#endif
-
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-
-  double style = (double)((align<<16)|(font<<8)|(fontsize));
 
   if(dim3){
     List_Add(v1->T3D, &X);

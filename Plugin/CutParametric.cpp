@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.13 2005-03-04 19:08:38 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.14 2005-03-09 02:19:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,11 @@
 #include "Context.h"
 #include <math.h>
 
+#if defined(HAVE_FLTK)
+#include "GmshUI.h"
+#include "Draw.h"
+#endif
+
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
 #endif
@@ -32,23 +37,17 @@
 extern Context_T CTX;
 
 StringXNumber CutParametricOptions_Number[] = {
-  {GMSH_FULLRC, "MinU", NULL, 0.},
-  {GMSH_FULLRC, "MaxU", NULL, 2*M_PI},
-  {GMSH_FULLRC, "nPointsU", NULL, 360.},
-  //{GMSH_FULLRC, "MinV", NULL, 0.},
-  //{GMSH_FULLRC, "MaxV", NULL, 1.},
-  //{GMSH_FULLRC, "nPointsV", NULL, 0.},
-  //{GMSH_FULLRC, "MinW", NULL, 0.},
-  //{GMSH_FULLRC, "MaxW", NULL, 1.},
-  //{GMSH_FULLRC, "nPointsW", NULL, 0.},
-  {GMSH_FULLRC, "ConnectPoints", NULL, 0.},
+  {GMSH_FULLRC, "MinU", GMSH_CutParametricPlugin::callbackMinU, 0.},
+  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2*M_PI},
+  {GMSH_FULLRC, "nPointsU", GMSH_CutParametricPlugin::callbackN, 360.},
+  {GMSH_FULLRC, "ConnectPoints", GMSH_CutParametricPlugin::callbackConnect, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 StringXString CutParametricOptions_String[] = {
-  {GMSH_FULLRC, "X", NULL, "0 + 1 * Cos(u)"},
-  {GMSH_FULLRC, "Y", NULL, "0 + 1 * Sin(u)"},
-  {GMSH_FULLRC, "Z", NULL, "0"},
+  {GMSH_FULLRC, "X", GMSH_CutParametricPlugin::callbackX, "0 + 1 * Cos(u)"},
+  {GMSH_FULLRC, "Y", GMSH_CutParametricPlugin::callbackY, "0 + 1 * Sin(u)"},
+  {GMSH_FULLRC, "Z", GMSH_CutParametricPlugin::callbackZ, "0"},
 };
 
 extern "C"
@@ -63,6 +62,155 @@ extern "C"
 GMSH_CutParametricPlugin::GMSH_CutParametricPlugin()
 {
   ;
+}
+
+static double getU(int i)
+{
+  double minU = CutParametricOptions_Number[0].def;
+  double maxU = CutParametricOptions_Number[1].def;
+  int nbU = (int)CutParametricOptions_Number[2].def;
+  
+  if(nbU == 1)
+    return minU;
+  else
+    return minU + (double)(i)/(double)(nbU-1) * (maxU - minU);
+}
+
+int GMSH_CutParametricPlugin::recompute = 1;
+vector<double> GMSH_CutParametricPlugin::x;
+vector<double> GMSH_CutParametricPlugin::y;
+vector<double> GMSH_CutParametricPlugin::z;
+
+int GMSH_CutParametricPlugin::fillXYZ()
+{
+#if !defined(HAVE_MATH_EVAL)
+  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  return 0;
+#else
+  char *exprx = CutParametricOptions_String[0].def;
+  char *expry = CutParametricOptions_String[1].def;
+  char *exprz = CutParametricOptions_String[2].def;
+  int nbU = (int)CutParametricOptions_Number[2].def;
+
+  x.resize(nbU);
+  y.resize(nbU);
+  z.resize(nbU);
+  void *fx = evaluator_create(exprx);
+  if(!fx){
+    Msg(GERROR, "Invalid expression '%s'", exprx);
+    return 0;
+  }
+  void *fy = evaluator_create(expry);
+  if(!fy){
+    evaluator_destroy(fx);
+    Msg(GERROR, "Invalid expression '%s'", expry);
+    return 0;
+  }
+  void *fz = evaluator_create(exprz);
+  if(!fz){
+    Msg(GERROR, "Invalid expression '%s'", exprz);
+    evaluator_destroy(fx);
+    evaluator_destroy(fy);
+    return 0;
+  }
+  for(int i = 0; i < nbU; ++i){
+    char *names[] = { "u" };
+    double values[] = { getU(i) };
+    x[i] = evaluator_evaluate(fx, sizeof(names)/sizeof(names[0]), names, values);
+    y[i] = evaluator_evaluate(fy, sizeof(names)/sizeof(names[0]), names, values);
+    z[i] = evaluator_evaluate(fz, sizeof(names)/sizeof(names[0]), names, values);
+  }
+  return 1;
+#endif
+}
+
+void GMSH_CutParametricPlugin::draw()
+{
+#if defined(HAVE_FLTK)
+  if(recompute){
+    fillXYZ();
+    recompute = 0;
+  }
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+  if(CutParametricOptions_Number[3].def && x.size() > 1){
+    glBegin(GL_LINES);
+    for(unsigned int i = 1; i < x.size(); ++i){
+      glVertex3d(x[i-1], y[i-1], z[i-1]);
+      glVertex3d(x[i], y[i], z[i]);
+    }
+    glEnd();
+  }
+  else{
+    for(unsigned int i = 0; i < x.size(); ++i)
+      Draw_Point(1, CTX.point_size, &x[i], &y[i], &z[i], 1);
+  }
+#endif
+}
+
+double GMSH_CutParametricPlugin::callback(int num, int action, double value, double *opt,
+					  double step, double min, double max)
+{
+  switch(action){ // configure the input field
+  case 1: return step;
+  case 2: return min;
+  case 3: return max;
+  default: break;
+  }
+  *opt = value;
+#if defined(HAVE_FLTK)
+  recompute = 1;
+  DrawPlugin(draw);
+#endif
+  return 0.;
+}
+
+char *GMSH_CutParametricPlugin::callbackStr(int num, int action, char *value, char **opt)
+{
+  *opt = value;
+#if defined(HAVE_FLTK)
+  recompute = 1;
+  DrawPlugin(draw);
+#endif
+  return NULL;
+}
+
+double GMSH_CutParametricPlugin::callbackMinU(int num, int action, double value)
+{
+  return callback(num, action, value, &CutParametricOptions_Number[0].def,
+		  0.01, 0., 10.);
+}
+
+double GMSH_CutParametricPlugin::callbackMaxU(int num, int action, double value)
+{
+  return callback(num, action, value, &CutParametricOptions_Number[1].def,
+		  0.01, 0., 10.);
+}
+
+double GMSH_CutParametricPlugin::callbackN(int num, int action, double value)
+{
+  return callback(num, action, value, &CutParametricOptions_Number[2].def,
+		  1, 1, 1000);
+}
+
+double GMSH_CutParametricPlugin::callbackConnect(int num, int action, double value)
+{
+  return callback(num, action, value, &CutParametricOptions_Number[3].def,
+		  1, 0, 1);
+}
+
+char *GMSH_CutParametricPlugin::callbackX(int num, int action, char *value)
+{
+  return callbackStr(num, action, value, &CutParametricOptions_String[0].def);
+}
+
+char *GMSH_CutParametricPlugin::callbackY(int num, int action, char *value)
+{
+  return callbackStr(num, action, value, &CutParametricOptions_String[1].def);
+}
+
+char *GMSH_CutParametricPlugin::callbackZ(int num, int action, char *value)
+{
+  return callbackStr(num, action, value, &CutParametricOptions_String[2].def);
 }
 
 void GMSH_CutParametricPlugin::getName(char *name) const
@@ -154,86 +302,48 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
     return v;
   }
 
-#if !defined(HAVE_MATH_EVAL)
+  if(!fillXYZ())
+    return v;
 
-  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
-  return v;
-
-#else
-
-  double minU = CutParametricOptions_Number[0].def;
-  double maxU = CutParametricOptions_Number[1].def;
   int nbU = (int)CutParametricOptions_Number[2].def;
   int connect = (int)CutParametricOptions_Number[3].def;
   if(nbU < 2) connect = 0;
-
-  char *exprx = CutParametricOptions_String[0].def;
-  char *expry = CutParametricOptions_String[1].def;
-  char *exprz = CutParametricOptions_String[2].def;
-
-  void *fx = evaluator_create(exprx);
-  if(!fx){
-    Msg(GERROR, "Invalid expression '%s'", exprx);
-    return v;
-  }
-
-  void *fy = evaluator_create(expry);
-  if(!fy){
-    evaluator_destroy(fx);
-    Msg(GERROR, "Invalid expression '%s'", expry);
-    return v;
-  }
-
-  void *fz = evaluator_create(exprz);
-  if(!fz){
-    evaluator_destroy(fx);
-    evaluator_destroy(fy);
-    Msg(GERROR, "Invalid expression '%s'", exprz);
-    return v;
-  }
 
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   OctreePost o(v1);
 
   Post_View *v2 = BeginView(1);
   double *res0 = new double[9*v1->NbTimeStep];
-  double *res = new double[9*v1->NbTimeStep];
-  double x = 0., y = 0., z = 0., x0 = 0., y0 = 0., z0 = 0.;
+  double *res1 = new double[9*v1->NbTimeStep];
+  double x0 = 0., y0 = 0., z0 = 0., x1 = 0., y1 = 0., z1 = 0.;
 
-  for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res[k] = 0.;
+  for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res1[k] = 0.;
 
   for(int i = 0; i < nbU; ++i){
     if(i && connect){
-      x0 = x;
-      y0 = y;
-      z0 = z;
-      for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res[k];
+      x0 = x1;
+      y0 = y1;
+      z0 = z1;
+      for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res1[k];
     }
 
-    double u;
-    if(nbU == 1 || maxU == minU)
-      u = minU;
-    else
-      u = minU + (double)(i)/(double)(nbU-1) * (maxU - minU);
-    char *names[] = { "u" };
-    double values[] = { u };
-    x = evaluator_evaluate(fx, sizeof(names)/sizeof(names[0]), names, values);
-    y = evaluator_evaluate(fy, sizeof(names)/sizeof(names[0]), names, values);
-    z = evaluator_evaluate(fz, sizeof(names)/sizeof(names[0]), names, values);
+    x1 = x[i];
+    y1 = y[i];
+    z1 = z[i];
 
     if(v->NbST || v->NbSQ || v->NbSS || v->NbSH || v->NbSI || v->NbSY){
-      o.searchScalar(x, y, z, res);
-      addInView(connect, i, 1, v1->NbTimeStep, x0, y0, z0, res0, x, y, z, res,
+      o.searchScalar(x1, y1, z1, res1);
+      addInView(connect, i, 1, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
 		v2->SP, &v2->NbSP, v2->SL, &v2->NbSL);
     }
     if(v->NbVT || v->NbVQ || v->NbVS || v->NbVH || v->NbVI || v->NbVY){
-      o.searchVector(x, y, z, res);
-      addInView(connect, i, 3, v1->NbTimeStep, x0, y0, z0, res0, x, y, z, res,
+      o.searchVector(x1, y1, z1, res1);
+      addInView(connect, i, 3, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
 		v2->VP, &v2->NbVP, v2->VL, &v2->NbVL);
     }
     if(v->NbTT || v->NbTQ || v->NbTS || v->NbTH || v->NbTI || v->NbTY){
-      o.searchTensor(x, y, z, res);
-      addInView(connect, i, 9, v1->NbTimeStep, x0, y0, z0, res0, x, y, z, res,
+      o.searchTensor(x1, y1, z1, res1);
+      addInView(connect, i, 9, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
 		v2->TP, &v2->NbTP, v2->TL, &v2->NbTL);
     }
   }
@@ -243,13 +353,8 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
   sprintf(filename, "%s_CutParametric.pos", v1->Name);
   EndView(v2, 1, filename, name);
 
-  evaluator_destroy(fx);
-  evaluator_destroy(fy);
-  evaluator_destroy(fz);
   delete [] res0;
-  delete [] res;
+  delete [] res1;
 
   return v2;
-
-#endif
 }

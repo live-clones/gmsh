@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
+
 #include "Plugin.h"
 
 extern "C"
@@ -29,6 +31,13 @@ extern "C"
 
 class GMSH_CutParametricPlugin : public GMSH_Post_Plugin 
 { 
+private:
+  static double callback(int num, int action, double value, double *opt,
+			 double step, double min, double max);
+  static char *callbackStr(int num, int action, char *value, char **opt);
+  static int fillXYZ();
+  static int recompute;
+  static vector<double> x, y, z;
 public:
   GMSH_CutParametricPlugin();
   void getName  (char *name) const;
@@ -41,6 +50,15 @@ public:
   int getNbOptionsStr() const;
   StringXString* getOptionStr(int iopt);  
   Post_View *execute (Post_View *);
+
+  static double callbackMinU(int, int, double);
+  static double callbackMaxU(int, int, double);
+  static double callbackN(int, int, double);
+  static double callbackConnect(int, int, double);
+  static char *callbackX(int, int, char *);
+  static char *callbackY(int, int, char *);
+  static char *callbackZ(int, int, char *);
+  static void draw();
 };
 
 #endif

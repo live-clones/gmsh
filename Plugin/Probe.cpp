@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.9 2005-03-04 19:08:38 geuzaine Exp $
+// $Id: Probe.cpp,v 1.10 2005-03-09 02:19:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -78,7 +78,7 @@ void GMSH_ProbePlugin::draw()
     glEnd();
   }
   else{
-    // draw a small marker
+    // draw 10-pixel marker
     double d = 10 * CTX.pixel_equiv_x / CTX.s[0];
     glBegin(GL_LINES);
     glVertex3d(x-d,y,z); glVertex3d(x+d,y,z);

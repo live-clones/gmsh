@@ -29,6 +29,10 @@ extern "C"
 
 class GMSH_AnnotatePlugin : public GMSH_Post_Plugin
 {
+private:
+  static double callback(int num, int action, double value, double *opt,
+			 double step, double min, double max);
+  static char *callbackStr(int num, int action, char *value, char **opt);
 public:
   GMSH_AnnotatePlugin();
   void getName(char *name) const;
@@ -39,6 +43,16 @@ public:
   int getNbOptionsStr() const;
   StringXString* getOptionStr(int iopt);  
   Post_View *execute(Post_View *);
+
+  static double callbackX(int, int, double);
+  static double callbackY(int, int, double);
+  static double callbackZ(int, int, double);
+  static double callback3D(int, int, double);
+  static double callbackFontSize(int, int, double);
+  static char *callbackText(int, int, char *);
+  static char *callbackFont(int, int, char *);
+  static char *callbackAlign(int, int, char *);
+  static void draw();
 };
 
 #endif
