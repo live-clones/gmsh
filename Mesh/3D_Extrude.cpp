@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.21 2001-08-11 23:25:23 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.22 2001-08-11 23:53:35 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -463,18 +463,20 @@ void copy_mesh (Curve * from, Curve * to){
   
   if (Vertex_Bound && (vexist = (Vertex **) Tree_PQuery (Vertex_Bound, &to->beg))){
     (*vexist)->u = to->ubeg;
-    vi = *vexist;
+    Tree_Insert (THEM->Vertices, vexist);
+    if ((*vexist)->ListCurves)
+      List_Add ((*vexist)->ListCurves, &to);
+    List_Add (to->Vertices, vexist);
   }
   else{
     vi = Create_Vertex (++CurrentNodeNumber, 
 			to->beg->Pos.X, to->beg->Pos.Y, to->beg->Pos.Z, to->beg->lc, to->ubeg);
     Tree_Insert (THEM->Vertices, &vi);
     Tree_Insert (Vertex_Bound, &vi);
-  }
-  if(!vi->ListCurves)
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
-  List_Add (vi->ListCurves, &to);
-  List_Add (to->Vertices, &vi);
+    List_Add (vi->ListCurves, &to);
+    List_Add (to->Vertices, &vi);
+  }
 
   for (int i = 1; i < List_Nbr (list)-1; i++){
     List_Read (list, i, &v);
@@ -498,18 +500,20 @@ void copy_mesh (Curve * from, Curve * to){
 
   if (Vertex_Bound && (vexist = (Vertex **) Tree_PQuery (Vertex_Bound, &to->end))){
     (*vexist)->u = to->uend;
-    vi = *vexist;
+    Tree_Insert (THEM->Vertices, vexist);
+    if ((*vexist)->ListCurves)
+      List_Add ((*vexist)->ListCurves, &to);
+    List_Add (to->Vertices, vexist);
   }
   else{
     vi = Create_Vertex (++CurrentNodeNumber, 
 			to->end->Pos.X, to->end->Pos.Y, to->end->Pos.Z, to->end->lc, to->uend);
     Tree_Insert (THEM->Vertices, &vi);
     Tree_Insert (Vertex_Bound, &vi);
-  }
-  if(!vi->ListCurves)
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
-  List_Add (vi->ListCurves, &to);
-  List_Add (to->Vertices, &vi);
+    List_Add (vi->ListCurves, &to);
+    List_Add (to->Vertices, &vi);
+  }
 
 }
 
