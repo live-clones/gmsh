@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2001-02-18 18:04:03 geuzaine Exp $
+# $Id: Makefile,v 1.10 2001-02-20 18:32:58 geuzaine Exp $
 #
 # Makefile for "libMotif.a"
 #
@@ -77,10 +77,10 @@ Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
   ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h \
-  ../Common/Context.h ../Parser/Parser.h Widgets.h Pixmaps.h XColors.h \
-  XContext.h XRessources.h CbContext.h CbGeom.h Register.h Geometry.h \
-  ../Parser/OpenFile.h ../Common/GetOptions.h ../Common/Static.h \
-  XStatic.h
+  ../Common/Context.h ../Common/Options.h ../Parser/Parser.h Widgets.h \
+  Pixmaps.h XColors.h XContext.h XRessources.h CbContext.h CbGeom.h \
+  Register.h Geometry.h ../Parser/OpenFile.h ../Common/GetOptions.h \
+  ../Common/Static.h XStatic.h
 Widgets.o: Widgets.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h ../Mesh/Mesh.h \

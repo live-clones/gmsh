@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.7 2001-02-17 22:04:05 geuzaine Exp $
+// $Id: Message.cpp,v 1.8 2001-02-20 18:32:58 geuzaine Exp $
 
 #include <signal.h>
 #include <sys/resource.h>
@@ -61,7 +61,7 @@ void Msg(int level, char *fmt, ...){
   int      nb, nbvis;
 
   if(level != FATAL && level != GERROR && level != PARSER_ERROR &&
-     CTX.interactive && !CTX.verbosity) 
+     CTX.batch && !CTX.verbosity) 
     return ;
 
   va_start (args, fmt);
@@ -78,7 +78,7 @@ void Msg(int level, char *fmt, ...){
     abort = 1; 
     break;
   case GERROR :
-    if(CTX.interactive || !CTX.command_win){
+    if(CTX.batch || !CTX.command_win){
       fprintf(stderr, ERROR_STR);
       vfprintf(stderr, fmt, args); 
       fprintf(stderr, "\n");
@@ -88,7 +88,7 @@ void Msg(int level, char *fmt, ...){
     }
     break;
   case WARNING :
-    if(CTX.interactive || !CTX.command_win){
+    if(CTX.batch || !CTX.command_win){
       if(CTX.verbosity > 0){
         fprintf(stderr, WARNING_STR);
         vfprintf(stderr, fmt, args); 
@@ -100,7 +100,7 @@ void Msg(int level, char *fmt, ...){
     }
     break;
   case INFO :
-    if(CTX.interactive || !CTX.command_win){
+    if(CTX.batch || !CTX.command_win){
       if(CTX.verbosity > 1){
         fprintf(stderr, INFO_STR);
         vfprintf(stderr, fmt, args); 
@@ -113,7 +113,7 @@ void Msg(int level, char *fmt, ...){
     break;
   case STATUS2 :
   case STATUS2N :
-    if(CTX.interactive){
+    if(CTX.batch){
       if(CTX.verbosity > 1){
         fprintf(stderr, STATUS_STR);
         vfprintf(stderr, fmt, args);
@@ -129,7 +129,7 @@ void Msg(int level, char *fmt, ...){
     break;
   case STATUS1 :
   case STATUS1N :
-    if(CTX.interactive){
+    if(CTX.batch){
       if(CTX.verbosity > 1){
         fprintf(stderr, STATUS_STR);
         vfprintf(stderr, fmt, args); 
@@ -145,7 +145,7 @@ void Msg(int level, char *fmt, ...){
     break;
   case STATUS3 :
   case STATUS3N :
-    if(CTX.interactive){
+    if(CTX.batch){
       if(CTX.verbosity > 1){
         fprintf(stderr, STATUS_STR);
         vfprintf(stderr, fmt, args);
@@ -160,7 +160,7 @@ void Msg(int level, char *fmt, ...){
     }
     break;
   case PARSER_ERROR :
-    if(CTX.interactive || !CTX.command_win){
+    if(CTX.batch || !CTX.command_win){
       if(CTX.verbosity > 0){
         fprintf(stderr, PARSER_ERROR_STR);
         vfprintf(stderr, fmt, args); 
@@ -172,7 +172,7 @@ void Msg(int level, char *fmt, ...){
     }
     break;
   case PARSER_INFO :
-    if(CTX.interactive || !CTX.command_win){
+    if(CTX.batch || !CTX.command_win){
       if(CTX.verbosity > 1){
         fprintf(stderr, PARSER_INFO_STR);
         vfprintf(stderr, fmt, args); 
@@ -184,7 +184,7 @@ void Msg(int level, char *fmt, ...){
     }
     break;
   case DEBUG :
-    if(CTX.interactive || !CTX.command_win){
+    if(CTX.batch || !CTX.command_win){
       if(CTX.verbosity > 2){
         fprintf(stderr, DEBUG_STR);
         vfprintf(stderr, fmt, args); 

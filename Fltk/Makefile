@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 2001-02-18 18:04:03 geuzaine Exp $
+# $Id: Makefile,v 1.12 2001-02-20 18:32:58 geuzaine Exp $
 #
 # Makefile for "libFltk.a"
 #
@@ -67,9 +67,9 @@ Main.o: Main.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Mesh/Mesh.h ../Mesh/Vertex.h ../Mesh/Simplex.h ../Mesh/Edge.h \
   ../Geo/ExtrudeParams.h ../Mesh/Metric.h ../Graphics/Draw.h \
   ../Common/Views.h ../Common/Const.h ../Common/ColorTable.h \
-  ../Common/Context.h ../Parser/Parser.h ../Common/Static.h GUI.h \
-  Opengl_Window.h Colorbar_Window.h ../Parser/OpenFile.h \
-  ../Common/GetOptions.h
+  ../Common/Context.h ../Common/Options.h ../Parser/Parser.h \
+  ../Common/Static.h GUI.h Opengl_Window.h Colorbar_Window.h \
+  ../Parser/OpenFile.h ../Common/GetOptions.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../Common/GmshUI.h \

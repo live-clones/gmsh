@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.17 2001-02-17 22:02:17 geuzaine Exp $
+// $Id: Main.cpp,v 1.18 2001-02-20 18:32:58 geuzaine Exp $
 
 #include <signal.h>
 
@@ -11,6 +11,7 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
+#include "Options.h"
 #include "ColorTable.h"
 #include "Parser.h"
 #include "Static.h"
@@ -23,9 +24,9 @@ GUI *WID = NULL;
 int main(int argc, char *argv[]){
   int     i, nbf;
  
-  // Gmsh default context options
+  // Gmsh default options
   
-  Init_Context(0);
+  Init_Options(0);
 
   // Configuration files and command line options
 
@@ -38,7 +39,7 @@ int main(int argc, char *argv[]){
 
   // Always print info on terminal for non-interactive execution
 
-  if(CTX.interactive)
+  if(CTX.batch)
     CTX.terminal = 1;
 
   if(CTX.verbosity && CTX.terminal)
@@ -66,7 +67,7 @@ int main(int argc, char *argv[]){
 
   // Non-interactive Gmsh
 
-  if(CTX.interactive){
+  if(CTX.batch){
     OpenProblem(CTX.filename);
     if(yyerrorstate)
       exit(1);
@@ -79,8 +80,8 @@ int main(int argc, char *argv[]){
         else
           Msg(GERROR, "Invalid Background Mesh (no View)");
       }
-      if(CTX.interactive > 0){
-        mai3d(THEM, CTX.interactive);
+      if(CTX.batch > 0){
+        mai3d(THEM, CTX.batch);
         Print_Mesh(THEM,NULL,CTX.mesh.format);
       }
       else
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]){
 
   // Interactive Gmsh
 
-  CTX.interactive = -1 ; // The GUI is not ready yet for interactivity
+  CTX.batch = -1 ; // The GUI is not ready yet for interactivity
 
   // Create the GUI
   
@@ -100,10 +101,11 @@ int main(int argc, char *argv[]){
 
   // Set all previously defined options in the GUI
 
-  Init_Context_GUI(0);
+  Init_Options_GUI(0);
 
   // The GUI is ready
-  CTX.interactive = 0 ; 
+
+  CTX.batch = 0 ; 
 
   // Say welcome!
 
@@ -121,11 +123,11 @@ int main(int argc, char *argv[]){
 
   WID->check();
 
-  // Open input file
+  // Open project file
 
   OpenProblem(CTX.filename);
 
-  // Merge all Input Files
+  // Merge all other input files
 
   for(i=1;i<nbf;i++) MergeProblem(TheFileNameTab[i]);
   

@@ -169,7 +169,7 @@
 #line 1 "Gmsh.y"
  
 
-// $Id: Gmsh.tab.cpp,v 1.73 2001-02-19 21:55:42 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.74 2001-02-20 18:32:58 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -4232,7 +4232,7 @@ case 193:
 
       }
       else if(!strcmp(yyvsp[-2].c, "Print")){
-	if(!CTX.interactive) CreateOutputFile(yyvsp[-1].c, CTX.print.format);
+	if(!CTX.batch) CreateOutputFile(yyvsp[-1].c, CTX.print.format);
       }
       else if(!strcmp(yyvsp[-2].c, "Save")){
 	CreateOutputFile(yyvsp[-1].c, CTX.mesh.format);
@@ -4285,7 +4285,7 @@ case 195:
 case 196:
 #line 1456 "Gmsh.y"
 {
-      if(!CTX.interactive){ // we're in interactive mode
+      if(!CTX.batch){ // we're in interactive mode
 	if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
 	  Last_NumberOfPoints = Tree_Nbr(THEM->Points);
 	  Replot();

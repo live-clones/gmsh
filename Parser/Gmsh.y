@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.65 2001-02-19 21:55:42 geuzaine Exp $
+// $Id: Gmsh.y,v 1.66 2001-02-20 18:32:58 geuzaine Exp $
 
 #include <stdarg.h>
 
@@ -1407,7 +1407,7 @@ Command :
 
       }
       else if(!strcmp($1, "Print")){
-	if(!CTX.interactive) CreateOutputFile($2, CTX.print.format);
+	if(!CTX.batch) CreateOutputFile($2, CTX.print.format);
       }
       else if(!strcmp($1, "Save")){
 	CreateOutputFile($2, CTX.mesh.format);
@@ -1454,7 +1454,7 @@ Command :
     } 
   | tDraw tEND
     {
-      if(!CTX.interactive){ // we're in interactive mode
+      if(!CTX.batch){ // we're in interactive mode
 	if(Tree_Nbr(THEM->Points) != Last_NumberOfPoints){
 	  Last_NumberOfPoints = Tree_Nbr(THEM->Points);
 	  Replot();

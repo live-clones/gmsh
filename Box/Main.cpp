@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.1 2001-02-17 22:08:53 geuzaine Exp $
+// $Id: Main.cpp,v 1.2 2001-02-20 18:32:58 geuzaine Exp $
 
 #include <signal.h>
 
@@ -10,6 +10,7 @@
 #include "Views.h"
 #include "Parser.h"
 #include "Context.h"
+#include "Options.h"
 #include "OpenFile.h"
 #include "GetOptions.h"
 #include "MinMax.h"
@@ -34,7 +35,7 @@ void Info (int level, char *arg0){
   case 0 :
     fprintf(stderr, "%s\n", gmsh_progname);
     fprintf(stderr, "%s\n", gmsh_copyright);
-    Print_Options(arg0);
+    Print_Usage(arg0);
     exit(1);
   case 1:
     fprintf(stderr, "%.2f\n", GMSH_VERSION);
@@ -60,7 +61,10 @@ void Info (int level, char *arg0){
 int main(int argc, char *argv[]){
   int     i, nbf;
 
-  Init_Context(0);
+  if(argc < 2) Info(0,argv[0]);
+
+  Init_Options(0);
+
   Get_Options(argc, argv, &nbf);
 
   signal(SIGINT,  Signal); 
@@ -81,8 +85,8 @@ int main(int argc, char *argv[]){
       else
         fprintf(stderr, ERROR_STR "Invalid BGM (no view)\n"); exit(1);
     }
-    if(CTX.interactive > 0){
-      mai3d(THEM, CTX.interactive);
+    if(CTX.batch > 0){
+      mai3d(THEM, CTX.batch);
       Print_Mesh(THEM,NULL,CTX.mesh.format);
     }
     exit(1);
@@ -119,6 +123,10 @@ void Msg(int level, char *fmt, ...){
   va_start (args, fmt);
 
   switch(level){
+
+  case DIRECT :
+    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    break;
 
   case FATAL :
   case FATAL1 :
@@ -158,12 +166,18 @@ void Msg(int level, char *fmt, ...){
     }
     break ;
 
-  case DIRECT :
-    vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+  case DEBUG    :		     	  
+  case DEBUG1   : 
+  case DEBUG2   :		     	  
+  case DEBUG3   : 
+    if(CTX.verbosity > 2){
+      fprintf(stderr, DEBUG_STR);
+      vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
+    }
     break;
 
   default :
-    if(CTX.verbosity == 5){
+    if(CTX.verbosity > 0){
       fprintf(stderr, INFO_STR);
       vfprintf(stderr, fmt, args); fprintf(stderr, "\n");
     }

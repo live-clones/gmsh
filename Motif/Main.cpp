@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.9 2001-02-12 17:38:03 geuzaine Exp $
+// $Id: Main.cpp,v 1.10 2001-02-20 18:32:58 geuzaine Exp $
 
 #include <signal.h>
 
@@ -10,6 +10,7 @@
 #include "Mesh.h"
 #include "Draw.h"
 #include "Context.h"
+#include "Options.h"
 #include "ColorTable.h"
 #include "Parser.h"
 #include "Views.h"
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]){
  
   /* Gmsh default context options */
   
-  Init_Context(0);
+  Init_Options(0);
 
   /* Command line options */
 
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]){
 
   /* Non-interactive Gmsh */
 
-  if(CTX.interactive){
+  if(CTX.batch){
     OpenProblem(CTX.filename);
     if(yyerrorstate)
       exit(1);
@@ -92,8 +93,8 @@ int main(int argc, char *argv[]){
         else
           Msg(GERROR, "Invalid Background Mesh (no View)");
       }
-      if(CTX.interactive > 0){
-        mai3d(THEM, CTX.interactive);
+      if(CTX.batch > 0){
+        mai3d(THEM, CTX.batch);
         Print_Mesh(THEM,NULL,CTX.mesh.format);
       }
       else
@@ -105,7 +106,7 @@ int main(int argc, char *argv[]){
 
   /* Interactive Gmsh */
 
-  CTX.interactive = -1 ; /* The GUI is not ready yet for interactivity */
+  CTX.batch = -1 ; /* The GUI is not ready yet for interactivity */
 
   /* Text for about window */
 
@@ -372,7 +373,7 @@ int main(int argc, char *argv[]){
               CTX.font_base+XCTX.xfont.helve->min_char_or_byte2);
 
   /* The GUI is ready */
-  CTX.interactive = 0 ; 
+  CTX.batch = 0 ; 
   CTX.expose = 1 ;
 
   /* Say welcome! */

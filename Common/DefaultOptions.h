@@ -79,7 +79,11 @@ StringXNumber GeneralOptions_Number[] = {
   { F, "ScaleZ" , opt_general_scale2 , 1.0 }, 
   { F|O, "Shininess" , opt_general_shine , 0.4 }, 
   { F|O, "ColorScheme", opt_general_color_scheme , 0. }, 
+#ifdef _BLACKBOX
+  { F|O, "Verbosity" , opt_general_verbosity , 0. },
+#else
   { F|O, "Verbosity" , opt_general_verbosity , 2. },
+#endif
 #ifdef _FLTK
   { F|O, "Terminal" , opt_general_terminal , 0. },
 #else		      

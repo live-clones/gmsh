@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.13 2001-02-17 22:02:18 geuzaine Exp $
+// $Id: Message.cpp,v 1.14 2001-02-20 18:32:58 geuzaine Exp $
 
 #include <signal.h>
 #ifndef WIN32
@@ -140,7 +140,7 @@ void Msg(int level, char *fmt, ...){
 /* ------------------------------------------------------------------------ */
 
 void Exit(int level){
-  if(WID && !CTX.interactive){
+  if(WID && !CTX.batch){
     if(CTX.session_save){
       CTX.position[0] = WID->m_window->x();
       CTX.position[1] = WID->m_window->y();
@@ -150,10 +150,10 @@ void Exit(int level){
       CTX.msg_position[1] = WID->msg_window->y();
       CTX.msg_size[0] = WID->msg_window->w();
       CTX.msg_size[1] = WID->msg_window->h();
-      Print_Context(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
+      Print_Options(0, GMSH_SESSIONRC, CTX.sessionrc_filename);
     }
     if(CTX.options_save)
-      Print_Context(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
+      Print_Options(0, GMSH_OPTIONSRC, CTX.optionsrc_filename);
   }
   exit(level);
 }

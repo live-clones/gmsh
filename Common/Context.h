@@ -45,7 +45,7 @@ public :
   int msg_size[2];            // size of the message window on the screen
   int center_windows;         // center popup windows on the menu window
 
-  int interactive;            // 0=full gfx; -1=just parse; 1,2,3=batch mesh 
+  int batch;                  // 0=full gfx; -1=just parse; 1,2,3=batch 1D, 2D, 3D mesh 
   int verbosity;              // 0=silent -> 3=debug 
   int expose;                 // 1 if everything is ready to expose and draw 
 
@@ -180,9 +180,5 @@ public :
   void setQuaternion (float p1x, float p1y, float p2x, float p2y);
   void addQuaternion (float p1x, float p1y, float p2x, float p2y);
 };
-
-void Init_Context (int num);
-void Init_Context_GUI (int num);
-void Print_Context(int num, int level, char *filename);
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.34 2001-02-19 21:55:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.35 2001-02-20 18:32:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -123,7 +123,7 @@ void status_xyz1p_cb(CALLBACK_ARGS){
     Draw(); 
     break;
   case 4 :
-    Print_Context(0,GMSH_FULLRC,NULL);
+    Print_Options(0,GMSH_FULLRC,NULL);
     WID->create_message_window();
     break ;
   }
@@ -187,7 +187,7 @@ void file_save_mesh_cb(CALLBACK_ARGS) {
 }
 
 void file_save_options_cb(CALLBACK_ARGS) {
-  Print_Context(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
+  Print_Options(0,GMSH_OPTIONSRC, CTX.optionsrc_filename); 
 }
 
 void file_save_as_auto_cb(CALLBACK_ARGS) {
@@ -205,7 +205,7 @@ void file_save_as_geo_cb(CALLBACK_ARGS) {
 void file_save_as_geo_options_cb(CALLBACK_ARGS) {
   char *newfile;
   if((newfile = fl_file_chooser("Save Options File", "*", NULL)))
-    Print_Context(0,GMSH_FULLRC, newfile); 
+    Print_Options(0,GMSH_FULLRC, newfile); 
 }
 
 void file_save_as_msh_cb(CALLBACK_ARGS) {
@@ -505,7 +505,7 @@ void help_short_cb(CALLBACK_ARGS){
 }
 void help_command_line_cb(CALLBACK_ARGS){
   Msg(DIRECT, "");
-  Print_Options("gmsh");
+  Print_Usage("gmsh");
   WID->create_message_window();
 }
 void help_about_cb(CALLBACK_ARGS){

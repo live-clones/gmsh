@@ -1,4 +1,4 @@
-// $Id: GetOptions.cpp,v 1.11 2001-02-17 21:56:58 geuzaine Exp $
+// $Id: GetOptions.cpp,v 1.12 2001-02-20 18:32:58 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -28,7 +28,7 @@ char gmsh_url[]       = "URL              : http://www.geuz.org/gmsh/" ;
 char gmsh_email[]     = "E-Mail           : Christophe.Geuzaine@ulg.ac.be\n"
                         "                   Remacle@scorec.rpi.edu" ;
 
-void Print_Options(char *name){
+void Print_Usage(char *name){
   Msg(DIRECT, "Usage: %s [options] [files]", name);
   Msg(DIRECT, "Geometry options:");
   Msg(DIRECT, "  -0                    parse input files, output flattened geometry, and exit");
@@ -65,11 +65,7 @@ void Print_Options(char *name){
   Msg(DIRECT, "  -perspective          set projection mode to perspective");
 #endif
   Msg(DIRECT, "Other options:");      
-#ifndef _BLACKBOX
   Msg(DIRECT, "  -v int                set verbosity level (default: 2)");
-#else
-  Msg(DIRECT, "  -v                    be verbose");
-#endif
 #ifdef _MOTIF
   Msg(DIRECT, "  -nothreads            disable threads");
 #endif
@@ -81,11 +77,6 @@ void Print_Options(char *name){
 
 void Get_Options (int argc, char *argv[], int *nbfiles) {
   int i=1;
-
-#ifdef _BLACKBOX
-  void Info (int level, char *arg0);
-  if(argc < 2) Info(0,argv[0]);
-#endif
 
   // Parse session and option files
 
@@ -102,16 +93,16 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
     if (argv[i][0] == '-') {
       
       if(!strcmp(argv[i]+1, "0")){ 
-        CTX.interactive = -1; i++;
+        CTX.batch = -1; i++;
       }
       else if(!strcmp(argv[i]+1, "1")){ 
-        CTX.interactive = 1; i++;
+        CTX.batch = 1; i++;
       }
       else if(!strcmp(argv[i]+1, "2")){ 
-        CTX.interactive = 2; i++;
+        CTX.batch = 2; i++;
       }
       else if(!strcmp(argv[i]+1, "3")){ 
-        CTX.interactive = 3; i++;
+        CTX.batch = 3; i++;
       }
       else if(!strcmp(argv[i]+1, "bgm")){ 
         i++;
@@ -284,16 +275,9 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
         fprintf(stderr, "%s\n", gmsh_progname);
         fprintf(stderr, "%s\n", gmsh_copyright);
 	CTX.terminal = 1 ;
-        Print_Options(argv[0]);
+        Print_Usage(argv[0]);
         exit(1);
       }
-
-
-#ifdef _BLACKBOX
-      else if(!strcmp(argv[i]+1, "v")){ 
-        CTX.verbosity = 5; i++;
-      }
-#else
       else if(!strcmp(argv[i]+1, "v")){  
         i++;
         if(argv[i]!=NULL) CTX.verbosity = atoi(argv[i++]);
@@ -302,6 +286,7 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           exit(1);
         }
       }
+#ifndef _BLACKBOX
       else if(!strcmp(argv[i]+1, "noterm")){ 
         CTX.terminal = 0; i++;
       }
@@ -411,13 +396,13 @@ void Get_Options (int argc, char *argv[], int *nbfiles) {
           exit(1);
         }
       }
-#endif // _BLACKBOX
+#endif // !_BLACKBOX
 
 
       else{
         fprintf(stderr, "Unknown Option '%s'\n", argv[i]);
 	CTX.terminal = 1 ;
-        Print_Options(argv[0]);
+        Print_Usage(argv[0]);
         exit(1);
       }
     }

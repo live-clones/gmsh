@@ -9,12 +9,11 @@
 #define GMSH_OPTIONSRC (1<<1)
 #define GMSH_FULLRC    (1<<2)
 
+// action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
+
 #define OPT_ARGS_STR   int num, int action, char *val
 #define OPT_ARGS_NUM   int num, int action, double val
 #define OPT_ARGS_COL   int num, int action, unsigned int val
-
-// Option Database (General, Geometry, Mesh, Post, View, Print), with
-// default values
 
 // STRINGS
 
@@ -291,6 +290,10 @@ typedef struct {
   unsigned int def1, def2, def3 ;
 } StringXColor ;
 
+void Init_Options (int num);
+void Init_Options_GUI (int num);
+void Print_Options(int num, int level, char *filename);
+
 StringXString * Get_StringOptionCategory(char * cat);
 StringXNumber * Get_NumberOptionCategory(char * cat);
 StringXColor * Get_ColorOptionCategory(char * cat);
@@ -307,9 +310,9 @@ void * Get_StringOption(char *str, StringXString s[]);
 void * Get_NumberOption(char *str, StringXNumber s[]);
 void * Get_ColorOption(char *str, StringXColor s[]);
 
-void Print_StringOptions(int num, StringXString s[], char *prefix, FILE *file);
-void Print_NumberOptions(int num, StringXNumber s[], char *prefix, FILE *file);
-void Print_ColorOptions(int num, StringXColor s[], char *prefix, FILE *file);
+void Print_StringOptions(int num, int level, StringXString s[], char *prefix, FILE *file);
+void Print_NumberOptions(int num, int level, StringXNumber s[], char *prefix, FILE *file);
+void Print_ColorOptions(int num, int level, StringXColor s[], char *prefix, FILE *file);
 
 extern StringXString GeneralOptions_String[] ;
 extern StringXString GeometryOptions_String[] ;

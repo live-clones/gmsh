@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.62 2001-02-19 15:58:30 geuzaine Exp $
+# $Id: Makefile,v 1.63 2001-02-20 18:32:58 geuzaine Exp $
 # ----------------------------------------------------------------------
 #  Makefile for Gmsh  
 # ----------------------------------------------------------------------
@@ -146,6 +146,7 @@ depend:
 	for i in $(GMSH_DIR); \
         do (cd $$i && $(MAKE) depend \
            "CC=$(CC)" \
+           "VERSION_FLAGS=-D_FLTK -D_XMOTIF" \
            "GL_INCLUDE=$(OPENGL_INC)" \
            "GUI_INCLUDE=$(MOTIF_INC) $(FLTK_INC)" \
         ); done

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.6 2001-02-17 22:09:00 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.7 2001-02-20 18:32:58 geuzaine Exp $
 #include "Gmsh.h"
 #include "Const.h"
 #include "Context.h"
@@ -96,7 +96,7 @@ void OpenProblem(char *name){
 
   strncpy(THEM->name, CTX.basefilename,NAME_STR_L);
 
-  if(!CTX.interactive){
+  if(!CTX.batch){
 #if _XMOTIF
     XtVaSetValues(WID.G.shell,
                   XmNtitle, CTX.filename,
