@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.14 2001-05-04 13:39:34 geuzaine Exp $
+// $Id: Options.cpp,v 1.15 2001-05-04 13:42:09 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -450,6 +450,10 @@ char * opt_general_options_filename(OPT_ARGS_STR){
 }
 char * opt_general_editor(OPT_ARGS_STR){
   if(action & GMSH_SET) CTX.editor = val;
+#ifdef _FLTK
+  if(WID && (action & GMSH_GUI))
+    WID->gen_input[4]->value(CTX.editor);
+#endif
   return CTX.editor;
 }
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.66 2001-05-04 13:39:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.67 2001-05-04 13:42:09 geuzaine Exp $
 
 // To make the interface as visually consistent as possible, please:
 // - use the BH, BW, WB, IW values for button heights/widths, window borders, etc.
@@ -898,7 +898,7 @@ void GUI::create_general_options_window(){
     init_general_options_window = 1 ;
     
     int width = 25*CTX.fontsize;
-    int height = 5*WB+10*BH ;
+    int height = 5*WB+11*BH ;
     
     gen_window = new Fl_Window(width,height);
     gen_window->box(WINDOW_BOX);
@@ -947,7 +947,8 @@ void GUI::create_general_options_window(){
 	gen_input[1] = new Fl_Input(2*WB, 2*WB+6*BH, IW, BH, "Temporary file");
 	gen_input[2] = new Fl_Input(2*WB, 2*WB+7*BH, IW, BH, "Error file");
 	gen_input[3] = new Fl_Input(2*WB, 2*WB+8*BH, IW, BH, "Option file");
-	for(i=0 ; i<4 ; i++){
+	gen_input[4] = new Fl_Input(2*WB, 2*WB+9*BH, IW, BH, "Text editor command");
+	for(i=0 ; i<5 ; i++){
 	  gen_input[i]->labelsize(CTX.fontsize);
 	  gen_input[i]->textsize(CTX.fontsize);
 	  gen_input[i]->align(FL_ALIGN_RIGHT);
