@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.5 2003-02-18 05:50:06 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.6 2003-02-18 21:19:13 geuzaine Exp $
 //
 // Copyright (C) 1997 - 2003 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,14 @@
 
 #if defined(HAVE_GSL)
 #include <gsl/gsl_version.h>
+#include <gsl/gsl_errno.h>
+
+void new_handler(const char * reason, const char * file, int line, int gsl_errno){
+  Msg(GERROR, "GSL: %s (%s, line %d)", reason, file, line);
+}
+
 int check_gsl(){
+  // check version
   int major, minor;
   sscanf(gsl_version, "%d.%d", &major, &minor);
   if(major < 1 || (major == 1 && minor < 2)){
@@ -41,12 +48,16 @@ int check_gsl(){
     Msg(FATAL3, "decomposition code. Please upgrade to version 1.2 or above.");
     return 0;
   }
+  // set new error handler
+  gsl_set_error_handler(&new_handler);
   return 1;
 }
 #else
+
 int check_gsl(){
   return 1;
 }
+
 #endif
 
 // How ? GSL_VERSION is a string "maj.min" or "maj.min.patch"
