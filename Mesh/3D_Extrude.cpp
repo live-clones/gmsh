@@ -1,4 +1,4 @@
-// $Id: 3D_Extrude.cpp,v 1.25 2001-08-12 09:29:47 geuzaine Exp $
+// $Id: 3D_Extrude.cpp,v 1.26 2001-08-12 12:30:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -448,7 +448,7 @@ void Extrude_Curve (void *data, void *dum){
   }
 }
 
-void copy_mesh (Curve * from, Curve * to){
+void copy_mesh (Curve * from, Curve * to, int direction){
   List_T *list = from->Vertices;
   Vertex *vi, *v, **vv, **vexist;
 
@@ -466,6 +466,7 @@ void copy_mesh (Curve * from, Curve * to){
   if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->ubeg;
     Tree_Insert (THEM->Vertices, vexist);
+    Tree_Insert (Vertex_Bound, vexist);
     if ((*vexist)->ListCurves)
       List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
@@ -474,18 +475,23 @@ void copy_mesh (Curve * from, Curve * to){
     vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z,
 			(*vv)->lc, to->ubeg);
     Tree_Insert (THEM->Vertices, &vi);
+    Tree_Insert (Vertex_Bound, &vi);
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
     List_Add (to->Vertices, &vi);
   }
 
-  for (int i = 1; i < List_Nbr (list)-1; i++){
-    List_Read (list, i, &v);
+  for (int i = 1; i < List_Nbr(list)-1; i++){
+    if(direction < 0) 
+      List_Read (list, List_Nbr(list)-1-i, &v);
+    else
+      List_Read (list, i, &v);
     vi = Create_Vertex (++CurrentNodeNumber, v->Pos.X,
-			v->Pos.Y, v->Pos.Z, v->lc, v->u);
+			v->Pos.Y, v->Pos.Z, v->lc, (direction>0)?v->u:(1.-v->u));
     ep->Extrude (ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		 vi->Pos.X, vi->Pos.Y, vi->Pos.Z);
     Tree_Insert (THEM->Vertices, &vi);
+    Tree_Insert (Vertex_Bound, &vi);
     if(!vi->ListCurves)
       vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
@@ -496,6 +502,7 @@ void copy_mesh (Curve * from, Curve * to){
   if ((vexist = (Vertex **) Tree_PQuery (THEM->Vertices, vv))){
     (*vexist)->u = to->uend;
     Tree_Insert (THEM->Vertices, vexist);
+    Tree_Insert (Vertex_Bound, vexist);
     if ((*vexist)->ListCurves)
       List_Add ((*vexist)->ListCurves, &to);
     List_Add (to->Vertices, vexist);
@@ -504,6 +511,7 @@ void copy_mesh (Curve * from, Curve * to){
     vi = Create_Vertex ((*vv)->Num, (*vv)->Pos.X, (*vv)->Pos.Y, (*vv)->Pos.Z, 
 			(*vv)->lc, to->uend);
     Tree_Insert (THEM->Vertices, &vi);
+    Tree_Insert (Vertex_Bound, &vi);
     vi->ListCurves = List_Create (1, 1, sizeof (Curve *));
     List_Add (vi->ListCurves, &to);
     List_Add (to->Vertices, &vi);
@@ -568,9 +576,9 @@ int Extrude_Mesh (Curve * c){
     return true;
   }
   else{
-    Curve *cc = FindCurve (ep->geo.Source, THEM);
+    Curve *cc = FindCurve (abs(ep->geo.Source), THEM);
     if (!cc) return false;
-    copy_mesh (cc, c);
+    copy_mesh (cc, c, sign(ep->geo.Source));
     return true;
   }
 }
@@ -647,7 +655,7 @@ int Extrude_Mesh (Surface * s){
     }
   }
   if (ep->geo.Mode == EXTRUDED_ENTITY){
-    Curve *c = FindCurve (ep->geo.Source, THEM);
+    Curve *c = FindCurve (abs(ep->geo.Source), THEM);
     if (!c) return false;
     for (i = 0; i < List_Nbr (c->Vertices); i++){
       List_Read (c->Vertices, i, &v1);

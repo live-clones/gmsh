@@ -1,4 +1,4 @@
-// $Id: 1D_Mesh.cpp,v 1.18 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: 1D_Mesh.cpp,v 1.19 2001-08-12 12:30:48 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -227,4 +227,13 @@ void Maillage_Curve (void *data, void *dummy){
 
   THEM->Statistics[4] += List_Nbr (c->Vertices);
 
+#if 1
+  if(fabs(c->Num) != 41) return;
+  printf("curve %d : ", c->Num);
+  for (i = 0; i < List_Nbr (c->Vertices); i++){
+    List_Read (c->Vertices, i, &v1);
+    printf(" %d (%g %g %g)", v1->Num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
+  }
+  printf("\n");
+#endif
 }

@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.26 2001-08-11 23:28:31 geuzaine Exp $
+// $Id: CAD.cpp,v 1.27 2001-08-12 12:30:49 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1068,7 +1068,8 @@ void Extrude_ProtudeSurface(int ep, int is,
       }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(ep,A,B,C,X,Y,Z,alpha);
-    c->Extrude->geo.Source = abs(c2->Num);
+    //pas de abs()! il faut le signe pour copy_mesh dans ExtrudeMesh
+    c->Extrude->geo.Source = c2->Num; 
     if(e)c->Extrude->mesh = e->mesh;
   }
   
