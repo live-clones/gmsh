@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.34 2001-07-31 10:41:38 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.35 2001-07-31 11:48:27 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -75,7 +75,7 @@ void Draw_Mesh (Mesh *M) {
   if(CTX.mesh.hidden) glEnable(GL_POLYGON_OFFSET_FILL);
 
   // draw the bbox of the mesh in fast redraw mode if there is no geometry
-  if(!CTX.mesh.draw && !Tree_Nbr(M->Points)){
+  if(!CTX.mesh.draw && Tree_Nbr(M->Vertices) && !Tree_Nbr(M->Points)){
     glColor4ubv((GLubyte*)&CTX.color.fg);
     glBegin(GL_LINE_LOOP);
     glVertex3d(CTX.min[0], CTX.min[1], CTX.min[2]);
