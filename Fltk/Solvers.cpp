@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.5 2001-05-04 22:42:21 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.6 2001-05-17 13:14:15 geuzaine Exp $
 
 #include "Gmsh.h"
 
@@ -53,6 +53,8 @@ int GetDP(char *args){
   sock = Socket_StartProgram(progname, sockname);
   if(sock<0){
     Msg(GERROR, "Could not execute '%s'", progname);
+    WID->getdp_choice[0]->clear();
+    WID->getdp_choice[1]->clear();
     return 0;
   }
 

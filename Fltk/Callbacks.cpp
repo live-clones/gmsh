@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.53 2001-05-05 10:14:21 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.54 2001-05-17 13:14:15 geuzaine Exp $
 
 #include <sys/types.h>
 #include <signal.h>
@@ -1394,7 +1394,11 @@ void getdp_ok_cb(CALLBACK_ARGS){
   opt_solver_getdp_popupmessages(0, GMSH_SET, WID->getdp_butt[0]->value());
   opt_solver_getdp_mergeviews(0, GMSH_SET, WID->getdp_butt[1]->value());
 
+  int retry=0;
+  if(strcmp(opt_solver_getdp_command(0, GMSH_GET, NULL), 
+	    WID->getdp_input[2]->value())) retry=1;
   opt_solver_getdp_command(0, GMSH_SET, (char*)WID->getdp_input[2]->value());
+  if(retry) getdp_cb(NULL,NULL);
 }
 
 
