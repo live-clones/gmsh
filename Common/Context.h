@@ -1,4 +1,4 @@
-/* $Id: Context.h,v 1.16 2000-12-06 22:09:53 geuzaine Exp $ */
+/* $Id: Context.h,v 1.17 2000-12-08 11:16:34 geuzaine Exp $ */
 #ifndef _CONTEXT_H_
 #define _CONTEXT_H_
 
@@ -202,6 +202,6 @@ void Print_ColorOptions(StringXArray s[], char *prefix, FILE *file);
 
 void Init_Colors (int num);
 void Init_Context (void);
-void Print_Context(FILE *file);
+void Print_Context(char *filename);
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: Print_Geo.cpp,v 1.7 2000-12-05 15:47:04 geuzaine Exp $ */
+/* $Id: Print_Geo.cpp,v 1.8 2000-12-08 11:16:36 geuzaine Exp $ */
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -173,7 +173,6 @@ void Print_Geo(Mesh *M, char *filename){
   else
     FOUT = stdout;
 
-  Print_Context(FOUT);
   Tree_Action(M->Points,Print_Point);
   Tree_Action(M->Curves,Print_Curve);
   Tree_Action(M->Surfaces,Print_Surface);
