@@ -62,7 +62,7 @@ smooth views
 @item -combine
 combine input views into multi time step ones
 @item -convert file file
-convert all views in a file into binary views
+perform batch conversion of view(s)/mesh into new file formats
 @end ftable
 
 @sp 1 

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.61 2004-04-19 07:42:24 geuzaine Exp $
+// $Id: Main.cpp,v 1.62 2004-04-21 23:14:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -80,6 +80,20 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
+  // Initialize the static Mesh
+
+  M.Vertices = NULL;
+  M.Simplexes = NULL;
+  M.Points = NULL;
+  M.Curves = NULL;
+  M.SurfaceLoops = NULL;
+  M.EdgeLoops = NULL;
+  M.Surfaces = NULL;
+  M.Volumes = NULL;
+  M.PhysicalGroups = NULL;
+  M.Partitions = NULL;
+  M.Metric = NULL;
+
   // Configuration files and command line options
 
   Get_Options(argc, argv, &nbf);
@@ -101,20 +115,6 @@ int main(int argc, char *argv[])
   // Register Default Plugins
   if(CTX.default_plugins)
     GMSH_PluginManager::instance()->registerDefaultPlugins();
-
-  // Initialize the static Mesh
-
-  M.Vertices = NULL;
-  M.Simplexes = NULL;
-  M.Points = NULL;
-  M.Curves = NULL;
-  M.SurfaceLoops = NULL;
-  M.EdgeLoops = NULL;
-  M.Surfaces = NULL;
-  M.Volumes = NULL;
-  M.PhysicalGroups = NULL;
-  M.Partitions = NULL;
-  M.Metric = NULL;
 
   // Signal handling
 

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.31 2004-04-18 03:07:44 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.32 2004-04-21 23:14:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,7 @@
 #endif
 
 extern Context_T CTX;
+extern Mesh *THEM;
 
 char *TheFileNameTab[MAX_OPEN_FILES];
 char *TheBgmFileName = NULL, *TheOptString = NULL;
@@ -93,7 +94,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -link int             select link mode between views (default: 0)");
   Msg(DIRECT, "  -smoothview           smooth views");
   Msg(DIRECT, "  -combine              combine input views into multi time step ones");
-  Msg(DIRECT, "  -convert file file    convert all views in a file into binary views");
+  Msg(DIRECT, "  -convert file file    perform batch conversion of view(s)/mesh into new file formats");
   Msg(DIRECT, "Display options:");    
   Msg(DIRECT, "  -nodb                 disable double buffering");
   Msg(DIRECT, "  -fontsize int         specify the font size for the GUI (default: 12)");
@@ -263,11 +264,20 @@ void Get_Options(int argc, char *argv[], int *nbfiles)
       else if(!strcmp(argv[i] + 1, "convert")) {
         i++;
         CTX.terminal = 1;
+        CTX.batch = 1;
         if(argv[i] && argv[i + 1]) {
-          MergeProblem(argv[i]);
+          OpenProblem(argv[i]);
+	  // convert post-processing views to latest (binary) format
           for(int j = 0; j < List_Nbr(CTX.post.list); j++)
             WriteView((Post_View *) List_Pointer(CTX.post.list, j),
                       argv[i + 1], 1, j ? 1 : 0);
+	  // convert any mesh to the latest format
+	  if(THEM){
+	    if(Tree_Nbr(THEM->Vertices)){
+	      CTX.mesh.msh_file_version = 2.0;
+	      Print_Mesh(THEM, argv[i + 1], FORMAT_MSH);
+	    }
+	  }
         }
         else
           fprintf(stderr, "Usage: %s -convert file file\n", argv[0]);
