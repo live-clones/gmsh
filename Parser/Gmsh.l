@@ -1,4 +1,4 @@
-%{ /* $Id: Gmsh.l,v 1.15 2000-12-08 22:17:47 geuzaine Exp $ */
+%{ /* $Id: Gmsh.l,v 1.16 2000-12-08 22:34:53 geuzaine Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -314,6 +314,7 @@ void skipline(void)
 
 void skip_until(char *until)
 {
+  int i;
   int l = strlen(until);
   char chars[256];
   while(1)
@@ -330,7 +331,7 @@ void skip_until(char *until)
 	}
       
       printf("%c",chars[0]); 
-      for(int i=1;i<l;i++)
+      for(i=1;i<l;i++)
 	{
 	  chars[i] = yyinput();
 	  if(chars[i] == EOF) 
@@ -344,7 +345,7 @@ void skip_until(char *until)
 	{
 	  return;
 	}
-      for(int i=1;i<l-1;i++)
+      for(i=1;i<l-1;i++)
 	{
 	  unput(chars[l-i]);
 	}      
