@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.148 2001-09-06 08:00:34 geuzaine Exp $
+# $Id: Makefile,v 1.149 2001-09-06 08:02:54 geuzaine Exp $
 
 GMSH_RELEASE = 1.26
 
@@ -169,7 +169,7 @@ distrib:
 distrib-win:
 	cp $(GMSH_BIN_DIR)/gmsh.exe ../gmsh-distrib
 	cp doc/README.txt ../gmsh-distrib
-	cp doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS gmsh-distrib
+	cp doc/FORMATS doc/VERSIONS doc/FAQ doc/CONTRIBUTORS ../gmsh-distrib
 	cp -R tutorial ../gmsh-distrib
 	cp -R demos ../gmsh-distrib
 	rm -rf ../gmsh-distrib/*/CVS
