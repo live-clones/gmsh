@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.4 2002-01-24 17:48:28 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.5 2002-01-24 17:54:32 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -10,14 +10,6 @@ double myatan2 (double a, double b){
   if (a == 0.0 && b == 0)
     return 0.0;
   return atan2 (a, b);
-}
-
-double myacos (double a){
-  if (a == 0)
-    return Pi * 0.5;
-  if (a == 1)
-    return 0.0;
-  return acos (a);
 }
 
 double myasin(double a){
