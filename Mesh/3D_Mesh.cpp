@@ -1,4 +1,4 @@
-// $Id: 3D_Mesh.cpp,v 1.26 2001-08-13 09:42:02 geuzaine Exp $
+// $Id: 3D_Mesh.cpp,v 1.27 2001-08-13 18:38:55 geuzaine Exp $
 
 /*
  
@@ -711,12 +711,6 @@ void Maillage_Volume (void *data, void *dum){
   double uvw[3];
   int i;
 
-  // WE SHOULD ALLOCATE THESE GUYS HERE AND NOT IN Bowyer_Watson 
-  // MEMORY BUG -JF
-
-  Simplexes_New = List_Create (10, 10, sizeof (Simplex *));
-  Simplexes_Destroyed = List_Create (10, 10, sizeof (Simplex *));
-
   FACE_DIMENSION = 2;
 
   pv = (Volume **) data;
@@ -732,6 +726,9 @@ void Maillage_Volume (void *data, void *dum){
   else if (MeshTransfiniteVolume (v)){
   }
   else if (v->Typ == 99999){
+
+    Simplexes_New = List_Create (10, 10, sizeof (Simplex *));
+    Simplexes_Destroyed = List_Create (10, 10, sizeof (Simplex *));
 
     LOCAL = &M;
     Create_BgMesh (THEM->BGM.Typ, .2, LOCAL);
@@ -868,6 +865,9 @@ void Maillage_Volume (void *data, void *dum){
 
     if (CTX.mesh.degree == 2)
       Degre2 (THEM->Vertices, THEM->VertexEdges, v->Simplexes, NULL, NULL);
+
+    List_Delete(Simplexes_New);
+    List_Delete(Simplexes_Destroyed);
   }
 
   THEM->Statistics[6] += Tree_Nbr(v->Vertices);
@@ -880,8 +880,5 @@ void Maillage_Volume (void *data, void *dum){
     Eta_Maillage (THEM, &THEM->Statistics[20], &THEM->Statistics[21], &THEM->Statistics[22]);
     R_Maillage (THEM, &THEM->Statistics[23], &THEM->Statistics[24], &THEM->Statistics[25]);
   }
-  // WE SHOULD DESALLOCATE THESE GUYS HERE AND NOT NOWHERE ;-)
-  // MEMORY BUG -JF
-  List_Delete(Simplexes_New);
-  List_Delete(Simplexes_Destroyed);
+
 }

@@ -1,6 +1,6 @@
 %{ 
 
-// $Id: Gmsh.y,v 1.93 2001-08-13 16:13:14 geuzaine Exp $
+// $Id: Gmsh.y,v 1.94 2001-08-13 18:38:56 geuzaine Exp $
 
   //
   // Generaliser sprintf avec des chaines de caracteres
@@ -1232,9 +1232,14 @@ Shape :
     }
   | tBSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      Cdbseg101((int)$3,MSH_SEGM_BSPLN,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
-      $$.Type = MSH_SEGM_BSPLN;
-      $$.Num  = (int)$3;
+      if(List_Nbr($6) > 3){
+	Cdbseg101((int)$3,MSH_SEGM_BSPLN,2,$6,NULL,-1,-1,0.,1.,NULL,NULL,NULL);
+	$$.Type = MSH_SEGM_BSPLN;
+	$$.Num  = (int)$3;
+      }
+      else
+	vyyerror("Too few control points for BSpline %d (%d < 4)", (int)$3, 
+		 List_Nbr($6));
     }
   | tNurbs  '(' FExpr ')' tAFFECT ListOfDouble tKnots ListOfDouble tOrder FExpr tEND
     {

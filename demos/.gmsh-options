@@ -3,7 +3,7 @@
 // This file takes configuration options (preferences) that
 // should be loaded each time Gmsh is launched. You can create
 // this file by hand, or let Gmsh generate it for you (with
-// the 'Options->Save options' menu button). This file can
+// the 'Options->Save options now' menu button). This file can
 // also be automatically regenerated every time you quit
 // Gmsh if the option 'General.SaveOptions' is set. If
 // this file isn't found, defaults are used.
@@ -27,7 +27,7 @@ General.DisplayLists = 0; // Use OpenGL display lists (useful with real time man
 General.AlphaBlending = 0; // Enable alpha blending (transparency) in post-processing views
 General.Trackball = 1; // Use trackball rotation mode
 General.ZoomFactor = 1.1; // 'Speed' of the middle mouse button zoom
-General.DefaultPlugins = 0; // Load default plugins on startup
+General.DefaultPlugins = 1; // Load default plugins on startup
 General.MovingLight = 0; // Use a moving (i.e. which follows the model) light source
 General.Light0 = 1; // Enable light source 0
 General.Light0X = 0.5; // X position of light source 0
@@ -68,7 +68,7 @@ Geometry.Lines = 1; // Display geometry curves?
 Geometry.Surfaces = 0; // Display geometry surfaces?
 Geometry.Volumes = 0; // Display geometry volumes? (not implemented yet)
 Geometry.PointsNumbers = 1; // Display points numbers?
-Geometry.LinesNumbers = 0; // Display curve numbers?
+Geometry.LinesNumbers = 1; // Display curve numbers?
 Geometry.SurfacesNumbers = 0; // Display surface numbers?
 Geometry.VolumesNumbers = 0; // Display volume numbers? (not implemented yet)
 Geometry.Aspect = 0; // Not used
@@ -156,7 +156,7 @@ Solver.GetDPMergeViews = 1; // Automatically merge any post-processing view crea
 // Post-processing options
 //
 PostProcessing.Scales = 1; // Show value scales
-PostProcessing.Link = 0; // Link post-processing views (0=no, 1=visible views, 2=all views)
+PostProcessing.Link = 0; // Link post-processing views (0=none, 1,2=changes in visible/all, 3,4=everything in visible/all)
 PostProcessing.Smoothing = 0; // Apply (non-reversible) smoothing to post-processing view when merged
 PostProcessing.AnimationDelay = 0.25; // Delay (in seconds) between to animation frames
 //
@@ -164,9 +164,13 @@ PostProcessing.AnimationDelay = 0.25; // Delay (in seconds) between to animation
 //
 View.Format = "%.3e"; // Number format (in standard C form)
 View.ArrowScale = 50; // Size of the vector (e.g. arrow size in pixels)
-View.IntervalsType = 2; // Type of interval display (1=iso, 2=discrete, 3=continuous, 4=numeric)
+View.Explode = 1; // Explode elements (0: reduced to point; 1: not transformed)
+View.IntervalsType = 2; // Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)
+View.SaturateValues = 0; // Saturate the view values to custom min and max (1=true, 0=false)
 View.NbIso = 15; // Number of intervals
+View.Boundary = 0; // Draw the N-b dimensional boundary of the simplex (N=dimension, b=option value)
 View.Light = 0; // Enable light sources?
+View.SmoothNormals = 0; // Smooth the normals?
 View.ShowElement = 0; // Show element boundaries?
 View.ShowTime = 1; // Show time value (or time step) if NbTimeStep > 1?
 View.ShowScale = 1; // Show value scale?
@@ -178,7 +182,7 @@ View.DrawScalars = 1; // Display scalar values?
 View.DrawVectors = 1; // Display vector values?
 View.DrawTensors = 1; // Display tensor values?
 View.TransparentScale = 1; // Display a 'transparent' value scale?
-View.ScaleType = 1; // Value scale type (1=linear, 2=logarithmic)
+View.ScaleType = 1; // Value scale type (1=linear, 2=logarithmic, 3=double logarithmic)
 View.RangeType = 1; // Value scale range type (1=default, 2=custom)
 View.ArrowType = 2; // Vector display type (1=segment, 2=arrow, 3=pyramid, 4=cone, 5=displacement)
 View.ArrowLocation = 1; // Arrow location (1=cog, 2=vertex)
@@ -254,9 +258,13 @@ View.ColorTable = {
 Print.Font = "Courier"; // Font used for postscript printing
 Print.Format = 10; // Print format
 Print.EpsQuality = 2; // Postscript quality (1=simple sort, 2=recursive sort)
+Print.EpsBackground = 0; // Save image background in postscript output
 Print.JpegQuality = 85; // JPEG quality (between 1 and 100)
 Print.GifDither = 0; // Apply dithering to GIF output
 Print.GifSort = 1; // Sort the colormap in GIF output
 Print.GifInterlace = 0; // Interlace GIF output
 Print.GifTransparent = 0; // Output transparent GIF image
 Print.FontSize = 12; // Font size used for postscript printing
+Print.GeometryLineWidth = 8; // Width factor for geometry lines in postscript output (10 looks nice for geometry+mesh display)
+Print.MeshLineWidth = 1; // Width factor for mesh lines in postscript output (1 looks nice for geometry+mesh display)
+Print.PostProcessingLineWidth = 2; // Width factor for post-processing lines in postscript output

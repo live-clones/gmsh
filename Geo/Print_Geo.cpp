@@ -1,4 +1,4 @@
-// $Id: Print_Geo.cpp,v 1.18 2001-08-13 15:24:54 geuzaine Exp $
+// $Id: Print_Geo.cpp,v 1.19 2001-08-13 18:38:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Geo.h"
@@ -65,6 +65,9 @@ void Print_Curve(void *a, void *b){
     return;
   case MSH_SEGM_SPLN:
     fprintf(FOUT,"CatmullRom (%d) = ",c->Num);
+    break;
+  case MSH_SEGM_BSPLN:
+    fprintf(FOUT,"BSpline (%d) = ",c->Num);
     break;
   default:
     Msg(GERROR, "Unknown Curve type %d", c->Typ);

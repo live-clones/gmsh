@@ -1,4 +1,4 @@
-// $Id: CAD.cpp,v 1.27 2001-08-12 12:30:49 geuzaine Exp $
+// $Id: CAD.cpp,v 1.28 2001-08-13 18:38:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -1444,6 +1444,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes){
       break;
     case MSH_SEGM_LINE:
     case MSH_SEGM_SPLN:
+    case MSH_SEGM_BSPLN:
     case MSH_SEGM_CIRC:
     case MSH_SEGM_ELLI:
     case MSH_SEGM_NURBS:
@@ -1525,6 +1526,7 @@ void CopyShape(int Type, int Num, int *New){
     break;
   case MSH_SEGM_LINE:
   case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:
@@ -1611,6 +1613,7 @@ void DeleteShape(int Type, int Num){
     break;
   case MSH_SEGM_LINE:
   case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
   case MSH_SEGM_CIRC:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_NURBS:

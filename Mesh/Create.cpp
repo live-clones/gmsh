@@ -1,4 +1,4 @@
-// $Id: Create.cpp,v 1.23 2001-08-11 23:28:32 geuzaine Exp $
+// $Id: Create.cpp,v 1.24 2001-08-13 18:38:55 geuzaine Exp $
 
 #include "Gmsh.h"
 #include "Numeric.h"
@@ -441,7 +441,6 @@ Curve *Create_Curve (int Num, int Typ, int Order, List_T * Liste,
     for (i = 0; i < 4; i++)
       for (j = 0; j < 4; j++)
         pC->mat[i][j] = matcr[i][j];
-    
   }
   else if (Typ == MSH_SEGM_BSPLN){
     for (i = 0; i < 4; i++)
