@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.18 2004-07-05 15:20:06 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.19 2004-07-21 18:18:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2004 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
   if(!nbElm)
     return;
 
-  if(timeStep < 0 || timeStep > v->NbTimeStep - 1){
+  if(timeStep > v->NbTimeStep - 1){
     Msg(GERROR, "Invalid TimeStep (%d) in View[%d]", timeStep, v->Index);
     return;
   }
@@ -126,7 +126,10 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
       d[1] = y[j] - center[1];
       d[2] = z[j] - center[2];
       norme(d);
-      coef = raise * val[nbNod * timeStep + j];
+      if(timeStep < 0)
+	coef = raise;
+      else
+	coef = raise * val[nbNod * timeStep + j];
       x[j] += coef * d[0];
       y[j] += coef * d[1];
       z[j] += coef * d[2];
